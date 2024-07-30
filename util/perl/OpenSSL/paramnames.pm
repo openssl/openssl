@@ -117,6 +117,7 @@ my %params = (
     'CIPHER_PARAM_RC2_KEYBITS' =>          "keybits",     # size_t
     'CIPHER_PARAM_SPEED' =>                "speed",       # uint
     'CIPHER_PARAM_CTS_MODE' =>             "cts_mode",    # utf8_string
+    'CIPHER_PARAM_DECRYPT_ONLY' =>         "decrypt-only",  # int, 0 or 1
     'CIPHER_PARAM_FIPS_ENCRYPT_CHECK' =>   "encrypt-check", # int
     'CIPHER_PARAM_FIPS_APPROVED_INDICATOR' => '*ALG_PARAM_FIPS_APPROVED_INDICATOR',
 # For passing the AlgorithmIdentifier parameter in DER form
