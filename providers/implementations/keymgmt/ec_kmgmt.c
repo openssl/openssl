@@ -1471,7 +1471,7 @@ const OSSL_DISPATCH ossl_ec_keymgmt_functions[] = {
       (void (*)(void))ec_gen_settable_params },
     { OSSL_FUNC_KEYMGMT_GEN_GET_PARAMS, (void (*)(void))ec_gen_get_params },
     { OSSL_FUNC_KEYMGMT_GEN_GETTABLE_PARAMS,
-        (void (*)(void))ec_gen_gettable_params },
+      (void (*)(void))ec_gen_gettable_params },
     { OSSL_FUNC_KEYMGMT_GEN, (void (*)(void))ec_gen },
     { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (void (*)(void))ec_gen_cleanup },
     { OSSL_FUNC_KEYMGMT_LOAD, (void (*)(void))ec_load },
