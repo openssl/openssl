@@ -14,6 +14,7 @@ EVP_KEYMGMT_do_all_provided,
 EVP_KEYMGMT_names_do_all,
 EVP_KEYMGMT_gettable_params,
 EVP_KEYMGMT_settable_params,
+EVP_KEYMGMT_gen_gettable_params,
 EVP_KEYMGMT_gen_settable_params
 - EVP key management routines
 
@@ -41,6 +42,7 @@ EVP_KEYMGMT_gen_settable_params
  const OSSL_PARAM *EVP_KEYMGMT_gettable_params(const EVP_KEYMGMT *keymgmt);
  const OSSL_PARAM *EVP_KEYMGMT_settable_params(const EVP_KEYMGMT *keymgmt);
  const OSSL_PARAM *EVP_KEYMGMT_gen_settable_params(const EVP_KEYMGMT *keymgmt);
+ const OSSL_PARAM *EVP_KEYMGMT_gen_gettable_params(const EVP_KEYMGMT *keymgmt);
 
 =head1 DESCRIPTION
 
