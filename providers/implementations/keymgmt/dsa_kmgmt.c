@@ -611,7 +611,7 @@ static void *dsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     if (!OSSL_FIPS_IND_ON_UNAPPROVED(gctx, OSSL_FIPS_IND_SETTABLE0,
                                      gctx->libctx, "DSA", "Keygen",
                                      FIPS_dsa_sign_check))
-    return 0;
+        return 0;
 #endif
 
     dsa = ossl_dsa_new(gctx->libctx);
