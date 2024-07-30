@@ -61,7 +61,7 @@ set to 0.
 
 =item "digest-check" (B<OSSL_KDF_PARAM_FIPS_DIGEST_CHECK>) <integer>
 
-The default value of 1 causes an error during EVP_KDF_derive() if
+The default value of 1 causes an error during EVP_KDF_CTX_set_params() if
 used digest is not approved.
 Setting this to zero will ignore the error and set the approved
 "fips-indicator" to 0.
@@ -73,8 +73,9 @@ SHA2-256, SHA2-384, SHA2-512.
 
 =item "key-check" (B<OSSL_KDF_PARAM_FIPS_KEY_CHECK>) <integer>
 
-The default value of 1 causes an error during EVP_KDF_derive() if the length of
-used key-derivation key (B<OSSL_KDF_PARAM_SECRET>) is shorter than 112 bits.
+The default value of 1 causes an error during EVP_KDF_CTX_set_params() if the
+length of used key-derivation key (B<OSSL_KDF_PARAM_SECRET>) is shorter than 112
+bits.
 Setting this to zero will ignore the error and set the approved
 "fips-indicator" to 0.
 This option is used by the OpenSSL FIPS provider, and breaks FIPS compliance if
