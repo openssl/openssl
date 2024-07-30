@@ -38,7 +38,7 @@ struct h3ssl {
     int done;
     int received_from_two;
     int restart;
-    uint64_t id_bidi; /* the id of the stream use to send reponse */
+    uint64_t id_bidi; /* the id of the stream used to send response */
 };
 
 static void init_ids(struct h3ssl *h3ssl)
