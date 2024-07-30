@@ -153,9 +153,9 @@ static int pkey_check_fips_approved(EVP_PKEY_CTX *ctx, EVP_TEST *t)
     const OSSL_PARAM *gettables = EVP_PKEY_CTX_gettable_params(ctx);
 
     if (gettables == NULL
-        || OSSL_PARAM_locate_const(gettables,
-                                   OSSL_ALG_PARAM_FIPS_APPROVED_INDICATOR)
-                                   == NULL)
+            || OSSL_PARAM_locate_const(gettables,
+                                       OSSL_ALG_PARAM_FIPS_APPROVED_INDICATOR)
+            == NULL)
         return 1;
 
     params[0] = OSSL_PARAM_construct_int(OSSL_ALG_PARAM_FIPS_APPROVED_INDICATOR,
