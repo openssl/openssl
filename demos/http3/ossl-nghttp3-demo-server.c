@@ -94,6 +94,7 @@ static void set_id_status(uint64_t id, int status, struct h3ssl *h3ssl)
     printf("Oops can't set status, can't find stream!!!\n");
     assert(0);
 }
+
 static int are_all_clientid_closed(struct h3ssl *h3ssl)
 {
     struct ssl_id *ssl_ids;
