@@ -42,8 +42,8 @@ static void *tdes_##type##_##lcmode##_newctx(void *provctx)                    \
 static OSSL_FUNC_cipher_get_params_fn tdes_##type##_##lcmode##_get_params;     \
 static int tdes_##type##_##lcmode##_get_params(OSSL_PARAM params[])            \
 {                                                                              \
-    return ossl_cipher_generic_get_params(params, EVP_CIPH_##UCMODE##_MODE,    \
-                                          flags, kbits, blkbits, ivbits);      \
+    return ossl_tdes_get_params(params, EVP_CIPH_##UCMODE##_MODE,              \
+                                flags, kbits, blkbits, ivbits);                \
 }                                                                              \
 const OSSL_DISPATCH ossl_tdes_##type##_##lcmode##_functions[] = {              \
     { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))ossl_tdes_einit },        \
@@ -74,6 +74,9 @@ const OSSL_DISPATCH ossl_tdes_##type##_##lcmode##_functions[] = {              \
 
 void *ossl_tdes_newctx(void *provctx, int mode, size_t kbits, size_t blkbits,
                        size_t ivbits, uint64_t flags, const PROV_CIPHER_HW *hw);
+int ossl_tdes_get_params(OSSL_PARAM params[], unsigned int md, uint64_t flags,
+                         size_t kbits, size_t blkbits, size_t ivbits);
+
 OSSL_FUNC_cipher_dupctx_fn ossl_tdes_dupctx;
 OSSL_FUNC_cipher_freectx_fn ossl_tdes_freectx;
 OSSL_FUNC_cipher_encrypt_init_fn ossl_tdes_einit;

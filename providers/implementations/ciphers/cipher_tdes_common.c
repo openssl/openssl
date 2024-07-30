@@ -185,3 +185,20 @@ int ossl_tdes_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         return 0;
     return ossl_cipher_generic_set_ctx_params(vctx, params);
 }
+
+int ossl_tdes_get_params(OSSL_PARAM params[], unsigned int md, uint64_t flags,
+                         size_t kbits, size_t blkbits, size_t ivbits)
+{
+#ifdef FIPS_MODULE
+    OSSL_PARAM *p;
+
+    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_DECRYPT_ONLY);
+    if (p != NULL && !OSSL_PARAM_set_int(p, 1)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+        return 0;
+    }
+#endif
+
+    return ossl_cipher_generic_get_params(params, md, flags,
+                                          kbits, blkbits, ivbits);
+}
