@@ -733,6 +733,12 @@ Gets 1 if the cipher algorithm I<cipher> supports the gettable EVP_CIPHER_CTX
 parameter B<OSSL_CIPHER_PARAM_RANDOM_KEY>. Only DES and 3DES set this to 1,
 all other OpenSSL ciphers return 0.
 
+=item "decrypt-only" (B<OSSL_CIPHER_PARAM_DECRYPT_ONLY) <integer>
+
+Gets 1 if the cipher algorithm I<cipher> implementation supports only
+the decryption operation such as the 3DES ciphers in the fips provider.
+Otherwise gets 0 or the parameter might not be present at all.
+
 =back
 
 =head2 Gettable and Settable EVP_CIPHER_CTX parameters
