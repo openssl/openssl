@@ -87,6 +87,7 @@ typedef struct fips_global_st {
     SELF_TEST_POST_PARAMS selftest_params;
     FIPS_OPTION fips_security_checks;
     FIPS_OPTION fips_tls1_prf_ems_check;
+    FIPS_OPTION fips_eddsa_no_verify_digested;
     FIPS_OPTION fips_no_short_mac;
     FIPS_OPTION fips_restricted_drgb_digests;
     FIPS_OPTION fips_hkdf_digest_check;
@@ -121,6 +122,7 @@ void *ossl_fips_prov_ossl_ctx_new(OSSL_LIB_CTX *libctx)
         return NULL;
     init_fips_option(&fgbl->fips_security_checks, 1);
     init_fips_option(&fgbl->fips_tls1_prf_ems_check, 0); /* Disabled by default */
+    init_fips_option(&fgbl->fips_eddsa_no_verify_digested, 0);
     init_fips_option(&fgbl->fips_no_short_mac, 1);
     init_fips_option(&fgbl->fips_restricted_drgb_digests, 0);
     init_fips_option(&fgbl->fips_hkdf_digest_check, 0);
@@ -202,7 +204,7 @@ static int fips_get_params_from_core(FIPS_GLOBAL *fgbl)
     * OSSL_PROV_FIPS_PARAM_SECURITY_CHECKS and
     * OSSL_PROV_FIPS_PARAM_TLS1_PRF_EMS_CHECK are not self test parameters.
     */
-    OSSL_PARAM core_params[27], *p = core_params;
+    OSSL_PARAM core_params[28], *p = core_params;
 
     *p++ = OSSL_PARAM_construct_utf8_ptr(
             OSSL_PROV_PARAM_CORE_MODULE_FILENAME,
@@ -239,6 +241,8 @@ static int fips_get_params_from_core(FIPS_GLOBAL *fgbl)
                         fips_security_checks);
     FIPS_FEATURE_OPTION(fgbl, OSSL_PROV_FIPS_PARAM_TLS1_PRF_EMS_CHECK,
                         fips_tls1_prf_ems_check);
+    FIPS_FEATURE_OPTION(fgbl, OSSL_PROV_FIPS_PARAM_EDDSA_NO_VERIFY_DIGESTED,
+                        fips_eddsa_no_verify_digested);
     FIPS_FEATURE_OPTION(fgbl, OSSL_PROV_FIPS_PARAM_NO_SHORT_MAC,
                         fips_no_short_mac);
     FIPS_FEATURE_OPTION(fgbl, OSSL_PROV_FIPS_PARAM_DRBG_TRUNC_DIGEST,
@@ -320,6 +324,8 @@ static int fips_get_params(void *provctx, OSSL_PARAM params[])
                      fips_security_checks);
     FIPS_FEATURE_GET(fgbl, OSSL_PROV_PARAM_TLS1_PRF_EMS_CHECK,
                      fips_tls1_prf_ems_check);
+    FIPS_FEATURE_GET(fgbl, OSSL_PROV_FIPS_PARAM_EDDSA_NO_VERIFY_DIGESTED,
+                     fips_eddsa_no_verify_digested);
     FIPS_FEATURE_GET(fgbl, OSSL_PROV_PARAM_NO_SHORT_MAC,
                      fips_no_short_mac);
     FIPS_FEATURE_GET(fgbl, OSSL_PROV_PARAM_DRBG_TRUNC_DIGEST,
@@ -889,6 +895,7 @@ int OSSL_provider_init_int(const OSSL_CORE_HANDLE *handle,
 
     FIPS_SET_OPTION(fgbl, fips_security_checks);
     FIPS_SET_OPTION(fgbl, fips_tls1_prf_ems_check);
+    FIPS_SET_OPTION(fgbl, fips_eddsa_no_verify_digested);
     FIPS_SET_OPTION(fgbl, fips_no_short_mac);
     FIPS_SET_OPTION(fgbl, fips_restricted_drgb_digests);
     FIPS_SET_OPTION(fgbl, fips_hkdf_digest_check);
@@ -1106,6 +1113,7 @@ int BIO_snprintf(char *buf, size_t n, const char *format, ...)
 
 FIPS_FEATURE_CHECK(FIPS_security_check_enabled, fips_security_checks)
 FIPS_FEATURE_CHECK(FIPS_tls_prf_ems_check, fips_tls1_prf_ems_check)
+FIPS_FEATURE_CHECK(FIPS_eddsa_no_verify_digested, fips_eddsa_no_verify_digested)
 FIPS_FEATURE_CHECK(FIPS_no_short_mac, fips_no_short_mac)
 FIPS_FEATURE_CHECK(FIPS_restricted_drbg_digests_enabled,
                    fips_restricted_drgb_digests)
