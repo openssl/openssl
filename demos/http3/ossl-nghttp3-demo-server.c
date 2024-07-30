@@ -77,6 +77,7 @@ static void add_id(uint64_t id, SSL *ssl, struct h3ssl *h3ssl)
     printf("Oops too many streams to add!!!\n");
     exit(1);
 }
+
 static void set_id_status(uint64_t id, int status, struct h3ssl *h3ssl)
 {
     struct ssl_id *ssl_ids;
