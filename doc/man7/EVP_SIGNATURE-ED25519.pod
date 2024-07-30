@@ -38,9 +38,9 @@ instance, a nonempty context-string is not permitted.
 
 =head2 ED25519 and ED448 Signature Parameters
 
-Two parameters can be set during signing or verification: the EdDSA
-B<instance name> and the B<context-string value>.  They can be set by
-passing an OSSL_PARAM array to EVP_DigestSignInit_ex().
+The following parameters can be set during signing or verification by
+passing an OSSL_PARAM array to EVP_DigestSignInit_ex() or
+EVP_PKEY_CTX_set_params():
 
 =over 4
 
@@ -56,9 +56,14 @@ One of the five strings "Ed25519", "Ed25519ctx", "Ed25519ph", "Ed448", "Ed448ph"
 
 A string of octets with length at most 255.
 
+=item * "verify-digested" (B<OSSL_SIGNATURE_PARAM_EDDSA_VERIFY_DIGESTED> <integer>
+
+If set to a nonzero value, EdDSA can be used to verify a hash of a message.
+If zero, EdDSA will digest the message internally.
+
 =back
 
-Both of these parameters are optional.
+All of these parameters are optional.
 
 If the instance name is not specified, then the default "Ed25519" or
 "Ed448" is used.
@@ -81,6 +86,8 @@ EVP_PKEY_CTX_get_params().
 =item * "instance" (B<OSSL_SIGNATURE_PARAM_INSTANCE>) <utf8 string>
 
 =item * "context-string" (B<OSSL_SIGNATURE_PARAM_CONTEXT_STRING>) <octet string>
+
+=item * "fips-indicator" (B<OSSL_SIGNATURE_PARAM_FIPS_APPROVED_INDICATOR>) <integer>
 
 =back
 
