@@ -4919,7 +4919,7 @@ Ctrl.hexkey = hexkey:0102030405060708090a0b
 Ctrl.hexxcghash = hexxcghash:a4ebd45934f56792b5112dcd75a1075fdc889245
 Ctrl.hexsession_id = hexsession_id:a4ebd45934f56792b5112dcd75a1075fdc889245
 Ctrl.type = type:A
-Result = KDF_DERIVE_ERROR
+Result = KDF_CTRL_ERROR
 
 # Test that the key whose length is shorter than 112 bits is reported as
 # unapproved
