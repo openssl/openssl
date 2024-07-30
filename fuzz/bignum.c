@@ -52,12 +52,12 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
      */
     if (len > 2) {
         len -= 3;
-        /* limit l1, l2, and l3 to be no more than 128 bytes */
-        l1 = ((buf[0] * len) / 255) % 128;
+        /* limit l1, l2, and l3 to be no more than 512 bytes */
+        l1 = ((buf[0] * len) / 255) % 512;
         ++buf;
-        l2 = ((buf[0] * (len - l1)) / 255) % 128;
+        l2 = ((buf[0] * (len - l1)) / 255) % 512;
         ++buf;
-        l3 = (len - l1 - l2) % 128;
+        l3 = (len - l1 - l2) % 512;
 
         s1 = buf[0] & 1;
         s3 = buf[0] & 4;
