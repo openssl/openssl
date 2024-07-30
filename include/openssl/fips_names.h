@@ -62,6 +62,13 @@ extern "C" {
 # define OSSL_PROV_FIPS_PARAM_TLS1_PRF_EMS_CHECK "tls1-prf-ems-check"
 
 /*
+ * A boolean that determines if Ed448 and Ed25519 are forbidden to process
+ * a pre-hashed message or not.
+ * This is disabled by default.
+ * Type: OSSL_PARAM_UTF8_STRING
+ */
+# define OSSL_PROV_FIPS_PARAM_EDDSA_NO_VERIFY_DIGESTED "eddsa-no-verify-digested"
+/*
  * A boolean that determines if the runtime FIPS check for undersized MAC output
  * is performed.
  * This is enabled by default.

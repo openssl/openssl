@@ -38,7 +38,7 @@ typedef enum OPTION_choice {
     OPT_NO_LOG, OPT_CORRUPT_DESC, OPT_CORRUPT_TYPE, OPT_QUIET, OPT_CONFIG,
     OPT_NO_CONDITIONAL_ERRORS,
     OPT_NO_SECURITY_CHECKS,
-    OPT_TLS_PRF_EMS_CHECK, OPT_NO_SHORT_MAC,
+    OPT_TLS_PRF_EMS_CHECK, OPT_EDDSA_NO_VERIFY_DIGESTED, OPT_NO_SHORT_MAC,
     OPT_DISALLOW_SIGNATURE_X931_PADDING,
     OPT_DISALLOW_DRGB_TRUNC_DIGEST,
     OPT_HKDF_DIGEST_CHECK,
@@ -80,6 +80,8 @@ const OPTIONS fipsinstall_options[] = {
      "Forces self tests to run once on module installation"},
     {"ems_check", OPT_TLS_PRF_EMS_CHECK, '-',
      "Enable the run-time FIPS check for EMS during TLS1_PRF"},
+    {"eddsa_no_verify_digested", OPT_EDDSA_NO_VERIFY_DIGESTED, '-',
+     "Disallow Ed25519/Ed448 verification of pre-hashed data"},
     {"no_short_mac", OPT_NO_SHORT_MAC, '-', "Disallow short MAC output"},
     {"no_drbg_truncated_digests", OPT_DISALLOW_DRGB_TRUNC_DIGEST, '-',
      "Disallow truncated digests with Hash and HMAC DRBGs"},
@@ -136,6 +138,7 @@ typedef struct {
     unsigned int conditional_errors : 1;
     unsigned int security_checks : 1;
     unsigned int tls_prf_ems_check : 1;
+    unsigned int eddsa_no_verify_digested : 1;
     unsigned int no_short_mac : 1;
     unsigned int drgb_no_trunc_dgst : 1;
     unsigned int hkdf_digest_check : 1;
@@ -162,6 +165,7 @@ static const FIPS_OPTS pedantic_opts = {
     1,      /* conditional_errors */
     1,      /* security_checks */
     1,      /* tls_prf_ems_check */
+    1,      /* eddsa_no_verify_digested */
     1,      /* no_short_mac */
     1,      /* drgb_no_trunc_dgst */
     1,      /* hkdf_digest_check */
@@ -188,6 +192,7 @@ static FIPS_OPTS fips_opts = {
     1,      /* conditional_errors */
     1,      /* security_checks */
     0,      /* tls_prf_ems_check */
+    0,      /* eddsa_no_verify_digested */
     0,      /* no_short_mac */
     0,      /* drgb_no_trunc_dgst */
     0,      /* hkdf_digest_check */
@@ -327,6 +332,8 @@ static int write_config_fips_section(BIO *out, const char *section,
                       opts->security_checks ? "1" : "0") <= 0
         || BIO_printf(out, "%s = %s\n", OSSL_PROV_FIPS_PARAM_TLS1_PRF_EMS_CHECK,
                       opts->tls_prf_ems_check ? "1" : "0") <= 0
+        || BIO_printf(out, "%s = %s\n", OSSL_PROV_FIPS_PARAM_EDDSA_NO_VERIFY_DIGESTED,
+                      opts->eddsa_no_verify_digested ? "1" : "0") <= 0
         || BIO_printf(out, "%s = %s\n", OSSL_PROV_PARAM_NO_SHORT_MAC,
                       opts->no_short_mac ? "1" : "0") <= 0
         || BIO_printf(out, "%s = %s\n", OSSL_PROV_PARAM_DRBG_TRUNC_DIGEST,
@@ -552,6 +559,9 @@ int fipsinstall_main(int argc, char **argv)
             break;
         case OPT_TLS_PRF_EMS_CHECK:
             fips_opts.tls_prf_ems_check = 1;
+            break;
+        case OPT_EDDSA_NO_VERIFY_DIGESTED:
+            fips_opts.eddsa_no_verify_digested = 1;
             break;
         case OPT_NO_SHORT_MAC:
             fips_opts.no_short_mac = 1;
