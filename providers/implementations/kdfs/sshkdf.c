@@ -202,11 +202,6 @@ static int kdf_sshkdf_derive(void *vctx, unsigned char *key, size_t keylen,
         return 0;
     }
 
-#ifdef FIPS_MODULE
-    if (!fips_key_check_passed(ctx))
-        return 0;
-#endif
-
     return SSHKDF(md, ctx->key, ctx->key_len,
                   ctx->xcghash, ctx->xcghash_len,
                   ctx->session_id, ctx->session_id_len,
@@ -247,9 +242,15 @@ static int kdf_sshkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 #endif
     }
 
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_KEY)) != NULL)
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_KEY)) != NULL) {
         if (!sshkdf_set_membuf(&ctx->key, &ctx->key_len, p))
             return 0;
+
+#ifdef FIPS_MODULE
+        if (!fips_key_check_passed(ctx))
+            return 0;
+#endif
+    }
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_SSHKDF_XCGHASH))
         != NULL)

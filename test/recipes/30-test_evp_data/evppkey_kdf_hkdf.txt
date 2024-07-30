@@ -214,7 +214,7 @@ Ctrl.digest = digest:SHA1
 Ctrl.IKM = hexkey:0b0b0b0b0b0b0b0b0b0b0b
 Ctrl.salt = hexsalt:000102030405060708090a0b0c
 Ctrl.info = hexinfo:f0f1f2f3f4f5f6f7f8f9
-Result = KDF_DERIVE_ERROR
+Result = PKEY_CTRL_ERROR
 
 # Test that the key whose length is shorter than 112 bits is reported as
 # unapproved

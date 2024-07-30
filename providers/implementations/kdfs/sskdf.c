@@ -425,11 +425,6 @@ static int sskdf_derive(void *vctx, unsigned char *key, size_t keylen,
         return 0;
     }
 
-#ifdef FIPS_MODULE
-    if (!fips_sskdf_key_check_passed(ctx))
-        return 0;
-#endif
-
     md = ossl_prov_digest_md(&ctx->digest);
 
     if (ctx->macctx != NULL) {
@@ -545,11 +540,6 @@ static int x963kdf_derive(void *vctx, unsigned char *key, size_t keylen,
         return 0;
     }
 
-#ifdef FIPS_MODULE
-    if (!fips_x963kdf_key_check_passed(ctx))
-        return 0;
-#endif
-
     /* H(x) = hash */
     md = ossl_prov_digest_md(&ctx->digest);
     if (md == NULL) {
@@ -634,6 +624,13 @@ static int sskdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (!sskdf_common_set_ctx_params(ctx, params))
         return 0;
 
+#ifdef FIPS_MODULE
+    if ((OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_KEY) != NULL) ||
+        (OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_SECRET) != NULL))
+        if (!fips_sskdf_key_check_passed(ctx))
+            return 0;
+#endif
+
     return 1;
 }
 
@@ -714,6 +711,11 @@ static int x963kdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         if (!fips_x963kdf_digest_check_passed(ctx, md))
             return 0;
     }
+
+    if ((OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_KEY) != NULL) ||
+        (OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_SECRET) != NULL))
+        if (!fips_x963kdf_key_check_passed(ctx))
+            return 0;
 #endif
 
     return 1;

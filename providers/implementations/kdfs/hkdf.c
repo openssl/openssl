@@ -236,11 +236,6 @@ static int kdf_hkdf_derive(void *vctx, unsigned char *key, size_t keylen,
         return 0;
     }
 
-#ifdef FIPS_MODULE
-    if (!fips_hkdf_key_check_passed(ctx))
-        return 0;
-#endif
-
     switch (ctx->mode) {
     case EVP_KDF_HKDF_MODE_EXTRACT_AND_EXPAND:
     default:
@@ -344,6 +339,12 @@ static int kdf_hkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
                                             &ctx->info, &ctx->info_len,
                                             HKDF_MAXINFO) == 0)
         return 0;
+
+#ifdef FIPS_MODULE
+    if (OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_KEY) != NULL)
+        if (!fips_hkdf_key_check_passed(ctx))
+            return 0;
+#endif
 
     return 1;
 }
@@ -815,11 +816,6 @@ static int kdf_tls1_3_derive(void *vctx, unsigned char *key, size_t keylen,
         return 0;
     }
 
-#ifdef FIPS_MODULE
-    if (!fips_tls1_3_key_check_passed(ctx))
-        return 0;
-#endif
-
     switch (ctx->mode) {
     default:
         return 0;
@@ -895,6 +891,10 @@ static int kdf_tls1_3_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         if (!fips_tls1_3_digest_check_passed(ctx, md))
             return 0;
     }
+
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_KEY)) != NULL)
+        if (!fips_tls1_3_key_check_passed(ctx))
+            return 0;
 #endif
 
     return 1;

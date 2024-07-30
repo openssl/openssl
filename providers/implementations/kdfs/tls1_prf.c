@@ -274,8 +274,6 @@ static int kdf_tls1_prf_derive(void *vctx, unsigned char *key, size_t keylen,
 #ifdef FIPS_MODULE
     if (!fips_ems_check_passed(ctx))
         return 0;
-    if (!fips_key_check_passed(ctx))
-        return 0;
 #endif
 
     return tls1_prf_alg(ctx->P_hash, ctx->P_sha1,
@@ -349,6 +347,11 @@ static int kdf_tls1_prf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         ctx->sec = NULL;
         if (!OSSL_PARAM_get_octet_string(p, (void **)&ctx->sec, 0, &ctx->seclen))
             return 0;
+
+#ifdef FIPS_MODULE
+        if (!fips_key_check_passed(ctx))
+            return 0;
+#endif
     }
     /* The seed fields concatenate, so process them all */
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_SEED)) != NULL) {

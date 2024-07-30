@@ -163,7 +163,7 @@ KDF = X963KDF
 Ctrl.digest = digest:SHA224
 Ctrl.hexsecret = hexsecret:0102030405060908090a0b
 Ctrl.hexinfo = hexinfo:0102030405060708090a0b0c0d0e0f10
-Result = KDF_DERIVE_ERROR
+Result = KDF_CTRL_ERROR
 
 # Test that the key whose length is shorter than 112 bits is reported as
 # unapproved

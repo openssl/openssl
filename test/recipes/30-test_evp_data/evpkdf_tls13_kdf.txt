@@ -4978,7 +4978,7 @@ KDF = TLS13-KDF
 Ctrl.mode = mode:EXTRACT_ONLY
 Ctrl.digest = digest:SHA2-256
 Ctrl.key = hexkey:0102030405060708090a0b
-Result = KDF_DERIVE_ERROR
+Result = KDF_CTRL_ERROR
 
 FIPSversion = >=3.4.0
 KDF = TLS13-KDF
@@ -4988,7 +4988,7 @@ Ctrl.key = hexkey:0102030405060708090a0b
 Ctrl.data = hexdata:7c92f68bd5bf3638ea338a6494722e1b44127e1b7e8aad535f2322a644ff22b3
 Ctrl.prefix = hexprefix:746c73313320
 Ctrl.label = hexlabel:6320652074726166666963
-Result = KDF_DERIVE_ERROR
+Result = KDF_CTRL_ERROR
 
 # Test that the key whose length is shorter than 112 bits is reported as
 # unapproved
