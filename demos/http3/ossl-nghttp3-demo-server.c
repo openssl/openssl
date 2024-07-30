@@ -19,26 +19,30 @@
       sizeof((VALUE)) - 1, NGHTTP3_NV_FLAG_NONE }
 #define nghttp3_arraylen(A) (sizeof(A) / sizeof(*(A)))
 
-/* CURL according to trace has 2 more streams 7 and 11 */
+/* 3 streams created by the server and 4 by the client (one is bidi) */
 struct ssl_id {
-    SSL *s;
-    uint64_t id;
-    int status; /* 0, CLIENTUNIOPEN or CLIENTUNIOPEN|CLIENTCLOSED */
+    SSL *s;      /* the stream openssl uses in SSL_read(),  SSL_write etc */
+    uint64_t id; /* the stream identifier the nghttp3 uses */
+    int status;  /* 0, CLIENTUNIOPEN or CLIENTUNIOPEN|CLIENTCLOSED (for the moment) */
 };
-#define CLIENTUNIOPEN 0x01
-#define CLIENTCLOSED  0x02
+/* status and origin of the streams the possible values are: */
+#define CLIENTUNIOPEN  0x01 /* unidirectional open by the client (2, 6 and 10) */
+#define CLIENTCLOSED   0x02 /* closed by the client */
+#define CLIENTBIDIOPEN 0x04 /* bidirectional open by the client (something like 0, 4, 8 ...) */
+#define SERVERUNIOPEN  0x08 /* unidirectional open by the server (3, 7 and 11) */
+#define SERVERCLOSED   0x10 /* closed by the server (us) */
 
 #define MAXSSL_IDS 20
 struct h3ssl {
     struct ssl_id ssl_ids[MAXSSL_IDS];
-    int end_headers_received;
-    int datadone;
-    int has_uni;
-    int close_done;
-    int done;
-    int received_from_two;
-    int restart;
-    uint64_t id_bidi; /* the id of the stream used to send response */
+    int end_headers_received; /* h3 header received call back called */
+    int datadone;             /* h3 has given openssl all the data of the response */
+    int has_uni;              /* we have the 3 uni directional stream needed */
+    int close_done;           /* connection begins terminating EVENT_EC */
+    int done;                 /* connection terminated EVENT_ECD, after EVENT_EC */
+    int received_from_two;    /* workaround for -607 on nghttp3_conn_read_stream on stream 2 */
+    int restart;              /* new request/reponse cycle started */   
+    uint64_t id_bidi;         /* the id of the stream use to read request and send reponse */
 };
 
 static void init_ids(struct h3ssl *h3ssl)
