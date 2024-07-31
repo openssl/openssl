@@ -1717,8 +1717,14 @@ static int ch_generate_transport_params(QUIC_CHANNEL *ch)
     int wpkt_valid = 0;
     size_t buf_len = 0;
 
-    if (ch->local_transport_params != NULL || ch->got_local_transport_params)
+    if (ch->state != QUIC_CHANNEL_STATE_IDLE &&
+        (ch->local_transport_params != NULL || ch->got_local_transport_params))
         goto err;
+
+    /* Free prior params */
+    OPENSSL_free(ch->local_transport_params);
+    ch->local_transport_params = NULL;
+    ch->got_local_transport_params = 0;
 
     if ((buf_mem = BUF_MEM_new()) == NULL)
         goto err;

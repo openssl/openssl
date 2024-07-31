@@ -3253,7 +3253,8 @@ static int qc_getset_idle_timeout(QCTX *ctx, uint32_t class_,
                 goto err;
             }
 
-            if (ossl_quic_channel_have_generated_transport_params(ctx->qc->ch)) {
+            if (ossl_quic_channel_is_active(ctx->qc->ch)
+                && ossl_quic_channel_have_generated_transport_params(ctx->qc->ch)) {
                 QUIC_RAISE_NON_NORMAL_ERROR(ctx, SSL_R_FEATURE_NOT_RENEGOTIABLE,
                                             NULL);
                 goto err;
