@@ -38,7 +38,7 @@
 
 # ifndef OPENSSL_NO_SOCK
 /*-
- * Initialize an HTTP server, setting up its listening BIO
+ * Initialize an HTTP server, setting up its listening BIO, using IPv4 or IPv6
  * prog: the name of the current app
  * port: the port to listen on
  * verbosity: the level of verbosity to use, or -1 for default: LOG_INFO
