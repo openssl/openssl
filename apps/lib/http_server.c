@@ -228,6 +228,7 @@ BIO *http_server_init_bio(const char *prog, const char *port)
         goto err;
     acbio = BIO_new(BIO_s_accept());
     if (acbio == NULL
+        || BIO_set_accept_ip_family(acbio, BIO_FAMILY_IPANY) <= 0 /* IPv4/6 */
         || BIO_set_bind_mode(acbio, BIO_BIND_REUSEADDR) <= 0
         || BIO_set_accept_name(acbio, name) <= 0) {
         log_message(prog, LOG_ERR, "Error setting up accept BIO");
