@@ -35,6 +35,7 @@ B<openssl fipsinstall>
 [B<-no_pbkdf2_lower_bound_check>]
 [B<-no_short_mac>]
 [B<-tdes_encrypt_disabled>]
+[B<-rsa_pkcs15_padding_disabled>]
 [B<-rsa_sign_x931_disabled>]
 [B<-hkdf_key_check>]
 [B<-tls13_kdf_key_check>]
@@ -266,10 +267,16 @@ Configure the module to not allow Triple-DES encryption.
 Triple-DES decryption is still allowed for legacy purposes.
 See SP800-131Ar2 for details.
 
+=item B<-rsa_pkcs15_padding_disabled>
+
+Configure the module to not allow PKCS#1 version 1.5 padding to be used with
+RSA for key transport and key agreement.  See NIST's SP 800-131A Revision 2
+for details.
+
 =item B<-rsa_sign_x931_disabled>
 
-Configure the module to not allow X9.31 padding be used when signing with RSA.
-See FIPS 140-3 IG C.K for details.
+Configure the module to not allow X9.31 padding to be used when signing with
+RSA.  See FIPS 140-3 IG C.K for details.
 
 =item B<-hkdf_key_check>
 
