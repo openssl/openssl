@@ -158,6 +158,19 @@ static int rsa_encrypt(void *vprsactx, unsigned char *out, size_t *outlen,
     if (!ossl_prov_is_running())
         return 0;
 
+#ifdef FIPS_MODULE
+    if ((prsactx->pad_mode == RSA_PKCS1_PADDING
+         || prsactx->pad_mode == RSA_PKCS1_WITH_TLS_PADDING)
+        && !ossl_FIPS_IND_on_unapproved(OSSL_FIPS_IND_GET(prsactx),
+                                        OSSL_FIPS_IND_SETTABLE1,
+                                        prsactx->libctx, "RSA Encrypt",
+                                        "PKCS#1 v1.5 padding",
+                                        FIPS_rsa_pkcs15_padding_disabled)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_PADDING_MODE);
+        return 0;
+    }
+#endif
+
     if (out == NULL) {
         size_t len = RSA_size(prsactx->rsa);
 
@@ -462,6 +475,9 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
     if (!OSSL_FIPS_IND_SET_CTX_PARAM(prsactx, OSSL_FIPS_IND_SETTABLE0, params,
                                      OSSL_ASYM_CIPHER_PARAM_FIPS_KEY_CHECK))
         return  0;
+    if (!OSSL_FIPS_IND_SET_CTX_PARAM(prsactx, OSSL_FIPS_IND_SETTABLE1, params,
+                                     OSSL_ASYM_CIPHER_PARAM_PKCS15_PADDING_DISABLED))
+        return  0;
 
     p = OSSL_PARAM_locate_const(params, OSSL_ASYM_CIPHER_PARAM_OAEP_DIGEST);
     if (p != NULL) {
@@ -600,6 +616,7 @@ static const OSSL_PARAM known_settable_ctx_params[] = {
     OSSL_PARAM_uint(OSSL_ASYM_CIPHER_PARAM_TLS_NEGOTIATED_VERSION, NULL),
     OSSL_PARAM_uint(OSSL_ASYM_CIPHER_PARAM_IMPLICIT_REJECTION, NULL),
     OSSL_FIPS_IND_SETTABLE_CTX_PARAM(OSSL_ASYM_CIPHER_PARAM_FIPS_KEY_CHECK)
+    OSSL_FIPS_IND_SETTABLE_CTX_PARAM(OSSL_ASYM_CIPHER_PARAM_PKCS15_PADDING_DISABLED)
     OSSL_PARAM_END
 };
 
