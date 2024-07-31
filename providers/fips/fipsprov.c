@@ -98,6 +98,7 @@ typedef struct fips_global_st {
     FIPS_OPTION fips_x963kdf_digest_check;
     FIPS_OPTION fips_dsa_sign_disallowed;
     FIPS_OPTION fips_tdes_encrypt_disallowed;
+    FIPS_OPTION fips_rsa_pkcs15_padding_disabled;
     FIPS_OPTION fips_rsa_sign_x931_disallowed;
     FIPS_OPTION fips_hkdf_key_check;
     FIPS_OPTION fips_tls13_kdf_key_check;
@@ -133,6 +134,7 @@ void *ossl_fips_prov_ossl_ctx_new(OSSL_LIB_CTX *libctx)
     init_fips_option(&fgbl->fips_x963kdf_digest_check, 0);
     init_fips_option(&fgbl->fips_dsa_sign_disallowed, 0);
     init_fips_option(&fgbl->fips_tdes_encrypt_disallowed, 0);
+    init_fips_option(&fgbl->fips_rsa_pkcs15_padding_disabled, 0);
     init_fips_option(&fgbl->fips_rsa_sign_x931_disallowed, 0);
     init_fips_option(&fgbl->fips_hkdf_key_check, 0);
     init_fips_option(&fgbl->fips_tls13_kdf_key_check, 0);
@@ -204,7 +206,7 @@ static int fips_get_params_from_core(FIPS_GLOBAL *fgbl)
     * OSSL_PROV_FIPS_PARAM_SECURITY_CHECKS and
     * OSSL_PROV_FIPS_PARAM_TLS1_PRF_EMS_CHECK are not self test parameters.
     */
-    OSSL_PARAM core_params[28], *p = core_params;
+    OSSL_PARAM core_params[29], *p = core_params;
 
     *p++ = OSSL_PARAM_construct_utf8_ptr(
             OSSL_PROV_PARAM_CORE_MODULE_FILENAME,
@@ -263,6 +265,8 @@ static int fips_get_params_from_core(FIPS_GLOBAL *fgbl)
                         fips_dsa_sign_disallowed);
     FIPS_FEATURE_OPTION(fgbl, OSSL_PROV_FIPS_PARAM_TDES_ENCRYPT_DISABLED,
                         fips_tdes_encrypt_disallowed);
+    FIPS_FEATURE_OPTION(fgbl, OSSL_PROV_FIPS_PARAM_RSA_PKCS15_PADDING_DISABLED,
+                        fips_rsa_pkcs15_padding_disabled);
     FIPS_FEATURE_OPTION(fgbl, OSSL_PROV_FIPS_PARAM_RSA_SIGN_X931_PAD_DISABLED,
                         fips_rsa_sign_x931_disallowed);
     FIPS_FEATURE_OPTION(fgbl, OSSL_PROV_FIPS_PARAM_HKDF_KEY_CHECK,
@@ -346,6 +350,8 @@ static int fips_get_params(void *provctx, OSSL_PARAM params[])
                      fips_dsa_sign_disallowed);
     FIPS_FEATURE_GET(fgbl, OSSL_PROV_PARAM_TDES_ENCRYPT_DISABLED,
                      fips_tdes_encrypt_disallowed);
+    FIPS_FEATURE_GET(fgbl, OSSL_PROV_FIPS_PARAM_RSA_PKCS15_PADDING_DISABLED,
+                     fips_rsa_pkcs15_padding_disabled);
     FIPS_FEATURE_GET(fgbl, OSSL_PROV_PARAM_RSA_SIGN_X931_PAD_DISABLED,
                      fips_rsa_sign_x931_disallowed);
     FIPS_FEATURE_GET(fgbl, OSSL_PROV_PARAM_HKDF_KEY_CHECK,
@@ -906,6 +912,7 @@ int OSSL_provider_init_int(const OSSL_CORE_HANDLE *handle,
     FIPS_SET_OPTION(fgbl, fips_x963kdf_digest_check);
     FIPS_SET_OPTION(fgbl, fips_dsa_sign_disallowed);
     FIPS_SET_OPTION(fgbl, fips_tdes_encrypt_disallowed);
+    FIPS_SET_OPTION(fgbl, fips_rsa_pkcs15_padding_disabled);
     FIPS_SET_OPTION(fgbl, fips_rsa_sign_x931_disallowed);
     FIPS_SET_OPTION(fgbl, fips_hkdf_key_check);
     FIPS_SET_OPTION(fgbl, fips_tls13_kdf_key_check);
@@ -1125,6 +1132,8 @@ FIPS_FEATURE_CHECK(FIPS_sskdf_digest_check, fips_sskdf_digest_check)
 FIPS_FEATURE_CHECK(FIPS_x963kdf_digest_check, fips_x963kdf_digest_check)
 FIPS_FEATURE_CHECK(FIPS_dsa_sign_check, fips_dsa_sign_disallowed)
 FIPS_FEATURE_CHECK(FIPS_tdes_encrypt_check, fips_tdes_encrypt_disallowed)
+FIPS_FEATURE_CHECK(FIPS_rsa_pkcs15_padding_disabled,
+                   fips_rsa_pkcs15_padding_disabled)
 FIPS_FEATURE_CHECK(FIPS_rsa_sign_x931_disallowed,
                    fips_rsa_sign_x931_disallowed)
 FIPS_FEATURE_CHECK(FIPS_hkdf_key_check, fips_hkdf_key_check)
