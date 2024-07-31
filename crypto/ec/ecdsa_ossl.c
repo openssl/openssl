@@ -106,6 +106,10 @@ int ossl_ecdsa_deterministic_sign(const unsigned char *dgst, int dlen,
         ERR_raise(ERR_LIB_EC, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
+    if (digestname == NULL) {
+        ERR_raise(ERR_LIB_EC, EC_R_INVALID_DIGEST);
+        return 0;
+    }
 
     *siglen = 0;
     if (!ecdsa_sign_setup(eckey, NULL, &kinv, &r, dgst, dlen,
