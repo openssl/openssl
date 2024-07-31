@@ -40,6 +40,7 @@ typedef enum OPTION_choice {
     OPT_NO_SECURITY_CHECKS,
     OPT_TLS_PRF_EMS_CHECK, OPT_EDDSA_NO_VERIFY_DIGESTED, OPT_NO_SHORT_MAC,
     OPT_DISALLOW_PKCS15_PADDING, OPT_DISALLOW_SIGNATURE_X931_PADDING,
+    OPT_HMAC_KEY_CHECK,
     OPT_DISALLOW_DRGB_TRUNC_DIGEST,
     OPT_HKDF_DIGEST_CHECK,
     OPT_TLS13_KDF_DIGEST_CHECK,
@@ -86,6 +87,7 @@ const OPTIONS fipsinstall_options[] = {
     {"no_short_mac", OPT_NO_SHORT_MAC, '-', "Disallow short MAC output"},
     {"no_drbg_truncated_digests", OPT_DISALLOW_DRGB_TRUNC_DIGEST, '-',
      "Disallow truncated digests with Hash and HMAC DRBGs"},
+    {"hmac_key_check", OPT_HMAC_KEY_CHECK, '-', "Enable key check for HMAC"},
     {"hkdf_digest_check", OPT_HKDF_DIGEST_CHECK, '-',
      "Enable digest check for HKDF"},
     {"tls13_kdf_digest_check", OPT_TLS13_KDF_DIGEST_CHECK, '-',
@@ -142,6 +144,7 @@ typedef struct {
     unsigned int self_test_onload : 1;
     unsigned int conditional_errors : 1;
     unsigned int security_checks : 1;
+    unsigned int hmac_key_check : 1;
     unsigned int tls_prf_ems_check : 1;
     unsigned int eddsa_no_verify_digested : 1;
     unsigned int no_short_mac : 1;
@@ -171,6 +174,7 @@ static const FIPS_OPTS pedantic_opts = {
     1,      /* self_test_onload */
     1,      /* conditional_errors */
     1,      /* security_checks */
+    1,      /* hmac_key_check */
     1,      /* tls_prf_ems_check */
     1,      /* eddsa_no_verify_digested */
     1,      /* no_short_mac */
@@ -200,6 +204,7 @@ static FIPS_OPTS fips_opts = {
     1,      /* self_test_onload */
     1,      /* conditional_errors */
     1,      /* security_checks */
+    0,      /* hmac_key_check */
     0,      /* tls_prf_ems_check */
     0,      /* eddsa_no_verify_digested */
     0,      /* no_short_mac */
@@ -341,6 +346,8 @@ static int write_config_fips_section(BIO *out, const char *section,
                       opts->conditional_errors ? "1" : "0") <= 0
         || BIO_printf(out, "%s = %s\n", OSSL_PROV_FIPS_PARAM_SECURITY_CHECKS,
                       opts->security_checks ? "1" : "0") <= 0
+        || BIO_printf(out, "%s = %s\n", OSSL_PROV_FIPS_PARAM_HMAC_KEY_CHECK,
+                      opts->hmac_key_check ? "1": "0") <= 0
         || BIO_printf(out, "%s = %s\n", OSSL_PROV_FIPS_PARAM_TLS1_PRF_EMS_CHECK,
                       opts->tls_prf_ems_check ? "1" : "0") <= 0
         || BIO_printf(out, "%s = %s\n", OSSL_PROV_FIPS_PARAM_EDDSA_NO_VERIFY_DIGESTED,
@@ -572,6 +579,9 @@ int fipsinstall_main(int argc, char **argv)
             if (!check_non_pedantic_fips(pedantic, "no_security_checks"))
                 goto end;
             fips_opts.security_checks = 0;
+            break;
+        case OPT_HMAC_KEY_CHECK:
+            fips_opts.hmac_key_check = 1;
             break;
         case OPT_TLS_PRF_EMS_CHECK:
             fips_opts.tls_prf_ems_check = 1;
