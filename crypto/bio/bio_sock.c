@@ -430,15 +430,16 @@ int BIO_sock_info(int sock,
  */
 int BIO_socket_wait(int fd, int for_read, time_t max_time)
 {
+# if defined(OPENSSL_SYS_WINDOWS) || !defined(POLLIN)
     fd_set confds;
     struct timeval tv;
     time_t now;
 
-#ifdef _WIN32
+#  ifdef _WIN32
     if ((SOCKET)fd == INVALID_SOCKET)
-#else
+#  else
     if (fd < 0 || fd >= FD_SETSIZE)
-#endif
+#  endif
         return -1;
     if (max_time == 0)
         return 1;
@@ -453,5 +454,22 @@ int BIO_socket_wait(int fd, int for_read, time_t max_time)
     tv.tv_sec = (long)(max_time - now); /* might overflow */
     return select(fd + 1, for_read ? &confds : NULL,
                   for_read ? NULL : &confds, NULL, &tv);
+# else
+    struct pollfd confds;
+    time_t now;
+
+    if (fd < 0)
+        return -1;
+    if (max_time == 0)
+        return 1;
+
+    now = time(NULL);
+    if (max_time < now)
+        return 0;
+
+    confds.fd = fd;
+    confds.events = for_read ? POLLIN : POLLOUT;
+    return poll(&confds, 1, (int)(max_time - now) * 1000);
+# endif
 }
 #endif /* !defined(OPENSSL_NO_SOCK) */
