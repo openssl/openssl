@@ -76,8 +76,10 @@
  */
 #if defined(__GNUC__) || defined(__CLANG__)
 #define PREFETCH_NEIGHBORHOOD(x) __builtin_prefetch(x.entries)
+#define PREFETCH(x) __builtin_prefetch(x)
 #else
 #define PREFETCH_NEIGHBORHOOD(x)
+#define PREFETCH(x)
 #endif
 
 static ossl_unused uint64_t fnv1a_hash(uint8_t *key, size_t len)
@@ -177,7 +179,7 @@ static void internal_free_nop(HT_VALUE *v)
     return;
 }
 
-HT *ossl_ht_new(HT_CONFIG *conf)
+HT *ossl_ht_new(const HT_CONFIG *conf)
 {
     HT *new = OPENSSL_zalloc(sizeof(*new));
 
@@ -425,7 +427,7 @@ static void free_old_neigh_table(void *arg)
  */
 static int grow_hashtable(HT *h, size_t oldsize)
 {
-    struct ht_mutable_data_st *newmd = OPENSSL_zalloc(sizeof(*newmd));
+    struct ht_mutable_data_st *newmd;
     struct ht_mutable_data_st *oldmd = ossl_rcu_deref(&h->md);
     int rc = 0;
     uint64_t oldi, oldj, newi, newj;
@@ -434,7 +436,10 @@ static int grow_hashtable(HT *h, size_t oldsize)
     int rehashed;
     size_t newsize = oldsize * 2;
 
-    if (newmd == NULL)
+    if (h->config.lockless_reads)
+        goto out;
+
+    if ((newmd = OPENSSL_zalloc(sizeof(*newmd))) == NULL)
         goto out;
 
     /* bucket list is always a power of 2 */
@@ -515,6 +520,21 @@ static void free_old_ht_value(void *arg)
     OPENSSL_free(h);
 }
 
+static ossl_inline int match_key(HT_KEY *a, HT_KEY *b)
+{
+
+    /*
+     * keys match if they are both present, the same size
+     * and compare equal in memory
+     */
+    PREFETCH(a->keybuf);
+    PREFETCH(b->keybuf);
+    if (a->keybuf != NULL && b->keybuf != NULL && a->keysize == b->keysize)
+        return !memcmp(a->keybuf, b->keybuf, a->keysize);
+
+    return 1;
+}
+
 static int ossl_ht_insert_locked(HT *h, uint64_t hash,
                                  struct ht_internal_value_st *newval,
                                  HT_VALUE **olddata)
@@ -534,7 +554,9 @@ static int ossl_ht_insert_locked(HT *h, uint64_t hash,
                            &ihash, h->atomic_lock);
         if (ival == NULL)
             empty_idx = j;
-        if (compare_hash(hash, ihash)) {
+        if (compare_hash(hash, ihash) && match_key(&newval->value.key,
+                                                   &ival->key)) {
+            /* Its the same hash, lets make sure its not a collision */
             if (olddata == NULL) {
                 /* invalid */
                 return 0;
@@ -565,18 +587,27 @@ static struct ht_internal_value_st *alloc_new_value(HT *h, HT_KEY *key,
                                                     void *data,
                                                     uintptr_t *type)
 {
-    struct ht_internal_value_st *new;
     struct ht_internal_value_st *tmp;
+    size_t nvsize = sizeof(*tmp);
 
-    new  = OPENSSL_malloc(sizeof(*new));
+    if (h->config.collision_check == 1)
+        nvsize += key->keysize;
 
-    if (new == NULL)
+    tmp  = OPENSSL_malloc(nvsize);
+
+    if (tmp == NULL)
         return NULL;
 
-    tmp = (struct ht_internal_value_st *)ossl_rcu_deref(&new);
     tmp->ht = h;
     tmp->value.value = data;
     tmp->value.type_id = type;
+    tmp->value.key.keybuf = NULL;
+    if (h->config.collision_check) {
+        tmp->value.key.keybuf = (uint8_t *)(tmp+1);
+        tmp->value.key.keysize = key->keysize;
+        memcpy(tmp->value.key.keybuf, key->keybuf, key->keysize);
+    }
+
 
     return tmp;
 }
@@ -591,6 +622,7 @@ int ossl_ht_insert(HT *h, HT_KEY *key, HT_VALUE *data, HT_VALUE **olddata)
     struct ht_internal_value_st *newval = NULL;
     uint64_t hash;
     int rc = 0;
+    int i;
 
     if (data->value == NULL)
         goto out;
@@ -605,15 +637,16 @@ int ossl_ht_insert(HT *h, HT_KEY *key, HT_VALUE *data, HT_VALUE **olddata)
      */
     hash = h->config.ht_hash_fn(key->keybuf, key->keysize);
 
-try_again:
-    rc = ossl_ht_insert_locked(h, hash, newval, olddata);
+    for (i = 0;
+         (rc = ossl_ht_insert_locked(h, hash, newval, olddata)) == -1
+         && i < 2;
+         ++i)
+        if (!grow_hashtable(h, h->wpd.neighborhood_len)) {
+            rc = -1;
+            break;
+        }
 
-    if (rc == -1) {
-        grow_hashtable(h, h->wpd.neighborhood_len);
-        goto try_again;
-    }
-
-    if (rc == 0)
+    if (rc <= 0)
         free_value(newval);
 
 out:
@@ -638,8 +671,8 @@ HT_VALUE *ossl_ht_get(HT *h, HT_KEY *key)
     for (j = 0; j < NEIGHBORHOOD_LEN; j++) {
         CRYPTO_atomic_load(&md->neighborhoods[neigh_idx].entries[j].hash,
                            &ehash, h->atomic_lock);
-        if (compare_hash(hash, ehash)) {
-            vidx = ossl_rcu_deref(&md->neighborhoods[neigh_idx].entries[j].value);
+        vidx = ossl_rcu_deref(&md->neighborhoods[neigh_idx].entries[j].value);
+        if (compare_hash(hash, ehash) && match_key(&vidx->value.key, key)) {
             ret = (HT_VALUE *)vidx;
             break;
         }
@@ -665,16 +698,20 @@ int ossl_ht_delete(HT *h, HT_KEY *key)
     HT_VALUE *nv = NULL;
     int rc = 0;
 
+    if (h->config.lockless_reads)
+        return 0;
+
     hash = h->config.ht_hash_fn(key->keybuf, key->keysize);
 
     neigh_idx = hash & h->md->neighborhood_mask;
     PREFETCH_NEIGHBORHOOD(h->md->neighborhoods[neigh_idx]);
     for (j = 0; j < NEIGHBORHOOD_LEN; j++) {
-        if (compare_hash(hash, h->md->neighborhoods[neigh_idx].entries[j].hash)) {
+        v = (struct ht_internal_value_st *)h->md->neighborhoods[neigh_idx].entries[j].value;
+        if (compare_hash(hash, h->md->neighborhoods[neigh_idx].entries[j].hash)
+            && match_key(key, &v->value.key)) {
             h->wpd.value_count--;
             CRYPTO_atomic_store(&h->md->neighborhoods[neigh_idx].entries[j].hash,
                                 0, h->atomic_lock);
-            v = (struct ht_internal_value_st *)h->md->neighborhoods[neigh_idx].entries[j].value;
             ossl_rcu_assign_ptr(&h->md->neighborhoods[neigh_idx].entries[j].value,
                                 &nv);
             rc = 1;
@@ -687,4 +724,3 @@ int ossl_ht_delete(HT *h, HT_KEY *key)
     }
     return rc;
 }
-

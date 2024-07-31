@@ -20,7 +20,7 @@ IMPLEMENT_HT_VALUE_TYPE_FNS
 
 =head1 SYNOPSIS
 
- HT *ossl_ht_new(HT_CONFIG *conf);
+ HT *ossl_ht_new(const HT_CONFIG *conf);
  void ossl_ht_free(HT *htable);
  void ossl_ht_read_lock(HT *htable);
  void ossl_ht_read_unlock(HT *htable);
@@ -66,14 +66,14 @@ contains configurations options for hashtable.  Current config options consist
 of:
     I<ht_free_fn> The function to call to free a value, may be NULL.
     I<ht_hash_fn> The function to generate a hash value for a key, may be NULL.
-    I<init_neighborhood_len> The initial number of neighborhoods in the hash table.
+    I<init_neighborhoods> The initial number of neighborhoods in the hash table.
 
 Note that init_bucket_len may be set to zero, which will use the default initial
 bucket size, which will be automatically expanded with the hash table load
 average reaches 0.75.
 
-Note that lockless_read operation implies behavioral restrictions.  Specifically
-    Only element additions are allowed, deletion operations will fail
+Note that lockless_read operation implies behavioral restrictions. Specifically
+only element additions are allowed, deletion operations will fail
     Hash table growth is inhibited.  init_bucket_len should be set to an
     appropriate value to prevent performance degradation
     The table owner is responsible for ensuring there are no readers during a
@@ -280,6 +280,9 @@ provided filter
 
 ossl_ht_get() returns an B<HT_VALUE> pointer, or NULL if the element was not
 found.
+
+ossl_ht_insert() returns 1 if an element was inserted, 0 if the element is
+already present, -1 on fatal errors (memory allocation or growth not allowed).
 
 =head1 EXAMPLES
 
