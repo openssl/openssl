@@ -338,9 +338,13 @@ static int ecdsa_sign_directly(void *vctx,
         return 0;
 
     if (ctx->nonce_type != 0) {
+        const char *mdname = NULL;
+
+        if (ctx->mdname[0] != '\0')
+            mdname = ctx->mdname;
         ret = ossl_ecdsa_deterministic_sign(tbs, tbslen, sig, &sltmp,
                                             ctx->ec, ctx->nonce_type,
-                                            ctx->mdname,
+                                            mdname,
                                             ctx->libctx, ctx->propq);
     } else {
         ret = ECDSA_sign_ex(0, tbs, tbslen, sig, &sltmp, ctx->kinv, ctx->r,
