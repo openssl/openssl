@@ -31,7 +31,7 @@ extern "C" {
 /*
  * The FIPS provider vendor name, as a string.
  */
-#define FIPS_VENDOR "{- $config{FIPSVENDOR} -}"
+#define FIPS_VENDOR "{- $config{FIPS_VENDOR} -}"
 
 # ifdef  __cplusplus
 }
