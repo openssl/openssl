@@ -313,6 +313,16 @@ static int read_from_ssl_ids(nghttp3_conn *h3conn, struct h3ssl *h3ssl)
             item++;
         }
     }
+
+    /*
+     * SSL_POLL_FLAG_NO_HANDLE_EVENTS would require to use:
+     * SSL_get_event_timeout on the connection stream
+     * select/wait using the timeout value (which could be no wait time)
+     * SSL_handle_events
+     * SSL_poll
+     * for the moment we let SSL_poll to performs ticking internally 
+     * on an automatic basis.
+     */
     ret = SSL_poll(items, numitem, sizeof(SSL_POLL_ITEM), &nz_timeout, 0,
                    &result_count);
     if (!ret) {
@@ -379,7 +389,7 @@ static int read_from_ssl_ids(nghttp3_conn *h3conn, struct h3ssl *h3ssl)
     if (item->revents & SSL_POLL_EVENT_OSU) {
         /* at least one uni */
         /* we have 4 streams from the client 2, 6 , 10 and 0 */
-        /* need 2 streams to the client */
+        /* need 3 streams to the client */
         printf("Create uni?\n");
         processed_event = processed_event + SSL_POLL_EVENT_OSU;
         if (!h3ssl->has_uni) {
