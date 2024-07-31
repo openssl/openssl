@@ -813,16 +813,14 @@ STACK_OF(X509_NAME) *SSL_load_client_CA_file(const char *file)
     return SSL_load_client_CA_file_ex(file, NULL, NULL);
 }
 
-int SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
-                                        const char *file)
+static int add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
+                                           const char *file,
+                                           LHASH_OF(X509_NAME) *name_hash)
 {
     BIO *in;
     X509 *x = NULL;
     X509_NAME *xn = NULL;
     int ret = 1;
-    int (*oldcmp) (const X509_NAME *const *a, const X509_NAME *const *b);
-
-    oldcmp = sk_X509_NAME_set_cmp_func(stack, xname_sk_cmp);
 
     in = BIO_new(BIO_s_file());
 
@@ -842,12 +840,15 @@ int SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
         xn = X509_NAME_dup(xn);
         if (xn == NULL)
             goto err;
-        if (sk_X509_NAME_find(stack, xn) >= 0) {
+        if (lh_X509_NAME_retrieve(name_hash, xn) != NULL) {
             /* Duplicate. */
             X509_NAME_free(xn);
         } else if (!sk_X509_NAME_push(stack, xn)) {
             X509_NAME_free(xn);
             goto err;
+        } else {
+            /* Successful insert, add to hash table */
+            lh_X509_NAME_insert(name_hash, xn);
         }
     }
 
@@ -859,7 +860,42 @@ int SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
  done:
     BIO_free(in);
     X509_free(x);
-    (void)sk_X509_NAME_set_cmp_func(stack, oldcmp);
+    return ret;
+}
+
+int SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
+                                        const char *file)
+{
+    X509_NAME *xn = NULL;
+    int ret = 1;
+    int idx = 0;
+    int num = 0;
+    LHASH_OF(X509_NAME) *name_hash = lh_X509_NAME_new(xname_hash, xname_cmp);
+
+    if (name_hash == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
+        goto err;
+    }
+
+    /*
+     * Pre-populate the lhash with the existing entries of the stack, since
+     * using the LHASH_OF is much faster for duplicate checking. That's because
+     * xname_cmp converts the X509_NAMEs to DER involving a memory allocation
+     * for every single invocation of the comparison function.
+     */
+    num = sk_X509_NAME_num(stack);
+    for (idx = 0; idx < num; idx++) {
+        xn = sk_X509_NAME_value(stack, idx);
+        lh_X509_NAME_insert(name_hash, xn);
+    }
+
+    ret = add_file_cert_subjects_to_stack(stack, file, name_hash);
+    goto done;
+
+ err:
+    ret = 0;
+ done:
+    lh_X509_NAME_free(name_hash);
     return ret;
 }
 
@@ -869,8 +905,27 @@ int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
     OPENSSL_DIR_CTX *d = NULL;
     const char *filename;
     int ret = 0;
+    X509_NAME *xn = NULL;
+    int idx = 0;
+    int num = 0;
+    LHASH_OF(X509_NAME) *name_hash = lh_X509_NAME_new(xname_hash, xname_cmp);
 
-    /* Note that a side effect is that the CAs will be sorted by name */
+    if (name_hash == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
+        goto err;
+    }
+
+    /*
+     * Pre-populate the lhash with the existing entries of the stack, since
+     * using the LHASH_OF is much faster for duplicate checking. That's because
+     * xname_cmp converts the X509_NAMEs to DER involving a memory allocation
+     * for every single invocation of the comparison function.
+     */
+    num = sk_X509_NAME_num(stack);
+    for (idx = 0; idx < num; idx++) {
+        xn = sk_X509_NAME_value(stack, idx);
+        lh_X509_NAME_insert(name_hash, xn);
+    }
 
     while ((filename = OPENSSL_DIR_read(&d, dir))) {
         char buf[1024];
@@ -899,7 +954,7 @@ int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
 #endif
         if (r <= 0 || r >= (int)sizeof(buf))
             goto err;
-        if (!SSL_add_file_cert_subjects_to_stack(stack, buf))
+        if (!add_file_cert_subjects_to_stack(stack, buf, name_hash))
             goto err;
     }
 
@@ -915,6 +970,7 @@ int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
  err:
     if (d)
         OPENSSL_DIR_end(&d);
+    lh_X509_NAME_free(name_hash);
 
     return ret;
 }
