@@ -18,6 +18,7 @@
 int ossl_rsa_key_op_get_protect(const RSA *rsa, int operation, int *outprotect);
 int ossl_rsa_check_key_size(const RSA *rsa, int protect);
 int ossl_kdf_check_key_size(size_t keylen);
+int ossl_mac_check_key_size(size_t keylen);
 
 #ifndef OPENSSL_NO_EC
 int ossl_ec_check_curve_allowed(const EC_GROUP *group);

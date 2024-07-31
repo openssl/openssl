@@ -1937,8 +1937,12 @@ static int mac_test_run_mac(EVP_TEST *t)
         t->err = "MAC_CREATE_ERROR";
         goto err;
     }
-    if (fips_provider_version_gt(libctx, 3, 2, 0))
+    if (fips_provider_version_gt(libctx, 3, 2, 0)) {
+        /* HMAC will put an error on the stack here (digest is not set yet) */
+        ERR_set_mark();
         size_before_init = EVP_MAC_CTX_get_mac_size(ctx);
+        ERR_pop_to_mark();
+    }
     if (!EVP_MAC_init(ctx, expected->key, expected->key_len, params)) {
         t->err = "MAC_INIT_ERROR";
         goto err;
