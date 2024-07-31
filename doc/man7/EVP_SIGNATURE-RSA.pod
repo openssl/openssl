@@ -27,7 +27,7 @@ using EVP_PKEY_sign_init_ex() or EVP_PKEY_verify_init_ex().
 
 =item "digest-check" (B<OSSL_SIGNATURE_PARAM_FIPS_DIGEST_CHECK>) <integer>
 
-=item "sign-x931-pad-check" (B<SIGNATURE_PARAM_FIPS_SIGN_X931_PAD_CHECK>) <int>
+=item "sign-x931-pad-check" (B<OSSL_SIGNATURE_PARAM_FIPS_SIGN_X931_PAD_CHECK>) <integer>
 
 These common parameters are described in L<provider-signature(7)>.
 
