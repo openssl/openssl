@@ -1372,7 +1372,10 @@ static int final_key_share(SSL_CONNECTION *s, unsigned int context, int sent)
             && (!s->hit
                 || (s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE) == 0)) {
         /* Nothing left we can do - just fail */
-        SSLfatal(s, SSL_AD_MISSING_EXTENSION, SSL_R_NO_SUITABLE_KEY_SHARE);
+        if ((s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE) == 0)
+            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_NO_SUITABLE_KEY_SHARE);
+        else
+            SSLfatal(s, SSL_AD_MISSING_EXTENSION, SSL_R_NO_SUITABLE_KEY_SHARE);
         return 0;
     }
     /*
