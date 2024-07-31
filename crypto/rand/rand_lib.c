@@ -21,7 +21,7 @@
 #include "crypto/context.h"
 
 #ifndef OPENSSL_DEFAULT_SEED_SRC
-# define OPENSSL_DEFAULT_SEED_SRC "SEED-SRC"
+# define OPENSSL_DEFAULT_SEED_SRC SEED-SRC
 #endif
 
 #ifndef FIPS_MODULE
@@ -597,7 +597,7 @@ static EVP_RAND_CTX *rand_new_seed(OSSL_LIB_CTX *libctx)
                 propq = props;
             }
         }
-        name = OPENSSL_DEFAULT_SEED_SRC;
+        name = OPENSSL_MSTR(OPENSSL_DEFAULT_SEED_SRC);
     }
 
     rand = EVP_RAND_fetch(libctx, name, propq);
