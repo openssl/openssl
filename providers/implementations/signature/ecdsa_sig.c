@@ -550,18 +550,9 @@ static const OSSL_PARAM settable_ctx_params[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM settable_ctx_params_no_digest[] = {
-    OSSL_PARAM_uint(OSSL_SIGNATURE_PARAM_KAT, NULL),
-    OSSL_PARAM_END
-};
-
 static const OSSL_PARAM *ecdsa_settable_ctx_params(void *vctx,
                                                    ossl_unused void *provctx)
 {
-    PROV_ECDSA_CTX *ctx = (PROV_ECDSA_CTX *)vctx;
-
-    if (ctx != NULL && !ctx->flag_allow_md)
-        return settable_ctx_params_no_digest;
     return settable_ctx_params;
 }
 
