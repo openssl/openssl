@@ -179,6 +179,7 @@
 # define SSL_R_MISSING_SIGNING_CERT                       221
 # define SSL_R_MISSING_SRP_PARAM                          358
 # define SSL_R_MISSING_SUPPORTED_GROUPS_EXTENSION         209
+# define SSL_R_MISSING_SUPPORTED_VERSIONS_EXTENSION       420
 # define SSL_R_MISSING_TMP_DH_KEY                         171
 # define SSL_R_MISSING_TMP_ECDH_KEY                       311
 # define SSL_R_MIXED_HANDSHAKE_AND_NON_HANDSHAKE_DATA     293
