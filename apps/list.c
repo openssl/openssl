@@ -777,9 +777,9 @@ static int list_tls_sigalg_caps(OSSL_PROVIDER *provider, void *cbdata)
 static void list_tls_signatures(void)
 {
     int tls_sigalg_listed = 0;
-    char *builtin_sigalgs = SSL_get_builtin_sigalgs(app_get0_libctx());
+    char *builtin_sigalgs = SSL_get1_builtin_sigalgs(app_get0_libctx());
 
-    if (builtin_sigalgs && strlen(builtin_sigalgs)>0) {
+    if (builtin_sigalgs != NULL && strlen(builtin_sigalgs)>0) {
         BIO_printf(bio_out, "%s", builtin_sigalgs);
         OPENSSL_free(builtin_sigalgs);
         tls_sigalg_listed = 1;

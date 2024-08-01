@@ -2,20 +2,19 @@
 
 =head1 NAME
 
-SSL_get_builtin_sigalgs - get list of built-in signature algorithms
+SSL_get1_builtin_sigalgs - get list of built-in signature algorithms
 
 =head1 SYNOPSIS
 
  #include <openssl/tls1.h>
 
- char * SSL_get_builtin_sigalgs(OSSL_LIB_CTX *libctx);
+ char *SSL_get1_builtin_sigalgs(OSSL_LIB_CTX *libctx);
 
 =head1 DESCRIPTION
 
 Return the colon-separated list of built-in and available TLS signature
 algorithms.
 The string returned must be freed by the user using L<OPENSSL_free(3)>.
-
 
 =head1 NOTES
 
@@ -24,7 +23,8 @@ algorithms can be activated, e.g., if suitable providers are missing.
 
 =head1 RETURN VALUES
 
-A newly allocated string is always returned but it may have strlen == 0.
+NULL may be returned if no memory could be allocated. Otherwise, a
+newly allocated string is always returned but it may have strlen == 0.
 
 =head1 COPYRIGHT
 

@@ -1596,18 +1596,23 @@ int ssl_setup_sigalgs(SSL_CTX *ctx)
 
 #define SIGLEN_BUF_INCREMENT 100
 
-char *SSL_get_builtin_sigalgs(OSSL_LIB_CTX *libctx)
+char *SSL_get1_builtin_sigalgs(OSSL_LIB_CTX *libctx)
 {
     size_t i, retlen = 0, maxretlen = SIGLEN_BUF_INCREMENT;
     const SIGALG_LOOKUP *lu;
     EVP_PKEY *tmpkey = EVP_PKEY_new();
     char *retval = OPENSSL_zalloc(maxretlen);
 
+    if (retval == NULL) {
+        return NULL;
+    }
+
     for (i = 0, lu = sigalg_lookup_tbl;
          i < OSSL_NELEM(sigalg_lookup_tbl); lu++, i++) {
         EVP_PKEY_CTX *pctx;
         int enabled = 1;
 
+        ERR_set_mark();
         /* Check hash is available in some provider. */
         if (lu->hash != NID_undef) {
             EVP_MD *hash = EVP_MD_fetch(libctx, OBJ_nid2ln(lu->hash), NULL);
@@ -1615,6 +1620,7 @@ char *SSL_get_builtin_sigalgs(OSSL_LIB_CTX *libctx)
             /* If unable to create we assume the hash algorithm is unavailable */
             if (hash == NULL) {
                 enabled = 0;
+                ERR_pop_to_mark();
                 continue;
             }
             EVP_MD_free(hash);
@@ -1622,12 +1628,14 @@ char *SSL_get_builtin_sigalgs(OSSL_LIB_CTX *libctx)
 
         if (!EVP_PKEY_set_type(tmpkey, lu->sig)) {
             enabled = 0;
+            ERR_pop_to_mark();
             continue;
         }
         pctx = EVP_PKEY_CTX_new_from_pkey(libctx, tmpkey, NULL);
         /* If unable to create pctx we assume the sig algorithm is unavailable */
         if (pctx == NULL)
             enabled = 0;
+        ERR_pop_to_mark();
         EVP_PKEY_CTX_free(pctx);
 
         if (enabled) {
@@ -1637,13 +1645,15 @@ char *SSL_get_builtin_sigalgs(OSSL_LIB_CTX *libctx)
                 if (strlen(sa) + strlen(retval) + 1 >= maxretlen) {
                     maxretlen += SIGLEN_BUF_INCREMENT;
                     retval = OPENSSL_realloc(retval, maxretlen);
+                    if (retval == NULL) {
+                        return NULL;
+                    }
                 }
                 if (retlen > 0)
                     OPENSSL_strlcat(retval, ":", ++retlen);
-                retlen += strlen(sa)+1;
+                retlen += strlen(sa) + 1;
                 OPENSSL_strlcat(retval, sa, retlen);
-            }
-            else {
+            } else {
                 /* lu->name must not be NULL */
                 ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
             }
