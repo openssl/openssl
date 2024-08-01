@@ -1588,6 +1588,9 @@
 #define NID_ac_auditIdentity            1323
 #define OBJ_ac_auditIdentity            OBJ_id_pe,4L
 
+#define NID_ac_auditEntity              287
+#define OBJ_ac_auditEntity              OBJ_ac_auditIdentity
+
 #define SN_ac_targeting         "ac-targeting"
 #define NID_ac_targeting                288
 #define OBJ_ac_targeting                OBJ_id_pe,5L
