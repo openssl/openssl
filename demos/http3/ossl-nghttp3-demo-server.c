@@ -42,7 +42,7 @@ struct h3ssl {
     int done;                 /* connection terminated EVENT_ECD, after EVENT_EC */
     int received_from_two;    /* workaround for -607 on nghttp3_conn_read_stream on stream 2 */
     int restart;              /* new request/reponse cycle started */   
-    uint64_t id_bidi;         /* the id of the stream use to read request and send reponse */
+    uint64_t id_bidi;         /* the id of the stream used to read request and send response */
 };
 
 static void init_ids(struct h3ssl *h3ssl)
@@ -185,7 +185,7 @@ static int quic_server_read(nghttp3_conn *h3conn, SSL *stream, uint64_t id, stru
     uint8_t msg2[16000];
     size_t l = sizeof(msg2);
 
-    if (!SSL_net_read_desired(stream))
+    if (!SSL_has_pending(stream))
         return 0; /* Nothing to read */
 
     ret = SSL_read(stream, msg2, l);
@@ -201,7 +201,7 @@ static int quic_server_read(nghttp3_conn *h3conn, SSL *stream, uint64_t id, stru
     }
 
     /* XXX: work around nghttp3_conn_read_stream returning  -607 on stream 2 */
-    if (!h3ssl->received_from_two && id !=2 ) {
+    if (!h3ssl->received_from_two && id != 2 ) {
        r = nghttp3_conn_read_stream(h3conn, id, msg2, ret, 0);
     } else {
        r = ret; /* ignore it for the moment ... */
@@ -747,7 +747,7 @@ restart:
                 /*
                  * XXX: 25 is TOO BIG.
                  * Probably something wrong when waiting for the close on
-                 * the previous request/reponse
+                 * the previous request/response
                  */
                 if (waitsocket(fd, 1)) {
                     printf("waiting for end_headers_received timeout %d\n", numtimeout);
