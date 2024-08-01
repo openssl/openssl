@@ -25,6 +25,7 @@ use lib srctop_dir('Configurations');
 use lib bldtop_dir('.');
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
+my $old_fips = 0;
 
 plan skip_all => "CMS is not supported by this OpenSSL build"
     if disabled("cms");
@@ -63,6 +64,7 @@ unless ($no_fips) {
     run(test(["fips_version_test", "-config", $provconf, "<3.4.0"]),
     capture => 1, statusvar => \$dsaallow);
     $no_dsa = 1 if $dsaallow == '0';
+    $old_fips = 1 if $dsaallow != '0';
 }
 
 $ENV{OPENSSL_TEST_LIBCTX} = "1";
@@ -241,18 +243,22 @@ my @smime_pkcs7_tests = (
       \&final_compare
     ],
 
-    [ "enveloped content test streaming S/MIME format, AES-256 cipher, 3 recipients",
-      [ "{cmd1}", @prov, "-encrypt", "-in", $smcont,
-        "-aes256", "-stream", "-out", "{output}.cms",
-        $smrsa1,
-        catfile($smdir, "smrsa2.pem"),
-        catfile($smdir, "smrsa3.pem") ],
-      [ "{cmd2}", @prov, "-decrypt", "-recip", $smrsa1,
-        "-in", "{output}.cms", "-out", "{output}.txt" ],
-      \&final_compare
-    ],
-
 );
+
+if ($no_fips || $old_fips) {
+    push(@smime_pkcs7_tests,
+         [ "enveloped content test streaming S/MIME format, AES-256 cipher, 3 recipients",
+           [ "{cmd1}", @prov, "-encrypt", "-in", $smcont,
+             "-aes256", "-stream", "-out", "{output}.cms",
+             $smrsa1,
+             catfile($smdir, "smrsa2.pem"),
+             catfile($smdir, "smrsa3.pem") ],
+           [ "{cmd2}", @prov, "-decrypt", "-recip", $smrsa1,
+             "-in", "{output}.cms", "-out", "{output}.txt" ],
+           \&final_compare
+         ]
+    );
+}
 
 my @smime_cms_tests = (
 
