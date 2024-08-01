@@ -1082,8 +1082,9 @@ int ossl_quic_get_event_timeout(SSL *s, struct timeval *tv, int *is_infinite)
 
     quic_lock(ctx.qc);
 
-    deadline
-        = ossl_quic_reactor_get_tick_deadline(ossl_quic_channel_get_reactor(ctx.qc->ch));
+    if (ctx.qc->started)
+        deadline
+            = ossl_quic_reactor_get_tick_deadline(ossl_quic_channel_get_reactor(ctx.qc->ch));
 
     if (ossl_time_is_infinite(deadline)) {
         *is_infinite = 1;
