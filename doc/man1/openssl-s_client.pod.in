@@ -10,11 +10,11 @@ openssl-s_client - SSL/TLS client program
 B<openssl> B<s_client>
 [B<-help>]
 [B<-ssl_config> I<section>]
-[B<-connect> I<host:port>]
+[B<-connect> I<host>:I<port>]
 [B<-host> I<hostname>]
 [B<-port> I<port>]
-[B<-bind> I<host:port>]
-[B<-proxy> I<host:port>]
+[B<-bind> I<host>:I<port>]
+[B<-proxy> I<host>:I<port>]
 [B<-proxy_user> I<userid>]
 [B<-proxy_pass> I<arg>]
 [B<-unix> I<path>]
@@ -168,6 +168,7 @@ This specifies the host and optional port to connect to. It is possible to
 select the host and port using the optional target positional argument instead.
 If neither this nor the target positional argument are specified then an attempt
 is made to connect to the local host on port 4433.
+If the host string is an IPv6 address, it must be enclosed in C<[> and C<]>.
 
 =item B<-host> I<hostname>
 
@@ -177,17 +178,19 @@ Host to connect to; use B<-connect> instead.
 
 Connect to the specified port; use B<-connect> instead.
 
-=item B<-bind> I<host:port>
+=item B<-bind> I<host>:I<port>
 
 This specifies the host address and or port to bind as the source for the
 connection.  For Unix-domain sockets the port is ignored and the host is
 used as the source socket address.
+If the host string is an IPv6 address, it must be enclosed in C<[> and C<]>.
 
-=item B<-proxy> I<host:port>
+=item B<-proxy> I<host>:I<port>
 
 When used with the B<-connect> flag, the program uses the host and port
 specified with this flag and issues an HTTP CONNECT command to connect
 to the desired server.
+If the host string is an IPv6 address, it must be enclosed in C<[> and C<]>.
 
 =item B<-proxy_user> I<userid>
 
@@ -865,10 +868,11 @@ or may request a certificate.
 
 =item I<host>:I<port>
 
-Rather than providing B<-connect>, the target hostname and optional port may
+Rather than providing B<-connect>, the target host and optional port may
 be provided as a single positional argument after all options. If neither this
 nor B<-connect> are provided, falls back to attempting to connect to
 I<localhost> on port I<4433>.
+If the host string is an IPv6 address, it must be enclosed in C<[> and C<]>.
 
 =back
 
