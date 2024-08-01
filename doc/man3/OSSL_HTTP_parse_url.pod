@@ -42,8 +42,12 @@ take any further default value from the C<HTTP_PROXY>
 environment variable, or from C<HTTPS_PROXY> if I<use_ssl> is nonzero.
 If I<no_proxy> is NULL, take any default exclusion value from the C<no_proxy>
 environment variable, or else from C<NO_PROXY>.
-Return the determined proxy hostname unless the exclusion contains I<server>.
+Return the determined proxy host unless the exclusion value,
+which is a list of proxy hosts separated by C<,> and/or whitespace,
+contains I<server>.
 Otherwise return NULL.
+In case I<server> is a string enclosed with C<[> and C<]>, it is assumed to be
+an escaped IPv6 address and so the C<[> and C<]> are ignored for the comparison.
 
 OSSL_parse_url() parses its input string I<url> as a URL of the form
 C<[scheme://][userinfo@]host[:port][/path][?query][#fragment]> and splits it up
