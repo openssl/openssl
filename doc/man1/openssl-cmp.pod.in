@@ -513,6 +513,7 @@ Reason numbers defined in RFC 5280 are:
 The I<host> domain name or IP address and optionally I<port>
 of the CMP server to connect to using HTTP(S).
 IP address may be for v4 or v6, such as C<127.0.0.1> or C<[::1]> for localhost.
+If the host string is an IPv6 address, it must be enclosed in C<[> and C<]>.
 
 This option excludes I<-port> and I<-use_mock_srv>.
 It is ignored if I<-rspin> is given with enough filename arguments.
@@ -527,6 +528,7 @@ If a path is included it provides the default value for the B<-path> option.
 
 The HTTP(S) proxy server to use for reaching the CMP server unless B<-no_proxy>
 applies, see below.
+If the host string is an IPv6 address, it must be enclosed in C<[> and C<]>.
 The proxy port defaults to 80 or 443 if the scheme is C<https>; apart from that
 the optional C<http://> or C<https://> prefix is ignored (note that using TLS
 may be required by B<-tls_used> or B<-server> with the prefix C<https>),
