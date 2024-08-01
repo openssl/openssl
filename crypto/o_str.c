@@ -14,6 +14,7 @@
 #include "crypto/ctype.h"
 #include "internal/cryptlib.h"
 #include "internal/thread_once.h"
+#include "internal/to_hex.h"
 
 #define DEFAULT_SEPARATOR ':'
 #define CH_ZERO '\0'
@@ -286,12 +287,9 @@ static int buf2hexstr_sep(char *str, size_t str_n, size_t *strlength,
                           const unsigned char *buf, size_t buflen,
                           const char sep)
 {
-    static const char hexdig[] = "0123456789ABCDEF";
-    const unsigned char *p;
     char *q;
-    size_t i;
     int has_sep = (sep != CH_ZERO);
-    size_t len = has_sep ? buflen * 3 : 1 + buflen * 2;
+    size_t i, len = has_sep ? buflen * 3 : 1 + buflen * 2;
 
     if (len == 0)
         ++len;
@@ -306,9 +304,8 @@ static int buf2hexstr_sep(char *str, size_t str_n, size_t *strlength,
     }
 
     q = str;
-    for (i = 0, p = buf; i < buflen; i++, p++) {
-        *q++ = hexdig[(*p >> 4) & 0xf];
-        *q++ = hexdig[*p & 0xf];
+    for (i = 0; i < buflen; i++) {
+        q += ossl_to_hex(q, buf[i]);
         if (has_sep)
             *q++ = sep;
     }
@@ -427,4 +424,11 @@ int OPENSSL_strncasecmp(const char *s1, const char *s2, size_t n)
         else if (*s1++ == '\0')
             return 0;
     return 0;
+}
+
+size_t ossl_to_hex(char *buf, uint8_t n)
+{
+    static const char hexdig[] = "0123456789ABCDEF";
+
+    return to_hex(buf, n, hexdig);
 }

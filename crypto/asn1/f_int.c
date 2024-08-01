@@ -16,7 +16,6 @@
 int i2a_ASN1_INTEGER(BIO *bp, const ASN1_INTEGER *a)
 {
     int i, n = 0;
-    static const char *h = "0123456789ABCDEF";
     char buf[2];
 
     if (a == NULL)
@@ -39,8 +38,7 @@ int i2a_ASN1_INTEGER(BIO *bp, const ASN1_INTEGER *a)
                     goto err;
                 n += 2;
             }
-            buf[0] = h[((unsigned char)a->data[i] >> 4) & 0x0f];
-            buf[1] = h[((unsigned char)a->data[i]) & 0x0f];
+            ossl_to_hex(buf, a->data[i]);
             if (BIO_write(bp, buf, 2) != 2)
                 goto err;
             n += 2;
