@@ -26,6 +26,7 @@
 #include "internal/nelem.h"
 #include "internal/refcount.h"
 #include "internal/ktls.h"
+#include "internal/to_hex.h"
 #include "quic/quic_local.h"
 
 static int ssl_undefined_function_3(SSL_CONNECTION *sc, unsigned char *r,
@@ -6747,10 +6748,8 @@ static int nss_keylog_int(const char *prefix,
                           const uint8_t *parameter_2,
                           size_t parameter_2_len)
 {
-    static const char hexdig[] = "0123456789abcdef";
     char *out = NULL;
     char *cursor = NULL;
-    const uint8_t *p;
     size_t out_len = 0, i, prefix_len;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(sc);
 
@@ -6774,16 +6773,12 @@ static int nss_keylog_int(const char *prefix,
     cursor += prefix_len;
     *cursor++ = ' ';
 
-    for (i = 0, p = parameter_1; i < parameter_1_len; i++, ++p) {
-        *cursor++ = hexdig[(*p >> 4) & 0xf];
-        *cursor++ = hexdig[*p & 0xf];
-    }
+    for (i = 0; i < parameter_1_len; ++i)
+        cursor += ossl_to_lowerhex(cursor, parameter_1[i]);
     *cursor++ = ' ';
 
-    for (i = 0, p = parameter_2; i < parameter_2_len; i++, ++p) {
-        *cursor++ = hexdig[(*p >> 4) & 0xf];
-        *cursor++ = hexdig[*p & 0xf];
-    }
+    for (i = 0; i < parameter_2_len; ++i)
+        cursor += ossl_to_lowerhex(cursor, parameter_2[i]);
     *cursor = '\0';
 
     sctx->keylog_callback(SSL_CONNECTION_GET_SSL(sc), (const char *)out);
