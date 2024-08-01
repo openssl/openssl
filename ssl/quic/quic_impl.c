@@ -2812,6 +2812,9 @@ static size_t ossl_quic_pending_int(const SSL *s, int check_channel)
 
     quic_lock(ctx.qc);
 
+    if (!ctx.qc->started)
+        goto out;
+
     if (ctx.xso == NULL) {
         /* No XSO yet, but there might be a default XSO eligible to be created. */
         if (qc_wait_for_default_xso_for_read(&ctx, /*peek=*/1)) {
