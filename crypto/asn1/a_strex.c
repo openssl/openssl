@@ -234,15 +234,14 @@ static int do_buf(unsigned char *buf, int buflen,
 static int do_hex_dump(char_io *io_ch, void *arg, unsigned char *buf,
                        int buflen)
 {
-    static const char hexdig[] = "0123456789ABCDEF";
     unsigned char *p, *q;
     char hextmp[2];
+
     if (arg) {
         p = buf;
         q = buf + buflen;
         while (p != q) {
-            hextmp[0] = hexdig[*p >> 4];
-            hextmp[1] = hexdig[*p & 0xf];
+            ossl_to_hex(hextmp, *p);
             if (!io_ch(arg, hextmp, 2))
                 return -1;
             p++;
