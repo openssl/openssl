@@ -38,7 +38,8 @@ use constant {
     CHANGE_HRR_CIPHERSUITE => 0,
     CHANGE_CH1_CIPHERSUITE => 1,
     DUPLICATE_HRR => 2,
-    INVALID_GROUP => 3
+    INVALID_GROUP => 3,
+    NO_SUPPORTED_VERSIONS => 4
 };
 
 #Test 1: A client should fail if the server changes the ciphersuite between the
@@ -51,7 +52,7 @@ if (disabled("ec")) {
 }
 my $testtype = CHANGE_HRR_CIPHERSUITE;
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 4;
+plan tests => 5;
 ok(TLSProxy::Message->fail(), "Server ciphersuite changes");
 
 #Test 2: It is an error if the client changes the offered ciphersuites so that
@@ -98,6 +99,19 @@ SKIP: {
     ok(TLSProxy::Message->success(), "Invalid group with HRR");
 }
 
+#Test 5: A failure should occur if an HRR is sent without the supported_versions
+#        extension
+$fatal_alert = 0;
+$proxy->clear();
+if (disabled("ec")) {
+    $proxy->serverflags("-curves ffdhe3072");
+} else {
+    $proxy->serverflags("-curves P-384");
+}
+$testtype = NO_SUPPORTED_VERSIONS;
+$proxy->start();
+ok($fatal_alert, "supported_versions missing from HRR");
+
 sub hrr_filter
 {
     my $proxy = shift;
@@ -114,6 +128,25 @@ sub hrr_filter
         # because that's what Proxy tells s_server to do. Setting as below means
         # the ciphersuite will change will we get the ServerHello
         $hrr->ciphersuite(TLSProxy::Message::CIPHER_TLS13_AES_256_GCM_SHA384);
+        $hrr->repack();
+        return;
+    }
+
+    if ($testtype == NO_SUPPORTED_VERSIONS) {
+        # Check if we have the expected fatal alert
+        if ($proxy->flight == 2) {
+            $fatal_alert = 1
+                if @{$proxy->record_list}[-1]->is_fatal_alert(0) == TLSProxy::Message::AL_DESC_MISSING_EXTENSION;
+            return;
+        }
+
+        # Otherwise we're only interested in the HRR
+        if ($proxy->flight != 1) {
+            return;
+        }
+
+        my $hrr = ${$proxy->message_list}[1];
+        $hrr->delete_extension(TLSProxy::Message::EXT_SUPPORTED_VERSIONS);
         $hrr->repack();
         return;
     }
