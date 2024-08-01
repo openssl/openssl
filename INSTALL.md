@@ -834,6 +834,13 @@ Build (and install) the FIPS provider
 Don't perform FIPS module run-time checks related to enforcement of security
 parameters such as minimum security strength of keys.
 
+### no-fips-post
+
+Don't perform FIPS module Power On Self Tests.
+
+This option MUST be used for debugging only as it makes the FIPS provider
+non-compliant. It is useful when setting breakpoints in FIPS algorithms.
+
 ### enable-fuzz-libfuzzer, enable-fuzz-afl
 
 Build with support for fuzzing using either libfuzzer or AFL.

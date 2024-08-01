@@ -50,9 +50,12 @@
 
 static int FIPS_conditional_error_check = 1;
 static CRYPTO_RWLOCK *self_test_lock = NULL;
-static unsigned char fixed_key[32] = { FIPS_KEY_ELEMENTS };
 
 static CRYPTO_ONCE fips_self_test_init = CRYPTO_ONCE_STATIC_INIT;
+#if !defined(OPENSSL_NO_FIPS_POST)
+static unsigned char fixed_key[32] = { FIPS_KEY_ELEMENTS };
+#endif
+
 DEFINE_RUN_ONCE_STATIC(do_fips_self_test_init)
 {
     /*
@@ -172,6 +175,7 @@ DEP_FINI_ATTRIBUTE void cleanup(void)
 }
 #endif
 
+#if !defined(OPENSSL_NO_FIPS_POST)
 /*
  * We need an explicit HMAC-SHA-256 KAT even though it is also
  * checked as part of the KDF KATs.  Refer IG 10.3.
@@ -287,6 +291,7 @@ err:
     EVP_MAC_free(mac);
     return ret;
 }
+#endif /* OPENSSL_NO_FIPS_POST */
 
 static void set_fips_state(int state)
 {
@@ -296,16 +301,18 @@ static void set_fips_state(int state)
 /* This API is triggered either on loading of the FIPS module or on demand */
 int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
 {
+    int loclstate;
+#if !defined(OPENSSL_NO_FIPS_POST)
     int ok = 0;
     int kats_already_passed = 0;
     long checksum_len;
     OSSL_CORE_BIO *bio_module = NULL, *bio_indicator = NULL;
     unsigned char *module_checksum = NULL;
     unsigned char *indicator_checksum = NULL;
-    int loclstate;
     OSSL_SELF_TEST *ev = NULL;
     EVP_RAND *testrand = NULL;
     EVP_RAND_CTX *rng;
+#endif
 
     if (!RUN_ONCE(&fips_self_test_init, do_fips_self_test_init))
         return 0;
@@ -322,6 +329,8 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
 
     if (!CRYPTO_THREAD_write_lock(self_test_lock))
         return 0;
+
+#if !defined(OPENSSL_NO_FIPS_POST)
     loclstate = tsan_load(&FIPS_state);
     if (loclstate == FIPS_STATE_RUNNING) {
         if (!on_demand_test) {
@@ -434,6 +443,11 @@ end:
     CRYPTO_THREAD_unlock(self_test_lock);
 
     return ok;
+#else
+    set_fips_state(FIPS_STATE_RUNNING);
+    CRYPTO_THREAD_unlock(self_test_lock);
+    return 1;
+#endif /* !defined(OPENSSL_NO_FIPS_POST) */
 }
 
 void SELF_TEST_disable_conditional_error_state(void)

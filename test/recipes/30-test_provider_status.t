@@ -20,7 +20,7 @@ setup("test_provider_status");
 use lib srctop_dir('Configurations');
 use lib bldtop_dir('.');
 
-my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
+my $no_fips = disabled('fips') || disabled('fips-post') || ($ENV{NO_FIPS} // 0);
 
 plan tests => 5;
 
