@@ -14,6 +14,13 @@
 #include <openssl/bio.h> /* for BIO_snprintf() */
 #include <openssl/err.h>
 #include "internal/cryptlib.h" /* for ossl_assert() */
+#ifndef OPENSSL_NO_SOCK
+# include "internal/bio_addr.h" /* for NI_MAXHOST */
+#endif
+#ifndef NI_MAXHOST
+# define NI_MAXHOST 255
+#endif
+#include "crypto/ctype.h" /* for ossl_isspace() */
 
 static void init_pstring(char **pstr)
 {
@@ -251,10 +258,17 @@ static int use_proxy(const char *no_proxy, const char *server)
 {
     size_t sl;
     const char *found = NULL;
+    char host[NI_MAXHOST];
 
     if (!ossl_assert(server != NULL))
         return 0;
     sl = strlen(server);
+    if (sl >= 2 && sl < sizeof(host) + 2 && server[0] == '[' && server[sl - 1] == ']') {
+        /* strip leading '[' and trailing ']' from escaped IPv6 address */
+        sl -= 2;
+        strncpy(host, server + 1, sl);
+        server = host;
+    }
 
     /*
      * using environment variable names, both lowercase and uppercase variants,
@@ -268,8 +282,8 @@ static int use_proxy(const char *no_proxy, const char *server)
     if (no_proxy != NULL)
         found = strstr(no_proxy, server);
     while (found != NULL
-           && ((found != no_proxy && found[-1] != ' ' && found[-1] != ',')
-               || (found[sl] != '\0' && found[sl] != ' ' && found[sl] != ',')))
+           && ((found != no_proxy && !ossl_isspace(found[-1]) && found[-1] != ',')
+               || (found[sl] != '\0' && !ossl_isspace(found[sl]) && found[sl] != ',')))
         found = strstr(found + 1, server);
     return found == NULL;
 }
