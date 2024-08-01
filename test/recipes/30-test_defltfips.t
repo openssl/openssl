@@ -24,7 +24,7 @@ use lib bldtop_dir('.');
 plan skip_all => "Configuration loading is turned off"
     if disabled("autoload-config");
 
-my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
+my $no_fips = disabled('fips') || disabled('fips-post') || ($ENV{NO_FIPS} // 0);
 
 plan tests =>
     ($no_fips ? 1 : 5);
