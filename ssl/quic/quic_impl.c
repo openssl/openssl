@@ -1059,7 +1059,8 @@ int ossl_quic_handle_events(SSL *s)
         return 0;
 
     quic_lock(ctx.qc);
-    ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(ctx.qc->ch), 0);
+    if (ctx.qc->started)
+        ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(ctx.qc->ch), 0);
     quic_unlock(ctx.qc);
     return 1;
 }
