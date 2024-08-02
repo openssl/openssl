@@ -24,6 +24,10 @@ my $provconf = srctop_file("test", "fips-and-base.cnf");
 my $fipsmodcfgnew_filename = "fipsmodule_mod.cnf";
 my $fipsmodcfgnew = result_file($fipsmodcfgnew_filename);
 
+# An interum modified copy of "fipsmodule.cnf"
+my $fipsmodcfgtmp_filename = "fipsmodule_tmp.cnf";
+my $fipsmodcfgtmp = result_file($fipsmodcfgtmp_filename);
+
 # A modified copy of "fips-and-base.cnf"
 my $provconfnew = result_file("fips-and-base-temp.cnf");
 
@@ -121,7 +125,10 @@ SKIP: {
     $ENV{OPENSSL_CONF_INCLUDE} = result_dir();
     ok(replace_kv_file($fipsmodcfg,
                        'tls1-prf-ems-check', '0',
-                       $fipsmodcfgnew)
+                       $fipsmodcfgtmp)
+       && replace_kv_file($fipsmodcfgtmp,
+                          'rsa-pkcs15-padding-disabled', '0',
+                          $fipsmodcfgnew)
        && replace_line_file($provconf,
                             $fipsmodcfg_filename, $fipsmodcfgnew_filename,
                             $provconfnew)
