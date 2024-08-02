@@ -1,15 +1,22 @@
-prefix={- $OpenSSL::safe::installdata::PREFIX -}
+prefix={- $OpenSSL::safe::installdata::PREFIX[0] -}
 exec_prefix=${prefix}
-libdir={- $OpenSSL::safe::installdata::LIBDIR_REL_PREFIX
-          ? '${exec_prefix}/' . $OpenSSL::safe::installdata::LIBDIR_REL_PREFIX
-          : $OpenSSL::safe::installdata::libdir -}
-includedir=${prefix}/{- $OpenSSL::safe::installdata::INCLUDEDIR_REL_PREFIX -}
-enginesdir=${libdir}/{- $OpenSSL::safe::installdata::ENGINESDIR_REL_LIBDIR -}
-modulesdir=${libdir}/{- $OpenSSL::safe::installdata::MODULESDIR_REL_LIBDIR -}
+libdir={- $OpenSSL::safe::installdata::LIBDIR_REL_PREFIX[0]
+          ? '${exec_prefix}/' . $OpenSSL::safe::installdata::LIBDIR_REL_PREFIX[0]
+          : $OpenSSL::safe::installdata::libdir[0] -}
+includedir={- $OUT = '';
+              $OUT .= '${prefix}/' . $_ . ' '
+                  foreach (@OpenSSL::safe::installdata::INCLUDEDIR_REL_PREFIX); -}
+enginesdir=${libdir}/{- $OpenSSL::safe::installdata::ENGINESDIR_REL_LIBDIR[0] -}
+modulesdir=${libdir}/{- $OpenSSL::safe::installdata::MODULESDIR_REL_LIBDIR[0] -}
 
 Name: OpenSSL-libcrypto
 Description: OpenSSL cryptography library
 Version: {- $OpenSSL::safe::installdata::VERSION -}
 Libs: -L${libdir} -lcrypto
 Libs.private: {- join(' ', @OpenSSL::safe::installdata::LDLIBS) -}
-Cflags: -I${includedir}
+Cflags:{- $OUT = ' -I${includedir}';
+          if (scalar @OpenSSL::safe::installdata::INCLUDEDIR_REL_PREFIX > 1) {
+              $OUT = '';
+              $OUT .= ' -I${prefix}/' . $_ . ' '
+                  foreach (@OpenSSL::safe::installdata::INCLUDEDIR_REL_PREFIX);
+          } -}

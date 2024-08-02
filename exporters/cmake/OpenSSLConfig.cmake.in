@@ -89,13 +89,15 @@ unset(_ossl_undefined_targets)
 # Set up the import path, so all other import paths are made relative this file
 get_filename_component(_ossl_prefix "${CMAKE_CURRENT_LIST_FILE}" PATH)
 {-
-  # For each component in $OpenSSL::safe::installdata::CMAKECONFIGDIR relative to
-  # $OpenSSL::safe::installdata::PREFIX, have CMake figure out the parent directory.
-  my $d = join('/', unixify($OpenSSL::safe::installdata::LIBDIR_REL_PREFIX),
-                    unixify($OpenSSL::safe::installdata::CMAKECONFIGDIR_REL_LIBDIR));
+  # For each component in $OpenSSL::safe::installdata::CMAKECONFIGDIR[0] relative to
+  # $OpenSSL::safe::installdata::PREFIX[0], have CMake figure out the parent directory.
+  my $d = join('/', unixify(catdir($OpenSSL::safe::installdata::LIBDIR_REL_PREFIX[0],
+                                   $OpenSSL::safe::installdata::CMAKECONFIGDIR_REL_LIBDIR[0]), 1));
   $OUT = '';
-  $OUT .= 'get_filename_component(_ossl_prefix "${_ossl_prefix}" PATH)' . "\n"
-      foreach (split '/', $d);
+  if ($d ne '.') {
+      $OUT .= 'get_filename_component(_ossl_prefix "${_ossl_prefix}" PATH)' . "\n"
+          foreach (split '/', $d);
+  }
 -}
 if(_ossl_prefix STREQUAL "/")
   set(_ossl_prefix "")
@@ -127,13 +129,15 @@ set(OPENSSL_VERSION_FIX "${OpenSSL_VERSION_PATCH}")
 set(OPENSSL_FOUND YES)
 
 # Directories and names
-set(OPENSSL_LIBRARY_DIR "${_ossl_prefix}/{- unixify($OpenSSL::safe::installdata::LIBDIR_REL_PREFIX, 1); -}")
-set(OPENSSL_INCLUDE_DIR "${_ossl_prefix}/{- unixify($OpenSSL::safe::installdata::INCLUDEDIR_REL_PREFIX, 1); -}")
-set(OPENSSL_ENGINES_DIR "${_ossl_prefix}/{- unixify($OpenSSL::safe::installdata::LIBDIR_REL_PREFIX, 1); -}/{- unixify($OpenSSL::safe::installdata::ENGINESDIR_REL_LIBDIR, 1); -}")
-set(OPENSSL_MODULES_DIR "${_ossl_prefix}/{- unixify($OpenSSL::safe::installdata::LIBDIR_REL_PREFIX, 1); -}/{- unixify($OpenSSL::safe::installdata::MODULESDIR_REL_LIBDIR, 1); -}")
-set(OPENSSL_RUNTIME_DIR "${_ossl_prefix}/{- unixify($OpenSSL::safe::installdata::BINDIR_REL_PREFIX, 1); -}")
+set(OPENSSL_LIBRARY_DIR "${_ossl_prefix}/{- unixify($OpenSSL::safe::installdata::LIBDIR_REL_PREFIX[0], 1); -}")
+set(OPENSSL_INCLUDE_DIR{- $OUT = '';
+                          $OUT .= ' "${_ossl_prefix}/' . $_ . '"'
+                              foreach (@OpenSSL::safe::installdata::INCLUDEDIR_REL_PREFIX); -})
+set(OPENSSL_ENGINES_DIR "${_ossl_prefix}/{- unixify($OpenSSL::safe::installdata::LIBDIR_REL_PREFIX[0], 1); -}/{- unixify($OpenSSL::safe::installdata::ENGINESDIR_REL_LIBDIR[0], 1); -}")
+set(OPENSSL_MODULES_DIR "${_ossl_prefix}/{- unixify($OpenSSL::safe::installdata::LIBDIR_REL_PREFIX[0], 1); -}/{- unixify($OpenSSL::safe::installdata::MODULESDIR_REL_LIBDIR[0], 1); -}")
+set(OPENSSL_RUNTIME_DIR "${_ossl_prefix}/{- unixify($OpenSSL::safe::installdata::BINDIR_REL_PREFIX[0], 1); -}")
 {- output_off() if $disabled{uplink}; "" -}
-set(OPENSSL_APPLINK_SOURCE "${_ossl_prefix}/{- unixify($OpenSSL::safe::installdata::APPLINKDIR_REL_PREFIX, 1); -}/applink.c")
+set(OPENSSL_APPLINK_SOURCE "${_ossl_prefix}/{- unixify($OpenSSL::safe::installdata::APPLINKDIR_REL_PREFIX[0], 1); -}/applink.c")
 {- output_on() if $disabled{uplink}; "" -}
 set(OPENSSL_PROGRAM "${OPENSSL_RUNTIME_DIR}/{- platform->bin('openssl') -}")
 

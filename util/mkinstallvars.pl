@@ -32,10 +32,11 @@ foreach (@others) { $all{$_} = 1 }
 print STDERR "DEBUG: all keys: ", join(", ", sort keys %all), "\n";
 
 my %keys = ();
+my %values = ();
 foreach (@ARGV) {
     (my $k, my $v) = m|^([^=]*)=(.*)$|;
     $keys{$k} = 1;
-    $ENV{$k} = $v;
+    push @{$values{$k}}, $v;
 }
 
 # warn if there are missing values, and also if there are unexpected values
@@ -49,11 +50,12 @@ foreach my $k (sort keys %keys) {
 # This shouldn't be needed, but just in case we get relative paths that
 # should be absolute, make sure they actually are.
 foreach my $k (@absolutes) {
-    my $v = $ENV{$k} || '.';
-    print STDERR "DEBUG: $k = $v => ";
-    $v = File::Spec->rel2abs($v) if $v;
-    $ENV{$k} = $v;
-    print STDERR "$k = $ENV{$k}\n";
+    my $v = $values{$k} || [ '.' ];
+    die "Can't have more than one $k\n" if scalar @$v > 1;
+    print STDERR "DEBUG: $k = $v->[0] => ";
+    $v = [ map { File::Spec->rel2abs($_) } @$v ];
+    $values{$k} = $v;
+    print STDERR "$k = $v->[0]\n";
 }
 
 # Absolute paths for the subdir variables are computed.  This provides
@@ -66,18 +68,31 @@ foreach my $k (@absolutes) {
 foreach my $pair (@subdirs) {
     my ($var, $subdir_vars) = @$pair;
     foreach my $k (@$subdir_vars) {
-        my $v = $ENV{$k} || '.';
-        print STDERR "DEBUG: $k = $v => ";
-        if (File::Spec->file_name_is_absolute($v)) {
-            my $kr = "${k}_REL_${var}";
-            $ENV{$kr} = File::Spec->abs2rel($v, $ENV{$var});
-            print STDERR "$kr = $ENV{$kr}\n";
-        } else {
-            my $kr = "${k}_REL_${var}";
-            $ENV{$kr} = $v;
-            $ENV{$k} = File::Spec->rel2abs($v, $ENV{$var});
-            print STDERR "$k = $ENV{$k} ,  $kr = $v\n";
+        my $kr = "${k}_REL_${var}";
+        my $v2 = $values{$k} || [ '.' ];
+        $values{$k} = [];       # We're rebuilding it
+        print STDERR "DEBUG: $k = ",
+            (scalar @$v2 > 1 ? "[ " . join(", ", @$v2) . " ]" : $v2->[0]),
+            " => ";
+        foreach my $v (@$v2) {
+            if (File::Spec->file_name_is_absolute($v)) {
+                push @{$values{$k}}, $v;
+                push @{$values{$kr}},
+                    File::Spec->abs2rel($v, $values{$var}->[0]);
+            } else {
+                push @{$values{$kr}}, $v;
+                push @{$values{$k}},
+                    File::Spec->rel2abs($v, $values{$var}->[0]);
+            }
         }
+        print STDERR join(", ",
+                          map {
+                              my $v = $values{$_};
+                              "$_ = " . (scalar @$v > 1
+                                         ? "[ " . join(", ", @$v) . " ]"
+                                         : $v->[0]);
+                          } ($k, $kr)),
+            "\n";
     }
 }
 
@@ -92,13 +107,13 @@ our \@EXPORT = qw(
 _____
 
 foreach my $k (@absolutes) {
-    print "    \$$k\n";
+    print "    \@$k\n";
 }
 foreach my $pair (@subdirs) {
     my ($var, $subdir_vars) = @$pair;
     foreach my $k (@$subdir_vars) {
         my $k2 = "${k}_REL_${var}";
-        print "    \$$k \$$k2\n";
+        print "    \@$k \@$k2\n";
     }
 }
 
@@ -109,22 +124,28 @@ print <<_____;
 _____
 
 foreach my $k (@absolutes) {
-    print "our \$$k" . ' ' x (27 - length($k)) . "= '$ENV{$k}';\n";
+    print "our \@$k" . ' ' x (27 - length($k)) . "= ( '",
+        join("', '", @{$values{$k}}),
+        "' );\n";
 }
 foreach my $pair (@subdirs) {
     my ($var, $subdir_vars) = @$pair;
     foreach my $k (@$subdir_vars) {
         my $k2 = "${k}_REL_${var}";
-        print "our \$$k" . ' ' x (27 - length($k)) . "= '$ENV{$k}';\n";
-        print "our \$$k2" . ' ' x (27 - length($k2)) . "= '$ENV{$k2}';\n";
+        print "our \@$k" . ' ' x (27 - length($k)) . "= ( '",
+            join("', '", @{$values{$k}}),
+            "' );\n";
+        print "our \@$k2" . ' ' x (27 - length($k2)) . "= ( '",
+            join("', '", @{$values{$k2}}),
+            "' );\n";
     }
 }
 
 print <<_____;
-our \$VERSION                    = '$ENV{VERSION}';
+our \$VERSION                    = '$values{VERSION}->[0]';
 our \@LDLIBS                     =
     # Unix and Windows use space separation, VMS uses comma separation
-    split(/ +| *, */, '$ENV{LDLIBS}');
+    split(/ +| *, */, '$values{LDLIBS}->[0]');
 
 1;
 _____

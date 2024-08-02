@@ -3,11 +3,18 @@ exec_prefix=${prefix}
 libdir={- $OpenSSL::safe::installdata::LIBDIR_REL_PREFIX
           ? '${exec_prefix}/' . $OpenSSL::safe::installdata::LIBDIR_REL_PREFIX
           : $OpenSSL::safe::installdata::libdir -}
-includedir=${prefix}/{- $OpenSSL::safe::installdata::INCLUDEDIR_REL_PREFIX -}
+includedir={- $OUT = '';
+              $OUT .= '${prefix}/' . $_ . ' '
+                  foreach (@OpenSSL::safe::installdata::INCLUDEDIR_REL_PREFIX); -}
 
 Name: OpenSSL-libssl
 Description: Secure Sockets Layer and cryptography libraries
 Version: {- $OpenSSL::safe::installdata::VERSION -}
 Requires.private: libcrypto
 Libs: -L${libdir} -lssl
-Cflags: -I${includedir}
+Cflags:{- $OUT = ' -I${includedir}';
+          if (scalar @OpenSSL::safe::installdata::INCLUDEDIR_REL_PREFIX > 1) {
+              $OUT = '';
+              $OUT .= ' -I${prefix}/' . $_ . ' '
+                  foreach (@OpenSSL::safe::installdata::INCLUDEDIR_REL_PREFIX);
+          } -}
