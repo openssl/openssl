@@ -755,7 +755,7 @@ static int list_provider_tls_sigalgs(const OSSL_PARAM params[], void *data)
     /* Get registered IANA name */
     p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_SIGALG_IANA_NAME);
     if (p != NULL && p->data_type == OSSL_PARAM_UTF8_STRING) {
-        if (*((int *)data))
+        if (*((int *)data) > 0)
             BIO_printf(bio_out, ":");
         BIO_printf(bio_out, "%s", (char *)(p->data));
         /* mark presence of a provider-based sigalg */
@@ -779,7 +779,7 @@ static void list_tls_signatures(void)
     int tls_sigalg_listed = 0;
     char *builtin_sigalgs = SSL_get1_builtin_sigalgs(app_get0_libctx());
 
-    if (builtin_sigalgs != NULL && strlen(builtin_sigalgs)>0) {
+    if (builtin_sigalgs != NULL && strlen(builtin_sigalgs) > 0) {
         BIO_printf(bio_out, "%s", builtin_sigalgs);
         OPENSSL_free(builtin_sigalgs);
         tls_sigalg_listed = 1;

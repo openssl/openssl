@@ -1598,14 +1598,17 @@ int ssl_setup_sigalgs(SSL_CTX *ctx)
 
 char *SSL_get1_builtin_sigalgs(OSSL_LIB_CTX *libctx)
 {
-    size_t i, retlen = 0, maxretlen = SIGLEN_BUF_INCREMENT;
+    size_t i, maxretlen = SIGLEN_BUF_INCREMENT;
     const SIGALG_LOOKUP *lu;
     EVP_PKEY *tmpkey = EVP_PKEY_new();
-    char *retval = OPENSSL_zalloc(maxretlen);
+    char *retval = OPENSSL_malloc(maxretlen);
 
     if (retval == NULL) {
         return NULL;
     }
+
+    /* ensure retval string is NUL terminated */
+    retval[0] = (char)0;
 
     for (i = 0, lu = sigalg_lookup_tbl;
          i < OSSL_NELEM(sigalg_lookup_tbl); lu++, i++) {
@@ -1649,10 +1652,9 @@ char *SSL_get1_builtin_sigalgs(OSSL_LIB_CTX *libctx)
                         return NULL;
                     }
                 }
-                if (retlen > 0)
-                    OPENSSL_strlcat(retval, ":", ++retlen);
-                retlen += strlen(sa) + 1;
-                OPENSSL_strlcat(retval, sa, retlen);
+                if (strlen(retval) > 0)
+                    OPENSSL_strlcat(retval, ":", maxretlen);
+                OPENSSL_strlcat(retval, sa, maxretlen);
             } else {
                 /* lu->name must not be NULL */
                 ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
