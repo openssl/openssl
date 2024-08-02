@@ -3,7 +3,7 @@ HOW TO CONTRIBUTE TO OpenSSL
 
 Please visit our [Getting Started] page for other ideas about how to contribute.
 
-  [Getting Started]: <https://openssl-library.org/community/getting-started/index.html>
+  [Getting Started]: <https://openssl-library.org/community/getting-started>
 
 Development is done on GitHub in the [openssl/openssl] repository.
 
