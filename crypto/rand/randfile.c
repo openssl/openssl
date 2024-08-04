@@ -208,8 +208,14 @@ int RAND_write_file(const char *file)
          * should be restrictive from the start
          */
         int fd = open(file, O_WRONLY | O_CREAT | O_BINARY, 0600);
-        if (fd != -1)
+        if (fd != -1) {
             out = fdopen(fd, "wb");
+            if (out == NULL) {
+                ERR_raise_data(ERR_LIB_RAND, RAND_R_CANNOT_OPEN_FILE,
+                            "Filename=%s", file);
+                return -1;
+            }
+        }
     }
 #endif
 
