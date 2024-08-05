@@ -204,7 +204,7 @@ This option is used by the OpenSSL FIPS provider.
 
 =over 4
 
-=item "no-short-mac" (B<OSSL_PROV_FIPS_PARAM_NO_SHORT_MAC>) <integer>
+=item "no-short-mac" (B<OSSL_MAC_PARAM_FIPS_NO_SHORT_MAC>) <integer>
 
 If required this parameter should be set early via an init function.
 The default value of 1 causes an error when too short MAC output is

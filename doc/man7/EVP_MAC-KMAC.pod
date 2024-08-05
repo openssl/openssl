@@ -68,11 +68,15 @@ The default value is 0.
 
 This settable parameter is described in L<provider-mac(7)>.
 
-=item "no-short-mac" (B<OSSL_PROV_FIPS_PARAM_NO_SHORT_MAC>) <integer>
+=item "no-short-mac" (B<OSSL_MAC_PARAM_FIPS_NO_SHORT_MAC>) <integer>
 
 This settable parameter is described in L<provider-mac(7)>.  It is used by
 the OpenSSL FIPS provider and the minimum length output for KMAC
 is defined by NIST's SP 800-185 8.4.2.
+
+=item "key-check" (B<OSSL_MAC_PARAM_FIPS_KEY_CHECK>) <integer>
+
+This settable parameter is described in L<provider-mac(7)>.
 
 =back
 
