@@ -1855,3 +1855,56 @@ Ctrl.hexinfo = hexinfo:8e9db3335779db688bcfe096668d9c3bc64e193e3529c430e68d09d5
 Ctrl.hexinfo = hexinfo:6c837dd6c0f94678f121a68ee1feea4735da85a49d34a5290aa39f7b
 Ctrl.hexinfo = hexinfo:40de435f
 Output = 6db880daac98b078ee389a2164252ded61322d661e2b49247ea921e544675d8f17af2bf66dd40d81
+
+Title = Negative tests for FIPS minimum key length
+
+FIPSversion = >=3.4.0
+KDF = KBKDF
+Ctrl.mode = mode:COUNTER
+Ctrl.digest = digest:SHA512
+Ctrl.mac = mac:HMAC
+Ctrl.use-l = use-l:0
+Ctrl.use-separator = use-separator:0
+Ctrl.r = r:8
+Ctrl.hexkey = hexkey:0ef9
+Ctrl.hexinfo = hexinfo:56ec
+Result = KDF_CTRL_ERROR
+
+FIPSversion = >=3.4.0
+KDF = KBKDF
+Ctrl.mode = mode:COUNTER
+Ctrl.digest = digest:SHA256
+Ctrl.mac = mac:HMAC
+Ctrl.use-l = use-l:0
+Ctrl.use-separator = use-separator:0
+Ctrl.r = r:8
+Ctrl.hexkey = hexkey:0ef9
+Ctrl.hexinfo = hexinfo:56ec
+Ctrl.key-check = key-check:0
+Unapproved = 1
+Output = 9de01850c9d3d1cd0270b3ea9c9c683d
+
+FIPSversion = >=3.4.0
+KDF = KBKDF
+Ctrl.mode = mode:COUNTER
+Ctrl.cipher = cipher:AES128
+Ctrl.mac = mac:CMAC
+Ctrl.use-l = use-l:0
+Ctrl.use-separator = use-separator:0
+Ctrl.r = r:24
+Ctrl.hexkey = hexkey:1122334455667788
+Ctrl.hexinfo = hexinfo:1122334455667788
+Result = KDF_CTRL_ERROR
+
+Availablein = default
+KDF = KBKDF
+Ctrl.mode = mode:COUNTER
+Ctrl.digest = digest:SHA256
+Ctrl.mac = mac:HMAC
+Ctrl.use-l = use-l:0
+Ctrl.use-separator = use-separator:0
+Ctrl.r = r:8
+Ctrl.hexkey = hexkey:0ef9
+Ctrl.hexinfo = hexinfo:56ec
+Output = 9de01850c9d3d1cd0270b3ea9c9c683d
+
