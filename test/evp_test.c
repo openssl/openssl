@@ -135,6 +135,9 @@ static int mac_check_fips_approved(EVP_MAC_CTX *ctx, EVP_TEST *t)
      */
     int approved = 1;
 
+    if (EVP_MAC_CTX_gettable_params(ctx) == NULL)
+        return 1;
+
     params[0] = OSSL_PARAM_construct_int(OSSL_MAC_PARAM_FIPS_APPROVED_INDICATOR,
                                          &approved);
     if (!EVP_MAC_CTX_get_params(ctx, params))
@@ -151,6 +154,10 @@ static int pkey_check_fips_approved(EVP_PKEY_CTX *ctx, EVP_TEST *t)
      */
     int approved = 1;
 
+    /* Older providers dont have a gettable */
+    if (EVP_PKEY_CTX_gettable_params(ctx) == NULL)
+        return 1;
+
     params[0] = OSSL_PARAM_construct_int(OSSL_ALG_PARAM_FIPS_APPROVED_INDICATOR,
                                          &approved);
     if (!EVP_PKEY_CTX_get_params(ctx, params))
@@ -166,6 +173,9 @@ static int rand_check_fips_approved(EVP_RAND_CTX *ctx, EVP_TEST *t)
      * value of approved.
      */
     int approved = 1;
+
+    if (EVP_RAND_CTX_gettable_params(ctx) == NULL)
+        return 1;
 
     params[0] = OSSL_PARAM_construct_int(OSSL_DRBG_PARAM_FIPS_APPROVED_INDICATOR,
                                          &approved);
