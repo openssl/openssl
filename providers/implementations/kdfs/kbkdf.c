@@ -43,6 +43,9 @@
 #include "prov/provider_ctx.h"
 #include "prov/provider_util.h"
 #include "prov/providercommon.h"
+#include "prov/securitycheck.h"
+#include "prov/fipscommon.h"
+#include "prov/fipsindicator.h"
 
 #include "internal/e_os.h"
 #include "internal/params.h"
@@ -73,6 +76,7 @@ typedef struct {
     int use_l;
     int is_kmac;
     int use_separator;
+    OSSL_FIPS_IND_DECLARE
 } KBKDF;
 
 /* Definitions needed for typechecking. */
@@ -122,6 +126,7 @@ static void *kbkdf_new(void *provctx)
         return NULL;
 
     ctx->provctx = provctx;
+    OSSL_FIPS_IND_INIT(ctx)
     init(ctx);
     return ctx;
 }
@@ -174,6 +179,7 @@ static void *kbkdf_dup(void *vctx)
         dest->use_l = src->use_l;
         dest->use_separator = src->use_separator;
         dest->is_kmac = src->is_kmac;
+        OSSL_FIPS_IND_COPY(dest, src)
     }
     return dest;
 
@@ -181,6 +187,24 @@ static void *kbkdf_dup(void *vctx)
     kbkdf_free(dest);
     return NULL;
 }
+
+#ifdef FIPS_MODULE
+static int fips_kbkdf_key_check_passed(KBKDF *ctx)
+{
+    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
+    int key_approved = ossl_kdf_check_key_size(ctx->ki_len);
+
+    if (!key_approved) {
+        if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE0,
+                                         libctx, "KBKDF", "Key size",
+                                         FIPS_kbkdf_key_check)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
+            return 0;
+        }
+    }
+    return 1;
+}
+#endif
 
 /* SP800-108 section 5.1 or section 5.2 depending on mode. */
 static int derive(EVP_MAC_CTX *ctx_init, kbkdf_mode mode, unsigned char *iv,
@@ -351,6 +375,10 @@ static int kbkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (params == NULL)
         return 1;
 
+    if (!OSSL_FIPS_IND_SET_CTX_PARAM(ctx, OSSL_FIPS_IND_SETTABLE0, params,
+                                     OSSL_KDF_PARAM_FIPS_KEY_CHECK))
+        return 0;
+
     if (!ossl_prov_macctx_load_from_params(&ctx->ctx_init, params, NULL,
                                            NULL, NULL, libctx))
         return 0;
@@ -382,9 +410,16 @@ static int kbkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         return 0;
     }
 
-    if (ossl_param_get1_octet_string(params, OSSL_KDF_PARAM_KEY,
-                                     &ctx->ki, &ctx->ki_len) == 0)
+    p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_KEY);
+    if (p != NULL) {
+        if (ossl_param_get1_octet_string(p, OSSL_KDF_PARAM_KEY,
+                                         &ctx->ki, &ctx->ki_len) == 0)
             return 0;
+#ifdef FIPS_MODULE
+        if (!fips_kbkdf_key_check_passed(ctx))
+            return 0;
+#endif
+    }
 
     if (ossl_param_get1_octet_string(params, OSSL_KDF_PARAM_SALT,
                                      &ctx->label, &ctx->label_len) == 0)
@@ -443,6 +478,7 @@ static const OSSL_PARAM *kbkdf_settable_ctx_params(ossl_unused void *ctx,
         OSSL_PARAM_int(OSSL_KDF_PARAM_KBKDF_USE_L, NULL),
         OSSL_PARAM_int(OSSL_KDF_PARAM_KBKDF_USE_SEPARATOR, NULL),
         OSSL_PARAM_int(OSSL_KDF_PARAM_KBKDF_R, NULL),
+        OSSL_FIPS_IND_SETTABLE_CTX_PARAM(OSSL_KDF_PARAM_FIPS_KEY_CHECK)
         OSSL_PARAM_END,
     };
     return known_settable_ctx_params;
@@ -450,21 +486,28 @@ static const OSSL_PARAM *kbkdf_settable_ctx_params(ossl_unused void *ctx,
 
 static int kbkdf_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
+#ifdef FIPS_MODULE
+    KBKDF *ctx = (KBKDF *)vctx;
+#endif
     OSSL_PARAM *p;
 
-    p = OSSL_PARAM_locate(params, OSSL_KDF_PARAM_SIZE);
-    if (p == NULL)
-        return -2;
-
     /* KBKDF can produce results as large as you like. */
-    return OSSL_PARAM_set_size_t(p, SIZE_MAX);
+    p = OSSL_PARAM_locate(params, OSSL_KDF_PARAM_SIZE);
+    if (p != NULL && !OSSL_PARAM_set_size_t(p, SIZE_MAX))
+        return 0;
+
+    if (!OSSL_FIPS_IND_GET_CTX_PARAM(ctx, params))
+        return 0;
+    return 1;
 }
 
 static const OSSL_PARAM *kbkdf_gettable_ctx_params(ossl_unused void *ctx,
                                                    ossl_unused void *provctx)
 {
     static const OSSL_PARAM known_gettable_ctx_params[] = {
-        OSSL_PARAM_size_t(OSSL_KDF_PARAM_SIZE, NULL), OSSL_PARAM_END
+        OSSL_PARAM_size_t(OSSL_KDF_PARAM_SIZE, NULL),
+        OSSL_FIPS_IND_GETTABLE_CTX_PARAM()
+        OSSL_PARAM_END
     };
     return known_gettable_ctx_params;
 }
