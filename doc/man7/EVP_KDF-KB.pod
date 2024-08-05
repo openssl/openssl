@@ -65,6 +65,23 @@ Set the fixed value 'r', indicating the length of the counter in bits.
 Supported values are B<8>, B<16>, B<24>, and B<32>.
 The default value of B<32> will be used if unspecified.
 
+=item "fips-indicator" (B<OSSL_KDF_PARAM_FIPS_APPROVED_INDICATOR>) <integer>
+
+A getter that returns 1 if the operation is FIPS approved, or 0 otherwise.
+This may be used after calling EVP_KDF_derive. It returns 0 if any "***-check"
+related parameter is set to 0 and the check fails.
+This option is used by the OpenSSL FIPS provider.
+
+=item "key-check" (B<OSSL_KDF_PARAM_FIPS_KEY_CHECK>) <integer>
+
+The default value of 1 causes an error during EVP_KDF_CTX_set_params() if the
+length of used key-derivation key (B<OSSL_KDF_PARAM_KEY>) is shorter than 112
+bits.
+Setting this to zero will ignore the error and set the approved
+"fips-indicator" to 0.
+This option is used by the OpenSSL FIPS provider, and breaks FIPS compliance if
+set to 0.
+
 =back
 
 Depending on whether mac is CMAC or HMAC, either digest or cipher is required
