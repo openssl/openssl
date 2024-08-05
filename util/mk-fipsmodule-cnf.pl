@@ -23,6 +23,7 @@ my $pkcs15_pad_disable = 1;
 my $rsa_sign_x931_pad_disabled = 1;
 my $kdf_key_check = 1;
 my $pbkdf2_lower_bound_check = 1;
+my $mac_key_check = 1;
 
 my $activate = 1;
 my $version = 1;
@@ -59,7 +60,6 @@ security-checks = $security_checks
 module-mac = $module_mac
 tls1-prf-ems-check = $ems_check
 no-short-mac = $no_short_mac
-hmac-key-check = $key_check
 drbg-no-trunc-md = $drgb_no_trunc_dgst
 dsa-sign-disabled = $dsa_sign_disabled
 hkdf-digest-check = $kdf_digest_check
@@ -79,4 +79,6 @@ sshkdf-key-check = $kdf_key_check
 sskdf-key-check = $kdf_key_check
 x963kdf-key-check = $kdf_key_check
 pbkdf2-lower-bound-check = $pbkdf2_lower_bound_check
+hmac-key-check = $key_check
+kmac-key-check = $mac_key_check
 _____
