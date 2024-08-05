@@ -70,6 +70,7 @@ tdes-encrypt-disabled = $tdes_encrypt_disabled
 rsa-pkcs15-padding-disabled = $pkcs15_pad_disable
 rsa-sign-x931-pad-disabled = $rsa_sign_x931_pad_disabled
 hkdf-key-check = $kdf_key_check
+kbkdf-key-check = $kdf_key_check
 tls13-kdf-key-check = $kdf_key_check
 tls1-prf-key-check = $kdf_key_check
 sshkdf-key-check = $kdf_key_check
