@@ -91,6 +91,7 @@ typedef struct fips_global_st {
     FIPS_OPTION fips_tls1_prf_ems_check;
     FIPS_OPTION fips_no_short_mac;
     FIPS_OPTION fips_hmac_key_check;
+    FIPS_OPTION fips_kmac_key_check;
     FIPS_OPTION fips_restricted_drgb_digests;
     FIPS_OPTION fips_signature_digest_check;
     FIPS_OPTION fips_hkdf_digest_check;
@@ -131,6 +132,7 @@ void *ossl_fips_prov_ossl_ctx_new(OSSL_LIB_CTX *libctx)
     init_fips_option(&fgbl->fips_tls1_prf_ems_check, 0); /* Disabled by default */
     init_fips_option(&fgbl->fips_no_short_mac, 1);
     init_fips_option(&fgbl->fips_hmac_key_check, 0);
+    init_fips_option(&fgbl->fips_kmac_key_check, 0);
     init_fips_option(&fgbl->fips_restricted_drgb_digests, 0);
     init_fips_option(&fgbl->fips_signature_digest_check, 0);
     init_fips_option(&fgbl->fips_hkdf_digest_check, 0);
@@ -192,6 +194,8 @@ static const OSSL_PARAM fips_param_types[] = {
                     OSSL_PARAM_INTEGER, NULL, 0),
     OSSL_PARAM_DEFN(OSSL_PROV_PARAM_HKDF_KEY_CHECK, OSSL_PARAM_INTEGER, NULL,
                     0),
+    OSSL_PARAM_DEFN(OSSL_PROV_PARAM_KMAC_KEY_CHECK, OSSL_PARAM_INTEGER, NULL,
+                    0),
     OSSL_PARAM_DEFN(OSSL_PROV_PARAM_TLS13_KDF_KEY_CHECK, OSSL_PARAM_INTEGER,
                     NULL, 0),
     OSSL_PARAM_DEFN(OSSL_PROV_PARAM_TLS1_PRF_KEY_CHECK, OSSL_PARAM_INTEGER,
@@ -249,6 +253,8 @@ static int fips_get_params_from_core(FIPS_GLOBAL *fgbl)
                         fips_no_short_mac);
     FIPS_FEATURE_OPTION(fgbl, OSSL_PROV_FIPS_PARAM_HMAC_KEY_CHECK,
                         fips_hmac_key_check);
+    FIPS_FEATURE_OPTION(fgbl, OSSL_PROV_FIPS_PARAM_KMAC_KEY_CHECK,
+                        fips_kmac_key_check);
     FIPS_FEATURE_OPTION(fgbl, OSSL_PROV_FIPS_PARAM_DRBG_TRUNC_DIGEST,
                         fips_restricted_drgb_digests);
     FIPS_FEATURE_OPTION(fgbl, OSSL_PROV_FIPS_PARAM_SIGNATURE_DIGEST_CHECK,
@@ -342,6 +348,8 @@ static int fips_get_params(void *provctx, OSSL_PARAM params[])
                      fips_no_short_mac);
     FIPS_FEATURE_GET(fgbl, OSSL_PROV_PARAM_HMAC_KEY_CHECK,
                      fips_hmac_key_check);
+    FIPS_FEATURE_GET(fgbl, OSSL_PROV_PARAM_KMAC_KEY_CHECK,
+                     fips_kmac_key_check);
     FIPS_FEATURE_GET(fgbl, OSSL_PROV_PARAM_DRBG_TRUNC_DIGEST,
                      fips_restricted_drgb_digests);
     FIPS_FEATURE_GET(fgbl, OSSL_PROV_FIPS_PARAM_SIGNATURE_DIGEST_CHECK,
@@ -547,8 +555,9 @@ static const OSSL_ALGORITHM fips_macs_internal[] = {
     { PROV_NAMES_CMAC, FIPS_DEFAULT_PROPERTIES, ossl_cmac_functions },
 #endif
     { PROV_NAMES_HMAC, FIPS_DEFAULT_PROPERTIES, ossl_hmac_internal_functions },
-    { PROV_NAMES_KMAC_128, FIPS_DEFAULT_PROPERTIES, ossl_kmac128_functions },
-    { PROV_NAMES_KMAC_256, FIPS_DEFAULT_PROPERTIES, ossl_kmac256_functions },
+    { PROV_NAMES_KMAC_128, FIPS_DEFAULT_PROPERTIES, ossl_kmac128_internal_functions },
+    { PROV_NAMES_KMAC_256, FIPS_DEFAULT_PROPERTIES, ossl_kmac256_internal_functions },
+    { NULL, NULL, NULL }
 };
 
 static const OSSL_ALGORITHM fips_kdfs[] = {
@@ -963,6 +972,7 @@ int OSSL_provider_init_int(const OSSL_CORE_HANDLE *handle,
     FIPS_SET_OPTION(fgbl, fips_tls1_prf_ems_check);
     FIPS_SET_OPTION(fgbl, fips_no_short_mac);
     FIPS_SET_OPTION(fgbl, fips_hmac_key_check);
+    FIPS_SET_OPTION(fgbl, fips_kmac_key_check);
     FIPS_SET_OPTION(fgbl, fips_restricted_drgb_digests);
     FIPS_SET_OPTION(fgbl, fips_signature_digest_check);
     FIPS_SET_OPTION(fgbl, fips_hkdf_digest_check);
@@ -1186,6 +1196,7 @@ FIPS_FEATURE_CHECK(FIPS_security_check_enabled, fips_security_checks)
 FIPS_FEATURE_CHECK(FIPS_tls_prf_ems_check, fips_tls1_prf_ems_check)
 FIPS_FEATURE_CHECK(FIPS_no_short_mac, fips_no_short_mac)
 FIPS_FEATURE_CHECK(FIPS_hmac_key_check, fips_hmac_key_check)
+FIPS_FEATURE_CHECK(FIPS_kmac_key_check, fips_kmac_key_check)
 FIPS_FEATURE_CHECK(FIPS_restricted_drbg_digests_enabled,
                    fips_restricted_drgb_digests)
 FIPS_FEATURE_CHECK(FIPS_fips_signature_digest_check, fips_signature_digest_check)

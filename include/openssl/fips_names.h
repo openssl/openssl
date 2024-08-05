@@ -78,6 +78,14 @@ extern "C" {
 # define OSSL_PROV_FIPS_PARAM_HMAC_KEY_CHECK "hmac-key-check"
 
 /*
+ * A boolean that determines if the runtime FIPS key check for KMAC is
+ * performed.
+ * This is enabled by default.
+ * Type: OSSL_PARAM_UTF8_STRING
+ */
+# define OSSL_PROV_FIPS_PARAM_KMAC_KEY_CHECK "kmac-key-check"
+
+/*
  * A boolean that determines if truncated digests can be used with Hash and HMAC
  * DRBGs.  FIPS 140-3 IG D.R disallows such use for efficiency rather than
  * security reasons.

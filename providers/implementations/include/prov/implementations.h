@@ -260,6 +260,8 @@ extern const OSSL_DISPATCH ossl_gmac_functions[];
 extern const OSSL_DISPATCH ossl_hmac_functions[];
 #ifdef FIPS_MODULE
 extern const OSSL_DISPATCH ossl_hmac_internal_functions[];
+extern const OSSL_DISPATCH ossl_kmac128_internal_functions[];
+extern const OSSL_DISPATCH ossl_kmac256_internal_functions[];
 #endif
 extern const OSSL_DISPATCH ossl_kmac128_functions[];
 extern const OSSL_DISPATCH ossl_kmac256_functions[];
