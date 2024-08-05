@@ -42,7 +42,7 @@ is made too late.
 The default DRBG is "CTR-DRBG" using the "AES-256-CTR" cipher.
 
 The default seed source can be configured when OpenSSL is compiled by
-setting B<-DOPENSSL_DEFAULT_SEED_SRC='\"SEED-SRC\"'>. If not set then
+setting B<-DOPENSSL_DEFAULT_SEED_SRC=SEED-SRC>. If not set then
 "SEED-SRC" is used.
 
 =head1 EXAMPLES
