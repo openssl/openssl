@@ -388,9 +388,11 @@ static int dh_validate_public(const DH *dh, int checktype)
     if (pub_key == NULL)
         return 0;
 
-    /* The partial test is only valid for named group's with q = (p - 1) / 2 */
-    if (checktype == OSSL_KEYMGMT_VALIDATE_QUICK_CHECK
-        && ossl_dh_is_named_safe_prime_group(dh))
+    /*
+     * The partial test is only valid for named group's with q = (p - 1) / 2
+     * but for that case it is also fully sufficient to check the key validity.
+     */
+    if (ossl_dh_is_named_safe_prime_group(dh))
         return ossl_dh_check_pub_key_partial(dh, pub_key, &res);
 
     return DH_check_pub_key_ex(dh, pub_key);
