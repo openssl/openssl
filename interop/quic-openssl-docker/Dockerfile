@@ -10,28 +10,30 @@ RUN apt-get update && apt-get install -y \
     git make gcc perl cmake build-essential \
     autoconf libtool pkg-config libpsl-dev
 
+WORKDIR /
+
 # build nghttp3
 RUN git clone https://github.com/ngtcp2/nghttp3.git && \
     cd nghttp3 && \
     git submodule update --init && \
     autoreconf -i && \
     ./configure --prefix=/usr && \
-    make -j check && \
+    make -j 4 check && \
     make install && \
-    rm -rf nghttp3
+    rm -rf /nghttp3
 
 # download and build openssl 
 RUN git clone https://github.com/openssl/openssl.git && \
     cd openssl && \
     ./Configure enable-fips no-docs --prefix=/usr --openssldir=/etc/pki/tls && \
-    make -j && make install && \
-    rm -rf openssl
+    make -j 4 && make install && \
+    rm -rf /openssl
 
 # Build curl
 RUN git clone https://github.com/curl/curl.git && \
     cd curl && \
     autoreconf -fi && ./configure --with-openssl-quic --with-openssl --with-nghttp3 --prefix=/usr && \
-    make -j && \
+    make -j 4 && \
     make install && \
     rm -rf /curl
 
