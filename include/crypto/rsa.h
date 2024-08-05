@@ -15,7 +15,7 @@
 # include <openssl/rsa.h>
 # include "crypto/types.h"
 
-#define RSA_MIN_MODULUS_BITS    512
+# define RSA_MIN_MODULUS_BITS OPENSSL_RSA_MIN_MODULUS_BITS
 
 typedef struct rsa_pss_params_30_st {
     int hash_algorithm_nid;

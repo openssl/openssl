@@ -136,15 +136,15 @@ unless ($no_fips) {
                 '-out', 'genrsatest3072.pem'])),
        "Generating RSA key with 3072 bits");
 
-   ok(!run(app(['openssl', 'genrsa', @prov, '512'])),
-       "Generating RSA key with 512 bits should fail in FIPS provider");
+   ok(!run(app(['openssl', 'genrsa', @prov, '1024'])),
+       "Generating RSA key with 1024 bits should fail in FIPS provider");
 
    ok(!run(app(['openssl', 'genrsa',
                 @prov,
                 '-provider', 'default',
                 '-propquery', '?fips!=yes',
-                '512'])),
-       "Generating RSA key with 512 bits should succeed with FIPS provider as".
+                '1024'])),
+       "Generating RSA key with 1024 bits should succeed with FIPS provider as".
        " default with a non-FIPS property query");
 
     # We want to know that an absurdly large number of bits fails the RNG check
