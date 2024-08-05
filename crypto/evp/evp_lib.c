@@ -17,6 +17,7 @@
 #include <string.h>
 #include "internal/cryptlib.h"
 #include <openssl/evp.h>
+#include <openssl/x509.h>
 #include <openssl/objects.h>
 #include <openssl/params.h>
 #include <openssl/core_names.h>
@@ -127,37 +128,13 @@ int evp_cipher_param_to_asn1_ex(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
             ret = EVP_CIPHER_set_asn1_iv(c, type);
         }
     } else if (cipher->prov != NULL) {
-        OSSL_PARAM params[3], *p = params;
-        unsigned char *der = NULL, *derp;
+        /* We cheat, there's no need for an object ID for this use */
+        X509_ALGOR alg;
 
-        /*
-         * We make two passes, the first to get the appropriate buffer size,
-         * and the second to get the actual value.
-         */
-        *p++ = OSSL_PARAM_construct_octet_string(
-                       OSSL_CIPHER_PARAM_ALGORITHM_ID_PARAMS,
-                       NULL, 0);
-        *p = OSSL_PARAM_construct_end();
+        alg.algorithm = NULL;
+        alg.parameter = type;
 
-        if (!EVP_CIPHER_CTX_get_params(c, params))
-            goto err;
-
-        /* ... but, we should get a return size too! */
-        if (OSSL_PARAM_modified(params)
-            && params[0].return_size != 0
-            && (der = OPENSSL_malloc(params[0].return_size)) != NULL) {
-            params[0].data = der;
-            params[0].data_size = params[0].return_size;
-            OSSL_PARAM_set_all_unmodified(params);
-            derp = der;
-            if (EVP_CIPHER_CTX_get_params(c, params)
-                && OSSL_PARAM_modified(params)
-                && d2i_ASN1_TYPE(&type, (const unsigned char **)&derp,
-                                 params[0].return_size) != NULL) {
-                ret = 1;
-            }
-            OPENSSL_free(der);
-        }
+        ret = EVP_CIPHER_CTX_get_algor_params(c, &alg);
     } else {
         ret = -2;
     }
@@ -220,20 +197,13 @@ int evp_cipher_asn1_to_param_ex(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
             ret = EVP_CIPHER_get_asn1_iv(c, type) >= 0 ? 1 : -1;
         }
     } else if (cipher->prov != NULL) {
-        OSSL_PARAM params[3], *p = params;
-        unsigned char *der = NULL;
-        int derl = -1;
+        /* We cheat, there's no need for an object ID for this use */
+        X509_ALGOR alg;
 
-        if ((derl = i2d_ASN1_TYPE(type, &der)) >= 0) {
-            *p++ =
-                OSSL_PARAM_construct_octet_string(
-                        OSSL_CIPHER_PARAM_ALGORITHM_ID_PARAMS,
-                        der, (size_t)derl);
-            *p = OSSL_PARAM_construct_end();
-            if (EVP_CIPHER_CTX_set_params(c, params))
-                ret = 1;
-            OPENSSL_free(der);
-        }
+        alg.algorithm = NULL;
+        alg.parameter = type;
+
+        ret = EVP_CIPHER_CTX_set_algor_params(c, &alg);
     } else {
         ret = -2;
     }
@@ -1245,6 +1215,248 @@ EVP_PKEY *EVP_PKEY_Q_keygen(OSSL_LIB_CTX *libctx, const char *propq,
 
  end:
     va_end(args);
+    return ret;
+}
+
+int EVP_CIPHER_CTX_set_algor_params(EVP_CIPHER_CTX *ctx, const X509_ALGOR *alg)
+{
+    int ret = -1;                /* Assume the worst */
+    unsigned char *der = NULL;
+    int derl = -1;
+
+    if ((derl = i2d_ASN1_TYPE(alg->parameter, &der)) >= 0) {
+        const char *k_old = OSSL_CIPHER_PARAM_ALGORITHM_ID_PARAMS_OLD;
+        const char *k_new = OSSL_CIPHER_PARAM_ALGORITHM_ID_PARAMS;
+        OSSL_PARAM params[3];
+
+        /*
+         * Passing the same data with both the old (deprecated) and the
+         * new AlgID parameters OSSL_PARAM key.
+         */
+        params[0] = OSSL_PARAM_construct_octet_string(k_old, der, (size_t)derl);
+        params[1] = OSSL_PARAM_construct_octet_string(k_new, der, (size_t)derl);
+        params[2] = OSSL_PARAM_construct_end();
+        ret = EVP_CIPHER_CTX_set_params(ctx, params);
+    }
+    OPENSSL_free(der);
+    return ret;
+}
+
+int EVP_CIPHER_CTX_get_algor_params(EVP_CIPHER_CTX *ctx, X509_ALGOR *alg)
+{
+    int ret = -1;                /* Assume the worst */
+    unsigned char *der = NULL;
+    size_t derl;
+    ASN1_TYPE *type = NULL;
+    int i = -1;
+    const char *k_old = OSSL_CIPHER_PARAM_ALGORITHM_ID_PARAMS_OLD;
+    const char *k_new = OSSL_CIPHER_PARAM_ALGORITHM_ID_PARAMS;
+    const char *derk;
+    OSSL_PARAM params[3];
+
+    /*
+     * We make two passes, the first to get the appropriate buffer size,
+     * and the second to get the actual value.
+     * Also, using both the old (deprecated) and the new AlgID parameters
+     * OSSL_PARAM key, and using whichever the provider responds to.
+     * Should the provider respond on both, the new key takes priority.
+     */
+    params[0] = OSSL_PARAM_construct_octet_string(k_old, NULL, 0);
+    params[1] = OSSL_PARAM_construct_octet_string(k_new, NULL, 0);
+    params[2] = OSSL_PARAM_construct_end();
+
+    if (!EVP_CIPHER_CTX_get_params(ctx, params))
+        goto err;
+
+    /* ... but, we should get a return size too! */
+    if (OSSL_PARAM_modified(&params[0]) && params[0].return_size != 0)
+        i = 0;
+    if (OSSL_PARAM_modified(&params[1]) && params[1].return_size != 0)
+        i = 1;
+
+    /*
+     * If alg->parameter is non-NULL, it will be changed by d2i_ASN1_TYPE()
+     * below.  If it is NULL, the d2i_ASN1_TYPE() call will allocate new
+     * space for it.  Either way, alg->parameter can be safely assigned
+     * with type after the d2i_ASN1_TYPE() call, with the safety that it
+     * will be ok.
+     */
+    type = alg->parameter;
+
+    derk = params[i].key;
+    derl = params[i].return_size;
+    if (i >= 0 && (der = OPENSSL_malloc(derl)) != NULL) {
+        unsigned char *derp = der;
+
+        params[i] = OSSL_PARAM_construct_octet_string(derk, der, derl);
+        if (EVP_CIPHER_CTX_get_params(ctx, params)
+            && OSSL_PARAM_modified(&params[i])
+            && d2i_ASN1_TYPE(&type, (const unsigned char **)&derp,
+                             (int)derl) != NULL) {
+            /*
+             * Don't free alg->parameter, see comment further up.
+             * Worst case, alg->parameter gets assigned its own value.
+             */
+            alg->parameter = type;
+            ret = 1;
+        }
+    }
+ err:
+    OPENSSL_free(der);
+    return ret;
+}
+
+int EVP_CIPHER_CTX_get_algor(EVP_CIPHER_CTX *ctx, X509_ALGOR **alg)
+{
+    int ret = -1;                /* Assume the worst */
+    OSSL_PARAM params[2];
+    size_t aid_len = 0;
+    const char *k_aid = OSSL_SIGNATURE_PARAM_ALGORITHM_ID;
+
+    params[0] = OSSL_PARAM_construct_octet_string(k_aid, NULL, 0);
+    params[1] = OSSL_PARAM_construct_end();
+
+    if (EVP_CIPHER_CTX_get_params(ctx, params) <= 0)
+        goto err;
+
+    if (OSSL_PARAM_modified(&params[0]))
+        aid_len = params[0].return_size;
+    if (aid_len == 0) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_GETTING_ALGORITHMIDENTIFIER_NOT_SUPPORTED);
+        ret = -2;
+        goto err;
+    }
+    if (alg != NULL) {
+        unsigned char *aid = NULL;
+        const unsigned char *pp = NULL;
+
+        if ((aid = OPENSSL_malloc(aid_len)) != NULL) {
+            params[0] = OSSL_PARAM_construct_octet_string(k_aid, aid, aid_len);
+            pp = aid;
+            if (EVP_CIPHER_CTX_get_params(ctx, params)
+                && OSSL_PARAM_modified(&params[0])
+                && d2i_X509_ALGOR(alg, &pp, aid_len) != NULL)
+                ret = 1;
+        }
+        OPENSSL_free(aid);
+    }
+ err:
+    return ret;
+}
+
+int EVP_PKEY_CTX_set_algor_params(EVP_PKEY_CTX *ctx, const X509_ALGOR *alg)
+{
+    int ret = -1;                /* Assume the worst */
+    unsigned char *der = NULL;
+    int derl = -1;
+
+    if ((derl = i2d_ASN1_TYPE(alg->parameter, &der)) >= 0) {
+        const char *k = OSSL_PKEY_PARAM_ALGORITHM_ID_PARAMS;
+        OSSL_PARAM params[2];
+
+        /*
+         * Passing the same data with both the old (deprecated) and the
+         * new AlgID parameters OSSL_PARAM key.
+         */
+        params[0] = OSSL_PARAM_construct_octet_string(k, der, (size_t)derl);
+        params[1] = OSSL_PARAM_construct_end();
+        ret = EVP_PKEY_CTX_set_params(ctx, params);
+    }
+    OPENSSL_free(der);
+    return ret;
+}
+
+int EVP_PKEY_CTX_get_algor_params(EVP_PKEY_CTX *ctx, X509_ALGOR *alg)
+{
+    int ret = -1;                /* Assume the worst */
+    OSSL_PARAM params[2];
+    unsigned char *der = NULL;
+    size_t derl;
+    ASN1_TYPE *type = NULL;
+    const char *k = OSSL_PKEY_PARAM_ALGORITHM_ID_PARAMS;
+
+    /*
+     * We make two passes, the first to get the appropriate buffer size,
+     * and the second to get the actual value.
+     * Also, using both the old (deprecated) and the new AlgID parameters
+     * OSSL_PARAM key, and using whichever the provider responds to.
+     * Should the provider respond on both, the new key takes priority.
+     */
+    params[0] = OSSL_PARAM_construct_octet_string(k, NULL, 0);
+    params[1] = OSSL_PARAM_construct_end();
+
+    if (!EVP_PKEY_CTX_get_params(ctx, params))
+        goto err;
+
+    /*
+     * If alg->parameter is non-NULL, it will be changed by d2i_ASN1_TYPE()
+     * below.  If it is NULL, the d2i_ASN1_TYPE() call will allocate new
+     * space for it.  Either way, alg->parameter can be safely assigned
+     * with type after the d2i_ASN1_TYPE() call, with the safety that it
+     * will be ok.
+     */
+    type = alg->parameter;
+
+    derl = params[0].return_size;
+    if (OSSL_PARAM_modified(&params[0])
+        /* ... but, we should get a return size too! */
+        && derl != 0
+        && (der = OPENSSL_malloc(derl)) != NULL) {
+        unsigned char *derp = der;
+
+        params[0] = OSSL_PARAM_construct_octet_string(k, der, derl);
+        if (EVP_PKEY_CTX_get_params(ctx, params)
+            && OSSL_PARAM_modified(&params[0])
+            && d2i_ASN1_TYPE(&type, (const unsigned char **)&derp,
+                             derl) != NULL) {
+            /*
+             * Don't free alg->parameter, see comment further up.
+             * Worst case, alg->parameter gets assigned its own value.
+             */
+            alg->parameter = type;
+            ret = 1;
+        }
+    }
+ err:
+    OPENSSL_free(der);
+    return ret;
+}
+
+int EVP_PKEY_CTX_get_algor(EVP_PKEY_CTX *ctx, X509_ALGOR **alg)
+{
+    int ret = -1;                /* Assume the worst */
+    OSSL_PARAM params[2];
+    size_t aid_len = 0;
+    const char *k_aid = OSSL_SIGNATURE_PARAM_ALGORITHM_ID;
+
+    params[0] = OSSL_PARAM_construct_octet_string(k_aid, NULL, 0);
+    params[1] = OSSL_PARAM_construct_end();
+
+    if (EVP_PKEY_CTX_get_params(ctx, params) <= 0)
+        goto err;
+
+    if (OSSL_PARAM_modified(&params[0]))
+        aid_len = params[0].return_size;
+    if (aid_len == 0) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_GETTING_ALGORITHMIDENTIFIER_NOT_SUPPORTED);
+        ret = -2;
+        goto err;
+    }
+    if (alg != NULL) {
+        unsigned char *aid = NULL;
+        const unsigned char *pp = NULL;
+
+        if ((aid = OPENSSL_malloc(aid_len)) != NULL) {
+            params[0] = OSSL_PARAM_construct_octet_string(k_aid, aid, aid_len);
+            pp = aid;
+            if (EVP_PKEY_CTX_get_params(ctx, params)
+                && OSSL_PARAM_modified(&params[0])
+                && d2i_X509_ALGOR(alg, &pp, aid_len) != NULL)
+                ret = 1;
+        }
+        OPENSSL_free(aid);
+    }
+ err:
     return ret;
 }
 
