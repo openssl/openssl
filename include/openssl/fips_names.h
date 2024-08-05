@@ -175,6 +175,14 @@ extern "C" {
 # define OSSL_PROV_FIPS_PARAM_HKDF_KEY_CHECK "hkdf-key-check"
 
 /*
+ * A boolean that determines if the runtime FIPS key check for KBKDF is
+ * performed.
+ * This is disabled by default.
+ * Type: OSSL_PARAM_UTF8_STRING
+ */
+# define OSSL_PROV_FIPS_PARAM_KBKDF_KEY_CHECK "kbkdf-key-check"
+
+/*
  * A boolean that determines if the runtime FIPS key check for TLS13 KDF is
  * performed.
  * This is disabled by default.
