@@ -151,6 +151,10 @@ static int pkey_check_fips_approved(EVP_PKEY_CTX *ctx, EVP_TEST *t)
      */
     int approved = 1;
 
+    /* Older providers dont have a gettable */
+    if (EVP_PKEY_CTX_gettable_params(ctx) == NULL)
+        return 1;
+
     params[0] = OSSL_PARAM_construct_int(OSSL_ALG_PARAM_FIPS_APPROVED_INDICATOR,
                                          &approved);
     if (!EVP_PKEY_CTX_get_params(ctx, params))
