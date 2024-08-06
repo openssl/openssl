@@ -71,6 +71,19 @@ IF[{- !$disabled{asm} -}]
   ENDIF
 ENDIF
 
+IF[{- !$disabled{asm} -}]
+  IF[{- ($target{perlasm_scheme} // '') ne '31' -}]
+    $AESXTSDEF_s390x=AES_XTS_S390X
+  ENDIF
+
+  # Now that we have defined all the arch specific variables, use the
+  # appropriate one, and define the appropriate macros
+
+  IF[$AESXTSDEF_{- $target{asm_arch} -}]
+    $AESXTSDEF=$AESXTSDEF_{- $target{asm_arch} -}
+  ENDIF
+ENDIF
+
 # This source is common building blocks for all ciphers in all our providers.
 SOURCE[$COMMON_GOAL]=\
         ciphercommon.c ciphercommon_hw.c ciphercommon_block.c \
@@ -93,6 +106,7 @@ SOURCE[$AES_GOAL]=\
         cipher_aes_cbc_hmac_sha.c \
         cipher_aes_cbc_hmac_sha256_hw.c cipher_aes_cbc_hmac_sha1_hw.c \
         cipher_cts.c
+DEFINE[$AES_GOAL]=$AESXTSDEF
 
 # Extra code to satisfy the FIPS and non-FIPS separation.
 # When the AES-xxx-XTS moves to legacy, cipher_aes_xts_fips.c can be removed.

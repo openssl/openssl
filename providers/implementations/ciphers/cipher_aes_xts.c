@@ -62,6 +62,10 @@ static int aes_xts_check_keys_differ(const unsigned char *key, size_t bytes,
     return 1;
 }
 
+#ifdef AES_XTS_S390X
+# include "cipher_aes_xts_s390x.inc"
+#endif
+
 /*-
  * Provider dispatch functions
  */
@@ -98,6 +102,10 @@ static int aes_xts_einit(void *vctx, const unsigned char *key, size_t keylen,
                          const unsigned char *iv, size_t ivlen,
                          const OSSL_PARAM params[])
 {
+#ifdef AES_XTS_S390X
+    if (s390x_aes_xts_einit(vctx, key, keylen, iv, ivlen, params) == 1)
+        return 1;
+#endif
     return aes_xts_init(vctx, key, keylen, iv, ivlen, params, 1);
 }
 
@@ -105,6 +113,10 @@ static int aes_xts_dinit(void *vctx, const unsigned char *key, size_t keylen,
                          const unsigned char *iv, size_t ivlen,
                          const OSSL_PARAM params[])
 {
+#ifdef AES_XTS_S390X
+    if (s390x_aes_xts_dinit(vctx, key, keylen, iv, ivlen, params) == 1)
+        return 1;
+#endif
     return aes_xts_init(vctx, key, keylen, iv, ivlen, params, 0);
 }
 
@@ -137,6 +149,11 @@ static void *aes_xts_dupctx(void *vctx)
     if (!ossl_prov_is_running())
         return NULL;
 
+#ifdef AES_XTS_S390X
+    if (in->plat.s390x.fc)
+        return s390x_aes_xts_dupctx(vctx);
+#endif
+
     if (in->xts.key1 != NULL) {
         if (in->xts.key1 != &in->ks1)
             return NULL;
@@ -156,6 +173,11 @@ static int aes_xts_cipher(void *vctx, unsigned char *out, size_t *outl,
                           size_t outsize, const unsigned char *in, size_t inl)
 {
     PROV_AES_XTS_CTX *ctx = (PROV_AES_XTS_CTX *)vctx;
+
+#ifdef AES_XTS_S390X
+    if (ctx->plat.s390x.fc)
+        return s390x_aes_xts_cipher(vctx, out, outl, outsize, in, inl);
+#endif
 
     if (!ossl_prov_is_running()
             || ctx->xts.key1 == NULL
