@@ -1318,3 +1318,12 @@ alt_signature_algorithm		1317
 alt_signature_value		1318
 associated_information		1319
 id_ct_rpkiSignedPrefixList		1320
+aes_128_cbc_hmac_sha1_etm		1321
+aes_192_cbc_hmac_sha1_etm		1322
+aes_256_cbc_hmac_sha1_etm		1323
+aes_128_cbc_hmac_sha256_etm		1324
+aes_192_cbc_hmac_sha256_etm		1325
+aes_256_cbc_hmac_sha256_etm		1326
+aes_128_cbc_hmac_sha512_etm		1327
+aes_192_cbc_hmac_sha512_etm		1328
+aes_256_cbc_hmac_sha512_etm		1329

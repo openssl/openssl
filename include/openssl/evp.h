@@ -356,6 +356,7 @@ OSSL_DEPRECATEDIN_3_0 int
 /* For supplementary wrap cipher support */
 # define         EVP_CIPH_FLAG_GET_WRAP_CIPHER   0x4000000
 # define         EVP_CIPH_FLAG_INVERSE_CIPHER    0x8000000
+# define         EVP_CIPH_FLAG_ENC_THEN_MAC      0x10000000
 
 /*
  * Cipher context flag to indicate we can handle wrap mode: if allowed in
@@ -1069,6 +1070,15 @@ const EVP_CIPHER *EVP_aes_128_cbc_hmac_sha1(void);
 const EVP_CIPHER *EVP_aes_256_cbc_hmac_sha1(void);
 const EVP_CIPHER *EVP_aes_128_cbc_hmac_sha256(void);
 const EVP_CIPHER *EVP_aes_256_cbc_hmac_sha256(void);
+const EVP_CIPHER *EVP_aes_128_cbc_hmac_sha1_etm(void);
+const EVP_CIPHER *EVP_aes_192_cbc_hmac_sha1_etm(void);
+const EVP_CIPHER *EVP_aes_256_cbc_hmac_sha1_etm(void);
+const EVP_CIPHER *EVP_aes_128_cbc_hmac_sha256_etm(void);
+const EVP_CIPHER *EVP_aes_192_cbc_hmac_sha256_etm(void);
+const EVP_CIPHER *EVP_aes_256_cbc_hmac_sha256_etm(void);
+const EVP_CIPHER *EVP_aes_128_cbc_hmac_sha512_etm(void);
+const EVP_CIPHER *EVP_aes_192_cbc_hmac_sha512_etm(void);
+const EVP_CIPHER *EVP_aes_256_cbc_hmac_sha512_etm(void);
 # ifndef OPENSSL_NO_ARIA
 const EVP_CIPHER *EVP_aria_128_ecb(void);
 const EVP_CIPHER *EVP_aria_128_cbc(void);
