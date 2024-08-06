@@ -1024,10 +1024,10 @@ int create_test_sockets(int *cfdp, int *sfdp, int socktype, BIO_ADDR *saddr)
     if (afd == INVALID_SOCKET)
         return 0;
 
-    if (bind(afd, (struct sockaddr*)&sin, sizeof(sin)) < 0)
+    if (bind(afd, (struct sockaddr *)&sin, sizeof(sin)) < 0)
         goto out;
 
-    if (getsockname(afd, (struct sockaddr*)&sin, &slen) < 0)
+    if (getsockname(afd, (struct sockaddr *)&sin, &slen) < 0)
         goto out;
 
     if (saddr != NULL
@@ -1061,7 +1061,7 @@ int create_test_sockets(int *cfdp, int *sfdp, int socktype, BIO_ADDR *saddr)
         if (sfd == -1 && errno != EAGAIN)
             goto out;
 
-        if (!cfd_connected && connect(cfd, (struct sockaddr*)&sin, sizeof(sin)) < 0)
+        if (!cfd_connected && connect(cfd, (struct sockaddr *)&sin, sizeof(sin)) < 0)
             goto out;
         else
             cfd_connected = 1;

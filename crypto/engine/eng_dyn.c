@@ -317,7 +317,7 @@ static int dynamic_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
             ctx->DYNAMIC_LIBNAME = OPENSSL_strdup(p);
         else
             ctx->DYNAMIC_LIBNAME = NULL;
-        return (ctx->DYNAMIC_LIBNAME ? 1 : 0);
+        return ctx->DYNAMIC_LIBNAME ? 1 : 0;
     case DYNAMIC_CMD_NO_VCHECK:
         ctx->no_vcheck = ((i == 0) ? 0 : 1);
         return 1;
@@ -330,7 +330,7 @@ static int dynamic_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
             ctx->engine_id = OPENSSL_strdup(p);
         else
             ctx->engine_id = NULL;
-        return (ctx->engine_id ? 1 : 0);
+        return ctx->engine_id ? 1 : 0;
     case DYNAMIC_CMD_LIST_ADD:
         if ((i < 0) || (i > 2)) {
             ERR_raise(ERR_LIB_ENGINE, ENGINE_R_INVALID_ARGUMENT);

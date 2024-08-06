@@ -1274,18 +1274,18 @@ int EVP_PKEY_CTX_set_kem_op(EVP_PKEY_CTX *ctx, const char *op)
 int EVP_PKEY_CTX_set1_id(EVP_PKEY_CTX *ctx, const void *id, int len)
 {
     return EVP_PKEY_CTX_ctrl(ctx, -1, -1,
-                             EVP_PKEY_CTRL_SET1_ID, (int)len, (void*)(id));
+                             EVP_PKEY_CTRL_SET1_ID, (int)len, (void *)(id));
 }
 
 int EVP_PKEY_CTX_get1_id(EVP_PKEY_CTX *ctx, void *id)
 {
-    return EVP_PKEY_CTX_ctrl(ctx, -1, -1, EVP_PKEY_CTRL_GET1_ID, 0, (void*)id);
+    return EVP_PKEY_CTX_ctrl(ctx, -1, -1, EVP_PKEY_CTRL_GET1_ID, 0, (void *)id);
 }
 
 int EVP_PKEY_CTX_get1_id_len(EVP_PKEY_CTX *ctx, size_t *id_len)
 {
     return EVP_PKEY_CTX_ctrl(ctx, -1, -1,
-                             EVP_PKEY_CTRL_GET1_ID_LEN, 0, (void*)id_len);
+                             EVP_PKEY_CTRL_GET1_ID_LEN, 0, (void *)id_len);
 }
 
 static int evp_pkey_ctx_ctrl_int(EVP_PKEY_CTX *ctx, int keytype, int optype,

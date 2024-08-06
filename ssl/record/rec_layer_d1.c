@@ -680,7 +680,8 @@ void dtls1_increment_epoch(SSL_CONNECTION *s, int rw)
     }
 }
 
-uint16_t dtls1_get_epoch(SSL_CONNECTION *s, int rw) {
+uint16_t dtls1_get_epoch(SSL_CONNECTION *s, int rw)
+{
     uint16_t epoch;
 
     if (rw & SSL3_CC_READ)

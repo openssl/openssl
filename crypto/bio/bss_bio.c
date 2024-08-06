@@ -180,8 +180,7 @@ static int bio_read(BIO *bio, char *buf, int size_)
             peer_b->offset = 0;
         }
         rest -= chunk;
-    }
-    while (rest);
+    } while (rest);
 
     return size;
 }
@@ -329,8 +328,7 @@ static int bio_write(BIO *bio, const char *buf, int num_)
 
         rest -= chunk;
         buf += chunk;
-    }
-    while (rest);
+    } while (rest);
 
     return num;
 }

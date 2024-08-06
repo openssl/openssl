@@ -6355,7 +6355,7 @@ static int serverinfo_custom_parse_cb(SSL *s, unsigned int ext_type,
 {
     const size_t len = serverinfo_custom_v1_len;
     const unsigned char *si = &serverinfo_custom_v1[len - 3];
-    int *p_cb_result = (int*)parse_arg;
+    int *p_cb_result = (int *)parse_arg;
     *p_cb_result = TEST_mem_eq(in, inlen, si, 3);
     return 1;
 }
@@ -9213,8 +9213,7 @@ static int test_ca_names(int tst)
 }
 
 #ifndef OPENSSL_NO_TLS1_2
-static const char *multiblock_cipherlist_data[]=
-{
+static const char *multiblock_cipherlist_data[] = {
     "AES128-SHA",
     "AES128-SHA256",
     "AES256-SHA",

@@ -291,7 +291,7 @@ ASN1_TIME *ossl_asn1_time_from_tm(ASN1_TIME *s, struct tm *ts, int type)
         goto err;
 
     tmps->type = type;
-    p = (char*)tmps->data;
+    p = (char *)tmps->data;
 
     if (ts->tm_mon > INT_MAX - 1)
         goto err;

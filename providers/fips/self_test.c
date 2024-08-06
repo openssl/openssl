@@ -135,12 +135,14 @@ void _cleanup(void)
 
 #elif defined(__TANDEM)
 /* Method automatically called by the NonStop OS when the DLL loads */
-void __INIT__init(void) {
+void __INIT__init(void)
+{
     init();
 }
 
 /* Method automatically called by the NonStop OS prior to unloading the DLL */
-void __TERM__cleanup(void) {
+void __TERM__cleanup(void)
+{
     cleanup();
 }
 

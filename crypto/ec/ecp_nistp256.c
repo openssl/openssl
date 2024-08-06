@@ -248,8 +248,7 @@ static void longfelem_scalar(longfelem out, const u64 scalar)
 #define two105m41p9 (((limb)1) << 105) - (((limb)1) << 41) + (((limb)1) << 9)
 
 /* zero105 is 0 mod p */
-static const felem zero105 =
-    { two105m41m9, two105, two105m41p9, two105m41p9 };
+static const felem zero105 = { two105m41m9, two105, two105m41p9, two105m41p9 };
 
 /*-
  * smallfelem_neg sets |out| to |-small|
@@ -717,8 +716,7 @@ static void felem_small_mul(longfelem out, const smallfelem small1,
 #define two100 (((limb)1) << 100)
 #define two100m36p4 (((limb)1) << 100) - (((limb)1) << 36) + (((limb)1) << 4)
 /* zero100 is 0 mod p */
-static const felem zero100 =
-    { two100m36m4, two100, two100m36p4, two100m36p4 };
+static const felem zero100 = { two100m36m4, two100, two100m36p4, two100m36p4 };
 
 /*-
  * Internal function for the different flavours of felem_reduce.

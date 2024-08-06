@@ -533,7 +533,7 @@ static int ocb_finish(OCB128_CONTEXT *ctx, unsigned char *tag, size_t len,
 int CRYPTO_ocb128_finish(OCB128_CONTEXT *ctx, const unsigned char *tag,
                          size_t len)
 {
-    return ocb_finish(ctx, (unsigned char*)tag, len, 0);
+    return ocb_finish(ctx, (unsigned char *)tag, len, 0);
 }
 
 /*

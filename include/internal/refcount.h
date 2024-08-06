@@ -229,7 +229,7 @@ static ossl_unused ossl_inline int CRYPTO_NEW_REF(CRYPTO_REF_COUNT *refcnt, int 
     return 1;
 }
 
-static ossl_unused ossl_inline void CRYPTO_FREE_REF(CRYPTO_REF_COUNT *refcnt)                                  \
+static ossl_unused ossl_inline void CRYPTO_FREE_REF(CRYPTO_REF_COUNT *refcnt)
 {
     if (refcnt != NULL)
         CRYPTO_THREAD_lock_free(refcnt->lock);
@@ -270,7 +270,7 @@ static ossl_unused ossl_inline int CRYPTO_NEW_REF(CRYPTO_REF_COUNT *refcnt, int 
     return 1;
 }
 
-static ossl_unused ossl_inline void CRYPTO_FREE_REF(CRYPTO_REF_COUNT *refcnt)                                  \
+static ossl_unused ossl_inline void CRYPTO_FREE_REF(CRYPTO_REF_COUNT *refcnt)
 {
 }
 # endif /* CRYPTO_NEW_FREE_DEFINED */

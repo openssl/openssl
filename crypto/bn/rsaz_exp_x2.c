@@ -384,7 +384,7 @@ int RSAZ_mod_exp_x2_ifma256(BN_ULONG *out,
      */
     red_X[0 * red_digits] = 1;
     red_X[1 * red_digits] = 1;
-    damm(&red_table[0 * 2 * red_digits], (const BN_ULONG*)red_X, rr, m, k0);
+    damm(&red_table[0 * 2 * red_digits], (const BN_ULONG *)red_X, rr, m, k0);
     damm(&red_table[1 * 2 * red_digits], base,  rr, m, k0);
 
     for (idx = 1; idx < (int)((1U << exp_win_size) / 2); idx++) {
@@ -433,7 +433,7 @@ int RSAZ_mod_exp_x2_ifma256(BN_ULONG *out,
         red_table_idx_0 >>= exp_chunk_shift;
         red_table_idx_1 >>= exp_chunk_shift;
 
-        extract(&red_Y[0 * red_digits], (const BN_ULONG*)red_table, (int)red_table_idx_0, (int)red_table_idx_1);
+        extract(&red_Y[0 * red_digits], (const BN_ULONG *)red_table, (int)red_table_idx_0, (int)red_table_idx_1);
 
         /* Process other exp windows */
         for (exp_bit_no -= exp_win_size; exp_bit_no >= 0; exp_bit_no -= exp_win_size) {
@@ -474,17 +474,17 @@ int RSAZ_mod_exp_x2_ifma256(BN_ULONG *out,
                     red_table_idx_1 &= table_idx_mask;
                 }
 
-                extract(&red_X[0 * red_digits], (const BN_ULONG*)red_table, (int)red_table_idx_0, (int)red_table_idx_1);
+                extract(&red_X[0 * red_digits], (const BN_ULONG *)red_table, (int)red_table_idx_0, (int)red_table_idx_1);
             }
 
             /* Series of squaring */
-            DAMS((BN_ULONG*)red_Y, (const BN_ULONG*)red_Y, m, k0);
-            DAMS((BN_ULONG*)red_Y, (const BN_ULONG*)red_Y, m, k0);
-            DAMS((BN_ULONG*)red_Y, (const BN_ULONG*)red_Y, m, k0);
-            DAMS((BN_ULONG*)red_Y, (const BN_ULONG*)red_Y, m, k0);
-            DAMS((BN_ULONG*)red_Y, (const BN_ULONG*)red_Y, m, k0);
+            DAMS((BN_ULONG *)red_Y, (const BN_ULONG *)red_Y, m, k0);
+            DAMS((BN_ULONG *)red_Y, (const BN_ULONG *)red_Y, m, k0);
+            DAMS((BN_ULONG *)red_Y, (const BN_ULONG *)red_Y, m, k0);
+            DAMS((BN_ULONG *)red_Y, (const BN_ULONG *)red_Y, m, k0);
+            DAMS((BN_ULONG *)red_Y, (const BN_ULONG *)red_Y, m, k0);
 
-            damm((BN_ULONG*)red_Y, (const BN_ULONG*)red_Y, (const BN_ULONG*)red_X, m, k0);
+            damm((BN_ULONG *)red_Y, (const BN_ULONG *)red_Y, (const BN_ULONG *)red_X, m, k0);
         }
     }
 
@@ -503,7 +503,7 @@ int RSAZ_mod_exp_x2_ifma256(BN_ULONG *out,
     memset(red_X, 0, 2 * red_digits * sizeof(BN_ULONG));
     red_X[0 * red_digits] = 1;
     red_X[1 * red_digits] = 1;
-    damm(out, (const BN_ULONG*)red_Y, (const BN_ULONG*)red_X, m, k0);
+    damm(out, (const BN_ULONG *)red_Y, (const BN_ULONG *)red_X, m, k0);
 
     ret = 1;
 

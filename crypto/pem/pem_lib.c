@@ -284,14 +284,16 @@ static int pem_bytes_read_bio_flags(unsigned char **pdata, long *plen,
 
 int PEM_bytes_read_bio(unsigned char **pdata, long *plen, char **pnm,
                        const char *name, BIO *bp, pem_password_cb *cb,
-                       void *u) {
+                       void *u)
+{
     return pem_bytes_read_bio_flags(pdata, plen, pnm, name, bp, cb, u,
                                     PEM_FLAG_EAY_COMPATIBLE);
 }
 
 int PEM_bytes_read_bio_secmem(unsigned char **pdata, long *plen, char **pnm,
                               const char *name, BIO *bp, pem_password_cb *cb,
-                              void *u) {
+                              void *u)
+{
     return pem_bytes_read_bio_flags(pdata, plen, pnm, name, bp, cb, u,
                                     PEM_FLAG_SECURE | PEM_FLAG_EAY_COMPATIBLE);
 }
@@ -967,9 +969,9 @@ int PEM_read_bio_ex(BIO *bp, char **name_out, char **header,
     }
 
     EVP_DecodeInit(ctx);
-    if (EVP_DecodeUpdate(ctx, (unsigned char*)buf_mem->data, &len,
-                         (unsigned char*)buf_mem->data, len) < 0
-            || EVP_DecodeFinal(ctx, (unsigned char*)&(buf_mem->data[len]),
+    if (EVP_DecodeUpdate(ctx, (unsigned char *)buf_mem->data, &len,
+                         (unsigned char *)buf_mem->data, len) < 0
+            || EVP_DecodeFinal(ctx, (unsigned char *)&(buf_mem->data[len]),
                                &taillen) < 0) {
         ERR_raise(ERR_LIB_PEM, PEM_R_BAD_BASE64_DECODE);
         goto end;

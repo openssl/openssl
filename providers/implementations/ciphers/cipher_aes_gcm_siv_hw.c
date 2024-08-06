@@ -173,7 +173,7 @@ static int aes_gcm_siv_encrypt(PROV_AES_GCM_SIV_CTX *ctx, const unsigned char *i
         len_blk[1] = GSWAP8((uint64_t)len * 8);
     }
     memset(S_s, 0, TAG_SIZE);
-    ossl_polyval_ghash_init(ctx->Htable, (const uint64_t*)ctx->msg_auth_key);
+    ossl_polyval_ghash_init(ctx->Htable, (const uint64_t *)ctx->msg_auth_key);
 
     if (ctx->aad != NULL) {
         /* AAD is allocated with padding, but need to adjust length */
@@ -239,7 +239,7 @@ static int aes_gcm_siv_decrypt(PROV_AES_GCM_SIV_CTX *ctx, const unsigned char *i
         len_blk[1] = GSWAP8((uint64_t)len * 8);
     }
     memset(S_s, 0, TAG_SIZE);
-    ossl_polyval_ghash_init(ctx->Htable, (const uint64_t*)ctx->msg_auth_key);
+    ossl_polyval_ghash_init(ctx->Htable, (const uint64_t *)ctx->msg_auth_key);
     if (ctx->aad != NULL) {
         /* AAD allocated with padding, but need to adjust length */
         ossl_polyval_ghash_hash(ctx->Htable, S_s, ctx->aad, UP16(ctx->aad_len));
@@ -354,7 +354,7 @@ static int aes_gcm_siv_ctr32(PROV_AES_GCM_SIV_CTX *ctx, const unsigned char *ini
 
     for (i = 0; i < len; i += sizeof(block)) {
         out_len = BLOCK_SIZE;
-        error |= !EVP_EncryptUpdate(ctx->ecb_ctx, keystream, &out_len, (uint8_t*)&block, sizeof(block));
+        error |= !EVP_EncryptUpdate(ctx->ecb_ctx, keystream, &out_len, (uint8_t *)&block, sizeof(block));
         if (IS_LITTLE_ENDIAN) {
             block.x32[0]++;
         } else {

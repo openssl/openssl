@@ -136,7 +136,7 @@ err:
 
 static int pkcs12_create_cb(PKCS12_SAFEBAG *bag, void *cbarg)
 {
-    int cb_ret = *((int*)cbarg);
+    int cb_ret = *((int *)cbarg);
     return cb_ret;
 }
 
@@ -188,7 +188,7 @@ static int pkcs12_create_ex2_test(int test)
                                 cert, NULL, NID_undef, NID_undef,
                                 0, 0, 0,
                                 testctx, NULL,
-                                pkcs12_create_cb, (void*)&cb_ret);
+                                pkcs12_create_cb, (void *)&cb_ret);
         /* PKCS12 successfully created */
         if (!TEST_ptr(ptr))
             goto err;
@@ -199,7 +199,7 @@ static int pkcs12_create_ex2_test(int test)
                                 cert, NULL, NID_undef, NID_undef,
                                 0, 0, 0,
                                 testctx, NULL,
-                                pkcs12_create_cb, (void*)&cb_ret);
+                                pkcs12_create_cb, (void *)&cb_ret);
         /* PKCS12 not created */
        if (TEST_ptr(ptr))
             goto err;
@@ -210,7 +210,7 @@ static int pkcs12_create_ex2_test(int test)
                                 cert, NULL, NID_undef, NID_undef,
                                 0, 0, 0,
                                 testctx, NULL,
-                                pkcs12_create_cb, (void*)&cb_ret);
+                                pkcs12_create_cb, (void *)&cb_ret);
         /* PKCS12 successfully created */
         if (!TEST_ptr(ptr))
             goto err;

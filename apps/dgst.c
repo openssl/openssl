@@ -541,7 +541,7 @@ static const char *newline_escape_filename(const char *file, int *backslash)
         e++;
     }
     file_cpy[i] = '\0';
-    return (const char*)file_cpy;
+    return (const char *)file_cpy;
 }
 
 

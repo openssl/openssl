@@ -481,7 +481,7 @@ int ssl_cipher_get_evp_md_mac(SSL_CTX *ctx, const SSL_CIPHER *sslc,
     } else {
         const EVP_MD *digest = ctx->ssl_digest_methods[i];
 
-        if (digest == NULL || !ssl_evp_md_up_ref(digest)) 
+        if (digest == NULL || !ssl_evp_md_up_ref(digest))
             return 0;
 
         *md = digest;
@@ -2131,7 +2131,8 @@ int SSL_CIPHER_get_auth_nid(const SSL_CIPHER *c)
     return ssl_cipher_table_auth[i].nid;
 }
 
-int ssl_get_md_idx(int md_nid) {
+int ssl_get_md_idx(int md_nid)
+{
     int i;
 
     for(i = 0; i < SSL_MD_NUM_IDX; i++) {

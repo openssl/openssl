@@ -92,7 +92,7 @@ void gcm_ghash_p8(u64 Xi[2],const u128 Htable[16],const u8 *inp, size_t len);
 #   endif /* OPENSSL_SYS_AIX || OPENSSL_SYS_MACOSX */
 #  endif /* PPC */
 
-#  if (defined(__arm__) || defined(__arm) || defined(__aarch64__) || defined(_M_ARM64)) 
+#  if (defined(__arm__) || defined(__arm) || defined(__aarch64__) || defined(_M_ARM64))
 #   include "arm_arch.h"
 #   if __ARM_MAX_ARCH__>=7
 #    if defined(BSAES_ASM)

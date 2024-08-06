@@ -292,8 +292,8 @@ struct servent *getservbyname(const char *name, const char *proto);
 # if defined(__TANDEM) && defined(_GUARDIAN_TARGET)
 #  include <strings.h>
 #  include <netdb.h>
-#  define getservbyname(name,proto)          getservbyname((char*)name,proto)
-#  define gethostbyname(name)                gethostbyname((char*)name)
+#  define getservbyname(name,proto)          getservbyname((char *)name,proto)
+#  define gethostbyname(name)                gethostbyname((char *)name)
 #  define ioctlsocket(a,b,c)	ioctl(a,b,c)
 #  ifdef NO_GETPID
 inline int nssgetpid(void);

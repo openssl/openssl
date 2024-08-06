@@ -481,7 +481,8 @@ int NAME_CONSTRAINTS_check_CN(X509 *x, NAME_CONSTRAINTS *nc)
  * Return nonzero if the GeneralSubtree has valid 'minimum' field
  * (must be absent or 0) and valid 'maximum' field (must be absent).
  */
-static int nc_minmax_valid(GENERAL_SUBTREE *sub) {
+static int nc_minmax_valid(GENERAL_SUBTREE *sub)
+{
     BIGNUM *bn = NULL;
     int ok = 1;
 

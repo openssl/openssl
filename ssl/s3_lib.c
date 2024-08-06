@@ -3967,7 +3967,7 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
         return 1;
 
     case SSL_CTRL_GET_TLSEXT_STATUS_REQ_CB_ARG:
-        *(void**)parg = ctx->ext.status_arg;
+        *(void **)parg = ctx->ext.status_arg;
         break;
 
     case SSL_CTRL_GET_TLSEXT_STATUS_REQ_CB:
@@ -5104,7 +5104,8 @@ const char *SSL_get0_group_name(SSL *s)
     return tls1_group_id2name(s->ctx, id);
 }
 
-const char *SSL_group_to_name(SSL *s, int nid) {
+const char *SSL_group_to_name(SSL *s, int nid)
+{
     int group_id = 0;
     const TLS_GROUP_INFO *cinf = NULL;
 

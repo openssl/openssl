@@ -717,7 +717,7 @@ static int do_print_item(const TEST_PACKAGE *package)
     if ((o = OPENSSL_malloc(DATA_BUF_SIZE)) == NULL)
         return 0;
 
-    (void)RAND_bytes((unsigned char*)o,
+    (void)RAND_bytes((unsigned char *)o,
                      (int)package->encode_expectations_elem_size);
     ret = ASN1_item_print(bio_err, o, 0, i, NULL);
     OPENSSL_free(o);

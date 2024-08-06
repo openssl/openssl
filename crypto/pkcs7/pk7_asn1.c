@@ -83,7 +83,7 @@ PKCS7 *d2i_PKCS7(PKCS7 **a, const unsigned char **in, long len)
 
 int i2d_PKCS7(const PKCS7 *a, unsigned char **out)
 {
-    return ASN1_item_i2d((const ASN1_VALUE *)a, out, (PKCS7_it()));\
+    return ASN1_item_i2d((const ASN1_VALUE *)a, out, (PKCS7_it()));
 }
 
 PKCS7 *PKCS7_new(void)

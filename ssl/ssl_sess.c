@@ -1326,7 +1326,7 @@ static void SSL_SESSION_list_add(SSL_CTX *ctx, SSL_SESSION *s)
              * one session in the cache it will be caught above
              */
             next = ctx->session_cache_head->next;
-            while (next != (SSL_SESSION*)&(ctx->session_cache_tail)) {
+            while (next != (SSL_SESSION *)&(ctx->session_cache_tail)) {
                 if (timeoutcmp(s, next) >= 0) {
                     s->next = next;
                     s->prev = next->prev;

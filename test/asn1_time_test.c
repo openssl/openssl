@@ -153,7 +153,7 @@ static struct testdata tbl_testdata_neg_64bit[] = {
 static ASN1_TIME gtime = {
     15,
     V_ASN1_GENERALIZEDTIME,
-    (unsigned char*)"19991231000000Z",
+    (unsigned char *)"19991231000000Z",
     0
 };
 static time_t gtime_t = 946598400;
@@ -166,8 +166,8 @@ static int test_table(struct testdata *tbl, int idx)
     struct testdata *td = &tbl[idx];
     int day, sec;
 
-    atime.data = (unsigned char*)td->data;
-    atime.length = strlen((char*)atime.data);
+    atime.data = (unsigned char *)td->data;
+    atime.length = strlen((char *)atime.data);
     atime.type = td->type;
     atime.flags = 0;
 

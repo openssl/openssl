@@ -515,7 +515,8 @@ static void wait_cleanup(ASYNC_WAIT_CTX *ctx, const void *key,
 
 #define DUMMY_CHAR 'X'
 
-static void dummy_pause_job(void) {
+static void dummy_pause_job(void)
+{
     ASYNC_JOB *job;
     ASYNC_WAIT_CTX *waitctx;
     ASYNC_callback_fn callback;

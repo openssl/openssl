@@ -216,7 +216,7 @@ static const struct {
     const unsigned char *param_bin;
     size_t param_bin_len;
     struct pubkey keys[NUM_KEYS];
-} pkey_params [] = {
+} pkey_params[] = {
 # ifndef OPENSSL_NO_DH
     { EVP_PKEY_DH, dhparam_bin, sizeof(dhparam_bin),
         { { 0, dhkey_1, sizeof(dhkey_1) },

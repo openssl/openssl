@@ -606,7 +606,7 @@ static void do_mt_hash_work(void)
             }
             if (expected_rc == 1) {
                 expected_m->in_table = 0;
-                CRYPTO_atomic_add(&expected_m->pending_delete, 1, &ret, worker_lock); 
+                CRYPTO_atomic_add(&expected_m->pending_delete, 1, &ret, worker_lock);
             }
             ossl_ht_write_unlock(m_ht);
             if (worker_exits[num] != NULL)

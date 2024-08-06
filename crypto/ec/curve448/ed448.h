@@ -40,8 +40,8 @@
 c448_error_t
 ossl_c448_ed448_derive_public_key(
                               OSSL_LIB_CTX *ctx,
-                              uint8_t pubkey [EDDSA_448_PUBLIC_BYTES],
-                              const uint8_t privkey [EDDSA_448_PRIVATE_BYTES],
+                              uint8_t pubkey[EDDSA_448_PUBLIC_BYTES],
+                              const uint8_t privkey[EDDSA_448_PRIVATE_BYTES],
                               const char *propq);
 
 /*
@@ -178,7 +178,7 @@ ossl_c448_ed448_verify_prehash(
  */
 void
 ossl_curve448_point_mul_by_ratio_and_encode_like_eddsa(
-                                    uint8_t enc [EDDSA_448_PUBLIC_BYTES],
+                                    uint8_t enc[EDDSA_448_PUBLIC_BYTES],
                                     const curve448_point_t p);
 
 /*

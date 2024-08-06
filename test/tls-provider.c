@@ -415,7 +415,7 @@ static int tls_prov_get_capabilities(void *provctx, const char *capability,
             dummygroup[0].data_size = strlen(dummy_group_names[i]) + 1;
             /* assign unique group IDs also to dummy groups for registration */
             dummygroup_id = 65279 - NUM_DUMMY_GROUPS + i;
-            dummygroup[3].data = (unsigned char*)&dummygroup_id;
+            dummygroup[3].data = (unsigned char *)&dummygroup_id;
             ret &= cb(dummygroup, arg);
         }
     }
@@ -860,7 +860,8 @@ static void *xor_load(const void *reference, size_t reference_sz)
 }
 
 /* check one key is the "XOR complement" of the other */
-static int xor_recreate(const unsigned char *kd1, const unsigned char *kd2) {
+static int xor_recreate(const unsigned char *kd1, const unsigned char *kd2)
+{
     int i;
 
     for (i = 0; i < XOR_KEY_SIZE; i++) {
@@ -1631,7 +1632,7 @@ static int prepare_xorx_params(const void *xorxkey, int nid, int save,
                              void **pstr, int *pstrtype)
 {
     ASN1_OBJECT *params = NULL;
-    XORKEY *k = (XORKEY*)xorxkey;
+    XORKEY *k = (XORKEY *)xorxkey;
 
     if (k->tls_name && OBJ_sn2nid(k->tls_name) != nid) {
         ERR_raise(ERR_LIB_USER, XORPROV_R_INVALID_KEY);
@@ -2608,7 +2609,8 @@ static OSSL_FUNC_signature_gettable_ctx_md_params_fn xor_sig_gettable_ctx_md_par
 static OSSL_FUNC_signature_set_ctx_md_params_fn xor_sig_set_ctx_md_params;
 static OSSL_FUNC_signature_settable_ctx_md_params_fn xor_sig_settable_ctx_md_params;
 
-static int xor_get_aid(unsigned char** oidbuf, const char *tls_name) {
+static int xor_get_aid(unsigned char** oidbuf, const char *tls_name)
+{
    X509_ALGOR *algor = X509_ALGOR_new();
    int aidlen = 0;
 
@@ -2616,7 +2618,7 @@ static int xor_get_aid(unsigned char** oidbuf, const char *tls_name) {
 
    aidlen = i2d_X509_ALGOR(algor, oidbuf);
    X509_ALGOR_free(algor);
-   return(aidlen);
+   return aidlen;
 }
 
 /*
@@ -2655,7 +2657,7 @@ static void *xor_sig_newctx(void *provctx, const char *propq)
     if (pxor_sigctx == NULL)
         return NULL;
 
-    pxor_sigctx->libctx = ((PROV_XOR_CTX*)provctx)->libctx;
+    pxor_sigctx->libctx = ((PROV_XOR_CTX *)provctx)->libctx;
     pxor_sigctx->flag_allow_md = 0;
     if (propq != NULL && (pxor_sigctx->propq = OPENSSL_strdup(propq)) == NULL) {
         OPENSSL_free(pxor_sigctx);
@@ -3159,7 +3161,7 @@ static const OSSL_ALGORITHM *tls_prov_query(void *provctx, int operation_id,
 static void tls_prov_teardown(void *provctx)
 {
     int i;
-    PROV_XOR_CTX *pctx = (PROV_XOR_CTX*)provctx;
+    PROV_XOR_CTX *pctx = (PROV_XOR_CTX *)provctx;
 
     OSSL_LIB_CTX_free(pctx->libctx);
 

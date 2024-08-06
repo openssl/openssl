@@ -1019,8 +1019,7 @@ static int char2_field_tests(void)
         if (!TEST_true(EC_POINT_copy(R, P))
             || !TEST_true(EC_POINT_add(group, P, P, Q, ctx)))
             goto err;
-    }
-    while (!EC_POINT_is_at_infinity(group, P));
+    } while (!EC_POINT_is_at_infinity(group, P));
 
     if (!TEST_true(EC_POINT_add(group, P, Q, R, ctx))
         || !TEST_true(EC_POINT_is_at_infinity(group, P)))

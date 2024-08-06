@@ -75,7 +75,8 @@ static int print_hex(BIO *out, unsigned char *buf, int len)
     return result;
 }
 
-static int print_oid(BIO *out, const ASN1_OBJECT *oid) {
+static int print_oid(BIO *out, const ASN1_OBJECT *oid)
+{
     const char *ln;
     char objbuf[80];
     int rc;
@@ -123,7 +124,7 @@ int ossl_print_attribute_value(BIO *out,
          */
         value = av->value.sequence->data;
         xn = d2i_X509_NAME(NULL,
-                           (const unsigned char**)&value,
+                           (const unsigned char **)&value,
                            av->value.sequence->length);
         if (xn == NULL) {
             BIO_puts(out, "(COULD NOT DECODE DISTINGUISHED NAME)\n");
@@ -176,7 +177,7 @@ int ossl_print_attribute_value(BIO *out,
         if (BIO_printf(out, "%*s", indent, "") < 0)
             return 0;
         return print_oid(out, av->value.object);
-    
+
     /*
      * ObjectDescriptor is an IMPLICIT GraphicString, but GeneralString is a
      * superset supported by OpenSSL, so we will use that anywhere a

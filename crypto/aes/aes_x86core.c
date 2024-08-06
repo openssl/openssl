@@ -78,7 +78,7 @@ static void prefetch256(const void *table)
 #endif
 
 #undef GETU32
-#define GETU32(p) (*((u32*)(p)))
+#define GETU32(p) (*((u32 *)(p)))
 
 #if (defined(_WIN32) || defined(_WIN64)) && !defined(__MINGW32__)
 #define U64(C)  C##UI64
@@ -112,10 +112,10 @@ Te1[x] = S [x].[03, 02, 01, 01];
 Te2[x] = S [x].[01, 03, 02, 01];
 Te3[x] = S [x].[01, 01, 03, 02];
 */
-#define Te0 (u32)((u64*)((u8*)Te+0))
-#define Te1 (u32)((u64*)((u8*)Te+3))
-#define Te2 (u32)((u64*)((u8*)Te+2))
-#define Te3 (u32)((u64*)((u8*)Te+1))
+#define Te0 (u32)((u64 *)((u8 *)Te+0))
+#define Te1 (u32)((u64 *)((u8 *)Te+3))
+#define Te2 (u32)((u64 *)((u8 *)Te+2))
+#define Te3 (u32)((u64 *)((u8 *)Te+1))
 /*-
 Td [x] = Si[x].[0e, 09, 0d, 0b, 0e, 09, 0d, 0b];
 Td0[x] = Si[x].[0e, 09, 0d, 0b];
@@ -124,10 +124,10 @@ Td2[x] = Si[x].[0d, 0b, 0e, 09];
 Td3[x] = Si[x].[09, 0d, 0b, 0e];
 Td4[x] = Si[x].[01];
 */
-#define Td0 (u32)((u64*)((u8*)Td+0))
-#define Td1 (u32)((u64*)((u8*)Td+3))
-#define Td2 (u32)((u64*)((u8*)Td+2))
-#define Td3 (u32)((u64*)((u8*)Td+1))
+#define Td0 (u32)((u64 *)((u8 *)Td+0))
+#define Td1 (u32)((u64 *)((u8 *)Td+3))
+#define Td2 (u32)((u64 *)((u8 *)Td+2))
+#define Td3 (u32)((u64 *)((u8 *)Td+1))
 
 static const u64 Te[256] = {
     U64(0xa56363c6a56363c6), U64(0x847c7cf8847c7cf8),
@@ -811,50 +811,50 @@ void AES_encrypt(const unsigned char *in, unsigned char *out,
 #if defined(AES_COMPACT_IN_OUTER_ROUNDS)
     prefetch256(Te4);
 
-    *(u32*)(out+0) =
+    *(u32 *)(out+0) =
            (u32)Te4[(s0      ) & 0xff]       ^
            (u32)Te4[(s1 >>  8) & 0xff] <<  8 ^
            (u32)Te4[(s2 >> 16) & 0xff] << 16 ^
            (u32)Te4[(s3 >> 24)       ] << 24 ^
         rk[0];
-    *(u32*)(out+4) =
+    *(u32 *)(out+4) =
            (u32)Te4[(s1      ) & 0xff]       ^
            (u32)Te4[(s2 >>  8) & 0xff] <<  8 ^
            (u32)Te4[(s3 >> 16) & 0xff] << 16 ^
            (u32)Te4[(s0 >> 24)       ] << 24 ^
         rk[1];
-    *(u32*)(out+8) =
+    *(u32 *)(out+8) =
            (u32)Te4[(s2      ) & 0xff]       ^
            (u32)Te4[(s3 >>  8) & 0xff] <<  8 ^
            (u32)Te4[(s0 >> 16) & 0xff] << 16 ^
            (u32)Te4[(s1 >> 24)       ] << 24 ^
         rk[2];
-    *(u32*)(out+12) =
+    *(u32 *)(out+12) =
            (u32)Te4[(s3      ) & 0xff]       ^
            (u32)Te4[(s0 >>  8) & 0xff] <<  8 ^
            (u32)Te4[(s1 >> 16) & 0xff] << 16 ^
            (u32)Te4[(s2 >> 24)       ] << 24 ^
         rk[3];
 #else
-    *(u32*)(out+0) =
+    *(u32 *)(out+0) =
         (Te2[(s0      ) & 0xff] & 0x000000ffU) ^
         (Te3[(s1 >>  8) & 0xff] & 0x0000ff00U) ^
         (Te0[(s2 >> 16) & 0xff] & 0x00ff0000U) ^
         (Te1[(s3 >> 24)       ] & 0xff000000U) ^
         rk[0];
-    *(u32*)(out+4) =
+    *(u32 *)(out+4) =
         (Te2[(s1      ) & 0xff] & 0x000000ffU) ^
         (Te3[(s2 >>  8) & 0xff] & 0x0000ff00U) ^
         (Te0[(s3 >> 16) & 0xff] & 0x00ff0000U) ^
         (Te1[(s0 >> 24)       ] & 0xff000000U) ^
         rk[1];
-    *(u32*)(out+8) =
+    *(u32 *)(out+8) =
         (Te2[(s2      ) & 0xff] & 0x000000ffU) ^
         (Te3[(s3 >>  8) & 0xff] & 0x0000ff00U) ^
         (Te0[(s0 >> 16) & 0xff] & 0x00ff0000U) ^
         (Te1[(s1 >> 24)       ] & 0xff000000U) ^
         rk[2];
-    *(u32*)(out+12) =
+    *(u32 *)(out+12) =
         (Te2[(s3      ) & 0xff] & 0x000000ffU) ^
         (Te3[(s0 >>  8) & 0xff] & 0x0000ff00U) ^
         (Te0[(s1 >> 16) & 0xff] & 0x00ff0000U) ^
@@ -1045,25 +1045,25 @@ void AES_decrypt(const unsigned char *in, unsigned char *out,
      */
     prefetch256(Td4);
 
-    *(u32*)(out+0) =
+    *(u32 *)(out+0) =
         ((u32)Td4[(s0      ) & 0xff])    ^
         ((u32)Td4[(s3 >>  8) & 0xff] <<  8) ^
         ((u32)Td4[(s2 >> 16) & 0xff] << 16) ^
         ((u32)Td4[(s1 >> 24)       ] << 24) ^
         rk[0];
-    *(u32*)(out+4) =
+    *(u32 *)(out+4) =
         ((u32)Td4[(s1      ) & 0xff])     ^
         ((u32)Td4[(s0 >>  8) & 0xff] <<  8) ^
         ((u32)Td4[(s3 >> 16) & 0xff] << 16) ^
         ((u32)Td4[(s2 >> 24)       ] << 24) ^
         rk[1];
-    *(u32*)(out+8) =
+    *(u32 *)(out+8) =
         ((u32)Td4[(s2      ) & 0xff])     ^
         ((u32)Td4[(s1 >>  8) & 0xff] <<  8) ^
         ((u32)Td4[(s0 >> 16) & 0xff] << 16) ^
         ((u32)Td4[(s3 >> 24)       ] << 24) ^
         rk[2];
-    *(u32*)(out+12) =
+    *(u32 *)(out+12) =
         ((u32)Td4[(s3      ) & 0xff])     ^
         ((u32)Td4[(s2 >>  8) & 0xff] <<  8) ^
         ((u32)Td4[(s1 >> 16) & 0xff] << 16) ^

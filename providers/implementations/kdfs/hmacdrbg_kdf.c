@@ -77,7 +77,8 @@ static void hmac_drbg_kdf_free(void *vctx)
     }
 }
 
-static int ossl_drbg_hmac_dup(PROV_DRBG_HMAC *dst, const PROV_DRBG_HMAC *src) {
+static int ossl_drbg_hmac_dup(PROV_DRBG_HMAC *dst, const PROV_DRBG_HMAC *src)
+{
     if (src->ctx != NULL) {
         dst->ctx = EVP_MAC_CTX_dup(src->ctx);
         if (dst->ctx == NULL)

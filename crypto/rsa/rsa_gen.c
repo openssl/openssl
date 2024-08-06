@@ -562,7 +562,7 @@ static int rsa_multiprime_keygen(RSA *rsa, int bits, int primes,
      * and the first coeff is in iqmp, so pop those off the stack
      * Note, the first 2 factors/exponents are already tracked by p and q
      * assign dmp1/dmq1 and iqmp
-     * the remaining pinfo values are separately allocated, so copy and delete 
+     * the remaining pinfo values are separately allocated, so copy and delete
      * those
      */
     BN_clear_free(sk_BIGNUM_delete(factors, 0));

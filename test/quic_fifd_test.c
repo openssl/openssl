@@ -14,11 +14,13 @@
 
 static OSSL_TIME cur_time;
 
-static OSSL_TIME fake_now(void *arg) {
+static OSSL_TIME fake_now(void *arg)
+{
     return cur_time;
 }
 
-static void step_time(uint64_t ms) {
+static void step_time(uint64_t ms)
+{
     cur_time = ossl_time_add(cur_time, ossl_ms2time(ms));
 }
 

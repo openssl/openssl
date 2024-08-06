@@ -585,12 +585,12 @@ end:
         \
         if (alg == NULL) \
             break; \
-        fuzzed_params = fuzz_params((OSSL_PARAM*) evp##_settable_ctx_params(alg), &buf, &len); \
+        fuzzed_params = fuzz_params((OSSL_PARAM *) evp##_settable_ctx_params(alg), &buf, &len); \
         if (fuzzed_params != NULL) \
             f(alg, fuzzed_params); \
         free_params(fuzzed_params); \
         OSSL_PARAM_free(fuzzed_params); \
-    } while (0);
+    } while (0)
 
 int FuzzerTestOneInput(const uint8_t *buf, size_t len)
 {

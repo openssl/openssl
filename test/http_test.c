@@ -471,7 +471,7 @@ static int test_hdr_resp_hdr_limit_none(void)
 
 static int test_hdr_resp_hdr_limit_short(void)
 {
-    return (test_http_resp_hdr_limit(1));
+    return test_http_resp_hdr_limit(1);
 }
 
 static int test_hdr_resp_hdr_limit_256(void)

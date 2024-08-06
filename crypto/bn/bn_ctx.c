@@ -86,7 +86,7 @@ static void ctxdbg(BIO *channel, const char *text, BN_CTX *ctx)
     BN_STACK *stack = &ctx->stack;
 
     BIO_printf(channel, "%s\n", text);
-    BIO_printf(channel, "  (%16p): ", (void*)ctx);
+    BIO_printf(channel, "  (%16p): ", (void *)ctx);
     while (bnidx < ctx->used) {
         BIO_printf(channel, "%03x ",
                    item->vals[bnidx++ % BN_CTX_POOL_SIZE].dmax);

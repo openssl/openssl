@@ -629,7 +629,7 @@ static EVP_CIPHER chacha20_poly1305 = {
 
 const EVP_CIPHER *EVP_chacha20_poly1305(void)
 {
-    return(&chacha20_poly1305);
+    return &chacha20_poly1305;
 }
 # endif
 #endif

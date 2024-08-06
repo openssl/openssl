@@ -213,9 +213,9 @@ static int test_drbg_reseed(int expect_success,
 
     /* Generate random output from the public and private DRBG */
     before_reseed = expect_primary_reseed == 1 ? reseed_when : 0;
-    if (!TEST_int_eq(rand_bytes((unsigned char*)public_random,
+    if (!TEST_int_eq(rand_bytes((unsigned char *)public_random,
                                 RANDOM_SIZE), expect_success)
-        || !TEST_int_eq(rand_priv_bytes((unsigned char*) private_random,
+        || !TEST_int_eq(rand_priv_bytes((unsigned char *) private_random,
                                         RANDOM_SIZE), expect_success))
         return 0;
     after_reseed = time(NULL);
@@ -696,8 +696,7 @@ static void run_multi_thread_test(void)
             multi_thread_rand_bytes_succeeded = 0;
         if (rand_priv_bytes(buf, sizeof(buf)) <= 0)
             multi_thread_rand_priv_bytes_succeeded = 0;
-    }
-    while (time(NULL) - start < 5);
+    } while (time(NULL) - start < 5);
 }
 
 # if defined(OPENSSL_SYS_WINDOWS)

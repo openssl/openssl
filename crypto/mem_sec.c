@@ -316,9 +316,9 @@ size_t CRYPTO_secure_actual_size(void *ptr)
 # define CLEARBIT(t, b) (t[(b) >> 3] &= (0xFF & ~(ONE << ((b) & 7))))
 
 #define WITHIN_ARENA(p) \
-    ((char*)(p) >= sh.arena && (char*)(p) < &sh.arena[sh.arena_size])
+    ((char *)(p) >= sh.arena && (char *)(p) < &sh.arena[sh.arena_size])
 #define WITHIN_FREELIST(p) \
-    ((char*)(p) >= (char*)sh.freelist && (char*)(p) < (char*)&sh.freelist[sh.freelist_size])
+    ((char *)(p) >= (char *)sh.freelist && (char *)(p) < (char *)&sh.freelist[sh.freelist_size])
 
 
 typedef struct sh_list_st {

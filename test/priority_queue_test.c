@@ -199,7 +199,7 @@ static int test_22644(void)
             || !TEST_size_t_eq(infos[1].idx, 7)
             || !TEST_ptr(ossl_pqueue_INFO_remove(pq, infos[1].idx)))
         goto err;
-    
+
     infos[2].seq_num = 289360691352306692;
     if (!TEST_true(ossl_pqueue_INFO_push(pq, &infos[2], &infos[2].idx))
             || !TEST_size_t_eq(infos[2].idx, 7))

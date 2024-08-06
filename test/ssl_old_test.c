@@ -2165,8 +2165,7 @@ int doit_localhost(SSL *s_ssl, SSL *c_ssl, int family, long count,
 
             *s_time += (clock() - s_clock);
         }
-    }
-    while (cw_num > 0 || cr_num > 0 || sw_num > 0 || sr_num > 0);
+    } while (cw_num > 0 || cr_num > 0 || sw_num > 0 || sr_num > 0);
 
     if (verbose) {
         print_details(c_ssl, "DONE via TCP connect: ");
@@ -2495,8 +2494,7 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
                                "C->S relaying: %d bytes\n" :
                                "S->C relaying: %d bytes\n", (int)num);
                 }
-            }
-            while (r1 && r2);
+            } while (r1 && r2);
 
             /* io2 to io1 */
             {
@@ -2556,8 +2554,7 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
                 }
             prev_progress = progress;
         }
-    }
-    while (cw_num > 0 || cr_num > 0 || sw_num > 0 || sr_num > 0);
+    } while (cw_num > 0 || cr_num > 0 || sw_num > 0 || sr_num > 0);
 
     if (verbose)
         print_details(c_ssl, "DONE via BIO pair: ");

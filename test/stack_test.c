@@ -264,7 +264,8 @@ static SS *SS_copy(const SS *p)
     return q;
 }
 
-static void SS_free(SS *p) {
+static void SS_free(SS *p)
+{
     OPENSSL_free(p);
 }
 

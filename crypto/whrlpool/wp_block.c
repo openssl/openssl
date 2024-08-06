@@ -210,14 +210,14 @@ typedef u64 u64_aX;
 # define N     2
 # define LL(c0,c1,c2,c3,c4,c5,c6,c7)   c0,c1,c2,c3,c4,c5,c6,c7, \
                                         c0,c1,c2,c3,c4,c5,c6,c7
-# define C0(K,i)       (((u64*)(Cx.c+0))[2*K.c[(i)*8+0]])
-# define C1(K,i)       (((u64_a1*)(Cx.c+7))[2*K.c[(i)*8+1]])
-# define C2(K,i)       (((u64_a1*)(Cx.c+6))[2*K.c[(i)*8+2]])
-# define C3(K,i)       (((u64_a1*)(Cx.c+5))[2*K.c[(i)*8+3]])
-# define C4(K,i)       (((u64_a1*)(Cx.c+4))[2*K.c[(i)*8+4]])
-# define C5(K,i)       (((u64_a1*)(Cx.c+3))[2*K.c[(i)*8+5]])
-# define C6(K,i)       (((u64_a1*)(Cx.c+2))[2*K.c[(i)*8+6]])
-# define C7(K,i)       (((u64_a1*)(Cx.c+1))[2*K.c[(i)*8+7]])
+# define C0(K,i)       (((u64 *)(Cx.c+0))[2*K.c[(i)*8+0]])
+# define C1(K,i)       (((u64_a1 *)(Cx.c+7))[2*K.c[(i)*8+1]])
+# define C2(K,i)       (((u64_a1 *)(Cx.c+6))[2*K.c[(i)*8+2]])
+# define C3(K,i)       (((u64_a1 *)(Cx.c+5))[2*K.c[(i)*8+3]])
+# define C4(K,i)       (((u64_a1 *)(Cx.c+4))[2*K.c[(i)*8+4]])
+# define C5(K,i)       (((u64_a1 *)(Cx.c+3))[2*K.c[(i)*8+5]])
+# define C6(K,i)       (((u64_a1 *)(Cx.c+2))[2*K.c[(i)*8+6]])
+# define C7(K,i)       (((u64_a1 *)(Cx.c+1))[2*K.c[(i)*8+7]])
 #endif
 
 static const

@@ -353,7 +353,7 @@ static int tls13_add_record_padding(OSSL_RECORD_LAYER *rl,
          * a change that could break some application that has
          * a client and server that both know what padding they
          * like, and that dislike any other padding. That'd need
-         * one of those to have been updated though so the 
+         * one of those to have been updated though so the
          * probability may be low enough that we could change
          * the "else if" below to just an "if" and pick the
          * larger of the library and callback's idea of padding.

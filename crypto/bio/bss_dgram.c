@@ -505,7 +505,8 @@ static long dgram_get_mtu_overhead(bio_dgram_data *data)
 
 /* Enables appropriate destination address reception option on the socket. */
 # if defined(SUPPORT_LOCAL_ADDR)
-static int enable_local_addr(BIO *b, int enable) {
+static int enable_local_addr(BIO *b, int enable)
+{
     int af = dgram_get_sock_family(b);
 
     if (af == AF_INET) {
@@ -1105,7 +1106,8 @@ static void translate_msg(BIO *b, struct msghdr *mh, struct iovec *iov,
 
 # if M_METHOD == M_METHOD_RECVMMSG || M_METHOD == M_METHOD_RECVMSG || M_METHOD == M_METHOD_WSARECVMSG
 /* Extracts destination address from the control buffer. */
-static int extract_local(BIO *b, MSGHDR_TYPE *mh, BIO_ADDR *local) {
+static int extract_local(BIO *b, MSGHDR_TYPE *mh, BIO_ADDR *local)
+{
 #  if defined(IP_PKTINFO) || defined(IP_RECVDSTADDR) || defined(IPV6_PKTINFO)
     CMSGHDR_TYPE *cmsg;
     int af = dgram_get_sock_family(b);
@@ -1170,7 +1172,8 @@ static int extract_local(BIO *b, MSGHDR_TYPE *mh, BIO_ADDR *local) {
     return 0;
 }
 
-static int pack_local(BIO *b, MSGHDR_TYPE *mh, const BIO_ADDR *local) {
+static int pack_local(BIO *b, MSGHDR_TYPE *mh, const BIO_ADDR *local)
+{
     int af = dgram_get_sock_family(b);
 #  if defined(IP_PKTINFO) || defined(IP_RECVDSTADDR) || defined(IPV6_PKTINFO)
     CMSGHDR_TYPE *cmsg;
@@ -1306,7 +1309,8 @@ static int pack_local(BIO *b, MSGHDR_TYPE *mh, const BIO_ADDR *local) {
  * in a particular circumstance. Currently no flags are defined.
  */
 # if M_METHOD != M_METHOD_NONE
-static int translate_flags(uint64_t flags) {
+static int translate_flags(uint64_t flags)
+{
     return 0;
 }
 # endif
@@ -2074,9 +2078,8 @@ static int dgram_sctp_read(BIO *b, char *out, int outl)
             } else {
                 ret += n;
             }
-        }
-        while ((msg.msg_flags & MSG_NOTIFICATION) && (msg.msg_flags & MSG_EOR)
-               && (ret < outl));
+        } while ((msg.msg_flags & MSG_NOTIFICATION) && (msg.msg_flags & MSG_EOR)
+                 && (ret < outl));
 
         if (ret > 0 && !(msg.msg_flags & MSG_EOR)) {
             /* Partial message read, this should never happen! */

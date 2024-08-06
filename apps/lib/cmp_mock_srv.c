@@ -437,9 +437,9 @@ static int check_client_crl(const STACK_OF(OSSL_CMP_CRLSTATUS) *crlStatusList,
                 ERR_raise(ERR_LIB_CMP, CMP_R_UNKNOWN_CRL_ISSUER);
                 return -1;
             }
-        } else {  
-            ERR_raise(ERR_LIB_CMP, CMP_R_SENDER_GENERALNAME_TYPE_NOT_SUPPORTED);  
-            return -1; /* error according to RFC 9483 section 4.3.4 */  
+        } else {
+            ERR_raise(ERR_LIB_CMP, CMP_R_SENDER_GENERALNAME_TYPE_NOT_SUPPORTED);
+            return -1; /* error according to RFC 9483 section 4.3.4 */
         }
     }
 

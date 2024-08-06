@@ -250,7 +250,7 @@ int crl_main(int argc, char **argv)
             goto end;
         if (i == 0) {
             BIO_printf(bio_err, "verify failure\n");
-	    goto end;
+            goto end;
         } else
             BIO_printf(bio_err, "verify OK\n");
     }

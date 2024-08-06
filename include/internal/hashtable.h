@@ -167,7 +167,8 @@ memset((key), 0, sizeof(*(key))); \
 static uintptr_t name##_##vtype##_id = 0; \
 pfx ossl_unused int ossl_ht_##name##_##vtype##_insert(HT *h, HT_KEY *key,      \
                                                       vtype *data,             \
-                                                      vtype **olddata) {       \
+                                                      vtype **olddata)         \
+{                                                                              \
     HT_VALUE inval;                                                            \
     HT_VALUE *oval = NULL;                                                     \
     int rc;                                                                    \
@@ -313,7 +314,7 @@ void ossl_ht_foreach_until(HT *htable, int (*cb)(HT_VALUE *obj, void *arg),
  * filter function return value.  Returns NULL on error,
  * or an HT_VALUE_LIST object on success.  Note it is possible
  * That a list will be returned with 0 entries, if none were found.
- * The zero length list must still be freed via ossl_ht_value_list_free 
+ * The zero length list must still be freed via ossl_ht_value_list_free.
  */
 HT_VALUE_LIST *ossl_ht_filter(HT *htable, size_t max_len,
                               int (*filter)(HT_VALUE *obj, void *arg),

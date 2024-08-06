@@ -372,7 +372,7 @@ static int test_tlsafile(SSL_CTX *ctx, const char *base_name,
             continue;
         }
         if (!TEST_int_eq(mdpth, want_depth)) {
-            TEST_info("In test test %d", testno);
+            TEST_info("In test %d", testno);
             ret = 0;
         }
     }

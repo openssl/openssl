@@ -84,7 +84,8 @@ struct driver_info_st {
 void engine_load_devcrypto_int(void);
 #endif
 
-static int clean_devcrypto_session(session_op_t *sess) {
+static int clean_devcrypto_session(session_op_t *sess)
+{
     if (ioctl(cfd, CIOCFSESSION, &sess->ses) < 0) {
         ERR_raise_data(ERR_LIB_SYS, errno, "calling ioctl()");
         return 0;
@@ -1162,7 +1163,7 @@ static int devcrypto_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
             return 1;
         if (OPENSSL_strcasecmp((const char *)p, "ALL") == 0) {
             devcrypto_select_all_ciphers(selected_ciphers);
-        } else if (OPENSSL_strcasecmp((const char*)p, "NONE") == 0) {
+        } else if (OPENSSL_strcasecmp((const char *)p, "NONE") == 0) {
             memset(selected_ciphers, 0, sizeof(selected_ciphers));
         } else {
             new_list=OPENSSL_zalloc(sizeof(selected_ciphers));
@@ -1182,7 +1183,7 @@ static int devcrypto_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
             return 1;
         if (OPENSSL_strcasecmp((const char *)p, "ALL") == 0) {
             devcrypto_select_all_digests(selected_digests);
-        } else if (OPENSSL_strcasecmp((const char*)p, "NONE") == 0) {
+        } else if (OPENSSL_strcasecmp((const char *)p, "NONE") == 0) {
             memset(selected_digests, 0, sizeof(selected_digests));
         } else {
             new_list=OPENSSL_zalloc(sizeof(selected_digests));
@@ -1276,8 +1277,8 @@ static int devcrypto_unload(ENGINE *e)
     return 1;
 }
 
-static int bind_devcrypto(ENGINE *e) {
-
+static int bind_devcrypto(ENGINE *e)
+{
     if (!ENGINE_set_id(e, engine_devcrypto_id)
         || !ENGINE_set_name(e, "/dev/crypto engine")
         || !ENGINE_set_destroy_function(e, devcrypto_unload)

@@ -530,7 +530,7 @@ static void h3_conn_pump_stream(OSSL_DEMO_H3_STREAM *s, void *conn_)
             break;
 
         /*
-         * This function is confusingly named as it is is named from nghttp3's
+         * This function is confusingly named as it is named from nghttp3's
          * 'perspective'; it is used to pass data *into* the HTTP/3 stack which
          * has been received from the network.
          */

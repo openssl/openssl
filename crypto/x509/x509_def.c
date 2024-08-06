@@ -16,7 +16,7 @@
 
 #if defined(_WIN32)
 
-static char x509_private_dir[MAX_PATH + 1]; 
+static char x509_private_dir[MAX_PATH + 1];
 static char *x509_private_dirptr = NULL;
 
 static char x509_cert_area[MAX_PATH + 1];

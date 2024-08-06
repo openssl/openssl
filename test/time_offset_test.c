@@ -60,7 +60,7 @@ static time_t the_time = 975628800;
 static ASN1_TIME the_asn1_time = {
     15,
     V_ASN1_GENERALIZEDTIME,
-    (unsigned char*)"20001201000000Z",
+    (unsigned char *)"20001201000000Z",
     0
 };
 
@@ -71,7 +71,7 @@ static int test_offset(int idx)
     int ret = -2;
     int day, sec;
 
-    at.data = (unsigned char*)testdata->data;
+    at.data = (unsigned char *)testdata->data;
     at.length = strlen(testdata->data);
     at.type = testdata->type;
     at.flags = 0;

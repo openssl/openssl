@@ -212,7 +212,8 @@ end:
     return ok;
 }
 
-static int dsa_exact_size_test(void) {
+static int dsa_exact_size_test(void)
+{
     /*
      * For a 2048-bit p, q should be either 224 or 256 bits per the table in
      * FIPS 186-4 4.2.
@@ -221,11 +222,13 @@ static int dsa_exact_size_test(void) {
     return sign_and_verify(224 / 8) && sign_and_verify(256 / 8);
 }
 
-static int dsa_small_digest_test(void) {
+static int dsa_small_digest_test(void)
+{
     return sign_and_verify(16) && sign_and_verify(1);
 }
 
-static int dsa_large_digest_test(void) {
+static int dsa_large_digest_test(void)
+{
     return sign_and_verify(33) && sign_and_verify(64);
 }
 

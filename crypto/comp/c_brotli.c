@@ -169,7 +169,7 @@ static ossl_ssize_t brotli_stateful_compress_block(COMP_CTX *ctx, unsigned char 
      * output buffer space
      */
     done = BrotliEncoderCompressStream(state->encoder, BROTLI_OPERATION_FLUSH,
-                                       &in_avail, (const uint8_t**)&in,
+                                       &in_avail, (const uint8_t **)&in,
                                        &out_avail, &out, NULL);
     if (done == BROTLI_FALSE
             || in_avail != 0
@@ -197,7 +197,7 @@ static ossl_ssize_t brotli_stateful_expand_block(COMP_CTX *ctx, unsigned char *o
         return 0;
 
     result = BrotliDecoderDecompressStream(state->decoder, &in_avail,
-                                           (const uint8_t**)&in, &out_avail,
+                                           (const uint8_t **)&in, &out_avail,
                                            &out, NULL);
     if (result == BROTLI_DECODER_RESULT_ERROR
             || in_avail != 0
@@ -533,7 +533,7 @@ static int bio_brotli_read(BIO *b, char *out, int outl)
     for (;;) {
         /* Decompress while data available */
         while (ctx->decode.avail_in > 0 || BrotliDecoderHasMoreOutput(ctx->decode.state)) {
-            bret = BrotliDecoderDecompressStream(ctx->decode.state, &ctx->decode.avail_in, (const uint8_t**)&ctx->decode.next_in,
+            bret = BrotliDecoderDecompressStream(ctx->decode.state, &ctx->decode.avail_in, (const uint8_t **)&ctx->decode.next_in,
                                                   &ctx->decode.avail_out, &ctx->decode.next_out, NULL);
             if (bret == BROTLI_DECODER_RESULT_ERROR) {
                 ERR_raise(ERR_LIB_COMP, COMP_R_BROTLI_DECODE_ERROR);
@@ -633,7 +633,7 @@ static int bio_brotli_write(BIO *b, const char *in, int inl)
         ctx->encode.next_out = ctx->encode.buf;
         ctx->encode.avail_out = ctx->encode.bufsize;
         /* Compress some more */
-        brret = BrotliEncoderCompressStream(ctx->encode.state, BROTLI_OPERATION_FLUSH, &ctx->encode.avail_in, (const uint8_t**)&ctx->encode.next_in,
+        brret = BrotliEncoderCompressStream(ctx->encode.state, BROTLI_OPERATION_FLUSH, &ctx->encode.avail_in, (const uint8_t **)&ctx->encode.next_in,
                                             &ctx->encode.avail_out, &ctx->encode.next_out, NULL);
         if (brret != BROTLI_TRUE) {
             ERR_raise(ERR_LIB_COMP, COMP_R_BROTLI_ENCODE_ERROR);
@@ -683,7 +683,7 @@ static int bio_brotli_flush(BIO *b)
         ctx->encode.avail_out = ctx->encode.bufsize;
         /* Compress some more */
         brret = BrotliEncoderCompressStream(ctx->encode.state, BROTLI_OPERATION_FINISH, &ctx->encode.avail_in,
-                                            (const uint8_t**)&ctx->encode.next_in, &ctx->encode.avail_out, &ctx->encode.next_out, NULL);
+                                            (const uint8_t **)&ctx->encode.next_in, &ctx->encode.avail_out, &ctx->encode.next_out, NULL);
         if (brret != BROTLI_TRUE) {
             ERR_raise(ERR_LIB_COMP, COMP_R_BROTLI_DECODE_ERROR);
             ERR_add_error_data(1, "brotli encoder error");

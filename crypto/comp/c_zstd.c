@@ -664,7 +664,7 @@ static int bio_zstd_write(BIO *b, const char *in, int inl)
     for (;;) {
         /* If data in output buffer write it first */
         while (ctx->compress.write_pos < ctx->compress.outbuf.pos) {
-            ret = BIO_write(next, (unsigned char*)ctx->compress.outbuf.dst + ctx->compress.write_pos,
+            ret = BIO_write(next, (unsigned char *)ctx->compress.outbuf.dst + ctx->compress.write_pos,
                             ctx->compress.outbuf.pos - ctx->compress.write_pos);
             if (ret <= 0) {
                 BIO_copy_next_retry(b);
@@ -716,7 +716,7 @@ static int bio_zstd_flush(BIO *b)
     for (;;) {
         /* If data in output buffer write it first */
         while (ctx->compress.write_pos < ctx->compress.outbuf.pos) {
-            ret = BIO_write(next, (unsigned char*)ctx->compress.outbuf.dst + ctx->compress.write_pos,
+            ret = BIO_write(next, (unsigned char *)ctx->compress.outbuf.dst + ctx->compress.write_pos,
                             ctx->compress.outbuf.pos - ctx->compress.write_pos);
             if (ret <= 0) {
                 BIO_copy_next_retry(b);

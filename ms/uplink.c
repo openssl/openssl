@@ -102,16 +102,19 @@ void OPENSSL_Uplink(volatile void **table, int index)
 #if (defined(_MSC_VER) || defined(__BORLANDC__)) && defined(_M_IX86)
 # if defined(_MSC_VER)
 #  define LAZY(i)         \
-__declspec(naked) static void lazy##i (void) {  \
+__declspec(naked) static void lazy##i (void)    \
+{                                               \
         _asm    push i                          \
         _asm    push OFFSET OPENSSL_UplinkTable \
         _asm    call OPENSSL_Uplink             \
         _asm    add  esp,8                      \
-        _asm    jmp  OPENSSL_UplinkTable+4*i    }
+        _asm    jmp  OPENSSL_UplinkTable+4*i    \
+}
 # elif defined(__BORLANDC__) && defined(__clang__)
 void *OPENSSL_UplinkTable[26]; /* C++Builder requires declaration before use */
 #  define LAZY(i)         \
-__declspec(naked) static void lazy##i (void) { \
+__declspec(naked) static void lazy##i (void)   \
+{                                              \
     __asm__("pushl $" #i "; "                  \
             "pushl %0; "                       \
             "call  %P1; "                      \
@@ -120,7 +123,8 @@ __declspec(naked) static void lazy##i (void) { \
             : /* no outputs */                 \
             : "i" (OPENSSL_UplinkTable),       \
               "i" (OPENSSL_Uplink),            \
-              "m" (OPENSSL_UplinkTable[i]));   }
+              "m" (OPENSSL_UplinkTable[i]));   \
+}
 # endif
 
 # if APPLINK_MAX>25
