@@ -62,17 +62,30 @@ enum ID_EdDSA_INSTANCE {
 #define EDDSA_PREHASH_OUTPUT_LEN 64
 
 static OSSL_FUNC_signature_newctx_fn eddsa_newctx;
-static OSSL_FUNC_signature_digest_sign_init_fn eddsa_digest_signverify_init;
+static OSSL_FUNC_signature_sign_message_init_fn ed25519_signverify_message_init;
+static OSSL_FUNC_signature_sign_message_init_fn ed25519ph_signverify_message_init;
+static OSSL_FUNC_signature_sign_message_init_fn ed25519ctx_signverify_message_init;
+static OSSL_FUNC_signature_sign_message_init_fn ed448_signverify_message_init;
+static OSSL_FUNC_signature_sign_message_init_fn ed448ph_signverify_message_init;
+static OSSL_FUNC_signature_sign_fn ed25519_sign;
+static OSSL_FUNC_signature_sign_fn ed448_sign;
+static OSSL_FUNC_signature_verify_fn ed25519_verify;
+static OSSL_FUNC_signature_verify_fn ed448_verify;
+static OSSL_FUNC_signature_digest_sign_init_fn ed25519_digest_signverify_init;
+static OSSL_FUNC_signature_digest_sign_init_fn ed448_digest_signverify_init;
 static OSSL_FUNC_signature_digest_sign_fn ed25519_digest_sign;
 static OSSL_FUNC_signature_digest_sign_fn ed448_digest_sign;
 static OSSL_FUNC_signature_digest_verify_fn ed25519_digest_verify;
 static OSSL_FUNC_signature_digest_verify_fn ed448_digest_verify;
 static OSSL_FUNC_signature_freectx_fn eddsa_freectx;
 static OSSL_FUNC_signature_dupctx_fn eddsa_dupctx;
+static OSSL_FUNC_signature_query_key_types_fn ed25519_sigalg_query_key_types;
+static OSSL_FUNC_signature_query_key_types_fn ed448_sigalg_query_key_types;
 static OSSL_FUNC_signature_get_ctx_params_fn eddsa_get_ctx_params;
 static OSSL_FUNC_signature_gettable_ctx_params_fn eddsa_gettable_ctx_params;
 static OSSL_FUNC_signature_set_ctx_params_fn eddsa_set_ctx_params;
 static OSSL_FUNC_signature_settable_ctx_params_fn eddsa_settable_ctx_params;
+static OSSL_FUNC_signature_settable_ctx_params_fn eddsa_settable_variant_ctx_params;
 
 /* there are five EdDSA instances:
 
@@ -132,6 +145,10 @@ typedef struct {
 
     /* id indicating the EdDSA instance */
     int instance_id;
+    /* indicates that instance_id and associated flags are preset / hardcoded */
+    unsigned int instance_id_preset_flag : 1;
+    /* for ph instances, this indicates whether the caller is expected to prehash */
+    unsigned int prehash_by_caller_flag : 1;
 
     unsigned int dom2_flag : 1;
     unsigned int prehash_flag : 1;
@@ -160,9 +177,70 @@ static void *eddsa_newctx(void *provctx, const char *propq_unused)
     return peddsactx;
 }
 
-static int eddsa_digest_signverify_init(void *vpeddsactx, const char *mdname,
-                                        void *vedkey,
-                                        const OSSL_PARAM params[])
+static int eddsa_setup_instance(void *vpeddsactx, int instance_id,
+                                unsigned int instance_id_preset,
+                                unsigned int prehash_by_caller)
+{
+    PROV_EDDSA_CTX *peddsactx = (PROV_EDDSA_CTX *)vpeddsactx;
+
+ again:
+    switch (instance_id) {
+    case ID_NOT_SET:
+        switch (peddsactx->key->type) {
+        case ECX_KEY_TYPE_ED25519:
+            instance_id = ID_Ed25519;
+            break;
+        case ECX_KEY_TYPE_ED448:
+            instance_id = ID_Ed448;
+            break;
+        default:
+            return 0;
+        }
+        goto again;
+    case ID_Ed25519:
+        if (peddsactx->key->type != ECX_KEY_TYPE_ED25519)
+            return 0;
+        peddsactx->dom2_flag = 0;
+        peddsactx->prehash_flag = 0;
+        peddsactx->context_string_flag = 0;
+        break;
+    case ID_Ed25519ctx:
+        if (peddsactx->key->type != ECX_KEY_TYPE_ED25519)
+            return 0;
+        peddsactx->dom2_flag = 1;
+        peddsactx->prehash_flag = 0;
+        peddsactx->context_string_flag = 1;
+        break;
+    case ID_Ed25519ph:
+        if (peddsactx->key->type != ECX_KEY_TYPE_ED25519)
+            return 0;
+        peddsactx->dom2_flag = 1;
+        peddsactx->prehash_flag = 1;
+        peddsactx->context_string_flag = 0;
+        break;
+    case ID_Ed448:
+        if (peddsactx->key->type != ECX_KEY_TYPE_ED448)
+            return 0;
+        peddsactx->prehash_flag = 0;
+        peddsactx->context_string_flag = 0;
+        break;
+    case ID_Ed448ph:
+        if (peddsactx->key->type != ECX_KEY_TYPE_ED448)
+            return 0;
+        peddsactx->prehash_flag = 1;
+        peddsactx->context_string_flag = 0;
+        break;
+    default:
+        /* we did not recognize the instance */
+        return 0;
+    }
+    peddsactx->instance_id = instance_id;
+    peddsactx->instance_id_preset_flag = instance_id_preset;
+    peddsactx->prehash_by_caller_flag = prehash_by_caller;
+    return 1;
+}
+
+static int eddsa_signverify_init(void *vpeddsactx, void *vedkey)
 {
     PROV_EDDSA_CTX *peddsactx = (PROV_EDDSA_CTX *)vpeddsactx;
     ECX_KEY *edkey = (ECX_KEY *)vedkey;
@@ -172,14 +250,7 @@ static int eddsa_digest_signverify_init(void *vpeddsactx, const char *mdname,
     if (!ossl_prov_is_running())
         return 0;
 
-    if (mdname != NULL && mdname[0] != '\0') {
-        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST);
-        return 0;
-    }
-
     if (edkey == NULL) {
-        if (peddsactx->key != NULL)
-            return eddsa_set_ctx_params(peddsactx, params);
         ERR_raise(ERR_LIB_PROV, PROV_R_NO_KEY_SET);
         return 0;
     }
@@ -189,10 +260,13 @@ static int eddsa_digest_signverify_init(void *vpeddsactx, const char *mdname,
         return 0;
     }
 
+    peddsactx->instance_id_preset_flag = 0;
     peddsactx->dom2_flag = 0;
     peddsactx->prehash_flag = 0;
     peddsactx->context_string_flag = 0;
     peddsactx->context_string_len = 0;
+
+    peddsactx->key = edkey;
 
     /*
      * We do not care about DER writing errors.
@@ -206,16 +280,15 @@ static int eddsa_digest_signverify_init(void *vpeddsactx, const char *mdname,
     switch (edkey->type) {
     case ECX_KEY_TYPE_ED25519:
         ret = ret && ossl_DER_w_algorithmIdentifier_ED25519(&pkt, -1, edkey);
-        peddsactx->instance_id = ID_Ed25519;
         break;
     case ECX_KEY_TYPE_ED448:
         ret = ret && ossl_DER_w_algorithmIdentifier_ED448(&pkt, -1, edkey);
-        peddsactx->instance_id = ID_Ed448;
         break;
     default:
         /* Should never happen */
         ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
         ossl_ecx_key_free(edkey);
+        peddsactx->key = NULL;
         return 0;
     }
     if (ret && WPACKET_finish(&pkt)) {
@@ -224,16 +297,99 @@ static int eddsa_digest_signverify_init(void *vpeddsactx, const char *mdname,
     }
     WPACKET_cleanup(&pkt);
 
-    peddsactx->key = edkey;
-
-    if (!eddsa_set_ctx_params(peddsactx, params))
-        return 0;
-
     return 1;
 }
 
-int ed25519_digest_sign(void *vpeddsactx, unsigned char *sigret,
-                        size_t *siglen, size_t sigsize,
+static int ed25519_signverify_message_init(void *vpeddsactx, void *vedkey,
+                                             const OSSL_PARAM params[])
+{
+    return eddsa_signverify_init(vpeddsactx, vedkey)
+        && eddsa_setup_instance(vpeddsactx, ID_Ed25519, 1, 0)
+        && eddsa_set_ctx_params(vpeddsactx, params);
+}
+
+static int ed25519ph_signverify_message_init(void *vpeddsactx, void *vedkey,
+                                             const OSSL_PARAM params[])
+{
+    return eddsa_signverify_init(vpeddsactx, vedkey)
+        && eddsa_setup_instance(vpeddsactx, ID_Ed25519ph, 1, 0)
+        && eddsa_set_ctx_params(vpeddsactx, params);
+}
+
+static int ed25519ph_signverify_init(void *vpeddsactx, void *vedkey,
+                                     const OSSL_PARAM params[])
+{
+    return eddsa_signverify_init(vpeddsactx, vedkey)
+        && eddsa_setup_instance(vpeddsactx, ID_Ed25519ph, 1, 1)
+        && eddsa_set_ctx_params(vpeddsactx, params);
+}
+
+/*
+ * This supports using ED25519 with EVP_PKEY_{sign,verify}_init_ex() and
+ * EVP_PKEY_{sign,verify}_init_ex2(), under the condition that the caller
+ * explicitly sets the Ed25519ph instance (this is verified by ed25519_sign()
+ * and ed25519_verify())
+ */
+static int ed25519_signverify_init(void *vpeddsactx, void *vedkey,
+                                   const OSSL_PARAM params[])
+{
+    return eddsa_signverify_init(vpeddsactx, vedkey)
+        && eddsa_setup_instance(vpeddsactx, ID_Ed25519, 0, 1)
+        && eddsa_set_ctx_params(vpeddsactx, params);
+}
+
+static int ed25519ctx_signverify_message_init(void *vpeddsactx, void *vedkey,
+                                             const OSSL_PARAM params[])
+{
+    return eddsa_signverify_init(vpeddsactx, vedkey)
+        && eddsa_setup_instance(vpeddsactx, ID_Ed25519ctx, 1, 0)
+        && eddsa_set_ctx_params(vpeddsactx, params);
+}
+
+static int ed448_signverify_message_init(void *vpeddsactx, void *vedkey,
+                                         const OSSL_PARAM params[])
+{
+    return eddsa_signverify_init(vpeddsactx, vedkey)
+        && eddsa_setup_instance(vpeddsactx, ID_Ed448, 1, 0)
+        && eddsa_set_ctx_params(vpeddsactx, params);
+}
+
+static int ed448ph_signverify_message_init(void *vpeddsactx, void *vedkey,
+                                           const OSSL_PARAM params[])
+{
+    return eddsa_signverify_init(vpeddsactx, vedkey)
+        && eddsa_setup_instance(vpeddsactx, ID_Ed448ph, 1, 0)
+        && eddsa_set_ctx_params(vpeddsactx, params);
+}
+
+static int ed448ph_signverify_init(void *vpeddsactx, void *vedkey,
+                                   const OSSL_PARAM params[])
+{
+    return eddsa_signverify_init(vpeddsactx, vedkey)
+        && eddsa_setup_instance(vpeddsactx, ID_Ed448ph, 1, 1)
+        && eddsa_set_ctx_params(vpeddsactx, params);
+}
+
+/*
+ * This supports using ED448 with EVP_PKEY_{sign,verify}_init_ex() and
+ * EVP_PKEY_{sign,verify}_init_ex2(), under the condition that the caller
+ * explicitly sets the Ed448ph instance (this is verified by ed448_sign()
+ * and ed448_verify())
+ */
+static int ed448_signverify_init(void *vpeddsactx, void *vedkey,
+                                   const OSSL_PARAM params[])
+{
+    return eddsa_signverify_init(vpeddsactx, vedkey)
+        && eddsa_setup_instance(vpeddsactx, ID_Ed448, 0, 1)
+        && eddsa_set_ctx_params(vpeddsactx, params);
+}
+
+/*
+ * This is used directly for OSSL_FUNC_SIGNATURE_SIGN and indirectly
+ * for OSSL_FUNC_SIGNATURE_DIGEST_SIGN
+ */
+static int ed25519_sign(void *vpeddsactx,
+                        unsigned char *sigret, size_t *siglen, size_t sigsize,
                         const unsigned char *tbs, size_t tbslen)
 {
     PROV_EDDSA_CTX *peddsactx = (PROV_EDDSA_CTX *)vpeddsactx;
@@ -273,11 +429,20 @@ int ed25519_digest_sign(void *vpeddsactx, unsigned char *sigret,
 #endif /* S390X_EC_ASM */
 
     if (peddsactx->prehash_flag) {
-        if (!EVP_Q_digest(peddsactx->libctx, SN_sha512, NULL, tbs, tbslen, md, &mdlen)
+        if (!peddsactx->prehash_by_caller_flag) {
+            if (!EVP_Q_digest(peddsactx->libctx, SN_sha512, NULL, tbs, tbslen, md, &mdlen)
                 || mdlen != EDDSA_PREHASH_OUTPUT_LEN)
+                return 0;
+            tbs = md;
+            tbslen = mdlen;
+        } else if (tbslen != EDDSA_PREHASH_OUTPUT_LEN) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST_LENGTH);
             return 0;
-        tbs = md;
-        tbslen = mdlen;
+        }
+    } else if (peddsactx->prehash_by_caller_flag) {
+        /* The caller is supposed to set up a ph instance! */
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_INSTANCE);
+        return 0;
     }
 
     if (ossl_ed25519_sign(sigret, tbs, tbslen, edkey->pubkey, edkey->privkey,
@@ -318,9 +483,13 @@ static int ed448_shake256(OSSL_LIB_CTX *libctx,
     return ret;
 }
 
-int ed448_digest_sign(void *vpeddsactx, unsigned char *sigret,
-                      size_t *siglen, size_t sigsize,
-                      const unsigned char *tbs, size_t tbslen)
+/*
+ * This is used directly for OSSL_FUNC_SIGNATURE_SIGN and indirectly
+ * for OSSL_FUNC_SIGNATURE_DIGEST_SIGN
+ */
+int ed448_sign(void *vpeddsactx,
+               unsigned char *sigret, size_t *siglen, size_t sigsize,
+               const unsigned char *tbs, size_t tbslen)
 {
     PROV_EDDSA_CTX *peddsactx = (PROV_EDDSA_CTX *)vpeddsactx;
     const ECX_KEY *edkey = peddsactx->key;
@@ -358,10 +527,19 @@ int ed448_digest_sign(void *vpeddsactx, unsigned char *sigret,
 #endif /* S390X_EC_ASM */
 
     if (peddsactx->prehash_flag) {
-        if (!ed448_shake256(peddsactx->libctx, NULL, tbs, tbslen, md, mdlen))
+        if (!peddsactx->prehash_by_caller_flag) {
+            if (!ed448_shake256(peddsactx->libctx, NULL, tbs, tbslen, md, mdlen))
+                return 0;
+            tbs = md;
+            tbslen = mdlen;
+        } else if (tbslen != EDDSA_PREHASH_OUTPUT_LEN) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST_LENGTH);
             return 0;
-        tbs = md;
-        tbslen = mdlen;
+        }
+    } else if (peddsactx->prehash_by_caller_flag) {
+        /* The caller is supposed to set up a ph instance! */
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_INSTANCE);
+        return 0;
     }
 
     if (ossl_ed448_sign(peddsactx->libctx, sigret, tbs, tbslen,
@@ -375,9 +553,13 @@ int ed448_digest_sign(void *vpeddsactx, unsigned char *sigret,
     return 1;
 }
 
-int ed25519_digest_verify(void *vpeddsactx, const unsigned char *sig,
-                          size_t siglen, const unsigned char *tbs,
-                          size_t tbslen)
+/*
+ * This is used directly for OSSL_FUNC_SIGNATURE_VERIFY and indirectly
+ * for OSSL_FUNC_SIGNATURE_DIGEST_VERIFY
+ */
+int ed25519_verify(void *vpeddsactx,
+                   const unsigned char *sig, size_t siglen,
+                   const unsigned char *tbs, size_t tbslen)
 {
     PROV_EDDSA_CTX *peddsactx = (PROV_EDDSA_CTX *)vpeddsactx;
     const ECX_KEY *edkey = peddsactx->key;
@@ -399,11 +581,20 @@ int ed25519_digest_verify(void *vpeddsactx, const unsigned char *sig,
 #endif /* S390X_EC_ASM */
 
     if (peddsactx->prehash_flag) {
-        if (!EVP_Q_digest(peddsactx->libctx, SN_sha512, NULL, tbs, tbslen, md, &mdlen)
+        if (!peddsactx->prehash_by_caller_flag) {
+            if (!EVP_Q_digest(peddsactx->libctx, SN_sha512, NULL, tbs, tbslen, md, &mdlen)
                 || mdlen != EDDSA_PREHASH_OUTPUT_LEN)
+                return 0;
+            tbs = md;
+            tbslen = mdlen;
+        } else if (tbslen != EDDSA_PREHASH_OUTPUT_LEN) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST_LENGTH);
             return 0;
-        tbs = md;
-        tbslen = mdlen;
+        }
+    } else if (peddsactx->prehash_by_caller_flag) {
+        /* The caller is supposed to set up a ph instance! */
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_INSTANCE);
+        return 0;
     }
 
     return ossl_ed25519_verify(tbs, tbslen, sig, edkey->pubkey,
@@ -412,9 +603,13 @@ int ed25519_digest_verify(void *vpeddsactx, const unsigned char *sig,
                                peddsactx->libctx, edkey->propq);
 }
 
-int ed448_digest_verify(void *vpeddsactx, const unsigned char *sig,
-                        size_t siglen, const unsigned char *tbs,
-                        size_t tbslen)
+/*
+ * This is used directly for OSSL_FUNC_SIGNATURE_VERIFY and indirectly
+ * for OSSL_FUNC_SIGNATURE_DIGEST_VERIFY
+ */
+int ed448_verify(void *vpeddsactx,
+                 const unsigned char *sig, size_t siglen,
+                 const unsigned char *tbs, size_t tbslen)
 {
     PROV_EDDSA_CTX *peddsactx = (PROV_EDDSA_CTX *)vpeddsactx;
     const ECX_KEY *edkey = peddsactx->key;
@@ -435,15 +630,92 @@ int ed448_digest_verify(void *vpeddsactx, const unsigned char *sig,
 #endif /* S390X_EC_ASM */
 
     if (peddsactx->prehash_flag) {
-        if (!ed448_shake256(peddsactx->libctx, NULL, tbs, tbslen, md, mdlen))
+        if (!peddsactx->prehash_by_caller_flag) {
+            if (!ed448_shake256(peddsactx->libctx, NULL, tbs, tbslen, md, mdlen))
+                return 0;
+            tbs = md;
+            tbslen = mdlen;
+        } else if (tbslen != EDDSA_PREHASH_OUTPUT_LEN) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST_LENGTH);
             return 0;
-        tbs = md;
-        tbslen = mdlen;
+        }
+    } else if (peddsactx->prehash_by_caller_flag) {
+        /* The caller is supposed to set up a ph instance! */
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_INSTANCE);
+        return 0;
     }
 
     return ossl_ed448_verify(peddsactx->libctx, tbs, tbslen, sig, edkey->pubkey,
                              peddsactx->context_string, peddsactx->context_string_len,
                              peddsactx->prehash_flag, edkey->propq);
+}
+
+/* All digest_{sign,verify} are simple wrappers around the functions above */
+
+static int ed25519_digest_signverify_init(void *vpeddsactx, const char *mdname,
+                                          void *vedkey,
+                                          const OSSL_PARAM params[])
+{
+    PROV_EDDSA_CTX *peddsactx = (PROV_EDDSA_CTX *)vpeddsactx;
+
+    if (mdname != NULL && mdname[0] != '\0') {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST);
+        return 0;
+    }
+
+    if (vedkey == NULL && peddsactx->key != NULL)
+        return eddsa_set_ctx_params(peddsactx, params);
+
+    return eddsa_signverify_init(vpeddsactx, vedkey)
+        && eddsa_setup_instance(vpeddsactx, ID_Ed25519, 0, 0)
+        && eddsa_set_ctx_params(vpeddsactx, params);
+}
+
+int ed25519_digest_sign(void *vpeddsactx,
+                        unsigned char *sigret, size_t *siglen, size_t sigsize,
+                        const unsigned char *tbs, size_t tbslen)
+{
+    return ed25519_sign(vpeddsactx, sigret, siglen, sigsize, tbs, tbslen);
+}
+
+int ed25519_digest_verify(void *vpeddsactx,
+                          const unsigned char *sigret, size_t siglen,
+                          const unsigned char *tbs, size_t tbslen)
+{
+    return ed25519_verify(vpeddsactx, sigret, siglen, tbs, tbslen);
+}
+
+static int ed448_digest_signverify_init(void *vpeddsactx, const char *mdname,
+                                        void *vedkey,
+                                        const OSSL_PARAM params[])
+{
+    PROV_EDDSA_CTX *peddsactx = (PROV_EDDSA_CTX *)vpeddsactx;
+
+    if (mdname != NULL && mdname[0] != '\0') {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST);
+        return 0;
+    }
+
+    if (vedkey == NULL && peddsactx->key != NULL)
+        return eddsa_set_ctx_params(peddsactx, params);
+
+    return eddsa_signverify_init(vpeddsactx, vedkey)
+        && eddsa_setup_instance(vpeddsactx, ID_Ed448, 0, 0)
+        && eddsa_set_ctx_params(vpeddsactx, params);
+}
+
+int ed448_digest_sign(void *vpeddsactx,
+                      unsigned char *sigret, size_t *siglen, size_t sigsize,
+                      const unsigned char *tbs, size_t tbslen)
+{
+    return ed448_sign(vpeddsactx, sigret, siglen, sigsize, tbs, tbslen);
+}
+
+int ed448_digest_verify(void *vpeddsactx,
+                        const unsigned char *sigret, size_t siglen,
+                        const unsigned char *tbs, size_t tbslen)
+{
+    return ed448_verify(vpeddsactx, sigret, siglen, tbs, tbslen);
 }
 
 static void eddsa_freectx(void *vpeddsactx)
@@ -481,6 +753,22 @@ static void *eddsa_dupctx(void *vpeddsactx)
     eddsa_freectx(dstctx);
     return NULL;
 }
+
+static const char **ed25519_sigalg_query_key_types(void)
+{
+    static const char *keytypes[] = { "ED25519", NULL };
+
+    return keytypes;
+}
+
+static const char **ed448_sigalg_query_key_types(void)
+{
+    static const char *keytypes[] = { "ED448", NULL };
+
+    return keytypes;
+}
+
+
 
 static int eddsa_get_ctx_params(void *vpeddsactx, OSSL_PARAM *params)
 {
@@ -526,37 +814,34 @@ static int eddsa_set_ctx_params(void *vpeddsactx, const OSSL_PARAM params[])
         char instance_name[OSSL_MAX_NAME_SIZE] = "";
         char *pinstance_name = instance_name;
 
+        if (peddsactx->instance_id_preset_flag)
+            /* Raise an error? */
+            return 0;
+
         if (!OSSL_PARAM_get_utf8_string(p, &pinstance_name, sizeof(instance_name)))
             return 0;
 
+        /*
+         * When setting the new instance, we're careful not to change the
+         * prehash_by_caller flag, as that's always preset by the init
+         * functions.  The sign functions will determine if the instance
+         * matches this flag.
+         */
         if (OPENSSL_strcasecmp(pinstance_name, SN_Ed25519) == 0) {
-            peddsactx->instance_id = ID_Ed25519;
-            if (peddsactx->key->type != ECX_KEY_TYPE_ED25519) return 0;
-            peddsactx->dom2_flag = 0;
-            peddsactx->prehash_flag = 0;
-            peddsactx->context_string_flag = 0;
+            eddsa_setup_instance(peddsactx, ID_Ed25519, 0,
+                                 peddsactx->prehash_by_caller_flag);
         } else if (OPENSSL_strcasecmp(pinstance_name, SN_Ed25519ctx) == 0) {
-            peddsactx->instance_id = ID_Ed25519ctx;
-            if (peddsactx->key->type != ECX_KEY_TYPE_ED25519) return 0;
-            peddsactx->dom2_flag = 1;
-            peddsactx->prehash_flag = 0;
-            peddsactx->context_string_flag = 1;
+            eddsa_setup_instance(peddsactx, ID_Ed25519ctx, 0,
+                                 peddsactx->prehash_by_caller_flag);
         } else if (OPENSSL_strcasecmp(pinstance_name, SN_Ed25519ph) == 0) {
-            peddsactx->instance_id = ID_Ed25519ph;
-            if (peddsactx->key->type != ECX_KEY_TYPE_ED25519) return 0;
-            peddsactx->dom2_flag = 1;
-            peddsactx->prehash_flag = 1;
-            peddsactx->context_string_flag = 0;
+            eddsa_setup_instance(peddsactx, ID_Ed25519ph, 0,
+                                 peddsactx->prehash_by_caller_flag);
         } else if (OPENSSL_strcasecmp(pinstance_name, SN_Ed448) == 0) {
-            peddsactx->instance_id = ID_Ed448;
-            if (peddsactx->key->type != ECX_KEY_TYPE_ED448) return 0;
-            peddsactx->prehash_flag = 0;
-            peddsactx->context_string_flag = 0;
+            eddsa_setup_instance(peddsactx, ID_Ed448, 0,
+                                 peddsactx->prehash_by_caller_flag);
         } else if (OPENSSL_strcasecmp(pinstance_name, SN_Ed448ph) == 0) {
-            peddsactx->instance_id = ID_Ed448ph;
-            if (peddsactx->key->type != ECX_KEY_TYPE_ED448) return 0;
-            peddsactx->prehash_flag = 1;
-            peddsactx->context_string_flag = 0;
+            eddsa_setup_instance(peddsactx, ID_Ed448ph, 0,
+                                 peddsactx->prehash_by_caller_flag);
         } else {
             /* we did not recognize the instance */
             return 0;
@@ -589,47 +874,147 @@ static const OSSL_PARAM *eddsa_settable_ctx_params(ossl_unused void *vpeddsactx,
     return settable_ctx_params;
 }
 
-const OSSL_DISPATCH ossl_ed25519_signature_functions[] = {
-    { OSSL_FUNC_SIGNATURE_NEWCTX, (void (*)(void))eddsa_newctx },
-    { OSSL_FUNC_SIGNATURE_DIGEST_SIGN_INIT,
-      (void (*)(void))eddsa_digest_signverify_init },
-    { OSSL_FUNC_SIGNATURE_DIGEST_SIGN,
-      (void (*)(void))ed25519_digest_sign },
-    { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_INIT,
-      (void (*)(void))eddsa_digest_signverify_init },
-    { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY,
-      (void (*)(void))ed25519_digest_verify },
-    { OSSL_FUNC_SIGNATURE_FREECTX, (void (*)(void))eddsa_freectx },
-    { OSSL_FUNC_SIGNATURE_DUPCTX, (void (*)(void))eddsa_dupctx },
-    { OSSL_FUNC_SIGNATURE_GET_CTX_PARAMS, (void (*)(void))eddsa_get_ctx_params },
-    { OSSL_FUNC_SIGNATURE_GETTABLE_CTX_PARAMS,
-      (void (*)(void))eddsa_gettable_ctx_params },
-    { OSSL_FUNC_SIGNATURE_SET_CTX_PARAMS, (void (*)(void))eddsa_set_ctx_params },
-    { OSSL_FUNC_SIGNATURE_SETTABLE_CTX_PARAMS,
-      (void (*)(void))eddsa_settable_ctx_params },
-    OSSL_DISPATCH_END
+static const OSSL_PARAM settable_variant_ctx_params[] = {
+    OSSL_PARAM_octet_string(OSSL_SIGNATURE_PARAM_CONTEXT_STRING, NULL, 0),
+    OSSL_PARAM_END
 };
 
-const OSSL_DISPATCH ossl_ed448_signature_functions[] = {
-    { OSSL_FUNC_SIGNATURE_NEWCTX, (void (*)(void))eddsa_newctx },
-    { OSSL_FUNC_SIGNATURE_DIGEST_SIGN_INIT,
-      (void (*)(void))eddsa_digest_signverify_init },
-    { OSSL_FUNC_SIGNATURE_DIGEST_SIGN,
-      (void (*)(void))ed448_digest_sign },
-    { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_INIT,
-      (void (*)(void))eddsa_digest_signverify_init },
-    { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY,
-      (void (*)(void))ed448_digest_verify },
-    { OSSL_FUNC_SIGNATURE_FREECTX, (void (*)(void))eddsa_freectx },
-    { OSSL_FUNC_SIGNATURE_DUPCTX, (void (*)(void))eddsa_dupctx },
-    { OSSL_FUNC_SIGNATURE_GET_CTX_PARAMS, (void (*)(void))eddsa_get_ctx_params },
-    { OSSL_FUNC_SIGNATURE_GETTABLE_CTX_PARAMS,
-      (void (*)(void))eddsa_gettable_ctx_params },
-    { OSSL_FUNC_SIGNATURE_SET_CTX_PARAMS, (void (*)(void))eddsa_set_ctx_params },
-    { OSSL_FUNC_SIGNATURE_SETTABLE_CTX_PARAMS,
-      (void (*)(void))eddsa_settable_ctx_params },
+static const OSSL_PARAM *
+eddsa_settable_variant_ctx_params(ossl_unused void *vpeddsactx,
+                                  ossl_unused void *provctx)
+{
+    return settable_variant_ctx_params;
+}
+
+/*
+ * Ed25519 can be used using:
+ * - EVP_PKEY_sign_init_ex2()   [ instance and prehash assumed done by caller ]
+ * - EVP_PKEY_verify_init_ex2() [ instance and prehash assumed done by caller ]
+ * - EVP_PKEY_sign_message_init()
+ * - EVP_PKEY_verify_message_init()
+ * - EVP_DigestSignInit_ex()
+ * - EVP_DigestVerifyInit_ex()
+ * Ed25519ph can be used using:
+ * - EVP_PKEY_sign_init_ex2()   [ prehash assumed done by caller ]
+ * - EVP_PKEY_verify_init_ex2() [ prehash assumed done by caller ]
+ * - EVP_PKEY_sign_message_init()
+ * - EVP_PKEY_verify_message_init()
+ * Ed25519ctx can be used using:
+ * - EVP_PKEY_sign_message_init()
+ * - EVP_PKEY_verify_message_init()
+ * Ed448 can be used using:
+ * - EVP_PKEY_sign_init_ex2()   [ instance and prehash assumed done by caller ]
+ * - EVP_PKEY_verify_init_ex2() [ instance and prehash assumed done by caller ]
+ * - EVP_PKEY_sign_message_init()
+ * - EVP_PKEY_verify_message_init()
+ * - EVP_DigestSignInit_ex()
+ * - EVP_DigestVerifyInit_ex()
+ * Ed448ph can be used using:
+ * - EVP_PKEY_sign_init_ex2()   [ prehash assumed done by caller ]
+ * - EVP_PKEY_verify_init_ex2() [ prehash assumed done by caller ]
+ * - EVP_PKEY_sign_message_init()
+ * - EVP_PKEY_verify_message_init()
+ */
+
+#define ed25519_DISPATCH_END                                            \
+    { OSSL_FUNC_SIGNATURE_SIGN_INIT,                                    \
+        (void (*)(void))ed25519_signverify_init },                      \
+    { OSSL_FUNC_SIGNATURE_VERIFY_INIT,                                  \
+        (void (*)(void))ed25519_signverify_init },                      \
+    { OSSL_FUNC_SIGNATURE_DIGEST_SIGN_INIT,                             \
+        (void (*)(void))ed25519_digest_signverify_init },               \
+    { OSSL_FUNC_SIGNATURE_DIGEST_SIGN,                                  \
+        (void (*)(void))ed25519_digest_sign },                          \
+    { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_INIT,                           \
+        (void (*)(void))ed25519_digest_signverify_init },               \
+    { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY,                                \
+        (void (*)(void))ed25519_digest_verify },                        \
+    { OSSL_FUNC_SIGNATURE_GET_CTX_PARAMS,                               \
+        (void (*)(void))eddsa_get_ctx_params },                         \
+    { OSSL_FUNC_SIGNATURE_GETTABLE_CTX_PARAMS,                          \
+        (void (*)(void))eddsa_gettable_ctx_params },                    \
+    { OSSL_FUNC_SIGNATURE_SET_CTX_PARAMS,                               \
+        (void (*)(void))eddsa_set_ctx_params },                         \
+    { OSSL_FUNC_SIGNATURE_SETTABLE_CTX_PARAMS,                          \
+        (void (*)(void))eddsa_settable_ctx_params },                    \
     OSSL_DISPATCH_END
-};
+
+#define eddsa_variant_DISPATCH_END(v)                                   \
+    { OSSL_FUNC_SIGNATURE_SIGN_INIT,                                    \
+        (void (*)(void))v##_signverify_message_init },                  \
+    { OSSL_FUNC_SIGNATURE_VERIFY_INIT,                                  \
+        (void (*)(void))v##_signverify_message_init },                  \
+    { OSSL_FUNC_SIGNATURE_GET_CTX_PARAMS,                               \
+        (void (*)(void))eddsa_get_ctx_params },                         \
+    { OSSL_FUNC_SIGNATURE_GETTABLE_CTX_PARAMS,                          \
+        (void (*)(void))eddsa_gettable_ctx_params },                    \
+    { OSSL_FUNC_SIGNATURE_SET_CTX_PARAMS,                               \
+        (void (*)(void))eddsa_set_ctx_params },                         \
+    { OSSL_FUNC_SIGNATURE_SETTABLE_CTX_PARAMS,                          \
+        (void (*)(void))eddsa_settable_variant_ctx_params },            \
+    OSSL_DISPATCH_END
+#define ed25519ph_DISPATCH_END                                          \
+    { OSSL_FUNC_SIGNATURE_SIGN_INIT,                                    \
+        (void (*)(void))ed25519ph_signverify_init },                    \
+    { OSSL_FUNC_SIGNATURE_VERIFY_INIT,                                  \
+        (void (*)(void))ed25519ph_signverify_init },                    \
+    eddsa_variant_DISPATCH_END(ed25519ph)
+#define ed25519ctx_DISPATCH_END eddsa_variant_DISPATCH_END(ed25519ctx)
+
+#define ed448_DISPATCH_END                                              \
+    { OSSL_FUNC_SIGNATURE_SIGN_INIT,                                    \
+        (void (*)(void))ed448_signverify_init },                        \
+    { OSSL_FUNC_SIGNATURE_VERIFY_INIT,                                  \
+        (void (*)(void))ed448_signverify_init },                        \
+    { OSSL_FUNC_SIGNATURE_DIGEST_SIGN_INIT,                             \
+        (void (*)(void))ed448_digest_signverify_init },                 \
+    { OSSL_FUNC_SIGNATURE_DIGEST_SIGN,                                  \
+        (void (*)(void))ed448_digest_sign },                            \
+    { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_INIT,                           \
+        (void (*)(void))ed448_digest_signverify_init },                 \
+    { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY,                                \
+        (void (*)(void))ed448_digest_verify },                          \
+    { OSSL_FUNC_SIGNATURE_GET_CTX_PARAMS,                               \
+        (void (*)(void))eddsa_get_ctx_params },                         \
+    { OSSL_FUNC_SIGNATURE_GETTABLE_CTX_PARAMS,                          \
+        (void (*)(void))eddsa_gettable_ctx_params },                    \
+    { OSSL_FUNC_SIGNATURE_SET_CTX_PARAMS,                               \
+        (void (*)(void))eddsa_set_ctx_params },                         \
+    { OSSL_FUNC_SIGNATURE_SETTABLE_CTX_PARAMS,                          \
+        (void (*)(void))eddsa_settable_ctx_params },                    \
+    OSSL_DISPATCH_END
+
+#define ed448ph_DISPATCH_END                                            \
+    { OSSL_FUNC_SIGNATURE_SIGN_INIT,                                    \
+        (void (*)(void))ed448ph_signverify_init },                      \
+    { OSSL_FUNC_SIGNATURE_VERIFY_INIT,                                  \
+        (void (*)(void))ed448ph_signverify_init },                      \
+    eddsa_variant_DISPATCH_END(ed448ph)
+
+/* vn = variant name, bn = base name */
+#define IMPL_EDDSA_DISPATCH(vn,bn)                                      \
+    const OSSL_DISPATCH ossl_##vn##_signature_functions[] = {           \
+        { OSSL_FUNC_SIGNATURE_NEWCTX, (void (*)(void))eddsa_newctx },   \
+        { OSSL_FUNC_SIGNATURE_SIGN_MESSAGE_INIT,                        \
+          (void (*)(void))vn##_signverify_message_init },               \
+        { OSSL_FUNC_SIGNATURE_SIGN,                                     \
+          (void (*)(void))bn##_sign },                                  \
+        { OSSL_FUNC_SIGNATURE_VERIFY_MESSAGE_INIT,                      \
+          (void (*)(void))vn##_signverify_message_init },               \
+        { OSSL_FUNC_SIGNATURE_VERIFY,                                   \
+          (void (*)(void))bn##_verify },                                \
+        { OSSL_FUNC_SIGNATURE_FREECTX, (void (*)(void))eddsa_freectx }, \
+        { OSSL_FUNC_SIGNATURE_DUPCTX, (void (*)(void))eddsa_dupctx },   \
+        { OSSL_FUNC_SIGNATURE_QUERY_KEY_TYPES,                          \
+          (void (*)(void))bn##_sigalg_query_key_types },                \
+        vn##_DISPATCH_END                                               \
+    }
+
+IMPL_EDDSA_DISPATCH(ed25519,ed25519);
+IMPL_EDDSA_DISPATCH(ed25519ph,ed25519);
+IMPL_EDDSA_DISPATCH(ed25519ctx,ed25519);
+IMPL_EDDSA_DISPATCH(ed448,ed448);
+IMPL_EDDSA_DISPATCH(ed448ph,ed448);
 
 #ifdef S390X_EC_ASM
 

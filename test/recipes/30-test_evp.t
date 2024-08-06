@@ -63,6 +63,7 @@ my @files = qw(
                 evppbe_pbkdf2.txt
                 evppkey_kdf_hkdf.txt
                 evppkey_rsa_common.txt
+                evppkey_rsa_sigalg.txt
                 evprand.txt
               );
 push @files, qw(
@@ -76,6 +77,7 @@ push @files, qw(
 push @files, qw(evppkey_dsa.txt) unless $no_dsa;
 push @files, qw(
                 evppkey_ecx.txt
+                evppkey_ecx_sigalg.txt
                 evppkey_mismatch_ecx.txt
                ) unless $no_ecx;
 push @files, qw(

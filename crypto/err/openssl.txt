@@ -779,6 +779,8 @@ EVP_R_ONLY_ONESHOT_SUPPORTED:177:only oneshot supported
 EVP_R_OPERATION_NOT_INITIALIZED:151:operation not initialized
 EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE:150:\
 	operation not supported for this keytype
+EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_SIGNATURE_TYPE:226:\
+	operation not supported for this signature type
 EVP_R_OUTPUT_WOULD_OVERFLOW:202:output would overflow
 EVP_R_PARAMETER_TOO_LARGE:187:parameter too large
 EVP_R_PARTIALLY_OVERLAPPING:162:partially overlapping buffers
@@ -790,6 +792,8 @@ EVP_R_PRIVATE_KEY_ENCODE_ERROR:146:private key encode error
 EVP_R_PUBLIC_KEY_NOT_RSA:106:public key not rsa
 EVP_R_SETTING_XOF_FAILED:227:setting xof failed
 EVP_R_SET_DEFAULT_PROPERTY_FAILURE:209:set default property failure
+EVP_R_SIGNATURE_TYPE_AND_KEY_TYPE_INCOMPATIBLE:228:\
+	signature type and key type incompatible
 EVP_R_TOO_MANY_RECORDS:183:too many records
 EVP_R_UNABLE_TO_ENABLE_LOCKING:212:unable to enable locking
 EVP_R_UNABLE_TO_GET_MAXIMUM_REQUEST_SIZE:215:unable to get maximum request size
@@ -1063,6 +1067,7 @@ PROV_R_INVALID_DIGEST:122:invalid digest
 PROV_R_INVALID_DIGEST_LENGTH:166:invalid digest length
 PROV_R_INVALID_DIGEST_SIZE:218:invalid digest size
 PROV_R_INVALID_INPUT_LENGTH:230:invalid input length
+PROV_R_INVALID_INSTANCE:236:invalid instance
 PROV_R_INVALID_ITERATION_COUNT:123:invalid iteration count
 PROV_R_INVALID_IV_LENGTH:109:invalid iv length
 PROV_R_INVALID_KDF:232:invalid kdf
