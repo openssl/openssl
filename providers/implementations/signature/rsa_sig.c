@@ -234,7 +234,7 @@ static int rsa_pss_compute_saltlen(PROV_RSA_CTX *ctx)
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST);
             return -1;
         }
-        if ((rsasize = RSA_size(ctx->rsa)) <= 0 || rsasize < mdsize + 2) {
+        if ((rsasize = RSA_size(ctx->rsa)) <= 2 || rsasize - 2 < mdsize) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY);
             return -1;
         }
