@@ -63,6 +63,7 @@ my @files = qw(
                 evppbe_pbkdf2.txt
                 evppkey_kdf_hkdf.txt
                 evppkey_rsa_common.txt
+                evppkey_rsa_sigalg.txt
                 evprand.txt
               );
 push @files, qw(
@@ -73,7 +74,10 @@ push @files, qw(
                 evpkdf_x942_des.txt
                 evpmac_cmac_des.txt
                ) unless $no_des;
-push @files, qw(evppkey_dsa.txt) unless $no_dsa;
+push @files, qw(
+                evppkey_dsa.txt
+                evppkey_dsa_sigalg.txt
+               ) unless $no_dsa;
 push @files, qw(
                 evppkey_ecx.txt
                 evppkey_mismatch_ecx.txt
@@ -82,6 +86,7 @@ push @files, qw(
                 evppkey_ecc.txt
                 evppkey_ecdh.txt
                 evppkey_ecdsa.txt
+                evppkey_ecdsa_sigalg.txt
                 evppkey_kas.txt
                 evppkey_mismatch.txt
                ) unless $no_ec;

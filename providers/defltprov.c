@@ -397,14 +397,49 @@ static const OSSL_ALGORITHM deflt_rands[] = {
 static const OSSL_ALGORITHM deflt_signature[] = {
 #ifndef OPENSSL_NO_DSA
     { PROV_NAMES_DSA, "provider=default", ossl_dsa_signature_functions },
+    { PROV_NAMES_DSA_SHA1, "provider=default", ossl_dsa_sha1_signature_functions },
+    { PROV_NAMES_DSA_SHA224, "provider=default", ossl_dsa_sha224_signature_functions },
+    { PROV_NAMES_DSA_SHA256, "provider=default", ossl_dsa_sha256_signature_functions },
+    { PROV_NAMES_DSA_SHA384, "provider=default", ossl_dsa_sha384_signature_functions },
+    { PROV_NAMES_DSA_SHA512, "provider=default", ossl_dsa_sha512_signature_functions },
+    { PROV_NAMES_DSA_SHA3_224, "provider=default", ossl_dsa_sha3_224_signature_functions },
+    { PROV_NAMES_DSA_SHA3_256, "provider=default", ossl_dsa_sha3_256_signature_functions },
+    { PROV_NAMES_DSA_SHA3_384, "provider=default", ossl_dsa_sha3_384_signature_functions },
+    { PROV_NAMES_DSA_SHA3_512, "provider=default", ossl_dsa_sha3_512_signature_functions },
 #endif
     { PROV_NAMES_RSA, "provider=default", ossl_rsa_signature_functions },
+#if !defined(OPENSSL_NO_RMD160) && !defined(FIPS_MODULE)
+    { PROV_NAMES_RSA_RIPEMD160, "provider=default", ossl_rsa_ripemd160_signature_functions },
+#endif
+    { PROV_NAMES_RSA_SHA1, "provider=default", ossl_rsa_sha1_signature_functions },
+    { PROV_NAMES_RSA_SHA224, "provider=default", ossl_rsa_sha224_signature_functions },
+    { PROV_NAMES_RSA_SHA256, "provider=default", ossl_rsa_sha256_signature_functions },
+    { PROV_NAMES_RSA_SHA384, "provider=default", ossl_rsa_sha384_signature_functions },
+    { PROV_NAMES_RSA_SHA512, "provider=default", ossl_rsa_sha512_signature_functions },
+    { PROV_NAMES_RSA_SHA512_224, "provider=default", ossl_rsa_sha512_224_signature_functions },
+    { PROV_NAMES_RSA_SHA512_256, "provider=default", ossl_rsa_sha512_256_signature_functions },
+    { PROV_NAMES_RSA_SHA3_224, "provider=default", ossl_rsa_sha3_224_signature_functions },
+    { PROV_NAMES_RSA_SHA3_256, "provider=default", ossl_rsa_sha3_256_signature_functions },
+    { PROV_NAMES_RSA_SHA3_384, "provider=default", ossl_rsa_sha3_384_signature_functions },
+    { PROV_NAMES_RSA_SHA3_512, "provider=default", ossl_rsa_sha3_512_signature_functions },
+#ifndef OPENSSL_NO_SM3
+    { PROV_NAMES_RSA_SM3, "provider=default", ossl_rsa_sm3_signature_functions },
+#endif
 #ifndef OPENSSL_NO_EC
 # ifndef OPENSSL_NO_ECX
     { PROV_NAMES_ED25519, "provider=default", ossl_ed25519_signature_functions },
     { PROV_NAMES_ED448, "provider=default", ossl_ed448_signature_functions },
 # endif
     { PROV_NAMES_ECDSA, "provider=default", ossl_ecdsa_signature_functions },
+    { PROV_NAMES_ECDSA_SHA1, "provider=default", ossl_ecdsa_sha1_signature_functions },
+    { PROV_NAMES_ECDSA_SHA224, "provider=default", ossl_ecdsa_sha224_signature_functions },
+    { PROV_NAMES_ECDSA_SHA256, "provider=default", ossl_ecdsa_sha256_signature_functions },
+    { PROV_NAMES_ECDSA_SHA384, "provider=default", ossl_ecdsa_sha384_signature_functions },
+    { PROV_NAMES_ECDSA_SHA512, "provider=default", ossl_ecdsa_sha512_signature_functions },
+    { PROV_NAMES_ECDSA_SHA3_224, "provider=default", ossl_ecdsa_sha3_224_signature_functions },
+    { PROV_NAMES_ECDSA_SHA3_256, "provider=default", ossl_ecdsa_sha3_256_signature_functions },
+    { PROV_NAMES_ECDSA_SHA3_384, "provider=default", ossl_ecdsa_sha3_384_signature_functions },
+    { PROV_NAMES_ECDSA_SHA3_512, "provider=default", ossl_ecdsa_sha3_512_signature_functions },
 # ifndef OPENSSL_NO_SM2
     { PROV_NAMES_SM2, "provider=default", ossl_sm2_signature_functions },
 # endif
