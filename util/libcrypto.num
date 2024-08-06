@@ -5708,3 +5708,13 @@ i2d_OSSL_BASIC_ATTR_CONSTRAINTS         ?	3_4_0	EXIST::FUNCTION:
 OSSL_BASIC_ATTR_CONSTRAINTS_free        ?	3_4_0	EXIST::FUNCTION:
 OSSL_BASIC_ATTR_CONSTRAINTS_new         ?	3_4_0	EXIST::FUNCTION:
 OSSL_BASIC_ATTR_CONSTRAINTS_it          ?	3_4_0	EXIST::FUNCTION:
+EVP_PKEY_CTX_set_signature              ?	3_4_0	EXIST::FUNCTION:
+EVP_PKEY_sign_init_ex2                  ?	3_4_0	EXIST::FUNCTION:
+EVP_PKEY_sign_message_init              ?	3_4_0	EXIST::FUNCTION:
+EVP_PKEY_sign_message_update            ?	3_4_0	EXIST::FUNCTION:
+EVP_PKEY_sign_message_final             ?	3_4_0	EXIST::FUNCTION:
+EVP_PKEY_verify_init_ex2                ?	3_4_0	EXIST::FUNCTION:
+EVP_PKEY_verify_message_init            ?	3_4_0	EXIST::FUNCTION:
+EVP_PKEY_verify_message_update          ?	3_4_0	EXIST::FUNCTION:
+EVP_PKEY_verify_message_final           ?	3_4_0	EXIST::FUNCTION:
+EVP_PKEY_verify_recover_init_ex2        ?	3_4_0	EXIST::FUNCTION:

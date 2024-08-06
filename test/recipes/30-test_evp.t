@@ -63,6 +63,7 @@ my @files = qw(
                 evppbe_pbkdf2.txt
                 evppkey_kdf_hkdf.txt
                 evppkey_rsa_common.txt
+                evppkey_rsa_sigalg.txt
                 evprand.txt
               );
 push @files, qw(

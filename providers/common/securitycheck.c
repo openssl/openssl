@@ -26,30 +26,32 @@ int ossl_rsa_key_op_get_protect(const RSA *rsa, int operation, int *outprotect)
     int protect = 0;
 
     switch (operation) {
-        case EVP_PKEY_OP_SIGN:
-            protect = 1;
-            /* fallthrough */
-        case EVP_PKEY_OP_VERIFY:
-            break;
-        case EVP_PKEY_OP_ENCAPSULATE:
-        case EVP_PKEY_OP_ENCRYPT:
-            protect = 1;
-            /* fallthrough */
-        case EVP_PKEY_OP_VERIFYRECOVER:
-        case EVP_PKEY_OP_DECAPSULATE:
-        case EVP_PKEY_OP_DECRYPT:
-            if (RSA_test_flags(rsa,
-                               RSA_FLAG_TYPE_MASK) == RSA_FLAG_TYPE_RSASSAPSS) {
-                ERR_raise_data(ERR_LIB_PROV,
-                               PROV_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE,
-                               "operation: %d", operation);
-                return 0;
-            }
-            break;
-        default:
-            ERR_raise_data(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR,
-                           "invalid operation: %d", operation);
+    case EVP_PKEY_OP_SIGN:
+    case EVP_PKEY_OP_SIGNMSG:
+        protect = 1;
+        /* fallthrough */
+    case EVP_PKEY_OP_VERIFY:
+    case EVP_PKEY_OP_VERIFYMSG:
+        break;
+    case EVP_PKEY_OP_ENCAPSULATE:
+    case EVP_PKEY_OP_ENCRYPT:
+        protect = 1;
+        /* fallthrough */
+    case EVP_PKEY_OP_VERIFYRECOVER:
+    case EVP_PKEY_OP_DECAPSULATE:
+    case EVP_PKEY_OP_DECRYPT:
+        if (RSA_test_flags(rsa,
+                           RSA_FLAG_TYPE_MASK) == RSA_FLAG_TYPE_RSASSAPSS) {
+            ERR_raise_data(ERR_LIB_PROV,
+                           PROV_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE,
+                           "operation: %d", operation);
             return 0;
+        }
+        break;
+    default:
+        ERR_raise_data(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR,
+                       "invalid operation: %d", operation);
+        return 0;
     }
     *outprotect = protect;
     return 1;

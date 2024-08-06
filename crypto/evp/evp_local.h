@@ -165,8 +165,14 @@ struct evp_signature_st {
     OSSL_FUNC_signature_newctx_fn *newctx;
     OSSL_FUNC_signature_sign_init_fn *sign_init;
     OSSL_FUNC_signature_sign_fn *sign;
+    OSSL_FUNC_signature_sign_message_init_fn *sign_message_init;
+    OSSL_FUNC_signature_sign_message_update_fn *sign_message_update;
+    OSSL_FUNC_signature_sign_message_final_fn *sign_message_final;
     OSSL_FUNC_signature_verify_init_fn *verify_init;
     OSSL_FUNC_signature_verify_fn *verify;
+    OSSL_FUNC_signature_verify_message_init_fn *verify_message_init;
+    OSSL_FUNC_signature_verify_message_update_fn *verify_message_update;
+    OSSL_FUNC_signature_verify_message_final_fn *verify_message_final;
     OSSL_FUNC_signature_verify_recover_init_fn *verify_recover_init;
     OSSL_FUNC_signature_verify_recover_fn *verify_recover;
     OSSL_FUNC_signature_digest_sign_init_fn *digest_sign_init;
@@ -187,6 +193,9 @@ struct evp_signature_st {
     OSSL_FUNC_signature_gettable_ctx_md_params_fn *gettable_ctx_md_params;
     OSSL_FUNC_signature_set_ctx_md_params_fn *set_ctx_md_params;
     OSSL_FUNC_signature_settable_ctx_md_params_fn *settable_ctx_md_params;
+
+    /* Signature object checking */
+    OSSL_FUNC_signature_query_key_types_fn *query_key_types;
 } /* EVP_SIGNATURE */;
 
 struct evp_asym_cipher_st {
