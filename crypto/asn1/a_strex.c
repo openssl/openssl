@@ -344,13 +344,10 @@ static int do_print_ex(char_io *io_ch, void *arg, unsigned long lflags,
 
     if (lflags & ASN1_STRFLGS_SHOW_TYPE) {
         const char *tagname;
-        size_t tagname_len;
 
         tagname = ASN1_tag2str(type);
-        tagname_len = strlen(tagname);
-        if (tagname_len > INT_MAX - 1)
-            return -1;
-        outlen += (int)tagname_len;
+        /* We can directly cast here as tagname will never be too large. */
+        outlen += (int)strlen(tagname);
         if (!io_ch(arg, tagname, outlen) || !io_ch(arg, ":", 1))
             return -1;
         outlen++;
