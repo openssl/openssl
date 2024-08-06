@@ -43,12 +43,11 @@ static int test_explicit_provider(void)
 
     if (ok) {
         ok = test_provider(ctx);
-        if (ok) {
+        if (ok)
             ok = TEST_true(OSSL_PROVIDER_unload(prov));
-        }
-        else {
+        else
             OSSL_PROVIDER_unload(prov);
-        }
+            OSSL_PROVIDER_unload(prov);
     }
 
     OSSL_LIB_CTX_free(ctx);
