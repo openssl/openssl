@@ -99,9 +99,11 @@ struct record_functions_st
      * alternative record layer.
      */
     int (*set_crypto_state)(OSSL_RECORD_LAYER *rl, int level,
+                            unsigned char *snkey,
                             unsigned char *key, size_t keylen,
                             unsigned char *iv, size_t ivlen,
                             unsigned char *mackey, size_t mackeylen,
+                            const EVP_CIPHER *snciph,
                             const EVP_CIPHER *ciph,
                             size_t taglen,
                             int mactype,
@@ -298,6 +300,9 @@ struct ossl_record_layer_st
     /* TLSv1.3 MAC ctx, only used with integrity-only cipher */
     EVP_MAC_CTX *mac_ctx;
 
+    /* cryptographic state for DTLS sequence numbers */
+    EVP_CIPHER_CTX *sn_enc_ctx;
+
     /* Explicit IV length */
     size_t eivlen;
 
@@ -418,6 +423,9 @@ int tls_free_buffers(OSSL_RECORD_LAYER *rl);
 int tls_default_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
                        int clearold, size_t *readbytes);
 int tls_get_more_records(OSSL_RECORD_LAYER *rl);
+
+int dtls_crypt_sequence_number(unsigned char *seq, size_t seq_len,
+                               EVP_CIPHER_CTX *ctx, unsigned char *rec_data);
 int dtls_get_more_records(OSSL_RECORD_LAYER *rl);
 
 int dtls_prepare_record_header(OSSL_RECORD_LAYER *rl,
