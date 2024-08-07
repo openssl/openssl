@@ -1911,6 +1911,8 @@ static int test_tlsext_status_type(void)
     /* First just do various checks getting and setting tlsext_status_type */
 
     clientssl = SSL_new(cctx);
+    if (!TEST_ptr(clientssl))
+        goto end;
     if (!TEST_int_eq(SSL_get_tlsext_status_type(clientssl), -1)
             || !TEST_true(SSL_set_tlsext_status_type(clientssl,
                                                       TLSEXT_STATUSTYPE_ocsp))
@@ -1926,6 +1928,8 @@ static int test_tlsext_status_type(void)
         goto end;
 
     clientssl = SSL_new(cctx);
+    if (!TEST_ptr(clientssl))
+        goto end;
     if (SSL_get_tlsext_status_type(clientssl) != TLSEXT_STATUSTYPE_ocsp)
         goto end;
     SSL_free(clientssl);
