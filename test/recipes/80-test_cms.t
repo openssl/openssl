@@ -516,12 +516,12 @@ my @smime_cms_param_tests = (
     ],
 
     [ "signed content test streaming PEM format, RSA keys, PSS signature, saltlen=max",
-      [ "{cmd1}", @prov, "-sign", "-in", $smcont, "-outform", "PEM", "-nodetach",
+      [ "{cmd1}", @defaultprov, "-sign", "-in", $smcont, "-outform", "PEM", "-nodetach",
         "-signer", $smrsa1,
         "-keyopt", "rsa_padding_mode:pss", "-keyopt", "rsa_pss_saltlen:max",
         "-out", "{output}.cms" ],
       sub { my %opts = @_; rsapssSaltlen("$opts{output}.cms") == 222; },
-      [ "{cmd2}", @prov, "-verify", "-in", "{output}.cms", "-inform", "PEM",
+      [ "{cmd2}", @defaultprov, "-verify", "-in", "{output}.cms", "-inform", "PEM",
         "-CAfile", $smroot, "-out", "{output}.txt" ],
       \&final_compare
     ],

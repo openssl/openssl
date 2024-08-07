@@ -165,6 +165,15 @@ extern "C" {
  */
 # define OSSL_PROV_FIPS_PARAM_RSA_PKCS15_PADDING_DISABLED \
             "rsa-pkcs15-padding-disabled"
+
+/*
+ * A boolean that determines if the runtime salt length check for RSA-PSS is
+ * performed.
+ * This is disabled by default.
+ * Type: OSSL_PARAM_UTF8_STRING
+ */
+# define OSSL_PROV_FIPS_PARAM_RSA_PSS_SALTLEN_CHECK "rsa-pss-saltlen-check"
+
 /*
  * A boolean that determines if X9.31 padding can be used for RSA signing.
  * X9.31 RSA has been removed from FIPS 186-5, and is no longer approved for
