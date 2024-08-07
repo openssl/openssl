@@ -460,7 +460,8 @@ int ossl_quic_reactor_block_until_pred(QUIC_REACTOR *rtor,
     OSSL_TIME tick_deadline;
 
     notifier_fd
-        = (rtor->have_notifier ? ossl_rio_notifier_as_fd(&rtor->notifier) : -1);
+        = (rtor->have_notifier ? ossl_rio_notifier_as_fd(&rtor->notifier)
+                               : INVALID_SOCKET);
 
     for (;;) {
         if ((flags & SKIP_FIRST_TICK) != 0)
@@ -529,7 +530,7 @@ int ossl_quic_reactor_block_until_pred(QUIC_REACTOR *rtor,
          *   Second, the thread which happened to be the one which decremented
          *   cur_blocking_waiters to 0 unsignals the notifier and is then
          *   responsible for broadcasting to a CV to indicate to the other
-         *   threads that the synchronised wakeup has been cmpleted. Other
+         *   threads that the synchronised wakeup has been cpmpleted. Other
          *   threads wait for this CV to be signalled.
          *
          */
