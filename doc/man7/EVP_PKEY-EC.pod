@@ -19,7 +19,7 @@ Explicit parameters are supported for backwards compatibility reasons, but they
 are not compliant with multiple standards (including RFC5915) which only allow
 named curves.
 
-The following KeyGen/Gettable/Import/Export types are available for the
+The following Key generation/Gettable/Import/Export types are available for the
 built-in EC algorithm:
 
 =over 4
@@ -187,8 +187,8 @@ that m > k3 > k2 > k1 > 0
 
 =back
 
-The following KeyGen settable parameter is also available for the OpenSSL FIPS
-provider's EC algorithm:
+The following key generation settable parameter is also available for the
+OpenSSL FIPS provider's EC algorithm:
 
 =over 4
 
@@ -198,8 +198,8 @@ See L<provider-keymgmt(7)/Common Information Parameters> for further information
 
 =back
 
-The following KeyGen Gettable parameter is available for the OpenSSL FIPS
-provider's EC algorithm:
+The following key generation Gettable parameter is available for the OpenSSL
+FIPS provider's EC algorithm:
 
 =over 4
 
