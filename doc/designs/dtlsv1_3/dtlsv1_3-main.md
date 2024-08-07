@@ -82,8 +82,8 @@ ACK's are sent for KeyUpdates, NewSessionTicket and Finish (client).
 Notes on RFC9147 Section 7.1:
 
 * The implementation does not offer any logic to determine that there is disruption
-when receiving messages which means it will not send ACKs for the example given
-in RFC9147 Figure 12.
+  when receiving messages which means it will not send ACKs for the example given
+  in RFC9147 Figure 12.
 * ACKs are always sent immediately after receiving a message to be ACK'ed.
 * Empty ACKs are never sent.
 
