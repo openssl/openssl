@@ -14,7 +14,6 @@ my $conditional_errors = 1;
 my $security_checks = 1;
 my $ems_check = 1;
 my $no_short_mac = 1;
-my $key_check = 1;
 my $drgb_no_trunc_dgst = 1;
 my $kdf_digest_check = 1;
 my $dsa_sign_disabled = 1;
@@ -79,6 +78,6 @@ sshkdf-key-check = $kdf_key_check
 sskdf-key-check = $kdf_key_check
 x963kdf-key-check = $kdf_key_check
 pbkdf2-lower-bound-check = $pbkdf2_lower_bound_check
-hmac-key-check = $key_check
+hmac-key-check = $mac_key_check
 kmac-key-check = $mac_key_check
 _____
