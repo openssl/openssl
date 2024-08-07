@@ -4536,7 +4536,7 @@ KeyName = ec2
 Ctrl = group:P-192
 Result = KEYGEN_GENERATE_ERROR
 
-# Test KeyGen with a curve with < 112 bits of security fails is not approved
+# Test KeyGen with a curve with < 112 bits of security is not approved
 FIPSversion = >=3.4.0
 KeyGen = ec
 KeyName = ec3
