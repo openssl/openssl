@@ -4272,7 +4272,6 @@ SSL *ossl_quic_new_listener_from(SSL *ssl, uint64_t flags)
     QCTX ctx;
     QUIC_LISTENER *ql = NULL;
     QUIC_PORT_ARGS port_args = {0};
-    int reffed = 0;
 
     if (!expect_quic_domain(ssl, &ctx))
         return NULL;
@@ -4280,7 +4279,6 @@ SSL *ossl_quic_new_listener_from(SSL *ssl, uint64_t flags)
     if (!SSL_up_ref(&ctx.qd->obj.ssl))
         return NULL;
 
-    reffed = 1;
     qctx_lock(&ctx);
 
     if ((ql = OPENSSL_zalloc(sizeof(*ql))) == NULL) {
@@ -4320,8 +4318,7 @@ err:
 
     OPENSSL_free(ql);
     qctx_unlock(&ctx);
-    if (reffed)
-        SSL_free(&ctx.qd->obj.ssl);
+    SSL_free(&ctx.qd->obj.ssl);
 
     return NULL;
 }
@@ -4536,7 +4533,7 @@ SSL *ossl_quic_new_domain(SSL_CTX *ctx, uint64_t flags)
 
     if ((qd = OPENSSL_zalloc(sizeof(*qd))) == NULL) {
         QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_CRYPTO_LIB, NULL);
-        goto err;
+        return NULL;
     }
 
 #if defined(OPENSSL_THREADS)

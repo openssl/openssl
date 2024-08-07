@@ -79,7 +79,7 @@ The merits of these models are as follows:
 
 The B<Single-Threaded Concurrency Model (SCM)> performs no locking or
 synchronisation. It is entirely up to the application to synchronise access to
-the QUIC domain and its subsidary SSL objects.
+the QUIC domain and its subsidiary SSL objects.
 
 This concurrency model is also useful for an application which wants to use the
 OpenSSL QUIC implementation as a pure state machine.
@@ -201,7 +201,7 @@ B<SSL_DOMAIN_FLAG_THREAD_ASSISTED> is also specified).
 
 =item B<SSL_DOMAIN_FLAG_THREAD_ASSISTED>
 
-Specifying this flag configures the Thread-Assisted Concurrency Modle (TACM).
+Specifying this flag configures the Thread-Assisted Concurrency Model (TACM).
 It implies B<SSL_DOMAIN_FLAG_MULTI_THREAD>.
 
 =item B<SSL_DOMAIN_FLAG_BLOCKING>
@@ -266,7 +266,7 @@ Otherwise, the Contentive Concurrency Model (CCM) is used.
 =back
 
 The default concurrency model may vary between releases of OpenSSL. An
-application may specify one of more of the domain flags above to ensure
+application may specify one or more of the domain flags above to ensure
 consistent usage of a specific concurrency model between releases.
 
 =head2 Configuration of Concurrency Models with Implicit QUIC Domains

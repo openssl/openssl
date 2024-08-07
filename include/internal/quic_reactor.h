@@ -71,10 +71,10 @@
  * the reactor interface.
  */
 struct quic_tick_result_st {
+    OSSL_TIME   tick_deadline;
     char        net_read_desired;
     char        net_write_desired;
     char        notify_other_threads;
-    OSSL_TIME   tick_deadline;
 };
 
 static ossl_inline ossl_unused void

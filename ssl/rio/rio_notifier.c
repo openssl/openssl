@@ -47,7 +47,7 @@ static int create_socket(int domain, int socktype, int protocol)
 # endif
 
     fd = BIO_socket(domain, socktype, protocol, 0);
-    if (fd < 0)
+    if (fd == INVALID_SOCKET)
         return -1;
 
     /*
