@@ -1031,14 +1031,10 @@ static int ping_pong_query(SSL *clientssl, SSL *serverssl)
     unsigned char cbuf[16000] = {0};
     unsigned char sbuf[16000];
     size_t err = 0;
-    uint64_t crec_wseq_before;
-    uint64_t crec_wseq_after;
-    uint64_t crec_rseq_before;
-    uint64_t crec_rseq_after;
-    uint64_t srec_wseq_before;
-    uint64_t srec_wseq_after;
-    uint64_t srec_rseq_before;
-    uint64_t srec_rseq_after;
+    uint64_t crec_wseq_before, crec_wseq_after;
+    uint64_t crec_rseq_before, crec_rseq_after;
+    uint64_t srec_wseq_before, srec_wseq_after;
+    uint64_t srec_rseq_before, srec_rseq_after;
     SSL_CONNECTION *clientsc, *serversc;
 
     if (!TEST_ptr(clientsc = SSL_CONNECTION_FROM_SSL_ONLY(clientssl))
@@ -1046,10 +1042,10 @@ static int ping_pong_query(SSL *clientssl, SSL *serverssl)
         goto end;
 
     cbuf[0] = count++;
-    crec_wseq_before = &clientsc->rlayer.wrl->sequence;
-    srec_wseq_before = &serversc->rlayer.wrl->sequence;
-    crec_rseq_before = &clientsc->rlayer.rrl->sequence;
-    srec_rseq_before = &serversc->rlayer.rrl->sequence;
+    crec_wseq_before = clientsc->rlayer.wrl->sequence;
+    srec_wseq_before = serversc->rlayer.wrl->sequence;
+    crec_rseq_before = clientsc->rlayer.rrl->sequence;
+    srec_rseq_before = serversc->rlayer.rrl->sequence;
 
     if (!TEST_true(SSL_write(clientssl, cbuf, sizeof(cbuf)) == sizeof(cbuf)))
         goto end;
@@ -1069,10 +1065,10 @@ static int ping_pong_query(SSL *clientssl, SSL *serverssl)
         }
     }
 
-    crec_wseq_after = &clientsc->rlayer.wrl->sequence;
-    srec_wseq_after = &serversc->rlayer.wrl->sequence;
-    crec_rseq_after = &clientsc->rlayer.rrl->sequence;
-    srec_rseq_after = &serversc->rlayer.rrl->sequence;
+    crec_wseq_after = clientsc->rlayer.wrl->sequence;
+    srec_wseq_after = serversc->rlayer.wrl->sequence;
+    crec_rseq_after = clientsc->rlayer.rrl->sequence;
+    srec_rseq_after = serversc->rlayer.rrl->sequence;
 
     /* verify the payload */
     if (!TEST_mem_eq(cbuf, sizeof(cbuf), sbuf, sizeof(sbuf)))
@@ -1099,12 +1095,10 @@ static int ping_pong_query(SSL *clientssl, SSL *serverssl)
     }
 
     if (!BIO_get_ktls_recv(clientsc->wbio)) {
-        if (!TEST_mem_ne(crec_rseq_before, SEQ_NUM_SIZE,
-                         crec_rseq_after, SEQ_NUM_SIZE))
+        if (!TEST_false(crec_rseq_before == crec_rseq_after))
             goto end;
     } else {
-        if (!TEST_mem_eq(crec_rseq_before, SEQ_NUM_SIZE,
-                         crec_rseq_after, SEQ_NUM_SIZE))
+        if (!TEST_true(crec_rseq_before == crec_rseq_after))
             goto end;
     }
 
