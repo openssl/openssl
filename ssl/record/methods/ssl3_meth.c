@@ -252,7 +252,7 @@ static int ssl3_mac(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec, unsigned char *md
             || !WPACKET_memcpy(&hdr, rl->mac_secret, md_size)
             || !WPACKET_memcpy(&hdr, ssl3_pad_1, npad)
             || !WPACKET_put_bytes_u64(&hdr, rl->sequence)
-            || (!cbc_encrypted && !WPACKET_put_bytes_u8(&hdr, rec->type))
+            || !WPACKET_put_bytes_u8(&hdr, rec->type)
             || !WPACKET_put_bytes_u16(&hdr, rec->length)
             || !WPACKET_finish(&hdr)
             || !WPACKET_get_total_written(&hdr, &hdr_written))
