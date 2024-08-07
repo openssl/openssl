@@ -1603,9 +1603,8 @@ char *SSL_get1_builtin_sigalgs(OSSL_LIB_CTX *libctx)
     EVP_PKEY *tmpkey = EVP_PKEY_new();
     char *retval = OPENSSL_malloc(maxretlen);
 
-    if (retval == NULL) {
+    if (retval == NULL)
         return NULL;
-    }
 
     /* ensure retval string is NUL terminated */
     retval[0] = (char)0;
@@ -1646,11 +1645,15 @@ char *SSL_get1_builtin_sigalgs(OSSL_LIB_CTX *libctx)
 
             if (sa != NULL) {
                 if (strlen(sa) + strlen(retval) + 1 >= maxretlen) {
+                    char *tmp;
+
                     maxretlen += SIGLEN_BUF_INCREMENT;
-                    retval = OPENSSL_realloc(retval, maxretlen);
-                    if (retval == NULL) {
+                    tmp = OPENSSL_realloc(retval, maxretlen);
+                    if (tmp == NULL) {
+                        OPENSSL_free(retval);
                         return NULL;
                     }
+                    retval = tmp;
                 }
                 if (strlen(retval) > 0)
                     OPENSSL_strlcat(retval, ":", maxretlen);
