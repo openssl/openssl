@@ -26,7 +26,7 @@ see L<openssl_user_macros(7)>:
 =head1 DESCRIPTION
 
 RAND_bytes() generates B<num> random bytes using a cryptographically
-secure pseudo random generator (CSPRNG) and stores them in B<buf>.
+secure pseudo random generator (CSPRNG) and stores them in B<buf>. B<buf> B<MUST NOT> be NULL.
 
 RAND_priv_bytes() has the same semantics as RAND_bytes().  It is intended to
 be used for generating values that should remain private. If using the

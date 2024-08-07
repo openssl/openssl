@@ -266,7 +266,7 @@ If I<impl> is NULL the default implementation of digest I<type> is used.
 
 Sets up digest context I<ctx> to use a digest I<type>.
 I<type> is typically supplied by a function such as EVP_sha1(), or a
-value explicitly fetched with EVP_MD_fetch().
+value explicitly fetched with EVP_MD_fetch(). I<ctx> B<MUST NOT> be NULL.
 
 The parameters B<params> are set on the context after initialisation.
 
@@ -302,7 +302,7 @@ B<EVP_MAX_MD_SIZE> bytes will be written unless the digest implementation
 allows changing the digest size and it is set to a larger value by the
 application. After calling EVP_DigestFinal_ex() no additional calls to
 EVP_DigestUpdate() can be made, but EVP_DigestInit_ex2() can be called to
-initialize a new digest operation.
+initialize a new digest operation. I<ctx> B<MUST NOT> be NULL.
 
 =item EVP_DigestFinalXOF()
 
@@ -761,6 +761,10 @@ digest name passed on the command line.
      }
 
      mdctx = EVP_MD_CTX_new();
+     if (mdctx == NULL) {
+        printf("Message digest create failed.\n");
+        exit(1);
+     }
      if (!EVP_DigestInit_ex2(mdctx, md, NULL)) {
          printf("Message digest initialization failed.\n");
          EVP_MD_CTX_free(mdctx);

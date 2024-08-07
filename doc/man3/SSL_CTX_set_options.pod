@@ -24,6 +24,7 @@ SSL_get_secure_renegotiation_support - manipulate SSL options
 =head1 DESCRIPTION
 
 SSL_CTX_set_options() adds the options set via bit-mask in B<options> to B<ctx>.
+B<ctx> B<MUST NOT> be NULL.
 Options already set before are not cleared!
 
 SSL_set_options() adds the options set via bit-mask in B<options> to B<ssl>.
