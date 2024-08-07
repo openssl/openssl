@@ -769,3 +769,42 @@ int ossl_cms_set1_keyid(ASN1_OCTET_STRING **pkeyid, X509 *cert)
     *pkeyid = keyid;
     return 1;
 }
+
+CMS_EnvelopedData *CMS_env_sign_data(BIO *data, X509 *signcert, EVP_PKEY *signkey,
+                                     STACK_OF(X509) *encryption_recip,
+                                     OSSL_LIB_CTX *libctx, const char *propq)
+{
+    CMS_EnvelopedData *evd = NULL;
+    BIO *privbio = NULL, *signbio = NULL, *envelopbio = NULL;
+    CMS_ContentInfo *signcms = NULL, *evpcms = NULL;
+
+    if (data == NULL || signkey == NULL || signcert == NULL || encryption_recip == NULL) {
+        ERR_raise(ERR_LIB_CMS, ERR_R_PASSED_NULL_PARAMETER);
+        return NULL;
+    }
+
+    signcms = CMS_sign_ex(signcert, signkey, NULL, data, CMS_BINARY,
+                          libctx, propq);
+    if (signcms == NULL)
+        goto err;
+
+    signbio = BIO_new(BIO_s_mem());
+    if (signbio == NULL
+        || ASN1_item_i2d_bio(ASN1_ITEM_rptr(CMS_SignedData), signbio, signcms->d.signedData) <= 0)
+        goto err;
+
+    evpcms = CMS_encrypt_ex(encryption_recip, signbio,
+                            EVP_aes_256_cbc(), CMS_BINARY, libctx, propq);
+    if (evpcms == NULL)
+        goto err;
+    evd = CMS_EnvelopedData_dup(evpcms->d.envelopedData);
+
+ err:
+    BIO_free(privbio);
+    BIO_free(signbio);
+    BIO_free(envelopbio);
+    CMS_ContentInfo_free(signcms);
+    CMS_ContentInfo_free(evpcms);
+
+    return evd;
+}

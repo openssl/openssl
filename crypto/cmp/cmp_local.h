@@ -952,7 +952,8 @@ OSSL_CMP_MSG *ossl_cmp_certreq_new(OSSL_CMP_CTX *ctx, int bodytype,
                                    const OSSL_CRMF_MSG *crm);
 OSSL_CMP_MSG *ossl_cmp_certrep_new(OSSL_CMP_CTX *ctx, int bodytype,
                                    int certReqId, const OSSL_CMP_PKISI *si,
-                                   X509 *cert, const X509 *encryption_recip,
+                                   X509 *cert, EVP_PKEY *certkey,
+                                   const X509 *encryption_recip,
                                    STACK_OF(X509) *chain, STACK_OF(X509) *caPubs,
                                    int unprotectedErrors);
 OSSL_CMP_MSG *ossl_cmp_rr_new(OSSL_CMP_CTX *ctx);

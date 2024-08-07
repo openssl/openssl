@@ -27,6 +27,7 @@ use OpenSSL::stackhash qw(generate_stack_macros);
 #  include <openssl/safestack.h>
 #  include <openssl/crmferr.h>
 #  include <openssl/x509v3.h> /* for GENERAL_NAME etc. */
+#  include <openssl/cms.h>
 
 /* explicit #includes not strictly needed since implied by the above: */
 #  include <openssl/types.h>
@@ -198,7 +199,10 @@ EVP_PKEY
                                   EVP_PKEY *pkey, X509 *cert,
                                   ASN1_OCTET_STRING *secret,
                                   OSSL_LIB_CTX *libctx, const char *propq);
-
+#  ifndef OPENSSL_NO_CMS
+OSSL_CRMF_ENCRYPTEDKEY
+*OSSL_CRMF_ENCRYPTEDKEY_init_envdata(CMS_EnvelopedData *envdata);
+#  endif
 
 #  ifdef __cplusplus
 }

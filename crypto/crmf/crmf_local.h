@@ -66,7 +66,9 @@ struct ossl_crmf_encryptedkey_st {
     int type;
     union {
         OSSL_CRMF_ENCRYPTEDVALUE *encryptedValue; /* 0 */ /* Deprecated */
+# ifndef OPENSSL_NO_CMS
         CMS_EnvelopedData *envelopedData; /* 1 */
+# endif
     } value;
 } /* OSSL_CRMF_ENCRYPTEDKEY */;
 

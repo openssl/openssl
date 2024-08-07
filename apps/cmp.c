@@ -201,6 +201,8 @@ static char *opt_srv_trusted = NULL;
 static char *opt_srv_untrusted = NULL;
 static char *opt_ref_cert = NULL;
 static char *opt_rsp_cert = NULL;
+static char *opt_rsp_cert_key = NULL;
+static char *opt_rsp_keypass = NULL;
 static char *opt_rsp_crl = NULL;
 static char *opt_rsp_extracerts = NULL;
 static char *opt_rsp_capubs = NULL;
@@ -285,7 +287,8 @@ typedef enum OPTION_choice {
     OPT_SRV_REF, OPT_SRV_SECRET,
     OPT_SRV_CERT, OPT_SRV_KEY, OPT_SRV_KEYPASS,
     OPT_SRV_TRUSTED, OPT_SRV_UNTRUSTED,
-    OPT_REF_CERT, OPT_RSP_CERT, OPT_RSP_CRL, OPT_RSP_EXTRACERTS, OPT_RSP_CAPUBS,
+    OPT_REF_CERT, OPT_RSP_CERT, OPT_RSP_CERT_KEY, OPT_RSP_KEYPASS,
+    OPT_RSP_CRL, OPT_RSP_EXTRACERTS, OPT_RSP_CAPUBS,
     OPT_RSP_NEWWITHNEW, OPT_RSP_NEWWITHOLD, OPT_RSP_OLDWITHNEW,
     OPT_POLL_COUNT, OPT_CHECK_AFTER,
     OPT_GRANT_IMPLICITCONF,
@@ -578,6 +581,12 @@ const OPTIONS cmp_options[] = {
      "Certificate to be expected for rr and any oldCertID in kur messages"},
     {"rsp_cert", OPT_RSP_CERT, 's',
      "Certificate to be returned as mock enrollment result"},
+    {"rsp_cert_key", OPT_RSP_CERT_KEY, 's',
+     "Private key for the certificate to be returned as mock enrollment result"},
+    {OPT_MORE_STR, 0, 0,
+     "Key to be returned for central key pair generation"},
+    {"rsp_keypass", OPT_RSP_KEYPASS, 's',
+     "Response private key (and cert) pass phrase source"},
     {"rsp_crl", OPT_RSP_CRL, 's',
      "CRL to be returned in genp of type crls"},
     {"rsp_extracerts", OPT_RSP_EXTRACERTS, 's',
@@ -690,8 +699,8 @@ static varref cmp_vars[] = { /* must be in same order as enumerated above! */
     {&opt_srv_ref}, {&opt_srv_secret},
     {&opt_srv_cert}, {&opt_srv_key}, {&opt_srv_keypass},
     {&opt_srv_trusted}, {&opt_srv_untrusted},
-    {&opt_ref_cert}, {&opt_rsp_cert}, {&opt_rsp_crl},
-    {&opt_rsp_extracerts}, {&opt_rsp_capubs},
+    {&opt_ref_cert}, {&opt_rsp_cert}, {&opt_rsp_cert_key}, {&opt_rsp_keypass},
+    {&opt_rsp_crl}, {&opt_rsp_extracerts}, {&opt_rsp_capubs},
     {&opt_rsp_newwithnew}, {&opt_rsp_newwithold}, {&opt_rsp_oldwithnew},
 
     {(char **)&opt_poll_count}, {(char **)&opt_check_after},
@@ -1204,11 +1213,25 @@ static OSSL_CMP_SRV_CTX *setup_srv_ctx(ENGINE *engine)
     if (opt_rsp_cert == NULL) {
         CMP_warn("no -rsp_cert given for mock server");
     } else {
-        if (!setup_cert(srv_ctx, opt_rsp_cert, opt_keypass,
+        if (!setup_cert(srv_ctx, opt_rsp_cert, opt_rsp_keypass,
                         "cert the mock server returns on certificate requests",
                         (add_X509_fn_t)ossl_cmp_mock_srv_set1_certOut))
             goto err;
     }
+    if (opt_rsp_cert_key != NULL) {
+        EVP_PKEY *pkey = load_key_pwd(opt_rsp_cert_key, opt_keyform,
+                                      opt_rsp_keypass, engine,
+                                      "private key for enrollment cert");
+
+        if (pkey == NULL
+            || !ossl_cmp_mock_srv_set1_certOutKey(srv_ctx, pkey)) {
+            EVP_PKEY_free(pkey);
+            goto err;
+        }
+        EVP_PKEY_free(pkey);
+    }
+    cleanse(opt_rsp_keypass);
+
     if (!setup_mock_crlout(srv_ctx, opt_rsp_crl,
                            "CRL to be returned by the mock server"))
         goto err;
@@ -3118,6 +3141,12 @@ static int get_opts(int argc, char **argv)
             break;
         case OPT_RSP_CERT:
             opt_rsp_cert = opt_str();
+            break;
+        case OPT_RSP_CERT_KEY:
+            opt_rsp_cert_key = opt_str();
+            break;
+        case OPT_RSP_KEYPASS:
+            opt_rsp_keypass = opt_str();
             break;
         case OPT_RSP_CRL:
             opt_rsp_crl = opt_str();

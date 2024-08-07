@@ -19,6 +19,9 @@
 #include <openssl/crmf.h>
 #include <openssl/err.h>
 #include <openssl/x509.h>
+#include <openssl/cms.h>
+#include <openssl/pem.h>
+#include <openssl/bio.h>
 
 OSSL_CMP_MSG *OSSL_CMP_MSG_new(OSSL_LIB_CTX *libctx, const char *propq)
 {
@@ -449,9 +452,45 @@ OSSL_CMP_MSG *ossl_cmp_certreq_new(OSSL_CMP_CTX *ctx, int type,
     return NULL;
 }
 
+#ifndef OPENSSL_NO_CMS
+static OSSL_CRMF_ENCRYPTEDKEY *encprivatekey(OSSL_CMP_CTX *ctx, EVP_PKEY *privKey)
+{
+    OSSL_CRMF_ENCRYPTEDKEY *ek = NULL;
+    CMS_EnvelopedData *envData = NULL;
+    STACK_OF(X509) *encryption_recips = NULL;
+    BIO *privbio = NULL;
+    int res = 0;
+    X509 *recip = X509_dup(ctx->validatedSrvCert);
+
+    encryption_recips = sk_X509_new_null();
+    if (encryption_recips == NULL || recip == NULL
+        || !sk_X509_push(encryption_recips, recip))
+        goto err;
+
+    privbio = BIO_new(BIO_s_mem());
+    if (privbio == NULL || i2d_PrivateKey_bio(privbio, privKey) <= 0)
+        goto err;
+    envData = CMS_env_sign_data(privbio, ctx->cert, ctx->pkey,
+                                encryption_recips, ctx->libctx, ctx->propq);
+    if (envData == NULL)
+        goto err;
+    if ((ek = OSSL_CRMF_ENCRYPTEDKEY_init_envdata(envData)) == NULL)
+        goto err;
+    res = 1;
+
+ err:
+    sk_X509_pop_free(encryption_recips, X509_free);
+    if (!res)
+        M_ASN1_free_of(envData, CMS_EnvelopedData);
+
+    return ek;
+}
+#endif
+
 OSSL_CMP_MSG *ossl_cmp_certrep_new(OSSL_CMP_CTX *ctx, int bodytype,
                                    int certReqId, const OSSL_CMP_PKISI *si,
-                                   X509 *cert, const X509 *encryption_recip,
+                                   X509 *cert, EVP_PKEY *certkey,
+                                   const X509 *encryption_recip,
                                    STACK_OF(X509) *chain, STACK_OF(X509) *caPubs,
                                    int unprotectedErrors)
 {
@@ -495,6 +534,15 @@ OSSL_CMP_MSG *ossl_cmp_certrep_new(OSSL_CMP_CTX *ctx, int bodytype,
         if (!X509_up_ref(cert))
             goto err;
         resp->certifiedKeyPair->certOrEncCert->value.certificate = cert;
+
+        if (certkey != NULL) {
+#ifndef OPENSSL_NO_CMS
+            resp->certifiedKeyPair->privateKey = encprivatekey(ctx, certkey);
+#else
+            ERR_raise(ERR_LIB_CMP, ERR_R_UNSUPPORTED);
+            goto err;
+#endif
+        }
     }
 
     if (!sk_OSSL_CMP_CERTRESPONSE_push(repMsg->response, resp))

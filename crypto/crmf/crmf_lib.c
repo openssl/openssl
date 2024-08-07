@@ -38,6 +38,7 @@
 #include <openssl/crmf.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
+#include <openssl/cms.h>
 
 /*-
  * atyp = Attribute Type
@@ -627,18 +628,8 @@ static int check_cmKGA(ossl_unused const X509_PURPOSE *purpose,
         return ret;
     ekus = X509_get_ext_d2i(x, NID_ext_key_usage, NULL, NULL);
     for (i = 0; i < sk_ASN1_OBJECT_num(ekus); i++) {
-# if OPENSSL_VERSION_NUMBER >= 0x30000000L
         if (OBJ_obj2nid(sk_ASN1_OBJECT_value(ekus, i)) == NID_cmKGA)
             goto end;
-# else
-        {
-            char txt[100];
-
-            if (OBJ_obj2txt(txt, sizeof(txt), sk_ASN1_OBJECT_value(ekus, i), 1)
-                    && strcmp(txt, "1.3.6.1.5.5.7.3.32") == 0) /* OID cmKGA */
-                goto end;
-        }
-# endif
     }
     ret = 0;
 
@@ -912,3 +903,17 @@ X509
     return NULL;
 #endif /* OPENSSL_NO_CMS */
 }
+
+#ifndef OPENSSL_NO_CMS
+OSSL_CRMF_ENCRYPTEDKEY
+*OSSL_CRMF_ENCRYPTEDKEY_init_envdata(CMS_EnvelopedData *envdata)
+{
+    OSSL_CRMF_ENCRYPTEDKEY *ek = OSSL_CRMF_ENCRYPTEDKEY_new();
+
+    if (ek == NULL)
+        return NULL;
+    ek->type = OSSL_CRMF_ENCRYPTEDKEY_ENVELOPEDDATA;
+    ek->value.envelopedData = envdata;
+    return ek;
+}
+#endif
