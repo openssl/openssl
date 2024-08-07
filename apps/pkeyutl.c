@@ -24,7 +24,7 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
                               const char *keyfile, int keyform, int key_type,
                               char *passinarg, int pkey_op, ENGINE *e,
                               const int impl, int rawin, EVP_PKEY **ppkey,
-                              EVP_MD_CTX *mctx, const char *digestname,
+                              EVP_MD_CTX *mctx, const char *digestname, const char *kemop,
                               OSSL_LIB_CTX *libctx, const char *propq);
 
 static int setup_peer(EVP_PKEY_CTX *ctx, int peerform, const char *file,
@@ -32,7 +32,8 @@ static int setup_peer(EVP_PKEY_CTX *ctx, int peerform, const char *file,
 
 static int do_keyop(EVP_PKEY_CTX *ctx, int pkey_op,
                     unsigned char *out, size_t *poutlen,
-                    const unsigned char *in, size_t inlen);
+                    const unsigned char *in, size_t inlen,
+                    unsigned char *secret, size_t *psecretlen);
 
 static int do_raw_keyop(int pkey_op, EVP_MD_CTX *mctx,
                         EVP_PKEY *pkey, BIO *in,
@@ -47,6 +48,7 @@ typedef enum OPTION_choice {
     OPT_DERIVE, OPT_SIGFILE, OPT_INKEY, OPT_PEERKEY, OPT_PASSIN,
     OPT_PEERFORM, OPT_KEYFORM, OPT_PKEYOPT, OPT_PKEYOPT_PASSIN, OPT_KDF,
     OPT_KDFLEN, OPT_R_ENUM, OPT_PROV_ENUM,
+    OPT_DECAP, OPT_ENCAP, OPT_SECOUT, OPT_KEMOP,
     OPT_CONFIG,
     OPT_RAWIN, OPT_DIGEST
 } OPTION_CHOICE;
@@ -64,6 +66,8 @@ const OPTIONS pkeyutl_options[] = {
     {"encrypt", OPT_ENCRYPT, '-', "Encrypt input data with public key"},
     {"decrypt", OPT_DECRYPT, '-', "Decrypt input data with private key"},
     {"derive", OPT_DERIVE, '-', "Derive shared secret"},
+    {"decap", OPT_DECAP, '-', "Decapsulate shared secret"},
+    {"encap", OPT_ENCAP, '-', "Encapsulate shared secret"},
     OPT_CONFIG_OPTION,
 
     OPT_SECTION("Input"),
@@ -81,12 +85,13 @@ const OPTIONS pkeyutl_options[] = {
 
     OPT_SECTION("Output"),
     {"out", OPT_OUT, '>', "Output file - default stdout"},
+    {"secret", OPT_SECOUT, '>', "File to store secret on encapsulation"},
     {"asn1parse", OPT_ASN1PARSE, '-', "asn1parse the output data"},
     {"hexdump", OPT_HEXDUMP, '-', "Hex dump output"},
     {"verifyrecover", OPT_VERIFYRECOVER, '-',
      "Verify with public key, recover original data"},
 
-    OPT_SECTION("Signing/Derivation"),
+    OPT_SECTION("Signing/Derivation/Encapsulation"),
     {"digest", OPT_DIGEST, 's',
      "Specify the digest algorithm when signing the raw input data"},
     {"pkeyopt", OPT_PKEYOPT, 's', "Public key options as opt:value"},
@@ -94,6 +99,7 @@ const OPTIONS pkeyutl_options[] = {
      "Public key option that is read as a passphrase argument opt:passphrase"},
     {"kdf", OPT_KDF, 's', "Use KDF algorithm"},
     {"kdflen", OPT_KDFLEN, 'p', "KDF algorithm output length"},
+    {"kemop", OPT_KEMOP, 's', "KEM operation specific to the key algorithm"},
 
     OPT_R_OPTIONS,
     OPT_PROV_OPTIONS,
@@ -103,23 +109,23 @@ const OPTIONS pkeyutl_options[] = {
 int pkeyutl_main(int argc, char **argv)
 {
     CONF *conf = NULL;
-    BIO *in = NULL, *out = NULL;
+    BIO *in = NULL, *out = NULL, *secout = NULL;
     ENGINE *e = NULL;
     EVP_PKEY_CTX *ctx = NULL;
     EVP_PKEY *pkey = NULL;
-    char *infile = NULL, *outfile = NULL, *sigfile = NULL, *passinarg = NULL;
+    char *infile = NULL, *outfile = NULL, *secoutfile = NULL, *sigfile = NULL, *passinarg = NULL;
     char hexdump = 0, asn1parse = 0, rev = 0, *prog;
-    unsigned char *buf_in = NULL, *buf_out = NULL, *sig = NULL;
+    unsigned char *buf_in = NULL, *buf_out = NULL, *sig = NULL, *secret = NULL;
     OPTION_CHOICE o;
     int buf_inlen = 0, siglen = -1;
     int keyform = FORMAT_UNDEF, peerform = FORMAT_UNDEF;
     int keysize = -1, pkey_op = EVP_PKEY_OP_SIGN, key_type = KEY_PRIVKEY;
     int engine_impl = 0;
     int ret = 1, rv = -1;
-    size_t buf_outlen;
+    size_t buf_outlen = 0, secretlen = 0;
     const char *inkey = NULL;
     const char *peerkey = NULL;
-    const char *kdfalg = NULL, *digestname = NULL;
+    const char *kdfalg = NULL, *digestname = NULL, *kemop = NULL;
     int kdflen = 0;
     STACK_OF(OPENSSL_STRING) *pkeyopts = NULL;
     STACK_OF(OPENSSL_STRING) *pkeyopts_passin = NULL;
@@ -146,6 +152,9 @@ int pkeyutl_main(int argc, char **argv)
             break;
         case OPT_OUT:
             outfile = opt_arg();
+            break;
+        case OPT_SECOUT:
+            secoutfile = opt_arg();
             break;
         case OPT_SIGFILE:
             sigfile = opt_arg();
@@ -215,6 +224,15 @@ int pkeyutl_main(int argc, char **argv)
             break;
         case OPT_DERIVE:
             pkey_op = EVP_PKEY_OP_DERIVE;
+            break;
+        case OPT_DECAP:
+            pkey_op = EVP_PKEY_OP_DECAPSULATE;
+            break;
+        case OPT_ENCAP:
+            pkey_op = EVP_PKEY_OP_ENCAPSULATE;
+            break;
+        case OPT_KEMOP:
+            kemop = opt_arg();
             break;
         case OPT_KDF:
             pkey_op = EVP_PKEY_OP_DERIVE;
@@ -303,7 +321,7 @@ int pkeyutl_main(int argc, char **argv)
     }
     ctx = init_ctx(kdfalg, &keysize, inkey, keyform, key_type,
                    passinarg, pkey_op, e, engine_impl, rawin, &pkey,
-                   mctx, digestname, libctx, app_get0_propq());
+                   mctx, digestname, kemop, libctx, app_get0_propq());
     if (ctx == NULL) {
         BIO_printf(bio_err, "%s: Error initializing context\n", prog);
         goto end;
@@ -387,7 +405,7 @@ int pkeyutl_main(int argc, char **argv)
         goto end;
     }
 
-    if (pkey_op != EVP_PKEY_OP_DERIVE) {
+    if (pkey_op != EVP_PKEY_OP_DERIVE && pkey_op != EVP_PKEY_OP_ENCAPSULATE) {
         in = bio_open_default(infile, 'r', FORMAT_BINARY);
         if (infile != NULL) {
             struct stat st;
@@ -401,6 +419,16 @@ int pkeyutl_main(int argc, char **argv)
     out = bio_open_default(outfile, 'w', FORMAT_BINARY);
     if (out == NULL)
         goto end;
+
+    if (pkey_op == EVP_PKEY_OP_ENCAPSULATE) {
+        if (secoutfile == NULL) {
+            BIO_printf(bio_err, "Encapsulation requires '-secret' argument\n");
+            goto end;
+        }
+        secout = bio_open_default(secoutfile, 'w', FORMAT_BINARY);
+        if (secout == NULL)
+            goto end;
+    }
 
     if (sigfile != NULL) {
         BIO *sigbio = BIO_new_file(sigfile, "rb");
@@ -473,13 +501,15 @@ int pkeyutl_main(int argc, char **argv)
             rv = 1;
         } else {
             rv = do_keyop(ctx, pkey_op, NULL, (size_t *)&buf_outlen,
-                          buf_in, (size_t)buf_inlen);
+                          buf_in, (size_t)buf_inlen, NULL, (size_t *)&secretlen);
         }
         if (rv > 0 && buf_outlen != 0) {
             buf_out = app_malloc(buf_outlen, "buffer output");
+            if (secretlen > 0)
+                secret = app_malloc(secretlen, "secret output");
             rv = do_keyop(ctx, pkey_op,
                           buf_out, (size_t *)&buf_outlen,
-                          buf_in, (size_t)buf_inlen);
+                          buf_in, (size_t)buf_inlen, secret, (size_t *)&secretlen);
         }
     }
     if (rv <= 0) {
@@ -500,6 +530,8 @@ int pkeyutl_main(int argc, char **argv)
     } else {
         BIO_write(out, buf_out, buf_outlen);
     }
+    if (secretlen > 0)
+        BIO_write(secout, secret, secretlen);
 
  end:
     if (ret != 0)
@@ -510,9 +542,11 @@ int pkeyutl_main(int argc, char **argv)
     release_engine(e);
     BIO_free(in);
     BIO_free_all(out);
+    BIO_free_all(secout);
     OPENSSL_free(buf_in);
     OPENSSL_free(buf_out);
     OPENSSL_free(sig);
+    OPENSSL_free(secret);
     sk_OPENSSL_STRING_free(pkeyopts);
     sk_OPENSSL_STRING_free(pkeyopts_passin);
     NCONF_free(conf);
@@ -524,7 +558,7 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
                               char *passinarg, int pkey_op, ENGINE *e,
                               const int engine_impl, int rawin,
                               EVP_PKEY **ppkey, EVP_MD_CTX *mctx, const char *digestname,
-                              OSSL_LIB_CTX *libctx, const char *propq)
+                              const char *kemop, OSSL_LIB_CTX *libctx, const char *propq)
 {
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
@@ -642,6 +676,18 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
         case EVP_PKEY_OP_DERIVE:
             rv = EVP_PKEY_derive_init(ctx);
             break;
+
+        case EVP_PKEY_OP_ENCAPSULATE:
+            rv = EVP_PKEY_encapsulate_init(ctx, NULL);
+            if (rv > 0 && kemop != NULL)
+                rv = EVP_PKEY_CTX_set_kem_op(ctx, kemop);
+            break;
+
+        case EVP_PKEY_OP_DECAPSULATE:
+            rv = EVP_PKEY_decapsulate_init(ctx, NULL);
+            if (rv > 0 && kemop != NULL)
+                rv = EVP_PKEY_CTX_set_kem_op(ctx, kemop);
+            break;
         }
     }
 
@@ -679,7 +725,8 @@ static int setup_peer(EVP_PKEY_CTX *ctx, int peerform, const char *file,
 
 static int do_keyop(EVP_PKEY_CTX *ctx, int pkey_op,
                     unsigned char *out, size_t *poutlen,
-                    const unsigned char *in, size_t inlen)
+                    const unsigned char *in, size_t inlen,
+                    unsigned char *secret, size_t *pseclen)
 {
     int rv = 0;
     switch (pkey_op) {
@@ -701,6 +748,14 @@ static int do_keyop(EVP_PKEY_CTX *ctx, int pkey_op,
 
     case EVP_PKEY_OP_DERIVE:
         rv = EVP_PKEY_derive(ctx, out, poutlen);
+        break;
+
+    case EVP_PKEY_OP_ENCAPSULATE:
+        rv = EVP_PKEY_encapsulate(ctx, out, poutlen, secret, pseclen);
+        break;
+
+    case EVP_PKEY_OP_DECAPSULATE:
+        rv = EVP_PKEY_decapsulate(ctx, out, poutlen, in, inlen);
         break;
 
     }
