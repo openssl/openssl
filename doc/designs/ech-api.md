@@ -209,7 +209,7 @@ typedef struct ossl_echstore_st OSSL_ECHSTORE;
 OSSL_ECHSTORE *OSSL_ECHSTORE_init(OSSL_LIB_CTX *libctx, const char *propq);
 void OSSL_ECHSTORE_free(OSSL_ECHSTORE *es);
 int OSSL_ECHSTORE_new_config(OSSL_ECHSTORE *es,
-                             uint16_t echversion, uint16_t max_name_length,
+                             uint16_t echversion, uint8_t max_name_length,
                              const char *public_name, OSSL_HPKE_SUITE suite);
 int OSSL_ECHSTORE_write_pem(OSSL_ECHSTORE *es, int index, BIO *out);
 
@@ -318,9 +318,9 @@ typedef struct ossl_ech_info_st {
     char *public_name; /* public_name from API or ECHConfig */
     char *inner_name; /* server-name (for inner CH if doing ECH) */
     unsigned char *outer_alpns; /* outer ALPN string */
-    int outer_alpns_len;
+    size_t outer_alpns_len;
     unsigned char *inner_alpns; /* inner ALPN string */
-    int inner_alpns_len;
+    size_t inner_alpns_len;
     char *echconfig; /* a JSON-like version of the associated ECHConfig */
 } OSSL_ECH_INFO;
 
@@ -335,28 +335,28 @@ The internal structure of an ECH Store is as described below:
 
 ```c
 typedef struct ossl_echext_st {
-    unsigned int type;
-    unsigned int len;
+    uint16_t type;
+    uint16_t len;
     unsigned char *val;
 } OSSL_ECHEXT;
 
 DEFINE_STACK_OF(OSSL_ECHEXT)
 
 typedef struct ossl_echstore_entry_st {
-    unsigned int version; /* 0xff0d for draft-13 */
+    uint16_t version; /* 0xff0d for draft-13 */
     char *public_name;
-    unsigned int pub_len;
+    size_t pub_len;
     unsigned char *pub;
     unsigned int nsuites;
     OSSL_HPKE_SUITE *suites;
-    unsigned int max_name_length;
+    uint8_t max_name_length;
     uint8_t config_id;
     STACK_OF(OSSL_ECHEXT) *exts;
     char *pemfname; /* name of PEM file from which this was loaded */
     time_t loadtime; /* time public and private key were loaded from file */
     EVP_PKEY *keyshare; /* long(ish) term ECH private keyshare on a server */
     int for_retry; /* whether to use this ECHConfigList in a retry */
-    unsigned int encoded_len; /* length of overall encoded content */
+    size_t encoded_len; /* length of overall encoded content */
     unsigned char *encoded; /* overall encoded content */
 } OSSL_ECHSTORE_entry;
 
