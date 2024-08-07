@@ -75,6 +75,17 @@ for DTLSv1.3 connections.
 The DTLSv1.3 implementation does not include the message sequence number,
 fragment offset and fragment length as is the case with previous versions of DTLS.
 
+#### DTLS ACK records (RFC9147 Section 7)
+
+ACK's are sent for KeyUpdates, NewSessionTicket and Finish (client).
+
+Notes on RFC9147 Section 7.1:
+* The implementation does not offer any logic to determine that there is disruption
+when receiving messages which means it will not send ACKs for the example given
+in RFC9147 Figure 12.
+* ACKs are always sent immediately after receiving a message to be ACK'ed.
+* Empty ACKs are never sent.
+
 Implementation progress
 -----------------------
 
@@ -90,8 +101,6 @@ is not covered by these workitems and must be implemented separately.
 
 | Summary                                             | #PR            |
 |-----------------------------------------------------|----------------|
-| ACK messages                                        | -              |
-| Use HelloRetryRequest instead of HelloVerifyRequest | #22985, #22400 |
 | ClientHello                                         | #23320         |
 | EndOfEarlyData message                              | -              |
 | Variable length header                              | -              |
@@ -140,10 +149,6 @@ random value:
 
 > the EndOfEarlyData message is omitted both from the wire and the handshake
 > transcript
-
-#### ACK messages
-
-See section 7 and 8 of RFC 9147.
 
 ### List of DTLSv1.3 requirements
 

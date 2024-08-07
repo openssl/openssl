@@ -220,11 +220,22 @@ static const unsigned char ssl3_pad_2[48] = {
 static int ssl3_mac(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec, unsigned char *md,
                     int sending)
 {
+    /*
+     * npad is, at most, 48 bytes and that's with MD5:
+     *   16 + 48 + 8 (sequence bytes) + 1 + 2 = 75.
+     *
+     * With SHA-1 (the largest hash speced for SSLv3) the hash size
+     * goes up 4, but npad goes down by 8, resulting in a smaller
+     * total size.
+     */
+    unsigned char header[75];
+    WPACKET hdr;
+    size_t hdr_written;
     unsigned char *mac_sec;
     const EVP_MD_CTX *hash;
     size_t md_size;
     size_t npad;
-    int t;
+    int t, cbc_encrypted;
 
     mac_sec = &(rl->mac_secret[0]);
     hash = rl->md_ctx;
@@ -235,9 +246,21 @@ static int ssl3_mac(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec, unsigned char *md
     md_size = t;
     npad = (48 / md_size) * md_size;
 
-    if (!sending
-        && EVP_CIPHER_CTX_get_mode(rl->enc_ctx) == EVP_CIPH_CBC_MODE
-        && ssl3_cbc_record_digest_supported(hash)) {
+    cbc_encrypted = !sending
+                    && EVP_CIPHER_CTX_get_mode(rl->enc_ctx) == EVP_CIPH_CBC_MODE
+                    && ssl3_cbc_record_digest_supported(hash);
+
+    if (!WPACKET_init_static_len(&hdr, header, sizeof(header), 0)
+            || !WPACKET_memcpy(&hdr, rl->mac_secret, md_size)
+            || !WPACKET_memcpy(&hdr, ssl3_pad_1, npad)
+            || !WPACKET_put_bytes_u64(&hdr, rl->sequence)
+            || (!cbc_encrypted && !WPACKET_put_bytes_u8(&hdr, rec->type))
+            || !WPACKET_put_bytes_u16(&hdr, rec->length)
+            || !WPACKET_finish(&hdr)
+            || !WPACKET_get_total_written(&hdr, &hdr_written))
+        return 0;
+
+    if (cbc_encrypted) {
 #ifdef OPENSSL_NO_DEPRECATED_3_0
         return 0;
 #else
@@ -246,25 +269,6 @@ static int ssl3_mac(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec, unsigned char *md
          * timing-side channel information about how many blocks of data we
          * are hashing because that gives an attacker a timing-oracle.
          */
-
-        /*-
-         * npad is, at most, 48 bytes and that's with MD5:
-         *   16 + 48 + 8 (sequence bytes) + 1 + 2 = 75.
-         *
-         * With SHA-1 (the largest hash speced for SSLv3) the hash size
-         * goes up 4, but npad goes down by 8, resulting in a smaller
-         * total size.
-         */
-        unsigned char header[75];
-        WPACKET hdr;
-
-        if (!WPACKET_init_static_len(&hdr, header, 75, 0)
-                || !WPACKET_memcpy(&hdr, rl->mac_secret, md_size)
-                || !WPACKET_memcpy(&hdr, ssl3_pad_1, npad)
-                || !WPACKET_put_bytes_u64(&hdr, rl->sequence)
-                || !WPACKET_put_bytes_u16(&hdr, rec->length)
-                || !WPACKET_finish(&hdr))
-            return 0;
 
         /* Final param == is SSLv3 */
         if (ssl3_cbc_digest_record(EVP_MD_CTX_get0_md(hash),
@@ -276,28 +280,18 @@ static int ssl3_mac(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec, unsigned char *md
 #endif
     } else {
         unsigned int md_size_u;
-        unsigned char rec_char, seq[SEQ_NUM_SIZE];
-        unsigned char *p_seq = seq, *p_md = md;
         /* Chop the digest off the end :-) */
         EVP_MD_CTX *md_ctx = EVP_MD_CTX_new();
 
         if (md_ctx == NULL)
             return 0;
 
-        rec_char = rec->type;
-        s2n(rec->length, p_md);
-        l2n8(rl->sequence, p_seq);
-
         if (EVP_MD_CTX_copy_ex(md_ctx, hash) <= 0
-            || EVP_DigestUpdate(md_ctx, mac_sec, md_size) <= 0
-            || EVP_DigestUpdate(md_ctx, ssl3_pad_1, npad) <= 0
-            || EVP_DigestUpdate(md_ctx, seq, 8) <= 0
-            || EVP_DigestUpdate(md_ctx, &rec_char, 1) <= 0
-            || EVP_DigestUpdate(md_ctx, md, 2) <= 0
+            || EVP_DigestUpdate(md_ctx, header, hdr_written) <= 0
             || EVP_DigestUpdate(md_ctx, rec->input, rec->length) <= 0
             || EVP_DigestFinal_ex(md_ctx, md, NULL) <= 0
             || EVP_MD_CTX_copy_ex(md_ctx, hash) <= 0
-            || EVP_DigestUpdate(md_ctx, mac_sec, md_size) <= 0
+            || EVP_DigestUpdate(md_ctx, rl->mac_secret, md_size) <= 0
             || EVP_DigestUpdate(md_ctx, ssl3_pad_2, npad) <= 0
             || EVP_DigestUpdate(md_ctx, md, md_size) <= 0
             || EVP_DigestFinal_ex(md_ctx, md, &md_size_u) <= 0) {
