@@ -33,7 +33,7 @@ When B<callback> is NULL, no callback function is used.
 SSL_set_info_callback() sets the B<callback> function, that can be used to
 obtain state information for B<ssl> during connection setup and use.
 When B<callback> is NULL, the callback setting currently valid for
-B<ctx> is used.
+B<ctx> is used. B<ssl> B<MUST NOT> be NULL.
 
 SSL_CTX_get_info_callback() returns a pointer to the currently set information
 callback function for B<ctx>.

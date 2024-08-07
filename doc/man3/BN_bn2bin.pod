@@ -43,7 +43,7 @@ BN_print, BN_print_fp, BN_bn2mpi, BN_mpi2bn - format conversions
 
 BN_bn2bin() converts the absolute value of B<a> into big-endian form
 and stores it at B<to>. B<to> must point to BN_num_bytes(B<a>) bytes of
-memory.
+memory. B<a> and B<to> B<MUST NOT> be NULL.
 
 BN_bn2binpad() also converts the absolute value of B<a> into big-endian form
 and stores it at B<to>. B<tolen> indicates the length of the output buffer
@@ -59,7 +59,7 @@ C<<BN_num_bytes(B<a>) + 1>>), an error is returned.
 
 BN_bin2bn() converts the positive integer in big-endian form of length
 B<len> at B<s> into a B<BIGNUM> and places it in B<ret>. If B<ret> is
-NULL, a new B<BIGNUM> is created.
+NULL, a new B<BIGNUM> is created. B<s> B<MUST NOT> be NULL.
 
 BN_signed_bin2bn() converts the integer in big-endian signed 2's complement
 form of length B<len> at B<s> into a B<BIGNUM> and places it in B<ret>. If

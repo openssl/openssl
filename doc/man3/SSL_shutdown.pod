@@ -21,7 +21,7 @@ SSL_shutdown, SSL_shutdown_ex - shut down a TLS/SSL or QUIC connection
 
 =head1 DESCRIPTION
 
-SSL_shutdown() shuts down an active connection represented by an SSL object.
+SSL_shutdown() shuts down an active connection represented by an SSL object. I<ssl> B<MUST NOT> be NULL.
 
 SSL_shutdown_ex() is an extended version of SSL_shutdown(). If non-NULL, I<args>
 must point to a B<SSL_SHUTDOWN_EX_ARGS> structure and I<args_len> must be set to
