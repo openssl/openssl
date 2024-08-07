@@ -1318,3 +1318,4 @@ alt_signature_algorithm		1317
 alt_signature_value		1318
 associated_information		1319
 id_ct_rpkiSignedPrefixList		1320
+ac_auditIdentity		1321
