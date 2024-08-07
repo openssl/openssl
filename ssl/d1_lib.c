@@ -8,6 +8,7 @@
  */
 
 #include "internal/e_os.h"
+#include "internal/e_winsock.h"          /* struct timeval for DTLS_CTRL_GET_TIMEOUT */
 #include <stdio.h>
 #include <openssl/objects.h>
 #include <openssl/rand.h>

@@ -37,9 +37,10 @@ typedef unsigned int u_int;
 
 #ifndef OPENSSL_NO_SOCK
 
+# include "internal/e_os.h"
 # include "apps.h"
 # include "s_apps.h"
-# include "internal/sockets.h"
+# include "internal/sockets.h" /* for openssl_fdset() */
 
 # include <openssl/bio.h>
 # include <openssl/err.h>

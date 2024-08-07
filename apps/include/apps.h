@@ -10,10 +10,8 @@
 #ifndef OSSL_APPS_H
 # define OSSL_APPS_H
 
-# include "internal/e_os.h" /* struct timeval for DTLS */
 # include "internal/common.h" /* for HAS_PREFIX */
 # include "internal/nelem.h"
-# include "internal/sockets.h" /* for openssl_fdset() */
 # include <assert.h>
 
 # include <stdarg.h>
