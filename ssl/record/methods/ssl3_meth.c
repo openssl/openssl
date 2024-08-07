@@ -231,13 +231,11 @@ static int ssl3_mac(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec, unsigned char *md
     unsigned char header[75];
     WPACKET hdr;
     size_t hdr_written;
-    unsigned char *mac_sec;
     const EVP_MD_CTX *hash;
     size_t md_size;
     size_t npad;
     int t, cbc_encrypted;
 
-    mac_sec = &(rl->mac_secret[0]);
     hash = rl->md_ctx;
 
     t = EVP_MD_CTX_get_size(hash);
@@ -275,7 +273,7 @@ static int ssl3_mac(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec, unsigned char *md
                                    md, &md_size,
                                    header, rec->input,
                                    rec->length, rec->orig_len,
-                                   mac_sec, md_size, 1) <= 0)
+                                   rl->mac_secret, md_size, 1) <= 0)
             return 0;
 #endif
     } else {
