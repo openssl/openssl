@@ -521,7 +521,7 @@ static int HKDF_Extract(OSSL_LIB_CTX *libctx, const EVP_MD *evp_md,
     /* calc: PRK = HMAC-Hash(salt, IKM) */
     return
         EVP_Q_mac(libctx, "HMAC", NULL, EVP_MD_get0_name(evp_md), NULL, salt,
-                   salt_len, ikm, ikm_len, prk, EVP_MD_get_size(evp_md), NULL)
+                  salt_len, ikm, ikm_len, prk, EVP_MD_get_size(evp_md), NULL)
         != NULL;
 }
 
