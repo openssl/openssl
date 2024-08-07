@@ -452,10 +452,10 @@ static int kmac_set_ctx_params(void *vmacctx, const OSSL_PARAM *params)
 
     if (!OSSL_FIPS_IND_SET_CTX_PARAM(kctx, OSSL_FIPS_IND_SETTABLE0, params,
                                      OSSL_MAC_PARAM_FIPS_NO_SHORT_MAC))
-        return  0;
+        return 0;
     if (!OSSL_FIPS_IND_SET_CTX_PARAM(kctx, OSSL_FIPS_IND_SETTABLE1, params,
                                      OSSL_MAC_PARAM_FIPS_KEY_CHECK))
-        return  0;
+        return 0;
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_XOF)) != NULL
         && !OSSL_PARAM_get_int(p, &kctx->xof_mode))
@@ -652,7 +652,8 @@ static int kmac_bytepad_encode_key(unsigned char *out, size_t out_max_len,
 }
 
 #define IMPLEMENT_KMAC_TABLE(size, funcname, newname)                          \
-const OSSL_DISPATCH ossl_kmac##size##_##funcname[] = {                        \
+const OSSL_DISPATCH ossl_kmac##size##_##funcname[] =                           \
+{                                                                              \
     { OSSL_FUNC_MAC_NEWCTX, (void (*)(void))kmac##size##_##newname },          \
     { OSSL_FUNC_MAC_DUPCTX, (void (*)(void))kmac_dup },                        \
     { OSSL_FUNC_MAC_FREECTX, (void (*)(void))kmac_free },                      \
@@ -674,11 +675,12 @@ KMAC_TABLE(128);
 KMAC_TABLE(256);
 
 #ifdef FIPS_MODULE
-
 # define KMAC_INTERNAL_TABLE(size)                                             \
 static OSSL_FUNC_mac_newctx_fn kmac##size##_internal_new;                      \
-static void *kmac##size##_internal_new(void *provctx) {                        \
+static void *kmac##size##_internal_new(void *provctx)                          \
+{                                                                              \
     struct kmac_data_st *macctx = kmac##size##_new(provctx);                   \
+                                                                               \
     if (macctx != NULL)                                                        \
         macctx->internal = 1;                                                  \
     return macctx;                                                             \
@@ -687,4 +689,4 @@ IMPLEMENT_KMAC_TABLE(size, internal_functions, internal_new)
 
 KMAC_INTERNAL_TABLE(128);
 KMAC_INTERNAL_TABLE(256);
-#endif
+#endif /* FIPS_MODULE */
