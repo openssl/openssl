@@ -180,6 +180,15 @@ static int ossl_statem_client13_read_transition(SSL_CONNECTION *s, int mt)
         }
         break;
 
+    case TLS_ST_CW_KEY_UPDATE:
+    case TLS_ST_CW_FINISHED:
+    case TLS_ST_CR_ACK:
+        if (mt == DTLS13_MT_ACK) {
+            st->hand_state = TLS_ST_CR_ACK;
+            return 1;
+        }
+        break;
+
     case TLS_ST_OK:
         if (mt == SSL3_MT_NEWSESSION_TICKET) {
             st->hand_state = TLS_ST_CR_SESSION_TICKET;
@@ -421,6 +430,23 @@ static int do_compressed_cert(SSL_CONNECTION *sc)
         && sc->ext.compress_certificate_from_peer[0] != TLSEXT_comp_cert_none;
 }
 
+int any_sent_messages_are_missing_acknowledge(SSL_CONNECTION *s) {
+    pitem *item;
+    piterator iter = pqueue_iterator(s->d1->sent_messages);
+
+    while ((item = pqueue_next(&iter)) != NULL) {
+        dtls_sent_msg *msg = (dtls_sent_msg *)item->data;
+        size_t idx = 0;
+
+        do {
+            if (msg->rec_nums[idx].acknowledged == 0)
+                return 1;
+        } while (++idx < msg->rec_nums_idx);
+    }
+
+    return 0;
+}
+
 /*
  * ossl_statem_client13_write_transition() works out what handshake state to
  * move to next when the TLSv1.3 client is writing messages to be sent to the
@@ -507,9 +533,31 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL_CONNECTION *s)
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_CR_KEY_UPDATE:
-    case TLS_ST_CW_KEY_UPDATE:
     case TLS_ST_CR_SESSION_TICKET:
+        if (SSL_CONNECTION_IS_DTLS13(s)) {
+            st->hand_state = TLS_ST_CW_ACK;
+            return WRITE_TRAN_CONTINUE;
+        }
+        /* Fall-through */
+    case TLS_ST_CW_KEY_UPDATE:
     case TLS_ST_CW_FINISHED:
+        if (SSL_CONNECTION_IS_DTLS13(s))
+            /* We wait for ACK */
+            return WRITE_TRAN_FINISHED;
+        else
+            st->hand_state = TLS_ST_OK;
+        return WRITE_TRAN_CONTINUE;
+
+    case TLS_ST_CR_ACK:
+        if (SSL_CONNECTION_IS_DTLS13(s)
+                && any_sent_messages_are_missing_acknowledge(s)) {
+            /* We wait for ACK */
+            return WRITE_TRAN_FINISHED;
+        }
+        st->hand_state = TLS_ST_OK;
+        return WRITE_TRAN_CONTINUE;
+
+    case TLS_ST_CW_ACK:
         st->hand_state = TLS_ST_OK;
         return WRITE_TRAN_CONTINUE;
 
@@ -910,6 +958,11 @@ WORK_STATE ossl_statem_client_post_work(SSL_CONNECTION *s, WORK_STATE wst)
             return WORK_ERROR;
         }
         break;
+
+    case TLS_ST_CW_ACK:
+        if (statem_flush(s) != 1)
+            return WORK_MORE_A;
+        break;
     }
 
     return WORK_FINISHED_CONTINUE;
@@ -994,6 +1047,11 @@ int ossl_statem_client_construct_message(SSL_CONNECTION *s,
         *confunc = tls_construct_key_update;
         *mt = SSL3_MT_KEY_UPDATE;
         break;
+
+    case TLS_ST_CW_ACK:
+        *confunc = dtls_construct_ack;
+        *mt = DTLS13_MT_ACK;
+        break;
     }
 
     return 1;
@@ -1059,6 +1117,9 @@ size_t ossl_statem_client_max_message_size(SSL_CONNECTION *s)
 
     case TLS_ST_CR_KEY_UPDATE:
         return KEY_UPDATE_MAX_LENGTH;
+
+    case TLS_ST_CR_ACK:
+        return 2 + (0x1 << 16) - 1;
     }
 }
 
@@ -1122,6 +1183,9 @@ MSG_PROCESS_RETURN ossl_statem_client_process_message(SSL_CONNECTION *s,
 
     case TLS_ST_CR_KEY_UPDATE:
         return tls_process_key_update(s, pkt);
+
+    case TLS_ST_CR_ACK:
+        return dtls_process_ack(s, pkt);
     }
 }
 

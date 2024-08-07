@@ -146,9 +146,9 @@ void dtls1_clear_sent_buffer(SSL_CONNECTION *s)
     while ((item = pqueue_pop(s->d1->sent_messages)) != NULL) {
         dtls_sent_msg *sent_msg = (dtls_sent_msg *)item->data;
 
-        if (sent_msg->record_type == SSL3_RT_CHANGE_CIPHER_SPEC
-            && sent_msg->saved_retransmit_state.wrlmethod != NULL
-            && s->rlayer.wrl != sent_msg->saved_retransmit_state.wrl) {
+        if (sent_msg->msg_info.record_type == SSL3_RT_CHANGE_CIPHER_SPEC
+                && sent_msg->saved_retransmit_state.wrlmethod != NULL
+                && s->rlayer.wrl != sent_msg->saved_retransmit_state.wrl) {
             /*
              * If we're freeing the CCS then we're done with the old wrl and it
              * can bee freed

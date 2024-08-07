@@ -65,6 +65,18 @@ This is enforced by the macro `SSL_CONNECTION_MIDDLEBOX_IS_ENABLED(sc)`.
 The DTLSv1.3 implementation uses the label "dtls1.3" as described by RFC9147
 section 5.9.
 
+#### DTLS ACK records (RFC9147 Section 7)
+
+ACK's are sent for KeyUpdates, NewSessionTicket and Finish (client).
+
+Notes on RFC9147 Section 7.1:
+
+* The implementation does not offer any logic to determine that there is disruption
+  when receiving messages which means it will not send ACKs for the example given
+  in RFC9147 Figure 12.
+* ACKs are always sent immediately after receiving a message to be ACK'ed.
+* Empty ACKs are never sent.
+
 Implementation progress
 -----------------------
 
@@ -80,8 +92,6 @@ is not covered by these workitems and must be implemented separately.
 
 | Summary                                             | #PR            |
 |-----------------------------------------------------|----------------|
-| ACK messages                                        | -              |
-| Use HelloRetryRequest instead of HelloVerifyRequest | #22985, #22400 |
 | Message transcript                                  | -              |
 | DTLSv1.3 epoch                                      | #23553         |
 | ClientHello                                         | #23320         |
@@ -148,10 +158,6 @@ random value:
 
 > the EndOfEarlyData message is omitted both from the wire and the handshake
 > transcript
-
-#### ACK messages
-
-See section 7 and 8 of RFC 9147.
 
 ### List of DTLSv1.3 requirements
 

@@ -25,6 +25,23 @@ pitem *pitem_new(unsigned char *prio64be, void *data)
     memcpy(item->priority, prio64be, sizeof(item->priority));
     item->data = data;
     item->next = NULL;
+
+    return item;
+}
+
+pitem *pitem_new_ex(uint64_t prio64be, void *data)
+{
+    pitem *item = OPENSSL_malloc(sizeof(*item));
+    unsigned char *p_item_prio;
+
+    if (item == NULL)
+        return NULL;
+
+    p_item_prio = item->priority;
+    l2n8(prio64be, p_item_prio);
+    item->data = data;
+    item->next = NULL;
+
     return item;
 }
 
@@ -119,6 +136,14 @@ pitem *pqueue_find(pqueue *pq, unsigned char *prio64be)
         return NULL;
 
     return found;
+}
+
+pitem *pqueue_find_ex(pqueue *pq, uint64_t prio64be) {
+    unsigned char prio[8], *p_prio = prio;
+
+    l2n8(prio64be, p_prio);
+
+    return pqueue_find(pq, prio);
 }
 
 pitem *pqueue_iterator(pqueue *pq)

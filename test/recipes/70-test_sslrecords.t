@@ -356,6 +356,7 @@ sub add_empty_recs_filter
         if ($isdtls == 1) {
             $record = TLSProxy::Record->new_dtls(
                 0,
+                0,
                 $content_type,
                 TLSProxy::Record::VERS_DTLS_1_2,
                 0,
@@ -369,6 +370,7 @@ sub add_empty_recs_filter
             );
         } else {
             $record = TLSProxy::Record->new(
+                0,
                 0,
                 $content_type,
                 TLSProxy::Record::VERS_TLS_1_2,
@@ -413,6 +415,7 @@ sub add_frag_alert_filter
     $byte = pack('C', TLSProxy::Message::AL_LEVEL_FATAL);
     my $record = TLSProxy::Record->new(
         0,
+        0,
         TLSProxy::Record::RT_ALERT,
         TLSProxy::Record::VERS_TLS_1_2,
         1,
@@ -427,6 +430,7 @@ sub add_frag_alert_filter
     # And finally the description (Unexpected message) in a third record
     $byte = pack('C', TLSProxy::Message::AL_DESC_UNEXPECTED_MESSAGE);
     $record = TLSProxy::Record->new(
+        0,
         0,
         TLSProxy::Record::RT_ALERT,
         TLSProxy::Record::VERS_TLS_1_2,
@@ -459,6 +463,7 @@ sub add_sslv2_filter
                                TLSProxy::Message::AL_DESC_NO_RENEGOTIATION);
         my $alertlen = length $alert;
         $record = TLSProxy::Record->new(
+            0,
             0,
             TLSProxy::Record::RT_ALERT,
             TLSProxy::Record::VERS_TLS_1_2,
@@ -498,6 +503,7 @@ sub add_sslv2_filter
         my $chlen = length $clienthello;
 
         $record = TLSProxy::Record->new(
+            0,
             0,
             TLSProxy::Record::RT_HANDSHAKE,
             TLSProxy::Record::VERS_TLS_1_2,
@@ -539,6 +545,7 @@ sub add_sslv2_filter
         my $fraglen = length $frag1;
         $record = TLSProxy::Record->new(
             0,
+            0,
             TLSProxy::Record::RT_HANDSHAKE,
             TLSProxy::Record::VERS_TLS_1_2,
             $fraglen,
@@ -559,6 +566,7 @@ sub add_sslv2_filter
         }
         $record = TLSProxy::Record->new(
             0,
+            0,
             TLSProxy::Record::RT_HANDSHAKE,
             TLSProxy::Record::VERS_TLS_1_2,
             $fraglen,
@@ -572,6 +580,7 @@ sub add_sslv2_filter
 
         $fraglen = length $frag3;
         $record = TLSProxy::Record->new(
+            0,
             0,
             TLSProxy::Record::RT_HANDSHAKE,
             TLSProxy::Record::VERS_TLS_1_2,
@@ -591,6 +600,8 @@ sub add_unknown_record_type
 {
     my $proxy = shift;
     my $records = $proxy->record_list;
+    my $lastmessage =  @{$proxy->message_list}[-1];
+    my $isserver = $lastmessage->server;
     my $isdtls = $proxy->isdtls;
     state $added_record;
 
@@ -607,6 +618,7 @@ sub add_unknown_record_type
 
     if ($isdtls) {
         $record = TLSProxy::Record->new_dtls(
+            $isserver,
             1,
             TLSProxy::Record::RT_UNKNOWN,
             @{$records}[-1]->version(),
@@ -621,6 +633,7 @@ sub add_unknown_record_type
         );
     } else {
         $record = TLSProxy::Record->new(
+            $isserver,
             1,
             TLSProxy::Record::RT_UNKNOWN,
             @{$records}[-1]->version(),
@@ -763,6 +776,7 @@ sub not_on_record_boundary
         #KeyUpdates must end on a record boundary
 
         my $record = TLSProxy::Record->new(
+            @{$proxy->{message_list}}[-1]->server,
             1,
             TLSProxy::Record::RT_APPLICATION_DATA,
             TLSProxy::Record::VERS_TLS_1_2,
@@ -791,8 +805,10 @@ sub not_on_record_boundary
     } else {
         return if @{$proxy->{message_list}}[-1]->{mt}
                   != TLSProxy::Message::MT_FINISHED;
+        my $isserver = @{$proxy->{message_list}}[-1]->server;
 
         my $record = TLSProxy::Record->new(
+            $isserver,
             1,
             TLSProxy::Record::RT_APPLICATION_DATA,
             TLSProxy::Record::VERS_TLS_1_2,
@@ -818,6 +834,7 @@ sub not_on_record_boundary
         if ($boundary_test_type == DATA_BETWEEN_KEY_UPDATE) {
             #Now add an app data record
             $record = TLSProxy::Record->new(
+                $isserver,
                 1,
                 TLSProxy::Record::RT_APPLICATION_DATA,
                 TLSProxy::Record::VERS_TLS_1_2,
@@ -839,6 +856,7 @@ sub not_on_record_boundary
 
         #Now add the rest of the KeyUpdate message
         $record = TLSProxy::Record->new(
+            $isserver,
             1,
             TLSProxy::Record::RT_APPLICATION_DATA,
             TLSProxy::Record::VERS_TLS_1_2,

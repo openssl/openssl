@@ -134,6 +134,13 @@ static int ossl_statem_server13_read_transition(SSL_CONNECTION *s, int mt)
             return 1;
         }
         break;
+    case TLS_ST_SW_KEY_UPDATE:
+    case TLS_ST_SW_SESSION_TICKET:
+        if (mt == DTLS13_MT_ACK) {
+            st->hand_state = TLS_ST_SR_ACK;
+            return 1;
+        }
+        break;
 
     case TLS_ST_OK:
         /*
@@ -159,6 +166,11 @@ static int ossl_statem_server13_read_transition(SSL_CONNECTION *s, int mt)
 
         if (mt == SSL3_MT_KEY_UPDATE && !SSL_IS_QUIC_HANDSHAKE(s)) {
             st->hand_state = TLS_ST_SR_KEY_UPDATE;
+            return 1;
+        }
+
+        if (mt == DTLS13_MT_ACK) { /*TODO: Delete?*/
+            st->hand_state = TLS_ST_SR_ACK;
             return 1;
         }
         break;
@@ -464,6 +476,7 @@ static int do_compressed_cert(SSL_CONNECTION *sc)
  */
 static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
 {
+    OSSL_HANDSHAKE_STATE next_state;
     OSSL_STATEM *st = &s->statem;
 
     /*
@@ -568,16 +581,34 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
              * If we're not going to renew the ticket then we just finish the
              * handshake at this point.
              */
-            st->hand_state = TLS_ST_OK;
+            if (SSL_CONNECTION_IS_DTLS13(s)) {
+                st->defered_ack_state = TLS_ST_OK;
+                st->hand_state = TLS_ST_SW_ACK;
+            } else
+                st->hand_state = TLS_ST_OK;
+
             return WRITE_TRAN_CONTINUE;
         }
         if (s->num_tickets > s->sent_tickets)
-            st->hand_state = TLS_ST_SW_SESSION_TICKET;
+            next_state = TLS_ST_SW_SESSION_TICKET;
         else
-            st->hand_state = TLS_ST_OK;
+            next_state = TLS_ST_OK;
+
+        if (SSL_CONNECTION_IS_DTLS13(s)) {
+            st->defered_ack_state = next_state;
+            st->hand_state = TLS_ST_SW_ACK;
+        } else {
+            st->hand_state = next_state;
+        }
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_SR_KEY_UPDATE:
+        if (SSL_CONNECTION_IS_DTLS13(s)) {
+            st->defered_ack_state = TLS_ST_OK;
+            st->hand_state = TLS_ST_SW_ACK;
+            return WRITE_TRAN_CONTINUE;
+        }
+        /* Fall through */
     case TLS_ST_SW_KEY_UPDATE:
         st->hand_state = TLS_ST_OK;
         return WRITE_TRAN_CONTINUE;
@@ -587,12 +618,25 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
          * Following an initial handshake we send the number of tickets we have
          * been configured for.
          */
-        if (!SSL_IS_FIRST_HANDSHAKE(s) && s->ext.extra_tickets_expected > 0) {
-            return WRITE_TRAN_CONTINUE;
-        } else if (s->hit || s->num_tickets <= s->sent_tickets) {
+        if (!(!SSL_IS_FIRST_HANDSHAKE(s) && s->ext.extra_tickets_expected > 0)
+                && (s->hit || s->num_tickets <= s->sent_tickets)) {
             /* We've written enough tickets out. */
             st->hand_state = TLS_ST_OK;
         }
+        return WRITE_TRAN_CONTINUE;
+
+    case TLS_ST_SR_ACK:
+        if (SSL_CONNECTION_IS_DTLS13(s)
+                && any_sent_messages_are_missing_acknowledge(s)) {
+            /* We wait for ACK */
+            return WRITE_TRAN_FINISHED;
+        }
+        st->hand_state = TLS_ST_OK;
+        return WRITE_TRAN_CONTINUE;
+
+    case TLS_ST_SW_ACK:
+        st->hand_state = st->defered_ack_state;
+
         return WRITE_TRAN_CONTINUE;
     }
 }
@@ -1080,6 +1124,11 @@ WORK_STATE ossl_statem_server_post_work(SSL_CONNECTION *s, WORK_STATE wst)
             return WORK_MORE_A;
         }
         break;
+
+    case TLS_ST_SW_ACK:
+        if (statem_flush(s) != 1)
+            return WORK_MORE_A;
+        break;
     }
 
     return WORK_FINISHED_CONTINUE;
@@ -1190,6 +1239,11 @@ int ossl_statem_server_construct_message(SSL_CONNECTION *s,
         *confunc = tls_construct_key_update;
         *mt = SSL3_MT_KEY_UPDATE;
         break;
+
+    case TLS_ST_SW_ACK:
+        *confunc = dtls_construct_ack;
+        *mt = DTLS13_MT_ACK;
+        break;
     }
 
     return 1;
@@ -1257,6 +1311,9 @@ size_t ossl_statem_server_max_message_size(SSL_CONNECTION *s)
 
     case TLS_ST_SR_KEY_UPDATE:
         return KEY_UPDATE_MAX_LENGTH;
+
+    case TLS_ST_SR_ACK:
+        return 2 + (0x1 << 16) - 1;
     }
 }
 
@@ -1308,6 +1365,8 @@ MSG_PROCESS_RETURN ossl_statem_server_process_message(SSL_CONNECTION *s,
     case TLS_ST_SR_KEY_UPDATE:
         return tls_process_key_update(s, pkt);
 
+    case TLS_ST_SR_ACK:
+        return dtls_process_ack(s, pkt);
     }
 }
 

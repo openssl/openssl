@@ -92,7 +92,7 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
     size_t nonce_len, offset, loop, hdrlen, taglen;
     unsigned char *staticiv;
     unsigned char *nonce;
-    unsigned char *seq = rl->sequence;
+    unsigned char seq[SEQ_NUM_SIZE], *p_seq = seq;
     int lenu, lenf;
     TLS_RL_RECORD *rec = &recs[0];
     WPACKET wpkt;
@@ -109,6 +109,7 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
     enc_ctx = rl->enc_ctx; /* enc_ctx is ignored when rl->mac_ctx != NULL */
     staticiv = rl->iv;
     nonce = rl->nonce;
+    l2n8(rl->sequence, p_seq);
 
     if (enc_ctx == NULL && rl->mac_ctx == NULL) {
         RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
