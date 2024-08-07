@@ -99,45 +99,6 @@ int ossl_print_attribute_value(BIO *out,
     X509_NAME *xn = NULL;
     int64_t int_val;
 
-    /*
-     * This switch-case is only for syntaxes that are not encoded as a single
-     * primitively-constructed value universal ASN.1 type.
-     */
-    switch (obj_nid) {
-    case NID_undef: /* Unrecognized OID. */
-        break;
-    /* Attribute types with DN syntax. */
-    case NID_member:
-    case NID_roleOccupant:
-    case NID_seeAlso:
-    case NID_manager:
-    case NID_documentAuthor:
-    case NID_secretary:
-    case NID_associatedName:
-    case NID_dITRedirect:
-    case NID_owner:
-        /*
-         * d2i_ functions increment the ppin pointer. See doc/man3/d2i_X509.pod.
-         * This preserves the original  pointer. We don't want to corrupt this
-         * value.
-         */
-        value = av->value.sequence->data;
-        xn = d2i_X509_NAME(NULL,
-                           (const unsigned char**)&value,
-                           av->value.sequence->length);
-        if (xn == NULL) {
-            BIO_puts(out, "(COULD NOT DECODE DISTINGUISHED NAME)\n");
-            return 0;
-        }
-        if (X509_NAME_print_ex(out, xn, indent, XN_FLAG_SEP_CPLUS_SPC) <= 0)
-            return 0;
-        X509_NAME_free(xn);
-        return 1;
-
-    default:
-        break;
-    }
-
     switch (av->type) {
     case V_ASN1_BOOLEAN:
         if (av->value.boolean) {
@@ -176,7 +137,7 @@ int ossl_print_attribute_value(BIO *out,
         if (BIO_printf(out, "%*s", indent, "") < 0)
             return 0;
         return print_oid(out, av->value.object);
-    
+
     /*
      * ObjectDescriptor is an IMPLICIT GraphicString, but GeneralString is a
      * superset supported by OpenSSL, so we will use that anywhere a
@@ -204,6 +165,40 @@ int ossl_print_attribute_value(BIO *out,
     /* TIME would go here. */
 
     case V_ASN1_SEQUENCE:
+        switch (obj_nid) {
+        case NID_undef: /* Unrecognized OID. */
+            break;
+        /* Attribute types with DN syntax. */
+        case NID_member:
+        case NID_roleOccupant:
+        case NID_seeAlso:
+        case NID_manager:
+        case NID_documentAuthor:
+        case NID_secretary:
+        case NID_associatedName:
+        case NID_dITRedirect:
+        case NID_owner:
+            /*
+             * d2i_ functions increment the ppin pointer. See doc/man3/d2i_X509.pod.
+             * This preserves the original  pointer. We don't want to corrupt this
+             * value.
+             */
+            value = av->value.sequence->data;
+            xn = d2i_X509_NAME(NULL,
+                               (const unsigned char **)&value,
+                               av->value.sequence->length);
+            if (xn == NULL) {
+                BIO_puts(out, "(COULD NOT DECODE DISTINGUISHED NAME)\n");
+                return 0;
+            }
+            if (X509_NAME_print_ex(out, xn, indent, XN_FLAG_SEP_CPLUS_SPC) <= 0)
+                return 0;
+            X509_NAME_free(xn);
+            return 1;
+
+        default:
+            break;
+        }
         return ASN1_parse_dump(out, av->value.sequence->data,
                                av->value.sequence->length, indent, 1) > 0;
 
@@ -249,7 +244,7 @@ int ossl_print_attribute_value(BIO *out,
     /* OID-IRI would go here. */
     /* RELATIVE-OID-IRI would go here. */
 
-    /* Would it be approriate to just hexdump? */
+    /* Would it be appropriate to just hexdump? */
     default:
         return BIO_printf(out,
                           "%*s<Unsupported tag %d>",

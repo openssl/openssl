@@ -59,6 +59,8 @@ static int final_key_share(SSL_CONNECTION *s, unsigned int context, int sent);
 static int init_srtp(SSL_CONNECTION *s, unsigned int context);
 #endif
 static int final_sig_algs(SSL_CONNECTION *s, unsigned int context, int sent);
+static int final_supported_versions(SSL_CONNECTION *s, unsigned int context,
+                                    int sent);
 static int final_early_data(SSL_CONNECTION *s, unsigned int context, int sent);
 static int final_maxfragmentlen(SSL_CONNECTION *s, unsigned int context,
                                 int sent);
@@ -344,7 +346,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         /* Processed inline as part of version selection */
         NULL, tls_parse_stoc_supported_versions,
         tls_construct_stoc_supported_versions,
-        tls_construct_ctos_supported_versions, NULL
+        tls_construct_ctos_supported_versions, final_supported_versions
     },
     {
         TLSEXT_TYPE_psk_kex_modes,
@@ -1340,6 +1342,18 @@ static int final_sig_algs(SSL_CONNECTION *s, unsigned int context, int sent)
     if (!sent && SSL_CONNECTION_IS_TLS13(s) && !s->hit) {
         SSLfatal(s, TLS13_AD_MISSING_EXTENSION,
                  SSL_R_MISSING_SIGALGS_EXTENSION);
+        return 0;
+    }
+
+    return 1;
+}
+
+static int final_supported_versions(SSL_CONNECTION *s, unsigned int context,
+                                    int sent)
+{
+    if (!sent && context == SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST) {
+        SSLfatal(s, TLS13_AD_MISSING_EXTENSION,
+                 SSL_R_MISSING_SUPPORTED_VERSIONS_EXTENSION);
         return 0;
     }
 

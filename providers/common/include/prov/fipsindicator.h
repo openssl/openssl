@@ -48,7 +48,7 @@
  * To override strict mode we either need to have a settable variable or have a
  * fips config flag that overrides strict mode.
  * If there are multiple checks, each one could possible have a different
- * configurable item. Each configurable item can be overriden by a different
+ * configurable item. Each configurable item can be overridden by a different
  * settable.
  */
 typedef struct ossl_fips_ind_st {

@@ -1562,7 +1562,7 @@ static int test_large_app_data(int tst)
         prot = TLS1_3_VERSION;
         break;
 #else
-        return 1;
+        return TEST_skip("TLS 1.3 not supported");
 #endif
 
     case 1:
@@ -1570,7 +1570,7 @@ static int test_large_app_data(int tst)
         prot = TLS1_2_VERSION;
         break;
 #else
-        return 1;
+        return TEST_skip("TLS 1.2 not supported");
 #endif
 
     case 2:
@@ -1578,7 +1578,7 @@ static int test_large_app_data(int tst)
         prot = TLS1_1_VERSION;
         break;
 #else
-        return 1;
+        return TEST_skip("TLS 1.1 not supported");
 #endif
 
     case 3:
@@ -1586,7 +1586,7 @@ static int test_large_app_data(int tst)
         prot = TLS1_VERSION;
         break;
 #else
-        return 1;
+        return TEST_skip("TLS 1 not supported");
 #endif
 
     case 4:
@@ -1594,7 +1594,7 @@ static int test_large_app_data(int tst)
         prot = SSL3_VERSION;
         break;
 #else
-        return 1;
+        return TEST_skip("SSL 3 not supported");
 #endif
 
     case 5:
@@ -1604,17 +1604,19 @@ static int test_large_app_data(int tst)
         cmeth = DTLS_client_method();
         break;
 #else
-        return 1;
+        return TEST_skip("DTLS 1.2 not supported");
 #endif
 
     case 6:
 #ifndef OPENSSL_NO_DTLS1
+        if (is_fips)
+            return TEST_skip("DTLS 1 not supported by FIPS provider");
         prot = DTLS1_VERSION;
         smeth = DTLS_server_method();
         cmeth = DTLS_client_method();
         break;
 #else
-        return 1;
+        return TEST_skip("DTLS 1 not supported");
 #endif
 
     default:
@@ -1622,8 +1624,8 @@ static int test_large_app_data(int tst)
         return 0;
     }
 
-    if ((prot < TLS1_2_VERSION || prot == DTLS1_VERSION) && is_fips)
-        return 1;
+    if (is_fips && prot < TLS1_2_VERSION)
+        return TEST_skip("TLS versions < 1.2 not supported by FIPS provider");
 
     /* Maximal sized message of zeros */
     msg = OPENSSL_zalloc(SSL3_RT_MAX_PLAIN_LENGTH);
@@ -1911,6 +1913,8 @@ static int test_tlsext_status_type(void)
     /* First just do various checks getting and setting tlsext_status_type */
 
     clientssl = SSL_new(cctx);
+    if (!TEST_ptr(clientssl))
+        goto end;
     if (!TEST_int_eq(SSL_get_tlsext_status_type(clientssl), -1)
             || !TEST_true(SSL_set_tlsext_status_type(clientssl,
                                                       TLSEXT_STATUSTYPE_ocsp))
@@ -1926,6 +1930,8 @@ static int test_tlsext_status_type(void)
         goto end;
 
     clientssl = SSL_new(cctx);
+    if (!TEST_ptr(clientssl))
+        goto end;
     if (SSL_get_tlsext_status_type(clientssl) != TLSEXT_STATUSTYPE_ocsp)
         goto end;
     SSL_free(clientssl);

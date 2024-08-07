@@ -274,6 +274,8 @@ static const ERR_STRING_DATA SSL_str_reasons[] = {
     "can't find SRP server param"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_MISSING_SUPPORTED_GROUPS_EXTENSION),
     "missing supported groups extension"},
+    {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_MISSING_SUPPORTED_VERSIONS_EXTENSION),
+    "missing supported versions extension"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_MISSING_TMP_DH_KEY), "missing tmp dh key"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_MISSING_TMP_ECDH_KEY),
     "missing tmp ecdh key"},

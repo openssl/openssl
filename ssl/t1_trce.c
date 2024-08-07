@@ -1671,6 +1671,7 @@ static int ssl_print_handshake(BIO *bio, const SSL_CONNECTION *sc, int server,
         ssl_print_hex(bio, indent + 2, "verify_data", msg, msglen);
         break;
 
+    case SSL3_MT_END_OF_EARLY_DATA:
     case SSL3_MT_SERVER_DONE:
         if (msglen != 0)
             ssl_print_hex(bio, indent + 2, "unexpected value", msg, msglen);

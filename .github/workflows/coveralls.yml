@@ -72,7 +72,7 @@ jobs:
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
     - name: make test
-      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} TESTS='-test_external_krb5'
+      run: make test TESTS='-test_external_krb5'
     - name: generate coverage info
       run: lcov -d . -c
              --exclude "${PWD}/test/*"

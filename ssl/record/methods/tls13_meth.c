@@ -347,7 +347,7 @@ static int tls13_add_record_padding(OSSL_RECORD_LAYER *rl,
          * We might want to change the "else if" below so that
          * library-added padding can still happen even if there
          * is an application-layer callback. The reason being
-         * the application may not be aware that the effectivness
+         * the application may not be aware that the effectiveness
          * of ECH could be damaged if the callback e.g. only
          * padded application data. However, doing so would be
          * a change that could break some application that has

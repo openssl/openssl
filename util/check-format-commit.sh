@@ -65,7 +65,7 @@ else
     COMMIT_RANGE=$COMMIT_RANGE^..$COMMIT_RANGE
 fi
 
-# Create an iteratable list of files to check formatting on,
+# Create an iterable list of files to check formatting on,
 # including the line ranges that are changed by the commits
 # It produces output of this format:
 # <file name> <change start line>, <change line count>

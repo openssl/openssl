@@ -216,13 +216,29 @@ static int rsa_pss_compute_saltlen(PROV_RSA_CTX *ctx)
      * Provide a way to use at most the digest length, so that the default does
      * not violate FIPS 186-4. */
     if (saltlen == RSA_PSS_SALTLEN_DIGEST) {
-        saltlen = EVP_MD_get_size(ctx->md);
+        if ((saltlen = EVP_MD_get_size(ctx->md)) <= 0) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST);
+            return -1;
+        }
     } else if (saltlen == RSA_PSS_SALTLEN_AUTO_DIGEST_MAX) {
         saltlen = RSA_PSS_SALTLEN_MAX;
-        saltlenMax = EVP_MD_get_size(ctx->md);
+        if ((saltlenMax = EVP_MD_get_size(ctx->md)) <= 0) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST);
+            return -1;
+        }
     }
     if (saltlen == RSA_PSS_SALTLEN_MAX || saltlen == RSA_PSS_SALTLEN_AUTO) {
-        saltlen = RSA_size(ctx->rsa) - EVP_MD_get_size(ctx->md) - 2;
+        int mdsize, rsasize;
+
+        if ((mdsize = EVP_MD_get_size(ctx->md)) <= 0) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST);
+            return -1;
+        }
+        if ((rsasize = RSA_size(ctx->rsa)) <= 2 || rsasize - 2 < mdsize) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY);
+            return -1;
+        }
+        saltlen = rsasize - mdsize - 2;
         if ((RSA_bits(ctx->rsa) & 0x7) == 1)
             saltlen--;
         if (saltlenMax >= 0 && saltlen > saltlenMax)
