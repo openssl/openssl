@@ -1273,12 +1273,11 @@ int dtls1_retransmit_sent_messages(SSL_CONNECTION *s)
         dtls_sent_msg *sent_msg = (dtls_sent_msg *)item->data;
 
         if (SSL_CONNECTION_IS_DTLS13(s)) {
-            size_t idx = 0;
-            int ack_count = 0;
+            size_t idx = 0, ack_count = 0;
 
             if (sent_msg->rec_nums_idx > 0) {
                 do {
-                    ack_count += sent_msg->rec_nums[idx].acknowledged;
+                    ack_count += (size_t)sent_msg->rec_nums[idx].acknowledged;
                 } while (++idx < sent_msg->rec_nums_idx);
             }
 
