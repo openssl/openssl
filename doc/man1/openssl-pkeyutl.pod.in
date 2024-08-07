@@ -13,6 +13,7 @@ B<openssl> B<pkeyutl>
 [B<-rawin>]
 [B<-digest> I<algorithm>]
 [B<-out> I<file>]
+[B<-secret> I<file>]
 [B<-sigfile> I<file>]
 [B<-inkey> I<filename>|I<uri>]
 [B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
@@ -28,8 +29,11 @@ B<openssl> B<pkeyutl>
 [B<-encrypt>]
 [B<-decrypt>]
 [B<-derive>]
+[B<-encap>]
+[B<-decap>]
 [B<-kdf> I<algorithm>]
 [B<-kdflen> I<length>]
+[B<-kemop> I<operation>]
 [B<-pkeyopt> I<opt>:I<value>]
 [B<-pkeyopt_passin> I<opt>[:I<passarg>]]
 [B<-hexdump>]
@@ -78,6 +82,10 @@ then the B<-rawin> option must be also specified.
 
 Specifies the output filename to write to or standard output by
 default.
+
+=item B<-secret> I<filename>
+
+Specifies the output filename to write the secret to on I<-encap>.
 
 =item B<-sigfile> I<file>
 
@@ -146,6 +154,31 @@ Decrypt the input data using a private key.
 =item B<-derive>
 
 Derive a shared secret using the peer key.
+
+=item B<-encap>
+
+Encapsulate a generated secret using a private key.
+The encapsulated result (binary data) is written to standard output by default,
+or else to the file specified with I<-out>.
+The I<-secret> option must also be provided to specify the output file for the
+secret value generated in the encapsulation process.
+
+=item B<-decap>
+
+Decapsulate the secret using a private key.
+The result (binary data) is written to standard output by default, or else to
+the file specified with I<-out>.
+
+=item B<-kemop> I<operation>
+
+This option is used for I<-encap>/I<-decap> commands and specifies the KEM
+operation specific for the key algorithm when there is no default KEM
+operation.
+If the algorithm has the default KEM operation, this option can be omitted.
+
+See L<EVP_PKEY_CTX_set_kem_op(3)> and algorithm-specific KEM documentation e.g.
+L<EVP_KEM-RSA(7)>, L<EVP_KEM-EC(7)>, L<EVP_KEM-X25519(7)>, and
+L<EVP_KEM-X448(7)>.
 
 =item B<-kdf> I<algorithm>
 
