@@ -39,7 +39,8 @@ typedef enum OPTION_choice {
     OPT_NO_CONDITIONAL_ERRORS,
     OPT_NO_SECURITY_CHECKS,
     OPT_TLS_PRF_EMS_CHECK, OPT_EDDSA_NO_VERIFY_DIGESTED, OPT_NO_SHORT_MAC,
-    OPT_DISALLOW_PKCS15_PADDING, OPT_DISALLOW_SIGNATURE_X931_PADDING,
+    OPT_DISALLOW_PKCS15_PADDING, OPT_RSA_PSS_SALTLEN_CHECK,
+    OPT_DISALLOW_SIGNATURE_X931_PADDING,
     OPT_DISALLOW_DRGB_TRUNC_DIGEST,
     OPT_SIGNATURE_DIGEST_CHECK,
     OPT_HKDF_DIGEST_CHECK,
@@ -107,6 +108,8 @@ const OPTIONS fipsinstall_options[] = {
      "Disallow Triple-DES encryption"},
     {"rsa_pkcs15_padding_disabled", OPT_DISALLOW_PKCS15_PADDING, '-',
      "Disallow PKCS#1 version 1.5 padding for RSA encryption"},
+    {"rsa_pss_saltlen_check", OPT_RSA_PSS_SALTLEN_CHECK, '-',
+     "Enable salt length check for RSA-PSS signature operations"},
     {"rsa_sign_x931_disabled", OPT_DISALLOW_SIGNATURE_X931_PADDING, '-',
      "Disallow X931 Padding for RSA signing"},
     {"hkdf_key_check", OPT_HKDF_KEY_CHECK, '-',
@@ -159,6 +162,7 @@ typedef struct {
     unsigned int dsa_sign_disabled : 1;
     unsigned int tdes_encrypt_disabled : 1;
     unsigned int rsa_pkcs15_padding_disabled : 1;
+    unsigned int rsa_pss_saltlen_check : 1;
     unsigned int sign_x931_padding_disabled : 1;
     unsigned int hkdf_key_check : 1;
     unsigned int kbkdf_key_check : 1;
@@ -189,6 +193,7 @@ static const FIPS_OPTS pedantic_opts = {
     1,      /* dsa_sign_disabled */
     1,      /* tdes_encrypt_disabled */
     1,      /* rsa_pkcs15_padding_disabled */
+    1,      /* rsa_pss_saltlen_check */
     1,      /* sign_x931_padding_disabled */
     1,      /* hkdf_key_check */
     1,      /* kbkdf_key_check */
@@ -219,6 +224,7 @@ static FIPS_OPTS fips_opts = {
     0,      /* dsa_sign_disabled */
     0,      /* tdes_encrypt_disabled */
     0,      /* rsa_pkcs15_padding_disabled */
+    0,      /* rsa_pss_saltlen_check */
     0,      /* sign_x931_padding_disabled */
     0,      /* hkdf_key_check */
     0,      /* kbkdf_key_check */
@@ -380,6 +386,9 @@ static int write_config_fips_section(BIO *out, const char *section,
         || BIO_printf(out, "%s = %s\n",
                       OSSL_PROV_FIPS_PARAM_RSA_PKCS15_PADDING_DISABLED,
                       opts->rsa_pkcs15_padding_disabled ? "1" : "0") <= 0
+        || BIO_printf(out, "%s = %s\n",
+                      OSSL_PROV_FIPS_PARAM_RSA_PSS_SALTLEN_CHECK,
+                      opts->rsa_pss_saltlen_check ? "1" : "0") <= 0
         || BIO_printf(out, "%s = %s\n",
                       OSSL_PROV_FIPS_PARAM_RSA_SIGN_X931_PAD_DISABLED,
                       opts->sign_x931_padding_disabled ? "1" : "0") <= 0
@@ -619,6 +628,9 @@ int fipsinstall_main(int argc, char **argv)
             break;
         case OPT_DISALLOW_TDES_ENCRYPT:
             fips_opts.tdes_encrypt_disabled = 1;
+            break;
+        case OPT_RSA_PSS_SALTLEN_CHECK:
+            fips_opts.rsa_pss_saltlen_check = 1;
             break;
         case OPT_DISALLOW_SIGNATURE_X931_PADDING:
             fips_opts.sign_x931_padding_disabled = 1;

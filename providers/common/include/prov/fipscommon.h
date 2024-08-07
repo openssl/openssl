@@ -25,6 +25,7 @@ int FIPS_x963kdf_digest_check(OSSL_LIB_CTX *libctx);
 int FIPS_dsa_sign_check(OSSL_LIB_CTX *libctx);
 int FIPS_tdes_encrypt_check(OSSL_LIB_CTX *libctx);
 int FIPS_rsa_pkcs15_padding_disabled(OSSL_LIB_CTX *libctx);
+int FIPS_rsa_pss_saltlen_check(OSSL_LIB_CTX *libctx);
 int FIPS_rsa_sign_x931_disallowed(OSSL_LIB_CTX *libctx);
 int FIPS_hkdf_key_check(OSSL_LIB_CTX *libctx);
 int FIPS_kbkdf_key_check(OSSL_LIB_CTX *libctx);

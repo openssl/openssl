@@ -37,6 +37,7 @@ B<openssl fipsinstall>
 [B<-no_short_mac>]
 [B<-tdes_encrypt_disabled>]
 [B<-rsa_pkcs15_padding_disabled>]
+[B<-rsa_pss_saltlen_check>]
 [B<-rsa_sign_x931_disabled>]
 [B<-hkdf_key_check>]
 [B<-kbkdf_key_check>]
@@ -279,6 +280,12 @@ See SP800-131Ar2 for details.
 Configure the module to not allow PKCS#1 version 1.5 padding to be used with
 RSA for key transport and key agreement.  See NIST's SP 800-131A Revision 2
 for details.
+
+=item B<-rsa_pss_saltlen_check>
+
+Configure the module to enable a run-time salt length check when generating or
+verifying a RSA-PSS signature.
+See FIPS 186-5 5.4 (g) for details.
 
 =item B<-rsa_sign_x931_disabled>
 
