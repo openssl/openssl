@@ -4876,6 +4876,7 @@ Ctrl.hexxcghash = hexxcghash:a4ebd45934f56792b5112dcd75a1075fdc889245
 Ctrl.hexsession_id = hexsession_id:a4ebd45934f56792b5112dcd75a1075fdc889245
 Ctrl.type = type:A
 Result = KDF_CTRL_ERROR
+Reason = xof digests not allowed
 
 FIPSversion = <3.4.0
 KDF = SSHKDF
@@ -4897,6 +4898,7 @@ Ctrl.hexxcghash = hexxcghash:a4ebd45934f56792b5112dcd75a1075fdc889245
 Ctrl.hexsession_id = hexsession_id:a4ebd45934f56792b5112dcd75a1075fdc889245
 Ctrl.type = type:A
 Result = KDF_CTRL_ERROR
+Reason = digest not allowed
 
 # Test that the operation with unapproved digest function is is reported as
 # unapproved
@@ -4920,6 +4922,7 @@ Ctrl.hexxcghash = hexxcghash:a4ebd45934f56792b5112dcd75a1075fdc889245
 Ctrl.hexsession_id = hexsession_id:a4ebd45934f56792b5112dcd75a1075fdc889245
 Ctrl.type = type:A
 Result = KDF_CTRL_ERROR
+Reason = invalid key length
 
 # Test that the key whose length is shorter than 112 bits is reported as
 # unapproved
