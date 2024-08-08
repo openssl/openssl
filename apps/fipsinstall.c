@@ -603,7 +603,7 @@ int fipsinstall_main(int argc, char **argv)
             break;
         case OPT_KMAC_KEY_CHECK:
             fips_opts.kmac_key_check = 1;
-            break
+            break;
         case OPT_HKDF_DIGEST_CHECK:
             fips_opts.hkdf_digest_check = 1;
             break;
