@@ -197,8 +197,8 @@ Can be used to get the MAC block size (if supported by the algorithm).
 
 A getter that returns 1 if the operation is FIPS approved, or 0 otherwise.
 This may be used after calling the final function. It may return 0 if
-either "no-short-mac" or "key-check" are set to 0. This option is used by the
-OpenSSL FIPS provider.
+either "no-short-mac" or "key-check" are set to 0.
+This option is used by the OpenSSL FIPS provider.
 
 =back
 

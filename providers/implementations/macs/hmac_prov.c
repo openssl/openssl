@@ -66,9 +66,9 @@ struct hmac_data_st {
     size_t tls_mac_out_size;
 #ifdef FIPS_MODULE
     /*
-     * internal is set to 1 if HMAC is used inside another algorithm such as a
+     * 'internal' is set to 1 if HMAC is used inside another algorithm such as a
      * KDF. In this case it is the parent algorithm that is responsible for
-     * performing any conditional FIPS indicator related checks for the MAC.
+     * performing any conditional FIPS indicator related checks for the HMAC.
      */
     int internal;
 #endif
