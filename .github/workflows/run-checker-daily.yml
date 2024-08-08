@@ -130,6 +130,7 @@ jobs:
           no-zlib,
           enable-zlib-dynamic,
           no-zlib-dynamic,
+          -DSSL3_ALIGN_PAYLOAD=0,
         ]
     runs-on: ubuntu-latest
     steps:

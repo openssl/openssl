@@ -74,6 +74,13 @@ static int fail_due_to_record_overflow(int enc)
             && ERR_GET_REASON(err) == reason)
         return 1;
 
+#if SSL3_ALIGN_PAYLOAD < 2
+    if (ERR_GET_LIB(err) == ERR_LIB_SSL
+            && ERR_GET_REASON(err) == SSL_R_PACKET_LENGTH_TOO_LONG
+            && reason == SSL_R_ENCRYPTED_LENGTH_TOO_LONG)
+        return 1;
+#endif
+
     return 0;
 }
 
