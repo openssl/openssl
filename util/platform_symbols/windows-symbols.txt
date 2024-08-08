@@ -179,6 +179,7 @@ TryEnterCriticalSection
 DeleteCriticalSection
 ReleaseSemaphore
 WaitForSingleObject
+WSASocketA
 GetCurrentThreadId
 SetUnhandledExceptionFilter
 GetExitCodeThread

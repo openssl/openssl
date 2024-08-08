@@ -100,6 +100,9 @@ struct quic_obj_st {
      */
     QUIC_PORT               *port;
 
+    /* SSL_DOMAIN_FLAG values taken from SSL_CTX at construction time. */
+    uint64_t                domain_flags;
+
     unsigned int            init_done       : 1;
     unsigned int            is_event_leader : 1;
     unsigned int            is_port_leader  : 1;
@@ -322,6 +325,16 @@ ossl_quic_obj_get0_port_leader(const QUIC_OBJ *obj)
     return obj->cached_port_leader != NULL
         ? &obj->cached_port_leader->ssl
         : NULL;
+}
+
+/*
+ * Change the domain flags. Should only be called immediately after
+ * ossl_quic_obj_init().
+ */
+static ossl_inline ossl_unused void
+ossl_quic_obj_set_domain_flags(QUIC_OBJ *obj, uint64_t domain_flags)
+{
+    obj->domain_flags = domain_flags;
 }
 
 # endif

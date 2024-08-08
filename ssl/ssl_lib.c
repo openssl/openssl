@@ -4092,6 +4092,27 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
     /* By default we send two session tickets automatically in TLSv1.3 */
     ret->num_tickets = 2;
 
+# ifndef OPENSSL_NO_QUIC
+    ret->domain_flags = 0;
+    if (IS_QUIC_METHOD(meth)) {
+#  if defined(OPENSSL_THREADS)
+        if (meth == OSSL_QUIC_client_thread_method())
+            ret->domain_flags
+                = SSL_DOMAIN_FLAG_MULTI_THREAD
+                | SSL_DOMAIN_FLAG_THREAD_ASSISTED
+                | SSL_DOMAIN_FLAG_BLOCKING;
+        else
+            ret->domain_flags
+                = SSL_DOMAIN_FLAG_MULTI_THREAD
+                | SSL_DOMAIN_FLAG_LEGACY_BLOCKING;
+#  else
+        ret->domain_flags
+            = SSL_DOMAIN_FLAG_SINGLE_THREAD
+            | SSL_DOMAIN_FLAG_LEGACY_BLOCKING;
+#  endif
+    }
+# endif
+
     ssl_ctx_system_config(ret);
 
     return ret;
@@ -7492,9 +7513,26 @@ SSL *SSL_get0_listener(SSL *s)
 #endif
 }
 
+SSL *SSL_get0_domain(SSL *s)
+{
+#ifndef OPENSSL_NO_QUIC
+    if (!IS_QUIC(s))
+        return NULL;
+
+    return ossl_quic_get0_domain(s);
+#else
+    return NULL;
+#endif
+}
+
 int SSL_is_listener(SSL *s)
 {
     return SSL_get0_listener(s) == s;
+}
+
+int SSL_is_domain(SSL *s)
+{
+    return SSL_get0_domain(s) == s;
 }
 
 int SSL_get_stream_type(SSL *s)
@@ -7692,6 +7730,18 @@ SSL *SSL_new_listener(SSL_CTX *ctx, uint64_t flags)
 #endif
 }
 
+SSL *SSL_new_listener_from(SSL *ssl, uint64_t flags)
+{
+#ifndef OPENSSL_NO_QUIC
+    if (!IS_QUIC(ssl))
+        return NULL;
+
+    return ossl_quic_new_listener_from(ssl, flags);
+#else
+    return NULL;
+#endif
+}
+
 SSL *SSL_new_from_listener(SSL *ssl, uint64_t flags)
 {
 #ifndef OPENSSL_NO_QUIC
@@ -7738,6 +7788,99 @@ int SSL_listen(SSL *ssl)
 #else
     return 0;
 #endif
+}
+
+SSL *SSL_new_domain(SSL_CTX *ctx, uint64_t flags)
+{
+#ifndef OPENSSL_NO_QUIC
+    if (!IS_QUIC_CTX(ctx))
+        return NULL;
+
+    return ossl_quic_new_domain(ctx, flags);
+#else
+    return NULL;
+#endif
+}
+
+int ossl_adjust_domain_flags(uint64_t domain_flags, uint64_t *p_domain_flags)
+{
+    if ((domain_flags & ~OSSL_QUIC_SUPPORTED_DOMAIN_FLAGS) != 0) {
+        ERR_raise_data(ERR_LIB_SSL, ERR_R_UNSUPPORTED,
+                       "unsupported domain flag requested");
+        return 0;
+    }
+
+    if ((domain_flags & SSL_DOMAIN_FLAG_THREAD_ASSISTED) != 0)
+        domain_flags |= SSL_DOMAIN_FLAG_MULTI_THREAD;
+
+    if ((domain_flags & (SSL_DOMAIN_FLAG_MULTI_THREAD
+                         | SSL_DOMAIN_FLAG_SINGLE_THREAD)) == 0)
+        domain_flags |= SSL_DOMAIN_FLAG_MULTI_THREAD;
+
+    if ((domain_flags & SSL_DOMAIN_FLAG_SINGLE_THREAD) != 0
+        && (domain_flags & SSL_DOMAIN_FLAG_MULTI_THREAD) != 0) {
+        ERR_raise_data(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT,
+                       "mutually exclusive domain flags specified");
+        return 0;
+    }
+
+    /*
+     * Note: We treat MULTI_THREAD as a no-op in non-threaded builds, but
+     * not THREAD_ASSISTED.
+     */
+# ifndef OPENSSL_THREADS
+    if ((domain_flags & SSL_DOMAIN_FLAG_THREAD_ASSISTED) != 0) {
+        ERR_raise_data(ERR_LIB_SSL, ERR_R_UNSUPPORTED,
+                       "thread assisted mode not available in this build");
+        return 0;
+    }
+# endif
+
+    *p_domain_flags = domain_flags;
+    return 1;
+}
+
+int SSL_CTX_set_domain_flags(SSL_CTX *ctx, uint64_t domain_flags)
+{
+#ifndef OPENSSL_NO_QUIC
+    if (IS_QUIC_CTX(ctx)) {
+        if (!ossl_adjust_domain_flags(domain_flags, &domain_flags))
+            return 0;
+
+        ctx->domain_flags = domain_flags;
+        return 1;
+    }
+#endif
+
+    ERR_raise_data(ERR_LIB_SSL, ERR_R_UNSUPPORTED,
+                   "domain flags unsupported on this kind of SSL_CTX");
+    return 0;
+}
+
+int SSL_CTX_get_domain_flags(const SSL_CTX *ctx, uint64_t *domain_flags)
+{
+#ifndef OPENSSL_NO_QUIC
+    if (IS_QUIC_CTX(ctx)) {
+        if (domain_flags != NULL)
+            *domain_flags = ctx->domain_flags;
+
+        return 1;
+    }
+#endif
+
+    ERR_raise_data(ERR_LIB_SSL, ERR_R_UNSUPPORTED,
+                   "domain flags unsupported on this kind of SSL_CTX");
+    return 0;
+}
+
+int SSL_get_domain_flags(const SSL *ssl, uint64_t *domain_flags)
+{
+#ifndef OPENSSL_NO_QUIC
+    if (IS_QUIC(ssl))
+        return ossl_quic_get_domain_flags(ssl, domain_flags);
+#endif
+
+    return 0;
 }
 
 int SSL_add_expected_rpk(SSL *s, EVP_PKEY *rpk)

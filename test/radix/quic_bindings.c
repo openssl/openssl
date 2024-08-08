@@ -788,5 +788,26 @@ err:
     return ok;
 }
 
+DEF_FUNC(hf_clear)
+{
+    RADIX_THREAD *rt = RT();
+    size_t i;
+
+    ossl_crypto_mutex_lock(RP()->gm);
+
+    lh_RADIX_OBJ_doall(RP()->objs, cleanup_one);
+    lh_RADIX_OBJ_flush(RP()->objs);
+
+    for (i = 0; i < NUM_SLOTS; ++i) {
+        rt->slot[i] = NULL;
+        rt->ssl[i]  = NULL;
+    }
+
+    ossl_crypto_mutex_unlock(RP()->gm);
+    return 1;
+}
+
 #define OP_SPAWN_THREAD(script_name)                            \
     (OP_PUSH_P(SCRIPT(script_name)), OP_FUNC(hf_spawn_thread))
+#define OP_CLEAR()                                              \
+    (OP_FUNC(hf_clear))

@@ -123,6 +123,9 @@ struct quic_conn_st {
     /* The QLSO this connection belongs to, if any. */
     QUIC_LISTENER                   *listener;
 
+    /* The QDSO this connection belongs to, if any. */
+    QUIC_DOMAIN                     *domain;
+
     /* The QUIC engine representing the QUIC event domain. */
     QUIC_ENGINE                     *engine;
 
@@ -235,6 +238,9 @@ struct quic_listener_st {
     /* QUIC_OBJ common header, including SSL object common header. */
     QUIC_OBJ                        obj;
 
+    /* The QDSO this connection belongs to, if any. */
+    QUIC_DOMAIN                     *domain;
+
     /* The QUIC engine representing the QUIC event domain. */
     QUIC_ENGINE                     *engine;
 
@@ -251,6 +257,26 @@ struct quic_listener_st {
 
     /* Have we started listening yet? */
     unsigned int                    listening               : 1;
+};
+
+/*
+ * QUIC domain SSL object (QDSO) type. This implements the API personality layer
+ * for QDSO objects, wrapping the QUIC-native QUIC_ENGINE object.
+ */
+struct quic_domain_st {
+     /* QUIC_OBJ common header, including SSL object common header. */
+    QUIC_OBJ                        obj;
+
+    /* The QUIC engine representing the QUIC event domain. */
+    QUIC_ENGINE                     *engine;
+
+#if defined(OPENSSL_THREADS)
+    /*
+     * The mutex used to synchronise access to the QUIC_ENGINE. We own this but
+     * provide it to the engine.
+     */
+    CRYPTO_MUTEX                    *mutex;
+#endif
 };
 
 /* Internal calls to the QUIC CSM which come from various places. */

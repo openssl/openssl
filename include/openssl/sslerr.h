@@ -108,6 +108,7 @@
 # define SSL_R_DH_KEY_TOO_SMALL                           394
 # define SSL_R_DH_PUBLIC_VALUE_LENGTH_IS_WRONG            148
 # define SSL_R_DIGEST_CHECK_FAILED                        149
+# define SSL_R_DOMAIN_USE_ONLY                            420
 # define SSL_R_DTLS_MESSAGE_TOO_BIG                       334
 # define SSL_R_DUPLICATE_COMPRESSION_ID                   309
 # define SSL_R_ECC_CERT_NOT_FOR_SIGNING                   318
