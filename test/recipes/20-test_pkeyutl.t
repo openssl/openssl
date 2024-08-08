@@ -13,11 +13,11 @@ use File::Spec;
 use File::Basename;
 use OpenSSL::Test qw/:DEFAULT srctop_file ok_nofips/;
 use OpenSSL::Test::Utils;
-use File::Compare qw/compare_text/;
+use File::Compare qw/compare_text compare/;
 
 setup("test_pkeyutl");
 
-plan tests => 14;
+plan tests => 19;
 
 # For the tests below we use the cert itself as the TBS file
 
@@ -200,3 +200,33 @@ SKIP: {
                     "-rawin");
     };
 }
+
+#Encap/decap tests
+# openssl pkeyutl -encap -pubin -inkey rsa_pub.pem -secret secret.bin -out encap_out.bin
+# openssl pkeyutl -decap -inkey rsa_priv.pem -in encap_out.bin -out decap_out.bin
+# decap_out is equal to secret
+SKIP: {
+    skip "RSA is not supported by this OpenSSL build", 3
+        if disabled("rsa");
+
+    # Self-compat
+    ok(run(app(([ 'openssl', 'pkeyutl', '-encap', '-pubin', '-kemop', 'RSASVE',
+                  '-inkey', srctop_file('test', 'testrsa2048pub.pem'),
+                  '-out', 'encap_out.bin', '-secret', 'secret.bin']))),
+                  "RSA pubkey encapsulation");
+    ok(run(app(([ 'openssl', 'pkeyutl', '-decap', '-kemop', 'RSASVE',
+                  '-inkey', srctop_file('test', 'testrsa2048.pem'),
+                  '-in', 'encap_out.bin', '-out', 'decap_out.bin']))),
+                  "RSA pubkey decapsulation");
+    is(compare("secret.bin", "decap_out.bin"), 0, "Secret is correctly decapsulated");
+
+    # Pregenerated
+    ok(run(app(([ 'openssl', 'pkeyutl', '-decap', '-kemop', 'RSASVE',
+                  '-inkey', srctop_file('test', 'testrsa2048.pem'),
+                  '-in', srctop_file('test', 'encap_out.bin'), '-out', 'decap_out_etl.bin']))),
+                  "RSA pubkey decapsulation - pregenerated");
+
+    is(compare(srctop_file('test', 'encap_secret.bin'), "decap_out_etl.bin"), 0,
+               "Secret is correctly decapsulated - pregenerated");
+}
+
