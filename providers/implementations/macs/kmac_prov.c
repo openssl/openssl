@@ -130,8 +130,15 @@ struct kmac_data_st {
     /* key and custom are stored in encoded form */
     unsigned char key[KMAC_MAX_KEY_ENCODED];
     unsigned char custom[KMAC_MAX_CUSTOM_ENCODED];
-    OSSL_FIPS_IND_DECLARE
+#ifdef FIPS_MODULE
+    /*
+     * 'internal' is set to 1 if KMAC is used inside another algorithm such as a
+     * KDF. In this case it is the parent algorithm that is responsible for
+     * performing any conditional FIPS indicator related checks for KMAC.
+     */
     int internal;
+#endif
+    OSSL_FIPS_IND_DECLARE
 };
 
 static int encode_string(unsigned char *out, size_t out_max_len, size_t *out_len,
@@ -241,8 +248,9 @@ static void *kmac_dup(void *vsrc)
         kmac_free(dst);
         return NULL;
     }
-
+#ifdef FIPS_MODULE
     dst->internal = src->internal;
+#endif
     dst->out_len = src->out_len;
     dst->key_len = src->key_len;
     dst->custom_len = src->custom_len;
