@@ -247,6 +247,14 @@ extern "C" {
  */
 # define OSSL_PROV_FIPS_PARAM_PBKDF2_LOWER_BOUND_CHECK "pbkdf2-lower-bound-check"
 
+/*
+ * A boolean that determines if the runtime cofactor check for ECDH is
+ * performed.
+ * This is disabled by default.
+ * Type: OSSL_PARAM_UTF8_STRING
+ */
+# define OSSL_PROV_FIPS_PARAM_ECDH_COFACTOR_CHECK "ecdh-cofactor-check"
+
 # ifdef __cplusplus
 }
 # endif

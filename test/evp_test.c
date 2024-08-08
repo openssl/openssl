@@ -2661,6 +2661,7 @@ static int pderive_test_run(EVP_TEST *t)
     PKEY_DATA *expected = t->data;
     unsigned char *got = NULL;
     size_t got_len;
+    int ret = 1;
 
     if (!pkey_test_run_init(t))
         goto err;
@@ -2695,11 +2696,15 @@ static int pderive_test_run(EVP_TEST *t)
                             got, got_len))
         goto err;
 
+    if (!pkey_check_fips_approved(dctx, t)) {
+        ret = 0;
+        goto err;
+    }
     t->err = NULL;
  err:
     OPENSSL_free(got);
     EVP_PKEY_CTX_free(dctx);
-    return 1;
+    return ret;
 }
 
 static const EVP_TEST_METHOD pderive_test_method = {

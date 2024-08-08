@@ -46,6 +46,7 @@ B<openssl fipsinstall>
 [B<-sshkdf_key_check>]
 [B<-sskdf_key_check>]
 [B<-x963kdf_key_check>]
+[B<-ecdh_cofactor_check>]
 [B<-self_test_onload>]
 [B<-self_test_oninstall>]
 [B<-corrupt_desc> I<selftest_description>]
@@ -338,6 +339,12 @@ See NIST SP 800-131Ar2 for details.
 
 Configure the module to not perform run-time lower bound check for PBKDF2.
 See NIST SP 800-132 for details.
+
+=item B<-ecdh_cofactor_check>
+
+Configure the module to enable a run-time check that ECDH uses the EC curves
+cofactor value when deriving a key. This only affects the 'B' and 'K' curves.
+See SP 800-56A r3 Section 5.7.1.2 for details.
 
 =item B<-self_test_onload>
 
