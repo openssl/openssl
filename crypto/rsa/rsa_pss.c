@@ -39,6 +39,13 @@ int RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
                               const EVP_MD *Hash, const EVP_MD *mgf1Hash,
                               const unsigned char *EM, int sLen)
 {
+    return ossl_rsa_verify_PKCS1_PSS_mgf1(rsa, mHash, Hash, mgf1Hash, EM, &sLen);
+}
+
+int ossl_rsa_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
+                                   const EVP_MD *Hash, const EVP_MD *mgf1Hash,
+                                   const unsigned char *EM, int *sLen)
+{
     int i;
     int ret = 0;
     int hLen, maskedDBLen, MSBits, emLen;
@@ -64,9 +71,9 @@ int RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
      *      -4      salt length is autorecovered from signature
      *      -N      reserved
      */
-    if (sLen == RSA_PSS_SALTLEN_DIGEST) {
-        sLen = hLen;
-    } else if (sLen < RSA_PSS_SALTLEN_AUTO_DIGEST_MAX) {
+    if (*sLen == RSA_PSS_SALTLEN_DIGEST) {
+        *sLen = hLen;
+    } else if (*sLen < RSA_PSS_SALTLEN_AUTO_DIGEST_MAX) {
         ERR_raise(ERR_LIB_RSA, RSA_R_SLEN_CHECK_FAILED);
         goto err;
     }
@@ -85,9 +92,9 @@ int RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
         ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_LARGE);
         goto err;
     }
-    if (sLen == RSA_PSS_SALTLEN_MAX) {
-        sLen = emLen - hLen - 2;
-    } else if (sLen > emLen - hLen - 2) { /* sLen can be small negative */
+    if (*sLen == RSA_PSS_SALTLEN_MAX) {
+        *sLen = emLen - hLen - 2;
+    } else if (*sLen > emLen - hLen - 2) { /* sLen can be small negative */
         ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_LARGE);
         goto err;
     }
@@ -111,20 +118,22 @@ int RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
         ERR_raise(ERR_LIB_RSA, RSA_R_SLEN_RECOVERY_FAILED);
         goto err;
     }
-    if (sLen != RSA_PSS_SALTLEN_AUTO
-            && sLen != RSA_PSS_SALTLEN_AUTO_DIGEST_MAX
-            && (maskedDBLen - i) != sLen) {
+    if (*sLen != RSA_PSS_SALTLEN_AUTO
+            && *sLen != RSA_PSS_SALTLEN_AUTO_DIGEST_MAX
+            && (maskedDBLen - i) != *sLen) {
         ERR_raise_data(ERR_LIB_RSA, RSA_R_SLEN_CHECK_FAILED,
-                       "expected: %d retrieved: %d", sLen,
+                       "expected: %d retrieved: %d", *sLen,
                        maskedDBLen - i);
         goto err;
+    } else {
+        *sLen = maskedDBLen - i;
     }
     if (!EVP_DigestInit_ex(ctx, Hash, NULL)
         || !EVP_DigestUpdate(ctx, zeroes, sizeof(zeroes))
         || !EVP_DigestUpdate(ctx, mHash, hLen))
         goto err;
-    if (maskedDBLen - i) {
-        if (!EVP_DigestUpdate(ctx, DB + i, maskedDBLen - i))
+    if (*sLen) {
+        if (!EVP_DigestUpdate(ctx, DB + i, *sLen))
             goto err;
     }
     if (!EVP_DigestFinal_ex(ctx, H_, NULL))
@@ -156,6 +165,14 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
                                    const EVP_MD *Hash, const EVP_MD *mgf1Hash,
                                    int sLen)
 {
+    return ossl_rsa_padding_add_PKCS1_PSS_mgf1(rsa, EM, mHash, Hash, mgf1Hash, &sLen);
+}
+
+int ossl_rsa_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
+                                        const unsigned char *mHash,
+                                        const EVP_MD *Hash, const EVP_MD *mgf1Hash,
+                                        int *sLen)
+{
     int i;
     int ret = 0;
     int hLen, maskedDBLen, MSBits, emLen;
@@ -184,15 +201,15 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
      *
      * Provide a way to use at most the digest length, so that the default does
      * not violate FIPS 186-4. */
-    if (sLen == RSA_PSS_SALTLEN_DIGEST) {
-        sLen = hLen;
-    } else if (sLen == RSA_PSS_SALTLEN_MAX_SIGN
-            || sLen == RSA_PSS_SALTLEN_AUTO) {
-        sLen = RSA_PSS_SALTLEN_MAX;
-    } else if (sLen == RSA_PSS_SALTLEN_AUTO_DIGEST_MAX) {
-        sLen = RSA_PSS_SALTLEN_MAX;
+    if (*sLen == RSA_PSS_SALTLEN_DIGEST) {
+        *sLen = hLen;
+    } else if (*sLen == RSA_PSS_SALTLEN_MAX_SIGN
+               || *sLen == RSA_PSS_SALTLEN_AUTO) {
+        *sLen = RSA_PSS_SALTLEN_MAX;
+    } else if (*sLen == RSA_PSS_SALTLEN_AUTO_DIGEST_MAX) {
+        *sLen = RSA_PSS_SALTLEN_MAX;
         sLenMax = hLen;
-    } else if (sLen < RSA_PSS_SALTLEN_AUTO_DIGEST_MAX) {
+    } else if (*sLen < RSA_PSS_SALTLEN_AUTO_DIGEST_MAX) {
         ERR_raise(ERR_LIB_RSA, RSA_R_SLEN_CHECK_FAILED);
         goto err;
     }
@@ -207,19 +224,19 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
         ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
         goto err;
     }
-    if (sLen == RSA_PSS_SALTLEN_MAX) {
-        sLen = emLen - hLen - 2;
-        if (sLenMax >= 0 && sLen > sLenMax)
-            sLen = sLenMax;
-    } else if (sLen > emLen - hLen - 2) {
+    if (*sLen == RSA_PSS_SALTLEN_MAX) {
+        *sLen = emLen - hLen - 2;
+        if (sLenMax >= 0 && *sLen > sLenMax)
+            *sLen = sLenMax;
+    } else if (*sLen > emLen - hLen - 2) {
         ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
         goto err;
     }
-    if (sLen > 0) {
-        salt = OPENSSL_malloc(sLen);
+    if (*sLen > 0) {
+        salt = OPENSSL_malloc(*sLen);
         if (salt == NULL)
             goto err;
-        if (RAND_bytes_ex(rsa->libctx, salt, sLen, 0) <= 0)
+        if (RAND_bytes_ex(rsa->libctx, salt, *sLen, 0) <= 0)
             goto err;
     }
     maskedDBLen = emLen - hLen - 1;
@@ -231,7 +248,7 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
         || !EVP_DigestUpdate(ctx, zeroes, sizeof(zeroes))
         || !EVP_DigestUpdate(ctx, mHash, hLen))
         goto err;
-    if (sLen && !EVP_DigestUpdate(ctx, salt, sLen))
+    if (*sLen && !EVP_DigestUpdate(ctx, salt, *sLen))
         goto err;
     if (!EVP_DigestFinal_ex(ctx, H, NULL))
         goto err;
@@ -246,10 +263,10 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
      * Initial PS XORs with all zeroes which is a NOP so just update pointer.
      * Note from a test above this value is guaranteed to be non-negative.
      */
-    p += emLen - sLen - hLen - 2;
+    p += emLen - *sLen - hLen - 2;
     *p++ ^= 0x1;
-    if (sLen > 0) {
-        for (i = 0; i < sLen; i++)
+    if (*sLen > 0) {
+        for (i = 0; i < *sLen; i++)
             *p++ ^= salt[i];
     }
     if (MSBits)
@@ -263,7 +280,7 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
 
  err:
     EVP_MD_CTX_free(ctx);
-    OPENSSL_clear_free(salt, (size_t)sLen); /* salt != NULL implies sLen > 0 */
+    OPENSSL_clear_free(salt, (size_t)*sLen); /* salt != NULL implies sLen > 0 */
 
     return ret;
 

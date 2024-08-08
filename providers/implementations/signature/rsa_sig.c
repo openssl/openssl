@@ -564,10 +564,9 @@ static void free_tbuf(PROV_RSA_CTX *ctx)
 }
 
 #ifdef FIPS_MODULE
-static int rsa_pss_saltlen_check_passed(PROV_RSA_CTX *ctx, const char *algoname)
+static int rsa_pss_saltlen_check_passed(PROV_RSA_CTX *ctx, const char *algoname, int saltlen)
 {
     int mdsize = rsa_get_md_size(ctx);
-    int saltlen = rsa_pss_compute_saltlen(ctx);
     /*
      * Perform the check if the salt length is compliant to FIPS 186-5.
      *
@@ -679,50 +678,55 @@ static int rsa_sign(void *vprsactx, unsigned char *sig, size_t *siglen,
             break;
 
         case RSA_PKCS1_PSS_PADDING:
-            /* Check PSS restrictions */
-#ifdef FIPS_MODULE
-            if (!rsa_pss_saltlen_check_passed(prsactx, "RSA Sign"))
-                return 0;
-#endif
-            if (rsa_pss_restricted(prsactx)) {
-                switch (prsactx->saltlen) {
-                case RSA_PSS_SALTLEN_DIGEST:
-                    if (prsactx->min_saltlen > EVP_MD_get_size(prsactx->md)) {
-                        ERR_raise_data(ERR_LIB_PROV,
-                                       PROV_R_PSS_SALTLEN_TOO_SMALL,
-                                       "minimum salt length set to %d, "
-                                       "but the digest only gives %d",
-                                       prsactx->min_saltlen,
-                                       EVP_MD_get_size(prsactx->md));
-                        return 0;
+            {
+                int saltlen;
+
+                /* Check PSS restrictions */
+                if (rsa_pss_restricted(prsactx)) {
+                    switch (prsactx->saltlen) {
+                    case RSA_PSS_SALTLEN_DIGEST:
+                        if (prsactx->min_saltlen > EVP_MD_get_size(prsactx->md)) {
+                            ERR_raise_data(ERR_LIB_PROV,
+                                           PROV_R_PSS_SALTLEN_TOO_SMALL,
+                                           "minimum salt length set to %d, "
+                                           "but the digest only gives %d",
+                                           prsactx->min_saltlen,
+                                           EVP_MD_get_size(prsactx->md));
+                            return 0;
+                        }
+                        /* FALLTHRU */
+                    default:
+                        if (prsactx->saltlen >= 0
+                            && prsactx->saltlen < prsactx->min_saltlen) {
+                            ERR_raise_data(ERR_LIB_PROV,
+                                           PROV_R_PSS_SALTLEN_TOO_SMALL,
+                                           "minimum salt length set to %d, but the"
+                                           "actual salt length is only set to %d",
+                                           prsactx->min_saltlen,
+                                           prsactx->saltlen);
+                            return 0;
+                        }
+                        break;
                     }
-                    /* FALLTHRU */
-                default:
-                    if (prsactx->saltlen >= 0
-                        && prsactx->saltlen < prsactx->min_saltlen) {
-                        ERR_raise_data(ERR_LIB_PROV,
-                                       PROV_R_PSS_SALTLEN_TOO_SMALL,
-                                       "minimum salt length set to %d, but the"
-                                       "actual salt length is only set to %d",
-                                       prsactx->min_saltlen,
-                                       prsactx->saltlen);
-                        return 0;
-                    }
-                    break;
                 }
+                if (!setup_tbuf(prsactx))
+                    return 0;
+                saltlen = prsactx->saltlen;
+                if (!ossl_rsa_padding_add_PKCS1_PSS_mgf1(prsactx->rsa,
+                                                         prsactx->tbuf, tbs,
+                                                         prsactx->md, prsactx->mgf1_md,
+                                                         &saltlen)) {
+                    ERR_raise(ERR_LIB_PROV, ERR_R_RSA_LIB);
+                    return 0;
+                }
+#ifdef FIPS_MODULE
+                if (!rsa_pss_saltlen_check_passed(prsactx, "RSA Sign", saltlen))
+                    return 0;
+#endif
+                ret = RSA_private_encrypt(RSA_size(prsactx->rsa), prsactx->tbuf,
+                                          sig, prsactx->rsa, RSA_NO_PADDING);
+                clean_tbuf(prsactx);
             }
-            if (!setup_tbuf(prsactx))
-                return 0;
-            if (!RSA_padding_add_PKCS1_PSS_mgf1(prsactx->rsa,
-                                                prsactx->tbuf, tbs,
-                                                prsactx->md, prsactx->mgf1_md,
-                                                prsactx->saltlen)) {
-                ERR_raise(ERR_LIB_PROV, ERR_R_RSA_LIB);
-                return 0;
-            }
-            ret = RSA_private_encrypt(RSA_size(prsactx->rsa), prsactx->tbuf,
-                                      sig, prsactx->rsa, RSA_NO_PADDING);
-            clean_tbuf(prsactx);
             break;
 
         default:
@@ -876,12 +880,8 @@ static int rsa_verify(void *vprsactx, const unsigned char *sig, size_t siglen,
         case RSA_PKCS1_PSS_PADDING:
             {
                 int ret;
+                int saltlen;
                 size_t mdsize;
-
-#ifdef FIPS_MODULE
-                if (!rsa_pss_saltlen_check_passed(prsactx, "RSA Verify"))
-                    return 0;
-#endif
 
                 /*
                  * We need to check this for the RSA_verify_PKCS1_PSS_mgf1()
@@ -903,14 +903,19 @@ static int rsa_verify(void *vprsactx, const unsigned char *sig, size_t siglen,
                     ERR_raise(ERR_LIB_PROV, ERR_R_RSA_LIB);
                     return 0;
                 }
-                ret = RSA_verify_PKCS1_PSS_mgf1(prsactx->rsa, tbs,
-                                                prsactx->md, prsactx->mgf1_md,
-                                                prsactx->tbuf,
-                                                prsactx->saltlen);
+                saltlen = prsactx->saltlen;
+                ret = ossl_rsa_verify_PKCS1_PSS_mgf1(prsactx->rsa, tbs,
+                                                     prsactx->md, prsactx->mgf1_md,
+                                                     prsactx->tbuf,
+                                                     &saltlen);
                 if (ret <= 0) {
                     ERR_raise(ERR_LIB_PROV, ERR_R_RSA_LIB);
                     return 0;
                 }
+#ifdef FIPS_MODULE
+                if (!rsa_pss_saltlen_check_passed(prsactx, "RSA Verify", saltlen))
+                    return 0;
+#endif
                 return 1;
             }
         default:
@@ -1526,6 +1531,7 @@ static const OSSL_PARAM settable_ctx_params[] = {
     OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_PSS_SALTLEN, NULL, 0),
     OSSL_FIPS_IND_SETTABLE_CTX_PARAM(OSSL_SIGNATURE_PARAM_FIPS_KEY_CHECK)
     OSSL_FIPS_IND_SETTABLE_CTX_PARAM(OSSL_SIGNATURE_PARAM_FIPS_DIGEST_CHECK)
+    OSSL_FIPS_IND_SETTABLE_CTX_PARAM(OSSL_SIGNATURE_PARAM_FIPS_RSA_PSS_SALTLEN_CHECK)
     OSSL_FIPS_IND_SETTABLE_CTX_PARAM(OSSL_SIGNATURE_PARAM_FIPS_SIGN_X931_PAD_CHECK)
     OSSL_PARAM_END
 };
@@ -1537,6 +1543,7 @@ static const OSSL_PARAM settable_ctx_params_no_digest[] = {
     OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_PSS_SALTLEN, NULL, 0),
     OSSL_FIPS_IND_SETTABLE_CTX_PARAM(OSSL_SIGNATURE_PARAM_FIPS_KEY_CHECK)
     OSSL_FIPS_IND_SETTABLE_CTX_PARAM(OSSL_SIGNATURE_PARAM_FIPS_DIGEST_CHECK)
+    OSSL_FIPS_IND_SETTABLE_CTX_PARAM(OSSL_SIGNATURE_PARAM_FIPS_RSA_PSS_SALTLEN_CHECK)
     OSSL_FIPS_IND_SETTABLE_CTX_PARAM(OSSL_SIGNATURE_PARAM_FIPS_SIGN_X931_PAD_CHECK)
     OSSL_PARAM_END
 };

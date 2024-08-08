@@ -2599,15 +2599,20 @@ static int verify_test_init(EVP_TEST *t, const char *name)
 
 static int verify_test_run(EVP_TEST *t)
 {
+    int ret = 1;
     PKEY_DATA *kdata = t->data;
 
     if (!pkey_test_run_init(t))
         goto err;
     if (EVP_PKEY_verify(kdata->ctx, kdata->output, kdata->output_len,
-                        kdata->input, kdata->input_len) <= 0)
+                        kdata->input, kdata->input_len) <= 0) {
         t->err = "VERIFY_ERROR";
+        goto err;
+    }
+    if (!pkey_check_fips_approved(kdata->ctx, t))
+        ret = 0;
 err:
-    return 1;
+    return ret;
 }
 
 static const EVP_TEST_METHOD pverify_test_method = {
