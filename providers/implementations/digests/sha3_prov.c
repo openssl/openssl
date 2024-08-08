@@ -622,8 +622,8 @@ static int shake_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     SHAKE_newctx(shake, SHAKE_##bitlen, shake_##bitlen, bitlen,                \
                  0 /* no default md length */, '\x1f')                         \
     PROV_FUNC_SHAKE_DIGEST(shake_##bitlen, bitlen,                             \
-                          SHA3_BLOCKSIZE(bitlen), 0,                           \
-                          SHAKE_FLAGS)
+                           SHA3_BLOCKSIZE(bitlen), 0,                          \
+                           SHAKE_FLAGS)
 
 #define IMPLEMENT_KMAC_functions(bitlen)                                       \
     KMAC_newctx(keccak_kmac_##bitlen, bitlen, '\x04')                          \

@@ -506,7 +506,7 @@ static int xof_fail_test(void)
     EVP_MD *md = NULL;
 
     ret = TEST_ptr(md = EVP_MD_fetch(NULL, "SHA256", NULL))
-          && TEST_false(EVP_MD_xof(md));
+            && TEST_false(EVP_MD_xof(md));
     EVP_MD_free(md);
     return ret;
 }
