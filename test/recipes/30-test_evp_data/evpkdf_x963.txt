@@ -135,6 +135,7 @@ Ctrl.digest = digest:SHAKE-256
 Ctrl.hexsecret = hexsecret:fd17198b89ab39c4ab5d7cca363b82f9fd7e23c3984dc8a2
 Ctrl.hexinfo = hexinfo:856a53f3e36a26bbc5792879f307cce2
 Result = KDF_CTRL_ERROR
+Reason = xof digests not allowed
 
 Title = FIPS indicator tests
 
@@ -145,6 +146,7 @@ Ctrl.digest = digest:SHA1
 Ctrl.hexsecret = hexsecret:fd17198b89ab39c4ab5d7cca363b82f9fd7e23c3984dc8a2
 Ctrl.hexinfo = hexinfo:856a53f3e36a26bbc5792879f307cce2
 Result = KDF_CTRL_ERROR
+Reason = digest not allowed
 
 # Test that the operation with unapproved digest function is is reported as
 # unapproved
@@ -164,6 +166,7 @@ Ctrl.digest = digest:SHA224
 Ctrl.hexsecret = hexsecret:0102030405060908090a0b
 Ctrl.hexinfo = hexinfo:0102030405060708090a0b0c0d0e0f10
 Result = KDF_CTRL_ERROR
+Reason = invalid key length
 
 # Test that the key whose length is shorter than 112 bits is reported as
 # unapproved
