@@ -224,6 +224,7 @@ Ctrl.salt = salt:salt
 Ctrl.iter = iter:1
 Ctrl.digest = digest:shake-128
 Result = KDF_CTRL_ERROR
+Reason = xof digests not allowed
 
 Title = FIPS indicator tests
 
@@ -235,6 +236,7 @@ Ctrl.salt = salt:salt
 Ctrl.iter = iter:4096
 Ctrl.digest = digest:sha1
 Result = KDF_CTRL_ERROR
+Reason = invalid salt length
 
 # Test that the operation with unapproved parameters is reported as unapproved
 FIPSversion = >=3.4.0
