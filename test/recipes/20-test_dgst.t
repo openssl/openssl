@@ -17,7 +17,7 @@ use OpenSSL::Test::Utils;
 
 setup("test_dgst");
 
-plan tests => 13;
+plan tests => 14;
 
 sub tsignverify {
     my $testtext = shift;
@@ -231,7 +231,7 @@ subtest "SHAKE digest generation with no xoflen set `dgst` CLI" => sub {
 };
 
 SKIP: {
-    skip "ECDSA is not supported by this OpenSSL build", 1
+    skip "ECDSA is not supported by this OpenSSL build", 2
         if disabled("ec");
 
     subtest "signing with xoflen is not supported `dgst` CLI" => sub {
@@ -243,5 +243,17 @@ SKIP: {
                      '-out', 'test.sig',
                      srctop_file('test', 'data.bin')])),
                      "Generating signature with xoflen should fail");
+    };
+
+    subtest "signing using the nonce-type sigopt" => sub {
+        plan tests => 1;
+        my $data_to_sign = srctop_file('test', 'data.bin');
+
+        ok(run(app(['openssl', 'dgst', '-sha256',
+                     '-sign', srctop_file("test","testec-p256.pem"),
+                     '-out', 'test.sig',
+                     '-sigopt', 'nonce-type:1',
+                     srctop_file('test', 'data.bin')])),
+                     "Sign using the nonce-type sigopt");
     }
 }
