@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -euxo pipefail
+
 CURLRC=~/testcase_curlrc
 
 # Set up the routing needed for the simulation
@@ -82,6 +84,9 @@ if [ "$ROLE" == "client" ]; then
     esac
 elif [ "$ROLE" == "server" ]; then
     echo "UNSUPPORTED"
+    exit 127
+else
+    echo "Unknown ROLE $ROLE"
     exit 127
 fi
 

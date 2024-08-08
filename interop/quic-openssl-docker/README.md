@@ -7,7 +7,7 @@ Overview
 --------
 
 This Dockerfile builds a container for use with the
-[QUIC working group interop testing facility](https://interop.seemann.io/?run=2024-08-05T08:30)
+[QUIC working group interop testing facility](https://interop.seemann.io/)
 It can also be used locally to test QUIC interoperability via the
 [QUIC interop runner](https://github.com/quic-interop/quic-interop-runner)
 Please see instructions there for running local interop testing
