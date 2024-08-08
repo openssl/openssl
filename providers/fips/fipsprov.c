@@ -111,6 +111,7 @@ typedef struct fips_global_st {
     FIPS_OPTION fips_sskdf_key_check;
     FIPS_OPTION fips_x963kdf_key_check;
     FIPS_OPTION fips_pbkdf2_lower_bound_check;
+    FIPS_OPTION fips_ecdh_cofactor_check;
 } FIPS_GLOBAL;
 
 static void init_fips_option(FIPS_OPTION *opt, int enabled)
@@ -150,6 +151,7 @@ void *ossl_fips_prov_ossl_ctx_new(OSSL_LIB_CTX *libctx)
     init_fips_option(&fgbl->fips_sskdf_key_check, 0);
     init_fips_option(&fgbl->fips_x963kdf_key_check, 0);
     init_fips_option(&fgbl->fips_pbkdf2_lower_bound_check, 1);
+    init_fips_option(&fgbl->fips_ecdh_cofactor_check, 0);
     return fgbl;
 }
 
@@ -200,6 +202,8 @@ static const OSSL_PARAM fips_param_types[] = {
                     0),
     OSSL_PARAM_DEFN(OSSL_PROV_PARAM_PBKDF2_LOWER_BOUND_CHECK,
                     OSSL_PARAM_INTEGER, NULL, 0),
+    OSSL_PARAM_DEFN(OSSL_PROV_PARAM_ECDH_COFACTOR_CHECK, OSSL_PARAM_INTEGER,
+                    NULL, 0),
     OSSL_PARAM_END
 };
 
@@ -213,7 +217,7 @@ static int fips_get_params_from_core(FIPS_GLOBAL *fgbl)
     * OSSL_PROV_FIPS_PARAM_SECURITY_CHECKS and
     * OSSL_PROV_FIPS_PARAM_TLS1_PRF_EMS_CHECK are not self test parameters.
     */
-    OSSL_PARAM core_params[32], *p = core_params;
+    OSSL_PARAM core_params[33], *p = core_params;
 
     *p++ = OSSL_PARAM_construct_utf8_ptr(
             OSSL_PROV_PARAM_CORE_MODULE_FILENAME,
@@ -296,6 +300,8 @@ static int fips_get_params_from_core(FIPS_GLOBAL *fgbl)
                         fips_x963kdf_key_check);
     FIPS_FEATURE_OPTION(fgbl, OSSL_PROV_FIPS_PARAM_PBKDF2_LOWER_BOUND_CHECK,
                         fips_pbkdf2_lower_bound_check);
+    FIPS_FEATURE_OPTION(fgbl, OSSL_PROV_FIPS_PARAM_ECDH_COFACTOR_CHECK,
+                        fips_ecdh_cofactor_check);
 #undef FIPS_FEATURE_OPTION
 
     *p = OSSL_PARAM_construct_end();
@@ -387,6 +393,8 @@ static int fips_get_params(void *provctx, OSSL_PARAM params[])
                      fips_x963kdf_key_check);
     FIPS_FEATURE_GET(fgbl, OSSL_PROV_PARAM_PBKDF2_LOWER_BOUND_CHECK,
                      fips_pbkdf2_lower_bound_check);
+    FIPS_FEATURE_GET(fgbl, OSSL_PROV_PARAM_ECDH_COFACTOR_CHECK,
+                     fips_ecdh_cofactor_check);
 #undef FIPS_FEATURE_GET
     return 1;
 }
@@ -943,6 +951,7 @@ int OSSL_provider_init_int(const OSSL_CORE_HANDLE *handle,
     FIPS_SET_OPTION(fgbl, fips_sskdf_key_check);
     FIPS_SET_OPTION(fgbl, fips_x963kdf_key_check);
     FIPS_SET_OPTION(fgbl, fips_pbkdf2_lower_bound_check);
+    FIPS_SET_OPTION(fgbl, fips_ecdh_cofactor_check);
 #undef FIPS_SET_OPTION
 
     ossl_prov_cache_exported_algorithms(fips_ciphers, exported_fips_ciphers);
@@ -1168,6 +1177,7 @@ FIPS_FEATURE_CHECK(FIPS_sshkdf_key_check, fips_sshkdf_key_check)
 FIPS_FEATURE_CHECK(FIPS_sskdf_key_check, fips_sskdf_key_check)
 FIPS_FEATURE_CHECK(FIPS_x963kdf_key_check, fips_x963kdf_key_check)
 FIPS_FEATURE_CHECK(FIPS_pbkdf2_lower_bound_check, fips_pbkdf2_lower_bound_check)
+FIPS_FEATURE_CHECK(FIPS_ecdh_cofactor_check, fips_ecdh_cofactor_check)
 
 #undef FIPS_FEATURE_CHECK
 
