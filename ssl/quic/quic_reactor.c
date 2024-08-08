@@ -259,6 +259,12 @@ static int poll_two_fds(int rfd, int rfd_want_read,
         /* Do not block forever; should not happen. */
         return 0;
 
+    /*
+     * The mutex dance (unlock/re-locak after poll/seclect) is
+     * potentially problematic. This may create a situation when
+     * two threads arrive to select/poll with the same file
+     * descriptors. We just need to be aware of this.
+     */
 # if defined(OPENSSL_THREADS)
     if (mutex != NULL)
         ossl_crypto_mutex_unlock(mutex);
