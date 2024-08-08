@@ -130,7 +130,7 @@ const OPTIONS fipsinstall_options[] = {
     {"no_pbkdf2_lower_bound_check", OPT_NO_PBKDF2_LOWER_BOUND_CHECK, '-',
      "Disable lower bound check for PBKDF2"},
     {"ecdh_cofactor_check", OPT_ECDH_COFACTOR_CHECK, '-',
-      "Enable Cofactor check for ECDH"},
+     "Enable Cofactor check for ECDH"},
     OPT_SECTION("Input"),
     {"in", OPT_IN, '<', "Input config file, used when verifying"},
 
