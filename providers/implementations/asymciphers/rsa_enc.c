@@ -161,8 +161,7 @@ static int rsa_encrypt(void *vprsactx, unsigned char *out, size_t *outlen,
 #ifdef FIPS_MODULE
     if ((prsactx->pad_mode == RSA_PKCS1_PADDING
          || prsactx->pad_mode == RSA_PKCS1_WITH_TLS_PADDING)
-        && !ossl_FIPS_IND_on_unapproved(OSSL_FIPS_IND_GET(prsactx),
-                                        OSSL_FIPS_IND_SETTABLE1,
+        && !OSSL_FIPS_IND_ON_UNAPPROVED(prsactx, OSSL_FIPS_IND_SETTABLE1,
                                         prsactx->libctx, "RSA Encrypt",
                                         "PKCS#1 v1.5 padding",
                                         FIPS_rsa_pkcs15_padding_disabled)) {
