@@ -1,0 +1,48 @@
+Field Type: characteristic-two-field
+Basis Type: ppBasis
+Polynomial:
+    08:00:00:00:00:00:00:00:00:00:00:00:00:00:00:
+    00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:
+    00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:
+    00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:
+    00:00:00:00:00:00:00:00:00:00:04:25
+A:    1 (0x1)
+B:   
+    02:f4:0e:7e:22:21:f2:95:de:29:71:17:b7:f3:d6:
+    2f:5c:6a:97:ff:cb:8c:ef:f1:cd:6b:a8:ce:4a:9a:
+    18:ad:84:ff:ab:bd:8e:fa:59:33:2b:e7:ad:67:56:
+    a6:6e:29:4a:fd:18:5a:78:ff:12:aa:52:0e:4d:e7:
+    39:ba:ca:0c:7f:fe:ff:7f:29:55:72:7a
+Generator (uncompressed):
+    04:03:03:00:1d:34:b8:56:29:6c:16:c0:d4:0d:3c:
+    d7:75:0a:93:d1:d2:95:5f:a8:0a:a5:f4:0f:c8:db:
+    7b:2a:bd:bd:e5:39:50:f4:c0:d2:93:cd:d7:11:a3:
+    5b:67:fb:14:99:ae:60:03:86:14:f1:39:4a:bf:a3:
+    b4:c8:50:d9:27:e1:e7:76:9c:8e:ec:2d:19:03:7b:
+    f2:73:42:da:63:9b:6d:cc:ff:fe:b7:3d:69:d7:8c:
+    6c:27:a6:00:9c:bb:ca:19:80:f8:53:39:21:e8:a6:
+    84:42:3e:43:ba:b0:8a:57:62:91:af:8f:46:1b:b2:
+    a8:b3:53:1d:2f:04:85:c1:9b:16:e2:f1:51:6e:23:
+    dd:3c:1a:48:27:af:1b:8a:c1:5b
+Order: 
+    03:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:
+    ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:
+    ff:ff:ff:ff:ff:ff:e6:61:ce:18:ff:55:98:73:08:
+    05:9b:18:68:23:85:1e:c7:dd:9c:a1:16:1d:e9:3d:
+    51:74:d6:6e:83:82:e9:bb:2f:e8:4e:47
+Cofactor:  2 (0x2)
+Seed:
+    2a:a0:58:f7:3a:0e:33:ab:48:6b:0f:61:04:10:c5:
+    3a:7f:13:23:10
+-----BEGIN EC PARAMETERS-----
+MIIBuQIBATAlBgcqhkjOPQECMBoCAgI7BgkqhkjOPQECAwMwCQIBAgIBBQIBCjCB
+qwRIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBEgC9A5+IiHyld4pcRe389YvXGqX
+/8uM7/HNa6jOSpoYrYT/q72O+lkzK+etZ1ambilK/RhaeP8SqlIOTec5usoMf/7/
+fylVcnoDFQAqoFj3Og4zq0hrD2EEEMU6fxMjEASBkQQDAwAdNLhWKWwWwNQNPNd1
+CpPR0pVfqAql9A/I23sqvb3lOVD0wNKTzdcRo1tn+xSZrmADhhTxOUq/o7TIUNkn
+4ed2nI7sLRkDe/JzQtpjm23M//63PWnXjGwnpgCcu8oZgPhTOSHopoRCPkO6sIpX
+YpGvj0YbsqizUx0vBIXBmxbi8VFuI908GkgnrxuKwVsCSAP/////////////////
+/////////////////////////////+Zhzhj/VZhzCAWbGGgjhR7H3ZyhFh3pPVF0
+1m6Dgum7L+hORwIBAg==
+-----END EC PARAMETERS-----

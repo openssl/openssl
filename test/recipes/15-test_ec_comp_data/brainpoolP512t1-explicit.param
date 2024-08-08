@@ -1,0 +1,47 @@
+Field Type: prime-field
+Prime:
+    00:aa:dd:9d:b8:db:e9:c4:8b:3f:d4:e6:ae:33:c9:
+    fc:07:cb:30:8d:b3:b3:c9:d2:0e:d6:63:9c:ca:70:
+    33:08:71:7d:4d:9b:00:9b:c6:68:42:ae:cd:a1:2a:
+    e6:a3:80:e6:28:81:ff:2f:2d:82:c6:85:28:aa:60:
+    56:58:3a:48:f3
+A:   
+    00:aa:dd:9d:b8:db:e9:c4:8b:3f:d4:e6:ae:33:c9:
+    fc:07:cb:30:8d:b3:b3:c9:d2:0e:d6:63:9c:ca:70:
+    33:08:71:7d:4d:9b:00:9b:c6:68:42:ae:cd:a1:2a:
+    e6:a3:80:e6:28:81:ff:2f:2d:82:c6:85:28:aa:60:
+    56:58:3a:48:f0
+B:   
+    7c:bb:bc:f9:44:1c:fa:b7:6e:18:90:e4:68:84:ea:
+    e3:21:f7:0c:0b:cb:49:81:52:78:97:50:4b:ec:3e:
+    36:a6:2b:cd:fa:23:04:97:65:40:f6:45:00:85:f2:
+    da:e1:45:c2:25:53:b4:65:76:36:89:18:0e:a2:57:
+    18:67:42:3e
+Generator (uncompressed):
+    04:64:0e:ce:5c:12:78:87:17:b9:c1:ba:06:cb:c2:
+    a6:fe:ba:85:84:24:58:c5:6d:de:9d:b1:75:8d:39:
+    c0:31:3d:82:ba:51:73:5c:db:3e:a4:99:aa:77:a7:
+    d6:94:3a:64:f7:a3:f2:5f:e2:6f:06:b5:1b:aa:26:
+    96:fa:90:35:da:5b:53:4b:d5:95:f5:af:0f:a2:c8:
+    92:37:6c:84:ac:e1:bb:4e:30:19:b7:16:34:c0:11:
+    31:15:9c:ae:03:ce:e9:d9:93:21:84:be:ef:21:6b:
+    d7:1d:f2:da:df:86:a6:27:30:6e:cf:f9:6d:bb:8b:
+    ac:e1:98:b6:1e:00:f8:b3:32
+Order: 
+    00:aa:dd:9d:b8:db:e9:c4:8b:3f:d4:e6:ae:33:c9:
+    fc:07:cb:30:8d:b3:b3:c9:d2:0e:d6:63:9c:ca:70:
+    33:08:70:55:3e:5c:41:4c:a9:26:19:41:86:61:19:
+    7f:ac:10:47:1d:b1:d3:81:08:5d:da:dd:b5:87:96:
+    82:9c:a9:00:69
+Cofactor:  1 (0x1)
+-----BEGIN EC PARAMETERS-----
+MIIBogIBATBMBgcqhkjOPQEBAkEAqt2duNvpxIs/1OauM8n8B8swjbOzydIO1mOc
+ynAzCHF9TZsAm8ZoQq7NoSrmo4DmKIH/Ly2CxoUoqmBWWDpI8zCBhARAqt2duNvp
+xIs/1OauM8n8B8swjbOzydIO1mOcynAzCHF9TZsAm8ZoQq7NoSrmo4DmKIH/Ly2C
+xoUoqmBWWDpI8ARAfLu8+UQc+rduGJDkaITq4yH3DAvLSYFSeJdQS+w+NqYrzfoj
+BJdlQPZFAIXy2uFFwiVTtGV2NokYDqJXGGdCPgSBgQRkDs5cEniHF7nBugbLwqb+
+uoWEJFjFbd6dsXWNOcAxPYK6UXNc2z6kmap3p9aUOmT3o/Jf4m8GtRuqJpb6kDXa
+W1NL1ZX1rw+iyJI3bISs4btOMBm3FjTAETEVnK4DzunZkyGEvu8ha9cd8trfhqYn
+MG7P+W27i6zhmLYeAPizMgJBAKrdnbjb6cSLP9TmrjPJ/AfLMI2zs8nSDtZjnMpw
+MwhwVT5cQUypJhlBhmEZf6wQRx2x04EIXdrdtYeWgpypAGkCAQE=
+-----END EC PARAMETERS-----

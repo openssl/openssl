@@ -1,0 +1,51 @@
+Field Type: prime-field
+Prime:
+    01:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:
+    ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:
+    ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:
+    ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:
+    ff:ff:ff:ff:ff:ff
+A:   
+    01:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:
+    ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:
+    ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:
+    ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:
+    ff:ff:ff:ff:ff:fc
+B:   
+    51:95:3e:b9:61:8e:1c:9a:1f:92:9a:21:a0:b6:85:
+    40:ee:a2:da:72:5b:99:b3:15:f3:b8:b4:89:91:8e:
+    f1:09:e1:56:19:39:51:ec:7e:93:7b:16:52:c0:bd:
+    3b:b1:bf:07:35:73:df:88:3d:2c:34:f1:ef:45:1f:
+    d4:6b:50:3f:00
+Generator (uncompressed):
+    04:00:c6:85:8e:06:b7:04:04:e9:cd:9e:3e:cb:66:
+    23:95:b4:42:9c:64:81:39:05:3f:b5:21:f8:28:af:
+    60:6b:4d:3d:ba:a1:4b:5e:77:ef:e7:59:28:fe:1d:
+    c1:27:a2:ff:a8:de:33:48:b3:c1:85:6a:42:9b:f9:
+    7e:7e:31:c2:e5:bd:66:01:18:39:29:6a:78:9a:3b:
+    c0:04:5c:8a:5f:b4:2c:7d:1b:d9:98:f5:44:49:57:
+    9b:44:68:17:af:bd:17:27:3e:66:2c:97:ee:72:99:
+    5e:f4:26:40:c5:50:b9:01:3f:ad:07:61:35:3c:70:
+    86:a2:72:c2:40:88:be:94:76:9f:d1:66:50
+Order: 
+    01:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:
+    ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:
+    ff:ff:ff:fa:51:86:87:83:bf:2f:96:6b:7f:cc:01:
+    48:f7:09:a5:d0:3b:b5:c9:b8:89:9c:47:ae:bb:6f:
+    b7:1e:91:38:64:09
+Cofactor:  1 (0x1)
+Seed:
+    d0:9e:88:00:29:1c:b8:53:96:cc:67:17:39:32:84:
+    aa:a0:da:64:ba
+-----BEGIN EC PARAMETERS-----
+MIIBwwIBATBNBgcqhkjOPQEBAkIB////////////////////////////////////
+//////////////////////////////////////////////////8wgZ8EQgH/////
+////////////////////////////////////////////////////////////////
+/////////////////ARCAFGVPrlhjhyaH5KaIaC2hUDuotpyW5mzFfO4tImRjvEJ
+4VYZOVHsfpN7FlLAvTuxvwc1c9+IPSw08e9FH9RrUD8AAxUA0J6IACkcuFOWzGcX
+OTKEqqDaZLoEgYUEAMaFjga3BATpzZ4+y2YjlbRCnGSBOQU/tSH4KK9ga009uqFL
+Xnfv51ko/h3BJ6L/qN4zSLPBhWpCm/l+fjHC5b1mARg5KWp4mjvABFyKX7QsfRvZ
+mPVESVebRGgXr70XJz5mLJfucple9CZAxVC5AT+tB2E1PHCGonLCQIi+lHaf0WZQ
+AkIB///////////////////////////////////////////6UYaHg78vlmt/zAFI
+9wml0Du1ybiJnEeuu2+3HpE4ZAkCAQE=
+-----END EC PARAMETERS-----
