@@ -93,7 +93,6 @@ static int sig_gen(EVP_PKEY *pkey, OSSL_PARAM *params, const char *digest_name,
                    unsigned char **sig_out, size_t *sig_out_len)
 {
     int ret = 0;
-    EVP_PKEY_CTX *pkey_ctx = NULL;
     EVP_MD_CTX *md_ctx = NULL;
     unsigned char *sig = NULL;
     size_t sig_len;
@@ -102,9 +101,8 @@ static int sig_gen(EVP_PKEY *pkey, OSSL_PARAM *params, const char *digest_name,
     sig_len = sz;
     if (!TEST_ptr(sig = OPENSSL_malloc(sz))
         || !TEST_ptr(md_ctx = EVP_MD_CTX_new())
-        || !TEST_int_eq(EVP_DigestSignInit_ex(md_ctx, &pkey_ctx, digest_name,
-                                              libctx, NULL, pkey, NULL), 1)
-        || !TEST_true(EVP_PKEY_CTX_set_params(pkey_ctx, params))
+        || !TEST_int_eq(EVP_DigestSignInit_ex(md_ctx, NULL, digest_name, libctx,
+                                              NULL, pkey, params), 1)
         || !TEST_int_gt(EVP_DigestSign(md_ctx, sig, &sig_len, msg, msg_len), 0))
         goto err;
     *sig_out = sig;
