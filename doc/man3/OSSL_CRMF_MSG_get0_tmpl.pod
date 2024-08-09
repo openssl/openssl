@@ -10,6 +10,10 @@ OSSL_CRMF_CERTTEMPLATE_get0_serialNumber,
 OSSL_CRMF_CERTTEMPLATE_get0_extensions,
 OSSL_CRMF_CERTID_get0_serialNumber,
 OSSL_CRMF_CERTID_get0_issuer,
+OSSL_CRMF_ENCRYPTEDKEY_get1_encCert,
+OSSL_CRMF_ENCRYPTEDKEY_get1_pkey,
+OSSL_CRMF_ENCRYPTEDKEY_init_envdata,
+OSSL_CRMF_ENCRYPTEDVALUE_decrypt,
 OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert,
 OSSL_CRMF_MSG_get_certReqId
 - functions reading from CRMF CertReqMsg structures
@@ -34,6 +38,23 @@ OSSL_CRMF_MSG_get_certReqId
  *OSSL_CRMF_CERTID_get0_serialNumber(const OSSL_CRMF_CERTID *cid);
  const X509_NAME *OSSL_CRMF_CERTID_get0_issuer(const OSSL_CRMF_CERTID *cid);
 
+ X509
+ *OSSL_CRMF_ENCRYPTEDKEY_get1_encCert(const OSSL_CRMF_ENCRYPTEDKEY *ecert,
+                                      OSSL_LIB_CTX *libctx, const char *propq,
+                                      EVP_PKEY *pkey, unsigned int flags);
+ EVP_PKEY
+ *OSSL_CRMF_ENCRYPTEDKEY_get1_pkey(OSSL_CRMF_ENCRYPTEDKEY *encryptedKey,
+                                   X509_STORE *ts, STACK_OF(X509) *extra,
+                                   EVP_PKEY *pkey, X509 *cert,
+                                   ASN1_OCTET_STRING *secret,
+                                   OSSL_LIB_CTX *libctx, const char *propq);
+ OSSL_CRMF_ENCRYPTEDKEY
+ *OSSL_CRMF_ENCRYPTEDKEY_init_envdata(CMS_EnvelopedData *envdata);
+
+ unsigned char
+ *OSSL_CRMF_ENCRYPTEDVALUE_decrypt(const OSSL_CRMF_ENCRYPTEDVALUE *enc,
+                                   EVP_PKEY *pkey, int *outlen,
+                                   OSSL_LIB_CTX *libctx, const char *propq);
  X509
  *OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(const OSSL_CRMF_ENCRYPTEDVALUE *ecert,
                                         OSSL_LIB_CTX *libctx, const char *propq,
@@ -66,6 +87,27 @@ of the given CertId I<cid>.
 OSSL_CRMF_CERTID_get0_issuer retrieves the issuer name
 of the given CertId I<cid>, which must be of ASN.1 type GEN_DIRNAME.
 
+OSSL_CRMF_ENCRYPTEDKEY_get1_encCert() decrypts the certificate in the given
+encryptedKey I<ecert>, using the private key I<pkey>, library context
+I<libctx> and property query string I<propq> (see L<OSSL_LIB_CTX(3)>).
+This is needed for the indirect POPO method as in RFC 4210 section 5.2.8.2.
+The function returns the decrypted certificate as a copy, leaving its ownership
+with the caller, who is responsible for freeing it.
+
+OSSL_CRMF_ENCRYPTEDKEY_get1_pkey() decrypts the private key in the given
+encryptedKey I<encryptedKey>, using the I<secret> or private key I<pkey>
+and certificate I<cert>.
+It verifies the signed data using the trusted certificates in I<ts> and untrusted
+certificates in I<extra>,if envelopedata is present.
+library context I<libctx> and property query string I<propq> (see L<OSSL_LIB_CTX(3)>).
+
+OSSL_CRMF_ENCRYPTEDKEY_init_envdata() returns I<OSSL_CRMF_ENCRYPTEDKEY>, intialized with 
+the enveloped data I<envdata>.
+
+OSSL_CRMF_ENCRYPTEDVALUE_decrypt() decrypts the encrypted value in the given
+encryptedValue I<enc>, using the private key I<pkey>, library context
+I<libctx> and property query string I<propq> (see L<OSSL_LIB_CTX(3)>).
+
 OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert() decrypts the certificate in the given
 encryptedValue I<ecert>, using the private key I<pkey>, library context
 I<libctx> and property query string I<propq> (see L<OSSL_LIB_CTX(3)>).
@@ -91,6 +133,10 @@ RFC 4211
 The OpenSSL CRMF support was added in OpenSSL 3.0.
 
 OSSL_CRMF_CERTTEMPLATE_get0_publicKey() was added in OpenSSL 3.2.
+
+OSSL_CRMF_ENCRYPTEDKEY_get1_encCert(), OSSL_CRMF_ENCRYPTEDKEY_get1_pkey(),
+OSSL_CRMF_ENCRYPTEDKEY_init_envdata() and OSSL_CRMF_ENCRYPTEDVALUE_decrypt()
+were added in OpenSSL 3.4.
 
 =head1 COPYRIGHT
 

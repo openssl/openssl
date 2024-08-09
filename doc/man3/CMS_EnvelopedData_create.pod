@@ -3,7 +3,8 @@
 =head1 NAME
 
 CMS_EnvelopedData_create_ex, CMS_EnvelopedData_create,
-CMS_AuthEnvelopedData_create, CMS_AuthEnvelopedData_create_ex
+CMS_AuthEnvelopedData_create, CMS_AuthEnvelopedData_create_ex,
+CMS_env_sign_data
 - Create CMS envelope
 
 =head1 SYNOPSIS
@@ -19,6 +20,9 @@ CMS_AuthEnvelopedData_create, CMS_AuthEnvelopedData_create_ex
  CMS_AuthEnvelopedData_create_ex(const EVP_CIPHER *cipher, OSSL_LIB_CTX *libctx,
                                  const char *propq);
  CMS_ContentInfo *CMS_AuthEnvelopedData_create(const EVP_CIPHER *cipher);
+ CMS_EnvelopedData *CMS_env_sign_data(BIO *data, X509 *signcert, EVP_PKEY *signkey,
+                                      STACK_OF(X509) *encryption_recip,
+                                      OSSL_LIB_CTX *libctx, const char *propq);
 
 =head1 DESCRIPTION
 
@@ -46,6 +50,12 @@ CMS_EnvelopedData_create() and CMS_AuthEnvelopedData_create() are similar to
 CMS_EnvelopedData_create_ex() and CMS_AuthEnvelopedData_create_ex()
 but use default values of NULL for
 the library context I<libctx> and the property query I<propq>.
+
+CMS_env_sign_data() creates a B<CMS_EnvelopedData> structure for recipients in
+I<encryption_recip>. I<data> is signed using I<signcert> and I<signkey> to
+create B<CMS_SignedData> and then encrypted using I<encryption_recip> to
+create B<CMS_EnvelopedData>. The library context I<libctx> and the property
+query I<propq> are used when retrieving algorithms from providers.
 
 =head1 NOTES
 
