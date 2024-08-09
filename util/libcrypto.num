@@ -5672,6 +5672,7 @@ PBMAC1PARAM_free                        ?	3_4_0	EXIST::FUNCTION:
 PBMAC1PARAM_new                         ?	3_4_0	EXIST::FUNCTION:
 PBMAC1PARAM_it                          ?	3_4_0	EXIST::FUNCTION:
 X509_ACERT_add_attr_nconf               ?	3_4_0	EXIST::FUNCTION:
+RAND_set1_random_provider               ?	3_4_0	EXIST::FUNCTION:
 OSSL_LIB_CTX_get_conf_diagnostics       ?	3_4_0	EXIST::FUNCTION:
 OSSL_LIB_CTX_set_conf_diagnostics       ?	3_4_0	EXIST::FUNCTION:
 OSSL_LIB_CTX_get_data                   ?	3_4_0	EXIST::FUNCTION:

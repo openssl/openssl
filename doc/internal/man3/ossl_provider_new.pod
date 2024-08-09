@@ -18,6 +18,7 @@ ossl_provider_libctx,
 ossl_provider_teardown, ossl_provider_gettable_params,
 ossl_provider_get_params,
 ossl_provider_query_operation, ossl_provider_unquery_operation,
+ossl_provider_random,
 ossl_provider_set_operation_bit, ossl_provider_test_operation_bit,
 ossl_provider_get_capabilities
 - internal provider routines
@@ -89,6 +90,8 @@ ossl_provider_get_capabilities
  void ossl_provider_unquery_operation(const OSSL_PROVIDER *prov,
                                       int operation_id,
                                       const OSSL_ALGORITHM *algs);
+ int ossl_provider_random(const OSSL_PROVIDER *prov, int which, void *buf, size_t n,
+                          unsigned int strength);
 
  int ossl_provider_set_operation_bit(OSSL_PROVIDER *provider, size_t bitnum);
  int ossl_provider_test_operation_bit(OSSL_PROVIDER *provider, size_t bitnum,
@@ -286,6 +289,26 @@ ossl_provider_unquery_operation() informs the provider that the result of
 ossl_provider_query_operation() is no longer going to be directly accessed and
 that all relevant information has been copied.
 
+ossl_provider_random() queries the provider, I<prov>, randomness source for I<n>
+bytes of entropy which are returned in the buffer I<buf>, the returned entropy will
+have a number of bits of I<strength>.
+The entropy is drawn from the source, I<which>, which can be:
+
+=over 4
+
+=item *
+
+OSSL_PROV_RANDOM_PUBLIC for a source equivalent to L<RAND_bytes(3)> or
+
+=item *
+
+.OSSL_PROV_RANDOM_PRIVATE for a source equivalent to L<RAND_priv_bytes(3)>.
+
+=back
+
+Specifying other values for I<which> will result in an unspecified source but will
+not result in an error.
+
 ossl_provider_set_operation_bit() registers a 1 for operation I<bitnum>
 in a bitstring that's internal to I<provider>.
 
@@ -373,6 +396,9 @@ return 1 on success, or 0 on error.
 ossl_provider_get_capabilities() returns 1 on success, or 0 on error.
 If this function isn't available in the provider or the provider does not
 support the requested capability then 0 is returned.
+
+ossl_provider_random() returns 1 on success or 0 or -1 on error as per
+L<RAND_bytes(3)>.
 
 =head1 SEE ALSO
 

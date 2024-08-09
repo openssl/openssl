@@ -248,13 +248,13 @@ OSSL_CORE_MAKE_FUNC(int, provider_free,
 
 /* Functions provided by the provider to the Core, reserved numbers 1024-1535 */
 # define OSSL_FUNC_PROVIDER_TEARDOWN           1024
-OSSL_CORE_MAKE_FUNC(void,provider_teardown,(void *provctx))
+OSSL_CORE_MAKE_FUNC(void, provider_teardown, (void *provctx))
 # define OSSL_FUNC_PROVIDER_GETTABLE_PARAMS    1025
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *,
                     provider_gettable_params,(void *provctx))
 # define OSSL_FUNC_PROVIDER_GET_PARAMS         1026
-OSSL_CORE_MAKE_FUNC(int,provider_get_params,(void *provctx,
-                                             OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(int, provider_get_params,(void *provctx,
+                                              OSSL_PARAM params[]))
 # define OSSL_FUNC_PROVIDER_QUERY_OPERATION    1027
 OSSL_CORE_MAKE_FUNC(const OSSL_ALGORITHM *,provider_query_operation,
                     (void *provctx, int operation_id, int *no_store))
@@ -269,6 +269,10 @@ OSSL_CORE_MAKE_FUNC(int, provider_get_capabilities, (void *provctx,
                     const char *capability, OSSL_CALLBACK *cb, void *arg))
 # define OSSL_FUNC_PROVIDER_SELF_TEST          1031
 OSSL_CORE_MAKE_FUNC(int, provider_self_test, (void *provctx))
+# define OSSL_FUNC_PROVIDER_RANDOM             1032
+OSSL_CORE_MAKE_FUNC(int, provider_random, (void *provctx, int which,
+                                           void *buf, size_t n,
+                                           unsigned int strength))
 
 /* Operations */
 
