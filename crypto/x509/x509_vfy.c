@@ -899,6 +899,8 @@ static int check_trust(X509_STORE_CTX *ctx, int num_untrusted)
      */
     for (i = num_untrusted; i < num; i++) {
         x = sk_X509_value(ctx->chain, i);
+        if (x == NULL)
+            return -1;
         trust = X509_check_trust(x, ctx->param->trust, 0);
         /* If explicitly trusted (so not neutral nor rejected) return trusted */
         if (trust == X509_TRUST_TRUSTED)
