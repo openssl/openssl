@@ -351,6 +351,10 @@ OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, digest_gettable_ctx_params,
 # define OSSL_FUNC_CIPHER_GETTABLE_PARAMS           12
 # define OSSL_FUNC_CIPHER_GETTABLE_CTX_PARAMS       13
 # define OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS       14
+# define OSSL_FUNC_CIPHER_PIPELINE_ENCRYPT_INIT     15
+# define OSSL_FUNC_CIPHER_PIPELINE_DECRYPT_INIT     16
+# define OSSL_FUNC_CIPHER_PIPELINE_UPDATE           17
+# define OSSL_FUNC_CIPHER_PIPELINE_FINAL            18
 
 OSSL_CORE_MAKE_FUNC(void *, cipher_newctx, (void *provctx))
 OSSL_CORE_MAKE_FUNC(int, cipher_encrypt_init, (void *cctx,
@@ -376,6 +380,23 @@ OSSL_CORE_MAKE_FUNC(int, cipher_cipher,
                     (void *cctx,
                      unsigned char *out, size_t *outl, size_t outsize,
                      const unsigned char *in, size_t inl))
+OSSL_CORE_MAKE_FUNC(int, cipher_pipeline_encrypt_init,
+                    (void *cctx,
+                     const unsigned char *key, size_t keylen,
+                     size_t numpipes, const unsigned char **iv, size_t ivlen,
+                     const OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(int, cipher_pipeline_decrypt_init,
+                    (void *cctx,
+                     const unsigned char *key, size_t keylen,
+                     size_t numpipes, const unsigned char **iv, size_t ivlen,
+                     const OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(int, cipher_pipeline_update,
+                    (void *cctx, size_t numpipes,
+                     unsigned char **out, size_t *outl, size_t *outsize,
+                     const unsigned char **in, size_t *inl))
+OSSL_CORE_MAKE_FUNC(int, cipher_pipeline_final,
+                    (void *cctx, size_t numpipes,
+                     unsigned char **out, size_t *outl, size_t *outsize))
 OSSL_CORE_MAKE_FUNC(void, cipher_freectx, (void *cctx))
 OSSL_CORE_MAKE_FUNC(void *, cipher_dupctx, (void *cctx))
 OSSL_CORE_MAKE_FUNC(int, cipher_get_params, (OSSL_PARAM params[]))
