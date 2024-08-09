@@ -42,7 +42,8 @@ $code.=<<___;
 	adc $t4,xzr,xzr
 
 	// Load polynomial
-	adr x2,$mod
+	adrp x2,$mod
+	add x2,x2,:lo12:$mod
 	ldp $s4,$s5,[x2]
 	ldp $s6,$s7,[x2,#16]
 
@@ -88,7 +89,8 @@ $code.=<<___;
 	sbc $t4,xzr,xzr
 
 	// Load polynomial
-	adr x2,$mod
+	adrp x2,$mod
+	add x2,x2,:lo12:$mod
 	ldp $s4,$s5,[x2]
 	ldp $s6,$s7,[x2,#16]
 
@@ -134,7 +136,8 @@ $code.=<<___;
 	lsr $s3,$s3,#1
 
 	// Load mod
-	adr x2,$mod
+	adrp x2,$mod
+	add x2,x2,:lo12:$mod
 	ldp $s4,$s5,[x2]
 	ldp $s6,$s7,[x2,#16]
 
@@ -161,7 +164,7 @@ ___
 $code.=<<___;
 #include "arm_arch.h"
 .arch  armv8-a
-.text
+.rodata
 
 .align	5
 // The polynomial p
@@ -176,6 +179,8 @@ $code.=<<___;
 // (n + 1) / 2
 .Lord_div_2:
 .quad	0xa9ddfa049ceaa092,0xb901efb590e30295,0xffffffffffffffff,0x7fffffff7fffffff
+
+.text
 
 // void bn_rshift1(BN_ULONG *a);
 .globl	bn_rshift1
@@ -272,7 +277,8 @@ ecp_sm2p256_mul_by_3:
 	mov $t3,$s3
 
 	// Sub polynomial
-	adr x2,.Lpoly
+	adrp x2,.Lpoly
+	add x2,x2,:lo12:.Lpoly
 	ldp $s4,$s5,[x2]
 	ldp $s6,$s7,[x2,#16]
 	subs $s0,$s0,$s4
@@ -302,7 +308,8 @@ ecp_sm2p256_mul_by_3:
 	mov $t3,$s3
 
 	// Sub polynomial
-	adr x2,.Lpoly
+	adrp x2,.Lpoly
+	add x2,x2,:lo12:.Lpoly
 	ldp $s4,$s5,[x2]
 	ldp $s6,$s7,[x2,#16]
 	subs $s0,$s0,$s4
@@ -508,7 +515,8 @@ $code.=<<___;
 	mov $s6,$s2
 	mov $s7,$s3
 
-	adr $t0,.Lpoly
+	adrp $t0,.Lpoly
+	add $t0,$t0,:lo12:.Lpoly
 	ldp $t1,$t2,[$t0]
 	ldp $t3,$t4,[$t0,#16]
 
