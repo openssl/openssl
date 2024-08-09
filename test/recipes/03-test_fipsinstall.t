@@ -33,7 +33,7 @@ my @pedantic_fail =
     ( 'no_conditional_errors', 'no_security_checks', 'self_test_oninstall',
       'no_pbkdf2_lower_bound_check' );
 
-plan tests => 35 + (scalar @pedantic_okay) + (scalar @pedantic_fail);
+plan tests => 37 + (scalar @pedantic_okay) + (scalar @pedantic_fail);
 
 my $infile = bldtop_file('providers', platform->dso('fips'));
 my $fipskey = $ENV{FIPSKEY} // config('FIPSKEY') // '00';
@@ -119,7 +119,6 @@ ok(!run(app(['openssl', 'fipsinstall', '-in', 'dummy.tmp', '-module', $infile,
              '-section_name', 'fips_sect', '-verify'])),
    "fipsinstall verify fail");
 
-
 # output a fips.cnf file containing mac data
 ok(run(app(['openssl', 'fipsinstall', '-out', 'fips.cnf', '-module', $infile,
             '-provider_name', 'fips', '-mac_name', 'HMAC',
@@ -133,6 +132,23 @@ ok(run(app(['openssl', 'fipsinstall', '-in', 'fips.cnf', '-module', $infile,
             '-macopt', 'digest:SHA256', '-macopt', "hexkey:$fipskey",
             '-section_name', 'fips_sect', '-verify'])),
    "fipsinstall verify");
+
+# Test that default options for fipsinstall output the 'install-status' for
+# FIPS 140-2 providers.
+SKIP: {
+    run(test(["fips_version_test", "-config", $provconf, "<3.1.0"]),
+             capture => 1, statusvar => \my $exit);
+
+    skip "Skipping FIPS 140-3 provider", 2
+        if !$exit;
+
+    ok(find_line_file('install-mac = ', 'fips.cnf') == 1,
+       'FIPS 140-2 should output install-mac');
+
+    ok(find_line_file('install-status = INSTALL_SELF_TEST_KATS_RUN',
+                      'fips.cnf') == 1,
+       'FIPS 140-2 should output install-status');
+}
 
 # Skip Tests if POST is disabled
 SKIP: {
@@ -419,4 +435,3 @@ foreach my $o (@pedantic_fail) {
                  '-module', $infile, '-pedantic', "-${o}"])),
             "fipsinstall disallows -${o} after -pedantic option");
 }
-
