@@ -54,7 +54,7 @@ X509_NAME_hash() returns a hash value of name I<x> or 0 on failure,
 using the default library context and default property query.
 
 X509_get_subject_name() returns the subject name of certificate I<x>. The
-returned value is an internal pointer which B<MUST NOT> be freed.
+returned value is an internal pointer which B<MUST NOT> be freed. I<x> B<MUST NOT> be NULL.
 
 X509_set_subject_name() sets the issuer name of certificate I<x> to
 I<name>. The I<name> parameter is copied internally and should be freed

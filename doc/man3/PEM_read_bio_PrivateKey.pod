@@ -320,7 +320,7 @@ structure.
 The PEM functions have many common arguments.
 
 The I<bp> BIO parameter (if present) specifies the BIO to read from
-or write to.
+or write to. The I<bp> BIO parameter B<MUST NOT> be NULL.
 
 The I<fp> FILE parameter (if present) specifies the FILE pointer to
 read from or write to.

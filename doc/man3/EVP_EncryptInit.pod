@@ -352,8 +352,8 @@ can be set in the context's current state.
 
 =item EVP_EncryptInit_ex2()
 
-Sets up cipher context I<ctx> for encryption with cipher I<type>. I<type> is
-typically supplied by calling EVP_CIPHER_fetch(). I<type> may also be set
+Sets up cipher context I<ctx> for encryption with cipher I<type>. I<ctx> B<MUST NOT> be NULL.
+I<type> is typically supplied by calling EVP_CIPHER_fetch(). I<type> may also be set
 using legacy functions such as EVP_aes_256_cbc(), but this is not recommended
 for new applications. I<key> is the symmetric key to use and I<iv> is the IV to
 use (if necessary), the actual number of bytes used for the key and IV depends
@@ -378,7 +378,7 @@ I<out>. The pointers I<out> and I<in> may point to the same location, in which
 case the encryption will be done in-place. However, in-place encryption is
 guaranteed to work only if the encryption context (I<ctx>) has processed data in
 multiples of the block size. If the context contains an incomplete data block
-from previous operations, in-place encryption will fail.
+from previous operations, in-place encryption will fail. I<ctx> B<MUST NOT> be NULL.
 
 If I<out> and I<in> point to different locations, the two buffers must be
 disjoint, otherwise the operation might fail or the outcome might be undefined.
@@ -418,7 +418,7 @@ final block is not correctly formatted. The parameters and restrictions are
 identical to the encryption operations except that if padding is enabled the
 decrypted data buffer I<out> passed to EVP_DecryptUpdate() should have
 sufficient room for (I<inl> + cipher_block_size) bytes unless the cipher block
-size is 1 in which case I<inl> bytes is sufficient.
+size is 1 in which case I<inl> bytes is sufficient. I<ctx> B<MUST NOT> be NULL.
 
 =item EVP_CipherInit_ex2(), EVP_CipherInit_ex(), EVP_CipherUpdate() and
 EVP_CipherFinal_ex()
@@ -513,7 +513,7 @@ EVP_DecryptInit_ex2() or EVP_CipherInit_ex2(). By default encryption operations
 are padded using standard block padding and the padding is checked and removed
 when decrypting. If the I<pad> parameter is zero then no padding is
 performed, the total amount of data encrypted or decrypted must then
-be a multiple of the block size or an error will occur.
+be a multiple of the block size or an error will occur. I<x> B<MUST NOT> be NULL.
 
 =item EVP_CIPHER_get_key_length() and EVP_CIPHER_CTX_get_key_length()
 
@@ -570,6 +570,7 @@ context (see L<OSSL_LIB_CTX(3)>) will be considered.
 
 Return the name of the passed cipher or context.  For fetched ciphers with
 multiple names, only one of them is returned. See also EVP_CIPHER_names_do_all().
+I<cipher> B<MUST NOT> be NULL.
 
 =item EVP_CIPHER_names_do_all()
 
