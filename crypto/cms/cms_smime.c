@@ -304,7 +304,7 @@ static int cms_signerinfo_verify_cert(CMS_SignerInfo *si,
 }
 
 /* This strongly overlaps with PKCS7_verify() */
-int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
+int CMS_verify(CMS_ContentInfo *cms, const STACK_OF(X509) *certs,
                X509_STORE *store, BIO *dcont, BIO *out, unsigned int flags)
 {
     CMS_SignerInfo *si;
@@ -498,7 +498,7 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
 }
 
 int CMS_verify_receipt(CMS_ContentInfo *rcms, CMS_ContentInfo *ocms,
-                       STACK_OF(X509) *certs,
+                       const STACK_OF(X509) *certs,
                        X509_STORE *store, unsigned int flags)
 {
     int r;
@@ -511,7 +511,7 @@ int CMS_verify_receipt(CMS_ContentInfo *rcms, CMS_ContentInfo *ocms,
 }
 
 CMS_ContentInfo *CMS_sign_ex(X509 *signcert, EVP_PKEY *pkey,
-                             STACK_OF(X509) *certs, BIO *data,
+                             const STACK_OF(X509) *certs, BIO *data,
                              unsigned int flags, OSSL_LIB_CTX *libctx,
                              const char *propq)
 {
@@ -558,7 +558,8 @@ CMS_ContentInfo *CMS_sign_ex(X509 *signcert, EVP_PKEY *pkey,
     return NULL;
 }
 
-CMS_ContentInfo *CMS_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
+CMS_ContentInfo *CMS_sign(X509 *signcert, EVP_PKEY *pkey,
+                          const STACK_OF(X509) *certs,
                           BIO *data, unsigned int flags)
 {
     return CMS_sign_ex(signcert, pkey, certs, data, flags, NULL, NULL);
@@ -566,7 +567,8 @@ CMS_ContentInfo *CMS_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
 
 CMS_ContentInfo *CMS_sign_receipt(CMS_SignerInfo *si,
                                   X509 *signcert, EVP_PKEY *pkey,
-                                  STACK_OF(X509) *certs, unsigned int flags)
+                                  const STACK_OF(X509) *certs,
+                                  unsigned int flags)
 {
     CMS_SignerInfo *rct_si;
     CMS_ContentInfo *cms = NULL;
@@ -637,7 +639,7 @@ CMS_ContentInfo *CMS_sign_receipt(CMS_SignerInfo *si,
 
 }
 
-CMS_ContentInfo *CMS_encrypt_ex(STACK_OF(X509) *certs, BIO *data,
+CMS_ContentInfo *CMS_encrypt_ex(const STACK_OF(X509) *certs, BIO *data,
                                 const EVP_CIPHER *cipher, unsigned int flags,
                                 OSSL_LIB_CTX *libctx, const char *propq)
 {
@@ -675,7 +677,7 @@ CMS_ContentInfo *CMS_encrypt_ex(STACK_OF(X509) *certs, BIO *data,
     return NULL;
 }
 
-CMS_ContentInfo *CMS_encrypt(STACK_OF(X509) *certs, BIO *data,
+CMS_ContentInfo *CMS_encrypt(const STACK_OF(X509) *certs, BIO *data,
                              const EVP_CIPHER *cipher, unsigned int flags)
 {
     return CMS_encrypt_ex(certs, data, cipher, flags, NULL, NULL);
