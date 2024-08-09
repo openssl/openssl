@@ -255,6 +255,7 @@ static int test_builtin_provider_with_child(void)
 
     if (!TEST_true(OSSL_PROVIDER_add_builtin(libctx, name,
                                              PROVIDER_INIT_FUNCTION_NAME))) {
+        OSSL_PROVIDER_unload(legacy);
         OSSL_LIB_CTX_free(libctx);
         return 0;
     }
