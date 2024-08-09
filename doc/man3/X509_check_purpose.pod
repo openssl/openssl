@@ -2,17 +2,23 @@
 
 =head1 NAME
 
-X509_check_purpose - Check the purpose of a certificate
+X509_check_eku,
+X509_check_purpose - Check the EKU or purpose of a certificate
 
 =head1 SYNOPSIS
 
  #include <openssl/x509v3.h>
 
+ int X509_check_eku(X509 *x, int nid);
  int X509_check_purpose(X509 *x, int id, int ca);
 
 =head1 DESCRIPTION
 
-This function checks if certificate I<x> was created with the purpose
+X509_check_eku() checks if certificate I<x> supports
+the Extended Key Usage (EKU) represented by I<nid>.
+This must be an NID corresponding to an EKU OID, for example B<NID_server_auth>.
+
+X509_check_purpose() checks if certificate I<x> was created with the purpose
 represented by I<id>. If I<ca> is nonzero, then certificate I<x> is
 checked to determine if it's a possible CA with various levels of certainty
 possibly returned. The certificate I<x> must be a complete certificate
@@ -36,7 +42,9 @@ keyUsage, extendedKeyUsage, and basicConstraints.
 
 =head1 RETURN VALUES
 
-For non-CA checks
+X509_check_eku() returns 1 on allowed, 0 if not, and -1 on internal error.
+
+X509_check_purpose() returns for non-CA checks
 
 =over 4
 

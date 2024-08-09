@@ -1,0 +1,49 @@
+=pod
+
+=head1 NAME
+
+SSL_CTX_set_eku,
+SSL_set_eku
+- set peer certificate usage requirements to be verified
+
+=head1 SYNOPSIS
+
+ #include <openssl/ssl.h>
+
+ int SSL_CTX_set_eku(SSL_CTX *ctx, int nid);
+ int SSL_set_eku(SSL *ssl, int nid);
+
+=head1 DESCRIPTION
+
+SSL_CTX_set_eku() and SSL_CTX_set_eku() sets the Extended Key Usage (EKU)
+in the verification parameters of I<ctx> or I<ssl>, respectively, to I<nid>.
+This must be an NID corresponding to an EKU OID, for example B<NID_server_auth>,
+which may have been obtained by parsing a text string using L<OBJ_txt2nid(3)>.
+It determines the acceptable EKU for the peer certificate and its chain,
+If provided, it overrides any purpose requirements for untrusted certificates.
+
+=head1 RETURN VALUES
+
+SSL_CTX_set_eku() and SSL_CTX_set_eku()
+return 1 for success and 0 for failure.
+
+=head1 SEE ALSO
+
+L<OBJ_txt2nid(3)>,
+L<SSL_CTX_set_verify(3)>
+
+=head1 HISTORY
+
+The SSL_CTX_set_eku() and SSL_CTX_set_eku()
+functions were added in OpenSSL 3.0.
+
+=head1 COPYRIGHT
+
+Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

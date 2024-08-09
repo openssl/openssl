@@ -5650,6 +5650,8 @@ X509_ACERT_get_ext_d2i                  ?	3_4_0	EXIST::FUNCTION:
 X509_ACERT_add1_ext_i2d                 ?	3_4_0	EXIST::FUNCTION:
 X509_ACERT_get0_extensions              ?	3_4_0	EXIST::FUNCTION:
 X509v3_add_extensions                   ?	3_4_0	EXIST::FUNCTION:
+X509_VERIFY_PARAM_set_eku               ?	3_4_0	EXIST::FUNCTION:
+X509_check_eku                          ?	3_4_0	EXIST::FUNCTION:
 OSSL_IETF_ATTR_SYNTAX_VALUE_it          ?	3_4_0	EXIST::FUNCTION:
 OSSL_IETF_ATTR_SYNTAX_VALUE_free        ?	3_4_0	EXIST::FUNCTION:
 OSSL_IETF_ATTR_SYNTAX_VALUE_new         ?	3_4_0	EXIST::FUNCTION:

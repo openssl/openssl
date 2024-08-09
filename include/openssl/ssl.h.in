@@ -1816,6 +1816,8 @@ int SSL_is_quic(const SSL *s);
 __owur int SSL_set_session_id_context(SSL *ssl, const unsigned char *sid_ctx,
                                       unsigned int sid_ctx_len);
 
+__owur int SSL_CTX_set_eku(SSL_CTX *ctx, int nid);
+__owur int SSL_set_eku(SSL *ssl, int nid);
 __owur int SSL_CTX_set_purpose(SSL_CTX *ctx, int purpose);
 __owur int SSL_set_purpose(SSL *ssl, int purpose);
 __owur int SSL_CTX_set_trust(SSL_CTX *ctx, int trust);
