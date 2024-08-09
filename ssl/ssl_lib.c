@@ -6677,8 +6677,8 @@ int SSL_client_hello_get_extension_order(SSL *s, uint16_t *exts, size_t *num_ext
 int SSL_client_hello_get0_ext(SSL *s, unsigned int type, const unsigned char **out,
                        size_t *outlen)
 {
-    size_t i;
-    RAW_EXTENSION *r;
+    PACKET pkt,ext_data;
+    unsigned int ext_type;
     const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
 
     if (sc == NULL)
@@ -6686,16 +6686,23 @@ int SSL_client_hello_get0_ext(SSL *s, unsigned int type, const unsigned char **o
 
     if (sc->clienthello == NULL)
         return 0;
-    for (i = 0; i < sc->clienthello->pre_proc_exts_len; ++i) {
-        r = sc->clienthello->pre_proc_exts + i;
-        if (r->present && r->type == type) {
+
+    pkt = sc->clienthello->extensions ;
+    while (PACKET_remaining(&pkt) > 0) {
+        if (!PACKET_get_net_2(&pkt, &ext_type) ||
+            !PACKET_get_length_prefixed_2(&pkt, &ext_data)) {
+            return 0;
+        }
+        if (ext_type == type) {
             if (out != NULL)
-                *out = PACKET_data(&r->data);
+                *out = PACKET_data(&ext_data);
             if (outlen != NULL)
-                *outlen = PACKET_remaining(&r->data);
+                *outlen = PACKET_remaining(&ext_data);
             return 1;
+
         }
     }
+
     return 0;
 }
 
