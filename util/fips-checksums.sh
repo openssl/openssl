@@ -3,7 +3,7 @@
 HERE=`dirname $0`
 
 for f in "$@"; do
-    # It's worth nothing that 'openssl sha256 -r' assumes that all input
+    # It's worth noting that 'openssl sha256 -r' assumes that all input
     # is binary.  This isn't quite true, and we know better, so we convert
     # the '*stdin' marker to the filename preceded by a space.  See the
     # sha1sum manual for a specification of the format.
