@@ -285,7 +285,7 @@ err:
 }
 
 static int load_fips_prov_and_run_self_test(const char *prov_name,
-                                            int *is30fipsprov)
+                                            int *is_fips_140_2_prov)
 {
     int ret = 0;
     OSSL_PROVIDER *prov = NULL;
@@ -324,7 +324,7 @@ static int load_fips_prov_and_run_self_test(const char *prov_name,
             goto end;
         }
     }
-    *is30fipsprov = (strncmp("3.0.", vers, 4) == 0);
+    *is_fips_140_2_prov = (strncmp("3.0.", vers, 4) == 0);
     ret = 1;
 end:
     OSSL_PROVIDER_unload(prov);
@@ -571,7 +571,7 @@ end:
 int fipsinstall_main(int argc, char **argv)
 {
     int ret = 1, verify = 0, gotkey = 0, gotdigest = 0, pedantic = 0;
-    int isfips30prov = 0, setoption = 0;
+    int is_fips_140_2_prov = 0, set_selftest_onload_option = 0;
     const char *section_name = "fips_sect";
     const char *mac_name = "HMAC";
     const char *prov_name = "fips";
@@ -747,13 +747,13 @@ int fipsinstall_main(int argc, char **argv)
             verify = 1;
             break;
         case OPT_SELF_TEST_ONLOAD:
-            setoption = 1;
+            set_selftest_onload_option = 1;
             fips_opts.self_test_onload = 1;
             break;
         case OPT_SELF_TEST_ONINSTALL:
             if (!check_non_pedantic_fips(pedantic, "self_test_oninstall"))
                 goto end;
-            setoption = 1;
+            set_selftest_onload_option = 1;
             fips_opts.self_test_onload = 0;
             break;
         }
@@ -874,17 +874,18 @@ int fipsinstall_main(int argc, char **argv)
                                         module_mac_len, &fips_opts);
         if (conf == NULL)
             goto end;
-        if (!load_fips_prov_and_run_self_test(prov_name, &isfips30prov))
+        if (!load_fips_prov_and_run_self_test(prov_name, &is_fips_140_2_prov))
             goto end;
 
         /*
          * In OpenSSL 3.1 the code was changed so that the status indicator is
-         * not written out by default.
+         * not written out by default since this is a FIPS 140-3 requirement.
          * For backwards compatibility - if the detected FIPS provider is 3.0.X
-         * then the indicator status will be written to the config
-         * file unless 'self_test_onload' is set on the command line.
+         * (Which was a FIPS 140-2 validation), then the indicator status will
+         * be written to the config file unless 'self_test_onload' is set on the
+         * command line.
          */
-        if (setoption == 0 && isfips30prov)
+        if (set_selftest_onload_option == 0 && is_fips_140_2_prov)
             fips_opts.self_test_onload = 0;
 
         fout =
