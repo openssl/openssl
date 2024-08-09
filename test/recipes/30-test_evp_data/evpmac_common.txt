@@ -554,6 +554,7 @@ Output = 28c815
 Custom = "My Tagged Application"
 Ctrl = size:3
 Result = MAC_INIT_ERROR
+Reason = invalid output length
 
 FIPSversion = >=3.4.0
 MAC = KMAC256
@@ -564,6 +565,7 @@ Custom = "My Tagged Application"
 Ctrl = size:3
 Ctrl = no-short-mac:1
 Result = MAC_INIT_ERROR
+Reason = invalid output length
 
 # Old FIPS providers accept short output
 FIPSversion = <3.4.0

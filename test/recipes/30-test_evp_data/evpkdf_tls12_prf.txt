@@ -58,6 +58,7 @@ Ctrl.label = seed:master secret
 Ctrl.client_random = hexseed:36c129d01a3200894b9179faac589d9835d58775f9b5ea3587cb8fd0364cae8c
 Ctrl.server_random = hexseed:f6c9575ed7ddd73e1f7d16eca115415812a43c2b747daaaae043abfb50053fce
 Result = KDF_DERIVE_ERROR
+Reason = invalid key length
 
 # FIPS indicator callback test
 FIPSversion = >=3.4.0
@@ -92,6 +93,7 @@ Ctrl.label = seed:extended master secret
 Ctrl.client_random = hexseed:36c129d01a3200894b9179faac589d9835d58775f9b5ea3587cb8fd0364cae8c
 Ctrl.server_random = hexseed:f6c9575ed7ddd73e1f7d16eca115415812a43c2b747daaaae043abfb50053fce
 Result = KDF_CTRL_ERROR
+Reason = digest not allowed
 
 # Test that the operation with unapproved digest function is is reported as
 # unapproved
@@ -116,6 +118,7 @@ Ctrl.label = seed:extended master secret
 Ctrl.client_random = hexseed:36c129d01a3200894b9179faac589d9835d58775f9b5ea3587cb8fd0364cae8c
 Ctrl.server_random = hexseed:f6c9575ed7ddd73e1f7d16eca115415812a43c2b747daaaae043abfb50053fce
 Result = KDF_CTRL_ERROR
+Reason = invalid key length
 
 # Test that the key whose length is shorter than 112 bits is reported as
 # unapproved

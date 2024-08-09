@@ -1869,6 +1869,7 @@ Ctrl.r = r:8
 Ctrl.hexkey = hexkey:0ef9
 Ctrl.hexinfo = hexinfo:56ec
 Result = KDF_CTRL_ERROR
+Reason = invalid key length
 
 FIPSversion = >=3.4.0
 KDF = KBKDF
@@ -1895,6 +1896,7 @@ Ctrl.r = r:24
 Ctrl.hexkey = hexkey:1122334455667788
 Ctrl.hexinfo = hexinfo:1122334455667788
 Result = KDF_CTRL_ERROR
+Reason = invalid key length
 
 Availablein = default
 KDF = KBKDF
