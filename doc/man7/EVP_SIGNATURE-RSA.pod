@@ -86,6 +86,16 @@ digest size when signing to comply with FIPS 186-4 section 5.5.
 
 =back
 
+=item "rsa-pss-saltlen-check" (B<OSSL_SIGNATURE_PARAM_FIPS_RSA_PSS_SALTLEN_CHECK>) <integer>
+
+The default value of 1 causes an error during signature generation or
+verification if salt length (B<OSSL_SIGNATURE_PARAM_PSS_SALTLEN>) is not between
+zero and the output block size of the digest function (inclusive).
+Setting this to zero will ignore the error and set the approved "fips-indicator"
+to 0.
+This option is used by the OpenSSL FIPS provider, and breaks FIPS compliance if
+set to 0.
+
 =back
 
 The following signature parameters can be retrieved using

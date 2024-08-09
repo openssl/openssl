@@ -46,6 +46,8 @@ static OSSL_PROVIDER *prov_null = NULL;
 static OSSL_LIB_CTX *libctx = NULL;
 static SELF_TEST_ARGS self_test_args = { 0 };
 static OSSL_CALLBACK self_test_events;
+static int pass_sig_gen_params = 1;
+static int rsa_sign_x931_pad_allowed = 1;
 #ifndef OPENSSL_NO_DSA
 static int dsasign_allowed = 1;
 #endif
@@ -96,12 +98,13 @@ static int sig_gen(EVP_PKEY *pkey, OSSL_PARAM *params, const char *digest_name,
     unsigned char *sig = NULL;
     size_t sig_len;
     size_t sz = EVP_PKEY_get_size(pkey);
+    OSSL_PARAM *p = pass_sig_gen_params ? params : NULL;
 
     sig_len = sz;
     if (!TEST_ptr(sig = OPENSSL_malloc(sz))
         || !TEST_ptr(md_ctx = EVP_MD_CTX_new())
         || !TEST_int_eq(EVP_DigestSignInit_ex(md_ctx, NULL, digest_name, libctx,
-                                              NULL, pkey, NULL), 1)
+                                              NULL, pkey, p), 1)
         || !TEST_int_gt(EVP_DigestSign(md_ctx, sig, &sig_len, msg, msg_len), 0))
         goto err;
     *sig_out = sig;
@@ -1184,6 +1187,12 @@ static int rsa_siggen_test(int id)
     const struct rsa_siggen_st *tst = &rsa_siggen_data[id];
     int salt_len = tst->pss_salt_len;
 
+    if (!rsa_sign_x931_pad_allowed
+            && (strcmp(tst->sig_pad_mode, OSSL_PKEY_RSA_PAD_MODE_X931) == 0)) {
+        TEST_info("RSA x931 signature generation skipped: x931 signing is not allowed");
+        return 1;
+    }
+
     TEST_note("RSA %s signature generation", tst->sig_pad_mode);
 
     p = params;
@@ -1484,6 +1493,8 @@ int setup_tests(void)
     ADD_ALL_TESTS(aes_ccm_enc_dec_test, OSSL_NELEM(aes_ccm_enc_data));
     ADD_ALL_TESTS(aes_gcm_enc_dec_test, OSSL_NELEM(aes_gcm_enc_data));
 
+    pass_sig_gen_params = fips_provider_version_ge(libctx, 3, 4, 0);
+    rsa_sign_x931_pad_allowed = fips_provider_version_lt(libctx, 3, 4, 0);
     ADD_ALL_TESTS(rsa_keygen_test, OSSL_NELEM(rsa_keygen_data));
     ADD_ALL_TESTS(rsa_siggen_test, OSSL_NELEM(rsa_siggen_data));
     ADD_ALL_TESTS(rsa_sigver_test, OSSL_NELEM(rsa_sigver_data));
