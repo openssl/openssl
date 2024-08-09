@@ -59,10 +59,11 @@ if this option is not specified.
 
 =item B<-rawin>
 
-This indicates that the input data is raw data, which is not hashed by any
-message digest algorithm. The user can specify a digest algorithm by using
-the B<-digest> option. This option can only be used with B<-sign> and
-B<-verify> and must be used with the Ed25519 and Ed448 algorithms.
+This indicates that signature input data is raw data, which for most signature
+algorithms (but not EdDSA) needs to be hashed by some message digest algorithm.
+The user can specify a digest algorithm by using the B<-digest> option.
+This option can only be used with B<-sign> and B<-verify>
+and is implied by the Ed25519 and Ed448 algorithms.
 
 =item B<-digest> I<algorithm>
 
@@ -120,6 +121,7 @@ The input is a certificate containing a public key.
 
 Reverse the order of the input buffer. This is useful for some libraries
 (such as CryptoAPI) which represent the buffer in little endian format.
+This cannot be used in conjunction with B<-rawin>.
 
 =item B<-sign>
 
