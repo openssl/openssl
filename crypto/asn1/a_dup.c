@@ -75,7 +75,7 @@ void *ASN1_item_dup(const ASN1_ITEM *it, const void *x)
     }
 
     i = ASN1_item_i2d(x, &b, it);
-    if (b == NULL) {
+    if (i < 0 || b == NULL) {
         ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
         return NULL;
     }

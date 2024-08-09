@@ -88,7 +88,7 @@ int ASN1_item_i2d_bio(const ASN1_ITEM *it, BIO *out, const void *x)
     int i, j = 0, n, ret = 1;
 
     n = ASN1_item_i2d(x, &b, it);
-    if (b == NULL) {
+    if (n < 0 || b == NULL) {
         ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
         return 0;
     }
