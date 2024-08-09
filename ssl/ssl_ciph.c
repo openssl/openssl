@@ -338,7 +338,8 @@ int ssl_load_ciphers(SSL_CTX *ctx)
             ctx->disabled_mac_mask |= t->mask;
         } else {
             int tmpsize = EVP_MD_get_size(md);
-            if (!ossl_assert(tmpsize >= 0))
+
+            if (!ossl_assert(tmpsize > 0))
                 return 0;
             ctx->ssl_mac_secret_size[i] = tmpsize;
         }
