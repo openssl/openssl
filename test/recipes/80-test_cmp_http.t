@@ -252,14 +252,16 @@ sub load_tests {
 
         next LOOP if $server_tls == 0 && $line =~ m/,\s*-tls_used\s*,/;
         my $noproxy = $no_proxy;
+        my $serverhost = $server_host;
+        $serverhost = $1 if $serverhost =~ m/^\[(.*)\]$/;
         if ($line =~ m/,\s*-no_proxy\s*,(.*?)(,|$)/) {
             $noproxy = $1;
-        } elsif ($server_host eq "127.0.0.1") {
+        } elsif ($server_host eq "127.0.0.1" || $serverhost eq "::1") {
             # do connections to localhost (e.g., mock server) without proxy
-            $line =~ s{-section,,}{-section,,-no_proxy,127.0.0.1,} ;
+            $line =~ s{-section,,}{-section,,-no_proxy,$serverhost,} ;
         }
         if ($line =~ m/,\s*-proxy\s*,/) {
-            next LOOP if $no_proxy && ($noproxy =~ $server_host);
+            next LOOP if $no_proxy && ($noproxy =~ $serverhost);
         } else {
             $line =~ s{-section,,}{-section,,-proxy,$proxy,};
         }
