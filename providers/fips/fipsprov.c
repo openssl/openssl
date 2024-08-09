@@ -219,18 +219,19 @@ static int fips_get_params_from_core(FIPS_GLOBAL *fgbl)
     */
     OSSL_PARAM core_params[30], *p = core_params;
 
-    *p++ = OSSL_PARAM_construct_utf8_ptr(
-            OSSL_PROV_PARAM_CORE_MODULE_FILENAME,
-            (char **)&fgbl->selftest_params.module_filename,
-            sizeof(fgbl->selftest_params.module_filename));
-    *p++ = OSSL_PARAM_construct_utf8_ptr(
-            OSSL_PROV_FIPS_PARAM_MODULE_MAC,
-            (char **)&fgbl->selftest_params.module_checksum_data,
-            sizeof(fgbl->selftest_params.module_checksum_data));
-    *p++ = OSSL_PARAM_construct_utf8_ptr(
-            OSSL_PROV_FIPS_PARAM_CONDITIONAL_ERRORS,
-            (char **)&fgbl->selftest_params.conditional_error_check,
-            sizeof(fgbl->selftest_params.conditional_error_check));
+/* FIPS self test params */
+#define FIPS_FEATURE_SELF_TEST(fgbl, pname, field)                             \
+    *p++ = OSSL_PARAM_construct_utf8_ptr(pname,                                \
+                                         (char **)&fgbl->selftest_params.field,\
+                                         sizeof(fgbl->selftest_params.field))
+
+    FIPS_FEATURE_SELF_TEST(fgbl, OSSL_PROV_PARAM_CORE_MODULE_FILENAME,
+                           module_filename);
+    FIPS_FEATURE_SELF_TEST(fgbl, OSSL_PROV_FIPS_PARAM_MODULE_MAC,
+                           module_checksum_data);
+    FIPS_FEATURE_SELF_TEST(fgbl, OSSL_PROV_FIPS_PARAM_CONDITIONAL_ERRORS,
+                           conditional_error_check);
+#undef FIPS_FEATURE_SELF_TEST
 
 /* FIPS features can be enabled or disabled independently */
 #define FIPS_FEATURE_OPTION(fgbl, pname, field)                         \
