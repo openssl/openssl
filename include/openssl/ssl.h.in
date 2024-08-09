@@ -1760,7 +1760,7 @@ __owur X509 *SSL_get0_peer_certificate(const SSL *s);
 __owur X509 *SSL_get1_peer_certificate(const SSL *s);
 /* Deprecated in 3.0.0 */
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
-#   define SSL_get_peer_certificate SSL_get1_peer_certificate
+#   define SSL_get_peer_certificate(s) (OSSL_DEPRECATEDIN_3_0_PRAGMA("SSL_get_peer_certificate is deprecated, use SSL_get1_peer_certificate instead") SSL_get1_peer_certificate(s))
 #  endif
 # endif
 
