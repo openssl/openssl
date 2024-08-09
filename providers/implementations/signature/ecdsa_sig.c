@@ -207,9 +207,13 @@ static int ecdsa_sign(void *vctx, unsigned char *sig, size_t *siglen,
         return 0;
 
     if (ctx->nonce_type != 0) {
+        const char *mdname = NULL;
+
+        if (ctx->mdname[0] != '\0')
+            mdname = ctx->mdname;
         ret = ossl_ecdsa_deterministic_sign(tbs, tbslen, sig, &sltmp,
                                             ctx->ec, ctx->nonce_type,
-                                            ctx->mdname,
+                                            mdname,
                                             ctx->libctx, ctx->propq);
     } else {
         ret = ECDSA_sign_ex(0, tbs, tbslen, sig, &sltmp, ctx->kinv, ctx->r,
@@ -585,18 +589,9 @@ static const OSSL_PARAM settable_ctx_params[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM settable_ctx_params_no_digest[] = {
-    OSSL_PARAM_uint(OSSL_SIGNATURE_PARAM_KAT, NULL),
-    OSSL_PARAM_END
-};
-
 static const OSSL_PARAM *ecdsa_settable_ctx_params(void *vctx,
                                                    ossl_unused void *provctx)
 {
-    PROV_ECDSA_CTX *ctx = (PROV_ECDSA_CTX *)vctx;
-
-    if (ctx != NULL && !ctx->flag_allow_md)
-        return settable_ctx_params_no_digest;
     return settable_ctx_params;
 }
 
