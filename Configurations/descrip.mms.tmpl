@@ -15,13 +15,21 @@
   our $builddir = $config{builddir};
   sub make_unix_path {
       # Split the native path
-      (my $vol, my $dirs, my $file) = File::Spec->splitpath($_[0]);
+      my $path = $_[0];
+      # Convert any path of the VMS form VOLUME:[DIR1.DIR2]FILE to the
+      # Unix form /VOLUME/DIR1/DIR2/FILE
+
+      # Start with splitting the native path
+      (my $vol, my $dirs, my $file) = File::Spec->splitpath($path);
       my @dirs = File::Spec->splitdir($dirs);
 
       # Reassemble it as a Unix path
       $vol =~ s|:$||;
-      return File::Spec::Unix->catpath(
-          '', File::Spec::Unix->catdir('', $vol ? $vol : (), @dirs), $file);
+      $dirs = File::Spec::Unix->catdir('', $vol, @dirs);
+      $path = File::Spec::Unix->catpath('', $dirs, $file);
+      # Unescape VMS ODS-5 file name escapes (^)
+      $path =~ s|\^||g;
+      return $path;
   }
   sub sourcefile {
       catfile($sourcedir, @_);
