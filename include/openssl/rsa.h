@@ -35,6 +35,10 @@
 extern "C" {
 # endif
 
+# ifndef OPENSSL_RSA_MIN_MODULUS_BITS
+#  define OPENSSL_RSA_MIN_MODULUS_BITS 1024
+# endif
+
 # ifndef OPENSSL_RSA_MAX_MODULUS_BITS
 #  define OPENSSL_RSA_MAX_MODULUS_BITS   16384
 # endif
