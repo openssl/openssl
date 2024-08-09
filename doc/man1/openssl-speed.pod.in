@@ -27,6 +27,7 @@ B<openssl speed>
 [B<-bytes> I<num>]
 [B<-mr>]
 [B<-mlock>]
+[B<-testmode>]
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 [I<algorithm> ...]
@@ -130,6 +131,12 @@ Produce the summary in a mechanical, machine-readable, format.
 
 Lock memory into RAM for more deterministic measurements.
 
+=item B<-testmode>
+
+Runs the speed command in testmode. Runs only 1 iteration of each algorithm test
+regardless of any B<-seconds> value. In the event that any operation fails then
+the speed command will return with a failure result.
+
 {- $OpenSSL::safe::opt_r_item -}
 
 {- $OpenSSL::safe::opt_engine_item -}
@@ -157,6 +164,8 @@ supported by third party providers with the C<openssl speed> command.
 The B<-engine> option was deprecated in OpenSSL 3.0.
 
 DSA512 was removed in OpenSSL 3.2.
+
+The B<-testmode> option was added in OpenSSL 3.4.
 
 =head1 COPYRIGHT
 
