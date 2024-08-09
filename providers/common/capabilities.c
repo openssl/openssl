@@ -168,10 +168,8 @@ static const OSSL_PARAM param_group_list[][10] = {
     TLS_GROUP_ENTRY("secp160r1", "secp160r1", "EC", 15),
     TLS_GROUP_ENTRY("secp160r2", "secp160r2", "EC", 16),
     TLS_GROUP_ENTRY("secp192k1", "secp192k1", "EC", 17),
-#  endif
     TLS_GROUP_ENTRY("secp192r1", "prime192v1", "EC", 18),
     TLS_GROUP_ENTRY("P-192", "prime192v1", "EC", 18), /* Alias of above */
-#  ifndef FIPS_MODULE
     TLS_GROUP_ENTRY("secp224k1", "secp224k1", "EC", 19),
 #  endif
     TLS_GROUP_ENTRY("secp224r1", "secp224r1", "EC", 20),
