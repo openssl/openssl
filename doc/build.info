@@ -2559,6 +2559,10 @@ DEPEND[html/man3/SSL_get0_peer_scts.html]=man3/SSL_get0_peer_scts.pod
 GENERATE[html/man3/SSL_get0_peer_scts.html]=man3/SSL_get0_peer_scts.pod
 DEPEND[man/man3/SSL_get0_peer_scts.3]=man3/SSL_get0_peer_scts.pod
 GENERATE[man/man3/SSL_get0_peer_scts.3]=man3/SSL_get0_peer_scts.pod
+DEPEND[html/man3/SSL_get1_builtin_sigalgs.html]=man3/SSL_get1_builtin_sigalgs.pod
+GENERATE[html/man3/SSL_get1_builtin_sigalgs.html]=man3/SSL_get1_builtin_sigalgs.pod
+DEPEND[man/man3/SSL_get1_builtin_sigalgs.3]=man3/SSL_get1_builtin_sigalgs.pod
+GENERATE[man/man3/SSL_get1_builtin_sigalgs.3]=man3/SSL_get1_builtin_sigalgs.pod
 DEPEND[html/man3/SSL_get_SSL_CTX.html]=man3/SSL_get_SSL_CTX.pod
 GENERATE[html/man3/SSL_get_SSL_CTX.html]=man3/SSL_get_SSL_CTX.pod
 DEPEND[man/man3/SSL_get_SSL_CTX.3]=man3/SSL_get_SSL_CTX.pod
@@ -3635,6 +3639,7 @@ html/man3/SSL_get0_connection.html \
 html/man3/SSL_get0_group_name.html \
 html/man3/SSL_get0_peer_rpk.html \
 html/man3/SSL_get0_peer_scts.html \
+html/man3/SSL_get1_builtin_sigalgs.html \
 html/man3/SSL_get_SSL_CTX.html \
 html/man3/SSL_get_all_async_fds.html \
 html/man3/SSL_get_certificate.html \
@@ -4296,6 +4301,7 @@ man/man3/SSL_get0_connection.3 \
 man/man3/SSL_get0_group_name.3 \
 man/man3/SSL_get0_peer_rpk.3 \
 man/man3/SSL_get0_peer_scts.3 \
+man/man3/SSL_get1_builtin_sigalgs.3 \
 man/man3/SSL_get_SSL_CTX.3 \
 man/man3/SSL_get_all_async_fds.3 \
 man/man3/SSL_get_certificate.3 \

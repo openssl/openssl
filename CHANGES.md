@@ -29,6 +29,11 @@ OpenSSL 3.4
 
 ### Changes between 3.3 and 3.4 [xx XXX xxxx]
 
+ * Add feature to retrieve configured TLS signature algorithms,
+   e.g., via the openssl list command.
+
+   *Michael Baentsch*
+
  * Add FIPS provider configuration option to enforce the a minimal
    MAC length check.  The option '-no_short_mac' can optionally be
    supplied to 'openssl fipsinstall'.

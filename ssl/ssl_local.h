@@ -2209,6 +2209,40 @@ typedef enum downgrade_en {
 #define TLSEXT_SIGALG_ecdsa_brainpoolP384r1_sha384              0x081b
 #define TLSEXT_SIGALG_ecdsa_brainpoolP512r1_sha512              0x081c
 
+/* Sigalgs names */
+#define TLSEXT_SIGALG_ecdsa_secp256r1_sha256_name                    "ecdsa_secp256r1_sha256"
+#define TLSEXT_SIGALG_ecdsa_secp384r1_sha384_name                    "ecdsa_secp384r1_sha384"
+#define TLSEXT_SIGALG_ecdsa_secp521r1_sha512_name                    "ecdsa_secp521r1_sha512"
+#define TLSEXT_SIGALG_ecdsa_sha224_name                              "ecdsa_sha224"
+#define TLSEXT_SIGALG_ecdsa_sha1_name                                "ecdsa_sha1"
+#define TLSEXT_SIGALG_rsa_pss_rsae_sha256_name                       "rsa_pss_rsae_sha256"
+#define TLSEXT_SIGALG_rsa_pss_rsae_sha384_name                       "rsa_pss_rsae_sha384"
+#define TLSEXT_SIGALG_rsa_pss_rsae_sha512_name                       "rsa_pss_rsae_sha512"
+#define TLSEXT_SIGALG_rsa_pss_pss_sha256_name                        "rsa_pss_pss_sha256"
+#define TLSEXT_SIGALG_rsa_pss_pss_sha384_name                        "rsa_pss_pss_sha384"
+#define TLSEXT_SIGALG_rsa_pss_pss_sha512_name                        "rsa_pss_pss_sha512"
+#define TLSEXT_SIGALG_rsa_pkcs1_sha256_name                          "rsa_pkcs1_sha256"
+#define TLSEXT_SIGALG_rsa_pkcs1_sha384_name                          "rsa_pkcs1_sha384"
+#define TLSEXT_SIGALG_rsa_pkcs1_sha512_name                          "rsa_pkcs1_sha512"
+#define TLSEXT_SIGALG_rsa_pkcs1_sha224_name                          "rsa_pkcs1_sha224"
+#define TLSEXT_SIGALG_rsa_pkcs1_sha1_name                            "rsa_pkcs1_sha1"
+#define TLSEXT_SIGALG_dsa_sha256_name                                "dsa_sha256"
+#define TLSEXT_SIGALG_dsa_sha384_name                                "dsa_sha384"
+#define TLSEXT_SIGALG_dsa_sha512_name                                "dsa_sha512"
+#define TLSEXT_SIGALG_dsa_sha224_name                                "dsa_sha224"
+#define TLSEXT_SIGALG_dsa_sha1_name                                  "dsa_sha1"
+#define TLSEXT_SIGALG_gostr34102012_256_intrinsic_name               "gost2012_256"
+#define TLSEXT_SIGALG_gostr34102012_512_intrinsic_name               "gost2012_512"
+#define TLSEXT_SIGALG_gostr34102012_256_gostr34112012_256_name       "gost2012_256"
+#define TLSEXT_SIGALG_gostr34102012_512_gostr34112012_512_name       "gost2012_512"
+#define TLSEXT_SIGALG_gostr34102001_gostr3411_name                   "gost2001_gost94"
+
+#define TLSEXT_SIGALG_ed25519_name                                   "ed25519"
+#define TLSEXT_SIGALG_ed448_name                                     "ed448"
+#define TLSEXT_SIGALG_ecdsa_brainpoolP256r1_sha256_name              "ecdsa_brainpoolP256r1_sha256"
+#define TLSEXT_SIGALG_ecdsa_brainpoolP384r1_sha384_name              "ecdsa_brainpoolP384r1_sha384"
+#define TLSEXT_SIGALG_ecdsa_brainpoolP512r1_sha512_name              "ecdsa_brainpoolP512r1_sha512"
+
 /* Known PSK key exchange modes */
 #define TLSEXT_KEX_MODE_KE                                      0x00
 #define TLSEXT_KEX_MODE_KE_DHE                                  0x01
