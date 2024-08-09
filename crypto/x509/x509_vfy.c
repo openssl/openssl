@@ -1606,6 +1606,8 @@ static int check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
         issuer = sk_X509_value(ctx->chain, cnum + 1);
     } else {
         issuer = sk_X509_value(ctx->chain, chnum);
+        if (!ossl_assert(issuer != NULL))
+            return 0;
         /* If not self-issued, can't check signature */
         if (!ctx->check_issued(ctx, issuer, issuer) &&
             !verify_cb_crl(ctx, X509_V_ERR_UNABLE_TO_GET_CRL_ISSUER))
