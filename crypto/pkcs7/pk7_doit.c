@@ -17,6 +17,9 @@
 #include "internal/sizes.h"
 #include "crypto/evp.h"
 #include "pk7_local.h"
+#include "openssl/evp.h"
+#include "crypto/evp.h"
+#include "crypto/rsa.h"
 
 static int add_attribute(STACK_OF(X509_ATTRIBUTE) **sk, int nid, int atrtype,
                          void *value);
@@ -1118,6 +1121,14 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
     if (pkey == NULL) {
         ret = -1;
         goto err;
+    }
+
+    if (OBJ_obj2nid(si->digest_enc_alg->algorithm) == EVP_PKEY_RSA_PSS) {
+        i = ossl_rsa_pss_to_ctx(ctx, NULL, si->digest_enc_alg, pkey);
+        if (i <= 0) {
+            ret = -1;
+            goto err;
+        }
     }
 
     i = EVP_VerifyFinal_ex(mdc_tmp, os->data, os->length, pkey, libctx, propq);
