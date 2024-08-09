@@ -4944,6 +4944,7 @@ static int custom_md_cleanup(EVP_MD_CTX *ctx)
 
 static int test_custom_md_meth(void)
 {
+    ASN1_OBJECT *o = NULL;
     EVP_MD_CTX *mdctx = NULL;
     EVP_MD *tmp = NULL;
     char mess[] = "Test Message\n";
@@ -4989,8 +4990,21 @@ static int test_custom_md_meth(void)
             || !TEST_int_eq(custom_md_cleanup_called, 1))
         goto err;
 
+    if (!TEST_int_eq(OBJ_create("1.3.6.1.4.1.16604.998866.1",
+                                "custom-md", "custom-md"), NID_undef)
+            || !TEST_int_eq(ERR_GET_LIB(ERR_peek_error()), ERR_LIB_OBJ)
+            || !TEST_int_eq(ERR_GET_REASON(ERR_get_error()), OBJ_R_OID_EXISTS))
+        goto err;
+
+    o = ASN1_OBJECT_create(nid, (unsigned char *)
+                                "\53\6\1\4\1\201\201\134\274\373\122\1", 12,
+                                "custom-md", "custom-md");
+    if (!TEST_int_eq(OBJ_add_object(o), nid))
+        goto err;
+
     testresult = 1;
  err:
+    ASN1_OBJECT_free(o);
     EVP_MD_CTX_free(mdctx);
     EVP_MD_meth_free(tmp);
     return testresult;
