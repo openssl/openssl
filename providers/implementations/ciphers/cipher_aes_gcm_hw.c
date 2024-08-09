@@ -36,7 +36,7 @@ static int aes_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
 
 # ifdef BSAES_CAPABLE
     if (BSAES_CAPABLE) {
-        GCM_HW_SET_KEY_CTR_FN(ks, AES_set_encrypt_key, AES_encrypt,
+        GCM_HW_SET_KEY_CTR_FN(ks, ossl_bsaes_set_encrypt_key, ossl_bsaes_encrypt,
                               ossl_bsaes_ctr32_encrypt_blocks);
     } else
 # endif /* BSAES_CAPABLE */
