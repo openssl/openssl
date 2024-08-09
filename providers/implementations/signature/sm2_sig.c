@@ -77,7 +77,6 @@ typedef struct {
 
     /* The Algorithm Identifier of the combined signature algorithm */
     unsigned char aid_buf[OSSL_MAX_ALGORITHM_ID_SIZE];
-    unsigned char *aid;
     size_t  aid_len;
 
     /* main digest */
@@ -207,6 +206,7 @@ static int sm2sig_digest_signverify_init(void *vpsm2ctx, const char *mdname,
     int md_nid;
     WPACKET pkt;
     int ret = 0;
+    unsigned char *aid = NULL;
 
     if (!sm2sig_signature_init(vpsm2ctx, ec, params)
         || !sm2sig_set_mdname(ctx, mdname))
@@ -232,9 +232,11 @@ static int sm2sig_digest_signverify_init(void *vpsm2ctx, const char *mdname,
         && ossl_DER_w_algorithmIdentifier_SM2_with_MD(&pkt, -1, ctx->ec, md_nid)
         && WPACKET_finish(&pkt)) {
         WPACKET_get_total_written(&pkt, &ctx->aid_len);
-        ctx->aid = WPACKET_get_curr(&pkt);
+        aid = WPACKET_get_curr(&pkt);
     }
     WPACKET_cleanup(&pkt);
+    if (aid != NULL && ctx->aid_len != 0)
+        memmove(ctx->aid_buf, aid, ctx->aid_len);
 
     if (!EVP_DigestInit_ex2(ctx->mdctx, ctx->md, params))
         goto error;
@@ -398,7 +400,9 @@ static int sm2sig_get_ctx_params(void *vpsm2ctx, OSSL_PARAM *params)
 
     p = OSSL_PARAM_locate(params, OSSL_SIGNATURE_PARAM_ALGORITHM_ID);
     if (p != NULL
-        && !OSSL_PARAM_set_octet_string(p, psm2ctx->aid, psm2ctx->aid_len))
+        && !OSSL_PARAM_set_octet_string(p, psm2ctx->aid_len == 0
+                                           ? NULL : psm2ctx->aid_buf,
+                                        psm2ctx->aid_len))
         return 0;
 
     p = OSSL_PARAM_locate(params, OSSL_SIGNATURE_PARAM_DIGEST_SIZE);
