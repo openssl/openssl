@@ -304,7 +304,9 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
     int loclstate;
 #if !defined(OPENSSL_NO_FIPS_POST)
     int ok = 0;
+# if defined(OSSL_POST_140_2_INDICATOR)
     int kats_already_passed = 0;
+# endif
     long checksum_len;
     OSSL_CORE_BIO *bio_module = NULL, *bio_indicator = NULL;
     unsigned char *module_checksum = NULL;
@@ -371,6 +373,7 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
         goto end;
     }
 
+# if defined(OSSL_POST_140_2_INDICATOR)
     /* This will be NULL during installation - so the self test KATS will run */
     if (st->indicator_data != NULL) {
         /*
@@ -408,12 +411,12 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
      * NOTE: If the installation option 'self_test_onload' is chosen then this
      * path will always be run, since kats_already_passed will always be 0.
      */
-    if (on_demand_test || kats_already_passed == 0) {
+    if (on_demand_test || kats_already_passed == 0)
+# endif /* OSSL_POST_140_2_INDICATOR */
         if (!SELF_TEST_kats(ev, st->libctx)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_SELF_TEST_KAT_FAILURE);
             goto end;
         }
-    }
 
     /* Verify that the RNG has been restored properly */
     rng = ossl_rand_get0_private_noncreating(st->libctx);
