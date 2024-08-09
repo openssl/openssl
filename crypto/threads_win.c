@@ -78,7 +78,7 @@ struct thread_qp {
     CRYPTO_RCU_LOCK *lock;
 };
 
-#define MAX_QPS 10
+# define MAX_QPS 10
 /*
  * This is the per thread tracking data
  * that is assigned to each thread participating
@@ -390,7 +390,8 @@ void ossl_synchronize_rcu(CRYPTO_RCU_LOCK *lock)
     struct rcu_cb_item *cb_items, *tmpcb;
 
     /* before we do anything else, lets grab the cb list */
-    cb_items = InterlockedExchangePointer((void * volatile *)&lock->cb_items, NULL);
+    cb_items = InterlockedExchangePointer((void * volatile *)&lock->cb_items,
+                                          NULL);
 
     qp = update_qp(lock);
 
@@ -433,7 +434,8 @@ int ossl_rcu_call(CRYPTO_RCU_LOCK *lock, rcu_cb_fn cb, void *data)
     new->data = data;
     new->fn = cb;
 
-    new->next = InterlockedExchangePointer((void * volatile *)&lock->cb_items, new);
+    new->next = InterlockedExchangePointer((void * volatile *)&lock->cb_items,
+                                           new);
     return 1;
 }
 
@@ -623,14 +625,15 @@ int CRYPTO_THREAD_compare_id(CRYPTO_THREAD_ID a, CRYPTO_THREAD_ID b)
 
 int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock)
 {
-    *ret = (int)InterlockedExchangeAdd((long volatile *)val, (long)amount) + amount;
+    *ret = (int)InterlockedExchangeAdd((LONG volatile *)val, (LONG)amount)
+        + amount;
     return 1;
 }
 
 int CRYPTO_atomic_add64(uint64_t *val, uint64_t op, uint64_t *ret,
                         CRYPTO_RWLOCK *lock)
 {
-#if (defined(NO_INTERLOCKEDOR64))
+# if (defined(NO_INTERLOCKEDOR64))
     if (lock == NULL || !CRYPTO_THREAD_write_lock(lock))
         return 0;
     *val += op;
@@ -640,16 +643,16 @@ int CRYPTO_atomic_add64(uint64_t *val, uint64_t op, uint64_t *ret,
         return 0;
 
     return 1;
-#else
+# else
     *ret = (uint64_t)InterlockedAdd64((LONG64 volatile *)val, (LONG64)op);
     return 1;
-#endif
+# endif
 }
 
 int CRYPTO_atomic_and(uint64_t *val, uint64_t op, uint64_t *ret,
                       CRYPTO_RWLOCK *lock)
 {
-#if (defined(NO_INTERLOCKEDOR64))
+# if (defined(NO_INTERLOCKEDOR64))
     if (lock == NULL || !CRYPTO_THREAD_write_lock(lock))
         return 0;
     *val &= op;
@@ -659,16 +662,16 @@ int CRYPTO_atomic_and(uint64_t *val, uint64_t op, uint64_t *ret,
         return 0;
 
     return 1;
-#else
+# else
     *ret = (uint64_t)InterlockedAnd64((LONG64 volatile *)val, (LONG64)op) & op;
     return 1;
-#endif
+# endif
 }
 
 int CRYPTO_atomic_or(uint64_t *val, uint64_t op, uint64_t *ret,
                      CRYPTO_RWLOCK *lock)
 {
-#if (defined(NO_INTERLOCKEDOR64))
+# if (defined(NO_INTERLOCKEDOR64))
     if (lock == NULL || !CRYPTO_THREAD_write_lock(lock))
         return 0;
     *val |= op;
@@ -678,15 +681,15 @@ int CRYPTO_atomic_or(uint64_t *val, uint64_t op, uint64_t *ret,
         return 0;
 
     return 1;
-#else
+# else
     *ret = (uint64_t)InterlockedOr64((LONG64 volatile *)val, (LONG64)op) | op;
     return 1;
-#endif
+# endif
 }
 
 int CRYPTO_atomic_load(uint64_t *val, uint64_t *ret, CRYPTO_RWLOCK *lock)
 {
-#if (defined(NO_INTERLOCKEDOR64))
+# if (defined(NO_INTERLOCKEDOR64))
     if (lock == NULL || !CRYPTO_THREAD_read_lock(lock))
         return 0;
     *ret = *val;
@@ -694,15 +697,15 @@ int CRYPTO_atomic_load(uint64_t *val, uint64_t *ret, CRYPTO_RWLOCK *lock)
         return 0;
 
     return 1;
-#else
+# else
     *ret = (uint64_t)InterlockedOr64((LONG64 volatile *)val, 0);
     return 1;
-#endif
+# endif
 }
 
 int CRYPTO_atomic_store(uint64_t *dst, uint64_t val, CRYPTO_RWLOCK *lock)
 {
-#if (defined(NO_INTERLOCKEDOR64))
+# if (defined(NO_INTERLOCKEDOR64))
     if (lock == NULL || !CRYPTO_THREAD_read_lock(lock))
         return 0;
     *dst = val;
@@ -710,15 +713,15 @@ int CRYPTO_atomic_store(uint64_t *dst, uint64_t val, CRYPTO_RWLOCK *lock)
         return 0;
 
     return 1;
-#else
+# else
     InterlockedExchange64(dst, val);
     return 1;
-#endif
+# endif
 }
 
 int CRYPTO_atomic_load_int(int *val, int *ret, CRYPTO_RWLOCK *lock)
 {
-#if (defined(NO_INTERLOCKEDOR64))
+# if (defined(NO_INTERLOCKEDOR64))
     if (lock == NULL || !CRYPTO_THREAD_read_lock(lock))
         return 0;
     *ret = *val;
@@ -726,11 +729,11 @@ int CRYPTO_atomic_load_int(int *val, int *ret, CRYPTO_RWLOCK *lock)
         return 0;
 
     return 1;
-#else
+# else
     /* On Windows, LONG (but not long) is always the same size as int. */
     *ret = (int)InterlockedOr((LONG volatile *)val, 0);
     return 1;
-#endif
+# endif
 }
 
 int openssl_init_fork_handlers(void)
