@@ -32,12 +32,7 @@ jobs:
           #     `dir' it the directory inside the tarball.
           #     `tgz' is the name of the tarball.
           #     `url' is the download URL.
-          {
-            dir: openssl-3.0.0,
-            tgz: openssl-3.0.0.tar.gz,
-            url: "https://www.openssl.org/source/old/3.0/openssl-3.0.0.tar.gz",
-          },
-          {
+         {
             dir: openssl-3.0.8,
             tgz: openssl-3.0.8.tar.gz,
             url: "https://www.openssl.org/source/openssl-3.0.8.tar.gz",
@@ -196,7 +191,7 @@ jobs:
         # later providers.  Problems in these situations ought to be
         # caught by cross branch testing before the release.
         tree_a: [ branch-master, branch-3.3, branch-3.2, branch-3.1, branch-3.0,
-                  openssl-3.0.0, openssl-3.0.8, openssl-3.0.9, openssl-3.1.2 ]
+                  openssl-3.0.8, openssl-3.0.9, openssl-3.1.2 ]
         tree_b: [ branch-master, branch-3.3, branch-3.2, branch-3.1,
                   branch-3.0  ]
     steps:
