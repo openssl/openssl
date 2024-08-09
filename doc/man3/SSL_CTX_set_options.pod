@@ -279,6 +279,15 @@ RFC7627 Extended Master Secret option on TLS and DTLS connection.
 If this option is set, Extended Master Secret is disabled. Clients will
 not propose, and servers will not accept the extension.
 
+=item SSL_OP_NO_DTLS_RECORD_REPLAY_CHECK
+
+Turn off DTLS replay detect as described in RFC 6374 section 4.1.2.6.
+By default, replay detect is built in DTLS record handling. Some 
+applications may be able to mitigate the replay risks in other ways and 
+in such cases the detection is not required. Those applications can turn
+this feature off by setting this option. Only affects DTLS over non-SCTP
+connections.
+
 =item SSL_OP_NO_QUERY_MTU
 
 Do not query the MTU. Only affects DTLS connections.
