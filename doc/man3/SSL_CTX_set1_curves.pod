@@ -43,22 +43,46 @@ When setting such groups applications should use the "list" form of these
 functions (i.e. SSL_CTX_set1_groups_list() and SSL_set1_groups_list).
 
 SSL_CTX_set1_groups() sets the supported groups for B<ctx> to B<glistlen>
-groups in the array B<glist>. The array consist of all NIDs of groups in
-preference order. For a TLS client the groups are used directly in the
-supported groups extension. For a TLS server the groups are used to
-determine the set of shared groups. Currently supported groups for
-B<TLSv1.3> are B<NID_X9_62_prime256v1>, B<NID_secp384r1>, B<NID_secp521r1>,
-B<NID_X25519>, B<NID_X448>, B<NID_brainpoolP256r1tls13>,
-B<NID_brainpoolP384r1tls13>, B<NID_brainpoolP512r1tls13>, B<NID_ffdhe2048>,
-B<NID_ffdhe3072>, B<NID_ffdhe4096>, B<NID_ffdhe6144> and B<NID_ffdhe8192>.
+groups in the array B<glist>. The array consist of all NIDs of supported groups.
+Currently supported groups for B<TLSv1.3> are B<NID_X9_62_prime256v1>,
+B<NID_secp384r1>, B<NID_secp521r1>, B<NID_X25519>, B<NID_X448>,
+B<NID_brainpoolP256r1tls13>, B<NID_brainpoolP384r1tls13>,
+B<NID_brainpoolP512r1tls13>, B<NID_ffdhe2048>, B<NID_ffdhe3072>,
+B<NID_ffdhe4096>, B<NID_ffdhe6144> and B<NID_ffdhe8192>.
+OpenSSL will use this array in different ways depending on TLS role and version:
+
+=over 4
+
+=item For a TLS client, the groups are used directly in the supported groups
+extension. The extension's preference order, to be evaluated by the server, is
+determined by the order of the elements in the array.
+
+=item For a TLS 1.2 server, the groups determine the selected group. If
+B<SSL_OP_CIPHER_SERVER_PREFERENCE> is set, the order of the elements in the
+array determines the selected group. Otherwise, the order is ignored and the
+client's order determines the selection.
+
+=item For a TLS 1.3 server, the groups determine the selected group, but
+selection is more complex. A TLS 1.3 client sends both a group list as well as a
+predicted subset of groups. Choosing a group outside the predicted subset incurs
+an extra roundtrip. However, in some situations, the most preferred group may
+not be predicted. OpenSSL considers all supported groups to be comparable in
+security and prioritizes avoiding roundtrips above either client or server
+preference order. If an application uses an external provider to extend OpenSSL
+with, e.g., a post-quantum algorithm, this behavior may allow a network attacker
+to downgrade connections to a weaker algorithm.
+
+=back
 
 SSL_CTX_set1_groups_list() sets the supported groups for B<ctx> to
 string B<list>. The string is a colon separated list of group names, for example
-"P-521:P-384:P-256:X25519:ffdhe2048". Currently supported groups for B<TLSv1.3>
-are B<P-256>, B<P-384>, B<P-521>, B<X25519>, B<X448>, B<brainpoolP256r1tls13>,
-B<brainpoolP384r1tls13>, B<brainpoolP512r1tls13>, B<ffdhe2048>, B<ffdhe3072>,
-B<ffdhe4096>, B<ffdhe6144> and B<ffdhe8192>. Support for other groups may be
-added by external providers. If a group name is preceded with the C<?>
+"P-521:P-384:P-256:X25519:ffdhe2048". The groups are used as in
+SSL_CTX_set1_groups(), described above. Currently supported groups for
+B<TLSv1.3> are B<P-256>, B<P-384>, B<P-521>, B<X25519>, B<X448>,
+B<brainpoolP256r1tls13>, B<brainpoolP384r1tls13>, B<brainpoolP512r1tls13>,
+B<ffdhe2048>, B<ffdhe3072>, B<ffdhe4096>, B<ffdhe6144> and B<ffdhe8192>. Support
+for other groups may be added by external providers, however note the discussion
+on TLS 1.3 selection criteria above. If a group name is preceded with the C<?>
 character, it will be ignored if an implementation is missing.
 
 SSL_set1_groups() and SSL_set1_groups_list() are similar except they set
@@ -145,6 +169,10 @@ was added in OpenSSL 3.0.0.
 
 Support for ignoring unknown groups in SSL_CTX_set1_groups_list() and
 SSL_set1_groups_list() was added in OpenSSL 3.3.
+
+Earlier versions of this document described the list as a preference order.
+However, OpenSSL's behavior as a TLS 1.3 server is to consider I<all>
+supported groups as comparable in security.
 
 =head1 COPYRIGHT
 
