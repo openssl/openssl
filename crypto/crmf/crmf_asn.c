@@ -58,6 +58,21 @@ ASN1_SEQUENCE(OSSL_CRMF_ENCRYPTEDVALUE) = {
 } ASN1_SEQUENCE_END(OSSL_CRMF_ENCRYPTEDVALUE)
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_CRMF_ENCRYPTEDVALUE)
 
+/*
+ * Note from CMP Updates defining CMPv3:
+ * The EncryptedKey structure defined in CRMF [RFC4211] is reused
+ * here, which makes the update backward compatible.  Using the new
+ * syntax with the untagged default choice EncryptedValue is bits-on-
+ * the-wire compatible with the old syntax.
+ */
+ASN1_CHOICE(OSSL_CRMF_ENCRYPTEDKEY) = {
+    ASN1_SIMPLE(OSSL_CRMF_ENCRYPTEDKEY, value.encryptedValue, OSSL_CRMF_ENCRYPTEDVALUE),
+#ifndef OPENSSL_NO_CMS
+    ASN1_IMP(OSSL_CRMF_ENCRYPTEDKEY, value.envelopedData, CMS_EnvelopedData, 0),
+#endif
+} ASN1_CHOICE_END(OSSL_CRMF_ENCRYPTEDKEY)
+IMPLEMENT_ASN1_FUNCTIONS(OSSL_CRMF_ENCRYPTEDKEY)
+
 ASN1_SEQUENCE(OSSL_CRMF_SINGLEPUBINFO) = {
     ASN1_SIMPLE(OSSL_CRMF_SINGLEPUBINFO, pubMethod, ASN1_INTEGER),
     ASN1_SIMPLE(OSSL_CRMF_SINGLEPUBINFO, pubLocation, GENERAL_NAME)

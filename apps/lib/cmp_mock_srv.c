@@ -19,6 +19,7 @@
 typedef struct {
     X509 *refCert;             /* cert to expect for oldCertID in kur/rr msg */
     X509 *certOut;             /* certificate to be returned in cp/ip/kup msg */
+    EVP_PKEY *certOutKey;     /* Private key to be returned for central keygen */
     X509_CRL *crlOut;          /* CRL to be returned in genp for crls */
     STACK_OF(X509) *chainOut;  /* chain of certOut to add to extraCerts field */
     STACK_OF(X509) *caPubsOut; /* used in caPubs of ip and in caCerts of genp */
@@ -86,6 +87,22 @@ static mock_srv_ctx *mock_srv_ctx_new(void)
 
 DEFINE_OSSL_SET1_CERT(refCert)
 DEFINE_OSSL_SET1_CERT(certOut)
+
+int ossl_cmp_mock_srv_set1_certOutKey(OSSL_CMP_SRV_CTX *srv_ctx,
+                                      EVP_PKEY *pkey)
+{
+    mock_srv_ctx *ctx = OSSL_CMP_SRV_CTX_get0_custom_ctx(srv_ctx);
+
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
+        return 0;
+    }
+    if (pkey != NULL && !EVP_PKEY_up_ref(pkey))
+        return 0;
+    EVP_PKEY_free(ctx->certOutKey);
+    ctx->certOutKey = pkey;
+    return 1;
+}
 
 int ossl_cmp_mock_srv_set1_crlOut(OSSL_CMP_SRV_CTX *srv_ctx,
                                   X509_CRL *crl)
@@ -275,6 +292,7 @@ static OSSL_CMP_PKISI *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
     mock_srv_ctx *ctx = OSSL_CMP_SRV_CTX_get0_custom_ctx(srv_ctx);
     int bodytype;
     OSSL_CMP_PKISI *si = NULL;
+    EVP_PKEY *certOutKey = NULL;
 
     if (ctx == NULL || cert_req == NULL
             || certOut == NULL || chainOut == NULL || caPubs == NULL) {
@@ -357,6 +375,13 @@ static OSSL_CMP_PKISI *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
     if (ctx->certOut != NULL
             && (*certOut = X509_dup(ctx->certOut)) == NULL)
         /* Should return a cert produced from request template, see FR #16054 */
+        goto err;
+    if (ctx->certOutKey != NULL
+        && OSSL_CMP_SRV_CTX_centralKeygen_req(crm, (X509_REQ *) p10cr)
+        /* using newPkey to return the private key */
+        && (((certOutKey = EVP_PKEY_dup(ctx->certOutKey)) == NULL)
+            || !OSSL_CMP_CTX_set0_newPkey(OSSL_CMP_SRV_CTX_get0_cmp_ctx(srv_ctx),
+                                          1 /* priv */, certOutKey)))
         goto err;
     if (ctx->chainOut != NULL
             && (*chainOut = X509_chain_up_ref(ctx->chainOut)) == NULL)

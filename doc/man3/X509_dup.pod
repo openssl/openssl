@@ -32,6 +32,7 @@ CMS_ContentInfo_new,
 CMS_ContentInfo_new_ex,
 CMS_ContentInfo_print_ctx,
 CMS_EnvelopedData_it,
+CMS_EnvelopedData_dup,
 CMS_ReceiptRequest_free,
 CMS_ReceiptRequest_new,
 CMS_SignedData_free,
@@ -169,6 +170,9 @@ OSSL_CRMF_CERTTEMPLATE_new,
 OSSL_CRMF_CERTTEMPLATE_dup,
 OSSL_CRMF_ATTRIBUTETYPEANDVALUE_dup,
 OSSL_CRMF_ATTRIBUTETYPEANDVALUE_free,
+OSSL_CRMF_ENCRYPTEDKEY_free,
+OSSL_CRMF_ENCRYPTEDKEY_it,
+OSSL_CRMF_ENCRYPTEDKEY_new,
 OSSL_CRMF_ENCRYPTEDVALUE_free,
 OSSL_CRMF_ENCRYPTEDVALUE_it,
 OSSL_CRMF_ENCRYPTEDVALUE_new,
@@ -447,6 +451,9 @@ CMS_ContentInfo_new_ex() were added in OpenSSL 3.0.
 
 The functions DSAparams_dup(), RSAPrivateKey_dup() and RSAPublicKey_dup() were
 deprecated in 3.0.
+
+The function CMS_EnvelopedData_dup(), OSSL_CRMF_ENCRYPTEDKEY_free(),
+OSSL_CRMF_ENCRYPTEDKEY_it() and OSSL_CRMF_ENCRYPTEDKEY_new() were added in OpenSSL 3.4.
 
 =head1 COPYRIGHT
 

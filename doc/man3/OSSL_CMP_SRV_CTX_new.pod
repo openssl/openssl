@@ -21,7 +21,8 @@ OSSL_CMP_SRV_CTX_get0_custom_ctx,
 OSSL_CMP_SRV_CTX_set_send_unprotected_errors,
 OSSL_CMP_SRV_CTX_set_accept_unprotected,
 OSSL_CMP_SRV_CTX_set_accept_raverified,
-OSSL_CMP_SRV_CTX_set_grant_implicit_confirm
+OSSL_CMP_SRV_CTX_set_grant_implicit_confirm,
+OSSL_CMP_SRV_CTX_centralKeygen_req
 - generic functions to set up and control a CMP server
 
 =head1 SYNOPSIS
@@ -91,6 +92,8 @@ OSSL_CMP_SRV_CTX_set_grant_implicit_confirm
  int OSSL_CMP_SRV_CTX_set_accept_raverified(OSSL_CMP_SRV_CTX *srv_ctx, int val);
  int OSSL_CMP_SRV_CTX_set_grant_implicit_confirm(OSSL_CMP_SRV_CTX *srv_ctx,
                                                  int val);
+ int OSSL_CMP_SRV_CTX_centralKeygen_req(const OSSL_CRMF_MSG *crm,
+                                        X509_REQ *p10cr);
 
 =head1 DESCRIPTION
 
@@ -154,6 +157,11 @@ messages with POPO 'RAVerified'.
 
 OSSL_CMP_SRV_CTX_set_grant_implicit_confirm() enables granting implicit
 confirmation of newly enrolled certificates if requested.
+
+OSSL_CMP_SRV_CTX_centralKeygen_req() returns I<true> if central key generaion
+is requested i.e, public key in certificate request (I<crm> or I<p10cr>) is NULL
+or have zero length.
+
 
 =head1 NOTES
 
