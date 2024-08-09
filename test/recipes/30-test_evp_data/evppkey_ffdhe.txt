@@ -16,7 +16,7 @@ Title = RFC7919 DH tests
 
 # Key generation test
 KeyGen = dhKeyAgreement
-Ctrl = dh_param:ffdhe2048
+Ctrl = group:ffdhe2048
 KeyName = tmpdh
 
 # ffdhe2048-1 and ffdhe2048-2 were randomly generated and have a shared secret
