@@ -30,8 +30,15 @@ for each on the TNS/X (L-Series) platform:
 
  * `nonstop-nsx` or default will select an unthreaded 32-bit build.
  * `nonstop-nsx_64` selects an unthreaded 64-bit memory and file length build.
+ * `nonstop-nsx_64_klt` selects the 64-bit memory and file length KLT build.
  * `nonstop-nsx_put` selects the PUT build.
  * `nonstop-nsx_64_put` selects the 64-bit memory and file length PUT build.
+
+The KLT threading model is a newly released model on NonStop. It implements
+kernel-level threading. KLT provides much closer threading to what OpenSSL
+uses for Linux-like threading models. KLT continues to use the pthread library
+API. There is no supported 32-bit or Guardian builds for KLT. Note: KLT is
+not currently available but is planned for post-2024.
 
 The SPT threading model is no longer supported as of OpenSSL 3.2.
 
