@@ -57,6 +57,7 @@ typedef enum OPTION_choice {
     OPT_SSKDF_KEY_CHECK,
     OPT_X963KDF_KEY_CHECK,
     OPT_NO_PBKDF2_LOWER_BOUND_CHECK,
+    OPT_ECDH_COFACTOR_CHECK,
     OPT_SELF_TEST_ONLOAD, OPT_SELF_TEST_ONINSTALL
 } OPTION_CHOICE;
 
@@ -122,6 +123,8 @@ const OPTIONS fipsinstall_options[] = {
      "Enable key check for X963KDF"},
     {"no_pbkdf2_lower_bound_check", OPT_NO_PBKDF2_LOWER_BOUND_CHECK, '-',
      "Disable lower bound check for PBKDF2"},
+    {"ecdh_cofactor_check", OPT_ECDH_COFACTOR_CHECK, '-',
+     "Enable Cofactor check for ECDH"},
     OPT_SECTION("Input"),
     {"in", OPT_IN, '<', "Input config file, used when verifying"},
 
@@ -164,6 +167,7 @@ typedef struct {
     unsigned int sskdf_key_check : 1;
     unsigned int x963kdf_key_check : 1;
     unsigned int pbkdf2_lower_bound_check : 1;
+    unsigned int ecdh_cofactor_check : 1;
 } FIPS_OPTS;
 
 /* Pedantic FIPS compliance */
@@ -193,6 +197,7 @@ static const FIPS_OPTS pedantic_opts = {
     1,      /* sskdf_key_check */
     1,      /* x963kdf_key_check */
     1,      /* pbkdf2_lower_bound_check */
+    1,      /* ecdh_cofactor_check */
 };
 
 /* Default FIPS settings for backward compatibility */
@@ -222,6 +227,7 @@ static FIPS_OPTS fips_opts = {
     0,      /* sskdf_key_check */
     0,      /* x963kdf_key_check */
     1,      /* pbkdf2_lower_bound_check */
+    0,      /* ecdh_cofactor_check */
 };
 
 static int check_non_pedantic_fips(int pedantic, const char *name)
@@ -393,6 +399,8 @@ static int write_config_fips_section(BIO *out, const char *section,
         || BIO_printf(out, "%s = %s\n",
                       OSSL_PROV_FIPS_PARAM_PBKDF2_LOWER_BOUND_CHECK,
                       opts->pbkdf2_lower_bound_check ? "1" : "0") <= 0
+        || BIO_printf(out, "%s = %s\n", OSSL_PROV_FIPS_PARAM_ECDH_COFACTOR_CHECK,
+                      opts->ecdh_cofactor_check ? "1": "0") <= 0
         || !print_mac(out, OSSL_PROV_FIPS_PARAM_MODULE_MAC, module_mac,
                       module_mac_len))
         goto end;
@@ -640,6 +648,9 @@ int fipsinstall_main(int argc, char **argv)
             if (!check_non_pedantic_fips(pedantic, "no_pbkdf2_lower_bound_check"))
                 goto end;
             fips_opts.pbkdf2_lower_bound_check = 0;
+            break;
+        case OPT_ECDH_COFACTOR_CHECK:
+            fips_opts.ecdh_cofactor_check = 1;
             break;
         case OPT_QUIET:
             quiet = 1;

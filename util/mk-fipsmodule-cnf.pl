@@ -22,6 +22,7 @@ my $pkcs15_pad_disable = 1;
 my $rsa_sign_x931_pad_disabled = 1;
 my $kdf_key_check = 1;
 my $pbkdf2_lower_bound_check = 1;
+my $ec_cofactor_check = 1;
 
 my $activate = 1;
 my $version = 1;
@@ -77,4 +78,5 @@ sshkdf-key-check = $kdf_key_check
 sskdf-key-check = $kdf_key_check
 x963kdf-key-check = $kdf_key_check
 pbkdf2-lower-bound-check = $pbkdf2_lower_bound_check
+ecdh-cofactor-check = $ec_cofactor_check
 _____

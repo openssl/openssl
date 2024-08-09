@@ -1030,6 +1030,7 @@ PROV_R_BAD_LENGTH:142:bad length
 PROV_R_BAD_TLS_CLIENT_VERSION:161:bad tls client version
 PROV_R_BN_ERROR:160:bn error
 PROV_R_CIPHER_OPERATION_FAILED:102:cipher operation failed
+PROV_R_COFACTOR_REQUIRED:236:cofactor required
 PROV_R_DERIVATION_FUNCTION_INIT_FAILED:205:derivation function init failed
 PROV_R_DIGEST_NOT_ALLOWED:174:digest not allowed
 PROV_R_EMS_NOT_ENABLED:233:ems not enabled
