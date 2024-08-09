@@ -16,11 +16,6 @@ typedef struct self_test_post_params_st {
     const char *module_filename;            /* Module file to perform MAC on */
     const char *module_checksum_data;       /* Expected module MAC integrity */
 
-    /* Used for KAT install indicator integrity check */
-    const char *indicator_version;          /* version - for future proofing */
-    const char *indicator_data;             /* data to perform MAC on */
-    const char *indicator_checksum_data;    /* Expected MAC integrity value */
-
     /* Used for continuous tests */
     const char *conditional_error_check;
 
