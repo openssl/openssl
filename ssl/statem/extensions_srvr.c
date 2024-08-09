@@ -288,7 +288,13 @@ int tls_parse_ctos_sig_algs_cert(SSL_CONNECTION *s, PACKET *pkt,
         return 0;
     }
 
-    if (!s->hit && !tls1_save_sigalgs(s, &supported_sig_algs, 1)) {
+    /*
+     * We use this routine on both clients and servers, and when clients
+     * get asked for PHA we need to always save the sigalgs regardless
+     * of whether it was a resumption or not.
+     */
+    if ((!s->server || (s->server && !s->hit))
+            && !tls1_save_sigalgs(s, &supported_sig_algs, 1)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         return 0;
     }
@@ -307,7 +313,13 @@ int tls_parse_ctos_sig_algs(SSL_CONNECTION *s, PACKET *pkt,
         return 0;
     }
 
-    if (!s->hit && !tls1_save_sigalgs(s, &supported_sig_algs, 0)) {
+    /*
+     * We use this routine on both clients and servers, and when clients
+     * get asked for PHA we need to always save the sigalgs regardless
+     * of whether it was a resumption or not.
+     */
+    if ((!s->server || (s->server && !s->hit))
+            && !tls1_save_sigalgs(s, &supported_sig_algs, 0)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         return 0;
     }
