@@ -2765,7 +2765,7 @@ __owur int tls1_group_id2nid(uint16_t group_id, int include_unknown);
 __owur uint16_t tls1_nid2group_id(int nid);
 __owur int tls1_check_group_id(SSL_CONNECTION *s, uint16_t group_id,
                                int check_own_curves);
-__owur uint16_t tls1_shared_group(SSL_CONNECTION *s, int nmatch);
+__owur uint16_t tls1_shared_group(SSL_CONNECTION *s, int nmatch, int ec, int dh);
 __owur int tls1_set_groups(uint16_t **pext, size_t *pextlen,
                            int *curves, size_t ncurves);
 __owur int tls1_set_groups_list(SSL_CTX *ctx, uint16_t **pext, size_t *pextlen,
