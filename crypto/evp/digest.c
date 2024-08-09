@@ -78,7 +78,6 @@ static int evp_md_ctx_reset_ex(EVP_MD_CTX *ctx, int keep_fetched)
     if (ctx == NULL)
         return 1;
 
-#ifndef FIPS_MODULE
     /*
      * pctx should be freed by the user of EVP_MD_CTX
      * if EVP_MD_CTX_FLAG_KEEP_PKEY_CTX is set
@@ -87,7 +86,6 @@ static int evp_md_ctx_reset_ex(EVP_MD_CTX *ctx, int keep_fetched)
         EVP_PKEY_CTX_free(ctx->pctx);
         ctx->pctx = NULL;
     }
-#endif
 
     evp_md_ctx_clear_digest(ctx, 0, keep_fetched);
     if (!keep_fetched)
