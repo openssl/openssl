@@ -41,6 +41,7 @@ typedef enum OPTION_choice {
     OPT_TLS_PRF_EMS_CHECK, OPT_EDDSA_NO_VERIFY_DIGESTED, OPT_NO_SHORT_MAC,
     OPT_DISALLOW_PKCS15_PADDING, OPT_DISALLOW_SIGNATURE_X931_PADDING,
     OPT_DISALLOW_DRGB_TRUNC_DIGEST,
+    OPT_SIGNATURE_DIGEST_CHECK,
     OPT_HKDF_DIGEST_CHECK,
     OPT_TLS13_KDF_DIGEST_CHECK,
     OPT_TLS1_PRF_DIGEST_CHECK,
@@ -86,6 +87,8 @@ const OPTIONS fipsinstall_options[] = {
     {"no_short_mac", OPT_NO_SHORT_MAC, '-', "Disallow short MAC output"},
     {"no_drbg_truncated_digests", OPT_DISALLOW_DRGB_TRUNC_DIGEST, '-',
      "Disallow truncated digests with Hash and HMAC DRBGs"},
+    {"signature_digest_check", OPT_SIGNATURE_DIGEST_CHECK, '-',
+     "Enable checking for approved digests for signatures"},
     {"hkdf_digest_check", OPT_HKDF_DIGEST_CHECK, '-',
      "Enable digest check for HKDF"},
     {"tls13_kdf_digest_check", OPT_TLS13_KDF_DIGEST_CHECK, '-',
@@ -146,6 +149,7 @@ typedef struct {
     unsigned int eddsa_no_verify_digested : 1;
     unsigned int no_short_mac : 1;
     unsigned int drgb_no_trunc_dgst : 1;
+    unsigned int signature_digest_check : 1;
     unsigned int hkdf_digest_check : 1;
     unsigned int tls13_kdf_digest_check : 1;
     unsigned int tls1_prf_digest_check : 1;
@@ -175,6 +179,7 @@ static const FIPS_OPTS pedantic_opts = {
     1,      /* eddsa_no_verify_digested */
     1,      /* no_short_mac */
     1,      /* drgb_no_trunc_dgst */
+    1,      /* signature_digest_check */
     1,      /* hkdf_digest_check */
     1,      /* tls13_kdf_digest_check */
     1,      /* tls1_prf_digest_check */
@@ -204,6 +209,7 @@ static FIPS_OPTS fips_opts = {
     0,      /* eddsa_no_verify_digested */
     0,      /* no_short_mac */
     0,      /* drgb_no_trunc_dgst */
+    0,      /* signature_digest_check */
     0,      /* hkdf_digest_check */
     0,      /* tls13_kdf_digest_check */
     0,      /* tls1_prf_digest_check */
@@ -347,8 +353,10 @@ static int write_config_fips_section(BIO *out, const char *section,
                       opts->eddsa_no_verify_digested ? "1" : "0") <= 0
         || BIO_printf(out, "%s = %s\n", OSSL_PROV_PARAM_NO_SHORT_MAC,
                       opts->no_short_mac ? "1" : "0") <= 0
-        || BIO_printf(out, "%s = %s\n", OSSL_PROV_PARAM_DRBG_TRUNC_DIGEST,
+        || BIO_printf(out, "%s = %s\n", OSSL_PROV_FIPS_PARAM_DRBG_TRUNC_DIGEST,
                       opts->drgb_no_trunc_dgst ? "1" : "0") <= 0
+        || BIO_printf(out, "%s = %s\n", OSSL_PROV_FIPS_PARAM_SIGNATURE_DIGEST_CHECK,
+                      opts->signature_digest_check ? "1" : "0") <= 0
         || BIO_printf(out, "%s = %s\n", OSSL_PROV_FIPS_PARAM_HKDF_DIGEST_CHECK,
                       opts->hkdf_digest_check ? "1": "0") <= 0
         || BIO_printf(out, "%s = %s\n",
@@ -584,6 +592,9 @@ int fipsinstall_main(int argc, char **argv)
             break;
         case OPT_DISALLOW_DRGB_TRUNC_DIGEST:
             fips_opts.drgb_no_trunc_dgst = 1;
+            break;
+        case OPT_SIGNATURE_DIGEST_CHECK:
+            fips_opts.signature_digest_check = 1;
             break;
         case OPT_HKDF_DIGEST_CHECK:
             fips_opts.hkdf_digest_check = 1;

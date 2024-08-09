@@ -343,6 +343,16 @@ static int rsa_setup_md(PROV_RSA_CTX *ctx, const char *mdname,
                            "digest=%s", mdname);
             goto err;
         }
+        /*
+         * XOF digests are not allowed except for RSA PSS.
+         * We don't support XOF digests with RSA PSS (yet), so just fail.
+         * When we do support them, uncomment the second clause.
+         */
+        if ((EVP_MD_get_flags(md) & EVP_MD_FLAG_XOF) != 0
+                /* && ctx->pad_mode != RSA_PKCS1_PSS_PADDING */) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_XOF_DIGESTS_NOT_ALLOWED);
+            goto err;
+        }
 #ifdef FIPS_MODULE
         {
             int sha1_allowed = (ctx->operation != EVP_PKEY_OP_SIGN);
@@ -350,7 +360,8 @@ static int rsa_setup_md(PROV_RSA_CTX *ctx, const char *mdname,
             if (!ossl_fips_ind_digest_sign_check(OSSL_FIPS_IND_GET(ctx),
                                                  OSSL_FIPS_IND_SETTABLE1,
                                                  ctx->libctx,
-                                                 md_nid, sha1_allowed, desc))
+                                                 md_nid, sha1_allowed, desc,
+                                                 &FIPS_fips_signature_digest_check))
                 goto err;
         }
 #endif

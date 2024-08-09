@@ -156,6 +156,11 @@ static int dsa_setup_md(PROV_DSA_CTX *ctx,
                                "%s exceeds name buffer length", mdname);
             goto err;
         }
+        /* XOF digests don't work */
+        if ((EVP_MD_get_flags(md) & EVP_MD_FLAG_XOF) != 0) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_XOF_DIGESTS_NOT_ALLOWED);
+            goto err;
+        }
 #ifdef FIPS_MODULE
         {
             int sha1_allowed = (ctx->operation != EVP_PKEY_OP_SIGN);
@@ -163,7 +168,8 @@ static int dsa_setup_md(PROV_DSA_CTX *ctx,
             if (!ossl_fips_ind_digest_sign_check(OSSL_FIPS_IND_GET(ctx),
                                                  OSSL_FIPS_IND_SETTABLE1,
                                                  ctx->libctx, md_nid, sha1_allowed,
-                                                 desc))
+                                                 desc,
+                                                 &FIPS_fips_signature_digest_check))
                 goto err;
         }
 #endif
@@ -229,7 +235,7 @@ static int dsa_check_key(PROV_DSA_CTX *ctx, int sign, const char *desc)
     if (!approved) {
         if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE0,
                                          ctx->libctx, desc, "DSA Key",
-                                         ossl_securitycheck_enabled)) {
+                                         FIPS_fips_signature_digest_check)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
             return 0;
         }

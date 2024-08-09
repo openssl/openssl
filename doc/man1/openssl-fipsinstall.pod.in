@@ -25,6 +25,7 @@ B<openssl fipsinstall>
 [B<-ems_check>]
 [B<-eddsa_no_verify_digested>]
 [B<-no_drbg_truncated_digests>]
+[B<-signature_digest_check>]
 [B<-hkdf_digest_check>]
 [B<-tls13_kdf_digest_check>]
 [B<-tls1_prf_digest_check>]
@@ -220,6 +221,11 @@ See SP 800-185 8.4.2 and FIPS 140-3 ID C.D for details.
 
 Configure the module to not allow truncated digests to be used with Hash and
 HMAC DRBGs.  See FIPS 140-3 IG D.R for details.
+
+=item B<-signature_digest_check>
+
+Configure the module to enforce signature algorithms to use digests that are
+explicitly permitted by the various standards.
 
 =item B<-hkdf_digest_check>
 
