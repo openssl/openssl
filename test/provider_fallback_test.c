@@ -39,9 +39,15 @@ static int test_explicit_provider(void)
     int ok;
 
     ok = TEST_ptr(ctx = OSSL_LIB_CTX_new())
-        && TEST_ptr(prov = OSSL_PROVIDER_load(ctx, "default"))
-        && test_provider(ctx)
-        && TEST_true(OSSL_PROVIDER_unload(prov));
+        && TEST_ptr(prov = OSSL_PROVIDER_load(ctx, "default"));
+
+    if (ok) {
+        ok = test_provider(ctx);
+        if (ok)
+            ok = TEST_true(OSSL_PROVIDER_unload(prov));
+        else
+            OSSL_PROVIDER_unload(prov);
+    }
 
     OSSL_LIB_CTX_free(ctx);
     return ok;
