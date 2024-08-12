@@ -228,7 +228,7 @@ Reason = xof digests not allowed
 
 Title = FIPS indicator tests
 
-# Test that operations with unapproved parameters is rejected
+# Test that operations with unapproved parameters are rejected
 FIPSversion = >=3.4.0
 KDF = PBKDF2
 Ctrl.pass = pass:password
