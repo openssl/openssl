@@ -40,11 +40,16 @@ ok(run(app(['openssl', 'speed', '-testmode', '-misalign', 1])),
 
 SKIP: {
     skip "Multiblock is not supported by this OpenSSL build", 1
-        if disabled("multiblock");
+        if disabled("multiblock")
+           # The AES-128-CBC-HMAC-SHA1 cipher isn't available on all platforms
+           # We test its availability without the "-mb" option. We only do the
+           # multiblock test via "-mb" if the cipher seems to exist.
+           || !run(app(['openssl', 'speed', '-testmode', '-evp',
+                       'AES-128-CBC-HMAC-SHA1']));
 
     ok(run(app(['openssl', 'speed', '-testmode', '-mb', '-evp',
                 'AES-128-CBC-HMAC-SHA1'])),
-        "Test the EVP, bytes and mb options");
+        "Test the EVP and mb options");
 }
 
 ok(run(app(['openssl', 'speed', '-testmode', '-kem-algorithms'])),
