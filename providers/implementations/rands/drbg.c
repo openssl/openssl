@@ -21,7 +21,6 @@
 #include "crypto/rand_pool.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
-#include "prov/fipscommon.h"
 #include "crypto/context.h"
 
 /*
@@ -1024,7 +1023,7 @@ int ossl_drbg_verify_digest(PROV_DRBG *drbg, OSSL_LIB_CTX *libctx,
     if (!approved) {
         if (!OSSL_FIPS_IND_ON_UNAPPROVED(drbg, OSSL_FIPS_IND_SETTABLE0,
                                          libctx, "DRBG", "Digest",
-                                         FIPS_restricted_drbg_digests_enabled)) {
+                                         ossl_fips_config_restricted_drbg_digests)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED);
             return 0;
         }

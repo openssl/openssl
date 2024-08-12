@@ -30,7 +30,6 @@
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
 #include "prov/securitycheck.h"
-#include "prov/fipsindicator.h"
 #include "crypto/ec.h"
 #include "prov/der_ec.h"
 
@@ -302,7 +301,7 @@ static int ecdsa_setup_md(PROV_ECDSA_CTX *ctx, const char *mdname,
         if (!ossl_fips_ind_digest_sign_check(OSSL_FIPS_IND_GET(ctx),
                                              OSSL_FIPS_IND_SETTABLE1, ctx->libctx,
                                              md_nid, sha1_allowed, desc,
-                                             &FIPS_fips_signature_digest_check))
+                                             ossl_fips_config_signature_digest_check))
             goto err;
     }
 #endif

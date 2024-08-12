@@ -161,7 +161,7 @@ unless ($no_fips) {
     my $fipsmodcfgnew = result_file($fipsmodcfgnew_filename);
     $ENV{OPENSSL_CONF_INCLUDE} = result_dir();
     ok(replace_kv_file($fipsmodcfg,
-                       'rsa-pkcs15-padding-disabled', '0',
+                       'rsa-pkcs15-pad-disabled', '0',
                        $fipsmodcfgnew)
        && replace_line_file($provconf,
                             $fipsmodcfg_filename, $fipsmodcfgnew_filename,

@@ -13,6 +13,7 @@
 # include <openssl/indicator.h>
 # include "crypto/types.h"
 # include <openssl/ec.h>
+# include "fipscommon.h"
 
 /*
  * There may be multiple settables associated with an algorithm that allow

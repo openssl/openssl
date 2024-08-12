@@ -127,7 +127,7 @@ SKIP: {
                        'tls1-prf-ems-check', '0',
                        $fipsmodcfgtmp)
        && replace_kv_file($fipsmodcfgtmp,
-                          'rsa-pkcs15-padding-disabled', '0',
+                          'rsa-pkcs15-pad-disabled', '0',
                           $fipsmodcfgnew)
        && replace_line_file($provconf,
                             $fipsmodcfg_filename, $fipsmodcfgnew_filename,

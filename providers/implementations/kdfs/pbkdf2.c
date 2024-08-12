@@ -28,8 +28,7 @@
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
 #include "prov/provider_util.h"
-#include "prov/fipscommon.h"
-#include "prov/fipsindicator.h"
+#include "prov/securitycheck.h"
 #include "pbkdf2.h"
 
 /* Constants specified in SP800-132 */
@@ -217,7 +216,7 @@ static int fips_lower_bound_check_passed(KDF_PBKDF2 *ctx, size_t keylen)
     if (!approved) {
         if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE0, libctx,
                                          "PBKDF2", desc,
-                                         FIPS_pbkdf2_lower_bound_check)) {
+                                         ossl_fips_config_pbkdf2_lower_bound_check)) {
             ERR_raise(ERR_LIB_PROV, error);
             return 0;
         }

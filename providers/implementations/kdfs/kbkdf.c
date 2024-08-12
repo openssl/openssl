@@ -44,9 +44,6 @@
 #include "prov/provider_util.h"
 #include "prov/providercommon.h"
 #include "prov/securitycheck.h"
-#include "prov/fipscommon.h"
-#include "prov/fipsindicator.h"
-
 #include "internal/e_os.h"
 #include "internal/params.h"
 
@@ -197,7 +194,7 @@ static int fips_kbkdf_key_check_passed(KBKDF *ctx)
     if (!key_approved) {
         if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE0,
                                          libctx, "KBKDF", "Key size",
-                                         FIPS_kbkdf_key_check)) {
+                                         ossl_fips_config_kbkdf_key_check)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
             return 0;
         }

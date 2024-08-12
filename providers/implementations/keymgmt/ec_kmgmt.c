@@ -26,7 +26,6 @@
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
 #include "prov/securitycheck.h"
-#include "prov/fipsindicator.h"
 #include "internal/param_build_set.h"
 
 #ifndef FIPS_MODULE
@@ -1311,7 +1310,7 @@ static void *ec_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     if (!ossl_ec_check_security_strength(gctx->gen_group, 1)) {
         if (!OSSL_FIPS_IND_ON_UNAPPROVED(gctx, OSSL_FIPS_IND_SETTABLE0,
                                          gctx->libctx, "EC KeyGen", "key size",
-                                         ossl_securitycheck_enabled)) {
+                                         ossl_fips_config_securitycheck_enabled)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
             goto err;
         }

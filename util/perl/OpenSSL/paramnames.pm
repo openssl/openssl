@@ -46,6 +46,7 @@ my %params = (
     'PROV_PARAM_TDES_ENCRYPT_DISABLED' =>  "tdes-encrypt-disabled",  # uint
     'PROV_PARAM_RSA_PSS_SALTLEN_CHECK' =>  "rsa-pss-saltlen-check",  # uint
     'PROV_PARAM_RSA_SIGN_X931_PAD_DISABLED' =>  "rsa-sign-x931-pad-disabled",   # uint
+    'PROV_PARAM_RSA_PKCS15_PAD_DISABLED' => "rsa-pkcs15-pad-disabled", # uint
     'PROV_PARAM_HKDF_KEY_CHECK' =>         "hkdf-key-check",         # uint
     'PROV_PARAM_KBKDF_KEY_CHECK' =>        "kbkdf-key-check",        # uint
     'PROV_PARAM_TLS13_KDF_KEY_CHECK' =>    "tls13-kdf-key-check",    # uint
@@ -55,6 +56,7 @@ my %params = (
     'PROV_PARAM_X963KDF_KEY_CHECK' =>      "x963kdf-key-check",      # uint
     'PROV_PARAM_PBKDF2_LOWER_BOUND_CHECK' => "pbkdf2-lower-bound-check", # uint
     'PROV_PARAM_ECDH_COFACTOR_CHECK' =>    "ecdh-cofactor-check",    # uint
+    'PROV_PARAM_SIGNATURE_DIGEST_CHECK' => "signature-digest-check", # uint
 
 # Self test callback parameters
     'PROV_PARAM_SELF_TEST_PHASE' =>  "st-phase",# utf8_string
@@ -188,6 +190,7 @@ my %params = (
     'MAC_PARAM_FIPS_NO_SHORT_MAC' =>'*PROV_PARAM_NO_SHORT_MAC',
     'MAC_PARAM_FIPS_KEY_CHECK' =>   '*PKEY_PARAM_FIPS_KEY_CHECK',
     'MAC_PARAM_FIPS_APPROVED_INDICATOR' => '*ALG_PARAM_FIPS_APPROVED_INDICATOR',
+    'MAC_PARAM_FIPS_NO_SHORT_MAC' => '*PROV_PARAM_NO_SHORT_MAC',
 
 # KDF / PRF parameters
     'KDF_PARAM_SECRET' =>       "secret",                   # octet string
@@ -473,7 +476,7 @@ my %params = (
     'ASYM_CIPHER_PARAM_TLS_CLIENT_VERSION' =>       "tls-client-version",
     'ASYM_CIPHER_PARAM_TLS_NEGOTIATED_VERSION' =>   "tls-negotiated-version",
     'ASYM_CIPHER_PARAM_IMPLICIT_REJECTION' =>       "implicit-rejection",
-    'ASYM_CIPHER_PARAM_PKCS15_PADDING_DISABLED' =>  "pkcs15-padding-disabled",
+    'ASYM_CIPHER_PARAM_FIPS_RSA_PKCS15_PAD_DISABLED' => '*PROV_PARAM_RSA_PKCS15_PAD_DISABLED',
     'ASYM_CIPHER_PARAM_FIPS_KEY_CHECK' =>           '*PKEY_PARAM_FIPS_KEY_CHECK',
     'ASYM_CIPHER_PARAM_FIPS_APPROVED_INDICATOR' =>  '*ALG_PARAM_FIPS_APPROVED_INDICATOR',
 

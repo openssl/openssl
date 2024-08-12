@@ -18,6 +18,7 @@
 #include "internal/sizes.h"
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
+#include "prov/securitycheck.h"
 #include "prov/provider_ctx.h"
 #include "prov/der_ecx.h"
 #include "crypto/ecx.h"

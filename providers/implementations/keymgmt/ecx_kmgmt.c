@@ -24,8 +24,7 @@
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
 #include "prov/ecx.h"
-#include "prov/fipsindicator.h"
-#include "prov/fipscommon.h"
+#include "prov/securitycheck.h"
 #ifdef S390X_EC_ASM
 # include "s390x_arch.h"
 # include <openssl/sha.h>   /* For SHA512_DIGEST_LENGTH */
