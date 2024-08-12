@@ -19,7 +19,6 @@
 #include <openssl/core_names.h>
 #include <openssl/obj_mac.h>
 #include "prov/securitycheck.h"
-#include "prov/fipsindicator.h"
 
 #define OSSL_FIPS_MIN_SECURITY_STRENGTH_BITS 112
 

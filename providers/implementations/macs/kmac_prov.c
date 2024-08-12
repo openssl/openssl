@@ -55,14 +55,11 @@
 #include <openssl/err.h>
 #include <openssl/proverr.h>
 #include <openssl/fips_names.h>
-
+#include "prov/securitycheck.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
 #include "prov/provider_util.h"
 #include "prov/providercommon.h"
-#include "prov/fipscommon.h"
-#include "prov/fipsindicator.h"
-#include "prov/securitycheck.h"
 #include "internal/cryptlib.h" /* ossl_assert */
 
 /*
@@ -284,7 +281,7 @@ static int kmac_setkey(struct kmac_data_st *kctx, const unsigned char *key,
             if (!OSSL_FIPS_IND_ON_UNAPPROVED(kctx, OSSL_FIPS_IND_SETTABLE1,
                                              PROV_LIBCTX_OF(kctx->provctx),
                                              "KMAC", "Key size",
-                                             FIPS_kmac_key_check)) {
+                                             ossl_fips_config_kmac_key_check)) {
                 ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
                 return 0;
             }
@@ -483,7 +480,7 @@ static int kmac_set_ctx_params(void *vmacctx, const OSSL_PARAM *params)
             if (!OSSL_FIPS_IND_ON_UNAPPROVED(kctx, OSSL_FIPS_IND_SETTABLE0,
                                              PROV_LIBCTX_OF(kctx->provctx),
                                              "KMAC", "length",
-                                             &FIPS_no_short_mac)) {
+                                             ossl_fips_config_no_short_mac)) {
                 ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_OUTPUT_LENGTH);
                 return 0;
             }

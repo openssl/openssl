@@ -50,7 +50,7 @@ my @commandline =
         ( 'x963kdf_digest_check',           'x963kdf-digest-check' ),
         ( 'dsa_sign_disabled',              'dsa-sign-disabled' ),
         ( 'tdes_encrypt_disabled',          'tdes-encrypt-disabled' ),
-        ( 'rsa_pkcs15_padding_disabled',    'rsa-pkcs15-padding-disabled' ),
+        ( 'rsa_pkcs15_pad_disabled',        'rsa-pkcs15-pad-disabled' ),
         ( 'rsa_pss_saltlen_check',          'rsa-pss-saltlen-check' ),
         ( 'rsa_sign_x931_disabled',         'rsa-sign-x931-pad-disabled' ),
         ( 'hkdf_key_check',                 'hkdf-key-check' ),

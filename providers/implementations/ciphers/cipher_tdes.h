@@ -9,8 +9,8 @@
 
 #include <openssl/des.h>
 #include <openssl/core_dispatch.h>
+#include "prov/securitycheck.h"
 #include "crypto/des_platform.h"
-#include "prov/fipsindicator.h"
 
 #define DES_BLOCK_SIZE 8
 #define TDES_IVLEN 8

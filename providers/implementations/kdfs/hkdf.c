@@ -30,8 +30,6 @@
 #include "prov/implementations.h"
 #include "prov/provider_util.h"
 #include "prov/securitycheck.h"
-#include "prov/fipscommon.h"
-#include "prov/fipsindicator.h"
 #include "internal/e_os.h"
 #include "internal/params.h"
 
@@ -203,7 +201,7 @@ static int fips_hkdf_key_check_passed(KDF_HKDF *ctx)
     if (!key_approved) {
         if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE0,
                                          libctx, "HKDF", "Key size",
-                                         FIPS_hkdf_key_check)) {
+                                         ossl_fips_config_hkdf_key_check)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
             return 0;
         }
@@ -756,7 +754,7 @@ static int fips_tls1_3_digest_check_passed(KDF_HKDF *ctx, const EVP_MD *md)
     if (digest_unapproved) {
         if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE0,
                                          libctx, "TLS13 KDF", "Digest",
-                                         FIPS_tls13_kdf_digest_check)) {
+                                         ossl_fips_config_tls13_kdf_digest_check)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED);
             return 0;
         }
@@ -792,7 +790,7 @@ static int fips_tls1_3_key_check_passed(KDF_HKDF *ctx)
     if (!key_approved) {
         if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE1,
                                          libctx, "TLS13 KDF", "Key size",
-                                         FIPS_tls13_kdf_key_check)) {
+                                         ossl_fips_config_tls13_kdf_key_check)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
             return 0;
         }

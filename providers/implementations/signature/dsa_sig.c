@@ -30,7 +30,6 @@
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
 #include "prov/securitycheck.h"
-#include "prov/fipsindicator.h"
 #include "crypto/dsa.h"
 #include "prov/der_dsa.h"
 
@@ -169,7 +168,7 @@ static int dsa_setup_md(PROV_DSA_CTX *ctx,
                                                  OSSL_FIPS_IND_SETTABLE1,
                                                  ctx->libctx, md_nid, sha1_allowed,
                                                  desc,
-                                                 &FIPS_fips_signature_digest_check))
+                                                 ossl_fips_config_signature_digest_check))
                 goto err;
         }
 #endif
@@ -223,7 +222,7 @@ static int dsa_sign_check_approved(PROV_DSA_CTX *ctx, int signing,
     if (signing
         && !OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE2,
                                         ctx->libctx, desc, "DSA",
-                                        FIPS_dsa_sign_check))
+                                        ossl_fips_config_dsa_sign_disallowed))
         return 0;
     return 1;
 }
@@ -235,7 +234,7 @@ static int dsa_check_key(PROV_DSA_CTX *ctx, int sign, const char *desc)
     if (!approved) {
         if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE0,
                                          ctx->libctx, desc, "DSA Key",
-                                         FIPS_fips_signature_digest_check)) {
+                                         ossl_fips_config_signature_digest_check)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
             return 0;
         }

@@ -21,12 +21,11 @@
 #include <openssl/err.h>
 #include <openssl/proverr.h>
 
+#include "prov/securitycheck.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
 #include "prov/provider_util.h"
 #include "prov/providercommon.h"
-#include "prov/fipscommon.h"
-#include "prov/fipsindicator.h"
 #include "crypto/cmac.h"
 
 /*
@@ -138,7 +137,7 @@ static int tdes_check_param(struct cmac_data_st *macctx, OSSL_PARAM *p,
     if (EVP_CIPHER_is_a(cipher, "DES-EDE3-CBC")) {
         if (!OSSL_FIPS_IND_ON_UNAPPROVED(macctx, OSSL_FIPS_IND_SETTABLE0,
                                          libctx, "CMAC", "Triple-DES",
-                                         FIPS_tdes_encrypt_check))
+                                         ossl_fips_config_tdes_encrypt_disallowed))
             return 0;
         OSSL_FIPS_IND_GET_PARAM(macctx, p, state, OSSL_FIPS_IND_SETTABLE0,
                                 OSSL_CIPHER_PARAM_FIPS_ENCRYPT_CHECK)

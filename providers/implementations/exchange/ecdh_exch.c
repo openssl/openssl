@@ -26,7 +26,6 @@
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
 #include "prov/securitycheck.h"
-#include "prov/fipsindicator.h"
 #include "crypto/ec.h" /* ossl_ecdh_kdf_X9_63() */
 
 static OSSL_FUNC_keyexch_newctx_fn ecdh_newctx;
@@ -550,7 +549,7 @@ int ecdh_plain_derive(void *vpecdhctx, unsigned char *secret,
     if (has_cofactor && !cofactor_approved) {
         if (!OSSL_FIPS_IND_ON_UNAPPROVED(pecdhctx, OSSL_FIPS_IND_SETTABLE2,
                                          pecdhctx->libctx, "ECDH", "Cofactor",
-                                         FIPS_ecdh_cofactor_check)) {
+                                         ossl_fips_config_ecdh_cofactor_check)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_COFACTOR_REQUIRED);
             return 0;
         }

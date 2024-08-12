@@ -51,8 +51,6 @@
 #include "prov/implementations.h"
 #include "prov/provider_util.h"
 #include "prov/securitycheck.h"
-#include "prov/fipscommon.h"
-#include "prov/fipsindicator.h"
 #include "internal/params.h"
 
 typedef struct {
@@ -403,7 +401,7 @@ static int fips_sskdf_key_check_passed(KDF_SSKDF *ctx)
     if (!key_approved) {
         if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE0,
                                          libctx, "SSKDF", "Key size",
-                                         FIPS_sskdf_key_check)) {
+                                         ossl_fips_config_sskdf_key_check)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
             return 0;
         }
@@ -496,7 +494,7 @@ static int fips_x963kdf_digest_check_passed(KDF_SSKDF *ctx, const EVP_MD *md)
     if (digest_unapproved) {
         if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE0,
                                          libctx, "X963KDF", "Digest",
-                                         FIPS_x963kdf_digest_check)) {
+                                         ossl_fips_config_x963kdf_digest_check)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED);
             return 0;
         }
@@ -512,7 +510,7 @@ static int fips_x963kdf_key_check_passed(KDF_SSKDF *ctx)
     if (!key_approved) {
         if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE1,
                                          libctx, "X963KDF", "Key size",
-                                         FIPS_x963kdf_key_check)) {
+                                         ossl_fips_config_x963kdf_key_check)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
             return 0;
         }
