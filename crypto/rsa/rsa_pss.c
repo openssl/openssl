@@ -133,7 +133,7 @@ int ossl_rsa_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
         || !EVP_DigestUpdate(ctx, zeroes, sizeof(zeroes))
         || !EVP_DigestUpdate(ctx, mHash, hLen))
         goto err;
-    if (sLen) {
+    if (sLen != 0) {
         if (!EVP_DigestUpdate(ctx, DB + i, sLen))
             goto err;
     }
