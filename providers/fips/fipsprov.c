@@ -218,7 +218,7 @@ static int fips_get_params_from_core(FIPS_GLOBAL *fgbl)
     * OSSL_PROV_FIPS_PARAM_SECURITY_CHECKS and
     * OSSL_PROV_FIPS_PARAM_TLS1_PRF_EMS_CHECK are not self test parameters.
     */
-    OSSL_PARAM core_params[31], *p = core_params;
+    OSSL_PARAM core_params[32], *p = core_params;
 
     *p++ = OSSL_PARAM_construct_utf8_ptr(
             OSSL_PROV_PARAM_CORE_MODULE_FILENAME,
