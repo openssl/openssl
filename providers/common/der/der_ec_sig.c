@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -17,6 +17,8 @@
 #define ossl_der_oid_id_ecdsa_with_sha256 ossl_der_oid_ecdsa_with_SHA256
 #define ossl_der_oid_id_ecdsa_with_sha384 ossl_der_oid_ecdsa_with_SHA384
 #define ossl_der_oid_id_ecdsa_with_sha512 ossl_der_oid_ecdsa_with_SHA512
+#define ossl_der_oid_id_ecdsa_with_shake128 ossl_der_oid_id_ecdsa_with_shake128
+#define ossl_der_oid_id_ecdsa_with_shake256 ossl_der_oid_id_ecdsa_with_shake256
 
 #define MD_CASE(name)                                                   \
     case NID_##name:                                                    \
@@ -40,6 +42,8 @@ int ossl_DER_w_algorithmIdentifier_ECDSA_with_MD(WPACKET *pkt, int cont,
         MD_CASE(sha3_256);
         MD_CASE(sha3_384);
         MD_CASE(sha3_512);
+        MD_CASE(shake128);
+        MD_CASE(shake256);
     default:
         return 0;
     }

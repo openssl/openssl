@@ -60,6 +60,8 @@ static const OSSL_ITEM oaeppss_name_nid_map[] = {
     { NID_sha512,       OSSL_DIGEST_NAME_SHA2_512     },
     { NID_sha512_224,   OSSL_DIGEST_NAME_SHA2_512_224 },
     { NID_sha512_256,   OSSL_DIGEST_NAME_SHA2_512_256 },
+    { NID_shake256,     OSSL_DIGEST_NAME_SHAKE_256_512 },
+    { NID_shake128,     OSSL_DIGEST_NAME_SHAKE_128_256 },
 };
 
 static int md_is_a(const void *md, const char *name)

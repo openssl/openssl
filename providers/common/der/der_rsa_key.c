@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -280,6 +280,11 @@ static int DER_w_MaskGenAlgorithm(WPACKET *pkt, int tag,
         var##_sz = sizeof(ossl_der_aid_##name##Identifier);             \
         break;
 
+/*
+ * NOTE: Shake is not handled by this function() as this function is for
+ * algorithm parameters. See the caller function
+ * ossl_DER_w_algorithmIdentifier_RSA_PSS() to see how this is handled.
+ */
 int ossl_DER_w_RSASSA_PSS_params(WPACKET *pkt, int tag,
                                  const RSA_PSS_PARAMS_30 *pss)
 {
@@ -300,7 +305,6 @@ int ossl_DER_w_RSASSA_PSS_params(WPACKET *pkt, int tag,
     if (!ossl_assert(pss != NULL
                      && !ossl_rsa_pss_params_30_is_unrestricted(pss)))
         return 0;
-
     hashalg_nid = ossl_rsa_pss_params_30_hashalg(pss);
     saltlen = ossl_rsa_pss_params_30_saltlen(pss);
     trailerfield = ossl_rsa_pss_params_30_trailerfield(pss);
@@ -355,6 +359,40 @@ int ossl_DER_w_RSASSA_PSS_params(WPACKET *pkt, int tag,
         && ossl_DER_w_end_sequence(pkt, tag);
 }
 
+#define SHAKE_MD(name)                                            \
+    precompiled = ossl_der_oid_id_RSASSA_PSS_##name;              \
+    precompiled_sz = sizeof(DER_OID_SZ_id_RSASSA_PSS_##name);     \
+
+/*
+ * From https://datatracker.ietf.org/doc/html/rfc8702#section-3.2.1
+ *
+ * When id-RSASSA-PSS-SHAKE128 or id-RSASSA-PSS-SHAKE256 is used,
+ * the encoding MUST omit the parameters field. That is, the
+ * AlgorithmIdentifier SHALL be a SEQUENCE of one component:
+ * id-RSASSA-PSS-SHAKE128 or id-RSASSA-PSS-SHAKE256.
+ * This specification does not use parameters because the hash,
+ * mask generation algorithm, trailer, and salt are embedded in the
+ * OID definition.
+ */
+static int
+ossl_DER_w_algorithmIdentifier_RSA_PSS_shake(WPACKET *pkt, int tag,
+                                             const RSA_PSS_PARAMS_30 *pss)
+{
+    const unsigned char *precompiled = NULL;
+    size_t precompiled_sz = 0;
+    int nid = pss->hash_algorithm_nid;
+
+    if (nid == NID_shake128) {
+        SHAKE_MD(SHAKE128);
+    } else {
+        SHAKE_MD(SHAKE256);
+    }
+    return ossl_DER_w_begin_sequence(pkt, tag)
+           /* No parameters */
+           && ossl_DER_w_precompiled(pkt, -1, precompiled, precompiled_sz)
+           && ossl_DER_w_end_sequence(pkt, tag);
+}
+
 /* Aliases so we can have a uniform RSA_CASE */
 #define ossl_der_oid_rsassaPss ossl_der_oid_id_RSASSA_PSS
 
@@ -376,7 +414,14 @@ int ossl_DER_w_algorithmIdentifier_RSA_PSS(WPACKET *pkt, int tag,
     case RSA_FLAG_TYPE_RSA:
         RSA_CASE(rsaEncryption, rsa);
     case RSA_FLAG_TYPE_RSASSAPSS:
-        RSA_CASE(rsassaPss, rsa);
+        /* Shake has no algorithm parameters - so treat it differently */
+        if (pss != NULL
+                && (pss->hash_algorithm_nid == NID_shake128
+                    || pss->hash_algorithm_nid == NID_shake256)) {
+            return ossl_DER_w_algorithmIdentifier_RSA_PSS_shake(pkt, tag, pss);
+        } else {
+            RSA_CASE(rsassaPss, rsa);
+        }
     }
 
     if (rsa_oid == NULL)
