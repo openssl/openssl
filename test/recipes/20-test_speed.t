@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2017-2023 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2024 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -26,8 +26,14 @@ ok(run(app(['openssl', 'speed', '-testmode'])),
 #ensure we don't spend too long in this test. That option also causes the speed
 #app to return an error code if anything unexpectedly goes wrong.
 
-ok(run(app(['openssl', 'speed', '-testmode', '-multi', 2])),
-       "Test the multi option");
+
+SKIP: {
+    skip "Multi option is not supported by this OpenSSL build", 1
+       if $^O =~ /^(VMS|MSWin32)$/;
+
+    ok(run(app(['openssl', 'speed', '-testmode', '-multi', 2])),
+           "Test the multi option");
+}
 
 ok(run(app(['openssl', 'speed', '-testmode', '-misalign', 1])),
        "Test the misalign option");
@@ -67,22 +73,32 @@ ok(run(app(['openssl', 'speed', '-testmode', '-evp', 'sha256'])),
 ok(run(app(['openssl', 'speed', '-testmode', '-hmac', 'sha256'])),
        "Test the hmac option");
 
-ok(run(app(['openssl', 'speed', '-testmode', '-cmac', 'aes-128-cbc'])),
-       "Test the cmac option");
+SKIP: {
+    skip "CMAC is not supported by this OpenSSL build", 1
+        if disabled("cmac");
+
+    ok(run(app(['openssl', 'speed', '-testmode', '-cmac', 'aes-128-cbc'])),
+           "Test the cmac option");
+}
 
 ok(run(app(['openssl', 'speed', '-testmode', '-aead', '-evp', 'aes-128-gcm'])),
        "Test the aead and evp options");
 
 SKIP: {
-    skip "ASYNC is not supported by this OpenSSL build", 1
-        if disabled("async");
+    skip "ASYNC/threads not supported by this OpenSSL build", 1
+        if disabled("async") || disabled("threads");
 
     ok(run(app(['openssl', 'speed', '-testmode', '-async_jobs', '1'])),
         "Test the async_jobs option");
 }
 
-ok(run(app(['openssl', 'speed', '-testmode', '-mlock'])),
-       "Test the mlock option");
+SKIP: {
+    skip "Mlock option is not supported by this OpenSSL build", 1
+       if $^O !~ /^(linux|MSWin32)$/;
+
+       ok(run(app(['openssl', 'speed', '-testmode', '-mlock'])),
+              "Test the mlock option");
+}
 
 #We don't expect these options to have an effect in testmode but we at least
 #test that the option parsing works ok
