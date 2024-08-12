@@ -362,12 +362,14 @@ static const OPT_PAIR doit_choices[] = {
 
 static double results[ALGOR_NUM][SIZE_NUM];
 
+#ifndef OPENSSL_NO_DSA
 enum { R_DSA_1024, R_DSA_2048, DSA_NUM };
 static const OPT_PAIR dsa_choices[DSA_NUM] = {
     {"dsa1024", R_DSA_1024},
     {"dsa2048", R_DSA_2048}
 };
 static double dsa_results[DSA_NUM][2];  /* 2 ops: sign then verify */
+#endif /* OPENSSL_NO_DSA */
 
 enum {
     R_RSA_512, R_RSA_1024, R_RSA_2048, R_RSA_3072, R_RSA_4096, R_RSA_7680,
@@ -527,8 +529,10 @@ typedef struct loopargs_st {
     EVP_PKEY_CTX *rsa_verify_ctx[RSA_NUM];
     EVP_PKEY_CTX *rsa_encrypt_ctx[RSA_NUM];
     EVP_PKEY_CTX *rsa_decrypt_ctx[RSA_NUM];
+#ifndef OPENSSL_NO_DSA
     EVP_PKEY_CTX *dsa_sign_ctx[DSA_NUM];
     EVP_PKEY_CTX *dsa_verify_ctx[DSA_NUM];
+#endif
     EVP_PKEY_CTX *ecdsa_sign_ctx[ECDSA_NUM];
     EVP_PKEY_CTX *ecdsa_verify_ctx[ECDSA_NUM];
     EVP_PKEY_CTX *ecdh_ctx[EC_NUM];
@@ -1086,6 +1090,7 @@ static int FFDH_derive_key_loop(void *args)
 }
 #endif /* OPENSSL_NO_DH */
 
+#ifndef OPENSSL_NO_DSA
 static int DSA_sign_loop(void *args)
 {
     loopargs_t *tempargs = *(loopargs_t **) args;
@@ -1128,6 +1133,7 @@ static int DSA_verify_loop(void *args)
     }
     return count;
 }
+#endif /* OPENSSL_NO_DSA */
 
 static int ECDSA_sign_loop(void *args)
 {
@@ -1843,8 +1849,10 @@ int speed_main(int argc, char **argv)
     uint8_t ffdh_doit[FFDH_NUM] = { 0 };
 
 #endif /* OPENSSL_NO_DH */
+#ifndef OPENSSL_NO_DSA
     static const unsigned int dsa_bits[DSA_NUM] = { 1024, 2048 };
     uint8_t dsa_doit[DSA_NUM] = { 0 };
+#endif /* OPENSSL_NO_DSA */
     /*
      * We only test over the following curves as they are representative, To
      * add tests over more curves, simply add the curve NID and curve name to
@@ -2151,6 +2159,7 @@ int speed_main(int argc, char **argv)
                 sigs_algname[sigs_algs_len++] = OPENSSL_strdup(rsa_choices[i].name);
             }
         }
+#ifndef OPENSSL_NO_DSA
         else if (strcmp(sig_name, "DSA") == 0) {
             if (sigs_algs_len + DSA_NUM >= MAX_SIG_NUM) {
                 BIO_printf(bio_err,
@@ -2162,6 +2171,7 @@ int speed_main(int argc, char **argv)
                 sigs_algname[sigs_algs_len++] = OPENSSL_strdup(dsa_choices[i].name);
             }
         }
+#endif /* OPENSSL_NO_DSA */
         /* skipping these algs as tested elsewhere - and b/o setup is a pain */
         else if (strcmp(sig_name, "ED25519") &&
                  strcmp(sig_name, "ED448") &&
@@ -2233,6 +2243,7 @@ int speed_main(int argc, char **argv)
             }
         }
 #endif
+#ifndef OPENSSL_NO_DSA
         if (HAS_PREFIX(algo, "dsa")) {
             if (algo[sizeof("dsa") - 1] == '\0') {
                 memset(dsa_doit, 1, sizeof(dsa_doit));
@@ -2243,6 +2254,7 @@ int speed_main(int argc, char **argv)
                 algo_found = 1;
             }
         }
+#endif
         if (strcmp(algo, "aes") == 0) {
             doit[D_CBC_128_AES] = doit[D_CBC_192_AES] = doit[D_CBC_256_AES] = 1;
             algo_found = 1;
@@ -2468,7 +2480,9 @@ int speed_main(int argc, char **argv)
 #ifndef OPENSSL_NO_DH
         memset(ffdh_doit, 1, sizeof(ffdh_doit));
 #endif
+#ifndef OPENSSL_NO_DSA
         memset(dsa_doit, 1, sizeof(dsa_doit));
+#endif
 #ifndef OPENSSL_NO_ECX
         memset(ecdsa_doit, 1, sizeof(ecdsa_doit));
         memset(ecdh_doit, 1, sizeof(ecdh_doit));
@@ -3117,6 +3131,7 @@ int speed_main(int argc, char **argv)
         EVP_PKEY_free(rsa_key);
     }
 
+#ifndef OPENSSL_NO_DSA
     for (testnum = 0; testnum < DSA_NUM; testnum++) {
         EVP_PKEY *dsa_key = NULL;
         int st;
@@ -3192,6 +3207,7 @@ int speed_main(int argc, char **argv)
         }
         EVP_PKEY_free(dsa_key);
     }
+#endif /* OPENSSL_NO_DSA */
 
     for (testnum = 0; testnum < ECDSA_NUM; testnum++) {
         EVP_PKEY *ecdsa_key = NULL;
@@ -4226,6 +4242,7 @@ int speed_main(int argc, char **argv)
                    rsa_results[k][2], rsa_results[k][3]);
     }
     testnum = 1;
+#ifndef OPENSSL_NO_DSA
     for (k = 0; k < DSA_NUM; k++) {
         if (!dsa_doit[k])
             continue;
@@ -4241,6 +4258,7 @@ int speed_main(int argc, char **argv)
                    dsa_bits[k], 1.0 / dsa_results[k][0], 1.0 / dsa_results[k][1],
                    dsa_results[k][0], dsa_results[k][1]);
     }
+#endif /* OPENSSL_NO_DSA */
     testnum = 1;
     for (k = 0; k < OSSL_NELEM(ecdsa_doit); k++) {
         if (!ecdsa_doit[k])
@@ -4410,10 +4428,12 @@ int speed_main(int argc, char **argv)
         for (k = 0; k < FFDH_NUM; k++)
             EVP_PKEY_CTX_free(loopargs[i].ffdh_ctx[k]);
 #endif
+#ifndef OPENSSL_NO_DSA
         for (k = 0; k < DSA_NUM; k++) {
             EVP_PKEY_CTX_free(loopargs[i].dsa_sign_ctx[k]);
             EVP_PKEY_CTX_free(loopargs[i].dsa_verify_ctx[k]);
         }
+#endif
         for (k = 0; k < ECDSA_NUM; k++) {
             EVP_PKEY_CTX_free(loopargs[i].ecdsa_sign_ctx[k]);
             EVP_PKEY_CTX_free(loopargs[i].ecdsa_verify_ctx[k]);
@@ -4662,6 +4682,7 @@ static int do_multi(int multi, int size_num)
                     d = atof(sstrsep(&p, sep));
                     rsa_results[k][3] += d;
                 }
+#ifndef OPENSSL_NO_DSA
             } else if (CHECK_AND_SKIP_PREFIX(p, "+F3:")) {
                 tk = sstrsep(&p, sep);
                 if (strtoint(tk, 0, OSSL_NELEM(dsa_results), &k)) {
@@ -4673,6 +4694,7 @@ static int do_multi(int multi, int size_num)
                     d = atof(sstrsep(&p, sep));
                     dsa_results[k][1] += d;
                 }
+#endif /* OPENSSL_NO_DSA */
             } else if (CHECK_AND_SKIP_PREFIX(p, "+F4:")) {
                 tk = sstrsep(&p, sep);
                 if (strtoint(tk, 0, OSSL_NELEM(ecdsa_results), &k)) {
