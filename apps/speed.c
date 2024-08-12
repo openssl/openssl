@@ -3266,6 +3266,7 @@ int speed_main(int argc, char **argv)
             /* if longer than 10s, don't do any more */
             stop_it(ecdsa_doit, testnum);
         }
+        EVP_PKEY_free(ecdsa_key);
     }
 
     for (testnum = 0; testnum < EC_NUM; testnum++) {
