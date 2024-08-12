@@ -4682,7 +4682,7 @@ static int do_multi(int multi, int size_num)
                     d = atof(sstrsep(&p, sep));
                     rsa_results[k][3] += d;
                 }
-#ifndef OPENSSL_NO_DSA
+# ifndef OPENSSL_NO_DSA
             } else if (CHECK_AND_SKIP_PREFIX(p, "+F3:")) {
                 tk = sstrsep(&p, sep);
                 if (strtoint(tk, 0, OSSL_NELEM(dsa_results), &k)) {
@@ -4694,7 +4694,7 @@ static int do_multi(int multi, int size_num)
                     d = atof(sstrsep(&p, sep));
                     dsa_results[k][1] += d;
                 }
-#endif /* OPENSSL_NO_DSA */
+# endif /* OPENSSL_NO_DSA */
             } else if (CHECK_AND_SKIP_PREFIX(p, "+F4:")) {
                 tk = sstrsep(&p, sep);
                 if (strtoint(tk, 0, OSSL_NELEM(ecdsa_results), &k)) {
