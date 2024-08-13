@@ -1400,6 +1400,10 @@ CON_FUNC_RETURN dtls_construct_hello_verify_request(SSL_CONNECTION *s,
         return CON_FUNC_ERROR;
     }
 
+    /*
+     * Server must recover the downgrade sentinel in case it sends a
+     * HelloVerifyRequest.
+     */
     s->d1->hello_verify_request = SSL_HVR_SENT;
 
     return CON_FUNC_SUCCESS;

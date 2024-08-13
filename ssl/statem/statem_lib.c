@@ -2166,6 +2166,12 @@ int ssl_choose_server_version(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello,
             if (ssl_version_cmp(s, client_version, s->version) < 0)
                 return SSL_R_WRONG_SSL_VERSION;
 
+            /*
+             * The downgrade sentinel is selected when parsing the first
+             * ClientHello. If this server has sent a HelloVerifyRequest, the
+             * sentinel is recovered while parsing the second ClientHello in
+             * order to apply it to the ServerHello random value.
+             */
             if (SSL_CONNECTION_IS_DTLS(s)
                     && s->d1->hello_verify_request != SSL_HVR_NONE) {
                 *dgrd = s->d1->downgrade_after_hvr;
