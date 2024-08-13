@@ -660,7 +660,7 @@ int fipsinstall_main(int argc, char **argv)
             break;
         case OPT_KBKDF_KEY_CHECK:
             fips_opts.kbkdf_key_check = 1;
-            break;;
+            break;
         case OPT_TLS13_KDF_KEY_CHECK:
             fips_opts.tls13_kdf_key_check = 1;
             break;

@@ -221,8 +221,8 @@ See SP 800-131Ar2 for details.
 
 =item B<-kmac_key_check>
 
-Configure the module to enable a run-time short key check when using KMAC.
-See NIST SP 800-131Ar2 for details.
+Configure the module to not allow small keys sizes when using KMAC.
+See SP 800-131Ar2 for details.
 
 =item B<-no_drbg_truncated_digests>
 

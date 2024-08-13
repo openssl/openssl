@@ -268,7 +268,7 @@ static int kmac_setkey(struct kmac_data_st *kctx, const unsigned char *key,
     const EVP_MD *digest = ossl_prov_digest_md(&kctx->digest);
     int w = EVP_MD_get_block_size(digest);
 
-    if (keylen > KMAC_MAX_KEY || keylen < KMAC_MIN_KEY) {
+    if (keylen < KMAC_MIN_KEY || keylen > KMAC_MAX_KEY) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
         return 0;
     }
