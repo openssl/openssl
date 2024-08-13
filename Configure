@@ -758,6 +758,7 @@ my %user = (
     RANLIB      => env('RANLIB'),
     RC          => env('RC') || env('WINDRES'),
     RCFLAGS     => [ env('RCFLAGS') || () ],
+    OBJCOPY     => undef,
     RM          => undef,
    );
 # Info about what "make variables" may be prefixed with the cross compiler
