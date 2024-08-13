@@ -1676,6 +1676,12 @@ described here.  Examine the Makefiles themselves for the full list.
     build_docs
                    Build all documentation components.
 
+    debuginfo
+                    On unix platforms, this target can be used to create .debug
+                    libraries, which separate the DWARF information in the
+                    shared library ELF files into a separate file for use
+                    in post-mortem (core dump) debugging
+
     clean
                    Remove all build artefacts and return the directory to a "clean"
                    state.

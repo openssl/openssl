@@ -373,6 +373,7 @@ CFLAGS={- join(' ', @{$config{CFLAGS}}) -}
 CXXFLAGS={- join(' ', @{$config{CXXFLAGS}}) -}
 LDFLAGS= {- join(' ', @{$config{LDFLAGS}}) -}
 EX_LIBS= {- join(' ', @{$config{LDLIBS}}) -}
+OBJCOPY={- $config{OBJCOPY} -}
 
 MAKEDEPEND={- $config{makedepcmd} -}
 
@@ -533,6 +534,11 @@ LANG=C
 {- dependmagic('build_programs', 'Build the openssl executables and scripts'); -}: build_programs_nodep
 
 all: build_sw {- "build_docs" if !$disabled{docs}; -} ## Build software and documentation
+debuginfo: $(SHLIBS)
+	@set -e; for i in $(SHLIBS); do \
+		$(OBJCOPY) --only-keep-debug $$i $$i.debug; \
+		$(OBJCOPY) --strip-debug --add-gnu-debuglink=$$i.debug $$i; \
+	done;
 
 ##@ Documentation
 build_generated_pods: $(GENERATED_PODS)
