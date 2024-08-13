@@ -6677,7 +6677,7 @@ int SSL_client_hello_get_extension_order(SSL *s, uint16_t *exts, size_t *num_ext
 int SSL_client_hello_get0_ext(SSL *s, unsigned int type, const unsigned char **out,
                        size_t *outlen)
 {
-    PACKET pkt,ext_data;
+    PACKET pkt, ext_data;
     unsigned int ext_type;
     const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
 
