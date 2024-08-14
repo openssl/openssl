@@ -30,6 +30,7 @@
 #ifndef OPENSSL_NO_DSA
 # include <openssl/dsa.h>
 #endif
+#include "internal/e_os.h"    /* For isatty() */
 
 #define BITS               "default_bits"
 #define KEYFILE            "default_keyfile"
@@ -516,7 +517,7 @@ int req_main(int argc, char **argv)
     if (infile == NULL) {
         if (gen_x509)
             newreq = 1;
-        else if (!newreq)
+        else if (!newreq && isatty(fileno_stdin()))
             BIO_printf(bio_err,
                        "Warning: Will read cert request from stdin since no -in option is given\n");
     }
