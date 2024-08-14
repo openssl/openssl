@@ -12,7 +12,6 @@
 
 int FIPS_security_check_enabled(OSSL_LIB_CTX *libctx);
 int FIPS_tls_prf_ems_check(OSSL_LIB_CTX *libctx);
-int FIPS_eddsa_no_verify_digested(OSSL_LIB_CTX *libctx);
 int FIPS_no_short_mac(OSSL_LIB_CTX *libctx);
 int FIPS_restricted_drbg_digests_enabled(OSSL_LIB_CTX *libctx);
 int FIPS_fips_signature_digest_check(OSSL_LIB_CTX *libctx);
