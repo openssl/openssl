@@ -135,6 +135,7 @@ void ossl_rsa_acvp_test_free(RSA_ACVP_TEST *t);
 # else
 # define RSA_ACVP_TEST void
 # endif
+int ossl_rsa_check_factors(RSA *r);
 
 RSA *evp_pkey_get1_RSA_PSS(EVP_PKEY *pkey);
 #endif

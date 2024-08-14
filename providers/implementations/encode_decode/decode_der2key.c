@@ -544,15 +544,23 @@ static void *rsa_d2i_PKCS8(void **key, const unsigned char **der, long der_len,
 
 static int rsa_check(void *key, struct der2key_ctx_st *ctx)
 {
+    int valid;
+
     switch (RSA_test_flags(key, RSA_FLAG_TYPE_MASK)) {
     case RSA_FLAG_TYPE_RSA:
-        return ctx->desc->evp_type == EVP_PKEY_RSA;
+        valid = (ctx->desc->evp_type == EVP_PKEY_RSA);
+        break;
     case RSA_FLAG_TYPE_RSASSAPSS:
-        return ctx->desc->evp_type == EVP_PKEY_RSA_PSS;
+        valid = (ctx->desc->evp_type == EVP_PKEY_RSA_PSS);
+        break;
+    default:
+        /* Currently unsupported RSA key type */
+        valid = 0;
     }
 
-    /* Currently unsupported RSA key type */
-    return 0;
+    valid = (valid && ossl_rsa_check_factors(key));
+
+    return valid;
 }
 
 static void rsa_adjust(void *key, struct der2key_ctx_st *ctx)
