@@ -383,9 +383,10 @@ static int ed448_digest_sign(void *vpeddsactx, unsigned char *sigret,
 static int fips_check_verify(PROV_EDDSA_CTX *ctx)
 {
 #ifdef FIPS_MODULE
-    if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE0,
-                                     ctx->libctx, "Verify", "EdDSA",
-                                     FIPS_eddsa_no_verify_digested))
+    if (ctx->prehash_flag
+        && !OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE0,
+                                        ctx->libctx, "Verify", "EdDSA",
+                                        FIPS_eddsa_no_verify_digested))
         return 0;
 #endif  /* FIPS_MODULE */
     return 1;
