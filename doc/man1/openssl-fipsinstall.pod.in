@@ -23,7 +23,6 @@ B<openssl fipsinstall>
 [B<-no_conditional_errors>]
 [B<-no_security_checks>]
 [B<-ems_check>]
-[B<-eddsa_no_verify_digested>]
 [B<-no_drbg_truncated_digests>]
 [B<-signature_digest_check>]
 [B<-hkdf_digest_check>]
@@ -207,12 +206,6 @@ turn off the check at compile time.
 Configure the module to enable a run-time Extended Master Secret (EMS) check
 when using the TLS1_PRF KDF algorithm. This check is disabled by default.
 See RFC 7627 for information related to EMS.
-
-=item B<-eddsa_no_verify_digested>
-
-Configure the module to not allow EdDSA to verify from a message digest
-directly.  Instead, EdDSA will digest the message itself.
-This check is disabled by default.
 
 =item B<-no_short_mac>
 
