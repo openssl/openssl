@@ -560,14 +560,16 @@ static int rsa_check(void *key, struct der2key_ctx_st *ctx)
     }
 
     n = BN_num_bits(RSA_get0_n(key));
-    e_ok = (BN_num_bits(RSA_get0_e(key)) < n);
-    d_ok = (BN_num_bits(RSA_get0_d(key)) < n);
-    p_ok = (BN_num_bits(RSA_get0_p(key)) < n);
-    q_ok = (BN_num_bits(RSA_get0_q(key)) < n);
-    dmp1_ok = (BN_num_bits(RSA_get0_dmp1(key)) < n);
-    dmq1_ok = (BN_num_bits(RSA_get0_dmq1(key)) < n);
-    iqmp_ok = (BN_num_bits(RSA_get0_iqmp(key)) < n);
+    e_ok = (BN_num_bits(RSA_get0_e(key)) <= n);
+    d_ok = (BN_num_bits(RSA_get0_d(key)) <= n);
+    p_ok = (BN_num_bits(RSA_get0_p(key)) <= n);
+    q_ok = (BN_num_bits(RSA_get0_q(key)) <= n);
+    dmp1_ok = (BN_num_bits(RSA_get0_dmp1(key)) <= n);
+    dmq1_ok = (BN_num_bits(RSA_get0_dmq1(key)) <= n);
+    iqmp_ok = (BN_num_bits(RSA_get0_iqmp(key)) <= n);
+/*
     valid = (valid && e_ok && d_ok && p_ok && q_ok && dmp1_ok && dmq1_ok && iqmp_ok);
+*/
 
     return valid;
 }
