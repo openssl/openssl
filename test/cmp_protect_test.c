@@ -162,14 +162,6 @@ static int test_cmp_calc_protection_pkey(void)
 static int test_cmp_calc_protection_pkey_Ed(void)
 {
     SETUP_TEST_FIXTURE(CMP_PROTECT_TEST_FIXTURE, set_up);
-
-    /* eddsa_no_verify_digested prevents this test working */
-    if (fips_provider_version_match(libctx, ">=3.4.0")) {
-        tear_down(fixture);
-        fixture = NULL;
-        return TEST_skip("incompatible FIPS provider version");
-    }
-
     fixture->pubkey = prot_Ed_key;
     if (!TEST_true(OSSL_CMP_CTX_set1_pkey(fixture->cmp_ctx, prot_Ed_key))
         || !TEST_ptr(fixture->msg = load_pkimsg(genm_prot_Ed_f, libctx))) {
