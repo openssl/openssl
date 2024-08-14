@@ -876,8 +876,8 @@ static int aes_gcm_enc_dec(const char *alg,
                 || !TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG,
                                                     tag_len, out + olen), 0)
                 || (tag != NULL
-                   && !TEST_mem_eq(out + olen, tag_len, tag, tag_len)))
-                    goto err;
+                    && !TEST_mem_eq(out + olen, tag_len, tag, tag_len)))
+            goto err;
     } else {
         if (ct != NULL && !TEST_mem_eq(out, olen, ct, ct_len))
             goto err;
@@ -893,8 +893,7 @@ static int aes_gcm_enc_dec(const char *alg,
             params[1] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_IV,
                                                           outiv, iv_len);
         if (!TEST_true(EVP_CIPHER_CTX_get_params(ctx, params)))
-                goto err;
-        printf("%d %d %d\n", iv_generated, enc, iv != NULL);
+            goto err;
         if (!TEST_uint_eq(iv_generated, (enc == 0 || iv != NULL ? 0 : 1)))
             goto err;
     }
