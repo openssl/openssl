@@ -829,13 +829,14 @@ static int aes_gcm_enc_dec(const char *alg,
                            const unsigned char *aad, size_t aad_len,
                            const unsigned char *ct, size_t ct_len,
                            const unsigned char *tag, size_t tag_len,
-                           int enc, int pass)
+                           int enc, int pass,
+                           unsigned char *out, int *out_len,
+                           unsigned char *outiv)
 {
     int ret = 0;
     EVP_CIPHER_CTX *ctx;
     EVP_CIPHER *cipher = NULL;
-    int out_len, len;
-    unsigned char out[1024];
+    int olen, len;
 
     TEST_note("%s : %s : expected to %s", alg, enc ? "encrypt" : "decrypt",
               pass ? "pass" : "fail");
@@ -853,9 +854,9 @@ static int aes_gcm_enc_dec(const char *alg,
             goto err;
     }
     /*
-     * For testing purposes the IV it being set here. In a compliant application
-     * the IV would be generated internally. A fake entropy source could also
-     * be used to feed in the random IV bytes (see fake_random.c)
+     * For testing purposes the IV may be passed in here. In a compliant
+     * application the IV would be generated internally. A fake entropy source
+     * could also be used to feed in the random IV bytes (see fake_random.c)
      */
     if (!TEST_true(EVP_CipherInit_ex(ctx, NULL, NULL, key, iv, enc))
         || !TEST_true(EVP_CIPHER_CTX_set_padding(ctx, 0))
@@ -863,23 +864,41 @@ static int aes_gcm_enc_dec(const char *alg,
         || !TEST_true(EVP_CipherUpdate(ctx, out, &len, pt, pt_len)))
         goto err;
 
-    if (!TEST_int_eq(EVP_CipherFinal_ex(ctx, out + len, &out_len), pass))
+    if (!TEST_int_eq(EVP_CipherFinal_ex(ctx, out + len, &olen), pass))
         goto err;
     if (!pass) {
         ret = 1;
         goto err;
     }
-    out_len += len;
+    olen += len;
     if (enc) {
-        if (!TEST_mem_eq(out, out_len, ct, ct_len)
-            || !TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG,
-                                              tag_len, out + out_len), 0)
-            || !TEST_mem_eq(out + out_len, tag_len, tag, tag_len))
-                    goto err;
+        if ((ct != NULL && !TEST_mem_eq(out, olen, ct, ct_len))
+                || !TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG,
+                                                    tag_len, out + olen), 0)
+                || (tag != NULL
+                    && !TEST_mem_eq(out + olen, tag_len, tag, tag_len)))
+            goto err;
     } else {
-        if (!TEST_mem_eq(out, out_len, ct, ct_len))
+        if (ct != NULL && !TEST_mem_eq(out, olen, ct, ct_len))
             goto err;
     }
+
+    {
+        OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END, OSSL_PARAM_END };
+        unsigned int iv_generated = -1;
+
+        params[0] = OSSL_PARAM_construct_uint(OSSL_CIPHER_PARAM_AEAD_IV_GENERATED,
+                                              &iv_generated);
+        if (outiv != NULL)
+            params[1] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_IV,
+                                                          outiv, iv_len);
+        if (!TEST_true(EVP_CIPHER_CTX_get_params(ctx, params)))
+            goto err;
+        if (!TEST_uint_eq(iv_generated, (enc == 0 || iv != NULL ? 0 : 1)))
+            goto err;
+    }
+    if (out_len != NULL)
+        *out_len = olen;
 
     ret = 1;
 err:
@@ -893,23 +912,45 @@ static int aes_gcm_enc_dec_test(int id)
     const struct cipher_gcm_st *tst = &aes_gcm_enc_data[id];
     int enc = 1;
     int pass = 1;
+    unsigned char out[1024];
 
     return aes_gcm_enc_dec(tst->alg, tst->pt, tst->pt_len,
                            tst->key, tst->key_len,
                            tst->iv, tst->iv_len, tst->aad, tst->aad_len,
                            tst->ct, tst->ct_len, tst->tag, tst->tag_len,
-                           enc, pass)
+                           enc, pass, out, NULL, NULL)
             && aes_gcm_enc_dec(tst->alg, tst->ct, tst->ct_len,
                                tst->key, tst->key_len,
                                tst->iv, tst->iv_len, tst->aad, tst->aad_len,
                                tst->pt, tst->pt_len, tst->tag, tst->tag_len,
-                               !enc, pass)
+                               !enc, pass, out, NULL, NULL)
             /* Fail if incorrect tag passed to decrypt */
             && aes_gcm_enc_dec(tst->alg, tst->ct, tst->ct_len,
                                tst->key, tst->key_len,
                                tst->iv, tst->iv_len, tst->aad, tst->aad_len,
                                tst->pt, tst->pt_len, tst->aad, tst->tag_len,
-                               !enc, !pass);
+                               !enc, !pass, out, NULL, NULL);
+}
+
+static int aes_gcm_gen_iv_internal_test(void)
+{
+    const struct cipher_gcm_st *tst = &aes_gcm_enc_data[0];
+    int enc = 1;
+    int pass = 1;
+    int out_len = 0;
+    unsigned char out[1024];
+    unsigned char iv[16];
+
+    return aes_gcm_enc_dec(tst->alg, tst->pt, tst->pt_len,
+                           tst->key, tst->key_len,
+                           NULL, tst->iv_len, tst->aad, tst->aad_len,
+                           NULL, tst->ct_len, NULL, tst->tag_len,
+                           enc, pass, out, &out_len, iv)
+            && aes_gcm_enc_dec(tst->alg, out, out_len,
+                               tst->key, tst->key_len,
+                               iv, tst->iv_len, tst->aad, tst->aad_len,
+                               tst->pt, tst->pt_len, out + out_len, tst->tag_len,
+                               !enc, pass, out, NULL, NULL);
 }
 
 #ifndef OPENSSL_NO_DH
@@ -1492,6 +1533,8 @@ int setup_tests(void)
     ADD_ALL_TESTS(cipher_enc_dec_test, OSSL_NELEM(cipher_enc_data));
     ADD_ALL_TESTS(aes_ccm_enc_dec_test, OSSL_NELEM(aes_ccm_enc_data));
     ADD_ALL_TESTS(aes_gcm_enc_dec_test, OSSL_NELEM(aes_gcm_enc_data));
+    if (fips_provider_version_ge(libctx, 3, 4, 0))
+        ADD_TEST(aes_gcm_gen_iv_internal_test);
 
     pass_sig_gen_params = fips_provider_version_ge(libctx, 3, 4, 0);
     rsa_sign_x931_pad_allowed = fips_provider_version_lt(libctx, 3, 4, 0);

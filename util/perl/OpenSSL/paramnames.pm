@@ -115,6 +115,7 @@ my %params = (
     'CIPHER_PARAM_AEAD_TLS1_GET_IV_GEN' => "tlsivgen",    # octet_string
     'CIPHER_PARAM_AEAD_TLS1_SET_IV_INV' => "tlsivinv",    # octet_string
     'CIPHER_PARAM_AEAD_IVLEN' =>           '*CIPHER_PARAM_IVLEN',
+    'CIPHER_PARAM_AEAD_IV_GENERATED' => "iv-generated",   # uint
     'CIPHER_PARAM_AEAD_TAGLEN' =>          "taglen",      # size_t
     'CIPHER_PARAM_AEAD_MAC_KEY' =>         "mackey",      # octet_string
     'CIPHER_PARAM_RANDOM_KEY' =>           "randkey",     # octet_string

@@ -236,6 +236,9 @@ int ossl_gcm_get_ctx_params(void *vctx, OSSL_PARAM params[])
                 || !getivgen(ctx, p->data, p->data_size))
                 return 0;
             break;
+        case PIDX_CIPHER_PARAM_AEAD_IV_GENERATED:
+            if (!OSSL_PARAM_set_uint(p, ctx->iv_gen_rand))
+                return 0;
         }
     }
     return 1;
@@ -513,9 +516,11 @@ static int gcm_tls_iv_set_fixed(PROV_GCM_CTX *ctx, unsigned char *iv,
             return 0;
     if (len > 0)
         memcpy(ctx->iv, iv, len);
-    if (ctx->enc
-        && RAND_bytes_ex(ctx->libctx, ctx->iv + len, ctx->ivlen - len, 0) <= 0)
+    if (ctx->enc) {
+        if (RAND_bytes_ex(ctx->libctx, ctx->iv + len, ctx->ivlen - len, 0) <= 0)
             return 0;
+        ctx->iv_gen_rand = 1;
+    }
     ctx->iv_gen = 1;
     ctx->iv_state = IV_STATE_BUFFERED;
     return 1;
