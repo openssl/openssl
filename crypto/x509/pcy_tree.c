@@ -110,6 +110,8 @@ static int tree_init(X509_POLICY_TREE **ptree, STACK_OF(X509) *certs,
 
     *ptree = NULL;
 
+    if (n < 0)
+        return X509_PCY_TREE_INTERNAL;
     /* Can't do anything with just a trust anchor */
     if (n == 0)
         return X509_PCY_TREE_EMPTY;
