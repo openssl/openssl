@@ -769,6 +769,11 @@ Enable support for explictitly specified elliptic curves not matching the
 well-known ones. Until this option is on, such curves can't be instantiated
 from ASN.1 formats.
 
+### no-ech
+
+Don't build support for Encrypted Client Hello (ECH) extension (draft-ietf-tls-esni)
+TODO(ECH) update link to RFC.
+
 ### enable-ec_nistp_64_gcc_128
 
 Enable support for optimised implementations of some commonly used NIST
