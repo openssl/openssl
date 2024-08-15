@@ -92,11 +92,11 @@ typedef struct ossl_echstore_entry_st {
 
 DEFINE_STACK_OF(OSSL_ECHSTORE_entry)
 
-typedef struct ossl_echstore_st {
+struct ossl_echstore_st {
     STACK_OF(OSSL_ECHSTORE_entry) *entries;
     OSSL_LIB_CTX *libctx;
     const char *propq;
-} OSSL_ECHSTORE;
+};
 
 # endif
 #endif

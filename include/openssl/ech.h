@@ -72,9 +72,6 @@
  */
 #  define OPENSSL_ECH_ALLOW_CUST_INJECT
 
-/* opaque type for ECH related information */
-typedef struct ossl_echstore_st OSSL_ECHSTORE;
-
 /* if a caller wants to index the last entry in the store */
 # define OSSL_ECHSTORE_LAST -1
 

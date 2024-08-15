@@ -18,6 +18,8 @@
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
 
+#ifndef OPENSSL_NO_ECH
+
 /* a size for some crypto vars */
 # define OSSL_ECH_CRYPTO_VAR_SIZE 2048
 
@@ -317,7 +319,14 @@ int OSSL_ECHSTORE_write_pem(OSSL_ECHSTORE *es, int index, BIO *out)
     int rv = 0, num = 0, chosen = 0;
 
     if (es == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
+        /*
+         * TODO(ECH): this is a bit of a bogus error, just so as
+         * to get the `make update` command to add the required
+         * error number. We don't need it yet, but it's involved
+         * in some of the build artefacts, so may as well jump
+         * the gun a bit on it.
+         */
+        ERR_raise(ERR_LIB_SSL, SSL_R_ECH_REQUIRED);
         return 0;
     }
     num = sk_OSSL_ECHSTORE_entry_num(es->entries);
@@ -352,7 +361,7 @@ int OSSL_ECHSTORE_write_pem(OSSL_ECHSTORE *es, int index, BIO *out)
     b64len = EVP_EncodeBlock((unsigned char*)b64val,
                              ee->encoded, ee->encoded_len);
     if (BIO_printf(out, "-----BEGIN ECHCONFIG-----\n") <= 0
-        || BIO_write(out, b64val, b64len) != b64len
+        || BIO_write(out, b64val, b64len) != (int)b64len
         || BIO_printf(out, "\n") <= 0
         || BIO_printf(out, "-----END ECHCONFIG-----\n") <= 0) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
@@ -494,4 +503,4 @@ void SSL_CTX_ech_set_callback(SSL_CTX *ctx, SSL_ech_cb_func f)
     return;
 }
 
-
+#endif

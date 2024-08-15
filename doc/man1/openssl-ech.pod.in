@@ -76,7 +76,7 @@ See L<OSSL_HPKE_CTX_new(3)> for details.
 L<openssl(1)>,
 L<openssl-s_client(1)>,
 L<openssl-s_server(1)>,
-L<SSL_ech_set1_echstore(3)>
+L<SSL_set1_echstore(3)>
 
 =head1 HISTORY
 
