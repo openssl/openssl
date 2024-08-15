@@ -101,7 +101,7 @@ typedef struct ossl_ech_info_st {
 OSSL_ECHSTORE *OSSL_ECHSTORE_init(OSSL_LIB_CTX *libctx, const char *propq);
 void OSSL_ECHSTORE_free(OSSL_ECHSTORE *es);
 int OSSL_ECHSTORE_new_config(OSSL_ECHSTORE *es,
-                             uint16_t echversion, uint16_t max_name_length,
+                             uint16_t echversion, uint8_t max_name_length,
                              const char *public_name, OSSL_HPKE_SUITE suite);
 int OSSL_ECHSTORE_write_pem(OSSL_ECHSTORE *es, int index, BIO *out);
 int OSSL_ECHSTORE_read_echconfiglist(OSSL_ECHSTORE *es, BIO *in);

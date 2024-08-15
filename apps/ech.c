@@ -40,7 +40,7 @@ typedef enum OPTION_choice {
     OPT_PEMOUT,
     /* ECHConfig specifics */
     OPT_PUBLICNAME, OPT_ECHVERSION,
-    OPT_MAXNAMELENGTH, OPT_HPKESUITE,
+    OPT_MAXNAMELENGTH, OPT_HPKESUITE
 } OPTION_CHOICE;
 
 const OPTIONS ech_options[] = {
