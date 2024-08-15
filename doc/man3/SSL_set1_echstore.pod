@@ -1,0 +1,187 @@
+=pod
+
+=head1 NAME
+
+SSL_set1_echstore,
+OSSL_ECHSTORE_new, OSSL_ECHSTORE_free,
+OSSL_ECHSTORE_new_config, OSSL_ECHSTORE_write_pem,
+OSSL_ECHSTORE_read_echconfiglist, OSSL_ECHSTORE_get1_info,
+OSSL_ECHSTORE_downselect, OSSL_ECHSTORE_set1_key_and_read_pem,
+OSSL_ECHSTORE_read_pem, OSSL_ECHSTORE_num_keys, OSSL_ECHSTORE_flush_keys,
+OSSL_ECH_INFO_free, OSSL_ECH_INFO_print, SSL_CTX_set1_echstore,
+SSL_CTX_get1_echstore, SSL_get1_echstore, SSL_ech_set_server_names,
+SSL_ech_set_outer_server_name, SSL_ech_set_outer_alpn_protos,
+SSL_ech_get1_status, SSL_ech_set_grease_suite, SSL_ech_set_grease_type,
+SSL_ech_set_callback, SSL_ech_get_retry_config,
+SSL_CTX_ech_set_outer_alpn_protos, SSL_CTX_ech_raw_decrypt,
+SSL_CTX_ech_set_callback
+- Encrypted Client Hello (ECH) functions
+
+=head1 SYNOPSIS
+
+ #include <openssl/ech.h>
+
+  OSSL_ECHSTORE *OSSL_ECHSTORE_new(OSSL_LIB_CTX *libctx, const char *propq);
+  void OSSL_ECHSTORE_free(OSSL_ECHSTORE *es);
+  int OSSL_ECHSTORE_new_config(OSSL_ECHSTORE *es,
+                               uint16_t echversion, uint16_t max_name_length,
+                               const char *public_name, OSSL_HPKE_SUITE suite);
+  int OSSL_ECHSTORE_write_pem(OSSL_ECHSTORE *es, int index, BIO *out);
+  int OSSL_ECHSTORE_read_echconfiglist(OSSL_ECHSTORE *es, BIO *in);
+  int OSSL_ECHSTORE_get1_info(OSSL_ECHSTORE *es, OSSL_ECH_INFO **info,
+                              int *count);
+  int OSSL_ECHSTORE_downselect(OSSL_ECHSTORE *es, int index);
+  int OSSL_ECHSTORE_set1_key_and_read_pem(OSSL_ECHSTORE *es, EVP_PKEY *priv,
+                                          BIO *in, int for_retry);
+  int OSSL_ECHSTORE_read_pem(OSSL_ECHSTORE *es, BIO *in, int for_retry);
+  int OSSL_ECHSTORE_num_keys(OSSL_ECHSTORE *es, int *numkeys);
+  int OSSL_ECHSTORE_flush_keys(OSSL_ECHSTORE *es, time_t age);
+  void OSSL_ECH_INFO_free(OSSL_ECH_INFO *info, int count);
+  int OSSL_ECH_INFO_print(BIO *out, OSSL_ECH_INFO *info, int count);
+  int SSL_CTX_set1_echstore(SSL_CTX *ctx, OSSL_ECHSTORE *es);
+  int SSL_set1_echstore(SSL *s, OSSL_ECHSTORE *es);
+  OSSL_ECHSTORE *SSL_CTX_get1_echstore(const SSL_CTX *ctx);
+  OSSL_ECHSTORE *SSL_get1_echstore(const SSL *s);
+  int SSL_ech_set_server_names(SSL *s, const char *inner_name,
+                               const char *outer_name, int no_outer);
+  int SSL_ech_set_outer_server_name(SSL *s, const char *outer_name, int no_outer);
+  int SSL_ech_set_outer_alpn_protos(SSL *s, const unsigned char *protos,
+                                    const size_t protos_len);
+  int SSL_ech_get1_status(SSL *s, char **inner_sni, char **outer_sni);
+  int SSL_ech_set_grease_suite(SSL *s, const char *suite);
+  int SSL_ech_set_grease_type(SSL *s, uint16_t type);
+  void SSL_ech_set_callback(SSL *s, SSL_ech_cb_func f);
+  int SSL_ech_get_retry_config(SSL *s, unsigned char **ec, size_t *eclen);
+  int SSL_CTX_ech_set_outer_alpn_protos(SSL_CTX *s, const unsigned char *protos,
+                                        const size_t protos_len);
+  int SSL_CTX_ech_raw_decrypt(SSL_CTX *ctx,
+                              int *decrypted_ok,
+                              char **inner_sni, char **outer_sni,
+                              unsigned char *outer_ch, size_t outer_len,
+                              unsigned char *inner_ch, size_t *inner_len,
+                              unsigned char **hrrtok, size_t *toklen);
+  void SSL_CTX_ech_set_callback(SSL_CTX *ctx, SSL_ech_cb_func f);
+
+=head1 DESCRIPTION
+
+TODO(ECH): Text is TBD, this is just enough for the build.
+
+Mention SSL_set1_echstore() is a thing
+Mention OSSL_ECHSTORE_new() is a thing
+Mention OSSL_ECHSTORE_free() is a thing
+Mention OSSL_ECHSTORE_new_config() is a thing
+Mention OSSL_ECHSTORE_write_pem() is a thing
+Mention OSSL_ECHSTORE_read_echconfiglist() is a thing
+Mention OSSL_ECHSTORE_get1_info() is a thing
+Mention OSSL_ECHSTORE_downselect() is a thing
+Mention OSSL_ECHSTORE_set1_key_and_read_pem() is a thing
+Mention OSSL_ECHSTORE_read_pem() is a thing
+Mention OSSL_ECHSTORE_num_keys() is a thing
+Mention OSSL_ECHSTORE_flush_keys() is a thing
+Mention OSSL_ECH_INFO_free() is a thing
+Mention OSSL_ECH_INFO_print() is a thing
+Mention SSL_CTX_set1_echstore() is a thing
+Mention SSL_CTX_get1_echstore() is a thing
+Mention SSL_get1_echstore() is a thing
+Mention SSL_ech_set_server_names() is a thing
+Mention SSL_ech_set_outer_server_name() is a thing
+Mention SSL_ech_set_outer_alpn_protos() is a thing
+Mention SSL_ech_get1_status() is a thing
+Mention SSL_ech_set_grease_suite() is a thing
+Mention SSL_ech_set_grease_type() is a thing
+Mention SSL_ech_set_callback() is a thing
+Mention SSL_ech_get_retry_config() is a thing
+Mention SSL_CTX_ech_set_outer_alpn_protos() is a thing
+Mention SSL_CTX_ech_raw_decrypt() is a thing
+Mention SSL_CTX_ech_set_callback() is a thing
+
+=head2 Callback Function
+
+Applications can set a callback function that will be called when the
+outcome from an attempt at ECH has been determined. On the server,
+that happens early, as part of construction of the ServerHello message.
+On the client, the callback will happen after the SeverHello has
+been processed. In the event of HelloRetryRequest, the callback will
+only be triggered when processing the second ServerHello. The callback
+function will be triggered even if the client is only GREASEing.
+
+The callback function prototype is:
+
+ typedef unsigned int (*SSL_ech_cb_func)(SSL *s, const char *str);
+
+To set a callback function use SSL_ech_set_callback() or
+SSL_CTX_ech_set_callback() - the I<f> input should match the
+above prototype.
+
+When the callback function is called, the I<str> will point at a string
+intended for logging describing the state of ECH processing.
+Applications should not attempt to parse that string as the value depends
+on compile time settings, local configuration and the specific processing
+that happened prior to the callback. Applications that need to branch based
+on the outcome of ECH processing should instead make a call to
+SSL_ech_get1_status() from within their callback function.
+
+An example string I<str> as seen on a client might be:
+
+ ech_attempted=1
+ ech_attempted_type=0xfe0d
+ ech_atttempted_cid=0x5d
+ ech_done=1
+ ech_grease=0
+ ech_returned_len=0
+ ech_backend=0
+ ech_success=1
+ 2 ECHConfig values loaded
+ cfg(0): [fe0d,5d,cover.defo.ie,0020,[0001,0001],190984309c1a24cb944c005eb79d9c72ca9a4a979194b553dfd0bffc6b5c152d,00,00]
+ cfg(1): [fe0d,fd,cover.defo.ie,0020,[0001,0001],46dd4e2c81bb15ef9d194c99b86983844e2a1387e4fb7e7d3b8d368c8e1b4d2a,00,00]
+
+=head1 RETURN VALUES
+
+SSL_set1_echstore() returns zero on error
+OSSL_ECHSTORE_new() returns zero on error
+OSSL_ECHSTORE_free() returns zero on error
+OSSL_ECHSTORE_new_config() returns zero on error
+OSSL_ECHSTORE_write_pem() returns zero on error
+OSSL_ECHSTORE_read_echconfiglist() returns zero on error
+OSSL_ECHSTORE_get1_info() returns zero on error
+OSSL_ECHSTORE_downselect() returns zero on error
+OSSL_ECHSTORE_set1_key_and_read_pem() returns zero on error
+OSSL_ECHSTORE_read_pem() returns zero on error
+OSSL_ECHSTORE_num_keys() returns zero on error
+OSSL_ECHSTORE_flush_keys() returns zero on error
+OSSL_ECH_INFO_free() returns zero on error
+OSSL_ECH_INFO_print() returns zero on error
+SSL_CTX_set1_echstore() returns zero on error
+SSL_CTX_get1_echstore() returns zero on error
+SSL_get1_echstore() returns zero on error
+SSL_ech_set_server_names() returns zero on error
+SSL_ech_set_outer_server_name() returns zero on error
+SSL_ech_set_outer_alpn_protos() returns zero on error
+SSL_ech_get1_status() returns zero on error
+SSL_ech_set_grease_suite() returns zero on error
+SSL_ech_set_grease_type() returns zero on error
+SSL_ech_set_callback() returns zero on error
+SSL_ech_get_retry_config() returns zero on error
+SSL_CTX_ech_set_outer_alpn_protos() returns zero on error
+SSL_CTX_ech_raw_decrypt() returns zero on error
+SSL_CTX_ech_set_callback() returns zero on error
+
+=head1 SEE ALSO
+
+The Encrypted ClientHello specification: L<https://datatracker.ietf.org/doc/draft-ietf-tls-esni/>
+TODO(ECH) update link to RFC.
+
+=head1 HISTORY
+
+This functionality described here was added in OpenSSL 3.4.
+
+=head1 COPYRIGHT
+
+Copyright 2024 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut
