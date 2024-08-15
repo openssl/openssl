@@ -542,7 +542,7 @@ static void *rsa_d2i_PKCS8(void **key, const unsigned char **der, long der_len,
 #define rsa_d2i_PUBKEY                  (d2i_of_void *)d2i_RSA_PUBKEY
 #define rsa_free                        (free_key_fn *)RSA_free
 
-#define	safe_BN_num_bits(_k_)           (((_k_) == NULL) ? 0 : BN_num_bits((_k_)))
+#define safe_BN_num_bits(_k_)           (((_k_) == NULL) ? 0 : BN_num_bits((_k_)))
 static int rsa_check(void *key, struct der2key_ctx_st *ctx)
 {
     int valid;
