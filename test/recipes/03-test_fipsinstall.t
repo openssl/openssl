@@ -35,7 +35,35 @@ my @pedantic_fail =
     ( 'no_conditional_errors', 'no_security_checks', 'self_test_oninstall',
       'no_pbkdf2_lower_bound_check' );
 
-plan tests => 35 + (scalar @pedantic_okay) + (scalar @pedantic_fail);
+# Command line options
+my @commandline =
+    (
+        ( 'ems_check',                      'tls1-prf-ems-check' ),
+        ( 'no_short_mac',                   'no-short-mac' ),
+        ( 'no_drbg_truncated_digests',      'drbg-no-trunc-md' ),
+        ( 'signature_digest_check',         'signature-digest-check' ),
+        ( 'hkdf_digest_check',              'hkdf-digest-check' ),
+        ( 'tls13_kdf_digest_check',         'tls13-kdf-digest-check' ),
+        ( 'tls1_prf_digest_check',          'tls1-prf-digest-check' ),
+        ( 'sshkdf_digest_check',            'sshkdf-digest-check' ),
+        ( 'sskdf_digest_check',             'sskdf-digest-check' ),
+        ( 'x963kdf_digest_check',           'x963kdf-digest-check' ),
+        ( 'dsa_sign_disabled',              'dsa-sign-disabled' ),
+        ( 'tdes_encrypt_disabled',          'tdes-encrypt-disabled' ),
+        ( 'rsa_pkcs15_padding_disabled',    'rsa-pkcs15-padding-disabled' ),
+        ( 'rsa_pss_saltlen_check',          'rsa-pss-saltlen-check' ),
+        ( 'rsa_sign_x931_disabled',         'rsa-sign-x931-pad-disabled' ),
+        ( 'hkdf_key_check',                 'hkdf-key-check' ),
+        ( 'kbkdf_key_check',                'kbkdf-key-check' ),
+        ( 'tls13_kdf_key_check',            'tls13-kdf-key-check' ),
+        ( 'tls1_prf_key_check',             'tls1-prf-key-check' ),
+        ( 'sshkdf_key_check',               'sshkdf-key-check' ),
+        ( 'sskdf_key_check',                'sskdf-key-check' ),
+        ( 'x963kdf_key_check',              'x963kdf-key-check' )
+    );
+
+plan tests => 35 + (scalar @pedantic_okay) + (scalar @pedantic_fail)
+              + 4 * (scalar @commandline);
 
 my $infile = bldtop_file('providers', platform->dso('fips'));
 my $fipskey = $ENV{FIPSKEY} // config('FIPSKEY') // '00';
@@ -420,5 +448,21 @@ foreach my $o (@pedantic_fail) {
     ok(!run(app(['openssl', 'fipsinstall', '-out', 'fips_fail.cnf',
                  '-module', $infile, '-pedantic', "-${o}"])),
             "fipsinstall disallows -${o} after -pedantic option");
+}
+
+foreach my $cp (@commandline) {
+    my $o = $commandline[0];
+    my $l = $commandline[1];
+
+    ok(find_line_file("${l} = 1", 'fips-pedantic.cnf') == 1,
+       "fipsinstall enables ${l} with -pendantic option");
+    ok(find_line_file("${l} = 0", 'fips.cnf') == 1,
+       "fipsinstall disables ${l} without -pendantic option");
+
+    ok(run(app(['openssl', 'fipsinstall', '-out', "fips-${o}.cnf",
+                '-module', $infile, "-${o}"])),
+           "fipsinstall accepts -${o} option");
+    ok(find_line_file("${l} = 1", "fips-${o}.cnf") == 1,
+       "fipsinstall enables ${l} with -${o} option");
 }
 
