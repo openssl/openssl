@@ -236,7 +236,12 @@ typedef struct ossl_decoder_ctx_st OSSL_DECODER_CTX;
 
 typedef struct ossl_self_test_st OSSL_SELF_TEST;
 
-#ifdef __cplusplus
+#ifndef OPENSSL_NO_ECH
+/* opaque type for ECH related information */
+typedef struct ossl_echstore_st OSSL_ECHSTORE;
+#endif
+
+#ifdef  __cplusplus
 }
 #endif
 
