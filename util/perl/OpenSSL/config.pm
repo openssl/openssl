@@ -807,7 +807,7 @@ EOF
       [ 'ia64-.*-openbsd.*',      { target => "BSD-nodef-ia64" } ],
       [ 'ia64-.*-.*bsd.*',        { target => "BSD-ia64" } ],
       [ 'x86_64-.*-dragonfly.*',  { target => "BSD-x86_64" } ],
-      [ 'amd64-.*-openbsd.*',     { target => "BSD-nodef-x86_64" } ],
+      [ 'amd64-.*-openbsd.*',     { target => "BSD-openbsd-x86_64" } ],
       [ 'amd64-.*-.*bsd.*',       { target => "BSD-x86_64" } ],
       [ 'arm64-.*-.*bsd.*',       { target => "BSD-aarch64" } ],
       [ 'armv6-.*-.*bsd.*',       { target => "BSD-armv4" } ],
