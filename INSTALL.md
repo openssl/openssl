@@ -781,6 +781,11 @@ Don't build support for Elliptic Curves.
 
 Don't build support for binary Elliptic Curves
 
+### no-ech
+
+Don't build support for Encrypted Client Hello (ECH) extension (draft-ietf-tls-esni)
+TODO(ECH) update link to RFC.
+
 ### enable-ec_nistp_64_gcc_128
 
 Enable support for optimised implementations of some commonly used NIST
