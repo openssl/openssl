@@ -113,6 +113,7 @@
 # define SSL_R_DUPLICATE_COMPRESSION_ID                   309
 # define SSL_R_ECC_CERT_NOT_FOR_SIGNING                   318
 # define SSL_R_ECDH_REQUIRED_FOR_SUITEB_MODE              374
+# define SSL_R_ECH_REQUIRED                               424
 # define SSL_R_EE_KEY_TOO_SMALL                           399
 # define SSL_R_EMPTY_RAW_PUBLIC_KEY                       349
 # define SSL_R_EMPTY_SRTP_PROTECTION_PROFILE_LIST         354

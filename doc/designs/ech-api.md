@@ -173,25 +173,25 @@ used to authenticate servers. Notably:
 
 - ECH private keys are expected to be rotated roughly hourly, rather than every
   month or two for TLS server private keys. Hourly ECH key rotation is an
-attempt to provide better forward secrecy, given ECH implements an
-ephemeral-static ECDH scheme.
+  attempt to provide better forward secrecy, given ECH implements an
+  ephemeral-static ECDH scheme.
 
 - ECH private keys stand alone - there are no hierarchies and there is no
-chaining, and no certificates and no defined relationships between current
-and older ECH private keys. The expectation is that a "current" ECH public key
-will be published in the DNS and that plus approx. 2 "older" ECH private keys
-will remain usable for decryption at any given time. This is a way to balance
-DNS TTLs versus forward secrecy and robustness.
+  chaining, and no certificates and no defined relationships between current
+  and older ECH private keys. The expectation is that a "current" ECH public key
+  will be published in the DNS and that plus approx. 2 "older" ECH private keys
+  will remain usable for decryption at any given time. This is a way to balance
+  DNS TTLs versus forward secrecy and robustness.
 
 - In particular, the above means that we do not see any need to repeatedly
-parse or process related ECHConfigList structures - each can be processed
-independently for all practical purposes.
+  parse or process related ECHConfigList structures - each can be processed
+  independently for all practical purposes.
 
 - There are all the usual algorithm variations, and those will likely result in
-the same x25519 versus p256 combinatorics. How that plays out has yet to be
-seen as FIPS compliance for ECH is not (yet) a thing. For OpenSSL, it seems
-wise to be agnostic and support all relevant combinations. (And doing so is not
-that hard.)
+  the same x25519 versus p256 combinatorics. How that plays out has yet to be
+  seen as FIPS compliance for ECH is not (yet) a thing. For OpenSSL, it seems
+  wise to be agnostic and support all relevant combinations. (And doing so is not
+  that hard.)
 
 ECH Store APIs
 --------------
@@ -206,7 +206,7 @@ typedef struct ossl_echstore_st OSSL_ECHSTORE;
 /* if a caller wants to index the last entry in the store */
 # define OSSL_ECHSTORE_LAST -1
 
-OSSL_ECHSTORE *OSSL_ECHSTORE_init(OSSL_LIB_CTX *libctx, const char *propq);
+OSSL_ECHSTORE *OSSL_ECHSTORE_new(OSSL_LIB_CTX *libctx, const char *propq);
 void OSSL_ECHSTORE_free(OSSL_ECHSTORE *es);
 int OSSL_ECHSTORE_new_config(OSSL_ECHSTORE *es,
                              uint16_t echversion, uint8_t max_name_length,
@@ -226,7 +226,7 @@ int OSSL_ECHSTORE_num_keys(OSSL_ECHSTORE *es, int *numkeys);
 int OSSL_ECHSTORE_flush_keys(OSSL_ECHSTORE *es, time_t age);
 ```
 
-`OSSL_ECHSTORE_init()` and `OSSL_ECHSTORE_free()` are relatively obvious.
+`OSSL_ECHSTORE_new()` and `OSSL_ECHSTORE_free()` are relatively obvious.
 
 `OSSL_ECHSTORE_new_config()` allows the caller to create a new private key
 value and the related "singleton" ECHConfigList structure.
@@ -288,6 +288,7 @@ To access the `OSSL_ECHSTORE` associated with an `SSL_CTX` or
 OSSL_ECHSTORE *SSL_CTX_get1_echstore(const SSL_CTX *ctx);
 OSSL_ECHSTORE *SSL_get1_echstore(const SSL *s);
 ```
+
 The resulting `OSSL_ECHSTORE` can be modified and then re-associated
 with an `SSL_CTX` or `SSL` connection.
 
@@ -374,20 +375,20 @@ Some notes on the above ECHConfig fields:
 - `version` should be `OSSL_ECH_CURRENT_VERSION` for the current version.
 
 - `public_name` field is the name used in the SNI of the outer ClientHello, and
-that a server ought be able to authenticate if using the `retry_configs`
-fallback mechanism.
+  that a server ought be able to authenticate if using the `retry_configs`
+  fallback mechanism.
 
 - `config_id` is a one-octet value used by servers to select which private
-value to use to attempt ECH decryption. Servers can also do trial decryption
-if desired, as clients might use a random value for the `confid_id` as an
-anti-fingerprinting mechanism. (The use of one octet for this value was the
-result of an extended debate about efficiency versus fingerprinting.)
+  value to use to attempt ECH decryption. Servers can also do trial decryption
+  if desired, as clients might use a random value for the `confid_id` as an
+  anti-fingerprinting mechanism. (The use of one octet for this value was the
+  result of an extended debate about efficiency versus fingerprinting.)
 
 - The `max_name_length` is an element of the ECHConfigList that is used by
-clients as part of a padding algorithm. (That design is part of the spec, but
-isn't necessarily great - the idea is to include the longest value that might
-be the length of a DNS name included as an inner CH SNI.) A value of 0 is
-perhaps most likely to be used, indicating that the maximum isn't known.
+  clients as part of a padding algorithm. (That design is part of the spec, but
+  isn't necessarily great - the idea is to include the longest value that might
+  be the length of a DNS name included as an inner CH SNI.) A value of 0 is
+  perhaps most likely to be used, indicating that the maximum isn't known.
 
 Essentially, an ECH store is a set of ECHConfig values, plus optionally
 (for servers), relevant private key value information.

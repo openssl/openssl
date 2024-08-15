@@ -69,7 +69,8 @@ IF[{- !$disabled{tests} -}]
           ca_internals_test bio_tfo_test membio_test bio_dgram_test list_test \
           fips_version_test x509_test hpke_test pairwise_fail_test \
           nodefltctxtest evp_xof_test x509_load_cert_file_test bio_meth_test \
-          x509_acert_test x509_req_test strtoultest bio_pw_callback_test
+          x509_acert_test x509_req_test strtoultest bio_pw_callback_test \
+          ech_test
 
   IF[{- !$disabled{'rpk'} -}]
     PROGRAMS{noinst}=rpktest
@@ -220,6 +221,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[hpke_test]=hpke_test.c
   INCLUDE[hpke_test]=../include ../apps/include
   DEPEND[hpke_test]=../libcrypto.a libtestutil.a
+
+  SOURCE[ech_test]=ech_test.c helpers/ssltestlib.c
+  INCLUDE[ech_test]=../include ../apps/include
+  DEPEND[ech_test]=../libssl.a ../libcrypto.a libtestutil.a
 
   SOURCE[evp_extra_test2]=evp_extra_test2.c $INITSRC tls-provider.c
   INCLUDE[evp_extra_test2]=../include ../apps/include

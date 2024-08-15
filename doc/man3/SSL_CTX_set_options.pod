@@ -368,6 +368,30 @@ only understands up to SSLv3. In this case the client must still use the
 same SSLv3.1=TLSv1 announcement. Some clients step down to SSLv3 with respect
 to the server's answer and violate the version rollback protection.)
 
+=item SSL_OP_ECH_GREASE
+
+If set, TLS ClientHello messages emitted by the client will include GREASE
+Encrypted ClientHello (ECH) extension values, if ECH is not really being
+attempted.
+
+=item SSL_OP_ECH_TRIALDECRYPT
+
+If set, servers will attempt to decrypt ECH extensions using all loaded
+ECH key pairs. By default, servers will only attempt decryption using
+an ECH key pair that matches the config_id in the ECH extension value
+received.
+
+=item SSL_OP_ECH_GREASE_RETRY_CONFIG
+
+If set, servers will add GREASEy ECHConfig values to those sent to the
+client after the client GREASEd or the client tried and failed to use
+ECH.
+
+=item SSL_OP_ECH_IGNORED_CID
+
+If set, TLS ClientHello messages emitted by the client will ignore the
+ECHConfig config_id chosen by the server and use a random octet.
+
 =back
 
 The following options no longer have any effect but their identifiers are

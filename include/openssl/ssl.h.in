@@ -44,6 +44,9 @@ use OpenSSL::stackhash qw(generate_stack_macros generate_const_stack_macros);
 # include <openssl/ct.h>
 # include <openssl/sslerr.h>
 # include <openssl/prov_ssl.h>
+# ifndef OPENSSL_NO_ECH
+#  include <openssl/ech.h>
+# endif
 # ifndef OPENSSL_NO_STDIO
 #  include <stdio.h>
 # endif
@@ -425,6 +428,28 @@ typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
 # define SSL_OP_ENABLE_KTLS_TX_ZEROCOPY_SENDFILE         SSL_OP_BIT(34)
 # define SSL_OP_PREFER_NO_DHE_KEX                        SSL_OP_BIT(35)
 # define SSL_OP_LEGACY_EC_POINT_FORMATS                  SSL_OP_BIT(36)
+
+
+#ifndef OPENSSL_NO_ECH
+/* Set this to tell client to emit greased ECH values */
+# define SSL_OP_ECH_GREASE                               SSL_OP_BIT(37)
+/*
+ * If this is set then the server side will attempt trial decryption
+ * of ECHs even if there is no matching ECH config_id. That's a bit
+ * inefficient, but more privacy friendly.
+ */
+# define SSL_OP_ECH_TRIALDECRYPT                         SSL_OP_BIT(38)
+/*
+ * If set, clients will ignore the supplied ECH config_id and replace
+ * that with a random value.
+ */
+# define SSL_OP_ECH_IGNORE_CID                           SSL_OP_BIT(39)
+/*
+ * If set, servers will add GREASEy ECHConfig values to those sent
+ * in retry_configs.
+ */
+# define SSL_OP_ECH_GREASE_RETRY_CONFIG                  SSL_OP_BIT(40)
+#endif
 
 /*
  * Option "collections."
@@ -1191,6 +1216,9 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 # define SSL_AD_NO_RENEGOTIATION         TLS1_AD_NO_RENEGOTIATION
 # define SSL_AD_MISSING_EXTENSION        TLS13_AD_MISSING_EXTENSION
 # define SSL_AD_CERTIFICATE_REQUIRED     TLS13_AD_CERTIFICATE_REQUIRED
+# ifndef OPENSSL_NO_ECH
+#  define SSL_AD_ECH_REQUIRED            TLS1_AD_ECH_REQUIRED
+# endif
 # define SSL_AD_UNSUPPORTED_EXTENSION    TLS1_AD_UNSUPPORTED_EXTENSION
 # define SSL_AD_CERTIFICATE_UNOBTAINABLE TLS1_AD_CERTIFICATE_UNOBTAINABLE
 # define SSL_AD_UNRECOGNIZED_NAME        TLS1_AD_UNRECOGNIZED_NAME
