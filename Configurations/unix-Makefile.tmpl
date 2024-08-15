@@ -135,7 +135,7 @@ GENERATED_PODS={- # common0.tmpl provides @generated
                        fill_lines(" ", $COLUMNS - 15,
                                   map { my $x = $_;
                                         (
-                                          grep { 
+                                          grep {
                                                  $unified_info{attributes}->{depends}
                                                  ->{$x}->{$_}->{pod} // 0
                                                }
@@ -1328,7 +1328,8 @@ errors:
            include/openssl/dtls1.h
            include/openssl/srtp.h
            include/openssl/quic.h
-           include/openssl/sslerr_legacy.h );
+           include/openssl/sslerr_legacy.h
+           include/openssl/ech.h);
    my @cryptoheaders_tmpl =
        qw( include/internal/dso.h
            include/internal/o_dir.h

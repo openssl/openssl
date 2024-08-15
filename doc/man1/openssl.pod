@@ -121,6 +121,10 @@ L<openssl-genpkey(1)> and L<openssl-pkeyparam(1)>.
 
 EC (Elliptic curve) key processing.
 
+=item B<ech>
+
+Encrypted Client Hello (ECH) admin. See L<openssl-ech(1)>.
+
 =item B<ecparam>
 
 EC parameter manipulation and generation.
