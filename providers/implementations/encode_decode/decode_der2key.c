@@ -542,10 +542,10 @@ static void *rsa_d2i_PKCS8(void **key, const unsigned char **der, long der_len,
 #define rsa_d2i_PUBKEY                  (d2i_of_void *)d2i_RSA_PUBKEY
 #define rsa_free                        (free_key_fn *)RSA_free
 
-#define safe_BN_num_bits(_k_)	(((_k_) == NULL) ? 0 : BN_num_bits((_k_)))
+#define	safe_BN_num_bits(_k_)           (((_k_) == NULL) ? 0 : BN_num_bits((_k_)))
 static int rsa_check(void *key, struct der2key_ctx_st *ctx)
 {
-    int	valid;
+    int valid;
     int n, e_ok, d_ok, p_ok, q_ok, dmp1_ok, dmq1_ok, iqmp_ok;
 
     switch (RSA_test_flags(key, RSA_FLAG_TYPE_MASK)) {
@@ -567,7 +567,7 @@ static int rsa_check(void *key, struct der2key_ctx_st *ctx)
     n = safe_BN_num_bits(RSA_get0_n(key));
     e_ok = (safe_BN_num_bits(RSA_get0_e(key)) <= n);
     d_ok = (safe_BN_num_bits(RSA_get0_d(key)) <= n);
-    n = n/2;
+    n = n / 2;
     p_ok = (safe_BN_num_bits(RSA_get0_p(key)) <= n);
     q_ok = (safe_BN_num_bits(RSA_get0_q(key)) <= n);
     dmp1_ok = (safe_BN_num_bits(RSA_get0_dmp1(key)) <= n);
