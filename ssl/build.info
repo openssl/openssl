@@ -20,6 +20,7 @@ SOURCE[../libssl]=\
         bio_ssl.c ssl_err.c ssl_err_legacy.c tls_srp.c t1_trce.c ssl_utst.c \
         statem/statem.c \
         ssl_cert_comp.c \
+        ech.c \
         tls_depr.c
 
 # For shared builds we need to include the libcrypto packet.c and quic_vlint.c

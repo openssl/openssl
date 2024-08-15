@@ -374,5 +374,10 @@
 # define SSL_R_WRONG_VERSION_NUMBER                       267
 # define SSL_R_X509_LIB                                   268
 # define SSL_R_X509_VERIFICATION_SETUP_PROBLEMS           269
+/*
+ * TODO(ECH): this should probably be generated from openssl.txt but I
+ * I can't recall how;-(
+ */
+# define SSL_R_ECH_REQUIRED                              1355
 
 #endif
