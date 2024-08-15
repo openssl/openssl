@@ -29,6 +29,11 @@ OpenSSL 3.4
 
 ### Changes between 3.3 and 3.4 [xx XXX xxxx]
 
+ * Add debuginfo Makefile target for unix platforms to produce
+   a separate DWARF info file from the corresponding shared libs.
+
+   *Neil Horman*
+
  * Add feature to retrieve configured TLS signature algorithms,
    e.g., via the openssl list command.
 
