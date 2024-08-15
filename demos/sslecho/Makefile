@@ -4,7 +4,7 @@
 #
 #    LD_LIBRARY_PATH=../.. ./sslecho
 
-TESTS = sslecho
+TESTS = sslecho echecho
 
 CFLAGS  = -I../../include -g -Wall
 LDFLAGS = -L../..
@@ -13,6 +13,8 @@ LDLIBS  = -lssl -lcrypto
 all: $(TESTS)
 
 sslecho: main.o
+
+echecho: echecho.o
 
 $(TESTS):
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LDLIBS)

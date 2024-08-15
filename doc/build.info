@@ -82,6 +82,12 @@ DEPEND[man/man1/openssl-ec.1]=man1/openssl-ec.pod
 GENERATE[man/man1/openssl-ec.1]=man1/openssl-ec.pod
 DEPEND[man1/openssl-ec.pod]{pod}=man1/openssl-ec.pod.in
 GENERATE[man1/openssl-ec.pod]=man1/openssl-ec.pod.in
+DEPEND[html/man1/openssl-ech.html]=man1/openssl-ech.pod
+GENERATE[html/man1/openssl-ech.html]=man1/openssl-ech.pod
+DEPEND[man/man1/openssl-ech.1]=man1/openssl-ech.pod
+GENERATE[man/man1/openssl-ech.1]=man1/openssl-ech.pod
+DEPEND[man1/openssl-ech.pod]{pod}=man1/openssl-ech.pod.in
+GENERATE[man1/openssl-ech.pod]=man1/openssl-ech.pod.in
 DEPEND[html/man1/openssl-ecparam.html]=man1/openssl-ecparam.pod
 GENERATE[html/man1/openssl-ecparam.html]=man1/openssl-ecparam.pod
 DEPEND[man/man1/openssl-ecparam.1]=man1/openssl-ecparam.pod
@@ -367,6 +373,7 @@ html/man1/openssl-dhparam.html \
 html/man1/openssl-dsa.html \
 html/man1/openssl-dsaparam.html \
 html/man1/openssl-ec.html \
+html/man1/openssl-ech.html \
 html/man1/openssl-ecparam.html \
 html/man1/openssl-enc.html \
 html/man1/openssl-engine.html \
@@ -428,6 +435,7 @@ man/man1/openssl-dhparam.1 \
 man/man1/openssl-dsa.1 \
 man/man1/openssl-dsaparam.1 \
 man/man1/openssl-ec.1 \
+man/man1/openssl-ech.1 \
 man/man1/openssl-ecparam.1 \
 man/man1/openssl-enc.1 \
 man/man1/openssl-engine.1 \
@@ -2775,6 +2783,10 @@ DEPEND[html/man3/SSL_session_reused.html]=man3/SSL_session_reused.pod
 GENERATE[html/man3/SSL_session_reused.html]=man3/SSL_session_reused.pod
 DEPEND[man/man3/SSL_session_reused.3]=man3/SSL_session_reused.pod
 GENERATE[man/man3/SSL_session_reused.3]=man3/SSL_session_reused.pod
+DEPEND[html/man3/SSL_set1_echstore.html]=man3/SSL_set1_echstore.pod
+GENERATE[html/man3/SSL_set1_echstore.html]=man3/SSL_set1_echstore.pod
+DEPEND[man/man3/SSL_set1_echstore.3]=man3/SSL_set1_echstore.pod
+GENERATE[man/man3/SSL_set1_echstore.3]=man3/SSL_set1_echstore.pod
 DEPEND[html/man3/SSL_set1_host.html]=man3/SSL_set1_host.pod
 GENERATE[html/man3/SSL_set1_host.html]=man3/SSL_set1_host.pod
 DEPEND[man/man3/SSL_set1_host.3]=man3/SSL_set1_host.pod
@@ -3739,6 +3751,7 @@ html/man3/SSL_read.html \
 html/man3/SSL_read_early_data.html \
 html/man3/SSL_rstate_string.html \
 html/man3/SSL_session_reused.html \
+html/man3/SSL_set1_echstore.html \
 html/man3/SSL_set1_host.html \
 html/man3/SSL_set1_initial_peer_addr.html \
 html/man3/SSL_set1_server_cert_type.html \
@@ -4411,6 +4424,7 @@ man/man3/SSL_read.3 \
 man/man3/SSL_read_early_data.3 \
 man/man3/SSL_rstate_string.3 \
 man/man3/SSL_session_reused.3 \
+man/man3/SSL_set1_echstore.3 \
 man/man3/SSL_set1_host.3 \
 man/man3/SSL_set1_initial_peer_addr.3 \
 man/man3/SSL_set1_server_cert_type.3 \
