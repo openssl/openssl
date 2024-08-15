@@ -542,19 +542,9 @@ static void *rsa_d2i_PKCS8(void **key, const unsigned char **der, long der_len,
 #define rsa_d2i_PUBKEY                  (d2i_of_void *)d2i_RSA_PUBKEY
 #define rsa_free                        (free_key_fn *)RSA_free
 
-#define safe_BN_num_bits(_k_)           (((_k_) == NULL) ? 0 : BN_num_bits((_k_)))
-DEFINE_SPECIAL_STACK_OF_CONST(BIGNUM_const, BIGNUM)
-
 static int rsa_check(void *key, struct der2key_ctx_st *ctx)
 {
-    int valid = 0;
-    int n, d_ok, factors_ok, exps_ok, coeffs_ok, bits, i;
-    STACK_OF(BIGNUM_const) *factors = sk_BIGNUM_const_new_null();
-    STACK_OF(BIGNUM_const) *exps = sk_BIGNUM_const_new_null();
-    STACK_OF(BIGNUM_const) *coeffs = sk_BIGNUM_const_new_null();
-
-    if (factors == NULL || exps == NULL || coeffs == NULL)
-        goto done;
+    int valid;
 
     switch (RSA_test_flags(key, RSA_FLAG_TYPE_MASK)) {
     case RSA_FLAG_TYPE_RSA:
@@ -568,41 +558,7 @@ static int rsa_check(void *key, struct der2key_ctx_st *ctx)
         valid = 0;
     }
 
-    /*
-     * Simple sanity check for RSA key. All RSA key parameters
-     * must be less-than/equal-to RSA parameter n
-     */
-    ossl_rsa_get0_all_params(key, factors, exps, coeffs);
-    n = safe_BN_num_bits(RSA_get0_n(key));
-
-    exps_ok = 1;
-    for (i = 0; i < sk_BIGNUM_const_num(exps); i++) {
-        bits = safe_BN_num_bits(sk_BIGNUM_const_value(exps, i));
-        exps_ok = ((exps_ok) && (bits <= n));
-    }
-
-    d_ok = (safe_BN_num_bits(RSA_get0_d(key)) <= n);
-
-    n = n / 2;
-
-    factors_ok = 1;
-    for (i = 0; i < sk_BIGNUM_const_num(factors); i++) {
-        bits = safe_BN_num_bits(sk_BIGNUM_const_value(factors, i));
-        factors_ok = ((factors_ok) && (bits <= n));
-    }
-
-    coeffs_ok = 1;
-    for (i = 0; i < sk_BIGNUM_const_num(coeffs); i++) {
-        bits = safe_BN_num_bits(sk_BIGNUM_const_value(coeffs, i));
-        coeffs_ok = ((coeffs_ok) && (bits <= n));
-    }
-
-    valid = (valid && d_ok && factors_ok && coeffs_ok);
-
-done:
-    sk_BIGNUM_const_free(factors);
-    sk_BIGNUM_const_free(exps);
-    sk_BIGNUM_const_free(coeffs);
+    valid = (valid && ossl_rsa_check_factors(key));
 
     return valid;
 }
