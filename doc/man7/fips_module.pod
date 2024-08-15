@@ -471,6 +471,83 @@ use L<EVP_MD_get0_provider(3)>.
 To extract the name from the B<OSSL_PROVIDER>, use
 L<OSSL_PROVIDER_get0_name(3)>.
 
+=head2 FIPS indicators
+
+FIPS indicators have been added to the FIPS provider in OpenSSL 3.4.
+FIPS 140-3 requires indicators to be used if the FIPS provider allows non
+approved algorithms. An algorithm is approved if it passes all required checks
+such as minimum key size. By default an error will occur if any check fails.
+For backwards compatability individual algorithms may override the checks by
+using either an option in the FIPS configuration (See
+L<fips_config(5)/FIPS indicator options>) OR in code using an algorithm context setter.
+Overriding the check means that the algorithm is not FIPS compliant.
+L<OSSL_INDICATOR_set_callback(3)> can be called to register a callback to log
+unapproved algorithms. At the end of any algorithm operation the approved status
+can be queried using an algorithm context getter to retrieve the "fips-indicator".
+An example of an algorithm context setter is "key-check"
+in L<EVP_KDF-HKDF(7)/Supported parameters>.
+
+The following algorithms use "fips-indicator" to query if the algorithm
+is approved:
+
+=over 4
+
+=item DSA Key generation
+
+See L<EVP_PKEY-DSA(7)/DSA parameters>
+
+=item DSA Signatures L<EVP_SIGNATURE-DSA(7)/Signature Parameters>
+
+=item ECDSA Signatures L<EVP_SIGNATURE-ECDSA(7)/ECDSA Signature Parameters>
+
+=item EC Key Generation L<EVP_PKEY-EC(7)/Common EC parameters>
+
+=item RSA Encryption
+
+See L<EVP_ASYM_CIPHER-RSA(7)/RSA Asymmetric Cipher parameters> and 
+L<EVP_KEM-RSA(7)/RSA KEM parameters>
+
+=item RSA Signatures
+
+See L<EVP_SIGNATURE-RSA(7)/Signature Parameters>
+
+=item DRBGS
+
+See L<EVP_RAND-HASH-DRBG(7)/Supported parameters> and
+EVP_RAND-HMAC-DRBG(7)/Supported parameters>
+
+=item DES
+
+See L<EVP_CIPHER-DES(7)/Parameters>
+
+=item DH
+
+See L<EVP_KEYEXCH-DH(7)/DH and DHX key exchange parameters>
+
+=item ECDH
+
+See L<EVP_KEYEXCH-ECDH(7)/ECDH Key Exchange parameters>
+
+=item KDFS
+
+See relevant KDF documentation e.g. L<EVP_KDF-HKDF(7)/Supported parameters>
+
+=item CMAC and KMAC
+
+See L<EVP_MAC-CMAC(7)/Supported parameters> and
+L<EVP_MAC-KMAC(7)/Supported parameters>
+
+=item RAND-TEST-RAND
+
+This is an unapproved algorithm.
+See L<EVP_RAND-TEST-RAND(7)/Supported parameters>
+
+=back
+
+AES-GCM also has a indicator called "iv-generated".
+See L<EVP_EncryptInit(3)/PARAMETERS)> for further information. This indicator
+does not trigger the indicator callback.
+
 =head1 NOTES
 
 Some released versions of OpenSSL do not include a validated

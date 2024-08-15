@@ -29,6 +29,21 @@ OpenSSL 3.4
 
 ### Changes between 3.3 and 3.4 [xx XXX xxxx]
 
+ * Add FIPS indicators to the FIPS provider.
+   FIPS 140-3 requires indicators to be used if the FIPS provider allows
+   non approved algorithms. An algorithm is approved if it passes all
+   required checks such as minimum key size. By default an error will
+   occur if any check fails. For backwards compatibility individual
+   algorithms may override the checks by using either an option in the
+   FIPS configuration OR in code using an algorithm context setter.
+   Overriding the check means that the algorithm is not FIPS compliant.
+   OSSL_INDICATOR_set_callback() can be called to register a callback
+   to log unapproved algorithms. At the end of any algorithm operation
+   the approved status can be queried using an algorithm context getter.
+   FIPS provider configuration options are set using 'openssl fipsinstall'.
+
+   *Shane Lontis, Paul Dale and Po-Hsing Wu*
+
  * Add debuginfo Makefile target for unix platforms to produce
    a separate DWARF info file from the corresponding shared libs.
 
@@ -38,12 +53,6 @@ OpenSSL 3.4
    e.g., via the openssl list command.
 
    *Michael Baentsch*
-
- * Add FIPS provider configuration option to enforce the a minimal
-   MAC length check.  The option '-no_short_mac' can optionally be
-   supplied to 'openssl fipsinstall'.
-
-   *Paul Dale*
 
  * Redesigned Windows use of OPENSSLDIR/ENGINESDIR/MODULESDIR such that
    what were formerly build time locations can now be defined at run time
