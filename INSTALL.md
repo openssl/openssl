@@ -782,6 +782,11 @@ This option is only supported on platforms:
    - supports the non-standard type `__uint128_t`
    - defines the built-in macro `__SIZEOF_INT128__`
 
+### no-ech
+
+Don't build support for Encrypted Client Hello (ECH) extension (draft-ietf-tls-esni)
+TODO(ECH) update link to RFC.
+
 ### enable-egd
 
 Build support for gathering entropy from the Entropy Gathering Daemon (EGD).
