@@ -82,7 +82,7 @@ int ech_main(int argc, char **argv)
     char *public_name = NULL;
     char *suitestr = NULL;
     uint16_t ech_version = OSSL_ECH_CURRENT_VERSION;
-    uint16_t max_name_length = 0;
+    uint8_t max_name_length = 0;
     OSSL_HPKE_SUITE hpke_suite = OSSL_HPKE_SUITE_DEFAULT;
     int mode = OSSL_ECH_KEYGEN_MODE; /* key generation */
 
@@ -112,13 +112,13 @@ int ech_main(int argc, char **argv)
             {
                 long tmp = strtol(opt_arg(), NULL, 10);
 
-                if (tmp < 0 || tmp > 65535) {
+                if (tmp < 0 || tmp > OSSL_ECH_MAX_MAXNAMELEN) {
                     BIO_printf(bio_err,
-                               "max name length out of range [0,65553] (%ld)\n",
-                               tmp);
+                               "max name length out of range [0,%d] (%ld)\n",
+                               OSSL_ECH_MAX_MAXNAMELEN, tmp);
                     goto opthelp;
                 } else {
-                    max_name_length = (uint16_t)tmp;
+                    max_name_length = (uint8_t)tmp;
                 }
             }
             break;
