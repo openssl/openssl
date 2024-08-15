@@ -52,6 +52,12 @@ The supported parameters are:
 
 These parameters work as described in L<EVP_RAND(3)/PARAMETERS>.
 
+=item "fips-indicator" (B<OSSL_DRBG_PARAM_FIPS_APPROVED_INDICATOR>) <integer>
+
+=item "digest-check" (B<OSSL_DRBG_PARAM_FIPS_DIGEST_CHECK>) <integer>
+
+These parameters work as described in L<provider-rand(7)/PARAMETERS>.
+
 =back
 
 =head1 NOTES
