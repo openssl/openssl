@@ -925,15 +925,13 @@ int ossl_rsa_check_factors(RSA *r)
     ossl_rsa_get0_all_params(r, factors, exps, coeffs);
     n = safe_BN_num_bits(RSA_get0_n(r));
 
+    d_ok = (safe_BN_num_bits(RSA_get0_d(r)) <= n);
+
     exps_ok = 1;
     for (i = 0; i < sk_BIGNUM_const_num(exps); i++) {
         bits = safe_BN_num_bits(sk_BIGNUM_const_value(exps, i));
         exps_ok = ((exps_ok) && (bits <= n));
     }
-
-    d_ok = (safe_BN_num_bits(RSA_get0_d(r)) <= n);
-
-    n = (n / 2) + 2;	/* ? rounding ? Avoids failures in evp_test */
 
     factors_ok = 1;
     for (i = 0; i < sk_BIGNUM_const_num(factors); i++) {
