@@ -395,6 +395,15 @@ This may be used after calling either the sign or verify final functions. It may
 return 0 if either the "digest-check", "key-check", or "sign-check" are set to 0.
 This option is used by the OpenSSL FIPS provider.
 
+=item "verify-message" (B<OSSL_SIGNATURE_PARAM_FIPS_VERIFY_MESSAGE> <integer>
+
+A getter that returns 1 if a signature verification operation acted on
+a raw message, or 0 if it verified a predigested message.  A value of 0
+indicates likely non-approved usage of the FIPS provider.  This flag is
+set when any signature verification initialisation function is called.
+It is also set to 1 when any signing operation is performed to signify
+compliance.  See FIPS 140-3 IG 2.4.B for further information.
+
 =item "key-check" (B<OSSL_SIGNATURE_PARAM_FIPS_KEY_CHECK>) <integer>
 
 If required this parameter should be set early via an init function
