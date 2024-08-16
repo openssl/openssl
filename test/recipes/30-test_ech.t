@@ -14,7 +14,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file srctop_dir bldtop_dir bldtop_file/;
 setup("test_ech");
 
 plan skip_all => "ECH tests not supported in this build"
-    if !disabled("fips") || disabled("ech") || disabled("tls1_3") || disabled("ec") || disabled("tls1_2") || disabled("ecx");
+    if disabled("ech") || disabled("tls1_3") || disabled("ec") || disabled("ecx");
 
 plan tests => 1;
 
