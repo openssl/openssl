@@ -37,7 +37,7 @@
 /*
  * ECH version. We only support RFC XXXX as of now.  As/if new ECHConfig
  * versions are added, those will be noted here.
- * TODO: Replace XXXX with the actual RFC number once known.
+ * TODO(ECH): Replace XXXX with the actual RFC number once known.
  */
 #  define OSSL_ECH_RFCXXXX_VERSION 0xfe0d /* official ECHConfig version */
 /* latest version from an RFC */
@@ -73,7 +73,7 @@
 #  define OPENSSL_ECH_ALLOW_CUST_INJECT
 
 /* if a caller wants to index the last entry in the store */
-# define OSSL_ECHSTORE_LAST -1
+#  define OSSL_ECHSTORE_LAST -1
 
 /*
  * Application-visible form of ECH information from the DNS, from config

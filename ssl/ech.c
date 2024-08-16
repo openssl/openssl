@@ -50,13 +50,15 @@ static int ah_encode(char *out, size_t outsize,
 }
 
 /*
- * @brief has a buffer as a pretend file name being ascii-hex of hashed buffer
+ * @brief hash a buffer as a pretend file name being ascii-hex of hashed buffer
+ * @param es is the OSSL_ECHSTORE we're dealing with
  * @param buf is the input buffer
  * @param blen is the length of buf
- * @param ah_hash is a pointer to where to the result 
+ * @param ah_hash is a pointer to where to put the result 
  * @param ah_len is the length of ah_hash
  */
-static int ech_hash_pub_as_fname(const unsigned char *buf, size_t blen,
+static int ech_hash_pub_as_fname(OSSL_ECHSTORE *es,
+                                 const unsigned char *buf, size_t blen,
                                  char *ah_hash, size_t ah_len)
 {
     EVP_MD *md = NULL;
@@ -64,15 +66,15 @@ static int ech_hash_pub_as_fname(const unsigned char *buf, size_t blen,
     unsigned char hashval[EVP_MAX_MD_SIZE];
     unsigned int hashlen;
 
-    if (((md = EVP_MD_fetch(NULL, "SHA2-256", NULL)) == NULL)
+    if (es == NULL)
+        return 0;
+    if (((md = EVP_MD_fetch(es->libctx, "SHA2-256", es->propq)) == NULL)
         || ((mdctx = EVP_MD_CTX_new()) == NULL)
         || EVP_DigestInit_ex(mdctx, md, NULL) <= 0
         || EVP_DigestUpdate(mdctx, buf, blen) <= 0
         || EVP_DigestFinal_ex(mdctx, hashval, &hashlen) <= 0) {
-        if (md != NULL)
-            EVP_MD_free(md);
-        if (mdctx != NULL)
-            EVP_MD_CTX_free(mdctx);
+        EVP_MD_free(md);
+        EVP_MD_CTX_free(mdctx);
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return 0;
     }
@@ -152,7 +154,7 @@ int OSSL_ECHSTORE_new_config(OSSL_ECHSTORE *es,
         return 0;
     }
     pnlen = (public_name == NULL ? 0 : strlen(public_name));
-    if (pnlen > OSSL_ECH_MAX_PUBLICNAME
+    if (pnlen == 0 || pnlen > OSSL_ECH_MAX_PUBLICNAME
         || max_name_length > OSSL_ECH_MAX_MAXNAMELEN) {
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
@@ -169,7 +171,8 @@ int OSSL_ECHSTORE_new_config(OSSL_ECHSTORE *es,
     /* so WPAKCET_cleanup() won't go wrong */
     memset(&epkt, 0, sizeof(epkt));
     /* random config_id */
-    if (RAND_bytes((unsigned char *)&config_id, 1) <= 0) {
+    if (RAND_bytes_ex(es->libctx, (unsigned char *)&config_id, 1,
+                      RAND_DRBG_STRENGTH) <= 0) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         goto err;
     }
@@ -254,7 +257,7 @@ int OSSL_ECHSTORE_new_config(OSSL_ECHSTORE *es,
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    if (ech_hash_pub_as_fname(pub, publen, pembuf, pembuflen) != 1) {
+    if (ech_hash_pub_as_fname(es, pub, publen, pembuf, pembuflen) != 1) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         goto err;
     }
@@ -298,7 +301,7 @@ int OSSL_ECHSTORE_new_config(OSSL_ECHSTORE *es,
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    WPACKET_cleanup(&epkt);
+    WPACKET_finish(&epkt);
     BUF_MEM_free(epkt_mem);
     return 1;
 
@@ -314,8 +317,6 @@ err:
 int OSSL_ECHSTORE_write_pem(OSSL_ECHSTORE *es, int index, BIO *out)
 {
     OSSL_ECHSTORE_entry *ee = NULL;
-    char *b64val = NULL;
-    size_t b64len = 0;
     int rv = 0, num = 0, chosen = 0;
 
     if (es == NULL) {
@@ -347,29 +348,19 @@ int OSSL_ECHSTORE_write_pem(OSSL_ECHSTORE *es, int index, BIO *out)
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
     }
-    b64val = OPENSSL_zalloc(2 * ee->encoded_len);
-    if (b64val == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
     /* private key first */
     if (!PEM_write_bio_PrivateKey(out, ee->keyshare, NULL, NULL, 0,
                                   NULL, NULL)) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    b64len = EVP_EncodeBlock((unsigned char*)b64val,
-                             ee->encoded, ee->encoded_len);
-    if (BIO_printf(out, "-----BEGIN ECHCONFIG-----\n") <= 0
-        || BIO_write(out, b64val, b64len) != (int)b64len
-        || BIO_printf(out, "\n") <= 0
-        || BIO_printf(out, "-----END ECHCONFIG-----\n") <= 0) {
+    if (PEM_write_bio(out, PEM_STRING_ECHCONFIG, NULL,
+                      ee->encoded, ee->encoded_len) <= 0) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         goto err;
     }
     rv = 1;
 err:
-    OPENSSL_free(b64val);
     return rv;
 }
 

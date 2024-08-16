@@ -46,8 +46,7 @@ typedef enum OPTION_choice {
 const OPTIONS ech_options[] = {
     OPT_SECTION("General options"),
     {"help", OPT_HELP, '-', "Display this summary"},
-    {"verbose", OPT_VERBOSE, '-',
-     "Provide additional output (though not much:-)"},
+    {"verbose", OPT_VERBOSE, '-', "Provide additional output"},
     OPT_SECTION("Key generation"),
     {"pemout", OPT_PEMOUT, '>', "Private key and ECHConfig [echconfig.pem]"},
     {"public_name", OPT_PUBLICNAME, 's', "public_name value"},
@@ -165,26 +164,25 @@ int ech_main(int argc, char **argv)
     }
 
     /* Set default if needed */
-    if (pemfile == NULL) {
+    if (pemfile == NULL)
         pemfile = "echconfig.pem";
-    }
 
     if (mode == OSSL_ECH_KEYGEN_MODE) {
         OSSL_ECHSTORE *es = NULL;
         BIO *ecf = NULL;
 
         if (verbose)
-            BIO_printf(bio_err, "Calling OSSL_ECHSTORE_make_pemech\n");
+            BIO_printf(bio_err, "Calling OSSL_ECHSTORE_new_config\n");
         if ((ecf = BIO_new_file(pemfile, "w")) == NULL 
-            || (es=OSSL_ECHSTORE_init(NULL,NULL)) == NULL
+            || (es = OSSL_ECHSTORE_init(NULL, NULL)) == NULL
             || OSSL_ECHSTORE_new_config(es, ech_version, max_name_length,
                                         public_name, hpke_suite) != 1
             || OSSL_ECHSTORE_write_pem(es, 0, ecf) != 1) {
-            BIO_printf(bio_err, "OSSL_ECHSTORE_make_pemech error\n");
+            BIO_printf(bio_err, "OSSL_ECHSTORE_new_config error\n");
             goto end;
         }
         if (verbose)
-            BIO_printf(bio_err, "OSSL_ECHSTORE_make_pemech success\n");
+            BIO_printf(bio_err, "OSSL_ECHSTORE_new_config success\n");
         OSSL_ECHSTORE_free(es);
         BIO_free_all(ecf);
         return 1;

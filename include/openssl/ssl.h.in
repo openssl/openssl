@@ -449,9 +449,6 @@ typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
  * in retry_configs.
  */
 # define SSL_OP_ECH_GREASE_RETRY_CONFIG                  SSL_OP_BIT(39)
-/* If set, servers will add ECH-specific padding to Certificate,
- * CertificateVerify and EncryptedExtensions messages */
-# define SSL_OP_ECH_SPECIFIC_PADDING                     SSL_OP_BIT(40)
 #endif
 
 /*
