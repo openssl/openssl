@@ -2011,14 +2011,17 @@ int speed_main(int argc, char **argv)
         case OPT_ASYNCJOBS:
 #ifndef OPENSSL_NO_ASYNC
             async_jobs = opt_int_arg();
+            if (async_jobs > 99999) {
+                BIO_printf(bio_err, "%s: too many async_jobs\n", prog);
+                goto opterr;
+            }
             if (!ASYNC_is_capable()) {
                 BIO_printf(bio_err,
                            "%s: async_jobs specified but async not supported\n",
                            prog);
-                goto opterr;
-            }
-            if (async_jobs > 99999) {
-                BIO_printf(bio_err, "%s: too many async_jobs\n", prog);
+                if (testmode)
+                    /* Return success in the testmode. */
+                    return 0;
                 goto opterr;
             }
 #endif
