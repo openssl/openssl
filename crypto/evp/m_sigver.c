@@ -493,11 +493,13 @@ int EVP_DigestVerifyUpdate(EVP_MD_CTX *ctx, const void *data, size_t dsize)
 #endif
 }
 
-#ifndef FIPS_MODULE
 int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
                         size_t *siglen)
 {
-    int sctx = 0, r = 0;
+#ifndef FIPS_MODULE
+    int sctx = 0;
+#endif
+    int r = 0;
     EVP_PKEY_CTX *dctx = NULL, *pctx = ctx->pctx;
 
     if ((ctx->flags & EVP_MD_CTX_FLAG_FINALISED) != 0) {
@@ -511,12 +513,14 @@ int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
             || pctx->op.sig.signature == NULL)
         goto legacy;
 
+#ifndef FIPS_MODULE
     if (sigret != NULL && (ctx->flags & EVP_MD_CTX_FLAG_FINALISE) == 0) {
         /* try dup */
         dctx = EVP_PKEY_CTX_dup(pctx);
         if (dctx != NULL)
             pctx = dctx;
     }
+#endif
     r = pctx->op.sig.signature->digest_sign_final(pctx->op.sig.algctx,
                                                   sigret, siglen,
                                                   sigret == NULL ? 0 : *siglen);
@@ -527,6 +531,10 @@ int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
     return r;
 
  legacy:
+#ifdef FIPS_MODULE
+    ERR_raise(ERR_LIB_EVP, EVP_R_UPDATE_ERROR);
+    return 0;
+#else
     if (pctx == NULL || pctx->pmeth == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         return 0;
@@ -598,8 +606,8 @@ int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
         }
     }
     return 1;
-}
 #endif
+}
 
 int EVP_DigestSign(EVP_MD_CTX *ctx, unsigned char *sigret, size_t *siglen,
                    const unsigned char *tbs, size_t tbslen)
@@ -640,13 +648,14 @@ int EVP_DigestSign(EVP_MD_CTX *ctx, unsigned char *sigret, size_t *siglen,
 #endif
 }
 
-#ifndef FIPS_MODULE
 int EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sig,
                           size_t siglen)
 {
+#ifndef FIPS_MODULE
     int vctx = 0;
     unsigned int mdlen = 0;
     unsigned char md[EVP_MAX_MD_SIZE];
+#endif
     int r = 0;
     EVP_PKEY_CTX *dctx = NULL, *pctx = ctx->pctx;
 
@@ -661,12 +670,14 @@ int EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sig,
             || pctx->op.sig.signature == NULL)
         goto legacy;
 
+#ifndef FIPS_MODULE
     if ((ctx->flags & EVP_MD_CTX_FLAG_FINALISE) == 0) {
         /* try dup */
         dctx = EVP_PKEY_CTX_dup(pctx);
         if (dctx != NULL)
             pctx = dctx;
     }
+#endif
     r = pctx->op.sig.signature->digest_verify_final(pctx->op.sig.algctx,
                                                     sig, siglen);
     if (dctx == NULL)
@@ -676,6 +687,10 @@ int EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sig,
     return r;
 
  legacy:
+#ifdef FIPS_MODULE
+    ERR_raise(ERR_LIB_EVP, EVP_R_UPDATE_ERROR);
+    return 0;
+#else
     if (pctx == NULL || pctx->pmeth == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         return 0;
@@ -715,8 +730,8 @@ int EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sig,
     if (vctx || !r)
         return r;
     return EVP_PKEY_verify(pctx, sig, siglen, md, mdlen);
-}
 #endif
+}
 
 int EVP_DigestVerify(EVP_MD_CTX *ctx, const unsigned char *sigret,
                      size_t siglen, const unsigned char *tbs, size_t tbslen)
