@@ -906,7 +906,7 @@ int ossl_rsa_get0_all_params(RSA *r, STACK_OF(BIGNUM_const) *primes,
     return 1;
 }
 
-#define safe_BN_num_bits(_k_)           (((_k_) == NULL) ? 0 : BN_num_bits((_k_)))
+#define safe_BN_num_bits(_k_)  (((_k_) == NULL) ? 0 : BN_num_bits((_k_)))
 int ossl_rsa_check_factors(RSA *r)
 {
     int valid = 0;
