@@ -232,9 +232,9 @@ static int eddsa_digest_signverify_init(void *vpeddsactx, const char *mdname,
     return 1;
 }
 
-int ed25519_digest_sign(void *vpeddsactx, unsigned char *sigret,
-                        size_t *siglen, size_t sigsize,
-                        const unsigned char *tbs, size_t tbslen)
+static int ed25519_digest_sign(void *vpeddsactx, unsigned char *sigret,
+                               size_t *siglen, size_t sigsize,
+                               const unsigned char *tbs, size_t tbslen)
 {
     PROV_EDDSA_CTX *peddsactx = (PROV_EDDSA_CTX *)vpeddsactx;
     const ECX_KEY *edkey = peddsactx->key;
@@ -318,9 +318,9 @@ static int ed448_shake256(OSSL_LIB_CTX *libctx,
     return ret;
 }
 
-int ed448_digest_sign(void *vpeddsactx, unsigned char *sigret,
-                      size_t *siglen, size_t sigsize,
-                      const unsigned char *tbs, size_t tbslen)
+static int ed448_digest_sign(void *vpeddsactx, unsigned char *sigret,
+                             size_t *siglen, size_t sigsize,
+                             const unsigned char *tbs, size_t tbslen)
 {
     PROV_EDDSA_CTX *peddsactx = (PROV_EDDSA_CTX *)vpeddsactx;
     const ECX_KEY *edkey = peddsactx->key;
@@ -375,9 +375,9 @@ int ed448_digest_sign(void *vpeddsactx, unsigned char *sigret,
     return 1;
 }
 
-int ed25519_digest_verify(void *vpeddsactx, const unsigned char *sig,
-                          size_t siglen, const unsigned char *tbs,
-                          size_t tbslen)
+static int ed25519_digest_verify(void *vpeddsactx, const unsigned char *sig,
+                                 size_t siglen, const unsigned char *tbs,
+                                 size_t tbslen)
 {
     PROV_EDDSA_CTX *peddsactx = (PROV_EDDSA_CTX *)vpeddsactx;
     const ECX_KEY *edkey = peddsactx->key;
@@ -412,9 +412,9 @@ int ed25519_digest_verify(void *vpeddsactx, const unsigned char *sig,
                                peddsactx->libctx, edkey->propq);
 }
 
-int ed448_digest_verify(void *vpeddsactx, const unsigned char *sig,
-                        size_t siglen, const unsigned char *tbs,
-                        size_t tbslen)
+static int ed448_digest_verify(void *vpeddsactx, const unsigned char *sig,
+                               size_t siglen, const unsigned char *tbs,
+                               size_t tbslen)
 {
     PROV_EDDSA_CTX *peddsactx = (PROV_EDDSA_CTX *)vpeddsactx;
     const ECX_KEY *edkey = peddsactx->key;
