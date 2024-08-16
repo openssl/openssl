@@ -803,6 +803,16 @@ EVP_RAND_CTX *RAND_get0_public(OSSL_LIB_CTX *ctx)
         if (primary == NULL)
             return NULL;
 
+#ifndef FIPS_MODULE
+	/*
+	 * Since https://github.com/openssl/openssl/pull/25415
+	 * FIPS_MODULE is already unchained, using 2 DRBGs. This
+	 * unchain is for the default provider.
+	 */
+        if (dgbl->chain == 0)
+            return primary;
+#ifndef
+
         ctx = ossl_lib_ctx_get_concrete(ctx);
         /*
          * If the private is also NULL then this is the first time we've
@@ -835,6 +845,16 @@ EVP_RAND_CTX *RAND_get0_private(OSSL_LIB_CTX *ctx)
         primary = RAND_get0_primary(ctx);
         if (primary == NULL)
             return NULL;
+
+#ifndef FIPS_MODULE
+	/*
+	 * Since https://github.com/openssl/openssl/pull/25415
+	 * FIPS_MODULE is already unchained, using 2 DRBGs. This
+	 * unchain is for the default provider.
+	 */
+        if (dgbl->chain == 0)
+            return primary;
+#endif
 
         ctx = ossl_lib_ctx_get_concrete(ctx);
         /*
