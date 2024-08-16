@@ -44,6 +44,10 @@
  * neighborhood to have all entries in the neighborhood fit into a single cache
  * line to speed up lookups.  If all entries in a neighborhood are in use at the
  * time of an insert, the table is expanded and rehashed.
+ *
+ * Lockless reads hash table is based on the same design but does not
+ * allow growing and deletion. Thus subsequent neighborhoods are always
+ * searched for a match until an empty entry is found.
  */
 
 #include <string.h>
@@ -539,50 +543,61 @@ static int ossl_ht_insert_locked(HT *h, uint64_t hash,
                                  HT_VALUE **olddata)
 {
     struct ht_mutable_data_st *md = h->md;
-    uint64_t neigh_idx = hash & md->neighborhood_mask;
+    uint64_t neigh_idx_start = hash & md->neighborhood_mask;
+    uint64_t neigh_idx = neigh_idx_start;
     size_t j;
     uint64_t ihash;
     HT_VALUE *ival;
     size_t empty_idx = SIZE_MAX;
+    int lockless_reads = h->config.lockless_reads;
 
-    PREFETCH_NEIGHBORHOOD(md->neighborhoods[neigh_idx]);
+    do {
+        PREFETCH_NEIGHBORHOOD(md->neighborhoods[neigh_idx]);
 
-    for (j = 0; j < NEIGHBORHOOD_LEN; j++) {
-        ival = ossl_rcu_deref(&md->neighborhoods[neigh_idx].entries[j].value);
-
-        if (!CRYPTO_atomic_load(&md->neighborhoods[neigh_idx].entries[j].hash,
-                                &ihash, h->atomic_lock))
-            return 0;
-
-        if (ival == NULL)
-            empty_idx = j;
-        if (compare_hash(hash, ihash) && match_key(&newval->value.key,
-                                                   &ival->key)) {
-            /* Its the same hash, lets make sure its not a collision */
-            if (olddata == NULL) {
-                /* invalid */
-                return 0;
+        for (j = 0; j < NEIGHBORHOOD_LEN; j++) {
+            ival = ossl_rcu_deref(&md->neighborhoods[neigh_idx].entries[j].value);
+            if (ival == NULL) {
+                empty_idx = j;
+                /* lockless_reads implies no deletion, we can break out */
+                if (lockless_reads)
+                    goto not_found;
+                continue;
             }
-            /* Do a replacement */
-            if (!CRYPTO_atomic_store(&md->neighborhoods[neigh_idx].entries[j].hash,
-                                     hash, h->atomic_lock))
+            if (!CRYPTO_atomic_load(&md->neighborhoods[neigh_idx].entries[j].hash,
+                                    &ihash, h->atomic_lock))
                 return 0;
-
-            *olddata = (HT_VALUE *)md->neighborhoods[neigh_idx].entries[j].value;
-            ossl_rcu_assign_ptr(&md->neighborhoods[neigh_idx].entries[j].value,
-                                &newval);
-            ossl_rcu_call(h->lock, free_old_ht_value, *olddata);
-            h->wpd.need_sync = 1;
-            return 1;
+            if (compare_hash(hash, ihash) && match_key(&newval->value.key,
+                                                       &ival->key)) {
+                if (olddata == NULL) {
+                    /* This would insert a duplicate -> fail */
+                    return 0;
+                }
+                /* Do a replacement */
+                if (!CRYPTO_atomic_store(&md->neighborhoods[neigh_idx].entries[j].hash,
+                                         hash, h->atomic_lock))
+                    return 0;
+                *olddata = (HT_VALUE *)md->neighborhoods[neigh_idx].entries[j].value;
+                ossl_rcu_assign_ptr(&md->neighborhoods[neigh_idx].entries[j].value,
+                                    &newval);
+                ossl_rcu_call(h->lock, free_old_ht_value, *olddata);
+                h->wpd.need_sync = 1;
+                return 1;
+            }
         }
-    }
+        if (!lockless_reads)
+            break;
+        /* Continue search in subsequent neighborhoods */
+        neigh_idx = (neigh_idx + 1) & md->neighborhood_mask;
+    } while (neigh_idx != neigh_idx_start);
+
+ not_found:
     /* If we get to here, its just an insert */
     if (empty_idx == SIZE_MAX)
         return -1; /* out of space */
-    h->wpd.value_count++;
     if (!CRYPTO_atomic_store(&md->neighborhoods[neigh_idx].entries[empty_idx].hash,
                              hash, h->atomic_lock))
         return 0;
+    h->wpd.value_count++;
     ossl_rcu_assign_ptr(&md->neighborhoods[neigh_idx].entries[empty_idx].value,
                         &newval);
     return 1;
@@ -662,29 +677,40 @@ HT_VALUE *ossl_ht_get(HT *h, HT_KEY *key)
 {
     struct ht_mutable_data_st *md;
     uint64_t hash;
+    uint64_t neigh_idx_start;
     uint64_t neigh_idx;
-    struct ht_internal_value_st *vidx = NULL;
+    struct ht_internal_value_st *ival = NULL;
     size_t j;
     uint64_t ehash;
-    HT_VALUE *ret = NULL;
+    int lockless_reads = h->config.lockless_reads;
 
     hash = h->config.ht_hash_fn(key->keybuf, key->keysize);
 
     md = ossl_rcu_deref(&h->md);
-    neigh_idx = hash & md->neighborhood_mask;
-    PREFETCH_NEIGHBORHOOD(md->neighborhoods[neigh_idx]);
-    for (j = 0; j < NEIGHBORHOOD_LEN; j++) {
-        if (!CRYPTO_atomic_load(&md->neighborhoods[neigh_idx].entries[j].hash,
-                                &ehash, h->atomic_lock))
-            return NULL;
-        vidx = ossl_rcu_deref(&md->neighborhoods[neigh_idx].entries[j].value);
-        if (compare_hash(hash, ehash) && match_key(&vidx->value.key, key)) {
-            ret = (HT_VALUE *)vidx;
-            break;
+    neigh_idx = neigh_idx_start = hash & md->neighborhood_mask;
+    do {
+        PREFETCH_NEIGHBORHOOD(md->neighborhoods[neigh_idx]);
+        for (j = 0; j < NEIGHBORHOOD_LEN; j++) {
+            ival = ossl_rcu_deref(&md->neighborhoods[neigh_idx].entries[j].value);
+            if (ival == NULL) {
+                if (lockless_reads)
+                    /* lockless_reads implies no deletion, we can break out */
+                    return NULL;
+                continue;
+            }
+            if (!CRYPTO_atomic_load(&md->neighborhoods[neigh_idx].entries[j].hash,
+                                    &ehash, h->atomic_lock))
+                return NULL;
+            if (compare_hash(hash, ehash) && match_key(&ival->value.key, key))
+                return (HT_VALUE *)ival;
         }
-    }
+        if (!lockless_reads)
+            break;
+        /* Continue search in subsequent neighborhoods */
+        neigh_idx = (neigh_idx + 1) & md->neighborhood_mask;
+    } while (neigh_idx != neigh_idx_start);
 
-    return ret;
+    return NULL;
 }
 
 static void free_old_entry(void *arg)
@@ -713,6 +739,8 @@ int ossl_ht_delete(HT *h, HT_KEY *key)
     PREFETCH_NEIGHBORHOOD(h->md->neighborhoods[neigh_idx]);
     for (j = 0; j < NEIGHBORHOOD_LEN; j++) {
         v = (struct ht_internal_value_st *)h->md->neighborhoods[neigh_idx].entries[j].value;
+        if (v == NULL)
+            continue;
         if (compare_hash(hash, h->md->neighborhoods[neigh_idx].entries[j].hash)
             && match_key(key, &v->value.key)) {
             if (!CRYPTO_atomic_store(&h->md->neighborhoods[neigh_idx].entries[j].hash,

@@ -399,7 +399,7 @@ static void hashtable_intfree(HT_VALUE *v)
     OPENSSL_free(v->value);
 }
 
-static int test_hashtable_stress(void)
+static int test_hashtable_stress(int idx)
 {
     const unsigned int n = 2500000;
     unsigned int i;
@@ -410,13 +410,16 @@ static int test_hashtable_stress(void)
         hashtable_hash,    /* our hash function */
         625000,            /* preset hash size */
         1,                 /* Check collisions */
+        0                  /* Lockless reads */
     };
     HT *h;
     INTKEY key;
+    HT_VALUE *v;
 #ifdef MEASURE_HASH_PERFORMANCE
     struct timeval start, end, delta;
 #endif
 
+    hash_conf.lockless_reads = idx;
     h = ossl_ht_new(&hash_conf);
 
 
@@ -448,13 +451,25 @@ static int test_hashtable_stress(void)
     if (!TEST_int_eq((size_t)ossl_ht_count(h), n))
             goto end;
 
-    /* delete in a different order */
+    /* delete or get in a different order */
     for (i = 0; i < n; i++) {
         const int j = (7 * i + 4) % n * 3 + 1;
         HT_SET_KEY_FIELD(&key, mykey, j);
-        if (!TEST_int_eq((ossl_ht_delete(h, TO_HT_KEY(&key))), 1)) {
-            TEST_info("hashtable didn't delete key %d\n", j);
-            goto end;
+
+        switch (idx) {
+        case 0:
+            if (!TEST_int_eq((ossl_ht_delete(h, TO_HT_KEY(&key))), 1)) {
+                TEST_info("hashtable didn't delete key %d\n", j);
+                goto end;
+            }
+            break;
+        case 1:
+            if (!TEST_ptr(p = ossl_ht_test_int_get(h, TO_HT_KEY(&key), &v))
+                || !TEST_int_eq(*p, j)) {
+                TEST_info("hashtable didn't get key %d\n", j);
+                goto end;
+            }
+            break;
         }
     }
 
@@ -698,7 +713,7 @@ int setup_tests(void)
     ADD_TEST(test_int_lhash);
     ADD_TEST(test_stress);
     ADD_TEST(test_int_hashtable);
-    ADD_TEST(test_hashtable_stress);
+    ADD_ALL_TESTS(test_hashtable_stress, 2);
     ADD_TEST(test_hashtable_multithread);
     return 1;
 }
