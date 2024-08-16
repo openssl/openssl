@@ -779,10 +779,12 @@ static void list_tls_signatures(void)
     int tls_sigalg_listed = 0;
     char *builtin_sigalgs = SSL_get1_builtin_sigalgs(app_get0_libctx());
 
-    if (builtin_sigalgs != NULL && builtin_sigalgs[0] != 0) {
-        BIO_printf(bio_out, "%s", builtin_sigalgs);
+    if (builtin_sigalgs != NULL) {
+        if (builtin_sigalgs[0] != 0) {
+            BIO_printf(bio_out, "%s", builtin_sigalgs);
+            tls_sigalg_listed = 1;
+        }
         OPENSSL_free(builtin_sigalgs);
-        tls_sigalg_listed = 1;
     }
 
     /* As built-in providers don't have this capability, never error */
