@@ -79,11 +79,11 @@
  * structure for faster lookups
  */
 #if defined(__GNUC__) || defined(__CLANG__)
-#define PREFETCH_NEIGHBORHOOD(x) __builtin_prefetch(x.entries)
-#define PREFETCH(x) __builtin_prefetch(x)
+# define PREFETCH_NEIGHBORHOOD(x) __builtin_prefetch(x.entries)
+# define PREFETCH(x) __builtin_prefetch(x)
 #else
-#define PREFETCH_NEIGHBORHOOD(x)
-#define PREFETCH(x)
+# define PREFETCH_NEIGHBORHOOD(x)
+# define PREFETCH(x)
 #endif
 
 static ossl_unused uint64_t fnv1a_hash(uint8_t *key, size_t len)
@@ -613,7 +613,7 @@ static struct ht_internal_value_st *alloc_new_value(HT *h, HT_KEY *key,
     if (h->config.collision_check == 1)
         nvsize += key->keysize;
 
-    tmp  = OPENSSL_malloc(nvsize);
+    tmp = OPENSSL_malloc(nvsize);
 
     if (tmp == NULL)
         return NULL;
@@ -623,7 +623,7 @@ static struct ht_internal_value_st *alloc_new_value(HT *h, HT_KEY *key,
     tmp->value.type_id = type;
     tmp->value.key.keybuf = NULL;
     if (h->config.collision_check) {
-        tmp->value.key.keybuf = (uint8_t *)(tmp+1);
+        tmp->value.key.keybuf = (uint8_t *)(tmp + 1);
         tmp->value.key.keysize = key->keysize;
         memcpy(tmp->value.key.keybuf, key->keybuf, key->keysize);
     }
