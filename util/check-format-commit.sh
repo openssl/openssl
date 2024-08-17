@@ -94,7 +94,7 @@ do
     grep "$i " $TEMPDIR/ranges.txt >> $TEMPDIR/ranges.filter || true
 done
 cp $TEMPDIR/ranges.filter $TEMPDIR/ranges.txt
-REMAINING_FILES=$(wc -l $TEMPDIR/ranges.filter | awk '{print $1}')
+REMAINING_FILES=$(wc -l <$TEMPDIR/ranges.filter)
 if [ $REMAINING_FILES -eq 0 ]
 then
     echo "This commit has no files that require checking"
@@ -107,7 +107,7 @@ fi
 # to $TEMPDIR/check-format.  This give us the full file to run
 # check-format.pl on with line numbers matching the ranges in the
 # $TEMPDIR/ranges.txt file
-for j in $(cat $TEMPDIR/ranges.txt | awk '{print $1}' | sort | uniq)
+for j in $(awk '{print $1}' $TEMPDIR/ranges.txt | sort -u)
 do
     FDIR=$(dirname $j)
     mkdir -p $TEMPDIR/check-format/$FDIR
@@ -115,7 +115,7 @@ do
 done
 
 # Now for each file in $TEMPDIR/ranges.txt, run check-format.pl
-for j in $(cat $TEMPDIR/ranges.txt | awk '{print $1}' | sort | uniq)
+for j in $(awk '{print $1}' $TEMPDIR/ranges.txt | sort -u)
 do
     range_start=()
     range_end=()
