@@ -42,7 +42,8 @@ struct ossl_dispatch_st {
     void (*function)(void);
 };
 
-# define OSSL_DISPATCH_END { 0, NULL }
+# define OSSL_DISPATCH_END \
+    { 0, NULL }
 
 /*
  * Other items, essentially an int<->pointer map element.
