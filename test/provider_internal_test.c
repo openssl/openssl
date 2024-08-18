@@ -22,7 +22,7 @@ static OSSL_PARAM greeting_request[] = {
 
 static int test_provider(OSSL_PROVIDER *prov, const char *expected_greeting)
 {
-    const char *greeting = NULL;
+    const char *greeting = "no greeting received";
     int ret = 0;
 
     ret =
