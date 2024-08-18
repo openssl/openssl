@@ -120,11 +120,6 @@ static void *jitter_new(void *provctx, void *parent,
 {
     PROV_JITTER *s;
 
-    if (parent != NULL) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_SEED_SOURCES_MUST_NOT_HAVE_A_PARENT);
-        return NULL;
-    }
-
     s = OPENSSL_zalloc(sizeof(*s));
     if (s == NULL)
         return NULL;
