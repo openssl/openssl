@@ -59,17 +59,37 @@ __owur static int timeoutcmp(SSL_SESSION *a, SSL_SESSION *b)
  */
 void ssl_session_calculate_timeout(SSL_SESSION *ss)
 {
-#ifndef __DJGPP__ /* time_t is unsigned on djgpp */
-    /* Force positive timeout */
-    if (ss->timeout < 0)
-        ss->timeout = 0;
+    time_t tmax = -1;
+
+    if (sizeof(time_t) == 8) {
+        uint64_t overflow;
+
+#ifndef __DJGPP__ /* time_t is unsigned on djgpp, it's signed anywhere else */
+        tmax = (time_t)((uint64_t)tmax >> 1);
 #endif
-    ss->calc_timeout = ss->time + ss->timeout;
-    /*
-     * |timeout| is always zero or positive, so the check for
-     * overflow only needs to consider if |time| is positive
-     */
-    ss->timeout_ovf = ss->time > 0 && ss->calc_timeout < ss->time;
+        overflow = (uint64_t)((uint64_t)tmax - ss->time);
+        if (ss->timeout > (time_t)overflow) {
+            ss->timeout_ovf |= 1;
+            ss->calc_timeout = ss->timeout - overflow;
+        } else {
+            ss->calc_timeout = ss->time + ss->timeout;
+        }
+    } else {
+        uint32_t overflow;
+
+#ifndef __DJGPP__ /* time_t is unsigned on djgp, it's signed anywhere elsep */
+        tmax = (time_t)((uint32_t)tmax >> 1);
+#endif
+        overflow = (uint32_t)((uint32_t)tmax - ss->time);
+
+        if (ss->timeout > (time_t)overflow) {
+            ss->timeout_ovf |= 1;
+            ss->calc_timeout = ss->timeout - overflow;
+        } else {
+            ss->calc_timeout = ss->time + ss->timeout;
+        }
+    }
+
     /*
      * N.B. Realistic overflow can only occur in our lifetimes on a
      *      32-bit machine with signed time_t, in January 2038.
