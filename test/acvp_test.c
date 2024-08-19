@@ -117,6 +117,25 @@ err:
     return ret;
 }
 
+static int check_verify_message(EVP_PKEY_CTX *pkey_ctx, int expected)
+{
+    OSSL_PARAM params[2], *p = params;
+    int verify_message = -1;
+
+    if (!OSSL_PROVIDER_available(libctx, "fips")
+            || fips_provider_version_match(libctx, "<3.4.0"))
+        return 1;
+
+    *p++ = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_FIPS_VERIFY_MESSAGE,
+                                    &verify_message);
+    *p = OSSL_PARAM_construct_end();
+
+    if (!TEST_true(EVP_PKEY_CTX_get_params(pkey_ctx, params))
+            || !TEST_int_eq(verify_message, expected))
+        return 0;
+    return 1;
+}
+
 #ifndef OPENSSL_NO_EC
 static int ecdsa_keygen_test(int id)
 {
@@ -282,6 +301,7 @@ static int ecdsa_sigver_test(int id)
     int ret = 0;
     EVP_MD_CTX *md_ctx = NULL;
     EVP_PKEY *pkey = NULL;
+    EVP_PKEY_CTX *pkey_ctx;
     ECDSA_SIG *sign = NULL;
     size_t sig_len;
     unsigned char *sig = NULL;
@@ -299,12 +319,20 @@ static int ecdsa_sigver_test(int id)
         goto err;
     rbn = sbn = NULL;
 
-    ret = TEST_int_gt((sig_len = i2d_ECDSA_SIG(sign, &sig)), 0)
-          && TEST_ptr(md_ctx = EVP_MD_CTX_new())
-          && TEST_true(EVP_DigestVerifyInit_ex(md_ctx, NULL, tst->digest_alg,
-                                               libctx, NULL, pkey, NULL)
-          && TEST_int_eq(EVP_DigestVerify(md_ctx, sig, sig_len,
-                                          tst->msg, tst->msg_len), tst->pass));
+    if (!TEST_int_gt((sig_len = i2d_ECDSA_SIG(sign, &sig)), 0)
+        || !TEST_ptr(md_ctx = EVP_MD_CTX_new())
+        || !TEST_true(EVP_DigestVerifyInit_ex(md_ctx, NULL, tst->digest_alg,
+                                              libctx, NULL, pkey, NULL))
+        || !TEST_ptr(pkey_ctx = EVP_MD_CTX_get_pkey_ctx(md_ctx))
+        || !check_verify_message(pkey_ctx, 1)
+        || !TEST_int_eq(EVP_DigestVerify(md_ctx, sig, sig_len,
+                                         tst->msg, tst->msg_len), tst->pass)
+        || !check_verify_message(pkey_ctx, 1)
+        || !TEST_true(EVP_PKEY_verify_init(pkey_ctx))
+        || !check_verify_message(pkey_ctx, 0))
+        goto err;
+
+    ret = 1;
 err:
     BN_free(rbn);
     BN_free(sbn);
@@ -1252,11 +1280,11 @@ static int rsa_siggen_test(int id)
     *p++ = OSSL_PARAM_construct_end();
 
     if (!TEST_ptr(pkey = EVP_PKEY_Q_keygen(libctx, NULL, "RSA", tst->mod))
-       || !TEST_true(pkey_get_bn_bytes(pkey, OSSL_PKEY_PARAM_RSA_N, &n, &n_len))
-       || !TEST_true(pkey_get_bn_bytes(pkey, OSSL_PKEY_PARAM_RSA_E, &e, &e_len))
-       || !TEST_true(sig_gen(pkey, params, tst->digest_alg,
-                             tst->msg, tst->msg_len,
-                             &sig, &sig_len)))
+        || !TEST_true(pkey_get_bn_bytes(pkey, OSSL_PKEY_PARAM_RSA_N, &n, &n_len))
+        || !TEST_true(pkey_get_bn_bytes(pkey, OSSL_PKEY_PARAM_RSA_E, &e, &e_len))
+        || !TEST_true(sig_gen(pkey, params, tst->digest_alg,
+                              tst->msg, tst->msg_len,
+                              &sig, &sig_len)))
         goto err;
     test_output_memory("n", n, n_len);
     test_output_memory("e", e, e_len);
@@ -1292,7 +1320,7 @@ static int rsa_sigver_test(int id)
     if (salt_len >= 0)
         *p++ = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_PSS_SALTLEN,
                                         &salt_len);
-    *p++ = OSSL_PARAM_construct_end();
+    *p = OSSL_PARAM_construct_end();
 
     if (!TEST_ptr(bn_ctx = BN_CTX_new())
         || !TEST_true(rsa_create_pkey(&pkey, tst->n, tst->n_len,
@@ -1301,10 +1329,15 @@ static int rsa_sigver_test(int id)
         || !TEST_true(EVP_DigestVerifyInit_ex(md_ctx, &pkey_ctx,
                                               tst->digest_alg, libctx, NULL,
                                               pkey, NULL))
+        || !check_verify_message(pkey_ctx, 1)
         || !TEST_true(EVP_PKEY_CTX_set_params(pkey_ctx, params))
         || !TEST_int_eq(EVP_DigestVerify(md_ctx, tst->sig, tst->sig_len,
-                                         tst->msg, tst->msg_len), tst->pass))
+                                         tst->msg, tst->msg_len), tst->pass)
+        || !check_verify_message(pkey_ctx, 1)
+        || !TEST_true(EVP_PKEY_verify_init(pkey_ctx))
+        || !check_verify_message(pkey_ctx, 0))
         goto err;
+
     ret = 1;
 err:
     EVP_PKEY_free(pkey);
