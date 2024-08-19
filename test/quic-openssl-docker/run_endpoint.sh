@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -euxo pipefail
-
 CURLRC=~/testcase_curlrc
 
 # Set up the routing needed for the simulation
