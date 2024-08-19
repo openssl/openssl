@@ -24,76 +24,40 @@
 # define OSSL_ECH_CRYPTO_VAR_SIZE 2048
 
 /*
- * @brief encode binary buffer as ascii hex
- * @param out is an allocated buffer for the ascii hex string
- * @param outsize is the size of the buffer
- * @param in is the input binary buffer
- * @param inlen is the size of the binary buffer
- * @return 1 for good otherwise bad
- */
-static int ah_encode(char *out, size_t outsize,
-                     const unsigned char *in, size_t inlen)
-{
-    size_t i;
-
-    if (outsize < 2 * inlen + 1)
-        return 0;
-    for (i = 0; i != inlen; i++) {
-        uint8_t tn = (in[i] >> 4) & 0x0f;
-        uint8_t bn = (in[i] & 0x0f);
-
-        out[2 * i] = (tn < 10 ? tn + '0' : (tn - 10 + 'A'));
-        out[2 * i + 1] = (bn < 10 ? bn + '0' : (bn - 10 + 'A'));
-    }
-    out[2 * i] = '\0';
-    return 1;
-}
-
-/*
  * @brief hash a buffer as a pretend file name being ascii-hex of hashed buffer
  * @param es is the OSSL_ECHSTORE we're dealing with
  * @param buf is the input buffer
  * @param blen is the length of buf
- * @param ah_hash is a pointer to where to put the result 
+ * @param ah_hash is a pointer to where to put the result
  * @param ah_len is the length of ah_hash
  */
 static int ech_hash_pub_as_fname(OSSL_ECHSTORE *es,
                                  const unsigned char *buf, size_t blen,
                                  char *ah_hash, size_t ah_len)
 {
-    EVP_MD *md = NULL;
-    EVP_MD_CTX *mdctx = NULL;
     unsigned char hashval[EVP_MAX_MD_SIZE];
-    unsigned int hashlen;
+    size_t hashlen, actual_ah_len;
 
-    if (es == NULL)
-        return 0;
-    if (((md = EVP_MD_fetch(es->libctx, "SHA2-256", es->propq)) == NULL)
-        || ((mdctx = EVP_MD_CTX_new()) == NULL)
-        || EVP_DigestInit_ex(mdctx, md, NULL) <= 0
-        || EVP_DigestUpdate(mdctx, buf, blen) <= 0
-        || EVP_DigestFinal_ex(mdctx, hashval, &hashlen) <= 0) {
-        EVP_MD_free(md);
-        EVP_MD_CTX_free(mdctx);
+    if (es == NULL
+        || EVP_Q_digest(es->libctx, "SHA2-256", es->propq,
+                        buf, blen, hashval, &hashlen) != 1
+        || OPENSSL_buf2hexstr_ex(ah_hash, ah_len, &actual_ah_len,
+                                 hashval, hashlen, '\0') != 1) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return 0;
     }
-    EVP_MD_free(md);
-    EVP_MD_CTX_free(mdctx);
-    if (ah_encode(ah_hash, ah_len, hashval, hashlen) != 1)
-        return 0;
     return 1;
 }
 
-/* 
- * API calls build around OSSL_ECHSSTORE 
+/*
+ * API calls built around OSSL_ECHSTORE
  */
 
 OSSL_ECHSTORE *OSSL_ECHSTORE_init(OSSL_LIB_CTX *libctx, const char *propq)
 {
     OSSL_ECHSTORE *es = NULL;
 
-    es = OPENSSL_zalloc(sizeof(OSSL_ECHSTORE));
+    es = OPENSSL_zalloc(sizeof(*es));
     if (es == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return 0;
@@ -168,7 +132,7 @@ int OSSL_ECHSTORE_new_config(OSSL_ECHSTORE *es,
         return 0;
     }
 
-    /* so WPAKCET_cleanup() won't go wrong */
+    /* so WPACKET_cleanup() won't go wrong */
     memset(&epkt, 0, sizeof(epkt));
     /* random config_id */
     if (RAND_bytes_ex(es->libctx, (unsigned char *)&config_id, 1,
