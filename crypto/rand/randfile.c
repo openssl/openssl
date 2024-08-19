@@ -16,7 +16,7 @@
 # include <sys/stat.h>
 #endif
 
-#include "internal/e_os.h"
+#include "e_os.h"
 #include "internal/cryptlib.h"
 
 #include <errno.h>
