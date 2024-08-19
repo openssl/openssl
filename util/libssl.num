@@ -584,7 +584,6 @@ SSL_poll                                584	3_3_0	EXIST::FUNCTION:
 SSL_SESSION_get_time_ex                 585	3_3_0	EXIST::FUNCTION:
 SSL_SESSION_set_time_ex                 586	3_3_0	EXIST::FUNCTION:
 SSL_CTX_flush_sessions_ex               587	3_4_0	EXIST::FUNCTION:
-OSSL_ECHSTORE_init                      ?	3_4_0	EXIST::FUNCTION:ECH
 OSSL_ECHSTORE_free                      ?	3_4_0	EXIST::FUNCTION:ECH
 OSSL_ECHSTORE_new_config                ?	3_4_0	EXIST::FUNCTION:ECH
 OSSL_ECHSTORE_write_pem                 ?	3_4_0	EXIST::FUNCTION:ECH
@@ -612,3 +611,4 @@ SSL_ech_get_retry_config                ?	3_4_0	EXIST::FUNCTION:ECH
 SSL_CTX_ech_set_outer_alpn_protos       ?	3_4_0	EXIST::FUNCTION:ECH
 SSL_CTX_ech_raw_decrypt                 ?	3_4_0	EXIST::FUNCTION:ECH
 SSL_CTX_ech_set_callback                ?	3_4_0	EXIST::FUNCTION:ECH
+OSSL_ECHSTORE_new                       ?	3_4_0	EXIST::FUNCTION:ECH

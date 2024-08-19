@@ -3,7 +3,7 @@
 =head1 NAME
 
 SSL_set1_echstore,
-OSSL_ECHSTORE_init, OSSL_ECHSTORE_free,
+OSSL_ECHSTORE_new, OSSL_ECHSTORE_free,
 OSSL_ECHSTORE_new_config, OSSL_ECHSTORE_write_pem,
 OSSL_ECHSTORE_read_echconfiglist, OSSL_ECHSTORE_get1_info,
 OSSL_ECHSTORE_downselect, OSSL_ECHSTORE_set1_key_and_read_pem,
@@ -21,7 +21,7 @@ SSL_CTX_ech_set_callback
 
  #include <openssl/ech.h>
 
-  OSSL_ECHSTORE *OSSL_ECHSTORE_init(OSSL_LIB_CTX *libctx, const char *propq);
+  OSSL_ECHSTORE *OSSL_ECHSTORE_new(OSSL_LIB_CTX *libctx, const char *propq);
   void OSSL_ECHSTORE_free(OSSL_ECHSTORE *es);
   int OSSL_ECHSTORE_new_config(OSSL_ECHSTORE *es,
                                uint16_t echversion, uint16_t max_name_length,
@@ -67,7 +67,7 @@ SSL_CTX_ech_set_callback
 TODO(ECH): Text is TBD, this is just enough for the build.
 
 Mention SSL_set1_echstore() is a thing
-Mention OSSL_ECHSTORE_init() is a thing
+Mention OSSL_ECHSTORE_new() is a thing
 Mention OSSL_ECHSTORE_free() is a thing
 Mention OSSL_ECHSTORE_new_config() is a thing
 Mention OSSL_ECHSTORE_write_pem() is a thing
@@ -138,7 +138,7 @@ An example string I<str> as seen on a client might be:
 =head1 RETURN VALUES
 
 SSL_set1_echstore() returns zero on error
-OSSL_ECHSTORE_init() returns zero on error
+OSSL_ECHSTORE_new() returns zero on error
 OSSL_ECHSTORE_free() returns zero on error
 OSSL_ECHSTORE_new_config() returns zero on error
 OSSL_ECHSTORE_write_pem() returns zero on error

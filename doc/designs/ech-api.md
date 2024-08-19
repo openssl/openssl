@@ -206,7 +206,7 @@ typedef struct ossl_echstore_st OSSL_ECHSTORE;
 /* if a caller wants to index the last entry in the store */
 # define OSSL_ECHSTORE_LAST -1
 
-OSSL_ECHSTORE *OSSL_ECHSTORE_init(OSSL_LIB_CTX *libctx, const char *propq);
+OSSL_ECHSTORE *OSSL_ECHSTORE_new(OSSL_LIB_CTX *libctx, const char *propq);
 void OSSL_ECHSTORE_free(OSSL_ECHSTORE *es);
 int OSSL_ECHSTORE_new_config(OSSL_ECHSTORE *es,
                              uint16_t echversion, uint8_t max_name_length,
@@ -226,7 +226,7 @@ int OSSL_ECHSTORE_num_keys(OSSL_ECHSTORE *es, int *numkeys);
 int OSSL_ECHSTORE_flush_keys(OSSL_ECHSTORE *es, time_t age);
 ```
 
-`OSSL_ECHSTORE_init()` and `OSSL_ECHSTORE_free()` are relatively obvious.
+`OSSL_ECHSTORE_new()` and `OSSL_ECHSTORE_free()` are relatively obvious.
 
 `OSSL_ECHSTORE_new_config()` allows the caller to create a new private key
 value and the related "singleton" ECHConfigList structure.

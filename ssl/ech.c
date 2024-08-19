@@ -53,7 +53,7 @@ static int ech_hash_pub_as_fname(OSSL_ECHSTORE *es,
  * API calls built around OSSL_ECHSTORE
  */
 
-OSSL_ECHSTORE *OSSL_ECHSTORE_init(OSSL_LIB_CTX *libctx, const char *propq)
+OSSL_ECHSTORE *OSSL_ECHSTORE_new(OSSL_LIB_CTX *libctx, const char *propq)
 {
     OSSL_ECHSTORE *es = NULL;
 
