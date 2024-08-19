@@ -885,16 +885,21 @@ static int aes_gcm_enc_dec(const char *alg,
 
     {
         OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END, OSSL_PARAM_END };
+        OSSL_PARAM *p = params;
         unsigned int iv_generated = -1;
+        const OSSL_PARAM *gettables = EVP_CIPHER_CTX_gettable_params(ctx);
+        const char *ivgenkey = OSSL_CIPHER_PARAM_AEAD_IV_GENERATED;
+        int ivgen = (OSSL_PARAM_locate_const(gettables, ivgenkey) != NULL);
 
-        params[0] = OSSL_PARAM_construct_uint(OSSL_CIPHER_PARAM_AEAD_IV_GENERATED,
-                                              &iv_generated);
+        if (ivgen != 0)
+            *p++ = OSSL_PARAM_construct_uint(ivgenkey, &iv_generated);
         if (outiv != NULL)
-            params[1] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_IV,
-                                                          outiv, iv_len);
+            *p = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_IV,
+                                                   outiv, iv_len);
         if (!TEST_true(EVP_CIPHER_CTX_get_params(ctx, params)))
             goto err;
-        if (!TEST_uint_eq(iv_generated, (enc == 0 || iv != NULL ? 0 : 1)))
+        if (ivgen != 0
+                && !TEST_uint_eq(iv_generated, (enc == 0 || iv != NULL ? 0 : 1)))
             goto err;
     }
     if (out_len != NULL)
