@@ -5201,6 +5201,10 @@ static int is_pkey_disabled(const char *name)
     if (HAS_CASE_SUFFIX(name, "-RIPEMD160"))
         return 1;
 #endif
+#ifdef OPENSSL_NO_SM3
+    if (HAS_CASE_SUFFIX(name, "-SM3"))
+        return 1;
+#endif
     return 0;
 }
 
