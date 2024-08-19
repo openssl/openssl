@@ -7,6 +7,15 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * This file contains self test data required by FIPS 140-3 IG
+ * 10.3.A Cryptographic Algorithm Self test Requirements
+ *
+ * Note that in the 'General CAST requirements': Note33 Allows individual
+ * self tests for low level algorithms (such as digests) to be omitted, if
+ * they are tested as part of a higher level algorithm (such as HMAC).
+ */
+
 /* Macros to build Self test data */
 #define ITM(x) ((void *)&x), sizeof(x)
 #define ITM_STR(x) ((void *)&x), (sizeof(x) - 1)
@@ -137,13 +146,7 @@ typedef struct st_kat_asym_cipher_st {
     size_t expected_len;
 } ST_KAT_ASYM_CIPHER;
 
-/*- DIGEST TEST DATA */
-static const unsigned char sha1_pt[] = "abc";
-static const unsigned char sha1_digest[] = {
-    0xA9, 0x99, 0x3E, 0x36, 0x47, 0x06, 0x81, 0x6A, 0xBA, 0x3E, 0x25, 0x71,
-    0x78, 0x50, 0xC2, 0x6C, 0x9C, 0xD0, 0xD8, 0x9D
-};
-
+/*- DIGEST SELF TEST DATA */
 static const unsigned char sha512_pt[] = "abc";
 static const unsigned char sha512_digest[] = {
     0xDD, 0xAF, 0x35, 0xA1, 0x93, 0x61, 0x7A, 0xBA, 0xCC, 0x41, 0x73, 0x49,
@@ -160,14 +163,13 @@ static const unsigned char sha3_256_digest[] = {
     0x89, 0x77, 0x7f, 0x05, 0x1e, 0x40, 0x46, 0xae
 };
 
+/*
+ * Note:
+ *  SHA1 and SHA256 are tested by higher level algorithms so a
+ *  CAST is not needed.
+ */
 static const ST_KAT_DIGEST st_kat_digest_tests[] =
 {
-    {
-         OSSL_SELF_TEST_DESC_MD_SHA1,
-         "SHA1",
-         ITM_STR(sha1_pt),
-         ITM(sha1_digest),
-    },
     {
          OSSL_SELF_TEST_DESC_MD_SHA2,
          "SHA512",
@@ -429,56 +431,13 @@ static const unsigned char pbkdf2_expected[] = {
     0x1c
 };
 static int pbkdf2_iterations = 4096;
-static int pbkdf2_pkcs5 = 0;
+static int pbkdf2_pkcs5 = 0; /* Enable compliance checks */
 static const ST_KAT_PARAM pbkdf2_params[] = {
     ST_KAT_PARAM_UTF8STRING(OSSL_KDF_PARAM_DIGEST, pbkdf2_digest),
     ST_KAT_PARAM_OCTET(OSSL_KDF_PARAM_PASSWORD, pbkdf2_password),
     ST_KAT_PARAM_OCTET(OSSL_KDF_PARAM_SALT, pbkdf2_salt),
     ST_KAT_PARAM_INT(OSSL_KDF_PARAM_ITER, pbkdf2_iterations),
     ST_KAT_PARAM_INT(OSSL_KDF_PARAM_PKCS5, pbkdf2_pkcs5),
-    ST_KAT_PARAM_END()
-};
-
-static const char sshkdf_digest[] = "SHA1";
-static const char sshkdf_type = EVP_KDF_SSHKDF_TYPE_INITIAL_IV_CLI_TO_SRV;
-static const unsigned char sshkdf_key[] = {
-    0x00, 0x00, 0x00, 0x80, 0x55, 0xba, 0xe9, 0x31,
-    0xc0, 0x7f, 0xd8, 0x24, 0xbf, 0x10, 0xad, 0xd1,
-    0x90, 0x2b, 0x6f, 0xbc, 0x7c, 0x66, 0x53, 0x47,
-    0x38, 0x34, 0x98, 0xa6, 0x86, 0x92, 0x9f, 0xf5,
-    0xa2, 0x5f, 0x8e, 0x40, 0xcb, 0x66, 0x45, 0xea,
-    0x81, 0x4f, 0xb1, 0xa5, 0xe0, 0xa1, 0x1f, 0x85,
-    0x2f, 0x86, 0x25, 0x56, 0x41, 0xe5, 0xed, 0x98,
-    0x6e, 0x83, 0xa7, 0x8b, 0xc8, 0x26, 0x94, 0x80,
-    0xea, 0xc0, 0xb0, 0xdf, 0xd7, 0x70, 0xca, 0xb9,
-    0x2e, 0x7a, 0x28, 0xdd, 0x87, 0xff, 0x45, 0x24,
-    0x66, 0xd6, 0xae, 0x86, 0x7c, 0xea, 0xd6, 0x3b,
-    0x36, 0x6b, 0x1c, 0x28, 0x6e, 0x6c, 0x48, 0x11,
-    0xa9, 0xf1, 0x4c, 0x27, 0xae, 0xa1, 0x4c, 0x51,
-    0x71, 0xd4, 0x9b, 0x78, 0xc0, 0x6e, 0x37, 0x35,
-    0xd3, 0x6e, 0x6a, 0x3b, 0xe3, 0x21, 0xdd, 0x5f,
-    0xc8, 0x23, 0x08, 0xf3, 0x4e, 0xe1, 0xcb, 0x17,
-    0xfb, 0xa9, 0x4a, 0x59,
-};
-static const unsigned char sshkdf_xcghash[] = {
-    0xa4, 0xeb, 0xd4, 0x59, 0x34, 0xf5, 0x67, 0x92,
-    0xb5, 0x11, 0x2d, 0xcd, 0x75, 0xa1, 0x07, 0x5f,
-    0xdc, 0x88, 0x92, 0x45,
-};
-static const unsigned char sshkdf_session_id[] = {
-    0xa4, 0xeb, 0xd4, 0x59, 0x34, 0xf5, 0x67, 0x92,
-    0xb5, 0x11, 0x2d, 0xcd, 0x75, 0xa1, 0x07, 0x5f,
-    0xdc, 0x88, 0x92, 0x45,
-};
-static const unsigned char sshkdf_expected[] = {
-    0xe2, 0xf6, 0x27, 0xc0, 0xb4, 0x3f, 0x1a, 0xc1,
-};
-static const ST_KAT_PARAM sshkdf_params[] = {
-    ST_KAT_PARAM_UTF8STRING(OSSL_KDF_PARAM_DIGEST, sshkdf_digest),
-    ST_KAT_PARAM_UTF8CHAR(OSSL_KDF_PARAM_SSHKDF_TYPE, sshkdf_type),
-    ST_KAT_PARAM_OCTET(OSSL_KDF_PARAM_KEY, sshkdf_key),
-    ST_KAT_PARAM_OCTET(OSSL_KDF_PARAM_SSHKDF_XCGHASH, sshkdf_xcghash),
-    ST_KAT_PARAM_OCTET(OSSL_KDF_PARAM_SSHKDF_SESSION_ID, sshkdf_session_id),
     ST_KAT_PARAM_END()
 };
 
@@ -629,6 +588,11 @@ static const ST_KAT_PARAM tls13_kdf_client_early_secret_params[] = {
     ST_KAT_PARAM_END()
 };
 
+/*
+ * NOTES:
+ * According to FIPS 140-3 10.3.A Note18: SSH KDF is not required, since it is
+ * sufficient to self-test the underlying SHA hash functions.
+ */
 static const ST_KAT_KDF st_kat_kdf_tests[] =
 {
     {
@@ -654,12 +618,6 @@ static const ST_KAT_KDF st_kat_kdf_tests[] =
         OSSL_KDF_NAME_PBKDF2,
         pbkdf2_params,
         ITM(pbkdf2_expected)
-    },
-    {
-        OSSL_SELF_TEST_DESC_KDF_SSHKDF,
-        OSSL_KDF_NAME_SSHKDF,
-        sshkdf_params,
-        ITM(sshkdf_expected)
     },
     {
         OSSL_SELF_TEST_DESC_KDF_KBKDF,
@@ -1654,12 +1612,6 @@ static const unsigned char dsa_pub[] = {
     0xe5, 0x1b, 0x16, 0xa4, 0xe3, 0x92, 0x15, 0xea,
     0x0b, 0x17, 0xc4, 0x73, 0x59, 0x74, 0xc5, 0x16
 };
-static const unsigned char dsa_priv[] = {
-    0x6c, 0xca, 0xee, 0xf6, 0xd7, 0x3b, 0x4e, 0x80,
-    0xf1, 0x1c, 0x17, 0xb8, 0xe9, 0x62, 0x7c, 0x03,
-    0x66, 0x35, 0xba, 0xc3, 0x94, 0x23, 0x50, 0x5e,
-    0x40, 0x7e, 0x5c, 0xb7
-};
 static const unsigned char dsa_expected_sig[] = {
     0x30, 0x3c, 0x02, 0x1c, 0x69, 0xc6, 0xd6, 0x9e,
     0x2b, 0x91, 0xea, 0x72, 0xb3, 0x8b, 0x7c, 0x57,
@@ -1676,7 +1628,6 @@ static const ST_KAT_PARAM dsa_key[] = {
     ST_KAT_PARAM_BIGNUM(OSSL_PKEY_PARAM_FFC_Q, dsa_q),
     ST_KAT_PARAM_BIGNUM(OSSL_PKEY_PARAM_FFC_G, dsa_g),
     ST_KAT_PARAM_BIGNUM(OSSL_PKEY_PARAM_PUB_KEY, dsa_pub),
-    ST_KAT_PARAM_BIGNUM(OSSL_PKEY_PARAM_PRIV_KEY, dsa_priv),
     ST_KAT_PARAM_END()
 };
 #endif /* OPENSSL_NO_DSA */
