@@ -920,7 +920,7 @@ int ossl_rsa_check_factors(RSA *r)
 
     /*
      * Simple sanity check for RSA key. All RSA key parameters
-     * must be less-than/equal-to RSA parameter n
+     * must be less-than/equal-to RSA parameter n.
      */
     ossl_rsa_get0_all_params(r, factors, exps, coeffs);
     n = safe_BN_num_bits(RSA_get0_n(r));
@@ -945,7 +945,7 @@ int ossl_rsa_check_factors(RSA *r)
         coeffs_ok = ((coeffs_ok) && (bits <= n));
     }
 
-    valid = (d_ok && factors_ok && coeffs_ok);
+    valid = (d_ok && exps_ok && factors_ok && coeffs_ok);
 
 done:
     sk_BIGNUM_const_free(factors);
