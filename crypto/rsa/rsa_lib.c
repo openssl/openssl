@@ -910,7 +910,7 @@ int ossl_rsa_get0_all_params(RSA *r, STACK_OF(BIGNUM_const) *primes,
 int ossl_rsa_check_factors(RSA *r)
 {
     int valid = 0;
-    int n, d_ok, factors_ok, exps_ok, coeffs_ok, bits, i;
+    int n, i, bits;
     STACK_OF(BIGNUM_const) *factors = sk_BIGNUM_const_new_null();
     STACK_OF(BIGNUM_const) *exps = sk_BIGNUM_const_new_null();
     STACK_OF(BIGNUM_const) *coeffs = sk_BIGNUM_const_new_null();
@@ -925,27 +925,28 @@ int ossl_rsa_check_factors(RSA *r)
     ossl_rsa_get0_all_params(r, factors, exps, coeffs);
     n = safe_BN_num_bits(RSA_get0_n(r));
 
-    d_ok = (safe_BN_num_bits(RSA_get0_d(r)) <= n);
+    if (safe_BN_num_bits(RSA_get0_d(r)) > n)
+        goto done;
 
-    exps_ok = 1;
     for (i = 0; i < sk_BIGNUM_const_num(exps); i++) {
         bits = safe_BN_num_bits(sk_BIGNUM_const_value(exps, i));
-        exps_ok = ((exps_ok) && (bits <= n));
+        if (bits > n)
+            goto done;
     }
 
-    factors_ok = 1;
     for (i = 0; i < sk_BIGNUM_const_num(factors); i++) {
         bits = safe_BN_num_bits(sk_BIGNUM_const_value(factors, i));
-        factors_ok = ((factors_ok) && (bits <= n));
+        if (bits > n)
+            goto done;
     }
 
-    coeffs_ok = 1;
     for (i = 0; i < sk_BIGNUM_const_num(coeffs); i++) {
         bits = safe_BN_num_bits(sk_BIGNUM_const_value(coeffs, i));
-        coeffs_ok = ((coeffs_ok) && (bits <= n));
+        if (bits > n)
+            goto done;
     }
 
-    valid = (d_ok && exps_ok && factors_ok && coeffs_ok);
+    valid = 1;
 
 done:
     sk_BIGNUM_const_free(factors);
