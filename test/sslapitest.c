@@ -1735,7 +1735,7 @@ static int execute_cleanse_plaintext(const SSL_METHOD *smeth,
         if (is_fips) {
             testresult = 1;
             goto end;
-        };
+        }
         /*
          * Default sigalgs are SHA1 based in <DTLS1.2 which is in security
          * level 0
@@ -1943,7 +1943,7 @@ static int ocsp_server_cb_multi(SSL *s, void *arg)
     sk_resp = sk_OCSP_RESPONSE_new_null();
     sk_OCSP_RESPONSE_push(sk_resp, dummy_ocsp_resp);
 
-    if (!TEST_true(SSL_set_tlsext_status_ocsp_resp_ex(s, sk_resp)))
+    if (!TEST_true(SSL_set0_tlsext_status_ocsp_resp_ex(s, sk_resp)))
         return SSL_TLSEXT_ERR_ALERT_FATAL;
 
     ocsp_server_called = 1;
@@ -1960,7 +1960,7 @@ static int ocsp_client_cb_multi(SSL *s, void *arg)
     if (*argi != 1 && *argi != 2)
         return 0;
 
-    SSL_get_tlsext_status_ocsp_resp_ex(s, &sk_resp);
+    SSL_get0_tlsext_status_ocsp_resp_ex(s, &sk_resp);
 
     num = sk_OCSP_RESPONSE_num(sk_resp);
 
@@ -1971,7 +1971,7 @@ static int ocsp_client_cb_multi(SSL *s, void *arg)
 
     i = OCSP_response_status(rsp);
 
-    SSL_set_tlsext_status_ocsp_resp_ex(s, NULL);
+    SSL_set0_tlsext_status_ocsp_resp_ex(s, NULL);
 
     if (i != OCSP_RESPONSE_STATUS_SUCCESSFUL)
         return 0;
@@ -2008,7 +2008,7 @@ static int test_tlsext_status_type(int multi_stapling)
         goto end;
     if (!TEST_int_eq(SSL_get_tlsext_status_type(clientssl), -1)
             || !TEST_true(SSL_set_tlsext_status_type(clientssl,
-                                                      TLSEXT_STATUSTYPE_ocsp))
+                                                     TLSEXT_STATUSTYPE_ocsp))
             || !TEST_int_eq(SSL_get_tlsext_status_type(clientssl),
                             TLSEXT_STATUSTYPE_ocsp))
         goto end;
@@ -2017,7 +2017,7 @@ static int test_tlsext_status_type(int multi_stapling)
     clientssl = NULL;
 
     if (!SSL_CTX_set_tlsext_status_type(cctx, TLSEXT_STATUSTYPE_ocsp)
-     || SSL_CTX_get_tlsext_status_type(cctx) != TLSEXT_STATUSTYPE_ocsp)
+        || SSL_CTX_get_tlsext_status_type(cctx) != TLSEXT_STATUSTYPE_ocsp)
         goto end;
 
     clientssl = SSL_new(cctx);
@@ -2113,7 +2113,7 @@ static int test_tlsext_status_type(int multi_stapling)
 
     testresult = 1;
 
- end:
+end:
     SSL_free(serverssl);
     SSL_free(clientssl);
     SSL_CTX_free(sctx);
