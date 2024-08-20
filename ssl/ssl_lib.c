@@ -6336,11 +6336,16 @@ static int ct_extract_ocsp_response_scts(SSL_CONNECTION *s)
 
             scts = OCSP_SINGLERESP_get1_ext_d2i(single,
                                                 NID_ct_cert_scts, NULL, NULL);
+
+            if (scts == NULL)  {
+                scts_extracted = -1;
+                goto err;
+            }
+
             ret = ct_move_scts(&s->scts, scts,
                                SCT_SOURCE_OCSP_STAPLED_RESPONSE);
 
             SCT_LIST_free(scts);
-            OCSP_BASICRESP_free(br);
 
             if (ret < 0) {
                 scts_extracted = -1;
@@ -6349,8 +6354,13 @@ static int ct_extract_ocsp_response_scts(SSL_CONNECTION *s)
 
             scts_extracted += ret;
         }
+
+        OCSP_BASICRESP_free(br);
+        /* to assure that is not freed twice */
+        br = NULL;
     }
  err:
+    OCSP_BASICRESP_free(br);
     return scts_extracted;
 # else
     /* Behave as if no OCSP response exists */

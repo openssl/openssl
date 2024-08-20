@@ -631,7 +631,7 @@ const OPTIONS s_client_options[] = {
     OPT_SECTION("OCSP stapling"),
     {"status", OPT_STATUS, '-',
      "Sends a certificate status request to the server (OCSP stapling) " \
-     "The server response (if any) is only printed out."},
+     "The server response (if any) will be printed out."},
     {"ocsp_check_leaf", OPT_STATUS_OCSP_CHECK_LEAF, '-',
      "Require checking leaf certificate status, attempting to use OCSP stapling first"},
     {"ocsp_check_all", OPT_STATUS_OCSP_CHECK_ALL, '-',
