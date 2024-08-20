@@ -595,12 +595,21 @@ static int get_ocsp_resp_from_responder_single(SSL *s, X509 *x,
     return ret;
 }
 
+/*
+ * Helper function to get OCSP_RESPONSE from a responder for the server
+ * certificate and the chain certificates.
+ * The function get_ocsp_resp_from_responder_single is called for each
+ * certificate.
+ * This is a simplified version. It examines certificates each time and
+ * makes one OCSP responder query for each request. A full version would
+ * store details such as the OCSP certificate IDs and minimise the number
+ * of OCSP responses by caching them until they were considered "expired".
+ */
 static int get_ocsp_resp_from_responder(SSL *s, tlsextstatusctx *srctx,
                                         STACK_OF(OCSP_RESPONSE) **sk_resp)
 {
     const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
     X509 *x = NULL;
-    int ret = SSL_TLSEXT_ERR_NOACK;
     int i, num = 1;
     STACK_OF(X509) *server_certs = NULL;
     OCSP_RESPONSE *resp = NULL;
@@ -618,7 +627,7 @@ static int get_ocsp_resp_from_responder(SSL *s, tlsextstatusctx *srctx,
         !SSL_CONNECTION_IS_DTLS(sc) && SSL_version(s) >= TLS1_3_VERSION) {
         /* certificate chain is available */
         num = sk_X509_num(server_certs) + 1;
-    } else {
+    } else if (sc != NULL) {
         /*
          * certificate chain is not available,
          * set num to 1 for server certificate
@@ -647,9 +656,9 @@ static int get_ocsp_resp_from_responder(SSL *s, tlsextstatusctx *srctx,
             return SSL_TLSEXT_ERR_OK;
 
         resp = NULL;
-        ret = get_ocsp_resp_from_responder_single(s, x, srctx, &resp);
+        get_ocsp_resp_from_responder_single(s, x, srctx, &resp);
         /* add response to stack; skip if no response was received */
-        if (ret == SSL_TLSEXT_ERR_OK && resp != NULL)
+        if (resp != NULL)
             sk_OCSP_RESPONSE_insert(*sk_resp, resp, -1);
     }
 
@@ -675,10 +684,14 @@ static int cert_status_cb(SSL *s, void *arg)
         BIO_puts(bio_err, "cert_status: callback called\n");
 
     if (srctx->sk_resp_in != NULL) {
-        /* reading as many responses as files given */
-        sk_resp = sk_OCSP_RESPONSE_new_reserve(NULL,
-                                               sk_OPENSSL_STRING_num(srctx->sk_resp_in));
+        sk_resp = sk_OCSP_RESPONSE_new_reserve(NULL, sk_OPENSSL_STRING_num(srctx->sk_resp_in));
 
+        if (sk_resp == NULL) {
+            BIO_puts(bio_err, "cert_status: Cannot reserve memory for OCSP responses\n");
+            goto err;
+        }
+
+        /* reading as many responses as files given */
         for (i = 0; i < sk_OPENSSL_STRING_num(srctx->sk_resp_in); i++) {
             respfile = sk_OPENSSL_STRING_value(srctx->sk_resp_in, i);
 
@@ -716,8 +729,10 @@ static int cert_status_cb(SSL *s, void *arg)
     ret = SSL_TLSEXT_ERR_OK;
 
  err:
-    if (ret != SSL_TLSEXT_ERR_OK)
+    if (ret != SSL_TLSEXT_ERR_OK) {
         ERR_print_errors(bio_err);
+        sk_OCSP_RESPONSE_pop_free(sk_resp, OCSP_RESPONSE_free);
+    }
 
     return ret;
 }

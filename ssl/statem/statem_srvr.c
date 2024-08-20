@@ -4357,6 +4357,10 @@ int tls_construct_cert_status_body(SSL_CONNECTION *s, size_t chainidx, WPACKET *
         /* search the stack for the requested OCSP response */
         cert_id = OCSP_cert_to_id(NULL, x, issuer);
 
+        if (cert_id == NULL)
+            return 0;
+
+
         /* find the correct OCSP response for the requested certificate */
         found = -1;
         for (i = 0; i < sk_OCSP_RESPONSE_num(s->ext.ocsp.resp_ex); i++) {
@@ -4368,8 +4372,7 @@ int tls_construct_cert_status_body(SSL_CONNECTION *s, size_t chainidx, WPACKET *
 
             found = OCSP_resp_find(bs, cert_id, -1);
 
-            if (bs != NULL)
-                OCSP_BASICRESP_free(bs);
+            OCSP_BASICRESP_free(bs);
 
             if (found > -1)
                 break;
