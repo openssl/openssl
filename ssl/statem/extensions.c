@@ -18,6 +18,7 @@
 #include "internal/ssl_unwrap.h"
 #include "../ssl_local.h"
 #include "statem_local.h"
+#include <openssl/ocsp.h>
 
 static int final_renegotiate(SSL_CONNECTION *s, unsigned int context, int sent);
 static int init_server_name(SSL_CONNECTION *s, unsigned int context);
