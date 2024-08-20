@@ -103,7 +103,6 @@ quic_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                       OSSL_RECORD_LAYER **retrl)
 {
     OSSL_RECORD_LAYER *rl = OPENSSL_zalloc(sizeof(*rl));
-    uint32_t enc_level;
     int qdir;
     uint32_t suite_id = 0;
 
@@ -135,51 +134,41 @@ quic_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
         }
     }
 
-    switch (level) {
-    case OSSL_RECORD_PROTECTION_LEVEL_NONE:
+    if (level == OSSL_RECORD_PROTECTION_LEVEL_NONE)
         return 1;
-
-    case OSSL_RECORD_PROTECTION_LEVEL_EARLY:
-        enc_level = QUIC_ENC_LEVEL_0RTT;
-        break;
-
-    case OSSL_RECORD_PROTECTION_LEVEL_HANDSHAKE:
-        enc_level = QUIC_ENC_LEVEL_HANDSHAKE;
-        break;
-
-    case OSSL_RECORD_PROTECTION_LEVEL_APPLICATION:
-        enc_level = QUIC_ENC_LEVEL_1RTT;
-        break;
-
-    default:
-        QUIC_TLS_FATAL(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
 
     if (direction == OSSL_RECORD_DIRECTION_READ)
         qdir = 0;
     else
         qdir = 1;
 
-    if (EVP_CIPHER_is_a(ciph, "AES-128-GCM")) {
-        suite_id = QRL_SUITE_AES128GCM;
-    } else if (EVP_CIPHER_is_a(ciph, "AES-256-GCM")) {
-        suite_id = QRL_SUITE_AES256GCM;
-    } else if (EVP_CIPHER_is_a(ciph, "CHACHA20-POLY1305")) {
-        suite_id = QRL_SUITE_CHACHA20POLY1305;
-    } else {
-        QUIC_TLS_FATAL(rl, SSL_AD_INTERNAL_ERROR, SSL_R_UNKNOWN_CIPHER_TYPE);
-        goto err;
+    if (rl->qtls->args.ossl_quic) {
+        /*
+         * We only look up the suite_id/MD for internal callers. Not used in the
+         * public API. We assume that a 3rd party QUIC stack will want to
+         * figure this out by itself (e.g. so that they could add new
+         * ciphersuites at a different pace to us)
+         */
+        if (EVP_CIPHER_is_a(ciph, "AES-128-GCM")) {
+            suite_id = QRL_SUITE_AES128GCM;
+        } else if (EVP_CIPHER_is_a(ciph, "AES-256-GCM")) {
+            suite_id = QRL_SUITE_AES256GCM;
+        } else if (EVP_CIPHER_is_a(ciph, "CHACHA20-POLY1305")) {
+            suite_id = QRL_SUITE_CHACHA20POLY1305;
+        } else {
+            QUIC_TLS_FATAL(rl, SSL_AD_INTERNAL_ERROR, SSL_R_UNKNOWN_CIPHER_TYPE);
+            goto err;
+        }
+
+        /* We pass a ref to the md in a successful yield_secret_cb call */
+        /* TODO(QUIC FUTURE): This cast is horrible. We should try and remove it */
+        if (!EVP_MD_up_ref((EVP_MD *)kdfdigest)) {
+            QUIC_TLS_FATAL(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
     }
 
-    /* We pass a ref to the md in a successful yield_secret_cb call */
-    /* TODO(QUIC FUTURE): This cast is horrible. We should try and remove it */
-    if (!EVP_MD_up_ref((EVP_MD *)kdfdigest)) {
-        QUIC_TLS_FATAL(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-
-    if (!rl->qtls->args.yield_secret_cb(enc_level, qdir, suite_id,
+    if (!rl->qtls->args.yield_secret_cb(level, qdir, suite_id,
                                         (EVP_MD *)kdfdigest, secret, secretlen,
                                         rl->qtls->args.yield_secret_cb_arg)) {
         QUIC_TLS_FATAL(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -698,6 +687,33 @@ static int raise_error(QUIC_TLS *qtls, uint64_t error_code,
 #define RAISE_INTERNAL_ERROR(qtls) \
     RAISE_ERROR((qtls), OSSL_QUIC_ERR_INTERNAL_ERROR, "internal error")
 
+int ossl_quic_tls_configure(QUIC_TLS *qtls)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(qtls->args.s);
+
+    if (!SSL_set_min_proto_version(qtls->args.s, TLS1_3_VERSION))
+        return RAISE_INTERNAL_ERROR(qtls);
+
+    SSL_clear_options(qtls->args.s, SSL_OP_ENABLE_MIDDLEBOX_COMPAT);
+    ossl_ssl_set_custom_record_layer(sc, &quic_tls_record_method, qtls);
+
+    if (!ossl_tls_add_custom_ext_intern(NULL, &sc->cert->custext,
+                                        qtls->args.is_server ? ENDPOINT_SERVER
+                                                                : ENDPOINT_CLIENT,
+                                        TLSEXT_TYPE_quic_transport_parameters,
+                                        SSL_EXT_TLS1_3_ONLY
+                                        | SSL_EXT_CLIENT_HELLO
+                                        | SSL_EXT_TLS1_3_ENCRYPTED_EXTENSIONS,
+                                        add_transport_params_cb,
+                                        free_transport_params_cb, qtls,
+                                        parse_transport_params_cb, qtls))
+        return 0;
+
+    sc->s3.flags |= TLS1_FLAGS_QUIC;
+
+    return 1;
+}
+
 int ossl_quic_tls_tick(QUIC_TLS *qtls)
 {
     int ret, err;
@@ -749,22 +765,8 @@ int ossl_quic_tls_tick(QUIC_TLS *qtls)
                 return RAISE_ERROR(qtls, OSSL_QUIC_ERR_CRYPTO_NO_APP_PROTO,
                                    "ALPN must be configured when using QUIC");
         }
-        if (!SSL_set_min_proto_version(qtls->args.s, TLS1_3_VERSION))
-            return RAISE_INTERNAL_ERROR(qtls);
 
-        SSL_clear_options(qtls->args.s, SSL_OP_ENABLE_MIDDLEBOX_COMPAT);
-        ossl_ssl_set_custom_record_layer(sc, &quic_tls_record_method, qtls);
-
-        if (!ossl_tls_add_custom_ext_intern(NULL, &sc->cert->custext,
-                                            qtls->args.is_server ? ENDPOINT_SERVER
-                                                                 : ENDPOINT_CLIENT,
-                                            TLSEXT_TYPE_quic_transport_parameters,
-                                            SSL_EXT_TLS1_3_ONLY
-                                            | SSL_EXT_CLIENT_HELLO
-                                            | SSL_EXT_TLS1_3_ENCRYPTED_EXTENSIONS,
-                                            add_transport_params_cb,
-                                            free_transport_params_cb, qtls,
-                                            parse_transport_params_cb, qtls))
+        if (!ossl_quic_tls_configure(qtls))
             return RAISE_INTERNAL_ERROR(qtls);
 
         nullbio = BIO_new(BIO_s_null());

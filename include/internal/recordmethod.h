@@ -43,14 +43,6 @@ typedef struct ossl_record_layer_st OSSL_RECORD_LAYER;
 # define OSSL_RECORD_DIRECTION_READ  0
 # define OSSL_RECORD_DIRECTION_WRITE 1
 
-/*
- * Protection level. For <= TLSv1.2 only "NONE" and "APPLICATION" are used.
- */
-# define OSSL_RECORD_PROTECTION_LEVEL_NONE        0
-# define OSSL_RECORD_PROTECTION_LEVEL_EARLY       1
-# define OSSL_RECORD_PROTECTION_LEVEL_HANDSHAKE   2
-# define OSSL_RECORD_PROTECTION_LEVEL_APPLICATION 3
-
 # define OSSL_RECORD_RETURN_SUCCESS           1
 # define OSSL_RECORD_RETURN_RETRY             0
 # define OSSL_RECORD_RETURN_NON_FATAL_ERR    -1
