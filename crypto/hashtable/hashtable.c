@@ -525,7 +525,6 @@ static void free_old_ht_value(void *arg)
 
 static ossl_inline int match_key(HT_KEY *a, HT_KEY *b)
 {
-
     /*
      * keys match if they are both present, the same size
      * and compare equal in memory
