@@ -16,7 +16,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_x509");
 
-plan tests => 96;
+plan tests => 97;
 
 # Prevent MSys2 filename munging for arguments that look like file paths but
 # aren't
@@ -298,6 +298,11 @@ my $audit_id_cert = srctop_file(@certs, "ext-auditIdentity.pem");
 cert_contains($audit_id_cert,
               "09:08:07",
               1, 'X509v3 Audit Identity');
+
+my $iobo_cert = srctop_file(@certs, "ext-issuedOnBehalfOf.pem");
+cert_contains($iobo_cert,
+              "DirName:CN = Wildboar",
+              1, 'X.509 Issued On Behalf Of');
 
 sub test_errors { # actually tests diagnostics of OSSL_STORE
     my ($expected, $cert, @opts) = @_;
