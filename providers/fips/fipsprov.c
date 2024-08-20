@@ -12,6 +12,7 @@
 #include <openssl/core_names.h>
 #include <openssl/params.h>
 #include <openssl/fips_names.h>
+#include <openssl/fipskey.h>
 #include <openssl/rand.h> /* RAND_get0_public() */
 #include <openssl/proverr.h>
 #include <openssl/indicator.h>
@@ -27,12 +28,6 @@
 #include "self_test.h"
 #include "crypto/context.h"
 #include "internal/core.h"
-
-#if defined(OPENSSL_NO_FIPS_POST)
-# define OSSL_FIPS_PROV_NAME "OpenSSL non-compliant FIPS Provider"
-#else
-# define OSSL_FIPS_PROV_NAME "OpenSSL FIPS Provider"
-#endif
 
 static const char FIPS_DEFAULT_PROPERTIES[] = "provider=fips,fips=yes";
 static const char FIPS_UNAPPROVED_PROPERTIES[] = "provider=fips,fips=no";
@@ -93,9 +88,9 @@ typedef struct fips_global_st {
     SELF_TEST_POST_PARAMS selftest_params;
     FIPS_OPTION fips_security_checks;
     FIPS_OPTION fips_tls1_prf_ems_check;
-    FIPS_OPTION fips_eddsa_no_verify_digested;
     FIPS_OPTION fips_no_short_mac;
     FIPS_OPTION fips_restricted_drgb_digests;
+    FIPS_OPTION fips_signature_digest_check;
     FIPS_OPTION fips_hkdf_digest_check;
     FIPS_OPTION fips_tls13_kdf_digest_check;
     FIPS_OPTION fips_tls1_prf_digest_check;
@@ -105,6 +100,7 @@ typedef struct fips_global_st {
     FIPS_OPTION fips_dsa_sign_disallowed;
     FIPS_OPTION fips_tdes_encrypt_disallowed;
     FIPS_OPTION fips_rsa_pkcs15_padding_disabled;
+    FIPS_OPTION fips_rsa_pss_saltlen_check;
     FIPS_OPTION fips_rsa_sign_x931_disallowed;
     FIPS_OPTION fips_hkdf_key_check;
     FIPS_OPTION fips_kbkdf_key_check;
@@ -114,6 +110,7 @@ typedef struct fips_global_st {
     FIPS_OPTION fips_sskdf_key_check;
     FIPS_OPTION fips_x963kdf_key_check;
     FIPS_OPTION fips_pbkdf2_lower_bound_check;
+    FIPS_OPTION fips_ecdh_cofactor_check;
 } FIPS_GLOBAL;
 
 static void init_fips_option(FIPS_OPTION *opt, int enabled)
@@ -130,9 +127,9 @@ void *ossl_fips_prov_ossl_ctx_new(OSSL_LIB_CTX *libctx)
         return NULL;
     init_fips_option(&fgbl->fips_security_checks, 1);
     init_fips_option(&fgbl->fips_tls1_prf_ems_check, 0); /* Disabled by default */
-    init_fips_option(&fgbl->fips_eddsa_no_verify_digested, 0);
     init_fips_option(&fgbl->fips_no_short_mac, 1);
     init_fips_option(&fgbl->fips_restricted_drgb_digests, 0);
+    init_fips_option(&fgbl->fips_signature_digest_check, 0);
     init_fips_option(&fgbl->fips_hkdf_digest_check, 0);
     init_fips_option(&fgbl->fips_tls13_kdf_digest_check, 0);
     init_fips_option(&fgbl->fips_tls1_prf_digest_check, 0);
@@ -142,6 +139,7 @@ void *ossl_fips_prov_ossl_ctx_new(OSSL_LIB_CTX *libctx)
     init_fips_option(&fgbl->fips_dsa_sign_disallowed, 0);
     init_fips_option(&fgbl->fips_tdes_encrypt_disallowed, 0);
     init_fips_option(&fgbl->fips_rsa_pkcs15_padding_disabled, 0);
+    init_fips_option(&fgbl->fips_rsa_pss_saltlen_check, 0);
     init_fips_option(&fgbl->fips_rsa_sign_x931_disallowed, 0);
     init_fips_option(&fgbl->fips_hkdf_key_check, 0);
     init_fips_option(&fgbl->fips_kbkdf_key_check, 0);
@@ -151,6 +149,7 @@ void *ossl_fips_prov_ossl_ctx_new(OSSL_LIB_CTX *libctx)
     init_fips_option(&fgbl->fips_sskdf_key_check, 0);
     init_fips_option(&fgbl->fips_x963kdf_key_check, 0);
     init_fips_option(&fgbl->fips_pbkdf2_lower_bound_check, 1);
+    init_fips_option(&fgbl->fips_ecdh_cofactor_check, 0);
     return fgbl;
 }
 
@@ -201,6 +200,8 @@ static const OSSL_PARAM fips_param_types[] = {
                     0),
     OSSL_PARAM_DEFN(OSSL_PROV_PARAM_PBKDF2_LOWER_BOUND_CHECK,
                     OSSL_PARAM_INTEGER, NULL, 0),
+    OSSL_PARAM_DEFN(OSSL_PROV_PARAM_ECDH_COFACTOR_CHECK, OSSL_PARAM_INTEGER,
+                    NULL, 0),
     OSSL_PARAM_END
 };
 
@@ -214,32 +215,21 @@ static int fips_get_params_from_core(FIPS_GLOBAL *fgbl)
     * OSSL_PROV_FIPS_PARAM_SECURITY_CHECKS and
     * OSSL_PROV_FIPS_PARAM_TLS1_PRF_EMS_CHECK are not self test parameters.
     */
-    OSSL_PARAM core_params[30], *p = core_params;
+    OSSL_PARAM core_params[29], *p = core_params;
 
-    *p++ = OSSL_PARAM_construct_utf8_ptr(
-            OSSL_PROV_PARAM_CORE_MODULE_FILENAME,
-            (char **)&fgbl->selftest_params.module_filename,
-            sizeof(fgbl->selftest_params.module_filename));
-    *p++ = OSSL_PARAM_construct_utf8_ptr(
-            OSSL_PROV_FIPS_PARAM_MODULE_MAC,
-            (char **)&fgbl->selftest_params.module_checksum_data,
-            sizeof(fgbl->selftest_params.module_checksum_data));
-    *p++ = OSSL_PARAM_construct_utf8_ptr(
-            OSSL_PROV_FIPS_PARAM_INSTALL_MAC,
-            (char **)&fgbl->selftest_params.indicator_checksum_data,
-            sizeof(fgbl->selftest_params.indicator_checksum_data));
-    *p++ = OSSL_PARAM_construct_utf8_ptr(
-            OSSL_PROV_FIPS_PARAM_INSTALL_STATUS,
-            (char **)&fgbl->selftest_params.indicator_data,
-            sizeof(fgbl->selftest_params.indicator_data));
-    *p++ = OSSL_PARAM_construct_utf8_ptr(
-            OSSL_PROV_FIPS_PARAM_INSTALL_VERSION,
-            (char **)&fgbl->selftest_params.indicator_version,
-            sizeof(fgbl->selftest_params.indicator_version));
-    *p++ = OSSL_PARAM_construct_utf8_ptr(
-            OSSL_PROV_FIPS_PARAM_CONDITIONAL_ERRORS,
-            (char **)&fgbl->selftest_params.conditional_error_check,
-            sizeof(fgbl->selftest_params.conditional_error_check));
+/* FIPS self test params */
+#define FIPS_FEATURE_SELF_TEST(fgbl, pname, field)                             \
+    *p++ = OSSL_PARAM_construct_utf8_ptr(pname,                                \
+                                         (char **)&fgbl->selftest_params.field,\
+                                         sizeof(fgbl->selftest_params.field))
+
+    FIPS_FEATURE_SELF_TEST(fgbl, OSSL_PROV_PARAM_CORE_MODULE_FILENAME,
+                           module_filename);
+    FIPS_FEATURE_SELF_TEST(fgbl, OSSL_PROV_FIPS_PARAM_MODULE_MAC,
+                           module_checksum_data);
+    FIPS_FEATURE_SELF_TEST(fgbl, OSSL_PROV_FIPS_PARAM_CONDITIONAL_ERRORS,
+                           conditional_error_check);
+#undef FIPS_FEATURE_SELF_TEST
 
 /* FIPS features can be enabled or disabled independently */
 #define FIPS_FEATURE_OPTION(fgbl, pname, field)                         \
@@ -251,12 +241,12 @@ static int fips_get_params_from_core(FIPS_GLOBAL *fgbl)
                         fips_security_checks);
     FIPS_FEATURE_OPTION(fgbl, OSSL_PROV_FIPS_PARAM_TLS1_PRF_EMS_CHECK,
                         fips_tls1_prf_ems_check);
-    FIPS_FEATURE_OPTION(fgbl, OSSL_PROV_FIPS_PARAM_EDDSA_NO_VERIFY_DIGESTED,
-                        fips_eddsa_no_verify_digested);
     FIPS_FEATURE_OPTION(fgbl, OSSL_PROV_FIPS_PARAM_NO_SHORT_MAC,
                         fips_no_short_mac);
     FIPS_FEATURE_OPTION(fgbl, OSSL_PROV_FIPS_PARAM_DRBG_TRUNC_DIGEST,
                         fips_restricted_drgb_digests);
+    FIPS_FEATURE_OPTION(fgbl, OSSL_PROV_FIPS_PARAM_SIGNATURE_DIGEST_CHECK,
+                        fips_signature_digest_check);
     FIPS_FEATURE_OPTION(fgbl, OSSL_PROV_FIPS_PARAM_HKDF_DIGEST_CHECK,
                         fips_hkdf_digest_check);
     FIPS_FEATURE_OPTION(fgbl, OSSL_PROV_FIPS_PARAM_TLS13_KDF_DIGEST_CHECK,
@@ -275,6 +265,8 @@ static int fips_get_params_from_core(FIPS_GLOBAL *fgbl)
                         fips_tdes_encrypt_disallowed);
     FIPS_FEATURE_OPTION(fgbl, OSSL_PROV_FIPS_PARAM_RSA_PKCS15_PADDING_DISABLED,
                         fips_rsa_pkcs15_padding_disabled);
+    FIPS_FEATURE_OPTION(fgbl, OSSL_PROV_FIPS_PARAM_RSA_PSS_SALTLEN_CHECK,
+                        fips_rsa_pss_saltlen_check);
     FIPS_FEATURE_OPTION(fgbl, OSSL_PROV_FIPS_PARAM_RSA_SIGN_X931_PAD_DISABLED,
                         fips_rsa_sign_x931_disallowed);
     FIPS_FEATURE_OPTION(fgbl, OSSL_PROV_FIPS_PARAM_HKDF_KEY_CHECK,
@@ -293,6 +285,8 @@ static int fips_get_params_from_core(FIPS_GLOBAL *fgbl)
                         fips_x963kdf_key_check);
     FIPS_FEATURE_OPTION(fgbl, OSSL_PROV_FIPS_PARAM_PBKDF2_LOWER_BOUND_CHECK,
                         fips_pbkdf2_lower_bound_check);
+    FIPS_FEATURE_OPTION(fgbl, OSSL_PROV_FIPS_PARAM_ECDH_COFACTOR_CHECK,
+                        fips_ecdh_cofactor_check);
 #undef FIPS_FEATURE_OPTION
 
     *p = OSSL_PARAM_construct_end();
@@ -317,7 +311,7 @@ static int fips_get_params(void *provctx, OSSL_PARAM params[])
                                               OSSL_LIB_CTX_FIPS_PROV_INDEX);
 
     p = OSSL_PARAM_locate(params, OSSL_PROV_PARAM_NAME);
-    if (p != NULL && !OSSL_PARAM_set_utf8_ptr(p, OSSL_FIPS_PROV_NAME))
+    if (p != NULL && !OSSL_PARAM_set_utf8_ptr(p, FIPS_VENDOR))
         return 0;
     p = OSSL_PARAM_locate(params, OSSL_PROV_PARAM_VERSION);
     if (p != NULL && !OSSL_PARAM_set_utf8_ptr(p, OPENSSL_VERSION_STR))
@@ -338,12 +332,12 @@ static int fips_get_params(void *provctx, OSSL_PARAM params[])
                      fips_security_checks);
     FIPS_FEATURE_GET(fgbl, OSSL_PROV_PARAM_TLS1_PRF_EMS_CHECK,
                      fips_tls1_prf_ems_check);
-    FIPS_FEATURE_GET(fgbl, OSSL_PROV_FIPS_PARAM_EDDSA_NO_VERIFY_DIGESTED,
-                     fips_eddsa_no_verify_digested);
     FIPS_FEATURE_GET(fgbl, OSSL_PROV_PARAM_NO_SHORT_MAC,
                      fips_no_short_mac);
     FIPS_FEATURE_GET(fgbl, OSSL_PROV_PARAM_DRBG_TRUNC_DIGEST,
                      fips_restricted_drgb_digests);
+    FIPS_FEATURE_GET(fgbl, OSSL_PROV_FIPS_PARAM_SIGNATURE_DIGEST_CHECK,
+                     fips_signature_digest_check);
     FIPS_FEATURE_GET(fgbl, OSSL_PROV_PARAM_HKDF_DIGEST_CHECK,
                      fips_hkdf_digest_check);
     FIPS_FEATURE_GET(fgbl, OSSL_PROV_PARAM_TLS13_KDF_DIGEST_CHECK,
@@ -362,6 +356,8 @@ static int fips_get_params(void *provctx, OSSL_PARAM params[])
                      fips_tdes_encrypt_disallowed);
     FIPS_FEATURE_GET(fgbl, OSSL_PROV_FIPS_PARAM_RSA_PKCS15_PADDING_DISABLED,
                      fips_rsa_pkcs15_padding_disabled);
+    FIPS_FEATURE_GET(fgbl, OSSL_PROV_PARAM_RSA_PSS_SALTLEN_CHECK,
+                     fips_rsa_pss_saltlen_check);
     FIPS_FEATURE_GET(fgbl, OSSL_PROV_PARAM_RSA_SIGN_X931_PAD_DISABLED,
                      fips_rsa_sign_x931_disallowed);
     FIPS_FEATURE_GET(fgbl, OSSL_PROV_PARAM_HKDF_KEY_CHECK,
@@ -380,6 +376,8 @@ static int fips_get_params(void *provctx, OSSL_PARAM params[])
                      fips_x963kdf_key_check);
     FIPS_FEATURE_GET(fgbl, OSSL_PROV_PARAM_PBKDF2_LOWER_BOUND_CHECK,
                      fips_pbkdf2_lower_bound_check);
+    FIPS_FEATURE_GET(fgbl, OSSL_PROV_PARAM_ECDH_COFACTOR_CHECK,
+                     fips_ecdh_cofactor_check);
 #undef FIPS_FEATURE_GET
     return 1;
 }
@@ -585,9 +583,9 @@ static const OSSL_ALGORITHM fips_signature[] = {
     { PROV_NAMES_RSA, FIPS_DEFAULT_PROPERTIES, ossl_rsa_signature_functions },
 #ifndef OPENSSL_NO_EC
 # ifndef OPENSSL_NO_ECX
-    { PROV_NAMES_ED25519, FIPS_UNAPPROVED_PROPERTIES,
+    { PROV_NAMES_ED25519, FIPS_DEFAULT_PROPERTIES,
       ossl_ed25519_signature_functions },
-    { PROV_NAMES_ED448, FIPS_UNAPPROVED_PROPERTIES, ossl_ed448_signature_functions },
+    { PROV_NAMES_ED448, FIPS_DEFAULT_PROPERTIES, ossl_ed448_signature_functions },
 # endif
     { PROV_NAMES_ECDSA, FIPS_DEFAULT_PROPERTIES, ossl_ecdsa_signature_functions },
 #endif
@@ -633,9 +631,9 @@ static const OSSL_ALGORITHM fips_keymgmt[] = {
       PROV_DESCS_X25519 },
     { PROV_NAMES_X448, FIPS_UNAPPROVED_PROPERTIES, ossl_x448_keymgmt_functions,
       PROV_DESCS_X448 },
-    { PROV_NAMES_ED25519, FIPS_UNAPPROVED_PROPERTIES, ossl_ed25519_keymgmt_functions,
+    { PROV_NAMES_ED25519, FIPS_DEFAULT_PROPERTIES, ossl_ed25519_keymgmt_functions,
       PROV_DESCS_ED25519 },
-    { PROV_NAMES_ED448, FIPS_UNAPPROVED_PROPERTIES, ossl_ed448_keymgmt_functions,
+    { PROV_NAMES_ED448, FIPS_DEFAULT_PROPERTIES, ossl_ed448_keymgmt_functions,
       PROV_DESCS_ED448 },
 # endif
 #endif
@@ -913,9 +911,9 @@ int OSSL_provider_init_int(const OSSL_CORE_HANDLE *handle,
 
     FIPS_SET_OPTION(fgbl, fips_security_checks);
     FIPS_SET_OPTION(fgbl, fips_tls1_prf_ems_check);
-    FIPS_SET_OPTION(fgbl, fips_eddsa_no_verify_digested);
     FIPS_SET_OPTION(fgbl, fips_no_short_mac);
     FIPS_SET_OPTION(fgbl, fips_restricted_drgb_digests);
+    FIPS_SET_OPTION(fgbl, fips_signature_digest_check);
     FIPS_SET_OPTION(fgbl, fips_hkdf_digest_check);
     FIPS_SET_OPTION(fgbl, fips_tls13_kdf_digest_check);
     FIPS_SET_OPTION(fgbl, fips_tls1_prf_digest_check);
@@ -925,6 +923,7 @@ int OSSL_provider_init_int(const OSSL_CORE_HANDLE *handle,
     FIPS_SET_OPTION(fgbl, fips_dsa_sign_disallowed);
     FIPS_SET_OPTION(fgbl, fips_tdes_encrypt_disallowed);
     FIPS_SET_OPTION(fgbl, fips_rsa_pkcs15_padding_disabled);
+    FIPS_SET_OPTION(fgbl, fips_rsa_pss_saltlen_check);
     FIPS_SET_OPTION(fgbl, fips_rsa_sign_x931_disallowed);
     FIPS_SET_OPTION(fgbl, fips_hkdf_key_check);
     FIPS_SET_OPTION(fgbl, fips_kbkdf_key_check);
@@ -934,6 +933,7 @@ int OSSL_provider_init_int(const OSSL_CORE_HANDLE *handle,
     FIPS_SET_OPTION(fgbl, fips_sskdf_key_check);
     FIPS_SET_OPTION(fgbl, fips_x963kdf_key_check);
     FIPS_SET_OPTION(fgbl, fips_pbkdf2_lower_bound_check);
+    FIPS_SET_OPTION(fgbl, fips_ecdh_cofactor_check);
 #undef FIPS_SET_OPTION
 
     ossl_prov_cache_exported_algorithms(fips_ciphers, exported_fips_ciphers);
@@ -1133,10 +1133,10 @@ int BIO_snprintf(char *buf, size_t n, const char *format, ...)
 
 FIPS_FEATURE_CHECK(FIPS_security_check_enabled, fips_security_checks)
 FIPS_FEATURE_CHECK(FIPS_tls_prf_ems_check, fips_tls1_prf_ems_check)
-FIPS_FEATURE_CHECK(FIPS_eddsa_no_verify_digested, fips_eddsa_no_verify_digested)
 FIPS_FEATURE_CHECK(FIPS_no_short_mac, fips_no_short_mac)
 FIPS_FEATURE_CHECK(FIPS_restricted_drbg_digests_enabled,
                    fips_restricted_drgb_digests)
+FIPS_FEATURE_CHECK(FIPS_fips_signature_digest_check, fips_signature_digest_check)
 FIPS_FEATURE_CHECK(FIPS_hkdf_digest_check, fips_hkdf_digest_check)
 FIPS_FEATURE_CHECK(FIPS_tls13_kdf_digest_check, fips_tls13_kdf_digest_check)
 FIPS_FEATURE_CHECK(FIPS_tls1_prf_digest_check, fips_tls1_prf_digest_check)
@@ -1147,6 +1147,7 @@ FIPS_FEATURE_CHECK(FIPS_dsa_sign_check, fips_dsa_sign_disallowed)
 FIPS_FEATURE_CHECK(FIPS_tdes_encrypt_check, fips_tdes_encrypt_disallowed)
 FIPS_FEATURE_CHECK(FIPS_rsa_pkcs15_padding_disabled,
                    fips_rsa_pkcs15_padding_disabled)
+FIPS_FEATURE_CHECK(FIPS_rsa_pss_saltlen_check, fips_rsa_pss_saltlen_check)
 FIPS_FEATURE_CHECK(FIPS_rsa_sign_x931_disallowed,
                    fips_rsa_sign_x931_disallowed)
 FIPS_FEATURE_CHECK(FIPS_hkdf_key_check, fips_hkdf_key_check)
@@ -1157,6 +1158,7 @@ FIPS_FEATURE_CHECK(FIPS_sshkdf_key_check, fips_sshkdf_key_check)
 FIPS_FEATURE_CHECK(FIPS_sskdf_key_check, fips_sskdf_key_check)
 FIPS_FEATURE_CHECK(FIPS_x963kdf_key_check, fips_x963kdf_key_check)
 FIPS_FEATURE_CHECK(FIPS_pbkdf2_lower_bound_check, fips_pbkdf2_lower_bound_check)
+FIPS_FEATURE_CHECK(FIPS_ecdh_cofactor_check, fips_ecdh_cofactor_check)
 
 #undef FIPS_FEATURE_CHECK
 

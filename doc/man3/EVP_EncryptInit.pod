@@ -905,6 +905,16 @@ A getter that returns 1 if the operation is FIPS approved, or 0 otherwise.
 This may be used after calling a cipher final operation such as
 EVP_EncryptFinal_ex(). It may return 0 if the "encrypt-check" option is set to 0.
 
+=item "iv-generated" (B<OSSL_CIPHER_PARAM_AEAD_IV_GENERATED>) <unsigned integer>
+
+An indicator that returns 1 if an IV was generated internally during encryption,
+or O otherwise.
+This may be used by GCM ciphers after calling a cipher final operation such
+as EVP_EncryptFinal_ex().
+GCM should generate an IV internally if the IV is not specified during a
+cipher initialisation call such as EVP_CipherInit_ex().
+See FIPS 140-3 IG C.H for information related to IV requirements.
+
 =back
 
 =head2 Settable EVP_CIPHER_CTX parameters

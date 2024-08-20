@@ -918,6 +918,7 @@ Output = B53FE7F63A41A69BAE048E78F620084D98BCDF8A2C2B825971634B376A365831F0D2F93
 
 Title = Negative test for FIPS minimum key length
 
+Availablein = fips
 FIPSversion = >=3.4.0
 KDF = KBKDF
 Ctrl.mac = mac:KMAC128
@@ -925,7 +926,9 @@ Ctrl.hexinfo = hexinfo:11223344
 Ctrl.hexsalt = hexsalt:11223344
 Ctrl.hexkey = hexkey:11223344
 Result = KDF_CTRL_ERROR
+Reason = invalid key length
 
+Availablein = fips
 FIPSversion = >=3.4.0
 KDF = KBKDF
 Ctrl.mac = mac:KMAC128

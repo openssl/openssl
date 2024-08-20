@@ -42,6 +42,7 @@ my %params = (
     'PROV_PARAM_X963KDF_DIGEST_CHECK' =>   "x963kdf-digest-check",   # uint
     'PROV_PARAM_DSA_SIGN_DISABLED' =>      "dsa-sign-disabled",      # uint
     'PROV_PARAM_TDES_ENCRYPT_DISABLED' =>  "tdes-encrypt-disabled",  # uint
+    'PROV_PARAM_RSA_PSS_SALTLEN_CHECK' =>  "rsa-pss-saltlen-check",  # uint
     'PROV_PARAM_RSA_SIGN_X931_PAD_DISABLED' =>  "rsa-sign-x931-pad-disabled",   # uint
     'PROV_PARAM_HKDF_KEY_CHECK' =>         "hkdf-key-check",         # uint
     'PROV_PARAM_KBKDF_KEY_CHECK' =>        "kbkdf-key-check",        # uint
@@ -51,6 +52,7 @@ my %params = (
     'PROV_PARAM_SSKDF_KEY_CHECK' =>        "sskdf-key-check",        # uint
     'PROV_PARAM_X963KDF_KEY_CHECK' =>      "x963kdf-key-check",      # uint
     'PROV_PARAM_PBKDF2_LOWER_BOUND_CHECK' => "pbkdf2-lower-bound-check", # uint
+    'PROV_PARAM_ECDH_COFACTOR_CHECK' =>    "ecdh-cofactor-check",    # uint
 
 # Self test callback parameters
     'PROV_PARAM_SELF_TEST_PHASE' =>  "st-phase",# utf8_string
@@ -113,6 +115,7 @@ my %params = (
     'CIPHER_PARAM_AEAD_TLS1_GET_IV_GEN' => "tlsivgen",    # octet_string
     'CIPHER_PARAM_AEAD_TLS1_SET_IV_INV' => "tlsivinv",    # octet_string
     'CIPHER_PARAM_AEAD_IVLEN' =>           '*CIPHER_PARAM_IVLEN',
+    'CIPHER_PARAM_AEAD_IV_GENERATED' => "iv-generated",   # uint
     'CIPHER_PARAM_AEAD_TAGLEN' =>          "taglen",      # size_t
     'CIPHER_PARAM_AEAD_MAC_KEY' =>         "mackey",      # octet_string
     'CIPHER_PARAM_RANDOM_KEY' =>           "randkey",     # octet_string
@@ -410,6 +413,7 @@ my %params = (
     'EXCHANGE_PARAM_KDF_UKM' =>               "kdf-ukm",
     'EXCHANGE_PARAM_FIPS_DIGEST_CHECK' =>     '*PKEY_PARAM_FIPS_DIGEST_CHECK',
     'EXCHANGE_PARAM_FIPS_KEY_CHECK' =>        '*PKEY_PARAM_FIPS_KEY_CHECK',
+    'EXCHANGE_PARAM_FIPS_ECDH_COFACTOR_CHECK' => '*PROV_PARAM_ECDH_COFACTOR_CHECK',
     'EXCHANGE_PARAM_FIPS_APPROVED_INDICATOR' => '*ALG_PARAM_FIPS_APPROVED_INDICATOR',
 
 # Signature parameters
@@ -427,9 +431,9 @@ my %params = (
     'SIGNATURE_PARAM_FIPS_DIGEST_CHECK' =>  '*PKEY_PARAM_FIPS_DIGEST_CHECK',
     'SIGNATURE_PARAM_FIPS_KEY_CHECK' =>     '*PKEY_PARAM_FIPS_KEY_CHECK',
     'SIGNATURE_PARAM_FIPS_SIGN_CHECK' =>    '*PKEY_PARAM_FIPS_SIGN_CHECK',
+    'SIGNATURE_PARAM_FIPS_RSA_PSS_SALTLEN_CHECK' => "rsa-pss-saltlen-check",
     'SIGNATURE_PARAM_FIPS_SIGN_X931_PAD_CHECK' => "sign-x931-pad-check",
     'SIGNATURE_PARAM_FIPS_APPROVED_INDICATOR' => '*ALG_PARAM_FIPS_APPROVED_INDICATOR',
-    'SIGNATURE_PARAM_EDDSA_VERIFY_DIGESTED' => 'verify-digested',
 
 # Asym cipher parameters
     'ASYM_CIPHER_PARAM_DIGEST' =>                   '*PKEY_PARAM_DIGEST',

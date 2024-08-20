@@ -414,14 +414,14 @@ the error and set the approved "fips-indicator" to 0.
 This option is used by the OpenSSL FIPS provider, and breaks FIPS compliance if
 set to 0.
 
-=item "sign-check" (B<OSSL_SIGNATURE_PARAM_FIPS_SIGN_CHECK>) <int>
+=item "sign-check" (B<OSSL_SIGNATURE_PARAM_FIPS_SIGN_CHECK>) <integer>
 
 If required this parameter should be set early via an init function.
 The default value of 1 causes an error when a signing algorithm is used. (This
 is triggered by deprecated signing algorithms).
 Setting this to 0 will ignore the error and set the approved "fips-indicator" to 0.
 
-=item "sign-x931-pad-check" (B<SIGNATURE_PARAM_FIPS_SIGN_X931_PAD_CHECK>) <int>
+=item "sign-x931-pad-check" (B<SIGNATURE_PARAM_FIPS_SIGN_X931_PAD_CHECK>) <integer>
 
 If required this parameter should be set before the padding mode is set
 The default value of 1 causes an error if the padding mode is set to X9.31 padding

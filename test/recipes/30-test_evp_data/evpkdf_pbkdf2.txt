@@ -224,10 +224,11 @@ Ctrl.salt = salt:salt
 Ctrl.iter = iter:1
 Ctrl.digest = digest:shake-128
 Result = KDF_CTRL_ERROR
+Reason = xof digests not allowed
 
 Title = FIPS indicator tests
 
-# Test that the operation with unapproved parameters is rejected
+# Test that operations with unapproved parameters are rejected
 FIPSversion = >=3.4.0
 KDF = PBKDF2
 Ctrl.pass = pass:password
@@ -235,8 +236,9 @@ Ctrl.salt = salt:salt
 Ctrl.iter = iter:4096
 Ctrl.digest = digest:sha1
 Result = KDF_CTRL_ERROR
+Reason = invalid salt length
 
-# Test that the operation with unapproved parameters is reported as unapproved
+# Test that operations with unapproved parameters are reported as unapproved
 FIPSversion = >=3.4.0
 KDF = PBKDF2
 Unapproved = 1
@@ -257,3 +259,14 @@ Ctrl.salt = salt:saltSALTsaltSALTsaltSALTsaltSALTsalt
 Ctrl.iter = iter:4096
 Ctrl.digest = digest:sha1
 Output = 043c508e57c6427036fd2c6cd2a02ec7530a412c
+
+Title = Test that a too low iteration count raises an error
+
+Availablein = fips
+KDF = PBKDF2
+Ctrl.pass = pass:password
+Ctrl.salt = salt:saltydaysarethebest
+Ctrl.iter = iter:10
+Ctrl.digest = digest:sha1
+Result = KDF_CTRL_ERROR
+Reason = invalid iteration count

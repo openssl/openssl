@@ -224,6 +224,7 @@ static const OSSL_PARAM settable_ctx_params[] = {
     OSSL_PARAM_int("ems_check", NULL),
     OSSL_PARAM_int("sign-check", NULL),
     OSSL_PARAM_int("encrypt-check", NULL),
+    OSSL_PARAM_int("rsa-pss-saltlen-check", NULL),
     OSSL_PARAM_int("sign-x931-pad-check", NULL),
     OSSL_PARAM_END
 };
@@ -2598,15 +2599,20 @@ static int verify_test_init(EVP_TEST *t, const char *name)
 
 static int verify_test_run(EVP_TEST *t)
 {
+    int ret = 1;
     PKEY_DATA *kdata = t->data;
 
     if (!pkey_test_run_init(t))
         goto err;
     if (EVP_PKEY_verify(kdata->ctx, kdata->output, kdata->output_len,
-                        kdata->input, kdata->input_len) <= 0)
+                        kdata->input, kdata->input_len) <= 0) {
         t->err = "VERIFY_ERROR";
+        goto err;
+    }
+    if (!pkey_check_fips_approved(kdata->ctx, t))
+        ret = 0;
 err:
-    return 1;
+    return ret;
 }
 
 static const EVP_TEST_METHOD pverify_test_method = {
@@ -2655,6 +2661,7 @@ static int pderive_test_run(EVP_TEST *t)
     PKEY_DATA *expected = t->data;
     unsigned char *got = NULL;
     size_t got_len;
+    int ret = 1;
 
     if (!pkey_test_run_init(t))
         goto err;
@@ -2689,11 +2696,15 @@ static int pderive_test_run(EVP_TEST *t)
                             got, got_len))
         goto err;
 
+    if (!pkey_check_fips_approved(dctx, t)) {
+        ret = 0;
+        goto err;
+    }
     t->err = NULL;
  err:
     OPENSSL_free(got);
     EVP_PKEY_CTX_free(dctx);
-    return 1;
+    return ret;
 }
 
 static const EVP_TEST_METHOD pderive_test_method = {
@@ -3815,7 +3826,7 @@ static int keypair_test_init(EVP_TEST *t, const char *pair)
     rv = 1;
     t->err = NULL;
 
-end:
+ end:
     OPENSSL_free(priv);
     return rv;
 }
@@ -3895,13 +3906,6 @@ typedef struct keygen_test_data_st {
 static int keygen_test_init(EVP_TEST *t, const char *alg)
 {
     KEYGEN_TEST_DATA *data;
-    int nid = OBJ_sn2nid(alg);
-
-    if (nid == NID_undef) {
-        nid = OBJ_ln2nid(alg);
-        if (nid == NID_undef)
-            return 0;
-    }
 
     if (is_pkey_disabled(alg)) {
         t->skip = 1;
@@ -3909,16 +3913,14 @@ static int keygen_test_init(EVP_TEST *t, const char *alg)
     }
 
     if (!TEST_ptr(data = OPENSSL_malloc(sizeof(*data))))
-        goto err;
+        return 0;
     data->keyname = NULL;
-    data->alg = OPENSSL_strdup(alg);
     data->paramname = NULL;
     data->controls = sk_OPENSSL_STRING_new_null();
+    data->alg = OPENSSL_strdup(alg);
     t->data = data;
     t->err = NULL;
     return 1;
-err:
-    return 0;
 }
 
 static void keygen_test_cleanup(EVP_TEST *t)
@@ -3927,8 +3929,8 @@ static void keygen_test_cleanup(EVP_TEST *t)
 
     ctrlfree(keygen->controls);
     OPENSSL_free(keygen->alg);
-    OPENSSL_free(keygen->paramname);
     OPENSSL_free(keygen->keyname);
+    OPENSSL_free(keygen->paramname);
     OPENSSL_free(t->data);
     t->data = NULL;
 }
@@ -3952,7 +3954,9 @@ static int keygen_test_run(EVP_TEST *t)
     KEYGEN_TEST_DATA *keygen = t->data;
     EVP_PKEY *pkey = NULL, *keyparams = NULL;
     EVP_PKEY_CTX *genctx = NULL; /* Keygen context to use */
-    int rv = 1, i;
+    int rv = 1;
+    OSSL_PARAM params[4];
+    size_t params_n = 0;
 
     if (keygen->paramname != NULL) {
         rv = find_key(&keyparams, keygen->paramname, public_keys);
@@ -3976,11 +3980,17 @@ static int keygen_test_run(EVP_TEST *t)
         goto err;
     }
 
-    for (i = 0; i < sk_OPENSSL_STRING_num(keygen->controls); ++i) {
-        if (!pkey_test_ctrl(t, genctx,
-                            sk_OPENSSL_STRING_value(keygen->controls, i))
-                || t->err != NULL)
+    if (sk_OPENSSL_STRING_num(keygen->controls) > 0) {
+        if (!ctrl2params(t, keygen->controls,
+                         EVP_PKEY_CTX_settable_params(genctx),
+                         params, OSSL_NELEM(params), &params_n))
             goto err;
+        if (!EVP_PKEY_CTX_set_params(genctx, params)) {
+            t->err = "PKEY_CTRL_ERROR";
+            goto err;
+        }
+    } else {
+        params[0] = OSSL_PARAM_construct_end();
     }
 
     if (EVP_PKEY_keygen(genctx, &pkey) <= 0) {
@@ -4018,7 +4028,8 @@ static int keygen_test_run(EVP_TEST *t)
     }
 
     t->err = NULL;
-err:
+ err:
+    ctrl2params_free(params, params_n, 0);
     EVP_PKEY_CTX_free(genctx);
     return rv;
 }
@@ -5041,6 +5052,10 @@ static int is_pkey_disabled(const char *name)
 #endif
 #ifdef OPENSSL_NO_DSA
     if (HAS_CASE_PREFIX(name, "DSA"))
+        return 1;
+#endif
+#ifdef OPENSSL_NO_SM2
+    if (HAS_CASE_PREFIX(name, "SM2"))
         return 1;
 #endif
     return 0;

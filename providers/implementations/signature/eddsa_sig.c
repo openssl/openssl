@@ -16,8 +16,6 @@
 #include <openssl/proverr.h>
 #include "internal/nelem.h"
 #include "internal/sizes.h"
-#include "prov/fipscommon.h"
-#include "prov/fipsindicator.h"
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
@@ -144,7 +142,6 @@ typedef struct {
     unsigned char context_string[EDDSA_MAX_CONTEXT_STRING_LEN];
     size_t context_string_len;
 
-    OSSL_FIPS_IND_DECLARE
 } PROV_EDDSA_CTX;
 
 static void *eddsa_newctx(void *provctx, const char *propq_unused)
@@ -159,7 +156,6 @@ static void *eddsa_newctx(void *provctx, const char *propq_unused)
         return NULL;
 
     peddsactx->libctx = PROV_LIBCTX_OF(provctx);
-    OSSL_FIPS_IND_INIT(peddsactx)
 
     return peddsactx;
 }
@@ -193,7 +189,6 @@ static int eddsa_digest_signverify_init(void *vpeddsactx, const char *mdname,
         return 0;
     }
 
-    OSSL_FIPS_IND_SET_APPROVED(peddsactx)
     peddsactx->dom2_flag = 0;
     peddsactx->prehash_flag = 0;
     peddsactx->context_string_flag = 0;
@@ -380,17 +375,6 @@ static int ed448_digest_sign(void *vpeddsactx, unsigned char *sigret,
     return 1;
 }
 
-static int fips_check_verify(PROV_EDDSA_CTX *ctx)
-{
-#ifdef FIPS_MODULE
-    if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE0,
-                                     ctx->libctx, "Verify", "EdDSA",
-                                     FIPS_eddsa_no_verify_digested))
-        return 0;
-#endif  /* FIPS_MODULE */
-    return 1;
-}
-
 static int ed25519_digest_verify(void *vpeddsactx, const unsigned char *sig,
                                  size_t siglen, const unsigned char *tbs,
                                  size_t tbslen)
@@ -400,9 +384,7 @@ static int ed25519_digest_verify(void *vpeddsactx, const unsigned char *sig,
     uint8_t md[EVP_MAX_MD_SIZE];
     size_t mdlen;
 
-    if (!ossl_prov_is_running()
-            || siglen != ED25519_SIGSIZE
-            || !fips_check_verify(peddsactx))
+    if (!ossl_prov_is_running() || siglen != ED25519_SIGSIZE)
         return 0;
 
 #ifdef S390X_EC_ASM
@@ -439,9 +421,7 @@ static int ed448_digest_verify(void *vpeddsactx, const unsigned char *sig,
     uint8_t md[EDDSA_PREHASH_OUTPUT_LEN];
     size_t mdlen = sizeof(md);
 
-    if (!ossl_prov_is_running()
-            || siglen != ED448_SIGSIZE
-            || !fips_check_verify(peddsactx))
+    if (!ossl_prov_is_running() || siglen != ED448_SIGSIZE)
         return 0;
 
 #ifdef S390X_EC_ASM
@@ -515,8 +495,6 @@ static int eddsa_get_ctx_params(void *vpeddsactx, OSSL_PARAM *params)
                                                   peddsactx->aid_len))
         return 0;
 
-    if (!OSSL_FIPS_IND_GET_CTX_PARAM(peddsactx, params))
-        return 0;
     return 1;
 }
 
@@ -524,7 +502,6 @@ static const OSSL_PARAM known_gettable_ctx_params[] = {
     OSSL_PARAM_octet_string(OSSL_SIGNATURE_PARAM_ALGORITHM_ID, NULL, 0),
     OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_INSTANCE, NULL, 0),
     OSSL_PARAM_octet_string(OSSL_SIGNATURE_PARAM_CONTEXT_STRING, NULL, 0),
-    OSSL_FIPS_IND_GETTABLE_CTX_PARAM()
     OSSL_PARAM_END
 };
 
@@ -543,10 +520,6 @@ static int eddsa_set_ctx_params(void *vpeddsactx, const OSSL_PARAM params[])
         return 0;
     if (params == NULL)
         return 1;
-
-    if (!OSSL_FIPS_IND_SET_CTX_PARAM(peddsactx, OSSL_FIPS_IND_SETTABLE0, params,
-                                     OSSL_SIGNATURE_PARAM_EDDSA_VERIFY_DIGESTED))
-        return 0;
 
     p = OSSL_PARAM_locate_const(params, OSSL_SIGNATURE_PARAM_INSTANCE);
     if (p != NULL) {
@@ -607,7 +580,6 @@ static int eddsa_set_ctx_params(void *vpeddsactx, const OSSL_PARAM params[])
 static const OSSL_PARAM settable_ctx_params[] = {
     OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_INSTANCE, NULL, 0),
     OSSL_PARAM_octet_string(OSSL_SIGNATURE_PARAM_CONTEXT_STRING, NULL, 0),
-    OSSL_FIPS_IND_SETTABLE_CTX_PARAM(OSSL_SIGNATURE_PARAM_EDDSA_VERIFY_DIGESTED)
     OSSL_PARAM_END
 };
 

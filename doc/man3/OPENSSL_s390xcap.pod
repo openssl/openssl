@@ -74,6 +74,7 @@ the numbering is continuous across 64-bit mask boundaries.
       :
       # 76    1<<51    message-security assist extension 3
       # 77    1<<50    message-security assist extension 4
+      # 86    1<<41    message-security-assist extension 12
       :
       #129    1<<62    vector facility
       #134    1<<57    vector packed decimal facility
@@ -110,6 +111,8 @@ the numbering is continuous across 64-bit mask boundaries.
       # 50    1<<13    KM-XTS-AES-128
       # 52    1<<11    KM-XTS-AES-256
       :
+      # 82    1<<45    KM-XTS-AES-128-MSA10
+      # 84    1<<43    KM-XTS-AES-256-MSA10
 
  kmc  :
       # 18    1<<45    KMC-AES-128
@@ -122,6 +125,10 @@ the numbering is continuous across 64-bit mask boundaries.
       # 19    1<<44    KMAC-AES-192
       # 20    1<<43    KMAC-AES-256
       :
+      # 112   1<<15    KMAC-SHA-224
+      # 113   1<<14    KMAC-SHA-256
+      # 114   1<<13    KMAC-SHA-384
+      # 115   1<<12    KMAC-SHA-512
 
  kmctr:
       :

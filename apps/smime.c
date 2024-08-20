@@ -121,7 +121,7 @@ const OPTIONS smime_options[] = {
      "Do not load certificates from the default certificates store"},
     {"nochain", OPT_NOCHAIN, '-',
      "set PKCS7_NOCHAIN so certificates contained in the message are not used as untrusted CAs" },
-    {"crlfeol", OPT_CRLFEOL, '-', "Use CRLF as EOL termination instead of CR only"},
+    {"crlfeol", OPT_CRLFEOL, '-', "Use CRLF as EOL termination instead of LF only"},
 
     OPT_R_OPTIONS,
     OPT_V_OPTIONS,

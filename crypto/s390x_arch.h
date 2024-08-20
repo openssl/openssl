@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -115,6 +115,7 @@ extern int OPENSSL_s390xcex;
 # define S390X_MSA5             57      /* message-security-assist-ext. 5 */
 # define S390X_MSA3             76      /* message-security-assist-ext. 3 */
 # define S390X_MSA4             77      /* message-security-assist-ext. 4 */
+# define S390X_MSA12            86      /* message-security-assist-ext. 12 */
 # define S390X_VX               129     /* vector */
 # define S390X_VXD              134     /* vector packed decimal */
 # define S390X_VXE              135     /* vector enhancements 1 */
@@ -150,6 +151,14 @@ extern int OPENSSL_s390xcex;
 /* km */
 # define S390X_XTS_AES_128      50
 # define S390X_XTS_AES_256      52
+# define S390X_XTS_AES_128_MSA10 82
+# define S390X_XTS_AES_256_MSA10 84
+
+/* kmac */
+# define S390X_HMAC_SHA_224     112
+# define S390X_HMAC_SHA_256     113
+# define S390X_HMAC_SHA_384     114
+# define S390X_HMAC_SHA_512     115
 
 /* prno */
 # define S390X_SHA_512_DRNG     3
@@ -183,5 +192,8 @@ extern int OPENSSL_s390xcex;
 # define S390X_KMA_HS           0x400
 # define S390X_KDSA_D           0x80
 # define S390X_KLMD_PS          0x100
+# define S390X_KMAC_IKP         0x8000
+# define S390X_KMAC_IIMP        0x4000
+# define S390X_KMAC_CCUP        0x2000
 
 #endif

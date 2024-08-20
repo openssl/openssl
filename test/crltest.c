@@ -101,6 +101,13 @@ static const char *kRevokedCRL[] = {
     NULL
 };
 
+static const char *kInvalidCRL[] = {
+    "-----BEGIN X509 CRL-----\n",
+    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n",
+    "-----END X509 CRL-----\n",
+    NULL
+};
+
 static const char *kBadIssuerCRL[] = {
     "-----BEGIN X509 CRL-----\n",
     "MIIBwjCBqwIBATANBgkqhkiG9w0BAQsFADBSMQswCQYDVQQGEwJVUzETMBEGA1UE\n",
@@ -371,24 +378,58 @@ static int test_unknown_critical_crl(int n)
     return r;
 }
 
-static int test_reuse_crl(void)
+static int test_reuse_crl(int idx)
 {
-    X509_CRL *reused_crl = CRL_from_strings(kBasicCRL);
-    char *p;
-    BIO *b = glue2bio(kRevokedCRL, &p);
+    X509_CRL *result, *reused_crl = CRL_from_strings(kBasicCRL);
+    X509_CRL *addref_crl = NULL;
+    char *p = NULL;
+    BIO *b = NULL;
+    int r = 0;
 
-    if (b == NULL) {
-        OPENSSL_free(p);
-        X509_CRL_free(reused_crl);
-        return 0;
+    if (!TEST_ptr(reused_crl))
+        goto err;
+
+    if (idx & 1) {
+        if (!TEST_true(X509_CRL_up_ref(reused_crl)))
+            goto err;
+	addref_crl = reused_crl;
     }
 
-    reused_crl = PEM_read_bio_X509_CRL(b, &reused_crl, NULL, NULL);
+    idx >>= 1;
+    b = glue2bio(idx == 2 ? kRevokedCRL : kInvalidCRL + idx, &p);
 
+    if (!TEST_ptr(b))
+        goto err;
+
+    result = PEM_read_bio_X509_CRL(b, &reused_crl, NULL, NULL);
+
+    switch (idx) {
+    case 0: /* valid PEM + invalid DER */
+        if (!TEST_ptr_null(result)
+                || !TEST_ptr_null(reused_crl))
+            goto err;
+        break;
+    case 1: /* invalid PEM */
+        if (!TEST_ptr_null(result)
+                || !TEST_ptr(reused_crl))
+            goto err;
+        break;
+    case 2:
+        if (!TEST_ptr(result)
+                || !TEST_ptr(reused_crl)
+                || !TEST_ptr_eq(result, reused_crl))
+            goto err;
+        break;
+    }
+
+    r = 1;
+
+ err:
     OPENSSL_free(p);
     BIO_free(b);
     X509_CRL_free(reused_crl);
-    return 1;
+    X509_CRL_free(addref_crl);
+    return r;
 }
 
 int setup_tests(void)
@@ -402,7 +443,7 @@ int setup_tests(void)
     ADD_TEST(test_bad_issuer_crl);
     ADD_TEST(test_known_critical_crl);
     ADD_ALL_TESTS(test_unknown_critical_crl, OSSL_NELEM(unknown_critical_crls));
-    ADD_TEST(test_reuse_crl);
+    ADD_ALL_TESTS(test_reuse_crl, 6);
     return 1;
 }
 

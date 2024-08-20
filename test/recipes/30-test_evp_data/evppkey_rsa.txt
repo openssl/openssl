@@ -617,7 +617,7 @@ Title = Test RSA keygen
 # Key generation tests
 
 KeyGen = rsaEncryption
-Ctrl = rsa_keygen_bits:128
+Ctrl = bits:128
 KeyName = tmprsa
 Result = PKEY_CTRL_ERROR
 Reason = key size too small
@@ -656,3 +656,11 @@ Securitycheck = 1
 Unapproved = 1
 CtrlInit = key-check:0
 Op = RSASVE
+
+Title = XOF disallowed
+
+DigestSign = SHAKE128
+Key = RSA-2048
+Input = "Hello World"
+Result = DIGESTSIGNINIT_ERROR
+

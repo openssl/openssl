@@ -21,6 +21,7 @@
 #include <openssl/store.h>
 #include <openssl/core_names.h>
 #include <openssl/rand.h>
+#include <openssl/tls1.h>
 #include "apps.h"
 #include "app_params.h"
 #include "progs.h"
@@ -71,7 +72,7 @@ static void legacy_cipher_fn(const EVP_CIPHER *c,
 {
     if (select_name != NULL
         && (c == NULL
-            || OPENSSL_strcasecmp(select_name,  EVP_CIPHER_get0_name(c)) != 0))
+            || OPENSSL_strcasecmp(select_name, EVP_CIPHER_get0_name(c)) != 0))
         return;
     if (c != NULL) {
         BIO_printf(arg, "  %s\n", EVP_CIPHER_get0_name(c));
@@ -747,6 +748,53 @@ static void list_signatures(void)
         BIO_printf(bio_out, " -\n");
 }
 
+static int list_provider_tls_sigalgs(const OSSL_PARAM params[], void *data)
+{
+    const OSSL_PARAM *p;
+
+    /* Get registered IANA name */
+    p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_SIGALG_IANA_NAME);
+    if (p != NULL && p->data_type == OSSL_PARAM_UTF8_STRING) {
+        if (*((int *)data) > 0)
+            BIO_printf(bio_out, ":");
+        BIO_printf(bio_out, "%s", (char *)(p->data));
+        /* mark presence of a provider-based sigalg */
+        *((int *)data) = 2;
+    }
+    /* As built-in providers don't have this capability, never error */
+    return 1;
+}
+
+static int list_tls_sigalg_caps(OSSL_PROVIDER *provider, void *cbdata)
+{
+    OSSL_PROVIDER_get_capabilities(provider, "TLS-SIGALG",
+                                   list_provider_tls_sigalgs,
+                                   cbdata);
+    /* As built-in providers don't have this capability, never error */
+    return 1;
+}
+
+static void list_tls_signatures(void)
+{
+    int tls_sigalg_listed = 0;
+    char *builtin_sigalgs = SSL_get1_builtin_sigalgs(app_get0_libctx());
+
+    if (builtin_sigalgs != NULL) {
+        if (builtin_sigalgs[0] != 0) {
+            BIO_printf(bio_out, "%s", builtin_sigalgs);
+            tls_sigalg_listed = 1;
+        }
+        OPENSSL_free(builtin_sigalgs);
+    }
+
+    /* As built-in providers don't have this capability, never error */
+    OSSL_PROVIDER_do_all(NULL, list_tls_sigalg_caps, &tls_sigalg_listed);
+    if (tls_sigalg_listed < 2)
+        BIO_printf(bio_out,
+                   "\nNo TLS sig algs registered by currently active providers");
+    BIO_printf(bio_out, "\n");
+}
+
 DEFINE_STACK_OF(EVP_KEM)
 static int kem_cmp(const EVP_KEM * const *a,
                    const EVP_KEM * const *b)
@@ -1209,6 +1257,7 @@ static int provider_cmp(const OSSL_PROVIDER * const *a,
 static int collect_providers(OSSL_PROVIDER *provider, void *stack)
 {
     STACK_OF(OSSL_PROVIDER) *provider_stack = stack;
+
     /*
      * If OK - result is the index of inserted data
      * Error - result is -1 or 0
@@ -1459,9 +1508,10 @@ typedef enum HELPLIST_CHOICE {
     OPT_PK_ALGORITHMS, OPT_PK_METHOD, OPT_DISABLED,
     OPT_KDF_ALGORITHMS, OPT_RANDOM_INSTANCES, OPT_RANDOM_GENERATORS,
     OPT_ENCODERS, OPT_DECODERS, OPT_KEYMANAGERS, OPT_KEYEXCHANGE_ALGORITHMS,
-    OPT_KEM_ALGORITHMS, OPT_SIGNATURE_ALGORITHMS, OPT_ASYM_CIPHER_ALGORITHMS,
-    OPT_STORE_LOADERS, OPT_PROVIDER_INFO,
-    OPT_OBJECTS, OPT_SELECT_NAME,
+    OPT_KEM_ALGORITHMS, OPT_SIGNATURE_ALGORITHMS,
+    OPT_TLS_SIGNATURE_ALGORITHMS, OPT_ASYM_CIPHER_ALGORITHMS,
+    OPT_STORE_LOADERS, OPT_PROVIDER_INFO, OPT_OBJECTS,
+    OPT_SELECT_NAME,
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     OPT_ENGINES,
 #endif
@@ -1496,7 +1546,7 @@ const OPTIONS list_options[] = {
      "List of message authentication code algorithms"},
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     {"cipher-commands", OPT_CIPHER_COMMANDS, '-',
-    "List of cipher commands (deprecated)"},
+     "List of cipher commands (deprecated)"},
 #endif
     {"cipher-algorithms", OPT_CIPHER_ALGORITHMS, '-',
      "List of symmetric cipher algorithms"},
@@ -1509,6 +1559,8 @@ const OPTIONS list_options[] = {
      "List of key encapsulation mechanism algorithms" },
     {"signature-algorithms", OPT_SIGNATURE_ALGORITHMS, '-',
      "List of signature algorithms" },
+    {"tls-signature-algorithms", OPT_TLS_SIGNATURE_ALGORITHMS, '-',
+     "List of TLS signature algorithms" },
     {"asymcipher-algorithms", OPT_ASYM_CIPHER_ALGORITHMS, '-',
       "List of asymmetric cipher algorithms" },
     {"public-key-algorithms", OPT_PK_ALGORITHMS, '-',
@@ -1554,6 +1606,7 @@ int list_main(int argc, char **argv)
         unsigned int decoder_algorithms:1;
         unsigned int keymanager_algorithms:1;
         unsigned int signature_algorithms:1;
+        unsigned int tls_signature_algorithms:1;
         unsigned int keyexchange_algorithms:1;
         unsigned int kem_algorithms:1;
         unsigned int asym_cipher_algorithms:1;
@@ -1627,6 +1680,9 @@ opthelp:
         case OPT_SIGNATURE_ALGORITHMS:
             todo.signature_algorithms = 1;
             break;
+        case OPT_TLS_SIGNATURE_ALGORITHMS:
+            todo.tls_signature_algorithms = 1;
+            break;
         case OPT_KEYEXCHANGE_ALGORITHMS:
             todo.keyexchange_algorithms = 1;
             break;
@@ -1686,7 +1742,7 @@ opthelp:
             BIO_printf(bio_out, "\n"); \
         } \
         cmd; \
-    } while(0)
+    } while (0)
 
     if (todo.commands)
         MAYBE_ADD_NL(list_type(FT_general, one));
@@ -1744,6 +1800,8 @@ opthelp:
         MAYBE_ADD_NL(list_keymanagers());
     if (todo.signature_algorithms)
         MAYBE_ADD_NL(list_signatures());
+    if (todo.tls_signature_algorithms)
+        MAYBE_ADD_NL(list_tls_signatures());
     if (todo.asym_cipher_algorithms)
         MAYBE_ADD_NL(list_asymciphers());
     if (todo.keyexchange_algorithms)

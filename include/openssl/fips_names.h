@@ -62,13 +62,6 @@ extern "C" {
 # define OSSL_PROV_FIPS_PARAM_TLS1_PRF_EMS_CHECK "tls1-prf-ems-check"
 
 /*
- * A boolean that determines if Ed448 and Ed25519 are forbidden to process
- * a pre-hashed message or not.
- * This is disabled by default.
- * Type: OSSL_PARAM_UTF8_STRING
- */
-# define OSSL_PROV_FIPS_PARAM_EDDSA_NO_VERIFY_DIGESTED "eddsa-no-verify-digested"
-/*
  * A boolean that determines if the runtime FIPS check for undersized MAC output
  * is performed.
  * This is enabled by default.
@@ -84,6 +77,14 @@ extern "C" {
  * Type: OSSL_PARAM_UTF8_STRING
  */
 # define OSSL_PROV_FIPS_PARAM_DRBG_TRUNC_DIGEST "drbg-no-trunc-md"
+
+/*
+ * A boolean that determines if the digest algorithm used as part of a
+ * signature algorithm is in the approved list.
+ * This is disabled by default.
+ * Type: OSSL_PARAM_UTF8_STRING
+ */
+# define OSSL_PROV_FIPS_PARAM_SIGNATURE_DIGEST_CHECK "signature-digest-check"
 
 /*
  * A boolean that determines if the runtime FIPS digest check for HKDF is
@@ -157,6 +158,15 @@ extern "C" {
  */
 # define OSSL_PROV_FIPS_PARAM_RSA_PKCS15_PADDING_DISABLED \
             "rsa-pkcs15-padding-disabled"
+
+/*
+ * A boolean that determines if the runtime salt length check for RSA-PSS is
+ * performed.
+ * This is disabled by default.
+ * Type: OSSL_PARAM_UTF8_STRING
+ */
+# define OSSL_PROV_FIPS_PARAM_RSA_PSS_SALTLEN_CHECK "rsa-pss-saltlen-check"
+
 /*
  * A boolean that determines if X9.31 padding can be used for RSA signing.
  * X9.31 RSA has been removed from FIPS 186-5, and is no longer approved for
@@ -229,6 +239,14 @@ extern "C" {
  * Type: OSSL_PARAM_UTF8_STRING
  */
 # define OSSL_PROV_FIPS_PARAM_PBKDF2_LOWER_BOUND_CHECK "pbkdf2-lower-bound-check"
+
+/*
+ * A boolean that determines if the runtime cofactor check for ECDH is
+ * performed.
+ * This is disabled by default.
+ * Type: OSSL_PARAM_UTF8_STRING
+ */
+# define OSSL_PROV_FIPS_PARAM_ECDH_COFACTOR_CHECK "ecdh-cofactor-check"
 
 # ifdef __cplusplus
 }

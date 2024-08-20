@@ -9,7 +9,7 @@
 use strict;
 use warnings;
 
-use OpenSSL::Test qw/:DEFAULT srctop_file with/;
+use OpenSSL::Test qw/:DEFAULT srctop_file bldtop_dir with/;
 use OpenSSL::Test::Utils;
 
 use Encode;
@@ -54,7 +54,9 @@ if (eval { require Win32::API; 1; }) {
 }
 $ENV{OPENSSL_WIN32_UTF8}=1;
 
-plan tests => 45;
+my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
+
+plan tests => $no_fips ? 45 : 51;
 
 # Test different PKCS#12 formats
 ok(run(test(["pkcs12_format_test"])), "test pkcs12 formats");
@@ -185,7 +187,7 @@ for my $instance (sort keys %pbmac1_tests) {
                 "-inkey", srctop_file(@path, "cert-key-cert.pem"),
                 "-in", srctop_file(@path, "cert-key-cert.pem"),
                 "-passout", "pass:1234",
-		@$extra_args,
+                @$extra_args,
                 "-out", "$pbmac1_id.p12"], stderr => "${pbmac1_id}_err.txt")),
         "test_export_pkcs12_${pbmac1_id}");
         open DATA, "${pbmac1_id}_err.txt";
@@ -209,6 +211,28 @@ for my $file ("pbmac1_256_256.good.p12", "pbmac1_512_256.good.p12", "pbmac1_512_
     my $path = srctop_file("test", "recipes", "80-test_pkcs12_data", $file);
     ok(run(app(["openssl", "pkcs12", "-in", $path, "-password", "pass:1234", "-noenc"])),
       "test pbmac1 pkcs12 file $file");
+}
+
+
+unless ($no_fips) {
+    my $provpath = bldtop_dir("providers");
+    my $provconf = srctop_file("test", "fips-and-base.cnf");
+    my $provname = 'fips';
+    my @prov = ("-provider-path", $provpath,
+                "-provider", $provname);
+    local $ENV{OPENSSL_CONF} = $provconf;
+
+# Test pbmac1 pkcs12 good files, RFC 9579
+    for my $file ("pbmac1_256_256.good.p12", "pbmac1_512_256.good.p12", "pbmac1_512_512.good.p12")
+    {
+        my $path = srctop_file("test", "recipes", "80-test_pkcs12_data", $file);
+        ok(run(app(["openssl", "pkcs12", @prov, "-in", $path, "-password", "pass:1234", "-noenc"])),
+           "test pbmac1 pkcs12 file $file");
+
+        ok(run(app(["openssl", "pkcs12", @prov, "-in", $path, "-info", "-noout",
+                    "-passin", "pass:1234"], stderr => "${file}_info.txt")),
+           "test_export_pkcs12_${file}_info");
+    }
 }
 
 # Test pbmac1 pkcs12 bad files, RFC 9579

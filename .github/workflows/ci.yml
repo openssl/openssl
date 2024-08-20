@@ -81,6 +81,9 @@ jobs:
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: localegen
       run: sudo locale-gen tr_TR.UTF-8
+    - name: fipsvendor
+      # Make one fips build use a customized FIPS vendor
+      run: echo "FIPS_VENDOR=CI" >> VERSION.dat
     - name: config
       # enable-quic is on by default, but we leave it here to check we're testing the explicit enable somewhere
       run: CC=gcc ./config --banner=Configured enable-demos enable-h3demo enable-fips enable-quic --strict-warnings && perl configdata.pm --dump
@@ -92,6 +95,9 @@ jobs:
         ./util/opensslwrap.sh version -c
     - name: make test
       run: .github/workflows/make-test
+    - name: check fipsvendor
+      run: |
+        util/wrap.pl -fips apps/openssl list -providers | grep 'name: CI FIPS Provider for OpenSSL$'
     - name: save artifacts
       uses: actions/upload-artifact@v3
       with:

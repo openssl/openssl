@@ -255,18 +255,10 @@ Input = ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a
 Output = dc2a4459e7369633a52b1bf277839a00201009a3efbf3ecb69bea2186c26b58909351fc9ac90b3ecfdfbc7c66431e0303dca179c138ac17ad9bef1177331a704
 
 # Verify test
-FIPSversion = <3.4.0
 OneShotDigestVerify = NULL
 Key = ED25519-1-PUBLIC
 Input = ""
 Output = e5564300c360ac729086e2cc806e828a84877f1eb8e5d974d873e065224901555fb8821590a33bacc61e39701cf9b46bd25bf5f0595bbe24655141438e7a100b
-
-FIPSversion = >=3.4.0
-Availablein = fips
-OneShotDigestVerify = NULL
-Key = ED25519-1-PUBLIC
-Input = ""
-Result = VERIFY_ERROR
 
 # Corrupted input
 OneShotDigestVerify = NULL
@@ -308,18 +300,10 @@ Key = ED25519-1-Raw
 Input = ""
 Output = e5564300c360ac729086e2cc806e828a84877f1eb8e5d974d873e065224901555fb8821590a33bacc61e39701cf9b46bd25bf5f0595bbe24655141438e7a100b
 
-FIPSversion = <3.4.0
 OneShotDigestVerify = NULL
 Key = ED25519-1-PUBLIC-Raw
 Input = ""
 Output = e5564300c360ac729086e2cc806e828a84877f1eb8e5d974d873e065224901555fb8821590a33bacc61e39701cf9b46bd25bf5f0595bbe24655141438e7a100b
-
-FIPSversion = >=3.4.0
-Availablein = fips
-OneShotDigestVerify = NULL
-Key = ED25519-1-PUBLIC-Raw
-Input = ""
-Result = VERIFY_ERROR
 
 #Signature maleability test.
 #Same as the verify operation above but with the order added to s
@@ -491,18 +475,10 @@ Input = 6ddf802e1aae4986935f7f981ba3f0351d6273c0a0c22c9c0e8339168e675412a3debfaf
 Output = e301345a41a39a4d72fff8df69c98075a0cc082b802fc9b2b6bc503f926b65bddf7f4c8f1cb49f6396afc8a70abe6d8aef0db478d4c6b2970076c6a0484fe76d76b3a97625d79f1ce240e7c576750d295528286f719b413de9ada3e8eb78ed573603ce30d8bb761785dc30dbc320869e1a00
 
 # Verify test
-FIPSversion = <3.4.0
 OneShotDigestVerify = NULL
 Key = ED448-1-PUBLIC
 Input = ""
 Output = 533a37f6bbe457251f023c0d88f976ae2dfb504a843e34d2074fd823d41a591f2b233f034f628281f2fd7a22ddd47d7828c59bd0a21bfd3980ff0d2028d4b18a9df63e006c5d1c2d345b925d8dc00b4104852db99ac5c7cdda8530a113a0f4dbb61149f05a7363268c71d95808ff2e652600
-
-FIPSversion = >=3.4.0
-Availablein = fips
-OneShotDigestVerify = NULL
-Key = ED448-1-PUBLIC
-Input = ""
-Result = VERIFY_ERROR
 
 # Corrupted input
 OneShotDigestVerify = NULL
@@ -540,17 +516,10 @@ Key = ED448-1-Raw
 Input = ""
 Output = 533a37f6bbe457251f023c0d88f976ae2dfb504a843e34d2074fd823d41a591f2b233f034f628281f2fd7a22ddd47d7828c59bd0a21bfd3980ff0d2028d4b18a9df63e006c5d1c2d345b925d8dc00b4104852db99ac5c7cdda8530a113a0f4dbb61149f05a7363268c71d95808ff2e652600
 
-FIPSversion = <3.4.0
 OneShotDigestVerify = NULL
 Key = ED448-1-PUBLIC-Raw
 Input = ""
 Output = 533a37f6bbe457251f023c0d88f976ae2dfb504a843e34d2074fd823d41a591f2b233f034f628281f2fd7a22ddd47d7828c59bd0a21bfd3980ff0d2028d4b18a9df63e006c5d1c2d345b925d8dc00b4104852db99ac5c7cdda8530a113a0f4dbb61149f05a7363268c71d95808ff2e652600
-
-FIPSversion = >=3.4.0
-OneShotDigestVerify = NULL
-Key = ED448-1-PUBLIC-Raw
-Input = ""
-Result = VERIFY_ERROR
 
 #Signature malelability test.
 #Same as the verify operation above but with the order added to s
@@ -950,23 +919,3 @@ Input = 616263
 Ctrl = instance:Ed448ph
 Ctrl = hexcontext-string:666f6f
 Output = c32299d46ec8ff02b54540982814dce9a05812f81962b649d528095916a2aa481065b1580423ef927ecf0af5888f90da0f6a9a85ad5dc3f280d91224ba9911a3653d00e484e2ce232521481c8658df304bb7745a73514cdb9bf3e15784ab71284f8d0704a608c54a6b62d97beb511d132100
-
-Title = FIPS indicator tests
-
-FIPSversion = >=3.4.0
-Availablein = fips
-OneShotDigestVerify = NULL
-Key = ED25519-1-PUBLIC
-Input = ""
-Unapproved = 1
-Ctrl = verify-digested:0
-Output = e5564300c360ac729086e2cc806e828a84877f1eb8e5d974d873e065224901555fb8821590a33bacc61e39701cf9b46bd25bf5f0595bbe24655141438e7a100b
-
-FIPSversion = >=3.4.0
-Availablein = fips
-OneShotDigestVerify = NULL
-Key = ED448-1-PUBLIC
-Input = ""
-Unapproved = 1
-Ctrl = verify-digested:0
-Output = 533a37f6bbe457251f023c0d88f976ae2dfb504a843e34d2074fd823d41a591f2b233f034f628281f2fd7a22ddd47d7828c59bd0a21bfd3980ff0d2028d4b18a9df63e006c5d1c2d345b925d8dc00b4104852db99ac5c7cdda8530a113a0f4dbb61149f05a7363268c71d95808ff2e652600

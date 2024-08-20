@@ -259,10 +259,13 @@ int ecdh_set_ctx_params(void *vpecdhctx, const OSSL_PARAM params[])
 
     if (!OSSL_FIPS_IND_SET_CTX_PARAM(pectx, OSSL_FIPS_IND_SETTABLE0, params,
                                      OSSL_EXCHANGE_PARAM_FIPS_KEY_CHECK))
-        return  0;
+        return 0;
     if (!OSSL_FIPS_IND_SET_CTX_PARAM(pectx, OSSL_FIPS_IND_SETTABLE1, params,
                                      OSSL_EXCHANGE_PARAM_FIPS_DIGEST_CHECK))
-        return  0;
+        return 0;
+    if (!OSSL_FIPS_IND_SET_CTX_PARAM(pectx, OSSL_FIPS_IND_SETTABLE2, params,
+                                     OSSL_EXCHANGE_PARAM_FIPS_ECDH_COFACTOR_CHECK))
+        return 0;
 
     p = OSSL_PARAM_locate_const(params, OSSL_EXCHANGE_PARAM_EC_ECDH_COFACTOR_MODE);
     if (p != NULL) {
@@ -312,6 +315,11 @@ int ecdh_set_ctx_params(void *vpecdhctx, const OSSL_PARAM params[])
         pectx->kdf_md = EVP_MD_fetch(pectx->libctx, name, mdprops);
         if (pectx->kdf_md == NULL)
             return 0;
+        /* XOF digests are not allowed */
+        if ((EVP_MD_get_flags(pectx->kdf_md) & EVP_MD_FLAG_XOF) != 0) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_XOF_DIGESTS_NOT_ALLOWED);
+            return 0;
+        }
 #ifdef FIPS_MODULE
         if (!ossl_fips_ind_digest_check(OSSL_FIPS_IND_GET(pectx),
                                         OSSL_FIPS_IND_SETTABLE1, pectx->libctx,
@@ -356,6 +364,7 @@ static const OSSL_PARAM known_settable_ctx_params[] = {
     OSSL_PARAM_octet_string(OSSL_EXCHANGE_PARAM_KDF_UKM, NULL, 0),
     OSSL_FIPS_IND_SETTABLE_CTX_PARAM(OSSL_EXCHANGE_PARAM_FIPS_KEY_CHECK)
     OSSL_FIPS_IND_SETTABLE_CTX_PARAM(OSSL_EXCHANGE_PARAM_FIPS_DIGEST_CHECK)
+    OSSL_FIPS_IND_SETTABLE_CTX_PARAM(OSSL_EXCHANGE_PARAM_FIPS_ECDH_COFACTOR_CHECK)
     OSSL_PARAM_END
 };
 
@@ -473,6 +482,10 @@ int ecdh_plain_derive(void *vpecdhctx, unsigned char *secret,
     const EC_GROUP *group;
     const BIGNUM *cofactor;
     int key_cofactor_mode;
+    int has_cofactor;
+#ifdef FIPS_MODULE
+    int cofactor_approved = 0;
+#endif
 
     if (pecdhctx->k == NULL || pecdhctx->peerk == NULL) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_KEY);
@@ -488,6 +501,8 @@ int ecdh_plain_derive(void *vpecdhctx, unsigned char *secret,
     if ((group = EC_KEY_get0_group(pecdhctx->k)) == NULL
             || (cofactor = EC_GROUP_get0_cofactor(group)) == NULL)
         return 0;
+
+    has_cofactor = !BN_is_one(cofactor);
 
     /*
      * NB: unlike PKCS#3 DH, if outlen is less than maximum size this is not
@@ -511,17 +526,36 @@ int ecdh_plain_derive(void *vpecdhctx, unsigned char *secret,
         (EC_KEY_get_flags(pecdhctx->k) & EC_FLAG_COFACTOR_ECDH) ? 1 : 0;
     if (pecdhctx->cofactor_mode != -1
             && pecdhctx->cofactor_mode != key_cofactor_mode
-            && !BN_is_one(cofactor)) {
+            && has_cofactor) {
         if ((privk = EC_KEY_dup(pecdhctx->k)) == NULL)
             return 0;
 
-        if (pecdhctx->cofactor_mode == 1)
+        if (pecdhctx->cofactor_mode == 1) {
             EC_KEY_set_flags(privk, EC_FLAG_COFACTOR_ECDH);
-        else
+#ifdef FIPS_MODULE
+            cofactor_approved = 1;
+#endif
+        } else {
             EC_KEY_clear_flags(privk, EC_FLAG_COFACTOR_ECDH);
+        }
     } else {
         privk = pecdhctx->k;
     }
+
+#ifdef FIPS_MODULE
+    /*
+     * SP800-56A r3 Section 5.7.1.2 requires ECC Cofactor DH to be used.
+     * This applies to the 'B' and 'K' curves that have cofactors that are not 1.
+     */
+    if (has_cofactor && !cofactor_approved) {
+        if (!OSSL_FIPS_IND_ON_UNAPPROVED(pecdhctx, OSSL_FIPS_IND_SETTABLE2,
+                                         pecdhctx->libctx, "ECDH", "Cofactor",
+                                         FIPS_ecdh_cofactor_check)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_COFACTOR_REQUIRED);
+            return 0;
+        }
+    }
+#endif
 
     ppubkey = EC_KEY_get0_public_key(pecdhctx->peerk);
 

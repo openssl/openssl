@@ -23,8 +23,8 @@ B<openssl fipsinstall>
 [B<-no_conditional_errors>]
 [B<-no_security_checks>]
 [B<-ems_check>]
-[B<-eddsa_no_verify_digested>]
 [B<-no_drbg_truncated_digests>]
+[B<-signature_digest_check>]
 [B<-hkdf_digest_check>]
 [B<-tls13_kdf_digest_check>]
 [B<-tls1_prf_digest_check>]
@@ -36,6 +36,7 @@ B<openssl fipsinstall>
 [B<-no_short_mac>]
 [B<-tdes_encrypt_disabled>]
 [B<-rsa_pkcs15_padding_disabled>]
+[B<-rsa_pss_saltlen_check>]
 [B<-rsa_sign_x931_disabled>]
 [B<-hkdf_key_check>]
 [B<-kbkdf_key_check>]
@@ -44,6 +45,7 @@ B<openssl fipsinstall>
 [B<-sshkdf_key_check>]
 [B<-sskdf_key_check>]
 [B<-x963kdf_key_check>]
+[B<-ecdh_cofactor_check>]
 [B<-self_test_onload>]
 [B<-self_test_oninstall>]
 [B<-corrupt_desc> I<selftest_description>]
@@ -205,12 +207,6 @@ Configure the module to enable a run-time Extended Master Secret (EMS) check
 when using the TLS1_PRF KDF algorithm. This check is disabled by default.
 See RFC 7627 for information related to EMS.
 
-=item B<-eddsa_no_verify_digested>
-
-Configure the module to not allow EdDSA to verify from a message digest
-directly.  Instead, EdDSA will digest the message itself.
-This check is disabled by default.
-
 =item B<-no_short_mac>
 
 Configure the module to not allow short MAC outputs.
@@ -220,6 +216,11 @@ See SP 800-185 8.4.2 and FIPS 140-3 ID C.D for details.
 
 Configure the module to not allow truncated digests to be used with Hash and
 HMAC DRBGs.  See FIPS 140-3 IG D.R for details.
+
+=item B<-signature_digest_check>
+
+Configure the module to enforce signature algorithms to use digests that are
+explicitly permitted by the various standards.
 
 =item B<-hkdf_digest_check>
 
@@ -274,6 +275,12 @@ Configure the module to not allow PKCS#1 version 1.5 padding to be used with
 RSA for key transport and key agreement.  See NIST's SP 800-131A Revision 2
 for details.
 
+=item B<-rsa_pss_saltlen_check>
+
+Configure the module to enable a run-time salt length check when generating or
+verifying a RSA-PSS signature.
+See FIPS 186-5 5.4 (g) for details.
+
 =item B<-rsa_sign_x931_disabled>
 
 Configure the module to not allow X9.31 padding to be used when signing with
@@ -325,6 +332,12 @@ See NIST SP 800-131Ar2 for details.
 
 Configure the module to not perform run-time lower bound check for PBKDF2.
 See NIST SP 800-132 for details.
+
+=item B<-ecdh_cofactor_check>
+
+Configure the module to enable a run-time check that ECDH uses the EC curves
+cofactor value when deriving a key. This only affects the 'B' and 'K' curves.
+See SP 800-56A r3 Section 5.7.1.2 for details.
 
 =item B<-self_test_onload>
 
