@@ -479,11 +479,12 @@ approved algorithms. An algorithm is approved if it passes all required checks
 such as minimum key size. By default an error will occur if any check fails.
 For backwards compatability individual algorithms may override the checks by
 using either an option in the FIPS configuration (See
-L<fips_config(5)/FIPS indicator options>) OR in code using an algorithm context setter.
-Overriding the check means that the algorithm is not FIPS compliant.
+L<fips_config(5)/FIPS indicator options>) OR in code using an algorithm context
+setter. Overriding the check means that the algorithm is not FIPS compliant.
 L<OSSL_INDICATOR_set_callback(3)> can be called to register a callback to log
 unapproved algorithms. At the end of any algorithm operation the approved status
-can be queried using an algorithm context getter to retrieve the "fips-indicator".
+can be queried using an algorithm context getter to retrieve the indicator
+(e.g. "fips-indicator").
 An example of an algorithm context setter is "key-check"
 in L<EVP_KDF-HKDF(7)/Supported parameters>.
 
@@ -494,13 +495,21 @@ is approved:
 
 =item DSA Key generation
 
+DSA Key generation is no longer approved.
 See L<EVP_PKEY-DSA(7)/DSA parameters>
 
-=item DSA Signatures L<EVP_SIGNATURE-DSA(7)/Signature Parameters>
+=item DSA Signatures
 
-=item ECDSA Signatures L<EVP_SIGNATURE-ECDSA(7)/ECDSA Signature Parameters>
+DSA Signature generation is no longer approved.
+See L<EVP_SIGNATURE-DSA(7)/Signature Parameters>
 
-=item EC Key Generation L<EVP_PKEY-EC(7)/Common EC parameters>
+=item ECDSA Signatures
+
+See L<EVP_SIGNATURE-ECDSA(7)/ECDSA Signature Parameters>
+
+=item EC Key Generation
+
+See L<EVP_PKEY-EC(7)/Common EC parameters>
 
 =item RSA Encryption
 
@@ -518,6 +527,7 @@ EVP_RAND-HMAC-DRBG(7)/Supported parameters>
 
 =item DES
 
+Triple-DES is not longer approved for encryption.
 See L<EVP_CIPHER-DES(7)/Parameters>
 
 =item DH
@@ -537,16 +547,38 @@ See relevant KDF documentation e.g. L<EVP_KDF-HKDF(7)/Supported parameters>
 See L<EVP_MAC-CMAC(7)/Supported parameters> and
 L<EVP_MAC-KMAC(7)/Supported parameters>
 
+=back
+
+The following FIPS non-FIPS validated (unapproved) algorithms use the
+"fips-indicator".
+
+=over 4
+
 =item RAND-TEST-RAND
 
-This is an unapproved algorithm.
 See L<EVP_RAND-TEST-RAND(7)/Supported parameters>
+
+=item X25519 and X448
 
 =back
 
-AES-GCM also has a indicator called "iv-generated".
-See L<EVP_EncryptInit(3)/PARAMETERS)> for further information. This indicator
-does not trigger the indicator callback.
+The non-FIPS validated algorithms have a property query value of "fips=no".
+
+The following algorithms use a unique indicator and do not trigger the
+indicator callback.
+
+=over 4
+
+=item AES-GCM ciphers support the indicator "iv-generated"
+
+See L<EVP_EncryptInit(3)/PARAMETERS> for further information.
+
+=item ECDSA and RSA Signatures support the indicator "verify-message".
+
+See L<EVP_SIGNATURE-ECDSA(7)/ECDSA Signature Parameters> and
+L<EVP_SIGNATURE-RSA(7)/Signature Parameters> /for further information.
+
+=back
 
 =head1 NOTES
 
@@ -561,19 +593,9 @@ validated versions alongside F<libcrypto> and F<libssl> compiled from any
 release within the same major release series.  This flexibility enables
 you to address bug fixes and CVEs that fall outside the FIPS boundary.
 
-The FIPS provider in OpenSSL 3.1 includes some non-FIPS validated algorithms,
-consequently the property query C<fips=yes> is mandatory for applications that
-want to operate in a FIPS approved manner.  The algorithms are:
-
-=over 4
-
-=item Triple DES ECB
-
-=item Triple DES CBC
-
-=item EdDSA
-
-=back
+As the FIPS provider still supports non-FIPS validated algorithms,
+The property query C<fips=yes> is mandatory for applications that
+want to operate in a FIPS approved manner.
 
 =head1 SEE ALSO
 
@@ -584,10 +606,11 @@ L<https://www.openssl.org/source/>
 
 The FIPS module guide was created for use with the new FIPS provider
 in OpenSSL 3.0.
+FIPS indicators were added in OpenSSL 3.4.
 
 =head1 COPYRIGHT
 
-Copyright 2021-2023 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2021-2024 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
