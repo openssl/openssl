@@ -159,6 +159,7 @@ int ossl_namemap_name2num(const OSSL_NAMEMAP *namemap, const char *name)
     val = ossl_ht_get(namemap->namenum_ht, TO_HT_KEY(&key));
 
     if (val != NULL)
+        /* We store a (small) int directly instead of a pointer to it. */
         number = (int)(intptr_t)val->value;
 
     return number;
