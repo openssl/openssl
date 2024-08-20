@@ -112,6 +112,7 @@ static SSL_SESSION *psksess = NULL;
 static void print_stuff(BIO *berr, SSL *con, int full);
 #ifndef OPENSSL_NO_OCSP
 static int ocsp_resp_cb(SSL *s, void *arg);
+static void print_ocsp_response(BIO *bp, OCSP_RESPONSE *rsp);
 #endif
 static int ldap_ExtendedResponse_parse(const char *buf, long rem);
 static int is_dNS_name(const char *host);
@@ -481,8 +482,10 @@ typedef enum OPTION_choice {
     OPT_CERTFORM, OPT_CRLFORM, OPT_VERIFY_RET_ERROR, OPT_VERIFY_QUIET,
     OPT_BRIEF, OPT_PREXIT, OPT_NO_INTERACTIVE, OPT_CRLF, OPT_QUIET, OPT_NBIO,
     OPT_SSL_CLIENT_ENGINE, OPT_IGN_EOF, OPT_NO_IGN_EOF,
-    OPT_DEBUG, OPT_TLSEXTDEBUG, OPT_STATUS, OPT_STATUS_OCSP_CHECK_LEAF,
-    OPT_STATUS_OCSP_CHECK_ALL, OPT_WDEBUG,
+    OPT_DEBUG, OPT_TLSEXTDEBUG, OPT_WDEBUG,
+#ifndef OPENSSL_NO_OCSP
+    OPT_STATUS, OPT_STATUS_OCSP_CHECK_LEAF, OPT_STATUS_OCSP_CHECK_ALL,
+#endif
     OPT_MSG, OPT_MSGFILE, OPT_ENGINE, OPT_TRACE, OPT_SECURITY_DEBUG,
     OPT_SECURITY_DEBUG_VERBOSE, OPT_SHOWCERTS, OPT_NBIO_TEST, OPT_STATE,
     OPT_PSK_IDENTITY, OPT_PSK, OPT_PSK_SESS,
@@ -627,12 +630,12 @@ const OPTIONS s_client_options[] = {
 #ifndef OPENSSL_NO_OCSP
     OPT_SECTION("OCSP stapling"),
     {"status", OPT_STATUS, '-',
-    "Sends a certificate status request to the server (OCSP stapling). " \
-    "The server response (if any) is only printed out."},
+     "Sends a certificate status request to the server (OCSP stapling) " \
+     "The server response (if any) is only printed out."},
     {"ocsp_check_leaf", OPT_STATUS_OCSP_CHECK_LEAF, '-',
-     "Leaf certificate status checking with response from OCSP stapling"},
+     "Require checking leaf certificate status, attempting to use OCSP stapling first"},
     {"ocsp_check_all", OPT_STATUS_OCSP_CHECK_ALL, '-',
-     "Full chain status checking with responses from OCSP stapling"},
+     "Require checking status of full chain, attempting to use OCSP stapling first"},
 #endif
 
     OPT_SECTION("Debug"),
@@ -1202,27 +1205,23 @@ int s_client_main(int argc, char **argv)
         case OPT_TLSEXTDEBUG:
             c_tlsextdebug = 1;
             break;
-        case OPT_STATUS:
 #ifndef OPENSSL_NO_OCSP
+        case OPT_STATUS:
             c_status_req = 1;
-#endif
             break;
         case OPT_STATUS_OCSP_CHECK_LEAF:
-#ifndef OPENSSL_NO_OCSP
             c_status_req = 1;
             X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_OCSP_RESP_CHECK);
             vpmtouched++;
-#endif
             break;
         case OPT_STATUS_OCSP_CHECK_ALL:
-#ifndef OPENSSL_NO_OCSP
             c_status_req = 1;
             X509_VERIFY_PARAM_set_flags(vpm,
                                         X509_V_FLAG_OCSP_RESP_CHECK |
                                         X509_V_FLAG_OCSP_RESP_CHECK_ALL);
             vpmtouched++;
-#endif
             break;
+#endif
         case OPT_WDEBUG:
 #ifdef WATT32
             dbug_init();
@@ -3645,50 +3644,53 @@ static int ocsp_resp_cb(SSL *s, void *arg)
     STACK_OF(OCSP_RESPONSE) *sk_resp = NULL;
     OCSP_RESPONSE *rsp;
 
-    if (SSL_version(s) == TLS1_3_VERSION) {
-        SSL_get_tlsext_status_ocsp_resp_ex(s, &sk_resp);
+    if (SSL_version(s) >= TLS1_3_VERSION) {
+        SSL_get0_tlsext_status_ocsp_resp_ex(s, &sk_resp);
 
-        BIO_puts(arg, "OCSP response: ");
+        BIO_puts(arg, "OCSP responses: ");
 
         if (sk_resp == NULL) {
-            BIO_puts(arg, "no response sent\n");
+            BIO_puts(arg, "no responses sent\n");
             return 1;
         }
 
         num = sk_OCSP_RESPONSE_num(sk_resp);
 
         BIO_printf(arg, "number of responses: %d", num);
-        for (i = 0; i < num; i++) {
-            rsp = sk_OCSP_RESPONSE_value(sk_resp, i);
-            if (rsp == NULL) {
-                BIO_puts(arg, "response parse error\n");
-                return 0;
-            }
-            BIO_puts(arg, "\n-----BEGIN OCSP RESPONSE-----\n");
-            OCSP_RESPONSE_print(arg, rsp, 0);
-            BIO_puts(arg, "-----END  OCSP RESPONSE-----\n");
-        }
+        for (i = 0; i < num; i++)
+            print_ocsp_response(arg, sk_OCSP_RESPONSE_value(sk_resp, i));
     } else {
         const unsigned char *p;
-        int len;
-        len = SSL_get_tlsext_status_ocsp_resp(s, &p);
+        int len = SSL_get_tlsext_status_ocsp_resp(s, &p);
+
         BIO_puts(arg, "OCSP response: ");
         if (p == NULL) {
-            BIO_puts(arg, "no response sent\n");
+            BIO_puts(arg, "no OCSP response received\n");
             return 1;
         }
         rsp = d2i_OCSP_RESPONSE(NULL, &p, len);
         if (rsp == NULL) {
-            BIO_puts(arg, "response parse error\n");
+            BIO_puts(arg, "OCSP response parse error\n");
             BIO_dump_indent(arg, (char *)p, len, 4);
             return 0;
         }
-        BIO_puts(arg, "\n-----BEGIN OCSP RESPONSE-----\n");
-        OCSP_RESPONSE_print(arg, rsp, 0);
-        BIO_puts(arg, "-----END  OCSP RESPONSE-----\n");
+        print_ocsp_response(arg, rsp);
+        OCSP_RESPONSE_free(rsp);
     }
 
     return 1;
+}
+
+static void print_ocsp_response(BIO *bp, OCSP_RESPONSE *rsp)
+{
+    if (rsp == NULL) {
+        BIO_puts(bp, "no OCSP response to print\n");
+        return;
+    }
+
+    BIO_puts(bp, "\n======================================\n");
+    OCSP_RESPONSE_print(bp, rsp, 0);
+    BIO_puts(bp, "\n======================================\n");
 }
 # endif
 
