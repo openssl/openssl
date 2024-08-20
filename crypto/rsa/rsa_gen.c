@@ -661,7 +661,7 @@ static int rsa_keygen(OSSL_LIB_CTX *libctx, RSA *rsa, int bits, int primes,
  *    in the applicable standards. For RSA-based schemes, this is defined in
  *    SP 800-56Br2 (Section 6.4.1.1) as:
  *    "The owner shall perform a pair-wise consistency test by verifying that m
- *    = (m^e)^d mod n for some integer m satisfying 1 < m < (n − 1)."
+ *    = (m^e)^d mod n for some integer m satisfying 1 < m < (n - 1)."
  *
  * OpenSSL implements all three use cases: RSA-OAEP for key transport,
  * RSA signatures with PKCS#1 v1.5 or PSS padding, and KAS-IFC-SSC (KAS1/KAS2)
@@ -671,7 +671,7 @@ static int rsa_keygen(OSSL_LIB_CTX *libctx, RSA *rsa, int bits, int primes,
  * the keys' intended usage is not known, then any of the three PCTs described
  * in AS10.35 shall be performed on this key pair.
  *
- * Because of this allowance from the IG,  the simplest option is 3, i.e.
+ * Because of this allowance from the IG, the simplest option is 3, i.e.
  * RSA_public_encrypt() and RSA_private_decrypt() with RSA_NO_PADDING.
  */
 static int rsa_keygen_pairwise_test(RSA *rsa, OSSL_CALLBACK *cb, void *cbarg)
