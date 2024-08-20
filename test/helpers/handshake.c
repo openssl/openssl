@@ -296,9 +296,8 @@ static int server_ocsp_cb_ext(SSL *s, void *arg)
      * For the purposes of testing we just send back a dummy OCSP response
      */
     sk_resp = (STACK_OF(OCSP_RESPONSE) *)arg;
-    if (!SSL_set_tlsext_status_ocsp_resp_ex(s, sk_resp)) {
+    if (!SSL_set0_tlsext_status_ocsp_resp_ex(s, sk_resp))
         return SSL_TLSEXT_ERR_ALERT_FATAL;
-    }
 
     return SSL_TLSEXT_ERR_OK;
 }
@@ -330,7 +329,7 @@ static int client_ocsp_cb_ext(SSL *s, void *arg)
     STACK_OF(OCSP_RESPONSE) *sk_resp = NULL;
     OCSP_RESPONSE *rsp;
 
-    SSL_get_tlsext_status_ocsp_resp_ex(s, &sk_resp);
+    SSL_get0_tlsext_status_ocsp_resp_ex(s, &sk_resp);
 
     if (sk_resp == NULL) {
         BIO_puts(arg, "no response sent\n");
@@ -339,19 +338,17 @@ static int client_ocsp_cb_ext(SSL *s, void *arg)
 
     len = sk_OCSP_RESPONSE_num(sk_resp);
 
-    if (len != 1) {
+    if (len != 1)
         return 0;
-    }
 
     rsp = sk_OCSP_RESPONSE_value(sk_resp, 0);
 
     i = OCSP_response_status(rsp);
 
-    SSL_set_tlsext_status_ocsp_resp_ex(s, NULL);
+    SSL_set0_tlsext_status_ocsp_resp_ex(s, NULL);
 
-    if (i != OCSP_RESPONSE_STATUS_SUCCESSFUL) {
+    if (i != OCSP_RESPONSE_STATUS_SUCCESSFUL)
         return 0;
-    }
 
     return 1;
 }
@@ -560,7 +557,6 @@ static int configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
 {
     unsigned char *ticket_keys;
     size_t ticket_key_len;
-
 #ifndef OPENSSL_NO_OCSP
     STACK_OF(OCSP_RESPONSE) *sk_resp = NULL;
 #endif
@@ -659,9 +655,8 @@ static int configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
 
         case SSL_TEST_CERT_STATUS_GOOD_RESPONSE_EXT:
 
-            dummy_ocsp_resp = OCSP_response_create(OCSP_RESPONSE_STATUS_SUCCESSFUL, NULL);
-
             sk_resp = sk_OCSP_RESPONSE_new_null();
+            dummy_ocsp_resp = OCSP_response_create(OCSP_RESPONSE_STATUS_SUCCESSFUL, NULL);
             sk_OCSP_RESPONSE_push(sk_resp, dummy_ocsp_resp);
 
             SSL_CTX_set_tlsext_status_cb(client_ctx, client_ocsp_cb_ext);
@@ -672,9 +667,8 @@ static int configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
 
         case SSL_TEST_CERT_STATUS_BAD_RESPONSE_EXT:
 
-            dummy_ocsp_resp = OCSP_response_create(OCSP_RESPONSE_STATUS_INTERNALERROR, NULL);
-
             sk_resp = sk_OCSP_RESPONSE_new_null();
+            dummy_ocsp_resp = OCSP_response_create(OCSP_RESPONSE_STATUS_INTERNALERROR, NULL);
             sk_OCSP_RESPONSE_push(sk_resp, dummy_ocsp_resp);
 
             SSL_CTX_set_tlsext_status_cb(client_ctx, client_ocsp_cb_ext);
