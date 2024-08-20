@@ -1117,7 +1117,9 @@ B<-no_tx_cert_comp>,
 and B<-tfo>
 options were added in OpenSSL 3.2.
 
-The B<-ocsp_check_leaf> and B<-ocsp_check_all>
+The
+<-ocsp_check_leaf>
+and B<-ocsp_check_all>
 options were added in OpenSSL 3.4.
 
 =head1 COPYRIGHT

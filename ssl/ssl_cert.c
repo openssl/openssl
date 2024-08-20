@@ -469,9 +469,8 @@ static int ssl_verify_internal(SSL_CONNECTION *s, STACK_OF(X509) *sk, EVP_PKEY *
     /* Set suite B flags if needed */
     X509_STORE_CTX_set_flags(ctx, tls1_suiteb(s));
     if (!X509_STORE_CTX_set_ex_data(ctx,
-                                    SSL_get_ex_data_X509_STORE_CTX_idx(), s)) {
+                                    SSL_get_ex_data_X509_STORE_CTX_idx(), s))
         goto end;
-    }
 
     /* Verify via DANE if enabled */
     if (DANETLS_ENABLED(&s->dane))
@@ -489,9 +488,8 @@ static int ssl_verify_internal(SSL_CONNECTION *s, STACK_OF(X509) *sk, EVP_PKEY *
         SSL *ssl = SSL_CONNECTION_GET_SSL(s);
         int status = SSL_get_tlsext_status_type(ssl);
 
-        if (status == TLSEXT_STATUSTYPE_ocsp) {
-            X509_STORE_CTX_set_ocsp_resp(ctx, s->ext.ocsp.resp_ex);
-        }
+        if (status == TLSEXT_STATUSTYPE_ocsp)
+            X509_STORE_CTX_set0_ocsp_resp(ctx, s->ext.ocsp.resp_ex);
     }
 #endif
 
