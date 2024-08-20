@@ -4346,11 +4346,13 @@ int tls_construct_cert_status_body(SSL_CONNECTION *s, size_t chainidx, WPACKET *
          * if chainidx = 0 the server certificate is requested
          * if chainidx > 0 an intermediate certificate is requested
          */
-        if ((int)chainidx < sk_X509_num(chain_certs)+1 && chainidx > 0) {
+        if ((int)chainidx < sk_X509_num(chain_certs)+1 && chainidx > 0)
             x = sk_X509_value(chain_certs, chainidx - 1);
-        }
 
         issuer = X509_find_by_subject(chain_certs, X509_get_issuer_name(x));
+
+        if (issuer == NULL)
+            return 0;
 
         /* search the stack for the requested OCSP response */
         cert_id = OCSP_cert_to_id(NULL, x, issuer);
@@ -4372,25 +4374,25 @@ int tls_construct_cert_status_body(SSL_CONNECTION *s, size_t chainidx, WPACKET *
             if (found > -1)
                 break;
         }
+
         if (found < 0)
             resp = NULL;
 
+        OCSP_CERTID_free(cert_id);
     } else if (chainidx == 0) {
         /*
          * if certificate chain was not built and only the response for the server
          * certificate (chainidx=0) was requested, check if the stack contains an
          * OCSP response and get the first one
          * TODO: check if the first response on the stack is indeed the one for the
-         *       server certificate
+         *       server certificate. At the moment the issuer information is missing.
          */
-        if (s->ext.ocsp.resp_ex != NULL && sk_OCSP_RESPONSE_num(s->ext.ocsp.resp_ex) > 0) {
+        if (s->ext.ocsp.resp_ex != NULL && sk_OCSP_RESPONSE_num(s->ext.ocsp.resp_ex) > 0)
             resp = sk_OCSP_RESPONSE_value(s->ext.ocsp.resp_ex, 0);
-        }
     }
 
-    if (resp != NULL) {
+    if (resp != NULL)
         resplen = i2d_OCSP_RESPONSE(resp, &respder);
-    }
 #endif
 
     if (!WPACKET_sub_memcpy_u24(pkt, respder, resplen)) {

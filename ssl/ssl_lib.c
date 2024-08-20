@@ -6337,7 +6337,7 @@ static int ct_extract_ocsp_response_scts(SSL_CONNECTION *s)
             scts = OCSP_SINGLERESP_get1_ext_d2i(single,
                                                 NID_ct_cert_scts, NULL, NULL);
             ret = ct_move_scts(&s->scts, scts,
-                                          SCT_SOURCE_OCSP_STAPLED_RESPONSE);
+                               SCT_SOURCE_OCSP_STAPLED_RESPONSE);
 
             SCT_LIST_free(scts);
             OCSP_BASICRESP_free(br);

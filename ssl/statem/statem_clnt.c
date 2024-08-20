@@ -2887,9 +2887,9 @@ int tls_process_cert_status_body(SSL_CONNECTION *s, size_t chainidx, PACKET *pkt
         s->ext.ocsp.resp_len = 0;
     }
 
-    if (s->ext.ocsp.resp_ex == NULL) {
+    if (s->ext.ocsp.resp_ex == NULL)
         s->ext.ocsp.resp_ex = sk_OCSP_RESPONSE_new_null();
-    }
+
     if (!SSL_CONNECTION_IS_TLS13(s) && type == TLSEXT_STATUSTYPE_ocsp) {
         sk_OCSP_RESPONSE_pop_free(s->ext.ocsp.resp_ex, OCSP_RESPONSE_free);
         s->ext.ocsp.resp_ex = sk_OCSP_RESPONSE_new_null();
