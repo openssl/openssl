@@ -84,6 +84,7 @@ static const X509V3_EXT_METHOD *standard_exts[] = {
     &ossl_v3_acc_priv_policies,
     &ossl_v3_indirect_issuer,
     &ossl_v3_no_assertion,
+    &ossl_v3_issued_on_behalf_of,
     &ossl_v3_single_use,
     &ossl_v3_group_ac,
     &ossl_v3_holder_name_constraints,
