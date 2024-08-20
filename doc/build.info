@@ -2783,6 +2783,10 @@ DEPEND[html/man3/SSL_set_incoming_stream_policy.html]=man3/SSL_set_incoming_stre
 GENERATE[html/man3/SSL_set_incoming_stream_policy.html]=man3/SSL_set_incoming_stream_policy.pod
 DEPEND[man/man3/SSL_set_incoming_stream_policy.3]=man3/SSL_set_incoming_stream_policy.pod
 GENERATE[man/man3/SSL_set_incoming_stream_policy.3]=man3/SSL_set_incoming_stream_policy.pod
+DEPEND[html/man3/SSL_set_quic_tls_cbs.html]=man3/SSL_set_quic_tls_cbs.pod
+GENERATE[html/man3/SSL_set_quic_tls_cbs.html]=man3/SSL_set_quic_tls_cbs.pod
+DEPEND[man/man3/SSL_set_quic_tls_cbs.3]=man3/SSL_set_quic_tls_cbs.pod
+GENERATE[man/man3/SSL_set_quic_tls_cbs.3]=man3/SSL_set_quic_tls_cbs.pod
 DEPEND[html/man3/SSL_set_retry_verify.html]=man3/SSL_set_retry_verify.pod
 GENERATE[html/man3/SSL_set_retry_verify.html]=man3/SSL_set_retry_verify.pod
 DEPEND[man/man3/SSL_set_retry_verify.3]=man3/SSL_set_retry_verify.pod
@@ -3707,6 +3711,7 @@ html/man3/SSL_set_connect_state.html \
 html/man3/SSL_set_default_stream_mode.html \
 html/man3/SSL_set_fd.html \
 html/man3/SSL_set_incoming_stream_policy.html \
+html/man3/SSL_set_quic_tls_cbs.html \
 html/man3/SSL_set_retry_verify.html \
 html/man3/SSL_set_session.html \
 html/man3/SSL_set_session_secret_cb.html \
@@ -4372,6 +4377,7 @@ man/man3/SSL_set_connect_state.3 \
 man/man3/SSL_set_default_stream_mode.3 \
 man/man3/SSL_set_fd.3 \
 man/man3/SSL_set_incoming_stream_policy.3 \
+man/man3/SSL_set_quic_tls_cbs.3 \
 man/man3/SSL_set_retry_verify.3 \
 man/man3/SSL_set_session.3 \
 man/man3/SSL_set_session_secret_cb.3 \
