@@ -712,34 +712,13 @@ static const OSSL_ALGORITHM *fips_query(void *provctx, int operation_id,
 static const OSSL_ALGORITHM *fips_query_internal(void *provctx, int operation_id,
                                                  int *no_cache)
 {
-    *no_cache = 0;
-
-    if (!ossl_prov_is_running())
-        return NULL;
-
-    switch (operation_id) {
-    case OSSL_OP_DIGEST:
-        return fips_digests;
-    case OSSL_OP_CIPHER:
-        return exported_fips_ciphers;
-    case OSSL_OP_MAC:
+    if (operation_id == OSSL_OP_MAC) {
+        *no_cache = 0;
+        if (!ossl_prov_is_running())
+            return NULL;
         return fips_macs_internal;
-    case OSSL_OP_KDF:
-        return fips_kdfs;
-    case OSSL_OP_RAND:
-        return fips_rands;
-    case OSSL_OP_KEYMGMT:
-        return fips_keymgmt;
-    case OSSL_OP_KEYEXCH:
-        return fips_keyexch;
-    case OSSL_OP_SIGNATURE:
-        return fips_signature;
-    case OSSL_OP_ASYM_CIPHER:
-        return fips_asym_cipher;
-    case OSSL_OP_KEM:
-        return fips_asym_kem;
     }
-    return NULL;
+    return fips_query(provctx, operation_id, no_cache);
 }
 
 static void fips_teardown(void *provctx)
