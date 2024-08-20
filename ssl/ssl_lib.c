@@ -6687,12 +6687,12 @@ int SSL_client_hello_get0_ext(SSL *s, unsigned int type, const unsigned char **o
     if (sc->clienthello == NULL)
         return 0;
 
-    pkt = sc->clienthello->extensions ;
+    pkt = sc->clienthello->extensions;
     while (PACKET_remaining(&pkt) > 0) {
         if (!PACKET_get_net_2(&pkt, &ext_type) ||
-            !PACKET_get_length_prefixed_2(&pkt, &ext_data)) {
+            !PACKET_get_length_prefixed_2(&pkt, &ext_data)) 
             return 0;
-        }
+        
         if (ext_type == type) {
             if (out != NULL)
                 *out = PACKET_data(&ext_data);
