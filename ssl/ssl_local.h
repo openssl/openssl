@@ -26,7 +26,6 @@
 # include <openssl/async.h>
 # include <openssl/symhacks.h>
 # include <openssl/ct.h>
-# include <openssl/ocsp.h>
 # include "internal/recordmethod.h"
 # include "internal/statem.h"
 # include "internal/packet.h"
