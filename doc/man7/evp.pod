@@ -63,7 +63,7 @@ implementation. However, new applications should not typically use this (preferr
 PBKDF2 from PCKS#5).
 
 The L<B<EVP_Encode>I<XXX>|EVP_EncodeInit(3)> and
-L<B<EVP_Decode>I<XXX>|EVP_EncodeInit(3)> functions implement base 64 encoding
+L<B<EVP_Decode>I<XXX>|EVP_EncodeInit(3)> functions implement base64 encoding
 and decoding.
 
 All the symmetric algorithms (ciphers), digests and asymmetric algorithms
