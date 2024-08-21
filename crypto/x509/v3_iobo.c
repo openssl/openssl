@@ -8,6 +8,7 @@
  */
 
 #include <openssl/x509v3.h>
+#include "ext_dat.h"
 
 static int i2r_IOBO(X509V3_EXT_METHOD *method,
                     GENERAL_NAME *gn, BIO *out,
