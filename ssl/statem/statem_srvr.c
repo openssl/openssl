@@ -1683,7 +1683,6 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
     unsigned int j;
     int i, al = SSL_AD_INTERNAL_ERROR;
     int protverr;
-    size_t loop;
     unsigned long id;
 #ifndef OPENSSL_NO_COMP
     SSL_COMP *comp = NULL;
@@ -1924,14 +1923,16 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
         OSSL_TRACE_END(TLS_CIPHER);
     }
 
-    for (loop = 0; loop < clienthello->compressions_len; loop++) {
-        if (clienthello->compressions[loop] == 0)
-            break;
-    }
-
-    if (loop >= clienthello->compressions_len) {
-        /* no compress */
+    /* At least one compression method must be preset. */
+    if (clienthello->compressions_len == 0) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_NO_COMPRESSION_SPECIFIED);
+        goto err;
+    }
+    /* Make sure at least the null compression is supported. */
+    if (memchr(clienthello->compressions, 0,
+               clienthello->compressions_len) == NULL) {
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
+                 SSL_R_REQUIRED_COMPRESSION_ALGORITHM_MISSING);
         goto err;
     }
 
