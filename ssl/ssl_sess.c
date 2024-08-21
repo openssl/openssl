@@ -67,10 +67,10 @@ void ssl_session_calculate_timeout(SSL_SESSION *ss)
 #ifndef __DJGPP__ /* time_t is unsigned on djgpp, it's signed anywhere else */
         tmax = (time_t)((uint64_t)tmax >> 1);
 #endif
-        overflow = ((uint64_t)tmax - ss->time);
+        overflow = (uint64_t)tmax - (uint64_t)ss->time;
         if (ss->timeout > (time_t)overflow) {
             ss->timeout_ovf |= 1;
-            ss->calc_timeout = ss->timeout - overflow;
+            ss->calc_timeout = ss->timeout - (time_t)overflow;
         } else {
             ss->calc_timeout = ss->time + ss->timeout;
         }
@@ -80,11 +80,11 @@ void ssl_session_calculate_timeout(SSL_SESSION *ss)
 #ifndef __DJGPP__ /* time_t is unsigned on djgp, it's signed anywhere else */
         tmax = (time_t)((uint32_t)tmax >> 1);
 #endif
-        overflow = (uint32_t)((uint32_t)tmax - ss->time);
+        overflow = (uint32_t)tmax - (uint32_t)ss->time;
 
         if (ss->timeout > (time_t)overflow) {
             ss->timeout_ovf |= 1;
-            ss->calc_timeout = ss->timeout - overflow;
+            ss->calc_timeout = ss->timeout - (time_t)overflow;
         } else {
             ss->calc_timeout = ss->time + ss->timeout;
         }
