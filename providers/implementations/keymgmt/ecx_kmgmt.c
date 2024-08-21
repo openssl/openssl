@@ -24,6 +24,8 @@
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
 #include "prov/ecx.h"
+#include "prov/fipsindicator.h"
+#include "prov/fipscommon.h"
 #ifdef S390X_EC_ASM
 # include "s390x_arch.h"
 # include <openssl/sha.h>   /* For SHA512_DIGEST_LENGTH */
@@ -303,6 +305,16 @@ static int ecx_get_params(void *key, OSSL_PARAM params[], int bits, int secbits,
         if (!OSSL_PARAM_set_octet_string(p, ecx->pubkey, ecx->keylen))
             return 0;
     }
+#ifdef FIPS_MODULE
+    {
+        /* X25519 and X448 are not approved */
+        int approved = 0;
+
+        p = OSSL_PARAM_locate(params, OSSL_ALG_PARAM_FIPS_APPROVED_INDICATOR);
+        if (p != NULL && !OSSL_PARAM_set_int(p, approved))
+            return 0;
+    }
+#endif
 
     return key_to_params(ecx, NULL, params, 1);
 }
@@ -351,6 +363,7 @@ static const OSSL_PARAM ecx_gettable_params[] = {
     OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_MANDATORY_DIGEST, NULL, 0),
     OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY, NULL, 0),
     ECX_KEY_TYPES(),
+    OSSL_FIPS_IND_GETTABLE_CTX_PARAM()
     OSSL_PARAM_END
 };
 
@@ -475,7 +488,8 @@ static const OSSL_PARAM *ed448_settable_params(void *provctx)
 }
 
 static void *ecx_gen_init(void *provctx, int selection,
-                          const OSSL_PARAM params[], ECX_KEY_TYPE type)
+                          const OSSL_PARAM params[], ECX_KEY_TYPE type,
+                          const char *algdesc)
 {
     OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(provctx);
     struct ecx_gen_ctx *gctx = NULL;
@@ -487,6 +501,14 @@ static void *ecx_gen_init(void *provctx, int selection,
         gctx->libctx = libctx;
         gctx->type = type;
         gctx->selection = selection;
+#ifdef FIPS_MODULE
+        /* X25519/X448 are not FIPS approved, (ED25519/ED448 are approved) */
+        if (algdesc != NULL
+                && !ossl_FIPS_IND_callback(libctx, algdesc, "KeyGen Init")) {
+            OPENSSL_free(gctx);
+            return 0;
+        }
+#endif
     }
     if (!ecx_gen_set_params(gctx, params)) {
         OPENSSL_free(gctx);
@@ -498,25 +520,25 @@ static void *ecx_gen_init(void *provctx, int selection,
 static void *x25519_gen_init(void *provctx, int selection,
                              const OSSL_PARAM params[])
 {
-    return ecx_gen_init(provctx, selection, params, ECX_KEY_TYPE_X25519);
+    return ecx_gen_init(provctx, selection, params, ECX_KEY_TYPE_X25519, "X25519");
 }
 
 static void *x448_gen_init(void *provctx, int selection,
                            const OSSL_PARAM params[])
 {
-    return ecx_gen_init(provctx, selection, params, ECX_KEY_TYPE_X448);
+    return ecx_gen_init(provctx, selection, params, ECX_KEY_TYPE_X448, "X448");
 }
 
 static void *ed25519_gen_init(void *provctx, int selection,
                               const OSSL_PARAM params[])
 {
-    return ecx_gen_init(provctx, selection, params, ECX_KEY_TYPE_ED25519);
+    return ecx_gen_init(provctx, selection, params, ECX_KEY_TYPE_ED25519, NULL);
 }
 
 static void *ed448_gen_init(void *provctx, int selection,
                             const OSSL_PARAM params[])
 {
-    return ecx_gen_init(provctx, selection, params, ECX_KEY_TYPE_ED448);
+    return ecx_gen_init(provctx, selection, params, ECX_KEY_TYPE_ED448, NULL);
 }
 
 static int ecx_gen_set_params(void *genctx, const OSSL_PARAM params[])

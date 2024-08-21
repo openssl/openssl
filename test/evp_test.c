@@ -118,11 +118,15 @@ static int check_fips_approved(EVP_TEST *t, int approved)
      * approved should be 0 and the fips indicator callback should be triggered.
      */
     if (t->expect_unapproved) {
-        if (approved == 1 || fips_indicator_callback_unapproved_count == 0)
+        if (approved == 1 || fips_indicator_callback_unapproved_count == 0) {
+            TEST_error("Test is not expected to be FIPS approved");
             return 0;
+        }
     } else {
-        if (approved == 0 || fips_indicator_callback_unapproved_count > 0)
+        if (approved == 0 || fips_indicator_callback_unapproved_count > 0) {
+            TEST_error("Test is expected to be FIPS approved");
             return 0;
+        }
     }
     return 1;
 }
