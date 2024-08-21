@@ -12,6 +12,7 @@
 #include <crypto/x509_acert.h>
 #include <openssl/x509_acert.h>
 #include "crypto/asn1.h"
+#include "ext_dat.h"
 
 DECLARE_ASN1_ITEM(OSSL_ISSUER_SERIAL)
 
