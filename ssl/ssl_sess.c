@@ -59,7 +59,7 @@ __owur static int timeoutcmp(SSL_SESSION *a, SSL_SESSION *b)
  */
 void ssl_session_calculate_timeout(SSL_SESSION *ss)
 {
-    time_t tmax = -1;
+    time_t tmax = (time_t)-1;
 
     if (sizeof(time_t) == 8) {
         uint64_t overflow;
@@ -80,7 +80,7 @@ void ssl_session_calculate_timeout(SSL_SESSION *ss)
 #ifndef __DJGPP__ /* time_t is unsigned on djgp, it's signed anywhere else */
         tmax = (time_t)((uint32_t)tmax >> 1);
 #endif
-        overflow = ((uint32_t)tmax - ss->time);
+        overflow = (uint32_t)((uint32_t)tmax - ss->time);
 
         if (ss->timeout > (time_t)overflow) {
             ss->timeout_ovf |= 1;
