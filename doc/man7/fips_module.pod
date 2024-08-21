@@ -549,20 +549,22 @@ L<EVP_MAC-KMAC(7)/Supported parameters>
 
 =back
 
-The following FIPS non-FIPS validated (unapproved) algorithms use the
-"fips-indicator".
+The following FIPS algorithms are unapproved and use the "fips-indicator".
 
 =over 4
 
 =item RAND-TEST-RAND
 
 See L<EVP_RAND-TEST-RAND(7)/Supported parameters>
+The indicator callback is NOT triggered for this algorithm since it is used
+internally for non security purposes.
 
-=item X25519 and X448
+=item X25519 and X448 Key Generation and Key Exchange
 
 =back
 
-The non-FIPS validated algorithms have a property query value of "fips=no".
+The unapproved (non-FIPS validated) algorithms have a property query value of
+"fips=no".
 
 The following algorithms use a unique indicator and do not trigger the
 indicator callback.
