@@ -508,10 +508,8 @@ int ssl_cipher_get_evp_cipher_ecb(SSL_CTX *ctx, const SSL_CIPHER *sslc,
              * ssl_evp_cipher_fetch()
              */
             *enc = EVP_CIPHER_fetch(ctx->libctx, "NULL", ctx->propq);
-            if (*enc == NULL)
-                return 0;
         } else {
-            char *ecb_name;
+            char *ecb_name = NULL;
 
             if ((sslc->algorithm_enc & SSL_AES128_ANY) != 0) {
                 ecb_name = "AES-128-ECB";
@@ -521,8 +519,14 @@ int ssl_cipher_get_evp_cipher_ecb(SSL_CTX *ctx, const SSL_CIPHER *sslc,
                 ecb_name = "ChaCha20";
             }
 
-            *enc = EVP_CIPHER_fetch(ctx->libctx, ecb_name, ctx->propq);
+            if (ecb_name != NULL)
+                *enc = EVP_CIPHER_fetch(ctx->libctx, ecb_name, ctx->propq);
+            else
+                return 0;
         }
+
+        if (*enc == NULL)
+            return 0;
     }
     return 1;
 }
