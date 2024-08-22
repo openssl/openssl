@@ -273,7 +273,7 @@ ossl_c448_ed448_sign_prehash(
 }
 
 static c448_error_t
-ossl_c448_ed448_pubkey_verify(const uint8_t *pub, size_t pub_len)
+c448_ed448_pubkey_verify(const uint8_t *pub, size_t pub_len)
 {
     curve448_point_t pk_point;
 
@@ -399,7 +399,7 @@ ossl_ed448_sign(OSSL_LIB_CTX *ctx, uint8_t *out_sig,
 int
 ossl_ed448_pubkey_verify(const uint8_t *pub, size_t pub_len)
 {
-    return ossl_c448_ed448_pubkey_verify(pub, pub_len);
+    return c448_ed448_pubkey_verify(pub, pub_len);
 }
 
 int
