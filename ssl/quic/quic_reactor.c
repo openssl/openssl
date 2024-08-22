@@ -231,23 +231,21 @@ static int poll_two_fds(int rfd, int rfd_want_read,
     FD_ZERO(&wfd_set);
     FD_ZERO(&efd_set);
 
-    if (rfd != -1 && rfd_want_read)
+    if (rfd != INVALID_SOCKET && rfd_want_read)
         openssl_fdset(rfd, &rfd_set);
-    if (wfd != -1 && wfd_want_write)
+    if (wfd != INVALID_SOCKET && wfd_want_write)
         openssl_fdset(wfd, &wfd_set);
 
     /* Always check for error conditions. */
-    if (rfd != -1)
+    if (rfd != INVALID_SOCKET)
         openssl_fdset(rfd, &efd_set);
-    if (wfd != -1)
+    if (wfd != INVALID_SOCKET)
         openssl_fdset(wfd, &efd_set);
 
     /* Check for notifier FD readability. */
-    if (notify_rfd == INVALID_SOCKET) {
+    if (notify_rfd != INVALID_SOCKET) {
         openssl_fdset(notify_rfd, &rfd_set);
         openssl_fdset(notify_rfd, &efd_set);
-    } else {
-        return 0;
     }
 
     maxfd = rfd;
@@ -256,7 +254,7 @@ static int poll_two_fds(int rfd, int rfd_want_read,
     if (notify_rfd > maxfd)
         maxfd = notify_rfd;
 
-    if (!ossl_assert(rfd != -1 || wfd != -1
+    if (!ossl_assert(rfd != INVALID_SOCKET || wfd != INVALID_SOCKET
                      || !ossl_time_is_infinite(deadline)))
         /* Do not block forever; should not happen. */
         return 0;
