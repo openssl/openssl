@@ -81,12 +81,12 @@ static int tls13_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
         return OSSL_RECORD_RETURN_FATAL;
     }
 
-    if (rl->isdtls) {
+    if (rl->isdtls && snciph != NULL) {
         EVP_CIPHER_CTX *sn_ciph_ctx;
 
         sn_ciph_ctx = rl->sn_enc_ctx = EVP_CIPHER_CTX_new();
 
-        if (sn_ciph_ctx == NULL || snciph == NULL) {
+        if (sn_ciph_ctx == NULL) {
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
             return OSSL_RECORD_RETURN_FATAL;
         }
