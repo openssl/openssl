@@ -4930,11 +4930,6 @@ start:
                     t->skip = 1;
                     return 0;
             }
-        } else {
-            TEST_info("skipping, FIPS provider not active: %s:%d",
-                      t->s.test_file, t->s.start);
-            t->skip = 1;
-            return 0;
         }
         skipped++;
         pp++;
