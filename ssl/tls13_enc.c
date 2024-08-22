@@ -517,7 +517,7 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
     unsigned char iv_intern[EVP_MAX_IV_LENGTH];
     unsigned char *iv = iv_intern;
     unsigned char key[EVP_MAX_KEY_LENGTH];
-    unsigned char snkey[EVP_MAX_KEY_LENGTH]; // has same len as key
+    unsigned char snkey[EVP_MAX_KEY_LENGTH];
     unsigned char secret[EVP_MAX_MD_SIZE];
     unsigned char hashval[EVP_MAX_MD_SIZE];
     unsigned char *hash = hashval;

@@ -571,6 +571,7 @@ int ssl_cipher_get_evp(SSL_CTX *ctx, const SSL_SESSION *s,
     if (!ssl_cipher_get_evp_md_mac(ctx, c, md, mac_pkey_type,
                                    mac_secret_size)) {
         ssl_evp_cipher_free(*enc);
+        ssl_evp_cipher_free(*snenc);
         return 0;
     }
 
@@ -613,6 +614,7 @@ int ssl_cipher_get_evp(SSL_CTX *ctx, const SSL_SESSION *s,
 
         if (evp != NULL) {
             ssl_evp_cipher_free(*enc);
+            ssl_evp_cipher_free(*snenc);
             ssl_evp_md_free(*md);
             *enc = evp;
             *md = NULL;
