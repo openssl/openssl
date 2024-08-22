@@ -360,7 +360,7 @@ static int eddsa_create_pkey(EVP_PKEY **pkey, const char *algname,
         || !TEST_int_eq(EVP_PKEY_fromdata_init(ctx), 1)
         || !TEST_int_eq(EVP_PKEY_fromdata(ctx, pkey, EVP_PKEY_PUBLIC_KEY,
                                           params), expected))
-    goto err;
+        goto err;
 
     ret = 1;
 err:
@@ -373,7 +373,6 @@ err:
 static int eddsa_pub_verify_test(int id)
 {
     const struct ecdsa_pub_verify_st *tst = &eddsa_pv_data[id];
-
     int ret = 0;
     EVP_PKEY_CTX *key_ctx = NULL;
     EVP_PKEY *pkey = NULL;
