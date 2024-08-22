@@ -818,6 +818,7 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
         if ((EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) == 0)
             ssl_evp_md_free(mac_md);
         ssl_evp_cipher_free(cipher);
+        ssl_evp_cipher_free(sncipher);
     }
     OPENSSL_cleanse(key, sizeof(key));
     OPENSSL_cleanse(snkey, sizeof(snkey));
