@@ -373,6 +373,7 @@ int dtls_crypt_sequence_number(unsigned char *seq, size_t seq_len,
     int outlen, inlen;
     unsigned char *iv, *in;
     const char *name = EVP_CIPHER_get0_name(EVP_CIPHER_CTX_get0_cipher(ctx));
+    size_t i;
 
     memset(mask, 0, sizeof(mask));
 
@@ -396,7 +397,7 @@ int dtls_crypt_sequence_number(unsigned char *seq, size_t seq_len,
         return 0;
     }
 
-    for (size_t i = 0; i < seq_len; i++)
+    for (i = 0; i < seq_len; i++)
         seq[i] ^= mask[i];
 
     return 1;
