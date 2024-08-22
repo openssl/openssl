@@ -658,7 +658,7 @@ int ossl_ht_insert(HT *h, HT_KEY *key, HT_VALUE *data, HT_VALUE **olddata)
 
     for (i = 0;
          (rc = ossl_ht_insert_locked(h, hash, newval, olddata)) == -1
-         && i < 2;
+         && i < 4;
          ++i)
         if (!grow_hashtable(h, h->wpd.neighborhood_len)) {
             rc = -1;
