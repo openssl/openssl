@@ -286,9 +286,8 @@ static const unsigned char kInvalidRSAKeyDER[] = {
     0xe2, 0x80,
 };
 
-
 /*
-* kExampleDSAKeyDER is a DSA private key in ASN.1, DER format. Of course, you
+ * kExampleDSAKeyDER is a DSA private key in ASN.1, DER format. Of course, you
  * should never use this key anywhere but in an example.
  */
 #ifndef OPENSSL_NO_DSA
