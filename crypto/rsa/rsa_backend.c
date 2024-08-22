@@ -230,7 +230,7 @@ int ossl_rsa_fromdata(RSA *rsa, const OSSL_PARAM params[], int include_private)
     }
 
     if (!ossl_rsa_check_factors(rsa)) {
-        ERR_raise_data(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR,
+        ERR_raise_data(ERR_LIB_RSA, RSA_R_INVALID_KEYPAIR,
                        "RSA factors/exponents are too big for for n-modulus\n");
         goto err;
     }
