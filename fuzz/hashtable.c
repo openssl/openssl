@@ -188,6 +188,10 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
             rc = ossl_ht_fz_FUZZER_VALUE_insert(fuzzer_table, TO_HT_KEY(&key),
                                                 valptr, NULL);
 
+        if (rc == -1)
+            /* failed to grow the hash table due to too many collisions */
+            break;
+
         /*
          * mark the entry as being allocated
          */
