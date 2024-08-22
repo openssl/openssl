@@ -439,8 +439,8 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
     /* get something from the wire */
 
     /* check if we have the header */
-    if ((rl->rstate != SSL_ST_READ_BODY)
-            || (rl->packet_length < DTLS1_RT_HEADER_LENGTH)) {
+    if (rl->rstate != SSL_ST_READ_BODY
+            || rl->packet_length < DTLS1_RT_HEADER_LENGTH) {
         PACKET pkt;
         unsigned int record_type, version, epoch;
 
