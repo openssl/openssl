@@ -369,13 +369,12 @@ static int dtls_retrieve_rlayer_buffered_record(OSSL_RECORD_LAYER *rl,
 int dtls_crypt_sequence_number(unsigned char *seq, size_t seq_len,
                                EVP_CIPHER_CTX *ctx, unsigned char *rec_data)
 {
-    static const size_t mask_size = 16;
-    unsigned char mask[mask_size];
+    unsigned char mask[16];
     int outlen, inlen;
     unsigned char *iv, *in;
     const char *name = EVP_CIPHER_get0_name(EVP_CIPHER_CTX_get0_cipher(ctx));
 
-    memset(mask, 0, mask_size);
+    memset(mask, 0, sizeof(mask));
 
     if (strncmp(name, "AES", 3) == 0) {
         iv = NULL;
@@ -390,8 +389,8 @@ int dtls_crypt_sequence_number(unsigned char *seq, size_t seq_len,
     }
 
     if (!ossl_assert(inlen >= 0)
-            || (size_t)inlen > mask_size
-            || seq_len > mask_size
+            || (size_t)inlen > sizeof(mask)
+            || seq_len > sizeof(mask)
             || EVP_CipherInit_ex(ctx, NULL, NULL, NULL, iv, 1) <= 0
             || EVP_CipherUpdate(ctx, mask, &outlen, in, inlen) <= 0) {
         return 0;

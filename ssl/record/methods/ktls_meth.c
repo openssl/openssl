@@ -431,8 +431,9 @@ ktls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     (*retrl)->funcs = &ossl_ktls_funcs;
 
     ret = (*retrl)->funcs->set_crypto_state(*retrl, level, snkey, key, keylen,
-                                            iv, ivlen, mackey, mackeylen, ciph,
-                                            taglen, mactype, md, comp);
+                                            iv, ivlen, mackey, mackeylen,
+                                            snciph, ciph, taglen, mactype, md,
+                                            comp);
 
     if (ret != OSSL_RECORD_RETURN_SUCCESS) {
         OPENSSL_free(*retrl);
