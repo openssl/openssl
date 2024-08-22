@@ -108,13 +108,12 @@ static void *der2key_decode_p8(const unsigned char **input_der,
     const X509_ALGOR *alg = NULL;
     void *key = NULL;
 
-    if ((p8inf = d2i_PKCS8_PRIV_KEY_INFO(NULL, input_der, input_der_len)) !=
-            NULL &&
-        PKCS8_pkey_get0(NULL, NULL, NULL, &alg, p8inf) &&
-        (OBJ_obj2nid(alg->algorithm) == ctx->desc->evp_type ||
-         /* Allow decoding sm2 private key with id_ecPublicKey */
-         (OBJ_obj2nid(alg->algorithm) == NID_X9_62_id_ecPublicKey
-          &&  ctx->desc->evp_type == NID_sm2)))
+    if ((p8inf = d2i_PKCS8_PRIV_KEY_INFO(NULL, input_der, input_der_len)) != NULL
+        && PKCS8_pkey_get0(NULL, NULL, NULL, &alg, p8inf)
+        && (OBJ_obj2nid(alg->algorithm) == ctx->desc->evp_type ||
+            /* Allow decoding sm2 private key with id_ecPublicKey */
+            (OBJ_obj2nid(alg->algorithm) == NID_X9_62_id_ecPublicKey
+             && ctx->desc->evp_type == NID_sm2)))
         key = key_from_pkcs8(p8inf, PROV_LIBCTX_OF(ctx->provctx), ctx->propq);
     PKCS8_PRIV_KEY_INFO_free(p8inf);
 
