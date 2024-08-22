@@ -866,6 +866,25 @@ static int ecx_key_pairwise_check(const ECX_KEY *ecx, int type)
 }
 
 #ifdef FIPS_MODULE
+/*
+ * FIPS ACVP testing requires the ability to check if the public key is valid
+ * This is not required normally since the ED signature verify does the test
+ * internally.
+ */
+static int ecd_key_pub_check(const ECX_KEY *ecx, int type)
+{
+    switch (type) {
+    case ECX_KEY_TYPE_ED25519:
+        return ossl_ed25519_pubkey_verify(ecx->pubkey, ecx->keylen);
+    case ECX_KEY_TYPE_ED448:
+        return ossl_ed448_pubkey_verify(ecx->pubkey, ecx->keylen);
+    default:
+        return 1;
+    }
+}
+#endif
+
+#ifdef FIPS_MODULE
 static int ecd_key_pairwise_check(const ECX_KEY *ecx, int type)
 {
     return ecd_fips140_pairwise_test(ecx, type, 0);
@@ -893,7 +912,8 @@ static int ecd_key_pairwise_check(const ECX_KEY *ecx, int type)
 }
 #endif
 
-static int ecx_validate(const void *keydata, int selection, int type, size_t keylen)
+static int ecx_validate(const void *keydata, int selection, int type,
+                        size_t keylen)
 {
     const ECX_KEY *ecx = keydata;
     int ok = keylen == ecx->keylen;
@@ -909,8 +929,12 @@ static int ecx_validate(const void *keydata, int selection, int type, size_t key
         return 0;
     }
 
-    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
+    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
         ok = ok && ecx->haspubkey;
+#ifdef FIPS_MODULE
+        ok = ok && ecd_key_pub_check(ecx, type);
+#endif
+    }
 
     if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
         ok = ok && ecx->privkey != NULL;
