@@ -71,6 +71,28 @@ to run the quic-client-block demo:
 
 SSL_CERT_FILE=rootcert.pem LD_LIBRARY_PATH=../.. ./quic-client-block localhost 4443
 
+Notes on the quic-hq-interop demo
+---------------------------------
+
+The quic-hq-interop demo is effectively the same as the quic-client-nonblock
+demo, but is specifically constructed to use the hq-interop alpn for the
+purposes of interacting with other demonstration containers found in the 
+QUIC working group [interop runner](https://github.com/quic-interop/quic-interop-runner)
+It is run as follows:
+
+SSL_CERT_FILE=ca.pem LD_LIBRARY_PATH=../../ ./quic-hq-interop host port file
+
+The demo will then do the following:
+
+1. Connect to the server at host/port
+2. Negotiates the hq-interop alpn
+3. Issues an HTTP 1.0 GET request of the form "GET /$FILE"
+3. Reads any response from the server and write it verbatim to stdout
+
+This demo can be used for any hq-interop negotiating server, but its use can
+most easily be seen in action in our quic interop container, buildable from
+./test/quic_interop_openssl in this source tree.
+
 <!-- Links  -->
 
 [guide]: https://www.openssl.org/docs/manmaster/man7/ossl-guide-introduction.html
