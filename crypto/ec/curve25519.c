@@ -5538,6 +5538,21 @@ err:
     return res;
 }
 
+/*
+ * This function should not be necessary since ossl_ed25519_verify() already
+ * does this check internally.
+ * For some reason the FIPS ACVP requires a EDDSA KeyVer test.
+ */
+int
+ossl_ed25519_pubkey_verify(const uint8_t *pub, size_t pub_len)
+{
+    ge_p3 A;
+
+    if (pub_len != ED25519_KEYLEN)
+        return 0;
+    return (ge_frombytes_vartime(&A, pub) == 0);
+}
+
 static const char allzeroes[15];
 
 int

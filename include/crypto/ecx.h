@@ -108,6 +108,8 @@ ossl_ed25519_verify(const uint8_t *tbs, size_t tbs_len,
                     const uint8_t *context, size_t context_len,
                     OSSL_LIB_CTX *libctx, const char *propq);
 int
+ossl_ed25519_pubkey_verify(const uint8_t *pub, size_t pub_len);
+int
 ossl_ed448_public_from_private(OSSL_LIB_CTX *ctx, uint8_t out_public_key[57],
                                const uint8_t private_key[57], const char *propq);
 int
@@ -123,6 +125,9 @@ ossl_ed448_verify(OSSL_LIB_CTX *ctx,
                   const uint8_t signature[114], const uint8_t public_key[57],
                   const uint8_t *context, size_t context_len,
                   const uint8_t phflag, const char *propq);
+
+int
+ossl_ed448_pubkey_verify(const uint8_t *pub, size_t pub_len);
 
 int
 ossl_x448(uint8_t out_shared_key[56], const uint8_t private_key[56],

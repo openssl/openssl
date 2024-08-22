@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -345,7 +345,7 @@ err:
 }
 #endif /* OPENSSL_NO_EC */
 
-#ifndef OPENSSL_NO_DSA
+#if !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_ECX)
 static int pkey_get_octet_bytes(EVP_PKEY *pkey, const char *name,
                                 unsigned char **out, size_t *out_len)
 {
@@ -367,6 +367,91 @@ err:
     OPENSSL_free(buf);
     return 0;
 }
+#endif /* !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_ECX) */
+
+#ifndef OPENSSL_NO_ECX
+static int eddsa_create_pkey(EVP_PKEY **pkey, const char *algname,
+                             const unsigned char *pub, size_t pub_len,
+                             int expected)
+{
+    int ret = 0;
+    EVP_PKEY_CTX *ctx = NULL;
+    OSSL_PARAM_BLD *bld = NULL;
+    OSSL_PARAM *params = NULL;
+
+    if (!TEST_ptr(bld = OSSL_PARAM_BLD_new())
+        || !TEST_true(OSSL_PARAM_BLD_push_octet_string(bld,
+                                                       OSSL_PKEY_PARAM_PUB_KEY,
+                                                       pub, pub_len) > 0)
+        || !TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld))
+        || !TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(libctx, algname, NULL))
+        || !TEST_int_eq(EVP_PKEY_fromdata_init(ctx), 1)
+        || !TEST_int_eq(EVP_PKEY_fromdata(ctx, pkey, EVP_PKEY_PUBLIC_KEY,
+                                          params), expected))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_PARAM_free(params);
+    OSSL_PARAM_BLD_free(bld);
+    EVP_PKEY_CTX_free(ctx);
+    return ret;
+}
+
+static int eddsa_pub_verify_test(int id)
+{
+    const struct ecdsa_pub_verify_st *tst = &eddsa_pv_data[id];
+    int ret = 0;
+    EVP_PKEY_CTX *key_ctx = NULL;
+    EVP_PKEY *pkey = NULL;
+
+    if (!TEST_true(eddsa_create_pkey(&pkey, tst->curve_name,
+                                     tst->pub, tst->pub_len, 1)))
+        goto err;
+
+    if (!TEST_ptr(key_ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, ""))
+            || !TEST_int_eq(EVP_PKEY_public_check(key_ctx), tst->pass))
+        goto err;
+    ret = 1;
+err:
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_CTX_free(key_ctx);
+    return ret;
+}
+
+static int eddsa_keygen_test(int id)
+{
+    int ret = 0;
+    EVP_PKEY *pkey = NULL;
+    unsigned char *priv = NULL, *pub = NULL;
+    size_t priv_len = 0, pub_len = 0;
+    const struct ecdsa_pub_verify_st *tst = &eddsa_pv_data[id];
+
+    self_test_args.called = 0;
+    self_test_args.enable = 1;
+    if (!TEST_ptr(pkey = EVP_PKEY_Q_keygen(libctx, NULL, tst->curve_name))
+        || !TEST_int_ge(self_test_args.called, 3)
+        || !TEST_true(pkey_get_octet_bytes(pkey, OSSL_PKEY_PARAM_PRIV_KEY,
+                                           &priv, &priv_len))
+        || !TEST_true(pkey_get_octet_bytes(pkey, OSSL_PKEY_PARAM_PUB_KEY, &pub,
+                                           &pub_len)))
+        goto err;
+
+    test_output_memory("q", pub, pub_len);
+    test_output_memory("d", priv, priv_len);
+    ret = 1;
+err:
+    self_test_args.enable = 0;
+    self_test_args.called = 0;
+    OPENSSL_clear_free(priv, priv_len);
+    OPENSSL_free(pub);
+    EVP_PKEY_free(pkey);
+    return ret;
+}
+
+#endif /* OPENSSL_NO_ECX */
+
+#ifndef OPENSSL_NO_DSA
 
 static EVP_PKEY *dsa_paramgen(int L, int N)
 {
@@ -1605,6 +1690,12 @@ int setup_tests(void)
     ADD_ALL_TESTS(ecdsa_sigver_test, OSSL_NELEM(ecdsa_sigver_data));
 #endif /* OPENSSL_NO_EC */
 
+#ifndef OPENSSL_NO_ECX
+    if (fips_provider_version_ge(libctx, 3, 4, 0)) {
+        ADD_ALL_TESTS(eddsa_keygen_test, OSSL_NELEM(eddsa_pv_data));
+        ADD_ALL_TESTS(eddsa_pub_verify_test, OSSL_NELEM(eddsa_pv_data));
+    }
+#endif
     ADD_ALL_TESTS(drbg_test, OSSL_NELEM(drbg_data));
     return 1;
 }
