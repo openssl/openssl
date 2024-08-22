@@ -1446,6 +1446,7 @@ static void tls_int_free(OSSL_RECORD_LAYER *rl)
     tls_release_write_buffer(rl);
 
     EVP_CIPHER_CTX_free(rl->enc_ctx);
+    EVP_CIPHER_CTX_free(rl->sn_enc_ctx);
     EVP_MAC_CTX_free(rl->mac_ctx);
     EVP_MD_CTX_free(rl->md_ctx);
 #ifndef OPENSSL_NO_COMP
