@@ -618,7 +618,7 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
          * Following an initial handshake we send the number of tickets we have
          * been configured for.
          */
-        if (!(!SSL_IS_FIRST_HANDSHAKE(s) && s->ext.extra_tickets_expected > 0)
+        if ((SSL_IS_FIRST_HANDSHAKE(s) || s->ext.extra_tickets_expected <= 0)
                 && (s->hit || s->num_tickets <= s->sent_tickets)) {
             /* We've written enough tickets out. */
             st->hand_state = TLS_ST_OK;
