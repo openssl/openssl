@@ -207,6 +207,7 @@ Ctrl.iter = iter:1
 Ctrl.digest = digest:sha512
 Output = 00ef42cdbfc98d29db20976608e455567fdddf14
 
+Availablein = fips
 FIPSversion = <3.4.0
 KDF = PBKDF2
 Ctrl.pkcs5 = pkcs5:1
@@ -216,6 +217,7 @@ Ctrl.iter = iter:1
 Ctrl.digest = digest:shake-128
 Result = KDF_DERIVE_ERROR
 
+Availablein = fips
 FIPSversion = >=3.4.0
 KDF = PBKDF2
 Ctrl.pkcs5 = pkcs5:1
@@ -229,6 +231,7 @@ Reason = xof digests not allowed
 Title = FIPS indicator tests
 
 # Test that operations with unapproved parameters are rejected
+Availablein = fips
 FIPSversion = >=3.4.0
 KDF = PBKDF2
 Ctrl.pass = pass:password
@@ -239,6 +242,7 @@ Result = KDF_CTRL_ERROR
 Reason = invalid salt length
 
 # Test that operations with unapproved parameters are reported as unapproved
+Availablein = fips
 FIPSversion = >=3.4.0
 KDF = PBKDF2
 Unapproved = 1
@@ -251,6 +255,7 @@ Output = 4b007901b765489abead49d926f721d065a429c1
 
 # Test that the operation with approved parameters and unapproved pkcs5 value is
 # reposted as approved
+Availablein = fips
 FIPSversion = >=3.4.0
 KDF = PBKDF2
 Ctrl.pkcs5 = pkcs5:1

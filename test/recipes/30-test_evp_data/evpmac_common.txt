@@ -574,6 +574,7 @@ Reason = invalid output length
 
 Title = KMAC output is too small in FIPS
 
+Availablein = fips
 FIPSversion = >=3.4.0
 MAC = KMAC256
 Key = 404142434445464748494A4B4C4D4E4F505152535455565758595A5B5C5D5E5F
@@ -584,6 +585,7 @@ Unapproved = 1
 Ctrl = size:3
 Ctrl = no-short-mac:0
 
+Availablein = fips
 FIPSversion = >=3.4.0
 MAC = KMAC256
 Key = 404142434445464748494A4B4C4D4E4F505152535455565758595A5B5C5D5E5F
@@ -594,6 +596,7 @@ Ctrl = size:3
 Result = MAC_INIT_ERROR
 Reason = invalid output length
 
+Availablein = fips
 FIPSversion = >=3.4.0
 MAC = KMAC256
 Key = 404142434445464748494A4B4C4D4E4F505152535455565758595A5B5C5D5E5F

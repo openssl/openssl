@@ -82,6 +82,7 @@ Result = KDF_CTRL_ERROR
 Title = FIPS indicator tests
 
 # Test that the operation with unapproved digest function is rejected
+Availablein = fips
 FIPSversion = >=3.4.0
 PKEYKDF = TLS1-PRF
 Ctrl.digest = digest:SHA512-256
@@ -94,6 +95,7 @@ Reason = digest not allowed
 
 # Test that the operation with unapproved digest function is is reported as
 # unapproved
+Availablein = fips
 FIPSversion = >=3.4.0
 PKEYKDF = TLS1-PRF
 Unapproved = 1
@@ -106,6 +108,7 @@ Ctrl.server_random = hexseed:f6c9575ed7ddd73e1f7d16eca115415812a43c2b747daaaae04
 Output = 17be20a3b4cc05524d7de353b2f125537c23372144111b0367bda166fcfc09cf1c94909a408b986f53afbdc41d93ae09
 
 # Test that the key whose length is shorter than 112 bits is rejected
+Availablein = fips
 FIPSversion = >=3.4.0
 PKEYKDF = TLS1-PRF
 Ctrl.digest = digest:SHA256
@@ -118,6 +121,7 @@ Reason = invalid key length
 
 # Test that the key whose length is shorter than 112 bits is reported as
 # unapproved
+Availablein = fips
 FIPSversion = >=3.4.0
 PKEYKDF = TLS1-PRF
 Unapproved = 1
