@@ -25,8 +25,8 @@ RUN git clone https://github.com/ngtcp2/nghttp3.git && \
 # download and build openssl 
 RUN git clone https://github.com/openssl/openssl.git && \
     cd openssl && \
-    ./Configure enable-fips no-docs --prefix=/usr --openssldir=/etc/pki/tls && \
-    make -j 4 && make install && \
+    ./Configure enable-fips enable-demos no-docs --prefix=/usr --openssldir=/etc/pki/tls && \
+    make -j 4 && make install && cp demos/guide/quic-hq-interop /usr/local/bin && \
     rm -rf /openssl
 
 # Build curl

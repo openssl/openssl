@@ -35,18 +35,34 @@ if [ "$ROLE" == "client" ]; then
     rm -f $CURLRC 
 
     case "$TESTCASE" in
-    "http3"|"transfer")
-        echo -e "--verbose\n--parallel" >> $CURLRC
-        generate_outputs_http3
-        dump_curlrc
-        SSL_CERT_FILE=/certs/ca.pem curl --config $CURLRC || exit 1
+    "http3")
+    echo -e "--verbose\n--parallel" >> $CURLRC
+    generate_outputs_http3
+    dump_curlrc
+        SSL_CERT_FILE=/certs/ca.pem curl --config $CURLRC 
+        if [ $? -ne 0 ]
+        then
+            exit 1
+        fi
         exit 0
         ;;
-    "handshake")
-       OUTFILE=$(basename $REQUESTS)
-       echo -e "--verbose\n--http3\n-H \"Connection: close\"\n-o /downloads/$OUTFILE\n--url $REQUESTS" >> $CURLRC
-       dump_curlrc
-       SSL_CERT_FILE=/certs/ca.pem curl --config $CURLRC || exit 1
+    "handshake"|"transfer")
+       HOSTNAME=none
+       for req in $REQUESTS
+       do
+           OUTFILE=$(basename $req)
+           if [ "$HOSTNAME" == "none" ]
+           then
+               HOSTNAME=$(echo $req | sed -e"s/\(^https:\/\/\)\(.*\)\(:.*$\)/\2/")
+               HOSTPORT=$(echo $req | sed -e"s/\(^https:\/\/\)\(.*:\)\(.*\)\(\/.*$\)/\3/")
+           fi
+           echo -n "$OUTFILE " >> ./reqfile.txt
+       done
+       SSLKEYLOGFILE=/logs/keys.log SSL_CERT_FILE=/certs/ca.pem SSL_CERT_DIR=/certs quic-hq-interop $HOSTNAME $HOSTPORT ./reqfile.txt 
+       if [ $? -ne 0 ]
+       then
+           exit 1
+       fi
        exit 0
        ;; 
     "retry")
