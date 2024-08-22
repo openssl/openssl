@@ -1858,6 +1858,7 @@ Output = 6db880daac98b078ee389a2164252ded61322d661e2b49247ea921e544675d8f17af2bf
 
 Title = Negative tests for FIPS minimum key length
 
+Availablein = fips
 FIPSversion = >=3.4.0
 KDF = KBKDF
 Ctrl.mode = mode:COUNTER
@@ -1871,6 +1872,7 @@ Ctrl.hexinfo = hexinfo:56ec
 Result = KDF_CTRL_ERROR
 Reason = invalid key length
 
+Availablein = fips
 FIPSversion = >=3.4.0
 KDF = KBKDF
 Ctrl.mode = mode:COUNTER

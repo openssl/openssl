@@ -41,6 +41,7 @@ Ciphertext = 4d1332e49f380e23d80a0d8b2bae5e4e6a0094171abcfc27df2bfd40da9f4e4d
 # DES EDE3 CBC tests (from destest)
 
 # Test that DES3 CBC mode encryption fails because it is not FIPS approved
+Availablein = fips
 FIPSversion = >=3.4.0
 Cipher = DES-EDE3-CBC
 Key = 0123456789abcdeff1e0d3c2b5a49786fedcba9876543210
@@ -50,6 +51,7 @@ Ciphertext = 3FE301C962AC01D02213763C1CBD4CDC799657C064ECF5D41C673812CFDE9675
 Result = CIPHERINIT_ERROR
 
 # Test that DES3 EBC mode encryption fails because it is not FIPS approved
+Availablein = fips
 FIPSversion = >=3.4.0
 Cipher = DES-EDE3-ECB
 Key = 0123456789abcdeff1e0d3c2b5a49786fedcba9876543210
@@ -60,6 +62,7 @@ Result = CIPHERINIT_ERROR
 Title = DES3 FIPS Indicator Tests
 
 # Test that DES3 CBC mode encryption is not FIPS approved
+Availablein = fips
 FIPSversion = >=3.4.0
 Cipher = DES-EDE3-CBC
 Unapproved = 1
@@ -71,6 +74,7 @@ Plaintext = 37363534333231204E6F77206973207468652074696D6520666F722000000000
 Ciphertext = 3FE301C962AC01D02213763C1CBD4CDC799657C064ECF5D41C673812CFDE9675
 
 # Test that DES3 ECB mode encryption is not FIPS approved
+Availablein = fipss
 FIPSversion = >=3.4.0
 Cipher = DES-EDE3-ECB
 Operation = ENCRYPT

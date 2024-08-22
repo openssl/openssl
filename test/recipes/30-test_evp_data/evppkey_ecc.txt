@@ -4546,6 +4546,7 @@ KeyName = ec1
 Ctrl = group:P-256
 
 # Test KeyGen with a curve with < 112 bits of security fails.
+Availablein = fips
 FIPSversion = >=3.4.0
 KeyGen = ec
 KeyName = ec2
@@ -4553,6 +4554,7 @@ Ctrl = group:P-192
 Result = KEYGEN_GENERATE_ERROR
 
 # Test KeyGen with a curve with < 112 bits of security is not approved
+Availablein = fips
 FIPSversion = >=3.4.0
 KeyGen = ec
 KeyName = ec3
