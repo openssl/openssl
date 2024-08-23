@@ -31,7 +31,7 @@ OpenSSL 3.4
 
  * Add FIPS indicators to the FIPS provider.
    FIPS 140-3 requires indicators to be used if the FIPS provider allows
-   non approved algorithms. An algorithm is approved if it passes all
+   non-approved algorithms. An algorithm is approved if it passes all
    required checks such as minimum key size. By default an error will
    occur if any check fails. For backwards compatibility individual
    algorithms may override the checks by using either an option in the
