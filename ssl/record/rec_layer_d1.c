@@ -86,7 +86,7 @@ static int dtls_buffer_record(SSL_CONNECTION *s, TLS_RECORD *rec)
         return -1;
 
     rdata = OPENSSL_malloc(sizeof(*rdata));
-    item = pitem_new_ex(rec->seq_num, rdata);
+    item = pitem_new_u64(rec->seq_num, rdata);
     if (rdata == NULL || item == NULL) {
         OPENSSL_free(rdata);
         pitem_free(item);

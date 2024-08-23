@@ -1969,7 +1969,7 @@ struct pitem_st {
 typedef struct pitem_st *piterator;
 
 pitem *pitem_new(unsigned char *prio64be, void *data);
-pitem *pitem_new_ex(uint64_t prio64be, void *data);
+pitem *pitem_new_u64(uint64_t prio, void *data);
 void pitem_free(pitem *item);
 pqueue *pqueue_new(void);
 void pqueue_free(pqueue *pq);
@@ -1977,7 +1977,7 @@ pitem *pqueue_insert(pqueue *pq, pitem *item);
 pitem *pqueue_peek(pqueue *pq);
 pitem *pqueue_pop(pqueue *pq);
 pitem *pqueue_find(pqueue *pq, unsigned char *prio64be);
-pitem *pqueue_find_ex(pqueue *pq, uint64_t prio64be);
+pitem *pqueue_find_u64(pqueue *pq, uint64_t prio);
 pitem *pqueue_iterator(pqueue *pq);
 pitem *pqueue_next(piterator *iter);
 size_t pqueue_size(pqueue *pq);

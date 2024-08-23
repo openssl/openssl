@@ -1079,34 +1079,34 @@ static int ping_pong_query(SSL *clientssl, SSL *serverssl)
      * OpenSSL sequences
      */
     if (!BIO_get_ktls_send(clientsc->wbio)) {
-        if (!TEST_false(crec_wseq_before == crec_wseq_after))
+        if (!TEST_uint64_t_ne(crec_wseq_before, crec_wseq_after))
             goto end;
     } else {
-        if (!TEST_true(crec_wseq_before == crec_wseq_after))
+        if (!TEST_uint64_t_eq(crec_wseq_before, crec_wseq_after))
             goto end;
     }
 
     if (!BIO_get_ktls_send(serversc->wbio)) {
-        if (!TEST_false(srec_wseq_before == srec_wseq_after))
+        if (!TEST_uint64_t_ne(srec_wseq_before, srec_wseq_after))
             goto end;
     } else {
-        if (!TEST_true(srec_wseq_before == srec_wseq_after))
+        if (!TEST_uint64_t_eq(srec_wseq_before, srec_wseq_after))
             goto end;
     }
 
     if (!BIO_get_ktls_recv(clientsc->wbio)) {
-        if (!TEST_false(crec_rseq_before == crec_rseq_after))
+        if (!TEST_uint64_t_ne(crec_rseq_before, crec_rseq_after))
             goto end;
     } else {
-        if (!TEST_true(crec_rseq_before == crec_rseq_after))
+        if (!TEST_uint64_t_eq(crec_rseq_before, crec_rseq_after))
             goto end;
     }
 
     if (!BIO_get_ktls_recv(serversc->wbio)) {
-        if (!TEST_false(srec_rseq_before == srec_rseq_after))
+        if (!TEST_uint64_t_ne(srec_rseq_before, srec_rseq_after))
             goto end;
     } else {
-        if (!TEST_true(srec_rseq_before == srec_rseq_after))
+        if (!TEST_uint64_t_eq(srec_rseq_before, srec_rseq_after))
             goto end;
     }
 
