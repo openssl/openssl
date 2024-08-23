@@ -53,42 +53,34 @@ __owur static int timeoutcmp(SSL_SESSION *a, SSL_SESSION *b)
     return 0;
 }
 
+#ifdef __DJGPP__ /* time_t is unsigned on djgpp, it's signed anywhere else */
+# define TMAX(_type_) ((time_t)-1)
+#else
+# define TMAX(_type_) ((time_t)(((_type_)-1) >> 1))
+#endif
+
+#define CALCULATE_TIMEOUT(_ss_, _type_) do { \
+        _type_ overflow; \
+        time_t tmax = TMAX(_type_); \
+        overflow = (_type_)tmax - (_type_)(_ss_)->time; \
+        if ((_ss_)->timeout > (time_t)overflow) { \
+            (_ss_)->timeout_ovf = 1; \
+            (_ss_)->calc_timeout = (_ss_)->timeout - (time_t)overflow; \
+        } else { \
+            (_ss_)->calc_timeout = (_ss_)->time + (_ss_)->timeout; \
+        } \
+    } while (0)
 /*
  * Calculates effective timeout, saving overflow state
  * Locking must be done by the caller of this function
  */
 void ssl_session_calculate_timeout(SSL_SESSION *ss)
 {
-    time_t tmax = (time_t)-1;
 
-    if (sizeof(time_t) == 8) {
-        uint64_t overflow;
-
-#ifndef __DJGPP__ /* time_t is unsigned on djgpp, it's signed anywhere else */
-        tmax = (time_t)((uint64_t)tmax >> 1);
-#endif
-        overflow = (uint64_t)tmax - (uint64_t)ss->time;
-        if (ss->timeout > (time_t)overflow) {
-            ss->timeout_ovf = 1;
-            ss->calc_timeout = ss->timeout - (time_t)overflow;
-        } else {
-            ss->calc_timeout = ss->time + ss->timeout;
-        }
-    } else {
-        uint32_t overflow;
-
-#ifndef __DJGPP__ /* time_t is unsigned on djgp, it's signed anywhere else */
-        tmax = (time_t)((uint32_t)tmax >> 1);
-#endif
-        overflow = (uint32_t)tmax - (uint32_t)ss->time;
-
-        if (ss->timeout > (time_t)overflow) {
-            ss->timeout_ovf = 1;
-            ss->calc_timeout = ss->timeout - (time_t)overflow;
-        } else {
-            ss->calc_timeout = ss->time + ss->timeout;
-        }
-    }
+    if (sizeof(time_t) == 8)
+        CALCULATE_TIMEOUT(ss, uint64_t);
+    else
+        CALCULATE_TIMEOUT(ss, uint32_t);
 
     /*
      * N.B. Realistic overflow can only occur in our lifetimes on a
