@@ -464,6 +464,7 @@ typedef struct tlsextstatusctx_st {
     char *proxy, *no_proxy;
     int use_ssl;
     int verbose;
+    int status_server_only;
 } tlsextstatusctx;
 
 static tlsextstatusctx tlscstatp = { -1, NULL };
@@ -610,7 +611,7 @@ static int get_ocsp_resp_from_responder(SSL *s, tlsextstatusctx *srctx,
 {
     const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
     X509 *x = NULL;
-    int i, num = 1;
+    int i, num = 0;
     STACK_OF(X509) *server_certs = NULL;
     OCSP_RESPONSE *resp = NULL;
 
@@ -623,7 +624,7 @@ static int get_ocsp_resp_from_responder(SSL *s, tlsextstatusctx *srctx,
     /*
      * TODO: in future DTLS should also be considered
      */
-    if (server_certs != NULL && sc != NULL &&
+    if (server_certs != NULL && sc != NULL && !srctx->status_server_only &&
         !SSL_CONNECTION_IS_DTLS(sc) && SSL_version(s) >= TLS1_3_VERSION) {
         /* certificate chain is available */
         num = sk_X509_num(server_certs) + 1;
@@ -816,9 +817,9 @@ typedef enum OPTION_choice {
     OPT_VERIFYCAFILE,
     OPT_CASTORE, OPT_NOCASTORE, OPT_CHAINCASTORE, OPT_VERIFYCASTORE,
     OPT_NBIO, OPT_NBIO_TEST, OPT_IGN_EOF, OPT_NO_IGN_EOF,
-    OPT_DEBUG, OPT_TLSEXTDEBUG, OPT_STATUS, OPT_STATUS_VERBOSE,
-    OPT_STATUS_TIMEOUT, OPT_PROXY, OPT_NO_PROXY, OPT_STATUS_URL,
-    OPT_STATUS_FILE, OPT_MSG, OPT_MSGFILE,
+    OPT_DEBUG, OPT_TLSEXTDEBUG, OPT_STATUS, OPT_OCSP_STATUS_SERVER,
+    OPT_STATUS_VERBOSE, OPT_STATUS_TIMEOUT, OPT_PROXY, OPT_NO_PROXY,
+    OPT_STATUS_URL, OPT_STATUS_FILE, OPT_MSG, OPT_MSGFILE,
     OPT_TRACE, OPT_SECURITY_DEBUG, OPT_SECURITY_DEBUG_VERBOSE, OPT_STATE,
     OPT_CRLF, OPT_QUIET, OPT_BRIEF, OPT_NO_DHE,
     OPT_NO_RESUME_EPHEMERAL, OPT_PSK_IDENTITY, OPT_PSK_HINT, OPT_PSK,
@@ -970,7 +971,10 @@ const OPTIONS s_server_options[] = {
 #ifndef OPENSSL_NO_OCSP
     OPT_SECTION("OCSP"),
     {"status", OPT_STATUS, '-',
-     "Provide certificate status response(s) if requested by client"},
+     "Provide certificate status response(s) (for the whole chain if possible) "
+     "if requested by client"},
+    {"status_server_only", OPT_OCSP_STATUS_SERVER, '-',
+     "Provide certificate status response only for server certificate"},
     {"status_verbose", OPT_STATUS_VERBOSE, '-',
      "Print more output in certificate status callback"},
     {"status_timeout", OPT_STATUS_TIMEOUT, 'n',
@@ -1484,8 +1488,15 @@ int s_server_main(int argc, char *argv[])
         case OPT_STATUS:
 #ifndef OPENSSL_NO_OCSP
             s_tlsextstatus = 1;
+            tlscstatp.status_server_only = 0;
 #endif
             break;
+        case OPT_OCSP_STATUS_SERVER:
+#ifndef OPENSSL_NO_OCSP
+            s_tlsextstatus = tlscstatp.status_server_only = 1;
+#endif
+            break;
+
         case OPT_STATUS_VERBOSE:
 #ifndef OPENSSL_NO_OCSP
             s_tlsextstatus = tlscstatp.verbose = 1;
