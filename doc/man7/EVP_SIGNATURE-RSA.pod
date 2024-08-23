@@ -63,12 +63,6 @@ using EVP_PKEY_sign_init_ex() or EVP_PKEY_verify_init_ex().
 These are not supported with the RSA signature schemes that already include a
 message digest algorithm, See L</Algorithm Names> above.
 
-=item "key-check" (B<OSSL_SIGNATURE_PARAM_FIPS_KEY_CHECK>) <integer>
-
-=item "digest-check" (B<OSSL_SIGNATURE_PARAM_FIPS_DIGEST_CHECK>) <integer>
-
-=item "sign-x931-pad-check" (B<OSSL_SIGNATURE_PARAM_FIPS_SIGN_X931_PAD_CHECK>) <integer>
-
 These common parameters are described in L<provider-signature(7)>.
 
 =item "pad-mode" (B<OSSL_SIGNATURE_PARAM_PAD_MODE>) <UTF8 string>
@@ -126,6 +120,20 @@ digest size when signing to comply with FIPS 186-4 section 5.5.
 
 =back
 
+=back
+
+The OpenSSL FIPS provider also supports the following parameters:
+
+=over 4
+
+=item "key-check" (B<OSSL_SIGNATURE_PARAM_FIPS_KEY_CHECK>) <integer>
+
+=item "digest-check" (B<OSSL_SIGNATURE_PARAM_FIPS_DIGEST_CHECK>) <integer>
+
+=item "sign-x931-pad-check" (B<OSSL_SIGNATURE_PARAM_FIPS_SIGN_X931_PAD_CHECK>) <integer>
+
+These parameters are described in L<provider-signature(7)>.
+
 =item "rsa-pss-saltlen-check" (B<OSSL_SIGNATURE_PARAM_FIPS_RSA_PSS_SALTLEN_CHECK>) <integer>
 
 The default value of 1 causes an error during signature generation or
@@ -133,8 +141,8 @@ verification if salt length (B<OSSL_SIGNATURE_PARAM_PSS_SALTLEN>) is not between
 zero and the output block size of the digest function (inclusive).
 Setting this to zero will ignore the error and set the approved "fips-indicator"
 to 0.
-This option is used by the OpenSSL FIPS provider, and breaks FIPS compliance if
-set to 0.
+This option breaks FIPS compliance if it causes the approved "fips-indicator"
+to return 0.
 
 =back
 
