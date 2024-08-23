@@ -189,8 +189,10 @@ static int add_entry(enum Type type, unsigned int hash, const char *filename,
 }
 
 /*
- * Check if a symlink goes to the right spot; return 0 if okay.
- * This can be -1 if bad filename, or an error count.
+ * Check if a symlink name has the expected pattern.
+ * Remove symlink or add an entry for it.
+ * Return 0 if the symlink has been handled.
+ *
  */
 static int handle_symlink(const char *filename, const char *fullpath)
 {
@@ -219,6 +221,20 @@ static int handle_symlink(const char *filename, const char *fullpath)
     id = strtoul(&filename[i], &endptr, 10);
     if (*endptr != '\0')
         return -1;
+
+    if (remove_links) {
+        if (verbose)
+            BIO_printf(bio_out, "unlink %s\n",
+                    fullpath);
+        if (unlink(fullpath) < 0 && errno != ENOENT) {
+            BIO_printf(bio_err,
+                    "%s: Can't unlink %s, %s\n",
+                    opt_getprog(), fullpath, strerror(errno));
+            return -1;
+        } else {
+            return 0;
+        }
+    }
 
     n = readlink(fullpath, linktarget, sizeof(linktarget));
     if (n < 0 || n >= (int)sizeof(linktarget))
