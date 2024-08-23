@@ -67,6 +67,7 @@ __owur static int timeoutcmp(SSL_SESSION *a, SSL_SESSION *b)
             (_ss_)->timeout_ovf = 1; \
             (_ss_)->calc_timeout = (_ss_)->timeout - (time_t)overflow; \
         } else { \
+            (_ss_)->timeout_ovf = 0; \
             (_ss_)->calc_timeout = (_ss_)->time + (_ss_)->timeout; \
         } \
     } while (0)
