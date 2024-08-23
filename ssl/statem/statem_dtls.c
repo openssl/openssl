@@ -406,11 +406,11 @@ int dtls_get_message_body(SSL_CONNECTION *s, size_t *len)
     default:
         break;
     case DTLS13_MT_ACK:
-
         if (s->msg_callback)
             s->msg_callback(0, s->version, SSL3_RT_ACK,
                             s->init_buf->data, s->init_num,
                             SSL_CONNECTION_GET_SSL(s), s->msg_callback_arg);
+        /* fallthrough */
     case SSL3_MT_CHANGE_CIPHER_SPEC:
         /* Nothing to be done */
         goto end;
@@ -494,7 +494,6 @@ void add_record_to_ack_list(SSL_CONNECTION *sc, uint64_t epoch, uint64_t sequenc
 
     if (!ossl_assert(rec_num_idx < DTLS_ACK_REC_NUM_LEN))
         return;
-
 
     sc->d1->ack_rec_num[rec_num_idx].epoch = epoch;
     sc->d1->ack_rec_num[rec_num_idx].seqnum = sequence;
@@ -640,7 +639,7 @@ static int dtls1_reassemble_fragment(SSL_CONNECTION *s,
     }
 
     /* Try to find item in queue */
-    item = pqueue_find_ex(&s->d1->rcvd_messages, msg_hdr->seq);
+    item = pqueue_find_u64(&s->d1->rcvd_messages, msg_hdr->seq);
 
     if (item == NULL) {
         frag = dtls1_hm_fragment_new(msg_hdr->msg_len, 1);
@@ -698,14 +697,14 @@ static int dtls1_reassemble_fragment(SSL_CONNECTION *s,
         frag->reassembly = NULL;
 
     if (item == NULL) {
-        item = pitem_new_ex(msg_hdr->seq, frag);
+        item = pitem_new_u64(msg_hdr->seq, frag);
         if (item == NULL)
             goto err;
 
         item = pqueue_insert(&s->d1->rcvd_messages, item);
         /*
          * pqueue_insert fails iff a duplicate item is inserted. However,
-         * |item| cannot be a duplicate. If it were, |pqueue_find_ex|, above,
+         * |item| cannot be a duplicate. If it were, |pqueue_find_u64|, above,
          * would have returned it and control would never have reached this
          * branch.
          */
@@ -738,7 +737,7 @@ static int dtls1_process_out_of_seq_message(SSL_CONNECTION *s,
         goto err;
 
     /* Try to find item in queue, to prevent duplicate entries */
-    item = pqueue_find_ex(&s->d1->rcvd_messages, msg_hdr->seq);
+    item = pqueue_find_u64(&s->d1->rcvd_messages, msg_hdr->seq);
 
     /*
      * If we already have an entry and this one is a fragment, don't discard
@@ -792,7 +791,7 @@ static int dtls1_process_out_of_seq_message(SSL_CONNECTION *s,
                 goto err;
         }
 
-        item = pitem_new_ex(msg_hdr->seq, frag);
+        item = pitem_new_u64(msg_hdr->seq, frag);
         if (item == NULL)
             goto err;
 
@@ -1108,7 +1107,7 @@ CON_FUNC_RETURN dtls_construct_ack(SSL_CONNECTION *s, WPACKET *pkt) {
          * is equal to or higher than the record which is being acknowledged
          */
         if (epoch <= dtls1_get_epoch(s, SSL3_CC_WRITE))
-            if(!WPACKET_put_bytes_u64(pkt, epoch)
+            if (!WPACKET_put_bytes_u64(pkt, epoch)
                     || !WPACKET_put_bytes_u64(pkt, sequence_number)) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 return CON_FUNC_ERROR;
@@ -1156,7 +1155,7 @@ MSG_PROCESS_RETURN dtls_process_ack(SSL_CONNECTION *s, PACKET *pkt)
 
         if (!PACKET_get_net_8(&record_numbers, &epoch)
                 || !PACKET_get_net_8(&record_numbers, &sequence_number)) {
-            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_LENGTH_TOO_LONG);
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_TOO_SHORT);
             return MSG_PROCESS_ERROR;
         }
 

@@ -12,7 +12,7 @@
 #include "../record_local.h"
 #include "recmethod_local.h"
 
-/* mod 128 saturating subtract of two 64-bit values in big-endian order */
+/* mod 128 saturating subtract of two 64-bit values */
 static int satsub64be(uint64_t l1, uint64_t l2)
 {
     int64_t ret = l1 - l2;
@@ -35,11 +35,10 @@ static int dtls_record_replay_check(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
 {
     int cmp;
     unsigned int shift;
-    const uint64_t seq = rl->sequence;
 
-    cmp = satsub64be(seq, bitmap->max_seq_num);
+    cmp = satsub64be(rl->sequence, bitmap->max_seq_num);
     if (cmp > 0) {
-        rl->rrec[0].seq_num = seq;
+        rl->rrec[0].seq_num = rl->sequence;
         return 1;               /* this record in new */
     }
     shift = -cmp;
@@ -48,7 +47,7 @@ static int dtls_record_replay_check(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
     else if (bitmap->map & ((uint64_t)1 << shift))
         return 0;               /* record previously received */
 
-    rl->rrec[0].seq_num = seq;
+    rl->rrec[0].seq_num = rl->sequence;
     return 1;
 }
 
@@ -56,16 +55,15 @@ static void dtls_record_bitmap_update(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap
 {
     int cmp;
     unsigned int shift;
-    const uint64_t seq = rl->sequence;
 
-    cmp = satsub64be(seq, bitmap->max_seq_num);
+    cmp = satsub64be(rl->sequence, bitmap->max_seq_num);
     if (cmp > 0) {
         shift = cmp;
         if (shift < sizeof(bitmap->map) * 8)
             bitmap->map <<= shift, bitmap->map |= 1UL;
         else
             bitmap->map = 1UL;
-        bitmap->max_seq_num = seq;
+        bitmap->max_seq_num = rl->sequence;
     } else {
         shift = -cmp;
         if (shift < sizeof(bitmap->map) * 8)
@@ -282,7 +280,7 @@ static int dtls_rlayer_buffer_record(OSSL_RECORD_LAYER *rl, struct pqueue_st *qu
         return 0;
 
     rdata = OPENSSL_malloc(sizeof(*rdata));
-    item = pitem_new_ex(priority, rdata);
+    item = pitem_new_u64(priority, rdata);
     if (rdata == NULL || item == NULL) {
         OPENSSL_free(rdata);
         pitem_free(item);

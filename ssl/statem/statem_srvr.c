@@ -171,7 +171,7 @@ static int ossl_statem_server13_read_transition(SSL_CONNECTION *s, int mt)
             return 1;
         }
 
-        if (mt == DTLS13_MT_ACK) { /*TODO: Delete?*/
+        if (mt == DTLS13_MT_ACK) { /*TODO(DTLSv1.3): Delete?*/
             st->hand_state = TLS_ST_SR_ACK;
             return 1;
         }
@@ -584,7 +584,7 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
              * handshake at this point.
              */
             if (SSL_CONNECTION_IS_DTLS13(s)) {
-                st->defered_ack_state = TLS_ST_OK;
+                st->deferred_ack_state = TLS_ST_OK;
                 st->hand_state = TLS_ST_SW_ACK;
             } else
                 st->hand_state = TLS_ST_OK;
@@ -597,7 +597,7 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
             next_state = TLS_ST_OK;
 
         if (SSL_CONNECTION_IS_DTLS13(s)) {
-            st->defered_ack_state = next_state;
+            st->deferred_ack_state = next_state;
             st->hand_state = TLS_ST_SW_ACK;
         } else {
             st->hand_state = next_state;
@@ -606,7 +606,7 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
 
     case TLS_ST_SR_KEY_UPDATE:
         if (SSL_CONNECTION_IS_DTLS13(s)) {
-            st->defered_ack_state = TLS_ST_OK;
+            st->deferred_ack_state = TLS_ST_OK;
             st->hand_state = TLS_ST_SW_ACK;
             return WRITE_TRAN_CONTINUE;
         }
@@ -637,7 +637,7 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_SW_ACK:
-        st->hand_state = st->defered_ack_state;
+        st->hand_state = st->deferred_ack_state;
 
         return WRITE_TRAN_CONTINUE;
     }
