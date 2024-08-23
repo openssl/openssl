@@ -194,6 +194,7 @@ static int ecx_get_ctx_params(ossl_unused void *vctx, OSSL_PARAM params[])
     int approved = 0;
     OSSL_PARAM *p = OSSL_PARAM_locate(params,
                                       OSSL_ALG_PARAM_FIPS_APPROVED_INDICATOR);
+
     if (p != NULL && !OSSL_PARAM_set_int(p, approved))
         return 0;
 #endif
