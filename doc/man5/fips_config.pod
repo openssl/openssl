@@ -78,7 +78,7 @@ It is written-to at the same time as B<install-status> is updated.
 
 =head2 FIPS indicator options
 
-The following FIPS configuration option indicates if run-time checks related to
+The following FIPS configuration options indicate if run-time checks related to
 enforcement of FIPS security parameters such as minimum security strength of
 keys and approved curve names are used.
 A value of '1' will perform the checks, otherwise if the value is '0' the checks

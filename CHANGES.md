@@ -42,6 +42,13 @@ OpenSSL 3.4
    the approved status can be queried using an algorithm context getter.
    FIPS provider configuration options are set using 'openssl fipsinstall'.
 
+   Note that new FIPS 140-3 restrictions have been enforced such as
+   RSA Encryption using PKCS1 padding is no longer approved.
+   Documentation related to the changes can be found on the [fips_module(7)]
+   manual page.
+
+   [fips_module(7)]: https://docs.openssl.org/master/man7/fips_module/#FIPS indicators
+
    *Shane Lontis, Paul Dale and Po-Hsing Wu*
 
  * Add debuginfo Makefile target for unix platforms to produce
