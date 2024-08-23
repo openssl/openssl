@@ -390,8 +390,9 @@ static int dsa_sign_message_final(void *vpdsactx, unsigned char *sig,
      */
     if (sig != NULL) {
         /*
-         * There is the possibility that some externally provided
-         * digests exceed EVP_MAX_MD_SIZE. We should probably handle that
+         * When this function is used through dsa_digest_sign_final(),
+         * there is the possibility that some externally provided digests
+         * exceed EVP_MAX_MD_SIZE. We should probably handle that
          * somehow but that problem is much larger than just in DSA.
          */
         if (!EVP_DigestFinal_ex(pdsactx->mdctx, digest, &dlen))
@@ -996,7 +997,7 @@ static int dsa_sigalg_set_ctx_params(void *vpdsactx, const OSSL_PARAM params[])
     dsa_##md##_sign_init(void *vpdsactx, void *vdsa,                    \
                          const OSSL_PARAM params[])                     \
     {                                                                   \
-        static const char desc[] = "DSA Sigalg Sign Init";              \
+        static const char desc[] = "DSA-" #MD " Sign Init";             \
                                                                         \
         return dsa_sigalg_signverify_init(vpdsactx, vdsa,               \
                                           dsa_sigalg_set_ctx_params,    \
@@ -1009,7 +1010,7 @@ static int dsa_sigalg_set_ctx_params(void *vpdsactx, const OSSL_PARAM params[])
     dsa_##md##_sign_message_init(void *vpdsactx, void *vdsa,            \
                                  const OSSL_PARAM params[])             \
     {                                                                   \
-        static const char desc[] = "DSA Sigalg Sign Message Init";      \
+        static const char desc[] = "DSA-" #MD " Sign Message Init";     \
                                                                         \
         return dsa_sigalg_signverify_init(vpdsactx, vdsa,               \
                                           dsa_sigalg_set_ctx_params,    \
@@ -1022,7 +1023,7 @@ static int dsa_sigalg_set_ctx_params(void *vpdsactx, const OSSL_PARAM params[])
     dsa_##md##_verify_init(void *vpdsactx, void *vdsa,                  \
                            const OSSL_PARAM params[])                   \
     {                                                                   \
-        static const char desc[] = "DSA Sigalg Verify Init";            \
+        static const char desc[] = "DSA-" #MD " Verify Init";           \
                                                                         \
         return dsa_sigalg_signverify_init(vpdsactx, vdsa,               \
                                           dsa_sigalg_set_ctx_params,    \
@@ -1035,7 +1036,7 @@ static int dsa_sigalg_set_ctx_params(void *vpdsactx, const OSSL_PARAM params[])
     dsa_##md##_verify_message_init(void *vpdsactx, void *vdsa,          \
                                    const OSSL_PARAM params[])           \
     {                                                                   \
-        static const char desc[] = "DSA Sigalg Verify Message Init";    \
+        static const char desc[] = "DSA-" #MD " Verify Message Init";   \
                                                                         \
         return dsa_sigalg_signverify_init(vpdsactx, vdsa,               \
                                           dsa_sigalg_set_ctx_params,    \
