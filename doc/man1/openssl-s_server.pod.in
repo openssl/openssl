@@ -73,6 +73,7 @@ B<openssl> B<s_server>
 [B<-no_etm>]
 [B<-no_ems>]
 [B<-status>]
+[B<-status_server_only>]
 [B<-status_verbose>]
 [B<-status_timeout> I<int>]
 [B<-proxy> I<[http[s]://][userinfo@]host[:port][/path][?query][#fragment]>]
@@ -511,6 +512,12 @@ Enables certificate status request support (aka OCSP stapling). For TLSv1.3
 status responses for all certificates in the chain (except the trust anchor)
 are provided (multiple stapling). Before TLSv1.3 only the status response
 for the leaf (server) certificate is provided.
+
+=item B<-status_server_only>
+
+Enables certificate status request support (aka OCSP stapling).
+Only the status response for the leaf (server) certificate is provided
+(regardless of the TLS version).
 
 =item B<-status_verbose>
 
