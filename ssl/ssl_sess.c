@@ -69,7 +69,7 @@ void ssl_session_calculate_timeout(SSL_SESSION *ss)
 #endif
         overflow = (uint64_t)tmax - (uint64_t)ss->time;
         if (ss->timeout > (time_t)overflow) {
-            ss->timeout_ovf |= 1;
+            ss->timeout_ovf = 1;
             ss->calc_timeout = ss->timeout - (time_t)overflow;
         } else {
             ss->calc_timeout = ss->time + ss->timeout;
@@ -83,7 +83,7 @@ void ssl_session_calculate_timeout(SSL_SESSION *ss)
         overflow = (uint32_t)tmax - (uint32_t)ss->time;
 
         if (ss->timeout > (time_t)overflow) {
-            ss->timeout_ovf |= 1;
+            ss->timeout_ovf = 1;
             ss->calc_timeout = ss->timeout - (time_t)overflow;
         } else {
             ss->calc_timeout = ss->time + ss->timeout;
