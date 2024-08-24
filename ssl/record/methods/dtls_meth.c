@@ -483,15 +483,6 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
             rl->msg_callback(0, rr->rec_version, SSL3_RT_HEADER, rl->packet, DTLS1_RT_HEADER_LENGTH,
                              rl->cbarg);
 
-        if (rl->sn_enc_ctx != NULL
-                && !dtls_crypt_sequence_number(&(rl->sequence[2]), 6,
-                                               rl->sn_enc_ctx, rl->packet + 13)) {
-            /* unexpected version, silently discard */
-            rr->length = 0;
-            rl->packet_length = 0;
-            goto again;
-        }
-
         /*
          * Lets check the version. We tolerate alerts that don't have the exact
          * version number (e.g. because of protocol version errors)
@@ -562,6 +553,23 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
     }
     /* set state for later operations */
     rl->rstate = SSL_ST_READ_HEADER;
+
+    /*
+     * rfc9147:
+     * This procedure requires the ciphertext length to be at least 16 bytes.
+     * Receivers MUST reject shorter records as if they had failed deprotection
+     * TODO(DTLSv1.3): This check will need to be modified when support for variable
+     * length headers is added.
+     */
+    if (rl->sn_enc_ctx != NULL
+            && (rl->packet_length >= DTLS1_RT_HEADER_LENGTH + 16)
+            && !dtls_crypt_sequence_number(&(rl->sequence[2]), 6, rl->sn_enc_ctx,
+                                           rl->packet + DTLS1_RT_HEADER_LENGTH)) {
+        /* sequence number encryption failed dump record */
+        rr->length = 0;
+        rl->packet_length = 0;
+        goto again;
+    }
 
     /* match epochs.  NULL means the packet is dropped on the floor */
     bitmap = dtls_get_bitmap(rl, rr, &is_next_epoch);
