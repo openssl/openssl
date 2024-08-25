@@ -17,8 +17,7 @@
 #include "crypto/ecx.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
-#include "prov/fipsindicator.h"
-#include "prov/fipscommon.h"
+#include "prov/securitycheck.h"
 
 static OSSL_FUNC_keyexch_newctx_fn x25519_newctx;
 static OSSL_FUNC_keyexch_newctx_fn x448_newctx;
