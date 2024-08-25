@@ -35,6 +35,8 @@ static OSSL_FUNC_digest_final_fn keccak_final;
 static OSSL_FUNC_digest_freectx_fn keccak_freectx;
 static OSSL_FUNC_digest_dupctx_fn keccak_dupctx;
 static OSSL_FUNC_digest_squeeze_fn shake_squeeze;
+static OSSL_FUNC_digest_get_ctx_params_fn shake_get_ctx_params;
+static OSSL_FUNC_digest_gettable_ctx_params_fn shake_gettable_ctx_params;
 static OSSL_FUNC_digest_set_ctx_params_fn shake_set_ctx_params;
 static OSSL_FUNC_digest_settable_ctx_params_fn shake_settable_ctx_params;
 static sha3_absorb_fn generic_sha3_absorb;
@@ -525,6 +527,9 @@ const OSSL_DISPATCH ossl_##name##_functions[] = {                              \
     { OSSL_FUNC_DIGEST_SET_CTX_PARAMS, (void (*)(void))shake_set_ctx_params }, \
     { OSSL_FUNC_DIGEST_SETTABLE_CTX_PARAMS,                                    \
      (void (*)(void))shake_settable_ctx_params },                              \
+    { OSSL_FUNC_DIGEST_GET_CTX_PARAMS, (void (*)(void))shake_get_ctx_params }, \
+    { OSSL_FUNC_DIGEST_GETTABLE_CTX_PARAMS,                                    \
+     (void (*)(void))shake_gettable_ctx_params },                              \
     PROV_DISPATCH_FUNC_DIGEST_CONSTRUCT_END
 
 static void keccak_freectx(void *vctx)
@@ -545,13 +550,50 @@ static void *keccak_dupctx(void *ctx)
     return ret;
 }
 
-static const OSSL_PARAM known_shake_settable_ctx_params[] = {
-    {OSSL_DIGEST_PARAM_XOFLEN, OSSL_PARAM_UNSIGNED_INTEGER, NULL, 0, 0},
-    OSSL_PARAM_END
-};
+static const OSSL_PARAM *shake_gettable_ctx_params(ossl_unused void *ctx,
+                                                   ossl_unused void *provctx)
+{
+    static const OSSL_PARAM known_shake_gettable_ctx_params[] = {
+        {OSSL_DIGEST_PARAM_XOFLEN, OSSL_PARAM_UNSIGNED_INTEGER, NULL, 0, 0},
+        {OSSL_DIGEST_PARAM_SIZE, OSSL_PARAM_UNSIGNED_INTEGER, NULL, 0, 0},
+        OSSL_PARAM_END
+    };
+    return known_shake_gettable_ctx_params;
+}
+
+static int shake_get_ctx_params(void *vctx, OSSL_PARAM params[])
+{
+    OSSL_PARAM *p;
+    KECCAK1600_CTX *ctx = (KECCAK1600_CTX *)vctx;
+
+    if (ctx == NULL)
+        return 0;
+    if (params == NULL)
+        return 1;
+
+    p = OSSL_PARAM_locate(params, OSSL_DIGEST_PARAM_XOFLEN);
+    if (p != NULL && !OSSL_PARAM_set_size_t(p, ctx->md_size)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
+        return 0;
+    }
+    /* Size is an alias of xoflen */
+    p = OSSL_PARAM_locate(params, OSSL_DIGEST_PARAM_SIZE);
+    if (p != NULL && !OSSL_PARAM_set_size_t(p, ctx->md_size)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
+        return 0;
+    }
+    return 1;
+}
+
 static const OSSL_PARAM *shake_settable_ctx_params(ossl_unused void *ctx,
                                                    ossl_unused void *provctx)
 {
+    static const OSSL_PARAM known_shake_settable_ctx_params[] = {
+        {OSSL_DIGEST_PARAM_XOFLEN, OSSL_PARAM_UNSIGNED_INTEGER, NULL, 0, 0},
+        {OSSL_DIGEST_PARAM_SIZE, OSSL_PARAM_UNSIGNED_INTEGER, NULL, 0, 0},
+        OSSL_PARAM_END
+    };
+
     return known_shake_settable_ctx_params;
 }
 
@@ -566,6 +608,9 @@ static int shake_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         return 1;
 
     p = OSSL_PARAM_locate_const(params, OSSL_DIGEST_PARAM_XOFLEN);
+    if (p == NULL)
+        p = OSSL_PARAM_locate_const(params, OSSL_DIGEST_PARAM_SIZE);
+
     if (p != NULL && !OSSL_PARAM_get_size_t(p, &ctx->md_size)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
         return 0;
@@ -589,8 +634,8 @@ static int shake_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     SHAKE_newctx(shake, SHAKE_##bitlen, shake_##bitlen, bitlen,                \
                  0 /* no default md length */, '\x1f')                         \
     PROV_FUNC_SHAKE_DIGEST(shake_##bitlen, bitlen,                             \
-                          SHA3_BLOCKSIZE(bitlen), 0,                           \
-                          SHAKE_FLAGS)
+                           SHA3_BLOCKSIZE(bitlen), 0,                          \
+                           SHAKE_FLAGS)
 
 #define IMPLEMENT_KMAC_functions(bitlen)                                       \
     KMAC_newctx(keccak_kmac_##bitlen, bitlen, '\x04')                          \

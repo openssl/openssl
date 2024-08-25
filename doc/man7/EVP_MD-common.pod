@@ -48,7 +48,7 @@ This value can also be retrieved with L<EVP_MD_get_flags(3)>.
 
 =head1 SEE ALSO
 
-L<EVP_MD_get_params(3)>, L<provider-digest(7)>
+L<EVP_DigestInit(3)/PARAMETERS>, L<EVP_MD_get_params(3)>, L<provider-digest(7)>
 
 =head1 COPYRIGHT
 
