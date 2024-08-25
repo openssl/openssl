@@ -315,6 +315,7 @@ void ossl_ctx_thread_stop(OSSL_LIB_CTX *ctx)
     hands = init_get_thread_local(local, 0, 0);
     init_thread_stop(ctx, hands);
     OPENSSL_free(hands);
+    CRYPTO_THREAD_cleanup_local(local);
 }
 #endif /* FIPS_MODULE */
 
