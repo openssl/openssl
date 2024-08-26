@@ -188,6 +188,14 @@ Specifies a QUIC qlog output directory. See L<openssl-qlog(7)>.
 
 Used to set a QUIC qlog filter specification. See L<openssl-qlog(7)>.
 
+=item B<SSLKEYLOGFILE>
+
+Used to produce the standard format output file for SSL key logging.  Optionally
+set this variable to a filename to log all secrets produced by SSL connections.
+Note, use of the environment variable is predicated on configuring OpenSSL at
+build time with the enable-sslkeylog feature.  The file format standard can be
+found at L<https://datatracker.ietf.org/doc/draft-ietf-tls-keylogfile/>
+
 =back
 
 =head1 COPYRIGHT
