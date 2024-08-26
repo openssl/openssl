@@ -27,6 +27,7 @@
 #include "internal/cryptlib.h"
 #include "internal/nelem.h"
 #include "internal/refcount.h"
+#include "internal/thread_once.h"
 #include "internal/ktls.h"
 #include "internal/to_hex.h"
 #include "quic/quic_local.h"
@@ -3849,6 +3850,55 @@ static int ssl_session_cmp(const SSL_SESSION *a, const SSL_SESSION *b)
     return memcmp(a->session_id, b->session_id, a->session_id_length);
 }
 
+#ifndef OPENSSL_NO_SSLKEYLOG
+/**
+ * @brief Static initialization for a one-time action to initialize the SSL key log.
+ */
+static CRYPTO_ONCE ssl_keylog_once = CRYPTO_ONCE_STATIC_INIT;
+
+/**
+ * @brief Pointer to a read-write lock used to protect access to the key log.
+ */
+static CRYPTO_RWLOCK *keylog_lock = NULL;
+
+/**
+ * @brief Pointer to a BIO structure used for writing the key log information.
+ */
+static BIO *keylog_bio = NULL;
+
+/**
+ * @brief Ref counter tracking the number of keylog_bio users.
+ */
+static unsigned int keylog_count = 0;
+
+/**
+ * @brief Initializes the SSLKEYLOGFILE lock.
+ *
+ * @return 1 on success, 0 on failure.
+ */
+DEFINE_RUN_ONCE_STATIC(ssl_keylog_init)
+{
+    keylog_lock = CRYPTO_THREAD_lock_new();
+    if (keylog_lock == NULL)
+        return 0;
+    return 1;
+}
+
+static void sslkeylogfile_cb(const SSL *ssl, const char *line)
+{
+    if (keylog_lock == NULL)
+        return;
+
+    if (!CRYPTO_THREAD_write_lock(keylog_lock))
+        return;
+    if (keylog_bio != NULL) {
+        BIO_printf(keylog_bio, "%s\n", line);
+        (void)BIO_flush(keylog_bio);
+    }
+    CRYPTO_THREAD_unlock(keylog_lock);
+}
+#endif
+
 /*
  * These wrapper functions should remain rather than redeclaring
  * SSL_SESSION_hash and SSL_SESSION_cmp for void* types and casting each
@@ -3860,6 +3910,9 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
                         const SSL_METHOD *meth)
 {
     SSL_CTX *ret = NULL;
+#ifndef OPENSSL_NO_SSLKEYLOG
+    const char *keylogfile = ossl_safe_getenv("SSLKEYLOGFILE");
+#endif
 #ifndef OPENSSL_NO_COMP_ALG
     int i;
 #endif
@@ -4120,6 +4173,43 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
         goto err;
     }
 
+#ifndef OPENSSL_NO_SSLKEYLOG
+    if (keylogfile != NULL && strlen(keylogfile) != 0) {
+        /* Make sure we have a global lock allocated */
+        if (!RUN_ONCE(&ssl_keylog_once, ssl_keylog_init)) {
+            /* log an error, but don't fail here */
+            ERR_raise(ERR_LIB_SSL, ERR_R_SSL_LIB);
+            goto err;
+        }
+
+        /* Grab out global lock */
+        if (!CRYPTO_THREAD_write_lock(keylog_lock)) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_SSL_LIB);
+        } else {
+            /*
+             * If the bio for the requested keylog file hasn't been
+             * created yet, go ahead and create it, and set it to append
+             * if its already there.
+             */
+            if (keylog_bio == NULL) {
+                keylog_bio = BIO_new_file(keylogfile, "a");
+                if (keylog_bio == NULL)
+                    ERR_raise(ERR_LIB_SSL, ERR_R_SSL_LIB);
+                else
+                    /* up our ref count for the newly created case */
+                    keylog_count++;
+            } else {
+                /* up our refcount for the already-created case */
+                keylog_count++;
+            }
+            /* If we have a bio now, assign the callback handler */
+            if (keylog_bio != NULL)
+                ret->sslkeylog_callback = sslkeylogfile_cb;
+            /* unlock, and we're done */
+            CRYPTO_THREAD_unlock(keylog_lock);
+        }
+    }
+#endif
     return ret;
  err:
     SSL_CTX_free(ret);
@@ -4156,6 +4246,20 @@ void SSL_CTX_free(SSL_CTX *a)
     if (i > 0)
         return;
     REF_ASSERT_ISNT(i < 0);
+
+#ifndef OPENSSL_NO_SSLKEYLOG
+    if (keylog_lock != NULL && CRYPTO_THREAD_write_lock(keylog_lock)) {
+        if (a->sslkeylog_callback != NULL)
+            keylog_count--;
+        a->sslkeylog_callback = NULL;
+        /* If we're the last user, close the bio */
+        if (keylog_count == 0) {
+            BIO_free(keylog_bio);
+            keylog_bio = NULL;
+        }
+        CRYPTO_THREAD_unlock(keylog_lock);
+    }
+#endif
 
     X509_VERIFY_PARAM_free(a->param);
     dane_ctx_final(&a->dane);
@@ -6750,8 +6854,13 @@ static int nss_keylog_int(const char *prefix,
     size_t out_len = 0, i, prefix_len;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(sc);
 
+#ifndef OPENSSL_NO_SSLKEYLOG
+    if (sctx->keylog_callback == NULL && sctx->sslkeylog_callback == NULL)
+        return 1;
+#else
     if (sctx->keylog_callback == NULL)
         return 1;
+#endif
 
     /*
      * Our output buffer will contain the following strings, rendered with
@@ -6778,7 +6887,12 @@ static int nss_keylog_int(const char *prefix,
         cursor += ossl_to_lowerhex(cursor, parameter_2[i]);
     *cursor = '\0';
 
-    sctx->keylog_callback(SSL_CONNECTION_GET_SSL(sc), (const char *)out);
+#ifndef OPENSSL_NO_SSLKEYLOG
+    if (sctx->sslkeylog_callback != NULL)
+        sctx->sslkeylog_callback(SSL_CONNECTION_GET_SSL(sc), (const char *)out);
+#endif
+    if (sctx->keylog_callback != NULL)
+        sctx->keylog_callback(SSL_CONNECTION_GET_SSL(sc), (const char *)out);
     OPENSSL_clear_free(out, out_len);
     return 1;
 }
