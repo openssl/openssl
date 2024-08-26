@@ -603,7 +603,8 @@ static int ed25519_digest_signverify_init(void *vpeddsactx, const char *mdname,
     PROV_EDDSA_CTX *peddsactx = (PROV_EDDSA_CTX *)vpeddsactx;
 
     if (mdname != NULL && mdname[0] != '\0') {
-        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST);
+        ERR_raise_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST,
+                        "Explicit digest not allowed with EdDSA operations");
         return 0;
     }
 
@@ -636,7 +637,8 @@ static int ed448_digest_signverify_init(void *vpeddsactx, const char *mdname,
     PROV_EDDSA_CTX *peddsactx = (PROV_EDDSA_CTX *)vpeddsactx;
 
     if (mdname != NULL && mdname[0] != '\0') {
-        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST);
+        ERR_raise_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST,
+                        "Explicit digest not allowed with EdDSA operations");
         return 0;
     }
 
@@ -820,25 +822,25 @@ eddsa_settable_variant_ctx_params(ossl_unused void *vpeddsactx,
 }
 
 /*
- * Ed25519 can be used using:
+ * Ed25519 can be used with:
  * - EVP_PKEY_sign_message_init()
  * - EVP_PKEY_verify_message_init()
  * - EVP_DigestSignInit_ex()
  * - EVP_DigestVerifyInit_ex()
- * Ed25519ph can be used using:
+ * Ed25519ph can be used with:
  * - EVP_PKEY_sign_init_ex2()   [ prehash assumed done by caller ]
  * - EVP_PKEY_verify_init_ex2() [ prehash assumed done by caller ]
  * - EVP_PKEY_sign_message_init()
  * - EVP_PKEY_verify_message_init()
- * Ed25519ctx can be used using:
+ * Ed25519ctx can be used with:
  * - EVP_PKEY_sign_message_init()
  * - EVP_PKEY_verify_message_init()
- * Ed448 can be used using:
+ * Ed448 can be used with:
  * - EVP_PKEY_sign_message_init()
  * - EVP_PKEY_verify_message_init()
  * - EVP_DigestSignInit_ex()
  * - EVP_DigestVerifyInit_ex()
- * Ed448ph can be used using:
+ * Ed448ph can be used with:
  * - EVP_PKEY_sign_init_ex2()   [ prehash assumed done by caller ]
  * - EVP_PKEY_verify_init_ex2() [ prehash assumed done by caller ]
  * - EVP_PKEY_sign_message_init()
@@ -878,12 +880,14 @@ eddsa_settable_variant_ctx_params(ossl_unused void *vpeddsactx,
     { OSSL_FUNC_SIGNATURE_SETTABLE_CTX_PARAMS,                          \
         (void (*)(void))eddsa_settable_variant_ctx_params },            \
     OSSL_DISPATCH_END
+
 #define ed25519ph_DISPATCH_END                                          \
     { OSSL_FUNC_SIGNATURE_SIGN_INIT,                                    \
         (void (*)(void))ed25519ph_signverify_init },                    \
     { OSSL_FUNC_SIGNATURE_VERIFY_INIT,                                  \
         (void (*)(void))ed25519ph_signverify_init },                    \
     eddsa_variant_DISPATCH_END(ed25519ph)
+
 #define ed25519ctx_DISPATCH_END eddsa_variant_DISPATCH_END(ed25519ctx)
 
 #define ed448_DISPATCH_END                                              \
