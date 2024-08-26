@@ -78,11 +78,11 @@ int ossl_rsa_padding_add_PKCS1_OAEP_mgf1_ex(OSSL_LIB_CTX *libctx,
 
 #ifdef FIPS_MODULE
     /* XOF are approved as standalone; Shake256 in Ed448; MGF */
-    if ((EVP_MD_get_flags(md) & EVP_MD_FLAG_XOF) != 0) {
+    if (EVP_MD_xof(md)) {
         ERR_raise(ERR_LIB_RSA, RSA_R_DIGEST_NOT_ALLOWED);
         return 0;
     }
-    if ((EVP_MD_get_flags(mgf1md) & EVP_MD_FLAG_XOF) != 0) {
+    if (EVP_MD_xof(mgf1md)) {
         ERR_raise(ERR_LIB_RSA, RSA_R_MGF1_DIGEST_NOT_ALLOWED);
         return 0;
     }
@@ -196,11 +196,11 @@ int RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
 
 #ifdef FIPS_MODULE
     /* XOF are approved as standalone; Shake256 in Ed448; MGF */
-    if ((EVP_MD_get_flags(md) & EVP_MD_FLAG_XOF) != 0) {
+    if (EVP_MD_xof(md)) {
         ERR_raise(ERR_LIB_RSA, RSA_R_DIGEST_NOT_ALLOWED);
         return -1;
     }
-    if ((EVP_MD_get_flags(mgf1md) & EVP_MD_FLAG_XOF) != 0) {
+    if (EVP_MD_xof(mgf1md)) {
         ERR_raise(ERR_LIB_RSA, RSA_R_MGF1_DIGEST_NOT_ALLOWED);
         return -1;
     }
@@ -360,7 +360,7 @@ int PKCS1_MGF1(unsigned char *mask, long len,
     if (c == NULL)
         goto err;
     mdlen = EVP_MD_get_size(dgst);
-    if (mdlen < 0)
+    if (mdlen <= 0)
         goto err;
     /* step 4 */
     for (i = 0; outlen < len; i++) {
