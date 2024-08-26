@@ -915,11 +915,8 @@ int ossl_rsa_check_factors(RSA *r)
     STACK_OF(BIGNUM_const) *exps = sk_BIGNUM_const_new_null();
     STACK_OF(BIGNUM_const) *coeffs = sk_BIGNUM_const_new_null();
 
-    if (factors == NULL || exps == NULL || coeffs == NULL) {
-        ERR_raise_data(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE,
-                       "ossl_rsa_check_factors() could not allocate memory\n");
+    if (factors == NULL || exps == NULL || coeffs == NULL)
         goto done;
-    }
 
     /*
      * Simple sanity check for RSA key. All RSA key parameters
