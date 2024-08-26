@@ -432,7 +432,8 @@ static int ed25519_sign(void *vpeddsactx,
         }
     } else if (peddsactx->prehash_by_caller_flag) {
         /* The caller is supposed to set up a ph instance! */
-        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_INSTANCE);
+        ERR_raise(ERR_LIB_PROV,
+                  PROV_R_INVALID_EDDSA_INSTANCE_FOR_ATTEMPTED_OPERATION);
         return 0;
     }
 
@@ -529,7 +530,8 @@ static int ed448_sign(void *vpeddsactx,
         }
     } else if (peddsactx->prehash_by_caller_flag) {
         /* The caller is supposed to set up a ph instance! */
-        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_INSTANCE);
+        ERR_raise(ERR_LIB_PROV,
+                  PROV_R_INVALID_EDDSA_INSTANCE_FOR_ATTEMPTED_OPERATION);
         return 0;
     }
 
@@ -587,7 +589,8 @@ static int ed25519_verify(void *vpeddsactx,
         }
     } else if (peddsactx->prehash_by_caller_flag) {
         /* The caller is supposed to set up a ph instance! */
-        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_INSTANCE);
+        ERR_raise(ERR_LIB_PROV,
+                  PROV_R_INVALID_EDDSA_INSTANCE_FOR_ATTEMPTED_OPERATION);
         return 0;
     }
 
@@ -635,7 +638,8 @@ static int ed448_verify(void *vpeddsactx,
         }
     } else if (peddsactx->prehash_by_caller_flag) {
         /* The caller is supposed to set up a ph instance! */
-        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_INSTANCE);
+        ERR_raise(ERR_LIB_PROV,
+                  PROV_R_INVALID_EDDSA_INSTANCE_FOR_ATTEMPTED_OPERATION);
         return 0;
     }
 
