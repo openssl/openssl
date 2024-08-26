@@ -46,7 +46,7 @@ int HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
      * The HMAC construction is not allowed to be used with the
      * extendable-output functions (XOF) shake128 and shake256.
      */
-    if ((EVP_MD_get_flags(md) & EVP_MD_FLAG_XOF) != 0)
+    if (EVP_MD_xof(md))
         return 0;
 
 #ifdef OPENSSL_HMAC_S390X
@@ -254,7 +254,7 @@ unsigned char *HMAC(const EVP_MD *evp_md, const void *key, int key_len,
     size_t temp_md_len = 0;
     unsigned char *ret = NULL;
 
-    if (size >= 0) {
+    if (size > 0) {
         ret = EVP_Q_mac(NULL, "HMAC", NULL, EVP_MD_get0_name(evp_md), NULL,
                         key, key_len, data, data_len,
                         md == NULL ? static_md : md, size, &temp_md_len);
