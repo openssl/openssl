@@ -99,7 +99,7 @@ static int sm2sig_set_mdname(PROV_SM2_CTX *psm2ctx, const char *mdname)
         return 0;
 
     /* XOF digests don't work */
-    if ((EVP_MD_get_flags(psm2ctx->md) & EVP_MD_FLAG_XOF) != 0) {
+    if (EVP_MD_xof(psm2ctx->md)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_XOF_DIGESTS_NOT_ALLOWED);
         return 0;
     }

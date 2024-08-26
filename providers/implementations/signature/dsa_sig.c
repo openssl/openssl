@@ -156,7 +156,7 @@ static int dsa_setup_md(PROV_DSA_CTX *ctx,
             goto err;
         }
         /* XOF digests don't work */
-        if ((EVP_MD_get_flags(md) & EVP_MD_FLAG_XOF) != 0) {
+        if (EVP_MD_xof(md)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_XOF_DIGESTS_NOT_ALLOWED);
             goto err;
         }

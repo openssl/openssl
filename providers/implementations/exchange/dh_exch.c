@@ -392,7 +392,7 @@ static int dh_set_ctx_params(void *vpdhctx, const OSSL_PARAM params[])
         if (pdhctx->kdf_md == NULL)
             return 0;
         /* XOF digests are not allowed */
-        if ((EVP_MD_get_flags(pdhctx->kdf_md) & EVP_MD_FLAG_XOF) != 0) {
+        if (EVP_MD_xof(pdhctx->kdf_md)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_XOF_DIGESTS_NOT_ALLOWED);
             return 0;
         }

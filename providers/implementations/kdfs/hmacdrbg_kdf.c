@@ -217,7 +217,7 @@ static int hmac_drbg_kdf_set_ctx_params(void *vctx,
         /* Confirm digest is allowed. Allow all digests that are not XOF */
         md = ossl_prov_digest_md(&drbg->digest);
         if (md != NULL) {
-            if ((EVP_MD_get_flags(md) & EVP_MD_FLAG_XOF) != 0) {
+            if (EVP_MD_xof(md)) {
                 ERR_raise(ERR_LIB_PROV, PROV_R_XOF_DIGESTS_NOT_ALLOWED);
                 return 0;
             }

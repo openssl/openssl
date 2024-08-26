@@ -397,7 +397,7 @@ static int rsa_setup_md(PROV_RSA_CTX *ctx, const char *mdname,
          * We don't support XOF digests with RSA PSS (yet), so just fail.
          * When we do support them, uncomment the second clause.
          */
-        if ((EVP_MD_get_flags(md) & EVP_MD_FLAG_XOF) != 0
+        if (EVP_MD_xof(md)
                 /* && ctx->pad_mode != RSA_PKCS1_PSS_PADDING */) {
             ERR_raise(ERR_LIB_PROV, PROV_R_XOF_DIGESTS_NOT_ALLOWED);
             goto err;
