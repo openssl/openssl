@@ -184,20 +184,7 @@ static int eddsa_setup_instance(void *vpeddsactx, int instance_id,
 {
     PROV_EDDSA_CTX *peddsactx = (PROV_EDDSA_CTX *)vpeddsactx;
 
- again:
     switch (instance_id) {
-    case ID_NOT_SET:
-        switch (peddsactx->key->type) {
-        case ECX_KEY_TYPE_ED25519:
-            instance_id = ID_Ed25519;
-            break;
-        case ECX_KEY_TYPE_ED448:
-            instance_id = ID_Ed448;
-            break;
-        default:
-            return 0;
-        }
-        goto again;
     case ID_Ed25519:
         if (peddsactx->key->type != ECX_KEY_TYPE_ED25519)
             return 0;
