@@ -256,8 +256,15 @@ static int b64_read(BIO *b, char *out, int outl)
                     /* All we have is newline terminated non-start data */
                     ctx->tmp_len = 0;
                 }
+                /*
+                 * Try to read more if possible, otherwise we can't make
+                 * progress unless the underlying BIO is retriable and may
+                 * produce more data next time we're called.
+                 */
                 if (again > 0)
                     continue;
+                else
+                    break;
             } else {
                 ctx->tmp_len = 0;
             }
