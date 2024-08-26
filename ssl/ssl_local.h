@@ -1100,6 +1100,16 @@ struct ssl_ctx_st {
     SSL_CTX_keylog_cb_func keylog_callback;
 
     /*
+     * Private callback for internal key logging based on SSLKEYLOG env
+     * We don't want to create a chaining mechanism as we're never sure
+     * if the application wants to set an additional callback or override
+     * the one set via SSLKEYLOGFILE, so we just keep them separate
+     */
+# ifndef OPENSSL_NO_SSLKEYLOG
+    SSL_CTX_keylog_cb_func sslkeylog_callback;
+# endif
+
+    /*
      * The maximum number of bytes advertised in session tickets that can be
      * sent as early data.
      */
