@@ -139,8 +139,7 @@ see L<openssl_user_macros(7)>:
 =head1 DESCRIPTION
 
 The EVP digest routines are a high-level interface to message digests, and
-Extendable Output Functions (XOF), which should be used instead of the
-digest-specific functions.
+Extendable Output Functions (XOF).
 
 The B<EVP_MD> type is a structure for digest method implementation.
 
@@ -854,6 +853,10 @@ The EVP_MD_CTX_dup() function was added in OpenSSL 3.1.
 The EVP_DigestSqueeze() function was added in OpenSSL 3.3.
 
 The EVP_MD_CTX_get_size_ex() and EVP_xof() functions were added in OpenSSL 3.4.
+The macros EVP_MD_CTX_get_size() and EVP_MD_CTX_size were changed in OpenSSL 3.4
+to be aliases for EVP_MD_CTX_get_size_ex(), previously they were aliases for
+EVP_MD_get_size which returned a constant value. This is required for XOF
+digests since they do not have a fixed size.
 
 =head1 COPYRIGHT
 

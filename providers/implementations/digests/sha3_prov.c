@@ -550,16 +550,15 @@ static void *keccak_dupctx(void *ctx)
     return ret;
 }
 
-static const OSSL_PARAM known_shake_settable_ctx_params[] = {
-    {OSSL_DIGEST_PARAM_XOFLEN, OSSL_PARAM_UNSIGNED_INTEGER, NULL, 0, 0},
-    {OSSL_DIGEST_PARAM_SIZE, OSSL_PARAM_UNSIGNED_INTEGER, NULL, 0, 0},
-    OSSL_PARAM_END
-};
-
 static const OSSL_PARAM *shake_gettable_ctx_params(ossl_unused void *ctx,
                                                    ossl_unused void *provctx)
 {
-    return known_shake_settable_ctx_params;
+    static const OSSL_PARAM known_shake_gettable_ctx_params[] = {
+        {OSSL_DIGEST_PARAM_XOFLEN, OSSL_PARAM_UNSIGNED_INTEGER, NULL, 0, 0},
+        {OSSL_DIGEST_PARAM_SIZE, OSSL_PARAM_UNSIGNED_INTEGER, NULL, 0, 0},
+        OSSL_PARAM_END
+    };
+    return known_shake_gettable_ctx_params;
 }
 
 static int shake_get_ctx_params(void *vctx, OSSL_PARAM params[])
@@ -573,8 +572,12 @@ static int shake_get_ctx_params(void *vctx, OSSL_PARAM params[])
         return 1;
 
     p = OSSL_PARAM_locate(params, OSSL_DIGEST_PARAM_XOFLEN);
-    if (p == NULL)
-        p = OSSL_PARAM_locate(params, OSSL_DIGEST_PARAM_SIZE);
+    if (p != NULL && !OSSL_PARAM_set_size_t(p, ctx->md_size)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
+        return 0;
+    }
+    /* Size is an alias of xoflen */
+    p = OSSL_PARAM_locate(params, OSSL_DIGEST_PARAM_SIZE);
     if (p != NULL && !OSSL_PARAM_set_size_t(p, ctx->md_size)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
         return 0;
@@ -585,6 +588,12 @@ static int shake_get_ctx_params(void *vctx, OSSL_PARAM params[])
 static const OSSL_PARAM *shake_settable_ctx_params(ossl_unused void *ctx,
                                                    ossl_unused void *provctx)
 {
+    static const OSSL_PARAM known_shake_settable_ctx_params[] = {
+        {OSSL_DIGEST_PARAM_XOFLEN, OSSL_PARAM_UNSIGNED_INTEGER, NULL, 0, 0},
+        {OSSL_DIGEST_PARAM_SIZE, OSSL_PARAM_UNSIGNED_INTEGER, NULL, 0, 0},
+        OSSL_PARAM_END
+    };
+
     return known_shake_settable_ctx_params;
 }
 
@@ -599,6 +608,9 @@ static int shake_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         return 1;
 
     p = OSSL_PARAM_locate_const(params, OSSL_DIGEST_PARAM_XOFLEN);
+    if (p == NULL)
+        p = OSSL_PARAM_locate_const(params, OSSL_DIGEST_PARAM_SIZE);
+
     if (p != NULL && !OSSL_PARAM_get_size_t(p, &ctx->md_size)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
         return 0;
