@@ -207,7 +207,7 @@ static int pkcs12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
 
     keylen = EVP_MD_get_size(md);
     md_nid = EVP_MD_get_type(md);
-    if (keylen < 0)
+    if (keylen <= 0)
         goto err;
 
     /* For PBMAC1 we use a special keygen callback if not provided (e.g. on verification) */

@@ -5726,6 +5726,8 @@ EVP_PKEY_verify_message_init            ?	3_4_0	EXIST::FUNCTION:
 EVP_PKEY_verify_message_update          ?	3_4_0	EXIST::FUNCTION:
 EVP_PKEY_verify_message_final           ?	3_4_0	EXIST::FUNCTION:
 EVP_PKEY_verify_recover_init_ex2        ?	3_4_0	EXIST::FUNCTION:
+EVP_MD_xof                              ?	3_4_0	EXIST::FUNCTION:
+EVP_MD_CTX_get_size_ex                  ?	3_4_0	EXIST::FUNCTION:
 EVP_CIPHER_CTX_set_algor_params         ?	3_4_0	EXIST::FUNCTION:
 EVP_CIPHER_CTX_get_algor_params         ?	3_4_0	EXIST::FUNCTION:
 EVP_CIPHER_CTX_get_algor                ?	3_4_0	EXIST::FUNCTION:
