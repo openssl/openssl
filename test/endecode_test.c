@@ -1032,8 +1032,10 @@ DOMAIN_KEYS(ECExplicitTri2G);
 IMPLEMENT_TEST_SUITE(ECExplicitTri2G, "EC", 0)
 IMPLEMENT_TEST_SUITE_LEGACY(ECExplicitTri2G, "EC")
 # endif
+# ifndef OPENSSL_NO_SM2
 KEYS(SM2);
 IMPLEMENT_TEST_SUITE(SM2, "SM2", 0)
+# endif
 KEYS(ED25519);
 IMPLEMENT_TEST_SUITE(ED25519, "ED25519", 1)
 KEYS(ED448);
@@ -1399,7 +1401,9 @@ int setup_tests(void)
     MAKE_DOMAIN_KEYS(ECExplicitTriNamedCurve, "EC", ec_explicit_tri_params_nc);
     MAKE_DOMAIN_KEYS(ECExplicitTri2G, "EC", ec_explicit_tri_params_explicit);
 # endif
+# ifndef OPENSSL_NO_SM2
     MAKE_KEYS(SM2, "SM2", NULL);
+#endif
     MAKE_KEYS(ED25519, "ED25519", NULL);
     MAKE_KEYS(ED448, "ED448", NULL);
     MAKE_KEYS(X25519, "X25519", NULL);
@@ -1446,7 +1450,9 @@ int setup_tests(void)
         ADD_TEST_SUITE(ECExplicitTri2G);
         ADD_TEST_SUITE_LEGACY(ECExplicitTri2G);
 # endif
+# ifndef OPENSSL_NO_SM2
         ADD_TEST_SUITE(SM2);
+#endif
         ADD_TEST_SUITE(ED25519);
         ADD_TEST_SUITE(ED448);
         ADD_TEST_SUITE(X25519);
@@ -1504,7 +1510,9 @@ void cleanup_tests(void)
     FREE_DOMAIN_KEYS(ECExplicitTriNamedCurve);
     FREE_DOMAIN_KEYS(ECExplicitTri2G);
 # endif
+# ifndef OPENSSL_NO_SM2
     FREE_KEYS(SM2);
+#endif
     FREE_KEYS(ED25519);
     FREE_KEYS(ED448);
     FREE_KEYS(X25519);

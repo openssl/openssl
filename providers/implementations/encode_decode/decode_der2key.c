@@ -316,10 +316,19 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
 
         params[0] =
             OSSL_PARAM_construct_int(OSSL_OBJECT_PARAM_TYPE, &object_type);
-        params[1] =
-            OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_TYPE,
-                                             (char *)ctx->desc->keytype_name,
-                                             0);
+
+#ifndef OPENSSL_NO_SM2
+        if (strcmp(ctx->desc->keytype_name, "EC") == 0
+            && (EC_KEY_get_flags(key) & EC_FLAG_SM2_RANGE) != 0)
+            params[1] =
+                OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_TYPE,
+                                                 "SM2", 0);
+        else
+#endif
+            params[1] =
+                OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_TYPE,
+                                                 (char *)ctx->desc->keytype_name,
+                                                 0);
         /* The address of the key becomes the octet string */
         params[2] =
             OSSL_PARAM_construct_octet_string(OSSL_OBJECT_PARAM_REFERENCE,
@@ -439,13 +448,12 @@ static void *ec_d2i_PKCS8(void **key, const unsigned char **der, long der_len,
 static int ec_check(void *key, struct der2key_ctx_st *ctx)
 {
     /* We're trying to be clever by comparing two truths */
-
     int ret = 0;
     int sm2 = (EC_KEY_get_flags(key) & EC_FLAG_SM2_RANGE) != 0;
 
-    if(sm2)
-        ret = ctx->desc->evp_type == EVP_PKEY_SM2 
-              || ctx->desc->evp_type == NID_X9_62_id_ecPublicKey;
+    if (sm2)
+        ret = ctx->desc->evp_type == EVP_PKEY_SM2
+            || ctx->desc->evp_type == NID_X9_62_id_ecPublicKey;
     else
         ret = ctx->desc->evp_type != EVP_PKEY_SM2;
 

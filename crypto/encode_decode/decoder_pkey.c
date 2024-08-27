@@ -22,7 +22,6 @@
 #include "encoder_local.h"
 #include "internal/namemap.h"
 #include "internal/sizes.h"
-#include "openssl/params.h"
 
 int OSSL_DECODER_CTX_set_passphrase(OSSL_DECODER_CTX *ctx,
                                     const unsigned char *kstr,
@@ -90,14 +89,10 @@ static int decoder_construct_pkey(OSSL_DECODER_INSTANCE *decoder_inst,
     void *object_ref = NULL;
     size_t object_ref_sz = 0;
     const OSSL_PARAM *p;
-    int ec_flag = 0;
 
     p = OSSL_PARAM_locate_const(params, OSSL_OBJECT_PARAM_DATA_TYPE);
     if (p != NULL) {
         char *object_type = NULL;
-
-        if(strcmp(p->data, "EC") == 0)
-            ec_flag = 1;
 
         if (!OSSL_PARAM_get_utf8_string(p, &object_type, 0))
             return 0;
@@ -115,23 +110,6 @@ static int decoder_construct_pkey(OSSL_DECODER_INSTANCE *decoder_inst,
         return 0;
     object_ref = p->data;
     object_ref_sz = p->data_size;
-
-    if(ec_flag == 1){
-        /* 
-         * When param has type "EC", we need an additional check to see if the 
-         * underlying curve is SM2. If it is SM2, we need to change the value 
-         * of data->object_type, so that we can locat the correct evp_keymgmt
-         * load function.
-         */
-        const EC_KEY* ec_object_ref = *(EC_KEY **)object_ref;
-        int curve_id = EC_GROUP_get_curve_name(EC_KEY_get0_group(ec_object_ref));
-        if(curve_id == NID_sm2){
-            OPENSSL_free(data->object_type);
-            const char* k_sm2_object_type = "SM2\0";
-            data->object_type = OPENSSL_malloc(strlen(k_sm2_object_type));
-            memcpy(data->object_type, k_sm2_object_type, strlen(k_sm2_object_type));
-        }
-    }
 
     /*
      * First, we try to find a keymgmt that comes from the same provider as
