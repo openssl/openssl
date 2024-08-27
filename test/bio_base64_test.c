@@ -108,7 +108,7 @@ static int memoutws(BIO *mem, char c, unsigned wscnt, unsigned llen, int *pos)
 }
 
 /*
- * Encode an octent string in base64, approximately `llen` bytes per line,
+ * Encode an octet string in base64, approximately `llen` bytes per line,
  * with up to roughly `wscnt` additional space characters inserted at random
  * before some of the base64 code points.
  */
