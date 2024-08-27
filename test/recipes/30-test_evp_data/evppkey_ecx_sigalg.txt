@@ -503,7 +503,7 @@ Output = 98a70222f0b8121aa9d30f813d683f809e462b469c7ff87639499bb94e6dae4131f8504
 
 # Same as the Sign above, but using the plain ED25519 with an instance set
 # through controls
-FIPSversion = >=3.2.0
+FIPSversion = >=3.4.0
 Sign = Ed25519:EDDSA-TV-10-Raw
 Ctrl = instance:Ed25519ph
 Input = ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f
@@ -512,7 +512,7 @@ Output = 98a70222f0b8121aa9d30f813d683f809e462b469c7ff87639499bb94e6dae4131f8504
 
 # Same as the Sign above, but forgetting to set an instance, should lead to
 # an error
-FIPSversion = >=3.2.0
+FIPSversion = >=3.4.0
 Sign = Ed25519:EDDSA-TV-10-Raw
 Input = ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f
 Ctrl = hexcontext-string:
@@ -669,7 +669,7 @@ Output = 822f6901f7480f3d5f562c592994d9693602875614483256505600bbc281ae381f54d6b
 
 # Same as the Sign above, but using the plain ED25519 with an instance set
 # through controls
-FIPSversion = >=3.2.0
+FIPSversion = >=3.4.0
 Sign = Ed448:EDDSA-TV-20-Raw
 Ctrl = instance:Ed448ph
 Input = 483366601360a8771c6863080cc4114d8db44530f8f1e1ee4f94ea37e78b5739d5a15bef186a5386c75744c0527e1faa9f8726e462a12a4feb06bd8801e751e4
@@ -678,7 +678,7 @@ Output = 822f6901f7480f3d5f562c592994d9693602875614483256505600bbc281ae381f54d6b
 
 # Same as the Sign above, but forgetting to set an instance, should lead to
 # an error
-FIPSversion = >=3.2.0
+FIPSversion = >=3.4.0
 Sign = Ed448:EDDSA-TV-20-Raw
 Input = 483366601360a8771c6863080cc4114d8db44530f8f1e1ee4f94ea37e78b5739d5a15bef186a5386c75744c0527e1faa9f8726e462a12a4feb06bd8801e751e4
 Ctrl = hexcontext-string:
@@ -709,7 +709,7 @@ Output = c32299d46ec8ff02b54540982814dce9a05812f81962b649d528095916a2aa481065b15
 
 # Same as the Sign above, but using the plain ED25519 with an instance set
 # through controls
-FIPSversion = >=3.2.0
+FIPSversion = >=3.4.0
 Sign = Ed448:EDDSA-TV-21-Raw
 Ctrl = instance:Ed448ph
 Input = 483366601360a8771c6863080cc4114d8db44530f8f1e1ee4f94ea37e78b5739d5a15bef186a5386c75744c0527e1faa9f8726e462a12a4feb06bd8801e751e4
@@ -718,7 +718,7 @@ Output = c32299d46ec8ff02b54540982814dce9a05812f81962b649d528095916a2aa481065b15
 
 # Same as the Sign above, but forgetting to set an instance, should lead to
 # an error
-FIPSversion = >=3.2.0
+FIPSversion = >=3.4.0
 Sign = Ed448:EDDSA-TV-21-Raw
 Input = 483366601360a8771c6863080cc4114d8db44530f8f1e1ee4f94ea37e78b5739d5a15bef186a5386c75744c0527e1faa9f8726e462a12a4feb06bd8801e751e4
 Ctrl = hexcontext-string:666f6f
