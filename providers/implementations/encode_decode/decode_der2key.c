@@ -440,9 +440,16 @@ static int ec_check(void *key, struct der2key_ctx_st *ctx)
 {
     /* We're trying to be clever by comparing two truths */
 
+    int ret = 0;
     int sm2 = (EC_KEY_get_flags(key) & EC_FLAG_SM2_RANGE) != 0;
 
-    return sm2 == (ctx->desc->evp_type == EVP_PKEY_SM2);
+    if(sm2)
+        ret = ctx->desc->evp_type == EVP_PKEY_SM2 
+              || ctx->desc->evp_type == NID_X9_62_id_ecPublicKey;
+    else
+        ret = ctx->desc->evp_type != EVP_PKEY_SM2;
+
+    return ret;
 }
 
 static void ec_adjust(void *key, struct der2key_ctx_st *ctx)
