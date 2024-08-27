@@ -1403,7 +1403,7 @@ int setup_tests(void)
 # endif
 # ifndef OPENSSL_NO_SM2
     MAKE_KEYS(SM2, "SM2", NULL);
-#endif
+# endif
     MAKE_KEYS(ED25519, "ED25519", NULL);
     MAKE_KEYS(ED448, "ED448", NULL);
     MAKE_KEYS(X25519, "X25519", NULL);
@@ -1452,7 +1452,7 @@ int setup_tests(void)
 # endif
 # ifndef OPENSSL_NO_SM2
         ADD_TEST_SUITE(SM2);
-#endif
+# endif
         ADD_TEST_SUITE(ED25519);
         ADD_TEST_SUITE(ED448);
         ADD_TEST_SUITE(X25519);
@@ -1512,7 +1512,7 @@ void cleanup_tests(void)
 # endif
 # ifndef OPENSSL_NO_SM2
     FREE_KEYS(SM2);
-#endif
+# endif
     FREE_KEYS(ED25519);
     FREE_KEYS(ED448);
     FREE_KEYS(X25519);
