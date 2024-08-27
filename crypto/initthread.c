@@ -266,9 +266,8 @@ void *ossl_thread_event_ctx_new(OSSL_LIB_CTX *libctx)
     if (tlocal == NULL)
         return NULL;
 
-    if (!CRYPTO_THREAD_init_local(tlocal, NULL)) {
-        goto err;
-    }
+    if (!CRYPTO_THREAD_init_local(tlocal, NULL))
+        goto deinit;
 
     hands = OPENSSL_zalloc(sizeof(*hands));
     if (hands == NULL)
@@ -290,12 +289,15 @@ void *ossl_thread_event_ctx_new(OSSL_LIB_CTX *libctx)
     return tlocal;
  err:
     OPENSSL_free(hands);
+    CRYPTO_THREAD_cleanup_local(tlocal);
+ deinit:
     OPENSSL_free(tlocal);
     return NULL;
 }
 
 void ossl_thread_event_ctx_free(void *tlocal)
 {
+    CRYPTO_THREAD_cleanup_local(tlocal);
     OPENSSL_free(tlocal);
 }
 
