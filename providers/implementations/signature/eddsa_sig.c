@@ -603,7 +603,7 @@ static int ed25519_digest_signverify_init(void *vpeddsactx, const char *mdname,
     PROV_EDDSA_CTX *peddsactx = (PROV_EDDSA_CTX *)vpeddsactx;
 
     if (mdname != NULL && mdname[0] != '\0') {
-        ERR_raise_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST,
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_DIGEST,
                         "Explicit digest not allowed with EdDSA operations");
         return 0;
     }
@@ -637,7 +637,7 @@ static int ed448_digest_signverify_init(void *vpeddsactx, const char *mdname,
     PROV_EDDSA_CTX *peddsactx = (PROV_EDDSA_CTX *)vpeddsactx;
 
     if (mdname != NULL && mdname[0] != '\0') {
-        ERR_raise_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST,
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_DIGEST,
                         "Explicit digest not allowed with EdDSA operations");
         return 0;
     }
