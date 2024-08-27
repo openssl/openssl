@@ -1583,9 +1583,13 @@
 #define NID_qcStatements                286
 #define OBJ_qcStatements                OBJ_id_pe,3L
 
-#define SN_ac_auditEntity               "ac-auditEntity"
-#define NID_ac_auditEntity              287
-#define OBJ_ac_auditEntity              OBJ_id_pe,4L
+#define SN_ac_auditIdentity             "ac-auditIdentity"
+#define LN_ac_auditIdentity             "X509v3 Audit Identity"
+#define NID_ac_auditIdentity            287
+#define OBJ_ac_auditIdentity            OBJ_id_pe,4L
+
+#define NID_ac_auditEntity              1323
+#define OBJ_ac_auditEntity              OBJ_ac_auditIdentity
 
 #define SN_ac_targeting         "ac-targeting"
 #define NID_ac_targeting                288

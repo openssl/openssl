@@ -67,7 +67,23 @@ extern "C" {
  * This is enabled by default.
  * Type: OSSL_PARAM_UTF8_STRING
  */
-#define OSSL_PROV_FIPS_PARAM_NO_SHORT_MAC "no-short-mac"
+# define OSSL_PROV_FIPS_PARAM_NO_SHORT_MAC "no-short-mac"
+
+/*
+ * A boolean that determines if the runtime FIPS key check for HMAC is
+ * performed.
+ * This is enabled by default.
+ * Type: OSSL_PARAM_UTF8_STRING
+ */
+# define OSSL_PROV_FIPS_PARAM_HMAC_KEY_CHECK "hmac-key-check"
+
+/*
+ * A boolean that determines if the runtime FIPS key check for KMAC is
+ * performed.
+ * This is enabled by default.
+ * Type: OSSL_PARAM_UTF8_STRING
+ */
+# define OSSL_PROV_FIPS_PARAM_KMAC_KEY_CHECK "kmac-key-check"
 
 /*
  * A boolean that determines if truncated digests can be used with Hash and HMAC

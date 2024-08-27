@@ -263,6 +263,7 @@ int s390x_HMAC_CTX_copy(HMAC_CTX *dctx, HMAC_CTX *sctx)
     memcpy(&dctx->plat.s390x.param, &sctx->plat.s390x.param,
            sizeof(dctx->plat.s390x.param));
 
+    OPENSSL_clear_free(dctx->plat.s390x.buf, dctx->plat.s390x.size);
     dctx->plat.s390x.buf = NULL;
     if (sctx->plat.s390x.buf != NULL) {
         dctx->plat.s390x.buf = OPENSSL_memdup(sctx->plat.s390x.buf,

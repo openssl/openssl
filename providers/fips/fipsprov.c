@@ -40,6 +40,7 @@ static OSSL_FUNC_provider_teardown_fn fips_teardown;
 static OSSL_FUNC_provider_gettable_params_fn fips_gettable_params;
 static OSSL_FUNC_provider_get_params_fn fips_get_params;
 static OSSL_FUNC_provider_query_operation_fn fips_query;
+static OSSL_FUNC_provider_query_operation_fn fips_query_internal;
 
 #define ALGC(NAMES, FUNC, CHECK)                \
     { { NAMES, FIPS_DEFAULT_PROPERTIES, FUNC }, CHECK }
@@ -89,6 +90,8 @@ typedef struct fips_global_st {
     FIPS_OPTION fips_security_checks;
     FIPS_OPTION fips_tls1_prf_ems_check;
     FIPS_OPTION fips_no_short_mac;
+    FIPS_OPTION fips_hmac_key_check;
+    FIPS_OPTION fips_kmac_key_check;
     FIPS_OPTION fips_restricted_drgb_digests;
     FIPS_OPTION fips_signature_digest_check;
     FIPS_OPTION fips_hkdf_digest_check;
@@ -128,6 +131,8 @@ void *ossl_fips_prov_ossl_ctx_new(OSSL_LIB_CTX *libctx)
     init_fips_option(&fgbl->fips_security_checks, 1);
     init_fips_option(&fgbl->fips_tls1_prf_ems_check, 0); /* Disabled by default */
     init_fips_option(&fgbl->fips_no_short_mac, 1);
+    init_fips_option(&fgbl->fips_hmac_key_check, 0);
+    init_fips_option(&fgbl->fips_kmac_key_check, 0);
     init_fips_option(&fgbl->fips_restricted_drgb_digests, 0);
     init_fips_option(&fgbl->fips_signature_digest_check, 0);
     init_fips_option(&fgbl->fips_hkdf_digest_check, 0);
@@ -167,6 +172,7 @@ static const OSSL_PARAM fips_param_types[] = {
     OSSL_PARAM_DEFN(OSSL_PROV_PARAM_SECURITY_CHECKS, OSSL_PARAM_INTEGER, NULL, 0),
     OSSL_PARAM_DEFN(OSSL_PROV_PARAM_TLS1_PRF_EMS_CHECK, OSSL_PARAM_INTEGER, NULL, 0),
     OSSL_PARAM_DEFN(OSSL_PROV_PARAM_NO_SHORT_MAC, OSSL_PARAM_INTEGER, NULL, 0),
+    OSSL_PARAM_DEFN(OSSL_PROV_PARAM_HMAC_KEY_CHECK, OSSL_PARAM_INTEGER, NULL, 0),
     OSSL_PARAM_DEFN(OSSL_PROV_PARAM_DRBG_TRUNC_DIGEST, OSSL_PARAM_INTEGER, NULL, 0),
     OSSL_PARAM_DEFN(OSSL_PROV_PARAM_HKDF_DIGEST_CHECK, OSSL_PARAM_INTEGER, NULL,
                     0),
@@ -187,6 +193,8 @@ static const OSSL_PARAM fips_param_types[] = {
     OSSL_PARAM_DEFN(OSSL_PROV_PARAM_RSA_SIGN_X931_PAD_DISABLED,
                     OSSL_PARAM_INTEGER, NULL, 0),
     OSSL_PARAM_DEFN(OSSL_PROV_PARAM_HKDF_KEY_CHECK, OSSL_PARAM_INTEGER, NULL,
+                    0),
+    OSSL_PARAM_DEFN(OSSL_PROV_PARAM_KMAC_KEY_CHECK, OSSL_PARAM_INTEGER, NULL,
                     0),
     OSSL_PARAM_DEFN(OSSL_PROV_PARAM_TLS13_KDF_KEY_CHECK, OSSL_PARAM_INTEGER,
                     NULL, 0),
@@ -215,7 +223,7 @@ static int fips_get_params_from_core(FIPS_GLOBAL *fgbl)
     * OSSL_PROV_FIPS_PARAM_SECURITY_CHECKS and
     * OSSL_PROV_FIPS_PARAM_TLS1_PRF_EMS_CHECK are not self test parameters.
     */
-    OSSL_PARAM core_params[29], *p = core_params;
+    OSSL_PARAM core_params[31], *p = core_params;
 
 /* FIPS self test params */
 #define FIPS_FEATURE_SELF_TEST(fgbl, pname, field)                             \
@@ -243,6 +251,10 @@ static int fips_get_params_from_core(FIPS_GLOBAL *fgbl)
                         fips_tls1_prf_ems_check);
     FIPS_FEATURE_OPTION(fgbl, OSSL_PROV_FIPS_PARAM_NO_SHORT_MAC,
                         fips_no_short_mac);
+    FIPS_FEATURE_OPTION(fgbl, OSSL_PROV_FIPS_PARAM_HMAC_KEY_CHECK,
+                        fips_hmac_key_check);
+    FIPS_FEATURE_OPTION(fgbl, OSSL_PROV_FIPS_PARAM_KMAC_KEY_CHECK,
+                        fips_kmac_key_check);
     FIPS_FEATURE_OPTION(fgbl, OSSL_PROV_FIPS_PARAM_DRBG_TRUNC_DIGEST,
                         fips_restricted_drgb_digests);
     FIPS_FEATURE_OPTION(fgbl, OSSL_PROV_FIPS_PARAM_SIGNATURE_DIGEST_CHECK,
@@ -334,6 +346,10 @@ static int fips_get_params(void *provctx, OSSL_PARAM params[])
                      fips_tls1_prf_ems_check);
     FIPS_FEATURE_GET(fgbl, OSSL_PROV_PARAM_NO_SHORT_MAC,
                      fips_no_short_mac);
+    FIPS_FEATURE_GET(fgbl, OSSL_PROV_PARAM_HMAC_KEY_CHECK,
+                     fips_hmac_key_check);
+    FIPS_FEATURE_GET(fgbl, OSSL_PROV_PARAM_KMAC_KEY_CHECK,
+                     fips_kmac_key_check);
     FIPS_FEATURE_GET(fgbl, OSSL_PROV_PARAM_DRBG_TRUNC_DIGEST,
                      fips_restricted_drgb_digests);
     FIPS_FEATURE_GET(fgbl, OSSL_PROV_FIPS_PARAM_SIGNATURE_DIGEST_CHECK,
@@ -534,6 +550,16 @@ static const OSSL_ALGORITHM fips_macs[] = {
     { NULL, NULL, NULL }
 };
 
+static const OSSL_ALGORITHM fips_macs_internal[] = {
+#ifndef OPENSSL_NO_CMAC
+    { PROV_NAMES_CMAC, FIPS_DEFAULT_PROPERTIES, ossl_cmac_functions },
+#endif
+    { PROV_NAMES_HMAC, FIPS_DEFAULT_PROPERTIES, ossl_hmac_internal_functions },
+    { PROV_NAMES_KMAC_128, FIPS_DEFAULT_PROPERTIES, ossl_kmac128_internal_functions },
+    { PROV_NAMES_KMAC_256, FIPS_DEFAULT_PROPERTIES, ossl_kmac256_internal_functions },
+    { NULL, NULL, NULL }
+};
+
 static const OSSL_ALGORITHM fips_kdfs[] = {
     { PROV_NAMES_HKDF, FIPS_DEFAULT_PROPERTIES, ossl_kdf_hkdf_functions },
     { PROV_NAMES_TLS1_3_KDF, FIPS_DEFAULT_PROPERTIES,
@@ -581,6 +607,28 @@ static const OSSL_ALGORITHM fips_signature[] = {
     { PROV_NAMES_DSA, FIPS_DEFAULT_PROPERTIES, ossl_dsa_signature_functions },
 #endif
     { PROV_NAMES_RSA, FIPS_DEFAULT_PROPERTIES, ossl_rsa_signature_functions },
+    { PROV_NAMES_RSA_SHA1, FIPS_DEFAULT_PROPERTIES,
+      ossl_rsa_sha1_signature_functions },
+    { PROV_NAMES_RSA_SHA224, FIPS_DEFAULT_PROPERTIES,
+      ossl_rsa_sha224_signature_functions },
+    { PROV_NAMES_RSA_SHA256, FIPS_DEFAULT_PROPERTIES,
+      ossl_rsa_sha256_signature_functions },
+    { PROV_NAMES_RSA_SHA384, FIPS_DEFAULT_PROPERTIES,
+      ossl_rsa_sha384_signature_functions },
+    { PROV_NAMES_RSA_SHA512, FIPS_DEFAULT_PROPERTIES,
+      ossl_rsa_sha512_signature_functions },
+    { PROV_NAMES_RSA_SHA512_224, FIPS_DEFAULT_PROPERTIES,
+      ossl_rsa_sha512_224_signature_functions },
+    { PROV_NAMES_RSA_SHA512_256, FIPS_DEFAULT_PROPERTIES,
+      ossl_rsa_sha512_256_signature_functions },
+    { PROV_NAMES_RSA_SHA3_224, FIPS_DEFAULT_PROPERTIES,
+      ossl_rsa_sha3_224_signature_functions },
+    { PROV_NAMES_RSA_SHA3_256, FIPS_DEFAULT_PROPERTIES,
+      ossl_rsa_sha3_256_signature_functions },
+    { PROV_NAMES_RSA_SHA3_384, FIPS_DEFAULT_PROPERTIES,
+      ossl_rsa_sha3_384_signature_functions },
+    { PROV_NAMES_RSA_SHA3_512, FIPS_DEFAULT_PROPERTIES,
+      ossl_rsa_sha3_512_signature_functions },
 #ifndef OPENSSL_NO_EC
 # ifndef OPENSSL_NO_ECX
     { PROV_NAMES_ED25519, FIPS_DEFAULT_PROPERTIES,
@@ -683,6 +731,18 @@ static const OSSL_ALGORITHM *fips_query(void *provctx, int operation_id,
     return NULL;
 }
 
+static const OSSL_ALGORITHM *fips_query_internal(void *provctx, int operation_id,
+                                                 int *no_cache)
+{
+    if (operation_id == OSSL_OP_MAC) {
+        *no_cache = 0;
+        if (!ossl_prov_is_running())
+            return NULL;
+        return fips_macs_internal;
+    }
+    return fips_query(provctx, operation_id, no_cache);
+}
+
 static void fips_teardown(void *provctx)
 {
     OSSL_LIB_CTX_free(PROV_LIBCTX_OF(provctx));
@@ -713,7 +773,7 @@ static const OSSL_DISPATCH fips_dispatch_table[] = {
 /* Functions we provide to ourself */
 static const OSSL_DISPATCH intern_dispatch_table[] = {
     { OSSL_FUNC_PROVIDER_TEARDOWN, (void (*)(void))fips_intern_teardown },
-    { OSSL_FUNC_PROVIDER_QUERY_OPERATION, (void (*)(void))fips_query },
+    { OSSL_FUNC_PROVIDER_QUERY_OPERATION, (void (*)(void))fips_query_internal },
     OSSL_DISPATCH_END
 };
 
@@ -912,6 +972,8 @@ int OSSL_provider_init_int(const OSSL_CORE_HANDLE *handle,
     FIPS_SET_OPTION(fgbl, fips_security_checks);
     FIPS_SET_OPTION(fgbl, fips_tls1_prf_ems_check);
     FIPS_SET_OPTION(fgbl, fips_no_short_mac);
+    FIPS_SET_OPTION(fgbl, fips_hmac_key_check);
+    FIPS_SET_OPTION(fgbl, fips_kmac_key_check);
     FIPS_SET_OPTION(fgbl, fips_restricted_drgb_digests);
     FIPS_SET_OPTION(fgbl, fips_signature_digest_check);
     FIPS_SET_OPTION(fgbl, fips_hkdf_digest_check);
@@ -1112,6 +1174,12 @@ int CRYPTO_secure_allocated(const void *ptr)
     return c_CRYPTO_secure_allocated(ptr);
 }
 
+void *CRYPTO_aligned_alloc(size_t num, size_t align, void **freeptr,
+                           const char *file, int line)
+{
+    return NULL;
+}
+
 int BIO_snprintf(char *buf, size_t n, const char *format, ...)
 {
     va_list args;
@@ -1134,6 +1202,8 @@ int BIO_snprintf(char *buf, size_t n, const char *format, ...)
 FIPS_FEATURE_CHECK(FIPS_security_check_enabled, fips_security_checks)
 FIPS_FEATURE_CHECK(FIPS_tls_prf_ems_check, fips_tls1_prf_ems_check)
 FIPS_FEATURE_CHECK(FIPS_no_short_mac, fips_no_short_mac)
+FIPS_FEATURE_CHECK(FIPS_hmac_key_check, fips_hmac_key_check)
+FIPS_FEATURE_CHECK(FIPS_kmac_key_check, fips_kmac_key_check)
 FIPS_FEATURE_CHECK(FIPS_restricted_drbg_digests_enabled,
                    fips_restricted_drgb_digests)
 FIPS_FEATURE_CHECK(FIPS_fips_signature_digest_check, fips_signature_digest_check)

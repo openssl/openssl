@@ -20,6 +20,8 @@
 #include <openssl/params.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
+#include <openssl/proverr.h>
+#include <openssl/err.h>
 
 #include "internal/ssl3_cbc.h"
 
@@ -27,6 +29,9 @@
 #include "prov/provider_ctx.h"
 #include "prov/provider_util.h"
 #include "prov/providercommon.h"
+#include "prov/fipsindicator.h"
+#include "prov/securitycheck.h"
+#include "prov/fipscommon.h"
 
 /*
  * Forward declaration of everything implemented here.  This is not strictly
@@ -59,6 +64,15 @@ struct hmac_data_st {
     int tls_header_set;
     unsigned char tls_mac_out[EVP_MAX_MD_SIZE];
     size_t tls_mac_out_size;
+#ifdef FIPS_MODULE
+    /*
+     * 'internal' is set to 1 if HMAC is used inside another algorithm such as a
+     * KDF. In this case it is the parent algorithm that is responsible for
+     * performing any conditional FIPS indicator related checks for the HMAC.
+     */
+    int internal;
+#endif
+    OSSL_FIPS_IND_DECLARE
 };
 
 static void *hmac_new(void *provctx)
@@ -74,6 +88,7 @@ static void *hmac_new(void *provctx)
         return NULL;
     }
     macctx->provctx = provctx;
+    OSSL_FIPS_IND_INIT(macctx)
 
     return macctx;
 }
@@ -144,12 +159,33 @@ static int hmac_setkey(struct hmac_data_st *macctx,
 {
     const EVP_MD *digest;
 
+#ifdef FIPS_MODULE
+    /*
+     * KDF's pass a salt rather than a key,
+     * which is why it skips the key check unless "HMAC" is fetched directly.
+     */
+    if (!macctx->internal) {
+        OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(macctx->provctx);
+        int approved = ossl_mac_check_key_size(keylen);
+
+        if (!approved) {
+            if (!OSSL_FIPS_IND_ON_UNAPPROVED(macctx, OSSL_FIPS_IND_SETTABLE0,
+                                             libctx, "HMAC", "keysize",
+                                             FIPS_hmac_key_check)) {
+                ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
+                return 0;
+            }
+        }
+    }
+#endif
+
     if (macctx->key != NULL)
         OPENSSL_secure_clear_free(macctx->key, macctx->keylen);
     /* Keep a copy of the key in case we need it for TLS HMAC */
     macctx->key = OPENSSL_secure_malloc(keylen > 0 ? keylen : 1);
     if (macctx->key == NULL)
         return 0;
+
     memcpy(macctx->key, key, keylen);
     macctx->keylen = keylen;
 
@@ -235,6 +271,7 @@ static int hmac_final(void *vmacctx, unsigned char *out, size_t *outl,
 static const OSSL_PARAM known_gettable_ctx_params[] = {
     OSSL_PARAM_size_t(OSSL_MAC_PARAM_SIZE, NULL),
     OSSL_PARAM_size_t(OSSL_MAC_PARAM_BLOCK_SIZE, NULL),
+    OSSL_FIPS_IND_GETTABLE_CTX_PARAM()
     OSSL_PARAM_END
 };
 static const OSSL_PARAM *hmac_gettable_ctx_params(ossl_unused void *ctx,
@@ -256,6 +293,17 @@ static int hmac_get_ctx_params(void *vmacctx, OSSL_PARAM params[])
             && !OSSL_PARAM_set_int(p, hmac_block_size(macctx)))
         return 0;
 
+#ifdef FIPS_MODULE
+    p = OSSL_PARAM_locate(params, OSSL_MAC_PARAM_FIPS_APPROVED_INDICATOR);
+    if (p != NULL) {
+        int approved = 0;
+
+        if (!macctx->internal)
+            approved = OSSL_FIPS_IND_GET(macctx)->approved;
+        if (!OSSL_PARAM_set_int(p, approved))
+            return 0;
+    }
+#endif
     return 1;
 }
 
@@ -266,6 +314,7 @@ static const OSSL_PARAM known_settable_ctx_params[] = {
     OSSL_PARAM_int(OSSL_MAC_PARAM_DIGEST_NOINIT, NULL),
     OSSL_PARAM_int(OSSL_MAC_PARAM_DIGEST_ONESHOT, NULL),
     OSSL_PARAM_size_t(OSSL_MAC_PARAM_TLS_DATA_SIZE, NULL),
+    OSSL_FIPS_IND_SETTABLE_CTX_PARAM(OSSL_MAC_PARAM_FIPS_KEY_CHECK)
     OSSL_PARAM_END
 };
 static const OSSL_PARAM *hmac_settable_ctx_params(ossl_unused void *ctx,
@@ -286,12 +335,17 @@ static int hmac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
     if (params == NULL)
         return 1;
 
+    if (!OSSL_FIPS_IND_SET_CTX_PARAM(macctx, OSSL_FIPS_IND_SETTABLE0, params,
+                                     OSSL_MAC_PARAM_FIPS_KEY_CHECK))
+        return 0;
+
     if (!ossl_prov_digest_load_from_params(&macctx->digest, params, ctx))
         return 0;
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_KEY)) != NULL) {
         if (p->data_type != OSSL_PARAM_OCTET_STRING)
             return 0;
+
         if (!hmac_setkey(macctx, p->data, p->data_size))
             return 0;
     }
@@ -319,3 +373,33 @@ const OSSL_DISPATCH ossl_hmac_functions[] = {
     { OSSL_FUNC_MAC_SET_CTX_PARAMS, (void (*)(void))hmac_set_ctx_params },
     OSSL_DISPATCH_END
 };
+
+#ifdef FIPS_MODULE
+static OSSL_FUNC_mac_newctx_fn hmac_internal_new;
+
+static void *hmac_internal_new(void *provctx)
+{
+    struct hmac_data_st *macctx = hmac_new(provctx);
+
+    if (macctx != NULL)
+        macctx->internal = 1;
+    return macctx;
+}
+
+const OSSL_DISPATCH ossl_hmac_internal_functions[] = {
+    { OSSL_FUNC_MAC_NEWCTX, (void (*)(void))hmac_internal_new },
+    { OSSL_FUNC_MAC_DUPCTX, (void (*)(void))hmac_dup },
+    { OSSL_FUNC_MAC_FREECTX, (void (*)(void))hmac_free },
+    { OSSL_FUNC_MAC_INIT, (void (*)(void))hmac_init },
+    { OSSL_FUNC_MAC_UPDATE, (void (*)(void))hmac_update },
+    { OSSL_FUNC_MAC_FINAL, (void (*)(void))hmac_final },
+    { OSSL_FUNC_MAC_GETTABLE_CTX_PARAMS,
+      (void (*)(void))hmac_gettable_ctx_params },
+    { OSSL_FUNC_MAC_GET_CTX_PARAMS, (void (*)(void))hmac_get_ctx_params },
+    { OSSL_FUNC_MAC_SETTABLE_CTX_PARAMS,
+      (void (*)(void))hmac_settable_ctx_params },
+    { OSSL_FUNC_MAC_SET_CTX_PARAMS, (void (*)(void))hmac_set_ctx_params },
+    OSSL_DISPATCH_END
+};
+
+#endif /* FIPS_MODULE */

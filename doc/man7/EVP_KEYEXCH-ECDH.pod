@@ -41,6 +41,12 @@ per-key basis.
 
 =item "kdf-ukm" (B<OSSL_EXCHANGE_PARAM_KDF_UKM>) <octet string>
 
+=back
+
+The OpenSSL FIPS provider also supports the following parameters:
+
+=over 4
+
 =item "fips-indicator" (B<OSSL_EXCHANGE_PARAM_FIPS_APPROVED_INDICATOR>) <integer>
 
 =item "key-check" (B<OSSL_EXCHANGE_PARAM_FIPS_KEY_CHECK>) <integer>
@@ -54,9 +60,10 @@ See L<provider-keyexch(7)/Common Key Exchange parameters>.
 If required this parameter should before OSSL_FUNC_keyexch_derive().
 The default value of 1 causes an error during the OSSL_FUNC_keyexch_derive if
 the EC curve has a cofactor that is not 1, and the cofactor is not used.
-Setting this to 0 will ignore the error and set the approved "fips-indicator" to
-0. This option is used by the OpenSSL FIPS provider, and breaks FIPS compliance
-if set to 0.
+Setting this to 0 will ignore the error and set the approved
+"fips-indicator" to 0.
+This option breaks FIPS compliance if it causes the approved "fips-indicator"
+to return 0.
 
 =back
 

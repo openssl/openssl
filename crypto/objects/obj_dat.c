@@ -263,7 +263,7 @@ int OBJ_new_nid(int num)
 static int ossl_obj_add_object(const ASN1_OBJECT *obj, int lock)
 {
     ASN1_OBJECT *o = NULL;
-    ADDED_OBJ *ao[4] = { NULL, NULL, NULL, NULL }, *aop;
+    ADDED_OBJ *ao[4] = { NULL, NULL, NULL, NULL }, *aop[4];
     int i;
 
     if ((o = OBJ_dup(obj)) == NULL)
@@ -294,9 +294,21 @@ static int ossl_obj_add_object(const ASN1_OBJECT *obj, int lock)
         if (ao[i] != NULL) {
             ao[i]->type = i;
             ao[i]->obj = o;
-            aop = lh_ADDED_OBJ_insert(added, ao[i]);
-            /* memory leak, but should not normally matter */
-            OPENSSL_free(aop);
+            aop[i] = lh_ADDED_OBJ_retrieve(added, ao[i]);
+            if (aop[i] != NULL)
+                aop[i]->type = -1;
+            (void)lh_ADDED_OBJ_insert(added, ao[i]);
+            if (lh_ADDED_OBJ_error(added)) {
+                if (aop[i] != NULL)
+                    aop[i]->type = i;
+                while (i-- > ADDED_DATA) {
+                    lh_ADDED_OBJ_delete(added, ao[i]);
+                    if (aop[i] != NULL)
+                        aop[i]->type = i;
+                }
+                ERR_raise(ERR_LIB_OBJ, ERR_R_CRYPTO_LIB);
+                goto err;
+            }
         }
     }
     o->flags &=

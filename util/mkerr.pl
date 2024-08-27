@@ -567,12 +567,11 @@ EOF
                 $rn =~ tr/_[A-Z]/ [a-z]/;
                 $strings{$i} = $rn;
             }
-            my $short = "    {ERR_PACK($pack_lib, 0, $i), \"$rn\"},";
-            if ( length($short) <= 80 ) {
-                print OUT "$short\n";
-            } else {
-                print OUT "    {ERR_PACK($pack_lib, 0, $i),\n    \"$rn\"},\n";
-            }
+            my $lines;
+            $lines = "    {ERR_PACK($pack_lib, 0, $i), \"$rn\"},";
+            $lines = "    {ERR_PACK($pack_lib, 0, $i),\n     \"$rn\"},"
+                if length($lines) > 80;
+            print OUT "$lines\n";
         }
         print OUT <<"EOF";
     {0, NULL}

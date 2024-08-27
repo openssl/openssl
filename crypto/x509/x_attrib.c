@@ -98,6 +98,7 @@ int ossl_print_attribute_value(BIO *out,
     unsigned char *value;
     X509_NAME *xn = NULL;
     int64_t int_val;
+    int ret = 1;
 
     switch (av->type) {
     case V_ASN1_BOOLEAN:
@@ -192,9 +193,9 @@ int ossl_print_attribute_value(BIO *out,
                 return 0;
             }
             if (X509_NAME_print_ex(out, xn, indent, XN_FLAG_SEP_CPLUS_SPC) <= 0)
-                return 0;
+                ret = 0;
             X509_NAME_free(xn);
-            return 1;
+            return ret;
 
         default:
             break;

@@ -436,6 +436,18 @@ its argument I<mdname>.  This signifies that no digest has to be specified
 with the corresponding signature operation, but may be specified as an
 option.
 
+=back
+
+The OpenSSL FIPS provider also supports the following parameters:
+
+=over 4
+
+=item "fips-indicator" (B<OSSL_PKEY_PARAM_FIPS_APPROVED_INDICATOR>) <integer>
+
+A getter that returns 1 if the operation is FIPS approved, or 0 otherwise.
+This may be used after calling OSSL_FUNC_keymgmt_gen() function. It may
+return 0 if either the "key-check", or "sign-check" are set to 0.
+
 =item "key-check" (B<OSSL_PKEY_PARAM_FIPS_KEY_CHECK>) <integer>
 
 If required this parameter should be set using OSSL_FUNC_keymgmt_gen_set_params()
@@ -443,25 +455,18 @@ or OSSL_FUNC_keymgmt_gen_init().
 The default value of 1 causes an error during the init if the key is not FIPS
 approved (e.g. The key has a security strength of less than 112 bits). Setting
 this to 0 will ignore the error and set the approved "fips-indicator" to 0.
-This option is used by the OpenSSL FIPS provider, and breaks FIPS compliance if
-set to 0.
+This option breaks FIPS compliance if it causes the approved "fips-indicator"
+to return 0.
 
-=item "sign-check" (B<OSSL_PKEY_PARAM_FIPS_SIGN_CHECK>) <int>
+=item "sign-check" (B<OSSL_PKEY_PARAM_FIPS_SIGN_CHECK>) <integer>
 
 If required this parameter should be set before the OSSL_FUNC_keymgmt_gen()
 function. This value is not supported by all keygen algorithms.
 The default value of 1 will cause an error if the generated key is not
 allowed to be used for signing.
 Setting this to 0 will ignore the error and set the approved "fips-indicator" to 0.
-This option is used by the OpenSSL FIPS provider, and breaks FIPS compliance if
-set to 0.
-
-=item "fips-indicator" (B<OSSL_PKEY_PARAM_FIPS_APPROVED_INDICATOR>) <integer>
-
-A getter that returns 1 if the operation is FIPS approved, or 0 otherwise.
-This may be used after calling OSSL_FUNC_keymgmt_gen() function. It may
-return 0 if either the "key-check", or "sign-check" are set to 0.
-This option is used by the OpenSSL FIPS provider.
+This option breaks FIPS compliance if it causes the approved "fips-indicator"
+to return 0.
 
 =back
 

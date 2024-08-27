@@ -209,6 +209,7 @@ Reason = xof digests not allowed
 Title = FIPS indicator tests
 
 # Test that the key whose length is shorter than 112 bits is rejected
+Availablein = fips
 FIPSversion = >=3.4.0
 PKEYKDF = HKDF
 Ctrl.digest = digest:SHA1
@@ -220,6 +221,7 @@ Reason = invalid key length
 
 # Test that the key whose length is shorter than 112 bits is reported as
 # unapproved
+Availablein = fips
 FIPSversion = >=3.4.0
 PKEYKDF = HKDF
 Unapproved = 1

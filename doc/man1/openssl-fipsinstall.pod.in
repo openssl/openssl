@@ -22,6 +22,8 @@ B<openssl fipsinstall>
 [B<-pedantic>]
 [B<-no_conditional_errors>]
 [B<-no_security_checks>]
+[B<-hmac_key_check>]
+[B<-kmac_key_check>]
 [B<-ems_check>]
 [B<-no_drbg_truncated_digests>]
 [B<-signature_digest_check>]
@@ -211,6 +213,16 @@ See RFC 7627 for information related to EMS.
 
 Configure the module to not allow short MAC outputs.
 See SP 800-185 8.4.2 and FIPS 140-3 ID C.D for details.
+
+=item B<-hmac_key_check>
+
+Configure the module to not allow small keys sizes when using HMAC.
+See SP 800-131Ar2 for details.
+
+=item B<-kmac_key_check>
+
+Configure the module to not allow small keys sizes when using KMAC.
+See SP 800-131Ar2 for details.
 
 =item B<-no_drbg_truncated_digests>
 

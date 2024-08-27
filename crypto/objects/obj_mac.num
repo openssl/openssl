@@ -284,7 +284,7 @@ id_mod_dvcs		283
 id_mod_cmp2000		284
 biometricInfo		285
 qcStatements		286
-ac_auditEntity		287
+ac_auditIdentity		287
 ac_targeting		288
 aaControls		289
 sbgp_ipAddrBlock		290
@@ -1320,3 +1320,4 @@ associated_information		1319
 id_ct_rpkiSignedPrefixList		1320
 id_on_hardwareModuleName		1321
 id_kp_wisun_fan_device		1322
+ac_auditEntity		1323

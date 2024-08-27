@@ -268,7 +268,7 @@ static const unsigned char so[8504] = {
     0x2B,0x06,0x01,0x05,0x05,0x07,0x00,0x10,       /* [ 2075] OBJ_id_mod_cmp2000 */
     0x2B,0x06,0x01,0x05,0x05,0x07,0x01,0x02,       /* [ 2083] OBJ_biometricInfo */
     0x2B,0x06,0x01,0x05,0x05,0x07,0x01,0x03,       /* [ 2091] OBJ_qcStatements */
-    0x2B,0x06,0x01,0x05,0x05,0x07,0x01,0x04,       /* [ 2099] OBJ_ac_auditEntity */
+    0x2B,0x06,0x01,0x05,0x05,0x07,0x01,0x04,       /* [ 2099] OBJ_ac_auditIdentity */
     0x2B,0x06,0x01,0x05,0x05,0x07,0x01,0x05,       /* [ 2107] OBJ_ac_targeting */
     0x2B,0x06,0x01,0x05,0x05,0x07,0x01,0x06,       /* [ 2115] OBJ_aaControls */
     0x2B,0x06,0x01,0x05,0x05,0x07,0x01,0x07,       /* [ 2123] OBJ_sbgp_ipAddrBlock */
@@ -1187,7 +1187,7 @@ static const unsigned char so[8504] = {
     0x2B,0x06,0x01,0x04,0x01,0x82,0xE4,0x25,0x01,  /* [ 8494] OBJ_id_kp_wisun_fan_device */
 };
 
-#define NUM_NID 1323
+#define NUM_NID 1324
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -1476,7 +1476,7 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"id-mod-cmp2000", "id-mod-cmp2000", NID_id_mod_cmp2000, 8, &so[2075]},
     {"biometricInfo", "Biometric Info", NID_biometricInfo, 8, &so[2083]},
     {"qcStatements", "qcStatements", NID_qcStatements, 8, &so[2091]},
-    {"ac-auditEntity", "ac-auditEntity", NID_ac_auditEntity, 8, &so[2099]},
+    {"ac-auditIdentity", "X509v3 Audit Identity", NID_ac_auditIdentity, 8, &so[2099]},
     {"ac-targeting", "ac-targeting", NID_ac_targeting, 8, &so[2107]},
     {"aaControls", "aaControls", NID_aaControls, 8, &so[2115]},
     {"sbgp-ipAddrBlock", "sbgp-ipAddrBlock", NID_sbgp_ipAddrBlock, 8, &so[2123]},
@@ -2512,9 +2512,10 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"id-ct-rpkiSignedPrefixList", "id-ct-rpkiSignedPrefixList", NID_id_ct_rpkiSignedPrefixList, 11, &so[8475]},
     {"id-on-hardwareModuleName", "Hardware Module Name", NID_id_on_hardwareModuleName, 8, &so[8486]},
     {"id-kp-wisun-fan-device", "Wi-SUN Alliance Field Area Network (FAN)", NID_id_kp_wisun_fan_device, 9, &so[8494]},
+    {"NULL", "NULL", NID_ac_auditEntity},
 };
 
-#define NUM_SN 1314
+#define NUM_SN 1315
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -2709,6 +2710,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      388,    /* "Mail" */
      393,    /* "NULL" */
      404,    /* "NULL" */
+    1323,    /* "NULL" */
       57,    /* "Netscape" */
      366,    /* "Nonce" */
       17,    /* "O" */
@@ -2827,7 +2829,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1307,    /* "aAissuingDistributionPoint" */
      478,    /* "aRecord" */
      289,    /* "aaControls" */
-     287,    /* "ac-auditEntity" */
+     287,    /* "ac-auditIdentity" */
      397,    /* "ac-proxying" */
      288,    /* "ac-targeting" */
     1303,    /* "acceptableCertPolicies" */
@@ -3832,7 +3834,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1289,    /* "zstd" */
 };
 
-#define NUM_LN 1314
+#define NUM_LN 1315
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -3966,6 +3968,7 @@ static const unsigned int ln_objs[NUM_LN] = {
     1211,    /* "NAIRealm" */
      393,    /* "NULL" */
      404,    /* "NULL" */
+    1323,    /* "NULL" */
       72,    /* "Netscape Base Url" */
       76,    /* "Netscape CA Policy Url" */
       74,    /* "Netscape CA Revocation Url" */
@@ -4051,6 +4054,7 @@ static const unsigned int ln_objs[NUM_LN] = {
     1307,    /* "X509v3 Attribute Authority Issuing Distribution Point" */
     1300,    /* "X509v3 Attribute Descriptor" */
     1312,    /* "X509v3 Attribute Mappings" */
+     287,    /* "X509v3 Audit Identity" */
     1295,    /* "X509v3 Authority Attribute Identifier" */
       90,    /* "X509v3 Authority Key Identifier" */
     1314,    /* "X509v3 Authorization Validation" */
@@ -4096,7 +4100,6 @@ static const unsigned int ln_objs[NUM_LN] = {
     1289,    /* "Zstandard compression" */
      478,    /* "aRecord" */
      289,    /* "aaControls" */
-     287,    /* "ac-auditEntity" */
      397,    /* "ac-proxying" */
      288,    /* "ac-targeting" */
      446,    /* "account" */
@@ -5150,7 +5153,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      125,    /* "zlib compression" */
 };
 
-#define NUM_OBJ 1180
+#define NUM_OBJ 1181
 static const unsigned int obj_objs[NUM_OBJ] = {
        0,    /* OBJ_undef                        0 */
      181,    /* OBJ_iso                          1 */
@@ -5158,6 +5161,7 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      404,    /* OBJ_ccitt                        OBJ_itu_t */
      645,    /* OBJ_itu_t                        0 */
      646,    /* OBJ_joint_iso_itu_t              2 */
+    1323,    /* OBJ_ac_auditEntity               OBJ_ac_auditIdentity */
     1264,    /* OBJ_itu_t_identified_organization 0 4 */
      434,    /* OBJ_data                         0 9 */
      182,    /* OBJ_member_body                  1 2 */
@@ -5779,7 +5783,7 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      177,    /* OBJ_info_access                  1 3 6 1 5 5 7 1 1 */
      285,    /* OBJ_biometricInfo                1 3 6 1 5 5 7 1 2 */
      286,    /* OBJ_qcStatements                 1 3 6 1 5 5 7 1 3 */
-     287,    /* OBJ_ac_auditEntity               1 3 6 1 5 5 7 1 4 */
+     287,    /* OBJ_ac_auditIdentity             1 3 6 1 5 5 7 1 4 */
      288,    /* OBJ_ac_targeting                 1 3 6 1 5 5 7 1 5 */
      289,    /* OBJ_aaControls                   1 3 6 1 5 5 7 1 6 */
      290,    /* OBJ_sbgp_ipAddrBlock             1 3 6 1 5 5 7 1 7 */

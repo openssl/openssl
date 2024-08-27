@@ -33,6 +33,7 @@ int ossl_digest_rsa_sign_get_md_nid(const EVP_MD *md)
         { NID_md4,       OSSL_DIGEST_NAME_MD4       },
         { NID_mdc2,      OSSL_DIGEST_NAME_MDC2      },
         { NID_ripemd160, OSSL_DIGEST_NAME_RIPEMD160 },
+        { NID_sm3,       OSSL_DIGEST_NAME_SM3 },
     };
 
     mdnid = ossl_digest_get_approved_nid(md);

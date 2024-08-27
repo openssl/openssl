@@ -99,7 +99,7 @@ static void fuzz_free_cb(HT_VALUE *v)
 
 int FuzzerInitialize(int *argc, char ***argv)
 {
-    HT_CONFIG fuzz_conf = {NULL, fuzz_free_cb, NULL, 0};
+    HT_CONFIG fuzz_conf = {NULL, fuzz_free_cb, NULL, 0, 1};
 
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
     ERR_clear_error();
@@ -187,6 +187,10 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
         else
             rc = ossl_ht_fz_FUZZER_VALUE_insert(fuzzer_table, TO_HT_KEY(&key),
                                                 valptr, NULL);
+
+        if (rc == -1)
+            /* failed to grow the hash table due to too many collisions */
+            break;
 
         /*
          * mark the entry as being allocated

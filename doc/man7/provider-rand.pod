@@ -260,12 +260,17 @@ Sets the properties to be queried when trying to fetch an underlying algorithm.
 This must be given together with the algorithm naming parameter to be
 considered valid.
 
+=back
+
+The OpenSSL FIPS provider also supports the following parameters:
+
+=over 4
+
 =item "fips-indicator" (B<OSSL_DRBG_PARAM_FIPS_APPROVED_INDICATOR>) <integer>
 
 A getter that returns 1 if the operation is FIPS approved, or 0 otherwise.
 This may be used after calling OSSL_FUNC_rand_generate(). It may
 return 0 if the "digest-check" is set to 0.
-This option is used by the OpenSSL FIPS provider.
 
 =item "digest-check" (B<OSSL_DRBG_PARAM_FIPS_DIGEST_CHECK>) <integer>
 
@@ -273,8 +278,8 @@ If required this parameter should be set before the digest is set.
 The default value of 1 causes an error when the digest is set if the digest is
 not FIPS approved (e.g. truncated digests). Setting this to 0 will ignore
 the error and set the approved "fips-indicator" to 0.
-This option is used by the OpenSSL FIPS provider, and breaks FIPS compliance if
-set to 0.
+This option breaks FIPS compliance if it causes the approved "fips-indicator"
+to return 0.
 
 =back
 

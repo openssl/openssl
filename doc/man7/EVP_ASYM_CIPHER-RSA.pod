@@ -65,10 +65,6 @@ See L<EVP_PKEY_CTX_set_rsa_padding(3)> for further details.
 
 =item "oaep-label" (B<OSSL_ASYM_CIPHER_PARAM_OAEP_LABEL>) <octet string>
 
-=item "fips-indicator" (B<OSSL_ASYM_CIPHER_PARAM_FIPS_APPROVED_INDICATOR>) <integer>
-
-=item "key-check" (B<OSSL_ASYM_CIPHER_PARAM_FIPS_KEY_CHECK>) <integer>
-
 =item "tls-client-version" (B<OSSL_ASYM_CIPHER_PARAM_TLS_CLIENT_VERSION>) <unsigned integer>
 
 See B<RSA_PKCS1_WITH_TLS_PADDING> on the page L<EVP_PKEY_CTX_set_rsa_padding(3)>.
@@ -79,10 +75,26 @@ See B<RSA_PKCS1_WITH_TLS_PADDING> on the page L<EVP_PKEY_CTX_set_rsa_padding(3)>
 
 See L<provider-asym_cipher(7)/Asymmetric Cipher Parameters> for more information.
 
-=item "pkcs15-padding-disabled" (B<OSSL_ASYM_CIPHER_PARAM_PKCS15_PADDING_DISABLED>) <integer>
+=back
 
-If nonzero, PKCS#1 version 1.5 padding is disabled.
-This option is used by the OpenSSL FIPS provider.
+The OpenSSL FIPS provider also supports the following parameters:
+
+=over 4
+
+=item "fips-indicator" (B<OSSL_ASYM_CIPHER_PARAM_FIPS_APPROVED_INDICATOR>) <integer>
+
+=item "key-check" (B<OSSL_ASYM_CIPHER_PARAM_FIPS_KEY_CHECK>) <integer>
+
+See L<provider-asym_cipher(7)/Asymmetric Cipher Parameters> for more information.
+
+=item "pkcs15-pad-disabled" (B<OSSL_ASYM_CIPHER_PARAM_FIPS_RSA_PKCS15_PAD_DISABLED>) <integer>
+
+The default value of 1 causes an error during encryption if the RSA padding
+mode is set to "pkcs1".
+Setting this to zero will ignore the error and set the approved
+"fips-indicator" to 0.
+This option breaks FIPS compliance if it causes the approved "fips-indicator"
+to return 0.
 
 =back
 

@@ -782,12 +782,23 @@ The length of the "keybits" parameter should not exceed that of a B<size_t>.
 Gets or sets the number of rounds to be used for a cipher.
 This is used by the RC5 cipher.
 
-=item "alg_id_param" (B<OSSL_CIPHER_PARAM_ALGORITHM_ID_PARAMS>) <octet string>
+=item "algorithm-id" (B<OSSL_CIPHER_PARAM_ALGORITHM_ID>) <octet string>
+
+Used to get the DER encoded AlgorithmIdentifier from the cipher
+implementation.  Functions like L<EVP_PKEY_CTX_get_algor(3)> use this
+parameter.
+
+=item "algorithm-id-params" (B<OSSL_CIPHER_PARAM_ALGORITHM_ID_PARAMS>) <octet string>
 
 Used to pass the DER encoded AlgorithmIdentifier parameter to or from
-the cipher implementation.  Functions like L<EVP_CIPHER_param_to_asn1(3)>
-and L<EVP_CIPHER_asn1_to_param(3)> use this parameter for any implementation
-that has the flag B<EVP_CIPH_FLAG_CUSTOM_ASN1> set.
+the cipher implementation.
+Functions like L<EVP_CIPHER_CTX_set_algor_params(3)> and
+L<EVP_CIPHER_CTX_get_algor_params(3)> use this parameter.
+
+=item "alg_id_params" (B<OSSL_CIPHER_PARAM_ALGORITHM_ID_PARAMS_OLD>) <octet string>
+
+An deprecated alias for "algorithm-id-params", only used by
+L<EVP_CIPHER_param_to_asn1(3)> and L<EVP_CIPHER_asn1_to_param(3)>.
 
 =item "cts_mode" (B<OSSL_CIPHER_PARAM_CTS_MODE>) <UTF8 string>
 
@@ -900,6 +911,8 @@ Gets the result of running the "tls1multi_aad" operation.
 Used to pass the TLS MAC data.
 
 =item "fips-indicator" (B<OSSL_CIPHER_PARAM_FIPS_APPROVED_INDICATOR>) <integer>
+
+This option is used by the OpenSSL FIPS provider.
 
 A getter that returns 1 if the operation is FIPS approved, or 0 otherwise.
 This may be used after calling a cipher final operation such as
@@ -1063,13 +1076,15 @@ The default value is "GB".
 
 =item "encrypt-check" (B<OSSL_CIPHER_PARAM_FIPS_ENCRYPT_CHECK>) <integer>
 
+This option is used by the OpenSSL FIPS provider.
+
 If required this parameter should be set early via an cipher encrypt init
 function such as EVP_EncryptInit_ex2().
 The default value of 1 causes an error when an encryption operation is triggered.
 Setting this to 0 will ignore the error and set the approved "fips-indicator" to
 0.
-This option is used by the OpenSSL FIPS provider, and breaks FIPS compliance if
-set to 0.
+This option breaks FIPS compliance if it causes the approved "fips-indicator"
+to return 0.
 
 =back
 

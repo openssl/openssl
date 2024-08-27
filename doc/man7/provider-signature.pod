@@ -388,12 +388,26 @@ was successful.
 Known answer tests can be performed if the random generator is overridden to
 supply known values that either pass or fail.
 
+=back
+
+The following parameters are used by the OpenSSL FIPS provider:
+
+=over 4
+
 =item "fips-indicator" (B<OSSL_SIGNATURE_PARAM_FIPS_APPROVED_INDICATOR>) <integer>
 
 A getter that returns 1 if the operation is FIPS approved, or 0 otherwise.
 This may be used after calling either the sign or verify final functions. It may
 return 0 if either the "digest-check", "key-check", or "sign-check" are set to 0.
-This option is used by the OpenSSL FIPS provider.
+
+=item "verify-message" (B<OSSL_SIGNATURE_PARAM_FIPS_VERIFY_MESSAGE> <integer>
+
+A getter that returns 1 if a signature verification operation acted on
+a raw message, or 0 if it verified a predigested message.  A value of 0
+indicates likely non-approved usage of the FIPS provider.  This flag is
+set when any signature verification initialisation function is called.
+It is also set to 1 when any signing operation is performed to signify
+compliance.  See FIPS 140-3 IG 2.4.B for further information.
 
 =item "key-check" (B<OSSL_SIGNATURE_PARAM_FIPS_KEY_CHECK>) <integer>
 
@@ -402,8 +416,8 @@ If required this parameter should be set early via an init function
 The default value of 1 causes an error during the init if the key is not FIPS
 approved (e.g. The key has a security strength of less than 112 bits).
 Setting this to 0 will ignore the error and set the approved "indicator" to 0.
-This option is used by the OpenSSL FIPS provider, and breaks FIPS compliance if
-set to 0.
+This option breaks FIPS compliance if it causes the approved "fips-indicator"
+to return 0.
 
 =item "digest-check" (B<OSSL_SIGNATURE_PARAM_FIPS_DIGEST_CHECK>) <integer>
 
@@ -411,8 +425,8 @@ If required this parameter should be set before the signature digest is set.
 The default value of 1 causes an error when the digest is set if the digest is
 not FIPS approved (e.g. SHA1 is used for signing). Setting this to 0 will ignore
 the error and set the approved "fips-indicator" to 0.
-This option is used by the OpenSSL FIPS provider, and breaks FIPS compliance if
-set to 0.
+This option breaks FIPS compliance if it causes the approved "fips-indicator"
+to return 0.
 
 =item "sign-check" (B<OSSL_SIGNATURE_PARAM_FIPS_SIGN_CHECK>) <integer>
 
@@ -420,15 +434,17 @@ If required this parameter should be set early via an init function.
 The default value of 1 causes an error when a signing algorithm is used. (This
 is triggered by deprecated signing algorithms).
 Setting this to 0 will ignore the error and set the approved "fips-indicator" to 0.
+This option breaks FIPS compliance if it causes the approved "fips-indicator" to
+return 0.
 
 =item "sign-x931-pad-check" (B<SIGNATURE_PARAM_FIPS_SIGN_X931_PAD_CHECK>) <integer>
 
-If required this parameter should be set before the padding mode is set
+If required this parameter should be set before the padding mode is set.
 The default value of 1 causes an error if the padding mode is set to X9.31 padding
 for a RSA signing operation. Setting this to 0 will ignore the error and set the
 approved "fips-indicator" to 0.
-This option is used by the OpenSSL FIPS provider, and breaks FIPS compliance if
-set to 0.
+This option breaks FIPS compliance if it causes the approved "fips-indicator"
+to return 0.
 
 =back
 
