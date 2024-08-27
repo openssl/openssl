@@ -201,7 +201,8 @@ static int genb64(char *prefix, char *suffix, unsigned const char *buf,
     return outlen;
 }
 
-static int single_test(test_case *t, int eof_return, int llen, int wscnt)
+static int single_test(test_case *t, int eof_return, int llen, int wscnt,
+                       int flags)
 {
     unsigned char *raw;
     unsigned char *out;
@@ -255,6 +256,8 @@ static int single_test(test_case *t, int eof_return, int llen, int wscnt)
         BIO_write(bio, encoded, n1);
 
     b64 = BIO_new(BIO_f_base64());
+    if (flags != 0)
+        BIO_set_flags(b64, flags);
     BIO_push(b64, bio);
 
     n = BIO_read(b64, out, out_len);
@@ -311,6 +314,7 @@ static unsigned wscnts[] = { 0, 1, 2, 4, 8, 16, 0xFFFF };
 
 int main(void)
 {
+    static int no_nl = BIO_FLAGS_BASE64_NO_NL;
     test_case *t;
     int ok = 1;
     unsigned *llen;
@@ -330,7 +334,7 @@ int main(void)
             for (wscnt = wscnts;
                  !done && *wscnt >= 0 && *wscnt * 2 < *llen;
                  ++wscnt) {
-                if (single_test(t, 0, *llen, *wscnt) != 0) {
+                if (single_test(t, 0, *llen, *wscnt, 0) != 0) {
                     fprintf(stderr, "Failed %s: retry=no llen=%u, wscnt=%u\n",
                             t->desc, *llen, *wscnt);
                     ok = 0;
@@ -339,9 +343,28 @@ int main(void)
                  * Distinguish between EOF and data error results by choosing an
                  * "unnatural" EOF return value.
                  */
-                if (single_test(t, -1729, *llen, *wscnt) != 0) {
+                if (single_test(t, -1729, *llen, *wscnt, 0) != 0) {
                     fprintf(stderr, "Failed %s: retry=yes llen=%u, wscnt=%u\n",
                             t->desc, *llen, *wscnt);
+                    ok = 0;
+                }
+                /*
+                 * For encoded data with no prefix or suffix, also run NO_NL
+                 * tests, but with a larger line length, in particular,
+                 * eventually exceeding 1k bytes.
+                 */
+                if (*t->prefix == '\0' && *t->suffix == '\0'
+                    && single_test(t, 0, *llen + 64, *wscnt, no_nl) != 0) {
+                    fprintf(stderr,
+                            "Failed %s: retry=no llen=%u wscnt=%u no_nl=yes\n",
+                            t->desc, *llen + 64, *wscnt);
+                    ok = 0;
+                }
+                if (*t->prefix == '\0' && *t->suffix == '\0'
+                    && single_test(t, -1729, *llen + 64, *wscnt, no_nl) != 0) {
+                    fprintf(stderr,
+                            "Failed %s: retry=yes llen=%u wscnt=%u no_nl=yes\n",
+                            t->desc, *llen + 64, *wscnt);
                     ok = 0;
                 }
                 /* llen and wscnt are unused with verbatim encoded input */
