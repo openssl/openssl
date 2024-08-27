@@ -335,7 +335,7 @@ PublicKeyRaw = EDDSA-TV-1-PUBLIC-Raw:ED25519:d75a980182b10ab7d54bfed3c964073a0ee
 
 PrivPubKeyPair = EDDSA-TV-1-Raw:EDDSA-TV-1-PUBLIC-Raw
 
-FIPSversion = >=3.2.0
+FIPSversion = >=3.4.0
 Sign-Message = ED25519:EDDSA-TV-1-Raw
 Input = 
 Ctrl = hexcontext-string:
@@ -349,7 +349,7 @@ PublicKeyRaw = EDDSA-TV-2-PUBLIC-Raw:ED25519:3d4017c3e843895a92b70aa74d1b7ebc9c9
 
 PrivPubKeyPair = EDDSA-TV-2-Raw:EDDSA-TV-2-PUBLIC-Raw
 
-FIPSversion = >=3.2.0
+FIPSversion = >=3.4.0
 Sign-Message = Ed25519:EDDSA-TV-2-Raw
 Input = 72
 Ctrl = hexcontext-string:
@@ -363,7 +363,7 @@ PublicKeyRaw = EDDSA-TV-3-PUBLIC-Raw:ED25519:fc51cd8e6218a1a38da47ed00230f058081
 
 PrivPubKeyPair = EDDSA-TV-3-Raw:EDDSA-TV-3-PUBLIC-Raw
 
-FIPSversion = >=3.2.0
+FIPSversion = >=3.4.0
 Sign-Message = Ed25519:EDDSA-TV-3-Raw
 Input = af82
 Ctrl = hexcontext-string:
@@ -377,7 +377,7 @@ PublicKeyRaw = EDDSA-TV-4-PUBLIC-Raw:ED25519:278117fc144c72340f67d0f2316e8386cef
 
 PrivPubKeyPair = EDDSA-TV-4-Raw:EDDSA-TV-4-PUBLIC-Raw
 
-FIPSversion = >=3.2.0
+FIPSversion = >=3.4.0
 Sign-Message = ED25519:EDDSA-TV-4-Raw
 Input = 08b8b2b733424243760fe426a4b54908632110a66c2f6591eabd3345e3e4eb98fa6e264bf09efe12ee50f8f54e9f77b1e355f6c50544e23fb1433ddf73be84d879de7c0046dc4996d9e773f4bc9efe5738829adb26c81b37c93a1b270b20329d658675fc6ea534e0810a4432826bf58c941efb65d57a338bbd2e26640f89ffbc1a858efcb8550ee3a5e1998bd177e93a7363c344fe6b199ee5d02e82d522c4feba15452f80288a821a579116ec6dad2b3b310da903401aa62100ab5d1a36553e06203b33890cc9b832f79ef80560ccb9a39ce767967ed628c6ad573cb116dbefefd75499da96bd68a8a97b928a8bbc103b6621fcde2beca1231d206be6cd9ec7aff6f6c94fcd7204ed3455c68c83f4a41da4af2b74ef5c53f1d8ac70bdcb7ed185ce81bd84359d44254d95629e9855a94a7c1958d1f8ada5d0532ed8a5aa3fb2d17ba70eb6248e594e1a2297acbbb39d502f1a8c6eb6f1ce22b3de1a1f40cc24554119a831a9aad6079cad88425de6bde1a9187ebb6092cf67bf2b13fd65f27088d78b7e883c8759d2c4f5c65adb7553878ad575f9fad878e80a0c9ba63bcbcc2732e69485bbc9c90bfbd62481d9089beccf80cfe2df16a2cf65bd92dd597b0707e0917af48bbb75fed413d238f5555a7a569d80c3414a8d0859dc65a46128bab27af87a71314f318c782b23ebfe808b82b0ce26401d2e22f04d83d1255dc51addd3b75a2b1ae0784504df543af8969be3ea7082ff7fc9888c144da2af58429ec96031dbcad3dad9af0dcbaaaf268cb8fcffead94f3c7ca495e056a9b47acdb751fb73e666c6c655ade8297297d07ad1ba5e43f1bca32301651339e22904cc8c42f58c30c04aafdb038dda0847dd988dcda6f3bfd15c4b4c4525004aa06eeff8ca61783aacec57fb3d1f92b0fe2fd1a85f6724517b65e614ad6808d6f6ee34dff7310fdc82aebfd904b01e1dc54b2927094b2db68d6f903b68401adebf5a7e08d78ff4ef5d63653a65040cf9bfd4aca7984a74d37145986780fc0b16ac451649de6188a7dbdf191f64b5fc5e2ab47b57f7f7276cd419c17a3ca8e1b939ae49e488acba6b965610b5480109c8b17b80e1b7b750dfc7598d5d5011fd2dcc5600a32ef5b52a1ecc820e308aa342721aac0943bf6686b64b2579376504ccc493d97e6aed3fb0f9cd71a43dd497f01f17c0e2cb3797aa2a2f256656168e6c496afc5fb93246f6b1116398a346f1a641f3b041e989f7914f90cc2c7fff357876e506b50d334ba77c225bc307ba537152f3f1610e4eafe595f6d9d90d11faa933a15ef1369546868a7f3a45a96768d40fd9d03412c091c6315cf4fde7cb68606937380db2eaaa707b4c4185c32eddcdd306705e4dc1ffc872eeee475a64dfac86aba41c0618983f8741c5ef68d3a101e8a3b8cac60c905c15fc910840b94c00a0b9d0
 Ctrl = hexcontext-string:
@@ -391,7 +391,7 @@ PublicKeyRaw = EDDSA-TV-5-PUBLIC-Raw:ED25519:ec172b93ad5e563bf4932c70e1245034c35
 
 PrivPubKeyPair = EDDSA-TV-5-Raw:EDDSA-TV-5-PUBLIC-Raw
 
-FIPSversion = >=3.2.0
+FIPSversion = >=3.4.0
 Sign-Message = ED25519:EDDSA-TV-5-Raw
 Input = ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f
 Ctrl = hexcontext-string:
@@ -405,7 +405,7 @@ PublicKeyRaw = EDDSA-TV-6-PUBLIC-Raw:ED25519:dfc9425e4f968f7f0c29f0259cf5f9aed68
 
 PrivPubKeyPair = EDDSA-TV-6-Raw:EDDSA-TV-6-PUBLIC-Raw
 
-FIPSversion = >=3.2.0
+FIPSversion = >=3.4.0
 Sign-Message = ED25519ctx:EDDSA-TV-6-Raw
 Input = f726936d19c800494e3fdaff20b276a8
 Ctrl = hexcontext-string:666f6f
@@ -419,7 +419,7 @@ PublicKeyRaw = EDDSA-TV-7-PUBLIC-Raw:ED25519:dfc9425e4f968f7f0c29f0259cf5f9aed68
 
 PrivPubKeyPair = EDDSA-TV-7-Raw:EDDSA-TV-7-PUBLIC-Raw
 
-FIPSversion = >=3.2.0
+FIPSversion = >=3.4.0
 Sign-Message = Ed25519ctx:EDDSA-TV-7-Raw
 Input = f726936d19c800494e3fdaff20b276a8
 Ctrl = hexcontext-string:626172
@@ -433,7 +433,7 @@ PublicKeyRaw = EDDSA-TV-8-PUBLIC-Raw:ED25519:dfc9425e4f968f7f0c29f0259cf5f9aed68
 
 PrivPubKeyPair = EDDSA-TV-8-Raw:EDDSA-TV-8-PUBLIC-Raw
 
-FIPSversion = >=3.2.0
+FIPSversion = >=3.4.0
 Sign-Message = Ed25519ctx:EDDSA-TV-8-Raw
 Input = 508e9e6882b979fea900f62adceaca35
 Ctrl = hexcontext-string:666f6f
@@ -447,7 +447,7 @@ PublicKeyRaw = EDDSA-TV-9-PUBLIC-Raw:ED25519:0f1d1274943b91415889152e893d80e9327
 
 PrivPubKeyPair = EDDSA-TV-9-Raw:EDDSA-TV-9-PUBLIC-Raw
 
-FIPSversion = >=3.2.0
+FIPSversion = >=3.4.0
 Sign-Message = Ed25519ctx:EDDSA-TV-9-Raw
 Input = f726936d19c800494e3fdaff20b276a8
 Ctrl = hexcontext-string:666f6f
@@ -461,7 +461,7 @@ PublicKeyRaw = EDDSA-TV-10-PUBLIC-Raw:ED25519:ec172b93ad5e563bf4932c70e1245034c3
 
 PrivPubKeyPair = EDDSA-TV-10-Raw:EDDSA-TV-10-PUBLIC-Raw
 
-FIPSversion = >=3.2.0
+FIPSversion = >=3.4.0
 Sign-Message = Ed25519ph:EDDSA-TV-10-Raw
 Input = 616263
 Ctrl = hexcontext-string:
@@ -470,7 +470,7 @@ Output = 98a70222f0b8121aa9d30f813d683f809e462b469c7ff87639499bb94e6dae4131f8504
 # Same as the Sign-Message above, but with a pre-hashed input.  Input was
 # generated with:
 # echo 616263 | xxd -r -p | openssl sha512 -binary | xxd -p -c 0
-FIPSversion = >=3.2.0
+FIPSversion = >=3.4.0
 Sign = Ed25519ph:EDDSA-TV-10-Raw
 Input = ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f
 Ctrl = hexcontext-string:
@@ -484,7 +484,7 @@ PublicKeyRaw = EDDSA-TV-11-PUBLIC-Raw:ED448:5fd7449b59b461fd2ce787ec616ad46a1da1
 
 PrivPubKeyPair = EDDSA-TV-11-Raw:EDDSA-TV-11-PUBLIC-Raw
 
-FIPSversion = >=3.2.0
+FIPSversion = >=3.4.0
 Sign-Message = Ed448:EDDSA-TV-11-Raw
 Input = 
 Ctrl = hexcontext-string:
@@ -498,7 +498,7 @@ PublicKeyRaw = EDDSA-TV-12-PUBLIC-Raw:ED448:43ba28f430cdff456ae531545f7ecd0ac834
 
 PrivPubKeyPair = EDDSA-TV-12-Raw:EDDSA-TV-12-PUBLIC-Raw
 
-FIPSversion = >=3.2.0
+FIPSversion = >=3.4.0
 Sign-Message = Ed448:EDDSA-TV-12-Raw
 Input = 03
 Ctrl = hexcontext-string:
@@ -512,7 +512,7 @@ PublicKeyRaw = EDDSA-TV-13-PUBLIC-Raw:ED448:43ba28f430cdff456ae531545f7ecd0ac834
 
 PrivPubKeyPair = EDDSA-TV-13-Raw:EDDSA-TV-13-PUBLIC-Raw
 
-FIPSversion = >=3.2.0
+FIPSversion = >=3.4.0
 Sign-Message = Ed448:EDDSA-TV-13-Raw
 Input = 03
 Ctrl = hexcontext-string:666f6f
@@ -526,7 +526,7 @@ PublicKeyRaw = EDDSA-TV-14-PUBLIC-Raw:ED448:dcea9e78f35a1bf3499a831b10b86c90aac0
 
 PrivPubKeyPair = EDDSA-TV-14-Raw:EDDSA-TV-14-PUBLIC-Raw
 
-FIPSversion = >=3.2.0
+FIPSversion = >=3.4.0
 Sign-Message = Ed448:EDDSA-TV-14-Raw
 Input = 0c3e544074ec63b0265e0c
 Ctrl = hexcontext-string:
@@ -540,7 +540,7 @@ PublicKeyRaw = EDDSA-TV-15-PUBLIC-Raw:ED448:3ba16da0c6f2cc1f30187740756f5e798d6b
 
 PrivPubKeyPair = EDDSA-TV-15-Raw:EDDSA-TV-15-PUBLIC-Raw
 
-FIPSversion = >=3.2.0
+FIPSversion = >=3.4.0
 Sign-Message = Ed448:EDDSA-TV-15-Raw
 Input = 64a65f3cdedcdd66811e2915
 Ctrl = hexcontext-string:
@@ -554,7 +554,7 @@ PublicKeyRaw = EDDSA-TV-16-PUBLIC-Raw:ED448:b3da079b0aa493a5772029f0467baebee5a8
 
 PrivPubKeyPair = EDDSA-TV-16-Raw:EDDSA-TV-16-PUBLIC-Raw
 
-FIPSversion = >=3.2.0
+FIPSversion = >=3.4.0
 Sign-Message = Ed448:EDDSA-TV-16-Raw
 Input = 64a65f3cdedcdd66811e2915e7
 Ctrl = hexcontext-string:
@@ -568,7 +568,7 @@ PublicKeyRaw = EDDSA-TV-17-PUBLIC-Raw:ED448:df9705f58edbab802c7f8363cfe5560ab1c6
 
 PrivPubKeyPair = EDDSA-TV-17-Raw:EDDSA-TV-17-PUBLIC-Raw
 
-FIPSversion = >=3.2.0
+FIPSversion = >=3.4.0
 Sign-Message = Ed448:EDDSA-TV-17-Raw
 Input = bd0f6a3747cd561bdddf4640a332461a4a30a12a434cd0bf40d766d9c6d458e5512204a30c17d1f50b5079631f64eb3112182da3005835461113718d1a5ef944
 Ctrl = hexcontext-string:
@@ -582,7 +582,7 @@ PublicKeyRaw = EDDSA-TV-18-PUBLIC-Raw:ED448:79756f014dcfe2079f5dd9e718be4171e2ef
 
 PrivPubKeyPair = EDDSA-TV-18-Raw:EDDSA-TV-18-PUBLIC-Raw
 
-FIPSversion = >=3.2.0
+FIPSversion = >=3.4.0
 Sign-Message = Ed448:EDDSA-TV-18-Raw
 Input = 15777532b0bdd0d1389f636c5f6b9ba734c90af572877e2d272dd078aa1e567cfa80e12928bb542330e8409f3174504107ecd5efac61ae7504dabe2a602ede89e5cca6257a7c77e27a702b3ae39fc769fc54f2395ae6a1178cab4738e543072fc1c177fe71e92e25bf03e4ecb72f47b64d0465aaea4c7fad372536c8ba516a6039c3c2a39f0e4d832be432dfa9a706a6e5c7e19f397964ca4258002f7c0541b590316dbc5622b6b2a6fe7a4abffd96105eca76ea7b98816af0748c10df048ce012d901015a51f189f3888145c03650aa23ce894c3bd889e030d565071c59f409a9981b51878fd6fc110624dcbcde0bf7a69ccce38fabdf86f3bef6044819de11
 Ctrl = hexcontext-string:
@@ -596,7 +596,7 @@ PublicKeyRaw = EDDSA-TV-19-PUBLIC-Raw:ED448:a81b2e8a70a5ac94ffdbcc9badfc3feb0801
 
 PrivPubKeyPair = EDDSA-TV-19-Raw:EDDSA-TV-19-PUBLIC-Raw
 
-FIPSversion = >=3.2.0
+FIPSversion = >=3.4.0
 Sign-Message = Ed448:EDDSA-TV-19-Raw
 Input = 6ddf802e1aae4986935f7f981ba3f0351d6273c0a0c22c9c0e8339168e675412a3debfaf435ed651558007db4384b650fcc07e3b586a27a4f7a00ac8a6fec2cd86ae4bf1570c41e6a40c931db27b2faa15a8cedd52cff7362c4e6e23daec0fbc3a79b6806e316efcc7b68119bf46bc76a26067a53f296dafdbdc11c77f7777e972660cf4b6a9b369a6665f02e0cc9b6edfad136b4fabe723d2813db3136cfde9b6d044322fee2947952e031b73ab5c603349b307bdc27bc6cb8b8bbd7bd323219b8033a581b59eadebb09b3c4f3d2277d4f0343624acc817804728b25ab797172b4c5c21a22f9c7839d64300232eb66e53f31c723fa37fe387c7d3e50bdf9813a30e5bb12cf4cd930c40cfb4e1fc622592a49588794494d56d24ea4b40c89fc0596cc9ebb961c8cb10adde976a5d602b1c3f85b9b9a001ed3c6a4d3b1437f52096cd1956d042a597d561a596ecd3d1735a8d570ea0ec27225a2c4aaff26306d1526c1af3ca6d9cf5a2c98f47e1c46db9a33234cfd4d81f2c98538a09ebe76998d0d8fd25997c7d255c6d66ece6fa56f11144950f027795e653008f4bd7ca2dee85d8e90f3dc315130ce2a00375a318c7c3d97be2c8ce5b6db41a6254ff264fa6155baee3b0773c0f497c573f19bb4f4240281f0b1f4f7be857a4e59d416c06b4c50fa09e1810ddc6b1467baeac5a3668d11b6ecaa901440016f389f80acc4db977025e7f5924388c7e340a732e554440e76570f8dd71b7d640b3450d1fd5f0410a18f9a3494f707c717b79b4bf75c98400b096b21653b5d217cf3565c9597456f70703497a078763829bc01bb1cbc8fa04eadc9a6e3f6699587a9e75c94e5bab0036e0b2e711392cff0047d0d6b05bd2a588bc109718954259f1d86678a579a3120f19cfb2963f177aeb70f2d4844826262e51b80271272068ef5b3856fa8535aa2a88b2d41f2a0e2fda7624c2850272ac4a2f561f8f2f7a318bfd5caf9696149e4ac824ad3460538fdc25421beec2cc6818162d06bbed0c40a387192349db67a118bada6cd5ab0140ee273204f628aad1c135f770279a651e24d8c14d75a6059d76b96a6fd857def5e0b354b27ab937a5815d16b5fae407ff18222c6d1ed263be68c95f32d908bd895cd76207ae726487567f9a67dad79abec316f683b17f2d02bf07e0ac8b5bc6162cf94697b3c27cd1fea49b27f23ba2901871962506520c392da8b6ad0d99f7013fbc06c2c17a569500c8a7696481c1cd33e9b14e40b82e79a5f5db82571ba97bae3ad3e0479515bb0e2b0f3bfcd1fd33034efc6245eddd7ee2086ddae2600d8ca73e214e8c2b0bdb2b047c6a464a562ed77b73d2d841c4b34973551257713b753632efba348169abc90a68f42611a40126d7cb21b58695568186f7e569d2ff0f9e745d0487dd2eb997cafc5abf9dd102e62ff66cba87
 Ctrl = hexcontext-string:
@@ -610,7 +610,7 @@ PublicKeyRaw = EDDSA-TV-20-PUBLIC-Raw:ED448:259b71c19f83ef77a7abd26524cbdb3161b5
 
 PrivPubKeyPair = EDDSA-TV-20-Raw:EDDSA-TV-20-PUBLIC-Raw
 
-FIPSversion = >=3.2.0
+FIPSversion = >=3.4.0
 Sign-Message = Ed448ph:EDDSA-TV-20-Raw
 Input = 616263
 Ctrl = hexcontext-string:
@@ -619,7 +619,7 @@ Output = 822f6901f7480f3d5f562c592994d9693602875614483256505600bbc281ae381f54d6b
 # Same as the Sign-Message above, but with a pre-hashed input.  Input was
 # generated with:
 # echo 616263 | xxd -r -p | openssl shake256 -binary -xoflen | xxd -p -c 0
-FIPSversion = >=3.2.0
+FIPSversion = >=3.4.0
 Sign = Ed448ph:EDDSA-TV-20-Raw
 Input = 483366601360a8771c6863080cc4114d8db44530f8f1e1ee4f94ea37e78b5739d5a15bef186a5386c75744c0527e1faa9f8726e462a12a4feb06bd8801e751e4
 Ctrl = hexcontext-string:
@@ -633,7 +633,7 @@ PublicKeyRaw = EDDSA-TV-21-PUBLIC-Raw:ED448:259b71c19f83ef77a7abd26524cbdb3161b5
 
 PrivPubKeyPair = EDDSA-TV-21-Raw:EDDSA-TV-21-PUBLIC-Raw
 
-FIPSversion = >=3.2.0
+FIPSversion = >=3.4.0
 Sign-Message = Ed448ph:EDDSA-TV-21-Raw
 Input = 616263
 Ctrl = hexcontext-string:666f6f
@@ -642,7 +642,7 @@ Output = c32299d46ec8ff02b54540982814dce9a05812f81962b649d528095916a2aa481065b15
 # Same as the Sign-Message above, but with a pre-hashed input.  Input was
 # generated with:
 # echo 616263 | xxd -r -p | openssl shake256 -binary -xoflen 64 | xxd -p -c 0
-FIPSversion = >=3.2.0
+FIPSversion = >=3.4.0
 Sign = Ed448ph:EDDSA-TV-21-Raw
 Input = 483366601360a8771c6863080cc4114d8db44530f8f1e1ee4f94ea37e78b5739d5a15bef186a5386c75744c0527e1faa9f8726e462a12a4feb06bd8801e751e4
 Ctrl = hexcontext-string:666f6f
