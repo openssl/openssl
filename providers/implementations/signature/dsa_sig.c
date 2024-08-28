@@ -72,6 +72,7 @@ typedef struct {
     OSSL_LIB_CTX *libctx;
     char *propq;
     DSA *dsa;
+    /* |operation| reuses EVP's operation bitfield */
     int operation;
 
     /*
