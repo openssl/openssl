@@ -3668,6 +3668,9 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
         if (parg != NULL) {
             sc->ext.ocsp.resp_ex = sk_OCSP_RESPONSE_new_null();
 
+            if (sc->ext.ocsp.resp_ex == NULL)
+                return 0;
+
             p = parg;
             resp = d2i_OCSP_RESPONSE(NULL, (const unsigned char **)&p, larg);
             if (resp != NULL) {
