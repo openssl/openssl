@@ -252,7 +252,7 @@ static int use_proxy(const char *no_proxy, const char *server)
 {
     size_t sl;
     const char *found = NULL;
-    char host[300];
+    char host[NI_MAXHOST];
 
     if (!ossl_assert(server != NULL))
         return 0;
