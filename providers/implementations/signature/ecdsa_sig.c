@@ -197,7 +197,7 @@ static int ecdsa_setup_md(PROV_ECDSA_CTX *ctx,
         goto err;
     }
     md_nid = ossl_digest_get_approved_nid(md);
-    if (md_nid < 0) {
+    if (md_nid == NID_undef) {
         ERR_raise_data(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED,
                        "digest=%s", mdname);
         goto err;

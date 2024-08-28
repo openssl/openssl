@@ -387,7 +387,7 @@ static int rsa_setup_md(PROV_RSA_CTX *ctx, const char *mdname,
             goto err;
         }
         md_nid = ossl_digest_rsa_sign_get_md_nid(md);
-        if (md_nid <= 0) {
+        if (md_nid == NID_undef) {
             ERR_raise_data(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED,
                            "digest=%s", mdname);
             goto err;
