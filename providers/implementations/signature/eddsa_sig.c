@@ -768,7 +768,9 @@ static int eddsa_set_ctx_params(void *vpeddsactx, const OSSL_PARAM params[])
 
         if (peddsactx->instance_id_preset_flag) {
             /* When the instance is preset, the caller must no try to set it */
-            ERR_raise(ERR_LIB_PROV, PROV_R_NO_INSTANCE_ALLOWED);
+            ERR_raise_data(ERR_LIB_PROV, PROV_R_NO_INSTANCE_ALLOWED,
+                           "the EdDSA instance is preset, you may not try to specify it",
+                           NULL);
             return 0;
         }
 
