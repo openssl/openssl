@@ -516,6 +516,10 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL_CONNECTION *s, PACKET *pkt)
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
         goto err;
     }
+    if (PACKET_remaining(pkt) != 0) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
+        goto err;
+    }
 
     if (!get_cert_verify_tbs_data(s, tls13tbs, &hdata, &hdatalen)) {
         /* SSLfatal() already called */
