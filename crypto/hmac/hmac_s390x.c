@@ -18,22 +18,16 @@ static int s390x_fc_from_md(const EVP_MD *md)
 {
     int fc;
 
-    switch (EVP_MD_get_type(md)) {
-    case NID_sha224:
+    if (EVP_MD_is_a(md, "SHA2-224"))
         fc = S390X_HMAC_SHA_224;
-        break;
-    case NID_sha256:
+    else if (EVP_MD_is_a(md, "SHA2-256"))
         fc = S390X_HMAC_SHA_256;
-        break;
-    case NID_sha384:
+    else if (EVP_MD_is_a(md, "SHA2-384"))
         fc = S390X_HMAC_SHA_384;
-        break;
-    case NID_sha512:
+    else if (EVP_MD_is_a(md, "SHA2-512"))
         fc = S390X_HMAC_SHA_512;
-        break;
-    default:
+    else
         return 0;
-    }
 
     if ((OPENSSL_s390xcap_P.kmac[1] & S390X_CAPBIT(fc)) == 0)
         return 0;
