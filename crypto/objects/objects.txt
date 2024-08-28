@@ -1869,3 +1869,149 @@ oracle 746875 1 1 : oracle-jdk-trustedkeyusage : Trusted key usage (Oracle)
 # NID for compression
                             : brotli : Brotli compression
 			    : zstd : Zstandard compression
+
+2 23 133 : tcg 		: Trusted Computing Group
+
+tcg 1  : tcg-tcpaSpecVersion
+tcg 2  : tcg-attribute 			: Trusted Computing Group Attributes
+tcg 3  : tcg-protocol 			: Trusted Computing Group Protocols
+tcg 4  : tcg-algorithm 			: Trusted Computing Group Algorithms
+tcg 5  : tcg-platformClass 		: Trusted Computing Group Platform Classes
+tcg 6  : tcg-ce 				: Trusted Computing Group Certificate Extensions
+tcg 8  : tcg-kp 				: Trusted Computing Group Key Purposes
+tcg 11 : tcg-ca					: Trusted Computing Group Certificate Policies
+tcg 17 : tcg-address 			: Trusted Computing Group Address Formats
+tcg 18 : tcg-registry 			: Trusted Computing Group Registry
+tcg 19 : tcg-traits				: Trusted Computing Group Traits
+
+tcg-platformClass 1 : tcg-common 							: Trusted Computing Group Common
+tcg-common 1		: tcg-at-platformManufacturerStr		: TCG Platform Manufacturer String
+tcg-common 2		: tcg-at-platformManufacturerId			: TCG Platform Manufacturer ID
+tcg-common 3		: tcg-at-platformConfigUri				: TCG Platform Configuration URI
+tcg-common 4		: tcg-at-platformModel					: TCG Platform Model
+tcg-common 5		: tcg-at-platformVersion				: TCG Platform Version
+tcg-common 6		: tcg-at-platformSerial					: TCG Platform Serial Number
+tcg-common 7		: tcg-at-platformConfiguration			: TCG Platform Configuration
+tcg-common 8		: tcg-at-platformIdentifier				: TCG Platform Identifier
+
+tcg-attribute 1		: tcg-at-tpmManufacturer			  : TPM Manufacturer
+tcg-attribute 2		: tcg-at-tpmModel					  : TPM Model
+tcg-attribute 3		: tcg-at-tpmVersion 				  : TPM Version
+tcg-attribute 10	: tcg-at-securityQualities			  : Security Qualities
+tcg-attribute 11	: tcg-at-tpmProtectionProfile		  : TPM Protection Profile
+tcg-attribute 12	: tcg-at-tpmSecurityTarget 			  : TPM Security Target
+tcg-attribute 13	: tcg-at-tbbProtectionProfile		  : TBB Protection Profile
+tcg-attribute 14	: tcg-at-tbbSecurityTarget			  : TBB Security Target
+tcg-attribute 15	: tcg-at-tpmIdLabel					  : TPM ID Label
+tcg-attribute 16	: tcg-at-tpmSpecification			  : TPM Specification
+tcg-attribute 17	: tcg-at-tcgPlatformSpecification	  : TPM Platform Specification
+tcg-attribute 18	: tcg-at-tpmSecurityAssertions		  : TPM Security Assertions
+tcg-attribute 19	: tcg-at-tbbSecurityAssertions		  : TBB Security Assertions
+tcg-attribute 23	: tcg-at-tcgCredentialSpecification	  : TCG Credential Specification
+tcg-attribute 25	: tcg-at-tcgCredentialType			  : TCG Credential Type
+tcg-attribute 26    : tcg-at-previousPlatformCertificates : TCG Previous Platform Certificates
+tcg-attribute 27    : tcg-at-tbbSecurityAssertions-v3     : TCG TBB Security Assertions V3
+tcg-attribute 28    : tcg-at-cryptographicAnchors         : TCG Cryptographic Anchors
+
+tcg-at-platformConfiguration 1 : tcg-at-platformConfiguration-v1 : Platform Configuration Version 1
+tcg-at-platformConfiguration 2 : tcg-at-platformConfiguration-v2 : Platform Configuration Version 2
+tcg-at-platformConfiguration 3 : tcg-at-platformConfiguration-v3 : Platform Configuration Version 3
+tcg-at-platformConfiguration 4 : tcg-at-platformConfigUri-v3     : Platform Configuration URI Version 3
+
+tcg-algorithm 1 : tcg-algorithm-null : TCG NULL Algorithm
+
+tcg-kp 1 : tcg-kp-EKCertificate 						 : Endorsement Key Certificate
+tcg-kp 2 : tcg-kp-PlatformAttributeCertificate 			 : Platform Attribute Certificate
+tcg-kp 3 : tcg-kp-AIKCertificate 						 : Attestation Identity Key Certificate
+tcg-kp 4 : tcg-kp-PlatformKeyCertificate 				 : Platform Key Certificate
+tcg-kp 5 : tcg-kp-DeltaPlatformAttributeCertificate 	 : Delta Platform Attribute Certificate
+tcg-kp 6 : tcg-kp-DeltaPlatformKeyCertificate 			 : Delta Platform Key Certificate
+tcg-kp 7 : tcg-kp-AdditionalPlatformAttributeCertificate : Additional Platform Attribute Certificate
+tcg-kp 8 : tcg-kp-AdditionalPlatformKeyCertificate 		 : Additional Platform Key Certificate
+
+tcg-ce 2 : tcg-ce-relevantCredentials						: Relevant Credentials
+tcg-ce 3 : tcg-ce-relevantManifests							: Relevant Manifests
+tcg-ce 4 : tcg-ce-virtualPlatformAttestationService			: Virtual Platform Attestation Service
+tcg-ce 5 : tcg-ce-migrationControllerAttestationService		: Migration Controller Attestation Service
+tcg-ce 6 : tcg-ce-migrationControllerRegistrationService	: Migration Controller Registration Service
+tcg-ce 7 : tcg-ce-virtualPlatformBackupService				: Virtual Platform Backup Service
+
+tcg-protocol 1 : tcg-prt-tpmIdProtocol : TCG TPM Protocol
+
+tcg-address 1 : tcg-address-ethernetmac		: Ethernet MAC Address
+tcg-address 2 : tcg-address-wlanmac			: WLAN MAC Address
+tcg-address 3 : tcg-address-bluetoothmac	: Bluetooth MAC Address
+
+tcg-registry 3 : tcg-registry-componentClass : TCG Component Class
+
+tcg-registry-componentClass 1 : tcg-registry-componentClass-tcg		: Trusted Computed Group Registry
+tcg-registry-componentClass 2 : tcg-registry-componentClass-ietf	: Internet Engineering Task Force Registry
+tcg-registry-componentClass 3 : tcg-registry-componentClass-dmtf	: Distributed Management Task Force Registry
+tcg-registry-componentClass 4 : tcg-registry-componentClass-pcie	: PCIE Component Class
+tcg-registry-componentClass 5 : tcg-registry-componentClass-disk	: Disk Component Class
+
+tcg-ca 4 : tcg-cap-verifiedPlatformCertificate : TCG Verified Platform Certificate CA Policy
+
+tcg-traits 1 : tcg-tr-ID       : TCG Trait Identifiers
+tcg-traits 2 : tcg-tr-category : TCG Trait Categories
+tcg-traits 3 : tcg-tr-registry : TCG Trait Registries
+
+tcg-tr-ID 1  : tcg-tr-ID-Boolean 								: Boolean Trait
+tcg-tr-ID 2  : tcg-tr-ID-CertificateIdentifier 					: Certificate Identifier Trait
+tcg-tr-ID 3  : tcg-tr-ID-CommonCriteria 						: Common Criteria Trait
+tcg-tr-ID 4  : tcg-tr-ID-componentClass 						: Component Class Trait
+tcg-tr-ID 5  : tcg-tr-ID-componentIdentifierV11 				: Component Identifier V1.1 Trait
+tcg-tr-ID 6  : tcg-tr-ID-FIPSLevel 								: FIPS Level Trait
+tcg-tr-ID 7  : tcg-tr-ID-ISO9000Level 							: ISO 9000 Level Trait
+tcg-tr-ID 8  : tcg-tr-ID-networkMAC 							: Network MAC Trait
+tcg-tr-ID 9  : tcg-tr-ID-OID 									: Object Identifier Trait
+tcg-tr-ID 10 : tcg-tr-ID-PEN 									: Private Enterprise Number Trait
+tcg-tr-ID 11 : tcg-tr-ID-platformFirmwareCapabilities 			: Platform Firmware Capabilities Trait
+tcg-tr-ID 12 : tcg-tr-ID-platformFirmwareSignatureVerification 	: Platform Firmware Signature Verification Trait
+tcg-tr-ID 13 : tcg-tr-ID-platformFirmwareUpdateCompliance 		: Platform Firmware Update Compliance Trait
+tcg-tr-ID 14 : tcg-tr-ID-platformHardwareCapabilities 			: Platform Hardware Capabilities Trait
+tcg-tr-ID 15 : tcg-tr-ID-RTM 									: Root of Trust for Measurement Trait
+tcg-tr-ID 16 : tcg-tr-ID-status 								: Attribute Status Trait
+tcg-tr-ID 17 : tcg-tr-ID-URI 									: Uniform Resource Identifier Trait
+tcg-tr-ID 18 : tcg-tr-ID-UTF8String 							: UTF8String Trait
+tcg-tr-ID 19 : tcg-tr-ID-IA5String 								: IA5String Trait
+tcg-tr-ID 20 : tcg-tr-ID-PEMCertString 							: PEM-Encoded Certificate String Trait
+tcg-tr-ID 21 : tcg-tr-ID-PublicKey 								: Public Key Trait
+
+tcg-tr-category 1  : tcg-tr-cat-platformManufacturer 					: Platform Manufacturer Trait Category
+tcg-tr-category 2  : tcg-tr-cat-platformModel 							: Platform Model Trait Category
+tcg-tr-category 3  : tcg-tr-cat-platformVersion 						: Platform Version Trait Category
+tcg-tr-category 4  : tcg-tr-cat-platformSerial 							: Platform Serial Trait Category
+tcg-tr-category 5  : tcg-tr-cat-platformManufacturerIdentifier 			: Platform Manufacturer Identifier Trait Category
+tcg-tr-category 6  : tcg-tr-cat-platformOwnership 						: Platform Ownership Trait Category
+tcg-tr-category 7  : tcg-tr-cat-componentClass 							: Component Class Trait Category
+tcg-tr-category 8  : tcg-tr-cat-componentManufacturer 					: Component Manufacturer Trait Category
+tcg-tr-category 9  : tcg-tr-cat-componentModel 							: Component Model Trait Category
+tcg-tr-category 10 : tcg-tr-cat-componentSerial 						: Component Serial Trait Category
+tcg-tr-category 11 : tcg-tr-cat-componentStatus 						: Component Status Trait Category
+tcg-tr-category 12 : tcg-tr-cat-componentLocation 						: Component Location Trait Category
+tcg-tr-category 13 : tcg-tr-cat-componentRevision 						: Component Revision Trait Category
+tcg-tr-category 14 : tcg-tr-cat-componentFieldReplaceable 				: Component Field Replaceable Trait Category
+tcg-tr-category 15 : tcg-tr-cat-EKCertificate 							: EK Certificate Trait Category
+tcg-tr-category 16 : tcg-tr-cat-IAKCertificate 							: IAK Certificate Trait Category
+tcg-tr-category 17 : tcg-tr-cat-IDevIDCertificate 						: IDevID Certificate Trait Category
+tcg-tr-category 18 : tcg-tr-cat-DICECertificate 						: DICE Certificate Trait Category
+tcg-tr-category 19 : tcg-tr-cat-SPDMCertificate 						: SPDM Certificate Trait Category
+tcg-tr-category 20 : tcg-tr-cat-PEMCertificate 							: PEM Certificate Trait Category
+tcg-tr-category 21 : tcg-tr-cat-PlatformCertificate 					: Platform Certificate Trait Category
+tcg-tr-category 22 : tcg-tr-cat-DeltaPlatformCertificate 				: Delta Platform Certificate Trait Category
+tcg-tr-category 23 : tcg-tr-cat-RebasePlatformCertificate 				: Rebase Platform Certificate Trait Category
+tcg-tr-category 24 : tcg-tr-cat-genericCertificate 						: Generic Certificate Trait Category
+tcg-tr-category 25 : tcg-tr-cat-CommonCriteria 							: Common Criteria Trait Category
+tcg-tr-category 26 : tcg-tr-cat-componentIdentifierV11 					: Component Identifier V1.1 Trait Category
+tcg-tr-category 27 : tcg-tr-cat-FIPSLevel 								: FIPS Level Trait Category
+tcg-tr-category 28 : tcg-tr-cat-ISO9000 								: ISO 9000 Trait Category
+tcg-tr-category 29 : tcg-tr-cat-networkMAC 								: Network MAC Trait Category
+tcg-tr-category 30 : tcg-tr-cat-attestationProtocol 					: Attestation Protocol Trait Category
+tcg-tr-category 31 : tcg-tr-cat-PEN 									: Private Enterprise Number Trait Category
+tcg-tr-category 32 : tcg-tr-cat-platformFirmwareCapabilities 			: Platform Firmware Capabilities Trait Category
+tcg-tr-category 33 : tcg-tr-cat-platformHardwareCapabilities 			: Platform Hardware Capabilities Trait Category
+tcg-tr-category 34 : tcg-tr-cat-platformFirmwareSignatureVerification 	: Platform Firmware Signature Verification Trait Category
+tcg-tr-category 35 : tcg-tr-cat-platformFirmwareUpdateCompliance 		: Platform Firmware Update Compliance Trait Category
+tcg-tr-category 36 : tcg-tr-cat-RTM 									: Root of Trust of Measurement Trait Category
+tcg-tr-category 37 : tcg-tr-cat-PublicKey 								: Public Key Trait Category
