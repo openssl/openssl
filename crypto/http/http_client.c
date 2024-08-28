@@ -928,10 +928,10 @@ int OSSL_HTTP_REQ_CTX_nbio_d2i(OSSL_HTTP_REQ_CTX *rctx,
 
 #ifndef OPENSSL_NO_SOCK
 
-static const char *complete_port(const char *host, const char *port, int use_ssl)
+static const char *extract_port(const char *host, const char *port, int use_ssl)
 {
     if (port == NULL) {
-        if (host[0] == '[') { /* IPv6 address enclosed with '[' and ']' */
+        if (host[0] == '[') { /* IPv6 address enclosed in '[' and ']' */
             host = strchr(host + 1, ']');
             if (host == NULL) {
                 ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_INVALID_ARGUMENT);
@@ -964,7 +964,7 @@ static BIO *http_new_bio(const char *server /* optionally includes ":port" */,
         port = proxy_port;
     }
 
-    if ((port = complete_port(host, port, use_ssl)) == NULL)
+    if ((port = extract_port(host, port, use_ssl)) == NULL)
         return NULL;
 
     cbio = BIO_new_connect(host /* optionally includes ":port" */);
@@ -1052,7 +1052,7 @@ OSSL_HTTP_REQ_CTX *OSSL_HTTP_open(const char *server, const char *port,
         }
         if (port != NULL && *port == '\0')
             port = NULL;
-        if ((port = complete_port(server, port, use_ssl)) == NULL)
+        if ((port = extract_port(server, port, use_ssl)) == NULL)
             return NULL;
         proxy = OSSL_HTTP_adapt_proxy(proxy, no_proxy, server, use_ssl);
         if (proxy != NULL
