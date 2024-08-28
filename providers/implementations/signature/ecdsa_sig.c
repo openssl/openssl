@@ -892,8 +892,7 @@ const OSSL_DISPATCH ossl_ecdsa_signature_functions[] = {
 
 /*
  * So called sigalgs (composite ECDSA+hash) implemented below.  They
- * are pretty much hard coded, and rely on direct non-EVP use of hash
- * implementations.
+ * are pretty much hard coded.
  */
 
 static OSSL_FUNC_signature_query_key_types_fn ecdsa_sigalg_query_key_types;
