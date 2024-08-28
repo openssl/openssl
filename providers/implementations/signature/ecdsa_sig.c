@@ -505,7 +505,7 @@ static int ecdsa_digest_signverify_init(void *vctx, const char *mdname,
         return 0;
 
     if (mdname != NULL
-        /* was dsa_setup_md already called in dsa_signverify_init()? */
+        /* was ecdsa_setup_md already called in ecdsa_signverify_init()? */
         && (mdname[0] == '\0' || OPENSSL_strcasecmp(ctx->mdname, mdname) != 0)
         && !ecdsa_setup_md(ctx, mdname, NULL, desc))
         return 0;
