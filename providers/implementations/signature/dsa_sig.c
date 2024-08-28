@@ -26,7 +26,6 @@
 #include "internal/nelem.h"
 #include "internal/sizes.h"
 #include "internal/cryptlib.h"
-#include "crypto/dsa.h"
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
@@ -875,8 +874,7 @@ const OSSL_DISPATCH ossl_dsa_signature_functions[] = {
 
 /*
  * So called sigalgs (composite DSA+hash) implemented below.  They
- * are pretty much hard coded, and rely on direct non-EVP use of hash
- * implementations.
+ * are pretty much hard coded.
  */
 
 static OSSL_FUNC_signature_query_key_types_fn dsa_sigalg_query_key_types;
