@@ -553,7 +553,7 @@ static int dsa_digest_sign_init(void *vpdsactx, const char *mdname,
 }
 
 static int dsa_digest_signverify_update(void *vpdsactx, const unsigned char *data,
-                                  size_t datalen)
+                                        size_t datalen)
 {
     PROV_DSA_CTX *pdsactx = (PROV_DSA_CTX *)vpdsactx;
 
