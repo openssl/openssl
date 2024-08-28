@@ -536,7 +536,7 @@ static int ecdsa_digest_sign_init(void *vctx, const char *mdname, void *ec,
 }
 
 static int ecdsa_digest_signverify_update(void *vctx, const unsigned char *data,
-                                  size_t datalen)
+                                          size_t datalen)
 {
     PROV_ECDSA_CTX *ctx = (PROV_ECDSA_CTX *)vctx;
 
