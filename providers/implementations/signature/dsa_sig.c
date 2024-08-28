@@ -520,7 +520,7 @@ static int dsa_digest_signverify_init(void *vpdsactx, const char *mdname,
         return 0;
 
     if (mdname != NULL
-        /* was ecdsa_setup_md already called in ecdsa_signverify_init()? */
+        /* was dsa_setup_md already called in dsa_signverify_init()? */
         && (mdname[0] == '\0' || OPENSSL_strcasecmp(pdsactx->mdname, mdname) != 0)
         && !dsa_setup_md(pdsactx, mdname, NULL, desc))
         return 0;
