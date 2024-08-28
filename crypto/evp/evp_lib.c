@@ -1246,12 +1246,10 @@ int EVP_CIPHER_CTX_get_algor_params(EVP_CIPHER_CTX *ctx, X509_ALGOR *alg)
 {
     int ret = -1;                /* Assume the worst */
     unsigned char *der = NULL;
-    size_t derl;
     ASN1_TYPE *type = NULL;
     int i = -1;
     const char *k_old = OSSL_CIPHER_PARAM_ALGORITHM_ID_PARAMS_OLD;
     const char *k_new = OSSL_CIPHER_PARAM_ALGORITHM_ID_PARAMS;
-    const char *derk;
     OSSL_PARAM params[3];
 
     /*
@@ -1283,9 +1281,9 @@ int EVP_CIPHER_CTX_get_algor_params(EVP_CIPHER_CTX *ctx, X509_ALGOR *alg)
      */
     type = alg->parameter;
 
-    derk = params[i].key;
-    derl = params[i].return_size;
-    if (i >= 0 && (der = OPENSSL_malloc(derl)) != NULL) {
+    if (i >= 0 && (der = OPENSSL_malloc(params[i].return_size)) != NULL) {
+        size_t derl = params[i].return_size;
+        const char *derk = params[i].key;
         unsigned char *derp = der;
 
         params[i] = OSSL_PARAM_construct_octet_string(derk, der, derl);
