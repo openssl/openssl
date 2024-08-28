@@ -94,21 +94,20 @@ obtained via a call to SSL_get0_tlsext_status_ocsp_resp_ex(). The value B<*resp>
 will be updated to point to the OCSP response stack and the return value will
 be the number of responses on the stack.
 Typically a callback would obtain an OCSP_RESPONSE object from the stack via a
-call to sk_OCSP_RESPONSE_pop and convert it with the d2i_OCSP_RESPONSE()
-function. If the server has not provided any response data then B<*resp> will
-be NULL and the return value from SSL_get0_tlsext_status_ocsp_resp_ex() will
-be -1.
+call to sk_OCSP_RESPONSE_pop. If the server has not provided any response data
+then B<*resp> will be NULL and the return value from
+SSL_get0_tlsext_status_ocsp_resp_ex() will be -1.
 
 A server application must also call the SSL_CTX_set_tlsext_status_cb() function
 if it wants to be able to provide clients with OCSP Certificate Status
 responses, where TLS 1.3 allows for multi-stapling, i.e., providing responses
 for all certificates in the chain of the server certificate (excluding the root
 CA certificate).
-Typically the server callback would obtain the certificates that are being sent
-back to the client via a call to SSL_get_certificate() resp.
-SSL_get0_chain_certs(); obtain the OCSP response to be sent back; and then set
-that response data by calling SSL_set0_tlsext_status_ocsp_resp_ex(). A stack of
-OCSP responses should be provided in the B<resp> argument.
+The certificates sent back to the to the client and for which OCSP response(s)
+should be aquired could be obtained via call to SSL_get_certificate() resp.
+SSL_get0_chain_certs(). OCSP response(s) then set by calling
+SSL_set0_tlsext_status_ocsp_resp_ex(). A stack of OCSP responses should be
+provided in the B<resp> argument.
 
 =head1 RETURN VALUES
 

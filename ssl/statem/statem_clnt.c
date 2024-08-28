@@ -2881,11 +2881,9 @@ int tls_process_cert_status_body(SSL_CONNECTION *s, size_t chainidx, PACKET *pkt
     }
 
 #ifndef OPENSSL_NO_OCSP
-    if (s->ext.ocsp.resp != NULL) {
-        OPENSSL_free(s->ext.ocsp.resp);
-        s->ext.ocsp.resp = NULL;
-        s->ext.ocsp.resp_len = 0;
-    }
+    OPENSSL_free(s->ext.ocsp.resp);
+    s->ext.ocsp.resp = NULL;
+    s->ext.ocsp.resp_len = 0;
 
     if (s->ext.ocsp.resp_ex == NULL)
         s->ext.ocsp.resp_ex = sk_OCSP_RESPONSE_new_null();

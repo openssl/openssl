@@ -23,7 +23,6 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include <openssl/ocsp.h>
-#include <openssl/tls1.h>
 #include <openssl/objects.h>
 #include <openssl/core_names.h>
 #include "internal/dane.h"
@@ -1173,8 +1172,7 @@ static int check_cert_ocsp_resp(X509_STORE_CTX *ctx)
 end:
 
     OCSP_CERTID_free(cert_id);
-    if (bs != NULL)
-        OCSP_BASICRESP_free(bs);
+    OCSP_BASICRESP_free(bs);
 
     return ret;
 }
@@ -2653,6 +2651,7 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
     ctx->rpk = NULL;
     /* Zero ex_data to make sure we're cleanup-safe */
     memset(&ctx->ex_data, 0, sizeof(ctx->ex_data));
+    ctx->ocsp_resp = NULL;
 
     /* store->cleanup is always 0 in OpenSSL, if set must be idempotent */
     if (store != NULL)

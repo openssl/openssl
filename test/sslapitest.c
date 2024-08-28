@@ -1943,8 +1943,10 @@ static int ocsp_server_cb_multi(SSL *s, void *arg)
     sk_resp = sk_OCSP_RESPONSE_new_null();
     sk_OCSP_RESPONSE_push(sk_resp, dummy_ocsp_resp);
 
-    if (!TEST_true(SSL_set0_tlsext_status_ocsp_resp_ex(s, sk_resp)))
+    if (!TEST_true(SSL_set0_tlsext_status_ocsp_resp_ex(s, sk_resp))) {
+        sk_OCSP_RESPONSE_pop_free(sk_resp, OCSP_RESPONSE_free);
         return SSL_TLSEXT_ERR_ALERT_FATAL;
+    }
 
     ocsp_server_called = 1;
     return SSL_TLSEXT_ERR_OK;
