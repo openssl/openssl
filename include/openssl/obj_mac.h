@@ -5771,6 +5771,655 @@
 #define LN_zstd         "Zstandard compression"
 #define NID_zstd                1289
 
+#define SN_tcg          "tcg"
+#define LN_tcg          "Trusted Computing Group"
+#define NID_tcg         1324
+#define OBJ_tcg         2L,23L,133L
+
+#define SN_tcg_tcpaSpecVersion          "tcg-tcpaSpecVersion"
+#define NID_tcg_tcpaSpecVersion         1325
+#define OBJ_tcg_tcpaSpecVersion         OBJ_tcg,1L
+
+#define SN_tcg_attribute                "tcg-attribute"
+#define LN_tcg_attribute                "Trusted Computing Group Attributes"
+#define NID_tcg_attribute               1326
+#define OBJ_tcg_attribute               OBJ_tcg,2L
+
+#define SN_tcg_protocol         "tcg-protocol"
+#define LN_tcg_protocol         "Trusted Computing Group Protocols"
+#define NID_tcg_protocol                1327
+#define OBJ_tcg_protocol                OBJ_tcg,3L
+
+#define SN_tcg_algorithm                "tcg-algorithm"
+#define LN_tcg_algorithm                "Trusted Computing Group Algorithms"
+#define NID_tcg_algorithm               1328
+#define OBJ_tcg_algorithm               OBJ_tcg,4L
+
+#define SN_tcg_platformClass            "tcg-platformClass"
+#define LN_tcg_platformClass            "Trusted Computing Group Platform Classes"
+#define NID_tcg_platformClass           1329
+#define OBJ_tcg_platformClass           OBJ_tcg,5L
+
+#define SN_tcg_ce               "tcg-ce"
+#define LN_tcg_ce               "Trusted Computing Group Certificate Extensions"
+#define NID_tcg_ce              1330
+#define OBJ_tcg_ce              OBJ_tcg,6L
+
+#define SN_tcg_kp               "tcg-kp"
+#define LN_tcg_kp               "Trusted Computing Group Key Purposes"
+#define NID_tcg_kp              1331
+#define OBJ_tcg_kp              OBJ_tcg,8L
+
+#define SN_tcg_ca               "tcg-ca"
+#define LN_tcg_ca               "Trusted Computing Group Certificate Policies"
+#define NID_tcg_ca              1332
+#define OBJ_tcg_ca              OBJ_tcg,11L
+
+#define SN_tcg_address          "tcg-address"
+#define LN_tcg_address          "Trusted Computing Group Address Formats"
+#define NID_tcg_address         1333
+#define OBJ_tcg_address         OBJ_tcg,17L
+
+#define SN_tcg_registry         "tcg-registry"
+#define LN_tcg_registry         "Trusted Computing Group Registry"
+#define NID_tcg_registry                1334
+#define OBJ_tcg_registry                OBJ_tcg,18L
+
+#define SN_tcg_traits           "tcg-traits"
+#define LN_tcg_traits           "Trusted Computing Group Traits"
+#define NID_tcg_traits          1335
+#define OBJ_tcg_traits          OBJ_tcg,19L
+
+#define SN_tcg_common           "tcg-common"
+#define LN_tcg_common           "Trusted Computing Group Common"
+#define NID_tcg_common          1336
+#define OBJ_tcg_common          OBJ_tcg_platformClass,1L
+
+#define SN_tcg_at_platformManufacturerStr               "tcg-at-platformManufacturerStr"
+#define LN_tcg_at_platformManufacturerStr               "TCG Platform Manufacturer String"
+#define NID_tcg_at_platformManufacturerStr              1337
+#define OBJ_tcg_at_platformManufacturerStr              OBJ_tcg_common,1L
+
+#define SN_tcg_at_platformManufacturerId                "tcg-at-platformManufacturerId"
+#define LN_tcg_at_platformManufacturerId                "TCG Platform Manufacturer ID"
+#define NID_tcg_at_platformManufacturerId               1338
+#define OBJ_tcg_at_platformManufacturerId               OBJ_tcg_common,2L
+
+#define SN_tcg_at_platformConfigUri             "tcg-at-platformConfigUri"
+#define LN_tcg_at_platformConfigUri             "TCG Platform Configuration URI"
+#define NID_tcg_at_platformConfigUri            1339
+#define OBJ_tcg_at_platformConfigUri            OBJ_tcg_common,3L
+
+#define SN_tcg_at_platformModel         "tcg-at-platformModel"
+#define LN_tcg_at_platformModel         "TCG Platform Model"
+#define NID_tcg_at_platformModel                1340
+#define OBJ_tcg_at_platformModel                OBJ_tcg_common,4L
+
+#define SN_tcg_at_platformVersion               "tcg-at-platformVersion"
+#define LN_tcg_at_platformVersion               "TCG Platform Version"
+#define NID_tcg_at_platformVersion              1341
+#define OBJ_tcg_at_platformVersion              OBJ_tcg_common,5L
+
+#define SN_tcg_at_platformSerial                "tcg-at-platformSerial"
+#define LN_tcg_at_platformSerial                "TCG Platform Serial Number"
+#define NID_tcg_at_platformSerial               1342
+#define OBJ_tcg_at_platformSerial               OBJ_tcg_common,6L
+
+#define SN_tcg_at_platformConfiguration         "tcg-at-platformConfiguration"
+#define LN_tcg_at_platformConfiguration         "TCG Platform Configuration"
+#define NID_tcg_at_platformConfiguration                1343
+#define OBJ_tcg_at_platformConfiguration                OBJ_tcg_common,7L
+
+#define SN_tcg_at_platformIdentifier            "tcg-at-platformIdentifier"
+#define LN_tcg_at_platformIdentifier            "TCG Platform Identifier"
+#define NID_tcg_at_platformIdentifier           1344
+#define OBJ_tcg_at_platformIdentifier           OBJ_tcg_common,8L
+
+#define SN_tcg_at_tpmManufacturer               "tcg-at-tpmManufacturer"
+#define LN_tcg_at_tpmManufacturer               "TPM Manufacturer"
+#define NID_tcg_at_tpmManufacturer              1345
+#define OBJ_tcg_at_tpmManufacturer              OBJ_tcg_attribute,1L
+
+#define SN_tcg_at_tpmModel              "tcg-at-tpmModel"
+#define LN_tcg_at_tpmModel              "TPM Model"
+#define NID_tcg_at_tpmModel             1346
+#define OBJ_tcg_at_tpmModel             OBJ_tcg_attribute,2L
+
+#define SN_tcg_at_tpmVersion            "tcg-at-tpmVersion"
+#define LN_tcg_at_tpmVersion            "TPM Version"
+#define NID_tcg_at_tpmVersion           1347
+#define OBJ_tcg_at_tpmVersion           OBJ_tcg_attribute,3L
+
+#define SN_tcg_at_securityQualities             "tcg-at-securityQualities"
+#define LN_tcg_at_securityQualities             "Security Qualities"
+#define NID_tcg_at_securityQualities            1348
+#define OBJ_tcg_at_securityQualities            OBJ_tcg_attribute,10L
+
+#define SN_tcg_at_tpmProtectionProfile          "tcg-at-tpmProtectionProfile"
+#define LN_tcg_at_tpmProtectionProfile          "TPM Protection Profile"
+#define NID_tcg_at_tpmProtectionProfile         1349
+#define OBJ_tcg_at_tpmProtectionProfile         OBJ_tcg_attribute,11L
+
+#define SN_tcg_at_tpmSecurityTarget             "tcg-at-tpmSecurityTarget"
+#define LN_tcg_at_tpmSecurityTarget             "TPM Security Target"
+#define NID_tcg_at_tpmSecurityTarget            1350
+#define OBJ_tcg_at_tpmSecurityTarget            OBJ_tcg_attribute,12L
+
+#define SN_tcg_at_tbbProtectionProfile          "tcg-at-tbbProtectionProfile"
+#define LN_tcg_at_tbbProtectionProfile          "TBB Protection Profile"
+#define NID_tcg_at_tbbProtectionProfile         1351
+#define OBJ_tcg_at_tbbProtectionProfile         OBJ_tcg_attribute,13L
+
+#define SN_tcg_at_tbbSecurityTarget             "tcg-at-tbbSecurityTarget"
+#define LN_tcg_at_tbbSecurityTarget             "TBB Security Target"
+#define NID_tcg_at_tbbSecurityTarget            1352
+#define OBJ_tcg_at_tbbSecurityTarget            OBJ_tcg_attribute,14L
+
+#define SN_tcg_at_tpmIdLabel            "tcg-at-tpmIdLabel"
+#define LN_tcg_at_tpmIdLabel            "TPM ID Label"
+#define NID_tcg_at_tpmIdLabel           1353
+#define OBJ_tcg_at_tpmIdLabel           OBJ_tcg_attribute,15L
+
+#define SN_tcg_at_tpmSpecification              "tcg-at-tpmSpecification"
+#define LN_tcg_at_tpmSpecification              "TPM Specification"
+#define NID_tcg_at_tpmSpecification             1354
+#define OBJ_tcg_at_tpmSpecification             OBJ_tcg_attribute,16L
+
+#define SN_tcg_at_tcgPlatformSpecification              "tcg-at-tcgPlatformSpecification"
+#define LN_tcg_at_tcgPlatformSpecification              "TPM Platform Specification"
+#define NID_tcg_at_tcgPlatformSpecification             1355
+#define OBJ_tcg_at_tcgPlatformSpecification             OBJ_tcg_attribute,17L
+
+#define SN_tcg_at_tpmSecurityAssertions         "tcg-at-tpmSecurityAssertions"
+#define LN_tcg_at_tpmSecurityAssertions         "TPM Security Assertions"
+#define NID_tcg_at_tpmSecurityAssertions                1356
+#define OBJ_tcg_at_tpmSecurityAssertions                OBJ_tcg_attribute,18L
+
+#define SN_tcg_at_tbbSecurityAssertions         "tcg-at-tbbSecurityAssertions"
+#define LN_tcg_at_tbbSecurityAssertions         "TBB Security Assertions"
+#define NID_tcg_at_tbbSecurityAssertions                1357
+#define OBJ_tcg_at_tbbSecurityAssertions                OBJ_tcg_attribute,19L
+
+#define SN_tcg_at_tcgCredentialSpecification            "tcg-at-tcgCredentialSpecification"
+#define LN_tcg_at_tcgCredentialSpecification            "TCG Credential Specification"
+#define NID_tcg_at_tcgCredentialSpecification           1358
+#define OBJ_tcg_at_tcgCredentialSpecification           OBJ_tcg_attribute,23L
+
+#define SN_tcg_at_tcgCredentialType             "tcg-at-tcgCredentialType"
+#define LN_tcg_at_tcgCredentialType             "TCG Credential Type"
+#define NID_tcg_at_tcgCredentialType            1359
+#define OBJ_tcg_at_tcgCredentialType            OBJ_tcg_attribute,25L
+
+#define SN_tcg_at_previousPlatformCertificates          "tcg-at-previousPlatformCertificates"
+#define LN_tcg_at_previousPlatformCertificates          "TCG Previous Platform Certificates"
+#define NID_tcg_at_previousPlatformCertificates         1360
+#define OBJ_tcg_at_previousPlatformCertificates         OBJ_tcg_attribute,26L
+
+#define SN_tcg_at_tbbSecurityAssertions_v3              "tcg-at-tbbSecurityAssertions-v3"
+#define LN_tcg_at_tbbSecurityAssertions_v3              "TCG TBB Security Assertions V3"
+#define NID_tcg_at_tbbSecurityAssertions_v3             1361
+#define OBJ_tcg_at_tbbSecurityAssertions_v3             OBJ_tcg_attribute,27L
+
+#define SN_tcg_at_cryptographicAnchors          "tcg-at-cryptographicAnchors"
+#define LN_tcg_at_cryptographicAnchors          "TCG Cryptographic Anchors"
+#define NID_tcg_at_cryptographicAnchors         1362
+#define OBJ_tcg_at_cryptographicAnchors         OBJ_tcg_attribute,28L
+
+#define SN_tcg_at_platformConfiguration_v1              "tcg-at-platformConfiguration-v1"
+#define LN_tcg_at_platformConfiguration_v1              "Platform Configuration Version 1"
+#define NID_tcg_at_platformConfiguration_v1             1363
+#define OBJ_tcg_at_platformConfiguration_v1             OBJ_tcg_at_platformConfiguration,1L
+
+#define SN_tcg_at_platformConfiguration_v2              "tcg-at-platformConfiguration-v2"
+#define LN_tcg_at_platformConfiguration_v2              "Platform Configuration Version 2"
+#define NID_tcg_at_platformConfiguration_v2             1364
+#define OBJ_tcg_at_platformConfiguration_v2             OBJ_tcg_at_platformConfiguration,2L
+
+#define SN_tcg_at_platformConfiguration_v3              "tcg-at-platformConfiguration-v3"
+#define LN_tcg_at_platformConfiguration_v3              "Platform Configuration Version 3"
+#define NID_tcg_at_platformConfiguration_v3             1365
+#define OBJ_tcg_at_platformConfiguration_v3             OBJ_tcg_at_platformConfiguration,3L
+
+#define SN_tcg_at_platformConfigUri_v3          "tcg-at-platformConfigUri-v3"
+#define LN_tcg_at_platformConfigUri_v3          "Platform Configuration URI Version 3"
+#define NID_tcg_at_platformConfigUri_v3         1366
+#define OBJ_tcg_at_platformConfigUri_v3         OBJ_tcg_at_platformConfiguration,4L
+
+#define SN_tcg_algorithm_null           "tcg-algorithm-null"
+#define LN_tcg_algorithm_null           "TCG NULL Algorithm"
+#define NID_tcg_algorithm_null          1367
+#define OBJ_tcg_algorithm_null          OBJ_tcg_algorithm,1L
+
+#define SN_tcg_kp_EKCertificate         "tcg-kp-EKCertificate"
+#define LN_tcg_kp_EKCertificate         "Endorsement Key Certificate"
+#define NID_tcg_kp_EKCertificate                1368
+#define OBJ_tcg_kp_EKCertificate                OBJ_tcg_kp,1L
+
+#define SN_tcg_kp_PlatformAttributeCertificate          "tcg-kp-PlatformAttributeCertificate"
+#define LN_tcg_kp_PlatformAttributeCertificate          "Platform Attribute Certificate"
+#define NID_tcg_kp_PlatformAttributeCertificate         1369
+#define OBJ_tcg_kp_PlatformAttributeCertificate         OBJ_tcg_kp,2L
+
+#define SN_tcg_kp_AIKCertificate                "tcg-kp-AIKCertificate"
+#define LN_tcg_kp_AIKCertificate                "Attestation Identity Key Certificate"
+#define NID_tcg_kp_AIKCertificate               1370
+#define OBJ_tcg_kp_AIKCertificate               OBJ_tcg_kp,3L
+
+#define SN_tcg_kp_PlatformKeyCertificate                "tcg-kp-PlatformKeyCertificate"
+#define LN_tcg_kp_PlatformKeyCertificate                "Platform Key Certificate"
+#define NID_tcg_kp_PlatformKeyCertificate               1371
+#define OBJ_tcg_kp_PlatformKeyCertificate               OBJ_tcg_kp,4L
+
+#define SN_tcg_kp_DeltaPlatformAttributeCertificate             "tcg-kp-DeltaPlatformAttributeCertificate"
+#define LN_tcg_kp_DeltaPlatformAttributeCertificate             "Delta Platform Attribute Certificate"
+#define NID_tcg_kp_DeltaPlatformAttributeCertificate            1372
+#define OBJ_tcg_kp_DeltaPlatformAttributeCertificate            OBJ_tcg_kp,5L
+
+#define SN_tcg_kp_DeltaPlatformKeyCertificate           "tcg-kp-DeltaPlatformKeyCertificate"
+#define LN_tcg_kp_DeltaPlatformKeyCertificate           "Delta Platform Key Certificate"
+#define NID_tcg_kp_DeltaPlatformKeyCertificate          1373
+#define OBJ_tcg_kp_DeltaPlatformKeyCertificate          OBJ_tcg_kp,6L
+
+#define SN_tcg_kp_AdditionalPlatformAttributeCertificate                "tcg-kp-AdditionalPlatformAttributeCertificate"
+#define LN_tcg_kp_AdditionalPlatformAttributeCertificate                "Additional Platform Attribute Certificate"
+#define NID_tcg_kp_AdditionalPlatformAttributeCertificate               1374
+#define OBJ_tcg_kp_AdditionalPlatformAttributeCertificate               OBJ_tcg_kp,7L
+
+#define SN_tcg_kp_AdditionalPlatformKeyCertificate              "tcg-kp-AdditionalPlatformKeyCertificate"
+#define LN_tcg_kp_AdditionalPlatformKeyCertificate              "Additional Platform Key Certificate"
+#define NID_tcg_kp_AdditionalPlatformKeyCertificate             1375
+#define OBJ_tcg_kp_AdditionalPlatformKeyCertificate             OBJ_tcg_kp,8L
+
+#define SN_tcg_ce_relevantCredentials           "tcg-ce-relevantCredentials"
+#define LN_tcg_ce_relevantCredentials           "Relevant Credentials"
+#define NID_tcg_ce_relevantCredentials          1376
+#define OBJ_tcg_ce_relevantCredentials          OBJ_tcg_ce,2L
+
+#define SN_tcg_ce_relevantManifests             "tcg-ce-relevantManifests"
+#define LN_tcg_ce_relevantManifests             "Relevant Manifests"
+#define NID_tcg_ce_relevantManifests            1377
+#define OBJ_tcg_ce_relevantManifests            OBJ_tcg_ce,3L
+
+#define SN_tcg_ce_virtualPlatformAttestationService             "tcg-ce-virtualPlatformAttestationService"
+#define LN_tcg_ce_virtualPlatformAttestationService             "Virtual Platform Attestation Service"
+#define NID_tcg_ce_virtualPlatformAttestationService            1378
+#define OBJ_tcg_ce_virtualPlatformAttestationService            OBJ_tcg_ce,4L
+
+#define SN_tcg_ce_migrationControllerAttestationService         "tcg-ce-migrationControllerAttestationService"
+#define LN_tcg_ce_migrationControllerAttestationService         "Migration Controller Attestation Service"
+#define NID_tcg_ce_migrationControllerAttestationService                1379
+#define OBJ_tcg_ce_migrationControllerAttestationService                OBJ_tcg_ce,5L
+
+#define SN_tcg_ce_migrationControllerRegistrationService                "tcg-ce-migrationControllerRegistrationService"
+#define LN_tcg_ce_migrationControllerRegistrationService                "Migration Controller Registration Service"
+#define NID_tcg_ce_migrationControllerRegistrationService               1380
+#define OBJ_tcg_ce_migrationControllerRegistrationService               OBJ_tcg_ce,6L
+
+#define SN_tcg_ce_virtualPlatformBackupService          "tcg-ce-virtualPlatformBackupService"
+#define LN_tcg_ce_virtualPlatformBackupService          "Virtual Platform Backup Service"
+#define NID_tcg_ce_virtualPlatformBackupService         1381
+#define OBJ_tcg_ce_virtualPlatformBackupService         OBJ_tcg_ce,7L
+
+#define SN_tcg_prt_tpmIdProtocol                "tcg-prt-tpmIdProtocol"
+#define LN_tcg_prt_tpmIdProtocol                "TCG TPM Protocol"
+#define NID_tcg_prt_tpmIdProtocol               1382
+#define OBJ_tcg_prt_tpmIdProtocol               OBJ_tcg_protocol,1L
+
+#define SN_tcg_address_ethernetmac              "tcg-address-ethernetmac"
+#define LN_tcg_address_ethernetmac              "Ethernet MAC Address"
+#define NID_tcg_address_ethernetmac             1383
+#define OBJ_tcg_address_ethernetmac             OBJ_tcg_address,1L
+
+#define SN_tcg_address_wlanmac          "tcg-address-wlanmac"
+#define LN_tcg_address_wlanmac          "WLAN MAC Address"
+#define NID_tcg_address_wlanmac         1384
+#define OBJ_tcg_address_wlanmac         OBJ_tcg_address,2L
+
+#define SN_tcg_address_bluetoothmac             "tcg-address-bluetoothmac"
+#define LN_tcg_address_bluetoothmac             "Bluetooth MAC Address"
+#define NID_tcg_address_bluetoothmac            1385
+#define OBJ_tcg_address_bluetoothmac            OBJ_tcg_address,3L
+
+#define SN_tcg_registry_componentClass          "tcg-registry-componentClass"
+#define LN_tcg_registry_componentClass          "TCG Component Class"
+#define NID_tcg_registry_componentClass         1386
+#define OBJ_tcg_registry_componentClass         OBJ_tcg_registry,3L
+
+#define SN_tcg_registry_componentClass_tcg              "tcg-registry-componentClass-tcg"
+#define LN_tcg_registry_componentClass_tcg              "Trusted Computed Group Registry"
+#define NID_tcg_registry_componentClass_tcg             1387
+#define OBJ_tcg_registry_componentClass_tcg             OBJ_tcg_registry_componentClass,1L
+
+#define SN_tcg_registry_componentClass_ietf             "tcg-registry-componentClass-ietf"
+#define LN_tcg_registry_componentClass_ietf             "Internet Engineering Task Force Registry"
+#define NID_tcg_registry_componentClass_ietf            1388
+#define OBJ_tcg_registry_componentClass_ietf            OBJ_tcg_registry_componentClass,2L
+
+#define SN_tcg_registry_componentClass_dmtf             "tcg-registry-componentClass-dmtf"
+#define LN_tcg_registry_componentClass_dmtf             "Distributed Management Task Force Registry"
+#define NID_tcg_registry_componentClass_dmtf            1389
+#define OBJ_tcg_registry_componentClass_dmtf            OBJ_tcg_registry_componentClass,3L
+
+#define SN_tcg_registry_componentClass_pcie             "tcg-registry-componentClass-pcie"
+#define LN_tcg_registry_componentClass_pcie             "PCIE Component Class"
+#define NID_tcg_registry_componentClass_pcie            1390
+#define OBJ_tcg_registry_componentClass_pcie            OBJ_tcg_registry_componentClass,4L
+
+#define SN_tcg_registry_componentClass_disk             "tcg-registry-componentClass-disk"
+#define LN_tcg_registry_componentClass_disk             "Disk Component Class"
+#define NID_tcg_registry_componentClass_disk            1391
+#define OBJ_tcg_registry_componentClass_disk            OBJ_tcg_registry_componentClass,5L
+
+#define SN_tcg_cap_verifiedPlatformCertificate          "tcg-cap-verifiedPlatformCertificate"
+#define LN_tcg_cap_verifiedPlatformCertificate          "TCG Verified Platform Certificate CA Policy"
+#define NID_tcg_cap_verifiedPlatformCertificate         1392
+#define OBJ_tcg_cap_verifiedPlatformCertificate         OBJ_tcg_ca,4L
+
+#define SN_tcg_tr_ID            "tcg-tr-ID"
+#define LN_tcg_tr_ID            "TCG Trait Identifiers"
+#define NID_tcg_tr_ID           1393
+#define OBJ_tcg_tr_ID           OBJ_tcg_traits,1L
+
+#define SN_tcg_tr_category              "tcg-tr-category"
+#define LN_tcg_tr_category              "TCG Trait Categories"
+#define NID_tcg_tr_category             1394
+#define OBJ_tcg_tr_category             OBJ_tcg_traits,2L
+
+#define SN_tcg_tr_registry              "tcg-tr-registry"
+#define LN_tcg_tr_registry              "TCG Trait Registries"
+#define NID_tcg_tr_registry             1395
+#define OBJ_tcg_tr_registry             OBJ_tcg_traits,3L
+
+#define SN_tcg_tr_ID_Boolean            "tcg-tr-ID-Boolean"
+#define LN_tcg_tr_ID_Boolean            "Boolean Trait"
+#define NID_tcg_tr_ID_Boolean           1396
+#define OBJ_tcg_tr_ID_Boolean           OBJ_tcg_tr_ID,1L
+
+#define SN_tcg_tr_ID_CertificateIdentifier              "tcg-tr-ID-CertificateIdentifier"
+#define LN_tcg_tr_ID_CertificateIdentifier              "Certificate Identifier Trait"
+#define NID_tcg_tr_ID_CertificateIdentifier             1397
+#define OBJ_tcg_tr_ID_CertificateIdentifier             OBJ_tcg_tr_ID,2L
+
+#define SN_tcg_tr_ID_CommonCriteria             "tcg-tr-ID-CommonCriteria"
+#define LN_tcg_tr_ID_CommonCriteria             "Common Criteria Trait"
+#define NID_tcg_tr_ID_CommonCriteria            1398
+#define OBJ_tcg_tr_ID_CommonCriteria            OBJ_tcg_tr_ID,3L
+
+#define SN_tcg_tr_ID_componentClass             "tcg-tr-ID-componentClass"
+#define LN_tcg_tr_ID_componentClass             "Component Class Trait"
+#define NID_tcg_tr_ID_componentClass            1399
+#define OBJ_tcg_tr_ID_componentClass            OBJ_tcg_tr_ID,4L
+
+#define SN_tcg_tr_ID_componentIdentifierV11             "tcg-tr-ID-componentIdentifierV11"
+#define LN_tcg_tr_ID_componentIdentifierV11             "Component Identifier V1.1 Trait"
+#define NID_tcg_tr_ID_componentIdentifierV11            1400
+#define OBJ_tcg_tr_ID_componentIdentifierV11            OBJ_tcg_tr_ID,5L
+
+#define SN_tcg_tr_ID_FIPSLevel          "tcg-tr-ID-FIPSLevel"
+#define LN_tcg_tr_ID_FIPSLevel          "FIPS Level Trait"
+#define NID_tcg_tr_ID_FIPSLevel         1401
+#define OBJ_tcg_tr_ID_FIPSLevel         OBJ_tcg_tr_ID,6L
+
+#define SN_tcg_tr_ID_ISO9000Level               "tcg-tr-ID-ISO9000Level"
+#define LN_tcg_tr_ID_ISO9000Level               "ISO 9000 Level Trait"
+#define NID_tcg_tr_ID_ISO9000Level              1402
+#define OBJ_tcg_tr_ID_ISO9000Level              OBJ_tcg_tr_ID,7L
+
+#define SN_tcg_tr_ID_networkMAC         "tcg-tr-ID-networkMAC"
+#define LN_tcg_tr_ID_networkMAC         "Network MAC Trait"
+#define NID_tcg_tr_ID_networkMAC                1403
+#define OBJ_tcg_tr_ID_networkMAC                OBJ_tcg_tr_ID,8L
+
+#define SN_tcg_tr_ID_OID                "tcg-tr-ID-OID"
+#define LN_tcg_tr_ID_OID                "Object Identifier Trait"
+#define NID_tcg_tr_ID_OID               1404
+#define OBJ_tcg_tr_ID_OID               OBJ_tcg_tr_ID,9L
+
+#define SN_tcg_tr_ID_PEN                "tcg-tr-ID-PEN"
+#define LN_tcg_tr_ID_PEN                "Private Enterprise Number Trait"
+#define NID_tcg_tr_ID_PEN               1405
+#define OBJ_tcg_tr_ID_PEN               OBJ_tcg_tr_ID,10L
+
+#define SN_tcg_tr_ID_platformFirmwareCapabilities               "tcg-tr-ID-platformFirmwareCapabilities"
+#define LN_tcg_tr_ID_platformFirmwareCapabilities               "Platform Firmware Capabilities Trait"
+#define NID_tcg_tr_ID_platformFirmwareCapabilities              1406
+#define OBJ_tcg_tr_ID_platformFirmwareCapabilities              OBJ_tcg_tr_ID,11L
+
+#define SN_tcg_tr_ID_platformFirmwareSignatureVerification              "tcg-tr-ID-platformFirmwareSignatureVerification"
+#define LN_tcg_tr_ID_platformFirmwareSignatureVerification              "Platform Firmware Signature Verification Trait"
+#define NID_tcg_tr_ID_platformFirmwareSignatureVerification             1407
+#define OBJ_tcg_tr_ID_platformFirmwareSignatureVerification             OBJ_tcg_tr_ID,12L
+
+#define SN_tcg_tr_ID_platformFirmwareUpdateCompliance           "tcg-tr-ID-platformFirmwareUpdateCompliance"
+#define LN_tcg_tr_ID_platformFirmwareUpdateCompliance           "Platform Firmware Update Compliance Trait"
+#define NID_tcg_tr_ID_platformFirmwareUpdateCompliance          1408
+#define OBJ_tcg_tr_ID_platformFirmwareUpdateCompliance          OBJ_tcg_tr_ID,13L
+
+#define SN_tcg_tr_ID_platformHardwareCapabilities               "tcg-tr-ID-platformHardwareCapabilities"
+#define LN_tcg_tr_ID_platformHardwareCapabilities               "Platform Hardware Capabilities Trait"
+#define NID_tcg_tr_ID_platformHardwareCapabilities              1409
+#define OBJ_tcg_tr_ID_platformHardwareCapabilities              OBJ_tcg_tr_ID,14L
+
+#define SN_tcg_tr_ID_RTM                "tcg-tr-ID-RTM"
+#define LN_tcg_tr_ID_RTM                "Root of Trust for Measurement Trait"
+#define NID_tcg_tr_ID_RTM               1410
+#define OBJ_tcg_tr_ID_RTM               OBJ_tcg_tr_ID,15L
+
+#define SN_tcg_tr_ID_status             "tcg-tr-ID-status"
+#define LN_tcg_tr_ID_status             "Attribute Status Trait"
+#define NID_tcg_tr_ID_status            1411
+#define OBJ_tcg_tr_ID_status            OBJ_tcg_tr_ID,16L
+
+#define SN_tcg_tr_ID_URI                "tcg-tr-ID-URI"
+#define LN_tcg_tr_ID_URI                "Uniform Resource Identifier Trait"
+#define NID_tcg_tr_ID_URI               1412
+#define OBJ_tcg_tr_ID_URI               OBJ_tcg_tr_ID,17L
+
+#define SN_tcg_tr_ID_UTF8String         "tcg-tr-ID-UTF8String"
+#define LN_tcg_tr_ID_UTF8String         "UTF8String Trait"
+#define NID_tcg_tr_ID_UTF8String                1413
+#define OBJ_tcg_tr_ID_UTF8String                OBJ_tcg_tr_ID,18L
+
+#define SN_tcg_tr_ID_IA5String          "tcg-tr-ID-IA5String"
+#define LN_tcg_tr_ID_IA5String          "IA5String Trait"
+#define NID_tcg_tr_ID_IA5String         1414
+#define OBJ_tcg_tr_ID_IA5String         OBJ_tcg_tr_ID,19L
+
+#define SN_tcg_tr_ID_PEMCertString              "tcg-tr-ID-PEMCertString"
+#define LN_tcg_tr_ID_PEMCertString              "PEM-Encoded Certificate String Trait"
+#define NID_tcg_tr_ID_PEMCertString             1415
+#define OBJ_tcg_tr_ID_PEMCertString             OBJ_tcg_tr_ID,20L
+
+#define SN_tcg_tr_ID_PublicKey          "tcg-tr-ID-PublicKey"
+#define LN_tcg_tr_ID_PublicKey          "Public Key Trait"
+#define NID_tcg_tr_ID_PublicKey         1416
+#define OBJ_tcg_tr_ID_PublicKey         OBJ_tcg_tr_ID,21L
+
+#define SN_tcg_tr_cat_platformManufacturer              "tcg-tr-cat-platformManufacturer"
+#define LN_tcg_tr_cat_platformManufacturer              "Platform Manufacturer Trait Category"
+#define NID_tcg_tr_cat_platformManufacturer             1417
+#define OBJ_tcg_tr_cat_platformManufacturer             OBJ_tcg_tr_category,1L
+
+#define SN_tcg_tr_cat_platformModel             "tcg-tr-cat-platformModel"
+#define LN_tcg_tr_cat_platformModel             "Platform Model Trait Category"
+#define NID_tcg_tr_cat_platformModel            1418
+#define OBJ_tcg_tr_cat_platformModel            OBJ_tcg_tr_category,2L
+
+#define SN_tcg_tr_cat_platformVersion           "tcg-tr-cat-platformVersion"
+#define LN_tcg_tr_cat_platformVersion           "Platform Version Trait Category"
+#define NID_tcg_tr_cat_platformVersion          1419
+#define OBJ_tcg_tr_cat_platformVersion          OBJ_tcg_tr_category,3L
+
+#define SN_tcg_tr_cat_platformSerial            "tcg-tr-cat-platformSerial"
+#define LN_tcg_tr_cat_platformSerial            "Platform Serial Trait Category"
+#define NID_tcg_tr_cat_platformSerial           1420
+#define OBJ_tcg_tr_cat_platformSerial           OBJ_tcg_tr_category,4L
+
+#define SN_tcg_tr_cat_platformManufacturerIdentifier            "tcg-tr-cat-platformManufacturerIdentifier"
+#define LN_tcg_tr_cat_platformManufacturerIdentifier            "Platform Manufacturer Identifier Trait Category"
+#define NID_tcg_tr_cat_platformManufacturerIdentifier           1421
+#define OBJ_tcg_tr_cat_platformManufacturerIdentifier           OBJ_tcg_tr_category,5L
+
+#define SN_tcg_tr_cat_platformOwnership         "tcg-tr-cat-platformOwnership"
+#define LN_tcg_tr_cat_platformOwnership         "Platform Ownership Trait Category"
+#define NID_tcg_tr_cat_platformOwnership                1422
+#define OBJ_tcg_tr_cat_platformOwnership                OBJ_tcg_tr_category,6L
+
+#define SN_tcg_tr_cat_componentClass            "tcg-tr-cat-componentClass"
+#define LN_tcg_tr_cat_componentClass            "Component Class Trait Category"
+#define NID_tcg_tr_cat_componentClass           1423
+#define OBJ_tcg_tr_cat_componentClass           OBJ_tcg_tr_category,7L
+
+#define SN_tcg_tr_cat_componentManufacturer             "tcg-tr-cat-componentManufacturer"
+#define LN_tcg_tr_cat_componentManufacturer             "Component Manufacturer Trait Category"
+#define NID_tcg_tr_cat_componentManufacturer            1424
+#define OBJ_tcg_tr_cat_componentManufacturer            OBJ_tcg_tr_category,8L
+
+#define SN_tcg_tr_cat_componentModel            "tcg-tr-cat-componentModel"
+#define LN_tcg_tr_cat_componentModel            "Component Model Trait Category"
+#define NID_tcg_tr_cat_componentModel           1425
+#define OBJ_tcg_tr_cat_componentModel           OBJ_tcg_tr_category,9L
+
+#define SN_tcg_tr_cat_componentSerial           "tcg-tr-cat-componentSerial"
+#define LN_tcg_tr_cat_componentSerial           "Component Serial Trait Category"
+#define NID_tcg_tr_cat_componentSerial          1426
+#define OBJ_tcg_tr_cat_componentSerial          OBJ_tcg_tr_category,10L
+
+#define SN_tcg_tr_cat_componentStatus           "tcg-tr-cat-componentStatus"
+#define LN_tcg_tr_cat_componentStatus           "Component Status Trait Category"
+#define NID_tcg_tr_cat_componentStatus          1427
+#define OBJ_tcg_tr_cat_componentStatus          OBJ_tcg_tr_category,11L
+
+#define SN_tcg_tr_cat_componentLocation         "tcg-tr-cat-componentLocation"
+#define LN_tcg_tr_cat_componentLocation         "Component Location Trait Category"
+#define NID_tcg_tr_cat_componentLocation                1428
+#define OBJ_tcg_tr_cat_componentLocation                OBJ_tcg_tr_category,12L
+
+#define SN_tcg_tr_cat_componentRevision         "tcg-tr-cat-componentRevision"
+#define LN_tcg_tr_cat_componentRevision         "Component Revision Trait Category"
+#define NID_tcg_tr_cat_componentRevision                1429
+#define OBJ_tcg_tr_cat_componentRevision                OBJ_tcg_tr_category,13L
+
+#define SN_tcg_tr_cat_componentFieldReplaceable         "tcg-tr-cat-componentFieldReplaceable"
+#define LN_tcg_tr_cat_componentFieldReplaceable         "Component Field Replaceable Trait Category"
+#define NID_tcg_tr_cat_componentFieldReplaceable                1430
+#define OBJ_tcg_tr_cat_componentFieldReplaceable                OBJ_tcg_tr_category,14L
+
+#define SN_tcg_tr_cat_EKCertificate             "tcg-tr-cat-EKCertificate"
+#define LN_tcg_tr_cat_EKCertificate             "EK Certificate Trait Category"
+#define NID_tcg_tr_cat_EKCertificate            1431
+#define OBJ_tcg_tr_cat_EKCertificate            OBJ_tcg_tr_category,15L
+
+#define SN_tcg_tr_cat_IAKCertificate            "tcg-tr-cat-IAKCertificate"
+#define LN_tcg_tr_cat_IAKCertificate            "IAK Certificate Trait Category"
+#define NID_tcg_tr_cat_IAKCertificate           1432
+#define OBJ_tcg_tr_cat_IAKCertificate           OBJ_tcg_tr_category,16L
+
+#define SN_tcg_tr_cat_IDevIDCertificate         "tcg-tr-cat-IDevIDCertificate"
+#define LN_tcg_tr_cat_IDevIDCertificate         "IDevID Certificate Trait Category"
+#define NID_tcg_tr_cat_IDevIDCertificate                1433
+#define OBJ_tcg_tr_cat_IDevIDCertificate                OBJ_tcg_tr_category,17L
+
+#define SN_tcg_tr_cat_DICECertificate           "tcg-tr-cat-DICECertificate"
+#define LN_tcg_tr_cat_DICECertificate           "DICE Certificate Trait Category"
+#define NID_tcg_tr_cat_DICECertificate          1434
+#define OBJ_tcg_tr_cat_DICECertificate          OBJ_tcg_tr_category,18L
+
+#define SN_tcg_tr_cat_SPDMCertificate           "tcg-tr-cat-SPDMCertificate"
+#define LN_tcg_tr_cat_SPDMCertificate           "SPDM Certificate Trait Category"
+#define NID_tcg_tr_cat_SPDMCertificate          1435
+#define OBJ_tcg_tr_cat_SPDMCertificate          OBJ_tcg_tr_category,19L
+
+#define SN_tcg_tr_cat_PEMCertificate            "tcg-tr-cat-PEMCertificate"
+#define LN_tcg_tr_cat_PEMCertificate            "PEM Certificate Trait Category"
+#define NID_tcg_tr_cat_PEMCertificate           1436
+#define OBJ_tcg_tr_cat_PEMCertificate           OBJ_tcg_tr_category,20L
+
+#define SN_tcg_tr_cat_PlatformCertificate               "tcg-tr-cat-PlatformCertificate"
+#define LN_tcg_tr_cat_PlatformCertificate               "Platform Certificate Trait Category"
+#define NID_tcg_tr_cat_PlatformCertificate              1437
+#define OBJ_tcg_tr_cat_PlatformCertificate              OBJ_tcg_tr_category,21L
+
+#define SN_tcg_tr_cat_DeltaPlatformCertificate          "tcg-tr-cat-DeltaPlatformCertificate"
+#define LN_tcg_tr_cat_DeltaPlatformCertificate          "Delta Platform Certificate Trait Category"
+#define NID_tcg_tr_cat_DeltaPlatformCertificate         1438
+#define OBJ_tcg_tr_cat_DeltaPlatformCertificate         OBJ_tcg_tr_category,22L
+
+#define SN_tcg_tr_cat_RebasePlatformCertificate         "tcg-tr-cat-RebasePlatformCertificate"
+#define LN_tcg_tr_cat_RebasePlatformCertificate         "Rebase Platform Certificate Trait Category"
+#define NID_tcg_tr_cat_RebasePlatformCertificate                1439
+#define OBJ_tcg_tr_cat_RebasePlatformCertificate                OBJ_tcg_tr_category,23L
+
+#define SN_tcg_tr_cat_genericCertificate                "tcg-tr-cat-genericCertificate"
+#define LN_tcg_tr_cat_genericCertificate                "Generic Certificate Trait Category"
+#define NID_tcg_tr_cat_genericCertificate               1440
+#define OBJ_tcg_tr_cat_genericCertificate               OBJ_tcg_tr_category,24L
+
+#define SN_tcg_tr_cat_CommonCriteria            "tcg-tr-cat-CommonCriteria"
+#define LN_tcg_tr_cat_CommonCriteria            "Common Criteria Trait Category"
+#define NID_tcg_tr_cat_CommonCriteria           1441
+#define OBJ_tcg_tr_cat_CommonCriteria           OBJ_tcg_tr_category,25L
+
+#define SN_tcg_tr_cat_componentIdentifierV11            "tcg-tr-cat-componentIdentifierV11"
+#define LN_tcg_tr_cat_componentIdentifierV11            "Component Identifier V1.1 Trait Category"
+#define NID_tcg_tr_cat_componentIdentifierV11           1442
+#define OBJ_tcg_tr_cat_componentIdentifierV11           OBJ_tcg_tr_category,26L
+
+#define SN_tcg_tr_cat_FIPSLevel         "tcg-tr-cat-FIPSLevel"
+#define LN_tcg_tr_cat_FIPSLevel         "FIPS Level Trait Category"
+#define NID_tcg_tr_cat_FIPSLevel                1443
+#define OBJ_tcg_tr_cat_FIPSLevel                OBJ_tcg_tr_category,27L
+
+#define SN_tcg_tr_cat_ISO9000           "tcg-tr-cat-ISO9000"
+#define LN_tcg_tr_cat_ISO9000           "ISO 9000 Trait Category"
+#define NID_tcg_tr_cat_ISO9000          1444
+#define OBJ_tcg_tr_cat_ISO9000          OBJ_tcg_tr_category,28L
+
+#define SN_tcg_tr_cat_networkMAC                "tcg-tr-cat-networkMAC"
+#define LN_tcg_tr_cat_networkMAC                "Network MAC Trait Category"
+#define NID_tcg_tr_cat_networkMAC               1445
+#define OBJ_tcg_tr_cat_networkMAC               OBJ_tcg_tr_category,29L
+
+#define SN_tcg_tr_cat_attestationProtocol               "tcg-tr-cat-attestationProtocol"
+#define LN_tcg_tr_cat_attestationProtocol               "Attestation Protocol Trait Category"
+#define NID_tcg_tr_cat_attestationProtocol              1446
+#define OBJ_tcg_tr_cat_attestationProtocol              OBJ_tcg_tr_category,30L
+
+#define SN_tcg_tr_cat_PEN               "tcg-tr-cat-PEN"
+#define LN_tcg_tr_cat_PEN               "Private Enterprise Number Trait Category"
+#define NID_tcg_tr_cat_PEN              1447
+#define OBJ_tcg_tr_cat_PEN              OBJ_tcg_tr_category,31L
+
+#define SN_tcg_tr_cat_platformFirmwareCapabilities              "tcg-tr-cat-platformFirmwareCapabilities"
+#define LN_tcg_tr_cat_platformFirmwareCapabilities              "Platform Firmware Capabilities Trait Category"
+#define NID_tcg_tr_cat_platformFirmwareCapabilities             1448
+#define OBJ_tcg_tr_cat_platformFirmwareCapabilities             OBJ_tcg_tr_category,32L
+
+#define SN_tcg_tr_cat_platformHardwareCapabilities              "tcg-tr-cat-platformHardwareCapabilities"
+#define LN_tcg_tr_cat_platformHardwareCapabilities              "Platform Hardware Capabilities Trait Category"
+#define NID_tcg_tr_cat_platformHardwareCapabilities             1449
+#define OBJ_tcg_tr_cat_platformHardwareCapabilities             OBJ_tcg_tr_category,33L
+
+#define SN_tcg_tr_cat_platformFirmwareSignatureVerification             "tcg-tr-cat-platformFirmwareSignatureVerification"
+#define LN_tcg_tr_cat_platformFirmwareSignatureVerification             "Platform Firmware Signature Verification Trait Category"
+#define NID_tcg_tr_cat_platformFirmwareSignatureVerification            1450
+#define OBJ_tcg_tr_cat_platformFirmwareSignatureVerification            OBJ_tcg_tr_category,34L
+
+#define SN_tcg_tr_cat_platformFirmwareUpdateCompliance          "tcg-tr-cat-platformFirmwareUpdateCompliance"
+#define LN_tcg_tr_cat_platformFirmwareUpdateCompliance          "Platform Firmware Update Compliance Trait Category"
+#define NID_tcg_tr_cat_platformFirmwareUpdateCompliance         1451
+#define OBJ_tcg_tr_cat_platformFirmwareUpdateCompliance         OBJ_tcg_tr_category,35L
+
+#define SN_tcg_tr_cat_RTM               "tcg-tr-cat-RTM"
+#define LN_tcg_tr_cat_RTM               "Root of Trust of Measurement Trait Category"
+#define NID_tcg_tr_cat_RTM              1452
+#define OBJ_tcg_tr_cat_RTM              OBJ_tcg_tr_category,36L
+
+#define SN_tcg_tr_cat_PublicKey         "tcg-tr-cat-PublicKey"
+#define LN_tcg_tr_cat_PublicKey         "Public Key Trait Category"
+#define NID_tcg_tr_cat_PublicKey                1453
+#define OBJ_tcg_tr_cat_PublicKey                OBJ_tcg_tr_category,37L
+
 #endif /* OPENSSL_OBJ_MAC_H */
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
