@@ -1084,6 +1084,7 @@ PROV_R_INVALID_MGF1_MD:167:invalid mgf1 md
 PROV_R_INVALID_MODE:125:invalid mode
 PROV_R_INVALID_OUTPUT_LENGTH:217:invalid output length
 PROV_R_INVALID_PADDING_MODE:168:invalid padding mode
+PROV_R_INVALID_PREHASHED_DIGEST_LENGTH:241:invalid prehashed digest length
 PROV_R_INVALID_PUBINFO:198:invalid pubinfo
 PROV_R_INVALID_SALT_LENGTH:112:invalid salt length
 PROV_R_INVALID_SEED_LENGTH:154:invalid seed length
@@ -1121,6 +1122,7 @@ PROV_R_NOT_INSTANTIATED:193:not instantiated
 PROV_R_NOT_PARAMETERS:226:not parameters
 PROV_R_NOT_SUPPORTED:136:not supported
 PROV_R_NOT_XOF_OR_INVALID_LENGTH:113:not xof or invalid length
+PROV_R_NO_INSTANCE_ALLOWED:242:no instance allowed
 PROV_R_NO_KEY_SET:114:no key set
 PROV_R_NO_PARAMETERS_SET:177:no parameters set
 PROV_R_ONESHOT_CALL_OUT_OF_ORDER:239:oneshot call out of order

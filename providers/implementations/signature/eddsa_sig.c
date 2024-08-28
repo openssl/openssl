@@ -390,9 +390,12 @@ static int ed25519_sign(void *vpeddsactx,
 
     if (peddsactx->prehash_flag) {
         if (!peddsactx->prehash_by_caller_flag) {
-            if (!EVP_Q_digest(peddsactx->libctx, SN_sha512, NULL, tbs, tbslen, md, &mdlen)
-                || mdlen != EDDSA_PREHASH_OUTPUT_LEN)
+            if (!EVP_Q_digest(peddsactx->libctx, SN_sha512, NULL,
+                              tbs, tbslen, md, &mdlen)
+                || mdlen != EDDSA_PREHASH_OUTPUT_LEN) {
+                ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_PREHASHED_DIGEST_LENGTH);
                 return 0;
+            }
             tbs = md;
             tbslen = mdlen;
         } else if (tbslen != EDDSA_PREHASH_OUTPUT_LEN) {
@@ -534,9 +537,12 @@ static int ed25519_verify(void *vpeddsactx,
 
     if (peddsactx->prehash_flag) {
         if (!peddsactx->prehash_by_caller_flag) {
-            if (!EVP_Q_digest(peddsactx->libctx, SN_sha512, NULL, tbs, tbslen, md, &mdlen)
-                || mdlen != EDDSA_PREHASH_OUTPUT_LEN)
+            if (!EVP_Q_digest(peddsactx->libctx, SN_sha512, NULL,
+                              tbs, tbslen, md, &mdlen)
+                || mdlen != EDDSA_PREHASH_OUTPUT_LEN) {
+                ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_PREHASHED_DIGEST_LENGTH);
                 return 0;
+            }
             tbs = md;
             tbslen = mdlen;
         } else if (tbslen != EDDSA_PREHASH_OUTPUT_LEN) {
@@ -760,9 +766,11 @@ static int eddsa_set_ctx_params(void *vpeddsactx, const OSSL_PARAM params[])
         char instance_name[OSSL_MAX_NAME_SIZE] = "";
         char *pinstance_name = instance_name;
 
-        if (peddsactx->instance_id_preset_flag)
-            /* Raise an error? */
+        if (peddsactx->instance_id_preset_flag) {
+            /* When the instance is preset, the caller must no try to set it */
+            ERR_raise(ERR_LIB_PROV, PROV_R_NO_INSTANCE_ALLOWED);
             return 0;
+        }
 
         if (!OSSL_PARAM_get_utf8_string(p, &pinstance_name, sizeof(instance_name)))
             return 0;
