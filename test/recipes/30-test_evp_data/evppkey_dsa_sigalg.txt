@@ -44,45 +44,53 @@ PrivPubKeyPair = DSA-1024:DSA-1024-PUBLIC
 
 Title = DSA tests
 
+FIPSversion = >=3.4.0
 Verify = DSA-SHA1:DSA-1024
 Input = "0123456789ABCDEF1234"
 Output = 302d021500942b8c5850e05b59e24495116b1e8559e51b610e0214237aedf272d91f2397f63c9fc8790e1a6cde5d87
 
+FIPSversion = >=3.4.0
 Verify = DSA-SHA1:DSA-1024-PUBLIC
 Input = "0123456789ABCDEF1234"
 Output = 302d021500942b8c5850e05b59e24495116b1e8559e51b610e0214237aedf272d91f2397f63c9fc8790e1a6cde5d87
 
 # Modified signature
+FIPSversion = >=3.4.0
 Verify = DSA-SHA1:DSA-1024-PUBLIC
 Input = "0123456789ABCDEF1234"
 Output = 302d021500942b8c5850e05b59e24495116b1e8559e51b610e0214237aedf272d91f2397f63c9fc8790e1a6cde5d88
 Result = VERIFY_ERROR
 
 # Digest too short
+FIPSversion = >=3.4.0
 Verify = DSA-SHA1:DSA-1024-PUBLIC
 Input = "0123456789ABCDEF123"
 Output = 302d021500942b8c5850e05b59e24495116b1e8559e51b610e0214237aedf272d91f2397f63c9fc8790e1a6cde5d87
 Result = VERIFY_ERROR
 
 # Digest too long
+FIPSversion = >=3.4.0
 Verify = DSA-SHA1:DSA-1024-PUBLIC
 Input = "0123456789ABCDEF12345"
 Output = 302d021500942b8c5850e05b59e24495116b1e8559e51b610e0214237aedf272d91f2397f63c9fc8790e1a6cde5d87
 Result = VERIFY_ERROR
 
 # Garbage after signature
+FIPSversion = >=3.4.0
 Verify = DSA-1024-PUBLIC
 Input = "0123456789ABCDEF1234"
 Output = 302d021500942b8c5850e05b59e24495116b1e8559e51b610e0214237aedf272d91f2397f63c9fc8790e1a6cde5d8700
 Result = VERIFY_ERROR
 
 # Invalid tag
+FIPSversion = >=3.4.0
 Verify = DSA-SHA1:DSA-1024-PUBLIC
 Input = "0123456789ABCDEF1234"
 Output = 312d021500942b8c5850e05b59e24495116b1e8559e51b610e0214237aedf272d91f2397f63c9fc8790e1a6cde5d87
 Result = VERIFY_ERROR
 
 # BER signature
+FIPSversion = >=3.4.0
 Verify = DSA-SHA1:DSA-1024-PUBLIC
 Input = "0123456789ABCDEF1234"
 Output = 3080021500942b8c5850e05b59e24495116b1e8559e51b610e0214237aedf272d91f2397f63c9fc8790e1a6cde5d870000
@@ -263,6 +271,7 @@ Title = FIPS Tests (using different key sizes and digests)
 
 # Test sign with a 2048 bit key with N == 160 is not allowed in fips mode
 Availablein = fips
+FIPSversion = >=3.4.0
 Sign-Message = DSA-SHA256:DSA-2048-160
 Input = "Hello"
 Output = 00
@@ -270,6 +279,7 @@ Result = KEYOP_INIT_ERROR
 
 # Test sign with a 2048 bit key with N == 224 is allowed in fips mode
 Availablein = default
+FIPSversion = >=3.4.0
 Sign-Message = DSA-SHA256:DSA-2048-224
 Input = "Hello"
 Output = 00
@@ -277,34 +287,39 @@ Result = KEYOP_MISMATCH
 
 # Test sign with a 2048 bit key with N == 256 is allowed in fips mode
 Availablein = default
+FIPSversion = >=3.4.0
 Sign-Message = DSA-SHA256:DSA-2048-256
 Input = "Hello"
 Result = KEYOP_MISMATCH
 
 # Test sign with a 3072 bit key with N == 256 is allowed in fips mode
 Availablein = default
+FIPSversion = >=3.4.0
 Sign-Message = DSA-SHA256:DSA-3072-256
 Input = "Hello"
 Result = KEYOP_MISMATCH
 
 # Test sign with a 2048 bit SHA3 is allowed in fips mode
 Availablein = default
+FIPSversion = >=3.4.0
 Sign-Message = DSA-SHA3-224:DSA-2048-256
 Input = "Hello"
 Result = KEYOP_MISMATCH
 
 # Test verify with a 1024 bit key is allowed in fips mode
+FIPSversion = >=3.4.0
 Verify-Message = DSA-SHA256:DSA-1024
 Input = "Hello "
 Output = 302c02142e32c8a5b0bd19b2ba33fd9c78aad3729dcb1b9e02142c006f7726a9d6833d414865b95167ea5f4f7713
 
 # Test verify with SHA1 is allowed in fips mode
+FIPSversion = >=3.4.0
 Verify-Message = DSA-SHA1:DSA-1024
 Input = "Hello "
 Output = 302c0214602d21ed37e46051bb3d06cc002adddeb4cdb3bd02144f39f75587b286588862d06366b2f29bddaf8cf6
 
 # Test verify with a 2048/160 bit key is allowed in fips mode
-FIPSversion = >3.1.1
+FIPSversion = >=3.4.0
 Verify-Message = DSA-SHA256:DSA-2048-160
 Input = "Hello"
 Output = 302e021500a51ca7f70ae206f221dc9b805bb04bfc07d6e448021500b16e45f9dac8aff04e115f96c00f4237d0fced41
@@ -313,6 +328,7 @@ Title = Fips Negative Tests (using different key sizes and digests)
 
 # Test sign with a 1024 bit key is not allowed in fips mode
 Availablein = fips
+FIPSversion = >=3.4.0
 Sign-Message = DSA-SHA256:DSA-1024-FIPS186-2
 Securitycheck = 1
 Input = "Hello"
@@ -320,6 +336,7 @@ Result = KEYOP_INIT_ERROR
 
 # Test sign with SHA1 is not allowed in fips mode
 Availablein = fips
+FIPSversion = >=3.4.0
 Sign-Message = DSA-SHA1:DSA-2048-256
 Securitycheck = 1
 Input = "Hello"
@@ -327,6 +344,7 @@ Result = KEYOP_INIT_ERROR
 
 # Test sign with a 3072 bit key with N == 224 is not allowed in fips mode
 Availablein = fips
+FIPSversion = >=3.4.0
 Sign-Message = DSA-SHA256:DSA-3072-224
 Securitycheck = 1
 Input = "Hello"
@@ -334,6 +352,7 @@ Result = KEYOP_INIT_ERROR
 
 # Test sign with a 4096 bit key is not allowed in fips mode
 Availablein = fips
+FIPSversion = >=3.4.0
 Sign-Message = DSA-SHA256:DSA-4096-256
 Securitycheck = 1
 Input = "Hello"
