@@ -266,9 +266,8 @@ void *ossl_thread_event_ctx_new(OSSL_LIB_CTX *libctx)
     if (tlocal == NULL)
         return NULL;
 
-    if (!CRYPTO_THREAD_init_local(tlocal, NULL)) {
+    if (!CRYPTO_THREAD_init_local(tlocal, NULL))
         goto deinit;
-    }
 
     hands = OPENSSL_zalloc(sizeof(*hands));
     if (hands == NULL)
