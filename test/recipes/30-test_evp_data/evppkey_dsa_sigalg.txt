@@ -344,6 +344,7 @@ Title = Fips Indicator Tests
 
 # Test sign with a 1024 bit key is unapproved in fips mode if the sign and key
 # checks are ignored.
+Availablein = fips
 FIPSversion = >=3.4.0
 Sign-Message = DSA-SHA256:DSA-1024-FIPS186-2
 Securitycheck = 1
@@ -355,6 +356,7 @@ Result = KEYOP_MISMATCH
 
 # Test sign with a 1024 bit key is unapproved and fails the key check in
 # fips mode if the sign check is ignored
+Availablein = fips
 FIPSversion = >=3.4.0
 Sign-Message = DSA-SHA256:DSA-1024-FIPS186-2
 Securitycheck = 1
@@ -365,6 +367,7 @@ Result = KEYOP_INIT_ERROR
 
 # Test sign with a 3072 bit key with N == 224 is not allowed in fips mode if the
 # sign and key checks are ignored
+Availablein = fips
 FIPSversion = >=3.4.0
 Sign-Message = DSA-SHA256:DSA-3072-224
 Securitycheck = 1
@@ -376,6 +379,7 @@ Result = KEYOP_MISMATCH
 
 # Test sign with a 4096 bit key is unapproved in fips mode if the sign and key
 # checks are ignored
+Availablein = fips
 FIPSversion = >=3.4.0
 Sign-Message = DSA-SHA256:DSA-4096-256
 Securitycheck = 1
@@ -386,6 +390,7 @@ Input = "Hello"
 Result = KEYOP_MISMATCH
 
 # Test sign with SHA1 is unapproved in fips mode if DSA sign check is ignored
+Availablein = fips
 FIPSversion = >=3.4.0
 Sign-Message = DSA-SHA1:DSA-2048-256
 Securitycheck = 1
