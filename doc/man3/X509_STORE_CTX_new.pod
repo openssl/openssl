@@ -216,7 +216,7 @@ custom "purpose" (see below) or supply a nondefault verification callback
 (L<X509_STORE_set_verify_cb_func(3)>).
 
 X509_STORE_CTX_set0_ocsp_resp() sets the OCSP response(s) for the verification
-of a certificate chain or for including in the handshake, when the client
+of a certificate chain or for including in the TLS handshake, when the client
 requests OCSP stapling. The stack of OCSP responses are not copied, it is just
 stored to the context.
 

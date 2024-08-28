@@ -2175,7 +2175,8 @@ static int tls_handle_status_request(SSL_CONNECTION *s)
                 /* status request response should be sent */
             case SSL_TLSEXT_ERR_OK:
 #ifndef OPENSSL_NO_OCSP
-                if (s->ext.ocsp.resp_ex && sk_OCSP_RESPONSE_num(s->ext.ocsp.resp_ex) > 0)
+                if (s->ext.ocsp.resp_ex != NULL
+                        && sk_OCSP_RESPONSE_num(s->ext.ocsp.resp_ex) > 0)
                     s->ext.status_expected = 1;
 #endif
                 break;
@@ -4346,7 +4347,7 @@ int tls_construct_cert_status_body(SSL_CONNECTION *s, size_t chainidx, WPACKET *
          * if chainidx = 0 the server certificate is requested
          * if chainidx > 0 an intermediate certificate is requested
          */
-        if ((int)chainidx < sk_X509_num(chain_certs)+1 && chainidx > 0)
+        if ((int)chainidx < sk_X509_num(chain_certs) + 1 && chainidx > 0)
             x = sk_X509_value(chain_certs, chainidx - 1);
 
         issuer = X509_find_by_subject(chain_certs, X509_get_issuer_name(x));
@@ -4359,7 +4360,6 @@ int tls_construct_cert_status_body(SSL_CONNECTION *s, size_t chainidx, WPACKET *
 
         if (cert_id == NULL)
             return 0;
-
 
         /* find the correct OCSP response for the requested certificate */
         found = -1;
@@ -4400,6 +4400,7 @@ int tls_construct_cert_status_body(SSL_CONNECTION *s, size_t chainidx, WPACKET *
 
     if (!WPACKET_sub_memcpy_u24(pkt, respder, resplen)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        OPENSSL_free(respder);
         return 0;
     }
 

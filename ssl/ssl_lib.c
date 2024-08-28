@@ -1447,16 +1447,13 @@ void ossl_ssl_connection_free(SSL *ssl)
     sk_X509_EXTENSION_pop_free(s->ext.ocsp.exts, X509_EXTENSION_free);
 
 #ifndef OPENSSL_NO_OCSP
-    if (s->ext.ocsp.resp != NULL) {
-        OPENSSL_free(s->ext.ocsp.resp);
-        s->ext.ocsp.resp = NULL;
-        s->ext.ocsp.resp_len = 0;
-    }
+    OPENSSL_free(s->ext.ocsp.resp);
+    s->ext.ocsp.resp = NULL;
+    s->ext.ocsp.resp_len = 0;
+
     sk_OCSP_RESPID_pop_free(s->ext.ocsp.ids, OCSP_RESPID_free);
-    if (s->ext.ocsp.resp_ex != NULL) {
-        sk_OCSP_RESPONSE_pop_free(s->ext.ocsp.resp_ex, OCSP_RESPONSE_free);
-        s->ext.ocsp.resp_ex = NULL;
-    }
+    sk_OCSP_RESPONSE_pop_free(s->ext.ocsp.resp_ex, OCSP_RESPONSE_free);
+    s->ext.ocsp.resp_ex = NULL;
 #endif
 #ifndef OPENSSL_NO_CT
     SCT_LIST_free(s->scts);
