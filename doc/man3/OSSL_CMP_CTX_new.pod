@@ -394,7 +394,7 @@ An empty proxy string specifies not to use a proxy.
 Otherwise the format is
 C<[http[s]://][userinfo@]host[:port][/path][?query][#fragment]>,
 where any given userinfo, path, query, and fragment is ignored.
-If the host string is an IPv6 address, it must be enclosed with C<[> and C<]>.
+If the host string is an IPv6 address, it must be enclosed in C<[> and C<]>.
 The default port number is 80, or 443 in case C<https:> is given.
 
 OSSL_CMP_CTX_set1_no_proxy() sets the list of server hostnames not to use

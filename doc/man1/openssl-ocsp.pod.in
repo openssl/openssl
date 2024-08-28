@@ -179,7 +179,7 @@ If the B<-host> option is present then the OCSP request is sent to the host
 I<host> on port I<port>.
 The I<host> may be a domain name or an IP (v4 or v6) address,
 such as C<127.0.0.1> or C<[::1]> for localhost.
-If it is IPv6 address, it must be enclosed with C<[> and C<]>.
+If it is IPv6 address, it must be enclosed in C<[> and C<]>.
 
 The B<-path> option specifies the HTTP pathname to use or "/" by default.
 This is equivalent to specifying B<-url> with scheme
@@ -189,7 +189,7 @@ http:// and the given I<host>, I<port>, and optional I<pathname>.
 
 The HTTP(S) proxy server to use for reaching the OCSP server unless B<-no_proxy>
 applies, see below.
-If the host string is an IPv6 address, it must be enclosed with C<[> and C<]>.
+If the host string is an IPv6 address, it must be enclosed in C<[> and C<]>.
 The proxy port defaults to 80 or 443 if the scheme is C<https>; apart from that
 the optional C<http://> or C<https://> prefix is ignored,
 as well as any userinfo, path, query, and fragment components.
