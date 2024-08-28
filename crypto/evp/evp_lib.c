@@ -1306,6 +1306,8 @@ int EVP_CIPHER_CTX_get_algor_params(EVP_CIPHER_CTX *ctx, X509_ALGOR *alg)
         i = 0;
     if (OSSL_PARAM_modified(&params[1]) && params[1].return_size != 0)
         i = 1;
+    if (i < 0)
+        goto err;
 
     /*
      * If alg->parameter is non-NULL, it will be changed by d2i_ASN1_TYPE()
@@ -1318,7 +1320,7 @@ int EVP_CIPHER_CTX_get_algor_params(EVP_CIPHER_CTX *ctx, X509_ALGOR *alg)
 
     derk = params[i].key;
     derl = params[i].return_size;
-    if (i >= 0 && (der = OPENSSL_malloc(derl)) != NULL) {
+    if ((der = OPENSSL_malloc(derl)) != NULL) {
         unsigned char *derp = der;
 
         params[i] = OSSL_PARAM_construct_octet_string(derk, der, derl);
