@@ -1007,6 +1007,27 @@ option: any verify errors are then returned aborting the handshake.
 The B<-bind> option may be useful if the server or a firewall requires
 connections to come from some particular address and or port.
 
+=head2 Note on Non-Interactive Use
+
+When B<s_client> is run in a non-interactive environment (e.g., a cron job or
+a script without a valid I<stdin>), it may close the connection before
+receiving all the necessary TLS session data, especially with TLS 1.3.
+To prevent this, consider using the B<-ign_eof> option to keep B<s_client>
+running even after reaching EOF from I<stdin>.
+
+Additionally, redirecting input explicitly, such as by using B<E<lt>/dev/null>,
+can ensure the proper handling of I<stdin> and avoid premature connection
+closure.
+
+For example:
+
+ openssl s_client -connect <server address>:443 -tls1_3
+                  -sess_out /path/to/tls_session_params_file
+                  -ign_eof </dev/null
+
+This ensures that the client remains active until all session data is
+properly received and the server closes the connection.
+
 =head1 BUGS
 
 Because this program has a lot of options and also because some of the
