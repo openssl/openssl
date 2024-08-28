@@ -1,9 +1,11 @@
 prefix={- $OpenSSL::safe::installdata::PREFIX -}
 exec_prefix=${prefix}
-libdir={- $OpenSSL::safe::installdata::LIBDIR_REL_PREFIX
-          ? '${exec_prefix}/' . $OpenSSL::safe::installdata::LIBDIR_REL_PREFIX
-          : $OpenSSL::safe::installdata::libdir -}
-includedir=${prefix}/{- $OpenSSL::safe::installdata::INCLUDEDIR_REL_PREFIX -}
+libdir={- $OpenSSL::safe::installdata::LIBDIR_REL_PREFIX[0]
+          ? '${exec_prefix}/' . $OpenSSL::safe::installdata::LIBDIR_REL_PREFIX[0]
+          : $OpenSSL::safe::installdata::libdir[0] -}
+includedir={- $OUT = '';
+              $OUT .= '${prefix}/' . $_ . ' '
+                  foreach (@OpenSSL::safe::installdata::INCLUDEDIR_REL_PREFIX); -}
 
 Name: OpenSSL
 Description: Secure Sockets Layer and cryptography libraries and tools
