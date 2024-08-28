@@ -53,12 +53,11 @@ typedef unsigned int u_int;
 #include <openssl/rsa.h>
 #include "s_apps.h"
 #include "timeouts.h"
-#include "ssl/ssl_local.h"
 #ifdef CHARSET_EBCDIC
 #include <openssl/ebcdic.h>
 #endif
 #include "internal/sockets.h"
-#include "internal/statem.h"
+# include "internal/statem.h"
 
 static int not_resumable_sess_cb(SSL *s, int is_forward_secure);
 static int sv_body(int s, int stype, int prot, unsigned char *context);
@@ -464,7 +463,7 @@ typedef struct tlsextstatusctx_st {
     char *proxy, *no_proxy;
     int use_ssl;
     int verbose;
-    int status_server_only;
+    int status_all;
 } tlsextstatusctx;
 
 static tlsextstatusctx tlscstatp = { -1, NULL };
@@ -609,7 +608,6 @@ static int get_ocsp_resp_from_responder_single(SSL *s, X509 *x,
 static int get_ocsp_resp_from_responder(SSL *s, tlsextstatusctx *srctx,
                                         STACK_OF(OCSP_RESPONSE) **sk_resp)
 {
-    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
     X509 *x = NULL;
     int i, num = 0;
     STACK_OF(X509) *server_certs = NULL;
@@ -624,11 +622,11 @@ static int get_ocsp_resp_from_responder(SSL *s, tlsextstatusctx *srctx,
     /*
      * TODO: in future DTLS should also be considered
      */
-    if (server_certs != NULL && sc != NULL && !srctx->status_server_only &&
-        !SSL_CONNECTION_IS_DTLS(sc) && SSL_version(s) >= TLS1_3_VERSION) {
+    if (server_certs != NULL && srctx->status_all &&
+        !SSL_is_dtls(s) && SSL_version(s) >= TLS1_3_VERSION) {
         /* certificate chain is available */
         num = sk_X509_num(server_certs) + 1;
-    } else if (sc != NULL) {
+    } else {
         /*
          * certificate chain is not available,
          * set num to 1 for server certificate
@@ -817,7 +815,7 @@ typedef enum OPTION_choice {
     OPT_VERIFYCAFILE,
     OPT_CASTORE, OPT_NOCASTORE, OPT_CHAINCASTORE, OPT_VERIFYCASTORE,
     OPT_NBIO, OPT_NBIO_TEST, OPT_IGN_EOF, OPT_NO_IGN_EOF,
-    OPT_DEBUG, OPT_TLSEXTDEBUG, OPT_STATUS, OPT_OCSP_STATUS_SERVER,
+    OPT_DEBUG, OPT_TLSEXTDEBUG, OPT_STATUS, OPT_STATUS_ALL,
     OPT_STATUS_VERBOSE, OPT_STATUS_TIMEOUT, OPT_PROXY, OPT_NO_PROXY,
     OPT_STATUS_URL, OPT_STATUS_FILE, OPT_MSG, OPT_MSGFILE,
     OPT_TRACE, OPT_SECURITY_DEBUG, OPT_SECURITY_DEBUG_VERBOSE, OPT_STATE,
@@ -968,13 +966,12 @@ const OPTIONS s_server_options[] = {
     {"cert_comp", OPT_CERT_COMP, '-', "Pre-compress server certificates"},
 #endif
 
-#ifndef OPENSSL_NO_OCSP
+# ifndef OPENSSL_NO_OCSP
     OPT_SECTION("OCSP"),
     {"status", OPT_STATUS, '-',
-     "Provide certificate status response(s) (for the whole chain if possible) "
-     "if requested by client"},
-    {"status_server_only", OPT_OCSP_STATUS_SERVER, '-',
-     "Provide certificate status response only for server certificate"},
+     "Provide certificate status response if requested, for server cert only"},
+    {"status_all", OPT_STATUS_ALL, '-',
+     "Provide certificate status response(s) if requested, for the whole chain"},
     {"status_verbose", OPT_STATUS_VERBOSE, '-',
      "Print more output in certificate status callback"},
     {"status_timeout", OPT_STATUS_TIMEOUT, 'n',
@@ -988,7 +985,7 @@ const OPTIONS s_server_options[] = {
      "Default from environment variable 'no_proxy', else 'NO_PROXY', else none"},
     {"status_file", OPT_STATUS_FILE, '<',
      "File containing DER encoded OCSP Response (can be specified multiple times)"},
-#endif
+# endif
 
     OPT_SECTION("Debug"),
     {"security_debug", OPT_SECURITY_DEBUG, '-',
@@ -1172,9 +1169,9 @@ int s_server_main(int argc, char *argv[])
     const char *s_cert_file = TEST_CERT, *s_key_file = NULL, *s_chain_file = NULL;
     const char *s_cert_file2 = TEST_CERT2, *s_key_file2 = NULL;
     char *s_dcert_file = NULL, *s_dkey_file = NULL, *s_dchain_file = NULL;
-#ifndef OPENSSL_NO_OCSP
+# ifndef OPENSSL_NO_OCSP
     int s_tlsextstatus = 0;
-#endif
+# endif
     int no_resume_ephemeral = 0;
     unsigned int max_send_fragment = 0;
     unsigned int split_send_fragment = 0, max_pipelines = 0;
@@ -1486,40 +1483,40 @@ int s_server_main(int argc, char *argv[])
             s_tlsextdebug = 1;
             break;
         case OPT_STATUS:
-#ifndef OPENSSL_NO_OCSP
+# ifndef OPENSSL_NO_OCSP
             s_tlsextstatus = 1;
-            tlscstatp.status_server_only = 0;
-#endif
+            tlscstatp.status_all = 0;
+# endif
             break;
-        case OPT_OCSP_STATUS_SERVER:
-#ifndef OPENSSL_NO_OCSP
-            s_tlsextstatus = tlscstatp.status_server_only = 1;
-#endif
+        case OPT_STATUS_ALL:
+# ifndef OPENSSL_NO_OCSP
+            s_tlsextstatus = tlscstatp.status_all = 1;
+# endif
             break;
 
         case OPT_STATUS_VERBOSE:
-#ifndef OPENSSL_NO_OCSP
+# ifndef OPENSSL_NO_OCSP
             s_tlsextstatus = tlscstatp.verbose = 1;
-#endif
+# endif
             break;
         case OPT_STATUS_TIMEOUT:
-#ifndef OPENSSL_NO_OCSP
+# ifndef OPENSSL_NO_OCSP
             s_tlsextstatus = 1;
             tlscstatp.timeout = atoi(opt_arg());
-#endif
+# endif
             break;
         case OPT_PROXY:
-#ifndef OPENSSL_NO_OCSP
+# ifndef OPENSSL_NO_OCSP
             tlscstatp.proxy = opt_arg();
-#endif
+# endif
             break;
         case OPT_NO_PROXY:
-#ifndef OPENSSL_NO_OCSP
+# ifndef OPENSSL_NO_OCSP
             tlscstatp.no_proxy = opt_arg();
-#endif
+# endif
             break;
         case OPT_STATUS_URL:
-#ifndef OPENSSL_NO_OCSP
+# ifndef OPENSSL_NO_OCSP
             s_tlsextstatus = 1;
             if (!OSSL_HTTP_parse_url(opt_arg(), &tlscstatp.use_ssl, NULL,
                                      &tlscstatp.host, &tlscstatp.port, NULL,
@@ -1527,16 +1524,16 @@ int s_server_main(int argc, char *argv[])
                 BIO_printf(bio_err, "Error parsing -status_url argument\n");
                 goto end;
             }
-#endif
+# endif
             break;
         case OPT_STATUS_FILE:
-#ifndef OPENSSL_NO_OCSP
+# ifndef OPENSSL_NO_OCSP
             s_tlsextstatus = 1;
             if (tlscstatp.sk_resp_in == NULL
                 && (tlscstatp.sk_resp_in = sk_OPENSSL_STRING_new_null()) == NULL)
                 goto end;
             sk_OPENSSL_STRING_push(tlscstatp.sk_resp_in, opt_arg());
-#endif
+# endif
             break;
         case OPT_MSG:
             s_msg = 1;
