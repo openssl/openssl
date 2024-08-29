@@ -153,6 +153,21 @@ OpenSSL 3.4
 
    *Watson Ladd*
 
+ * Enhancement to SSL_client_hello_get0_ext.
+
+   The `SSL_client_hello_get0_ext` function has been improved to support
+   all types of extensions in the ClientHello message, including custom
+   and non-standard extensions. This enhancement increases the flexibility
+   and usability of the function for developers who need to implement or
+   interact with custom TLS extensions.
+
+   Previously, `SSL_client_hello_get0_ext` was limited to handling well-known
+   standard extensions. This update expands its capability by iterating over
+   all extensions present in the ClientHello message, allowing retrieval
+   of extension data based on the provided extension type.
+
+   *Mohamed Shekiwy*
+
 OpenSSL 3.3
 -----------
 
