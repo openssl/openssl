@@ -377,16 +377,20 @@ int dtls_crypt_sequence_number(unsigned char *seq, size_t seq_len,
 
     memset(mask, 0, sizeof(mask));
 
-    if (strncmp(name, "AES", 3) == 0) {
+    if (OPENSSL_strncasecmp(name, "aes", 3) == 0) {
         iv = NULL;
         in = rec_data;
         inlen = 16;
-    } else if (strncmp(name, "Cha", 3) == 0) {
+    } else if (OPENSSL_strncasecmp(name, "cha", 3) == 0) {
         iv = rec_data;
         in = rec_data + 4;
         inlen = 12;
     } else {
-        return 0;
+        if (ossl_assert(OPENSSL_strncasecmp(name, "null", 4) == 0)) {
+            return 1;
+        } else {
+            return 0;
+        }
     }
 
     if (!ossl_assert(inlen >= 0)
