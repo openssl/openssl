@@ -36,43 +36,27 @@ if [ "$ROLE" == "client" ]; then
 
     case "$TESTCASE" in
     "http3"|"transfer")
-    echo -e "--verbose\n--parallel" >> $CURLRC
-    generate_outputs_http3
-    dump_curlrc
-        SSL_CERT_FILE=/certs/ca.pem curl --config $CURLRC 
-        if [ $? -ne 0 ]
-        then
-            exit 1
-        fi
+        echo -e "--verbose\n--parallel" >> $CURLRC
+        generate_outputs_http3
+        dump_curlrc
+        SSL_CERT_FILE=/certs/ca.pem curl --config $CURLRC || exit 1
         exit 0
         ;;
     "handshake")
        OUTFILE=$(basename $REQUESTS)
        echo -e "--verbose\n--http3\n-H \"Connection: close\"\n-o /downloads/$OUTFILE\n--url $REQUESTS" >> $CURLRC
        dump_curlrc
-       SSL_CERT_FILE=/certs/ca.pem curl --config $CURLRC 
-       if [ $? -ne 0 ]
-       then
-           exit 1
-       fi
+       SSL_CERT_FILE=/certs/ca.pem curl --config $CURLRC || exit 1
        exit 0
        ;; 
     "retry")
        OUTFILE=$(basename $REQUESTS)
-       SSL_CERT_FILE=/certs/ca.pem curl --verbose --http3 -o /downloads/$OUTFILE $REQUESTS
-       if [ $? -ne 0 ]
-       then
-           exit 1
-       fi
+       SSL_CERT_FILE=/certs/ca.pem curl --verbose --http3 -o /downloads/$OUTFILE $REQUESTS || exit 1
        exit 0
        ;; 
     "chacha20")
        OUTFILE=$(basename $REQUESTS)
-       SSL_CERT_FILE=/certs/ca.pem curl --verbose --tlsv1.3 --tls13-ciphers TLS_CHACHA20_POLY1305_SHA256 --http3 -o /downloads/$OUTFILE $REQUESTS
-       if [ $? -ne 0 ]
-       then
-           exit 1
-       fi
+       SSL_CERT_FILE=/certs/ca.pem curl --verbose --tlsv1.3 --tls13-ciphers TLS_CHACHA20_POLY1305_SHA256 --http3 -o /downloads/$OUTFILE $REQUESTS || exit 1
        exit 0
        ;; 
     *)
