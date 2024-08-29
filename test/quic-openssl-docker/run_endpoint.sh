@@ -46,7 +46,7 @@ if [ "$ROLE" == "client" ]; then
         fi
         exit 0
         ;;
-    "handshake"|"transfer")
+    "handshake"|"transfer"|"retry")
        HOSTNAME=none
        for req in $REQUESTS
        do
@@ -63,11 +63,6 @@ if [ "$ROLE" == "client" ]; then
        then
            exit 1
        fi
-       exit 0
-       ;; 
-    "retry")
-       OUTFILE=$(basename $REQUESTS)
-       SSL_CERT_FILE=/certs/ca.pem curl --verbose --http3 -o /downloads/$OUTFILE $REQUESTS || exit 1
        exit 0
        ;; 
     "chacha20")
