@@ -64,7 +64,7 @@ IF[{- !$disabled{tests} -}]
           ca_internals_test bio_tfo_test membio_test bio_dgram_test list_test \
           fips_version_test x509_test hpke_test pairwise_fail_test \
           nodefltctxtest evp_xof_test x509_load_cert_file_test bio_meth_test \
-          x509_acert_test x509_req_test strtoultest
+          x509_acert_test x509_req_test strtoultest bio_pw_callback_test
 
   IF[{- !$disabled{'rpk'} -}]
     PROGRAMS{noinst}=rpktest
@@ -1223,6 +1223,10 @@ ENDIF
   SOURCE[strtoultest]=strtoultest.c
   INCLUDE[strtoultest]=../include ../apps/include
   DEPEND[strtoultest]=../libcrypto libtestutil.a
+
+  SOURCE[bio_pw_callback_test]=bio_pw_callback_test.c
+  INCLUDE[bio_pw_callback_test]=../include ../apps/include
+  DEPEND[bio_pw_callback_test]=../libcrypto libtestutil.a
 
 {-
    use File::Spec::Functions;
