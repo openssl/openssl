@@ -1451,7 +1451,10 @@ int setup_tests(void)
         ADD_TEST_SUITE_LEGACY(ECExplicitTri2G);
 # endif
 # ifndef OPENSSL_NO_SM2
-        ADD_TEST_SUITE(SM2);
+        if (!is_fips_3_0_0) {
+            /* 3.0.0 FIPS provider imports explicit EC params and then fails. */
+            ADD_TEST_SUITE(SM2);
+        }
 # endif
         ADD_TEST_SUITE(ED25519);
         ADD_TEST_SUITE(ED448);
