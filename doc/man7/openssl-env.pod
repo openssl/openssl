@@ -97,8 +97,8 @@ Used to set a QUIC qlog filter specification. See L<openssl-qlog(7)>.
 
 =item B<SSLKEYLOGFILE>
 
-Used to produce the standard format output file for ssl key logging.  Optionally
-set this variable to a filename to log all secrets produced by ssl connections.
+Used to produce the standard format output file for SSL key logging.  Optionally
+set this variable to a filename to log all secrets produced by SSL connections.
 Note, use of the environment variable is predicated on configuring OpenSSL at
 build time with the enable-sslkeylog feature
 
