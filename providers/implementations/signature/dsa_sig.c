@@ -380,9 +380,7 @@ static int dsa_sign_message_final(void *vpdsactx, unsigned char *sig,
     unsigned char digest[EVP_MAX_MD_SIZE];
     unsigned int dlen = 0;
 
-    if (!ossl_prov_is_running() || pdsactx == NULL)
-        return 0;
-    if (pdsactx->mdctx == NULL)
+    if (!ossl_prov_is_running() || pdsactx == NULL || pdsactx->mdctx == NULL)
         return 0;
     /*
      * If sig is NULL then we're just finding out the sig size. Other fields
@@ -468,9 +466,7 @@ static int dsa_verify_message_final(void *vpdsactx)
     if (!ossl_prov_is_running())
         return 0;
 
-    if (pdsactx == NULL)
-        return 0;
-    if (pdsactx->mdctx == NULL)
+    if (pdsactx == NULL || pdsactx->mdctx == NULL)
         return 0;
 
     /*
