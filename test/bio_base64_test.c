@@ -6,71 +6,49 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-#include <limits.h>
 #include <stdio.h>
 #include <string.h>
-#include <time.h>
 #include <openssl/bio.h>
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 
 #include "testutil.h"
 
-/* 2048 bytes of "#ooooooooo...\n" + NUL terminator */
-static char gunk[2049];
+/* 2047 bytes of "#ooooooooo..." + NUL terminator */
+static char gunk[2048];
 
 typedef struct {
     char *prefix;
     char *encoded;
     unsigned bytes;
+    int trunc;
     char *suffix;
-    int last_read_ret;
-    char *desc;
+    int retry;
+    int no_nl;
 } test_case;
 
 #define BUFMAX 0xa0000          /* Encode at most 640kB. */
-#define sEOF "-EOF\n"           /* '-' as in PEM and MIME boundaries */
-#define junk "#foo\n"           /* Skipped initial content */
-#define junk2 "#foo\n#bar\n"    /* Edge case in original decoder */
-#define edge  "A\nAAA\nAAAA\n"  /* was misdecoded with junk2 as prefix */
+#define sEOF "-EOF"             /* '-' as in PEM and MIME boundaries */
+#define junk "#foo"             /* Skipped initial content */
 
-static test_case tests[] = {
-    { "",         NULL,    0,   "",  0, "empty" },
-    { "",         NULL,    0, sEOF,  0, "soft EOF" },
-    { junk,       NULL,    0,   "",  0, "non-b64 junk" },
-    { gunk,       NULL,    0,   "",  0, "non-b64 gunk" },
-    { "",         NULL,    1,   "",  0, "padded byte" },
-    { "",         NULL,    2,   "",  0, "padded double byte" },
-    { "",         NULL,    3,   "",  0, "single block" },
-    { "",   "A\nAAA\n",    3,   "",  0, "split single block" },
-    { "", "AAAA\nAA\n",    0,   "", -1, "missing padding" },
-    { "",  "AAAA\nA\n",    0,   "", -1, "truncated input" },
-    { junk,   "AAAA\n",    3,   "",  0, "junk + single" },
-    { junk, "A\nAAA\n",    3,   "",  0, "junk + split single" },
-    { junk2,      edge,    6,   "",  0, "edge case decode" },
-    { gunk,   "AAAA\n",    3,   "",  0, "gunk + single" },
-    { gunk, "A\nAAA\n",    3,   "",  0, "gunk + split single" },
-    { "",     "AAAA\n",    3, sEOF,  0, "single + soft EOF" },
-    { "",     "AAAA\n",    0, junk, -1, "single + junk" },
-    { "",         NULL,   48,   "",  0, "64 encoded bytes" },
-    { junk,       NULL,   48,   "",  0, "junk + 64 encoded bytes" },
-    { "",         NULL,   48, sEOF,  0, "64 encoded bytes + soft EOF" },
-    { "",         NULL,   48, junk, -1, "64 encoded bytes + junk" },
-    { "",         NULL,  192,   "",  0, "256 encoded bytes" },
-    { junk,       NULL,  192,   "",  0, "junk + 256 encoded bytes" },
-    { "",         NULL,  192, sEOF,  0, "256 encoded bytes + soft EOF" },
-    { "",         NULL,  192, junk, -1, "256 encoded bytes + junk" },
-    { "",         NULL,  768,   "",  0, "1024 encoded bytes" },
-    { junk,       NULL,  768,   "",  0, "junk + 1024 encoded bytes" },
-    { "",         NULL,  768, sEOF,  0, "1024 encoded bytes + soft EOF" },
-    { "",         NULL,  768, junk, -1, "1024 encoded bytes + junk" },
-    { "",         NULL, 1536,   "",  0, "2048 encoded bytes" },
-    { junk,       NULL, 1536,   "",  0, "junk + 2048 encoded bytes" },
-    { "",         NULL, 1536, sEOF,  0, "2048 encoded bytes + soft EOF" },
-    { "",         NULL, 1536, junk, -1, "2048 encoded bytes + junk" },
-    { gunk,       NULL, 1536,   "",  0, "gunk + 2048 encoded bytes" },
-    { NULL,       NULL,    0, NULL,  0, NULL }
+#define EOF_RETURN (-1729)      /* Distinct from -1, etc., internal results */
+#define NLEN 6
+#define NVAR 5
+/*
+ * Junk suffixed variants don't make sense with padding or truncated groups
+ * because we will typically stop with an error before seeing the suffix, but
+ * with retriable BIOs may never look at the suffix after detecting padding.
+ */
+#define NPAD 6
+#define NVARPAD (NVAR * NPAD - NPAD + 1)
+
+static char *prefixes[NVAR] = { "", junk, gunk, "", "" };
+static char *suffixes[NVAR] = { "", "", "", sEOF, junk };
+static unsigned lengths[6] = { 0, 3, 48, 192, 768, 1536 };
+static unsigned linelengths[] = {
+    4, 8, 16, 28, 40, 64, 80, 128, 256, 512, 1023, 0
 };
+static unsigned wscnts[] = { 0, 1, 2, 4, 8, 16, 0xFFFF };
 
 /* Generate `len` random octets */
 static unsigned char *genbytes(unsigned len)
@@ -113,7 +91,7 @@ static int memoutws(BIO *mem, char c, unsigned wscnt, unsigned llen, int *pos)
  * before some of the base64 code points.
  */
 static int encode(unsigned const char *buf, unsigned buflen, char *encoded,
-                  unsigned llen, unsigned wscnt, BIO *mem)
+                  int trunc, unsigned llen, unsigned wscnt, BIO *mem)
 {
     static const unsigned char b64[65] =
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -162,6 +140,10 @@ static int encode(unsigned const char *buf, unsigned buflen, char *encoded,
             return 0;
     }
 
+    while (trunc-- > 0)
+        if (memoutws(mem, 'A', wscnt, llen, &pos) == 0)
+            return 0;
+
     /* Terminate last line */
     if (pos > 0 && BIO_write(mem, &nl, 1) != 1)
         return 0;
@@ -170,21 +152,24 @@ static int encode(unsigned const char *buf, unsigned buflen, char *encoded,
 }
 
 static int genb64(char *prefix, char *suffix, unsigned const char *buf,
-                  unsigned buflen, char *encoded, unsigned llen,
+                  unsigned buflen, int trunc, char *encoded, unsigned llen,
                   unsigned wscnt, char **out)
 {
     int preflen = strlen(prefix);
     int sufflen = strlen(suffix);
     int outlen;
+    char newline = '\n';
     BUF_MEM *bptr;
     BIO *mem = BIO_new(BIO_s_mem());
 
     if (mem == NULL)
         return -1;
 
-    if (BIO_write(mem, prefix, preflen) != preflen
-        || encode(buf, buflen, encoded, llen, wscnt, mem) <= 0
-        || BIO_write(mem, suffix, sufflen) != sufflen) {
+    if ((*prefix && (BIO_write(mem, prefix, preflen) != preflen
+                     || BIO_write(mem, &newline, 1) != 1))
+        || encode(buf, buflen, encoded, trunc, llen, wscnt, mem) <= 0
+        || (*suffix && (BIO_write(mem, suffix, sufflen) != sufflen
+                        || BIO_write(mem, &newline, 1) != 1))) {
         BIO_free(mem);
         return -1;
     }
@@ -201,8 +186,7 @@ static int genb64(char *prefix, char *suffix, unsigned const char *buf,
     return outlen;
 }
 
-static int single_test(test_case *t, int eof_return, int llen, int wscnt,
-                       int flags)
+static int test_bio_base64_run(test_case *t, int llen, int wscnt)
 {
     unsigned char *raw;
     unsigned char *out;
@@ -222,47 +206,51 @@ static int single_test(test_case *t, int eof_return, int llen, int wscnt,
     else
         raw = genbytes(t->bytes);
 
-    if (raw == NULL && t->bytes > 0)
+    if (raw == NULL && t->bytes > 0) {
+        TEST_error("out of memory");
         return -1;
+    }
 
     out_len = t->bytes + 1024;
     out = OPENSSL_malloc(out_len);
     if (out == NULL) {
         OPENSSL_free(raw);
+        TEST_error("out of memory");
         return -1;
     }
 
-    elen = genb64(t->prefix, t->suffix, raw, t->bytes, t->encoded,
+    elen = genb64(t->prefix, t->suffix, raw, t->bytes, t->trunc, t->encoded,
                   llen, wscnt, &encoded);
     if (elen < 0 || (bio = BIO_new(BIO_s_mem())) == NULL) {
         OPENSSL_free(raw);
         OPENSSL_free(out);
         OPENSSL_free(encoded);
+        TEST_error("out of memory");
         return -1;
     }
-    if (eof_return <= 0)
-        BIO_set_mem_eof_return(bio, eof_return);
+    if (t->retry)
+        BIO_set_mem_eof_return(bio, EOF_RETURN);
     else
-        eof_return = 0;
+        BIO_set_mem_eof_return(bio, 0);
 
     /*
-     * When the input is long enough, and the source bio is retriable, test
-     * retries by writting it in two steps (1024 bytes, then the rest).
+     * When the input is long enough, and the source bio is retriable, exercise
+     * retries by writting the input to the underlying BIO in two steps (1024
+     * bytes, then the rest) and trying to decode some data after each write.
      */
     n1 = elen;
-    if (eof_return < 0 && n1 > 1024)
-        n1 = 1024;
+    if (t->retry)
+        n1 = elen / 2;
     if (n1 > 0)
         BIO_write(bio, encoded, n1);
 
     b64 = BIO_new(BIO_f_base64());
-    if (flags != 0)
-        BIO_set_flags(b64, flags);
+    if (t->no_nl)
+        BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
     BIO_push(b64, bio);
 
     n = BIO_read(b64, out, out_len);
 
-    /* Retry when we have more input */
     if (n1 < elen) {
         /* Append the rest of the input, and read again */
         BIO_write(bio, encoded + n1, elen - n1);
@@ -270,34 +258,49 @@ static int single_test(test_case *t, int eof_return, int llen, int wscnt,
             n2 = BIO_read(b64, out + n, out_len - n);
             if (n2 > 0)
                 n += n2;
-        } else if (n == eof_return) {
+        } else if (n == EOF_RETURN) {
             n = BIO_read(b64, out, out_len);
         }
     }
 
     /* Turn retry-related negative results to normal (0) EOF */
-    if (n < 0 && n == eof_return)
+    if (n < 0 && n == EOF_RETURN)
         n = 0;
 
     /* Turn off retries */
-    if (eof_return < 0)
+    if (t->retry)
         BIO_set_mem_eof_return(bio, 0);
 
-    if (n < (int) out_len) {
+    if (n < (int) out_len)
         /* Perform the last read, checking its result */
         ret = BIO_read(b64, out + n, out_len - n);
-    } else {
+    else {
         /* Should not happen, given extra space in out_len */
-        ret = t->last_read_ret - 1;
+        TEST_error("Unexpectedly long decode output");
+        ret = -1;
     }
 
-    /* Should now equal the expected last read return */
-    ret = ret == t->last_read_ret ? 0 : -1;
-
-    /* Check the decoded content if any */
-    if ((t->last_read_ret == 0 && n != (int) t->bytes)
-        || (n > 0 && memcmp(raw, out, n) != 0))
+    /*
+     * Expect an error to be detected with:
+     *
+     * - truncated groups,
+     * - non-base64 suffixes (other than soft EOF) for non-empty or oneline
+     *   input
+     * - non-base64 prefixes in NO_NL mode
+     *
+     * Otherwise, check the decoded content
+     */
+    if (t->trunc > 0
+        || ((t->bytes > 0 || t->no_nl) && *t->suffix && *t->suffix != '-')
+        || (t->no_nl && *t->prefix)) {
+        if ((ret = ret < 0 ? 0 : -1) != 0)
+            TEST_error("Final read result was non-negative");
+    } else if (ret != 0
+             || n != (int) t->bytes
+             || (n > 0 && memcmp(raw, out, n) != 0)) {
+        TEST_error("Failed to decode expected data");
         ret = -1;
+    }
 
     BIO_free_all(b64);
     OPENSSL_free(out);
@@ -307,74 +310,182 @@ static int single_test(test_case *t, int eof_return, int llen, int wscnt,
     return ret;
 }
 
-static unsigned lengths[] = {
-    4, 8, 16, 28, 40, 64, 80, 128, 256, 512, 1023, 0
-};
-static unsigned wscnts[] = { 0, 1, 2, 4, 8, 16, 0xFFFF };
-
-int main(void)
+static int generic_case(test_case *t, int verbose)
 {
-    static int no_nl = BIO_FLAGS_BASE64_NO_NL;
-    test_case *t;
-    int ok = 1;
     unsigned *llen;
     unsigned *wscnt;
-    int done;
+    int ok = 1;
+
+    for (llen = linelengths; *llen > 0; ++llen) {
+        for (wscnt = wscnts; *wscnt >= 0 && *wscnt * 2 < *llen; ++wscnt) {
+            int extra = t->no_nl ? 64 : 0;
+
+            /*
+             * Use a longer line for NO_NL tests, in particular, eventually
+             * exceeding 1k bytes.
+             */
+            if (test_bio_base64_run(t, *llen + extra, *wscnt) != 0)
+                ok = 0;
+
+            if (verbose) {
+                fprintf(stderr, "bio_base64_test: ok=%d", ok);
+                if (*t->prefix)
+                    fprintf(stderr, ", prefix='%s'", t->prefix);
+                if (t->encoded)
+                    fprintf(stderr, ", data='%s'", t->encoded);
+                else
+                    fprintf(stderr, ", datalen=%u", t->bytes);
+                if (t->trunc)
+                    fprintf(stderr, ", trunc=%d", t->trunc);
+                if (*t->suffix)
+                    fprintf(stderr, ", suffix='%s'", t->suffix);
+                fprintf(stderr, ", linelen=%u", *llen);
+                fprintf(stderr, ", wscount=%u", *wscnt);
+                if (t->retry)
+                    fprintf(stderr, ", retriable");
+                if (t->no_nl)
+                    fprintf(stderr, ", oneline");
+                fputc('\n', stderr);
+            }
+
+            /* For verbatim input no effect from varying llen or wscnt */
+            if (t->encoded)
+                return ok;
+        }
+        /*
+         * Longer 'llen' has no effect once we're sure to not have multiple
+         * lines of data
+         */
+        if (*llen > t->bytes + (t->bytes >> 1))
+            break;
+    }
+    return ok;
+}
+
+static int quotrem(int i, unsigned int m, int *q)
+{
+    *q = i / m;
+    return i - *q * m;
+}
+
+static int test_bio_base64_generated(int idx)
+{
+    test_case t;
+    int variant;
+    int lencase;
+    int padcase;
+    int q = idx;
+
+    lencase = quotrem(q, NLEN, &q);
+    variant = quotrem(q, NVARPAD, &q);
+    padcase = quotrem(variant, NPAD, &variant);
+    t.retry = quotrem(q, 2, &q);
+    t.no_nl = quotrem(q, 2, &q);
+
+    if (q != 0) {
+        fprintf(stderr, "Test index out of range: %d", idx);
+        return 0;
+    }
+
+    t.prefix = prefixes[variant];
+    t.encoded = NULL;
+    t.bytes  = lengths[lencase];
+    t.trunc = 0;
+    if (padcase && padcase < 3)
+        t.bytes  += padcase;
+    else if (padcase >= 3)
+        t.trunc = padcase - 2;
+    t.suffix = suffixes[variant];
+
+    if (padcase != 0 && (*t.suffix && *t.suffix != '-')) {
+        TEST_error("Unexpected suffix test after padding");
+        return 0;
+    }
+
+    return generic_case(&t, 0);
+}
+
+static int test_bio_base64_corner_case_bug(int idx)
+{
+    test_case t;
+    int q = idx;
+
+    t.retry = quotrem(q, 2, &q);
+    t.no_nl = quotrem(q, 2, &q);
+
+    if (q != 0) {
+        fprintf(stderr, "Test index out of range: %d", idx);
+        return 0;
+    }
+
+    /* 9 bytes of skipped non-base64 input + newline */
+    t.prefix = "#foo\n#bar";
+
+    /* 9 bytes on 2nd and subsequent lines */
+    t.encoded = "A\nAAA\nAAAA\n";
+    t.suffix = "";
+
+    /* Expected decode length */
+    t.bytes = 6;
+    t.trunc = 0;    /* ignored */
+
+    return generic_case(&t, 0);
+}
+
+int setup_tests(void)
+{
+    int numidx;
 
     memset(gunk, 'o', sizeof(gunk));
     gunk[0] = '#';
-    gunk[sizeof(gunk) - 2] = '\n';
     gunk[sizeof(gunk) - 1] = '\0';
 
-    test_random_seed((uint32_t)time(NULL));
+    /*
+     * Test 5 variants of prefix or suffix
+     *
+     *  - both empty
+     *  - short junk prefix
+     *  - long gunk prefix (> internal BIO 1k buffer size),
+     *  - soft EOF suffix
+     *  - junk suffix (expect to detect an error)
+     *
+     * For 6 input lengths of randomly generated raw input:
+     *
+     *  0, 3, 48, 192, 768 and 1536
+     *
+     * corresponding to encoded lengths (plus linebreaks and ignored
+     * whitespace) of:
+     *
+     *  0, 4, 64, 256, 1024 and 2048
+     *
+     * Followed by zero, one or two additional bytes that may involve padding,
+     * or else (truncation) 1, 2 or 3 bytes with missing padding.
+     * Only the the first four variants make sense with padding or truncated
+     * groups.
+     *
+     * With two types of underlying BIO
+     *
+     *  - Non-retriable underlying BIO
+     *  - Retriable underlying BIO
+     *
+     * And with/without the BIO_FLAGS_BASE64_NO_NL flag, where now an error is
+     * expected with the junk and gunk prefixes, however, but the "soft EOF"
+     * suffix is still accepted.
+     *
+     * Internally, each test may loop over a range of encoded line lengths and
+     * whitespace average "densities".
+     */
+    numidx = NLEN * (NVAR * NPAD - NPAD + 1) * 2 * 2;
+    ADD_ALL_TESTS(test_bio_base64_generated, numidx);
 
-    for (t = tests; t->desc != NULL; ++t) {
-        done = 0;
-        for (llen = lengths; !done && *llen > 0; ++llen) {
-            for (wscnt = wscnts;
-                 !done && *wscnt >= 0 && *wscnt * 2 < *llen;
-                 ++wscnt) {
-                if (single_test(t, 0, *llen, *wscnt, 0) != 0) {
-                    fprintf(stderr, "Failed %s: retry=no llen=%u, wscnt=%u\n",
-                            t->desc, *llen, *wscnt);
-                    ok = 0;
-                }
-                /*
-                 * Distinguish between EOF and data error results by choosing an
-                 * "unnatural" EOF return value.
-                 */
-                if (single_test(t, -1729, *llen, *wscnt, 0) != 0) {
-                    fprintf(stderr, "Failed %s: retry=yes llen=%u, wscnt=%u\n",
-                            t->desc, *llen, *wscnt);
-                    ok = 0;
-                }
-                /*
-                 * For encoded data with no prefix or suffix, also run NO_NL
-                 * tests, but with a larger line length, in particular,
-                 * eventually exceeding 1k bytes.
-                 */
-                if (*t->prefix == '\0' && *t->suffix == '\0'
-                    && single_test(t, 0, *llen + 64, *wscnt, no_nl) != 0) {
-                    fprintf(stderr,
-                            "Failed %s: retry=no llen=%u wscnt=%u no_nl=yes\n",
-                            t->desc, *llen + 64, *wscnt);
-                    ok = 0;
-                }
-                if (*t->prefix == '\0' && *t->suffix == '\0'
-                    && single_test(t, -1729, *llen + 64, *wscnt, no_nl) != 0) {
-                    fprintf(stderr,
-                            "Failed %s: retry=yes llen=%u wscnt=%u no_nl=yes\n",
-                            t->desc, *llen + 64, *wscnt);
-                    ok = 0;
-                }
-                /* llen and wscnt are unused with verbatim encoded input */
-                if (t->encoded)
-                    done = 1;
-            }
-            /* Stop once we're sure to not have multiple lines of data */
-            if (*llen > t->bytes + (t->bytes >> 1))
-                done = 1;
-        }
-    }
-    return ok ? 0 : 1;
+    /*
+     * Corner case in original code that skips ignored input, when the ignored
+     * length is one byte longer than the total of the second and later lines
+     * of valid input in the first 1k bytes of input.  No content variants,
+     * just BIO retry status and oneline flags vary.
+     */
+    numidx = 2 * 2;
+    ADD_ALL_TESTS(test_bio_base64_corner_case_bug, numidx);
+
+    return 1;
 }
