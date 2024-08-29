@@ -21,6 +21,8 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
+static BIO *session_bio = NULL;
+
 /* Helper function to create a BIO connected to the server */
 static BIO *create_socket_bio(const char *hostname, const char *port,
                               int family, BIO_ADDR **peer_addr)
@@ -260,6 +262,71 @@ int set_keylog_file(SSL_CTX *ctx, const char *keylog_file)
     return 0;
 }
 
+static int session_cached = 0;
+static int cache_new_session(struct ssl_st *ssl, SSL_SESSION *sess)
+{
+
+    if (session_cached == 1)
+        return 0;
+
+    /* Just write the new session to our bio */
+    if (!PEM_write_bio_SSL_SESSION(session_bio, sess))
+        return 0;
+
+    fprintf(stderr, "Writing a new session to the cache\n");
+    (void)BIO_flush(session_bio);
+    /* only cache one session */
+    session_cached = 1;
+    return 1;
+}
+
+static int setup_session_cache(SSL *ssl, SSL_CTX *ctx, const char *filename)
+{
+
+    SSL_SESSION *sess = NULL;
+    int rc = 0;
+    int new_cache = 0;
+
+    /* make sure caching is enabled */
+    if (!SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_BOTH))
+        return rc;
+
+    /* Don't use stateless session tickets */
+    if (!SSL_CTX_set_options(ctx, SSL_OP_NO_TICKET))
+        return rc;
+
+    /* open our cache file */
+    session_bio = BIO_new_file(filename, "r+");
+    if (session_bio == NULL) {
+        /* file might need to be created */
+        session_bio = BIO_new_file(filename, "w+");
+        if (session_bio == NULL)
+            return rc;
+        new_cache = 1;
+    }
+
+    if (new_cache == 0) {
+        /* read in our cached session */
+        if (PEM_read_bio_SSL_SESSION(session_bio, &sess, NULL, NULL)) {
+            if (!SSL_CTX_add_session(ctx, sess))
+                goto err;
+            /* set our session */
+            if (!SSL_set_session(ssl, sess))
+                goto err;
+        }
+    } else {
+        /* Set the callback to store new sessions */
+        SSL_CTX_sess_set_new_cb(ctx, cache_new_session);
+    }
+
+    rc = 1;
+
+err:
+    if (rc == 0)
+        BIO_free(session_bio);
+    return rc;
+}
+
 /*
  * Simple application to send a basic HTTP/1.0 request to a server and
  * print the response on the screen. Note that HTTP/1.0 over QUIC is
@@ -371,6 +438,13 @@ int main(int argc, char *argv[])
     if (ssl == NULL) {
         fprintf(stderr, "Failed to create the SSL object\n");
         goto end;
+    }
+
+    if (getenv("SSL_SESSION_FILE") != NULL) {
+        if (!setup_session_cache(ssl, ctx, getenv("SSL_SESSION_FILE"))) {
+            fprintf(stderr, "Unable to setup session cache\n");
+            goto end;
+        }
     }
 
     /*
@@ -542,5 +616,6 @@ int main(int argc, char *argv[])
     BIO_ADDR_free(peer_addr);
     OPENSSL_free(reqnames);
     BIO_free(req_bio);
+    BIO_free(session_bio);
     return res;
 }

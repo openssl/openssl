@@ -36,14 +36,10 @@ if [ "$ROLE" == "client" ]; then
 
     case "$TESTCASE" in
     "http3")
-    echo -e "--verbose\n--parallel" >> $CURLRC
-    generate_outputs_http3
-    dump_curlrc
-        SSL_CERT_FILE=/certs/ca.pem curl --config $CURLRC 
-        if [ $? -ne 0 ]
-        then
-            exit 1
-        fi
+        echo -e "--verbose\n--parallel" >> $CURLRC
+        generate_outputs_http3
+        dump_curlrc
+        SSL_CERT_FILE=/certs/ca.pem curl --config $CURLRC || exit 1
         exit 0
         ;;
     "handshake"|"transfer"|"retry")
@@ -53,18 +49,25 @@ if [ "$ROLE" == "client" ]; then
            OUTFILE=$(basename $req)
            if [ "$HOSTNAME" == "none" ]
            then
-               HOSTNAME=$(echo $req | sed -e"s/\(^https:\/\/\)\(.*\)\(:.*$\)/\2/")
-               HOSTPORT=$(echo $req | sed -e"s/\(^https:\/\/\)\(.*:\)\(.*\)\(\/.*$\)/\3/")
+               HOSTNAME=$(printf "%s\n" "$req" | sed -ne 's,^https://\([^/:]*\).*,\1,p')
+               HOSTPORT=$(printf "%s\n" "$req" | sed -ne 's,^https://[^:/]*:\([^/]*\).*,\1,p')
            fi
            echo -n "$OUTFILE " >> ./reqfile.txt
        done
-       SSLKEYLOGFILE=/logs/keys.log SSL_CERT_FILE=/certs/ca.pem SSL_CERT_DIR=/certs quic-hq-interop $HOSTNAME $HOSTPORT ./reqfile.txt 
-       if [ $? -ne 0 ]
-       then
-           exit 1
-       fi
+       SSLKEYLOGFILE=/logs/keys.log SSL_CERT_FILE=/certs/ca.pem SSL_CERT_DIR=/certs quic-hq-interop $HOSTNAME $HOSTPORT ./reqfile.txt || exit 1
        exit 0
        ;; 
+    "resumption")
+       for req in $REQUESTS
+       do
+           OUTFILE=$(basename $req)
+           echo -n "$OUTFILE " > ./reqfile.txt
+           HOSTNAME=$(printf "%s\n" "$req" | sed -ne 's,^https://\([^/:]*\).*,\1,p')
+           HOSTPORT=$(printf "%s\n" "$req" | sed -ne 's,^https://[^:/]*:\([^/]*\).*,\1,p')
+           SSL_SESSION_FILE=./session.db SSLKEYLOGFILE=/logs/keys.log SSL_CERT_FILE=/certs/ca.pem SSL_CERT_DIR=/certs quic-hq-interop $HOSTNAME $HOSTPORT ./reqfile.txt || exit 1
+       done
+       exit 0
+       ;;
     "chacha20")
        OUTFILE=$(basename $REQUESTS)
        SSL_CERT_FILE=/certs/ca.pem curl --verbose --tlsv1.3 --tls13-ciphers TLS_CHACHA20_POLY1305_SHA256 --http3 -o /downloads/$OUTFILE $REQUESTS || exit 1
