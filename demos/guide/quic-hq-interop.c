@@ -7,6 +7,26 @@
  *  https://www.openssl.org/source/license.html
  */
 
+/**
+ * @file quic-hq-interop.c
+ * @brief QUIC client interoperability demo using OpenSSL.
+ *
+ * This file contains the implementation of a QUIC client that demonstrates
+ * interoperability with hq-interop servers. It handles connection setup,
+ * session caching, key logging, and sending HTTP GET requests over QUIC.
+ *
+ * The file includes functions for setting up SSL/TLS contexts, managing session
+ * caches, and handling I/O failures. It supports both IPv4 and IPv6 connections
+ * and uses non-blocking mode for QUIC operations.
+ *
+ * The client sends HTTP/1.0 GET requests for specified files and saves the
+ * responses to disk. It demonstrates OpenSSL's QUIC API, including ALPN protocol
+ * settings, peer address management, and SSL handshake and shutdown processes.
+ *
+ * @note This client is intended for demonstration purposes and may require
+ * additional error handling and robustness improvements for production use.
+ *
+ */
 #include <string.h>
 
 /* Include the appropriate header file for SOCK_DGRAM */
@@ -21,9 +41,59 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
+/**
+ * @brief A static pointer to a BIO object representing the session's BIO.
+ *
+ * This variable holds a reference to a BIO object used for network
+ * communication during the session. It is initialized to NULL and should
+ * be assigned a valid BIO object before use. The BIO object pointed to by
+ * this variable may be used throughout the session for reading and writing
+ * data.
+ *
+ * @note This variable is static, meaning it is only accessible within the
+ * file in which it is declared.
+ */
 static BIO *session_bio = NULL;
 
-/* Helper function to create a BIO connected to the server */
+/**
+ * @brief A static pointer to a BIO object used for logging key material.
+ *
+ * This variable holds a reference to a BIO object that is used to log
+ * cryptographic key material for debugging purposes. It is initialized to
+ * NULL and should be assigned a valid BIO object before use.
+ *
+ * @note This variable is static, meaning it is only accessible within the
+ * file in which it is declared.
+ */
+static BIO *bio_keylog = NULL;
+
+/**
+ * @brief Creates a BIO object for a UDP socket connection to a server.
+ *
+ * This function attempts to create a UDP socket and connect it to the server
+ * specified by the given hostname and port. The socket is wrapped in a BIO
+ * object, which allows for network communication via OpenSSL's BIO API.
+ * The function also returns the address of the connected peer.
+ *
+ * @param hostname The hostname of the server to connect to.
+ * @param port The port number of the server to connect to.
+ * @param family The desired address family (e.g., AF_INET for IPv4,
+ *        AF_INET6 for IPv6).
+ * @param peer_addr A pointer to a BIO_ADDR pointer that will hold the address
+ *                  of the connected peer on success. The caller is responsible
+ *                  for freeing this memory using BIO_ADDR_free().
+ * @return A pointer to a BIO object on success, or NULL on failure.
+ *         The returned BIO object will be associated with the connected socket.
+ *         If the BIO object is successfully created, it will take ownership of
+ *         the socket and automatically close it when the BIO is freed.
+ *
+ * @note The function uses OpenSSL's socket-related functions (e.g., BIO_socket,
+ *       BIO_connect) or portability and to integrate with OpenSSL's error
+ *       handling mechanisms.
+ * @note If no valid connection is established, the function returns NULL and
+ *       ensures that any resources allocated during the process are properly
+ *       freed.
+ */
 static BIO *create_socket_bio(const char *hostname, const char *port,
                               int family, BIO_ADDR **peer_addr)
 {
@@ -106,6 +176,26 @@ static BIO *create_socket_bio(const char *hostname, const char *port,
     return bio;
 }
 
+
+/**
+ * @brief Waits for activity on the SSL socket, either for reading or writing.
+ *
+ * This function monitors the underlying file descriptor of the given SSL
+ * connection to determine when it is ready for reading or writing, or both.
+ * It uses the select function to wait until the socket is either readable
+ * or writable, depending on what the SSL connection requires.
+ *
+ * @param ssl A pointer to the SSL object representing the connection.
+ *
+ * @note This function blocks until there is activity on the socket or
+ * until the timeout specified by OpenSSL is reached. In a real application,
+ * you might want to perform other tasks while waiting, such as updating a
+ * GUI or handling other connections.
+ *
+ * @note This function uses select for simplicity and portability. Depending
+ * on your application's requirements, you might consider using other
+ * mechanisms like poll or epoll for handling multiple file descriptors.
+ */
 static void wait_for_activity(SSL *ssl)
 {
     fd_set wfds, rfds;
@@ -159,6 +249,27 @@ static void wait_for_activity(SSL *ssl)
     select(width, &rfds, &wfds, NULL, tvp);
 }
 
+/**
+ * @brief Handles I/O failures on an SSL connection based on the result code.
+ *
+ * This function processes the result of an SSL I/O operation and handles
+ * different types of errors that may occur during the operation. It takes
+ * appropriate actions such as retrying the operation, reporting errors, or
+ * returning specific status codes based on the error type.
+ *
+ * @param ssl A pointer to the SSL object representing the connection.
+ * @param res The result code from the SSL I/O operation.
+ * @return An integer indicating the outcome:
+ *         - 1: Temporary failure, the operation should be retried.
+ *         - 0: EOF, indicating the connection has been closed.
+ *         - -1: A fatal error occurred or the connection has been reset.
+ *
+ * @note This function may block if a temporary failure occurs and
+ * wait_for_activity() is called.
+ *
+ * @note If the failure is due to an SSL verification error, additional
+ * information will be logged to stderr.
+ */
 static int handle_io_failure(SSL *ssl, int res)
 {
     switch (SSL_get_error(ssl, res)) {
@@ -213,8 +324,20 @@ static int handle_io_failure(SSL *ssl, int res)
     }
 }
 
-static BIO *bio_keylog = NULL;
-
+/**
+ * @brief Callback function to log key material during an SSL session.
+ *
+ * This function is invoked by OpenSSL when key material needs to be logged
+ * for debugging purposes. It writes the provided key log line to the
+ * `bio_keylog` BIO, ensuring thread-safe output by writing the entire line
+ * at once.
+ *
+ * @param ssl A pointer to the SSL object associated with the session.
+ * @param line The key log line to be written.
+ *
+ * @note If `bio_keylog` is NULL, an error message is printed to stderr, and
+ * the function returns without logging the key material.
+ */
 static void keylog_callback(const SSL *ssl, const char *line)
 {
     if (bio_keylog == NULL) {
@@ -230,6 +353,23 @@ static void keylog_callback(const SSL *ssl, const char *line)
     (void)BIO_flush(bio_keylog);
 }
 
+/**
+ * @brief Sets up the key logging file for an SSL context.
+ *
+ * This function configures a file to log SSL/TLS key material for the
+ * provided SSL context. If a keylog file is specified, it will be opened
+ * in append mode, allowing for concurrent writes and preserving existing
+ * logs. If no keylog file is provided, key logging is disabled.
+ *
+ * @param ctx A pointer to the SSL_CTX object where the keylog file is set.
+ * @param keylog_file The path to the keylog file. If NULL, key logging is
+ *                    disabled.
+ * @return 0 on success, or 1 if there was an error opening the keylog file.
+ *
+ * @note The function writes a header to the keylog file if it is empty and
+ * seekable. It also ensures that any previously opened keylog files are
+ * closed before opening a new one.
+ */
 int set_keylog_file(SSL_CTX *ctx, const char *keylog_file)
 {
     /* Close any open files */
@@ -262,7 +402,33 @@ int set_keylog_file(SSL_CTX *ctx, const char *keylog_file)
     return 0;
 }
 
+/**
+ * @brief A static integer indicating whether the session is cached.
+ *
+ * This variable is used to track the state of session caching. It is
+ * initialized to 0, meaning no session is cached. The value may be updated
+ * to indicate that a session has been successfully cached.
+ *
+ * @note This variable is static, meaning it is only accessible within the
+ * file in which it is declared.
+ */
 static int session_cached = 0;
+
+/**
+ * @brief Caches a new SSL session if one is not already cached.
+ *
+ * This function writes a new SSL session to the session BIO and caches it.
+ * It ensures that only one session is cached at a time by checking the
+ * `session_cached` flag. If a session is already cached, the function
+ * returns without caching the new session.
+ *
+ * @param ssl A pointer to the SSL object associated with the session.
+ * @param sess A pointer to the SSL_SESSION object to be cached.
+ * @return 1 if the session is successfully cached, 0 otherwise.
+ *
+ * @note This function only allows one session to be cached. Subsequent
+ * sessions will not be cached unless `session_cached` is reset.
+ */
 static int cache_new_session(struct ssl_st *ssl, SSL_SESSION *sess)
 {
 
@@ -280,6 +446,24 @@ static int cache_new_session(struct ssl_st *ssl, SSL_SESSION *sess)
     return 1;
 }
 
+/**
+ * @brief Sets up the session cache for the SSL connection.
+ *
+ * This function configures session caching for the given SSL connection
+ * and context. It attempts to load a session from the specified cache file
+ * or creates a new one if the file does not exist. It also configures the
+ * session cache mode and disables stateless session tickets.
+ *
+ * @param ssl A pointer to the SSL object for the connection.
+ * @param ctx A pointer to the SSL_CTX object representing the context.
+ * @param filename The name of the file used to store the session cache.
+ * @return 1 on success, 0 on failure.
+ *
+ * @note If the cache file does not exist, a new file is created and the
+ * session cache is initialized. If a session is successfully loaded from
+ * the file, it is added to the context and set for the SSL connection.
+ * If an error occurs during setup, the session BIO is freed.
+ */
 static int setup_session_cache(SSL *ssl, SSL_CTX *ctx, const char *filename)
 {
 
@@ -327,11 +511,29 @@ err:
     return rc;
 }
 
-/*
- * Simple application to send a basic HTTP/1.0 request to a server and
- * print the response on the screen. Note that HTTP/1.0 over QUIC is
- * non-standard and will not typically be supported by real world servers. This
- * is for demonstration purposes only.
+/**
+ * @brief Entry point for the QUIC hq-interop client demo application.
+ *
+ * This function sets up an SSL/TLS connection using QUIC, sends HTTP GET
+ * requests for files specified in the command-line arguments, and saves
+ * the responses to disk. It handles various configurations such as IPv6
+ * support, session caching, and key logging.
+ *
+ * @param argc The number of command-line arguments.
+ * @param argv The array of command-line arguments. The expected format is
+ *             "[-6] hostname port file".
+ * @return EXIT_SUCCESS on success, or EXIT_FAILURE on error.
+ *
+ * @note The function performs the following main tasks:
+ *       - Parses command-line arguments and configures IPv6 if specified.
+ *       - Reads the list of requests from the specified file.
+ *       - Sets up the SSL context and configures certificate verification.
+ *       - Optionally enables key logging and session caching.
+ *       - Establishes a non-blocking QUIC connection to the server.
+ *       - Sends an HTTP GET request for each file and writes the response
+ *         to the corresponding output file.
+ *       - Gracefully shuts down the SSL connection and frees resources.
+ *       - Prints any OpenSSL error stack information on failure.
  */
 int main(int argc, char *argv[])
 {
