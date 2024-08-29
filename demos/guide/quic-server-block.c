@@ -266,8 +266,8 @@ int main(int argc, char *argv[])
     progname = argv[0];
 #endif
 
-    if (argc < 4) {
-        errx(res, "usage: %s <port> <server.crt> <server.key>\n", argv[0]);
+    if (argc != 4) {
+        errx(res, "usage: %s <port> <server.crt> <server.key>", argv[0]);
     }
 
     /* Parse port number from command line arguments. */
