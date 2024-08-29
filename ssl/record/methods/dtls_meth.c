@@ -381,25 +381,23 @@ int dtls_crypt_sequence_number(unsigned char *seq, size_t seq_len,
         iv = NULL;
         in = rec_data;
         inlen = 16;
-    } else if (OPENSSL_strncasecmp(name, "cha", 3) == 0) {
+    } else if (OPENSSL_strncasecmp(name, "chacha", 6) == 0) {
         iv = rec_data;
         in = rec_data + 4;
         inlen = 12;
     } else {
-        if (ossl_assert(OPENSSL_strncasecmp(name, "null", 4) == 0)) {
+        if (ossl_assert(OPENSSL_strncasecmp(name, "null", 4) == 0))
             return 1;
-        } else {
+        else
             return 0;
-        }
     }
 
     if (!ossl_assert(inlen >= 0)
             || (size_t)inlen > sizeof(mask)
             || seq_len > sizeof(mask)
             || EVP_CipherInit_ex(ctx, NULL, NULL, NULL, iv, 1) <= 0
-            || EVP_CipherUpdate(ctx, mask, &outlen, in, inlen) <= 0) {
+            || EVP_CipherUpdate(ctx, mask, &outlen, in, inlen) <= 0)
         return 0;
-    }
 
     for (i = 0; i < seq_len; i++)
         seq[i] ^= mask[i];

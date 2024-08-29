@@ -522,7 +522,7 @@ int ssl_cipher_get_evp_cipher_ecb(SSL_CTX *ctx, const SSL_CIPHER *sslc,
             if (ecb_name != NULL)
                 *enc = EVP_CIPHER_fetch(ctx->libctx, ecb_name, ctx->propq);
             else
-                return 0;
+                *enc = NULL;
         }
 
         if (*enc == NULL)
