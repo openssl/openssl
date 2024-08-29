@@ -32,7 +32,7 @@ domain flags on a B<SSL_CTX> using a QUIC B<SSL_METHOD>. These flags determine
 the concurrency model which is used for a QUIC domain. A detailed introduction
 to these concepts can be found in L<openssl-quic-concurrency(7)>.
 
-Application may use either one the flags here:
+Applications may use either one the flags here:
 
 =over 4
 

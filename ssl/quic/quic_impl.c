@@ -4565,9 +4565,7 @@ SSL *ossl_quic_new_domain(SSL_CTX *ctx, uint64_t flags)
     return &qd->obj.ssl;
 
 err:
-    if (qd != NULL)
-        ossl_quic_engine_free(qd->engine);
-
+    ossl_quic_engine_free(qd->engine);
 #if defined(OPENSSL_THREADS)
     ossl_crypto_mutex_free(&qd->mutex);
 #endif
