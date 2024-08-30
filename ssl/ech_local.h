@@ -24,7 +24,7 @@
  * Define this to get loads more lines of tracing which is
  * very useful for interop.
  * This needs tracing enabled at build time, e.g.:
- *          $ ./config enable-ssl-trace endable-trace
+ *          $ ./config enable-ssl-trace enable-trace
  * This added tracing will finally (mostly) disappear once the ECH RFC
  * has issued, but is very useful for interop testing so some of it might
  * be retained.

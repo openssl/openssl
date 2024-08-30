@@ -26,9 +26,6 @@
 
 #ifndef OPENSSL_NO_ECH
 
-/* size for some local crypto vars */
-# define OSSL_ECH_CRYPTO_VAR_SIZE 1024
-
 # define OSSL_ECH_KEYGEN_MODE    0 /* default: generate a key pair/ECHConfig */
 # define OSSL_ECH_SELPRINT_MODE  1 /* we can print/down-select ECHConfigList */
 

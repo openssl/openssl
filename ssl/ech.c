@@ -69,6 +69,8 @@ OSSL_ECHSTORE *OSSL_ECHSTORE_new(OSSL_LIB_CTX *libctx, const char *propq)
 
 static void OSSL_ECHEXT_free(OSSL_ECHEXT *e)
 {
+    if (e == NULL)
+        return;
     OPENSSL_free(e->val);
     OPENSSL_free(e);
     return;
@@ -76,6 +78,8 @@ static void OSSL_ECHEXT_free(OSSL_ECHEXT *e)
 
 static void OSSL_ECHSTORE_entry_free(OSSL_ECHSTORE_entry *ee)
 {
+    if (ee == NULL)
+        return;
     OPENSSL_free(ee->public_name);
     OPENSSL_free(ee->pub);
     OPENSSL_free(ee->pemfname);
@@ -212,7 +216,7 @@ int OSSL_ECHSTORE_new_config(OSSL_ECHSTORE *es,
     }
     /* bp, bblen has encoding */
     WPACKET_get_total_written(&epkt, &bblen);
-    if ((ee = OPENSSL_zalloc(sizeof(OSSL_ECHSTORE_entry))) == NULL) {
+    if ((ee = OPENSSL_zalloc(sizeof(*ee))) == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         goto err;
     }
