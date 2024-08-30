@@ -8,7 +8,8 @@ PROGRAMS{noinst} = tls-client-block \
                    quic-client-block \
                    quic-multi-stream \
                    tls-client-non-block \
-                   quic-client-non-block
+                   quic-client-non-block \
+                   quic-server-block
 
 INCLUDE[tls-client-block]=../../include
 SOURCE[tls-client-block]=tls-client-block.c
@@ -28,4 +29,8 @@ DEPEND[tls-client-non-block]=../../libcrypto ../../libssl
 
 INCLUDE[quic-client-non-block]=../../include
 SOURCE[quic-client-non-block]=quic-client-non-block.c
+DEPEND[quic-client-non-block]=../../libcrypto ../../libssl
+
+INCLUDE[quic-client-non-block]=../../include
+SOURCE[quic-client-non-block]=quic-server-block.c
 DEPEND[quic-client-non-block]=../../libcrypto ../../libssl

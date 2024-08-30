@@ -26,8 +26,6 @@
 
 #include <netinet/in.h>
 
-static const char cache_id[] = "OpenSSL QUIC Demo Server";
-
 #ifdef _WIN32
 static const char *progname;
 

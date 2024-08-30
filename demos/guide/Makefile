@@ -8,18 +8,20 @@ TESTS = tls-client-block \
         quic-client-block \
         quic-multi-stream \
         tls-client-non-block \
+        quic-server-block \
         quic-client-non-block
 
 CFLAGS  = -I../../include -g -Wall
 LDFLAGS = -L../..
 LDLIBS  = -lcrypto -lssl
 
-all: $(TESTS)
+all: $(TESTS) chain
 
 tls-client-block: tls-client-block.o
 quic-client-block: quic-client-block.o
 quic-multi-stream: quic-multi-stream.o
 tls-client-non-block: tls-client-non-block.o
+quic-server-block: quic-server-block.o
 quic-client-non-block: quic-client-non-block.o
 
 chain: chain.pem
@@ -34,7 +36,7 @@ $(TESTS):
 clean:
 	$(RM) $(TESTS) *.o
 
-.PHONY: test
+.PHONY: test chain
 test: all
 	@echo "\nTLS and QUIC tests:"
 	@echo "skipped"
