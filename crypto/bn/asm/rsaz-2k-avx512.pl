@@ -393,7 +393,7 @@ $code.=<<___;
 ___
 
 $code.=<<___;
-.data
+.section .rodata align=32
 .align 32
 .Lmask52x4:
     .quad   0xfffffffffffff
@@ -589,7 +589,7 @@ $code.=<<___;
 .size   ossl_extract_multiplier_2x20_win5, .-ossl_extract_multiplier_2x20_win5
 ___
 $code.=<<___;
-.data
+.section .rodata align=32
 .align 32
 .Lones:
     .quad   1,1,1,1

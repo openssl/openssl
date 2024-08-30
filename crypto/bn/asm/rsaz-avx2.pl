@@ -1779,6 +1779,7 @@ $code.=<<___;
 	ret
 .size	rsaz_avx2_eligible,.-rsaz_avx2_eligible
 
+.section .rodata align=64
 .align	64
 .Land_mask:
 	.quad	0x1fffffff,0x1fffffff,0x1fffffff,0x1fffffff
@@ -1790,6 +1791,7 @@ $code.=<<___;
 	.long	0,0,0,0, 1,1,1,1
 	.long	2,2,2,2, 3,3,3,3
 	.long	4,4,4,4, 4,4,4,4
+.previous
 .align	64
 ___
 
