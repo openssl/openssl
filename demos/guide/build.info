@@ -9,7 +9,7 @@ PROGRAMS{noinst} = tls-client-block \
                    quic-multi-stream \
                    tls-client-non-block \
                    quic-server-block \
-                   quic-client-non-block \
+                   quic-client-non-block
 
 INCLUDE[tls-client-block]=../../include
 SOURCE[tls-client-block]=tls-client-block.c
