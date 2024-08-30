@@ -29,7 +29,17 @@ OpenSSL 3.4
 
 ### Changes between 3.3 and 3.4 [xx XXX xxxx]
 
- * XOF Digest API changes.
+ * Improved base64 BIO correctness and error reporting.
+
+   *Viktor Dukhovni*
+
+ * Added support for directly fetched composite signature algorithms such as
+   RSA-SHA2-256 including new API functions in the EVP_PKEY_sign,
+   EVP_PKEY_verify and EVP_PKEY_verify_recover groups.
+
+   *Richard Levitte*
+
+ * XOF Digest API improvements
 
    EVP_MD_CTX_get_size() and EVP_MD_CTX_size are macros that were aliased to
    EVP_MD_get_size which returns a constant value. XOF Digests such as SHAKE
@@ -44,7 +54,8 @@ OpenSSL 3.4
 
    *Shane Lontis*
 
- * Add FIPS indicators to the FIPS provider.
+ * Added FIPS indicators to the FIPS provider.
+
    FIPS 140-3 requires indicators to be used if the FIPS provider allows
    non-approved algorithms. An algorithm is approved if it passes all
    required checks such as minimum key size. By default an error will
@@ -66,19 +77,42 @@ OpenSSL 3.4
 
    *Shane Lontis, Paul Dale and Po-Hsing Wu*
 
- * Add debuginfo Makefile target for unix platforms to produce
+ * Added support for hardware acceleration for HMAC on S390x architecture.
+
+   *Ingo Franzki*
+
+ * Added debuginfo Makefile target for unix platforms to produce
    a separate DWARF info file from the corresponding shared libs.
 
    *Neil Horman*
 
- * Add feature to retrieve configured TLS signature algorithms,
+ * Added support for encapsulation and decapsulation operations in the
+   pkeyutl command.
+
+   *Dmitry Belyavskiy*
+
+ * Added implementation of RFC 9579 (PBMAC1) in PKCS#12.
+
+   *Dmitry Belyavskiy*
+
+ * Add a new random seed source RNG `JITTER` using a statically linked
+   jitterentropy library.
+
+   *Dimitri John Ledkov*
+
+ * Added a feature to retrieve configured TLS signature algorithms,
    e.g., via the openssl list command.
 
    *Michael Baentsch*
 
+ * Deprecated TS_VERIFY_CTX_set_* functions and added replacement
+   TS_VERIFY_CTX_set0_* functions with improved semantics.
+
+   *Tobias Erbsland*
+
  * Redesigned Windows use of OPENSSLDIR/ENGINESDIR/MODULESDIR such that
    what were formerly build time locations can now be defined at run time
-   with registry keys. See NOTES-WINDOWS.md
+   with registry keys. See NOTES-WINDOWS.md.
 
    *Neil Horman*
 
@@ -110,8 +144,8 @@ OpenSSL 3.4
 
    *Tomáš Mráz*
 
- * Use an empty renegotiate extension in TLS client hellos instead of
-   the empty renegotiation SCSV, for all connections with a minimum TLS
+ * An empty renegotiate extension will be used in TLS client hellos instead
+   of the empty renegotiation SCSV, for all connections with a minimum TLS
    version > 1.0.
 
    *Tim Perry*
@@ -127,7 +161,14 @@ OpenSSL 3.4
 
    This work was sponsored by Siemens AG.
 
-    *Rajeev Ranjan*
+   *Rajeev Ranjan*
+
+ * Added support for issuedOnBehalfOf, auditIdentity, basicAttConstraints,
+   userNotice, acceptablePrivilegePolicies, acceptableCertPolicies,
+   subjectDirectoryAttributes, associatedInformation, delegatedNameConstraints,
+   holderNameConstraints and targetingInformation X.509v3 extensions.
+
+   *Jonathan M. Wilbur*
 
  * Added Attribute Certificate (RFC 5755) support. Attribute
    Certificates can be created, parsed, modified and printed via the
@@ -207,11 +248,6 @@ OpenSSL 3.3
    *Tomáš Mráz and Paul Dale*
 
 ### Changes between 3.2 and 3.3.0 [9 Apr 2024]
-
- * Add a new random seed source RNG `JITTER` using a statically linked
-   jitterentropy library.
-
-   *Dimitri John Ledkov*
 
  * The `-verify` option to the `openssl crl` and `openssl req` will make
    the program exit with 1 on failure.
