@@ -6696,9 +6696,9 @@ int SSL_client_hello_get0_ext(SSL *s, unsigned int type, const unsigned char **o
 
         if (ext_type == type) {
             if (out != NULL)
-                *out = PACKET_data(&r->data);
+                *out = PACKET_data(&ext_data);
             if (outlen != NULL)
-                *outlen = PACKET_remaining(&r->data);
+                *outlen = PACKET_remaining(&ext_data);
             return 1;
         }
     }
