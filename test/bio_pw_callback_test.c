@@ -14,7 +14,8 @@
 
 /* dummy data that needs to be passed to the callback */
 typedef struct CallbackData {
-    int dummy;
+    char magic;
+    int result;
 } CALLBACK_DATA;
 
 /* constants */
@@ -24,16 +25,11 @@ static char *a0a_password = "aaaaaaaa\0aaaaaaaa";
 static int a0a_password_len = 17;
 static char *a0b_password = "aaaaaaaa\0bbbbbbbb";
 static int a0b_password_len = 17;
+static char cb_magic = 'p';
 
 /* shared working data for all tests */
 static char *key_file = NULL;
 static EVP_PKEY *original_pkey = NULL;
-static BUF_MEM *encrypted_key_data = NULL;
-static int encrypted_key_data_size = 0;
-static BIO *bio = NULL;
-static EVP_PKEY *pkey = NULL;
-static CALLBACK_DATA *callback_data = NULL;
-static int callback_ret = 0;
 
 /* the test performed by the callback */
 typedef enum CallbackTest {
@@ -76,17 +72,6 @@ const OPTIONS *test_get_options(void)
     return test_options;
 }
 
-static void cleanup_after_test(void)
-{
-    free(encrypted_key_data);
-    encrypted_key_data = NULL;
-    encrypted_key_data_size = 0;
-    BIO_free(bio);
-    bio = NULL;
-    EVP_PKEY_free(pkey);
-    pkey = NULL;
-}
-
 static int callback_copy_password(char *buf, int size)
 {
     int ret = -1;
@@ -127,10 +112,13 @@ static int callback_copy_password(char *buf, int size)
 
 static int read_callback(char *buf, int size, int rwflag, void *u)
 {
+    CALLBACK_DATA *cb_data = (CALLBACK_DATA *)u;
     int ret = -1;
 
     /* basic verification of the received data */
-    if (!TEST_ptr_eq(u, callback_data))
+    if (!TEST_ptr(cb_data))
+        goto err;
+    if (!TEST_char_eq(cb_data->magic, cb_magic))
         goto err;
     if (!TEST_ptr(buf))
         goto err;
@@ -139,17 +127,20 @@ static int read_callback(char *buf, int size, int rwflag, void *u)
     if (!TEST_int_eq(rwflag, 0))
         goto err;
     ret = callback_copy_password(buf, size);
-    callback_ret = 1;
+    cb_data->result = 1;
 err:
     return ret;
 }
 
 static int write_callback(char *buf, int size, int rwflag, void *u)
 {
+    CALLBACK_DATA *cb_data = (CALLBACK_DATA *)u;
     int ret = -1;
 
     /* basic verification of the received data */
-    if (!TEST_ptr_eq(u, callback_data))
+    if (!TEST_ptr(cb_data))
+        goto err;
+    if (!TEST_char_eq(cb_data->magic, cb_magic))
         goto err;
     if (!TEST_ptr(buf))
         goto err;
@@ -158,41 +149,45 @@ static int write_callback(char *buf, int size, int rwflag, void *u)
     if (!TEST_int_eq(rwflag, 1))
         goto err;
     ret = callback_copy_password(buf, size);
-    callback_ret = 1;
+    cb_data->result = 1;
 err:
     return ret;
 }
 
-static int re_encrypt_key(KEY_ENCODING key_encoding)
+static int re_encrypt_key(char **enc_data, int *enc_data_size,
+                          KEY_ENCODING key_encoding)
 {
+    CALLBACK_DATA cb_data;
     int w_ret = 0;
-    int ret = 0;
     BUF_MEM *bptr = NULL;
+    BIO *bio = NULL;
+    int ret = 0;
 
-    free(encrypted_key_data);
-    encrypted_key_data = NULL;
-    encrypted_key_data_size = 0;
+    if (!TEST_ptr(enc_data))
+        goto err;
+    if (!TEST_ptr(enc_data_size))
+        goto err;
     if (!TEST_ptr(bio = BIO_new(BIO_s_mem())))
         goto err;
-    callback_ret = 0;
+    cb_data.magic = cb_magic;
+    cb_data.result = 0;
     switch (key_encoding) {
     case KE_PEM:
-        w_ret = PEM_write_bio_PrivateKey(bio, original_pkey,
-                                         EVP_aes_256_cbc(),
-                                         NULL, 0, write_callback,
-                                         callback_data);
+        w_ret = PEM_write_bio_PrivateKey(bio, original_pkey, EVP_aes_256_cbc(),
+                                         NULL, 0, write_callback, &cb_data);
         break;
     case KE_PKCS8:
         w_ret = i2d_PKCS8PrivateKey_bio(bio, original_pkey, EVP_aes_256_cbc(),
-                                        NULL, 0, write_callback,
-                                        callback_data);
+                                        NULL, 0, write_callback, &cb_data);
         break;
     }
     if (!TEST_int_ne(w_ret, 0))
         goto err;
-    if (!TEST_int_eq(callback_ret, 1))
+    if (!TEST_char_eq(cb_data.magic, cb_magic))
         goto err;
-    encrypted_key_data_size = BIO_get_mem_data(bio, &encrypted_key_data);
+    if (!TEST_int_eq(cb_data.result, 1))
+        goto err;
+    *enc_data_size = BIO_get_mem_data(bio, enc_data);
     BIO_get_mem_ptr(bio, &bptr);
     if (!BIO_set_close(bio, BIO_NOCLOSE))
         goto err;
@@ -201,30 +196,29 @@ static int re_encrypt_key(KEY_ENCODING key_encoding)
 err:
     BUF_MEM_free(bptr);
     BIO_free(bio);
-    bio = NULL;
     return ret;
 }
 
-static int decrypt_key(KEY_ENCODING key_encoding,
+static int decrypt_key(char *enc_data, int enc_data_size,
+                       KEY_ENCODING key_encoding,
                        EXPECTED_RESULT expected_result)
 {
+    CALLBACK_DATA cb_data;
     EVP_PKEY *r_ret = NULL;
+    BIO *bio = NULL;
+    EVP_PKEY *pkey = NULL;
     int ret = 0;
 
-    if (!TEST_ptr(bio = BIO_new_mem_buf(encrypted_key_data,
-                                        encrypted_key_data_size)))
+    if (!TEST_ptr(bio = BIO_new_mem_buf(enc_data, enc_data_size)))
         goto err;
-    EVP_PKEY_free(pkey);
-    pkey = NULL;
-    callback_ret = 0;
+    cb_data.magic = cb_magic;
+    cb_data.result = 0;
     switch (key_encoding) {
     case KE_PEM:
-        r_ret = PEM_read_bio_PrivateKey(bio, &pkey, read_callback,
-                                        callback_data);
+        r_ret = PEM_read_bio_PrivateKey(bio, &pkey, read_callback, &cb_data);
         break;
     case KE_PKCS8:
-        r_ret = d2i_PKCS8PrivateKey_bio(bio, &pkey, read_callback,
-                                        callback_data);
+        r_ret = d2i_PKCS8PrivateKey_bio(bio, &pkey, read_callback, &cb_data);
         break;
     }
     if (expected_result == ER_SUCCESS) {
@@ -234,14 +228,14 @@ static int decrypt_key(KEY_ENCODING key_encoding,
         if (!TEST_ptr_null(r_ret))
             goto err;
     }
-    if (!TEST_int_eq(callback_ret, 1))
+    if (!TEST_char_eq(cb_data.magic, cb_magic))
+        goto err;
+    if (!TEST_int_eq(cb_data.result, 1))
         goto err;
     ret = 1;
 err:
     EVP_PKEY_free(pkey);
-    pkey = NULL;
     BIO_free(bio);
-    bio = NULL;
     return ret;
 }
 
@@ -249,22 +243,20 @@ static int full_cycle_test(KEY_ENCODING key_encoding, CALLBACK_TEST write_test,
                            CALLBACK_TEST read_test,
                            EXPECTED_RESULT expected_read_result)
 {
+    char *enc_data = NULL;
+    int enc_data_size = 0;
     int ret = 0;
 
     callback_test = write_test;
-    callback_ret = 0;
-    if (!re_encrypt_key(key_encoding))
-        goto err;
-    if (!TEST_int_eq(callback_ret, 1))
+    if (!re_encrypt_key(&enc_data, &enc_data_size, key_encoding))
         goto err;
     callback_test = read_test;
-    if (!decrypt_key(key_encoding, expected_read_result))
-        goto err;
-    if (!TEST_int_eq(callback_ret, 1))
+    if (!decrypt_key(enc_data, enc_data_size, key_encoding,
+                     expected_read_result))
         goto err;
     ret = 1;
 err:
-    cleanup_after_test();
+    OPENSSL_free(enc_data);
     return ret;
 }
 
@@ -364,6 +356,7 @@ static int callback_original_pw(char *buf, int size, int rwflag, void *u)
 int setup_tests(void)
 {
     OPTION_CHOICE o;
+    BIO *bio = NULL;
 
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
@@ -378,10 +371,6 @@ int setup_tests(void)
         }
     }
 
-    /* create dummy callback data for verification */
-    callback_data = OPENSSL_malloc(sizeof(CALLBACK_DATA));
-    memset(callback_data, 0, sizeof(CALLBACK_DATA));
-
     /* read the original key */
     if (!TEST_ptr(bio = BIO_new_file(key_file, "r")))
         return 0;
@@ -389,7 +378,6 @@ int setup_tests(void)
                                           callback_original_pw, NULL)))
         return 0;
     BIO_free(bio);
-    bio = NULL;
 
     /* add all tests */
     ADD_TEST(test_pem_negative);
@@ -413,7 +401,5 @@ int setup_tests(void)
 
 void cleanup_tests(void)
 {
-    BUF_MEM_free(encrypted_key_data);
-    OPENSSL_free(callback_data);
     EVP_PKEY_free(original_pkey);
 }
