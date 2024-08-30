@@ -4,6 +4,9 @@ FROM martenseemann/quic-network-simulator-endpoint:latest
 ENV PKG_CONFIG_LIBDIR=/usr/lib64/pkgconfig:/usr/lib/pkgconfig:/usr/lib/x86_64-linux-gnu/pkgconfig/:$PKG_CONFIG_LIBDIR
 # Set the environment variable LD_LIBRARY_PATH to ensure we get the right libraries
 ENV LD_LIBRARY_PATH=/usr/lib64:/usr/lib:/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH
+# The branch of openssl to clone
+ARG OPENSSL_URL=https://github.com/openssl/openssl.git
+ARG OPENSSL_BRANCH=master
 
 # Install needed tools
 RUN apt-get update && apt-get install -y \
@@ -13,7 +16,7 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /
 
 # build nghttp3
-RUN git clone https://github.com/ngtcp2/nghttp3.git && \
+RUN git clone --depth 1 https://github.com/ngtcp2/nghttp3.git && \
     cd nghttp3 && \
     git submodule update --init && \
     autoreconf -i && \
@@ -23,14 +26,14 @@ RUN git clone https://github.com/ngtcp2/nghttp3.git && \
     rm -rf /nghttp3
 
 # download and build openssl 
-RUN git clone https://github.com/openssl/openssl.git && \
+RUN git clone --depth 1 -b $OPENSSL_BRANCH $OPENSSL_URL && \
     cd openssl && \
-    ./Configure enable-fips enable-demos no-docs --prefix=/usr --openssldir=/etc/pki/tls && \
+    ./Configure enable-fips enable-demos disable-docs --prefix=/usr --openssldir=/etc/pki/tls && \
     make -j 4 && make install && cp demos/guide/quic-hq-interop /usr/local/bin && \
     rm -rf /openssl
 
 # Build curl
-RUN git clone https://github.com/curl/curl.git && \
+RUN git clone --depth 1 https://github.com/curl/curl.git && \
     cd curl && \
     autoreconf -fi && ./configure --with-openssl-quic --with-openssl --with-nghttp3 --prefix=/usr && \
     make -j 4 && \
