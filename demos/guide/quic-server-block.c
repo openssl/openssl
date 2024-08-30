@@ -7,6 +7,11 @@
  *  https://www.openssl.org/source/license.html
  */
 
+/*
+ * NB: Changes to this file should also be reflected in
+ * doc/man7/ossl-guide-quic-server-block.pod
+ */
+
 #include <string.h>
 
 /* Include the appropriate header file for SOCK_STREAM */
@@ -132,8 +137,22 @@ static SSL_CTX *create_ctx(const char *cert_path, const char *key_path)
         goto err;
     }
 
+    /*
+     * Clients rarely employ certificate-based authentication, and so we don't
+     * require "mutual" TLS authentication (indeed there's no way to know
+     * whether or how the client authenticated the server, so the term "mutual"
+     * is potentially misleading).
+     *
+     * Since we're not soliciting or processing client certificates, we don't
+     * need to configure a trusted-certificate store, so no call to
+     * SSL_CTX_set_default_verify_paths() is needed.  The server's own
+     * certificate chain is assumed valid.
+     */
+    SSL_CTX_set_verify(ctx, SSL_VERIFY_NONE, NULL);
+
     /* Setup ALPN negotiation callback to decide which ALPN is accepted. */
     SSL_CTX_set_alpn_select_cb(ctx, select_alpn, NULL);
+
     return ctx;
 
 err:
@@ -166,6 +185,7 @@ static int create_socket(uint16_t port)
     return fd;
 
 err:
+    close(fd);
     return -1;
 }
 
@@ -177,7 +197,6 @@ static int run_quic_server(SSL_CTX *ctx, int fd)
 {
     int ok = 0;
     SSL *listener, *conn;
-
     unsigned char buf[8192];
     size_t nread;
     size_t nwritten;
@@ -268,16 +287,16 @@ int main(int argc, char *argv[])
         errx(res, "usage: %s <port> <server.crt> <server.key>", argv[0]);
     }
 
-    /* Parse port number from command line arguments. */
-    port = strtoul(argv[1], NULL, 0);
-    if (port == 0 || port > UINT16_MAX) {
-        errx(res, "Failed to parse port number");
-    }
-
     /* Create SSL_CTX that supports QUIC. */
     if ((ctx = create_ctx(argv[2], argv[3])) == NULL) {
         ERR_print_errors_fp(stderr);
         errx(res, "Failed to create context");
+    }
+
+    /* Parse port number from command line arguments. */
+    port = strtoul(argv[1], NULL, 0);
+    if (port == 0 || port > UINT16_MAX) {
+        errx(res, "Failed to parse port number");
     }
 
     /* Create and bind a UDP socket. */
@@ -290,10 +309,14 @@ int main(int argc, char *argv[])
     /* QUIC server connection acceptance loop. */
     if (!run_quic_server(ctx, fd)) {
         SSL_CTX_free(ctx);
+        close(fd);
         ERR_print_errors_fp(stderr);
         errx(res, "Error in QUIC server loop");
     }
 
+    /* Free resources. */
+    SSL_CTX_free(ctx);
+    close(fd);
     res = EXIT_SUCCESS;
     return res;
 }
