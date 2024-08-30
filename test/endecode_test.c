@@ -1337,9 +1337,7 @@ int setup_tests(void)
     }
 
     /* FIPS(3.0.0): provider imports explicit params but they won't work #17998 */
-    is_fips_3_0_0 = fips_provider_version_eq(testctx, 3, 0, 0);
-    if (is_fips_3_0_0 < 0)
-        return 0;
+    is_fips_3_0_0 = is_fips && fips_provider_version_eq(testctx, 3, 0, 0);
 
     /* Separate provider/ctx for generating the test data */
     if (!TEST_ptr(keyctx = OSSL_LIB_CTX_new()))
