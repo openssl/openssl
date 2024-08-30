@@ -386,9 +386,9 @@ B<EVP_MD>.
 
 =item EVP_MD_get_size()
 
-Return the size of the message digest when passed an B<EVP_MD> or an
-B<EVP_MD_CTX> structure, i.e. the size of the hash.
-For an XOF this returns 0.
+Return the size of the message digest when passed an B<EVP_MD>, i.e. the size of
+the hash. A negative value or 0 can occur for invalid size.
+For an XOF with no default size this returns 0.
 
 =item EVP_MD_CTX_get_size_ex(), EVP_MD_CTX_get_size()
 
