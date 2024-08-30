@@ -22,6 +22,7 @@
 # include <err.h>
 # include <sys/socket.h>
 # include <sys/select.h>
+#include <unistd.h>
 #endif
 
 #include <openssl/bio.h>
