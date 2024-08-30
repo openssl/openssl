@@ -6679,7 +6679,6 @@ int SSL_client_hello_get0_ext(SSL *s, unsigned int type, const unsigned char **o
 {
     PACKET pkt, ext_data;
     unsigned int ext_type;
-
     const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
 
     if (sc == NULL)
@@ -6692,7 +6691,7 @@ int SSL_client_hello_get0_ext(SSL *s, unsigned int type, const unsigned char **o
     while (PACKET_remaining(&pkt) > 0) {
         if (!PACKET_get_net_2(&pkt, &ext_type) ||
             !PACKET_get_length_prefixed_2(&pkt, &ext_data))
-		return 0;
+            return 0;
 
         if (ext_type == type) {
             if (out != NULL)
