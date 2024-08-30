@@ -22,7 +22,6 @@
 # include <err.h>
 # include <sys/socket.h>
 # include <sys/select.h>
-#include <unistd.h>
 #endif
 
 #include <openssl/bio.h>
@@ -31,6 +30,7 @@
 #include <openssl/quic.h>
 
 #include <netinet/in.h>
+#include <unistd.h>
 
 #ifdef _WIN32
 static const char *progname;
