@@ -98,9 +98,6 @@ static int encode(unsigned const char *buf, unsigned buflen, char *encoded,
     int pos = 0;
     char nl = '\n';
 
-    if (buflen < 0)
-        return 0;
-
     /* Use a verbatim encoding when provided */
     if (encoded != NULL) {
         int elen = strlen(encoded);
@@ -317,7 +314,7 @@ static int generic_case(test_case *t, int verbose)
     int ok = 1;
 
     for (llen = linelengths; *llen > 0; ++llen) {
-        for (wscnt = wscnts; *wscnt >= 0 && *wscnt * 2 < *llen; ++wscnt) {
+        for (wscnt = wscnts; *wscnt * 2 < *llen; ++wscnt) {
             int extra = t->no_nl ? 64 : 0;
 
             /*
