@@ -19,13 +19,10 @@ typedef struct CallbackData {
 } CALLBACK_DATA;
 
 /* constants */
-static char *key_password = "weak_password";
-static int key_password_len = 13;
-static char *a0a_password = "aaaaaaaa\0aaaaaaaa";
-static int a0a_password_len = 17;
-static char *a0b_password = "aaaaaaaa\0bbbbbbbb";
-static int a0b_password_len = 17;
-static char cb_magic = 'p';
+static const char weak_password[] = "weak_password";
+static const char a0a_password[] = "aaaaaaaa\0aaaaaaaa";
+static const char a0b_password[] = "aaaaaaaa\0bbbbbbbb";
+static const char cb_magic = 'p';
 
 /* shared working data for all tests */
 static char *key_file = NULL;
@@ -83,20 +80,20 @@ static int callback_copy_password(char *buf, int size)
         ret = 0;
         break;
     case CB_TEST_WEAK:
-        memcpy(buf, key_password, key_password_len);
-        ret = key_password_len;
+        ret = sizeof(weak_password) - 1;
+        memcpy(buf, weak_password, ret);
         break;
     case CB_TEST_16ZERO:
         memset(buf, 0, 16);
         ret = 16;
         break;
     case CB_TEST_A0A:
-        memcpy(buf, a0a_password, a0a_password_len);
-        ret = a0a_password_len;
+        ret = sizeof(a0a_password) - 1;
+        memcpy(buf, a0a_password, ret);
         break;
     case CB_TEST_A0B:
-        memcpy(buf, a0b_password, a0b_password_len);
-        ret = a0b_password_len;
+        ret = sizeof(a0b_password) - 1;
+        memcpy(buf, a0b_password, ret);
         break;
     case CB_TEST_MATCH_SIZE:
         memset(buf, 'e', size);
@@ -349,8 +346,8 @@ static int test_pkcs8_exceed_size(void)
 
 static int callback_original_pw(char *buf, int size, int rwflag, void *u)
 {
-    memcpy(buf, key_password, key_password_len);
-    return key_password_len;
+    memcpy(buf, weak_password, sizeof(weak_password) - 1);
+    return sizeof(weak_password) - 1;
 }
 
 int setup_tests(void)
