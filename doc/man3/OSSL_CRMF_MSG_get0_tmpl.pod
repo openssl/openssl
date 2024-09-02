@@ -38,10 +38,9 @@ OSSL_CRMF_MSG_get_certReqId
  *OSSL_CRMF_CERTID_get0_serialNumber(const OSSL_CRMF_CERTID *cid);
  const X509_NAME *OSSL_CRMF_CERTID_get0_issuer(const OSSL_CRMF_CERTID *cid);
 
- X509
- *OSSL_CRMF_ENCRYPTEDKEY_get1_encCert(const OSSL_CRMF_ENCRYPTEDKEY *ecert,
-                                      OSSL_LIB_CTX *libctx, const char *propq,
-                                      EVP_PKEY *pkey, unsigned int flags);
+ X509 *OSSL_CRMF_ENCRYPTEDKEY_get1_encCert(const OSSL_CRMF_ENCRYPTEDKEY *ecert,
+                                           EVP_PKEY *pkey, unsigned int flags
+                                           OSSL_LIB_CTX *libctx, const char *propq);
  EVP_PKEY
  *OSSL_CRMF_ENCRYPTEDKEY_get1_pkey(OSSL_CRMF_ENCRYPTEDKEY *encryptedKey,
                                    X509_STORE *ts, STACK_OF(X509) *extra,
@@ -56,9 +55,8 @@ OSSL_CRMF_MSG_get_certReqId
                                    EVP_PKEY *pkey, int *outlen,
                                    OSSL_LIB_CTX *libctx, const char *propq);
  X509
- *OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(const OSSL_CRMF_ENCRYPTEDVALUE *ecert,
-                                        OSSL_LIB_CTX *libctx, const char *propq,
-                                        EVP_PKEY *pkey);
+ *OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(const OSSL_CRMF_ENCRYPTEDVALUE *ecert, EVP_PKEY *pkey
+                                        OSSL_LIB_CTX *libctx, const char *propq);
 
  int OSSL_CRMF_MSG_get_certReqId(const OSSL_CRMF_MSG *crm);
 
@@ -136,7 +134,7 @@ OSSL_CRMF_CERTTEMPLATE_get0_publicKey() was added in OpenSSL 3.2.
 
 OSSL_CRMF_ENCRYPTEDKEY_get1_encCert(), OSSL_CRMF_ENCRYPTEDKEY_get1_pkey(),
 OSSL_CRMF_ENCRYPTEDKEY_init_envdata() and OSSL_CRMF_ENCRYPTEDVALUE_decrypt()
-were added in OpenSSL 3.4.
+were added in OpenSSL 3.5.
 
 =head1 COPYRIGHT
 

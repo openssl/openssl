@@ -166,7 +166,7 @@ int OSSL_CMP_SRV_CTX_set_grant_implicit_confirm(OSSL_CMP_SRV_CTX *srv_ctx,
 }
 
 int OSSL_CMP_SRV_CTX_centralKeygen_req(const OSSL_CRMF_MSG *crm,
-                                       X509_REQ *p10cr)
+                                       const X509_REQ *p10cr)
 {
     X509_PUBKEY *pubkey = NULL;
     const unsigned char *pk = NULL;
@@ -180,7 +180,7 @@ int OSSL_CMP_SRV_CTX_centralKeygen_req(const OSSL_CRMF_MSG *crm,
     if (crm != NULL)
         pubkey = OSSL_CRMF_CERTTEMPLATE_get0_publicKey(OSSL_CRMF_MSG_get0_tmpl(crm));
     else
-        pubkey = X509_REQ_get_X509_PUBKEY(p10cr);
+        pubkey = p10cr->req_info.pubkey;
 
     if (pubkey == NULL
         || (X509_PUBKEY_get0_param(NULL, &pk, &pklen, NULL, pubkey)
@@ -242,7 +242,7 @@ static OSSL_CMP_MSG *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
     OSSL_CMP_MSG *msg = NULL;
     OSSL_CMP_PKISI *si = NULL;
     X509 *certOut = NULL;
-    EVP_PKEY *certOutKey = NULL;
+    EVP_PKEY *keyOut = NULL;
     STACK_OF(X509) *chainOut = NULL, *caPubs = NULL;
     const OSSL_CRMF_MSG *crm = NULL;
     X509_REQ *p10cr = NULL;
@@ -317,11 +317,11 @@ static OSSL_CMP_MSG *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
             goto err;
         if (OSSL_CMP_SRV_CTX_centralKeygen_req(crm, p10cr)
             && srv_ctx->ctx->newPkey_priv && srv_ctx->ctx->newPkey != NULL)
-            certOutKey = srv_ctx->ctx->newPkey;
+            keyOut = srv_ctx->ctx->newPkey;
     }
 
     msg = ossl_cmp_certrep_new(srv_ctx->ctx, bodytype, certReqId, si,
-                               certOut, certOutKey, NULL /* enc */, chainOut, caPubs,
+                               certOut, keyOut, NULL /* enc */, chainOut, caPubs,
                                srv_ctx->sendUnprotectedErrors);
     /* When supporting OSSL_CRMF_POPO_KEYENC, "enc" will need to be set */
     if (msg == NULL)

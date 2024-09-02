@@ -770,21 +770,20 @@ int ossl_cms_set1_keyid(ASN1_OCTET_STRING **pkeyid, X509 *cert)
     return 1;
 }
 
-CMS_EnvelopedData *CMS_env_sign_data(BIO *data, X509 *signcert, EVP_PKEY *signkey,
-                                     STACK_OF(X509) *encryption_recip,
-                                     OSSL_LIB_CTX *libctx, const char *propq)
+CMS_EnvelopedData *CMS_sign_encrypt(BIO *data, X509 *sign_cert, STACK_OF(X509) *certs,
+                                    EVP_PKEY *sign_key, unsigned int sign_flags,
+                                    STACK_OF(X509) *enc_recip, const EVP_CIPHER *cipher,
+                                    unsigned int enc_flags, OSSL_LIB_CTX *libctx, const char *propq)
 {
     CMS_EnvelopedData *evd = NULL;
-    BIO *privbio = NULL, *signbio = NULL, *envelopbio = NULL;
+    BIO *privbio = NULL, *signbio = NULL;
     CMS_ContentInfo *signcms = NULL, *evpcms = NULL;
 
-    if (data == NULL || signkey == NULL || signcert == NULL || encryption_recip == NULL) {
+    if (data == NULL || sign_key == NULL || sign_cert == NULL || enc_recip == NULL) {
         ERR_raise(ERR_LIB_CMS, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
     }
-
-    signcms = CMS_sign_ex(signcert, signkey, NULL, data, CMS_BINARY,
-                          libctx, propq);
+    signcms = CMS_sign_ex(sign_cert, sign_key, certs, data, sign_flags, libctx, propq);
     if (signcms == NULL)
         goto err;
 
@@ -793,8 +792,7 @@ CMS_EnvelopedData *CMS_env_sign_data(BIO *data, X509 *signcert, EVP_PKEY *signke
         || ASN1_item_i2d_bio(ASN1_ITEM_rptr(CMS_SignedData), signbio, signcms->d.signedData) <= 0)
         goto err;
 
-    evpcms = CMS_encrypt_ex(encryption_recip, signbio,
-                            EVP_aes_256_cbc(), CMS_BINARY, libctx, propq);
+    evpcms = CMS_encrypt_ex(enc_recip, signbio, cipher, enc_flags, libctx, propq);
     if (evpcms == NULL)
         goto err;
     evd = CMS_EnvelopedData_dup(evpcms->d.envelopedData);
@@ -802,7 +800,6 @@ CMS_EnvelopedData *CMS_env_sign_data(BIO *data, X509 *signcert, EVP_PKEY *signke
  err:
     BIO_free(privbio);
     BIO_free(signbio);
-    BIO_free(envelopbio);
     CMS_ContentInfo_free(signcms);
     CMS_ContentInfo_free(evpcms);
 

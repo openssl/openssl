@@ -138,9 +138,11 @@ expected,description, -section,val, -cmd,val,val2, -cacertsout,val,val2, -infoty
 1,reqin ir and rspout - no newkey but -popo -1, -section,, -cmd,ir,,-reqin,_RESULT_DIR/ir2.der,,-rspout,_RESULT_DIR/ip2.der,-newkey,"""",-popo,-1,-newkeyout,_RESULT_DIR/newkeyout.pem
 1,reqin ip and rspin  - no newkey but -popo -1, -section,, -cmd,ir,,-reqin,_RESULT_DIR/ir2.der,,-rspin,_RESULT_DIR/ip2.der,,-newkey,"""",-server,"""",-disable_confirm,-popo,-1,-newkeyout,_RESULT_DIR/newkeyout.pem 
 ,,,,,,,,,,,,,,,,,,,
-1,central key generation, -section,, -cmd,cr,, -centralkeygen, -newkeyout,_RESULT_DIR/newkeyout.pem
+1,central key generation, -section,, -cmd,cr,, -centralkeygen, -newkeyout,_RESULT_DIR/newkeyout1.pem
 0,central key generation missing newkeyout, -section,, -cmd,cr,, -centralkeygen,,BLANK,,BLANK,,BLANK,,BLANK,
 0,using popo=1 with central key generation, -section,, -cmd,cr,, -centralkeygen, -popo,1, -newkeyout,_RESULT_DIR/newkeyout.pem
-1, using popo=-1 with central key generation, -section,, -cmd,cr,, -centralkeygen, -popo,-1, -newkeyout,_RESULT_DIR/newkeyout.pem
-1, uisng popo=-1 instead of central key generation, -section,, -cmd,cr,, -popo,-1, -newkeyout,_RESULT_DIR/newkeyout.pem
+1, using popo=-1 with central key generation, -section,, -cmd,cr,, -centralkeygen, -popo,-1, -newkeyout,_RESULT_DIR/newkeyout2.pem
+1, using popo=-1 instead of central key generation, -section,, -cmd,cr,, -popo,-1, -newkeyout,_RESULT_DIR/newkeyout3.pem, -newkeypass,pass:12345, -certout,_RESULT_DIR/test.cert3.pem
+1, using centrally generated credentials , -section,, -cmd,cr,,-cert,_RESULT_DIR/test.cert3.pem, -key,_RESULT_DIR/newkeyout3.pem, -keypass,pass:12345
+0, using centrally generated credentials with wrong password , -section,, -cmd,cr,,-cert,_RESULT_DIR/test.cert3.pem, -key,_RESULT_DIR/newkeyout3.pem, -keypass,pass:wrong
 0, using popo=-1 instead of central key generation without newkeyout, -section,, -cmd,cr,, -popo,-1,,BLANK,,BLANK,,BLANK,,BLANK,

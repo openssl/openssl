@@ -618,8 +618,7 @@ int OSSL_CRMF_CERTTEMPLATE_fill(OSSL_CRMF_CERTTEMPLATE *tmpl,
 DECLARE_ASN1_ITEM(CMS_SignedData) /* copied from cms_local.h */
 
 /* check for KGA authorization implied by CA flag or by explicit EKU cmKGA */
-static int check_cmKGA(ossl_unused const X509_PURPOSE *purpose,
-                       const X509 *x, int ca)
+static int check_cmKGA(ossl_unused const X509_PURPOSE *purpose, const X509 *x, int ca)
 {
     STACK_OF(ASN1_OBJECT) *ekus;
     int i, ret = 1;
@@ -639,12 +638,10 @@ static int check_cmKGA(ossl_unused const X509_PURPOSE *purpose,
 }
 #endif /* OPENSSL_NO_CMS */
 
-EVP_PKEY
-*OSSL_CRMF_ENCRYPTEDKEY_get1_pkey(OSSL_CRMF_ENCRYPTEDKEY *encryptedKey,
-                                  X509_STORE *ts, STACK_OF(X509) *extra,
-                                  EVP_PKEY *pkey, X509 *cert,
-                                  ASN1_OCTET_STRING *secret,
-                                  OSSL_LIB_CTX *libctx, const char *propq)
+EVP_PKEY *OSSL_CRMF_ENCRYPTEDKEY_get1_pkey(const OSSL_CRMF_ENCRYPTEDKEY *encryptedKey,
+                                           X509_STORE *ts, STACK_OF(X509) *extra, EVP_PKEY *pkey,
+                                           X509 *cert, ASN1_OCTET_STRING *secret,
+                                           OSSL_LIB_CTX *libctx, const char *propq)
 {
 #ifndef OPENSSL_NO_CMS
     BIO *bio = NULL;
@@ -660,7 +657,7 @@ EVP_PKEY
         return NULL;
     }
     if (encryptedKey->type != OSSL_CRMF_ENCRYPTEDKEY_ENVELOPEDDATA) {
-        unsigned char *p = NULL;
+        unsigned char *p;
         const unsigned char *p_copy;
         int len;
 
@@ -684,10 +681,8 @@ EVP_PKEY
         goto end;
     }
     sd = ASN1_item_d2i_bio(ASN1_ITEM_rptr(CMS_SignedData), bio, NULL);
-    if (sd == NULL) {
-        ERR_raise(ERR_LIB_CRMF, CRMF_R_ERROR_VERIFYING_ENCRYPTEDKEY);
+    if (sd == NULL)
         goto end;
-    }
 
     if ((ts_vpm = X509_STORE_get0_param(ts)) == NULL
         || (bak_vpm = X509_VERIFY_PARAM_new()) == NULL /* copy of VPMs of ts */
@@ -700,8 +695,6 @@ EVP_PKEY
         goto end;
     }
 
-    /* workaround for CMS_add0_cert() in cms_lib.c not allowing duplicate untrusted certs */
-    extra = NULL;
     pkey_bio = CMS_SignedData_verify(sd, NULL, NULL /* scerts */, ts,
                                      extra, NULL, 0, libctx, propq);
 
@@ -776,7 +769,7 @@ unsigned char
     cikeysize = EVP_CIPHER_get_key_length(cipher);
     /* first the symmetric key needs to be decrypted */
     pkctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, propq);
-    if (pkctx != NULL && EVP_PKEY_decrypt_init(pkctx)) {
+    if (pkctx != NULL && EVP_PKEY_decrypt_init(pkctx) > 0) {
         ASN1_BIT_STRING *encKey = enc->encSymmKey;
         size_t failure;
         int retval;
@@ -785,13 +778,12 @@ unsigned char
                              encKey->data, encKey->length) <= 0
                 || (ek = OPENSSL_malloc(eksize)) == NULL)
             goto end;
-        retval = EVP_PKEY_decrypt(pkctx, ek, &eksize,
-                                  encKey->data, encKey->length);
-        ERR_clear_error(); /* error state may have sensitive information */
+        retval = EVP_PKEY_decrypt(pkctx, ek, &eksize, encKey->data, encKey->length);
         failure = ~constant_time_is_zero_s(constant_time_msb(retval)
                                            | constant_time_is_zero(retval));
         failure |= ~constant_time_eq_s(eksize, (size_t)cikeysize);
         if (failure) {
+            ERR_clear_error(); /* error state may have sensitive information */
             ERR_raise(ERR_LIB_CRMF, CRMF_R_ERROR_DECRYPTING_SYMMETRIC_KEY);
             goto end;
         }
@@ -842,10 +834,8 @@ unsigned char
  * returns a pointer to the decrypted certificate
  * returns NULL on error or if no certificate available
  */
-X509
-*OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(const OSSL_CRMF_ENCRYPTEDVALUE *ecert,
-                                       OSSL_LIB_CTX *libctx, const char *propq,
-                                       EVP_PKEY *pkey)
+X509 *OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(const OSSL_CRMF_ENCRYPTEDVALUE *ecert, EVP_PKEY *pkey,
+                                            OSSL_LIB_CTX *libctx, const char *propq)
 {
     unsigned char *buf = NULL;
     const unsigned char *p;
@@ -853,9 +843,9 @@ X509
     X509 *cert = NULL;
 
     buf = OSSL_CRMF_ENCRYPTEDVALUE_decrypt(ecert, pkey, &len, libctx, propq);
-    if ((p = buf) == NULL
-            || (cert = X509_new_ex(libctx, propq)) == NULL)
+    if ((p = buf) == NULL || (cert = X509_new_ex(libctx, propq)) == NULL)
         goto end;
+
     if (d2i_X509(&cert, &p, len) == NULL) {
         ERR_raise(ERR_LIB_CRMF, CRMF_R_ERROR_DECODING_CERTIFICATE);
         X509_free(cert);
@@ -873,10 +863,9 @@ X509
  * returns a pointer to the decrypted certificate
  * returns NULL on error or if no certificate available
  */
-X509
-*OSSL_CRMF_ENCRYPTEDKEY_get1_encCert(const OSSL_CRMF_ENCRYPTEDKEY *ecert,
-                                     OSSL_LIB_CTX *libctx, const char *propq,
-                                     EVP_PKEY *pkey, unsigned int flags)
+X509 *OSSL_CRMF_ENCRYPTEDKEY_get1_encCert(const OSSL_CRMF_ENCRYPTEDKEY *ecert,
+                                          EVP_PKEY *pkey, unsigned int flags,
+                                          OSSL_LIB_CTX *libctx, const char *propq)
 {
 #ifndef OPENSSL_NO_CMS
     BIO *bio;
@@ -884,8 +873,8 @@ X509
 #endif
 
     if (ecert->type != OSSL_CRMF_ENCRYPTEDKEY_ENVELOPEDDATA)
-        return OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(ecert->value.encryptedValue,
-                                                     libctx, propq, pkey);
+        return OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(ecert->value.encryptedValue, pkey,
+                                                     libctx, propq);
 #ifndef OPENSSL_NO_CMS
     bio = CMS_EnvelopedData_decrypt(ecert->value.envelopedData, NULL,
                                     pkey, NULL /* cert */, NULL, flags,
@@ -905,8 +894,7 @@ X509
 }
 
 #ifndef OPENSSL_NO_CMS
-OSSL_CRMF_ENCRYPTEDKEY
-*OSSL_CRMF_ENCRYPTEDKEY_init_envdata(CMS_EnvelopedData *envdata)
+OSSL_CRMF_ENCRYPTEDKEY *OSSL_CRMF_ENCRYPTEDKEY_init_envdata(CMS_EnvelopedData *envdata)
 {
     OSSL_CRMF_ENCRYPTEDKEY *ek = OSSL_CRMF_ENCRYPTEDKEY_new();
 
