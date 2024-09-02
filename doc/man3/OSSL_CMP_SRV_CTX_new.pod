@@ -93,7 +93,7 @@ OSSL_CMP_SRV_CTX_centralKeygen_req
  int OSSL_CMP_SRV_CTX_set_grant_implicit_confirm(OSSL_CMP_SRV_CTX *srv_ctx,
                                                  int val);
  int OSSL_CMP_SRV_CTX_centralKeygen_req(const OSSL_CRMF_MSG *crm,
-                                        X509_REQ *p10cr);
+                                        const X509_REQ *p10cr);
 
 =head1 DESCRIPTION
 
@@ -158,10 +158,10 @@ messages with POPO 'RAVerified'.
 OSSL_CMP_SRV_CTX_set_grant_implicit_confirm() enables granting implicit
 confirmation of newly enrolled certificates if requested.
 
-OSSL_CMP_SRV_CTX_centralKeygen_req() returns I<true> if central key generaion
-is requested i.e, public key in certificate request (I<crm> or I<p10cr>) is NULL
-or have zero length.
-
+OSSL_CMP_SRV_CTX_centralKeygen_req() returns 1 if central key generation
+is requested i.e., the public key in the certificate request (I<crm> if non-NULL, 
+otherwise I<p10cr>) is NULL or has an empty key value (with length zero).
+Otherwise or on error it returns 0.
 
 =head1 NOTES
 
@@ -192,6 +192,9 @@ The OpenSSL CMP support was added in OpenSSL 3.0.
 OSSL_CMP_SRV_CTX_init_trans()
 supporting delayed delivery of all types of response messages
 was added in OpenSSL 3.3.
+
+OSSL_CMP_SRV_CTX_set_grant_implicit_confirm() and OSSL_CMP_SRV_CTX_centralKeygen_req()
+were added in OpenSSL 3.5.
 
 =head1 COPYRIGHT
 

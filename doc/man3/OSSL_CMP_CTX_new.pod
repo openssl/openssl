@@ -273,7 +273,8 @@ The following options can be set:
 
         Select the proof of possession method to use. Possible values are:
 
-            OSSL_CRMF_POPO_NONE       - ProofOfPossession field omitted
+            OSSL_CRMF_POPO_NONE       - ProofOfPossession field omitted,
+                                        which implies central key generation
             OSSL_CRMF_POPO_RAVERIFIED - assert that the RA has already
                                         verified the PoPo
             OSSL_CRMF_POPO_SIGNATURE  - sign a value with private key,

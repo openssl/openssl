@@ -4,7 +4,7 @@
 
 CMS_EnvelopedData_create_ex, CMS_EnvelopedData_create,
 CMS_AuthEnvelopedData_create, CMS_AuthEnvelopedData_create_ex,
-CMS_env_sign_data
+CMS_sign_encrypt
 - Create CMS envelope
 
 =head1 SYNOPSIS
@@ -20,9 +20,11 @@ CMS_env_sign_data
  CMS_AuthEnvelopedData_create_ex(const EVP_CIPHER *cipher, OSSL_LIB_CTX *libctx,
                                  const char *propq);
  CMS_ContentInfo *CMS_AuthEnvelopedData_create(const EVP_CIPHER *cipher);
- CMS_EnvelopedData *CMS_env_sign_data(BIO *data, X509 *signcert, EVP_PKEY *signkey,
-                                      STACK_OF(X509) *encryption_recip,
-                                      OSSL_LIB_CTX *libctx, const char *propq);
+
+ CMS_EnvelopedData *CMS_sign_encrypt(BIO *data, X509 *sign_cert, STACK_OF(X509) *certs,
+                                     EVP_PKEY *sign_key, unsigned int sign_flags,
+                                     STACK_OF(X509) *enc_recip, const EVP_CIPHER *cipher,
+                                     unsigned int enc_flags, OSSL_LIB_CTX *libctx, const char *propq);
 
 =head1 DESCRIPTION
 
@@ -51,11 +53,23 @@ CMS_EnvelopedData_create_ex() and CMS_AuthEnvelopedData_create_ex()
 but use default values of NULL for
 the library context I<libctx> and the property query I<propq>.
 
-CMS_env_sign_data() creates a B<CMS_EnvelopedData> structure for recipients in
-I<encryption_recip>. I<data> is signed using I<signcert> and I<signkey> to
-create B<CMS_SignedData> and then encrypted using I<encryption_recip> to
+CMS_sign_encrypt() creates a B<CMS_EnvelopedData> structure for recipients in
+I<enc_recip>.
+
+I<data> is signed using I<signcert> and I<signkey> to
+create B<CMS_SignedData> and then encrypted using I<enc_recip> to
 create B<CMS_EnvelopedData>. The library context I<libctx> and the property
 query I<propq> are used when retrieving algorithms from providers.
+
+I<certs> is an optional additional set of certificates to include in the
+B<CMS_SignedData> structure (e.g., any intermediate CAs in the chain of the signer certificate).
+
+I<sign_flags> is an optional set of flags for the signing operation.
+see L<CMS_sign_ex(3)> for more information.
+
+I<enc_flags> is an optional set of flags for the encryption operation.
+see L<CMS_encrypt_ex(3)> for more information.
+
 
 =head1 NOTES
 
@@ -67,18 +81,23 @@ The wrappers L<CMS_encrypt(3)> and L<CMS_decrypt(3)> are often used instead.
 =head1 RETURN VALUES
 
 If the allocation fails, CMS_EnvelopedData_create_ex(),
-CMS_EnvelopedData_create(), CMS_AuthEnvelopedData_create_ex(), and
-CMS_AuthEnvelopedData_create() return NULL and set an error code that can be
-obtained by L<ERR_get_error(3)>. Otherwise they return a pointer to the newly
+CMS_EnvelopedData_create(), CMS_AuthEnvelopedData_create_ex()
+CMS_AuthEnvelopedData_create(), CMS_AuthEnvelopedData_create(),
+CMS_AuthEnvelopedData_create_ex() and CMS_sign_encrypt() return NULL and set an error code
+that can be obtained by L<ERR_get_error(3)>. Otherwise they return a pointer to the newly
 allocated structure.
 
 =head1 SEE ALSO
 
-L<ERR_get_error(3)>, L<CMS_encrypt(3)>, L<CMS_decrypt(3)>, L<CMS_final(3)>
+L<ERR_get_error(3)>, L<CMS_encrypt(3)>, L<CMS_decrypt(3)>, L<CMS_final(3)>,
+L<CMS_sign_ex(3)>, L<CMS_encrypt_ex(3)>
 
 =head1 HISTORY
 
 The CMS_EnvelopedData_create_ex() method was added in OpenSSL 3.0.
+
+CMS_AuthEnvelopedData_create(), CMS_AuthEnvelopedData_create_ex()
+and CMS_sign_encrypt() were added in OpenSSL 3.5.
 
 =head1 COPYRIGHT
 

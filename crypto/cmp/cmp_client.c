@@ -508,7 +508,6 @@ static X509 *get1_cert_status(OSSL_CMP_CTX *ctx, int bodytype,
 {
     char buf[OSSL_CMP_PKISI_BUFLEN];
     X509 *crt = NULL;
-    EVP_PKEY *privkey = NULL;
 
     if (!ossl_assert(ctx != NULL && crep != NULL))
         return NULL;
@@ -550,7 +549,7 @@ static X509 *get1_cert_status(OSSL_CMP_CTX *ctx, int bodytype,
         ERR_raise(ERR_LIB_CMP, CMP_R_UNKNOWN_PKISTATUS);
         goto err;
     }
-    crt = ossl_cmp_certresponse_get1_cert_key(crep, ctx, privkey);
+    crt = ossl_cmp_certresponse_get1_cert(ctx, crep);
     if (crt == NULL) /* according to PKIStatus, we can expect a cert */
         ERR_raise(ERR_LIB_CMP, CMP_R_CERTIFICATE_NOT_FOUND);
 

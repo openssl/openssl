@@ -952,7 +952,7 @@ OSSL_CMP_MSG *ossl_cmp_certreq_new(OSSL_CMP_CTX *ctx, int bodytype,
                                    const OSSL_CRMF_MSG *crm);
 OSSL_CMP_MSG *ossl_cmp_certrep_new(OSSL_CMP_CTX *ctx, int bodytype,
                                    int certReqId, const OSSL_CMP_PKISI *si,
-                                   X509 *cert, EVP_PKEY *certkey,
+                                   X509 *cert, const EVP_PKEY *pkey,
                                    const X509 *encryption_recip,
                                    STACK_OF(X509) *chain, STACK_OF(X509) *caPubs,
                                    int unprotectedErrors);
@@ -989,12 +989,13 @@ ossl_cmp_pollrepcontent_get0_pollrep(const OSSL_CMP_POLLREPCONTENT *prc,
 OSSL_CMP_CERTRESPONSE *
 ossl_cmp_certrepmessage_get0_certresponse(const OSSL_CMP_CERTREPMESSAGE *crm,
                                           int rid);
-X509 *ossl_cmp_certresponse_get1_cert_key(const OSSL_CMP_CERTRESPONSE *crep,
-                                          const OSSL_CMP_CTX *ctx, EVP_PKEY *pkey);
+X509 *ossl_cmp_certresponse_get1_cert(const OSSL_CMP_CTX *ctx,
+                                      const OSSL_CMP_CERTRESPONSE *crep);
 OSSL_CMP_MSG *ossl_cmp_msg_load(const char *file);
 int ossl_cmp_is_error_with_waiting(const OSSL_CMP_MSG *msg);
 
 /* from cmp_protect.c */
+void ossl_cmp_set_own_chain(OSSL_CMP_CTX *ctx);
 int ossl_cmp_msg_add_extraCerts(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg);
 ASN1_BIT_STRING *ossl_cmp_calc_protection(const OSSL_CMP_CTX *ctx,
                                           const OSSL_CMP_MSG *msg);
