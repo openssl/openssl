@@ -1283,12 +1283,12 @@ int EVP_CIPHER_CTX_get_algor_params(EVP_CIPHER_CTX *ctx, X509_ALGOR *alg)
      */
     type = alg->parameter;
 
-    if (i < -1)
+    if (i < 0)
         goto err;
 
     derk = params[i].key;
     derl = params[i].return_size;
-    if ((der = OPENSSL_malloc(params[i].return_size)) != NULL) {
+    if ((der = OPENSSL_malloc(derl)) != NULL) {
         unsigned char *derp = der;
 
         params[i] = OSSL_PARAM_construct_octet_string(derk, der, derl);
