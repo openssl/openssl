@@ -401,12 +401,17 @@ static int ed25519_sign(void *vpeddsactx,
         return 0;
     }
 #ifdef S390X_EC_ASM
-    /* s390x_ed25519_digestsign() does not yet support dom2 or context-strings.
-       fall back to non-accelerated sign if those options are set. */
+    /*
+     * s390x_ed25519_digestsign() does not yet support dom2 or context-strings.
+     * fall back to non-accelerated sign if those options are set, or pre-hasing
+     * is provided.
+     */
     if (S390X_CAN_SIGN(ED25519)
             && !peddsactx->dom2_flag
             && !peddsactx->context_string_flag
-            && peddsactx->context_string_len == 0) {
+            && peddsactx->context_string_len == 0
+            && !peddsactx->prehash_flag
+            && !peddsactx->prehash_by_caller_flag) {
         if (s390x_ed25519_digestsign(edkey, sigret, tbs, tbslen) == 0) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SIGN);
             return 0;
@@ -504,11 +509,15 @@ static int ed448_sign(void *vpeddsactx,
         return 0;
     }
 #ifdef S390X_EC_ASM
-    /* s390x_ed448_digestsign() does not yet support context-strings or pre-hashing.
-       fall back to non-accelerated sign if a context-string or pre-hasing is provided. */
+    /*
+     * s390x_ed448_digestsign() does not yet support context-strings or
+     * pre-hashing. Fall back to non-accelerated sign if a context-string or
+     * pre-hasing is provided.
+     */
     if (S390X_CAN_SIGN(ED448)
             && peddsactx->context_string_len == 0
-            && peddsactx->prehash_flag == 0) {
+            && !peddsactx->prehash_flag
+            && !peddsactx->prehash_by_caller_flag) {
         if (s390x_ed448_digestsign(edkey, sigret, tbs, tbslen) == 0) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SIGN);
             return 0;
@@ -563,14 +572,18 @@ static int ed25519_verify(void *vpeddsactx,
         return 0;
 
 #ifdef S390X_EC_ASM
-    /* s390x_ed25519_digestverify() does not yet support dom2 or context-strings.
-       fall back to non-accelerated verify if those options are set. */
+    /*
+     * s390x_ed25519_digestverify() does not yet support dom2 or context-strings.
+     * fall back to non-accelerated verify if those options are set, or
+     * pre-hasing is provided.
+     */
     if (S390X_CAN_SIGN(ED25519)
             && !peddsactx->dom2_flag
             && !peddsactx->context_string_flag
-            && peddsactx->context_string_len == 0) {
+            && peddsactx->context_string_len == 0
+            && !peddsactx->prehash_flag
+            && !peddsactx->prehash_by_caller_flag)
         return s390x_ed25519_digestverify(edkey, sig, tbs, tbslen);
-    }
 #endif /* S390X_EC_ASM */
 
     if (peddsactx->prehash_flag) {
@@ -617,13 +630,16 @@ static int ed448_verify(void *vpeddsactx,
         return 0;
 
 #ifdef S390X_EC_ASM
-    /* s390x_ed448_digestverify() does not yet support context-strings or pre-hashing.
-       fall back to non-accelerated verify if a context-string or pre-hasing is provided. */
+    /*
+     * s390x_ed448_digestverify() does not yet support context-strings or
+     * pre-hashing. Fall back to non-accelerated verify if a context-string or
+     * pre-hasing is provided.
+     */
     if (S390X_CAN_SIGN(ED448)
             && peddsactx->context_string_len == 0
-            && peddsactx->prehash_flag == 0) {
+            && !peddsactx->prehash_flag
+            && !peddsactx->prehash_by_caller_flag)
         return s390x_ed448_digestverify(edkey, sig, tbs, tbslen);
-    }
 #endif /* S390X_EC_ASM */
 
     if (peddsactx->prehash_flag) {
