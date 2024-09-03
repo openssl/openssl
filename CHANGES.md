@@ -38,9 +38,19 @@ breaking changes, and mappings for the large list of deprecated functions.
    an X.509 certificate. This may result in an exception that terminates the
    application program.
 
-   [(CVE-2024-6119)]
+   ([CVE-2024-6119])
 
    *Viktor Dukhovni*
+
+ * Fixed possible buffer overread in SSL_select_next_proto().
+
+   Calling the OpenSSL API function SSL_select_next_proto with an empty
+   supported client protocols buffer may cause a crash or memory contents
+   to be sent to the peer.
+
+   ([CVE-2024-5535])
+
+   *Matt Caswell*
 
 ### Changes between 3.0.13 and 3.0.14 [4 Jun 2024]
 
@@ -19913,6 +19923,7 @@ ndif
 <!-- Links -->
 
 [CVE-2024-6119]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-6119
+[CVE-2024-5535]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-5535
 [CVE-2024-4741]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-4741
 [CVE-2024-4603]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-4603
 [CVE-2024-2511]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-2511
