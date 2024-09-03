@@ -19,7 +19,7 @@ OpenSSL Releases
 OpenSSL 3.1
 -----------
 
-### Major changes between OpenSSL 3.1.6 and OpenSSL 3.1.7 [under development]
+### Major changes between OpenSSL 3.1.6 and OpenSSL 3.1.7 [3 Sep 2024]
 
 OpenSSL 3.1.7 is a security patch release. The most severe CVE fixed in this
 release is Moderate.

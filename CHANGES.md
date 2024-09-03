@@ -22,7 +22,7 @@ OpenSSL Releases
 OpenSSL 3.1
 -----------
 
-### Changes between 3.1.6 and 3.1.7 [xx XXX xxxx]
+### Changes between 3.1.6 and 3.1.7 [3 Sep 2024]
 
  * Fixed possible denial of service in X.509 name checks.
 
