@@ -28,7 +28,7 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 [Migration guide]: https://github.com/openssl/openssl/tree/master/doc/man7/migration_guide.pod
 
-### Changes between 3.0.14 and 3.0.15 [xx XXX xxxx]
+### Changes between 3.0.14 and 3.0.15 [3 Sep 2024]
 
  * Fixed possible denial of service in X.509 name checks.
 
