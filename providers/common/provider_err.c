@@ -35,6 +35,8 @@ static const ERR_STRING_DATA PROV_str_reasons[] = {
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_DIGEST_NOT_ALLOWED),
      "digest not allowed"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_EMS_NOT_ENABLED), "ems not enabled"},
+    {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_ENTROPY_SOURCE_FAILED_CONTINUOUS_TESTS),
+     "entropy source failed continuous tests"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_ENTROPY_SOURCE_STRENGTH_TOO_WEAK),
      "entropy source strength too weak"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_ERROR_INSTANTIATING_DRBG),
