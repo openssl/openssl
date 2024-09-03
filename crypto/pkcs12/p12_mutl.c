@@ -236,6 +236,8 @@ static int pkcs12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
             if (OBJ_obj2txt(hmac_md_name, sizeof(hmac_md_name), OBJ_nid2obj(pbmac1_kdf_nid), 0) < 0)
                 goto err;
             hmac_md = EVP_MD_fetch(NULL, hmac_md_name, NULL);
+            if (hmac_md == NULL)
+                goto err;
             fetched = 1;
         }
         if (pkcs12_key_gen != NULL) {
@@ -249,6 +251,8 @@ static int pkcs12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
                 goto err;
             }
         } else {
+            if (fetched)
+                EVP_MD_free(hmac_md);
             /* Default to UTF-8 password */
             if (!PKCS12_key_gen_utf8_ex(pass, passlen, salt, saltlen, PKCS12_MAC_ID,
                                         iter, keylen, key, md,
