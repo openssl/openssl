@@ -10,8 +10,14 @@
 # form, or passed as variable assignments on the command line.
 # The result is a Perl module creating the package OpenSSL::safe::installdata.
 
+use 5.10.0;
+use strict;
+use warnings;
+use Carp;
+
 use File::Spec;
-use List::Util qw(pairs);
+#use List::Util qw(pairs);
+sub _pairs (@);
 
 # These are expected to be set up as absolute directories
 my @absolutes = qw(PREFIX libdir);
@@ -19,9 +25,9 @@ my @absolutes = qw(PREFIX libdir);
 # as subdirectories to PREFIX or LIBDIR.  The order of the pairs is important,
 # since the LIBDIR subdirectories depend on the calculation of LIBDIR from
 # PREFIX.
-my @subdirs = pairs (PREFIX => [ qw(BINDIR LIBDIR INCLUDEDIR APPLINKDIR) ],
-                     LIBDIR => [ qw(ENGINESDIR MODULESDIR PKGCONFIGDIR
-                                    CMAKECONFIGDIR) ]);
+my @subdirs = _pairs (PREFIX => [ qw(BINDIR LIBDIR INCLUDEDIR APPLINKDIR) ],
+                      LIBDIR => [ qw(ENGINESDIR MODULESDIR PKGCONFIGDIR
+                                     CMAKECONFIGDIR) ]);
 # For completeness, other expected variables
 my @others = qw(VERSION LDLIBS);
 
@@ -151,3 +157,26 @@ our \@LDLIBS                     =
 
 1;
 _____
+
+######## Helpers
+
+# _pairs LIST
+#
+# This operates on an even-sized list, and returns a list of "ARRAY"
+# references, each containing two items from the given LIST.
+#
+# It is a quick cheap reimplementation of List::Util::pairs(), a function
+# we cannot use, because it only appeared in perl v5.19.3, and we claim to
+# support perl versions all the way back to v5.10.
+
+sub _pairs (@) {
+    croak "Odd number of arguments" if @_ & 1;
+
+    my @pairlist = ();
+
+    while (@_) {
+        my $x = [ shift, shift ];
+        push @pairlist, $x;
+    }
+    return @pairlist;
+}
