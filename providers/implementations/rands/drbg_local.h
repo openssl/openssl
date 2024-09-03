@@ -91,8 +91,6 @@ struct prov_drbg_st {
     OSSL_FUNC_rand_get_seed_fn *parent_get_seed;
     OSSL_FUNC_rand_clear_seed_fn *parent_clear_seed;
 
-    const OSSL_DISPATCH *parent_dispatch;
-
     /*
      * Stores the return value of openssl_get_fork_id() as of when we last
      * reseeded.  The DRBG reseeds automatically whenever drbg->fork_id !=
