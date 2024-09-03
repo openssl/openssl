@@ -43,7 +43,7 @@
        * __inline function.  https://quality.embarcadero.com/browse/RSP-33806
        */
 #   if !defined(__BORLANDC__) || !defined(__clang__)
-#       include <wspiapi.h>
+#    include <wspiapi.h>
 #   endif
       /* yes, they have to be #included prior to <windows.h> */
 #  endif
