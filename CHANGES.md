@@ -25,6 +25,10 @@ OpenSSL Releases
 OpenSSL 3.2
 -----------
 
+### Changes between 3.2.3 and 3.2.4 [xx XXX xxxx]
+
+ * none yet
+
 ### Changes between 3.2.2 and 3.2.3 [3 Sep 2024]
 
  * Fixed possible denial of service in X.509 name checks.
