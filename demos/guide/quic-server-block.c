@@ -286,8 +286,10 @@ int main(int argc, char *argv[])
 
     /* Parse port number from command line arguments. */
     port = strtoul(argv[1], NULL, 0);
-    if (port == 0 || port > UINT16_MAX)
+    if (port == 0 || port > UINT16_MAX) {
+        SSL_CTX_free(ctx);
         errx(res, "Failed to parse port number");
+    }
 
     /* Create and bind a UDP socket. */
     if ((fd = create_socket((uint16_t)port)) < 0) {
