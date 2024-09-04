@@ -23,6 +23,8 @@ jobs:
         platform:
           - arch: win64
             config: enable-fips
+          - arch: win64
+            config: enable-fips no-thread-pool no-quic
           - arch: win32
             config: --strict-warnings no-fips
     runs-on: ${{ github.server_url == 'https://github.com' && matrix.os || format('{0}-self-hosted', matrix.os) }}
