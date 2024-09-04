@@ -245,6 +245,7 @@ static int s390x_shake_final(void *vctx, unsigned char *out, size_t outlen)
 static int s390x_shake_squeeze(void *vctx, unsigned char *out, size_t outlen)
 {
     KECCAK1600_CTX *ctx = vctx;
+    unsigned int fc;
     size_t len;
 
     if (!ossl_prov_is_running())
@@ -255,8 +256,10 @@ static int s390x_shake_squeeze(void *vctx, unsigned char *out, size_t outlen)
      * On the first squeeze call, finish the absorb process (incl. padding).
      */
     if (ctx->xof_state != XOF_STATE_SQUEEZE) {
+        fc = ctx->pad;
+        fc |= ctx->xof_state == XOF_STATE_INIT ? S390X_KLMD_NIP : 0;
         ctx->xof_state = XOF_STATE_SQUEEZE;
-        s390x_klmd(ctx->buf, ctx->bufsz, out, outlen, ctx->pad, ctx->A);
+        s390x_klmd(ctx->buf, ctx->bufsz, out, outlen, fc, ctx->A);
         ctx->bufsz = outlen % ctx->block_size;
         /* reuse ctx->bufsz to count bytes squeezed from current sponge */
         return 1;
