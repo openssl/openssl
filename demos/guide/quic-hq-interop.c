@@ -511,6 +511,10 @@ err:
     return rc;
 }
 
+static SSL_POLL_ITEM *poll_list = NULL;
+static BIO **outbiolist = NULL;
+static size_t poll_count = 0;
+
 /**
  * @brief Entry point for the QUIC hq-interop client demo application.
  *
@@ -540,6 +544,7 @@ int main(int argc, char *argv[])
     SSL_CTX *ctx = NULL;
     SSL *ssl = NULL;
     BIO *bio = NULL;
+    BIO *req_bio = NULL;
     int res = EXIT_FAILURE;
     int ret;
     unsigned char alpn[] = { 10, 'h','q','-','i','n','t','e','r','o','p'};
@@ -553,22 +558,24 @@ int main(int argc, char *argv[])
     int argnext = 1;
     char *reqfile = NULL;
     char *sslkeylogfile = NULL;
-    BIO *req_bio = NULL;
     char *reqnames = OPENSSL_zalloc(1025);
     size_t read_offset = 0;
     size_t bytes_read = 0;
     char *req = NULL, *saveptr = NULL;
     char outfilename[1024];
-    SSL *stream_bio = NULL;
+    size_t poll_idx = 0;
+    size_t poll_done = 0;
+    size_t result_count = 0;
+    struct timeval poll_timeout;
 
     if (argc < 4) {
-        fprintf(stderr, "Usage: quic-client-non-block [-6] hostname port file\n");
+        fprintf(stderr, "Usage: quic-hq-interop [-6] hostname port file\n");
         goto end;
     }
 
     if (!strcmp(argv[argnext], "-6")) {
         if (argc < 5) {
-            fprintf(stderr, "Usage: quic-client-non-block [-6] hostname port\n");
+            fprintf(stderr, "Usage: quic-hq-interop [-6] hostname port\n");
             goto end;
         }
         ipv6 = 1;
@@ -716,7 +723,21 @@ int main(int argc, char *argv[])
     req = strtok_r(reqnames, " ", &saveptr);
     while (req != NULL) {
 
-        eof = 0;
+        poll_count++;
+        poll_idx = poll_count - 1;
+        poll_list = OPENSSL_realloc(poll_list,
+                                    sizeof(SSL_POLL_ITEM) * poll_count);
+        if (poll_list == NULL) {
+            fprintf(stderr, "Unable to realloc poll_list\n");
+            goto end;
+        }
+
+        outbiolist = OPENSSL_realloc(outbiolist,
+                                     sizeof(BIO *) * poll_count);
+        if (outbiolist == NULL) {
+            fprintf(stderr, "Unable to realloc outbiolist\n");
+            goto end;
+        }
 
         /* Format the http request */
         sprintf(req_string, "GET /%s\r\n", req);
@@ -726,67 +747,91 @@ int main(int argc, char *argv[])
         sprintf(outfilename, "/downloads/%s", req);
 
         /* open a bio to write the file */
-        req_bio = BIO_new_file(outfilename, "w+");
-        if (req_bio == NULL) {
+        outbiolist[poll_idx] = BIO_new_file(outfilename, "w+");
+        if (outbiolist[poll_idx] == NULL) {
             fprintf(stderr, "Failed to open outfile %s\n", outfilename);
             goto end;
         }
 
         /* create a request stream */
-        stream_bio = SSL_new_stream(ssl, 0);
-        if (stream_bio == NULL) {
+        poll_list[poll_idx].desc = SSL_as_poll_descriptor(SSL_new_stream(ssl, 0));
+        if (poll_list[poll_idx].desc.value.ssl == NULL) {
             fprintf(stderr, "Failed to create stream request bio\n");
             goto end;
         }
 
+        poll_list[poll_idx].revents = 0;
+        poll_list[poll_idx].events = SSL_POLL_EVENT_R;
+
         /* Write an HTTP GET request to the peer */
-        while (!SSL_write_ex2(stream_bio, req_string, strlen(req_string),
+        while (!SSL_write_ex2(poll_list[poll_idx].desc.value.ssl,
+                              req_string, strlen(req_string),
                               SSL_WRITE_FLAG_CONCLUDE, &written)) {
             fprintf(stderr, "Write failed\n");
-            if (handle_io_failure(stream_bio, 0) == 1)
+            if (handle_io_failure(poll_list[poll_idx].desc.value.ssl, 0) == 1)
                 continue; /* Retry */
             fprintf(stderr, "Failed to write start of HTTP request\n");
             goto end; /* Cannot retry: error */
         }
-
-        do {
-            /*
-             * Get up to sizeof(buf) bytes of the response. We keep reading until
-             * the server closes the connection.
-             */
-            while (!eof && !SSL_read_ex(stream_bio, buf, sizeof(buf), &readbytes)) {
-                switch (handle_io_failure(stream_bio, 0)) {
-                case 1:
-                    continue; /* Retry */
-                case 0:
-                    eof = 1;
-                    continue;
-                case -1:
-                default:
-                    fprintf(stderr, "Failed reading remaining data\n");
-                    goto end; /* Cannot retry: error */
-                }
-            }
-            /*
-             * OpenSSL does not guarantee that the returned data is a string or
-             * that it is NUL terminated so we use fwrite() to write the exact
-             * number of bytes that we read. The data could be non-printable or
-             * have NUL characters in the middle of it. For this simple example
-             * we're going to print it to stdout anyway.
-             */
-            if (!eof)
-                BIO_write(req_bio, buf, readbytes);
-            else
-                fprintf(stderr, "Wrote %s\n", outfilename);
-        } while (!eof);
-        /* In case the response didn't finish with a newline we add one now */
-        BIO_free(req_bio);
-        req_bio = NULL;
         req = strtok_r(NULL, " ", &saveptr);
-        SSL_free(stream_bio);
-        stream_bio = NULL;
     }
 
+    /*
+     * Now poll all our descriptors for events
+     */
+    while (poll_done < poll_count) {
+        result_count = 0;
+        poll_timeout.tv_sec = 0;
+        poll_timeout.tv_usec = 0;
+        if (!SSL_poll(poll_list, poll_count, sizeof(SSL_POLL_ITEM),
+                     &poll_timeout, 0, &result_count)) {
+            fprintf(stderr, "Failed to poll\n");
+            goto end;
+        }
+
+        for (poll_idx = 0; poll_idx < poll_count; poll_idx++) {
+            if (result_count == 0)
+                break;
+            if (poll_list[poll_idx].revents == SSL_POLL_EVENT_R) {
+                result_count--;
+                poll_list[poll_idx].revents = 0;
+                /*
+                 * Get up to sizeof(buf) bytes of the response. We keep reading until
+                 * the server closes the connection.
+                 */
+                if (!SSL_read_ex(poll_list[poll_idx].desc.value.ssl, buf,
+                                 sizeof(buf), &readbytes)) {
+                    switch (handle_io_failure(poll_list[poll_idx].desc.value.ssl,
+                                              0)) {
+                    case 1:
+                        eof = 0;
+                        break; /* Retry on next poll */
+                    case 0:
+                        eof = 1;
+                        break;
+                    case -1:
+                    default:
+                        fprintf(stderr, "Failed reading remaining data\n");
+                        goto end; /* Cannot retry: error */
+                    }
+                }
+                /*
+                 * OpenSSL does not guarantee that the returned data is a string or
+                 * that it is NUL terminated so we use fwrite() to write the exact
+                 * number of bytes that we read. The data could be non-printable or
+                 * have NUL characters in the middle of it. For this simple example
+                 * we're going to print it to stdout anyway.
+                 */
+                if (!eof) {
+                    BIO_write(outbiolist[poll_idx], buf, readbytes);
+                } else {
+                    /* This file is done, take it out of polling contention */
+                    poll_list[poll_idx].events = 0;
+                    poll_done++;
+                }
+            }
+        }
+    }
     /*
      * Repeatedly call SSL_shutdown() until the connection is fully
      * closed.
@@ -812,12 +857,16 @@ int main(int argc, char *argv[])
      * because ownership of it was immediately transferred to the SSL object
      * via SSL_set_bio(). The BIO will be freed when we free the SSL object.
      */
-    SSL_free(stream_bio);
-    SSL_free(ssl);
-    SSL_CTX_free(ctx);
     BIO_ADDR_free(peer_addr);
     OPENSSL_free(reqnames);
-    BIO_free(req_bio);
     BIO_free(session_bio);
+    for (poll_idx = 0; poll_idx < poll_count; poll_idx++) {
+        BIO_free(outbiolist[poll_idx]);
+        SSL_free(poll_list[poll_idx].desc.value.ssl);
+    }
+    SSL_free(ssl);
+    SSL_CTX_free(ctx);
+    OPENSSL_free(outbiolist);
+    OPENSSL_free(poll_list);
     return res;
 }
