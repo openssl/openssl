@@ -160,6 +160,15 @@ _____
 
 ######## Helpers
 
+# _pairs LIST
+#
+# This operates on an even-sized list, and returns a list of "ARRAY"
+# references, each containing two items from the given LIST.
+#
+# It is a quick cheap reimplementation of List::Util::pairs(), a function
+# we cannot use, because it only appeared in perl v5.19.3, and we claim to
+# support perl versions all the way back to v5.10.
+
 sub _pairs (@) {
     croak "Odd number of arguments" if @_ & 1;
 
