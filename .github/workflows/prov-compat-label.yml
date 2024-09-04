@@ -89,7 +89,7 @@ jobs:
                                                  -providers
         working-directory: ${{ matrix.release.dir }}
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.release.tgz }}
           path: ${{ matrix.release.tgz }}
@@ -174,7 +174,7 @@ jobs:
           ./util/opensslwrap.sh version -c
         working-directory: ${{ matrix.branch.dir }}
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.branch.tgz }}
           path: ${{ matrix.branch.tgz }}
