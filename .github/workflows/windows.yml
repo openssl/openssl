@@ -17,17 +17,17 @@ jobs:
     # Run a job for each of the specified target architectures:
     strategy:
       matrix:
-        os:
-          - windows-2019
-          - windows-2022
         platform:
           - arch: win64
+            os: windows-2019
             config: enable-fips
           - arch: win64
+            os: windows-2022
             config: enable-fips no-thread-pool no-quic
           - arch: win32
+            os: windows-2022
             config: --strict-warnings no-fips
-    runs-on: ${{ github.server_url == 'https://github.com' && matrix.os || format('{0}-self-hosted', matrix.os) }}
+    runs-on: ${{ github.server_url == 'https://github.com' && matrix.platform.os || format('{0}-self-hosted', matrix.platform.os) }}
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -92,7 +92,7 @@ jobs:
     strategy:
       matrix:
         os:
-          - windows-2019
+# Reducing CI footprint  - windows-2019
           - windows-2022
     runs-on: ${{ github.server_url == 'https://github.com' && matrix.os || format('{0}-self-hosted', matrix.os) }}
     steps:
@@ -130,7 +130,7 @@ jobs:
       matrix:
         os:
           - windows-2019
-          - windows-2022
+# Reducing CI footprint  - windows-2022
     runs-on: ${{ github.server_url == 'https://github.com' && matrix.os || format('{0}-self-hosted', matrix.os) }}
     steps:
     - uses: actions/checkout@v4
