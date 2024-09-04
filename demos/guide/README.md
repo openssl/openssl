@@ -55,12 +55,12 @@ The QUIC demos can be run in a very similar way to the TLS demos.
 
 While in the demos directory the QUIC server can be run like this:
 
-./quic-server-block 4443 ./chain.pem pkey.pem
+./quic-server-block 4443 ./chain.pem ./pkey.pem
 
 The QUIC demos can then be run in the same was as the TLS demos. For example
 to run the quic-client-block demo:
 
-SSL_CERT_FILE=chain.pem ./quic-client-non-block localhost 4433
+SSL_CERT_FILE=chain.pem LD_LIBRARY_PATH=../.. ./quic-client-block localhost 4443
 
 <!-- Links  -->
 

@@ -16,14 +16,14 @@
 
 /* Include the appropriate header file for SOCK_STREAM */
 #ifdef _WIN32 /* Windows */
-#include <stdarg.h>
-#include <winsock2.h>
+# include <stdarg.h>
+# include <winsock2.h>
 #else /* Linux/Unix */
-#include <err.h>
-#include <sys/socket.h>
-#include <sys/select.h>
-#include <netinet/in.h>
-#include <unistd.h>
+# include <err.h>
+# include <sys/socket.h>
+# include <sys/select.h>
+# include <netinet/in.h>
+# include <unistd.h>
 #endif
 
 #include <openssl/bio.h>
@@ -90,7 +90,7 @@ static SSL_CTX *create_ctx(const char *cert_path, const char *key_path)
 
     /*
      * An SSL_CTX holds shared configuration information for multiple
-     * subsequent per-client SSL connections. We specifically load a QUIC
+     * subsequent per-client connections. We specifically load a QUIC
      * server method here.
      */
     ctx = SSL_CTX_new(OSSL_QUIC_server_method());
@@ -125,15 +125,6 @@ static SSL_CTX *create_ctx(const char *cert_path, const char *key_path)
      */
     if (SSL_CTX_use_PrivateKey_file(ctx, key_path, SSL_FILETYPE_PEM) <= 0) {
         fprintf(stderr, "couldn't load key file: %s\n", key_path);
-        goto err;
-    }
-
-    /* 
-     * Check the consistency of the private key with the corresponding
-     * certificate loaded into ctx 
-     */
-    if (!SSL_CTX_check_private_key(ctx)) {
-        fprintf(stderr, "private key check failed\n");
         goto err;
     }
 
@@ -185,7 +176,7 @@ static int create_socket(uint16_t port)
     return fd;
 
 err:
-    close(fd);
+    BIO_closesocket(fd);
     return -1;
 }
 
@@ -295,9 +286,8 @@ int main(int argc, char *argv[])
 
     /* Parse port number from command line arguments. */
     port = strtoul(argv[1], NULL, 0);
-    if (port == 0 || port > UINT16_MAX) {
+    if (port == 0 || port > UINT16_MAX)
         errx(res, "Failed to parse port number");
-    }
 
     /* Create and bind a UDP socket. */
     if ((fd = create_socket((uint16_t)port)) < 0) {
@@ -309,14 +299,14 @@ int main(int argc, char *argv[])
     /* QUIC server connection acceptance loop. */
     if (!run_quic_server(ctx, fd)) {
         SSL_CTX_free(ctx);
-        close(fd);
+        BIO_closesocket(fd);
         ERR_print_errors_fp(stderr);
         errx(res, "Error in QUIC server loop");
     }
 
     /* Free resources. */
     SSL_CTX_free(ctx);
-    close(fd);
+    BIO_closesocket(fd);
     res = EXIT_SUCCESS;
     return res;
 }
