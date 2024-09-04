@@ -54,6 +54,10 @@ In case of any error, NULL is returned.
 L<X509_LOOKUP_meth_set_get_by_subject(3)>,
 L<X509_LOOKUP_by_subject(3)>
 
+=head1 HISTORY
+
+X509_STORE_CTX_get1_objs_by_auth() was added in OpenSSL 3.5.0.
+
 =head1 COPYRIGHT
 
 Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
