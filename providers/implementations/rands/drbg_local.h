@@ -70,7 +70,7 @@ struct prov_drbg_st {
     CRYPTO_RWLOCK *lock;
     PROV_CTX *provctx;
 
-    /* Virtual functions are cache here */
+    /* Virtual functions are cached here */
     int (*instantiate)(PROV_DRBG *drbg,
                        const unsigned char *entropy, size_t entropylen,
                        const unsigned char *nonce, size_t noncelen,
