@@ -500,6 +500,34 @@ err:
     return ret;
 }
 
+/* Test that a squeeze without a preceding absorb works */
+static int shake_squeeze_no_absorb_test(void)
+{
+    int ret = 0;
+    EVP_MD_CTX *ctx = NULL;
+    unsigned char out[1000];
+    unsigned char out2[1000];
+    const char *alg = "SHAKE128";
+
+    if (!TEST_ptr(ctx = shake_setup(alg))
+        || !TEST_true(EVP_DigestFinalXOF(ctx, out, sizeof(out))))
+        goto err;
+
+    if (!TEST_true(EVP_DigestInit_ex2(ctx, NULL, NULL))
+        || !TEST_true(EVP_DigestSqueeze(ctx, out2, sizeof(out2) / 2))
+        || !TEST_true(EVP_DigestSqueeze(ctx, out2 + sizeof(out2) / 2,
+                                        sizeof(out2) / 2)))
+        goto err;
+
+    if (!TEST_mem_eq(out2, sizeof(out2), out, sizeof(out)))
+        goto err;
+    ret = 1;
+
+err:
+    EVP_MD_CTX_free(ctx);
+    return ret;
+}
+
 static int xof_fail_test(void)
 {
     int ret;
@@ -521,5 +549,6 @@ int setup_tests(void)
     ADD_ALL_TESTS(shake_squeeze_large_test, OSSL_NELEM(stride_tests));
     ADD_ALL_TESTS(shake_squeeze_dup_test, OSSL_NELEM(dupoffset_tests));
     ADD_TEST(xof_fail_test);
+    ADD_TEST(shake_squeeze_no_absorb_test);
     return 1;
 }
