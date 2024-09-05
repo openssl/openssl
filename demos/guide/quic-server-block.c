@@ -77,10 +77,10 @@ static int select_alpn(SSL *ssl, const unsigned char **out,
                        unsigned int in_len, void *arg) {
     if (SSL_select_next_proto((unsigned char **)out, out_len, alpn_ossltest,
                               sizeof(alpn_ossltest), in,
-                              in_len) != OPENSSL_NPN_NEGOTIATED)
-        return SSL_TLSEXT_ERR_ALERT_FATAL;
-
-    return SSL_TLSEXT_ERR_OK;
+                              in_len) == OPENSSL_NPN_NEGOTIATED) {
+        return SSL_TLSEXT_ERR_OK;
+    }
+    return SSL_TLSEXT_ERR_ALERT_FATAL;
 }
 
 /* Create SSL_CTX. */
@@ -249,9 +249,7 @@ static int run_quic_server(SSL_CTX *ctx, int fd)
          */
         SSL_SHUTDOWN_EX_ARGS shutdown_args = {0};
         while (SSL_shutdown_ex(conn, 0, &shutdown_args,
-                               sizeof(SSL_SHUTDOWN_EX_ARGS)) != 1) {
-            fprintf(stderr, "Re-attempting SSL shutdown\n");
-        }
+                               sizeof(SSL_SHUTDOWN_EX_ARGS)) != 1) {}
 
         SSL_free(conn);
     }
