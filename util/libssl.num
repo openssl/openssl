@@ -584,6 +584,6 @@ SSL_poll                                584	3_3_0	EXIST::FUNCTION:
 SSL_SESSION_get_time_ex                 585	3_3_0	EXIST::FUNCTION:
 SSL_SESSION_set_time_ex                 586	3_3_0	EXIST::FUNCTION:
 SSL_CTX_flush_sessions_ex               587	3_4_0	EXIST::FUNCTION:
-SSL_CTX_set_block_padding_ex            ?	3_4_0	EXIST::FUNCTION:
-SSL_set_block_padding_ex                ?	3_4_0	EXIST::FUNCTION:
-SSL_get1_builtin_sigalgs                ?	3_4_0	EXIST::FUNCTION:
+SSL_CTX_set_block_padding_ex            588	3_4_0	EXIST::FUNCTION:
+SSL_set_block_padding_ex                589	3_4_0	EXIST::FUNCTION:
+SSL_get1_builtin_sigalgs                590	3_4_0	EXIST::FUNCTION:
