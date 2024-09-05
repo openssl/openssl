@@ -198,10 +198,12 @@ static size_t s390x_sha3_absorb(void *vctx, const void *inp, size_t len)
     if (!(ctx->xof_state == XOF_STATE_INIT ||
           ctx->xof_state == XOF_STATE_ABSORB))
         return 0;
-    fc = ctx->pad;
-    fc |= ctx->xof_state == XOF_STATE_INIT ? S390X_KIMD_NIP : 0;
-    ctx->xof_state = XOF_STATE_ABSORB;
-    s390x_kimd(inp, len - rem, fc, ctx->A);
+    if (len - rem > 0) {
+        fc = ctx->pad;
+        fc |= ctx->xof_state == XOF_STATE_INIT ? S390X_KIMD_NIP : 0;
+        ctx->xof_state = XOF_STATE_ABSORB;
+        s390x_kimd(inp, len - rem, fc, ctx->A);
+    }
     return rem;
 }
 
