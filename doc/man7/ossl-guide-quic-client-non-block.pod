@@ -344,6 +344,12 @@ contains that data may change location. See L<SSL_CTX_set_mode(3)> for further
 details. As in the TLS tutorials (L<ossl-guide-tls-client-block(7)>) we write
 the request in three chunks.
 
+First, we write the entire request to the stream. We also must make sure to
+signal to the server that we have finished writing. This can be done by passing
+the SSL_WRITE_FLAG_CONCLUDE flag to L<SSL_write_ex2(3)> or by calling
+L<SSL_stream_conclude(3)>. Since the first way is more efficient, we choose to
+do that.
+
     /* Write an HTTP GET request to the peer */
     while (!SSL_write_ex(ssl, request_start, strlen(request_start), &written)) {
         if (handle_io_failure(ssl, 0) == 1)
@@ -357,7 +363,8 @@ the request in three chunks.
         printf("Failed to write hostname in HTTP request\n");
         goto end; /* Cannot retry: error */
     }
-    while (!SSL_write_ex(ssl, request_end, strlen(request_end), &written)) {
+    while (!SSL_write_ex2(ssl, request_end, strlen(request_end),
+           SSL_WRITE_FLAG_CONCLUDE, &written)) {
         if (handle_io_failure(ssl, 0) == 1)
             continue; /* Retry */
         printf("Failed to write end of HTTP request\n");

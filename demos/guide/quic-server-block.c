@@ -191,6 +191,7 @@ static int run_quic_server(SSL_CTX *ctx, int fd)
     unsigned char buf[8192];
     size_t nread;
     size_t nwritten;
+    SSL_SHUTDOWN_EX_ARGS shutdown_args = {0};
 
     /*
      * Create a new QUIC listener. Listeners, and other QUIC objects, default
@@ -228,8 +229,8 @@ static int run_quic_server(SSL_CTX *ctx, int fd)
 
         /* Echo client input */
         while (SSL_read_ex(conn, buf, sizeof(buf), &nread) > 0) {
-            if (SSL_write_ex(conn, buf, nread, &nwritten) > 0 &&
-                nwritten == nread) {
+            if (SSL_write_ex(conn, buf, nread, &nwritten) > 0
+                && nwritten == nread) {
                 break;
             }
             fprintf(stderr, "Error echoing client input");
@@ -247,7 +248,6 @@ static int run_quic_server(SSL_CTX *ctx, int fd)
          * Shut down the connection. We may need to call this multiple times
          * to ensure the connection is shutdown completely.
          */
-        SSL_SHUTDOWN_EX_ARGS shutdown_args = {0};
         while (SSL_shutdown_ex(conn, 0, &shutdown_args,
                                sizeof(SSL_SHUTDOWN_EX_ARGS)) != 1) {}
 
@@ -272,9 +272,8 @@ int main(int argc, char *argv[])
     progname = argv[0];
 #endif
 
-    if (argc != 4) {
+    if (argc != 4)
         errx(res, "usage: %s <port> <server.crt> <server.key>", argv[0]);
-    }
 
     /* Create SSL_CTX that supports QUIC. */
     if ((ctx = create_ctx(argv[2], argv[3])) == NULL) {
