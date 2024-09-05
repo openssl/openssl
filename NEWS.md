@@ -7,6 +7,7 @@ release. For more details please read the CHANGES file.
 OpenSSL Releases
 ----------------
 
+ - [OpenSSL 3.5](#openssl-35)
  - [OpenSSL 3.4](#openssl-34)
  - [OpenSSL 3.3](#openssl-33)
  - [OpenSSL 3.2](#openssl-32)
@@ -18,6 +19,25 @@ OpenSSL Releases
  - [OpenSSL 1.0.1](#openssl-101)
  - [OpenSSL 1.0.0](#openssl-100)
  - [OpenSSL 0.9.x](#openssl-09x)
+
+OpenSSL 3.5
+-----------
+
+### Major changes between OpenSSL 3.4 and OpenSSL 3.5 [under development]
+
+OpenSSL 3.5.0 is a feature release adding significant new functionality to
+OpenSSL.
+
+This release is in development.
+
+This release incorporates the following potentially significant or incompatible
+changes:
+
+  * none yet
+
+This release adds the following new features:
+
+  * none yet
 
 OpenSSL 3.4
 -----------
