@@ -88,12 +88,12 @@ typedef struct ossl_echstore_entry_st {
     int for_retry; /* whether to use this ECHConfigList in a retry */
     size_t encoded_len; /* length of overall encoded content */
     unsigned char *encoded; /* overall encoded content */
-} OSSL_ECHSTORE_entry;
+} OSSL_ECHSTORE_ENTRY;
 
-DEFINE_STACK_OF(OSSL_ECHSTORE_entry)
+DEFINE_STACK_OF(OSSL_ECHSTORE_ENTRY)
 
 struct ossl_echstore_st {
-    STACK_OF(OSSL_ECHSTORE_entry) *entries;
+    STACK_OF(OSSL_ECHSTORE_ENTRY) *entries;
     OSSL_LIB_CTX *libctx;
     const char *propq;
 };

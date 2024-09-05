@@ -34,10 +34,9 @@ discussed above but enables ECH for the connection, based on hard-coded ECH
 configuration data. A real server would load file(s), and a real client would
 acquire an ECHConfigList from the DNS.
 
-All that's required to use ECH is for the server to enable ECH via
-``SSL_CTX_ech_server_enable_buffer()`` and for the client to do
-similarly via ``SSL_CTX_ech_set1_echconfig()``. Both client and
-server check and print out the status of ECH using ``SSL_ech_get_status()``,
+All that's required to use ECH is to load ECH data via `OSSL_ECHSTORE_read_*`
+APIs and then enable ECH via ``SSL_CTX_set1_echstore()``. Both client and
+server check and print out the status of ECH using ``SSL_ech_get1_status()``,
 but that's optional.
 
 To run the server:

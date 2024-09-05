@@ -67,7 +67,7 @@ OSSL_ECHSTORE *OSSL_ECHSTORE_new(OSSL_LIB_CTX *libctx, const char *propq)
     return es;
 }
 
-static void OSSL_ECHEXT_free(OSSL_ECHEXT *e)
+static void ossl_echext_free(OSSL_ECHEXT *e)
 {
     if (e == NULL)
         return;
@@ -76,7 +76,7 @@ static void OSSL_ECHEXT_free(OSSL_ECHEXT *e)
     return;
 }
 
-static void OSSL_ECHSTORE_entry_free(OSSL_ECHSTORE_entry *ee)
+static void OSSL_ECHSTORE_ENTRY_free(OSSL_ECHSTORE_ENTRY *ee)
 {
     if (ee == NULL)
         return;
@@ -86,14 +86,16 @@ static void OSSL_ECHSTORE_entry_free(OSSL_ECHSTORE_entry *ee)
     EVP_PKEY_free(ee->keyshare);
     OPENSSL_free(ee->encoded);
     OPENSSL_free(ee->suites);
-    sk_OSSL_ECHEXT_pop_free(ee->exts, OSSL_ECHEXT_free);
+    sk_OSSL_ECHEXT_pop_free(ee->exts, ossl_echext_free);
     OPENSSL_free(ee);
     return;
 }
 
 void OSSL_ECHSTORE_free(OSSL_ECHSTORE *es)
 {
-    sk_OSSL_ECHSTORE_entry_pop_free(es->entries, OSSL_ECHSTORE_entry_free);
+    if (es == NULL)
+        return;
+    sk_OSSL_ECHSTORE_ENTRY_pop_free(es->entries, OSSL_ECHSTORE_ENTRY_free);
     OPENSSL_free(es);
     return;
 }
@@ -112,7 +114,7 @@ int OSSL_ECHSTORE_new_config(OSSL_ECHSTORE *es,
     uint8_t config_id = 0;
     WPACKET epkt;
     BUF_MEM *epkt_mem = NULL;
-    OSSL_ECHSTORE_entry *ee = NULL;
+    OSSL_ECHSTORE_ENTRY *ee = NULL;
     char pembuf[2 * EVP_MAX_MD_SIZE + 1];
     size_t pembuflen = 2 * EVP_MAX_MD_SIZE + 1;
 
@@ -260,12 +262,12 @@ int OSSL_ECHSTORE_new_config(OSSL_ECHSTORE *es,
     ee->loadtime = time(0);
     /* push entry into store */
     if (es->entries == NULL)
-        es->entries = sk_OSSL_ECHSTORE_entry_new_null();
+        es->entries = sk_OSSL_ECHSTORE_ENTRY_new_null();
     if (es->entries == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    if (!sk_OSSL_ECHSTORE_entry_push(es->entries, ee)) {
+    if (!sk_OSSL_ECHSTORE_ENTRY_push(es->entries, ee)) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         goto err;
     }
@@ -277,14 +279,14 @@ err:
     EVP_PKEY_free(privp);
     WPACKET_cleanup(&epkt);
     BUF_MEM_free(epkt_mem);
-    OSSL_ECHSTORE_entry_free(ee);
+    OSSL_ECHSTORE_ENTRY_free(ee);
     OPENSSL_free(ee);
     return rv;
 }
 
 int OSSL_ECHSTORE_write_pem(OSSL_ECHSTORE *es, int index, BIO *out)
 {
-    OSSL_ECHSTORE_entry *ee = NULL;
+    OSSL_ECHSTORE_ENTRY *ee = NULL;
     int rv = 0, num = 0, chosen = 0;
 
     if (es == NULL) {
@@ -298,7 +300,7 @@ int OSSL_ECHSTORE_write_pem(OSSL_ECHSTORE *es, int index, BIO *out)
         ERR_raise(ERR_LIB_SSL, SSL_R_ECH_REQUIRED);
         return 0;
     }
-    num = sk_OSSL_ECHSTORE_entry_num(es->entries);
+    num = sk_OSSL_ECHSTORE_ENTRY_num(es->entries);
     if (num <= 0) {
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
@@ -311,7 +313,7 @@ int OSSL_ECHSTORE_write_pem(OSSL_ECHSTORE *es, int index, BIO *out)
         chosen = num - 1;
     else
         chosen = index;
-    ee = sk_OSSL_ECHSTORE_entry_value(es->entries, chosen);
+    ee = sk_OSSL_ECHSTORE_ENTRY_value(es->entries, chosen);
     if (ee == NULL || ee->keyshare == NULL || ee->encoded == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;

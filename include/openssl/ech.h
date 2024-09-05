@@ -79,8 +79,8 @@ typedef struct ossl_ech_info_st {
 #  define SSL_ECH_USE_FOR_RETRY 1
 #  define SSL_ECH_NOT_FOR_RETRY 0
 
-/* 
- * API calls build around OSSL_ECHSSTORE 
+/*
+ * API calls built around OSSL_ECHSTORE
  */
 OSSL_ECHSTORE *OSSL_ECHSTORE_new(OSSL_LIB_CTX *libctx, const char *propq);
 void OSSL_ECHSTORE_free(OSSL_ECHSTORE *es);

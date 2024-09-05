@@ -45,11 +45,14 @@ const OPTIONS ech_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"verbose", OPT_VERBOSE, '-', "Provide additional output"},
     OPT_SECTION("Key generation"),
-    {"pemout", OPT_PEMOUT, '>', "Private key and ECHConfig [echconfig.pem]"},
+    {"pemout", OPT_PEMOUT, '>',
+     "Private key and ECHConfig [default echconfig.pem]"},
     {"public_name", OPT_PUBLICNAME, 's', "public_name value"},
-    {"mlen", OPT_MAXNAMELENGTH, 'n', "Maximum name length value"},
+    {"mlen", OPT_MAXNAMELENGTH, 'n',
+     "Maximum host name length value [default: 0]"},
     {"suite", OPT_HPKESUITE, 's', "HPKE ciphersuite: e.g. \"0x20,1,3\""},
-    {"ech_version", OPT_ECHVERSION, 'n', "ECHConfig version [0xff0d (13)]"},
+    {"ech_version", OPT_ECHVERSION, 'n',
+     "ECHConfig version [default 0xff0d (13)]"},
     {NULL}
 };
 
