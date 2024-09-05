@@ -100,7 +100,7 @@ typedef struct ossl_ex_data_global_st {
 # define OSSL_LIB_CTX_NAMEMAP_INDEX                  4
 # define OSSL_LIB_CTX_DRBG_INDEX                     5
 # define OSSL_LIB_CTX_DRBG_NONCE_INDEX               6
-# define OSSL_LIB_CTX_RAND_CRNGT_INDEX               7
+/* slot 7 unused, was CRNG test data and can be reused */
 # ifdef FIPS_MODULE
 #  define OSSL_LIB_CTX_THREAD_EVENT_HANDLER_INDEX    8
 # endif
