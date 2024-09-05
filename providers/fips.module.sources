@@ -12,6 +12,9 @@ crypto/aes/asm/aes-parisc.pl
 crypto/aes/asm/aes-ppc.pl
 crypto/aes/asm/aes-riscv32-zkn.pl
 crypto/aes/asm/aes-riscv64-zkn.pl
+crypto/aes/asm/aes-riscv64-zvbb-zvkg-zvkned.pl
+crypto/aes/asm/aes-riscv64-zvkb-zvkned.pl
+crypto/aes/asm/aes-riscv64-zvkned.pl
 crypto/aes/asm/aes-riscv64.pl
 crypto/aes/asm/aes-s390x.pl
 crypto/aes/asm/aes-sparcv9.pl
@@ -153,7 +156,6 @@ crypto/ec/asm/ecp_nistz256-ppc64.pl
 crypto/ec/asm/ecp_nistz256-sparcv9.pl
 crypto/ec/asm/ecp_nistz256-x86.pl
 crypto/ec/asm/ecp_nistz256-x86_64.pl
-crypto/ec/asm/ecp_sm2p256-armv8.pl
 crypto/ec/asm/x25519-ppc64.pl
 crypto/ec/asm/x25519-x86_64.pl
 crypto/ec/curve25519.c
@@ -230,6 +232,7 @@ crypto/ffc/ffc_key_validate.c
 crypto/ffc/ffc_params.c
 crypto/ffc/ffc_params_generate.c
 crypto/ffc/ffc_params_validate.c
+crypto/hashtable/hashtable.c
 crypto/hmac/hmac.c
 crypto/hmac/hmac_local.h
 crypto/ia64cpuid.S
@@ -243,12 +246,15 @@ crypto/modes/asm/aes-gcm-armv8-unroll8_64.pl
 crypto/modes/asm/aes-gcm-armv8_64.pl
 crypto/modes/asm/aes-gcm-avx512.pl
 crypto/modes/asm/aes-gcm-ppc.pl
+crypto/modes/asm/aes-gcm-riscv64-zvkb-zvkg-zvkned.pl
 crypto/modes/asm/aesni-gcm-x86_64.pl
 crypto/modes/asm/ghash-alpha.pl
 crypto/modes/asm/ghash-armv4.pl
 crypto/modes/asm/ghash-c64xplus.pl
 crypto/modes/asm/ghash-ia64.pl
 crypto/modes/asm/ghash-parisc.pl
+crypto/modes/asm/ghash-riscv64-zvkb-zvbc.pl
+crypto/modes/asm/ghash-riscv64-zvkg.pl
 crypto/modes/asm/ghash-riscv64.pl
 crypto/modes/asm/ghash-s390x.pl
 crypto/modes/asm/ghash-sparcv9.pl
@@ -286,6 +292,7 @@ crypto/provider_local.h
 crypto/provider_predefined.c
 crypto/rand/rand_lib.c
 crypto/rand/rand_local.h
+crypto/rcu_internal.h
 crypto/riscv32cpuid.pl
 crypto/riscv64cpuid.pl
 crypto/riscvcap.c
@@ -340,6 +347,7 @@ crypto/sha/asm/sha256-586.pl
 crypto/sha/asm/sha256-armv4.pl
 crypto/sha/asm/sha256-c64xplus.pl
 crypto/sha/asm/sha256-mb-x86_64.pl
+crypto/sha/asm/sha256-riscv64-zvkb-zvknha_or_zvknhb.pl
 crypto/sha/asm/sha512-586.pl
 crypto/sha/asm/sha512-armv4.pl
 crypto/sha/asm/sha512-armv8.pl
@@ -348,6 +356,7 @@ crypto/sha/asm/sha512-ia64.pl
 crypto/sha/asm/sha512-mips.pl
 crypto/sha/asm/sha512-parisc.pl
 crypto/sha/asm/sha512-ppc.pl
+crypto/sha/asm/sha512-riscv64-zvkb-zvknhb.pl
 crypto/sha/asm/sha512-s390x.pl
 crypto/sha/asm/sha512-sparcv9.pl
 crypto/sha/asm/sha512-x86_64.pl
@@ -381,6 +390,7 @@ include/crypto/asn1_dsa.h
 include/crypto/bn.h
 include/crypto/bn_conf.h.in
 include/crypto/bn_dh.h
+include/crypto/cmac.h
 include/crypto/context.h
 include/crypto/cryptlib.h
 include/crypto/ctype.h
@@ -414,6 +424,7 @@ include/internal/dsoerr.h
 include/internal/e_os.h
 include/internal/endian.h
 include/internal/ffc.h
+include/internal/hashtable.h
 include/internal/namemap.h
 include/internal/nelem.h
 include/internal/numbers.h
@@ -424,6 +435,7 @@ include/internal/params.h
 include/internal/property.h
 include/internal/propertyerr.h
 include/internal/provider.h
+include/internal/rcu.h
 include/internal/refcount.h
 include/internal/safe_math.h
 include/internal/sha3.h
@@ -435,6 +447,7 @@ include/internal/thread_arch.h
 include/internal/thread_once.h
 include/internal/time.h
 include/internal/tlsgroups.h
+include/internal/to_hex.h
 include/internal/tsan_assist.h
 include/openssl/aes.h
 include/openssl/asn1.h.in
@@ -476,6 +489,8 @@ include/openssl/evperr.h
 include/openssl/fips_names.h
 include/openssl/fipskey.h.in
 include/openssl/hmac.h
+include/openssl/http.h
+include/openssl/indicator.h
 include/openssl/kdf.h
 include/openssl/lhash.h.in
 include/openssl/macros.h
@@ -487,6 +502,8 @@ include/openssl/opensslconf.h
 include/openssl/opensslv.h.in
 include/openssl/param_build.h
 include/openssl/params.h
+include/openssl/pkcs7.h.in
+include/openssl/pkcs7err.h
 include/openssl/prov_ssl.h
 include/openssl/proverr.h
 include/openssl/provider.h
@@ -502,6 +519,9 @@ include/openssl/symhacks.h
 include/openssl/thread.h
 include/openssl/trace.h
 include/openssl/types.h
+include/openssl/x509.h.in
+include/openssl/x509_vfy.h.in
+include/openssl/x509err.h
 providers/common/bio_prov.c
 providers/common/capabilities.c
 providers/common/der/der_digests_gen.c.in
@@ -525,7 +545,6 @@ providers/common/include/prov/der_ec.h.in
 providers/common/include/prov/der_ecx.h.in
 providers/common/include/prov/der_rsa.h.in
 providers/common/include/prov/der_wrap.h.in
-providers/common/include/prov/fipscommon.h
 providers/common/include/prov/proverr.h
 providers/common/include/prov/provider_ctx.h
 providers/common/include/prov/provider_util.h
@@ -538,7 +557,12 @@ providers/common/provider_util.c
 providers/common/securitycheck.c
 providers/common/securitycheck_fips.c
 providers/fips/fips_entry.c
+providers/fips/fipsindicator.c
 providers/fips/fipsprov.c
+providers/fips/include/fips/fipsindicator.h
+providers/fips/include/fips_indicator_params.inc
+providers/fips/include/fips_selftest_params.inc
+providers/fips/include/fipscommon.h
 providers/fips/self_test.c
 providers/fips/self_test.h
 providers/fips/self_test_data.inc
