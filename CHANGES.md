@@ -27,7 +27,7 @@ OpenSSL Releases
 OpenSSL 3.4
 -----------
 
-### Changes between 3.3 and 3.4 alpha 1 [5 Sep 2024]
+### Changes between 3.3 and 3.4 [xx XXX xxxx]
 
  * Improved base64 BIO correctness and error reporting.
 
