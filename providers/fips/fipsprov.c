@@ -386,6 +386,7 @@ static const OSSL_ALGORITHM fips_kdfs[] = {
 };
 
 static const OSSL_ALGORITHM fips_rands[] = {
+    { PROV_NAMES_CRNG_TEST, FIPS_UNAPPROVED_PROPERTIES, ossl_crng_test_functions },
     { PROV_NAMES_CTR_DRBG, FIPS_DEFAULT_PROPERTIES, ossl_drbg_ctr_functions },
     { PROV_NAMES_HASH_DRBG, FIPS_DEFAULT_PROPERTIES, ossl_drbg_hash_functions },
     { PROV_NAMES_HMAC_DRBG, FIPS_DEFAULT_PROPERTIES, ossl_drbg_ossl_hmac_functions },

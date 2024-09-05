@@ -696,6 +696,33 @@ static EVP_RAND_CTX *rand_new_drbg(OSSL_LIB_CTX *libctx, EVP_RAND_CTX *parent,
     return ctx;
 }
 
+#ifdef FIPS_MODULE
+static EVP_RAND_CTX *rand_new_crngt(OSSL_LIB_CTX *libctx, EVP_RAND_CTX *parent)
+{
+    EVP_RAND *rand;
+    EVP_RAND_CTX *ctx;
+
+    rand = EVP_RAND_fetch(libctx, "CRNG-TEST", "fips=no");
+    if (rand == NULL) {
+        ERR_raise(ERR_LIB_RAND, RAND_R_UNABLE_TO_FETCH_DRBG);
+        return NULL;
+    }
+    ctx = EVP_RAND_CTX_new(rand, parent);
+    EVP_RAND_free(rand);
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_RAND, RAND_R_UNABLE_TO_CREATE_DRBG);
+        return NULL;
+    }
+
+    if (!EVP_RAND_instantiate(ctx, 0, 0, NULL, 0, NULL)) {
+        ERR_raise(ERR_LIB_RAND, RAND_R_ERROR_INSTANTIATING_DRBG);
+        EVP_RAND_CTX_free(ctx);
+        return NULL;
+    }
+    return ctx;
+}
+#endif
+
 /*
  * Get the primary random generator.
  * Returns pointer to its EVP_RAND_CTX on success, NULL on failure.
@@ -727,21 +754,23 @@ EVP_RAND_CTX *RAND_get0_primary(OSSL_LIB_CTX *ctx)
         return ret;
     }
 
-#ifndef FIPS_MODULE
+#ifdef FIPS_MODULE
+    ret = rand_new_crngt(ctx, dgbl->seed);
+#else
     if (dgbl->seed == NULL) {
         ERR_set_mark();
         dgbl->seed = rand_new_seed(ctx);
         ERR_pop_to_mark();
     }
+    ret = rand_new_drbg(ctx, dgbl->seed, PRIMARY_RESEED_INTERVAL,
+                        PRIMARY_RESEED_TIME_INTERVAL, 1);
 #endif
 
-    ret = dgbl->primary = rand_new_drbg(ctx, dgbl->seed,
-                                        PRIMARY_RESEED_INTERVAL,
-                                        PRIMARY_RESEED_TIME_INTERVAL, 1);
     /*
-    * The primary DRBG may be shared between multiple threads so we must
-    * enable locking.
-    */
+     * The primary DRBG may be shared between multiple threads so we must
+     * enable locking.
+     */
+    dgbl->primary = ret;
     if (ret != NULL && !EVP_RAND_enable_locking(ret)) {
         ERR_raise(ERR_LIB_EVP, EVP_R_UNABLE_TO_ENABLE_LOCKING);
         EVP_RAND_CTX_free(ret);
