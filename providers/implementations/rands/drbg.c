@@ -197,18 +197,12 @@ static size_t get_entropy(PROV_DRBG *drbg, unsigned char **pout, int entropy,
     unsigned int p_str;
 
     if (drbg->parent == NULL)
-#ifdef FIPS_MODULE
-        return ossl_crngt_get_entropy(drbg, pout, entropy, min_len, max_len,
-                                      prediction_resistance);
-#else
         /*
          * In normal use (i.e. OpenSSL's own uses), this is never called.
-         * Outside of the FIPS provider, OpenSSL sets its DRBGs up so that
-         * they always have a parent.  This remains purely for legacy reasons.
+         * This remains purely for legacy reasons.
          */
         return ossl_prov_get_entropy(drbg->provctx, pout, entropy, min_len,
                                      max_len);
-#endif
 
     if (drbg->parent_get_seed == NULL) {
         ERR_raise(ERR_LIB_PROV, PROV_R_PARENT_CANNOT_SUPPLY_ENTROPY_SEED);
@@ -251,11 +245,7 @@ static size_t get_entropy(PROV_DRBG *drbg, unsigned char **pout, int entropy,
 static void cleanup_entropy(PROV_DRBG *drbg, unsigned char *out, size_t outlen)
 {
     if (drbg->parent == NULL) {
-#ifdef FIPS_MODULE
-        ossl_crngt_cleanup_entropy(drbg, out, outlen);
-#else
         ossl_prov_cleanup_entropy(drbg->provctx, out, outlen);
-#endif
     } else if (drbg->parent_clear_seed != NULL) {
         if (!ossl_drbg_lock_parent(drbg))
             return;
