@@ -4023,6 +4023,22 @@ static int test_poll_event_r(QUIC_XSO *xso)
     int fin = 0;
     size_t avail = 0;
 
+    /*
+     * If a stream has had the fin bit set on the last packet
+     * received, then we need to return a 1 here to raise
+     * SSL_POLL_EVENT_R, so that the stream can have its completion
+     * detected and closed gracefully by an application.
+     * However, if the client reads the data via SSL_read[_ex], that api
+     * provides no stream status, and as a result the stream state moves to
+     * QUIC_RSTREAM_STATE_DATA_READ, and the receive buffer is freed, which
+     * stored the fin state, so its not directly know-able here.  Instead
+     * check for the stream state being QUIC_RSTREAM_STATE_DATA_READ, which
+     * is only set if the last stream frame received had the fin bit set, and
+     * the client read the data.  This catches our poll/read/poll case
+     */
+    if (xso->stream->recv_state == QUIC_RSTREAM_STATE_DATA_READ)
+        return 1;
+
     return ossl_quic_stream_has_recv_buffer(xso->stream)
         && ossl_quic_rstream_available(xso->stream->rstream, &avail, &fin)
         && (avail > 0 || (fin && !xso->retired_fin));
