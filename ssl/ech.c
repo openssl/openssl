@@ -76,7 +76,7 @@ static void ossl_echext_free(OSSL_ECHEXT *e)
     return;
 }
 
-static void OSSL_ECHSTORE_ENTRY_free(OSSL_ECHSTORE_ENTRY *ee)
+static void ossl_echstore_entry_free(OSSL_ECHSTORE_ENTRY *ee)
 {
     if (ee == NULL)
         return;
@@ -95,7 +95,7 @@ void OSSL_ECHSTORE_free(OSSL_ECHSTORE *es)
 {
     if (es == NULL)
         return;
-    sk_OSSL_ECHSTORE_ENTRY_pop_free(es->entries, OSSL_ECHSTORE_ENTRY_free);
+    sk_OSSL_ECHSTORE_ENTRY_pop_free(es->entries, ossl_echstore_entry_free);
     OPENSSL_free(es);
     return;
 }
@@ -279,7 +279,7 @@ err:
     EVP_PKEY_free(privp);
     WPACKET_cleanup(&epkt);
     BUF_MEM_free(epkt_mem);
-    OSSL_ECHSTORE_ENTRY_free(ee);
+    ossl_echstore_entry_free(ee);
     OPENSSL_free(ee);
     return rv;
 }

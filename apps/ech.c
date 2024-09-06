@@ -48,7 +48,7 @@ const OPTIONS ech_options[] = {
     {"pemout", OPT_PEMOUT, '>',
      "Private key and ECHConfig [default echconfig.pem]"},
     {"public_name", OPT_PUBLICNAME, 's', "public_name value"},
-    {"mlen", OPT_MAXNAMELENGTH, 'n',
+    {"max_name_len", OPT_MAXNAMELENGTH, 'n',
      "Maximum host name length value [default: 0]"},
     {"suite", OPT_HPKESUITE, 's', "HPKE ciphersuite: e.g. \"0x20,1,3\""},
     {"ech_version", OPT_ECHVERSION, 'n',

@@ -12,7 +12,7 @@ B<openssl> B<ech>
 [B<-verbose>]
 [B<-pemout> I<file>]
 [B<-public_name> I<name>]
-[B<-mlen> I<len>]
+[B<-max_name_len> I<len>]
 [B<-suite> I<suite_str>]
 [B<-ech_version> I<version>]
 
@@ -46,7 +46,7 @@ Name of output ECHConfig PEM file.
 
 The DNS name to use in the "public_name" field of the ECHConfig.
 
-=item B<-mlen> I<num>
+=item B<-max_name_len> I<num>
 
 Maximum name length field value to use in the ECHConfig.
 
