@@ -1,0 +1,16 @@
+*.so
+*.o
+test/test_kyber1024
+test/test_kyber512
+test/test_kyber768
+test/test_speed1024
+test/test_speed512
+test/test_speed768
+test/test_vectors1024
+test/test_vectors512
+test/test_vectors768
+nistkat/PQCgenKAT_kem512
+nistkat/PQCgenKAT_kem768
+nistkat/PQCgenKAT_kem1024
+nistkat/*.req
+nistkat/*.rsp
