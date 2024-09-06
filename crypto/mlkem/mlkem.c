@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <string.h>
 #include "params.h"
-#include "kem.h"
+#include "mlkem.h"
 #include "indcpa.h"
 #include "verify.h"
 #include "symmetric.h"

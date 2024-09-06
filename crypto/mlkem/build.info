@@ -1,0 +1,5 @@
+LIBS=../../libcrypto
+
+SOURCE[../../libcrypto]=cbd.c fips202.c indcpa.c mlkem.c ntt.c poly.c \
+                        polyvec.c randombytes.c reduce.c symmetric-shake.c \
+                        verify.c
