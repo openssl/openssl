@@ -4023,6 +4023,16 @@ static int test_poll_event_r(QUIC_XSO *xso)
     int fin = 0;
     size_t avail = 0;
 
+    /*
+     * If the recv state is QUIC_RSTREAM_STATE_DATA_READ
+     * then we must have received a fin bit in the last packet
+     * return 1 here to indicate a read event so the next SSL_read
+     * produces an error and SSL_ZERO_RETURN cause
+     */
+    if (xso->stream->recv_state == QUIC_RSTREAM_STATE_DATA_READ)
+        return 1;
+
+
     return ossl_quic_stream_has_recv_buffer(xso->stream)
         && ossl_quic_rstream_available(xso->stream->rstream, &avail, &fin)
         && (avail > 0 || (fin && !xso->retired_fin));
