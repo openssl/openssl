@@ -557,11 +557,6 @@ int dtls1_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
             return -1;
         }
 
-        if (rr->type == SSL3_RT_HANDSHAKE && SSL_CONNECTION_IS_DTLS13(sc)) {
-            sc->s3.tmp.record_epoch = rr->epoch;
-            sc->s3.tmp.record_seq_num = rr->seq_num;
-        }
-
         /* We found handshake data, so we're going back into init */
         ossl_statem_set_in_init(sc, 1);
 
