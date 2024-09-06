@@ -20,7 +20,7 @@
 *              - uint8_t *coins: pointer to input randomness
 *                (an already allocated array filled with 2*KYBER_SYMBYTES random bytes)
 **
-* Returns 0 (success)
+* Returns 1 (success)
 **************************************************/
 int crypto_kem_keypair_derand(uint8_t *pk,
                               uint8_t *sk,
@@ -31,7 +31,7 @@ int crypto_kem_keypair_derand(uint8_t *pk,
   hash_h(sk+KYBER_SECRETKEYBYTES-2*KYBER_SYMBYTES, pk, KYBER_PUBLICKEYBYTES);
   /* Value z for pseudo-random output on reject */
   memcpy(sk+KYBER_SECRETKEYBYTES-KYBER_SYMBYTES, coins+KYBER_SYMBYTES, KYBER_SYMBYTES);
-  return 0;
+  return 1;
 }
 
 /*************************************************
@@ -45,7 +45,7 @@ int crypto_kem_keypair_derand(uint8_t *pk,
 *              - uint8_t *sk: pointer to output private key
 *                (an already allocated array of KYBER_SECRETKEYBYTES bytes)
 *
-* Returns 0 (success)
+* Returns 1 (success)
 **************************************************/
 int crypto_kem_keypair(uint8_t *pk,
                        uint8_t *sk)
@@ -53,7 +53,7 @@ int crypto_kem_keypair(uint8_t *pk,
   uint8_t coins[2*KYBER_SYMBYTES];
   randombytes(coins, 2*KYBER_SYMBYTES);
   crypto_kem_keypair_derand(pk, sk, coins);
-  return 0;
+  return 1;
 }
 
 /*************************************************
@@ -71,7 +71,7 @@ int crypto_kem_keypair(uint8_t *pk,
 *              - const uint8_t *coins: pointer to input randomness
 *                (an already allocated array filled with KYBER_SYMBYTES random bytes)
 **
-* Returns 0 (success)
+* Returns 1 (success)
 **************************************************/
 int crypto_kem_enc_derand(uint8_t *ct,
                           uint8_t *ss,
@@ -92,7 +92,7 @@ int crypto_kem_enc_derand(uint8_t *ct,
   indcpa_enc(ct, buf, pk, kr+KYBER_SYMBYTES);
 
   memcpy(ss,kr,KYBER_SYMBYTES);
-  return 0;
+  return 1;
 }
 
 /*************************************************
@@ -108,7 +108,7 @@ int crypto_kem_enc_derand(uint8_t *ct,
 *              - const uint8_t *pk: pointer to input public key
 *                (an already allocated array of KYBER_PUBLICKEYBYTES bytes)
 *
-* Returns 0 (success)
+* Returns 1 (success)
 **************************************************/
 int crypto_kem_enc(uint8_t *ct,
                    uint8_t *ss,
@@ -117,7 +117,7 @@ int crypto_kem_enc(uint8_t *ct,
   uint8_t coins[KYBER_SYMBYTES];
   randombytes(coins, KYBER_SYMBYTES);
   crypto_kem_enc_derand(ct, ss, pk, coins);
-  return 0;
+  return 1;
 }
 
 /*************************************************
@@ -133,7 +133,7 @@ int crypto_kem_enc(uint8_t *ct,
 *              - const uint8_t *sk: pointer to input private key
 *                (an already allocated array of KYBER_SECRETKEYBYTES bytes)
 *
-* Returns 0.
+* Returns 1.
 *
 * On failure, ss will contain a pseudo-random value.
 **************************************************/
@@ -165,5 +165,5 @@ int crypto_kem_dec(uint8_t *ss,
   /* Copy true key to return buffer if fail is false */
   cmov(ss,kr,KYBER_SYMBYTES,!fail);
 
-  return 0;
+  return 1;
 }
