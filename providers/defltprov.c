@@ -477,6 +477,7 @@ static const OSSL_ALGORITHM deflt_asym_kem[] = {
 # endif
     { PROV_NAMES_EC, "provider=default", ossl_ec_asym_kem_functions },
 #endif
+    { PROV_NAMES_MLKEM, "provider=default", ossl_mlkem_asym_key_functions },
     { NULL, NULL, NULL }
 };
 

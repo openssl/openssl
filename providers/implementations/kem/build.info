@@ -3,8 +3,10 @@
 
 $RSA_KEM_GOAL=../../libdefault.a ../../libfips.a
 $EC_KEM_GOAL=../../libdefault.a
+$ML_KEM_GOAL=../../libdefault.a
 
 SOURCE[$RSA_KEM_GOAL]=rsa_kem.c
+SOURCE[$ML_KEM_GOAL]=ml_kem.c
 
 IF[{- !$disabled{ec} -}]
   SOURCE[$EC_KEM_GOAL]=kem_util.c ec_kem.c

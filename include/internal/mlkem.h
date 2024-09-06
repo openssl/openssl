@@ -73,4 +73,14 @@ int mlkem1024_ref_enc_derand(uint8_t *ct, uint8_t *ss, const uint8_t *pk, const 
 int mlkem1024_ref_enc(uint8_t *ct, uint8_t *ss, const uint8_t *pk);
 int mlkem1024_ref_dec(uint8_t *ss, const uint8_t *ct, const uint8_t *sk);
 
+# define MLKEM_KEY_TYPE_512     0
+# define MLKEM_KEY_TYPE_768     1
+# define MLKEY_KEY_TYPE_1024    2
+
+typedef struct mlkem_key_st {
+    int keytype;
+    uint8_t *seckey;
+    uint8_t *pubkey;
+} MLKEM_KEY;
+
 #endif /* OSSL_INTERNAL_MLKEM_H */
