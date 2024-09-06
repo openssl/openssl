@@ -1,3 +1,4 @@
+
 /*
  *  Copyright 2024 The OpenSSL Project Authors. All Rights Reserved.
  *
@@ -41,6 +42,8 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
+static int handle_io_failure(SSL *ssl, int res);
+
 /**
  * @brief A static pointer to a BIO object representing the session's BIO.
  *
@@ -66,6 +69,7 @@ static BIO *session_bio = NULL;
  * file in which it is declared.
  */
 static BIO *bio_keylog = NULL;
+
 
 /**
  * @brief Creates a BIO object for a UDP socket connection to a server.
@@ -175,7 +179,6 @@ static BIO *create_socket_bio(const char *hostname, const char *port,
 
     return bio;
 }
-
 
 /**
  * @brief Waits for activity on the SSL socket, either for reading or writing.
@@ -439,7 +442,6 @@ static int cache_new_session(struct ssl_st *ssl, SSL_SESSION *sess)
     if (!PEM_write_bio_SSL_SESSION(session_bio, sess))
         return 0;
 
-    fprintf(stderr, "Writing a new session to the cache\n");
     (void)BIO_flush(session_bio);
     /* only cache one session */
     session_cached = 1;
@@ -513,7 +515,124 @@ err:
 
 static SSL_POLL_ITEM *poll_list = NULL;
 static BIO **outbiolist = NULL;
+static char **outnames = NULL;
 static size_t poll_count = 0;
+static char **req_array = NULL;
+static size_t total_requests = 0;
+static size_t req_idx = 0;
+
+static size_t build_request_set(SSL *ssl)
+{
+    size_t poll_idx;
+    char *req;
+    char outfilename[1024];
+    char req_string[1024];
+    SSL *new_stream;
+    size_t written;
+
+    /*
+     * Free any previous poll lists
+     */
+
+    for (poll_idx = 0; poll_idx < poll_count; poll_idx++) {
+        (void)BIO_flush(outbiolist[poll_idx]);
+        BIO_free(outbiolist[poll_idx]);
+        SSL_free(poll_list[poll_idx].desc.value.ssl);
+    }
+    OPENSSL_free(outbiolist);
+    OPENSSL_free(outnames);
+    OPENSSL_free(poll_list);
+    outnames = NULL;
+    poll_list = NULL;
+    outbiolist = NULL;
+
+    poll_count = 0;
+
+    while (req_idx < total_requests) {
+	req = req_array[req_idx];
+        poll_count++;
+        poll_idx = poll_count - 1;
+
+        poll_list = OPENSSL_realloc(poll_list,
+                                    sizeof(SSL_POLL_ITEM) * poll_count);
+        if (poll_list == NULL) {
+            fprintf(stderr, "Unable to realloc poll_list\n");
+            goto err;
+        }
+
+        outbiolist = OPENSSL_realloc(outbiolist,
+                                     sizeof(BIO *) * poll_count);
+        if (outbiolist == NULL) {
+            fprintf(stderr, "Unable to realloc outbiolist\n");
+            goto err;
+        }
+
+        outnames = OPENSSL_realloc(outnames, sizeof(char *) * poll_count);
+        if (outnames == NULL) {
+            fprintf(stderr, "Unable to realloc outnames\n");
+            goto err;
+        }
+       
+        outnames[poll_idx] = req;
+
+        /* Format the http request */
+        sprintf(req_string, "GET /%s\r\n", req);
+
+        /* build the outfile request path */
+        memset(outfilename, 0, 1024);
+        sprintf(outfilename, "/downloads/%s", req);
+
+        /* open a bio to write the file */
+        outbiolist[poll_idx] = BIO_new_file(outfilename, "w+");
+        if (outbiolist[poll_idx] == NULL) {
+            fprintf(stderr, "Failed to open outfile %s\n", outfilename);
+            goto err;
+        }
+
+        /* create a request stream */
+        new_stream = NULL;
+        if (poll_count <= 99)
+            new_stream = SSL_new_stream(ssl, 0);
+
+        if (new_stream == NULL) {
+            /*
+             * We ran out of new streams to allocate
+             * return and process this batch before getting more
+             */
+            poll_count--;
+            return poll_count;
+        }
+        poll_list[poll_idx].desc = SSL_as_poll_descriptor(new_stream);
+        poll_list[poll_idx].revents = 0;
+        poll_list[poll_idx].events = SSL_POLL_EVENT_R;
+
+        /* Write an HTTP GET request to the peer */
+        while (!SSL_write_ex2(poll_list[poll_idx].desc.value.ssl,
+                              req_string, strlen(req_string),
+                              SSL_WRITE_FLAG_CONCLUDE, &written)) {
+            fprintf(stderr, "Write failed\n");
+            if (handle_io_failure(poll_list[poll_idx].desc.value.ssl, 0) == 1)
+                continue; /* Retry */
+            fprintf(stderr, "Failed to write start of HTTP request\n");
+            goto err; /* Cannot retry: error */
+        }
+
+        req_idx++;
+    }
+    return poll_count;
+
+err:
+    for (poll_idx = 0; poll_idx < poll_count; poll_idx++) {
+        BIO_free(outbiolist[poll_idx]);
+        SSL_free(poll_list[poll_idx].desc.value.ssl);
+    }
+    OPENSSL_free(poll_list);
+    OPENSSL_free(outbiolist);
+    poll_list = NULL;
+    outbiolist = NULL;
+    poll_count = 0;
+    return poll_count;
+}
 
 /**
  * @brief Entry point for the QUIC hq-interop client demo application.
@@ -547,26 +666,26 @@ int main(int argc, char *argv[])
     BIO *req_bio = NULL;
     int res = EXIT_FAILURE;
     int ret;
-    unsigned char alpn[] = { 10, 'h','q','-','i','n','t','e','r','o','p'};
     char req_string[1024];
-    size_t written, readbytes = 0;
+    size_t readbytes = 0;
     char buf[160];
-    BIO_ADDR *peer_addr = NULL;
     int eof = 0;
-    char *hostname, *port;
-    int ipv6 = 0;
     int argnext = 1;
     char *reqfile = NULL;
     char *sslkeylogfile = NULL;
     char *reqnames = OPENSSL_zalloc(1025);
     size_t read_offset = 0;
     size_t bytes_read = 0;
-    char *req = NULL, *saveptr = NULL;
-    char outfilename[1024];
     size_t poll_idx = 0;
     size_t poll_done = 0;
     size_t result_count = 0;
     struct timeval poll_timeout;
+    size_t this_poll_count = 0;
+    char *req, *saveptr = NULL;
+    char *hostname, *port;
+    int ipv6 = 0;
+    unsigned char alpn[] = { 10, 'h','q','-','i','n','t','e','r','o','p'};
+    BIO_ADDR *peer_addr = NULL;
 
     if (argc < 4) {
         fprintf(stderr, "Usage: quic-hq-interop [-6] hostname port file\n");
@@ -586,10 +705,6 @@ int main(int argc, char *argv[])
     reqfile = argv[argnext];
 
     memset(req_string, 0, 1024);
-#if 0
-    sprintf(req_string, "GET /%s\r\n",
-            reqfile);
-#endif
     req_bio = BIO_new_file(reqfile, "r");
     if (req_bio == NULL) {
         fprintf(stderr, "Failed to open request file %s\n", reqfile);
@@ -704,7 +819,7 @@ int main(int argc, char *argv[])
      * The underlying socket is always nonblocking with QUIC, but the default
      * behaviour of the SSL object is still to block. We set it for nonblocking
      * mode in this demo.
-     {*/
+     */
     if (!SSL_set_blocking_mode(ssl, 0)) {
         fprintf(stderr, "Failed to turn off blocking mode\n");
         goto end;
@@ -718,78 +833,31 @@ int main(int argc, char *argv[])
         goto end; /* Cannot retry: error */
     }
 
-
-    /* Send an http1.0 request for each item in reqnames */
     req = strtok_r(reqnames, " ", &saveptr);
+
     while (req != NULL) {
-
-        poll_count++;
-        poll_idx = poll_count - 1;
-        poll_list = OPENSSL_realloc(poll_list,
-                                    sizeof(SSL_POLL_ITEM) * poll_count);
-        if (poll_list == NULL) {
-            fprintf(stderr, "Unable to realloc poll_list\n");
-            goto end;
-        }
-
-        outbiolist = OPENSSL_realloc(outbiolist,
-                                     sizeof(BIO *) * poll_count);
-        if (outbiolist == NULL) {
-            fprintf(stderr, "Unable to realloc outbiolist\n");
-            goto end;
-        }
-
-        /* Format the http request */
-        sprintf(req_string, "GET /%s\r\n", req);
-
-        /* build the outfile request path */
-        memset(outfilename, 0, 1024);
-        sprintf(outfilename, "/downloads/%s", req);
-
-        /* open a bio to write the file */
-        outbiolist[poll_idx] = BIO_new_file(outfilename, "w+");
-        if (outbiolist[poll_idx] == NULL) {
-            fprintf(stderr, "Failed to open outfile %s\n", outfilename);
-            goto end;
-        }
-
-        /* create a request stream */
-        poll_list[poll_idx].desc = SSL_as_poll_descriptor(SSL_new_stream(ssl, 0));
-        if (poll_list[poll_idx].desc.value.ssl == NULL) {
-            fprintf(stderr, "Failed to create stream request bio\n");
-            goto end;
-        }
-
-        poll_list[poll_idx].revents = 0;
-        poll_list[poll_idx].events = SSL_POLL_EVENT_R;
-
-        /* Write an HTTP GET request to the peer */
-        while (!SSL_write_ex2(poll_list[poll_idx].desc.value.ssl,
-                              req_string, strlen(req_string),
-                              SSL_WRITE_FLAG_CONCLUDE, &written)) {
-            fprintf(stderr, "Write failed\n");
-            if (handle_io_failure(poll_list[poll_idx].desc.value.ssl, 0) == 1)
-                continue; /* Retry */
-            fprintf(stderr, "Failed to write start of HTTP request\n");
-            goto end; /* Cannot retry: error */
-        }
-        req = strtok_r(NULL, " ", &saveptr);
+	total_requests++;
+	req_array = OPENSSL_realloc(req_array, sizeof(char *) * total_requests); 
+	req_array[total_requests-1] = req;
+    	req = strtok_r(NULL, " ", &saveptr);
     }
 
+    /* get a list of requests to poll */
+    this_poll_count = build_request_set(ssl);
     /*
      * Now poll all our descriptors for events
      */
-    while (poll_done < poll_count) {
+    while (this_poll_count != 0 && poll_done < this_poll_count) {
         result_count = 0;
         poll_timeout.tv_sec = 0;
         poll_timeout.tv_usec = 0;
-        if (!SSL_poll(poll_list, poll_count, sizeof(SSL_POLL_ITEM),
+        if (!SSL_poll(poll_list, this_poll_count, sizeof(SSL_POLL_ITEM),
                      &poll_timeout, 0, &result_count)) {
             fprintf(stderr, "Failed to poll\n");
             goto end;
         }
 
-        for (poll_idx = 0; poll_idx < poll_count; poll_idx++) {
+        for (poll_idx = 0; poll_idx < this_poll_count; poll_idx++) {
             if (result_count == 0)
                 break;
             if (poll_list[poll_idx].revents == SSL_POLL_EVENT_R) {
@@ -799,6 +867,7 @@ int main(int argc, char *argv[])
                  * Get up to sizeof(buf) bytes of the response. We keep reading until
                  * the server closes the connection.
                  */
+		eof = 0;
                 if (!SSL_read_ex(poll_list[poll_idx].desc.value.ssl, buf,
                                  sizeof(buf), &readbytes)) {
                     switch (handle_io_failure(poll_list[poll_idx].desc.value.ssl,
@@ -825,17 +894,28 @@ int main(int argc, char *argv[])
                 if (!eof) {
                     BIO_write(outbiolist[poll_idx], buf, readbytes);
                 } else {
+                    fprintf(stderr, "completed %s\n", outnames[poll_idx]);
                     /* This file is done, take it out of polling contention */
                     poll_list[poll_idx].events = 0;
                     poll_done++;
                 }
             }
         }
+
+        /*
+         * If we've completed this poll set, try get another one
+         */
+        if (poll_done == this_poll_count) {
+            this_poll_count = build_request_set(ssl);
+	    poll_done=0;
+        }
     }
+
     /*
      * Repeatedly call SSL_shutdown() until the connection is fully
      * closed.
      */
+    fprintf(stderr, "Shutting down\n");
     while ((ret = SSL_shutdown(ssl)) != 1) {
         if (ret < 0 && handle_io_failure(ssl, ret) == 1)
             continue; /* Retry */
