@@ -80,6 +80,8 @@ static int i2r_ISSUER_SERIAL(X509V3_EXT_METHOD *method,
         BIO_printf(out, "%*sIssuer Names:\n", indent, "");
         OSSL_GENERAL_NAMES_print(out, iss->issuer, indent);
         BIO_puts(out, "\n");
+    } else {
+        BIO_printf(out, "%*sIssuer Names: <none>\n", indent, "");
     }
     BIO_printf(out, "%*sIssuer Serial: ", indent, "");
     if (i2a_ASN1_INTEGER(out, &(iss->serial)) <= 0)
@@ -90,6 +92,8 @@ static int i2r_ISSUER_SERIAL(X509V3_EXT_METHOD *method,
         if (i2a_ASN1_STRING(out, iss->issuerUID, V_ASN1_BIT_STRING) <= 0)
             return 0;
         BIO_puts(out, "\n");
+    } else {
+        BIO_printf(out, "%*sIssuer UID: <none>\n", indent, "");
     }
     return 1;
 }
