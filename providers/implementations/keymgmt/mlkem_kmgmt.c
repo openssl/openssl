@@ -293,13 +293,15 @@ static void *mlkem_dup(const void *vsrckey, int selection)
         return NULL;
 
     dstkey->keytype = srckey->keytype;
-    if (srckey->pubkey != NULL) {
+    if (srckey->pubkey != NULL
+            && (selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
         dstkey->pubkey = OPENSSL_memdup(srckey->pubkey, MLKEM768_PUBLICKEYBYTES);
         if (dstkey->pubkey == NULL) {
             goto err;
         }
     }
-    if (srckey->seckey != NULL) {
+    if (srckey->seckey != NULL
+            && (selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
         dstkey->seckey = OPENSSL_memdup(srckey->seckey, MLKEM768_SECRETKEYBYTES);
         if (dstkey->seckey == NULL) {
             goto err;
