@@ -532,6 +532,8 @@ static const OSSL_ALGORITHM deflt_keymgmt[] = {
     { PROV_NAMES_SM2, "provider=default", ossl_sm2_keymgmt_functions,
       PROV_DESCS_SM2 },
 #endif
+    { PROV_NAMES_MLKEM, "provider=default", ossl_mlkem_keymgmt_functions,
+      PROV_DESCS_MLKEM },
     { NULL, NULL, NULL }
 };
 

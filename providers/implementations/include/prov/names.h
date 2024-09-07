@@ -384,3 +384,4 @@
 #define PROV_NAMES_SM2 "SM2:1.2.156.10197.1.301"
 #define PROV_DESCS_SM2 "OpenSSL SM2 implementation"
 #define PROV_NAMES_MLKEM "ML-KEM"
+#define PROV_DESCS_MLKEM "OpenSSL ML-KEM implementation"
