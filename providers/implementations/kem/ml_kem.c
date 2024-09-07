@@ -62,7 +62,7 @@ static int mlkem_init(void *vctx, int operation, void *vkey, void *vauth,
     if (!ossl_prov_is_running())
         return 0;
 
-    if (mlkemkey->keytype == MLKEM_KEY_TYPE_768)
+    if (mlkemkey->keytype != MLKEM_KEY_TYPE_768)
         return 0;
 
     ctx->key = mlkemkey;
