@@ -232,6 +232,8 @@ This is an unapproved algorithm.
 
 =over 4
 
+=item CRNG-TEST, see L<EVP_RAND-CRNG-TEST(7)>
+
 =item CTR-DRBG, see L<EVP_RAND-CTR-DRBG(7)>
 
 =item HASH-DRBG, see L<EVP_RAND-HASH-DRBG(7)>
