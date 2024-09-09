@@ -28,7 +28,10 @@ jobs:
       - name: Patch implementations file
         run: |
           head -n -2 implementations.json > ./implementations.tmp
-          echo -e "},\n\"openssl\": {\n\"image\": \"quay.io/openssl-ci/openssl-quic-interop\",\n\"url\": \"https://github.com/openssl/openssl\",\n\"role\": \"client\"\n}\n}" >> ./implementations.tmp
+          jq '.openssl = { image: "quay.io/openssl-ci/openssl-quic-interop"
+                         , url: "https://github.com/openssl/openssl"
+                         , role: "client"
+                         }' ./implementations.json > ./implementations.tmp
           mv ./implementations.tmp implementations.json
       - name: "run interop"
         run: |
