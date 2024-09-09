@@ -124,6 +124,7 @@ my %params = (
     'CIPHER_PARAM_NUM' =>                  "num",         # uint
     'CIPHER_PARAM_ROUNDS' =>               "rounds",      # uint
     'CIPHER_PARAM_AEAD_TAG' =>             "tag",         # octet_string
+    'CIPHER_PARAM_PIPELINE_AEAD_TAG' =>    "pipeline-tag",# octet_ptr
     'CIPHER_PARAM_AEAD_TLS1_AAD' =>        "tlsaad",      # octet_string
     'CIPHER_PARAM_AEAD_TLS1_AAD_PAD' =>    "tlsaadpad",   # size_t
     'CIPHER_PARAM_AEAD_TLS1_IV_FIXED' =>   "tlsivfixed",  # octet_string
