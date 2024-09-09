@@ -3867,7 +3867,7 @@ static BIO *keylog_bio = NULL;
 /**
  * @brief Ref counter tracking the number of keylog_bio users.
  */
-unsigned int keylog_count = 0;
+static unsigned int keylog_count = 0;
 
 /**
  * @brief Initializes the SSLKEYLOGFILE lock.
@@ -4170,36 +4170,37 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
     }
 
 #ifndef OPENSSL_NO_SSLKEYLOG
-    /* Make sure we have a global lock allocated */
-    if (!RUN_ONCE(&ssl_keylog_once, ssl_keylog_init)) {
-        /* log an error, but don't fail here */
-        ERR_raise(ERR_LIB_SSL, ERR_R_SSL_LIB);
-    } else {
-        /* If someone set SSLKEYLOGFILE ... */
-        if (keylogfile != NULL) {
-            /* Grab out global lock */
-            if (!CRYPTO_THREAD_write_lock(keylog_lock)) {
-                ERR_raise(ERR_LIB_SSL, ERR_R_SSL_LIB);
-            } else {
-                /*
-                 * If the bio for the requested keylog file hasn't been
-                 * created yet, go ahead and create it, truncating it to zero
-                 */
-                if (keylog_bio == NULL) {
-                    keylog_bio = BIO_new_file(keylogfile, "w+");
-                    if (keylog_bio == NULL)
-                        ERR_raise(ERR_LIB_SSL, ERR_R_SSL_LIB);
-                    else
-                        /* up our ref count for the newly created case */
-                        keylog_count++;
-                } else {
-                    /* up our refcount for the already-created case */
+    if (keylogfile != NULL && strlen(keylogfile) != 0) {
+        /* Make sure we have a global lock allocated */
+        if (!RUN_ONCE(&ssl_keylog_once, ssl_keylog_init)) {
+            /* log an error, but don't fail here */
+            ERR_raise(ERR_LIB_SSL, ERR_R_SSL_LIB);
+            goto err;
+        }
+
+        /* Grab out global lock */
+        if (!CRYPTO_THREAD_write_lock(keylog_lock)) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_SSL_LIB);
+        } else {
+            /*
+             * If the bio for the requested keylog file hasn't been
+             * created yet, go ahead and create it, and set it to append
+             * if its already there.
+             */
+            if (keylog_bio == NULL) {
+                keylog_bio = BIO_new_file(keylogfile, "a");
+                if (keylog_bio == NULL)
+                    ERR_raise(ERR_LIB_SSL, ERR_R_SSL_LIB);
+                else
+                    /* up our ref count for the newly created case */
                     keylog_count++;
-                }
-                /* If we have a bio now, assign the callback handler */
-                if (keylog_bio != NULL)
-                    ret->sslkeylog_callback = sslkeylogfile_cb;
+            } else {
+                /* up our refcount for the already-created case */
+                keylog_count++;
             }
+            /* If we have a bio now, assign the callback handler */
+            if (keylog_bio != NULL)
+                ret->sslkeylog_callback = sslkeylogfile_cb;
             /* unlock, and we're done */
             CRYPTO_THREAD_unlock(keylog_lock);
         }
