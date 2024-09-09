@@ -93,6 +93,7 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
                                     const EVP_CIPHER *cipher,
                                     ENGINE *impl, const unsigned char *key,
                                     const unsigned char *iv, int enc,
+                                    uint8_t is_pipeline,
                                     const OSSL_PARAM params[])
 {
     int n;
@@ -119,6 +120,8 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
     }
 
     /* Code below to be removed when legacy support is dropped. */
+    if (is_pipeline)
+        goto nonlegacy;
 
 #if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
     /*
@@ -166,7 +169,7 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
     }
 
     /* Start of non-legacy code below */
-
+nonlegacy:
     /* Ensure a context left lying around from last time is cleared */
     if (cipher != NULL && ctx->cipher != NULL) {
         unsigned long flags = ctx->flags;
@@ -216,6 +219,12 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
         ctx->fetched_cipher = (EVP_CIPHER *)cipher;
     }
     ctx->cipher = cipher;
+
+    if (is_pipeline && !EVP_CIPHER_can_pipeline(cipher, enc)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_PIPELINE_NOT_SUPPORTED);
+        return 0;
+    }
+
     if (ctx->algctx == NULL) {
         ctx->algctx = ctx->cipher->newctx(ossl_provider_ctx(cipher->prov));
         if (ctx->algctx == NULL) {
@@ -248,7 +257,7 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
         OSSL_PARAM *q = param_lens;
         const OSSL_PARAM *p;
 
-        p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_KEYLEN); 
+        p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_KEYLEN);
         if (p != NULL)
             memcpy(q++, p, sizeof(*q));
 
@@ -268,6 +277,9 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
         }
     }
 #endif
+
+    if (is_pipeline)
+        return 1;
 
     if (enc) {
         if (ctx->cipher->einit == NULL) {
@@ -444,7 +456,7 @@ int EVP_CipherInit_ex2(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
                        const unsigned char *key, const unsigned char *iv,
                        int enc, const OSSL_PARAM params[])
 {
-    return evp_cipher_init_internal(ctx, cipher, NULL, key, iv, enc, params);
+    return evp_cipher_init_internal(ctx, cipher, NULL, key, iv, enc, 0, params);
 }
 
 int EVP_CipherInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
@@ -452,14 +464,74 @@ int EVP_CipherInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 {
     if (cipher != NULL)
         EVP_CIPHER_CTX_reset(ctx);
-    return evp_cipher_init_internal(ctx, cipher, NULL, key, iv, enc, NULL);
+    return evp_cipher_init_internal(ctx, cipher, NULL, key, iv, enc, 0, NULL);
 }
 
 int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
                       ENGINE *impl, const unsigned char *key,
                       const unsigned char *iv, int enc)
 {
-    return evp_cipher_init_internal(ctx, cipher, impl, key, iv, enc, NULL);
+    return evp_cipher_init_internal(ctx, cipher, impl, key, iv, enc, 0, NULL);
+}
+
+int EVP_CipherPipelineEncryptInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
+                                  const unsigned char *key, size_t keylen,
+                                  size_t numpipes,
+                                  const unsigned char **iv, size_t ivlen)
+{
+    if (numpipes > EVP_MAX_PIPES) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_TOO_MANY_PIPES);
+        return 0;
+    }
+
+    ctx->numpipes = numpipes;
+
+    if (!evp_cipher_init_internal(ctx, cipher, NULL, NULL, NULL, 1, 1,
+                                  NULL))
+        return 0;
+
+    if (ctx->cipher->p_einit == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+        return 0;
+    }
+
+    return ctx->cipher->p_einit(ctx->algctx,
+                                key,
+                                keylen,
+                                numpipes,
+                                iv,
+                                ivlen,
+                                NULL);
+}
+
+int EVP_CipherPipelineDecryptInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
+                                  const unsigned char *key, size_t keylen,
+                                  size_t numpipes,
+                                  const unsigned char **iv, size_t ivlen)
+{
+    if (numpipes > EVP_MAX_PIPES) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_TOO_MANY_PIPES);
+        return 0;
+    }
+
+    ctx->numpipes = numpipes;
+
+    if (!evp_cipher_init_internal(ctx, cipher, NULL, NULL, NULL, 0, 1,
+                                  NULL))
+        return 0;
+
+    if (ctx->cipher->p_dinit == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+        return 0;
+    }
+
+    return ctx->cipher->p_dinit(ctx->algctx,
+                                key,
+                                keylen,
+                                numpipes,
+                                iv,
+                                ivlen,
+                                NULL);
 }
 
 int EVP_CipherUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
@@ -469,6 +541,41 @@ int EVP_CipherUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
         return EVP_EncryptUpdate(ctx, out, outl, in, inl);
     else
         return EVP_DecryptUpdate(ctx, out, outl, in, inl);
+}
+
+int EVP_CipherPipelineUpdate(EVP_CIPHER_CTX *ctx,
+                             unsigned char **out, size_t *outl,
+                             const size_t *outsize,
+                             const unsigned char **in, const size_t *inl)
+{
+    size_t i;
+
+    if (ossl_unlikely(outl == NULL || inl == NULL)) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    if (ossl_unlikely(ctx->cipher == NULL)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_NO_CIPHER_SET);
+        return 0;
+    }
+
+    if (ossl_unlikely(ctx->cipher->prov == NULL)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_OPERATION);
+        return 0;
+    }
+
+    if (ossl_unlikely(ctx->cipher->p_cupdate == NULL)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_UPDATE_ERROR);
+        return 0;
+    }
+
+    for (i = 0; i < ctx->numpipes; i++)
+        outl[i] = 0;
+
+    return ctx->cipher->p_cupdate(ctx->algctx, ctx->numpipes,
+                                  out, outl, outsize,
+                                  in, inl);
 }
 
 int EVP_CipherFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
@@ -485,6 +592,39 @@ int EVP_CipherFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
         return EVP_EncryptFinal(ctx, out, outl);
     else
         return EVP_DecryptFinal(ctx, out, outl);
+}
+
+int EVP_CipherPipelineFinal(EVP_CIPHER_CTX *ctx,
+                            unsigned char **out, size_t *outl,
+                            const size_t *outsize)
+{
+    size_t i;
+
+    if (ossl_unlikely(outl == NULL)) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    if (ossl_unlikely(ctx->cipher == NULL)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_NO_CIPHER_SET);
+        return 0;
+    }
+
+    if (ossl_unlikely(ctx->cipher->prov == NULL)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_OPERATION);
+        return 0;
+    }
+
+    if (ossl_unlikely(ctx->cipher->p_cfinal == NULL)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_FINAL_ERROR);
+        return 0;
+    }
+
+    for (i = 0; i < ctx->numpipes; i++)
+        outl[i] = 0;
+
+    return ctx->cipher->p_cfinal(ctx->algctx, ctx->numpipes,
+                                 out, outl, outsize);
 }
 
 int EVP_EncryptInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
@@ -1567,7 +1707,7 @@ static void *evp_cipher_from_algorithm(const int name_id,
 {
     const OSSL_DISPATCH *fns = algodef->implementation;
     EVP_CIPHER *cipher = NULL;
-    int fnciphcnt = 0, fnctxcnt = 0;
+    int fnciphcnt = 0, fnpipecnt = 0, fnctxcnt = 0;
 
     if ((cipher = evp_cipher_new()) == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_EVP_LIB);
@@ -1628,6 +1768,30 @@ static void *evp_cipher_from_algorithm(const int name_id,
                 break;
             cipher->ccipher = OSSL_FUNC_cipher_cipher(fns);
             break;
+        case OSSL_FUNC_CIPHER_PIPELINE_ENCRYPT_INIT:
+            if (cipher->p_einit != NULL)
+                break;
+            cipher->p_einit = OSSL_FUNC_cipher_pipeline_encrypt_init(fns);
+            fnpipecnt++;
+            break;
+        case OSSL_FUNC_CIPHER_PIPELINE_DECRYPT_INIT:
+            if (cipher->p_dinit != NULL)
+                break;
+            cipher->p_dinit = OSSL_FUNC_cipher_pipeline_decrypt_init(fns);
+            fnpipecnt++;
+            break;
+        case OSSL_FUNC_CIPHER_PIPELINE_UPDATE:
+            if (cipher->p_cupdate != NULL)
+                break;
+            cipher->p_cupdate = OSSL_FUNC_cipher_pipeline_update(fns);
+            fnpipecnt++;
+            break;
+        case OSSL_FUNC_CIPHER_PIPELINE_FINAL:
+            if (cipher->p_cfinal != NULL)
+                break;
+            cipher->p_cfinal = OSSL_FUNC_cipher_pipeline_final(fns);
+            fnpipecnt++;
+            break;
         case OSSL_FUNC_CIPHER_FREECTX:
             if (cipher->freectx != NULL)
                 break;
@@ -1674,7 +1838,9 @@ static void *evp_cipher_from_algorithm(const int name_id,
         }
     }
     if ((fnciphcnt != 0 && fnciphcnt != 3 && fnciphcnt != 4)
-            || (fnciphcnt == 0 && cipher->ccipher == NULL)
+            || (fnciphcnt == 0 && cipher->ccipher == NULL && fnpipecnt == 0)
+            || (fnpipecnt != 0 && (fnpipecnt < 3 || cipher->p_cupdate == NULL
+                                   || cipher->p_cfinal == NULL))
             || fnctxcnt != 2) {
         /*
          * In order to be a consistent set of functions we must have at least
@@ -1718,6 +1884,15 @@ EVP_CIPHER *EVP_CIPHER_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
                           evp_cipher_free);
 
     return cipher;
+}
+
+int EVP_CIPHER_can_pipeline(const EVP_CIPHER *cipher, int enc)
+{
+    if (((enc && cipher->p_einit != NULL) || (!enc && cipher->p_dinit != NULL))
+        && cipher->p_cupdate != NULL && cipher->p_cfinal != NULL)
+        return 1;
+
+    return 0;
 }
 
 int EVP_CIPHER_up_ref(EVP_CIPHER *cipher)

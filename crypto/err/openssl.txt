@@ -788,6 +788,7 @@ EVP_R_OUTPUT_WOULD_OVERFLOW:202:output would overflow
 EVP_R_PARAMETER_TOO_LARGE:187:parameter too large
 EVP_R_PARTIALLY_OVERLAPPING:162:partially overlapping buffers
 EVP_R_PBKDF2_ERROR:181:pbkdf2 error
+EVP_R_PIPELINE_NOT_SUPPORTED:230:pipeline not supported
 EVP_R_PKEY_APPLICATION_ASN1_METHOD_ALREADY_REGISTERED:179:\
 	pkey application asn1 method already registered
 EVP_R_PRIVATE_KEY_DECODE_ERROR:145:private key decode error
@@ -797,6 +798,7 @@ EVP_R_SETTING_XOF_FAILED:227:setting xof failed
 EVP_R_SET_DEFAULT_PROPERTY_FAILURE:209:set default property failure
 EVP_R_SIGNATURE_TYPE_AND_KEY_TYPE_INCOMPATIBLE:228:\
 	signature type and key type incompatible
+EVP_R_TOO_MANY_PIPES:231:too many pipes
 EVP_R_TOO_MANY_RECORDS:183:too many records
 EVP_R_UNABLE_TO_ENABLE_LOCKING:212:unable to enable locking
 EVP_R_UNABLE_TO_GET_MAXIMUM_REQUEST_SIZE:215:unable to get maximum request size

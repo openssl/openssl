@@ -5831,3 +5831,8 @@ i2d_OSSL_TIME_PERIOD                    ?	3_5_0	EXIST::FUNCTION:
 OSSL_TIME_PERIOD_free                   ?	3_5_0	EXIST::FUNCTION:
 OSSL_TIME_PERIOD_new                    ?	3_5_0	EXIST::FUNCTION:
 OSSL_TIME_PERIOD_it                     ?	3_5_0	EXIST::FUNCTION:
+EVP_CIPHER_can_pipeline                 ?	3_5_0	EXIST::FUNCTION:
+EVP_CipherPipelineEncryptInit           ?	3_5_0	EXIST::FUNCTION:
+EVP_CipherPipelineDecryptInit           ?	3_5_0	EXIST::FUNCTION:
+EVP_CipherPipelineUpdate                ?	3_5_0	EXIST::FUNCTION:
+EVP_CipherPipelineFinal                 ?	3_5_0	EXIST::FUNCTION:
