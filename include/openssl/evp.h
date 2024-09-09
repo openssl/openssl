@@ -37,6 +37,8 @@
 # define EVP_MAX_BLOCK_LENGTH            32
 # define EVP_MAX_AEAD_TAG_LENGTH         16
 
+# define EVP_MAX_PIPES                   32
+
 # define PKCS5_SALT_LEN                  8
 /* Default PKCS#5 iteration count */
 # define PKCS5_DEFAULT_ITER              2048
@@ -611,6 +613,7 @@ int EVP_CIPHER_get_type(const EVP_CIPHER *cipher);
 # define EVP_CIPHER_type EVP_CIPHER_get_type
 EVP_CIPHER *EVP_CIPHER_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
                              const char *properties);
+int EVP_CIPHER_can_pipeline(const EVP_CIPHER *cipher, int enc);
 int EVP_CIPHER_up_ref(EVP_CIPHER *cipher);
 void EVP_CIPHER_free(EVP_CIPHER *cipher);
 
@@ -807,6 +810,23 @@ __owur int EVP_CipherUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
                             int *outl, const unsigned char *in, int inl);
 __owur int EVP_CipherFinal(EVP_CIPHER_CTX *ctx, unsigned char *outm,
                            int *outl);
+__owur int EVP_CipherPipelineEncryptInit(EVP_CIPHER_CTX *ctx,
+                                         const EVP_CIPHER *cipher,
+                                         const unsigned char *key, size_t keylen,
+                                         size_t numpipes,
+                                         const unsigned char **iv, size_t ivlen);
+__owur int EVP_CipherPipelineDecryptInit(EVP_CIPHER_CTX *ctx,
+                                         const EVP_CIPHER *cipher,
+                                         const unsigned char *key, size_t keylen,
+                                         size_t numpipes,
+                                         const unsigned char **iv, size_t ivlen);
+__owur int EVP_CipherPipelineUpdate(EVP_CIPHER_CTX *ctx,
+                                    unsigned char **out, size_t *outl,
+                                    const size_t *outsize,
+                                    const unsigned char **in, const size_t *inl);
+__owur int EVP_CipherPipelineFinal(EVP_CIPHER_CTX *ctx,
+                                   unsigned char **outm, size_t *outl,
+                                   const size_t *outsize);
 __owur int EVP_CipherFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *outm,
                               int *outl);
 

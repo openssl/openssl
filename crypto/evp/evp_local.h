@@ -52,6 +52,7 @@ struct evp_cipher_ctx_st {
     int final_used;
     int block_mask;
     unsigned char final[EVP_MAX_BLOCK_LENGTH]; /* possible final block */
+    size_t numpipes;
 
     /*
      * Opaque ctx returned from a providers cipher algorithm implementation

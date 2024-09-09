@@ -341,6 +341,10 @@ struct evp_cipher_st {
     OSSL_FUNC_cipher_update_fn *cupdate;
     OSSL_FUNC_cipher_final_fn *cfinal;
     OSSL_FUNC_cipher_cipher_fn *ccipher;
+    OSSL_FUNC_cipher_pipeline_encrypt_init_fn *p_einit;
+    OSSL_FUNC_cipher_pipeline_decrypt_init_fn *p_dinit;
+    OSSL_FUNC_cipher_pipeline_update_fn *p_cupdate;
+    OSSL_FUNC_cipher_pipeline_final_fn *p_cfinal;
     OSSL_FUNC_cipher_freectx_fn *freectx;
     OSSL_FUNC_cipher_dupctx_fn *dupctx;
     OSSL_FUNC_cipher_get_params_fn *get_params;
