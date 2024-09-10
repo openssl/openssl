@@ -10,23 +10,29 @@ openssl-ech - ECH key generation
 B<openssl> B<ech>
 [B<-help>]
 [B<-verbose>]
-[B<-pemout> I<file>]
+[B<-in> I<files>]
+[B<-out> I<file>]
 [B<-public_name> I<name>]
 [B<-max_name_len> I<len>]
 [B<-suite> I<suite_str>]
 [B<-ech_version> I<version>]
+[B<-select> I<number>]
+[B<-text>]
 
 =head1 DESCRIPTION
 
-The L<openssl-ech(1)> command generates Encrypted Client Hello (ECH) private keys 
-and public keys in the ECHConfig format.
+The L<openssl-ech(1)> command generates Encrypted Client Hello (ECH) key pairs
+in the ECHConfig PEM file format as specified in
+L<https://datatracker.ietf.org/doc/draft-farrell-tls-pemesni/>.
+TODO(ECH): update I-D reference to RFC when possible.
 
-The "ECHConfig PEM file" format mentioned below is specified in
-L<https://datatracker.ietf.org/doc/draft-farrell-tls-pemesni/> and consists of
-one private key in PKCS#8 format and a base64 encoded ECHConfig containing one
-matching public value.
+That format consists of an optional private key in PKCS#8 format and a base64
+encoded ECHConfigList containing an entry with a matching public value (and
+possibly other entries as well).
 
 =head1 OPTIONS
+
+The following options are supported:
 
 =over 4
 
@@ -38,9 +44,21 @@ Print out a usage message.
 
 Print more verbosely.
 
-=item B<-pemout> I<file> 
+=item B<-in>
 
-Name of output ECHConfig PEM file.
+Provide an input ECH PEM file for printing or merging. Up to five
+input files can be provided via use of multiple B<in> arguments.
+
+=item B<-out> I<file>
+
+Name of output ECHConfig PEM file.  If a new key pair was generated the output
+file will contain the private key and encoded ECHConfigList.  If one or more
+input files was provided the output file will contain a set of ECHConfigList
+values with public keys from the inputs, and no private key(s).
+
+=item B<-text>
+
+Provide human-readable text ouput.
 
 =item B<-public_name> I<name>
 
@@ -57,6 +75,11 @@ HPKE suite to use in the ECHConfig.
 =item B<-ech_version> I<version>
 
 The ECH version to use in the ECHConfig. Only 0xfe0d is supported in this version.
+
+=item B<-select> I<number>
+
+Select the N-th ECHConfig/public key from the set of input ECH PEM files and output
+that.
 
 =back
 

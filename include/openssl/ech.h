@@ -58,6 +58,8 @@
 
 /* if a caller wants to index the last entry in the store */
 #  define OSSL_ECHSTORE_LAST -1
+/* if a caller wants all entries in the store, e.g. to print public values */
+#  define OSSL_ECHSTORE_ALL -2
 
 /*
  * Application-visible form of ECH information from the DNS, from config
@@ -73,11 +75,12 @@ typedef struct ossl_ech_info_st {
     unsigned char *inner_alpns; /* inner ALPN string */
     size_t inner_alpns_len;
     char *echconfig; /* a JSON-like version of the associated ECHConfig */
+    int has_private_key; /* 0 if we don't have a related private key */
 } OSSL_ECH_INFO;
 
 /* Values for the for_retry inputs */
-#  define SSL_ECH_USE_FOR_RETRY 1
-#  define SSL_ECH_NOT_FOR_RETRY 0
+#  define OSSL_ECH_FOR_RETRY 1
+#  define OSSL_ECH_NO_RETRY  0
 
 /*
  * API calls built around OSSL_ECHSTORE

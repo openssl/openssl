@@ -28,31 +28,35 @@
 
 # define OSSL_ECH_KEYGEN_MODE    0 /* default: generate a key pair/ECHConfig */
 # define OSSL_ECH_SELPRINT_MODE  1 /* we can print/down-select ECHConfigList */
-
-# define PEM_SELECT_ALL    -1 /* to indicate we're not downselecting another */
+# define OSSL_ECH_MAXINFILES     5 /* we'll only take this many inputs */
 
 typedef enum OPTION_choice {
     /* standard openssl options */
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP, OPT_VERBOSE,
-    OPT_PEMOUT,
+    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP, OPT_VERBOSE, OPT_TEXT,
+    OPT_OUT, OPT_IN,
     /* ECHConfig specifics */
     OPT_PUBLICNAME, OPT_ECHVERSION,
-    OPT_MAXNAMELENGTH, OPT_HPKESUITE
+    OPT_MAXNAMELENGTH, OPT_HPKESUITE,
+    OPT_SELECT
 } OPTION_CHOICE;
 
 const OPTIONS ech_options[] = {
     OPT_SECTION("General options"),
     {"help", OPT_HELP, '-', "Display this summary"},
     {"verbose", OPT_VERBOSE, '-', "Provide additional output"},
+    {"text", OPT_TEXT, '-', "Provide human-readable output"},
     OPT_SECTION("Key generation"),
-    {"pemout", OPT_PEMOUT, '>',
-     "Private key and ECHConfig [default echconfig.pem]"},
+    {"out", OPT_OUT, '>',
+     "Private key and/or ECHConfig [default: echconfig.pem]"},
     {"public_name", OPT_PUBLICNAME, 's', "public_name value"},
     {"max_name_len", OPT_MAXNAMELENGTH, 'n',
      "Maximum host name length value [default: 0]"},
     {"suite", OPT_HPKESUITE, 's', "HPKE ciphersuite: e.g. \"0x20,1,3\""},
     {"ech_version", OPT_ECHVERSION, 'n',
-     "ECHConfig version [default 0xff0d (13)]"},
+     "ECHConfig version [default: 0xff0d (13)]"},
+    OPT_SECTION("ECH PEM file downselect/display"),
+    {"in", OPT_IN, '<', "An ECH PEM file"},
+    {"select", OPT_SELECT, 'n', "Downselect to the numbered ECH config"},
     {NULL}
 };
 
@@ -66,9 +70,8 @@ static uint16_t verstr2us(char *arg)
     long lv = strtol(arg, NULL, 0);
     uint16_t rv = 0;
 
-    if (lv < 0xffff && lv > 0) {
+    if (lv < 0xffff && lv > 0)
         rv = (uint16_t)lv;
-    }
     return rv;
 }
 
@@ -76,14 +79,19 @@ int ech_main(int argc, char **argv)
 {
     char *prog = NULL;
     OPTION_CHOICE o;
-    int verbose = 0;
-    char *pemfile = NULL;
+    int i, rv = 1, verbose = 0, text = 0, outsupp = 0;
+    int select = OSSL_ECHSTORE_ALL;
+    char *outfile = NULL, *infile = NULL;
+    char *infiles[OSSL_ECH_MAXINFILES] = { NULL };
+    int numinfiles = 0;
     char *public_name = NULL;
     char *suitestr = NULL;
     uint16_t ech_version = OSSL_ECH_CURRENT_VERSION;
     uint8_t max_name_length = 0;
     OSSL_HPKE_SUITE hpke_suite = OSSL_HPKE_SUITE_DEFAULT;
     int mode = OSSL_ECH_KEYGEN_MODE; /* key generation */
+    OSSL_ECHSTORE *es = NULL;
+    BIO *ecf = NULL;
 
     prog = opt_init(argc, argv, ech_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -94,12 +102,32 @@ int ech_main(int argc, char **argv)
             goto end;
         case OPT_HELP:
             opt_help(ech_options);
+            rv = 0;
             goto end;
         case OPT_VERBOSE:
             verbose = 1;
             break;
-        case OPT_PEMOUT:
-            pemfile = opt_arg();
+        case OPT_TEXT:
+            text = 1;
+            break;
+        case OPT_SELECT:
+            mode = OSSL_ECH_SELPRINT_MODE;
+            select = strtol(opt_arg(), NULL, 10);
+            break;
+        case OPT_OUT:
+            outfile = opt_arg();
+            outsupp = 1;
+            break;
+        case OPT_IN:
+            mode = OSSL_ECH_SELPRINT_MODE;
+            infile = opt_arg();
+            if (numinfiles >= OSSL_ECH_MAXINFILES) {
+                BIO_printf(bio_err, "too many input files, only %d allowed\n",
+                           OSSL_ECH_MAXINFILES);
+                goto opthelp;
+            }
+            infiles[numinfiles] = infile;
+            numinfiles++;
             break;
         case OPT_PUBLICNAME:
             public_name = opt_arg();
@@ -147,10 +175,10 @@ int ech_main(int argc, char **argv)
         goto end;
     }
 
-    if (max_name_length > TLSEXT_MAXLEN_host_name) {
+    if (max_name_length > OSSL_ECH_MAX_MAXNAMELEN) {
         BIO_printf(bio_err, "Weird max name length (0x%04x) - biggest is "
                    "(0x%04x) - exiting\n", max_name_length,
-                   TLSEXT_MAXLEN_host_name);
+                   OSSL_ECH_MAX_MAXNAMELEN);
         ERR_print_errors(bio_err);
         goto end;
     }
@@ -164,17 +192,15 @@ int ech_main(int argc, char **argv)
     }
 
     /* Set default if needed */
-    if (pemfile == NULL)
-        pemfile = "echconfig.pem";
-
+    if (outfile == NULL)
+        outfile = "echconfig.pem";
+    es = OSSL_ECHSTORE_new(NULL, NULL);
+    if (es == NULL)
+        goto end;
     if (mode == OSSL_ECH_KEYGEN_MODE) {
-        OSSL_ECHSTORE *es = NULL;
-        BIO *ecf = NULL;
-
         if (verbose)
             BIO_printf(bio_err, "Calling OSSL_ECHSTORE_new_config\n");
-        if ((ecf = BIO_new_file(pemfile, "w")) == NULL 
-            || (es = OSSL_ECHSTORE_new(NULL, NULL)) == NULL
+        if ((ecf = BIO_new_file(outfile, "w")) == NULL
             || OSSL_ECHSTORE_new_config(es, ech_version, max_name_length,
                                         public_name, hpke_suite) != 1
             || OSSL_ECHSTORE_write_pem(es, 0, ecf) != 1) {
@@ -183,17 +209,72 @@ int ech_main(int argc, char **argv)
         }
         if (verbose)
             BIO_printf(bio_err, "OSSL_ECHSTORE_new_config success\n");
-        OSSL_ECHSTORE_free(es);
-        BIO_free_all(ecf);
-        return 1;
+        rv = 0;
     }
 
-opthelp:
-    BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
-    goto end;
+    if (mode == OSSL_ECH_SELPRINT_MODE) {
+        if (numinfiles == 0)
+            goto opthelp;
+        for (i = 0; i != numinfiles; i++) {
+            if ((ecf = BIO_new_file(infiles[i], "r")) == NULL
+                || OSSL_ECHSTORE_read_pem(es, ecf, OSSL_ECH_FOR_RETRY) != 1) {
+                if (verbose)
+                    BIO_printf(bio_err, "OSSL_ECHSTORE_read_pem error for %s\n",
+                               infiles[i]);
+                /* try read it as an ECHConfigList */
+                goto end;
+            }
+            BIO_free(ecf);
+            ecf = NULL;
+        }
+        if (verbose)
+            BIO_printf(bio_err, "Success reading %d files\n", numinfiles);
+        if (outsupp == 1) {
+            /* write result to that, with downselection if required */
+            if (verbose)
+                BIO_printf(bio_err, "Will write to %s\n", outfile);
+            if (verbose && select != OSSL_ECHSTORE_ALL)
+                BIO_printf(bio_err, "Selected entry: %d\n", select);
+            if ((ecf = BIO_new_file(outfile, "w")) == NULL
+                || OSSL_ECHSTORE_write_pem(es, select, ecf) != 1) {
+                BIO_printf(bio_err, "OSSL_ECHSTORE_write_pem error\n");
+                goto end;
+            }
+            if (verbose)
+                BIO_printf(bio_err, "Success writing to %s\n", outfile);
+        }
+        rv = 0;
+    }
+
+    if (text) {
+        OSSL_ECH_INFO *oi = NULL;
+        int oi_ind, oi_cnt = 0;
+
+        if (OSSL_ECHSTORE_get1_info(es, &oi, &oi_cnt) != 1)
+            goto end;
+        if (verbose)
+            BIO_printf(bio_err, "Printing %d ECHConfigList\n", oi_cnt);
+        for (oi_ind = 0; oi_ind != oi_cnt; oi_ind++) {
+            if (OSSL_ECH_INFO_print(bio_out, oi, oi_ind) != 1) {
+                BIO_printf(bio_err, "OSSL_ECH_INFO_print error entry (%d)\n",
+                           oi_ind);
+                goto end;
+            }
+        }
+        OSSL_ECH_INFO_free(oi, oi_cnt);
+        if (verbose)
+            BIO_printf(bio_err, "Success printing %d ECHConfigList\n", oi_cnt);
+        rv = 0;
+    }
 
 end:
-    return 0;
+    OSSL_ECHSTORE_free(es);
+    BIO_free_all(ecf);
+    return rv;
+opthelp:
+    BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
+    BIO_printf(bio_err, "\tup to %d -in instances allowed\n", OSSL_ECH_MAXINFILES);
+    return rv;
 }
 
 #endif
