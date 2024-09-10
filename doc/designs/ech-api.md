@@ -205,6 +205,8 @@ typedef struct ossl_echstore_st OSSL_ECHSTORE;
 
 /* if a caller wants to index the last entry in the store */
 # define OSSL_ECHSTORE_LAST -1
+/* if a caller wants all entries in the store, e.g. to print public values */
+#  define OSSL_ECHSTORE_ALL -2
 
 OSSL_ECHSTORE *OSSL_ECHSTORE_new(OSSL_LIB_CTX *libctx, const char *propq);
 void OSSL_ECHSTORE_free(OSSL_ECHSTORE *es);
@@ -234,7 +236,8 @@ value and the related "singleton" ECHConfigList structure.
 structure (conforming to the [PEMECH
 specification](https://datatracker.ietf.org/doc/draft-farrell-tls-pemesni/))
 from the `OSSL_ECHSTORE` entry identified by the `index`. (An `index` of
-`OSSL_ECHSTORE_LAST` will select the last entry.)
+`OSSL_ECHSTORE_LAST` will select the last entry. An `index` of
+`OSSL_ECHSTORE_ALL` will output all public values, and no private values.)
 These two APIs will typically be used via the `openssl ech` command line tool.
 
 `OSSL_ECHSTORE_read_echconfiglist()` will typically be used by a client to
@@ -323,6 +326,7 @@ typedef struct ossl_ech_info_st {
     unsigned char *inner_alpns; /* inner ALPN string */
     size_t inner_alpns_len;
     char *echconfig; /* a JSON-like version of the associated ECHConfig */
+    int has_private_key; /* 0 if we don't have a related private key */
 } OSSL_ECH_INFO;
 
 void OSSL_ECH_INFO_free(OSSL_ECH_INFO *info, int count);
