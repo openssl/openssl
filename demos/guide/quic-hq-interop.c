@@ -873,12 +873,12 @@ static int setup_connection(char *hostname, char *port, int ipv6,
         goto end; /* Cannot retry: error */
     }
 
-    return 0;
+    return 1;
 end:
     SSL_CTX_free(*ctx);
     SSL_free(*ssl);
     BIO_ADDR_free(peer_addr);
-    return 1;
+    return 0;
 }
 
 /**
@@ -926,7 +926,7 @@ int main(int argc, char *argv[])
     size_t result_count = 0;
     struct timeval poll_timeout;
     size_t this_poll_count = 0;
-    char *req, *saveptr = NULL;
+    char *req = NULL;
     char *hostname, *port;
     int ipv6 = 0;
 
@@ -976,13 +976,13 @@ int main(int argc, char *argv[])
         goto end;
     }
 
-    req = strtok_r(reqnames, " ", &saveptr);
+    req = strtok(reqnames, " ");
 
     while (req != NULL) {
         total_requests++;
         req_array = OPENSSL_realloc(req_array, sizeof(char *) * total_requests);
         req_array[total_requests - 1] = req;
-        req = strtok_r(NULL, " ", &saveptr);
+        req = strtok(NULL, " ");
     }
 
     /* get a list of requests to poll */
