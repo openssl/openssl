@@ -326,7 +326,7 @@ SSL_poll() as presently implemented has the following limitation:
 =item
 
 Only B<BIO_POLL_DESCRIPTOR> structures with type
-B<BIO_POLL_DESCRIPTOR_TYPE_SSL>, referencing QUIC connection SSL objects or QUIC
+B<BIO_POLL_DESCRIPTOR_TYPE_SSL>, referencing QUIC listener, connection or
 stream SSL objects, are supported.
 
 =back

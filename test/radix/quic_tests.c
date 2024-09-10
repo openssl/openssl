@@ -123,7 +123,7 @@ DEF_FUNC(ssl_poll_check)
         break;
     case 4: /* Listener test */
         expected_result_count       = 1;
-        items[5].events            |= SSL_POLL_EVENT_IC;
+        items[5].events             = SSL_POLL_EVENT_IC;
         expected_items[5].revents   = SSL_POLL_EVENT_IC;
         break;
     default:
