@@ -76,7 +76,7 @@ Notes on the quic-hq-interop demo
 
 The quic-hq-interop demo is effectively the same as the quic-client-nonblock
 demo, but is specifically constructed to use the hq-interop alpn for the
-purposes of interacting with other demonstration containers found in the 
+purposes of interacting with other demonstration containers found in the
 QUIC working group [interop runner](https://github.com/quic-interop/quic-interop-runner)
 It is run as follows:
 

@@ -54,6 +54,7 @@
 #include <openssl/err.h>
 
 static int handle_io_failure(SSL *ssl, int res);
+static int set_keylog_file(SSL_CTX *ctx, const char *keylog_file);
 
 /**
  * @brief A static pointer to a BIO object representing the session's BIO.
@@ -383,7 +384,7 @@ static void keylog_callback(const SSL *ssl, const char *line)
  * seekable. It also ensures that any previously opened keylog files are
  * closed before opening a new one.
  */
-int set_keylog_file(SSL_CTX *ctx, const char *keylog_file)
+static int set_keylog_file(SSL_CTX *ctx, const char *keylog_file)
 {
     /* Close any open files */
     BIO_free_all(bio_keylog);
