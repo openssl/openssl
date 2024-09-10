@@ -1,4 +1,3 @@
-
 /*
  *  Copyright 2024 The OpenSSL Project Authors. All Rights Reserved.
  *
@@ -55,6 +54,7 @@
 #include <openssl/err.h>
 
 static int handle_io_failure(SSL *ssl, int res);
+static int set_keylog_file(SSL_CTX *ctx, const char *keylog_file);
 
 /**
  * @brief A static pointer to a BIO object representing the session's BIO.
@@ -81,7 +81,6 @@ static BIO *session_bio = NULL;
  * file in which it is declared.
  */
 static BIO *bio_keylog = NULL;
-
 
 /**
  * @brief Creates a BIO object for a UDP socket connection to a server.
@@ -331,7 +330,7 @@ static int handle_io_failure(SSL *ssl, int res)
          */
         if (SSL_get_verify_result(ssl) != X509_V_OK)
             fprintf(stderr, "Verify error: %s\n",
-                X509_verify_cert_error_string(SSL_get_verify_result(ssl)));
+                    X509_verify_cert_error_string(SSL_get_verify_result(ssl)));
         return -1;
 
     default:
@@ -385,7 +384,7 @@ static void keylog_callback(const SSL *ssl, const char *line)
  * seekable. It also ensures that any previously opened keylog files are
  * closed before opening a new one.
  */
-int set_keylog_file(SSL_CTX *ctx, const char *keylog_file)
+static int set_keylog_file(SSL_CTX *ctx, const char *keylog_file)
 {
     /* Close any open files */
     BIO_free_all(bio_keylog);
@@ -480,7 +479,6 @@ static int cache_new_session(struct ssl_st *ssl, SSL_SESSION *sess)
  */
 static int setup_session_cache(SSL *ssl, SSL_CTX *ctx, const char *filename)
 {
-
     SSL_SESSION *sess = NULL;
     int rc = 0;
     int new_cache = 0;
@@ -638,7 +636,7 @@ static size_t build_request_set(SSL *ssl)
      * multiple calls to build_request_list are made
      */
     while (req_idx < total_requests) {
-	req = req_array[req_idx];
+        req = req_array[req_idx];
         /* Up our poll count and set our poll_list index */
         poll_count++;
         poll_idx = poll_count - 1;
@@ -739,6 +737,151 @@ err:
 }
 
 /**
+ * @brief Static pointer to a BIO_ADDR structure representing the peer's address.
+ *
+ * This variable is used to store the address of a peer for network communication.
+ * It is statically allocated and should be initialized appropriately.
+ */
+static BIO_ADDR *peer_addr = NULL;
+
+/**
+ * @brief Set up a TLS/QUIC connection to the specified hostname and port.
+ *
+ * This function creates and configures an SSL context for a client connection
+ * using the QUIC client method. It sets up the necessary certificates,
+ * performs host verification, configures ALPN, and establishes a non-blocking
+ * connection.
+ *
+ * @param hostname Hostname to connect to.
+ * @param port Port to connect to.
+ * @param ipv6 Whether to use IPv6 (non-zero for IPv6, zero for IPv4).
+ * @param ctx Pointer to an SSL_CTX object, which will be created.
+ * @param ssl Pointer to an SSL object, which will be created.
+ *
+ * @return Returns 0 on success, 1 on error.
+ */
+static int setup_connection(char *hostname, char *port, int ipv6,
+                            SSL_CTX **ctx, SSL **ssl)
+{
+    unsigned char alpn[] = {10, 'h', 'q', '-', 'i', 'n', 't', 'e', 'r', 'o', 'p'};
+    int ret = 0;
+    char *sslkeylogfile = NULL;
+    BIO *bio = NULL;
+
+    /*
+     * Create an SSL_CTX which we can use to create SSL objects from. We
+     * want an SSL_CTX for creating clients so we use
+     * OSSL_QUIC_client_method() here.
+     */
+    *ctx = SSL_CTX_new(OSSL_QUIC_client_method());
+    if (*ctx == NULL) {
+        fprintf(stderr, "Failed to create the SSL_CTX\n");
+        goto end;
+    }
+
+    /*
+     * Configure the client to abort the handshake if certificate
+     * verification fails. Virtually all clients should do this unless you
+     * really know what you are doing.
+     */
+    SSL_CTX_set_verify(*ctx, SSL_VERIFY_PEER, NULL);
+
+    /* Use the default trusted certificate store */
+    if (!SSL_CTX_set_default_verify_paths(*ctx)) {
+        fprintf(stderr, "Failed to set the default trusted certificate store\n");
+        goto end;
+    }
+
+    sslkeylogfile = getenv("SSLKEYLOGFILE");
+    if (sslkeylogfile != NULL)
+        if (set_keylog_file(*ctx, sslkeylogfile))
+            goto end;
+
+    /* Create an SSL object to represent the TLS connection */
+    *ssl = SSL_new(*ctx);
+    if (*ssl == NULL) {
+        fprintf(stderr, "Failed to create the SSL object\n");
+        goto end;
+    }
+
+    if (getenv("SSL_SESSION_FILE") != NULL) {
+        if (!setup_session_cache(*ssl, *ctx, getenv("SSL_SESSION_FILE"))) {
+            fprintf(stderr, "Unable to setup session cache\n");
+            goto end;
+        }
+    }
+
+    /*
+     * Create the underlying transport socket/BIO and associate it with the
+     * connection.
+     */
+    bio = create_socket_bio(hostname, port, ipv6 ? AF_INET6 : AF_INET,
+                            &peer_addr);
+    if (bio == NULL) {
+        fprintf(stderr, "Failed to crete the BIO\n");
+        goto end;
+    }
+    SSL_set_bio(*ssl, bio, bio);
+
+    /*
+     * Tell the server during the handshake which hostname we are attempting
+     * to connect to in case the server supports multiple hosts.
+     */
+    if (!SSL_set_tlsext_host_name(*ssl, hostname)) {
+        fprintf(stderr, "Failed to set the SNI hostname\n");
+        goto end;
+    }
+
+    /*
+     * Ensure we check during certificate verification that the server has
+     * supplied a certificate for the hostname that we were expecting.
+     * Virtually all clients should do this unless you really know what you
+     * are doing.
+     */
+    if (!SSL_set1_host(*ssl, hostname)) {
+        fprintf(stderr, "Failed to set the certificate verification hostname");
+        goto end;
+    }
+
+    /* SSL_set_alpn_protos returns 0 for success! */
+    if (SSL_set_alpn_protos(*ssl, alpn, sizeof(alpn)) != 0) {
+        fprintf(stderr, "Failed to set the ALPN for the connection\n");
+        goto end;
+    }
+
+    /* Set the IP address of the remote peer */
+    if (!SSL_set1_initial_peer_addr(*ssl, peer_addr)) {
+        fprintf(stderr, "Failed to set the initial peer address\n");
+        goto end;
+    }
+
+    /*
+     * The underlying socket is always nonblocking with QUIC, but the default
+     * behaviour of the SSL object is still to block. We set it for nonblocking
+     * mode in this demo.
+     */
+    if (!SSL_set_blocking_mode(*ssl, 0)) {
+        fprintf(stderr, "Failed to turn off blocking mode\n");
+        goto end;
+    }
+
+    /* Do the handshake with the server */
+    while ((ret = SSL_connect(*ssl)) != 1) {
+        if (handle_io_failure(*ssl, ret) == 1)
+            continue; /* Retry */
+        fprintf(stderr, "Failed to connect to server\n");
+        goto end; /* Cannot retry: error */
+    }
+
+    return 1;
+end:
+    SSL_CTX_free(*ctx);
+    SSL_free(*ssl);
+    BIO_ADDR_free(peer_addr);
+    return 0;
+}
+
+/**
  * @brief Entry point for the QUIC hq-interop client demo application.
  *
  * This function sets up an SSL/TLS connection using QUIC, sends HTTP GET
@@ -766,7 +909,6 @@ int main(int argc, char *argv[])
 {
     SSL_CTX *ctx = NULL;
     SSL *ssl = NULL;
-    BIO *bio = NULL;
     BIO *req_bio = NULL;
     int res = EXIT_FAILURE;
     int ret;
@@ -776,7 +918,6 @@ int main(int argc, char *argv[])
     int eof = 0;
     int argnext = 1;
     char *reqfile = NULL;
-    char *sslkeylogfile = NULL;
     char *reqnames = OPENSSL_zalloc(1025);
     size_t read_offset = 0;
     size_t bytes_read = 0;
@@ -785,11 +926,9 @@ int main(int argc, char *argv[])
     size_t result_count = 0;
     struct timeval poll_timeout;
     size_t this_poll_count = 0;
-    char *req, *saveptr = NULL;
+    char *req = NULL;
     char *hostname, *port;
     int ipv6 = 0;
-    unsigned char alpn[] = { 10, 'h','q','-','i','n','t','e','r','o','p'};
-    BIO_ADDR *peer_addr = NULL;
 
     if (argc < 4) {
         fprintf(stderr, "Usage: quic-hq-interop [-6] hostname port file\n");
@@ -822,7 +961,7 @@ int main(int argc, char *argv[])
             goto end;
         }
         read_offset += bytes_read;
-        reqnames = OPENSSL_realloc(reqnames, read_offset+1024);
+        reqnames = OPENSSL_realloc(reqnames, read_offset + 1024);
         if (reqnames == NULL) {
             fprintf(stderr, "Realloc failure\n");
             goto end;
@@ -830,124 +969,25 @@ int main(int argc, char *argv[])
     }
     BIO_free(req_bio);
     req_bio = NULL;
-    reqnames[read_offset+1] = '\0';
-    
-    /*
-     * Create an SSL_CTX which we can use to create SSL objects from. We
-     * want an SSL_CTX for creating clients so we use
-     * OSSL_QUIC_client_method() here.
-     */
-    ctx = SSL_CTX_new(OSSL_QUIC_client_method());
-    if (ctx == NULL) {
-        fprintf(stderr, "Failed to create the SSL_CTX\n");
+    reqnames[read_offset + 1] = '\0';
+
+    if (!setup_connection(hostname, port, ipv6, &ctx, &ssl)) {
+        fprintf(stderr, "Unable to establish connection\n");
         goto end;
     }
 
-    /*
-     * Configure the client to abort the handshake if certificate
-     * verification fails. Virtually all clients should do this unless you
-     * really know what you are doing.
-     */
-    SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
-
-    /* Use the default trusted certificate store */
-    if (!SSL_CTX_set_default_verify_paths(ctx)) {
-        fprintf(stderr, "Failed to set the default trusted certificate store\n");
-        goto end;
-    }
-
-    sslkeylogfile = getenv("SSLKEYLOGFILE");
-    if (sslkeylogfile != NULL)
-        if (set_keylog_file(ctx, sslkeylogfile))
-            goto end;
-
-    /* Create an SSL object to represent the TLS connection */
-    ssl = SSL_new(ctx);
-    if (ssl == NULL) {
-        fprintf(stderr, "Failed to create the SSL object\n");
-        goto end;
-    }
-
-    if (getenv("SSL_SESSION_FILE") != NULL) {
-        if (!setup_session_cache(ssl, ctx, getenv("SSL_SESSION_FILE"))) {
-            fprintf(stderr, "Unable to setup session cache\n");
-            goto end;
-        }
-    }
-
-    /*
-     * Create the underlying transport socket/BIO and associate it with the
-     * connection.
-     */
-    bio = create_socket_bio(hostname, port, ipv6 ? AF_INET6 : AF_INET,
-                            &peer_addr);
-    if (bio == NULL) {
-        fprintf(stderr, "Failed to crete the BIO\n");
-        goto end;
-    }
-    SSL_set_bio(ssl, bio, bio);
-
-    /*
-     * Tell the server during the handshake which hostname we are attempting
-     * to connect to in case the server supports multiple hosts.
-     */
-    if (!SSL_set_tlsext_host_name(ssl, hostname)) {
-        fprintf(stderr, "Failed to set the SNI hostname\n");
-        goto end;
-    }
-
-    /*
-     * Ensure we check during certificate verification that the server has
-     * supplied a certificate for the hostname that we were expecting.
-     * Virtually all clients should do this unless you really know what you
-     * are doing.
-     */
-    if (!SSL_set1_host(ssl, hostname)) {
-        fprintf(stderr, "Failed to set the certificate verification hostname");
-        goto end;
-    }
-
-    /* SSL_set_alpn_protos returns 0 for success! */
-    if (SSL_set_alpn_protos(ssl, alpn, sizeof(alpn)) != 0) {
-        fprintf(stderr, "Failed to set the ALPN for the connection\n");
-        goto end;
-    }
-
-    /* Set the IP address of the remote peer */
-    if (!SSL_set1_initial_peer_addr(ssl, peer_addr)) {
-        fprintf(stderr, "Failed to set the initial peer address\n");
-        goto end;
-    }
-
-    /*
-     * The underlying socket is always nonblocking with QUIC, but the default
-     * behaviour of the SSL object is still to block. We set it for nonblocking
-     * mode in this demo.
-     */
-    if (!SSL_set_blocking_mode(ssl, 0)) {
-        fprintf(stderr, "Failed to turn off blocking mode\n");
-        goto end;
-    }
-
-    /* Do the handshake with the server */
-    while ((ret = SSL_connect(ssl)) != 1) {
-        if (handle_io_failure(ssl, ret) == 1)
-            continue; /* Retry */
-        fprintf(stderr, "Failed to connect to server\n");
-        goto end; /* Cannot retry: error */
-    }
-
-    req = strtok_r(reqnames, " ", &saveptr);
+    req = strtok(reqnames, " ");
 
     while (req != NULL) {
-	total_requests++;
-	req_array = OPENSSL_realloc(req_array, sizeof(char *) * total_requests); 
-	req_array[total_requests-1] = req;
-    	req = strtok_r(NULL, " ", &saveptr);
+        total_requests++;
+        req_array = OPENSSL_realloc(req_array, sizeof(char *) * total_requests);
+        req_array[total_requests - 1] = req;
+        req = strtok(NULL, " ");
     }
 
     /* get a list of requests to poll */
     this_poll_count = build_request_set(ssl);
+
     /*
      * Now poll all our descriptors for events
      */
@@ -956,7 +996,7 @@ int main(int argc, char *argv[])
         poll_timeout.tv_sec = 0;
         poll_timeout.tv_usec = 0;
         if (!SSL_poll(poll_list, this_poll_count, sizeof(SSL_POLL_ITEM),
-                     &poll_timeout, 0, &result_count)) {
+                      &poll_timeout, 0, &result_count)) {
             fprintf(stderr, "Failed to poll\n");
             goto end;
         }
@@ -1005,8 +1045,8 @@ int main(int argc, char *argv[])
 
                 /*
                  * If error handling indicated that this SSL is in an EOF state
-                 * we mark the SSL as not needing any more polling, and up our 
-                 * poll_done count.  Otherwise, just write to the outbio 
+                 * we mark the SSL as not needing any more polling, and up our
+                 * poll_done count.  Otherwise, just write to the outbio
                  */
                 if (!eof) {
                     BIO_write(outbiolist[poll_idx], buf, readbytes);
@@ -1024,7 +1064,7 @@ int main(int argc, char *argv[])
          */
         if (poll_done == this_poll_count) {
             this_poll_count = build_request_set(ssl);
-	    poll_done=0;
+            poll_done = 0;
         }
     }
 
