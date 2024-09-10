@@ -1357,6 +1357,7 @@ SSL_R_BAD_DH_VALUE:102:bad dh value
 SSL_R_BAD_DIGEST_LENGTH:111:bad digest length
 SSL_R_BAD_EARLY_DATA:233:bad early data
 SSL_R_BAD_ECC_CERT:304:bad ecc cert
+SSL_R_BAD_ECHCONFIG_EXTENSION:422:bad echconfig extension
 SSL_R_BAD_ECPOINT:306:bad ecpoint
 SSL_R_BAD_EXTENSION:110:bad extension
 SSL_R_BAD_HANDSHAKE_LENGTH:332:bad handshake length
@@ -1437,6 +1438,7 @@ SSL_R_DTLS_MESSAGE_TOO_BIG:334:dtls message too big
 SSL_R_DUPLICATE_COMPRESSION_ID:309:duplicate compression id
 SSL_R_ECC_CERT_NOT_FOR_SIGNING:318:ecc cert not for signing
 SSL_R_ECDH_REQUIRED_FOR_SUITEB_MODE:374:ecdh required for suiteb mode
+SSL_R_ECH_DECODE_ERROR:423:ech decode error
 SSL_R_ECH_REQUIRED:421:ech required
 SSL_R_EE_KEY_TOO_SMALL:399:ee key too small
 SSL_R_EMPTY_RAW_PUBLIC_KEY:349:empty raw public key
