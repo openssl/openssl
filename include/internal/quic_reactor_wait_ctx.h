@@ -43,12 +43,12 @@
  * it natural for us to implement it simply by registering a blocking call per
  * SSL object passed in. Since multiple SSL objects may be passed to an SSL_poll
  * call, and some SSL objects may correspond to the same reactor, and other SSL
- * objects may correspond toa different reactor, we need to be able to determine
- * when a SSL_poll call has finished with all of the SSL objects *corresponding
- * to a given reactor*.
+ * objects may correspond to a different reactor, we need to be able to
+ * determine when a SSL_poll() call has finished with all of the SSL objects
+ * *corresponding to a given reactor*.
  *
- * Doing this requires some ephemeral state tracking as a SSL_poll call may map
- * to an arbitrarily large set of reactor objects. For now, we track this
+ * Doing this requires some ephemeral state tracking as a SSL_poll() call may
+ * map to an arbitrarily large set of reactor objects. For now, we track this
  * separately from the reactor code as the state needed is only ephemeral and
  * this keeps the reactor internals simple.
  *
