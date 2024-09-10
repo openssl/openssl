@@ -2,6 +2,10 @@ SUBDIRS=record rio quic
 
 LIBS=../libssl
 
+IF[{- !$disabled{ech} -}]
+  SUBDIRS=ech
+ENDIF
+
 SOURCE[../libssl]=\
         pqueue.c \
         statem/statem_srvr.c statem/statem_clnt.c  s3_lib.c  s3_enc.c \
@@ -16,7 +20,6 @@ SOURCE[../libssl]=\
         bio_ssl.c ssl_err_legacy.c tls_srp.c t1_trce.c ssl_utst.c \
         statem/statem.c \
         ssl_cert_comp.c \
-        ech.c \
         tls_depr.c
 
 # For shared builds we need to include the libcrypto packet.c and quic_vlint.c
