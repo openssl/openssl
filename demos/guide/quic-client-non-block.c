@@ -362,7 +362,7 @@ int main(int argc, char *argv[])
         goto end; /* Cannot retry: error */
     }
     while (!SSL_write_ex2(ssl, request_end, strlen(request_end),
-           SSL_WRITE_FLAG_CONCLUDE, &written)) {
+                          SSL_WRITE_FLAG_CONCLUDE, &written)) {
         if (handle_io_failure(ssl, 0) == 1)
             continue; /* Retry */
         printf("Failed to write end of HTTP request\n");

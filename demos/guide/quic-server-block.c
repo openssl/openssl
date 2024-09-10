@@ -191,7 +191,7 @@ static int run_quic_server(SSL_CTX *ctx, int fd)
     unsigned char buf[8192];
     size_t nread;
     size_t nwritten;
-    SSL_SHUTDOWN_EX_ARGS shutdown_args;
+    SSL_SHUTDOWN_EX_ARGS shutdown_args = {0};
 
     /*
      * Create a new QUIC listener. Listeners, and other QUIC objects, default
@@ -215,8 +215,6 @@ static int run_quic_server(SSL_CTX *ctx, int fd)
      * exit this loop if we encounter an error.
      */
     for (;;) {
-        shutdown_args = (SSL_SHUTDOWN_EX_ARGS){0};
-
         /* Pristine error stack for each new connection */
         ERR_clear_error();
 

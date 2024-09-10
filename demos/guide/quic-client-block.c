@@ -244,7 +244,7 @@ int main(int argc, char *argv[])
         goto end;
     }
     if (!SSL_write_ex2(ssl, request_end, strlen(request_end),
-        SSL_WRITE_FLAG_CONCLUDE, &written)) {
+                       SSL_WRITE_FLAG_CONCLUDE, &written)) {
         printf("Failed to write end of HTTP request\n");
         goto end;
     }
