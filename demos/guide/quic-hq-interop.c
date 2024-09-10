@@ -27,6 +27,18 @@
  * @note This client is intended for demonstration purposes and may require
  * additional error handling and robustness improvements for production use.
  *
+ * USAGE
+ * quic-hq-interop <host> <port> <reqfile>
+ * host - The hostname of the server to contact
+ * port - The port that the server is listening on
+ * reqfile - a text file containing a space separated list of paths to fetch
+ *           via http 1.0 GET requests
+ *
+ * ENVIRONMENT VARIABLES
+ * SSLKEYLOGFILE - set to a file path to record keylog exchange with server
+ * SSL_SESSION_FILE - set to a file path to record ssl sessions and restore
+ *                    said sessions on next invocation
+ * SSL_CERT_FILE - The ca file to use when validating a server
  */
 #include <string.h>
 
@@ -513,14 +525,83 @@ err:
     return rc;
 }
 
+/**
+ * @brief Pointer to a list of SSL polling items.
+ *
+ * This static variable holds the reference to a dynamically allocated list
+ * of SSL_POLL_ITEM structures used for SSL polling operations. It is
+ * initialized to NULL and will be populated as needed.
+ */
 static SSL_POLL_ITEM *poll_list = NULL;
+
+/**
+ * @brief Pointer to an array of BIO objects for output.
+ *
+ * This static variable holds the reference to a dynamically allocated array
+ * of BIO structures, which are used for handling output in SSL operations.
+ * It is initialized to NULL and will be set when needed.  This array holds
+ * the out bio's for all received data from GET requests
+ */
 static BIO **outbiolist = NULL;
+
+/**
+ * @brief Pointer to an array of output names.
+ *
+ * This static variable holds the reference to a dynamically allocated array
+ * of strings, representing output names. It is initialized to NULL and
+ * populated as required during operation.  This array holds the names of the
+ * output files from http GET requests.  Indicies are correlated with the
+ * corresponding outbiolist and poll_list arrays
+ */
 static char **outnames = NULL;
+
+/**
+ * @brief Counter for the number of poll items.
+ *
+ * This static variable holds the count of items in the poll_list. It is
+ * initialized to 0 and updated as items are added or removed from the list.
+ */
 static size_t poll_count = 0;
+
+/**
+ * @brief Pointer to an array of request strings.
+ *
+ * This static variable holds the reference to a dynamically allocated array
+ * of strings, representing requests. It is initialized to NULL and populated
+ * as requests are added during execution.
+ */
 static char **req_array = NULL;
+
+/**
+ * @brief Counter for the total number of requests.
+ *
+ * This static variable tracks the total number of parsed from reqfile. It is
+ * initialized to 0 and incremented as new requests are processed.
+ */
 static size_t total_requests = 0;
+
+/**
+ * @brief Index for the current request in the request array.
+ *
+ * This static variable keeps track of the index of the current request being
+ * processed in the request array. It is initialized to 0 and updated as
+ * requests are handled.
+ */
 static size_t req_idx = 0;
 
+/**
+ * @brief Builds and processes a set of SSL poll requests.
+ *
+ * This function creates a new set of SSL poll requests based on the current
+ * request array. It allocates and manages memory for poll lists, BIO output
+ * files, and associated request names. Each request sends an HTTP GET to the
+ * corresponding peer. The function processes the requests until a batch limit
+ * or error is encountered.
+ *
+ * @param ssl A pointer to the SSL object to use for creating new streams.
+ *
+ * @return The number of poll requests successfully built, or 0 on error.
+ */
 static size_t build_request_set(SSL *ssl)
 {
     size_t poll_idx;
@@ -531,14 +612,17 @@ static size_t build_request_set(SSL *ssl)
     size_t written;
 
     /*
-     * Free any previous poll lists
+     * Free any previous poll list
      */
-
     for (poll_idx = 0; poll_idx < poll_count; poll_idx++) {
         (void)BIO_flush(outbiolist[poll_idx]);
         BIO_free(outbiolist[poll_idx]);
         SSL_free(poll_list[poll_idx].desc.value.ssl);
     }
+
+    /*
+     * Reset out lists and poll_count
+     */
     OPENSSL_free(outbiolist);
     OPENSSL_free(outnames);
     OPENSSL_free(poll_list);
@@ -548,11 +632,20 @@ static size_t build_request_set(SSL *ssl)
 
     poll_count = 0;
 
+    /*
+     * Iterate through our parsed lists of requests
+     * note req_idx may start at a non-zero value if
+     * multiple calls to build_request_list are made
+     */
     while (req_idx < total_requests) {
 	req = req_array[req_idx];
+        /* Up our poll count and set our poll_list index */
         poll_count++;
         poll_idx = poll_count - 1;
 
+        /*
+         * Expand our poll_list, outbiolist, and outnames arrays
+         */
         poll_list = OPENSSL_realloc(poll_list,
                                     sizeof(SSL_POLL_ITEM) * poll_count);
         if (poll_list == NULL) {
@@ -572,7 +665,8 @@ static size_t build_request_set(SSL *ssl)
             fprintf(stderr, "Unable to realloc outnames\n");
             goto err;
         }
-       
+
+        /* set the output file name for this index */
         outnames[poll_idx] = req;
 
         /* Format the http request */
@@ -591,6 +685,12 @@ static size_t build_request_set(SSL *ssl)
 
         /* create a request stream */
         new_stream = NULL;
+
+        /*
+         * We don't strictly have to do this check, but our quic client limits
+         * our max data streams to 100, so we're just batching in groups of 100
+         * for now
+         */
         if (poll_count <= 99)
             new_stream = SSL_new_stream(ssl, 0);
 
@@ -602,6 +702,10 @@ static size_t build_request_set(SSL *ssl)
             poll_count--;
             return poll_count;
         }
+
+        /*
+         * Create a poll descriptor for this stream
+         */
         poll_list[poll_idx].desc = SSL_as_poll_descriptor(new_stream);
         poll_list[poll_idx].revents = 0;
         poll_list[poll_idx].events = SSL_POLL_EVENT_R;
@@ -857,17 +961,31 @@ int main(int argc, char *argv[])
             goto end;
         }
 
+        /* Iterate over our poll array looking for ready SSL's */
         for (poll_idx = 0; poll_idx < this_poll_count; poll_idx++) {
+            /*
+             * If we have visited the number of SSL's that SSL_poll
+             * indicated were ready, we can go poll again
+             */
             if (result_count == 0)
                 break;
+
             if (poll_list[poll_idx].revents == SSL_POLL_EVENT_R) {
+                /*
+                 * We found an SSL that we can read, drop our result count
+                 */
                 result_count--;
+
+                /* And clear the revents for the next poll */
                 poll_list[poll_idx].revents = 0;
+
                 /*
                  * Get up to sizeof(buf) bytes of the response. We keep reading until
                  * the server closes the connection.
                  */
-		eof = 0;
+                eof = 0;
+
+                /* Read our data, and handle any errors/eof conditions */
                 if (!SSL_read_ex(poll_list[poll_idx].desc.value.ssl, buf,
                                  sizeof(buf), &readbytes)) {
                     switch (handle_io_failure(poll_list[poll_idx].desc.value.ssl,
@@ -884,12 +1002,11 @@ int main(int argc, char *argv[])
                         goto end; /* Cannot retry: error */
                     }
                 }
+
                 /*
-                 * OpenSSL does not guarantee that the returned data is a string or
-                 * that it is NUL terminated so we use fwrite() to write the exact
-                 * number of bytes that we read. The data could be non-printable or
-                 * have NUL characters in the middle of it. For this simple example
-                 * we're going to print it to stdout anyway.
+                 * If error handling indicated that this SSL is in an EOF state
+                 * we mark the SSL as not needing any more polling, and up our 
+                 * poll_done count.  Otherwise, just write to the outbio 
                  */
                 if (!eof) {
                     BIO_write(outbiolist[poll_idx], buf, readbytes);
