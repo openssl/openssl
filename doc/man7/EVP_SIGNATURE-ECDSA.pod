@@ -25,7 +25,7 @@ L<EVP_PKEY_sign_init_ex2(3)>, and implicitly fetched (through
 L<EC keys|EVP_PKEY-EC(7)>) with L<EVP_DigestSignInit(3)> and
 L<EVP_DigestVerifyInit(3)>.
 
-Can't be used with L<EVP_PKEY_sign_message_init(3)>
+It can't be used with L<EVP_PKEY_sign_message_init(3)>
 
 =item "ECDSA-SHA1", "ECDSA-SHA-1", "ecdsa-with-SHA1", "1.2.840.10045.4.1"
 
@@ -44,7 +44,6 @@ Can't be used with L<EVP_PKEY_sign_message_init(3)>
 =item "ECDSA-SHA3-384", "ecdsa_with_SHA3-384", "id-ecdsa-with-sha3-384", "2.16.840.1.101.3.4.3.11"
 
 =item "ECDSA-SHA3-512", "ecdsa_with_SHA3-512", "id-ecdsa-with-sha3-512", "2.16.840.1.101.3.4.3.12"
-
 
 ECDSA signature schemes with diverse message digest algorithm.  They are all
 supported explicitly fetched with L<EVP_PKEY_sign_init_ex2(3)> and

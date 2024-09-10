@@ -29,7 +29,7 @@ L<EVP_PKEY_sign_init_ex2(3)>, and implicitly fetched (through
 L<EC keys|EVP_PKEY-EC(7)>) with L<EVP_DigestSignInit(3)> and
 L<EVP_DigestVerifyInit(3)>.
 
-Can't be used with L<EVP_PKEY_sign_message_init(3)>
+It can't be used with L<EVP_PKEY_sign_message_init(3)>
 
 =item "DSA-SHA1", "DSA-SHA-1", "dsaWithSHA1", "1.2.840.10040.4.3"
 
