@@ -1,6 +1,16 @@
-#include "poll_builder.h"
-#include "internal/safe_math.h"
+/*
+ * Copyright 2024 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
+
 #include <assert.h>
+#include <errno.h>
+#include "internal/safe_math.h"
+#include "poll_builder.h"
 
 OSSL_SAFE_MATH_UNSIGNED(size_t, size_t)
 
@@ -56,6 +66,10 @@ static int rpb_ensure_alloc(RIO_POLL_BUILDER *rpb, size_t alloc)
 int ossl_rio_poll_builder_add_fd(RIO_POLL_BUILDER *rpb, int fd,
                                  int want_read, int want_write)
 {
+#if RIO_POLL_METHOD == RIO_POLL_METHOD_POLL
+    size_t num_loop;
+#endif
+
     if (fd < 0)
         return 0;
 
@@ -83,8 +97,6 @@ int ossl_rio_poll_builder_add_fd(RIO_POLL_BUILDER *rpb, int fd,
     return 1;
 
 #elif RIO_POLL_METHOD == RIO_POLL_METHOD_POLL
-    size_t num_loop;
-
     for (num_loop = 0;; ++num_loop) {
         size_t i;
         struct pollfd *pfds = (rpb->pfd_heap != NULL ? rpb->pfd_heap : rpb->pfds);
