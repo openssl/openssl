@@ -11,6 +11,7 @@
 #include <openssl/rand.h>
 #include <openssl/bio.h>
 #include <openssl/core_names.h>
+#include <openssl/params.h>
 #include "crypto/rand.h"
 #include "testutil.h"
 
@@ -93,6 +94,66 @@ static int test_rand_uniform(void)
     return res;
 }
 
+/* Test the FIPS health tests */
+static int fips_health_test_one(const uint8_t *buf, size_t n, size_t gen)
+{
+    int res = 0;
+    EVP_RAND *crngt_alg = NULL, *parent_alg = NULL;
+    EVP_RAND_CTX *crngt = NULL, *parent = NULL;
+    OSSL_PARAM p[2];
+    uint8_t out[1000];
+
+    p[0] = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY,
+                                             (void *)buf, n);
+    p[1] = OSSL_PARAM_construct_end();
+
+    if (!TEST_ptr(parent_alg = EVP_RAND_fetch(NULL, "TEST-RAND", "-fips"))
+            || !TEST_ptr(crngt_alg = EVP_RAND_fetch(NULL, "CRNG-TEST", "-fips"))
+            || !TEST_ptr(parent = EVP_RAND_CTX_new(parent_alg, NULL))
+            || !TEST_ptr(crngt = EVP_RAND_CTX_new(crngt_alg, parent))
+            || !TEST_true(EVP_RAND_instantiate(parent, 0, 0,
+                                               (unsigned char *)"abc", 3, p))
+            || !TEST_true(EVP_RAND_instantiate(crngt, 0, 0,
+                                               (unsigned char *)"def", 3, NULL))
+            || !TEST_size_t_le(gen, sizeof(out)))
+        goto err;
+
+    ERR_set_mark();
+    res = EVP_RAND_generate(crngt, out, gen, 0, 0, NULL, 0);
+    ERR_pop_to_mark();
+ err:
+    EVP_RAND_CTX_free(crngt);
+    EVP_RAND_CTX_free(parent);
+    EVP_RAND_free(crngt_alg);
+    EVP_RAND_free(parent_alg);
+    return res;
+}
+
+static int fips_health_tests(void)
+{
+    uint8_t buf[1000];
+    size_t i;
+
+    /* Verify tests can pass */
+    for (i = 0; i < sizeof(buf); i++)
+        buf[i] = 0xff & i;
+    if (!TEST_true(fips_health_test_one(buf, i, i)))
+        return 0;
+
+    /* Verify RCT can fail */
+    for (i = 0; i < 20; i++)
+        buf[i] = 0xff & (i > 10 ? 200 : i);
+    if (!TEST_false(fips_health_test_one(buf, i, i)))
+        return 0;
+
+    /* Verify APT can fail */
+    for (i = 0; i < sizeof(buf); i++)
+        buf[i] = 0xff & (i >= 512 && i % 8 == 0 ? 0x80 : i);
+    if (!TEST_false(fips_health_test_one(buf, i, i)))
+        return 0;
+    return 1;
+}
+
 int setup_tests(void)
 {
     char *configfile;
@@ -106,5 +167,10 @@ int setup_tests(void)
 
     ADD_TEST(test_rand);
     ADD_TEST(test_rand_uniform);
+
+    if (OSSL_PROVIDER_available(NULL, "fips")
+            && fips_provider_version_ge(NULL, 3, 5, 0))
+        ADD_TEST(fips_health_tests);
+
     return 1;
 }
