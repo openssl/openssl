@@ -32,6 +32,7 @@
 #define FAIL_ITEM(idx)                                                      \
     do {                                                                    \
         size_t idx_ = (idx);                                                \
+                                                                            \
         ITEM_N(items, stride, idx_).revents = SSL_POLL_EVENT_F;             \
         ++result_count;                                                     \
         FAIL_FROM(idx_ + 1);                                                \
@@ -190,7 +191,8 @@ static int poll_translate(SSL_POLL_ITEM *items,
                           QUIC_REACTOR_WAIT_CTX *wctx,
                           RIO_POLL_BUILDER *rpb,
                           OSSL_TIME *p_earliest_wakeup_deadline,
-                          int *abort_blocking)
+                          int *abort_blocking,
+                          size_t *p_result_count)
 {
     int ok = 1;
     SSL_POLL_ITEM *item;
@@ -262,13 +264,15 @@ out:
         postpoll_translation_cleanup(items, i, stride, wctx);
 
     *p_earliest_wakeup_deadline = earliest_wakeup_deadline;
+    *p_result_count = result_count;
     return ok;
 }
 
 static int poll_block(SSL_POLL_ITEM *items,
                       size_t num_items,
                       size_t stride,
-                      OSSL_TIME user_deadline)
+                      OSSL_TIME user_deadline,
+                      size_t *p_result_count)
 {
     int ok = 0, abort_blocking = 0;
     RIO_POLL_BUILDER rpb;
@@ -301,7 +305,8 @@ static int poll_block(SSL_POLL_ITEM *items,
 
     if (!poll_translate(items, num_items, stride, &wctx, &rpb,
                         &earliest_wakeup_deadline,
-                        &abort_blocking))
+                        &abort_blocking,
+                        p_result_count))
         goto out;
 
     if (abort_blocking)
@@ -423,7 +428,6 @@ int SSL_poll(SSL_POLL_ITEM *items,
     for (;;) {
         /* Readout phase - poll current state of each item. */
         if (!poll_readout(items, num_items, stride, do_tick, &result_count)) {
-            result_count = 0;
             ok = 0;
             goto out;
         }
