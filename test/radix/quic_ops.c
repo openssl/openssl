@@ -150,10 +150,12 @@ DEF_FUNC(hf_new_ssl)
     if (!TEST_ptr(ctx = SSL_CTX_new(method)))
         goto err;
 
+#if defined(OPENSSL_THREADS)
     if (!TEST_true(SSL_CTX_set_domain_flags(ctx,
                                             SSL_DOMAIN_FLAG_MULTI_THREAD
                                             | SSL_DOMAIN_FLAG_BLOCKING)))
         goto err;
+#endif
 
     if (!TEST_true(ssl_ctx_configure(ctx, is_server)))
         goto err;
