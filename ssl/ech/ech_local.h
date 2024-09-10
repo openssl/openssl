@@ -31,6 +31,7 @@
  */
 #  define OSSL_ECH_SUPERVERBOSE
 
+#  define OSSL_ECH_CIPHER_LEN 4 /* ECHCipher length (2 for kdf, 2 for aead) */
 /*
  * Reminder of what goes in DNS for ECH RFC XXXX
  *
