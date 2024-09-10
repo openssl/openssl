@@ -1380,10 +1380,9 @@ For GCM, this call is only valid when decrypting data.
 For OCB, this call is valid when decrypting data to set the expected tag,
 and when encrypting to set the desired tag length.
 
-In OCB mode, calling this when encrypting with C<tag> set to C<NULL> sets the
-tag length. The tag length can only be set before specifying an IV. If this is
-not called prior to setting the IV during encryption, then a default tag length
-is used.
+In OCB mode, calling this with C<tag> set to C<NULL> sets the tag length.
+The tag length can only be set before specifying an IV. If this is not called
+prior to setting the IV, then a default tag length is used.
 
 For OCB AES, the default tag length is 16 (i.e. 128 bits).  It is also the
 maximum tag length for OCB.
