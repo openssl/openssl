@@ -52,7 +52,7 @@ It can't be used with L<EVP_PKEY_sign_message_init(3)>
 
 =item "RSA-SM3", "sm3WithRSAEncryption", "1.2.156.10197.1.504"
 
-PKCS#1 v1.5 RSA signature schemes with diverse message digest algorithm.  They
+PKCS#1 v1.5 RSA signature schemes with diverse message digest algorithms.  They
 are all supported explicitly fetched with L<EVP_PKEY_sign_init_ex2(3)> and
 L<EVP_PKEY_sign_message_init(3)>.
 They are all pre-set to use the pad mode "pkcs1".  This cannot be changed.
