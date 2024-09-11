@@ -863,11 +863,33 @@ static EVP_PKEY *load_example_hmac_key(void)
     return pkey;
 }
 
+static int test_EVP_set_config_properties(void)
+{
+    char *fetched_properties = NULL;
+    const char test_propq[] = "test.fizzbuzz=buzzfizz";
+    int res = 0;
+
+    fetched_properties = EVP_get1_default_properties(OSSL_LIB_CTX_get0_global_default());
+    if (!TEST_ptr(fetched_properties)
+            || !TEST_str_eq(fetched_properties, test_propq))
+        goto err;
+    OPENSSL_free(fetched_properties);
+    fetched_properties = NULL;
+
+    res = 1;
+err:
+    OPENSSL_free(fetched_properties);
+    return res;
+}
+
 static int test_EVP_set_default_properties(void)
 {
     OSSL_LIB_CTX *ctx;
     EVP_MD *md = NULL;
     int res = 0;
+    char *fetched_properties = NULL;
+    const char test_propq[] = "provider=fizzbang";
+    const char test_fips_propq[] = "fips=yes,provider=fizzbang";
 
     if (!TEST_ptr(ctx = OSSL_LIB_CTX_new())
             || !TEST_ptr(md = EVP_MD_fetch(ctx, "sha256", NULL)))
@@ -875,18 +897,38 @@ static int test_EVP_set_default_properties(void)
     EVP_MD_free(md);
     md = NULL;
 
-    if (!TEST_true(EVP_set_default_properties(ctx, "provider=fizzbang"))
+    if (!TEST_true(EVP_set_default_properties(ctx, test_propq))
             || !TEST_ptr_null(md = EVP_MD_fetch(ctx, "sha256", NULL))
             || !TEST_ptr(md = EVP_MD_fetch(ctx, "sha256", "-provider")))
         goto err;
     EVP_MD_free(md);
     md = NULL;
 
+    fetched_properties = EVP_get1_default_properties(ctx);
+    if (!TEST_ptr(fetched_properties)
+            || !TEST_str_eq(fetched_properties, test_propq))
+        goto err;
+    OPENSSL_free(fetched_properties);
+    fetched_properties = NULL;
+
+    if (!TEST_true(EVP_default_properties_enable_fips(ctx, 1)))
+        goto err;
+    fetched_properties = EVP_get1_default_properties(ctx);
+    if (!TEST_ptr(fetched_properties)
+            || !TEST_str_eq(fetched_properties, test_fips_propq))
+        goto err;
+    OPENSSL_free(fetched_properties);
+    fetched_properties = NULL;
+
+    if (!TEST_true(EVP_default_properties_enable_fips(ctx, 0)))
+        goto err;
+
     if (!TEST_true(EVP_set_default_properties(ctx, NULL))
             || !TEST_ptr(md = EVP_MD_fetch(ctx, "sha256", NULL)))
         goto err;
     res = 1;
 err:
+    OPENSSL_free(fetched_properties);
     EVP_MD_free(md);
     OSSL_LIB_CTX_free(ctx);
     return res;
@@ -5461,6 +5503,7 @@ typedef enum OPTION_choice {
     OPT_ERR = -1,
     OPT_EOF = 0,
     OPT_CONTEXT,
+    OPT_CONFIG_FILE,
     OPT_TEST_ENUM
 } OPTION_CHOICE;
 
@@ -5469,6 +5512,8 @@ const OPTIONS *test_get_options(void)
     static const OPTIONS options[] = {
         OPT_TEST_OPTIONS_DEFAULT_USAGE,
         { "context", OPT_CONTEXT, '-', "Explicitly use a non-default library context" },
+        { "config", OPT_CONFIG_FILE, '<',
+          "The configuration file to use for the libctx" },
         { NULL }
     };
     return options;
@@ -5868,6 +5913,7 @@ static int test_invalid_ctx_for_digest(void)
 
 int setup_tests(void)
 {
+    char *config_file = NULL;
     OPTION_CHOICE o;
 
     while ((o = opt_next()) != OPT_EOF) {
@@ -5893,11 +5939,21 @@ int setup_tests(void)
             lgcyprov = OSSL_PROVIDER_load(testctx, "legacy");
 #endif
             break;
+        case OPT_CONFIG_FILE:
+            config_file = opt_arg();
+            if (!test_get_libctx(&testctx, &nullprov, config_file, NULL, NULL))
+                return 0;
+            break;
         case OPT_TEST_CASES:
             break;
         default:
             return 0;
         }
+    }
+
+    if (config_file != NULL) {
+        ADD_TEST(test_EVP_set_config_properties);
+        return 1;
     }
 
     ADD_TEST(test_EVP_set_default_properties);
