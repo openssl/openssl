@@ -159,8 +159,6 @@ typedef struct ec_key_st EC_KEY;
 typedef struct ec_key_method_st EC_KEY_METHOD;
 # endif
 
-typedef struct lms_key_st LMS_KEY;
-
 typedef struct rand_meth_st RAND_METHOD;
 typedef struct rand_drbg_st RAND_DRBG;
 
