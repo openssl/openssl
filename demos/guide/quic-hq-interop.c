@@ -56,6 +56,8 @@
 static int handle_io_failure(SSL *ssl, int res);
 static int set_keylog_file(SSL_CTX *ctx, const char *keylog_file);
 
+#define REQ_STRING_SZ 1024
+
 /**
  * @brief A static pointer to a BIO object representing the session's BIO.
  *
@@ -147,8 +149,12 @@ static BIO *create_socket_bio(const char *hostname, const char *port,
             continue;
         }
 
-        /* Set to nonblocking mode */
-        if (!BIO_socket_nbio(sock, 1)) {
+        /*
+         * Set to nonblocking mode
+         * Note: This function returns a range of errors
+         * <= 0 if something goes wrong, so catch them all here
+         */
+        if (BIO_socket_nbio(sock, 1) <= 0) {
             BIO_closesocket(sock);
             sock = -1;
             continue;
@@ -186,7 +192,11 @@ static BIO *create_socket_bio(const char *hostname, const char *port,
      * case you must close the socket explicitly when it is no longer
      * needed.
      */
-    BIO_set_fd(bio, sock, BIO_CLOSE);
+    if (BIO_set_fd(bio, sock, BIO_CLOSE) <= 0) {
+        BIO_closesocket(sock);
+        BIO_free(bio);
+        return NULL;
+    }
 
     return bio;
 }
@@ -483,12 +493,17 @@ static int setup_session_cache(SSL *ssl, SSL_CTX *ctx, const char *filename)
     int rc = 0;
     int new_cache = 0;
 
-    /* make sure caching is enabled */
-    if (!SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_BOTH))
-        return rc;
-
-    /* Don't use stateless session tickets */
-    if (!SSL_CTX_set_options(ctx, SSL_OP_NO_TICKET))
+    /* 
+     * Because we cache sessions to a file in this client, we don't 
+     * actualy need to internally store sessions, because we restore them
+     * from the file with SSL_set_session below, but we want to ensure
+     * that caching is enabled so that the session cache callbacks get called
+     * properly.  The documentation is a bit unclear under what conditions
+     * the callback is made, so play it safe here, by enforcing enablement
+     */
+    if (!SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_CLIENT |
+                                             SSL_SESS_CACHE_NO_INTERNAL_STORE |
+                                             SSL_SESS_CACHE_NO_AUTO_CLEAR))
         return rc;
 
     /* open our cache file */
@@ -504,8 +519,6 @@ static int setup_session_cache(SSL *ssl, SSL_CTX *ctx, const char *filename)
     if (new_cache == 0) {
         /* read in our cached session */
         if (PEM_read_bio_SSL_SESSION(session_bio, &sess, NULL, NULL)) {
-            if (!SSL_CTX_add_session(ctx, sess))
-                goto err;
             /* set our session */
             if (!SSL_set_session(ssl, sess))
                 goto err;
@@ -604,8 +617,8 @@ static size_t build_request_set(SSL *ssl)
 {
     size_t poll_idx;
     char *req;
-    char outfilename[1024];
-    char req_string[1024];
+    char outfilename[REQ_STRING_SZ];
+    char req_string[REQ_STRING_SZ];
     SSL *new_stream;
     size_t written;
 
@@ -668,11 +681,11 @@ static size_t build_request_set(SSL *ssl)
         outnames[poll_idx] = req;
 
         /* Format the http request */
-        sprintf(req_string, "GET /%s\r\n", req);
+        BIO_snprintf(req_string, REQ_STRING_SZ, "GET /%s\r\n", req);
 
         /* build the outfile request path */
-        memset(outfilename, 0, 1024);
-        sprintf(outfilename, "/downloads/%s", req);
+        memset(outfilename, 0, REQ_STRING_SZ);
+        BIO_snprintf(outfilename, REQ_STRING_SZ, "/downloads/%s", req);
 
         /* open a bio to write the file */
         outbiolist[poll_idx] = BIO_new_file(outfilename, "w+");
@@ -712,7 +725,6 @@ static size_t build_request_set(SSL *ssl)
         while (!SSL_write_ex2(poll_list[poll_idx].desc.value.ssl,
                               req_string, strlen(req_string),
                               SSL_WRITE_FLAG_CONCLUDE, &written)) {
-            fprintf(stderr, "Write failed\n");
             if (handle_io_failure(poll_list[poll_idx].desc.value.ssl, 0) == 1)
                 continue; /* Retry */
             fprintf(stderr, "Failed to write start of HTTP request\n");
@@ -786,7 +798,12 @@ static int setup_connection(char *hostname, char *port, int ipv6,
      */
     SSL_CTX_set_verify(*ctx, SSL_VERIFY_PEER, NULL);
 
-    /* Use the default trusted certificate store */
+    /*
+     * Use the default trusted certificate store
+     * Note: The store is read from SSL_CERT_DIR and SSL_CERT_FILE
+     * environment variables in the default case, so users can set those
+     * When running this application to direct where the store is loaded from
+     */
     if (!SSL_CTX_set_default_verify_paths(*ctx)) {
         fprintf(stderr, "Failed to set the default trusted certificate store\n");
         goto end;
@@ -912,7 +929,6 @@ int main(int argc, char *argv[])
     BIO *req_bio = NULL;
     int res = EXIT_FAILURE;
     int ret;
-    char req_string[1024];
     size_t readbytes = 0;
     char buf[160];
     int eof = 0;
@@ -931,13 +947,13 @@ int main(int argc, char *argv[])
     int ipv6 = 0;
 
     if (argc < 4) {
-        fprintf(stderr, "Usage: quic-hq-interop [-6] hostname port file\n");
+        fprintf(stderr, "Usage: quic-hq-interop [-6] hostname port reqfile\n");
         goto end;
     }
 
     if (!strcmp(argv[argnext], "-6")) {
         if (argc < 5) {
-            fprintf(stderr, "Usage: quic-hq-interop [-6] hostname port\n");
+            fprintf(stderr, "Usage: quic-hq-interop [-6] hostname port reqfile\n");
             goto end;
         }
         ipv6 = 1;
@@ -947,7 +963,6 @@ int main(int argc, char *argv[])
     port = argv[argnext++];
     reqfile = argv[argnext];
 
-    memset(req_string, 0, 1024);
     req_bio = BIO_new_file(reqfile, "r");
     if (req_bio == NULL) {
         fprintf(stderr, "Failed to open request file %s\n", reqfile);
@@ -956,12 +971,12 @@ int main(int argc, char *argv[])
 
     /* Get the list of requests */
     while (!BIO_eof(req_bio)) {
-        if (!BIO_read_ex(req_bio, &reqnames[read_offset], 1024, &bytes_read)) {
+        if (!BIO_read_ex(req_bio, &reqnames[read_offset], REQ_STRING_SZ, &bytes_read)) {
             fprintf(stderr, "Failed to read some data from request file\n");
             goto end;
         }
         read_offset += bytes_read;
-        reqnames = OPENSSL_realloc(reqnames, read_offset + 1024);
+        reqnames = OPENSSL_realloc(reqnames, read_offset + REQ_STRING_SZ);
         if (reqnames == NULL) {
             fprintf(stderr, "Realloc failure\n");
             goto end;
