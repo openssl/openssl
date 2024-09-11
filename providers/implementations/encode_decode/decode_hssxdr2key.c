@@ -49,15 +49,15 @@ static int hssxdr2key_does_selection(void *provctx, int selection)
     if (selection == 0)
         return 1;
 
-    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY)  != 0)
+    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
         return 1;
 
     return 0;
 }
 
 static int hssxdr2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
-                              OSSL_CALLBACK *data_cb, void *data_cbarg,
-                              OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg)
+                             OSSL_CALLBACK *data_cb, void *data_cbarg,
+                             OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg)
 {
     struct hssxdr2key_ctx_st *ctx = vctx;
     HSS_KEY *key = NULL;

@@ -120,7 +120,7 @@ static int key2xdr_encode(void *vctx, const void *key, int selection,
     static int impl##2xdr_does_selection(void *ctx, int selection)      \
     {                                                                   \
         return key2xdr_check_selection(selection,                       \
-                                        EVP_PKEY_##selection_name);     \
+                                       EVP_PKEY_##selection_name);      \
     }                                                                   \
     static int impl##2xdr_encode(void *vctx, OSSL_CORE_BIO *cout,       \
                                  const void *key,                       \

@@ -310,9 +310,8 @@ int ossl_lm_ots_signature_gen_final(LMS_KEY *key, LM_OTS_SIG *sig)
         WPACKET_put_bytes_u16(&pkt, i);
         for (j = 0; j < a; ++j) {
             WPACKET_put_bytes_u8(&pkt, j);
-            if (!ossl_lms_hash(key->mdctx, tmp, LMS_OFFSET_SEED, psig, n, psig)) {
+            if (!ossl_lms_hash(key->mdctx, tmp, LMS_OFFSET_SEED, psig, n, psig))
                 goto err;
-            }
             WPACKET_backward(&pkt, 1);
         }
         WPACKET_backward(&pkt, 2);
@@ -358,7 +357,7 @@ int ossl_lm_ots_ctx_pubkey_init(LM_OTS_CTX *pctx,
                                 const EVP_MD *md,
                                 const LM_OTS_SIG *sig,
                                 const LM_OTS_PARAMS *pub,
-                                const unsigned char *I, uint32_t q)
+                                const unsigned char *Id, uint32_t q)
 {
     int ret = 0;
     EVP_MD_CTX *ctx, *ctxIq;
@@ -369,7 +368,7 @@ int ossl_lm_ots_ctx_pubkey_init(LM_OTS_CTX *pctx,
     if (sig->params != pub)
         return 0;
 
-    memcpy(iq, I, LMS_SIZE_I);
+    memcpy(iq, Id, LMS_SIZE_I);
     U32STR(qbuf, q);
 
     ctx = pctx->mdctx;

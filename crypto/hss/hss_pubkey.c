@@ -36,7 +36,7 @@ size_t ossl_hss_pubkey_length(const unsigned char *data, size_t datalen)
             || (params = ossl_lms_params_get(lms_type)) == NULL)
         return 0;
     return HSS_SIZE_PUB_L + LMS_SIZE_PUB_LMS_TYPE + LMS_SIZE_PUB_OTS_TYPE
-           + LMS_SIZE_I + params->n;
+        + LMS_SIZE_I + params->n;
 }
 
 /**

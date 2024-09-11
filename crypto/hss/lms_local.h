@@ -96,7 +96,7 @@ int ossl_lm_ots_ctx_pubkey_init(LM_OTS_CTX *ctx,
                                 const EVP_MD *md,
                                 const LM_OTS_SIG *sig,
                                 const LM_OTS_PARAMS *pub,
-                                const unsigned char *I, uint32_t q);
+                                const unsigned char *Id, uint32_t q);
 int ossl_lm_ots_ctx_pubkey_update(LM_OTS_CTX *ctx,
                                   const unsigned char *msg, size_t msglen);
 int ossl_lm_ots_ctx_pubkey_final(LM_OTS_CTX *ctx, unsigned char *Kc);

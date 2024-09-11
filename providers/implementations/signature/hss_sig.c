@@ -475,7 +475,7 @@ static int hss_sign_msg_init(void *vctx, void *vkey, const OSSL_PARAM params[])
     PROV_HSS_CTX *ctx = (PROV_HSS_CTX *)vctx;
 
     return hss_sign_verify_init(vctx, vkey, params, NULL, EVP_PKEY_OP_SIGNMSG)
-           && ossl_hss_sign_init(ctx->key);
+        && ossl_hss_sign_init(ctx->key);
 }
 
 static int hss_sign_msg_update(void *vctx,
@@ -504,7 +504,7 @@ static int hss_sign(void *vctx,
     if (sig == NULL)
         return ossl_hss_sign_final(hsskey, sig, siglen, sigsz);
     return ossl_hss_sign_update(hsskey, msg, msglen)
-           && ossl_hss_sign_final(hsskey, sig, siglen, sigsz);
+        && ossl_hss_sign_final(hsskey, sig, siglen, sigsz);
 }
 #endif
 

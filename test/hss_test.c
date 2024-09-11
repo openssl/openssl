@@ -220,7 +220,7 @@ static int hss_verify_bad_sig_len_test(void)
         goto end;
 
     ret = 0;
-    for (siglen = 0; siglen < td->siglen + 4 ; siglen += step) {
+    for (siglen = 0; siglen < td->siglen + 4; siglen += step) {
         if (siglen == td->siglen)   /* ignore the size that should pass */
             continue;
         if (!TEST_int_eq(EVP_PKEY_verify_message_init(ctx, sig, NULL), 1))
@@ -306,7 +306,7 @@ static int hss_bad_pub_len_test(void)
     EVP_PKEY *pkey = NULL;
     size_t publen = 0;
 
-    for (publen = 0; publen <= td->publen + 4; publen += 3 ) {
+    for (publen = 0; publen <= td->publen + 4; publen += 3) {
         if (publen == td->publen)
             continue;
         if (!TEST_ptr_null(pkey = hsspubkey_from_data(td->pub, publen)))
@@ -441,6 +441,7 @@ static int hss_key_eq_test(void)
 #ifndef OPENSSL_NO_EC
     EVP_PKEY *eckey = NULL;
 #endif
+
     if (!TEST_ptr(key[0] = hsspubkey_from_data(td1->pub, td1->publen))
             || !TEST_ptr(key[1] = hsspubkey_from_data(td1->pub, td1->publen))
             || !TEST_ptr(key[2] = key_decode_from_data(td1->pub, td1->publen, NULL))
@@ -474,7 +475,7 @@ static int hss_key_validate_test(void)
     EVP_PKEY *key = NULL;
 
     if (!TEST_ptr(key = hsspubkey_from_data(td->pub, td->publen)))
-         return 0;
+        return 0;
     if (!TEST_ptr(vctx = EVP_PKEY_CTX_new_from_pkey(libctx, key, propq)))
         goto end;
     ret = TEST_int_eq(EVP_PKEY_check(vctx), 1);
@@ -526,6 +527,7 @@ static int extract_sign_data(HSS_ACVP_TEST_DATA *t, uint32_t *out_levels,
 {
     uint32_t i, levels, sigoff;
     uint64_t qindex, scale, q[OSSL_HSS_MAX_L] = { 0 };
+
     /*
      * Extract Level and types from public key blob for level 0
      * Extra types for additional level from the signature.
@@ -640,7 +642,7 @@ static int hss_pkey_sign_test(int tst)
      * RAND to supply this data.
      */
     fake_rand_set_callback(RAND_get0_private(libctx), &fbytes);
-    if (!TEST_true(set_entropy(t->priv,t->privlen, NULL, 0)))
+    if (!TEST_true(set_entropy(t->priv, t->privlen, NULL, 0)))
         goto err;
 
     if (!TEST_int_gt(EVP_PKEY_generate(genctx, &key), 0))
@@ -826,7 +828,7 @@ int setup_tests(void)
             propq = "";
             break;
         case OPT_TEST_CASES:
-           break;
+            break;
         default:
         case OPT_ERR:
             return 0;

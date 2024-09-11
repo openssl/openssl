@@ -459,7 +459,7 @@ static int lms_privkey_reset(LMS_PRIV_KEY *priv, uint32_t seedlen,
 {
     WPACKET pkt;
     uint8_t SEED[2 * LMS_MAX_DIGEST_SIZE]; /* truncated to LMS_SIZE_I */
-    uint8_t *I = SEED + seedlen;
+    uint8_t *Id = SEED + seedlen;
     size_t datalen = LMS_OFFSET_SEED + seedlen;
 
     if (priv->data == NULL) {
@@ -478,7 +478,8 @@ static int lms_privkey_reset(LMS_PRIV_KEY *priv, uint32_t seedlen,
         if (RAND_priv_bytes_ex(libctx, SEED, seedlen + LMS_SIZE_I, 0) <= 0)
             goto err;
     } else {
-        uint8_t buf[LMS_SIZE_I + LMS_SIZE_q + LMS_SIZE_DTAG + LMS_SIZE_j + LMS_MAX_DIGEST_SIZE];
+        uint8_t buf[LMS_SIZE_I + LMS_SIZE_q + LMS_SIZE_DTAG + LMS_SIZE_j
+                    + LMS_MAX_DIGEST_SIZE];
         size_t buflen;
 
         /*
@@ -494,7 +495,7 @@ static int lms_privkey_reset(LMS_PRIV_KEY *priv, uint32_t seedlen,
                 || !WPACKET_put_bytes_u8(&pkt, 0xFF)
                 || !WPACKET_memcpy(&pkt, parent->priv.seed, seedlen)
                 || !WPACKET_get_total_written(&pkt, &buflen)
-                || !ossl_lms_hash(parent->mdctx, buf, buflen, NULL, 0, I)
+                || !ossl_lms_hash(parent->mdctx, buf, buflen, NULL, 0, Id)
                 || !WPACKET_backward(&pkt, seedlen + LMS_SIZE_j + LMS_SIZE_DTAG)
                 || !WPACKET_put_bytes_u16(&pkt, OSSL_LMS_D_CHILD_SEED)
                 || !ossl_lms_hash(parent->mdctx, buf, buflen, NULL, 0, SEED)
@@ -508,7 +509,7 @@ static int lms_privkey_reset(LMS_PRIV_KEY *priv, uint32_t seedlen,
      * and point priv->seed to the offset of SEED in priv->data
      */
     if (!WPACKET_init_static_len(&pkt, priv->data, priv->datalen, 0)
-            || !WPACKET_memcpy(&pkt, I, LMS_SIZE_I)
+            || !WPACKET_memcpy(&pkt, Id, LMS_SIZE_I)
             || !WPACKET_put_bytes_u32(&pkt, 0)  /* q */
             || !WPACKET_put_bytes_u16(&pkt, 0)  /* i */
             || !WPACKET_put_bytes_u8(&pkt, 0xFF)
