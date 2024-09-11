@@ -483,8 +483,17 @@ static int setup_session_cache(SSL *ssl, SSL_CTX *ctx, const char *filename)
     int rc = 0;
     int new_cache = 0;
 
-    /* make sure caching is enabled */
-    if (!SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_SERVER))
+    /* 
+     * Because we cache sessions to a file in this client, we don't 
+     * actualy need to internally store sessions, because we restore them
+     * from the file with SSL_set_session below, but we want to ensure
+     * that caching is enabled so that the session cache callbacks get called
+     * properly.  The documentation is a bit unclear under what conditions
+     * the callback is made, so play it safe here, by enforcing enablement
+     */
+    if (!SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_CLIENT |
+                                             SSL_SESS_CACHE_NO_INTERNAL_STORE |
+                                             SSL_SESS_CACHE_NO_AUTO_CLEAR))
         return rc;
 
     /* open our cache file */
@@ -500,8 +509,6 @@ static int setup_session_cache(SSL *ssl, SSL_CTX *ctx, const char *filename)
     if (new_cache == 0) {
         /* read in our cached session */
         if (PEM_read_bio_SSL_SESSION(session_bio, &sess, NULL, NULL)) {
-            if (!SSL_CTX_add_session(ctx, sess))
-                goto err;
             /* set our session */
             if (!SSL_set_session(ssl, sess))
                 goto err;
