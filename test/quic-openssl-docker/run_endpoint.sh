@@ -36,9 +36,9 @@ if [ "$ROLE" == "client" ]; then
 
     case "$TESTCASE" in
     "http3")
-    echo -e "--verbose\n--parallel" >> $CURLRC
-    generate_outputs_http3
-    dump_curlrc
+        echo -e "--verbose\n--parallel" >> $CURLRC
+        generate_outputs_http3
+        dump_curlrc
         SSL_CERT_FILE=/certs/ca.pem curl --config $CURLRC 
         if [ $? -ne 0 ]
         then
