@@ -1301,7 +1301,7 @@ int ossl_quic_handle_events(SSL *s)
         return 0;
 
     qctx_lock(&ctx);
-    if (ctx.qc->started)
+    if (ctx.qc == NULL || ctx.qc->started)
         ossl_quic_reactor_tick(ossl_quic_obj_get0_reactor(ctx.obj), 0);
     qctx_unlock(&ctx);
     return 1;
@@ -1320,7 +1320,7 @@ int ossl_quic_get_event_timeout(SSL *s, struct timeval *tv, int *is_infinite)
     QCTX ctx;
     OSSL_TIME deadline = ossl_time_infinite();
 
-    if (!expect_quic_any(s, &ctx))
+    if (!expect_quic_cs(s, &ctx))
         return 0;
 
     qctx_lock(&ctx);
