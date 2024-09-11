@@ -581,6 +581,11 @@ char *evp_get_global_properties_str(OSSL_LIB_CTX *libctx, int loadconfig)
     return propstr;
 }
 
+char *EVP_get1_default_properties(OSSL_LIB_CTX *libctx)
+{
+    return evp_get_global_properties_str(libctx, ossl_lib_ctx_is_global_default(libctx));
+}
+
 struct filter_data_st {
     int operation_id;
     void (*user_fn)(void *method, void *arg);
