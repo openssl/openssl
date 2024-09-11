@@ -58,7 +58,7 @@ static int print_labeled_hex(BIO *out, const char *label,
  */
 int ossl_lms_params_to_text(BIO *out, const LMS_PARAMS *prms)
 {
-    return BIO_printf(out, "LMS type:   %d     # LM_%s_M%d_H%d\n",
+    return BIO_printf(out, "LMS type:   %u     # LM_%s_M%u_H%u\n",
                       prms->lms_type, prms->digestname, prms->n, prms->h) > 0;
 }
 
@@ -71,7 +71,7 @@ int ossl_lms_params_to_text(BIO *out, const LMS_PARAMS *prms)
  */
 int ossl_lm_ots_params_to_text(BIO *out, const LM_OTS_PARAMS *prms)
 {
-    return BIO_printf(out, "LMOTS type: %d     # LMOTS_%s_N%d_W%d (p=%d)\n",
+    return BIO_printf(out, "LMOTS type: %u     # LMOTS_%s_N%d_W%d (p=%d)\n",
                       prms->lm_ots_type, prms->digestname,
                       prms->n, prms->w, prms->p) > 0;
 }
@@ -114,7 +114,7 @@ int ossl_lms_key_to_text(BIO *out, LMS_KEY *lmskey, int selection)
                 && !print_labeled_hex(out, "SEED:", lmskey->priv.seed,
                                       lmskey->lms_params->n))
             goto err;
-        if (BIO_printf(out, "q: %d\n", lmskey->q) <= 0)
+        if (BIO_printf(out, "q: %u\n", lmskey->q) <= 0)
             goto err;
     }
 
@@ -135,7 +135,7 @@ static int lms_sig_to_text(BIO *out, LMS_SIG *lmssig)
     int ret = 0;
     uint32_t i;
 
-    if (BIO_printf(out, "q: %d\n", lmssig->q) <= 0)
+    if (BIO_printf(out, "q: %u\n", lmssig->q) <= 0)
         goto err;
     if (!ossl_lm_ots_params_to_text(out, lmssig->sig.params))
         goto err;
@@ -143,7 +143,7 @@ static int lms_sig_to_text(BIO *out, LMS_SIG *lmssig)
         goto err;
 
     for (i = 0; i < lmssig->sig.params->p; i++) {
-        if (BIO_printf(out, "y[%d]: ", i) <= 0)
+        if (BIO_printf(out, "y[%u]: ", i) <= 0)
             goto err;
         if (!print_hex(out, lmssig->sig.y + i * lmssig->sig.params->n,
                        lmssig->sig.params->n))
@@ -152,7 +152,7 @@ static int lms_sig_to_text(BIO *out, LMS_SIG *lmssig)
     if (!ossl_lms_params_to_text(out, lmssig->params))
         goto err;
     for (i = 0; i < lmssig->params->h; i++) {
-        if (BIO_printf(out, "path[%d]: ", i) <= 0)
+        if (BIO_printf(out, "path[%u]: ", i) <= 0)
             goto err;
         if (!print_hex(out, lmssig->paths + i * lmssig->sig.params->n,
                        lmssig->sig.params->n))
@@ -192,7 +192,7 @@ int ossl_hss_sig_to_text(BIO *out, HSS_KEY *hsskey, int selection)
             if (!ossl_lms_key_to_text(out, key, selection))
                 return 0;
         }
-        if (BIO_printf(out, "\nSig[%d]:\n", i) <= 0)
+        if (BIO_printf(out, "\nSig[%u]:\n", i) <= 0)
             return 0;
         if (!lms_sig_to_text(out, sig))
             return 0;

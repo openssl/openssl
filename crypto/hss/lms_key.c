@@ -75,7 +75,7 @@ void ossl_lms_key_free(LMS_KEY *lmskey)
 int ossl_lms_key_get_pubkey_from_nodeid(LMS_KEY *key,
                                         uint32_t nodeid, unsigned char *out)
 {
-    int ret;
+    int ret = 0;
     unsigned char buf[LMS_SIZE_I + 4 + 2];
     uint32_t n = key->lms_params->n;
     uint32_t leafoffset = 1 << key->lms_params->h;
