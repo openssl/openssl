@@ -11,8 +11,8 @@ SOURCE[$DECODER_GOAL]=decode_der2key.c decode_epki2pki.c decode_pem2der.c \
                       decode_spki2typespki.c
 
 IF[{- !$disabled{hss} -}]
-  SOURCE[$ENCODER_GOAL]=encode_hss2blob.c
-  SOURCE[$DECODER_GOAL]=decode_hssblob2key.c
+  SOURCE[$ENCODER_GOAL]=encode_hss2xdr.c
+  SOURCE[$DECODER_GOAL]=decode_hssxdr2key.c
 ENDIF
 
 SOURCE[$ENCODER_GOAL]=encode_key2any.c encode_key2text.c encode_key2ms.c

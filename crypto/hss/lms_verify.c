@@ -2,13 +2,19 @@
 #include <openssl/core_names.h>
 #include <openssl/params.h>
 #include "internal/packet.h"
+#include "internal/common.h"
 #include "crypto/hss.h"
 #include "lms_local.h"
 
 /*
- * NOTE: The passed in ctx->sig and ctx->pub need to exist until
+ * @brief The initial phase for LMS signature validation.
+ * The passed in |ctx->sig| and |ctx->pub| need to exist until
  * ossl_lms_sig_verify_final() is called, since the final may be delayed until
  * some later time,
+ *
+ * @param ctx A LMS_VALIDATE_CTX object used to store the input and outputs of
+ *            a streaming LMS verification operation
+ * @returns 1 on success, or 0 otherwise.
  */
 int ossl_lms_sig_verify_init(LMS_VALIDATE_CTX *ctx)
 {
@@ -17,12 +23,29 @@ int ossl_lms_sig_verify_init(LMS_VALIDATE_CTX *ctx)
                                        ctx->sig->q);
 }
 
+/*
+ * @brief The update phase for LMS signature verification.
+ * This may be called multiple times.
+ *
+ * @param ctx A LMS_VALIDATE_CTX object used to store the input and outputs of
+ *            a streaming LMS verification operation
+ * @param msg The message to sign
+ * @param msglen The size of the message
+ * @returns 1 on success, or 0 otherwise.
+ */
 int ossl_lms_sig_verify_update(LMS_VALIDATE_CTX *ctx,
                                const unsigned char *msg, size_t msglen)
 {
     return ossl_lm_ots_ctx_pubkey_update(ctx->pubctx, msg, msglen);
 }
 
+/*
+ * @brief The final phase for LMS signature validation.
+ *
+ * @param ctx A LMS_VALIDATE_CTX object used to store the input and outputs of
+ *            a streaming LMS verification operation
+ * @returns 1 if the validation succeeds, or 0 otherwise.
+ */
 int ossl_lms_sig_verify_final(LMS_VALIDATE_CTX *vctx)
 {
     EVP_MD_CTX *ctx = vctx->pubctx->mdctx;
@@ -43,6 +66,9 @@ int ossl_lms_sig_verify_final(LMS_VALIDATE_CTX *vctx)
     /* Compute the candidate LMS root value Tc */
     lmsParams = key->lms_params;
     m = lmsParams->n;
+
+    if (!ossl_assert(lms_sig->q < (uint32_t)(1 << lmsParams->h)))
+        return 0;
     node_num = (1 << lmsParams->h) + lms_sig->q;
 
     U32STR(buf, node_num);
@@ -55,6 +81,7 @@ int ossl_lms_sig_verify_final(LMS_VALIDATE_CTX *vctx)
             || !EVP_DigestFinal_ex(ctx, Tc, NULL))
         goto err;
 
+    /* Calculate the public key Tc using the path */
     path = lms_sig->paths;
     while (node_num > 1) {
         int odd = node_num & 1;

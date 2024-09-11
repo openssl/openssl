@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2023-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -17,34 +17,34 @@
 #include "prov/bio.h"
 #include "prov/implementations.h"
 
-static OSSL_FUNC_decoder_newctx_fn hssblob2key_newctx;
-static OSSL_FUNC_decoder_freectx_fn hssblob2key_freectx;
-static OSSL_FUNC_decoder_decode_fn hssblob2key_decode;
-static OSSL_FUNC_decoder_export_object_fn hssblob2key_export_object;
+static OSSL_FUNC_decoder_newctx_fn hssxdr2key_newctx;
+static OSSL_FUNC_decoder_freectx_fn hssxdr2key_freectx;
+static OSSL_FUNC_decoder_decode_fn hssxdr2key_decode;
+static OSSL_FUNC_decoder_export_object_fn hssxdr2key_export_object;
 
-/* Context used for blob to key decoding. */
-struct hssblob2key_ctx_st {
+/* Context used for xdr to key decoding. */
+struct hssxdr2key_ctx_st {
     PROV_CTX *provctx;
-    int selection; /* The selection that is passed to hssblob2key_decode() */
+    int selection; /* The selection that is passed to hssxdr2key_decode() */
 };
 
-static void *hssblob2key_newctx(void *provctx)
+static void *hssxdr2key_newctx(void *provctx)
 {
-    struct hssblob2key_ctx_st *ctx = OPENSSL_zalloc(sizeof(*ctx));
+    struct hssxdr2key_ctx_st *ctx = OPENSSL_zalloc(sizeof(*ctx));
 
     if (ctx != NULL)
         ctx->provctx = provctx;
     return ctx;
 }
 
-static void hssblob2key_freectx(void *vctx)
+static void hssxdr2key_freectx(void *vctx)
 {
-    struct hssblob2key_ctx_st *ctx = vctx;
+    struct hssxdr2key_ctx_st *ctx = vctx;
 
     OPENSSL_free(ctx);
 }
 
-static int hssblob2key_does_selection(void *provctx, int selection)
+static int hssxdr2key_does_selection(void *provctx, int selection)
 {
     if (selection == 0)
         return 1;
@@ -55,11 +55,11 @@ static int hssblob2key_does_selection(void *provctx, int selection)
     return 0;
 }
 
-static int hssblob2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
+static int hssxdr2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
                               OSSL_CALLBACK *data_cb, void *data_cbarg,
                               OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg)
 {
-    struct hssblob2key_ctx_st *ctx = vctx;
+    struct hssxdr2key_ctx_st *ctx = vctx;
     HSS_KEY *key = NULL;
     unsigned char buf[HSS_MAX_PUBKEY];
     size_t length;
@@ -83,7 +83,7 @@ static int hssblob2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
         goto next;
     if (selection == 0 || (selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
         key = ossl_hss_key_new(PROV_LIBCTX_OF(ctx->provctx), NULL);
-        if (key == NULL || !ossl_hss_pub_key_decode(buf, length, key)) {
+        if (key == NULL || !ossl_hss_pubkey_decode(buf, length, key)) {
             ossl_hss_key_free(key);
             key = NULL;
         }
@@ -127,12 +127,12 @@ static int hssblob2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     return ok;
 }
 
-static int hssblob2key_export_object(void *vctx,
+static int hssxdr2key_export_object(void *vctx,
                                      const void *reference, size_t reference_sz,
                                      OSSL_CALLBACK *export_cb,
                                      void *export_cbarg)
 {
-    struct hssblob2key_ctx_st *ctx = vctx;
+    struct hssxdr2key_ctx_st *ctx = vctx;
     OSSL_FUNC_keymgmt_export_fn *export =
         ossl_prov_get_keymgmt_export(ossl_hss_keymgmt_functions);
     void *keydata;
@@ -150,13 +150,13 @@ static int hssblob2key_export_object(void *vctx,
     return 0;
 }
 
-const OSSL_DISPATCH ossl_hssblob_to_key_decoder_functions[] = {
-    { OSSL_FUNC_DECODER_NEWCTX, (void (*)(void))hssblob2key_newctx },
-    { OSSL_FUNC_DECODER_FREECTX, (void (*)(void))hssblob2key_freectx },
+const OSSL_DISPATCH ossl_xdr_to_hss_decoder_functions[] = {
+    { OSSL_FUNC_DECODER_NEWCTX, (void (*)(void))hssxdr2key_newctx },
+    { OSSL_FUNC_DECODER_FREECTX, (void (*)(void))hssxdr2key_freectx },
     { OSSL_FUNC_DECODER_DOES_SELECTION,
-      (void (*)(void))hssblob2key_does_selection },
-    { OSSL_FUNC_DECODER_DECODE, (void (*)(void))hssblob2key_decode },
+      (void (*)(void))hssxdr2key_does_selection },
+    { OSSL_FUNC_DECODER_DECODE, (void (*)(void))hssxdr2key_decode },
     { OSSL_FUNC_DECODER_EXPORT_OBJECT,
-      (void (*)(void))hssblob2key_export_object },
+      (void (*)(void))hssxdr2key_export_object },
     OSSL_DISPATCH_END
 };

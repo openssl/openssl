@@ -168,20 +168,6 @@ static void *evp_signature_from_algorithm(int name_id,
             signature->digest_sign
                 = OSSL_FUNC_signature_digest_sign(fns);
             break;
-        case OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_PQ_INIT:
-            if (signature->digest_verify_pq_init != NULL)
-                break;
-            signature->digest_verify_pq_init
-                = OSSL_FUNC_signature_digest_verify_pq_init(fns);
-            digverifypqfncnt++;
-            break;
-        case OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_PQ_FINAL:
-            if (signature->digest_verify_pq_final != NULL)
-                break;
-            signature->digest_verify_pq_final
-                = OSSL_FUNC_signature_digest_verify_pq_final(fns);
-            digverifypqfncnt++;
-            break;
         case OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_INIT:
             if (signature->digest_verify_init != NULL)
                 break;

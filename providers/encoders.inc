@@ -107,7 +107,7 @@ ENCODER_w_structure("DSA", dsa, yes, der, type_specific),
 ENCODER_w_structure("DSA", dsa, yes, pem, type_specific),
 #endif
 
-ENCODER("HSS", hss, yes, blob),
+ENCODER("HSS", hss, yes, xdr),
 ENCODER_TEXT("HSS", hss, yes),
 
 #ifndef OPENSSL_NO_EC

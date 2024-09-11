@@ -1,7 +1,12 @@
 LIBS=../../libcrypto
 
-$COMMON=hss_key.c lms_key.c lms_sig.c lms_params.c lm_ots.c lm_ots_params.c \
-        lms_sign.c lms_verify.c lms_hash.c hss_decode.c lms_nodecache.c
+$COMMON=hss_key.c hss_pubkey.c hss_sig_decode.c \
+        hss_to_text.c lm_ots_params.c lm_ots.c lms_hash.c lms_key.c \
+        lms_params.c lms_pubkey_cache.c lms_sig.c lms_verify.c
 
-SOURCE[../../libcrypto]=$COMMON hss_encode.c
+$HSS_GEN=hss_keygen.c hss_sign.c lms_sign.c
+
+IF[{- !$disabled{'hss'} -}]
+SOURCE[../../libcrypto]=$COMMON $HSS_GEN
 SOURCE[../../providers/libfips.a]=$COMMON
+ENDIF

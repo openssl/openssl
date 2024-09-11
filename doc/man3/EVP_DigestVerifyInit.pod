@@ -3,8 +3,7 @@
 =head1 NAME
 
 EVP_DigestVerifyInit_ex, EVP_DigestVerifyInit, EVP_DigestVerifyUpdate,
-EVP_DigestVerifyFinal, EVP_DigestVerify,
-EVP_DigestVerifyPQInit, EVP_DigestVerifyPQUpdate, EVP_DigestVerifyPQFinal
+EVP_DigestVerifyFinal, EVP_DigestVerify
 - EVP signature verification functions
 
 =head1 SYNOPSIS
@@ -22,16 +21,6 @@ EVP_DigestVerifyPQInit, EVP_DigestVerifyPQUpdate, EVP_DigestVerifyPQFinal
                            size_t siglen);
  int EVP_DigestVerify(EVP_MD_CTX *ctx, const unsigned char *sig,
                       size_t siglen, const unsigned char *tbs, size_t tbslen);
-
- int EVP_DigestVerifyPQInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
-                            const char *mdname, OSSL_LIB_CTX *libctx,
-                            const char *props, EVP_PKEY *pkey,
-                            const OSSL_PARAM params[],
-                            const unsigned char *sig,
-                            size_t siglen);
- int EVP_DigestVerifyPQFinal(EVP_MD_CTX *ctx);
-
- #define EVP_DigestVerifyPQUpdate EVP_DigestVerifyUpdate
 
 =head1 DESCRIPTION
 
@@ -137,29 +126,16 @@ B<sig> of length B<siglen>.
 EVP_DigestVerify() verifies B<tbslen> bytes at B<tbs> against the signature
 in B<sig> of length B<siglen>.
 
-EVP_DigestVerifyPQInit() is similiar to EVP_DigestVerifyInit_ex() except that
-the signature I<sig> of size I<siglen> is also supplied. This can be used for
-streaming Hash-Based Signature Schemes such as L<EVP_PKEY-HSS(7)> that require
-the signature to be set before calling EVP_DigestVerifyUpdate().
-
-EVP_DigestVerifyPQUpdate() is an alias for EVP_DigestVerifyUpdate() that can be
-called after EVP_DigestVerifyPQInit().
-
-EVP_DigestVerifyPQFinal() is similar to EVP_DigestVerifyFinal() except that it
-does not pass the signature (since it was alreay passed previously by calling
-EVP_DigestVerifyPQInit()).
-
 =head1 RETURN VALUES
 
-EVP_DigestVerifyInit(), EVP_DigestVerifyPQInit() and EVP_DigestVerifyUpdate()
-return 1 for success and 0 for failure.
+EVP_DigestVerifyInit() and EVP_DigestVerifyUpdate() return 1 for success and
+0 for failure.
 
-EVP_DigestVerifyFinal(), EVP_DigestVerifyPQFinal() and EVP_DigestVerify()
-return 1 for success; any other value indicates failure. A return value of zero
-indicates that the signature did not verify successfully (that is, B<tbs> did
-not match the original data or the signature had an invalid form), while other
-values indicate a more serious error (and sometimes also indicate an invalid
-signature form).
+EVP_DigestVerifyFinal() and EVP_DigestVerify()return 1 for success;
+any other value indicates failure. A return value of zero indicates that the
+signature did not verify successfully (that is, B<tbs> did not match the
+original data or the signature had an invalid form), while other values indicate
+a more serious error (and sometimes also indicate an invalid signature form).
 
 The error codes can be obtained from L<ERR_get_error(3)>.
 
@@ -225,9 +201,6 @@ EVP_DigestVerifyInit_ex() was added in OpenSSL 3.0.
 
 EVP_DigestVerifyUpdate() was converted from a macro to a function in OpenSSL
 3.0.
-
-EVP_DigestVerifyPQInit(), EVP_DigestVerifyPQUpdate() and
-EVP_DigestVerifyPQFinal() were added in OpenSSL 3.1.
 
 =head1 COPYRIGHT
 

@@ -15,6 +15,13 @@
 extern "C" {
 # endif
 
+/*
+ * HSS minimum and maximum number of LMS trees
+ * A tree of height 1 can be used to represent a LMS tree.
+ */
+#define OSSL_HSS_MIN_L 1
+#define OSSL_HSS_MAX_L 8
+
 #define OSSL_LMS_TYPE_SHA256_N32_H5   0x00000005
 #define OSSL_LMS_TYPE_SHA256_N32_H10  0x00000006
 #define OSSL_LMS_TYPE_SHA256_N32_H15  0x00000007

@@ -9,6 +9,17 @@ const uint16_t OSSL_LMS_D_C             = 0xFFFD;
 const uint16_t OSSL_LMS_D_CHILD_SEED    = 0xFFFE;
 const uint16_t OSSL_LMS_D_CHILD_I       = 0xFFFF;
 
+/**
+ * @brief A simple Hash function
+ *
+ * @param ctx A EVP_MD_CTX object that already has a EVP_MD digest set.
+ * @param in1 Data to digest
+ * @param in1len The size of |in1|
+ * @param in2 Additional data to digest. This may be NULL
+ * @param in2len The size on |in2|
+ * @param out The output buffer. It is assumed this is the correct size.
+ * @returns 1 for success, or 0 otherwise.
+ */
 int ossl_lms_hash(EVP_MD_CTX *ctx,
                   const unsigned char *in1, size_t in1len,
                   const unsigned char *in2, size_t in2len,

@@ -97,5 +97,5 @@ DECODER("DER", pem, der, yes),
 DECODER_w_structure("DER", der, EncryptedPrivateKeyInfo, der, yes),
 
 #ifndef OPENSSL_NO_HSS
-DECODER("HSS", hssblob, key, yes),
+DECODER("HSS", xdr, hss, yes),
 #endif

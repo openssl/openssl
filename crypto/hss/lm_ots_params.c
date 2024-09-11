@@ -10,9 +10,7 @@
 #include <openssl/hss.h>
 #include "lms_local.h"
 
-/*
- * See Table 1 of RFC 8554 Section 4.1 Parameters (SHA256_N32_WXX)
- */
+/* See Table 1 of RFC 8554 Section 4.1 Parameters (SHA256_N32_WXX) */
 static const LM_OTS_PARAMS lm_ots_params[] = {
     { OSSL_LM_OTS_TYPE_SHA256_N32_W1, 32, 1, 265, "SHA256"},
     { OSSL_LM_OTS_TYPE_SHA256_N32_W2, 32, 2, 133, "SHA256"},
@@ -26,7 +24,7 @@ static const LM_OTS_PARAMS lm_ots_params[] = {
     { OSSL_LM_OTS_TYPE_SHAKE_N32_W2,  32, 2, 133, "SHAKE-256"},
     { OSSL_LM_OTS_TYPE_SHAKE_N32_W4,  32, 4,  67, "SHAKE-256"},
     { OSSL_LM_OTS_TYPE_SHAKE_N32_W8,  32, 8,  34, "SHAKE-256"},
-    /* SHAKE-256/192 */
+    /* SHAKE-256/192 - OpenSSL does not support this as a name */
     { OSSL_LM_OTS_TYPE_SHAKE_N24_W1,  24, 1, 200, "SHAKE-256"},
     { OSSL_LM_OTS_TYPE_SHAKE_N24_W2,  24, 2, 101, "SHAKE-256"},
     { OSSL_LM_OTS_TYPE_SHAKE_N24_W4,  24, 4,  51, "SHAKE-256"},
@@ -34,6 +32,13 @@ static const LM_OTS_PARAMS lm_ots_params[] = {
     { 0, 0, 0, 0, NULL },
 };
 
+/**
+ * @brief A getter to convert a ots_type into a LM_OTS_PARAMS object.
+ *
+ * @param ots_type The type such as OSSL_LM_OTS_TYPE_SHA256_N32_W1
+ * @returns The LM_OTS_PARAMS object associated with the |ots_type|, or
+ *          NULL if |ots_type| is undefined.
+ */
 const LM_OTS_PARAMS *ossl_lm_ots_params_get(uint32_t ots_type)
 {
     const LM_OTS_PARAMS *p;

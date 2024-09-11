@@ -791,33 +791,38 @@ static int hss_to_text(BIO *out, const void *key, int selection)
 {
     const HSS_KEY *hsskey = key;
     LMS_KEY *lmskey;
-    int ret = 0, i = 0;
-    int height = 0;
+    int ret = 0;
+    uint32_t i = 0;
 
+#if 0
     if (!BIO_printf(out, "levels: %d\n", hsskey->L))
         goto err;
+#endif
     lmskey = sk_LMS_KEY_value(hsskey->lmskeys, 0);
     if (lmskey == NULL)
         goto err;
 
     if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
         if (hsskey->lmskeys != NULL && sk_LMS_KEY_num(hsskey->lmskeys) > 0) {
-            if (!ossl_lms_key_to_text(out, lmskey, 0,
+            if (!ossl_lms_key_to_text(out, lmskey,
                                       OSSL_KEYMGMT_SELECT_PUBLIC_KEY))
                 goto err;
         }
     }
     if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
+        if (!BIO_printf(out, "\nRemaining %ld ", hsskey->remaining))
+            goto err;
         while ((lmskey = sk_LMS_KEY_value(hsskey->lmskeys, i++)) != NULL) {
             if (lmskey->priv.data == NULL)
                 break;
-            if (!BIO_printf(out, "\nPrivate Key Level %d: \n", i))
-                goto err;
-            height += lmskey->lms_params->h;
-            if (!ossl_lms_key_to_text(out, lmskey, height,
+            //if (!BIO_printf(out, "\nPrivate Key Level %d: \n", i))
+            //    goto err;
+            if (!ossl_lms_key_to_text(out, lmskey,
                                       OSSL_KEYMGMT_SELECT_PRIVATE_KEY))
                 goto err;
         }
+        if (!BIO_printf(out, "\n"))
+            goto err;
     }
     ret = 1;
 err:

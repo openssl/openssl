@@ -476,6 +476,7 @@ my @disablables = (
     "fuzz-libfuzzer",
     "gost",
     "hss",
+    "hss-gen",
     "http",
     "idea",
     "jitter",

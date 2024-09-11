@@ -264,22 +264,12 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
     }
 
     if (ver) {
-        if (sig != NULL) {
-            if (signature->digest_verify_pq_init == NULL) {
-                ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
-                goto err;
-            }
-            ret = signature->digest_verify_pq_init(locpctx->op.sig.algctx,
-                                                   mdname, provkey, params,
-                                                   sig, siglen);
-        } else {
-            if (signature->digest_verify_init == NULL) {
-                ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
-                goto err;
-            }
-            ret = signature->digest_verify_init(locpctx->op.sig.algctx,
-                                                mdname, provkey, params);
+        if (signature->digest_verify_init == NULL) {
+            ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+            goto err;
         }
+        ret = signature->digest_verify_init(locpctx->op.sig.algctx,
+                                            mdname, provkey, params);
     } else {
         if (signature->digest_sign_init == NULL) {
             ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
@@ -414,17 +404,6 @@ int EVP_DigestVerifyInit_ex(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
 {
     return do_sigver_init(ctx, pctx, NULL, mdname, libctx, props, NULL, pkey, 1,
                           params, NULL, 0);
-}
-
-int EVP_DigestVerifyPQInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
-                           const char *mdname, OSSL_LIB_CTX *libctx,
-                           const char *props, EVP_PKEY *pkey,
-                           const OSSL_PARAM params[],
-                           const unsigned char *sig,
-                           size_t siglen)
-{
-    return do_sigver_init(ctx, pctx, NULL, mdname, libctx, props, NULL, pkey, 1,
-                          params, sig, siglen);
 }
 
 #ifndef FIPS_MODULE
@@ -754,39 +733,6 @@ int EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sig,
         return r;
     return EVP_PKEY_verify(pctx, sig, siglen, md, mdlen);
 #endif
-}
-
-int EVP_DigestVerifyPQFinal(EVP_MD_CTX *ctx)
-{
-    int r = 0;
-    EVP_PKEY_CTX *dctx = NULL, *pctx = ctx->pctx;
-
-    if ((ctx->flags & EVP_MD_CTX_FLAG_FINALISED) != 0) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_FINAL_ERROR);
-        return 0;
-    }
-
-    if (pctx == NULL
-            || pctx->operation != EVP_PKEY_OP_VERIFYCTX
-            || pctx->op.sig.algctx == NULL
-            || pctx->op.sig.signature == NULL
-            || pctx->op.sig.signature->digest_verify_pq_final == NULL) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_FINAL_ERROR);
-        return 0;
-    }
-
-    if ((ctx->flags & EVP_MD_CTX_FLAG_FINALISE) == 0) {
-        /* try dup */
-        dctx = EVP_PKEY_CTX_dup(pctx);
-        if (dctx != NULL)
-            pctx = dctx;
-    }
-    r = pctx->op.sig.signature->digest_verify_pq_final(pctx->op.sig.algctx);
-    if (dctx == NULL)
-        ctx->flags |= EVP_MD_CTX_FLAG_FINALISED;
-    else
-        EVP_PKEY_CTX_free(dctx);
-    return r;
 }
 
 int EVP_DigestVerify(EVP_MD_CTX *ctx, const unsigned char *sigret,

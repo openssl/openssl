@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2023-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -37,6 +37,13 @@ static const LMS_PARAMS lms_params[] = {
     { 0, NULL, 0 , 0 }
 };
 
+/**
+ * @brief A getter to convert a |lms_type| into a LMS_PARAMS object.
+ *
+ * @param lms_type The type such as OSSL_LMS_TYPE_SHA256_N32_H5.
+ * @returns The LMS_PARAMS object associated with the |lms_type|, or
+ *          NULL if |lms_type| is undefined.
+ */
 const LMS_PARAMS *ossl_lms_params_get(uint32_t lms_type)
 {
     const LMS_PARAMS *p;

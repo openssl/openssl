@@ -1692,8 +1692,12 @@ EVP_PKEY *EVP_PKEY_reserve(EVP_PKEY *pkey, uint64_t count)
     if (ret == NULL)
         return NULL;
 
-    //!EVP_PKEY_set_type_by_keymgmt(ret, pkey->keymgmt)
     ret->keydata = evp_keymgmt_reserve(pkey->keymgmt, pkey->keydata, count);
+    if (ret->keydata == NULL
+            || !evp_keymgmt_util_assign_pkey(ret, pkey->keymgmt, ret->keydata)) {
+        EVP_PKEY_free(ret);
+        ret = NULL;
+    }
     return ret;
 }
 

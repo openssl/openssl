@@ -590,6 +590,6 @@ extern const OSSL_DISPATCH ossl_pem_to_der_decoder_functions[];
 extern const OSSL_DISPATCH ossl_file_store_functions[];
 extern const OSSL_DISPATCH ossl_winstore_store_functions[];
 
-extern const OSSL_DISPATCH ossl_hssblob_to_key_decoder_functions[];
-extern const OSSL_DISPATCH ossl_hss_to_blob_encoder_functions[];
+extern const OSSL_DISPATCH ossl_xdr_to_hss_decoder_functions[];
+extern const OSSL_DISPATCH ossl_hss_to_xdr_encoder_functions[];
 extern const OSSL_DISPATCH ossl_hss_to_text_encoder_functions[];

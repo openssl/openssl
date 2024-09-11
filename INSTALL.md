@@ -862,6 +862,10 @@ engine.
 
 Disable HSS/LMS support.
 
+### no-hss-gen
+
+Disable HSS/LMS signature and key generation support.
+
 ### no-http
 
 Disable HTTP support.
