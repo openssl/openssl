@@ -149,7 +149,7 @@ end:
 
 static int hss_verify_bad_sig_test(void)
 {
-    int ret = 0, i;
+    int ret = 0, i = 0;
     HSS_ACVP_TEST_DATA *td = &hss_testdata[1];
     EVP_PKEY *pkey = NULL;
     EVP_SIGNATURE *sig = NULL;
@@ -211,7 +211,7 @@ static int hss_verify_bad_sig_len_test(void)
     EVP_PKEY *pkey = NULL;
     EVP_SIGNATURE *sig = NULL;
     EVP_PKEY_CTX *ctx = NULL;
-    size_t siglen;
+    size_t siglen = 0;
     const int step = 3;
 
     if (!TEST_ptr(pkey = hsspubkey_from_data(td->pub, td->publen))
@@ -247,7 +247,7 @@ end:
 static int hss_verify_bad_pub_sig_test(void)
 {
     HSS_ACVP_TEST_DATA *td = &hss_testdata[1];
-    int ret = 0, i;
+    int ret = 0, i = 0;
     EVP_PKEY *pkey = NULL;
     EVP_SIGNATURE *sig = NULL;
     EVP_PKEY_CTX *ctx = NULL;
