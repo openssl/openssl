@@ -25,8 +25,9 @@ int ossl_lms_hash(EVP_MD_CTX *ctx,
                   const unsigned char *in2, size_t in2len,
                   unsigned char *out)
 {
-    return EVP_DigestInit_ex2(ctx, NULL, NULL)
-           && EVP_DigestUpdate(ctx, in1, in1len)
-           && (in2 == NULL || EVP_DigestUpdate(ctx, in2, in2len))
-           && EVP_DigestFinal_ex(ctx, out, NULL);
+    return
+        EVP_DigestInit_ex2(ctx, NULL, NULL)
+        && EVP_DigestUpdate(ctx, in1, in1len)
+        && (in2 == NULL || EVP_DigestUpdate(ctx, in2, in2len))
+        && EVP_DigestFinal_ex(ctx, out, NULL);
 }

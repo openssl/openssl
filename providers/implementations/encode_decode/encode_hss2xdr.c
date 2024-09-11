@@ -27,8 +27,7 @@
 #include "prov/provider_ctx.h"
 #include "endecoder_local.h"
 
-static int write_xdr(void *provctx, OSSL_CORE_BIO *cout,
-                      void *data, int len)
+static int write_xdr(void *provctx, OSSL_CORE_BIO *cout, void *data, int len)
 {
     BIO *out = ossl_bio_new_from_core_bio(provctx, cout);
     int ret;
@@ -87,7 +86,7 @@ static int key2xdr_check_selection(int selection, int selection_mask)
 }
 
 static int key2xdr_encode(void *vctx, const void *key, int selection,
-                           OSSL_CORE_BIO *cout)
+                          OSSL_CORE_BIO *cout)
 {
     size_t pubkeylen = 0;
     unsigned char data[64];
@@ -109,7 +108,7 @@ static int key2xdr_encode(void *vctx, const void *key, int selection,
     static OSSL_FUNC_encoder_encode_fn impl##2xdr_encode;               \
                                                                         \
     static void *impl##2xdr_import_object(void *ctx, int selection,     \
-                                           const OSSL_PARAM params[])   \
+                                          const OSSL_PARAM params[])    \
     {                                                                   \
         return ossl_prov_import_key(ossl_##impl##_keymgmt_functions,    \
                                     ctx, selection, params);            \
@@ -124,11 +123,11 @@ static int key2xdr_encode(void *vctx, const void *key, int selection,
                                         EVP_PKEY_##selection_name);     \
     }                                                                   \
     static int impl##2xdr_encode(void *vctx, OSSL_CORE_BIO *cout,       \
-                                  const void *key,                      \
-                                  const OSSL_PARAM key_abstract[],      \
-                                  int selection,                        \
-                                  OSSL_PASSPHRASE_CALLBACK *cb,         \
-                                  void *cbarg)                          \
+                                 const void *key,                       \
+                                 const OSSL_PARAM key_abstract[],       \
+                                 int selection,                         \
+                                 OSSL_PASSPHRASE_CALLBACK *cb,          \
+                                 void *cbarg)                           \
     {                                                                   \
         /* We don't deal with abstract objects */                       \
         if (key_abstract != NULL) {                                     \

@@ -18,9 +18,9 @@
 #include "crypto/hss.h"
 #include "lms_local.h"
 
-#define U16STR(out, in)                        \
-(out)[0] = (unsigned char)((in >> 8) & 0xff);  \
-(out)[1] = (unsigned char)(in & 0xff)
+#define U16STR(out, in)                            \
+    (out)[0] = (unsigned char)((in >> 8) & 0xff);  \
+    (out)[1] = (unsigned char)(in & 0xff)
 
 /**
  * @brief OTS private key generation
@@ -68,7 +68,7 @@ static uint16_t checksum(const LM_OTS_PARAMS *params, const unsigned char *S)
     uint16_t sum = 0;
     uint16_t i;
     /* Largest size is 8 * 32 / 1 = 256 (which doesnt quite fit into 8 bits) */
-    uint16_t bytes = (8 * params->n / params->w );
+    uint16_t bytes = (8 * params->n / params->w);
     uint16_t end = (1 << params->w) - 1;
 
     for (i = 0; i < bytes; ++i)
@@ -140,7 +140,7 @@ int ossl_lm_ots_pubK_from_priv(LMS_KEY *privkey, uint32_t q, unsigned char *outK
 
     /* tmpbuf[] = I || q || D_PBLC */
     if (!WPACKET_init_static_len(&pkt, tmpbuf, sizeof(tmpbuf), 0)
-            || !WPACKET_memcpy(&pkt, privkey->I, LMS_SIZE_I)
+            || !WPACKET_memcpy(&pkt, privkey->Id, LMS_SIZE_I)
             || !WPACKET_put_bytes_u32(&pkt, q)
             || !WPACKET_put_bytes_u16(&pkt, OSSL_LMS_D_PBLC)
             || !WPACKET_get_total_written(&pkt, &len))
@@ -165,7 +165,7 @@ int ossl_lm_ots_pubK_from_priv(LMS_KEY *privkey, uint32_t q, unsigned char *outK
             if (!WPACKET_put_bytes_u8(&pkt, j)
                     || !ossl_lms_hash(privkey->mdctx, tmpbuf, len + 1, yi, n, yi)
                     || !WPACKET_backward(&pkt, LMS_SIZE_j))
-                    goto err;
+                goto err;
         }
         /* K = H(I || q || D_PBLC || y[i] || .. || y[p-1]) */
         if (!EVP_DigestUpdate(ctxK, yi, n))
@@ -204,8 +204,8 @@ int ossl_lm_ots_signature_gen(LMS_KEY *privkey,
                               LM_OTS_SIG *sig)
 {
     return ossl_lm_ots_signature_gen_init(privkey, sig)
-           && ossl_lm_ots_signature_gen_update(privkey, msg, msglen)
-           && ossl_lm_ots_signature_gen_final(privkey, sig);
+        && ossl_lm_ots_signature_gen_update(privkey, msg, msglen)
+        && ossl_lm_ots_signature_gen_final(privkey, sig);
 }
 
 /**
@@ -231,7 +231,7 @@ int ossl_lm_ots_signature_gen_init(LMS_KEY *key, LM_OTS_SIG *sig)
     if (!ossl_assert(key->q < (uint32_t)(1 << key->lms_params->h)))
         return 0;
     if (!WPACKET_init_static_len(&pkt, tmp, sizeof(tmp), 0)
-            || !WPACKET_memcpy(&pkt, key->I, LMS_SIZE_I)
+            || !WPACKET_memcpy(&pkt, key->Id, LMS_SIZE_I)
             || !WPACKET_put_bytes_u32(&pkt, key->q)
             || !WPACKET_put_bytes_u16(&pkt, OSSL_LMS_D_C)
             || !WPACKET_put_bytes_u8(&pkt, 0xFF)
@@ -255,7 +255,7 @@ int ossl_lm_ots_signature_gen_init(LMS_KEY *key, LM_OTS_SIG *sig)
 
     /* mdctx = H(I || q || 0x8181 || C) */
     ret =  EVP_DigestInit_ex2(key->mdctx, NULL, NULL)
-           && EVP_DigestUpdate(key->mdctx, tmp, len);
+        && EVP_DigestUpdate(key->mdctx, tmp, len);
 err:
     WPACKET_finish(&pkt);
     WPACKET_close(&pkt);
@@ -296,14 +296,14 @@ int ossl_lm_ots_signature_gen_final(LMS_KEY *key, LM_OTS_SIG *sig)
     U16STR(Qsum, checksum(prms, Q));
 
     if (!WPACKET_init_static_len(&pkt, tmp, sizeof(tmp), 0)
-            || !WPACKET_memcpy(&pkt, key->I, LMS_SIZE_I)
+            || !WPACKET_memcpy(&pkt, key->Id, LMS_SIZE_I)
             || !WPACKET_put_bytes_u32(&pkt, key->q))
         goto err;
 
     psig = sig->y;
     for (i = 0; i < prms->p; ++i) {
         a = coef(Q, i, prms->w);
-        /* get psig = x_q[i] = H(I || u32str(q) || u16str(i) || u8str(0xff) || SEED) */
+        /* psig = x_q[i] = H(I || u32str(q) || u16str(i) || u8str(0xff) || SEED) */
         if (!lm_ots_get_private_xq(key, key->q, i, key->mdctx, psig))
             goto err;
 
@@ -311,7 +311,6 @@ int ossl_lm_ots_signature_gen_final(LMS_KEY *key, LM_OTS_SIG *sig)
         for (j = 0; j < a; ++j) {
             WPACKET_put_bytes_u8(&pkt, j);
             if (!ossl_lms_hash(key->mdctx, tmp, LMS_OFFSET_SEED, psig, n, psig)) {
-                // Clear the sig here!
                 goto err;
             }
             WPACKET_backward(&pkt, 1);
@@ -321,6 +320,8 @@ int ossl_lm_ots_signature_gen_final(LMS_KEY *key, LM_OTS_SIG *sig)
     }
     ret = 1;
 err:
+    if (ret == 0)
+        OPENSSL_cleanse(sig->y, prms->p * n);
     WPACKET_finish(&pkt);
     WPACKET_close(&pkt);
     return ret;
@@ -460,7 +461,8 @@ int ossl_lm_ots_ctx_pubkey_final(LM_OTS_CTX *pctx, unsigned char *Kc)
         goto err;
 
     y = pctx->sig->y;
-    tag[0] = 0; tag[1] = 0;
+    tag[0] = 0;
+    tag[1] = 0;
 
     for (i = 0; i < p; ++i) {
         a = coef(Q, i, w);

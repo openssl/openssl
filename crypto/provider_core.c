@@ -2067,7 +2067,6 @@ static void *core_crypto_thread_start(const OSSL_CORE_HANDLE *handle,
     return ossl_crypto_thread_start(prov->libctx, start, data);
 }
 
-
 /*
  * These error functions should use |handle| to select the proper
  * library context to report in the correct error stack if error

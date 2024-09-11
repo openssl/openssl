@@ -101,8 +101,8 @@ int ossl_hss_pubkey_encode(HSS_KEY *hsskey, unsigned char *pub, size_t *publen)
         return 1;
     }
     ret = WPACKET_init_static_len(&pkt, pub, *publen, 0)
-          && WPACKET_put_bytes_u32(&pkt, hsskey->L)
-          && ossl_lms_pubkey_to_pkt(&pkt, lmskey);
+            && WPACKET_put_bytes_u32(&pkt, hsskey->L)
+            && ossl_lms_pubkey_to_pkt(&pkt, lmskey);
     WPACKET_finish(&pkt);
     WPACKET_close(&pkt);
     return ret;

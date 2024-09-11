@@ -128,9 +128,9 @@ static int hssxdr2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
 }
 
 static int hssxdr2key_export_object(void *vctx,
-                                     const void *reference, size_t reference_sz,
-                                     OSSL_CALLBACK *export_cb,
-                                     void *export_cbarg)
+                                    const void *reference, size_t reference_sz,
+                                    OSSL_CALLBACK *export_cb,
+                                    void *export_cbarg)
 {
     struct hssxdr2key_ctx_st *ctx = vctx;
     OSSL_FUNC_keymgmt_export_fn *export =

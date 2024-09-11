@@ -26,10 +26,12 @@
 #  define LMS_MAX_DIGEST_SIZE 32
 
 #  define LMS_SIZE_I 16
-#  define LMS_SIZE_PUB_LMS_TYPE  4
-#  define LMS_SIZE_PUB_OTS_TYPE  4
-#  define HSS_SIZE_PUB_L  4
-#  define HSS_MAX_PUBKEY (HSS_SIZE_PUB_L + LMS_SIZE_PUB_LMS_TYPE + LMS_SIZE_PUB_OTS_TYPE + LMS_SIZE_I + LMS_MAX_DIGEST_SIZE)
+#  define LMS_SIZE_PUB_LMS_TYPE 4
+#  define LMS_SIZE_PUB_OTS_TYPE 4
+#  define HSS_SIZE_PUB_L 4
+#  define HSS_MAX_PUBKEY (HSS_SIZE_PUB_L + LMS_SIZE_PUB_LMS_TYPE \
+                         + LMS_SIZE_PUB_OTS_TYPE + LMS_SIZE_I    \
+                         + LMS_MAX_DIGEST_SIZE)
 
 /*
  * Refer to RFC 8554 Section 4.1.
@@ -80,7 +82,8 @@ typedef struct lms_pub_key_st {
     /*
      * K is the LMS tree's root public key (Called T(1))
      * It is n bytes long (the hash size).
-     * It is a pointer into the encoded buffer */
+     * It is a pointer into the encoded buffer
+     */
     unsigned char *K;
     uint32_t allocated;             /* If 1 then encoded needs to be freed */
 } LMS_PUB_KEY;
@@ -101,7 +104,7 @@ struct lms_key_st {
     LMS_PRIV_KEY priv;
     const LMS_PARAMS *lms_params;
     const LM_OTS_PARAMS *ots_params;
-    unsigned char *I;         /* A pointer to 16 bytes */
+    unsigned char *Id;        /* A pointer to 16 bytes (I[16]) */
     uint32_t q;               /* leaf index (0..(2^h - 1)) */
     EVP_MD_CTX *mdctx;
     OSSL_LIB_CTX *libctx;
@@ -135,11 +138,11 @@ typedef struct lm_ots_sig_st {
 } LM_OTS_SIG;
 
 typedef struct lms_signature_st {
-  uint32_t q;
-  LM_OTS_SIG sig;
-  const LMS_PARAMS *params;
-  unsigned char *paths; /* size is h * m */
-  int paths_allocated;
+    uint32_t q;
+    LM_OTS_SIG sig;
+    const LMS_PARAMS *params;
+    unsigned char *paths; /* size is h * m */
+    int paths_allocated;
 } LMS_SIG;
 
 /* A structure used for processing jobs when performing signature validation */
@@ -167,8 +170,7 @@ void ossl_hss_key_free(HSS_KEY *key);
 void ossl_hss_key_verify_reset(HSS_KEY *hsskey);
 int ossl_hss_key_reset(HSS_KEY *hsskey);
 
-int ossl_hss_sig_decode(HSS_KEY *pub,
-                    const unsigned char *sig, size_t siglen);
+int ossl_hss_sig_decode(HSS_KEY *pub, const unsigned char *sig, size_t siglen);
 int ossl_hss_sig_to_text(BIO *out, HSS_KEY *hsskey, int selection);
 
 int ossl_hss_pubkey_encode(HSS_KEY *hsskey, unsigned char *pub, size_t *publen);

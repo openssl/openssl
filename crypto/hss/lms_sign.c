@@ -29,8 +29,8 @@ int ossl_lms_signature_gen(LMS_KEY *key, const unsigned char *msg, size_t msglen
                            LMS_SIG *sig)
 {
     return ossl_lms_signature_gen_init(key, sig)
-           && ossl_lms_signature_gen_update(key, msg, msglen)
-           && ossl_lms_signature_gen_final(key, sig);
+        && ossl_lms_signature_gen_update(key, msg, msglen)
+        && ossl_lms_signature_gen_final(key, sig);
 }
 
 /**

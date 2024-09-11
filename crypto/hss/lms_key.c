@@ -88,7 +88,7 @@ int ossl_lms_key_get_pubkey_from_nodeid(LMS_KEY *key,
 
     /* I || u32str(nodeid) */
     if (!WPACKET_init_static_len(&pkt, buf, sizeof(buf), 0)
-            || !WPACKET_memcpy(&pkt, key->I, LMS_SIZE_I)
+            || !WPACKET_memcpy(&pkt, key->Id, LMS_SIZE_I)
             || !WPACKET_put_bytes_u32(&pkt, nodeid))
         goto err;
 
@@ -99,9 +99,9 @@ int ossl_lms_key_get_pubkey_from_nodeid(LMS_KEY *key,
 
         /* out = H(I || nodeid || 0x8282 || K */
         ret = ossl_lm_ots_pubK_from_priv(key, q, K)
-              && WPACKET_put_bytes_u16(&pkt, OSSL_LMS_D_LEAF)
-              && WPACKET_get_total_written(&pkt, &len)
-              && ossl_lms_hash(key->mdctx, buf, len, K, n, out);
+            && WPACKET_put_bytes_u16(&pkt, OSSL_LMS_D_LEAF)
+            && WPACKET_get_total_written(&pkt, &len)
+            && ossl_lms_hash(key->mdctx, buf, len, K, n, out);
     } else {
         unsigned char tlr[2 * LMS_MAX_DIGEST_SIZE];
 
@@ -110,10 +110,10 @@ int ossl_lms_key_get_pubkey_from_nodeid(LMS_KEY *key,
          * Where T is a recursive call.
          */
         ret = WPACKET_put_bytes_u16(&pkt, OSSL_LMS_D_INTR)
-              && WPACKET_get_total_written(&pkt, &len)
-              && ossl_lms_key_get_pubkey_from_nodeid(key, 2 * nodeid, tlr)
-              && ossl_lms_key_get_pubkey_from_nodeid(key, 2 * nodeid + 1, tlr + n)
-              && ossl_lms_hash(key->mdctx, buf, len, tlr, 2 * n, out);
+            && WPACKET_get_total_written(&pkt, &len)
+            && ossl_lms_key_get_pubkey_from_nodeid(key, 2 * nodeid, tlr)
+            && ossl_lms_key_get_pubkey_from_nodeid(key, 2 * nodeid + 1, tlr + n)
+            && ossl_lms_hash(key->mdctx, buf, len, tlr, 2 * n, out);
     }
     if (ret)
         ossl_lms_pubkey_cache_add(key, nodeid, out);
@@ -157,7 +157,7 @@ int ossl_lms_pubkey_from_pkt(PACKET *pkt, LMS_KEY *lmskey)
 
     /* The digest used must be the same */
     if (HASH_NOT_MATCHED(lmskey->ots_params, lmskey->lms_params)
-            || !PACKET_get_bytes_shallow(pkt, &lmskey->I, LMS_SIZE_I)
+            || !PACKET_get_bytes_shallow(pkt, &lmskey->Id, LMS_SIZE_I)
             || !PACKET_get_bytes_shallow(pkt, &key->K, lmskey->lms_params->n))
         goto err;
     key->encodedlen = pkt->curr - key->encoded;
@@ -176,7 +176,7 @@ err:
 size_t ossl_lms_pubkey_encode_len(LMS_KEY *lmskey)
 {
     return LMS_SIZE_LMS_TYPE + LMS_SIZE_OTS_TYPE + LMS_SIZE_I
-           + lmskey->lms_params->n;
+        + lmskey->lms_params->n;
 }
 
 /**
@@ -190,9 +190,9 @@ size_t ossl_lms_pubkey_encode_len(LMS_KEY *lmskey)
 int ossl_lms_pubkey_to_pkt(WPACKET *pkt, LMS_KEY *lmskey)
 {
     return WPACKET_put_bytes_u32(pkt, lmskey->lms_params->lms_type)
-           && WPACKET_put_bytes_u32(pkt, lmskey->ots_params->lm_ots_type)
-           && WPACKET_memcpy(pkt, lmskey->I, LMS_SIZE_I)
-           && WPACKET_memcpy(pkt, lmskey->pub.K, lmskey->lms_params->n);
+        && WPACKET_put_bytes_u32(pkt, lmskey->ots_params->lm_ots_type)
+        && WPACKET_memcpy(pkt, lmskey->Id, LMS_SIZE_I)
+        && WPACKET_memcpy(pkt, lmskey->pub.K, lmskey->lms_params->n);
 }
 
 /*
@@ -315,8 +315,8 @@ LMS_KEY *ossl_lms_key_gen(uint32_t lms_type, uint32_t ots_type,
         return NULL;
 
     ret = lms_key_init(key, lms_type, ots_type, libctx, propq)
-          && ossl_lms_key_reset(key, 0, parent)
-          && ossl_lms_pubkey_compute(key);
+        && ossl_lms_key_reset(key, 0, parent)
+        && ossl_lms_pubkey_compute(key);
     if (ret == 0) {
         ossl_lms_key_free(key);
         key = NULL;
@@ -408,11 +408,11 @@ LMS_KEY *ossl_lms_key_deep_copy(const LMS_KEY *src)
             || !lms_privkey_copy(&dst->priv, &src->priv, n))
         goto err;
     if (dst->priv.data != NULL)
-        dst->I = dst->priv.data;
+        dst->Id = dst->priv.data;
     else if (dst->pub.K != NULL)
-        dst->I = dst->pub.K - n;
+        dst->Id = dst->pub.K - n;
     else
-        dst->I = NULL;
+        dst->Id = NULL;
 
     return dst;
 err:
@@ -469,10 +469,10 @@ static int lms_privkey_reset(LMS_PRIV_KEY *priv, uint32_t seedlen,
         priv->datalen = datalen;
     }
 
-   /*
-    * According to SP800-208 Section 6.1, hardware implementations should
-    * use an Approved RBG to generate this value.
-    */
+    /*
+     * According to SP800-208 Section 6.1, hardware implementations should
+     * use an Approved RBG to generate this value.
+     */
     if (parent == NULL) {
         /* Randomly generate SEED and I */
         if (RAND_priv_bytes_ex(libctx, SEED, seedlen + LMS_SIZE_I, 0) <= 0)
@@ -488,7 +488,7 @@ static int lms_privkey_reset(LMS_PRIV_KEY *priv, uint32_t seedlen,
          * SEED = Hash(I || nodeid || 0xFFFE || 0xFF || parent->seed
          */
         if (!WPACKET_init_static_len(&pkt, buf, sizeof(buf), 0)
-                || !WPACKET_memcpy(&pkt, parent->I, LMS_SIZE_I)
+                || !WPACKET_memcpy(&pkt, parent->Id, LMS_SIZE_I)
                 || !WPACKET_put_bytes_u32(&pkt, nodeid) /* nodeid = q */
                 || !WPACKET_put_bytes_u16(&pkt, OSSL_LMS_D_CHILD_I)
                 || !WPACKET_put_bytes_u8(&pkt, 0xFF)
@@ -499,7 +499,7 @@ static int lms_privkey_reset(LMS_PRIV_KEY *priv, uint32_t seedlen,
                 || !WPACKET_put_bytes_u16(&pkt, OSSL_LMS_D_CHILD_SEED)
                 || !ossl_lms_hash(parent->mdctx, buf, buflen, NULL, 0, SEED)
                 || !WPACKET_finish(&pkt))
-                goto err;
+            goto err;
     }
     /*
      * x_q[i] = H(I || u32str(q) || u16str(i) || u8str(0xff) || SEED
@@ -555,7 +555,7 @@ int ossl_lms_key_reset(LMS_KEY *lmskey, int nodeid, LMS_KEY *parent)
         return 0;
     if (!lms_pubkey_reset(&lmskey->pub))
         return 0;
-    lmskey->I = lmskey->priv.data;
+    lmskey->Id = lmskey->priv.data;
     lmskey->q = 0;
     return 1;
 }
@@ -590,8 +590,8 @@ int ossl_lms_pubkey_compute(LMS_KEY *lmskey)
 
     /* Allocate a buffer for the encoded public key once */
     if (pub->encoded == NULL) {
-        pub->encodedlen = LMS_SIZE_PUB_LMS_TYPE + LMS_SIZE_PUB_OTS_TYPE +
-                          LMS_SIZE_I + n;
+        pub->encodedlen = LMS_SIZE_PUB_LMS_TYPE + LMS_SIZE_PUB_OTS_TYPE
+            + LMS_SIZE_I + n;
         pub->encoded = OPENSSL_malloc(pub->encodedlen);
         if (pub->encoded == NULL)
             return 0;
@@ -612,7 +612,7 @@ int ossl_lms_pubkey_compute(LMS_KEY *lmskey)
         /* XDR encode the public key into pub->encoded */
         if (!WPACKET_put_bytes_u32(&pkt, lmskey->lms_params->lms_type)
                 || !WPACKET_put_bytes_u32(&pkt, prms->lm_ots_type)
-                || !WPACKET_memcpy(&pkt, lmskey->I, LMS_SIZE_I))
+                || !WPACKET_memcpy(&pkt, lmskey->Id, LMS_SIZE_I))
             goto err;
 
         pK = WPACKET_get_curr(&pkt);

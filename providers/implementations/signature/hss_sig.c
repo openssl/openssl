@@ -26,23 +26,23 @@
 # define LMS_NO_THREADS
 #endif
 
-# define HSS_MIN_THREADS 1u
-# define HSS_MAX_THREADS 8u
+#define HSS_MIN_THREADS 1u
+#define HSS_MAX_THREADS 8u
 
 static OSSL_FUNC_signature_newctx_fn hss_newctx;
 static OSSL_FUNC_signature_freectx_fn hss_freectx;
-#if !defined(OPENSSL_NO_HSS_GEN) && !defined(FIPS_MODULE)
-static OSSL_FUNC_signature_sign_message_init_fn hss_sign_msg_init;
-static OSSL_FUNC_signature_sign_message_update_fn hss_sign_msg_update;
-static OSSL_FUNC_signature_sign_message_final_fn hss_sign_msg_final;
-static OSSL_FUNC_signature_sign_fn hss_sign;
-#endif
 static OSSL_FUNC_signature_verify_message_init_fn hss_verify_msg_init;
 static OSSL_FUNC_signature_verify_message_update_fn hss_verify_msg_update;
 static OSSL_FUNC_signature_verify_message_final_fn hss_verify_msg_final;
 static OSSL_FUNC_signature_verify_fn hss_verify;
 static OSSL_FUNC_signature_set_ctx_params_fn hss_set_ctx_params;
 static OSSL_FUNC_signature_settable_ctx_params_fn hss_settable_ctx_params;
+#if !defined(OPENSSL_NO_HSS_GEN) && !defined(FIPS_MODULE)
+static OSSL_FUNC_signature_sign_message_init_fn hss_sign_msg_init;
+static OSSL_FUNC_signature_sign_message_update_fn hss_sign_msg_update;
+static OSSL_FUNC_signature_sign_message_final_fn hss_sign_msg_final;
+static OSSL_FUNC_signature_sign_fn hss_sign;
+#endif
 
 typedef struct {
     OSSL_LIB_CTX *libctx;
@@ -184,8 +184,8 @@ static CRYPTO_THREAD_RETVAL verify_thread(void *ctx)
     int ret;
 
     ret = ossl_lms_sig_verify_init(cur)
-          && ossl_lms_sig_verify_update(cur, cur->msg, cur->msglen)
-          && ossl_lms_sig_verify_final(cur);
+        && ossl_lms_sig_verify_update(cur, cur->msg, cur->msglen)
+        && ossl_lms_sig_verify_final(cur);
     cur->failed = (ret != 1);
     return ret;
 }
@@ -292,6 +292,7 @@ static int hss_sig_verify(PROV_HSS_CTX *ctx,
 static int hss_decoded(PROV_HSS_CTX *ctx)
 {
     HSS_KEY *hsskey = ctx->key;
+
     return sk_LMS_SIG_num(hsskey->lmssigs) > 0;
 }
 
@@ -343,71 +344,6 @@ static int hss_verify_int(PROV_HSS_CTX *ctx,
 err:
     return ret;
 }
-
-/*
-static int hss_digest_verify(void *vctx,
-                             const unsigned char *sig, size_t siglen,
-                             const unsigned char *msg, size_t msglen)
-{
-    PROV_HSS_CTX *ctx = (PROV_HSS_CTX *)vctx;
-    int ret = 0;
-
-    if (!ossl_prov_is_running() || ctx == NULL)
-        return 0;
-    ret = hss_verify_int(ctx, sig, siglen, msg, msglen);
-    if (msg != NULL && !check_jobs(ctx))
-        ret = 0;
-    return ret;
-}
-*/
-
-/*
-static int hss_digest_verify_init(void *vctx, const char *mdname, void *key,
-                                  const OSSL_PARAM params[])
-{
-    return hss_verify_init(vctx, key, params, mdname);
-}
-*/
-
-#if 0
-int hss_digest_verify_update(void *vctx,
-                             const unsigned char *data, size_t datalen)
-{
-    PROV_HSS_CTX *ctx = (PROV_HSS_CTX *)vctx;
-//    void *ptr;
-
-//    if (ctx->pqmode
-    return ossl_lms_sig_verify_update(&ctx->ctx, data, datalen);
-
-    /* TODO - remove this caching part and return -1 */
-    /*
-     * Since the signature is required before we can process the message
-     * we need to buffer the message, if we use the normal pattern of passing
-     * the signature during the final.
-     */
-    ptr = OPENSSL_realloc(ctx->msg, ctx->msglen + datalen);
-    if (ptr == NULL)
-        return 0;
-
-    ctx->msg = ptr;
-    memcpy(&ctx->msg[ctx->msglen], data, datalen);
-    ctx->msglen += datalen;
-    return 1;
-}
-#endif
-
-/*
-int hss_digest_verify_final(void *vctx,
-                            const unsigned char *sig, size_t siglen)
-{
-    PROV_HSS_CTX *ctx = (PROV_HSS_CTX *)vctx;
-    int ret = 0;
-
-    if (ctx == NULL)
-        return 0;
-    return ossl_lms_sig_verify_final(&ctx->ctx);
-}
-*/
 
 static int set_signature(PROV_HSS_CTX *ctx,
                          const unsigned char *sig, size_t siglen)
@@ -476,33 +412,6 @@ static int hss_verify_msg_final(void *vctx)
     return ret;
 }
 
-/*
-static int hss_digest_verify_pq_init(void *vctx, const char *mdname, void *key,
-                                     const OSSL_PARAM params[],
-                                     const unsigned char *sig, size_t siglen)
-{
-    PROV_HSS_CTX *ctx = (PROV_HSS_CTX *)vctx;
-
-    if (!hss_verify_init(vctx, key, params, mdname))
-        return 0;
-    ctx->pqmode = 1;
-    return hss_digest_verify(vctx, sig, siglen, NULL, 0);
-}
-
-static int hss_digest_verify_pq_final(void *vctx)
-{
-    PROV_HSS_CTX *ctx = (PROV_HSS_CTX *)vctx;
-    int ret = 0;
-
-    if (!ctx->pqmode)
-        return 0;
-    ret = ossl_lms_sig_verify_final(&ctx->ctx);
-    if (!check_jobs(ctx))
-        ret = 0;
-    return ret;
-}
-*/
-
 static int hss_ctx_set_threads(PROV_HSS_CTX *ctx, uint32_t threads)
 {
     if (threads > HSS_MAX_THREADS) {
@@ -560,26 +469,6 @@ static const OSSL_PARAM *hss_settable_ctx_params(void *vctx,
     return settable_ctx_params;
 }
 
-/*
-static int hss_sign_init(void *vctx, const char *mdname,
-                         void *vkey, const OSSL_PARAM params[])
-{
-    PROV_HSS_CTX *ctx = (PROV_HSS_CTX *)vctx;
-
-    return hss_sign_verify_init(vctx, vkey, params, mdname)
-           && ossl_hss_sign_init(ctx->key);
-}
-
-static int hss_digest_sign(void *vctx, unsigned char *sigout,
-                           size_t *siglen, size_t sigsize,
-                           const unsigned char *tbs, size_t tbslen)
-{
-    PROV_HSS_CTX *ctx = (PROV_HSS_CTX *)vctx;
-
-    return ossl_hss_sign(ctx->key, tbs, tbslen, sigout, siglen, sigsize);
-}
-*/
-
 #if !defined(OPENSSL_NO_HSS_GEN) && !defined(FIPS_MODULE)
 static int hss_sign_msg_init(void *vctx, void *vkey, const OSSL_PARAM params[])
 {
@@ -622,6 +511,13 @@ static int hss_sign(void *vctx,
 const OSSL_DISPATCH ossl_hss_signature_functions[] = {
     { OSSL_FUNC_SIGNATURE_NEWCTX, (void (*)(void))hss_newctx },
     { OSSL_FUNC_SIGNATURE_FREECTX, (void (*)(void))hss_freectx },
+    { OSSL_FUNC_SIGNATURE_VERIFY_MESSAGE_INIT,
+      (void (*)(void))hss_verify_msg_init },
+    { OSSL_FUNC_SIGNATURE_VERIFY_MESSAGE_UPDATE,
+        (void (*)(void))hss_verify_msg_update },
+    { OSSL_FUNC_SIGNATURE_VERIFY_MESSAGE_FINAL,
+      (void (*)(void))hss_verify_msg_final },
+    { OSSL_FUNC_SIGNATURE_VERIFY, (void (*)(void))hss_verify },
 #if !defined(OPENSSL_NO_HSS_GEN) && !defined(FIPS_MODULE)
     { OSSL_FUNC_SIGNATURE_SIGN_MESSAGE_INIT, (void (*)(void))hss_sign_msg_init },
     { OSSL_FUNC_SIGNATURE_SIGN_MESSAGE_UPDATE,
@@ -630,26 +526,6 @@ const OSSL_DISPATCH ossl_hss_signature_functions[] = {
       (void (*)(void))hss_sign_msg_final },
     { OSSL_FUNC_SIGNATURE_SIGN, (void (*)(void))hss_sign },
 #endif
-    { OSSL_FUNC_SIGNATURE_VERIFY_MESSAGE_INIT,
-      (void (*)(void))hss_verify_msg_init },
-    { OSSL_FUNC_SIGNATURE_VERIFY_MESSAGE_UPDATE,
-        (void (*)(void))hss_verify_msg_update },
-    { OSSL_FUNC_SIGNATURE_VERIFY_MESSAGE_FINAL,
-      (void (*)(void))hss_verify_msg_final },
-    { OSSL_FUNC_SIGNATURE_VERIFY, (void (*)(void))hss_verify },
-/*
-    { OSSL_FUNC_SIGNATURE_DIGEST_SIGN_INIT,
-      (void (*)(void))hss_digest_sign_init },
-    { OSSL_FUNC_SIGNATURE_DIGEST_SIGN,
-      (void (*)(void))hss_digest_sign },
-    { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_INIT,
-      (void (*)(void))hss_digest_verify_init },
-    { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_UPDATE,
-      (void (*)(void))hss_digest_verify_update },
-    { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_FINAL,
-      (void (*)(void))hss_digest_verify_final },
-    { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY, (void (*)(void))hss_digest_verify },
-*/
     { OSSL_FUNC_SIGNATURE_SET_CTX_PARAMS, (void (*)(void))hss_set_ctx_params },
     { OSSL_FUNC_SIGNATURE_SETTABLE_CTX_PARAMS,
       (void (*)(void))hss_settable_ctx_params },

@@ -47,8 +47,8 @@ static EVP_PKEY *hsspubkey_from_data(const unsigned char *data, size_t datalen)
                                                   (unsigned char *)data, datalen);
     params[1] = OSSL_PARAM_construct_end();
     ret = TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(libctx, "HSS", propq))
-          && TEST_int_eq(EVP_PKEY_fromdata_init(ctx), 1)
-          && (EVP_PKEY_fromdata(ctx, &key, EVP_PKEY_PUBLIC_KEY, params) == 1);
+        && TEST_int_eq(EVP_PKEY_fromdata_init(ctx), 1)
+        && (EVP_PKEY_fromdata(ctx, &key, EVP_PKEY_PUBLIC_KEY, params) == 1);
     if (ret == 0) {
         EVP_PKEY_free(key);
         key = NULL;
@@ -91,11 +91,11 @@ static int hss_pkey_verify_test(int tst)
     EVP_SIGNATURE *sig = NULL;
 
     ret = TEST_ptr(pkey = hsspubkey_from_data(td->pub, td->publen))
-          && TEST_ptr(sig = EVP_SIGNATURE_fetch(libctx, "HSS", propq))
-          && TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, propq))
-          && TEST_int_eq(EVP_PKEY_verify_message_init(ctx, sig, NULL), 1)
-          && TEST_int_eq(EVP_PKEY_verify(ctx, td->sig, td->siglen,
-                                         td->msg, td->msglen), 1);
+        && TEST_ptr(sig = EVP_SIGNATURE_fetch(libctx, "HSS", propq))
+        && TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, propq))
+        && TEST_int_eq(EVP_PKEY_verify_message_init(ctx, sig, NULL), 1)
+        && TEST_int_eq(EVP_PKEY_verify(ctx, td->sig, td->siglen,
+                                       td->msg, td->msglen), 1);
 
     EVP_PKEY_free(pkey);
     EVP_PKEY_CTX_free(ctx);
@@ -113,14 +113,14 @@ static int hss_pkey_verify_update_test(int tst)
     int sz = (td->msglen / 3);
 
     ret = TEST_ptr(pkey = hsspubkey_from_data(td->pub, td->publen))
-          && TEST_ptr(sig = EVP_SIGNATURE_fetch(libctx, "HSS", propq))
-          && TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, propq))
-          && TEST_int_eq(EVP_PKEY_verify_message_init(ctx, sig, NULL), 1)
-          && TEST_int_eq(EVP_PKEY_CTX_set_signature(ctx, td->sig, td->siglen), 1)
-          && TEST_int_eq(EVP_PKEY_verify_message_update(ctx, td->msg, sz), 1)
-          && TEST_int_eq(EVP_PKEY_verify_message_update(ctx, td->msg + sz,
-                                                        td->msglen - sz), 1)
-          && TEST_int_eq(EVP_PKEY_verify_message_final(ctx), 1);
+        && TEST_ptr(sig = EVP_SIGNATURE_fetch(libctx, "HSS", propq))
+        && TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, propq))
+        && TEST_int_eq(EVP_PKEY_verify_message_init(ctx, sig, NULL), 1)
+        && TEST_int_eq(EVP_PKEY_CTX_set_signature(ctx, td->sig, td->siglen), 1)
+        && TEST_int_eq(EVP_PKEY_verify_message_update(ctx, td->msg, sz), 1)
+        && TEST_int_eq(EVP_PKEY_verify_message_update(ctx, td->msg + sz,
+                                                      td->msglen - sz), 1)
+        && TEST_int_eq(EVP_PKEY_verify_message_final(ctx), 1);
 
     EVP_PKEY_free(pkey);
     EVP_PKEY_CTX_free(ctx);
@@ -136,7 +136,7 @@ static int hss_pkey_verify_fail_test(void)
     EVP_PKEY *pkey = NULL;
 
     if (!TEST_ptr(pkey = hsspubkey_from_data(td->pub, td->publen))
-        || !TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, propq)))
+            || !TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, propq)))
         goto end;
     if (!TEST_int_eq(EVP_PKEY_verify_init(ctx), -2))
         goto end;
@@ -442,14 +442,14 @@ static int hss_key_eq_test(void)
     EVP_PKEY *eckey = NULL;
 #endif
     if (!TEST_ptr(key[0] = hsspubkey_from_data(td1->pub, td1->publen))
-        || !TEST_ptr(key[1] = hsspubkey_from_data(td1->pub, td1->publen))
-        || !TEST_ptr(key[2] = key_decode_from_data(td1->pub, td1->publen, NULL))
-        || !TEST_ptr(key[3] = hsspubkey_from_data(td2->pub, td2->publen)))
+            || !TEST_ptr(key[1] = hsspubkey_from_data(td1->pub, td1->publen))
+            || !TEST_ptr(key[2] = key_decode_from_data(td1->pub, td1->publen, NULL))
+            || !TEST_ptr(key[3] = hsspubkey_from_data(td2->pub, td2->publen)))
         goto end;
 
     ret = TEST_int_eq(EVP_PKEY_eq(key[0], key[1]), 1)
-          && TEST_int_eq(EVP_PKEY_eq(key[0], key[2]), 1)
-          && TEST_int_ne(EVP_PKEY_eq(key[0], key[3]), 1);
+        && TEST_int_eq(EVP_PKEY_eq(key[0], key[2]), 1)
+        && TEST_int_ne(EVP_PKEY_eq(key[0], key[3]), 1);
     if (ret == 0)
         goto end;
 #ifndef OPENSSL_NO_EC

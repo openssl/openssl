@@ -53,8 +53,8 @@ static LMS_KEY *add_decoded_pubkey(PACKET *pkt, STACK_OF(LMS_KEY) *keylist)
 
     if (!ossl_lms_pubkey_from_pkt(pkt, key)
             || (sk_LMS_KEY_push(keylist, key) <= 0)) {
-            ossl_lms_key_free(key);
-            key = NULL;
+        ossl_lms_key_free(key);
+        key = NULL;
     }
     return key;
 }

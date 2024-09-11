@@ -26,10 +26,9 @@ static uint64_t hss_keys_total(HSS_KEY *hsskey)
      * Multiply (2^h) together for all tree levels
      * Where 2^h1 * 2^h2 = 2^(h1 + h2)
      */
-    uint32_t height;
+    uint32_t height = 0;
     LMS_KEY *lmskey;
     uint32_t d, L = hsskey->L;
-    uint64_t sz = 1;
 
     for (d = 0; d < L; ++d) {
         lmskey = sk_LMS_KEY_value(hsskey->lmskeys, d);
@@ -37,12 +36,8 @@ static uint64_t hss_keys_total(HSS_KEY *hsskey)
             return 0;
         height += lmskey->lms_params->h;
     }
-    /* The largest value that we can fit into 64 bits is 2^64 - 1 */
-    if (height >= 64)
-        sz = UINT64_MAX; /* 2^64 -1 */
-    else
-        sz  = 1 << height;
-    return sz;
+    /* Only allow 2^64 - 1 signatures */
+    return height >= 64 ? UINT64_MAX : (uint64_t)1 << height;
 }
 
 /*

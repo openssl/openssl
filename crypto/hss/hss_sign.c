@@ -32,8 +32,8 @@ int ossl_hss_sign(HSS_KEY *hsskey, const unsigned char *msg, size_t msglen,
                   unsigned char *outsig, size_t *outsiglen, size_t outsigmaxlen)
 {
     return ossl_hss_sign_init(hsskey)
-           && ossl_hss_sign_update(hsskey, msg, msglen)
-           && ossl_hss_sign_final(hsskey, outsig, outsiglen, outsigmaxlen);
+        && ossl_hss_sign_update(hsskey, msg, msglen)
+        && ossl_hss_sign_final(hsskey, outsig, outsiglen, outsigmaxlen);
 }
 
 /**
@@ -232,7 +232,7 @@ int ossl_hss_key_advance(HSS_KEY *hsskey, uint64_t count)
             if (!ossl_lms_signature_gen(parent,
                                         key->pub.encoded,
                                         key->pub.encodedlen, lmssig))
-                    return 0;
+                return 0;
         } else {
             key->q = newq[d];
         }

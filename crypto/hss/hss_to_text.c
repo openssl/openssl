@@ -105,8 +105,8 @@ int ossl_lms_key_to_text(BIO *out, LMS_KEY *lmskey, int selection)
     }
 
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
-        if (lmskey->I != NULL
-                && !print_labeled_hex(out, "I:", lmskey->I, LMS_SIZE_I))
+        if (lmskey->Id != NULL
+                && !print_labeled_hex(out, "I:", lmskey->Id, LMS_SIZE_I))
             goto err;
     }
     if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {

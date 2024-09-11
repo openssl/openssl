@@ -121,12 +121,12 @@ int ossl_lms_sig_xdr_encode(LMS_SIG *sig, unsigned char *out, size_t *outlen)
             return 0;
     }
     ret = WPACKET_put_bytes_u32(&pkt, sig->q)
-          && WPACKET_put_bytes_u32(&pkt, prms->lm_ots_type)
-          && WPACKET_memcpy(&pkt, sig->sig.C, prms->n)
-          && WPACKET_memcpy(&pkt, sig->sig.y, prms->n * prms->p)
-          && WPACKET_put_bytes_u32(&pkt, lprms->lms_type)
-          && WPACKET_memcpy(&pkt, sig->paths, lprms->h * lprms->n)
-          && WPACKET_get_total_written(&pkt, outlen);
+        && WPACKET_put_bytes_u32(&pkt, prms->lm_ots_type)
+        && WPACKET_memcpy(&pkt, sig->sig.C, prms->n)
+        && WPACKET_memcpy(&pkt, sig->sig.y, prms->n * prms->p)
+        && WPACKET_put_bytes_u32(&pkt, lprms->lms_type)
+        && WPACKET_memcpy(&pkt, sig->paths, lprms->h * lprms->n)
+        && WPACKET_get_total_written(&pkt, outlen);
     WPACKET_finish(&pkt);
     if (out != NULL && ret != 1)
         OPENSSL_cleanse(out, out_maxlen);

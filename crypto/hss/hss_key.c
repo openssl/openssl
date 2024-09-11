@@ -72,10 +72,12 @@ int ossl_hss_key_up_ref(HSS_KEY *key)
  */
 void ossl_hss_key_verify_reset(HSS_KEY *hsskey)
 {
+    LMS_KEY *key;
+
     sk_LMS_SIG_pop_free(hsskey->lmssigs, ossl_lms_sig_free);
     hsskey->lmssigs = sk_LMS_SIG_new_null();
     while (sk_LMS_KEY_num(hsskey->lmskeys) > 1) {
-        LMS_KEY *key = sk_LMS_KEY_pop(hsskey->lmskeys);
+        key = sk_LMS_KEY_pop(hsskey->lmskeys);
         ossl_lms_key_free(key);
     }
 }

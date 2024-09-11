@@ -2393,7 +2393,6 @@ const OSSL_PARAM *EVP_PKEY_settable_params(const EVP_PKEY *pkey)
         : NULL;
 }
 
-
 int EVP_PKEY_set_params(EVP_PKEY *pkey, OSSL_PARAM params[])
 {
     if (pkey != NULL) {

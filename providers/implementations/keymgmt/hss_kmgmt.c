@@ -106,9 +106,9 @@ static int hss_match(const void *keydata1, const void *keydata2, int selection)
           && key1->ots_params == key2->ots_params);
     if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
         ok = ok
-             && key1->pub.encodedlen == key2->pub.encodedlen
-             && (memcmp(key1->pub.encoded, key2->pub.encoded,
-                        key1->pub.encodedlen) == 0);
+            && key1->pub.encodedlen == key2->pub.encodedlen
+            && (memcmp(key1->pub.encoded, key2->pub.encoded,
+                       key1->pub.encodedlen) == 0);
     }
     if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
         ok = ok && (memcmp(key1->priv.seed, key2->priv.seed,

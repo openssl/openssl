@@ -11,7 +11,7 @@
 # define OSSL_LMS_LOCAL_H
 # pragma once
 
-#include "crypto/hss.h"
+# include "crypto/hss.h"
 
 # define LMS_MAX_DIGEST_SIZE 32
 
@@ -50,9 +50,9 @@ extern const uint16_t OSSL_LMS_D_INTR;      /* 8383 */
  * They are used for ACVP testing, in order to have a deterministic sign,
  * See https://github.com/cisco/hash-sigs/blob/master/ACVP Definition.txt
  */
-extern const uint16_t OSSL_LMS_D_C;         /* FFFD */
-extern const uint16_t OSSL_LMS_D_CHILD_SEED;/* FFFE */
-extern const uint16_t OSSL_LMS_D_CHILD_I;   /* FFFF */
+extern const uint16_t OSSL_LMS_D_C;          /* FFFD */
+extern const uint16_t OSSL_LMS_D_CHILD_SEED; /* FFFE */
+extern const uint16_t OSSL_LMS_D_CHILD_I;    /* FFFF */
 
 /* XDR sizes when encoding and decoding */
 # define LMS_SIZE_LMS_TYPE 4
@@ -68,14 +68,14 @@ extern const uint16_t OSSL_LMS_D_CHILD_I;   /* FFFF */
  * for each LMS tree in the HSS.
  */
 # define HASH_NOT_MATCHED(a, b) \
-a->n != b->n || (strcmp(a->digestname, b->digestname) != 0)
+    a->n != b->n || (strcmp(a->digestname, b->digestname) != 0)
 
 /* Convert a 32 bit value |in| to 4 bytes |out| */
-# define U32STR(out, in)                       \
-(out)[0] = (unsigned char)((in >> 24) & 0xff); \
-(out)[1] = (unsigned char)((in >> 16) & 0xff); \
-(out)[2] = (unsigned char)((in >> 8) & 0xff);  \
-(out)[3] = (unsigned char)(in & 0xff)
+# define U32STR(out, in)                           \
+    (out)[0] = (unsigned char)((in >> 24) & 0xff); \
+    (out)[1] = (unsigned char)((in >> 16) & 0xff); \
+    (out)[2] = (unsigned char)((in >> 8) & 0xff);  \
+    (out)[3] = (unsigned char)(in & 0xff)
 
 int ossl_lms_hash(EVP_MD_CTX *ctx,
                   const unsigned char *in1, size_t in1len,
@@ -91,7 +91,6 @@ size_t ossl_lms_pubkey_encode_len(LMS_KEY *lmskey);
 int ossl_lms_pubkey_to_pkt(WPACKET *pkt, LMS_KEY *lmskey);
 int ossl_lms_pubkey_decode(const unsigned char *pub, size_t publen,
                            LMS_KEY *lmskey);
-
 
 int ossl_lm_ots_ctx_pubkey_init(LM_OTS_CTX *ctx,
                                 const EVP_MD *md,
@@ -164,7 +163,7 @@ int ossl_lms_pubkey_cache_new(LMS_KEY *key);
 void ossl_lms_pubkey_cache_free(LMS_KEY *key);
 void ossl_lms_pubkey_cache_flush(LMS_KEY *key);
 void ossl_lms_pubkey_cache_add(LMS_KEY *key, uint32_t nodeid,
-                                const unsigned char *data);
+                               const unsigned char *data);
 int ossl_lms_pubkey_cache_get(LMS_KEY *key, uint32_t nodeid, unsigned char *out);
 
 # if !defined(OPENSSL_NO_HSS_GEN) && !defined(FIPS_MODULE)

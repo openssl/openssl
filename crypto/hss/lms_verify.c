@@ -19,7 +19,7 @@
 int ossl_lms_sig_verify_init(LMS_VALIDATE_CTX *ctx)
 {
     return ossl_lm_ots_ctx_pubkey_init(ctx->pubctx, ctx->md, &ctx->sig->sig,
-                                       ctx->pub->ots_params, ctx->pub->I,
+                                       ctx->pub->ots_params, ctx->pub->Id,
                                        ctx->sig->q);
 }
 
@@ -73,7 +73,7 @@ int ossl_lms_sig_verify_final(LMS_VALIDATE_CTX *vctx)
 
     U32STR(buf, node_num);
     if (!EVP_DigestInit_ex2(ctx, NULL, NULL)
-            || !EVP_DigestUpdate(ctx, key->I, LMS_SIZE_I)
+            || !EVP_DigestUpdate(ctx, key->Id, LMS_SIZE_I)
             || !EVP_MD_CTX_copy_ex(ctxI, ctx)
             || !EVP_DigestUpdate(ctx, buf, sizeof(buf))
             || !EVP_DigestUpdate(ctx, &OSSL_LMS_D_LEAF, sizeof(OSSL_LMS_D_LEAF))
