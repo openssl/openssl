@@ -174,8 +174,8 @@ static int create_socket(uint16_t port)
     }
 
     /* Set port to nonblocking mode */
-    if (!BIO_socket_nbio(fd, 1)) {
-        fprintf(stderr, "Unable to set port nonblocking mode");
+    if (BIO_socket_nbio(fd, 1) <= 0) {
+        fprintf(stderr, "Unable to set port to nonblocking mode");
         BIO_closesocket(fd);
         goto err;
     }
@@ -187,7 +187,24 @@ err:
     return -1;
 }
 
-/* Use select() to wait for activity on the SSL port */
+/**
+ * @brief Waits for activity on the SSL socket, either for reading or writing.
+ *
+ * This function monitors the underlying file descriptor of the given SSL
+ * connection to determine when it is ready for reading or writing, or both.
+ * It uses the select function to wait until the socket is either readable
+ * or writable, depending on what the SSL connection requires.
+ *
+ * @param ssl A pointer to the SSL object representing the connection.
+ *
+ * @note This function blocks until there is activity on the socket. In a real
+ * application, you might want to perform other tasks while waiting, such as
+ * updating a GUI or handling other connections.
+ *
+ * @note This function uses select for simplicity and portability. Depending
+ * on your application's requirements, you might consider using other
+ * mechanisms like poll or epoll for handling multiple file descriptors.
+ */
 static void wait_for_activity(SSL *ssl)
 {
     int sock;
@@ -228,7 +245,27 @@ static void wait_for_activity(SSL *ssl)
     select(sock + 1, &read_fd, NULL, NULL, NULL);
 }
 
-/* Determine the next course of action when we encounter an IO error */
+/**
+ * @brief Handles I/O failures on an SSL connection based on the result code.
+ *
+ * This function processes the result of an SSL I/O operation and handles
+ * different types of errors that may occur during the operation. It takes
+ * appropriate actions such as retrying the operation, reporting errors, or
+ * returning specific status codes based on the error type.
+ *
+ * @param ssl A pointer to the SSL object representing the connection.
+ * @param res The result code from the SSL I/O operation.
+ * @return An integer indicating the outcome:
+ *         - 1: Temporary failure, the operation should be retried.
+ *         - 0: EOF, indicating the connection has been closed.
+ *         - -1: A fatal error occurred or the connection has been reset.
+ *
+ * @note This function may block if a temporary failure occurs and
+ * wait_for_activity() is called.
+ *
+ * @note If the failure is due to an SSL verification error, additional
+ * information will be logged to stderr.
+ */
 static int handle_io_failure(SSL *ssl, int res)
 {
     switch (SSL_get_error(ssl, res)) {
@@ -295,7 +332,6 @@ static int run_quic_server(SSL_CTX *ctx, int fd)
     SSL *listener, *conn = NULL;
     unsigned char buf[8192];
     size_t nread, nwritten, total_read, total_written;
-    SSL_SHUTDOWN_EX_ARGS shutdown_args = {0};
 
     /* Create a new QUIC listener */
     if ((listener = SSL_new_listener(ctx, 0)) == NULL) {
@@ -332,10 +368,6 @@ static int run_quic_server(SSL_CTX *ctx, int fd)
         printf("Waiting for connection\n");
         while ((conn = SSL_accept_connection(listener, 0)) == NULL) {
             wait_for_activity(listener);
-        }
-        if (conn == NULL) {
-            fprintf(stderr, "error while accepting connection\n");
-            goto err;
         }
         printf("Accepted new connection\n");
 
@@ -382,8 +414,7 @@ static int run_quic_server(SSL_CTX *ctx, int fd)
          * Shut down the connection. We may need to call this multiple times
          * to ensure the connection is shutdown completely.
          */
-        while (SSL_shutdown_ex(conn, 0, &shutdown_args,
-                               sizeof(SSL_SHUTDOWN_EX_ARGS)) != 1) {}
+        while (SSL_shutdown(conn) != 1) {}
 
         SSL_free(conn);
     }
