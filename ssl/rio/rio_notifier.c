@@ -7,10 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/rio_notifier.h"
 #include "internal/sockets.h"
 #include <openssl/bio.h>
 #include <openssl/err.h>
+#include "internal/thread_once.h"
+#include "internal/rio_notifier.h"
 
 /*
  * Sets a socket as close-on-exec, except that this is a no-op if we are certain
@@ -25,14 +26,45 @@ static int set_cloexec(int fd)
 #endif
 }
 
+#if defined(OPENSSL_SYS_WINDOWS)
+
+static CRYPTO_ONCE ensure_wsa_startup_once = CRYPTO_ONCE_STATIC_INIT;
+static int wsa_started;
+
+static void ossl_wsa_cleanup(void)
+{
+    if (wsa_started) {
+        wsa_started = 0;
+        WSACleanup();
+    }
+}
+
+DEFINE_RUN_ONCE_STATIC(do_wsa_startup)
+{
+    WORD versionreq = 0x0202; /* Version 2.2 */
+    WSADATA wsadata;
+
+    if (WSAStartup(versionreq, &wsadata) != 0)
+        return 0;
+    wsa_started = 1;
+    OPENSSL_atexit(ossl_wsa_cleanup);
+    return 1;
+}
+
+static ossl_inline int ensure_wsa_startup(void)
+{
+    return RUN_ONCE(&ensure_wsa_startup_once, do_wsa_startup);
+}
+
+#endif
+
 #if RIO_NOTIFIER_METHOD == RIO_NOTIFIER_METHOD_SOCKET
 
 /* Create a close-on-exec socket. */
 static int create_socket(int domain, int socktype, int protocol)
 {
     int fd;
-
-#if defined(OPENSSL_SYS_WINDOWS)
+# if defined(OPENSSL_SYS_WINDOWS)
     static const int on = 1;
 
     /*
@@ -58,10 +90,10 @@ static int create_socket(int domain, int socktype, int protocol)
         return INVALID_SOCKET;
     }
 
-#else
-# if defined(SOCK_CLOEXEC)
+# else
+#  if defined(SOCK_CLOEXEC)
     socktype |= SOCK_CLOEXEC;
-# endif
+#  endif
 
     fd = BIO_socket(domain, socktype, protocol, 0);
     if (fd == INVALID_SOCKET) {
@@ -80,7 +112,7 @@ static int create_socket(int domain, int socktype, int protocol)
         BIO_closesocket(fd);
         return INVALID_SOCKET;
     }
-#endif
+# endif
 
     return fd;
 }
@@ -100,6 +132,13 @@ int ossl_rio_notifier_init(RIO_NOTIFIER *nfy)
     struct sockaddr_in sa = {0}, accept_sa;
     socklen_t sa_len = sizeof(sa), accept_sa_len = sizeof(accept_sa);
 
+# if defined(OPENSSL_SYS_WINDOWS)
+    if (!ensure_wsa_startup()) {
+        ERR_raise_data(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR,
+                       "Cannot start Windows sockets");
+        return 0;
+    }
+# endif
     /* Create a close-on-exec socket. */
     lfd = create_socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (lfd == INVALID_SOCKET) {
@@ -233,9 +272,9 @@ int ossl_rio_notifier_init(RIO_NOTIFIER *nfy)
     type |= SOCK_NONBLOCK;
 # endif
 
-#if defined(OPENSSL_SYS_UNIX) && defined(AF_UNIX)
+# if defined(OPENSSL_SYS_UNIX) && defined(AF_UNIX)
     domain = AF_UNIX;
-#endif
+# endif
 
     if (socketpair(domain, type, 0, fds) < 0) {
         ERR_raise_data(ERR_LIB_SYS, get_last_sys_error(),
@@ -249,13 +288,13 @@ int ossl_rio_notifier_init(RIO_NOTIFIER *nfy)
         goto err;
     }
 
-#if !defined(SOCK_NONBLOCK)
+# if !defined(SOCK_NONBLOCK)
     if (!BIO_socket_nbio(fds[0], 1) || !BIO_socket_nbio(fds[1], 1)) {
         ERR_raise_data(ERR_LIB_SYS, get_last_sys_error(),
                        "calling BIO_socket_nbio()");
         goto err;
     }
-#endif
+# endif
 
     if (domain == AF_INET && !BIO_set_tcp_ndelay(fds[1], 1)) {
         ERR_raise_data(ERR_LIB_SYS, get_last_sys_error(),
