@@ -174,8 +174,8 @@ int ossl_hss_key_advance(HSS_KEY *hsskey, uint64_t count)
     uint32_t oldq[OSSL_HSS_MAX_L] = { 0 };
     uint32_t newq[OSSL_HSS_MAX_L] = { 0 };
     uint32_t d, L = hsskey->L;
-    LMS_KEY *key, *parent;
-    uint64_t index;
+    LMS_KEY *key = NULL, *parent = NULL;
+    uint64_t index = 0;
 
     /*
      * As we use this to function to increment q by 1 at the end of a sign,
