@@ -147,8 +147,12 @@ static BIO *create_socket_bio(const char *hostname, const char *port,
             continue;
         }
 
-        /* Set to nonblocking mode */
-        if (!BIO_socket_nbio(sock, 1)) {
+        /*
+         * Set to nonblocking mode
+         * Note: This function returns a range of errors
+         * <= 0 if something goes wrong, so catch them all here
+         */
+        if (BIO_socket_nbio(sock, 1) <= 0) {
             BIO_closesocket(sock);
             sock = -1;
             continue;
@@ -186,7 +190,11 @@ static BIO *create_socket_bio(const char *hostname, const char *port,
      * case you must close the socket explicitly when it is no longer
      * needed.
      */
-    BIO_set_fd(bio, sock, BIO_CLOSE);
+    if (BIO_set_fd(bio, sock, BIO_CLOSE) <= 0) {
+        BIO_closesocket(sock);
+        BIO_free(bio);
+        return NULL;
+    }
 
     return bio;
 }
@@ -715,7 +723,6 @@ static size_t build_request_set(SSL *ssl)
         while (!SSL_write_ex2(poll_list[poll_idx].desc.value.ssl,
                               req_string, strlen(req_string),
                               SSL_WRITE_FLAG_CONCLUDE, &written)) {
-            fprintf(stderr, "Write failed\n");
             if (handle_io_failure(poll_list[poll_idx].desc.value.ssl, 0) == 1)
                 continue; /* Retry */
             fprintf(stderr, "Failed to write start of HTTP request\n");
@@ -789,7 +796,12 @@ static int setup_connection(char *hostname, char *port, int ipv6,
      */
     SSL_CTX_set_verify(*ctx, SSL_VERIFY_PEER, NULL);
 
-    /* Use the default trusted certificate store */
+    /*
+     * Use the default trusted certificate store
+     * Note: The store is read from SSL_CERT_DIR and SSL_CERT_FILE
+     * environment variables in the default case, so users can set those
+     * When running this application to direct where the store is loaded from
+     */
     if (!SSL_CTX_set_default_verify_paths(*ctx)) {
         fprintf(stderr, "Failed to set the default trusted certificate store\n");
         goto end;
