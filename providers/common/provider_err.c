@@ -168,6 +168,8 @@ static const ERR_STRING_DATA PROV_str_reasons[] = {
      "oneshot call out of order"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE),
      "operation not supported for this keytype"},
+    {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_OTS_KEYS_EXHAUSTED),
+     "ots keys exhausted"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_OUTPUT_BUFFER_TOO_SMALL),
      "output buffer too small"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_PARENT_CANNOT_GENERATE_RANDOM_NUMBERS),
