@@ -16,6 +16,7 @@
 #include "ssl_local.h"
 #include "sslerr.h"
 #include "internal/thread_once.h"
+#include "internal/rio_notifier.h"    /* for ossl_wsa_cleanup() */
 
 static int stopped;
 
