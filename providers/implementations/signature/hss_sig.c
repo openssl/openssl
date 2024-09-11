@@ -15,6 +15,7 @@
 #include <openssl/evp.h>
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
+#include "prov/implementations.h"
 #include "internal/thread.h"
 #include "crypto/hss.h"
 
