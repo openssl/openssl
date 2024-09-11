@@ -76,7 +76,7 @@ The ECH version to use in the ECHConfig. Only 0xfe0d is supported in this versio
 
 =item B<-select>
 
-Select the N-th ECHConfig/public key from the set of input ECH PEM file and output
+Select the N-th ECHConfig/public key from the set of input ECH PEM files and output
 that.
 
 =back

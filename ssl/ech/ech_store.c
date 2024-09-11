@@ -206,11 +206,11 @@ static int ech_bio2buf(BIO *in, unsigned char **buf, size_t *len)
 {
     unsigned char *lptr = NULL, *lbuf = NULL, *tmp = NULL;
     size_t sofar = 0, readbytes = 0;
-    int done = 0, brv,  iter = 0;
+    int done = 0, brv, iter = 0;
 
     if (buf == NULL || len == NULL)
         return 0;
-    sofar=OSSL_ECH_BUFCHUNK;
+    sofar = OSSL_ECH_BUFCHUNK;
     lbuf = OPENSSL_zalloc(sofar);
     if (lbuf == NULL)
         return 0;
@@ -227,6 +227,7 @@ static int ech_bio2buf(BIO *in, unsigned char **buf, size_t *len)
         tmp = OPENSSL_realloc(lbuf, sofar);
         if (tmp == NULL)
             goto err;
+        lbuf = tmp;
         lptr += OSSL_ECH_BUFCHUNK;
     }
     if (BIO_eof(in) && done == 1)  {

@@ -56,6 +56,21 @@ static const char pem_6_to_3[] =
     "AA==\n"
     "-----END ECHCONFIG-----\n";
 
+/*
+ * This ECHConfigList has 4 entries with different versions,
+ * from drafts: 13,10,13,9 - since our runtime no longer supports
+ * version 9 or 10, we should see 2 configs loaded.
+ */
+static const char pem_4_to_2[] =
+    "-----BEGIN ECHCONFIG-----\n"
+    "APv+DQA6xQAgACBm54KSIPXu+pQq2oY183wt3ybx7CKbBYX0ogPq5u6FegAEAAEA\n"
+    "AQALZXhhbXBsZS5jb20AAP4KADzSACAAIIP+0Qt0WGBF3H5fz8HuhVRTCEMuHS4K\n"
+    "hu6ibR/6qER4AAQAAQABAAAAC2V4YW1wbGUuY29tAAD+DQA6QwAgACB3xsNUtSgi\n"
+    "piYpUkW6OSrrg03I4zIENMFa0JR2+Mm1WwAEAAEAAQALZXhhbXBsZS5jb20AAP4J\n"
+    "ADsAC2V4YW1wbGUuY29tACCjJCv5w/yaHjbOc6nVuM/GksIGLgDR+222vww9dEk8\n"
+    "FwAgAAQAAQABAAAAAA==\n"
+    "-----END ECHCONFIG-----\n";
+
 /* single-line base64(ECHConfigList) form of pem_pk1 */
 static const char ecl_pk1[] =
     "AD7+DQA6bAAgACCY7B0f/3KvHIFdoqFaObdU8YYU+MdBf4vzbLhAAL2QCwAEAAEA"
@@ -103,6 +118,8 @@ static ingest_tv_t ingest_tvs[] = {
     { pem_6_to_3, 1,   1,    0,    3,    0,                  1,   0,      1 },
     /* in the next, downselect fails, so we still have 3 entries */
     { pem_6_to_3, 1,   1,    0,    3,    4,                  0,   0,      3 },
+
+    { pem_4_to_2, 1,   1,    0,    2,    0,                  1,   0,      1 },
 
     /* non-PEM test vectors */
     /* tv,      pem, read, k-b4, e-b4,   ind,              exp, kaftr, eaftr */

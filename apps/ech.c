@@ -129,7 +129,7 @@ int ech_main(int argc, char **argv)
                            OSSL_ECH_MAXINFILES);
                 goto opthelp;
             }
-            infiles[numinfiles]=infile;
+            infiles[numinfiles] = infile;
             numinfiles++;
             break;
         case OPT_PUBLICNAME:
@@ -220,7 +220,7 @@ int ech_main(int argc, char **argv)
             BIO_printf(bio_err, "Doing input stuff\n");
         if (numinfiles == 0)
             goto opthelp;
-        for (i=0; i != numinfiles; i++) {
+        for (i = 0; i != numinfiles; i++) {
             if ((ecf = BIO_new_file(infiles[i], "r")) == NULL
                 || OSSL_ECHSTORE_read_pem(es, ecf, OSSL_ECH_FOR_RETRY) != 1) {
                 if (verbose)
@@ -229,7 +229,8 @@ int ech_main(int argc, char **argv)
                 /* try read it as an ECHConfigList */
                 goto end;
             }
-            BIO_free(ecf); ecf = NULL;
+            BIO_free(ecf);
+            ecf = NULL;
         }
         if (verbose)
             BIO_printf(bio_err, "Success reading %d files\n", numinfiles);
