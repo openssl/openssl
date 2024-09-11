@@ -484,11 +484,7 @@ static int setup_session_cache(SSL *ssl, SSL_CTX *ctx, const char *filename)
     int new_cache = 0;
 
     /* make sure caching is enabled */
-    if (!SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_BOTH))
-        return rc;
-
-    /* Don't use stateless session tickets */
-    if (!SSL_CTX_set_options(ctx, SSL_OP_NO_TICKET))
+    if (!SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_SERVER))
         return rc;
 
     /* open our cache file */
@@ -668,11 +664,11 @@ static size_t build_request_set(SSL *ssl)
         outnames[poll_idx] = req;
 
         /* Format the http request */
-        sprintf(req_string, "GET /%s\r\n", req);
+        BIO_snprintf(req_string, 1024, "GET /%s\r\n", req);
 
         /* build the outfile request path */
         memset(outfilename, 0, 1024);
-        sprintf(outfilename, "/downloads/%s", req);
+        BIO_snprintf(outfilename, 1024, "/downloads/%s", req);
 
         /* open a bio to write the file */
         outbiolist[poll_idx] = BIO_new_file(outfilename, "w+");
