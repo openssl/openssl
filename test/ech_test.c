@@ -94,9 +94,8 @@ static ingest_tv_t ingest_tvs[] = {
     /* downselect from the 3, at each position */
     { pem_4_to_2, 1,   1,    0,    2,    0,                  1,   0,      1 },
     { pem_4_to_2, 1,   1,    0,    2,    1,                  1,   0,      1 },
-    /* in the next, downselect fails, so we still have 2 entries */
     { pem_4_to_2, 1,   1,    0,    2,    3,                  0,   0,      2 },
-
+    /* in the last one above, downselect fails, so we still have 2 entries */
     /* non-PEM test vectors */
     /* tv,      pem, read, k-b4, e-b4,   ind,              exp, kaftr, eaftr */
     { ecl_pk1,    0,   1,    0,    1,    OSSL_ECHSTORE_LAST, 1,   0,      1 },
