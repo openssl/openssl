@@ -18,7 +18,7 @@ SOURCE[../../libcrypto]=\
         v3_soa_id.c v3_no_ass.c v3_group_ac.c v3_single_use.c v3_ind_iss.c \
         x509_acert.c x509aset.c t_acert.c x_ietfatt.c v3_ac_tgt.c v3_sda.c \
         v3_usernotice.c v3_battcons.c v3_audit_id.c v3_iobo.c v3_authattid.c \
-        v3_rolespec.c
+        v3_rolespec.c v3_attrdesc.c
 
 IF[{- !$disabled{'deprecated-3.0'} -}]
   SOURCE[../../libcrypto]=x509type.c
