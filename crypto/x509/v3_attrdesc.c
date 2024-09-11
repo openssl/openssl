@@ -131,9 +131,9 @@ static int i2r_OSSL_PRIVILEGE_POLICY_ID(X509V3_EXT_METHOD *method,
     /* Intentionally display the numeric OID, rather than the textual name. */
     if (OBJ_obj2txt(buf, sizeof(buf), ppid->privilegePolicy, 1) <= 0)
         return 0;
-    if (BIO_printf(out, "%*sIdentifier: %s\n", indent, "", buf) <= 0)
+    if (BIO_printf(out, "%*sPrivilege Policy Identifier: %s\n", indent, "", buf) <= 0)
         return 0;
-    if (BIO_printf(out, "%*sSyntax:\n", indent, "") <= 0)
+    if (BIO_printf(out, "%*sPrivilege Policy Syntax:\n", indent, "") <= 0)
         return 0;
     return i2r_OSSL_INFO_SYNTAX(method, ppid->privPolSyntax, out, indent + 4);
 }
