@@ -21,12 +21,12 @@ ASN1_SEQUENCE(OSSL_ROLE_SPEC_CERT_ID) = {
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_ROLE_SPEC_CERT_ID)
 
 ASN1_ITEM_TEMPLATE(OSSL_ROLE_SPEC_CERT_ID_SYNTAX) =
-    ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, OSSL_ROLE_SPEC_CERT_ID_SYNTAX, OSSL_ROLE_SPEC_CERT_ID)
+    ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF,
+                          0, OSSL_ROLE_SPEC_CERT_ID_SYNTAX, OSSL_ROLE_SPEC_CERT_ID)
 ASN1_ITEM_TEMPLATE_END(OSSL_ROLE_SPEC_CERT_ID_SYNTAX)
 
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_ROLE_SPEC_CERT_ID_SYNTAX)
 
-// This was copied from crypto/x509/x_attrib.c
 static int integer_print_bio(BIO *bio, const ASN1_INTEGER *num)
 {
     BIGNUM *num_bn;
@@ -88,7 +88,9 @@ static int i2r_OSSL_ROLE_SPEC_CERT_ID_SYNTAX(X509V3_EXT_METHOD *method,
     for (i = 0; i < sk_OSSL_ROLE_SPEC_CERT_ID_num(rscids); i++) {
         if (i > 0 && BIO_puts(out, "\n") <= 0)
             return 0;
-        if (BIO_printf(out, "%*sRole Specification Certificate Identifier #%d:\n", indent, "", i+1) <= 0)
+        if (BIO_printf(out,
+                       "%*sRole Specification Certificate Identifier #%d:\n",
+                       indent, "", i + 1) <= 0)
             return 0;
         rscid = sk_OSSL_ROLE_SPEC_CERT_ID_value(rscids, i);
         if (i2r_OSSL_ROLE_SPEC_CERT_ID(method, rscid, out, indent + 4) != 1)
