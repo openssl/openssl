@@ -82,7 +82,7 @@ int ech_main(int argc, char **argv)
     OPTION_CHOICE o;
     int i, rv = 1, verbose = 0, text = 0, outsupp = 0;
     int select = OSSL_ECHSTORE_ALL;
-    char *outfile = NULL, *infile=NULL;
+    char *outfile = NULL, *infile = NULL;
     char *infiles[OSSL_ECH_MAXINFILES];
     int numinfiles = 0;
     char *public_name = NULL;

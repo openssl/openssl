@@ -36,27 +36,6 @@ static const char pem_pk1[] =
     "-----END ECHCONFIG-----\n";
 
 /*
- * This ECHConfigList has 6 entries with different versions,
- * from drafts: 13,10,9,13,10,13 - since our runtime no longer supports
- * version 9 or 10, we should see 3 configs loaded.
- * TODO(ECH): The check-ansi CI workflow objects to this as too big
- * (it dislikes values >509 octets). We'll fix by using some test files
- * later, or shortening this, but should be ok for now living with that.
- */
-static const char pem_6_to_3[] =
-    "-----BEGIN ECHCONFIG-----\n"
-    "AXn+DQA6xQAgACBm54KSIPXu+pQq2oY183wt3ybx7CKbBYX0ogPq5u6FegAEAAE\n"
-    "AAQALZXhhbXBsZS5jb20AAP4KADzSACAAIIP+0Qt0WGBF3H5fz8HuhVRTCEMuHS\n"
-    "4Khu6ibR/6qER4AAQAAQABAAAAC2V4YW1wbGUuY29tAAD+CQA7AAtleGFtcGxlL\n"
-    "mNvbQAgoyQr+cP8mh42znOp1bjPxpLCBi4A0ftttr8MPXRJPBcAIAAEAAEAAQAA\n"
-    "AAD+DQA6QwAgACB3xsNUtSgipiYpUkW6OSrrg03I4zIENMFa0JR2+Mm1WwAEAAE\n"
-    "AAQALZXhhbXBsZS5jb20AAP4KADwDACAAIH0BoAdiJCX88gv8nYpGVX5BpGBa9y\n"
-    "T0Pac3Kwx6i8URAAQAAQABAAAAC2V4YW1wbGUuY29tAAD+DQA6QwAgACDcZIAx7\n"
-    "OcOiQuk90VV7/DO4lFQr5I3Zw9tVbK8MGw1dgAEAAEAAQALZXhhbXBsZS5jb20A\n"
-    "AA==\n"
-    "-----END ECHCONFIG-----\n";
-
-/*
  * This ECHConfigList has 4 entries with different versions,
  * from drafts: 13,10,13,9 - since our runtime no longer supports
  * version 9 or 10, we should see 2 configs loaded.
@@ -89,7 +68,7 @@ static const char ecl_6_to_3[] =
     "AA==";
 
 /* base64(ECHConfigList) with corrupt ciphersuite length and public_name */
-static const char ecl_bad_cs[] = 
+static const char ecl_bad_cs[] =
     "AD7+DQA6uAAgACAogff+HZbirYdQCfXI01GBPP8AEKYyK/D/0DoeXD84fgAQAAE"
     "AAQgLZXhhbUNwbGUuYwYAAAAAQwA=";
 
@@ -113,13 +92,10 @@ static ingest_tv_t ingest_tvs[] = {
     { pem_pk1,    1,   1,    0,    1,    0,                  1,   0,      1 },
     { pem_pk1,    1,   1,    0,    1,    2,                  0,   0,      1 },
     /* downselect from the 3, at each position */
-    { pem_6_to_3, 1,   1,    0,    3,    2,                  1,   0,      1 },
-    { pem_6_to_3, 1,   1,    0,    3,    1,                  1,   0,      1 },
-    { pem_6_to_3, 1,   1,    0,    3,    0,                  1,   0,      1 },
-    /* in the next, downselect fails, so we still have 3 entries */
-    { pem_6_to_3, 1,   1,    0,    3,    4,                  0,   0,      3 },
-
     { pem_4_to_2, 1,   1,    0,    2,    0,                  1,   0,      1 },
+    { pem_4_to_2, 1,   1,    0,    2,    1,                  1,   0,      1 },
+    /* in the next, downselect fails, so we still have 2 entries */
+    { pem_4_to_2, 1,   1,    0,    2,    3,                  0,   0,      2 },
 
     /* non-PEM test vectors */
     /* tv,      pem, read, k-b4, e-b4,   ind,              exp, kaftr, eaftr */
@@ -206,7 +182,8 @@ static int ech_ingest_test(int run)
         TEST_info("OSSL_ECSTORE_get1_info unexpected fail");
         goto end;
     }
-    OSSL_ECH_INFO_free(ei, entsb4); ei = NULL;
+    OSSL_ECH_INFO_free(ei, entsb4);
+    ei = NULL;
     if (!TEST_int_eq(entsb4, tv->entsb4)) {
         TEST_info("OSSL_ECSTORE_get1_info unexpected number of entries (b4)");
         goto end;
@@ -219,7 +196,7 @@ static int ech_ingest_test(int run)
         TEST_info("OSSL_ECSTORE_num_keys unexpected fail");
         goto end;
     }
-    if (!TEST_int_eq(keysaftr,tv->keysaftr)) {
+    if (!TEST_int_eq(keysaftr, tv->keysaftr)) {
         TEST_info("OSSL_ECSTORE_num_keys unexpected number of keys (aftr)");
         goto end;
     }
@@ -227,7 +204,8 @@ static int ech_ingest_test(int run)
         TEST_info("OSSL_ECSTORE_get1_info unexpected fail");
         goto end;
     }
-    OSSL_ECH_INFO_free(ei, entsaftr); ei = NULL;
+    OSSL_ECH_INFO_free(ei, entsaftr);
+    ei = NULL;
     if (!TEST_int_eq(entsaftr, tv->entsaftr)) {
         TEST_info("OSSL_ECSTORE_get1_info unexpected number of entries (aftr)");
         goto end;
