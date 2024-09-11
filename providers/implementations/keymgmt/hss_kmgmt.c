@@ -281,7 +281,7 @@ struct hss_gen_ctx {
     uint32_t ots_types[8];
 };
 
-const char *ossl_hss_lms_type_names[] = {
+static const char *ossl_hss_lms_type_names[] = {
     OSSL_PKEY_PARAM_HSS_LMS_TYPE_L1,
     OSSL_PKEY_PARAM_HSS_LMS_TYPE_L2,
     OSSL_PKEY_PARAM_HSS_LMS_TYPE_L3,
@@ -293,7 +293,7 @@ const char *ossl_hss_lms_type_names[] = {
     NULL
 };
 
-const char *ossl_hss_ots_type_names[] = {
+static const char *ossl_hss_ots_type_names[] = {
     OSSL_PKEY_PARAM_HSS_OTS_TYPE_L1,
     OSSL_PKEY_PARAM_HSS_OTS_TYPE_L2,
     OSSL_PKEY_PARAM_HSS_OTS_TYPE_L3,
