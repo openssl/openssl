@@ -1301,7 +1301,13 @@ int ossl_quic_handle_events(SSL *s)
         return 0;
 
     qctx_lock(&ctx);
-    if (ctx.qc->started)
+    /*
+     * TODO(QUIC SERVER): We should always tick the engine, whether the current
+     * connection is started or not.  When ticking the engine, we MUST avoid
+     * inadvertently starting connections that haven't started, the guards
+     * don't belong here.
+     */
+    if (ctx.qc == NULL || ctx.qc->started)
         ossl_quic_reactor_tick(ossl_quic_obj_get0_reactor(ctx.obj), 0);
     qctx_unlock(&ctx);
     return 1;
@@ -1318,18 +1324,25 @@ QUIC_TAKES_LOCK
 int ossl_quic_get_event_timeout(SSL *s, struct timeval *tv, int *is_infinite)
 {
     QCTX ctx;
-    OSSL_TIME deadline = ossl_time_infinite();
+    QUIC_REACTOR *reactor;
+    OSSL_TIME deadline;
+    OSSL_TIME basetime;
 
     if (!expect_quic_any(s, &ctx))
         return 0;
 
     qctx_lock(&ctx);
 
-    if (ctx.qc->started)
-        deadline
-            = ossl_quic_reactor_get_tick_deadline(ossl_quic_channel_get_reactor(ctx.qc->ch));
+    reactor = ossl_quic_obj_get0_reactor(ctx.obj);
+    /*
+     * TODO(QUIC SERVER): There's no longer a way to indicate infinite timeout,
+     * should this now be the responsibility of
+     * ossl_quic_reactor_get_tick_deadline()?
+     */
+    deadline = ossl_quic_reactor_get_tick_deadline(reactor);
 
     if (ossl_time_is_infinite(deadline)) {
+        qctx_unlock(&ctx);
         *is_infinite = 1;
 
         /*
@@ -1338,14 +1351,24 @@ int ossl_quic_get_event_timeout(SSL *s, struct timeval *tv, int *is_infinite)
          */
         tv->tv_sec  = 1000000;
         tv->tv_usec = 0;
-
-        qctx_unlock(&ctx);
         return 1;
     }
 
-    *tv = ossl_time_to_timeval(ossl_time_subtract(deadline, get_time(ctx.qc)));
-    *is_infinite = 0;
+    /*
+     * TODO(QUIC SERVER): The clock override callback belongs at the engine
+     * (DOMAIN) not the QC layer, which would make `basetime` independent of
+     * the object type.
+     */
+    if (ctx.qc)
+        basetime = get_time(ctx.qc);
+    else
+        basetime = ossl_time_now();
+
     qctx_unlock(&ctx);
+
+    *tv = ossl_time_to_timeval(ossl_time_subtract(deadline, basetime));
+    *is_infinite = 0;
+
     return 1;
 }
 
