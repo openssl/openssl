@@ -4855,23 +4855,30 @@ int ossl_quic_conn_poll_events(SSL *ssl, uint64_t events, int do_tick,
     return 1;
 }
 
+QUIC_TAKES_LOCK
 int ossl_quic_get_notifier_fd(SSL *ssl)
 {
     QCTX ctx;
     QUIC_REACTOR *rtor;
     RIO_NOTIFIER *nfy;
+    int nfd = -1;
 
     if (!expect_quic_any(ssl, &ctx))
         return -1;
 
+    qctx_lock(&ctx);
     rtor = ossl_quic_obj_get0_reactor(ctx.obj);
     nfy = ossl_quic_reactor_get0_notifier(rtor);
     if (nfy == NULL)
-        return -1;
+        goto end;
+    nfd = ossl_rio_notifier_as_fd(nfy);
 
-    return ossl_rio_notifier_as_fd(nfy);
+ end:
+    qctx_unlock(&ctx);
+    return nfd;
 }
 
+QUIC_TAKES_LOCK
 void ossl_quic_enter_blocking_section(SSL *ssl, QUIC_REACTOR_WAIT_CTX *wctx)
 {
     QCTX ctx;
@@ -4880,10 +4887,13 @@ void ossl_quic_enter_blocking_section(SSL *ssl, QUIC_REACTOR_WAIT_CTX *wctx)
     if (!expect_quic_any(ssl, &ctx))
         return;
 
+    qctx_lock(&ctx);
     rtor = ossl_quic_obj_get0_reactor(ctx.obj);
     ossl_quic_reactor_wait_ctx_enter(wctx, rtor);
+    qctx_unlock(&ctx);
 }
 
+QUIC_TAKES_LOCK
 void ossl_quic_leave_blocking_section(SSL *ssl, QUIC_REACTOR_WAIT_CTX *wctx)
 {
     QCTX ctx;
@@ -4892,8 +4902,10 @@ void ossl_quic_leave_blocking_section(SSL *ssl, QUIC_REACTOR_WAIT_CTX *wctx)
     if (!expect_quic_any(ssl, &ctx))
         return;
 
+    qctx_lock(&ctx);
     rtor = ossl_quic_obj_get0_reactor(ctx.obj);
     ossl_quic_reactor_wait_ctx_leave(wctx, rtor);
+    qctx_unlock(&ctx);
 }
 
 /*
