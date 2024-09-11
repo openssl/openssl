@@ -47,8 +47,9 @@ provider-signature - The signature library E<lt>-E<gt> provider functions
  int OSSL_FUNC_signature_verify_message_update(void *ctx, const unsigned char *in,
                                                size_t inlen);
  /*
-  * OSSL_FUNC_signature_verify_final requires that the signature to be verified
-  * against is specified via an OSSL_PARAM.
+  * OSSL_FUNC_signature_verify_message_final requires that the signature to be
+  * verified against is specified via a "signature" OSSL_PARAM, which is given
+  * with a previous call of OSSL_FUNC_signature_set_ctx_params().
   */
  int OSSL_FUNC_signature_verify_message_final(void *ctx);
 
@@ -251,7 +252,7 @@ I<*siglen>.
 
 =head2 Message Signing Functions
 
-These functions are suitable to algorithms that implement algorithms that
+These functions are suitable for providers that implement algorithms that
 accumulates a full message and signs the result of that accumulation, such as
 RSA-SHA256.
 
