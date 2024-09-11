@@ -373,12 +373,12 @@ static int aes_ocb_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             }
             ctx->taglen = p->data_size;
         } else {
-            if (p->data_size != ctx->taglen) {
-                ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_TAG_LENGTH);
+            if (ctx->base.enc) {
+                ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_INVALID_ARGUMENT);
                 return 0;
             }
-            if (ctx->base.enc) {
-                ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+            if (p->data_size != ctx->taglen) {
+                ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_TAG_LENGTH);
                 return 0;
             }
             memcpy(ctx->tag, p->data, p->data_size);
