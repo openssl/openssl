@@ -53,8 +53,8 @@ if [ "$ROLE" == "client" ]; then
            OUTFILE=$(basename $req)
            if [ "$HOSTNAME" == "none" ]
            then
-               HOSTNAME=$(echo $req | sed -e"s/\(^https:\/\/\)\(.*\)\(:.*$\)/\2/")
-               HOSTPORT=$(echo $req | sed -e"s/\(^https:\/\/\)\(.*:\)\(.*\)\(\/.*$\)/\3/")
+               HOSTNAME=$(printf "%s\n" "$req" | sed -ne 's,^https://\([^/:]*\).*,\1,p')
+               HOSTPORT=$(printf "%s\n" "$req" | sed -ne 's,^https://[^:/]*:\([^/]*\).*,\1,p')
            fi
            echo -n "$OUTFILE " >> ./reqfile.txt
        done
@@ -70,8 +70,8 @@ if [ "$ROLE" == "client" ]; then
        do
            OUTFILE=$(basename $req)
            echo -n "$OUTFILE " > ./reqfile.txt
-           HOSTNAME=$(echo $req | sed -e"s/\(^https:\/\/\)\(.*\)\(:.*$\)/\2/")
-           HOSTPORT=$(echo $req | sed -e"s/\(^https:\/\/\)\(.*:\)\(.*\)\(\/.*$\)/\3/")
+           HOSTNAME=$(printf "%s\n" "$req" | sed -ne 's,^https://\([^/:]*\).*,\1,p')
+           HOSTPORT=$(printf "%s\n" "$req" | sed -ne 's,^https://[^:/]*:\([^/]*\).*,\1,p')
            SSL_SESSION_FILE=./session.db SSLKEYLOGFILE=/logs/keys.log SSL_CERT_FILE=/certs/ca.pem SSL_CERT_DIR=/certs quic-hq-interop $HOSTNAME $HOSTPORT ./reqfile.txt
            if [ $? -ne 0 ]
            then
