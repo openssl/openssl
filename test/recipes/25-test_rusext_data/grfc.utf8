@@ -1,7 +1,7 @@
 Certificate:
     Data:
         Version: 3 (0x2)
-        Serial Number:
+        Serial Number: 
             0c:8c:40:93:bb:e6:93:bd:43:0b:f5:18:26:03:1d:05
         Signature Algorithm: GOST R 34.11-94 with GOST R 34.10-2001
         Issuer: OGRN=1027739334479, INN=007706228218, street=Дербеневская наб. д. 7 стр. 15, emailAddress=pki-grfc@grfc.ru, C=RU, ST=77 г. Москва, L=Москва, O=ФГУП "ГРЧЦ", CN=УЦ ФГУП "ГРЧЦ"

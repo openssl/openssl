@@ -88,37 +88,10 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags,
 
         if (BIO_write(bp, "        Serial Number:", 22) <= 0)
             goto err;
-
-        if (bs->length <= (int)sizeof(long)) {
-                ERR_set_mark();
-                l = ASN1_INTEGER_get(bs);
-                ERR_pop_to_mark();
-        } else {
-            l = -1;
-        }
-        if (l != -1) {
-            unsigned long ul;
-            if (bs->type == V_ASN1_NEG_INTEGER) {
-                ul = 0 - (unsigned long)l;
-                neg = "-";
-            } else {
-                ul = l;
-                neg = "";
-            }
-            if (BIO_printf(bp, " %s%lu (%s0x%lx)\n", neg, ul, neg, ul) <= 0)
-                goto err;
-        } else {
-            neg = (bs->type == V_ASN1_NEG_INTEGER) ? " (Negative)" : "";
-            if (BIO_printf(bp, "\n%12s%s", "", neg) <= 0)
-                goto err;
-
-            for (i = 0; i < bs->length; i++) {
-                if (BIO_printf(bp, "%02x%c", bs->data[i],
-                               ((i + 1 == bs->length) ? '\n' : ':')) <= 0)
-                    goto err;
-            }
-        }
-
+        if (ossl_serial_number_print(bp, bs, 12) != 0)
+            goto err;
+        if (BIO_puts(bp, "\n") <= 0)
+            goto err;
     }
 
     if (!(cflag & X509_FLAG_NO_SIGNAME)) {
