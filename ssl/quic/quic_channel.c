@@ -1890,12 +1890,12 @@ void ossl_quic_channel_subtick(QUIC_CHANNEL *ch, QUIC_TICK_RESULT *res,
      *   - determine the time at which we should next be ticked.
      */
 
-    /* Nothing to do yet if connection has not been started. */
-    if (ch->state == QUIC_CHANNEL_STATE_IDLE)
-        return;
-
-    /* If we are in the TERMINATED state, there is nothing to do. */
-    if (ossl_quic_channel_is_terminated(ch)) {
+    /*
+     * If the connection has not yet started, or we are in the TERMINATED state,
+     * there is nothing to do.
+     */
+    if (ch->state == QUIC_CHANNEL_STATE_IDLE
+            || ossl_quic_channel_is_terminated(ch)) {
         res->net_read_desired       = 0;
         res->net_write_desired      = 0;
         res->notify_other_threads   = 0;
