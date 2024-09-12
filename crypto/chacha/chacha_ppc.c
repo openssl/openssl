@@ -11,6 +11,7 @@
 #include <string.h>
 
 #include <openssl/opensslconf.h>
+#include "internal/endian.h"
 #include "crypto/chacha.h"
 #include "crypto/ppc_arch.h"
 
@@ -30,7 +31,7 @@ void ChaCha20_ctr32(unsigned char *out, const unsigned char *inp,
                     size_t len, const unsigned int key[8],
                     const unsigned int counter[4])
 {
-#if !defined(OPENSSL_SYS_AIX) && !defined(OPENSSL_SYS_MACOSX)
+#if defined(L_ENDIAN)
     OPENSSL_ppccap_P & PPC_BRD31
         ? ChaCha20_ctr32_vsx_p10(out, inp, len, key, counter) :
 #endif
