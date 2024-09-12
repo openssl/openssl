@@ -54,11 +54,10 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags,
                   unsigned long cflag)
 {
     long l;
-    int ret = 0, i;
+    int ret = 0;
     char mlch = ' ';
     int nmindent = 0, printok = 0;
     EVP_PKEY *pkey = NULL;
-    const char *neg;
 
     if ((nmflags & XN_FLAG_SEP_MASK) == XN_FLAG_SEP_MULTILINE) {
         mlch = '\n';
@@ -536,10 +535,12 @@ int ossl_serial_number_print(BIO *out, const ASN1_INTEGER* bs, int indent)
         if (BIO_printf(out, "\n%*s%s", indent, "", neg) <= 0)
             return -1;
 
-        for (i = 0; i < bs->length; i++) {
+        for (i = 0; i < bs->length - 1; i++) {
             if (BIO_printf(out, "%02x%c", bs->data[i], ':') <= 0)
                 return -1;
         }
+        if (BIO_printf(out, "%02x", bs->data[i]) <= 0)
+            return -1;
     }
     return 0;
 }
