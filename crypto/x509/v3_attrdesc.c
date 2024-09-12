@@ -42,24 +42,6 @@ ASN1_SEQUENCE(OSSL_ATTRIBUTE_DESCRIPTOR) = {
 
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_ATTRIBUTE_DESCRIPTOR)
 
-/* Copied from x_attrib.c */
-static int print_hex(BIO *out, unsigned char *buf, int len)
-{
-    int result = 1;
-    char *hexbuf;
-
-    if (len == 0)
-        return 1;
-
-    hexbuf = OPENSSL_buf2hexstr(buf, len);
-    if (hexbuf == NULL)
-        return 0;
-    result = BIO_puts(out, hexbuf) > 0;
-
-    OPENSSL_free(hexbuf);
-    return result;
-}
-
 static int i2r_HASH(X509V3_EXT_METHOD *method,
                     OSSL_HASH *hash,
                     BIO *out, int indent)
@@ -81,7 +63,7 @@ static int i2r_HASH(X509V3_EXT_METHOD *method,
     }
     if (BIO_printf(out, "%*sHash Value: ", indent, "") <= 0)
         return 0;
-    return print_hex(out, hash->hashValue->data, hash->hashValue->length);
+    return ossl_bio_print_hex(out, hash->hashValue->data, hash->hashValue->length);
 }
 
 static int i2r_INFO_SYNTAX_POINTER(X509V3_EXT_METHOD *method,
