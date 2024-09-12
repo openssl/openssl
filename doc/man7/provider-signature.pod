@@ -449,7 +449,11 @@ NULL is used if this optional value is not set.
 =back
 
 Note that when implementing a signature algorithm that gathers a full message,
-like RSA-SHA256, the "digest" and "properties" should not be used.
+like RSA-SHA256, the "digest" and "properties" parameters should not be used.
+For such implementations, it's acceptable to simply ignore them if they happen
+to be passed in a call to OSSL_FUNC_signature_set_ctx_params().  For such
+implementations, however, it is not acceptable to have them in the B<OSSL_PARAM>
+array that's returned by OSSL_FUNC_signature_settable_ctx_params().
 
 =over 4
 
