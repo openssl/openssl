@@ -59,15 +59,15 @@ static int i2r_OSSL_ROLE_SPEC_CERT_ID(X509V3_EXT_METHOD *method,
         return 0;
     if (GENERAL_NAME_print(out, rscid->roleCertIssuer) <= 0)
         return 0;
-    if (rscid->roleCertSerialNumber) {
+    if (rscid->roleCertSerialNumber != NULL) {
         if (BIO_puts(out, "\n") <= 0)
             return 0;
         if (BIO_printf(out, "%*sRole Certificate Serial Number: ", indent, "") <= 0)
             return 0;
-        if (integer_print_bio(out, rscid->roleCertSerialNumber) <= 0)
+        if (ossl_serial_number_print(out, rscid->roleCertSerialNumber, indent) != 0)
             return 0;
     }
-    if (rscid->roleCertLocator) {
+    if (rscid->roleCertLocator != NULL) {
         if (BIO_puts(out, "\n") <= 0)
             return 0;
         if (BIO_printf(out, "%*sRole Certificate Locator:\n", indent, "") <= 0)
