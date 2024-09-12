@@ -43,7 +43,8 @@ ASN1_SEQUENCE(OSSL_ATTRIBUTE_DESCRIPTOR) = {
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_ATTRIBUTE_DESCRIPTOR)
 
 /* Copied from x_attrib.c */
-static int print_hex(BIO *out, unsigned char *buf, int len) {
+static int print_hex(BIO *out, unsigned char *buf, int len)
+{
     int result = 1;
     char *hexbuf;
 
@@ -61,7 +62,8 @@ static int print_hex(BIO *out, unsigned char *buf, int len) {
 
 static int i2r_HASH(X509V3_EXT_METHOD *method,
                     OSSL_HASH *hash,
-                    BIO *out, int indent) {
+                    BIO *out, int indent)
+{
     if (BIO_printf(out, "%*sAlgorithm: ", indent, "") <= 0)
         return 0;
     if (i2a_ASN1_OBJECT(out, hash->algorithmIdentifier->algorithm) <= 0)
@@ -83,7 +85,8 @@ static int i2r_HASH(X509V3_EXT_METHOD *method,
 
 static int i2r_INFO_SYNTAX_POINTER(X509V3_EXT_METHOD *method,
                                    OSSL_INFO_SYNTAX_POINTER *pointer,
-                                   BIO *out, int indent) {
+                                   BIO *out, int indent)
+{
     if (BIO_printf(out, "%*sNames:\n", indent, "") <= 0)
         return 0;
     if (OSSL_GENERAL_NAMES_print(out, pointer->name, indent) <= 0)
@@ -101,9 +104,10 @@ static int i2r_INFO_SYNTAX_POINTER(X509V3_EXT_METHOD *method,
 
 static int i2r_OSSL_INFO_SYNTAX(X509V3_EXT_METHOD *method,
                                 OSSL_INFO_SYNTAX *info,
-                                BIO *out, int indent) {
+                                BIO *out, int indent)
+{
     switch (info->type) {
-    case (OSSL_INFO_SYNTAX_TYPE_CONTENT): {
+    case (OSSL_INFO_SYNTAX_TYPE_CONTENT):
         if (BIO_printf(out, "%*sContent: ", indent, "") <= 0)
             return 0;
         if (BIO_printf(out, "%.*s", info->choice.content->length, info->choice.content->data) <= 0)
@@ -111,21 +115,21 @@ static int i2r_OSSL_INFO_SYNTAX(X509V3_EXT_METHOD *method,
         if (BIO_puts(out, "\n") <= 0)
             return 0;
         return 1;
-    }
-    case (OSSL_INFO_SYNTAX_TYPE_POINTER): {
+    case (OSSL_INFO_SYNTAX_TYPE_POINTER):
         if (BIO_printf(out, "%*sPointer:\n", indent, "") <= 0) {
             return 0;
         }
         return i2r_INFO_SYNTAX_POINTER(method, info->choice.pointer, out, indent + 4);
-    }
-    default: return 0;
+    default:
+        return 0;
     }
     return 0;
 }
 
 static int i2r_OSSL_PRIVILEGE_POLICY_ID(X509V3_EXT_METHOD *method,
                                    OSSL_PRIVILEGE_POLICY_ID *ppid,
-                                   BIO *out, int indent) {
+                                   BIO *out, int indent)
+{
     char buf[80];
 
     /* Intentionally display the numeric OID, rather than the textual name. */
@@ -140,7 +144,8 @@ static int i2r_OSSL_PRIVILEGE_POLICY_ID(X509V3_EXT_METHOD *method,
 
 static int i2r_OSSL_ATTRIBUTE_DESCRIPTOR(X509V3_EXT_METHOD *method,
                                          OSSL_ATTRIBUTE_DESCRIPTOR *ad,
-                                         BIO *out, int indent) {
+                                         BIO *out, int indent)
+{
     char buf[80];
 
     /* Intentionally display the numeric OID, rather than the textual name. */
@@ -150,7 +155,8 @@ static int i2r_OSSL_ATTRIBUTE_DESCRIPTOR(X509V3_EXT_METHOD *method,
         return 0;
     if (BIO_printf(out, "%*sSyntax:\n", indent, "") <= 0)
         return 0;
-    if (BIO_printf(out, "%*s%.*s", indent + 4, "", ad->attributeSyntax->length, ad->attributeSyntax->data) <= 0)
+    if (BIO_printf(out, "%*s%.*s", indent + 4, "",
+                   ad->attributeSyntax->length, ad->attributeSyntax->data) <= 0)
         return 0;
     if (BIO_puts(out, "\n\n") <= 0)
         return 0;
@@ -159,7 +165,8 @@ static int i2r_OSSL_ATTRIBUTE_DESCRIPTOR(X509V3_EXT_METHOD *method,
             return 0;
     }
     if (ad->description != NULL) {
-        if (BIO_printf(out, "%*sDescription: %.*s\n", indent, "", ad->description->length, ad->description->data) <= 0)
+        if (BIO_printf(out, "%*sDescription: %.*s\n", indent, "",
+                       ad->description->length, ad->description->data) <= 0)
             return 0;
     }
     if (BIO_printf(out, "%*sDomination Rule:\n", indent, "") <= 0)
