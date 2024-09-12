@@ -9,6 +9,7 @@
 
 #include <openssl/asn1t.h>
 #include <openssl/x509v3.h>
+#include <crypto/x509.h>
 #include "ext_dat.h"
 
 ASN1_SEQUENCE(OSSL_ROLE_SPEC_CERT_ID) = {
@@ -26,24 +27,6 @@ ASN1_ITEM_TEMPLATE(OSSL_ROLE_SPEC_CERT_ID_SYNTAX) =
 ASN1_ITEM_TEMPLATE_END(OSSL_ROLE_SPEC_CERT_ID_SYNTAX)
 
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_ROLE_SPEC_CERT_ID_SYNTAX)
-
-static int integer_print_bio(BIO *bio, const ASN1_INTEGER *num)
-{
-    BIGNUM *num_bn;
-    int result = 0;
-    char *hex;
-
-    num_bn = ASN1_INTEGER_to_BN(num, NULL);
-    if (num_bn == NULL)
-        return -1;
-    if ((hex = BN_bn2hex(num_bn))) {
-        result = BIO_write(bio, "0x", 2) > 0;
-        result = result && BIO_write(bio, hex, strlen(hex)) > 0;
-        OPENSSL_free(hex);
-    }
-    BN_free(num_bn);
-    return result;
-}
 
 static int i2r_OSSL_ROLE_SPEC_CERT_ID(X509V3_EXT_METHOD *method,
                                       OSSL_ROLE_SPEC_CERT_ID *rscid,
