@@ -323,7 +323,7 @@ cert_contains($role_spec_cert,
               "Role Certificate Issuer: DirName:CN",
               1, 'X.509 Role Spec Certificate Identifier');
 cert_contains($role_spec_cert,
-              "Role Certificate Serial Number: 0x02040608",
+              "Role Certificate Serial Number: 33818120 \\(0x2040608\\)",
               1, 'X.509 Role Spec Certificate Identifier');
 cert_contains($role_spec_cert,
               "DNS:wildboarsoftware.com",

@@ -394,4 +394,6 @@ int ossl_print_attribute_value(BIO *out,
                                const ASN1_TYPE *av,
                                int indent);
 
+int ossl_serial_number_print(BIO *out, const ASN1_INTEGER *bs, int indent);
+
 #endif  /* OSSL_CRYPTO_X509_H */
