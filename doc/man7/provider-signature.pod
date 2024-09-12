@@ -253,7 +253,7 @@ I<*siglen>.
 =head2 Message Signing Functions
 
 These functions are suitable for providers that implement algorithms that
-accumulates a full message and signs the result of that accumulation, such as
+accumulate a full message and signs the result of that accumulation, such as
 RSA-SHA256.
 
 OSSL_FUNC_signature_sign_message_init() initialises a context for signing a
@@ -302,13 +302,14 @@ long.
 
 =head2 Message Verify Functions
 
-These functions are suitable to algorithms that implement algorithms that
-accumulates a full message and signs the result of that accumulation, such as
-RSA-SHA256.
+These functions are suitable for providers that implement algorithms that
+accumulate a full message and verifies a signature against the result
+of that accumulation, such as RSA-SHA256.
 
-OSSL_FUNC_signature_verify_message_init() initialises a context for signing a
-message given a provider side signature context in the I<ctx> parameter, and a
-pointer to a provider key object in the I<provkey> parameter.
+OSSL_FUNC_signature_verify_message_init() initialises a context for verify a
+signature against a message given a provider side signature context in the
+I<ctx> parameter, and a pointer to a provider key object in the I<provkey>
+parameter.
 The I<params>, if not NULL, should be set on the context in a manner similar to
 using OSSL_FUNC_signature_set_ctx_params().
 The key object should have been previously generated, loaded or imported into
@@ -318,15 +319,15 @@ provider-keymgmt(7)>.
 OSSL_FUNC_signature_verify_message_update() gathers the data pointed at by
 I<in>, which is I<inlen> bytes long.
 
-OSSL_FUNC_signature_verify_message_final() performs the actual signing on the
-data that was gathered with OSSL_FUNC_signature_verify_message_update().  The
-signature itself must have been passed through the "signature"
+OSSL_FUNC_signature_verify_message_final() performs the actual verification on
+the data that was gathered with OSSL_FUNC_signature_verify_message_update().
+The signature itself must have been passed through the "signature"
 (B<OSSL_SIGNATURE_PARAM_SIGNATURE>) L<Signature parameter|/Signature parameters>
 before this function is called.
 
-OSSL_FUNC_signature_verify() can be used for one-shot signature calls.  In that
-case, I<tbs> is expected to be the whole message to be signed, I<tbslen> bytes
-long.
+OSSL_FUNC_signature_verify() can be used for one-shot verification calls.  In
+that case, I<tbs> is expected to be the whole message to be signed, I<tbslen>
+bytes long.
 
 =head2 Verify Recover Functions
 
