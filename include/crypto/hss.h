@@ -176,7 +176,7 @@ int ossl_hss_sig_to_text(BIO *out, HSS_KEY *hsskey, int selection);
 int ossl_hss_pubkey_encode(HSS_KEY *hsskey, unsigned char *pub, size_t *publen);
 size_t ossl_hss_pubkey_length(const unsigned char *data, size_t datalen);
 int ossl_hss_pubkey_decode(const unsigned char *pub, size_t publen,
-                           HSS_KEY *hsskey);
+                           HSS_KEY *hsskey, int lms_only);
 int ossl_hss_pubkey_from_params(const OSSL_PARAM params[], HSS_KEY *key);
 
 #  if !defined(OPENSSL_NO_HSS_GEN) && !defined(FIPS_MODULE)

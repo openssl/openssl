@@ -121,7 +121,8 @@ void ossl_hss_key_free(HSS_KEY *hsskey)
         return;
     REF_ASSERT_ISNT(i < 0);
 
-    ossl_hss_key_reset(hsskey);
+    sk_LMS_SIG_pop_free(hsskey->lmssigs, ossl_lms_sig_free);
+    sk_LMS_KEY_pop_free(hsskey->lmskeys, ossl_lms_key_free);
     OPENSSL_free(hsskey->propq);
     CRYPTO_FREE_REF(&hsskey->references);
     OPENSSL_free(hsskey);

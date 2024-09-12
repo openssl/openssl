@@ -46,22 +46,25 @@ size_t ossl_hss_pubkey_length(const unsigned char *data, size_t datalen)
  *
  * @param pub A byte array of public key data in XDR format.
  * @param publen The size of |pub|.
- * @param The HSS_KEY object to store the public key into.
+ * @param hsskey The HSS_KEY object to store the public key into.
+ * @param lms_only Set to 1 for a LMS key, or 0 for a HSS key.
  * @returns 1 on success, or 0 on failure. A failure may occur if L, lms_type or
  * ots_type are invalid, OR if there are trailing bytes in |pub|.
  */
 int ossl_hss_pubkey_decode(const unsigned char *pub, size_t publen,
-                           HSS_KEY *hsskey)
+                           HSS_KEY *hsskey, int lms_only)
 {
     PACKET pkt;
     LMS_KEY *lmskey;
 
-    if (!PACKET_buf_init(&pkt, pub, publen)
-            || !PACKET_get_4_len(&pkt, &hsskey->L)
-            || hsskey->L < OSSL_HSS_MIN_L
-            || hsskey->L > OSSL_HSS_MAX_L)
+    if (!PACKET_buf_init(&pkt, pub, publen))
         return 0;
-
+    if (!lms_only) {
+        if (!PACKET_get_4_len(&pkt, &hsskey->L)
+                || hsskey->L < OSSL_HSS_MIN_L
+                || hsskey->L > OSSL_HSS_MAX_L)
+            return 0;
+    }
     if (!ossl_hss_key_reset(hsskey))
         return 0;
     lmskey = ossl_lms_key_new();
@@ -118,20 +121,21 @@ int ossl_hss_pubkey_encode(HSS_KEY *hsskey, unsigned char *pub, size_t *publen)
 int ossl_hss_pubkey_from_params(const OSSL_PARAM params[], HSS_KEY *hsskey)
 {
     const OSSL_PARAM *p = NULL, *pl = NULL;
-    uint32_t L;
+    uint32_t L = 0;
 
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY);
+    pl = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_HSS_L);
     if (p != NULL) {
         if (p->data == NULL || p->data_type != OSSL_PARAM_OCTET_STRING)
             return 0;
-        pl = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_HSS_L);
         if (pl != NULL) {
             if (!OSSL_PARAM_get_uint32(pl, &L))
                 return 0;
-            if (L != hsskey->L)
+            if (hsskey->L > 0 && L != hsskey->L)
                 return 0;
+            hsskey->L = L;
         }
-        if (!ossl_hss_pubkey_decode(p->data, p->data_size, hsskey))
+        if (!ossl_hss_pubkey_decode(p->data, p->data_size, hsskey, pl != NULL))
             return 0;
     }
     return 1;

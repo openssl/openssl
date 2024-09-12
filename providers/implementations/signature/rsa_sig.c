@@ -2007,7 +2007,7 @@ static int rsa_sigalg_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
     }
 
     /* Wrong operation */
-    return 0;
+    return 1;
 }
 
 #define IMPL_RSA_SIGALG(md, MD)                                         \

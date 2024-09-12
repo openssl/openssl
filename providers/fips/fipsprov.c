@@ -233,6 +233,25 @@ static int fips_self_test(void *provctx)
     return SELF_TEST_post(&fgbl->selftest_params, 1) ? 1 : 0;
 }
 
+/* Our primary name:NIST name[:our older names] */
+#define FIPS_DIGESTS_COMMON()                                                  \
+{ PROV_NAMES_SHA1, FIPS_DEFAULT_PROPERTIES, ossl_sha1_functions },             \
+{ PROV_NAMES_SHA2_224, FIPS_DEFAULT_PROPERTIES, ossl_sha224_functions },       \
+{ PROV_NAMES_SHA2_256, FIPS_DEFAULT_PROPERTIES, ossl_sha256_functions },       \
+{ PROV_NAMES_SHA2_384, FIPS_DEFAULT_PROPERTIES, ossl_sha384_functions },       \
+{ PROV_NAMES_SHA2_512, FIPS_DEFAULT_PROPERTIES, ossl_sha512_functions },       \
+{ PROV_NAMES_SHA2_512_224, FIPS_DEFAULT_PROPERTIES,                            \
+  ossl_sha512_224_functions },                                                 \
+{ PROV_NAMES_SHA2_512_256, FIPS_DEFAULT_PROPERTIES,                            \
+  ossl_sha512_256_functions },                                                 \
+{ PROV_NAMES_SHA3_224, FIPS_DEFAULT_PROPERTIES, ossl_sha3_224_functions },     \
+{ PROV_NAMES_SHA3_256, FIPS_DEFAULT_PROPERTIES, ossl_sha3_256_functions },     \
+{ PROV_NAMES_SHA3_384, FIPS_DEFAULT_PROPERTIES, ossl_sha3_384_functions },     \
+{ PROV_NAMES_SHA3_512, FIPS_DEFAULT_PROPERTIES, ossl_sha3_512_functions },     \
+{ PROV_NAMES_SHAKE_128, FIPS_DEFAULT_PROPERTIES, ossl_shake_128_functions },   \
+{ PROV_NAMES_SHAKE_256, FIPS_DEFAULT_PROPERTIES, ossl_shake_256_functions }
+
+
 /*
  * For the algorithm names, we use the following formula for our primary
  * names:
@@ -258,26 +277,15 @@ static int fips_self_test(void *provctx)
  * we have used historically.
  */
 static const OSSL_ALGORITHM fips_digests[] = {
-    /* Our primary name:NiST name[:our older names] */
-    { PROV_NAMES_SHA1, FIPS_DEFAULT_PROPERTIES, ossl_sha1_functions },
-    { PROV_NAMES_SHA2_224, FIPS_DEFAULT_PROPERTIES, ossl_sha224_functions },
-    { PROV_NAMES_SHA2_256, FIPS_DEFAULT_PROPERTIES, ossl_sha256_functions },
-    { PROV_NAMES_SHA2_384, FIPS_DEFAULT_PROPERTIES, ossl_sha384_functions },
-    { PROV_NAMES_SHA2_512, FIPS_DEFAULT_PROPERTIES, ossl_sha512_functions },
-    { PROV_NAMES_SHA2_512_224, FIPS_DEFAULT_PROPERTIES,
-      ossl_sha512_224_functions },
-    { PROV_NAMES_SHA2_512_256, FIPS_DEFAULT_PROPERTIES,
-      ossl_sha512_256_functions },
+    FIPS_DIGESTS_COMMON(),
+    { NULL, NULL, NULL }
+};
 
-    /* We agree with NIST here, so one name only */
-    { PROV_NAMES_SHA3_224, FIPS_DEFAULT_PROPERTIES, ossl_sha3_224_functions },
-    { PROV_NAMES_SHA3_256, FIPS_DEFAULT_PROPERTIES, ossl_sha3_256_functions },
-    { PROV_NAMES_SHA3_384, FIPS_DEFAULT_PROPERTIES, ossl_sha3_384_functions },
-    { PROV_NAMES_SHA3_512, FIPS_DEFAULT_PROPERTIES, ossl_sha3_512_functions },
-
-    { PROV_NAMES_SHAKE_128, FIPS_DEFAULT_PROPERTIES, ossl_shake_128_functions },
-    { PROV_NAMES_SHAKE_256, FIPS_DEFAULT_PROPERTIES, ossl_shake_256_functions },
-
+static const OSSL_ALGORITHM fips_digests_internal[] = {
+    FIPS_DIGESTS_COMMON(),
+    /* Used by HSS */
+    { PROV_NAMES_SHA2_256_192, FIPS_DEFAULT_PROPERTIES,
+      ossl_sha256_192_functions },
     /*
      * KECCAK-KMAC-128 and KECCAK-KMAC-256 as hashes are mostly useful for
      * KMAC128 and KMAC256.
@@ -583,6 +591,12 @@ static const OSSL_ALGORITHM *fips_query_internal(void *provctx, int operation_id
         if (!ossl_prov_is_running())
             return NULL;
         return fips_macs_internal;
+    }
+    if (operation_id == OSSL_OP_DIGEST) {
+        *no_cache = 0;
+        if (!ossl_prov_is_running())
+            return NULL;
+        return fips_digests_internal;
     }
     return fips_query(provctx, operation_id, no_cache);
 }

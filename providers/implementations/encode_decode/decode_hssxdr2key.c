@@ -83,7 +83,7 @@ static int hssxdr2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
         goto next;
     if (selection == 0 || (selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
         key = ossl_hss_key_new(PROV_LIBCTX_OF(ctx->provctx), NULL);
-        if (key == NULL || !ossl_hss_pubkey_decode(buf, length, key)) {
+        if (key == NULL || !ossl_hss_pubkey_decode(buf, length, key, 0)) {
             ossl_hss_key_free(key);
             key = NULL;
         }

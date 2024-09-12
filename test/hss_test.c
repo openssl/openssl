@@ -82,6 +82,27 @@ err:
     return ret;
 }
 
+static int hss_digest_verify_fail_test(void)
+{
+    int ret = 0;
+    HSS_ACVP_TEST_DATA *td = &hss_testdata[0];
+    EVP_PKEY *pub = NULL;
+    EVP_MD_CTX *vctx = NULL;
+
+    if (!TEST_ptr(pub = hsspubkey_from_data(td->pub, td->publen)))
+        return 0;
+    if (!TEST_ptr(vctx = EVP_MD_CTX_new()))
+        goto err;
+    if (!TEST_int_eq(EVP_DigestVerifyInit_ex(vctx, NULL, NULL, libctx, NULL,
+                                             pub, NULL), 0))
+        goto err;
+    ret = 1;
+ err:
+    EVP_PKEY_free(pub);
+    EVP_MD_CTX_free(vctx);
+    return ret;
+}
+
 static int hss_pkey_verify_test(int tst)
 {
     int ret = 0;
@@ -331,7 +352,7 @@ static int hss_decode_fail_test(void)
 
     if (!TEST_ptr(pub = ossl_hss_key_new(libctx, propq)))
         goto end;
-    if (!TEST_true(ossl_hss_pubkey_decode(td->pub, td->publen, pub)))
+    if (!TEST_true(ossl_hss_pubkey_decode(td->pub, td->publen, pub, 0)))
         goto end;
     if (!TEST_int_eq(ossl_hss_sig_decode(pub, td->sig, 1), 0))
         goto end;
@@ -430,6 +451,17 @@ static EVP_PKEY *key_decode_from_data(const unsigned char *data, size_t datalen,
     key = key_decode_from_bio(bio, keytype);
     BIO_free(bio);
     return key;
+}
+
+static int hss_key_decode_test(void)
+{
+    int ret = 0;
+    HSS_ACVP_TEST_DATA *td1 = &hss_testdata[0];
+    EVP_PKEY *key = NULL;
+
+    ret = TEST_ptr(key = key_decode_from_data(td1->pub, td1->publen, NULL));
+    EVP_PKEY_free(key);
+    return ret;
 }
 
 static int hss_key_eq_test(void)
@@ -614,7 +646,7 @@ static int hss_pkey_sign_test(int tst)
     size_t siglen = 0;
     unsigned char *hsspubdata = NULL;
     size_t hsspubdatalen = 0;
-
+    int expected = 1;
     /*
      * Skip if the test does not specify the private key, this
      * is required for deterministic signing
@@ -624,9 +656,16 @@ static int hss_pkey_sign_test(int tst)
     if (!extract_sign_data(t, &levels, lms_type, ots_type, &qindex))
         goto err;
 
+    if (OSSL_PROVIDER_available(libctx, "fips"))
+        expected = -2; /* Not supported since */
+
     if (!TEST_ptr(genctx = EVP_PKEY_CTX_new_from_name(libctx, "HSS", propq))
-            || !TEST_int_eq(EVP_PKEY_keygen_init(genctx), 1))
+            || !TEST_int_eq(EVP_PKEY_keygen_init(genctx), expected))
         goto err;
+    if (expected == -2) {
+        ret = 1;
+        goto err;
+    }
 
     *prm++ = OSSL_PARAM_construct_uint32(OSSL_PKEY_PARAM_HSS_LEVELS, &levels);
     for (i = 0; i < levels; i++) {
@@ -645,7 +684,7 @@ static int hss_pkey_sign_test(int tst)
     if (!TEST_true(set_entropy(t->priv, t->privlen, NULL, 0)))
         goto err;
 
-    if (!TEST_int_gt(EVP_PKEY_generate(genctx, &key), 0))
+    if (!TEST_int_eq(EVP_PKEY_generate(genctx, &key), 1))
         goto err;
 
     if (!TEST_ptr(ectx = OSSL_ENCODER_CTX_new_for_pkey(key, OSSL_KEYMGMT_SELECT_PUBLIC_KEY,
@@ -853,9 +892,11 @@ int setup_tests(void)
         ADD_TEST(hss_verify_bad_pub_sig_test);
         ADD_TEST(hss_bad_pub_len_test);
         ADD_TEST(hss_decode_fail_test);
+        ADD_TEST(hss_key_decode_test);
         ADD_TEST(hss_pubkey_decoder_fail_test);
         ADD_TEST(hss_key_eq_test);
         ADD_TEST(hss_key_validate_test);
+        ADD_TEST(hss_digest_verify_fail_test);
 #ifndef OPENSSL_NO_HSS_GEN
         ADD_ALL_TESTS(hss_pkey_sign_test, OSSL_NELEM(hss_testdata));
 #endif
