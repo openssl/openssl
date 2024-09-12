@@ -30,6 +30,7 @@
 # include <openssl/engine.h>
 # include <openssl/ocsp.h>
 # include <openssl/http.h>
+# include <openssl/x509_acert.h>
 # include <signal.h>
 # include "apps_ui.h"
 # include "opt.h"
@@ -352,5 +353,8 @@ void app_providers_cleanup(void);
 
 EVP_PKEY *app_keygen(EVP_PKEY_CTX *ctx, const char *alg, int bits, int verbose);
 EVP_PKEY *app_paramgen(EVP_PKEY_CTX *ctx, const char *alg);
+
+int do_X509_ACERT_sign(X509_ACERT *x, EVP_PKEY *pkey, const char *md,
+                       STACK_OF(OPENSSL_STRING) *sigopts);
 
 #endif

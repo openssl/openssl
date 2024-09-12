@@ -12,10 +12,16 @@
 # pragma once
 
 # include <openssl/x509_acert.h>
+# include "openssl/x509.h"
+# include "openssl/types.h"
+# include "internal/refcount.h"
 
 #define OSSL_ODI_TYPE_PUBLIC_KEY      0
 #define OSSL_ODI_TYPE_PUBLIC_KEY_CERT 1
 #define OSSL_ODI_TYPE_OTHER           2
+
+# define X509_ACERT_ISSUER_V1 0
+# define X509_ACERT_ISSUER_V2 1
 
 struct ossl_object_digest_info_st {
     ASN1_ENUMERATED digestedObjectType;
@@ -36,19 +42,19 @@ struct X509_acert_issuer_v2form_st {
     OSSL_OBJECT_DIGEST_INFO *objectDigestInfo;
 };
 
-typedef struct X509_acert_issuer_st {
+struct X509_acert_issuer_st {
     int type;
     union {
         STACK_OF(GENERAL_NAME) *v1Form;
         X509_ACERT_ISSUER_V2FORM *v2Form;
     } u;
-} X509_ACERT_ISSUER;
+};
 
-typedef struct X509_holder_st {
+struct X509_holder_st {
     OSSL_ISSUER_SERIAL *baseCertificateID;
     STACK_OF(GENERAL_NAME) *entityName;
     OSSL_OBJECT_DIGEST_INFO *objectDigestInfo;
-} X509_HOLDER;
+};
 
 struct X509_acert_info_st {
     ASN1_INTEGER version;      /* default of v2 */
@@ -67,4 +73,10 @@ struct X509_acert_st {
     X509_ALGOR sig_alg;
     ASN1_BIT_STRING signature;
 };
+
+int ossl_x509_check_acert_time(X509_STORE_CTX *ctx, X509_ACERT *acert);
+int ossl_x509_check_acert_exts(X509_ACERT *acert);
+int X509_attr_cert_verify(X509_STORE_CTX *ctx, X509_ACERT *acert);
+int acert_crl(X509_STORE_CTX *ctx, X509_CRL *crl, X509_ACERT *x);
+
 #endif
