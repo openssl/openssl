@@ -19,6 +19,9 @@ user of negative serial numbers, and handles wrapping of huge serial numbers.
 The output is written to a newline and indented by I<indent> spaces if the
 serial number cannot be read into a long int.
 
+If the serial number fits into a long int, it is printed on the same line as
+whatever precedes it, after a single SPACE character.
+
 =head1 RETURN VALUES
 
 This function returns 0 on success and -1 on failure.
