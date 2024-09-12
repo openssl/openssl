@@ -63,7 +63,7 @@ Encapsulate an RSASVE key (for RSA keys).
  unsigned char *out = NULL, *secret = NULL;
 
  ctx = EVP_PKEY_CTX_new_from_pkey(libctx, rsa_pub_key, NULL);
- if (ctx = NULL)
+ if (ctx == NULL)
      /* Error */
  if (EVP_PKEY_encapsulate_init(ctx, NULL) <= 0)
      /* Error */
