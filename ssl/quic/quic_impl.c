@@ -1280,14 +1280,7 @@ int ossl_quic_handle_events(SSL *s)
         return 0;
 
     qctx_lock(&ctx);
-    /*
-     * TODO(QUIC SERVER): We should always tick the engine, whether the current
-     * connection is started or not.  When ticking the engine, we MUST avoid
-     * inadvertently starting connections that haven't started, the guards
-     * don't belong here.
-     */
-    if (ctx.qc == NULL || ctx.qc->started)
-        ossl_quic_reactor_tick(ossl_quic_obj_get0_reactor(ctx.obj), 0);
+    ossl_quic_reactor_tick(ossl_quic_obj_get0_reactor(ctx.obj), 0);
     qctx_unlock(&ctx);
     return 1;
 }
@@ -4776,15 +4769,15 @@ int ossl_quic_conn_poll_events(SSL *ssl, uint64_t events, int do_tick,
 
     qctx_lock(&ctx);
 
+    if (do_tick)
+        ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(ctx.qc->ch), 0);
+
     if (!ctx.qc->started) {
         /* We can only try to write on non-started connection. */
         if ((events & SSL_POLL_EVENT_W) != 0)
             revents |= SSL_POLL_EVENT_W;
         goto end;
     }
-
-    if (do_tick)
-        ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(ctx.qc->ch), 0);
 
     if (ctx.xso != NULL) {
         /* SSL object has a stream component. */
