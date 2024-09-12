@@ -73,7 +73,8 @@ static int i2r_HASH(X509V3_EXT_METHOD *method,
     if (hash->algorithmIdentifier->parameter) {
         if (BIO_printf(out, "%*sParameter: ", indent, "") <= 0)
             return 0;
-        if (ossl_print_attribute_value(out, 0, hash->algorithmIdentifier->parameter, indent + 4) <= 0)
+        if (ossl_print_attribute_value(out, 0, hash->algorithmIdentifier->parameter,
+                                       indent + 4) <= 0)
             return 0;
         if (BIO_puts(out, "\n") <= 0)
             return 0;
@@ -116,9 +117,8 @@ static int i2r_OSSL_INFO_SYNTAX(X509V3_EXT_METHOD *method,
             return 0;
         return 1;
     case (OSSL_INFO_SYNTAX_TYPE_POINTER):
-        if (BIO_printf(out, "%*sPointer:\n", indent, "") <= 0) {
+        if (BIO_printf(out, "%*sPointer:\n", indent, "") <= 0)
             return 0;
-        }
         return i2r_INFO_SYNTAX_POINTER(method, info->choice.pointer, out, indent + 4);
     default:
         return 0;
@@ -127,8 +127,8 @@ static int i2r_OSSL_INFO_SYNTAX(X509V3_EXT_METHOD *method,
 }
 
 static int i2r_OSSL_PRIVILEGE_POLICY_ID(X509V3_EXT_METHOD *method,
-                                   OSSL_PRIVILEGE_POLICY_ID *ppid,
-                                   BIO *out, int indent)
+                                        OSSL_PRIVILEGE_POLICY_ID *ppid,
+                                        BIO *out, int indent)
 {
     char buf[80];
 
