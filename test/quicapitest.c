@@ -2299,6 +2299,56 @@ err:
     return testresult;
 }
 
+/*
+ * Test that calling SSL_handle_events() early behaves as expected
+ */
+static int test_early_ticks(void)
+{
+    SSL_CTX *cctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method());
+    SSL *clientquic = NULL;
+    QUIC_TSERVER *qtserv = NULL;
+    int testresult = 0;
+    struct timeval tv;
+    int inf = 0;
+
+    if (!TEST_ptr(cctx)
+            || !TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert,
+                                                    privkey, QTEST_FLAG_FAKE_TIME,
+                                                    &qtserv,
+                                                    &clientquic, NULL, NULL)))
+        goto err;
+
+    if (!TEST_true(SSL_in_before(clientquic)))
+        goto err;
+
+    if (!TEST_true(SSL_handle_events(clientquic)))
+        goto err;
+
+    if (!TEST_true(SSL_get_event_timeout(clientquic, &tv, &inf))
+            || !TEST_true(inf))
+        goto err;
+
+    if (!TEST_false(SSL_has_pending(clientquic))
+            || !TEST_int_eq(SSL_pending(clientquic), 0))
+        goto err;
+
+    if (!TEST_true(SSL_in_before(clientquic)))
+        goto err;
+
+    if (!TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
+        goto err;
+
+    if (!TEST_false(SSL_in_before(clientquic)))
+        goto err;
+
+    testresult = 1;
+ err:
+    SSL_free(clientquic);
+    SSL_CTX_free(cctx);
+    ossl_quic_tserver_free(qtserv);
+    return testresult;
+}
+
 /***********************************************************************************/
 
 OPT_TEST_DECLARE_USAGE("provider config certsdir datadir\n")
@@ -2393,7 +2443,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_tparam, OSSL_NELEM(tparam_tests));
     ADD_TEST(test_session_cb);
     ADD_TEST(test_domain_flags);
-
+    ADD_TEST(test_early_ticks);
     return 1;
  err:
     cleanup_tests();
