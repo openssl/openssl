@@ -316,7 +316,8 @@ int engine_main(int argc, char **argv)
      * names, and then setup to parse the rest of the line as flags. */
     prog = argv[0];
     while ((argv1 = argv[1]) != NULL && *argv1 != '-') {
-        sk_OPENSSL_CSTRING_push(engines, argv1);
+        if (!sk_OPENSSL_CSTRING_push(engines, argv1))
+            goto end;
         argc--;
         argv++;
     }
@@ -352,10 +353,12 @@ int engine_main(int argc, char **argv)
             test_avail++;
             break;
         case OPT_PRE:
-            sk_OPENSSL_STRING_push(pre_cmds, opt_arg());
+            if (!sk_OPENSSL_STRING_push(pre_cmds, opt_arg()))
+                goto end;
             break;
         case OPT_POST:
-            sk_OPENSSL_STRING_push(post_cmds, opt_arg());
+            if (!sk_OPENSSL_STRING_push(post_cmds, opt_arg()))
+                goto end;
             break;
         }
     }
@@ -370,12 +373,14 @@ int engine_main(int argc, char **argv)
             BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
             goto end;
         }
-        sk_OPENSSL_CSTRING_push(engines, *argv);
+        if (!sk_OPENSSL_CSTRING_push(engines, *argv))
+            goto end;
     }
 
     if (sk_OPENSSL_CSTRING_num(engines) == 0) {
         for (e = ENGINE_get_first(); e != NULL; e = ENGINE_get_next(e)) {
-            sk_OPENSSL_CSTRING_push(engines, ENGINE_get_id(e));
+            if (!sk_OPENSSL_CSTRING_push(engines, ENGINE_get_id(e)))
+                goto end;
         }
     }
 

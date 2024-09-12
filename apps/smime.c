@@ -312,16 +312,14 @@ int smime_main(int argc, char **argv)
         case OPT_SIGNER:
             /* If previous -signer argument add signer to list */
             if (signerfile != NULL) {
-                if (sksigners == NULL
-                    && (sksigners = sk_OPENSSL_STRING_new_null()) == NULL)
+                if ((!sksigners && (sksigners = sk_OPENSSL_STRING_new_null()) == NULL) ||
+                    !sk_OPENSSL_STRING_push(sksigners, signerfile))
                     goto end;
-                sk_OPENSSL_STRING_push(sksigners, signerfile);
                 if (keyfile == NULL)
                     keyfile = signerfile;
-                if (skkeys == NULL
-                    && (skkeys = sk_OPENSSL_STRING_new_null()) == NULL)
+                if ((!skkeys && (skkeys = sk_OPENSSL_STRING_new_null()) == NULL) ||
+                    !sk_OPENSSL_STRING_push(skkeys, keyfile))
                     goto end;
-                sk_OPENSSL_STRING_push(skkeys, keyfile);
                 keyfile = NULL;
             }
             signerfile = opt_arg();
@@ -343,15 +341,13 @@ int smime_main(int argc, char **argv)
                                "%s: Must have -signer before -inkey\n", prog);
                     goto opthelp;
                 }
-                if (sksigners == NULL
-                    && (sksigners = sk_OPENSSL_STRING_new_null()) == NULL)
+                if ((!sksigners && (sksigners = sk_OPENSSL_STRING_new_null()) == NULL) ||
+                    !sk_OPENSSL_STRING_push(sksigners, signerfile))
                     goto end;
-                sk_OPENSSL_STRING_push(sksigners, signerfile);
                 signerfile = NULL;
-                if (skkeys == NULL
-                    && (skkeys = sk_OPENSSL_STRING_new_null()) == NULL)
+                if ((!skkeys && (skkeys = sk_OPENSSL_STRING_new_null()) == NULL) ||
+                    !sk_OPENSSL_STRING_push(skkeys, keyfile))
                     goto end;
-                sk_OPENSSL_STRING_push(skkeys, keyfile);
             }
             keyfile = opt_arg();
             break;
@@ -421,15 +417,14 @@ int smime_main(int argc, char **argv)
             goto opthelp;
         }
         if (signerfile != NULL) {
-            if (sksigners == NULL
-                && (sksigners = sk_OPENSSL_STRING_new_null()) == NULL)
-                goto end;
-            sk_OPENSSL_STRING_push(sksigners, signerfile);
-            if (!skkeys && (skkeys = sk_OPENSSL_STRING_new_null()) == NULL)
+            if ((!sksigners && (sksigners = sk_OPENSSL_STRING_new_null()) == NULL) ||
+                !sk_OPENSSL_STRING_push(sksigners, signerfile))
                 goto end;
             if (!keyfile)
                 keyfile = signerfile;
-            sk_OPENSSL_STRING_push(skkeys, keyfile);
+            if ((!skkeys && (skkeys = sk_OPENSSL_STRING_new_null()) == NULL) ||
+                !sk_OPENSSL_STRING_push(skkeys, keyfile))
+                goto end;
         }
         if (sksigners == NULL) {
             BIO_printf(bio_err, "No signer certificate specified\n");

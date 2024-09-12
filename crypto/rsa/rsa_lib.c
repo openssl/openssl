@@ -887,19 +887,21 @@ int ossl_rsa_get0_all_params(RSA *r, STACK_OF(BIGNUM_const) *primes,
     if (RSA_get0_p(r) == NULL)
         return 1;
 
-    sk_BIGNUM_const_push(primes, RSA_get0_p(r));
-    sk_BIGNUM_const_push(primes, RSA_get0_q(r));
-    sk_BIGNUM_const_push(exps, RSA_get0_dmp1(r));
-    sk_BIGNUM_const_push(exps, RSA_get0_dmq1(r));
-    sk_BIGNUM_const_push(coeffs, RSA_get0_iqmp(r));
+    if (!sk_BIGNUM_const_push(primes, RSA_get0_p(r)) ||
+        !sk_BIGNUM_const_push(primes, RSA_get0_q(r)) ||
+        !sk_BIGNUM_const_push(exps, RSA_get0_dmp1(r)) ||
+        !sk_BIGNUM_const_push(exps, RSA_get0_dmq1(r)) ||
+        !sk_BIGNUM_const_push(coeffs, RSA_get0_iqmp(r)))
+        return 0;
 
 #ifndef FIPS_MODULE
     pnum = RSA_get_multi_prime_extra_count(r);
     for (i = 0; i < pnum; i++) {
         pinfo = sk_RSA_PRIME_INFO_value(r->prime_infos, i);
-        sk_BIGNUM_const_push(primes, pinfo->r);
-        sk_BIGNUM_const_push(exps, pinfo->d);
-        sk_BIGNUM_const_push(coeffs, pinfo->t);
+        if (!sk_BIGNUM_const_push(primes, pinfo->r) ||
+            !sk_BIGNUM_const_push(exps, pinfo->d) ||
+            !sk_BIGNUM_const_push(coeffs, pinfo->t))
+            return 0;
     }
 #endif
 

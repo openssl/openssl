@@ -544,7 +544,7 @@ void CONF_modules_unload(int all)
             continue;
         /* Since we're working in reverse this is OK */
         (void)sk_CONF_MODULE_delete(new_modules, i);
-        sk_CONF_MODULE_push(to_delete, md);
+        (void)sk_CONF_MODULE_push(to_delete, md);
     }
 
     if (sk_CONF_MODULE_num(new_modules) == 0) {

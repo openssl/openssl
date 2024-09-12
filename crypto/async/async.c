@@ -134,13 +134,16 @@ static void async_release_job(ASYNC_JOB *job) {
     async_pool *pool;
 
     pool = (async_pool *)CRYPTO_THREAD_get_local(&poolkey);
-    if (pool == NULL) {
-        ERR_raise(ERR_LIB_ASYNC, ERR_R_INTERNAL_ERROR);
-        return;
-    }
+    if (pool == NULL)
+        goto err;
     OPENSSL_free(job->funcargs);
     job->funcargs = NULL;
-    sk_ASYNC_JOB_push(pool->jobs, job);
+    if (!sk_ASYNC_JOB_push(pool->jobs, job))
+        goto err;
+    return;
+err:
+    ERR_raise(ERR_LIB_ASYNC, ERR_R_INTERNAL_ERROR);
+    return;
 }
 
 void async_start_func(void)
