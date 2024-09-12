@@ -56,6 +56,8 @@
 static int handle_io_failure(SSL *ssl, int res);
 static int set_keylog_file(SSL_CTX *ctx, const char *keylog_file);
 
+#define REQ_STRING_SZ 1024
+
 /**
  * @brief A static pointer to a BIO object representing the session's BIO.
  *
@@ -615,8 +617,8 @@ static size_t build_request_set(SSL *ssl)
 {
     size_t poll_idx;
     char *req;
-    char outfilename[1024];
-    char req_string[1024];
+    char outfilename[REQ_STRING_SZ];
+    char req_string[REQ_STRING_SZ];
     SSL *new_stream;
     size_t written;
 
@@ -679,11 +681,11 @@ static size_t build_request_set(SSL *ssl)
         outnames[poll_idx] = req;
 
         /* Format the http request */
-        BIO_snprintf(req_string, 1024, "GET /%s\r\n", req);
+        BIO_snprintf(req_string, REQ_STRING_SZ, "GET /%s\r\n", req);
 
         /* build the outfile request path */
-        memset(outfilename, 0, 1024);
-        BIO_snprintf(outfilename, 1024, "/downloads/%s", req);
+        memset(outfilename, 0, REQ_STRING_SZ);
+        BIO_snprintf(outfilename, REQ_STRING_SZ, "/downloads/%s", req);
 
         /* open a bio to write the file */
         outbiolist[poll_idx] = BIO_new_file(outfilename, "w+");
@@ -927,7 +929,6 @@ int main(int argc, char *argv[])
     BIO *req_bio = NULL;
     int res = EXIT_FAILURE;
     int ret;
-    char req_string[1024];
     size_t readbytes = 0;
     char buf[160];
     int eof = 0;
@@ -946,13 +947,13 @@ int main(int argc, char *argv[])
     int ipv6 = 0;
 
     if (argc < 4) {
-        fprintf(stderr, "Usage: quic-hq-interop [-6] hostname port file\n");
+        fprintf(stderr, "Usage: quic-hq-interop [-6] hostname port reqfile\n");
         goto end;
     }
 
     if (!strcmp(argv[argnext], "-6")) {
         if (argc < 5) {
-            fprintf(stderr, "Usage: quic-hq-interop [-6] hostname port\n");
+            fprintf(stderr, "Usage: quic-hq-interop [-6] hostname port reqfile\n");
             goto end;
         }
         ipv6 = 1;
@@ -962,7 +963,6 @@ int main(int argc, char *argv[])
     port = argv[argnext++];
     reqfile = argv[argnext];
 
-    memset(req_string, 0, 1024);
     req_bio = BIO_new_file(reqfile, "r");
     if (req_bio == NULL) {
         fprintf(stderr, "Failed to open request file %s\n", reqfile);
@@ -971,12 +971,12 @@ int main(int argc, char *argv[])
 
     /* Get the list of requests */
     while (!BIO_eof(req_bio)) {
-        if (!BIO_read_ex(req_bio, &reqnames[read_offset], 1024, &bytes_read)) {
+        if (!BIO_read_ex(req_bio, &reqnames[read_offset], REQ_STRING_SZ, &bytes_read)) {
             fprintf(stderr, "Failed to read some data from request file\n");
             goto end;
         }
         read_offset += bytes_read;
-        reqnames = OPENSSL_realloc(reqnames, read_offset + 1024);
+        reqnames = OPENSSL_realloc(reqnames, read_offset + REQ_STRING_SZ);
         if (reqnames == NULL) {
             fprintf(stderr, "Realloc failure\n");
             goto end;
