@@ -58,23 +58,6 @@ X509_ATTRIBUTE *X509_ATTRIBUTE_create(int nid, int atrtype, void *value)
     return NULL;
 }
 
-static int print_hex(BIO *out, unsigned char *buf, int len)
-{
-    int result = 1;
-    char *hexbuf;
-
-    if (len == 0)
-        return 1;
-
-    hexbuf = OPENSSL_buf2hexstr(buf, len);
-    if (hexbuf == NULL)
-        return 0;
-    result = BIO_puts(out, hexbuf) > 0;
-
-    OPENSSL_free(hexbuf);
-    return result;
-}
-
 static int print_oid(BIO *out, const ASN1_OBJECT *oid) {
     const char *ln;
     char objbuf[80];
@@ -116,20 +99,20 @@ int ossl_print_attribute_value(BIO *out,
             return BIO_printf(out, "%lld", (long long int)int_val) > 0;
         }
         str = av->value.integer;
-        return print_hex(out, str->data, str->length);
+        return ossl_bio_print_hex(out, str->data, str->length);
 
     case V_ASN1_BIT_STRING:
         if (BIO_printf(out, "%*s", indent, "") < 0)
             return 0;
-        return print_hex(out, av->value.bit_string->data,
-                         av->value.bit_string->length);
+        return ossl_bio_print_hex(out, av->value.bit_string->data,
+                                  av->value.bit_string->length);
 
     case V_ASN1_OCTET_STRING:
     case V_ASN1_VIDEOTEXSTRING:
         if (BIO_printf(out, "%*s", indent, "") < 0)
             return 0;
-        return print_hex(out, av->value.octet_string->data,
-                         av->value.octet_string->length);
+        return ossl_bio_print_hex(out, av->value.octet_string->data,
+                                  av->value.octet_string->length);
 
     case V_ASN1_NULL:
         return BIO_printf(out, "%*sNULL", indent, "") >= 4;
