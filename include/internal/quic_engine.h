@@ -80,7 +80,7 @@ OSSL_TIME ossl_quic_engine_get_time(QUIC_ENGINE *qeng);
  */
 OSSL_TIME ossl_quic_engine_make_real_time(QUIC_ENGINE *qeng, OSSL_TIME tm);
 
-/* Override the callback for getting the current time*/
+/* Override the callback for getting the current time */
 void ossl_quic_engine_set_time_cb(QUIC_ENGINE *qeng,
                                   OSSL_TIME (*now_cb)(void *arg),
                                   void *now_cb_arg);
