@@ -672,6 +672,13 @@ static int ech_store_null_calls(void)
         TEST_info("OSSL_ECHSTORE_new_config unexpected non-zero");
         goto end;
     }
+    hpke_suite.kdf_id = 0xAAAA; /* a bad value */
+    if (!TEST_int_eq(OSSL_ECHSTORE_new_config(es, OSSL_ECH_CURRENT_VERSION,
+                                              0, "example.com", hpke_suite),
+                     0)) {
+        TEST_info("OSSL_ECHSTORE_new_config unexpected non-zero");
+        goto end;
+    }
     if (!TEST_int_eq(OSSL_ECHSTORE_write_pem(NULL, 0, inout), 0)) {
         TEST_info("OSSL_ECHSTORE_write_pem unexpected non-zero");
         goto end;
