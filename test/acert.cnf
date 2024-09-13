@@ -1,0 +1,30 @@
+[acert]
+attributes = acert_att
+extensions = acert_ext
+
+[acert_ext]
+authorityKeyIdentifier=keyid:always,issuer
+noRevAvail = ASN1:NULL
+
+[acert_att]
+id-aca-group = ASN1:SEQUENCE:ietfattr
+role = ASN1:SEQUENCE:rolesyntax
+
+[rolesyntax]
+rolename = IMP:1,SEQUENCE:rolename
+
+[rolename]
+name = IMP:3,IA5STRING:administrator
+
+[ietfattr]
+pol = IMP:0,SEQUENCE:policy
+values = SEQUENCE:group
+
+[policy]
+val = IMP:6,IA5STRING:Testval
+
+[group]
+1.string = UTF8:group1
+
+[policyAuth]
+genname = GENSTR:URI:My policy Authority
