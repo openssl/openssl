@@ -167,10 +167,6 @@ struct quic_conn_st {
     QUIC_THREAD_ASSIST              thread_assist;
 #  endif
 
-    /* If non-NULL, used instead of ossl_time_now(). Used for testing. */
-    OSSL_TIME                       (*override_now_cb)(void *arg);
-    void                            *override_now_cb_arg;
-
     /* Number of XSOs allocated. Includes the default XSO, if any. */
     size_t                          num_xso;
 
