@@ -748,6 +748,10 @@ STACK_OF(X509_NAME) *SSL_load_client_CA_file_ex(const char *file,
     LHASH_OF(X509_NAME) *name_hash = lh_X509_NAME_new(xname_hash, xname_cmp);
     OSSL_LIB_CTX *prev_libctx = NULL;
 
+    if (file == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
+        goto err;
+    }
     if (name_hash == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         goto err;
@@ -873,6 +877,11 @@ int SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
     int idx = 0;
     int num = 0;
     LHASH_OF(X509_NAME) *name_hash = lh_X509_NAME_new(xname_hash, xname_cmp);
+
+    if (file == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
+        goto err;
+    }
 
     if (name_hash == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);

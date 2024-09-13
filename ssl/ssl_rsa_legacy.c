@@ -43,8 +43,13 @@ int SSL_use_RSAPrivateKey(SSL *ssl, RSA *rsa)
 int SSL_use_RSAPrivateKey_file(SSL *ssl, const char *file, int type)
 {
     int j, ret = 0;
-    BIO *in;
+    BIO *in = NULL;
     RSA *rsa = NULL;
+
+    if (file == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
+        goto end;
+    }
 
     in = BIO_new(BIO_s_file());
     if (in == NULL) {
@@ -125,8 +130,13 @@ int SSL_CTX_use_RSAPrivateKey(SSL_CTX *ctx, RSA *rsa)
 int SSL_CTX_use_RSAPrivateKey_file(SSL_CTX *ctx, const char *file, int type)
 {
     int j, ret = 0;
-    BIO *in;
+    BIO *in = NULL;
     RSA *rsa = NULL;
+
+    if (file == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
+        goto end;
+    }
 
     in = BIO_new(BIO_s_file());
     if (in == NULL) {

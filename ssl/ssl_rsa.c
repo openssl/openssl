@@ -53,9 +53,14 @@ int SSL_use_certificate(SSL *ssl, X509 *x)
 int SSL_use_certificate_file(SSL *ssl, const char *file, int type)
 {
     int j;
-    BIO *in;
+    BIO *in = NULL;
     int ret = 0;
     X509 *cert = NULL, *x = NULL;
+
+    if (file == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
+        goto end;
+    }
 
     in = BIO_new(BIO_s_file());
     if (in == NULL) {
@@ -163,8 +168,13 @@ int SSL_use_PrivateKey(SSL *ssl, EVP_PKEY *pkey)
 int SSL_use_PrivateKey_file(SSL *ssl, const char *file, int type)
 {
     int j, ret = 0;
-    BIO *in;
+    BIO *in = NULL;
     EVP_PKEY *pkey = NULL;
+
+    if (file == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
+        goto end;
+    }
 
     in = BIO_new(BIO_s_file());
     if (in == NULL) {
@@ -296,9 +306,14 @@ static int ssl_set_cert(CERT *c, X509 *x, SSL_CTX *ctx)
 int SSL_CTX_use_certificate_file(SSL_CTX *ctx, const char *file, int type)
 {
     int j = SSL_R_BAD_VALUE;
-    BIO *in;
+    BIO *in = NULL;
     int ret = 0;
     X509 *x = NULL, *cert = NULL;
+
+    if (file == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
+        goto end;
+    }
 
     in = BIO_new(BIO_s_file());
     if (in == NULL) {
@@ -373,8 +388,13 @@ int SSL_CTX_use_PrivateKey(SSL_CTX *ctx, EVP_PKEY *pkey)
 int SSL_CTX_use_PrivateKey_file(SSL_CTX *ctx, const char *file, int type)
 {
     int j, ret = 0;
-    BIO *in;
+    BIO *in = NULL;
     EVP_PKEY *pkey = NULL;
+
+    if (file == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
+        goto end;
+    }
 
     in = BIO_new(BIO_s_file());
     if (in == NULL) {
@@ -436,7 +456,7 @@ int SSL_CTX_use_PrivateKey_ASN1(int type, SSL_CTX *ctx,
  */
 static int use_certificate_chain_file(SSL_CTX *ctx, SSL *ssl, const char *file)
 {
-    BIO *in;
+    BIO *in = NULL;
     int ret = 0;
     X509 *x = NULL;
     pem_password_cb *passwd_callback;
@@ -460,6 +480,11 @@ static int use_certificate_chain_file(SSL_CTX *ctx, SSL *ssl, const char *file)
 
         passwd_callback = sc->default_passwd_callback;
         passwd_callback_userdata = sc->default_passwd_callback_userdata;
+    }
+
+    if (file == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
+        goto end;
     }
 
     in = BIO_new(BIO_s_file());
