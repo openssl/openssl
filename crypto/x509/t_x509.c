@@ -508,7 +508,7 @@ int X509_STORE_CTX_print_verify_cb(int ok, X509_STORE_CTX *ctx)
  * Prints serial numbers in decimal and hexadecimal. The indent argument is only
  * used if the serial number is too large to fit in a long int.
  */
-int ossl_serial_number_print(BIO *out, const ASN1_INTEGER* bs, int indent)
+int ossl_serial_number_print(BIO *out, const ASN1_INTEGER *bs, int indent)
 {
     int i;
     long l;
