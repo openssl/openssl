@@ -193,7 +193,7 @@ int ossl_hss_key_advance(HSS_KEY *hsskey, uint64_t count)
         key = sk_LMS_KEY_value(hsskey->lmskeys, 0);
         if (key == NULL)
             return 0;
-        key->q += count;
+        key->q += (uint32_t)count;
         hsskey->remaining -= count;
         return 1;
     }

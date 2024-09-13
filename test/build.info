@@ -64,8 +64,8 @@ IF[{- !$disabled{tests} -}]
           ca_internals_test bio_tfo_test membio_test bio_dgram_test list_test \
           fips_version_test x509_test hpke_test pairwise_fail_test \
           nodefltctxtest evp_xof_test x509_load_cert_file_test bio_meth_test \
-          x509_acert_test x509_req_test strtoultest bio_pw_callback_test \
-          hss_test
+          x509_acert_test x509_req_test strtoultest bio_pw_callback_test
+
 
   IF[{- !$disabled{'rpk'} -}]
     PROGRAMS{noinst}=rpktest
@@ -210,9 +210,12 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[hpke_test]=../include ../apps/include
   DEPEND[hpke_test]=../libcrypto.a libtestutil.a
 
-  SOURCE[hss_test]=hss_test.c
-  INCLUDE[hss_test]=../include ../apps/include
-  DEPEND[hss_test]=../libcrypto.a libtestutil.a
+  IF[{- !$disabled{'hss'} -}]
+    PROGRAMS{noinst}=hss_test
+    SOURCE[hss_test]=hss_test.c
+    INCLUDE[hss_test]=../include ../apps/include
+    DEPEND[hss_test]=../libcrypto.a libtestutil.a
+  ENDIF
 
   SOURCE[evp_extra_test2]=evp_extra_test2.c $INITSRC
   INCLUDE[evp_extra_test2]=../include ../apps/include

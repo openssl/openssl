@@ -808,7 +808,7 @@ static int hss_to_text(BIO *out, const void *key, int selection)
         }
     }
     if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
-        if (!BIO_printf(out, "\nRemaining %ld ", hsskey->remaining))
+        if (!BIO_printf(out, "\nRemaining %lu", (long unsigned)hsskey->remaining))
             goto err;
         while ((lmskey = sk_LMS_KEY_value(hsskey->lmskeys, i++)) != NULL) {
             if (lmskey->priv.data == NULL)

@@ -7,6 +7,10 @@ $COMMON=hss_key.c hss_pubkey.c hss_sig_decode.c \
 $HSS_GEN=hss_keygen.c hss_sign.c lms_sign.c
 
 IF[{- !$disabled{'hss'} -}]
-SOURCE[../../libcrypto]=$COMMON $HSS_GEN
+SOURCE[../../libcrypto]=$COMMON
 SOURCE[../../providers/libfips.a]=$COMMON
+ENDIF
+
+IF[{- !$disabled{'hss-gen'} -}]
+  SOURCE[../../libcrypto]=$HSS_GEN
 ENDIF
