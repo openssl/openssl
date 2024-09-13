@@ -33,8 +33,6 @@ QUIC_ENGINE *ossl_quic_engine_new(const QUIC_ENGINE_ARGS *args)
     qeng->libctx            = args->libctx;
     qeng->propq             = args->propq;
     qeng->mutex             = args->mutex;
-    qeng->now_cb            = args->now_cb;
-    qeng->now_cb_arg        = args->now_cb_arg;
 
     if (!qeng_init(qeng, args->reactor_flags)) {
         OPENSSL_free(qeng);
@@ -82,6 +80,31 @@ OSSL_TIME ossl_quic_engine_get_time(QUIC_ENGINE *qeng)
         return ossl_time_now();
 
     return qeng->now_cb(qeng->now_cb_arg);
+}
+
+OSSL_TIME ossl_quic_engine_make_real_time(QUIC_ENGINE *qeng, OSSL_TIME tm)
+{
+    OSSL_TIME offset;
+
+    if (qeng->now_cb != NULL
+            && !ossl_time_is_zero(tm)
+            && !ossl_time_is_infinite(tm)) {
+
+        offset = qeng->now_cb(qeng->now_cb_arg);
+
+        /* If tm is earlier than offset then tm will end up as "now" */
+        tm = ossl_time_add(ossl_time_subtract(tm, offset), ossl_time_now());
+    }
+
+    return tm;
+}
+
+void ossl_quic_engine_set_time_cb(QUIC_ENGINE *qeng,
+                                  OSSL_TIME (*now_cb)(void *arg),
+                                  void *now_cb_arg)
+{
+    qeng->now_cb = now_cb;
+    qeng->now_cb_arg = now_cb_arg;
 }
 
 void ossl_quic_engine_set_inhibit_tick(QUIC_ENGINE *qeng, int inhibit)
