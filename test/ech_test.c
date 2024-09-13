@@ -363,9 +363,9 @@ static ingest_tv_t ingest_tvs[] = {
     /* PEM test vectors */
     { "PEM basic/last", (unsigned char *)pem_kp1, sizeof(pem_kp1) - 1,
       1, 1, 1, 1, OSSL_ECHSTORE_LAST, 1, 1, 1 },
-    { "PEM basic/0", (unsigned char *)pem_pk1, sizeof(pem_kp1) - 1,
+    { "PEM basic/0", (unsigned char *)pem_pk1, sizeof(pem_pk1) - 1,
       1, 1, 0, 1, 0, 1, 0, 1 },
-    { "PEM basic/2nd", (unsigned char *)pem_pk1, sizeof(pem_kp1) - 1,
+    { "PEM basic/2nd", (unsigned char *)pem_pk1, sizeof(pem_pk1) - 1,
       1, 1, 0, 1, 2, 0, 0, 1 },
     /* downselect from the 2, at each position */
     { "PEM 4->2/0", (unsigned char *)pem_4_to_2, sizeof(pem_4_to_2) - 1,
