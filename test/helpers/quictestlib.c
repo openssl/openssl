@@ -306,7 +306,7 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
         using_fake_time = 1;
         qtest_reset_time();
         tserver_args.now_cb = fake_now_cb;
-        (void)ossl_quic_conn_set_override_now_cb(*cssl, fake_now_cb, NULL);
+        (void)ossl_quic_set_override_now_cb(*cssl, fake_now_cb, NULL);
     } else {
         using_fake_time = 0;
     }
