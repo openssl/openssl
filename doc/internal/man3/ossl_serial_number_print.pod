@@ -9,7 +9,7 @@ ossl_serial_number_print
 
  #include <crypto/x509.h>
 
- int ossl_serial_number_print(BIO *out, const ASN1_INTEGER* bs, int indent);
+ int ossl_serial_number_print(BIO *out, const ASN1_INTEGER *bs, int indent);
 
 =head1 DESCRIPTION
 
