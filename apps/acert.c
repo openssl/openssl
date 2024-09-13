@@ -74,7 +74,7 @@ const OPTIONS acert_options[] = {
 #endif
     {"in", OPT_IN, '<', "X.509 request input file"},
     {"inform", OPT_INFORM, 'F', "Input format - DER or PEM"},
-    {"verify", OPT_VERIFY, '-', "Verify signature on the attribue certificate"},
+    {"verify", OPT_VERIFY, '-', "Verify signature on the attribute certificate"},
 
     OPT_SECTION("Certificate"),
     {"new", OPT_NEW, '-', "New Attribute Certificate"},
@@ -94,8 +94,7 @@ const OPTIONS acert_options[] = {
     {"use-holder-name", OPT_HOLDER_NAME, '-',
      "Specify holder certificate using certificate subject name"},
     {"startdate", OPT_STARTDATE, 's', "Cert notBefore, YYYYMMDDHHMMSSZ"},
-    {"enddate", OPT_ENDDATE, 's',
-     "YYYYMMDDHHMMSSZ cert notAfter (overrides -days)"},
+    {"enddate", OPT_ENDDATE, 's', "YYYYMMDDHHMMSSZ cert notAfter (overrides -days)"},
     {"days", OPT_DAYS, 'p', "Number of days cert is valid for"},
     {"set_serial", OPT_SET_SERIAL, 's', "Serial number to use"},
     {"addext", OPT_ADDEXT, 's',
@@ -258,7 +257,7 @@ static int X509_ACERT_verify_cert (X509_ACERT *acert, X509 *holder, X509 *issuer
         goto out;
     }
 
-    /* TODO: wrap this in X509_ACERT_get_ext_d2i) */
+    /* TODO: wrap this in X509_ACERT_get_ext_d2i() */
     if ((akid = X509V3_get_d2i(acert->acinfo->extensions,
                                NID_authority_key_identifier, NULL, NULL))
              != NULL) {
