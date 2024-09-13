@@ -1313,11 +1313,6 @@ int ossl_quic_get_event_timeout(SSL *s, struct timeval *tv, int *is_infinite)
     qctx_lock(&ctx);
 
     reactor = ossl_quic_obj_get0_reactor(ctx.obj);
-    /*
-     * TODO(QUIC SERVER): There's no longer a way to indicate infinite timeout,
-     * should this now be the responsibility of
-     * ossl_quic_reactor_get_tick_deadline()?
-     */
     deadline = ossl_quic_reactor_get_tick_deadline(reactor);
 
     if (ossl_time_is_infinite(deadline)) {
