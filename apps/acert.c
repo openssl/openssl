@@ -789,6 +789,7 @@ static int set_acert_validity(X509_ACERT *acert, char *notBefore,
     ASN1_GENERALIZEDTIME *tmp_time;
     struct tm tm;
     time_t start_tm;
+    time_t now;
 
     tmp_time = ASN1_GENERALIZEDTIME_new();
     if (tmp_time == NULL)
@@ -798,7 +799,7 @@ static int set_acert_validity(X509_ACERT *acert, char *notBefore,
         if (!ASN1_GENERALIZEDTIME_set_string(tmp_time, notBefore))
             goto err;
     } else {
-        time_t now = time(NULL);
+        now = time(NULL);
         if (!ASN1_GENERALIZEDTIME_set(tmp_time, now))
             goto err;
     }
