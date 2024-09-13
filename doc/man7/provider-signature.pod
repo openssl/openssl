@@ -253,7 +253,7 @@ I<*siglen>.
 =head2 Message Signing Functions
 
 These functions are suitable for providers that implement algorithms that
-accumulate a full message and signs the result of that accumulation, such as
+accumulate a full message and sign the result of that accumulation, such as
 RSA-SHA256.
 
 OSSL_FUNC_signature_sign_message_init() initialises a context for signing a
@@ -303,7 +303,7 @@ long.
 =head2 Message Verify Functions
 
 These functions are suitable for providers that implement algorithms that
-accumulate a full message and verifies a signature on the result of that
+accumulate a full message and verify a signature on the result of that
 accumulation, such as RSA-SHA256.
 
 OSSL_FUNC_signature_verify_message_init() initialises a context for verifying
