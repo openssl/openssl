@@ -611,6 +611,7 @@ int X509V3_EXT_ACERT_add_nconf(CONF *conf, X509V3_CTX *ctx, const char *section,
                                X509_ACERT *acert)
 {
     STACK_OF(X509_EXTENSION) **sk = NULL;
+
     if (acert != NULL)
         sk = &acert->acinfo->extensions;
     return X509V3_EXT_add_nconf_sk(conf, ctx, section, sk);

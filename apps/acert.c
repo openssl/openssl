@@ -177,13 +177,13 @@ static int duplicated(LHASH_OF(OPENSSL_STRING) *addexts, char *kv)
     return 0;
 }
 
-static int X509_ACERT_verify_cert (X509_ACERT *acert, X509 *holder, X509 *issuer) {
+static int X509_ACERT_verify_cert(X509_ACERT *acert, X509 *holder, X509 *issuer)
+{
     int ret = 0;
     const OSSL_ISSUER_SERIAL *basecertid;
     const GENERAL_NAMES *holder_ent;
     const X509_NAME *entity;
     AUTHORITY_KEYID *akid;
-
     int holder_verified = 0;
 
     if (ossl_x509_check_acert_exts(acert) != X509_V_OK)
@@ -200,9 +200,8 @@ static int X509_ACERT_verify_cert (X509_ACERT *acert, X509 *holder, X509 *issuer
         if (X509_NAME_cmp(OSSL_ISSUER_SERIAL_get0_issuer(basecertid),
                           X509_get_issuer_name(holder)) != 0
             || ASN1_STRING_cmp(OSSL_ISSUER_SERIAL_get0_serial(basecertid),
-                               X509_get0_serialNumber(holder)) != 0) {
+                               X509_get0_serialNumber(holder)) != 0)
             goto out;
-        }
         holder_verified = 1;
     }
 
@@ -258,12 +257,9 @@ static int X509_ACERT_verify_cert (X509_ACERT *acert, X509 *holder, X509 *issuer
     }
 
     /* TODO: wrap this in X509_ACERT_get_ext_d2i() */
-    if ((akid = X509V3_get_d2i(acert->acinfo->extensions,
-                               NID_authority_key_identifier, NULL, NULL))
-             != NULL) {
-        if (X509_check_akid(issuer, akid))
-            goto out;
-    }
+    akid = X509V3_get_d2i(acert->acinfo->extensions, NID_authority_key_identifier, NULL, NULL);
+    if (akid != NULL && X509_check_akid(issuer, akid))
+        goto out;
 
     if (X509_ACERT_verify(acert, X509_get0_pubkey(issuer)) <= 0) {
         ERR_raise(ERR_LIB_X509, X509_V_ERR_CERT_SIGNATURE_FAILURE);
@@ -273,11 +269,11 @@ static int X509_ACERT_verify_cert (X509_ACERT *acert, X509 *holder, X509 *issuer
     /*
      * extensions have been cached by X509_get_key_usage(), so X509_check_ca()
      * can't fail and will only return 0 if `issuer` is not a CA.
-     * 
+     *
      * It does not seem to be specified in ITU Recommendation X.509, but IETF
      * RFC 5755 states in Section 4.5 that an AC issuer MUST NOT be a PKC
      * issuer.
-     * 
+     *
      * In my opinion, however, validation should simply be ambivalent.
      */
     // if (X509_check_ca(issuer) != 0) {
@@ -304,7 +300,7 @@ out:
 int acert_main(int argc, char **argv)
 {
     ASN1_INTEGER *serial = NULL;
-    BIO *out = NULL;
+    BIO *in, *out = NULL;
     ENGINE *e = NULL;
     EVP_PKEY *AAkey = NULL;
     EVP_PKEY_CTX *genctx = NULL;
@@ -555,7 +551,6 @@ int acert_main(int argc, char **argv)
     }
 
     if (!newacert) {
-        BIO *in;
         in = bio_open_default(infile, 'r', informat);
         if (informat == FORMAT_ASN1)
             acert = d2i_X509_ACERT_bio(in, NULL);
@@ -603,22 +598,19 @@ int acert_main(int argc, char **argv)
         X509V3_CTX ext_ctx;
 
         if (holder == NULL) {
-            BIO_printf(bio_err,
-                       "Must specify 'holder' to create new certificate\n");
+            BIO_printf(bio_err, "Must specify 'holder' to create new certificate\n");
             goto end;
         }
 
         if (AAcert == NULL) {
-            BIO_printf(bio_err,
-                       "Must specify 'AA' to create new certificate\n");
+            BIO_printf(bio_err, "Must specify 'AA' to create new certificate\n");
             goto end;
         }
 
         /* TODO: _ex variant not implented yet */
         acert = X509_ACERT_new();
-        if (acert == NULL) {
+        if (acert == NULL)
             goto end;
-        }
 
         if ((hldr_entity == 0) && (hldr_basecertid == 0))
             hldr_basecertid = 1;
@@ -643,20 +635,16 @@ int acert_main(int argc, char **argv)
         }
 
         /* Set up V3 context struct */
-        X509V3_set_ctx(&ext_ctx, AAcert,
-                       NULL, NULL, NULL, X509V3_CTX_REPLACE);
+        X509V3_set_ctx(&ext_ctx, AAcert, NULL, NULL, NULL, X509V3_CTX_REPLACE);
 
         if (acert_exts != NULL
-            && !X509V3_EXT_ACERT_add_nconf(acert_conf, &ext_ctx,
-                                           acert_exts, acert)) {
-            BIO_printf(bio_err, "Error adding extensions from section %s\n",
-                       acert_exts);
+            && !X509V3_EXT_ACERT_add_nconf(acert_conf, &ext_ctx, acert_exts, acert)) {
+            BIO_printf(bio_err, "Error adding extensions from section %s\n", acert_exts);
             goto end;
         }
 
         if (addext_conf != NULL
-            && !X509V3_EXT_ACERT_add_nconf(addext_conf, &ext_ctx, "default",
-                                           acert)) {
+            && !X509V3_EXT_ACERT_add_nconf(addext_conf, &ext_ctx, "default", acert)) {
             BIO_printf(bio_err, "Error adding extensions defined via -addext\n");
             goto end;
         }
@@ -668,12 +656,10 @@ int acert_main(int argc, char **argv)
             goto end;
     }
 
-    if (verify) {
-        if (X509_ACERT_verify_cert(acert, holder, AAcert) <= 0) {
-            ERR_print_errors(bio_err);
-            BIO_printf(bio_err, "Attribute certificate verification failed.\n");
-            goto end;
-        }
+    if (verify && X509_ACERT_verify_cert(acert, holder, AAcert) <= 0) {
+        ERR_print_errors(bio_err);
+        BIO_printf(bio_err, "Attribute certificate verification failed.\n");
+        goto end;
     }
 
     if (noout && !text) {
@@ -687,9 +673,8 @@ int acert_main(int argc, char **argv)
 
     if (text) {
         ret = X509_ACERT_print_ex(out, acert, get_nameopt(), certflag);
-        if (ret == 0) {
+        if (ret == 0)
             BIO_printf(bio_err, "Error printing certificate request\n");
-        }
     }
 
     if (!noout) {
@@ -704,9 +689,8 @@ int acert_main(int argc, char **argv)
     }
     ret = 0;
  end:
-    if (ret) {
+    if (ret)
         ERR_print_errors(bio_err);
-    }
     NCONF_free(acert_conf);
     NCONF_free(addext_conf);
     BIO_free(addext_bio);
@@ -730,15 +714,14 @@ int acert_main(int argc, char **argv)
 static int add_config_attributes(CONF *conf, X509_ACERT *acert)
 {
     char *attr_sect;
+
     attr_sect = NCONF_get_string(conf, section, ATTRIBUTES);
     if (attr_sect == NULL) {
         ERR_clear_error();
         return 1;
     }
-
     if (!X509_ACERT_add_attr_nconf(conf, attr_sect, acert)) {
-        BIO_printf(bio_err,
-                   "Unable to add attributes from section '%s'\n", attr_sect);
+        BIO_printf(bio_err, "Unable to add attributes from section '%s'\n", attr_sect);
         return 0;
     }
     return 1;
@@ -804,6 +787,8 @@ static int set_acert_validity(X509_ACERT *acert, char *notBefore,
 {
     int ret = 0;
     ASN1_GENERALIZEDTIME *tmp_time;
+    struct tm tm;
+    time_t start_tm;
 
     tmp_time = ASN1_GENERALIZEDTIME_new();
     if (tmp_time == NULL)
@@ -823,8 +808,6 @@ static int set_acert_validity(X509_ACERT *acert, char *notBefore,
         if (!ASN1_GENERALIZEDTIME_set_string(tmp_time, notAfter))
             goto err;
     } else {
-        struct tm tm;
-        time_t start_tm;
         ASN1_TIME_to_tm(tmp_time, &tm);
         start_tm = timegm(&tm);
         if (!X509_time_adj_ex(tmp_time, days, 0, &start_tm))

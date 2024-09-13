@@ -67,8 +67,10 @@ int ossl_x509_check_acert_exts(X509_ACERT *acert)
         if (current_ext == NULL)
             break;
         if (current_ext->critical)
-            /* All extensions for attribute certificates not validated. Those
-            for public-key certs are not applicable. */
+            /*
+             * All extensions for attribute certificates not validated. Those
+             * for public-key certs are not applicable.
+             */
             return X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION;
     }
     return X509_V_OK;
@@ -91,7 +93,7 @@ int X509_attr_cert_verify(X509_STORE_CTX *ctx, X509_ACERT *acert)
     if ((pkey = X509_get0_pubkey(subj_pkc)) == NULL)
         return X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY;
     rc = ASN1_item_verify(ASN1_ITEM_rptr(X509_ACERT), &acert->sig_alg,
-                           &acert->signature, &acert->acinfo, pkey);
+                          &acert->signature, acert->acinfo, pkey);
     if (rc != 1)
         return X509_V_ERR_CERT_SIGNATURE_FAILURE;
 

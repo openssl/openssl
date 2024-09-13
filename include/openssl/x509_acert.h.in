@@ -218,6 +218,6 @@ void *X509_acert_get_ext_d2i(const X509_ACERT *x, int nid, int *crit, int *idx);
 int X509_acert_add1_ext_i2d(X509_ACERT *x, int nid, void *value, int crit,
                             unsigned long flags);
 X509_EXTENSION *X509_acert_delete_ext(X509_ACERT *x, int loc);
-OSSL_ISSUER_SERIAL *X509_get_issuer_serial (X509 *x);
+OSSL_ISSUER_SERIAL *X509_get_issuer_serial(X509 *x);
 
 #endif
