@@ -124,9 +124,9 @@ __owur int ossl_quic_set_write_buffer_size(SSL *s, size_t size);
  * overridden at any time, expect strange results if you change it after
  * connecting.
  */
-int ossl_quic_conn_set_override_now_cb(SSL *s,
-                                       OSSL_TIME (*now_cb)(void *arg),
-                                       void *now_cb_arg);
+int ossl_quic_set_override_now_cb(SSL *s,
+                                  OSSL_TIME (*now_cb)(void *arg),
+                                  void *now_cb_arg);
 
 /*
  * Condvar waiting in the assist thread doesn't support time faking as it relies
