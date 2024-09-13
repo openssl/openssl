@@ -795,7 +795,7 @@ static int helper_init(struct helper *h, const char *script_name,
         goto err;
 
     /* Use custom time function for virtual time skip. */
-    if (!TEST_true(ossl_quic_conn_set_override_now_cb(h->c_conn, get_time, h)))
+    if (!TEST_true(ossl_quic_set_override_now_cb(h->c_conn, get_time, h)))
         goto err;
 
     /* Takes ownership of our reference to the BIO. */

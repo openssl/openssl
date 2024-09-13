@@ -122,11 +122,12 @@ QUIC_TSERVER *ossl_quic_tserver_new(const QUIC_TSERVER_ARGS *args,
     engine_args.libctx          = srv->args.libctx;
     engine_args.propq           = srv->args.propq;
     engine_args.mutex           = srv->mutex;
-    engine_args.now_cb          = srv->args.now_cb;
-    engine_args.now_cb_arg      = srv->args.now_cb_arg;
 
     if ((srv->engine = ossl_quic_engine_new(&engine_args)) == NULL)
         goto err;
+
+    ossl_quic_engine_set_time_cb(srv->engine, srv->args.now_cb,
+                                 srv->args.now_cb_arg);
 
     port_args.channel_ctx       = srv->ctx;
     port_args.is_multi_conn     = 1;

@@ -53,9 +53,6 @@ typedef struct quic_engine_args_st {
      */
     CRYPTO_MUTEX    *mutex;
 
-    OSSL_TIME       (*now_cb)(void *arg);
-    void            *now_cb_arg;
-
     /* Flags to pass when initialising the reactor. */
     uint64_t        reactor_flags;
 } QUIC_ENGINE_ARGS;
@@ -75,6 +72,18 @@ CRYPTO_MUTEX *ossl_quic_engine_get0_mutex(QUIC_ENGINE *qeng);
 
 /* Gets the current time. */
 OSSL_TIME ossl_quic_engine_get_time(QUIC_ENGINE *qeng);
+
+/*
+ * Some use cases really need actual time rather than "fake" time. Convert a
+ * fake time into a real time. If tm is before the current fake time then the
+ * current time is returned.
+ */
+OSSL_TIME ossl_quic_engine_make_real_time(QUIC_ENGINE *qeng, OSSL_TIME tm);
+
+/* Override the callback for getting the current time */
+void ossl_quic_engine_set_time_cb(QUIC_ENGINE *qeng,
+                                  OSSL_TIME (*now_cb)(void *arg),
+                                  void *now_cb_arg);
 
 /* For testing use. While enabled, ticking is not performed. */
 void ossl_quic_engine_set_inhibit_tick(QUIC_ENGINE *qeng, int inhibit);
