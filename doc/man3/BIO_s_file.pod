@@ -95,7 +95,8 @@ BIO_seek() returns 0 for success or negative values for failure.
 BIO_tell() returns the current file position or negative values for failure.
 
 BIO_read_filename(), BIO_write_filename(), BIO_append_filename() and
-BIO_rw_filename() return 1 for success or <=0 for failure.
+BIO_rw_filename() return 1 for success or <=0 for failure. An error is also
+returned if the file does not exist.
 
 =head1 EXAMPLES
 

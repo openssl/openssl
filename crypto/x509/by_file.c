@@ -91,6 +91,11 @@ int X509_load_cert_file_ex(X509_LOOKUP *ctx, const char *file, int type,
     int count = 0;
     X509 *x = NULL;
 
+    if (file == NULL) {
+        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
+        goto err;
+    }
+
     in = BIO_new(BIO_s_file());
 
     if ((in == NULL) || (BIO_read_filename(in, file) <= 0)) {
@@ -167,6 +172,11 @@ int X509_load_crl_file(X509_LOOKUP *ctx, const char *file, int type)
     BIO *in = NULL;
     int count = 0;
     X509_CRL *x = NULL;
+
+    if (file == NULL) {
+        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
+        goto err;
+    }
 
     in = BIO_new(BIO_s_file());
 

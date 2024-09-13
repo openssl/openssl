@@ -409,6 +409,11 @@ int SRP_VBASE_init(SRP_VBASE *vb, char *verifier_file)
 
     error_code = SRP_ERR_OPEN_FILE;
 
+    if (verifier_file == NULL) {
+        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
+        goto err;
+    }
+
     if (in == NULL || BIO_read_filename(in, verifier_file) <= 0)
         goto err;
 
