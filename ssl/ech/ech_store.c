@@ -29,84 +29,23 @@
 # define OSSL_ECH_MAXITER  32
 
 /*
- * TODO(ECH): consider whether to keep this...
- * To meet the needs of script-based tools (likely to deal with
- * base64 or ascii-hex encodings) and of libraries that might
- * handle binary values we support various input formats for
- * encoded ECHConfigList API inputs:
- * - binary encoded ECHConfigList
- * - binary (wireform) HTTPS/SVCB RRVALUE
- * - base64 encoded ECHConfigList
- * - ascii-hex encoded ECHConfigList
- * - DNS zone-file presentation-like format containing "ech=<b64-stuff>"
- *
- * We guess which format we're given by checking until something works
- * or nothing has.
+ * ECHConfigList input to OSSL_ECHSTORE_read_echconfiglist()
+ * can be either binary encoded ECHConfigList or a base64
+ * encoded ECHConfigList.
  */
-# define OSSL_ECH_FMT_GUESS     0  /* implementation will guess */
 # define OSSL_ECH_FMT_BIN       1  /* catenated binary ECHConfigList */
-# define OSSL_ECH_FMT_B64TXT    2  /* base64 ECHConfigList (';' separated) */
-# define OSSL_ECH_FMT_ASCIIHEX  3  /* ascii-hex ECHConfigList (';' separated */
-# define OSSL_ECH_FMT_HTTPSSVC  4  /* presentation form with "ech=<b64>" */
-# define OSSL_ECH_FMT_DIG_UNK   5  /* dig unknown format (mainly ascii-hex) */
-# define OSSL_ECH_FMT_DNS_WIRE  6  /* DNS wire format (binary + other) */
-/* special case: HTTPS RR presentation form with no "ech=<b64>" */
-# define OSSL_ECH_FMT_HTTPSSVC_NO_ECH 7
-
-/*
- * TODO(ECH): consider whether to keep this...
- * We support catenated lists of encoded ECHConfigLists (to make it easier
- * to feed values from scripts). Catenated binary values need no separator
- * as there is internal length information. Catenated ascii-hex or
- * base64 values need a separator semi-colon.
- *
- * All catenated values passed in a single call must use the same
- * encoding method.
- */
-# define OSSL_ECH_B64_SEPARATOR " "    /* separator str for b64 decode  */
-# define OSSL_ECH_FMT_LINESEP   "\r\n" /* separator str for lines  */
+# define OSSL_ECH_FMT_B64TXT    2  /* base64 ECHConfigList */
 
 /*
  * Telltales we use when guessing which form of encoded input we've
  * been given for an RR value or ECHConfig.
  * We give these the EBCDIC treatment as well - why not? :-)
  */
-/*
- * ascii hex with either case allowed, plus a semi-colon separator
- * "0123456789ABCDEFabcdef;"
- */
-static const char *AH_alphabet =
-    "\x30\x31\x32\x33\x34\x35\x36\x37\x38\x39\x41\x42\x43\x44\x45\x46\x61\x62"
-    "\x63\x64\x65\x66\x3b";
-/*
- * b64 plus a semi-colon - we accept multiple semi-colon separated values
- * "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=;"
- */
 static const char *B64_alphabet =
     "\x41\x42\x43\x44\x45\x46\x47\x48\x49\x4a\x4b\x4c\x4d\x4e\x4f\x50\x51\x52"
     "\x53\x54\x55\x56\x57\x58\x59\x5a\x61\x62\x63\x64\x65\x66\x67\x68\x69\x6a"
     "\x6b\x6c\x6d\x6e\x6f\x70\x71\x72\x73\x74\x75\x76\x77\x78\x79\x7a\x30\x31"
     "\x32\x33\x34\x35\x36\x37\x38\x39\x2b\x2f\x3d\x3b";
-/*
- * telltales for ECH HTTPS/SVCB in presentation format, as per svcb spec
- * 1: "ech=" 2: "alpn=" 3: "ipv4hint=" 4: "ipv6hint="
- */
-static const char *httpssvc_telltale1 = "\x65\x63\x68\x3d";
-static const char *httpssvc_telltale2 = "\x61\x6c\x70\x6e\x3d";
-static const char *httpssvc_telltale3 = "\x69\x70\x76\x34\x68\x69\x6e\x74\x3d";
-static const char *httpssvc_telltale4 = "\x69\x70\x76\x36\x68\x69\x6e\x74\x3d";
-/*
- * telltale for ECH HTTPS/SVCB in dig unknownformat (i.e. ascii-hex with a
- * header and some spaces
- * "\# " is the telltale
- */
-static const char *unknownformat_telltale = "\x5c\x23\x20";
-
-/*
- * Wire-format type code for ECH/ECHConfiGList within an SVCB or HTTPS RR
- * value
- */
-# define OSSL_ECH_PCODE_ECH 0x0005
 
 # ifndef TLSEXT_MINLEN_host_name
 /*
@@ -143,27 +82,6 @@ static void ossl_echstore_entry_free(OSSL_ECHSTORE_ENTRY *ee)
     sk_OSSL_ECHEXT_pop_free(ee->exts, ossl_echext_free);
     OPENSSL_free(ee);
     return;
-}
-
-static int ech_ah_decode(size_t ahlen, const char *ah,
-                         size_t *blen, unsigned char **buf)
-{
-    size_t llen = 0;
-    unsigned char *lbuf = NULL;
-
-    if (ahlen < 2 || ah == NULL || blen == NULL || buf == NULL)
-        return 0;
-    if (OPENSSL_hexstr2buf_ex(NULL, 0, &llen, ah, '\0') != 1)
-        return 0;
-    lbuf = OPENSSL_malloc(llen);
-    if (lbuf == NULL)
-        return 0;
-    if (OPENSSL_hexstr2buf_ex(lbuf, llen, blen, ah, '\0') != 1) {
-        OPENSSL_free(lbuf);
-        return 0;
-    }
-    *buf = lbuf;
-    return 1;
 }
 
 /*
@@ -241,161 +159,30 @@ err:
 }
 
 /*
- * @brief decode the DNS name in a binary RRData
- * @param buf points to the buffer (in/out)
- * @param remaining points to the remaining buffer length (in/out)
- * @param dnsname returns the string-form name on success
- * @return is 1 for success, error otherwise
- *
- * The encoding here is defined in
- * https://tools.ietf.org/html/rfc1035#section-3.1
- *
- * The input buffer pointer will be modified so it points to
- * just after the end of the DNS name encoding on output. (And
- * that's why it's an "unsigned char **" :-)
- */
-static int ech_decode_rdata_name(unsigned char **buf, size_t *remaining,
-                                 char **dnsname)
-{
-    unsigned char *cp = NULL;
-    int rem = 0;
-    char *thename = NULL, *tp = NULL;
-    unsigned char clen = 0; /* chunk len */
-
-    if (buf == NULL || remaining == NULL || dnsname == NULL)
-        return 0;
-    rem = (int)*remaining;
-    thename = OPENSSL_malloc(TLSEXT_MAXLEN_host_name);
-    if (thename == NULL)
-        return 0;
-    cp = *buf;
-    tp = thename;
-    clen = *cp++;
-    rem -= 1;
-    if (clen == 0) {
-        /* special case - return "." as name */
-        thename[0] = '.';
-        thename[1] = 0x00;
-    }
-    while (clen != 0 && rem > 0) {
-        if (clen > rem) {
-            OPENSSL_free(thename);
-            return 0;
-        }
-        if (((tp - thename) + clen + 1) > TLSEXT_MAXLEN_host_name) {
-            OPENSSL_free(thename);
-            return 0;
-        }
-        memcpy(tp, cp, clen);
-        tp += clen;
-        *tp++ = '.';
-        cp += clen;
-        rem -= (clen + 1);
-        if (rem <= 0) {
-            OPENSSL_free(thename);
-            return 0;
-        }
-        clen = *cp++;
-    }
-    *buf = cp;
-    if (rem <= 0) {
-        OPENSSL_free(thename);
-        return 0;
-    }
-    *remaining = rem;
-    *dnsname = thename;
-    return 1;
-}
-
-/*
- * @brief Try figure out ECHConfig encodng by looking for telltales
+ * @brief Figure out ECHConfig encoding
  * @param encodedval is a buffer with the encoding
  * @param encodedlen is the length of that buffer
- * @param guessedfmt is our returned guess at the format
+ * @param guessedfmt is the detected format
  * @return 1 for success, 0 for error
- *
- * We try check from most to least restrictive  to avoid wrong
- * answers. IOW we try from most constrained to least in that
- * order.
- *
- * The wrong answer could be derived with a low probability.
- * If the application can't handle that, then it ought not use
- * OSSL_ech_find_echconfigs()
  */
-static int ech_guess_format(unsigned char *encodedval, size_t encodedlen,
-                            int *guessedfmt)
+static int ech_check_format(unsigned char *val, size_t len, int *fmt)
 {
     size_t span = 0;
-    char *dnsname = NULL;
-    unsigned char *cp = NULL, *rdin = NULL;
-    size_t remaining;
 
-    if (guessedfmt == NULL || encodedlen == 0 || encodedval == NULL)
+    if (fmt == NULL || len <= 4 || val == NULL)
         return 0;
-    /*
-     * check for binary encoding of an ECHConfigList that starts with a
-     * two octet length and then our ECH extension type codepoint
-     */
-    if (encodedlen <= 2)
-        return 0;
-    cp = OPENSSL_malloc(encodedlen + 1);
-    if (cp == NULL)
-        return 0;
-    memcpy(cp, encodedval, encodedlen);
-    cp[encodedlen] = '\0'; /* make sure string funcs have a NUL terminator */
-    if (encodedlen > 4
-        && encodedlen == ((size_t)(cp[0]) * 256 + (size_t)(cp[1])) + 2
-        && cp[3] == ((OSSL_ECH_RFCXXXX_VERSION / 256) & 0xff)
-        && cp[4] == ((OSSL_ECH_RFCXXXX_VERSION % 256) & 0xff)) {
-        *guessedfmt = OSSL_ECH_FMT_BIN;
-        goto win;
+    /* binary encoding starts with two octet length and ECH version */
+    if (len == 2 + ((size_t)(val[0]) * 256 + (size_t)(val[1]))
+        && val[2] == ((OSSL_ECH_RFCXXXX_VERSION / 256) & 0xff)
+        && val[3] == ((OSSL_ECH_RFCXXXX_VERSION % 256) & 0xff)) {
+        *fmt = OSSL_ECH_FMT_BIN;
+        return 1;
     }
-    if (encodedlen < strlen(unknownformat_telltale))
-        goto err;
-    if (!strncmp((char *)cp, unknownformat_telltale,
-                 strlen(unknownformat_telltale))) {
-        *guessedfmt = OSSL_ECH_FMT_DIG_UNK;
-        goto win;
+    span = strspn((char *)val, B64_alphabet);
+    if (len <= span) {
+        *fmt = OSSL_ECH_FMT_B64TXT;
+        return 1;
     }
-    if (strstr((char *)cp, httpssvc_telltale1)) {
-        *guessedfmt = OSSL_ECH_FMT_HTTPSSVC;
-        goto win;
-    }
-    if (strstr((char *)cp, httpssvc_telltale2)
-        || strstr((char *)cp, httpssvc_telltale3)
-        || strstr((char *)cp, httpssvc_telltale4)) {
-        *guessedfmt = OSSL_ECH_FMT_HTTPSSVC_NO_ECH;
-        goto win;
-    }
-    span = strspn((char *)cp, AH_alphabet);
-    if (encodedlen <= span) {
-        *guessedfmt = OSSL_ECH_FMT_ASCIIHEX;
-        goto win;
-    }
-    span = strspn((char *)cp, B64_alphabet);
-    if (encodedlen <= span) {
-        *guessedfmt = OSSL_ECH_FMT_B64TXT;
-        goto win;
-    }
-    /*
-     * check for HTTPS RR DNS wire format - we'll go with that if
-     * the buffer starts with a two octet priority and then a
-     * wire-format encoded DNS name
-     */
-    rdin = cp + 2;
-    remaining = encodedlen - 2;
-    if (ech_decode_rdata_name(&rdin, &remaining, &dnsname) == 1) {
-        *guessedfmt = OSSL_ECH_FMT_DNS_WIRE;
-        OPENSSL_free(dnsname);
-        goto win;
-    }
-    /* fallback - try binary */
-    *guessedfmt = OSSL_ECH_FMT_BIN;
-win:
-    OPENSSL_free(cp);
-    return 1;
-err:
-    OPENSSL_free(cp);
     return 0;
 }
 
@@ -763,65 +550,6 @@ err:
     return rv;
 }
 
-/**
- * @brief try decode a wire-form HTTPS RR
- * @param nonehere is 1 if HTTPS RR is ok, but has no ECHConfigList
- * @param outlen is the output buffer length
- * @param inlen is the input buffer length
- * @param inbuf is the input/output buffer
- *
- * If we decode ok we'll put the binary ECHConfigList in the inbuf
- */
-static int ech_decode_https_rr(int *nonehere, size_t *outlen,
-                               size_t inlen, unsigned char *inbuf)
-{
-    /* decode DNS wire and fall through to binary */
-    size_t remaining = inlen, eklen = 0;
-    unsigned char *cp = inbuf, *ekval = NULL;
-    uint16_t pcode = 0, plen = 0;
-    int done = 0;
-    char *dnsname = NULL;
-
-    if (nonehere == NULL || outlen == NULL || inbuf == NULL
-        || remaining <= 2) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
-        return 0;
-    }
-    cp += 2;
-    remaining -= 2;
-    if (ech_decode_rdata_name(&cp, &remaining, &dnsname) != 1) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
-        return 0;
-    }
-    OPENSSL_free(dnsname);
-    dnsname = NULL;
-    while (done != 1 && remaining >= 4) {
-        pcode = (*cp << 8) + (*(cp + 1));
-        cp += 2;
-        plen = (*cp << 8) + (*(cp + 1));
-        cp += 2;
-        remaining -= 4;
-        if (pcode == OSSL_ECH_PCODE_ECH) {
-            eklen = (size_t)plen;
-            ekval = cp;
-            done = 1;
-        }
-        if (plen != 0 && plen <= remaining) {
-            cp += plen;
-            remaining -= plen;
-        }
-    }
-    if (done == 0) {
-        *nonehere = 1; /* not an error just didn't find an ECH here */
-    } else {
-        /* binbuf is bigger, so the in-place memmove is ok */
-        *nonehere = 0; /* we do have an ECH */
-        memmove(inbuf, ekval, eklen);
-        *outlen = eklen;
-    }
-    return 1;
-}
-
 /*
  * @brief decode input ECHConfigList and associate optional private info
  * @param es is the OSSL_ECHSTORE
@@ -832,13 +560,10 @@ static int ech_decode_https_rr(int *nonehere, size_t *outlen,
 static int ech_read_priv_echconfiglist(OSSL_ECHSTORE *es, BIO *in,
                                        EVP_PKEY *priv, int for_retry)
 {
-    int rv = 0, detfmt = OSSL_ECH_FMT_GUESS, origfmt;
-    size_t encodedlen = 0, leftover = 0;
-    unsigned char *encodedval = NULL;
-    int multiline = 0, linesdone = 0, nonehere = 0, tdeclen = 0;
-    unsigned char *lval, *binbuf = NULL;
-    size_t llen, binlen = 0, linelen = 0, slen = 0, ldiff = 0;
-    char *dnsname = NULL, *tmp = NULL, *lstr = NULL, *ekstart = NULL;
+    int rv = 0, detfmt, tdeclen = 0;
+    size_t encodedlen = 0, leftover = 0, binlen = 0;
+    unsigned char *encodedval = NULL, *binbuf = NULL;
+    BIO *btmp, *btmp1;
 
     if (es == NULL || in == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
@@ -848,172 +573,60 @@ static int ech_read_priv_echconfiglist(OSSL_ECHSTORE *es, BIO *in,
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return 0;
     }
-    if (ech_guess_format(encodedval, encodedlen, &detfmt) != 1) {
+    if (encodedlen >= OSSL_ECH_MAX_ECHCONFIG_LEN) { /* sanity check */
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+    if (ech_check_format(encodedval, encodedlen, &detfmt) != 1) {
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         goto err;
     }
-    if (detfmt == OSSL_ECH_FMT_HTTPSSVC_NO_ECH) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
-        goto err;
+    if (detfmt == OSSL_ECH_FMT_BIN) { /* copy buffer if binary format */
+        binbuf = OPENSSL_malloc(encodedlen);
+        if (binbuf == NULL)
+            goto err;
+        memcpy(binbuf, encodedval, encodedlen);
+        binlen = encodedlen;
     }
-    origfmt = detfmt;
-    if (detfmt == OSSL_ECH_FMT_HTTPSSVC || detfmt == OSSL_ECH_FMT_DIG_UNK)
-        multiline = 1;
-    llen = encodedlen;
-    lval = encodedval;
-    while (linesdone == 0) { /* if blank line, then skip */
-        if (multiline == 1 && strchr(OSSL_ECH_FMT_LINESEP, lval[0]) != NULL) {
-            if (llen > 1) {
-                lval++;
-                llen -= 1;
-                continue;
-            } else {
-                break; /* we're done */
-            }
-        }
-        if (llen >= OSSL_ECH_MAX_ECHCONFIG_LEN) { /* sanity check */
+    if (detfmt == OSSL_ECH_FMT_B64TXT) {
+        btmp = BIO_new_mem_buf(encodedval, -1);
+        if (btmp == NULL) {
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
             goto err;
         }
-        detfmt = origfmt; /* restore format from before loop */
-        if (detfmt == OSSL_ECH_FMT_BIN || detfmt == OSSL_ECH_FMT_DNS_WIRE) {
-            /* copy buffer if binary format */
-            binbuf = OPENSSL_malloc(encodedlen);
-            if (binbuf == NULL)
-                goto err;
-            memcpy(binbuf, encodedval, encodedlen);
-            binlen = encodedlen;
-        }
-        /* do decodes, some of these fall through to others */
-        if (detfmt == OSSL_ECH_FMT_DIG_UNK) {
-            /* chew up header and length, e.g. "\\# 232 " */
-            if (llen < strlen(unknownformat_telltale) + 3) {
-                ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
-                goto err;
-            }
-            lstr = (char *)(lval + strlen(unknownformat_telltale));
-            tmp = strstr(lstr, " ");
-            if (tmp == NULL) {
-                ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
-                goto err;
-            }
-            ldiff = tmp - (char *)lval;
-            if (ldiff >= llen
-                || ech_ah_decode(llen - ldiff, (char *)lval + ldiff,
-                                 &binlen, &binbuf) != 1) {
-                ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
-                goto err;
-            }
-            detfmt = OSSL_ECH_FMT_DNS_WIRE;
-        }
-        if (detfmt == OSSL_ECH_FMT_ASCIIHEX) {
-            /* AH decode and fall throught to DNS wire or binary */
-            if (ech_ah_decode(llen, (char *)lval, &binlen, &binbuf) != 1
-                || binlen < 4) {
-                ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
-                goto err;
-            }
-            /*
-             * ECHConfigList has a 2-octet length then version. SCVB RDATA wire
-             * format starts with 2-octet svcPriority field, then encoded DNS
-             * name. Our RFC XXXX field has a value of 0xfe0d, and it's
-             * extremely unlikely we deal with a DNS name label of length 0xfe
-             * (254), that being disallowed.
-             */
-            if ((size_t)(binbuf[0] * 256 + binbuf[1]) == (binlen - 2)
-                && binbuf[2] == ((OSSL_ECH_RFCXXXX_VERSION >> 8) & 0xff)
-                && binbuf[3] == (OSSL_ECH_RFCXXXX_VERSION & 0xff))
-                detfmt = OSSL_ECH_FMT_BIN;
-            else
-                detfmt = OSSL_ECH_FMT_DNS_WIRE;
-        }
-        if (detfmt == OSSL_ECH_FMT_DNS_WIRE) {
-            size_t outlen = 0;
-
-            if (ech_decode_https_rr(&nonehere, &outlen, binlen, binbuf) != 1) {
-                ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
-                goto err;
-            }
-            detfmt = OSSL_ECH_FMT_BIN;
-            binlen = outlen;
-
-        }
-        if (detfmt == OSSL_ECH_FMT_HTTPSSVC) {
-            ekstart = strstr((char *)lval, httpssvc_telltale1);
-            if (ekstart == NULL) {
-                nonehere = 1;
-            } else {
-                if (strlen(ekstart) <= strlen(httpssvc_telltale1)) {
-                    ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
-                    goto err;
-                }
-                ekstart += strlen(httpssvc_telltale1);
-                llen = strcspn(ekstart, " \n");
-                lval = (unsigned char *)ekstart;
-                detfmt = OSSL_ECH_FMT_B64TXT;
-            }
-        }
-        if (detfmt == OSSL_ECH_FMT_B64TXT) {
-            BIO *btmp, *btmp1;
-
-            btmp = BIO_new_mem_buf(lval, -1);
-            if (btmp == NULL) {
-                ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
-                goto err;
-            }
-            btmp1 = BIO_new(BIO_f_base64());
-            if (btmp1 == NULL) {
-                BIO_free_all(btmp);
-                ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
-                goto err;
-            }
-            BIO_set_flags(btmp1, BIO_FLAGS_BASE64_NO_NL);
-            btmp = BIO_push(btmp1, btmp);
-            /* overestimate but good enough */
-            binbuf = OPENSSL_malloc(llen);
-            if (binbuf == NULL) {
-                BIO_free_all(btmp);
-                ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
-                goto err;
-            }
-            tdeclen = BIO_read(btmp, binbuf, llen);
+        btmp1 = BIO_new(BIO_f_base64());
+        if (btmp1 == NULL) {
             BIO_free_all(btmp);
-            if (tdeclen <= 0) { /* need int for -1 return in failure case */
-                ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
-                goto err;
-            }
-            binlen = tdeclen;
-            detfmt = OSSL_ECH_FMT_BIN;
-        }
-        if (nonehere != 1 && detfmt != OSSL_ECH_FMT_BIN) {
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
             goto err;
         }
-        if (nonehere == 0) {
-            if (ech_decode_and_flatten(es, priv, for_retry,
-                                       binbuf, binlen, &leftover) != 1) {
-                ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
-                goto err;
-            }
+        BIO_set_flags(btmp1, BIO_FLAGS_BASE64_NO_NL);
+        btmp = BIO_push(btmp1, btmp);
+        /* overestimate but good enough */
+        binbuf = OPENSSL_malloc(encodedlen);
+        if (binbuf == NULL) {
+            BIO_free_all(btmp);
+            ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+            goto err;
         }
-        OPENSSL_free(binbuf);
-        binbuf = NULL;
-        if (multiline == 0) { /* check at end if more lines to do */
-            linesdone = 1;
-        } else {
-            slen = strlen((char *)lval); /* is there a next line? */
-            linelen = strcspn((char *)lval, OSSL_ECH_FMT_LINESEP);
-            if (linelen >= slen) {
-                linesdone = 1;
-            } else {
-                lval = lval + linelen + 1;
-                llen = slen - linelen - 1;
-            }
+        tdeclen = BIO_read(btmp, binbuf, encodedlen);
+        BIO_free_all(btmp);
+        if (tdeclen <= 0) { /* need int for -1 return in failure case */
+            ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+            goto err;
         }
+        binlen = tdeclen;
     }
+    if (ech_decode_and_flatten(es, priv, for_retry,
+                               binbuf, binlen, &leftover) != 1) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+    OPENSSL_free(binbuf);
+    binbuf = NULL;
+
     rv = 1;
 err:
-    OPENSSL_free(dnsname);
     OPENSSL_free(binbuf);
     OPENSSL_free(encodedval);
     return rv;
