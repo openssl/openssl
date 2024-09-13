@@ -7,6 +7,7 @@ IF[{- !$disabled{asm} -}]
   $MD5ASM_aarch64=md5-aarch64.S
   $MD5ASM_loongarch64=md5-loongarch64.S
   $MD5ASM_sparcv9=md5-sparcv9.S
+  $MD5ASM_riscv64=md5-riscv64.s
 
   # Now that we have defined all the arch specific variables, use the
   # appropriate one, and define the appropriate macros
@@ -45,3 +46,5 @@ INCLUDE[md5-loongarch64.o]=..
 
 GENERATE[md5-sparcv9.S]=asm/md5-sparcv9.pl
 INCLUDE[md5-sparcv9.o]=..
+
+GENERATE[md5-riscv64.s]=asm/md5-riscv64.pl
