@@ -14,7 +14,10 @@
 
 #ifndef OPENSSL_NO_ECH
 
+# define DEF_CERTS_DIR "test/certs"
+
 static int verbose = 0;
+static char *certsdir = NULL;
 
 /* general test vector values */
 
@@ -344,6 +347,60 @@ static const unsigned char bin_bad_then_good[] = {
     0x2e, 0x63, 0x6f, 0x6d, 0x00, 0x00
 };
 
+/* couple of harmless extensions */
+static const unsigned char bin_ok_exts[] = {
+    0x00, 0x47, 0xfe, 0x0d, 0x00, 0x43, 0xbb, 0x00,
+    0x20, 0x00, 0x20, 0x62, 0xc7, 0x60, 0x7b, 0xf2,
+    0xc5, 0xfe, 0x11, 0x08, 0x44, 0x6f, 0x13, 0x2c,
+    0xa4, 0x33, 0x9c, 0xf1, 0x9d, 0xf1, 0x55, 0x2e,
+    0x5a, 0x42, 0x96, 0x0f, 0xd0, 0x2c, 0x69, 0x73,
+    0x60, 0x16, 0x3c, 0x00, 0x04, 0x00, 0x01, 0x00,
+    0x01, 0x00, 0x0b, 0x65, 0x78, 0x61, 0x6d, 0x70,
+    0x6c, 0x65, 0x2e, 0x63, 0x6f, 0x6d, 0x00, 0x09,
+    0x0a, 0x0b, 0x00, 0x00, 0x0c, 0x0d, 0x00, 0x01,
+    0x02
+};
+
+/* one "mandatory" extension (high bit of type set) */
+static const unsigned char bin_mand_ext[] = {
+    0x00, 0x47, 0xfe, 0x0d, 0x00, 0x43, 0xbb, 0x00,
+    0x20, 0x00, 0x20, 0x62, 0xc7, 0x60, 0x7b, 0xf2,
+    0xc5, 0xfe, 0x11, 0x08, 0x44, 0x6f, 0x13, 0x2c,
+    0xa4, 0x33, 0x9c, 0xf1, 0x9d, 0xf1, 0x55, 0x2e,
+    0x5a, 0x42, 0x96, 0x0f, 0xd0, 0x2c, 0x69, 0x73,
+    0x60, 0x16, 0x3c, 0x00, 0x04, 0x00, 0x01, 0x00,
+    0x01, 0x00, 0x0b, 0x65, 0x78, 0x61, 0x6d, 0x70,
+    0x6c, 0x65, 0x2e, 0x63, 0x6f, 0x6d, 0x00, 0x09,
+    0x0a, 0x0b, 0x00, 0x00, 0xFc, 0x0d, 0x00, 0x01,
+    0x02
+};
+
+/* extension with bad length (0xFFFF) */
+static const unsigned char bin_bad_inner_extlen[] = {
+    0x00, 0x47, 0xfe, 0x0d, 0x00, 0x43, 0xbb, 0x00,
+    0x20, 0x00, 0x20, 0x62, 0xc7, 0x60, 0x7b, 0xf2,
+    0xc5, 0xfe, 0x11, 0x08, 0x44, 0x6f, 0x13, 0x2c,
+    0xa4, 0x33, 0x9c, 0xf1, 0x9d, 0xf1, 0x55, 0x2e,
+    0x5a, 0x42, 0x96, 0x0f, 0xd0, 0x2c, 0x69, 0x73,
+    0x60, 0x16, 0x3c, 0x00, 0x04, 0x00, 0x01, 0x00,
+    0x01, 0x00, 0x0b, 0x65, 0x78, 0x61, 0x6d, 0x70,
+    0x6c, 0x65, 0x2e, 0x63, 0x6f, 0x6d, 0x00, 0x09,
+    0x0a, 0x0b, 0x00, 0x00, 0x0c, 0x0d, 0xFF, 0xFF,
+    0x02
+};
+
+/* good, other than a NUL inside the public_name */ 
+static const unsigned char bin_nul_in_pn[] = {
+    0x00, 0x3e, 0xfe, 0x0d, 0x00, 0x3a, 0xbb, 0x00,
+    0x20, 0x00, 0x20, 0x62, 0xc7, 0x60, 0x7b, 0xf2,
+    0xc5, 0xfe, 0x11, 0x08, 0x44, 0x6f, 0x13, 0x2c,
+    0xa4, 0x33, 0x9c, 0xf1, 0x9d, 0xf1, 0x55, 0x2e,
+    0x5a, 0x42, 0x96, 0x0f, 0xd0, 0x2c, 0x69, 0x73,
+    0x60, 0x16, 0x3c, 0x00, 0x04, 0x00, 0x01, 0x00,
+    0x01, 0x00, 0x0b, 0x65, 0x78, 0x61, 0x6d, 0x70,
+    0x6c, 0x00, 0x2e, 0x63, 0x6f, 0x6d, 0x00, 0x00
+};
+
 /* struct for ingest test vector and results */
 typedef struct INGEST_TV_T {
     char *name; /* name for verbose output */
@@ -387,6 +444,8 @@ static ingest_tv_t ingest_tvs[] = {
       0, 1, 0, 3, 2, 1, 0, 1 },
     { "bin all-zero pub", (unsigned char *)bin_zero, sizeof(bin_zero),
       0, 1, 0, 1, OSSL_ECHSTORE_LAST, 1, 0, 1 },
+    { "bin ok exts", (unsigned char *)bin_ok_exts, sizeof(bin_ok_exts),
+      0, 1, 0, 1, OSSL_ECHSTORE_LAST, 1, 0, 1 },
     { "bin bad ver", (unsigned char *)bin_bad_ver, sizeof(bin_bad_ver),
       0, 0, 0, 0, 0, 0, 0, 0 },
     { "bin 2 bad ver", (unsigned char *)bin_bad_ver2, sizeof(bin_bad_ver2),
@@ -415,6 +474,26 @@ static ingest_tv_t ingest_tvs[] = {
     { "bin bad,good", (unsigned char *)bin_bad_then_good,
       sizeof(bin_bad_then_good),
       0, 0, 0, 0, 0, 0, 0, 0 },
+    { "bin mand ext", (unsigned char *)bin_mand_ext, sizeof(bin_mand_ext),
+      0, 0, 0, 0, 0, 0, 0, 0 },
+    { "bin bad inner extlen", (unsigned char *)bin_bad_inner_extlen,
+      sizeof(bin_bad_inner_extlen),
+      0, 0, 0, 0, 0, 0, 0, 0 },
+    { "bin NUL in PN", (unsigned char *)bin_nul_in_pn, sizeof(bin_nul_in_pn),
+      0, 0, 0, 0, 0, 0, 0, 0 },
+};
+
+/* similar, but slightly simpler setup for file reading tests */
+typedef struct FNT_T {
+    char *fname; /* relative file name */
+    int read; /* expected result from a pem_read of that */
+} fnt_t;
+
+fnt_t fnames[] = {
+    { "ech-eg.pem", 1 },
+    { "ech-mid.pem", 1 },
+    { "ech-big.pem", 1 },
+    { "ech-giant.pem", 0 },
 };
 
 typedef enum OPTION_choice {
@@ -450,7 +529,7 @@ static int ech_ingest_test(int run)
     OSSL_ECHSTORE *es = NULL;
     OSSL_ECH_INFO *ei = NULL;
     BIO *in = NULL, *out = NULL;
-    int rv = 0, keysb4, keysaftr, entsb4, entsaftr;
+    int i, rv = 0, keysb4, keysaftr, entsb4, entsaftr;
     ingest_tv_t *tv = &ingest_tvs[run];
     time_t now = 0;
 
@@ -495,12 +574,19 @@ static int ech_ingest_test(int run)
         TEST_info("OSSL_ECSTORE_get1_info unexpected fail");
         goto end;
     }
-    OSSL_ECH_INFO_free(ei, entsb4);
-    ei = NULL;
+    for (i = 0; i != entsb4; i++) {
+        if (!TEST_int_eq(OSSL_ECH_INFO_print(bio_err, ei, i), 1)) {
+            TEST_info("OSSL_ECH_INFO_print unexpected fail");
+            OSSL_ECH_INFO_free(ei, entsb4);
+            goto end;
+        }
+    }
     if (!TEST_int_eq(entsb4, tv->entsb4)) {
         TEST_info("OSSL_ECSTORE_get1_info unexpected number of entries (b4)");
         goto end;
     }
+    OSSL_ECH_INFO_free(ei, entsb4);
+    ei = NULL;
     if (!TEST_int_eq(OSSL_ECHSTORE_downselect(es, tv->index), tv->expected)) {
         TEST_info("OSSL_ECSTORE_downselect unexpected fail");
         goto end;
@@ -548,6 +634,183 @@ end:
     return rv;
 }
 
+/* make a bunch of calls with bad, mostly NULL, arguments */
+static int ech_store_null_calls(void)
+{
+    int rv = 0, count = 0;
+    OSSL_ECHSTORE *es = OSSL_ECHSTORE_new(NULL, NULL);
+    OSSL_HPKE_SUITE hpke_suite = OSSL_HPKE_SUITE_DEFAULT;
+    BIO *inout = BIO_new(BIO_s_mem());
+    OSSL_ECH_INFO *info = NULL;
+    EVP_PKEY *priv = EVP_PKEY_new();
+
+    OSSL_ECHSTORE_free(NULL);
+    if (!TEST_int_eq(OSSL_ECHSTORE_new_config(NULL, OSSL_ECH_CURRENT_VERSION,
+                                              0, "example.com", hpke_suite),
+                     0)) {
+        TEST_info("OSSL_ECHSTORE_new_config unexpected non-zero");
+        goto end;
+    }
+    if (!TEST_int_eq(OSSL_ECHSTORE_new_config(es, OSSL_ECH_CURRENT_VERSION,
+                                              0, NULL, hpke_suite),
+                     0)) {
+        TEST_info("OSSL_ECHSTORE_new_config unexpected non-zero");
+        goto end;
+    }
+    if (!TEST_int_eq(OSSL_ECHSTORE_write_pem(NULL, 0, inout), 0)) {
+        TEST_info("OSSL_ECHSTORE_write_pem unexpected non-zero");
+        goto end;
+    }
+    if (!TEST_int_eq(OSSL_ECHSTORE_write_pem(es, 0, NULL), 0)) {
+        TEST_info("OSSL_ECHSTORE_write_pem unexpected non-zero");
+        goto end;
+    }
+    if (!TEST_int_eq(OSSL_ECHSTORE_write_pem(es, 100, inout), 0)) {
+        TEST_info("OSSL_ECHSTORE_write_pem unexpected non-zero");
+        goto end;
+    }
+    if (!TEST_int_eq(OSSL_ECHSTORE_read_echconfiglist(NULL, inout), 0)) {
+        TEST_info("OSSL_ECHSTORE_read_echconfiglist unexpected non-zero");
+        goto end;
+    }
+    if (!TEST_int_eq(OSSL_ECHSTORE_read_echconfiglist(es, NULL), 0)) {
+        TEST_info("OSSL_ECHSTORE_read_echconfiglist unexpected non-zero");
+        goto end;
+    }
+    if (!TEST_int_eq(OSSL_ECHSTORE_get1_info(NULL, &info, &count), 0)) {
+        TEST_info("OSSL_ECHSTORE_get1_info unexpected non-zero");
+        goto end;
+    }
+    if (!TEST_int_eq(OSSL_ECHSTORE_get1_info(es, NULL, &count), 0)) {
+        TEST_info("OSSL_ECHSTORE_get1_info unexpected non-zero");
+        goto end;
+    }
+    if (!TEST_int_eq(OSSL_ECHSTORE_get1_info(es, &info, NULL), 0)) {
+        TEST_info("OSSL_ECHSTORE_get1_info unexpected non-zero");
+        goto end;
+    }
+    if (!TEST_int_eq(OSSL_ECHSTORE_downselect(NULL, 0), 0)) {
+        TEST_info("OSSL_ECHSTORE_downselect unexpected non-zero");
+        goto end;
+    }
+    if (!TEST_int_eq(OSSL_ECHSTORE_downselect(es, 100), 0)) {
+        TEST_info("OSSL_ECHSTORE_downselect unexpected non-zero");
+        goto end;
+    }
+    if (!TEST_int_eq(OSSL_ECHSTORE_set1_key_and_read_pem(NULL, priv,
+                                                         inout, 0), 0)) {
+        TEST_info("OSSL_ECHSTORE_set1_key_and_readp_pem unexpected non-zero");
+        goto end;
+    }
+    if (!TEST_int_eq(OSSL_ECHSTORE_set1_key_and_read_pem(es, NULL,
+                                                         inout, 0), 0)) {
+        TEST_info("OSSL_ECHSTORE_set1_key_and_readp_pem unexpected non-zero");
+        goto end;
+    }
+    if (!TEST_int_eq(OSSL_ECHSTORE_set1_key_and_read_pem(es, priv,
+                                                         NULL, 0), 0)) {
+        TEST_info("OSSL_ECHSTORE_set1_key_and_readp_pem unexpected non-zero");
+        goto end;
+    }
+    if (!TEST_int_eq(OSSL_ECHSTORE_set1_key_and_read_pem(es, priv,
+                                                         inout, 100), 0)) {
+        TEST_info("OSSL_ECHSTORE_set1_key_and_readp_pem unexpected non-zero");
+        goto end;
+    }
+    /* this one fails 'cause priv has no real value, even if non NULL */
+    if (!TEST_int_eq(OSSL_ECHSTORE_set1_key_and_read_pem(es, priv, inout,
+                                                         OSSL_ECH_NO_RETRY),
+                     0)) {
+        TEST_info("OSSL_ECHSTORE_set1_key_and_readp_pem unexpected non-zero");
+        goto end;
+    }
+    if (!TEST_int_eq(OSSL_ECHSTORE_read_pem(NULL, inout, OSSL_ECH_NO_RETRY), 0)) {
+        TEST_info("OSSL_ECHSTORE_read_pem unexpected non-zero");
+        goto end;
+    }
+    if (!TEST_int_eq(OSSL_ECHSTORE_read_pem(es, NULL, OSSL_ECH_NO_RETRY), 0)) {
+        TEST_info("OSSL_ECHSTORE_read_pem unexpected non-zero");
+        goto end;
+    }
+    if (!TEST_int_eq(OSSL_ECHSTORE_read_pem(es, inout, 100), 0)) {
+        TEST_info("OSSL_ECHSTORE_read_pem unexpected non-zero");
+        goto end;
+    }
+    if (!TEST_int_eq(OSSL_ECHSTORE_num_keys(NULL, &count), 0)) {
+        TEST_info("OSSL_ECHSTORE_num_keys unexpected non-zero");
+        goto end;
+    }
+    if (!TEST_int_eq(OSSL_ECHSTORE_num_keys(es, NULL), 0)) {
+        TEST_info("OSSL_ECHSTORE_num_keys unexpected non-zero");
+        goto end;
+    }
+    if (!TEST_int_eq(OSSL_ECHSTORE_flush_keys(NULL, 0), 0)) {
+        TEST_info("OSSL_ECHSTORE_flush_keys unexpected non-zero");
+        goto end;
+    }
+    if (!TEST_int_eq(OSSL_ECHSTORE_flush_keys(es, -1), 0)) {
+        TEST_info("OSSL_ECHSTORE_flush_keys unexpected non-zero");
+        goto end;
+    }
+    OSSL_ECH_INFO_free(NULL, 100);
+    if (!TEST_int_eq(OSSL_ECH_INFO_print(inout, NULL, -1), 0)) {
+        TEST_info("OSSL_ECHSTORE_flush_keys unexpected non-zero");
+        goto end;
+    }
+    if (!TEST_int_eq(OSSL_ECH_INFO_print(NULL, info, -1), 0)) {
+        TEST_info("OSSL_ECHSTORE_flush_keys unexpected non-zero");
+        goto end;
+    }
+    if (!TEST_int_eq(OSSL_ECH_INFO_print(inout, info, 0), 0)) {
+        TEST_info("OSSL_ECHSTORE_flush_keys unexpected non-zero");
+        goto end;
+    }
+    rv = 1;
+end:
+    OSSL_ECHSTORE_free(es);
+    BIO_free_all(inout);
+    EVP_PKEY_free(priv);
+    return rv;
+}
+
+/* read some files, some that work, some that fail */
+static int ech_test_file_read(int run)
+{
+    int rv = 0;
+    OSSL_ECHSTORE *es = NULL;
+    BIO *in = NULL;
+    fnt_t *ft = &fnames[run];
+    char *fullname = NULL;
+    size_t fnlen = 0;
+
+    es = OSSL_ECHSTORE_new(NULL, NULL);
+    if (es == NULL)
+        goto end;
+    fnlen = strlen(certsdir) + 1 + strlen(ft->fname) + 1;
+    fullname = OPENSSL_malloc(fnlen);
+    if (fullname == NULL)
+        goto end;
+    snprintf(fullname, fnlen, "%s/%s", certsdir, ft->fname);
+    if (verbose)
+        TEST_info("testing read of %s", fullname);
+    in = BIO_new_file(fullname, "r");
+    if (in == NULL) {
+        TEST_info("BIO_new_file failed for %s", ft->fname);
+        goto end;
+    }
+    if (!TEST_int_eq(OSSL_ECHSTORE_read_pem(es, in, OSSL_ECH_NO_RETRY),
+                     ft->read)) {
+        TEST_info("OSSL_ECSTORE_read_pem unexpected fail");
+        goto end;
+    }
+    rv = 1;
+end:
+    OPENSSL_free(fullname);
+    OSSL_ECHSTORE_free(es);
+    BIO_free_all(in);
+    return rv;
+}
+
 #endif
 
 int setup_tests(void)
@@ -566,7 +829,12 @@ int setup_tests(void)
             return 0;
         }
     }
+    certsdir = test_get_argument(0);
+    if (certsdir == NULL)
+        certsdir = DEF_CERTS_DIR;
     ADD_ALL_TESTS(ech_ingest_test, OSSL_NELEM(ingest_tvs));
+    ADD_TEST(ech_store_null_calls);
+    ADD_ALL_TESTS(ech_test_file_read, OSSL_NELEM(fnames));
     /* TODO(ECH): we'll add more test code once other TODO's settle */
     return 1;
 #endif

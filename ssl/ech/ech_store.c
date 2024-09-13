@@ -146,10 +146,10 @@ static int ech_bio2buf(BIO *in, unsigned char **buf, size_t *len)
         if (tmp == NULL)
             goto err;
         lbuf = tmp;
-        lptr += OSSL_ECH_BUFCHUNK;
+        lptr = lbuf + sofar - OSSL_ECH_BUFCHUNK;
     }
     if (BIO_eof(in) && done == 1) {
-        *len = (lptr + readbytes) - lbuf;
+        *len = sofar + readbytes - OSSL_ECH_BUFCHUNK;
         *buf = lbuf;
         return 1;
     }
@@ -194,8 +194,7 @@ static int ech_check_format(unsigned char *val, size_t len, int *fmt)
  */
 static int ech_decode_echconfig_exts(OSSL_ECHSTORE_ENTRY *ee, PACKET *exts)
 {
-    unsigned int exttype = 0;
-    unsigned int extlen = 0;
+    unsigned int exttype = 0, extlen = 0;
     unsigned char *extval = NULL;
     OSSL_ECHEXT *oe = NULL;
 
@@ -209,6 +208,7 @@ static int ech_decode_echconfig_exts(OSSL_ECHSTORE_ENTRY *ee, PACKET *exts)
     while (PACKET_remaining(exts) > 0) {
         exttype = 0, extlen = 0;
         extval = NULL;
+        oe = NULL;
         if (!PACKET_get_net_2(exts, &exttype)
             || !PACKET_get_net_2(exts, &extlen)
             || extlen >= OSSL_ECH_MAX_ECHCONFIGEXT_LEN) {
@@ -326,10 +326,8 @@ static int ech_decode_one_entry(OSSL_ECHSTORE_ENTRY **rent,
         goto err;
     }
     ee = OPENSSL_zalloc(sizeof(*ee));
-    if (ee == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+    if (ee == NULL)
         goto err;
-    }
     /* note start of encoding so we can make a copy later */
     tmpeclen = PACKET_remaining(pkt);
     if (PACKET_peek_bytes(pkt, &tmpecp, tmpeclen) != 1
@@ -465,9 +463,6 @@ static int ech_decode_one_entry(OSSL_ECHSTORE_ENTRY **rent,
         }
     }
     ee->loadtime = time(0);
-    /* do final checks on suites, exts, and skip this one if issues */
-    if (ech_final_config_checks(ee) != 1)
-        goto err;
     *rent = ee;
     return 1;
 err:
@@ -528,8 +523,12 @@ static int ech_decode_and_flatten(OSSL_ECHSTORE *es, EVP_PKEY *priv,
             goto err;
         }
         remaining = PACKET_remaining(&pkt);
+        /* if wrong version we can skip over */
         if (ee == NULL)
             continue;
+        /* do final checks on suites, exts, and fail if issues */
+        if (ech_final_config_checks(ee) != 1)
+            goto err;
         /* push entry into store */
         if (es->entries == NULL)
             es->entries = sk_OSSL_ECHSTORE_ENTRY_new_null();
