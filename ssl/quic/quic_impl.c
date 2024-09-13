@@ -45,26 +45,6 @@ static void qctx_maybe_autotick(QCTX *ctx);
 static int qctx_should_autotick(QCTX *ctx);
 
 /*
- * QUIC Front-End I/O API: Common Utilities
- * ========================================
- */
-
-static OSSL_TIME get_time(QUIC_CONNECTION *qc)
-{
-    if (qc->override_now_cb != NULL)
-        return qc->override_now_cb(qc->override_now_cb_arg);
-    else
-        return ossl_time_now();
-}
-
-static OSSL_TIME get_time_cb(void *arg)
-{
-    QUIC_CONNECTION *qc = arg;
-
-    return get_time(qc);
-}
-
-/*
  * QCTX is a utility structure which provides information we commonly wish to
  * unwrap upon an API call being dispatched to us, namely:
  *
@@ -867,19 +847,18 @@ int ossl_quic_clear(SSL *s)
     return 0;
 }
 
-int ossl_quic_conn_set_override_now_cb(SSL *s,
-                                       OSSL_TIME (*now_cb)(void *arg),
-                                       void *now_cb_arg)
+int ossl_quic_set_override_now_cb(SSL *s,
+                                  OSSL_TIME (*now_cb)(void *arg),
+                                  void *now_cb_arg)
 {
     QCTX ctx;
 
-    if (!expect_quic_conn_only(s, &ctx))
+    if (!expect_quic_any(s, &ctx))
         return 0;
 
     qctx_lock(&ctx);
 
-    ctx.qc->override_now_cb     = now_cb;
-    ctx.qc->override_now_cb_arg = now_cb_arg;
+    ossl_quic_engine_set_time_cb(ctx.obj->engine, now_cb, now_cb_arg);
 
     qctx_unlock(&ctx);
     return 1;
@@ -1354,15 +1333,7 @@ int ossl_quic_get_event_timeout(SSL *s, struct timeval *tv, int *is_infinite)
         return 1;
     }
 
-    /*
-     * TODO(QUIC SERVER): The clock override callback belongs at the engine
-     * (DOMAIN) not the QC layer, which would make `basetime` independent of
-     * the object type.
-     */
-    if (ctx.qc)
-        basetime = get_time(ctx.qc);
-    else
-        basetime = ossl_time_now();
+    basetime = ossl_quic_engine_get_time(ctx.obj->engine);
 
     qctx_unlock(&ctx);
 
@@ -1791,8 +1762,7 @@ static int create_channel(QUIC_CONNECTION *qc, SSL_CTX *ctx)
 #if defined(OPENSSL_THREADS)
     engine_args.mutex         = qc->mutex;
 #endif
-    engine_args.now_cb        = get_time_cb;
-    engine_args.now_cb_arg    = qc;
+
     if (need_notifier_for_domain_flags(ctx->domain_flags))
         engine_args.reactor_flags |= QUIC_REACTOR_FLAG_USE_NOTIFIER;
 
@@ -1846,9 +1816,7 @@ static int ensure_channel_started(QCTX *ctx)
 
 #if !defined(OPENSSL_NO_QUIC_THREAD_ASSIST)
         if (qc->is_thread_assisted)
-            if (!ossl_quic_thread_assist_init_start(&qc->thread_assist, qc->ch,
-                                                    qc->override_now_cb,
-                                                    qc->override_now_cb_arg)) {
+            if (!ossl_quic_thread_assist_init_start(&qc->thread_assist, qc->ch)) {
                 QUIC_RAISE_NON_NORMAL_ERROR(ctx, ERR_R_INTERNAL_ERROR,
                                             "failed to start assist thread");
                 return 0;
@@ -4266,6 +4234,7 @@ SSL *ossl_quic_new_listener(SSL_CTX *ctx, uint64_t flags)
 #if defined(OPENSSL_THREADS)
     engine_args.mutex   = ql->mutex;
 #endif
+
     if (need_notifier_for_domain_flags(ctx->domain_flags))
         engine_args.reactor_flags |= QUIC_REACTOR_FLAG_USE_NOTIFIER;
 
@@ -4589,6 +4558,7 @@ SSL *ossl_quic_new_domain(SSL_CTX *ctx, uint64_t flags)
 #if defined(OPENSSL_THREADS)
     engine_args.mutex   = qd->mutex;
 #endif
+
     if (need_notifier_for_domain_flags(domain_flags))
         engine_args.reactor_flags |= QUIC_REACTOR_FLAG_USE_NOTIFIER;
 
