@@ -1078,6 +1078,7 @@ void OSSL_INDICATOR_get_callback(OSSL_LIB_CTX *libctx,
     }
 }
 
+#if !defined(OPENSSL_NO_DEFAULT_THREAD_POOL)
 uint64_t ossl_prov_get_avail_threads(OSSL_LIB_CTX *libctx)
 {
     return c_get_avail_threads(FIPS_get_core_handle(libctx));
@@ -1099,3 +1100,4 @@ int ossl_prov_thread_clean(void *vhandle)
 {
     return c_crypto_thread_clean(vhandle);
 }
+#endif

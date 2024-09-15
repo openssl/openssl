@@ -600,7 +600,7 @@ static int extract_sign_data(HSS_ACVP_TEST_DATA *t, uint32_t *out_levels,
         const LMS_PARAMS *lms_params = ossl_lms_params_get(lms_type[i - 1]);
 
         qindex += scale * q[i - 1];
-        scale *= (1 << lms_params->h);
+        scale *= (uint64_t)(1 << lms_params->h);
     }
     *out_levels = levels;
     *out_qindex = qindex;

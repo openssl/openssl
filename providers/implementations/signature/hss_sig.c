@@ -19,7 +19,7 @@
 #include "internal/thread.h"
 #include "crypto/hss.h"
 
-#if defined(OPENSSL_NO_DEFAULT_THREAD_POOL) && defined(OPENSSL_NO_THREAD_POOL)
+#if defined(OPENSSL_NO_DEFAULT_THREAD_POOL) || defined(OPENSSL_NO_THREAD_POOL)
 # define LMS_NO_THREADS
 #endif
 

@@ -66,7 +66,6 @@ IF[{- !$disabled{tests} -}]
           nodefltctxtest evp_xof_test x509_load_cert_file_test bio_meth_test \
           x509_acert_test x509_req_test strtoultest bio_pw_callback_test
 
-
   IF[{- !$disabled{'rpk'} -}]
     PROGRAMS{noinst}=rpktest
   ENDIF

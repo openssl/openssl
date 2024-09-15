@@ -124,7 +124,7 @@ EVP_DigestVerifyInit() and EVP_DigestVerifyUpdate() return 1 for success and 0
 for failure.
 
 EVP_DigestVerifyFinal() and EVP_DigestVerify() return 1 for success; any other
-value indicates failure. A return value of zero indicates that the signature
+value indicates failure.  A return value of zero indicates that the signature
 did not verify successfully (that is, B<tbs> did not match the original data or
 the signature had an invalid form), while other values indicate a more serious
 error (and sometimes also indicate an invalid signature form).
