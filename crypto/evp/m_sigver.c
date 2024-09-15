@@ -40,9 +40,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                           const EVP_MD *type, const char *mdname,
                           OSSL_LIB_CTX *libctx, const char *props,
                           ENGINE *e, EVP_PKEY *pkey, int ver,
-                          const OSSL_PARAM params[],
-                          const unsigned char *sig,
-                          size_t siglen)
+                          const OSSL_PARAM params[])
 {
     EVP_PKEY_CTX *locpctx = NULL;
     EVP_SIGNATURE *signature = NULL;
@@ -385,7 +383,7 @@ int EVP_DigestSignInit_ex(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                           const OSSL_PARAM params[])
 {
     return do_sigver_init(ctx, pctx, NULL, mdname, libctx, props, NULL, pkey, 0,
-                          params, NULL, 0);
+                          params);
 }
 
 #ifndef FIPS_MODULE
@@ -393,7 +391,7 @@ int EVP_DigestSignInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                        const EVP_MD *type, ENGINE *e, EVP_PKEY *pkey)
 {
     return do_sigver_init(ctx, pctx, type, NULL, NULL, NULL, e, pkey, 0,
-                          NULL, NULL, 0);
+                          NULL);
 }
 #endif
 
@@ -403,7 +401,7 @@ int EVP_DigestVerifyInit_ex(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                             const OSSL_PARAM params[])
 {
     return do_sigver_init(ctx, pctx, NULL, mdname, libctx, props, NULL, pkey, 1,
-                          params, NULL, 0);
+                          params);
 }
 
 #ifndef FIPS_MODULE
@@ -411,7 +409,7 @@ int EVP_DigestVerifyInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                          const EVP_MD *type, ENGINE *e, EVP_PKEY *pkey)
 {
     return do_sigver_init(ctx, pctx, type, NULL, NULL, NULL, e, pkey, 1,
-                          NULL, NULL, 0);
+                          NULL);
 }
 #endif /* FIPS_MODULE */
 

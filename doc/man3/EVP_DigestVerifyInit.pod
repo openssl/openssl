@@ -3,8 +3,7 @@
 =head1 NAME
 
 EVP_DigestVerifyInit_ex, EVP_DigestVerifyInit, EVP_DigestVerifyUpdate,
-EVP_DigestVerifyFinal, EVP_DigestVerify
-- EVP signature verification functions
+EVP_DigestVerifyFinal, EVP_DigestVerify - EVP signature verification functions
 
 =head1 SYNOPSIS
 
@@ -99,13 +98,6 @@ Supports any digest
 
 Will ignore any digest provided.
 
-=item HSS
-
-The digest is optional, If the value is set then it must mach the digest used
-by the HSS public key and HSS signature, otherwise an error will occur.
-
-Supports SHA256, SHA256-192, SHAKE-256
-
 =back
 
 If RSA-PSS is used and restrictions apply then the digest must match.
@@ -128,14 +120,14 @@ in B<sig> of length B<siglen>.
 
 =head1 RETURN VALUES
 
-EVP_DigestVerifyInit() and EVP_DigestVerifyUpdate() return 1 for success and
-0 for failure.
+EVP_DigestVerifyInit() and EVP_DigestVerifyUpdate() return 1 for success and 0
+for failure.
 
-EVP_DigestVerifyFinal() and EVP_DigestVerify()return 1 for success;
-any other value indicates failure. A return value of zero indicates that the
-signature did not verify successfully (that is, B<tbs> did not match the
-original data or the signature had an invalid form), while other values indicate
-a more serious error (and sometimes also indicate an invalid signature form).
+EVP_DigestVerifyFinal() and EVP_DigestVerify() return 1 for success; any other
+value indicates failure. A return value of zero indicates that the signature
+did not verify successfully (that is, B<tbs> did not match the original data or
+the signature had an invalid form), while other values indicate a more serious
+error (and sometimes also indicate an invalid signature form).
 
 The error codes can be obtained from L<ERR_get_error(3)>.
 

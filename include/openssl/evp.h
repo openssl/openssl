@@ -1397,7 +1397,7 @@ EVP_PKEY *EVP_PKEY_new(void);
 int EVP_PKEY_up_ref(EVP_PKEY *pkey);
 EVP_PKEY *EVP_PKEY_dup(EVP_PKEY *pkey);
 void EVP_PKEY_free(EVP_PKEY *pkey);
-EVP_PKEY *EVP_PKEY_reserve(EVP_PKEY *pkey, uint64_t count);
+EVP_PKEY *EVP_PKEY_reserve(EVP_PKEY *pkey, const OSSL_PARAM *params);
 const char *EVP_PKEY_get0_description(const EVP_PKEY *pkey);
 const OSSL_PROVIDER *EVP_PKEY_get0_provider(const EVP_PKEY *key);
 

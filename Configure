@@ -692,6 +692,8 @@ my @disable_cascades = (
 
     "cmp"               => [ "crmf" ],
 
+    "hss"              => [ "hss-gen" ],
+
     "fips"              => [ "fips-securitychecks", "fips-post", "acvp-tests" ],
 
     "threads"           => [ "thread-pool" ],

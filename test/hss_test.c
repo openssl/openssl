@@ -485,6 +485,7 @@ static int hss_key_eq_test(void)
         && TEST_int_ne(EVP_PKEY_eq(key[0], key[3]), 1);
     if (ret == 0)
         goto end;
+
 #ifndef OPENSSL_NO_EC
     if (!TEST_ptr(eckey = EVP_PKEY_Q_keygen(libctx, propq, "EC", "P-256")))
         goto end;
@@ -701,7 +702,9 @@ static int hss_pkey_sign_test(int tst)
         goto err;
 
     /* Skip over the keygen keypairs that were already used by the testcase */
-    if (!TEST_ptr(reserve = EVP_PKEY_reserve(key, qindex)))
+    params[0] = OSSL_PARAM_construct_uint64(OSSL_PKEY_PARAM_HSS_SHARD_SIZE, &qindex);
+    params[1] = OSSL_PARAM_construct_end();
+    if (!TEST_ptr(reserve = EVP_PKEY_reserve(key, params)))
         goto err;
     EVP_PKEY_free(reserve);
 

@@ -1,0 +1,42 @@
+=pod
+
+=head1 NAME
+
+EVP_PKEY_reserve - Extracts a key from an existing key
+
+=head1 SYNOPSIS
+
+ #include <openssl/evp.h>
+
+ EVP_PKEY *EVP_PKEY_reserve(EVP_PKEY *pkey, const OSSL_PARAM *params);
+
+=head1 DESCRIPTION
+
+EVP_PKEY_reserve() is used to split a key into 2 parts. The newly returned key
+is a portion of the passed in key. The passed in key |pkey| may mutate, so this
+is not the same as EVP_PKEY_dup().
+Optional |params| can be passed in that are specific to the key type that
+we wish to split.
+
+=head1 RETURN VALUES
+
+EVP_PKEY_reserve() returns the newly created key on success, or NULL on failure.
+
+=head1 SEE ALSO
+
+L<EVP_PKEY-HSS(7)>,
+
+=head1 HISTORY
+
+the function EVP_PKEY_reserve() was added in OpenSSL 3.5.0
+
+=head1 COPYRIGHT
+
+Copyright 2024 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

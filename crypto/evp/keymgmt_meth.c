@@ -549,11 +549,11 @@ const OSSL_PARAM *evp_keymgmt_import_types(const EVP_KEYMGMT *keymgmt,
 }
 
 void *evp_keymgmt_reserve(const EVP_KEYMGMT *keymgmt, void *keydata,
-                          uint64_t count)
+                          const OSSL_PARAM *params)
 {
     if (keymgmt->reserve == NULL)
         return NULL;
-    return keymgmt->reserve(keydata, count);
+    return keymgmt->reserve(keydata, params);
 }
 
 int evp_keymgmt_export(const EVP_KEYMGMT *keymgmt, void *keydata,

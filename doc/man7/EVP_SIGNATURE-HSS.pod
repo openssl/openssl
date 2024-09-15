@@ -31,26 +31,40 @@ EVP_PKEY_CTX_get_params() is not supported.
 
 =head1 NOTES
 
-The "digest" is not specified as a settable parameter because the both the 
+The "digest" is not specified as a parameter because the both the 
 HSS EVP_PKEY and the HSS signature contain this information.
 
+=head1 EXAMPLES
+
+=head2 HSS signature verification
+
+ /* See L<EVP_PKEY-HSS(7)/EXAMPLES to load a HSS 'pub' key */
+ ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pub, propq);
+ if (ctx == NULL)
+     /* Error */
+ sig = EVP_SIGNATURE_fetch(libctx, "HSS", propq);
+ if (sig == NULL)
+     /* Error */
+ if (EVP_PKEY_verify_message_init(ctx, sig, NULL) <= 0)
+     /* Error */
+ ret = EVP_PKEY_verify(ctx, sigdata, sigdata_len, msg, msglen);
+ /*
+  * ret == 1 indicates success, 0 verify failure and < 0 for some
+  * other error.
+  */
 =head1 SEE ALSO
 
 L<EVP_PKEY-HSS(7)>,
 L<EVP_PKEY_CTX_set_params(3)>,
 L<provider-signature(7)>,
 
-=head1 Example
-
-Refer to the example in demos/signature/EVP_HSS_SignatureVerify_demo.c
-
 =head1 HISTORY
 
-This functionality was added in OpenSSL 3.3.
+This functionality was added in OpenSSL 3.5.0
 
 =head1 COPYRIGHT
 
-Copyright 2023 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2023-2024 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

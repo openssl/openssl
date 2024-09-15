@@ -352,6 +352,7 @@ my %params = (
 # HSS parameters
     'PKEY_PARAM_HSS_L' =>           "l",
     'PKEY_PARAM_HSS_KEYS_REMAINING' => "remaining",
+    'PKEY_PARAM_HSS_SHARD_SIZE' => "shard-size",
 
 # RSA Keys
 #

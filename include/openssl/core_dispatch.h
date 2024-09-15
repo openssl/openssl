@@ -700,7 +700,7 @@ OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, keymgmt_export_types_ex,
 
 # define OSSL_FUNC_KEYMGMT_RESERVE                    47
 OSSL_CORE_MAKE_FUNC(void *, keymgmt_reserve,
-                    (void *keydata, uint64_t count))
+                    (void *keydata, const OSSL_PARAM *params))
 
 /* Key Exchange */
 

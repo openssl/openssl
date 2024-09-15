@@ -427,21 +427,27 @@ static void hss_gen_cleanup(void *genctx)
     OPENSSL_free(gctx);
 }
 
-static void *hss_reserve(void *keydata, uint64_t count)
+static void *hss_reserve(void *keydata, const OSSL_PARAM *params)
 {
     HSS_KEY *curkey = (HSS_KEY *)keydata;
     HSS_KEY *newkey = NULL;
+    const OSSL_PARAM *p;
+    uint64_t shard_sz = 0;
 
-    if (count == 0)
-        return NULL;
-    if (count > ossl_hss_keys_remaining(curkey))
+    p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_HSS_SHARD_SIZE);
+    if (p == NULL || !OSSL_PARAM_get_uint64(p, &shard_sz))
         return NULL;
 
-    newkey = ossl_hss_key_reserve(curkey, count);
+    if (shard_sz == 0)
+        return NULL;
+    if (shard_sz > ossl_hss_keys_remaining(curkey))
+        return NULL;
+
+    newkey = ossl_hss_key_reserve(curkey, shard_sz);
     if (newkey == NULL)
         return NULL;
 
-    if (!ossl_hss_key_advance(curkey, count)) {
+    if (!ossl_hss_key_advance(curkey, shard_sz)) {
         ossl_hss_key_free(newkey);
         return NULL;
     }
