@@ -43,19 +43,19 @@ typedef struct lm_ots_params_st {
      * e.g. OSSL_LM_OTS_TYPE_SHAKE_N32_W1
      */
     uint32_t lm_ots_type;
-    uint8_t n;              /* Hash output size in bytes (32 or 24) */
+    uint32_t n;              /* Hash output size in bytes (32 or 24) */
     /*
      * The width of the Winternitz coefficients in bits. One of (1, 2, 4, 8)
      * Higher values of w are slower (~2^w computations) but have smaller
      * signatures.
      */
-    uint8_t w;
+    uint32_t w;
     /*
      * The number of n-byte elements used for an LMOTS signature.
      * One of (265, 133, 67, 34) for n = 32, for w=1,2,4,8
      * One of (200, 101, 51, 26) for n = 24, for w=1,2,4,8
      */
-    uint16_t p;
+    uint32_t p;
     const char *digestname; /* Hash Name */
 } LM_OTS_PARAMS;
 

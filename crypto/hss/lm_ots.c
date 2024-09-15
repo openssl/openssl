@@ -376,9 +376,8 @@ int ossl_lm_ots_ctx_pubkey_init(LM_OTS_CTX *pctx,
 
     /* The OpenSSL SHAKE implementation requires the xoflen to be set */
     if (strncmp(sig->params->digestname, "SHAKE", 5) == 0) {
-        size_t len = sig->params->n;
-
-        params[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_XOFLEN, &len);
+        params[0] = OSSL_PARAM_construct_uint32(OSSL_DIGEST_PARAM_XOFLEN,
+                                                (uint32_t *)&sig->params->n);
         p = params;
     }
 

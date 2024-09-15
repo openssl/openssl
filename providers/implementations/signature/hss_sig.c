@@ -358,7 +358,8 @@ static int set_signature(PROV_HSS_CTX *ctx,
             return 0;
         ctx->siglen = siglen;
     }
-    memcpy(ctx->sig, sig, siglen);
+    if (sig != NULL && ctx->sig != NULL)
+        memcpy(ctx->sig, sig, siglen);
     return 1;
 }
 
