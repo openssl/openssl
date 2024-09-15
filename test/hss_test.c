@@ -234,19 +234,26 @@ static int hss_verify_bad_sig_len_test(void)
     EVP_PKEY_CTX *ctx = NULL;
     size_t siglen = 0;
     const int step = 3;
+    unsigned char sigdata[4096];
 
     if (!TEST_ptr(pkey = hsspubkey_from_data(td->pub, td->publen))
             || !TEST_ptr(sig = EVP_SIGNATURE_fetch(libctx, "HSS", propq))
             || !TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, propq)))
         goto end;
 
+    if (!TEST_size_t_le(td->siglen + 16, sizeof(sigdata)))
+        goto end;
+
+    OPENSSL_cleanse(sigdata, sizeof(sigdata));
+    memcpy(sigdata, td->sig, td->siglen);
+
     ret = 0;
-    for (siglen = 0; siglen < td->siglen + 4; siglen += step) {
+    for (siglen = 0; siglen < td->siglen + 16; siglen += step) {
         if (siglen == td->siglen)   /* ignore the size that should pass */
             continue;
         if (!TEST_int_eq(EVP_PKEY_verify_message_init(ctx, sig, NULL), 1))
             goto end;
-        if (!TEST_int_eq(EVP_PKEY_verify(ctx, td->sig, siglen,
+        if (!TEST_int_eq(EVP_PKEY_verify(ctx, sigdata, siglen,
                                          td->msg, td->msglen), 0)) {
             ret = -1;
             goto end;

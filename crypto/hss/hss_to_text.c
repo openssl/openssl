@@ -72,9 +72,10 @@ int ossl_lms_params_to_text(BIO *out, const LMS_PARAMS *prms)
  */
 int ossl_lm_ots_params_to_text(BIO *out, const LM_OTS_PARAMS *prms)
 {
-    return BIO_printf(out, "LMOTS type: %u     # LMOTS_%s_N%d_W%d (p=%d)\n",
+    return BIO_printf(out, "LMOTS type: %u     # LMOTS_%s_N%u_W%u (p=%u)\n",
                       (unsigned)prms->lm_ots_type, prms->digestname,
-                      (unsigned)prms->n, prms->w, prms->p) > 0;
+                      (unsigned)prms->n, (unsigned)prms->w,
+                      (unsigned)prms->p) > 0;
 }
 
 /**
