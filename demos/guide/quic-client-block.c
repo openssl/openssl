@@ -243,7 +243,8 @@ int main(int argc, char *argv[])
         printf("Failed to write hostname in HTTP request\n");
         goto end;
     }
-    if (!SSL_write_ex(ssl, request_end, strlen(request_end), &written)) {
+    if (!SSL_write_ex2(ssl, request_end, strlen(request_end),
+                       SSL_WRITE_FLAG_CONCLUDE, &written)) {
         printf("Failed to write end of HTTP request\n");
         goto end;
     }
