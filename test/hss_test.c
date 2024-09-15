@@ -728,31 +728,6 @@ err:
     EVP_PKEY_free(key);
     return ret;
 }
-
-    //        EVP_PKEY_print_private(bio_out, key, 0, NULL);
-            //{
-            //    unsigned char out[256];
-            //    size_t outlen = 256;
-            //    if (!EVP_Q_digest(libctx, "SHA1", propq, sig, siglen, out, &outlen))
-            //        goto err;
-            //    printf("\n---------------\nSignature SHA1 Checksum: %d: %s\n", i, OPENSSL_buf2hexstr(out, outlen));
-            //}
-    /*
-            EVP_PKEY_print_private(bio_out, key, 0, NULL);
-            if (!EVP_PKEY_get_size_t_param(key, OSSL_PKEY_PARAM_HSS_KEYS_REMAINING, &sz)
-                    || !TEST_size_t_eq(sz, remaining))
-                goto err;
-
-            {
-                HSS_KEY *tst;
-                if (!TEST_ptr(tst = ossl_hss_key_new(libctx, propq)))
-                    goto err;
-                if (!TEST_true(ossl_hss_pubkey_decode(hsspubdata, hsspubdatalen, tst)))
-                    goto err;
-                ossl_hss_decode(tst, sig, siglen);
-                ossl_hss_sig_to_text(bio_out, tst, OSSL_KEYMGMT_SELECT_KEYPAIR);
-            }
-    */
 #endif
 
 static size_t load_file(const char *filename, unsigned char **out)

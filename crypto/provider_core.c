@@ -1920,8 +1920,8 @@ static OSSL_FUNC_core_get_params_fn core_get_params;
 static OSSL_FUNC_core_get_libctx_fn core_get_libctx;
 static OSSL_FUNC_core_thread_start_fn core_thread_start;
 
-#ifndef FIPS_MODULE
-# ifdef OPENSSL_THREADS
+#if !defined(FIPS_MODULE)
+# if!defined(OPENSSL_NO_THREAD_POOL)
 static OSSL_FUNC_core_get_avail_threads_fn core_get_avail_threads;
 static OSSL_FUNC_core_crypto_thread_start_fn core_crypto_thread_start;
 OSSL_FUNC_core_crypto_thread_join_fn ossl_crypto_thread_join;
@@ -2052,8 +2052,8 @@ static int core_thread_start(const OSSL_CORE_HANDLE *handle,
  * needed there, since the FIPS module upcalls are always the outer provider
  * ones.
  */
-#ifndef FIPS_MODULE
-# ifdef OPENSSL_THREADS
+#if !defined(FIPS_MODULE)
+# if !defined(OPENSSL_NO_THREAD_POOL)
 static uint64_t core_get_avail_threads(const OSSL_CORE_HANDLE *handle)
 {
     OSSL_PROVIDER *prov = (OSSL_PROVIDER *)handle;
@@ -2271,8 +2271,8 @@ static const OSSL_DISPATCH core_dispatch_[] = {
     { OSSL_FUNC_CORE_GET_PARAMS, (void (*)(void))core_get_params },
     { OSSL_FUNC_CORE_GET_LIBCTX, (void (*)(void))core_get_libctx },
     { OSSL_FUNC_CORE_THREAD_START, (void (*)(void))core_thread_start },
-#ifndef FIPS_MODULE
-# ifdef OPENSSL_THREADS
+#if !defined(FIPS_MODULE)
+# if !defined(OPENSSL_NO_THREAD_POOL)
     { OSSL_FUNC_CORE_GET_AVAIL_THREADS, (void (*)(void))core_get_avail_threads },
     { OSSL_FUNC_CORE_CRYPTO_THREAD_START, (void (*)(void))core_crypto_thread_start },
     { OSSL_FUNC_CORE_CRYPTO_THREAD_JOIN, (void (*)(void))ossl_crypto_thread_join },
