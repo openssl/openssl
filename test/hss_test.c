@@ -778,6 +778,10 @@ static int hss_verify_hss_file_test(int tst)
     unsigned char *sigdata = NULL;
     size_t sigdata_len = 0;
     OSSL_PARAM *p = NULL;
+#if !defined(OPENSSL_NO_DEFAULT_THREAD_POOL)
+    OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+    uint32_t threads = 8;
+#endif
 
     if (!TEST_ptr(pub = load_key(pubfilename)))
         return 0;
@@ -790,9 +794,6 @@ static int hss_verify_hss_file_test(int tst)
         goto err;
 #if !defined(OPENSSL_NO_DEFAULT_THREAD_POOL)
     if (tst == 1) {
-        OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
-        uint32_t threads = 8;
-
         p = params;
         params[0] = OSSL_PARAM_construct_uint32(OSSL_SIGNATURE_PARAM_THREADS,
                                                 &threads);

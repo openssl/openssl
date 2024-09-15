@@ -276,9 +276,8 @@ static int lms_key_init(LMS_KEY *lmskey, uint32_t lms_type, uint32_t ots_type,
     if (mdctx == NULL)
         goto err;
     if (strncmp(lprms->digestname, "SHAKE", 5) == 0) {
-        size_t len = lprms->n;
-
-        params[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_XOFLEN, &len);
+        params[0] = OSSL_PARAM_construct_uint32(OSSL_DIGEST_PARAM_XOFLEN,
+                                                (uint32_t *)&lprms->n);
         p = params;
     }
     if (EVP_DigestInit_ex2(mdctx, md, p) <= 0)
