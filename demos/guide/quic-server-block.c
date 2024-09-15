@@ -248,7 +248,7 @@ static int run_quic_server(SSL_CTX *ctx, int fd)
          * to ensure the connection is shutdown completely.
          */
         while (SSL_shutdown(conn) != 1)
-            continue
+            continue;
 
         SSL_free(conn);
     }
