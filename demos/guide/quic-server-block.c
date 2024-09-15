@@ -45,6 +45,7 @@ static void vwarnx(const char *fmt, va_list ap)
 static void errx(int status, const char *fmt, ...)
 {
     va_list ap;
+
     va_start(ap, fmt);
     vwarnx(fmt, ap);
     va_end(ap);
@@ -54,6 +55,7 @@ static void errx(int status, const char *fmt, ...)
 static void warnx(const char *fmt, ...)
 {
     va_list ap;
+
     va_start(ap, fmt);
     vwarnx(fmt, ap);
     va_end(ap);
@@ -63,7 +65,7 @@ static void warnx(const char *fmt, ...)
 /*
  * ALPN strings for TLS handshake. Only 'http/1.0' and 'hq-interop'
  * are accepted.
-*/
+ */
 static const unsigned char alpn_ossltest[] = {
     8,  'h', 't', 't', 'p', '/', '1', '.', '0',
     10, 'h', 'q', '-', 'i', 'n', 't', 'e', 'r', 'o', 'p',
@@ -74,12 +76,12 @@ static const unsigned char alpn_ossltest[] = {
  */
 static int select_alpn(SSL *ssl, const unsigned char **out,
                        unsigned char *out_len, const unsigned char *in,
-                       unsigned int in_len, void *arg) {
+                       unsigned int in_len, void *arg)
+{
     if (SSL_select_next_proto((unsigned char **)out, out_len, alpn_ossltest,
                               sizeof(alpn_ossltest), in,
-                              in_len) == OPENSSL_NPN_NEGOTIATED) {
+                              in_len) == OPENSSL_NPN_NEGOTIATED)
         return SSL_TLSEXT_ERR_OK;
-    }
     return SSL_TLSEXT_ERR_ALERT_FATAL;
 }
 
@@ -191,16 +193,14 @@ static int run_quic_server(SSL_CTX *ctx, int fd)
     unsigned char buf[8192];
     size_t nread;
     size_t nwritten;
-    SSL_SHUTDOWN_EX_ARGS shutdown_args = {0};
 
     /*
      * Create a new QUIC listener. Listeners, and other QUIC objects, default
      * to operating in blocking mode. The configured behaviour is inherited by
      * child objects.
      */
-    if ((listener = SSL_new_listener(ctx, 0)) == NULL) {
+    if ((listener = SSL_new_listener(ctx, 0)) == NULL)
         goto err;
-    }
 
     /* Provide the listener with our UDP socket. */
     if (!SSL_set_fd(listener, fd))
@@ -230,9 +230,8 @@ static int run_quic_server(SSL_CTX *ctx, int fd)
         /* Echo client input */
         while (SSL_read_ex(conn, buf, sizeof(buf), &nread) > 0) {
             if (SSL_write_ex(conn, buf, nread, &nwritten) > 0
-                && nwritten == nread) {
+                && nwritten == nread)
                 break;
-            }
             fprintf(stderr, "Error echoing client input");
             break;
         }
@@ -248,8 +247,8 @@ static int run_quic_server(SSL_CTX *ctx, int fd)
          * Shut down the connection. We may need to call this multiple times
          * to ensure the connection is shutdown completely.
          */
-        while (SSL_shutdown_ex(conn, 0, &shutdown_args,
-                               sizeof(SSL_SHUTDOWN_EX_ARGS)) != 1) {}
+        while (SSL_shutdown(conn) != 1)
+            continue
 
         SSL_free(conn);
     }
@@ -266,10 +265,8 @@ int main(int argc, char *argv[])
     SSL_CTX *ctx = NULL;
     int fd;
     unsigned long port;
-
 #ifdef _WIN32
-    static const char *progname;
-    progname = argv[0];
+    static const char *progname = argv[0];
 #endif
 
     if (argc != 4)
