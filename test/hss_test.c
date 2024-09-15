@@ -257,7 +257,7 @@ static int hss_verify_bad_sig_len_test(void)
 end:
     if (ret == -1)
         TEST_note("Incorrectly accepted signature key of length"
-                  " %ld (expected %ld)", siglen, td->siglen);
+                  " %u (expected %u)", (unsigned)siglen, (unsigned)td->siglen);
     EVP_SIGNATURE_free(sig);
     EVP_PKEY_CTX_free(ctx);
     EVP_PKEY_free(pkey);
@@ -336,8 +336,8 @@ static int hss_bad_pub_len_test(void)
     ret = 1;
 end:
     if (ret == 0)
-        TEST_note("Incorrectly accepted public key of length %ld (expected %ld)",
-                  publen, td->publen);
+        TEST_note("Incorrectly accepted public key of length %u (expected %u)",
+                  (unsigned)publen, (unsigned)td->publen);
     EVP_PKEY_free(pkey);
 
     return ret == 1;
