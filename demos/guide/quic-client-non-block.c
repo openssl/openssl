@@ -361,7 +361,8 @@ int main(int argc, char *argv[])
         printf("Failed to write hostname in HTTP request\n");
         goto end; /* Cannot retry: error */
     }
-    while (!SSL_write_ex(ssl, request_end, strlen(request_end), &written)) {
+    while (!SSL_write_ex2(ssl, request_end, strlen(request_end),
+                          SSL_WRITE_FLAG_CONCLUDE, &written)) {
         if (handle_io_failure(ssl, 0) == 1)
             continue; /* Retry */
         printf("Failed to write end of HTTP request\n");
