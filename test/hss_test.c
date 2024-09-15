@@ -333,11 +333,18 @@ static int hss_bad_pub_len_test(void)
     HSS_ACVP_TEST_DATA *td = &hss_testdata[1];
     EVP_PKEY *pkey = NULL;
     size_t publen = 0;
+    unsigned char pubdata[128];
 
-    for (publen = 0; publen <= td->publen + 4; publen += 3) {
+    if (!TEST_size_t_le(td->publen + 16, sizeof(pubdata)))
+        goto end;
+
+    OPENSSL_cleanse(pubdata, sizeof(pubdata));
+    memcpy(pubdata, td->pub, td->publen);
+
+    for (publen = 0; publen <= td->publen + 16; publen += 3) {
         if (publen == td->publen)
             continue;
-        if (!TEST_ptr_null(pkey = hsspubkey_from_data(td->pub, publen)))
+        if (!TEST_ptr_null(pkey = hsspubkey_from_data(pubdata, publen)))
             goto end;
     }
     ret = 1;
