@@ -171,7 +171,7 @@ end:
 static int hss_verify_bad_sig_test(void)
 {
     int ret = 0, i = 0;
-    HSS_ACVP_TEST_DATA *td = &hss_testdata[1];
+    HSS_ACVP_TEST_DATA *td = &hss_testdata[3];
     EVP_PKEY *pkey = NULL;
     EVP_SIGNATURE *sig = NULL;
     EVP_PKEY_CTX *ctx = NULL;
@@ -180,8 +180,11 @@ static int hss_verify_bad_sig_test(void)
      * Corrupt every 3rd byte to run less tests. The smallest element of an XDR
      * encoding is 4 bytes, so this will corrupt every element.
      */
+#if defined(OSSL_SANITIZE_MEMORY)
+    const int step = (int)(td->siglen >> 1);
+#else
     const int step = 3;
-
+#endif
     /* Copy the signature so that we can corrupt it */
     sig_data = OPENSSL_memdup(td->sig, td->siglen);
     if (sig_data == NULL)
@@ -192,19 +195,21 @@ static int hss_verify_bad_sig_test(void)
             || !TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, propq)))
         goto end;
 
+    if (!TEST_int_eq(EVP_PKEY_verify_message_init(ctx, sig, NULL), 1))
+        goto end;
+
     for (i = 0; i < (int)td->siglen; i += step) {
         sig_data[i] ^= corrupt_mask; /* corrupt a byte */
         if (i > 0)
             sig_data[i - step] ^= corrupt_mask; /* Reset the previously corrupt byte */
 
-        if (!TEST_int_eq(EVP_PKEY_verify_message_init(ctx, sig, NULL), 1))
-            goto end;
         if (!TEST_int_eq(EVP_PKEY_verify(ctx, sig_data, td->siglen,
                                          td->msg, td->msglen), 0)) {
             ret = -1;
             goto end;
         }
     }
+
 
     ret = 1;
 end:
@@ -894,7 +899,11 @@ int setup_tests(void)
         ADD_TEST(hss_key_validate_test);
         ADD_TEST(hss_digest_verify_fail_test);
 #ifndef OPENSSL_NO_HSS_GEN
+# if defined(OSSL_SANITIZE_MEMORY)
+        ADD_ALL_TESTS(hss_pkey_sign_test, 1);
+# else
         ADD_ALL_TESTS(hss_pkey_sign_test, OSSL_NELEM(hss_testdata));
+#endif
 #endif
     }
     return 1;
