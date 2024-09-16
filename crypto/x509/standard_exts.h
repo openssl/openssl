@@ -79,6 +79,7 @@ static const X509V3_EXT_METHOD *standard_exts[] = {
     &ossl_v3_authority_attribute_identifier,
     &ossl_v3_role_spec_cert_identifier,
     &ossl_v3_battcons,
+    &ossl_v3_time_specification,
     &ossl_v3_delegated_name_constraints,
     &ossl_v3_attribute_descriptor,
     &ossl_v3_user_notice,
