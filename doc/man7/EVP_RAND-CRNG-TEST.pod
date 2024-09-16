@@ -6,10 +6,11 @@ EVP_RAND-CRNG-TEST - The FIPS health testing EVP_RAND filter
 
 =head1 DESCRIPTION
 
-Support for the L<SP 800-90B|https://csrc.nist.gov/pubs/sp/800/90/b/final>
-section 4 health tests as a filter between the entropy source and its
-users.  This EVP_RAND forwards most requests to the entropy source,
-either via its parent reference or via the provider entropy upcalls.
+This B<EVP_RAND> object acts a filter between the entropy source
+and its users.  It performs CRNG health tests as defined in
+L<SP 800-90B|https://csrc.nist.gov/pubs/sp/800/90/b/final> Section 4 "Health
+Tests".  Most requests are forwarded to the entropy source, either via
+its parent reference or via the provider entropy upcalls.
 
 =head2 Identity
 
@@ -18,8 +19,28 @@ EVP_RAND_fetch() function.
 
 =head2 Supported parameters
 
-There are no supported parameters, rather the request is forwarded to
-the parent seed source for processing.
+If a parent EVP_RAND is specified on context creation, the parent's
+parameters are supported because the request is forwarded to the parent
+seed source for processing.
+
+If no parent EVP_RAND is specified on contexst creation, the following parameters
+are supported:
+
+=over 4
+
+=item "state" (B<OSSL_RAND_PARAM_STATE>) <integer>
+
+=item "strength" (B<OSSL_RAND_PARAM_STRENGTH>) <unsigned integer>
+
+=item "max_request" (B<OSSL_RAND_PARAM_MAX_REQUEST>) <unsigned integer>
+
+These parameters work as described in L<EVP_RAND(3)/PARAMETERS>.
+
+=item "fips-indicator" (B<OSSL_DRBG_PARAM_FIPS_APPROVED_INDICATOR>) <integer>
+
+This parameter works as described in L<provider-rand(7)/PARAMETERS>.
+
+=back
 
 =head1 NOTES
 
