@@ -386,6 +386,10 @@ static int crng_test_get_ctx_params(void *vcrngt, OSSL_PARAM params[])
     p = OSSL_PARAM_locate(params, OSSL_RAND_PARAM_MAX_REQUEST);
     if (p != NULL && !OSSL_PARAM_set_size_t(p, 128))
         return 0;
+
+    p = OSSL_PARAM_locate(params, OSSL_RAND_PARAM_FIPS_APPROVED_INDICATOR);
+    if (p != NULL && !OSSL_PARAM_set_int(p, 0))
+        return 0;
     return 1;
 }
 
@@ -397,6 +401,7 @@ static const OSSL_PARAM *crng_test_gettable_ctx_params(void *vcrngt,
         OSSL_PARAM_int(OSSL_RAND_PARAM_STATE, NULL),
         OSSL_PARAM_uint(OSSL_RAND_PARAM_STRENGTH, NULL),
         OSSL_PARAM_size_t(OSSL_RAND_PARAM_MAX_REQUEST, NULL),
+        OSSL_PARAM_int(OSSL_RAND_PARAM_FIPS_APPROVED_INDICATOR, NULL),
         OSSL_PARAM_END
     };
 
