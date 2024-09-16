@@ -4953,6 +4953,10 @@ DEPEND[html/man7/ossl-guide-migration.html]=man7/ossl-guide-migration.pod
 GENERATE[html/man7/ossl-guide-migration.html]=man7/ossl-guide-migration.pod
 DEPEND[man/man7/ossl-guide-migration.7]=man7/ossl-guide-migration.pod
 GENERATE[man/man7/ossl-guide-migration.7]=man7/ossl-guide-migration.pod
+DEPEND[html/man7/ossl-guide-quic-server-non-block.html]=man7/ossl-guide-quic-server-non-block.pod
+GENERATE[html/man7/ossl-guide-quic-server-non-block.html]=man7/ossl-guide-quic-server-non-block.pod
+DEPEND[man/man7/ossl-guide-quic-server-non-block.7]=man7/ossl-guide-quic-server-non-block.pod
+GENERATE[man/man7/ossl-guide-quic-server-non-block.7]=man7/ossl-guide-quic-server-non-block.pod
 DEPEND[html/man7/ossl-guide-quic-client-block.html]=man7/ossl-guide-quic-client-block.pod
 GENERATE[html/man7/ossl-guide-quic-client-block.html]=man7/ossl-guide-quic-client-block.pod
 DEPEND[man/man7/ossl-guide-quic-client-block.7]=man7/ossl-guide-quic-client-block.pod
@@ -5200,6 +5204,7 @@ html/man7/ossl-guide-libcrypto-introduction.html \
 html/man7/ossl-guide-libraries-introduction.html \
 html/man7/ossl-guide-libssl-introduction.html \
 html/man7/ossl-guide-migration.html \
+html/man7/ossl-guide-quic-server-non-block.html \
 html/man7/ossl-guide-quic-client-block.html \
 html/man7/ossl-guide-quic-client-non-block.html \
 html/man7/ossl-guide-quic-introduction.html \
@@ -5348,6 +5353,7 @@ man/man7/ossl-guide-libcrypto-introduction.7 \
 man/man7/ossl-guide-libraries-introduction.7 \
 man/man7/ossl-guide-libssl-introduction.7 \
 man/man7/ossl-guide-migration.7 \
+man/man7/ossl-guide-quic-server-non-block.7 \
 man/man7/ossl-guide-quic-client-block.7 \
 man/man7/ossl-guide-quic-client-non-block.7 \
 man/man7/ossl-guide-quic-introduction.7 \
