@@ -176,6 +176,7 @@ static int hss_verify_bad_sig_test(void)
     EVP_SIGNATURE *sig = NULL;
     EVP_PKEY_CTX *ctx = NULL;
     unsigned char *sig_data = NULL, corrupt_mask = 0x01;
+
     /*
      * Corrupt every 3rd byte to run less tests. The smallest element of an XDR
      * encoding is 4 bytes, so this will corrupt every element.
@@ -667,6 +668,7 @@ static int hss_pkey_sign_test(int tst)
     unsigned char *hsspubdata = NULL;
     size_t hsspubdatalen = 0;
     int expected = 1;
+
     /*
      * Skip if the test does not specify the private key, this
      * is required for deterministic signing
@@ -738,6 +740,7 @@ static int hss_pkey_sign_test(int tst)
         goto err;
     ret = 1;
 err:
+    fake_rand_set_callback(RAND_get0_private(libctx), NULL);
     OPENSSL_free(sig);
     OPENSSL_free(hsspubdata);
     OSSL_ENCODER_CTX_free(ectx);
@@ -797,7 +800,7 @@ static int hss_verify_hss_file_test(int tst)
     unsigned char *sigdata = NULL;
     size_t sigdata_len = 0;
     OSSL_PARAM *p = NULL;
-#if 0 /* !defined(OPENSSL_NO_DEFAULT_THREAD_POOL) */
+#if !defined(OPENSSL_NO_DEFAULT_THREAD_POOL)
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
     uint32_t threads = 8;
 #endif
@@ -811,7 +814,7 @@ static int hss_verify_hss_file_test(int tst)
     if (!TEST_ptr(sig = EVP_SIGNATURE_fetch(libctx, "HSS", propq))
             || !TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pub, propq)))
         goto err;
-#if 0   /* !defined(OPENSSL_NO_DEFAULT_THREAD_POOL) */
+#if !defined(OPENSSL_NO_DEFAULT_THREAD_POOL)
     if (tst == 1) {
         p = params;
         params[0] = OSSL_PARAM_construct_uint32(OSSL_SIGNATURE_PARAM_THREADS,
@@ -877,7 +880,7 @@ int setup_tests(void)
         return 0;
 
     fake_rand = fake_rand_start(libctx);
-#if 0   /* !defined(OPENSSL_NO_DEFAULT_THREAD_POOL) */
+#if !defined(OPENSSL_NO_DEFAULT_THREAD_POOL)
     if (!OSSL_set_max_threads(libctx, 16))
         return 0;
 #endif
@@ -895,9 +898,9 @@ int setup_tests(void)
         ADD_TEST(hss_decode_fail_test);
         ADD_TEST(hss_key_decode_test);
         ADD_TEST(hss_pubkey_decoder_fail_test);
-        ADD_TEST(hss_key_eq_test);
         ADD_TEST(hss_key_validate_test);
         ADD_TEST(hss_digest_verify_fail_test);
+        ADD_TEST(hss_key_eq_test);
 #ifndef OPENSSL_NO_HSS_GEN
 # if defined(OSSL_SANITIZE_MEMORY)
         ADD_ALL_TESTS(hss_pkey_sign_test, 1);
