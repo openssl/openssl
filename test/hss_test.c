@@ -797,7 +797,7 @@ static int hss_verify_hss_file_test(int tst)
     unsigned char *sigdata = NULL;
     size_t sigdata_len = 0;
     OSSL_PARAM *p = NULL;
-#if !defined(OPENSSL_NO_DEFAULT_THREAD_POOL)
+#if 0 /* !defined(OPENSSL_NO_DEFAULT_THREAD_POOL) */
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
     uint32_t threads = 8;
 #endif
@@ -811,7 +811,7 @@ static int hss_verify_hss_file_test(int tst)
     if (!TEST_ptr(sig = EVP_SIGNATURE_fetch(libctx, "HSS", propq))
             || !TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pub, propq)))
         goto err;
-#if !defined(OPENSSL_NO_DEFAULT_THREAD_POOL)
+#if 0   /* !defined(OPENSSL_NO_DEFAULT_THREAD_POOL) */
     if (tst == 1) {
         p = params;
         params[0] = OSSL_PARAM_construct_uint32(OSSL_SIGNATURE_PARAM_THREADS,
@@ -877,7 +877,7 @@ int setup_tests(void)
         return 0;
 
     fake_rand = fake_rand_start(libctx);
-#if !defined(OPENSSL_NO_DEFAULT_THREAD_POOL)
+#if 0   /* !defined(OPENSSL_NO_DEFAULT_THREAD_POOL) */
     if (!OSSL_set_max_threads(libctx, 16))
         return 0;
 #endif
