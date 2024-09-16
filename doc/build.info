@@ -5011,6 +5011,10 @@ DEPEND[html/man7/ossl-guide-quic-server-block.html]=man7/ossl-guide-quic-server-
 GENERATE[html/man7/ossl-guide-quic-server-block.html]=man7/ossl-guide-quic-server-block.pod
 DEPEND[man/man7/ossl-guide-quic-server-block.7]=man7/ossl-guide-quic-server-block.pod
 GENERATE[man/man7/ossl-guide-quic-server-block.7]=man7/ossl-guide-quic-server-block.pod
+DEPEND[html/man7/ossl-guide-quic-server-non-block.html]=man7/ossl-guide-quic-server-non-block.pod
+GENERATE[html/man7/ossl-guide-quic-server-non-block.html]=man7/ossl-guide-quic-server-non-block.pod
+DEPEND[man/man7/ossl-guide-quic-server-non-block.7]=man7/ossl-guide-quic-server-non-block.pod
+GENERATE[man/man7/ossl-guide-quic-server-non-block.7]=man7/ossl-guide-quic-server-non-block.pod
 DEPEND[html/man7/ossl-guide-tls-client-block.html]=man7/ossl-guide-tls-client-block.pod
 GENERATE[html/man7/ossl-guide-tls-client-block.html]=man7/ossl-guide-tls-client-block.pod
 DEPEND[man/man7/ossl-guide-tls-client-block.7]=man7/ossl-guide-tls-client-block.pod
@@ -5248,6 +5252,7 @@ html/man7/ossl-guide-quic-client-non-block.html \
 html/man7/ossl-guide-quic-introduction.html \
 html/man7/ossl-guide-quic-multi-stream.html \
 html/man7/ossl-guide-quic-server-block.html \
+html/man7/ossl-guide-quic-server-non-block.html \
 html/man7/ossl-guide-tls-client-block.html \
 html/man7/ossl-guide-tls-client-non-block.html \
 html/man7/ossl-guide-tls-introduction.html \
@@ -5401,6 +5406,7 @@ man/man7/ossl-guide-quic-client-non-block.7 \
 man/man7/ossl-guide-quic-introduction.7 \
 man/man7/ossl-guide-quic-multi-stream.7 \
 man/man7/ossl-guide-quic-server-block.7 \
+man/man7/ossl-guide-quic-server-non-block.7 \
 man/man7/ossl-guide-tls-client-block.7 \
 man/man7/ossl-guide-tls-client-non-block.7 \
 man/man7/ossl-guide-tls-introduction.7 \
