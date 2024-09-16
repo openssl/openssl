@@ -102,6 +102,7 @@ static int fips_health_test_one(const uint8_t *buf, size_t n, size_t gen)
     EVP_RAND_CTX *crngt = NULL, *parent = NULL;
     OSSL_PARAM p[2];
     uint8_t out[1000];
+    int indicator = -1;
 
     p[0] = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY,
                                              (void *)buf, n);
@@ -116,6 +117,13 @@ static int fips_health_test_one(const uint8_t *buf, size_t n, size_t gen)
             || !TEST_true(EVP_RAND_instantiate(crngt, 0, 0,
                                                (unsigned char *)"def", 3, NULL))
             || !TEST_size_t_le(gen, sizeof(out)))
+        goto err;
+
+    /* Verify that the FIPS indicator is negative */
+    p[0] = OSSL_PARAM_construct_int(OSSL_RAND_PARAM_FIPS_APPROVED_INDICATOR,
+                                    &indicator);
+    if (!TEST_true(EVP_RAND_CTX_get_params(crngt, p))
+            || !TEST_int_le(indicator, 0))
         goto err;
 
     ERR_set_mark();
