@@ -616,6 +616,7 @@ my @smime_cms_param_tests = (
         "-stream", "-out", "{output}.cms",
         "-recip", catfile($smdir, "smec1.pem"), "-aes128",
         "-keyopt", "ecdh_kdf_md:sha256" ],
+      sub { my %opts = @_; smimeType_matches("$opts{output}.cms", "enveloped-data"); },
       [ "{cmd2}", @prov, "-decrypt", "-recip", catfile($smdir, "smec1.pem"),
         "-in", "{output}.cms", "-out", "{output}.txt" ],
       \&final_compare
@@ -625,6 +626,7 @@ my @smime_cms_param_tests = (
       [ "{cmd1}", @prov, "-encrypt", "-in", $smcont,
         "-stream", "-out", "{output}.cms",
         "-recip", catfile($smdir, "smec1.pem"), "-aes-128-gcm", "-keyopt", "ecdh_kdf_md:sha256" ],
+      sub { my %opts = @_; smimeType_matches("$opts{output}.cms", "authEnveloped-data"); },
       [ "{cmd2}", "-decrypt", "-recip", catfile($smdir, "smec1.pem"),
         "-in", "{output}.cms", "-out", "{output}.txt" ],
       \&final_compare
@@ -831,6 +833,28 @@ sub contentType_matches {
 
   close(HEX_IN);
   return scalar(@c);
+}
+
+# Returns 1 if the smime-type matches the passed parameter, otherwise 0.
+sub smimeType_matches {
+  my ($in, $expected_smime_type) = @_;
+
+  # Read the text file
+  open(my $fh, '<', $in) or die("open failed for $in : $!");
+  local $/;
+  my $content = <$fh>;
+  close($fh);
+
+  # Extract the Content-Type line with the smime-type attribute
+  if ($content =~ /Content-Type:\s*application\/pkcs7-mime.*smime-type=([^\s;]+)/) {
+    my $smime_type = $1;
+
+    # Compare the extracted smime-type with the expected value
+    return ($smime_type eq $expected_smime_type) ? 1 : 0;
+  }
+
+  # If no smime-type is found, return 0
+  return 0;
 }
 
 sub rsapssSaltlen {
