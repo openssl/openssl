@@ -11,7 +11,7 @@
 #include <openssl/asn1t.h>
 #include <openssl/x509v3.h>
 #include <crypto/asn1.h>
-#include <ext_dat.h>
+#include "ext_dat.h"
 
 ASN1_SEQUENCE(OSSL_TIME_SPEC_ABSOLUTE) = {
     ASN1_EXP_OPT(OSSL_TIME_SPEC_ABSOLUTE, startTime, ASN1_GENERALIZEDTIME, 0),
