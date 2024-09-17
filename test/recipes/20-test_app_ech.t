@@ -19,11 +19,17 @@ setup("test_app_ech");
 plan skip_all => "ECH tests not supported in this build"
     if disabled("ech") || disabled("tls1_3") || disabled("ec") || disabled("ecx");
 
-plan tests => 2;
+plan tests => 4;
+
+ok(!run(app(["openssl", "ech", "-nohelpatall"])),
+   "Run openssl ech with unknown arg");
 
 ok(run(app(["openssl", "ech", "-help"])),
    "Run openssl ech with help");
 
-ok(run(app(["openssl", "ech", "-public_name", "example.com"])),
+ok(run(app(["openssl", "ech", "-public_name", "example.com", "-out", "eg1.pem"])),
    "Generate an ECH key pair for example.com");
+
+ok(run(app(["openssl", "ech", "-in", "eg1.pem", "-in", "eg1.pem", "-out", "eg2.pem", "-verbose"])),
+   "Catenate the ECH for example.com twice");
 

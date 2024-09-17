@@ -767,7 +767,8 @@ int OSSL_ECHSTORE_new_config(OSSL_ECHSTORE *es,
     ee->keyshare = privp;
     /* "steal" the encoding from the memory */
     ee->encoded = (unsigned char *)epkt_mem->data;
-    ee->encoded_len = epkt_mem->length;
+    //ee->encoded_len = epkt_mem->length;
+    ee->encoded_len = bblen;
     epkt_mem->data = NULL;
     epkt_mem->length = 0;
     ee->pemfname = OPENSSL_strdup(pembuf);
