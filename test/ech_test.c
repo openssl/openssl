@@ -127,10 +127,7 @@ static const char b64_bad_cs[] =
     "AD7+DQA6uAAgACAogff+HZbirYdQCfXI01GBPP8AEKYyK/D/0DoeXD84fgAQAAE"
     "AAQgLZXhhbUNwbGUuYwYAAAAAQwA=";
 
-/*
- * An ascii-hex ECHConfigList with one ECHConfig
- * but of the wrong version
- */
+/* An ECHConfigList with one ECHConfig but of the wrong version */
 static const unsigned char bin_bad_ver[] = {
     0x00, 0x3e, 0xfe, 0xff, 0x00, 0x3a, 0xbb, 0x00,
     0x20, 0x00, 0x20, 0x62, 0xc7, 0x60, 0x7b, 0xf2,
@@ -168,9 +165,8 @@ static const unsigned char bin_bad_ver2[] = {
 };
 
 /*
- * An ascii-hex ECHConfigList with one ECHConfig
- * with an all-zero public value.
- * This should be ok, for 25519, but hey, just in case:-)
+ * An ECHConfigList with one ECHConfig with an all-zero public value.
+ * That should be ok, for 25519, but hey, just in case:-)
  */
 static const unsigned char bin_zero[] = {
     0x00, 0x3e, 0xfe, 0x0d, 0x00, 0x3a, 0xbb, 0x00,
@@ -187,12 +183,12 @@ static const unsigned char bin_zero[] = {
  * The next set of samples are syntactically invalid
  * Proper fuzzing is still needed but no harm having
  * these too. Generally these are bad version of
- * echconfig_ah with some octet(s) replaced by 0xFF
- * values. Other hex letters are lowercase so you
- * can find the altered octet(s).
+ * our nominal encoding with some octet(s) replaced
+ * by 0xFF values. Other hex letters are lowercase
+ * so you can find the altered octet(s).
  */
 
-/* wrong oveall length (replacing 0x3e with 0xFF) */
+/* wrong overall length (replacing 0x3e with 0xFF) */
 static const unsigned char bin_bad_olen[] = {
     0x00, 0xFF, 0xfe, 0x0d, 0x00, 0x3a, 0xbb, 0x00,
     0x20, 0x00, 0xFF, 0x62, 0xc7, 0x60, 0x7b, 0xf2,
@@ -577,7 +573,7 @@ static int ech_ingest_test(int run)
     OSSL_ECHSTORE *es = NULL;
     OSSL_ECH_INFO *ei = NULL;
     BIO *in = NULL, *out = NULL;
-    int i, rv = 0, keysb4, keysaftr, entsb4, entsaftr;
+    int i, rv = 0, keysb4, keysaftr, actual_ents;
     ingest_tv_t *tv = &ingest_tvs[run];
     time_t now = 0;
 
@@ -596,13 +592,13 @@ static int ech_ingest_test(int run)
     if (tv->pemenc == 1
         && !TEST_int_eq(OSSL_ECHSTORE_read_pem(es, in, OSSL_ECH_NO_RETRY),
                         tv->read)) {
-        TEST_info("OSSL_ECSTORE_read_pem unexpected fail");
+        TEST_info("OSSL_ECSTORE_read_pem unexpected result");
         goto end;
     }
     if (tv->pemenc != 1
         && !TEST_int_eq(OSSL_ECHSTORE_read_echconfiglist(es, in),
                         tv->read)) {
-        TEST_info("OSSL_ECSTORE_read_echconfiglist unexpected fail");
+        TEST_info("OSSL_ECSTORE_read_echconfiglist unexpected result");
         goto end;
     }
     /* if we provided a deliberately bad tv then we're done */
@@ -618,25 +614,25 @@ static int ech_ingest_test(int run)
         TEST_info("OSSL_ECSTORE_num_keys unexpected number of keys (b4)");
         goto end;
     }
-    if (!TEST_int_eq(OSSL_ECHSTORE_get1_info(es, &ei, &entsb4), 1)) {
+    if (!TEST_int_eq(OSSL_ECHSTORE_get1_info(es, &ei, &actual_ents), 1)) {
         TEST_info("OSSL_ECSTORE_get1_info unexpected fail");
         goto end;
     }
-    for (i = 0; i != entsb4; i++) {
+    for (i = 0; i != actual_ents; i++) {
         if (!TEST_int_eq(OSSL_ECH_INFO_print(bio_err, ei, i), 1)) {
             TEST_info("OSSL_ECH_INFO_print unexpected fail");
-            OSSL_ECH_INFO_free(ei, entsb4);
+            OSSL_ECH_INFO_free(ei, actual_ents);
             goto end;
         }
     }
-    if (!TEST_int_eq(entsb4, tv->entsb4)) {
+    if (!TEST_int_eq(actual_ents, tv->entsb4)) {
         TEST_info("OSSL_ECSTORE_get1_info unexpected number of entries (b4)");
         goto end;
     }
-    OSSL_ECH_INFO_free(ei, entsb4);
+    OSSL_ECH_INFO_free(ei, actual_ents);
     ei = NULL;
     if (!TEST_int_eq(OSSL_ECHSTORE_downselect(es, tv->index), tv->expected)) {
-        TEST_info("OSSL_ECSTORE_downselect unexpected fail");
+        TEST_info("OSSL_ECSTORE_downselect unexpected result");
         goto end;
     }
     if (!TEST_int_eq(OSSL_ECHSTORE_num_keys(es, &keysaftr), 1)) {
@@ -647,13 +643,13 @@ static int ech_ingest_test(int run)
         TEST_info("OSSL_ECSTORE_num_keys unexpected number of keys (aftr)");
         goto end;
     }
-    if (!TEST_int_eq(OSSL_ECHSTORE_get1_info(es, &ei, &entsaftr), 1)) {
+    if (!TEST_int_eq(OSSL_ECHSTORE_get1_info(es, &ei, &actual_ents), 1)) {
         TEST_info("OSSL_ECSTORE_get1_info unexpected fail");
         goto end;
     }
-    OSSL_ECH_INFO_free(ei, entsaftr);
+    OSSL_ECH_INFO_free(ei, actual_ents);
     ei = NULL;
-    if (!TEST_int_eq(entsaftr, tv->entsaftr)) {
+    if (!TEST_int_eq(actual_ents, tv->entsaftr)) {
         TEST_info("OSSL_ECSTORE_get1_info unexpected number of entries (aftr)");
         goto end;
     }
@@ -676,6 +672,7 @@ static int ech_ingest_test(int run)
     }
     rv = 1;
 end:
+    OSSL_ECH_INFO_free(ei, actual_ents);
     OSSL_ECHSTORE_free(es);
     BIO_free_all(in);
     BIO_free_all(out);
@@ -822,6 +819,7 @@ static int ech_store_null_calls(void)
     }
     rv = 1;
 end:
+    OSSL_ECH_INFO_free(info, count);
     OSSL_ECHSTORE_free(es);
     BIO_free_all(inout);
     EVP_PKEY_free(priv);

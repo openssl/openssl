@@ -396,6 +396,7 @@ static int ech_decode_one_entry(OSSL_ECHSTORE_ENTRY **rent, PACKET *pkt,
         goto err;
     }
     if (PACKET_contains_zero_byte(&public_name_pkt)
+        || PACKET_remaining(&public_name_pkt) < TLSEXT_MINLEN_host_name
         || !PACKET_strndup(&public_name_pkt, &ee->public_name)) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         goto err;
@@ -461,14 +462,12 @@ err:
  * If a private value is provided then that'll only be associated with the
  * relevant public value, if >1 public value was present in the ECHConfigList.
  */
-static int ech_decode_and_flatten(OSSL_ECHSTORE *es, EVP_PKEY *priv,
-                                  int for_retry,
+static int ech_decode_and_flatten(OSSL_ECHSTORE *es, EVP_PKEY *priv, int for_retry,
                                   unsigned char *binbuf, size_t binblen)
 {
     int rv = 0;
-    size_t remaining = 0, not_to_consume = 0;
-    PACKET pkt;
-    unsigned int olen = 0;
+    size_t remaining = 0;
+    PACKET opkt, pkt;
     OSSL_ECHSTORE_ENTRY *ee = NULL;
 
     if (binbuf == NULL || binblen == 0 || binblen < OSSL_ECH_MIN_ECHCONFIG_LEN
@@ -480,22 +479,19 @@ static int ech_decode_and_flatten(OSSL_ECHSTORE *es, EVP_PKEY *priv,
      * ECHConfigList length (olen) could be less than the input buffer length,
      * (binblen) if the caller has been given a catenated set of binary buffers
      */
-    if (PACKET_buf_init(&pkt, binbuf, binblen) != 1
-        || !PACKET_get_net_2(&pkt, &olen)
-        || olen < (OSSL_ECH_MIN_ECHCONFIG_LEN - 2) || olen > (binblen - 2)) {
+    if (PACKET_buf_init(&opkt, binbuf, binblen) != 1
+        || !PACKET_get_length_prefixed_2(&opkt, &pkt)) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    not_to_consume = binblen - olen;
     remaining = PACKET_remaining(&pkt);
-    while (remaining > not_to_consume) {
-
+    while (remaining > 0) {
         if (ech_decode_one_entry(&ee, &pkt, priv, for_retry) != 1) {
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
             goto err;
         }
         remaining = PACKET_remaining(&pkt);
-        /* if wrong version we can skip over */
+        /* if unsupported version we can skip over */
         if (ee == NULL)
             continue;
         /* do final checks on suites, exts, and fail if issues */
@@ -591,9 +587,6 @@ static int ech_read_priv_echconfiglist(OSSL_ECHSTORE *es, BIO *in,
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    OPENSSL_free(binbuf);
-    binbuf = NULL;
-
     rv = 1;
 err:
     OPENSSL_free(binbuf);
@@ -664,20 +657,6 @@ int OSSL_ECHSTORE_new_config(OSSL_ECHSTORE *es,
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
     }
-    /* so WPACKET_cleanup() won't go wrong */
-    memset(&epkt, 0, sizeof(epkt));
-    /* random config_id */
-    if (RAND_bytes_ex(es->libctx, (unsigned char *)&config_id, 1,
-                      RAND_DRBG_STRENGTH) <= 0) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-    /* key pair */
-    if (OSSL_HPKE_keygen(suite, pub, &publen, &privp, NULL, 0,
-                         es->libctx, es->propq) != 1) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
     /*
      *   Reminder, for draft-13 we want this:
      *
@@ -711,13 +690,25 @@ int OSSL_ECHSTORE_new_config(OSSL_ECHSTORE *es,
      *   ECHConfig ECHConfigList<1..2^16-1>;
      */
     if ((epkt_mem = BUF_MEM_new()) == NULL
-        || !BUF_MEM_grow(epkt_mem, OSSL_ECH_MAX_ECHCONFIG_LEN)) {
+        || !BUF_MEM_grow(epkt_mem, OSSL_ECH_MAX_ECHCONFIG_LEN)
+        || !WPACKET_init(&epkt, epkt_mem)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+    /* random config_id */
+    if (RAND_bytes_ex(es->libctx, (unsigned char *)&config_id, 1,
+                      RAND_DRBG_STRENGTH) <= 0) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+    /* key pair */
+    if (OSSL_HPKE_keygen(suite, pub, &publen, &privp, NULL, 0,
+                         es->libctx, es->propq) != 1) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         goto err;
     }
     /* config id, KEM, public, KDF, AEAD, max name len, public_name, exts */
-    if (!WPACKET_init(&epkt, epkt_mem)
-        || (bp = WPACKET_get_curr(&epkt)) == NULL
+    if ((bp = WPACKET_get_curr(&epkt)) == NULL
         || !WPACKET_start_sub_packet_u16(&epkt)
         || !WPACKET_put_bytes_u16(&epkt, echversion)
         || !WPACKET_start_sub_packet_u16(&epkt)
@@ -774,12 +765,11 @@ int OSSL_ECHSTORE_new_config(OSSL_ECHSTORE *es,
     ee->max_name_length = max_name_length;
     ee->config_id = config_id;
     ee->keyshare = privp;
-    ee->encoded = OPENSSL_memdup(bp, bblen);
-    if (ee->encoded == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-    ee->encoded_len = bblen;
+    /* "steal" the encoding from the memory */
+    ee->encoded = (unsigned char *)epkt_mem->data;
+    ee->encoded_len = epkt_mem->length;
+    epkt_mem->data = NULL;
+    epkt_mem->length = 0;
     ee->pemfname = OPENSSL_strdup(pembuf);
     if (ee->pemfname == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
@@ -982,7 +972,7 @@ int OSSL_ECHSTORE_downselect(OSSL_ECHSTORE *es, int index)
     } else {
         chosen = index;
     }
-    for (i = num -1; i >= 0; i--) {
+    for (i = num - 1; i >= 0; i--) {
         if (i == chosen)
             continue;
         ee = sk_OSSL_ECHSTORE_ENTRY_value(es->entries, i);
@@ -1010,8 +1000,7 @@ int OSSL_ECHSTORE_set1_key_and_read_pem(OSSL_ECHSTORE *es, EVP_PKEY *priv,
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return 0;
     }
-    if (pname == NULL
-        || strncmp(pname, PEM_STRING_ECHCONFIG, strlen(PEM_STRING_ECHCONFIG))) {
+    if (pname == NULL || strcmp(pname, PEM_STRING_ECHCONFIG)) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         goto err;
     }
@@ -1070,8 +1059,10 @@ int OSSL_ECHSTORE_num_keys(OSSL_ECHSTORE *es, int *numkeys)
     num = (es->entries == NULL ? 0 : sk_OSSL_ECHSTORE_ENTRY_num(es->entries));
     for (i = 0; i != num; i++) {
         ee = sk_OSSL_ECHSTORE_ENTRY_value(es->entries, i);
-        if (ee == NULL)
+        if (ee == NULL) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
             return 0;
+        }
         count += (ee->keyshare != NULL);
     }
     *numkeys = count;
