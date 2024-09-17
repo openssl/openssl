@@ -293,7 +293,8 @@ static size_t crng_test_get_seed(void *vcrngt, unsigned char **pout,
     /* Without a parent, we rely on the up calls */
     if (crngt->parent == NULL
             || crngt->parent_get_seed == NULL) {
-        n = ossl_prov_get_entropy(crngt->provctx, pout, 0, min_len, max_len);
+        n = ossl_prov_get_entropy(crngt->provctx, pout, entropy,
+                                  min_len, max_len);
         if (n == 0)
             return 0;
         r = crng_test(crngt, *pout, n);
