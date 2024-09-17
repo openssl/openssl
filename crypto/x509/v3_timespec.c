@@ -89,6 +89,7 @@ IMPLEMENT_ASN1_FUNCTIONS(OSSL_TIME_SPEC_X_DAY_OF)
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_TIME_SPEC_ABSOLUTE)
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_TIME_SPEC_TIME)
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_TIME_SPEC)
+IMPLEMENT_ASN1_FUNCTIONS(OSSL_TIME_PERIOD)
 
 static int i2r_OSSL_TIME_SPEC_ABSOLUTE(X509V3_EXT_METHOD *method,
                                        OSSL_TIME_SPEC_ABSOLUTE *time,
@@ -115,7 +116,7 @@ static int i2r_OSSL_TIME_SPEC_ABSOLUTE(X509V3_EXT_METHOD *method,
             return 0;
         if (!ossl_asn1_time_print_ex(out, time->endTime, 0))
             return 0;
-    } else {/* Invalid: there must be SOME time specified. */
+    } else { /* Invalid: there must be SOME time specified. */
         return BIO_puts(out, "INVALID (EMPTY)");
     }
     return 1;
@@ -435,6 +436,7 @@ static int print_int_named_day(BIO *out, int64_t nd)
 static int print_bit_named_day(BIO *out, ASN1_BIT_STRING *bs)
 {
     int i = 0;
+
     if (ASN1_BIT_STRING_get_bit(bs, OSSL_NAMED_DAY_BIT_SUN)) {
         if (i > 0 && !BIO_puts(out, ", "))
             return 0;
@@ -532,77 +534,73 @@ static int i2r_OSSL_PERIOD(X509V3_EXT_METHOD *method,
         }
 
         switch (p->days->type) {
-            case (OSSL_TIME_SPEC_DAY_TYPE_INT):
-                for (i = 0; i < sk_ASN1_INTEGER_num(p->days->choice.intDay); i++) {
-                    big_val = sk_ASN1_INTEGER_value(p->days->choice.intDay, i);
-                    if (!ASN1_INTEGER_get_int64(&small_val, big_val))
-                        return 0;
-                    if (i > 0 && !BIO_puts(out, ", "))
-                        return 0;
-                    /* If weeks is defined, then print day of week by name. */
-                    if (p->weeks != NULL) {
-                        if (!print_int_day_of_week(out, small_val))
-                            return 0;
-                    } else if (BIO_printf(out, "%ld", small_val) <= 0)
-                        return 0;
-                }
-                break;
-            case (OSSL_TIME_SPEC_DAY_TYPE_BIT):
-                if (!print_day_of_week(out, p->days->choice.bitDay))
+        case (OSSL_TIME_SPEC_DAY_TYPE_INT):
+            for (i = 0; i < sk_ASN1_INTEGER_num(p->days->choice.intDay); i++) {
+                big_val = sk_ASN1_INTEGER_value(p->days->choice.intDay, i);
+                if (!ASN1_INTEGER_get_int64(&small_val, big_val))
                     return 0;
-                break;
-            case (OSSL_TIME_SPEC_DAY_TYPE_DAY_OF):
-                switch (p->days->choice.dayOf->type) {
-                case (OSSL_TIME_SPEC_X_DAY_OF_FIRST): {
-                    if (!BIO_puts(out, "FIRST "))
+                if (i > 0 && !BIO_puts(out, ", "))
+                    return 0;
+                /* If weeks is defined, then print day of week by name. */
+                if (p->weeks != NULL) {
+                    if (!print_int_day_of_week(out, small_val))
                         return 0;
-                    nd = p->days->choice.dayOf->choice.first;
-                    break;
-                }
-                case (OSSL_TIME_SPEC_X_DAY_OF_SECOND): {
-                    if (!BIO_puts(out, "SECOND "))
-                        return 0;
-                    nd = p->days->choice.dayOf->choice.second;
-                    break;
-                }
-                case (OSSL_TIME_SPEC_X_DAY_OF_THIRD): {
-                    if (!BIO_puts(out, "THIRD "))
-                        return 0;
-                    nd = p->days->choice.dayOf->choice.third;
-                    break;
-                }
-                case (OSSL_TIME_SPEC_X_DAY_OF_FOURTH): {
-                    if (!BIO_puts(out, "FOURTH "))
-                        return 0;
-                    nd = p->days->choice.dayOf->choice.fourth;
-                    break;
-                }
-                case (OSSL_TIME_SPEC_X_DAY_OF_FIFTH): {
-                    if (!BIO_puts(out, "FIFTH "))
-                        return 0;
-                    nd = p->days->choice.dayOf->choice.fifth;
-                    break;
-                }
-                default:
+                } else if (BIO_printf(out, "%ld", small_val) <= 0) {
                     return 0;
                 }
-                switch (nd->type) {
-                    case (OSSL_NAMED_DAY_TYPE_INT):
-                        if (!ASN1_INTEGER_get_int64(&small_val, nd->choice.intNamedDays))
-                            return 0;
-                        if (!print_int_named_day(out, small_val))
-                            return 0;
-                        break;
-                    case (OSSL_NAMED_DAY_TYPE_BIT):
-                        if (!print_bit_named_day(out, nd->choice.bitNamedDays))
-                            return 0;
-                        break;
-                    default:
-                        return 0;
-                }
+            }
+            break;
+        case (OSSL_TIME_SPEC_DAY_TYPE_BIT):
+            if (!print_day_of_week(out, p->days->choice.bitDay))
+                return 0;
+            break;
+        case (OSSL_TIME_SPEC_DAY_TYPE_DAY_OF):
+            switch (p->days->choice.dayOf->type) {
+            case (OSSL_TIME_SPEC_X_DAY_OF_FIRST):
+                if (!BIO_puts(out, "FIRST "))
+                    return 0;
+                nd = p->days->choice.dayOf->choice.first;
+                break;
+            case (OSSL_TIME_SPEC_X_DAY_OF_SECOND):
+                if (!BIO_puts(out, "SECOND "))
+                    return 0;
+                nd = p->days->choice.dayOf->choice.second;
+                break;
+            case (OSSL_TIME_SPEC_X_DAY_OF_THIRD):
+                if (!BIO_puts(out, "THIRD "))
+                    return 0;
+                nd = p->days->choice.dayOf->choice.third;
+                break;
+            case (OSSL_TIME_SPEC_X_DAY_OF_FOURTH):
+                if (!BIO_puts(out, "FOURTH "))
+                    return 0;
+                nd = p->days->choice.dayOf->choice.fourth;
+                break;
+            case (OSSL_TIME_SPEC_X_DAY_OF_FIFTH):
+                if (!BIO_puts(out, "FIFTH "))
+                    return 0;
+                nd = p->days->choice.dayOf->choice.fifth;
                 break;
             default:
                 return 0;
+            }
+            switch (nd->type) {
+            case (OSSL_NAMED_DAY_TYPE_INT):
+                if (!ASN1_INTEGER_get_int64(&small_val, nd->choice.intNamedDays))
+                    return 0;
+                if (!print_int_named_day(out, small_val))
+                    return 0;
+                break;
+            case (OSSL_NAMED_DAY_TYPE_BIT):
+                if (!print_bit_named_day(out, nd->choice.bitNamedDays))
+                    return 0;
+                break;
+            default:
+                return 0;
+            }
+            break;
+        default:
+            return 0;
         }
         if (!BIO_puts(out, "\n"))
             return 0;
