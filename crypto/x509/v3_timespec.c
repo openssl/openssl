@@ -11,6 +11,7 @@
 #include <openssl/asn1t.h>
 #include <openssl/x509v3.h>
 #include <crypto/asn1.h>
+#include <ext_dat.h>
 
 ASN1_SEQUENCE(OSSL_TIME_SPEC_ABSOLUTE) = {
     ASN1_EXP_OPT(OSSL_TIME_SPEC_ABSOLUTE, startTime, ASN1_GENERALIZEDTIME, 0),
@@ -114,8 +115,9 @@ static int i2r_OSSL_TIME_SPEC_ABSOLUTE(X509V3_EXT_METHOD *method,
             return 0;
         if (!ossl_asn1_time_print_ex(out, time->endTime, 0))
             return 0;
-    } else /* Invalid: there must be SOME time specified. */
+    } else {/* Invalid: there must be SOME time specified. */
         return BIO_puts(out, "INVALID (EMPTY)");
+    }
     return 1;
 }
 
@@ -123,11 +125,11 @@ static int i2r_OSSL_DAY_TIME(X509V3_EXT_METHOD *method,
                              OSSL_DAY_TIME *dt,
                              BIO *out, int indent)
 {
-    int64_t h;
-    int64_t m;
-    int64_t s;
+    int64_t h = 0;
+    int64_t m = 0;
+    int64_t s = 0;
 
-    if (!ASN1_INTEGER_get_int64(&h, dt->hour))
+    if (!dt->hour || !ASN1_INTEGER_get_int64(&h, dt->hour))
         return 0;
     if (dt->minute && !ASN1_INTEGER_get_int64(&m, dt->minute))
         return 0;
@@ -143,15 +145,17 @@ static int i2r_OSSL_DAY_TIME_BAND(X509V3_EXT_METHOD *method,
     if (band->startDayTime) {
         if (!i2r_OSSL_DAY_TIME(method, band->startDayTime, out, indent))
             return 0;
-    } else if (!BIO_puts(out, "00:00:00"))
+    } else if (!BIO_puts(out, "00:00:00")) {
         return 0;
+    }
     if (!BIO_puts(out, " - "))
         return 0;
     if (band->endDayTime) {
         if (!i2r_OSSL_DAY_TIME(method, band->endDayTime, out, indent))
             return 0;
-    } else if (!BIO_puts(out, "23:59:59"))
+    } else if (!BIO_puts(out, "23:59:59")) {
         return 0;
+    }
     return 1;
 }
 
@@ -287,6 +291,7 @@ static int print_bit_month(BIO *out, ASN1_BIT_STRING *bs)
 static int print_bit_week(BIO *out, ASN1_BIT_STRING *bs)
 {
     int i = 0;
+
     if (ASN1_BIT_STRING_get_bit(bs, OSSL_TIME_SPEC_BIT_WEEKS_1)) {
         if (i > 0 && !BIO_puts(out, ", "))
             return 0;
@@ -328,6 +333,7 @@ static int print_bit_week(BIO *out, ASN1_BIT_STRING *bs)
 static int print_day_of_week(BIO *out, ASN1_BIT_STRING *bs)
 {
     int i = 0;
+
     if (ASN1_BIT_STRING_get_bit(bs, OSSL_TIME_SPEC_DAY_BIT_SUN)) {
         if (i > 0 && !BIO_puts(out, ", "))
             return 0;
@@ -383,15 +389,22 @@ static int print_day_of_week(BIO *out, ASN1_BIT_STRING *bs)
 static int print_int_day_of_week(BIO *out, int64_t month)
 {
     switch (month) {
-        case (OSSL_TIME_SPEC_DAY_INT_SUN): return BIO_puts(out, "SUN");
-        case (OSSL_TIME_SPEC_DAY_INT_MON): return BIO_puts(out, "MON");
-        case (OSSL_TIME_SPEC_DAY_INT_TUE): return BIO_puts(out, "TUE");
-        case (OSSL_TIME_SPEC_DAY_INT_WED): return BIO_puts(out, "WED");
-        case (OSSL_TIME_SPEC_DAY_INT_THU): return BIO_puts(out, "THU");
-        case (OSSL_TIME_SPEC_DAY_INT_FRI): return BIO_puts(out, "FRI");
-        case (OSSL_TIME_SPEC_DAY_INT_SAT): return BIO_puts(out, "SAT");
-        default:
-            return 0;
+    case (OSSL_TIME_SPEC_DAY_INT_SUN):
+        return BIO_puts(out, "SUN");
+    case (OSSL_TIME_SPEC_DAY_INT_MON):
+        return BIO_puts(out, "MON");
+    case (OSSL_TIME_SPEC_DAY_INT_TUE):
+        return BIO_puts(out, "TUE");
+    case (OSSL_TIME_SPEC_DAY_INT_WED):
+        return BIO_puts(out, "WED");
+    case (OSSL_TIME_SPEC_DAY_INT_THU):
+        return BIO_puts(out, "THU");
+    case (OSSL_TIME_SPEC_DAY_INT_FRI):
+        return BIO_puts(out, "FRI");
+    case (OSSL_TIME_SPEC_DAY_INT_SAT):
+        return BIO_puts(out, "SAT");
+    default:
+        return 0;
     }
     return 0;
 }
@@ -399,15 +412,22 @@ static int print_int_day_of_week(BIO *out, int64_t month)
 static int print_int_named_day(BIO *out, int64_t nd)
 {
     switch (nd) {
-        case (OSSL_NAMED_DAY_INT_SUN): return BIO_puts(out, "SUN");
-        case (OSSL_NAMED_DAY_INT_MON): return BIO_puts(out, "MON");
-        case (OSSL_NAMED_DAY_INT_TUE): return BIO_puts(out, "TUE");
-        case (OSSL_NAMED_DAY_INT_WED): return BIO_puts(out, "WED");
-        case (OSSL_NAMED_DAY_INT_THU): return BIO_puts(out, "THU");
-        case (OSSL_NAMED_DAY_INT_FRI): return BIO_puts(out, "FRI");
-        case (OSSL_NAMED_DAY_INT_SAT): return BIO_puts(out, "SAT");
-        default:
-            return 0;
+    case (OSSL_NAMED_DAY_INT_SUN):
+        return BIO_puts(out, "SUN");
+    case (OSSL_NAMED_DAY_INT_MON):
+        return BIO_puts(out, "MON");
+    case (OSSL_NAMED_DAY_INT_TUE):
+        return BIO_puts(out, "TUE");
+    case (OSSL_NAMED_DAY_INT_WED):
+        return BIO_puts(out, "WED");
+    case (OSSL_NAMED_DAY_INT_THU):
+        return BIO_puts(out, "THU");
+    case (OSSL_NAMED_DAY_INT_FRI):
+        return BIO_puts(out, "FRI");
+    case (OSSL_NAMED_DAY_INT_SAT):
+        return BIO_puts(out, "SAT");
+    default:
+        return 0;
     }
     return 0;
 }
@@ -570,7 +590,7 @@ static int i2r_OSSL_PERIOD(X509V3_EXT_METHOD *method,
                     case (OSSL_NAMED_DAY_TYPE_INT):
                         if (!ASN1_INTEGER_get_int64(&small_val, nd->choice.intNamedDays))
                             return 0;
-                        if (!print_int_named_day(out, day))
+                        if (!print_int_named_day(out, small_val))
                             return 0;
                         break;
                     case (OSSL_NAMED_DAY_TYPE_BIT):
@@ -634,33 +654,30 @@ static int i2r_OSSL_PERIOD(X509V3_EXT_METHOD *method,
         if (BIO_printf(out, "%*sMonths: ", indent + 4, "") <= 0)
             return 0;
         switch (p->months->type) {
-            case (OSSL_TIME_SPEC_MONTH_TYPE_ALL): {
-                if (!BIO_puts(out, "ALL"))
-                    return 0;
-                break;
-            }
-            case (OSSL_TIME_SPEC_MONTH_TYPE_INT): {
-                for (i = 0; i < sk_ASN1_INTEGER_num(p->months->choice.intMonth); i++) {
-                    ASN1_INTEGER *big_month;
-                    int64_t month;
-
-                    big_month = sk_ASN1_INTEGER_value(p->months->choice.intMonth, i);
-                    if (!ASN1_INTEGER_get_int64(&month, big_month))
-                        return 0;
-                    if (i > 0 && !BIO_puts(out, ", "))
-                        return 0;
-                    if (!print_int_month(out, month))
-                        return 0;
-                }
-                break;
-            }
-            case (OSSL_TIME_SPEC_MONTH_TYPE_BIT): {
-                if (!print_bit_month(out, p->months->choice.bitMonth))
-                    return 0;
-                break;
-            }
-            default:
+        case (OSSL_TIME_SPEC_MONTH_TYPE_ALL):
+            if (!BIO_puts(out, "ALL"))
                 return 0;
+            break;
+        case (OSSL_TIME_SPEC_MONTH_TYPE_INT):
+            for (i = 0; i < sk_ASN1_INTEGER_num(p->months->choice.intMonth); i++) {
+                ASN1_INTEGER *big_month;
+                int64_t month;
+
+                big_month = sk_ASN1_INTEGER_value(p->months->choice.intMonth, i);
+                if (!ASN1_INTEGER_get_int64(&month, big_month))
+                    return 0;
+                if (i > 0 && !BIO_puts(out, ", "))
+                    return 0;
+                if (!print_int_month(out, month))
+                    return 0;
+            }
+            break;
+        case (OSSL_TIME_SPEC_MONTH_TYPE_BIT):
+            if (!print_bit_month(out, p->months->choice.bitMonth))
+                return 0;
+            break;
+        default:
+            return 0;
         }
         if (!BIO_puts(out, "\n"))
             return 0;
