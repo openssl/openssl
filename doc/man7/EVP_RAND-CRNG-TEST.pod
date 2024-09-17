@@ -23,7 +23,7 @@ If a parent EVP_RAND is specified on context creation, the parent's
 parameters are supported because the request is forwarded to the parent
 seed source for processing.
 
-If no parent EVP_RAND is specified on contexst creation, the following parameters
+If no parent EVP_RAND is specified on context creation, the following parameters
 are supported:
 
 =over 4
@@ -44,7 +44,7 @@ This parameter works as described in L<provider-rand(7)/PARAMETERS>.
 
 =head1 NOTES
 
-This EVP_RAND is only implemented by the FIPS provider.
+This EVP_RAND is only implemented by the OpenSSL FIPS provider.
 
 A context for a health test filter can be obtained by calling:
 
