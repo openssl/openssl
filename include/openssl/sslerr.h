@@ -36,6 +36,7 @@
 # define SSL_R_BAD_DIGEST_LENGTH                          111
 # define SSL_R_BAD_EARLY_DATA                             233
 # define SSL_R_BAD_ECC_CERT                               304
+# define SSL_R_BAD_ECHCONFIG_EXTENSION                    422
 # define SSL_R_BAD_ECPOINT                                306
 # define SSL_R_BAD_EXTENSION                              110
 # define SSL_R_BAD_HANDSHAKE_LENGTH                       332

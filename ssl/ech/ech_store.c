@@ -197,6 +197,7 @@ static int ech_decode_echconfig_exts(OSSL_ECHSTORE_ENTRY *ee, PACKET *exts)
     unsigned int exttype = 0, extlen = 0;
     unsigned char *extval = NULL;
     OSSL_ECHEXT *oe = NULL;
+    PACKET ext;
 
     /*
      * reminder: exts is a two-octet length prefixed list of:
@@ -209,18 +210,22 @@ static int ech_decode_echconfig_exts(OSSL_ECHSTORE_ENTRY *ee, PACKET *exts)
         exttype = 0, extlen = 0;
         extval = NULL;
         oe = NULL;
-        if (!PACKET_get_net_2(exts, &exttype)
-            || !PACKET_get_net_2(exts, &extlen)
-            || extlen >= OSSL_ECH_MAX_ECHCONFIGEXT_LEN) {
-            ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        if (!PACKET_get_net_2(exts, &exttype) ||
+            !PACKET_get_length_prefixed_2(exts, &ext)) {
+            ERR_raise(ERR_LIB_SSL, SSL_R_BAD_ECHCONFIG_EXTENSION);
+            goto err;
+        }
+        extlen = PACKET_remaining(&ext);
+        if (extlen >= OSSL_ECH_MAX_ECHCONFIGEXT_LEN) {
+            ERR_raise(ERR_LIB_SSL, SSL_R_BAD_ECHCONFIG_EXTENSION);
             goto err;
         }
         if (extlen != 0) {
             extval = (unsigned char *)OPENSSL_malloc(extlen);
             if (extval == NULL)
                 goto err;
-            if (!PACKET_copy_bytes(exts, extval, extlen)) {
-                ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+            if (!PACKET_copy_bytes(&ext, extval, extlen)) {
+                ERR_raise(ERR_LIB_SSL, SSL_R_BAD_ECHCONFIG_EXTENSION);
                 goto err;
             }
         }
@@ -244,7 +249,7 @@ static int ech_decode_echconfig_exts(OSSL_ECHSTORE_ENTRY *ee, PACKET *exts)
     return 1;
 err:
     sk_OSSL_ECHEXT_pop_free(ee->exts, ossl_echext_free);
-    ee->exts = 0;
+    ee->exts = NULL;
     ossl_echext_free(oe);
     OPENSSL_free(extval);
     return 0;
@@ -300,14 +305,12 @@ static int ech_final_config_checks(OSSL_ECHSTORE_ENTRY *ee)
 /**
  * @brief decode one ECHConfig from a packet into an entry
  * @param rent ptr to an entry allocated within (on success)
- * @param olen is length of the overall buffer containing encoding
  * @param pkt is the encoding
  * @param priv is an optional private key (NULL if absent)
  * @param for_retry says whether to include in a retry_config (if priv present)
  * @return 1 for success, 0 for error
  */
-static int ech_decode_one_entry(OSSL_ECHSTORE_ENTRY **rent,
-                                size_t olen, PACKET *pkt,
+static int ech_decode_one_entry(OSSL_ECHSTORE_ENTRY **rent, PACKET *pkt,
                                 EVP_PKEY *priv, int for_retry)
 {
     unsigned int ech_content_length = 0, tmpi;
@@ -337,11 +340,6 @@ static int ech_decode_one_entry(OSSL_ECHSTORE_ENTRY **rent,
         goto err;
     }
     ee->version = (uint16_t) tmpi;
-    /* the length of one ECHConfig can't be more than that of the list */
-    if (ech_content_length >= olen) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
     remaining = PACKET_remaining(pkt);
     if (ech_content_length > (remaining + 2)) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
@@ -518,7 +516,7 @@ static int ech_decode_and_flatten(OSSL_ECHSTORE *es, EVP_PKEY *priv,
     remaining = PACKET_remaining(&pkt);
     while (remaining > not_to_consume) {
 
-        if (ech_decode_one_entry(&ee, olen, &pkt, priv, for_retry) != 1) {
+        if (ech_decode_one_entry(&ee, &pkt, priv, for_retry) != 1) {
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
             goto err;
         }
