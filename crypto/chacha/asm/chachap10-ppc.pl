@@ -1032,10 +1032,10 @@ $code.=<<___;
 	vadduwm	$xcn0,$xcn4,@K[2]
 	vadduwm	$xdn0,$xdn4,@K[3]
 
-	be?vperm $xan0,$xa4,$xa4,$beperm
-	be?vperm $xbn0,$xb4,$xb4,$beperm
-	be?vperm $xcn0,$xcn4,$xcn4,$beperm
-	be?vperm $xdn0,$xdn4,$xdn4,$beperm
+	be?vperm $xan0,$xan0,$xan0,$beperm
+	be?vperm $xbn0,$xbn0,$xbn0,$beperm
+	be?vperm $xcn0,$xcn0,$xcn0,$beperm
+	be?vperm $xdn0,$xdn0,$xdn0,$beperm
 
 	${UCMP}i $len,0x40
 	blt	Ltail_vsx_8x_1
