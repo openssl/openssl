@@ -546,7 +546,7 @@ static int i2r_OSSL_PERIOD(X509V3_EXT_METHOD *method,
                 if (p->weeks != NULL) {
                     if (!print_int_day_of_week(out, small_val))
                         return 0;
-                } else if (BIO_printf(out, "%ld", small_val) <= 0) {
+                } else if (BIO_printf(out, "%lld", (long long int)small_val) <= 0) {
                     return 0;
                 }
             }
@@ -627,15 +627,12 @@ static int i2r_OSSL_PERIOD(X509V3_EXT_METHOD *method,
             break;
         case (OSSL_TIME_SPEC_WEEKS_TYPE_INT):
             for (i = 0; i < sk_ASN1_INTEGER_num(p->weeks->choice.intWeek); i++) {
-                ASN1_INTEGER *big_week;
-                int64_t week;
-
-                big_week = sk_ASN1_INTEGER_value(p->weeks->choice.intWeek, i);
-                if (!ASN1_INTEGER_get_int64(&week, big_week))
+                big_val = sk_ASN1_INTEGER_value(p->weeks->choice.intWeek, i);
+                if (!ASN1_INTEGER_get_int64(&small_val, big_val))
                     return 0;
                 if (i > 0 && !BIO_puts(out, ", "))
                     return 0;
-                if (!BIO_printf(out, "%ld", week))
+                if (!BIO_printf(out, "%lld", (long long int)small_val))
                     return 0;
             }
             break;
@@ -659,15 +656,12 @@ static int i2r_OSSL_PERIOD(X509V3_EXT_METHOD *method,
             break;
         case (OSSL_TIME_SPEC_MONTH_TYPE_INT):
             for (i = 0; i < sk_ASN1_INTEGER_num(p->months->choice.intMonth); i++) {
-                ASN1_INTEGER *big_month;
-                int64_t month;
-
-                big_month = sk_ASN1_INTEGER_value(p->months->choice.intMonth, i);
-                if (!ASN1_INTEGER_get_int64(&month, big_month))
+                big_val = sk_ASN1_INTEGER_value(p->months->choice.intMonth, i);
+                if (!ASN1_INTEGER_get_int64(&small_val, big_val))
                     return 0;
                 if (i > 0 && !BIO_puts(out, ", "))
                     return 0;
-                if (!print_int_month(out, month))
+                if (!print_int_month(out, small_val))
                     return 0;
             }
             break;
@@ -690,7 +684,7 @@ static int i2r_OSSL_PERIOD(X509V3_EXT_METHOD *method,
                 return 0;
             if (i > 0 && !BIO_puts(out, ", "))
                 return 0;
-            if (BIO_printf(out, "%04ld", small_val) <= 0)
+            if (BIO_printf(out, "%04lld", (long long int)small_val) <= 0)
                 return 0;
         }
     }
@@ -737,7 +731,7 @@ static int i2r_OSSL_TIME_SPEC(X509V3_EXT_METHOD *method,
     if (time->timeZone) {
         if (ASN1_INTEGER_get_int64(&tz, time->timeZone) != 1)
             return 0;
-        if (BIO_printf(out, "%*sTimezone: UTC%+03ld:00\n", indent, "", tz) <= 0)
+        if (BIO_printf(out, "%*sTimezone: UTC%+03lld:00\n", indent, "", (long long int)tz) <= 0)
             return 0;
     }
     if (time->notThisTime > 0) {
