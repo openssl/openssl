@@ -573,7 +573,7 @@ static int ech_ingest_test(int run)
     OSSL_ECHSTORE *es = NULL;
     OSSL_ECH_INFO *ei = NULL;
     BIO *in = NULL, *out = NULL;
-    int i, rv = 0, keysb4, keysaftr, actual_ents;
+    int i, rv = 0, keysb4, keysaftr, actual_ents = 0;
     ingest_tv_t *tv = &ingest_tvs[run];
     time_t now = 0;
 
