@@ -803,6 +803,9 @@ int OSSL_ECHSTORE_write_pem(OSSL_ECHSTORE *es, int index, BIO *out)
 {
     OSSL_ECHSTORE_ENTRY *ee = NULL;
     int rv = 0, num = 0, chosen = 0, doall = 0;
+    WPACKET epkt; /* used if we want to merge ECHConfigs for output */
+    BUF_MEM *epkt_mem = NULL;
+    size_t allencoded_len;
 
     if (es == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
@@ -823,15 +826,17 @@ int OSSL_ECHSTORE_write_pem(OSSL_ECHSTORE *es, int index, BIO *out)
         chosen = num - 1;
     else
         chosen = index;
+    memset(&epkt, 0, sizeof(epkt));
     if (doall == 0) {
         ee = sk_OSSL_ECHSTORE_ENTRY_value(es->entries, chosen);
-        if (ee == NULL || ee->keyshare == NULL || ee->encoded == NULL) {
+        if (ee == NULL || ee->encoded == NULL) {
             ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
             return 0;
         }
         /* private key first */
-        if (!PEM_write_bio_PrivateKey(out, ee->keyshare, NULL, NULL, 0,
-                                      NULL, NULL)) {
+        if (ee->keyshare != NULL 
+            && !PEM_write_bio_PrivateKey(out, ee->keyshare, NULL, NULL, 0,
+                                         NULL, NULL)) {
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
             goto err;
         }
@@ -841,21 +846,41 @@ int OSSL_ECHSTORE_write_pem(OSSL_ECHSTORE *es, int index, BIO *out)
             goto err;
         }
     } else {
+        /* catenate the encodings into one */
+        if ((epkt_mem = BUF_MEM_new()) == NULL
+            || !BUF_MEM_grow(epkt_mem, OSSL_ECH_MAX_ECHCONFIG_LEN)
+            || !WPACKET_init(&epkt, epkt_mem)
+            || !WPACKET_start_sub_packet_u16(&epkt)) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
         for (chosen = 0; chosen != num; chosen++) {
             ee = sk_OSSL_ECHSTORE_ENTRY_value(es->entries, chosen);
             if (ee == NULL || ee->encoded == NULL) {
                 ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
                 return 0;
             }
-            if (PEM_write_bio(out, PEM_STRING_ECHCONFIG, NULL,
-                              ee->encoded, ee->encoded_len) <= 0) {
+            if (!WPACKET_memcpy(&epkt, ee->encoded, ee->encoded_len)) { 
                 ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
         }
+        if (!WPACKET_close(&epkt)) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+        WPACKET_get_total_written(&epkt, &allencoded_len);
+        if (PEM_write_bio(out, PEM_STRING_ECHCONFIG, NULL,
+                          (unsigned char *)epkt_mem->data,
+                          allencoded_len) <= 0) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
     }
     rv = 1;
 err:
+    WPACKET_cleanup(&epkt);
+    BUF_MEM_free(epkt_mem);
     return rv;
 }
 

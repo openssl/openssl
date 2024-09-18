@@ -178,10 +178,10 @@ int ech_main(int argc, char **argv)
         goto end;
     }
 
-    if (max_name_length > TLSEXT_MAXLEN_host_name) {
+    if (max_name_length > OSSL_ECH_MAX_MAXNAMELEN) {
         BIO_printf(bio_err, "Weird max name length (0x%04x) - biggest is "
                    "(0x%04x) - exiting\n", max_name_length,
-                   TLSEXT_MAXLEN_host_name);
+                   OSSL_ECH_MAX_MAXNAMELEN);
         ERR_print_errors(bio_err);
         goto end;
     }
@@ -238,6 +238,8 @@ int ech_main(int argc, char **argv)
             /* write result to that, with downselection if required */
             if (verbose)
                 BIO_printf(bio_err, "Will write to %s\n", outfile);
+            if (verbose && select != OSSL_ECHSTORE_ALL)
+                BIO_printf(bio_err, "Selected entry: %d\n", select);
             if ((ecf = BIO_new_file(outfile, "w")) == NULL
                 || OSSL_ECHSTORE_write_pem(es, select, ecf) != 1) {
                 BIO_printf(bio_err, "OSSL_ECHSTORE_write_pem error\n");
@@ -258,6 +260,7 @@ int ech_main(int argc, char **argv)
         if (verbose)
             BIO_printf(bio_err, "Printing %d ECHConfigList\n", oi_cnt);
         for (oi_ind = 0; oi_ind != oi_cnt; oi_ind++) {
+            BIO_printf(bio_out, "%d: ", oi_ind);
             if (OSSL_ECH_INFO_print(bio_out, oi, oi_ind) != 1) {
                 BIO_printf(bio_err, "OSSL_ECH_INFO_print error entry (%d)\n",
                            oi_ind);
@@ -276,8 +279,8 @@ end:
     return rv;
 opthelp:
     BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
-    BIO_printf(bio_err, "\tup to %d -in instances allowed", OSSL_ECH_MAXINFILES);
-    return 0;
+    BIO_printf(bio_err, "\tup to %d -in instances allowed\n", OSSL_ECH_MAXINFILES);
+    return rv;
 }
 
 #endif
