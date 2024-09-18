@@ -83,7 +83,7 @@ int ech_main(int argc, char **argv)
     int i, rv = 1, verbose = 0, text = 0, outsupp = 0;
     int select = OSSL_ECHSTORE_ALL;
     char *outfile = NULL, *infile = NULL;
-    char *infiles[OSSL_ECH_MAXINFILES];
+    char *infiles[OSSL_ECH_MAXINFILES] = { 0 };
     int numinfiles = 0;
     char *public_name = NULL;
     char *suitestr = NULL;
@@ -93,8 +93,6 @@ int ech_main(int argc, char **argv)
     int mode = OSSL_ECH_KEYGEN_MODE; /* key generation */
     OSSL_ECHSTORE *es = NULL;
     BIO *ecf = NULL;
-
-    memset(infiles, 0, sizeof(infiles));
 
     prog = opt_init(argc, argv, ech_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -260,7 +258,6 @@ int ech_main(int argc, char **argv)
         if (verbose)
             BIO_printf(bio_err, "Printing %d ECHConfigList\n", oi_cnt);
         for (oi_ind = 0; oi_ind != oi_cnt; oi_ind++) {
-            BIO_printf(bio_out, "%d: ", oi_ind);
             if (OSSL_ECH_INFO_print(bio_out, oi, oi_ind) != 1) {
                 BIO_printf(bio_err, "OSSL_ECH_INFO_print error entry (%d)\n",
                            oi_ind);

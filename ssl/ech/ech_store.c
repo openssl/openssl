@@ -41,7 +41,7 @@
  * been given for an RR value or ECHConfig.
  * We give these the EBCDIC treatment as well - why not? :-)
  */
-static const char *B64_alphabet =
+static const char B64_alphabet[] =
     "\x41\x42\x43\x44\x45\x46\x47\x48\x49\x4a\x4b\x4c\x4d\x4e\x4f\x50\x51\x52"
     "\x53\x54\x55\x56\x57\x58\x59\x5a\x61\x62\x63\x64\x65\x66\x67\x68\x69\x6a"
     "\x6b\x6c\x6d\x6e\x6f\x70\x71\x72\x73\x74\x75\x76\x77\x78\x79\x7a\x30\x31"
@@ -165,7 +165,7 @@ err:
  * @param guessedfmt is the detected format
  * @return 1 for success, 0 for error
  */
-static int ech_check_format(unsigned char *val, size_t len, int *fmt)
+static int ech_check_format(const unsigned char *val, size_t len, int *fmt)
 {
     size_t span = 0;
 
@@ -229,7 +229,7 @@ static int ech_decode_echconfig_exts(OSSL_ECHSTORE_ENTRY *ee, PACKET *exts)
                 goto err;
             }
         }
-        oe = (OSSL_ECHEXT *)OPENSSL_malloc(sizeof(*oe));
+        oe = OPENSSL_malloc(sizeof(*oe));
         if (oe == NULL)
             goto err;
         oe->type = exttype;
@@ -380,7 +380,7 @@ static int ech_decode_one_entry(OSSL_ECHSTORE_ENTRY **rent, PACKET *pkt,
         ee->suites[ci].kem_id = thiskemid;
         ee->suites[ci].kdf_id = cipher[0] << 8 | cipher [1];
         ee->suites[ci].aead_id = cipher[2] << 8 | cipher [3];
-        if (ci++ > ee->nsuites) {
+        if (ci++ >= ee->nsuites) {
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
             goto err;
         }
@@ -472,7 +472,7 @@ static int ech_decode_and_flatten(OSSL_ECHSTORE *es, EVP_PKEY *priv, int for_ret
 
     if (binbuf == NULL || binblen == 0 || binblen < OSSL_ECH_MIN_ECHCONFIG_LEN
         || binblen >= OSSL_ECH_MAX_ECHCONFIG_LEN) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
         goto err;
     }
     /*
@@ -532,7 +532,7 @@ static int ech_read_priv_echconfiglist(OSSL_ECHSTORE *es, BIO *in,
     BIO *btmp, *btmp1;
 
     if (es == NULL || in == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
     if (ech_bio2buf(in, &encodedval, &encodedlen) != 1) {
@@ -834,7 +834,7 @@ int OSSL_ECHSTORE_write_pem(OSSL_ECHSTORE *es, int index, BIO *out)
             return 0;
         }
         /* private key first */
-        if (ee->keyshare != NULL 
+        if (ee->keyshare != NULL
             && !PEM_write_bio_PrivateKey(out, ee->keyshare, NULL, NULL, 0,
                                          NULL, NULL)) {
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
@@ -860,7 +860,7 @@ int OSSL_ECHSTORE_write_pem(OSSL_ECHSTORE *es, int index, BIO *out)
                 ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
                 return 0;
             }
-            if (!WPACKET_memcpy(&epkt, ee->encoded, ee->encoded_len)) { 
+            if (!WPACKET_memcpy(&epkt, ee->encoded, ee->encoded_len)) {
                 ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
@@ -1140,16 +1140,17 @@ void OSSL_ECH_INFO_free(OSSL_ECH_INFO *info, int count)
     return;
 }
 
-int OSSL_ECH_INFO_print(BIO *out, OSSL_ECH_INFO *info, int count)
+int OSSL_ECH_INFO_print(BIO *out, OSSL_ECH_INFO *info, int index)
 {
     if (out == NULL || info == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    BIO_printf(out, "ECH entry: %d public_name: %s%s\n",
-               count + 1, info[count].public_name,
-               info[count].has_private_key ? " (has private key)" : "");
-    BIO_printf(out, "\t%s\n", info[count].echconfig);
+    BIO_printf(out, "ECH entry: %d public_name: %s age: %d%s\n",
+               index, info[index].public_name,
+               (int)info[index].seconds_in_memory,
+               info[index].has_private_key ? " (has private key)" : "");
+    BIO_printf(out, "\t%s\n", info[index].echconfig);
     return 1;
 }
 

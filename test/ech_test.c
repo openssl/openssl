@@ -592,13 +592,13 @@ static int ech_ingest_test(int run)
     if (tv->pemenc == 1
         && !TEST_int_eq(OSSL_ECHSTORE_read_pem(es, in, OSSL_ECH_NO_RETRY),
                         tv->read)) {
-        TEST_info("OSSL_ECSTORE_read_pem unexpected result");
+        TEST_info("OSSL_ECHSTORE_read_pem unexpected result");
         goto end;
     }
     if (tv->pemenc != 1
         && !TEST_int_eq(OSSL_ECHSTORE_read_echconfiglist(es, in),
                         tv->read)) {
-        TEST_info("OSSL_ECSTORE_read_echconfiglist unexpected result");
+        TEST_info("OSSL_ECHSTORE_read_echconfiglist unexpected result");
         goto end;
     }
     /* if we provided a deliberately bad tv then we're done */
@@ -607,15 +607,15 @@ static int ech_ingest_test(int run)
         goto end;
     }
     if (!TEST_int_eq(OSSL_ECHSTORE_num_keys(es, &keysb4), 1)) {
-        TEST_info("OSSL_ECSTORE_num_keys unexpected fail");
+        TEST_info("OSSL_ECHSTORE_num_keys unexpected fail");
         goto end;
     }
     if (!TEST_int_eq(keysb4, tv->keysb4)) {
-        TEST_info("OSSL_ECSTORE_num_keys unexpected number of keys (b4)");
+        TEST_info("OSSL_ECHSTORE_num_keys unexpected number of keys (b4)");
         goto end;
     }
     if (!TEST_int_eq(OSSL_ECHSTORE_get1_info(es, &ei, &actual_ents), 1)) {
-        TEST_info("OSSL_ECSTORE_get1_info unexpected fail");
+        TEST_info("OSSL_ECHSTORE_get1_info unexpected fail");
         goto end;
     }
     for (i = 0; i != actual_ents; i++) {
@@ -626,48 +626,48 @@ static int ech_ingest_test(int run)
         }
     }
     if (!TEST_int_eq(actual_ents, tv->entsb4)) {
-        TEST_info("OSSL_ECSTORE_get1_info unexpected number of entries (b4)");
+        TEST_info("OSSL_ECHSTORE_get1_info unexpected number of entries (b4)");
         goto end;
     }
     OSSL_ECH_INFO_free(ei, actual_ents);
     ei = NULL;
     if (!TEST_int_eq(OSSL_ECHSTORE_downselect(es, tv->index), tv->expected)) {
-        TEST_info("OSSL_ECSTORE_downselect unexpected result");
+        TEST_info("OSSL_ECHSTORE_downselect unexpected result");
         goto end;
     }
     if (!TEST_int_eq(OSSL_ECHSTORE_num_keys(es, &keysaftr), 1)) {
-        TEST_info("OSSL_ECSTORE_num_keys unexpected fail");
+        TEST_info("OSSL_ECHSTORE_num_keys unexpected fail");
         goto end;
     }
     if (!TEST_int_eq(keysaftr, tv->keysaftr)) {
-        TEST_info("OSSL_ECSTORE_num_keys unexpected number of keys (aftr)");
+        TEST_info("OSSL_ECHSTORE_num_keys unexpected number of keys (aftr)");
         goto end;
     }
     if (!TEST_int_eq(OSSL_ECHSTORE_get1_info(es, &ei, &actual_ents), 1)) {
-        TEST_info("OSSL_ECSTORE_get1_info unexpected fail");
+        TEST_info("OSSL_ECHSTORE_get1_info unexpected fail");
         goto end;
     }
     OSSL_ECH_INFO_free(ei, actual_ents);
     ei = NULL;
     if (!TEST_int_eq(actual_ents, tv->entsaftr)) {
-        TEST_info("OSSL_ECSTORE_get1_info unexpected number of entries (aftr)");
+        TEST_info("OSSL_ECHSTORE_get1_info unexpected number of entries (aftr)");
         goto end;
     }
     if (!TEST_int_eq(OSSL_ECHSTORE_write_pem(es, OSSL_ECHSTORE_ALL, out), 1)) {
-        TEST_info("OSSL_ECSTORE_write_pem unexpected fail");
+        TEST_info("OSSL_ECHSTORE_write_pem unexpected fail");
         goto end;
     }
     now = time(0);
     if (!TEST_int_eq(OSSL_ECHSTORE_flush_keys(es, now), 1)) {
-        TEST_info("OSSL_ECSTORE_flush_keys unexpected fail");
+        TEST_info("OSSL_ECHSTORE_flush_keys unexpected fail");
         goto end;
     }
     if (!TEST_int_eq(OSSL_ECHSTORE_num_keys(es, &keysaftr), 1)) {
-        TEST_info("OSSL_ECSTORE_num_keys unexpected fail");
+        TEST_info("OSSL_ECHSTORE_num_keys unexpected fail");
         goto end;
     }
     if (!TEST_int_eq(keysaftr, 0)) {
-        TEST_info("OSSL_ECSTORE_flush_keys unexpected non-zero");
+        TEST_info("OSSL_ECHSTORE_flush_keys unexpected non-zero");
         goto end;
     }
     rv = 1;
@@ -741,6 +741,10 @@ static int ech_store_null_calls(void)
         TEST_info("OSSL_ECHSTORE_get1_info unexpected non-zero");
         goto end;
     }
+    if (!TEST_int_eq(OSSL_ECHSTORE_get1_info(es, &info, &count), 1)) {
+        TEST_info("OSSL_ECHSTORE_get1_info unexpected zero");
+        goto end;
+    }
     if (!TEST_int_eq(OSSL_ECHSTORE_downselect(NULL, 0), 0)) {
         TEST_info("OSSL_ECHSTORE_downselect unexpected non-zero");
         goto end;
@@ -804,6 +808,7 @@ static int ech_store_null_calls(void)
         TEST_info("OSSL_ECHSTORE_flush_keys unexpected non-zero");
         goto end;
     }
+    /* check free NULL is ok */
     OSSL_ECH_INFO_free(NULL, 100);
     if (!TEST_int_eq(OSSL_ECH_INFO_print(inout, NULL, -1), 0)) {
         TEST_info("OSSL_ECHSTORE_flush_keys unexpected non-zero");
@@ -853,7 +858,7 @@ static int ech_test_file_read(int run)
     }
     if (!TEST_int_eq(OSSL_ECHSTORE_read_pem(es, in, OSSL_ECH_NO_RETRY),
                      ft->read)) {
-        TEST_info("OSSL_ECSTORE_read_pem unexpected fail");
+        TEST_info("OSSL_ECHSTORE_read_pem unexpected fail");
         goto end;
     }
     rv = 1;
