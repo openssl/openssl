@@ -27,7 +27,7 @@ ok(!run(app(["openssl", "ech", "-nohelpatall"])),
 ok(run(app(["openssl", "ech", "-help"])),
    "Run openssl ech with help");
 
-ok(run(app(["openssl", "ech", "-public_name", "example.com", "-out", "eg1.pem"])),
+ok(run(app(["openssl", "ech", "-public_name", "example.com", "-out", "eg1.pem", "-text"])),
    "Generate an ECH key pair for example.com");
 
 ok(run(app(["openssl", "ech", "-in", "eg1.pem", "-in", "eg1.pem", "-out", "eg2.pem", "-verbose"])),
