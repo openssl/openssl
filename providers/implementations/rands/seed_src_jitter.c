@@ -104,7 +104,7 @@ static size_t get_jitter_random_value(PROV_JITTER *s,
             break;
 
         /* Success */
-        if (result == len)
+        if (result >= 0 && (size_t)result == len)
             return len;
     }
 
