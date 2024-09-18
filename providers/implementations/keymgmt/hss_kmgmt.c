@@ -75,7 +75,7 @@ static int hss_has(const void *keydata, int selection)
     if ((selection & HSS_POSSIBLE_SELECTIONS) == 0)
         return 1; /* the selection is not missing */
 
-    key = sk_LMS_KEY_value(hsskey->lmskeys, 0);
+    key = LMS_KEY_get(hsskey, 0);
     if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
         ok = (key != NULL && key->pub.K != NULL);
     if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
@@ -95,8 +95,8 @@ static int hss_match(const void *keydata1, const void *keydata2, int selection)
     if (hsskey1 == NULL || hsskey2 == NULL)
         return 0;
 
-    key1 = sk_LMS_KEY_value(hsskey1->lmskeys, 0);
-    key2 = sk_LMS_KEY_value(hsskey2->lmskeys, 0);
+    key1 = LMS_KEY_get(hsskey1, 0);
+    key2 = LMS_KEY_get(hsskey2, 0);
     if (key1 == NULL || key2 == NULL)
         return 0;
 
@@ -145,7 +145,9 @@ static int hss_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
     if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) == 0)
         return 0;
 
-    lmskey = sk_LMS_KEY_value(hsskey->lmskeys, 0);
+    lmskey = LMS_KEY_get(hsskey, 0);
+    if (lmskey == NULL)
+        return 0;
 
     tmpl = OSSL_PARAM_BLD_new();
     if (tmpl == NULL)
@@ -268,7 +270,7 @@ static int hss_validate(const void *keydata, int selection, int checktype)
     if ((selection & HSS_POSSIBLE_SELECTIONS) == 0)
         return 1; /* nothing to validate */
 
-    lmskey = sk_LMS_KEY_value(hsskey->lmskeys, 0);
+    lmskey = LMS_KEY_get(hsskey, 0);
     return (lmskey->pub.encoded != NULL && lmskey->pub.encodedlen > 0);
 }
 
@@ -277,8 +279,9 @@ struct hss_gen_ctx {
     OSSL_LIB_CTX *libctx;
     const char *propq;
     uint32_t levels;
-    uint32_t lms_types[8];
-    uint32_t ots_types[8];
+    uint32_t lms_types[OSSL_HSS_MAX_L];
+    uint32_t ots_types[OSSL_HSS_MAX_L];
+    uint32_t gen_type;
 };
 
 static const char *ossl_hss_lms_type_names[] = {
@@ -341,14 +344,22 @@ static int hss_gen_set_params(void *genctx, const OSSL_PARAM params[])
 
     if (params == NULL)
         return 1;
+    p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_HSS_GEN_TYPE);
+    if (p != NULL) {
+        if (!OSSL_PARAM_get_uint32(p, &gctx->gen_type))
+            return 0;
+        if (gctx->gen_type != OSSL_HSS_KEYGEN_TYPE_DETERMINISTIC
+                && gctx->gen_type != OSSL_HSS_KEYGEN_TYPE_RANDOM)
+            return 0;
+    }
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_HSS_LEVELS);
     if (p != NULL) {
         if (!OSSL_PARAM_get_uint32(p, &gctx->levels))
             return 0;
-        if (gctx->levels == 0 || gctx->levels > 8)
+        if (gctx->levels < OSSL_HSS_MIN_L || gctx->levels > OSSL_HSS_MAX_L)
             return 0;
     }
-    for (i = 0; i < 8; ++i) {
+    for (i = 0; i < OSSL_HSS_MAX_L; ++i) {
         p = OSSL_PARAM_locate_const(params, ossl_hss_lms_type_names[i]);
         if (p != NULL && !OSSL_PARAM_get_uint32(p, &gctx->lms_types[i]))
             return 0;
@@ -380,6 +391,7 @@ static const OSSL_PARAM *hss_gen_settable_params(ossl_unused void *genctx,
         OSSL_PARAM_uint32(OSSL_PKEY_PARAM_HSS_OTS_TYPE_L6, NULL),
         OSSL_PARAM_uint32(OSSL_PKEY_PARAM_HSS_OTS_TYPE_L7, NULL),
         OSSL_PARAM_uint32(OSSL_PKEY_PARAM_HSS_OTS_TYPE_L8, NULL),
+        OSSL_PARAM_uint32(OSSL_PKEY_PARAM_HSS_GEN_TYPE, NULL),
         OSSL_PARAM_END
     };
     return settable;
@@ -400,7 +412,7 @@ static void *hss_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
         if (gctx->ots_types[i] == 0)
             return NULL;
     }
-    while (i < 8) {
+    while (i < OSSL_HSS_MAX_L) {
         if (gctx->lms_types[i] != 0)
             return NULL;
         if (gctx->ots_types[i] != 0)
@@ -411,7 +423,8 @@ static void *hss_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     if (key == NULL)
         return NULL;
     if (!ossl_hss_generate_key(key, gctx->levels,
-                               gctx->lms_types, gctx->ots_types)) {
+                               gctx->lms_types, gctx->ots_types,
+                               gctx->gen_type)) {
         ossl_hss_key_free(key);
         key = NULL;
     }

@@ -60,8 +60,8 @@ int ossl_hss_sign_init(HSS_KEY *hsskey)
      * Delay doing the signature generation here until ossl_hss_sign_final()
      * is called.
      */
-    lmskey = sk_LMS_KEY_value(hsskey->lmskeys, L - 1);
-    lmssig = sk_LMS_SIG_value(hsskey->lmssigs, L - 1);
+    lmskey = LMS_KEY_get(hsskey, L - 1);
+    lmssig = LMS_SIG_get(hsskey, L - 1);
     if (!ossl_lms_signature_gen_init(lmskey, lmssig))
         goto err;
 
@@ -77,7 +77,7 @@ err:
 int ossl_hss_sign_update(HSS_KEY *hsskey,
                          const unsigned char *msg, size_t msglen)
 {
-    LMS_KEY *lmskey = sk_LMS_KEY_value(hsskey->lmskeys, hsskey->L - 1);
+    LMS_KEY *lmskey = LMS_KEY_get(hsskey, hsskey->L - 1);
 
     return ossl_lms_signature_gen_update(lmskey, msg, msglen);
 }
@@ -90,9 +90,14 @@ int ossl_hss_sign_final(HSS_KEY *hsskey, unsigned char *outsig,
 {
     int ret = 0;
     uint32_t i, L = hsskey->L;
-    LMS_KEY *lmskey = sk_LMS_KEY_value(hsskey->lmskeys, L - 1);
-    LMS_SIG *lmssig = sk_LMS_SIG_value(hsskey->lmssigs, L - 1);
+    LMS_KEY *lmskey = LMS_KEY_get(hsskey, L - 1);
+    LMS_SIG *lmssig = LMS_SIG_get(hsskey, L - 1);
     WPACKET pkt;
+    /*
+     * The signature buffer size allows for
+     * q[4] || ots_type[4] || C[n] || y[p][n] || lms_type[4] || path[h][n]
+     * (where n <= LMS_MAX_DIGEST_SIZE, p <= 265 and h <= 25).
+     */
     unsigned char sigbuf[3 * 4 + LMS_MAX_DIGEST_SIZE * (1 + 265 + 25)];
     unsigned char *sigdata = (outsig != NULL) ? sigbuf : NULL;
     size_t len;
@@ -111,8 +116,8 @@ int ossl_hss_sign_final(HSS_KEY *hsskey, unsigned char *outsig,
         goto err;
     for (i = 0; i < L - 1; ++i) {
         /* Write out signed public keys */
-        lmssig = sk_LMS_SIG_value(hsskey->lmssigs, i);
-        lmskey = sk_LMS_KEY_value(hsskey->lmskeys, i + 1);
+        lmssig = LMS_SIG_get(hsskey, i);
+        lmskey = LMS_KEY_get(hsskey, i + 1);
         len = sizeof(sigbuf);
         if (!ossl_lms_sig_xdr_encode(lmssig, sigdata, &len)
                 || !WPACKET_memcpy(&pkt, sigdata, len)
@@ -122,7 +127,7 @@ int ossl_hss_sign_final(HSS_KEY *hsskey, unsigned char *outsig,
     }
     /* Write out the signed message */
     len = sizeof(sigbuf);
-    lmssig = sk_LMS_SIG_value(hsskey->lmssigs, L - 1);
+    lmssig = LMS_SIG_get(hsskey, L - 1);
     if (!ossl_lms_sig_xdr_encode(lmssig, sigdata, &len)
             || !WPACKET_memcpy(&pkt, sigdata, len)
             || !WPACKET_get_total_written(&pkt, &len))
@@ -187,20 +192,18 @@ int ossl_hss_key_advance(HSS_KEY *hsskey, uint64_t count)
         hsskey->remaining = 0;
         return 1;
     }
-
     /* Special case for a simple LMS tree (only only level) */
     if (L == 1) {
-        key = sk_LMS_KEY_value(hsskey->lmskeys, 0);
+        key = LMS_KEY_get(hsskey, 0);
         if (key == NULL)
             return 0;
         key->q += (uint32_t)count;
-        hsskey->remaining -= count;
-        return 1;
+        goto end;
     }
-    index = hsskey->total - hsskey->remaining + count;
-    /* For this index figure out what the 'q' value is for each level in the tree */
+    index = hsskey->index + count;
+    /* Calculate the new 'q' value for each level in the tree */
     for (d = L; d > 0; --d) {
-        key = sk_LMS_KEY_value(hsskey->lmskeys, d - 1);
+        key = LMS_KEY_get(hsskey, d - 1);
         if (key == NULL)
             return 0;
 
@@ -208,14 +211,26 @@ int ossl_hss_key_advance(HSS_KEY *hsskey, uint64_t count)
         newq[d - 1] = index & ((1 << key->lms_params->h) - 1);
         index = index >> key->lms_params->h;
     }
+    /* If the index is too large then do not advance */
+    if (index > 0) {
+        hsskey->index += count;
+        hsskey->remaining -= count;
+        /* sanity check that there are no remaining nodes */
+        if (!ossl_assert(hsskey->remaining == 0))
+            return 0;
+        return 1;
+    }
 
     /* sanity check that the root tree is exhausted */
     if (!ossl_assert(newq[0] < (uint32_t)(1 << key->lms_params->h)))
         return 0;
+    /* sanity check that we never go backwards */
+    if (!ossl_assert(newq[0] >= oldq[0]))
+        return 0;
 
-    parent = sk_LMS_KEY_value(hsskey->lmskeys, 0);
+    parent = LMS_KEY_get(hsskey, 0);
     for (d = 1; d < L; ++d) {
-        key = sk_LMS_KEY_value(hsskey->lmskeys, d);
+        key = LMS_KEY_get(hsskey, d);
         /*
          * If the parent key has changed then we need to
          * create a new active child tree, and then sign the new child's
@@ -223,12 +238,12 @@ int ossl_hss_key_advance(HSS_KEY *hsskey, uint64_t count)
          */
         if (oldq[d - 1] != newq[d - 1]) {
             parent->q = newq[d - 1];
-            if (!ossl_lms_key_reset(key, parent->q, parent))
+            if (!ossl_lms_key_reset(key, parent->q, hsskey->gen_type, parent))
                 return 0;
             key->q = newq[d];
             if (!ossl_lms_pubkey_compute(key))
                 return 0;
-            lmssig = sk_LMS_SIG_value(hsskey->lmssigs, d - 1);
+            lmssig = LMS_SIG_get(hsskey, d - 1);
             if (!ossl_lms_signature_gen(parent,
                                         key->pub.encoded,
                                         key->pub.encodedlen, lmssig))
@@ -238,6 +253,8 @@ int ossl_hss_key_advance(HSS_KEY *hsskey, uint64_t count)
         }
         parent = key;
     }
+end:
+    hsskey->index += count;
     hsskey->remaining -= count;
     return 1;
 }

@@ -2010,6 +2010,8 @@ int EVP_PKEY_get_int_param(const EVP_PKEY *pkey, const char *key_name,
                            int *out);
 int EVP_PKEY_get_size_t_param(const EVP_PKEY *pkey, const char *key_name,
                               size_t *out);
+int EVP_PKEY_get_uint64_param(const EVP_PKEY *pkey, const char *key_name,
+                              uint64_t *out);
 int EVP_PKEY_get_bn_param(const EVP_PKEY *pkey, const char *key_name,
                           BIGNUM **bn);
 int EVP_PKEY_get_utf8_string_param(const EVP_PKEY *pkey, const char *key_name,

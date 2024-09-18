@@ -83,7 +83,8 @@ int ossl_lms_hash(EVP_MD_CTX *ctx,
                   unsigned char *out);
 int ossl_hss_sig_to_text(BIO *out, HSS_KEY *hsskey, int selection);
 
-int ossl_lms_key_reset(LMS_KEY *lmskey, int nodeid, LMS_KEY *parent);
+int ossl_lms_key_reset(LMS_KEY *lmskey, int nodeid, uint32_t gen_type,
+                       LMS_KEY *parent);
 int ossl_lms_pubkey_compute(LMS_KEY *lmskey);
 int ossl_lms_key_get_pubkey_from_nodeid(LMS_KEY *key,
                                         uint32_t nodeid, unsigned char *out);
@@ -179,6 +180,7 @@ int ossl_lms_signature_gen(LMS_KEY *key,
 LMS_SIG *ossl_lms_sig_deep_copy(const LMS_SIG *src);
 LMS_KEY *ossl_lms_key_deep_copy(const LMS_KEY *src);
 LMS_KEY *ossl_lms_key_gen(uint32_t lms_type, uint32_t ots_type,
+                          uint32_t gen_type,
                           OSSL_LIB_CTX *libctx, const char *propq,
                           LMS_KEY *parent);
 int ossl_lms_sig_xdr_encode(LMS_SIG *sig, unsigned char *out, size_t *outlen);

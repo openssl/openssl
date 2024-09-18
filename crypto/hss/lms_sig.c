@@ -13,9 +13,13 @@
 /**
  * @brief Create a new LMS_SIG object
  */
-LMS_SIG *ossl_lms_sig_new(void)
+LMS_SIG *ossl_lms_sig_new(uint32_t gen_type)
 {
-    return OPENSSL_zalloc(sizeof(LMS_SIG));
+    LMS_SIG *s = OPENSSL_zalloc(sizeof(LMS_SIG));
+
+    if (s != NULL)
+        s->sig.gen_type = gen_type;
+    return s;
 }
 
 /**
@@ -152,7 +156,7 @@ LMS_SIG *ossl_lms_sig_deep_copy(const LMS_SIG *src)
 
     if (src == NULL)
         return NULL;
-    dst = ossl_lms_sig_new();
+    dst = ossl_lms_sig_new(src->sig.gen_type);
     if (dst == NULL)
         return NULL;
 

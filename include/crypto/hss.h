@@ -15,9 +15,7 @@
 #ifndef OSSL_CRYPTO_HSS_H
 # define OSSL_CRYPTO_HSS_H
 # pragma once
-
 # ifndef OPENSSL_NO_HSS
-
 #  include <openssl/e_os2.h>
 #  include "types.h"
 #  include "internal/refcount.h"
@@ -112,20 +110,40 @@ struct lms_key_st {
     unsigned char *node_cache;
 };
 
+/*
+ * This object is used to store lists of keys and signatures.
+ * For key generation and signing it is used for storing the lists of
+ * active trees and the current signed public keys (See lists in hss_key_st).
+ * For verification it is used inside hss_sig.c when decoding a signature.
+ * These are different lists, since the verification process should not
+ * interfere with the HSS_KEY object.
+ */
+typedef struct hss_lists {
+    STACK_OF(LMS_KEY) *lmskeys;
+    STACK_OF(LMS_SIG) *lmssigs;
+} HSS_LISTS;
+
 struct hss_key_st {
     uint32_t L;                     /* HSS number of levels */
     /*
-     * Only one LMS tree is active for each level of the hierarchy,
-     * so that is all that is updated,
-     * Whenever any child tree is exhausted it creates a new one.
+     * For key generation and signing only one LMS tree is active for each
+     * level of the hierarchy, so that is all that is updated,
+     * Whenever an active child tree is exhausted it creates a new one.
+     * A loaded public key would also be stored in lmskeys.
      */
-    STACK_OF(LMS_KEY) *lmskeys;
-    STACK_OF(LMS_SIG) *lmssigs;
+    HSS_LISTS lists;
+    /*
+     * The virtual leaf index of the bottom LMS tree (0..2^64-1).
+     * This can be used to calculate the leaf index for every level.
+     * This is useful for determining when new active trees need to be
+     * generated.
+     */
+    uint64_t index;
     uint64_t remaining;
-    uint64_t total;
     OSSL_LIB_CTX *libctx;
     char *propq;
     int reserved;
+    uint32_t gen_type;
 
     CRYPTO_REF_COUNT references;
 };
@@ -135,6 +153,7 @@ typedef struct lm_ots_sig_st {
     unsigned char *C; /* size is n */
     unsigned char *y; /* size is p * n */
     int allocated;
+    uint32_t gen_type;
 } LM_OTS_SIG;
 
 typedef struct lms_signature_st {
@@ -164,13 +183,22 @@ typedef struct {
 DEFINE_STACK_OF(LMS_KEY)
 DEFINE_STACK_OF(LMS_SIG)
 
+#define LMS_KEY_get(ctx, id) sk_LMS_KEY_value(ctx->lists.lmskeys, id)
+#define LMS_KEY_add(ctx, key) (sk_LMS_KEY_push(ctx->lists.lmskeys, key) > 0)
+#define LMS_KEY_count(ctx) sk_LMS_KEY_num(ctx->lists.lmskeys)
+#define LMS_SIG_get(ctx, id) sk_LMS_SIG_value(ctx->lists.lmssigs, id)
+#define LMS_SIG_add(ctx, key) (sk_LMS_SIG_push(ctx->lists.lmssigs, key) > 0)
+#define LMS_SIG_count(ctx) sk_LMS_SIG_num(ctx->lists.lmssigs)
+int ossl_hss_lists_init(HSS_LISTS *lists);
+void ossl_hss_lists_free(HSS_LISTS *lists);
+int ossl_hss_lists_copy(HSS_LISTS *dst, const HSS_LISTS *src);
+
 HSS_KEY *ossl_hss_key_new(OSSL_LIB_CTX *libctx, const char *propq);
 int ossl_hss_key_up_ref(HSS_KEY *key);
 void ossl_hss_key_free(HSS_KEY *key);
-void ossl_hss_key_verify_reset(HSS_KEY *hsskey);
-int ossl_hss_key_reset(HSS_KEY *hsskey);
 
-int ossl_hss_sig_decode(HSS_KEY *pub, const unsigned char *sig, size_t siglen);
+int ossl_hss_sig_decode(HSS_LISTS *lists, LMS_KEY *pub, uint32_t L,
+                        const unsigned char *sig, size_t siglen);
 int ossl_hss_sig_to_text(BIO *out, HSS_KEY *hsskey, int selection);
 
 int ossl_hss_pubkey_encode(HSS_KEY *hsskey, unsigned char *pub, size_t *publen);
@@ -181,7 +209,8 @@ int ossl_hss_pubkey_from_params(const OSSL_PARAM params[], HSS_KEY *key);
 
 #  if !defined(OPENSSL_NO_HSS_GEN) && !defined(FIPS_MODULE)
 int ossl_hss_generate_key(HSS_KEY *hsskey, uint32_t levels,
-                          uint32_t *lms_types, uint32_t *ots_types);
+                          uint32_t *lms_types, uint32_t *ots_types,
+                          uint32_t gen_type);
 int ossl_hss_sign(HSS_KEY *hsskey, const unsigned char *msg, size_t msglen,
                   unsigned char *outsig, size_t *outsiglen, size_t outsigmaxlen);
 int ossl_hss_sign_init(HSS_KEY *hsskey);
@@ -205,7 +234,7 @@ int ossl_lms_key_to_text(BIO *out, LMS_KEY *lmskey, int selection);
 int ossl_lms_pubkey_from_pkt(PACKET *pkt, LMS_KEY *key);
 
 LMS_SIG *ossl_lms_sig_from_pkt(PACKET *pkt, const LMS_KEY *pub);
-LMS_SIG *ossl_lms_sig_new(void);
+LMS_SIG *ossl_lms_sig_new(uint32_t gen_type);
 void ossl_lms_sig_free(LMS_SIG *sig);
 int ossl_lms_sig_verify_init(LMS_VALIDATE_CTX *ctx);
 int ossl_lms_sig_verify_update(LMS_VALIDATE_CTX *ctx,

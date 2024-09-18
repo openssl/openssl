@@ -180,6 +180,7 @@ static int hss_verify_bad_sig_test(void)
     /*
      * Corrupt every 3rd byte to run less tests. The smallest element of an XDR
      * encoding is 4 bytes, so this will corrupt every element.
+     * Memory sanitisation is slow, so a larger step size is used for this.
      */
 #if defined(OSSL_SANITIZE_MEMORY)
     const int step = (int)(td->siglen >> 1);
@@ -210,7 +211,6 @@ static int hss_verify_bad_sig_test(void)
             goto end;
         }
     }
-
 
     ret = 1;
 end:
@@ -367,21 +367,31 @@ end:
 static int hss_decode_fail_test(void)
 {
     int ret = 0;
-    HSS_KEY *pub;
+    HSS_KEY *hsspub;
     HSS_ACVP_TEST_DATA *td = &hss_testdata[0];
+    HSS_LISTS *ctx = NULL;
+    LMS_KEY *pub;
 
-    if (!TEST_ptr(pub = ossl_hss_key_new(libctx, propq)))
+    if (!TEST_ptr(hsspub = ossl_hss_key_new(libctx, propq)))
         goto end;
-    if (!TEST_true(ossl_hss_pubkey_decode(td->pub, td->publen, pub, 0)))
+    if (!TEST_true(ossl_hss_pubkey_decode(td->pub, td->publen, hsspub, 0)))
         goto end;
-    if (!TEST_int_eq(ossl_hss_sig_decode(pub, td->sig, 1), 0))
+
+    pub = LMS_KEY_get(hsspub, 0);
+    if (!TEST_ptr(ctx = (HSS_LISTS *)OPENSSL_zalloc(sizeof(*ctx))))
         goto end;
-    if (!TEST_int_eq(ossl_hss_sig_decode(pub, td->sig, SIZE_MAX), 0))
+    if (!TEST_int_eq(ossl_hss_lists_init(ctx), 1))
+        goto end;
+    if (!TEST_int_eq(ossl_hss_sig_decode(ctx, pub, hsspub->L, td->sig, 1), 0))
+        goto end;
+    if (!TEST_int_eq(ossl_hss_sig_decode(ctx, pub, hsspub->L, td->sig, SIZE_MAX), 0))
         goto end;
 
     ret = 1;
 end:
-    ossl_hss_key_free(pub);
+    ossl_hss_lists_free(ctx);
+    OPENSSL_free(ctx);
+    ossl_hss_key_free(hsspub);
     return ret;
 }
 
@@ -576,9 +586,9 @@ static int fbytes(unsigned char *buf, size_t num, ossl_unused const char *name,
  */
 static int extract_sign_data(HSS_ACVP_TEST_DATA *t, uint32_t *out_levels,
                              uint32_t *lms_type, uint32_t *ots_type,
-                             uint64_t *out_qindex)
+                             uint64_t *out_qindex, uint32_t *out_height)
 {
-    uint32_t i, levels, sigoff;
+    uint32_t i, levels, sigoff, height = 0;
     uint64_t qindex, scale, q[OSSL_HSS_MAX_L] = { 0 };
 
     /*
@@ -593,6 +603,7 @@ static int extract_sign_data(HSS_ACVP_TEST_DATA *t, uint32_t *out_levels,
         const LMS_PARAMS *lms_params = ossl_lms_params_get(lms_type[i]);
         const LM_OTS_PARAMS *ots_params = ossl_lm_ots_params_get(ots_type[i]);
 
+        height += lms_params->h;
         q[i] = t->sig[sigoff + 3];
         /* Go to the offset of the public key field */
         sigoff += (4 * 3 + lms_params->n * (1 + ots_params->p + lms_params->h));
@@ -624,6 +635,7 @@ static int extract_sign_data(HSS_ACVP_TEST_DATA *t, uint32_t *out_levels,
     }
     *out_levels = levels;
     *out_qindex = qindex;
+    *out_height = height;
     return 1;
 }
 
@@ -648,10 +660,142 @@ static const char *ots_names[OSSL_HSS_MAX_L] = {
     OSSL_PKEY_PARAM_HSS_OTS_TYPE_L8,
 };
 
+static uint64_t get_remaining_keys(EVP_PKEY *pkey)
+{
+    uint64_t remaining = 0;
+
+    if (!EVP_PKEY_get_uint64_param(pkey, OSSL_PKEY_PARAM_HSS_KEYS_REMAINING,
+                                   &remaining))
+        return 0;
+    return remaining;
+}
+
+static int do_sign_verify(EVP_PKEY *key, EVP_SIGNATURE *sigalg, int expected)
+{
+    int ret = 0;
+    unsigned char sig[4096];
+    size_t siglen = sizeof(sig);
+    EVP_PKEY_CTX *signctx = NULL;
+    static const unsigned char msg[] = {1, 2, 3};
+
+    if (!TEST_ptr(signctx = EVP_PKEY_CTX_new_from_pkey(libctx, key, propq)))
+        goto err;
+    if (!TEST_int_eq(EVP_PKEY_sign_message_init(signctx, sigalg, NULL), expected))
+        goto err;
+    if (expected == 0)
+        goto end;
+    if (!TEST_int_eq(EVP_PKEY_sign(signctx, sig, &siglen, msg, sizeof(msg)),
+                     expected))
+        goto err;
+    /* Test that we can reuse the signctx and the private key for verifying */
+    if (!TEST_int_eq(EVP_PKEY_verify_message_init(signctx, sigalg, NULL), 1))
+        goto err;
+    if (!TEST_int_eq(EVP_PKEY_verify(signctx, sig, siglen, msg, sizeof(msg)), 1))
+        goto err;
+ end:
+    ret = 1;
+ err:
+    EVP_PKEY_CTX_free(signctx);
+    return ret;
+}
+
+static int hss_pkey_reserve_test(void)
+{
+    int ret = 0;
+    EVP_PKEY_CTX *genctx = NULL;
+    EVP_PKEY *pkey = NULL, *reserve = NULL, *reserve2 = NULL;
+    uint64_t sz;
+    uint32_t levels = 2;
+    uint32_t lms_types[] = {OSSL_LMS_TYPE_SHA256_N32_H10, OSSL_LMS_TYPE_SHA256_N32_H5};
+    uint32_t ots_types[] = {OSSL_LM_OTS_TYPE_SHA256_N32_W4, OSSL_LM_OTS_TYPE_SHA256_N32_W8};
+    uint32_t gen_type = OSSL_HSS_KEYGEN_TYPE_RANDOM;
+    OSSL_PARAM params[7], *p = params;
+    EVP_SIGNATURE *sigalg = NULL;
+
+    if (!TEST_ptr(sigalg = EVP_SIGNATURE_fetch(libctx, "HSS", propq)))
+        goto err;
+    if (!TEST_ptr(genctx = EVP_PKEY_CTX_new_from_name(libctx, "HSS", propq)))
+        goto err;
+    if (!TEST_int_eq(EVP_PKEY_keygen_init(genctx), 1))
+        goto err;
+
+    *p++ = OSSL_PARAM_construct_uint32(OSSL_PKEY_PARAM_HSS_GEN_TYPE, &gen_type);
+    *p++ = OSSL_PARAM_construct_uint32(OSSL_PKEY_PARAM_HSS_LEVELS, &levels);
+    *p++ = OSSL_PARAM_construct_uint32(OSSL_PKEY_PARAM_HSS_LMS_TYPE_L1, &lms_types[0]);
+    *p++ = OSSL_PARAM_construct_uint32(OSSL_PKEY_PARAM_HSS_LMS_TYPE_L2, &lms_types[1]);
+    *p++ = OSSL_PARAM_construct_uint32(OSSL_PKEY_PARAM_HSS_OTS_TYPE_L1, &ots_types[0]);
+    *p++ = OSSL_PARAM_construct_uint32(OSSL_PKEY_PARAM_HSS_OTS_TYPE_L2, &ots_types[1]);
+    *p = OSSL_PARAM_construct_end();
+    if (!TEST_int_eq(EVP_PKEY_CTX_set_params(genctx, params) , 1))
+        goto err;
+    if (!TEST_int_eq(EVP_PKEY_generate(genctx, &pkey), 1))
+        goto err;
+
+    /* Fail if size is too large */
+    sz = 32 * 1024 + 1;
+    params[0] = OSSL_PARAM_construct_uint64(OSSL_PKEY_PARAM_HSS_SHARD_SIZE, &sz);
+    if (!TEST_ptr_null(reserve = EVP_PKEY_reserve(pkey, params)))
+        goto err;
+    if (!TEST_uint64_t_eq(get_remaining_keys(pkey), 32 * 1024))
+        goto err;
+
+    /* Reserve a small block and test that the remaining sizes are correct */
+    sz = 2;
+    if (!TEST_ptr(reserve = EVP_PKEY_reserve(pkey, params)))
+        goto err;
+    if (!TEST_uint64_t_eq(get_remaining_keys(pkey), 32 * 1024 - 2))
+        goto err;
+    if (!TEST_uint64_t_eq(get_remaining_keys(reserve), 2))
+        goto err;
+
+    /* Test that a reserved block can not be reserved again */
+    sz = 1;
+    if (!TEST_ptr_null(reserve2 = EVP_PKEY_reserve(reserve, params)))
+        goto err;
+
+    /* Grab most of the remaining keys in pkey and check the remaining sizes */
+    sz = 32 * 1024 - 4;
+    if (!TEST_ptr(reserve2 = EVP_PKEY_reserve(pkey, params)))
+        goto err;
+
+    /* Check that the final 2 signatures left in pkey work */
+    if (!do_sign_verify(pkey, sigalg, 1)
+            || !do_sign_verify(pkey, sigalg, 1))
+        goto err;
+    if (!TEST_uint64_t_eq(get_remaining_keys(pkey), 0))
+        goto err;
+    /* Check that it fails when pkey is exhausted */
+    if (!do_sign_verify(pkey, sigalg, 0))
+        goto err;
+
+    /* Check that the 2 signatures left in |reserve| work */
+    if (!do_sign_verify(reserve, sigalg, 1)
+            || !do_sign_verify(reserve, sigalg, 1))
+        goto err;
+    if (!TEST_uint64_t_eq(get_remaining_keys(reserve), 0))
+        goto err;
+    /* Check that it fails when |reserve| is exhausted */
+    if (!do_sign_verify(reserve, sigalg, 0))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_SIGNATURE_free(sigalg);
+    EVP_PKEY_CTX_free(genctx);
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_free(reserve);
+    EVP_PKEY_free(reserve2);
+    return ret;
+}
+
+/*
+ * This sign test uses KAT data that is also used for verify tests,
+ * hence there is no need for a sign + verify test.
+ */
 static int hss_pkey_sign_test(int tst)
 {
     int ret = 0;
-    uint32_t i, levels;
+    uint32_t i, levels, height;
     HSS_ACVP_TEST_DATA *t = &hss_testdata[tst];
     EVP_PKEY_CTX *genctx = NULL;
     EVP_PKEY_CTX *signctx = NULL;
@@ -659,7 +803,7 @@ static int hss_pkey_sign_test(int tst)
     EVP_PKEY *reserve = NULL;
     EVP_SIGNATURE *sigalg = NULL;
     OSSL_ENCODER_CTX *ectx = NULL;
-    uint64_t qindex;
+    uint64_t qindex, sz;
     uint32_t lms_type[OSSL_HSS_MAX_L] = { 0 };
     uint32_t ots_type[OSSL_HSS_MAX_L] = { 0 };
     OSSL_PARAM params[2 + 2 * OSSL_HSS_MAX_L], *prm = params;
@@ -675,11 +819,12 @@ static int hss_pkey_sign_test(int tst)
      */
     if (t->priv == NULL)
         return 1;
-    if (!extract_sign_data(t, &levels, lms_type, ots_type, &qindex))
+    if (!extract_sign_data(t, &levels, lms_type, ots_type, &qindex, &height))
         goto err;
 
+    /* Signing is not supported in FIPS */
     if (OSSL_PROVIDER_available(libctx, "fips"))
-        expected = -2; /* Not supported since */
+        expected = -2;
 
     if (!TEST_ptr(genctx = EVP_PKEY_CTX_new_from_name(libctx, "HSS", propq))
             || !TEST_int_eq(EVP_PKEY_keygen_init(genctx), expected))
@@ -709,6 +854,9 @@ static int hss_pkey_sign_test(int tst)
     if (!TEST_int_eq(EVP_PKEY_generate(genctx, &key), 1))
         goto err;
 
+    if (!TEST_uint64_t_eq(get_remaining_keys(key), (uint64_t)1 << height))
+        goto err;
+
     if (!TEST_ptr(ectx = OSSL_ENCODER_CTX_new_for_pkey(key, OSSL_KEYMGMT_SELECT_PUBLIC_KEY,
                                                        "xdr", NULL, NULL)))
         goto err;
@@ -727,16 +875,41 @@ static int hss_pkey_sign_test(int tst)
     params[1] = OSSL_PARAM_construct_end();
     if (!TEST_ptr(reserve = EVP_PKEY_reserve(key, params)))
         goto err;
+    /* Check the remaining key counts after skipping forward */
+    if (!TEST_uint64_t_eq(get_remaining_keys(reserve), qindex)
+            || !TEST_uint64_t_eq(get_remaining_keys(key),
+                                 ((uint64_t)1 << height) - qindex))
+        goto err;
     EVP_PKEY_free(reserve);
 
-    if (!TEST_ptr(signctx = EVP_PKEY_CTX_new_from_pkey(libctx, key, propq)))
+    /* Reserve a small block */
+    sz = 16;
+    params[0] = OSSL_PARAM_construct_uint64(OSSL_PKEY_PARAM_HSS_SHARD_SIZE, &sz);
+    if (!TEST_ptr(reserve = EVP_PKEY_reserve(key, params)))
+        goto err;
+
+    /* Check the remaining key counts after a reserve operation */
+    if (!TEST_uint64_t_eq(get_remaining_keys(reserve), 16)
+            || !TEST_uint64_t_eq(get_remaining_keys(key),
+                              ((uint64_t)1 << height) - qindex - 16))
+        goto err;
+
+    if (!TEST_ptr(signctx = EVP_PKEY_CTX_new_from_pkey(libctx, reserve, propq)))
         goto err;
     siglen = t->siglen;
     if (!TEST_int_eq(EVP_PKEY_sign_message_init(signctx, sigalg, NULL), 1)
+            || !TEST_int_eq(EVP_PKEY_sign(signctx, NULL, &siglen,
+                                          t->msg, t->msglen), 1)
+            || !TEST_size_t_eq(siglen, t->siglen)
             || !TEST_ptr(sig = OPENSSL_malloc(t->siglen))
             || !TEST_int_eq(EVP_PKEY_sign(signctx, sig, &siglen,
                                           t->msg, t->msglen), 1)
             || !TEST_mem_eq(sig, siglen, t->sig, t->siglen))
+        goto err;
+    /* Check the remaining key counts after a sign operation */
+    if (!TEST_uint64_t_eq(get_remaining_keys(reserve), 15)
+            || !TEST_uint64_t_eq(get_remaining_keys(key),
+                              ((uint64_t)1 << height) - qindex - 16))
         goto err;
     ret = 1;
 err:
@@ -748,6 +921,7 @@ err:
     EVP_PKEY_CTX_free(signctx);
     EVP_PKEY_CTX_free(genctx);
     EVP_PKEY_free(key);
+    EVP_PKEY_free(reserve);
     return ret;
 }
 #endif
@@ -902,11 +1076,14 @@ int setup_tests(void)
         ADD_TEST(hss_digest_verify_fail_test);
         ADD_TEST(hss_key_eq_test);
 #ifndef OPENSSL_NO_HSS_GEN
+        if (!OSSL_PROVIDER_available(libctx, "fips"))
+            ADD_TEST(hss_pkey_reserve_test);
 # if defined(OSSL_SANITIZE_MEMORY)
+        /* Sign operations are slow, so reduce the number of sign tests */
         ADD_ALL_TESTS(hss_pkey_sign_test, 1);
 # else
         ADD_ALL_TESTS(hss_pkey_sign_test, OSSL_NELEM(hss_testdata));
-#endif
+# endif
 #endif
     }
     return 1;

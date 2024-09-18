@@ -26,7 +26,7 @@
  * Note that it subtracts 1 to get the id's in the range 0..63.
  *
  * A LMS tree has OTS public keys in its leaf nodes (as well as private keys).
- * The public key of any non leaf node in the tree is calculated as some Hash
+ * The public key of any non leaf node in the tree is calculated as some hash
  * of the children's public keys. The public key of the LMS tree is the
  * public key at the top of the tree. We therefore need to generate key pairs
  * for the entire LMS tree in order to figure out the public key.

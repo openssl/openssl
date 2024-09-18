@@ -42,7 +42,9 @@ size_t ossl_hss_pubkey_length(const unsigned char *data, size_t datalen)
 /**
  * @brief Decode a byte array of public key data in XDR format into a HSS_KEY
  * The XDR format is L[4] || lms_type[4] || ots_type[4] || I[16] || K[n].
- * This function will remove any existing Keys or Signatures from |hsskey|
+ * This function will fail if the |hsskey| contains OTS private keys, unless
+ * the decoded key matches the existing public root key. It will replace the
+ * key if it previously contained just a public key.
  *
  * @param pub A byte array of public key data in XDR format.
  * @param publen The size of |pub|.
@@ -55,7 +57,7 @@ int ossl_hss_pubkey_decode(const unsigned char *pub, size_t publen,
                            HSS_KEY *hsskey, int lms_only)
 {
     PACKET pkt;
-    LMS_KEY *lmskey;
+    LMS_KEY *lmskey, *curkey;
 
     if (!PACKET_buf_init(&pkt, pub, publen))
         return 0;
@@ -65,21 +67,41 @@ int ossl_hss_pubkey_decode(const unsigned char *pub, size_t publen,
                 || hsskey->L > OSSL_HSS_MAX_L)
             return 0;
     }
-    if (!ossl_hss_key_reset(hsskey))
-        return 0;
     lmskey = ossl_lms_key_new();
     if (lmskey == NULL)
         return 0;
-    if (!ossl_lms_pubkey_decode(pkt.curr, pkt.remaining, lmskey)
-            || !sk_LMS_KEY_push(hsskey->lmskeys, lmskey)) {
-        ossl_lms_key_free(lmskey);
-        return 0;
+    if (!ossl_lms_pubkey_decode(pkt.curr, pkt.remaining, lmskey))
+        goto err;
+
+    /* Check if there is an existing key */
+    curkey = LMS_KEY_get(hsskey, 0);
+    if (curkey != NULL) {
+        if (curkey->pub.encoded != NULL) {
+            if (curkey->pub.encodedlen == lmskey->pub.encodedlen
+                    && memcmp(curkey->pub.encoded, lmskey->pub.encoded,
+                              lmskey->pub.encodedlen) == 0) {
+                /* If the key matches then there is no need to copy it */
+                ossl_lms_key_free(lmskey);
+                return 1;
+            }
+        }
+        /* Do not allow the user to trash existing OTS private keys */
+        if (curkey->priv.data != NULL)
+            return 0;
+        /* Clear the lists if the public key is different */
+        if (!ossl_hss_lists_init(&hsskey->lists))
+            goto err;
     }
+    if (!LMS_KEY_add(hsskey, lmskey))
+        goto err;
     return 1;
+ err:
+    ossl_lms_key_free(lmskey);
+    return 0;
 }
 
 /**
- * @brief Encode the public key in a HSS_KEY into a byte array in XDR format.
+ * @brief Encode the root public key in a HSS_KEY into a byte array in XDR format.
  * The XDR format is L[4] || lms_type[4] || ots_type[4] || I[16] || K[n].
  *
  * @param hsskey The HSS_KEY object containing public key info.
@@ -94,7 +116,7 @@ int ossl_hss_pubkey_encode(HSS_KEY *hsskey, unsigned char *pub, size_t *publen)
     int ret;
 
     if (hsskey == NULL
-            || ((lmskey = sk_LMS_KEY_value(hsskey->lmskeys, 0)) == NULL))
+            || ((lmskey = LMS_KEY_get(hsskey, 0)) == NULL))
         return 0;
 
     if (pub == NULL) {

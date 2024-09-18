@@ -31,7 +31,7 @@ static uint64_t hss_keys_total(HSS_KEY *hsskey)
     uint32_t d, L = hsskey->L;
 
     for (d = 0; d < L; ++d) {
-        lmskey = sk_LMS_KEY_value(hsskey->lmskeys, d);
+        lmskey = LMS_KEY_get(hsskey, d);
         if (lmskey == NULL)
             return 0;
         height += lmskey->lms_params->h;
@@ -53,6 +53,17 @@ uint64_t ossl_hss_keys_remaining(const HSS_KEY *hsskey)
 }
 
 /*
+ * @returns 1 if the root LMS_KEY exists and contains a private key
+ *          or 0 otherwise.
+ */
+static int hss_key_is_private(const HSS_KEY *hsskey)
+{
+    LMS_KEY *root = LMS_KEY_get(hsskey, 0);
+
+    return root != NULL && root->priv.data != NULL;
+}
+
+/*
  * @brief HSS key generation
  * See RFC 8554 Algorithm 7: Generating a HSS Key Pair
  *
@@ -62,10 +73,12 @@ uint64_t ossl_hss_keys_remaining(const HSS_KEY *hsskey)
  *               This is the size of |lms_types| and |ots_types|
  * @param lms_types An array of LMS types such as OSSL_LMS_TYPE_SHA256_N32_H5
  * @param ots_types An array of OTS types such as OSSL_LM_OTS_TYPE_SHA256_N32_W1
+ * @param gen_type OSSL_HSS_KEYGEN_TYPE_DETERMINISTIC or OSSL_HSS_KEYGEN_TYPE_RANDOM
  * @returns 1 on success, or 0 on failure.
  */
 int ossl_hss_generate_key(HSS_KEY *hsskey, uint32_t levels,
-                          uint32_t *lms_types, uint32_t *ots_types)
+                          uint32_t *lms_types, uint32_t *ots_types,
+                          uint32_t gen_type)
 {
     uint32_t i;
     LMS_SIG *sig = NULL;
@@ -73,9 +86,10 @@ int ossl_hss_generate_key(HSS_KEY *hsskey, uint32_t levels,
     LMS_KEY *parent = NULL;
 
     hsskey->L = levels;
+    hsskey->gen_type = gen_type;
 
     /* Clear any existing keys & signatures */
-    if (!ossl_hss_key_reset(hsskey))
+    if (!ossl_hss_lists_init(&hsskey->lists))
         goto err;
     /*
      * Create an active LMS tree for each level.
@@ -83,38 +97,38 @@ int ossl_hss_generate_key(HSS_KEY *hsskey, uint32_t levels,
      */
     for (i = 0; i < levels; ++i) {
         /* Do LMS keygen, this calculates the public key T(1) for each tree */
-        key = ossl_lms_key_gen(lms_types[i], ots_types[i], hsskey->libctx,
-                               hsskey->propq, parent);
+        key = ossl_lms_key_gen(lms_types[i], ots_types[i], gen_type,
+                               hsskey->libctx, hsskey->propq, parent);
         if (key == NULL)
             goto err;
-        if (sk_LMS_KEY_push(hsskey->lmskeys, key) <= 0)
+        if (!LMS_KEY_add(hsskey, key))
             goto err;
         /*
          * Set up objects for the signatures for each level. This loop does not
          * calculate the signatures.
          */
-        sig = ossl_lms_sig_new();
+        sig = ossl_lms_sig_new(gen_type);
         if (sig == NULL)
             goto err;
         sig->params = key->lms_params;
         sig->sig.params = key->ots_params;
-        if (sk_LMS_SIG_push(hsskey->lmssigs, sig) <= 0)
+        if (!LMS_SIG_add(hsskey, sig))
             goto err;
         sig = NULL;
         parent = key;
     }
-    hsskey->total = hss_keys_total(hsskey);
-    hsskey->remaining = hsskey->total;
+    hsskey->index = 0;
+    hsskey->remaining = hss_keys_total(hsskey);
 
     /*
      * For each intermediate tree except the leaf, generate a LMS signature,
      * using the private key of the tree above to sign the encoded public key.
      */
-    parent = sk_LMS_KEY_value(hsskey->lmskeys, 0);
+    parent = LMS_KEY_get(hsskey, 0);
     for (i = 1; i < levels; ++i) {
-        key = sk_LMS_KEY_value(hsskey->lmskeys, i);
+        key = LMS_KEY_get(hsskey, i);
         if (!ossl_lms_signature_gen(parent, key->pub.encoded, key->pub.encodedlen,
-                                    sk_LMS_SIG_value(hsskey->lmssigs, i - 1)))
+                                    LMS_SIG_get(hsskey, i - 1)))
             goto err;
         parent = key;
     }
@@ -122,13 +136,12 @@ int ossl_hss_generate_key(HSS_KEY *hsskey, uint32_t levels,
     return 1;
 err:
     ossl_lms_sig_free(sig);
-    sk_LMS_SIG_pop_free(hsskey->lmssigs, ossl_lms_sig_free);
-    sk_LMS_KEY_pop_free(hsskey->lmskeys, ossl_lms_key_free);
+    ossl_hss_lists_free(&hsskey->lists);
     return 0;
 }
 
 /*
- * @brief Duplicates an existing key.
+ * @brief Duplicates an existing private key.
  * It also sets a count of how many times this new key can be used.
  * This function is used along with ossl_hss_key_advance() to split
  * a HSS key into 2 parts.
@@ -145,6 +158,9 @@ HSS_KEY *ossl_hss_key_reserve(const HSS_KEY *src, uint64_t count)
 
     if (src->reserved)
         return NULL;
+    /* Do not allow a public key to be split */
+    if (!hss_key_is_private(src))
+        return NULL;
 
     dst = OPENSSL_zalloc(sizeof(*dst));
     if (dst == NULL)
@@ -153,17 +169,13 @@ HSS_KEY *ossl_hss_key_reserve(const HSS_KEY *src, uint64_t count)
         OPENSSL_free(dst);
         return NULL;
     }
-    dst->lmskeys = sk_LMS_KEY_deep_copy(src->lmskeys,
-                                        ossl_lms_key_deep_copy, ossl_lms_key_free);
-    dst->lmssigs = sk_LMS_SIG_deep_copy(src->lmssigs,
-                                        ossl_lms_sig_deep_copy, ossl_lms_sig_free);
-    if (dst->lmskeys == NULL || dst->lmssigs == NULL)
+    if (!ossl_hss_lists_copy(&dst->lists, &src->lists))
         goto err;
     dst->L = src->L;
     dst->libctx = src->libctx;
     dst->reserved = 1;
     dst->remaining = count;
-    dst->total = count;
+    dst->index = src->index;
     return dst;
 err:
     ossl_hss_key_free(dst);

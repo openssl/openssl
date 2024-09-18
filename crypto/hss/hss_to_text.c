@@ -185,8 +185,8 @@ int ossl_hss_sig_to_text(BIO *out, HSS_KEY *hsskey, int selection)
         return 0;
 
     for (i = 0; i < hsskey->L; ++i) {
-        sig = sk_LMS_SIG_value(hsskey->lmssigs, i);
-        key = sk_LMS_KEY_value(hsskey->lmskeys, i);
+        sig = LMS_SIG_get(hsskey, i);
+        key = LMS_KEY_get(hsskey, i);
         if (key == NULL || sig == NULL)
             return 0;
         if (i != 0) {

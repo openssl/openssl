@@ -12,11 +12,11 @@ EVP_PKEY_reserve - Extracts a key from an existing key
 
 =head1 DESCRIPTION
 
-EVP_PKEY_reserve() is used to split a key into 2 parts. The newly returned key
+EVP_PKEY_reserve() is used to divide a key into 2 parts. The newly returned key
 is a portion of the passed in key. The passed in key |pkey| may mutate, so this
 is not the same as EVP_PKEY_dup().
 Optional |params| can be passed in that are specific to the key type that
-we wish to split.
+we wish to split. This functionality is not supported by all key types.
 
 =head1 RETURN VALUES
 

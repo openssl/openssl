@@ -1,6 +1,7 @@
 #include <openssl/evp.h>
 #include <openssl/core_names.h>
 #include <openssl/params.h>
+#include <openssl/hss.h>
 #include "internal/packet.h"
 #include "crypto/hss.h"
 #include "lms_local.h"
@@ -66,14 +67,15 @@ static LMS_KEY *add_decoded_pubkey(PACKET *pkt, STACK_OF(LMS_KEY) *keylist)
  * This function does not duplicate any of the byte data contained within
  * sig. So it is expected that sig will exist for the duration of the hsskey.
  *
- * @param hsskey Must contain a public key on entry, and is used to store
- *               lists of LMS_KEY and LMS_SIG objects.
+ * @param ctx Used to store lists of LMS_KEY and LMS_SIG objects.
+ * @param pub The root public LMS key
+ * @param L The number of levels in the HSS tree.
  * @param sig A input byte array of signature data.
  * @param siglen The size of sig.
  * @returns 1 if the signature is successfully decoded and added,
  *          otherwise it returns 0.
  */
-int ossl_hss_sig_decode(HSS_KEY *hsskey,
+int ossl_hss_sig_decode(HSS_LISTS *ctx, LMS_KEY *pub, uint32_t L,
                         const unsigned char *sig, size_t siglen)
 {
     int ret = 0;
@@ -81,26 +83,17 @@ int ossl_hss_sig_decode(HSS_KEY *hsskey,
     LMS_KEY *key;
     PACKET pkt;
 
-    /*
-     * This assumes that the HSS public key has been set up already
-     * and there is only the public key in the list.
-     */
-    if (sk_LMS_KEY_num(hsskey->lmskeys) != 1)
+    if (pub == NULL)
         return 0;
-    key = sk_LMS_KEY_value(hsskey->lmskeys, 0);
-    if (key == NULL)
+    if (L < OSSL_HSS_MIN_L || L > OSSL_HSS_MAX_L)
         return 0;
-    /* Check that the signature list is empty */
-    if (sk_LMS_SIG_num(hsskey->lmssigs) > 0)
-        return 0;
-
     /*
      * Decode the number of signed public keys
      * and check that it is one less than the number of HSS levels L
      */
     if (!PACKET_buf_init(&pkt, sig, siglen)
             || !PACKET_get_4_len(&pkt, &Nspk)
-            || Nspk != (hsskey->L - 1))
+            || Nspk != (L - 1))
         return 0;
 
     /*
@@ -109,12 +102,13 @@ int ossl_hss_sig_decode(HSS_KEY *hsskey,
      * The signature uses the parents private key to sign the encoded
      * public key of the next level).
      */
+    key = pub;
     for (i = 0; i < Nspk; ++i) {
         /* Decode signature for the public key */
-        if (!add_decoded_sig(&pkt, key, hsskey->lmssigs))
+        if (!add_decoded_sig(&pkt, key, ctx->lmssigs))
             goto err;
         /* Decode the public key */
-        key = add_decoded_pubkey(&pkt, hsskey->lmskeys);
+        key = add_decoded_pubkey(&pkt, ctx->lmskeys);
         if (key == NULL)
             goto err;
     }
@@ -123,7 +117,7 @@ int ossl_hss_sig_decode(HSS_KEY *hsskey,
      * (This signature used the private key of the leaf tree to sign
      * an actual message).
      */
-    if (!add_decoded_sig(&pkt, key, hsskey->lmssigs))
+    if (!add_decoded_sig(&pkt, key, ctx->lmssigs))
         goto err;
     /* Fail if there are trailing bytes */
     if (PACKET_remaining(&pkt) > 0)

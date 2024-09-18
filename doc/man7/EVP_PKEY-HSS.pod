@@ -5,6 +5,54 @@
 EVP_PKEY-HSS, EVP_KEYMGMT-HSS, HSS
 - EVP_PKEY HSS keytype and algorithm support
 
+=head1 SYNOPSIS
+
+ #include <openssl/hss.h>
+
+ #define OSSL_HSS_MIN_L 1
+ #define OSSL_HSS_MAX_L 8
+
+#define OSSL_HSS_KEYGEN_TYPE_DETERMINISTIC 0
+#define OSSL_HSS_KEYGEN_TYPE_RANDOM        1
+
+ #define OSSL_LMS_TYPE_SHA256_N32_H5  0x00000005
+ #define OSSL_LMS_TYPE_SHA256_N32_H10 0x00000006
+ #define OSSL_LMS_TYPE_SHA256_N32_H15 0x00000007
+ #define OSSL_LMS_TYPE_SHA256_N32_H20 0x00000008
+ #define OSSL_LMS_TYPE_SHA256_N32_H25 0x00000009
+ #define OSSL_LMS_TYPE_SHA256_N24_H5  0x0000000A
+ #define OSSL_LMS_TYPE_SHA256_N24_H10 0x0000000B
+ #define OSSL_LMS_TYPE_SHA256_N24_H15 0x0000000C
+ #define OSSL_LMS_TYPE_SHA256_N24_H20 0x0000000D
+ #define OSSL_LMS_TYPE_SHA256_N24_H25 0x0000000E
+ #define OSSL_LMS_TYPE_SHAKE_N32_H5   0x0000000F
+ #define OSSL_LMS_TYPE_SHAKE_N32_H10  0x00000010
+ #define OSSL_LMS_TYPE_SHAKE_N32_H15  0x00000011
+ #define OSSL_LMS_TYPE_SHAKE_N32_H20  0x00000012
+ #define OSSL_LMS_TYPE_SHAKE_N32_H25  0x00000013
+ #define OSSL_LMS_TYPE_SHAKE_N24_H5   0x00000014
+ #define OSSL_LMS_TYPE_SHAKE_N24_H10  0x00000015
+ #define OSSL_LMS_TYPE_SHAKE_N24_H15  0x00000016
+ #define OSSL_LMS_TYPE_SHAKE_N24_H20  0x00000017
+ #define OSSL_LMS_TYPE_SHAKE_N24_H25  0x00000018
+
+ #define OSSL_LM_OTS_TYPE_SHA256_N32_W1 0x00000001
+ #define OSSL_LM_OTS_TYPE_SHA256_N32_W2 0x00000002
+ #define OSSL_LM_OTS_TYPE_SHA256_N32_W4 0x00000003
+ #define OSSL_LM_OTS_TYPE_SHA256_N32_W8 0x00000004
+ #define OSSL_LM_OTS_TYPE_SHA256_N24_W1 0x00000005
+ #define OSSL_LM_OTS_TYPE_SHA256_N24_W2 0x00000006
+ #define OSSL_LM_OTS_TYPE_SHA256_N24_W4 0x00000007
+ #define OSSL_LM_OTS_TYPE_SHA256_N24_W8 0x00000008
+ #define OSSL_LM_OTS_TYPE_SHAKE_N32_W1  0x00000009
+ #define OSSL_LM_OTS_TYPE_SHAKE_N32_W2  0x0000000A
+ #define OSSL_LM_OTS_TYPE_SHAKE_N32_W4  0x0000000B
+ #define OSSL_LM_OTS_TYPE_SHAKE_N32_W8  0x0000000C
+ #define OSSL_LM_OTS_TYPE_SHAKE_N24_W1  0x0000000D
+ #define OSSL_LM_OTS_TYPE_SHAKE_N24_W2  0x0000000E
+ #define OSSL_LM_OTS_TYPE_SHAKE_N24_W4  0x0000000F
+ #define OSSL_LM_OTS_TYPE_SHAKE_N24_W8  0x00000010
+
 =head1 DESCRIPTION
 
 The B<HSS> keytype is implemented in OpenSSL's default and FIPS providers.
@@ -14,7 +62,7 @@ supported in OpenSSL. This means that only HSS public keys are supported.
 =head2 Common HSS parameters
 
 HSS public keys consists of the depth of the tree as well as an XDR encoding
-of the key (i.e. it is not ANS1 format), 
+of the key (i.e. it is not ANS1 format),
 The following parameters are used by EVP_PKEY_fromdata() and by the
 HSS keymanager for import and export.
 
@@ -22,7 +70,7 @@ HSS keymanager for import and export.
 
 =item "l" (B<OSSL_PKEY_PARAM_HSS_L>) <unsigned integer>
 
-The number of layers of LMS trees in the hierachy range from 1 to 8.
+The number of layers of LMS trees in the hierarchy ranging from 1 to 8.
 
 =item "encoded-pub-key" (B<OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY>) <octet string>
 
@@ -32,6 +80,117 @@ Within the HSS keymanager when used for import and export this encoding is just
 the LMS public key encoding with no "l" value.
 
 =back
+
+The following parameters are used for key generation
+
+=over 4
+
+=item "hss-gen-type" (B<OSSL_PKEY_PARAM_HSS_GEN_TYPE>) <unsigned integer>
+
+The generation type can be set to either B<OSSL_HSS_KEYGEN_TYPE_DETERMINISTIC>
+or B<OSSL_HSS_KEYGEN_TYPE_RANDOM>. The default value is
+B<OSSL_HSS_KEYGEN_TYPE_DETERMINISTIC>. This determines how secret values for
+SEED, I and C are calculated.
+B<OSSL_HSS_KEYGEN_TYPE_RANDOM> uses RAND_priv_bytes_ex() to generate secrets.
+B<OSSL_HSS_KEYGEN_TYPE_DETERMINISTIC> only uses RAND_priv_bytes_ex() when
+calculating the root LMS tree secrets. All other LMS trees use their parent tree
+secrets to derive secret values.
+
+When using ACVP data for testing, B<OSSL_HSS_KEYGEN_TYPE_DETERMINISTIC> should be
+used. The root tree SEED and I must be fed in as fake entropy for this use case.
+
+=item "hss-levels" (B<OSSL_PKEY_PARAM_HSS_LEVELS>) <unsigned integer>
+
+The number of levels of LMS trees ranging from 1 to 8.
+Setting hss-levels to 1 can be used for a simple single level LMS tree.
+
+=item "lms-type-l1" (B<OSSL_PKEY_PARAM_HSS_LMS_TYPE_L1>) <unsigned integer>
+=item "lms-type-l2" (B<OSSL_PKEY_PARAM_HSS_LMS_TYPE_L2>) <unsigned integer>
+=item "lms-type-l3" (B<OSSL_PKEY_PARAM_HSS_LMS_TYPE_L3>) <unsigned integer>
+=item "lms-type-l4" (B<OSSL_PKEY_PARAM_HSS_LMS_TYPE_L4>) <unsigned integer>
+=item "lms-type-l5" (B<OSSL_PKEY_PARAM_HSS_LMS_TYPE_L5>) <unsigned integer>
+=item "lms-type-l6" (B<OSSL_PKEY_PARAM_HSS_LMS_TYPE_L6>) <unsigned integer>
+=item "lms-type-l7" (B<OSSL_PKEY_PARAM_HSS_LMS_TYPE_L7>) <unsigned integer>
+=item "lms-type-l8" (B<OSSL_PKEY_PARAM_HSS_LMS_TYPE_L8>) <unsigned integer>
+
+A LMS type such as OSSL_LMS_TYPE_SHA256_N32_H5 which defines a set of parameters
+associated with each level of the LMS_tree hierarchy.
+The entries used here should match size of "hss-levels" e.g. If hss-levels is 2,
+"lms-type-l1" and "lms-type-l2" must be specified.
+Each LMS type specifies both a digest and height to use for a LMS tree.
+
+The height |h| is one of 5, 10, 15, 20, 25 and corresponds to 2^h leaf nodes
+for a tree.
+
+If a tree has 2 levels of 10 and 5 for example this would correspond to
+having 1024 (2^10) leaf nodes in the top tree, and each of these leaf nodes
+would then have 32 (2^5) child leaf nodes, which gives a total of 32*1024 nodes.
+
+Note that the current index in the tree is stored as a 64 bit value, so the
+maximum number of nodes that will be used will be 2^64 - 1 regardless of
+whether the user specifies multiple levels with large heights. Note that
+generating LMS trees for large values of H can be extremely slow.
+
+The digest specified by the LMS type is one of SHA256_N32, SHA256_N24,
+SHAKE_N32 or SHAKE_N24 and corresponds to SHA2-256, SHA2-256/192, SHAKE256/256
+and SHAKE256-192 respectively.
+The digest used must be the same for each level in the hierarchy.
+
+=item "ots-type-l1" (B<OSSL_PKEY_PARAM_HSS_OTS_TYPE_L1>) <unsigned integer>
+=item "ots-type-l2" (B<OSSL_PKEY_PARAM_HSS_OTS_TYPE_L2>) <unsigned integer>
+=item "ots-type-l3" (B<OSSL_PKEY_PARAM_HSS_OTS_TYPE_L3>) <unsigned integer>
+=item "ots-type-l4" (B<OSSL_PKEY_PARAM_HSS_OTS_TYPE_L4>) <unsigned integer>
+=item "ots-type-l5" (B<OSSL_PKEY_PARAM_HSS_OTS_TYPE_L5>) <unsigned integer>
+=item "ots-type-l6" (B<OSSL_PKEY_PARAM_HSS_OTS_TYPE_L6>) <unsigned integer>
+=item "ots-type-l7" (B<OSSL_PKEY_PARAM_HSS_OTS_TYPE_L7>) <unsigned integer>
+=item "ots-type-l8" (B<OSSL_PKEY_PARAM_HSS_OTS_TYPE_L8>) <unsigned integer>
+
+A OTS type such as OSSL_LM_OTS_TYPE_SHA256_N32_W1 which defines a set of parameters
+associated with each level of the LMS_tree hierarchy.
+
+The entries used here should match size of "hss-levels" e.g. If hss-levels is 2,
+"ots-type-l1" and "ots-type-l2" must be specified.
+Similar to the LMS type the digest used must be the same for each level in the
+hierarchy and must match the digest used for the LMS type.
+The OTS type specifies W which is the width in bits of the Winternitz
+coefficient which has values of 1, 2, 4 or 8.
+Larger w values require more computations (~2^w-1),
+but produce smaller signatures.
+
+=back
+
+A HSS_KEY supports the following parameter:
+
+=over 4
+
+=item "remaining" (B<OSSL_PKEY_PARAM_HSS_KEYS_REMAINING>) <unsigned integer>
+
+A getter that returns the number of remaining one time use key pairs.
+
+=back
+
+A HSS_KEY can pass the following parameter to EVP_PKEY_reserve().
+
+=over 4
+
+=item "shard-size" (B<OSSL_PKEY_PARAM_HSS_SHARD_SIZE>) <unsigned integer>
+
+Sets the number of times the returned key can be used for signing.
+This reduces the number of times the original key can be used for signing
+by shard_size.
+
+If the shard-size is larger than the number of remaining one time use key pairs
+then an error will be returned by EVP_PKEY_reserve().
+
+=back
+
+For HSS there are 2 purposes for the EVP_PKEY_reserve() function. Firstly it is
+used for testing purposes, since it allows skipping over OTS signatures in the
+HSS tree. HSS relies on the one time keys only being used once for signing.
+Implementing this correctly requires the key state to be persisted, and the
+OpenSSL implementation does not attempt to solve this issue. This function can
+however take a small shard of the entire HSS tree, which could potentially be
+thrown away on failures (such as a reboot).
 
 =head1 CONFORMING TO
 
@@ -56,10 +215,63 @@ Commercial National Security Algorithm Suite
 NOTE error checking has been omitted in these examples
 
 An B<EVP_PKEY> context can be obtained by calling:
-
     EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_from_name(NULL, "HSS", NULL);
 
-An B<HSS> "pkey" can be loaded simply like this:
+A HSS key can be generated using:
+
+    EVP_PKEY_CTX *genctx = NULL;
+    EVP_PKEY *pkey = NULL;
+    uint32_t levels = 2;
+    uitn32_t gen_type = OSSL_HSS_KEYGEN_TYPE_RANDOM;
+    uint32_t lms_types[] = {OSSL_LMS_TYPE_SHA256_N32_H10, OSSL_LMS_TYPE_SHA256_N32_H5};
+    uint32_t ots_types[] = {OSSL_LM_OTS_TYPE_SHA256_N32_W1, OSSL_LM_OTS_TYPE_SHA256_N32_W8};
+    OSSL_PARAM params[7], *p = params;
+
+    genctx = EVP_PKEY_CTX_new_from_name(libctx, "HSS", propq);
+    EVP_PKEY_keygen_init(genctx);
+
+    *p++ = OSSL_PARAM_construct_uint32(OSSL_PKEY_PARAM_HSS_GEN_TYPE, &gen_type); 
+    *p++ = OSSL_PARAM_construct_uint32(OSSL_PKEY_PARAM_HSS_LEVELS, &levels);
+    *p++ = OSSL_PARAM_construct_uint32(OSSL_PKEY_PARAM_HSS_LMS_TYPE_L1, &lms_types[0]);
+    *p++ = OSSL_PARAM_construct_uint32(OSSL_PKEY_PARAM_HSS_LMS_TYPE_L2, &lms_types[1]);
+    *p++ = OSSL_PARAM_construct_uint32(OSSL_PKEY_PARAM_HSS_OTS_TYPE_L1, &ots_types[0]);
+    *p++ = OSSL_PARAM_construct_uint32(OSSL_PKEY_PARAM_HSS_OTS_TYPE_L2, &ots_types[1]);
+    *p = OSSL_PARAM_construct_end();
+    EVP_PKEY_CTX_set_params(genctx, params);
+    EVP_PKEY_generate(genctx, &pkey);
+
+The number of remaining one time use keys can be found by calling:
+
+    uint64_t remaining = 0;
+
+    EVP_PKEY_get_uint64_param(pkey, OSSL_PKEY_PARAM_HSS_KEYS_REMAINING,
+                              &remaining);
+
+The fragment of the existing one time use keys can be obtained using:
+
+    EVP_PKEY *shard = NULL;
+    OSSL_PARAM params[2];
+    uint64_t shard_size = 32;
+
+    params[0] = OSSL_PARAM_construct_uint64(OSSL_PKEY_PARAM_HSS_SHARD_SIZE,
+                                            &shard_size);
+    params[1] = OSSL_PARAM_construct_end();
+    shard = EVP_PKEY_reserve(pkey, params);
+    /*
+     * This takes 32 one time use signing keys away from |pkey|
+     * and assigns them to |shard|
+     */
+
+The HSS public key can then be saved using:
+
+    OSSL_ENCODER_CTX *ectx = NULL;
+
+    ectx = OSSL_ENCODER_CTX_new_for_pkey(pkey, OSSL_KEYMGMT_SELECT_PUBLIC_KEY,
+                                         "xdr", NULL, NULL)));
+    OSSL_ENCODER_to_bio(ectx, bio);
+
+
+An B<HSS> public key can be loaded simply like this:
 
     EVP_PKEY *pkey = NULL;
     OSSL_DECODER_CTX *dctx = NULL;
@@ -75,7 +287,7 @@ or a "pkey" can be loaded from raw encoded "data" of size "datalen" like this:
     EVP_PKEY *key = NULL;
     OSSL_PARAM params[2];
 
-    params[0] = 
+    params[0] =
         OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY,
                                           (unsigned char *)data, datalen);
     params[1] = OSSL_PARAM_construct_end();
@@ -85,6 +297,7 @@ or a "pkey" can be loaded from raw encoded "data" of size "datalen" like this:
 =head1 SEE ALSO
 
 L<EVP_SIGNATURE-HSS(7)>,
+L<EVP_PKEY_reserve(3)>,
 L<EVP_KEYMGMT(3)>,
 L<EVP_PKEY(3)>,
 L<provider-keymgmt(7)>

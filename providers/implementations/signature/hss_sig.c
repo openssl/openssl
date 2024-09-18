@@ -49,6 +49,7 @@ typedef struct {
     OSSL_LIB_CTX *libctx;
     char *propq;
     HSS_KEY *key;
+    HSS_LISTS lists;
     LMS_VALIDATE_CTX ctx;
 #if !defined(LMS_NO_THREADS)
     LMS_VALIDATE_CTX *thread_data;
@@ -96,6 +97,7 @@ static void hss_freectx(void *vctx)
     if (ctx == NULL)
         return;
 
+    ossl_hss_lists_free(&ctx->lists);
     ossl_hss_key_free(ctx->key);
     OPENSSL_free(ctx->propq);
     ossl_lm_ots_ctx_free(ctx->ctx.pubctx);
@@ -119,7 +121,7 @@ static int setdigest(PROV_HSS_CTX *ctx, const char *digestname)
      * then return an error.
      */
     HSS_KEY *hsskey = ctx->key;
-    LMS_KEY *key = sk_LMS_KEY_value(hsskey->lmskeys, 0);
+    LMS_KEY *key = LMS_KEY_get(hsskey, 0);
     const char *pub_digestname = key->ots_params->digestname;
 
     if (ctx->ctx.md != NULL) {
@@ -290,54 +292,61 @@ static int hss_sig_verify(PROV_HSS_CTX *ctx,
     return 1;
 }
 
-static int hss_decoded(PROV_HSS_CTX *ctx)
+static int hss_decoded(PROV_HSS_CTX *verifyctx)
 {
-    HSS_KEY *hsskey = ctx->key;
-
-    return sk_LMS_SIG_num(hsskey->lmssigs) > 0;
+     return LMS_SIG_count(verifyctx) > 0;
 }
 
-static int hss_verify_int(PROV_HSS_CTX *ctx,
+static int hss_verify_int(PROV_HSS_CTX *verifyctx,
                           const unsigned char *sig, size_t siglen,
                           const unsigned char *msg, size_t msglen)
 {
     int ret = 0, i;
-    HSS_KEY *hsskey = ctx->key;
+    HSS_KEY *hsskey = verifyctx->key;
+    HSS_LISTS *lists = &verifyctx->lists;
+    LMS_KEY *pub, *next;
 
+    /* A root public key is required to perform a verify operation */
+    pub = LMS_KEY_get(hsskey, 0);
+    if (pub == NULL)
+        return 0;
+
+    /* Set up lists to hold the decoded signature data */
+    if (!ossl_hss_lists_init(lists))
+        return 0;
     /*
      * Decode the HSS signature data which contains signatures and public keys
      * This can just be a single level tree for the simple LMS case.
      */
-    if (!ossl_hss_sig_decode(hsskey, sig, siglen))
+    if (!ossl_hss_sig_decode(lists, pub, hsskey->L, sig, siglen))
         goto err;
 
     /* Verify each tree */
-    for (i = 0; i < sk_LMS_SIG_num(hsskey->lmssigs) - 1; ++i) {
-        LMS_KEY *next = sk_LMS_KEY_value(hsskey->lmskeys, i + 1);
-
+    for (i = 0; i < LMS_SIG_count(verifyctx) - 1; ++i) {
+        next = LMS_KEY_get(verifyctx, i);
         if (next == NULL)
             goto err;
         /*
          * As this call may create a thread to do the work it may not indicate
          * a verification failure until check_jobs() is called later
          */
-        if (hss_sig_verify(ctx, sk_LMS_SIG_value(hsskey->lmssigs, i),
-                           sk_LMS_KEY_value(hsskey->lmskeys, i),
+        if (hss_sig_verify(verifyctx, LMS_SIG_get(verifyctx, i), pub,
                            next->pub.encoded, next->pub.encodedlen) != 1)
             goto err;
+        pub = next;
     }
+
     if (msg == NULL) {
         /*
          * If the msg is not passed in, the last verify will be done on the
          * main thread.
          */
-        ctx->ctx.sig = sk_LMS_SIG_value(hsskey->lmssigs, i);
-        ctx->ctx.pub = sk_LMS_KEY_value(hsskey->lmskeys, i);
-        if (!ossl_lms_sig_verify_init(&ctx->ctx))
+        verifyctx->ctx.sig = LMS_SIG_get(verifyctx, i);
+        verifyctx->ctx.pub = pub;
+        if (!ossl_lms_sig_verify_init(&verifyctx->ctx))
             goto err;
     } else {
-        if (hss_sig_verify(ctx, sk_LMS_SIG_value(hsskey->lmssigs, i),
-                           sk_LMS_KEY_value(hsskey->lmskeys, i),
+        if (hss_sig_verify(verifyctx, LMS_SIG_get(verifyctx, i), pub,
                            msg, msglen) != 1)
             goto err;
     }
@@ -377,8 +386,6 @@ static int hss_verify(void *vctx, const unsigned char *sig, size_t siglen,
 err:
     if (!check_jobs(vctx))
         ret = 0;
-
-    ossl_hss_key_verify_reset(ctx->key);
     return ret;
 }
 
@@ -410,7 +417,6 @@ static int hss_verify_msg_final(void *vctx)
     /* Wait for any jobs to finish */
     if (!check_jobs(ctx))
         ret = 0;
-    ossl_hss_key_verify_reset(ctx->key);
     return ret;
 }
 

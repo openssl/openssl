@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2023-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -11,6 +11,7 @@
 #include <openssl/err.h>
 #include <openssl/proverr.h>
 #include <openssl/rand.h>
+#include <openssl/hss.h>
 #include <openssl/core_names.h>
 #include "lms_local.h"
 #include "internal/refcount.h"
@@ -297,12 +298,14 @@ err:
  *
  * @param lms_type The LMS type such as OSSL_LMS_TYPE_SHA256_N32_H5
  * @param ots_type The OTS type such as OSSL_LM_OTS_TYPE_SHA256_N32_W1
+ * @param gen_type OSSL_HSS_KEYGEN_TYPE_DETERMINISTIC or OSSL_HSS_KEYGEN_TYPE_RANDOM
  * @param libctx A OSSL_LIB_CTX object used for algorithm fetching
  * @param propq A property query used for algorithm fetching
  * @param parent The parent of this LMS_KEY. May be NULL.
  * @returns A newly generated LMS_KEY object on success, or NULL on failure.
  */
 LMS_KEY *ossl_lms_key_gen(uint32_t lms_type, uint32_t ots_type,
+                          uint32_t gen_type,
                           OSSL_LIB_CTX *libctx, const char *propq,
                           LMS_KEY *parent)
 {
@@ -314,7 +317,7 @@ LMS_KEY *ossl_lms_key_gen(uint32_t lms_type, uint32_t ots_type,
         return NULL;
 
     ret = lms_key_init(key, lms_type, ots_type, libctx, propq)
-        && ossl_lms_key_reset(key, 0, parent)
+        && ossl_lms_key_reset(key, 0, gen_type, parent)
         && ossl_lms_pubkey_compute(key);
     if (ret == 0) {
         ossl_lms_key_free(key);
@@ -447,13 +450,14 @@ err:
  * @param priv The LMS_Key to reset the private key in.
  * @param seedlen The size of the SEED generated (should be n)
  * @param nodeid The parents q index, used for deriving private key SEED and I
+ * @param gen_type OSSL_HSS_KEYGEN_TYPE_DETERMINISTIC or OSSL_HSS_KEYGEN_TYPE_RANDOM
  * @param parent The parent LMS_KEY, used for deriving private key SEED and I.
  *               This is NULL for the root of the HSS tree.
  * @param libctx The OSSL_LIB_CTX object required for generating random bytes
  * @returns 1 on success or 0 otherwise.
  */
 static int lms_privkey_reset(LMS_PRIV_KEY *priv, uint32_t seedlen,
-                             uint32_t nodeid, LMS_KEY *parent,
+                             uint32_t nodeid, uint32_t gen_type, LMS_KEY *parent,
                              OSSL_LIB_CTX *libctx)
 {
     WPACKET pkt;
@@ -472,7 +476,7 @@ static int lms_privkey_reset(LMS_PRIV_KEY *priv, uint32_t seedlen,
      * According to SP800-208 Section 6.1, hardware implementations should
      * use an Approved RBG to generate this value.
      */
-    if (parent == NULL) {
+    if (parent == NULL || gen_type == OSSL_HSS_KEYGEN_TYPE_RANDOM) {
         /* Randomly generate SEED and I */
         if (RAND_priv_bytes_ex(libctx, SEED, seedlen + LMS_SIZE_I, 0) <= 0)
             goto err;
@@ -543,15 +547,17 @@ static int lms_pubkey_reset(LMS_PUB_KEY *key)
  *
  * @param lmskey The LMS_KEY object to reset.
  * @param nodeid The parents q value is used when deriving private key SEED and I
+ * @param gen_type OSSL_HSS_KEYGEN_TYPE_DETERMINISTIC or OSSL_HSS_KEYGEN_TYPE_RANDOM
  * @param parent The parent LMS_KEY is used for deriving private key SEED and I
  * @returns 1 on success, or 0 otherwise.
  */
-int ossl_lms_key_reset(LMS_KEY *lmskey, int nodeid, LMS_KEY *parent)
+int ossl_lms_key_reset(LMS_KEY *lmskey, int nodeid, uint32_t gen_type,
+                       LMS_KEY *parent)
 {
     ossl_lms_pubkey_cache_flush(lmskey);
 
     if (!lms_privkey_reset(&lmskey->priv, lmskey->ots_params->n,
-                           nodeid, parent, lmskey->libctx))
+                           nodeid, gen_type, parent, lmskey->libctx))
         return 0;
     if (!lms_pubkey_reset(&lmskey->pub))
         return 0;

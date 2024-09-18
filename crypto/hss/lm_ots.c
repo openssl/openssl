@@ -11,6 +11,7 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/core_names.h>
+#include <openssl/hss.h>
 #include <openssl/proverr.h>
 #include <openssl/rand.h>
 #include "internal/refcount.h"
@@ -232,23 +233,32 @@ int ossl_lm_ots_signature_gen_init(LMS_KEY *key, LM_OTS_SIG *sig)
         return 0;
     if (!WPACKET_init_static_len(&pkt, tmp, sizeof(tmp), 0)
             || !WPACKET_memcpy(&pkt, key->Id, LMS_SIZE_I)
-            || !WPACKET_put_bytes_u32(&pkt, key->q)
-            || !WPACKET_put_bytes_u16(&pkt, OSSL_LMS_D_C)
-            || !WPACKET_put_bytes_u8(&pkt, 0xFF)
-            || !WPACKET_get_total_written(&pkt, &len))
-        goto err;
-    /*
-     * Note that this implementation generates a deterministic value for C
-     * based on I and SEED.
-     * C = H(I || q || 0xFFFD || 0xFF || SEED)
-     * According to SP800-208 Section 6.1, hardware implementations should
-     * use a Approved RBG to generate this value.
-     */
-    if (!ossl_lms_hash(key->mdctx, tmp, len, key->priv.seed, n, sig->C))
+            || !WPACKET_put_bytes_u32(&pkt, key->q))
         goto err;
 
-    if (!WPACKET_backward(&pkt, 3)
-            || !WPACKET_put_bytes_u16(&pkt, OSSL_LMS_D_MESG)
+    if (sig->gen_type == OSSL_HSS_KEYGEN_TYPE_DETERMINISTIC) {
+        /*
+         * Generate a deterministic value for C based on I and SEED.
+         * C = H(I || q || 0xFFFD || 0xFF || SEED)
+         */
+        if (!WPACKET_put_bytes_u16(&pkt, OSSL_LMS_D_C)
+                || !WPACKET_put_bytes_u8(&pkt, 0xFF)
+                || !WPACKET_get_total_written(&pkt, &len))
+            goto err;
+        if (!ossl_lms_hash(key->mdctx, tmp, len, key->priv.seed, n, sig->C))
+            goto err;
+        if (!WPACKET_backward(&pkt, 3))
+            goto err;
+    } else {
+       /*
+        * According to SP800-208 Section 6.1, hardware implementations should
+        * use an Approved RBG to generate this value.
+        */
+        if (RAND_priv_bytes_ex(key->libctx, sig->C, n, 0) <= 0)
+            goto err;
+    }
+
+    if (!WPACKET_put_bytes_u16(&pkt, OSSL_LMS_D_MESG)
             || !WPACKET_memcpy(&pkt, sig->C, n)
             || !WPACKET_get_total_written(&pkt, &len))
         goto err;

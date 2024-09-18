@@ -418,6 +418,7 @@ my %params = (
     'PKEY_PARAM_DHKEM_IKM' =>        "dhkem-ikm",
     
 # HSS Key generation parameters
+    'PKEY_PARAM_HSS_GEN_TYPE' => "hss-gen-type",
     'PKEY_PARAM_HSS_LEVELS' => "hss-levels",
     'PKEY_PARAM_HSS_LMS_TYPE_L1' => "lms-type-l1",
     'PKEY_PARAM_HSS_LMS_TYPE_L2' => "lms-type-l2",
