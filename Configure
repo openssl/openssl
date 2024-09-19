@@ -472,6 +472,7 @@ my @disablables = (
     "fips",
     "fips-securitychecks",
     "fips-post",
+    "fips-jitter",
     "fuzz-afl",
     "fuzz-libfuzzer",
     "gost",
@@ -573,6 +574,7 @@ my %deprecated_disablables = (
 
 our %disabled = ( # "what"         => "comment"
                   "fips"                => "default",
+                  "fips-jitter"         => "default",
                   "asan"                => "default",
                   "brotli"              => "default",
                   "brotli-dynamic"      => "default",
@@ -689,7 +691,8 @@ my @disable_cascades = (
 
     "cmp"               => [ "crmf" ],
 
-    "fips"              => [ "fips-securitychecks", "fips-post", "acvp-tests" ],
+    "fips"              => [ "fips-securitychecks", "fips-post", "acvp-tests",
+                             "fips-jitter" ],
 
     "threads"           => [ "thread-pool" ],
     "thread-pool"       => [ "default-thread-pool" ],
@@ -956,6 +959,11 @@ while (@argvcopy)
                 elsif ($1 eq "zstd-dynamic")
                         {
                         delete $disabled{"zstd"};
+                        }
+                elsif ($1 eq "fips-jitter")
+                        {
+                        delete $disabled{"fips"};
+                        delete $disabled{"jitter"};
                         }
                 my $algo = $1;
                 delete $disabled{$algo};

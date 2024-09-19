@@ -536,7 +536,7 @@ shown below:
     [random]
     seed=JITTER
 
-It uses a statically linked [jitterentropy-library](https://github.com/smuellerDD/jitterentropy-library) as the seed source.
+It uses a statically linked [jitterentropy-library] as the seed source.
 
 Additional configuration flags available:
 
@@ -840,6 +840,19 @@ Don't perform FIPS module Power On Self Tests.
 
 This option MUST be used for debugging only as it makes the FIPS provider
 non-compliant. It is useful when setting breakpoints in FIPS algorithms.
+
+### enable-fips-jitter
+
+Use the CPU Jitter library as a FIPS validated entropy source.
+
+This option will only produce a compliant FIPS provider if you have:
+
+1. independently performed the required [SP 800-90B] entropy assessments;
+2. meet the minimum required entropy as specified by [jitterentropy-library];
+3. obtain an [ESV] certificate for the [jitterentropy-library] and
+4. have had the resulting FIPS provider certified by the [CMVP].
+
+Failure to do all of these will produce a non-compliant FIPS provider.
 
 ### enable-fuzz-libfuzzer, enable-fuzz-afl
 
@@ -2006,3 +2019,15 @@ is used, as it is the version of the GNU assembler that will be checked.
 
 [10-main.conf]:
     Configurations/10-main.conf
+
+[CMVP]:
+    <https://csrc.nist.gov/projects/cryptographic-module-validation-program>
+
+[ESV]:
+    <https://csrc.nist.gov/Projects/cryptographic-module-validation-program/entropy-validations>
+
+[SP 800-90B]:
+    <https://csrc.nist.gov/pubs/sp/800/90/b/final>
+
+[jitterentropy-library]:
+    <https://github.com/smuellerDD/jitterentropy-library>
