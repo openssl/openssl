@@ -33,7 +33,7 @@
  * can be either binary encoded ECHConfigList or a base64
  * encoded ECHConfigList.
  */
-# define OSSL_ECH_FMT_BIN       1  /* catenated binary ECHConfigList */
+# define OSSL_ECH_FMT_BIN       1  /* binary ECHConfigList */
 # define OSSL_ECH_FMT_B64TXT    2  /* base64 ECHConfigList */
 
 /*
@@ -475,10 +475,6 @@ static int ech_decode_and_flatten(OSSL_ECHSTORE *es, EVP_PKEY *priv, int for_ret
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
         goto err;
     }
-    /*
-     * ECHConfigList length (olen) could be less than the input buffer length,
-     * (binblen) if the caller has been given a catenated set of binary buffers
-     */
     if (PACKET_buf_init(&opkt, binbuf, binblen) != 1
         || !PACKET_get_length_prefixed_2(&opkt, &pkt)) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
@@ -514,6 +510,32 @@ static int ech_decode_and_flatten(OSSL_ECHSTORE *es, EVP_PKEY *priv, int for_ret
 err:
     ossl_echstore_entry_free(ee);
     return rv;
+}
+
+/*
+ * @brief check a private matches some public
+ * @param es is the ECH store
+ * @param priv is the private value
+ * @return 1 if we have a match, zero otherwise
+ */
+static int check_priv_matches(OSSL_ECHSTORE *es, EVP_PKEY *priv)
+{
+    int num, ent, gotone = 0;
+    OSSL_ECHSTORE_ENTRY *ee = NULL;
+
+    num = (es->entries == NULL ? 0 : sk_OSSL_ECHSTORE_ENTRY_num(es->entries));
+    for (ent = 0; ent != num; ent++) {
+        ee = sk_OSSL_ECHSTORE_ENTRY_value(es->entries, ent);
+        if (ee == NULL) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
+            return 0;
+        }
+        if (ee->keyshare == priv) {
+            gotone = 1;
+            break;
+        }
+    }
+    return gotone;
 }
 
 /*
@@ -587,6 +609,8 @@ static int ech_read_priv_echconfiglist(OSSL_ECHSTORE *es, BIO *in,
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         goto err;
     }
+    if (priv != NULL && check_priv_matches(es, priv) == 0)
+        goto err;
     rv = 1;
 err:
     OPENSSL_free(binbuf);
