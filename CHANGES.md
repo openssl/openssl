@@ -30,7 +30,13 @@ OpenSSL 3.4
 
 ### Changes between 3.4 and 3.5 [xx XXX xxxx]
 
- * none yet
+ * Optionally allow the FIPS provider to use the `JITTER` entropy source.
+   Note that using this option will require the resulting FIPS provider
+   to undergo entropy source validation [ESV] by the [CMVP], without this
+   the FIPS provider will not be FIPS compliant.  Enable this using the
+   configuration option `enable-fips-jitter`.
+
+   *Paul Dale*
 
 OpenSSL 3.4
 -----------
@@ -21062,3 +21068,5 @@ ndif
 [CVE-2002-0657]: https://www.openssl.org/news/vulnerabilities.html#CVE-2002-0657
 [CVE-2002-0656]: https://www.openssl.org/news/vulnerabilities.html#CVE-2002-0656
 [CVE-2002-0655]: https://www.openssl.org/news/vulnerabilities.html#CVE-2002-0655
+[CMVP]: https://csrc.nist.gov/projects/cryptographic-module-validation-program
+[ESV]: https://csrc.nist.gov/Projects/cryptographic-module-validation-program/entropy-validations
