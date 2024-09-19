@@ -534,14 +534,16 @@ static void rand_delete_thread_state(void *arg)
     EVP_RAND_CTX_free(rand);
 }
 
-#ifndef FIPS_MODULE
+#if !defined(FIPS_MODULE) || !defined(OPENSSL_NO_FIPS_JITTER)
 static EVP_RAND_CTX *rand_new_seed(OSSL_LIB_CTX *libctx)
 {
     EVP_RAND *rand;
-    RAND_GLOBAL *dgbl = rand_get_global(libctx);
-    EVP_RAND_CTX *ctx = NULL;
     const char *propq;
-    char *name, *props = NULL;
+    char *name;
+    EVP_RAND_CTX *ctx = NULL;
+# ifdef OPENSSL_NO_FIPS_JITTER
+    RAND_GLOBAL *dgbl = rand_get_global(libctx);
+    char *props = NULL;
     size_t props_len;
     OSSL_PROPERTY_LIST *pl1, *pl2, *pl3 = NULL;
 
@@ -599,6 +601,10 @@ static EVP_RAND_CTX *rand_new_seed(OSSL_LIB_CTX *libctx)
         }
         name = OPENSSL_MSTR(OPENSSL_DEFAULT_SEED_SRC);
     }
+# else /* !OPENSSL_NO_FIPS_JITTER */
+    name = "JITTER";
+    propq = "-fips";  /* precautionary: shouldn't matter since it's internal */
+# endif /* OPENSSL_NO_FIPS_JITTER */
 
     rand = EVP_RAND_fetch(libctx, name, propq);
     if (rand == NULL) {
@@ -615,15 +621,21 @@ static EVP_RAND_CTX *rand_new_seed(OSSL_LIB_CTX *libctx)
         ERR_raise(ERR_LIB_RAND, RAND_R_ERROR_INSTANTIATING_DRBG);
         goto err;
     }
+# ifdef OPENSSL_NO_FIPS_JITTER
     OPENSSL_free(props);
+# endif /* OPENSSL_NO_FIPS_JITTER */
     return ctx;
  err:
     EVP_RAND_CTX_free(ctx);
+# ifdef OPENSSL_NO_FIPS_JITTER
     ossl_property_free(pl3);
     OPENSSL_free(props);
+# endif /* OPENSSL_NO_FIPS_JITTER */
     return NULL;
 }
+#endif  /* !FIPS_MODULE || !OPENSSL_NO_FIPS_JITTER */
 
+#ifndef FIPS_MODULE
 EVP_RAND_CTX *ossl_rand_get0_seed_noncreating(OSSL_LIB_CTX *ctx)
 {
     RAND_GLOBAL *dgbl = rand_get_global(ctx);
@@ -638,7 +650,7 @@ EVP_RAND_CTX *ossl_rand_get0_seed_noncreating(OSSL_LIB_CTX *ctx)
     CRYPTO_THREAD_unlock(dgbl->lock);
     return ret;
 }
-#endif
+#endif  /* !FIPS_MODULE */
 
 static EVP_RAND_CTX *rand_new_drbg(OSSL_LIB_CTX *libctx, EVP_RAND_CTX *parent,
                                    unsigned int reseed_interval,
@@ -697,13 +709,13 @@ static EVP_RAND_CTX *rand_new_drbg(OSSL_LIB_CTX *libctx, EVP_RAND_CTX *parent,
     return ctx;
 }
 
-#ifdef FIPS_MODULE
+#if defined(FIPS_MODULE)
 static EVP_RAND_CTX *rand_new_crngt(OSSL_LIB_CTX *libctx, EVP_RAND_CTX *parent)
 {
     EVP_RAND *rand;
     EVP_RAND_CTX *ctx;
 
-    rand = EVP_RAND_fetch(libctx, "CRNG-TEST", "fips=no");
+    rand = EVP_RAND_fetch(libctx, "CRNG-TEST", "-fips");
     if (rand == NULL) {
         ERR_raise(ERR_LIB_RAND, RAND_R_UNABLE_TO_FETCH_DRBG);
         return NULL;
@@ -722,7 +734,7 @@ static EVP_RAND_CTX *rand_new_crngt(OSSL_LIB_CTX *libctx, EVP_RAND_CTX *parent)
     }
     return ctx;
 }
-#endif
+#endif  /* FIPS_MODULE */
 
 /*
  * Get the primary random generator.
@@ -755,17 +767,22 @@ EVP_RAND_CTX *RAND_get0_primary(OSSL_LIB_CTX *ctx)
         return ret;
     }
 
-#ifdef FIPS_MODULE
-    ret = rand_new_crngt(ctx, dgbl->seed);
-#else
+#if !defined(FIPS_MODULE) || !defined(OPENSSL_NO_FIPS_JITTER)
+    /* Create a seed source for libcrypto or jitter enabled FIPS provider */
     if (dgbl->seed == NULL) {
         ERR_set_mark();
         dgbl->seed = rand_new_seed(ctx);
         ERR_pop_to_mark();
     }
+#endif  /* !FIPS_MODULE || !OPENSSL_NO_FIPS_JITTER */
+
+#if defined(FIPS_MODULE)
+    /* The FIPS provider has entropy health tests instead of the primary */
+    ret = rand_new_crngt(ctx, dgbl->seed);
+#else   /* FIPS_MODULE */
     ret = rand_new_drbg(ctx, dgbl->seed, PRIMARY_RESEED_INTERVAL,
                         PRIMARY_RESEED_TIME_INTERVAL);
-#endif
+#endif  /* FIPS_MODULE */
 
     /*
      * The primary DRBG may be shared between multiple threads so we must
