@@ -14,6 +14,18 @@
 
 #ifndef OPENSSL_NO_ECH
 
+/*
+ * TODO(ECH): checking if this gets around CI ansi error. If it does,
+ * we can then ask if doing that is ok.
+ */
+#ifdef __GNUC__
+/*
+    Ignore "string length ‘1189’ is greater than the length ‘509’ ISO C90
+    compilers are required to support [-Werror=overlength-strings]".
+*/
+#  pragma GCC diagnostic ignored "-Woverlength-strings"
+#endif /* ifdef __GNUC__ */
+
 # define DEF_CERTS_DIR "test/certs"
 
 static int verbose = 0;
@@ -39,7 +51,7 @@ static const char pem_pk1[] =
     "-----END ECHCONFIG-----\n";
 
 /* a 512 bit RSA private with an x25519 ech public key example.com */
-static const char pem_rsa_priv[] =
+static const char pem_rsa_priv[800] =
     "-----BEGIN PRIVATE KEY-----\n"
     "MIIBVQIBADANBgkqhkiG9w0BAQEFAASCAT8wggE7AgEAAkEApeb9fP5SDxyOQZQT\n"
     "qGg2QeE0ypxY6Th33aDkRCRVB69rDMSA1Thfeyk65IfaPaA3bC4hsqAIBgslcFfk\n"
