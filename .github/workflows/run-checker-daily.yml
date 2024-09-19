@@ -8,9 +8,9 @@
 name: Run-checker daily
 # Jobs run daily
 
-on:
-  schedule:
-    - cron: '0 6 * * *'
+on: [pull_request, push]
+#  schedule:
+#    - cron: '0 6 * * *'
 permissions:
   contents: read
 
