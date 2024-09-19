@@ -207,7 +207,7 @@ jobs:
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config
-      run: ./config --with-rand-seed=none enable-jitter --with-jitter-include=jitter/ --with-jitter-lib=jitter/ -DOPENSSL_DEFAULT_SEED_SRC=JITTER && perl configdata.pm --dump
+      run: ./config --with-rand-seed=none enable-jitter enable-fips-jitter --with-jitter-include=jitter/ --with-jitter-lib=jitter/ -DOPENSSL_DEFAULT_SEED_SRC=JITTER && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: get cpu info
