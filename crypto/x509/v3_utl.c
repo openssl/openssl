@@ -1437,7 +1437,7 @@ int OSSL_GENERAL_NAMES_print(BIO *out, GENERAL_NAMES *gens, int indent)
 
 int ossl_bio_print_hex(BIO *out, unsigned char *buf, int len)
 {
-    int result = 1;
+    int result;
     char *hexbuf;
 
     if (len == 0)
