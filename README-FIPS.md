@@ -167,6 +167,22 @@ manual page.
 
  [fips_module(7)]: https://www.openssl.org/docs/manmaster/man7/fips_module.html
 
+Entropy Source
+==============
+
+The FIPS provider typically relies on an external entropy source,
+specified during OpenSSL build configuration (default: `os`).  However, by
+enabling the `enable-fips-jitter` option during configuration, an internal
+jitter entropy source will be used instead.  Note that this will cause
+the FIPS provider to operate in a non-compliant mode unless an entropy
+assessment [ESV] and validation through the [CMVP] are additionally conducted.
+
+Note that the `enable-fips-jitter` option is only available in OpenSSL
+versions 3.5 and later.
+
+ [CMVP]: https://csrc.nist.gov/projects/cryptographic-module-validation-program
+ [ESV]: https://csrc.nist.gov/Projects/cryptographic-module-validation-program/entropy-validations
+
 3rd-Party Vendor Builds
 =====================================
 
