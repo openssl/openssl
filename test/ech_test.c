@@ -18,9 +18,9 @@
  * TODO(ECH): checking if this gets around CI ansi error. If it does,
  * we can then ask if doing that is ok.
  */
-#ifdef __GNUC__
+# ifdef __GNUC__
 #  pragma GCC diagnostic ignored "-Woverlength-strings"
-#endif /* ifdef __GNUC__ */
+# endif /* ifdef __GNUC__ */
 
 # define DEF_CERTS_DIR "test/certs"
 
