@@ -19,10 +19,6 @@
  * we can then ask if doing that is ok.
  */
 #ifdef __GNUC__
-/*
-    Ignore "string length ‘1189’ is greater than the length ‘509’ ISO C90
-    compilers are required to support [-Werror=overlength-strings]".
-*/
 #  pragma GCC diagnostic ignored "-Woverlength-strings"
 #endif /* ifdef __GNUC__ */
 
