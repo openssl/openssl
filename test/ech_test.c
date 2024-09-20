@@ -46,23 +46,6 @@ static const char pem_pk1[] =
     "AQALZXhhbXBsZS5jb20AAA==\n"
     "-----END ECHCONFIG-----\n";
 
-/* a 512 bit RSA private with an x25519 ech public key example.com */
-static const char pem_rsa_priv[800] =
-    "-----BEGIN PRIVATE KEY-----\n"
-    "MIIBVQIBADANBgkqhkiG9w0BAQEFAASCAT8wggE7AgEAAkEApeb9fP5SDxyOQZQT\n"
-    "qGg2QeE0ypxY6Th33aDkRCRVB69rDMSA1Thfeyk65IfaPaA3bC4hsqAIBgslcFfk\n"
-    "1/i8KQIDAQABAkAsH3EPizwb1MZo3o8T3ROBFfpKYKas8F3Azgenr9oFfs5kPgya\n"
-    "VDdtZu+UweG5nTo+fZG5ZFmcwWXJTLtiUfABAiEAz2gvTuc0lPTQi3t6RFB5nGCt\n"
-    "h75Ofx/ceusHa2a36QECIQDMxXJQnuWY+bH/wSfPY/ySltQ6U2cy0LHQ37FIfSFr\n"
-    "KQIgUo++hUI0BDeP7HYyrY77WeyCJ07yIFimg6ebRH2XKAECIQCSavhTd1q6qIhD\n"
-    "VMzveRInixvTXMGkzx7mOJzeNUMJCQIhAJjjVdRjUpWPMquRDCddmwegh88ptsFX\n"
-    "T/Ygm1OubAyM\n"
-    "-----END PRIVATE KEY-----\n"
-    "-----BEGIN ECHCONFIG-----\n"
-    "AD7+DQA6bAAgACCY7B0f/3KvHIFdoqFaObdU8YYU+MdBf4vzbLhAAL2QCwAEAAEA\n"
-    "AQALZXhhbXBsZS5jb20AAA==\n"
-    "-----END ECHCONFIG-----\n";
-
 /* an ECDSA private with an x25519 ech public key example.com */
 static const char pem_mismatch_priv[] =
     "-----BEGIN EC PRIVATE KEY-----\n"
@@ -618,8 +601,6 @@ static ingest_tv_t ingest_tvs[] = {
       1, 1, 0, 1, 0, 1, 0, 1 },
     { "PEM basic/2nd", (unsigned char *)pem_pk1, sizeof(pem_pk1) - 1,
       1, 1, 0, 1, 2, 0, 0, 1 },
-    { "PEM RSA", (unsigned char *)pem_rsa_priv, sizeof(pem_rsa_priv) - 1,
-      1, 0, 0, 0, 0, 0, 0, 0 },
     { "ECDSA priv + 25519 pub", (unsigned char *)pem_mismatch_priv,
       sizeof(pem_mismatch_priv) - 1,
       1, 0, 0, 0, 0, 0, 0, 0 },
@@ -712,6 +693,7 @@ static fnt_t fnames[] = {
     { "ech-mid.pem", 1 },
     { "ech-big.pem", 1 },
     { "ech-giant.pem", 0 },
+    { "ech-rsa.pem", 0 },
 };
 
 typedef enum OPTION_choice {

@@ -194,7 +194,8 @@ static int ech_check_format(const unsigned char *val, size_t len, int *fmt)
  */
 static int ech_decode_echconfig_exts(OSSL_ECHSTORE_ENTRY *ee, PACKET *exts)
 {
-    unsigned int exttype = 0, extlen = 0;
+    unsigned int exttype = 0;
+    size_t extlen = 0;
     unsigned char *extval = NULL;
     OSSL_ECHEXT *oe = NULL;
     PACKET ext;
@@ -215,27 +216,25 @@ static int ech_decode_echconfig_exts(OSSL_ECHSTORE_ENTRY *ee, PACKET *exts)
             ERR_raise(ERR_LIB_SSL, SSL_R_BAD_ECHCONFIG_EXTENSION);
             goto err;
         }
-        extlen = PACKET_remaining(&ext);
+        if (exttype > 0xffff) {
+            ERR_raise(ERR_LIB_SSL, SSL_R_BAD_ECHCONFIG_EXTENSION);
+            goto err;
+        }
+        if (!PACKET_memdup(&ext, &extval, &extlen)) {
+            ERR_raise(ERR_LIB_SSL, SSL_R_BAD_ECHCONFIG_EXTENSION);
+            goto err;
+        }
         if (extlen >= OSSL_ECH_MAX_ECHCONFIGEXT_LEN) {
             ERR_raise(ERR_LIB_SSL, SSL_R_BAD_ECHCONFIG_EXTENSION);
             goto err;
         }
-        if (extlen != 0) {
-            extval = (unsigned char *)OPENSSL_malloc(extlen);
-            if (extval == NULL)
-                goto err;
-            if (!PACKET_copy_bytes(&ext, extval, extlen)) {
-                ERR_raise(ERR_LIB_SSL, SSL_R_BAD_ECHCONFIG_EXTENSION);
-                goto err;
-            }
-        }
         oe = OPENSSL_malloc(sizeof(*oe));
         if (oe == NULL)
             goto err;
-        oe->type = exttype;
+        oe->type = (uint16_t) exttype;
         oe->val = extval;
         extval = NULL; /* avoid double free */
-        oe->len = extlen;
+        oe->len = (uint16_t) extlen;
         if (ee->exts == NULL)
             ee->exts = sk_OSSL_ECHEXT_new_null();
         if (ee->exts == NULL) {
@@ -336,14 +335,14 @@ static int ech_decode_one_entry(OSSL_ECHSTORE_ENTRY **rent, PACKET *pkt,
     tmpeclen = PACKET_remaining(pkt);
     if (PACKET_peek_bytes(pkt, &tmpecp, tmpeclen) != 1
         || !PACKET_get_net_2(pkt, &tmpi)) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        ERR_raise(ERR_LIB_SSL, SSL_R_ECH_DECODE_ERROR);
         goto err;
     }
     ee->version = (uint16_t) tmpi;
 
     /* grab versioned packet data */
     if (!PACKET_get_length_prefixed_2(pkt, &ver_pkt)) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        ERR_raise(ERR_LIB_SSL, SSL_R_ECH_DECODE_ERROR);
         goto err;
     }
     ech_content_length = PACKET_remaining(&ver_pkt);
@@ -353,7 +352,7 @@ static int ech_decode_one_entry(OSSL_ECHSTORE_ENTRY **rent, PACKET *pkt,
     default:
         /* skip over in case we get something we can handle later */
         if (!PACKET_forward(&ver_pkt, ech_content_length)) {
-            ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+            ERR_raise(ERR_LIB_SSL, SSL_R_ECH_DECODE_ERROR);
             goto err;
         }
         /* nothing to return but not a fail */
@@ -367,7 +366,7 @@ static int ech_decode_one_entry(OSSL_ECHSTORE_ENTRY **rent, PACKET *pkt,
         || !PACKET_get_length_prefixed_2(&ver_pkt, &cipher_suites)
         || (suiteoctets = PACKET_remaining(&cipher_suites)) <= 0
         || (suiteoctets % 2) == 1) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        ERR_raise(ERR_LIB_SSL, SSL_R_ECH_DECODE_ERROR);
         goto err;
     }
     thiskemid = (uint16_t) tmpi;
@@ -381,33 +380,33 @@ static int ech_decode_one_entry(OSSL_ECHSTORE_ENTRY **rent, PACKET *pkt,
         ee->suites[ci].kdf_id = cipher[0] << 8 | cipher [1];
         ee->suites[ci].aead_id = cipher[2] << 8 | cipher [3];
         if (ci++ >= ee->nsuites) {
-            ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+            ERR_raise(ERR_LIB_SSL, SSL_R_ECH_DECODE_ERROR);
             goto err;
         }
     }
     if (PACKET_remaining(&cipher_suites) > 0
         || !PACKET_copy_bytes(&ver_pkt, &max_name_len, 1)) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        ERR_raise(ERR_LIB_SSL, SSL_R_ECH_DECODE_ERROR);
         goto err;
     }
     ee->max_name_length = max_name_len;
     if (!PACKET_get_length_prefixed_1(&ver_pkt, &public_name_pkt)) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        ERR_raise(ERR_LIB_SSL, SSL_R_ECH_DECODE_ERROR);
         goto err;
     }
     if (PACKET_contains_zero_byte(&public_name_pkt)
         || PACKET_remaining(&public_name_pkt) < TLSEXT_MINLEN_host_name
         || !PACKET_strndup(&public_name_pkt, &ee->public_name)) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        ERR_raise(ERR_LIB_SSL, SSL_R_ECH_DECODE_ERROR);
         goto err;
     }
     if (!PACKET_get_length_prefixed_2(&ver_pkt, &exts)) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        ERR_raise(ERR_LIB_SSL, SSL_R_ECH_DECODE_ERROR);
         goto err;
     }
     if (PACKET_remaining(&exts) > 0
         && ech_decode_echconfig_exts(ee, &exts) != 1) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        ERR_raise(ERR_LIB_SSL, SSL_R_ECH_DECODE_ERROR);
         goto err;
     }
     /* set length of encoding of this ECHConfig */
@@ -426,7 +425,7 @@ static int ech_decode_one_entry(OSSL_ECHSTORE_ENTRY **rent, PACKET *pkt,
                                             OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY,
                                             test_pub, OSSL_ECH_CRYPTO_VAR_SIZE,
                                             &test_publen) != 1) {
-            ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
+            ERR_raise(ERR_LIB_SSL, SSL_R_ECH_DECODE_ERROR);
             goto err;
         }
         if (test_publen == ee->pub_len
@@ -530,7 +529,7 @@ static int check_priv_matches(OSSL_ECHSTORE *es, EVP_PKEY *priv)
             ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
             return 0;
         }
-        if (ee->keyshare == priv) {
+        if (EVP_PKEY_eq(ee->keyshare, priv)) {
             gotone = 1;
             break;
         }
@@ -1049,7 +1048,7 @@ int OSSL_ECHSTORE_set1_key_and_read_pem(OSSL_ECHSTORE *es, EVP_PKEY *priv,
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return 0;
     }
-    if (pname == NULL || strcmp(pname, PEM_STRING_ECHCONFIG)) {
+    if (pname == NULL || strcmp(pname, PEM_STRING_ECHCONFIG) != 0) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         goto err;
     }

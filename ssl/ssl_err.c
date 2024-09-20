@@ -157,6 +157,7 @@ static const ERR_STRING_DATA SSL_str_reasons[] = {
      "ecc cert not for signing"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_ECDH_REQUIRED_FOR_SUITEB_MODE),
      "ecdh required for suiteb mode"},
+    {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_ECH_DECODE_ERROR), "ech decode error"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_ECH_REQUIRED), "ech required"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_EE_KEY_TOO_SMALL), "ee key too small"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_EMPTY_RAW_PUBLIC_KEY),

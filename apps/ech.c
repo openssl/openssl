@@ -214,8 +214,6 @@ int ech_main(int argc, char **argv)
     }
 
     if (mode == OSSL_ECH_SELPRINT_MODE) {
-        if (verbose)
-            BIO_printf(bio_err, "Doing input stuff\n");
         if (numinfiles == 0)
             goto opthelp;
         for (i = 0; i != numinfiles; i++) {
