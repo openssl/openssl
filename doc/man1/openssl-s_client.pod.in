@@ -10,11 +10,11 @@ openssl-s_client - SSL/TLS client program
 B<openssl> B<s_client>
 [B<-help>]
 [B<-ssl_config> I<section>]
-[B<-connect> I<host:port>]
+[B<-connect> I<host>:I<port>]
 [B<-host> I<hostname>]
 [B<-port> I<port>]
-[B<-bind> I<host:port>]
-[B<-proxy> I<host:port>]
+[B<-bind> I<host>:I<port>]
+[B<-proxy> I<host>:I<port>]
 [B<-proxy_user> I<userid>]
 [B<-proxy_pass> I<arg>]
 [B<-unix> I<path>]
@@ -137,7 +137,7 @@ B<openssl> B<s_client>
 {- $OpenSSL::safe::opt_v_synopsis -}
 [B<-enable_server_rpk>]
 [B<-enable_client_rpk>]
-[I<host:port>]
+[I<host>:I<port>]
 
 =head1 DESCRIPTION
 
@@ -162,7 +162,7 @@ Print out a usage message.
 
 Use the specified section of the configuration file to configure the B<SSL_CTX> object.
 
-=item B<-connect> I<host:port>
+=item B<-connect> I<host>:I<port>
 
 This specifies the host and optional port to connect to. It is possible to
 select the host and port using the optional target positional argument instead.
@@ -178,14 +178,14 @@ Host to connect to; use B<-connect> instead.
 
 Connect to the specified port; use B<-connect> instead.
 
-=item B<-bind> I<host:port>
+=item B<-bind> I<host>:I<port>
 
 This specifies the host address and or port to bind as the source for the
 connection.  For Unix-domain sockets the port is ignored and the host is
 used as the source socket address.
 If the host string is an IPv6 address, it must be enclosed in C<[> and C<]>.
 
-=item B<-proxy> I<host:port>
+=item B<-proxy> I<host>:I<port>
 
 When used with the B<-connect> flag, the program uses the host and port
 specified with this flag and issues an HTTP CONNECT command to connect
@@ -866,7 +866,7 @@ provided a suitable key and public certificate pair is configured.
 Some servers may nevertheless not request any client credentials,
 or may request a certificate.
 
-=item I<host:port>
+=item I<host>:I<port>
 
 Rather than providing B<-connect>, the target host and optional port may
 be provided as a single positional argument after all options. If neither this

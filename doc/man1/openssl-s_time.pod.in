@@ -9,7 +9,7 @@ openssl-s_time - SSL/TLS performance timing program
 
 B<openssl> B<s_time>
 [B<-help>]
-[B<-connect> I<host:port>]
+[B<-connect> I<host>:I<port>]
 [B<-www> I<page>]
 [B<-cert> I<filename>]
 [B<-key> I<filename>]
@@ -47,7 +47,7 @@ connection.
 
 Print out a usage message.
 
-=item B<-connect> I<host:port>
+=item B<-connect> I<host>:I<port>
 
 This specifies the host and optional port to connect to.
 If the host string is an IPv6 address, it must be enclosed in C<[> and C<]>.

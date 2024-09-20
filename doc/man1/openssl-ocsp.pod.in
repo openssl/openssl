@@ -29,7 +29,7 @@ B<openssl> B<ocsp>
 [B<-reqin> I<file>]
 [B<-respin> I<file>]
 [B<-url> I<URL>]
-[B<-host> I<host:port>]
+[B<-host> I<host>:I<port>]
 [B<-path> I<pathname>]
 [B<-proxy> I<[http[s]://][userinfo@]host[:port][/path][?query][#fragment]>]
 [B<-no_proxy> I<addresses>]
@@ -173,7 +173,7 @@ The optional userinfo and fragment components are ignored.
 Any given query component is handled as part of the path component.
 For details, see the B<-host> and B<-path> options described next.
 
-=item B<-host> I<host:port>, B<-path> I<pathname>
+=item B<-host> I<host>:I<port>, B<-path> I<pathname>
 
 If the B<-host> option is present then the OCSP request is sent to the host
 I<host> on port I<port>.
