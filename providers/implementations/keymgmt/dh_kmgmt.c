@@ -531,7 +531,7 @@ static int dh_gen_common_set_params(void *genctx, const OSSL_PARAM params[])
 
     if (gctx == NULL)
         return 0;
-    if (params == NULL)
+    if (ossl_param_is_empty(params))
         return 1;
 
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_TYPE);

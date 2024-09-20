@@ -452,7 +452,7 @@ static int kmac_set_ctx_params(void *vmacctx, const OSSL_PARAM *params)
     struct kmac_data_st *kctx = vmacctx;
     const OSSL_PARAM *p;
 
-    if (params == NULL)
+    if (ossl_param_is_empty(params))
         return 1;
 
     if (!OSSL_FIPS_IND_SET_CTX_PARAM(kctx, OSSL_FIPS_IND_SETTABLE0, params,

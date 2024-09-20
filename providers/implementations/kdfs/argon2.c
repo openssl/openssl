@@ -1394,7 +1394,7 @@ static int kdf_argon2_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     KDF_ARGON2 *ctx;
     uint32_t u32_value;
 
-    if (params == NULL)
+    if (ossl_param_is_empty(params))
         return 1;
 
     ctx = (KDF_ARGON2 *) vctx;

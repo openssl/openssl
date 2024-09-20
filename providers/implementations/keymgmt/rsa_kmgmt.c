@@ -505,7 +505,7 @@ static int rsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
     struct rsa_gen_ctx *gctx = genctx;
     const OSSL_PARAM *p;
 
-    if (params == NULL)
+    if (ossl_param_is_empty(params))
         return 1;
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_BITS)) != NULL) {

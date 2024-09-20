@@ -185,7 +185,7 @@ static int hmac_drbg_kdf_set_ctx_params(void *vctx,
     size_t size = 0;
     int md_size;
 
-    if (params == NULL)
+    if (ossl_param_is_empty(params))
         return 1;
 
     p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_HMACDRBG_ENTROPY);

@@ -29,6 +29,7 @@
 #include "crypto/ctype.h"        /* ossl_isdigit() */
 #include "prov/implementations.h"
 #include "prov/bio.h"
+#include "prov/providercommon.h"
 #include "file_store_local.h"
 
 DEFINE_STACK_OF(OSSL_STORE_INFO)
@@ -320,7 +321,7 @@ static int file_set_ctx_params(void *loaderctx, const OSSL_PARAM params[])
     struct file_ctx_st *ctx = loaderctx;
     const OSSL_PARAM *p;
 
-    if (params == NULL)
+    if (ossl_param_is_empty(params))
         return 1;
 
     if (ctx->type != IS_DIR) {

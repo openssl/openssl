@@ -167,7 +167,7 @@ static int chacha20_poly1305_set_ctx_params(void *vctx,
     PROV_CIPHER_HW_CHACHA20_POLY1305 *hw =
         (PROV_CIPHER_HW_CHACHA20_POLY1305 *)ctx->base.hw;
 
-    if (params == NULL)
+    if (ossl_param_is_empty(params))
         return 1;
 
     p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_KEYLEN);

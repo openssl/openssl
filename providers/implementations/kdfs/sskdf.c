@@ -557,7 +557,7 @@ static int sskdf_common_set_ctx_params(KDF_SSKDF *ctx, const OSSL_PARAM params[]
     size_t sz;
     int r;
 
-    if (params == NULL)
+    if (ossl_param_is_empty(params))
         return 1;
 
     if (!ossl_prov_macctx_load_from_params(&ctx->macctx, params,
@@ -612,7 +612,7 @@ static int sskdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     KDF_SSKDF *ctx = (KDF_SSKDF *)vctx;
 
-    if (params == NULL)
+    if (ossl_param_is_empty(params))
         return 1;
 
     if (!OSSL_FIPS_IND_SET_CTX_PARAM(ctx, OSSL_FIPS_IND_SETTABLE0, params,
@@ -647,7 +647,7 @@ static int sskdf_common_get_ctx_params(KDF_SSKDF *ctx, OSSL_PARAM params[])
 {
     OSSL_PARAM *p;
 
-    if (params == NULL)
+    if (ossl_param_is_empty(params))
         return 1;
 
     if ((p = OSSL_PARAM_locate(params, OSSL_KDF_PARAM_SIZE)) != NULL) {
@@ -662,7 +662,7 @@ static int sskdf_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
     KDF_SSKDF *ctx = (KDF_SSKDF *)vctx;
 
-    if (params == NULL)
+    if (ossl_param_is_empty(params))
         return 1;
 
     if (!sskdf_common_get_ctx_params(ctx, params))
@@ -689,7 +689,7 @@ static int x963kdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     KDF_SSKDF *ctx = (KDF_SSKDF *)vctx;
 
-    if (params == NULL)
+    if (ossl_param_is_empty(params))
         return 1;
 
     if (!OSSL_FIPS_IND_SET_CTX_PARAM(ctx, OSSL_FIPS_IND_SETTABLE0, params,

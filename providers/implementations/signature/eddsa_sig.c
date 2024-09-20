@@ -826,7 +826,7 @@ static int eddsa_set_ctx_params(void *vpeddsactx, const OSSL_PARAM params[])
 
     if (peddsactx == NULL)
         return 0;
-    if (params == NULL)
+    if (ossl_param_is_empty(params))
         return 1;
 
     p = OSSL_PARAM_locate_const(params, OSSL_SIGNATURE_PARAM_INSTANCE);

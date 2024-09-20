@@ -347,7 +347,7 @@ static int dh_set_ctx_params(void *vpdhctx, const OSSL_PARAM params[])
 
     if (pdhctx == NULL)
         return 0;
-    if (params == NULL)
+    if (ossl_param_is_empty(params))
         return 1;
 
     if (!OSSL_FIPS_IND_SET_CTX_PARAM(pdhctx, OSSL_FIPS_IND_SETTABLE0, params,
