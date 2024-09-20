@@ -207,7 +207,7 @@ static int gmac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
     OSSL_LIB_CTX *provctx = PROV_LIBCTX_OF(macctx->provctx);
     const OSSL_PARAM *p;
 
-    if (params == NULL)
+    if (ossl_param_is_empty(params))
         return 1;
     if (ctx == NULL)
         return 0;

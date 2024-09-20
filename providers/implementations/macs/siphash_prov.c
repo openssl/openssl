@@ -198,7 +198,7 @@ static int siphash_set_params(void *vmacctx, const OSSL_PARAM *params)
     const OSSL_PARAM *p = NULL;
     size_t size;
 
-    if (params == NULL)
+    if (ossl_param_is_empty(params))
         return 1;
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_SIZE)) != NULL) {

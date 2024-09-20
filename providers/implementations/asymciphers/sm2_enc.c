@@ -19,6 +19,7 @@
 #include "crypto/sm2.h"
 #include "prov/provider_ctx.h"
 #include "prov/implementations.h"
+#include "prov/providercommon.h"
 #include "prov/provider_util.h"
 
 static OSSL_FUNC_asym_cipher_newctx_fn sm2_newctx;
@@ -190,7 +191,7 @@ static int sm2_set_ctx_params(void *vpsm2ctx, const OSSL_PARAM params[])
 
     if (psm2ctx == NULL)
         return 0;
-    if (params == NULL)
+    if (ossl_param_is_empty(params))
         return 1;
 
     if (!ossl_prov_digest_load_from_params(&psm2ctx->md, params,

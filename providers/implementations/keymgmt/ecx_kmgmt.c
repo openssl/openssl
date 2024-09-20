@@ -411,7 +411,7 @@ static int ecx_set_params(void *key, const OSSL_PARAM params[])
     ECX_KEY *ecxkey = key;
     const OSSL_PARAM *p;
 
-    if (params == NULL)
+    if (ossl_param_is_empty(params))
         return 1;
 
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY);

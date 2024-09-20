@@ -253,7 +253,7 @@ int ecdh_set_ctx_params(void *vpecdhctx, const OSSL_PARAM params[])
 
     if (pectx == NULL)
         return 0;
-    if (params == NULL)
+    if (ossl_param_is_empty(params))
         return 1;
 
     if (!OSSL_FIPS_IND_SET_CTX_PARAM(pectx, OSSL_FIPS_IND_SETTABLE0, params,

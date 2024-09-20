@@ -46,7 +46,7 @@ static int sha1_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 
     if (ctx == NULL)
         return 0;
-    if (params == NULL)
+    if (ossl_param_is_empty(params))
         return 1;
 
     p = OSSL_PARAM_locate_const(params, OSSL_DIGEST_PARAM_SSL3_MS);

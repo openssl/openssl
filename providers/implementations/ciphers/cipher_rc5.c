@@ -77,7 +77,7 @@ static int rc5_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     PROV_RC5_CTX *ctx = (PROV_RC5_CTX *)vctx;
     const OSSL_PARAM *p;
 
-    if (params == NULL)
+    if (ossl_param_is_empty(params))
         return 1;
 
     if (!ossl_cipher_var_keylen_set_ctx_params(vctx, params))

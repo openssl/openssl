@@ -534,7 +534,7 @@ static int x942kdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     const EVP_MD *md;
     size_t id;
 
-    if (params == NULL)
+    if (ossl_param_is_empty(params))
         return 1;
 
     if (!OSSL_FIPS_IND_SET_CTX_PARAM(ctx, OSSL_FIPS_IND_SETTABLE0, params,

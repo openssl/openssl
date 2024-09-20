@@ -22,3 +22,5 @@ void ossl_set_error_state(const char *type);
 
 /* Return true if the module is in a usable condition */
 int ossl_prov_is_running(void);
+
+int ossl_param_is_empty(const OSSL_PARAM params[]);

@@ -470,7 +470,7 @@ static int dsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
 
     if (gctx == NULL)
         return 0;
-    if (params == NULL)
+    if (ossl_param_is_empty(params))
         return 1;
 
     if (!OSSL_FIPS_IND_SET_CTX_PARAM(gctx, OSSL_FIPS_IND_SETTABLE0, params,
@@ -562,7 +562,7 @@ static int dsa_gen_get_params(void *genctx, OSSL_PARAM *params)
 
     if (gctx == NULL)
         return 0;
-    if (params == NULL)
+    if (ossl_param_is_empty(params))
         return 1;
     if (!OSSL_FIPS_IND_GET_CTX_PARAM(gctx, params))
         return 0;

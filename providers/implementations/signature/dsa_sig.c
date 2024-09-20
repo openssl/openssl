@@ -710,11 +710,6 @@ static int dsa_common_set_ctx_params(void *vpdsactx, const OSSL_PARAM params[])
     PROV_DSA_CTX *pdsactx = (PROV_DSA_CTX *)vpdsactx;
     const OSSL_PARAM *p;
 
-    if (pdsactx == NULL)
-        return 0;
-    if (params == NULL)
-        return 1;
-
     if (!OSSL_FIPS_IND_SET_CTX_PARAM(pdsactx, OSSL_FIPS_IND_SETTABLE0, params,
                                      OSSL_SIGNATURE_PARAM_FIPS_KEY_CHECK))
         return 0;
@@ -745,11 +740,13 @@ static int dsa_set_ctx_params(void *vpdsactx, const OSSL_PARAM params[])
     const OSSL_PARAM *p;
     int ret;
 
+    if (pdsactx == NULL)
+        return 0;
+    if (ossl_param_is_empty(params))
+        return 1;
+
     if ((ret = dsa_common_set_ctx_params(pdsactx, params)) <= 0)
         return ret;
-
-    if (params == NULL)
-        return 1;
 
     p = OSSL_PARAM_locate_const(params, OSSL_SIGNATURE_PARAM_DIGEST);
     if (p != NULL) {
@@ -948,11 +945,13 @@ static int dsa_sigalg_set_ctx_params(void *vpdsactx, const OSSL_PARAM params[])
     const OSSL_PARAM *p;
     int ret;
 
+    if (pdsactx == NULL)
+        return 0;
+    if (ossl_param_is_empty(params))
+        return 1;
+
     if ((ret = dsa_common_set_ctx_params(pdsactx, params)) <= 0)
         return ret;
-
-    if (params == NULL)
-        return 1;
 
     if (pdsactx->operation == EVP_PKEY_OP_VERIFYMSG) {
         p = OSSL_PARAM_locate_const(params, OSSL_SIGNATURE_PARAM_SIGNATURE);

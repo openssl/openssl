@@ -369,7 +369,7 @@ static int kbkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
     const OSSL_PARAM *p;
 
-    if (params == NULL)
+    if (ossl_param_is_empty(params))
         return 1;
 
     if (!OSSL_FIPS_IND_SET_CTX_PARAM(ctx, OSSL_FIPS_IND_SETTABLE0, params,
