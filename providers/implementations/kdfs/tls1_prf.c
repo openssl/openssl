@@ -227,10 +227,10 @@ static int fips_digest_check_passed(TLS1_PRF *ctx, const EVP_MD *md)
     return 1;
 }
 
-static int fips_key_check_passed(TLS1_PRF *ctx)
+static int fips_key_check_passed(TLS1_PRF *ctx, size_t length)
 {
     OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
-    int key_approved = ossl_kdf_check_key_size(ctx->seclen);
+    int key_approved = ossl_kdf_check_key_size(length);
 
     if (!key_approved) {
         if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE2,
@@ -270,6 +270,8 @@ static int kdf_tls1_prf_derive(void *vctx, unsigned char *key, size_t keylen,
     }
 
 #ifdef FIPS_MODULE
+    if (!fips_key_check_passed(ctx, keylen))
+        return 0;
     if (!fips_ems_check_passed(ctx))
         return 0;
 #endif
@@ -347,7 +349,7 @@ static int kdf_tls1_prf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             return 0;
 
 #ifdef FIPS_MODULE
-        if (!fips_key_check_passed(ctx))
+        if (!fips_key_check_passed(ctx, ctx->seclen))
             return 0;
 #endif
     }

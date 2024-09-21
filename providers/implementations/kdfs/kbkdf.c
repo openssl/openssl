@@ -186,10 +186,10 @@ static void *kbkdf_dup(void *vctx)
 }
 
 #ifdef FIPS_MODULE
-static int fips_kbkdf_key_check_passed(KBKDF *ctx)
+static int fips_kbkdf_key_check_passed(KBKDF *ctx, size_t length)
 {
     OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
-    int key_approved = ossl_kdf_check_key_size(ctx->ki_len);
+    int key_approved = ossl_kdf_check_key_size(length);
 
     if (!key_approved) {
         if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE0,
@@ -321,6 +321,10 @@ static int kbkdf_derive(void *vctx, unsigned char *key, size_t keylen,
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
         return 0;
     }
+#ifdef FIPS_MODULE
+    if (!fips_kbkdf_key_check_passed(ctx, keylen))
+        return 0;
+#endif
 
     if (ctx->is_kmac) {
         ret = kmac_derive(ctx->ctx_init, key, keylen,
@@ -413,7 +417,7 @@ static int kbkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
                                          &ctx->ki, &ctx->ki_len) == 0)
             return 0;
 #ifdef FIPS_MODULE
-        if (!fips_kbkdf_key_check_passed(ctx))
+        if (!fips_kbkdf_key_check_passed(ctx, ctx->ki_len))
             return 0;
 #endif
     }

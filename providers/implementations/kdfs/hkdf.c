@@ -193,10 +193,10 @@ static size_t kdf_hkdf_size(KDF_HKDF *ctx)
 }
 
 #ifdef FIPS_MODULE
-static int fips_hkdf_key_check_passed(KDF_HKDF *ctx)
+static int fips_hkdf_key_check_passed(KDF_HKDF *ctx, size_t length)
 {
     OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
-    int key_approved = ossl_kdf_check_key_size(ctx->key_len);
+    int key_approved = ossl_kdf_check_key_size(length);
 
     if (!key_approved) {
         if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE0,
@@ -233,6 +233,10 @@ static int kdf_hkdf_derive(void *vctx, unsigned char *key, size_t keylen,
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
         return 0;
     }
+#ifdef FIPS_MODULE
+    if (!fips_hkdf_key_check_passed(ctx, keylen))
+        return 0;
+#endif
 
     switch (ctx->mode) {
     case EVP_KDF_HKDF_MODE_EXTRACT_AND_EXPAND:
@@ -340,7 +344,7 @@ static int kdf_hkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 
 #ifdef FIPS_MODULE
     if (OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_KEY) != NULL)
-        if (!fips_hkdf_key_check_passed(ctx))
+        if (!fips_hkdf_key_check_passed(ctx, ctx->key_len))
             return 0;
 #endif
 
@@ -782,10 +786,10 @@ static size_t fips_tls1_3_key_size(KDF_HKDF *ctx)
     return key_size;
 }
 
-static int fips_tls1_3_key_check_passed(KDF_HKDF *ctx)
+static int fips_tls1_3_key_check_passed(KDF_HKDF *ctx, size_t length)
 {
     OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
-    int key_approved = ossl_kdf_check_key_size(fips_tls1_3_key_size(ctx));
+    int key_approved = ossl_kdf_check_key_size(length);
 
     if (!key_approved) {
         if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE1,
@@ -813,6 +817,11 @@ static int kdf_tls1_3_derive(void *vctx, unsigned char *key, size_t keylen,
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_MESSAGE_DIGEST);
         return 0;
     }
+
+#ifdef FIPS_MODULE
+    if (!fips_tls1_3_key_check_passed(ctx, keylen))
+        return 0;
+#endif
 
     switch (ctx->mode) {
     default:
@@ -891,7 +900,7 @@ static int kdf_tls1_3_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     }
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_KEY)) != NULL)
-        if (!fips_tls1_3_key_check_passed(ctx))
+        if (!fips_tls1_3_key_check_passed(ctx, fips_tls1_3_key_size(ctx)))
             return 0;
 #endif
 

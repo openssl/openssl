@@ -76,36 +76,42 @@ Ctrl.hexsecret = hexsecret:08b7140e2cd0a4abd79171e4d5a71cad
 Ctrl.hexinfo = hexinfo:099211f0d8a2e02dbb5958c0
 Output = 6162f5142e057efafd2c4f2bad5985a1
 
+FIPSversion = <3.5.0
 KDF = SSKDF
 Ctrl.digest = digest:SHA1
 Ctrl.hexsecret = hexsecret:ebe28edbae5a410b87a479243db3f690
 Ctrl.hexinfo = hexinfo:e60dd8b28228ce5b9be74d3b
 Output = b4a2
 
+FIPSversion = <3.5.0
 KDF = SSKDF
 Ctrl.digest = digest:SHA1
 Ctrl.hexsecret = hexsecret:ebe28edbae5a410b87a479243db3f690
 Ctrl.hexinfo = hexinfo:e60dd8b28228ce5b9be74d3b
 Output = b4a23963
 
+FIPSversion = <3.5.0
 KDF = SSKDF
 Ctrl.digest = digest:SHA1
 Ctrl.hexsecret = hexsecret:ebe28edbae5a410b87a479243db3f690
 Ctrl.hexinfo = hexinfo:e60dd8b28228ce5b9be74d3b
 Output = b4a23963e07f
 
+FIPSversion = <3.5.0
 KDF = SSKDF
 Ctrl.digest = digest:SHA1
 Ctrl.hexsecret = hexsecret:ebe28edbae5a410b87a479243db3f690
 Ctrl.hexinfo = hexinfo:e60dd8b28228ce5b9be74d3b
 Output = b4a23963e07f4853
 
+FIPSversion = <3.5.0
 KDF = SSKDF
 Ctrl.digest = digest:SHA1
 Ctrl.hexsecret = hexsecret:ebe28edbae5a410b87a479243db3f690
 Ctrl.hexinfo = hexinfo:e60dd8b28228ce5b9be74d3b
 Output = b4a23963e07f485382cb
 
+FIPSversion = <3.5.0
 KDF = SSKDF
 Ctrl.digest = digest:SHA1
 Ctrl.hexsecret = hexsecret:ebe28edbae5a410b87a479243db3f690
@@ -382,6 +388,7 @@ Ctrl.hexsecret = hexsecret:da69f1dbbebc837480af692e7e9ee6b9
 Ctrl.hexinfo = hexinfo:5c0b5eb3ac9f342347d73d7a521723aa
 Output = c7b7634fd809383e87c4b1b3e728be56
 
+FIPSversion = <3.5.0
 KDF = SSKDF
 Ctrl.digest = digest:SHA1
 Ctrl.hexsecret = hexsecret:8d7a4e7d5cf34b3f74873b862aeb33b7
@@ -515,6 +522,7 @@ Ctrl.hexsalt = hexsalt:7c9dacc409cde7b05efdae07bd9973db
 Ctrl.hexinfo = hexinfo:52651f0f2e858bbfbacb2533
 Output = b8683c9a982e0826d659a1ab77a603d7
 
+FIPSversion = <3.5.0
 KDF = SSKDF
 Ctrl.mac = mac:HMAC
 Ctrl.digest = digest:SHA256
@@ -523,6 +531,7 @@ Ctrl.hexsalt = hexsalt:0ad52c9357c85e4781296a36ca72039c
 Ctrl.hexinfo = hexinfo:c67c389580128f18f6cf8592
 Output = be32
 
+FIPSversion = <3.5.0
 KDF = SSKDF
 Ctrl.mac = mac:HMAC
 Ctrl.digest = digest:SHA256
@@ -531,6 +540,7 @@ Ctrl.hexsalt = hexsalt:0ad52c9357c85e4781296a36ca72039c
 Ctrl.hexinfo = hexinfo:c67c389580128f18f6cf8592
 Output = be32e7d3
 
+FIPSversion = <3.5.0
 KDF = SSKDF
 Ctrl.mac = mac:HMAC
 Ctrl.digest = digest:SHA256
@@ -539,6 +549,7 @@ Ctrl.hexsalt = hexsalt:0ad52c9357c85e4781296a36ca72039c
 Ctrl.hexinfo = hexinfo:c67c389580128f18f6cf8592
 Output = be32e7d306d8
 
+FIPSversion = <3.5.0
 KDF = SSKDF
 Ctrl.mac = mac:HMAC
 Ctrl.digest = digest:SHA256
@@ -547,6 +558,7 @@ Ctrl.hexsalt = hexsalt:0ad52c9357c85e4781296a36ca72039c
 Ctrl.hexinfo = hexinfo:c67c389580128f18f6cf8592
 Output = be32e7d306d89102
 
+FIPSversion = <3.5.0
 KDF = SSKDF
 Ctrl.mac = mac:HMAC
 Ctrl.digest = digest:SHA256
@@ -555,6 +567,7 @@ Ctrl.hexsalt = hexsalt:0ad52c9357c85e4781296a36ca72039c
 Ctrl.hexinfo = hexinfo:c67c389580128f18f6cf8592
 Output = be32e7d306d891028be0
 
+FIPSversion = <3.5.0
 KDF = SSKDF
 Ctrl.mac = mac:HMAC
 Ctrl.digest = digest:SHA256
@@ -985,6 +998,7 @@ Ctrl.hexsalt = hexsalt:91e8378de5348cea41f84c41e8546e34
 Ctrl.hexinfo = hexinfo:97ed3540c7466ab27395fe79
 Output = bf1eb0eab488b2393ad6a1c2eb804381
 
+FIPSversion = <3.5.0
 KDF = SSKDF
 Ctrl.mac = mac:HMAC
 Ctrl.digest = digest:SHA256
@@ -1041,6 +1055,7 @@ Ctrl.hexsecret = hexsecret:0ffa4c40a822f6e3d86053aefe738eac
 Ctrl.hexsalt = hexsalt:6199187690823def2037e0632577c6b1
 Output = 0486d589aa71a603c09120fb76eeab3293eee2dc36a91b23eb954d6703ade8a7b660d920c5a6f7bf3898d0e81fbad3a680b74b33680e0cc6a16aa616d078b256
 
+FIPSversion = <3.5.0
 KDF = SSKDF
 Ctrl.mac = mac:HMAC
 Ctrl.digest = digest:SHA256
