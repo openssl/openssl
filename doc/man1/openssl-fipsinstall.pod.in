@@ -47,6 +47,7 @@ B<openssl fipsinstall>
 [B<-sshkdf_key_check>]
 [B<-sskdf_key_check>]
 [B<-x963kdf_key_check>]
+[B<-x942kdf_key_check>]
 [B<-ecdh_cofactor_check>]
 [B<-self_test_onload>]
 [B<-self_test_oninstall>]
@@ -338,6 +339,12 @@ See NIST SP 800-131Ar2 for details.
 
 Configure the module to enable a run-time short key-derivation key check when
 deriving a key by X963KDF.
+See NIST SP 800-131Ar2 for details.
+
+=item B<-x942kdf_key_check>
+
+Configure the module to enable a run-time short key-derivation key check when
+deriving a key by X942KDF.
 See NIST SP 800-131Ar2 for details.
 
 =item B<-no_pbkdf2_lower_bound_check>
