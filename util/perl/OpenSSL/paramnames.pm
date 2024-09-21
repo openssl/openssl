@@ -54,6 +54,7 @@ my %params = (
     'PROV_PARAM_SSHKDF_KEY_CHECK' =>       "sshkdf-key-check",       # uint
     'PROV_PARAM_SSKDF_KEY_CHECK' =>        "sskdf-key-check",        # uint
     'PROV_PARAM_X963KDF_KEY_CHECK' =>      "x963kdf-key-check",      # uint
+    'PROV_PARAM_X942KDF_KEY_CHECK' =>      "x942kdf-key-check",      # uint
     'PROV_PARAM_PBKDF2_LOWER_BOUND_CHECK' => "pbkdf2-lower-bound-check", # uint
     'PROV_PARAM_ECDH_COFACTOR_CHECK' =>    "ecdh-cofactor-check",    # uint
     'PROV_PARAM_SIGNATURE_DIGEST_CHECK' => "signature-digest-check", # uint

@@ -59,6 +59,7 @@ typedef enum OPTION_choice {
     OPT_SSHKDF_KEY_CHECK,
     OPT_SSKDF_KEY_CHECK,
     OPT_X963KDF_KEY_CHECK,
+    OPT_X942KDF_KEY_CHECK,
     OPT_NO_PBKDF2_LOWER_BOUND_CHECK,
     OPT_ECDH_COFACTOR_CHECK,
     OPT_SELF_TEST_ONLOAD, OPT_SELF_TEST_ONINSTALL
@@ -128,6 +129,8 @@ const OPTIONS fipsinstall_options[] = {
      "Enable key check for SSKDF"},
     {"x963kdf_key_check", OPT_X963KDF_KEY_CHECK, '-',
      "Enable key check for X963KDF"},
+    {"x942kdf_key_check", OPT_X942KDF_KEY_CHECK, '-',
+     "Enable key check for X942KDF"},
     {"no_pbkdf2_lower_bound_check", OPT_NO_PBKDF2_LOWER_BOUND_CHECK, '-',
      "Disable lower bound check for PBKDF2"},
     {"ecdh_cofactor_check", OPT_ECDH_COFACTOR_CHECK, '-',
@@ -176,6 +179,7 @@ typedef struct {
     unsigned int sshkdf_key_check : 1;
     unsigned int sskdf_key_check : 1;
     unsigned int x963kdf_key_check : 1;
+    unsigned int x942kdf_key_check : 1;
     unsigned int pbkdf2_lower_bound_check : 1;
     unsigned int ecdh_cofactor_check : 1;
 } FIPS_OPTS;
@@ -209,6 +213,7 @@ static const FIPS_OPTS pedantic_opts = {
     1,      /* sshkdf_key_check */
     1,      /* sskdf_key_check */
     1,      /* x963kdf_key_check */
+    1,      /* x942kdf_key_check */
     1,      /* pbkdf2_lower_bound_check */
     1,      /* ecdh_cofactor_check */
 };
@@ -242,6 +247,7 @@ static FIPS_OPTS fips_opts = {
     0,      /* sshkdf_key_check */
     0,      /* sskdf_key_check */
     0,      /* x963kdf_key_check */
+    0,      /* x942kdf_key_check */
     1,      /* pbkdf2_lower_bound_check */
     0,      /* ecdh_cofactor_check */
 };
@@ -419,6 +425,8 @@ static int write_config_fips_section(BIO *out, const char *section,
                       opts->sskdf_key_check ? "1": "0") <= 0
         || BIO_printf(out, "%s = %s\n", OSSL_PROV_PARAM_X963KDF_KEY_CHECK,
                       opts->x963kdf_key_check ? "1": "0") <= 0
+        || BIO_printf(out, "%s = %s\n", OSSL_PROV_PARAM_X942KDF_KEY_CHECK,
+                      opts->x942kdf_key_check ? "1": "0") <= 0
         || BIO_printf(out, "%s = %s\n",
                       OSSL_PROV_PARAM_PBKDF2_LOWER_BOUND_CHECK,
                       opts->pbkdf2_lower_bound_check ? "1" : "0") <= 0
@@ -675,6 +683,9 @@ int fipsinstall_main(int argc, char **argv)
             break;
         case OPT_X963KDF_KEY_CHECK:
             fips_opts.x963kdf_key_check = 1;
+            break;
+        case OPT_X942KDF_KEY_CHECK:
+            fips_opts.x942kdf_key_check = 1;
             break;
         case OPT_NO_PBKDF2_LOWER_BOUND_CHECK:
             if (!check_non_pedantic_fips(pedantic, "no_pbkdf2_lower_bound_check"))

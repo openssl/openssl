@@ -59,7 +59,8 @@ my @commandline =
         ( 'tls1_prf_key_check',             'tls1-prf-key-check' ),
         ( 'sshkdf_key_check',               'sshkdf-key-check' ),
         ( 'sskdf_key_check',                'sskdf-key-check' ),
-        ( 'x963kdf_key_check',              'x963kdf-key-check' )
+        ( 'x963kdf_key_check',              'x963kdf-key-check' ),
+        ( 'x942kdf_key_check',              'x942kdf-key-check' )
     );
 
 plan tests => 35 + (scalar @pedantic_okay) + (scalar @pedantic_fail)
