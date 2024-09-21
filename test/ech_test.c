@@ -779,6 +779,11 @@ static int ech_ingest_test(int run)
     }
     OSSL_ECH_INFO_free(ei, actual_ents);
     ei = NULL;
+    /* ensure silly index fails ok */
+    if (!TEST_int_eq(OSSL_ECHSTORE_downselect(es, -20), 0)) {
+        TEST_info("OSSL_ECHSTORE_downselect unexpected non-zero");
+        goto end;
+    }
     if (!TEST_int_eq(OSSL_ECHSTORE_downselect(es, tv->index), tv->expected)) {
         TEST_info("OSSL_ECHSTORE_downselect unexpected result");
         goto end;
