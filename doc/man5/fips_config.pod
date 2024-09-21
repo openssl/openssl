@@ -182,6 +182,10 @@ See L<openssl-fipsinstall(1)/OPTIONS> B<-sskdf_key_check>
 
 See L<openssl-fipsinstall(1)/OPTIONS> B<-x963kdf_key_check>
 
+=item B<x942kdf-key-check>
+
+See L<openssl-fipsinstall(1)/OPTIONS> B<-x942kdf_key_check>
+
 =item B<pbkdf2-lower-bound-check>
 
 See L<openssl-fipsinstall(1)/OPTIONS> B<-no_pbkdf2_lower_bound_check>

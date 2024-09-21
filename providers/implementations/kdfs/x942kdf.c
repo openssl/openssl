@@ -22,6 +22,7 @@
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
 #include "prov/provider_util.h"
+#include "prov/securitycheck.h"
 #include "prov/der_wrap.h"
 
 #define X942KDF_MAX_INLEN (1 << 30)
@@ -49,6 +50,7 @@ typedef struct {
     const unsigned char *cek_oid;
     size_t cek_oid_len;
     int use_keybits;
+    OSSL_FIPS_IND_DECLARE
 } KDF_X942;
 
 /*
@@ -336,9 +338,12 @@ static void *x942kdf_new(void *provctx)
     if (!ossl_prov_is_running())
         return NULL;
 
-    if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL)
+    ctx = OPENSSL_zalloc(sizeof(*ctx));
+    if (ctx == NULL)
         return NULL;
+
     ctx->provctx = provctx;
+    OSSL_FIPS_IND_INIT(ctx)
     ctx->use_keybits = 1;
     return ctx;
 }
@@ -397,6 +402,7 @@ static void *x942kdf_dup(void *vctx)
         dest->cek_oid_len = src->cek_oid_len;
         dest->dkm_len = src->dkm_len;
         dest->use_keybits = src->use_keybits;
+        OSSL_FIPS_IND_COPY(dest, src)
     }
     return dest;
 
@@ -428,6 +434,24 @@ static size_t x942kdf_size(KDF_X942 *ctx)
     len = EVP_MD_get_size(md);
     return (len <= 0) ? 0 : (size_t)len;
 }
+
+#ifdef FIPS_MODULE
+static int fips_x942kdf_key_check_passed(KDF_X942 *ctx)
+{
+    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
+    int key_approved = ossl_kdf_check_key_size(ctx->secret_len);
+
+    if (!key_approved) {
+        if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE0,
+                                         libctx, "X942KDF", "Key size",
+                                         ossl_fips_config_x942kdf_key_check)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
+            return 0;
+        }
+    }
+    return 1;
+}
+#endif
 
 static int x942kdf_derive(void *vctx, unsigned char *key, size_t keylen,
                           const OSSL_PARAM params[])
@@ -513,6 +537,10 @@ static int x942kdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (params == NULL)
         return 1;
 
+    if (!OSSL_FIPS_IND_SET_CTX_PARAM(ctx, OSSL_FIPS_IND_SETTABLE0, params,
+                                     OSSL_KDF_PARAM_FIPS_KEY_CHECK))
+        return 0;
+
     if (OSSL_PARAM_locate_const(params, OSSL_ALG_PARAM_DIGEST) != NULL) {
         if (!ossl_prov_digest_load_from_params(&ctx->digest, params, provctx))
             return 0;
@@ -526,8 +554,14 @@ static int x942kdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_SECRET);
     if (p == NULL)
         p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_KEY);
-    if (p != NULL && !x942kdf_set_buffer(&ctx->secret, &ctx->secret_len, p))
-        return 0;
+    if (p != NULL) {
+        if (!x942kdf_set_buffer(&ctx->secret, &ctx->secret_len, p))
+            return 0;
+#ifdef FIPS_MODULE
+        if (!fips_x942kdf_key_check_passed(ctx))
+            return 0;
+#endif
+    }
 
     p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_X942_ACVPINFO);
     if (p != NULL
@@ -598,6 +632,7 @@ static const OSSL_PARAM *x942kdf_settable_ctx_params(ossl_unused void *ctx,
         OSSL_PARAM_octet_string(OSSL_KDF_PARAM_X942_SUPP_PRIVINFO, NULL, 0),
         OSSL_PARAM_int(OSSL_KDF_PARAM_X942_USE_KEYBITS, NULL),
         OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_CEK_ALG, NULL, 0),
+        OSSL_FIPS_IND_SETTABLE_CTX_PARAM(OSSL_KDF_PARAM_FIPS_KEY_CHECK)
         OSSL_PARAM_END
     };
     return known_settable_ctx_params;
@@ -608,9 +643,13 @@ static int x942kdf_get_ctx_params(void *vctx, OSSL_PARAM params[])
     KDF_X942 *ctx = (KDF_X942 *)vctx;
     OSSL_PARAM *p;
 
-    if ((p = OSSL_PARAM_locate(params, OSSL_KDF_PARAM_SIZE)) != NULL)
-        return OSSL_PARAM_set_size_t(p, x942kdf_size(ctx));
-    return -2;
+    p = OSSL_PARAM_locate(params, OSSL_KDF_PARAM_SIZE);
+    if (p != NULL && !OSSL_PARAM_set_size_t(p, x942kdf_size(ctx)))
+        return 0;
+
+    if (!OSSL_FIPS_IND_GET_CTX_PARAM(ctx, params))
+        return 0;
+    return 1;
 }
 
 static const OSSL_PARAM *x942kdf_gettable_ctx_params(ossl_unused void *ctx,
@@ -618,6 +657,7 @@ static const OSSL_PARAM *x942kdf_gettable_ctx_params(ossl_unused void *ctx,
 {
     static const OSSL_PARAM known_gettable_ctx_params[] = {
         OSSL_PARAM_size_t(OSSL_KDF_PARAM_SIZE, NULL),
+        OSSL_FIPS_IND_GETTABLE_CTX_PARAM()
         OSSL_PARAM_END
     };
     return known_gettable_ctx_params;

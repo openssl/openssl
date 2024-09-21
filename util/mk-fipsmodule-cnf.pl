@@ -81,6 +81,7 @@ tls1-prf-key-check = $kdf_key_check
 sshkdf-key-check = $kdf_key_check
 sskdf-key-check = $kdf_key_check
 x963kdf-key-check = $kdf_key_check
+x942kdf-key-check = $kdf_key_check
 pbkdf2-lower-bound-check = $pbkdf2_lower_bound_check
 ecdh-cofactor-check = $ec_cofactor_check
 hmac-key-check = $mac_key_check
