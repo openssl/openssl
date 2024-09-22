@@ -1072,26 +1072,29 @@ int OSSL_ECHSTORE_read_pem(OSSL_ECHSTORE *es, BIO *in, int for_retry)
 {
     EVP_PKEY *priv = NULL;
     int rv = 0;
+    BIO *fbio = BIO_new(BIO_f_buffer());
 
-    if (es == NULL || in == NULL) {
+    if (fbio == NULL || es == NULL || in == NULL) {
+        BIO_free_all(fbio);
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
     /*
-     * read private key then handoff to set1_key_and_read_pem
-     * we allow for no private key as an option
+     * Read private key then handoff to set1_key_and_read_pem.
+     * We allow for no private key as an option, to handle that
+     * the BIO_f_buffer allows us to seek back to the start.
      */
-    if (!PEM_read_bio_PrivateKey(in, &priv, NULL, NULL)) {
-        /* TODO(ECH): this is ok for file and mem BIOs but is it ok for all? */
-        if (BIO_method_type(in) == BIO_TYPE_MEM)
-            BIO_set_flags(in, BIO_FLAGS_NONCLEAR_RST);
-        if (BIO_reset(in) < 0) {
-            ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
-            return 0;
-        }
+    BIO_push(fbio, in);
+    if (!PEM_read_bio_PrivateKey(fbio, &priv, NULL, NULL)
+        && BIO_seek(fbio, 0) < 0) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        goto err;
     }
-    rv = OSSL_ECHSTORE_set1_key_and_read_pem(es, priv, in, for_retry);
+    rv = OSSL_ECHSTORE_set1_key_and_read_pem(es, priv, fbio, for_retry);
+err:
     EVP_PKEY_free(priv);
+    BIO_pop(fbio);
+    BIO_free_all(fbio);
     return rv;
 }
 
