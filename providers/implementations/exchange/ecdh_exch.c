@@ -320,9 +320,9 @@ int ecdh_set_ctx_params(void *vpecdhctx, const OSSL_PARAM params[])
             return 0;
         }
 #ifdef FIPS_MODULE
-        if (!ossl_fips_ind_digest_check(OSSL_FIPS_IND_GET(pectx),
-                                        OSSL_FIPS_IND_SETTABLE1, pectx->libctx,
-                                        pectx->kdf_md, "ECDH Set Ctx")) {
+        if (!ossl_fips_ind_digest_exch_check(OSSL_FIPS_IND_GET(pectx),
+                                             OSSL_FIPS_IND_SETTABLE1, pectx->libctx,
+                                             pectx->kdf_md, "ECDH Set Ctx")) {
             EVP_MD_free(pectx->kdf_md);
             pectx->kdf_md = NULL;
             return 0;

@@ -75,7 +75,7 @@ OpenSSL 3.4
 
    [fips_module(7)]: https://docs.openssl.org/master/man7/fips_module/#FIPS indicators
 
-   *Shane Lontis, Paul Dale and Po-Hsing Wu*
+   *Shane Lontis, Paul Dale, Po-Hsing Wu and Dimitri John Ledkov*
 
  * Added support for hardware acceleration for HMAC on S390x architecture.
 

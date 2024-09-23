@@ -129,8 +129,8 @@ int ossl_fips_ind_ec_key_check(OSSL_FIPS_IND *ind, int id, OSSL_LIB_CTX *libctx,
                                const EC_GROUP *group, const char *desc,
                                int protect);
 # endif
-int ossl_fips_ind_digest_check(OSSL_FIPS_IND *ind, int id, OSSL_LIB_CTX *libctx,
-                               const EVP_MD *md, const char *desc);
+int ossl_fips_ind_digest_exch_check(OSSL_FIPS_IND *ind, int id, OSSL_LIB_CTX *libctx,
+                                    const EVP_MD *md, const char *desc);
 int ossl_fips_ind_digest_sign_check(OSSL_FIPS_IND *ind, int id,
                                     OSSL_LIB_CTX *libctx,
                                     int nid, int sha1_allowed,
