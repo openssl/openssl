@@ -310,7 +310,7 @@ void ossl_quic_rcidm_free(QUIC_RCIDM *rcidm)
     while ((rcid = ossl_pqueue_RCID_pop(rcidm->rcids)) != NULL)
         OPENSSL_free(rcid);
 
-    LIST_FOREACH_DELSAFE(rcid, rnext, retiring, &rcidm->retiring_list)
+    OSSL_LIST_FOREACH_DELSAFE(rcid, rnext, retiring, &rcidm->retiring_list)
         OPENSSL_free(rcid);
 
     ossl_pqueue_RCID_free(rcidm->rcids);
