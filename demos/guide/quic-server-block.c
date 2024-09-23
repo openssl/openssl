@@ -231,7 +231,7 @@ static int run_quic_server(SSL_CTX *ctx, int fd)
         while (SSL_read_ex(conn, buf, sizeof(buf), &nread) > 0) {
             if (SSL_write_ex(conn, buf, nread, &nwritten) > 0
                 && nwritten == nread)
-                break;
+                continue;
             fprintf(stderr, "Error echoing client input");
             break;
         }
