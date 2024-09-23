@@ -82,7 +82,8 @@ int ossl_fips_ind_digest_check(OSSL_FIPS_IND *ind, int id,
                                OSSL_LIB_CTX *libctx,
                                const EVP_MD *md, const char *desc)
 {
-    int approved = (ossl_digest_get_approved_nid(md) != NID_undef);
+    int nid = ossl_digest_get_approved_nid(md);
+    int approved = (nid != NID_undef && nid != NID_sha1);
 
     if (!approved) {
         if (!ossl_FIPS_IND_on_unapproved(ind, id, libctx, desc, "Digest",
