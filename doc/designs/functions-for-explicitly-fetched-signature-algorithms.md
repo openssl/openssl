@@ -110,7 +110,7 @@ int EVP_PKEY_verify_message_update(EVP_PKEY_CTX *ctx,
 int EVP_PKEY_verify_message_final(EVP_PKEY_CTX *ctx);
 
 #define EVP_PKEY_verify_message(ctx,sig,siglen,tbs,tbslen) \
-    EVP_PKEY_sign(ctx,sig,siglen,tbs,tbslen)
+    EVP_PKEY_verify(ctx,sig,siglen,tbs,tbslen)
 ```
 
 ### For verify_recover with `EVP_SIGNATURE`
