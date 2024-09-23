@@ -24,7 +24,7 @@
     for ((p) = (init);                                                      \
          (p) != NULL;                                                       \
          (p) = ossl_list_##name##_next(p))
-# define OSSL_LIST_FOREACH(p, name, l)                                       \
+# define OSSL_LIST_FOREACH(p, name, l)                                      \
     OSSL_LIST_FOREACH_FROM(p, name, ossl_list_##name##_head(l))
 
 # define OSSL_LIST_FOREACH_REV_FROM(p, name, init)                          \
