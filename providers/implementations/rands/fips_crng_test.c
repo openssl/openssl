@@ -302,24 +302,18 @@ static size_t crng_test_get_seed(void *vcrngt, unsigned char **pout,
     }
 
     /* Grab seed from our parent */
-    if (!crng_test_lock(crngt))
+    if (!lock_parent(crngt))
         return 0;
-    if (!lock_parent(crngt)) {
-        crng_test_unlock(crngt);
-        return 0;
-    }
+
     n = crngt->parent_get_seed(crngt->parent, pout, entropy,
                                min_len, max_len, prediction_resistance,
                                adin, adin_len);
-    unlock_parent(crngt);
-    if (n > 0)
-        r = crng_test(crngt, *pout, n);
-    crng_test_unlock(crngt);
-    if (n > 0 && r > 0)
-        return n;
-    if (crngt->parent_clear_seed != NULL)
+    if (n > 0 && crng_test(crngt, *pout, n) > 0)
+        r = n;
+    else if (crngt->parent_clear_seed != NULL)
         crngt->parent_clear_seed(crngt->parent, *pout, n);
-    return 0;
+    unlock_parent(crngt);
+    return r;
 }
 
 static void crng_test_clear_seed(void *vcrngt,
