@@ -14,23 +14,23 @@ Public API - Add variants of `EVP_PKEY_CTX` functionality
 ---------------------------------------------------------
 
 Through OTC discussions, it's been determined that the most suitable APIs to
-touch is the collection of `EVP_PKEY_` functions.  In this case, it involves
-`EVP_PKEY_sign()`, `EVP_PKEY_verify()`, `EVP_PKEY_verify_recover()` with
-associated functions.  They can be extended to accept an explicitly fetched
-algorithm of the right type, and to be able to process infinite amounts of
-data if the fetched algorithm permits it (typically, algorithms like ED25519
-or RSA-SHA256).
+touch are the of `EVP_PKEY_` functions.
+Specifically, `EVP_PKEY_sign()`, `EVP_PKEY_verify()`, `EVP_PKEY_verify_recover()`
+and related functions.
+They can be extended to accept an explicitly fetched algorithm of the right
+type, and to be able to incrementally process indefinite length data streams
+when the fetched algorithm permits it (for example, RSA-SHA256).
 
-It must be made clear that the added functionality can not be used to
-compose an algorithm from different parts.  For example, it's not possible
-to specify a `EVP_SIGNATURE` "RSA" and combine it with a parameter that
-specifies the hash "SHA256" to get the "RSA-SHA256" functionality.  For an
-`EVP_SIGNATURE` "RSA", the input is still expected to be a digest, or some
-other input that's limited to the modulus size of the RSA pkey.
+It must be made clear that the added functionality cannot be used to compose
+an algorithm from different parts.  For example, it's not possible to specify
+a `EVP_SIGNATURE` "RSA" and combine it with a parameter that specifies the
+hash "SHA256" to get the "RSA-SHA256" functionality.  For an `EVP_SIGNATURE`
+"RSA", the input is still expected to be a digest, or some other input that's
+limited to the modulus size of the RSA pkey.
 
 ### Making things less confusing with distinct function names
 
-So far, `EVP_PKEY_sign()` and friends are only expected to act on the
+Until now, `EVP_PKEY_sign()` and friends were only expected to act on the
 pre-computed digest of a message (under the condition that proper flags
 and signature md are specified using functions like
 `EVP_PKEY_CTX_set_rsa_padding()` and `EVP_PKEY_CTX_set_signature_md()`),
@@ -41,21 +41,21 @@ This design proposes an extension to also allow full (not pre-hashed)
 messages to be passed, in a streaming style through an *update* and a
 *final* function.
 
-Discussions have revealed that it is potentially confusing to confound the
+Discussions have revealed that it is potentially confusing to conflate the
 current functionality with streaming style functionality into the same name,
 so this design separates those out with specific init / update / final
 functions for that purpose.  For oneshot functionality, `EVP_PKEY_sign()`
-and `EVP_PKEY_verify()` remain supported, through an alias for the
-application.
+and `EVP_PKEY_verify()` remain supported.
 
 [^1]: the term "primitive" is borrowed from [PKCS#1](https://www.rfc-editor.org/rfc/rfc8017#section-5)
 
 ### Making it possible to verify with an early signature
 
-There are newer verifying algorithms that need to receive the signature
-before processing the data.  This is particularly important for streaming
-functionality.  This design proposes a mechanism to accomodate this for the
-streaming style functionality.
+Some more recent verification algorithms need to obtain the signature
+before processing the data.
+This is particularly important for streaming modes of operation.
+This design proposes a mechanism to accomodate these algorithms
+and modes of operation.
 
 New public API - API Reference
 ------------------------------
@@ -115,7 +115,7 @@ int EVP_PKEY_verify_message_final(EVP_PKEY_CTX *ctx);
 
 ### For verify_recover with `EVP_SIGNATURE`
 
-According to feedback, a stream style interface is uninteresting for
+Preliminary feedback suggests that a streaming interface is uninteresting for
 verify_recover, so we only specify a new init function.
 
 ``` C
@@ -129,10 +129,10 @@ Requirements on the providers
 -----------------------------
 
 Because it's not immediately obvious from a composite algorithm name what
-key type it requires / supports, at least in code, allowing the use of an
-explicitly fetched implementation of a composite algorithm requires that
-providers cooperate by declaring what key type is required / supported by
-each algorithm.
+key type ("RSA", "EC", ...) it requires / supports, at least in code, allowing
+the use of an explicitly fetched implementation of a composite algorithm
+requires that providers cooperate by declaring what key type is required /
+supported by each algorithm.
 
 For non-composite operation algorithms (like "RSA"), this is not necessary,
 see the fallback strategies below.
