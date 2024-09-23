@@ -113,9 +113,9 @@ static int dh_check_key(PROV_DH_CTX *ctx)
 
 static int digest_check(PROV_DH_CTX *ctx, const EVP_MD *md)
 {
-    return ossl_fips_ind_digest_check(OSSL_FIPS_IND_GET(ctx),
-                                      OSSL_FIPS_IND_SETTABLE1, ctx->libctx,
-                                      md, "DH Set Ctx");
+    return ossl_fips_ind_digest_exch_check(OSSL_FIPS_IND_GET(ctx),
+                                           OSSL_FIPS_IND_SETTABLE1, ctx->libctx,
+                                           md, "DH Set Ctx");
 }
 #endif
 
