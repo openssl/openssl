@@ -333,7 +333,7 @@ static char *pt(unsigned char *md, unsigned int len)
     static char buf[80];
 
     for (i = 0; i < len; i++)
-        sprintf(&(buf[i * 2]), "%02x", md[i]);
+        BIO_snprintf(&(buf[i * 2]), sizeof(buf), "%02x", md[i]);
     return buf;
 }
 

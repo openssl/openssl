@@ -284,7 +284,7 @@ static char *pt(unsigned char *md, unsigned int len)
     if (md == NULL)
         return NULL;
     for (i = 0; i < len; i++)
-        sprintf(&(buf[i * 2]), "%02x", md[i]);
+        BIO_snprintf(&(buf[i * 2]), sizeof(buf), "%02x", md[i]);
     return buf;
 }
 # endif
