@@ -203,7 +203,6 @@ The helper function wait_for_activity uses select() to block until the file
 descriptor belonging to the passed SSL object is readable. As mentioned earlier,
 a more real-world application would likely use this time to perform other tasks.
 
-
     /* Initialize the fd_set structure */
     FD_ZERO(&read_fd);
 
