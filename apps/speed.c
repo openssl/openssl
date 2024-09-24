@@ -2523,15 +2523,14 @@ int speed_main(int argc, char **argv)
     if (doit[D_HMAC]) {
         static const char hmac_key[] = "This is a key...";
         int len = strlen(hmac_key);
+        size_t hmac_name_len = sizeof("hmac()") + strlen(evp_mac_mdname);
         OSSL_PARAM params[3];
 
         mac = EVP_MAC_fetch(app_get0_libctx(), "HMAC", app_get0_propq());
         if (mac == NULL || evp_mac_mdname == NULL)
             goto end;
-
-        evp_hmac_name = app_malloc(sizeof("hmac()") + strlen(evp_mac_mdname),
-                                   "HMAC name");
-        sprintf(evp_hmac_name, "hmac(%s)", evp_mac_mdname);
+        evp_hmac_name = app_malloc(hmac_name_len, "HMAC name");
+        BIO_snprintf(evp_hmac_name, hmac_name_len, "hmac(%s)", evp_mac_mdname);
         names[D_HMAC] = evp_hmac_name;
 
         params[0] =
@@ -2810,6 +2809,7 @@ skip_hmac:
     }
 
     if (doit[D_EVP_CMAC]) {
+        size_t len = sizeof("cmac()") + strlen(evp_mac_ciphername);
         OSSL_PARAM params[3];
         EVP_CIPHER *cipher = NULL;
 
@@ -2825,9 +2825,8 @@ skip_hmac:
             BIO_printf(bio_err, "\nRequested CMAC cipher with unsupported key length.\n");
             goto end;
         }
-        evp_cmac_name = app_malloc(sizeof("cmac()")
-                                   + strlen(evp_mac_ciphername), "CMAC name");
-        sprintf(evp_cmac_name, "cmac(%s)", evp_mac_ciphername);
+        evp_cmac_name = app_malloc(len, "CMAC name");
+        BIO_snprintf(evp_cmac_name, len, "cmac(%s)", evp_mac_ciphername);
         names[D_EVP_CMAC] = evp_cmac_name;
 
         params[0] = OSSL_PARAM_construct_utf8_string(OSSL_ALG_PARAM_CIPHER,
