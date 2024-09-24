@@ -6,7 +6,7 @@ EVP_RAND-CRNG-TEST - The FIPS health testing EVP_RAND filter
 
 =head1 DESCRIPTION
 
-This B<EVP_RAND> object acts a filter between the entropy source
+This B<EVP_RAND> object acts as a filter between the entropy source
 and its users.  It performs CRNG health tests as defined in
 L<SP 800-90B|https://csrc.nist.gov/pubs/sp/800/90/b/final> Section 4 "Health
 Tests".  Most requests are forwarded to the entropy source, either via
@@ -58,7 +58,7 @@ L<EVP_RAND(3)>, L<OSSL_PROVIDER-FIPS(7)>
 
 =head1 HISTORY
 
-This functionality was added in OpenSSL 3.5.
+This functionality was added in OpenSSL 3.4.
 
 =head1 COPYRIGHT
 
