@@ -16,6 +16,8 @@
 #include <string.h>
 #include <stdio.h>
 
+#include <stdarg.h>
+
 /*
  * When built as an object file to link the application with, we get the
  * init function name through the macro PROVIDER_INIT_FUNCTION_NAME.  If
@@ -46,6 +48,7 @@ static OSSL_FUNC_core_get_params_fn *c_get_params = NULL;
 static OSSL_FUNC_core_new_error_fn *c_new_error;
 static OSSL_FUNC_core_set_error_debug_fn *c_set_error_debug;
 static OSSL_FUNC_core_vset_error_fn *c_vset_error;
+static OSSL_FUNC_BIO_vsnprintf_fn *c_BIO_vsnprintf;
 
 /* Tell the core what params we provide and what type they are */
 static const OSSL_PARAM p_param_types[] = {
@@ -59,6 +62,17 @@ static OSSL_FUNC_provider_gettable_params_fn p_gettable_params;
 static OSSL_FUNC_provider_get_params_fn p_get_params;
 static OSSL_FUNC_provider_get_reason_strings_fn p_get_reason_strings;
 static OSSL_FUNC_provider_teardown_fn p_teardown;
+
+static int local_snprintf(char *buf, size_t n, const char *format, ...)
+{
+    va_list args;
+    int ret;
+
+    va_start(args, format);
+    ret = (*c_BIO_vsnprintf)(buf, n, format, args);
+    va_end(args);
+    return ret;
+}
 
 static void p_set_error(int lib, int reason, const char *file, int line,
                         const char *func, const char *fmt, ...)
@@ -114,11 +128,11 @@ static int p_get_params(void *provctx, OSSL_PARAM params[])
                     const char *versionp = *(void **)counter_request[0].data;
                     const char *namep = *(void **)counter_request[1].data;
 
-                    sprintf(buf, "Hello OpenSSL %.20s, greetings from %s!",
-                            versionp, namep);
+                    local_snprintf(buf, sizeof(buf), "Hello OpenSSL %.20s, greetings from %s!",
+                                   versionp, namep);
                 }
             } else {
-                sprintf(buf, "Howdy stranger...");
+                local_snprintf(buf, sizeof(buf), "Howdy stranger...");
             }
 
             p->return_size = buf_l = strlen(buf) + 1;
@@ -249,6 +263,9 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
             break;
         case OSSL_FUNC_CORE_VSET_ERROR:
             c_vset_error = OSSL_FUNC_core_vset_error(in);
+            break;
+        case OSSL_FUNC_BIO_VSNPRINTF:
+            c_BIO_vsnprintf = OSSL_FUNC_BIO_vsnprintf(in);
             break;
         default:
             /* Just ignore anything we don't understand */
