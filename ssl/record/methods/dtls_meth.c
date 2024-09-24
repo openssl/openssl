@@ -366,7 +366,7 @@ static int dtls_retrieve_rlayer_buffered_record(OSSL_RECORD_LAYER *rl,
 }
 
 /* rfc9147 section 4.2.3 */
-int dtls_crypt_sequence_number(const EVP_CIPHER_CTX *ctx, unsigned char *seq,
+int dtls_crypt_sequence_number(EVP_CIPHER_CTX *ctx, unsigned char *seq,
                                unsigned char *rec_data, size_t rec_data_offs)
 {
     unsigned char mask[16];

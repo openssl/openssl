@@ -424,7 +424,7 @@ int tls_default_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
                        int clearold, size_t *readbytes);
 int tls_get_more_records(OSSL_RECORD_LAYER *rl);
 
-int dtls_crypt_sequence_number(const EVP_CIPHER_CTX *ctx, unsigned char *seq,
+int dtls_crypt_sequence_number(EVP_CIPHER_CTX *ctx, unsigned char *seq,
                                unsigned char *rec_data, size_t rec_data_offs);
 int dtls_get_more_records(OSSL_RECORD_LAYER *rl);
 

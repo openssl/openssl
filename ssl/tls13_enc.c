@@ -367,7 +367,7 @@ size_t tls13_final_finish_mac(SSL_CONNECTION *s, const char *str, size_t slen,
 int tls13_setup_key_block(SSL_CONNECTION *s)
 {
     const EVP_CIPHER *c;
-    const EVP_CIPHER *snc, **p_snc = &snc;
+    const EVP_CIPHER *snc = NULL, **p_snc = SSL_CONNECTION_IS_DTLS(s) ? &snc : NULL;
     size_t snoffs;
     const EVP_MD *hash;
     int mac_type = NID_undef;
@@ -520,9 +520,7 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
     unsigned char *iv = iv_intern;
     unsigned char key[EVP_MAX_KEY_LENGTH];
     unsigned char snkey[EVP_MAX_KEY_LENGTH];
-    size_t sn_input_offs;
-    size_t sn_input_len;
-    int sn_use_input_as_iv;
+    size_t sn_input_offs = 0;
     unsigned char secret[EVP_MAX_MD_SIZE];
     unsigned char hashval[EVP_MAX_MD_SIZE];
     unsigned char *hash = hashval;
