@@ -677,6 +677,7 @@ static int kem_rsa_params(void)
           && TEST_int_eq(EVP_PKEY_CTX_set_kem_op(NULL,  NULL), 0)
           /* Test secretlen is optional */
           && TEST_int_eq(EVP_PKEY_CTX_set_kem_op(pubctx, "RSASVE"), 1)
+          && TEST_int_eq(EVP_PKEY_encapsulate(pubctx, NULL, &ctlen, NULL, NULL), 1)
           && TEST_int_eq(EVP_PKEY_encapsulate(pubctx, ct, &ctlen, secret, NULL), 1)
           && TEST_int_eq(EVP_PKEY_encapsulate(pubctx, NULL, &ctlen, NULL, NULL), 1)
           /* Test outlen is optional */
