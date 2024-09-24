@@ -79,7 +79,7 @@ int RECORD_LAYER_reset(RECORD_LAYER *rl)
                                         ? DTLS_ANY_VERSION : TLS_ANY_VERSION,
                                     OSSL_RECORD_DIRECTION_READ,
                                     OSSL_RECORD_PROTECTION_LEVEL_NONE, NULL, 0,
-                                    NULL, NULL, 0, NULL, 0, NULL, 0, NULL, NULL,
+                                    NULL, NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL,
                                     0, NID_undef, NULL, NULL, NULL);
 
     ret &= ssl_set_new_record_layer(rl->s,
@@ -87,7 +87,7 @@ int RECORD_LAYER_reset(RECORD_LAYER *rl)
                                         ? DTLS_ANY_VERSION : TLS_ANY_VERSION,
                                     OSSL_RECORD_DIRECTION_WRITE,
                                     OSSL_RECORD_PROTECTION_LEVEL_NONE, NULL, 0,
-                                    NULL, NULL, 0, NULL, 0, NULL, 0, NULL, NULL,
+                                    NULL, NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL,
                                     0, NID_undef, NULL, NULL, NULL);
 
     /* SSLfatal already called in the event of failure */
@@ -1237,7 +1237,7 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
                              unsigned char *key, size_t keylen,
                              unsigned char *iv,  size_t ivlen,
                              unsigned char *mackey, size_t mackeylen,
-                             const EVP_CIPHER *snciph,
+                             const EVP_CIPHER *snciph, size_t snoffs,
                              const EVP_CIPHER *ciph, size_t taglen,
                              int mactype, const EVP_MD *md,
                              const SSL_COMP *comp, const EVP_MD *kdfdigest)
@@ -1413,7 +1413,7 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
                                        s->server, direction, level, epoch,
                                        secret, secretlen, snkey, key, keylen,
                                        iv,
-                                       ivlen, mackey, mackeylen, snciph, ciph,
+                                       ivlen, mackey, mackeylen, snciph, snoffs, ciph,
                                        taglen, mactype, md, compm, kdfdigest,
                                        prev,
                                        thisbio, next, NULL, NULL, settings,

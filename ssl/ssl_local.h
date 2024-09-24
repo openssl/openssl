@@ -1380,6 +1380,7 @@ struct ssl_connection_st {
             unsigned char *key_block;
             const EVP_CIPHER *new_sym_enc;
             const EVP_CIPHER *new_sym_enc_sn;
+            size_t new_sym_enc_sn_offs;
             const EVP_MD *new_hash;
             int new_mac_pkey_type;
             size_t new_mac_secret_size;
@@ -2562,13 +2563,14 @@ __owur int ossl_bytes_to_cipher_list(SSL_CONNECTION *s, PACKET *cipher_suites,
 void ssl_update_cache(SSL_CONNECTION *s, int mode);
 __owur int ssl_cipher_get_evp_cipher(SSL_CTX *ctx, const SSL_CIPHER *sslc,
                                      const EVP_CIPHER **enc);
-__owur int ssl_cipher_get_evp_cipher_ecb(SSL_CTX *ctx, const SSL_CIPHER *sslc,
-                                         const EVP_CIPHER **enc);
+__owur int ssl_cipher_get_evp_cipher_sn(SSL_CTX *ctx, const SSL_CIPHER *sslc,
+                                        const EVP_CIPHER **enc, size_t *inputoffs);
 __owur int ssl_cipher_get_evp_md_mac(SSL_CTX *ctx, const SSL_CIPHER *sslc,
                                      const EVP_MD **md,
                                      int *mac_pkey_type, size_t *mac_secret_size);
-__owur int ssl_cipher_get_evp(SSL_CTX *ctxc, const SSL_SESSION *s,
-                              const EVP_CIPHER **snenc, const EVP_CIPHER **enc,
+__owur int ssl_cipher_get_evp(SSL_CTX *ctx, const SSL_SESSION *s,
+                              const EVP_CIPHER **snenc, size_t *snencoffs,
+                              const EVP_CIPHER **enc,
                               const EVP_MD **md,
                               int *mac_pkey_type, size_t *mac_secret_size,
                               SSL_COMP **comp, int use_etm);

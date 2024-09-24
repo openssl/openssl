@@ -366,35 +366,26 @@ static int dtls_retrieve_rlayer_buffered_record(OSSL_RECORD_LAYER *rl,
 }
 
 /* rfc9147 section 4.2.3 */
-int dtls_crypt_sequence_number(unsigned char *seq, size_t seq_len,
-                               const EVP_CIPHER_CTX *ctx, unsigned char *rec_data)
+int dtls_crypt_sequence_number(const EVP_CIPHER_CTX *ctx, unsigned char *seq,
+                               unsigned char *rec_data, size_t rec_data_offs)
 {
     unsigned char mask[16];
     int outlen, inlen;
     unsigned char *iv, *in;
-    const char *name = EVP_CIPHER_get0_name(EVP_CIPHER_CTX_get0_cipher(ctx));
     size_t i;
+    size_t seq_len = 6;
 
+    if (ossl_assert(sizeof(mask) > rec_data_offs))
+        inlen = (int)(sizeof(mask) - rec_data_offs);
+    else
+        return 0;
+
+    iv = rec_data_offs == 0 ? NULL : rec_data;
+    in = rec_data + rec_data_offs;
     memset(mask, 0, sizeof(mask));
-
-    if (OPENSSL_strncasecmp(name, "aes", 3) == 0) {
-        iv = NULL;
-        in = rec_data;
-        inlen = 16;
-    } else if (OPENSSL_strncasecmp(name, "chacha", 6) == 0) {
-        iv = rec_data;
-        in = rec_data + 4;
-        inlen = 12;
-    } else {
-        if (ossl_assert(OPENSSL_strncasecmp(name, "null", 4) == 0))
-            return 1;
-        else
-            return 0;
-    }
 
     if (!ossl_assert(inlen >= 0)
             || (size_t)inlen > sizeof(mask)
-            || seq_len > sizeof(mask)
             || EVP_CipherInit_ex2(ctx, NULL, NULL, iv, 1, NULL) <= 0
             || EVP_CipherUpdate(ctx, mask, &outlen, in, inlen) <= 0
             || outlen != inlen
@@ -570,8 +561,9 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
      */
     if (rl->sn_enc_ctx != NULL
             && (rl->packet_length >= DTLS1_RT_HEADER_LENGTH + 16)
-            && !dtls_crypt_sequence_number(&(rl->sequence[2]), 6, rl->sn_enc_ctx,
-                                           rl->packet + DTLS1_RT_HEADER_LENGTH)) {
+            && !dtls_crypt_sequence_number(rl->sn_enc_ctx, &(rl->sequence[2]),
+                                           rl->packet + DTLS1_RT_HEADER_LENGTH,
+                                           rl->sn_enc_offs)) {
         /* sequence number encryption failed dump record */
         rr->length = 0;
         rl->packet_length = 0;
@@ -693,7 +685,7 @@ dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                       unsigned char *snkey, unsigned char *key, size_t keylen,
                       unsigned char *iv, size_t ivlen,
                       unsigned char *mackey, size_t mackeylen,
-                      const EVP_CIPHER *snciph,
+                      const EVP_CIPHER *snciph, size_t snoffs,
                       const EVP_CIPHER *ciph, size_t taglen,
                       int mactype,
                       const EVP_MD *md, COMP_METHOD *comp,
@@ -749,7 +741,7 @@ dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
 
     ret = (*retrl)->funcs->set_crypto_state(*retrl, level, snkey, key, keylen,
                                             iv, ivlen, mackey, mackeylen,
-                                            snciph, ciph, taglen, mactype, md,
+                                            snciph, snoffs, ciph, taglen, mactype, md,
                                             comp);
 
  err:

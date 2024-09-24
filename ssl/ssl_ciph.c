@@ -493,8 +493,8 @@ int ssl_cipher_get_evp_md_mac(SSL_CTX *ctx, const SSL_CIPHER *sslc,
     return 1;
 }
 
-int ssl_cipher_get_evp_cipher_ecb(SSL_CTX *ctx, const SSL_CIPHER *sslc,
-                                  const EVP_CIPHER **enc)
+int ssl_cipher_get_evp_cipher_sn(SSL_CTX *ctx, const SSL_CIPHER *sslc,
+                                 const EVP_CIPHER **enc, size_t *inputoffs)
 {
     int i = ssl_cipher_info_lookup(ssl_cipher_table_cipher, sslc->algorithm_enc);
 
@@ -513,10 +513,13 @@ int ssl_cipher_get_evp_cipher_ecb(SSL_CTX *ctx, const SSL_CIPHER *sslc,
 
             if ((sslc->algorithm_enc & SSL_AES128_ANY) != 0) {
                 ecb_name = "AES-128-ECB";
+                *inputoffs = 0;
             } else if ((sslc->algorithm_enc & SSL_AES256_ANY) != 0) {
                 ecb_name = "AES-256-ECB";
+                *inputoffs = 0;
             } else if (ossl_assert((sslc->algorithm_enc & SSL_CHACHA20) != 0)) {
                 ecb_name = "ChaCha20";
+                *inputoffs = 4;
             }
 
             if (ecb_name != NULL)
@@ -532,7 +535,8 @@ int ssl_cipher_get_evp_cipher_ecb(SSL_CTX *ctx, const SSL_CIPHER *sslc,
 }
 
 int ssl_cipher_get_evp(SSL_CTX *ctx, const SSL_SESSION *s,
-                       const EVP_CIPHER **snenc, const EVP_CIPHER **enc,
+                       const EVP_CIPHER **snenc, size_t *snencoffs,
+                       const EVP_CIPHER **enc,
                        const EVP_MD **md,
                        int *mac_pkey_type, size_t *mac_secret_size,
                        SSL_COMP **comp, int use_etm)
@@ -565,7 +569,7 @@ int ssl_cipher_get_evp(SSL_CTX *ctx, const SSL_SESSION *s,
 
     if (!ssl_cipher_get_evp_cipher(ctx, c, enc)
             || (snenc != NULL
-                && !ssl_cipher_get_evp_cipher_ecb(ctx, c, snenc)))
+                && !ssl_cipher_get_evp_cipher_sn(ctx, c, snenc, snencoffs)))
         return 0;
 
     if (!ssl_cipher_get_evp_md_mac(ctx, c, md, mac_pkey_type,
