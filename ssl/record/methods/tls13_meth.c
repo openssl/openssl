@@ -91,8 +91,9 @@ static int tls13_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
             return OSSL_RECORD_RETURN_FATAL;
         }
 
-        if (EVP_CipherInit_ex(sn_ciph_ctx, snciph, NULL,
-                              snkey, NULL, 1) <= 0) {
+        if (EVP_CIPHER_CTX_set_padding(sn_ciph_ctx, 0)
+                || EVP_CipherInit_ex(sn_ciph_ctx, snciph, NULL,
+                                     snkey, NULL, 1) <= 0) {
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
             return OSSL_RECORD_RETURN_FATAL;
         }

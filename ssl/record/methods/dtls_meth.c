@@ -367,7 +367,7 @@ static int dtls_retrieve_rlayer_buffered_record(OSSL_RECORD_LAYER *rl,
 
 /* rfc9147 section 4.2.3 */
 int dtls_crypt_sequence_number(unsigned char *seq, size_t seq_len,
-                               EVP_CIPHER_CTX *ctx, unsigned char *rec_data)
+                               const EVP_CIPHER_CTX *ctx, unsigned char *rec_data)
 {
     unsigned char mask[16];
     int outlen, inlen;
@@ -395,12 +395,17 @@ int dtls_crypt_sequence_number(unsigned char *seq, size_t seq_len,
     if (!ossl_assert(inlen >= 0)
             || (size_t)inlen > sizeof(mask)
             || seq_len > sizeof(mask)
-            || EVP_CipherInit_ex(ctx, NULL, NULL, NULL, iv, 1) <= 0
-            || EVP_CipherUpdate(ctx, mask, &outlen, in, inlen) <= 0)
+            || EVP_CipherInit_ex2(ctx, NULL, NULL, iv, 1, NULL) <= 0
+            || EVP_CipherUpdate(ctx, mask, &outlen, in, inlen) <= 0
+            || outlen != inlen
+            || EVP_CipherFinal_ex(ctx, mask + outlen, &outlen) <= 0
+            || outlen != 0)
         return 0;
 
     for (i = 0; i < seq_len; i++)
         seq[i] ^= mask[i];
+
+    OPENSSL_cleanse(mask, sizeof(mask));
 
     return 1;
 }
