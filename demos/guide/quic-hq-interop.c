@@ -38,6 +38,7 @@
  * SSL_SESSION_FILE - set to a file path to record ssl sessions and restore
  *                    said sessions on next invocation
  * SSL_CERT_FILE - The ca file to use when validating a server
+ * SSL_CIPHER_SUITES - The list of cipher suites to use (see openssl-ciphers)
  */
 #include <string.h>
 
@@ -813,6 +814,17 @@ static int setup_connection(char *hostname, char *port, int ipv6,
     if (sslkeylogfile != NULL)
         if (set_keylog_file(*ctx, sslkeylogfile))
             goto end;
+
+    /*
+     * If the SSL_CIPHER_SUITES env variable is set, assign those
+     * ciphers to the context
+     */
+    if (getenv("SSL_CIPHER_SUITES") != NULL) {
+        if (!SSL_CTX_set_ciphersuites(*ctx, getenv("SSL_CIPHER_SUITES"))) {
+            fprintf(stderr, "Failed to set cipher suites for connection\n");
+            goto end;
+        }
+    }
 
     /* Create an SSL object to represent the TLS connection */
     *ssl = SSL_new(*ctx);
