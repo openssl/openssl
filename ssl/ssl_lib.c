@@ -4247,7 +4247,8 @@ void SSL_CTX_free(SSL_CTX *a)
 
 #ifndef OPENSSL_NO_SSLKEYLOG
     if (keylog_lock != NULL && CRYPTO_THREAD_write_lock(keylog_lock)) {
-        keylog_count--;
+        if (a->sslkeylog_callback != NULL)
+            keylog_count--;
         a->sslkeylog_callback = NULL;
         /* If we're the last user, close the bio */
         if (keylog_count == 0) {
