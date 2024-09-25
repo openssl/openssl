@@ -58,7 +58,7 @@ struct ossl_http_req_ctx_st {
     int method_POST;            /* HTTP method is POST (else GET) */
     int text;                   /* Request content type is (likely) text */
     char *expected_ct;          /* Optional expected Content-Type */
-    int expect_asn1;            /* Response must be ASN.1-encoded */
+    int expect_asn1;            /* Response content must be ASN.1-encoded */
     unsigned char *pos;         /* Current position sending data */
     long len_to_send;           /* Number of bytes still to send */
     size_t resp_len;            /* Length of response */
@@ -70,7 +70,7 @@ struct ossl_http_req_ctx_st {
     size_t max_hdr_lines;       /* Max. number of response header lines, or 0 */
 };
 
-/* HTTP states */
+/* HTTP client OSSL_HTTP_REQ_CTX_nbio() internal states, in typical order */
 
 #define OHS_NOREAD         0x1000 /* If set no reading should be performed */
 #define OHS_ERROR          (0 | OHS_NOREAD) /* Error condition */
@@ -78,16 +78,18 @@ struct ossl_http_req_ctx_st {
 #define OHS_WRITE_INIT     (2 | OHS_NOREAD) /* 1st call: ready to start send */
 #define OHS_WRITE_HDR1     (3 | OHS_NOREAD) /* Request header to be sent */
 #define OHS_WRITE_HDR      (4 | OHS_NOREAD) /* Request header being sent */
-#define OHS_WRITE_REQ      (5 | OHS_NOREAD) /* Request content being sent */
+#define OHS_WRITE_REQ      (5 | OHS_NOREAD) /* Request content (body) being sent */
 #define OHS_FLUSH          (6 | OHS_NOREAD) /* Request being flushed */
+
 #define OHS_FIRSTLINE       1 /* First line of response being read */
 #define OHS_HEADERS         2 /* MIME headers of response being read */
-#define OHS_HEADERS_ERROR   3 /* MIME headers of resp. being read after error */
+#define OHS_HEADERS_ERROR   3 /* MIME headers of response being read after fatal error */
 #define OHS_REDIRECT        4 /* MIME headers being read, expecting Location */
 #define OHS_ASN1_HEADER     5 /* ASN1 sequence header (tag+length) being read */
 #define OHS_ASN1_CONTENT    6 /* ASN1 content octets being read */
-#define OHS_ASN1_DONE      (7 | OHS_NOREAD) /* ASN1 content read completed */
-#define OHS_STREAM         (8 | OHS_NOREAD) /* HTTP content stream to be read */
+#define OHS_ASN1_DONE       7 /* ASN1 content read completed */
+#define OHS_STREAM          8 /* HTTP content stream to be read by caller */
+#define OHS_ERROR_CONTENT   9 /* response content (body) being read after fatal error */
 
 /* Low-level HTTP API implementation */
 
@@ -302,9 +304,9 @@ static int set1_content(OSSL_HTTP_REQ_CTX *rctx,
     }
 
     if (content_type == NULL) {
-        rctx->text = 1; /* assuming text by default, used just for tracing */
+        rctx->text = 1; /* assuming request to be text by default, used just for tracing */
     } else {
-        if (OPENSSL_strncasecmp(content_type, "text/", 5) == 0)
+        if (HAS_CASE_PREFIX(content_type, "text/"))
             rctx->text = 1;
         if (BIO_printf(rctx->mem, "Content-Type: %s\r\n", content_type) <= 0)
             return 0;
@@ -505,17 +507,23 @@ static int parse_http_line1(char *line, int *found_keep_alive)
     return 0;
 }
 
-static int check_set_resp_len(OSSL_HTTP_REQ_CTX *rctx, size_t len)
+static int check_max_len(const char *desc, size_t max_len, size_t len)
 {
-    if (rctx->max_resp_len != 0 && len > rctx->max_resp_len) {
+    if (max_len != 0 && len > max_len) {
         ERR_raise_data(ERR_LIB_HTTP, HTTP_R_MAX_RESP_LEN_EXCEEDED,
-                       "length=%zu, max=%zu", len, rctx->max_resp_len);
+                       "%s length=%zu, max=%zu", desc, len, max_len);
         return 0;
     }
+    return 1;
+}
+
+static int check_set_resp_len(const char *desc, OSSL_HTTP_REQ_CTX *rctx, size_t len)
+{
+    if (!check_max_len(desc, rctx->max_resp_len, len))
+        return 0;
     if (rctx->resp_len != 0 && rctx->resp_len != len) {
         ERR_raise_data(ERR_LIB_HTTP, HTTP_R_INCONSISTENT_CONTENT_LENGTH,
-                       "ASN.1 length=%zu, Content-Length=%zu",
-                       len, rctx->resp_len);
+                       "%s length=%zu, Content-Length=%zu", desc, len, rctx->resp_len);
         return 0;
     }
     rctx->resp_len = len;
@@ -546,7 +554,7 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
     int i, found_expected_ct = 0, found_keep_alive = 0;
     int got_text = 1;
     long n;
-    size_t resp_len;
+    size_t resp_len = 0;
     const unsigned char *p;
     char *buf, *key, *value, *line_end = NULL;
     size_t resp_hdr_lines = 0;
@@ -564,9 +572,10 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
  next_io:
     buf = (char *)rctx->buf;
     if ((rctx->state & OHS_NOREAD) == 0) {
-        if (rctx->expect_asn1) {
-            n = BIO_read(rctx->rbio, rctx->buf, rctx->buf_size);
-        } else {
+        if (rctx->expect_asn1 && (rctx->state == OHS_ASN1_HEADER
+                                  || rctx->state == OHS_ASN1_CONTENT)) {
+            n = BIO_read(rctx->rbio, buf, rctx->buf_size);
+        } else { /* read one text line */
             (void)ERR_set_mark();
             n = BIO_gets(rctx->rbio, buf, rctx->buf_size);
             if (n == -2) { /* some BIOs, such as SSL, do not support "gets" */
@@ -577,6 +586,13 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
             }
         }
         if (n <= 0) {
+            if (rctx->state == OHS_ERROR_CONTENT) {
+                if (OSSL_TRACE_ENABLED(HTTP))
+                    OSSL_TRACE(HTTP, "]\n"); /* end of error response content */
+                /* in addition, throw error on inconsistent length: */
+                (void)check_set_resp_len("error response content", rctx, resp_len);
+                return 0;
+            }
             if (BIO_should_retry(rctx->rbio))
                 return -1;
             ERR_raise(ERR_LIB_HTTP, HTTP_R_FAILED_READING_DATA);
@@ -584,7 +600,7 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
         }
 
         /* Write data to memory BIO */
-        if (BIO_write(rctx->mem, rctx->buf, n) != n)
+        if (BIO_write(rctx->mem, buf, n) != n)
             return 0;
     }
 
@@ -618,10 +634,14 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
                 rctx->state = OHS_ERROR;
                 return 0;
             }
-            if (OSSL_TRACE_ENABLED(HTTP) && rctx->state == OHS_WRITE_HDR1)
-                OSSL_TRACE(HTTP, "Sending request: [\n");
-            OSSL_TRACE_STRING(HTTP, rctx->state != OHS_WRITE_REQ || rctx->text,
-                              rctx->state != OHS_WRITE_REQ, rctx->pos, sz);
+            if (OSSL_TRACE_ENABLED(HTTP)) {
+                if (rctx->state == OHS_WRITE_HDR1)
+                    OSSL_TRACE(HTTP, "Sending request header: [\n");
+                /* for request headers, this usually traces several lines at once: */
+                OSSL_TRACE_STRING(HTTP, rctx->state != OHS_WRITE_REQ || rctx->text,
+                                  rctx->state != OHS_WRITE_REQ, rctx->pos, sz);
+                OSSL_TRACE(HTTP, "]\n"); /* end of request header or content */
+            }
             if (rctx->state == OHS_WRITE_HDR1)
                 rctx->state = OHS_WRITE_HDR;
             rctx->pos += sz;
@@ -633,6 +653,9 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
             rctx->state = OHS_WRITE_REQ;
         }
         if (rctx->req != NULL && !BIO_eof(rctx->req)) {
+            if (OSSL_TRACE_ENABLED(HTTP))
+                OSSL_TRACE1(HTTP, "Sending request content (likely %s)\n",
+                            rctx->text ? "text" : "ASN.1");
             n = BIO_read(rctx->req, rctx->buf, rctx->buf_size);
             if (n <= 0) {
                 if (BIO_should_retry(rctx->req))
@@ -644,8 +667,6 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
             rctx->len_to_send = n;
             goto next_io;
         }
-        if (OSSL_TRACE_ENABLED(HTTP))
-            OSSL_TRACE(HTTP, "]\n");
         rctx->state = OHS_FLUSH;
 
         /* fall through */
@@ -667,9 +688,13 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
     case OHS_ERROR:
         return 0;
 
+        /* State machine could be broken up at this point and bulky code sections factorized out. */
+
     case OHS_FIRSTLINE:
     case OHS_HEADERS:
+    case OHS_HEADERS_ERROR:
     case OHS_REDIRECT:
+    case OHS_ERROR_CONTENT:
 
         /* Attempt to read a line in */
  next_line:
@@ -695,6 +720,15 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
             return 0;
         }
 
+        if (rctx->state == OHS_ERROR_CONTENT) {
+            resp_len += n;
+            if (!check_max_len("error response content", rctx->max_resp_len, resp_len))
+                return 0;
+            if (OSSL_TRACE_ENABLED(HTTP)) /* dump response content line */
+                OSSL_TRACE_STRING(HTTP, got_text, 1, (unsigned char *)buf, n);
+            goto next_line;
+        }
+
         resp_hdr_lines++;
         if (rctx->max_hdr_lines != 0 && rctx->max_hdr_lines < resp_hdr_lines) {
             ERR_raise(ERR_LIB_HTTP, HTTP_R_RESPONSE_TOO_MANY_HDRLINES);
@@ -709,14 +743,14 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
             return 0;
         }
 
-        /* dump all response header lines */
         if (OSSL_TRACE_ENABLED(HTTP)) {
+            /* dump all response header line */
             if (rctx->state == OHS_FIRSTLINE)
-                OSSL_TRACE(HTTP, "Received response header: [\n");
-            OSSL_TRACE1(HTTP, "%s", buf);
+                OSSL_TRACE(HTTP, "Receiving response header: [\n");
+            OSSL_TRACE_STRING(HTTP, 1, 1, (unsigned char *)buf, n);
         }
 
-        /* First line */
+        /* First line in response header */
         if (rctx->state == OHS_FIRSTLINE) {
             switch (parse_http_line1(buf, &found_keep_alive)) {
             case HTTP_STATUS_CODE_OK:
@@ -752,10 +786,12 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
             if (rctx->state == OHS_REDIRECT
                     && OPENSSL_strcasecmp(key, "Location") == 0) {
                 rctx->redirection_url = value;
+                if (OSSL_TRACE_ENABLED(HTTP))
+                    OSSL_TRACE(HTTP, "]\n");
                 return 0;
             }
             if (OPENSSL_strcasecmp(key, "Content-Type") == 0) {
-                got_text = OPENSSL_strncasecmp(value, "text/", 5) == 0;
+                got_text = HAS_CASE_PREFIX(value, "text/");
                 if (rctx->state == OHS_HEADERS
                     && rctx->expected_ct != NULL) {
                     const char *semicolon;
@@ -784,14 +820,15 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
                 else if (OPENSSL_strcasecmp(value, "close") == 0)
                     found_keep_alive = 0;
             } else if (OPENSSL_strcasecmp(key, "Content-Length") == 0) {
-                resp_len = (size_t)strtoul(value, &line_end, 10);
+                size_t content_len = (size_t)strtoul(value, &line_end, 10);
+
                 if (line_end == value || *line_end != '\0') {
                     ERR_raise_data(ERR_LIB_HTTP,
                                    HTTP_R_ERROR_PARSING_CONTENT_LENGTH,
                                    "input=%s", value);
                     return 0;
                 }
-                if (!check_set_resp_len(rctx, resp_len))
+                if (!check_set_resp_len("response content-length", rctx, content_len))
                     return 0;
             }
         }
@@ -801,10 +838,12 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
             if (*p != '\r' && *p != '\n')
                 break;
         }
-        if (*p != '\0') /* not end of headers */
+        if (*p != '\0') /* not end of headers or not end of error reponse content */
             goto next_line;
+
+        /* Found blank line(s) indicating end of headers */
         if (OSSL_TRACE_ENABLED(HTTP))
-            OSSL_TRACE(HTTP, "]\n");
+            OSSL_TRACE(HTTP, "]\n"); /* end of response header */
 
         if (rctx->keep_alive != 0 /* do not let server initiate keep_alive */
                 && !found_keep_alive /* otherwise there is no change */) {
@@ -817,18 +856,11 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
         }
 
         if (rctx->state == OHS_HEADERS_ERROR) {
+            rctx->state = OHS_ERROR_CONTENT;
             if (OSSL_TRACE_ENABLED(HTTP)) {
-                int printed_final_nl = 0;
-
-                OSSL_TRACE(HTTP, "Received error response body: [\n");
-                while ((n = BIO_read(rctx->rbio, rctx->buf, rctx->buf_size)) > 0
-                       || (OSSL_sleep(100), BIO_should_retry(rctx->rbio))) {
-                    OSSL_TRACE_STRING(HTTP, got_text, 1, rctx->buf, n);
-                    if (n > 0)
-                        printed_final_nl = rctx->buf[n - 1] == '\n';
-                }
-                OSSL_TRACE1(HTTP, "%s]\n", printed_final_nl ? "" : "\n");
-                (void)printed_final_nl; /* avoid warning unless enable-trace */
+                OSSL_TRACE1(HTTP, "Receiving error response content (likely %s): [\n",
+                            got_text ? "text" : "ASN.1");
+                goto next_line;
             }
             return 0;
         }
@@ -844,11 +876,16 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
             return 0;
         }
 
+        /* Note: in non-error situations cannot trace response content */
         if (!rctx->expect_asn1) {
+            if (OSSL_TRACE_ENABLED(HTTP))
+                OSSL_TRACE(HTTP, "Receiving response text content\n");
             rctx->state = OHS_STREAM;
             return 1;
         }
 
+        if (OSSL_TRACE_ENABLED(HTTP))
+            OSSL_TRACE(HTTP, "Receiving response ASN.1 content\n");
         rctx->state = OHS_ASN1_HEADER;
 
         /* Fall thru */
@@ -892,9 +929,11 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
         } else {
             resp_len = *p + 2;
         }
-        if (!check_set_resp_len(rctx, resp_len))
+        if (!check_set_resp_len("ASN.1 DER content", rctx, resp_len))
             return 0;
 
+        if (OSSL_TRACE_ENABLED(HTTP))
+            OSSL_TRACE1(HTTP, "Expected response ASN.1 DER content length: %zd\n", resp_len);
         rctx->state = OHS_ASN1_CONTENT;
 
         /* Fall thru */
@@ -904,6 +943,8 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
         if (n < 0 || (size_t)n < rctx->resp_len)
             goto next_io;
 
+        if (OSSL_TRACE_ENABLED(HTTP))
+            OSSL_TRACE(HTTP, "Finished receiving response ASN.1 content\n");
         rctx->state = OHS_ASN1_DONE;
         return 1;
     }

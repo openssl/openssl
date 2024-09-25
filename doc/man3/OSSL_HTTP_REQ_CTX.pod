@@ -112,7 +112,8 @@ If the I<expect_asn1> parameter is nonzero a structure in ASN.1 encoding will be
 expected as the response content and input streaming is disabled.  This means
 that an ASN.1 sequence header is required, its length field is checked, and
 OSSL_HTTP_REQ_CTX_get0_mem_bio() should be used to get the buffered response.
-Otherwise (by default) any input format is allowed without length checks.
+Otherwise (by default) any input format is allowed,
+with body length checks being performed on error messages only.
 In this case the BIO given as I<rbio> argument to OSSL_HTTP_REQ_CTX_new() should
 be used directly to read the response contents, which may support streaming.
 
@@ -152,8 +153,12 @@ L<BIO_should_retry(3)>.  In such a case it is advisable to sleep a little in
 between, using L<BIO_wait(3)> on the read BIO to prevent a busy loop.
 See OSSL_HTTP_REQ_CTX_set_expected() how the response content type,
 the response body, the HTTP transfer timeout, and "keep-alive" are treated.
+Any error message body is consumed
+if a C<Content-Type> header is not included or its value starts with C<text/>.
+This is used for tracing the body contents if HTTP tracing is enabled.
 If the C<Content-Length> header is present in the response
 and its value exceeds the maximum allowed response content length
+or the response is an error message with its body length exceeding this value
 or the content is an ASN.1-encoded structure with a length exceeding this value
 or both length indications are present but disagree then an error occurs.
 
