@@ -241,7 +241,7 @@ with OSSL_HTTP_REQ_CTX_nbio() or OSSL_HTTP_REQ_CTX_exchange().
 When built with tracing enabled, OSSL_HTTP_REQ_CTX_nbio() and all functions
 using it, such as OSSL_HTTP_REQ_CTX_exchange() and L<OSSL_HTTP_transfer(3)>,
 may be traced using B<OSSL_TRACE_CATEGORY_HTTP>.
-See also L<OSSL_trace_enabled(3)> and L<openssl(1)/ENVIRONMENT>.
+See also L<OSSL_trace_enabled(3)> and L<openssl-env(7)>.
 
 =head1 RETURN VALUES
 
@@ -279,7 +279,7 @@ L<OSSL_HTTP_open(3)>,
 L<OSSL_HTTP_get(3)>,
 L<OSSL_HTTP_transfer(3)>,
 L<OSSL_HTTP_close(3)>,
-L<OSSL_trace_enabled(3)>
+L<OSSL_trace_enabled(3)>, and L<openssl-env(7)>.
 
 =head1 HISTORY
 
