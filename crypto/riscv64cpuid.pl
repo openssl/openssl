@@ -94,8 +94,24 @@ $code .= <<___;
 .globl riscv_vlen_asm
 .type riscv_vlen_asm,\@function
 riscv_vlen_asm:
-    csrr $ret, vlenb
-    slli $ret, $ret, 3
+    # Check for vector extension support.
+    csrrs   $t0,misa,x0
+    andi    $t0,$t0,(1<<20)
+    beqz    $t0,no_vector_extension
+
+    # vlenb is defined by RISC-V "V" Vector Extension
+    # version 1.0.
+    # See: https://github.com/riscv/riscv-v-spec/blob/master/v-spec.adoc
+    .equ    vlenb,0xC22
+
+    # Read vlenb.
+    csrr    $ret,vlenb
+    slli    $ret,$ret,3
+    ret
+
+no_vector_extension:
+    # Return 0 if no vector extension.
+    li      $ret,0
     ret
 .size riscv_vlen_asm,.-riscv_vlen_asm
 ___
