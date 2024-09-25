@@ -77,7 +77,7 @@ Output = 2c5c1f028c6d1fc9ba752e41fdb9edb2ea936f1b2449f214acd56d31
 
 Title = X9.42 KDF tests (ACVP test vectors)
 
-FIPSversion = <3.5.0
+FIPSversion = <3.4.0
 KDF = X942KDF-ASN1
 Ctrl.digest = digest:SHA256
 Ctrl.hexsecret = hexsecret:6B
@@ -89,7 +89,7 @@ Output = C2E6A0978C24AF3932F478583ADBFB5F57D491822592EAD3C538875F46EB057A
 # Negative tests
 
 # Fail if both acvp and ukm values are specified.
-FIPSversion = <3.5.0
+FIPSversion = <3.4.0
 KDF = X942KDF-ASN1
 Ctrl.digest = digest:SHA256
 Ctrl.hexsecret = hexsecret:6B
@@ -122,7 +122,7 @@ Result = KDF_CTRL_ERROR
 Reason = xof digests not allowed
 
 Availablein = fips
-FIPSversion = >=3.5.0
+FIPSversion = >=3.4.0
 KDF = X942KDF-ASN1
 Ctrl.digest = digest:SHA256
 Ctrl.hexsecret = hexsecret:6B
