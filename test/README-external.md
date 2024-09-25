@@ -118,6 +118,35 @@ algorithms to be skipped, e.g. as follows:
 The names of all supported quantum-safe algorithms are available at
 <https://github.com/open-quantum-safe/oqs-provider#algorithms>
 
+pkcs11-provider test suite
+======================
+
+This builds and runs pkcs11-provider tests agains the local OpenSSL build.
+
+You will need a git checkout of pkcs11-provider at the top level:
+
+    $ git submodule update --init
+
+Then configure/build OpenSSL enabling external tests:
+
+    $ ./config shared enable-external-tests
+    $ make
+
+pkcs11-provider requires meson for the build process. Moreover, it requires
+softhsm and nss softokn tokens and certtool, certutil, pkcs11-tool and expect
+to run the tests.
+
+Tests will then be run as part of the rest of the suite, or can be
+explicitly run (with more debugging):
+
+    $ make test VERBOSE=1 TESTS=test_external_pkcs11_provider
+
+Test failures and suppressions
+------------------------------
+
+There are tests for different software tokens - softhsm, nss-softokn and kryoptic.
+Kryoptic tests will not run at this point. Currently no test fails.
+
 Updating test suites
 ====================
 
