@@ -3884,13 +3884,15 @@ DEFINE_RUN_ONCE_STATIC(ssl_keylog_init)
 
 static void sslkeylogfile_cb(const SSL *ssl, const char *line)
 {
-    if (keylog_bio == NULL)
+    if (keylog_lock == NULL)
         return;
 
     if (!CRYPTO_THREAD_write_lock(keylog_lock))
         return;
-    BIO_printf(keylog_bio, "%s\n", line);
-    (void)BIO_flush(keylog_bio);
+    if (keylog_bio != NULL) {
+        BIO_printf(keylog_bio, "%s\n", line);
+        (void)BIO_flush(keylog_bio);
+    }
     CRYPTO_THREAD_unlock(keylog_lock);
 }
 #endif
