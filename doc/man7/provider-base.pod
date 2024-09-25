@@ -24,6 +24,14 @@ provider-base
                        OSSL_thread_stop_handler_fn handfn,
                        void *arg);
 
+ typedef uint32_t (*OSSL_thread_start_handler_fn)(void *);
+ uint64_t core_get_avail_threads(const OSSL_CORE_HANDLE *handle);
+ void *core_crypto_thread_start(const OSSL_CORE_HANDLE *prov,
+                                OSSL_thread_start_handler_fn start,
+                                void *data);
+ int core_crypto_thread_join(void *vhandle, uint32_t *ret);
+ int core_crypto_thread_clean(void *vhandle);
+
  OPENSSL_CORE_CTX *core_get_libctx(const OSSL_CORE_HANDLE *handle);
  void core_new_error(const OSSL_CORE_HANDLE *handle);
  void core_set_error_debug(const OSSL_CORE_HANDLE *handle,
@@ -150,6 +158,10 @@ provider):
  core_gettable_params           OSSL_FUNC_CORE_GETTABLE_PARAMS
  core_get_params                OSSL_FUNC_CORE_GET_PARAMS
  core_thread_start              OSSL_FUNC_CORE_THREAD_START
+ core_get_avail_threads         OSSL_FUNC_CORE_GET_AVAIL_THREADS
+ core_crypto_thread_start       OSSL_FUNC_CORE_CRYPTO_THREAD_START
+ core_crypto_thread_join        OSSL_FUNC_CORE_CRYPTO_THREAD_JOIN
+ core_crypto_thread_clean       OSSL_FUNC_CORE_CRYPTO_THREAD_CLEAN
  core_get_libctx                OSSL_FUNC_CORE_GET_LIBCTX
  core_new_error                 OSSL_FUNC_CORE_NEW_ERROR
  core_set_error_debug           OSSL_FUNC_CORE_SET_ERROR_DEBUG
@@ -225,6 +237,25 @@ callback will subsequently be called, with the supplied argument I<arg>, from
 the thread that is stopping and gets passed the provider context as an
 argument. This may be useful to perform thread specific clean up such as
 freeing thread local variables.
+
+The functions core_crypto_thread_start(), core_crypto_thread_join(),
+core_crypto_thread_clean() and core_get_avail_threads() are used to
+supply threading related functions to providers that do not implement threading.
+core_crypto_thread_start() and core_get_avail_threads() must be passed the
+I<handle> for this provider.
+
+The function core_crypto_thread_start() returns a handle to a created thread,
+which will run the function I<start> that is passed the parameter I<data>.
+
+core_crypto_thread_join() and core_crypto_thread_clean() must use the handle
+returned from core_crypto_thread_start() as their I<vhandle>.
+
+The function core_crypto_thread_join() may be called to wait until the thread
+is finished. The |ret| value returns the exit status if it is not NULL.
+
+The function core_crypto_thread_clean() should be used to clean up the thread.
+
+The function core_get_avail_threads() returns the number of available threads.
 
 core_get_libctx() retrieves the core context in which the library
 object for the current provider is stored, accessible through the I<handle>.

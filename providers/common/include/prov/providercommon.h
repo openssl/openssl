@@ -22,3 +22,12 @@ void ossl_set_error_state(const char *type);
 
 /* Return true if the module is in a usable condition */
 int ossl_prov_is_running(void);
+
+#if !defined(OPENSSL_NO_DEFAULT_THREAD_POOL)
+uint64_t ossl_prov_get_avail_threads(OSSL_LIB_CTX *libctx);
+void *ossl_prov_thread_start(OSSL_LIB_CTX *ctx,
+                             OSSL_thread_start_handler_fn start,
+                             void *data);
+int ossl_prov_thread_join(void *task, uint32_t *ret);
+int ossl_prov_thread_clean(void *vhandle);
+#endif /* OPENSSL_NO_DEFAULT_THREAD_POOL */
