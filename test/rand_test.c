@@ -177,7 +177,7 @@ int setup_tests(void)
     ADD_TEST(test_rand_uniform);
 
     if (OSSL_PROVIDER_available(NULL, "fips")
-            && fips_provider_version_ge(NULL, 3, 5, 0))
+            && fips_provider_version_ge(NULL, 3, 4, 0))
         ADD_TEST(fips_health_tests);
 
     return 1;
