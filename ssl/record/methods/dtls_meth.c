@@ -560,10 +560,10 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
      * length headers is added.
      */
     if (rl->sn_enc_ctx != NULL
-            && (rl->packet_length >= DTLS1_RT_HEADER_LENGTH + 16)
-            && !dtls_crypt_sequence_number(rl->sn_enc_ctx, &(rl->sequence[2]),
-                                           rl->packet + DTLS1_RT_HEADER_LENGTH,
-                                           rl->sn_enc_offs)) {
+            && (rl->packet_length < DTLS1_RT_HEADER_LENGTH + 16
+                || !dtls_crypt_sequence_number(rl->sn_enc_ctx, &(rl->sequence[2]),
+                                               rl->packet + DTLS1_RT_HEADER_LENGTH,
+                                               rl->sn_enc_offs))) {
         /* sequence number encryption failed dump record */
         rr->length = 0;
         rl->packet_length = 0;
