@@ -343,6 +343,63 @@ err:
     return ret;
 
 }
+
+static int ecdh_cofactor_derive_test(int tstid)
+{
+    int ret = 0;
+    const struct ecdh_cofactor_derive_st *t = &ecdh_cofactor_derive_data[tstid];
+    unsigned char secret1[16];
+    size_t secret1_len = sizeof(secret1);
+    const char *curve = "K-283"; /* A curve that has a cofactor that it not 1 */
+    EVP_PKEY *peer1 = NULL, *peer2 = NULL;
+    EVP_PKEY_CTX *p1ctx = NULL;
+    OSSL_PARAM params[2], *prms = NULL;
+    int use_cofactordh = t->key_cofactor;
+    int cofactor_mode = t->derive_cofactor_mode;
+
+    if (!TEST_ptr(peer1 = EVP_PKEY_Q_keygen(libctx, NULL, "EC", curve))
+            || !TEST_ptr(peer2 = EVP_PKEY_Q_keygen(libctx, NULL, "EC", curve)))
+        goto err;
+
+    params[1] = OSSL_PARAM_construct_end();
+
+    prms = NULL;
+    if (t->key_cofactor != COFACTOR_NOT_SET) {
+        params[0] = OSSL_PARAM_construct_int(OSSL_PKEY_PARAM_USE_COFACTOR_ECDH,
+                                             &use_cofactordh);
+        prms = params;
+    }
+    if (!TEST_int_eq(EVP_PKEY_set_params(peer1, prms), 1)
+            || !TEST_ptr(p1ctx = EVP_PKEY_CTX_new_from_pkey(libctx, peer1, NULL)))
+        goto err;
+
+    prms = NULL;
+    if (t->derive_cofactor_mode != COFACTOR_NOT_SET) {
+        params[0] = OSSL_PARAM_construct_int(OSSL_EXCHANGE_PARAM_EC_ECDH_COFACTOR_MODE,
+                                             &cofactor_mode);
+        prms = params;
+    }
+    if (!TEST_int_eq(EVP_PKEY_derive_init_ex(p1ctx, prms), 1)
+            || !TEST_int_eq(EVP_PKEY_derive_set_peer(p1ctx, peer2), 1)
+            || !TEST_int_eq(EVP_PKEY_derive(p1ctx, secret1, &secret1_len),
+                            t->expected))
+        goto err;
+
+    ret = 1;
+err:
+    if (ret == 0) {
+        static const char *state[] = { "unset", "-1", "disabled", "enabled" };
+
+        TEST_note("ECDH derive() was expected to %s if key cofactor is"
+                  "%s and derive mode is %s", t->expected ? "Pass" : "Fail",
+                  state[2 + t->key_cofactor], state[2 + t->derive_cofactor_mode]);
+    }
+    EVP_PKEY_free(peer1);
+    EVP_PKEY_free(peer2);
+    EVP_PKEY_CTX_free(p1ctx);
+    return ret;
+}
+
 #endif /* OPENSSL_NO_EC */
 
 #if !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_ECX)
@@ -1688,6 +1745,8 @@ int setup_tests(void)
     ADD_ALL_TESTS(ecdsa_pub_verify_test, OSSL_NELEM(ecdsa_pv_data));
     ADD_ALL_TESTS(ecdsa_siggen_test, OSSL_NELEM(ecdsa_siggen_data));
     ADD_ALL_TESTS(ecdsa_sigver_test, OSSL_NELEM(ecdsa_sigver_data));
+    ADD_ALL_TESTS(ecdh_cofactor_derive_test,
+                  OSSL_NELEM(ecdh_cofactor_derive_data));
 #endif /* OPENSSL_NO_EC */
 
 #ifndef OPENSSL_NO_ECX

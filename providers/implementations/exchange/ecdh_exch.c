@@ -539,6 +539,9 @@ int ecdh_plain_derive(void *vpecdhctx, unsigned char *secret,
         }
     } else {
         privk = pecdhctx->k;
+#ifdef FIPS_MODULE
+        cofactor_approved = key_cofactor_mode;
+#endif
     }
 
 #ifdef FIPS_MODULE
@@ -551,7 +554,7 @@ int ecdh_plain_derive(void *vpecdhctx, unsigned char *secret,
                                          pecdhctx->libctx, "ECDH", "Cofactor",
                                          ossl_fips_config_ecdh_cofactor_check)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_COFACTOR_REQUIRED);
-            return 0;
+            goto end;
         }
     }
 #endif
