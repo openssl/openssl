@@ -208,15 +208,15 @@ int pkey_main(int argc, char **argv)
         goto end;
     }
 
-    out = bio_open_owner(outfile, outformat, private);
-    if (out == NULL)
-        goto end;
-
     if (pubin)
         pkey = load_pubkey(infile, informat, 1, passin, e, "Public Key");
     else
         pkey = load_key(infile, informat, 1, passin, e, "key");
     if (pkey == NULL)
+        goto end;
+
+    out = bio_open_owner(outfile, outformat, private);
+    if (out == NULL)
         goto end;
 
 #ifndef OPENSSL_NO_EC
