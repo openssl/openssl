@@ -45,6 +45,12 @@ struct ecdsa_sigver_st {
     int pass;
 };
 
+struct ecdh_cofactor_derive_st {
+    int derive_cofactor_mode;
+    int key_cofactor;
+    int expected;
+};
+
 static const struct ecdsa_keygen_st ecdsa_keygen_data[] = {
     { "P-224" },
 };
@@ -229,6 +235,36 @@ static const struct ecdsa_sigver_st ecdsa_sigver_data[] = {
         ITM(ecdsa_sigver_s1),
         FAIL,
     },
+};
+
+/*
+ * FIPS EC DH key derivation requires the use of the cofactor if a curve has a
+ * cofactor that is not 1. The cofactor option is determined by either
+ *  (1) The derive ctx using OSSL_EXCHANGE_PARAM_EC_ECDH_COFACTOR_MODE or via
+ *  (2) The EVP_PKEY (used by the derive) using OSSL_PKEY_PARAM_USE_COFACTOR_ECDH
+ * Test all combinations of these.
+ * Notes:
+ *   COFACTOR_MODE is -1 by default. (It can be -1, 0, or 1).
+ *   OSSL_PKEY_PARAM_USE_COFACTOR_ECDH is 0 by default. (It can be 0 or 1)
+ *
+ *   OSSL_PKEY_PARAM_USE_COFACTOR_ECDH is only used if the COFACTOR_MODE is -1.
+ *
+ * If the cofactor is not set by either then the derived is expected to fail.
+ */
+# define COFACTOR_NOT_SET -2 /* Use the default by not setting the param */
+static const struct ecdh_cofactor_derive_st ecdh_cofactor_derive_data[] = {
+    { COFACTOR_NOT_SET, COFACTOR_NOT_SET, 0 },
+    { COFACTOR_NOT_SET, 0, 0 },
+    { COFACTOR_NOT_SET, 1, 1 },
+    { -1, COFACTOR_NOT_SET, 0 },
+    { -1, 0, 0 },
+    { -1, 1, 1 },
+    { 0, COFACTOR_NOT_SET, 0 },
+    { 0, 0, 0 },
+    { 0, 1, 0 },
+    { 1, COFACTOR_NOT_SET, 1 },
+    { 1, 0, 1 },
+    { 1, 1, 1 }
 };
 
 #endif /* OPENSSL_NO_EC */
