@@ -389,8 +389,9 @@ static int run_quic_server(SSL_CTX *ctx, int fd)
         }
 
         /* Echo client input */
-        while (!SSL_write_ex2(conn, buf, total_read, SSL_WRITE_FLAG_CONCLUDE,
-                              &nwritten)) {
+        while (!SSL_write_ex2(conn, buf + total_written,
+                              total_read - total_written,
+                              SSL_WRITE_FLAG_CONCLUDE, &nwritten)) {
             total_written += nwritten;
             if (handle_io_failure(conn, 0) == 1)
                 continue;
