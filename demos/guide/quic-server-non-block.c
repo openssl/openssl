@@ -162,7 +162,7 @@ static int create_socket(uint16_t port)
     /* Retrieve the file descriptor for a new UDP socket */
     if ((fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
         fprintf(stderr, "cannot create socket");
-        goto err;
+        return -1;
     }
 
     sa.sin_family = AF_INET;
@@ -172,21 +172,17 @@ static int create_socket(uint16_t port)
     if (bind(fd, (const struct sockaddr *)&sa, sizeof(sa)) < 0) {
         fprintf(stderr, "cannot bind to %u\n", port);
         BIO_closesocket(fd);
-        goto err;
+        return -1;
     }
 
     /* Set port to nonblocking mode */
     if (BIO_socket_nbio(fd, 1) <= 0) {
         fprintf(stderr, "Unable to set port to nonblocking mode");
         BIO_closesocket(fd);
-        goto err;
+        return -1;
     }
 
     return fd;
-
-err:
-    BIO_closesocket(fd);
-    return -1;
 }
 
 /**
@@ -374,21 +370,17 @@ static int run_quic_server(SSL_CTX *ctx, int fd)
 
         /* Read from client until the client sends a end of stream packet */
         while (!eof) {
-            ret = SSL_read_ex(conn, buf, sizeof(buf), &nread);
+            ret = SSL_read_ex(conn, buf + total_read, sizeof(buf) - total_read,
+                              &nread);
             total_read += nread;
             switch (handle_io_failure(conn, ret)) {
             case 1:
                 continue; /* Retry */
             case 0:
                 /* Reached end of stream */
-                if (SSL_has_pending(conn)) {
-                    if (SSL_read_ex(conn, buf, sizeof(buf), &nread) <= 0) {
-                        fprintf(stderr, "Unable to perform final read");
-                        goto err;
-                    }
-                    total_read += nread;
+                if (!SSL_has_pending(conn)) {
+                    eof = 1;
                 }
-                eof = 1;
                 break;
             default:
                 fprintf(stderr, "Failed reading remaining data\n");
@@ -434,11 +426,11 @@ int main(int argc, char *argv[])
     SSL_CTX *ctx = NULL;
     int fd;
     unsigned long port;
-#ifdef _WIN32
-    static const char *progname;
 
+#ifdef _WIN32
     progname = argv[0];
 #endif
+
     if (argc != 4)
         errx(res, "usage: %s <port> <server.crt> <server.key>", argv[0]);
 
