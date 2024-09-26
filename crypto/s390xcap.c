@@ -86,8 +86,8 @@ void OPENSSL_s390x_functions(void);
 struct OPENSSL_s390xcap_st OPENSSL_s390xcap_P;
 
 #ifdef S390X_MOD_EXP
-static int probe_cex(void);
 int OPENSSL_s390xcex;
+int OPENSSL_s390xcex_nodev;
 
 #if defined(__GNUC__)
 __attribute__ ((visibility("hidden")))
@@ -217,44 +217,11 @@ void OPENSSL_cpuid_setup(void)
         OPENSSL_s390xcex = -1;
     } else {
         OPENSSL_s390xcex = open("/dev/z90crypt", O_RDWR | O_CLOEXEC);
-        if (probe_cex() == 1)
-            OPENSSL_atexit(OPENSSL_s390x_cleanup);
+        OPENSSL_atexit(OPENSSL_s390x_cleanup);
     }
+    OPENSSL_s390xcex_nodev = 0;
 #endif
 }
-
-#ifdef S390X_MOD_EXP
-static int probe_cex(void)
-{
-    struct ica_rsa_modexpo me;
-    const unsigned char inval[16] = {
-        0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,2
-    };
-    const unsigned char modulus[16] = {
-        0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,3
-    };
-    unsigned char res[16];
-    int olderrno;
-    int rc = 1;
-
-    me.inputdata = (unsigned char *)inval;
-    me.inputdatalength = sizeof(inval);
-    me.outputdata = (unsigned char *)res;
-    me.outputdatalength = sizeof(res);
-    me.b_key = (unsigned char *)inval;
-    me.n_modulus = (unsigned char *)modulus;
-    olderrno = errno;
-    if (ioctl(OPENSSL_s390xcex, ICARSAMODEXPO, &me) == -1) {
-        (void)close(OPENSSL_s390xcex);
-        OPENSSL_s390xcex = -1;
-        rc = 0;
-    }
-    errno = olderrno;
-    return rc;
-}
-#endif
 
 static int parse_env(struct OPENSSL_s390xcap_st *cap, int *cex)
 {
