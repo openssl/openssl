@@ -378,9 +378,8 @@ static int run_quic_server(SSL_CTX *ctx, int fd)
                 continue; /* Retry */
             case 0:
                 /* Reached end of stream */
-                if (!SSL_has_pending(conn)) {
+                if (!SSL_has_pending(conn))
                     eof = 1;
-                }
                 break;
             default:
                 fprintf(stderr, "Failed reading remaining data\n");
