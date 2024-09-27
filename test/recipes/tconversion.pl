@@ -113,42 +113,41 @@ sub cmp_text {
 }
 
 sub file_contains {
-    $_ = shift @_;
-    my $pattern = shift @_;
-    open(DATA, $_) or return 0;
+    my ($file, $pattern) = @_;
+    open(DATA, $file) or return 0;
     $_= join('', <DATA>);
     close(DATA);
     s/\s+/ /g; # take multiple whitespace (including newline) as single space
     return m/$pattern/ ? 1 : 0;
 }
 
+sub test_file_contains {
+    my ($desc, $file, $pattern, $expected) = @_;
+    $expected //= 1;
+    return is(file_contains($file, $pattern), $expected,
+       "$desc should ".($expected ? "" : "not ")."contain '$pattern'");
+}
+
 sub cert_contains {
-    my $cert = shift @_;
-    my $pattern = shift @_;
-    my $expected = shift @_;
-    my $name = shift @_;
+    my ($cert, $pattern, $expected, $name) = @_;
     my $out = "cert_contains.out";
     run(app(["openssl", "x509", "-noout", "-text", "-in", $cert, "-out", $out]));
-    is(file_contains($out, $pattern), $expected, ($name ? "$name: " : "").
-       "$cert should ".($expected ? "" : "not ")."contain: \"$pattern\"");
+    return test_file_contains(($name ? "$name: " : "").$cert, $out, $pattern, $expected);
     # not unlinking $out
 }
 
 sub has_version {
-    my $cert = shift @_;
-    my $expect = shift @_;
+    my ($cert, $expect) = @_;
     cert_contains($cert, "Version: $expect", 1);
 }
 
 sub has_SKID {
-    my $cert = shift @_;
-    my $expect = shift @_;
+    my ($cert, $expect) = @_;
     cert_contains($cert, "Subject Key Identifier", $expect);
 }
 
 sub has_AKID {
-    my $cert = shift @_;
-    my $expect = shift @_;
+    my ($cert, $expect) = @_;
     cert_contains($cert, "Authority Key Identifier", $expect);
 }
 
@@ -166,10 +165,7 @@ sub file_n_different_lines {
 }
 
 sub cert_ext_has_n_different_lines {
-    my $cert = shift @_;
-    my $expected = shift @_;
-    my $exts = shift @_;
-    my $name = shift @_;
+    my ($cert, $expected, $exts, $name) = @_;
     my $out = "cert_n_different_exts.out";
     run(app(["openssl", "x509", "-noout", "-ext", $exts,
              "-in", $cert, "-out", $out]));
