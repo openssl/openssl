@@ -150,10 +150,6 @@ int dsaparam_main(int argc, char **argv)
     numbits = num;
     private = genkey ? 1 : 0;
 
-    out = bio_open_owner(outfile, outformat, private);
-    if (out == NULL)
-        goto end;
-
     ctx = EVP_PKEY_CTX_new_from_name(app_get0_libctx(), "DSA", app_get0_propq());
     if (ctx == NULL) {
         BIO_printf(bio_err,
@@ -199,6 +195,10 @@ int dsaparam_main(int argc, char **argv)
         /* Error message should already have been displayed */
         goto end;
     }
+
+    out = bio_open_owner(outfile, outformat, private);
+    if (out == NULL)
+        goto end;
 
     if (text) {
         EVP_PKEY_print_params(out, params, 0, NULL);
