@@ -16,6 +16,8 @@ use OpenSSL::Test::Utils;
 my $test_name = "test_store";
 setup($test_name);
 
+require(srctop_file("test", "recipes", "tconversion.pl")); # for test_file_contains()
+
 my $use_md5 = !disabled("md5");
 my $use_des = !(disabled("des") || disabled("legacy")); # also affects 3des and pkcs12 app
 my $use_dsa = !disabled("dsa");
@@ -106,7 +108,7 @@ push @methods, [ @prov_method ];
 push @methods, [qw(-engine loader_attic)]
     unless disabled('loadereng');
 
-my $n = 2 + scalar @methods
+my $n = 4 + scalar @methods
     * ( (3 * scalar @noexist_files)
         + (6 * scalar @src_files)
         + (2 * scalar @data_files)
@@ -171,6 +173,11 @@ indir "store_$$" => sub {
         init() or die "init failed";
 
         my $rehash = init_rehash();
+
+        ok(run(app(["openssl", "storeutl", "-out", "cacert.pem", "cacert.pem"])),
+            "identical infile and outfile");
+        test_file_contains("storeutl output on same input",
+                           "cacert.pem", "Total found: 1");
 
         foreach my $method (@methods) {
             my @storeutl = ( qw(openssl storeutl), @$method );
