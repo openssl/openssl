@@ -194,16 +194,6 @@ int ecparam_main(int argc, char **argv)
 
     private = genkey ? 1 : 0;
 
-    out = bio_open_owner(outfile, outformat, private);
-    if (out == NULL)
-        goto end;
-
-    if (list_curves) {
-        if (list_builtin_curves(out))
-            ret = 0;
-        goto end;
-    }
-
     if (curve_name != NULL) {
         OSSL_PARAM params[4];
         OSSL_PARAM *p = params;
@@ -273,6 +263,16 @@ int ecparam_main(int argc, char **argv)
         && !EVP_PKEY_set_octet_string_param(params_key, OSSL_PKEY_PARAM_EC_SEED,
                                             NULL, 0)) {
         BIO_printf(bio_err, "unable to clear seed\n");
+        goto end;
+    }
+
+    out = bio_open_owner(outfile, outformat, private);
+    if (out == NULL)
+        goto end;
+
+    if (list_curves) {
+        if (list_builtin_curves(out))
+            ret = 0;
         goto end;
     }
 
