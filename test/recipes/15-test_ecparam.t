@@ -11,7 +11,8 @@ use strict;
 use warnings;
 
 use File::Spec;
-use File::Compare qw/compare_text/;
+use File::Copy;
+use File::Compare qw/compare_text compare/;
 use OpenSSL::Glob;
 use OpenSSL::Test qw/:DEFAULT data_file srctop_file bldtop_dir/;
 use OpenSSL::Test::Utils;
@@ -29,7 +30,7 @@ if (disabled("sm2")) {
     @valid = grep { !/sm2-.*\.pem/} @valid;
 }
 
-plan tests => 12;
+plan tests => 13;
 
 sub checkload {
     my $files = shift; # List of files
@@ -60,6 +61,19 @@ sub checkcompare {
             $in1 =~ s/\r\n/\n/g;
             $in2 =~ s/\r\n/\n/g;
             $in1 ne $in2}), "Original file $_ is the same as new one");
+    }
+}
+
+sub check_identical {
+    my $apps = shift; # List of applications
+
+    foreach (@$apps) {
+        my $inout = "$_.tst";
+        my $backup = "backup.tst";
+
+        copy($inout, $backup);
+        ok(run(app(['openssl', $_, '-in', $inout, '-out', $inout])));
+        ok(!compare($inout, $backup), "converted file $inout did not change");
     }
 }
 
@@ -118,6 +132,12 @@ subtest "Check ecparam does not change the parameter file on output" => sub {
 subtest "Check pkeyparam does not change the parameter file on output" => sub {
     plan tests => 2 * scalar(@valid);
     checkcompare(\@valid, "pkeyparam");
+};
+
+my @apps = ("ecparam", "pkeyparam");
+subtest "Check param apps do not garble infile identical to outfile" => sub {
+    plan tests => 2 * scalar(@apps);
+    check_identical(\@apps);
 };
 
 subtest "Check loading of fips and non-fips params" => sub {
