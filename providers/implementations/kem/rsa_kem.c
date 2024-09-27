@@ -298,6 +298,11 @@ static int rsasve_generate(PROV_RSA_CTX *prsactx,
         return 1;
     }
 
+    /*
+     * If outlen is specified, then it must report the length
+     * of the out buffer on input so that we can confirm
+     * its size is sufficent for encapsulation
+     */
     if (outlen != NULL && *outlen < nlen) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_OUTPUT_LENGTH);
         return 0;
@@ -372,6 +377,12 @@ static int rsasve_recover(PROV_RSA_CTX *prsactx,
         ERR_raise(ERR_LIB_PROV, PROV_R_BAD_LENGTH);
         return 0;
     }
+
+    /*
+     * If outlen is specified, then it must report the length
+     * of the out buffer, so that we can confirm that it is of
+     * sufficient size to hold the output of decapsulation
+     */
     if (outlen != NULL && *outlen < nlen) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_OUTPUT_LENGTH);
         return 0;
