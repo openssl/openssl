@@ -553,10 +553,6 @@ int ocsp_main(int argc, char **argv)
         && respin == NULL && !(port != NULL && ridx_filename != NULL))
         goto opthelp;
 
-    out = bio_open_default(outfile, 'w', FORMAT_TEXT);
-    if (out == NULL)
-        goto end;
-
     if (req == NULL && (add_nonce != 2))
         add_nonce = 0;
 
@@ -708,6 +704,10 @@ redo_accept:
             goto end;
         }
     }
+
+    out = bio_open_default(outfile, 'w', FORMAT_TEXT);
+    if (out == NULL)
+        goto end;
 
     if (req_text && req != NULL)
         OCSP_REQUEST_print(out, req, 0);

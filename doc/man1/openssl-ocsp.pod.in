@@ -24,10 +24,10 @@ B<openssl> B<ocsp>
 [B<-req_text>]
 [B<-resp_text>]
 [B<-text>]
-[B<-reqout> I<file>]
-[B<-respout> I<file>]
-[B<-reqin> I<file>]
-[B<-respin> I<file>]
+[B<-reqout> I<filename>]
+[B<-respout> I<filename>]
+[B<-reqin> I<filename>]
+[B<-respin> I<filename>]
 [B<-url> I<URL>]
 [B<-host> I<host>:I<port>]
 [B<-path> I<pathname>]
@@ -155,11 +155,14 @@ a nonce is automatically added specifying B<-no_nonce> overrides this.
 
 Print out the text form of the OCSP request, response or both respectively.
 
-=item B<-reqout> I<file>, B<-respout> I<file>
+=item B<-reqout> I<file>, B<-respout> I<filename>
 
-Write out the DER encoded certificate request or response to I<file>.
+Write out the DER-encoded OCSP request or response to I<filename>.
+The output filename can be the same as the input filename,
+which leads to replacing the file contents.
+Note that file I/O is not atomic. The output file is truncated and then written.
 
-=item B<-reqin> I<file>, B<-respin> I<file>
+=item B<-reqin> I<file>, B<-respin> I<filename>
 
 Read OCSP request or response file from I<file>. These option are ignored
 if OCSP request or response creation is implied by other options (for example
