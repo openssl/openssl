@@ -10,6 +10,8 @@
 use strict;
 use warnings;
 
+use File::Copy;
+use File::Compare qw/compare/;
 use OpenSSL::Test qw(:DEFAULT data_file srctop_file);
 use OpenSSL::Test::Utils;
 
@@ -19,7 +21,7 @@ setup("test_dhparam");
 
 plan skip_all => "DH is not supported in this build"
     if disabled("dh");
-plan tests => 21;
+plan tests => 23;
 
 my $fipsconf = srctop_file("test", "fips-and-base.cnf");
 
@@ -210,6 +212,13 @@ SKIP: {
     delete $ENV{OPENSSL_CONF};
 }
 
+my $input = data_file("pkcs3-2-1024.pem");
 ok(run(app(["openssl", "dhparam", "-noout", "-text"],
-           stdin => data_file("pkcs3-2-1024.pem"))),
+           stdin => $input)),
    "stdinbuffer input test that uses BIO_gets");
+
+my $inout = "inout.pem";
+copy($input, $inout);
+ok(run(app(['openssl', 'dhparam', '-in', $inout, '-out', $inout])),
+    "identical infile and outfile");
+ok(!compare($input, $inout), "converted file $inout did not change");

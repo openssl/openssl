@@ -179,10 +179,6 @@ int dhparam_main(int argc, char **argv)
         goto end;
     }
 
-    out = bio_open_default(outfile, 'w', outformat);
-    if (out == NULL)
-        goto end;
-
     /* DH parameters */
     if (num && !g)
         g = 2;
@@ -321,6 +317,10 @@ int dhparam_main(int argc, char **argv)
             tmppkey = NULL;
         }
     }
+
+    out = bio_open_default(outfile, 'w', outformat);
+    if (out == NULL)
+        goto end;
 
     if (text)
         EVP_PKEY_print_params(out, pkey, 4, NULL);
