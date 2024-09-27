@@ -34,7 +34,10 @@ I<wrapped> and I<wrappedlen> parameters.
 If I<unwrapped> is NULL then the maximum size of the output secret buffer
 is written to I<*unwrappedlen>. If I<unwrapped> is not NULL and the
 call is successful then the decapsulated secret data is written to I<unwrapped>
-and the amount of data written to I<*unwrappedlen>.
+and the amount of data written to I<*unwrappedlen>.  Note that, if I<unwrappedlen>
+is not NULL in this call, the value it points to must be set to the length of
+I<unwrapped>, so that the call can validate it is of sufficient size to hold the
+result of the operation.
 
 =head1 NOTES
 
