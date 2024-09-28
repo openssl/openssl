@@ -190,10 +190,10 @@ DEFINE_RUN_ONCE_STATIC(init_info_strings)
 #endif
 #ifndef OPENSSL_NO_JITTER
         {
-            char jent_version_string[32];
+            char buf[32];
 
-            sprintf(jent_version_string, "JITTER (%d)", jent_version());
-            add_seeds_string(jent_version_string);
+            BIO_snprintf(buf, sizeof(buf), "JITTER (%d)", jent_version());
+            add_seeds_string(buf);
         }
 #endif
         seed_sources = seeds;

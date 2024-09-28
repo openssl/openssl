@@ -458,10 +458,7 @@ static char *win32_name_converter(DSO *dso, const char *filename)
         ERR_raise(ERR_LIB_DSO, DSO_R_NAME_TRANSLATION_FAILED);
         return NULL;
     }
-    if (transform)
-        sprintf(translated, "%s.dll", filename);
-    else
-        sprintf(translated, "%s", filename);
+    BIO_snprintf(translated, len + 1, transform ? "%s.dll" : "%s", filename);
     return translated;
 }
 
