@@ -309,7 +309,7 @@ static int test_ssl_timeout(void)
         ssl_session_set_times(s, test_sample[i].time, test_sample[i].timeout);
         ssl_session_calculate_timeout(s);
         ssl_session_get_calc_timeout(s, &result, &overflow);
-        if (!TEST_int_eq(result, test_sample[i].expected)) {
+        if (!TEST_time_t_eq(result, test_sample[i].expected)) {
             testresult = 0;
             TEST_info("test_ssl_timeout (%d) fails for %p + %p = %p, got %p\n",
                 i, (void *)test_sample[i].time, (void *)test_sample[i].timeout,
@@ -325,7 +325,6 @@ static int test_ssl_timeout(void)
                 (overflow ? "with overflow" : "no overflow"));
             testresult = 0;
         }
-
         i++;
     }
 
