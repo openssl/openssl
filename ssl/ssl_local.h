@@ -2883,4 +2883,6 @@ static ossl_unused ossl_inline void ssl_tsan_counter(const SSL_CTX *ctx,
     }
 }
 
+void ssl_session_get_calc_timeout(SSL_SESSION *, time_t *, int *);
+void ssl_session_set_times(SSL_SESSION *, time_t, time_t);
 #endif
