@@ -209,13 +209,11 @@ static const OSSL_PARAM param_group_list[][10] = {
 
 static int tls_group_capability(OSSL_CALLBACK *cb, void *arg)
 {
-#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
     size_t i;
 
     for (i = 0; i < OSSL_NELEM(param_group_list); i++)
         if (!cb(param_group_list[i], arg))
             return 0;
-#endif
 
     return 1;
 }
