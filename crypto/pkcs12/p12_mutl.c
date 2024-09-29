@@ -111,6 +111,7 @@ static int PBMAC1_PBKDF2_HMAC(OSSL_LIB_CTX *ctx, const char *propq,
 {
     PBKDF2PARAM *pbkdf2_param = NULL;
     const ASN1_OBJECT *kdf_hmac_oid;
+    int kdf_hmac_nid;
     int ret = -1;
     int keylen = 0;
     EVP_MD *kdf_md = NULL;
@@ -123,9 +124,15 @@ static int PBMAC1_PBKDF2_HMAC(OSSL_LIB_CTX *ctx, const char *propq,
     }
     keylen = ASN1_INTEGER_get(pbkdf2_param->keylength);
     pbkdf2_salt = pbkdf2_param->salt->value.octet_string;
-    X509_ALGOR_get0(&kdf_hmac_oid, NULL, NULL, pbkdf2_param->prf);
 
-    kdf_md = EVP_MD_fetch(ctx, OBJ_nid2sn(ossl_hmac2mdnid(OBJ_obj2nid(kdf_hmac_oid))), propq);
+    if (pbkdf2_param->prf == NULL) {
+        kdf_hmac_nid = NID_hmacWithSHA1;
+    } else {
+        X509_ALGOR_get0(&kdf_hmac_oid, NULL, NULL, pbkdf2_param->prf);
+        kdf_hmac_nid = OBJ_obj2nid(kdf_hmac_oid);
+    }
+
+    kdf_md = EVP_MD_fetch(ctx, OBJ_nid2sn(ossl_hmac2mdnid(kdf_hmac_nid)), propq);
     if (kdf_md == NULL) {
         ERR_raise(ERR_LIB_PKCS12, ERR_R_FETCH_FAILED);
         goto err;

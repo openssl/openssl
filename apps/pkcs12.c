@@ -799,16 +799,20 @@ int pkcs12_main(int argc, char **argv)
                 BIO_printf(bio_err, ", Unsupported KDF or params for PBMAC1\n");
             } else {
                 const ASN1_OBJECT *prfobj;
+                int prfnid;
 
                 BIO_printf(bio_err, " using PBKDF2, Iteration %ld\n",
                            ASN1_INTEGER_get(pbkdf2_param->iter));
                 BIO_printf(bio_err, "Key length: %ld, Salt length: %d\n",
                            ASN1_INTEGER_get(pbkdf2_param->keylength),
                            ASN1_STRING_length(pbkdf2_param->salt->value.octet_string));
-                X509_ALGOR_get0(&prfobj, NULL, NULL, pbkdf2_param->prf);
-                BIO_printf(bio_err, "PBKDF2 PRF: ");
-                i2a_ASN1_OBJECT(bio_err, prfobj);
-                BIO_printf(bio_err, "\n");
+                if (pbkdf2_param->prf == NULL) {
+                    prfnid = NID_hmacWithSHA1;
+                } else {
+                    X509_ALGOR_get0(&prfobj, NULL, NULL, pbkdf2_param->prf);
+                    prfnid = OBJ_obj2nid(prfobj);
+                }
+                BIO_printf(bio_err, "PBKDF2 PRF: %s\n", OBJ_nid2sn(prfnid));
             }
             PBKDF2PARAM_free(pbkdf2_param);
         } else {
