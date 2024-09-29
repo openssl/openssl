@@ -59,17 +59,19 @@ __owur static int timeoutcmp(SSL_SESSION *a, SSL_SESSION *b)
 # define TMAX(_type_) (((_type_)-1) >> 1)
 #endif
 
-#define CALCULATE_TIMEOUT(_ss_, _type_) do { \
+#define CALCULATE_TIMEOUT(_ss_, _type_) \
+do { \
     _type_ sum; \
     _type_ a = (_type_)(_ss_)->time; \
     _type_ b = (_type_)(_ss_)->timeout; \
+\
     if (a > TMAX(_type_)) { \
-        a = ~(a - 1);	/* a = a * (-1) */ \
+        a = ~(a - 1);  /* a = a * (-1) */ \
         if (b > a) { \
             sum = b - a; \
         } else { /* b is never greater than 0x7fffffffffffffff */\
-            a = ~(a - 1); /* it is safe add both operands after undoing a * (-1) */\
-            sum = a + b; \
+            a = ~(a - 1); /* therefore no overflow can occur */ \
+            sum = a + b; /* when adding here, just undo a * (-1) first */\
         } \
     } else  \
         sum = a + b; \
