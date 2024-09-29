@@ -72,7 +72,7 @@ if [ "$ROLE" == "client" ]; then
        for req in $REQUESTS
        do
            OUTFILE=$(basename $req)
-           echo -n "$OUTFILE " > ./reqfile.txt
+           printf "%s " "$OUTFILE" >> ./reqfile.txt
            HOSTNAME=$(printf "%s\n" "$req" | sed -ne 's,^https://\([^/:]*\).*,\1,p')
            HOSTPORT=$(printf "%s\n" "$req" | sed -ne 's,^https://[^:/]*:\([^/]*\).*,\1,p')
        done
