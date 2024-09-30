@@ -11,6 +11,27 @@
 #include "crypto/lms.h"
 #include "crypto/lms_util.h"
 
+/**
+ * @brief Calculate the size of a public key in XDR format.
+ *
+ * @param data A byte array of XDR data for a LMS public key.
+ *             The first 4 bytes are looked at.
+ * @param datalen The size of |data|.
+ * @returns The calculated size, or 0 on error.
+ */
+size_t ossl_lms_pubkey_length(const unsigned char *data, size_t datalen)
+{
+    PACKET pkt;
+    uint32_t lms_type;
+    const LMS_PARAMS *params;
+
+    if (!PACKET_buf_init(&pkt, data, datalen)
+            || !PACKET_get_4_len(&pkt, &lms_type)
+            || (params = ossl_lms_params_get(lms_type)) == NULL)
+        return 0;
+    return LMS_SIZE_LMS_TYPE + LMS_SIZE_OTS_TYPE + LMS_SIZE_I + params->n;
+}
+
 /*
  * @brief Decode LMS public key data in XDR format into a LMS_KEY object.
  *
@@ -64,17 +85,14 @@ err:
  * @returns 1 on success, or 0 otherwise. 0 is returned if either |pub| is
  * invalid or |publen| is not the correct size (i.e. trailing data is not allowed)
  */
-static
-int lms_pubkey_decode(const unsigned char *pub, size_t publen, LMS_KEY *lmskey)
+int ossl_lms_pubkey_decode(const unsigned char *pub, size_t publen,
+                           LMS_KEY *lmskey)
 {
     PACKET pkt;
     LMS_PUB_KEY *pkey = &lmskey->pub;
 
     if (pkey->encoded != NULL && pkey->encodedlen != publen) {
-        if (pkey->allocated) {
-            OPENSSL_free(pkey->encoded);
-            pkey->allocated = 0;
-        }
+        OPENSSL_free(pkey->encoded);
         pkey->encodedlen = 0;
     }
     pkey->encoded = OPENSSL_memdup(pub, publen);
@@ -86,7 +104,6 @@ int lms_pubkey_decode(const unsigned char *pub, size_t publen, LMS_KEY *lmskey)
             || (PACKET_remaining(&pkt) > 0))
         goto err;
     pkey->encodedlen = publen;
-    pkey->allocated = 1;
     return 1;
 err:
     OPENSSL_free(pkey->encoded);
@@ -107,9 +124,9 @@ int ossl_lms_pubkey_from_params(const OSSL_PARAM params[], LMS_KEY *lmskey)
 
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY);
     if (p != NULL) {
-        if (p->data == NULL || p->data_type != OSSL_PARAM_OCTET_STRING)
-            return 0;
-        if (!lms_pubkey_decode(p->data, p->data_size, lmskey))
+        if (p->data == NULL
+                || p->data_type != OSSL_PARAM_OCTET_STRING
+                || !ossl_lms_pubkey_decode(p->data, p->data_size, lmskey))
             return 0;
     }
     return 1;

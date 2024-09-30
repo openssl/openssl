@@ -22,6 +22,7 @@ static OSSL_FUNC_keymgmt_match_fn lms_match;
 static OSSL_FUNC_keymgmt_validate_fn lms_validate;
 static OSSL_FUNC_keymgmt_import_fn lms_import;
 static OSSL_FUNC_keymgmt_import_types_fn lms_imexport_types;
+static OSSL_FUNC_keymgmt_load_fn lms_load;
 
 #define LMS_POSSIBLE_SELECTIONS (OSSL_KEYMGMT_SELECT_PUBLIC_KEY)
 
@@ -99,6 +100,20 @@ static int lms_validate(const void *keydata, int selection, int checktype)
     return ossl_lms_key_valid(lmskey, selection);
 }
 
+static void *lms_load(const void *reference, size_t reference_sz)
+{
+    LMS_KEY *key = NULL;
+
+    if (ossl_prov_is_running() && reference_sz == sizeof(key)) {
+        /* The contents of the reference is the address to our object */
+        key = *(LMS_KEY **)reference;
+        /* We grabbed, so we detach it */
+        *(LMS_KEY **)reference = NULL;
+        return key;
+    }
+    return NULL;
+}
+
 const OSSL_DISPATCH ossl_lms_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))lms_new_key },
     { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))lms_free_key },
@@ -107,5 +122,6 @@ const OSSL_DISPATCH ossl_lms_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_VALIDATE, (void (*)(void))lms_validate },
     { OSSL_FUNC_KEYMGMT_IMPORT, (void (*)(void))lms_import },
     { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))lms_imexport_types },
+    { OSSL_FUNC_KEYMGMT_LOAD, (void (*)(void))lms_load },
     OSSL_DISPATCH_END
 };
