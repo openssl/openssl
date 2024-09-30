@@ -62,7 +62,8 @@ this option will be ignored.
 This specifies the output file to write parameters to. Standard output is used
 if this option is not present.
 The output filename can be the same as the input filename,
-which leads to replacing the file contents in situ.
+which leads to replacing the file contents.
+Note that file I/O is not atomic. The output file is truncated and then written.
 
 =item B<-noout>
 
