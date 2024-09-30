@@ -67,9 +67,11 @@ The OpenSSL FIPS provider supports these operations and algorithms:
 
 =item SHA3, see L<EVP_MD-SHA3(7)>
 
+=item SHAKE, see L<EVP_MD-SHAKE(7)>
+
 =item KECCAK-KMAC, see L<EVP_MD-KECCAK-KMAC(7)>
 
-=item SHAKE, see L<EVP_MD-SHAKE(7)>
+KECCAK-KMAC is only used internally as a sub algorithm of KMAC.
 
 =back
 
