@@ -43,7 +43,8 @@ this option is not specified.
 This specifies the output filename to write parameters to or standard output if
 this option is not specified.
 The output filename can be the same as the input filename,
-which leads to replacing the file contents in situ.
+which leads to replacing the file contents.
+Note that file I/O is not atomic. The output file is truncated and then written.
 
 =item B<-text>
 
