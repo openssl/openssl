@@ -51,6 +51,9 @@ static int rsa_sign_x931_pad_allowed = 1;
 #ifndef OPENSSL_NO_DSA
 static int dsasign_allowed = 1;
 #endif
+#ifndef OPENSSL_NO_EC
+static int ec_cofactors = 1;
+#endif
 
 const OPTIONS *test_get_options(void)
 {
@@ -357,6 +360,9 @@ static int ecdh_cofactor_derive_test(int tstid)
     int use_cofactordh = t->key_cofactor;
     int cofactor_mode = t->derive_cofactor_mode;
 
+    if (!ec_cofactors)
+        return TEST_skip("not supported by FIPS provider version");
+
     if (!TEST_ptr(peer1 = EVP_PKEY_Q_keygen(libctx, NULL, "EC", curve))
             || !TEST_ptr(peer2 = EVP_PKEY_Q_keygen(libctx, NULL, "EC", curve)))
         goto err;
@@ -551,10 +557,8 @@ static int dsa_keygen_test(int id)
     size_t priv_len = 0, pub_len = 0;
     const struct dsa_paramgen_st *tst = &dsa_keygen_data[id];
 
-    if (!dsasign_allowed) {
-        TEST_info("DSA keygen test skipped: DSA signing is not allowed");
-        return 1;
-    }
+    if (!dsasign_allowed)
+        return TEST_skip("DSA signing is not allowed");
     if (!TEST_ptr(param_key = dsa_paramgen(tst->L, tst->N))
         || !TEST_ptr(keygen_ctx = EVP_PKEY_CTX_new_from_pkey(libctx, param_key,
                                                              NULL))
@@ -1404,10 +1408,8 @@ static int rsa_siggen_test(int id)
     int salt_len = tst->pss_salt_len;
 
     if (!rsa_sign_x931_pad_allowed
-            && (strcmp(tst->sig_pad_mode, OSSL_PKEY_RSA_PAD_MODE_X931) == 0)) {
-        TEST_info("RSA x931 signature generation skipped: x931 signing is not allowed");
-        return 1;
-    }
+            && (strcmp(tst->sig_pad_mode, OSSL_PKEY_RSA_PAD_MODE_X931) == 0))
+        return TEST_skip("x931 signing is not allowed");
 
     TEST_note("RSA %s signature generation", tst->sig_pad_mode);
 
@@ -1741,6 +1743,7 @@ int setup_tests(void)
 #endif /* OPENSSL_NO_DSA */
 
 #ifndef OPENSSL_NO_EC
+    ec_cofactors = fips_provider_version_ge(libctx, 3, 4, 0);
     ADD_ALL_TESTS(ecdsa_keygen_test, OSSL_NELEM(ecdsa_keygen_data));
     ADD_ALL_TESTS(ecdsa_pub_verify_test, OSSL_NELEM(ecdsa_pv_data));
     ADD_ALL_TESTS(ecdsa_siggen_test, OSSL_NELEM(ecdsa_siggen_data));
