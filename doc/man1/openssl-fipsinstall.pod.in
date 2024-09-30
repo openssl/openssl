@@ -282,6 +282,11 @@ L<EVP_MAC(3)>
 
 The B<openssl-fipsinstall> application was added in OpenSSL 3.0.
 
+The following options were added in OpenSSL 3.1:
+
+B<-ems_check>,
+B<-self_test_oninstall>
+
 =head1 COPYRIGHT
 
 Copyright 2019-2023 The OpenSSL Project Authors. All Rights Reserved.
