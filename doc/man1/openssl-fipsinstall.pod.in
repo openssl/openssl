@@ -453,6 +453,34 @@ The following options were added in OpenSSL 3.2:
 B<-pedantic>,
 B<-no_drbg_truncated_digests>
 
+The following options were added in OpenSSL 3.4:
+
+B<-hmac_key_check>,
+B<-kmac_key_check>,
+B<-signature_digest_check>,
+B<-hkdf_digest_check>,
+B<-tls13_kdf_digest_check>,
+B<-tls1_prf_digest_check>,
+B<-sshkdf_digest_check>,
+B<-sskdf_digest_check>,
+B<-x963kdf_digest_check>,
+B<-dsa_sign_disabled>,
+B<-no_pbkdf2_lower_bound_check>,
+B<-no_short_mac>,
+B<-tdes_encrypt_disabled>,
+B<-rsa_pkcs15_padding_disabled>,
+B<-rsa_pss_saltlen_check>,
+B<-rsa_sign_x931_disabled>,
+B<-hkdf_key_check>,
+B<-kbkdf_key_check>,
+B<-tls13_kdf_key_check>,
+B<-tls1_prf_key_check>,
+B<-sshkdf_key_check>,
+B<-sskdf_key_check>,
+B<-x963kdf_key_check>,
+B<-x942kdf_key_check>,
+B<-ecdh_cofactor_check>
+
 =head1 COPYRIGHT
 
 Copyright 2019-2024 The OpenSSL Project Authors. All Rights Reserved.
