@@ -67,6 +67,9 @@
 #  define LMS_SIZE_I 16
 #  define LMS_SIZE_LMS_TYPE 4
 #  define LMS_SIZE_OTS_TYPE 4
+#  define LMS_MAX_DIGEST_SIZE 32
+#  define LMS_MAX_PUBKEY \
+    (LMS_SIZE_LMS_TYPE + LMS_SIZE_OTS_TYPE + LMS_SIZE_I + LMS_MAX_DIGEST_SIZE)
 
 /*
  * Refer to RFC 8554 Section 4.1.
@@ -141,6 +144,9 @@ int ossl_lms_key_valid(const LMS_KEY *key, int selection);
 int ossl_lms_key_has(const LMS_KEY *key, int selection);
 
 int ossl_lms_pubkey_from_params(const OSSL_PARAM params[], LMS_KEY *lmskey);
+int ossl_lms_pubkey_decode(const unsigned char *pub, size_t publen,
+                           LMS_KEY *lmskey);
+size_t ossl_lms_pubkey_length(const unsigned char *data, size_t datalen);
 
 # endif /* OPENSSL_NO_LMS */
 #endif /* OSSL_CRYPTO_LMS_H */
