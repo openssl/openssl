@@ -43,7 +43,7 @@ internally generated key is written to I<genkey> and its size is written to
 I<*genkeylen>. The encapsulated version of the generated key is written to
 I<wrappedkey> and its size is written to I<*wrappedkeylen>.  Note that if
 I<unwrappedlen> is not NULL, then the value it points to must hold the size of
-the  I<unrwapped> buffer so that its size can be validated by the call, ensuring
+the  I<unwrapped> buffer so that its size can be validated by the call, ensuring
 it is large enough to hold the result written to I<wrapped>.
 
 =head1 NOTES
