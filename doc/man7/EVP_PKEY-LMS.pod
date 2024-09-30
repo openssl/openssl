@@ -47,7 +47,19 @@ Commercial National Security Algorithm Suite
 NOTE error checking has been omitted in these examples
 
 An B<EVP_PKEY> context can be obtained by calling:
-    EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_from_name(NULL, "LMS", NULL);
+
+    EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_from_name(libctx, "LMS", propq);
+
+An B<LMS> public key can be loaded simply like this:
+
+     EVP_PKEY *pkey = NULL;
+     OSSL_DECODER_CTX *dctx = NULL;
+     int selection = OSSL_KEYMGMT_SELECT_PUBLIC_KEY;
+
+     dctx = OSSL_DECODER_CTX_new_for_pkey(&pkey, "XDR", NULL,
+                                          "LMS", selection, libctx, propq);
+     ret = OSSL_DECODER_from_bio(dctx, bio);
+     OSSL_DECODER_CTX_free(dctx);
 
 To load a LMS key from XDR encoded "data" of size "datalen":
 
