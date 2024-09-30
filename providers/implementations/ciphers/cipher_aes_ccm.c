@@ -38,6 +38,9 @@ static void *aes_ccm_dupctx(void *provctx)
     PROV_AES_CCM_CTX *ctx = provctx;
     PROV_AES_CCM_CTX *dupctx = NULL;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
     if (ctx == NULL)
         return NULL;
     dupctx = OPENSSL_memdup(provctx, sizeof(*ctx));
