@@ -56,7 +56,7 @@ typedef struct st_kat_st {
 /* FIPS 140-3 only allows DSA verification for legacy purposes */
 #define SIGNATURE_MODE_VERIFY_ONLY 1
 #define SIGNATURE_MODE_SIGN_ONLY   2
-#define SIGNATURE_MODE_ONESHOT     4
+#define SIGNATURE_MODE_DIGESTED    4
 
 typedef ST_KAT ST_KAT_DIGEST;
 typedef struct st_kat_cipher_st {
@@ -117,8 +117,8 @@ typedef struct st_kat_kas_st {
 
 typedef struct st_kat_sign_st {
     const char *desc;
-    const char *algorithm;
-    const char *mdalgorithm;
+    const char *keytype;
+    const char *sigalgorithm;
     int mode;
     const ST_KAT_PARAM *key;
     const unsigned char *msg;
@@ -1651,7 +1651,7 @@ static const unsigned char sig_kat_persstr[] = {
 static const ST_KAT_SIGN st_kat_sign_tests[] = {
     {
         OSSL_SELF_TEST_DESC_SIGN_RSA,
-        "RSA", "SHA-256", 0,
+        "RSA", "RSA-SHA256", 0,
         rsa_crt_key,
         ITM_STR(rsa_sig_msg),
         ITM(sig_kat_entropyin),
@@ -1662,7 +1662,7 @@ static const ST_KAT_SIGN st_kat_sign_tests[] = {
 #ifndef OPENSSL_NO_EC
     {
         OSSL_SELF_TEST_DESC_SIGN_ECDSA,
-        "EC", "SHA-256", 0,
+        "EC", "ECDSA-SHA256", 0,
         ecdsa_prime_key,
         ITM_STR(rsa_sig_msg),
         ITM(sig_kat_entropyin),
@@ -1673,7 +1673,7 @@ static const ST_KAT_SIGN st_kat_sign_tests[] = {
 # ifndef OPENSSL_NO_EC2M
     {
         OSSL_SELF_TEST_DESC_SIGN_ECDSA,
-        "EC", "SHA-256", 0,
+        "EC", "ECDSA-SHA256", 0,
         ecdsa_bin_key,
         ITM_STR(rsa_sig_msg),
         ITM(sig_kat_entropyin),
@@ -1685,7 +1685,7 @@ static const ST_KAT_SIGN st_kat_sign_tests[] = {
 # ifndef OPENSSL_NO_ECX
     {
         OSSL_SELF_TEST_DESC_SIGN_EDDSA,
-        "ED448", NULL, SIGNATURE_MODE_ONESHOT,
+        "ED448", "ED448", 0,
         ed448_key,
         ITM(ecx_sig_msg),
         NULL, 0, NULL, 0, NULL, 0,
@@ -1693,7 +1693,7 @@ static const ST_KAT_SIGN st_kat_sign_tests[] = {
     },
     {
         OSSL_SELF_TEST_DESC_SIGN_EDDSA,
-        "ED25519", NULL, SIGNATURE_MODE_ONESHOT,
+        "ED25519", "ED25519", 0,
         ed25519_key,
         ITM(ecx_sig_msg),
         NULL, 0, NULL, 0, NULL, 0,
@@ -1704,7 +1704,7 @@ static const ST_KAT_SIGN st_kat_sign_tests[] = {
 #ifndef OPENSSL_NO_DSA
     {
         OSSL_SELF_TEST_DESC_SIGN_DSA,
-        "DSA", "SHA-256", SIGNATURE_MODE_VERIFY_ONLY,
+        "DSA", "DSA-SHA256", SIGNATURE_MODE_VERIFY_ONLY,
         dsa_key,
         ITM_STR(rsa_sig_msg),
         ITM(sig_kat_entropyin),
