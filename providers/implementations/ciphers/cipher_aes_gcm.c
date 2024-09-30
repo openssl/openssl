@@ -39,6 +39,9 @@ static void *aes_gcm_dupctx(void *provctx)
     PROV_AES_GCM_CTX *ctx = provctx;
     PROV_AES_GCM_CTX *dctx = NULL;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
     if (ctx == NULL)
         return NULL;
 

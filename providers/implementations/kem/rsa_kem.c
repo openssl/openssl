@@ -23,6 +23,7 @@
 #include <openssl/proverr.h>
 #include "crypto/rsa.h"
 #include "prov/provider_ctx.h"
+#include "prov/providercommon.h"
 #include "prov/implementations.h"
 #include "prov/securitycheck.h"
 
@@ -82,8 +83,12 @@ static int rsakem_opname2id(const char *name)
 
 static void *rsakem_newctx(void *provctx)
 {
-    PROV_RSA_CTX *prsactx =  OPENSSL_zalloc(sizeof(PROV_RSA_CTX));
+    PROV_RSA_CTX *prsactx;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    prsactx =  OPENSSL_zalloc(sizeof(PROV_RSA_CTX));
     if (prsactx == NULL)
         return NULL;
     prsactx->libctx = PROV_LIBCTX_OF(provctx);
@@ -106,6 +111,9 @@ static void *rsakem_dupctx(void *vprsactx)
     PROV_RSA_CTX *srcctx = (PROV_RSA_CTX *)vprsactx;
     PROV_RSA_CTX *dstctx;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
     dstctx = OPENSSL_zalloc(sizeof(*srcctx));
     if (dstctx == NULL)
         return NULL;
@@ -124,6 +132,9 @@ static int rsakem_init(void *vprsactx, void *vrsa,
 {
     PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
     int protect = 0;
+
+    if (!ossl_prov_is_running())
+        return 0;
 
     if (prsactx == NULL || vrsa == NULL)
         return 0;
@@ -389,6 +400,9 @@ static int rsakem_generate(void *vprsactx, unsigned char *out, size_t *outlen,
 {
     PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
 
+    if (!ossl_prov_is_running())
+        return 0;
+
     switch (prsactx->op) {
         case KEM_OP_RSASVE:
             return rsasve_generate(prsactx, out, outlen, secret, secretlen);
@@ -401,6 +415,9 @@ static int rsakem_recover(void *vprsactx, unsigned char *out, size_t *outlen,
                           const unsigned char *in, size_t inlen)
 {
     PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
+
+    if (!ossl_prov_is_running())
+        return 0;
 
     switch (prsactx->op) {
         case KEM_OP_RSASVE:

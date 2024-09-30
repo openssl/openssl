@@ -71,6 +71,9 @@ static void *aes_wrap_dupctx(void *wctx)
     PROV_AES_WRAP_CTX *ctx = wctx;
     PROV_AES_WRAP_CTX *dctx = wctx;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
     if (ctx == NULL)
         return NULL;
     dctx = OPENSSL_memdup(ctx, sizeof(*ctx));
