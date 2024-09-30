@@ -104,7 +104,8 @@ If the input contains no public key but a private key, its public part is used.
 This specifies the output file to save the encoded and/or text output of key
 or standard output if this option is not specified.
 The output filename can be the same as the input filename,
-which leads to replacing the file contents in situ.
+which leads to replacing the file contents.
+Note that file I/O is not atomic. The output file is truncated and then written.
 
 If any cipher option is set but no B<-passout> is given
 then a pass phrase will be prompted for.
