@@ -95,3 +95,7 @@ DECODER("DER", pem, der, yes),
  * form to the next decoder.
  */
 DECODER_w_structure("DER", der, EncryptedPrivateKeyInfo, der, yes),
+
+#ifndef OPENSSL_NO_LMS
+DECODER("LMS", xdr, lms, yes),
+#endif
