@@ -683,6 +683,10 @@ OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, keymgmt_import_types_ex,
                     (void *provctx, int selection))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, keymgmt_export_types_ex,
                     (void *provctx, int selection))
+/* Create a create from an existing key, and possibly mutate the existing key */
+# define OSSL_FUNC_KEYMGMT_RESERVE                    47
+OSSL_CORE_MAKE_FUNC(void *, keymgmt_reserve,
+                    (void *keydata, const OSSL_PARAM *params))
 
 /* Key Exchange */
 
