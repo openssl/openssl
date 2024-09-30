@@ -159,7 +159,8 @@ Print out the text form of the OCSP request, response or both respectively.
 
 Write out the DER-encoded OCSP request or response to I<filename>.
 The output filename can be the same as the input filename,
-which leads to replacing the file contents in situ.
+which leads to replacing the file contents.
+Note that file I/O is not atomic. The output file is truncated and then written.
 
 =item B<-reqin> I<file>, B<-respin> I<filename>
 
