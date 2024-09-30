@@ -25,6 +25,7 @@ use lib srctop_dir('Configurations');
 use lib bldtop_dir('.');
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
+my $old_fips = 0;
 
 plan skip_all => "CMS is not supported by this OpenSSL build"
     if disabled("cms");
@@ -55,8 +56,12 @@ plan tests => 23;
 ok(run(test(["pkcs7_test"])), "test pkcs7");
 
 unless ($no_fips) {
-    @config = ( "-config", srctop_file("test", "fips-and-base.cnf") );
+    my $provconf = srctop_file("test", "fips-and-base.cnf");
+    @config = ( "-config", $provconf );
     $provname = 'fips';
+
+    run(test(["fips_version_test", "-config", $provconf, "<3.4.0"]),
+    capture => 1, statusvar => $old_fips);
 }
 
 $ENV{OPENSSL_TEST_LIBCTX} = "1";
@@ -633,17 +638,22 @@ my @smime_cms_param_tests = (
       [ "{cmd2}", @prov, "-decrypt", "-recip", catfile($smdir, "smec2.pem"),
         "-in", "{output}.cms", "-out", "{output}.txt" ],
       \&final_compare
-    ],
-
-    [ "enveloped content test streaming S/MIME format, X9.42 DH",
-      [ "{cmd1}", @prov, "-encrypt", "-in", $smcont,
-        "-stream", "-out", "{output}.cms",
-        "-recip", catfile($smdir, "smdh.pem"), "-aes128" ],
-      [ "{cmd2}", @prov, "-decrypt", "-recip", catfile($smdir, "smdh.pem"),
-        "-in", "{output}.cms", "-out", "{output}.txt" ],
-      \&final_compare
     ]
 );
+
+if ($no_fips || $old_fips) {
+    # Only SHA1 supported in dh_cms_encrypt()
+    push(@smime_cms_param_tests,
+         [ "enveloped content test streaming S/MIME format, X9.42 DH",
+           [ "{cmd1}", @prov, "-encrypt", "-in", $smcont,
+             "-stream", "-out", "{output}.cms",
+             "-recip", catfile($smdir, "smdh.pem"), "-aes128" ],
+           [ "{cmd2}", @prov, "-decrypt", "-recip", catfile($smdir, "smdh.pem"),
+             "-in", "{output}.cms", "-out", "{output}.txt" ],
+           \&final_compare
+         ]
+    );
+}
 
 my @smime_cms_param_tests_autodigestmax = (
     [ "signed content test streaming PEM format, RSA keys, PSS signature, saltlen=auto-digestmax, digestsize < maximum salt length",
