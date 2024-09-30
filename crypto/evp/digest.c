@@ -395,6 +395,7 @@ int EVP_DigestUpdate(EVP_MD_CTX *ctx, const void *data, size_t count)
     if (ctx->pctx != NULL
             && EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx->pctx)
             && ctx->pctx->op.sig.algctx != NULL) {
+#ifndef FIPS_MODULE
         /*
          * Prior to OpenSSL 3.0 EVP_DigestSignUpdate() and
          * EVP_DigestVerifyUpdate() were just macros for EVP_DigestUpdate().
@@ -407,6 +408,7 @@ int EVP_DigestUpdate(EVP_MD_CTX *ctx, const void *data, size_t count)
             return EVP_DigestSignUpdate(ctx, data, count);
         if (ctx->pctx->operation == EVP_PKEY_OP_VERIFYCTX)
             return EVP_DigestVerifyUpdate(ctx, data, count);
+#endif
         ERR_raise(ERR_LIB_EVP, EVP_R_UPDATE_ERROR);
         return 0;
     }
