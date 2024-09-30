@@ -514,14 +514,14 @@ static int self_test_digest_sign(const ST_KAT_SIGN *t,
         siglen = t->sig_expected_len;
     } else {
         if (digested) {
-             if (EVP_PKEY_sign_init_ex2(ctx, sigalg, paramsinit) <= 0)
-                 goto err;
-         } else {
-             if (EVP_PKEY_sign_message_init(ctx, sigalg, paramsinit) <= 0)
-                 goto err;
-         }
-         if (EVP_PKEY_sign(ctx, sig, &siglen, t->msg, t->msg_len) <= 0)
-             goto err;
+            if (EVP_PKEY_sign_init_ex2(ctx, sigalg, paramsinit) <= 0)
+                goto err;
+        } else {
+            if (EVP_PKEY_sign_message_init(ctx, sigalg, paramsinit) <= 0)
+                goto err;
+        }
+        if (EVP_PKEY_sign(ctx, sig, &siglen, t->msg, t->msg_len) <= 0)
+            goto err;
 
         if (t->sig_expected != NULL
                 && (siglen != t->sig_expected_len
