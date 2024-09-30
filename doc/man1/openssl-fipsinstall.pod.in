@@ -287,6 +287,11 @@ The following options were added in OpenSSL 3.1:
 B<-ems_check>,
 B<-self_test_oninstall>
 
+The following options were added in OpenSSL 3.2:
+
+B<-pedantic>,
+B<-no_drbg_truncated_digests>
+
 =head1 COPYRIGHT
 
 Copyright 2019-2023 The OpenSSL Project Authors. All Rights Reserved.
