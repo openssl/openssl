@@ -2287,6 +2287,20 @@ int EVP_PKEY_get_size_t_param(const EVP_PKEY *pkey, const char *key_name,
         && OSSL_PARAM_modified(params);
 }
 
+int EVP_PKEY_get_uint64_param(const EVP_PKEY *pkey, const char *key_name,
+                              uint64_t *out)
+{
+    OSSL_PARAM params[2];
+
+    if (key_name == NULL)
+        return 0;
+
+    params[0] = OSSL_PARAM_construct_uint64(key_name, out);
+    params[1] = OSSL_PARAM_construct_end();
+    return EVP_PKEY_get_params(pkey, params)
+        && OSSL_PARAM_modified(params);
+}
+
 int EVP_PKEY_set_int_param(EVP_PKEY *pkey, const char *key_name, int in)
 {
     OSSL_PARAM params[2];
@@ -2307,6 +2321,18 @@ int EVP_PKEY_set_size_t_param(EVP_PKEY *pkey, const char *key_name, size_t in)
         return 0;
 
     params[0] = OSSL_PARAM_construct_size_t(key_name, &in);
+    params[1] = OSSL_PARAM_construct_end();
+    return EVP_PKEY_set_params(pkey, params);
+}
+
+int EVP_PKEY_set_uint64_param(EVP_PKEY *pkey, const char *key_name, uint64_t in)
+{
+    OSSL_PARAM params[2];
+
+    if (key_name == NULL)
+        return 0;
+
+    params[0] = OSSL_PARAM_construct_uint64(key_name, &in);
     params[1] = OSSL_PARAM_construct_end();
     return EVP_PKEY_set_params(pkey, params);
 }

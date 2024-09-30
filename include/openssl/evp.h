@@ -2009,6 +2009,8 @@ int EVP_PKEY_get_int_param(const EVP_PKEY *pkey, const char *key_name,
                            int *out);
 int EVP_PKEY_get_size_t_param(const EVP_PKEY *pkey, const char *key_name,
                               size_t *out);
+int EVP_PKEY_get_uint64_param(const EVP_PKEY *pkey, const char *key_name,
+                              uint64_t *out);
 int EVP_PKEY_get_bn_param(const EVP_PKEY *pkey, const char *key_name,
                           BIGNUM **bn);
 int EVP_PKEY_get_utf8_string_param(const EVP_PKEY *pkey, const char *key_name,
@@ -2021,6 +2023,7 @@ const OSSL_PARAM *EVP_PKEY_settable_params(const EVP_PKEY *pkey);
 int EVP_PKEY_set_params(EVP_PKEY *pkey, OSSL_PARAM params[]);
 int EVP_PKEY_set_int_param(EVP_PKEY *pkey, const char *key_name, int in);
 int EVP_PKEY_set_size_t_param(EVP_PKEY *pkey, const char *key_name, size_t in);
+int EVP_PKEY_set_uint64_param(EVP_PKEY *pkey, const char *key_name, uint64_t in);
 int EVP_PKEY_set_bn_param(EVP_PKEY *pkey, const char *key_name,
                           const BIGNUM *bn);
 int EVP_PKEY_set_utf8_string_param(EVP_PKEY *pkey, const char *key_name,
