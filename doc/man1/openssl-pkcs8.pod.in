@@ -93,7 +93,8 @@ see L<openssl-passphrase-options(1)>.
 
 This specifies the output file to write a key to or standard output by default.
 The output filename can be the same as the input filename,
-which leads to replacing the file contents in situ.
+which leads to replacing the file contents.
+Note that file I/O is not atomic. The output file is truncated and then written.
 
 If any encryption options are set and B<-passout> is not given
 then a pass phrase will be prompted for.
