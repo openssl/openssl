@@ -457,6 +457,9 @@ static const OSSL_ALGORITHM deflt_signature[] = {
 #ifndef OPENSSL_NO_CMAC
     { PROV_NAMES_CMAC, "provider=default", ossl_mac_legacy_cmac_signature_functions },
 #endif
+#ifndef OPENSSL_NO_LMS
+    { PROV_NAMES_LMS, "provider=default", ossl_lms_signature_functions },
+#endif
     { NULL, NULL, NULL }
 };
 
