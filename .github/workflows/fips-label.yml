@@ -80,6 +80,7 @@ jobs:
               }
             }
       - name: 'Cleanup artifact'
+        if: ${{ github.event.workflow_run.conclusion == 'success' }}
         run: rm artifact.zip pr_num
 
       - name: 'Download abidiff artifact'
