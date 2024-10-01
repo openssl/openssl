@@ -20,6 +20,18 @@
 #define HASH_NOT_MATCHED(a, b) \
     (a)->n != (b)->n || (strcmp((a)->digestname, (b)->digestname) != 0)
 
+/* Convert a 32 bit value |in| to 4 bytes |out| */
+#define U32STR(out, in)                             \
+    (out)[0] = (unsigned char)(((in) >> 24) & 0xff); \
+    (out)[1] = (unsigned char)(((in) >> 16) & 0xff); \
+    (out)[2] = (unsigned char)(((in) >> 8) & 0xff);  \
+    (out)[3] = (unsigned char)((in) & 0xff)
+
+/* Convert a 16 bit value |in| to 2 bytes |out| */
+#define U16STR(out, in)                             \
+    (out)[0] = (unsigned char)(((in) >> 8) & 0xff); \
+    (out)[1] = (unsigned char)((in) & 0xff)
+
 /**
  * @brief Helper function to return a ptr to a pkt buffer and move forward.
  * Used when decoding byte array XDR data.
@@ -60,4 +72,35 @@ static ossl_inline int PACKET_get_4_len(PACKET *pkt, uint32_t *data)
     if (ret)
         *data = (uint32_t)i;
     return ret;
+}
+
+/*
+ * See RFC 8554 Section 3.1.3: Strings of w-bit Elements
+ * w: Is one of {1,2,4,8}
+ */
+static ossl_inline uint8_t coef(const unsigned char *S, uint16_t i, uint8_t w)
+{
+    uint8_t bitmask = (1 << w) - 1;
+    uint8_t shift = 8 - (w * (i % (8 / w)) + w);
+    int id = (i * w) / 8;
+
+    return (S[id] >> shift) & bitmask;
+}
+
+#include <openssl/params.h>
+#include <openssl/core_names.h>
+#include <openssl/evp.h>
+static ossl_inline int evp_md_ctx_init(EVP_MD_CTX *ctx, const EVP_MD *md,
+                                       const LMS_PARAMS *lms_params)
+{
+    OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+    OSSL_PARAM *p = NULL;
+
+    /* The OpenSSL SHAKE implementation requires the xoflen to be set */
+    if (strncmp(lms_params->digestname, "SHAKE", 5) == 0) {
+        params[0] = OSSL_PARAM_construct_uint32(OSSL_DIGEST_PARAM_XOFLEN,
+                                                (uint32_t *)&lms_params->n);
+        p = params;
+    }
+    return EVP_DigestInit_ex2(ctx, md, p);
 }
