@@ -9,18 +9,25 @@
 use strict;
 use warnings;
 
-use OpenSSL::Test qw(:DEFAULT srctop_dir bldtop_dir);
+use OpenSSL::Test qw(:DEFAULT srctop_file srctop_dir bldtop_dir);
 use OpenSSL::Test::Utils;
 
 BEGIN {
     setup("test_lms");
 }
 
+my $provconf = srctop_file("test", "fips-and-base.cnf");
+my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
+
 use lib srctop_dir('Configurations');
 use lib bldtop_dir('.');
 
 plan skip_all => 'LMS is not supported in this build' if disabled('lms');
-plan tests => 1;
+plan tests => 1 + + ($no_fips ? 0 : 1);
 
 ok(run(test(["lms_test"])), "running lms_test");
 
+unless ($no_fips) {
+    ok(run(test(["lms_test", "-config",  $provconf])),
+       "running lms_test with fips");
+}
