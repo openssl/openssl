@@ -586,9 +586,9 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
              * it again
              */
             if (!ssl_cipher_get_evp_cipher(sctx, sslcipher, &cipher)
-                    || (SSL_CONNECTION_IS_DTLS(s)
-                        && !ssl_cipher_get_evp_cipher_sn(sctx, sslcipher, &sncipher,
-                                                         &sn_input_offs))) {
+                || (SSL_CONNECTION_IS_DTLS(s)
+                    && !ssl_cipher_get_evp_cipher_sn(sctx, sslcipher, &sncipher,
+                                                     &sn_input_offs))) {
                 /* Error is already recorded */
                 SSLfatal_alert(s, SSL_AD_INTERNAL_ERROR);
                 goto err;
