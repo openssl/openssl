@@ -15,7 +15,17 @@
 #include "testutil.h"
 #include "lms.inc"
 
+typedef enum OPTION_choice {
+    OPT_ERR = -1,
+    OPT_EOF = 0,
+    OPT_CONFIG_FILE,
+    OPT_TEST_ENUM
+} OPTION_CHOICE;
+
 static OSSL_LIB_CTX *libctx = NULL;
+static char *propq = NULL;
+static OSSL_PROVIDER *nullprov = NULL;
+static OSSL_PROVIDER *libprov = NULL;
 
 static EVP_PKEY *lms_pubkey_from_data(const unsigned char *data, size_t datalen)
 {
@@ -27,7 +37,7 @@ static EVP_PKEY *lms_pubkey_from_data(const unsigned char *data, size_t datalen)
     params[0] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY,
                                                   (unsigned char *)data, datalen);
     params[1] = OSSL_PARAM_construct_end();
-    ret = TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(libctx, "LMS", NULL))
+    ret = TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(libctx, "LMS", propq))
         && TEST_int_eq(EVP_PKEY_fromdata_init(ctx), 1)
         && (EVP_PKEY_fromdata(ctx, &key, EVP_PKEY_PUBLIC_KEY, params) == 1);
     if (ret == 0) {
@@ -187,12 +197,16 @@ err:
 static int lms_key_eq_test(void)
 {
     int ret = 0;
-    EVP_PKEY *key[4] = { NULL, NULL, NULL };
+    EVP_PKEY *key[4];
     LMS_ACVP_TEST_DATA *td1 = &lms_testdata[0];
     LMS_ACVP_TEST_DATA *td2 = &lms_testdata[1];
+    size_t i;
 #ifndef OPENSSL_NO_EC
     EVP_PKEY *eckey = NULL;
 #endif
+
+    for (i = 0; i < OSSL_NELEM(key); i++)
+        key[i] = NULL;
 
     if (!TEST_ptr(key[0] = lms_pubkey_from_data(td1->pub, td1->publen))
             || !TEST_ptr(key[1] = lms_pubkey_from_data(td1->pub, td1->publen))
@@ -461,8 +475,41 @@ end:
     return ret;
 }
 
+const OPTIONS *test_get_options(void)
+{
+    static const OPTIONS options[] = {
+        OPT_TEST_OPTIONS_DEFAULT_USAGE,
+        { "config", OPT_CONFIG_FILE, '<',
+          "The configuration file to use for the libctx" },
+        { NULL }
+    };
+    return options;
+}
+
 int setup_tests(void)
 {
+    OPTION_CHOICE o;
+    char *config_file = NULL;
+
+    /* Swap the libctx to test non-default context only */
+    propq = "provider=default";
+
+    while ((o = opt_next()) != OPT_EOF) {
+        switch (o) {
+        case OPT_CONFIG_FILE:
+            config_file = opt_arg();
+            propq = "";
+            break;
+        case OPT_TEST_CASES:
+            break;
+        default:
+        case OPT_ERR:
+            return 0;
+        }
+    }
+    if (!test_get_libctx(&libctx, &nullprov, config_file, &libprov, NULL))
+        return 0;
+
     ADD_TEST(lms_bad_pub_len_test);
     ADD_TEST(lms_key_validate_test);
     ADD_TEST(lms_key_eq_test);
@@ -477,4 +524,11 @@ int setup_tests(void)
     ADD_TEST(lms_verify_bad_pub_sig_test);
 
     return 1;
+}
+
+void cleanup_tests(void)
+{
+    OSSL_PROVIDER_unload(nullprov);
+    OSSL_PROVIDER_unload(libprov);
+    OSSL_LIB_CTX_free(libctx);
 }
