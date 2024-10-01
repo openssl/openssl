@@ -216,15 +216,11 @@ static int ech_decode_echconfig_exts(OSSL_ECHSTORE_ENTRY *ee, PACKET *exts)
             ERR_raise(ERR_LIB_SSL, SSL_R_BAD_ECHCONFIG_EXTENSION);
             goto err;
         }
-        if (exttype > 0xffff) {
+        if (PACKET_remaining(&ext) >= OSSL_ECH_MAX_ECHCONFIGEXT_LEN) {
             ERR_raise(ERR_LIB_SSL, SSL_R_BAD_ECHCONFIG_EXTENSION);
             goto err;
         }
         if (!PACKET_memdup(&ext, &extval, &extlen)) {
-            ERR_raise(ERR_LIB_SSL, SSL_R_BAD_ECHCONFIG_EXTENSION);
-            goto err;
-        }
-        if (extlen >= OSSL_ECH_MAX_ECHCONFIGEXT_LEN) {
             ERR_raise(ERR_LIB_SSL, SSL_R_BAD_ECHCONFIG_EXTENSION);
             goto err;
         }
