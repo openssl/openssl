@@ -21,8 +21,13 @@ LMS_KEY *ossl_lms_key_new(OSSL_LIB_CTX *libctx)
 {
     LMS_KEY *ret = OPENSSL_zalloc(sizeof(LMS_KEY));
 
-    if (ret != NULL)
+    if (ret != NULL) {
+        if (!CRYPTO_NEW_REF(&ret->references, 1)) {
+            OPENSSL_free(ret);
+            return NULL;
+        }
         ret->libctx = libctx;
+    }
     return ret;
 }
 
@@ -32,14 +37,37 @@ LMS_KEY *ossl_lms_key_new(OSSL_LIB_CTX *libctx)
 void ossl_lms_key_free(LMS_KEY *lmskey)
 {
     LMS_PUB_KEY *pub;
+    int i;
 
     if (lmskey == NULL)
         return;
 
+    CRYPTO_DOWN_REF(&lmskey->references, &i);
+    REF_PRINT_COUNT("LMS_KEY", i, lmskey);
+    if (i > 0)
+        return;
+    REF_ASSERT_ISNT(i < 0);
+
     pub = &lmskey->pub;
-    if (pub->allocated)
-        OPENSSL_free(pub->encoded);
+    OPENSSL_free(pub->encoded);
+    CRYPTO_FREE_REF(&lmskey->references);
     OPENSSL_free(lmskey);
+}
+
+/*
+ * @brief Increase the reference count for a LMS_KEY object.
+ * @returns 1 on success or 0 otherwise.
+ */
+int ossl_lms_key_up_ref(LMS_KEY *key)
+{
+    int i;
+
+    if (CRYPTO_UP_REF(&key->references, &i) <= 0)
+        return 0;
+
+    REF_PRINT_COUNT("LMS_KEY", i, key);
+    REF_ASSERT_ISNT(i < 2);
+    return ((i > 1) ? 1 : 0);
 }
 
 /**
@@ -84,9 +112,9 @@ int ossl_lms_key_valid(const LMS_KEY *key, int selection)
         return 0;
 
     if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
-        if (key->pub.encoded == NULL || key->pub.encodedlen == 0)
-            return 0;
-    /* There is no private key currently */
+        return key->pub.encoded != NULL && key->pub.encodedlen != 0;
+    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
+        return 0; /* a private key that doesn't exist can't be valid */
     return 1;
 }
 
@@ -99,10 +127,10 @@ int ossl_lms_key_valid(const LMS_KEY *key, int selection)
  */
 int ossl_lms_key_has(const LMS_KEY *key, int selection)
 {
-    int ok = 1;
-
     if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
-        ok = (key != NULL && key->pub.K != NULL);
+        return (key != NULL) && (key->pub.K != NULL);
     /* There is no private key currently */
-    return ok;
+    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
+        return 0;
+    return 1;
 }

@@ -239,6 +239,228 @@ end:
     return ret;
 }
 
+static int lms_verify_test(int tst)
+{
+    int ret = 0;
+    LMS_ACVP_TEST_DATA *td = &lms_testdata[tst];
+    EVP_PKEY_CTX *ctx = NULL;
+    EVP_PKEY *pkey = NULL;
+    EVP_SIGNATURE *sig = NULL;
+
+    ret = TEST_ptr(pkey = lms_pubkey_from_data(td->pub, td->publen))
+        && TEST_ptr(sig = EVP_SIGNATURE_fetch(libctx, "LMS", NULL))
+        && TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, NULL))
+        && TEST_int_eq(EVP_PKEY_verify_message_init(ctx, sig, NULL), 1)
+        && TEST_int_eq(EVP_PKEY_verify(ctx, td->sig, td->siglen,
+                                       td->msg, td->msglen), 1);
+
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_CTX_free(ctx);
+    EVP_SIGNATURE_free(sig);
+    return ret;
+}
+
+static int lms_digest_verify_fail_test(void)
+{
+    int ret = 0;
+    LMS_ACVP_TEST_DATA *td = &lms_testdata[0];
+    EVP_PKEY *pub = NULL;
+    EVP_MD_CTX *vctx = NULL;
+
+    if (!TEST_ptr(pub = lms_pubkey_from_data(td->pub, td->publen)))
+        return 0;
+    if (!TEST_ptr(vctx = EVP_MD_CTX_new()))
+        goto err;
+    /* Only one shot mode is supported, streaming fails to initialise */
+    if (!TEST_int_eq(EVP_DigestVerifyInit_ex(vctx, NULL, NULL, libctx, NULL,
+                                             pub, NULL), 0))
+        goto err;
+    ret = 1;
+ err:
+    EVP_PKEY_free(pub);
+    EVP_MD_CTX_free(vctx);
+    return ret;
+}
+
+static int lms_verify_fail_test(void)
+{
+    int ret = 0;
+    LMS_ACVP_TEST_DATA *td = &lms_testdata[0];
+    EVP_PKEY_CTX *ctx = NULL;
+    EVP_PKEY *pkey = NULL;
+
+    if (!TEST_ptr(pkey = lms_pubkey_from_data(td->pub, td->publen))
+            || !TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, NULL)))
+        goto end;
+    /* Only one shot mode is supported, streaming fails to initialise */
+    if (!TEST_int_eq(EVP_PKEY_verify_init(ctx), -2))
+        goto end;
+    ret = 1;
+end:
+    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_free(pkey);
+    return ret;
+}
+
+static int lms_verify_bad_sig_test(void)
+{
+    int ret = 0, i = 0;
+    LMS_ACVP_TEST_DATA *td = &lms_testdata[1];
+    EVP_PKEY *pkey = NULL;
+    EVP_SIGNATURE *sig = NULL;
+    EVP_PKEY_CTX *ctx = NULL;
+    unsigned char *sig_data = NULL, corrupt_mask = 0x01;
+    /*
+     * Corrupt every 3rd byte to run less tests. The smallest element of an XDR
+     * encoding is 4 bytes, so this will corrupt every element.
+     * Memory sanitisation is slow, so a larger step size is used for this.
+     */
+#if defined(OSSL_SANITIZE_MEMORY)
+    const int step = (int)(td->siglen >> 1);
+#else
+    const int step = 3;
+#endif
+
+    /* Copy the signature so that we can corrupt it */
+    sig_data = OPENSSL_memdup(td->sig, td->siglen);
+    if (sig_data == NULL)
+        return 0;
+
+    if (!TEST_ptr(pkey = lms_pubkey_from_data(td->pub, td->publen))
+            || !TEST_ptr(sig = EVP_SIGNATURE_fetch(libctx, "LMS", NULL))
+            || !TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, NULL)))
+        goto end;
+
+    if (!TEST_int_eq(EVP_PKEY_verify_message_init(ctx, sig, NULL), 1))
+        goto end;
+
+    for (i = 0; i < (int)td->siglen; i += step) {
+        sig_data[i] ^= corrupt_mask; /* corrupt a byte */
+        if (i > 0)
+            sig_data[i - step] ^= corrupt_mask; /* Reset the previously corrupt byte */
+
+        if (!TEST_int_eq(EVP_PKEY_verify(ctx, sig_data, td->siglen,
+                                         td->msg, td->msglen), 0)) {
+            TEST_note("Incorrectly passed when %dth byte of signature"
+                      " was corrupted", i);
+            goto end;
+        }
+    }
+
+    ret = 1;
+end:
+    EVP_SIGNATURE_free(sig);
+    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_free(pkey);
+    OPENSSL_free(sig_data);
+
+    return ret;
+}
+
+/*
+ * Test that using the incorrect signature lengths (both shorter and longer)
+ * fail.
+ * NOTE: It does not get an out of bounds read due to the signature
+ * knowing how large it should be
+ */
+static int lms_verify_bad_sig_len_test(void)
+{
+    int ret = 0;
+    LMS_ACVP_TEST_DATA *td = &lms_testdata[1];
+    EVP_PKEY *pkey = NULL;
+    EVP_SIGNATURE *sig = NULL;
+    EVP_PKEY_CTX *ctx = NULL;
+    size_t siglen = 0;
+    const int step = 3;
+    unsigned char sigdata[4096];
+
+    if (!TEST_ptr(pkey = lms_pubkey_from_data(td->pub, td->publen))
+            || !TEST_ptr(sig = EVP_SIGNATURE_fetch(libctx, "LMS", NULL))
+            || !TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, NULL)))
+        goto end;
+
+    if (!TEST_size_t_le(td->siglen + 16, sizeof(sigdata)))
+        goto end;
+
+    OPENSSL_cleanse(sigdata, sizeof(sigdata));
+    memcpy(sigdata, td->sig, td->siglen);
+
+    ret = 0;
+    for (siglen = 0; siglen < td->siglen + 16; siglen += step) {
+        if (siglen == td->siglen)   /* ignore the size that should pass */
+            continue;
+        if (!TEST_int_eq(EVP_PKEY_verify_message_init(ctx, sig, NULL), 1))
+            goto end;
+        if (!TEST_int_eq(EVP_PKEY_verify(ctx, sigdata, siglen,
+                                         td->msg, td->msglen), 0)) {
+            TEST_note("Incorrectly accepted signature key of length"
+                      " %u (expected %u)", (unsigned)siglen, (unsigned)td->siglen);
+            goto end;
+        }
+    }
+
+    ret = 1;
+end:
+    EVP_SIGNATURE_free(sig);
+    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_free(pkey);
+
+    return ret;
+}
+
+static int lms_verify_bad_pub_sig_test(void)
+{
+    LMS_ACVP_TEST_DATA *td = &lms_testdata[1];
+    int ret = 0, i = 0;
+    EVP_PKEY *pkey = NULL;
+    EVP_SIGNATURE *sig = NULL;
+    EVP_PKEY_CTX *ctx = NULL;
+    unsigned char *pub = NULL;
+    const int step = 1;
+
+    /* Copy the public key data so that we can corrupt it */
+    if (!TEST_ptr(pub = OPENSSL_memdup(td->pub, td->publen)))
+        return 0;
+
+    if (!TEST_ptr(sig = EVP_SIGNATURE_fetch(libctx, "LMS", NULL)))
+        goto end;
+
+    for (i = 0; i < (int)td->publen; i += step) {
+        if (i > 0) {
+            EVP_PKEY_free(pkey);
+            EVP_PKEY_CTX_free(ctx);
+            pkey = NULL;
+            ctx = NULL;
+            pub[i - step] ^= 1;
+        }
+        pub[i] ^= 1;
+        /* Corrupting the public key may cause the key load to fail */
+        pkey = lms_pubkey_from_data(pub, td->publen);
+        if (pkey == NULL)
+            continue;
+        if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, NULL)))
+            continue;
+        if (!TEST_int_eq(EVP_PKEY_verify_message_init(ctx, sig, NULL), 1))
+            continue;
+        /* We expect the verify to fail */
+        if (!TEST_int_eq(EVP_PKEY_verify(ctx, td->sig, td->siglen,
+                                         td->msg, td->msglen), 0)) {
+            TEST_note("Incorrectly passed when byte %d of the public key"
+                      " was corrupted", i);
+            goto end;
+        }
+    }
+
+    ret = 1;
+end:
+    EVP_SIGNATURE_free(sig);
+    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_free(pkey);
+    OPENSSL_free(pub);
+
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(lms_bad_pub_len_test);
@@ -247,5 +469,12 @@ int setup_tests(void)
     ADD_TEST(lms_key_decode_test);
     ADD_TEST(lms_pubkey_decoder_test);
     ADD_TEST(lms_pubkey_decoder_fail_test);
+    ADD_ALL_TESTS(lms_verify_test, OSSL_NELEM(lms_testdata));
+    ADD_TEST(lms_verify_fail_test);
+    ADD_TEST(lms_digest_verify_fail_test);
+    ADD_TEST(lms_verify_bad_sig_test);
+    ADD_TEST(lms_verify_bad_sig_len_test);
+    ADD_TEST(lms_verify_bad_pub_sig_test);
+
     return 1;
 }

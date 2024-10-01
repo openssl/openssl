@@ -18,6 +18,7 @@
 # ifndef OPENSSL_NO_LMS
 #  include "types.h"
 #  include <openssl/params.h>
+#  include "internal/refcount.h"
 
 /*
  * Numeric identifiers associated with Leighton-Micali Signatures (LMS)
@@ -62,6 +63,9 @@
 #  define OSSL_LM_OTS_TYPE_SHAKE_N24_W2  0x0000000E
 #  define OSSL_LM_OTS_TYPE_SHAKE_N24_W4  0x0000000F
 #  define OSSL_LM_OTS_TYPE_SHAKE_N24_W8  0x00000010
+
+/* Constants used for verifying */
+#  define LMS_SIZE_q 4
 
 /* XDR sizes when encoding and decoding */
 #  define LMS_SIZE_I 16
@@ -123,7 +127,6 @@ typedef struct lms_pub_key_st {
      * It is a pointer into the encoded buffer
      */
     unsigned char *K;
-    uint32_t allocated;             /* If 1 then encoded needs to be freed */
 } LMS_PUB_KEY;
 
 struct lms_key_st {
@@ -132,12 +135,14 @@ struct lms_key_st {
     OSSL_LIB_CTX *libctx;
     unsigned char *Id;        /* A pointer to 16 bytes (I[16]) */
     LMS_PUB_KEY pub;
+    CRYPTO_REF_COUNT references;
 };
 
 const LMS_PARAMS *ossl_lms_params_get(uint32_t lms_type);
 const LM_OTS_PARAMS *ossl_lm_ots_params_get(uint32_t ots_type);
 
 LMS_KEY *ossl_lms_key_new(OSSL_LIB_CTX *libctx);
+int ossl_lms_key_up_ref(LMS_KEY *key);
 void ossl_lms_key_free(LMS_KEY *lmskey);
 int ossl_lms_key_equal(const LMS_KEY *key1, const LMS_KEY *key2, int selection);
 int ossl_lms_key_valid(const LMS_KEY *key, int selection);
