@@ -584,6 +584,8 @@ static int kem_rsa_gen_recover(void)
           && TEST_int_eq(EVP_PKEY_encapsulate_init(sctx, NULL), 1)
           && TEST_int_eq(EVP_PKEY_CTX_set_kem_op(sctx, "RSASVE"), 1)
           && TEST_ptr(dctx = EVP_PKEY_CTX_dup(sctx))
+          /* Test that not providing a NULL wrappedlen fails */
+          && TEST_int_eq(EVP_PKEY_encapsulate(dctx, NULL, NULL, NULL, NULL), 0)
           && TEST_int_eq(EVP_PKEY_encapsulate(dctx, NULL, &ctlen, NULL,
                                               &secretlen), 1)
           && TEST_int_eq(ctlen, secretlen)
@@ -593,11 +595,26 @@ static int kem_rsa_gen_recover(void)
           && TEST_ptr(rctx = EVP_PKEY_CTX_new_from_pkey(libctx, priv, NULL))
           && TEST_int_eq(EVP_PKEY_decapsulate_init(rctx, NULL), 1)
           && TEST_int_eq(EVP_PKEY_CTX_set_kem_op(rctx, "RSASVE"), 1)
+          /* Test that not providing a NULL unwrappedlen fails */
+          && TEST_int_eq(EVP_PKEY_decapsulate(rctx, NULL, NULL, ct, ctlen), 0)
           && TEST_int_eq(EVP_PKEY_decapsulate(rctx, NULL, &unwraplen,
                                               ct, ctlen), 1)
           && TEST_int_eq(EVP_PKEY_decapsulate(rctx, unwrap, &unwraplen,
                                               ct, ctlen), 1)
           && TEST_mem_eq(unwrap, unwraplen, secret, secretlen);
+
+    /*
+     * Test that providing a too short unwrapped/ctlen fails
+     */
+    ctlen = 1;
+    if (!TEST_int_eq(EVP_PKEY_encapsulate(dctx, ct, &ctlen, secret,
+                                          &secretlen), 0))
+        ret = 0;
+    unwraplen = 1;
+    if (!TEST_int_eq(EVP_PKEY_decapsulate(rctx, unwrap, &unwraplen, ct,
+                                          ctlen), 0))
+        ret = 0;
+
     EVP_PKEY_free(pub);
     EVP_PKEY_free(priv);
     EVP_PKEY_CTX_free(rctx);
