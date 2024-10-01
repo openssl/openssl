@@ -1676,6 +1676,7 @@ int tls_post_encryption_processing_default(OSSL_RECORD_LAYER *rl,
                                            TLS_RL_RECORD *thiswr)
 {
     size_t origlen, len;
+    /*TODO unified header support*/
     size_t headerlen = rl->isdtls ? DTLS1_RT_HEADER_LENGTH
                                   : SSL3_RT_HEADER_LENGTH;
 

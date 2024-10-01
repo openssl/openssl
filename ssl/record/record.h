@@ -18,6 +18,7 @@
  *****************************************************************************/
 
 #define SEQ_NUM_SIZE                            8
+#define REC_NUM_SIZE                            16
 
 typedef struct tls_record_st {
     void *rechandle;

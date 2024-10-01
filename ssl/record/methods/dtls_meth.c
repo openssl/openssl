@@ -105,6 +105,23 @@ static void dtls_set_in_init(OSSL_RECORD_LAYER *rl, int in_init)
     rl->in_init = in_init;
 }
 
+static size_t dtls_get_rec_header_size(uint8_t hdr_first_byte) {
+    size_t size = 0;
+
+    if (DTLS13_UNI_HDR_FIX_BITS_IS_SET(hdr_first_byte)
+        && ossl_assert(!DTLS13_UNI_HDR_CID_BIT_IS_SET(hdr_first_byte))) {
+        /* DTLSv1.3 unified record header */
+        size = 1;
+        size += DTLS13_UNI_HDR_SEQ_BIT_IS_SET(hdr_first_byte) ? 2 : 1;
+        size += DTLS13_UNI_HDR_LEN_BIT_IS_SET(hdr_first_byte) ? 2 : 0;
+    } else {
+        /* DTLSv1.0, DTLSv1.2 or unencrypted DTLSv1.3 record header */
+        size = DTLS1_RT_HEADER_LENGTH;
+    }
+
+    return size;
+}
+
 static int dtls_process_record(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
 {
     int i;
@@ -112,6 +129,7 @@ static int dtls_process_record(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
     TLS_RL_RECORD *rr;
     int imac_size;
     size_t mac_size = 0;
+    size_t rechdrsize = dtls_get_rec_header_size(rl->packet[0]);
     unsigned char md[EVP_MAX_MD_SIZE];
     SSL_MAC_BUF macbuf = { NULL, 0 };
     int ret = 0;
@@ -122,7 +140,7 @@ static int dtls_process_record(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
      * At this point, rl->packet_length == DTLS1_RT_HEADER_LENGTH + rr->length,
      * and we have that many bytes in rl->packet
      */
-    rr->input = &(rl->packet[DTLS1_RT_HEADER_LENGTH]);
+    rr->input = rl->packet + rechdrsize;
 
     /*
      * ok, we can now read from 'rl->packet' data into 'rr'. rr->input
@@ -342,7 +360,7 @@ static int dtls_copy_rlayer_record(OSSL_RECORD_LAYER *rl, pitem *item)
     memcpy(&rl->rrec[0], &(rdata->rrec), sizeof(TLS_RL_RECORD));
 
     /* Set proper sequence number for mac calculation */
-    memcpy(&(rl->sequence[2]), &(rdata->packet[5]), 6);
+    memcpy(rl->sequence, rdata->rrec.seq_num, 8);
 
     return 1;
 }
@@ -376,11 +394,9 @@ static int dtls_retrieve_rlayer_buffered_record(OSSL_RECORD_LAYER *rl,
  */
 int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
 {
-    int ssl_major, ssl_minor;
     int rret;
     size_t more, n;
     TLS_RL_RECORD *rr;
-    unsigned char *p = NULL;
     DTLS_BITMAP *bitmap;
     unsigned int is_next_epoch;
 
@@ -407,8 +423,12 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
     /* get something from the wire */
 
     /* check if we have the header */
-    if ((rl->rstate != SSL_ST_READ_BODY) ||
-        (rl->packet_length < DTLS1_RT_HEADER_LENGTH)) {
+    if (rl->rstate != SSL_ST_READ_BODY
+            || rl->packet_length < DTLS1_RT_HEADER_LENGTH) {
+        PACKET dtlsrecord;
+        unsigned int record_type, record_version, epoch, length;
+        size_t rechdrlen;
+
         rret = rl->funcs->read_n(rl, DTLS1_RT_HEADER_LENGTH,
                                  TLS_BUFFER_get_len(&rl->rbuf), 0, 1, &n);
         /* read timeout is handled by dtls1_read_bytes */
@@ -425,25 +445,105 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
 
         rl->rstate = SSL_ST_READ_BODY;
 
-        p = rl->packet;
+        if (!PACKET_buf_init(&dtlsrecord, rl->packet, rl->packet_length)
+            || !PACKET_get_1(&dtlsrecord, &record_type)) {
+            // TODO: is this appropriate error handling?
+            rl->packet_length = 0;
+            goto again;
+        }
 
         /* Pull apart the header into the DTLS1_RECORD */
-        rr->type = *(p++);
-        ssl_major = *(p++);
-        ssl_minor = *(p++);
-        rr->rec_version = (ssl_major << 8) | ssl_minor;
+        rr->type = (int)record_type;
 
-        /* sequence number is 64 bits, with top 2 bytes = epoch */
-        n2s(p, rr->epoch);
+        /*-
+         * rfc9147:
+         * Implementations can demultiplex DTLS 1.3 records by examining the first
+         * byte as follows:
+         *   • If the first byte is alert(21), handshake(22), or ack(proposed, 26),
+         *     the record MUST be interpreted as a DTLSPlaintext record.
+         *   • If the first byte is any other value, then receivers MUST check to
+         *     see if the leading bits of the first byte are 001. If so, the implementation
+         *     MUST process the record as DTLSCiphertext; the true content type
+         *     will be inside the protected portion.
+         *   • Otherwise, the record MUST be rejected as if it had failed deprotection,
+         *     as described in Section 4.5.2.
+         */
+        if (rl->version == DTLS1_3_VERSION
+            && rr->type != SSL3_RT_ALERT
+            && rr->type != SSL3_RT_HANDSHAKE
+            && rr->type != SSL3_RT_APPLICATION_DATA /* TODO: Disable this check when unified header has been developed */
+            //&& rr->type != SSL3_RT_ACK /* TODO: depends on acknowledge implementation */
+            && !DTLS13_UNI_HDR_FIX_BITS_IS_SET(rr->type)) {
+            /* Silently discard*/
+            rr->length = 0;
+            rl->packet_length = 0;
+            goto again;
+        }
 
-        memcpy(&(rl->sequence[2]), p, 6);
-        p += 6;
+        if (DTLS13_UNI_HDR_FIX_BITS_IS_SET(rr->type)) {
+            /*
+             * rfc9147:
+             * receivers MUST check to if the leading bits of the first byte are 001.
+             * If so, the implementation MUST process the record as DTLSCiphertext;
+             */
+            int cbitisset = DTLS13_UNI_HDR_CID_BIT_IS_SET(rr->type);
+            int sbitisset = DTLS13_UNI_HDR_SEQ_BIT_IS_SET(rr->type);
+            int lbitisset = DTLS13_UNI_HDR_LEN_BIT_IS_SET(rr->type);
+            uint16_t eebits = rr->type & DTLS13_UNI_HDR_EPOCH_BITS_MASK;
 
-        n2s(p, rr->length);
+            record_version = DTLS1_2_VERSION;
+            epoch = rl->epoch;
+
+            if (/* OpenSSL does not support connection ID's and a connection ID
+                 * is only set if one has been negotiated: silently discard */
+                cbitisset
+                /*
+                 * Naive approach? We expect sequence number to be filled already
+                 * and then override the last bytes of the sequence number.
+                 */
+                || (sbitisset ? !PACKET_copy_bytes(&dtlsrecord, rl->sequence + 6, 2)
+                              : !PACKET_copy_bytes(&dtlsrecord, rl->sequence + 7, 1))
+                /*
+                 * rfc9147:
+                 * The length field MAY be omitted by clearing the L bit, which means
+                 * that the record consumes the entire rest of the datagram in the
+                 * lower level transport
+                 */
+                || (lbitisset ? !PACKET_get_net_2(&dtlsrecord, &length)
+                                /* TODO: We have not read the full record yet */
+                              : (length = PACKET_remaining(&dtlsrecord)) > 0)) {
+                rr->length = 0;
+                rl->packet_length = 0;
+                goto again;
+            }
+
+            /*
+             * We should not be getting records from a previous epoch so
+             * choose the current epoch if the bits match or else choose the
+             * next epoch with matching bits
+             */
+            while (eebits != (epoch & DTLS13_UNI_HDR_EPOCH_BITS_MASK))
+                epoch++;
+
+        } else {
+            if (!PACKET_get_net_2(&dtlsrecord, &record_version)
+                || !PACKET_get_net_2(&dtlsrecord, &epoch)
+                || !PACKET_copy_bytes(&dtlsrecord, rl->sequence + 2, 6)
+                || !PACKET_get_net_2(&dtlsrecord, &length)) {
+                rr->length = 0;
+                rl->packet_length = 0;
+                goto again;
+            }
+        }
+
+        rechdrlen = PACKET_data(&dtlsrecord) - rl->packet;
+        rr->rec_version = (int)record_version;
+        rr->epoch = epoch;
+        rr->length = length;
 
         if (rl->msg_callback != NULL)
-            rl->msg_callback(0, rr->rec_version, SSL3_RT_HEADER, rl->packet, DTLS1_RT_HEADER_LENGTH,
-                             rl->cbarg);
+            rl->msg_callback(0, rr->rec_version, SSL3_RT_HEADER, rl->packet,
+                             rechdrlen, rl->cbarg);
 
         /*
          * Lets check the version. We tolerate alerts that don't have the exact
@@ -461,7 +561,7 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
             }
         }
 
-        if (ssl_major !=
+        if (rr->rec_version >> 8 !=
                 (rl->version == DTLS_ANY_VERSION ? DTLS1_VERSION_MAJOR
                                                  : rl->version >> 8)) {
             /* wrong version, silently discard record */
@@ -702,6 +802,7 @@ int dtls_prepare_record_header(OSSL_RECORD_LAYER *rl,
                                unsigned char **recdata)
 {
     size_t maxcomplen;
+    int unifiedheader = rl->version == DTLS1_3_VERSION && rl->epoch > 0;
 
     *recdata = NULL;
 
@@ -709,7 +810,26 @@ int dtls_prepare_record_header(OSSL_RECORD_LAYER *rl,
     if (rl->compctx != NULL)
         maxcomplen += SSL3_RT_MAX_COMPRESSED_OVERHEAD;
 
-    if (!WPACKET_put_bytes_u8(thispkt, rectype)
+    if (unifiedheader) {
+        uint8_t fixedbits = 0x20;
+        uint8_t cbit = 0;
+        uint8_t sbit = 0x08;
+        uint8_t lbit = 0x04;
+        uint8_t ebits = rl->epoch & 0x3;
+        uint8_t unifiedhdrbits = fixedbits | cbit | sbit | lbit | ebits;
+
+        if (!WPACKET_put_bytes_u8(thispkt, unifiedhdrbits)
+            || !WPACKET_memcpy(thispkt, &(rl->sequence[6]), 2)
+            || !WPACKET_start_sub_packet_u16(thispkt)
+            || (rl->eivlen > 0
+                && !WPACKET_allocate_bytes(thispkt, rl->eivlen, NULL))
+            || (maxcomplen > 0
+                && !WPACKET_reserve_bytes(thispkt, maxcomplen, recdata))) {
+            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+    } else {
+        if (!WPACKET_put_bytes_u8(thispkt, rectype)
             || !WPACKET_put_bytes_u16(thispkt, templ->version)
             || !WPACKET_put_bytes_u16(thispkt, rl->epoch)
             || !WPACKET_memcpy(thispkt, &(rl->sequence[2]), 6)
@@ -717,10 +837,10 @@ int dtls_prepare_record_header(OSSL_RECORD_LAYER *rl,
             || (rl->eivlen > 0
                 && !WPACKET_allocate_bytes(thispkt, rl->eivlen, NULL))
             || (maxcomplen > 0
-                && !WPACKET_reserve_bytes(thispkt, maxcomplen,
-                                          recdata))) {
-        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return 0;
+                && !WPACKET_reserve_bytes(thispkt, maxcomplen, recdata))) {
+            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
     }
 
     return 1;

@@ -542,8 +542,22 @@ int mempacket_test_inject(BIO *bio, const char *in, int inl, int pktnum,
     MEMPACKET *thispkt = NULL, *looppkt, *nextpkt, *allpkts[3];
     int i, duprec;
     const unsigned char *inu = (const unsigned char *)in;
-    size_t len = ((inu[RECORD_LEN_HI] << 8) | inu[RECORD_LEN_LO])
-                 + DTLS1_RT_HEADER_LENGTH;
+    size_t len;
+
+    if (DTLS13_UNI_HDR_FIX_BITS_IS_SET(*in)
+            /* The following code does not handle connection ids */
+            && ossl_assert(!DTLS13_UNI_HDR_CID_BIT_IS_SET(*in))) {
+        if (DTLS13_UNI_HDR_LEN_BIT_IS_SET(*in)) {
+            len = 3; /* 2 bytes for len field and 1 byte for record type */
+            len += DTLS13_UNI_HDR_SEQ_BIT_IS_SET(*in) ? 2 : 1;
+        } else {
+            /* We assert that inl is the correct record length */
+            len = inl;
+        }
+    } else {
+        len = ((inu[RECORD_LEN_HI] << 8) | inu[RECORD_LEN_LO])
+              + DTLS1_RT_HEADER_LENGTH;
+    }
 
     if (ctx == NULL)
         return -1;
