@@ -8,6 +8,8 @@
  */
 
 #include "crypto/lms.h"
+#include "crypto/lms_sig.h"
+#include "crypto/lms_util.h"
 
 /* Refer to SP800-208 Section 4 LM-OTS parameter sets */
 static const LM_OTS_PARAMS lm_ots_params[] = {
@@ -46,4 +48,19 @@ const LM_OTS_PARAMS *ossl_lm_ots_params_get(uint32_t ots_type)
         if (p->lm_ots_type == ots_type)
             return p;
     return NULL;
+}
+
+/* See RFC 8554 Section 4.4 Checksum */
+uint16_t ossl_lm_ots_params_checksum(const LM_OTS_PARAMS *params,
+                                     const unsigned char *S)
+{
+    uint16_t sum = 0;
+    uint16_t i;
+    /* Largest size is 8 * 32 / 1 = 256 (which doesnt quite fit into 8 bits) */
+    uint16_t bytes = (8 * params->n / params->w);
+    uint16_t end = (1 << params->w) - 1;
+
+    for (i = 0; i < bytes; ++i)
+        sum += end - coef(S, i, params->w);
+    return (sum << (8 - params->w));
 }
