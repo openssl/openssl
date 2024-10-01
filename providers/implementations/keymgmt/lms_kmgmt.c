@@ -11,6 +11,7 @@
 #include <openssl/core_names.h>
 #include <openssl/param_build.h>
 #include "crypto/lms.h"
+#include "internal/param_build_set.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
@@ -21,7 +22,9 @@ static OSSL_FUNC_keymgmt_has_fn lms_has;
 static OSSL_FUNC_keymgmt_match_fn lms_match;
 static OSSL_FUNC_keymgmt_validate_fn lms_validate;
 static OSSL_FUNC_keymgmt_import_fn lms_import;
+static OSSL_FUNC_keymgmt_export_fn lms_export;
 static OSSL_FUNC_keymgmt_import_types_fn lms_imexport_types;
+static OSSL_FUNC_keymgmt_export_types_fn lms_imexport_types;
 static OSSL_FUNC_keymgmt_load_fn lms_load;
 
 #define LMS_POSSIBLE_SELECTIONS (OSSL_KEYMGMT_SELECT_PUBLIC_KEY)
@@ -87,6 +90,41 @@ static const OSSL_PARAM *lms_imexport_types(int selection)
     return NULL;
 }
 
+static int lms_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
+                      void *cbarg)
+{
+    LMS_KEY *lmskey = keydata;
+    OSSL_PARAM_BLD *tmpl;
+    OSSL_PARAM *params = NULL;
+    int ret = 0;
+
+    if (!ossl_prov_is_running() || lmskey == NULL)
+        return 0;
+
+    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) == 0)
+        return 0;
+
+    tmpl = OSSL_PARAM_BLD_new();
+    if (tmpl == NULL)
+        return 0;
+
+    if (!ossl_param_build_set_octet_string(tmpl, params,
+                                           OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY,
+                                           lmskey->pub.encoded,
+                                           lmskey->pub.encodedlen))
+        goto err;
+
+    params = OSSL_PARAM_BLD_to_param(tmpl);
+    if (params == NULL)
+        goto err;
+
+    ret = param_cb(params, cbarg);
+    OSSL_PARAM_free(params);
+err:
+    OSSL_PARAM_BLD_free(tmpl);
+    return ret;
+}
+
 static int lms_validate(const void *keydata, int selection, int checktype)
 {
     const LMS_KEY *lmskey = keydata;
@@ -122,6 +160,8 @@ const OSSL_DISPATCH ossl_lms_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_VALIDATE, (void (*)(void))lms_validate },
     { OSSL_FUNC_KEYMGMT_IMPORT, (void (*)(void))lms_import },
     { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))lms_imexport_types },
+    { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))lms_export },
+    { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))lms_imexport_types },
     { OSSL_FUNC_KEYMGMT_LOAD, (void (*)(void))lms_load },
     OSSL_DISPATCH_END
 };

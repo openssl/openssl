@@ -271,21 +271,21 @@ static int fips_self_test(void *provctx)
  */
 
 #define FIPS_DIGESTS_COMMON()                                                  \
-{ PROV_NAMES_SHA1, FIPS_DEFAULT_PROPERTIES, ossl_sha1_functions },             \
-{ PROV_NAMES_SHA2_224, FIPS_DEFAULT_PROPERTIES, ossl_sha224_functions },       \
-{ PROV_NAMES_SHA2_256, FIPS_DEFAULT_PROPERTIES, ossl_sha256_functions },       \
-{ PROV_NAMES_SHA2_384, FIPS_DEFAULT_PROPERTIES, ossl_sha384_functions },       \
-{ PROV_NAMES_SHA2_512, FIPS_DEFAULT_PROPERTIES, ossl_sha512_functions },       \
-{ PROV_NAMES_SHA2_512_224, FIPS_DEFAULT_PROPERTIES,                            \
-  ossl_sha512_224_functions },                                                 \
-{ PROV_NAMES_SHA2_512_256, FIPS_DEFAULT_PROPERTIES,                            \
-  ossl_sha512_256_functions },                                                 \
-{ PROV_NAMES_SHA3_224, FIPS_DEFAULT_PROPERTIES, ossl_sha3_224_functions },     \
-{ PROV_NAMES_SHA3_256, FIPS_DEFAULT_PROPERTIES, ossl_sha3_256_functions },     \
-{ PROV_NAMES_SHA3_384, FIPS_DEFAULT_PROPERTIES, ossl_sha3_384_functions },     \
-{ PROV_NAMES_SHA3_512, FIPS_DEFAULT_PROPERTIES, ossl_sha3_512_functions },     \
-{ PROV_NAMES_SHAKE_128, FIPS_DEFAULT_PROPERTIES, ossl_shake_128_functions },   \
-{ PROV_NAMES_SHAKE_256, FIPS_DEFAULT_PROPERTIES, ossl_shake_256_functions }
+    { PROV_NAMES_SHA1, FIPS_DEFAULT_PROPERTIES, ossl_sha1_functions },         \
+    { PROV_NAMES_SHA2_224, FIPS_DEFAULT_PROPERTIES, ossl_sha224_functions },   \
+    { PROV_NAMES_SHA2_256, FIPS_DEFAULT_PROPERTIES, ossl_sha256_functions },   \
+    { PROV_NAMES_SHA2_384, FIPS_DEFAULT_PROPERTIES, ossl_sha384_functions },   \
+    { PROV_NAMES_SHA2_512, FIPS_DEFAULT_PROPERTIES, ossl_sha512_functions },   \
+    { PROV_NAMES_SHA2_512_224, FIPS_DEFAULT_PROPERTIES,                        \
+      ossl_sha512_224_functions },                                             \
+    { PROV_NAMES_SHA2_512_256, FIPS_DEFAULT_PROPERTIES,                        \
+      ossl_sha512_256_functions },                                             \
+    { PROV_NAMES_SHA3_224, FIPS_DEFAULT_PROPERTIES, ossl_sha3_224_functions }, \
+    { PROV_NAMES_SHA3_256, FIPS_DEFAULT_PROPERTIES, ossl_sha3_256_functions }, \
+    { PROV_NAMES_SHA3_384, FIPS_DEFAULT_PROPERTIES, ossl_sha3_384_functions }, \
+    { PROV_NAMES_SHA3_512, FIPS_DEFAULT_PROPERTIES, ossl_sha3_512_functions }, \
+    { PROV_NAMES_SHAKE_128, FIPS_DEFAULT_PROPERTIES, ossl_shake_128_functions }, \
+    { PROV_NAMES_SHAKE_256, FIPS_DEFAULT_PROPERTIES, ossl_shake_256_functions }
 
 static const OSSL_ALGORITHM fips_digests[] = {
     FIPS_DIGESTS_COMMON(),
@@ -525,6 +525,9 @@ static const OSSL_ALGORITHM fips_signature[] = {
     { PROV_NAMES_CMAC, FIPS_DEFAULT_PROPERTIES,
       ossl_mac_legacy_cmac_signature_functions },
 #endif
+#ifndef OPENSSL_NO_LMS
+    { PROV_NAMES_LMS, FIPS_DEFAULT_PROPERTIES, ossl_lms_signature_functions },
+#endif
 #ifndef OPENSSL_NO_SLH_DSA
     { PROV_NAMES_SLH_DSA_SHA2_128S, FIPS_DEFAULT_PROPERTIES,
       ossl_slh_dsa_sha2_128s_signature_functions, PROV_DESCS_SLH_DSA_SHA2_128S },
@@ -623,6 +626,10 @@ static const OSSL_ALGORITHM fips_keymgmt[] = {
 #ifndef OPENSSL_NO_CMAC
     { PROV_NAMES_CMAC, FIPS_DEFAULT_PROPERTIES,
       ossl_cmac_legacy_keymgmt_functions, PROV_DESCS_CMAC_SIGN },
+#endif
+#ifndef OPENSSL_NO_LMS
+    { PROV_NAMES_LMS, FIPS_DEFAULT_PROPERTIES, ossl_lms_keymgmt_functions,
+      PROV_DESCS_LMS },
 #endif
 #ifndef OPENSSL_NO_ML_KEM
     { PROV_NAMES_ML_KEM_512, FIPS_DEFAULT_PROPERTIES, ossl_ml_kem_512_keymgmt_functions,
