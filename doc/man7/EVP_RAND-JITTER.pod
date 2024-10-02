@@ -44,6 +44,8 @@ A context for the seed source can be obtained by calling:
  EVP_RAND *rand = EVP_RAND_fetch(NULL, "JITTER", NULL);
  EVP_RAND_CTX *rctx = EVP_RAND_CTX_new(rand, NULL);
 
+The B<enable-jitter> configuration option was added in OpenSSL 3.4.
+
 =head1 EXAMPLES
 
  EVP_RAND *rand;
