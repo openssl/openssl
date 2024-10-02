@@ -607,9 +607,10 @@ int tls_parse_ctos_key_share(SSL_CONNECTION *s, PACKET *pkt,
 {
 #ifndef OPENSSL_NO_TLS1_3
     unsigned int group_id;
-    PACKET key_share_list, encoded_pt;
-    const uint16_t *clntgroups, *srvrgroups;
-    size_t clnt_num_groups, srvr_num_groups;
+    PACKET key_share_list, encoded_pt, clnt_encoded_point[OPENSSL_CLIENT_MAX_KEY_SHARES];
+    const uint16_t *clntgroups, *srvrgroups, *ksgroups;
+    uint16_t clnt_ks_id[OPENSSL_CLIENT_MAX_KEY_SHARES];
+    size_t clnt_num_groups, srvr_num_groups, ks_num_groups, clnt_ks_num_groups;
     int found = 0;
 
     if (s->hit && (s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE_DHE) == 0)
@@ -626,7 +627,7 @@ int tls_parse_ctos_key_share(SSL_CONNECTION *s, PACKET *pkt,
         return 0;
     }
 
-    /* Get our list of supported groups */
+    /* Get our (server) list of supported groups */
     tls1_get_supported_groups(s, &srvrgroups, &srvr_num_groups);
     /* Get the clients list of supported groups. */
     tls1_get_peer_groups(s, &clntgroups, &clnt_num_groups);
@@ -651,72 +652,224 @@ int tls_parse_ctos_key_share(SSL_CONNECTION *s, PACKET *pkt,
         return 0;
     }
 
-    while (PACKET_remaining(&key_share_list) > 0) {
-        if (!PACKET_get_net_2(&key_share_list, &group_id)
-                || !PACKET_get_length_prefixed_2(&key_share_list, &encoded_pt)
-                || PACKET_remaining(&encoded_pt) == 0) {
-            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
-            return 0;
+    /* Pending whether a '!' prefix was used, we use a different group selection methodology */
+    if (s->ext.s_ext_ks_selection_detected == 0) { /* No '!' prefix was used, hence no code change */
+        fprintf(stdout, "=====> (1) No '!' detected: 0x%X\n", s->s3.group_id);
+
+        while (PACKET_remaining(&key_share_list) > 0) {
+            if (!PACKET_get_net_2(&key_share_list, &group_id)
+                    || !PACKET_get_length_prefixed_2(&key_share_list,
+                                                     &encoded_pt)
+                    || PACKET_remaining(&encoded_pt) == 0) {
+                SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
+                return 0;
+            }
+
+            /*
+             * If we already found a suitable key_share we loop through the
+             * rest to verify the structure, but don't process them.
+             */
+            if (found)
+                continue;
+
+            /*
+             * If we sent an HRR then the key_share sent back MUST be for the group
+             * we requested, and must be the only key_share sent.
+             */
+            if (s->s3.group_id != 0
+                    && (group_id != s->s3.group_id
+                        || PACKET_remaining(&key_share_list) != 0)) {
+                SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_KEY_SHARE);
+                return 0;
+            }
+
+            /* Check if this share is in supported_groups sent from client */
+            if (!check_in_list(s, group_id, clntgroups, clnt_num_groups, 0)) {
+                SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_KEY_SHARE);
+                return 0;
+            }
+
+            /* Check if this share is for a group we can use */
+            if (!check_in_list(s, group_id, srvrgroups, srvr_num_groups, 1)
+                    || !tls_group_allowed(s, group_id,
+                                          SSL_SECOP_CURVE_SUPPORTED)
+                       /*
+                        * We tolerate but ignore a group id that we don't think is
+                        * suitable for TLSv1.3
+                        */
+                    || !tls_valid_group(s, group_id, TLS1_3_VERSION,
+                                        TLS1_3_VERSION, 0, NULL)) {
+                /* Share not suitable */
+                continue;
+            }
+
+            s->s3.group_id = group_id;
+            /* Cache the selected group ID in the SSL_SESSION */
+            s->session->kex_group = group_id;
+
+            if ((s->s3.peer_tmp = ssl_generate_param_group(s, group_id)) == NULL) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                       SSL_R_UNABLE_TO_FIND_ECDH_PARAMETERS);
+                return 0;
+            }
+
+            if (tls13_set_encoded_pub_key(s->s3.peer_tmp,
+                                          PACKET_data(&encoded_pt),
+                                          PACKET_remaining(&encoded_pt)) <= 0) {
+                SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_ECPOINT);
+                return 0;
+            }
+
+            found = 1;
+        }
+    } else { /* a '!' prefix was used, hence we apply a new group selection methodology */
+        fprintf(stdout, "=====> %d x '!' prefix detected in extensions_srvr.c\n", s->ext.s_ext_ks_selection_detected);
+
+        /* Generate a list of all client key share IDs and the related encoded points
+           by reading the entire key share extension */
+        clnt_ks_num_groups = 0;
+        while (PACKET_remaining(&key_share_list) > 0) {
+            if (!PACKET_get_net_2(&key_share_list, &group_id)
+                    || !PACKET_get_length_prefixed_2(&key_share_list,
+                                                     &encoded_pt)
+                    || PACKET_remaining(&encoded_pt) == 0) {
+                SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
+                return 0;
+            }
+            /* TODO: Check for array overrun (max client key shares) */
+            clnt_ks_id[clnt_ks_num_groups] = group_id;
+            clnt_encoded_point[clnt_ks_num_groups++] = encoded_pt;
         }
 
-        /*
-         * If we already found a suitable key_share we loop through the
-         * rest to verify the structure, but don't process them.
-         */
-        if (found)
-            continue;
+        /* Get the list of server groups with '!' prefix */
+        tls1_get_requested_keyshare_groups(s, &ksgroups, &ks_num_groups);
 
-        /*
-         * If we sent an HRR then the key_share sent back MUST be for the group
-         * we requested, and must be the only key_share sent.
-         */
-        if (s->s3.group_id != 0
-                && (group_id != s->s3.group_id
-                    || PACKET_remaining(&key_share_list) != 0)) {
-            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_KEY_SHARE);
-            return 0;
+        /* NEW SERVER PREFERENCE GROUP SELECTION 'ALGORITHM'
+        * Do here: 
+        * 1) Use the entry in the client key share list which overlaps with the leftmost requested key share ('!' prefix) in server list.
+        * Do in extensions.c line 'final_key_share' (1412ff), but prepare here (in which case we skip step 3)
+        * 2) Use the entry in the client supported groups to trigger a HRR which overlaps with the leftmost requested key share ('!' prefix) in server list.
+        * Do here:
+        * 3) Use the entry in the client key share list which overlaps with the leftmost supported group in server list.
+        * Do in extensions.c line 'final_key_share' (1412ff), 
+        * 4) Trigger a HRR for the first group in the server list which is also supported by the client
+        *
+        * ==> Same as above in form of a table:
+        *    Client                  Server                    If they overlap
+        * 1) key share list          requested key share list  Use leftmost group_id from server requested key share list
+        * 2) supported groups list   requested key share list  HRR with leftmost group_id from server requested key share list
+        * 3) key share list          supported groups list     Use leftmost group_id from server groups list
+        * 4) supported groups list   supported groups list     HRR with leftmost group_id from server groups list
+        */
+
+        /* 1) Check if a client key share group id is in the list of requested key shares;
+           if so, take the leftmost entry in list of requested key shares */
+        fprintf(stdout, "=====> Trying (1)\n");
+        size_t pos=ks_num_groups, new_pos = ks_num_groups, i;
+        found = 0;
+        group_id = 0;
+        for (i = 0; i < clnt_ks_num_groups; i++) {
+            if (!check_in_list_pos(s, clnt_ks_id[i], ksgroups,
+                                   ks_num_groups, 1, &new_pos)
+                    || !tls_group_allowed(s, clnt_ks_id[i],
+                                          SSL_SECOP_CURVE_SUPPORTED)
+                       /*
+                        * We tolerate but ignore a group id that we don't think is
+                        * suitable for TLSv1.3
+                        */
+                    || !tls_valid_group(s, clnt_ks_id[i], TLS1_3_VERSION,
+                                        TLS1_3_VERSION, 0, NULL)) {
+                /* Share not suitable */
+                continue;
+            } 
+            /* is the found key share earlier in the server list? */
+            if (new_pos < pos) {
+                pos = new_pos;
+                group_id = clnt_ks_id[i];
+                encoded_pt = clnt_encoded_point[i];
+                found++;
+                fprintf(stdout, "=====> (1) Overlapping key share detected: 0x%X\n", group_id);
+            }
         }
 
-        /* Check if this share is in supported_groups sent from client */
-        if (!check_in_list(s, group_id, clntgroups, clnt_num_groups, 0)) {
-            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_KEY_SHARE);
-            return 0;
+        if (!found) {
+            fprintf(stdout, "=====> Trying (prep 2) with %d client supported groups against %d key share requests\n", clnt_num_groups, ks_num_groups);
+            /* prep 2) Is any of the client supported groups also in the list of requested key shares?
+               if so, use the leftmost entry in list of requested key shares and trigger a HRR*/
+            pos=ks_num_groups; 
+            new_pos = ks_num_groups;
+            for (i = 0; i < clnt_num_groups; i++) {
+                if (!check_in_list_pos(s, clntgroups[i], ksgroups,
+                                       ks_num_groups, 1, &new_pos)
+                        || !tls_group_allowed(s, clntgroups[i],
+                                             SSL_SECOP_CURVE_SUPPORTED)
+                        || !tls_valid_group(s, clntgroups[i], TLS1_3_VERSION,
+                                           TLS1_3_VERSION, 0, NULL)) {
+                    continue;
+                  }
+                /* is the found group earlier in the server list? */
+                if (new_pos < pos) {
+                    pos = new_pos;
+                    group_id = clntgroups[i];
+                    found++;
+                    fprintf(stdout, "=====> (Prep 2 scanning) Client supported group 0x%X overlaps with a requested key share at pos %d\n", group_id, new_pos);
+                }
+            }
+            if (found) { /* found an overlapping group ID, continue with HRR (extensions.c line 1412) */
+                s->s3.tmp.s3_tmp_group_id_supported_by_client = group_id;
+                fprintf(stdout, "=====> (Prep 2 final) Client supported group overlaps with requested key share at pos %d: 0x%X\n", group_id, pos);
+                goto found_id; 
+            } else {
+                s->s3.tmp.s3_tmp_group_id_supported_by_client = 0;
+            }
+
+            /* 3) Is any of client key share IDs anywhere in the server group list? If so, take the leftmost overlap */
+            fprintf(stdout, "=====> Trying (3)\n");
+            pos = srvr_num_groups;
+            new_pos = 0;
+            for (i = 0; i < clnt_ks_num_groups; i++) {
+                if (!check_in_list_pos(s, clnt_ks_id[i], srvrgroups,
+                                       srvr_num_groups, 1, &new_pos)
+                        || !tls_group_allowed(s, clnt_ks_id[i],
+                                              SSL_SECOP_CURVE_SUPPORTED)
+                        || !tls_valid_group(s, clnt_ks_id[i], TLS1_3_VERSION,
+                                            TLS1_3_VERSION, 0, NULL)) {
+                    /* Share not suitable */
+                    continue;
+                } 
+                /* is the found key share (if any) earlier in the server list? */
+                if (new_pos < pos) {
+                    pos = new_pos;
+                    group_id = clnt_ks_id[i];
+                    encoded_pt = clnt_encoded_point[i];
+                    found++;
+                    fprintf(stderr, "=====> (3) Client keyshare group overlaps with server group: 0x%X\n", group_id);
+                }
+            }
         }
 
-        /* Check if this share is for a group we can use */
-        if (!check_in_list(s, group_id, srvrgroups, srvr_num_groups, 1)
-                || !tls_group_allowed(s, group_id, SSL_SECOP_CURVE_SUPPORTED)
-                   /*
-                    * We tolerate but ignore a group id that we don't think is
-                    * suitable for TLSv1.3
-                    */
-                || !tls_valid_group(s, group_id, TLS1_3_VERSION, TLS1_3_VERSION,
-                                    0, NULL)) {
-            /* Share not suitable */
-            continue;
+        /* We found a suitable key share, hence we report it 'upwards' (for use in a ServerHello) */
+        if (found) {
+            s->s3.group_id = group_id;
+            /* Cache the selected group ID in the SSL_SESSION */
+            s->session->kex_group = group_id;
+
+            if ((s->s3.peer_tmp = ssl_generate_param_group(s, group_id)) == NULL) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                       SSL_R_UNABLE_TO_FIND_ECDH_PARAMETERS);
+                return 0;
+            }
+
+            if (tls13_set_encoded_pub_key(s->s3.peer_tmp,
+                                          PACKET_data(&encoded_pt),
+                                          PACKET_remaining(&encoded_pt)) <= 0) {
+                SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_ECPOINT);
+                return 0;
+            }
         }
-
-        s->s3.group_id = group_id;
-        /* Cache the selected group ID in the SSL_SESSION */
-        s->session->kex_group = group_id;
-
-        if ((s->s3.peer_tmp = ssl_generate_param_group(s, group_id)) == NULL) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR,
-                   SSL_R_UNABLE_TO_FIND_ECDH_PARAMETERS);
-            return 0;
-        }
-
-        if (tls13_set_encoded_pub_key(s->s3.peer_tmp,
-                                      PACKET_data(&encoded_pt),
-                                      PACKET_remaining(&encoded_pt)) <= 0) {
-            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_ECPOINT);
-            return 0;
-        }
-
-        found = 1;
     }
 #endif
-
+found_id:
     return 1;
 }
 

@@ -2595,6 +2595,30 @@ int check_in_list(SSL_CONNECTION *s, uint16_t group_id, const uint16_t *groups,
     return 0;
 }
 
+/* Same as above, but also returns position where group was found */
+int check_in_list_pos(SSL_CONNECTION *s, uint16_t group_id,
+                      const uint16_t *groups, size_t num_groups,
+                      int checkallow, size_t *pos)
+{
+    size_t i;
+
+    if (groups == NULL || num_groups == 0)
+        return 0;
+
+    for (i = 0; i < num_groups; i++) {
+        uint16_t group = groups[i];
+
+        if (group_id == group
+                && (!checkallow
+                    || tls_group_allowed(s, group, SSL_SECOP_CURVE_CHECK))) {
+            *pos = i;
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
 /* Replace ClientHello1 in the transcript hash with a synthetic message */
 int create_synthetic_message_hash(SSL_CONNECTION *s,
                                   const unsigned char *hashval,

@@ -843,6 +843,18 @@ SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, const SSL_METHOD *method)
         }
         s->ext.supportedgroups_len = ctx->ext.supportedgroups_len;
     }
+    if (ctx->ext.ctx_ext_keyshares) {
+        s->ext.s_ext_keyshares =
+            OPENSSL_memdup(ctx->ext.ctx_ext_keyshares,
+                           ctx->ext.ctx_ext_keyshares_len
+                           * sizeof(*ctx->ext.ctx_ext_keyshares));
+        if (!s->ext.s_ext_keyshares) {
+            s->ext.s_ext_keyshares_len = 0;
+            goto err;
+        }
+        s->ext.s_ext_keyshares_len = ctx->ext.ctx_ext_keyshares_len;
+        s->ext.s_ext_ks_selection_detected = ctx->ext.ctx_ext_ks_selection_detected;
+    }
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
     s->ext.npn = NULL;
@@ -3065,7 +3077,7 @@ long SSL_CTX_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
     if (ctx == NULL) {
         switch (cmd) {
         case SSL_CTRL_SET_GROUPS_LIST:
-            return tls1_set_groups_list(ctx, NULL, NULL, parg);
+            return tls1_set_groups_list(ctx, NULL, NULL, NULL, NULL, NULL, parg);
         case SSL_CTRL_SET_SIGALGS_LIST:
         case SSL_CTRL_SET_CLIENT_SIGALGS_LIST:
             return tls1_set_sigalgs_list(ctx, NULL, parg, 0);

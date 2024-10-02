@@ -3716,8 +3716,13 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
                                &sc->ext.supportedgroups_len, parg, larg);
 
     case SSL_CTRL_SET_GROUPS_LIST:
-        return tls1_set_groups_list(s->ctx, &sc->ext.supportedgroups,
-                                    &sc->ext.supportedgroups_len, parg);
+        return tls1_set_groups_list(s->ctx,
+                                    &sc->ext.supportedgroups,
+                                    &sc->ext.supportedgroups_len,
+                                    &sc->ext.s_ext_keyshares,
+                                    &sc->ext.s_ext_keyshares_len,
+                                    &sc->ext.s_ext_ks_selection_detected,
+                                    parg);
 
     case SSL_CTRL_GET_SHARED_GROUP:
         {
@@ -4017,8 +4022,12 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
                                parg, larg);
 
     case SSL_CTRL_SET_GROUPS_LIST:
-        return tls1_set_groups_list(ctx, &ctx->ext.supportedgroups,
+        return tls1_set_groups_list(ctx,
+                                    &ctx->ext.supportedgroups,
                                     &ctx->ext.supportedgroups_len,
+                                    &ctx->ext.ctx_ext_keyshares,
+                                    &ctx->ext.ctx_ext_keyshares_len,
+                                    &ctx->ext.ctx_ext_ks_selection_detected,
                                     parg);
 
     case SSL_CTRL_SET_SIGALGS:

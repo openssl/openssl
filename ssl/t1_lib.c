@@ -843,6 +843,21 @@ void tls1_get_supported_groups(SSL_CONNECTION *s, const uint16_t **pgroups,
     }
 }
 
+void tls1_get_requested_keyshare_groups(SSL_CONNECTION *s,
+                                        const uint16_t **pgroups,
+                                        size_t *pgroupslen)
+{
+    SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+
+    if (s->ext.supportedgroups == NULL) {
+        *pgroups = sctx->ext.supported_groups_default;
+        *pgroupslen = 1;
+    } else {
+        *pgroups = s->ext.s_ext_keyshares;
+        *pgroupslen = s->ext.s_ext_keyshares_len;
+    }
+}
+
 int tls_valid_group(SSL_CONNECTION *s, uint16_t group_id,
                     int minversion, int maxversion,
                     int isec, int *okfortls13)
@@ -1037,6 +1052,9 @@ typedef struct {
     size_t gidcnt;
     size_t gidmax;
     uint16_t *gid_arr;
+    size_t ks_selection_detected;
+    size_t kscnt;
+    uint16_t *ks_arr;
 } gid_cb_st;
 
 static int gid_cb(const char *elem, int len, void *arg)
@@ -1046,6 +1064,7 @@ static int gid_cb(const char *elem, int len, void *arg)
     uint16_t gid = 0;
     char etmp[GROUP_NAME_BUFFER_LENGTH];
     int ignore_unknown = 0;
+    int add_keyshare = 0;
 
     if (elem == NULL)
         return 0;
@@ -1053,7 +1072,32 @@ static int gid_cb(const char *elem, int len, void *arg)
         ignore_unknown = 1;
         ++elem;
         --len;
+    } else {
+        if (elem[0] == '!') {
+            add_keyshare = 1;
+            ++elem;
+            --len;
+        }
     }
+    if (elem[0] == '!' && add_keyshare == 0) {
+        ignore_unknown = 1;
+        ++elem;
+        --len;
+    } else {
+        if (elem[0] == '?' && ignore_unknown == 0) {
+            ignore_unknown = 1;
+            ++elem;
+            --len;
+        }
+    }
+
+    /*
+     * Remark: We check that we don't allow more than OPENSSL_CLIENT_MAX_KEY_SHARES
+     * key shares for a client in 'add_key_share' (in extensions_clnt.c);
+     * there's no limit how many keyshare requests a server can have
+     * (which is why we don't do the check here)
+     */
+
     if (garg->gidcnt == garg->gidmax) {
         uint16_t *tmp =
             OPENSSL_realloc(garg->gid_arr,
@@ -1063,6 +1107,18 @@ static int gid_cb(const char *elem, int len, void *arg)
         garg->gidmax += GROUPLIST_INCREMENT;
         garg->gid_arr = tmp;
     }
+    /* TODO: Make sure memory is deallocated at the end */
+    if (garg->kscnt == garg->gidmax) {
+        uint16_t *tmp =
+            OPENSSL_realloc(garg->ks_arr,
+                            (garg->gidmax + GROUPLIST_INCREMENT) * sizeof(*garg->ks_arr));
+
+        if (tmp == NULL)
+            return 0;
+        garg->gidmax += GROUPLIST_INCREMENT;
+        garg->ks_arr = tmp;
+    }
+
     if (len > (int)(sizeof(etmp) - 1))
         return 0;
     memcpy(etmp, elem, len);
@@ -1078,12 +1134,21 @@ static int gid_cb(const char *elem, int len, void *arg)
             /* Duplicate group - ignore */
             return 1;
         }
+    /* We add a key share if a '!' was detected */
+    /* And we keep track on how many '!' prefixed groups were detected */
+    if (add_keyshare) {
+        garg->ks_arr[garg->kscnt++] = gid;
+        garg->ks_selection_detected++;
+    }
     garg->gid_arr[garg->gidcnt++] = gid;
     return 1;
 }
 
 /* Set groups based on a colon separated list */
-int tls1_set_groups_list(SSL_CTX *ctx, uint16_t **pext, size_t *pextlen,
+int tls1_set_groups_list(SSL_CTX *ctx,
+                         uint16_t **pext, size_t *pextlen,
+                         uint16_t **ksext, size_t *ksextlen,
+                         size_t *ks_selection_detected,
                          const char *str)
 {
     gid_cb_st gcb;
@@ -1093,7 +1158,14 @@ int tls1_set_groups_list(SSL_CTX *ctx, uint16_t **pext, size_t *pextlen,
     gcb.gidcnt = 0;
     gcb.gidmax = GROUPLIST_INCREMENT;
     gcb.gid_arr = OPENSSL_malloc(gcb.gidmax * sizeof(*gcb.gid_arr));
+
+    gcb.kscnt = 0;
+    gcb.ks_selection_detected = 0;
+    gcb.ks_arr = OPENSSL_malloc(gcb.gidmax * sizeof(*gcb.ks_arr));
+
     if (gcb.gid_arr == NULL)
+        return 0;
+    if (gcb.ks_arr == NULL)
         return 0;
     gcb.ctx = ctx;
     if (!CONF_parse_list(str, ':', 1, gid_cb, &gcb))
@@ -1103,24 +1175,44 @@ int tls1_set_groups_list(SSL_CTX *ctx, uint16_t **pext, size_t *pextlen,
                        "No valid groups in '%s'", str);
         goto end;
     }
-    if (pext == NULL) {
+    if (pext == NULL && ksext == NULL) {
         ret = 1;
         goto end;
     }
 
+    /* if no '!' prefix was detected, we use the first group in the list
+       to request a key share for backward compatibility */
+    if (gcb.kscnt == 0) {
+        gcb.kscnt++;
+        gcb.ks_arr[0] = gcb.gid_arr[0];
+    }
+
     /*
-     * gid_cb ensurse there are no duplicates so we can just go ahead and set
-     * the result
+     * gid_cb ensures there are no duplicates, so we can just go ahead and set
+     * the results
      */
+    /* Full list of supported groups */
     tmparr = OPENSSL_memdup(gcb.gid_arr, gcb.gidcnt * sizeof(*tmparr));
     if (tmparr == NULL)
         goto end;
     OPENSSL_free(*pext);
     *pext = tmparr;
     *pextlen = gcb.gidcnt;
+    /* List of requested key share groups */
+    tmparr = OPENSSL_memdup(gcb.ks_arr, gcb.kscnt * sizeof(*tmparr));
+    if (tmparr == NULL)
+        goto end;
+    OPENSSL_free(*ksext);
+    *ksext = tmparr;
+    *ksextlen = gcb.kscnt;
+
+    /* The number of detected '!' prefixes */
+    *ks_selection_detected = gcb.ks_selection_detected;
+
     ret = 1;
  end:
     OPENSSL_free(gcb.gid_arr);
+    OPENSSL_free(gcb.ks_arr);
     return ret;
 }
 
