@@ -584,7 +584,7 @@ static int kem_rsa_gen_recover(void)
           && TEST_int_eq(EVP_PKEY_encapsulate_init(sctx, NULL), 1)
           && TEST_int_eq(EVP_PKEY_CTX_set_kem_op(sctx, "RSASVE"), 1)
           && TEST_ptr(dctx = EVP_PKEY_CTX_dup(sctx))
-          /* Test that not providing a NULL wrappedlen fails */
+          /* Test that providing a NULL wrappedlen fails */
           && TEST_int_eq(EVP_PKEY_encapsulate(dctx, NULL, NULL, NULL, NULL), 0)
           && TEST_int_eq(EVP_PKEY_encapsulate(dctx, NULL, &ctlen, NULL,
                                               &secretlen), 1)
