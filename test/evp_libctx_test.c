@@ -603,9 +603,7 @@ static int kem_rsa_gen_recover(void)
                                               ct, ctlen), 1)
           && TEST_mem_eq(unwrap, unwraplen, secret, secretlen);
 
-    /*
-     * Test that providing a too short unwrapped/ctlen fails
-     */
+    /* Test that providing a too short unwrapped/ctlen fails */
     ctlen = 1;
     if (!TEST_int_eq(EVP_PKEY_encapsulate(dctx, ct, &ctlen, secret,
                                           &secretlen), 0))
