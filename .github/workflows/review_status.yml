@@ -1,0 +1,124 @@
+name: "Synchronize PR status with development board"
+
+on:
+  pull_request_review:
+    types: [submitted, edited, dismissed]
+  workflow_dispatch:
+    inputs:
+      reviewer:
+        description: 'simulated reviewer'
+        required: true
+        type: string
+      review_action:
+        description: 'action to take'
+        required: true
+        type: choice
+        options:
+        - approved
+        - changes_requested 
+        - dismissed
+      pr_number:
+        description: 'pr to act on'
+        required: true
+        type: string
+
+permissions: write-all
+
+env:
+  GH_TOKEN: ${{ secrets.PROJECT_SECRET }}
+
+jobs:
+  sync_review_state:
+    runs-on: ubuntu-latest
+    steps:
+    - name: "gather review submission data"
+      run: |
+        # Gather review submission data here.
+        # We gather it either from the workflow_dispatch inputs
+        # or the event paylod if its an actual review
+        echo "${{ github.event_name }}"
+        if [ "${{ github.event_name }}" == "workflow_dispatch" ]
+        then
+          echo "REVIEWER=${{ github.event.inputs.reviewer }}" >> $GITHUB_ENV
+          echo "ACTION=${{ github.event.inputs.review_action }}" >> $GITHUB_ENV
+          echo "PR_NUM=${{ github.event.inputs.pr_number }}" >> $GITHUB_ENV
+        elif [ "${{ github.event_name }}" == "pull_request_review" ]
+        then
+          echo "REVIEWER=${{ github.event.review.user.login }}" >> $GITHUB_ENV
+          echo "ACTION=${{ github.event.review.state }}" >> $GITHUB_ENV
+          echo "PR_NUM=${{ github.event.pull_request.number }}" >> $GITHUB_ENV
+        fi
+    - name: "Select change color"
+      run: |
+        # In the project we have each reviewers name listed in 
+        # A single Select option 3 times, one in each of 3 colors
+        # Indicating approval (green), changes needed (red), or
+        # review pending (gray).  Later on, we use this color
+        # along with the reviewer identity to fetch the 
+        # Single select id for that user in the appropriate color
+        case "$ACTION" in
+        "approved")
+          echo "ACTION_COLOR=GREEN" >> $GITHUB_ENV
+          ;;
+        "changes_requested")
+          echo "ACTION_COLOR=RED" >> $GITHUB_ENV
+          ;;
+        "dismissed")
+          echo "ACTION_COLOR=GRAY" >> $GITHUB_ENV
+          ;;
+        esac
+    - name: "Identify associated issues"
+      run: |
+        # Ok, to start with here, we use graphql to fetch the Referenced
+        # issues associated with a given PR.  These are the issues linked in the
+        # Development pane on the right side of the PR.  Record those issues to
+        # the file issues.json
+        gh api graphql -f query="query { repository(owner:\"openssl\", name:\"openssl\") { pullRequest(number: ${PR_NUM}) { closingIssuesReferences(first: 10) { edges { node { number } } } } } }" > ./issues.json
+    - name: "Find and update issues in project board"
+      run: |
+        # Now, for each issue we find above, we have some work to do
+        for i in $(jq '.data.repository.pullRequest.closingIssuesReferences.edges[].node.number' ./issues.json)
+        do
+          echo " ISSUE $i "
+          # For each issue, use some graphql to interrogate it to see if it
+          # A) Has an associated issue, and if so
+          # B) If that Issue exists on a project board which has a field
+          # named either "Review 1" or "Review 2".  If it does, 
+          # output the project, field and item id, along with the single select field
+          # optinos for the reviewer submitting this review.  Output that data
+          # to the files review1.json and review2.json
+          gh api -F issue=$i -F reviewer="$REVIEWER" graphql -f query='query($issue: Int!, $reviewer: [String!]) { repository(owner:"openssl", name:"openssl") { issue(number: $issue) { projectItems(first: 50) { edges { node { id project {title id field(name:"Review 1") { ... on ProjectV2SingleSelectField { id options(names: $reviewer) { id color} } } } fieldValueByName(name: "Review 1") { ... on ProjectV2ItemFieldSingleSelectValue { status: name color } } } } } } } }' > ./review1.json
+
+          gh api -F issue=$i -F reviewer="$REVIEWER" graphql -f query='query($issue: Int!, $reviewer: [String!]) { repository(owner:"openssl", name:"openssl") { issue(number: $issue) { projectItems(first: 51) { edges { node { id project {title id field(name:"Review 1") { ... on ProjectV2SingleSelectField { id options(names: $reviewer) { id color} } } } fieldValueByName(name: "Review 1") { ... on ProjectV2ItemFieldSingleSelectValue { status: name color } } } } } } } }' > ./review2.json
+
+          # For each of the two files review1.json and review2.json, do some work
+          for rev in review1.json review2.json
+          do
+            # Fetch the reviewer assigned to this issue in the project board
+            # and extract the PROJECT, FIELD and ITEM id's along with
+            # The single select option that matches the color for the action
+            # Associated with the review
+            ASSIGNED_REVIEWER=$(jq -r '.data.repository.issue.projectItems.edges[0].node.fieldValueByName.status' ./review1.json)
+            PROJECT_ID=$(jq -r '.data.repository.issue.projectItems.edges[0].node.project.id' ./review1.json)
+            FIELD_ID=$(jq -r '.data.repository.issue.projectItems.edges[0].node.project.field.id' ./review1.json)
+            ITEM_ID=$(jq -r '.data.repository.issue.projectItems.edges[0].node.id' ./review1.json)
+            COLOR_OPTION=$(jq -r --arg color "$ACTION_COLOR" '.data.repository.issue.projectItems.edges[0].node.project.field.options[] | select(.color==$color) | .id' ./review1.json)
+            echo "ASSIGNED REVIEWER $ASSIGNED_REVIEWER"
+            echo "FIELD ID $FIELD_ID"
+            echo "PROJECT ID $PROJECT_ID"
+            echo "ITEM ID $ITEM_ID"
+            echo "ACTION COLOR $ACTION_COLOR"
+            echo "COLOR OPTION $COLOR_OPTION"
+         
+            # If the reviewer assigned in the project matches the reviewer
+            # submitting this review, mutate the field in the project board
+            # To match the color associated with the review state as defined
+            # above
+            if [ "$ASSIGNED_REVIEWER" == "$REVIEWER" ]
+            then
+              echo "REVIEW MATCH for $rev"
+              gh api graphql -F projectid="$PROJECT_ID" -F itemid="$ITEM_ID" -F fieldid="$FIELD_ID" -F coloroption="$COLOR_OPTION" -f query=' mutation($projectid: ID! $itemid: ID! $fieldid: ID! $coloroption: String) { updateProjectV2ItemFieldValue(input: {projectId: $projectid itemId: $itemid fieldId: $fieldid value: { singleSelectOptionId: $coloroption }}) {clientMutationId projectV2Item { id } } }'
+            fi
+          done
+        done
+
