@@ -55,32 +55,32 @@ ok(run(app(["openssl", "ech",
                 "-out", "eg4.pem"])),
    "Select one ECH Config");
 
-with({ exit_checker => sub { return shift == 0; } },
+with({ exit_checker => sub { return shift == 1; } },
     sub { 
-		ok(!run(app(["openssl", "ech" ])),
+		ok(run(app(["openssl", "ech" ])),
 		   "Run openssl ech with no arg");
-		ok(!run(app(["openssl", "ech", "-nohelpatall"])),
+		ok(run(app(["openssl", "ech", "-nohelpatall"])),
 		   "Run openssl ech with unknown arg");
-		ok(!run(app(["openssl", "ech", "nohelpatall"])),
+		ok(run(app(["openssl", "ech", "nohelpatall"])),
 		   "Run openssl ech with unknown non arg");
-		ok(!run(app(["openssl", "ech",
+		ok(run(app(["openssl", "ech",
 		                "-ech_version", "0xfe09",
 		                "-public_name", "example.com",
 		                "-out", "eg1.pem",
 		                "-text"])),
 		   "Fail to generate an ECH key pair for old draft version");
-		ok(!run(app(["openssl", "ech",
+		ok(run(app(["openssl", "ech",
 		                "-suite", "not,a,good,one",
 		                "-public_name", "example.com",
 		                "-out", "eg2.pem",
 		                "-text"])),
 		   "Fail to generate an ECH key pair with bad suite");
-		ok(!run(app(["openssl", "ech",
+		ok(run(app(["openssl", "ech",
 		                "-max_name_len", "1300",
 		                "-public_name", "example.com",
 		                "-text"])),
 		   "(Fail to) Generate an ECH key pair for example.com with max name len 1300");
-		ok(!run(app(["openssl", "ech",
+		ok(run(app(["openssl", "ech",
 		                "-in", "eg1.pem",
 		                "-in", "eg2.pem",
 		                "-in", "eg3.pem",
