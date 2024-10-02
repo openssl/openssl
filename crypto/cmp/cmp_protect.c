@@ -136,8 +136,7 @@ void ossl_cmp_set_own_chain(OSSL_CMP_CTX *ctx)
         return;
     /* if not yet done try to build chain using available untrusted certs */
     if (ctx->chain == NULL) {
-        ossl_cmp_debug(ctx,
-                       "trying to build chain for own CMP signer cert");
+        ossl_cmp_debug(ctx, "trying to build chain for own CMP signer cert");
         ctx->chain = X509_build_chain(ctx->cert, ctx->untrusted, NULL, 0,
                                       ctx->libctx, ctx->propq);
         if (ctx->chain != NULL) {

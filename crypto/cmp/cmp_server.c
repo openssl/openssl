@@ -245,7 +245,7 @@ static OSSL_CMP_MSG *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
     EVP_PKEY *keyOut = NULL;
     STACK_OF(X509) *chainOut = NULL, *caPubs = NULL;
     const OSSL_CRMF_MSG *crm = NULL;
-    X509_REQ *p10cr = NULL;
+    const X509_REQ *p10cr = NULL;
     int bodytype;
     int certReqId;
 

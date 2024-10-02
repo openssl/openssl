@@ -183,6 +183,9 @@ NULL on error.
 OSSL_CMP_SRV_CTX_get0_custom_ctx() returns the custom server context
 that has been set using OSSL_CMP_SRV_CTX_init().
 
+OSSL_CMP_SRV_CTX_centralKeygen_req() returns 0 if central key generation
+is not requested or in case of error, 1 if it is requested.
+
 All other functions return 1 on success, 0 on error.
 
 =head1 HISTORY

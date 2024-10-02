@@ -1214,7 +1214,7 @@ Private key to be returned as central key generation result.
 
 =item B<-rsp_keypass> I<arg>
 
-Pass phrase source for B<rsp_cert> and B<rsp_cert_key>.
+Pass phrase source for B<rsp_cert> and B<rsp_key>.
 
 =item B<-rsp_crl> I<filename>|I<uri>
 
