@@ -19,9 +19,9 @@
 #include <openssl/crmf.h>
 #include <openssl/err.h>
 #include <openssl/x509.h>
-#include <openssl/cms.h>
 #include <openssl/pem.h>
 #include <openssl/bio.h>
+#include <internal/cms.h>
 
 OSSL_CMP_MSG *OSSL_CMP_MSG_new(OSSL_LIB_CTX *libctx, const char *propq)
 {
@@ -458,30 +458,26 @@ static OSSL_CRMF_ENCRYPTEDKEY *enc_privkey(OSSL_CMP_CTX *ctx, const EVP_PKEY *pk
     OSSL_CRMF_ENCRYPTEDKEY *ek = NULL;
     CMS_EnvelopedData *envData = NULL;
     BIO *privbio = NULL;
-    X509 *recip = X509_dup(ctx->validatedSrvCert);
-    STACK_OF(X509) * encryption_recips = sk_X509_new_null();
+    X509 *recip = ctx->validatedSrvCert; /* this is the client cert */
+    STACK_OF(X509) *encryption_recips = sk_X509_new_reserve(NULL, 1);
 
-    if (encryption_recips == NULL || recip == NULL)
+    if (encryption_recips == NULL
+        || !X509_add_cert(encryption_recips, recip, X509_ADD_FLAG_UP_REF))
         goto err;
-
-    if (!sk_X509_push(encryption_recips, recip))
-        goto err;
-    recip = NULL;
 
     privbio = BIO_new(BIO_s_mem());
     if (privbio == NULL || i2d_PrivateKey_bio(privbio, pkey) <= 0)
         goto err;
     ossl_cmp_set_own_chain(ctx);
-    envData = CMS_sign_encrypt(privbio, ctx->cert, ctx->chain, ctx->pkey, CMS_BINARY,
-                               encryption_recips, EVP_aes_256_cbc(), CMS_BINARY,
-                               ctx->libctx, ctx->propq);
+    envData = ossl_cms_sign_encrypt(privbio, ctx->cert, ctx->chain, ctx->pkey, CMS_BINARY,
+                                    encryption_recips, EVP_aes_256_cbc(), CMS_BINARY,
+                                    ctx->libctx, ctx->propq);
     if (envData == NULL)
         goto err;
     ek = OSSL_CRMF_ENCRYPTEDKEY_init_envdata(envData);
 
  err:
     sk_X509_pop_free(encryption_recips, X509_free);
-    X509_free(recip);
     BIO_free(privbio);
     if (ek == NULL)
         M_ASN1_free_of(envData, CMS_EnvelopedData);

@@ -18,6 +18,7 @@
 #include "internal/cryptlib.h"
 #include "crypto/x509.h"
 #include "cms_local.h"
+#include "internal/cms.h"
 
 static STACK_OF(CMS_CertificateChoices)
 **cms_get0_certificate_choices(CMS_ContentInfo *cms);
@@ -770,10 +771,11 @@ int ossl_cms_set1_keyid(ASN1_OCTET_STRING **pkeyid, X509 *cert)
     return 1;
 }
 
-CMS_EnvelopedData *CMS_sign_encrypt(BIO *data, X509 *sign_cert, STACK_OF(X509) *certs,
-                                    EVP_PKEY *sign_key, unsigned int sign_flags,
-                                    STACK_OF(X509) *enc_recip, const EVP_CIPHER *cipher,
-                                    unsigned int enc_flags, OSSL_LIB_CTX *libctx, const char *propq)
+CMS_EnvelopedData *ossl_cms_sign_encrypt(BIO *data, X509 *sign_cert, STACK_OF(X509) *certs,
+                                         EVP_PKEY *sign_key, unsigned int sign_flags,
+                                         STACK_OF(X509) *enc_recip, const EVP_CIPHER *cipher,
+                                         unsigned int enc_flags, OSSL_LIB_CTX *libctx,
+                                         const char *propq)
 {
     CMS_EnvelopedData *evd = NULL;
     BIO *privbio = NULL, *signbio = NULL;

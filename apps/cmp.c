@@ -3872,8 +3872,8 @@ int cmp_main(int argc, char **argv)
                 }
 
                 CMP_info1("saving centrally generated key to file '%s'", opt_newkeyout);
-                if (PEM_write_bio_PKCS8PrivateKey(out, new_key, cipher, NULL, 0, NULL,
-                                                  (void *)pass_string) <= 0)
+                if (PEM_write_bio_PrivateKey(out, new_key, cipher, NULL, 0, NULL,
+                                             (void *)pass_string) <= 0)
                     goto err;
                 BIO_free(out);
                 clear_free(pass_string);

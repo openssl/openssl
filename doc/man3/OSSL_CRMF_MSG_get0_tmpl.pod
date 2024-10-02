@@ -92,12 +92,18 @@ This is needed for the indirect POPO method as in RFC 4210 section 5.2.8.2.
 The function returns the decrypted certificate as a copy, leaving its ownership
 with the caller, who is responsible for freeing it.
 
-OSSL_CRMF_ENCRYPTEDKEY_get1_pkey() decrypts the private key in the given
-encryptedKey I<encryptedKey>, using the I<secret> or private key I<pkey>
-and certificate I<cert>.
-It verifies the signed data using the trusted certificates in I<ts> and untrusted
-certificates in I<extra>,if envelopedata is present.
-library context I<libctx> and property query string I<propq> (see L<OSSL_LIB_CTX(3)>).
+OSSL_CRMF_ENCRYPTEDKEY_get1_pkey() decrypts the private key in I<encryptedKey>.
+If `encryptedKey` is not of type B<OSSL_CRMF_ENCRYPTEDKEY_ENVELOPEDDATA>, 
+decryption uses the private key I<pkey>.
+The library context I<libctx> and property query I<propq> are taken into account as usual.
+The rest of this paragraph is relevant only if CMS support not disabled for the OpenSSL build
+and `encryptedKey` is of  type case B<OSSL_CRMF_ENCRYPTEDKEY_ENVELOPEDDATA>.
+Decryption uses the I<secret> parameter if not NULL; 
+otherwise uses the private key <pkey> and the certificate I<cert> 
+related to I<pkey>, where I<cert>  is recommended to be given if available. 
+On success, the function verifies the decrypted data as signed data,
+using the trust store I<ts> and any untrusted certificates in I<extra>.
+Doing so, it checks for the purpose "CMP Key Generation Authority" (cmKGA).
 
 OSSL_CRMF_ENCRYPTEDKEY_init_envdata() returns I<OSSL_CRMF_ENCRYPTEDKEY>, intialized with 
 the enveloped data I<envdata>.

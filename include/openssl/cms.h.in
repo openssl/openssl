@@ -400,11 +400,6 @@ int CMS_RecipientInfo_kari_decrypt(CMS_ContentInfo *cms,
 
 int CMS_SharedInfo_encode(unsigned char **pder, X509_ALGOR *kekalg,
                           ASN1_OCTET_STRING *ukm, int keylen);
-CMS_EnvelopedData *CMS_sign_encrypt(BIO *data, X509 *sign_cert, STACK_OF(X509) *certs,
-                                    EVP_PKEY *sign_key, unsigned int sign_flags,
-                                    STACK_OF(X509) *enc_recip, const EVP_CIPHER *cipher,
-                                    unsigned int enc_flags, OSSL_LIB_CTX *libctx,
-                                    const char *propq);
 
 /* Backward compatibility for spelling errors. */
 # define CMS_R_UNKNOWN_DIGEST_ALGORITM CMS_R_UNKNOWN_DIGEST_ALGORITHM
