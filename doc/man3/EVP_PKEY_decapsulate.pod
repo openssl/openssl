@@ -31,7 +31,7 @@ key that is used during decapsulation.
 The EVP_PKEY_decapsulate() function performs a private key decapsulation
 operation using I<ctx>. The data to be decapsulated is specified using the
 I<wrapped> and I<wrappedlen> parameters.
-If I<unwrapped> is NULL then the maximum size of the output secret buffer
+If I<unwrapped> is NULL then the size of the output secret buffer
 is written to I<*unwrappedlen>. If I<unwrapped> is not NULL and the
 call is successful then the decapsulated secret data is written to I<unwrapped>
 and the amount of data written to I<*unwrappedlen>.  Note that, if I<unwrappedlen>
