@@ -46,6 +46,15 @@ A context for the seed source can be obtained by calling:
 
 The B<enable-jitter> option was added in OpenSSL 3.4.
 
+By specifying the B<enable-fips-jitter> configuration option, the FIPS
+provider will use an internal jitter source for its entropy.  Enabling
+this option will cause the FIPS provider to operate in a non-compliant
+mode unless an entropy assessment
+L<ESV|https://csrc.nist.gov/Projects/cryptographic-module-validation-program/entropy-validations>
+and validation through the
+L<CMVP|https://csrc.nist.gov/projects/cryptographic-module-validation-program>
+are additionally conducted.  This option was added in OpenSSL 3.5.
+
 =head1 EXAMPLES
 
  EVP_RAND *rand;
