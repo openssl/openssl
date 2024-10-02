@@ -595,7 +595,7 @@ static int kem_rsa_gen_recover(void)
           && TEST_ptr(rctx = EVP_PKEY_CTX_new_from_pkey(libctx, priv, NULL))
           && TEST_int_eq(EVP_PKEY_decapsulate_init(rctx, NULL), 1)
           && TEST_int_eq(EVP_PKEY_CTX_set_kem_op(rctx, "RSASVE"), 1)
-          /* Test that not providing a NULL unwrappedlen fails */
+          /* Test that providing a NULL unwrappedlen fails */
           && TEST_int_eq(EVP_PKEY_decapsulate(rctx, NULL, NULL, ct, ctlen), 0)
           && TEST_int_eq(EVP_PKEY_decapsulate(rctx, NULL, &unwraplen,
                                               ct, ctlen), 1)
