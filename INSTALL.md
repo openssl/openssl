@@ -858,6 +858,10 @@ Note that if this feature is enabled then GOST ciphersuites are only available
 if the GOST algorithms are also available through loading an externally supplied
 engine.
 
+### no-hss
+
+Disable Hierarchical Signature System (HSS) support. 
+
 ### no-http
 
 Disable HTTP support.
