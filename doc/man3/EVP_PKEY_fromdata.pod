@@ -86,6 +86,9 @@ public key and key parameters.
 These functions only work with key management methods coming from a provider.
 This is the mirror function to L<EVP_PKEY_todata(3)>.
 
+LMS support is disabled by default at compile-time.
+To enable, specify the B<enable-lms> build configuration option.
+
 =for comment We may choose to make this available for legacy methods too...
 
 =head1 RETURN VALUES
@@ -270,6 +273,7 @@ L<EVP_PKEY-RSA(7)>,
 L<EVP_PKEY-EC(7)>,
 L<EVP_PKEY-ED25519(7)>,
 L<EVP_PKEY-ED448(7)>,
+L<EVP_PKEY-LMS(7)>,
 L<EVP_PKEY-DSA(7)>,
 L<EVP_PKEY-DH(7)>,
 L<EVP_PKEY-X25519(7)>,
@@ -283,6 +287,8 @@ L<EVP_PKEY-SLH-DSA(7)>.
 These functions were added in OpenSSL 3.0.
 
 Support for B<ML-DSA>, B<ML-KEM> and B<SLH-DSA> was added in OpenSSL 3.5.
+
+Support for B<LMS> was added in OpenSSL 3.6.
 
 =head1 COPYRIGHT
 

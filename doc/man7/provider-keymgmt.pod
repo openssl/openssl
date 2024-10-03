@@ -500,6 +500,11 @@ OSSL_FUNC_keymgmt_export_types(), OSSL_FUNC_keymgmt_export_types_ex()
 should
 always return a constant L<OSSL_PARAM(3)> array.
 
+=head1 NOTES
+
+LMS support is disabled by default at compile-time.
+To enable, specify the B<enable-lms> build configuration option.
+
 =head1 SEE ALSO
 
 L<EVP_PKEY_get_size(3)>,
@@ -514,6 +519,7 @@ L<EVP_PKEY-EC(7)>,
 L<EVP_PKEY-RSA(7)>,
 L<EVP_PKEY-DSA(7)>,
 L<EVP_PKEY-DH(7)>,
+L<EVP_PKEY-LMS(7)>,
 L<EVP_PKEY-ML-DSA(7)>,
 L<EVP_PKEY-ML-KEM(7)>,
 L<EVP_PKEY-SLH-DSA(7)>.
@@ -531,6 +537,8 @@ OSSL_FUNC_keymgmt_gen_gettable_params() were added in OpenSSL 3.4.
 The parameters "sign-check" and "fips-indicator" were added in OpenSSL 3.4.
 
 Support for the B<ML-DSA>, B<ML-KEM> and B<SLH-DSA> algorithms was added in OpenSSL 3.5.
+
+Support for the B<LMS> algorithm was added in OpenSSL 3.6.
 
 =head1 COPYRIGHT
 

@@ -203,6 +203,8 @@ The OpenSSL default provider supports these operations and algorithms:
 
 =item SM2
 
+=item LMS, see L<EVP_SIGNATURE-LMS(7)>
+
 =item ML-DSA-44, see L<EVP_SIGNATURE-ML-DSA(7)>
 
 =item ML-DSA-65, see L<EVP_SIGNATURE-ML-DSA(7)>
