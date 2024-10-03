@@ -860,7 +860,7 @@ engine.
 
 ### no-hss
 
-Disable Hierarchical Signature System (HSS) support. 
+Disable Hierarchical Signature System (HSS) support.
 
 ### no-http
 

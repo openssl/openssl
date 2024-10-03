@@ -324,6 +324,9 @@ extern const OSSL_DISPATCH ossl_sm2_keymgmt_functions[];
 #ifndef OPENSSL_NO_LMS
 extern const OSSL_DISPATCH ossl_lms_keymgmt_functions[];
 #endif
+#ifndef OPENSSL_NO_HSS
+extern const OSSL_DISPATCH ossl_hss_keymgmt_functions[];
+#endif
 
 /* Key Exchange */
 extern const OSSL_DISPATCH ossl_dh_keyexch_functions[];

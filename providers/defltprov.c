@@ -538,6 +538,10 @@ static const OSSL_ALGORITHM deflt_keymgmt[] = {
     { PROV_NAMES_LMS, "provider=default", ossl_lms_keymgmt_functions,
       PROV_DESCS_LMS },
 #endif
+#ifndef OPENSSL_NO_HSS
+    { PROV_NAMES_HSS, "provider=default", ossl_hss_keymgmt_functions,
+      PROV_DESCS_HSS },
+#endif
     { NULL, NULL, NULL }
 };
 

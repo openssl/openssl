@@ -1,0 +1,7 @@
+LIBS=../../libcrypto
+
+$COMMON=hss_pubkey_decode.c hss_key.c hss_lists.c
+
+IF[{- !$disabled{'hss'} -}]
+SOURCE[../../libcrypto]=$COMMON
+ENDIF

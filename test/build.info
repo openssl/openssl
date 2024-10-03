@@ -215,6 +215,13 @@ IF[{- !$disabled{tests} -}]
     INCLUDE[lms_test]=../include ../apps/include
     DEPEND[lms_test]=../libcrypto.a libtestutil.a
   ENDIF
+  
+  IF[{- !$disabled{'hss'} -}]
+    PROGRAMS{noinst}=hss_test
+    SOURCE[hss_test]=hss_test.c
+    INCLUDE[hss_test]=../include ../apps/include
+    DEPEND[hss_test]=../libcrypto.a libtestutil.a
+  ENDIF
 
   SOURCE[evp_extra_test2]=evp_extra_test2.c $INITSRC
   INCLUDE[evp_extra_test2]=../include ../apps/include

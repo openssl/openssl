@@ -386,3 +386,5 @@
 #define PROV_DESCS_SM2 "OpenSSL SM2 implementation"
 #define PROV_NAMES_LMS "LMS"
 #define PROV_DESCS_LMS "OpenSSL LMS implementation"
+#define PROV_NAMES_HSS "HSS"
+#define PROV_DESCS_HSS "OpenSSL HSS implementation"
