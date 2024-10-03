@@ -1,0 +1,7 @@
+LIBS=../../libcrypto
+
+$COMMON=lms_params.c lms_pubkey_decode.c lms_key.c lm_ots_params.c
+
+IF[{- !$disabled{'lms'} -}]
+SOURCE[../../libcrypto]=$COMMON
+ENDIF
