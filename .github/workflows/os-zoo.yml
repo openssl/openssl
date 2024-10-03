@@ -26,8 +26,11 @@ jobs:
     container:
       image: docker.io/library/alpine:${{ matrix.tag }}
     env:
-      # https://www.openwall.com/lists/musl/2022/02/16/14
-      EXTRA_CFLAGS: ${{ matrix.cc == 'clang' && '-Wno-sign-compare' || '' }}
+      # See https://www.openwall.com/lists/musl/2022/02/16/14
+      # for the reason why -Wno-sign-compare is needed with clang
+      # -Wno-stringop-overflow is needed to silence a bogus
+      # warning on new fortify-headers with gcc
+      EXTRA_CFLAGS: ${{ matrix.cc == 'clang' && '-Wno-sign-compare' || matrix.tag == 'edge' && '-Wno-stringop-overflow' || '' }}
       CC: ${{ matrix.cc }}
     steps:
     - name: install packages
