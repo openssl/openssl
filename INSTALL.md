@@ -1078,6 +1078,13 @@ Build with support for the integrated tracing api.
 
 See manual pages OSSL_trace_set_channel(3) and OSSL_trace_enabled(3) for details.
 
+### enable-sslkeylog
+
+Build with support for the SSLKEYLOGFILE environment variable
+
+When enabled, setting SSLKEYLOGFILE to a file path records the keys exchanged
+during a TLS handshake for use in analysis tools like wireshark.
+
 ### no-ts
 
 Don't build Time Stamping (TS) Authority support.
