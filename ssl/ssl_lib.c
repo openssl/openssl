@@ -3896,7 +3896,6 @@ static long check_keylog_bio_free(BIO *b, int oper, const char *argp,
      */
     if (oper == BIO_CB_FREE)
         keylog_bio = NULL;
-out:
     return ret;
 }
 
