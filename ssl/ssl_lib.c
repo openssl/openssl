@@ -3867,11 +3867,6 @@ static CRYPTO_RWLOCK *keylog_lock = NULL;
 static BIO *keylog_bio = NULL;
 
 /**
- * @brief Ref counter tracking the number of keylog_bio users.
- */
-static unsigned int keylog_count = 0;
-
-/**
  * @brief Initializes the SSLKEYLOGFILE lock.
  *
  * @return 1 on success, 0 on failure.
@@ -3884,6 +3879,32 @@ DEFINE_RUN_ONCE_STATIC(ssl_keylog_init)
     return 1;
 }
 
+/**
+ * @brief checks when a BIO refcount has reached zero, and sets
+ * keylog_cb to NULL if it has
+ *
+ * @returns 1 always
+ */
+static long check_keylog_bio_free(BIO *b, int oper, const char *argp,
+                                  size_t len, int argi, long argl, int ret,
+                                  size_t *processed)
+{
+
+    /*
+     * Note we _dont_ take the keylog_lock here
+     * This is intentional, because we only free the keylog lock
+     * During SSL_CTX_free, in which we already posess the lock, so 
+     * Theres no need to grab it again here
+     */
+    if (oper == BIO_CB_FREE)
+        keylog_bio = NULL;
+out:
+    return ret;
+}
+
+/**
+ * @brief records ssl secrets to a file
+ */
 static void sslkeylogfile_cb(const SSL *ssl, const char *line)
 {
     if (keylog_lock == NULL)
@@ -4185,6 +4206,7 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
         /* Grab out global lock */
         if (!CRYPTO_THREAD_write_lock(keylog_lock)) {
             ERR_raise(ERR_LIB_SSL, ERR_R_SSL_LIB);
+            goto err;
         } else {
             /*
              * If the bio for the requested keylog file hasn't been
@@ -4193,14 +4215,14 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
              */
             if (keylog_bio == NULL) {
                 keylog_bio = BIO_new_file(keylogfile, "a");
-                if (keylog_bio == NULL)
+                if (keylog_bio == NULL) {
                     ERR_raise(ERR_LIB_SSL, ERR_R_SSL_LIB);
-                else
-                    /* up our ref count for the newly created case */
-                    keylog_count++;
+                    goto err;
+                }
+                BIO_set_callback_ex(keylog_bio, check_keylog_bio_free);
             } else {
                 /* up our refcount for the already-created case */
-                keylog_count++;
+                BIO_up_ref(keylog_bio);
             }
             /* If we have a bio now, assign the callback handler */
             if (keylog_bio != NULL)
@@ -4213,6 +4235,7 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
     return ret;
  err:
     SSL_CTX_free(ret);
+    BIO_free(keylog_bio);
     return NULL;
 }
 
@@ -4250,13 +4273,8 @@ void SSL_CTX_free(SSL_CTX *a)
 #ifndef OPENSSL_NO_SSLKEYLOG
     if (keylog_lock != NULL && CRYPTO_THREAD_write_lock(keylog_lock)) {
         if (a->sslkeylog_callback != NULL)
-            keylog_count--;
-        a->sslkeylog_callback = NULL;
-        /* If we're the last user, close the bio */
-        if (keylog_count == 0) {
             BIO_free(keylog_bio);
-            keylog_bio = NULL;
-        }
+        a->sslkeylog_callback = NULL;
         CRYPTO_THREAD_unlock(keylog_lock);
     }
 #endif
