@@ -32,7 +32,7 @@ is expected to be in XDR format.
 
 Leighton-Micali Hash-Based Signatures
 
-=item NIST SP 800-208
+=item NIST SP800-208
 
 Recommendation for Stateful Hash-Based Signature Schemes
 
@@ -77,6 +77,7 @@ To load a LMS key from XDR encoded "data" of size "datalen":
 
 L<EVP_KEYMGMT(3)>,
 L<EVP_PKEY(3)>,
+L<EVP_SIGNATURE-LMS(7)>,
 L<provider-keymgmt(7)>
 
 =head1 HISTORY

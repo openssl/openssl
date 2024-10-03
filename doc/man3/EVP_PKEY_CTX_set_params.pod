@@ -57,6 +57,7 @@ L<EVP_PKEY-DH(7)/DH parameters>
 L<EVP_PKEY-DH(7)/DH key generation parameters>
 L<EVP_PKEY-EC(7)/Common EC parameters>
 L<EVP_PKEY-X25519(7)/Common X25519, X448, ED25519 and ED448 parameters>
+L<EVP_PKEY-LMS(7)/Common LMS parameters>
 
 =head1 RETURN VALUES
 
