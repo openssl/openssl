@@ -3893,12 +3893,11 @@ static long check_keylog_bio_free(BIO *b, int oper, const char *argp,
     /*
      * Note we _dont_ take the keylog_lock here
      * This is intentional, because we only free the keylog lock
-     * During SSL_CTX_free, in which we already posess the lock, so 
+     * During SSL_CTX_free, in which we already posess the lock, so
      * Theres no need to grab it again here
      */
     if (oper == BIO_CB_FREE)
         keylog_bio = NULL;
-out:
     return ret;
 }
 
@@ -4235,7 +4234,9 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
     return ret;
  err:
     SSL_CTX_free(ret);
+#ifndef OPENSSL_NO_SSLKEYLOG
     BIO_free(keylog_bio);
+#endif
     return NULL;
 }
 
