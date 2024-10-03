@@ -4233,7 +4233,9 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
     return ret;
  err:
     SSL_CTX_free(ret);
+#ifndef OPENSSL_NO_SSLKEYLOG
     BIO_free(keylog_bio);
+#endif
     return NULL;
 }
 
