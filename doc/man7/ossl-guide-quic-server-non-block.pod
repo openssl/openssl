@@ -125,14 +125,35 @@ the default handling.
     SSL_CTX_set_verify(ctx, SSL_VERIFY_NONE, NULL);
 
 
-QUIC also dictates using Application-Layer Protocol Negotiation [ALPN] to select
+QUIC also dictates using Application-Layer Protocol Negotiation (ALPN) to select
 an application protocol.  We use L<SSL_CTX_set_alpn_select_cb(3)> for this
 purpose.  We can pass a callback which will be called for each connection to
-select an ALPN the server considers acceptable.  In this case, we only accept
-"http/1.0" and "hq-interop".
+select an ALPN the server considers acceptable.
 
     /* Setup ALPN negotiation callback to decide which ALPN is accepted. */
     SSL_CTX_set_alpn_select_cb(ctx, select_alpn, NULL);
+
+In this case, we only accept "http/1.0" and "hq-interop".
+
+    /*
+    * ALPN strings for TLS handshake. Only 'http/1.0' and 'hq-interop'
+    * are accepted.
+    */
+    static const unsigned char alpn_ossltest[] = {
+        8,  'h', 't', 't', 'p', '/', '1', '.', '0',
+        10, 'h', 'q', '-', 'i', 'n', 't', 'e', 'r', 'o', 'p',
+    };
+
+    static int select_alpn(SSL *ssl, const unsigned char **out,
+                        unsigned char *out_len, const unsigned char *in,
+                        unsigned int in_len, void *arg)
+    {
+        if (SSL_select_next_proto((unsigned char **)out, out_len, alpn_ossltest,
+                                sizeof(alpn_ossltest), in,
+                                in_len) == OPENSSL_NPN_NEGOTIATED)
+            return SSL_TLSEXT_ERR_OK;
+        return SSL_TLSEXT_ERR_ALERT_FATAL;
+    }
 
 That is all the setup that we need to do for the B<SSL_CTX>.  Next, we create a
 UDP socket and bind to it on localhost.
@@ -160,7 +181,7 @@ UDP socket and bind to it on localhost.
         return -1;
     }
 
-To run the QUIC server, we create a B<SSL_LISTENER> to listen for incoming
+To run the QUIC server, we create an B<SSL_LISTENER> to listen for incoming
 connections.  We provide it with the bound UDP port to then explicitly begin
 listening for new connections.
 
@@ -307,7 +328,7 @@ And in the main function, it would deallocate the constructed B<SSL_CTX>.
 L<ossl-guide-introduction(7)>, L<ossl-guide-libraries-introduction(7)>,
 L<ossl-guide-libssl-introduction(7)>, L<ossl-guide-quic-introduction(7)>,
 L<ossl-guide-quic-client-non-block(7)>, L<ossl-guide-quic-client-block(7)>,
-L<ossl-guide-quic-server-block(7)>,
+L<ossl-guide-tls-server-block(7)>, L<ossl-guide-quic-server-block(7)>
 
 =head1 COPYRIGHT
 
