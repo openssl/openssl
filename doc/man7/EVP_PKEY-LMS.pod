@@ -7,11 +7,14 @@ EVP_PKEY-LMS, EVP_KEYMGMT-LMS, LMS
 
 =head1 DESCRIPTION
 
-The B<LMS> keytype is implemented in OpenSSL's default provider.
+The B<LMS> keytype is implemented in OpenSSL's default and FIPS providers.
+The OpenSSL providers only support LMS signature verification, as this is a
+[SP 800-208](https://csrc.nist.gov/pubs/sp/800/208/final) requirement for
+software modules.
 
 =head2 Common LMS parameters
 
-LMS public keys are encoded in XDR format (i.e. not ANS1 format),
+LMS public keys are encoded in XDR format (i.e. not ASN1 format).
 The following parameters are used by EVP_PKEY_fromdata() and by the
 LMS keymanager for import and export.
 
@@ -32,7 +35,7 @@ is expected to be in XDR format.
 
 Leighton-Micali Hash-Based Signatures
 
-=item NIST SP 800-208
+=item NIST SP800-208
 
 Recommendation for Stateful Hash-Based Signature Schemes
 
@@ -77,15 +80,16 @@ To load a LMS key from XDR encoded "data" of size "datalen":
 
 L<EVP_KEYMGMT(3)>,
 L<EVP_PKEY(3)>,
+L<EVP_SIGNATURE-LMS(7)>,
 L<provider-keymgmt(7)>
 
 =head1 HISTORY
 
-This functionality was added in OpenSSL 3.5.0
+This functionality was added in OpenSSL 3.6.0.
 
 =head1 COPYRIGHT
 
-Copyright 2024 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
