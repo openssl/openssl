@@ -868,6 +868,10 @@ Don't build the legacy provider.
 
 Disabling this also disables the legacy algorithms: MD2 (already disabled by default).
 
+### no-lms
+
+Disable Leighton-Micali Signatures (LMS) support.
+
 ### no-makedepend
 
 Don't generate dependencies.
