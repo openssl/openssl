@@ -137,9 +137,9 @@ expected,description, -section,val, -cmd,val,val2, -cacertsout,val,val2, -infoty
 0,reqin ir - no newkey, -section,, -cmd,ir,,-reqin,_RESULT_DIR/ir2.der,,-newkey,"""",-newkey,"""",-key,"""",-cert,"""",-secret,_PBM_SECRET
 1,reqin ir and rspout - using no newkey and -popo 0 as workaround, -section,, -cmd,ir,,-reqin,_RESULT_DIR/ir2.der,,-rspout,_RESULT_DIR/ip2.der,-newkey,"""", -popo,0
 1,reqin ip and rspin  - using no newkey and -popo 0 as workaround, -section,, -cmd,ir,,-reqin,_RESULT_DIR/ir2.der,,-rspin,_RESULT_DIR/ip2.der,,-newkey,"""",-server,"""",-disable_confirm, -popo,0
-1,reqout_only ir - no server with -popo -1, -section,, -cmd,ir,,-reqout_only,_RESULT_DIR/ir3.der,,BLANK,,BLANK, -server,"""", -popo,-1, -newkeyout,_RESULT_DIR/dummyout.pem
-1,reqin ir and rspout - using no newkey and -popo -1, -section,, -cmd,ir,,-reqin,_RESULT_DIR/ir3.der,,-rspout,_RESULT_DIR/ip3.der,-newkey,"""", -popo,-1, -newkeyout,_RESULT_DIR/newkeyout.pem
-1,reqin ip and rspin  - using no newkey and -popo -1, -section,, -cmd,ir,,-reqin,_RESULT_DIR/ir3.der,,-rspin,_RESULT_DIR/ip3.der,,-newkey,"""",-server,"""",-disable_confirm, -popo,-1, -newkeyout,_RESULT_DIR/newkeyout.pem
+1,reqout_only ir - no server with -popo -1 (same as -centralkeygen), -section,, -cmd,ir,,-reqout_only,_RESULT_DIR/ir3.der,,BLANK,,BLANK, -server,"""", -popo,-1, -newkeyout,_RESULT_DIR/dummyout.pem
+1,reqin ir and rspout - using no newkey and -popo -1 (same as -centralkeygen), -section,, -cmd,ir,,-reqin,_RESULT_DIR/ir3.der,,-rspout,_RESULT_DIR/ip3.der,-newkey,"""", -popo,-1, -newkeyout,_RESULT_DIR/newkeyout.pem
+1,reqin ip and rspin  - using no newkey and -popo -1 (same as -centralkeygen), -section,, -cmd,ir,,-reqin,_RESULT_DIR/ir3.der,,-rspin,_RESULT_DIR/ip3.der,,-newkey,"""",-server,"""",-disable_confirm, -popo,-1, -newkeyout,_RESULT_DIR/newkeyout.pem
 ,,,,,,,,,,,,,,,,,,,
 1,central key generation, -section,, -cmd,cr,, -centralkeygen, -newkeyout,_RESULT_DIR/newkeyout1.pem
 0,central key generation missing newkeyout, -section,, -cmd,cr,, -centralkeygen,,BLANK,,BLANK,,BLANK,,BLANK,

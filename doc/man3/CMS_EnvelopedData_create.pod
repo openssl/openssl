@@ -57,8 +57,8 @@ The wrappers L<CMS_encrypt(3)> and L<CMS_decrypt(3)> are often used instead.
 =head1 RETURN VALUES
 
 If the allocation fails, CMS_EnvelopedData_create_ex(),
-CMS_EnvelopedData_create(), CMS_AuthEnvelopedData_create_ex()
-CMS_AuthEnvelopedData_create(), CMS_AuthEnvelopedData_create()
+CMS_EnvelopedData_create(), CMS_AuthEnvelopedData_create_ex(),
+CMS_AuthEnvelopedData_create(), CMS_AuthEnvelopedData_create(),
 and CMS_AuthEnvelopedData_create_ex() return NULL and set an
 error code that can be obtained by L<ERR_get_error(3)>. 
 Otherwise, they return a pointer to the newly allocated structure.

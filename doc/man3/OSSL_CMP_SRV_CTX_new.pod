@@ -21,8 +21,7 @@ OSSL_CMP_SRV_CTX_get0_custom_ctx,
 OSSL_CMP_SRV_CTX_set_send_unprotected_errors,
 OSSL_CMP_SRV_CTX_set_accept_unprotected,
 OSSL_CMP_SRV_CTX_set_accept_raverified,
-OSSL_CMP_SRV_CTX_set_grant_implicit_confirm,
-OSSL_CMP_SRV_CTX_centralKeygen_req
+OSSL_CMP_SRV_CTX_set_grant_implicit_confirm
 - generic functions to set up and control a CMP server
 
 =head1 SYNOPSIS
@@ -92,8 +91,6 @@ OSSL_CMP_SRV_CTX_centralKeygen_req
  int OSSL_CMP_SRV_CTX_set_accept_raverified(OSSL_CMP_SRV_CTX *srv_ctx, int val);
  int OSSL_CMP_SRV_CTX_set_grant_implicit_confirm(OSSL_CMP_SRV_CTX *srv_ctx,
                                                  int val);
- int OSSL_CMP_SRV_CTX_centralKeygen_req(const OSSL_CRMF_MSG *crm,
-                                        const X509_REQ *p10cr);
 
 =head1 DESCRIPTION
 
@@ -158,11 +155,6 @@ messages with POPO 'RAVerified'.
 OSSL_CMP_SRV_CTX_set_grant_implicit_confirm() enables granting implicit
 confirmation of newly enrolled certificates if requested.
 
-OSSL_CMP_SRV_CTX_centralKeygen_req() returns 1 if central key generation
-is requested i.e., the public key in the certificate request (I<crm> if non-NULL, 
-otherwise I<p10cr>) is NULL or has an empty key value (with length zero).
-Otherwise or on error it returns 0.
-
 =head1 NOTES
 
 CMP is defined in RFC 4210 (and CRMF in RFC 4211).
@@ -183,9 +175,6 @@ NULL on error.
 OSSL_CMP_SRV_CTX_get0_custom_ctx() returns the custom server context
 that has been set using OSSL_CMP_SRV_CTX_init().
 
-OSSL_CMP_SRV_CTX_centralKeygen_req() returns 0 if central key generation
-is not requested or in case of error, 1 if it is requested.
-
 All other functions return 1 on success, 0 on error.
 
 =head1 HISTORY
@@ -196,8 +185,7 @@ OSSL_CMP_SRV_CTX_init_trans()
 supporting delayed delivery of all types of response messages
 was added in OpenSSL 3.3.
 
-OSSL_CMP_SRV_CTX_set_grant_implicit_confirm() and OSSL_CMP_SRV_CTX_centralKeygen_req()
-were added in OpenSSL 3.5.
+OSSL_CMP_SRV_CTX_set_grant_implicit_confirm() was added in OpenSSL 3.5.
 
 =head1 COPYRIGHT
 

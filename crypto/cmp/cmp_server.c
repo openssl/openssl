@@ -165,8 +165,8 @@ int OSSL_CMP_SRV_CTX_set_grant_implicit_confirm(OSSL_CMP_SRV_CTX *srv_ctx,
     return 1;
 }
 
-int OSSL_CMP_SRV_CTX_centralKeygen_req(const OSSL_CRMF_MSG *crm,
-                                       const X509_REQ *p10cr)
+int OSSL_CRMF_MSG_centralKeygen_requested(const OSSL_CRMF_MSG *crm,
+                                          const X509_REQ *p10cr)
 {
     X509_PUBKEY *pubkey = NULL;
     const unsigned char *pk = NULL;
@@ -174,7 +174,7 @@ int OSSL_CMP_SRV_CTX_centralKeygen_req(const OSSL_CRMF_MSG *crm,
 
     if (crm == NULL && p10cr == NULL) {
         ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
-        return 0;
+        return -1;
     }
 
     if (crm != NULL)
@@ -187,7 +187,13 @@ int OSSL_CMP_SRV_CTX_centralKeygen_req(const OSSL_CRMF_MSG *crm,
             && pklen == 0))
         ret = 1;
 
-    pk = NULL;
+    /*
+     * In case of CRMF, POPO MUST be absent if central key generation
+     * is requested, otherwise MUST be present
+     */
+    if (crm != NULL && ret != OSSL_CRMF_MSG_popo_present(crm))
+        return -2;
+
     return ret;
 }
 
@@ -247,7 +253,7 @@ static OSSL_CMP_MSG *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
     const OSSL_CRMF_MSG *crm = NULL;
     const X509_REQ *p10cr = NULL;
     int bodytype;
-    int certReqId;
+    int certReqId, central_keygen;
 
     if (!ossl_assert(srv_ctx != NULL && srv_ctx->ctx != NULL && req != NULL))
         return NULL;
@@ -290,8 +296,11 @@ static OSSL_CMP_MSG *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
     }
     srv_ctx->certReqId = certReqId;
 
-    if (!(OSSL_CMP_SRV_CTX_centralKeygen_req(crm, p10cr)
-          || ossl_cmp_verify_popo(srv_ctx->ctx, req, srv_ctx->acceptRAVerified))) {
+    central_keygen = OSSL_CRMF_MSG_centralKeygen_requested(crm, p10cr);
+    if (central_keygen < 0)
+        return NULL;
+    if (central_keygen == 0
+        && !ossl_cmp_verify_popo(srv_ctx->ctx, req, srv_ctx->acceptRAVerified)) {
         /* Proof of possession could not be verified */
         si = OSSL_CMP_STATUSINFO_new(OSSL_CMP_PKISTATUS_rejection,
                                      1 << OSSL_CMP_PKIFAILUREINFO_badPOP,
@@ -315,7 +324,7 @@ static OSSL_CMP_MSG *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
                                          /* do not set if polling starts: */
                                          && certOut != NULL))
             goto err;
-        if (OSSL_CMP_SRV_CTX_centralKeygen_req(crm, p10cr)
+        if (central_keygen == 1
             && srv_ctx->ctx->newPkey_priv && srv_ctx->ctx->newPkey != NULL)
             keyOut = srv_ctx->ctx->newPkey;
     }
