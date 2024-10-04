@@ -24,10 +24,9 @@
 #  define HSS_MAX_L 8
 
 /* XDR sizes when encoding and decoding */
-#  define HSS_SIZE_PUB_L 4
-#  define HSS_MAX_PUBKEY (HSS_SIZE_PUB_L + LMS_SIZE_PUB_LMS_TYPE \
-                          + LMS_SIZE_PUB_OTS_TYPE + LMS_SIZE_I   \
-                          + LMS_MAX_DIGEST_SIZE)
+#  define HSS_SIZE_L 4
+#  define HSS_MAX_PUBKEY (HSS_SIZE_L + LMS_SIZE_LMS_TYPE + LMS_SIZE_OTS_TYPE \
+                          + LMS_SIZE_I + LMS_MAX_DIGEST_SIZE)
 
 /*
  * HSS require a tree of LMS keys, as well as a list of signatures.
@@ -76,6 +75,9 @@ int ossl_hss_key_valid(const HSS_KEY *hsskey, int selection);
 int ossl_hss_key_has(const HSS_KEY *hsskey, int selection);
 
 int ossl_hss_pubkey_from_params(const OSSL_PARAM params[], HSS_KEY *hsskey);
+int ossl_hss_pubkey_decode(const unsigned char *pub, size_t publen,
+                           HSS_KEY *hsskey, int lms_only);
+size_t ossl_hss_pubkey_length(const unsigned char *data, size_t datalen);
 
 # endif /* OPENSSL_NO_HSS */
 #endif /* OSSL_CRYPTO_HSS_H */

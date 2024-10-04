@@ -20,6 +20,7 @@ static OSSL_FUNC_keymgmt_free_fn hss_free_key;
 static OSSL_FUNC_keymgmt_has_fn hss_has;
 static OSSL_FUNC_keymgmt_match_fn hss_match;
 static OSSL_FUNC_keymgmt_validate_fn hss_validate;
+static OSSL_FUNC_keymgmt_load_fn hss_load;
 static OSSL_FUNC_keymgmt_import_fn hss_import;
 static OSSL_FUNC_keymgmt_import_types_fn hss_imexport_types;
 
@@ -100,12 +101,27 @@ static int hss_validate(const void *keydata, int selection, int checktype)
     return ossl_hss_key_valid(hsskey, selection);
 }
 
+static void *hss_load(const void *reference, size_t reference_sz)
+{
+    HSS_KEY *key = NULL;
+
+    if (ossl_prov_is_running() && reference_sz == sizeof(key)) {
+        /* The contents of the reference is the address to our object */
+        key = *(HSS_KEY **)reference;
+        /* We grabbed, so we detach it */
+        *(HSS_KEY **)reference = NULL;
+        return key;
+    }
+    return NULL;
+}
+
 const OSSL_DISPATCH ossl_hss_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))hss_new_key },
     { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))hss_free_key },
     { OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))hss_has },
     { OSSL_FUNC_KEYMGMT_MATCH, (void (*)(void))hss_match },
     { OSSL_FUNC_KEYMGMT_VALIDATE, (void (*)(void))hss_validate },
+    { OSSL_FUNC_KEYMGMT_LOAD, (void (*)(void))hss_load },
     { OSSL_FUNC_KEYMGMT_IMPORT, (void (*)(void))hss_import },
     { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))hss_imexport_types },
     OSSL_DISPATCH_END

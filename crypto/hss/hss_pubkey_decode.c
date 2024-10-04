@@ -12,6 +12,24 @@
 #include "crypto/lms_util.h"
 
 /**
+ * @brief Calculate the size of a HSS public key in XDR format.
+ *
+ * @param data A byte array of XDR data for a HSS public key.
+ *             The first 8 bytes are looked at.
+ * @param datalen The size of |data|.
+ * @returns The calculated size, or 0 on error.
+ */
+size_t ossl_hss_pubkey_length(const unsigned char *data, size_t datalen)
+{
+    size_t len;
+
+    if (datalen < (HSS_SIZE_L + LMS_SIZE_LMS_TYPE))
+        return 0;
+    len = ossl_lms_pubkey_length(data + HSS_SIZE_L, datalen - HSS_SIZE_L);
+    return (len == 0 ? 0 : HSS_SIZE_L + len);
+}
+
+/**
  * @brief Decode a byte array of public key data in XDR format into a HSS_KEY
  * The XDR format is L[4] || lms_type[4] || ots_type[4] || I[16] || K[n].
  * This function will fail if the |hsskey| contains OTS private keys, unless
@@ -25,9 +43,8 @@
  * @returns 1 on success, or 0 on failure. A failure may occur if L, lms_type or
  * ots_type are invalid, OR if there are trailing bytes in |pub|.
  */
-static
-int hss_pubkey_decode(const unsigned char *pub, size_t publen,
-                      HSS_KEY *hsskey, int lms_only)
+int ossl_hss_pubkey_decode(const unsigned char *pub, size_t publen,
+                           HSS_KEY *hsskey, int lms_only)
 {
     PACKET pkt;
     LMS_KEY *lmskey, *root;
@@ -92,7 +109,7 @@ int ossl_hss_pubkey_from_params(const OSSL_PARAM params[], HSS_KEY *hsskey)
                 return 0;
             hsskey->L = L;
         }
-        if (!hss_pubkey_decode(p->data, p->data_size, hsskey, pl != NULL))
+        if (!ossl_hss_pubkey_decode(p->data, p->data_size, hsskey, pl != NULL))
             return 0;
     }
     return 1;
