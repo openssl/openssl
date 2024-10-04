@@ -165,38 +165,6 @@ int OSSL_CMP_SRV_CTX_set_grant_implicit_confirm(OSSL_CMP_SRV_CTX *srv_ctx,
     return 1;
 }
 
-int OSSL_CRMF_MSG_centralKeygen_requested(const OSSL_CRMF_MSG *crm,
-                                          const X509_REQ *p10cr)
-{
-    X509_PUBKEY *pubkey = NULL;
-    const unsigned char *pk = NULL;
-    int pklen, ret = 0;
-
-    if (crm == NULL && p10cr == NULL) {
-        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
-        return -1;
-    }
-
-    if (crm != NULL)
-        pubkey = OSSL_CRMF_CERTTEMPLATE_get0_publicKey(OSSL_CRMF_MSG_get0_tmpl(crm));
-    else
-        pubkey = p10cr->req_info.pubkey;
-
-    if (pubkey == NULL
-        || (X509_PUBKEY_get0_param(NULL, &pk, &pklen, NULL, pubkey)
-            && pklen == 0))
-        ret = 1;
-
-    /*
-     * In case of CRMF, POPO MUST be absent if central key generation
-     * is requested, otherwise MUST be present
-     */
-    if (crm != NULL && ret != OSSL_CRMF_MSG_popo_present(crm))
-        return -2;
-
-    return ret;
-}
-
 /* return error msg with waiting status if polling is initiated, else NULL */
 static OSSL_CMP_MSG *delayed_delivery(OSSL_CMP_SRV_CTX *srv_ctx,
                                       const OSSL_CMP_MSG *req)

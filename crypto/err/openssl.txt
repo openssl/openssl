@@ -467,6 +467,7 @@ CRMF_R_ITERATIONCOUNT_BELOW_100:108:iterationcount below 100
 CRMF_R_MALFORMED_IV:101:malformed iv
 CRMF_R_NULL_ARGUMENT:109:null argument
 CRMF_R_POPOSKINPUT_NOT_SUPPORTED:113:poposkinput not supported
+CRMF_R_POPO_INCONSISTENT_CENTRAL_KEYGEN:128:popo inconsistent central keygen
 CRMF_R_POPO_INCONSISTENT_PUBLIC_KEY:117:popo inconsistent public key
 CRMF_R_POPO_MISSING:121:popo missing
 CRMF_R_POPO_MISSING_PUBLIC_KEY:118:popo missing public key

@@ -40,6 +40,7 @@
 #  define CRMF_R_MALFORMED_IV                              101
 #  define CRMF_R_NULL_ARGUMENT                             109
 #  define CRMF_R_POPOSKINPUT_NOT_SUPPORTED                 113
+#  define CRMF_R_POPO_INCONSISTENT_CENTRAL_KEYGEN          128
 #  define CRMF_R_POPO_INCONSISTENT_PUBLIC_KEY              117
 #  define CRMF_R_POPO_MISSING                              121
 #  define CRMF_R_POPO_MISSING_PUBLIC_KEY                   118

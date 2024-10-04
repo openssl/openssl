@@ -185,8 +185,6 @@ OSSL_CMP_SRV_CTX_init_trans()
 supporting delayed delivery of all types of response messages
 was added in OpenSSL 3.3.
 
-OSSL_CMP_SRV_CTX_set_grant_implicit_confirm() was added in OpenSSL 3.5.
-
 =head1 COPYRIGHT
 
 Copyright 2007-2024 The OpenSSL Project Authors. All Rights Reserved.
