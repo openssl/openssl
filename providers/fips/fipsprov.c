@@ -57,6 +57,10 @@ extern OSSL_FUNC_core_thread_start_fn *c_thread_start;
 static OSSL_FUNC_core_gettable_params_fn *c_gettable_params;
 static OSSL_FUNC_core_get_params_fn *c_get_params;
 OSSL_FUNC_core_thread_start_fn *c_thread_start;
+static OSSL_FUNC_core_get_avail_threads_fn *c_get_avail_threads;
+static OSSL_FUNC_core_crypto_thread_start_fn *c_crypto_thread_start;
+static OSSL_FUNC_core_crypto_thread_join_fn *c_crypto_thread_join;
+static OSSL_FUNC_core_crypto_thread_clean_fn *c_crypto_thread_clean;
 static OSSL_FUNC_core_new_error_fn *c_new_error;
 static OSSL_FUNC_core_set_error_debug_fn *c_set_error_debug;
 static OSSL_FUNC_core_vset_error_fn *c_vset_error;
@@ -229,6 +233,25 @@ static int fips_self_test(void *provctx)
     return SELF_TEST_post(&fgbl->selftest_params, 1) ? 1 : 0;
 }
 
+/* Our primary name:NIST name[:our older names] */
+#define FIPS_DIGESTS_COMMON()                                                  \
+{ PROV_NAMES_SHA1, FIPS_DEFAULT_PROPERTIES, ossl_sha1_functions },             \
+{ PROV_NAMES_SHA2_224, FIPS_DEFAULT_PROPERTIES, ossl_sha224_functions },       \
+{ PROV_NAMES_SHA2_256, FIPS_DEFAULT_PROPERTIES, ossl_sha256_functions },       \
+{ PROV_NAMES_SHA2_384, FIPS_DEFAULT_PROPERTIES, ossl_sha384_functions },       \
+{ PROV_NAMES_SHA2_512, FIPS_DEFAULT_PROPERTIES, ossl_sha512_functions },       \
+{ PROV_NAMES_SHA2_512_224, FIPS_DEFAULT_PROPERTIES,                            \
+  ossl_sha512_224_functions },                                                 \
+{ PROV_NAMES_SHA2_512_256, FIPS_DEFAULT_PROPERTIES,                            \
+  ossl_sha512_256_functions },                                                 \
+{ PROV_NAMES_SHA3_224, FIPS_DEFAULT_PROPERTIES, ossl_sha3_224_functions },     \
+{ PROV_NAMES_SHA3_256, FIPS_DEFAULT_PROPERTIES, ossl_sha3_256_functions },     \
+{ PROV_NAMES_SHA3_384, FIPS_DEFAULT_PROPERTIES, ossl_sha3_384_functions },     \
+{ PROV_NAMES_SHA3_512, FIPS_DEFAULT_PROPERTIES, ossl_sha3_512_functions },     \
+{ PROV_NAMES_SHAKE_128, FIPS_DEFAULT_PROPERTIES, ossl_shake_128_functions },   \
+{ PROV_NAMES_SHAKE_256, FIPS_DEFAULT_PROPERTIES, ossl_shake_256_functions }
+
+
 /*
  * For the algorithm names, we use the following formula for our primary
  * names:
@@ -254,26 +277,15 @@ static int fips_self_test(void *provctx)
  * we have used historically.
  */
 static const OSSL_ALGORITHM fips_digests[] = {
-    /* Our primary name:NiST name[:our older names] */
-    { PROV_NAMES_SHA1, FIPS_DEFAULT_PROPERTIES, ossl_sha1_functions },
-    { PROV_NAMES_SHA2_224, FIPS_DEFAULT_PROPERTIES, ossl_sha224_functions },
-    { PROV_NAMES_SHA2_256, FIPS_DEFAULT_PROPERTIES, ossl_sha256_functions },
-    { PROV_NAMES_SHA2_384, FIPS_DEFAULT_PROPERTIES, ossl_sha384_functions },
-    { PROV_NAMES_SHA2_512, FIPS_DEFAULT_PROPERTIES, ossl_sha512_functions },
-    { PROV_NAMES_SHA2_512_224, FIPS_DEFAULT_PROPERTIES,
-      ossl_sha512_224_functions },
-    { PROV_NAMES_SHA2_512_256, FIPS_DEFAULT_PROPERTIES,
-      ossl_sha512_256_functions },
+    FIPS_DIGESTS_COMMON(),
+    { NULL, NULL, NULL }
+};
 
-    /* We agree with NIST here, so one name only */
-    { PROV_NAMES_SHA3_224, FIPS_DEFAULT_PROPERTIES, ossl_sha3_224_functions },
-    { PROV_NAMES_SHA3_256, FIPS_DEFAULT_PROPERTIES, ossl_sha3_256_functions },
-    { PROV_NAMES_SHA3_384, FIPS_DEFAULT_PROPERTIES, ossl_sha3_384_functions },
-    { PROV_NAMES_SHA3_512, FIPS_DEFAULT_PROPERTIES, ossl_sha3_512_functions },
-
-    { PROV_NAMES_SHAKE_128, FIPS_DEFAULT_PROPERTIES, ossl_shake_128_functions },
-    { PROV_NAMES_SHAKE_256, FIPS_DEFAULT_PROPERTIES, ossl_shake_256_functions },
-
+static const OSSL_ALGORITHM fips_digests_internal[] = {
+    FIPS_DIGESTS_COMMON(),
+    /* Used by HSS */
+    { PROV_NAMES_SHA2_256_192, FIPS_DEFAULT_PROPERTIES,
+      ossl_sha256_192_functions },
     /*
      * KECCAK-KMAC-128 and KECCAK-KMAC-256 as hashes are mostly useful for
      * KMAC128 and KMAC256.
@@ -477,6 +489,9 @@ static const OSSL_ALGORITHM fips_signature[] = {
     { PROV_NAMES_CMAC, FIPS_DEFAULT_PROPERTIES,
       ossl_mac_legacy_cmac_signature_functions },
 #endif
+#ifndef OPENSSL_NO_HSS
+    { PROV_NAMES_HSS, FIPS_DEFAULT_PROPERTIES, ossl_hss_signature_functions },
+#endif
     { NULL, NULL, NULL }
 };
 
@@ -529,6 +544,10 @@ static const OSSL_ALGORITHM fips_keymgmt[] = {
     { PROV_NAMES_CMAC, FIPS_DEFAULT_PROPERTIES,
       ossl_cmac_legacy_keymgmt_functions, PROV_DESCS_CMAC_SIGN },
 #endif
+#ifndef OPENSSL_NO_HSS
+    { PROV_NAMES_HSS, FIPS_DEFAULT_PROPERTIES, ossl_hss_keymgmt_functions,
+      PROV_DESCS_HSS },
+#endif
     { NULL, NULL, NULL }
 };
 
@@ -573,6 +592,12 @@ static const OSSL_ALGORITHM *fips_query_internal(void *provctx, int operation_id
         if (!ossl_prov_is_running())
             return NULL;
         return fips_macs_internal;
+    }
+    if (operation_id == OSSL_OP_DIGEST) {
+        *no_cache = 0;
+        if (!ossl_prov_is_running())
+            return NULL;
+        return fips_digests_internal;
     }
     return fips_query(provctx, operation_id, no_cache);
 }
@@ -659,6 +684,21 @@ int OSSL_provider_init_int(const OSSL_CORE_HANDLE *handle,
             break;
         case OSSL_FUNC_CORE_THREAD_START:
             set_func(c_thread_start, OSSL_FUNC_core_thread_start(in));
+            break;
+        case OSSL_FUNC_CORE_GET_AVAIL_THREADS:
+            set_func(c_get_avail_threads, OSSL_FUNC_core_get_avail_threads(in));
+            break;
+        case OSSL_FUNC_CORE_CRYPTO_THREAD_START:
+            set_func(c_crypto_thread_start,
+                     OSSL_FUNC_core_crypto_thread_start(in));
+            break;
+        case OSSL_FUNC_CORE_CRYPTO_THREAD_JOIN:
+            set_func(c_crypto_thread_join,
+                     OSSL_FUNC_core_crypto_thread_join(in));
+            break;
+        case OSSL_FUNC_CORE_CRYPTO_THREAD_CLEAN:
+            set_func(c_crypto_thread_clean,
+                     OSSL_FUNC_core_crypto_thread_clean(in));
             break;
         case OSSL_FUNC_CORE_NEW_ERROR:
             set_func(c_new_error, OSSL_FUNC_core_new_error(in));
@@ -1038,3 +1078,27 @@ void OSSL_INDICATOR_get_callback(OSSL_LIB_CTX *libctx,
             *cb = NULL;
     }
 }
+
+#if !defined(OPENSSL_NO_DEFAULT_THREAD_POOL)
+uint64_t ossl_prov_get_avail_threads(OSSL_LIB_CTX *libctx)
+{
+    return c_get_avail_threads(FIPS_get_core_handle(libctx));
+}
+
+void *ossl_prov_thread_start(OSSL_LIB_CTX *libctx,
+                             OSSL_thread_start_handler_fn start,
+                             void *data)
+{
+    return c_crypto_thread_start(FIPS_get_core_handle(libctx), start, data);
+}
+
+int ossl_prov_thread_join(void *task, uint32_t *ret)
+{
+    return c_crypto_thread_join(task, ret);
+}
+
+int ossl_prov_thread_clean(void *vhandle)
+{
+    return c_crypto_thread_clean(vhandle);
+}
+#endif

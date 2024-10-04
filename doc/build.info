@@ -1323,6 +1323,10 @@ DEPEND[html/man3/EVP_PKEY_print_private.html]=man3/EVP_PKEY_print_private.pod
 GENERATE[html/man3/EVP_PKEY_print_private.html]=man3/EVP_PKEY_print_private.pod
 DEPEND[man/man3/EVP_PKEY_print_private.3]=man3/EVP_PKEY_print_private.pod
 GENERATE[man/man3/EVP_PKEY_print_private.3]=man3/EVP_PKEY_print_private.pod
+DEPEND[html/man3/EVP_PKEY_reserve.html]=man3/EVP_PKEY_reserve.pod
+GENERATE[html/man3/EVP_PKEY_reserve.html]=man3/EVP_PKEY_reserve.pod
+DEPEND[man/man3/EVP_PKEY_reserve.3]=man3/EVP_PKEY_reserve.pod
+GENERATE[man/man3/EVP_PKEY_reserve.3]=man3/EVP_PKEY_reserve.pod
 DEPEND[html/man3/EVP_PKEY_set1_RSA.html]=man3/EVP_PKEY_set1_RSA.pod
 GENERATE[html/man3/EVP_PKEY_set1_RSA.html]=man3/EVP_PKEY_set1_RSA.pod
 DEPEND[man/man3/EVP_PKEY_set1_RSA.3]=man3/EVP_PKEY_set1_RSA.pod
@@ -3334,6 +3338,7 @@ html/man3/EVP_PKEY_meth_get_count.html \
 html/man3/EVP_PKEY_meth_new.html \
 html/man3/EVP_PKEY_new.html \
 html/man3/EVP_PKEY_print_private.html \
+html/man3/EVP_PKEY_reserve.html \
 html/man3/EVP_PKEY_set1_RSA.html \
 html/man3/EVP_PKEY_set1_encoded_public_key.html \
 html/man3/EVP_PKEY_set_type.html \
@@ -3997,6 +4002,7 @@ man/man3/EVP_PKEY_meth_get_count.3 \
 man/man3/EVP_PKEY_meth_new.3 \
 man/man3/EVP_PKEY_new.3 \
 man/man3/EVP_PKEY_print_private.3 \
+man/man3/EVP_PKEY_reserve.3 \
 man/man3/EVP_PKEY_set1_RSA.3 \
 man/man3/EVP_PKEY_set1_encoded_public_key.3 \
 man/man3/EVP_PKEY_set_type.3 \
@@ -4733,6 +4739,10 @@ DEPEND[html/man7/EVP_PKEY-HMAC.html]=man7/EVP_PKEY-HMAC.pod
 GENERATE[html/man7/EVP_PKEY-HMAC.html]=man7/EVP_PKEY-HMAC.pod
 DEPEND[man/man7/EVP_PKEY-HMAC.7]=man7/EVP_PKEY-HMAC.pod
 GENERATE[man/man7/EVP_PKEY-HMAC.7]=man7/EVP_PKEY-HMAC.pod
+DEPEND[html/man7/EVP_PKEY-HSS.html]=man7/EVP_PKEY-HSS.pod
+GENERATE[html/man7/EVP_PKEY-HSS.html]=man7/EVP_PKEY-HSS.pod
+DEPEND[man/man7/EVP_PKEY-HSS.7]=man7/EVP_PKEY-HSS.pod
+GENERATE[man/man7/EVP_PKEY-HSS.7]=man7/EVP_PKEY-HSS.pod
 DEPEND[html/man7/EVP_PKEY-RSA.html]=man7/EVP_PKEY-RSA.pod
 GENERATE[html/man7/EVP_PKEY-RSA.html]=man7/EVP_PKEY-RSA.pod
 DEPEND[man/man7/EVP_PKEY-RSA.7]=man7/EVP_PKEY-RSA.pod
@@ -4793,6 +4803,10 @@ DEPEND[html/man7/EVP_SIGNATURE-HMAC.html]=man7/EVP_SIGNATURE-HMAC.pod
 GENERATE[html/man7/EVP_SIGNATURE-HMAC.html]=man7/EVP_SIGNATURE-HMAC.pod
 DEPEND[man/man7/EVP_SIGNATURE-HMAC.7]=man7/EVP_SIGNATURE-HMAC.pod
 GENERATE[man/man7/EVP_SIGNATURE-HMAC.7]=man7/EVP_SIGNATURE-HMAC.pod
+DEPEND[html/man7/EVP_SIGNATURE-HSS.html]=man7/EVP_SIGNATURE-HSS.pod
+GENERATE[html/man7/EVP_SIGNATURE-HSS.html]=man7/EVP_SIGNATURE-HSS.pod
+DEPEND[man/man7/EVP_SIGNATURE-HSS.7]=man7/EVP_SIGNATURE-HSS.pod
+GENERATE[man/man7/EVP_SIGNATURE-HSS.7]=man7/EVP_SIGNATURE-HSS.pod
 DEPEND[html/man7/EVP_SIGNATURE-RSA.html]=man7/EVP_SIGNATURE-RSA.pod
 GENERATE[html/man7/EVP_SIGNATURE-RSA.html]=man7/EVP_SIGNATURE-RSA.pod
 DEPEND[man/man7/EVP_SIGNATURE-RSA.7]=man7/EVP_SIGNATURE-RSA.pod
@@ -5128,6 +5142,7 @@ html/man7/EVP_PKEY-DSA.html \
 html/man7/EVP_PKEY-EC.html \
 html/man7/EVP_PKEY-FFC.html \
 html/man7/EVP_PKEY-HMAC.html \
+html/man7/EVP_PKEY-HSS.html \
 html/man7/EVP_PKEY-RSA.html \
 html/man7/EVP_PKEY-SM2.html \
 html/man7/EVP_PKEY-X25519.html \
@@ -5143,6 +5158,7 @@ html/man7/EVP_SIGNATURE-DSA.html \
 html/man7/EVP_SIGNATURE-ECDSA.html \
 html/man7/EVP_SIGNATURE-ED25519.html \
 html/man7/EVP_SIGNATURE-HMAC.html \
+html/man7/EVP_SIGNATURE-HSS.html \
 html/man7/EVP_SIGNATURE-RSA.html \
 html/man7/OSSL_PROVIDER-FIPS.html \
 html/man7/OSSL_PROVIDER-base.html \
@@ -5275,6 +5291,7 @@ man/man7/EVP_PKEY-DSA.7 \
 man/man7/EVP_PKEY-EC.7 \
 man/man7/EVP_PKEY-FFC.7 \
 man/man7/EVP_PKEY-HMAC.7 \
+man/man7/EVP_PKEY-HSS.7 \
 man/man7/EVP_PKEY-RSA.7 \
 man/man7/EVP_PKEY-SM2.7 \
 man/man7/EVP_PKEY-X25519.7 \
@@ -5290,6 +5307,7 @@ man/man7/EVP_SIGNATURE-DSA.7 \
 man/man7/EVP_SIGNATURE-ECDSA.7 \
 man/man7/EVP_SIGNATURE-ED25519.7 \
 man/man7/EVP_SIGNATURE-HMAC.7 \
+man/man7/EVP_SIGNATURE-HSS.7 \
 man/man7/EVP_SIGNATURE-RSA.7 \
 man/man7/OSSL_PROVIDER-FIPS.7 \
 man/man7/OSSL_PROVIDER-base.7 \

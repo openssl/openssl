@@ -475,6 +475,8 @@ my @disablables = (
     "fuzz-afl",
     "fuzz-libfuzzer",
     "gost",
+    "hss",
+    "hss-gen",
     "http",
     "idea",
     "jitter",
@@ -617,6 +619,7 @@ my @disable_cascades = (
                              "des", "dgram", "dh", "dsa",
                              "ec", "engine",
                              "filenames",
+                             "hss",
                              "idea", "ktls",
                              "md4", "multiblock", "nextprotoneg",
                              "ocsp", "ocb", "poly1305", "psk",
@@ -688,6 +691,8 @@ my @disable_cascades = (
     "legacy"            => [ "md2" ],
 
     "cmp"               => [ "crmf" ],
+
+    "hss"              => [ "hss-gen" ],
 
     "fips"              => [ "fips-securitychecks", "fips-post", "acvp-tests" ],
 

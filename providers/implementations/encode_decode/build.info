@@ -10,6 +10,11 @@ SOURCE[$DECODER_GOAL]=decode_der2key.c decode_epki2pki.c decode_pem2der.c \
                       decode_msblob2key.c decode_pvk2key.c \
                       decode_spki2typespki.c
 
+IF[{- !$disabled{hss} -}]
+  SOURCE[$ENCODER_GOAL]=encode_hss2xdr.c
+  SOURCE[$DECODER_GOAL]=decode_hssxdr2key.c
+ENDIF
+
 SOURCE[$ENCODER_GOAL]=encode_key2any.c encode_key2text.c encode_key2ms.c
 # encode_key2blob.c is only being included when EC is enabled, because we
 # currently only define a "blob" output type for EC public keys.  This may

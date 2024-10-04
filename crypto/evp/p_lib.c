@@ -1677,6 +1677,30 @@ int EVP_PKEY_up_ref(EVP_PKEY *pkey)
 }
 
 #ifndef FIPS_MODULE
+EVP_PKEY *EVP_PKEY_reserve(EVP_PKEY *pkey, const OSSL_PARAM *params)
+{
+    EVP_PKEY *ret = NULL;
+
+    if (pkey == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return NULL;
+    }
+    if (pkey->keymgmt == NULL || pkey->keymgmt->reserve == NULL)
+        return NULL;
+
+    ret = EVP_PKEY_new();
+    if (ret == NULL)
+        return NULL;
+
+    ret->keydata = evp_keymgmt_reserve(pkey->keymgmt, pkey->keydata, params);
+    if (ret->keydata == NULL
+            || !evp_keymgmt_util_assign_pkey(ret, pkey->keymgmt, ret->keydata)) {
+        EVP_PKEY_free(ret);
+        ret = NULL;
+    }
+    return ret;
+}
+
 EVP_PKEY *EVP_PKEY_dup(EVP_PKEY *pkey)
 {
     EVP_PKEY *dup_pk;
@@ -2282,6 +2306,20 @@ int EVP_PKEY_get_size_t_param(const EVP_PKEY *pkey, const char *key_name,
         return 0;
 
     params[0] = OSSL_PARAM_construct_size_t(key_name, out);
+    params[1] = OSSL_PARAM_construct_end();
+    return EVP_PKEY_get_params(pkey, params)
+        && OSSL_PARAM_modified(params);
+}
+
+int EVP_PKEY_get_uint64_param(const EVP_PKEY *pkey, const char *key_name,
+                              uint64_t *out)
+{
+    OSSL_PARAM params[2];
+
+    if (key_name == NULL)
+        return 0;
+
+    params[0] = OSSL_PARAM_construct_uint64(key_name, out);
     params[1] = OSSL_PARAM_construct_end();
     return EVP_PKEY_get_params(pkey, params)
         && OSSL_PARAM_modified(params);

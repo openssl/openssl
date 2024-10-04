@@ -15,6 +15,8 @@
 # include <openssl/core.h>
 # include <openssl/indicator.h>
 
+typedef uint32_t (*OSSL_thread_start_handler_fn)(void *);
+
 # ifdef __cplusplus
 extern "C" {
 # endif
@@ -45,7 +47,7 @@ extern "C" {
  * Note: This is considered a "reserved" internal macro. Applications should
  * not use this or assume its existence.
  */
-#define OSSL_CORE_MAKE_FUNC(type,name,args)                             \
+# define OSSL_CORE_MAKE_FUNC(type,name,args)                            \
     typedef type (OSSL_FUNC_##name##_fn)args;                           \
     static ossl_unused ossl_inline \
     OSSL_FUNC_##name##_fn *OSSL_FUNC_##name(const OSSL_DISPATCH *opf)   \
@@ -92,11 +94,24 @@ OSSL_CORE_MAKE_FUNC(int, core_clear_last_error_mark,
 # define OSSL_FUNC_CORE_POP_ERROR_TO_MARK     10
 OSSL_CORE_MAKE_FUNC(int, core_pop_error_to_mark, (const OSSL_CORE_HANDLE *prov))
 
+# define OSSL_FUNC_CORE_GET_AVAIL_THREADS     11
+OSSL_CORE_MAKE_FUNC(uint64_t, core_get_avail_threads,
+                    (const OSSL_CORE_HANDLE *prov))
+
+# define OSSL_FUNC_CORE_CRYPTO_THREAD_START   12
+OSSL_CORE_MAKE_FUNC(void *, core_crypto_thread_start,
+                    (const OSSL_CORE_HANDLE *prov,
+                     OSSL_thread_start_handler_fn start,
+                     void *data))
+# define OSSL_FUNC_CORE_CRYPTO_THREAD_JOIN    13
+OSSL_CORE_MAKE_FUNC(int, core_crypto_thread_join, (void *task, uint32_t *ret))
+# define OSSL_FUNC_CORE_CRYPTO_THREAD_CLEAN   14
+OSSL_CORE_MAKE_FUNC(int, core_crypto_thread_clean, (void *vhandle))
 
 /* Functions to access the OBJ database */
 
-#define OSSL_FUNC_CORE_OBJ_ADD_SIGID          11
-#define OSSL_FUNC_CORE_OBJ_CREATE             12
+# define OSSL_FUNC_CORE_OBJ_ADD_SIGID         15
+# define OSSL_FUNC_CORE_OBJ_CREATE            16
 
 OSSL_CORE_MAKE_FUNC(int, core_obj_add_sigid,
                     (const OSSL_CORE_HANDLE *prov, const char  *sign_name,
@@ -106,58 +121,57 @@ OSSL_CORE_MAKE_FUNC(int, core_obj_create,
                      const char *sn, const char *ln))
 
 /* Memory allocation, freeing, clearing. */
-#define OSSL_FUNC_CRYPTO_MALLOC               20
+# define OSSL_FUNC_CRYPTO_MALLOC              20
 OSSL_CORE_MAKE_FUNC(void *,
         CRYPTO_malloc, (size_t num, const char *file, int line))
-#define OSSL_FUNC_CRYPTO_ZALLOC               21
+# define OSSL_FUNC_CRYPTO_ZALLOC              21
 OSSL_CORE_MAKE_FUNC(void *,
         CRYPTO_zalloc, (size_t num, const char *file, int line))
-#define OSSL_FUNC_CRYPTO_FREE                 22
+# define OSSL_FUNC_CRYPTO_FREE                22
 OSSL_CORE_MAKE_FUNC(void,
         CRYPTO_free, (void *ptr, const char *file, int line))
-#define OSSL_FUNC_CRYPTO_CLEAR_FREE           23
+# define OSSL_FUNC_CRYPTO_CLEAR_FREE          23
 OSSL_CORE_MAKE_FUNC(void,
         CRYPTO_clear_free, (void *ptr, size_t num, const char *file, int line))
-#define OSSL_FUNC_CRYPTO_REALLOC              24
+# define OSSL_FUNC_CRYPTO_REALLOC             24
 OSSL_CORE_MAKE_FUNC(void *,
         CRYPTO_realloc, (void *addr, size_t num, const char *file, int line))
-#define OSSL_FUNC_CRYPTO_CLEAR_REALLOC        25
+# define OSSL_FUNC_CRYPTO_CLEAR_REALLOC       25
 OSSL_CORE_MAKE_FUNC(void *,
         CRYPTO_clear_realloc, (void *addr, size_t old_num, size_t num,
                                const char *file, int line))
-#define OSSL_FUNC_CRYPTO_SECURE_MALLOC        26
+# define OSSL_FUNC_CRYPTO_SECURE_MALLOC       26
 OSSL_CORE_MAKE_FUNC(void *,
         CRYPTO_secure_malloc, (size_t num, const char *file, int line))
-#define OSSL_FUNC_CRYPTO_SECURE_ZALLOC        27
+# define OSSL_FUNC_CRYPTO_SECURE_ZALLOC       27
 OSSL_CORE_MAKE_FUNC(void *,
         CRYPTO_secure_zalloc, (size_t num, const char *file, int line))
-#define OSSL_FUNC_CRYPTO_SECURE_FREE          28
+# define OSSL_FUNC_CRYPTO_SECURE_FREE         28
 OSSL_CORE_MAKE_FUNC(void,
         CRYPTO_secure_free, (void *ptr, const char *file, int line))
-#define OSSL_FUNC_CRYPTO_SECURE_CLEAR_FREE    29
+# define OSSL_FUNC_CRYPTO_SECURE_CLEAR_FREE   29
 OSSL_CORE_MAKE_FUNC(void,
         CRYPTO_secure_clear_free, (void *ptr, size_t num, const char *file,
                                    int line))
-#define OSSL_FUNC_CRYPTO_SECURE_ALLOCATED     30
+# define OSSL_FUNC_CRYPTO_SECURE_ALLOCATED    30
 OSSL_CORE_MAKE_FUNC(int,
         CRYPTO_secure_allocated, (const void *ptr))
-#define OSSL_FUNC_OPENSSL_CLEANSE             31
+# define OSSL_FUNC_OPENSSL_CLEANSE            31
 OSSL_CORE_MAKE_FUNC(void,
         OPENSSL_cleanse, (void *ptr, size_t len))
 
 /* Bio functions provided by the core */
-#define OSSL_FUNC_BIO_NEW_FILE                40
-#define OSSL_FUNC_BIO_NEW_MEMBUF              41
-#define OSSL_FUNC_BIO_READ_EX                 42
-#define OSSL_FUNC_BIO_WRITE_EX                43
-#define OSSL_FUNC_BIO_UP_REF                  44
-#define OSSL_FUNC_BIO_FREE                    45
-#define OSSL_FUNC_BIO_VPRINTF                 46
-#define OSSL_FUNC_BIO_VSNPRINTF               47
-#define OSSL_FUNC_BIO_PUTS                    48
-#define OSSL_FUNC_BIO_GETS                    49
-#define OSSL_FUNC_BIO_CTRL                    50
-
+# define OSSL_FUNC_BIO_NEW_FILE                40
+# define OSSL_FUNC_BIO_NEW_MEMBUF              41
+# define OSSL_FUNC_BIO_READ_EX                 42
+# define OSSL_FUNC_BIO_WRITE_EX                43
+# define OSSL_FUNC_BIO_UP_REF                  44
+# define OSSL_FUNC_BIO_FREE                    45
+# define OSSL_FUNC_BIO_VPRINTF                 46
+# define OSSL_FUNC_BIO_VSNPRINTF               47
+# define OSSL_FUNC_BIO_PUTS                    48
+# define OSSL_FUNC_BIO_GETS                    49
+# define OSSL_FUNC_BIO_CTRL                    50
 
 OSSL_CORE_MAKE_FUNC(OSSL_CORE_BIO *, BIO_new_file, (const char *filename,
                                                     const char *mode))
@@ -178,23 +192,23 @@ OSSL_CORE_MAKE_FUNC(int, BIO_ctrl, (OSSL_CORE_BIO *bio,
                                     int cmd, long num, void *ptr))
 
 /* New seeding functions prototypes with the 101-104 series */
-#define OSSL_FUNC_CLEANUP_USER_ENTROPY        96
-#define OSSL_FUNC_CLEANUP_USER_NONCE          97
-#define OSSL_FUNC_GET_USER_ENTROPY            98
-#define OSSL_FUNC_GET_USER_NONCE              99
+# define OSSL_FUNC_CLEANUP_USER_ENTROPY        96
+# define OSSL_FUNC_CLEANUP_USER_NONCE          97
+# define OSSL_FUNC_GET_USER_ENTROPY            98
+# define OSSL_FUNC_GET_USER_NONCE              99
 
-#define OSSL_FUNC_INDICATOR_CB                95
+# define OSSL_FUNC_INDICATOR_CB                95
 OSSL_CORE_MAKE_FUNC(void, indicator_cb, (OPENSSL_CORE_CTX *ctx,
                                          OSSL_INDICATOR_CALLBACK **cb))
-#define OSSL_FUNC_SELF_TEST_CB               100
+ #define OSSL_FUNC_SELF_TEST_CB               100
 OSSL_CORE_MAKE_FUNC(void, self_test_cb, (OPENSSL_CORE_CTX *ctx, OSSL_CALLBACK **cb,
                                          void **cbarg))
 
 /* Functions to get seed material from the operating system */
-#define OSSL_FUNC_GET_ENTROPY                101
-#define OSSL_FUNC_CLEANUP_ENTROPY            102
-#define OSSL_FUNC_GET_NONCE                  103
-#define OSSL_FUNC_CLEANUP_NONCE              104
+# define OSSL_FUNC_GET_ENTROPY                101
+# define OSSL_FUNC_CLEANUP_ENTROPY            102
+# define OSSL_FUNC_GET_NONCE                  103
+# define OSSL_FUNC_CLEANUP_NONCE              104
 OSSL_CORE_MAKE_FUNC(size_t, get_entropy, (const OSSL_CORE_HANDLE *handle,
                                           unsigned char **pout, int entropy,
                                           size_t min_len, size_t max_len))
@@ -219,13 +233,13 @@ OSSL_CORE_MAKE_FUNC(void, cleanup_user_nonce, (const OSSL_CORE_HANDLE *handle,
                                                unsigned char *buf, size_t len))
 
 /* Functions to access the core's providers */
-#define OSSL_FUNC_PROVIDER_REGISTER_CHILD_CB   105
-#define OSSL_FUNC_PROVIDER_DEREGISTER_CHILD_CB 106
-#define OSSL_FUNC_PROVIDER_NAME                107
-#define OSSL_FUNC_PROVIDER_GET0_PROVIDER_CTX   108
-#define OSSL_FUNC_PROVIDER_GET0_DISPATCH       109
-#define OSSL_FUNC_PROVIDER_UP_REF              110
-#define OSSL_FUNC_PROVIDER_FREE                111
+# define OSSL_FUNC_PROVIDER_REGISTER_CHILD_CB   105
+# define OSSL_FUNC_PROVIDER_DEREGISTER_CHILD_CB 106
+# define OSSL_FUNC_PROVIDER_NAME                107
+# define OSSL_FUNC_PROVIDER_GET0_PROVIDER_CTX   108
+# define OSSL_FUNC_PROVIDER_GET0_DISPATCH       109
+# define OSSL_FUNC_PROVIDER_UP_REF              110
+# define OSSL_FUNC_PROVIDER_FREE                111
 
 OSSL_CORE_MAKE_FUNC(int, provider_register_child_cb,
                     (const OSSL_CORE_HANDLE *handle,
@@ -684,6 +698,10 @@ OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, keymgmt_import_types_ex,
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, keymgmt_export_types_ex,
                     (void *provctx, int selection))
 
+# define OSSL_FUNC_KEYMGMT_RESERVE                    47
+OSSL_CORE_MAKE_FUNC(void *, keymgmt_reserve,
+                    (void *keydata, const OSSL_PARAM *params))
+
 /* Key Exchange */
 
 # define OSSL_FUNC_KEYEXCH_NEWCTX                      1
@@ -983,16 +1001,16 @@ OSSL_CORE_MAKE_FUNC(int, decoder_export_object,
  * deal with.
  */
 
-#define OSSL_FUNC_STORE_OPEN                        1
-#define OSSL_FUNC_STORE_ATTACH                      2
-#define OSSL_FUNC_STORE_SETTABLE_CTX_PARAMS         3
-#define OSSL_FUNC_STORE_SET_CTX_PARAMS              4
-#define OSSL_FUNC_STORE_LOAD                        5
-#define OSSL_FUNC_STORE_EOF                         6
-#define OSSL_FUNC_STORE_CLOSE                       7
-#define OSSL_FUNC_STORE_EXPORT_OBJECT               8
-#define OSSL_FUNC_STORE_DELETE                      9
-#define OSSL_FUNC_STORE_OPEN_EX                     10
+# define OSSL_FUNC_STORE_OPEN                        1
+# define OSSL_FUNC_STORE_ATTACH                      2
+# define OSSL_FUNC_STORE_SETTABLE_CTX_PARAMS         3
+# define OSSL_FUNC_STORE_SET_CTX_PARAMS              4
+# define OSSL_FUNC_STORE_LOAD                        5
+# define OSSL_FUNC_STORE_EOF                         6
+# define OSSL_FUNC_STORE_CLOSE                       7
+# define OSSL_FUNC_STORE_EXPORT_OBJECT               8
+# define OSSL_FUNC_STORE_DELETE                      9
+# define OSSL_FUNC_STORE_OPEN_EX                     10
 OSSL_CORE_MAKE_FUNC(void *, store_open, (void *provctx, const char *uri))
 OSSL_CORE_MAKE_FUNC(void *, store_attach, (void *provctx, OSSL_CORE_BIO *in))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, store_settable_ctx_params,

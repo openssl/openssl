@@ -1,0 +1,110 @@
+=pod
+
+=head1 NAME
+
+EVP_SIGNATURE-HSS
+- The EVP_PKEY Hierarchical signature scheme (HSS) implementation
+
+=head1 DESCRIPTION
+
+The B<HSS> EVP_PKEY implementation supports Hash-based stateful signatures
+using the HSS scheme described in RFC 8554. HSS uses a tree of
+Leighton-Micali Signatures (LMS).
+
+Generated HSS signature data consists of a list of signed encoded public
+keys for each level in the tree, that have been signed using the parents private
+keys.
+As well as a LMS signature of a message that uses the leaf trees private key.
+A single level HSS tree consists of just the LMS signature of a message.
+
+The OpenSSL FIPS provider only supports signature verification, as this is a
+SP800-208 requirement for software modules.
+HSS key generation and signing, are only available in the OpenSSL default
+provider, and their main purpose is for testing. Stateful signature schemes
+generate private keys that can only be used once for signing (OTS).
+Reuse of any one time private key is a security issue.
+Due to the nature of this scheme the private key 'state' is stored in the
+HSS private key. The code does not attempt to solve the complex issue of
+maintaining persistent state. It does however supply a function that can be
+used to split an existing HSS private key into 2 parts. The state would still
+need to stored before use of the split was allowed.
+
+=head2 Signature Parameters
+
+The following signature parameters can be set using EVP_PKEY_verify_message_init()
+
+=over 4
+
+=item "threads" (B<OSSL_SIGNATURE_PARAM_THREADS>) <uint32_t>
+
+Set the number of threads used for signature verification ranging from 1 to 8.
+The default value of 1 does not use multithreading.
+This can only be used with built-in thread support. Threading must be
+explicitly enabled by using OSSL_set_max_threads().
+
+=back
+
+EVP_PKEY_CTX_get_params() is not supported.
+
+=head1 NOTES
+
+The "digest" is not specified as a parameter because the both the
+HSS B<EVP_PKEY> and the HSS signature contain this information.
+
+=head1 EXAMPLES
+
+Error checking has been omitted from the following examples
+
+=head2 HSS signature verification
+
+ /* See L<EVP_PKEY-HSS(7)/EXAMPLES for an example of loading a HSS 'pub' key */
+ ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pub, propq);
+ sig = EVP_SIGNATURE_fetch(libctx, "HSS", propq);
+ EVP_PKEY_verify_message_init(ctx, sig, NULL);
+ /*
+  * EVP_PKEY_verify_message_update() and EVP_PKEY_verify_message_final()
+  * can also be used here.
+  */
+ ret = EVP_PKEY_verify(ctx, sigdata, sigdata_len, msg, msglen);
+ /*
+  * ret == 1 indicates success, 0 verify failure and < 0 for some
+  * other error.
+  */
+
+ =head2 HSS signature generation
+
+ /* See L<EVP_PKEY-HSS(7)/EXAMPLES for an example of key generation */
+ ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, propq);
+ sig = EVP_SIGNATURE_fetch(libctx, "HSS", propq);
+ EVP_PKEY_sign_message_init(ctx, sigalg, NULL);
+ /* Get the size of the signature */
+ EVP_PKEY_sign(ctx, NULL, &siglen, msg, msglen);
+ sig = OPENSSL_malloc(siglen);
+ /* 
+  * Note that EVP_PKEY_sign() will fail if there are no keys remaining.
+  *
+  * EVP_PKEY_sign_message_update() and EVP_PKEY_sign_message_final() can
+  * be used here also.
+  */
+ EVP_PKEY_sign(ctx, sig, &siglen, msg, msglen);
+
+=head1 SEE ALSO
+
+L<EVP_PKEY-HSS(7)>,
+L<EVP_PKEY_CTX_set_params(3)>,
+L<provider-signature(7)>,
+
+=head1 HISTORY
+
+This functionality was added in OpenSSL 3.5.0
+
+=head1 COPYRIGHT
+
+Copyright 2023-2024 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

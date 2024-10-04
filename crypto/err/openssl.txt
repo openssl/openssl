@@ -1132,6 +1132,7 @@ PROV_R_NO_PARAMETERS_SET:177:no parameters set
 PROV_R_ONESHOT_CALL_OUT_OF_ORDER:239:oneshot call out of order
 PROV_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE:178:\
 	operation not supported for this keytype
+PROV_R_OTS_KEYS_EXHAUSTED:244:ots keys exhausted
 PROV_R_OUTPUT_BUFFER_TOO_SMALL:106:output buffer too small
 PROV_R_PARENT_CANNOT_GENERATE_RANDOM_NUMBERS:228:\
 	parent cannot generate random numbers

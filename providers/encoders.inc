@@ -106,6 +106,12 @@ ENCODER_w_structure("DHX", dhx, yes, pem, type_specific_params),
 ENCODER_w_structure("DSA", dsa, yes, der, type_specific),
 ENCODER_w_structure("DSA", dsa, yes, pem, type_specific),
 #endif
+
+#ifndef OPENSSL_NO_HSS
+ENCODER("HSS", hss, yes, xdr),
+ENCODER_TEXT("HSS", hss, yes),
+#endif
+
 #ifndef OPENSSL_NO_EC
 /* EC only supports keypair and parameters DER and PEM output. */
 ENCODER_w_structure("EC", ec, yes, der, type_specific_no_pub),
