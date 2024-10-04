@@ -289,7 +289,7 @@ static OSSL_CMP_PKISI *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
                                             STACK_OF(X509) **caPubs)
 {
     mock_srv_ctx *ctx = OSSL_CMP_SRV_CTX_get0_custom_ctx(srv_ctx);
-    int bodytype;
+    int bodytype, central_keygen;
     OSSL_CMP_PKISI *si = NULL;
     EVP_PKEY *keyOut = NULL;
 
@@ -375,7 +375,12 @@ static OSSL_CMP_PKISI *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
             && (*certOut = X509_dup(ctx->certOut)) == NULL)
         /* Should return a cert produced from request template, see FR #16054 */
         goto err;
-    if (OSSL_CRMF_MSG_centralKeygen_requested(crm, p10cr)
+    
+    central_keygen = OSSL_CRMF_MSG_centralKeygen_requested(crm, p10cr);
+    if (central_keygen < 0)
+        goto err;
+
+    if (central_keygen == 1
         && (ctx->keyOut == NULL
             || (keyOut = EVP_PKEY_dup(ctx->keyOut)) == NULL
             || !OSSL_CMP_CTX_set0_newPkey(OSSL_CMP_SRV_CTX_get0_cmp_ctx(srv_ctx),

@@ -544,11 +544,36 @@ int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
     return 1;
 }
 
-int OSSL_CRMF_MSG_popo_present(const OSSL_CRMF_MSG *crm)
+int OSSL_CRMF_MSG_centralKeygen_requested(const OSSL_CRMF_MSG *crm, const X509_REQ *p10cr)
 {
-    if (crm != NULL)
+    X509_PUBKEY *pubkey = NULL;
+    const unsigned char *pk = NULL;
+    int pklen, ret = 0;
+
+    if (crm == NULL && p10cr == NULL) {
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_NULL_ARGUMENT);
         return -1;
-    return crm->popo != NULL;
+    }
+
+    if (crm != NULL)
+        pubkey = OSSL_CRMF_CERTTEMPLATE_get0_publicKey(OSSL_CRMF_MSG_get0_tmpl(crm));
+    else
+        pubkey = p10cr->req_info.pubkey;
+
+    if (pubkey == NULL
+        || (X509_PUBKEY_get0_param(NULL, &pk, &pklen, NULL, pubkey)
+            && pklen == 0))
+        ret = 1;
+
+    /*
+     * In case of CRMF, POPO MUST be absent if central key generation
+     * is requested, otherwise MUST be present
+     */
+    if (crm != NULL && ret != (crm->popo == NULL)) {
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_POPO_INCONSISTENT_CENTRAL_KEYGEN);
+        return -2;
+    }
+    return ret;
 }
 
 X509_PUBKEY

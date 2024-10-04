@@ -127,8 +127,8 @@ OSSL_CRMF_MSG_get_certReqId() retrieves the certReqId of I<crm>.
 OSSL_CRMF_MSG_centralKeygen_requested() returns 1 if central key generation
 is requested i.e., the public key in the certificate request (I<crm> is taken if it is non-NULL, 
 otherwise I<p10cr>) is NULL or has an empty key value (with length zero).
-In case I<crm> is non-NULL, this is checked for consistency with its B<popo> field (must be
-NULL if central key generation is requested else must be present).
+In case I<crm> is non-NULL, this is checked for consistency with its B<popo> field 
+(must be NULL if and only if central key generation is requested).
 Otherwise it returns 0, and on error a negative value.
 
 =head1 RETURN VALUES
