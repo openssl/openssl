@@ -15,26 +15,24 @@
 #include <openssl/evp.h>
 #include <openssl/core_names.h>
 
-#ifndef OPENSSL_NO_ECH
-
 /* a size for some crypto vars */
-# define OSSL_ECH_CRYPTO_VAR_SIZE 2048
+#define OSSL_ECH_CRYPTO_VAR_SIZE 2048
 
 /*
  * Used for ech_bio2buf, when reading from a BIO we allocate in chunks sized
  * as per below, with a max number of chunks as indicated, we don't expect to
  * go beyond one chunk in almost all cases
  */
-# define OSSL_ECH_BUFCHUNK 512
-# define OSSL_ECH_MAXITER  32
+#define OSSL_ECH_BUFCHUNK 512
+#define OSSL_ECH_MAXITER  32
 
 /*
  * ECHConfigList input to OSSL_ECHSTORE_read_echconfiglist()
  * can be either binary encoded ECHConfigList or a base64
  * encoded ECHConfigList.
  */
-# define OSSL_ECH_FMT_BIN       1  /* binary ECHConfigList */
-# define OSSL_ECH_FMT_B64TXT    2  /* base64 ECHConfigList */
+#define OSSL_ECH_FMT_BIN       1  /* binary ECHConfigList */
+#define OSSL_ECH_FMT_B64TXT    2  /* base64 ECHConfigList */
 
 /*
  * Telltales we use when guessing which form of encoded input we've
@@ -47,14 +45,14 @@ static const char B64_alphabet[] =
     "\x6b\x6c\x6d\x6e\x6f\x70\x71\x72\x73\x74\x75\x76\x77\x78\x79\x7a\x30\x31"
     "\x32\x33\x34\x35\x36\x37\x38\x39\x2b\x2f\x3d\x3b";
 
-# ifndef TLSEXT_MINLEN_host_name
+#ifndef TLSEXT_MINLEN_host_name
 /*
  * TODO(ECH): shortest DNS name we allow, e.g. "a.bc" - maybe that should
  * be defined elsewhere, or should the check be skipped in case there's
  * a local deployment that uses shorter names?
  */
-#  define TLSEXT_MINLEN_host_name 4
-# endif
+# define TLSEXT_MINLEN_host_name 4
+#endif
 
 /*
  * local functions - public APIs are at the end
@@ -259,7 +257,7 @@ err:
 static int ech_final_config_checks(OSSL_ECHSTORE_ENTRY *ee)
 {
     OSSL_HPKE_SUITE hpke_suite;
-    size_t ind = 0, num;
+    size_t ind, num;
     int goodsuitefound = 0;
 
     /* check local support for some suite */
@@ -310,7 +308,6 @@ static int ech_decode_one_entry(OSSL_ECHSTORE_ENTRY **rent, PACKET *pkt,
                                 EVP_PKEY *priv, int for_retry)
 {
     unsigned int ech_content_length = 0, tmpi;
-    unsigned char *tmpecstart = NULL;
     const unsigned char *tmpecp = NULL;
     size_t tmpeclen = 0, test_publen = 0;
     PACKET ver_pkt, pub_pkt, cipher_suites, public_name_pkt, exts;
@@ -353,6 +350,7 @@ static int ech_decode_one_entry(OSSL_ECHSTORE_ENTRY **rent, PACKET *pkt,
         }
         /* nothing to return but not a fail */
         ossl_echstore_entry_free(ee);
+        *rent = NULL;
         return 1;
     }
     if (!PACKET_copy_bytes(&ver_pkt, &ee->config_id, 1)
@@ -406,16 +404,11 @@ static int ech_decode_one_entry(OSSL_ECHSTORE_ENTRY **rent, PACKET *pkt,
         goto err;
     }
     /* set length of encoding of this ECHConfig */
-    ee->encoded = (unsigned char *)tmpecp;
-    ee->encoded_len = PACKET_data(&ver_pkt) - ee->encoded;
+    ee->encoded_len = PACKET_data(&ver_pkt) - tmpecp;
     /* copy encoded as it might get free'd if a reduce happens */
-    tmpecstart = OPENSSL_malloc(ee->encoded_len);
-    if (tmpecstart == NULL) {
-        ee->encoded = NULL; /* don't free twice in this case */
+    ee->encoded = OPENSSL_memdup(tmpecp, ee->encoded_len);
+    if (ee->encoded == NULL)
         goto err;
-    }
-    memcpy(tmpecstart, ee->encoded, ee->encoded_len);
-    ee->encoded = tmpecstart;
     if (priv != NULL) {
         if (EVP_PKEY_get_octet_string_param(priv,
                                             OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY,
@@ -436,6 +429,7 @@ static int ech_decode_one_entry(OSSL_ECHSTORE_ENTRY **rent, PACKET *pkt,
     return 1;
 err:
     ossl_echstore_entry_free(ee);
+    *rent = NULL;
     return 0;
 }
 
@@ -546,7 +540,7 @@ static int ech_read_priv_echconfiglist(OSSL_ECHSTORE *es, BIO *in,
     int rv = 0, detfmt, tdeclen = 0;
     size_t encodedlen = 0, binlen = 0;
     unsigned char *encodedval = NULL, *binbuf = NULL;
-    BIO *btmp, *btmp1;
+    BIO *btmp = NULL, *btmp1 = NULL;
 
     if (es == NULL || in == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
@@ -565,10 +559,9 @@ static int ech_read_priv_echconfiglist(OSSL_ECHSTORE *es, BIO *in,
         goto err;
     }
     if (detfmt == OSSL_ECH_FMT_BIN) { /* copy buffer if binary format */
-        binbuf = OPENSSL_malloc(encodedlen);
+        binbuf = OPENSSL_memdup(encodedval, encodedlen);
         if (binbuf == NULL)
             goto err;
-        memcpy(binbuf, encodedval, encodedlen);
         binlen = encodedlen;
     }
     if (detfmt == OSSL_ECH_FMT_B64TXT) {
@@ -579,7 +572,6 @@ static int ech_read_priv_echconfiglist(OSSL_ECHSTORE *es, BIO *in,
         }
         btmp1 = BIO_new(BIO_f_base64());
         if (btmp1 == NULL) {
-            BIO_free_all(btmp);
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
             goto err;
         }
@@ -588,12 +580,10 @@ static int ech_read_priv_echconfiglist(OSSL_ECHSTORE *es, BIO *in,
         /* overestimate but good enough */
         binbuf = OPENSSL_malloc(encodedlen);
         if (binbuf == NULL) {
-            BIO_free_all(btmp);
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
             goto err;
         }
         tdeclen = BIO_read(btmp, binbuf, encodedlen);
-        BIO_free_all(btmp);
         if (tdeclen <= 0) { /* need int for -1 return in failure case */
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
             goto err;
@@ -608,6 +598,7 @@ static int ech_read_priv_echconfiglist(OSSL_ECHSTORE *es, BIO *in,
         goto err;
     rv = 1;
 err:
+    BIO_free_all(btmp);
     OPENSSL_free(binbuf);
     OPENSSL_free(encodedval);
     return rv;
@@ -1175,5 +1166,3 @@ int OSSL_ECH_INFO_print(BIO *out, OSSL_ECH_INFO *info, int index)
     BIO_printf(out, "\t%s\n", info[index].echconfig);
     return 1;
 }
-
-#endif

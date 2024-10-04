@@ -70,9 +70,8 @@ static uint16_t verstr2us(char *arg)
     long lv = strtol(arg, NULL, 0);
     uint16_t rv = 0;
 
-    if (lv < 0xffff && lv > 0) {
+    if (lv < 0xffff && lv > 0)
         rv = (uint16_t)lv;
-    }
     return rv;
 }
 
@@ -83,7 +82,7 @@ int ech_main(int argc, char **argv)
     int i, rv = 1, verbose = 0, text = 0, outsupp = 0;
     int select = OSSL_ECHSTORE_ALL;
     char *outfile = NULL, *infile = NULL;
-    char *infiles[OSSL_ECH_MAXINFILES] = { 0 };
+    char *infiles[OSSL_ECH_MAXINFILES] = { NULL };
     int numinfiles = 0;
     char *public_name = NULL;
     char *suitestr = NULL;

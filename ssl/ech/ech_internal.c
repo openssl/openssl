@@ -12,8 +12,4 @@
 #include "../ssl_local.h"
 #include "ech_local.h"
 
-#ifndef OPENSSL_NO_ECH
-
 /* TODO(ECH): move ECH internal code here when we get to it */
-
-#endif

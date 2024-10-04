@@ -11,8 +11,6 @@
 #include <openssl/ech.h>
 #include "../ssl_local.h"
 
-#ifndef OPENSSL_NO_ECH
-
 int SSL_CTX_set1_echstore(SSL_CTX *ctx, OSSL_ECHSTORE *es)
 {
     return 0;
@@ -106,5 +104,3 @@ void SSL_CTX_ech_set_callback(SSL_CTX *ctx, SSL_ech_cb_func f)
 {
     return;
 }
-
-#endif
