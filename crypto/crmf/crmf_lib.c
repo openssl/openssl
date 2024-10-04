@@ -544,6 +544,13 @@ int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
     return 1;
 }
 
+int OSSL_CRMF_MSG_popo_present(const OSSL_CRMF_MSG *crm)
+{
+    if (crm != NULL)
+        return -1;
+    return crm->popo != NULL;
+}
+
 X509_PUBKEY
 *OSSL_CRMF_CERTTEMPLATE_get0_publicKey(const OSSL_CRMF_CERTTEMPLATE *tmpl)
 {

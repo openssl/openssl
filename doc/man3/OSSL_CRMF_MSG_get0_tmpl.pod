@@ -15,7 +15,8 @@ OSSL_CRMF_ENCRYPTEDKEY_get1_pkey,
 OSSL_CRMF_ENCRYPTEDKEY_init_envdata,
 OSSL_CRMF_ENCRYPTEDVALUE_decrypt,
 OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert,
-OSSL_CRMF_MSG_get_certReqId
+OSSL_CRMF_MSG_get_certReqId,
+OSSL_CRMF_MSG_centralKeygen_requested
 - functions reading from CRMF CertReqMsg structures
 
 =head1 SYNOPSIS
@@ -59,6 +60,8 @@ OSSL_CRMF_MSG_get_certReqId
                                         OSSL_LIB_CTX *libctx, const char *propq);
 
  int OSSL_CRMF_MSG_get_certReqId(const OSSL_CRMF_MSG *crm);
+ int OSSL_CRMF_MSG_centralKeygen_requested(const OSSL_CRMF_MSG *crm,
+                                           const X509_REQ *p10cr);
 
 =head1 DESCRIPTION
 
@@ -97,10 +100,10 @@ If `encryptedKey` is not of type B<OSSL_CRMF_ENCRYPTEDKEY_ENVELOPEDDATA>,
 decryption uses the private key I<pkey>.
 The library context I<libctx> and property query I<propq> are taken into account as usual.
 The rest of this paragraph is relevant only if CMS support not disabled for the OpenSSL build
-and `encryptedKey` is of  type case B<OSSL_CRMF_ENCRYPTEDKEY_ENVELOPEDDATA>.
+and `encryptedKey` is of type case B<OSSL_CRMF_ENCRYPTEDKEY_ENVELOPEDDATA>.
 Decryption uses the I<secret> parameter if not NULL; 
 otherwise uses the private key <pkey> and the certificate I<cert> 
-related to I<pkey>, where I<cert>  is recommended to be given if available. 
+related to I<pkey>, where I<cert> is recommended to be given if available. 
 On success, the function verifies the decrypted data as signed data,
 using the trust store I<ts> and any untrusted certificates in I<extra>.
 Doing so, it checks for the purpose "CMP Key Generation Authority" (cmKGA).
@@ -121,10 +124,20 @@ with the caller, who is responsible for freeing it.
 
 OSSL_CRMF_MSG_get_certReqId() retrieves the certReqId of I<crm>.
 
+OSSL_CRMF_MSG_centralKeygen_requested() returns 1 if central key generation
+is requested i.e., the public key in the certificate request (I<crm> is taken if it is non-NULL, 
+otherwise I<p10cr>) is NULL or has an empty key value (with length zero).
+In case I<crm> is non-NULL, this is checked for consistency with its B<popo> field (must be
+NULL if central key generation is requested else must be present).
+Otherwise it returns 0, and on error a negative value.
+
 =head1 RETURN VALUES
 
 OSSL_CRMF_MSG_get_certReqId() returns the certificate request ID as a
 nonnegative integer or -1 on error.
+
+OSSL_CRMF_MSG_centralKeygen_requested() returns 1 if central key generation
+is requested, 0 if it is not requested, and a negative value on error.
 
 All other functions return a pointer with the intended result or NULL on error.
 
@@ -139,8 +152,8 @@ The OpenSSL CRMF support was added in OpenSSL 3.0.
 OSSL_CRMF_CERTTEMPLATE_get0_publicKey() was added in OpenSSL 3.2.
 
 OSSL_CRMF_ENCRYPTEDKEY_get1_encCert(), OSSL_CRMF_ENCRYPTEDKEY_get1_pkey(),
-OSSL_CRMF_ENCRYPTEDKEY_init_envdata() and OSSL_CRMF_ENCRYPTEDVALUE_decrypt()
-were added in OpenSSL 3.5.
+OSSL_CRMF_ENCRYPTEDKEY_init_envdata(), OSSL_CRMF_ENCRYPTEDVALUE_decrypt()
+and OSSL_CRMF_MSG_centralKeygen_requested() were added in OpenSSL 3.5.
 
 =head1 COPYRIGHT
 

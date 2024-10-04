@@ -375,7 +375,7 @@ static OSSL_CMP_PKISI *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
             && (*certOut = X509_dup(ctx->certOut)) == NULL)
         /* Should return a cert produced from request template, see FR #16054 */
         goto err;
-    if (OSSL_CMP_SRV_CTX_centralKeygen_req(crm, p10cr)
+    if (OSSL_CRMF_MSG_centralKeygen_requested(crm, p10cr)
         && (ctx->keyOut == NULL
             || (keyOut = EVP_PKEY_dup(ctx->keyOut)) == NULL
             || !OSSL_CMP_CTX_set0_newPkey(OSSL_CMP_SRV_CTX_get0_cmp_ctx(srv_ctx),

@@ -8,7 +8,8 @@ OSSL_CRMF_CERTTEMPLATE_fill,
 OSSL_CRMF_MSG_set0_extensions,
 OSSL_CRMF_MSG_push0_extension,
 OSSL_CRMF_MSG_create_popo,
-OSSL_CRMF_MSGS_verify_popo
+OSSL_CRMF_MSGS_verify_popo,
+OSSL_CRMF_MSG_popo_present
 - functions populating and verifying CRMF CertReqMsg structures
 
 =head1 SYNOPSIS
@@ -37,6 +38,7 @@ OSSL_CRMF_MSGS_verify_popo
  int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
                                 int rid, int acceptRAVerified,
                                 OSSL_LIB_CTX *libctx, const char *propq);
+ int OSSL_CRMF_MSG_popo_present(const OSSL_CRMF_MSG *crm);
 
 =head1 DESCRIPTION
 
@@ -96,9 +98,15 @@ OSSL_CRMF_MSGS_verify_popo verifies the Proof-of-Possession of the request with
 the given I<rid> in the list of I<reqs>. Optionally accepts RAVerified. It can
 make use of the library context I<libctx> and property query string I<propq>.
 
+OSSL_CRMF_MSG_popo_present returns 1 if the Proof-of-Possession is present in I<crm>.
+Otherwise it returns 0 and negative value on error.
+
 =head1 RETURN VALUES
 
-All functions return 1 on success, 0 on error.
+OSSL_CRMF_MSG_popo_present returns 1 if popo is present, otherwise 0
+and negative value on error.
+
+All other functions return 1 on success, 0 on error.
 
 =head1 SEE ALSO
 
