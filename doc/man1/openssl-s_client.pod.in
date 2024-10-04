@@ -263,7 +263,9 @@ See L<openssl-format-options(1)> for details.
 
 =item B<-crl_download>
 
-Download CRL from distribution points in the certificate.
+Download CRL from distribution points in the certificate. Note that this option
+is ignored if B<-crl_check> option is not provided. Note that the maximum size
+of CRL is limited by L<X509_CRL_load_http(3)> function.
 
 =item B<-key> I<filename>|I<uri>
 
