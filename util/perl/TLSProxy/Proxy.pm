@@ -291,7 +291,7 @@ sub start
         print STDERR "Server command: $execcmd\n";
     }
 
-    $pid = IPC::Open2::open2(my $sout, my $sin, $execcmd) or die "Failed to $execcmd: $!\n";
+    $pid = IPC::Open3::open3(my $sin, my $sout, my $serr, $execcmd) or die "Failed to $execcmd: $!\n";
     $self->{serverpid} = $pid;
 
     # Process the output from s_server until we find the ACCEPT line, which
