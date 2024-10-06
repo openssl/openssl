@@ -19,6 +19,7 @@
 #include "crypto/ctype.h"
 #include <openssl/lhash.h>
 #include <openssl/rand.h>
+#include <openssl/trace.h>
 #include "internal/thread_once.h"
 #include "crypto/lhash.h"
 #include "crypto/sparse_array.h"
@@ -288,6 +289,26 @@ static int ossl_method_store_insert(OSSL_METHOD_STORE *store, ALGORITHM *alg)
     return ossl_sa_ALGORITHM_set(store->algs, alg->nid, alg);
 }
 
+/**
+ * @brief Adds a method to the specified method store.
+ *
+ * This function adds a new method to the provided method store, associating it
+ * with a specified NID, properties, and provider. The method is stored with
+ * reference count and destruction callbacks.
+ *
+ * @param store Pointer to the OSSL_METHOD_STORE where the method will be added.
+ * @param prov Pointer to the OSSL_PROVIDER representing the provider of the method.
+ * @param nid NID (numerical identifier) associated with the method.
+ * @param properties String containing properties of the method.
+ * @param method Pointer to the method to be added.
+ * @param method_up_ref Function pointer for incrementing the method reference count.
+ * @param method_destruct Function pointer for destroying the method.
+ *
+ * @return 1 if the method is successfully added, 0 on failure.
+ *
+ * If tracing is enabled, a message is printed indicating that the method is
+ * being added to the method store.
+ */
 int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
                           int nid, const char *properties, void *method,
                           int (*method_up_ref)(void *),
@@ -298,11 +319,24 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
     int ret = 0;
     int i;
 
+    /*
+     * fail if someone is trying:
+     * 1) To add the NID_undef nid (0)
+     * 2) To add an empty method
+     * 3) To add to a non-existant store
+     */
     if (nid <= 0 || method == NULL || store == NULL)
         return 0;
+    /*
+     * Properties has to be a non-null string, default it
+     * to an empty string if not set
+     */
     if (properties == NULL)
         properties = "";
 
+    /*
+     * We have to associate this method with a provider
+     */
     if (!ossl_assert(prov != NULL))
         return 0;
 
@@ -324,7 +358,21 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
         OPENSSL_free(impl);
         return 0;
     }
+
+    /*
+     * flush the method store of any implementation that already exists
+     * for this nid.
+     * This is done to ensure that on the next lookup we go through the
+     * provider comparison in ossl_method_store_fetch.  If we don't do this
+     * then this new method won't be given a chance to get selected
+     */
     ossl_method_cache_flush(store, nid);
+
+    /*
+     * Parse the properties associated with this method, and convert it to a
+     * property list stored against the implementation for later comparison
+     * during fetch operations
+     */
     if ((impl->properties = ossl_prop_defn_get(store->ctx, properties)) == NULL) {
         impl->properties = ossl_parse_property(store->ctx, properties);
         if (impl->properties == NULL)
@@ -336,6 +384,10 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
         }
     }
 
+    /*
+     * Check if we have an algorithm cache already for this nid.  If so use
+     * it, otherwise, create it, and insert it into the store
+     */
     alg = ossl_method_store_retrieve(store, nid);
     if (alg == NULL) {
         if ((alg = OPENSSL_zalloc(sizeof(*alg))) == NULL
@@ -355,9 +407,28 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
             && tmpimpl->properties == impl->properties)
             break;
     }
+
+    /*
+     * Check the number of implementation on the impl stack.
+     * If it matches the number we counted above, and the push
+     * operation is successful, then we're done here, and can return
+     * success.
+     * NOTE: This seems ripe for improvement, in that if we find a duplicate
+     * above, we can just jump down to the unlock code rather than do the extra
+     * comparison here
+     */
     if (i == sk_IMPLEMENTATION_num(alg->impls)
         && sk_IMPLEMENTATION_push(alg->impls, impl))
         ret = 1;
+    if (ret == 1) {
+        OSSL_TRACE_BEGIN(QUERY) {
+            BIO_printf(trc_out, "Adding to method store "
+                       "nid: %d\nproperties: %s\nprovider: %s\n",
+                       nid, properties,
+                       ossl_provider_name(prov) == NULL ? "none" :
+                       ossl_provider_name(prov));
+        } OSSL_TRACE_END(QUERY);
+    }
     ossl_property_unlock(store);
     if (ret == 0)
         impl_free(impl);
@@ -412,6 +483,21 @@ struct alg_cleanup_by_provider_data_st {
     const OSSL_PROVIDER *prov;
 };
 
+/**
+ * @brief Cleans up implementations of an algorithm associated with a provider.
+ *
+ * This function removes all implementations of a specified algorithm that are
+ * associated with a given provider. The function walks through the stack of
+ * implementations backwards to handle deletions without affecting indexing.
+ *
+ * @param idx Index of the algorithm (unused in this function).
+ * @param alg Pointer to the ALGORITHM structure containing the implementations.
+ * @param arg Pointer to the data containing the provider information.
+ *
+ * If tracing is enabled, messages are printed indicating the removal of each
+ * implementation and its properties. If any implementation is removed, the
+ * associated cache is flushed.
+ */
 static void
 alg_cleanup_by_provider(ossl_uintmax_t idx, ALGORITHM *alg, void *arg)
 {
@@ -426,9 +512,22 @@ alg_cleanup_by_provider(ossl_uintmax_t idx, ALGORITHM *alg, void *arg)
         IMPLEMENTATION *impl = sk_IMPLEMENTATION_value(alg->impls, i);
 
         if (impl->provider == data->prov) {
-            impl_free(impl);
+
+            OSSL_TRACE_BEGIN(QUERY) {
+                char buf[512];
+                size_t size;
+
+                size = ossl_property_list_to_string(NULL, impl->properties, buf, 512);
+                BIO_printf(trc_out, "Removing implementation from "
+                           "query cache\nproperties %s\nprovider %s\n",
+                           size == 0 ? "none" : buf,
+                           ossl_provider_name(impl->provider) == NULL ? "none" :
+                           ossl_provider_name(impl->provider));
+            } OSSL_TRACE_END(QUERY);
+
             (void)sk_IMPLEMENTATION_delete(alg->impls, i);
             count++;
+            impl_free(impl);
         }
     }
 
@@ -504,6 +603,25 @@ void ossl_method_store_do_all(OSSL_METHOD_STORE *store,
     }
 }
 
+/**
+ * @brief Fetches a method from the method store matching the given properties.
+ *
+ * This function searches the method store for an implementation of a specified
+ * method, identified by its NID, and matching the given property query. If
+ * successful, it returns the method and its associated provider.
+ *
+ * @param store Pointer to the OSSL_METHOD_STORE from which to fetch the method.
+ * @param nid NID (numerical identifier) of the method to be fetched.
+ * @param prop_query String containing the property query to match against.
+ * @param prov_rw Pointer to the OSSL_PROVIDER to restrict the search to, or
+ *                to receive the matched provider.
+ * @param method Pointer to receive the fetched method.
+ *
+ * @return 1 if the method is successfully fetched, 0 on failure.
+ *
+ * If tracing is enabled, a message is printed indicating the property query and
+ * the resolved provider.
+ */
 int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
                             int nid, const char *prop_query,
                             const OSSL_PROVIDER **prov_rw, void **method)
@@ -516,6 +634,10 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
     int ret = 0;
     int j, best = -1, score, optional;
 
+    /*
+     * Typical check, fail if we try to lookup NID_undef, a null method
+     * or use a NULL store
+     */
     if (nid <= 0 || method == NULL || store == NULL)
         return 0;
 
@@ -528,14 +650,28 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
     /* This only needs to be a read lock, because the query won't create anything */
     if (!ossl_property_read_lock(store))
         return 0;
+
+    /*
+     * Get the cache for this NID
+     * If its not found, then no lookup is possible here
+     */
     alg = ossl_method_store_retrieve(store, nid);
     if (alg == NULL) {
         ossl_property_unlock(store);
         return 0;
     }
 
+    /*
+     * If a property query string is provided, convert it to an
+     * OSSL_PROPERTY_LIST structure
+     */
     if (prop_query != NULL)
         p2 = pq = ossl_parse_query(store->ctx, prop_query, 0);
+
+    /*
+     * If the library context has default properties specified
+     * then merge those with the properties passed to this function
+     */
     plp = ossl_ctx_global_properties(store->ctx, 0);
     if (plp != NULL && *plp != NULL) {
         if (pq == NULL) {
@@ -549,6 +685,13 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
         }
     }
 
+    /*
+     * Search for a provider that provides this implementaiton.
+     * if the requested provider is NULL, then any provider will do,
+     * otherwise we should try to find the one that matches the requested
+     * provider.  Note that providers are given implicit preference via the
+     * ordering of the implementation stack
+     */
     if (pq == NULL) {
         for (j = 0; j < sk_IMPLEMENTATION_num(alg->impls); j++) {
             if ((impl = sk_IMPLEMENTATION_value(alg->impls, j)) != NULL
@@ -560,6 +703,12 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
         }
         goto fin;
     }
+
+    /*
+     * If there are optional properties specified
+     * the search again, and select the provider that matches the
+     * most options
+     */
     optional = ossl_property_has_optional(pq);
     for (j = 0; j < sk_IMPLEMENTATION_num(alg->impls); j++) {
         if ((impl = sk_IMPLEMENTATION_value(alg->impls, j)) != NULL
@@ -582,6 +731,18 @@ fin:
     } else {
         ret = 0;
     }
+
+    OSSL_TRACE_BEGIN(QUERY) {
+        char buf[512];
+        int size;
+
+        size = ossl_property_list_to_string(NULL, pq, buf, 512);
+        BIO_printf(trc_out, "method store query with properties %s "
+                   "resolves to provider %s\n",
+                   size == 0 ? "none" : buf,
+                   ossl_provider_name(best_impl->provider));
+    } OSSL_TRACE_END(QUERY);
+
     ossl_property_unlock(store);
     ossl_property_free(p2);
     return ret;

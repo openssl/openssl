@@ -27,26 +27,27 @@ static int test_trace_categories(void)
             is_cat_name_eq = TEST_str_eq(cat_name, #name); \
             break
 
-        CASE(ALL);
-        CASE(TRACE);
-        CASE(INIT);
-        CASE(TLS);
-        CASE(TLS_CIPHER);
-        CASE(CONF);
-        CASE(ENGINE_TABLE);
-        CASE(ENGINE_REF_COUNT);
-        CASE(PKCS5V2);
-        CASE(PKCS12_KEYGEN);
-        CASE(PKCS12_DECRYPT);
-        CASE(X509V3_POLICY);
-        CASE(BN_CTX);
-        CASE(CMP);
-        CASE(STORE);
-        CASE(DECODER);
-        CASE(ENCODER);
-        CASE(REF_COUNT);
-        CASE(HTTP);
-        CASE(PROVIDER);
+            CASE(ALL);
+            CASE(TRACE);
+            CASE(INIT);
+            CASE(TLS);
+            CASE(TLS_CIPHER);
+            CASE(CONF);
+            CASE(ENGINE_TABLE);
+            CASE(ENGINE_REF_COUNT);
+            CASE(PKCS5V2);
+            CASE(PKCS12_KEYGEN);
+            CASE(PKCS12_DECRYPT);
+            CASE(X509V3_POLICY);
+            CASE(BN_CTX);
+            CASE(CMP);
+            CASE(STORE);
+            CASE(DECODER);
+            CASE(ENCODER);
+            CASE(REF_COUNT);
+            CASE(HTTP);
+            CASE(PROVIDER);
+            CASE(QUERY);
 #undef CASE
         default:
             is_cat_name_eq = TEST_ptr_null(cat_name);
