@@ -27,7 +27,7 @@
 
 /* Whether to chain public/private DRBGs to primary DRBG */
 # ifndef OPENSSL_RAND_CHAIN
-#  define OPENSSL_RAND_CHAIN 1
+#  define OPENSSL_RAND_CHAIN 0
 # endif
 
 # ifndef FIPS_MODULE
