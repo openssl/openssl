@@ -225,6 +225,7 @@ static int test_drbg_reseed(int expect_success,
      * step 3: check postconditions
      */
 
+#if OPENSSL_RAND_CHAIN == 1
     /* Test whether reseeding succeeded as expected */
     if (!TEST_int_eq(state(primary), expected_state)
         || !TEST_int_eq(state(public), expected_state)
@@ -236,6 +237,12 @@ static int test_drbg_reseed(int expect_success,
         if (!TEST_int_ge(reseed_counter(primary), primary_reseed))
             return 0;
     }
+#else
+    /* Test whether reseeding succeeded as expected */
+    if (!TEST_int_eq(state(public), expected_state)
+        || !TEST_int_eq(state(private), expected_state))
+        return 0;
+#endif
 
     if (expect_public_reseed >= 0) {
         /* Test whether public DRBG was reseeded as expected */
@@ -246,7 +253,7 @@ static int test_drbg_reseed(int expect_success,
     }
 
     if (expect_private_reseed >= 0) {
-        /* Test whether public DRBG was reseeded as expected */
+        /* Test whether private DRBG was reseeded as expected */
         if (!TEST_int_ge(reseed_counter(private), private_reseed)
                 || !TEST_uint_ge(reseed_counter(private),
                                  reseed_counter(primary)))
@@ -254,6 +261,7 @@ static int test_drbg_reseed(int expect_success,
     }
 
     if (expect_success == 1) {
+#if OPENSSL_RAND_CHAIN == 1
         /* Test whether reseed time of primary DRBG is set correctly */
         if (!TEST_time_t_le(before_reseed, reseed_time(primary))
             || !TEST_time_t_le(reseed_time(primary), after_reseed))
@@ -263,6 +271,17 @@ static int test_drbg_reseed(int expect_success,
         if (!TEST_time_t_ge(reseed_time(public), reseed_time(primary))
             || !TEST_time_t_ge(reseed_time(private), reseed_time(primary)))
             return 0;
+#else
+        /* Test whether reseed times of child DRBGs are set correctly */
+        if (!TEST_time_t_le(before_reseed, reseed_time(public))
+            || !TEST_time_t_le(reseed_time(public), after_reseed))
+            return 0;
+
+        if (!TEST_time_t_le(before_reseed, reseed_time(private))
+            || !TEST_time_t_le(reseed_time(private), after_reseed))
+            return 0;
+#endif
+
     } else {
         ERR_clear_error();
     }
@@ -548,9 +567,11 @@ static int test_rand_fork_safety(int i)
 static int test_rand_reseed(void)
 {
     EVP_RAND_CTX *primary, *public, *private;
-    unsigned char rand_add_buf[256];
     int rv = 0;
+#if OPENSSL_RAND_CHAIN == 1
+    unsigned char rand_add_buf[256];
     time_t before_reseed;
+#endif
 
     if (using_fips_rng())
         return TEST_skip("CRNGT cannot be disabled");
@@ -561,12 +582,13 @@ static int test_rand_reseed(void)
         return 0;
 #endif
 
-    /* All three DRBGs should be non-null */
+    /* All three DRBGs and primary seed should be non-null */
     if (!TEST_ptr(primary = RAND_get0_primary(NULL))
         || !TEST_ptr(public = RAND_get0_public(NULL))
         || !TEST_ptr(private = RAND_get0_private(NULL)))
         return 0;
 
+#if OPENSSL_RAND_CHAIN == 1
     /* There should be three distinct DRBGs, two of them chained to primary */
     if (!TEST_ptr_ne(public, private)
         || !TEST_ptr_ne(public, primary)
@@ -574,6 +596,13 @@ static int test_rand_reseed(void)
         || !TEST_ptr_eq(prov_rand(public)->parent, prov_rand(primary))
         || !TEST_ptr_eq(prov_rand(private)->parent, prov_rand(primary)))
         return 0;
+#else
+    /* There should be three distinct DRBGs, all chained to seed */
+    if (!TEST_ptr_eq(public, private)
+        || !TEST_ptr_eq(public, primary)
+        || !TEST_ptr_eq(private, primary))
+        return 0;
+#endif
 
     /* Disable CRNG testing for the primary DRBG */
     if (!TEST_true(disable_crngt(primary)))
@@ -602,6 +631,7 @@ static int test_rand_reseed(void)
                                     0, 0, 0, 0)))
         goto error;
 
+#if OPENSSL_RAND_CHAIN == 1
     /*
      * Test whether the public and private DRBG are both reseeded when their
      * reseed counters differ from the primary's reseed counter.
@@ -656,6 +686,7 @@ static int test_rand_reseed(void)
                                     1, 1, 1,
                                     before_reseed)))
         goto error;
+#endif
 
     rv = 1;
 
