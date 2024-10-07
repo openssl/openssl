@@ -9,7 +9,7 @@
 
 /*
  * NB: Changes to this file should also be reflected in
- * doc/man7/ossl-guide-quic-server-non block.pod
+ * doc/man7/ossl-guide-quic-server-non-block.pod
  */
 
 #include <string.h>
@@ -205,8 +205,10 @@ static int create_socket(uint16_t port)
  */
 static void wait_for_activity(SSL *ssl)
 {
-    int sock;
+    int sock, isinfinite;
     fd_set read_fd;
+    struct timeval tv;
+    struct timeval *tvp = NULL;
 
     /* Get hold of the underlying file descriptor for the socket */
     if ((sock = SSL_get_fd(ssl)) == -1) {
@@ -219,6 +221,13 @@ static void wait_for_activity(SSL *ssl)
 
     /* Add the socket file descriptor to the fd_set */
     FD_SET(sock, &read_fd);
+
+    /*
+     * Find out when OpenSSL would next like to be called, regardless of
+     * whether the state of the underlying socket has changed or not.
+     */
+    if (SSL_get_event_timeout(ssl, &tv, &isinfinite) && !isinfinite)
+        tvp = &tv;
 
     /*
      * Wait until the socket is writeable or readable. We use select here
@@ -240,7 +249,7 @@ static void wait_for_activity(SSL *ssl)
      * "select" (with updated timeouts).
      */
 
-    select(sock + 1, &read_fd, NULL, NULL, NULL);
+    select(sock + 1, &read_fd, NULL, NULL, tvp);
 }
 
 /**
