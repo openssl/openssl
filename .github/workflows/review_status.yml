@@ -89,7 +89,7 @@ jobs:
           # to the files review1.json and review2.json
           gh api -F issue=$i -F reviewer="$REVIEWER" graphql -f query='query($issue: Int!, $reviewer: [String!]) { repository(owner:"openssl", name:"openssl") { issue(number: $issue) { projectItems(first: 50) { edges { node { id project {title id field(name:"Review 1") { ... on ProjectV2SingleSelectField { id options(names: $reviewer) { id color} } } } fieldValueByName(name: "Review 1") { ... on ProjectV2ItemFieldSingleSelectValue { status: name color } } } } } } } }' > ./review1.json
 
-          gh api -F issue=$i -F reviewer="$REVIEWER" graphql -f query='query($issue: Int!, $reviewer: [String!]) { repository(owner:"openssl", name:"openssl") { issue(number: $issue) { projectItems(first: 51) { edges { node { id project {title id field(name:"Review 2") { ... on ProjectV2SingleSelectField { id options(names: $reviewer) { id color} } } } fieldValueByName(name: "Review 2") { ... on ProjectV2ItemFieldSingleSelectValue { status: name color } } } } } } } }' > ./review2.json
+          gh api -F issue=$i -F reviewer="$REVIEWER" graphql -f query='query($issue: Int!, $reviewer: [String!]) { repository(owner:"openssl", name:"openssl") { issue(number: $issue) { projectItems(first: 50) { edges { node { id project {title id field(name:"Review 2") { ... on ProjectV2SingleSelectField { id options(names: $reviewer) { id color} } } } fieldValueByName(name: "Review 2") { ... on ProjectV2ItemFieldSingleSelectValue { status: name color } } } } } } } }' > ./review2.json
 
           # For each of the two files review1.json and review2.json, do some work
           for rev in review1.json review2.json
