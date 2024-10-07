@@ -47,7 +47,7 @@ int ossl_hss_pubkey_decode(const unsigned char *pub, size_t publen,
                            HSS_KEY *hsskey, int lms_only)
 {
     PACKET pkt;
-    LMS_KEY *lmskey, *root;
+    LMS_KEY *lmskey;
 
     if (!PACKET_buf_init(&pkt, pub, publen))
         return 0;
@@ -63,21 +63,7 @@ int ossl_hss_pubkey_decode(const unsigned char *pub, size_t publen,
     if (!ossl_lms_pubkey_decode(pkt.curr, pkt.remaining, lmskey))
         goto err;
 
-    /* Check if there is an existing key */
-    root = HSS_LMS_KEY_get(hsskey, 0);
-    if (root != NULL) {
-        /* If the key matches then there is no need to copy it */
-        if (root->pub.encoded != NULL) {
-            if (ossl_lms_key_equal(root, lmskey, OSSL_KEYMGMT_SELECT_PUBLIC_KEY)) {
-                ossl_lms_key_free(lmskey);
-                return 1;
-            }
-        }
-        /* Clear the lists if the public key is different */
-        if (!ossl_hss_lists_init(&hsskey->lists))
-            goto err;
-    }
-    if (!HSS_LMS_KEY_add(hsskey, lmskey))
+    if (!ossl_hss_key_set_public(hsskey, lmskey))
         goto err;
     return 1;
  err:

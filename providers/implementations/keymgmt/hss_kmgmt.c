@@ -10,6 +10,7 @@
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/param_build.h>
+#include "internal/param_build_set.h"
 #include "crypto/hss.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
@@ -22,7 +23,9 @@ static OSSL_FUNC_keymgmt_match_fn hss_match;
 static OSSL_FUNC_keymgmt_validate_fn hss_validate;
 static OSSL_FUNC_keymgmt_load_fn hss_load;
 static OSSL_FUNC_keymgmt_import_fn hss_import;
+static OSSL_FUNC_keymgmt_export_fn hss_export;
 static OSSL_FUNC_keymgmt_import_types_fn hss_imexport_types;
+static OSSL_FUNC_keymgmt_export_types_fn hss_imexport_types;
 
 #define HSS_POSSIBLE_SELECTIONS (OSSL_KEYMGMT_SELECT_PUBLIC_KEY)
 
@@ -75,6 +78,49 @@ static int hss_import(void *keydata, int selection, const OSSL_PARAM params[])
     return ossl_hss_pubkey_from_params(params, key);
 }
 
+static int hss_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
+                      void *cbarg)
+{
+    HSS_KEY *hsskey = keydata;
+    OSSL_PARAM_BLD *tmpl;
+    OSSL_PARAM *params = NULL;
+    int ret = 0, L;
+    LMS_KEY *lmskey;
+
+    if (!ossl_prov_is_running() || hsskey == NULL)
+        return 0;
+
+    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) == 0)
+        return 0;
+
+    lmskey = ossl_hss_key_get_public(hsskey);
+    if (lmskey == NULL)
+        return 0;
+
+    tmpl = OSSL_PARAM_BLD_new();
+    if (tmpl == NULL)
+        return 0;
+
+    L = hsskey->L;
+    if (!ossl_param_build_set_int(tmpl, params, OSSL_PKEY_PARAM_HSS_L, L))
+        goto err;
+    if (!ossl_param_build_set_octet_string(tmpl, params,
+                                           OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY,
+                                           lmskey->pub.encoded,
+                                           lmskey->pub.encodedlen))
+        goto err;
+
+    params = OSSL_PARAM_BLD_to_param(tmpl);
+    if (params == NULL)
+        goto err;
+
+    ret = param_cb(params, cbarg);
+    OSSL_PARAM_free(params);
+err:
+    OSSL_PARAM_BLD_free(tmpl);
+    return ret;
+}
+
 static const OSSL_PARAM hss_key_types[] = {
     OSSL_PARAM_int(OSSL_PKEY_PARAM_HSS_L, NULL),
     OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY, NULL, 0),
@@ -124,5 +170,7 @@ const OSSL_DISPATCH ossl_hss_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_LOAD, (void (*)(void))hss_load },
     { OSSL_FUNC_KEYMGMT_IMPORT, (void (*)(void))hss_import },
     { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))hss_imexport_types },
+    { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))hss_export },
+    { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))hss_imexport_types },
     OSSL_DISPATCH_END
 };

@@ -486,6 +486,9 @@ static const OSSL_ALGORITHM fips_signature[] = {
 #ifndef OPENSSL_NO_LMS
     { PROV_NAMES_LMS, FIPS_DEFAULT_PROPERTIES, ossl_lms_signature_functions },
 #endif
+#ifndef OPENSSL_NO_HSS
+    { PROV_NAMES_HSS, FIPS_DEFAULT_PROPERTIES, ossl_hss_signature_functions },
+#endif
     { NULL, NULL, NULL }
 };
 
@@ -541,6 +544,10 @@ static const OSSL_ALGORITHM fips_keymgmt[] = {
 #ifndef OPENSSL_NO_LMS
     { PROV_NAMES_LMS, FIPS_DEFAULT_PROPERTIES, ossl_lms_keymgmt_functions,
       PROV_DESCS_LMS },
+#endif
+#ifndef OPENSSL_NO_HSS
+    { PROV_NAMES_HSS, FIPS_DEFAULT_PROPERTIES, ossl_hss_keymgmt_functions,
+      PROV_DESCS_HSS },
 #endif
     { NULL, NULL, NULL }
 };

@@ -19,6 +19,7 @@
 #  include "types.h"
 #  include <openssl/params.h>
 #  include "internal/refcount.h"
+#  include "internal/packet.h"
 
 /*
  * Numeric identifiers associated with Leighton-Micali Signatures (LMS)
@@ -149,6 +150,7 @@ int ossl_lms_key_equal(const LMS_KEY *key1, const LMS_KEY *key2, int selection);
 int ossl_lms_key_valid(const LMS_KEY *key, int selection);
 int ossl_lms_key_has(const LMS_KEY *key, int selection);
 
+int ossl_lms_pubkey_from_pkt(PACKET *pkt, LMS_KEY *lmskey);
 int ossl_lms_pubkey_from_params(const OSSL_PARAM params[], LMS_KEY *lmskey);
 int ossl_lms_pubkey_decode(const unsigned char *pub, size_t publen,
                            LMS_KEY *lmskey);

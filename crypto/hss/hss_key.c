@@ -12,18 +12,6 @@
 #include <string.h>
 
 /*
- * Copyright 2023-2024 The OpenSSL Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
- * this file except in compliance with the License.  You can obtain a copy
- * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
- */
-#include <openssl/core_dispatch.h>
-#include "crypto/hss.h"
-#include <string.h>
-
-/*
  * @brief Create an empty HSS_KEY object.
  * The key is reference counted.
  *
@@ -42,9 +30,6 @@ HSS_KEY *ossl_hss_key_new(OSSL_LIB_CTX *libctx, const char *propq)
         return NULL;
     }
     hsskey->libctx = libctx;
-    if (!ossl_hss_lists_init(&hsskey->lists))
-        goto err;
-
     if (propq != NULL) {
         hsskey->propq = OPENSSL_strdup(propq);
         if (hsskey->propq == NULL)
@@ -73,7 +58,7 @@ void ossl_hss_key_free(HSS_KEY *hsskey)
         return;
     REF_ASSERT_ISNT(i < 0);
 
-    ossl_hss_lists_free(&hsskey->lists);
+    ossl_lms_key_free(hsskey->public);
     OPENSSL_free(hsskey->propq);
     CRYPTO_FREE_REF(&hsskey->references);
     OPENSSL_free(hsskey);
@@ -114,8 +99,8 @@ int ossl_hss_key_equal(const HSS_KEY *hsskey1, const HSS_KEY *hsskey2,
     if (hsskey1 == NULL || hsskey2 == NULL)
         return 0;
 
-    key1 = HSS_LMS_KEY_get(hsskey1, 0);
-    key2 = HSS_LMS_KEY_get(hsskey2, 0);
+    key1 = hsskey1->public;
+    key2 = hsskey2->public;
     if (key1 == NULL || key2 == NULL)
         return 0;
 
@@ -131,12 +116,12 @@ int ossl_hss_key_equal(const HSS_KEY *hsskey1, const HSS_KEY *hsskey2,
  */
 int ossl_hss_key_valid(const HSS_KEY *hsskey, int selection)
 {
-    if (hsskey == NULL)
+    if (hsskey == NULL || hsskey->public == NULL)
         return 0;
     if (hsskey->L < HSS_MIN_L || hsskey->L > HSS_MAX_L)
         return 0;
 
-    return ossl_lms_key_valid(HSS_LMS_KEY_get(hsskey, 0), selection);
+    return ossl_lms_key_valid(hsskey->public, selection);
 }
 
 /**
@@ -148,5 +133,29 @@ int ossl_hss_key_valid(const HSS_KEY *hsskey, int selection)
  */
 int ossl_hss_key_has(const HSS_KEY *hsskey, int selection)
 {
-    return ossl_lms_key_has(HSS_LMS_KEY_get(hsskey, 0), selection);
+    if (hsskey == NULL || hsskey->public == NULL)
+        return 0;
+    return ossl_lms_key_has(hsskey->public, selection);
+}
+
+const char *ossl_hss_key_get_digestname(HSS_KEY *hsskey)
+{
+    if (hsskey == NULL || hsskey->public == NULL)
+        return NULL;
+    return hsskey->public->lms_params->digestname;
+}
+
+LMS_KEY *ossl_hss_key_get_public(const HSS_KEY *hsskey)
+{
+    return hsskey->public;
+}
+
+int ossl_hss_key_set_public(HSS_KEY *hsskey, LMS_KEY *key)
+{
+    LMS_KEY *root = hsskey->public;
+
+    if (root != NULL)
+        ossl_lms_key_free(root);
+    hsskey->public = key;
+    return 1;
 }

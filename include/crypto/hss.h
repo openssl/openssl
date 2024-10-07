@@ -14,7 +14,6 @@
 # pragma once
 # ifndef OPENSSL_NO_HSS
 #  include "lms.h"
-#  include "lms_sig.h"
 
 /*
  * HSS minimum and maximum number of LMS trees
@@ -28,43 +27,19 @@
 #  define HSS_MAX_PUBKEY (HSS_SIZE_L + LMS_SIZE_LMS_TYPE + LMS_SIZE_OTS_TYPE \
                           + LMS_SIZE_I + LMS_MAX_DIGEST_SIZE)
 
-/*
- * HSS require a tree of LMS keys, as well as a list of signatures.
- * This object is used to store lists of HSS related LMS keys and signatures.
- * For verification it is used when decoding a signature.
- */
-typedef struct hss_lists {
-    STACK_OF(LMS_KEY) *lmskeys;
-    STACK_OF(LMS_SIG) *lmssigs;
-} HSS_LISTS;
-
 struct hss_key_st {
-    uint32_t L; /* HSS number of levels */
+    uint32_t L;             /* HSS number of levels */
     /*
-     * For key generation and signing only one LMS tree is active for each
-     * level of the hierarchy, so that is all that is updated,
-     * Whenever an active child tree is exhausted it creates a new one.
-     * A loaded public key would also be stored in lmskeys.
+     * For signature verification this is just the root public key.
+     * For signature generation there would be a list of active LMS_KEYS
+     * (one for each level of the tree starting at the root).
      */
-    HSS_LISTS lists;
+    //LMS_KEY *public;
     OSSL_LIB_CTX *libctx;
     char *propq;
 
     CRYPTO_REF_COUNT references;
 };
-
-DEFINE_STACK_OF(LMS_KEY)
-DEFINE_STACK_OF(LMS_SIG)
-
-#  define HSS_LMS_KEY_get(ctx, id) sk_LMS_KEY_value(ctx->lists.lmskeys, id)
-#  define HSS_LMS_KEY_add(ctx, key) (sk_LMS_KEY_push(ctx->lists.lmskeys, key) > 0)
-#  define HSS_LMS_KEY_count(ctx) sk_LMS_KEY_num(ctx->lists.lmskeys)
-#  define HSS_LMS_SIG_get(ctx, id) sk_LMS_SIG_value(ctx->lists.lmssigs, id)
-#  define HSS_LMS_SIG_add(ctx, key) (sk_LMS_SIG_push(ctx->lists.lmssigs, key) > 0)
-#  define HSS_LMS_SIG_count(ctx) sk_LMS_SIG_num(ctx->lists.lmssigs)
-
-int ossl_hss_lists_init(HSS_LISTS *lists);
-void ossl_hss_lists_free(HSS_LISTS *lists);
 
 HSS_KEY *ossl_hss_key_new(OSSL_LIB_CTX *libctx, const char *propq);
 int ossl_hss_key_up_ref(HSS_KEY *key);
@@ -78,6 +53,9 @@ int ossl_hss_pubkey_from_params(const OSSL_PARAM params[], HSS_KEY *hsskey);
 int ossl_hss_pubkey_decode(const unsigned char *pub, size_t publen,
                            HSS_KEY *hsskey, int lms_only);
 size_t ossl_hss_pubkey_length(const unsigned char *data, size_t datalen);
+const char *ossl_hss_key_get_digestname(HSS_KEY *hsskey);
+int ossl_hss_key_set_public(HSS_KEY *hsskey, LMS_KEY *key);
+LMS_KEY *ossl_hss_key_get_public(const HSS_KEY *hsskey);
 
 # endif /* OPENSSL_NO_HSS */
 #endif /* OSSL_CRYPTO_HSS_H */

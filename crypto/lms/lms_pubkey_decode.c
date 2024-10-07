@@ -45,8 +45,7 @@ size_t ossl_lms_pubkey_length(const unsigned char *data, size_t datalen)
  * @param lmskey The object to store the public key into
  * @return 1 on success or 0 otherwise.
  */
-static
-int lms_pubkey_from_pkt(PACKET *pkt, LMS_KEY *lmskey)
+int ossl_lms_pubkey_from_pkt(PACKET *pkt, LMS_KEY *lmskey)
 {
     uint32_t lms_type;
     uint32_t ots_type;
@@ -103,7 +102,7 @@ int ossl_lms_pubkey_decode(const unsigned char *pub, size_t publen,
         return 0;
 
     if (!PACKET_buf_init(&pkt, pkey->encoded, publen)
-            || !lms_pubkey_from_pkt(&pkt, lmskey)
+            || !ossl_lms_pubkey_from_pkt(&pkt, lmskey)
             || (PACKET_remaining(&pkt) > 0))
         goto err;
     pkey->encodedlen = publen;
