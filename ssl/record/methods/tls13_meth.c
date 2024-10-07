@@ -99,6 +99,8 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
     const EVP_CIPHER *cipher;
     EVP_MAC_CTX *mac_ctx = NULL;
     int mode;
+    int gcm_iv_gen_rand = -1;
+    OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
     if (n_recs != 1) {
         /* Should not happen */
@@ -234,6 +236,17 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
             || EVP_CipherFinal_ex(enc_ctx, rec->data + lenu, &lenf) <= 0
             || (size_t)(lenu + lenf) != rec->length) {
         return 0;
+    }
+    /*
+     * For GCM we must verify OSSL_CIPHER_PARAM_AEAD_IV_GENERATED when
+     * available.
+     */
+    if (mode == EVP_CIPH_GCM_MODE) {
+        params[0] = OSSL_PARAM_construct_int(OSSL_CIPHER_PARAM_AEAD_IV_GENERATED, &gcm_iv_gen_rand);
+	if (!EVP_CIPHER_CTX_get_params(enc_ctx, params))
+	    return 0;
+	if (!gcm_iv_gen_rand)
+	    return 0;
     }
     if (sending) {
         /* Add the tag */
