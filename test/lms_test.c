@@ -522,8 +522,7 @@ const OPTIONS *test_get_options(void)
         OPT_TEST_OPTIONS_DEFAULT_USAGE,
         { "config", OPT_CONFIG_FILE, '<',
           "The configuration file to use for the libctx" },
-          { "keytype", OPT_KEY_ALG, 's',
-            "set to either LMS or HSS" },
+        { "keytype", OPT_KEY_ALG, 's', "Set to either LMS or HSS" },
         { NULL }
     };
     return options;
