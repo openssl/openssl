@@ -775,7 +775,6 @@ complete algorithm is ignored.
 The core_obj_create() and core_obj_add_sigid() functions were not thread safe
 in OpenSSL 3.0.
 
-
 =head1 EXAMPLES
 
 This is an example of a simple provider made available as a
