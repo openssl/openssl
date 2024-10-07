@@ -89,7 +89,7 @@ jobs:
           # to the files review1.json and review2.json
           gh api -F issue=$i -F reviewer="$REVIEWER" graphql -f query='query($issue: Int!, $reviewer: [String!]) { repository(owner:"openssl", name:"openssl") { issue(number: $issue) { projectItems(first: 50) { edges { node { id project {title id field(name:"Review 1") { ... on ProjectV2SingleSelectField { id options(names: $reviewer) { id color} } } } fieldValueByName(name: "Review 1") { ... on ProjectV2ItemFieldSingleSelectValue { status: name color } } } } } } } }' > ./review1.json
 
-          gh api -F issue=$i -F reviewer="$REVIEWER" graphql -f query='query($issue: Int!, $reviewer: [String!]) { repository(owner:"openssl", name:"openssl") { issue(number: $issue) { projectItems(first: 51) { edges { node { id project {title id field(name:"Review 1") { ... on ProjectV2SingleSelectField { id options(names: $reviewer) { id color} } } } fieldValueByName(name: "Review 1") { ... on ProjectV2ItemFieldSingleSelectValue { status: name color } } } } } } } }' > ./review2.json
+          gh api -F issue=$i -F reviewer="$REVIEWER" graphql -f query='query($issue: Int!, $reviewer: [String!]) { repository(owner:"openssl", name:"openssl") { issue(number: $issue) { projectItems(first: 51) { edges { node { id project {title id field(name:"Review 2") { ... on ProjectV2SingleSelectField { id options(names: $reviewer) { id color} } } } fieldValueByName(name: "Review 2") { ... on ProjectV2ItemFieldSingleSelectValue { status: name color } } } } } } } }' > ./review2.json
 
           # For each of the two files review1.json and review2.json, do some work
           for rev in review1.json review2.json
@@ -98,11 +98,11 @@ jobs:
             # and extract the PROJECT, FIELD and ITEM id's along with
             # The single select option that matches the color for the action
             # Associated with the review
-            ASSIGNED_REVIEWER=$(jq -r '.data.repository.issue.projectItems.edges[0].node.fieldValueByName.status' $rev)
-            PROJECT_ID=$(jq -r '.data.repository.issue.projectItems.edges[0].node.project.id' $rev)
-            FIELD_ID=$(jq -r '.data.repository.issue.projectItems.edges[0].node.project.field.id' $rev)
+            ASSIGNED_REVIEWER=$(jq -r '.data.repository.issue.projectItems.edges[0].node.fieldValueByName.status' ./$rev)
+            PROJECT_ID=$(jq -r '.data.repository.issue.projectItems.edges[0].node.project.id' ./$rev)
+            FIELD_ID=$(jq -r '.data.repository.issue.projectItems.edges[0].node.project.field.id' ./$rev)
             ITEM_ID=$(jq -r '.data.repository.issue.projectItems.edges[0].node.id' $rev)
-            COLOR_OPTION=$(jq -r --arg color "$ACTION_COLOR" '.data.repository.issue.projectItems.edges[0].node.project.field.options[] | select(.color==$color) | .id' $rev)
+            COLOR_OPTION=$(jq -r --arg color "$ACTION_COLOR" '.data.repository.issue.projectItems.edges[0].node.project.field.options[] | select(.color==$color) | .id' ./$rev)
             echo "ASSIGNED REVIEWER $ASSIGNED_REVIEWER"
             echo "FIELD ID $FIELD_ID"
             echo "PROJECT ID $PROJECT_ID"
