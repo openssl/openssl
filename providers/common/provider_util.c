@@ -366,8 +366,3 @@ int ossl_prov_memdup(const void *src, size_t src_len,
     }
     return 1;
 }
-
-int ossl_param_is_empty(const OSSL_PARAM params[])
-{
-    return params == NULL || params->key == NULL;
-}

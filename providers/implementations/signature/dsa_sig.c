@@ -704,7 +704,11 @@ static const OSSL_PARAM *dsa_gettable_ctx_params(ossl_unused void *ctx,
     return known_gettable_ctx_params;
 }
 
-/* The common params for dsa_set_ctx_params and dsa_sigalg_set_ctx_params */
+/**
+ * @brief Setup common params for dsa_set_ctx_params and dsa_sigalg_set_ctx_params
+ * The caller is responsible for checking |vpdsactx| is not NULL and |params|
+ * is not empty.
+ */
 static int dsa_common_set_ctx_params(void *vpdsactx, const OSSL_PARAM params[])
 {
     PROV_DSA_CTX *pdsactx = (PROV_DSA_CTX *)vpdsactx;

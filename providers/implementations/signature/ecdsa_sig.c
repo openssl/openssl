@@ -716,7 +716,11 @@ static const OSSL_PARAM *ecdsa_gettable_ctx_params(ossl_unused void *vctx,
     return known_gettable_ctx_params;
 }
 
-/* The common params for ecdsa_set_ctx_params and ecdsa_sigalg_set_ctx_params */
+/**
+ * @brief Set up common params for ecdsa_set_ctx_params and
+ * ecdsa_sigalg_set_ctx_params. The caller is responsible for checking |vctx| is
+ * not NULL and |params| is not empty.
+ */
 static int ecdsa_common_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     PROV_ECDSA_CTX *ctx = (PROV_ECDSA_CTX *)vctx;

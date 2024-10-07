@@ -25,7 +25,6 @@
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
-#include "prov/providercommon.h"
 #include "prov/securitycheck.h"
 
 static OSSL_FUNC_kem_newctx_fn rsakem_newctx;
