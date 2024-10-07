@@ -1640,6 +1640,7 @@ static void trace_print_param_values(const OSSL_PARAM p[], BIO *b)
 {
     int64_t i;
     uint64_t u;
+    double d;
 
     for (; p->key != NULL; p++) {
         BIO_printf(b, "%s: ", p->key);
@@ -1666,6 +1667,14 @@ static void trace_print_param_values(const OSSL_PARAM p[], BIO *b)
         case OSSL_PARAM_OCTET_STRING:
             BIO_printf(b, "<%zu bytes>\n", p->data_size);
             break;
+# ifndef OPENSSL_SYS_UEFI
+        case OSSL_PARAM_REAL:
+            if (OSSL_PARAM_get_double(p, &d))
+                BIO_printf(b, "%f\n", d);
+            else
+                BIO_printf(b, "error getting value\n");
+            break;
+# endif
         default:
             BIO_printf(b, "unknown type (%u) of %zu bytes\n",
                        p->data_type, p->data_size);

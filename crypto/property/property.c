@@ -320,7 +320,7 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
     int i;
 
     /*
-     * fail if someone is trying:
+     * Fail if someone is trying:
      * 1) To add the NID_undef nid (0)
      * 2) To add an empty method
      * 3) To add to a non-existant store
@@ -360,7 +360,7 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
     }
 
     /*
-     * flush the method store of any implementation that already exists
+     * Flush the method store of any implementation that already exists
      * for this nid.
      * This is done to ensure that on the next lookup we go through the
      * provider comparison in ossl_method_store_fetch.  If we don't do this
@@ -405,22 +405,11 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
 
         if (tmpimpl->provider == impl->provider
             && tmpimpl->properties == impl->properties)
-            break;
+            goto err;
     }
 
-    /*
-     * Check the number of implementation on the impl stack.
-     * If it matches the number we counted above, and the push
-     * operation is successful, then we're done here, and can return
-     * success.
-     * NOTE: This seems ripe for improvement, in that if we find a duplicate
-     * above, we can just jump down to the unlock code rather than do the extra
-     * comparison here
-     */
-    if (i == sk_IMPLEMENTATION_num(alg->impls)
-        && sk_IMPLEMENTATION_push(alg->impls, impl))
+    if (sk_IMPLEMENTATION_push(alg->impls, impl)) {
         ret = 1;
-    if (ret == 1) {
         OSSL_TRACE_BEGIN(QUERY) {
             BIO_printf(trc_out, "Adding to method store "
                        "nid: %d\nproperties: %s\nprovider: %s\n",
@@ -686,7 +675,7 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
     }
 
     /*
-     * Search for a provider that provides this implementaiton.
+     * Search for a provider that provides this implementation.
      * if the requested provider is NULL, then any provider will do,
      * otherwise we should try to find the one that matches the requested
      * provider.  Note that providers are given implicit preference via the
