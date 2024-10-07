@@ -67,20 +67,21 @@ static const unsigned char gcm_tag[] = {
 static OSSL_LIB_CTX *libctx = NULL;
 static const char *propq = NULL;
 
-static int aes_gcm_encrypt(void)
+static int aes_gcm_encrypt(const int random_iv)
 {
     int ret = 0;
     EVP_CIPHER_CTX *ctx;
     EVP_CIPHER *cipher = NULL;
-    int outlen, tmplen;
+    int outlen, tmplen, iv_gen_rand;
     size_t gcm_ivlen = sizeof(gcm_iv);
     unsigned char outbuf[1024];
+    unsigned char outiv[12];
     unsigned char outtag[16];
     OSSL_PARAM params[2] = {
         OSSL_PARAM_END, OSSL_PARAM_END
     };
 
-    printf("AES GCM Encrypt:\n");
+    printf("AES GCM Encrypt (%s IV):\n", random_iv ? "internal" : "external");
     printf("Plaintext:\n");
     BIO_dump_fp(stdout, gcm_pt, sizeof(gcm_pt));
 
@@ -103,7 +104,7 @@ static int aes_gcm_encrypt(void)
      * application the IV would be generated internally so the iv passed in
      * would be NULL.
      */
-    if (!EVP_EncryptInit_ex2(ctx, cipher, gcm_key, gcm_iv, params))
+    if (!EVP_EncryptInit_ex2(ctx, cipher, gcm_key, random_iv ? NULL : gcm_iv, params))
         goto err;
 
     /* Zero or more calls to specify any AAD */
@@ -121,6 +122,22 @@ static int aes_gcm_encrypt(void)
     /* Finalise: note get no output for GCM */
     if (!EVP_EncryptFinal_ex(ctx, outbuf, &tmplen))
         goto err;
+
+    /* Retrieve service indicator for IV generation */
+    iv_gen_rand = -1;
+    params[0] = OSSL_PARAM_construct_int(OSSL_CIPHER_PARAM_AEAD_IV_GENERATED, &iv_gen_rand);
+    if (!EVP_CIPHER_CTX_get_params(ctx, params))
+        goto err;
+    if (OSSL_PARAM_modified(params))
+        printf("Service indicator for OSSL_CIPHER_PARAM_AEAD_IV_GENERATED is: %d\n", iv_gen_rand);
+    else
+        printf("Service indicator for OSSL_CIPHER_PARAM_AEAD_IV_GENERATED is not available\n");
+
+    /* Retrieve IV */
+    if (!EVP_CIPHER_CTX_get_original_iv(ctx, outiv, gcm_ivlen))
+        goto err;
+    printf("IV:\n");
+    BIO_dump_fp(stdout, outiv, gcm_ivlen);
 
     /* Get tag */
     params[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
@@ -218,9 +235,14 @@ err:
 
 int main(int argc, char **argv)
 {
-    if (!aes_gcm_encrypt())
+    if (!aes_gcm_encrypt(0))
         return EXIT_FAILURE;
 
+    printf("\n");
+    if (!aes_gcm_encrypt(1))
+        return EXIT_FAILURE;
+
+    printf("\n");
     if (!aes_gcm_decrypt())
         return EXIT_FAILURE;
 
