@@ -1640,7 +1640,9 @@ static void trace_print_param_values(const OSSL_PARAM p[], BIO *b)
 {
     int64_t i;
     uint64_t u;
+# ifndef OPENSSL_SYS_UEFI
     double d;
+# endif
 
     for (; p->key != NULL; p++) {
         BIO_printf(b, "%s: ", p->key);
