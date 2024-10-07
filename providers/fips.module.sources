@@ -649,12 +649,12 @@ providers/implementations/macs/cmac_prov.c
 providers/implementations/macs/gmac_prov.c
 providers/implementations/macs/hmac_prov.c
 providers/implementations/macs/kmac_prov.c
-providers/implementations/rands/crngt.c
 providers/implementations/rands/drbg.c
 providers/implementations/rands/drbg_ctr.c
 providers/implementations/rands/drbg_hash.c
 providers/implementations/rands/drbg_hmac.c
 providers/implementations/rands/drbg_local.h
+providers/implementations/rands/fips_crng_test.c
 providers/implementations/rands/test_rng.c
 providers/implementations/signature/dsa_sig.c
 providers/implementations/signature/ecdsa_sig.c
