@@ -22,7 +22,7 @@ OpenSSL Releases
 OpenSSL 3.4
 -----------
 
-### Major changes between OpenSSL 3.3 and OpenSSL 3.4 beta 1 [in pre-release]
+### Major changes between OpenSSL 3.3 and OpenSSL 3.4 [under development]
 
 OpenSSL 3.4.0 is a feature release adding significant new functionality to
 OpenSSL.
