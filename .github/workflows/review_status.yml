@@ -98,11 +98,11 @@ jobs:
             # and extract the PROJECT, FIELD and ITEM id's along with
             # The single select option that matches the color for the action
             # Associated with the review
-            ASSIGNED_REVIEWER=$(jq -r '.data.repository.issue.projectItems.edges[0].node.fieldValueByName.status' ./review1.json)
-            PROJECT_ID=$(jq -r '.data.repository.issue.projectItems.edges[0].node.project.id' ./review1.json)
-            FIELD_ID=$(jq -r '.data.repository.issue.projectItems.edges[0].node.project.field.id' ./review1.json)
-            ITEM_ID=$(jq -r '.data.repository.issue.projectItems.edges[0].node.id' ./review1.json)
-            COLOR_OPTION=$(jq -r --arg color "$ACTION_COLOR" '.data.repository.issue.projectItems.edges[0].node.project.field.options[] | select(.color==$color) | .id' ./review1.json)
+            ASSIGNED_REVIEWER=$(jq -r '.data.repository.issue.projectItems.edges[0].node.fieldValueByName.status' $rev)
+            PROJECT_ID=$(jq -r '.data.repository.issue.projectItems.edges[0].node.project.id' $rev)
+            FIELD_ID=$(jq -r '.data.repository.issue.projectItems.edges[0].node.project.field.id' $rev)
+            ITEM_ID=$(jq -r '.data.repository.issue.projectItems.edges[0].node.id' $rev)
+            COLOR_OPTION=$(jq -r --arg color "$ACTION_COLOR" '.data.repository.issue.projectItems.edges[0].node.project.field.options[] | select(.color==$color) | .id' $rev)
             echo "ASSIGNED REVIEWER $ASSIGNED_REVIEWER"
             echo "FIELD ID $FIELD_ID"
             echo "PROJECT ID $PROJECT_ID"
