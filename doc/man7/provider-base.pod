@@ -581,6 +581,11 @@ The name of the group as known by the provider. This could be the same as the
 
 The TLS group id value as given in the IANA TLS Supported Groups registry.
 
+It is possible to register the same group id from within different
+providers. Users should note that if no property query is specified, or
+more than one implementation matches the property query then it is
+unspecified which implementation for a particular group id will be used.
+
 =item "tls-group-alg" (B<OSSL_CAPABILITY_TLS_GROUP_ALG>) <UTF8 string>
 
 The name of a Key Management algorithm that the provider offers and that should
@@ -666,6 +671,11 @@ This value must be supplied.
 
 The TLS algorithm ID value as given in the IANA TLS SignatureScheme registry.
 This value must be supplied.
+
+It is possible to register the same code point from within different
+providers. Users should note that if no property query is specified, or
+more than one implementation matches the property query then it is
+unspecified which implementation for a particular code point will be used.
 
 =item "sigalg-name" (B<OSSL_CAPABILITY_TLS_SIGALG_NAME>) <UTF8 string>
 
