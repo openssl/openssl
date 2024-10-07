@@ -325,6 +325,9 @@ static int generate_key(DH *dh)
 #ifdef FIPS_MODULE
             if (dh->params.q == NULL)
                 goto err;
+# ifndef OPENSSL_NO_FIPS186_4_FFC
+            goto err;
+# endif
 #else
             if (dh->params.q == NULL) {
                 /* secret exponent length, must satisfy 2^(l-1) <= p */

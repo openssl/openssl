@@ -296,20 +296,22 @@ static DH *ffc_params_generate(OSSL_LIB_CTX *libctx, DH_PKEY_CTX *dctx,
     if (dctx->md != NULL)
         ossl_ffc_set_digest(&ret->params, EVP_MD_get0_name(dctx->md), NULL);
 
-# ifndef FIPS_MODULE
+#ifndef FIPS_MODULE
     if (dctx->paramgen_type == DH_PARAMGEN_TYPE_FIPS_186_2)
         rv = ossl_ffc_params_FIPS186_2_generate(libctx, &ret->params,
                                                 FFC_PARAM_TYPE_DH,
                                                 prime_len, subprime_len, &res,
                                                 pcb);
     else
-# endif
+#endif
+#if !defined(FIPS_MODULE) || !defined(OPENSSL_NO_FIPS186_4_FFC)
     /* For FIPS we always use the DH_PARAMGEN_TYPE_FIPS_186_4 generator */
     if (dctx->paramgen_type >= DH_PARAMGEN_TYPE_FIPS_186_2)
         rv = ossl_ffc_params_FIPS186_4_generate(libctx, &ret->params,
                                                 FFC_PARAM_TYPE_DH,
                                                 prime_len, subprime_len, &res,
                                                 pcb);
+#endif
     if (rv <= 0) {
         DH_free(ret);
         return NULL;
