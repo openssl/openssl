@@ -604,14 +604,16 @@ static int kem_rsa_gen_recover(void)
           && TEST_mem_eq(unwrap, unwraplen, secret, secretlen);
 
     /* Test that providing a too short unwrapped/ctlen fails */
-    ctlen = 1;
-    if (!TEST_int_eq(EVP_PKEY_encapsulate(dctx, ct, &ctlen, secret,
-                                          &secretlen), 0))
-        ret = 0;
-    unwraplen = 1;
-    if (!TEST_int_eq(EVP_PKEY_decapsulate(rctx, unwrap, &unwraplen, ct,
-                                          ctlen), 0))
-        ret = 0;
+    if (fips_provider_version_match(libctx, ">=3.4.0")) {
+        ctlen = 1;
+        if (!TEST_int_eq(EVP_PKEY_encapsulate(dctx, ct, &ctlen, secret,
+                                              &secretlen), 0))
+            ret = 0;
+        unwraplen = 1;
+        if (!TEST_int_eq(EVP_PKEY_decapsulate(rctx, unwrap, &unwraplen, ct,
+                                              ctlen), 0))
+            ret = 0;
+    }
 
     EVP_PKEY_free(pub);
     EVP_PKEY_free(priv);
