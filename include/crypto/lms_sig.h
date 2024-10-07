@@ -15,7 +15,7 @@
 #ifndef OSSL_CRYPTO_LMS_SIG_H
 # define OSSL_CRYPTO_LMS_SIG_H
 # pragma once
-# ifndef OPENSSL_NO_LMS
+# if !defined(OPENSSL_NO_LMS) || !defined(OPENSSL_NO_HSS)
 #  include "lms.h"
 #  include "internal/packet.h"
 

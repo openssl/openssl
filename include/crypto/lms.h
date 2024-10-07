@@ -15,7 +15,7 @@
 #ifndef OSSL_CRYPTO_LMS_H
 # define OSSL_CRYPTO_LMS_H
 # pragma once
-# ifndef OPENSSL_NO_LMS
+# if !defined(OPENSSL_NO_LMS) || !defined(OPENSSL_NO_HSS)
 #  include "types.h"
 #  include <openssl/params.h>
 #  include "internal/refcount.h"
