@@ -244,7 +244,7 @@ providers already having been initialized.
 It is possible to register the same algorithm name from within different
 providers. Users should note that if no property query is specified, or
 more than one implementation matches the property query then it is
-undefined which implementation of a particular algorithm will be returned.
+unspecified which implementation of a particular algorithm will be returned.
 Such naming clashes may also occur if algorithms only differ in
 capitalization as L</Algorithm naming> is case insensitive.
 
