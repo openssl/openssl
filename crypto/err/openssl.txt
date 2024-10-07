@@ -1170,6 +1170,7 @@ PROV_R_PARENT_CANNOT_GENERATE_RANDOM_NUMBERS:228:\
 PROV_R_PARENT_CANNOT_SUPPLY_ENTROPY_SEED:187:parent cannot supply entropy seed
 PROV_R_PARENT_LOCKING_NOT_ENABLED:182:parent locking not enabled
 PROV_R_PARENT_STRENGTH_TOO_WEAK:194:parent strength too weak
+PROV_R_PASSWORD_STRENGTH_TOO_WEAK:254:password strength too weak
 PROV_R_PATH_MUST_BE_ABSOLUTE:219:path must be absolute
 PROV_R_PERSONALISATION_STRING_TOO_LONG:195:personalisation string too long
 PROV_R_PSS_SALTLEN_TOO_SMALL:172:pss saltlen too small
