@@ -691,10 +691,11 @@ See L<property(7)> for a more detailed description.
 
 =head1 ENVIRONMENT
 
-The OpenSSL libraries can be take some configuration parameters from the
+The OpenSSL libraries can take some configuration parameters from the
 environment.
 
 For information about all environment variables used by the OpenSSL libraries,
+such as B<OPENSSL_CONF>, B<OPENSSL_MODULES>, and B<OPENSSL_TRACE>,
 see L<openssl-env(7)>.
 
 For information about the use of environment variables in configuration,
