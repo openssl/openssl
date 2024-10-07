@@ -330,7 +330,7 @@ OSSL_CRMF_MSG *OSSL_CMP_CTX_setup_CRM(OSSL_CMP_CTX *ctx, int for_KUR, int rid)
         != NULL
             && !add1_extension(&exts, NID_subject_alt_name, crit, default_sans))
         goto err;
-    if (ctx->reqExtensions != NULL /* augment/override existing ones */
+    if (sk_X509_EXTENSION_num(ctx->reqExtensions) > 0 /* augment/override existing ones */
             && X509v3_add_extensions(&exts, ctx->reqExtensions) == NULL)
         goto err;
     if (sk_GENERAL_NAME_num(ctx->subjectAltNames) > 0
