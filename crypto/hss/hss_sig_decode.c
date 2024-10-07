@@ -7,7 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "crypto/hss.h"
 #include "crypto/hss_sig.h"
 #include "crypto/lms_util.h"
 

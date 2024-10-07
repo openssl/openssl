@@ -34,7 +34,7 @@ struct hss_key_st {
      * For signature generation there would be a list of active LMS_KEYS
      * (one for each level of the tree starting at the root).
      */
-    //LMS_KEY *public;
+    LMS_KEY *public;
     OSSL_LIB_CTX *libctx;
     char *propq;
 

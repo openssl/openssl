@@ -7,7 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "crypto/hss.h"
 #include "crypto/hss_sig.h"
 
 /*
@@ -24,7 +23,7 @@ int ossl_hss_sig_verify(const HSS_SIG *hss_sig, const HSS_KEY *hsskey,
     LMS_KEY *pub = ossl_hss_key_get_public(hsskey);
     int i, nspk = ossl_hss_sig_get_lmssigcount(hss_sig) - 1;
 
-    /* Verify each intermediate tree */
+    /* Verify the signed public keys */
     for (i = 0; i < nspk; ++i) {
         next = ossl_hss_sig_get_lmskey(hss_sig, i);
         if (next == NULL)
@@ -34,8 +33,9 @@ int ossl_hss_sig_verify(const HSS_SIG *hss_sig, const HSS_KEY *hsskey,
             goto err;
         pub = next;
     }
+    /* Verify the message using the public key of the leaf tree */
     if (ossl_lms_sig_verify(ossl_hss_sig_get_lmssig(hss_sig, i), pub, md,
-                                                    msg, msglen) != 1)
+                            msg, msglen) != 1)
         goto err;
     ret = 1;
 err:
