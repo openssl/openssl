@@ -11,6 +11,7 @@
 # define OSSL_CRYPTO_HSS_SIG_H
 # pragma once
 # ifndef OPENSSL_NO_HSS
+#  include <openssl/e_os2.h> /* ossl_inline */
 #  include "lms_sig.h"
 #  include "hss.h"
 
@@ -30,15 +31,15 @@ DEFINE_STACK_OF(LMS_SIG)
 HSS_SIG *ossl_hss_sig_new(void);
 void ossl_hss_sig_free(HSS_SIG *sig);
 
-static inline LMS_KEY *ossl_hss_sig_get_lmskey(const HSS_SIG *sig, int id)
+static ossl_inline LMS_KEY *ossl_hss_sig_get_lmskey(const HSS_SIG *sig, int id)
 {
     return sk_LMS_KEY_value(sig->lmskeys, id);
 }
-static inline int ossl_hss_sig_get_lmssigcount(const HSS_SIG *sig)
+static ossl_inline int ossl_hss_sig_get_lmssigcount(const HSS_SIG *sig)
 {
     return sk_LMS_SIG_num(sig->lmssigs);
 }
-static inline LMS_SIG *ossl_hss_sig_get_lmssig(const HSS_SIG *sig, int id)
+static ossl_inline LMS_SIG *ossl_hss_sig_get_lmssig(const HSS_SIG *sig, int id)
 {
     return sk_LMS_SIG_value(sig->lmssigs, id);
 }
