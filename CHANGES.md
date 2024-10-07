@@ -27,7 +27,7 @@ OpenSSL Releases
 OpenSSL 3.4
 -----------
 
-### Changes between 3.3 and 3.4 [xx XXX xxxx]
+### Changes between 3.3 and 3.4 beta 1 [7 Oct 2024]
 
  * For the FIPS provider only, replaced the primary DRBG with a continuous
    health check module.  This also removes the now forbidden DRBG chaining.
