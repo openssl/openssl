@@ -222,7 +222,7 @@ static int do_dh_param_keygen(int tstid, const BIGNUM **bn)
 
     if (!TEST_ptr(gen_ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey_parm, NULL))
         || !TEST_int_gt(EVP_PKEY_keygen_init(gen_ctx), 0)
-        || !TEST_int_eq(EVP_PKEY_keygen(gen_ctx, &pkey), expected))
+        || !TEST_int_eq(EVP_PKEY_keygen(gen_ctx, &pkey) == 1, expected))
         goto err;
 
     if (expected) {

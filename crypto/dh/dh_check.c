@@ -57,6 +57,7 @@ int DH_check_params(const DH *dh, int *ret)
     nid = DH_get_nid((DH *)dh);
     if (nid != NID_undef)
         return 1;
+# ifndef OPENSSL_NO_FIPS186_4_FFC
     /*
      * OR
      * (2b) FFC domain params conform to FIPS-186-4 explicit domain param
@@ -64,6 +65,9 @@ int DH_check_params(const DH *dh, int *ret)
      */
     return ossl_ffc_params_FIPS186_4_validate(dh->libctx, &dh->params,
                                               FFC_PARAM_TYPE_DH, ret, NULL);
+# else
+    return 0;
+# endif
 }
 #else
 int DH_check_params(const DH *dh, int *ret)
