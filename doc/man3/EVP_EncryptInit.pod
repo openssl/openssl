@@ -388,7 +388,8 @@ of data. The amount of data written depends on the block alignment of the
 encrypted data.
 For most ciphers and modes, the amount of data written can be anything
 from zero bytes to (inl + cipher_block_size - 1) bytes.
-
+For wrap cipher modes, the amount of data written can be anything
+from zero bytes to (inl + cipher_block_size) bytes.
 For stream ciphers, the amount of data written can be anything from zero
 bytes to inl bytes.
 Thus, the buffer pointed to by I<out> must contain sufficient room for the
