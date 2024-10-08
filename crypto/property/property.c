@@ -293,21 +293,24 @@ static int ossl_method_store_insert(OSSL_METHOD_STORE *store, ALGORITHM *alg)
  * @brief Adds a method to the specified method store.
  *
  * This function adds a new method to the provided method store, associating it
- * with a specified NID, properties, and provider. The method is stored with
+ * with a specified id, properties, and provider. The method is stored with
  * reference count and destruction callbacks.
  *
  * @param store Pointer to the OSSL_METHOD_STORE where the method will be added.
- * @param prov Pointer to the OSSL_PROVIDER representing the provider of the method.
- * @param nid NID (numerical identifier) associated with the method.
+ * @param prov Pointer to the OSSL_PROVIDER for the provider of the method.
+ * @param nid (identifier) associated with the method.
  * @param properties String containing properties of the method.
  * @param method Pointer to the method to be added.
- * @param method_up_ref Function pointer for incrementing the method reference count.
+ * @param method_up_ref Function pointer for incrementing the method ref count.
  * @param method_destruct Function pointer for destroying the method.
  *
  * @return 1 if the method is successfully added, 0 on failure.
  *
  * If tracing is enabled, a message is printed indicating that the method is
  * being added to the method store.
+ *
+ * NOTE: The nid parameter here is _not_ a nid in the sense of the NID_* macros.
+ * It is an internal unique identifier.
  */
 int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
                           int nid, const char *properties, void *method,
@@ -321,7 +324,7 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
 
     /*
      * Fail if someone is trying:
-     * 1) To add the NID_undef nid (0)
+     * 1) To add an undefined identifier nid (0)
      * 2) To add an empty method
      * 3) To add to a non-existant store
      */
@@ -596,11 +599,11 @@ void ossl_method_store_do_all(OSSL_METHOD_STORE *store,
  * @brief Fetches a method from the method store matching the given properties.
  *
  * This function searches the method store for an implementation of a specified
- * method, identified by its NID, and matching the given property query. If
+ * method, identified by its id (nid), and matching the given property query. If
  * successful, it returns the method and its associated provider.
  *
  * @param store Pointer to the OSSL_METHOD_STORE from which to fetch the method.
- * @param nid NID (numerical identifier) of the method to be fetched.
+ * @param nid (identifier) of the method to be fetched.
  * @param prop_query String containing the property query to match against.
  * @param prov_rw Pointer to the OSSL_PROVIDER to restrict the search to, or
  *                to receive the matched provider.
@@ -610,6 +613,9 @@ void ossl_method_store_do_all(OSSL_METHOD_STORE *store,
  *
  * If tracing is enabled, a message is printed indicating the property query and
  * the resolved provider.
+ *
+ * NOTE: The nid parameter here is _not_ a NID in the sense of the NID_* macros.
+ * It is a unique internal identifier value.
  */
 int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
                             int nid, const char *prop_query,
@@ -624,7 +630,7 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
     int j, best = -1, score, optional;
 
     /*
-     * Typical check, fail if we try to lookup NID_undef, a null method
+     * Typical check, fail if we try to lookup an undefined id, a null method
      * or use a NULL store
      */
     if (nid <= 0 || method == NULL || store == NULL)
@@ -641,7 +647,7 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
         return 0;
 
     /*
-     * Get the cache for this NID
+     * Get the cache for this identifier
      * If its not found, then no lookup is possible here
      */
     alg = ossl_method_store_retrieve(store, nid);
