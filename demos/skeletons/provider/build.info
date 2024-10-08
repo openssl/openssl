@@ -1,0 +1,12 @@
+# This is just skeleton code meant to be useful for writing
+# providers. See the comments inside the skeletons to see
+# how/where/what to complete.
+#
+# code compilation is done only to ascertain basic API
+# correctness and make dependencies explicit
+
+PROGRAMS{noinst} = template_provider
+
+INCLUDE[template_provider]=../../../include ../../../providers/implementations/include ../../../providers/fips/include ../../../providers/common/include
+SOURCE[template_provider]=template_kem.c template_kmgmt.c prov_running.c
+DEPEND[template_provider]=../../../libcrypto ../../../providers/libcommon

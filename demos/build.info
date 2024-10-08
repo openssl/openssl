@@ -1,5 +1,5 @@
 SUBDIRS=bio cipher digest keyexch mac kdf pkey signature \
-        encrypt encode sslecho
+        encrypt encode sslecho skeletons
 
 IF[{- !$disabled{"h3demo"} -}]
  IF[{- !$disabled{"quic"} -}]
