@@ -206,9 +206,15 @@ static int create_socket(uint16_t port)
 static void wait_for_activity(SSL *ssl)
 {
     int sock, isinfinite;
-    fd_set read_fd;
+    fd_set read_fd, write_fd;
     struct timeval tv;
     struct timeval *tvp = NULL;
+    int conn_init = SSL_get_stream_read_state(ssl) != SSL_STREAM_STATE_NONE;
+
+    if (conn_init == -1) {
+        fprintf(stderr, "Unable to retrieve SSL state");
+        return;
+    }
 
     /* Get hold of the underlying file descriptor for the socket */
     if ((sock = SSL_get_fd(ssl)) == -1) {
@@ -218,9 +224,22 @@ static void wait_for_activity(SSL *ssl)
 
     /* Initialize the fd_set structure */
     FD_ZERO(&read_fd);
+    FD_ZERO(&write_fd);
+
+    /*
+     * If a connection has been established, find out if we would like to write
+     * to the socket, read from it, or both.
+     */
+    if (conn_init) {
+        if (SSL_net_write_desired(ssl))
+            FD_SET(sock, &write_fd);
+        if (SSL_net_read_desired(ssl))
+            FD_SET(sock, &read_fd);
+    }
 
     /* Add the socket file descriptor to the fd_set */
     FD_SET(sock, &read_fd);
+    FD_SET(sock, &write_fd);
 
     /*
      * Find out when OpenSSL would next like to be called, regardless of
@@ -249,7 +268,7 @@ static void wait_for_activity(SSL *ssl)
      * "select" (with updated timeouts).
      */
 
-    select(sock + 1, &read_fd, NULL, NULL, tvp);
+    select(sock + 1, &read_fd, &write_fd, NULL, tvp);
 }
 
 /**
@@ -382,6 +401,11 @@ static int run_quic_server(SSL_CTX *ctx, int fd)
             ret = SSL_read_ex(conn, buf + total_read, sizeof(buf) - total_read,
                               &nread);
             total_read += nread;
+            if (total_read >= 8192) {
+                fprintf(stderr, "Could not fit all data into buffer\n");
+                goto err;
+            }
+
             switch (handle_io_failure(conn, ret)) {
             case 1:
                 continue; /* Retry */
