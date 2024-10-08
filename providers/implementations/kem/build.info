@@ -3,6 +3,7 @@
 
 $RSA_KEM_GOAL=../../libdefault.a ../../libfips.a
 $EC_KEM_GOAL=../../libdefault.a
+$TEMPLATE_KEM_GOAL=../../libtemplate.a
 
 SOURCE[$RSA_KEM_GOAL]=rsa_kem.c
 
@@ -12,3 +13,5 @@ IF[{- !$disabled{ec} -}]
     SOURCE[$EC_KEM_GOAL]=ecx_kem.c
   ENDIF
 ENDIF
+
+SOURCE[$TEMPLATE_KEM_GOAL]=template_kem.c
