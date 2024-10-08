@@ -43,11 +43,11 @@ default provider:
 AES wrapping and unwrapping is performed via the encryption API using functions
 such as EVP_EncryptInit_ex2() and EVP_DecryptInit_ex2().
 
-Any input that need to be wrapped that is not a multiple of 8, or that is less
-than 16 bytes needs to use the padding variant of the algorithm
+When wrapping input that is not a multiple of 8, or that is less
+than 16 bytes the padding variant of the algorithm is required
 (e.g "AES-128-WRAP-PAD").
 
-Note that when unwrapping, that the unwrapped size returned in I<outl> from
+When unwrapping, note that the unwrapped size returned in I<outl> from
 EVP_DecryptUpdate() is smaller than the actual buffer size required for
 the unwrap operation. The unwrap buffer size must be at least the
 wrapped length I<inl> - 8 bytes.
