@@ -40,6 +40,22 @@ default provider:
 "AES-128-WRAP-INV", "AES-192-WRAP-INV", "AES-256-WRAP-INV",
 "AES-128-WRAP-PAD-INV", "AES-192-WRAP-PAD-INV" and "AES-256-WRAP-PAD-INV"
 
+AES wrapping and unwrapping is performed via the encryption API using functions
+such as EVP_EncryptInit_ex2() and EVP_DecryptInit_ex2().
+
+Any input that need to be wrapped that is not a multiple of 8, or that is less
+than 16 bytes needs to use the padding variant of the algorithm
+(e.g "AES-128-WRAP-PAD").
+
+Note that when unwrapping, that the unwrapped size returned in I<outl> from
+EVP_DecryptUpdate() is smaller than the actual buffer size required for
+the unwrap operation. The unwrap buffer size must be at least the
+wrapped length I<inl> - 8 bytes.
+
+The "inverse cipher" algorithms such as "AES-128-WRAP-INV" reverse the
+AES encryption and decryption block functions used when wrapping and unwrapping.
+See SP 800-38F : Section 5.1 for further information.
+
 =item "AES-128-CBC-HMAC-SHA1", "AES-256-CBC-HMAC-SHA1",
 "AES-128-CBC-HMAC-SHA256" and "AES-256-CBC-HMAC-SHA256"
 
@@ -68,7 +84,7 @@ L<EVP_EncryptInit(3)/PARAMETERS>.
 The AES-SIV and AES-WRAP mode implementations do not support streaming. That
 means to obtain correct results there can be only one L<EVP_EncryptUpdate(3)>
 or L<EVP_DecryptUpdate(3)> call after the initialization of the context.
-For output size restrictions see L<EVP_EncryptUpdate(3)) and
+For output size restrictions see L<EVP_EncryptUpdate(3)> and
 L<EVP_DecryptUpdate(3)>.
 
 The AES-XTS implementations allow streaming to be performed, but each
