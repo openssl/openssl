@@ -509,23 +509,23 @@ int ssl_cipher_get_evp_cipher_sn(SSL_CTX *ctx, const SSL_CIPHER *sslc,
              */
             *enc = EVP_CIPHER_fetch(ctx->libctx, "NULL", ctx->propq);
         } else {
-            char *ecb_name = NULL;
+            int ecbnid = NID_undef;
+
+            *enc = NULL;
 
             if ((sslc->algorithm_enc & SSL_AES128_ANY) != 0) {
-                ecb_name = "AES-128-ECB";
+                ecbnid = NID_aes_128_ecb;
                 *inputoffs = 0;
             } else if ((sslc->algorithm_enc & SSL_AES256_ANY) != 0) {
-                ecb_name = "AES-256-ECB";
+                ecbnid = NID_aes_256_ecb;
                 *inputoffs = 0;
             } else if (ossl_assert((sslc->algorithm_enc & SSL_CHACHA20) != 0)) {
-                ecb_name = "ChaCha20";
+                ecbnid = NID_chacha20;
                 *inputoffs = 4;
             }
 
-            if (ecb_name != NULL)
-                *enc = EVP_CIPHER_fetch(ctx->libctx, ecb_name, ctx->propq);
-            else
-                *enc = NULL;
+            if (ecbnid != NID_undef)
+                *enc = ssl_evp_cipher_fetch(ctx->libctx, ecbnid, ctx->propq);
         }
 
         if (*enc == NULL)
