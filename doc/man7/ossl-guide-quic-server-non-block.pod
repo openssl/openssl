@@ -10,7 +10,7 @@ demos/guide/quic-server-non-block.c
 =head1 NAME
 
 ossl-guide-quic-server-non-block
-- OpenSSL Guide: Writing a simple non-blocking QUIC server
+- OpenSSL Guide: Writing a simple nonblocking QUIC server
 
 =head1 SIMPLE NONBLOCKING QUIC SERVER EXAMPLE
 
@@ -22,13 +22,13 @@ Once the current client disconnects, the next client connection is accepted.
 The server only accepts HTTP/1.0 requests, which is non-standard and will not
 be supported by real world servers.  This is for demonstration purposes only.
 
-Both the accepting socket and client connections are "non-blocking".  However,
+Both the accepting socket and client connections are "nonblocking".  However,
 we use select() to make the listening socket block when it cannot read/write.
 Rather than stopping and waiting, your application may need to go and do other
 tasks whilst the B<SSL> object is unable to read/write. For example: updating a
 GUI or performing operations on some other connection or stream.
 
-The complete source code for this example non-blocking QUIC server is available
+The complete source code for this example nonblocking QUIC server is available
 in the B<demos/guide> directory of the OpenSSL source distribution in the file
 B<quic-server-non-block.c>.  It is also available online at
 L<https://github.com/openssl/openssl/blob/master/demos/guide/quic-server-non-block.c>.
@@ -193,7 +193,7 @@ listening for new connections.
     if (!SSL_set_fd(listener, fd))
         goto err;
 
-    /* Set the listener mode to non-blocking, which is inherited by
+    /* Set the listener mode to nonblocking, which is inherited by
      * child objects.
      */
     if (!SSL_set_blocking_mode(listener, 0))
