@@ -238,6 +238,13 @@ a more real-world application would likely use this time to perform other tasks.
     FD_SET(sock, &read_fd);
 
     /*
+     * Find out when OpenSSL would next like to be called, regardless of
+     * whether the state of the underlying socket has changed or not.
+     */
+    if (SSL_get_event_timeout(ssl, &tv, &isinfinite) && !isinfinite)
+        tvp = &tv;
+
+    /*
      * Wait until the socket is writeable or readable. We use select here
      * for the sake of simplicity and portability, but you could equally use
      * poll/epoll or similar functions
@@ -257,7 +264,7 @@ a more real-world application would likely use this time to perform other tasks.
      * "select" (with updated timeouts).
      */
 
-    select(sock + 1, &read_fd, NULL, NULL, NULL);
+    select(sock + 1, &read_fd, NULL, NULL, tvp);
 
 With the handshake complete, the server reads all the client input.
 
