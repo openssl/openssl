@@ -67,7 +67,7 @@ struct ossl_http_req_ctx_st {
     time_t max_time;            /* Maximum end time of current transfer, or 0 */
     time_t max_total_time;      /* Maximum end time of total transfer, or 0 */
     char *redirection_url;      /* Location obtained from HTTP status 301/302 */
-    size_t max_hdr_lines;       /* Max. number of http hdr lines, or 0 */
+    size_t max_hdr_lines;       /* Max. number of response header lines, or 0 */
 };
 
 /* HTTP states */
@@ -698,7 +698,6 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
         resp_hdr_lines++;
         if (rctx->max_hdr_lines != 0 && rctx->max_hdr_lines < resp_hdr_lines) {
             ERR_raise(ERR_LIB_HTTP, HTTP_R_RESPONSE_TOO_MANY_HDRLINES);
-            OSSL_TRACE(HTTP, "Received too many headers\n");
             rctx->state = OHS_ERROR;
             return 0;
         }
@@ -806,8 +805,6 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
             goto next_line;
         if (OSSL_TRACE_ENABLED(HTTP))
             OSSL_TRACE(HTTP, "]\n");
-
-        resp_hdr_lines = 0;
 
         if (rctx->keep_alive != 0 /* do not let server initiate keep_alive */
                 && !found_keep_alive /* otherwise there is no change */) {

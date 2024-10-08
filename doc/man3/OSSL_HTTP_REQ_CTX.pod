@@ -15,8 +15,8 @@ OSSL_HTTP_REQ_CTX_exchange,
 OSSL_HTTP_REQ_CTX_get0_mem_bio,
 OSSL_HTTP_REQ_CTX_get_resp_len,
 OSSL_HTTP_REQ_CTX_set_max_response_length,
-OSSL_HTTP_is_alive,
-OSSL_HTTP_REQ_CTX_set_max_response_hdr_lines
+OSSL_HTTP_REQ_CTX_set_max_response_hdr_lines,
+OSSL_HTTP_is_alive
 - HTTP client low-level functions
 
 =head1 SYNOPSIS
@@ -48,11 +48,10 @@ OSSL_HTTP_REQ_CTX_set_max_response_hdr_lines
  size_t OSSL_HTTP_REQ_CTX_get_resp_len(const OSSL_HTTP_REQ_CTX *rctx);
  void OSSL_HTTP_REQ_CTX_set_max_response_length(OSSL_HTTP_REQ_CTX *rctx,
                                                 unsigned long len);
-
- int OSSL_HTTP_is_alive(const OSSL_HTTP_REQ_CTX *rctx);
-
  void OSSL_HTTP_REQ_CTX_set_max_response_hdr_lines(OSSL_HTTP_REQ_CTX *rctx,
                                                    size_t count);
+
+ int OSSL_HTTP_is_alive(const OSSL_HTTP_REQ_CTX *rctx);
 
 =head1 DESCRIPTION
 
@@ -189,6 +188,13 @@ OSSL_HTTP_REQ_CTX_set_max_response_length() sets the maximum allowed
 response content length for I<rctx> to I<len>. If not set or I<len> is 0
 then the B<OSSL_HTTP_DEFAULT_MAX_RESP_LEN> is used, which currently is 100 KiB.
 
+OSSL_HTTP_REQ_CTX_set_max_response_hdr_lines() changes the limit for
+the number of HTTP header lines allowed to be received in a response.
+The default limit is B<OSSL_HTTP_DEFAULT_MAX_RESP_HDR_LINES>, currently 256.
+If the limit is not 0 and the number of lines exceeds the limit,
+then the HTTP_R_RESPONSE_TOO_MANY_HDRLINES error is indicated.
+Setting the limit to 0 disables the check.
+
 OSSL_HTTP_is_alive() can be used to query if the HTTP connection
 given by I<rctx> is still alive, i.e., has not been closed.
 It returns 0 if I<rctx> is NULL.
@@ -200,12 +206,6 @@ else it should call I<OSSL_HTTP_REQ_CTX_free(rctx)> or L<OSSL_HTTP_close(3)>.
 In case the client application keeps I<rctx> but the connection then dies
 for any reason at the server side, it will notice this obtaining an
 I/O error when trying to send the next request via I<rctx>.
-
-The OSSL_HTTP_REQ_CTX_set_max_response_hdr_lines() function changes the limit
-for the number of HTTP headers which can be received in a response. The default
-value is 256.  If the number of HTTP headers in a response exceeds the limit,
-then the HTTP_R_RESPONSE_TOO_MANY_HDRLINES error is indicated. Setting the
-limit to 0 disables the check.
 
 =head1 WARNINGS
 
@@ -253,8 +253,8 @@ See also L<OSSL_trace_enabled(3)> and L<openssl-env(7)>.
 OSSL_HTTP_REQ_CTX_new() returns a pointer to a B<OSSL_HTTP_REQ_CTX>, or NULL
 on error.
 
-OSSL_HTTP_REQ_CTX_free() and OSSL_HTTP_REQ_CTX_set_max_response_length()
-do not return values.
+OSSL_HTTP_REQ_CTX_free(), OSSL_HTTP_REQ_CTX_set_max_response_length(), and
+OSSL_HTTP_REQ_CTX_set_max_response_hdr_lines() do not return values.
 
 OSSL_HTTP_REQ_CTX_set_request_line(), OSSL_HTTP_REQ_CTX_add1_header(),
 OSSL_HTTP_REQ_CTX_set1_req(), and OSSL_HTTP_REQ_CTX_set_expected()
@@ -288,7 +288,9 @@ L<OSSL_trace_enabled(3)>, and L<openssl-env(7)>.
 
 =head1 HISTORY
 
-The functions described here were added in OpenSSL 3.0.
+OSSL_HTTP_REQ_CTX_set_max_response_hdr_lines() was added in OpenSSL 3.3.
+
+All other functions described here were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
