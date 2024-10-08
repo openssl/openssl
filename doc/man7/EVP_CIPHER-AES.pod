@@ -43,7 +43,7 @@ default provider:
 AES wrapping and unwrapping is performed via the encryption API using functions
 such as EVP_EncryptInit_ex2() and EVP_DecryptInit_ex2().
 
-When wrapping input that is not a multiple of 8, or that is less
+When wrapping input that is not a multiple of 8 bytes, or that is less
 than 16 bytes the padding variant of the algorithm is required
 (e.g "AES-128-WRAP-PAD").
 
