@@ -1106,7 +1106,7 @@ struct ssl_ctx_st {
      * the one set via SSLKEYLOGFILE, so we just keep them separate
      */
 # ifndef OPENSSL_NO_SSLKEYLOG
-    SSL_CTX_keylog_cb_func sslkeylog_callback;
+    uint32_t do_sslkeylog;
 # endif
 
     /*
