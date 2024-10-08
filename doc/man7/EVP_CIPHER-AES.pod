@@ -84,8 +84,6 @@ L<EVP_EncryptInit(3)/PARAMETERS>.
 The AES-SIV and AES-WRAP mode implementations do not support streaming. That
 means to obtain correct results there can be only one L<EVP_EncryptUpdate(3)>
 or L<EVP_DecryptUpdate(3)> call after the initialization of the context.
-For output size restrictions see L<EVP_EncryptUpdate(3)> and
-L<EVP_DecryptUpdate(3)>.
 
 The AES-XTS implementations allow streaming to be performed, but each
 L<EVP_EncryptUpdate(3)> or L<EVP_DecryptUpdate(3)> call requires each input
