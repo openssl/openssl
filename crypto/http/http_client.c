@@ -620,8 +620,9 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
             }
             if (OSSL_TRACE_ENABLED(HTTP) && rctx->state == OHS_WRITE_HDR1)
                 OSSL_TRACE(HTTP, "Sending request: [\n");
-            OSSL_TRACE_STRING(HTTP, rctx->state != OHS_WRITE_REQ || rctx->text,
-                              rctx->state != OHS_WRITE_REQ, rctx->pos, sz);
+            if (OSSL_TRACE_ENABLED(HTTP))
+                OSSL_TRACE_STRING(HTTP, rctx->state != OHS_WRITE_REQ || rctx->text,
+                                  rctx->state != OHS_WRITE_REQ, rctx->pos, sz);
             if (rctx->state == OHS_WRITE_HDR1)
                 rctx->state = OHS_WRITE_HDR;
             rctx->pos += sz;
