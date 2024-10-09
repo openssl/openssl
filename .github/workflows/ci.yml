@@ -81,7 +81,15 @@ jobs:
 
   basic_gcc:
     runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    outputs:
+      job_name: ${{ steps.capture-job-id.outputs.JOB_NAME }}
+      run_id: ${{ steps.capture-job-id.outputs.RUN_ID }}
     steps:
+    - name: capture-job-id
+      id: capture-job-id
+      run: |
+        echo "JOB_NAME=${{ github.job }}" >> $GITHUB_OUTPUT
+        echo "RUN_ID=${{ github.run_id }}" >> $GITHUB_OUTPUT
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
@@ -105,6 +113,32 @@ jobs:
       run: |
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
+    - name: tar build tree
+      run: |
+        tar -cvf "${{ github.job }}.tgz" .
+    - name: upload build tree
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ github.job }}
+        path: "./${{ github.job }}.tgz"
+        retention-days: 1
+
+  basic_gcc_test:
+    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    needs: basic_gcc
+    env:
+      JOB_NAME: ${{ needs.basic_gcc.outputs.job_name }}
+      RUN_ID: ${{ needs.basic_gcc.outputs.run_id }}
+    steps:
+    - name: download build tree
+      uses: actions/download-artifact@v4
+      with:
+        name: basic_gcc 
+        path: .
+        run-id: ${RUN_ID}
+    - name: extract artifacts
+      run: |
+        tar xvf "${JOB_NAME}.tgz"
     - name: make test
       run: .github/workflows/make-test
     - name: check fipsvendor
@@ -115,10 +149,24 @@ jobs:
       with:
         name: "ci@basic-gcc"
         path: artifacts.tar.gz
+    - name: delete build artifacts
+      if: always()
+      uses: geekyeggo/delete-artifact@v5
+      with:
+        name: ${JOB_NAME}
+        failOnError: false
 
   basic_clang:
     runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    outputs:
+      job_name: ${{ steps.capture-job-id.outputs.JOB_NAME }}
+      run_id: ${{ steps.capture-job-id.outputs.RUN_ID }}
     steps:
+    - name: capture-job-id
+      id: capture-job-id
+      run: |
+        echo "JOB_NAME=${{ github.job }}" >> $GITHUB_OUTPUT
+        echo "RUN_ID=${{ github.run_id }}" >> $GITHUB_OUTPUT
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
@@ -136,6 +184,42 @@ jobs:
       run: |
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
+    - name: tar build tree
+      run: |
+        tar -cvf "${{ github.job }}.tgz" .
+    - name: upload build tree
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ github.job }}
+        path: "./${{ github.job }}.tgz"
+        retention-days: 1
+
+  basic_clang_test:
+    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    needs: basic_clang
+    env:
+      JOB_NAME: ${{ needs.basic_clang.outputs.job_name }}
+      RUN_ID: ${{ needs.basic_clang.outputs.run_id }}
+    steps:
+    - name: download build tree
+      uses: actions/download-artifact@v4
+      with:
+        name: basic_clang
+        path: .
+        run-id: ${RUN_ID}
+    - name: extract artifacts
+      run: |
+        tar xvf "${JOB_NAME}.tgz"
+    - name: get cpu info
+      run: |
+        cat /proc/cpuinfo
+        ./util/opensslwrap.sh version -c
+    - name: delete build artifacts
+      if: always()
+      uses: geekyeggo/delete-artifact@v5
+      with:
+        name: ${JOB_NAME}
+        failOnError: false
     - name: make test
       run: .github/workflows/make-test
     - name: save artifacts
@@ -171,7 +255,15 @@ jobs:
 
   minimal:
     runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    outputs:
+      job_name: ${{ steps.capture-job-id.outputs.JOB_NAME }}
+      run_id: ${{ steps.capture-job-id.outputs.RUN_ID }}
     steps:
+    - name: capture-job-id
+      id: capture-job-id
+      run: |
+        echo "JOB_NAME=${{ github.job }}" >> $GITHUB_OUTPUT
+        echo "RUN_ID=${{ github.run_id }}" >> $GITHUB_OUTPUT
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
@@ -185,6 +277,38 @@ jobs:
       run: ./config --banner=Configured --strict-warnings enable-demos enable-h3demo no-bulk no-pic no-asm -DOPENSSL_NO_SECURE_MEMORY -DOPENSSL_SMALL_FOOTPRINT && perl configdata.pm --dump
     - name: make
       run: make -j4 # verbose, so no -s here
+    - name: tar build tree
+      run: |
+        tar -cvf "${{ github.job }}.tgz" .
+    - name: upload build tree
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ github.job }}
+        path: "./${{ github.job }}.tgz"
+        retention-days: 1
+
+  minimal_test:
+    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    needs: minimal 
+    env:
+      JOB_NAME: ${{ needs.minimal.outputs.job_name }}
+      RUN_ID: ${{ needs.minimal.outputs.run_id }}
+    steps:
+    - name: download build tree
+      uses: actions/download-artifact@v4
+      with:
+        name: minimal
+        path: .
+        run-id: ${RUN_ID}
+    - name: extract artifacts
+      run: |
+        tar xvf "${JOB_NAME}.tgz"
+    - name: delete build artifacts
+      if: always()
+      uses: geekyeggo/delete-artifact@v5
+      with:
+        name: ${JOB_NAME}
+        failOnError: false
     - name: get cpu info
       run: |
         cat /proc/cpuinfo
@@ -199,7 +323,15 @@ jobs:
 
   no-deprecated:
     runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    outputs:
+      job_name: ${{ steps.capture-job-id.outputs.JOB_NAME }}
+      run_id: ${{ steps.capture-job-id.outputs.RUN_ID }}
     steps:
+    - name: capture-job-id
+      id: capture-job-id
+      run: |
+        echo "JOB_NAME=${{ github.job }}" >> $GITHUB_OUTPUT
+        echo "RUN_ID=${{ github.run_id }}" >> $GITHUB_OUTPUT
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
@@ -213,6 +345,38 @@ jobs:
       run: ./config --banner=Configured --strict-warnings enable-demos enable-h3demo no-deprecated enable-fips && perl configdata.pm --dump
     - name: make
       run: make -s -j4
+    - name: tar build tree
+      run: |
+        tar -cvf "${{ github.job }}.tgz" .
+    - name: upload build tree
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ github.job }}
+        path: "./${{ github.job }}.tgz"
+        retention-days: 1
+
+  no-deprecated-test:
+    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    needs: no-deprecated 
+    env:
+      JOB_NAME: ${{ needs.no-deprecated.outputs.job_name }}
+      RUN_ID: ${{ needs.no-deprecated.outputs.run_id }}
+    steps:
+    - name: download build tree
+      uses: actions/download-artifact@v4
+      with:
+        name: no-deprecated
+        path: .
+        run-id: ${RUN_ID}
+    - name: extract artifacts
+      run: |
+        tar xvf "${JOB_NAME}.tgz"
+    - name: delete build artifacts
+      if: always()
+      uses: geekyeggo/delete-artifact@v5
+      with:
+        name: ${JOB_NAME}
+        failOnError: false
     - name: get cpu info
       run: |
         cat /proc/cpuinfo
@@ -227,7 +391,15 @@ jobs:
 
   no-shared-ubuntu:
     runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    outputs:
+      job_name: ${{ steps.capture-job-id.outputs.JOB_NAME }}
+      run_id: ${{ steps.capture-job-id.outputs.RUN_ID }}
     steps:
+    - name: capture-job-id
+      id: capture-job-id
+      run: |
+        echo "JOB_NAME=${{ github.job }}" >> $GITHUB_OUTPUT
+        echo "RUN_ID=${{ github.run_id }}" >> $GITHUB_OUTPUT
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
@@ -241,6 +413,38 @@ jobs:
       run: ./config --banner=Configured --strict-warnings enable-demos enable-h3demo no-shared no-fips && perl configdata.pm --dump
     - name: make
       run: make -s -j4
+    - name: tar build tree
+      run: |
+        tar -cvf "${{ github.job }}.tgz" .
+    - name: upload build tree
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ github.job }}
+        path: "./${{ github.job }}.tgz"
+        retention-days: 1
+
+  no-shared-ubuntu-test:
+    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    needs: no-shared-ubuntu
+    env:
+      JOB_NAME: ${{ needs.no-shared-ubuntu.outputs.job_name }}
+      RUN_ID: ${{ needs.no-shared-ubuntu.outputs.run_id }}
+    steps:
+    - name: download build tree
+      uses: actions/download-artifact@v4
+      with:
+        name: no-shared-ubuntu 
+        path: .
+        run-id: ${RUN_ID}
+    - name: extract artifacts
+      run: |
+        tar xvf "${JOB_NAME}.tgz"
+    - name: delete build artifacts
+      if: always()
+      uses: geekyeggo/delete-artifact@v5
+      with:
+        name: ${JOB_NAME}
+        failOnError: false
     - name: get cpu info
       run: |
         cat /proc/cpuinfo
@@ -260,7 +464,15 @@ jobs:
         os: [macos-13, macos-14]
     if: github.server_url == 'https://github.com'
     runs-on: ${{ matrix.os }}
+    outputs:
+      job_name: ${{ steps.capture-job-id.outputs.JOB_NAME }}
+      run_id: ${{ steps.capture-job-id.outputs.RUN_ID }}
     steps:
+    - name: capture-job-id
+      id: capture-job-id
+      run: |
+        echo "JOB_NAME=${{ github.job }}" >> $GITHUB_OUTPUT
+        echo "RUN_ID=${{ github.run_id }}" >> $GITHUB_OUTPUT
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
@@ -268,12 +480,49 @@ jobs:
       if: ${{ github.event_name  == 'pull_request' }}
       uses: hendrikmuhs/ccache-action@v1.2.14
       with:
-        key: ${{ github.job }}
+        key: ${{ github.job }}-${{ matrix.os }}
         create-symlink: true
     - name: config
       run: ./config --banner=Configured --strict-warnings enable-demos enable-h3demo no-shared no-fips && perl configdata.pm --dump
     - name: make
       run: make -s -j4
+    - name: tar build tree
+      run: |
+        tar -cvf "${{ github.job }}-${{ matrix.os }}.tgz" .
+    - name: upload build tree
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ github.job }}-${{ matrix.os }}
+        path: "./${{ github.job }}-${{ matrix.os }}.tgz"
+        retention-days: 1
+
+  no-shared-macos-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-13, macos-14]
+    if: github.server_url == 'https://github.com'
+    runs-on: ${{ matrix.os }}
+    needs: no-shared-macos
+    env:
+      JOB_NAME: ${{ needs.no-shared-macos.outputs.job_name }}
+      RUN_ID: ${{ needs.no-shared-macos.outputs.run_id }}
+    steps:
+    - name: download build tree
+      uses: actions/download-artifact@v4
+      with:
+        name: no-shared-macos-${{ matrix.os }}
+        path: .
+        run-id: ${RUN_ID}
+    - name: extract artifacts
+      run: |
+        tar xvf "${JOB_NAME}-${{ matrix.os }}.tgz"
+    - name: delete build artifacts
+      if: always()
+      uses: geekyeggo/delete-artifact@v5
+      with:
+        name: ${JOB_NAME}
+        failOnError: false
     - name: get cpu info
       run: |
         sysctl machdep.cpu
@@ -288,14 +537,18 @@ jobs:
 
   non-caching:
     runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    outputs:
+      job_name: ${{ steps.capture-job-id.outputs.JOB_NAME }}
+      run_id: ${{ steps.capture-job-id.outputs.RUN_ID }}
     steps:
+    - name: capture-job-id
+      id: capture-job-id
+      run: |
+        echo "JOB_NAME=${{ github.job }}" >> $GITHUB_OUTPUT
+        echo "RUN_ID=${{ github.run_id }}" >> $GITHUB_OUTPUT
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
-    - name: Adjust ASLR for sanitizer
-      run: |
-        sudo cat /proc/sys/vm/mmap_rnd_bits
-        sudo sysctl -w vm.mmap_rnd_bits=28
     - name: ccache
       if: ${{ github.event_name  == 'pull_request' }}
       uses: hendrikmuhs/ccache-action@v1.2.14
@@ -306,6 +559,42 @@ jobs:
       run: ./config --banner=Configured --debug enable-demos enable-h3demo enable-asan enable-ubsan no-cached-fetch no-fips no-dtls no-tls1 no-tls1-method no-tls1_1 no-tls1_1-method no-async && perl configdata.pm --dump
     - name: make
       run: make -s -j4
+    - name: tar build tree
+      run: |
+        tar -cvf "${{ github.job }}.tgz" .
+    - name: upload build tree
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ github.job }}
+        path: "./${{ github.job }}.tgz"
+        retention-days: 1
+
+  non-caching-test:
+    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    needs: non-caching 
+    env:
+      JOB_NAME: ${{ needs.non-caching.outputs.job_name }}
+      RUN_ID: ${{ needs.non-caching.outputs.run_id }}
+    steps:
+    - name: download build tree
+      uses: actions/download-artifact@v4
+      with:
+        name: non-caching
+        path: .
+        run-id: ${RUN_ID}
+    - name: extract artifacts
+      run: |
+        tar xvf "${JOB_NAME}.tgz"
+    - name: delete build artifacts
+      if: always()
+      uses: geekyeggo/delete-artifact@v5
+      with:
+        name: ${JOB_NAME}
+        failOnError: false
+    - name: Adjust ASLR for sanitizer
+      run: |
+        sudo cat /proc/sys/vm/mmap_rnd_bits
+        sudo sysctl -w vm.mmap_rnd_bits=28
     - name: get cpu info
       run: |
         cat /proc/cpuinfo
@@ -320,14 +609,18 @@ jobs:
 
   address_ub_sanitizer:
     runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    outputs:
+      job_name: ${{ steps.capture-job-id.outputs.JOB_NAME }}
+      run_id: ${{ steps.capture-job-id.outputs.RUN_ID }}
     steps:
+    - name: capture-job-id
+      id: capture-job-id
+      run: |
+        echo "JOB_NAME=${{ github.job }}" >> $GITHUB_OUTPUT
+        echo "RUN_ID=${{ github.run_id }}" >> $GITHUB_OUTPUT
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
-    - name: Adjust ASLR for sanitizer
-      run: |
-        sudo cat /proc/sys/vm/mmap_rnd_bits
-        sudo sysctl -w vm.mmap_rnd_bits=28
     - name: ccache
       if: ${{ github.event_name  == 'pull_request' }}
       uses: hendrikmuhs/ccache-action@v1.2.14
@@ -338,6 +631,42 @@ jobs:
       run: ./config --banner=Configured --debug enable-demos enable-h3demo enable-asan enable-ubsan enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-fips && perl configdata.pm --dump
     - name: make
       run: make -s -j4
+    - name: tar build tree
+      run: |
+        tar -cvf "${{ github.job }}.tgz" .
+    - name: upload build tree
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ github.job }}
+        path: "./${{ github.job }}.tgz"
+        retention-days: 1
+
+  address_ub_sanitizer-test:
+    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    needs: address_ub_sanitizer 
+    env:
+      JOB_NAME: ${{ needs.address_ub_sanitizer.outputs.job_name }}
+      RUN_ID: ${{ needs.address_ub_sanitizer.outputs.run_id }}
+    steps:
+    - name: download build tree
+      uses: actions/download-artifact@v4
+      with:
+        name: address_ub_sanitizer
+        path: .
+        run-id: ${RUN_ID}
+    - name: extract artifacts
+      run: |
+        tar xvf "${JOB_NAME}.tgz"
+    - name: delete build artifacts
+      if: always()
+      uses: geekyeggo/delete-artifact@v5
+      with:
+        name: ${JOB_NAME}
+        failOnError: false
+    - name: Adjust ASLR for sanitizer
+      run: |
+        sudo cat /proc/sys/vm/mmap_rnd_bits
+        sudo sysctl -w vm.mmap_rnd_bits=28
     - name: get cpu info
       run: |
         cat /proc/cpuinfo
@@ -352,14 +681,18 @@ jobs:
 
   fuzz_tests:
     runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    outputs:
+      job_name: ${{ steps.capture-job-id.outputs.JOB_NAME }}
+      run_id: ${{ steps.capture-job-id.outputs.RUN_ID }}
     steps:
+    - name: capture-job-id
+      id: capture-job-id
+      run: |
+        echo "JOB_NAME=${{ github.job }}" >> $GITHUB_OUTPUT
+        echo "RUN_ID=${{ github.run_id }}" >> $GITHUB_OUTPUT
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
-    - name: Adjust ASLR for sanitizer
-      run: |
-        sudo cat /proc/sys/vm/mmap_rnd_bits
-        sudo sysctl -w vm.mmap_rnd_bits=28
     - name: ccache
       if: ${{ github.event_name  == 'pull_request' }}
       uses: hendrikmuhs/ccache-action@v1.2.14
@@ -370,6 +703,42 @@ jobs:
       run: ./config --banner=Configured --debug -DPEDANTIC -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION enable-asan enable-ubsan enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-weak-ssl-ciphers enable-ssl3 enable-ssl3-method enable-nextprotoneg && perl configdata.pm --dump
     - name: make
       run: make -s -j4
+    - name: tar build tree
+      run: |
+        tar -cvf "${{ github.job }}.tgz" .
+    - name: upload build tree
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ github.job }}
+        path: "./${{ github.job }}.tgz"
+        retention-days: 1
+
+  fuzz_tests-test:
+    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    needs: fuzz_tests 
+    env:
+      JOB_NAME: ${{ needs.fuzz_tests.outputs.job_name }}
+      RUN_ID: ${{ needs.fuzz_tests.outputs.run_id }}
+    steps:
+    - name: download build tree
+      uses: actions/download-artifact@v4
+      with:
+        name: fuzz_tests
+        path: .
+        run-id: ${RUN_ID}
+    - name: extract artifacts
+      run: |
+        tar xvf "${JOB_NAME}.tgz"
+    - name: delete build artifacts
+      if: always()
+      uses: geekyeggo/delete-artifact@v5
+      with:
+        name: ${JOB_NAME}
+        failOnError: false
+    - name: Adjust ASLR for sanitizer
+      run: |
+        sudo cat /proc/sys/vm/mmap_rnd_bits
+        sudo sysctl -w vm.mmap_rnd_bits=28
     - name: get cpu info
       run: |
         cat /proc/cpuinfo
@@ -385,14 +754,18 @@ jobs:
 
   memory_sanitizer:
     runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    outputs:
+      job_name: ${{ steps.capture-job-id.outputs.JOB_NAME }}
+      run_id: ${{ steps.capture-job-id.outputs.RUN_ID }}
     steps:
+    - name: capture-job-id
+      id: capture-job-id
+      run: |
+        echo "JOB_NAME=${{ github.job }}" >> $GITHUB_OUTPUT
+        echo "RUN_ID=${{ github.run_id }}" >> $GITHUB_OUTPUT
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
-    - name: Adjust ASLR for sanitizer
-      run: |
-        sudo cat /proc/sys/vm/mmap_rnd_bits
-        sudo sysctl -w vm.mmap_rnd_bits=28
     - name: ccache
       if: ${{ github.event_name  == 'pull_request' }}
       uses: hendrikmuhs/ccache-action@v1.2.14
@@ -404,6 +777,42 @@ jobs:
       run: CC=clang ./config --banner=Configured --debug -O1 -fsanitize=memory -DOSSL_SANITIZE_MEMORY -fno-optimize-sibling-calls enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-fips && perl configdata.pm --dump
     - name: make
       run: make -s -j4
+    - name: tar build tree
+      run: |
+        tar -cvf "${{ github.job }}.tgz" .
+    - name: upload build tree
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ github.job }}
+        path: "./${{ github.job }}.tgz"
+        retention-days: 1
+
+  memory_sanitizer-test: 
+    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    needs: memory_sanitizer
+    env:
+      JOB_NAME: ${{ needs.memory_sanitizer.outputs.job_name }}
+      RUN_ID: ${{ needs.memory_sanitizer.outputs.run_id }}
+    steps:
+    - name: download build tree
+      uses: actions/download-artifact@v4
+      with:
+        name: memory_sanitizer
+        path: .
+        run-id: ${RUN_ID}
+    - name: extract artifacts
+      run: |
+        tar xvf "${JOB_NAME}.tgz"
+    - name: delete build artifacts
+      if: always()
+      uses: geekyeggo/delete-artifact@v5
+      with:
+        name: ${JOB_NAME}
+        failOnError: false
+    - name: Adjust ASLR for sanitizer
+      run: |
+        sudo cat /proc/sys/vm/mmap_rnd_bits
+        sudo sysctl -w vm.mmap_rnd_bits=28
     - name: get cpu info
       run: |
         cat /proc/cpuinfo
@@ -418,7 +827,15 @@ jobs:
 
   threads_sanitizer:
     runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    outputs:
+      job_name: ${{ steps.capture-job-id.outputs.JOB_NAME }}
+      run_id: ${{ steps.capture-job-id.outputs.RUN_ID }}
     steps:
+    - name: capture-job-id
+      id: capture-job-id
+      run: |
+        echo "JOB_NAME=${{ github.job }}" >> $GITHUB_OUTPUT
+        echo "RUN_ID=${{ github.run_id }}" >> $GITHUB_OUTPUT
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
@@ -436,6 +853,42 @@ jobs:
       run: CC=clang ./config --banner=Configured no-fips --strict-warnings -fsanitize=thread && perl configdata.pm --dump
     - name: make
       run: make -s -j4
+    - name: tar build tree
+      run: |
+        tar -cvf "${{ github.job }}.tgz" .
+    - name: upload build tree
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ github.job }}
+        path: "./${{ github.job }}.tgz"
+        retention-days: 1
+
+  threads_sanitizer-test:
+    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    needs: threads_sanitizer
+    env:
+      JOB_NAME: ${{ needs.threads_sanitizer.outputs.job_name }}
+      RUN_ID: ${{ needs.threads_sanitizer.outputs.run_id }}
+    steps:
+    - name: download build tree
+      uses: actions/download-artifact@v4
+      with:
+        name: threads_sanitizer
+        path: .
+        run-id: ${RUN_ID}
+    - name: extract artifacts
+      run: |
+        tar xvf "${JOB_NAME}.tgz"
+    - name: delete build artifacts
+      if: always()
+      uses: geekyeggo/delete-artifact@v5
+      with:
+        name: ${JOB_NAME}
+        failOnError: false
+    - name: Adjust ASLR for sanitizer
+      run: |
+        sudo cat /proc/sys/vm/mmap_rnd_bits
+        sudo sysctl -w vm.mmap_rnd_bits=28
     - name: get cpu info
       run: |
         cat /proc/cpuinfo
@@ -450,7 +903,15 @@ jobs:
 
   enable_non-default_options:
     runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    outputs:
+      job_name: ${{ steps.capture-job-id.outputs.JOB_NAME }}
+      run_id: ${{ steps.capture-job-id.outputs.RUN_ID }}
     steps:
+    - name: capture-job-id
+      id: capture-job-id
+      run: |
+        echo "JOB_NAME=${{ github.job }}" >> $GITHUB_OUTPUT
+        echo "RUN_ID=${{ github.run_id }}" >> $GITHUB_OUTPUT
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
@@ -466,6 +927,38 @@ jobs:
       run: ./config --banner=Configured --strict-warnings enable-demos enable-h3demo no-ec enable-ssl-trace enable-zlib enable-zlib-dynamic enable-crypto-mdebug enable-egd enable-ktls enable-fips no-threads && perl configdata.pm --dump
     - name: make
       run: make -s -j4
+    - name: tar build tree
+      run: |
+        tar -cvf "${{ github.job }}.tgz" .
+    - name: upload build tree
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ github.job }}
+        path: "./${{ github.job }}.tgz"
+        retention-days: 1
+
+  enable_non-default_options-test:
+    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    needs: enable_non-default_options 
+    env:
+      JOB_NAME: ${{ needs.enable_non-default_options.outputs.job_name }}
+      RUN_ID: ${{ needs.enable_non-default_options.outputs.run_id }}
+    steps:
+    - name: download build tree
+      uses: actions/download-artifact@v4
+      with:
+        name: enable_non-default_options
+        path: .
+        run-id: ${RUN_ID}
+    - name: extract artifacts
+      run: |
+        tar xvf "${JOB_NAME}.tgz"
+    - name: delete build artifacts
+      if: always()
+      uses: geekyeggo/delete-artifact@v5
+      with:
+        name: ${JOB_NAME}
+        failOnError: false
     - name: get cpu info
       run: |
         cat /proc/cpuinfo
@@ -480,16 +973,18 @@ jobs:
 
   full_featured:
     runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    outputs:
+      job_name: ${{ steps.capture-job-id.outputs.JOB_NAME }}
+      run_id: ${{ steps.capture-job-id.outputs.RUN_ID }}
     steps:
+    - name: capture-job-id
+      id: capture-job-id
+      run: |
+        echo "JOB_NAME=${{ github.job }}" >> $GITHUB_OUTPUT
+        echo "RUN_ID=${{ github.run_id }}" >> $GITHUB_OUTPUT
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
-    - name: modprobe tls
-      run: sudo modprobe tls
-    - name: Enable sctp
-      run: sudo modprobe sctp
-    - name: Enable auth in sctp
-      run: sudo sysctl -w net.sctp.auth_enable=1 
     - name: install extra config support
       run: sudo apt-get -y install libsctp-dev abigail-tools libzstd-dev zstd
     - name: ccache
@@ -502,6 +997,46 @@ jobs:
       run: ./config --banner=Configured --strict-warnings enable-demos enable-h3demo enable-ktls enable-fips enable-egd enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-sctp enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-trace enable-zlib enable-zstd && perl configdata.pm --dump
     - name: make
       run: make -s -j4
+    - name: tar build tree
+      run: |
+        tar -cvf "${{ github.job }}.tgz" .
+    - name: upload build tree
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ github.job }}
+        path: "./${{ github.job }}.tgz"
+        retention-days: 1
+
+  full_featured-test:
+   runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }} 
+   needs: full_featured 
+   env:
+      JOB_NAME: ${{ needs.full_featured.outputs.job_name }}
+      RUN_ID: ${{ needs.full_featured.outputs.run_id }}
+   steps:
+    - name: download build tree
+      uses: actions/download-artifact@v4
+      with:
+        name: full_featured
+        path: .
+        run-id: ${RUN_ID}
+    - name: extract artifacts
+      run: |
+        tar xvf "${JOB_NAME}.tgz"
+    - name: delete build artifacts
+      if: always()
+      uses: geekyeggo/delete-artifact@v5
+      with:
+        name: ${JOB_NAME}
+        failOnError: false
+    - name: modprobe tls
+      run: sudo modprobe tls
+    - name: Enable sctp
+      run: sudo modprobe sctp
+    - name: Enable auth in sctp
+      run: sudo sysctl -w net.sctp.auth_enable=1
+    - name: install extra config support
+      run: sudo apt-get -y install libsctp-dev abigail-tools libzstd-dev zstd
     - name: get cpu info
       run: |
         cat /proc/cpuinfo
@@ -516,7 +1051,15 @@ jobs:
 
   no-legacy:
     runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    outputs:
+      job_name: ${{ steps.capture-job-id.outputs.JOB_NAME }}
+      run_id: ${{ steps.capture-job-id.outputs.RUN_ID }}
     steps:
+    - name: capture-job-id
+      id: capture-job-id
+      run: |
+        echo "JOB_NAME=${{ github.job }}" >> $GITHUB_OUTPUT
+        echo "RUN_ID=${{ github.run_id }}" >> $GITHUB_OUTPUT
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
@@ -530,6 +1073,38 @@ jobs:
       run: ./config --banner=Configured --strict-warnings enable-demos enable-h3demo no-legacy enable-fips && perl configdata.pm --dump
     - name: make
       run: make -s -j4
+    - name: tar build tree
+      run: |
+        tar -cvf "${{ github.job }}.tgz" .
+    - name: upload build tree
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ github.job }}
+        path: "./${{ github.job }}.tgz"
+        retention-days: 1
+
+  no-legacy-test:
+    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    needs: no-legacy 
+    env:
+      JOB_NAME: ${{ needs.no-legacy.outputs.job_name }}
+      RUN_ID: ${{ needs.no-legacy.outputs.run_id }}
+    steps:
+    - name: download build tree
+      uses: actions/download-artifact@v4
+      with:
+        name: no-legacy 
+        path: .
+        run-id: ${RUN_ID}
+    - name: extract artifacts
+      run: |
+        tar xvf "${JOB_NAME}.tgz"
+    - name: delete build artifacts
+      if: always()
+      uses: geekyeggo/delete-artifact@v5
+      with:
+        name: ${JOB_NAME}
+        failOnError: false
     - name: get cpu info
       run: |
         cat /proc/cpuinfo
@@ -544,7 +1119,15 @@ jobs:
 
   legacy:
     runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    outputs:
+      job_name: ${{ steps.capture-job-id.outputs.JOB_NAME }}
+      run_id: ${{ steps.capture-job-id.outputs.RUN_ID }}
     steps:
+    - name: capture-job-id
+      id: capture-job-id
+      run: |
+        echo "JOB_NAME=${{ github.job }}" >> $GITHUB_OUTPUT
+        echo "RUN_ID=${{ github.run_id }}" >> $GITHUB_OUTPUT
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
@@ -558,6 +1141,38 @@ jobs:
       run: ./config --banner=Configured -Werror --debug no-afalgeng enable-demos enable-h3demo no-shared enable-crypto-mdebug enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 no-fips && perl configdata.pm --dump
     - name: make
       run: make -s -j4
+    - name: tar build tree
+      run: |
+        tar -cvf "${{ github.job }}.tgz" .
+    - name: upload build tree
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ github.job }}
+        path: "./${{ github.job }}.tgz"
+        retention-days: 1
+
+  legacy-test:
+    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    needs: legacy
+    env:
+      JOB_NAME: ${{ needs.legacy.outputs.job_name }}
+      RUN_ID: ${{ needs.legacy.outputs.run_id }}
+    steps:
+    - name: download build tree
+      uses: actions/download-artifact@v4
+      with:
+        name: legacy
+        path: .
+        run-id: ${RUN_ID}
+    - name: extract artifacts
+      run: |
+        tar xvf "${JOB_NAME}.tgz"
+    - name: delete build artifacts
+      if: always()
+      uses: geekyeggo/delete-artifact@v5
+      with:
+        name: ${JOB_NAME}
+        failOnError: false
     - name: get cpu info
       run: |
         cat /proc/cpuinfo
@@ -577,6 +1192,7 @@ jobs:
   #   tree
   out-of-readonly-source-and-install-ubuntu:
     runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    needs: legacy
     steps:
     - uses: actions/checkout@v4
       with:
@@ -622,6 +1238,7 @@ jobs:
       working-directory: ./build
 
   out-of-readonly-source-and-install-macos:
+    needs: legacy
     strategy:
       fail-fast: false
       matrix:
@@ -674,6 +1291,7 @@ jobs:
 
   external-tests:
     runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    needs: legacy
     steps:
     - uses: actions/checkout@v4
       with:
@@ -718,6 +1336,7 @@ jobs:
 
   external-test-pyca:
     runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    needs: legacy
     strategy:
       matrix:
         RUST:
@@ -754,6 +1373,7 @@ jobs:
 
   external-test-cf-quiche:
     runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    needs: legacy
     steps:
     - uses: actions/checkout@v4
       with:
