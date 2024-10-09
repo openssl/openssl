@@ -1380,7 +1380,7 @@ int ossl_quic_get_net_read_desired(SSL *s)
         return 0;
 
     qctx_lock(&ctx);
-    ret = ossl_quic_reactor_net_read_desired(ossl_quic_channel_get_reactor(ctx.qc->ch));
+    ret = ossl_quic_reactor_net_read_desired(ossl_quic_obj_get0_reactor(ctx.obj));
     qctx_unlock(&ctx);
     return ret;
 }
@@ -1396,7 +1396,7 @@ int ossl_quic_get_net_write_desired(SSL *s)
         return 0;
 
     qctx_lock(&ctx);
-    ret = ossl_quic_reactor_net_write_desired(ossl_quic_channel_get_reactor(ctx.qc->ch));
+    ret = ossl_quic_reactor_net_write_desired(ossl_quic_obj_get0_reactor(ctx.obj));
     qctx_unlock(&ctx);
     return ret;
 }
