@@ -84,8 +84,16 @@ Notes on RFC9147 Section 7.1:
 * The implementation does not offer any logic to determine that there is disruption
   when receiving messages which means it will not send ACKs for the example given
   in RFC9147 Figure 12.
-* ACKs are always sent immediately after receiving a message to be ACK'ed.
+* ACKs are always sent immediately after receiving a full message to be ACK'ed.
+* If the implementation does not receive an ACK for all fragments of a message,
+  then the full message wil be retransmitted.
 * Empty ACKs are never sent.
+* The implementation does not explicitly prohibit receiving unencrypted ACKs. The
+  implementation will only ACK records of epoch > 0 so all ACKs sent by the
+  implementation will be encrypted.
+* The implementation only accepts ACKs after DTLSv1.3 has been negotiated. ACKs
+  that are received when DTLSv1.3 has not been negotiated is handled with a fatal
+  alert as any other unexpected message.
 
 Implementation progress
 -----------------------
