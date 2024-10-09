@@ -209,12 +209,6 @@ static void wait_for_activity(SSL *ssl)
     fd_set read_fd, write_fd;
     struct timeval tv;
     struct timeval *tvp = NULL;
-    int conn_state = SSL_get_stream_read_state(ssl);
-
-    if (conn_state == -1) {
-        fprintf(stderr, "Unable to retrieve SSL read state");
-        return;
-    }
 
     /* Get hold of the underlying file descriptor for the socket */
     if ((sock = SSL_get_fd(ssl)) == -1) {
@@ -227,15 +221,12 @@ static void wait_for_activity(SSL *ssl)
     FD_ZERO(&write_fd);
 
     /*
-     * If a connection has been established, find out if we would like to write
-     * to the socket, read from it, or both.
+     * Determine if we would like to write to the socket, read from it, or both.
      */
-    if (conn_state != SSL_STREAM_STATE_NONE) {
-        if (SSL_net_write_desired(ssl))
-            FD_SET(sock, &write_fd);
-        if (SSL_net_read_desired(ssl))
-            FD_SET(sock, &read_fd);
-    }
+    if (SSL_net_write_desired(ssl))
+        FD_SET(sock, &write_fd);
+    if (SSL_net_read_desired(ssl))
+        FD_SET(sock, &read_fd);
 
     /* Add the socket file descriptor to the fd_set */
     FD_SET(sock, &read_fd);
