@@ -17,7 +17,7 @@ static int set_cloexec(int fd)
 #endif
 }
 
-# if defined(OPENSSL_SYS_WINDOWS)
+#if defined(OPENSSL_SYS_WINDOWS)
 
 static CRYPTO_ONCE ensure_wsa_startup_once = CRYPTO_ONCE_STATIC_INIT;
 static int wsa_started;
