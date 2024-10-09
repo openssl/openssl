@@ -68,6 +68,12 @@ jobs:
     runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
     steps:
     - uses: actions/checkout@v4
+    - name: ccache
+      if: ${{ github.event_name  == 'pull_request' }}
+      uses: hendrikmuhs/ccache-action@v1.2.14
+      with:
+        key: ${{ github.job }}
+        create-symlink: true
     - name: config
       run: CPPFLAGS='-ansi -D_XOPEN_SOURCE=1 -D_POSIX_C_SOURCE=200809L' ./config --banner=Configured no-asm no-secure-memory no-makedepend enable-buildtest-c++ enable-fips --strict-warnings && perl configdata.pm --dump
     - name: make
@@ -79,6 +85,12 @@ jobs:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
+    - name: ccache
+      if: ${{ github.event_name  == 'pull_request' }}
+      uses: hendrikmuhs/ccache-action@v1.2.14
+      with:
+        key: ${{ github.job }}
+        create-symlink: true
     - name: localegen
       run: sudo locale-gen tr_TR.UTF-8
     - name: fipsvendor
@@ -110,6 +122,12 @@ jobs:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
+    - name: ccache
+      if: ${{ github.event_name  == 'pull_request' }}
+      uses: hendrikmuhs/ccache-action@v1.2.14
+      with:
+        key: ${{ github.job }}
+        create-symlink: true
     - name: config
       run: CC=clang ./config --banner=Configured enable-demos enable-h3demo no-fips --strict-warnings && perl configdata.pm --dump
     - name: make
@@ -157,6 +175,12 @@ jobs:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
+    - name: ccache
+      if: ${{ github.event_name  == 'pull_request' }}
+      uses: hendrikmuhs/ccache-action@v1.2.14
+      with:
+        key: ${{ github.job }}
+        create-symlink: true
     - name: config
       run: ./config --banner=Configured --strict-warnings enable-demos enable-h3demo no-bulk no-pic no-asm -DOPENSSL_NO_SECURE_MEMORY -DOPENSSL_SMALL_FOOTPRINT && perl configdata.pm --dump
     - name: make
@@ -179,6 +203,12 @@ jobs:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
+    - name: ccache
+      if: ${{ github.event_name  == 'pull_request' }}
+      uses: hendrikmuhs/ccache-action@v1.2.14
+      with:
+        key: ${{ github.job }}
+        create-symlink: true
     - name: config
       run: ./config --banner=Configured --strict-warnings enable-demos enable-h3demo no-deprecated enable-fips && perl configdata.pm --dump
     - name: make
@@ -201,6 +231,12 @@ jobs:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
+    - name: ccache
+      if: ${{ github.event_name  == 'pull_request' }}
+      uses: hendrikmuhs/ccache-action@v1.2.14
+      with:
+        key: ${{ github.job }}
+        create-symlink: true
     - name: config
       run: ./config --banner=Configured --strict-warnings enable-demos enable-h3demo no-shared no-fips && perl configdata.pm --dump
     - name: make
@@ -228,6 +264,12 @@ jobs:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
+    - name: ccache
+      if: ${{ github.event_name  == 'pull_request' }}
+      uses: hendrikmuhs/ccache-action@v1.2.14
+      with:
+        key: ${{ github.job }}
+        create-symlink: true
     - name: config
       run: ./config --banner=Configured --strict-warnings enable-demos enable-h3demo no-shared no-fips && perl configdata.pm --dump
     - name: make
@@ -254,6 +296,12 @@ jobs:
       run: |
         sudo cat /proc/sys/vm/mmap_rnd_bits
         sudo sysctl -w vm.mmap_rnd_bits=28
+    - name: ccache
+      if: ${{ github.event_name  == 'pull_request' }}
+      uses: hendrikmuhs/ccache-action@v1.2.14
+      with:
+        key: ${{ github.job }}
+        create-symlink: true
     - name: config
       run: ./config --banner=Configured --debug enable-demos enable-h3demo enable-asan enable-ubsan no-cached-fetch no-fips no-dtls no-tls1 no-tls1-method no-tls1_1 no-tls1_1-method no-async && perl configdata.pm --dump
     - name: make
@@ -280,6 +328,12 @@ jobs:
       run: |
         sudo cat /proc/sys/vm/mmap_rnd_bits
         sudo sysctl -w vm.mmap_rnd_bits=28
+    - name: ccache
+      if: ${{ github.event_name  == 'pull_request' }}
+      uses: hendrikmuhs/ccache-action@v1.2.14
+      with:
+        key: ${{ github.job }}
+        create-symlink: true
     - name: config
       run: ./config --banner=Configured --debug enable-demos enable-h3demo enable-asan enable-ubsan enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-fips && perl configdata.pm --dump
     - name: make
@@ -306,6 +360,12 @@ jobs:
       run: |
         sudo cat /proc/sys/vm/mmap_rnd_bits
         sudo sysctl -w vm.mmap_rnd_bits=28
+    - name: ccache
+      if: ${{ github.event_name  == 'pull_request' }}
+      uses: hendrikmuhs/ccache-action@v1.2.14
+      with:
+        key: ${{ github.job }}
+        create-symlink: true
     - name: config
       run: ./config --banner=Configured --debug -DPEDANTIC -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION enable-asan enable-ubsan enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-weak-ssl-ciphers enable-ssl3 enable-ssl3-method enable-nextprotoneg && perl configdata.pm --dump
     - name: make
@@ -333,6 +393,12 @@ jobs:
       run: |
         sudo cat /proc/sys/vm/mmap_rnd_bits
         sudo sysctl -w vm.mmap_rnd_bits=28
+    - name: ccache
+      if: ${{ github.event_name  == 'pull_request' }}
+      uses: hendrikmuhs/ccache-action@v1.2.14
+      with:
+        key: ${{ github.job }}
+        create-symlink: true
     - name: config
       # --debug -O1 is to produce a debug build that runs in a reasonable amount of time
       run: CC=clang ./config --banner=Configured --debug -O1 -fsanitize=memory -DOSSL_SANITIZE_MEMORY -fno-optimize-sibling-calls enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-fips && perl configdata.pm --dump
@@ -360,6 +426,12 @@ jobs:
       run: |
         sudo cat /proc/sys/vm/mmap_rnd_bits
         sudo sysctl -w vm.mmap_rnd_bits=28
+    - name: ccache
+      if: ${{ github.event_name  == 'pull_request' }}
+      uses: hendrikmuhs/ccache-action@v1.2.14
+      with:
+        key: ${{ github.job }}
+        create-symlink: true
     - name: config
       run: CC=clang ./config --banner=Configured no-fips --strict-warnings -fsanitize=thread && perl configdata.pm --dump
     - name: make
@@ -384,6 +456,12 @@ jobs:
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: modprobe tls
       run: sudo modprobe tls
+    - name: ccache
+      if: ${{ github.event_name  == 'pull_request' }}
+      uses: hendrikmuhs/ccache-action@v1.2.14
+      with:
+        key: ${{ github.job }}
+        create-symlink: true
     - name: config
       run: ./config --banner=Configured --strict-warnings enable-demos enable-h3demo no-ec enable-ssl-trace enable-zlib enable-zlib-dynamic enable-crypto-mdebug enable-egd enable-ktls enable-fips no-threads && perl configdata.pm --dump
     - name: make
@@ -414,6 +492,12 @@ jobs:
       run: sudo sysctl -w net.sctp.auth_enable=1 
     - name: install extra config support
       run: sudo apt-get -y install libsctp-dev abigail-tools libzstd-dev zstd
+    - name: ccache
+      if: ${{ github.event_name  == 'pull_request' }}
+      uses: hendrikmuhs/ccache-action@v1.2.14
+      with:
+        key: ${{ github.job }}
+        create-symlink: true
     - name: config
       run: ./config --banner=Configured --strict-warnings enable-demos enable-h3demo enable-ktls enable-fips enable-egd enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-sctp enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-trace enable-zlib enable-zstd && perl configdata.pm --dump
     - name: make
@@ -436,6 +520,12 @@ jobs:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
+    - name: ccache
+      if: ${{ github.event_name  == 'pull_request' }}
+      uses: hendrikmuhs/ccache-action@v1.2.14
+      with:
+        key: ${{ github.job }}
+        create-symlink: true
     - name: config
       run: ./config --banner=Configured --strict-warnings enable-demos enable-h3demo no-legacy enable-fips && perl configdata.pm --dump
     - name: make
@@ -458,6 +548,12 @@ jobs:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
+    - name: ccache
+      if: ${{ github.event_name  == 'pull_request' }}
+      uses: hendrikmuhs/ccache-action@v1.2.14
+      with:
+        key: ${{ github.job }}
+        create-symlink: true
     - name: config
       run: ./config --banner=Configured -Werror --debug no-afalgeng enable-demos enable-h3demo no-shared enable-crypto-mdebug enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 no-fips && perl configdata.pm --dump
     - name: make
@@ -494,6 +590,12 @@ jobs:
       run: |
         mkdir ./build
         mkdir ./install
+    - name: ccache
+      if: ${{ github.event_name  == 'pull_request' }}
+      uses: hendrikmuhs/ccache-action@v1.2.14
+      with:
+        key: ${{ github.job }}
+        create-symlink: true
     - name: config
       run: |
         ../source/config --banner=Configured enable-demos enable-h3demo enable-fips enable-quic enable-acvp-tests --strict-warnings --prefix=$(cd ../install; pwd)
@@ -539,6 +641,12 @@ jobs:
       run: |
         mkdir ./build
         mkdir ./install
+    - name: ccache
+      if: ${{ github.event_name  == 'pull_request' }}
+      uses: hendrikmuhs/ccache-action@v1.2.14
+      with:
+        key: ${{ github.job }}
+        create-symlink: true
     - name: config
       run: |
         ../source/config --banner=Configured enable-fips enable-demos enable-h3demo enable-quic enable-acvp-tests --strict-warnings --prefix=$(cd ../install; pwd)
@@ -580,6 +688,12 @@ jobs:
         install: Test2::V0
     - name: setup hostname workaround
       run: sudo hostname localhost
+    - name: ccache
+      if: ${{ github.event_name  == 'pull_request' }}
+      uses: hendrikmuhs/ccache-action@v1.2.14
+      with:
+        key: ${{ github.job }}
+        create-symlink: true
     - name: config
       run: ./config --banner=Configured --strict-warnings --debug no-afalgeng enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 enable-external-tests no-fips && perl configdata.pm --dump
     - name: make
@@ -614,6 +728,12 @@ jobs:
     - uses: actions/checkout@v4
       with:
         submodules: recursive
+    - name: ccache
+      if: ${{ github.event_name  == 'pull_request' }}
+      uses: hendrikmuhs/ccache-action@v1.2.14
+      with:
+        key: ${{ github.job }}
+        create-symlink: true
     - name: Configure OpenSSL
       run: ./config --banner=Configured --strict-warnings --debug enable-external-tests && perl configdata.pm --dump
     - name: make
@@ -638,6 +758,12 @@ jobs:
     - uses: actions/checkout@v4
       with:
         submodules: recursive
+    - name: ccache
+      if: ${{ github.event_name  == 'pull_request' }}
+      uses: hendrikmuhs/ccache-action@v1.2.14
+      with:
+        key: ${{ github.job }}
+        create-symlink: true
     - name: Configure OpenSSL
       run: ./config --banner=Configured --strict-warnings enable-external-tests && perl configdata.pm --dump
     - name: make
