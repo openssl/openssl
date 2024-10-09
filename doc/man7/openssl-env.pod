@@ -194,7 +194,11 @@ Used to produce the standard format output file for SSL key logging.  Optionally
 set this variable to a filename to log all secrets produced by SSL connections.
 Note, use of the environment variable is predicated on configuring OpenSSL at
 build time with the enable-sslkeylog feature.  The file format standard can be
-found at L<https://datatracker.ietf.org/doc/draft-ietf-tls-keylogfile/>
+found at L<https://datatracker.ietf.org/doc/draft-ietf-tls-keylogfile/>.
+Note: the use of B<SSLKEYLOGFILE> poses an explicit security risk.  By recording
+the exchanged keys during an SSL session, it allows any available party with
+read access to the file to decrypt application traffic sent over that session.
+Use of this feature should be restricted to test and debug environments only.
 
 =back
 
