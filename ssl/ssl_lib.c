@@ -3904,7 +3904,7 @@ static long check_keylog_bio_free(BIO *b, int oper, const char *argp,
 /**
  * @brief records ssl secrets to a file
  */
-static void sslkeylogfile_cb(const SSL *ssl, const char *line)
+static void do_sslkeylogfile(const SSL *ssl, const char *line)
 {
     if (keylog_lock == NULL)
         return;
@@ -4202,7 +4202,7 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
             goto out;
         }
 
-        /* Grab out global lock */
+        /* Grab our global lock */
         if (!CRYPTO_THREAD_write_lock(keylog_lock)) {
             OSSL_TRACE(TLS, "Unable to acquire keylog write lock\n");
             goto out;
@@ -6909,7 +6909,7 @@ static int nss_keylog_int(const char *prefix,
 
 #ifndef OPENSSL_NO_SSLKEYLOG
     if (sctx->do_sslkeylog == 1)
-        sslkeylogfile_cb(SSL_CONNECTION_GET_SSL(sc), (const char *)out);
+        do_sslkeylogfile(SSL_CONNECTION_GET_SSL(sc), (const char *)out);
 #endif
     if (sctx->keylog_callback != NULL)
         sctx->keylog_callback(SSL_CONNECTION_GET_SSL(sc), (const char *)out);

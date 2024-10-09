@@ -36,8 +36,9 @@ my @s_server_cmd = ("s_server", "-accept", "0", "-naccept", "1",
                     "-cert", $server_pem, "-key", $server_key);
 my $s_server_pid = open3(my $s_server_i, my $s_server_o, my $s_server_e, $shlib_wrap, $apps_openssl, @s_server_cmd);
 
-# ACCEPT 0.0.0.0:45921
-# ACCEPT [::]:45921
+# expected outputs from the server
+# ACCEPT 0.0.0.0:<port>
+# ACCEPT [::]:<port>
 my $port = "0";
 # Figure out what port its listening on
 while (<$s_server_o>) {

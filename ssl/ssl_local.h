@@ -1100,10 +1100,7 @@ struct ssl_ctx_st {
     SSL_CTX_keylog_cb_func keylog_callback;
 
     /*
-     * Private callback for internal key logging based on SSLKEYLOG env
-     * We don't want to create a chaining mechanism as we're never sure
-     * if the application wants to set an additional callback or override
-     * the one set via SSLKEYLOGFILE, so we just keep them separate
+     * Private flag for internal key logging based on SSLKEYLOG env
      */
 # ifndef OPENSSL_NO_SSLKEYLOG
     uint32_t do_sslkeylog;
