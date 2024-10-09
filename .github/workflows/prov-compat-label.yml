@@ -20,7 +20,7 @@ env:
 
 jobs:
   fips-releases:
-    if: ${{ contains(github.event.pull_request.labels.*.name,'extended tests') }}
+#    if: ${{ contains(github.event.pull_request.labels.*.name,'extended tests') }}
     strategy:
       matrix:
         release: [
@@ -32,54 +32,70 @@ jobs:
             dir: openssl-3.0.0,
             tgz: openssl-3.0.0.tar.gz,
             url: "https://www.openssl.org/source/old/3.0/openssl-3.0.0.tar.gz",
+            extended: false,
           },
           {
             dir: openssl-3.0.8,
             tgz: openssl-3.0.8.tar.gz,
             url: "https://www.openssl.org/source/openssl-3.0.8.tar.gz",
+            extended: true,
           },
           {
             dir: openssl-3.0.9,
             tgz: openssl-3.0.9.tar.gz,
             url: "https://www.openssl.org/source/openssl-3.0.9.tar.gz",
+            extended: false,
           },
           {
             dir: openssl-3.1.2,
             tgz: openssl-3.1.2.tar.gz,
             url: "https://www.openssl.org/source/openssl-3.1.2.tar.gz",
+            extended: true,
           },
         ]
 
     runs-on: ubuntu-latest
     steps:
       - name: create download directory
+        if: matrix.release.extended == false || contains(github.event.pull_request.labels.*.name,'extended tests')
         run: mkdir downloads
+
       - name: download release source
+        if: matrix.release.extended == false || contains(github.event.pull_request.labels.*.name,'extended tests')
         run: wget --no-verbose ${{ matrix.release.url }}
         working-directory: downloads
+
       - name: unpack release source
+        if: matrix.release.extended == false || contains(github.event.pull_request.labels.*.name,'extended tests')
         run: tar xzf downloads/${{ matrix.release.tgz }}
 
       - name: localegen
+        if: matrix.release.extended == false || contains(github.event.pull_request.labels.*.name,'extended tests')
         run: sudo locale-gen tr_TR.UTF-8
 
       - name: config release
+        if: matrix.release.extended == false || contains(github.event.pull_request.labels.*.name,'extended tests')
         run: |
           ./config --banner=Configured enable-shared enable-fips ${{ env.opts }}
         working-directory: ${{ matrix.release.dir }}
+
       - name: config dump release
+        if: matrix.release.extended == false || contains(github.event.pull_request.labels.*.name,'extended tests')
         run: ./configdata.pm --dump
         working-directory: ${{ matrix.release.dir }}
 
       - name: make release
+        if: matrix.release.extended == false || contains(github.event.pull_request.labels.*.name,'extended tests')
         run: make -s -j4
         working-directory: ${{ matrix.release.dir }}
 
       - name: create release artifacts
+        if: matrix.release.extended == false || contains(github.event.pull_request.labels.*.name,'extended tests')
         run: |
           tar cz -H posix -f ${{ matrix.release.tgz }} ${{ matrix.release.dir }}
 
       - name: show module versions from release
+        if: matrix.release.extended == false || contains(github.event.pull_request.labels.*.name,'extended tests')
         run: |
           ./util/wrap.pl -fips apps/openssl list -provider-path providers   \
                                                  -provider base             \
@@ -90,14 +106,16 @@ jobs:
         working-directory: ${{ matrix.release.dir }}
 
       - uses: actions/upload-artifact@v4
+        if: matrix.release.extended == false || contains(github.event.pull_request.labels.*.name,'extended tests')
         with:
           name: ${{ matrix.release.tgz }}
           path: ${{ matrix.release.tgz }}
           retention-days: 7
 
   development-branches:
-    if: ${{ contains(github.event.pull_request.labels.*.name,'extended tests') }}
+    runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         branch: [
           # Currently supported FIPS capable branches should be added here.
@@ -109,60 +127,75 @@ jobs:
             name: '',
             dir: PR,
             tgz: PR.tar.gz,
+            extended: false,
           }, {
             name: openssl-3.0,
             dir: branch-3.0,
             tgz: branch-3.0.tar.gz,
+            extended: true,
           }, {
             name: openssl-3.1,
             dir: branch-3.1,
             tgz: branch-3.1.tar.gz,
+            extended: false,
           }, {
             name: openssl-3.2,
             dir: branch-3.2,
             tgz: branch-3.2.tar.gz,
+            extended: true,
           }, {
             name: openssl-3.3,
             dir: branch-3.3,
             tgz: branch-3.3.tar.gz,
+            extended: true,
           }, {
             name: openssl-3.4,
             dir: branch-3.4,
             tgz: branch-3.4.tar.gz,
+            extended: true,
           }, {
             name: master,
             dir: branch-master,
             tgz: branch-master.tar.gz,
+            extended: true,
           },
         ]
 
-    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        if: matrix.branch.extended == false || contains(github.event.pull_request.labels.*.name,'extended tests')
         with:
           path: ${{ matrix.branch.dir }}
           repository: openssl/openssl
           ref: ${{ matrix.branch.name }}
+
       - name: localegen
+        if: matrix.branch.extended == false || contains(github.event.pull_request.labels.*.name,'extended tests')
         run: sudo locale-gen tr_TR.UTF-8
 
       - name: config branch
+        if: matrix.branch.extended == false || contains(github.event.pull_request.labels.*.name,'extended tests')
         run: |
           ./config --banner=Configured enable-shared enable-fips ${{ env.opts }}
         working-directory: ${{ matrix.branch.dir }}
+
       - name: config dump current
+        if: matrix.branch.extended == false || contains(github.event.pull_request.labels.*.name,'extended tests')
         run: ./configdata.pm --dump
         working-directory: ${{ matrix.branch.dir }}
 
       - name: make branch
+        if: matrix.branch.extended == false || contains(github.event.pull_request.labels.*.name,'extended tests')
         run: make -s -j4
         working-directory: ${{ matrix.branch.dir }}
 
       - name: create branch artifacts
+        if: matrix.branch.extended == false || contains(github.event.pull_request.labels.*.name,'extended tests')
         run: |
           tar cz -H posix -f ${{ matrix.branch.tgz }} ${{ matrix.branch.dir }}
 
       - name: show module versions from branch
+        if: matrix.branch.extended == false || contains(github.event.pull_request.labels.*.name,'extended tests')
         run: |
           ./util/wrap.pl -fips apps/openssl list -provider-path providers   \
                                                  -provider base             \
@@ -173,19 +206,20 @@ jobs:
         working-directory: ${{ matrix.branch.dir }}
 
       - name: get cpu info
+        if: matrix.branch.extended == false || contains(github.event.pull_request.labels.*.name,'extended tests')
         run: |
           cat /proc/cpuinfo
           ./util/opensslwrap.sh version -c
         working-directory: ${{ matrix.branch.dir }}
 
       - uses: actions/upload-artifact@v4
+        if: matrix.branch.extended == false || contains(github.event.pull_request.labels.*.name,'extended tests')
         with:
           name: ${{ matrix.branch.tgz }}
           path: ${{ matrix.branch.tgz }}
           retention-days: 7
 
   cross-testing:
-    if: ${{ contains(github.event.pull_request.labels.*.name,'extended tests') }}
     needs: [fips-releases, development-branches]
     runs-on: ubuntu-latest
     strategy:
@@ -225,30 +259,36 @@ jobs:
         continue-on-error: true
 
       - uses: actions/download-artifact@v4.1.8
+        id: dir_a
         if: steps.early_exit.outcome == 'success'
         with:
           name: ${{ matrix.tree_a }}.tar.gz
+        continue-on-error: true
+
       - name: unpack first build
-        if: steps.early_exit.outcome == 'success'
+        if: steps.early_exit.outcome == 'success' && steps.dir_a.outcome == 'success'
         run: tar xzf "${{ matrix.tree_a }}.tar.gz"
 
       - uses: actions/download-artifact@v4.1.8
-        if: steps.early_exit.outcome == 'success'
+        id: dir_b
+        if: steps.early_exit.outcome == 'success' && steps.dir_a.outcome == 'success'
         with:
           name: ${{ matrix.tree_b }}.tar.gz
+        continue-on-error: true
+
       - name: unpack second build
-        if: steps.early_exit.outcome == 'success'
+        if: steps.early_exit.outcome == 'success' && steps.dir_a.outcome == 'success' && steps.dir_b.outcome == 'success'
         run: tar xzf "${{ matrix.tree_b }}.tar.gz"
 
       - name: set up cross validation of FIPS from A with tree from B
-        if: steps.early_exit.outcome == 'success'
+        if: steps.early_exit.outcome == 'success' && steps.dir_a.outcome == 'success' && steps.dir_b.outcome == 'success'
         run: |
           cp providers/fips.so ../${{ matrix.tree_b }}/providers/
           cp providers/fipsmodule.cnf ../${{ matrix.tree_b }}/providers/
         working-directory: ${{ matrix.tree_a }}
 
       - name: show module versions from cross validation
-        if: steps.early_exit.outcome == 'success'
+        if: steps.early_exit.outcome == 'success' && steps.dir_a.outcome == 'success' && steps.dir_b.outcome == 'success'
         run: |
           ./util/wrap.pl -fips apps/openssl list -provider-path providers   \
                                                  -provider base             \
@@ -259,14 +299,14 @@ jobs:
         working-directory: ${{ matrix.tree_b }}
 
       - name: get cpu info
-        if: steps.early_exit.outcome == 'success'
+        if: steps.early_exit.outcome == 'success' && steps.dir_a.outcome == 'success' && steps.dir_b.outcome == 'success'
         run: |
           cat /proc/cpuinfo
           ./util/opensslwrap.sh version -c
         working-directory: ${{ matrix.tree_b }}
 
       - name: run cross validation tests of FIPS from A with tree from B
-        if: steps.early_exit.outcome == 'success'
+        if: steps.early_exit.outcome == 'success' && steps.dir_a.outcome == 'success' && steps.dir_b.outcome == 'success'
         run: |
           make test HARNESS_JOBS=${HARNESS_JOBS:-4}
         working-directory: ${{ matrix.tree_b }}
