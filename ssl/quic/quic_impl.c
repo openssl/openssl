@@ -3198,7 +3198,6 @@ int SSL_inject_net_dgram(SSL *s, const unsigned char *buf,
     demux = ossl_quic_port_get0_demux(port);
     ret = ossl_quic_demux_inject(demux, buf, buf_len, peer, local);
 
-    ret = 1;
 err:
     qctx_unlock(&ctx);
     return ret;
