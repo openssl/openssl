@@ -59,7 +59,7 @@ static int rpb_ensure_alloc(RIO_POLL_BUILDER *rpb, size_t alloc)
 
     if (rpb->pfd_heap == NULL) {
         /* Copy the contents of the stacked array. */
-        memcpy(rpb->pfd_heap, rpb->pfds, sizeof(rpb->pfds));
+        memcpy(pfd_heap_new, rpb->pfds, sizeof(rpb->pfds));
     }
     rpb->pfd_heap   = pfd_heap_new;
     rpb->pfd_alloc  = alloc;
