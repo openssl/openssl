@@ -919,6 +919,11 @@ SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, SSL *user_ssl,
         goto sslerr;
 #endif
 
+#ifndef OPENSSL_NO_ECH
+    if (!ossl_ech_conn_init(s, ctx, method))
+        goto sslerr;
+#endif
+
     s->ssl_pkey_num = SSL_PKEY_NUM + ctx->sigalg_list_len;
     return ssl;
  cerr:
@@ -1495,6 +1500,9 @@ void ossl_ssl_connection_free(SSL *ssl)
     BIO_free_all(s->rbio);
     s->rbio = NULL;
     OPENSSL_free(s->s3.tmp.valid_flags);
+#ifndef OPENSSL_NO_ECH
+    ossl_ech_conn_clear(&s->ext.ech);
+#endif
 }
 
 void SSL_set0_rbio(SSL *s, BIO *rbio)
@@ -4373,6 +4381,10 @@ void SSL_CTX_free(SSL_CTX *a)
     OPENSSL_free(a->propq);
 #ifndef OPENSSL_NO_QLOG
     OPENSSL_free(a->qlog_title);
+#endif
+
+#ifndef OPENSSL_NO_ECH
+    ossl_ech_ctx_clear(&a->ext.ech);
 #endif
 
     OPENSSL_free(a);

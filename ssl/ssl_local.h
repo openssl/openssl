@@ -38,6 +38,9 @@
 # include "internal/ssl.h"
 # include "internal/cryptlib.h"
 # include "record/record.h"
+# ifndef OPENSSL_NO_ECH
+#  include "ech/ech_local.h"
+# endif
 
 # ifdef OPENSSL_BUILD_SHLIBSSL
 #  undef OPENSSL_EXTERN
@@ -1065,6 +1068,9 @@ struct ssl_ctx_st {
 # endif
 
         unsigned char cookie_hmac_key[SHA256_DIGEST_LENGTH];
+# ifndef OPENSSL_NO_ECH
+        OSSL_ECH_CTX ech;
+# endif
     } ext;
 
 # ifndef OPENSSL_NO_PSK
@@ -1680,6 +1686,10 @@ struct ssl_connection_st {
         uint8_t client_cert_type_ctos;
         uint8_t server_cert_type;
         uint8_t server_cert_type_ctos;
+
+# ifndef OPENSSL_NO_ECH
+        OSSL_ECH_CONN ech;
+# endif
     } ext;
 
     /*

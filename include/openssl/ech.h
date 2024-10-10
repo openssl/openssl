@@ -53,30 +53,13 @@
 #  define SSL_ECH_STATUS_NOT_TRIED  -101 /* ECH wasn't attempted  */
 #  define SSL_ECH_STATUS_BAD_NAME   -102 /* ECH ok but server cert bad */
 #  define SSL_ECH_STATUS_NOT_CONFIGURED -103 /* ECH wasn't configured */
-#  define SSL_ECH_STATUS_FAILED_ECH -105 /* We tried, failed and got an ECH, from a good name */
-#  define SSL_ECH_STATUS_FAILED_ECH_BAD_NAME -106 /* We tried, failed and got an ECH, from a bad name */
+#  define SSL_ECH_STATUS_FAILED_ECH -105 /* Tried, failed, got an ECH, from a good name */
+#  define SSL_ECH_STATUS_FAILED_ECH_BAD_NAME -106 /* Tried, failed, got an ECH, from a bad name */
 
 /* if a caller wants to index the last entry in the store */
 #  define OSSL_ECHSTORE_LAST -1
 /* if a caller wants all entries in the store, e.g. to print public values */
 #  define OSSL_ECHSTORE_ALL -2
-
-/*
- * Application-visible form of ECH information from the DNS, from config
- * files, or from earlier API calls. APIs produce/process an array of these.
- */
-typedef struct ossl_ech_info_st {
-    int index; /* externally re-usable reference to this value */
-    time_t seconds_in_memory; /* number of seconds since this was loaded */
-    char *public_name; /* public_name from API or ECHConfig */
-    char *inner_name; /* server-name (for inner CH if doing ECH) */
-    unsigned char *outer_alpns; /* outer ALPN string */
-    size_t outer_alpns_len;
-    unsigned char *inner_alpns; /* inner ALPN string */
-    size_t inner_alpns_len;
-    char *echconfig; /* a JSON-like version of the associated ECHConfig */
-    int has_private_key; /* 0 if we don't have a related private key */
-} OSSL_ECH_INFO;
 
 /* Values for the for_retry inputs */
 #  define OSSL_ECH_FOR_RETRY 1
@@ -92,17 +75,16 @@ int OSSL_ECHSTORE_new_config(OSSL_ECHSTORE *es,
                              const char *public_name, OSSL_HPKE_SUITE suite);
 int OSSL_ECHSTORE_write_pem(OSSL_ECHSTORE *es, int index, BIO *out);
 int OSSL_ECHSTORE_read_echconfiglist(OSSL_ECHSTORE *es, BIO *in);
-int OSSL_ECHSTORE_get1_info(OSSL_ECHSTORE *es, OSSL_ECH_INFO **info,
-                            int *count);
+int OSSL_ECHSTORE_get1_info(OSSL_ECHSTORE *es, int index, time_t *loaded_secs,
+                            char **public_name, char **echconfig,
+                            int *has_private, int *for_retry);
 int OSSL_ECHSTORE_downselect(OSSL_ECHSTORE *es, int index);
 int OSSL_ECHSTORE_set1_key_and_read_pem(OSSL_ECHSTORE *es, EVP_PKEY *priv,
                                         BIO *in, int for_retry);
 int OSSL_ECHSTORE_read_pem(OSSL_ECHSTORE *es, BIO *in, int for_retry);
+int OSSL_ECHSTORE_num_entries(const OSSL_ECHSTORE *es, int *numentries);
 int OSSL_ECHSTORE_num_keys(OSSL_ECHSTORE *es, int *numkeys);
 int OSSL_ECHSTORE_flush_keys(OSSL_ECHSTORE *es, time_t age);
-
-void OSSL_ECH_INFO_free(OSSL_ECH_INFO *info, int count);
-int OSSL_ECH_INFO_print(BIO *out, OSSL_ECH_INFO *info, int count);
 
 /*
  * APIs relating OSSL_ECHSTORE to SSL/SSL_CTX
@@ -113,21 +95,31 @@ int SSL_set1_echstore(SSL *s, OSSL_ECHSTORE *es);
 OSSL_ECHSTORE *SSL_CTX_get1_echstore(const SSL_CTX *ctx);
 OSSL_ECHSTORE *SSL_get1_echstore(const SSL *s);
 
-int SSL_ech_set_server_names(SSL *s, const char *inner_name,
-                             const char *outer_name, int no_outer);
-int SSL_ech_set_outer_server_name(SSL *s, const char *outer_name, int no_outer);
-int SSL_ech_set_outer_alpn_protos(SSL *s, const unsigned char *protos,
-                                  const size_t protos_len);
+int SSL_ech_set1_server_names(SSL *s, const char *inner_name,
+                              const char *outer_name, int no_outer);
+int SSL_ech_set1_outer_server_name(SSL *s, const char *outer_name, int no_outer);
+/*
+ * Note that this function returns 1 for success and 0 for error. This
+ * contrasts with SSL_set1_alpn_protos() which (unusually for OpenSSL)
+ * returns 0 for success and 1 on error.
+ */
+int SSL_ech_set1_outer_alpn_protos(SSL *s, const unsigned char *protos,
+                                   const size_t protos_len);
 
 int SSL_ech_get1_status(SSL *s, char **inner_sni, char **outer_sni);
-int SSL_ech_set_grease_suite(SSL *s, const char *suite);
+int SSL_ech_set1_grease_suite(SSL *s, const char *suite);
 int SSL_ech_set_grease_type(SSL *s, uint16_t type);
 typedef unsigned int (*SSL_ech_cb_func)(SSL *s, const char *str);
 void SSL_ech_set_callback(SSL *s, SSL_ech_cb_func f);
-int SSL_ech_get_retry_config(SSL *s, unsigned char **ec, size_t *eclen);
+int SSL_ech_get1_retry_config(SSL *s, unsigned char **ec, size_t *eclen);
 
-int SSL_CTX_ech_set_outer_alpn_protos(SSL_CTX *s, const unsigned char *protos,
-                                      const size_t protos_len);
+/*
+ * Note that this function returns 1 for success and 0 for error. This
+ * contrasts with SSL_set1_alpn_protos() which (unusually for OpenSSL)
+ * returns 0 for success and 1 on error.
+ */
+int SSL_CTX_ech_set1_outer_alpn_protos(SSL_CTX *s, const unsigned char *protos,
+                                       const size_t protos_len);
 int SSL_CTX_ech_raw_decrypt(SSL_CTX *ctx,
                             int *decrypted_ok,
                             char **inner_sni, char **outer_sni,
@@ -135,6 +127,7 @@ int SSL_CTX_ech_raw_decrypt(SSL_CTX *ctx,
                             unsigned char *inner_ch, size_t *inner_len,
                             unsigned char **hrrtok, size_t *toklen);
 void SSL_CTX_ech_set_callback(SSL_CTX *ctx, SSL_ech_cb_func f);
+int SSL_set1_ech_config_list(SSL *ssl, const uint8_t *ecl, size_t ecl_len);
 
 # endif
 #endif
