@@ -17,7 +17,7 @@ First checkout the `PYCA/Cryptography` module into `./pyca-cryptography` using:
 
 Then configure/build OpenSSL compatible with the python module:
 
-    $ ./config shared enable-external-tests
+    $ ./config enable-external-tests
     $ make
 
 The tests will run in a python virtual environment which requires virtualenv
@@ -66,7 +66,7 @@ of your system.  Certain tests may require more installed packages to run.  No
 tests are expected to fail.
 
 GOST engine test suite
-===============
+======================
 
 Much like the PYCA/Cryptography test suite, this builds and runs the GOST engine
 tests against the local OpenSSL build.
@@ -77,7 +77,7 @@ You will need a git checkout of gost-engine at the top level:
 
 Then configure/build OpenSSL enabling external tests:
 
-    $ ./config shared enable-external-tests
+    $ ./config enable-external-tests
     $ make
 
 GOST engine requires CMake for the build process.
@@ -100,7 +100,7 @@ You will need a git checkout of oqsprovider at the top level:
 
 Then configure/build OpenSSL enabling external tests:
 
-    $ ./config shared enable-external-tests
+    $ ./config enable-external-tests
     $ make
 
 oqsprovider requires CMake for the build process.
@@ -119,9 +119,9 @@ The names of all supported quantum-safe algorithms are available at
 <https://github.com/open-quantum-safe/oqs-provider#algorithms>
 
 pkcs11-provider test suite
-======================
+==========================
 
-This builds and runs pkcs11-provider tests agains the local OpenSSL build.
+This builds and runs pkcs11-provider tests against the local OpenSSL build.
 
 You will need a git checkout of pkcs11-provider at the top level:
 
@@ -129,7 +129,7 @@ You will need a git checkout of pkcs11-provider at the top level:
 
 Then configure/build OpenSSL enabling external tests:
 
-    $ ./config shared enable-external-tests
+    $ ./config enable-external-tests
     $ make
 
 pkcs11-provider requires meson for the build process. Moreover, it requires
