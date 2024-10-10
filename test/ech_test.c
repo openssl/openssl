@@ -885,7 +885,7 @@ static int ech_ingest_test(int run)
     pn = NULL;
     OPENSSL_free(ec);
     ec = NULL;
-    for (i = 0; i!= actual_ents; i++) {
+    for (i = 0; i != actual_ents; i++) {
         if (!TEST_int_eq(OSSL_ECHSTORE_get1_info(es, i, &secs, &pn, &ec,
                                                  &has_priv, &for_retry), 1)) {
             TEST_info("OSSL_ECHSTORE_get1_info unexpected fail");

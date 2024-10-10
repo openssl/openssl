@@ -39,7 +39,7 @@
 # include "internal/cryptlib.h"
 # include "record/record.h"
 # ifndef OPENSSL_NO_ECH
-# include "ech/ech_local.h"
+#  include "ech/ech_local.h"
 # endif
 
 # ifdef OPENSSL_BUILD_SHLIBSSL

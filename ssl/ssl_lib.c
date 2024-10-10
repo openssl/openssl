@@ -4128,9 +4128,9 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
         goto err;
     }
 
-# ifndef OPENSSL_NO_ECH
+#ifndef OPENSSL_NO_ECH
     memset(&ret->ext.ech, 0, sizeof(ret->ext.ech));
-# endif
+#endif
 
     return ret;
  err:

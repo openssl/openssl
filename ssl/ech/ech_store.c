@@ -866,7 +866,7 @@ int OSSL_ECHSTORE_get1_info(OSSL_ECHSTORE *es, int index, time_t *loaded_secs,
                             int *has_private, int *for_retry)
 {
     OSSL_ECHSTORE_ENTRY *ee = NULL;
-    unsigned int j = 0, num = 0;
+    int j = 0, num = 0;
     BIO *out = NULL;
     time_t now = time(0);
     size_t ehlen;
@@ -1098,4 +1098,3 @@ int OSSL_ECHSTORE_flush_keys(OSSL_ECHSTORE *es, time_t age)
     }
     return 1;
 }
-

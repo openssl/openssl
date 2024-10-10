@@ -259,7 +259,7 @@ int ech_main(int argc, char **argv)
             int has_priv, for_retry;
 
             if (OSSL_ECHSTORE_get1_info(es, oi_ind, &secs, &pn, &ec,
-                                        &has_priv, &for_retry ) != 1) {
+                                        &has_priv, &for_retry) != 1) {
                 OPENSSL_free(pn); /* just in case */
                 OPENSSL_free(ec);
                 goto end;
