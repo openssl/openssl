@@ -58,7 +58,7 @@ static const char B64_alphabet[] =
  * local functions - public APIs are at the end
  */
 
-static void ossl_echext_free(OSSL_ECHEXT *e)
+void ossl_echext_free(OSSL_ECHEXT *e)
 {
     if (e == NULL)
         return;
@@ -67,45 +67,36 @@ static void ossl_echext_free(OSSL_ECHEXT *e)
     return;
 }
 
-static void ossl_echstore_entry_free(OSSL_ECHSTORE_ENTRY *ee)
+OSSL_ECHEXT *ossl_echext_dup(const OSSL_ECHEXT *src)
+{
+    OSSL_ECHEXT *ext = OPENSSL_zalloc(sizeof(*src));
+
+    if (ext == NULL)
+        return NULL;
+    *ext = *src;
+    ext->val = NULL;
+    if (ext->len != 0) {
+        ext->val = OPENSSL_memdup(src->val, src->len);
+        if (ext->val == NULL) {
+            ossl_echext_free(ext);
+            return NULL;
+        }
+    }
+    return ext;
+}
+
+void ossl_echstore_entry_free(OSSL_ECHSTORE_ENTRY *ee)
 {
     if (ee == NULL)
         return;
     OPENSSL_free(ee->public_name);
     OPENSSL_free(ee->pub);
-    OPENSSL_free(ee->pemfname);
     EVP_PKEY_free(ee->keyshare);
     OPENSSL_free(ee->encoded);
     OPENSSL_free(ee->suites);
     sk_OSSL_ECHEXT_pop_free(ee->exts, ossl_echext_free);
     OPENSSL_free(ee);
     return;
-}
-
-/*
- * @brief hash a buffer as a pretend file name being ascii-hex of hashed buffer
- * @param es is the OSSL_ECHSTORE we're dealing with
- * @param buf is the input buffer
- * @param blen is the length of buf
- * @param ah_hash is a pointer to where to put the result
- * @param ah_len is the length of ah_hash
- */
-static int ech_hash_pub_as_fname(OSSL_ECHSTORE *es,
-                                 const unsigned char *buf, size_t blen,
-                                 char *ah_hash, size_t ah_len)
-{
-    unsigned char hashval[EVP_MAX_MD_SIZE];
-    size_t hashlen, actual_ah_len;
-
-    if (es == NULL
-        || EVP_Q_digest(es->libctx, "SHA2-256", es->propq,
-                        buf, blen, hashval, &hashlen) != 1
-        || OPENSSL_buf2hexstr_ex(ah_hash, ah_len, &actual_ah_len,
-                                 hashval, hashlen, '\0') != 1) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
-        return 0;
-    }
-    return 1;
 }
 
 /*
@@ -618,7 +609,14 @@ OSSL_ECHSTORE *OSSL_ECHSTORE_new(OSSL_LIB_CTX *libctx, const char *propq)
         return 0;
     }
     es->libctx = libctx;
-    es->propq = propq;
+    if (propq != NULL) {
+        es->propq = OPENSSL_strdup(propq);
+        if (es->propq == NULL) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+    }
+
     return es;
 }
 
@@ -627,6 +625,7 @@ void OSSL_ECHSTORE_free(OSSL_ECHSTORE *es)
     if (es == NULL)
         return;
     sk_OSSL_ECHSTORE_ENTRY_pop_free(es->entries, ossl_echstore_entry_free);
+    OPENSSL_free(es->propq);
     OPENSSL_free(es);
     return;
 }
@@ -645,8 +644,6 @@ int OSSL_ECHSTORE_new_config(OSSL_ECHSTORE *es,
     WPACKET epkt;
     BUF_MEM *epkt_mem = NULL;
     OSSL_ECHSTORE_ENTRY *ee = NULL;
-    char pembuf[2 * EVP_MAX_MD_SIZE + 1];
-    size_t pembuflen = 2 * EVP_MAX_MD_SIZE + 1;
 
     /* basic checks */
     if (es == NULL) {
@@ -754,10 +751,6 @@ int OSSL_ECHSTORE_new_config(OSSL_ECHSTORE *es,
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    if (ech_hash_pub_as_fname(es, pub, publen, pembuf, pembuflen) != 1) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
     ee->version = echversion;
     ee->pub_len = publen;
     ee->pub = OPENSSL_memdup(pub, publen);
@@ -780,11 +773,6 @@ int OSSL_ECHSTORE_new_config(OSSL_ECHSTORE *es,
     ee->encoded_len = bblen;
     epkt_mem->data = NULL;
     epkt_mem->length = 0;
-    ee->pemfname = OPENSSL_strdup(pembuf);
-    if (ee->pemfname == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
     ee->loadtime = time(0);
     /* push entry into store */
     if (es->entries == NULL)
@@ -899,52 +887,54 @@ int OSSL_ECHSTORE_read_echconfiglist(OSSL_ECHSTORE *es, BIO *in)
     return ech_read_priv_echconfiglist(es, in, NULL, 0);
 }
 
-int OSSL_ECHSTORE_get1_info(OSSL_ECHSTORE *es, OSSL_ECH_INFO **info,
-                            int *count)
+int OSSL_ECHSTORE_get1_info(OSSL_ECHSTORE *es, int index, time_t *loaded_secs,
+                            char **public_name, char **echconfig,
+                            int *has_private, int *for_retry)
 {
-    OSSL_ECH_INFO *linfo = NULL, *inst = NULL;
     OSSL_ECHSTORE_ENTRY *ee = NULL;
-    unsigned int i = 0, j = 0, num = 0;
+    unsigned int j = 0;
+    int num = 0;
     BIO *out = NULL;
     time_t now = time(0);
     size_t ehlen;
     unsigned char *ignore = NULL;
 
-    if (es == NULL || info == NULL || count == NULL) {
+    if (es == NULL || loaded_secs == NULL || public_name == NULL
+        || echconfig == NULL || has_private == NULL || for_retry == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
     num = (es->entries == NULL ? 0 : sk_OSSL_ECHSTORE_ENTRY_num(es->entries));
-    if (num == 0) {
-        *info = NULL;
-        *count = 0;
-        return 1;
+    if (num == 0 || index < 0 || index >= num) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
     }
-    linfo = OPENSSL_zalloc(num * sizeof(*linfo));
-    if (linfo == NULL)
-        goto err;
-    for (i = 0; i != num; i++) {
-        inst = &linfo[i];
-        ee = sk_OSSL_ECHSTORE_ENTRY_value(es->entries, i);
-
-        inst->index = i;
-        inst->seconds_in_memory = now - ee->loadtime;
-        inst->public_name = OPENSSL_strdup(ee->public_name);
-        inst->has_private_key = (ee->keyshare == NULL ? 0 : 1);
-        /* Now "print" the ECHConfigList */
-        out = BIO_new(BIO_s_mem());
-        if (out == NULL) {
-            ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
+    ee = sk_OSSL_ECHSTORE_ENTRY_value(es->entries, index);
+    if (ee == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
+    *loaded_secs = now - ee->loadtime;
+    if (ee->public_name != NULL) {
+        *public_name = OPENSSL_strdup(ee->public_name);
+        if (*public_name == NULL)
             goto err;
-        }
-        if (ee->version != OSSL_ECH_RFCXXXX_VERSION) {
-            /* just note we don't support that one today */
-            BIO_printf(out, "[Unsupported version (%04x)]", ee->version);
-            continue;
-        }
+    } else {
+        *public_name = NULL;
+    }
+    *has_private = (ee->keyshare == NULL ? 0 : 1);
+    /* Now "print" the ECHConfigList */
+    out = BIO_new(BIO_s_mem());
+    if (out == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+    if (ee->version != OSSL_ECH_RFCXXXX_VERSION) {
+        /* just note we don't support that one today */
+        BIO_printf(out, "[Unsupported version (%04x)]", ee->version);
+    } else {
         /* version, config_id, public_name, and kem */
-        BIO_printf(out, "[%04x,%02x,%s,[", ee->version,
-                   ee->config_id,
+        BIO_printf(out, "[%04x,%02x,%s,[", ee->version, ee->config_id,
                    ee->public_name != NULL ? (char *)ee->public_name : "NULL");
         /* ciphersuites */
         for (j = 0; j != ee->nsuites; j++) {
@@ -960,24 +950,20 @@ int OSSL_ECHSTORE_get1_info(OSSL_ECHSTORE *es, OSSL_ECH_INFO **info,
         /* max name length and (only) number of extensions */
         BIO_printf(out, ",%02x,%02x]", ee->max_name_length,
                    ee->exts == NULL ? 0 : sk_OSSL_ECHEXT_num(ee->exts));
-        ehlen = BIO_get_mem_data(out, &ignore);
-        inst->echconfig = OPENSSL_malloc(ehlen + 1);
-        if (inst->echconfig == NULL)
-            goto err;
-        if (BIO_read(out, inst->echconfig, ehlen) <= 0) {
-            ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
-            goto err;
-        }
-        inst->echconfig[ehlen] = '\0';
-        BIO_free(out);
-        out = NULL;
     }
-    *count = num;
-    *info = linfo;
+    ehlen = BIO_get_mem_data(out, &ignore);
+    *echconfig = OPENSSL_malloc(ehlen + 1);
+    if (*echconfig == NULL)
+        goto err;
+    if (BIO_read(out, *echconfig, ehlen) <= 0) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+    (*echconfig)[ehlen] = '\0';
+    BIO_free(out);
     return 1;
 err:
     BIO_free(out);
-    OSSL_ECH_INFO_free(linfo, num);
     return 0;
 }
 
@@ -1085,6 +1071,16 @@ err:
     return rv;
 }
 
+int OSSL_ECHSTORE_num_entries(const OSSL_ECHSTORE *es, int *numentries)
+{
+    if (es == NULL || numentries == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    *numentries = (es->entries == NULL ? 0 : sk_OSSL_ECHSTORE_ENTRY_num(es->entries));
+    return 1;
+}
+
 int OSSL_ECHSTORE_num_keys(OSSL_ECHSTORE *es, int *numkeys)
 {
     int i, num = 0, count = 0;
@@ -1133,36 +1129,5 @@ int OSSL_ECHSTORE_flush_keys(OSSL_ECHSTORE *es, time_t age)
             sk_OSSL_ECHSTORE_ENTRY_delete(es->entries, i);
         }
     }
-    return 1;
-}
-
-void OSSL_ECH_INFO_free(OSSL_ECH_INFO *info, int count)
-{
-    int i;
-
-    if (info == NULL)
-        return;
-    for (i = 0; i != count; i++) {
-        OPENSSL_free(info[i].public_name);
-        OPENSSL_free(info[i].inner_name);
-        OPENSSL_free(info[i].outer_alpns);
-        OPENSSL_free(info[i].inner_alpns);
-        OPENSSL_free(info[i].echconfig);
-    }
-    OPENSSL_free(info);
-    return;
-}
-
-int OSSL_ECH_INFO_print(BIO *out, OSSL_ECH_INFO *info, int index)
-{
-    if (out == NULL || info == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
-        return 0;
-    }
-    BIO_printf(out, "ECH entry: %d public_name: %s age: %d%s\n",
-               index, info[index].public_name,
-               (int)info[index].seconds_in_memory,
-               info[index].has_private_key ? " (has private key)" : "");
-    BIO_printf(out, "\t%s\n", info[index].echconfig);
     return 1;
 }
