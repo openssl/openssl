@@ -564,7 +564,7 @@ jobs:
       run: make install
       working-directory: ./build
 
-  external-tests:
+  external-tests-misc:
     runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
     steps:
     - uses: actions/checkout@v4
@@ -584,6 +584,7 @@ jobs:
       run: ./config --banner=Configured --strict-warnings --debug no-afalgeng enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 enable-external-tests no-fips && perl configdata.pm --dump
     - name: make
       run: make -s -j4
+    - uses: dtolnay/rust-toolchain@stable
     - name: get cpu info
       run: |
         cat /proc/cpuinfo
@@ -592,17 +593,17 @@ jobs:
       run: make test TESTS="test_external_gost_engine"
     - name: test external krb5
       run: make test TESTS="test_external_krb5"
-    - name: test external_tlsfuzzer
+    - name: test external tlsfuzzer
       run: make test TESTS="test_external_tlsfuzzer"
-    - name: test external oqs-provider
-      run: make test TESTS="test_external_oqsprovider"
+    - name: test external Cloudflare quiche
+      run: make test TESTS="test_external_cf_quiche" VERBOSE=1
     - name: test ability to produce debuginfo files
       run: |
         make debuginfo
         gdb < <(echo -e "file ./libcrypto.so.3\nquit") > ./results
         grep -q "Reading symbols from.*libcrypto\.so\.3\.debug" results
 
-  external-test-pkcs11-provider:
+  external-tests-providers:
     runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
     steps:
     - uses: actions/checkout@v4
@@ -620,10 +621,12 @@ jobs:
       run: |
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
+    - name: test external oqs-provider
+      run: make test TESTS="test_external_oqsprovider"
     - name: test external pkcs11-provider
       run: make test TESTS="test_external_pkcs11_provider" VERBOSE=1
 
-  external-test-pyca:
+  external-tests-pyca:
     runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
     strategy:
       matrix:
@@ -652,21 +655,3 @@ jobs:
         ./util/opensslwrap.sh version -c
     - name: test external pyca
       run: make test TESTS="test_external_pyca" VERBOSE=1
-
-  external-test-cf-quiche:
-    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
-    steps:
-    - uses: actions/checkout@v4
-      with:
-        submodules: recursive
-    - name: Configure OpenSSL
-      run: ./config --banner=Configured --strict-warnings enable-external-tests && perl configdata.pm --dump
-    - name: make
-      run: make -s -j4
-    - uses: dtolnay/rust-toolchain@stable
-    - name: get cpu info
-      run: |
-        cat /proc/cpuinfo
-        ./util/opensslwrap.sh version -c
-    - name: test external Cloudflare quiche
-      run: make test TESTS="test_external_cf_quiche" VERBOSE=1
