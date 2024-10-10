@@ -4,9 +4,10 @@ Encrypted ClientHello (ECH) APIs
 TODO(ECH): replace references/links to the [sftcd
 ECH-draft-13c](https://github.com/sftcd/openssl/tree/ECH-draft-13c) (the branch
 that has good integration and interop) with relative links as files are
-migrated into (PRs for) the feature branch. The `OSSL_ECHSTORE` related text
-here is based on another [prototype
-branch](https://github.com/sftcd/openssl/tree/ECHStore-1) that is new.
+migrated into (PRs for) the feature branch.
+
+The `OSSL_ECHSTORE` related text here matches the ECH
+[feature branch](https://github.com/openssl/openssl/tree/feature/ech).
 
 There is an [OpenSSL fork](https://github.com/sftcd/openssl/tree/ECH-draft-13c)
 that has an implementation of Encrypted Client Hello (ECH) and these are design
@@ -217,13 +218,15 @@ int OSSL_ECHSTORE_write_pem(OSSL_ECHSTORE *es, int index, BIO *out);
 
 int OSSL_ECHSTORE_read_echconfiglist(OSSL_ECHSTORE *es, BIO *in);
 
-int OSSL_ECHSTORE_get1_info(OSSL_ECHSTORE *es, OSSL_ECH_INFO **info,
-                            int *count);
+int OSSL_ECHSTORE_get1_info(OSSL_ECHSTORE *es, int index, time_t *loaded_secs,
+                            char **public_name, char **echconfig,
+                            int *has_private, int *for_retry);
 int OSSL_ECHSTORE_downselect(OSSL_ECHSTORE *es, int index);
 
 int OSSL_ECHSTORE_set1_key_and_read_pem(OSSL_ECHSTORE *es, EVP_PKEY *priv,
                                         BIO *in, int for_retry);
 int OSSL_ECHSTORE_read_pem(OSSL_ECHSTORE *es, BIO *in, int for_retry);
+int OSSL_ECHSTORE_num_entries(OSSL_ECHSTORE *es, int *numentries);
 int OSSL_ECHSTORE_num_keys(OSSL_ECHSTORE *es, int *numkeys);
 int OSSL_ECHSTORE_flush_keys(OSSL_ECHSTORE *es, time_t age);
 ```
@@ -245,15 +248,8 @@ ingest the "ech=" SvcParamKey value found in an SVCB or HTTPS RR retrieved from
 the DNS. The resulting set of ECHConfig values can then be associated with an
 `SSL_CTX` or `SSL` structure for TLS connections.
 
-Generally, clients will deal with "singleton" ECHConfigList values, but it is
-also possible (in multi-CDN or multi-algorithm cases), that a client may need
-more fine-grained control of which ECHConfig from a set to use for a particular
-TLS connection. Clients that only support a subset of algorithms can
-automatically make such decisions, however, a client faced with a set of HTTPS
-RR values might (in theory) need to match (in particular) the server IP address
-for the connection to the ECHConfig value via the `public_name` field within
-the ECHConfig value. To enable this selection, the `OSSL_ECHSTORE_get1_info()`
-API presents the client with the information enabling such selection, and the
+`OSSL_ECHSTORE_get1_info()` presents the caller with information about the
+content of the store for logging or for display, e.g. in a command line tool.
 `OSSL_ECHSTORE_downselect()` API gives the client a way to select one
 particular ECHConfig value from the set stored (discarding the rest).
 
@@ -264,13 +260,14 @@ connection. In addition to loading those values, the application can also
 indicate via `for_retry` which ECHConfig value(s) are to be included in the
 `retry_configs` fallback scheme defined by the ECH protocol.
 
-`OSSL_ECHSTORE_num_keys()` allows a server to see how many usable ECH private
-keys are currently in the store, and `OSSL_ECHSTORE_flush_keys()` allows a
-server to flush keys that are older than `age` seconds.  The general model is
-that a server can maintain an `OSSL_ECHSTORE` into which it periodically loads
-the "latest" set of keys, e.g. hourly, and also discards the keys that are too
-old, e.g. more than 3 hours old. This allows for more robust private key
-management even if public key distribution suffers temporary failures.
+`OSSL_ECHSTORE_num_entries()` and `OSSL_ECHSTORE_num_keys()` allow an
+application  to see how many usable ECH configs and private keys are currently
+in the store, and `OSSL_ECHSTORE_flush_keys()` allows a server to flush keys
+that are older than `age` seconds.  The general model is that a server can
+maintain an `OSSL_ECHSTORE` into which it periodically loads the "latest" set
+of keys, e.g.  hourly, and also discards the keys that are too old, e.g. more
+than 3 hours old. This allows for more robust private key management even if
+public key distribution suffers temporary failures.
 
 The APIs the clients and servers can use to associate an `OSSL_ECHSTORE`
 with an `SSL_CTX` or `SSL` structure:
@@ -284,6 +281,15 @@ ECH will be enabled for the relevant `SSL_CTX` or `SSL` connection
 when these functions succeed. Any previously associated `OSSL_ECHSTORE`
 will be `OSSL_ECHSTORE_free()`ed.
 
+There is also an API that allows setting an ECHConfigList for an SSL
+connection, that is compatible with BoringSSL. Note that the input
+`ecl` here can be either base64 or binary encoded, but for
+BoringSSL it must be binary encoded.
+
+```c
+int SSL_set1_ech_config_list(SSL *ssl, const uint8_t *ecl, size_t ecl_len);
+```
+
 To access the `OSSL_ECHSTORE` associated with an `SSL_CTX` or
 `SSL` connection:
 
@@ -294,44 +300,6 @@ OSSL_ECHSTORE *SSL_get1_echstore(const SSL *s);
 
 The resulting `OSSL_ECHSTORE` can be modified and then re-associated
 with an `SSL_CTX` or `SSL` connection.
-
-Finer-grained client control
-----------------------------
-
-TODO(ECH): revisit this later, when we hopefully have some more information
-about ECH deployments.
-
-Applications that need fine control over which ECHConfigList (from those
-available) will be used, can query an `OSSL_ECHSTORE`, retrieving information
-about the set of "singleton" ECHConfigList values available, and then, if
-desired, down-select to one of those, e.g., based on the `public_name` that
-will be used. This would enable a client that selects the server address to use
-based on IP address hints that can also be present in an HTTPS/SCVB resource
-record to ensure that the correct matching ECH public value is used. The
-information is presented to the caller using the `OSSL_ECH_INFO` type, which
-provides a simplified view of ECH data, but where each element of an array
-corresponds to exactly one ECH public value and set of names.
-
-```c
-/*
- * Application-visible form of ECH information from the DNS, from config
- * files, or from earlier API calls. APIs produce/process an array of these.
- */
-typedef struct ossl_ech_info_st {
-    int index; /* externally re-usable reference to this value */
-    char *public_name; /* public_name from API or ECHConfig */
-    char *inner_name; /* server-name (for inner CH if doing ECH) */
-    unsigned char *outer_alpns; /* outer ALPN string */
-    size_t outer_alpns_len;
-    unsigned char *inner_alpns; /* inner ALPN string */
-    size_t inner_alpns_len;
-    char *echconfig; /* a JSON-like version of the associated ECHConfig */
-    int has_private_key; /* 0 if we don't have a related private key */
-} OSSL_ECH_INFO;
-
-void OSSL_ECH_INFO_free(OSSL_ECH_INFO *info, int count);
-int OSSL_ECH_INFO_print(BIO *out, OSSL_ECH_INFO *info, int count);
-```
 
 ECH Store Internals
 -------------------
@@ -357,21 +325,20 @@ typedef struct ossl_echstore_entry_st {
     uint8_t max_name_length;
     uint8_t config_id;
     STACK_OF(OSSL_ECHEXT) *exts;
-    char *pemfname; /* name of PEM file from which this was loaded */
     time_t loadtime; /* time public and private key were loaded from file */
     EVP_PKEY *keyshare; /* long(ish) term ECH private keyshare on a server */
     int for_retry; /* whether to use this ECHConfigList in a retry */
     size_t encoded_len; /* length of overall encoded content */
     unsigned char *encoded; /* overall encoded content */
-} OSSL_ECHSTORE_entry;
+} OSSL_ECHSTORE_ENTRY;
 
-DEFINE_STACK_OF(OSSL_ECHSTORE_entry)
+DEFINE_STACK_OF(OSSL_ECHSTORE_ENTRY)
 
-typedef struct ossl_echstore_st {
-    STACK_OF(OSSL_ECHSTORE_entry) *entries;
+struct ossl_echstore_st {
+    STACK_OF(OSSL_ECHSTORE_ENTRY) *entries;
     OSSL_LIB_CTX *libctx;
     const char *propq;
-} OSSL_ECHSTORE;
+};
 ```
 
 Some notes on the above ECHConfig fields:
@@ -471,17 +438,7 @@ Different encodings
 ECHConfigList values may be provided via a command line argument to the calling
 application or (more likely) have been retrieved from DNS resource records by
 the application. ECHConfigList values may be provided in various encodings
-(base64, ascii hex or binary) each of which may suit different applications.
-ECHConfigList values may also be provided embedded in the DNS wire encoding of
-HTTPS or SVCB resource records or in the equivalent zone file presentation
-format.
-
-`OSSL_ECHSTORE_find_echconfigs()` attempts to find and return the (possibly empty)
-set of ECHConfigList values as an `OSSL_ECHSTORE` from the input `BIO`.
-
-```c
-OSSL_ECHSTORE *OSSL_ECHSTORE_find_echconfigs(BIO *in);
-```
+(base64 or binary) each of which may suit different applications.
 
 If the input contains more than one (syntactically correct) ECHConfigList, then only
 those that contain locally supported options (e.g. AEAD ciphers) will be
@@ -500,7 +457,7 @@ to send the `public_name` provided from the ECHConfigList.
 
 ```c
 int SSL_ech_set1_server_names(SSL *s, const char *inner_name,
-                             const char *outer_name, int no_outer);
+                              const char *outer_name, int no_outer);
 int SSL_ech_set1_outer_server_name(SSL *s, const char *outer_name, int no_outer);
 int SSL_ech_set1_outer_alpn_protos(SSL *s, const unsigned char *protos,
                                    size_t protos_len);
@@ -599,28 +556,6 @@ The following options are defined for ECH and may be set via
 #define SSL_OP_ECH_GREASE_RETRY_CONFIG                  SSL_OP_BIT(39)
 ```
 
-A Note on `_get_`,`_get0_`,`_get1_`,`_set_`,`_set0_`,`_set1_`
--------------------------------------------------------------
-
-TODO(ECH): This text will likely disappear as things settle.
-
-The abstraction behind the `_get_`,`_get0_`,`_get1_`,`_set_`,`_set0_`,`_set1_`
-convention used in OpenSSL APIs is somewhat non-obvious, (but is what it is),
-so some words of explanation of the function names above may be useful, partly
-as a check that those usages are consistent with other APIs:
-
-- `_set_` is appropriate where the input/output type(s) are basic and involve
-  no type-specific memory management (e.g. `SSL_set_enable_ech_grease`)
-- there are no uses of `_get_` or `_get0_` above
-- `_get1_` is appropriate when a pointer to a complex type is being returned
-  that may be modified and must be free'd by the application, e.g.
-  `OSSL_ECHSTORE_get1_info`.
-- `_set0_` is also unused above, because...
-- the `_set1_` variant seems easier to handle for the application ("with ECH
-  stuff, if you make it then give it to the library, you still need to free
-  it") and for consistency amongst these APIs, so that is often used, e.g.
-  `OSSL_ECHSTORE_set1_key_and_read_pem`.
-
 Build Options
 -------------
 
@@ -649,16 +584,6 @@ OPENSSL_EXPORT void SSL_set_enable_ech_grease(SSL *ssl, int enable);
 This could work as well for our implementation, or BoringSSL could probably
 change to use an option, unless there's some reason to prefer not adding new
 options.
-
-### Setting an ECHConfigList
-
-```c
-OPENSSL_EXPORT int SSL_set1_ech_config_list(SSL *ssl,
-                                            const uint8_t *ech_config_list,
-                                            size_t ech_config_list_len);
-```
-
-This provides a subset of the equivalent client capabilities from our fork.
 
 ### Verifying the outer CH rather than inner
 
@@ -696,7 +621,6 @@ OPENSSL_EXPORT int SSL_ECH_KEYS_add(SSL_ECH_KEYS *keys, int is_retry_config,
 OPENSSL_EXPORT int SSL_ECH_KEYS_marshal_retry_configs(const SSL_ECH_KEYS *keys,
                                                       uint8_t **out,
                                                       size_t *out_len);
-
 ```
 
 Collectively these are similar to `OSSL_ECH_make_echconfig()`.
@@ -709,8 +633,6 @@ ECH keys using:
 ```c
 OPENSSL_EXPORT int SSL_CTX_set1_ech_keys(SSL_CTX *ctx, SSL_ECH_KEYS *keys);
 ```
-
-This is similar to the `SSL_CTX_ech_server_enable_*()` APIs.
 
 ### Getting status
 
