@@ -290,7 +290,9 @@ sub start
     if ($self->debug) {
         print STDERR "Server command: $execcmd\n";
     }
-
+    my $sin = undef;
+    my $sout = undef;
+    my $serr = undef;
     if ("$^O" eq "MSWin32") {
         $pid = IPC::Open2::open2(my $sin, my $sout, $execcmd) or die "Failed to $execcmd: $!\n";
     } else {
