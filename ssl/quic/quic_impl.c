@@ -4832,7 +4832,7 @@ int ossl_quic_get_notifier_fd(SSL *ssl)
     QCTX ctx;
     QUIC_REACTOR *rtor;
     RIO_NOTIFIER *nfy;
-    int nfd;
+    int nfd = -1;
 
     if (!expect_quic_any(ssl, &ctx))
         return -1;
@@ -4841,9 +4841,10 @@ int ossl_quic_get_notifier_fd(SSL *ssl)
     rtor = ossl_quic_obj_get0_reactor(ctx.obj);
     nfy = ossl_quic_reactor_get0_notifier(rtor);
     if (nfy == NULL)
-        return -1;
+        goto end;
     nfd = ossl_rio_notifier_as_fd(nfy);
 
+ end:
     qctx_unlock(&ctx);
     return nfd;
 }
