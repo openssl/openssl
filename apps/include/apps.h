@@ -353,4 +353,6 @@ void app_providers_cleanup(void);
 EVP_PKEY *app_keygen(EVP_PKEY_CTX *ctx, const char *alg, int bits, int verbose);
 EVP_PKEY *app_paramgen(EVP_PKEY_CTX *ctx, const char *alg);
 
+int write_to_file(BIO *in, const char *filename, int format, int private);
+
 #endif

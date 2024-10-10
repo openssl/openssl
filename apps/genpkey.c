@@ -103,26 +103,27 @@ cleanup:
     EVP_PKEY_CTX_free(ctx);
 }
 
-int write_to_file( BIO *in, const char *filename, int format, int private){
+int write_to_file(BIO *in, const char *filename, int format, int private)
+{
     int rv = 0, ret = 0;
     BIO *out = NULL;
     BUF_MEM *mem_buffer = NULL;
 
     rv = BIO_get_mem_ptr(in, &mem_buffer);
-    if ( rv < 0 ) {
+    if (rv < 0) {
         BIO_puts(bio_err, "Error reading mem buffer\n");
         goto end;
     }
     out = bio_open_owner(filename, format, private);
-    if( out == NULL )
+    if(out == NULL)
         goto end;
     rv = BIO_write(out, mem_buffer->data, mem_buffer->length);
-    if ( rv < 0 ) // if the above function fails, we still have a file
+    if (rv < 0)
         BIO_puts(bio_err, "Error writing to output file\n");
     else
         ret = 0;
 end:
-    if ( ret != 0 )
+    if (ret != 0)
         ERR_print_errors(bio_err);
     BIO_free_all(out);
     return ret;
@@ -321,12 +322,12 @@ int genpkey_main(int argc, char **argv)
     sk_OPENSSL_STRING_free(keyopt);
     if (ret != 0)
         ERR_print_errors(bio_err);
-    else{
+    else {
         rv = write_to_file(mem_outpubkey, outpubkeyfile, outformat, private);
-        if ( rv < 0 )
+        if (rv < 0)
             BIO_puts(bio_err, "Error writing to outpubkey\n");
         rv = write_to_file(mem_out, outfile, outformat, private);
-        if ( rv < 0 )
+        if (rv < 0)
             BIO_puts(bio_err, "Error writing to outfile\n");
     }
     EVP_PKEY_free(pkey);
