@@ -57,6 +57,10 @@ static int rpb_ensure_alloc(RIO_POLL_BUILDER *rpb, size_t alloc)
     if (pfd_heap_new == NULL)
         return 0;
 
+    if (rpb->pfd_heap == NULL) {
+        /* Copy the contents of the stacked array. */
+        memcpy(pfd_heap_new, rpb->pfds, sizeof(rpb->pfds));
+    }
     rpb->pfd_heap   = pfd_heap_new;
     rpb->pfd_alloc  = alloc;
     return 1;
@@ -67,7 +71,9 @@ int ossl_rio_poll_builder_add_fd(RIO_POLL_BUILDER *rpb, int fd,
                                  int want_read, int want_write)
 {
 #if RIO_POLL_METHOD == RIO_POLL_METHOD_POLL
-    size_t num_loop;
+    size_t i;
+    struct pollfd *pfds = (rpb->pfd_heap != NULL ? rpb->pfd_heap : rpb->pfds);
+    struct pollfd *pfd;
 #endif
 
     if (fd < 0)
@@ -97,44 +103,31 @@ int ossl_rio_poll_builder_add_fd(RIO_POLL_BUILDER *rpb, int fd,
     return 1;
 
 #elif RIO_POLL_METHOD == RIO_POLL_METHOD_POLL
-    for (num_loop = 0;; ++num_loop) {
-        size_t i;
-        struct pollfd *pfds = (rpb->pfd_heap != NULL ? rpb->pfd_heap : rpb->pfds);
-        struct pollfd *pfd;
+    for (i = 0; i < rpb->pfd_num; ++i) {
+        pfd = &pfds[i];
 
-        for (i = 0; i < rpb->pfd_num; ++i) {
-            pfd = &pfds[i];
-
-            if (pfd->fd == -1 || pfd->fd == fd)
-                break;
-        }
-
-        if (i >= rpb->pfd_alloc) {
-            /* Was not able to find room - enlarge and try again. */
-            if (num_loop > 0)
-                /* Should not happen twice. */
-                return 0;
-
-            if (!rpb_ensure_alloc(rpb, rpb->pfd_alloc * 2))
-                return 0;
-
-            continue;
-        }
-
-        assert(i <= rpb->pfd_num && rpb->pfd_num <= rpb->pfd_alloc);
-        pfds[i].fd      = fd;
-        pfds[i].events  = 0;
-
-        if (want_read)
-            pfds[i].events |= POLLIN;
-        if (want_write)
-            pfds[i].events |= POLLOUT;
-
-        if (i == rpb->pfd_num)
-            ++rpb->pfd_num;
-
-        return 1;
+        if (pfd->fd == -1 || pfd->fd == fd)
+            break;
     }
+
+    if (i >= rpb->pfd_alloc) {
+        if (!rpb_ensure_alloc(rpb, rpb->pfd_alloc * 2))
+            return 0;
+    }
+
+    assert(i <= rpb->pfd_num && rpb->pfd_num <= rpb->pfd_alloc);
+    pfds[i].fd      = fd;
+    pfds[i].events  = 0;
+
+    if (want_read)
+        pfds[i].events |= POLLIN;
+    if (want_write)
+        pfds[i].events |= POLLOUT;
+
+    if (i == rpb->pfd_num)
+        ++rpb->pfd_num;
+
+    return 1;
 #endif
 }
 
