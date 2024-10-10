@@ -247,21 +247,29 @@ int ech_main(int argc, char **argv)
     }
 
     if (text) {
-        OSSL_ECH_INFO *oi = NULL;
         int oi_ind, oi_cnt = 0;
 
-        if (OSSL_ECHSTORE_get1_info(es, &oi, &oi_cnt) != 1)
+        if (OSSL_ECHSTORE_num_entries(es, &oi_cnt) != 1)
             goto end;
         if (verbose)
             BIO_printf(bio_err, "Printing %d ECHConfigList\n", oi_cnt);
         for (oi_ind = 0; oi_ind != oi_cnt; oi_ind++) {
-            if (OSSL_ECH_INFO_print(bio_out, oi, oi_ind) != 1) {
-                BIO_printf(bio_err, "OSSL_ECH_INFO_print error entry (%d)\n",
-                           oi_ind);
+            time_t secs = 0;
+            char *pn = NULL, *ec = NULL;
+            int has_priv, for_retry;
+
+            if (OSSL_ECHSTORE_get1_info(es, oi_ind, &secs, &pn, &ec,
+                                        &has_priv, &for_retry ) != 1) {
+                OPENSSL_free(pn); /* just in case */
+                OPENSSL_free(ec);
                 goto end;
             }
+            BIO_printf(bio_err, "ECH entry: %d public_name: %s age: %d%s\n",
+                       oi_ind, pn, (int)secs, has_priv ? " (has private key)" : "");
+            BIO_printf(bio_err, "\t%s\n", ec);
+            OPENSSL_free(pn);
+            OPENSSL_free(ec);
         }
-        OSSL_ECH_INFO_free(oi, oi_cnt);
         if (verbose)
             BIO_printf(bio_err, "Success printing %d ECHConfigList\n", oi_cnt);
         rv = 0;
