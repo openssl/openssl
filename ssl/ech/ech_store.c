@@ -866,7 +866,8 @@ int OSSL_ECHSTORE_get1_info(OSSL_ECHSTORE *es, int index, time_t *loaded_secs,
                             int *has_private, int *for_retry)
 {
     OSSL_ECHSTORE_ENTRY *ee = NULL;
-    int j = 0, num = 0;
+    unsigned int j = 0;
+    int num = 0;
     BIO *out = NULL;
     time_t now = time(0);
     size_t ehlen;
