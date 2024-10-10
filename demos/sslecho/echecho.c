@@ -100,7 +100,7 @@ static int configure_ech(SSL_CTX *ctx, int server,
     OSSL_ECHSTORE *es = NULL;
     BIO *es_in = BIO_new_mem_buf(buf, len);
 
-    if (es_in == NULL || (es = OSSL_ECHSTORE_init(NULL, NULL)) == NULL)
+    if (es_in == NULL || (es = OSSL_ECHSTORE_new(NULL, NULL)) == NULL)
         goto err;
     if (server && OSSL_ECHSTORE_read_pem(es, es_in, 1) != 1)
         goto err;
