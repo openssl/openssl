@@ -294,9 +294,9 @@ sub start
     my $sout = undef;
     my $serr = undef;
     if ("$^O" eq "MSWin32") {
-        $pid = IPC::Open2::open2(my $sin, my $sout, $execcmd) or die "Failed to $execcmd: $!\n";
+        $pid = IPC::Open2::open2($sin, $sout, $execcmd) or die "Failed to $execcmd: $!\n";
     } else {
-        $pid = IPC::Open3::open3(my $sin, my $sout, my $serr, $execcmd) or die "Failed to $execcmd: $!\n";
+        $pid = IPC::Open3::open3($sin, $sout, $serr, $execcmd) or die "Failed to $execcmd: $!\n";
     }
 
     $self->{serverpid} = $pid;
