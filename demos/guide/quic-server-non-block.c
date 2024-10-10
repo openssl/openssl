@@ -415,7 +415,6 @@ static int run_quic_server(SSL_CTX *ctx, int fd)
         while (!SSL_write_ex2(conn, buf + total_written,
                               total_read - total_written,
                               SSL_WRITE_FLAG_CONCLUDE, &nwritten)) {
-            total_written += nwritten;
             if (handle_io_failure(conn, 0) == 1)
                 continue;
             fprintf(stderr, "Failed to write data\n");
@@ -431,8 +430,10 @@ static int run_quic_server(SSL_CTX *ctx, int fd)
          * Shut down the connection. We may need to call this multiple times
          * to ensure the connection is shutdown completely.
          */
-        while (SSL_shutdown(conn) != 1)
-            continue;
+        while ((ret = SSL_shutdown(conn)) != 1) {
+            if (ret < 0 && handle_io_failure(conn, ret) == 1)
+                continue; /* Retry */
+        }
 
         SSL_free(conn);
     }
