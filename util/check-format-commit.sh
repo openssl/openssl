@@ -72,14 +72,14 @@ fi
 touch $TEMPDIR/ranges.txt
 git diff -U0 $COMMIT_RANGE | awk '
     BEGIN {myfile=""} 
-    /+{3}/ {
-        gsub(/b\//,"",$2);
+    /^\+\+\+/ {
+        sub(/^b./,"",$2);
         myfile=$2
     }
-    /@@/ {
-        gsub(/+/,"",$3);
+    /^@@/ {
+        sub(/^\+/,"",$3);
         printf myfile " " $3 "\n"
-    }' >> $TEMPDIR/ranges.txt || true
+    }' > $TEMPDIR/ranges.txt || true
 
 # filter in anything that matches on a filter regex
 for i in ${FILE_ALLOWLIST[@]}
