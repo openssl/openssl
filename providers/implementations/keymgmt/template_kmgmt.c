@@ -22,18 +22,23 @@
 #include "prov/provider_ctx.h"
 #include "prov/securitycheck.h"
 
+extern const OSSL_DISPATCH ossl_template_keymgmt_functions[];
+
 #ifdef NDEBUG
-static void debug_print(char *fmt, ...) {}
+static void debug_print(char *fmt, ...)
+{
+}
 #else
 static void debug_print(char *fmt, ...)
 {
     char out[1000];
-
     va_list argptr;
-    va_start(argptr,fmt);
+
+    va_start(argptr, fmt);
     vsprintf(out, fmt, argptr);
     va_end(argptr);
-    if (getenv("TEMPLATEKM")) printf("TEMPLATE_KM: %s",out);
+    if (getenv("TEMPLATEKM"))
+        printf("TEMPLATE_KM: %s", out);
 }
 #endif
 
@@ -65,6 +70,7 @@ struct template_gen_ctx {
 static void *template_new(void *provctx)
 {
     void *key = NULL;
+
     debug_print("new key req\n");
     if (!ossl_prov_is_running())
         return 0;
@@ -137,7 +143,7 @@ static int key_to_params(void *key, OSSL_PARAM_BLD *tmpl,
 }
 
 static int template_export(void *key, int selection, OSSL_CALLBACK *param_cb,
-                        void *cbarg)
+                           void *cbarg)
 {
     OSSL_PARAM_BLD *tmpl;
     OSSL_PARAM *params = NULL;
@@ -196,9 +202,8 @@ static int ossl_template_key_fromdata(void *key,
         /* retrieve private key and check integrity */
     }
 
-
     if (param_pub_key != NULL) {
-        /* retrieve public key and check integrity */ 
+        /* retrieve public key and check integrity */
     }
 
     return 1;
@@ -224,8 +229,8 @@ static int template_import(void *key, int selection, const OSSL_PARAM params[])
 }
 
 #define TEMPLATE_KEY_TYPES()                                 \
-OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PUB_KEY, NULL, 0),   \
-OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PRIV_KEY, NULL, 0)
+    OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PUB_KEY, NULL, 0),   \
+    OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PRIV_KEY, NULL, 0)
 
 static const OSSL_PARAM template_key_types[] = {
     TEMPLATE_KEY_TYPES(),
@@ -320,7 +325,7 @@ static int template_gen_set_params(void *genctx, const OSSL_PARAM params[])
 }
 
 static void *template_gen_init(void *provctx, int selection,
-                            const OSSL_PARAM params[])
+                               const OSSL_PARAM params[])
 {
     struct template_gen_ctx *gctx = NULL;
 
@@ -341,7 +346,7 @@ static void *template_gen_init(void *provctx, int selection,
 }
 
 static const OSSL_PARAM *template_gen_settable_params(ossl_unused void *genctx,
-                                                   ossl_unused void *provctx)
+                                                      ossl_unused void *provctx)
 {
     static OSSL_PARAM settable[] = {
         OSSL_PARAM_END
@@ -414,7 +419,7 @@ const OSSL_DISPATCH ossl_template_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_GEN_INIT, (void (*)(void))template_gen_init },
     { OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS, (void (*)(void))template_gen_set_params },
     { OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS,
-        (void (*)(void))template_gen_settable_params },
+      (void (*)(void))template_gen_settable_params },
     { OSSL_FUNC_KEYMGMT_GEN, (void (*)(void))template_gen },
     { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (void (*)(void))template_gen_cleanup },
     { OSSL_FUNC_KEYMGMT_DUP, (void (*)(void))template_dup },
