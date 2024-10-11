@@ -497,13 +497,14 @@ static struct test_mt_entry test_mt_entries[TEST_MT_POOL_SZ];
 static char *worker_exits[4];
 
 HT_START_KEY_DEFN(mtkey)
-HT_DEF_KEY_FIELD(index, unsigned int)
+HT_DEF_KEY_FIELD(index, uint32_t)
 HT_END_KEY_DEFN(MTKEY)
 
 IMPLEMENT_HT_VALUE_TYPE_FNS(TEST_MT_ENTRY, mt, static)
 
 static int worker_num = 0;
 static CRYPTO_RWLOCK *worker_lock;
+static CRYPTO_RWLOCK *testrand_lock;
 static int free_failure = 0;
 static int shutting_down = 0;
 static int global_iteration = 0;
@@ -528,16 +529,16 @@ static void hashtable_mt_free(HT_VALUE *v)
     }
 }
 
-#define BEHAVIOR_MASK 0x3
 #define DO_LOOKUP 0
 #define DO_INSERT 1
 #define DO_REPLACE 2
 #define DO_DELETE 3
+#define NUM_BEHAVIORS (DO_DELETE + 1)
 
 static void do_mt_hash_work(void)
 {
     MTKEY key;
-    unsigned int index;
+    uint32_t index;
     int num;
     TEST_MT_ENTRY *m;
     TEST_MT_ENTRY *expected_m = NULL;
@@ -555,16 +556,11 @@ static void do_mt_hash_work(void)
     HT_INIT_KEY(&key);
 
     for (iter = 0; iter < TEST_THREAD_ITERATIONS; iter++) {
-        if (!RAND_bytes((unsigned char *)&index, sizeof(unsigned int))) {
-            worker_exits[num] = "Failed to get random index";
+        if (!TEST_true(CRYPTO_THREAD_write_lock(testrand_lock)))
             return;
-        }
-        index %= TEST_MT_POOL_SZ;
-        if (!RAND_bytes((unsigned char *)&behavior, sizeof(char))) {
-            worker_exits[num] = "Failed to get random behavior";
-            return;
-        }
-        behavior &= BEHAVIOR_MASK;
+        index = test_random() % TEST_MT_POOL_SZ;
+        behavior = (char)(test_random() % NUM_BEHAVIORS);
+        CRYPTO_THREAD_unlock(testrand_lock);
 
         expected_m = &test_mt_entries[index];
         HT_KEY_RESET(&key);
@@ -601,9 +597,10 @@ static void do_mt_hash_work(void)
             if (expected_rc != ossl_ht_mt_TEST_MT_ENTRY_insert(m_ht,
                                                                TO_HT_KEY(&key),
                                                                expected_m, r)) {
-                TEST_info("Iteration %d Expected rc %d on %s of element %d which is %s\n",
+                TEST_info("Iteration %d Expected rc %d on %s of element %u which is %s\n",
                           giter, expected_rc, behavior == DO_REPLACE ? "replace" : "insert",
-                          index, expected_m->in_table ? "in table" : "not in table");
+                          (unsigned int)index,
+                          expected_m->in_table ? "in table" : "not in table");
                 worker_exits[num] = "Failure on insert";
             }
             if (expected_rc == 1)
@@ -616,8 +613,8 @@ static void do_mt_hash_work(void)
             ossl_ht_write_lock(m_ht);
             expected_rc = expected_m->in_table;
             if (expected_rc != ossl_ht_delete(m_ht, TO_HT_KEY(&key))) {
-                TEST_info("Iteration %d Expected rc %d on delete of element %d which is %s\n",
-                          giter, expected_rc, index,
+                TEST_info("Iteration %d Expected rc %d on delete of element %u which is %s\n",
+                          giter, expected_rc, (unsigned int)index,
                           expected_m->in_table ? "in table" : "not in table");
                 worker_exits[num] = "Failure on delete";
             }
@@ -661,8 +658,9 @@ static int test_hashtable_multithread(void)
     if (!TEST_ptr(m_ht))
         goto end;
 
-    worker_lock = CRYPTO_THREAD_lock_new();
-    if (worker_lock == NULL)
+    if (!TEST_ptr(worker_lock = CRYPTO_THREAD_lock_new()))
+        goto end_free;
+    if (!TEST_ptr(testrand_lock = CRYPTO_THREAD_lock_new()))
         goto end_free;
 #ifdef MEASURE_HASH_PERFORMANCE
     gettimeofday(&start, NULL);
@@ -703,6 +701,8 @@ shutdown:
 
 end_free:
     shutting_down = 1;
+    CRYPTO_THREAD_lock_free(worker_lock);
+    CRYPTO_THREAD_lock_free(testrand_lock);
     ossl_ht_free(m_ht);
 end:
     return ret;
