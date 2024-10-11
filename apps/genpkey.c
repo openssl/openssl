@@ -288,12 +288,12 @@ int genpkey_main(int argc, char **argv)
         assert(private);
         rv = PEM_write_bio_PrivateKey(mem_out, pkey, cipher, NULL, 0, NULL, pass);
         if (rv > 0 && mem_outpubkey != NULL)
-          rv = PEM_write_bio_PUBKEY(mem_outpubkey, pkey);
+           rv = PEM_write_bio_PUBKEY(mem_outpubkey, pkey);
     } else if (outformat == FORMAT_ASN1) {
         assert(private);
         rv = i2d_PrivateKey_bio(mem_out, pkey);
         if (rv > 0 && mem_outpubkey != NULL)
-          rv = i2d_PUBKEY_bio(mem_outpubkey, pkey);
+           rv = i2d_PUBKEY_bio(mem_outpubkey, pkey);
     } else {
         BIO_printf(bio_err, "Bad format specified for key\n");
         goto end;
@@ -320,9 +320,9 @@ int genpkey_main(int argc, char **argv)
 
  end:
     sk_OPENSSL_STRING_free(keyopt);
-    if (ret != 0)
+    if (ret != 0) {
         ERR_print_errors(bio_err);
-    else {
+    } else {
         rv = write_to_file(mem_outpubkey, outpubkeyfile, outformat, private);
         if (rv < 0)
             BIO_puts(bio_err, "Error writing to outpubkey\n");
