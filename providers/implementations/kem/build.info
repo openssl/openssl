@@ -3,7 +3,7 @@
 
 $RSA_KEM_GOAL=../../libdefault.a ../../libfips.a
 $EC_KEM_GOAL=../../libdefault.a
-$TEMPLATE_KEM_GOAL=../../libdefault.a
+$TEMPLATE_KEM_GOAL=../../libtemplate.a
 
 SOURCE[$RSA_KEM_GOAL]=rsa_kem.c
 
@@ -15,3 +15,4 @@ IF[{- !$disabled{ec} -}]
 ENDIF
 
 SOURCE[$TEMPLATE_KEM_GOAL]=template_kem.c
+INCLUDE[$TEMPLATE_KEM_GOAL]=../../common/include ../../implementations/include ../../fips/include ../../../include
