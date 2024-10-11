@@ -287,13 +287,15 @@ int genpkey_main(int argc, char **argv)
     } else if (outformat == FORMAT_PEM) {
         assert(private);
         rv = PEM_write_bio_PrivateKey(mem_out, pkey, cipher, NULL, 0, NULL, pass);
-        if (rv > 0 && mem_outpubkey != NULL)
-          rv = PEM_write_bio_PUBKEY(mem_outpubkey, pkey);
+        if (rv > 0 && mem_outpubkey != NULL) {
+            rv = PEM_write_bio_PUBKEY(mem_outpubkey, pkey);
+        }
     } else if (outformat == FORMAT_ASN1) {
         assert(private);
         rv = i2d_PrivateKey_bio(mem_out, pkey);
-        if (rv > 0 && mem_outpubkey != NULL)
-          rv = i2d_PUBKEY_bio(mem_outpubkey, pkey);
+        if (rv > 0 && mem_outpubkey != NULL) {
+            rv = i2d_PUBKEY_bio(mem_outpubkey, pkey);
+        }
     } else {
         BIO_printf(bio_err, "Bad format specified for key\n");
         goto end;
