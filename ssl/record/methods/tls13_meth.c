@@ -200,7 +200,7 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
 
         if ((mac_ctx = EVP_MAC_CTX_dup(rl->mac_ctx)) == NULL
             || !EVP_MAC_update(mac_ctx, nonce, nonce_len)
-            || !EVP_MAC_update(mac_ctx, recheader, sizeof(recheader))
+            || !EVP_MAC_update(mac_ctx, recheader, hdrlen)
             || !EVP_MAC_update(mac_ctx, rec->input, rec->length)
             || !EVP_MAC_final(mac_ctx, tag, &taglen, rl->taglen)) {
             RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -235,19 +235,37 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
         return 0;
     }
 
+    //if (!sending) {
+    //    printf("receiver: tag(%zu):", rl->taglen);
+    //    for (size_t i = 0; i < rl->taglen; i++) {
+    //        printf("0x%2x, ", *(rec->data + rec->length + i));
+    //    }
+    //    printf("\n");
+    //    printf("receiver: hdr(%zu):", hdrlen);
+    //    for (size_t i = 0; i < hdrlen; i++)
+    //        printf("0x%2x, ", *(recheader + i));
+    //    printf("\n");
+    //    printf("receiver: data(%zu):", rec->length);
+    //    for (size_t i = 0; i < rec->length; i++)
+    //        printf("0x%2x, ", *(rec->data + i));
+    //    printf("\n");
+    //    printf("receiver: nonce(%zu):", nonce_len);
+    //    for (size_t i = 0; i < nonce_len; i++) {
+    //        printf("0x%2x, ", *(nonce + i));
+    //    }
+    //    printf("\n");
+    //}
+
     /*
      * For CCM we must explicitly set the total plaintext length before we add
      * any AAD.
      */
     if ((mode == EVP_CIPH_CCM_MODE
-                 && EVP_CipherUpdate(enc_ctx, NULL, &lenu, NULL,
-                                     (unsigned int)rec->length) <= 0)
-            || EVP_CipherUpdate(enc_ctx, NULL, &lenu, recheader,
-                                sizeof(recheader)) <= 0
-            || EVP_CipherUpdate(enc_ctx, rec->data, &lenu, rec->input,
-                                (unsigned int)rec->length) <= 0
-            || EVP_CipherFinal_ex(enc_ctx, rec->data + lenu, &lenf) <= 0
-            || (size_t)(lenu + lenf) != rec->length) {
+             && EVP_CipherUpdate(enc_ctx, NULL, &lenu, NULL, (int)rec->length) <= 0)
+        || EVP_CipherUpdate(enc_ctx, NULL, &lenu, recheader, (int)hdrlen) <= 0
+        || EVP_CipherUpdate(enc_ctx, rec->data, &lenu, rec->input, (int)rec->length) <= 0
+        || EVP_CipherFinal_ex(enc_ctx, rec->data + lenu, &lenf) <= 0
+        || (size_t)(lenu + lenf) != rec->length) {
         return 0;
     }
     if (sending) {
@@ -257,6 +275,23 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
             RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return 0;
         }
+        //printf("sender: tag(%zu):", rl->taglen);
+        //for (size_t i = 0; i < rl->taglen; i++)
+        //    printf("0x%2x, ", *(rec->data + rec->length + i));
+        //printf("\n");
+        //printf("sender: hdr(%zu):", hdrlen);
+        //for (size_t i = 0; i < hdrlen; i++)
+        //    printf("0x%2x, ", *(recheader + i));
+        //printf("\n");
+        //printf("sender: data(%zu):", rec->length);
+        //for (size_t i = 0; i < rec->length; i++)
+        //    printf("0x%2x, ", *(rec->data + i));
+        //printf("\n");
+        //printf("sender: nonce(%zu):", nonce_len);
+        //for (size_t i = 0; i < nonce_len; i++) {
+        //    printf("0x%2x, ", *(nonce + i));
+        //}
+        //printf("\n");
         rec->length += rl->taglen;
     }
 
@@ -294,7 +329,8 @@ static int tls13_post_process_record(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec)
         size_t end;
 
         if (rec->length == 0
-                || rec->type != SSL3_RT_APPLICATION_DATA) {
+                || rl->isdtls ? (rec->type & 0xe0) != 0x20
+                              : rec->type != SSL3_RT_APPLICATION_DATA) {
             RLAYERfatal(rl, SSL_AD_UNEXPECTED_MESSAGE,
                         SSL_R_BAD_RECORD_TYPE);
             return 0;
@@ -332,7 +368,7 @@ static uint8_t tls13_get_record_type(OSSL_RECORD_LAYER *rl,
      * when encrypting in TLSv1.3. The "inner" record type encodes the "real"
      * record type from the template.
      */
-    return SSL3_RT_APPLICATION_DATA;
+    return rl->isdtls ? 0x2c | (0x3 & rl->epoch) : SSL3_RT_APPLICATION_DATA;
 }
 
 static int tls13_add_record_padding(OSSL_RECORD_LAYER *rl,

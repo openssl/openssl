@@ -22,7 +22,7 @@
 extern "C" {
 #endif
 
-#include <openssl/opensslconf.h>
+# include <openssl/opensslconf.h>
 
 /* DTLS*_VERSION constants are defined in prov_ssl.h */
 # ifndef OPENSSL_NO_DEPRECATED_3_0
@@ -51,6 +51,23 @@ extern "C" {
 # define DTLS1_AL_HEADER_LENGTH                   2
 
 # define DTLS1_TMO_ALERT_COUNT                     12
+
+/* DTLS 1.3 Unified header */
+# define DTLS13_UNI_HDR_FIX_BITS         0x20
+# define DTLS13_UNI_HDR_CID_BIT          0x10
+# define DTLS13_UNI_HDR_SEQ_BIT          0x08
+# define DTLS13_UNI_HDR_LEN_BIT          0x04
+# define DTLS13_UNI_HDR_FIX_BITS_MASK    0xe0
+# define DTLS13_UNI_HDR_EPOCH_BITS_MASK  0x03
+
+# define DTLS13_UNI_HDR_FIX_BITS_IS_SET(byte) \
+    (((byte) & DTLS13_UNI_HDR_FIX_BITS_MASK) == DTLS13_UNI_HDR_FIX_BITS)
+# define DTLS13_UNI_HDR_CID_BIT_IS_SET(byte) \
+    (((byte) & DTLS13_UNI_HDR_CID_BIT) == DTLS13_UNI_HDR_CID_BIT)
+# define DTLS13_UNI_HDR_SEQ_BIT_IS_SET(byte) \
+    (((byte) & DTLS13_UNI_HDR_SEQ_BIT) == DTLS13_UNI_HDR_SEQ_BIT)
+# define DTLS13_UNI_HDR_LEN_BIT_IS_SET(byte) \
+    (((byte) & DTLS13_UNI_HDR_LEN_BIT) == DTLS13_UNI_HDR_LEN_BIT)
 
 #ifdef  __cplusplus
 }
