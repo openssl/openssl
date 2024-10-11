@@ -491,10 +491,11 @@ typedef struct test_mt_entry {
 
 static HT *m_ht = NULL;
 #define TEST_MT_POOL_SZ 256
-#define TEST_THREAD_ITERATIONS 10000
+#define TEST_THREAD_ITERATIONS 1000000
+#define NUM_WORKERS 16
 
 static struct test_mt_entry test_mt_entries[TEST_MT_POOL_SZ];
-static char *worker_exits[4];
+static char *worker_exits[NUM_WORKERS];
 
 HT_START_KEY_DEFN(mtkey)
 HT_DEF_KEY_FIELD(index, uint32_t)
@@ -643,15 +644,15 @@ static int test_hashtable_multithread(void)
         1,                 /* Check collisions */
     };
     int ret = 0;
-    thread_t workers[4];
+    thread_t workers[NUM_WORKERS];
     int i;
 #ifdef MEASURE_HASH_PERFORMANCE
     struct timeval start, end, delta;
 #endif
 
-    memset(worker_exits, 0, sizeof(char *) * 4);
+    memset(worker_exits, 0, sizeof(char *) * NUM_WORKERS);
     memset(test_mt_entries, 0, sizeof(TEST_MT_ENTRY) * TEST_MT_POOL_SZ);
-    memset(workers, 0, sizeof(thread_t) * 4);
+    memset(workers, 0, sizeof(thread_t) * NUM_WORKERS);
 
     m_ht = ossl_ht_new(&hash_conf);
 
@@ -666,7 +667,7 @@ static int test_hashtable_multithread(void)
     gettimeofday(&start, NULL);
 #endif
 
-    for (i = 0; i < 4; i++) {
+    for (i = 0; i < NUM_WORKERS; i++) {
         if (!run_thread(&workers[i], do_mt_hash_work))
             goto shutdown;
     }
@@ -682,7 +683,7 @@ shutdown:
      * conditions
      */
     ret = 1;
-    for (i = 0; i < 4; i++) {
+    for (i = 0; i < NUM_WORKERS; i++) {
         if (worker_exits[i] != NULL) {
             TEST_info("Worker %d failed: %s\n", i, worker_exits[i]);
             ret = 0;
