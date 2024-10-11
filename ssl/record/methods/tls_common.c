@@ -1715,7 +1715,7 @@ int tls_post_encryption_processing_default(OSSL_RECORD_LAYER *rl,
 
         recordstart = WPACKET_get_curr(thispkt) - len - headerlen;
 
-        if (!dtls_crypt_sequence_number(rl->sn_enc_ctx, recordstart + DTLS1_RT_HEADER_SEQ_OFFS,
+        if (!dtls_crypt_sequence_number(rl->sn_enc_ctx, recordstart + DTLS1_RT_HEADER_SEQ_OFFS, 6,
                                         recordstart + DTLS1_RT_HEADER_LENGTH,
                                         rl->sn_enc_offs)) {
             RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
