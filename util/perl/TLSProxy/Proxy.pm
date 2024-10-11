@@ -292,11 +292,10 @@ sub start
     }
     my $sin = undef;
     my $sout = undef;
-    my $serr = undef;
     if ("$^O" eq "MSWin32") {
-        $pid = IPC::Open2::open2($sin, $sout, $execcmd) or die "Failed to $execcmd: $!\n";
+        $pid = IPC::Open2::open2($sout, $sin, $execcmd) or die "Failed to $execcmd: $!\n";
     } else {
-        $pid = IPC::Open3::open3($sin, $sout, $serr, $execcmd) or die "Failed to $execcmd: $!\n";
+        $pid = IPC::Open3::open3($sin, $sout, undef, $execcmd) or die "Failed to $execcmd: $!\n";
     }
 
     $self->{serverpid} = $pid;
