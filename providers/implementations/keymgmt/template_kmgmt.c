@@ -24,7 +24,7 @@
 
 extern const OSSL_DISPATCH ossl_template_keymgmt_functions[];
 
-#ifdef NDEBUG
+#if defined(NDEBUG) || defined(OPENSSL_NO_STDIO)
 static void debug_print(char *fmt, ...)
 {
 }
@@ -38,7 +38,7 @@ static void debug_print(char *fmt, ...)
     vsprintf(out, fmt, argptr);
     va_end(argptr);
     if (getenv("TEMPLATEKM"))
-        printf("TEMPLATE_KM: %s", out);
+        fprintf(stderr, "TEMPLATE_KM: %s", out);
 }
 #endif
 

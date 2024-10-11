@@ -22,7 +22,7 @@
 
 extern const OSSL_DISPATCH ossl_template_asym_kem_functions[];
 
-#ifdef NDEBUG
+#if defined(NDEBUG) || defined(OPENSSL_NO_STDIO)
 static void debug_print(char *fmt, ...)
 {
 }
@@ -37,7 +37,7 @@ static void debug_print(char *fmt, ...)
     vsprintf(out, fmt, argptr);
     va_end(argptr);
     if (getenv("TEMPLATEKEM"))
-        printf("TEMPLATE_KEM: %s", out);
+        fprintf(stderr, "TEMPLATE_KEM: %s", out);
 }
 #endif
 

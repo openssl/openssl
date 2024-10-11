@@ -15,4 +15,3 @@ IF[{- !$disabled{ec} -}]
 ENDIF
 
 SOURCE[$TEMPLATE_KEM_GOAL]=template_kem.c
-INCLUDE[$TEMPLATE_KEM_GOAL]=../../common/include ../../implementations/include ../../fips/include ../../../include
