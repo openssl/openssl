@@ -361,14 +361,13 @@ static int dtls_retrieve_rlayer_buffered_record(OSSL_RECORD_LAYER *rl,
 }
 
 /* rfc9147 section 4.2.3 */
-int dtls_crypt_sequence_number(EVP_CIPHER_CTX *ctx, unsigned char *seq,
+int dtls_crypt_sequence_number(EVP_CIPHER_CTX *ctx, unsigned char *seq, size_t seq_len,
                                unsigned char *rec_data, size_t rec_data_offs)
 {
     unsigned char mask[16];
     int outlen, inlen;
     unsigned char *iv, *in;
     size_t i;
-    size_t seq_len = 6;
 
     if (ossl_assert(sizeof(mask) > rec_data_offs))
         inlen = (int)(sizeof(mask) - rec_data_offs);
@@ -386,6 +385,9 @@ int dtls_crypt_sequence_number(EVP_CIPHER_CTX *ctx, unsigned char *seq,
             || outlen != inlen
             || EVP_CipherFinal_ex(ctx, mask + outlen, &outlen) <= 0
             || outlen != 0)
+        return 0;
+
+    if (!ossl_assert(sizeof(mask) > seq_len))
         return 0;
 
     for (i = 0; i < seq_len; i++)
@@ -413,7 +415,9 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
     TLS_RL_RECORD *rr;
     DTLS_BITMAP *bitmap;
     unsigned int is_next_epoch;
+    unsigned char recseqnum[6];
 
+    memset(recseqnum, 0, sizeof(recseqnum));
     rl->num_recs = 0;
     rl->curr_rec = 0;
     rl->num_released = 0;
@@ -463,7 +467,7 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
                 || !PACKET_get_1(&pkt, &record_type)
                 || !PACKET_get_net_2(&pkt, &version)
                 || !PACKET_get_net_2(&pkt, &epoch)
-                || !PACKET_get_net_6(&pkt, &rl->sequence)
+                || !PACKET_copy_bytes(&pkt, recseqnum, sizeof(recseqnum))
                 || !PACKET_get_net_2_len(&pkt, &rr->length)) {
             RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return OSSL_RECORD_RETURN_FATAL;
@@ -558,7 +562,8 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
      */
     if (rl->sn_enc_ctx != NULL
             && (rl->packet_length < DTLS1_RT_HEADER_LENGTH + 16
-                || !dtls_crypt_sequence_number(rl->sn_enc_ctx, &(rl->sequence[2]),
+                || !dtls_crypt_sequence_number(rl->sn_enc_ctx, recseqnum,
+                                               sizeof(recseqnum),
                                                rl->packet + DTLS1_RT_HEADER_LENGTH,
                                                rl->sn_enc_offs))) {
         /* sequence number encryption failed dump record */
@@ -566,6 +571,13 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
         rl->packet_length = 0;
         goto again;
     }
+
+    rl->sequence =  ((uint64_t)recseqnum[0]) << 40;
+    rl->sequence ^= ((uint64_t)recseqnum[1]) << 32;
+    rl->sequence ^= ((uint64_t)recseqnum[2]) << 24;
+    rl->sequence ^= ((uint64_t)recseqnum[3]) << 16;
+    rl->sequence ^= ((uint64_t)recseqnum[4]) << 8;
+    rl->sequence ^= ((uint64_t)recseqnum[5]) << 0;
 
     /* match epochs.  NULL means the packet is dropped on the floor */
     bitmap = dtls_get_bitmap(rl, rr, &is_next_epoch);
