@@ -115,7 +115,7 @@ int write_to_file(BIO *in, const char *filename, int format, int private)
         goto end;
     }
     out = bio_open_owner(filename, format, private);
-    if(out == NULL)
+    if (out == NULL)
         goto end;
     rv = BIO_write(out, mem_buffer->data, mem_buffer->length);
     if (rv < 0)
@@ -288,12 +288,12 @@ int genpkey_main(int argc, char **argv)
         assert(private);
         rv = PEM_write_bio_PrivateKey(mem_out, pkey, cipher, NULL, 0, NULL, pass);
         if (rv > 0 && mem_outpubkey != NULL)
-           rv = PEM_write_bio_PUBKEY(mem_outpubkey, pkey);
+          rv = PEM_write_bio_PUBKEY(mem_outpubkey, pkey);
     } else if (outformat == FORMAT_ASN1) {
         assert(private);
         rv = i2d_PrivateKey_bio(mem_out, pkey);
         if (rv > 0 && mem_outpubkey != NULL)
-           rv = i2d_PUBKEY_bio(mem_outpubkey, pkey);
+          rv = i2d_PUBKEY_bio(mem_outpubkey, pkey);
     } else {
         BIO_printf(bio_err, "Bad format specified for key\n");
         goto end;
