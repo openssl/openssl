@@ -1072,8 +1072,9 @@ Build with support for the SSLKEYLOGFILE environment variable
 When enabled, setting SSLKEYLOGFILE to a file path records the keys exchanged
 during a TLS handshake for use in analysis tools like wireshark.  Note that the
 use of this mechanism allows for decryption of application payloads found in
-captured packets using keys from the key log file.  See Section 3 of
-[the draft standard for SSLKEYLOGFILE](https://datatracker.ietf.org/doc/draft-thomson-tls-keylogfile/)
+captured packets using keys from the key log file and therefore has significant
+security consequences.  See Section 3 of
+[the draft standard for SSLKEYLOGFILE](https://datatracker.ietf.org/doc/draft-ietf-tls-keylogfile/)
 
 ### no-ts
 
