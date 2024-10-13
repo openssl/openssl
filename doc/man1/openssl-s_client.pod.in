@@ -26,9 +26,13 @@ B<openssl> B<s_client>
 [B<-verify> I<depth>]
 [B<-verify_return_error>]
 [B<-verify_quiet>]
+{- $OpenSSL::safe::opt_trust_synopsis -}
 [B<-verifyCAfile> I<filename>]
 [B<-verifyCApath> I<dir>]
 [B<-verifyCAstore> I<uri>]
+[B<-chainCAfile> I<filename>]
+[B<-chainCApath> I<directory>]
+[B<-chainCAstore> I<uri>]
 [B<-cert> I<filename>]
 [B<-certform> B<DER>|B<PEM>|B<P12>]
 [B<-cert_chain> I<filename>]
@@ -39,9 +43,6 @@ B<openssl> B<s_client>
 [B<-key> I<filename>|I<uri>]
 [B<-keyform> B<DER>|B<PEM>|B<P12>]
 [B<-pass> I<arg>]
-[B<-chainCAfile> I<filename>]
-[B<-chainCApath> I<directory>]
-[B<-chainCAstore> I<uri>]
 [B<-requestCAfile> I<filename>]
 [B<-dane_tlsa_domain> I<domain>]
 [B<-dane_tlsa_rrdata> I<rrdata>]
@@ -115,7 +116,6 @@ B<openssl> B<s_client>
 {- $OpenSSL::safe::opt_name_synopsis -}
 {- $OpenSSL::safe::opt_version_synopsis -}
 {- $OpenSSL::safe::opt_x_synopsis -}
-{- $OpenSSL::safe::opt_trust_synopsis -}
 {- $OpenSSL::safe::opt_s_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
@@ -307,43 +307,61 @@ This will typically abort the handshake with a fatal error.
 
 Limit verify output to only errors.
 
+{- $OpenSSL::safe::opt_trust_item -}
+
+The certificates loaded via the B<-CAfile>, B<-CApath>, and B<-CAstore> options
+are used as trust anchors when verifying the server's certificate unless
+overridden by B<-verifyCAfile>, B<-verifyCApath>, or B<-verifyCAstore> options.
+They are used as trust anchors when attempting
+to build the client certificate chain provided to the server unless
+overridden by B<-chainCAfile>, B<-chainCApath>, or B<-chainCAstore> options.
+
 =item B<-verifyCAfile> I<filename>
 
-A file in PEM format containing trusted certificates to use
-for verifying the server's certificate.
+A file in PEM format containing one or more CA certificates
+to trust for verifying the server's certificate.
 
-=item B<-verifyCApath> I<dir>
+This and the following two options
+override the B<-CAfile>, B<-CApath>, and B<-CAstore> options.
 
-A directory containing trusted certificates to use
-for verifying the server's certificate.
+=item B<-verifyCApath> I<dir>,
+
+A directory with files in PEM format containing CA certificates
+to trust for verifying the server's certificate.
 This directory must be in "hash format",
 see L<openssl-verify(1)> for more information.
 
-=item B<-verifyCAstore> I<uri>
+=item B<-verifyCAstore> I<uri>,
 
-The URI of a store containing trusted certificates to use
-for verifying the server's certificate.
+URI of a store containing CA certificates.
+to trust for verifying the server's certificate.
+The URI may indicate a single certificate, as well as a collection of them.
+With URIs in the C<file:> scheme, this is generally treated like B<-CApath> or
+B<-CAfile>, depending on if the URI indicates a directory or a single file.
+See L<ossl_store-file(7)> for more information on the C<file:> scheme.
 
 =item B<-chainCAfile> I<file>
 
-A file in PEM format containing trusted certificates to use
-when attempting to build the client certificate chain.
+A file in PEM format containing one or more trusted CA certificates to use
+when attempting to build the client certificate chain provided to the server.
+
+This and the following two options
+override the B<-CAfile>, B<-CApath>, and B<-CAstore> options.
 
 =item B<-chainCApath> I<directory>
 
-A directory containing trusted certificates to use
-for building the client certificate chain provided to the server.
+A directory with files in PEM format containing trusted CA certificates to use
+for attempting to build the client certificate chain provided to the server.
 This directory must be in "hash format",
 see L<openssl-verify(1)> for more information.
 
 =item B<-chainCAstore> I<uri>
 
 The URI of a store containing trusted certificates to use
-when attempting to build the client certificate chain.
+when attempting to build the client certificate chain provided to the server.
 The URI may indicate a single certificate, as well as a collection of them.
-With URIs in the C<file:> scheme, this acts as B<-chainCAfile> or
-B<-chainCApath>, depending on if the URI indicates a directory or a
-single file.
+With URIs in the C<file:> scheme, this is generally treated like B<-CApath> or
+B<-CAfile>, depending on if the URI indicates a directory or a single file.
 See L<ossl_store-file(7)> for more information on the C<file:> scheme.
 
 =item B<-requestCAfile> I<file>
@@ -770,8 +788,6 @@ Enable creation of connections via TCP fast open (RFC7413).
 {- $OpenSSL::safe::opt_name_item -}
 
 {- $OpenSSL::safe::opt_x_item -}
-
-{- $OpenSSL::safe::opt_trust_item -}
 
 {- $OpenSSL::safe::opt_s_item -}
 

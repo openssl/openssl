@@ -235,12 +235,12 @@ static int handle_symlink(const char *filename, const char *fullpath)
 static int do_file(const char *filename, const char *fullpath, enum Hash h)
 {
     STACK_OF(X509_INFO) *inf = NULL;
-    X509_INFO *x;
+    X509_INFO *x = NULL, *tmp;
     const X509_NAME *name = NULL;
     BIO *b;
     const char *ext;
     unsigned char digest[EVP_MAX_MD_SIZE];
-    int type, errs = 0;
+    int type, j, num = 0, errs = 0;
     size_t i;
 
     /* Does it end with a recognized extension? */
@@ -265,15 +265,21 @@ static int do_file(const char *filename, const char *fullpath, enum Hash h)
     if (inf == NULL)
         goto end;
 
-    if (sk_X509_INFO_num(inf) != 1) {
+    for (j = 0; j < sk_X509_INFO_num(inf); j++) {
+        tmp = sk_X509_INFO_value(inf, j);
+        if (tmp->x509 != NULL || tmp->crl != NULL) {
+            x = tmp;
+            num++;
+        }
+    }
+    if (num != 1) {
         BIO_printf(bio_err,
             "%s: warning: skipping %s, "
-            "it does not contain exactly one certificate or CRL\n",
+            "it does not contain exactly one certificate or CRL in PEM format\n",
             opt_getprog(), filename);
         /* This is not an error. */
         goto end;
     }
-    x = sk_X509_INFO_value(inf, 0);
     if (x->x509 != NULL) {
         type = TYPE_CERT;
         name = X509_get_subject_name(x->x509);
@@ -282,7 +288,7 @@ static int do_file(const char *filename, const char *fullpath, enum Hash h)
             ++errs;
             goto end;
         }
-    } else if (x->crl != NULL) {
+    } else {
         type = TYPE_CRL;
         name = X509_CRL_get_issuer(x->crl);
         if (!X509_CRL_digest(x->crl, evpmd, digest, NULL)) {
@@ -290,9 +296,6 @@ static int do_file(const char *filename, const char *fullpath, enum Hash h)
             ++errs;
             goto end;
         }
-    } else {
-        ++errs;
-        goto end;
     }
     if (name != NULL) {
         if (h == HASH_NEW || h == HASH_BOTH) {
