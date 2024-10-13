@@ -84,9 +84,9 @@ const OPTIONS crl_options[] = {
     { "gendelta", OPT_GENDELTA, '<', "Other CRL to compare/diff to the Input one" },
 
     OPT_SECTION("Certificate"),
-    { "CApath", OPT_CAPATH, '/', "Verify CRL using certificates in dir" },
-    { "CAfile", OPT_CAFILE, '<', "Verify CRL using certificates in file name" },
-    { "CAstore", OPT_CASTORE, ':', "Verify CRL using certificates in store URI" },
+    { "CAfile", OPT_CAFILE, '<', "file in PEM format with trusted CA certs" },
+    { "CApath", OPT_CAPATH, '/', "dir with trusted CA cert files in PEM format" },
+    { "CAstore", OPT_CASTORE, ':', "URI of store with trusted CA certs" },
     { "no-CAfile", OPT_NOCAFILE, '-',
         "Do not load the default certificates file" },
     { "no-CApath", OPT_NOCAPATH, '-',

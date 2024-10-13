@@ -1405,12 +1405,18 @@ int ssl_load_stores(SSL_CTX *ctx,
         vfy = X509_STORE_new();
         if (vfy == NULL)
             goto err;
-        if (vfyCAfile != NULL && !X509_STORE_load_file(vfy, vfyCAfile))
+        if (vfyCAfile != NULL && !X509_STORE_load_file(vfy, vfyCAfile)) {
+            BIO_printf(bio_err, "Error loading trusted peer verification cert file %s\n", vfyCAfile);
             goto err;
-        if (vfyCApath != NULL && !X509_STORE_load_path(vfy, vfyCApath))
+        }
+        if (vfyCApath != NULL && !X509_STORE_load_path(vfy, vfyCApath)) {
+            BIO_printf(bio_err, "Error adding trusted peer verification certs directory %s\n", vfyCApath);
             goto err;
-        if (vfyCAstore != NULL && !X509_STORE_load_store(vfy, vfyCAstore))
+        }
+        if (vfyCAstore != NULL && !X509_STORE_load_store(vfy, vfyCAstore)) {
+            BIO_printf(bio_err, "Error adding trusted peer verification cert store file %s\n", vfyCAstore);
             goto err;
+        }
         add_crls_store(vfy, crls);
         if (SSL_CTX_set1_verify_cert_store(ctx, vfy) == 0)
             goto err;
@@ -1421,12 +1427,18 @@ int ssl_load_stores(SSL_CTX *ctx,
         ch = X509_STORE_new();
         if (ch == NULL)
             goto err;
-        if (chCAfile != NULL && !X509_STORE_load_file(ch, chCAfile))
+        if (chCAfile != NULL && !X509_STORE_load_file(ch, chCAfile)) {
+            BIO_printf(bio_err, "Error loading trusted chain building cert file %s\n", chCAfile);
             goto err;
-        if (chCApath != NULL && !X509_STORE_load_path(ch, chCApath))
+        }
+        if (chCApath != NULL && !X509_STORE_load_path(ch, chCApath)) {
+            BIO_printf(bio_err, "Error adddng trusted chain building cert directory %s\n", chCApath);
             goto err;
-        if (chCAstore != NULL && !X509_STORE_load_store(ch, chCAstore))
+        }
+        if (chCAstore != NULL && !X509_STORE_load_store(ch, chCAstore)) {
+            BIO_printf(bio_err, "Error adddng trusted chain building cert store file %s\n", chCAstore);
             goto err;
+        }
         if (SSL_CTX_set1_chain_cert_store(ctx, ch) == 0)
             goto err;
     }

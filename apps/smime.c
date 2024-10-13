@@ -141,9 +141,9 @@ const OPTIONS smime_options[] = {
     { "nosmimecap", OPT_NOSMIMECAP, '-', "Omit the SMIMECapabilities attribute" },
 
     OPT_SECTION("Certificate chain"),
-    { "CApath", OPT_CAPATH, '/', "Trusted certificates directory" },
-    { "CAfile", OPT_CAFILE, '<', "Trusted certificates file" },
-    { "CAstore", OPT_CASTORE, ':', "Trusted certificates store URI" },
+    { "CAfile", OPT_CAFILE, '<', "file in PEM format with trusted CA certs" },
+    { "CApath", OPT_CAPATH, '/', "dir with trusted CA cert files in PEM format" },
+    { "CAstore", OPT_CASTORE, ':', "URI of store with trusted CA certs" },
     { "no-CAfile", OPT_NOCAFILE, '-',
         "Do not load the default certificates file" },
     { "no-CApath", OPT_NOCAPATH, '-',

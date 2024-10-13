@@ -56,9 +56,9 @@ const OPTIONS verify_options[] = {
 
     OPT_SECTION("Certificate chain"),
     { "trusted", OPT_TRUSTED, '<', "A file of trusted certificates" },
-    { "CAfile", OPT_CAFILE, '<', "A file of trusted certificates" },
-    { "CApath", OPT_CAPATH, '/', "A directory of files with trusted certificates" },
-    { "CAstore", OPT_CASTORE, ':', "URI to a store of trusted certificates" },
+    { "CAfile", OPT_CAFILE, '<', "file in PEM format with trusted CA certs" },
+    { "CApath", OPT_CAPATH, '/', "dir with trusted CA cert files in PEM format" },
+    { "CAstore", OPT_CASTORE, ':', "URI of store with trusted CA certs" },
     { "no-CAfile", OPT_NOCAFILE, '-',
         "Do not load the default trusted certificates file" },
     { "no-CApath", OPT_NOCAPATH, '-',
