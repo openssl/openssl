@@ -192,7 +192,9 @@ decoder implementations.
 =item "input-type" (B<OSSL_STORE_PARAM_INPUT_TYPE>) <utf8 string>
 
 Type of the input format as a hint to use when decoding the objects in the
-store.
+store, such as C<DER> and C<PEM>.
+See L<openssl-format-options(1)> for details on their use for OpenSSL commands.
+
 
 =back
 
