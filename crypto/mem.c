@@ -238,15 +238,19 @@ void *CRYPTO_aligned_alloc(size_t num, size_t alignment, void **freeptr,
     return ret;
 #endif
 
-#if defined (_BSD_SOURCE) || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L)
-    if (posix_memalign(&ret, alignment, num))
-        return NULL;
-    *freeptr = ret;
-    return ret;
+    /* Allow non-malloc() allocations as long as no malloc_impl is provided. */
+    if (malloc_impl == CRYPTO_malloc) {
+#if defined(_BSD_SOURCE) || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L)
+        if (posix_memalign(&ret, alignment, num))
+            return NULL;
+        *freeptr = ret;
+        return ret;
 #elif defined(_ISOC11_SOURCE)
-    ret = *freeptr =  aligned_alloc(alignment, num);
-    return ret;
-#else
+        ret = *freeptr = aligned_alloc(alignment, num);
+        return ret;
+#endif
+    }
+
     /* we have to do this the hard way */
 
     /*
@@ -261,7 +265,7 @@ void *CRYPTO_aligned_alloc(size_t num, size_t alignment, void **freeptr,
      * Step 1: Allocate an amount of memory that is <alignment>
      * bytes bigger than requested
      */
-    *freeptr = malloc(num + alignment);
+    *freeptr = CRYPTO_malloc(num + alignment, file, line);
     if (*freeptr == NULL)
         return NULL;
 
@@ -282,7 +286,6 @@ void *CRYPTO_aligned_alloc(size_t num, size_t alignment, void **freeptr,
      */
     ret = (void *)((uintptr_t)ret & (uintptr_t)(~(alignment - 1)));
     return ret;
-#endif
 }
 
 void *CRYPTO_realloc(void *str, size_t num, const char *file, int line)
