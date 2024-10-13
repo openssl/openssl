@@ -1,0 +1,7 @@
+LIBS=../../libcrypto
+
+$COMMON=hss_key.c hss_pubkey_decode.c hss_sig_decode.c hss_sig_verify.c \
+        hss_sig.c
+
+SOURCE[../../libcrypto]=$COMMON
+SOURCE[../../providers/libfips.a]=$COMMON

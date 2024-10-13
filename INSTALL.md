@@ -871,6 +871,10 @@ Note that if this feature is enabled then GOST ciphersuites are only available
 if the GOST algorithms are also available through loading an externally supplied
 engine.
 
+### no-hss
+
+Disable Hierarchical Signature System (HSS) support.
+
 ### no-http
 
 Disable HTTP support.
@@ -880,6 +884,10 @@ Disable HTTP support.
 Don't build the legacy provider.
 
 Disabling this also disables the legacy algorithms: MD2 (already disabled by default).
+
+### no-lms
+
+Disable Leighton-Micali Signatures (LMS) support.
 
 ### no-makedepend
 

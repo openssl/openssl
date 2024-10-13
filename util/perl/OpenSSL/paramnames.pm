@@ -350,6 +350,9 @@ my %params = (
     'PKEY_PARAM_USE_COFACTOR_FLAG' => "use-cofactor-flag",
     'PKEY_PARAM_USE_COFACTOR_ECDH' => '*PKEY_PARAM_USE_COFACTOR_FLAG',
 
+# HSS Key parameters
+    'PKEY_PARAM_HSS_L' =>           "l",
+
 # RSA Keys
 #
 # n, e, d are the usual public and private key components

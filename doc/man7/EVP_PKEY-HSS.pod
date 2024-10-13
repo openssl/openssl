@@ -1,0 +1,134 @@
+=pod
+
+=head1 NAME
+
+EVP_PKEY-HSS, EVP_KEYMGMT-HSS, HSS
+- EVP_PKEY Hierarchical Signature System (HSS) keytype and algorithm support
+
+=head1 DESCRIPTION
+
+The B<HSS> keytype is implemented in OpenSSL's default provider.
+Due to the stateful nature of B<HSS> keys only signature verification is
+supported in OpenSSL. This means that only B<HSS> public keys are supported.
+
+=head2 Background information related to HSS trees
+
+B<HSS> uses up to 8 levels of B<LMS> trees. If a single level tree is required
+then B<EVP_PKEY-LMS(7)> may be used instead.
+
+The height of each LMS tree is one of 5, 10, 15, 20, 25 and corresponds to 2^h
+leaf nodes for a single tree.
+If a tree has 2 levels of 10 and 5 for example this would correspond to
+having 1024 (2^10) leaf nodes in the top tree, and each of these leaf nodes
+would then have 32 (2^5) child leaf nodes, which gives a total of 32*1024 nodes.
+Note that for each level there is only one 'active' LMS tree and we only need to
+generate a new active tree if the current 'active' tree is exhausted.
+Once the top level tree is exhausted no more signatures can be produced.
+The nodes of the leaf tree are used for signing and they are only allowed to be
+used one time (OTS). Reusing a signature is a security issue. To implement this
+the node index 'state' must be stored in the private key and updated each time
+a signature is generated.
+
+The root of each LMS tree contains the public key, and this public key is
+calculated from a hash of its children. To compute the public key of a LMS
+tree all leaf node keypairs in a LMS tree are required to be generated.
+The root node of the root LMS tree contains the overall public key that is
+the public key used for verification purposes.
+Generated signature data consists of encoded public keys for intermediate
+LMS trees as well as signatures that uses the private key of the parent to sign
+the public encoded keys. The final embedded signature uses the current leaf LMS
+tree nodes private key to sign a message.
+
+=head2 Common HSS parameters
+
+A HSS public key consists of the depth of the tree as well as an XDR encoding
+of the key (i.e. it is not ASN1 format),
+The following parameters are used by EVP_PKEY_fromdata() and by the
+HSS keymanager for import and export.
+
+=over 4
+
+=item "l" (B<OSSL_PKEY_PARAM_HSS_L>) <unsigned integer>
+
+The number of layers of LMS trees in the hierarchy ranging from 1 to 8.
+
+=item "encoded-pub-key" (B<OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY>) <octet string>
+
+When used for loading an encoded HSS public key using EVP_PKEY_fromdata() the
+public key encoding includes the "l" value.
+Within the HSS keymanager when used for import and export this encoding is just
+the LMS public key encoding excluding the "l" value.
+
+=back
+
+=head1 CONFORMING TO
+
+=over 4
+
+=item RFC 8554
+
+Leighton-Micali Hash-Based Signatures
+
+=item NIST SP 800-208
+
+Recommendation for Stateful Hash-Based Signature Schemes
+
+=item CSNA 2.0
+
+Commercial National Security Algorithm Suite
+
+=back
+
+=head1 EXAMPLES
+
+NOTE error checking has been omitted in these examples
+
+An B<EVP_PKEY> context can be obtained by calling:
+
+    EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_from_name(NULL, "HSS", NULL);
+
+
+ A HSS B<EVP_PKEY> public key can be loaded from a BIO object by calling:
+
+     EVP_PKEY *pkey = NULL;
+     OSSL_DECODER_CTX *dctx = NULL;
+     int selection = OSSL_KEYMGMT_SELECT_PUBLIC_KEY;
+
+     dctx = OSSL_DECODER_CTX_new_for_pkey(&pkey, "XDR", NULL,
+                                          "HSS", selection, libctx, propq);
+     ret = OSSL_DECODER_from_bio(dctx, bio);
+     OSSL_DECODER_CTX_free(dctx);
+
+A HSS B<EVP_PKEY> public key can be loaded from XDR encoded data by calling:
+
+    EVP_PKEY *key = NULL;
+    OSSL_PARAM params[2];
+
+    params[0] =
+        OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY,
+                                          (unsigned char *)data, datalen);
+    params[1] = OSSL_PARAM_construct_end();
+    ret = EVP_PKEY_fromdata_init(ctx)
+    ret = EVP_PKEY_fromdata(ctx, &key, EVP_PKEY_PUBLIC_KEY, params);
+
+=head1 SEE ALSO
+
+L<EVP_PKEY-LMS(7)>,
+L<EVP_KEYMGMT(3)>,
+L<EVP_PKEY(3)>,
+L<provider-keymgmt(7)>
+
+=head1 HISTORY
+
+This functionality was added in OpenSSL 3.5.0
+
+=head1 COPYRIGHT
+
+Copyright 2024 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut
