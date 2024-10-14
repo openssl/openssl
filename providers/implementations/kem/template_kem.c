@@ -28,13 +28,14 @@ static void debug_print(char *fmt, ...)
 }
 
 #else
+#define BUFSIZE 1000
 static void debug_print(char *fmt, ...)
 {
-    char out[1000];
+    char out[BUFSIZE];
     va_list argptr;
 
     va_start(argptr, fmt);
-    vsprintf(out, fmt, argptr);
+    vsnprintf(out, BUFSIZE, fmt, argptr);
     va_end(argptr);
     if (getenv("TEMPLATEKEM"))
         fprintf(stderr, "TEMPLATE_KEM: %s", out);
@@ -43,7 +44,7 @@ static void debug_print(char *fmt, ...)
 
 typedef struct {
     OSSL_LIB_CTX *libctx;
-    /* some key struct */
+    /* some algorithm-specific key struct */
     int op;
 } PROV_TEMPLATE_CTX;
 
@@ -132,6 +133,9 @@ static int template_encapsulate(void *vctx, unsigned char *out, size_t *outlen,
                                 unsigned char *secret, size_t *secretlen)
 {
     debug_print("encaps %p to %p\n", vctx, out);
+
+    /* add algorithm-specific length checks */
+
     if (outlen != NULL)
         *outlen = 0; /* replace with real encapsulated data length */
     if (secretlen != NULL)
@@ -152,6 +156,9 @@ static int template_decapsulate(void *vctx, unsigned char *out, size_t *outlen,
                                 const unsigned char *in, size_t inlen)
 {
     debug_print("decaps %p to %p inlen at %d\n", vctx, out, inlen);
+
+    /* add algorithm-specific length checks */
+
     if (outlen != NULL)
         *outlen = 0; /* replace with shared secret length */
 

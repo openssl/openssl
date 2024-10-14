@@ -29,13 +29,14 @@ static void debug_print(char *fmt, ...)
 {
 }
 #else
+#define BUFSIZE 1000
 static void debug_print(char *fmt, ...)
 {
-    char out[1000];
+    char out[BUFSIZE];
     va_list argptr;
 
     va_start(argptr, fmt);
-    vsprintf(out, fmt, argptr);
+    vsnprintf(out, BUFSIZE, fmt, argptr);
     va_end(argptr);
     if (getenv("TEMPLATEKM"))
         fprintf(stderr, "TEMPLATE_KM: %s", out);
@@ -188,7 +189,7 @@ static int ossl_template_key_fromdata(void *key,
     if (key == NULL)
         return 0;
 
-    /* validate integrity of key */
+    /* validate integrity of key (algorithm type specific) */
 
     param_pub_key = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PUB_KEY);
     if (include_private)
@@ -330,6 +331,9 @@ static void *template_gen_init(void *provctx, int selection,
     struct template_gen_ctx *gctx = NULL;
 
     debug_print("gen init called for %p\n", provctx);
+
+    /* perform algorithm type specific sanity checks */
+
     if (!ossl_prov_is_running())
         return NULL;
 
@@ -360,6 +364,7 @@ static void *template_gen(void *vctx, OSSL_CALLBACK *osslcb, void *cbarg)
     void *key = NULL;
 
     debug_print("gen called for %p\n", gctx);
+
     if (gctx == NULL)
         goto err;
 
