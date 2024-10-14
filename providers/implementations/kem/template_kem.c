@@ -22,13 +22,13 @@
 
 extern const OSSL_DISPATCH ossl_template_asym_kem_functions[];
 
+#define BUFSIZE 1000
 #if defined(NDEBUG) || defined(OPENSSL_NO_STDIO)
 static void debug_print(char *fmt, ...)
 {
 }
 
 #else
-#define BUFSIZE 1000
 static void debug_print(char *fmt, ...)
 {
     char out[BUFSIZE];
@@ -111,7 +111,7 @@ static int template_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     debug_print("set ctx params %p\n", ctx);
     if (ctx == NULL)
         return 0;
-    if (params == NULL)
+    if (ossl_param_is_empty(params))
         return 1;
 
     debug_print("set ctx params OK\n");

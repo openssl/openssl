@@ -24,12 +24,12 @@
 
 extern const OSSL_DISPATCH ossl_template_keymgmt_functions[];
 
+#define BUFSIZE 1000
 #if defined(NDEBUG) || defined(OPENSSL_NO_STDIO)
 static void debug_print(char *fmt, ...)
 {
 }
 #else
-#define BUFSIZE 1000
 static void debug_print(char *fmt, ...)
 {
     char out[BUFSIZE];
@@ -188,6 +188,8 @@ static int ossl_template_key_fromdata(void *key,
 
     if (key == NULL)
         return 0;
+    if (ossl_param_is_empty(params))
+        return 0;
 
     /* validate integrity of key (algorithm type specific) */
 
@@ -252,6 +254,9 @@ static int template_get_params(void *key, OSSL_PARAM params[])
 
     debug_print("get params %p\n", key);
 
+    if (ossl_param_is_empty(params))
+        return 0;
+
     /* return sensible values for at least these parameters */
 
     if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_BITS)) != NULL
@@ -291,8 +296,8 @@ static int template_set_params(void *key, const OSSL_PARAM params[])
     const OSSL_PARAM *p;
 
     debug_print("set params called for %p\n", key);
-    if (params == NULL)
-        return 1;
+    if (ossl_param_is_empty(params))
+        return 1; /* OK not to set anything */
 
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY);
     if (p != NULL) {
