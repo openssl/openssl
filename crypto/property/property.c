@@ -297,8 +297,10 @@ static int ossl_method_store_insert(OSSL_METHOD_STORE *store, ALGORITHM *alg)
  * reference count and destruction callbacks.
  *
  * @param store Pointer to the OSSL_METHOD_STORE where the method will be added.
+ *        must be non-null.
  * @param prov Pointer to the OSSL_PROVIDER for the provider of the method.
- * @param nid (identifier) associated with the method.
+ *             Must be non-null.
+ * @param nid (identifier) associated with the method, must be > 0
  * @param properties String containing properties of the method.
  * @param method Pointer to the method to be added.
  * @param method_up_ref Function pointer for incrementing the method ref count.
@@ -322,24 +324,12 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
     int ret = 0;
     int i;
 
-    /*
-     * Fail if someone is trying:
-     * 1) To add an undefined identifier nid (0)
-     * 2) To add an empty method
-     * 3) To add to a non-existant store
-     */
     if (nid <= 0 || method == NULL || store == NULL)
         return 0;
-    /*
-     * Properties has to be a non-null string, default it
-     * to an empty string if not set
-     */
+
     if (properties == NULL)
         properties = "";
 
-    /*
-     * We have to associate this method with a provider
-     */
     if (!ossl_assert(prov != NULL))
         return 0;
 
@@ -363,11 +353,15 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
     }
 
     /*
-     * Flush the method store of any implementation that already exists
-     * for this nid.
+     * Flush the alg cache of any implementation that already exists
+     * for this id.
      * This is done to ensure that on the next lookup we go through the
      * provider comparison in ossl_method_store_fetch.  If we don't do this
-     * then this new method won't be given a chance to get selected
+     * then this new method won't be given a chance to get selected.
+     * NOTE: This doesn't actually remove the method from the backing store
+     * It just ensures that we query the backing store when (re)-adding a
+     * method to the algorithm cache, in case the one selected by the next
+     * query selects a different implementation
      */
     ossl_method_cache_flush(store, nid);
 
@@ -603,11 +597,12 @@ void ossl_method_store_do_all(OSSL_METHOD_STORE *store,
  * successful, it returns the method and its associated provider.
  *
  * @param store Pointer to the OSSL_METHOD_STORE from which to fetch the method.
- * @param nid (identifier) of the method to be fetched.
+ *        Must be non-null
+ * @param nid (identifier) of the method to be fetched. Must be > 0
  * @param prop_query String containing the property query to match against.
  * @param prov_rw Pointer to the OSSL_PROVIDER to restrict the search to, or
  *                to receive the matched provider.
- * @param method Pointer to receive the fetched method.
+ * @param method Pointer to receive the fetched method. Must be non-null.
  *
  * @return 1 if the method is successfully fetched, 0 on failure.
  *
@@ -629,10 +624,6 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
     int ret = 0;
     int j, best = -1, score, optional;
 
-    /*
-     * Typical check, fail if we try to lookup an undefined id, a null method
-     * or use a NULL store
-     */
     if (nid <= 0 || method == NULL || store == NULL)
         return 0;
 
@@ -646,10 +637,6 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
     if (!ossl_property_read_lock(store))
         return 0;
 
-    /*
-     * Get the cache for this identifier
-     * If its not found, then no lookup is possible here
-     */
     alg = ossl_method_store_retrieve(store, nid);
     if (alg == NULL) {
         ossl_property_unlock(store);
@@ -735,6 +722,7 @@ fin:
         BIO_printf(trc_out, "method store query with properties %s "
                    "resolves to provider %s\n",
                    size == 0 ? "none" : buf,
+                   best_impl == NULL ? "none" :
                    ossl_provider_name(best_impl->provider));
     } OSSL_TRACE_END(QUERY);
 
