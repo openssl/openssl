@@ -201,6 +201,8 @@ The OpenSSL default provider supports these operations and algorithms:
 
 =item LMS, see L<EVP_SIGNATURE-LMS(7)>
 
+=item HSS, see L<EVP_SIGNATURE-HSS(7)>
+
 =back
 
 =head2 Asymmetric Cipher

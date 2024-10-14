@@ -128,7 +128,7 @@ call EVP_PKEY_verify() multiple times.
 
 =head2 On EVP_PKEY_CTX_set_signature()
 
-Some signature algorithms (such as LMS) require the signature verification
+Some signature algorithms require the signature verification
 data be specified before verifying the message.
 Other algorithms allow the signature to be specified late.
 To allow either way (which may depend on the application's flow of input), the

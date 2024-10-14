@@ -30,7 +30,9 @@ OpenSSL 3.4
 
 ### Changes between 3.4 and 3.5 [xx XXX xxxx]
 
- * none yet
+ * Added support for LMS and HSS. Only the signature verify operation is supported.
+
+   *Shane Lontis* 
 
 OpenSSL 3.4
 -----------

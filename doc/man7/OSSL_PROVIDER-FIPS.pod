@@ -172,6 +172,8 @@ for signature generation, but may be used for verification for legacy use cases.
 
 =item LMS, see L<EVP_SIGNATURE-LMS(7)>
 
+=item HSS, see L<EVP_SIGNATURE-HSS(7)>
+
 =back
 
 =head2 Asymmetric Cipher

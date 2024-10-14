@@ -79,6 +79,7 @@ L<EVP_KEYMGMT(3)>,
 L<EVP_PKEY(3)>,
 L<EVP_SIGNATURE-LMS(7)>,
 L<EVP_PKEY-HSS(7)>,
+L<EVP_SIGNATURE-HSS(7)>,
 L<provider-keymgmt(7)>
 
 =head1 HISTORY

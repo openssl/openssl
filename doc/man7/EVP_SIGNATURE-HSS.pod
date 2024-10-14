@@ -1,0 +1,69 @@
+=pod
+
+=head1 NAME
+
+EVP_SIGNATURE-HSS
+- The EVP_PKEY Hierarchical Signature System (HSS) implementation
+
+=head1 DESCRIPTION
+
+The B<HSS> EVP_PKEY implementation supports Hash-based stateful signatures
+using the HSS scheme described in RFC 8554. HSS uses a tree of
+Leighton-Micali Signatures (LMS).
+
+Generated HSS signature data consists of a list of signed encoded public
+keys for each level in the tree, that have been signed using the parents private
+keys.
+As well as a LMS signature of a message that uses the leaf trees private key.
+A single level HSS tree consists of just the LMS signature of a message.
+If only a single level tree is required then L<EVP_SIGNATURE-LMS(7)> may be used.
+
+The OpenSSL FIPS provider only supports signature verification, as this is a
+SP800-208 requirement for software modules.
+
+
+=head1 NOTES
+
+The "digest" is not specified as a parameter because the both the
+HSS B<EVP_PKEY> and the HSS signature contain this information. For this reason
+only HSS only supports using EVP_PKEY_verify_message_init() and EVP_PKEY_verify()
+
+=head1 EXAMPLES
+
+Error checking has been omitted from the following examples
+
+=head2 HSS signature verification
+
+ /* See L<EVP_PKEY-HSS(7)/EXAMPLES for an example of loading a HSS 'pub' key */
+ ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pub, propq);
+ sig = EVP_SIGNATURE_fetch(libctx, "HSS", propq);
+ EVP_PKEY_verify_message_init(ctx, sig, NULL);
+ /*
+  * EVP_PKEY_verify_message_update() and EVP_PKEY_verify_message_final()
+  * can also be used here.
+  */
+ ret = EVP_PKEY_verify(ctx, sigdata, sigdata_len, msg, msglen);
+ /*
+  * ret == 1 indicates success, 0 verify failure and < 0 for some
+  * other error.
+  */
+
+=head1 SEE ALSO
+
+L<EVP_PKEY-HSS(7)>,
+L<provider-signature(7)>,
+
+=head1 HISTORY
+
+This functionality was added in OpenSSL 3.5.0
+
+=head1 COPYRIGHT
+
+Copyright 2024 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

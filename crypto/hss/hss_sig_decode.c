@@ -45,6 +45,7 @@ static int add_decoded_sig(PACKET *pkt, const LMS_KEY *key,
  * @param pkt Contains the public key data to decode. There may still be data
  *            remaining in pkt after decoding.
  * @param keylist A list to add the decoded public key to.
+ * @param libctx Used for fetching algorithms.
  * @returns 1 if the LMS_KEY object is successfully added to the list,
  *          or 0 on failure.
  */
