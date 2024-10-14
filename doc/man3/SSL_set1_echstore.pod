@@ -182,7 +182,7 @@ TODO(ECH) update link to RFC.
 
 =head1 HISTORY
 
-This functionality described here was added in OpenSSL 3.5.
+The functionality described here was added in OpenSSL 3.5.
 
 =head1 COPYRIGHT
 

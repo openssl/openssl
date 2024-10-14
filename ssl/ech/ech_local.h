@@ -105,7 +105,7 @@ DEFINE_STACK_OF(OSSL_ECHSTORE_ENTRY)
 struct ossl_echstore_st {
     STACK_OF(OSSL_ECHSTORE_ENTRY) *entries;
     OSSL_LIB_CTX *libctx;
-    const char *propq;
+    char *propq;
 };
 
 /* ECH details associated with an SSL_CTX */
@@ -149,7 +149,7 @@ typedef struct ossl_ech_conn_st {
     /*
      * in case of HRR, we need to record the 1st inner client hello, and
      * the first server hello (aka the HRR) so we can independently
-     * generate the trancsript and accept confirmation when making the
+     * generate the transcript and accept confirmation when making the
      * 2nd server hello
      */
     unsigned char *innerch1;
@@ -160,7 +160,7 @@ typedef struct ossl_ech_conn_st {
      * Extensions are "outer-only" if the value is only sent in the
      * outer CH and only the type is sent in the inner CH.
      * We use this array to keep track of the extension types that
-     * with values only in the outer CH
+     * have values only in the outer CH
      * Currently, this is basically contolled at compile time, but
      * in a way that could be varied, or, in future, put under
      * run-time control, so having this isn't so much an overhead.
