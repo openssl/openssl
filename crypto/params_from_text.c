@@ -220,9 +220,9 @@ int OSSL_PARAM_print_to_buf(const OSSL_PARAM p[], char **buf, int print_values)
 {
     int64_t i;
     uint64_t u;
-# ifndef OPENSSL_SYS_UEFI
+#ifndef OPENSSL_SYS_UEFI
     double d;
-# endif
+#endif
     int ok = -1;
     int dok;
     BIO *b;
@@ -274,9 +274,9 @@ int OSSL_PARAM_print_to_buf(const OSSL_PARAM p[], char **buf, int print_values)
             break;
         case OSSL_PARAM_REAL:
             dok = 0;
-# ifndef OPENSSL_SYS_UEFI
-            dok = OSSL_PARAM_get_double(p,&d);
-# endif
+#ifndef OPENSSL_SYS_UEFI
+            dok = OSSL_PARAM_get_double(p, &d);
+#endif
             if (dok == 1)
                 ok = BIO_printf(b, "%f\n", d);
             else
@@ -284,7 +284,7 @@ int OSSL_PARAM_print_to_buf(const OSSL_PARAM p[], char **buf, int print_values)
             break;
         default:
             ok = BIO_printf(b, "unknown type (%u) of %zu bytes\n",
-                       p->data_type, p->data_size);
+                            p->data_type, p->data_size);
             break;
         }
         if (ok == -1)
@@ -296,7 +296,7 @@ end:
     if (ok != -1) {
         /*
          * Now that we've printed everything, get the memory buffer
-         * and the amount of data written to it (the retval from 
+         * and the amount of data written to it (the retval from
          * the function below)
          */
         ok = BIO_get_mem_data(b, buf);
