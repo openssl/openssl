@@ -348,7 +348,7 @@ static int run_quic_server(SSL_CTX *ctx, int fd)
     int ret, eof;
     SSL *listener, *conn = NULL;
     unsigned char buf[8192];
-    size_t nread, nwritten, total_read, total_written;
+    size_t nread, total_read, total_written;
 
     /* Create a new QUIC listener */
     if ((listener = SSL_new_listener(ctx, 0)) == NULL)
@@ -365,7 +365,12 @@ static int run_quic_server(SSL_CTX *ctx, int fd)
     if (!SSL_set_blocking_mode(listener, 0))
         goto err;
 
-    /* Begin listening. */
+    /*
+     * Begin listening. Note that is not usually needed as SSL_accept_connection
+     * will implicitly start listening. It is only needed if a server wishes to
+     * ensure it has started to accept incoming connections but does not wish to
+     * actually call SSL_accept_connection yet.
+     */
     if (!SSL_listen(listener))
         goto err;
 
@@ -412,15 +417,14 @@ static int run_quic_server(SSL_CTX *ctx, int fd)
         }
 
         /* Echo client input */
-        while (!SSL_write_ex2(conn, buf + total_written,
-                              total_read - total_written,
-                              SSL_WRITE_FLAG_CONCLUDE, &nwritten)) {
+        while (!SSL_write_ex2(conn, buf,
+                              total_read,
+                              SSL_WRITE_FLAG_CONCLUDE, &total_written)) {
             if (handle_io_failure(conn, 0) == 1)
                 continue;
             fprintf(stderr, "Failed to write data\n");
             goto err;
         }
-        total_written += nwritten;
 
         if (total_read != total_written)
             fprintf(stderr, "Failed to echo data [read: %lu, written: %lu]\n",
