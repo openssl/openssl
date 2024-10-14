@@ -12,6 +12,8 @@
 #include <openssl/ebcdic.h>
 #include <openssl/err.h>
 #include <openssl/params.h>
+#include <openssl/buffer.h>
+
 
 /*
  * When processing text to params, we're trying to be smart with numbers.
@@ -195,6 +197,139 @@ static int construct_from_text(OSSL_PARAM *to, const OSSL_PARAM *paramdef,
     to->return_size = OSSL_PARAM_UNMODIFIED;
 
     return 1;
+}
+
+/**
+ * OSSL_PARAM_print_to_buf - Print OSSL_PARAM array to a buffer
+ *
+ * @p:        Array of OSSL_PARAM structures containing keys and values.
+ * @buf:      Pointer to buffer where the formatted output will be stored.
+ *            The buffer is allocated by this function and must be freed by
+ *            the caller.
+ * @print_values: If non-zero, prints both keys and values. If zero, only keys
+ *                are printed.
+ *
+ * This function iterates through the given array of OSSL_PARAM structures,
+ * printing each key to an in-memory buffer, and optionally printing its
+ * value based on the provided data type. Supported types include integers,
+ * strings, octet strings, and real numbers.
+ *
+ * Return:    The size of the buffer on success, or -1 on failure.
+ */
+int OSSL_PARAM_print_to_buf(const OSSL_PARAM p[], char **buf, int print_values)
+{
+    int64_t i;
+    uint64_t u;
+# ifndef OPENSSL_SYS_UEFI
+    double d;
+# endif
+    int ok = -1;
+    int dok;
+    BIO *b;
+    BUF_MEM *bmptr = NULL;
+
+    *buf = NULL;
+    b = BIO_new(BIO_s_mem());
+    if (b == NULL)
+        return -1;
+
+    /*
+     * Iterate through each key in the array printing its key and value
+     */
+    for (; p->key != NULL; p++) {
+        ok = -1;
+        ok = BIO_printf(b, "%s: ", p->key);
+
+        /*
+         * if printing of values was not requested, just move on
+         * to the next param, after adding a newline to the buffer
+         */
+        if (print_values == 0) {
+            BIO_printf(b, "\n");
+            continue;
+        }
+
+        switch (p->data_type) {
+        case OSSL_PARAM_UNSIGNED_INTEGER:
+            if (OSSL_PARAM_get_uint64(p, &u))
+                ok = BIO_printf(b, "%llu\n", (unsigned long long int)u);
+            else
+                ok = BIO_printf(b, "error getting value\n");
+            break;
+        case OSSL_PARAM_INTEGER:
+            if (OSSL_PARAM_get_int64(p, &i))
+                ok = BIO_printf(b, "%lld\n", (long long int)i);
+            else
+                ok = BIO_printf(b, "error getting value\n");
+            break;
+        case OSSL_PARAM_UTF8_PTR:
+            ok = BIO_printf(b, "'%s'\n", *(char **)(p->data));
+            break;
+        case OSSL_PARAM_UTF8_STRING:
+            ok = BIO_printf(b, "'%s'\n", (char *)p->data);
+            break;
+        case OSSL_PARAM_OCTET_PTR:
+        case OSSL_PARAM_OCTET_STRING:
+            ok = BIO_printf(b, "<%zu bytes>\n", p->data_size);
+            break;
+        case OSSL_PARAM_REAL:
+            dok = 0;
+# ifndef OPENSSL_SYS_UEFI
+            dok = OSSL_PARAM_get_double(p,&d);
+# endif
+            if (dok == 1)
+                ok = BIO_printf(b, "%f\n", d);
+            else
+                ok = BIO_printf(b, "error getting value\n");
+            break;
+        default:
+            ok = BIO_printf(b, "unknown type (%u) of %zu bytes\n",
+                       p->data_type, p->data_size);
+            break;
+        }
+        if (ok == -1)
+            goto end;
+    }
+
+end:
+    /* Check if we printed everything successfully */
+    if (ok != -1) {
+        /*
+         * Now that we've printed everything, get the memory buffer
+         * and the amount of data written to it (the retval from 
+         * the function below)
+         */
+        ok = BIO_get_mem_data(b, buf);
+
+        /*
+         * This is a bit of a hack, but needed.  We want to
+         * take ownership of the memory buffer we printed to
+         * (i.e. when we free the bio, we want the internal memory
+         * buffer (now pointed to by *buf) to persist.  We could do
+         * do this by setting NOCLOSE on the bio, but doing so prevents
+         * the freeing of both the data buffer, and its surrounding BUF_MEM
+         * structure, which would leak.  To fix that, we can either:
+         * 1) a) set NOCLOSE
+         *    b) use BIO_get_mem_ptr to get the BUF_MEM struct
+         *    c) record the BUF_MEM->data ptr into the local buf variable
+         *    d) set BUF_MEM->data to NULL
+         *    e) free the BUF_MEM
+         *    f) Free the BIO
+         *
+         * or
+         * 2) a) get the data pointer via BIO_get_mem_data
+         *    b) get the BUF_MEM via BIO_get_mem_ptr
+         *    c) NULL the bmptr->data pointer in the BUF_MEM
+         *    d) Free the BIO
+         *
+         * We've elected for option 2 here, as its shorter
+         */
+        BIO_get_mem_ptr(b, &bmptr);
+        bmptr->data = NULL;
+    }
+
+    BIO_free(b);
+    return ok;
 }
 
 int OSSL_PARAM_allocate_from_text(OSSL_PARAM *to,

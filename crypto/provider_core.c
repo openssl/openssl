@@ -1619,74 +1619,6 @@ OSSL_LIB_CTX *ossl_provider_libctx(const OSSL_PROVIDER *prov)
 }
 
 /**
- * @brief Prints the parameter values of an OSSL_PARAM array to a BIO.
- *
- * This function iterates over an array of OSSL_PARAM structures and prints the
- * value of each parameter to the specified BIO stream. The parameter type is
- * detected, and the value is printed accordingly.
- *
- * @param p Array of OSSL_PARAM structures to be printed.
- * @param b BIO stream to print the parameter values to.
- *
- * The supported parameter types are:
- * - OSSL_PARAM_UNSIGNED_INTEGER: Unsigned integer values.
- * - OSSL_PARAM_INTEGER: Signed integer values.
- * - OSSL_PARAM_UTF8_PTR: Pointer to a UTF-8 string.
- * - OSSL_PARAM_UTF8_STRING: UTF-8 string.
- * - OSSL_PARAM_OCTET_PTR/OCTET_STRING: Binary data (size in bytes).
- */
-#ifndef FIPS_MODULE
-static void trace_print_param_values(const OSSL_PARAM p[], BIO *b)
-{
-    int64_t i;
-    uint64_t u;
-# ifndef OPENSSL_SYS_UEFI
-    double d;
-# endif
-
-    for (; p->key != NULL; p++) {
-        BIO_printf(b, "%s: ", p->key);
-        switch (p->data_type) {
-        case OSSL_PARAM_UNSIGNED_INTEGER:
-            if (OSSL_PARAM_get_uint64(p, &u))
-                BIO_printf(b, "%llu\n", (unsigned long long int)u);
-            else
-                BIO_printf(b, "error getting value\n");
-            break;
-        case OSSL_PARAM_INTEGER:
-            if (OSSL_PARAM_get_int64(p, &i))
-                BIO_printf(b, "%lld\n", (long long int)i);
-            else
-                BIO_printf(b, "error getting value\n");
-            break;
-        case OSSL_PARAM_UTF8_PTR:
-            BIO_printf(b, "'%s'\n", *(char **)(p->data));
-            break;
-        case OSSL_PARAM_UTF8_STRING:
-            BIO_printf(b, "'%s'\n", (char *)p->data);
-            break;
-        case OSSL_PARAM_OCTET_PTR:
-        case OSSL_PARAM_OCTET_STRING:
-            BIO_printf(b, "<%zu bytes>\n", p->data_size);
-            break;
-# ifndef OPENSSL_SYS_UEFI
-        case OSSL_PARAM_REAL:
-            if (OSSL_PARAM_get_double(p, &d))
-                BIO_printf(b, "%f\n", d);
-            else
-                BIO_printf(b, "error getting value\n");
-            break;
-# endif
-        default:
-            BIO_printf(b, "unknown type (%u) of %zu bytes\n",
-                       p->data_type, p->data_size);
-            break;
-        }
-    }
-}
-#endif
-
-/**
  * @brief Tears down the given provider.
  *
  * This function calls the `teardown` callback of the given provider to release
@@ -1731,6 +1663,7 @@ void ossl_provider_teardown(const OSSL_PROVIDER *prov)
 const OSSL_PARAM *ossl_provider_gettable_params(const OSSL_PROVIDER *prov)
 {
     const OSSL_PARAM *ret = NULL;
+    char *buf = NULL;
 
     if (prov->gettable_params != NULL) {
         ret = prov->gettable_params(prov->provctx);
@@ -1738,7 +1671,12 @@ const OSSL_PARAM *ossl_provider_gettable_params(const OSSL_PROVIDER *prov)
         OSSL_TRACE_BEGIN(PROVIDER) {
             BIO_printf(trc_out, "(provider %s) gettable params\n",
                        ossl_provider_name(prov));
-            trace_print_param_values(ret, trc_out);
+            BIO_printf(trc_out, "Parameters:\n");
+            if (OSSL_PARAM_print_to_buf(ret, &buf, 0) != -1)
+                BIO_printf(trc_out, "%s\n", buf);
+            else
+                BIO_printf(trc_out, "Failed to parse param values\n");
+            OPENSSL_free(buf);
         } OSSL_TRACE_END(PROVIDER);
 #endif
     }
@@ -1762,6 +1700,7 @@ const OSSL_PARAM *ossl_provider_gettable_params(const OSSL_PROVIDER *prov)
 int ossl_provider_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
 {
     int ret;
+    char *buf = NULL;
 
     if (prov->get_params == NULL)
         return 0;
@@ -1772,7 +1711,12 @@ int ossl_provider_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
         OSSL_TRACE_BEGIN(PROVIDER) {
             BIO_printf(trc_out,
                        "(provider %s) calling get_params\n", prov->name);
-            trace_print_param_values(params, trc_out);
+            BIO_printf(trc_out, "Parameters:\n");
+            if (OSSL_PARAM_print_to_buf(params, &buf, 1) != -1)
+                BIO_printf(trc_out, "%s\n", buf);
+            else
+                BIO_printf(trc_out, "Failed to parse param values\n");
+            OPENSSL_free(buf);
         } OSSL_TRACE_END(PROVIDER);
     }
 #endif
@@ -1875,8 +1819,13 @@ const OSSL_ALGORITHM *ossl_provider_query_operation(const OSSL_PROVIDER *prov,
 {
     const OSSL_ALGORITHM *res;
 
-    if (prov->query_operation == NULL)
+    if (prov->query_operation == NULL) {
+        OSSL_TRACE_BEGIN(PROVIDER) {
+            BIO_printf(trc_out, "provider %s lacks query operation!\n",
+                       prov->name);
+        }
         return NULL;
+    }
 
     res = prov->query_operation(prov->provctx, operation_id, no_cache);
 #ifndef FIPS_MODULE
