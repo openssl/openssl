@@ -297,7 +297,7 @@ static int ossl_method_store_insert(OSSL_METHOD_STORE *store, ALGORITHM *alg)
  * reference count and destruction callbacks.
  *
  * @param store Pointer to the OSSL_METHOD_STORE where the method will be added.
- *        must be non-null.
+ *              Must be non-null.
  * @param prov Pointer to the OSSL_PROVIDER for the provider of the method.
  *             Must be non-null.
  * @param nid (identifier) associated with the method, must be > 0
@@ -402,10 +402,11 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
 
         if (tmpimpl->provider == impl->provider
             && tmpimpl->properties == impl->properties)
-            goto err;
+            break;
     }
 
-    if (sk_IMPLEMENTATION_push(alg->impls, impl)) {
+    if (i == sk_IMPLEMENTATION_num(alg->impls)
+        && sk_IMPLEMENTATION_push(alg->impls, impl)) {
         ret = 1;
         OSSL_TRACE_BEGIN(QUERY) {
             BIO_printf(trc_out, "Adding to method store "
@@ -503,7 +504,8 @@ alg_cleanup_by_provider(ossl_uintmax_t idx, ALGORITHM *alg, void *arg)
                 char buf[512];
                 size_t size;
 
-                size = ossl_property_list_to_string(NULL, impl->properties, buf, 512);
+                size = ossl_property_list_to_string(NULL, impl->properties, buf,
+                                                    sizeof(buf));
                 BIO_printf(trc_out, "Removing implementation from "
                            "query cache\nproperties %s\nprovider %s\n",
                            size == 0 ? "none" : buf,
@@ -597,7 +599,7 @@ void ossl_method_store_do_all(OSSL_METHOD_STORE *store,
  * successful, it returns the method and its associated provider.
  *
  * @param store Pointer to the OSSL_METHOD_STORE from which to fetch the method.
- *        Must be non-null
+ *              Must be non-null.
  * @param nid (identifier) of the method to be fetched. Must be > 0
  * @param prop_query String containing the property query to match against.
  * @param prov_rw Pointer to the OSSL_PROVIDER to restrict the search to, or
@@ -669,7 +671,7 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
 
     /*
      * Search for a provider that provides this implementation.
-     * if the requested provider is NULL, then any provider will do,
+     * If the requested provider is NULL, then any provider will do,
      * otherwise we should try to find the one that matches the requested
      * provider.  Note that providers are given implicit preference via the
      * ordering of the implementation stack
@@ -688,7 +690,7 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
 
     /*
      * If there are optional properties specified
-     * the search again, and select the provider that matches the
+     * then run the search again, and select the provider that matches the
      * most options
      */
     optional = ossl_property_has_optional(pq);
