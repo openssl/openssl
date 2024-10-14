@@ -412,8 +412,12 @@ int SSL_poll(SSL_POLL_ITEM *items,
     OSSL_TIME deadline;
 
     /* Trivial case. */
-    if (num_items == 0)
+    if (num_items == 0) {
+        if (timeout == NULL)
+            goto out;
+        OSSL_sleep(ossl_time2ms(ossl_time_from_timeval(*timeout)));
         goto out;
+    }
 
     /* Convert timeout to deadline. */
     if (timeout == NULL)
