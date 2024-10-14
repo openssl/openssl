@@ -591,7 +591,14 @@ OSSL_ECHSTORE *OSSL_ECHSTORE_new(OSSL_LIB_CTX *libctx, const char *propq)
         return 0;
     }
     es->libctx = libctx;
-    es->propq = propq;
+    if (propq != NULL) {
+        es->propq = OPENSSL_strdup(propq);
+        if (es->propq == NULL) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+    }
+
     return es;
 }
 
@@ -600,6 +607,7 @@ void OSSL_ECHSTORE_free(OSSL_ECHSTORE *es)
     if (es == NULL)
         return;
     sk_OSSL_ECHSTORE_ENTRY_pop_free(es->entries, ossl_echstore_entry_free);
+    OPENSSL_free(es->propq);
     OPENSSL_free(es);
     return;
 }
