@@ -70,6 +70,10 @@ DEFINE_RUN_ONCE_STATIC(version_strings_setup)
                  ossl_get_modulesdir());
     return 1;
 }
+
+# define TOSTR(x) #x
+# define OSSL_WINCTX_VERSION_STRING "OSSL_WINCTX: \"" ## TOSTR(OSSL_WINCTX) ## "\""
+
 #endif
 
 const char *OpenSSL_version(int t)
@@ -126,7 +130,7 @@ const char *OpenSSL_version(int t)
             return "CPUINFO: N/A";
     case OPENSSL_WINCTX:
 #if defined(_WIN32) && defined(OSSL_WINCTX)
-        return "OSSL_WINCTX: \"" MAKESTR(OSSL_WINCTX) "\"";
+        return OSSL_WINCTX_VERSION_STRING;
 #else
         return "OSSL_WINCTX: Undefined";
 #endif
