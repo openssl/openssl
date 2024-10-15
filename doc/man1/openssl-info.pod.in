@@ -73,6 +73,10 @@ Outputs the randomness seed sources.
 
 Outputs the OpenSSL CPU settings info.
 
+=item B<-windowscontext>
+
+Outputs the Windows install context.
+
 =back
 
 =head1 HISTORY
