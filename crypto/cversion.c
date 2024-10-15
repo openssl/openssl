@@ -7,8 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdio.h>
+#include <openssl/bio.h>
+#include "internal/e_os.h"
 #include "internal/cryptlib.h"
 #include "internal/common.h"
+#include "internal/thread_once.h"
 
 #include "buildinf.h"
 
@@ -44,8 +48,37 @@ const char *OPENSSL_version_build_metadata(void)
 
 extern char ossl_cpu_info_str[];
 
+#if defined(_WIN32) && defined(OSSL_WINCTX)
+/* size: MAX_PATH + sizeof("OPENSSLDIR: \"\"") */
+static char openssldir[MAX_PATH + 15];
+
+/* size: MAX_PATH + sizeof("ENGINESDIR: \"\"") */
+static char enginesdir[MAX_PATH + 15];
+
+/* size: MAX_PATH + sizeof("MODULESDIR: \"\"") */
+static char modulesdir[MAX_PATH + 15];
+
+static CRYPTO_ONCE version_strings_once = CRYPTO_ONCE_STATIC_INIT;
+
+DEFINE_RUN_ONCE_STATIC(version_strings_setup)
+{
+    BIO_snprintf(openssldir, sizeof(openssldir), "OPENSSLDIR: \"%s\"",
+                 ossl_get_openssldir());
+    BIO_snprintf(enginesdir, sizeof(enginesdir), "ENGINESDIR: \"%s\"",
+                 ossl_get_enginesdir());
+    BIO_snprintf(modulesdir, sizeof(modulesdir), "MODULESDIR: \"%s\"",
+                 ossl_get_modulesdir());
+    return 1;
+}
+#endif
+
 const char *OpenSSL_version(int t)
 {
+#if defined(_WIN32) && defined(OSSL_WINCTX)
+    /* Cannot really fail but we would return empty strings anyway */
+    (void)RUN_ONCE(&version_strings_once, version_strings_setup);
+#endif
+
     switch (t) {
     case OPENSSL_VERSION:
         return OPENSSL_VERSION_TEXT;
@@ -59,12 +92,33 @@ const char *OpenSSL_version(int t)
         return compiler_flags;
     case OPENSSL_PLATFORM:
         return PLATFORM;
+#if defined(_WIN32) && defined(OSSL_WINCTX)
     case OPENSSL_DIR:
-        return ossl_get_openssldir();
+        return openssldir;
     case OPENSSL_ENGINES_DIR:
-        return ossl_get_enginesdir();
+        return enginesdir;
     case OPENSSL_MODULES_DIR:
-        return ossl_get_modulesdir();
+        return modulesdir;
+#else
+    case OPENSSL_DIR:
+# ifdef OPENSSLDIR
+        return "OPENSSLDIR: \"" OPENSSLDIR "\"";
+# else
+        return "OPENSSLDIR: N/A";
+# endif
+    case OPENSSL_ENGINES_DIR:
+# ifdef ENGINESDIR
+        return "ENGINESDIR: \"" ENGINESDIR "\"";
+# else
+        return "ENGINESDIR: N/A";
+# endif
+    case OPENSSL_MODULES_DIR:
+# ifdef MODULESDIR
+        return "MODULESDIR: \"" MODULESDIR "\"";
+# else
+        return "MODULESDIR: N/A";
+# endif
+#endif
     case OPENSSL_CPU_INFO:
         if (OPENSSL_info(OPENSSL_INFO_CPU_SETTINGS) != NULL)
             return ossl_cpu_info_str;
