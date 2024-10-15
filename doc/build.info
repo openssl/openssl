@@ -1779,10 +1779,6 @@ DEPEND[html/man3/OSSL_PARAM_allocate_from_text.html]=man3/OSSL_PARAM_allocate_fr
 GENERATE[html/man3/OSSL_PARAM_allocate_from_text.html]=man3/OSSL_PARAM_allocate_from_text.pod
 DEPEND[man/man3/OSSL_PARAM_allocate_from_text.3]=man3/OSSL_PARAM_allocate_from_text.pod
 GENERATE[man/man3/OSSL_PARAM_allocate_from_text.3]=man3/OSSL_PARAM_allocate_from_text.pod
-DEPEND[html/man3/OSSL_PARAM_print_to_buf.html]=man3/OSSL_PARAM_print_to_buf.pod
-GENERATE[html/man3/OSSL_PARAM_print_to_buf.html]=man3/OSSL_PARAM_print_to_buf.pod
-DEPEND[man/man3/OSSL_PARAM_print_to_buf.3]=man3/OSSL_PARAM_print_to_buf.pod
-GENERATE[man/man3/OSSL_PARAM_print_to_buf.3]=man3/OSSL_PARAM_print_to_buf.pod
 DEPEND[html/man3/OSSL_PARAM_dup.html]=man3/OSSL_PARAM_dup.pod
 GENERATE[html/man3/OSSL_PARAM_dup.html]=man3/OSSL_PARAM_dup.pod
 DEPEND[man/man3/OSSL_PARAM_dup.3]=man3/OSSL_PARAM_dup.pod
@@ -1791,6 +1787,10 @@ DEPEND[html/man3/OSSL_PARAM_int.html]=man3/OSSL_PARAM_int.pod
 GENERATE[html/man3/OSSL_PARAM_int.html]=man3/OSSL_PARAM_int.pod
 DEPEND[man/man3/OSSL_PARAM_int.3]=man3/OSSL_PARAM_int.pod
 GENERATE[man/man3/OSSL_PARAM_int.3]=man3/OSSL_PARAM_int.pod
+DEPEND[html/man3/OSSL_PARAM_print_to_buf.html]=man3/OSSL_PARAM_print_to_buf.pod
+GENERATE[html/man3/OSSL_PARAM_print_to_buf.html]=man3/OSSL_PARAM_print_to_buf.pod
+DEPEND[man/man3/OSSL_PARAM_print_to_buf.3]=man3/OSSL_PARAM_print_to_buf.pod
+GENERATE[man/man3/OSSL_PARAM_print_to_buf.3]=man3/OSSL_PARAM_print_to_buf.pod
 DEPEND[html/man3/OSSL_PROVIDER.html]=man3/OSSL_PROVIDER.pod
 GENERATE[html/man3/OSSL_PROVIDER.html]=man3/OSSL_PROVIDER.pod
 DEPEND[man/man3/OSSL_PROVIDER.3]=man3/OSSL_PROVIDER.pod
@@ -3454,6 +3454,7 @@ html/man3/OSSL_PARAM_BLD.html \
 html/man3/OSSL_PARAM_allocate_from_text.html \
 html/man3/OSSL_PARAM_dup.html \
 html/man3/OSSL_PARAM_int.html \
+html/man3/OSSL_PARAM_print_to_buf.html \
 html/man3/OSSL_PROVIDER.html \
 html/man3/OSSL_QUIC_client_method.html \
 html/man3/OSSL_SELF_TEST_new.html \
@@ -4117,6 +4118,7 @@ man/man3/OSSL_PARAM_BLD.3 \
 man/man3/OSSL_PARAM_allocate_from_text.3 \
 man/man3/OSSL_PARAM_dup.3 \
 man/man3/OSSL_PARAM_int.3 \
+man/man3/OSSL_PARAM_print_to_buf.3 \
 man/man3/OSSL_PROVIDER.3 \
 man/man3/OSSL_QUIC_client_method.3 \
 man/man3/OSSL_SELF_TEST_new.3 \
