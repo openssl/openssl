@@ -11,6 +11,7 @@ on:
   push:
     tags:
       - "openssl-*"
+  workflow_dispatch:
 
 jobs:
   release:
