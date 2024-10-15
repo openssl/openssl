@@ -212,7 +212,7 @@ application. If any OpenSSL functions get called that require the use of
 cryptographic functions before this occurs then, if no provider has yet been
 loaded, then the default provider will be automatically loaded. If you then
 later explicitly load the FIPS provider then you will have both the FIPS and the
-default provider loaded at the same time. It is undefined which implementation
+default provider loaded at the same time. It is unspecified which implementation
 of an algorithm will be used if multiple implementations are available and you
 have not explicitly specified via a property query (see below) which one should
 be used.
@@ -244,7 +244,7 @@ standards you can specify the property query C<fips=yes> like this:
     sha256 = EVP_MD_fetch(NULL, "SHA2-256", "fips=yes");
 
 If no property query is specified, or more than one implementation matches the
-property query then it is undefined which implementation of a particular
+property query then it is unspecified which implementation of a particular
 algorithm will be returned.
 
 This example shows an explicit request for an implementation of SHA256 from the
