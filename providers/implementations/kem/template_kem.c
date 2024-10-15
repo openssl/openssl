@@ -55,6 +55,7 @@ static OSSL_FUNC_kem_decapsulate_init_fn template_decapsulate_init;
 static OSSL_FUNC_kem_decapsulate_fn template_decapsulate;
 static OSSL_FUNC_kem_freectx_fn template_freectx;
 static OSSL_FUNC_kem_set_ctx_params_fn template_set_ctx_params;
+static OSSL_FUNC_kem_settable_ctx_params_fn template_settable_ctx_params;
 
 static void *template_newctx(void *provctx)
 {
