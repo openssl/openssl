@@ -19,8 +19,6 @@
 static OSSL_ECHSTORE_ENTRY *ossl_echstore_entry_dup(OSSL_ECHSTORE_ENTRY *orig)
 {
     OSSL_ECHSTORE_ENTRY *ret = NULL;
-    OSSL_ECHEXT *ext = NULL, *newext = NULL;
-    int i;
 
     if (orig == NULL)
         return NULL;
@@ -46,32 +44,10 @@ static OSSL_ECHSTORE_ENTRY *ossl_echstore_entry_dup(OSSL_ECHSTORE_ENTRY *orig)
     ret->max_name_length = orig->max_name_length;
     ret->config_id = orig->config_id;
     if (orig->exts != NULL) {
-        int num;
-
-        if ((ret->exts = sk_OSSL_ECHEXT_new_null()) == NULL)
+        ret->exts = sk_OSSL_ECHEXT_deep_copy(orig->exts, ossl_echext_copy,
+                                             ossl_echext_free);
+        if (ret->exts == NULL)
             goto err;
-        num = (orig->exts == NULL ? 0 : sk_OSSL_ECHEXT_num(orig->exts));
-        for (i = 0; i != num; i++) {
-            ext = sk_OSSL_ECHEXT_value(orig->exts, i);
-            if (ext == NULL)
-                goto err;
-            newext = OPENSSL_malloc(sizeof(OSSL_ECHEXT));
-            if (newext == NULL)
-                goto err;
-            newext->type = ext->type;
-            newext->len = ext->len;
-            newext->val = NULL;
-            if (ext->len != 0) {
-                newext->val = OPENSSL_memdup(ext->val, ext->len);
-                if (newext->val == NULL)
-                    goto err;
-            }
-            if (sk_OSSL_ECHEXT_insert(ret->exts, newext, i) == 0) {
-                OPENSSL_free(newext->val);
-                OPENSSL_free(newext);
-                goto err;
-            }
-        }
     }
     ret->loadtime = orig->loadtime;
     if (orig->keyshare != NULL) {

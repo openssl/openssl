@@ -58,13 +58,31 @@ static const char B64_alphabet[] =
  * local functions - public APIs are at the end
  */
 
-static void ossl_echext_free(OSSL_ECHEXT *e)
+void ossl_echext_free(OSSL_ECHEXT *e)
 {
     if (e == NULL)
         return;
     OPENSSL_free(e->val);
     OPENSSL_free(e);
     return;
+}
+
+OSSL_ECHEXT *ossl_echext_copy(const OSSL_ECHEXT *src)
+{
+    OSSL_ECHEXT *ext = OPENSSL_zalloc(sizeof(*src));
+
+    if (ext == NULL)
+        return NULL;
+    *ext = *src;
+    ext->val = NULL;
+    if (ext->len != 0) {
+        ext->val = OPENSSL_memdup(src->val, src->len);
+        if (ext->val == NULL) {
+            ossl_echext_free(ext);
+            return NULL;
+        }
+    }
+    return ext;
 }
 
 void ossl_echstore_entry_free(OSSL_ECHSTORE_ENTRY *ee)

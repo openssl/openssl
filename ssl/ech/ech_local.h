@@ -213,6 +213,8 @@ void ossl_ctx_ech_free(OSSL_CTX_ECH *ce);
 int ossl_ech_conn_init(SSL_CONNECTION *s, SSL_CTX *ctx,
                        const SSL_METHOD *method);
 void ossl_ech_conn_free(OSSL_ECH_CONN *ec);
+void ossl_echext_free(OSSL_ECHEXT *e);
+OSSL_ECHEXT *ossl_echext_copy(const OSSL_ECHEXT *src);
 
 # endif
 #endif
