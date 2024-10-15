@@ -56,7 +56,6 @@ int version_main(int argc, char **argv)
 #endif
     char *prog;
     OPTION_CHOICE o;
-    const char *tmp;
 
     prog = opt_init(argc, argv, version_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -134,18 +133,12 @@ opthelp:
     }
     if (cflags)
         printf("%s\n", OpenSSL_version(OPENSSL_CFLAGS));
-    if (dir) {
-        tmp = OpenSSL_version(OPENSSL_DIR);
-        printf("OPENSSLDIR: %s\n", tmp == NULL ? "Undefined" : tmp);
-    }
-    if (engdir) {
-        tmp = OpenSSL_version(OPENSSL_ENGINES_DIR);
-        printf("ENGINESDIR: %s\n", tmp == NULL ? "Undefined" : tmp);
-    }
-    if (moddir) {
-        tmp = OpenSSL_version(OPENSSL_MODULES_DIR);
-        printf("MODULESDIR: %s\n", tmp == NULL ? "Undefined" : tmp);
-    }
+    if (dir)
+        printf("%s\n", OpenSSL_version(OPENSSL_DIR));
+    if (engdir)
+        printf("%s\n", OpenSSL_version(OPENSSL_ENGINES_DIR));
+    if (moddir)
+        printf("%s\n", OpenSSL_version(OPENSSL_MODULES_DIR));
     if (seed) {
         const char *src = OPENSSL_info(OPENSSL_INFO_SEED_SOURCE);
         printf("Seeding source: %s\n", src ? src : "N/A");
@@ -154,7 +147,7 @@ opthelp:
         printf("%s\n", OpenSSL_version(OPENSSL_CPU_INFO));
 #if defined(_WIN32)
     if (windows)
-        printf("OSSL_WINCTX: %s\n", OpenSSL_version(OPENSSL_WINCTX));
+        printf("%s\n", OpenSSL_version(OPENSSL_WINCTX));
 #endif
     ret = 0;
  end:
