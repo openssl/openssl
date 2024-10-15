@@ -25,6 +25,11 @@
 # define PRIMARY_RESEED_TIME_INTERVAL            (60 * 60) /* 1 hour */
 # define SECONDARY_RESEED_TIME_INTERVAL          (7 * 60)  /* 7 minutes */
 
+/* Whether to chain public/private DRBGs to primary DRBG */
+# ifndef OPENSSL_RAND_CHAIN
+#  define OPENSSL_RAND_CHAIN 1
+# endif
+
 # ifndef FIPS_MODULE
 /* The global RAND method, and the global buffer and DRBG instance. */
 extern RAND_METHOD ossl_rand_meth;
