@@ -1663,12 +1663,12 @@ void ossl_provider_teardown(const OSSL_PROVIDER *prov)
 const OSSL_PARAM *ossl_provider_gettable_params(const OSSL_PROVIDER *prov)
 {
     const OSSL_PARAM *ret = NULL;
-    char *buf = NULL;
 
     if (prov->gettable_params != NULL) {
         ret = prov->gettable_params(prov->provctx);
 #ifndef FIPS_MODULE
         OSSL_TRACE_BEGIN(PROVIDER) {
+            char *buf = NULL;
             BIO_printf(trc_out, "(provider %s) gettable params\n",
                        ossl_provider_name(prov));
             BIO_printf(trc_out, "Parameters:\n");
@@ -1700,7 +1700,6 @@ const OSSL_PARAM *ossl_provider_gettable_params(const OSSL_PROVIDER *prov)
 int ossl_provider_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
 {
     int ret;
-    char *buf = NULL;
 
     if (prov->get_params == NULL)
         return 0;
@@ -1709,6 +1708,8 @@ int ossl_provider_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
 #ifndef FIPS_MODULE
     if (ret == 1) {
         OSSL_TRACE_BEGIN(PROVIDER) {
+            char *buf = NULL;
+
             BIO_printf(trc_out,
                        "(provider %s) calling get_params\n", prov->name);
             BIO_printf(trc_out, "Parameters:\n");
@@ -1823,7 +1824,7 @@ const OSSL_ALGORITHM *ossl_provider_query_operation(const OSSL_PROVIDER *prov,
         OSSL_TRACE_BEGIN(PROVIDER) {
             BIO_printf(trc_out, "provider %s lacks query operation!\n",
                        prov->name);
-        }
+        } OSSL_TRACE_END(PROVIDER);
         return NULL;
     }
 
