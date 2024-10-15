@@ -16,7 +16,7 @@
 
 /* ECH internal API functions */
 
-static OSSL_ECHSTORE_ENTRY *ossl_echstore_entry_dup(OSSL_ECHSTORE_ENTRY *orig)
+static OSSL_ECHSTORE_ENTRY *ossl_echstore_entry_dup(const OSSL_ECHSTORE_ENTRY *orig)
 {
     OSSL_ECHSTORE_ENTRY *ret = NULL;
 
@@ -71,8 +71,6 @@ err:
 int ossl_echstore_dup(OSSL_ECHSTORE **new, OSSL_ECHSTORE *old)
 {
     OSSL_ECHSTORE *cp = NULL;
-    OSSL_ECHSTORE_ENTRY *ee = NULL;
-    int i, num;
 
     if (new == NULL || old == NULL)
         return 0;
@@ -85,22 +83,15 @@ int ossl_echstore_dup(OSSL_ECHSTORE **new, OSSL_ECHSTORE *old)
         *new = cp;
         return 1;
     }
-    if ((cp->entries = sk_OSSL_ECHSTORE_ENTRY_new_null()) == NULL)
+    cp->entries = sk_OSSL_ECHSTORE_ENTRY_deep_copy(old->entries,
+                                                   ossl_echstore_entry_dup,
+                                                   ossl_echstore_entry_free);
+    if (cp->entries == NULL)
         goto err;
-    num = sk_OSSL_ECHSTORE_ENTRY_num(old->entries);
-    for (i = 0; i != num; i++) {
-        ee = ossl_echstore_entry_dup(sk_OSSL_ECHSTORE_ENTRY_value(old->entries,
-                                                                  i));
-        if (ee == NULL)
-            goto err;
-        if (sk_OSSL_ECHSTORE_ENTRY_insert(cp->entries, ee, i) == 0)
-            goto err;
-    }
     *new = cp;
     return 1;
 err:
     OSSL_ECHSTORE_free(cp);
-    ossl_echstore_entry_free(ee);
     return 0;
 }
 
