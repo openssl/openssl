@@ -12,7 +12,9 @@ use warnings;
 my ($cflags, $platform) = @ARGV;
 $cflags = "compiler: $cflags";
 
-my $date = gmtime($ENV{'SOURCE_DATE_EPOCH'} || time()) . " UTC";
+# Use the value of the envvar SOURCE_DATE_EPOCH, even if it's
+# zero or the empty string.
+my $date = gmtime($ENV{'SOURCE_DATE_EPOCH'} // time()) . " UTC";
 
 print <<"END_OUTPUT";
 /*
