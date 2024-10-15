@@ -243,6 +243,8 @@ const char *OPENSSL_info(int t)
         if (ossl_cpu_info_str[0] != '\0')
             return ossl_cpu_info_str + strlen(CPUINFO_PREFIX);
         break;
+    case OPENSSL_INFO_WINDOWS_CONTEXT:
+        return ossl_get_wininstallcontext();
     default:
         break;
     }
