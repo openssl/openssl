@@ -14,7 +14,7 @@
 typedef enum OPTION_choice {
     OPT_COMMON,
     OPT_CONFIGDIR, OPT_ENGINESDIR, OPT_MODULESDIR, OPT_DSOEXT, OPT_DIRNAMESEP,
-    OPT_LISTSEP, OPT_SEEDS, OPT_CPUSETTINGS
+    OPT_LISTSEP, OPT_SEEDS, OPT_CPUSETTINGS, OPT_WINDOWSCONTEXT
 } OPTION_CHOICE;
 
 const OPTIONS info_options[] = {
@@ -32,6 +32,7 @@ const OPTIONS info_options[] = {
     {"listsep", OPT_LISTSEP, '-', "List separator character"},
     {"seeds", OPT_SEEDS, '-', "Seed sources"},
     {"cpusettings", OPT_CPUSETTINGS, '-', "CPU settings info"},
+    {"windowscontext", OPT_WINDOWSCONTEXT, '-', "Windows install context"},
     {NULL}
 };
 
@@ -83,6 +84,10 @@ opthelp:
             break;
         case OPT_CPUSETTINGS:
             type = OPENSSL_INFO_CPU_SETTINGS;
+            dirty++;
+            break;
+        case OPT_WINDOWSCONTEXT:
+            type = OPENSSL_INFO_WINDOWS_CONTEXT;
             dirty++;
             break;
         }
