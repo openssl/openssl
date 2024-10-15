@@ -147,7 +147,7 @@ opthelp:
         printf("%s\n", OpenSSL_version(OPENSSL_CPU_INFO));
 #if defined(_WIN32)
     if (windows)
-        printf("OSSL_WINCTX: %s\n", OpenSSL_version(OPENSSL_WINCTX));
+        printf("%s\n", OpenSSL_version(OPENSSL_WINCTX));
 #endif
     ret = 0;
  end:

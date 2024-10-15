@@ -125,7 +125,11 @@ const char *OpenSSL_version(int t)
         else
             return "CPUINFO: N/A";
     case OPENSSL_WINCTX:
-        return ossl_get_wininstallcontext();
+#if defined(_WIN32) && defined(OSSL_WINCTX)
+        return "OSSL_WINCTX: \"" MAKESTR(OSSL_WINCTX) "\"";
+#else
+        return "OSSL_WINCTX: Undefined";
+#endif
     }
     return "not available";
 }
