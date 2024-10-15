@@ -231,7 +231,7 @@ static int template_import(void *key, int selection, const OSSL_PARAM params[])
     return ok;
 }
 
-#define TEMPLATE_KEY_TYPES()                                 \
+#define TEMPLATE_KEY_TYPES()                                     \
     OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PUB_KEY, NULL, 0),   \
     OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PRIV_KEY, NULL, 0)
 
@@ -424,8 +424,8 @@ const OSSL_DISPATCH ossl_template_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_MATCH, (void (*)(void))template_match },
     { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))template_imexport_types },
     { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))template_imexport_types },
-    { OSSL_FUNC_KEYMGMT_IMPORT, (void (*)(void))template_export },
-    { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))template_import },
+    { OSSL_FUNC_KEYMGMT_IMPORT, (void (*)(void))template_import },
+    { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))template_export },
     { OSSL_FUNC_KEYMGMT_GEN_INIT, (void (*)(void))template_gen_init },
     { OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS, (void (*)(void))template_gen_set_params },
     { OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS,
