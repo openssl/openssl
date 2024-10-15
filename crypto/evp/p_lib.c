@@ -1677,6 +1677,30 @@ int EVP_PKEY_up_ref(EVP_PKEY *pkey)
 }
 
 #ifndef FIPS_MODULE
+EVP_PKEY *EVP_PKEY_reserve(EVP_PKEY *pkey, const OSSL_PARAM *params)
+{
+    EVP_PKEY *ret = NULL;
+
+    if (pkey == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return NULL;
+    }
+    if (pkey->keymgmt == NULL || pkey->keymgmt->reserve == NULL)
+        return NULL;
+
+    ret = EVP_PKEY_new();
+    if (ret == NULL)
+        return NULL;
+
+    ret->keydata = evp_keymgmt_reserve(pkey->keymgmt, pkey->keydata, params);
+    if (ret->keydata == NULL
+            || !evp_keymgmt_util_assign_pkey(ret, pkey->keymgmt, ret->keydata)) {
+        EVP_PKEY_free(ret);
+        ret = NULL;
+    }
+    return ret;
+}
+
 EVP_PKEY *EVP_PKEY_dup(EVP_PKEY *pkey)
 {
     EVP_PKEY *dup_pk;
