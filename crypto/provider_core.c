@@ -1669,6 +1669,7 @@ const OSSL_PARAM *ossl_provider_gettable_params(const OSSL_PROVIDER *prov)
 #ifndef FIPS_MODULE
         OSSL_TRACE_BEGIN(PROVIDER) {
             char *buf = NULL;
+
             BIO_printf(trc_out, "(provider %s) gettable params\n",
                        ossl_provider_name(prov));
             BIO_printf(trc_out, "Parameters:\n");
