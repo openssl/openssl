@@ -976,7 +976,7 @@ int SSL_up_ref(SSL *s)
     if (CRYPTO_UP_REF(&s->references, &i) <= 0)
         return 0;
 
-    REF_PRINT_COUNT("SSL", s);
+    REF_PRINT_COUNT("SSL", i, s);
     REF_ASSERT_ISNT(i < 2);
     return ((i > 1) ? 1 : 0);
 }
@@ -1379,7 +1379,7 @@ void SSL_free(SSL *s)
     if (s == NULL)
         return;
     CRYPTO_DOWN_REF(&s->references, &i);
-    REF_PRINT_COUNT("SSL", s);
+    REF_PRINT_COUNT("SSL", i, s);
     if (i > 0)
         return;
     REF_ASSERT_ISNT(i < 0);
@@ -4133,7 +4133,7 @@ int SSL_CTX_up_ref(SSL_CTX *ctx)
     if (CRYPTO_UP_REF(&ctx->references, &i) <= 0)
         return 0;
 
-    REF_PRINT_COUNT("SSL_CTX", ctx);
+    REF_PRINT_COUNT("SSL_CTX", i, ctx);
     REF_ASSERT_ISNT(i < 2);
     return ((i > 1) ? 1 : 0);
 }
@@ -4147,7 +4147,7 @@ void SSL_CTX_free(SSL_CTX *a)
         return;
 
     CRYPTO_DOWN_REF(&a->references, &i);
-    REF_PRINT_COUNT("SSL_CTX", a);
+    REF_PRINT_COUNT("SSL_CTX", i, a);
     if (i > 0)
         return;
     REF_ASSERT_ISNT(i < 0);
