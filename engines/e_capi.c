@@ -1771,7 +1771,10 @@ static int capi_load_ssl_client_cert(ENGINE *e, SSL *ssl,
             if (!certs)
                 certs = sk_X509_new_null();
 
-            sk_X509_push(certs, x);
+            if (!sk_X509_push(certs, x)) {
+                sk_X509_free(certs);
+                return 0;
+            }
         } else {
             X509_free(x);
         }
