@@ -40,8 +40,8 @@ OSSL_CRMF_MSG_centralKeygen_requested
  const X509_NAME *OSSL_CRMF_CERTID_get0_issuer(const OSSL_CRMF_CERTID *cid);
 
  X509 *OSSL_CRMF_ENCRYPTEDKEY_get1_encCert(const OSSL_CRMF_ENCRYPTEDKEY *ecert,
-                                           EVP_PKEY *pkey, unsigned int flags
-                                           OSSL_LIB_CTX *libctx, const char *propq);
+                                           OSSL_LIB_CTX *libctx, const char *propq,
+                                           EVP_PKEY *pkey, unsigned int flags);
  EVP_PKEY
  *OSSL_CRMF_ENCRYPTEDKEY_get1_pkey(OSSL_CRMF_ENCRYPTEDKEY *encryptedKey,
                                    X509_STORE *ts, STACK_OF(X509) *extra,
@@ -53,11 +53,11 @@ OSSL_CRMF_MSG_centralKeygen_requested
 
  unsigned char
  *OSSL_CRMF_ENCRYPTEDVALUE_decrypt(const OSSL_CRMF_ENCRYPTEDVALUE *enc,
-                                   EVP_PKEY *pkey, int *outlen,
-                                   OSSL_LIB_CTX *libctx, const char *propq);
+                                   OSSL_LIB_CTX *libctx, const char *propq,
+                                   EVP_PKEY *pkey, int *outlen);
  X509
  *OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(const OSSL_CRMF_ENCRYPTEDVALUE *ecert,
-                                        OSSL_LIB_CTX *libctx, const char *propq
+                                        OSSL_LIB_CTX *libctx, const char *propq,
                                         EVP_PKEY *pkey);
 
  int OSSL_CRMF_MSG_get_certReqId(const OSSL_CRMF_MSG *crm);

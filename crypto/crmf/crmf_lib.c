@@ -694,7 +694,7 @@ EVP_PKEY *OSSL_CRMF_ENCRYPTEDKEY_get1_pkey(const OSSL_CRMF_ENCRYPTEDKEY *encrypt
         int len;
 
         p = OSSL_CRMF_ENCRYPTEDVALUE_decrypt(encryptedKey->value.encryptedValue,
-                                             pkey, &len, libctx, propq);
+                                             libctx, propq, pkey, &len);
         if ((p_copy = p) != NULL)
             ret = d2i_AutoPrivateKey_ex(NULL, &p_copy, len, libctx, propq);
         OPENSSL_free(p);
@@ -762,8 +762,8 @@ EVP_PKEY *OSSL_CRMF_ENCRYPTEDKEY_get1_pkey(const OSSL_CRMF_ENCRYPTEDKEY *encrypt
 
 unsigned char
 *OSSL_CRMF_ENCRYPTEDVALUE_decrypt(const OSSL_CRMF_ENCRYPTEDVALUE *enc,
-                                  EVP_PKEY *pkey, int *outlen,
-                                  OSSL_LIB_CTX *libctx, const char *propq)
+                                  OSSL_LIB_CTX *libctx, const char *propq,
+                                  EVP_PKEY *pkey, int *outlen)
 {
     EVP_CIPHER_CTX *evp_ctx = NULL; /* context for symmetric encryption */
     unsigned char *ek = NULL; /* decrypted symmetric encryption key */
@@ -875,7 +875,7 @@ X509 *OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(const OSSL_CRMF_ENCRYPTEDVALUE *ecer
     int len;
     X509 *cert = NULL;
 
-    buf = OSSL_CRMF_ENCRYPTEDVALUE_decrypt(ecert, pkey, &len, libctx, propq);
+    buf = OSSL_CRMF_ENCRYPTEDVALUE_decrypt(ecert, libctx, propq, pkey, &len);
     if ((p = buf) == NULL || (cert = X509_new_ex(libctx, propq)) == NULL)
         goto end;
 
@@ -897,8 +897,8 @@ X509 *OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(const OSSL_CRMF_ENCRYPTEDVALUE *ecer
  * returns NULL on error or if no certificate available
  */
 X509 *OSSL_CRMF_ENCRYPTEDKEY_get1_encCert(const OSSL_CRMF_ENCRYPTEDKEY *ecert,
-                                          EVP_PKEY *pkey, unsigned int flags,
-                                          OSSL_LIB_CTX *libctx, const char *propq)
+                                          OSSL_LIB_CTX *libctx, const char *propq,
+                                          EVP_PKEY *pkey, unsigned int flags)
 {
 #ifndef OPENSSL_NO_CMS
     BIO *bio;
