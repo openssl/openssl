@@ -235,15 +235,6 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
                 _setmode(fd, _O_TEXT);
             else
                 _setmode(fd, _O_BINARY);
-            /*
-             * Reports show that ftell() isn't trustable in text mode.
-             * This has been confirmed as a bug in the Universal C RTL, see
-             * https://developercommunity.visualstudio.com/content/problem/425878/fseek-ftell-fail-in-text-mode-for-unix-style-text.html
-             * The suggested work-around from Microsoft engineering is to
-             * turn off buffering until the bug is resolved.
-             */
-            if ((num & BIO_FP_TEXT) != 0)
-                setvbuf((FILE *)ptr, NULL, _IONBF, 0);
 # elif defined(OPENSSL_SYS_MSDOS)
             int fd = fileno((FILE *)ptr);
             /* Set correct text/binary mode */
