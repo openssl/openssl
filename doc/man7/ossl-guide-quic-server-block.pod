@@ -268,7 +268,7 @@ And in the main function, it would deallocate the constructed B<SSL_CTX>.
 L<ossl-guide-introduction(7)>, L<ossl-guide-libraries-introduction(7)>,
 L<ossl-guide-libssl-introduction(7)>, L<ossl-guide-quic-introduction(7)>,
 L<ossl-guide-quic-client-non-block(7)>, L<ossl-guide-quic-client-block(7)>,
-L<ossl-guide-tls-server-block(7)>
+L<ossl-guide-tls-server-block(7)>, L<ossl-guide-quic-server-non-block(7)>
 
 =head1 COPYRIGHT
 
