@@ -166,6 +166,13 @@ jobs:
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
 
+    - name: ccache
+      if: ${{ github.event_name  == 'pull_request' }}
+      uses: hendrikmuhs/ccache-action@v1.2.14
+      with:
+        key: ${{ github.job }}-${{ matrix.platform.arch }}
+        create-symlink: true
+
     - name: config with FIPS
       if: matrix.platform.fips != 'no'
       run: |

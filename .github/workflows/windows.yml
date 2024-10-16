@@ -28,6 +28,8 @@ jobs:
             os: windows-2022
             config: --strict-warnings no-fips
     runs-on: ${{ github.server_url == 'https://github.com' && matrix.platform.os || format('{0}-self-hosted', matrix.platform.os) }}
+    env:
+      SCCACHE_GHA_ENABLED: "true"
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -38,6 +40,11 @@ jobs:
     - uses: ilammy/setup-nasm@v1
       with:
         platform: ${{ matrix.platform.arch }}
+    - name: Sccache
+      uses: mozilla-actions/sccache-action@v0.0.6
+    - name: setup sccache
+      run: |
+        Copy-Item "C:\hostedtoolcache\windows\sccache\0.8.2\x64\sccache.exe" -Destination "C:\hostedtoolcache\windows\sccache\0.8.2\x64\cl.exe"
     - name: prepare the build directory
       run: mkdir _build
     - name: config
@@ -47,8 +54,10 @@ jobs:
         perl configdata.pm --dump
     - name: build
       working-directory: _build
-      run: nmake /S
-    - name: download coreinfo
+      run: |
+        set path C:\hostedtoolcache\windows\sccache\0.8.2\x64\,%path%
+        nmake /S
+    - name: download core info
       uses: suisei-cn/actions-download-file@v1.6.0
       with:
         url: "https://download.sysinternals.com/files/Coreinfo.zip"
