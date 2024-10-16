@@ -14,6 +14,21 @@
 # include <openssl/trace.h>
 # include <openssl/err.h>
 
+#if defined(__clang__) && defined(__has_feature)
+# if __has_feature(thread_sanitizer)
+#  define __SANITIZE_THREAD__
+# endif
+#endif
+
+#if defined (__SANITIZE_THREAD__)
+# include <sanitizer/tsan_interface.h>
+# define TSAN_ACQUIRE(x) __tsan_acquire(x)
+# define TSAN_RELEASE(x) __tsan_release(x)
+#else
+# define TSAN_ACQUIRE(x)
+# define TSAN_RELEASE(x)
+#endif
+
 # if defined(OPENSSL_THREADS) && !defined(OPENSSL_DEV_NO_ATOMICS)
 #  if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L \
       && !defined(__STDC_NO_ATOMICS__)
@@ -36,21 +51,51 @@ static inline int CRYPTO_UP_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
     return 1;
 }
 
-/*
- * Changes to shared structure other than reference counter have to be
- * serialized. And any kind of serialization implies a release fence. This
- * means that by the time reference counter is decremented all other
- * changes are visible on all processors. Hence decrement itself can be
- * relaxed. In case it hits zero, object will be destructed. Since it's
- * last use of the object, destructor programmer might reason that access
- * to mutable members doesn't have to be serialized anymore, which would
- * otherwise imply an acquire fence. Hence conditional acquire fence...
+/**
+ * @brief Atomically decrements the reference count and stores the result.
+ *
+ * This function atomically decreases the reference count of a CRYPTO_REF_COUNT
+ * object. It ensures memory ordering constraints based on the architecture.
+ *
+ * @param refcnt A pointer to the CRYPTO_REF_COUNT object to be decremented.
+ * @param ret A pointer to an integer where the decremented result is stored.
+ *
+ * @return Always returns 1.
+ *
+ * Architecture-specific memory ordering is applied:
+ * - On ARM and AArch64, it uses __ATOMIC_ACQ_REL.
+ * - On other architectures, it uses __ATOMIC_RELAXED and ThreadSanitizer
+ *   acquire/release barriers.
+ *
+ * If the resulting reference count is 0, a memory fence is issued to ensure
+ * proper ordering.
+ *
+ * NOTE: Memory ordering is arch dependent here.  On strongly ordered systems
+ * a relaxed ordering is acceptable, because on such systems (like x86), the
+ * hardware ensures that atomic writes are visible to other cpus immediately.
+ *
+ * However, on weakly ordered systems, and atomic read/write is only atomic with
+ * respect to the local cpu.  To ensure that other cpus see a modified value, we
+ * need to use an atomic aquire/release ordering here, which emits the
+ * appropriate ldxar and stlxr instructions to ensure load/acquire, and
+ * store/release semantics.
+ *
+ * Note further that on x86 platforms, the subsequent atomic fence instruction
+ * isn't interpreted properly by thread sanitizers, and so, with relaxed
+ * ordering, tsan still potentially complains about multithreaded read/write
+ * races.  To avoid incurring the stricter semantic constraints there, we keep
+ * the relaxed ordering (sine the hardware enforces it anyway), and instead
+ * inform tsan that its ok with the __tsan_acquire and __tsan_release notations
  */
 static inline int CRYPTO_DOWN_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
 {
-    *ret = atomic_fetch_sub_explicit(&refcnt->val, 1, memory_order_relaxed) - 1;
-    if (*ret == 0)
-        atomic_thread_fence(memory_order_acquire);
+#    if defined (__arm__) || defined (__aarch64)
+    *ret = atomic_fetch_sub_explicit(&refcnt->val, 1, __ATOMIC_ACQ_REL) - 1;
+#   else 
+    TSAN_ACQUIRE(&refcnt->val);
+    *ret = atomic_fetch_sub_explicit(&refcnt->val, 1, __ATOMIC_RELAXED) - 1;
+    TSAN_RELEASE(&refcnt->val);
+#   endif
     return 1;
 }
 
@@ -70,15 +115,53 @@ typedef struct {
 
 static __inline__ int CRYPTO_UP_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
 {
-    *ret = __atomic_fetch_add(&refcnt->val, 1, __ATOMIC_RELAXED) + 1;
+    *ret = __atomic_fetch_add(&refcnt->val, 1, __ATOMIC_ACQ_REL) + 1;
     return 1;
 }
 
+/**
+ * @brief Atomically decrements the reference count and stores the result.
+ *
+ * This function atomically decreases the reference count of a CRYPTO_REF_COUNT
+ * object. It ensures memory ordering constraints based on the architecture.
+ *
+ * @param refcnt A pointer to the CRYPTO_REF_COUNT object to be decremented.
+ * @param ret A pointer to an integer where the decremented result is stored.
+ *
+ * @return Always returns 1.
+ *
+ * Architecture-specific memory ordering is applied:
+ * - On ARM and AArch64, it uses __ATOMIC_ACQ_REL.
+ * - On other architectures, it uses __ATOMIC_RELAXED and ThreadSanitizer
+ *   acquire/release barriers.
+ *
+ * If the resulting reference count is 0, a memory fence is issued to ensure
+ * proper ordering.
+ *
+ * NOTE: Memory ordering is arch dependent here.  On strongly ordered systems
+ * a relaxed ordering is acceptable, because on such systems (like x86), the
+ * hardware ensures that atomic writes are visible to other cpus immediately.
+ *
+ * However, on weakly ordered systems, and atomic read/write is only atomic with
+ * respect to the local cpu.  To ensure that other cpus see a modified value, we
+ * need to use an atomic aquire/release ordering here, which emits the
+ * appropriate ldxar and stlxr instructions to ensure load/acquire, and
+ * store/release semantics.
+ *
+ * Note further that on x86 platforms, the subsequent atomic fence instruction
+ * isn't interpreted properly by thread sanitizers, and so, with relaxed
+ * ordering, tsan still potentially complains about multithreaded read/write
+ * races.  To avoid incurring the stricter semantic constraints there, we keep
+ * the relaxed ordering (sine the hardware enforces it anyway), and instead
+ * inform tsan that its ok with the __tsan_acquire and __tsan_release notations
+ */
 static __inline__ int CRYPTO_DOWN_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
 {
+#   if defined (__arm__) || defined (__aarch64)
+    *ret = __atomic_fetch_sub(&refcnt->val, 1, __ATOMIC_ACQ_REL) - 1;
+#   else
     *ret = __atomic_fetch_sub(&refcnt->val, 1, __ATOMIC_RELAXED) - 1;
-    if (*ret == 0)
-        __atomic_thread_fence(__ATOMIC_ACQUIRE);
+#   endif
     return 1;
 }
 
