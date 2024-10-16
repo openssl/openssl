@@ -136,7 +136,7 @@ void OSSL_COMP_CERT_free(OSSL_COMP_CERT *cc)
         return;
 
     CRYPTO_DOWN_REF(&cc->references, &i);
-    REF_PRINT_COUNT("OSSL_COMP_CERT", cc);
+    REF_PRINT_COUNT("OSSL_COMP_CERT", i, cc);
     if (i > 0)
         return;
     REF_ASSERT_ISNT(i < 0);
@@ -152,7 +152,7 @@ int OSSL_COMP_CERT_up_ref(OSSL_COMP_CERT *cc)
     if (CRYPTO_UP_REF(&cc->references, &i) <= 0)
         return 0;
 
-    REF_PRINT_COUNT("OSSL_COMP_CERT", cc);
+    REF_PRINT_COUNT("OSSL_COMP_CERT", i, cc);
     REF_ASSERT_ISNT(i < 2);
     return ((i > 1) ? 1 : 0);
 }
