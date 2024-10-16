@@ -5747,6 +5747,7 @@ OSSL_CRMF_MSG_centralkeygen_requested   ?	3_5_0	EXIST::FUNCTION:CRMF
 CMS_EnvelopedData_dup                   ?	3_5_0	EXIST::FUNCTION:CMS
 OSSL_CRMF_ENCRYPTEDKEY_init_envdata     ?	3_5_0	EXIST::FUNCTION:CMS,CRMF
 EVP_get1_default_properties             ?	3_5_0	EXIST::FUNCTION:
+RAND_set1_random_provider               ?	3_5_0	EXIST::FUNCTION:
 X509_PURPOSE_get_unused_id              ?	3_5_0	EXIST::FUNCTION:
 d2i_OSSL_AUTHORITY_ATTRIBUTE_ID_SYNTAX  ?	3_5_0	EXIST::FUNCTION:
 i2d_OSSL_AUTHORITY_ATTRIBUTE_ID_SYNTAX  ?	3_5_0	EXIST::FUNCTION:
