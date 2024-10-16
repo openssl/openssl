@@ -164,8 +164,7 @@ or C<CPUINFO: N/A> if not available.
 
 =item OPENSSL_WINCTX
 
-The Windows install context.
-The Windows install context is used to compute the OpenSSL registry key name
+The Windows install context, which is used to compute the OpenSSL registry key name
 on Windows.  The full registry key is
 C<SOFTWARE\WOW6432Node\OpenSSL-{major}.{minor}-{context}>, where C<{major}>,
 C<{minor}> and C<{context}> are OpenSSL's major version number, minor version
