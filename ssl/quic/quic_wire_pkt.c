@@ -887,7 +887,7 @@ int ossl_quic_calculate_retry_integrity_tag(OSSL_LIB_CTX *libctx,
 
     if (!WPACKET_get_total_written(&wpkt, &hdr_enc_len)) {
         ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
-        return 0;
+        goto err;
     }
 
     /* Create and initialise cipher context. */
@@ -911,27 +911,27 @@ int ossl_quic_calculate_retry_integrity_tag(OSSL_LIB_CTX *libctx,
     /* Feed packet header as AAD data. */
     if (EVP_CipherUpdate(cctx, NULL, &l, buf, hdr_enc_len) != 1) {
         ERR_raise(ERR_LIB_SSL, ERR_R_EVP_LIB);
-        return 0;
+        goto err;
     }
 
     /* Feed packet body as AAD data. */
     if (EVP_CipherUpdate(cctx, NULL, &l, hdr->data,
                          hdr->len - QUIC_RETRY_INTEGRITY_TAG_LEN) != 1) {
         ERR_raise(ERR_LIB_SSL, ERR_R_EVP_LIB);
-        return 0;
+        goto err;
     }
 
     /* Finalise and get tag. */
     if (EVP_CipherFinal_ex(cctx, NULL, &l2) != 1) {
         ERR_raise(ERR_LIB_SSL, ERR_R_EVP_LIB);
-        return 0;
+        goto err;
     }
 
     if (EVP_CIPHER_CTX_ctrl(cctx, EVP_CTRL_AEAD_GET_TAG,
                             QUIC_RETRY_INTEGRITY_TAG_LEN,
                             tag) != 1) {
         ERR_raise(ERR_LIB_SSL, ERR_R_EVP_LIB);
-        return 0;
+        goto err;
     }
 
     ok = 1;
