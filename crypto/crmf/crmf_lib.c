@@ -866,8 +866,9 @@ unsigned char
  * returns a pointer to the decrypted certificate
  * returns NULL on error or if no certificate available
  */
-X509 *OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(const OSSL_CRMF_ENCRYPTEDVALUE *ecert, EVP_PKEY *pkey,
-                                            OSSL_LIB_CTX *libctx, const char *propq)
+X509 *OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(const OSSL_CRMF_ENCRYPTEDVALUE *ecert,
+                                            OSSL_LIB_CTX *libctx, const char *propq,
+                                            EVP_PKEY *pkey)
 {
     unsigned char *buf = NULL;
     const unsigned char *p;
@@ -905,8 +906,8 @@ X509 *OSSL_CRMF_ENCRYPTEDKEY_get1_encCert(const OSSL_CRMF_ENCRYPTEDKEY *ecert,
 #endif
 
     if (ecert->type != OSSL_CRMF_ENCRYPTEDKEY_ENVELOPEDDATA)
-        return OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(ecert->value.encryptedValue, pkey,
-                                                     libctx, propq);
+        return OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(ecert->value.encryptedValue,
+                                                     libctx, propq, pkey);
 #ifndef OPENSSL_NO_CMS
     bio = CMS_EnvelopedData_decrypt(ecert->value.envelopedData, NULL,
                                     pkey, NULL /* cert */, NULL, flags,
