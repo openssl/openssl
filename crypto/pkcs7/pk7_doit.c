@@ -1209,11 +1209,12 @@ int PKCS7_set_attributes(PKCS7_SIGNER_INFO *p7si,
     if (p7si->unauth_attr == NULL)
         return 0;
     for (i = 0; i < sk_X509_ATTRIBUTE_num(sk); i++) {
-        if ((sk_X509_ATTRIBUTE_set(p7si->unauth_attr, i,
-                                   X509_ATTRIBUTE_dup(sk_X509_ATTRIBUTE_value
-                                                      (sk, i))))
-            == NULL)
+        X509_ATTRIBUTE *dup = X509_ATTRIBUTE_dup(sk_X509_ATTRIBUTE_value(sk, i));
+
+        if (dup == NULL || sk_X509_ATTRIBUTE_set(p7si->unauth_attr, i, dup) == NULL) {
+            X509_ATTRIBUTE_free(dup);
             return 0;
+        }
     }
     return 1;
 }
