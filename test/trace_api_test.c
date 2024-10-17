@@ -17,48 +17,67 @@ static int test_trace_categories(void)
 
     for (cat_num = -1; cat_num <= OSSL_TRACE_CATEGORY_NUM + 1; ++cat_num) {
         const char *cat_name = OSSL_trace_get_category_name(cat_num);
-        int is_cat_name_eq = 0;
+        const char *expected_cat_name = NULL;
         int ret_cat_num;
-        int expected_ret;
 
+#define SET_EXPECTED_CAT_NAME(name) expected_cat_name = #name; break
         switch (cat_num) {
-#define CASE(name) \
-        case OSSL_TRACE_CATEGORY_##name: \
-            is_cat_name_eq = TEST_str_eq(cat_name, #name); \
-            break
-
-        CASE(ALL);
-        CASE(TRACE);
-        CASE(INIT);
-        CASE(TLS);
-        CASE(TLS_CIPHER);
-        CASE(CONF);
-        CASE(ENGINE_TABLE);
-        CASE(ENGINE_REF_COUNT);
-        CASE(PKCS5V2);
-        CASE(PKCS12_KEYGEN);
-        CASE(PKCS12_DECRYPT);
-        CASE(X509V3_POLICY);
-        CASE(BN_CTX);
-        CASE(CMP);
-        CASE(STORE);
-        CASE(DECODER);
-        CASE(ENCODER);
-        CASE(REF_COUNT);
-        CASE(HTTP);
-#undef CASE
+        case OSSL_TRACE_CATEGORY_ALL:
+            SET_EXPECTED_CAT_NAME(ALL);
+        case OSSL_TRACE_CATEGORY_TRACE:
+            SET_EXPECTED_CAT_NAME(TRACE);
+        case OSSL_TRACE_CATEGORY_INIT:
+            SET_EXPECTED_CAT_NAME(INIT);
+        case OSSL_TRACE_CATEGORY_TLS:
+            SET_EXPECTED_CAT_NAME(TLS);
+        case OSSL_TRACE_CATEGORY_TLS_CIPHER:
+            SET_EXPECTED_CAT_NAME(TLS_CIPHER);
+        case OSSL_TRACE_CATEGORY_CONF:
+            SET_EXPECTED_CAT_NAME(CONF);
+        case OSSL_TRACE_CATEGORY_ENGINE_TABLE:
+            SET_EXPECTED_CAT_NAME(ENGINE_TABLE);
+        case OSSL_TRACE_CATEGORY_ENGINE_REF_COUNT:
+            SET_EXPECTED_CAT_NAME(ENGINE_REF_COUNT);
+        case OSSL_TRACE_CATEGORY_PKCS5V2:
+            SET_EXPECTED_CAT_NAME(PKCS5V2);
+        case OSSL_TRACE_CATEGORY_PKCS12_KEYGEN:
+            SET_EXPECTED_CAT_NAME(PKCS12_KEYGEN);
+        case OSSL_TRACE_CATEGORY_PKCS12_DECRYPT:
+            SET_EXPECTED_CAT_NAME(PKCS12_DECRYPT);
+        case OSSL_TRACE_CATEGORY_X509V3_POLICY:
+            SET_EXPECTED_CAT_NAME(X509V3_POLICY);
+        case OSSL_TRACE_CATEGORY_BN_CTX:
+            SET_EXPECTED_CAT_NAME(BN_CTX);
+        case OSSL_TRACE_CATEGORY_CMP:
+            SET_EXPECTED_CAT_NAME(CMP);
+        case OSSL_TRACE_CATEGORY_STORE:
+            SET_EXPECTED_CAT_NAME(STORE);
+        case OSSL_TRACE_CATEGORY_DECODER:
+            SET_EXPECTED_CAT_NAME(DECODER);
+        case OSSL_TRACE_CATEGORY_ENCODER:
+            SET_EXPECTED_CAT_NAME(ENCODER);
+        case OSSL_TRACE_CATEGORY_REF_COUNT:
+            SET_EXPECTED_CAT_NAME(REF_COUNT);
+        case OSSL_TRACE_CATEGORY_HTTP:
+            SET_EXPECTED_CAT_NAME(HTTP);
+        case OSSL_TRACE_CATEGORY_PROVIDER:
+            SET_EXPECTED_CAT_NAME(PROVIDER);
+        case OSSL_TRACE_CATEGORY_QUERY:
+            SET_EXPECTED_CAT_NAME(QUERY);
         default:
-            is_cat_name_eq = TEST_ptr_null(cat_name);
+            if (cat_num == -1 || cat_num >= OSSL_TRACE_CATEGORY_NUM)
+                expected_cat_name = NULL;
             break;
         }
+#undef SET_EXPECTED_CAT_NAME
 
-        if (!TEST_true(is_cat_name_eq))
+        if (!TEST_str_eq(cat_name, expected_cat_name))
             return 0;
         ret_cat_num =
             OSSL_trace_get_category_num(cat_name);
-        expected_ret = cat_name != NULL ? cat_num : -1;
-        if (!TEST_int_eq(expected_ret, ret_cat_num))
-            return 0;
+        if (cat_num < OSSL_TRACE_CATEGORY_NUM)
+            if (!TEST_int_eq(cat_num, ret_cat_num))
+                return 0;
     }
 
     return 1;
