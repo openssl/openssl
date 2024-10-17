@@ -213,9 +213,13 @@ int ossl_dh_check_key(const DH *dh)
     if (DH_get_nid(dh))
         return 1;
 
+# if !defined(FIPS_MODULE) || !defined(OPENSSL_NO_FIPS_FCCPARAMS)
     /* If not then it must be FFC, which only allows certain sizes. */
     N = BN_num_bits(q);
 
     return (L == 2048 && (N == 224 || N == 256));
+# else
+    return 0;
+# endif
 }
 #endif /* OPENSSL_NO_DH */

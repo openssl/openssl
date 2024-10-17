@@ -854,6 +854,10 @@ This option will only produce a compliant FIPS provider if you have:
 
 Failure to do all of these will produce a non-compliant FIPS provider.
 
+### disable-fips-fcc-params
+
+Disable support for legacy FIPS186-4 FCC params.
+
 ### enable-fuzz-libfuzzer, enable-fuzz-afl
 
 Build with support for fuzzing using either libfuzzer or AFL.
