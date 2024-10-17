@@ -33,6 +33,9 @@
 # include <sys/sysctl.h>
 # include <sys/param.h>
 #endif
+#if defined(__FreeBSD__) && __FreeBSD_version >= 1200061
+# include <sys/random.h>
+#endif
 #if defined(__OpenBSD__)
 # include <sys/param.h>
 #endif
@@ -343,12 +346,11 @@ static ssize_t syscall_random(void *buf, size_t buflen)
      * - Solaris since 11.3
      * - OpenBSD since 5.6
      * - Linux since 3.17 with glibc 2.25
-     * - FreeBSD since 12.0 (1200061)
      *
      * Note: Sometimes getentropy() can be provided but not implemented
      * internally. So we need to check errno for ENOSYS
      */
-#  if !defined(__DragonFly__) && !defined(__NetBSD__)
+#  if !defined(__DragonFly__) && !defined(__NetBSD__) && !defined(__FreeBSD__)
 #    if defined(__GNUC__) && __GNUC__>=2 && defined(__ELF__) && !defined(__hpux)
     extern int getentropy(void *buffer, size_t length) __attribute__((weak));
 
@@ -380,16 +382,17 @@ static ssize_t syscall_random(void *buf, size_t buflen)
     if (p_getentropy.p != NULL)
         return p_getentropy.f(buf, buflen) == 0 ? (ssize_t)buflen : -1;
 #    endif
-#  endif /* !__DragonFly__ */
+#  endif /* !__DragonFly__ && !__NetBSD__ && !__FreeBSD__ */
 
     /* Linux supports this since version 3.17 */
 #  if defined(__linux) && defined(__NR_getrandom)
     return syscall(__NR_getrandom, buf, buflen, 0);
+#  elif (defined(__DragonFly__)  && __DragonFly_version >= 500700) \
+     || (defined(__NetBSD__) && __NetBSD_Version >= 1000000000) \
+     || (defined(__FreeBSD__) && __FreeBSD_version >= 1200061)
+    return getrandom(buf, buflen, 0);
 #  elif (defined(__FreeBSD__) || defined(__NetBSD__)) && defined(KERN_ARND)
     return sysctl_random(buf, buflen);
-#  elif (defined(__DragonFly__)  && __DragonFly_version >= 500700) \
-     || (defined(__NetBSD__) && __NetBSD_Version >= 1000000000)
-    return getrandom(buf, buflen, 0);
 #  elif defined(__wasi__)
     if (getentropy(buf, buflen) == 0)
       return (ssize_t)buflen;
