@@ -90,11 +90,11 @@ static const TLS_GROUP_CONSTANTS group_list[] = {
     { OSSL_TLS_GROUP_ID_brainpoolP384r1_tls13, 192, TLS1_3_VERSION, 0, -1, -1 },
     { OSSL_TLS_GROUP_ID_brainpoolP512r1_tls13, 256, TLS1_3_VERSION, 0, -1, -1 },
     /* Security bit values as given by BN_security_bits() */
-    { OSSL_TLS_GROUP_ID_ffdhe2048, 112, TLS1_3_VERSION, 0, -1, -1 },
-    { OSSL_TLS_GROUP_ID_ffdhe3072, 128, TLS1_3_VERSION, 0, -1, -1 },
-    { OSSL_TLS_GROUP_ID_ffdhe4096, 128, TLS1_3_VERSION, 0, -1, -1 },
-    { OSSL_TLS_GROUP_ID_ffdhe6144, 128, TLS1_3_VERSION, 0, -1, -1 },
-    { OSSL_TLS_GROUP_ID_ffdhe8192, 192, TLS1_3_VERSION, 0, -1, -1 },
+    { OSSL_TLS_GROUP_ID_ffdhe2048, 112, TLS1_VERSION, 0, -1, -1 },
+    { OSSL_TLS_GROUP_ID_ffdhe3072, 128, TLS1_VERSION, 0, -1, -1 },
+    { OSSL_TLS_GROUP_ID_ffdhe4096, 128, TLS1_VERSION, 0, -1, -1 },
+    { OSSL_TLS_GROUP_ID_ffdhe6144, 128, TLS1_VERSION, 0, -1, -1 },
+    { OSSL_TLS_GROUP_ID_ffdhe8192, 192, TLS1_VERSION, 0, -1, -1 },
 };
 
 #define TLS_GROUP_ENTRY(tlsname, realname, algorithm, idx) \
