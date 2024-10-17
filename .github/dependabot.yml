@@ -11,6 +11,5 @@ updates:
       - "dependencies"
       - "cla: trivial"
       - "approval: review pending"
-      - "approval: otc review pending"
     reviewers:
       - "openssl/committers"
