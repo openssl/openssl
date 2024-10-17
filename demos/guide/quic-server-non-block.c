@@ -228,10 +228,6 @@ static void wait_for_activity(SSL *ssl)
     if (SSL_net_read_desired(ssl))
         FD_SET(sock, &read_fd);
 
-    /* Add the socket file descriptor to the fd_set */
-    FD_SET(sock, &read_fd);
-    FD_SET(sock, &write_fd);
-
     /*
      * Find out when OpenSSL would next like to be called, regardless of
      * whether the state of the underlying socket has changed or not.
