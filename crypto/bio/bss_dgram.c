@@ -66,7 +66,7 @@
    #undef NO_RECVMSG
    #define NO_RECVMSG
 # endif
-# if defined(__ANDROID_API__) && __ANDROID_API__ < 21
+# if (defined(__ANDROID_API__) && __ANDROID_API__ < 21) || defined(_AIX)
 #  undef NO_RECVMMSG
 #  define NO_RECVMMSG
 # endif
