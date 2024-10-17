@@ -26,6 +26,12 @@
 
 #   define HAVE_ATOMICS 1
 
+#   if defined(__has_feature)
+#    if __has_feature(thread_sanitizer)
+#     define OSSL_TSAN_BUILD
+#    endif
+#   endif
+
 typedef struct {
     _Atomic int val;
 } CRYPTO_REF_COUNT;
@@ -48,15 +54,23 @@ static inline int CRYPTO_UP_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
  */
 static inline int CRYPTO_DOWN_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
 {
-    *ret = atomic_fetch_sub_explicit(&refcnt->val, 1, memory_order_relaxed) - 1;
+#   ifdef OSSL_TSAN_BUILD
+    /*
+     * TSAN requires acq_rel as it indicates a false positive error when
+     * the object that contains the refcount is freed otherwise.
+     */
+    *ret = atomic_fetch_sub_explicit(&refcnt->val, 1, memory_order_acq_rel) - 1;
+#   else
+    *ret = atomic_fetch_sub_explicit(&refcnt->val, 1, memory_order_release) - 1;
     if (*ret == 0)
         atomic_thread_fence(memory_order_acquire);
+#   endif
     return 1;
 }
 
 static inline int CRYPTO_GET_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
 {
-    *ret = atomic_load_explicit(&refcnt->val, memory_order_relaxed);
+    *ret = atomic_load_explicit(&refcnt->val, memory_order_acquire);
     return 1;
 }
 
@@ -76,7 +90,7 @@ static __inline__ int CRYPTO_UP_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
 
 static __inline__ int CRYPTO_DOWN_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
 {
-    *ret = __atomic_fetch_sub(&refcnt->val, 1, __ATOMIC_RELAXED) - 1;
+    *ret = __atomic_fetch_sub(&refcnt->val, 1, __ATOMIC_RELEASE) - 1;
     if (*ret == 0)
         __atomic_thread_fence(__ATOMIC_ACQUIRE);
     return 1;
@@ -135,15 +149,13 @@ static __inline int CRYPTO_UP_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
 
 static __inline int CRYPTO_DOWN_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
 {
-    *ret = _InterlockedExchangeAdd_nf(&refcnt->val, -1) - 1;
-    if (*ret == 0)
-        __dmb(_ARM_BARRIER_ISH);
+    *ret = _InterlockedExchangeAdd(&refcnt->val, -1) - 1;
     return 1;
 }
 
 static __inline int CRYPTO_GET_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
 {
-    *ret = _InterlockedOr_nf((void *)&refcnt->val, 0);
+    *ret = _InterlockedOr((void *)&refcnt->val, 0);
     return 1;
 }
 
