@@ -1434,3 +1434,20 @@ int OSSL_GENERAL_NAMES_print(BIO *out, GENERAL_NAMES *gens, int indent)
     }
     return 1;
 }
+
+int ossl_bio_print_hex(BIO *out, unsigned char *buf, int len)
+{
+    int result;
+    char *hexbuf;
+
+    if (len == 0)
+        return 1;
+
+    hexbuf = OPENSSL_buf2hexstr(buf, len);
+    if (hexbuf == NULL)
+        return 0;
+    result = BIO_puts(out, hexbuf) > 0;
+
+    OPENSSL_free(hexbuf);
+    return result;
+}
