@@ -1,0 +1,23 @@
+---
+name: Error Injection Testrun for 3.1
+
+on:
+  pull_request:
+  push:
+  schedule:
+    - cron: '0 10 * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  fuzzing_testrun:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: config
+      run: ./config --strict-warnings enable-asan enable-ubsan enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -DERROR_INJECT -DERROR_CALLSTACK && perl configdata.pm --dump
+    - name: make
+      run: make -s -j4
+    - name: fuzzing...
+      run: ./util/shlib_wrap.sh ./apps/openssl version -a && cd fuzz && (sh -c 'sleep 3600; touch stop.signal; sleep 60; test -f stop.signal && killall -6 -r ".*-test";' &) && ASAN_OPTIONS=handle_abort=true ./testrun.sh && test ! -f *-test.out
