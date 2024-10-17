@@ -50,7 +50,7 @@ X509 *TS_CONF_load_cert(const char *file)
     BIO *cert = NULL;
     X509 *x = NULL;
 
-    if ((cert = BIO_new_file(file, "r")) == NULL)
+    if ((cert = BIO_new_file(file, "rb")) == NULL)
         goto end;
     x = PEM_read_bio_X509_AUX(cert, NULL, NULL, NULL);
  end:
@@ -67,7 +67,7 @@ STACK_OF(X509) *TS_CONF_load_certs(const char *file)
     STACK_OF(X509_INFO) *allcerts = NULL;
     int i;
 
-    if ((certs = BIO_new_file(file, "r")) == NULL)
+    if ((certs = BIO_new_file(file, "rb")) == NULL)
         goto end;
     if ((othercerts = sk_X509_new_null()) == NULL)
         goto end;
@@ -98,7 +98,7 @@ EVP_PKEY *TS_CONF_load_key(const char *file, const char *pass)
     BIO *key = NULL;
     EVP_PKEY *pkey = NULL;
 
-    if ((key = BIO_new_file(file, "r")) == NULL)
+    if ((key = BIO_new_file(file, "rb")) == NULL)
         goto end;
     pkey = PEM_read_bio_PrivateKey(key, NULL, NULL, (char *)pass);
  end:
