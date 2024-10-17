@@ -26,6 +26,8 @@ Certificate enrollment options:
 
 [B<-newkey> I<filename>|I<uri>]
 [B<-newkeypass> I<arg>]
+[B<-centralkeygen>
+[B<-newkeyout> I<filename>]
 [B<-subject> I<name>]
 [B<-days> I<number>]
 [B<-reqexts> I<name>]
@@ -140,6 +142,8 @@ Mock server options:
 [B<-srv_untrusted> I<filenames>|I<uris>]
 [B<-ref_cert> I<filename>|I<uri>]
 [B<-rsp_cert> I<filename>|I<uri>]
+[B<-rsp_key> I<filename>|I<uri>]
+[B<-rsp_keypass> I<filename>|I<uri>]
 [B<-rsp_crl> I<filename>|I<uri>]
 [B<-rsp_extracerts> I<filenames>|I<uris>]
 [B<-rsp_capubs> I<filenames>|I<uris>]
@@ -308,6 +312,15 @@ If not given here, the password will be prompted for if needed.
 For more information about the format of I<arg> see
 L<openssl-passphrase-options(1)>.
 
+=item B<-centralkeygen>
+
+Request central key generation for certificate enrollment.
+This applies to B<-cmd> I<ir|cr|kur|p10cr>.
+
+=item B<-newkeyout> I<filename>
+
+File to save centrally generated private key, in PEM format.
+
 =item B<-subject> I<name>
 
 X.509 Distinguished Name (DN) to use as subject field
@@ -380,7 +393,8 @@ Flag the policies given with B<-policy_oids> as critical.
 =item B<-popo> I<number>
 
 Proof-of-possession (POPO) method to use for IR/CR/KUR; values: C<-1>..<2> where
-C<-1> = NONE, C<0> = RAVERIFIED, C<1> = SIGNATURE (default), C<2> = KEYENC.
+C<-1> = NONE, which implies central key generation,
+C<0> = RAVERIFIED, C<1> = SIGNATURE (default), C<2> = KEYENC.
 
 Note that a signature-based POPO can only be produced if a private key
 is provided via the B<-newkey> or B<-key> options.
@@ -920,7 +934,7 @@ See L<openssl(1)/Format Options> for details.
 
 Pass phrase source for certificate given with the B<-trusted>, B<-untrusted>,
 B<-own_trusted>, B<-srvcert>, B<-crlcert>, B<-out_trusted>, B<-extracerts>,
-B<-srv_trusted>, B<-srv_untrusted>, B<-ref_cert>, B<-rsp_cert>,
+B<-srv_trusted>, B<-srv_untrusted>, B<-ref_cert>,
 B<-rsp_extracerts>, B<-rsp_capubs>,
 B<-rsp_newwithnew>, B<-rsp_newwithold>, B<-rsp_oldwithnew>,
 B<-tls_extra>, and B<-tls_trusted> options.
@@ -1193,6 +1207,14 @@ Certificate to be expected for RR messages and any oldCertID in KUR messages.
 =item B<-rsp_cert> I<filename>|I<uri>
 
 Certificate to be returned as mock enrollment result.
+
+=item B<-rsp_key> I<filename>|I<uri>
+
+Private key to be returned as central key generation result.
+
+=item B<-rsp_keypass> I<arg>
+
+Pass phrase source for B<rsp_cert> and B<rsp_key>.
 
 =item B<-rsp_crl> I<filename>|I<uri>
 
@@ -1499,6 +1521,9 @@ The B<-profile> option was added in OpenSSL 3.3.
 
 B<-crlcert>, B<-oldcrl>, B<-crlout>, B<-crlform>
 and B<-rsp_crl> options were added in OpenSSL 3.4.
+
+B<-centralkeygen>, b<-newkeyout>, B<-rsp_key> and
+B<-rsp_keypass> were added in OpenSSL 3.5.
 
 =head1 COPYRIGHT
 
