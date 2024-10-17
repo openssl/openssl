@@ -98,11 +98,14 @@ static int aes_gcm_encrypt(const int random_iv)
                                             &gcm_ivlen);
 
     /*
-     * Initialise an encrypt operation with the cipher/mode, key, IV and
-     * IV length parameter.
-     * For demonstration purposes the IV is being set here. In a compliant
-     * application the IV would be generated internally so the iv passed in
-     * would be NULL.
+     * Initialise an encrypt operation with the cipher/mode, key, IV
+     * and IV length parameter.
+     * https://en.wikipedia.org/wiki/Galois/Counter_Mode#Security
+     * Security depends on using non-repeating IV. Pass NULL for a
+     * randomly generated IV. Retrieve it after encryption, as shown
+     * after Finalise step. Only pass in externally generated IV, if
+     * it is externally ensured to not be repeating, i.e. as done in
+     * TLSv1.3.
      */
     if (!EVP_EncryptInit_ex2(ctx, cipher, gcm_key, random_iv ? NULL : gcm_iv, params))
         goto err;
