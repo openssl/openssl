@@ -69,7 +69,7 @@ void ossl_ecx_key_free(ECX_KEY *key)
         return;
 
     CRYPTO_DOWN_REF(&key->references, &i);
-    REF_PRINT_COUNT("ECX_KEY", key);
+    REF_PRINT_COUNT("ECX_KEY", i, key);
     if (i > 0)
         return;
     REF_ASSERT_ISNT(i < 0);
@@ -92,7 +92,7 @@ int ossl_ecx_key_up_ref(ECX_KEY *key)
     if (CRYPTO_UP_REF(&key->references, &i) <= 0)
         return 0;
 
-    REF_PRINT_COUNT("ECX_KEY", key);
+    REF_PRINT_COUNT("ECX_KEY", i, key);
     REF_ASSERT_ISNT(i < 2);
     return ((i > 1) ? 1 : 0);
 }
