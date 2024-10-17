@@ -345,9 +345,7 @@ static int generate_key(DH *dh)
                     if (!BN_clear_bit(priv_key, 0))
                         goto err;
                 }
-            } else
-#endif
-            {
+            } else {
                 /* Do a partial check for invalid p, q, g */
                 if (!ossl_ffc_params_simple_validate(dh->libctx, &dh->params,
                                                      FFC_PARAM_TYPE_DH, NULL))
@@ -363,6 +361,7 @@ static int generate_key(DH *dh)
                                                    priv_key))
                     goto err;
             }
+#endif
         }
     }
 

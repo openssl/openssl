@@ -420,6 +420,13 @@ static int dh_validate(const void *keydata, int selection, int checktype)
     if ((selection & DH_POSSIBLE_SELECTIONS) == 0)
         return 1; /* nothing to validate */
 
+#ifdef FIPS_MODULE
+    /*
+     * In FIPS provider, always check the domain parameters to disallow
+     * operations on keys with FIPS 186-4 params.
+     */
+    selection |= OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS;
+#endif
     if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0) {
         /*
          * Both of these functions check parameters. DH_check_params_ex()
