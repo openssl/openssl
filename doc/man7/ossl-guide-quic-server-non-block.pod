@@ -32,7 +32,7 @@ text that will be echoed back by the server.
 Both the listening socket and connected socket are "nonblocking".  However,
 we use select() to make the listening socket block when it cannot read/write.
 Rather than stopping and waiting, your application may need to go and do other
-tasks whilst the B<SSL> object is unable to read/write. For example: updating a
+tasks whilst the B<SSL> object is unable to read/write.  For example: updating a
 GUI or performing operations on some other connection or stream.
 
 The complete source code for this example nonblocking QUIC server is available
@@ -44,12 +44,12 @@ We assume that you already have OpenSSL installed on your system; that you
 already have some fundamental understanding of OpenSSL concepts and QUIC (see
 L<ossl-guide-libraries-introduction(7)> and L<ossl-guide-quic-introduction(7)>);
 and that you know how to write and build C code and link it against the
-libcrypto and libssl libraries that are provided by OpenSSL. It also assumes
+libcrypto and libssl libraries that are provided by OpenSSL.  It also assumes
 that you have a basic understanding of UDP/IP and sockets.
 
 =head2 Creating the SSL_CTX and SSL objects
 
-The first step is to create an B<SSL_CTX> object for our server. We use the
+The first step is to create an B<SSL_CTX> object for our server.  We use the
 L<SSL_CTX_new(3)> function for this purpose.  We pass as an argument the return
 value of the function L<OSSL_QUIC_server_method(3)>.  You should use this method
 whenever you are writing a QUIC server.
@@ -255,10 +255,6 @@ a more real-world application would likely use this time to perform other tasks.
     if (SSL_net_read_desired(ssl))
         FD_SET(sock, &read_fd);
 
-    /* Add the socket file descriptor to the fd_set */
-    FD_SET(sock, &read_fd);
-    FD_SET(sock, &write_fd);
-
     /*
      * Find out when OpenSSL would next like to be called, regardless of
      * whether the state of the underlying socket has changed or not.
@@ -313,7 +309,7 @@ With the handshake complete, the server reads all the client input.
         }
     }
 
-Finally, we echo the received data back to the client. We can use
+Finally, we echo the received data back to the client.  We can use
 L<SSL_write_ex2(3)> to pass in a special flag SSL_WRITE_FLAG_CONCLUDE that will
 send a FIN packet once the write has successfully finished writing all the data
 to the peer.
