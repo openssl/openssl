@@ -142,19 +142,34 @@ static const struct cipher_data_st {
     { NID_aes_192_ctr, 16, 192 / 8, 16, EVP_CIPH_CTR_MODE, CRYPTO_AES_CTR },
     { NID_aes_256_ctr, 16, 256 / 8, 16, EVP_CIPH_CTR_MODE, CRYPTO_AES_CTR },
 #endif
-#if 0                            /* Not yet supported */
-    { NID_aes_128_xts, 16, 128 / 8 * 2, 16, EVP_CIPH_XTS_MODE, CRYPTO_AES_XTS },
-    { NID_aes_256_xts, 16, 256 / 8 * 2, 16, EVP_CIPH_XTS_MODE, CRYPTO_AES_XTS },
+#if !defined(CHECK_BSD_STYLE_MACROS) || defined(CRYPTO_AES_CFB)
+    { NID_aes_128_cfb128, 16, 128 / 8, 16, EVP_CIPH_CFB_MODE, CRYPTO_AES_CFB },
+    { NID_aes_192_cfb128, 16, 192 / 8, 16, EVP_CIPH_CFB_MODE, CRYPTO_AES_CFB },
+    { NID_aes_256_cfb128, 16, 256 / 8, 16, EVP_CIPH_CFB_MODE, CRYPTO_AES_CFB },
+#endif
+#if !defined(CHECK_BSD_STYLE_MACROS) || defined(CRYPTO_AES_OFB)
+    { NID_aes_128_ofb128, 16, 128 / 8, 16, EVP_CIPH_OFB_MODE, CRYPTO_AES_OFB },
+    { NID_aes_192_ofb128, 16, 192 / 8, 16, EVP_CIPH_OFB_MODE, CRYPTO_AES_OFB },
+    { NID_aes_256_ofb128, 16, 256 / 8, 16, EVP_CIPH_OFB_MODE, CRYPTO_AES_OFB },
+#endif
+#if !defined(CHECK_BSD_STYLE_MACROS) || defined(CRYPTO_AES_XTS)
+    { NID_aes_128_xts, 16, 128 / 8 * 2, 16, EVP_CIPH_XTS_MODE | EVP_CIPH_CUSTOM_IV, CRYPTO_AES_XTS },
+    { NID_aes_256_xts, 16, 256 / 8 * 2, 16, EVP_CIPH_XTS_MODE | EVP_CIPH_CUSTOM_IV, CRYPTO_AES_XTS },
 #endif
 #if !defined(CHECK_BSD_STYLE_MACROS) || defined(CRYPTO_AES_ECB)
     { NID_aes_128_ecb, 16, 128 / 8, 0, EVP_CIPH_ECB_MODE, CRYPTO_AES_ECB },
     { NID_aes_192_ecb, 16, 192 / 8, 0, EVP_CIPH_ECB_MODE, CRYPTO_AES_ECB },
     { NID_aes_256_ecb, 16, 256 / 8, 0, EVP_CIPH_ECB_MODE, CRYPTO_AES_ECB },
 #endif
-#if 0                            /* Not yet supported */
-    { NID_aes_128_gcm, 16, 128 / 8, 16, EVP_CIPH_GCM_MODE, CRYPTO_AES_GCM },
-    { NID_aes_192_gcm, 16, 192 / 8, 16, EVP_CIPH_GCM_MODE, CRYPTO_AES_GCM },
-    { NID_aes_256_gcm, 16, 256 / 8, 16, EVP_CIPH_GCM_MODE, CRYPTO_AES_GCM },
+#if !defined(CHECK_BSD_STYLE_MACROS) || defined(CRYPTO_AES_GCM)
+    { NID_aes_128_gcm, 16, 128 / 8, 16, EVP_CIPH_GCM_MODE | EVP_CIPH_CUSTOM_IV, CRYPTO_AES_GCM },
+    { NID_aes_192_gcm, 16, 192 / 8, 16, EVP_CIPH_GCM_MODE | EVP_CIPH_CUSTOM_IV, CRYPTO_AES_GCM },
+    { NID_aes_256_gcm, 16, 256 / 8, 16, EVP_CIPH_GCM_MODE | EVP_CIPH_CUSTOM_IV, CRYPTO_AES_GCM },
+#endif
+#if !defined(CHECK_BSD_STYLE_MACROS) || defined(CRYPTO_AES_CCM)
+    { NID_aes_128_ccm, 16, 128 / 8, 16, EVP_CIPH_CCM_MODE | EVP_CIPH_CUSTOM_IV, CRYPTO_AES_CCM },
+    { NID_aes_192_ccm, 16, 192 / 8, 16, EVP_CIPH_CCM_MODE | EVP_CIPH_CUSTOM_IV, CRYPTO_AES_CCM },
+    { NID_aes_256_ccm, 16, 256 / 8, 16, EVP_CIPH_CCM_MODE | EVP_CIPH_CUSTOM_IV, CRYPTO_AES_CCM },
 #endif
 #ifndef OPENSSL_NO_CAMELLIA
     { NID_camellia_128_cbc, 16, 128 / 8, 16, EVP_CIPH_CBC_MODE,
@@ -238,7 +253,7 @@ static int cipher_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     return 1;
 }
 
-static int cipher_do_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+static int cipher_do_cipher_noauth(EVP_CIPHER_CTX *ctx, unsigned char *out,
                             const unsigned char *in, size_t inl)
 {
     struct cipher_ctx *cipher_ctx =
@@ -317,6 +332,49 @@ static int cipher_do_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 #endif
 
     return 1;
+}
+
+static int cipher_do_cipher_auth(EVP_CIPHER_CTX *ctx, unsigned char *out,
+                            const unsigned char *in, size_t inl)
+{
+    struct cipher_ctx *cipher_ctx =
+        (struct cipher_ctx *)EVP_CIPHER_CTX_get_cipher_data(ctx);
+    struct crypt_auth_op cryp;
+    unsigned char *iv = EVP_CIPHER_CTX_iv_noconst(ctx);
+
+    memset(&cryp, 0, sizeof(cryp));
+    cryp.ses = cipher_ctx->sess.ses;
+    cryp.len = inl;
+    cryp.src = (void *)in;
+    cryp.dst = (void *)out;
+    cryp.iv = (void *)iv;
+    cryp.auth_len = 0;
+    cryp.tag_len = 0;
+    cryp.op = cipher_ctx->op;
+    cryp.flags = COP_FLAG_WRITE_IV;
+
+    if (ioctl(cfd, CIOCAUTHCRYPT, &cryp) < 0) {
+        ERR_raise_data(ERR_LIB_SYS, errno, "calling ioctl()");
+        return 0;
+    }
+
+    return 1;
+}
+
+static int cipher_do_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+                            const unsigned char *in, size_t inl)
+{
+    struct cipher_ctx *cipher_ctx =
+        (struct cipher_ctx *)EVP_CIPHER_CTX_get_cipher_data(ctx);
+    switch (cipher_ctx->mode) {
+    case EVP_CIPH_GCM_MODE:
+    case EVP_CIPH_CCM_MODE:
+        return cipher_do_cipher_auth(ctx, out, in, inl);
+        break;
+
+    default:
+        return cipher_do_cipher_noauth(ctx, out, in, inl);
+    }
 }
 
 static int ctr_do_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
