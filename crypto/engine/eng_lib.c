@@ -12,7 +12,7 @@
 #include <openssl/rand.h>
 #include "internal/refcount.h"
 
-CRYPTO_RWLOCK *global_engine_lock;
+CRYPTO_RWLOCK *global_engine_lock = NULL;
 
 CRYPTO_ONCE engine_lock_init = CRYPTO_ONCE_STATIC_INIT;
 
