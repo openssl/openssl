@@ -87,16 +87,8 @@ the source tarballs, having a local copy of the git repository with
 the entire project history gives you much more insight into the
 code base.
 
-The official OpenSSL Git Repository is located at [git.openssl.org].
-There is a GitHub mirror of the repository at [github.com/openssl/openssl],
-which is updated automatically from the former on every commit.
-
-A local copy of the Git Repository can be obtained by cloning it from
-the original OpenSSL repository using
-
-    git clone git://git.openssl.org/openssl.git
-
-or from the GitHub mirror using
+A local copy of the Git Repository can be obtained by cloning it
+from the GitHub
 
     git clone https://github.com/openssl/openssl.git
 
@@ -213,14 +205,6 @@ All rights reserved.
 [www.openssl.org]:
     <https://www.openssl.org>
     "OpenSSL Homepage"
-
-[git.openssl.org]:
-    <https://git.openssl.org>
-    "OpenSSL Git Repository"
-
-[git.openssl.org]:
-    <https://git.openssl.org>
-    "OpenSSL Git Repository"
 
 [github.com/openssl/openssl]:
     <https://github.com/openssl/openssl>
