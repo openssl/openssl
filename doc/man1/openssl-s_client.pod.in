@@ -1120,7 +1120,7 @@ options were added in OpenSSL 3.2.
 The
 <-ocsp_check_leaf>
 and B<-ocsp_check_all>
-options were added in OpenSSL 3.4.
+options were added in OpenSSL 3.5.
 
 =head1 COPYRIGHT
 
