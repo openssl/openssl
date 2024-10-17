@@ -28,7 +28,7 @@ static int s390x_mod_exp_hw(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
     size_t size;
     int res = 0;
 
-    if (OPENSSL_s390xcex == -1)
+    if (OPENSSL_s390xcex == -1 || OPENSSL_s390xcex_nodev)
         return 0;
     size = BN_num_bytes(m);
     buffer = OPENSSL_zalloc(4 * size);
@@ -47,12 +47,21 @@ static int s390x_mod_exp_hw(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
     if (ioctl(OPENSSL_s390xcex, ICARSAMODEXPO, &me) != -1) {
         if (BN_bin2bn(me.outputdata, size, r) != NULL)
             res = 1;
-    } else if (errno == EBADF) {
-        /*-
+    } else if (errno == EBADF || errno == ENOTTY) {
+        /*
          * In this cases, someone (e.g. a sandbox) closed the fd.
          * Make sure to not further use this hardware acceleration.
+         * In case of ENOTTY the file descriptor was already reused for another
+         * file. Do not attempt to use or close that file descriptor anymore.
          */
         OPENSSL_s390xcex = -1;
+    } else if (errno == ENODEV) {
+        /*
+         * No crypto card(s) available to handle RSA requests.
+         * Make sure to not further use this hardware acceleration,
+         * but do not close the file descriptor.
+         */
+        OPENSSL_s390xcex_nodev = 1;
     }
  dealloc:
     OPENSSL_clear_free(buffer, 4 * size);
@@ -75,7 +84,7 @@ int s390x_crt(BIGNUM *r, const BIGNUM *i, const BIGNUM *p, const BIGNUM *q,
     size_t size, plen, qlen;
     int res = 0;
 
-    if (OPENSSL_s390xcex == -1)
+    if (OPENSSL_s390xcex == -1 || OPENSSL_s390xcex_nodev)
         return 0;
     /*-
      * Hardware-accelerated CRT can only deal with p>q.  Fall back to
@@ -115,12 +124,21 @@ int s390x_crt(BIGNUM *r, const BIGNUM *i, const BIGNUM *p, const BIGNUM *q,
     if (ioctl(OPENSSL_s390xcex, ICARSACRT, &crt) != -1) {
         if (BN_bin2bn(crt.outputdata, crt.outputdatalength, r) != NULL)
             res = 1;
-    } else if (errno == EBADF) {
-        /*-
+    } else if (errno == EBADF || errno == ENOTTY) {
+        /*
          * In this cases, someone (e.g. a sandbox) closed the fd.
          * Make sure to not further use this hardware acceleration.
+         * In case of ENOTTY the file descriptor was already reused for another
+         * file. Do not attempt to use or close that file descriptor anymore.
          */
         OPENSSL_s390xcex = -1;
+    } else if (errno == ENODEV) {
+        /*
+         * No crypto card(s) available to handle RSA requests.
+         * Make sure to not further use this hardware acceleration,
+         * but do not close the file descriptor.
+         */
+        OPENSSL_s390xcex_nodev = 1;
     }
  dealloc:
     OPENSSL_clear_free(buffer, 9 * size + 24);
