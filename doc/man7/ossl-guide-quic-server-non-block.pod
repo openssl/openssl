@@ -19,8 +19,15 @@ simple, non-concurrent, QUIC "echo" server application which accepts one client
 connection at a time, echoing input from the client back to the same client.
 Once the current client disconnects, the next client connection is accepted.
 
-The server only accepts HTTP/1.0 requests, which is non-standard and will not
+The server only accepts "http/1.0" and "hq-interop" ALPN's and doesn't actually
+implement HTTP but only does a simple echo.  This is non-standard and will not
 be supported by real world servers.  This is for demonstration purposes only.
+
+There are various methods to test this server: B<quic-client-block.c> and
+B<quic-client-non-block.c> will send a basic HTTP/1.0 request, which the server
+will echo back.  You can also test this server by running
+`openssl s_client -connect localhost:4443 -4 -quic -alpn http/1.0` and entering
+text that will be echoed back by the server.
 
 Both the listening socket and connected socket are "nonblocking".  However,
 we use select() to make the listening socket block when it cannot read/write.
