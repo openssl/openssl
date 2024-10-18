@@ -242,7 +242,8 @@ EXT_RETURN tls_construct_ctos_supported_groups(SSL_CONNECTION *s, WPACKET *pkt,
                /* Sub-packet for supported_groups extension */
             || !WPACKET_start_sub_packet_u16(pkt)
             || !WPACKET_start_sub_packet_u16(pkt)
-            || !WPACKET_set_flags(pkt, WPACKET_FLAGS_NON_ZERO_LENGTH)) {
+            || !WPACKET_set_flags(pkt, WPACKET_FLAGS_NON_ZERO_LENGTH)
+            || !tls_add_grease16_to_packet(s, pkt, TLSEXT_TYPE_supported_groups)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return EXT_RETURN_FAIL;
     }
@@ -337,6 +338,8 @@ EXT_RETURN tls_construct_ctos_sig_algs(SSL_CONNECTION *s, WPACKET *pkt,
             || !WPACKET_start_sub_packet_u16(pkt)
                /* Sub-packet for the actual list */
             || !WPACKET_start_sub_packet_u16(pkt)
+               /* put grease first */
+            || !tls_add_grease16_to_packet(s, pkt, TLSEXT_TYPE_signature_algorithms)
             || !tls12_copy_sigalgs(s, pkt, salg, salglen)
             || !WPACKET_close(pkt)
             || !WPACKET_close(pkt)) {
@@ -577,7 +580,9 @@ EXT_RETURN tls_construct_ctos_supported_versions(SSL_CONNECTION *s, WPACKET *pkt
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_supported_versions)
             || !WPACKET_start_sub_packet_u16(pkt)
-            || !WPACKET_start_sub_packet_u8(pkt)) {
+            || !WPACKET_start_sub_packet_u8(pkt)
+               /* Put grease first */
+            || !tls_add_grease16_to_packet(s, pkt, TLSEXT_TYPE_supported_versions)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return EXT_RETURN_FAIL;
     }
@@ -609,6 +614,7 @@ EXT_RETURN tls_construct_ctos_psk_kex_modes(SSL_CONNECTION *s, WPACKET *pkt,
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_psk_kex_modes)
             || !WPACKET_start_sub_packet_u16(pkt)
             || !WPACKET_start_sub_packet_u8(pkt)
+            || !tls_add_grease8_to_packet(s, pkt, TLSEXT_TYPE_psk_kex_modes)
             || !WPACKET_put_bytes_u8(pkt, TLSEXT_KEX_MODE_KE_DHE)
             || (nodhe && !WPACKET_put_bytes_u8(pkt, TLSEXT_KEX_MODE_KE))
             || !WPACKET_close(pkt)
@@ -731,6 +737,22 @@ EXT_RETURN tls_construct_ctos_key_share(SSL_CONNECTION *s, WPACKET *pkt,
     if (!add_key_share(s, pkt, curve_id)) {
         /* SSLfatal() already called */
         return EXT_RETURN_FAIL;
+    }
+
+    {
+        SSL_CTX *ctx = SSL_CONNECTION_GET_CTX(s);
+        OSSL_GREASE *g;
+
+        for (g = ctx->grease; g != NULL; g = g->next) {
+            if (g->extension == TLSEXT_TYPE_key_share) {
+                /* Throw in the whole int value for the "encoded_point" */
+                if (!WPACKET_put_bytes_u16(pkt, g->value & 0xFFFF)
+                        || !WPACKET_sub_memcpy_u16(pkt, &g->value, sizeof(g->value))) {
+                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                    return EXT_RETURN_FAIL;
+                }
+            }
+        }
     }
 
     if (!WPACKET_close(pkt) || !WPACKET_close(pkt)) {
@@ -2104,7 +2126,10 @@ EXT_RETURN tls_construct_ctos_client_cert_type(SSL_CONNECTION *sc, WPACKET *pkt,
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_client_cert_type)
             || !WPACKET_start_sub_packet_u16(pkt)
-            || !WPACKET_sub_memcpy_u8(pkt, sc->client_cert_type, sc->client_cert_type_len)
+            || !WPACKET_start_sub_packet_u8(pkt)
+            || !tls_add_grease8_to_packet(sc, pkt, TLSEXT_TYPE_client_cert_type)
+            || !WPACKET_memcpy(pkt, sc->client_cert_type, sc->client_cert_type_len)
+            || !WPACKET_close(pkt)
             || !WPACKET_close(pkt)) {
         SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return EXT_RETURN_FAIL;
@@ -2156,7 +2181,10 @@ EXT_RETURN tls_construct_ctos_server_cert_type(SSL_CONNECTION *sc, WPACKET *pkt,
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_server_cert_type)
             || !WPACKET_start_sub_packet_u16(pkt)
-            || !WPACKET_sub_memcpy_u8(pkt, sc->server_cert_type, sc->server_cert_type_len)
+            || !WPACKET_start_sub_packet_u8(pkt)
+            || !tls_add_grease8_to_packet(sc, pkt, TLSEXT_TYPE_server_cert_type)
+            || !WPACKET_memcpy(pkt, sc->server_cert_type, sc->server_cert_type_len)
+            || !WPACKET_close(pkt)
             || !WPACKET_close(pkt)) {
         SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return EXT_RETURN_FAIL;
