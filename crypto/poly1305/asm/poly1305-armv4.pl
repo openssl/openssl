@@ -1240,6 +1240,7 @@ $code.=<<___;
 .align	2
 #if	__ARM_MAX_ARCH__>=7
 .extern   OPENSSL_armcap_P
+.hidden   OPENSSL_armcap_P
 #endif
 ___
 

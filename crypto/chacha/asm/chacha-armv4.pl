@@ -1155,6 +1155,7 @@ $code.=<<___;
 	ldmia		sp!,{r4-r11,pc}
 .size	ChaCha20_neon,.-ChaCha20_neon
 .extern	OPENSSL_armcap_P
+.hidden	OPENSSL_armcap_P
 #endif
 ___
 }}}
