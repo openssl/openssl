@@ -836,7 +836,8 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
             if (psksess == NULL
                     || !SSL_SESSION_set1_master_key(psksess, psk, psklen)
                     || !SSL_SESSION_set_cipher(psksess, cipher)
-                    || !SSL_SESSION_set_protocol_version(psksess, TLS1_3_VERSION)) {
+                    || !SSL_SESSION_set_protocol_version(psksess, TLS1_3_VERSION)
+                    || !SSL_SESSION_set1_cache_id(psksess, s->cache_id, s->cache_id_len)) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 OPENSSL_cleanse(psk, psklen);
                 return EXT_RETURN_FAIL;
