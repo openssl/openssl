@@ -3084,7 +3084,7 @@ static int tls_process_cke_dhe(SSL_CONNECTION *s, PACKET *pkt)
     }
 
     if (!EVP_PKEY_set1_encoded_public_key(ckey, data, i)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, ERR_R_DH_LIB);
         goto err;
     }
 
@@ -3138,7 +3138,7 @@ static int tls_process_cke_ecdhe(SSL_CONNECTION *s, PACKET *pkt)
         }
 
         if (EVP_PKEY_set1_encoded_public_key(ckey, data, i) <= 0) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EC_LIB);
+            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, ERR_R_EC_LIB);
             goto err;
         }
     }
