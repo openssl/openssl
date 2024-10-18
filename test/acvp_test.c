@@ -363,8 +363,10 @@ static int ecdh_cofactor_derive_test(int tstid)
     if (!ec_cofactors)
         return TEST_skip("not supported by FIPS provider version");
 
-    if (!TEST_ptr(peer1 = EVP_PKEY_Q_keygen(libctx, NULL, "EC", curve))
-            || !TEST_ptr(peer2 = EVP_PKEY_Q_keygen(libctx, NULL, "EC", curve)))
+    if (!TEST_ptr(peer1 = EVP_PKEY_Q_keygen(libctx, NULL, "EC", curve)))
+        return TEST_skip("Curve %s not supported by the FIPS provider", curve);
+
+    if (!TEST_ptr(peer2 = EVP_PKEY_Q_keygen(libctx, NULL, "EC", curve)))
         goto err;
 
     params[1] = OSSL_PARAM_construct_end();
