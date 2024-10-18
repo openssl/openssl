@@ -30,6 +30,19 @@ OpenSSL 3.4
 
 ### Changes between 3.4 and 3.5 [xx XXX xxxx]
 
+ * Enhanced PKCS#7 inner contents verification.
+   In the PKCS7_verify() function, the BIO *indata parameter refers to the
+   signed data if the content is detached from p7. Otherwise, indata should be
+   NULL, and then the signed data must be in p7.
+
+   The previous OpenSSL implementation only supported MIME inner content
+   [RFC 5652, section 5.2].
+
+   The added functionality now enables support for PKCS#7 inner content
+   [RFC 2315, section 7].
+
+   *Małgorzata Olszówka*
+
  * Optionally allow the FIPS provider to use the `JITTER` entropy source.
    Note that using this option will require the resulting FIPS provider
    to undergo entropy source validation [ESV] by the [CMVP], without this
