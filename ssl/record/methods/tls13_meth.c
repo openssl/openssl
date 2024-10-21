@@ -208,7 +208,7 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
 
         if ((mac_ctx = EVP_MAC_CTX_dup(rl->mac_ctx)) == NULL
             || !EVP_MAC_update(mac_ctx, nonce, nonce_len)
-            || !EVP_MAC_update(mac_ctx, recheader, sizeof(recheader))
+            || !EVP_MAC_update(mac_ctx, recheader, hdrlen)
             || !EVP_MAC_update(mac_ctx, rec->input, rec->length)
             || !EVP_MAC_final(mac_ctx, tag, &taglen, rl->taglen)) {
             RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -248,12 +248,9 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
      * any AAD.
      */
     if ((mode == EVP_CIPH_CCM_MODE
-                 && EVP_CipherUpdate(enc_ctx, NULL, &lenu, NULL,
-                                     (unsigned int)rec->length) <= 0)
-            || EVP_CipherUpdate(enc_ctx, NULL, &lenu, recheader,
-                                sizeof(recheader)) <= 0
-            || EVP_CipherUpdate(enc_ctx, rec->data, &lenu, rec->input,
-                                (unsigned int)rec->length) <= 0
+                 && EVP_CipherUpdate(enc_ctx, NULL, &lenu, NULL, (int)rec->length) <= 0)
+            || EVP_CipherUpdate(enc_ctx, NULL, &lenu, recheader, (int)hdrlen) <= 0
+            || EVP_CipherUpdate(enc_ctx, rec->data, &lenu, rec->input, (int)rec->length) <= 0
             || EVP_CipherFinal_ex(enc_ctx, rec->data + lenu, &lenf) <= 0
             || (size_t)(lenu + lenf) != rec->length) {
         return 0;
@@ -302,7 +299,8 @@ static int tls13_post_process_record(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec)
         size_t end;
 
         if (rec->length == 0
-                || rec->type != SSL3_RT_APPLICATION_DATA) {
+                || rl->isdtls ? !DTLS13_UNI_HDR_FIX_BITS_IS_SET(rec->type)
+                              : rec->type != SSL3_RT_APPLICATION_DATA) {
             RLAYERfatal(rl, SSL_AD_UNEXPECTED_MESSAGE,
                         SSL_R_BAD_RECORD_TYPE);
             return 0;
@@ -340,6 +338,11 @@ static uint8_t tls13_get_record_type(OSSL_RECORD_LAYER *rl,
      * when encrypting in TLSv1.3. The "inner" record type encodes the "real"
      * record type from the template.
      */
+    if (rl->isdtls) {
+        return DTLS13_UNI_HDR_FIX_BITS | DTLS13_UNI_HDR_SEQ_BIT | DTLS13_UNI_HDR_LEN_BIT
+               | (DTLS13_UNI_HDR_EPOCH_BITS_MASK & rl->epoch);
+    }
+
     return SSL3_RT_APPLICATION_DATA;
 }
 
