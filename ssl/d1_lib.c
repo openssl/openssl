@@ -923,7 +923,7 @@ size_t dtls1_min_mtu(SSL_CONNECTION *s)
 
 size_t DTLS_get_data_mtu(const SSL *ssl)
 {
-    size_t mac_overhead, int_overhead, blocksize, ext_overhead;
+    size_t mac_overhead, int_overhead, blocksize, ext_overhead, rechdrlen = 0;
     const SSL_CIPHER *ciph = SSL_get_current_cipher(ssl);
     size_t mtu;
     const SSL_CONNECTION *s = SSL_CONNECTION_FROM_CONST_SSL_ONLY(ssl);
@@ -945,10 +945,33 @@ size_t DTLS_get_data_mtu(const SSL *ssl)
     else
         int_overhead += mac_overhead;
 
+    if (SSL_version(ssl) == DTLS1_3_VERSION) {
+        switch (SSL_get_state(ssl)) {
+        case TLS_ST_BEFORE:
+        case DTLS_ST_CR_HELLO_VERIFY_REQUEST:
+        case TLS_ST_CR_SRVR_HELLO:
+        case TLS_ST_CW_CLNT_HELLO:
+        case TLS_ST_CW_COMP_CERT:
+        case TLS_ST_CW_KEY_EXCH:
+        case TLS_ST_SW_HELLO_REQ:
+        case TLS_ST_SR_CLNT_HELLO:
+        case DTLS_ST_SW_HELLO_VERIFY_REQUEST:
+        case TLS_ST_SW_SRVR_HELLO:
+        case TLS_ST_CR_HELLO_REQ:
+            rechdrlen = DTLS1_RT_HEADER_LENGTH;
+            break;
+        default:
+            rechdrlen = DTLS13_UNI_HDR_FIXED_LENGTH;
+            break;
+        }
+    } else {
+        rechdrlen = DTLS1_RT_HEADER_LENGTH;
+    }
+
     /* Subtract external overhead (e.g. IV/nonce, separate MAC) */
-    if (ext_overhead + DTLS1_RT_HEADER_LENGTH >= mtu)
+    if (ext_overhead + rechdrlen >= mtu)
         return 0;
-    mtu -= ext_overhead + DTLS1_RT_HEADER_LENGTH;
+    mtu -= ext_overhead + rechdrlen;
 
     /* Round encrypted payload down to cipher block size (for CBC etc.)
      * No check for overflow since 'mtu % blocksize' cannot exceed mtu. */

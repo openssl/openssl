@@ -120,6 +120,21 @@ static void copy_flags(BIO *bio)
 #define MSG_FRAG_LEN_MID        10
 #define MSG_FRAG_LEN_LO         11
 
+/* Returns true if the unified header fixed bits are set (rfc9147 section 4) */
+#define DTLS13_UNI_HDR_FIX_BITS_IS_SET(byte) \
+    (((byte) & DTLS13_UNI_HDR_FIX_BITS_MASK) == DTLS13_UNI_HDR_FIX_BITS)
+
+/* Returns true if the unified header connection id bit is set (rfc9147 section 4) */
+#define DTLS13_UNI_HDR_CID_BIT_IS_SET(byte) \
+    (((byte) & DTLS13_UNI_HDR_CID_BIT) == DTLS13_UNI_HDR_CID_BIT)
+
+/* Returns true if the unified header sequence number bit is set (rfc9147 section 4) */
+#define DTLS13_UNI_HDR_SEQ_BIT_IS_SET(byte) \
+    (((byte) & DTLS13_UNI_HDR_SEQ_BIT) == DTLS13_UNI_HDR_SEQ_BIT)
+
+/* Returns true if the unified header length bit is set (rfc9147 section 4) */
+#define DTLS13_UNI_HDR_LEN_BIT_IS_SET(byte) \
+    (((byte) & DTLS13_UNI_HDR_LEN_BIT) == DTLS13_UNI_HDR_LEN_BIT)
 
 static void dump_data(const char *data, int len)
 {
@@ -135,6 +150,9 @@ static void dump_data(const char *data, int len)
         if (rem != len)
             printf("*\n");
         printf("*---- START OF RECORD ----\n");
+        /*
+         * TODO(DTLSv1.3): support variable length headers
+         */
         if (rem < DTLS1_RT_HEADER_LENGTH) {
             printf("*---- RECORD TRUNCATED ----\n");
             break;
@@ -543,8 +561,22 @@ int mempacket_test_inject(BIO *bio, const char *in, int inl, int pktnum,
     MEMPACKET *thispkt = NULL, *looppkt, *nextpkt, *allpkts[3];
     int i, duprec;
     const unsigned char *inu = (const unsigned char *)in;
-    size_t len = ((inu[RECORD_LEN_HI] << 8) | inu[RECORD_LEN_LO])
-                 + DTLS1_RT_HEADER_LENGTH;
+    size_t len;
+
+    if (DTLS13_UNI_HDR_FIX_BITS_IS_SET(*in)
+            /* The following code does not handle connection ids */
+            && ossl_assert(!DTLS13_UNI_HDR_CID_BIT_IS_SET(*in))) {
+        if (DTLS13_UNI_HDR_LEN_BIT_IS_SET(*in)) {
+            len = 3; /* 2 bytes for len field and 1 byte for record type */
+            len += DTLS13_UNI_HDR_SEQ_BIT_IS_SET(*in) ? 2 : 1;
+        } else {
+            /* We assert that inl is the correct record length */
+            len = inl;
+        }
+    } else {
+        len = ((inu[RECORD_LEN_HI] << 8) | inu[RECORD_LEN_LO]);
+        len += DTLS1_RT_HEADER_LENGTH;
+    }
 
     if (ctx == NULL)
         return -1;

@@ -77,6 +77,10 @@ The connection uses the DTLSv1 protocol
 
 The connection uses the DTLSv1.2 protocol
 
+=item DTLSv1.3
+
+The connection uses the DTLSv1.3 protocol
+
 =item QUICv1
 
 The connection uses the QUICv1 protocol.
