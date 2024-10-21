@@ -54,8 +54,6 @@ OpenSSL 3.4
 OpenSSL 3.4.0 is a feature release adding significant new functionality to
 OpenSSL.
 
-This release is in development.
-
 This release incorporates the following potentially significant or incompatible
 changes:
 
