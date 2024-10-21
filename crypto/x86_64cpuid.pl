@@ -33,7 +33,7 @@ print<<___;
 	call	OPENSSL_cpuid_setup
 
 .hidden	OPENSSL_ia32cap_P
-.comm	OPENSSL_ia32cap_P,16,4
+.comm	OPENSSL_ia32cap_P,20,4
 
 .text
 
@@ -78,6 +78,7 @@ OPENSSL_ia32_cpuid:
 
 	xor	%eax,%eax
 	mov	%rax,8(%rdi)		# clear extended feature flags
+	mov	%rax,16(%rdi)
 	cpuid
 	mov	%eax,%r11d		# max value for standard query level
 
@@ -192,6 +193,7 @@ OPENSSL_ia32_cpuid:
 	mov	\$7,%eax
 	xor	%ecx,%ecx
 	cpuid
+	mov	%eax,%r11d      # max value for supported leaf 7 sub-leaves
 	bt	\$26,%r9d		# check XSAVE bit, cleared on Knights
 	jc	.Lnotknights
 	and	\$0xfff7ffff,%ebx	# clear ADCX/ADOX flag
@@ -205,6 +207,14 @@ OPENSSL_ia32_cpuid:
 .Lnotskylakex:
 	mov	%ebx,8(%rdi)		# save extended feature flags
 	mov	%ecx,12(%rdi)
+
+	cmp	\$1,%r11d
+	jb	.Lno_extended_info
+	mov	\$7,%eax
+	mov	\$1,%ecx
+	cpuid
+	mov	%eax,16(%rdi)
+
 .Lno_extended_info:
 
 	bt	\$27,%r9d		# check OSXSAVE bit
@@ -223,6 +233,9 @@ OPENSSL_ia32_cpuid:
 	cmp	\$6,%eax
 	je	.Ldone
 .Lclear_avx:
+	andl	\$0xff7fffff,16(%rdi)   # ~(1<<23)
+					# clear AVXIFMA, which is VEX-encoded
+					# and requires YMM state support
 	mov	\$0xefffe7ff,%eax	# ~(1<<28|1<<12|1<<11)
 	and	%eax,%r9d		# clear AVX, FMA and AMD XOP bits
 	mov	\$0x3fdeffdf,%eax	# ~(1<<31|1<<30|1<<21|1<<16|1<<5)
