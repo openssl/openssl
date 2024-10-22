@@ -250,6 +250,7 @@ static const unsigned char aes_128_ecb_ct[] = {
     0x4e, 0xaa, 0x6f, 0xb4, 0xdb, 0xf7, 0x84, 0x65
 };
 
+#ifndef OPENSSL_NO_DES
 /*
  * TDES-ECB test data from
  * https://github.com/usnistgov/ACVP-Server/blob/master/gen-val/json-files/ACVP-TDES-ECB-1.0
@@ -266,6 +267,7 @@ static const unsigned char tdes_ct[] = {
 static const unsigned char tdes_pt[] = {
     0x4B, 0xAB, 0x3B, 0xE1, 0x50, 0x2E, 0x3B, 0x36
 };
+#endif
 
 static const ST_KAT_CIPHER st_kat_cipher_tests[] = {
     {
@@ -291,6 +293,7 @@ static const ST_KAT_CIPHER st_kat_cipher_tests[] = {
         CIPHER_MODE_DECRYPT,
         ITM(aes_128_ecb_key)
     },
+#ifndef OPENSSL_NO_DES
     {
         {
             OSSL_SELF_TEST_DESC_CIPHER_TDES,
@@ -301,6 +304,7 @@ static const ST_KAT_CIPHER st_kat_cipher_tests[] = {
         CIPHER_MODE_DECRYPT,
         ITM(tdes_key)
     }
+#endif
 };
 
 static const char hkdf_digest[] = "SHA256";
