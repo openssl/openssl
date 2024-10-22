@@ -41,6 +41,7 @@ jobs:
           no-tls1_2,
           no-tls1_3,
           enable-trace enable-fips,
+          enable-fips disable-fips186-4-ffc,
           no-ui,
           no-quic
         ]
