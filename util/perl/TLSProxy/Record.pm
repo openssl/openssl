@@ -88,13 +88,24 @@ sub get_records
         my $seq;
 
         if ($isdtls == 1) {
-            my $seqhi;
-            my $seqmi;
-            my $seqlo;
             #Get the record header (unpack can't fail if $packet is too short)
             ($content_type, $version, $epoch,
-                $seqhi, $seqmi, $seqlo, $len) = unpack('Cnnnnnn', $packet);
-            $seq = ($seqhi << 32) | ($seqmi << 16) | $seqlo
+                my $seqhi, my $seqmi, my $seqlo, $len,
+                my $maskhi, my $maskmi, my $masklo) = unpack('Cnnnnnnnnn', $packet);
+
+            if (TLSProxy::Proxy->is_tls13()
+                && ($serverissender && $server_encrypting)
+                    || (!$serverissender && $client_encrypting)) {
+                # Encrypted DTLS 1.3 records have encrypted sequence numbers.
+                # ossltest engine overrides ecb encryption to be a no-op.
+                # This effectively means that the sequence number encryption mask
+                # is just the 16 first bytes of the record body.
+                $seqhi ^= $maskhi;
+                $seqmi ^= $maskmi;
+                $seqlo ^= $masklo;
+            }
+
+            $seq = ($seqhi << 32) | ($seqmi << 16) | $seqlo;
         } else {
             #Get the record header (unpack can't fail if $packet is too short)
             ($content_type, $version, $len) = unpack('Cnn', $packet);
@@ -411,6 +422,16 @@ sub reconstruct_record
             my $seqhi = ($self->seq >> 32) & 0xffff;
             my $seqmi = ($self->seq >> 16) & 0xffff;
             my $seqlo = ($self->seq >> 0) & 0xffff;
+
+            if (TLSProxy::Proxy->is_tls13() && $self->encrypted) {
+                #Mask sequence number with record body bytes. Explanation
+                #given in get_records.
+                (my $maskhi, my $maskmi, my $masklo) = unpack("nnn", $self->data);
+                $seqhi ^= $maskhi;
+                $seqmi ^= $maskmi;
+                $seqlo ^= $masklo;
+            }
+
             $data = pack('Cnnnnnn', $content_type, $self->version,
                          $self->epoch, $seqhi, $seqmi, $seqlo, $self->len);
         } else {

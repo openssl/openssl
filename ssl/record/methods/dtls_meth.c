@@ -380,6 +380,7 @@ int dtls_crypt_sequence_number(EVP_CIPHER_CTX *ctx, unsigned char *seq, size_t s
 
     if (!ossl_assert(inlen >= 0)
             || (size_t)inlen > sizeof(mask)
+            || EVP_CIPHER_CTX_set_padding(ctx, 0) <= 0
             || EVP_CipherInit_ex2(ctx, NULL, NULL, iv, 1, NULL) <= 0
             || EVP_CipherUpdate(ctx, mask, &outlen, in, inlen) <= 0
             || outlen != inlen
