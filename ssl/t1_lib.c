@@ -1866,8 +1866,8 @@ size_t tls12_get_psigalgs(SSL_CONNECTION *s, int sent, const uint16_t **psigs)
  */
 int tls_check_sigalg_curve(const SSL_CONNECTION *s, int curve)
 {
-   const uint16_t *sigs;
-   size_t siglen, i;
+    const uint16_t *sigs;
+    size_t siglen, i, j;
 
     if (s->cert->conf_sigalgs) {
         sigs = s->cert->conf_sigalgs;
@@ -1884,8 +1884,11 @@ int tls_check_sigalg_curve(const SSL_CONNECTION *s, int curve)
             continue;
         if (lu->sig == EVP_PKEY_EC
                 && lu->curve != NID_undef
-                && curve == lu->curve)
-            return 1;
+                && curve == lu->curve) {
+            for (j = 0; j < s->s3.tmp.peer_sigalgslen; j++)
+                if (sigs[i] == s->s3.tmp.peer_sigalgs[j])
+                    return 1;
+        }
     }
 
     return 0;
