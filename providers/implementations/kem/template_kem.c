@@ -142,8 +142,21 @@ static int template_encapsulate(void *vctx, unsigned char *out, size_t *outlen,
     if (secretlen != NULL)
         *secretlen = 0; /* replace with real shared secret length */
 
-    if (out == NULL)
+    if (out == NULL) {
+        debug_print("encaps outlens set to ");
+
+        if (outlen == NULL)
+            debug_print("outlen = NULL and ");
+        else
+            debug_print("outlen = %u and ", *outlen);
+
+        if (secretlen == NULL)
+            debug_print("secretlen = NULL\n");
+        else
+            debug_print("secretlen = %u\n", *secretlen);
+
         return 1;
+    }
 
     /* check key and perform real KEM operation */
 
@@ -161,8 +174,13 @@ static int template_decapsulate(void *vctx, unsigned char *out, size_t *outlen,
     if (outlen != NULL)
         *outlen = 0; /* replace with shared secret length */
 
-    if (out == NULL)
+    if (out == NULL) {
+        if (outlen == NULL)
+            debug_print("decaps outlen set to outlen = NULL\n");
+        else
+            debug_print("decaps outlen set to %u \n", *outlen);
         return 1;
+    }
 
     /* check key and perform real decaps operation */
 
