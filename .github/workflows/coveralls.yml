@@ -8,9 +8,9 @@
 name: Coverage
 
 # Run once a day
-on:
-  schedule:
-    - cron:  '49 0 * * *'
+on: [pull_request]
+#  schedule:
+#    - cron:  '49 0 * * *'
 
 permissions:
   contents: read
@@ -25,19 +25,10 @@ jobs:
       matrix:
         branches: [
           {
+            branch: openssl-3.4,
+            extra_config: no-afalgeng enable-fips enable-tfo
+          },          {
             branch: openssl-3.3,
-            extra_config: no-afalgeng enable-fips enable-tfo
-          }, {
-            branch: openssl-3.2,
-            extra_config: no-afalgeng enable-fips enable-tfo
-          }, {
-            branch: openssl-3.1,
-            extra_config: no-afalgeng enable-fips
-          }, {
-            branch: openssl-3.0,
-            extra_config: no-afalgeng enable-fips
-          }, {
-            branch: master,
             extra_config: no-afalgeng enable-fips enable-tfo
           }
         ]
