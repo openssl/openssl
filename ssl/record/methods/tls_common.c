@@ -143,7 +143,7 @@ int tls_setup_write_buffer(OSSL_RECORD_LAYER *rl, size_t numwpipes,
                            size_t firstlen, size_t nextlen)
 {
     unsigned char *p;
-    size_t align = 0, headerlen;
+    size_t maxalign = 0, headerlen;
     TLS_BUFFER *wb;
     size_t currpipe;
     size_t defltlen = 0;
@@ -160,10 +160,10 @@ int tls_setup_write_buffer(OSSL_RECORD_LAYER *rl, size_t numwpipes,
             contenttypelen = 1;
 
 #if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD != 0
-        align = SSL3_ALIGN_PAYLOAD - 1;
+        maxalign = SSL3_ALIGN_PAYLOAD - 1;
 #endif
 
-        defltlen = align + headerlen + rl->eivlen + rl->max_frag_len
+        defltlen = maxalign + headerlen + rl->eivlen + rl->max_frag_len
                    + contenttypelen + SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD;
 #ifndef OPENSSL_NO_COMP
         if (tls_allow_compression(rl))
@@ -175,7 +175,7 @@ int tls_setup_write_buffer(OSSL_RECORD_LAYER *rl, size_t numwpipes,
          * always be 0 in these protocol versions
          */
         if ((rl->options & SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS) == 0)
-            defltlen += headerlen + align + SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD;
+            defltlen += headerlen + maxalign + SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD;
     }
 
     wb = rl->wbuf;
@@ -229,7 +229,7 @@ static void tls_release_write_buffer(OSSL_RECORD_LAYER *rl)
 int tls_setup_read_buffer(OSSL_RECORD_LAYER *rl)
 {
     unsigned char *p;
-    size_t len, align = 0, headerlen;
+    size_t len, maxalign = 0, headerlen;
     TLS_BUFFER *b;
 
     b = &rl->rbuf;
@@ -240,12 +240,12 @@ int tls_setup_read_buffer(OSSL_RECORD_LAYER *rl)
         headerlen = SSL3_RT_HEADER_LENGTH;
 
 #if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD != 0
-    align = (-SSL3_RT_HEADER_LENGTH) & (SSL3_ALIGN_PAYLOAD - 1);
+    maxalign = SSL3_ALIGN_PAYLOAD - 1;
 #endif
 
     if (b->buf == NULL) {
         len = rl->max_frag_len
-              + SSL3_RT_MAX_ENCRYPTED_OVERHEAD + headerlen + align;
+              + SSL3_RT_MAX_ENCRYPTED_OVERHEAD + headerlen + maxalign;
 #ifndef OPENSSL_NO_COMP
         if (tls_allow_compression(rl))
             len += SSL3_RT_MAX_COMPRESSED_OVERHEAD;
