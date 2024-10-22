@@ -20,7 +20,7 @@ OpenSSL 3.0
 
 ### Major changes between OpenSSL 3.0.15 and OpenSSL 3.0.16 [under development]
 
-OpenSSL 3.3.3 is a security patch release. The most severe CVE fixed in this
+OpenSSL 3.0.16 is a security patch release. The most severe CVE fixed in this
 release is Low.
 
 This release incorporates the following bug fixes and mitigations:
