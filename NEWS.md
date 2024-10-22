@@ -22,6 +22,10 @@ OpenSSL Releases
 OpenSSL 3.4
 -----------
 
+### Major changes between OpenSSL 3.4.0 and OpenSSL 3.4.1 [under development]
+
+  * none
+
 ### Major changes between OpenSSL 3.3 and OpenSSL 3.4.0 [22 Oct 2024]
 
 OpenSSL 3.4.0 is a feature release adding significant new functionality to
