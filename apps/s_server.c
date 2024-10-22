@@ -595,6 +595,154 @@ static int get_ocsp_resp_from_responder_single(SSL *s, X509 *x,
     return ret;
 }
 
+static int bring_ocsp_resp_in_correct_order(SSL *s, tlsextstatusctx *srctx,
+                                            STACK_OF(OCSP_RESPONSE) *sk_resp_unorderd,
+                                            STACK_OF(OCSP_RESPONSE) **sk_resp)
+{
+    STACK_OF(X509) *server_certs = NULL;
+    X509 *x = NULL;
+    X509 *issuer = NULL;
+    OCSP_RESPONSE *resp = NULL;
+    OCSP_BASICRESP *bs = NULL;
+    OCSP_CERTID *cert_id = NULL;
+    int found = -1;
+    int i, j, num = 0;
+
+    if (*sk_resp != NULL)
+        sk_OCSP_RESPONSE_pop_free(*sk_resp, OCSP_RESPONSE_free);
+
+    *sk_resp = sk_OCSP_RESPONSE_new_null();
+
+    SSL_get0_chain_certs(s, &server_certs);
+    /*
+     * TODO: in future DTLS should also be considered
+     */
+    if (server_certs != NULL && srctx->status_all &&
+        !SSL_is_dtls(s) && SSL_version(s) >= TLS1_3_VERSION) {
+        /* certificate chain is available */
+        num = sk_X509_num(server_certs) + 1;
+    } else {
+        /*
+         * certificate chain is not available,
+         * set num to 1 for server certificate
+         */
+        num = 1;
+    }
+
+    sk_OCSP_RESPONSE_reserve(*sk_resp, num);
+
+    for (i = 0; i < num; i++) {
+        if (i == 0) {
+            /* get OCSP response for server certificate first */
+            x = SSL_get_certificate(s);
+        } else {
+            /*
+             * for each certificate in chain (except root) get
+             * the OCSP response
+             */
+            x = sk_X509_value(server_certs, i - 1);
+        }
+
+        /*
+         * OpenSSL servers with TLS 1.0-1.2 can be configured with no certificate
+         */
+        if (x == NULL)
+            return SSL_TLSEXT_ERR_OK;
+
+        issuer = X509_find_by_subject(server_certs, X509_get_issuer_name(x));
+
+        if (issuer == NULL) {
+            sk_OCSP_RESPONSE_insert(*sk_resp, NULL, -1);
+            continue;
+        }
+
+        /* search the stack for the requested OCSP response */
+        cert_id = OCSP_cert_to_id(NULL, x, issuer);
+
+        if (cert_id == NULL){
+            sk_OCSP_RESPONSE_insert(*sk_resp, NULL, -1);
+            continue;
+        }
+
+        /* find the correct OCSP response for the requested certificate */
+        found = -1;
+        for (j = 0; j < sk_OCSP_RESPONSE_num(sk_resp_unorderd); j++) {
+            if ((resp = sk_OCSP_RESPONSE_value(sk_resp_unorderd, j)) == NULL)
+                continue;
+            if ((bs = OCSP_response_get1_basic(resp)) == NULL)
+                continue;
+            found = OCSP_resp_find(bs, cert_id, -1);
+            OCSP_BASICRESP_free(bs);
+            if (found > -1)
+                break;
+        }
+        if (found < 0)
+            resp = NULL;
+
+        OCSP_CERTID_free(cert_id);
+
+        /* add response to stack; also insert null response */
+        sk_OCSP_RESPONSE_insert(*sk_resp, resp, -1);
+    }
+
+    return SSL_TLSEXT_ERR_OK;
+}
+
+/*
+ * Helper function to get OCSP_RESPONSE from the files specified on
+ * commandline.
+ * This is a simplified version. A full version would store details
+ * such as the OCSP certificate IDs and minimise the number of OCSP
+ * responses by caching them until they were considered "expired".
+ */
+static int get_ocsp_resp_from_files(SSL *s, tlsextstatusctx *srctx,
+                                    STACK_OF(OCSP_RESPONSE) **sk_resp)
+{
+    STACK_OF(OCSP_RESPONSE) *sk_resp_unorderd = NULL;
+    char *respfile = NULL;
+    OCSP_RESPONSE *resp = NULL;
+    BIO *derbio;
+    int i;
+    int ret = SSL_TLSEXT_ERR_OK;
+
+    sk_resp_unorderd = sk_OCSP_RESPONSE_new_reserve(NULL, sk_OPENSSL_STRING_num(srctx->sk_resp_in));
+
+    if (sk_resp_unorderd == NULL) {
+        BIO_puts(bio_err, "cert_status: Cannot reserve memory for OCSP responses\n");
+        return SSL_TLSEXT_ERR_ALERT_FATAL;
+    }
+
+    /* reading as many responses as files given */
+    for (i = 0; i < sk_OPENSSL_STRING_num(srctx->sk_resp_in); i++) {
+        respfile = sk_OPENSSL_STRING_value(srctx->sk_resp_in, i);
+
+        derbio = bio_open_default(respfile, 'r', FORMAT_ASN1);
+
+        if (derbio == NULL) {
+            BIO_puts(bio_err, "cert_status: Cannot open OCSP response file\n");
+            ret = SSL_TLSEXT_ERR_ALERT_FATAL;
+            goto err;
+        }
+
+        resp = d2i_OCSP_RESPONSE_bio(derbio, NULL);
+        BIO_free(derbio);
+        if (resp == NULL) {
+            BIO_puts(bio_err, "cert_status: Error reading OCSP response\n");
+            ret = SSL_TLSEXT_ERR_ALERT_FATAL;
+            goto err;
+        }
+
+        sk_OCSP_RESPONSE_insert(sk_resp_unorderd, resp, -1);
+    }
+
+    ret = bring_ocsp_resp_in_correct_order(s, srctx, sk_resp_unorderd, sk_resp);
+
+err:
+    sk_OCSP_RESPONSE_free(sk_resp_unorderd);
+
+    return ret;
+}
+
 /*
  * Helper function to get OCSP_RESPONSE from a responder for the server
  * certificate and the chain certificates.
@@ -656,9 +804,9 @@ static int get_ocsp_resp_from_responder(SSL *s, tlsextstatusctx *srctx,
 
         resp = NULL;
         get_ocsp_resp_from_responder_single(s, x, srctx, &resp);
-        /* add response to stack; skip if no response was received */
-        if (resp != NULL)
-            sk_OCSP_RESPONSE_insert(*sk_resp, resp, -1);
+
+        /* add response to stack; also insert null response */
+        sk_OCSP_RESPONSE_insert(*sk_resp, resp, -1);
     }
 
     return SSL_TLSEXT_ERR_OK;
@@ -674,41 +822,14 @@ static int cert_status_cb(SSL *s, void *arg)
     tlsextstatusctx *srctx = arg;
     OCSP_RESPONSE *resp = NULL;
     STACK_OF(OCSP_RESPONSE) *sk_resp = NULL;
-    char *respfile = NULL;
     int ret = SSL_TLSEXT_ERR_ALERT_FATAL;
     int i;
-    BIO *derbio;
 
     if (srctx->verbose)
         BIO_puts(bio_err, "cert_status: callback called\n");
 
     if (srctx->sk_resp_in != NULL) {
-        sk_resp = sk_OCSP_RESPONSE_new_reserve(NULL, sk_OPENSSL_STRING_num(srctx->sk_resp_in));
-
-        if (sk_resp == NULL) {
-            BIO_puts(bio_err, "cert_status: Cannot reserve memory for OCSP responses\n");
-            goto err;
-        }
-
-        /* reading as many responses as files given */
-        for (i = 0; i < sk_OPENSSL_STRING_num(srctx->sk_resp_in); i++) {
-            respfile = sk_OPENSSL_STRING_value(srctx->sk_resp_in, i);
-
-            derbio = bio_open_default(respfile, 'r', FORMAT_ASN1);
-
-            if (derbio == NULL) {
-                BIO_puts(bio_err, "cert_status: Cannot open OCSP response file\n");
-                goto err;
-            }
-            resp = d2i_OCSP_RESPONSE_bio(derbio, NULL);
-            BIO_free(derbio);
-            if (resp == NULL) {
-                BIO_puts(bio_err, "cert_status: Error reading OCSP response\n");
-                goto err;
-            }
-
-            sk_OCSP_RESPONSE_insert(sk_resp, resp, -1);
-        }
+        get_ocsp_resp_from_files(s, srctx, &sk_resp);
     } else {
         ret = get_ocsp_resp_from_responder(s, srctx, &sk_resp);
         if (ret != SSL_TLSEXT_ERR_OK)
@@ -718,10 +839,15 @@ static int cert_status_cb(SSL *s, void *arg)
     SSL_set0_tlsext_status_ocsp_resp_ex(s, sk_resp);
     if (srctx->verbose) {
         BIO_puts(bio_err, "cert_status: ocsp response sent:\n");
+        BIO_printf(bio_err, "cert_status: number of responses: %d\n",
+                   sk_OCSP_RESPONSE_num(sk_resp));
         for (i = 0; i < sk_OCSP_RESPONSE_num(sk_resp); i++) {
             resp = sk_OCSP_RESPONSE_value(sk_resp, i);
             if (resp != NULL)
                 OCSP_RESPONSE_print(bio_err, resp, 2);
+            else
+                BIO_printf(bio_err,
+                           "cert_status: no ocsp response for certificate with index %d\n", i);
         }
     }
 
