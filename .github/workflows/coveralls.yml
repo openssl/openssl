@@ -10,7 +10,8 @@ name: Coverage
 # Run once a day
 on:
   schedule:
-    - cron:  '49 0 * * *'
+    - cron:  '15 02 * * *'
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -25,6 +26,9 @@ jobs:
       matrix:
         branches: [
           {
+            branch: openssl-3.4,
+            extra_config: no-afalgeng enable-fips enable-tfo
+          }, {
             branch: openssl-3.3,
             extra_config: no-afalgeng enable-fips enable-tfo
           }, {
