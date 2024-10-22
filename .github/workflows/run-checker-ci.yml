@@ -39,6 +39,7 @@ jobs:
           no-tls1_2,
           no-tls1_3,
           enable-trace enable-fips,
+          enable-fips no-des no-dsa no-ec2m,
           no-ui,
           no-quic
         ]
