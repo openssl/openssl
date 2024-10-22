@@ -4311,11 +4311,9 @@ int tls_construct_cert_status_body(SSL_CONNECTION *s, size_t chainidx, WPACKET *
     unsigned char *respder = NULL;
     int resplen = 0;
 #ifndef OPENSSL_NO_OCSP
-    int i = 0;
     X509 *x = NULL;
     X509 *issuer = NULL;
     STACK_OF(X509) *chain_certs = NULL;
-    int found = 0;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
     OCSP_RESPONSE *resp = NULL;
     OCSP_BASICRESP *bs = NULL;
@@ -4361,25 +4359,15 @@ int tls_construct_cert_status_body(SSL_CONNECTION *s, size_t chainidx, WPACKET *
         if (cert_id == NULL)
             return 0;
 
-        /* find the correct OCSP response for the requested certificate */
-        found = -1;
-        for (i = 0; i < sk_OCSP_RESPONSE_num(s->ext.ocsp.resp_ex); i++) {
-            if ((resp = sk_OCSP_RESPONSE_value(s->ext.ocsp.resp_ex, i)) == NULL)
-                continue;
+        resp = sk_OCSP_RESPONSE_value(s->ext.ocsp.resp_ex, chainidx);
 
-            if ((bs = OCSP_response_get1_basic(resp)) == NULL)
-                continue;
+        if (resp != NULL && (bs = OCSP_response_get1_basic(resp)) != NULL) {
 
-            found = OCSP_resp_find(bs, cert_id, -1);
-
-            OCSP_BASICRESP_free(bs);
-
-            if (found > -1)
-                break;
-        }
-
-        if (found < 0)
+            if (OCSP_resp_find(bs, cert_id, -1) < 0)
+                resp = NULL;
+        } else {
             resp = NULL;
+        }
 
         OCSP_CERTID_free(cert_id);
     } else if (chainidx == 0) {

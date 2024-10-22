@@ -6334,6 +6334,8 @@ static int ct_extract_ocsp_response_scts(SSL_CONNECTION *s)
             scts = OCSP_SINGLERESP_get1_ext_d2i(single,
                                                 NID_ct_cert_scts, NULL, NULL);
 
+            OCSP_SINGLERESP_free(single);
+
             if (scts == NULL)  {
                 scts_extracted = -1;
                 goto err;
