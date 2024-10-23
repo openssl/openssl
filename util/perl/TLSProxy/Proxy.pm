@@ -256,7 +256,7 @@ sub start
 
     # Process the output from s_server until we find the ACCEPT line, which
     # tells us what the accepting address and port are.
-    while (<>) {
+    while (<$sout>) {
         print;
         s/\R$//;                # Better chomp
         next unless (/^ACCEPT\s.*:(\d+)$/);
