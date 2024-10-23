@@ -23,7 +23,7 @@ sub new
     return bless $self, $class;
 }
 
-#Read only accessors
+# Read only accessors
 sub epoch
 {
     my $self = shift;
