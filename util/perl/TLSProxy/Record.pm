@@ -424,8 +424,8 @@ sub reconstruct_record
             my $seqlo = ($self->seq >> 0) & 0xffff;
 
             if (TLSProxy::Proxy->is_tls13() && $self->encrypted) {
-                #Mask sequence number with record body bytes. Explanation
-                #given in get_records.
+                # Mask sequence number with record body bytes. Explanation
+                # given in get_records.
                 (my $maskhi, my $maskmi, my $masklo) = unpack("nnn", $self->data);
                 $seqhi ^= $maskhi;
                 $seqmi ^= $maskmi;
