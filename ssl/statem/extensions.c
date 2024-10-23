@@ -1444,43 +1444,114 @@ static int final_key_share(SSL_CONNECTION *s, unsigned int context, int sent)
                 return 1;
             }
         } else {
-            /* No suitable key_share */
-            if (s->hello_retry_request == SSL_HRR_NONE && sent
+            /* Pending whether a '!' prefix was used, we use a different group selection methodology */
+            /* No '!' prefix was used, hence no code change */
+            if (s->ext.s_ext_ks_selection_detected == 0) {
+                /* No suitable key_share */
+                if (s->hello_retry_request == SSL_HRR_NONE && sent
                     && (!s->hit
                         || (s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE_DHE)
                            != 0)) {
-                const uint16_t *pgroups, *clntgroups;
-                size_t num_groups, clnt_num_groups, i;
-                unsigned int group_id = 0;
+                    const uint16_t *pgroups, *clntgroups;
+                    size_t num_groups, clnt_num_groups, i;
+                    unsigned int group_id = 0;
 
-                /* Check if a shared group exists */
+                    /* Check if a shared group exists */
 
-                /* Get the clients list of supported groups. */
-                tls1_get_peer_groups(s, &clntgroups, &clnt_num_groups);
-                tls1_get_supported_groups(s, &pgroups, &num_groups);
+                    /* Get the clients list of supported groups. */
+                    tls1_get_peer_groups(s, &clntgroups, &clnt_num_groups);
+                    tls1_get_supported_groups(s, &pgroups, &num_groups);
 
-                /*
-                 * Find the first group we allow that is also in client's list
-                 */
-                for (i = 0; i < num_groups; i++) {
-                    group_id = pgroups[i];
+                    /*
+                     * Find the first group we allow that is also in client's list
+                     */
+                    for (i = 0; i < num_groups; i++) {
+                        group_id = pgroups[i];
 
-                    if (check_in_list(s, group_id, clntgroups, clnt_num_groups,
-                                      1)
-                            && tls_group_allowed(s, group_id,
-                                                 SSL_SECOP_CURVE_SUPPORTED)
-                            && tls_valid_group(s, group_id, TLS1_3_VERSION,
-                                               TLS1_3_VERSION, 0, NULL))
-                        break;
+                        if (check_in_list(s, group_id, clntgroups, clnt_num_groups,
+                                          1)
+                                && tls_group_allowed(s, group_id,
+                                                     SSL_SECOP_CURVE_SUPPORTED)
+                                && tls_valid_group(s, group_id, TLS1_3_VERSION,
+                                                   TLS1_3_VERSION, 0, NULL))
+                            break;
+                    }
+
+                    if (i < num_groups) {
+                        /* A shared group exists so send a HelloRetryRequest */
+                        s->s3.group_id = group_id;
+                        s->hello_retry_request = SSL_HRR_PENDING;
+                        return 1;
+                    }
                 }
+            } else { /* a '!' prefix was used, hence we apply a new group selection methodology */
+                fprintf(stdout, "=====> %d x '!' prefix detected in extensions.c\n", s->ext.s_ext_ks_selection_detected);
 
-                if (i < num_groups) {
-                    /* A shared group exists so send a HelloRetryRequest */
-                    s->s3.group_id = group_id;
-                    s->hello_retry_request = SSL_HRR_PENDING;
-                    return 1;
+                if (s->hello_retry_request == SSL_HRR_NONE && sent
+                    && (!s->hit
+                        || (s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE_DHE)
+                           != 0)) {
+
+                    fprintf(stdout, "=====> Analyzing in extensions.c\n");
+                    /*
+                     * See 'tls_parse_ctos_key_share' (in extensions_srvr.c)
+                     * for steps 1 & 3, and prep step 2 of key share selection algorithm
+                     */
+
+                    /* 2) Trigger a HRR for the first group with '!' prefix which is also supported by the client */
+                    fprintf(stdout, "=====> Trying (2)\n");
+                    if (s->s3.tmp.s3_tmp_group_id_supported_by_client) {
+                        /* A group shared between server requested key shares and the
+                           client supported groups exists (as determined in extensions_srv.c)
+                           so send a HelloRetryRequest */
+                        s->s3.group_id = s->s3.tmp.s3_tmp_group_id_supported_by_client;
+                        s->hello_retry_request = SSL_HRR_PENDING;
+                        fprintf(stdout, "=====> (2) Trigger a HRR for the first group with '!' prefix which is also supported by the client: 0x%X\n", s->s3.group_id);
+                        return 1;
+                    }
+
+                    /* 4) Check if this share is in the list of requested key shares;
+                       if so, take the first in list of requested key shares */
+                    fprintf(stdout, "=====> Trying (4)\n");
+                    const uint16_t *pgroups, *clntgroups;
+                    size_t num_groups, clnt_num_groups, i;
+                    unsigned int group_id = 0;
+                    /* Get the clients and server lists of supported groups. */
+                    tls1_get_peer_groups(s, &clntgroups, &clnt_num_groups);
+                    tls1_get_supported_groups(s, &pgroups, &num_groups);
+
+                    /* 4) Check for overlap and use leftmost find in list of server groups */
+                    size_t pos = num_groups, new_pos = 0, found = 0;
+                    for (i = 0; i < clnt_num_groups; i++) {
+                        if (!check_in_list_pos(s, clntgroups[i], pgroups,
+                                               num_groups, 1, &new_pos)
+                                || !tls_group_allowed(s, clntgroups[i],
+                                                      SSL_SECOP_CURVE_SUPPORTED)
+                                || !tls_valid_group(s, clntgroups[i],
+                                                    TLS1_3_VERSION,
+                                                    TLS1_3_VERSION,
+                                                    0, NULL)) {
+                            /* Group not suitable */
+                            continue;
+                        }
+                        /* is the found group ID earlier in the server list? */
+                        if (new_pos < pos) {
+                            pos = new_pos;
+                            group_id = clntgroups[i];
+                            found++;
+                        }
+                    }
+                    if (found) {
+                        /* A group shared between server and the client
+                           supported groups exists so send a HelloRetryRequest */
+                        s->s3.group_id = group_id;
+                        s->hello_retry_request = SSL_HRR_PENDING;
+                        fprintf(stdout, "=====> (4) Check for overlap and use leftmost find in list of server groups: 0x%X\n", group_id);
+                        return 1;
+                    }
                 }
             }
+
             if (!s->hit
                     || (s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE) == 0) {
                 /* Nothing left we can do - just fail */
