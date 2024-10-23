@@ -16,7 +16,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_x509");
 
-plan tests => 105;
+plan tests => 111;
 
 # Prevent MSys2 filename munging for arguments that look like file paths but
 # aren't
@@ -331,6 +331,28 @@ cert_contains($role_spec_cert,
 cert_contains($role_spec_cert,
               "Registered ID:description",
               1, 'X.509 Role Spec Certificate Identifier');
+
+my $attr_desc_cert = srctop_file(@certs, "ext-attributeDescriptor.pem");
+cert_contains($attr_desc_cert,
+              "Identifier: 2.5.4.3",
+              1, 'X.509 Attribute Descriptor');
+# This comes from the syntax field, which starts on the next line.
+cert_contains($attr_desc_cert,
+              "UnboundedDirectoryString",
+              1, 'X.509 Attribute Descriptor');
+cert_contains($attr_desc_cert,
+              "Name: commonName",
+              1, 'X.509 Attribute Descriptor');
+# These comes from the dominationRule field.
+cert_contains($attr_desc_cert,
+              "Privilege Policy Identifier: 2.5.4.10",
+              1, 'X.509 Attribute Descriptor');
+cert_contains($attr_desc_cert,
+              "DirName:CN = Wildboar",
+              1, 'X.509 Attribute Descriptor');
+cert_contains($attr_desc_cert,
+              "Algorithm: sha256",
+              1, 'X.509 Attribute Descriptor');
 
 sub test_errors { # actually tests diagnostics of OSSL_STORE
     my ($expected, $cert, @opts) = @_;
