@@ -292,10 +292,6 @@ sub start
         }
     }
 
-    # Change back to original stdin
-    open(STDIN, "<&", $savedin);
-    close($savedin);
-
     if (!defined($pid)) {
         kill(3, $self->{real_serverpid});
         die "Failed to capture s_server's output: $error\n";
