@@ -251,7 +251,7 @@ sub start
         $pid = IPC::Open3::open3($sin, $sout, undef, $execcmd) or die "Failed to $execcmd: $!\n";
     }
 
-    $self->{serverpid} = $pid;
+    $self->{real_serverpid} = $pid;
 
     # Process the output from s_server until we find the ACCEPT line, which
     # tells us what the accepting address and port are.
