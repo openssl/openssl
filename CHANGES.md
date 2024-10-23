@@ -25,6 +25,17 @@ OpenSSL Releases
  - [OpenSSL 1.0.0](#openssl-100)
  - [OpenSSL 0.9.x](#openssl-09x)
 
+OpenSSL 3.5
+-----------
+
+### Changes between 3.4 and 3.5 [xx XXX xxxx]
+
+ * Added support for central key generation in CMP.
+
+   This work was sponsored by Siemens AG.
+
+    *Rajeev Ranjan*
+
 OpenSSL 3.4
 -----------
 
