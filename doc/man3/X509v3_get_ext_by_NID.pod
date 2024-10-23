@@ -141,8 +141,10 @@ the extension index or -1 if an error occurs.
 X509v3_get_ext_by_NID() returns the extension index or negative values if an
 error occurs.
 
-X509v3_add_ext() and X509v3_add_extensions()
-return a STACK of extensions or NULL on error.
+X509v3_add_ext() returns a STACK of extensions or NULL on error.
+
+X509v3_add_extensions() returns a STACK of extensions
+or NULL on error or if I<*target> is NULL and I<exts> is NULL or an empty list.
 
 X509_add_ext() returns 1 on success and 0 on error.
 
