@@ -7,6 +7,7 @@
 
 use strict;
 use POSIX ":sys_wait_h";
+use IPC::Open2;
 
 package TLSProxy::Proxy;
 
