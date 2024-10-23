@@ -15,7 +15,14 @@
 
 # if defined(OPENSSL_SYS_LINUX) && !defined(FIPS_MODULE)
 #  if __has_include(<asm/hwprobe.h>)
-#   define OSSL_RISCV_HWPROBE
+#   include <sys/syscall.h>
+#   /*
+     * Some environments using musl are reported to have the hwprobe.h include
+     * file but not have the __NR_riscv_hwprobe define.
+     */
+#   ifdef __NR_riscv_hwprobe
+#    define OSSL_RISCV_HWPROBE
+#   endif
 #  endif
 # endif
 
