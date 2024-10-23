@@ -530,11 +530,11 @@ static void hashtable_mt_free(HT_VALUE *v)
     }
 }
 
-#define BEHAVIOR_MASK 0x3
 #define DO_LOOKUP 0
 #define DO_INSERT 1
 #define DO_REPLACE 2
 #define DO_DELETE 3
+#define NUM_BEHAVIORS (DO_DELETE + 1)
 
 static void do_mt_hash_work(void)
 {
@@ -560,7 +560,7 @@ static void do_mt_hash_work(void)
         if (!TEST_true(CRYPTO_THREAD_write_lock(testrand_lock)))
             return;
         index = test_random() % TEST_MT_POOL_SZ;
-        behavior = (char)(test_random() & BEHAVIOR_MASK);
+        behavior = (char)(test_random() % NUM_BEHAVIORS);
         CRYPTO_THREAD_unlock(testrand_lock);
 
         expected_m = &test_mt_entries[index];
