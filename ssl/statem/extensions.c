@@ -17,6 +17,7 @@
 #include "internal/cryptlib.h"
 #include "../ssl_local.h"
 #include "statem_local.h"
+#include <openssl/ocsp.h>
 
 static int final_renegotiate(SSL_CONNECTION *s, unsigned int context, int sent);
 static int init_server_name(SSL_CONNECTION *s, unsigned int context);
@@ -1146,6 +1147,9 @@ static int init_status_request(SSL_CONNECTION *s, unsigned int context)
         OPENSSL_free(s->ext.ocsp.resp);
         s->ext.ocsp.resp = NULL;
         s->ext.ocsp.resp_len = 0;
+
+        sk_OCSP_RESPONSE_pop_free(s->ext.ocsp.resp_ex, OCSP_RESPONSE_free);
+        s->ext.ocsp.resp_ex = NULL;
     }
 
     return 1;

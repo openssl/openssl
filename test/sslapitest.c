@@ -80,6 +80,10 @@ static int use_session_cb_cnt = 0;
 static int find_session_cb_cnt = 0;
 #endif
 
+#ifndef OPENSSL_NO_OCSP
+static int test_tlsext_status_type(int multi_stapling);
+#endif
+
 static char *certsdir = NULL;
 static char *cert = NULL;
 static char *privkey = NULL;
@@ -108,7 +112,7 @@ static size_t client_log_buffer_index = 0;
 static int error_writing_log = 0;
 
 #ifndef OPENSSL_NO_OCSP
-static const unsigned char orespder[] = "Dummy OCSP Response";
+static OCSP_RESPONSE *dummy_ocsp_resp = NULL;
 static int ocsp_server_called = 0;
 static int ocsp_client_called = 0;
 
@@ -1731,7 +1735,7 @@ static int execute_cleanse_plaintext(const SSL_METHOD *smeth,
         if (is_fips) {
             testresult = 1;
             goto end;
-        };
+        }
         /*
          * Default sigalgs are SHA1 based in <DTLS1.2 which is in security
          * level 0
@@ -1844,12 +1848,13 @@ static int test_cleanse_plaintext(void)
 }
 
 #ifndef OPENSSL_NO_OCSP
-static int ocsp_server_cb(SSL *s, void *arg)
+static int ocsp_server_cb_single(SSL *s, void *arg)
 {
     int *argi = (int *)arg;
-    unsigned char *copy = NULL;
     STACK_OF(OCSP_RESPID) *ids = NULL;
     OCSP_RESPID *id = NULL;
+    unsigned char *ocspresp = NULL;
+    int resplen = 0;
 
     if (*argi == 2) {
         /* In this test we are expecting exactly 1 OCSP_RESPID */
@@ -1864,36 +1869,124 @@ static int ocsp_server_cb(SSL *s, void *arg)
         return SSL_TLSEXT_ERR_ALERT_FATAL;
     }
 
-    if (!TEST_ptr(copy = OPENSSL_memdup(orespder, sizeof(orespder))))
+    dummy_ocsp_resp = OCSP_response_create(OCSP_RESPONSE_STATUS_SUCCESSFUL, NULL);
+
+    if (!TEST_ptr(dummy_ocsp_resp))
         return SSL_TLSEXT_ERR_ALERT_FATAL;
 
-    if (!TEST_true(SSL_set_tlsext_status_ocsp_resp(s, copy,
-                                                   sizeof(orespder)))) {
-        OPENSSL_free(copy);
+    resplen = i2d_OCSP_RESPONSE(dummy_ocsp_resp, &ocspresp);
+
+    OCSP_RESPONSE_free(dummy_ocsp_resp);
+
+    if (!TEST_true(SSL_set_tlsext_status_ocsp_resp(s, ocspresp, resplen))) {
+        OPENSSL_free(ocspresp);
         return SSL_TLSEXT_ERR_ALERT_FATAL;
     }
+
+    OPENSSL_free(ocspresp);
+
     ocsp_server_called = 1;
     return SSL_TLSEXT_ERR_OK;
 }
 
-static int ocsp_client_cb(SSL *s, void *arg)
+static int ocsp_client_cb_single(SSL *s, void *arg)
 {
     int *argi = (int *)arg;
-    const unsigned char *respderin;
-    size_t len;
+    const unsigned char *resp, *p;
+    OCSP_RESPONSE *rsp;
+    int len, i;
 
     if (*argi != 1 && *argi != 2)
         return 0;
 
-    len = SSL_get_tlsext_status_ocsp_resp(s, &respderin);
-    if (!TEST_mem_eq(orespder, len, respderin, len))
+    len = SSL_get_tlsext_status_ocsp_resp(s, &resp);
+
+    p = resp;
+    rsp = d2i_OCSP_RESPONSE(NULL, &p, len);
+
+    i = OCSP_response_status(rsp);
+
+    OCSP_RESPONSE_free(rsp);
+
+    if (i != OCSP_RESPONSE_STATUS_SUCCESSFUL)
         return 0;
 
     ocsp_client_called = 1;
     return 1;
 }
 
-static int test_tlsext_status_type(void)
+static int ocsp_server_cb_multi(SSL *s, void *arg)
+{
+    STACK_OF(OCSP_RESPONSE) *sk_resp = NULL;
+    int *argi = (int *)arg;
+    STACK_OF(OCSP_RESPID) *ids = NULL;
+    OCSP_RESPID *id = NULL;
+
+    if (*argi == 2) {
+        /* In this test we are expecting exactly 1 OCSP_RESPID */
+        SSL_get_tlsext_status_ids(s, &ids);
+        if (!TEST_ptr(ids) || !TEST_int_eq(sk_OCSP_RESPID_num(ids), 1))
+            return SSL_TLSEXT_ERR_ALERT_FATAL;
+
+        id = sk_OCSP_RESPID_value(ids, 0);
+        if (id == NULL || !OCSP_RESPID_match_ex(id, ocspcert, libctx, NULL))
+            return SSL_TLSEXT_ERR_ALERT_FATAL;
+    } else if (*argi != 1) {
+        return SSL_TLSEXT_ERR_ALERT_FATAL;
+    }
+
+    dummy_ocsp_resp = OCSP_response_create(OCSP_RESPONSE_STATUS_SUCCESSFUL, NULL);
+
+    if (!TEST_ptr(dummy_ocsp_resp))
+        return SSL_TLSEXT_ERR_ALERT_FATAL;
+
+    sk_resp = sk_OCSP_RESPONSE_new_null();
+    sk_OCSP_RESPONSE_push(sk_resp, dummy_ocsp_resp);
+
+    if (!TEST_true(SSL_set0_tlsext_status_ocsp_resp_ex(s, sk_resp))) {
+        sk_OCSP_RESPONSE_pop_free(sk_resp, OCSP_RESPONSE_free);
+        return SSL_TLSEXT_ERR_ALERT_FATAL;
+    }
+
+    ocsp_server_called = 1;
+    return SSL_TLSEXT_ERR_OK;
+}
+
+static int ocsp_client_cb_multi(SSL *s, void *arg)
+{
+    int *argi = (int *)arg;
+    int num, i;
+    STACK_OF(OCSP_RESPONSE) *sk_resp = NULL;
+    OCSP_RESPONSE *rsp;
+
+    if (*argi != 1 && *argi != 2)
+        return 0;
+
+    SSL_get0_tlsext_status_ocsp_resp_ex(s, &sk_resp);
+
+    num = sk_OCSP_RESPONSE_num(sk_resp);
+
+    if (num != 1)
+        return 0;
+
+    rsp = sk_OCSP_RESPONSE_value(sk_resp, 0);
+
+    i = OCSP_response_status(rsp);
+
+    SSL_set0_tlsext_status_ocsp_resp_ex(s, NULL);
+
+    if (i != OCSP_RESPONSE_STATUS_SUCCESSFUL)
+        return 0;
+
+    ocsp_client_called = 1;
+    return 1;
+}
+
+/*
+ * multi_stapling == 0: test for single OCSP response stapling test
+ * multi_stapling == 1: test function for OCSP multi-stapling tests
+ */
+static int test_tlsext_status_type(int multi_stapling)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
@@ -1917,7 +2010,7 @@ static int test_tlsext_status_type(void)
         goto end;
     if (!TEST_int_eq(SSL_get_tlsext_status_type(clientssl), -1)
             || !TEST_true(SSL_set_tlsext_status_type(clientssl,
-                                                      TLSEXT_STATUSTYPE_ocsp))
+                                                     TLSEXT_STATUSTYPE_ocsp))
             || !TEST_int_eq(SSL_get_tlsext_status_type(clientssl),
                             TLSEXT_STATUSTYPE_ocsp))
         goto end;
@@ -1926,7 +2019,7 @@ static int test_tlsext_status_type(void)
     clientssl = NULL;
 
     if (!SSL_CTX_set_tlsext_status_type(cctx, TLSEXT_STATUSTYPE_ocsp)
-     || SSL_CTX_get_tlsext_status_type(cctx) != TLSEXT_STATUSTYPE_ocsp)
+        || SSL_CTX_get_tlsext_status_type(cctx) != TLSEXT_STATUSTYPE_ocsp)
         goto end;
 
     clientssl = SSL_new(cctx);
@@ -1941,10 +2034,19 @@ static int test_tlsext_status_type(void)
      * Now actually do a handshake and check OCSP information is exchanged and
      * the callbacks get called
      */
-    SSL_CTX_set_tlsext_status_cb(cctx, ocsp_client_cb);
-    SSL_CTX_set_tlsext_status_arg(cctx, &cdummyarg);
-    SSL_CTX_set_tlsext_status_cb(sctx, ocsp_server_cb);
-    SSL_CTX_set_tlsext_status_arg(sctx, &cdummyarg);
+    if (multi_stapling) {
+        cdummyarg = 1;
+        SSL_CTX_set_tlsext_status_cb(cctx, ocsp_client_cb_multi);
+        SSL_CTX_set_tlsext_status_arg(cctx, &cdummyarg);
+        SSL_CTX_set_tlsext_status_cb(sctx, ocsp_server_cb_multi);
+        SSL_CTX_set_tlsext_status_arg(sctx, &cdummyarg);
+    } else {
+        cdummyarg = 1;
+        SSL_CTX_set_tlsext_status_cb(cctx, ocsp_client_cb_single);
+        SSL_CTX_set_tlsext_status_arg(cctx, &cdummyarg);
+        SSL_CTX_set_tlsext_status_cb(sctx, ocsp_server_cb_single);
+        SSL_CTX_set_tlsext_status_arg(sctx, &cdummyarg);
+    }
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
                                       &clientssl, NULL, NULL))
             || !TEST_true(create_ssl_connection(serverssl, clientssl,
@@ -2013,7 +2115,7 @@ static int test_tlsext_status_type(void)
 
     testresult = 1;
 
- end:
+end:
     SSL_free(serverssl);
     SSL_free(clientssl);
     SSL_CTX_free(sctx);
@@ -12512,7 +12614,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_large_app_data, 28);
     ADD_TEST(test_cleanse_plaintext);
 #ifndef OPENSSL_NO_OCSP
-    ADD_TEST(test_tlsext_status_type);
+    ADD_ALL_TESTS(test_tlsext_status_type, 2);
 #endif
     ADD_TEST(test_session_with_only_int_cache);
     ADD_TEST(test_session_with_only_ext_cache);
