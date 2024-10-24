@@ -42,6 +42,21 @@ static int check_purpose_ocsp_helper(const X509_PURPOSE *xp, const X509 *x,
 static int xp_cmp(const X509_PURPOSE *const *a, const X509_PURPOSE *const *b);
 static void xptable_free(X509_PURPOSE *p);
 
+/* Directly check for allowed extended key usage (EKU) */
+int X509_check_eku(X509 *x, int nid)
+{
+    int eku, i, n = sk_ASN1_OBJECT_num(x->ex_ekus);
+
+    if (nid == NID_anyExtendedKeyUsage || n <= 0)
+        return 1;
+    for (i = 0; i < n; i++) {
+        eku = OBJ_obj2nid(sk_ASN1_OBJECT_value(x->ex_ekus, i));
+        if (eku == NID_anyExtendedKeyUsage || eku == nid)
+            return 1;
+    }
+    return 0;
+}
+
 static X509_PURPOSE xstandard[] = {
     {X509_PURPOSE_SSL_CLIENT, X509_TRUST_SSL_CLIENT, 0,
      check_purpose_ssl_client, "SSL client", "sslclient", NULL},
@@ -403,7 +418,6 @@ int ossl_x509v3_cache_extensions(X509 *x)
     PROXY_CERT_INFO_EXTENSION *pci;
     ASN1_BIT_STRING *usage;
     ASN1_BIT_STRING *ns;
-    EXTENDED_KEY_USAGE *extusage;
     int i;
     int res;
 
@@ -491,10 +505,11 @@ int ossl_x509v3_cache_extensions(X509 *x)
 
     /* Handle extended key usage */
     x->ex_xkusage = 0;
-    if ((extusage = X509_get_ext_d2i(x, NID_ext_key_usage, &i, NULL)) != NULL) {
+    x->ex_ekus = X509_get_ext_d2i(x, NID_ext_key_usage, &i, NULL);
+    if (x->ex_ekus != NULL) {
         x->ex_flags |= EXFLAG_XKUSAGE;
-        for (i = 0; i < sk_ASN1_OBJECT_num(extusage); i++) {
-            switch (OBJ_obj2nid(sk_ASN1_OBJECT_value(extusage, i))) {
+        for (i = 0; i < sk_ASN1_OBJECT_num(x->ex_ekus); i++) {
+            switch (OBJ_obj2nid(sk_ASN1_OBJECT_value(x->ex_ekus, i))) {
             case NID_server_auth:
                 x->ex_xkusage |= XKU_SSL_SERVER;
                 break;
@@ -528,7 +543,6 @@ int ossl_x509v3_cache_extensions(X509 *x)
                 break;
             }
         }
-        sk_ASN1_OBJECT_pop_free(extusage, ASN1_OBJECT_free);
     } else if (i != -1) {
         x->ex_flags |= EXFLAG_INVALID;
     }
