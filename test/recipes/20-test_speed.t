@@ -17,7 +17,7 @@ use OpenSSL::Test::Utils;
 
 setup("test_speed");
 
-plan tests => 24;
+plan tests => 25;
 
 ok(run(app(['openssl', 'speed', '-testmode'])),
        "Simple test of all speed algorithms");
@@ -102,9 +102,14 @@ SKIP: {
 
 #We don't expect these options to have an effect in testmode but we at least
 #test that the option parsing works ok
-ok(run(app(['openssl', 'speed', '-testmode', '-seconds', 1, '-bytes', 1,
+ok(run(app(['openssl', 'speed', '-testmode', '-seconds', 1, '-bytes', 16,
             '-elapsed'])),
        "Test the seconds, bytes and elapsed options");
+
+#Test that this won't crash on sparc
+ok(run(app(['openssl', 'speed', '-testmode', '-seconds', 1, '-bytes', 1,
+            'aes-128-cbc'])),
+       "Test that bad bytes value doesn't make speed to crash");
 
 #No need to -testmode for testing -help. All we're doing is testing the option
 #parsing. We don't sanity check the output
