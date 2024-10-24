@@ -5750,3 +5750,12 @@ i2d_OSSL_ROLE_SPEC_CERT_ID_SYNTAX       ?	3_5_0	EXIST::FUNCTION:
 OSSL_ROLE_SPEC_CERT_ID_SYNTAX_free      ?	3_5_0	EXIST::FUNCTION:
 OSSL_ROLE_SPEC_CERT_ID_SYNTAX_new       ?	3_5_0	EXIST::FUNCTION:
 OSSL_ROLE_SPEC_CERT_ID_SYNTAX_it        ?	3_5_0	EXIST::FUNCTION:
+EVP_aes_128_cbc_hmac_sha1_etm           ?	3_5_0	EXIST::FUNCTION:
+EVP_aes_192_cbc_hmac_sha1_etm           ?	3_5_0	EXIST::FUNCTION:
+EVP_aes_256_cbc_hmac_sha1_etm           ?	3_5_0	EXIST::FUNCTION:
+EVP_aes_128_cbc_hmac_sha256_etm         ?	3_5_0	EXIST::FUNCTION:
+EVP_aes_192_cbc_hmac_sha256_etm         ?	3_5_0	EXIST::FUNCTION:
+EVP_aes_256_cbc_hmac_sha256_etm         ?	3_5_0	EXIST::FUNCTION:
+EVP_aes_128_cbc_hmac_sha512_etm         ?	3_5_0	EXIST::FUNCTION:
+EVP_aes_192_cbc_hmac_sha512_etm         ?	3_5_0	EXIST::FUNCTION:
+EVP_aes_256_cbc_hmac_sha512_etm         ?	3_5_0	EXIST::FUNCTION:
