@@ -285,6 +285,7 @@ struct evp_md_st {
     OSSL_FUNC_digest_squeeze_fn *dsqueeze;
     OSSL_FUNC_digest_digest_fn *digest;
     OSSL_FUNC_digest_freectx_fn *freectx;
+    OSSL_FUNC_digest_copyctx_fn *copyctx;
     OSSL_FUNC_digest_dupctx_fn *dupctx;
     OSSL_FUNC_digest_get_params_fn *get_params;
     OSSL_FUNC_digest_set_ctx_params_fn *set_ctx_params;
