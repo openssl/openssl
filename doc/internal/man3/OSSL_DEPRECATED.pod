@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-OSSL_DEPRECATED, OSSL_DEPRECATED_FOR - General deprecation macros
+OSSL_DEPRECATED, OSSL_DEPRECATED_FOR, OSSL_DEPRECATED_PRAGMA - General deprecation macros
 
 =head1 SYNOPSIS
 
@@ -10,6 +10,7 @@ OSSL_DEPRECATED, OSSL_DEPRECATED_FOR - General deprecation macros
 
  #define OSSL_DEPRECATED(since)
  #define OSSL_DEPRECATED_FOR(since, msg)
+ #define OSSL_DEPRECATED_PRAGMA(msg)
 
 =head1 DESCRIPTION
 
@@ -23,6 +24,10 @@ OSSL_DEPRECATED_FOR() does the same as OSSL_DEPRECATED(), but also takes a
 second argument I<msg>, which is an additional text messages to be displayed
 with the deprecation warning along with the OpenSSL version number, for
 compilers that support user specified deprecation messages.
+
+OSSL_DEPRECATED_PRAGMA() implements a warning via a compiler specific
+pragma, to be used when e.g. deprecating a macro.
+It takes a single argument I<msg>, which must be a "single string literal".
 
 These macros are used to define the version specific deprecation macros
 described in L<deprecation(7)>.
