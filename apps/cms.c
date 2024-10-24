@@ -502,16 +502,16 @@ int cms_main(int argc, char **argv)
             contfile = opt_arg();
             break;
         case OPT_RR_FROM:
-            if (rr_from == NULL
-                && (rr_from = sk_OPENSSL_STRING_new_null()) == NULL)
+            if ((rr_from == NULL &&
+                 (rr_from = sk_OPENSSL_STRING_new_null()) == NULL) ||
+                !sk_OPENSSL_STRING_push(rr_from, opt_arg()))
                 goto end;
-            sk_OPENSSL_STRING_push(rr_from, opt_arg());
             break;
         case OPT_RR_TO:
-            if (rr_to == NULL
-                && (rr_to = sk_OPENSSL_STRING_new_null()) == NULL)
+            if ((rr_to == NULL &&
+                 (rr_to = sk_OPENSSL_STRING_new_null()) == NULL) ||
+                !sk_OPENSSL_STRING_push(rr_to, opt_arg()))
                 goto end;
-            sk_OPENSSL_STRING_push(rr_to, opt_arg());
             break;
         case OPT_PRINT:
             noout = print = 1;
@@ -585,16 +585,16 @@ int cms_main(int argc, char **argv)
         case OPT_SIGNER:
             /* If previous -signer argument add signer to list */
             if (signerfile != NULL) {
-                if (sksigners == NULL
-                    && (sksigners = sk_OPENSSL_STRING_new_null()) == NULL)
+                if ((sksigners == NULL
+                     && (sksigners = sk_OPENSSL_STRING_new_null()) == NULL) ||
+                    !sk_OPENSSL_STRING_push(sksigners, signerfile))
                     goto end;
-                sk_OPENSSL_STRING_push(sksigners, signerfile);
                 if (keyfile == NULL)
                     keyfile = signerfile;
-                if (skkeys == NULL
-                    && (skkeys = sk_OPENSSL_STRING_new_null()) == NULL)
+                if ((skkeys == NULL &&
+                     (skkeys = sk_OPENSSL_STRING_new_null()) == NULL) ||
+                    !sk_OPENSSL_STRING_push(skkeys, keyfile))
                     goto end;
-                sk_OPENSSL_STRING_push(skkeys, keyfile);
                 keyfile = NULL;
             }
             signerfile = opt_arg();
@@ -609,15 +609,15 @@ int cms_main(int argc, char **argv)
                     BIO_puts(bio_err, "Illegal -inkey without -signer\n");
                     goto end;
                 }
-                if (sksigners == NULL
-                    && (sksigners = sk_OPENSSL_STRING_new_null()) == NULL)
+                if ((sksigners == NULL &&
+                     (sksigners = sk_OPENSSL_STRING_new_null()) == NULL) ||
+                    !sk_OPENSSL_STRING_push(sksigners, signerfile))
                     goto end;
-                sk_OPENSSL_STRING_push(sksigners, signerfile);
                 signerfile = NULL;
-                if (skkeys == NULL
-                    && (skkeys = sk_OPENSSL_STRING_new_null()) == NULL)
+                if ((skkeys == NULL &&
+                     (skkeys = sk_OPENSSL_STRING_new_null()) == NULL) ||
+                    !sk_OPENSSL_STRING_push(skkeys, keyfile))
                     goto end;
-                sk_OPENSSL_STRING_push(skkeys, keyfile);
             }
             keyfile = opt_arg();
             break;
@@ -671,7 +671,8 @@ int cms_main(int argc, char **argv)
                     key_param->next = nparam;
                 key_param = nparam;
             }
-            sk_OPENSSL_STRING_push(key_param->param, opt_arg());
+            if (!sk_OPENSSL_STRING_push(key_param->param, opt_arg()))
+                goto end;
             break;
         case OPT_V_CASES:
             if (!opt_verify(o, vpm))
@@ -755,15 +756,16 @@ int cms_main(int argc, char **argv)
         }
         /* Check to see if any final signer needs to be appended */
         if (signerfile != NULL) {
-            if (sksigners == NULL
-                && (sksigners = sk_OPENSSL_STRING_new_null()) == NULL)
+            if ((sksigners == NULL &&
+                 (sksigners = sk_OPENSSL_STRING_new_null()) == NULL) ||
+                !sk_OPENSSL_STRING_push(sksigners, signerfile))
                 goto end;
-            sk_OPENSSL_STRING_push(sksigners, signerfile);
             if (skkeys == NULL && (skkeys = sk_OPENSSL_STRING_new_null()) == NULL)
                 goto end;
             if (keyfile == NULL)
                 keyfile = signerfile;
-            sk_OPENSSL_STRING_push(skkeys, keyfile);
+            if (!sk_OPENSSL_STRING_push(skkeys, keyfile))
+                goto end;
         }
         if (sksigners == NULL) {
             BIO_printf(bio_err, "No signer certificate specified\n");
