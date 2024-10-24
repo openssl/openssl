@@ -81,6 +81,7 @@ static int batch = 0;
 
 typedef enum OPTION_choice {
     OPT_COMMON,
+    OPT_CIPHER,
     OPT_INFORM, OPT_OUTFORM, OPT_ENGINE, OPT_KEYGEN_ENGINE, OPT_KEY,
     OPT_PUBKEY, OPT_NEW, OPT_CONFIG, OPT_KEYFORM, OPT_IN, OPT_OUT,
     OPT_KEYOUT, OPT_PASSIN, OPT_PASSOUT, OPT_NEWKEY,
@@ -98,6 +99,7 @@ typedef enum OPTION_choice {
 const OPTIONS req_options[] = {
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
+    {"cipher", OPT_CIPHER, 's', "Specify the cipher for private key encryption"},
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
     {"keygen_engine", OPT_KEYGEN_ENGINE, 's',
@@ -250,7 +252,7 @@ int req_main(int argc, char **argv)
     LHASH_OF(OPENSSL_STRING) *addexts = NULL;
     X509 *new_x509 = NULL, *CAcert = NULL;
     X509_REQ *req = NULL;
-    EVP_CIPHER *cipher = NULL;
+    const EVP_CIPHER *cipher = NULL;
     int ext_copy = EXT_COPY_UNSET;
     BIO *addext_bio = NULL;
     char *extsect = NULL;
@@ -490,6 +492,13 @@ int req_main(int argc, char **argv)
             break;
         case OPT_PRECERT:
             newreq = precert = 1;
+            break;
+        case OPT_CIPHER:
+            cipher = EVP_get_cipherbyname(opt_arg());
+            if (cipher == NULL) {
+                BIO_printf(bio_err, "Unknown cipher: %s\n", opt_arg());
+                goto opthelp;
+            }
             break;
         case OPT_MD:
             digest = opt_unknown();
