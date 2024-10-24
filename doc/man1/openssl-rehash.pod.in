@@ -33,14 +33,14 @@ B<c_rehash>
 
 =head1 DESCRIPTION
 
-This command is generally equivalent to the external
-script B<c_rehash>,
+This command is generally equivalent to the external script B<c_rehash>,
 except for minor differences noted below.
 
-B<openssl rehash> scans directories and calculates a hash value of
-each F<.pem>, F<.crt>, F<.cer>, or F<.crl>
-file in the specified directory list and creates symbolic links
-for each file, where the name of the link is the hash value.
+B<openssl rehash> scans directories and calculates a hash value for each
+F<.pem>, F<.crt>, F<.cer>, or F<.crl> file in the specified directory list
+that is in PEM format and contains exactly one certificate or CRL.
+For each of these files, it creates a symbolic link with its name being the
+hash value of the certificate subject name or CRL issuer name, respectively.
 (If the platform does not support symbolic links, a copy is made.)
 This command is useful as many programs that use OpenSSL require
 directories to be set up like this in order to find certificates.
@@ -66,12 +66,12 @@ the period, like this: I<HHHHHHHH.>B<r>I<D>.
 
 Multiple objects may have the same hash; they will be indicated by
 incrementing the I<D> value. Duplicates are found by comparing the
-full SHA-1 fingerprint. A warning will be displayed if a duplicate
-is found.
+full SHA-1 fingerprint of the certificate or CRL.
+A warning will be displayed if a duplicate is found.
 
-A warning will also be displayed if there are files that
-cannot be parsed as either a certificate or a CRL or if
-more than one such object appears in the file.
+A warning will also be displayed if there are files with a recoginzed filename
+extension that cannot be parsed as either a certificate or a CRL in PEM format
+or contain more than one such object.
 
 =head2 Script Configuration
 
@@ -85,8 +85,11 @@ a certificate or CRL:
   $OPENSSL x509 -hash -fingerprint -noout -in FILENAME
   $OPENSSL crl -hash -fingerprint -noout -in FILENAME
 
-where I<FILENAME> is the filename. It must output the hash of the
-file on the first line, and the fingerprint on the second,
+where I<FILENAME> is the filename. It must output
+for the certificate or CRL contained in the input file the
+hash value of the certificate subject name or CRL issuer name, respectively,
+on the first line,
+and the fingerprint of the full certificate or CRL structure on the second line,
 optionally prefixed with some text and an equals sign.
 
 =head1 OPTIONS
