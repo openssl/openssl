@@ -10,6 +10,11 @@
 
 name: Provider compatibility across versions
 
+# Please note there is no point in running this job on PR as the tests
+# will always run against the tips of the branches in the main repository
+# and not the branch from the PR.
+# Use the `extended tests` label to run provider compatibility checks
+# on PRs.
 on:
   schedule:
     - cron: '10 02 * * *'
