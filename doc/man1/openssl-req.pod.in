@@ -9,6 +9,7 @@ openssl-req - PKCS#10 certificate request and certificate generating command
 
 B<openssl> B<req>
 [B<-help>]
+[B<-cipher>]
 [B<-inform> B<DER>|B<PEM>]
 [B<-outform> B<DER>|B<PEM>]
 [B<-in> I<filename>]
@@ -85,6 +86,13 @@ The output format; unspecified by default.
 See L<openssl-format-options(1)> for details.
 
 The data is a PKCS#10 object.
+
+=item B<-cipher> I<name>
+
+Specify the cipher to be used for encrypting the private key. 
+The default cipher is 3DES (DES-EDE3-CBC). 
+If no cipher is specified, 3DES will be used by default. 
+You can override this by providing any valid OpenSSL cipher name.
 
 =item B<-in> I<filename>
 
@@ -651,6 +659,10 @@ will be treated as though they were a DirectoryString.
 Examine and verify certificate request:
 
  openssl req -in req.pem -text -verify -noout
+
+Specify the cipher to be used for encrypting the private key:
+
+ openssl req -new -key privatekey.pem -out request.csr -cipher aes256
 
 Create a private key and then generate a certificate request from it:
 
