@@ -40,6 +40,8 @@ void RSAZ_512_mod_exp(BN_ULONG result[8],
 
 int ossl_rsaz_avx512ifma_eligible(void);
 
+int ossl_rsaz_avxifma_eligible(void);
+
 int ossl_rsaz_mod_exp_avx512_x2(BN_ULONG *res1,
                                 const BN_ULONG *base1,
                                 const BN_ULONG *exponent1,
