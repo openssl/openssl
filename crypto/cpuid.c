@@ -14,7 +14,7 @@
         defined(__x86_64) || defined(__x86_64__) || \
         defined(_M_AMD64) || defined(_M_X64)
 
-extern unsigned int OPENSSL_ia32cap_P[4];
+extern unsigned int OPENSSL_ia32cap_P[5];
 
 # if defined(OPENSSL_CPUID_OBJ)
 
@@ -156,7 +156,7 @@ void OPENSSL_cpuid_setup(void)
     OPENSSL_ia32cap_P[1] = (unsigned int)(vec >> 32);
 }
 # else
-unsigned int OPENSSL_ia32cap_P[4];
+unsigned int OPENSSL_ia32cap_P[5];
 # endif
 #endif
 
