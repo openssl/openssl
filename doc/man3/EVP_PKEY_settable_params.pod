@@ -3,7 +3,8 @@
 =head1 NAME
 
 EVP_PKEY_settable_params, EVP_PKEY_set_params,
-EVP_PKEY_set_int_param, EVP_PKEY_set_size_t_param, EVP_PKEY_set_bn_param,
+EVP_PKEY_set_int_param, EVP_PKEY_set_size_t_param, EVP_PKEY_set_uint64_param,
+EVP_PKEY_set_bn_param,
 EVP_PKEY_set_utf8_string_param, EVP_PKEY_set_octet_string_param
 - set key parameters into a key
 
@@ -15,6 +16,7 @@ EVP_PKEY_set_utf8_string_param, EVP_PKEY_set_octet_string_param
  int EVP_PKEY_set_params(EVP_PKEY *pkey, OSSL_PARAM params[]);
  int EVP_PKEY_set_int_param(EVP_PKEY *pkey, const char *key_name, int in);
  int EVP_PKEY_set_size_t_param(EVP_PKEY *pkey, const char *key_name, size_t in);
+ int EVP_PKEY_set_uint64_param(EVP_PKEY *pkey, const char *key_name, uint64_t in);
  int EVP_PKEY_set_bn_param(EVP_PKEY *pkey, const char *key_name,
                            const BIGNUM *bn);
  int EVP_PKEY_set_utf8_string_param(EVP_PKEY *pkey, const char *key_name,
@@ -38,6 +40,9 @@ EVP_PKEY_set_int_param() sets an integer value I<in> into a key I<pkey> for the
 associated field I<key_name>.
 
 EVP_PKEY_set_size_t_param() sets an size_t value I<in> into a key I<pkey> for
+the associated field I<key_name>.
+
+EVP_PKEY_set_uint64_param() sets an uint64_t value I<in> into a key I<pkey> for
 the associated field I<key_name>.
 
 EVP_PKEY_set_bn_param() sets the BIGNUM value I<bn> into a key I<pkey> for the
@@ -68,11 +73,12 @@ L<EVP_PKEY_CTX_new(3)>, L<provider-keymgmt(7)>, L<OSSL_PARAM(3)>,
 
 =head1 HISTORY
 
-These functions were added in OpenSSL 3.0.
+The function EVP_PKEY_set_uint64_param() was added in OpenSSL 3.5.
+All other functions were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020-2024 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
