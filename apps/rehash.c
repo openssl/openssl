@@ -116,6 +116,25 @@ static int bit_isset(unsigned char *set, unsigned int bit)
 
 
 /*
+ * Delete fullpath; return 0 on success, 1 on error.
+ */
+static int do_unlink(const char *fullpath)
+{
+    if (verbose)
+        BIO_printf(bio_out, "unlink %s\n",
+                   fullpath);
+
+    if (unlink(fullpath) < 0 && errno != ENOENT) {
+        BIO_printf(bio_err,
+                   "%s: Can't unlink %s, %s\n",
+                   opt_getprog(), fullpath, strerror(errno));
+        return 1;
+    }
+
+    return 0;
+}
+
+/*
  * Process an entry; return number of errors.
  */
 static int add_entry(enum Type type, unsigned int hash, const char *filename,
@@ -190,8 +209,9 @@ static int add_entry(enum Type type, unsigned int hash, const char *filename,
 }
 
 /*
- * Check if a symlink goes to the right spot; return 0 if okay.
- * This can be -1 if bad filename, or an error count.
+ * Check if a symlink name has the expected pattern.
+ * Remove symlink or add an entry for it.
+ * Return 0 if the symlink has been handled.
  */
 static int handle_symlink(const char *filename, const char *fullpath)
 {
@@ -220,6 +240,10 @@ static int handle_symlink(const char *filename, const char *fullpath)
     id = strtoul(&filename[i], &endptr, 10);
     if (*endptr != '\0')
         return -1;
+
+    if (remove_links) {
+        return do_unlink(fullpath);
+    }
 
     n = readlink(fullpath, linktarget, sizeof(linktarget));
     if (n < 0 || n >= (int)sizeof(linktarget))
@@ -437,15 +461,10 @@ static int do_dir(const char *dirname, enum Hash h)
                     BIO_snprintf(buf, buflen, "%s%s%08x.%s%d",
                                  dirname, pathsep, bp->hash,
                                  suffixes[bp->type], nextid);
+                    errs += do_unlink(buf);
                     if (verbose)
                         BIO_printf(bio_out, "link %s -> %s\n",
                                    ep->filename, &buf[dirlen]);
-                    if (unlink(buf) < 0 && errno != ENOENT) {
-                        BIO_printf(bio_err,
-                                   "%s: Can't unlink %s, %s\n",
-                                   opt_getprog(), buf, strerror(errno));
-                        errs++;
-                    }
                     if (symlink(ep->filename, buf) < 0) {
                         BIO_printf(bio_err,
                                    "%s: Can't symlink %s, %s\n",
@@ -459,15 +478,7 @@ static int do_dir(const char *dirname, enum Hash h)
                     BIO_snprintf(buf, buflen, "%s%s%08x.%s%d",
                                  dirname, pathsep, bp->hash,
                                  suffixes[bp->type], ep->old_id);
-                    if (verbose)
-                        BIO_printf(bio_out, "unlink %s\n",
-                                   &buf[dirlen]);
-                    if (unlink(buf) < 0 && errno != ENOENT) {
-                        BIO_printf(bio_err,
-                                   "%s: Can't unlink %s, %s\n",
-                                   opt_getprog(), buf, strerror(errno));
-                        errs++;
-                    }
+                    errs += do_unlink(buf);
                 }
                 OPENSSL_free(ep->filename);
                 OPENSSL_free(ep);
