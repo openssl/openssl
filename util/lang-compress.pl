@@ -102,7 +102,7 @@ if ($lang eq 'C') {
     s/ $//mg;
 } elsif ($lang eq 'S') {
     # Because we use C++ style comments in our .S files, all we can do
-    # is to drop them
+    # is drop them
     s{
          ^([^\n]*?)//[^\n]*?$   # Any line with a // comment
     }{
