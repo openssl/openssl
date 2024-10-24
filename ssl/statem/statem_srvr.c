@@ -1734,6 +1734,15 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
         s->client_version = clienthello->legacy_version;
     }
 
+#ifndef OPENSSL_NO_TLS1_3
+    /* We have to do this because is_tls13_capable needs to know */
+    if (!tls_parse_extension(s, TLSEXT_IDX_signature_algorithms,
+                             SSL_EXT_CLIENT_HELLO,
+                             s->clienthello->pre_proc_exts, NULL, 0))
+        /* SSLfatal() already called */
+        goto err;
+#endif
+
     /* Choose the server SSL/TLS/DTLS version. */
     protverr = ssl_choose_server_version(s, clienthello, &dgrd);
 
