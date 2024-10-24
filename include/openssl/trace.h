@@ -56,8 +56,9 @@ extern "C" {
 # define OSSL_TRACE_CATEGORY_ENCODER            16
 # define OSSL_TRACE_CATEGORY_REF_COUNT          17
 # define OSSL_TRACE_CATEGORY_HTTP               18
-/* Count of available categories. */
-# define OSSL_TRACE_CATEGORY_NUM                19
+# define OSSL_TRACE_CATEGORY_PROVIDER           19
+# define OSSL_TRACE_CATEGORY_QUERY              20
+# define OSSL_TRACE_CATEGORY_NUM                21
 /* KEEP THIS LIST IN SYNC with trace_categories[] in crypto/trace.c */
 
 /* Returns the trace category number for the given |name| */

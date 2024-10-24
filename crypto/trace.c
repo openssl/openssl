@@ -140,6 +140,8 @@ static const struct trace_category_st
     TRACE_CATEGORY_(ENCODER),
     TRACE_CATEGORY_(REF_COUNT),
     TRACE_CATEGORY_(HTTP),
+    TRACE_CATEGORY_(PROVIDER),
+    TRACE_CATEGORY_(QUERY),
 }; /* KEEP THIS LIST IN SYNC with #define OSSL_TRACE_CATEGORY_... in trace.h */
 
 const char *OSSL_trace_get_category_name(int num)
