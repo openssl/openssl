@@ -1366,6 +1366,19 @@ static int SIG_verify_loop(void *args)
     return count;
 }
 
+static int check_block_size(EVP_CIPHER_CTX *ctx, int length)
+{
+    const EVP_CIPHER *ciph = EVP_CIPHER_CTX_get0_cipher(ctx);
+
+    if (length % EVP_CIPHER_get_block_size(ciph) != 0) {
+        BIO_printf(bio_err,
+                   "\nRequested encryption length not a multiple of block size for %s!\n",
+                   EVP_CIPHER_get0_name(ciph));
+        return 0;
+    }
+    return 1;
+}
+
 static int run_benchmark(int async_jobs,
                          int (*loop_function) (void *), loopargs_t *loopargs)
 {
@@ -2574,6 +2587,8 @@ skip_hmac:
         }
         algindex = D_CBC_DES;
         for (testnum = 0; st && testnum < size_num; testnum++) {
+            if (!check_block_size(loopargs[0].ctx, lengths[testnum]))
+                break;
             print_message(names[D_CBC_DES], lengths[testnum], seconds.sym);
             Time_F(START);
             count = run_benchmark(async_jobs, EVP_Cipher_loop, loopargs);
@@ -2594,6 +2609,8 @@ skip_hmac:
         }
         algindex = D_EDE3_DES;
         for (testnum = 0; st && testnum < size_num; testnum++) {
+            if (!check_block_size(loopargs[0].ctx, lengths[testnum]))
+                break;
             print_message(names[D_EDE3_DES], lengths[testnum], seconds.sym);
             Time_F(START);
             count =
@@ -2618,6 +2635,8 @@ skip_hmac:
             }
 
             for (testnum = 0; st && testnum < size_num; testnum++) {
+                if (!check_block_size(loopargs[0].ctx, lengths[testnum]))
+                    break;
                 print_message(names[algindex], lengths[testnum], seconds.sym);
                 Time_F(START);
                 count =
@@ -2643,6 +2662,8 @@ skip_hmac:
             }
 
             for (testnum = 0; st && testnum < size_num; testnum++) {
+                if (!check_block_size(loopargs[0].ctx, lengths[testnum]))
+                    break;
                 print_message(names[algindex], lengths[testnum], seconds.sym);
                 Time_F(START);
                 count =
@@ -2667,6 +2688,8 @@ skip_hmac:
             }
 
             for (testnum = 0; st && testnum < size_num; testnum++) {
+                if (!check_block_size(loopargs[0].ctx, lengths[testnum]))
+                    break;
                 print_message(names[algindex], lengths[testnum], seconds.sym);
                 Time_F(START);
                 count =
