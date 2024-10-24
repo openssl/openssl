@@ -1323,6 +1323,10 @@ DEPEND[html/man3/EVP_PKEY_print_private.html]=man3/EVP_PKEY_print_private.pod
 GENERATE[html/man3/EVP_PKEY_print_private.html]=man3/EVP_PKEY_print_private.pod
 DEPEND[man/man3/EVP_PKEY_print_private.3]=man3/EVP_PKEY_print_private.pod
 GENERATE[man/man3/EVP_PKEY_print_private.3]=man3/EVP_PKEY_print_private.pod
+DEPEND[html/man3/EVP_PKEY_reserve.html]=man3/EVP_PKEY_reserve.pod
+GENERATE[html/man3/EVP_PKEY_reserve.html]=man3/EVP_PKEY_reserve.pod
+DEPEND[man/man3/EVP_PKEY_reserve.3]=man3/EVP_PKEY_reserve.pod
+GENERATE[man/man3/EVP_PKEY_reserve.3]=man3/EVP_PKEY_reserve.pod
 DEPEND[html/man3/EVP_PKEY_set1_RSA.html]=man3/EVP_PKEY_set1_RSA.pod
 GENERATE[html/man3/EVP_PKEY_set1_RSA.html]=man3/EVP_PKEY_set1_RSA.pod
 DEPEND[man/man3/EVP_PKEY_set1_RSA.3]=man3/EVP_PKEY_set1_RSA.pod
@@ -3334,6 +3338,7 @@ html/man3/EVP_PKEY_meth_get_count.html \
 html/man3/EVP_PKEY_meth_new.html \
 html/man3/EVP_PKEY_new.html \
 html/man3/EVP_PKEY_print_private.html \
+html/man3/EVP_PKEY_reserve.html \
 html/man3/EVP_PKEY_set1_RSA.html \
 html/man3/EVP_PKEY_set1_encoded_public_key.html \
 html/man3/EVP_PKEY_set_type.html \
@@ -3997,6 +4002,7 @@ man/man3/EVP_PKEY_meth_get_count.3 \
 man/man3/EVP_PKEY_meth_new.3 \
 man/man3/EVP_PKEY_new.3 \
 man/man3/EVP_PKEY_print_private.3 \
+man/man3/EVP_PKEY_reserve.3 \
 man/man3/EVP_PKEY_set1_RSA.3 \
 man/man3/EVP_PKEY_set1_encoded_public_key.3 \
 man/man3/EVP_PKEY_set_type.3 \
