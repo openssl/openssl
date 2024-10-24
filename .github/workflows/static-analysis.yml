@@ -10,7 +10,8 @@ name: Static Analysis
 #Run once a day
 on:
   schedule:
-    - cron:  '20 0 * * *'
+    - cron:  '20 02 * * *'
+  workflow_dispatch:
 
 permissions:
   contents: read
