@@ -87,6 +87,8 @@ int ossl_provider_get_capabilities(const OSSL_PROVIDER *prov,
                                    OSSL_CALLBACK *cb,
                                    void *arg);
 int ossl_provider_self_test(const OSSL_PROVIDER *prov);
+int ossl_provider_random(const OSSL_PROVIDER *prov, int which, void *buf, size_t n,
+                         unsigned int strength);
 const OSSL_ALGORITHM *ossl_provider_query_operation(const OSSL_PROVIDER *prov,
                                                     int operation_id,
                                                     int *no_cache);
