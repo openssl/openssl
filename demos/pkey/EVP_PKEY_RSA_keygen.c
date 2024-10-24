@@ -254,7 +254,7 @@ int main(int argc, char **argv)
 
     if (argc > 1) {
         bits_i = atoi(argv[1]);
-        if (bits < 512) {
+        if (bits < OPENSSL_RSA_MIN_MODULUS_BITS) {
             fprintf(stderr, "Invalid RSA key size\n");
             return EXIT_FAILURE;
         }

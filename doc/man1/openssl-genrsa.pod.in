@@ -97,7 +97,7 @@ Write the key using the traditional PKCS#1 format instead of the PKCS#8 format.
 =item B<numbits>
 
 The size of the private key to generate in bits. This must be the last option
-specified. The default is 2048 and values less than 512 are not allowed.
+specified. The default is 2048 and values less than 1024 are not allowed.
 
 =back
 
