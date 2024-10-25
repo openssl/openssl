@@ -82,7 +82,7 @@ jobs:
              --exclude "/usr/include/*"
               -o ./lcov.info
     - name: Coveralls upload
-      uses: coverallsapp/github-action@v2.3.2
+      uses: coverallsapp/github-action@v2.3.4
       with:
         github-token: ${{ secrets.github_token }}
         git-branch: ${{ matrix.branches.branch }}
