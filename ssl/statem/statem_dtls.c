@@ -297,20 +297,34 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t recordtype)
                  * we'll ignore the result anyway
                  */
                 size_t xlen;
+                int hmhdr_incl;
 
                 if (s->init_off == 0 && s->version != DTLS1_BAD_VER) {
                     /*
-                     * reconstruct message header is if it is being sent in
-                     * single fragment
+                     * Now prepare to calculate the transcript hash. For
+                     * versions prior to DTLSv1.3 this means:
+                     *
+                     * rfc6347: Hash calculations include entire handshake
+                     *   messages, including DTLS-specific fields: message_seq,
+                     *   fragment_offset, and fragment_length. However, the
+                     *   Finished MAC MUST be computed as if each handshake
+                     *   message had been sent as a single fragment.
+                     *
+                     * For DTLSv1.3 DTLS-specific fields: message_seq,
+                     * fragment_offset, and fragment_length are not used in the
+                     * calculation i.e. the MAC-calculation is the same as TLS
+                     * even though DTLS handshake messages may be fragmented.
                      */
                     if (!dtls1_write_hm_header(msgstart, msg_type, msg_len,
-                                               msg_seq, s->init_off, msg_len))
+                                               msg_seq, 0, msg_len))
                         return -1;
 
                     xlen = written;
+                    hmhdr_incl = 1;
                 } else {
                     msgstart += DTLS1_HM_HEADER_LENGTH;
                     xlen = written - DTLS1_HM_HEADER_LENGTH;
+                    hmhdr_incl = 0;
                 }
                 /*
                  * should not be done for 'Hello Request's, but in that case we'll
@@ -321,9 +335,8 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t recordtype)
                     || (s->statem.hand_state != TLS_ST_SW_SESSION_TICKET
                         && s->statem.hand_state != TLS_ST_CW_KEY_UPDATE
                         && s->statem.hand_state != TLS_ST_SW_KEY_UPDATE)) {
-                    if (!ssl3_finish_mac(s, msgstart, xlen)) {
+                    if (!ssl3_finish_mac(s, msgstart, xlen, hmhdr_incl))
                         return -1;
-                    }
                 }
             }
 
@@ -400,9 +413,6 @@ int dtls_get_message(SSL_CONNECTION *s, int *mt)
  */
 int dtls_get_message_body(SSL_CONNECTION *s, size_t *len)
 {
-    unsigned char *msg = (unsigned char *)s->init_buf->data;
-    size_t msg_len = s->init_num + DTLS1_HM_HEADER_LENGTH;
-
     if (s->s3.tmp.message_type == SSL3_MT_CHANGE_CIPHER_SPEC) {
         /* Nothing to be done */
         goto end;
@@ -416,12 +426,7 @@ int dtls_get_message_body(SSL_CONNECTION *s, size_t *len)
         return 0;
     }
 
-    if (s->version == DTLS1_BAD_VER) {
-        msg += DTLS1_HM_HEADER_LENGTH;
-        msg_len -= DTLS1_HM_HEADER_LENGTH;
-    }
-
-    if (!ssl3_finish_mac(s, msg, msg_len))
+    if (!tls_common_finish_mac(s))
         return 0;
 
     if (s->msg_callback)
