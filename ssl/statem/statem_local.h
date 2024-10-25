@@ -113,6 +113,7 @@ __owur int tls_get_message_header(SSL_CONNECTION *s, int *mt);
 __owur int tls_get_message_body(SSL_CONNECTION *s, size_t *len);
 __owur int dtls_get_message(SSL_CONNECTION *s, int *mt);
 __owur int dtls_get_message_body(SSL_CONNECTION *s, size_t *len);
+__owur int tls_common_finish_mac(SSL_CONNECTION *s);
 
 /* Message construction and processing functions */
 __owur int tls_process_initial_server_flight(SSL_CONNECTION *s);
