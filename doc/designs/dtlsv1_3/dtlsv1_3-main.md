@@ -70,6 +70,11 @@ section 5.9.
 The DTLSv1.3 implementation modifies the epoch according to RFC9147 section 6.1
 for DTLSv1.3 connections.
 
+#### DTLS 1.3 Transcript Hash
+
+The DTLSv1.3 implementation does not include the message sequence number,
+fragment offset and fragment length as is the case with previous versions of DTLS.
+
 Implementation progress
 -----------------------
 
@@ -87,7 +92,6 @@ is not covered by these workitems and must be implemented separately.
 |-----------------------------------------------------|----------------|
 | ACK messages                                        | -              |
 | Use HelloRetryRequest instead of HelloVerifyRequest | #22985, #22400 |
-| Message transcript                                  | -              |
 | ClientHello                                         | #23320         |
 | EndOfEarlyData message                              | -              |
 | Variable length header                              | -              |
@@ -100,15 +104,6 @@ TLSv1.3 and DTLSv1.2. This part of the implementation can be considered a
 separate work item.
 
 Here follows a collection of changes that need to be implemented.
-
-#### Message Transcript
-
-The message transcript is computed differently from DTLS 1.2 and TLS 1.3:
-
-> In DTLSv1.3, the message transcript is computed over the original TLS 1.3-style
-> Handshake messages without the message_seq, fragment_offset, and fragment_length
-> values. Note that this is a change from DTLS 1.2 where those values were
-> included in the transcript.
 
 #### DTLSCipherText
 

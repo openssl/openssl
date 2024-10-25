@@ -2749,7 +2749,7 @@ __owur int ssl3_dispatch_alert(SSL *s);
 __owur size_t ssl3_final_finish_mac(SSL_CONNECTION *s, const char *sender,
     size_t slen, unsigned char *p);
 __owur int ssl3_finish_mac(SSL_CONNECTION *s, const unsigned char *buf,
-    size_t len);
+    size_t len, int hmhdr_incl);
 void ssl3_free_digest_list(SSL_CONNECTION *s);
 __owur unsigned long ssl3_output_cert_chain(SSL_CONNECTION *s, WPACKET *pkt,
     CERT_PKEY *cpk, int for_comp);
