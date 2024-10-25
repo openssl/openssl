@@ -607,33 +607,81 @@ err:
     return -1;
 }
 
-static int waitsocket(int fd, int sec)
+/* Copied from demos/guide/quic-server-non-block.c */
+/**
+ * @brief Waits for activity on the SSL socket, either for reading or writing.
+ *
+ * This function monitors the underlying file descriptor of the given SSL
+ * connection to determine when it is ready for reading or writing, or both.
+ * It uses the select function to wait until the socket is either readable
+ * or writable, depending on what the SSL connection requires.
+ *
+ * @param ssl A pointer to the SSL object representing the connection.
+ *
+ * @note This function blocks until there is activity on the socket. In a real
+ * application, you might want to perform other tasks while waiting, such as
+ * updating a GUI or handling other connections.
+ *
+ * @note This function uses select for simplicity and portability. Depending
+ * on your application's requirements, you might consider using other
+ * mechanisms like poll or epoll for handling multiple file descriptors.
+ */
+static int wait_for_activity(SSL *ssl)
 {
-    fd_set read_fds;
-    int fdmax = fd;
-    int ret;
+    int sock, isinfinite;
+    fd_set read_fd, write_fd;
+    struct timeval tv;
+    struct timeval *tvp = NULL;
 
-    FD_ZERO(&read_fds);
-    FD_SET(fd, &read_fds);
-    if (sec) {
-        struct timeval tv;
+    /* Get hold of the underlying file descriptor for the socket */
+    if ((sock = SSL_get_fd(ssl)) == -1) {
+        fprintf(stderr, "Unable to get file descriptor");
+        return -1;
+    }
 
-        tv.tv_sec = sec;
-        tv.tv_usec = 0;
-        printf("waitsocket for %d\n", sec);
-        ret = select(fdmax + 1, &read_fds, NULL, NULL, &tv);
-    } else {
-        printf("waitsocket for ever\n");
-        ret = select(fdmax + 1, &read_fds, NULL, NULL, NULL);
-    }
-    if (ret == -1) {
-        fprintf(stderr, "waitsocket failed\n");
-        return -2;
-    } else if (ret) {
-        printf("waitsocket %d\n", FD_ISSET(fd, &read_fds));
-        return 0;
-    }
-    return -1; /* Timeout */
+    /* Initialize the fd_set structure */
+    FD_ZERO(&read_fd);
+    FD_ZERO(&write_fd);
+
+    /*
+     * Determine if we would like to write to the socket, read from it, or both.
+     */
+    if (SSL_net_write_desired(ssl))
+        FD_SET(sock, &write_fd);
+    if (SSL_net_read_desired(ssl))
+        FD_SET(sock, &read_fd);
+
+    /* Add the socket file descriptor to the fd_set */
+    FD_SET(sock, &read_fd);
+
+    /*
+     * Find out when OpenSSL would next like to be called, regardless of
+     * whether the state of the underlying socket has changed or not.
+     */
+    if (SSL_get_event_timeout(ssl, &tv, &isinfinite) && !isinfinite)
+        tvp = &tv;
+
+    /*
+     * Wait until the socket is writeable or readable. We use select here
+     * for the sake of simplicity and portability, but you could equally use
+     * poll/epoll or similar functions
+     *
+     * NOTE: For the purposes of this demonstration code this effectively
+     * makes this demo block until it has something more useful to do. In a
+     * real application you probably want to go and do other work here (e.g.
+     * update a GUI, or service other connections).
+     *
+     * Let's say for example that you want to update the progress counter on
+     * a GUI every 100ms. One way to do that would be to use the timeout in
+     * the last parameter to "select" below. If the tvp value is greater
+     * than 100ms then use 100ms instead. Then, when select returns, you
+     * check if it did so because of activity on the file descriptors or
+     * because of the timeout. If the 100ms GUI timeout has expired but the
+     * tvp timeout has not then go and update the GUI and then restart the
+     * "select" (with updated timeouts).
+     */
+
+    return (select(sock + 1, &read_fd, &write_fd, NULL, tvp));
 }
 
 /* Main loop for server to accept QUIC connections. */
@@ -680,10 +728,10 @@ static int run_quic_server(SSL_CTX *ctx, int fd)
         if (!hassomething) {
             fprintf(stderr, "waiting on socket\n");
             fflush(stderr);
-            ret = waitsocket(fd, 0);
-            if (ret == -2) {
+            ret = wait_for_activity(listener);
+            if (ret == -1) {
                 SSL_free(conn);
-                printf("waitsocket tells -2\n");
+                printf("wait_for_activity tells -1\n");
                 fflush(stdout);
                 goto err;
             }
@@ -743,12 +791,7 @@ restart:
         numtimeout = 0;
         while (!h3ssl.end_headers_received) {
             if (!hassomething) {
-                /*
-                 * XXX: 25 is TOO BIG.
-                 * Probably something wrong when waiting for the close on
-                 * the previous request/response
-                 */
-                if (waitsocket(fd, 1)) {
+                if (wait_for_activity(h3ssl.ssl_ids[0].s) == 0) {
                     printf("waiting for end_headers_received timeout %d\n", numtimeout);
                     numtimeout++;
                     if (numtimeout == 25)
@@ -860,7 +903,7 @@ wait_close:
         for (;;) {
             int hasnothing;
 
-            if (waitsocket(fd, 60)) {
+            if (wait_for_activity(h3ssl.ssl_ids[0].s) == 0) {
                 printf("hasnothing timeout\n");
                 /* XXX probably not always OK */
                 break;
