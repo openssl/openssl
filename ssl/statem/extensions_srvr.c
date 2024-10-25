@@ -739,6 +739,7 @@ int tls_parse_ctos_cookie(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     uint64_t tm, now;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+    const int version1_2 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_2_VERSION : TLS1_2_VERSION;
     const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
 
     /* Ignore any cookie if we're not set up to verify it */
@@ -874,7 +875,7 @@ int tls_parse_ctos_cookie(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     }
     if (!WPACKET_put_bytes_u8(&hrrpkt, SSL3_MT_SERVER_HELLO)
             || !WPACKET_start_sub_packet_u24(&hrrpkt)
-            || !WPACKET_put_bytes_u16(&hrrpkt, TLS1_2_VERSION)
+            || !WPACKET_put_bytes_u16(&hrrpkt, version1_2)
             || !WPACKET_memcpy(&hrrpkt, hrrrandom, SSL3_RANDOM_SIZE)
             || !WPACKET_sub_memcpy_u8(&hrrpkt, s->tmp_session_id,
                                       s->tmp_session_id_len)
