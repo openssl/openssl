@@ -1858,6 +1858,8 @@ static MSG_PROCESS_RETURN tls_process_as_hello_retry_request(SSL_CONNECTION *s,
     RAW_EXTENSION *extensions = NULL;
     const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
     const int versionany = SSL_CONNECTION_IS_DTLS(s) ? DTLS_ANY_VERSION : TLS_ANY_VERSION;
+    const size_t msghdrlen = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_HM_HEADER_LENGTH
+                                                       : SSL3_HM_HEADER_LENGTH;
 
     /*
      * If we were sending early_data then any alerts should not be sent using
@@ -1912,7 +1914,7 @@ static MSG_PROCESS_RETURN tls_process_as_hello_retry_request(SSL_CONNECTION *s,
      * for HRR messages.
      */
     if (!ssl3_finish_mac(s, (unsigned char *)s->init_buf->data,
-            s->init_num + SSL3_HM_HEADER_LENGTH)) {
+            s->init_num + msghdrlen, 1)) {
         /* SSLfatal() already called */
         goto err;
     }

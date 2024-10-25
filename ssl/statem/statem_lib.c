@@ -108,7 +108,7 @@ int ssl3_do_write(SSL_CONNECTION *s, uint8_t type)
                 && s->statem.hand_state != TLS_ST_SW_KEY_UPDATE))
             if (!ssl3_finish_mac(s,
                     (unsigned char *)&s->init_buf->data[s->init_off],
-                    written))
+                    written, 1))
                 return -1;
     if (written == s->init_num) {
         s->statem.write_in_progress = 0;
@@ -1661,6 +1661,57 @@ int tls_get_message_header(SSL_CONNECTION *s, int *mt)
     return 1;
 }
 
+int tls_common_finish_mac(SSL_CONNECTION *s)
+{
+    unsigned char *msg = (unsigned char *)s->init_buf->data;
+    size_t msg_len = s->init_num;
+    size_t hdr_len = 0;
+
+    if (SSL_CONNECTION_IS_DTLS(s)) {
+        if (s->version != DTLS1_BAD_VER)
+            hdr_len = DTLS1_HM_HEADER_LENGTH;
+        else
+            msg += DTLS1_HM_HEADER_LENGTH;
+    } else if (!RECORD_LAYER_is_sslv2_record(&s->rlayer)) {
+        hdr_len = SSL3_HM_HEADER_LENGTH;
+    }
+
+    msg_len += hdr_len;
+
+    /* Feed this message into MAC computation. */
+    if (RECORD_LAYER_is_sslv2_record(&s->rlayer)
+        && !ssl3_finish_mac(s, msg, msg_len, 1)) {
+        /* SSLfatal() already called */
+        return 0;
+    } else {
+        /*
+         * We defer feeding in the HRR until later. We'll do it as part of
+         * the message processing.
+         * The (D)TLSv1.3 handshake transcript stops at the ClientFinished
+         * message.
+         */
+        const size_t srvhellorandom_offs = hdr_len + 2;
+
+        /* KeyUpdate and NewSessionTicket do not need to be added */
+        if (!SSL_CONNECTION_IS_VERSION13(s)
+            || (s->s3.tmp.message_type != SSL3_MT_NEWSESSION_TICKET
+                && s->s3.tmp.message_type != SSL3_MT_KEY_UPDATE)) {
+            if (s->s3.tmp.message_type != SSL3_MT_SERVER_HELLO
+                || s->init_num < srvhellorandom_offs + SSL3_RANDOM_SIZE
+                || memcmp(hrrrandom,
+                       s->init_buf->data + srvhellorandom_offs,
+                       SSL3_RANDOM_SIZE)
+                    != 0) {
+                if (!ssl3_finish_mac(s, msg, msg_len, 1))
+                    /* SSLfatal() already called */
+                    return 0;
+            }
+        }
+    }
+
+    return 1;
+}
+
 int tls_get_message_body(SSL_CONNECTION *s, size_t *len)
 {
     size_t n, readbytes;
@@ -1699,46 +1750,20 @@ int tls_get_message_body(SSL_CONNECTION *s, size_t *len)
         return 0;
     }
 
-    /* Feed this message into MAC computation. */
+    if (!tls_common_finish_mac(s)) {
+        /* SSLfatal() already called */
+        *len = 0;
+        return 0;
+    }
+
     if (RECORD_LAYER_is_sslv2_record(&s->rlayer)) {
-        if (!ssl3_finish_mac(s, (unsigned char *)s->init_buf->data,
-                s->init_num)) {
-            /* SSLfatal() already called */
-            *len = 0;
-            return 0;
-        }
         if (s->msg_callback)
             s->msg_callback(0, SSL2_VERSION, 0, s->init_buf->data,
-                (size_t)s->init_num, ussl, s->msg_callback_arg);
+                s->init_num, ussl, s->msg_callback_arg);
     } else {
-        /*
-         * We defer feeding in the HRR until later. We'll do it as part of
-         * processing the message
-         * The TLsv1.3 handshake transcript stops at the ClientFinished
-         * message.
-         */
-#define SERVER_HELLO_RANDOM_OFFSET (SSL3_HM_HEADER_LENGTH + 2)
-        /* KeyUpdate and NewSessionTicket do not need to be added */
-        if (!SSL_CONNECTION_IS_VERSION13(s)
-            || (s->s3.tmp.message_type != SSL3_MT_NEWSESSION_TICKET
-                && s->s3.tmp.message_type != SSL3_MT_KEY_UPDATE)) {
-            if (s->s3.tmp.message_type != SSL3_MT_SERVER_HELLO
-                || s->init_num < SERVER_HELLO_RANDOM_OFFSET + SSL3_RANDOM_SIZE
-                || memcmp(hrrrandom,
-                       s->init_buf->data + SERVER_HELLO_RANDOM_OFFSET,
-                       SSL3_RANDOM_SIZE)
-                    != 0) {
-                if (!ssl3_finish_mac(s, (unsigned char *)s->init_buf->data,
-                        s->init_num + SSL3_HM_HEADER_LENGTH)) {
-                    /* SSLfatal() already called */
-                    *len = 0;
-                    return 0;
-                }
-            }
-        }
         if (s->msg_callback)
             s->msg_callback(0, s->version, SSL3_RT_HANDSHAKE, s->init_buf->data,
-                (size_t)s->init_num + SSL3_HM_HEADER_LENGTH, ussl,
+                s->init_num + SSL3_HM_HEADER_LENGTH, ussl,
                 s->msg_callback_arg);
     }
 
@@ -2656,9 +2681,11 @@ int create_synthetic_message_hash(SSL_CONNECTION *s,
     size_t hrrlen)
 {
     unsigned char hashvaltmp[EVP_MAX_MD_SIZE];
-    unsigned char msghdr[SSL3_HM_HEADER_LENGTH];
+    unsigned char synmsghdr[SSL3_HM_HEADER_LENGTH];
+    size_t currmsghdr_len = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_HM_HEADER_LENGTH
+                                                      : SSL3_HM_HEADER_LENGTH;
 
-    memset(msghdr, 0, sizeof(msghdr));
+    memset(synmsghdr, 0, sizeof(synmsghdr));
 
     if (hashval == NULL) {
         hashval = hashvaltmp;
@@ -2679,10 +2706,10 @@ int create_synthetic_message_hash(SSL_CONNECTION *s,
     }
 
     /* Inject the synthetic message_hash message */
-    msghdr[0] = SSL3_MT_MESSAGE_HASH;
-    msghdr[SSL3_HM_HEADER_LENGTH - 1] = (unsigned char)hashlen;
-    if (!ssl3_finish_mac(s, msghdr, SSL3_HM_HEADER_LENGTH)
-        || !ssl3_finish_mac(s, hashval, hashlen)) {
+    synmsghdr[0] = SSL3_MT_MESSAGE_HASH;
+    synmsghdr[SSL3_HM_HEADER_LENGTH - 1] = (unsigned char)hashlen;
+    if (!ssl3_finish_mac(s, synmsghdr, SSL3_HM_HEADER_LENGTH, 0)
+        || !ssl3_finish_mac(s, hashval, hashlen, 0)) {
         /* SSLfatal() already called */
         return 0;
     }
@@ -2693,10 +2720,9 @@ int create_synthetic_message_hash(SSL_CONNECTION *s,
      * receiving a ClientHello2 with a cookie.
      */
     if (hrr != NULL
-        && (!ssl3_finish_mac(s, hrr, hrrlen)
+        && (!ssl3_finish_mac(s, hrr, hrrlen, 1)
             || !ssl3_finish_mac(s, (unsigned char *)s->init_buf->data,
-                s->s3.tmp.message_size
-                    + SSL3_HM_HEADER_LENGTH))) {
+                s->s3.tmp.message_size + currmsghdr_len, 1))) {
         /* SSLfatal() already called */
         return 0;
     }
