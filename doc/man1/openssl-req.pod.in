@@ -662,7 +662,7 @@ Examine and verify certificate request:
 
 Specify the cipher to be used for encrypting the private key:
 
- openssl req -new -key privatekey.pem -out request.csr -cipher aes256
+ openssl req -newkey rsa:2048 -keyout privatekey.pem -out request.csr -cipher aes-256-cbc
 
 Create a private key and then generate a certificate request from it:
 
