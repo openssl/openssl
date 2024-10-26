@@ -27,6 +27,8 @@
 
 #include "testutil.h"
 #include "internal/nelem.h"
+#include "crypto/evp.h"
+#include "../crypto/evp/evp_local.h"
 
 static OSSL_LIB_CTX *mainctx = NULL;
 static OSSL_PROVIDER *nullprov = NULL;
@@ -1298,6 +1300,46 @@ static int test_evp_md_ctx_copy(void)
     return ret;
 }
 
+static int test_evp_md_ctx_copy2(void)
+{
+    int ret = 0;
+    EVP_MD *md = NULL;
+    OSSL_LIB_CTX *ctx = NULL;
+    EVP_MD_CTX *inctx = NULL, *outctx = NULL;
+    void *origin_algctx = NULL;
+
+    if (!TEST_ptr(ctx = OSSL_LIB_CTX_new())
+            || !TEST_ptr(md = EVP_MD_fetch(ctx, "sha256", NULL)))
+        goto end;
+
+    inctx = EVP_MD_CTX_new();
+    outctx = EVP_MD_CTX_new();
+
+    if (!TEST_ptr(inctx) || !TEST_ptr(outctx))
+        goto end;
+
+    /* init inctx and outctx, now the contexts are from same providers */
+    if (!TEST_true(EVP_DigestInit_ex2(inctx, md, NULL)))
+        goto end;
+    if (!TEST_true(EVP_DigestInit_ex2(outctx, md, NULL)))
+        goto end;
+
+    /*
+     * Test the EVP_MD_CTX_copy_ex function. After copying,
+     * outctx->algctx should be the same as the original.
+     */
+    origin_algctx = outctx->algctx;
+    ret = TEST_true(EVP_MD_CTX_copy_ex(outctx, inctx))
+          && TEST_true(outctx->algctx == origin_algctx);
+
+end:
+    EVP_MD_free(md);
+    EVP_MD_CTX_free(inctx);
+    EVP_MD_CTX_free(outctx);
+    OSSL_LIB_CTX_free(ctx);
+    return ret;
+}
+
 #if !defined OPENSSL_NO_DES && !defined OPENSSL_NO_MD5
 static int test_evp_pbe_alg_add(void)
 {
@@ -1391,6 +1433,7 @@ int setup_tests(void)
     ADD_TEST(test_rsa_pss_sign);
     ADD_TEST(test_evp_md_ctx_dup);
     ADD_TEST(test_evp_md_ctx_copy);
+    ADD_TEST(test_evp_md_ctx_copy2);
     ADD_ALL_TESTS(test_provider_unload_effective, 2);
 #if !defined OPENSSL_NO_DES && !defined OPENSSL_NO_MD5
     ADD_TEST(test_evp_pbe_alg_add);

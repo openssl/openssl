@@ -20,6 +20,7 @@ provider-digest - The digest library E<lt>-E<gt> provider functions
  void *OSSL_FUNC_digest_newctx(void *provctx);
  void OSSL_FUNC_digest_freectx(void *dctx);
  void *OSSL_FUNC_digest_dupctx(void *dctx);
+ void OSSL_FUNC_digest_copyctx(void *voutctx, void *vinctx);
 
  /* Digest generation */
  int OSSL_FUNC_digest_init(void *dctx, const OSSL_PARAM params[]);
@@ -76,6 +77,7 @@ macros in L<openssl-core_dispatch.h(7)>, as follows:
  OSSL_FUNC_digest_newctx               OSSL_FUNC_DIGEST_NEWCTX
  OSSL_FUNC_digest_freectx              OSSL_FUNC_DIGEST_FREECTX
  OSSL_FUNC_digest_dupctx               OSSL_FUNC_DIGEST_DUPCTX
+ OSSL_FUNC_digest_copyctx              OSSL_FUNC_DIGEST_COPYCTX
 
  OSSL_FUNC_digest_init                 OSSL_FUNC_DIGEST_INIT
  OSSL_FUNC_digest_update               OSSL_FUNC_DIGEST_UPDATE
@@ -110,6 +112,14 @@ This function should free any resources associated with that context.
 
 OSSL_FUNC_digest_dupctx() should duplicate the provider side digest context in the
 I<dctx> parameter and return the duplicate copy.
+
+OSSL_FUNC_digest_copyctx() should copy the provider side digest context in the
+I<vinctx> parameter to the I<voutctx> parameter which is the another provider side
+context.
+The OSSL_FUNC_digest_copyctx function is used in the EVP_MD_CTX_copy_ex function to
+speed up HMAC operations in the PBKDF2.
+This function is optional, and dupctx will be used if there is no EVP_MD_CTX_copy_ex
+function.
 
 =head2 Digest Generation Functions
 
@@ -273,6 +283,7 @@ L<life_cycle-digest(7)>, L<EVP_DigestInit(3)>
 =head1 HISTORY
 
 The provider DIGEST interface was introduced in OpenSSL 3.0.
+OSSL_FUNC_digest_copyctx() was added in 3.5 version.
 
 =head1 COPYRIGHT
 

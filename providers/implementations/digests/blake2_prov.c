@@ -134,6 +134,15 @@ static void *blake##variantsize##_dupctx(void *ctx) \
         *ret = *in; \
     return ret; \
 } \
+\
+static void blake##variantsize##_copyctx(void *voutctx, void *vinctx) \
+{ \
+    struct blake##variant##_md_data_st *inctx, *outctx; \
+ \
+    outctx = (struct blake##variant##_md_data_st *)voutctx; \
+    inctx = (struct blake##variant##_md_data_st *)vinctx; \
+    *outctx = *inctx; \
+} \
  \
 static int blake##variantsize##_internal_final(void *ctx, unsigned char *out, \
                                      size_t *outl, size_t outsz) \
@@ -169,6 +178,7 @@ const OSSL_DISPATCH ossl_blake##variantsize##_functions[] = { \
     {OSSL_FUNC_DIGEST_FINAL, (void (*)(void))blake##variantsize##_internal_final}, \
     {OSSL_FUNC_DIGEST_FREECTX, (void (*)(void))blake##variantsize##_freectx}, \
     {OSSL_FUNC_DIGEST_DUPCTX, (void (*)(void))blake##variantsize##_dupctx}, \
+    {OSSL_FUNC_DIGEST_COPYCTX, (void (*)(void))blake##variantsize##_copyctx}, \
     {OSSL_FUNC_DIGEST_GET_PARAMS, (void (*)(void))blake##variantsize##_get_params}, \
     {OSSL_FUNC_DIGEST_GETTABLE_PARAMS, \
      (void (*)(void))ossl_digest_default_gettable_params}, \
