@@ -67,7 +67,7 @@ void ossl_echext_free(OSSL_ECHEXT *e)
     return;
 }
 
-OSSL_ECHEXT *ossl_echext_copy(const OSSL_ECHEXT *src)
+OSSL_ECHEXT *ossl_echext_dup(const OSSL_ECHEXT *src)
 {
     OSSL_ECHEXT *ext = OPENSSL_zalloc(sizeof(*src));
 
@@ -915,7 +915,13 @@ int OSSL_ECHSTORE_get1_info(OSSL_ECHSTORE *es, int index, time_t *loaded_secs,
         return 0;
     }
     *loaded_secs = now - ee->loadtime;
-    *public_name = OPENSSL_strdup(ee->public_name);
+    if (ee->public_name != NULL) {
+        *public_name = OPENSSL_strdup(ee->public_name);
+        if (*public_name == NULL)
+            goto err;
+    } else {
+        *public_name = NULL;
+    }
     *has_private = (ee->keyshare == NULL ? 0 : 1);
     /* Now "print" the ECHConfigList */
     out = BIO_new(BIO_s_mem());

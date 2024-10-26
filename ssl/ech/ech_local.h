@@ -161,7 +161,7 @@ typedef struct ossl_ech_conn_st {
      * outer CH and only the type is sent in the inner CH.
      * We use this array to keep track of the extension types that
      * have values only in the outer CH
-     * Currently, this is basically contolled at compile time, but
+     * Currently, this is basically controlled at compile time, but
      * in a way that could be varied, or, in future, put under
      * run-time control, so having this isn't so much an overhead.
      */
@@ -214,7 +214,7 @@ int ossl_ech_conn_init(SSL_CONNECTION *s, SSL_CTX *ctx,
                        const SSL_METHOD *method);
 void ossl_ech_conn_free(OSSL_ECH_CONN *ec);
 void ossl_echext_free(OSSL_ECHEXT *e);
-OSSL_ECHEXT *ossl_echext_copy(const OSSL_ECHEXT *src);
+OSSL_ECHEXT *ossl_echext_dup(const OSSL_ECHEXT *src);
 
 # endif
 #endif

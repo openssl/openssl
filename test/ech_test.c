@@ -82,9 +82,9 @@ static int new_add_cb(SSL *s, unsigned int ext_type, unsigned int context,
     } else if (ext_type == OSSL_ECH_CURRENT_VERSION) {
         /* inject a sample ECH extension value into the CH */
         OPENSSL_free(data);
-        if ((data = OPENSSL_malloc(sizeof(encoded_ech_val))) == NULL)
+        if ((data = OPENSSL_memdup(encoded_ech_val,
+                                   sizeof(encoded_ech_val))) == NULL)
             return -1;
-        memcpy(data, encoded_ech_val, sizeof(encoded_ech_val));
         *out = data;
         *outlen = sizeof(encoded_ech_val);
     } else {

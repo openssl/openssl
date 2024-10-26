@@ -44,7 +44,7 @@ static OSSL_ECHSTORE_ENTRY *ossl_echstore_entry_dup(const OSSL_ECHSTORE_ENTRY *o
     ret->max_name_length = orig->max_name_length;
     ret->config_id = orig->config_id;
     if (orig->exts != NULL) {
-        ret->exts = sk_OSSL_ECHEXT_deep_copy(orig->exts, ossl_echext_copy,
+        ret->exts = sk_OSSL_ECHEXT_deep_copy(orig->exts, ossl_echext_dup,
                                              ossl_echext_free);
         if (ret->exts == NULL)
             goto err;
