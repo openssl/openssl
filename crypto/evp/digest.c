@@ -617,23 +617,35 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
         return 0;
     }
 
-    evp_md_ctx_reset_ex(out, 1);
-    digest_change = (out->fetched_digest != in->fetched_digest);
-    if (digest_change && out->fetched_digest != NULL)
-        EVP_MD_free(out->fetched_digest);
-    *out = *in;
-    /* NULL out pointers in case of error */
-    out->pctx = NULL;
-    out->algctx = NULL;
+    if (out->digest == in->digest && in->digest->copyctx != NULL) {
 
-    if (digest_change && in->fetched_digest != NULL)
-        EVP_MD_up_ref(in->fetched_digest);
+        in->digest->copyctx(out->algctx, in->algctx);
 
-    if (in->algctx != NULL) {
-        out->algctx = in->digest->dupctx(in->algctx);
-        if (out->algctx == NULL) {
-            ERR_raise(ERR_LIB_EVP, EVP_R_NOT_ABLE_TO_COPY_CTX);
-            return 0;
+        EVP_PKEY_CTX_free(out->pctx);
+        out->pctx = NULL;
+        cleanup_old_md_data(out, 0);
+
+        out->flags = in->flags;
+        out->update = in->update;
+    } else {
+        evp_md_ctx_reset_ex(out, 1);
+        digest_change = (out->fetched_digest != in->fetched_digest);
+        if (digest_change && out->fetched_digest != NULL)
+            EVP_MD_free(out->fetched_digest);
+        *out = *in;
+        /* NULL out pointers in case of error */
+        out->pctx = NULL;
+        out->algctx = NULL;
+
+        if (digest_change && in->fetched_digest != NULL)
+            EVP_MD_up_ref(in->fetched_digest);
+
+        if (in->algctx != NULL) {
+            out->algctx = in->digest->dupctx(in->algctx);
+            if (out->algctx == NULL) {
+                ERR_raise(ERR_LIB_EVP, EVP_R_NOT_ABLE_TO_COPY_CTX);
+                return 0;
+            }
         }
     }
 
@@ -1102,6 +1114,11 @@ static void *evp_md_from_algorithm(int name_id,
             if (md->gettable_ctx_params == NULL)
                 md->gettable_ctx_params =
                     OSSL_FUNC_digest_gettable_ctx_params(fns);
+            break;
+        case OSSL_FUNC_DIGEST_COPYCTX:
+            if (md->copyctx == NULL)
+                md->copyctx =
+                    OSSL_FUNC_digest_copyctx(fns);
             break;
         }
     }
