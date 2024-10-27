@@ -10044,7 +10044,7 @@ static int create_cert_key(int idx, char *certfilename, char *privkeyfilename)
     int ret = 1;
 
     if (!TEST_ptr(evpctx)
-        || !TEST_true(EVP_PKEY_keygen_init(evpctx))
+        || !TEST_int_gt(EVP_PKEY_keygen_init(evpctx), 0)
         || !TEST_true(EVP_PKEY_generate(evpctx, &pkey))
         || !TEST_ptr(pkey)
         || !TEST_ptr(x509)

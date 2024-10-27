@@ -2198,7 +2198,7 @@ X509_CRL *X509_CRL_diff(X509_CRL *base, X509_CRL *newer,
     }
 
     /* Set base CRL number: must be critical */
-    if (!X509_CRL_add1_ext_i2d(crl, NID_delta_crl, base->crl_number, 1, 0)) {
+    if (X509_CRL_add1_ext_i2d(crl, NID_delta_crl, base->crl_number, 1, 0) <= 0) {
         ERR_raise(ERR_LIB_X509, ERR_R_X509_LIB);
         goto err;
     }

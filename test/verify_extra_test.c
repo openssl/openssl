@@ -75,7 +75,7 @@ static int test_alt_chains_cert_forgery(void)
     lookup = X509_STORE_add_lookup(store, X509_LOOKUP_file());
     if (lookup == NULL)
         goto err;
-    if (!X509_LOOKUP_load_file(lookup, roots_f, X509_FILETYPE_PEM))
+    if (X509_LOOKUP_load_file(lookup, roots_f, X509_FILETYPE_PEM) <= 0)
         goto err;
 
     untrusted = load_certs_pem(untrusted_f);
