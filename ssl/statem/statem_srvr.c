@@ -3083,7 +3083,7 @@ static int tls_process_cke_dhe(SSL_CONNECTION *s, PACKET *pkt)
         goto err;
     }
 
-    if (!EVP_PKEY_set1_encoded_public_key(ckey, data, i)) {
+    if (EVP_PKEY_set1_encoded_public_key(ckey, data, i) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     }
