@@ -1308,11 +1308,9 @@ void print_ssl_summary(SSL *s)
         ssl_print_groups(bio_err, s, 1);
 #endif
     if (!SSL_is_server(s)) {
-        if (SSL_version(s) == TLS1_3_VERSION) {
-            int nid = SSL_get_negotiated_group(s);
-
-            BIO_printf(bio_err, "Negotiated TLS1.3 group: %s\n", SSL_group_to_name(s, nid));
-        }
+        if (SSL_version(s) == TLS1_3_VERSION)
+            BIO_printf(bio_err, "Negotiated TLS1.3 group: %s\n",
+                       SSL_group_to_name(s, SSL_get_negotiated_group(s)));
         ssl_print_tmp_key(bio_err, s);
     }
 }
