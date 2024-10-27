@@ -841,6 +841,7 @@ OSSL_HPKE_CTX *OSSL_HPKE_CTX_new(int mode, OSSL_HPKE_SUITE suite, int role,
 
  err:
     EVP_CIPHER_free(ctx->aead_ciph);
+    OPENSSL_free(ctx->propq);
     OPENSSL_free(ctx);
     return NULL;
 }
