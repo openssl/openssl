@@ -1326,12 +1326,13 @@ void print_ssl_summary(SSL *s)
     ssl_print_point_formats(bio_err, s);
     if (SSL_is_server(s))
         ssl_print_groups(bio_err, s, 1);
-    else
-        ssl_print_tmp_key(bio_err, s);
-#else
-    if (!SSL_is_server(s))
-        ssl_print_tmp_key(bio_err, s);
 #endif
+    if (!SSL_is_server(s)) {
+        if (SSL_version(s) == TLS1_3_VERSION)
+            BIO_printf(bio_err, "Negotiated TLS1.3 group: %s\n",
+                       SSL_group_to_name(s, SSL_get_negotiated_group(s)));
+        ssl_print_tmp_key(bio_err, s);
+    }
 }
 
 int config_ctx(SSL_CONF_CTX *cctx, STACK_OF(OPENSSL_STRING) *str,
