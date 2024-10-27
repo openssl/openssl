@@ -2187,7 +2187,7 @@ int check_cert_attributes(BIO *bio, X509 *x, const char *checkhost,
         if (print)
             BIO_printf(bio, "Hostname %s does%s match certificate\n",
                        checkhost, valid_host == 1 ? "" : " NOT");
-        ret = ret && valid_host;
+        ret = ret && valid_host > 0;
     }
 
     if (checkemail != NULL) {
@@ -2195,7 +2195,7 @@ int check_cert_attributes(BIO *bio, X509 *x, const char *checkhost,
         if (print)
             BIO_printf(bio, "Email %s does%s match certificate\n",
                        checkemail, valid_mail ? "" : " NOT");
-        ret = ret && valid_mail;
+        ret = ret && valid_mail > 0;
     }
 
     if (checkip != NULL) {
@@ -2203,7 +2203,7 @@ int check_cert_attributes(BIO *bio, X509 *x, const char *checkhost,
         if (print)
             BIO_printf(bio, "IP %s does%s match certificate\n",
                        checkip, valid_ip ? "" : " NOT");
-        ret = ret && valid_ip;
+        ret = ret && valid_ip > 0;
     }
 
     return ret;
