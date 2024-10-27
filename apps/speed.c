@@ -2993,7 +2993,7 @@ int speed_main(int argc, char **argv)
                 && EVP_PKEY_CTX_set_rsa_keygen_bits(genctx, rsa_keys[testnum].bits) > 0
                 && EVP_PKEY_CTX_set1_rsa_keygen_pubexp(genctx, bn) > 0
                 && EVP_PKEY_CTX_set_rsa_keygen_primes(genctx, primes) > 0
-                && EVP_PKEY_keygen(genctx, &rsa_key);
+                && EVP_PKEY_keygen(genctx, &rsa_key) > 0;
             BN_free(bn);
             bn = NULL;
             EVP_PKEY_CTX_free(genctx);

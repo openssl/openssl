@@ -277,7 +277,7 @@ int ecparam_main(int argc, char **argv)
     }
 
     if (text
-        && !EVP_PKEY_print_params(out, params_key, 0, NULL)) {
+        && EVP_PKEY_print_params(out, params_key, 0, NULL) <= 0) {
         BIO_printf(bio_err, "unable to print params\n");
         goto end;
     }
