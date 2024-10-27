@@ -111,7 +111,7 @@ static int ecdh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
     if (p == NULL || plen == 0)
         goto err;
 
-    if (!EVP_PKEY_set1_encoded_public_key(pkpeer, p, plen))
+    if (EVP_PKEY_set1_encoded_public_key(pkpeer, p, plen) <= 0)
         goto err;
 
     if (EVP_PKEY_derive_set_peer(pctx, pkpeer) > 0)
