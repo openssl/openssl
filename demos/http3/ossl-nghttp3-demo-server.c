@@ -158,6 +158,21 @@ static void set_id_status(uint64_t id, int status, struct h3ssl *h3ssl)
     printf("Oops can't set status, can't find stream!!!\n");
     assert(0);
 }
+static int get_id_status(uint64_t id, struct h3ssl *h3ssl)
+{
+    struct ssl_id *ssl_ids;
+    int i;
+
+    ssl_ids = h3ssl->ssl_ids;
+    for (i = 0; i < MAXSSL_IDS; i++) {
+        if (ssl_ids[i].id == id) {
+            printf("get_id_status: %llu to %d\n", (unsigned long long) ssl_ids[i].id, ssl_ids[i].status);
+            return ssl_ids[i].status;
+        }
+    }
+    printf("Oops can't set status, can't find stream!!!\n");
+    assert(0);
+}
 
 static int are_all_clientid_closed(struct h3ssl *h3ssl)
 {
@@ -172,22 +187,6 @@ static int are_all_clientid_closed(struct h3ssl *h3ssl)
         }
     }
     return 1;
-}
-
-static void h3close(struct h3ssl *h3ssl, uint64_t id)
-{
-    struct ssl_id *ssl_ids;
-    int i;
-
-    ssl_ids = h3ssl->ssl_ids;
-    for (i = 0; i < MAXSSL_IDS; i++) {
-        if (ssl_ids[i].id == id) {
-            if (!SSL_stream_conclude(ssl_ids[i].s, 0)) {
-                fprintf(stderr, "h3close: SSL_stream_conclude on %llu failed\n", (unsigned long long) id);
-                ERR_print_errors_fp(stderr);
-            }
-        }
-    }
 }
 
 static int on_recv_header(nghttp3_conn *conn, int64_t stream_id, int32_t token,
@@ -515,16 +514,20 @@ static int read_from_ssl_ids(nghttp3_conn *h3conn, struct h3ssl *h3ssl)
 
     /* Process the other stream */
     for (i = 1; i < numitem; i++) {
+        uint64_t id;
+        SSL *s;
         item++;
         processed_event = 0;
+        /* get the stream and id */
+        s = item->desc.value.ssl;
+        id = SSL_get_stream_id(item->desc.value.ssl);
 
         if (item->revents & SSL_POLL_EVENT_R) {
             /* try to read */
             int r;
 
-            printf("revent READ on %llu\n",
-                   (unsigned long long)ssl_ids[i].id);
-            r = quic_server_read(h3conn, ssl_ids[i].s, ssl_ids[i].id, h3ssl);
+            printf("revent READ on %llu\n", (unsigned long long)id);
+            r = quic_server_read(h3conn, s, id, h3ssl);
             if (r == 0) {
                 continue;
             }
@@ -536,10 +539,12 @@ static int read_from_ssl_ids(nghttp3_conn *h3conn, struct h3ssl *h3ssl)
         }
         if (item->revents & SSL_POLL_EVENT_ER) {
             /* mark it closed */
-            printf("revent exception READ on %llu\n",
-                   (unsigned long long)ssl_ids[i].id);
-            if (ssl_ids[i].status == CLIENTUNIOPEN) {
-                ssl_ids[i].status = ssl_ids[i].status | CLIENTCLOSED;
+            int status = get_id_status(id, h3ssl);
+         
+            printf("revent exception READ on %llu\n", (unsigned long long)id);
+            if (status == CLIENTUNIOPEN) {
+                status = status | CLIENTCLOSED;
+                set_id_status(id, status, h3ssl);
                 hassomething++;
             }
             processed_event = processed_event + SSL_POLL_EVENT_ER;
@@ -548,11 +553,22 @@ static int read_from_ssl_ids(nghttp3_conn *h3conn, struct h3ssl *h3ssl)
             /* we ignore those for the moment */
             processed_event = processed_event + SSL_POLL_EVENT_W;
         }
+        if (item->revents & SSL_POLL_EVENT_EW) {
+            /* write part received a STOP_SENDING */
+            int status = get_id_status(id, h3ssl);
+
+            if (status == SERVERCLOSED) {
+                printf("both sides closed on  %llu\n", (unsigned long long)id);
+                remove_id(id, h3ssl);
+                hassomething++;
+            }
+            processed_event = processed_event + SSL_POLL_EVENT_EW;
+        }
         if (item->revents != processed_event) {
             /* Figure out ??? */
             printf("revent %llu (%d) on %llu NOT PROCESSED!\n",
                    (unsigned long long)item->revents, SSL_POLL_EVENT_W,
-                   (unsigned long long)ssl_ids[i].id);
+                   (unsigned long long)id);
         }
     }
     return hassomething;
@@ -852,7 +868,7 @@ static int run_quic_server(SSL_CTX *ctx, int fd)
         struct h3ssl h3ssl;
         const nghttp3_mem *mem = nghttp3_mem_default();
         nghttp3_nv resp[10];
-        size_t num_nv = 0;
+        size_t num_nv;
         nghttp3_data_reader dr;
         int ret;
         int numtimeout;
@@ -922,6 +938,7 @@ static int run_quic_server(SSL_CTX *ctx, int fd)
         /* wait until we have received the headers */
 restart:
         numtimeout = 0;
+        num_nv = 0;
         while (!h3ssl.end_headers_received) {
             if (!hassomething) {
                 if (wait_for_activity(h3ssl.ssl_ids[0].s) == 0) {
@@ -1032,7 +1049,7 @@ restart:
 
                 printf("quic_server_write on %llu for %ld\n",
                        (unsigned long long)streamid, (unsigned long)vec[i].len);
-                if (flagwrite && i == sveccnt - 1) {
+                if (fin && i == sveccnt - 1) {
                     flagwrite = SSL_WRITE_FLAG_CONCLUDE;
                 }
                 if (!quic_server_write(&h3ssl, streamid, vec[i].base,
@@ -1056,7 +1073,9 @@ restart:
              * close stream zero
              */
             if (!h3ssl.close_done) {
-                h3close(&h3ssl, h3ssl.id_bidi);
+                int status = get_id_status(h3ssl.id_bidi, &h3ssl);
+                status = status | SERVERCLOSED;
+                set_id_status(h3ssl.id_bidi, status, &h3ssl);
                 h3ssl.close_wait = 1;
             }
         } else {
@@ -1073,8 +1092,6 @@ wait_close:
                 goto err;
             if (ret == 0) {
                 printf("hasnothing timeout\n");
-                /* XXX probably not always OK */
-                break;
             }
             hasnothing = read_from_ssl_ids(h3conn, &h3ssl);
             if (hasnothing == -1) {
