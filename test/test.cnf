@@ -50,7 +50,6 @@ emailAddress		= optional
 ####################################################################
 [ req ]
 distinguished_name	= req_distinguished_name
-encrypt_rsa_key		= no
 
 # Make altreq be identical to req
 [ altreq ]
