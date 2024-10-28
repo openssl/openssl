@@ -9788,7 +9788,6 @@ static int test_configuration_of_groups(void)
         || !TEST_size_t_eq(ctx->ext.supportedgroups_len, default_groups_len))
         goto end;
 
-
     if (!TEST_int_gt(SSL_CTX_set1_groups_list(ctx, "DEFAULT:-?P-256"), 0)
 #ifndef OPENSSL_NO_EC
         || !TEST_size_t_eq(ctx->ext.supportedgroups_len, default_groups_len - 1)
@@ -9814,7 +9813,6 @@ end:
     SSL_CTX_free(ctx);
     return ret;
 }
-
 
 #if !defined(OPENSSL_NO_EC) \
     && (!defined(OSSL_NO_USABLE_TLS1_3) || !defined(OPENSSL_NO_TLS1_2))

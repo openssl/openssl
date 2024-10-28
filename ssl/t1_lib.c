@@ -1070,11 +1070,10 @@ static int gid_cb(const char *elem, int len, void *arg)
     if (len == strlen("DEFAULT") && OPENSSL_strncasecmp("DEFAULT", elem, len) == 0)
         add_default_groups = 1;
 
-    if (add_default_groups) {
+    if (add_default_groups)
         groups_to_add = garg->ctx->ext.supported_groups_default_len;
-    } else if (!remove_group) {
+    else if (!remove_group)
         groups_to_add = 1;
-    }
 
     if (groups_to_add > garg->gidmax - garg->gidcnt) {
         size_t list_increment = groups_to_add > GROUPLIST_INCREMENT ? groups_to_add
@@ -1093,15 +1092,17 @@ static int gid_cb(const char *elem, int len, void *arg)
 
         for (j = 0; j < garg->ctx->ext.supported_groups_default_len; j++) {
             gid = garg->ctx->ext.supported_groups_default[j];
+            found_group = 0;
+
             for (i = 0; i < garg->gidcnt; i++) {
                 if (garg->gid_arr[i] == gid) {
                     found_group = 1;
                     break;
                 }
             }
-            if (!found_group) {
+
+            if (!found_group)
                 garg->gid_arr[garg->gidcnt++] = gid;
-            }
         }
 
         return 1;
