@@ -13,11 +13,13 @@
 #include <openssl/quic.h>
 #include <openssl/ssl.h>
 #include <unistd.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
-#define MAKE_NV(NAME, VALUE)                                                   \
-    { (uint8_t *)(NAME), (uint8_t *)(VALUE), sizeof((NAME)) - 1,               \
-      sizeof((VALUE)) - 1, NGHTTP3_NV_FLAG_NONE }
 #define nghttp3_arraylen(A) (sizeof(A) / sizeof(*(A)))
+
+/* The crappy test wants 20 bytes */
+static uint8_t nulldata[20] = "12345678901234567890";
 
 /* 3 streams created by the server and 4 by the client (one is bidi) */
 struct ssl_id {
@@ -33,17 +35,33 @@ struct ssl_id {
 #define SERVERCLOSED   0x10 /* closed by the server (us) */
 
 #define MAXSSL_IDS 20
+#define MAXURL 255
+
 struct h3ssl {
     struct ssl_id ssl_ids[MAXSSL_IDS];
     int end_headers_received; /* h3 header received call back called */
     int datadone;             /* h3 has given openssl all the data of the response */
     int has_uni;              /* we have the 3 uni directional stream needed */
     int close_done;           /* connection begins terminating EVENT_EC */
+    int close_wait;           /* we are wait for a close or a new request */
     int done;                 /* connection terminated EVENT_ECD, after EVENT_EC */
     int received_from_two;    /* workaround for -607 on nghttp3_conn_read_stream on stream 2 */
     int restart;              /* new request/response cycle started */
     uint64_t id_bidi;         /* the id of the stream used to read request and send response */
+    char url[MAXURL];         /* url to serve the request */
+    uint8_t *ptr_data;        /* pointer to the data to send */
+    unsigned int ldata;       /* amount of bytes to send */
+    int offset_data;          /* offset to next data to send */
 };
+
+static void make_nv(nghttp3_nv *nv, const char *name, const char *value)
+{
+    nv->name        = (uint8_t *)name;
+    nv->value       = (uint8_t *)value;
+    nv->namelen     = strlen(name);
+    nv->valuelen    = strlen(value);
+    nv->flags       = NGHTTP3_NV_FLAG_NONE;
+}
 
 static void init_ids(struct h3ssl *h3ssl)
 {
@@ -53,16 +71,37 @@ static void init_ids(struct h3ssl *h3ssl)
     ssl_ids = h3ssl->ssl_ids;
     for (i = 0; i < MAXSSL_IDS; i++) {
         ssl_ids[i].s = NULL;
-        ssl_ids[i].id = -1;
+        ssl_ids[i].id = UINT64_MAX;
         ssl_ids[i].status = 0;
     }
     h3ssl->end_headers_received = 0;
     h3ssl->datadone = 0;
     h3ssl->has_uni = 0;
     h3ssl->close_done = 0;
+    h3ssl->close_wait = 0;
     h3ssl->done = 0;
     h3ssl->received_from_two = 0;
     h3ssl->restart = 0;
+    memset(h3ssl->url, '\0', sizeof(h3ssl->url));
+    h3ssl->ptr_data = NULL;
+    h3ssl->offset_data = 0;
+    h3ssl->ldata = 0;
+    h3ssl->id_bidi = UINT64_MAX;
+}
+
+static void reuse_h3ssl(struct h3ssl *h3ssl)
+{
+    h3ssl->end_headers_received = 0;
+    h3ssl->datadone = 0;
+    h3ssl->close_done = 0;
+    h3ssl->close_wait = 0;
+    h3ssl->done = 0;
+    memset(h3ssl->url, '\0', sizeof(h3ssl->url));
+    if (h3ssl->ptr_data != NULL && h3ssl->ptr_data != nulldata)
+        free(h3ssl->ptr_data);
+    h3ssl->ptr_data = NULL;
+    h3ssl->offset_data = 0;
+    h3ssl->ldata = 0;
 }
 
 static void add_id(uint64_t id, SSL *ssl, struct h3ssl *h3ssl)
@@ -80,6 +119,27 @@ static void add_id(uint64_t id, SSL *ssl, struct h3ssl *h3ssl)
     }
     printf("Oops too many streams to add!!!\n");
     exit(1);
+}
+
+static void remove_id(uint64_t id, struct h3ssl *h3ssl)
+{
+    struct ssl_id *ssl_ids;
+    int i;
+
+    ssl_ids = h3ssl->ssl_ids;
+    if (id == UINT64_MAX)
+        return;
+    for (i = 0; i < MAXSSL_IDS; i++) {
+        if (ssl_ids[i].id == id) {
+            printf("remove_id %llu\n", (unsigned long long) ssl_ids[i].id);
+            /* XXX: don't work SSL_clear(ssl_ids[i].s); */
+            SSL_free(ssl_ids[i].s);
+            ssl_ids[i].s = NULL;
+            ssl_ids[i].id = UINT64_MAX;
+            ssl_ids[i].status = 0;
+            return;
+        }
+    }
 }
 
 static void set_id_status(uint64_t id, int status, struct h3ssl *h3ssl)
@@ -136,6 +196,7 @@ static int on_recv_header(nghttp3_conn *conn, int64_t stream_id, int32_t token,
                           void *stream_user_data)
 {
     nghttp3_vec vname, vvalue;
+    struct h3ssl *h3ssl = (struct h3ssl *)user_data;
 
     /* Received a single HTTP header. */
     vname = nghttp3_rcbuf_get_buf(name);
@@ -145,6 +206,18 @@ static int on_recv_header(nghttp3_conn *conn, int64_t stream_id, int32_t token,
     fprintf(stderr, ": ");
     fwrite(vvalue.base, vvalue.len, 1, stderr);
     fprintf(stderr, "\n");
+
+    if (token == NGHTTP3_QPACK_TOKEN__PATH) {
+        memcpy(h3ssl->url, vvalue.base, vvalue.len);
+        if (h3ssl->url[0] == '/') {
+            if (h3ssl->url[1] == '\0')
+                strcpy(h3ssl->url, "index.html");
+            else {
+                memcpy(h3ssl->url, h3ssl->url+1, vvalue.len-1);
+                h3ssl->url[vvalue.len-1] = '\0';
+            }
+        }
+    }
 
     return 0;
 }
@@ -351,18 +424,22 @@ static int read_from_ssl_ids(nghttp3_conn *h3conn, struct h3ssl *h3ssl)
         printf("=> Received connection on %lld %d\n", (unsigned long long) id,
                SSL_get_stream_type(stream));
         add_id(id, stream, h3ssl);
+        if (h3ssl->close_wait) {
+            printf("in close_wait so we will have a new request\n");
+            reuse_h3ssl(h3ssl);
+            h3ssl->restart = 1; /* Checked in wait_close loop */
+        }
         if (SSL_get_stream_type(stream) == SSL_STREAM_TYPE_BIDI) {
             /* bidi that is the id  where we have to send the response */
             printf("=> Received connection on %lld ISBIDI\n",
                    (unsigned long long) id);
+            if (h3ssl->id_bidi != UINT64_MAX) {
+                /* XXX check if closed ... */
+                remove_id(h3ssl->id_bidi, h3ssl);
+            }
             h3ssl->id_bidi = id;
-
-            /* XXX use it to restart to end_headers_received */
-            h3ssl->end_headers_received = 0;
-            h3ssl->datadone = 0;
-            h3ssl->close_done = 0;
-            h3ssl->done = 0;
-            h3ssl->restart = 1; /* Checked in wait_close loop */
+            reuse_h3ssl(h3ssl);
+            h3ssl->restart = 1;
         } else {
            set_id_status(id, CLIENTUNIOPEN, h3ssl);
         }
@@ -405,6 +482,7 @@ static int read_from_ssl_ids(nghttp3_conn *h3conn, struct h3ssl *h3ssl)
     if (item->revents & SSL_POLL_EVENT_EC) {
         /* the connection begins terminating */
         printf("Connection terminating\n");
+        printf("Connection terminating restart %d\n", h3ssl->restart);
         if (!h3ssl->close_done) {
             h3ssl->close_done = 1;
         } else {
@@ -466,9 +544,13 @@ static int read_from_ssl_ids(nghttp3_conn *h3conn, struct h3ssl *h3ssl)
             }
             processed_event = processed_event + SSL_POLL_EVENT_ER;
         }
+        if (item->revents & SSL_POLL_EVENT_W) {
+            /* we ignore those for the moment */
+            processed_event = processed_event + SSL_POLL_EVENT_W;
+        }
         if (item->revents != processed_event) {
             /* Figure out ??? */
-            printf("revent %llu (%d) on %llu\n",
+            printf("revent %llu (%d) on %llu NOT PROCESSED!\n",
                    (unsigned long long)item->revents, SSL_POLL_EVENT_W,
                    (unsigned long long)ssl_ids[i].id);
         }
@@ -476,8 +558,46 @@ static int read_from_ssl_ids(nghttp3_conn *h3conn, struct h3ssl *h3ssl)
     return hassomething;
 }
 
-/* The crappy test wants 20 bytes */
-static uint8_t nulldata[20] = "12345678901234567890";
+static int get_file_length(char *filename)
+{
+    struct stat st;
+    if (strcmp(filename, "big") == 0) {
+        printf("big!!!\n");
+        return INT_MAX;
+    }
+    if (stat(filename, &st) == 0) {
+        /* Only process regular files */
+        if (S_ISREG(st.st_mode)) {
+            printf("get_file_length %s %ld\n", filename, st.st_size);
+            return st.st_size;
+        }
+    }
+    printf("Can't get_file_length %s\n", filename);
+    return 0;
+}
+
+static char *get_file_data(char *filename)
+{
+    int size = get_file_length(filename);
+    char *res;
+    int fd;
+
+    if (size == 0)
+        return NULL;
+
+    res = malloc(size+1);
+    res[size] = '\0';
+    fd = open(filename, O_RDONLY);
+    if (read(fd,res,size)==-1) {
+        close(fd);
+        free(res);
+        return NULL;
+    }
+    close(fd);
+    printf("read from %s : %d\n", filename, size);
+    return res;
+}
+
 static nghttp3_ssize step_read_data(nghttp3_conn *conn, int64_t stream_id,
                                     nghttp3_vec *vec, size_t veccnt,
                                     uint32_t *pflags, void *user_data,
@@ -488,9 +608,23 @@ static nghttp3_ssize step_read_data(nghttp3_conn *conn, int64_t stream_id,
         *pflags = NGHTTP3_DATA_FLAG_EOF;
         return 0;
     }
-    vec[0].base = nulldata;
-    vec[0].len = 20;
-    h3ssl->datadone++;
+    /* send the data */
+    printf("step_read_data for %s %d\n", h3ssl->url, h3ssl->ldata);
+    if (h3ssl->ldata <= 4096) {
+        vec[0].base = &(h3ssl->ptr_data[h3ssl->offset_data]);
+        vec[0].len = h3ssl->ldata;
+        h3ssl->datadone++;
+        *pflags = NGHTTP3_DATA_FLAG_EOF;
+    } else {
+        vec[0].base = &(h3ssl->ptr_data[h3ssl->offset_data]);
+        vec[0].len = 4096;
+        if (h3ssl->ldata == INT_MAX) {
+            printf("big = endless!\n");
+        } else {
+            h3ssl->offset_data = h3ssl->offset_data + 4096;
+            h3ssl->ldata = h3ssl->ldata - 4096;
+        }
+    }
 
     return 1;
 }
@@ -717,17 +851,16 @@ static int run_quic_server(SSL_CTX *ctx, int fd)
         nghttp3_callbacks callbacks = {0};
         struct h3ssl h3ssl;
         const nghttp3_mem *mem = nghttp3_mem_default();
-        nghttp3_nv resp[] = {
-            MAKE_NV(":status", "200"),
-            MAKE_NV("content-length", "20"),
-        };
+        nghttp3_nv resp[10];
+        size_t num_nv = 0;
         nghttp3_data_reader dr;
         int ret;
         int numtimeout;
+        char slength[11];
 
         if (!hassomething) {
-            fprintf(stderr, "waiting on socket\n");
-            fflush(stderr);
+            printf("waiting on socket\n");
+            fflush(stdout);
             ret = wait_for_activity(listener);
             if (ret == -1) {
                 SSL_free(conn);
@@ -736,15 +869,15 @@ static int run_quic_server(SSL_CTX *ctx, int fd)
                 goto err;
             }
         }
-        fprintf(stderr, "before SSL_accept_connection\n");
-        fflush(stderr);
+        printf("before SSL_accept_connection\n");
+        fflush(stdout);
 
         /*
          * SSL_accept_connection will return NULL if there is nothing to accept
          */
         conn = SSL_accept_connection(listener, 0);
-        fprintf(stderr, "after SSL_accept_connection\n");
-        fflush(stderr);
+        printf("after SSL_accept_connection\n");
+        fflush(stdout);
         if (conn == NULL) {
             fprintf(stderr, "error while accepting connection\n");
             hassomething = 0;
@@ -833,8 +966,37 @@ restart:
 
         /* we have receive the request build the response and send it */
         /* XXX add  MAKE_NV("connection", "close"), to resp[] and recheck */
+        make_nv(&resp[num_nv++], ":status", "200");
+        h3ssl.ldata = get_file_length(h3ssl.url);
+        if (h3ssl.ldata == 0) {
+            /* We don't find the file: use default test string */
+            sprintf(slength, "%d", 20);
+            h3ssl.ptr_data = nulldata;
+            h3ssl.ldata = 20;
+            /* content-type: text/html */
+            make_nv(&resp[num_nv++], "content-type", "text/html");
+        } else if (h3ssl.ldata == INT_MAX) {
+            /* endless file for tests */
+            sprintf(slength, "%d", h3ssl.ldata);
+            h3ssl.ptr_data = (uint8_t *) malloc(4096);
+            memset(h3ssl.ptr_data, 'A', 4096);
+        } else {
+            /* normal file we have opened */
+            sprintf(slength, "%d", h3ssl.ldata);
+            h3ssl.ptr_data = (uint8_t *) get_file_data(h3ssl.url);
+            if (h3ssl.ptr_data == NULL)
+                abort();
+            printf("before nghttp3_conn_submit_response on %llu for %s ...\n", (unsigned long long) h3ssl.id_bidi, h3ssl.url);
+            if (strstr(h3ssl.url, ".png"))
+                make_nv(&resp[num_nv++], "content-type", "image/png");
+            else if (strstr(h3ssl.url, ".ico"))
+                make_nv(&resp[num_nv++], "content-type", "image/vnd.microsoft.icon");
+            else
+                make_nv(&resp[num_nv++], "content-type", "text/html");
+        }
+
         dr.read_data = step_read_data;
-        if (nghttp3_conn_submit_response(h3conn, h3ssl.id_bidi, resp, 2, &dr)) {
+        if (nghttp3_conn_submit_response(h3conn, h3ssl.id_bidi, resp, num_nv, &dr)) {
             fprintf(stderr, "nghttp3_conn_submit_response failed!\n");
             goto err;
         }
@@ -895,7 +1057,10 @@ restart:
              */
             if (!h3ssl.close_done) {
                 h3close(&h3ssl, h3ssl.id_bidi);
+                h3ssl.close_wait = 1;
             }
+        } else {
+            printf("nghttp3_conn_submit_response still not finished\n");
         }
 
         /* wait until closed */
@@ -903,7 +1068,10 @@ wait_close:
         for (;;) {
             int hasnothing;
 
-            if (wait_for_activity(h3ssl.ssl_ids[0].s) == 0) {
+            ret = wait_for_activity(h3ssl.ssl_ids[0].s);
+            if (ret == -1)
+                goto err;
+            if (ret == 0) {
                 printf("hasnothing timeout\n");
                 /* XXX probably not always OK */
                 break;
@@ -914,7 +1082,7 @@ wait_close:
                 break;
                 /* goto err; well in fact not */
             } else if (hasnothing == 0) {
-                printf("hasnothing nothing...\n");
+                printf("hasnothing nothing\n");
                 continue;
             } else {
                 printf("hasnothing something\n");
