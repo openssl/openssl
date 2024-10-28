@@ -164,7 +164,7 @@ done
 cat $TEMPDIR/results-filtered.txt
 
 # If any findings were in range, exit with a different error code
-if [ -n "$(cat $TEMPDIR/results-filtered.txt)" ]
+if [ -s $TEMPDIR/results-filtered.txt ]
 then
     exit 2
 fi
