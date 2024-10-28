@@ -1208,6 +1208,8 @@ static int fix_ecdh_cofactor(enum state state,
         /* The initial value for |ctx->action_type| must not be zero. */
         if (!ossl_assert(ctx->action_type != NONE))
             return 0;
+    } else if (state == POST_PARAMS_TO_CTRL && ctx->action_type == NONE) {
+        ctx->action_type = GET;
     }
 
     if ((ret = default_check(state, translation, ctx)) <= 0)
