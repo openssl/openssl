@@ -547,8 +547,13 @@ int BIO_parse_hostserv(const char *hostserv, char **host, char **service,
             *service = NULL;
         } else {
             *service = OPENSSL_strndup(p, pl);
-            if (*service == NULL)
+            if (*service == NULL) {
+                if (h != NULL && host != NULL) {
+                    OPENSSL_free(*host);
+                    *host = NULL;
+                }
                 goto memerr;
+            }
         }
     }
 
