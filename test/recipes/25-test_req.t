@@ -358,42 +358,41 @@ subtest "generating SM2 certificate requests" => sub {
 subtest "generating certificate requests with -cipher flag" => sub {
     plan tests => 4;
 
-    SKIP: {
-        skip "RSA is not supported by this OpenSSL build", 2
-            if disabled("rsa");
+    diag("Testing -cipher flag with aes-256-cbc...");
 
-        diag("Testing -cipher flag with aes256...");
+    ok(run(app(["openssl", "req",
+                "-config", srctop_file("test", "test.cnf"),
+                "-newkey", "rsa:2048",
+                "-keyout", "privatekey-aes256.pem",
+                "-out", "testreq-rsa-cipher.pem",
+                "-utf8",
+                "-cipher", "aes-256-cbc"])),
+       "Generating request with -cipher flag (AES-256-CBC)");
 
-        ok(run(app(["openssl", "req",
-                    "-config", srctop_file("test", "test.cnf"),
-                    "-new", "-out", "testreq-rsa-cipher.pem", "-utf8",
-                    "-key", srctop_file("test", "testrsa.pem"),
-                    "-cipher", "aes256"])),
-           "Generating request with -cipher flag (AES256)");
+    diag("Verifying signature for aes-256-cbc...");
 
-        diag("Verifying signature for aes256...");
+    ok(run(app(["openssl", "req",
+                "-config", srctop_file("test", "test.cnf"),
+                "-verify", "-in", "testreq-rsa-cipher.pem", "-noout"])),
+       "Verifying signature on request with -cipher");
 
-        ok(run(app(["openssl", "req",
-                    "-config", srctop_file("test", "test.cnf"),
-                    "-verify", "-in", "testreq-rsa-cipher.pem", "-noout"])),
-           "Verifying signature on request with -cipher");
+    diag("Testing -cipher flag with aes-128-cbc...");
 
-        diag("Testing -cipher flag with aes128...");
+    ok(run(app(["openssl", "req",
+                "-config", srctop_file("test", "test.cnf"),
+                "-newkey", "rsa:2048",
+                "-keyout", "privatekey-aes128.pem",
+                "-out", "testreq-rsa-cipher-aes128.pem",
+                "-utf8",
+                "-cipher", "aes-128-cbc"])),
+       "Generating request with -cipher flag (AES-128-CBC)");
 
-        ok(run(app(["openssl", "req",
-                    "-config", srctop_file("test", "test.cnf"),
-                    "-new", "-out", "testreq-rsa-cipher-aes128.pem", "-utf8",
-                    "-key", srctop_file("test", "testrsa.pem"),
-                    "-cipher", "aes128"])),
-           "Generating request with -cipher flag (AES128)");
+    diag("Verifying signature for aes-128-cbc...");
 
-        diag("Verifying signature for aes128...");
-
-        ok(run(app(["openssl", "req",
-                    "-config", srctop_file("test", "test.cnf"),
-                    "-verify", "-in", "testreq-rsa-cipher-aes128.pem", "-noout"])),
-           "Verifying signature on request with -cipher (AES128)");
-    }
+    ok(run(app(["openssl", "req",
+                "-config", srctop_file("test", "test.cnf"),
+                "-verify", "-in", "testreq-rsa-cipher-aes128.pem", "-noout"])),
+       "Verifying signature on request with -cipher (AES-128-CBC)");
 };
 
 my @openssl_args = ("req", "-config", srctop_file("apps", "openssl.cnf"));
