@@ -81,14 +81,14 @@ static int i2r_NAMING_AUTHORITY(const struct v3_ext_method *method, void *in,
         && namingAuthority->namingAuthorityUrl == NULL)
         return 0;
 
-    if (BIO_printf(bp, "%*snamingAuthority: ", ind, "") <= 0)
+    if (BIO_printf(bp, "%*snamingAuthority:\n", ind, "") <= 0)
         goto err;
 
     if (namingAuthority->namingAuthorityId != NULL) {
         char objbuf[128];
         const char *ln = OBJ_nid2ln(OBJ_obj2nid(namingAuthority->namingAuthorityId));
 
-        if (BIO_printf(bp, "%*s  admissionAuthorityId: ", ind, "") <= 0)
+        if (BIO_printf(bp, "%*s  namingAuthorityId: ", ind, "") <= 0)
             goto err;
 
         OBJ_obj2txt(objbuf, sizeof(objbuf), namingAuthority->namingAuthorityId, 1);
