@@ -676,6 +676,17 @@ static void port_send_retry(QUIC_PORT *port,
     BIO_sendmmsg(port->net_wbio, msg, sizeof(BIO_MSG), 1, 0, &written);
 }
 
+static int port_validate_token(QUIC_PKT_HDR *hdr)
+{
+    int valid;
+
+    if (hdr->token_len != sizeof("openssltoken") - 1)
+        return 0;
+
+    valid = !memcmp(hdr->token, "openssltoken", sizeof("openssltoken") - 1);
+    return (valid);
+}
+
 /*
  * This is called by the demux when we get a packet not destined for any known
  * DCID.
@@ -746,10 +757,16 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
     if (hdr.type != QUIC_PKT_TYPE_INITIAL)
         goto undesirable;
 
+    /*
+     * TODO: there should be some logic similar to accounting half-open
+     * states in TCP. If we reach certain threshold, then we want to
+     * validate clients.
+     */
     if (hdr.token == NULL) {
         port_send_retry(port, &e->peer, &hdr);
         goto undesirable;
-    }
+    } else if (port_validate_token(&hdr) == 0)
+        goto undesirable;
 
     /*
      * Try to process this as a valid attempt to initiate a connection.
