@@ -138,7 +138,8 @@ static int dtls_process_record(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
 
     /*
      * check is not needed I believe
-     * As per RFC 6347 4.1.2.7 and RFC 9147 4.5.2: Silently drop the packet in case of invalid length.
+     * As per RFC 6347 4.1.2.7 and RFC 9147 4.5.2: Silently drop the packet in case of invalid
+     * length.
      */
     if (rr->length > SSL3_RT_MAX_ENCRYPTED_LENGTH)
         return 0;
@@ -164,8 +165,8 @@ static int dtls_process_record(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
         unsigned char *mac;
 
         /*
-         * As per RFC 6347 4.1.2.7 and RFC 9147 4.5.2: Silently drop the packet in case of invalid length.
-         * In this case the record length is too small to contain a mac.
+         * As per RFC 6347 4.1.2.7 and RFC 9147 4.5.2: Silently drop the packet in case of invalid
+         * length. In this case the record length is too small to contain a mac.
          */
         if (rr->orig_len < mac_size)
             return 0;
@@ -174,10 +175,13 @@ static int dtls_process_record(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
         mac = rr->data + rr->length;
         i = rl->funcs->mac(rl, rr, md, 0 /* not send */);
 
-        /* As per RFC 6347 4.1.2.7 and RFC 9147 4.5.2: Silently drop the packet in case of invalid MAC. */
+        /*
+         * As per RFC 6347 4.1.2.7 and RFC 9147 4.5.2: Silently drop the packet in case of invalid
+         * MAC.
+         */
         if (i == 0 || CRYPTO_memcmp(md, mac, (size_t)mac_size) != 0)
             return 0;
-        
+
         /*
          * We've handled the mac now - there is no MAC inside the encrypted
          * record
@@ -240,7 +244,10 @@ static int dtls_process_record(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
     /* r->length is now just compressed */
     if (rl->compctx != NULL) {
         if (rr->length > SSL3_RT_MAX_COMPRESSED_LENGTH) {
-            /* As per RFC 6347 4.1.2.7 and RFC 9147 4.5.2: Silently drop the packet in case of invalid length. */
+            /*
+             * As per RFC 6347 4.1.2.7 and RFC 9147 4.5.2: Silently drop the packet in case of
+             * invalid length.
+             */
             rr->length = 0;
             rl->packet_length = 0;
             goto end;
