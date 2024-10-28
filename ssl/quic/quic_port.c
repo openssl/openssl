@@ -637,7 +637,7 @@ static void port_send_retry(QUIC_PORT *port,
     hdr.type = QUIC_PKT_TYPE_RETRY;
     hdr.fixed = 1;
     hdr.version = 1;
-    hdr.len =  TOKEN_LEN;
+    hdr.len = TOKEN_LEN;
     hdr.data = token;
     ok = ossl_quic_calculate_retry_integrity_tag(port->engine->libctx,
                                                  port->engine->propq, &hdr,
@@ -648,10 +648,8 @@ static void port_send_retry(QUIC_PORT *port,
 
     hdr.token = token;
     hdr.token_len = TOKEN_LEN;
-    hdr.len = 0;
-    hdr.data = NULL;
 
-    msg[0].data = msg;
+    msg[0].data = buffer;
     msg[0].peer = peer;
     msg[0].local = NULL;
     msg[0].flags = 0;
