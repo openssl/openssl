@@ -40,7 +40,7 @@ least one group in the list. A number of these functions identify groups via a
 unique integer NID value. However, support for some groups may be added by
 external providers. In this case there will be no NID assigned for the group.
 When setting such groups applications should use the "list" form of these
-functions (i.e. SSL_CTX_set1_groups_list() and SSL_set1_groups_list).
+functions (i.e. SSL_CTX_set1_groups_list() and SSL_set1_groups_list()).
 
 SSL_CTX_set1_groups() sets the supported groups for B<ctx> to B<glistlen>
 groups in the array B<glist>. The array consist of all NIDs of supported groups.
@@ -83,7 +83,9 @@ B<brainpoolP256r1tls13>, B<brainpoolP384r1tls13>, B<brainpoolP512r1tls13>,
 B<ffdhe2048>, B<ffdhe3072>, B<ffdhe4096>, B<ffdhe6144> and B<ffdhe8192>. Support
 for other groups may be added by external providers, however note the discussion
 on TLS 1.3 selection criteria above. If a group name is preceded with the C<?>
-character, it will be ignored if an implementation is missing.
+character, it will be ignored if an implementation is missing. The "DEFAULT"
+group name is used to select the default selection of groups. Group names that
+are preceded with the C<-> character will be removed from the selected groups.
 
 SSL_set1_groups() and SSL_set1_groups_list() are similar except they set
 supported groups for the SSL structure B<ssl>.

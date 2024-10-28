@@ -30,6 +30,13 @@ OpenSSL 3.5
 
 ### Changes between 3.4 and 3.5 [xx XXX xxxx]
 
+* Support DEFAULT keyword and '-' prefix in SSL_CTX_set1_groups_list().
+  SSL_CTX_set1_groups_list() now supports the DEFAULT keyword which sets the
+  available groups to the default selection. The '-' prefix allows the calling
+  application to remove a group from the selection.
+
+  *Frederik Wedel-Heinen*
+
  * Updated the default encryption cipher for the `req`, `cms`, and `smime` applications
    from `des-ede3-cbc` to `aes-256-cbc`.
 
