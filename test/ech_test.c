@@ -72,16 +72,16 @@ static int new_add_cb(SSL *s, unsigned int ext_type, unsigned int context,
     int *server = (int *)add_arg;
     unsigned char *data;
 
-    if (*server != SSL_is_server(s)
-            || (data = OPENSSL_malloc(sizeof(*data))) == NULL)
+    if (*server != SSL_is_server(s))
         return -1;
     if (ext_type == TEST_EXT_TYPE1) {
+        if ((data = OPENSSL_malloc(sizeof(*data))) == NULL)
+            return -1;
         *data = 1;
         *out = data;
         *outlen = sizeof(*data);
     } else if (ext_type == OSSL_ECH_CURRENT_VERSION) {
         /* inject a sample ECH extension value into the CH */
-        OPENSSL_free(data);
         if ((data = OPENSSL_memdup(encoded_ech_val,
                                    sizeof(encoded_ech_val))) == NULL)
             return -1;
@@ -89,7 +89,6 @@ static int new_add_cb(SSL *s, unsigned int ext_type, unsigned int context,
         *outlen = sizeof(encoded_ech_val);
     } else {
         /* inject a TEST_EXT_TYPE2, with a zero-length payload */
-        OPENSSL_free(data);
         *out = NULL;
         *outlen = 0;
     }

@@ -82,7 +82,7 @@ int OSSL_ECHSTORE_downselect(OSSL_ECHSTORE *es, int index);
 int OSSL_ECHSTORE_set1_key_and_read_pem(OSSL_ECHSTORE *es, EVP_PKEY *priv,
                                         BIO *in, int for_retry);
 int OSSL_ECHSTORE_read_pem(OSSL_ECHSTORE *es, BIO *in, int for_retry);
-int OSSL_ECHSTORE_num_entries(OSSL_ECHSTORE *es, int *numentries);
+int OSSL_ECHSTORE_num_entries(const OSSL_ECHSTORE *es, int *numentries);
 int OSSL_ECHSTORE_num_keys(OSSL_ECHSTORE *es, int *numkeys);
 int OSSL_ECHSTORE_flush_keys(OSSL_ECHSTORE *es, time_t age);
 

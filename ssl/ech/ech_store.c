@@ -1071,7 +1071,7 @@ err:
     return rv;
 }
 
-int OSSL_ECHSTORE_num_entries(OSSL_ECHSTORE *es, int *numentries)
+int OSSL_ECHSTORE_num_entries(const OSSL_ECHSTORE *es, int *numentries)
 {
     if (es == NULL || numentries == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
