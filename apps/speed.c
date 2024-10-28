@@ -2976,6 +2976,10 @@ int speed_main(int argc, char **argv)
                             ERR_print_errors(bio_err);
                             exit(1);
                         }
+                    } else if (mode_op == EVP_CIPH_SIV_MODE
+                               || mode_op == EVP_CIPH_GCM_SIV_MODE) {
+                        EVP_CIPHER_CTX_ctrl(loopargs[k].ctx,
+                                            EVP_CTRL_SET_SPEED, 1, NULL);
                     }
                     if (ae_mode && decrypt) {
                         /* Set length of iv (Doesn't apply to SIV mode) */
@@ -3067,13 +3071,13 @@ int speed_main(int argc, char **argv)
                         }
 
                         EVP_CIPHER_CTX_set_padding(loopargs[k].ctx, 0);
-                    }
 
-                    /* GCM-SIV/SIV only allows for a single Update operation */
-                    if (mode_op == EVP_CIPH_SIV_MODE
-                        || mode_op == EVP_CIPH_GCM_SIV_MODE)
-                        EVP_CIPHER_CTX_ctrl(loopargs[k].ctx,
-                                            EVP_CTRL_SET_SPEED, 1, NULL);
+                        /* GCM-SIV/SIV only allows for a single Update operation */
+                        if (mode_op == EVP_CIPH_SIV_MODE
+                            || mode_op == EVP_CIPH_GCM_SIV_MODE)
+                            EVP_CIPHER_CTX_ctrl(loopargs[k].ctx,
+                                                EVP_CTRL_SET_SPEED, 1, NULL);
+                    }
                 }
 
                 Time_F(START);
