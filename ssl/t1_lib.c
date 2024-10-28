@@ -1081,8 +1081,10 @@ static int gid_cb(const char *elem, int len, void *arg)
         uint16_t *tmp =
             OPENSSL_realloc(garg->gid_arr,
                             (garg->gidmax + list_increment) * sizeof(*garg->gid_arr));
+
         if (tmp == NULL)
             return 0;
+
         garg->gidmax += list_increment;
         garg->gid_arr = tmp;
     }
