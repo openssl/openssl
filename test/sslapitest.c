@@ -9793,7 +9793,7 @@ static int test_configuration_of_groups(void)
 #ifndef OPENSSL_NO_EC
         || !TEST_size_t_eq(ctx->ext.supportedgroups_len, default_groups_len - 1)
 #else
-        || !TEST_size_t_eq(ctx->ext.supportedgroups_len, supp_groups_len_before)
+        || !TEST_size_t_eq(ctx->ext.supportedgroups_len, default_groups_len)
 #endif
         )
         goto end;
@@ -9803,7 +9803,7 @@ static int test_configuration_of_groups(void)
         || !TEST_size_t_eq(ctx->ext.supportedgroups_len, 1)
         || !TEST_int_eq(ctx->ext.supportedgroups[0], OSSL_TLS_GROUP_ID_secp521r1)
 #else
-        || !TEST_size_t_eq(ctx->ext.supportedgroups_len, supp_groups_len_before)
+        || !TEST_size_t_eq(ctx->ext.supportedgroups_len, default_groups_len)
 #endif
         )
         goto end;
