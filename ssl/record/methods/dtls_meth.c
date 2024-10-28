@@ -170,7 +170,7 @@ static int dtls_process_record(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
         mac = rr->data + rr->length;
         i = rl->funcs->mac(rl, rr, md, 0 /* not send */);
         if (i == 0 || CRYPTO_memcmp(md, mac, (size_t)mac_size) != 0) {
-            /* Silently drop the packet in case of invalid MAC. */
+            /* As per RFC 9147 4.5.2: Silently drop the packet in case of invalid MAC. */
             return 0;
         }
         /*
