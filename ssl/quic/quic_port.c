@@ -641,7 +641,7 @@ static void port_send_retry(QUIC_PORT *port,
     hdr.data = token;
     ok = ossl_quic_calculate_retry_integrity_tag(port->engine->libctx,
                                                  port->engine->propq, &hdr,
-                                                 &client_hdr->src_conn_id,
+                                                 &client_hdr->dst_conn_id,
                                                  integrity_tag);
     if (ok == 0)
         return;
