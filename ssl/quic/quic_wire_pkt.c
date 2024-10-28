@@ -570,6 +570,7 @@ int ossl_quic_wire_encode_pkt_hdr(WPACKET *pkt,
         if (hdr->type == QUIC_PKT_TYPE_RETRY) {
             if (!WPACKET_memcpy(pkt, hdr->token, hdr->token_len))
                 return 0;
+            return 1;
         }
 
         if (!WPACKET_quic_write_vlint(pkt, hdr->len + hdr->pn_len)
