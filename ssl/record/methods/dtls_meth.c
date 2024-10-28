@@ -138,7 +138,7 @@ static int dtls_process_record(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
 
     /* check is not needed I believe */
     if (rr->length > SSL3_RT_MAX_ENCRYPTED_LENGTH) {
-        RLAYERfatal(rl, SSL_AD_RECORD_OVERFLOW, SSL_R_ENCRYPTED_LENGTH_TOO_LONG);
+        /* As per RFC 9147 4.5.2: Silently drop the packet in case of invalid length. */
         return 0;
     }
 
@@ -163,7 +163,10 @@ static int dtls_process_record(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
         unsigned char *mac;
 
         if (rr->orig_len < mac_size) {
-            RLAYERfatal(rl, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_TOO_SHORT);
+            /*
+             * As per RFC 9147 4.5.2: Silently drop the packet in case of invalid length.
+             * In this case the record length is too small to contain a mac.
+             */
             return 0;
         }
         rr->length -= mac_size;
@@ -235,8 +238,9 @@ static int dtls_process_record(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
     /* r->length is now just compressed */
     if (rl->compctx != NULL) {
         if (rr->length > SSL3_RT_MAX_COMPRESSED_LENGTH) {
-            RLAYERfatal(rl, SSL_AD_RECORD_OVERFLOW,
-                        SSL_R_COMPRESSED_LENGTH_TOO_LONG);
+            /* As per RFC 9147 4.5.2: Silently drop the packet in case of invalid length. */
+            rr->length = 0;
+            rl->packet_length = 0;
             goto end;
         }
         if (!tls_do_uncompress(rl, rr)) {
@@ -250,7 +254,9 @@ static int dtls_process_record(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
      * Length setting.
      */
     if (rr->length > rl->max_frag_len) {
-        RLAYERfatal(rl, SSL_AD_RECORD_OVERFLOW, SSL_R_DATA_LENGTH_TOO_LONG);
+        /* As per RFC 9147 4.5.2: Silently drop the packet in case of invalid length. */
+        rr->length = 0;
+        rl->packet_length = 0;
         goto end;
     }
 

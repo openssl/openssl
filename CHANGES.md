@@ -30,6 +30,12 @@ OpenSSL 3.4
 
 ### Changes between 3.4 and 3.5 [xx XXX xxxx]
 
+ * Changed DTLS handling of invalid records.
+   Records with invalid MAC or invalid length used to generate fatal alert,
+   and are now silently dropped.
+
+   *Omer Kattan*
+
  * Enhanced PKCS#7 inner contents verification.
    In the PKCS7_verify() function, the BIO *indata parameter refers to the
    signed data if the content is detached from p7. Otherwise, indata should be
@@ -55,12 +61,6 @@ OpenSSL 3.4
 -----------
 
 ### Changes between 3.3 and 3.4 [xx XXX xxxx]
-
- * Changed DTLS handling of record with invalid MAC.
-   Records with invalid MAC used to generate fatal alert, and are now
-   silently dropped.
-
-   *Omer Kattan*
 
  * For the FIPS provider only, replaced the primary DRBG with a continuous
    health check module.  This also removes the now forbidden DRBG chaining.
