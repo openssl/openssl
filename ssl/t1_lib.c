@@ -1046,24 +1046,68 @@ static int gid_cb(const char *elem, int len, void *arg)
     uint16_t gid = 0;
     char etmp[GROUP_NAME_BUFFER_LENGTH];
     int ignore_unknown = 0;
+    int remove_group = 0;
+    int found_group = 0;
+    int add_default_groups = 0;
+    size_t groups_to_add = 0;
 
     if (elem == NULL)
         return 0;
-    if (elem[0] == '?') {
-        ignore_unknown = 1;
-        ++elem;
-        --len;
+
+    while (elem[0] == '-' || elem[0] == '?') {
+        if (elem[0] == '-') {
+            remove_group = 1;
+            ++elem;
+            --len;
+        }
+        if (elem[0] == '?') {
+            ignore_unknown = 1;
+            ++elem;
+            --len;
+        }
     }
-    if (garg->gidcnt == garg->gidmax) {
+
+    if (len == strlen("DEFAULT") && OPENSSL_strncasecmp("DEFAULT", elem, len) == 0)
+        add_default_groups = 1;
+
+    if (add_default_groups) {
+        groups_to_add = garg->ctx->ext.supported_groups_default_len;
+    } else if (!remove_group) {
+        groups_to_add = 1;
+    }
+
+    if (groups_to_add > garg->gidmax - garg->gidcnt) {
+        size_t list_increment = groups_to_add > GROUPLIST_INCREMENT ? groups_to_add
+                                                                    : GROUPLIST_INCREMENT;
         uint16_t *tmp =
             OPENSSL_realloc(garg->gid_arr,
-                            (garg->gidmax + GROUPLIST_INCREMENT) * sizeof(*garg->gid_arr));
+                            (garg->gidmax + list_increment) * sizeof(*garg->gid_arr));
         if (tmp == NULL)
             return 0;
-        garg->gidmax += GROUPLIST_INCREMENT;
+        garg->gidmax += list_increment;
         garg->gid_arr = tmp;
     }
-    if (len > (int)(sizeof(etmp) - 1))
+
+    if (add_default_groups) {
+        size_t j;
+
+        for (j = 0; j < garg->ctx->ext.supported_groups_default_len; j++) {
+            gid = garg->ctx->ext.supported_groups_default[j];
+            for (i = 0; i < garg->gidcnt; i++) {
+                if (garg->gid_arr[i] == gid) {
+                    found_group = 1;
+                    break;
+                }
+            }
+            if (!found_group) {
+                garg->gid_arr[garg->gidcnt++] = gid;
+            }
+        }
+
+        return 1;
+    }
+
+    if (len > (int) (sizeof(etmp) - 1))
         return 0;
     memcpy(etmp, elem, len);
     etmp[len] = 0;
@@ -1073,12 +1117,25 @@ static int gid_cb(const char *elem, int len, void *arg)
         /* Unknown group - ignore, if ignore_unknown */
         return ignore_unknown;
     }
+
     for (i = 0; i < garg->gidcnt; i++)
         if (garg->gid_arr[i] == gid) {
-            /* Duplicate group - ignore */
-            return 1;
+            found_group = 1;
+            break;
         }
-    garg->gid_arr[garg->gidcnt++] = gid;
+
+    if (found_group && remove_group) {
+        size_t j;
+
+        for (j = i + 1; j < garg->gidcnt; j++)
+            garg->gid_arr[j - 1] = garg->gid_arr[j];
+
+        garg->gidcnt--;
+    }
+
+    if (!found_group && !remove_group)
+        garg->gid_arr[garg->gidcnt++] = gid;
+
     return 1;
 }
 
