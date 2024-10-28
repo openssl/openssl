@@ -615,6 +615,67 @@ static int port_try_handle_stateless_reset(QUIC_PORT *port, const QUIC_URXE *e)
     return i > 0;
 }
 
+static void port_send_retry(QUIC_PORT *port,
+                            BIO_ADDR *peer,
+                            QUIC_PKT_HDR *client_hdr)
+{
+#define TOKEN_LEN (sizeof("openssltoken") + QUIC_RETRY_INTEGRITY_TAG_LEN - 1)
+    BIO_MSG msg[1];
+    char buffer[512];
+    WPACKET wpkt;
+    size_t written;
+    QUIC_PKT_HDR hdr;
+    char token_buf[TOKEN_LEN];
+    char *token = token_buf;
+    char *integrity_tag = token + sizeof("openssltoken") - 1;
+    int ok;
+
+    /* TODO: generate proper validation token */
+    memcpy(token, "openssltoken", sizeof("openssltoken") - 1);
+    memset(&hdr, 0, sizeof(QUIC_PKT_HDR));
+    hdr.src_conn_id = client_hdr->dst_conn_id;
+    hdr.type = QUIC_PKT_TYPE_RETRY;
+    hdr.fixed = 1;
+    hdr.version = 1;
+    hdr.len =  TOKEN_LEN;
+    hdr.data = token;
+    ok = ossl_quic_calculate_retry_integrity_tag(port->engine->libctx,
+                                                 port->engine->propq, &hdr,
+                                                 &client_hdr->src_conn_id,
+                                                 integrity_tag);
+    if (ok == 0)
+        return;
+
+    hdr.token = token;
+    hdr.token_len = TOKEN_LEN;
+    hdr.len = 0;
+    hdr.data = NULL;
+
+    msg[0].data = msg;
+    msg[0].peer = peer;
+    msg[0].local = NULL;
+    msg[0].flags = 0;
+
+    ok = WPACKET_init_static_len(&wpkt, buffer, sizeof(buffer), 0);
+    if (ok == 0)
+        return;
+
+    ok = ossl_quic_wire_encode_pkt_hdr(&wpkt, client_hdr->dst_conn_id.id_len,
+                                       &hdr, NULL);
+    if (ok == 0)
+        return;
+
+    ok = WPACKET_get_total_written(&wpkt, &msg[0].data_len);
+    if (ok == 0)
+        return;
+
+    ok = WPACKET_finish(&wpkt);
+    if (ok == 0)
+        return;
+
+    BIO_sendmmsg(port->net_wbio, msg, sizeof(BIO_MSG), 1, 0, &written);
+}
+
 /*
  * This is called by the demux when we get a packet not destined for any known
  * DCID.
@@ -684,6 +745,11 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
      */
     if (hdr.type != QUIC_PKT_TYPE_INITIAL)
         goto undesirable;
+
+    if (hdr.token == NULL) {
+        port_send_retry(port, &e->peer, &hdr);
+        goto undesirable;
+    }
 
     /*
      * Try to process this as a valid attempt to initiate a connection.
