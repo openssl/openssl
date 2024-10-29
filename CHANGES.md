@@ -50,6 +50,13 @@ OpenSSL 3.5
 
    *Małgorzata Olszówka*
 
+ * The `-rawin` option of the `pkeyutl` command is now implied (and thus no
+   longer required) when using `-digest` or when signing or verifying with an
+   Ed25519 or Ed448 key.
+   The `-digest` and `-rawin` option may only be given with `-sign` or `verify`.
+
+   *David von Oheimb*
+
  * Optionally allow the FIPS provider to use the `JITTER` entropy source.
    Note that using this option will require the resulting FIPS provider
    to undergo entropy source validation [ESV] by the [CMVP], without this
@@ -214,11 +221,6 @@ OpenSSL 3.4
    public API. There is no command-line tool support at this time.
 
    *Damian Hobson-Garcia*
-
- * The `-rawin` option of the `pkeyutl` command is now implied (and thus no more
-   required) when signing or verifying with an Ed25519 or Ed448 key.
-
-   *David von Oheimb*
 
  * Added support to build Position Independent Executables (PIE). Configuration
    option `enable-pie` configures the cflag '-fPIE' and ldflag '-pie' to
