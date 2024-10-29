@@ -85,7 +85,7 @@ for other groups may be added by external providers, however note the discussion
 on TLS 1.3 selection criteria above. If a group name is preceded with the C<?>
 character, it will be ignored if an implementation is missing. The "DEFAULT"
 group name is used to select the default selection of groups. Group names that
-has C<-> preceded will be removed from the selected groups.
+are preceded with the C<-> character will be removed from the selected groups.
 
 SSL_set1_groups() and SSL_set1_groups_list() are similar except they set
 supported groups for the SSL structure B<ssl>.
