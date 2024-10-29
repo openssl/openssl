@@ -83,7 +83,6 @@ const OPTIONS pkeyutl_options[] = {
 
     OPT_SECTION("Input"),
     {"in", OPT_IN, '<', "Input file - default stdin"},
-    {"rawin", OPT_RAWIN, '-', "Indicate that signature input data is not hashed"},
     {"inkey", OPT_INKEY, 's', "Input key, by default private key"},
     {"pubin", OPT_PUBIN, '-', "Input key is a public key"},
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
@@ -103,8 +102,10 @@ const OPTIONS pkeyutl_options[] = {
      "Verify with public key, recover original data"},
 
     OPT_SECTION("Signing/Derivation/Encapsulation"),
+    {"rawin", OPT_RAWIN, '-',
+     "Indicate that the signature/verification input data is not yet hashed"},
     {"digest", OPT_DIGEST, 's',
-     "Specify the digest algorithm when signing the raw input data"},
+     "The digest algorithm to use for signing/verifying raw input data. Implies -rawin"},
     {"pkeyopt", OPT_PKEYOPT, 's', "Public key options as opt:value"},
     {"pkeyopt_passin", OPT_PKEYOPT_PASSIN, 's',
      "Public key option that is read as a passphrase argument opt:passphrase"},
@@ -288,6 +289,9 @@ int pkeyutl_main(int argc, char **argv)
     if (!app_RAND_load())
         goto end;
 
+    if (digestname != NULL)
+        rawin = 1;
+
     if (kdfalg != NULL) {
         if (kdflen == 0) {
             BIO_printf(bio_err,
@@ -316,15 +320,9 @@ int pkeyutl_main(int argc, char **argv)
             }
             rawin = 1; /* implied for Ed25519(ph) and Ed448(ph) and maybe others in the future */
         }
-    } else if (rawin) {
+    } else if (digestname != NULL || rawin) {
         BIO_printf(bio_err,
-                   "%s: -rawin can only be used with -sign or -verify\n", prog);
-        EVP_PKEY_free(pkey);
-        goto opthelp;
-    }
-    if (digestname != NULL && !rawin) {
-        BIO_printf(bio_err,
-                   "%s: -digest can only be used with -rawin\n", prog);
+                   "%s: -digest and -rawin can only be used with -sign or -verify\n", prog);
         EVP_PKEY_free(pkey);
         goto opthelp;
     }

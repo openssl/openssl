@@ -70,15 +70,17 @@ and is implied by the Ed25519 and Ed448 algorithms.
 Except with EdDSA,
 the user can specify a digest algorithm by using the B<-digest> option.
 
+The B<-digest> option implies B<-rawin>.
+
 =item B<-digest> I<algorithm>
 
-This specifies the digest algorithm which is used to hash the input data before
+This option can only be used with B<-sign> and B<-verify>.
+It specifies the digest algorithm which is used to hash the input data before
 signing or verifying it with the input key. This option could be omitted if the
 signature algorithm does not require one (for instance, EdDSA). If this option
 is omitted but the signature algorithm requires one, a default value will be
 used. For signature algorithms like RSA, DSA and ECDSA, SHA-256 will be the
-default digest algorithm. For SM2, it will be SM3. If this option is present,
-then the B<-rawin> option must be also specified.
+default digest algorithm. For SM2, it will be SM3.
 So far, HashEdDSA (the ph or "prehash" variant of EdDSA) is not supported,
 so the B<-digest> option cannot be used with EdDSA).
 
@@ -470,6 +472,10 @@ L<EVP_PKEY_CTX_set_hkdf_md(3)>,
 L<EVP_PKEY_CTX_set_tls1_prf_md(3)>,
 
 =head1 HISTORY
+
+Since OpenSSL 3.5,
+the B<-digest> option implies B<-rawin>, and these two options are
+no longer required when signing or verifying with an Ed25519 or Ed448 key.
 
 The B<-engine> option was deprecated in OpenSSL 3.0.
 
