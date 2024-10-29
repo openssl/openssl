@@ -125,8 +125,8 @@ B<SHA256>, B<SHA384> or B<SHA512>.  Note: algorithm and hash names are case
 sensitive.  B<signature_scheme> is one of the signature schemes defined in
 TLSv1.3, specified using the IETF name, e.g., B<ecdsa_secp256r1_sha256>,
 B<ed25519>, or B<rsa_pss_pss_sha256>. Additional providers may make available
-further algorithms via the TLS_SIGALG capability.
-See L<provider-base(7)/CAPABILITIES>.
+further algorithms via the TLS-SIGALG capability.
+See L<provider-base(7)>.
 
 If this option is not set then all signature algorithms supported by all
 activated providers are permissible.
@@ -161,9 +161,12 @@ where applicable (e.g. B<X25519>, B<ffdhe2048>) or an OpenSSL OID name
 (e.g. B<prime256v1>). Group names are case sensitive. The list should be
 in order of preference with the most preferred group first.
 
-Currently supported groups for B<TLSv1.3> are B<P-256>, B<P-384>, B<P-521>,
-B<X25519>, B<X448>, B<ffdhe2048>, B<ffdhe3072>, B<ffdhe4096>, B<ffdhe6144>,
-B<ffdhe8192>.
+Groups for B<TLSv1.3> in the default provider are B<P-256>, B<P-384>,
+B<P-521>, B<X25519>, B<X448>, B<ffdhe2048>, B<ffdhe3072>, B<ffdhe4096>,
+B<ffdhe6144>, B<ffdhe8192>, B<brainpoolP256r1tls13>,
+B<brainpoolP384r1tls13> and B<brainpoolP512r1tls13>.
+Additional providers may make available further algorithms via the
+TLS-GROUP capability. See L<provider-base(7)>.
 
 =item B<-curves> I<groups>
 
