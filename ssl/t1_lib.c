@@ -1054,7 +1054,8 @@ static int gid_cb(const char *elem, int len, void *arg)
     if (elem == NULL)
         return 0;
 
-    while (elem[0] == '-' || elem[0] == '?') {
+    while (((elem[0] == '-' && !remove_group) || (elem[0] == '?' && !ignore_unknown))
+           && len > 0) {
         if (elem[0] == '-') {
             remove_group = 1;
             ++elem;
