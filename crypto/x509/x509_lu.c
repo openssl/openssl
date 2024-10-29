@@ -331,7 +331,7 @@ static int ossl_x509_store_ctx_get_by_subject(const X509_STORE_CTX *ctx,
         return 0;
 
     stmp.type = X509_LU_NONE;
-    stmp.data.ptr = NULL;
+    stmp.data.x509 = NULL;
 
     if (!x509_store_read_lock(store))
         return 0;
@@ -371,7 +371,7 @@ static int ossl_x509_store_ctx_get_by_subject(const X509_STORE_CTX *ctx,
         return -1;
 
     ret->type = tmp->type;
-    ret->data.ptr = tmp->data.ptr;
+    ret->data = tmp->data;
     return 1;
 }
 

@@ -303,10 +303,8 @@ struct x509_object_st {
     /* one of the above types */
     X509_LOOKUP_TYPE type;
     union {
-        char *ptr;
         X509 *x509;
         X509_CRL *crl;
-        EVP_PKEY *pkey;
     } data;
 };
 
