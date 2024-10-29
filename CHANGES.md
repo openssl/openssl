@@ -30,6 +30,13 @@ OpenSSL 3.4
 
 ### Changes between 3.4 and 3.5 [xx XXX xxxx]
 
+* Support DEFAULT keyword and '-' prefix in SSL_CTX_set1_groups_list().
+  SSL_CTX_set1_groups_list() now supports the DEFAULT keyword which sets the
+  available groups to the default selection. The '-' prefix allows the calling
+  application to remove a group from the selection.
+
+  *Frederik Wedel-Heinen*
+
  * Enhanced PKCS#7 inner contents verification.
    In the PKCS7_verify() function, the BIO *indata parameter refers to the
    signed data if the content is detached from p7. Otherwise, indata should be
