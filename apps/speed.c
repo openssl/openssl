@@ -1447,8 +1447,13 @@ static int SIG_verify_loop(void *args)
 static int check_block_size(EVP_CIPHER_CTX *ctx, int length)
 {
     const EVP_CIPHER *ciph = EVP_CIPHER_CTX_get0_cipher(ctx);
+    int blocksize = EVP_CIPHER_CTX_get_block_size(ctx);
 
-    if (length % EVP_CIPHER_get_block_size(ciph) != 0) {
+    if (ciph == NULL || blocksize <= 0) {
+        BIO_printf(bio_err, "\nInvalid cipher!\n");
+        return 0;
+    }
+    if (length % blocksize != 0) {
         BIO_printf(bio_err,
                    "\nRequested encryption length not a multiple of block size for %s!\n",
                    EVP_CIPHER_get0_name(ciph));
