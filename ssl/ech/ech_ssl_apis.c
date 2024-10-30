@@ -13,12 +13,14 @@
 
 int SSL_CTX_set1_echstore(SSL_CTX *ctx, OSSL_ECHSTORE *es)
 {
-    if (ctx == NULL || es == NULL) {
+    if (ctx == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
     OSSL_ECHSTORE_free(ctx->ext.ech.es);
     ctx->ext.ech.es = NULL;
+    if (es == NULL)
+        return 1;
     if (ossl_echstore_dup(&ctx->ext.ech.es, es) != 1) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return 0;
@@ -31,10 +33,12 @@ int SSL_set1_echstore(SSL *ssl, OSSL_ECHSTORE *es)
     SSL_CONNECTION *s;
 
     s = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
-    if (s == NULL || es == NULL)
+    if (s == NULL)
         return 0;
     OSSL_ECHSTORE_free(s->ext.ech.es);
     s->ext.ech.es = NULL;
+    if (es == NULL)
+        return 1;
     if (ossl_echstore_dup(&s->ext.ech.es, es) != 1) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
@@ -55,6 +59,8 @@ OSSL_ECHSTORE *SSL_CTX_get1_echstore(const SSL_CTX *ctx)
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
     }
+    if (ctx->ext.ech.es == NULL)
+        return NULL;
     if (ossl_echstore_dup(&dup, ctx->ext.ech.es) != 1) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return NULL;
@@ -69,6 +75,8 @@ OSSL_ECHSTORE *SSL_get1_echstore(const SSL *ssl)
 
     s = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
     if (s == NULL)
+        return NULL;
+    if (s->ext.ech.es == NULL)
         return NULL;
     if (ossl_echstore_dup(&dup, s->ext.ech.es) != 1) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);

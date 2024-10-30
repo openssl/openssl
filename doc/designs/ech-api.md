@@ -281,7 +281,7 @@ ECH will be enabled for the relevant `SSL_CTX` or `SSL` connection
 when these functions succeed. Any previously associated `OSSL_ECHSTORE`
 will be `OSSL_ECHSTORE_free()`ed.
 
-There is also an API that allows setting an ECHConfigLIst for an SSL
+There is also an API that allows setting an ECHConfigList for an SSL
 connection, that is compatible with BoringSSL. Note that the input
 `ecl` here can be either base64 or binary encoded, but for
 BoringSSL it must be binary encoded.

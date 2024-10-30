@@ -52,7 +52,8 @@ static OSSL_ECHSTORE_ENTRY *ossl_echstore_entry_dup(const OSSL_ECHSTORE_ENTRY *o
     ret->loadtime = orig->loadtime;
     if (orig->keyshare != NULL) {
         ret->keyshare = orig->keyshare;
-        EVP_PKEY_up_ref(orig->keyshare);
+        if (!EVP_PKEY_up_ref(orig->keyshare))
+            goto err;
     }
     ret->for_retry = orig->for_retry;
     if (orig->encoded != NULL) {
@@ -68,7 +69,7 @@ err:
 }
 
 /* duplicate an OSSL_ECHSTORE as needed */
-int ossl_echstore_dup(OSSL_ECHSTORE **new, OSSL_ECHSTORE *old)
+int ossl_echstore_dup(OSSL_ECHSTORE **new, const OSSL_ECHSTORE *old)
 {
     OSSL_ECHSTORE *cp = NULL;
 
@@ -78,16 +79,18 @@ int ossl_echstore_dup(OSSL_ECHSTORE **new, OSSL_ECHSTORE *old)
     if (cp == NULL)
         return 0;
     cp->libctx = old->libctx;
-    cp->propq = old->propq;
-    if (old->entries == NULL) {
-        *new = cp;
-        return 1;
+    if (old->propq != NULL) {
+        cp->propq = OPENSSL_strdup(old->propq);
+        if (cp->propq == NULL)
+            goto err;
     }
-    cp->entries = sk_OSSL_ECHSTORE_ENTRY_deep_copy(old->entries,
-                                                   ossl_echstore_entry_dup,
-                                                   ossl_echstore_entry_free);
-    if (cp->entries == NULL)
-        goto err;
+    if (old->entries != NULL) {
+        cp->entries = sk_OSSL_ECHSTORE_ENTRY_deep_copy(old->entries,
+                                                       ossl_echstore_entry_dup,
+                                                       ossl_echstore_entry_free);
+        if (cp->entries == NULL)
+            goto err;
+    }
     *new = cp;
     return 1;
 err:
@@ -154,7 +157,10 @@ int ossl_ech_conn_init(SSL_CONNECTION *s, SSL_CTX *ctx,
     return 1;
 err:
     OSSL_ECHSTORE_free(s->ext.ech.es);
+    s->ext.ech.es = NULL;
     OPENSSL_free(s->ext.ech.alpn_outer);
+    s->ext.ech.alpn_outer = NULL;
+    s->ext.ech.alpn_outer_len = 0;
     return 0;
 }
 

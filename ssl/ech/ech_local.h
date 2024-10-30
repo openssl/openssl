@@ -207,7 +207,7 @@ typedef struct ossl_ech_conn_st {
 
 /* Internal ECH APIs */
 
-int ossl_echstore_dup(OSSL_ECHSTORE **new, OSSL_ECHSTORE *old);
+int ossl_echstore_dup(OSSL_ECHSTORE **new, const OSSL_ECHSTORE *old);
 void ossl_echstore_entry_free(OSSL_ECHSTORE_ENTRY *ee);
 void ossl_ctx_ech_free(OSSL_CTX_ECH *ce);
 int ossl_ech_conn_init(SSL_CONNECTION *s, SSL_CTX *ctx,

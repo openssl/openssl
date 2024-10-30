@@ -47,7 +47,7 @@ SSL_CTX_ech_set_callback,SSL_set1_ech_config_list
                                 const char *outer_name, int no_outer);
   int SSL_ech_set1_outer_server_name(SSL *s, const char *outer_name, int no_outer);
   int SSL_ech_set1_outer_alpn_protos(SSL *s, const unsigned char *protos,
-                                    const size_t protos_len);
+                                     const size_t protos_len);
   int SSL_ech_get1_status(SSL *s, char **inner_sni, char **outer_sni);
   int SSL_ech_set1_grease_suite(SSL *s, const char *suite);
   int SSL_ech_set_grease_type(SSL *s, uint16_t type);

@@ -1061,7 +1061,7 @@ static int ech_api_basic_calls(void)
     s = NULL; /* for some other tests */
     if (!TEST_int_eq(SSL_CTX_set1_echstore(ctx, es), 1))
         goto end;
-    if (!TEST_ptr_ne((es1 = SSL_CTX_get1_echstore(ctx)), NULL))
+    if (!TEST_ptr((es1 = SSL_CTX_get1_echstore(ctx))))
         goto end;
     OSSL_ECHSTORE_free(es1);
     es1 = NULL;
@@ -1074,7 +1074,7 @@ static int ech_api_basic_calls(void)
     s = SSL_new(ctx);
     if (!TEST_int_eq(SSL_set1_echstore(s, es), 1))
         goto end;
-    if (!TEST_ptr_ne((es1 = SSL_get1_echstore(s)), NULL))
+    if (!TEST_ptr((es1 = SSL_get1_echstore(s))))
         goto end;
     OSSL_ECHSTORE_free(es1);
     es1 = NULL;
