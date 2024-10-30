@@ -163,8 +163,10 @@ in order of preference with the most preferred group first.
 
 Groups for B<TLSv1.3> in the default provider are B<P-256>, B<P-384>,
 B<P-521>, B<X25519>, B<X448>, B<ffdhe2048>, B<ffdhe3072>, B<ffdhe4096>,
-B<ffdhe6144>, B<ffdhe8192>. Additional providers may make available
-further algorithms via the TLS-GROUP capability. See L<provider-base(7)>.
+B<ffdhe6144>, B<ffdhe8192>, B<brainpoolP256r1tls13>,
+B<brainpoolP384r1tls13> and B<brainpoolP512r1tls13>.
+Additional providers may make available further algorithms via the
+TLS-GROUP capability. See L<provider-base(7)>.
 
 =item B<-curves> I<groups>
 
