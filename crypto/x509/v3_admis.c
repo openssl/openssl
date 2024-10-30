@@ -143,7 +143,7 @@ static int i2r_ADMISSION_SYNTAX(const struct v3_ext_method *method, void *in,
         }
 
         if (entry->namingAuthority != NULL) {
-            if (i2r_NAMING_AUTHORITY(method, entry->namingAuthority, bp, ind) <= 0)
+            if (i2r_NAMING_AUTHORITY(method, entry->namingAuthority, bp, ind + 2) <= 0)
                 goto err;
         }
 
@@ -161,7 +161,7 @@ static int i2r_ADMISSION_SYNTAX(const struct v3_ext_method *method, void *in,
             }
 
             if (pinfo->namingAuthority != NULL) {
-                if (i2r_NAMING_AUTHORITY(method, pinfo->namingAuthority, bp, ind + 2) <= 0)
+                if (i2r_NAMING_AUTHORITY(method, pinfo->namingAuthority, bp, ind + 4) <= 0)
                     goto err;
             }
 
