@@ -409,10 +409,10 @@ static int read_from_ssl_ids(nghttp3_conn *h3conn, struct h3ssl *h3ssl)
 
     /* We have something */
     item = items;
-    /* SSL_accept_stream if anyway */
+    /* SSL_accept_stream if SSL_POLL_EVENT_ISB or SSL_POLL_EVENT_ISU */
     if ((item->revents & SSL_POLL_EVENT_ISB) ||
         (item->revents & SSL_POLL_EVENT_ISU)) {
-        SSL *stream = SSL_accept_stream(ssl_ids[0].s, 0);
+        SSL *stream = SSL_accept_stream(item->desc.value.ssl, 0);
         uint64_t id;
         int r;
 
@@ -501,7 +501,7 @@ static int read_from_ssl_ids(nghttp3_conn *h3conn, struct h3ssl *h3ssl)
         /* we missed something we need to figure out */
         printf("Missed revent %llu (%d) on %llu\n",
                (unsigned long long)item->revents, SSL_POLL_EVENT_W,
-               (unsigned long long)ssl_ids[i].id);
+               (unsigned long long)SSL_get_stream_id(item->desc.value.ssl));
     }
     if (result_count == 1 && !processed_event) {
         printf("read_from_ssl_ids 1 event only!\n");
@@ -873,6 +873,7 @@ static int run_quic_server(SSL_CTX *ctx, int fd)
         int ret;
         int numtimeout;
         char slength[11];
+        int hasnothing;
 
         if (!hassomething) {
             printf("waiting on socket\n");
@@ -1084,14 +1085,16 @@ restart:
 
         /* wait until closed */
 wait_close:
+        hasnothing = 0;
         for (;;) {
-            int hasnothing;
 
-            ret = wait_for_activity(h3ssl.ssl_ids[0].s);
-            if (ret == -1)
-                goto err;
-            if (ret == 0) {
-                printf("hasnothing timeout\n");
+            if (hasnothing) {
+                ret = wait_for_activity(h3ssl.ssl_ids[0].s);
+                if (ret == -1)
+                    goto err;
+                if (ret == 0) {
+                    printf("hasnothing timeout\n");
+                }
             }
             hasnothing = read_from_ssl_ids(h3conn, &h3ssl);
             if (hasnothing == -1) {
