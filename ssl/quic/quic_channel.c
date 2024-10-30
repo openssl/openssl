@@ -3362,18 +3362,10 @@ static void ch_on_idle_timeout(QUIC_CHANNEL *ch)
     ch_record_state_transition(ch, QUIC_CHANNEL_STATE_TERMINATED);
 }
 
-/* Called when we, as a server, get a new incoming connection. */
-int ossl_quic_channel_on_new_conn(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
-                                  const QUIC_CONN_ID *peer_scid,
-                                  const QUIC_CONN_ID *peer_dcid)
+static int ch_on_new_conn_common(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
+                                 const QUIC_CONN_ID *peer_scid,
+                                 const QUIC_CONN_ID *peer_dcid)
 {
-    if (!ossl_assert(ch->state == QUIC_CHANNEL_STATE_IDLE && ch->is_server))
-        return 0;
-
-    /* Generate an Initial LCID we will use for the connection. */
-    if (!ossl_quic_lcidm_generate_initial(ch->lcidm, ch, &ch->cur_local_cid))
-        return 0;
-
     /* Note our newly learnt peer address and CIDs. */
     ch->cur_peer_addr   = *peer;
     ch->init_dcid       = *peer_dcid;
@@ -3410,6 +3402,38 @@ int ossl_quic_channel_on_new_conn(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
     ch_record_state_transition(ch, QUIC_CHANNEL_STATE_ACTIVE);
     ch->doing_proactive_ver_neg = 0; /* not currently supported */
     return 1;
+}
+
+/* Called when we, as a server, get a new incoming connection. */
+int ossl_quic_channel_on_new_conn(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
+                                  const QUIC_CONN_ID *peer_scid,
+                                  const QUIC_CONN_ID *peer_dcid)
+{
+    if (!ossl_assert(ch->state == QUIC_CHANNEL_STATE_IDLE && ch->is_server))
+        return 0;
+
+    /* Generate an Initial LCID we will use for the connection. */
+    if (!ossl_quic_lcidm_generate_initial(ch->lcidm, ch, &ch->cur_local_cid))
+        return 0;
+
+    return ch_on_new_conn_common(ch, peer, peer_scid, peer_dcid);
+}
+
+int ossl_quic_bind_channel(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
+                           const QUIC_CONN_ID *peer_scid,
+                           const QUIC_CONN_ID *peer_dcid)
+{
+    if (peer_dcid == NULL)
+        return 0;
+
+    if (!ossl_assert(ch->state == QUIC_CHANNEL_STATE_IDLE && ch->is_server))
+        return 0;
+
+    ch->cur_local_cid = *peer_dcid;
+    if (!ossl_quic_lcidm_bind_channel(ch->lcidm, ch, peer_dcid))
+        return 0;
+
+    return ch_on_new_conn_common(ch, peer, peer_scid, peer_dcid);
 }
 
 SSL *ossl_quic_channel_get0_ssl(QUIC_CHANNEL *ch)

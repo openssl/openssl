@@ -393,6 +393,50 @@ int ossl_quic_lcidm_generate_initial(QUIC_LCIDM *lcidm,
                           initial_lcid, NULL);
 }
 
+int ossl_quic_lcidm_bind_channel(QUIC_LCIDM *lcidm, void *opaque,
+                                 const QUIC_CONN_ID *lcid)
+{
+    QUIC_LCIDM_CONN *conn;
+    QUIC_LCID *lcid_obj;
+
+    /*
+     * the plan is simple:
+     *   make sure the lcid is still unused.
+     *   do the same business as ossl_quic_lcidm_gnerate_initial() does,
+     *   except we will use lcid instead of generating a new one.
+     */
+    if (ossl_quic_lcidm_lookup(lcidm, lcid, NULL, NULL) != 0)
+        return 0;
+
+    if ((conn = lcidm_upsert_conn(lcidm, opaque)) == NULL)
+        return 0;
+
+    if ((lcid_obj = lcidm_conn_new_lcid(lcidm, conn, lcid)) == NULL) {
+        lcidm_delete_conn(lcidm, conn);
+        return 0;
+    }
+
+    /*
+     * emulate call to ossl_quic_lcidm_enrol_odcid()
+     * this currently feels as a kind of hack. perhaps better
+     * plan is to send original DCID we got in initial packet
+     * as a poart of validation token in retry packet.
+     * once client sends next initial packet with validation token
+     * we can read the original destination id back.
+     *
+     * on the other hand I see no reason to keep old destination connection
+     * id around. the need to get back to RFC to make my mind on this.
+     */
+    lcid_obj->seq_num   = LCIDM_ODCID_SEQ_NUM;
+    lcid_obj->type      = LCID_TYPE_ODCID;
+
+    ++conn->next_seq_num;
+    conn->odcid_lcid_obj    = lcid_obj;
+    conn->done_odcid        = 1;
+
+    return 1;
+}
+
 int ossl_quic_lcidm_generate(QUIC_LCIDM *lcidm,
                              void *opaque,
                              OSSL_QUIC_FRAME_NEW_CONN_ID *ncid_frame)
@@ -554,3 +598,17 @@ int ossl_quic_lcidm_debug_add(QUIC_LCIDM *lcidm, void *opaque,
     lcid_obj->type      = LCID_TYPE_NCID;
     return 1;
 }
+
+int ossl_quic_lcidm_get_unused_cid(QUIC_LCIDM *lcidm, QUIC_CONN_ID *cid)
+{
+    int i;
+
+    for (i = 0; i < 10; i++) {
+        if (lcidm_generate_cid(lcidm, cid))
+           if (lcidm_get0_lcid(lcidm, cid) == NULL)
+               return 1; /* not found <=> radomly generated cid is unused */
+    }
+
+    return 0;
+}
+
