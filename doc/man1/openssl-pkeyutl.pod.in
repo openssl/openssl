@@ -65,14 +65,18 @@ if this option is not specified.
 
 =item B<-rawin>
 
-This indicates that signature input data is raw data, which for most signature
-algorithms (but not EdDSA) needs to be hashed by some message digest algorithm.
-This option can only be used with B<-sign> and B<-verify>
-and is implied by the Ed25519 and Ed448 algorithms.
+This indicates that the signature or verification input data is raw data,
+which is not hashed by any message digest algorithm.
 Except with EdDSA,
 the user can specify a digest algorithm by using the B<-digest> option.
+For signature algorithms like RSA, DSA and ECDSA,
+the default digest algorithm is SHA-256. For SM2, it is SM3.
 
-The B<-digest> option implies B<-rawin>.
+This option can only be used with B<-sign> and B<-verify>.
+For EdDSA (the Ed25519 and Ed448 algorithms) it must be used,
+which is implied since OpenSSL 3.5.
+
+The B<-digest> option implies B<-rawin> since OpenSSL 3.5.
 
 =item B<-digest> I<algorithm>
 
@@ -80,9 +84,10 @@ This option can only be used with B<-sign> and B<-verify>.
 It specifies the digest algorithm which is used to hash the input data before
 signing or verifying it with the input key. This option could be omitted if the
 signature algorithm does not require one (for instance, EdDSA). If this option
-is omitted but the signature algorithm requires one, a default value will be
-used. For signature algorithms like RSA, DSA and ECDSA, SHA-256 will be the
-default digest algorithm. For SM2, it will be SM3.
+is omitted but the signature algorithm requires one and the B<-rawin> option
+is given or implied, a default value will be used (see B<-rawin> for details).
+If this option is present, then the B<-rawin> option must be also specified.
+
 At this time, HashEdDSA (the ph or "prehash" variant of EdDSA) is not supported,
 so the B<-digest> option cannot be used with EdDSA.
 
