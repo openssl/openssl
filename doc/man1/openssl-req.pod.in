@@ -90,8 +90,8 @@ The data is a PKCS#10 object.
 =item B<-cipher> I<name>
 
 Specify the cipher to be used for encrypting the private key.
-The default cipher is 3DES (DES-EDE3-CBC).
-If no cipher is specified, 3DES will be used by default.
+The default cipher is AES-256-CBC.
+If no cipher is specified, AES-256-CBC will be used by default.
 You can override this by providing any valid OpenSSL cipher name.
 
 =item B<-in> I<filename>
