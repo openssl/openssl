@@ -7,15 +7,17 @@ openssl-quic - OpenSSL QUIC
 =head1 DESCRIPTION
 
 OpenSSL 3.2 and later features support for the QUIC transport protocol.
-Currently, only client connectivity is supported. This man page describes the
-usage of QUIC client functionality for both existing and new applications.
+Initially, only client connectivity was supported. Now, server connectivity is
+also supported. This man page describes the usage of QUIC functionality for both
+existing and new applications.
 
 QUIC functionality uses the standard SSL API. A QUIC connection is represented
 by an SSL object in the same way that a TLS connection is. Only minimal changes
 are needed to existing applications making use of the libssl APIs to make use of
-QUIC client functionality. To make use of QUIC, use the SSL method
+QUIC functionality. To make use of QUIC for clients, use the SSL method
 L<OSSL_QUIC_client_method(3)> or L<OSSL_QUIC_client_thread_method(3)> with
-L<SSL_CTX_new(3)>.
+L<SSL_CTX_new(3)>. For servers, use the SSL method L<OSSL_QUIC_server_method(3)>
+with L<SSL_CTX_new(3)>.
 
 When a QUIC connection is created, by default, it operates in default stream
 mode, which is intended to provide compatibility with existing non-QUIC
@@ -238,7 +240,7 @@ B<SSL_METHOD> used, rather than by calls to L<SSL_set_connect_state(3)> or
 L<SSL_set_accept_state(3)>. It is not necessary to call either of
 L<SSL_set_connect_state(3)> or L<SSL_set_accept_state(3)> before connecting, but
 if either of these are called, the function called must be congruent with the
-B<SSL_METHOD> being used. Currently, only client mode is supported.
+B<SSL_METHOD> being used.
 
 =item
 
@@ -324,9 +326,13 @@ determine what changes they will need to make:
 
 =item
 
-An application wishing to use QUIC must use L<OSSL_QUIC_client_method(3)> or
-L<OSSL_QUIC_client_thread_method(3)> as its SSL method. For more information
+An client application wishing to use QUIC must use L<OSSL_QUIC_client_method(3)>
+or L<OSSL_QUIC_client_thread_method(3)> as its SSL method. For more information
 on the differences between these two methods, see B<THREAD ASSISTED MODE>.
+
+=item
+
+A server application wishing to use QUIC must use L<OSSL_QUIC_server_method(3)>. 
 
 =item
 
@@ -396,7 +402,7 @@ in blocking mode or not. Traditionally, an SSL object has automatically operated
 in blocking or nonblocking mode based on whether the underlying network BIO
 operates in blocking or nonblocking mode. QUIC requires the use of a
 nonblocking network BIO, therefore the blocking mode at the application level
-must be explicitly configured by the application using the new
+can be explicitly configured by the application using the new
 L<SSL_set_blocking_mode(3)> API. The default mode is blocking. If an application
 wishes to use the SSL object APIs at application level in a nonblocking manner,
 it must add a call to L<SSL_set_blocking_mode(3)> to disable blocking mode.
@@ -498,6 +504,57 @@ The following SSL APIs are new but relevant to both QUIC and DTLS:
 
 =over 4
 
+=item L<SSL_new_listener(3)>
+
+Creates a listener SSL object. A listener SSL object differs from an ordinary
+SSL object in that it is used to provide an abstraction for the acceptance of
+network connections in a protocol-agnostic manner.
+
+Currently, listener SSL objects are only supported for QUIC server usage or
+client-only usage. It is expected that the listener interface will be expanded
+to support other protocols.
+
+=item L<SSL_new_listener_from(3)>
+
+Creates a listener SSL object which is subordinate to a QUIC domain SSL object
+I<ssl>. See L<SSL_new_domain(3)> and L<openssl-quic-concurrency(7)> for details
+on QUIC domain SSL objects.
+
+=item L<SSL_is_listener(3)>
+
+Returns 1 if and only if a SSL object is a listener SSL object.
+
+=item L<SSL_get0_listener(3)>
+
+Returns an SSL object pointer (potentially to the same object on which it is
+called) or NULL.
+
+=item L<SSL_listen(3)>
+
+Begin listening after a listener has been created. It is ordinarily not needed
+to call this because it will be called automatically on the first call to
+L<SSL_accept_connection(3)>. 
+
+=item L<SSL_accept_connection(3)>
+
+Accepts a new incoming connection for a listner SSL object. A new SSL object
+representing the accepted connection is created and returned on success. If no
+incoming connection is available and the listener SSL object is configured in
+nonblocking mode, NULL is returned.
+
+=item L<SSL_get_accept_connection_queue_len(3)>
+
+Returns an informational value listing the number of connections waiting to be
+popped from the queue via calls to SSL_accept_connection().
+
+=item L<SSL_new_from_listener(3)>
+
+Creates a client connection under a given listener SSL object. For QUIC, it is
+also possible to use SSL_new_from_listener() in conjunction with a listener
+which does accept incoming connections (i.e., which was not created using
+B<SSL_LISTENER_FLAG_NO_ACCEPT>), leading to a UDP network endpoint which has
+both incoming and outgoing connections.
+
 =item L<SSL_get_event_timeout(3)>
 
 Determines when the QUIC implementation should next be woken up via a call to
@@ -562,8 +619,8 @@ autodetected in some cases. See L<SSL_set1_initial_peer_addr(3)> for details.
 =item L<SSL_shutdown_ex(3)>
 
 This augments L<SSL_shutdown(3)> by allowing an application error code to be
-specified. It also allows a client to decide how quickly it wants a shutdown to
-be performed, potentially by trading off strict RFC compliance.
+specified. It also allows an application to decide how quickly it wants a
+shutdown to be performed, potentially by trading off strict RFC compliance.
 
 =item L<SSL_stream_conclude(3)>
 
@@ -832,11 +889,12 @@ L<SSL_stream_reset(3)>, L<SSL_get_stream_read_state(3)>,
 L<SSL_get_stream_read_error_code(3)>, L<SSL_get_conn_close_info(3)>,
 L<SSL_get0_connection(3)>, L<SSL_get_stream_type(3)>, L<SSL_get_stream_id(3)>,
 L<SSL_new_stream(3)>, L<SSL_accept_stream(3)>,
-L<SSL_set_incoming_stream_policy(3)>, L<SSL_set_default_stream_mode(3)>
+L<SSL_set_incoming_stream_policy(3)>, L<SSL_set_default_stream_mode(3)>,
+L<SSL_new_listener(3)>, L<SSL_new_listener_from(3)>, L<SSL_is_listener(3)>,
+L<SSL_get0_listener(3)>, L<SSL_listen(3)>, L<SSL_accept_connection(3)>,
+L<SSL_get_accept_connection_queue_len(3)>
 
-=head1 COPYRIGHT
-
-Copyright 2022-2023 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2022-2024 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
