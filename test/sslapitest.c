@@ -9782,14 +9782,22 @@ static int test_configuration_of_groups(void)
         goto end;
 
     default_groups_len = ctx->ext.supported_groups_default_len;
-
+#if (!defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH))
     if (!TEST_size_t_gt(default_groups_len, 0)
         || !TEST_int_gt(SSL_CTX_set1_groups_list(ctx, "DEFAULT"), 0)
+#else
+    if (!TEST_size_t_eq(default_groups_len, 0)
+        || !TEST_int_eq(SSL_CTX_set1_groups_list(ctx, "DEFAULT"), 0)
+#endif
         || !TEST_size_t_eq(ctx->ext.supportedgroups_len, default_groups_len))
         goto end;
 
+#if (!defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH))
     if (!TEST_int_gt(SSL_CTX_set1_groups_list(ctx, "DEFAULT:-?P-256"), 0)
-#ifndef OPENSSL_NO_EC
+#else
+    if (!TEST_int_eq(SSL_CTX_set1_groups_list(ctx, "DEFAULT:-?P-256"), 0)
+#endif
+#if !defined(OPENSSL_NO_EC)
         || !TEST_size_t_eq(ctx->ext.supportedgroups_len, default_groups_len - 1)
 #else
         || !TEST_size_t_eq(ctx->ext.supportedgroups_len, default_groups_len)
@@ -9797,7 +9805,7 @@ static int test_configuration_of_groups(void)
         )
         goto end;
 
-#ifndef OPENSSL_NO_EC
+#if !defined(OPENSSL_NO_EC)
     if (!TEST_int_gt(SSL_CTX_set1_groups_list(ctx, "?P-256:?P-521:-?P-256"), 0)
         || !TEST_size_t_eq(ctx->ext.supportedgroups_len, 1)
         || !TEST_int_eq(ctx->ext.supportedgroups[0], OSSL_TLS_GROUP_ID_secp521r1)
