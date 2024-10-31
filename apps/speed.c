@@ -934,7 +934,7 @@ static int EVP_Update_loop_aead_enc(void *args)
             if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN,
                                      aead_ivlen, NULL)) {
                 BIO_printf(bio_err, "\nFailed to set iv length\n");
-                ERR_print_errors(bio_err);
+                dofail();
                 exit(1);
             }
         }
@@ -945,13 +945,13 @@ static int EVP_Update_loop_aead_enc(void *args)
             if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
                                      TAG_LEN, NULL)) {
                 BIO_printf(bio_err, "\nFailed to set tag length\n");
-                ERR_print_errors(bio_err);
+                dofail();
                 exit(1);
             }
         }
         if (!EVP_CipherInit_ex(ctx, NULL, NULL, key, aead_iv, -1)) {
             BIO_printf(bio_err, "\nFailed to set key and iv\n");
-            ERR_print_errors(bio_err);
+            dofail();
             exit(1);
         }
         /* Set total length of input. Only required for CCM */
@@ -959,20 +959,20 @@ static int EVP_Update_loop_aead_enc(void *args)
             if (!EVP_EncryptUpdate(ctx, NULL, &outl,
                                    NULL, lengths[testnum])) {
                 BIO_printf(bio_err, "\nCouldn't set input text length\n");
-                ERR_print_errors(bio_err);
+                dofail();
                 exit(1);
             }
         }
         if (aead) {
             if (!EVP_EncryptUpdate(ctx, NULL, &outl, aad, sizeof(aad))) {
                 BIO_printf(bio_err, "\nCouldn't insert AAD when encrypting\n");
-                ERR_print_errors(bio_err);
+                dofail();
                 exit(1);
             }
         }
         if (!EVP_EncryptUpdate(ctx, buf, &outl, buf, lengths[testnum])) {
             BIO_printf(bio_err, "\nFailed to encrypt the data\n");
-            ERR_print_errors(bio_err);
+            dofail();
             exit(1);
         }
         if (EVP_EncryptFinal_ex(ctx, buf, &outl))
@@ -1006,7 +1006,7 @@ static int EVP_Update_loop_aead_dec(void *args)
             if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN,
                                      aead_ivlen, NULL)) {
                 BIO_printf(bio_err, "\nFailed to set iv length\n");
-                ERR_print_errors(bio_err);
+                dofail();
                 exit(1);
             }
         }
@@ -1018,20 +1018,20 @@ static int EVP_Update_loop_aead_dec(void *args)
             if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
                                      TAG_LEN, NULL)) {
                 BIO_printf(bio_err, "\nFailed to set tag length\n");
-                ERR_print_errors(bio_err);
+                dofail();
                 exit(1);
             }
         }
         if (!EVP_CipherInit_ex(ctx, NULL, NULL, key, aead_iv, -1)) {
             BIO_printf(bio_err, "\nFailed to set key and iv\n");
-            ERR_print_errors(bio_err);
+            dofail();
             exit(1);
         }
         /* Set iv before decryption (Doesn't apply to SIV mode) */
         if (mode_op != EVP_CIPH_SIV_MODE) {
             if (!EVP_DecryptInit_ex(ctx, NULL, NULL, NULL, aead_iv)) {
                 BIO_printf(bio_err, "\nFailed to set iv\n");
-                ERR_print_errors(bio_err);
+                dofail();
                 exit(1);
             }
         }
@@ -1040,7 +1040,7 @@ static int EVP_Update_loop_aead_dec(void *args)
         if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
                                  TAG_LEN, tag)) {
             BIO_printf(bio_err, "\nFailed to set tag\n");
-            ERR_print_errors(bio_err);
+            dofail();
             exit(1);
         }
         /* Set the total length of cipher text. Only required for CCM */
@@ -1048,20 +1048,20 @@ static int EVP_Update_loop_aead_dec(void *args)
             if (!EVP_DecryptUpdate(ctx, NULL, &outl,
                                    NULL, lengths[testnum])) {
                 BIO_printf(bio_err, "\nCouldn't set cipher text length\n");
-                ERR_print_errors(bio_err);
+                dofail();
                 exit(1);
             }
         }
         if (aead) {
             if (!EVP_DecryptUpdate(ctx, NULL, &outl, aad, sizeof(aad))) {
                 BIO_printf(bio_err, "\nCouldn't insert AAD when decrypting\n");
-                ERR_print_errors(bio_err);
+                dofail();
                 exit(1);
             }
         }
         if (!EVP_DecryptUpdate(ctx, outbuf, &outl, buf, lengths[testnum])) {
             BIO_printf(bio_err, "\nFailed to decrypt the data\n");
-            ERR_print_errors(bio_err);
+            dofail();
             exit(1);
         }
         if (EVP_DecryptFinal_ex(ctx, outbuf, &outl))
@@ -3011,7 +3011,7 @@ int speed_main(int argc, char **argv)
                                                      EVP_CTRL_AEAD_SET_IVLEN,
                                                      aead_ivlen, NULL)) {
                                 BIO_printf(bio_err, "\nFailed to set iv length\n");
-                                ERR_print_errors(bio_err);
+                                dofail();
                                 exit(1);
                             }
                         }
@@ -3024,14 +3024,14 @@ int speed_main(int argc, char **argv)
                                                      TAG_LEN, NULL)) {
                                 BIO_printf(bio_err,
                                            "\nFailed to set tag length\n");
-                                ERR_print_errors(bio_err);
+                                dofail();
                                 exit(1);
                             }
                         }
                         if (!EVP_CipherInit_ex(loopargs[k].ctx, NULL, NULL,
                                                loopargs[k].key, aead_iv, -1)) {
                             BIO_printf(bio_err, "\nFailed to set the key\n");
-                            ERR_print_errors(bio_err);
+                            dofail();
                             exit(1);
                         }
                         /* Set total length of input. Only required for CCM */
@@ -3041,7 +3041,7 @@ int speed_main(int argc, char **argv)
                                                    lengths[testnum])) {
                                 BIO_printf(bio_err,
                                            "\nCouldn't set input text length\n");
-                                ERR_print_errors(bio_err);
+                                dofail();
                                 exit(1);
                             }
                         }
@@ -3050,7 +3050,7 @@ int speed_main(int argc, char **argv)
                                                    &outlen, aad, sizeof(aad))) {
                                 BIO_printf(bio_err,
                                            "\nCouldn't insert AAD when encrypting\n");
-                                ERR_print_errors(bio_err);
+                                dofail();
                                 exit(1);
                             }
                         }
@@ -3059,7 +3059,7 @@ int speed_main(int argc, char **argv)
                                                lengths[testnum])) {
                             BIO_printf(bio_err,
                                        "\nFailed to to encrypt the data\n");
-                            ERR_print_errors(bio_err);
+                            dofail();
                             exit(1);
                         }
 
@@ -3067,14 +3067,14 @@ int speed_main(int argc, char **argv)
                                                  loopargs[k].buf, &outlen)) {
                             BIO_printf(bio_err,
                                        "\nFailed finalize the encryption\n");
-                            ERR_print_errors(bio_err);
+                            dofail();
                             exit(1);
                         }
 
                         if (!EVP_CIPHER_CTX_ctrl(loopargs[k].ctx, EVP_CTRL_AEAD_GET_TAG,
                                                  TAG_LEN, &loopargs[k].tag)) {
                             BIO_printf(bio_err, "\nFailed to get the tag\n");
-                            ERR_print_errors(bio_err);
+                            dofail();
                             exit(1);
                         }
 
@@ -3089,7 +3089,7 @@ int speed_main(int argc, char **argv)
                                                NULL, NULL, NULL, 0)) {
                             BIO_printf(bio_err,
                                        "\nFailed initializing the context\n");
-                            ERR_print_errors(bio_err);
+                            dofail();
                             exit(1);
                         }
 
