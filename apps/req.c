@@ -275,9 +275,7 @@ int req_main(int argc, char **argv)
     long newkey_len = -1;
     unsigned long chtype = MBSTRING_ASC, reqflag = 0;
 
-#ifndef OPENSSL_NO_DES
     cipher = (EVP_CIPHER *)EVP_aes_256_cbc();
-#endif
 
     opt_set_unknown_name("digest");
     prog = opt_init(argc, argv, req_options);

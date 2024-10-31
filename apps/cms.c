@@ -823,12 +823,7 @@ int cms_main(int argc, char **argv)
 
     if (operation == SMIME_ENCRYPT) {
         if (!cipher) {
-#ifndef OPENSSL_NO_DES
             cipher = (EVP_CIPHER *)EVP_aes_256_cbc();
-#else
-            BIO_printf(bio_err, "No cipher selected\n");
-            goto end;
-#endif
         }
 
         if (secret_key && !secret_keyid) {
