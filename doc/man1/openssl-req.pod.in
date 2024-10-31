@@ -835,6 +835,8 @@ L<x509v3_config(5)>
 
 =head1 HISTORY
 
+The default encryption cipher was changed from 3DES to AES-256 in OpenSSL 3.5.
+
 The B<-section> option was added in OpenSSL 3.0.0.
 
 The B<-multivalue-rdn> option has become obsolete in OpenSSL 3.0.0 and
