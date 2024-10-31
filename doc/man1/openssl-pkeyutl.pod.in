@@ -81,7 +81,7 @@ signature algorithm does not require one (for instance, EdDSA). If this option
 is omitted but the signature algorithm requires one, a default value will be
 used. For signature algorithms like RSA, DSA and ECDSA, SHA-256 will be the
 default digest algorithm. For SM2, it will be SM3.
-So far, HashEdDSA (the ph or "prehash" variant of EdDSA) is not supported,
+At this time, HashEdDSA (the ph or "prehash" variant of EdDSA) is not supported,
 so the B<-digest> option cannot be used with EdDSA).
 
 =item B<-out> I<filename>
