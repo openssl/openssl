@@ -1115,7 +1115,7 @@ static int ech_boring_compat(void)
     if (!TEST_int_eq(SSL_set1_ech_config_list(NULL, NULL, 0), 0)
         || !TEST_ptr(ctx = SSL_CTX_new_ex(NULL, NULL, TLS_server_method()))
         || !TEST_ptr(s = SSL_new(ctx))
-        || !TEST_int_eq(SSL_set1_ech_config_list(s, NULL, 0), 0)
+        || !TEST_int_eq(SSL_set1_ech_config_list(s, NULL, 0), 1)
         || !TEST_int_eq(SSL_set1_ech_config_list(s, (uint8_t *)b64_pk1,
                                                  sizeof(b64_pk1) - 1), 1)
         || !TEST_int_eq(SSL_set1_ech_config_list(s, (uint8_t *)bin_6_to_3,

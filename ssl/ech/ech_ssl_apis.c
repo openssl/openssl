@@ -138,9 +138,16 @@ int SSL_ech_set1_outer_alpn_protos(SSL *ssl, const unsigned char *protos,
     SSL_CONNECTION *s;
 
     s = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
-    if (s == NULL || protos == NULL || protos_len == 0)
+    if (s == NULL)
         return 0;
     OPENSSL_free(s->ext.ech.alpn_outer);
+    s->ext.ech.alpn_outer = NULL;
+    if (protos == NULL)
+        return 1;
+    if (protos_len == 0) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
     s->ext.ech.alpn_outer = OPENSSL_memdup(protos, protos_len);
     if (s->ext.ech.alpn_outer == NULL)
         return 0;
@@ -233,9 +240,12 @@ int SSL_ech_set1_grease_suite(SSL *ssl, const char *suite)
     SSL_CONNECTION *s;
 
     s = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
-    if (s == NULL || suite == NULL)
+    if (s == NULL)
         return 0;
     OPENSSL_free(s->ext.ech.grease_suite);
+    s->ext.ech.grease_suite = NULL;
+    if (suite == NULL)
+        return 1;
     s->ext.ech.grease_suite = OPENSSL_strdup(suite);
     if (s->ext.ech.grease_suite == NULL)
         return 0;
@@ -316,11 +326,18 @@ int SSL_CTX_ech_set1_outer_alpn_protos(SSL_CTX *ctx,
                                        const unsigned char *protos,
                                        const size_t protos_len)
 {
-    if (ctx == NULL || protos == NULL || protos_len == 0) {
+    if (ctx == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
     OPENSSL_free(ctx->ext.ech.alpn_outer);
+    ctx->ext.ech.alpn_outer = NULL;
+    if (protos == NULL)
+        return 1;
+    if (protos_len == 0) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
     ctx->ext.ech.alpn_outer = OPENSSL_memdup(protos, protos_len);
     if (ctx->ext.ech.alpn_outer == NULL)
         return 0;
@@ -369,7 +386,12 @@ int SSL_set1_ech_config_list(SSL *ssl, const uint8_t *ecl, size_t ecl_len)
     s = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
     if (s == NULL)
         goto err;
-    if (ecl == NULL || ecl_len == 0) {
+    if (ecl == NULL) {
+        OSSL_ECHSTORE_free(s->ext.ech.es);
+        s->ext.ech.es = NULL;
+        return 1;
+    }
+    if (ecl_len == 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_PASSED_NULL_PARAMETER);
         goto err;
     }
