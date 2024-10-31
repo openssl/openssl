@@ -122,7 +122,6 @@ the default handling.
      */
     SSL_CTX_set_verify(ctx, SSL_VERIFY_NONE, NULL);
 
-
 QUIC also dictates using Application-Layer Protocol Negotiation (ALPN) to select
 an application protocol.  We use L<SSL_CTX_set_alpn_select_cb(3)> for this
 purpose.  We can pass a callback which will be called for each connection to
