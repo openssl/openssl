@@ -30,6 +30,13 @@ OpenSSL 3.4
 
 ### Changes between 3.4 and 3.5 [xx XXX xxxx]
 
+ * Updated the default encryption cipher for the `req`, `cms`, and `smime` applications
+   from `des-ede3-cbc` to `aes-256-cbc`.
+
+   AES-256 provides a stronger 256-bit key encryption than legacy 3DES.
+
+   *Aditya*
+
  * Enhanced PKCS#7 inner contents verification.
    In the PKCS7_verify() function, the BIO *indata parameter refers to the
    signed data if the content is detached from p7. Otherwise, indata should be

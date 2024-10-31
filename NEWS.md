@@ -33,7 +33,8 @@ This release is in development.
 This release incorporates the following potentially significant or incompatible
 changes:
 
-  * none yet
+  * Default encryption cipher for the `req`, `cms`, and `smime` applications
+    changed from `des-ede3-cbc` to `aes-256-cbc`.
 
 This release adds the following new features:
 
