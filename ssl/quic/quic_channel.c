@@ -3421,7 +3421,8 @@ int ossl_quic_channel_on_new_conn(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
 
 int ossl_quic_bind_channel(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
                            const QUIC_CONN_ID *peer_scid,
-                           const QUIC_CONN_ID *peer_dcid)
+                           const QUIC_CONN_ID *peer_dcid,
+                           const QUIC_CONN_ID *peer_odcid)
 {
     if (peer_dcid == NULL)
         return 0;
@@ -3433,7 +3434,11 @@ int ossl_quic_bind_channel(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
     if (!ossl_quic_lcidm_bind_channel(ch->lcidm, ch, peer_dcid))
         return 0;
 
-    return ch_on_new_conn_common(ch, peer, peer_scid, peer_dcid);
+    /*
+     * peer_odcid <=> is initial dst conn id chosen by peer in its
+     * first initial packet we received without token.
+     */
+    return ch_on_new_conn_common(ch, peer, peer_scid, peer_odcid);
 }
 
 SSL *ossl_quic_channel_get0_ssl(QUIC_CHANNEL *ch)
