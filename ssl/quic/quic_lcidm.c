@@ -416,7 +416,11 @@ int ossl_quic_lcidm_bind_channel(QUIC_LCIDM *lcidm, void *opaque,
         return 0;
     }
 
+    lcid_obj->seq_num = conn->next_seq_num;
+    lcid_obj->type = LCID_TYPE_INITIAL;
+    conn->next_seq_num++;
 #if 0
+
     /*
      * emulate call to ossl_quic_lcidm_enrol_odcid()
      * this currently feels as a kind of hack. perhaps better
