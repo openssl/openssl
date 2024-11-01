@@ -4,9 +4,9 @@
 # this job involving file system paths should be made prefixed with, or relative
 # to that directory
 name: Interoperability tests with GnuTLS and NSS
-on:
-  schedule:
-    - cron: '0 6 * * *'
+on: [pull_request]
+#  schedule:
+#    - cron: '0 6 * * *'
 jobs:
   test:
     runs-on: ubuntu-22.04
