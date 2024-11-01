@@ -896,7 +896,7 @@ L<ossl_store-file(7)>
 
 =head1 HISTORY
 
-The dedault encryption cipher was changed from 3DES to AES-256 in OpenSSL 3.5.
+The default encryption cipher was changed from 3DES to AES-256 in OpenSSL 3.5.
 
 The use of multiple B<-signer> options and the B<-resign> command were first
 added in OpenSSL 1.0.0.
