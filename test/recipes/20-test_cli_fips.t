@@ -252,7 +252,7 @@ SKIP: {
         $testtext = $testtext_prefix.': '.
             'Generate a key with a non-FIPS algorithm with the default provider';
         ok(run(app(['openssl', 'genpkey', '-algorithm', 'RSA',
-                    '-pkeyopt', 'rsa_keygen_bits:512',
+                    '-pkeyopt', 'rsa_keygen_bits:1024',
                     '-out', $nonfips_key])),
            $testtext);
 
@@ -273,7 +273,7 @@ SKIP: {
             'Generate a key with a non-FIPS algorithm'.
             ' (should fail)';
         ok(!run(app(['openssl', 'genpkey', '-algorithm', 'RSA',
-                    '-pkeyopt', 'rsa_keygen_bits:512',
+                    '-pkeyopt', 'rsa_keygen_bits:1024',
                      '-out', $testtext_prefix.'.fail.priv.pem'])),
            $testtext);
 

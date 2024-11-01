@@ -860,10 +860,10 @@ static void thread_general_worker(void)
 
     /*
      * We want the test to run quickly - not securely.
-     * Therefore we use an insecure bit length where we can (512).
+     * Therefore we use an insecure bit length where we can (1024).
      * In the FIPS module though we must use a longer length.
      */
-    pkey = EVP_PKEY_Q_keygen(multi_libctx, NULL, "RSA", isfips ? 2048 : 512);
+    pkey = EVP_PKEY_Q_keygen(multi_libctx, NULL, "RSA", isfips ? 2048 : OPENSSL_RSA_MIN_MODULUS_BITS);
     if (!TEST_ptr(pkey))
         goto err;
 
