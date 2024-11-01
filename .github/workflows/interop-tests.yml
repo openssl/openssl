@@ -11,7 +11,7 @@ jobs:
   test:
     runs-on: ubuntu-22.04
     container:
-      image: docker.io/fedora:39
+      image: docker.io/fedora:40
       options: --sysctl net.ipv6.conf.lo.disable_ipv6=0
     timeout-minutes: 90
     strategy:
@@ -48,6 +48,6 @@ jobs:
       - name: Run interop tests
         run: |
           cd interop
-          tmt run -av plans -n interop tests -f "tag: interop-openssl & tag: interop-$COMPONENT" provision -h local execute -h tmt --interactive
+          tmt run -av plans -n interop tests -f "tag: interop-openssl & tag: interop-$COMPONENT" provision -h local --feeling-safe execute -h tmt --interactive
           openssl version
           echo "Finished - important to prevent unwanted output truncating"
