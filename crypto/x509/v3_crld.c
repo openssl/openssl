@@ -424,6 +424,7 @@ static int print_distpoint(BIO *out, DIST_POINT_NAME *dpn, int indent)
     if (dpn->type == 0) {
         BIO_printf(out, "%*sFull Name:\n", indent, "");
         OSSL_GENERAL_NAMES_print(out, dpn->name.fullname, indent);
+        BIO_puts(out, "\n");
     } else {
         X509_NAME ntmp;
         ntmp.entries = dpn->name.relativename;
