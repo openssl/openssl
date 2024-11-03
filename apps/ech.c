@@ -80,12 +80,10 @@ int ech_main(int argc, char **argv)
     char *prog = NULL;
     OPTION_CHOICE o;
     int i, rv = 1, verbose = 0, text = 0, outsupp = 0;
-    int select = OSSL_ECHSTORE_ALL;
+    int select = OSSL_ECHSTORE_ALL, numinfiles = 0;
     char *outfile = NULL, *infile = NULL;
     char *infiles[OSSL_ECH_MAXINFILES] = { NULL };
-    int numinfiles = 0;
-    char *public_name = NULL;
-    char *suitestr = NULL;
+    char *public_name = NULL, *suitestr = NULL;
     uint16_t ech_version = OSSL_ECH_CURRENT_VERSION;
     uint8_t max_name_length = 0;
     OSSL_HPKE_SUITE hpke_suite = OSSL_HPKE_SUITE_DEFAULT;
@@ -154,17 +152,13 @@ int ech_main(int argc, char **argv)
             break;
         }
     }
-
     argc = opt_num_rest();
     argv = opt_rest();
     if (argc != 0) {
         BIO_printf(bio_err, "%s: Unknown parameter %s\n", prog, argv[0]);
         goto opthelp;
     }
-
-    /*
-     * Check ECH-specific inputs
-     */
+    /* Check ECH-specific inputs */
     switch (ech_version) {
     case OSSL_ECH_RFCXXXX_VERSION: /* fall through */
     case 13:
@@ -174,7 +168,6 @@ int ech_main(int argc, char **argv)
         BIO_printf(bio_err, "Un-supported version (0x%04x)\n", ech_version);
         goto end;
     }
-
     if (max_name_length > OSSL_ECH_MAX_MAXNAMELEN) {
         BIO_printf(bio_err, "Weird max name length (0x%04x) - biggest is "
                    "(0x%04x) - exiting\n", max_name_length,
@@ -182,7 +175,6 @@ int ech_main(int argc, char **argv)
         ERR_print_errors(bio_err);
         goto end;
     }
-
     if (suitestr != NULL) {
         if (OSSL_HPKE_str2suite(suitestr, &hpke_suite) != 1) {
             BIO_printf(bio_err, "Bad OSSL_HPKE_SUITE (%s)\n", suitestr);
@@ -190,7 +182,6 @@ int ech_main(int argc, char **argv)
             goto end;
         }
     }
-
     /* Set default if needed */
     if (outfile == NULL)
         outfile = "echconfig.pem";
@@ -211,7 +202,6 @@ int ech_main(int argc, char **argv)
             BIO_printf(bio_err, "OSSL_ECHSTORE_new_config success\n");
         rv = 0;
     }
-
     if (mode == OSSL_ECH_SELPRINT_MODE) {
         if (numinfiles == 0)
             goto opthelp;
@@ -245,7 +235,6 @@ int ech_main(int argc, char **argv)
         }
         rv = 0;
     }
-
     if (text) {
         int oi_ind, oi_cnt = 0;
 
@@ -264,8 +253,8 @@ int ech_main(int argc, char **argv)
                 OPENSSL_free(ec);
                 goto end;
             }
-            BIO_printf(bio_err, "ECH entry: %d public_name: %s age: %lld%s\n",
-                       oi_ind, pn, secs, has_priv ? " (has private key)" : "");
+            BIO_printf(bio_err, "ECH entry: %d public_name: %s age: %d%s\n",
+                       oi_ind, pn, (int)secs, has_priv ? " (has private key)" : "");
             BIO_printf(bio_err, "\t%s\n", ec);
             OPENSSL_free(pn);
             OPENSSL_free(ec);
@@ -274,7 +263,6 @@ int ech_main(int argc, char **argv)
             BIO_printf(bio_err, "Success printing %d ECHConfigList\n", oi_cnt);
         rv = 0;
     }
-
 end:
     OSSL_ECHSTORE_free(es);
     BIO_free_all(ecf);
