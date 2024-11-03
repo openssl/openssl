@@ -32,7 +32,7 @@ int SSL_set1_echstore(SSL *ssl, OSSL_ECHSTORE *es)
 {
     SSL_CONNECTION *s;
 
-    s = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
+    s = SSL_CONNECTION_FROM_SSL(ssl);
     if (s == NULL)
         return 0;
     OSSL_ECHSTORE_free(s->ext.ech.es);
@@ -73,7 +73,7 @@ OSSL_ECHSTORE *SSL_get1_echstore(const SSL *ssl)
     SSL_CONNECTION *s;
     OSSL_ECHSTORE *dup = NULL;
 
-    s = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
+    s = SSL_CONNECTION_FROM_SSL(ssl);
     if (s == NULL)
         return NULL;
     if (s->ext.ech.es == NULL)
@@ -90,7 +90,7 @@ int SSL_ech_set1_server_names(SSL *ssl, const char *inner_name,
 {
     SSL_CONNECTION *s;
 
-    s = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
+    s = SSL_CONNECTION_FROM_SSL(ssl);
     if (s == NULL)
         return 0;
     OPENSSL_free(s->ext.hostname);
@@ -117,7 +117,7 @@ int SSL_ech_set1_outer_server_name(SSL *ssl, const char *outer_name,
 {
     SSL_CONNECTION *s;
 
-    s = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
+    s = SSL_CONNECTION_FROM_SSL(ssl);
     if (s == NULL)
         return 0;
     OPENSSL_free(s->ext.ech.outer_hostname);
@@ -137,7 +137,7 @@ int SSL_ech_set1_outer_alpn_protos(SSL *ssl, const unsigned char *protos,
 {
     SSL_CONNECTION *s;
 
-    s = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
+    s = SSL_CONNECTION_FROM_SSL(ssl);
     if (s == NULL)
         return 0;
     OPENSSL_free(s->ext.ech.alpn_outer);
@@ -239,7 +239,7 @@ int SSL_ech_set1_grease_suite(SSL *ssl, const char *suite)
 {
     SSL_CONNECTION *s;
 
-    s = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
+    s = SSL_CONNECTION_FROM_SSL(ssl);
     if (s == NULL)
         return 0;
     OPENSSL_free(s->ext.ech.grease_suite);
@@ -257,7 +257,7 @@ int SSL_ech_set_grease_type(SSL *ssl, uint16_t type)
 {
     SSL_CONNECTION *s;
 
-    s = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
+    s = SSL_CONNECTION_FROM_SSL(ssl);
     if (s == NULL)
         return 0;
     s->ext.ech.attempted_type = type;
@@ -269,7 +269,7 @@ void SSL_ech_set_callback(SSL *ssl, SSL_ech_cb_func f)
 {
     SSL_CONNECTION *s;
 
-    s = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
+    s = SSL_CONNECTION_FROM_SSL(ssl);
     if (s == NULL)
         return;
     s->ext.ech.cb = f;
@@ -283,7 +283,7 @@ int SSL_ech_get1_retry_config(SSL *ssl, unsigned char **ec, size_t *eclen)
     BIO *in = NULL;
     int rv = 0;
 
-    s = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
+    s = SSL_CONNECTION_FROM_SSL(ssl);
     if (s == NULL || ec == NULL || eclen == NULL)
         goto err;
     if (s->ext.ech.returned == NULL) {
@@ -383,7 +383,7 @@ int SSL_set1_ech_config_list(SSL *ssl, const uint8_t *ecl, size_t ecl_len)
     OSSL_ECHSTORE *es = NULL;
     BIO *es_in = NULL;
 
-    s = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
+    s = SSL_CONNECTION_FROM_SSL(ssl);
     if (s == NULL)
         goto err;
     if (ecl == NULL) {

@@ -110,6 +110,7 @@ struct ossl_echstore_st {
 
 /* ECH details associated with an SSL_CTX */
 typedef struct ossl_ctx_ech_st {
+    /* TODO(ECH): consider making es ref-counted */
     OSSL_ECHSTORE *es;
     unsigned char *alpn_outer;
     size_t alpn_outer_len;
@@ -118,6 +119,7 @@ typedef struct ossl_ctx_ech_st {
 
 /* ECH details associated with an SSL_CONNECTION */
 typedef struct ossl_ech_conn_st {
+    /* TODO(ECH): consider making es ref-counted */
     OSSL_ECHSTORE *es; /* ECHConfigList details */
     int no_outer; /* set to 1 if we should send no outer SNI at all */
     char *outer_hostname;
