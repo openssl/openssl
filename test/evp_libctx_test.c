@@ -549,7 +549,7 @@ static int rsa_keygen(int bits, EVP_PKEY **pub, EVP_PKEY **priv)
     size_t len = 0;
     OSSL_ENCODER_CTX *ectx = NULL;
 
-    if (!TEST_ptr(*priv = EVP_PKEY_Q_keygen(libctx, NULL, "RSA", bits))
+    if (!TEST_ptr(*priv = EVP_PKEY_Q_keygen(libctx, NULL, "RSA", (size_t)bits))
         || !TEST_ptr(ectx =
                      OSSL_ENCODER_CTX_new_for_pkey(*priv,
                                                    EVP_PKEY_PUBLIC_KEY,
