@@ -146,8 +146,14 @@ This cannot be used in conjunction with B<-rawin>.
 =item B<-sign>
 
 Sign the input data and output the signed result. This requires a private key.
-The input data given with the B<-in> option should be a hash value
-unless the use of a message digest operation is implied,
+Using a message digest operation along with this is recommended -
+see the B<-rawin> and B<-digest> options for details.
+Otherwise, the input data given with the B<-in> option is assumed to already
+be a digest, but this may then require an additional B<-pkeyopt>I<digest>:I<md>
+in some cases (e.g., RSA with the default PKCS#1 padding mode).
+Even for other algorithms like ECDSA, where the additional B<-pkeyopt> option
+does not affect signature output, it recommended to use
+to sanity-check that the input length is consistent with the purported digest.
 
 =item B<-verify>
 
