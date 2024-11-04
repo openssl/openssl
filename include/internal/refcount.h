@@ -155,7 +155,7 @@ static __inline int CRYPTO_DOWN_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
 
 static __inline int CRYPTO_GET_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
 {
-    *ret = _InterlockedExchangeAdd((void *)&refcnt->val, 0);
+    *ret = _InterlockedExchangeAdd_acq((void *)&refcnt->val, 0);
     return 1;
 }
 
