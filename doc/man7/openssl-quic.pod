@@ -912,6 +912,8 @@ L<SSL_get0_listener(3)>, L<SSL_listen(3)>, L<SSL_accept_connection(3)>,
 L<SSL_get_accept_connection_queue_len(3)>, L<SSL_new_domain(3)>,
 L<SSL_is_domain(3)>, L<SSL_get0_domain(3)>
 
+=head1 COPYRIGHT
+
 Copyright 2022-2024 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
