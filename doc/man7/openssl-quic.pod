@@ -8,13 +8,13 @@ openssl-quic - OpenSSL QUIC
 
 OpenSSL 3.2 and later features support for the QUIC transport protocol.
 You can use OpenSSL's QUIC capabilities for both client and server applications.
-This man page describes how to let applications use QUIC protocol using the
+This man page describes how to let applications use the QUIC protocol using the
 libssl API.
 
-QUIC protocol maps to the standard SSL API. A QUIC connection is represented
+The QUIC protocol maps to the standard SSL API. A QUIC connection is represented
 by an SSL object in the same way that a TLS connection is. Only minimal changes
 are needed to existing applications which use libssl API to bring QUIC protocol
-in. QUIC clients can use L<OSSL_QUIC_client_method(3)> or
+support in. QUIC clients can use L<OSSL_QUIC_client_method(3)> or
 L<OSSL_QUIC_client_thread_method(3)> with L<SSL_CTX_new(3)>. See below for more
 details about the difference between the two. For servers, there is only one
 option: SSL method L<OSSL_QUIC_server_method(3)> with L<SSL_CTX_new(3)>.
@@ -592,11 +592,11 @@ detail in L<openssl-quic-concurrency(7)>.
 
 =item L<SSL_is_domain(3)>
 
-Returns 1 if a SSL object is a QUIC domain SSL object.
+Returns 1 if an SSL object is a QUIC domain SSL object.
 
 =item L<SSL_get0_domain(3)>
 
-SSL_get0_domain() obtains a pointer to the QUIC domain SSL object in a SSL
+SSL_get0_domain() obtains a pointer to the QUIC domain SSL object in an SSL
 object hierarchy (if any).
 
 =item L<SSL_set_blocking_mode(3)>, L<SSL_get_blocking_mode(3)>
@@ -672,7 +672,7 @@ Gets the QUIC connection SSL object from a QUIC stream SSL object.
 
 =item L<SSL_is_connection(3)>
 
-Returns 1 if a SSL object is not a QUIC stream SSL object.
+Returns 1 if an SSL object is not a QUIC stream SSL object.
 
 =item L<SSL_get_stream_type(3)>
 
