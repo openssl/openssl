@@ -290,7 +290,7 @@ static SSL *port_new_handshake_layer(QUIC_PORT *port)
     SSL *tls = NULL;
     SSL_CONNECTION *tls_conn = NULL;
 
-    tls = ossl_ssl_connection_new_int(port->channel_ctx, TLS_method());
+    tls = ossl_ssl_connection_new_int(port->channel_ctx, NULL, TLS_method());
     if (tls == NULL || (tls_conn = SSL_CONNECTION_FROM_SSL(tls)) == NULL)
         return NULL;
 
