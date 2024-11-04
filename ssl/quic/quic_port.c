@@ -763,6 +763,7 @@ static int port_validate_token(QUIC_PKT_HDR *hdr, QUIC_CONN_ID *odcid)
     return 1;
 }
 
+extern void ossl_print_dcid(QUIC_CONN_ID *);
 /*
  * This is called by the demux when we get a packet not destined for any known
  * DCID.
@@ -787,8 +788,15 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
         && ossl_quic_lcidm_lookup(port->lcidm, dcid, NULL,
                                   (void **)&ch)) {
         assert(ch != NULL);
+        fprintf(stderr, "%s found channel for dcid:", __func__);
+        ossl_print_cid(dcid);
+        fprintf(stderr, "\n");
         ossl_quic_channel_inject(ch, e);
         return;
+    } else {
+        fprintf(stderr, "%s could not find channel for dcid: ", __func__);
+        ossl_print_cid(dcid);
+        fprintf(stderr, "\n");
     }
 
     /*
