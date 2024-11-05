@@ -521,7 +521,7 @@ SSL_SESSION *lookup_sess_in_cache(SSL_CONNECTION *s,
     if (ret == NULL && s->session_ctx->get_session_cb != NULL) {
         int copy = 1;
 
-        ret = s->session_ctx->get_session_cb(SSL_CONNECTION_GET_SSL(s),
+        ret = s->session_ctx->get_session_cb(SSL_CONNECTION_GET_USER_SSL(s),
                                              sess_id, sess_id_len, &copy);
 
         if (ret != NULL) {
