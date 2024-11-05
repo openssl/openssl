@@ -1128,7 +1128,7 @@ static void rlayer_msg_callback_wrapper(int write_p, int version,
                                         size_t len, void *cbarg)
 {
     SSL_CONNECTION *s = cbarg;
-    SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+    SSL *ssl = SSL_CONNECTION_GET_USER_SSL(s);
 
     if (s->msg_callback != NULL)
         s->msg_callback(write_p, version, content_type, buf, len, ssl,
@@ -1148,7 +1148,7 @@ static OSSL_FUNC_rlayer_padding_fn rlayer_padding_wrapper;
 static size_t rlayer_padding_wrapper(void *cbarg, int type, size_t len)
 {
     SSL_CONNECTION *s = cbarg;
-    SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+    SSL *ssl = SSL_CONNECTION_GET_USER_SSL(s);
 
     return s->rlayer.record_padding_cb(ssl, type, len,
                                        s->rlayer.record_padding_arg);

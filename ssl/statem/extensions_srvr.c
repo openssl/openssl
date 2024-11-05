@@ -265,7 +265,7 @@ int tls_parse_ctos_session_ticket(SSL_CONNECTION *s, PACKET *pkt,
                                   X509 *x, size_t chainidx)
 {
     if (s->ext.session_ticket_cb &&
-            !s->ext.session_ticket_cb(SSL_CONNECTION_GET_SSL(s),
+            !s->ext.session_ticket_cb(SSL_CONNECTION_GET_USER_SSL(s),
                                       PACKET_data(pkt), PACKET_remaining(pkt),
                                       s->ext.session_ticket_cb_arg)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -852,7 +852,7 @@ int tls_parse_ctos_cookie(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     }
 
     /* Verify the app cookie */
-    if (sctx->verify_stateless_cookie_cb(ssl,
+    if (sctx->verify_stateless_cookie_cb(SSL_CONNECTION_GET_USER_SSL(s),
                                          PACKET_data(&appcookie),
                                          PACKET_remaining(&appcookie)) == 0) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_COOKIE_MISMATCH);
@@ -1030,7 +1030,7 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     unsigned int id, i, ext = 0;
     const EVP_MD *md = NULL;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
-    SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+    SSL *ussl = SSL_CONNECTION_GET_USER_SSL(s);
 
     /*
      * If we have no PSK kex mode that we recognise then we can't resume so
@@ -1059,7 +1059,7 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
 
         idlen = PACKET_remaining(&identity);
         if (s->psk_find_session_cb != NULL
-                && !s->psk_find_session_cb(ssl, PACKET_data(&identity), idlen,
+                && !s->psk_find_session_cb(ussl, PACKET_data(&identity), idlen,
                                            &sess)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_EXTENSION);
             return 0;
@@ -1077,7 +1077,7 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 return 0;
             }
-            pskdatalen = s->psk_server_callback(ssl, pskid, pskdata,
+            pskdatalen = s->psk_server_callback(ussl, pskid, pskdata,
                                                 sizeof(pskdata));
             OPENSSL_free(pskid);
             if (pskdatalen > PSK_MAX_PSK_LEN) {
@@ -1091,7 +1091,8 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
                  * We found a PSK using an old style callback. We don't know
                  * the digest so we default to SHA256 as per the TLSv1.3 spec
                  */
-                cipher = SSL_CIPHER_find(ssl, tls13_aes128gcmsha256_id);
+                cipher = SSL_CIPHER_find(SSL_CONNECTION_GET_SSL(s),
+                                         tls13_aes128gcmsha256_id);
                 if (cipher == NULL) {
                     OPENSSL_cleanse(pskdata, pskdatalen);
                     SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -1507,8 +1508,8 @@ EXT_RETURN tls_construct_stoc_next_proto_neg(SSL_CONNECTION *s, WPACKET *pkt,
     if (!npn_seen || sctx->ext.npn_advertised_cb == NULL)
         return EXT_RETURN_NOT_SENT;
 
-    ret = sctx->ext.npn_advertised_cb(SSL_CONNECTION_GET_SSL(s), &npa, &npalen,
-                                      sctx->ext.npn_advertised_cb_arg);
+    ret = sctx->ext.npn_advertised_cb(SSL_CONNECTION_GET_USER_SSL(s), &npa,
+                                      &npalen, sctx->ext.npn_advertised_cb_arg);
     if (ret == SSL_TLSEXT_ERR_OK) {
         if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_next_proto_neg)
                 || !WPACKET_sub_memcpy_u16(pkt, npa, npalen)) {
@@ -1781,6 +1782,7 @@ EXT_RETURN tls_construct_stoc_cookie(SSL_CONNECTION *s, WPACKET *pkt,
     int ret = EXT_RETURN_FAIL;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+    SSL *ussl = SSL_CONNECTION_GET_USER_SSL(s);
 
     if ((s->s3.flags & TLS1_FLAGS_STATELESS) == 0)
         return EXT_RETURN_NOT_SENT;
@@ -1830,7 +1832,7 @@ EXT_RETURN tls_construct_stoc_cookie(SSL_CONNECTION *s, WPACKET *pkt,
     }
 
     /* Generate the application cookie */
-    if (sctx->gen_stateless_cookie_cb(ssl, appcookie1,
+    if (sctx->gen_stateless_cookie_cb(ussl, appcookie1,
                                       &appcookielen) == 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_COOKIE_GEN_CALLBACK_FAILURE);
         return EXT_RETURN_FAIL;
