@@ -2087,6 +2087,77 @@ err:
     qtest_fault_free(qtf);
     return testresult;
 }
+
+static int new_called = 0;
+static SSL *cbssl = NULL;
+
+static int new_session_cb(SSL *ssl, SSL_SESSION *sess)
+{
+    new_called++;
+    /*
+     * Remember the SSL ref we were called with. No need to up-ref this. It
+     * should remain valid for the duration of the test.
+     */
+    cbssl = ssl;
+    /*
+     * sess has been up-refed for us, but we don't actually need it so free it
+     * immediately.
+     */
+    SSL_SESSION_free(sess);
+    return 1;
+}
+
+/* Test using a new_session_cb with a QUIC SSL object works as expected */
+static int test_session_cb(void)
+{
+    SSL_CTX *cctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method());
+    SSL *clientquic = NULL;
+    QUIC_TSERVER *qtserv = NULL;
+    int testresult = 0;
+
+    if (!TEST_ptr(cctx))
+        goto err;
+
+    new_called = 0;
+    cbssl = NULL;
+    SSL_CTX_sess_set_new_cb(cctx, new_session_cb);
+    SSL_CTX_set_session_cache_mode(cctx, SSL_SESS_CACHE_CLIENT);
+
+    if (!TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert,
+                                             privkey,
+                                             QTEST_FLAG_FAKE_TIME,
+                                             &qtserv, &clientquic,
+                                             NULL, NULL)))
+        goto err;
+
+    if (!TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
+        goto err;
+
+    /* Process the pending NewSessionTickets */
+    if (!TEST_true(SSL_handle_events(clientquic)))
+        goto err;
+
+    if (!TEST_int_eq(SSL_shutdown(clientquic), 0))
+        goto err;
+
+    /*
+     * Check the callback was called twice (we expect 2 tickets), and with the
+     * correct SSL reference
+     */
+    if (!TEST_int_eq(new_called, 2)
+            || !TEST_ptr_eq(clientquic, cbssl))
+        goto err;
+
+    testresult = 1;
+ err:
+    cbssl = NULL;
+    ossl_quic_tserver_free(qtserv);
+    SSL_free(clientquic);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
 /***********************************************************************************/
 
 OPT_TEST_DECLARE_USAGE("provider config certsdir datadir\n")
@@ -2178,6 +2249,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_noisy_dgram, 2);
     ADD_TEST(test_get_shutdown);
     ADD_ALL_TESTS(test_tparam, OSSL_NELEM(tparam_tests));
+    ADD_TEST(test_session_cb);
 
     return 1;
  err:
