@@ -1031,7 +1031,6 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     unsigned int id, i, ext = 0;
     const EVP_MD *md = NULL;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
-    SSL *ssl = SSL_CONNECTION_GET_SSL(s);
     SSL *ussl = SSL_CONNECTION_GET_USER_SSL(s);
 
     /*
@@ -1093,7 +1092,8 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
                  * We found a PSK using an old style callback. We don't know
                  * the digest so we default to SHA256 as per the TLSv1.3 spec
                  */
-                cipher = SSL_CIPHER_find(ssl, tls13_aes128gcmsha256_id);
+                cipher = SSL_CIPHER_find(SSL_CONNECTION_GET_SSL(s),
+                                         tls13_aes128gcmsha256_id);
                 if (cipher == NULL) {
                     OPENSSL_cleanse(pskdata, pskdatalen);
                     SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);

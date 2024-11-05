@@ -1005,7 +1005,7 @@ static int final_server_name(SSL_CONNECTION *s, unsigned int context, int sent)
                                       sctx->ext.servername_arg);
     else if (s->session_ctx->ext.servername_cb != NULL)
         ret = s->session_ctx->ext.servername_cb(ussl, &altmp,
-                                       s->session_ctx->ext.servername_arg);
+                                                s->session_ctx->ext.servername_arg);
 
     /*
      * For servers, propagate the SNI hostname from the temporary
@@ -1741,7 +1741,7 @@ static int final_early_data(SSL_CONNECTION *s, unsigned int context, int sent)
             || s->hello_retry_request != SSL_HRR_NONE
             || (s->allow_early_data_cb != NULL
                 && !s->allow_early_data_cb(SSL_CONNECTION_GET_USER_SSL(s),
-                                         s->allow_early_data_cb_data))) {
+                                           s->allow_early_data_cb_data))) {
         s->ext.early_data = SSL_EARLY_DATA_REJECTED;
     } else {
         s->ext.early_data = SSL_EARLY_DATA_ACCEPTED;
