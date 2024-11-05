@@ -308,7 +308,6 @@ static GENERAL_NAMES *v2i_issuer_alt(X509V3_EXT_METHOD *method,
 
     if (gens == NULL) {
         ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
-        sk_GENERAL_NAME_free(gens);
         return NULL;
     }
     for (i = 0; i < num; i++) {
@@ -387,7 +386,6 @@ static GENERAL_NAMES *v2i_subject_alt(X509V3_EXT_METHOD *method,
     gens = sk_GENERAL_NAME_new_reserve(NULL, num);
     if (gens == NULL) {
         ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
-        sk_GENERAL_NAME_free(gens);
         return NULL;
     }
 
@@ -483,7 +481,6 @@ GENERAL_NAMES *v2i_GENERAL_NAMES(const X509V3_EXT_METHOD *method,
     gens = sk_GENERAL_NAME_new_reserve(NULL, num);
     if (gens == NULL) {
         ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
-        sk_GENERAL_NAME_free(gens);
         return NULL;
     }
 
