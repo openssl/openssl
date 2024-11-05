@@ -784,13 +784,13 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
     SSL_SESSION *psksess = NULL;
     SSL_SESSION *edsess = NULL;
     const EVP_MD *handmd = NULL;
-    SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+    SSL *ussl = SSL_CONNECTION_GET_USER_SSL(s);
 
     if (s->hello_retry_request == SSL_HRR_PENDING)
         handmd = ssl_handshake_md(s);
 
     if (s->psk_use_session_cb != NULL
-            && (!s->psk_use_session_cb(ssl, handmd, &id, &idlen, &psksess)
+            && (!s->psk_use_session_cb(ussl, handmd, &id, &idlen, &psksess)
                 || (psksess != NULL
                     && psksess->ssl_version != TLS1_3_VERSION))) {
         SSL_SESSION_free(psksess);
@@ -804,7 +804,7 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
         size_t psklen = 0;
 
         memset(identity, 0, sizeof(identity));
-        psklen = s->psk_client_callback(ssl, NULL,
+        psklen = s->psk_client_callback(ussl, NULL,
                                         identity, sizeof(identity) - 1,
                                         psk, sizeof(psk));
 
@@ -826,7 +826,8 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
              * We found a PSK using an old style callback. We don't know
              * the digest so we default to SHA256 as per the TLSv1.3 spec
              */
-            cipher = SSL_CIPHER_find(ssl, tls13_aes128gcmsha256_id);
+            cipher = SSL_CIPHER_find(SSL_CONNECTION_GET_SSL(s),
+                                     tls13_aes128gcmsha256_id);
             if (cipher == NULL) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 return EXT_RETURN_FAIL;
@@ -1421,7 +1422,7 @@ int tls_parse_stoc_session_ticket(SSL_CONNECTION *s, PACKET *pkt,
                                   unsigned int context,
                                   X509 *x, size_t chainidx)
 {
-    SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+    SSL *ssl = SSL_CONNECTION_GET_USER_SSL(s);
 
     if (s->ext.session_ticket_cb != NULL &&
         !s->ext.session_ticket_cb(ssl, PACKET_data(pkt),
@@ -1595,7 +1596,7 @@ int tls_parse_stoc_npn(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
         /* SSLfatal() already called */
         return 0;
     }
-    if (sctx->ext.npn_select_cb(SSL_CONNECTION_GET_SSL(s),
+    if (sctx->ext.npn_select_cb(SSL_CONNECTION_GET_USER_SSL(s),
                                 &selected, &selected_len,
                                 PACKET_data(pkt), PACKET_remaining(pkt),
                                 sctx->ext.npn_select_cb_arg) != SSL_TLSEXT_ERR_OK

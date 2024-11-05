@@ -63,6 +63,7 @@ int ssl3_do_write(SSL_CONNECTION *s, uint8_t type)
     int ret;
     size_t written = 0;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+    SSL *ussl = SSL_CONNECTION_GET_USER_SSL(s);
 
     /*
      * If we're running the test suite then we may need to mutate the message
@@ -112,7 +113,7 @@ int ssl3_do_write(SSL_CONNECTION *s, uint8_t type)
         s->statem.write_in_progress = 0;
         if (s->msg_callback)
             s->msg_callback(1, s->version, type, s->init_buf->data,
-                            (size_t)(s->init_off + s->init_num), ssl,
+                            (size_t)(s->init_off + s->init_num), ussl,
                             s->msg_callback_arg);
         return 1;
     }
@@ -1411,7 +1412,7 @@ WORK_STATE tls_finish_handshake(SSL_CONNECTION *s, ossl_unused WORK_STATE wst,
 {
     void (*cb) (const SSL *ssl, int type, int val) = NULL;
     int cleanuphand = s->statem.cleanuphand;
-    SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+    SSL *ssl = SSL_CONNECTION_GET_USER_SSL(s);
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
     if (clearbufs) {
@@ -1423,7 +1424,7 @@ WORK_STATE tls_finish_handshake(SSL_CONNECTION *s, ossl_unused WORK_STATE wst,
              * MUST NOT be used.
              * Hence the init_buf can be cleared when DTLS over SCTP as transport is used.
              */
-            || BIO_dgram_is_sctp(SSL_get_wbio(ssl))
+            || BIO_dgram_is_sctp(SSL_get_wbio(SSL_CONNECTION_GET_SSL(s)))
 #endif
             ) {
             /*
@@ -1535,6 +1536,7 @@ int tls_get_message_header(SSL_CONNECTION *s, int *mt)
     unsigned char *p;
     size_t l, readbytes;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+    SSL *ussl = SSL_CONNECTION_GET_USER_SSL(s);
 
     p = (unsigned char *)s->init_buf->data;
 
@@ -1598,7 +1600,7 @@ int tls_get_message_header(SSL_CONNECTION *s, int *mt)
 
                     if (s->msg_callback)
                         s->msg_callback(0, s->version, SSL3_RT_HANDSHAKE,
-                                        p, SSL3_HM_HEADER_LENGTH, ssl,
+                                        p, SSL3_HM_HEADER_LENGTH, ussl,
                                         s->msg_callback_arg);
                 }
     } while (skip_message);
@@ -1643,6 +1645,7 @@ int tls_get_message_body(SSL_CONNECTION *s, size_t *len)
     unsigned char *p;
     int i;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+    SSL *ussl = SSL_CONNECTION_GET_USER_SSL(s);
 
     if (s->s3.tmp.message_type == SSL3_MT_CHANGE_CIPHER_SPEC) {
         /* We've already read everything in */
@@ -1684,7 +1687,7 @@ int tls_get_message_body(SSL_CONNECTION *s, size_t *len)
         }
         if (s->msg_callback)
             s->msg_callback(0, SSL2_VERSION, 0, s->init_buf->data,
-                            (size_t)s->init_num, ssl, s->msg_callback_arg);
+                            (size_t)s->init_num, ussl, s->msg_callback_arg);
     } else {
         /*
          * We defer feeding in the HRR until later. We'll do it as part of
@@ -1712,7 +1715,7 @@ int tls_get_message_body(SSL_CONNECTION *s, size_t *len)
         }
         if (s->msg_callback)
             s->msg_callback(0, s->version, SSL3_RT_HANDSHAKE, s->init_buf->data,
-                            (size_t)s->init_num + SSL3_HM_HEADER_LENGTH, ssl,
+                            (size_t)s->init_num + SSL3_HM_HEADER_LENGTH, ussl,
                             s->msg_callback_arg);
     }
 
