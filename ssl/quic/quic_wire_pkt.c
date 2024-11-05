@@ -554,8 +554,7 @@ int ossl_quic_wire_encode_pkt_hdr(WPACKET *pkt,
                                hdr->src_conn_id.id_len))
             return 0;
 
-        if (hdr->type == QUIC_PKT_TYPE_VERSION_NEG
-            || hdr->type == QUIC_PKT_TYPE_RETRY) {
+        if (hdr->type == QUIC_PKT_TYPE_VERSION_NEG) {
             if (hdr->len > 0 && !WPACKET_reserve_bytes(pkt, hdr->len, NULL))
                 return 0;
 
@@ -566,6 +565,12 @@ int ossl_quic_wire_encode_pkt_hdr(WPACKET *pkt,
             if (!WPACKET_quic_write_vlint(pkt, hdr->token_len)
                 || !WPACKET_memcpy(pkt, hdr->token, hdr->token_len))
                 return 0;
+        }
+
+        if (hdr->type == QUIC_PKT_TYPE_RETRY) {
+            if (!WPACKET_memcpy(pkt, hdr->token, hdr->token_len))
+                return 0;
+            return 1;
         }
 
         if (!WPACKET_quic_write_vlint(pkt, hdr->len + hdr->pn_len)

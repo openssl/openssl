@@ -30,6 +30,34 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
                                         const QUIC_CONN_ID *dcid);
 static void port_rx_pre(QUIC_PORT *port);
 
+/**
+ * @struct validation_token
+ * @brief Represents a validation token for secure connection handling.
+ *
+ * This struct is used to store information related to a validation token,
+ * including the token buffer, original connection ID, and an integrity tag
+ * for secure validation of QUIC connections.
+ *
+ * @var validation_token::token_buf
+ * A character array holding the token data. The size of this array is
+ * based on the length of the string "openssltoken" minus one for the null
+ * terminator.
+ *
+ * @var validation_token::token_odcid
+ * An original connection ID (`QUIC_CONN_ID`) used to identify the QUIC
+ * connection. This ID helps associate the token with a specific connection.
+ *
+ * @var validation_token::integrity_tag
+ * A character array for the integrity tag, with a length defined by
+ * `QUIC_RETRY_INTEGRITY_TAG_LEN`. This tag is used to verify the integrity
+ * of the token during the connection process.
+ */
+struct validation_token {
+    char token_buf[sizeof("openssltoken") - 1];
+    QUIC_CONN_ID token_odcid;
+    char integrity_tag[QUIC_RETRY_INTEGRITY_TAG_LEN];
+};
+
 DEFINE_LIST_OF_IMPL(ch, QUIC_CHANNEL);
 DEFINE_LIST_OF_IMPL(incoming_ch, QUIC_CHANNEL);
 DEFINE_LIST_OF_IMPL(port, QUIC_PORT);
@@ -544,28 +572,27 @@ static void port_rx_pre(QUIC_PORT *port)
  * connection from it. If a new connection is made, the new channel is written
  * to *new_ch.
  */
-static void port_on_new_conn(QUIC_PORT *port, const BIO_ADDR *peer,
-                             const QUIC_CONN_ID *scid,
-                             const QUIC_CONN_ID *dcid,
-                             QUIC_CHANNEL **new_ch)
+static void port_bind_channel(QUIC_PORT *port, const BIO_ADDR *peer,
+                              const QUIC_CONN_ID *scid, const QUIC_CONN_ID *dcid,
+                              const QUIC_CONN_ID *odcid, QUIC_CHANNEL **new_ch)
 {
     QUIC_CHANNEL *ch;
 
+    /*
+     * If we're running with a simulated tserver, it will already have
+     * a dummy channel created, use that instead
+     */
     if (port->tserver_ch != NULL) {
-        /* Specially assign to existing channel */
-        if (!ossl_quic_channel_on_new_conn(port->tserver_ch, peer, scid, dcid))
-            return;
-
-        *new_ch = port->tserver_ch;
+        ch = port->tserver_ch;
         port->tserver_ch = NULL;
-        return;
+    } else {
+        ch = port_make_channel(port, NULL, /* is_server= */1);
     }
 
-    ch = port_make_channel(port, NULL, /*is_server=*/1);
     if (ch == NULL)
         return;
 
-    if (!ossl_quic_channel_on_new_conn(ch, peer, scid, dcid)) {
+    if (!ossl_quic_bind_channel(ch, peer, scid, dcid, odcid)) {
         ossl_quic_channel_free(ch);
         return;
     }
@@ -620,6 +647,158 @@ static int port_try_handle_stateless_reset(QUIC_PORT *port, const QUIC_URXE *e)
     return i > 0;
 }
 
+#define TOKEN_LEN (sizeof("openssltoken") + \
+                   QUIC_RETRY_INTEGRITY_TAG_LEN - 1 + \
+                   sizeof(unsigned char))
+
+/**
+ * @brief Sends a QUIC Retry packet to a client.
+ *
+ * This function constructs and sends a Retry packet to the specified client
+ * using the provided connection header information. The Retry packet
+ * includes a generated validation token and a new connection ID, following
+ * the QUIC protocol specifications for connection establishment.
+ *
+ * @param port        Pointer to the QUIC port from which to send the packet.
+ * @param peer        Address of the client peer receiving the packet.
+ * @param client_hdr  Header of the client's initial packet, containing
+ *                    connection IDs and other relevant information.
+ *
+ * This function performs the following steps:
+ * - Generates a validation token for the client.
+ * - Sets the destination and source connection IDs.
+ * - Calculates the integrity tag and sets the token length.
+ * - Encodes and sends the packet via the BIO network interface.
+ *
+ * Error handling is included for failures in CID generation, encoding, and
+ * network transmiss
+ */
+static void port_send_retry(QUIC_PORT *port,
+                            BIO_ADDR *peer,
+                            QUIC_PKT_HDR *client_hdr)
+{
+    BIO_MSG msg[1];
+    unsigned char buffer[512];
+    WPACKET wpkt;
+    size_t written;
+    QUIC_PKT_HDR hdr;
+    struct validation_token token;
+    size_t token_len = TOKEN_LEN;
+    unsigned char *integrity_tag;
+    int ok;
+
+    /* TODO(QUIC_SERVER): generate proper validation token */
+    memcpy(token.token_buf, "openssltoken", sizeof("openssltoken") - 1);
+
+    token.token_odcid = client_hdr->dst_conn_id;
+    token_len += token.token_odcid.id_len;
+    integrity_tag = (unsigned char *)&token.token_odcid +
+        token.token_odcid.id_len + sizeof(token.token_odcid.id_len);
+    /*
+     * 17.2.5.1 Sending a Retry packet
+     *   dst ConnId is src ConnId we got from client
+     *   src ConnId comes from local conn ID manager
+     */
+    memset(&hdr, 0, sizeof(QUIC_PKT_HDR));
+    hdr.dst_conn_id = client_hdr->src_conn_id;
+    /*
+     * this is the random connection ID, we expect client is
+     * going to send the ID with next INITIAL packet which
+     * will also come with token we generate here.
+     */
+    ok = ossl_quic_lcidm_get_unused_cid(port->lcidm, &hdr.src_conn_id);
+    if (ok == 0)
+        return;
+
+    hdr.dst_conn_id = client_hdr->src_conn_id;
+    hdr.type = QUIC_PKT_TYPE_RETRY;
+    hdr.fixed = 1;
+    hdr.version = 1;
+    hdr.len = token_len;
+    hdr.data = (unsigned char *)&token;
+    ok = ossl_quic_calculate_retry_integrity_tag(port->engine->libctx,
+                                                 port->engine->propq, &hdr,
+                                                 &client_hdr->dst_conn_id,
+                                                 integrity_tag);
+    if (ok == 0)
+        return;
+
+    hdr.token = (unsigned char *)&token;
+    hdr.token_len = token_len;
+
+    msg[0].data = buffer;
+    msg[0].peer = peer;
+    msg[0].local = NULL;
+    msg[0].flags = 0;
+
+    ok = WPACKET_init_static_len(&wpkt, buffer, sizeof(buffer), 0);
+    if (ok == 0)
+        return;
+
+    ok = ossl_quic_wire_encode_pkt_hdr(&wpkt, client_hdr->dst_conn_id.id_len,
+                                       &hdr, NULL);
+    if (ok == 0)
+        return;
+
+    ok = WPACKET_get_total_written(&wpkt, &msg[0].data_len);
+    if (ok == 0)
+        return;
+
+    ok = WPACKET_finish(&wpkt);
+    if (ok == 0)
+        return;
+
+    /*
+     * TODO(QUIC SERVER) need to retry this in the event it return EAGAIN
+     * on a non-blocking BIO
+     */
+    if (!BIO_sendmmsg(port->net_wbio, msg, sizeof(BIO_MSG), 1, 0, &written))
+        ERR_raise_data(ERR_LIB_SSL, SSL_R_QUIC_NETWORK_ERROR,
+                       "port retry send failed due to network BIO I/O error");
+
+}
+
+/**
+ * @brief Validates a received token in a QUIC packet header.
+ *
+ * This function checks the validity of a token contained in the provided
+ * QUIC packet header (`QUIC_PKT_HDR *hdr`). The validation process involves
+ * verifying that the token matches an expected format and value. If the
+ * token is valid, the function extracts the original connection ID (ODCID)
+ * and stores it in the provided `QUIC_CONN_ID *odcid`.
+ *
+ * @param hdr   Pointer to the QUIC packet header containing the token.
+ * @param odcid Pointer to the connection ID structure to store the ODCID if
+ *              the token is valid.
+ * @return      1 if the token is valid and ODCID is extracted successfully,
+ *              0 otherwise.
+ *
+ * The function performs the following checks:
+ * - Verifies that the token length meets the required minimum.
+ * - Confirms the token buffer matches the expected "openssltoken" string.
+ * -
+ */
+static int port_validate_token(QUIC_PKT_HDR *hdr, QUIC_CONN_ID *odcid)
+{
+    int valid;
+    struct validation_token *token;
+
+    memset(odcid, 0, sizeof(QUIC_CONN_ID));
+
+    token = (struct validation_token *)hdr->token;
+    if (token == NULL || hdr->token_len <= (TOKEN_LEN - QUIC_RETRY_INTEGRITY_TAG_LEN))
+        return 0;
+
+    valid = memcmp(token->token_buf, "openssltoken", sizeof("openssltoken") - 1);
+    if (valid != 0)
+        return 0;
+
+    odcid->id_len = token->token_odcid.id_len;
+    memcpy(odcid->id, token->token_odcid.id, token->token_odcid.id_len);
+
+    return 1;
+}
+
 /*
  * This is called by the demux when we get a packet not destined for any known
  * DCID.
@@ -631,6 +810,7 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
     PACKET pkt;
     QUIC_PKT_HDR hdr;
     QUIC_CHANNEL *ch = NULL, *new_ch = NULL;
+    QUIC_CONN_ID odcid;
 
     /* Don't handle anything if we are no longer running. */
     if (!ossl_quic_port_is_running(port))
@@ -691,18 +871,29 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
         goto undesirable;
 
     /*
-     * Try to process this as a valid attempt to initiate a connection.
-     *
+     * TODO(QUIC SERVER): there should be some logic similar to accounting half-open
+     * states in TCP. If we reach certain threshold, then we want to
+     * validate clients.
+     */
+    if (hdr.token == NULL) {
+        port_send_retry(port, &e->peer, &hdr);
+        goto undesirable;
+    } else if (port_validate_token(&hdr, &odcid) == 0) {
+        goto undesirable;
+    }
+
+    port_bind_channel(port, &e->peer, &hdr.src_conn_id, &hdr.dst_conn_id,
+                      &odcid, &new_ch);
+
+    /*
      * The channel will do all the LCID registration needed, but as an
      * optimization inject this packet directly into the channel's QRX for
      * processing without going through the DEMUX again.
      */
-    port_on_new_conn(port, &e->peer, &hdr.src_conn_id, &hdr.dst_conn_id,
-                     &new_ch);
-    if (new_ch != NULL)
+    if (new_ch != NULL) {
         ossl_qrx_inject_urxe(new_ch->qrx, e);
-
-    return;
+        return;
+    }
 
 undesirable:
     ossl_quic_demux_release_urxe(port->demux, e);
