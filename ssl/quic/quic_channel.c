@@ -2458,6 +2458,7 @@ static int ch_tx(QUIC_CHANNEL *ch, int *notify_other_threads)
         */
         res = ossl_quic_tx_packetiser_generate(ch->txp, &status);
         if (status.sent_pkt > 0) {
+            fprintf(stderr, "%s packet sent\n", __func__);
             ch->have_sent_any_pkt = 1; /* Packet(s) were sent */
             ch->port->have_sent_any_pkt = 1;
 
@@ -3362,6 +3363,8 @@ static void ch_on_idle_timeout(QUIC_CHANNEL *ch)
     ch_record_state_transition(ch, QUIC_CHANNEL_STATE_TERMINATED);
 }
 
+extern void ossl_print_cid(const QUIC_CONN_ID *cid);
+
 static int ch_on_new_conn_common(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
                                  const QUIC_CONN_ID *peer_scid,
                                  const QUIC_CONN_ID *peer_dcid)
@@ -3369,7 +3372,16 @@ static int ch_on_new_conn_common(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
     /* Note our newly learnt peer address and CIDs. */
     ch->cur_peer_addr   = *peer;
     ch->init_dcid       = *peer_dcid;
+    fprintf(stderr, "%s init_dcid:", __func__);
+    ossl_print_cid(&ch->init_dcid);
+    fprintf(stderr, "\n");
     ch->cur_remote_dcid = *peer_scid;
+    fprintf(stderr, "%s remote_dcid:", __func__);
+    ossl_print_cid(&ch->cur_remote_dcid);
+    fprintf(stderr, "\n");
+    fprintf(stderr, "%s cur_local_cid:", __func__);
+    ossl_print_cid(&ch->cur_local_cid);
+    fprintf(stderr, "\n");
 
     /* Inform QTX of peer address. */
     if (!ossl_quic_tx_packetiser_set_peer(ch->txp, &ch->cur_peer_addr))
@@ -3404,6 +3416,20 @@ static int ch_on_new_conn_common(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
     return 1;
 }
 
+void ossl_print_cid(const QUIC_CONN_ID *cid)
+{
+    int i;
+
+    if (cid == NULL)
+        fprintf(stderr, "NULL");
+
+    if (cid->id_len == 0)
+        fprintf(stderr, "-");
+
+    for (i = 0; i < cid->id_len; i++)
+        fprintf(stderr, "%x", cid->id[i]);
+}
+
 /* Called when we, as a server, get a new incoming connection. */
 int ossl_quic_channel_on_new_conn(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
                                   const QUIC_CONN_ID *peer_scid,
@@ -3415,6 +3441,10 @@ int ossl_quic_channel_on_new_conn(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
     /* Generate an Initial LCID we will use for the connection. */
     if (!ossl_quic_lcidm_generate_initial(ch->lcidm, ch, &ch->cur_local_cid))
         return 0;
+
+    fprintf(stderr, "%s ch->cur_local_cid: ", __func__);
+    ossl_print_cid(&ch->cur_local_cid);
+    fprintf(stderr, "\n");
 
     return ch_on_new_conn_common(ch, peer, peer_scid, peer_dcid);
 }
@@ -3434,6 +3464,9 @@ int ossl_quic_bind_channel(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
     if (!ossl_quic_lcidm_bind_channel(ch->lcidm, ch, peer_dcid))
         return 0;
 
+    fprintf(stderr, "%s ch->cur_local_cid: ", __func__);
+    ossl_print_cid(&ch->cur_local_cid);
+    fprintf(stderr, "\n");
     /*
      * peer_odcid <=> is initial dst conn id chosen by peer in its
      * first initial packet we received without token.

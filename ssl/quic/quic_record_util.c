@@ -79,6 +79,7 @@ static const unsigned char quic_v1_initial_salt[] = {
     0x9a, 0xe6, 0xa4, 0xc8, 0x0c, 0xad, 0xcc, 0xbb, 0x7f, 0x0a
 };
 
+extern void ossl_print_cid(const QUIC_CONN_ID *);
 int ossl_quic_provide_initial_secret(OSSL_LIB_CTX *libctx,
                                      const char *propq,
                                      const QUIC_CONN_ID *dst_conn_id,
@@ -106,6 +107,9 @@ int ossl_quic_provide_initial_secret(OSSL_LIB_CTX *libctx,
         tx_secret = client_initial_secret;
     }
 
+    fprintf(stderr, "%s dst_conn_id: ", __func__);
+    ossl_print_cid(dst_conn_id);
+    fprintf(stderr, "\n");
     /* Derive initial secret from destination connection ID. */
     if (!ossl_quic_hkdf_extract(libctx, propq,
                                 sha256,

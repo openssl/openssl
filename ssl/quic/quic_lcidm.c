@@ -419,26 +419,6 @@ int ossl_quic_lcidm_bind_channel(QUIC_LCIDM *lcidm, void *opaque,
     lcid_obj->seq_num = conn->next_seq_num;
     lcid_obj->type = LCID_TYPE_INITIAL;
     conn->next_seq_num++;
-#if 0
-
-    /*
-     * emulate call to ossl_quic_lcidm_enrol_odcid()
-     * this currently feels as a kind of hack. perhaps better
-     * plan is to send original DCID we got in initial packet
-     * as a poart of validation token in retry packet.
-     * once client sends next initial packet with validation token
-     * we can read the original destination id back.
-     *
-     * on the other hand I see no reason to keep old destination connection
-     * id around. the need to get back to RFC to make my mind on this.
-     */
-    lcid_obj->seq_num   = LCIDM_ODCID_SEQ_NUM;
-    lcid_obj->type      = LCID_TYPE_ODCID;
-
-    ++conn->next_seq_num;
-    conn->odcid_lcid_obj    = lcid_obj;
-    conn->done_odcid        = 1;
-#endif
 
     return 1;
 }
