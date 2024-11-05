@@ -693,7 +693,7 @@ int tls_collect_extensions(SSL_CONNECTION *s, PACKET *packet,
             thisex->type = type;
             thisex->received_order = i++;
             if (s->ext.debug_cb)
-                s->ext.debug_cb(SSL_CONNECTION_GET_SSL(s), !s->server,
+                s->ext.debug_cb(SSL_CONNECTION_GET_USER_SSL(s), !s->server,
                                 thisex->type, PACKET_data(&thisex->data),
                                 PACKET_remaining(&thisex->data),
                                 s->ext.debug_arg);
@@ -991,6 +991,7 @@ static int final_server_name(SSL_CONNECTION *s, unsigned int context, int sent)
     int ret = SSL_TLSEXT_ERR_NOACK;
     int altmp = SSL_AD_UNRECOGNIZED_NAME;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+    SSL *ussl = SSL_CONNECTION_GET_USER_SSL(s);
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
     int was_ticket = (SSL_get_options(ssl) & SSL_OP_NO_TICKET) == 0;
 
@@ -1000,11 +1001,11 @@ static int final_server_name(SSL_CONNECTION *s, unsigned int context, int sent)
     }
 
     if (sctx->ext.servername_cb != NULL)
-        ret = sctx->ext.servername_cb(ssl, &altmp,
+        ret = sctx->ext.servername_cb(ussl, &altmp,
                                       sctx->ext.servername_arg);
     else if (s->session_ctx->ext.servername_cb != NULL)
-        ret = s->session_ctx->ext.servername_cb(ssl, &altmp,
-                                       s->session_ctx->ext.servername_arg);
+        ret = s->session_ctx->ext.servername_cb(ussl, &altmp,
+                                                s->session_ctx->ext.servername_arg);
 
     /*
      * For servers, propagate the SNI hostname from the temporary
@@ -1739,8 +1740,8 @@ static int final_early_data(SSL_CONNECTION *s, unsigned int context, int sent)
             || !s->ext.early_data_ok
             || s->hello_retry_request != SSL_HRR_NONE
             || (s->allow_early_data_cb != NULL
-                && !s->allow_early_data_cb(SSL_CONNECTION_GET_SSL(s),
-                                         s->allow_early_data_cb_data))) {
+                && !s->allow_early_data_cb(SSL_CONNECTION_GET_USER_SSL(s),
+                                           s->allow_early_data_cb_data))) {
         s->ext.early_data = SSL_EARLY_DATA_REJECTED;
     } else {
         s->ext.early_data = SSL_EARLY_DATA_ACCEPTED;
