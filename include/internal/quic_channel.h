@@ -448,6 +448,10 @@ uint64_t ossl_quic_channel_get_max_idle_timeout_peer_request(const QUIC_CHANNEL 
 /* Get the idle timeout actually negotiated. */
 uint64_t ossl_quic_channel_get_max_idle_timeout_actual(const QUIC_CHANNEL *ch);
 
+int ossl_quic_bind_channel(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
+                           const QUIC_CONN_ID *scid, const QUIC_CONN_ID *dcid,
+                           const QUIC_CONN_ID *odcid);
+
 # endif
 
 #endif
