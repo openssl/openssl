@@ -2211,11 +2211,11 @@ static int test_session_cb(void)
     SSL_CTX_sess_set_new_cb(cctx, new_session_cb);
     SSL_CTX_set_session_cache_mode(cctx, SSL_SESS_CACHE_CLIENT);
 
-     if (!TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert,
-                                              privkey,
-                                              QTEST_FLAG_FAKE_TIME,
-                                              &qtserv, &clientquic,
-                                              NULL, NULL)))
+    if (!TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert,
+                                             privkey,
+                                             QTEST_FLAG_FAKE_TIME,
+                                             &qtserv, &clientquic,
+                                             NULL, NULL)))
         goto err;
 
     if (!TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
