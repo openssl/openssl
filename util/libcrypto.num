@@ -5734,6 +5734,7 @@ EVP_CIPHER_CTX_get_algor                5861	3_4_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_set_algor_params           5862	3_4_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_get_algor_params           5863	3_4_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_get_algor                  5864	3_4_0	EXIST::FUNCTION:
+X509_VERIFY_PARAM_get_purpose           ?	3_5_0	EXIST::FUNCTION:
 d2i_OSSL_CRMF_ENCRYPTEDKEY              ?	3_5_0	EXIST::FUNCTION:CRMF
 i2d_OSSL_CRMF_ENCRYPTEDKEY              ?	3_5_0	EXIST::FUNCTION:CRMF
 OSSL_CRMF_ENCRYPTEDKEY_free             ?	3_5_0	EXIST::FUNCTION:CRMF

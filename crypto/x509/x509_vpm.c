@@ -302,6 +302,11 @@ int X509_VERIFY_PARAM_set_purpose(X509_VERIFY_PARAM *param, int purpose)
     return X509_PURPOSE_set(&param->purpose, purpose);
 }
 
+int X509_VERIFY_PARAM_get_purpose(const X509_VERIFY_PARAM *param)
+{
+    return param->purpose;
+}
+
 int X509_VERIFY_PARAM_set_trust(X509_VERIFY_PARAM *param, int trust)
 {
     return X509_TRUST_set(&param->trust, trust);
