@@ -395,7 +395,7 @@ int dtls1_handle_timeout(SSL_CONNECTION *s)
     }
 
     if (s->d1->timer_cb != NULL)
-        s->d1->timeout_duration_us = s->d1->timer_cb(SSL_CONNECTION_GET_SSL(s),
+        s->d1->timeout_duration_us = s->d1->timer_cb(SSL_CONNECTION_GET_USER_SSL(s),
                                                      s->d1->timeout_duration_us);
     else
         dtls1_double_timeout(s);
