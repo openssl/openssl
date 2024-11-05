@@ -1464,6 +1464,7 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
     unsigned int context;
     RAW_EXTENSION *extensions = NULL;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+    SSL *ussl = SSL_CONNECTION_GET_USER_SSL(s);
 #ifndef OPENSSL_NO_COMP
     SSL_COMP *comp;
 #endif
@@ -1624,7 +1625,7 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
             int master_key_length;
 
             master_key_length = sizeof(s->session->master_key);
-            if (s->ext.session_secret_cb(ssl, s->session->master_key,
+            if (s->ext.session_secret_cb(ussl, s->session->master_key,
                                          &master_key_length,
                                          NULL, &pref_cipher,
                                          s->ext.session_secret_cb_arg)
@@ -2930,7 +2931,7 @@ int tls_process_initial_server_flight(SSL_CONNECTION *s)
      */
     if (s->ext.status_type != TLSEXT_STATUSTYPE_nothing
             && sctx->ext.status_cb != NULL) {
-        int ret = sctx->ext.status_cb(SSL_CONNECTION_GET_SSL(s),
+        int ret = sctx->ext.status_cb(SSL_CONNECTION_GET_USER_SSL(s),
                                       sctx->ext.status_arg);
 
         if (ret == 0) {
@@ -3004,7 +3005,7 @@ static int tls_construct_cke_psk_preamble(SSL_CONNECTION *s, WPACKET *pkt)
 
     memset(identity, 0, sizeof(identity));
 
-    psklen = s->psk_client_callback(SSL_CONNECTION_GET_SSL(s),
+    psklen = s->psk_client_callback(SSL_CONNECTION_GET_USER_SSL(s),
                                     s->session->psk_identity_hint,
                                     identity, sizeof(identity) - 1,
                                     psk, sizeof(psk));
@@ -4055,7 +4056,7 @@ int ssl_do_client_cert_cb(SSL_CONNECTION *s, X509 **px509, EVP_PKEY **ppkey)
     }
 #endif
     if (sctx->client_cert_cb)
-        i = sctx->client_cert_cb(SSL_CONNECTION_GET_SSL(s), px509, ppkey);
+        i = sctx->client_cert_cb(SSL_CONNECTION_GET_USER_SSL(s), px509, ppkey);
     return i;
 }
 
