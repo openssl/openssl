@@ -4528,7 +4528,7 @@ void ssl_update_cache(SSL_CONNECTION *s, int mode)
          */
         if (s->session_ctx->new_session_cb != NULL) {
             SSL_SESSION_up_ref(s->session);
-            if (!s->session_ctx->new_session_cb(SSL_CONNECTION_GET_SSL(s),
+            if (!s->session_ctx->new_session_cb(SSL_CONNECTION_GET_USER_SSL(s),
                                                 s->session))
                 SSL_SESSION_free(s->session);
         }
@@ -6746,7 +6746,7 @@ static int nss_keylog_int(const char *prefix,
     }
     *cursor = '\0';
 
-    sctx->keylog_callback(SSL_CONNECTION_GET_SSL(sc), (const char *)out);
+    sctx->keylog_callback(SSL_CONNECTION_GET_USER_SSL(sc), (const char *)out);
     OPENSSL_clear_free(out, out_len);
     return 1;
 

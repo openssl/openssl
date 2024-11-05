@@ -1211,7 +1211,7 @@ static int ssl_security_default_callback(const SSL *s, const SSL_CTX *ctx,
 
 int ssl_security(const SSL_CONNECTION *s, int op, int bits, int nid, void *other)
 {
-    return s->cert->sec_cb(SSL_CONNECTION_GET_SSL(s), NULL, op, bits, nid,
+    return s->cert->sec_cb(SSL_CONNECTION_GET_USER_SSL(s), NULL, op, bits, nid,
                            other, s->cert->sec_ex);
 }
 

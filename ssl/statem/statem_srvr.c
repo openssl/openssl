@@ -1383,7 +1383,7 @@ CON_FUNC_RETURN dtls_construct_hello_verify_request(SSL_CONNECTION *s,
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
     if (sctx->app_gen_cookie_cb == NULL
-        || sctx->app_gen_cookie_cb(SSL_CONNECTION_GET_SSL(s), s->d1->cookie,
+        || sctx->app_gen_cookie_cb(SSL_CONNECTION_GET_USER_SSL(s), s->d1->cookie,
                                    &cookie_leni) == 0
         || cookie_leni > DTLS1_COOKIE_LENGTH) {
         SSLfatal(s, SSL_AD_NO_ALERT, SSL_R_COOKIE_GEN_CALLBACK_FAILURE);
@@ -1697,12 +1697,13 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
     DOWNGRADE dgrd = DOWNGRADE_NONE;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+    SSL *ussl = SSL_CONNECTION_GET_USER_SSL(s);
 
     /* Finished parsing the ClientHello, now we can start processing it */
     /* Give the ClientHello callback a crack at things */
     if (sctx->client_hello_cb != NULL) {
         /* A failure in the ClientHello callback terminates the connection. */
-        switch (sctx->client_hello_cb(ssl, &al, sctx->client_hello_cb_arg)) {
+        switch (sctx->client_hello_cb(ussl, &al, sctx->client_hello_cb_arg)) {
         case SSL_CLIENT_HELLO_SUCCESS:
             break;
         case SSL_CLIENT_HELLO_RETRY:
@@ -1767,8 +1768,8 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
         /* Empty cookie was already handled above by returning early. */
         if (SSL_get_options(ssl) & SSL_OP_COOKIE_EXCHANGE) {
             if (sctx->app_verify_cookie_cb != NULL) {
-                if (sctx->app_verify_cookie_cb(ssl, clienthello->dtls_cookie,
-                        clienthello->dtls_cookie_len) == 0) {
+                if (sctx->app_verify_cookie_cb(ussl, clienthello->dtls_cookie,
+                                               clienthello->dtls_cookie_len) == 0) {
                     SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE,
                              SSL_R_COOKIE_MISMATCH);
                     goto err;
@@ -1997,7 +1998,7 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
         int master_key_length;
 
         master_key_length = sizeof(s->session->master_key);
-        if (s->ext.session_secret_cb(ssl, s->session->master_key,
+        if (s->ext.session_secret_cb(ussl, s->session->master_key,
                                      &master_key_length, ciphers,
                                      &pref_cipher,
                                      s->ext.session_secret_cb_arg)
@@ -2180,7 +2181,7 @@ static int tls_handle_status_request(SSL_CONNECTION *s)
              * et al can pick it up.
              */
             s->cert->key = s->s3.tmp.cert;
-            ret = sctx->ext.status_cb(SSL_CONNECTION_GET_SSL(s),
+            ret = sctx->ext.status_cb(SSL_CONNECTION_GET_USER_SSL(s),
                                       sctx->ext.status_arg);
             switch (ret) {
                 /* We don't want to send a status request response */
@@ -2215,7 +2216,7 @@ int tls_handle_alpn(SSL_CONNECTION *s)
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
     if (sctx->ext.alpn_select_cb != NULL && s->s3.alpn_proposed != NULL) {
-        int r = sctx->ext.alpn_select_cb(SSL_CONNECTION_GET_SSL(s),
+        int r = sctx->ext.alpn_select_cb(SSL_CONNECTION_GET_USER_SSL(s),
                                          &selected, &selected_len,
                                          s->s3.alpn_proposed,
                                          (unsigned int)s->s3.alpn_proposed_len,
@@ -2290,6 +2291,7 @@ WORK_STATE tls_post_process_client_hello(SSL_CONNECTION *s, WORK_STATE wst)
 {
     const SSL_CIPHER *cipher;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+    SSL *ussl = SSL_CONNECTION_GET_USER_SSL(s);
 
     if (wst == WORK_MORE_A) {
         int rv = tls_early_post_process_client_hello(s);
@@ -2305,7 +2307,8 @@ WORK_STATE tls_post_process_client_hello(SSL_CONNECTION *s, WORK_STATE wst)
         if (!s->hit || SSL_CONNECTION_IS_TLS13(s)) {
             /* Let cert callback update server certificates if required */
             if (!s->hit && s->cert->cert_cb != NULL) {
-                int rv = s->cert->cert_cb(ssl, s->cert->cert_cb_arg);
+                int rv = s->cert->cert_cb(ussl, s->cert->cert_cb_arg);
+
                 if (rv == 0) {
                     SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_CERT_CB_ERROR);
                     goto err;
@@ -2338,7 +2341,7 @@ WORK_STATE tls_post_process_client_hello(SSL_CONNECTION *s, WORK_STATE wst)
                 /* check whether we should disable session resumption */
                 if (s->not_resumable_session_cb != NULL)
                     s->session->not_resumable =
-                        s->not_resumable_session_cb(ssl,
+                        s->not_resumable_session_cb(ussl,
                             ((s->s3.tmp.new_cipher->algorithm_mkey
                               & (SSL_kDHE | SSL_kECDHE)) != 0));
                 if (s->session->not_resumable)
@@ -2578,7 +2581,7 @@ CON_FUNC_RETURN tls_construct_server_key_exchange(SSL_CONNECTION *s,
         }
 #if !defined(OPENSSL_NO_DEPRECATED_3_0)
         if ((pkdhp == NULL) && (s->cert->dh_tmp_cb != NULL)) {
-            pkdh = ssl_dh_to_pkey(s->cert->dh_tmp_cb(SSL_CONNECTION_GET_SSL(s),
+            pkdh = ssl_dh_to_pkey(s->cert->dh_tmp_cb(SSL_CONNECTION_GET_USER_SSL(s),
                                                      0, 1024));
             if (pkdh == NULL) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -2934,7 +2937,7 @@ static int tls_process_cke_psk_preamble(SSL_CONNECTION *s, PACKET *pkt)
         return 0;
     }
 
-    psklen = s->psk_server_callback(SSL_CONNECTION_GET_SSL(s),
+    psklen = s->psk_server_callback(SSL_CONNECTION_GET_USER_SSL(s),
                                     s->session->psk_identity,
                                     psk, sizeof(psk));
 
@@ -3952,7 +3955,7 @@ static CON_FUNC_RETURN construct_stateless_ticket(SSL_CONNECTION *s,
     int iv_len;
     CON_FUNC_RETURN ok = CON_FUNC_ERROR;
     size_t macoffset, macendoffset;
-    SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+    SSL *ssl = SSL_CONNECTION_GET_USER_SSL(s);
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
     /* get session encoding length */
@@ -4263,7 +4266,7 @@ CON_FUNC_RETURN tls_construct_new_session_ticket(SSL_CONNECTION *s, WPACKET *pkt
     }
 
     if (tctx->generate_ticket_cb != NULL &&
-        tctx->generate_ticket_cb(SSL_CONNECTION_GET_SSL(s),
+        tctx->generate_ticket_cb(SSL_CONNECTION_GET_USER_SSL(s),
                                  tctx->ticket_cb_data) == 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
