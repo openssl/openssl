@@ -393,6 +393,36 @@ int ossl_quic_lcidm_generate_initial(QUIC_LCIDM *lcidm,
                           initial_lcid, NULL);
 }
 
+int ossl_quic_lcidm_bind_channel(QUIC_LCIDM *lcidm, void *opaque,
+                                 const QUIC_CONN_ID *lcid)
+{
+    QUIC_LCIDM_CONN *conn;
+    QUIC_LCID *lcid_obj;
+
+    /*
+     * the plan is simple:
+     *   make sure the lcid is still unused.
+     *   do the same business as ossl_quic_lcidm_gnerate_initial() does,
+     *   except we will use lcid instead of generating a new one.
+     */
+    if (ossl_quic_lcidm_lookup(lcidm, lcid, NULL, NULL) != 0)
+        return 0;
+
+    if ((conn = lcidm_upsert_conn(lcidm, opaque)) == NULL)
+        return 0;
+
+    if ((lcid_obj = lcidm_conn_new_lcid(lcidm, conn, lcid)) == NULL) {
+        lcidm_delete_conn(lcidm, conn);
+        return 0;
+    }
+
+    lcid_obj->seq_num = conn->next_seq_num;
+    lcid_obj->type = LCID_TYPE_INITIAL;
+    conn->next_seq_num++;
+
+    return 1;
+}
+
 int ossl_quic_lcidm_generate(QUIC_LCIDM *lcidm,
                              void *opaque,
                              OSSL_QUIC_FRAME_NEW_CONN_ID *ncid_frame)
@@ -553,4 +583,17 @@ int ossl_quic_lcidm_debug_add(QUIC_LCIDM *lcidm, void *opaque,
     lcid_obj->seq_num   = seq_num;
     lcid_obj->type      = LCID_TYPE_NCID;
     return 1;
+}
+
+int ossl_quic_lcidm_get_unused_cid(QUIC_LCIDM *lcidm, QUIC_CONN_ID *cid)
+{
+    int i;
+
+    for (i = 0; i < 10; i++) {
+        if (lcidm_generate_cid(lcidm, cid)
+            && lcidm_get0_lcid(lcidm, cid) == NULL)
+            return 1; /* not found <=> radomly generated cid is unused */
+    }
+
+    return 0;
 }
