@@ -679,8 +679,8 @@ EVP_PKEY *OSSL_CRMF_ENCRYPTEDKEY_get1_pkey(const OSSL_CRMF_ENCRYPTEDKEY *encrypt
     BIO *bio = NULL;
     CMS_SignedData *sd = NULL;
     BIO *pkey_bio = NULL;
-    int purpose_id = X509_PURPOSE_get_count() + 1;
-    X509_VERIFY_PARAM *ts_vpm, *bak_vpm = NULL;
+    int purpose_id, bak_purpose_id;
+    X509_VERIFY_PARAM *vpm;
 #endif
     EVP_PKEY *ret = NULL;
 
@@ -716,13 +716,21 @@ EVP_PKEY *OSSL_CRMF_ENCRYPTEDKEY_get1_pkey(const OSSL_CRMF_ENCRYPTEDKEY *encrypt
     if (sd == NULL)
         goto end;
 
-    if ((ts_vpm = X509_STORE_get0_param(ts)) == NULL
-        || (bak_vpm = X509_VERIFY_PARAM_new()) == NULL /* copy of VPMs of ts */
-        || !X509_VERIFY_PARAM_inherit(bak_vpm, ts_vpm)
-        || !X509_PURPOSE_add(purpose_id, X509_TRUST_COMPAT, 0, check_cmKGA,
-                             "CMP Key Generation Authority", "cmKGA", NULL)
-        /* override X509_PURPOSE_SMIME_SIGN: */
-        || !X509_STORE_set_purpose(ts, purpose_id)) {
+    purpose_id = X509_PURPOSE_get_count() + 1;
+
+    if (X509_PURPOSE_get_by_sname(SN_cmKGA) < 0 /* can be removed after fixing #25873 */
+        && !X509_PURPOSE_add(purpose_id, X509_TRUST_COMPAT, 0, check_cmKGA,
+                             LN_cmKGA, SN_cmKGA, NULL)) {
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_ERROR_SETTING_PURPOSE);
+        goto end;
+    }
+
+    if ((vpm = X509_STORE_get0_param(ts)) == NULL)
+        goto end;
+
+    /* temporarily override X509_PURPOSE_SMIME_SIGN: */
+    bak_purpose_id = X509_VERIFY_PARAM_get_purpose(vpm);
+    if (!X509_STORE_set_purpose(ts, purpose_id)) {
         ERR_raise(ERR_LIB_CRMF, CRMF_R_ERROR_SETTING_PURPOSE);
         goto end;
     }
@@ -730,9 +738,7 @@ EVP_PKEY *OSSL_CRMF_ENCRYPTEDKEY_get1_pkey(const OSSL_CRMF_ENCRYPTEDKEY *encrypt
     pkey_bio = CMS_SignedData_verify(sd, NULL, NULL /* scerts */, ts,
                                      extra, NULL, 0, libctx, propq);
 
-    /* workaround for API limit getting and restoring original purpose in ts */
-    if (!X509_VERIFY_PARAM_set_inh_flags(bak_vpm, X509_VP_FLAG_OVERWRITE)
-            || !X509_STORE_set1_param(ts, bak_vpm)) {
+    if (!X509_STORE_set_purpose(ts, bak_purpose_id)) {
         ERR_raise(ERR_LIB_CRMF, CRMF_R_ERROR_SETTING_PURPOSE);
         goto end;
     }
@@ -747,7 +753,6 @@ EVP_PKEY *OSSL_CRMF_ENCRYPTEDKEY_get1_pkey(const OSSL_CRMF_ENCRYPTEDKEY *encrypt
         ERR_raise(ERR_LIB_CRMF, CRMF_R_ERROR_DECODING_ENCRYPTEDKEY);
 
  end:
-    X509_VERIFY_PARAM_free(bak_vpm);
     CMS_SignedData_free(sd);
     BIO_free(bio);
     BIO_free(pkey_bio);
