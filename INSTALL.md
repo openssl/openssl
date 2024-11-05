@@ -984,6 +984,11 @@ Do not create shared libraries, only static ones.
 
 See [Notes on shared libraries](#notes-on-shared-libraries) below.
 
+### no-slh-dsa
+
+Disable Stateless Hash Based Digital Signature Standard support.
+(SLH-DSA is based on SPHINCS+. See NIST.FIPS.205)
+
 ### no-sm2-precomp
 
 Disable using the SM2 precomputed table on aarch64 to make the library smaller.

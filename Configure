@@ -522,6 +522,7 @@ my @disablables = (
     "shared",
     "siphash",
     "siv",
+    "slh-dsa",
     "sm2",
     "sm2-precomp",
     "sm3",
