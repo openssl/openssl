@@ -531,6 +531,10 @@ static const OSSL_ALGORITHM deflt_keymgmt[] = {
     { PROV_NAMES_SM2, "provider=default", ossl_sm2_keymgmt_functions,
       PROV_DESCS_SM2 },
 #endif
+#ifndef OPENSSL_NO_SLH_DSA
+    { PROV_NAMES_SLH_DSA_SHA2_128S, "provider=default", ossl_slh_dsa_sha2_128s_keymgmt_functions,
+      PROV_DESCS_SLH_DSA_SHA2_128S },
+#endif /* OPENSSL_NO_SLH_DSA */
     { NULL, NULL, NULL }
 };
 
