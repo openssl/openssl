@@ -285,7 +285,7 @@ static int test_fin_only_blocking(void)
 static int test_ciphersuites(void)
 {
     SSL_CTX *ctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method());
-    SSL *ssl;
+    SSL *ssl = NULL;
     int testresult = 0;
     const STACK_OF(SSL_CIPHER) *ciphers = NULL;
     const SSL_CIPHER *cipher;
