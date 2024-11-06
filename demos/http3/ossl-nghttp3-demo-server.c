@@ -677,7 +677,7 @@ static int get_file_length(char *filename)
     if (stat(filename, &st) == 0) {
         /* Only process regular files */
         if (S_ISREG(st.st_mode)) {
-            printf("get_file_length %s %ld\n", filename, st.st_size);
+            printf("get_file_length %s %lld\n", filename,  (unsigned long long) st.st_size);
             return st.st_size;
         }
     }
@@ -755,12 +755,12 @@ static int quic_server_write(struct h3ssl *h3ssl, uint64_t streamid,
                 ERR_print_errors_fp(stderr);
                 return 0;
             }
-            printf("written %ld on %lld flags %lld\n", (unsigned long)len,
+            printf("written %lld on %lld flags %lld\n", (unsigned long long)len,
                    (unsigned long long)streamid, (unsigned long long)flags);
             return 1;
         }
     }
-    printf("quic_server_write %ld on %lld (NOT FOUND!)\n", (unsigned long)len,
+    printf("quic_server_write %lld on %lld (NOT FOUND!)\n", (unsigned long long)len,
            (unsigned long long)streamid);
     return 0;
 }
