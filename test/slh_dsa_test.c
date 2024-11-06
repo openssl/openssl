@@ -114,10 +114,42 @@ end:
     return ret;
 }
 
+static int slh_dsa_sig_verify_test(void)
+{
+    int ret = 0;
+    SLH_DSA_ACVP_TEST_DATA *td = &slh_dsa_testdata[0];
+    EVP_PKEY_CTX *vctx = NULL;
+    EVP_PKEY *key = NULL;
+    EVP_SIGNATURE *sig_alg = NULL;
+    OSSL_PARAM params[2], *p = params;
+    int encode = 0;
+
+    *p++ = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_MESSAGE_ENCODING, &encode);
+    *p = OSSL_PARAM_construct_end();
+
+    if (!TEST_ptr(key = slh_dsa_pubkey_from_data(td->alg, td->pub, td->pub_len)))
+        return 0;
+    if (!TEST_ptr(vctx = EVP_PKEY_CTX_new_from_pkey(libctx, key, NULL)))
+        goto err;
+    if (!TEST_ptr(sig_alg = EVP_SIGNATURE_fetch(libctx, td->alg, NULL)))
+        goto err;
+    if (!TEST_int_eq(EVP_PKEY_verify_init_ex2(vctx, sig_alg, params), 1)
+            || !TEST_int_eq(EVP_PKEY_verify(vctx, td->sig, td->sig_len,
+                                            td->msg, td->msg_len), 1))
+        goto err;
+    ret = 1;
+err:
+    EVP_SIGNATURE_free(sig_alg);
+    EVP_PKEY_free(key);
+    EVP_PKEY_CTX_free(vctx);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(slh_dsa_bad_pub_len_test);
     ADD_TEST(slh_dsa_key_validate_test);
     ADD_TEST(slh_dsa_key_eq_test);
+    ADD_TEST(slh_dsa_sig_verify_test);
     return 1;
 }
