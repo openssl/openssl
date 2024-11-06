@@ -1749,7 +1749,7 @@ static int ch_generate_transport_params(QUIC_CHANNEL *ch)
 
     if (ch->is_server) {
         if (!ossl_quic_wire_encode_transport_param_cid(&wpkt, QUIC_TPARAM_ORIG_DCID,
-                                                       &ch->init_dcid))
+                                                       id_to_use))
             goto err;
 
         if (!ossl_quic_wire_encode_transport_param_cid(&wpkt, QUIC_TPARAM_INITIAL_SCID,
@@ -3402,6 +3402,10 @@ static int ch_on_new_conn_common(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
     ch->cur_peer_addr   = *peer;
     ch->init_dcid       = *peer_dcid;
     ch->cur_remote_dcid = *peer_scid;
+    ch->odcid.id_len = 0;
+
+    if (peer_odcid != NULL)
+        ch->odcid = *peer_odcid;
 
     /* Inform QTX of peer address. */
     if (!ossl_quic_tx_packetiser_set_peer(ch->txp, &ch->cur_peer_addr))
@@ -3428,8 +3432,8 @@ static int ch_on_new_conn_common(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
 
     /* Register the peer ODCID in the LCIDM. */
     if (!ossl_quic_lcidm_enrol_odcid(ch->lcidm, ch, peer_odcid == NULL ?
-                                                    &ch->init_dcid :
-                                                    peer_odcid))
+                                     &ch->init_dcid :
+                                     peer_odcid))
         return 0;
 
     /* Change state. */
