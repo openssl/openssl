@@ -73,8 +73,8 @@ For signature algorithms like RSA, DSA and ECDSA,
 the default digest algorithm is SHA-256. For SM2, it is SM3.
 
 This option can only be used with B<-sign> and B<-verify>.
-For EdDSA (the Ed25519 and Ed448 algorithms) it must be used,
-which is implied since OpenSSL 3.5.
+For EdDSA (the Ed25519 and Ed448 algorithms) this option
+is implied since OpenSSL 3.5, and required in earlier versions.
 
 The B<-digest> option implies B<-rawin> since OpenSSL 3.5.
 
@@ -83,10 +83,12 @@ The B<-digest> option implies B<-rawin> since OpenSSL 3.5.
 This option can only be used with B<-sign> and B<-verify>.
 It specifies the digest algorithm which is used to hash the input data before
 signing or verifying it with the input key. This option could be omitted if the
-signature algorithm does not require one (for instance, EdDSA). If this option
+signature algorithm does not require preprocessing the input through a
+pluggable hash function before signing (for instance, EdDSA). If this option
 is omitted but the signature algorithm requires one and the B<-rawin> option
 is given or implied, a default value will be used (see B<-rawin> for details).
-If this option is present, then the B<-rawin> option must be also specified.
+If this option is present, then the B<-rawin> option
+is implied since OpenSSL 3.5, and required in earlier versions.
 
 At this time, HashEdDSA (the ph or "prehash" variant of EdDSA) is not supported,
 so the B<-digest> option cannot be used with EdDSA.
@@ -152,19 +154,24 @@ Otherwise, the input data given with the B<-in> option is assumed to already
 be a digest, but this may then require an additional B<-pkeyopt> C<digest:>I<md>
 in some cases (e.g., RSA with the default PKCS#1 padding mode).
 Even for other algorithms like ECDSA, where the additional B<-pkeyopt> option
-does not affect signature output, it recommended to use
-to sanity-check that the input length is consistent with the purported digest.
+does not affect signature output, it is recommended, as it enables
+checking that the input length is consistent with the intended digest.
 
 =item B<-verify>
 
 Verify the input data against the signature given with the B<-sigfile> option
 and indicate if the verification succeeded or failed.
-The input data given with the B<-in> option should be a hash value
-unless the use of a message digest operation is implied,
+The input data given with the B<-in> option must be a hash value
+unless the B<-rawin> option is specified or implied.
+With raw data, when a digest algorithm is applicable, though it may be inferred
+from the signature or take a default value, it should also be specified.
 
 =item B<-verifyrecover>
 
-Verify the input data and output the recovered data.
+Verify the input data and output the recovered data (signature payload). For
+example, in the case of RSA PKCS#1 the recovered data is the B<EMSA-PKCS-v1_5>
+DER encoding of the digest algorithm OID and value as specified in
+L<RFC8017 Section 9.2|https://datatracker.ietf.org/doc/html/rfc8017#section-9.2>.
 The input data given with the B<-in> option should be a hash value.
 
 =item B<-encrypt>
