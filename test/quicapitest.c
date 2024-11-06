@@ -285,7 +285,7 @@ static int test_fin_only_blocking(void)
 static int test_ciphersuites(void)
 {
     SSL_CTX *ctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method());
-    SSL *ssl;
+    SSL *ssl = NULL;
     int testresult = 0;
     const STACK_OF(SSL_CIPHER) *ciphers = NULL;
     const SSL_CIPHER *cipher;
@@ -302,8 +302,18 @@ static int test_ciphersuites(void)
     if (!TEST_ptr(ctx))
         return 0;
 
+    /*
+     * Attempting to set TLSv1.2 ciphersuites should succeed, even though they
+     * aren't used in QUIC.
+     */
+    if (!TEST_true(SSL_CTX_set_cipher_list(ctx, "DEFAULT")))
+        goto err;
+
     ssl = SSL_new(ctx);
     if (!TEST_ptr(ssl))
+        goto err;
+
+    if (!TEST_true(SSL_set_cipher_list(ssl, "DEFAULT")))
         goto err;
 
     ciphers = SSL_get_ciphers(ssl);
