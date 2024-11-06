@@ -1,0 +1,7 @@
+LIBS=../../libcrypto
+
+$COMMON=slh_dsa_key.c slh_params.c
+
+IF[{- !$disabled{'slh_dsa'} -}]
+  SOURCE[../../libcrypto]=$COMMON
+ENDIF
