@@ -140,3 +140,8 @@ int ossl_slh_dsa_key_fromdata(SLH_DSA_KEY *key, const OSSL_PARAM params[])
     key->key_len = 0;
     return 0;
 }
+
+int ossl_slh_dsa_key_type_matches(SLH_DSA_CTX *ctx, const SLH_DSA_KEY *key)
+{
+    return (key->params == ctx->params);
+}
