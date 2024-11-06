@@ -321,6 +321,9 @@ extern const OSSL_DISPATCH ossl_cmac_legacy_keymgmt_functions[];
 #ifndef OPENSSL_NO_SM2
 extern const OSSL_DISPATCH ossl_sm2_keymgmt_functions[];
 #endif
+#ifndef OPENSSL_NO_SLH_DSA
+extern const OSSL_DISPATCH ossl_slh_dsa_sha2_128s_keymgmt_functions[];
+#endif /* OPENSSL_NO_SLH_DSA */
 
 /* Key Exchange */
 extern const OSSL_DISPATCH ossl_dh_keyexch_functions[];

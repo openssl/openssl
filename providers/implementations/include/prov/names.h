@@ -384,3 +384,10 @@
 #define PROV_DESCS_RSA_PSS "OpenSSL RSA-PSS implementation"
 #define PROV_NAMES_SM2 "SM2:1.2.156.10197.1.301"
 #define PROV_DESCS_SM2 "OpenSSL SM2 implementation"
+
+/*
+ * SLH_DSA OIDS are defined in
+ * https://csrc.nist.gov/projects/computer-security-objects-register/algorithm-registration#DSA
+ */
+#define PROV_NAMES_SLH_DSA_SHA2_128S "SLH-DSA-SHA2-128s:2.16.840.1.101.3.4.3.20"
+#define PROV_DESCS_SLH_DSA_SHA2_128S "OpenSSL SLH-DSA-SHA2-128s implementation"
