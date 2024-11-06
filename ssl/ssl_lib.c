@@ -3343,9 +3343,9 @@ int SSL_CTX_set_cipher_list(SSL_CTX *ctx, const char *str)
      * error as far as ssl_create_cipher_list is concerned, and hence
      * ctx->cipher_list and ctx->cipher_list_by_id has been updated.
      */
-    if (sk == NULL)
+    if (sk == NULL) {
         return 0;
-    else if (ctx->method->num_ciphers() > 0 && cipher_list_tls12_num(sk) == 0) {
+    } else if (ctx->method->num_ciphers() > 0 && cipher_list_tls12_num(sk) == 0) {
         ERR_raise(ERR_LIB_SSL, SSL_R_NO_CIPHER_MATCH);
         return 0;
     }
@@ -3367,9 +3367,9 @@ int SSL_set_cipher_list(SSL *s, const char *str)
                                 &sc->cipher_list, &sc->cipher_list_by_id, str,
                                 sc->cert);
     /* see comment in SSL_CTX_set_cipher_list */
-    if (sk == NULL)
+    if (sk == NULL) {
         return 0;
-    else if (ctx->method->num_ciphers() > 0 && cipher_list_tls12_num(sk) == 0) {
+    } else if (ctx->method->num_ciphers() > 0 && cipher_list_tls12_num(sk) == 0) {
         ERR_raise(ERR_LIB_SSL, SSL_R_NO_CIPHER_MATCH);
         return 0;
     }
