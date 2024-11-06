@@ -9,12 +9,42 @@
 
 #include <openssl/core_names.h>
 #include <openssl/evp.h>
+#include <openssl/param_build.h>
+#include <openssl/rand.h>
 #include "crypto/slh_dsa.h"
 #include "internal/nelem.h"
 #include "testutil.h"
 #include "slh_dsa.inc"
 
 static OSSL_LIB_CTX *libctx = NULL;
+static OSSL_PROVIDER *fake_rand = NULL;
+
+static size_t entropy_pos = 0;
+static size_t entropy_sz = 0;
+static uint8_t entropy[128];
+
+static int set_entropy(const uint8_t *ent1, size_t ent1_len,
+                       const uint8_t *ent2, size_t ent2_len)
+{
+    if ((ent1_len + ent2_len) > sizeof(entropy))
+        return 0;
+    entropy_pos = 0;
+    entropy_sz += (ent1_len + ent2_len);
+    memcpy(entropy, ent1, ent1_len);
+    if (ent2 != NULL)
+        memcpy(entropy + ent1_len, ent2, ent2_len);
+    return 1;
+}
+
+static int fake_rand_cb(unsigned char *buf, size_t num,
+                        ossl_unused const char *name, EVP_RAND_CTX *ctx)
+{
+    if ((entropy_pos + num) > entropy_sz)
+        return 0;
+    memcpy(buf, entropy + entropy_pos, num);
+    entropy_pos += num;
+    return 1;
+}
 
 static EVP_PKEY *slh_dsa_pubkey_from_data(const char *alg,
                                           const unsigned char *data, size_t datalen)
@@ -38,10 +68,45 @@ static EVP_PKEY *slh_dsa_pubkey_from_data(const char *alg,
     return key;
 }
 
+static int slh_dsa_create_keypair(EVP_PKEY **pkey, const char *name,
+                                  const uint8_t *priv, size_t priv_len,
+                                  const uint8_t *pub, size_t pub_len)
+{
+    int ret = 0;
+    EVP_PKEY_CTX *ctx = NULL;
+    OSSL_PARAM_BLD *bld = NULL;
+    OSSL_PARAM *params = NULL;
+    const char *pub_name = OSSL_PKEY_PARAM_PUB_KEY;
+
+    if (pub_len != priv_len)
+        pub_name = OSSL_PKEY_PARAM_SLH_DSA_PUB_SEED;
+
+    if (!TEST_ptr(bld = OSSL_PARAM_BLD_new())
+            || !TEST_true(OSSL_PARAM_BLD_push_octet_string(bld,
+                                                           OSSL_PKEY_PARAM_PRIV_KEY,
+                                                           priv, priv_len) > 0)
+            || !TEST_true(OSSL_PARAM_BLD_push_octet_string(bld,
+                                                           pub_name,
+                                                           pub, pub_len) > 0)
+            || !TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld))
+            || !TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(libctx, name, NULL))
+            || !TEST_int_eq(EVP_PKEY_fromdata_init(ctx), 1)
+            || !TEST_int_eq(EVP_PKEY_fromdata(ctx, pkey, EVP_PKEY_KEYPAIR,
+                                              params), 1))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_PARAM_free(params);
+    OSSL_PARAM_BLD_free(bld);
+    EVP_PKEY_CTX_free(ctx);
+    return ret;
+}
+
 static int slh_dsa_bad_pub_len_test(void)
 {
     int ret = 0;
-    SLH_DSA_ACVP_TEST_DATA *td = &slh_dsa_testdata[0];
+    SLH_DSA_SIG_TEST_DATA *td = &slh_dsa_sig_testdata[0];
     EVP_PKEY *pkey = NULL;
     size_t pub_len = 0;
     unsigned char pubdata[64 + 1];
@@ -71,7 +136,7 @@ static int slh_dsa_key_eq_test(void)
 {
     int ret = 0;
     EVP_PKEY *key[2] = { NULL, NULL };
-    SLH_DSA_ACVP_TEST_DATA *td1 = &slh_dsa_testdata[0];
+    SLH_DSA_SIG_TEST_DATA *td1 = &slh_dsa_sig_testdata[0];
 #ifndef OPENSSL_NO_EC
     EVP_PKEY *eckey = NULL;
 #endif
@@ -99,7 +164,7 @@ end:
 static int slh_dsa_key_validate_test(void)
 {
     int ret = 0;
-    SLH_DSA_ACVP_TEST_DATA *td = &slh_dsa_testdata[0];
+    SLH_DSA_SIG_TEST_DATA *td = &slh_dsa_sig_testdata[0];
     EVP_PKEY_CTX *vctx = NULL;
     EVP_PKEY *key = NULL;
 
@@ -117,7 +182,7 @@ end:
 static int slh_dsa_sig_verify_test(void)
 {
     int ret = 0;
-    SLH_DSA_ACVP_TEST_DATA *td = &slh_dsa_testdata[0];
+    SLH_DSA_SIG_TEST_DATA *td = &slh_dsa_sig_testdata[0];
     EVP_PKEY_CTX *vctx = NULL;
     EVP_PKEY *key = NULL;
     EVP_SIGNATURE *sig_alg = NULL;
@@ -145,11 +210,87 @@ err:
     return ret;
 }
 
+static int slh_dsa_keygen_test(void)
+{
+    int ret = 0;
+    const SLH_DSA_KEYGEN_TEST_DATA *tst = &slh_dsa_keygen_testdata[0];
+    EVP_PKEY *pkey = NULL;
+    uint8_t priv[32 * 2], pub[32 * 2];
+    size_t priv_len, pub_len;
+
+    if (!TEST_true(set_entropy(tst->priv, tst->priv_len,
+                               tst->pub_seed, tst->pub_seed_len)))
+        goto err;
+
+    fake_rand_set_callback(RAND_get0_private(NULL), &fake_rand_cb);
+    fake_rand_set_callback(RAND_get0_public(NULL), &fake_rand_cb);
+
+    if (!TEST_ptr(pkey = EVP_PKEY_Q_keygen(libctx, NULL, tst->name)))
+        goto err;
+    if (!TEST_true(EVP_PKEY_get_octet_string_param(pkey, OSSL_PKEY_PARAM_PRIV_KEY,
+                                                   priv, sizeof(priv), &priv_len)))
+        goto err;
+    if (!TEST_true(EVP_PKEY_get_octet_string_param(pkey, OSSL_PKEY_PARAM_PUB_KEY,
+                                                   pub, sizeof(pub), &pub_len)))
+        goto err;
+    if (!TEST_size_t_eq(priv_len, tst->priv_len)
+            || !TEST_size_t_eq(pub_len, tst->priv_len))
+        goto err;
+    ret = 1;
+err:
+    fake_rand_set_callback(RAND_get0_public(NULL), NULL);
+    fake_rand_set_callback(RAND_get0_private(NULL), NULL);
+    EVP_PKEY_free(pkey);
+    return ret;
+}
+
+/*
+ * Given raw values for the private key + public key seed
+ * generate the public root also when using from data.
+ */
+static int slh_dsa_pub_root_from_data_test(void)
+{
+    int ret = 0;
+    uint8_t priv[64], pub[64];
+    size_t priv_len = 0, pub_len = 0;
+    EVP_PKEY *pkey = NULL;
+    const SLH_DSA_KEYGEN_TEST_DATA *tst = &slh_dsa_keygen_testdata[0];
+
+    if (!slh_dsa_create_keypair(&pkey, tst->name, tst->priv, tst->priv_len,
+                                tst->pub_seed, tst->pub_seed_len))
+        goto err;
+
+    if (!TEST_true(EVP_PKEY_get_octet_string_param(pkey, OSSL_PKEY_PARAM_PRIV_KEY,
+                                                   priv, sizeof(priv), &priv_len)))
+        goto err;
+    if (!TEST_true(EVP_PKEY_get_octet_string_param(pkey, OSSL_PKEY_PARAM_PUB_KEY,
+                                                   pub, sizeof(pub), &pub_len)))
+        goto err;
+    if (!TEST_mem_eq(pub, pub_len, tst->pub_expected, tst->pub_expected_len))
+        goto err;
+    ret = 1;
+err:
+    OPENSSL_cleanse(priv, priv_len);
+    EVP_PKEY_free(pkey);
+    return ret;
+}
+
 int setup_tests(void)
 {
+    fake_rand = fake_rand_start(NULL);
+    if (fake_rand == NULL)
+        return 0;
+
     ADD_TEST(slh_dsa_bad_pub_len_test);
     ADD_TEST(slh_dsa_key_validate_test);
     ADD_TEST(slh_dsa_key_eq_test);
     ADD_TEST(slh_dsa_sig_verify_test);
+    ADD_TEST(slh_dsa_keygen_test);
+    ADD_TEST(slh_dsa_pub_root_from_data_test);
     return 1;
+}
+
+void cleanup_tests(void)
+{
+    fake_rand_finish(fake_rand);
 }

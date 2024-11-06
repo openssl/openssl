@@ -12,6 +12,54 @@
 #include "slh_dsa_local.h"
 
 /**
+ * @brief Compute the root Public key of a XMSS tree.
+ * See FIPS 205 Section 6.1 Algorithm 9.
+ * This is a recursive function that starts at an leaf index, that calculates
+ * the hash of each parent using 2 child nodes.
+ *
+ * @param sk_seed A private key seed
+ * @param pk_seed A public key seed
+ * @param n The size of |sk_seed|, |pk_seed| and |pk_out|
+ * @param adrs An ADRS object containing the layer address and tree address set
+ *              to the XMSS treewithing which the XMSS tree is being computed.
+ * @param nodeid The index of the target node being computed
+ *               (which must be < 2^(hm - height)
+ * @param height The height within the tree of the node being computed.
+ *               (which must be <= hm) (hm is one of 3, 4, 8 or 9)
+ *               At height=0 There are 2^hm leaf nodes,
+ *               and the root node is at height = hm)
+ * @param pk_out The generated public key of size |n|
+ */
+void ossl_slh_xmss_node(SLH_DSA_CTX *ctx,
+                        const uint8_t *sk_seed,
+                        uint32_t node_id,
+                        uint32_t h,
+                        const uint8_t *pk_seed,
+                        SLH_ADRS adrs,
+                        uint8_t *pk_out)
+{
+    SLH_ADRS_FUNC_DECLARE(ctx, adrsf);
+
+    if (h == 0) {
+        /* For leaf nodes generate the public key */
+        adrsf->set_type_and_clear(adrs, SLH_ADRS_TYPE_WOTS_HASH);
+        adrsf->set_keypair_address(adrs, node_id);
+        ossl_slh_wots_pk_gen(ctx, sk_seed, pk_seed, adrs, pk_out);
+    } else {
+        uint8_t lnode[SLH_MAX_N], rnode[SLH_MAX_N];
+
+        ossl_slh_xmss_node(ctx, sk_seed, 2 * node_id, h - 1, pk_seed, adrs,
+                           lnode);
+        ossl_slh_xmss_node(ctx, sk_seed, 2 * node_id + 1, h - 1, pk_seed, adrs,
+                           rnode);
+        adrsf->set_type_and_clear(adrs, SLH_ADRS_TYPE_TREE);
+        adrsf->set_tree_height(adrs, h);
+        adrsf->set_tree_index(adrs, node_id);
+        ctx->hash_func->H(&ctx->hash_ctx, pk_seed, adrs, lnode, rnode, pk_out);
+    }
+}
+
+/**
  * @brief Compute a candidate XMSS public key from a message and XMSS signature
  *
  * @param sig A XMSS signature which consists of a WOTS+ signature of

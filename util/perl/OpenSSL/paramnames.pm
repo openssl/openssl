@@ -444,6 +444,8 @@ my %params = (
     'PKEY_PARAM_ML_DSA_PREFER_SEED' =>      "ml-dsa.prefer_seed",
     'PKEY_PARAM_ML_DSA_INPUT_FORMATS' =>    "ml-dsa.input_formats",
     'PKEY_PARAM_ML_DSA_OUTPUT_FORMATS' =>   "ml-dsa.output_formats",
+# SLH_DSA parameters
+    'PKEY_PARAM_SLH_DSA_PUB_SEED' => "pk-seed",
 
 # Key Exchange parameters
     'EXCHANGE_PARAM_PAD' =>                   "pad",# uint
