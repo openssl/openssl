@@ -110,6 +110,52 @@ static void slh_wots_chain(SLH_DSA_CTX *ctx, const uint8_t *in,
 }
 
 /**
+ * @brief WOTS+ Public key generation. See FIPS 205 Section 5.1
+ *
+ * @param ctx Contains SLH_DSA algorithm functions and constants.
+ * @param sk_seed A private key seed of size |n|
+ * @param pk_seed A public key seed of size |n|
+ * @param adrs An ADRS object containing the layer address, tree address and
+ *             keypair address of the WOTS+ public key to generate.
+ * @param pk_out The generated public key of size |n|
+ */
+void ossl_slh_wots_pk_gen(SLH_DSA_CTX *ctx,
+                          const uint8_t *sk_seed, const uint8_t *pk_seed,
+                          SLH_ADRS adrs, uint8_t *pk_out)
+{
+    SLH_HASH_FUNC_DECLARE(ctx, hashf, hctx);
+    SLH_ADRS_FUNC_DECLARE(ctx, adrsf);
+    SLH_HASH_FN_DECLARE(hashf, PRF);
+    SLH_ADRS_FN_DECLARE(adrsf, set_chain_address);
+    SLH_ADRS_DECLARE(sk_adrs);
+    SLH_ADRS_DECLARE(wots_pk_adrs);
+    size_t i, len;
+    size_t n = ctx->params->n;
+    uint8_t tmp[SLH_WOTS_LEN_MAX * SLH_MAX_N], *ptmp = tmp;
+    uint8_t sk[32];
+
+    adrsf->copy(sk_adrs, adrs);
+    adrsf->set_type_and_clear(sk_adrs, SLH_ADRS_TYPE_WOTS_PRF);
+    adrsf->copy_keypair_address(sk_adrs, adrs);
+
+    len = SLH_WOTS_LEN(n); /* See Section 5 intro */
+    for (i = 0; i < len; ++i) {
+        set_chain_address(sk_adrs, i);
+        PRF(hctx, pk_seed, sk_seed, sk_adrs, sk);
+
+        set_chain_address(adrs, i);
+        slh_wots_chain(ctx, sk, 0, NIBBLE_MASK, pk_seed, adrs, ptmp);
+        ptmp += n;
+    }
+
+    len = ptmp - tmp; /* should be n * (2 * n + 3) */
+    adrsf->copy(wots_pk_adrs, adrs);
+    adrsf->set_type_and_clear(wots_pk_adrs, SLH_ADRS_TYPE_WOTS_PK);
+    adrsf->copy_keypair_address(wots_pk_adrs, adrs);
+    hashf->T(hctx, pk_seed, wots_pk_adrs, tmp, len, pk_out);
+}
+
+/**
  * @brief Compute a candidate WOTS+ public key from a message and signature
  * See FIPS 205 Section 5.2 Algorithm 7
  *
