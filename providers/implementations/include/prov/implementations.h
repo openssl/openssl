@@ -386,6 +386,9 @@ extern const OSSL_DISPATCH ossl_mac_legacy_siphash_signature_functions[];
 extern const OSSL_DISPATCH ossl_mac_legacy_poly1305_signature_functions[];
 extern const OSSL_DISPATCH ossl_mac_legacy_cmac_signature_functions[];
 extern const OSSL_DISPATCH ossl_sm2_signature_functions[];
+#ifndef OPENSSL_NO_SLH_DSA
+extern const OSSL_DISPATCH ossl_slh_dsa_sha2_128s_signature_functions[];
+#endif /* OPENSSL_NO_SLH_DSA */
 
 /* Asym Cipher */
 extern const OSSL_DISPATCH ossl_rsa_asym_cipher_functions[];
