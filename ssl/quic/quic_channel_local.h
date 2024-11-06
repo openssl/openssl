@@ -109,6 +109,13 @@ struct quic_channel_st {
     QUIC_CONN_ID                    init_dcid;
 
     /*
+     * Server: If this channel is created in response to an init packet sent
+     * after the server has sent a retry packet to do address validation, this
+     * field stores the original connection id from the first init packet sent
+     */
+    QUIC_CONN_ID                    odcid;
+
+    /*
      * Client: The SCID found in the first Initial packet from the server.
      * Not valid for servers.
      * Valid if have_received_enc_pkt is set.
