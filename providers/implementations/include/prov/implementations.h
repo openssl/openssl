@@ -339,6 +339,9 @@ extern const OSSL_DISPATCH ossl_mlx_p256_kem_kmgmt_functions[];
 extern const OSSL_DISPATCH ossl_mlx_p384_kem_kmgmt_functions[];
 # endif
 #endif
+#ifndef OPENSSL_NO_SLH_DSA
+extern const OSSL_DISPATCH ossl_slh_dsa_sha2_128s_keymgmt_functions[];
+#endif /* OPENSSL_NO_SLH_DSA */
 
 /* Key Exchange */
 extern const OSSL_DISPATCH ossl_dh_keyexch_functions[];

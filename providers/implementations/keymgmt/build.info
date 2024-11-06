@@ -12,6 +12,7 @@ $TEMPLATE_GOAL=../../libtemplate.a
 $ML_DSA_GOAL=../../libdefault.a ../../libfips.a
 $ML_KEM_GOAL=../../libdefault.a ../../libfips.a
 $TLS_ML_KEM_HYBRID_GOAL=../../libdefault.a ../../libfips.a
+$SLH_DSA_GOAL=../../libdefault.a
 
 IF[{- !$disabled{dh} -}]
   SOURCE[$DH_GOAL]=dh_kmgmt.c
@@ -57,4 +58,8 @@ SOURCE[$TEMPLATE_GOAL]=template_kmgmt.c
 
 IF[{- !$disabled{'ml-dsa'} -}]
   SOURCE[$ML_DSA_GOAL]=ml_dsa_kmgmt.c
+ENDIF
+
+IF[{- !$disabled{'slh-dsa'} -}]
+  SOURCE[$SLH_DSA_GOAL]=slh_dsa_kmgmt.c
 ENDIF

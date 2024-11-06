@@ -273,6 +273,13 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[evp_pkey_dhkem_test]=../include ../apps/include
   DEPEND[evp_pkey_dhkem_test]=../libcrypto.a libtestutil.a
 
+  IF[{- !$disabled{'slh-dsa'} -}]
+    PROGRAMS{noinst}=slh_dsa_test
+    SOURCE[slh_dsa_test]=slh_dsa_test.c
+    INCLUDE[slh_dsa_test]=../include ../apps/include
+    DEPEND[slh_dsa_test]=../libcrypto.a libtestutil.a
+  ENDIF
+  
   IF[{- !$disabled{'deprecated-3.0'} -}]
     PROGRAMS{noinst}=igetest bftest casttest
 
