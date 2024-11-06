@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-typedef struct SLH_DSA_ACVP_TEST_DATA_st {
+typedef struct slh_dsa_sig_test_data_st {
     const char *alg;
     const unsigned char *pub;
     size_t pub_len;
@@ -17,14 +17,31 @@ typedef struct SLH_DSA_ACVP_TEST_DATA_st {
     size_t msg_len;
     const unsigned char *sig;
     size_t sig_len;
-} SLH_DSA_ACVP_TEST_DATA;
+} SLH_DSA_SIG_TEST_DATA;
 
-#define SLH_DSA_ACVP_ITEM(name, alg) {                                         \
+typedef struct slh_dsa_keygen_test_data_st {
+    const char *name;
+    const uint8_t *priv;
+    size_t priv_len;
+    const uint8_t *pub_seed;
+    size_t pub_seed_len;
+    const uint8_t *pub_expected;
+    size_t pub_expected_len;
+} SLH_DSA_KEYGEN_TEST_DATA;
+
+#define SLH_DSA_SIG_TEST_ITEM(name, alg) {                                     \
     alg,                                                                       \
     name##_pub, sizeof(name##_pub),                                            \
     name##_priv, sizeof(name##_priv),                                          \
     name##_msg, sizeof(name##_msg),                                            \
     name##_sig, sizeof(name##_sig) }
+
+#define SLH_DSA_KEYGEN_TEST_ITEM(name, alg) {                                  \
+    alg,                                                                       \
+    name##_keygen_priv, sizeof(name##_keygen_priv),                            \
+    name##_keygen_pub_seed, sizeof(name##_keygen_pub_seed),                    \
+    name##_keygen_pub_expected, sizeof(name##_keygen_pub_expected)             \
+}
 
 /*
  * Test vectors from
@@ -171,6 +188,31 @@ static const uint8_t slh_dsa_sha2_128s_0_sig[] = {
     0xe0,0xd7,0x42,0x24,0xb6,0xfe,0xd7,0x6e,0xa8,0x3a,0x09,0x52,0x8f,0xb2,0x88,0xab,0x2a,0x88,0x67,0xdd,0x0a,0x9e,0x80,0x10,0x27,0x4b,0x21,0x09,0xa5,0x31,0x23,0x8e,0x34,0x51,0x23,0xc8,0xe0,0xd8,0xfd,0x4d,0x46,0xbf,0xc8,0x88,0xe4,0xd9,0x50,0xac,
 };
 
-static SLH_DSA_ACVP_TEST_DATA slh_dsa_testdata[] = {
-    SLH_DSA_ACVP_ITEM(slh_dsa_sha2_128s_0, "SLH-DSA-SHA2-128s"),
+static SLH_DSA_SIG_TEST_DATA slh_dsa_sig_testdata[] = {
+    SLH_DSA_SIG_TEST_ITEM(slh_dsa_sha2_128s_0, "SLH-DSA-SHA2-128s"),
+};
+
+
+/* skSeed || skPrf */
+static const uint8_t slh_dsa_sha2_128s_0_keygen_priv[] = {
+    0x2F, 0x89, 0x6D, 0x61, 0xD9, 0xCD, 0x90, 0x38,
+    0xCA, 0x30, 0x33, 0x94, 0xFA, 0xDA, 0xA2, 0x2A,
+    0x24, 0xAC, 0x5E, 0xC1, 0xD8, 0x6A, 0x98, 0x9C,
+    0xA2, 0x19, 0x6C, 0x3C, 0x86, 0x32, 0x41, 0x9C,
+};
+/* pkSeed */
+static const uint8_t slh_dsa_sha2_128s_0_keygen_pub_seed[] = {
+    0x1A, 0x05, 0xA4, 0x2F, 0xE3, 0x00, 0xE8, 0x7B,
+    0x16, 0xAE, 0xE1, 0x16, 0xCB, 0x2E, 0x23, 0x63,
+};
+/* pkSeed || pkRoot */
+static const uint8_t slh_dsa_sha2_128s_0_keygen_pub_expected[] = {
+    0x1A, 0x05, 0xA4, 0x2F, 0xE3, 0x00, 0xE8, 0x7B,
+    0x16, 0xAE, 0xE1, 0x16, 0xCB, 0x2E, 0x23, 0x63,
+    0x58, 0xE2, 0xC3, 0xE6, 0x26, 0x32, 0xC9, 0xDE,
+    0x03, 0xD0, 0x8A, 0x53, 0x5A, 0x0E, 0xB7, 0xE7,
+};
+
+static const SLH_DSA_KEYGEN_TEST_DATA slh_dsa_keygen_testdata[] = {
+    SLH_DSA_KEYGEN_TEST_ITEM(slh_dsa_sha2_128s_0, "SLH-DSA-SHA2-128s"),
 };
