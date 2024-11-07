@@ -17,12 +17,15 @@
 #define SLH_DSA_PK_ROOT(key) (key->pub + key->params->n)
 
 struct slh_dsa_key_st {
+    /* The public key consists of a SEED and ROOT values each of size |n| */
     uint8_t pub[SLH_DSA_MAX_KEYLEN];
+    /* The private key consists of a SEED and PRF values of size |n| */
     uint8_t priv[SLH_DSA_MAX_KEYLEN];
     size_t key_len; /* This value is set to 2 * n if there is a public key */
     CRYPTO_REF_COUNT references;
     OSSL_LIB_CTX *libctx;
     char *propq;
+    /* contains the algorithm name and constants such as |n| */
     const SLH_DSA_PARAMS *params;
-    int has_priv;
+    int has_priv; /* Set to 1 if there is a private key component */
 };

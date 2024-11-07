@@ -10,8 +10,16 @@
 #include <openssl/crypto.h>
 #include "slh_dsa_local.h"
 
-/*
- * @param
+/**
+ * @brief Create a SLH_DSA_CTX that contains parameters, functions, and
+ * pre-fetched HASH related objects for a SLH_DSA algorithm.This context is passed
+ * to most SLH-DSA functions.
+ *
+ * @param alg An SLH-DSA algorithm name such as "SLH-DSA-SHA2-128s"
+ * @param lib_ctx A library context used for fetching. Can be NULL
+ * @param propq A propqery query to use for algorithm fetching. Can be NULL.
+ *
+ * @returns The created SLH_DSA_CTX object or NULL on failure.
  */
 SLH_DSA_CTX *ossl_slh_dsa_ctx_new(const char *alg,
                                   OSSL_LIB_CTX *lib_ctx, const char *propq)
@@ -39,6 +47,11 @@ SLH_DSA_CTX *ossl_slh_dsa_ctx_new(const char *alg,
     return NULL;
 }
 
+/**
+ * @brief Destroy a SLH_DSA_CTX
+ *
+ * @param ctx The SLH_DSA_CTX object to destroy.
+ */
 void ossl_slh_dsa_ctx_free(SLH_DSA_CTX *ctx)
 {
     ossl_slh_hash_ctx_cleanup(&ctx->hash_ctx);

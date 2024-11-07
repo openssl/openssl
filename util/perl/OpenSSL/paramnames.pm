@@ -486,6 +486,7 @@ my %params = (
     'SIGNATURE_PARAM_DETERMINISTIC' =>      "deterministic",
     'SIGNATURE_PARAM_MU' =>                 "mu", # int
     'SIGNATURE_PARAM_TEST_ENTROPY' =>       "test-entropy",
+    'SIGNATURE_PARAM_ADD_RANDOM' =>         "additional-random",
 
 # Asym cipher parameters
     'ASYM_CIPHER_PARAM_DIGEST' =>                   '*PKEY_PARAM_DIGEST',

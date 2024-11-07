@@ -22,14 +22,144 @@
 static void slh_base_2b(const uint8_t *in, uint32_t b, uint32_t *out, size_t out_len);
 
 /**
- * @brief Compute a candidatr FORS public key from a message and signature.
+ * @brief Generate FORS secret values
+ * See FIPS 205 Section 8.1 Algorithm 14.
+ *
+ * @param ctx Contains SLH_DSA algorithm functions and constants.
+ * @param sk_seed A private key seed of size |n|
+ * @param pk_seed A public key seed of size |n|
+ * @param adrs An ADRS object containing the layer address of zero, with the
+ *             tree address and key pair address set to the index of the WOTS+
+ *             key within the XMSS tree that signs the FORS key.
+ * @param id The index of the FORS secret value within the sets of FORS trees.
+ *               (which must be < 2^(hm - height)
+ * @param pk_out The generated FORS secret value of size |n|
+ */
+static void slh_fors_sk_gen(SLH_DSA_CTX *ctx, const uint8_t *sk_seed,
+                            const uint8_t *pk_seed, SLH_ADRS adrs, uint32_t id,
+                            uint8_t *sk_out)
+{
+    SLH_ADRS_DECLARE(sk_adrs);
+    SLH_ADRS_FUNC_DECLARE(ctx, adrsf);
+
+    adrsf->copy(sk_adrs, adrs);
+    adrsf->set_type_and_clear(sk_adrs, SLH_ADRS_TYPE_FORS_PRF);
+    adrsf->copy_keypair_address(sk_adrs, adrs);
+    adrsf->set_tree_index(sk_adrs, id);
+    ctx->hash_func->PRF(&ctx->hash_ctx, pk_seed, sk_seed, sk_adrs, sk_out);
+}
+
+/**
+ * @brief Computes the nodes of a Merkle tree.
+ * See FIPS 205 Section 8.2 Algorithm 18
+ *
+ * The leaf nodes are hashes of FORS secret values.
+ * Each parent node is a hash of its 2 children.
+ * Note this is a recursive function.
+ *
+ * @param ctx Contains SLH_DSA algorithm functions and constants.
+ * @param sk_seed A SLH_DSA private key seed of size |n|
+ * @param pk_seed A SLH_DSA public key seed of size |n|
+ * @param adrs The ADRS object must have a layer address of zero, and the
+ *             tree address set to the XMSS tree that signs the FORS key,
+ *             the type set to FORS_TREE, and the keypair address set to the
+ *             index of the WOTS+ key that signs the FORS key.
+ * @param node_id The target node index
+ * @param height The target node height
+ * @param node The returned hash for a node of size|n|
+ */
+static void slh_fors_node(SLH_DSA_CTX *ctx, const uint8_t *sk_seed,
+                          const uint8_t *pk_seed, SLH_ADRS adrs, uint32_t node_id,
+                          uint32_t height, uint8_t *node)
+{
+    SLH_ADRS_FUNC_DECLARE(ctx, adrsf);
+    uint8_t sk[SLH_MAX_N], lnode[SLH_MAX_N], rnode[SLH_MAX_N];
+    uint32_t n = ctx->params->n;
+
+    if (height == 0) {
+        slh_fors_sk_gen(ctx, sk_seed, pk_seed, adrs, node_id, sk);
+        adrsf->set_tree_height(adrs, 0);
+        adrsf->set_tree_index(adrs, node_id);
+        ctx->hash_func->F(&ctx->hash_ctx, pk_seed, adrs, sk, n, node);
+    } else {
+        slh_fors_node(ctx, sk_seed, pk_seed, adrs, 2 * node_id, height - 1,
+                      lnode);
+        slh_fors_node(ctx, sk_seed, pk_seed, adrs, 2 * node_id + 1, height - 1,
+                      rnode);
+        adrsf->set_tree_height(adrs, height);
+        adrsf->set_tree_index(adrs, node_id);
+        ctx->hash_func->H(&ctx->hash_ctx, pk_seed, adrs, lnode, rnode, node);
+    }
+}
+
+/**
+ * @brief Generate an FORS signature
+ * See FIPS 205 Section 8.3 Algorithm 16
+ *
+ * @param ctx Contains SLH_DSA algorithm functions and constants.
+ * @param md A message digest of size |(k * a + 7) / 8| bytes to sign
+ * @param sk_seed A private key seed of size |n|
+ * @param pk_seed A public key seed of size |n|
+ * @param adrs The ADRS object must have a layer address of zero, and the
+ *             tree address set to the XMSS tree that signs the FORS key,
+ *             the type set to FORS_TREE, and the keypair address set to the
+ *             index of the WOTS+ key that signs the FORS key.
+ * @param sig_out The generated XMSS signature which consists of a WOTS+
+ *                signature and authentication path
+ * @param sig_len  The size of |sig| which is (2 * n + 3) * n + tree_height * n.
+ */
+void ossl_slh_fors_sign(SLH_DSA_CTX *ctx, const uint8_t *md,
+                        const uint8_t *sk_seed, const uint8_t *pk_seed,
+                        SLH_ADRS adrs, uint8_t *sig, size_t sig_len)
+{
+    uint32_t i, j, s;
+    uint32_t ids[SLH_MAX_K];
+    const SLH_DSA_PARAMS *params = ctx->params;
+    uint32_t n = params->n;
+    uint32_t k = params->k;
+    uint32_t a = params->a;
+    uint32_t t = (1 << a);
+    uint32_t t_times_i = 0;
+    uint8_t *psig = sig;
+
+    /*
+     * Split md into k a-bit values e.g with k = 14, a = 12
+     * ids[0..13] = 12 bits each of md
+     */
+    slh_base_2b(md, a, ids, k);
+
+    for (i = 0; i < k; ++i) {
+        uint32_t id = ids[i]; /* |id| = |a| bits */
+
+        slh_fors_sk_gen(ctx, sk_seed, pk_seed, adrs,
+                        id + t_times_i, psig);
+        psig += n;
+
+        for (j = 0; j < a; ++j) {
+            s = id ^ 1;
+            slh_fors_node(ctx, sk_seed, pk_seed, adrs, s + i * (1 << (a - j)),
+                          j, psig);
+            id >>= 1;
+            psig += n;
+        }
+        t_times_i += t;
+    }
+    assert((size_t)(psig - sig) == sig_len);
+}
+
+/**
+ * @brief Compute a candidate FORS public key from a message and signature.
  * See FIPS 205 Section 8.4 Algorithm 17.
  *
+ * @param ctx Contains SLH_DSA algorithm functions and constants.
  * @param sig A FORS signature of size (k * (a + 1) * n) bytes
  * @param md A message digest of size (k * a / 8) bytes
  * @param pk_seed A public key seed of size |n|
- * @param adrs An ADRS object containing
- * @param pk_out The returned
+ * @param adrs The ADRS object must have a layer address of zero, and the
+ *             tree address set to the XMSS tree that signs the FORS key,
+ *             the type set to FORS_TREE, and the keypair address set to the
+ *             index of the WOTS+ key that signs the FORS key.
+ * @param pk_out The returned candidate FORS public key of size |n|
  */
 void ossl_slh_fors_pk_from_sig(SLH_DSA_CTX *ctx, const uint8_t *sig,
                                const uint8_t *md, const uint8_t *pk_seed,
@@ -92,17 +222,17 @@ void ossl_slh_fors_pk_from_sig(SLH_DSA_CTX *ctx, const uint8_t *sig,
 
 /**
  * @brief Convert a byte string into a base 2^b representation
- * (See FIPS 205 Algorithm 4)
+ * See FIPS 205 Algorithm 4
  *
  * @param in An input byte stream with a size >= |outlen * b / 8|
  * @param b The bit size to divide |in| into
  *          This is one of 6, 8, 9, 12 or 14 for FORS.
- * @param out The array of returned base-2^b integers that represents the first
+ * @param out The array of returned base 2^b integers that represents the first
  *            |outlen|*|b| bits of |in|
- * @param outlen The size of |out|
- *
+ * @param out_len The size of |out|
  */
-static void slh_base_2b(const uint8_t *in, uint32_t b, uint32_t *out, size_t out_len)
+static void slh_base_2b(const uint8_t *in, uint32_t b,
+                        uint32_t *out, size_t out_len)
 {
     size_t consumed = 0;
     uint32_t bits = 0;

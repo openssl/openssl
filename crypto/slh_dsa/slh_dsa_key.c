@@ -124,6 +124,15 @@ int ossl_slh_dsa_key_has(const SLH_DSA_KEY *key, int selection)
     return 0;
 }
 
+/**
+ * @brief Load a SLH_DSA key from raw data.
+ *
+ * @param key An SLH_DSA key to load into
+ * @param params An array of parameters containing key data.
+ * @param include_private Set to 1 to optionally include the private key data
+ *                        if it exists.
+ * @returns 1 on success, or 0 on failure.
+ */
 int ossl_slh_dsa_key_fromdata(SLH_DSA_KEY *key, const OSSL_PARAM params[],
                               int include_private)
 {
@@ -198,9 +207,20 @@ int ossl_slh_dsa_key_fromdata(SLH_DSA_KEY *key, const OSSL_PARAM params[],
  err:
     key->key_len = 0;
     key->has_priv = 0;
+    ossl_slh_dsa_ctx_free(dsa_ctx);
+    OPENSSL_cleanse(key->priv, key_len);
     return 0;
 }
 
+/**
+ * Generate the public key root from private key (seed and prf) and public key seed.
+ * See FIPS 205 Section 9.1 Algorithm 18
+ *
+ * @param ctx Contains SLH_DSA algorithm functions and constants.
+ * @param out A SLH_DSA key containing the private key (seed and prf) and public key seed.
+ *            The public root key is written to this key.
+ * @returns 1 if the root key is generated.
+ */
 static int slh_dsa_compute_pk_root(SLH_DSA_CTX *ctx, SLH_DSA_KEY *out)
 {
     SLH_ADRS_FUNC_DECLARE(ctx, adrsf);
@@ -217,7 +237,18 @@ static int slh_dsa_compute_pk_root(SLH_DSA_CTX *ctx, SLH_DSA_KEY *out)
     return 1;
 }
 
-int ossl_slh_dsa_generate_key(SLH_DSA_CTX *ctx, OSSL_LIB_CTX *libctx,
+/**
+ * @brief Generate a SLH_DSA keypair. The private key seed and prf as well as the
+ * public key seed are generated using an approved DRBG's. The public key root is
+ * calculated using these generated values.
+ * See FIPS 205 Section 10.1 Algorithm 21
+ *
+ * @param ctx Contains SLH_DSA algorithm functions and constants.
+ * @param lib_ctx A library context for fetching RAND algorithms
+ * @param out An SLH_DSA key to write keypair data to.
+ * @returns 1 if the key is generated or 0 otherwise.
+ */
+int ossl_slh_dsa_generate_key(SLH_DSA_CTX *ctx, OSSL_LIB_CTX *lib_ctx,
                               SLH_DSA_KEY *out)
 {
     size_t n = ctx->params->n;
@@ -225,8 +256,8 @@ int ossl_slh_dsa_generate_key(SLH_DSA_CTX *ctx, OSSL_LIB_CTX *libctx,
 
     assert(ctx->params == out->params);
 
-    if (RAND_priv_bytes_ex(libctx, out->priv, key_len, 0) <= 0
-            || RAND_bytes_ex(libctx, out->pub, n, 0) <= 0
+    if (RAND_priv_bytes_ex(lib_ctx, out->priv, key_len, 0) <= 0
+            || RAND_bytes_ex(lib_ctx, out->pub, n, 0) <= 0
             || !slh_dsa_compute_pk_root(ctx, out))
         goto err;
     out->key_len = key_len;
@@ -239,11 +270,25 @@ err:
     return 0;
 }
 
+/**
+ * @brief This is used when a SLH key is used for an operation.
+ * This checks that the algorithm is the same (i.e. uses the same parameters)
+ *
+ * @param ctx Contains SLH_DSA algorithm functions and constants to be used for
+ *            an operation.
+ * @param key A SLH_DSA key to use for an operation.
+ *
+ * @returns 1 if the algorithm matches, or 0 otherwise.
+ */
 int ossl_slh_dsa_key_type_matches(SLH_DSA_CTX *ctx, const SLH_DSA_KEY *key)
 {
     return (key->params == ctx->params);
 }
 
+/*
+ * @returns 1 if the SLH_DSA key contains a private component, or 0 if the
+ *          key is just a public key.
+ */
 int ossl_slh_dsa_key_is_private(const SLH_DSA_KEY *key)
 {
     return key->has_priv;

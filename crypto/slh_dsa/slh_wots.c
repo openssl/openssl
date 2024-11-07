@@ -110,7 +110,8 @@ static void slh_wots_chain(SLH_DSA_CTX *ctx, const uint8_t *in,
 }
 
 /**
- * @brief WOTS+ Public key generation. See FIPS 205 Section 5.1
+ * @brief WOTS+ Public key generation.
+ * See FIPS 205 Section 5.1 Algorithm 6
  *
  * @param ctx Contains SLH_DSA algorithm functions and constants.
  * @param sk_seed A private key seed of size |n|
@@ -156,11 +157,68 @@ void ossl_slh_wots_pk_gen(SLH_DSA_CTX *ctx,
 }
 
 /**
- * @brief Compute a candidate WOTS+ public key from a message and signature
+ * @brief WOTS+ Signature generation
  * See FIPS 205 Section 5.2 Algorithm 7
  *
  * @param ctx Contains SLH_DSA algorithm functions and constants.
- * @param sig A WOTS+signature of size len * |n| bytes. (where len = 2 * |n| + 3)
+ * @param msg An input message of size |n| bytes.
+ *            The message is either an XMSS or FORS public key
+ * @param sk_seed The private key seed of size |n| bytes
+ * @param pk_seed The public key seed  of size |n| bytes
+ * @param adrs An address containing the layer address, tree address and key
+ *             pair address. The size is either 32 or 22 bytes.
+ * @param sig The returned signature.
+ * @param sig_len The size of |sig| which should be len * |n| bytes.
+ *                (where len = 2 * |n| + 3)
+ */
+void ossl_slh_wots_sign(SLH_DSA_CTX *ctx, const uint8_t *msg,
+                        const uint8_t *sk_seed, const uint8_t *pk_seed,
+                        SLH_ADRS adrs, uint8_t *sig, size_t sig_len)
+{
+    SLH_HASH_FUNC_DECLARE(ctx, hashf, hctx);
+    SLH_ADRS_FUNC_DECLARE(ctx, adrsf);
+    SLH_HASH_FN_DECLARE(hashf, PRF);
+    SLH_ADRS_FN_DECLARE(adrsf, set_chain_address);
+    SLH_ADRS_DECLARE(sk_adrs);
+    uint8_t msg_and_csum_nibbles[SLH_WOTS_LEN_MAX]; /* size is >= 2 * n + 3 */
+    uint8_t sk[SLH_MAX_N];
+    size_t i, len1, len;
+    size_t n = ctx->params->n;
+    uint8_t *psig = sig;
+
+    len1 = SLH_WOTS_LEN1(n); /* 2 * n is for the message length in nibbles */
+    len = len1 + SLH_WOTS_LEN2;  /* 2 * n + 3 (3 checksum nibbles) */
+
+    /*
+     * Convert n message bytes to 2*n base w=16 integers
+     * i.e. Convert message to an array of 2*n nibbles.
+     */
+    slh_bytes_to_nibbles(msg, n, msg_and_csum_nibbles);
+    /* Compute a 12 bit checksum and add it to the end */
+    compute_checksum_nibbles(msg_and_csum_nibbles, len1, msg_and_csum_nibbles + len1);
+
+    adrsf->copy(sk_adrs, adrs);
+    adrsf->set_type_and_clear(sk_adrs, SLH_ADRS_TYPE_WOTS_PRF);
+    adrsf->copy_keypair_address(sk_adrs, adrs);
+
+    for (i = 0; i < len; ++i) {
+        set_chain_address(sk_adrs, i);
+        /* compute chain i secret */
+        PRF(hctx, pk_seed, sk_seed, sk_adrs, sk);
+        set_chain_address(adrs, i);
+        /* compute chain i signature */
+        slh_wots_chain(ctx, sk, 0, msg_and_csum_nibbles[i], pk_seed, adrs, psig);
+        psig += n;
+    }
+    assert(sig_len == (size_t)(psig - sig));
+}
+
+/**
+ * @brief Compute a candidate WOTS+ public key from a message and signature
+ * See FIPS 205 Section 5.3 Algorithm 8
+ *
+ * @param ctx Contains SLH_DSA algorithm functions and constants.
+ * @param sig A WOTS+ signature of size len * |n| bytes. (where len = 2 * |n| + 3)
  * @param msg A message of size |n| bytes.
  * @param pk_seed The public key seed of size |n|.
  * @param adrs An ADRS object containing the layer address, tree address and
