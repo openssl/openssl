@@ -14,7 +14,56 @@
 #define SLH_XMSS_SIG_LEN(n, hm) ((SLH_WOTS_LEN(n) + (hm)) * (n))
 
 /**
- * @brief
+ * @brief Generate a Hypertree Signature
+ * See FIPS 205 Section 7.1 Algorithm 12
+ *
+ * @param ctx Contains SLH_DSA algorithm functions and constants.
+ * @param msg A message of size |n|.
+ * @param sk_seed The private key seed of size |n|
+ * @param pk_seed The public key seed of size |n|
+ * @param tree_id Index of the XMSS tree that will sign the message
+ * @param leaf_id Index of the WOTS+ key within the XMSS tree that will signed the message
+ * @param sig The returned Hypertree Signature (which is |d| XMSS signatures)
+ * @param sig_len The size of |sig| which is (|h| + |d| * |len|) * |n|)
+ */
+void ossl_slh_ht_sign(SLH_DSA_CTX *ctx,
+                      const uint8_t *msg, const uint8_t *sk_seed,
+                      const uint8_t *pk_seed,
+                      uint64_t tree_id, uint32_t leaf_id,
+                      uint8_t *sig, size_t sig_len)
+{
+    SLH_ADRS_FUNC_DECLARE(ctx, adrsf);
+    SLH_ADRS_DECLARE(adrs);
+    uint8_t root[SLH_MAX_N];
+    uint32_t layer, mask;
+    uint32_t n = ctx->params->n;
+    uint32_t d = ctx->params->d;
+    uint32_t hm = ctx->params->hm;
+    uint8_t *psig = sig;
+    size_t xmss_sig_len = SLH_XMSS_SIG_LEN(n, hm);
+
+    mask = (1 << hm) - 1; /* A mod 2^h = A & ((2^h - 1))) */
+
+    adrsf->zero(adrs);
+    memcpy(root, msg, n);
+
+    for (layer = 0; layer < d; ++layer) {
+        adrsf->set_layer_address(adrs, layer);
+        adrsf->set_tree_address(adrs, tree_id);
+        ossl_slh_xmss_sign(ctx, root, sk_seed, leaf_id, pk_seed, adrs,
+                           psig, xmss_sig_len);
+        if (layer < d - 1)
+            ossl_slh_xmss_pk_from_sig(ctx, leaf_id, psig, root, pk_seed, adrs, root);
+        psig += xmss_sig_len;
+        leaf_id = tree_id & mask;
+        tree_id >>= hm;
+    }
+    assert((size_t)(psig - sig) == sig_len);
+}
+
+/**
+ * @brief Verify a Hypertree Signature
+ * See FIPS 205 Section 7.2 Algorithm 13
  *
  * @param ctx Contains SLH_DSA algorithm functions and constants.
  * @param msg A message of size |n| bytes

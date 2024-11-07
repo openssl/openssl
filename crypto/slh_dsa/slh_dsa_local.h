@@ -49,7 +49,9 @@ struct slh_dsa_ctx_st {
 void ossl_slh_wots_pk_gen(SLH_DSA_CTX *ctx,
                           const uint8_t *sk_seed, const uint8_t *pk_seed,
                           SLH_ADRS adrs, uint8_t *pk_out);
-
+void ossl_slh_wots_sign(SLH_DSA_CTX *ctx, const uint8_t *msg,
+                        const uint8_t *sk_seed, const uint8_t *pk_seed,
+                        SLH_ADRS adrs, uint8_t *sig, size_t sig_len);
 void ossl_slh_wots_pk_from_sig(SLH_DSA_CTX *ctx,
                                const uint8_t *sig, const uint8_t *msg,
                                const uint8_t *pk_seed, uint8_t *adrs,
@@ -58,15 +60,26 @@ void ossl_slh_wots_pk_from_sig(SLH_DSA_CTX *ctx,
 void ossl_slh_xmss_node(SLH_DSA_CTX *ctx, const uint8_t *sk_seed,
                         uint32_t node_id, uint32_t height,
                         const uint8_t *pk_seed, SLH_ADRS adrs, uint8_t *pk_out);
+void ossl_slh_xmss_sign(SLH_DSA_CTX *ctx, const uint8_t *msg,
+                        const uint8_t *sk_seed, uint32_t node_id,
+                        const uint8_t *pk_seed, SLH_ADRS adrs,
+                        uint8_t *sig, size_t sig_len);
 void ossl_slh_xmss_pk_from_sig(SLH_DSA_CTX *ctx, uint32_t node_id,
                                const uint8_t *sig, const uint8_t *msg,
                                const uint8_t *pk_seed, SLH_ADRS adrs,
                                uint8_t *pk_out);
 
+void ossl_slh_ht_sign(SLH_DSA_CTX *ctx, const uint8_t *msg,
+                      const uint8_t *sk_seed, const uint8_t *pk_seed,
+                      uint64_t tree_id, uint32_t leaf_id,
+                      uint8_t *sig_out, size_t sig_out_len);
 int ossl_slh_ht_verify(SLH_DSA_CTX *ctx, const uint8_t *msg, const uint8_t *sig,
                        const uint8_t *pk_seed, uint64_t tree_id, uint32_t leaf_id,
                        const uint8_t *pk_root);
 
+void ossl_slh_fors_sign(SLH_DSA_CTX *ctx, const uint8_t *md,
+                        const uint8_t *sk_seed, const uint8_t *pk_seed,
+                        SLH_ADRS adrs, uint8_t *sig, size_t sig_len);
 void ossl_slh_fors_pk_from_sig(SLH_DSA_CTX *ctx, const uint8_t *sig,
                                const uint8_t *md, const uint8_t *pk_seed,
                                SLH_ADRS adrs, uint8_t *pk_out);
