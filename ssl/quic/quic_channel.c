@@ -1775,6 +1775,11 @@ static int ch_generate_transport_params(QUIC_CHANNEL *ch)
         if (!ossl_quic_wire_encode_transport_param_cid(&wpkt, QUIC_TPARAM_INITIAL_SCID,
                                                        &ch->cur_local_cid))
             goto err;
+        if (ch->odcid.id_len != 0)
+            if (!ossl_quic_wire_encode_transport_param_cid(&wpkt,
+                                                           QUIC_TPARAM_RETRY_SCID,
+                                                           &ch->init_dcid))
+                goto err;
     } else {
         /* Client always uses an empty SCID. */
         if (ossl_quic_wire_encode_transport_param_bytes(&wpkt, QUIC_TPARAM_INITIAL_SCID,
