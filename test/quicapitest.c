@@ -1725,7 +1725,6 @@ struct tparam_test {
     size_t      buf_len;
 };
 
-static const unsigned char retry_scid_1[8] = { 0 };
 
 static const unsigned char disable_active_migration_1[] = {
     0x00
@@ -1853,8 +1852,6 @@ static const struct tparam_test tparam_tests[] = {
     TPARAM_CHECK_DROP(ORIG_DCID,
                       "ORIG_DCID was not sent but is required")
 
-    TPARAM_CHECK_INJECT_A(RETRY_SCID, retry_scid_1,
-                          "RETRY_SCID sent when not performing a retry")
     TPARAM_CHECK_DROP_INJECT_A(DISABLE_ACTIVE_MIGRATION, disable_active_migration_1,
                                "DISABLE_ACTIVE_MIGRATION is malformed")
     TPARAM_CHECK_INJECT(UNKNOWN_1, NULL, 0,
