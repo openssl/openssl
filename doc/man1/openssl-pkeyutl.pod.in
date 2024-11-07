@@ -161,7 +161,7 @@ checking that the input length is consistent with the intended digest.
 
 Verify the input data against the signature given with the B<-sigfile> option
 and indicate if the verification succeeded or failed.
-The input data given with the B<-in> option must be a hash value
+The input data given with the B<-in> option is assumed to be a hash value
 unless the B<-rawin> option is specified or implied.
 With raw data, when a digest algorithm is applicable, though it may be inferred
 from the signature or take a default value, it should also be specified.
@@ -172,7 +172,7 @@ Verify the input data and output the recovered data (signature payload). For
 example, in the case of RSA PKCS#1 the recovered data is the B<EMSA-PKCS-v1_5>
 DER encoding of the digest algorithm OID and value as specified in
 L<RFC8017 Section 9.2|https://datatracker.ietf.org/doc/html/rfc8017#section-9.2>.
-The input data given with the B<-in> option must be a hash value.
+The input data given with the B<-in> option is assumed to be a hash value.
 
 =item B<-encrypt>
 
