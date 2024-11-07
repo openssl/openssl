@@ -7,7 +7,7 @@ $MAC_GOAL=../../libdefault.a ../../libfips.a
 $RSA_GOAL=../../libdefault.a ../../libfips.a
 $SM2_GOAL=../../libdefault.a
 $ML_DSA_GOAL=../../libdefault.a ../../libfips.a
-$SLH_DSA_GOAL=../../libdefault.a
+$SLH_DSA_GOAL=../../libdefault.a ../../libfips.a
 
 IF[{- !$disabled{dsa} -}]
   SOURCE[$DSA_GOAL]=dsa_sig.c

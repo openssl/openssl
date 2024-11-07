@@ -245,10 +245,14 @@ static int slh_dsa_compute_pk_root(SLH_DSA_CTX *ctx, SLH_DSA_KEY *out)
  *
  * @param ctx Contains SLH_DSA algorithm functions and constants.
  * @param lib_ctx A library context for fetching RAND algorithms
+ * @param entropy Optional entropy to use instead of using a DRBG.
+ *        Required for ACVP testing. It may be NULL.
+ * @param entropy_len the size of |entropy|. If set it must be at least 3 * |n|.
  * @param out An SLH_DSA key to write keypair data to.
  * @returns 1 if the key is generated or 0 otherwise.
  */
 int ossl_slh_dsa_generate_key(SLH_DSA_CTX *ctx, OSSL_LIB_CTX *lib_ctx,
+                              const uint8_t *entropy, size_t entropy_len,
                               SLH_DSA_KEY *out)
 {
     size_t n = ctx->params->n;
@@ -256,9 +260,17 @@ int ossl_slh_dsa_generate_key(SLH_DSA_CTX *ctx, OSSL_LIB_CTX *lib_ctx,
 
     assert(ctx->params == out->params);
 
-    if (RAND_priv_bytes_ex(lib_ctx, out->priv, key_len, 0) <= 0
-            || RAND_bytes_ex(lib_ctx, out->pub, n, 0) <= 0
-            || !slh_dsa_compute_pk_root(ctx, out))
+    if (entropy != NULL && entropy_len != 0) {
+        if (entropy_len < (key_len + n))
+            goto err;
+        memcpy(out->priv, entropy, key_len);
+        memcpy(out->pub, entropy + key_len, n);
+    } else {
+        if (RAND_priv_bytes_ex(lib_ctx, out->priv, key_len, 0) <= 0
+                || RAND_bytes_ex(lib_ctx, out->pub, n, 0) <= 0)
+            goto err;
+    }
+    if (!slh_dsa_compute_pk_root(ctx, out))
         goto err;
     out->key_len = key_len;
     out->has_priv = 1;
