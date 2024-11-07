@@ -17,7 +17,7 @@ use File::Compare qw/compare_text compare/;
 
 setup("test_pkeyutl");
 
-plan tests => 24;
+plan tests => 25;
 
 # For the tests below we use the cert itself as the TBS file
 
@@ -54,7 +54,7 @@ SKIP: {
 }
 
 SKIP: {
-    skip "Skipping tests that require ECX", 6
+    skip "Skipping tests that require ECX", 7
         if disabled("ecx");
 
     # Ed25519
@@ -68,6 +68,9 @@ SKIP: {
                   '-inkey', srctop_file('test', 'certs', 'server-ed25519-cert.pem'),
                   '-sigfile', 'Ed25519.sig']))),
                   "Verify an Ed25519 signature against a piece of data");
+    ok(!run(app(([ 'openssl', 'pkeyutl', '-verifyrecover', '-in', 'Ed25519.sig',
+                   '-inkey', srctop_file('test', 'certs', 'server-ed25519-key.pem')]))),
+       "Cannot use -verifyrecover with EdDSA");
 
     # Ed448
     ok(run(app(([ 'openssl', 'pkeyutl', '-sign', '-in',
