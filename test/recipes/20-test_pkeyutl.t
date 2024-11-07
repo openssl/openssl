@@ -17,7 +17,7 @@ use File::Compare qw/compare_text compare/;
 
 setup("test_pkeyutl");
 
-plan tests => 23;
+plan tests => 24;
 
 # For the tests below we use the cert itself as the TBS file
 
@@ -92,6 +92,7 @@ SKIP: {
                   "Verify an Ed448 signature against a piece of data, no -rawin");
 }
 
+my $sigfile;
 sub tsignverify {
     my $testtext = shift;
     my $privkey = shift;
@@ -100,7 +101,7 @@ sub tsignverify {
 
     my $data_to_sign = srctop_file('test', 'data.bin');
     my $other_data = srctop_file('test', 'data2.bin');
-    my $sigfile = basename($privkey, '.pem') . '.sig';
+    $sigfile = basename($privkey, '.pem') . '.sig';
 
     my @args = ();
     plan tests => 5;
@@ -149,7 +150,7 @@ sub tsignverify {
 }
 
 SKIP: {
-    skip "RSA is not supported by this OpenSSL build", 1
+    skip "RSA is not supported by this OpenSSL build", 3
         if disabled("rsa");
 
     subtest "RSA CLI signature generation and verification" => sub {
@@ -159,6 +160,10 @@ SKIP: {
                     "-rawin", "-digest", "sha256");
     };
 
+    ok(run(app((['openssl', 'pkeyutl', '-verifyrecover', '-in', $sigfile,
+                 '-pubin', '-inkey', srctop_file('test', 'testrsapub.pem')]))),
+       "RSA: Verify signature with -verifyrecover");
+
     subtest "RSA CLI signature and verification with pkeyopt" => sub {
         tsignverify("RSA",
                     srctop_file("test","testrsa.pem"),
@@ -166,6 +171,7 @@ SKIP: {
                     "-rawin", "-digest", "sha256",
                     "-pkeyopt", "rsa_padding_mode:pss");
     };
+
 }
 
 SKIP: {
@@ -228,7 +234,7 @@ SKIP: {
 # openssl pkeyutl -decap -inkey rsa_priv.pem -in encap_out.bin -out decap_out.bin
 # decap_out is equal to secret
 SKIP: {
-    skip "RSA is not supported by this OpenSSL build", 3
+    skip "RSA is not supported by this OpenSSL build", 5
         if disabled("rsa");
 
     # Self-compat

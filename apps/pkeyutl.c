@@ -490,8 +490,7 @@ int pkeyutl_main(int argc, char **argv)
 
     /* Sanity check the input if the input is not raw */
     if (!rawin
-        && (pkey_op == EVP_PKEY_OP_SIGN || pkey_op == EVP_PKEY_OP_VERIFY
-            || pkey_op == EVP_PKEY_OP_VERIFYRECOVER)) {
+        && (pkey_op == EVP_PKEY_OP_SIGN || pkey_op == EVP_PKEY_OP_VERIFY)) {
         if (buf_inlen > EVP_MAX_MD_SIZE) {
             BIO_printf(bio_err,
                        "Error: The non-raw input data length %d is too long - max supported hashed size is %d\n",
