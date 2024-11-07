@@ -90,6 +90,7 @@ void ossl_slh_xmss_sign(SLH_DSA_CTX *ctx, const uint8_t *msg,
     size_t auth_sig_len = n * hm;
     assert(sig_len == (wots_sig_len + auth_sig_len));
 */
+
     for (h = 0; h < hm; ++h) {
         ossl_slh_xmss_node(ctx, sk_seed, id ^ 1, h, pk_seed, adrs, auth_path);
         id >>= 1;

@@ -16,35 +16,16 @@
 #include "testutil.h"
 #include "slh_dsa.inc"
 
-static OSSL_LIB_CTX *libctx = NULL;
-static OSSL_PROVIDER *fake_rand = NULL;
+typedef enum OPTION_choice {
+    OPT_ERR = -1,
+    OPT_EOF = 0,
+    OPT_CONFIG_FILE,
+    OPT_TEST_ENUM
+} OPTION_CHOICE;
 
-static size_t entropy_pos = 0;
-static size_t entropy_sz = 0;
-static uint8_t entropy[128];
-
-static int set_entropy(const uint8_t *ent1, size_t ent1_len,
-                       const uint8_t *ent2, size_t ent2_len)
-{
-    if ((ent1_len + ent2_len) > sizeof(entropy))
-        return 0;
-    entropy_pos = 0;
-    entropy_sz += (ent1_len + ent2_len);
-    memcpy(entropy, ent1, ent1_len);
-    if (ent2 != NULL)
-        memcpy(entropy + ent1_len, ent2, ent2_len);
-    return 1;
-}
-
-static int fake_rand_cb(unsigned char *buf, size_t num,
-                        ossl_unused const char *name, EVP_RAND_CTX *ctx)
-{
-    if ((entropy_pos + num) > entropy_sz)
-        return 0;
-    memcpy(buf, entropy + entropy_pos, num);
-    entropy_pos += num;
-    return 1;
-}
+static OSSL_LIB_CTX *lib_ctx = NULL;
+static OSSL_PROVIDER *null_prov = NULL;
+static OSSL_PROVIDER *lib_prov = NULL;
 
 static EVP_PKEY *slh_dsa_pubkey_from_data(const char *alg,
                                           const unsigned char *data, size_t datalen)
@@ -57,7 +38,7 @@ static EVP_PKEY *slh_dsa_pubkey_from_data(const char *alg,
     params[0] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_PUB_KEY,
                                                   (unsigned char *)data, datalen);
     params[1] = OSSL_PARAM_construct_end();
-    ret = TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(libctx, alg, NULL))
+    ret = TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(lib_ctx, alg, NULL))
         && TEST_int_eq(EVP_PKEY_fromdata_init(ctx), 1)
         && (EVP_PKEY_fromdata(ctx, &key, EVP_PKEY_PUBLIC_KEY, params) == 1);
     if (ret == 0) {
@@ -89,7 +70,7 @@ static int slh_dsa_create_keypair(EVP_PKEY **pkey, const char *name,
                                                            pub_name,
                                                            pub, pub_len) > 0)
             || !TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld))
-            || !TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(libctx, name, NULL))
+            || !TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(lib_ctx, name, NULL))
             || !TEST_int_eq(EVP_PKEY_fromdata_init(ctx), 1)
             || !TEST_int_eq(EVP_PKEY_fromdata(ctx, pkey, EVP_PKEY_KEYPAIR,
                                               params), 1))
@@ -152,7 +133,7 @@ static int slh_dsa_key_eq_test(void)
         goto end;
 
 #ifndef OPENSSL_NO_EC
-    if (!TEST_ptr(eckey = EVP_PKEY_Q_keygen(libctx, NULL, "EC", "P-256")))
+    if (!TEST_ptr(eckey = EVP_PKEY_Q_keygen(lib_ctx, NULL, "EC", "P-256")))
         goto end;
     ret = TEST_int_ne(EVP_PKEY_eq(key[0], eckey), 1);
     EVP_PKEY_free(eckey);
@@ -173,7 +154,7 @@ static int slh_dsa_key_validate_test(void)
 
     if (!TEST_ptr(key = slh_dsa_pubkey_from_data(td->alg, td->pub, td->pub_len)))
         return 0;
-    if (!TEST_ptr(vctx = EVP_PKEY_CTX_new_from_pkey(libctx, key, NULL)))
+    if (!TEST_ptr(vctx = EVP_PKEY_CTX_new_from_pkey(lib_ctx, key, NULL)))
         goto end;
     ret = TEST_int_eq(EVP_PKEY_check(vctx), 1);
     EVP_PKEY_CTX_free(vctx);
@@ -203,9 +184,9 @@ static int do_slh_dsa_verify(const SLH_DSA_SIG_TEST_DATA *td,
 
     if (!TEST_ptr(key = slh_dsa_pubkey_from_data(td->alg, td->pub, td->pub_len)))
         return 0;
-    if (!TEST_ptr(vctx = EVP_PKEY_CTX_new_from_pkey(libctx, key, NULL)))
+    if (!TEST_ptr(vctx = EVP_PKEY_CTX_new_from_pkey(lib_ctx, key, NULL)))
         goto err;
-    if (!TEST_ptr(sig_alg = EVP_SIGNATURE_fetch(libctx, td->alg, NULL)))
+    if (!TEST_ptr(sig_alg = EVP_SIGNATURE_fetch(lib_ctx, td->alg, NULL)))
         goto err;
     if (!TEST_int_eq(EVP_PKEY_verify_init_ex2(vctx, sig_alg, params), 1)
             || !TEST_int_eq(EVP_PKEY_verify(vctx, sig, sig_len,
@@ -249,16 +230,16 @@ static int slh_dsa_sign_verify_test(int tst_id)
                                 td->pub, td->pub_len))
         goto err;
 
-    if (!TEST_ptr(sctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, NULL)))
+    if (!TEST_ptr(sctx = EVP_PKEY_CTX_new_from_pkey(lib_ctx, pkey, NULL)))
         goto err;
-    if (!TEST_ptr(sig_alg = EVP_SIGNATURE_fetch(libctx, td->alg, NULL)))
+    if (!TEST_ptr(sig_alg = EVP_SIGNATURE_fetch(lib_ctx, td->alg, NULL)))
         goto err;
     if (!TEST_int_eq(EVP_PKEY_sign_init_ex2(sctx, sig_alg, params), 1)
             || !TEST_int_eq(EVP_PKEY_sign(sctx, sig, &sig_len,
                                           td->msg, td->msg_len), 1))
         goto err;
 
-    if (!TEST_int_eq(EVP_Q_digest(libctx, "SHA256", NULL, sig, sig_len,
+    if (!TEST_int_eq(EVP_Q_digest(lib_ctx, "SHA256", NULL, sig, sig_len,
                                   digest, &digest_len), 1))
         goto err;
     if (!TEST_mem_eq(digest, digest_len, td->sig_digest, td->sig_digest_len))
@@ -273,6 +254,28 @@ err:
     return ret;
 }
 
+static EVP_PKEY *do_gen_key(const char *alg,
+                            const uint8_t *entropy, size_t entropy_len)
+{
+    EVP_PKEY *pkey = NULL;
+    EVP_PKEY_CTX *ctx = NULL;
+    OSSL_PARAM params[2], *p = params;
+
+    if (entropy_len != 0)
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_SLH_DSA_ENTROPY,
+                                                 (char *)entropy, entropy_len);
+    *p = OSSL_PARAM_construct_end();
+
+    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(lib_ctx, alg, NULL))
+            || !TEST_int_eq(EVP_PKEY_keygen_init(ctx), 1)
+            || !TEST_int_eq(EVP_PKEY_CTX_set_params(ctx, params), 1)
+            || !TEST_int_eq(EVP_PKEY_generate(ctx, &pkey), 1))
+        goto err;
+err:
+    EVP_PKEY_CTX_free(ctx);
+    return pkey;
+}
+
 static int slh_dsa_keygen_test(int tst_id)
 {
     int ret = 0;
@@ -283,15 +286,9 @@ static int slh_dsa_keygen_test(int tst_id)
     size_t key_len = tst->priv_len / 2;
     size_t n = key_len / 2;
 
-    if (!TEST_true(set_entropy(tst->priv, key_len,
-                               tst->priv + key_len, n)))
+    if (!TEST_ptr(pkey = do_gen_key(tst->name, tst->priv, key_len + n)))
         goto err;
 
-    fake_rand_set_callback(RAND_get0_private(NULL), &fake_rand_cb);
-    fake_rand_set_callback(RAND_get0_public(NULL), &fake_rand_cb);
-
-    if (!TEST_ptr(pkey = EVP_PKEY_Q_keygen(libctx, NULL, tst->name)))
-        goto err;
     if (!TEST_true(EVP_PKEY_get_octet_string_param(pkey, OSSL_PKEY_PARAM_PRIV_KEY,
                                                    priv, sizeof(priv), &priv_len)))
         goto err;
@@ -305,8 +302,6 @@ static int slh_dsa_keygen_test(int tst_id)
         goto err;
     ret = 1;
 err:
-    fake_rand_set_callback(RAND_get0_public(NULL), NULL);
-    fake_rand_set_callback(RAND_get0_private(NULL), NULL);
     EVP_PKEY_free(pkey);
     return ret;
 }
@@ -344,10 +339,35 @@ err:
     return ret;
 }
 
+const OPTIONS *test_get_options(void)
+{
+    static const OPTIONS options[] = {
+        OPT_TEST_OPTIONS_DEFAULT_USAGE,
+        { "config", OPT_CONFIG_FILE, '<',
+          "The configuration file to use for the libctx" },
+        { NULL }
+    };
+    return options;
+}
+
 int setup_tests(void)
 {
-    fake_rand = fake_rand_start(NULL);
-    if (fake_rand == NULL)
+    OPTION_CHOICE o;
+    char *config_file = NULL;
+
+    while ((o = opt_next()) != OPT_EOF) {
+        switch (o) {
+        case OPT_CONFIG_FILE:
+            config_file = opt_arg();
+            break;
+        case OPT_TEST_CASES:
+            break;
+        default:
+        case OPT_ERR:
+            return 0;
+        }
+    }
+    if (!test_get_libctx(&lib_ctx, &null_prov, config_file, &lib_prov, NULL))
         return 0;
 
     ADD_TEST(slh_dsa_bad_pub_len_test);
@@ -361,5 +381,7 @@ int setup_tests(void)
 
 void cleanup_tests(void)
 {
-    fake_rand_finish(fake_rand);
+    OSSL_PROVIDER_unload(null_prov);
+    OSSL_PROVIDER_unload(lib_prov);
+    OSSL_LIB_CTX_free(lib_ctx);
 }

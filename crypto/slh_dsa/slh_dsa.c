@@ -54,9 +54,9 @@ static int slh_sign_internal(SLH_DSA_CTX *ctx, const SLH_DSA_KEY *priv,
     size_t sig_len_expected = r_len + sig_fors_len + sig_ht_len;
     SLH_HASH_FUNC_DECLARE(ctx, hashf, hctx);
     SLH_ADRS_FUNC_DECLARE(ctx, adrsf);
+    SLH_ADRS_DECLARE(adrs);
     uint64_t tree_id;
     uint32_t leaf_id;
-    uint8_t adrs[SLH_ADRS_SIZE_MAX];
     uint8_t pk_fors[SLH_MAX_N];
     uint8_t m_digest[SLH_MAX_M];
     uint8_t *r = sig;
