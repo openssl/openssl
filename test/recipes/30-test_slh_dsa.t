@@ -23,11 +23,20 @@ use lib srctop_dir('Configurations');
 use lib bldtop_dir('.');
 
 plan skip_all => 'SLH-DSA is not supported in this build' if disabled('slh-dsa');
-plan tests => ($no_fips ? 0 : 1) + 1;
+plan tests => 2;
 
 ok(run(test(["slh_dsa_test"])), "running slh_dsa_test");
 
-unless ($no_fips) {
+SKIP: {
+    skip "Skipping FIPS tests", 1
+        if $no_fips;
+
+    # SLH-DSA is only present after OpenSSL 3.5
+    run(test(["fips_version_test", "-config", $provconf, ">=3.5.0"]),
+             capture => 1, statusvar => \my $exit);
+    skip "FIPS provider version is too old for SLH_DSA test", 1
+        if !$exit;
+
     ok(run(test(["slh_dsa_test", "-config",  $provconf])),
            "running slh_dsa_test with FIPS");
 }

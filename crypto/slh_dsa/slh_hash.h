@@ -38,23 +38,23 @@ typedef struct slh_hash_ctx_st {
 /*
  * @params out is |m| bytes which ranges from (30..49) bytes
  */
-typedef void (OSSL_SLH_HASHFUNC_H_MSG)(SLH_HASH_CTX *ctx, const uint8_t *r,
+typedef int (OSSL_SLH_HASHFUNC_H_MSG)(SLH_HASH_CTX *ctx, const uint8_t *r,
     const uint8_t *pk_seed, const uint8_t *pk_root,
     const uint8_t *msg, size_t msg_len, uint8_t *out);
 
-typedef void (OSSL_SLH_HASHFUNC_PRF)(SLH_HASH_CTX *ctx, const uint8_t *pk_seed,
+typedef int (OSSL_SLH_HASHFUNC_PRF)(SLH_HASH_CTX *ctx, const uint8_t *pk_seed,
     const uint8_t *sk_seed, const SLH_ADRS adrs, uint8_t *out);
 
-typedef void (OSSL_SLH_HASHFUNC_PRF_MSG)(SLH_HASH_CTX *ctx, const uint8_t *sk_prf,
+typedef int (OSSL_SLH_HASHFUNC_PRF_MSG)(SLH_HASH_CTX *ctx, const uint8_t *sk_prf,
     const uint8_t *opt_rand, const uint8_t *msg, size_t msg_len, uint8_t *out);
 
-typedef void (OSSL_SLH_HASHFUNC_F)(SLH_HASH_CTX *ctx, const uint8_t *pk_seed,
+typedef int (OSSL_SLH_HASHFUNC_F)(SLH_HASH_CTX *ctx, const uint8_t *pk_seed,
     const SLH_ADRS adrs, const uint8_t *m1, size_t m1_len, uint8_t *out);
 
-typedef void (OSSL_SLH_HASHFUNC_H)(SLH_HASH_CTX *ctx, const uint8_t *pk_seed,
+typedef int (OSSL_SLH_HASHFUNC_H)(SLH_HASH_CTX *ctx, const uint8_t *pk_seed,
     const SLH_ADRS adrs, const uint8_t *m1, const uint8_t *m2, uint8_t *out);
 
-typedef void (OSSL_SLH_HASHFUNC_T)(SLH_HASH_CTX *ctx, const uint8_t *pk_seed,
+typedef int (OSSL_SLH_HASHFUNC_T)(SLH_HASH_CTX *ctx, const uint8_t *pk_seed,
     const SLH_ADRS adrs, const uint8_t *m1, size_t m1_len, uint8_t *out);
 
 typedef struct slh_hash_func_st {
@@ -68,9 +68,9 @@ typedef struct slh_hash_func_st {
 
 const SLH_HASH_FUNC *ossl_slh_get_hash_fn(int is_shake);
 
-int ossl_slh_hash_ctx_init(SLH_HASH_CTX *ctx, OSSL_LIB_CTX *libctx,
-                           const char *propq, int is_shake,
-                           int security_category, size_t n, size_t m);
+__owur int ossl_slh_hash_ctx_init(SLH_HASH_CTX *ctx, OSSL_LIB_CTX *libctx,
+                                  const char *propq, int is_shake,
+                                  int security_category, size_t n, size_t m);
 void ossl_slh_hash_ctx_cleanup(SLH_HASH_CTX *ctx);
 
 #endif
