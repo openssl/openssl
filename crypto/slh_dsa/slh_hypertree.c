@@ -25,12 +25,13 @@
  * @param leaf_id Index of the WOTS+ key within the XMSS tree that will signed the message
  * @param sig The returned Hypertree Signature (which is |d| XMSS signatures)
  * @param sig_len The size of |sig| which is (|h| + |d| * |len|) * |n|)
+ * @returns 1 on success, or 0 on error.
  */
-void ossl_slh_ht_sign(SLH_DSA_CTX *ctx,
-                      const uint8_t *msg, const uint8_t *sk_seed,
-                      const uint8_t *pk_seed,
-                      uint64_t tree_id, uint32_t leaf_id,
-                      uint8_t *sig, size_t sig_len)
+int ossl_slh_ht_sign(SLH_DSA_CTX *ctx,
+                     const uint8_t *msg, const uint8_t *sk_seed,
+                     const uint8_t *pk_seed,
+                     uint64_t tree_id, uint32_t leaf_id,
+                     uint8_t *sig, size_t sig_len)
 {
     SLH_ADRS_FUNC_DECLARE(ctx, adrsf);
     SLH_ADRS_DECLARE(adrs);
@@ -50,15 +51,20 @@ void ossl_slh_ht_sign(SLH_DSA_CTX *ctx,
     for (layer = 0; layer < d; ++layer) {
         adrsf->set_layer_address(adrs, layer);
         adrsf->set_tree_address(adrs, tree_id);
-        ossl_slh_xmss_sign(ctx, root, sk_seed, leaf_id, pk_seed, adrs,
-                           psig, xmss_sig_len);
-        if (layer < d - 1)
-            ossl_slh_xmss_pk_from_sig(ctx, leaf_id, psig, root, pk_seed, adrs, root);
+        if (!ossl_slh_xmss_sign(ctx, root, sk_seed, leaf_id, pk_seed, adrs,
+                                psig, xmss_sig_len))
+            return 0;
+        if (layer < d - 1) {
+            if (!ossl_slh_xmss_pk_from_sig(ctx, leaf_id, psig, root,
+                                           pk_seed, adrs, root))
+                return 0;
+        }
         psig += xmss_sig_len;
         leaf_id = tree_id & mask;
         tree_id >>= hm;
     }
     assert((size_t)(psig - sig) == sig_len);
+    return 1;
 }
 
 /**
@@ -97,7 +103,9 @@ int ossl_slh_ht_verify(SLH_DSA_CTX *ctx, const uint8_t *msg, const uint8_t *sig,
     for (layer = 0; layer < d; ++layer) {
         adrsf->set_layer_address(adrs, layer);
         adrsf->set_tree_address(adrs, tree_id);
-        ossl_slh_xmss_pk_from_sig(ctx, leaf_id, sig, node, pk_seed, adrs, node);
+        if (!ossl_slh_xmss_pk_from_sig(ctx, leaf_id, sig, node,
+                                       pk_seed, adrs, node))
+            return 0;
         sig += len;
         leaf_id = tree_id & mask;
         tree_id >>= tree_height;

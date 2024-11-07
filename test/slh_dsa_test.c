@@ -137,6 +137,8 @@ static int slh_dsa_key_eq_test(void)
         goto end;
     ret = TEST_int_ne(EVP_PKEY_eq(key[0], eckey), 1);
     EVP_PKEY_free(eckey);
+#else
+    ret = 1;
 #endif
 end:
     EVP_PKEY_free(key[2]);

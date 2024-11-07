@@ -34,10 +34,11 @@ static void slh_base_2b(const uint8_t *in, uint32_t b, uint32_t *out, size_t out
  * @param id The index of the FORS secret value within the sets of FORS trees.
  *               (which must be < 2^(hm - height)
  * @param pk_out The generated FORS secret value of size |n|
+ * @returns 1 on success, or 0 on error.
  */
-static void slh_fors_sk_gen(SLH_DSA_CTX *ctx, const uint8_t *sk_seed,
-                            const uint8_t *pk_seed, SLH_ADRS adrs, uint32_t id,
-                            uint8_t *sk_out)
+static int slh_fors_sk_gen(SLH_DSA_CTX *ctx, const uint8_t *sk_seed,
+                           const uint8_t *pk_seed, SLH_ADRS adrs, uint32_t id,
+                           uint8_t *sk_out)
 {
     SLH_ADRS_DECLARE(sk_adrs);
     SLH_ADRS_FUNC_DECLARE(ctx, adrsf);
@@ -46,7 +47,7 @@ static void slh_fors_sk_gen(SLH_DSA_CTX *ctx, const uint8_t *sk_seed,
     adrsf->set_type_and_clear(sk_adrs, SLH_ADRS_TYPE_FORS_PRF);
     adrsf->copy_keypair_address(sk_adrs, adrs);
     adrsf->set_tree_index(sk_adrs, id);
-    ctx->hash_func->PRF(&ctx->hash_ctx, pk_seed, sk_seed, sk_adrs, sk_out);
+    return ctx->hash_func->PRF(&ctx->hash_ctx, pk_seed, sk_seed, sk_adrs, sk_out);
 }
 
 /**
@@ -67,29 +68,35 @@ static void slh_fors_sk_gen(SLH_DSA_CTX *ctx, const uint8_t *sk_seed,
  * @param node_id The target node index
  * @param height The target node height
  * @param node The returned hash for a node of size|n|
+ * @returns 1 on success, or 0 on error.
  */
-static void slh_fors_node(SLH_DSA_CTX *ctx, const uint8_t *sk_seed,
-                          const uint8_t *pk_seed, SLH_ADRS adrs, uint32_t node_id,
-                          uint32_t height, uint8_t *node)
+static int slh_fors_node(SLH_DSA_CTX *ctx, const uint8_t *sk_seed,
+                         const uint8_t *pk_seed, SLH_ADRS adrs, uint32_t node_id,
+                         uint32_t height, uint8_t *node)
 {
     SLH_ADRS_FUNC_DECLARE(ctx, adrsf);
     uint8_t sk[SLH_MAX_N], lnode[SLH_MAX_N], rnode[SLH_MAX_N];
     uint32_t n = ctx->params->n;
 
     if (height == 0) {
-        slh_fors_sk_gen(ctx, sk_seed, pk_seed, adrs, node_id, sk);
+        if (!slh_fors_sk_gen(ctx, sk_seed, pk_seed, adrs, node_id, sk))
+            return 0;
         adrsf->set_tree_height(adrs, 0);
         adrsf->set_tree_index(adrs, node_id);
-        ctx->hash_func->F(&ctx->hash_ctx, pk_seed, adrs, sk, n, node);
+        if (!ctx->hash_func->F(&ctx->hash_ctx, pk_seed, adrs, sk, n, node))
+            return 0;
     } else {
-        slh_fors_node(ctx, sk_seed, pk_seed, adrs, 2 * node_id, height - 1,
-                      lnode);
-        slh_fors_node(ctx, sk_seed, pk_seed, adrs, 2 * node_id + 1, height - 1,
-                      rnode);
+        if (!slh_fors_node(ctx, sk_seed, pk_seed, adrs, 2 * node_id, height - 1,
+                           lnode)
+                || !slh_fors_node(ctx, sk_seed, pk_seed, adrs, 2 * node_id + 1,
+                                  height - 1, rnode))
+            return 0;
         adrsf->set_tree_height(adrs, height);
         adrsf->set_tree_index(adrs, node_id);
-        ctx->hash_func->H(&ctx->hash_ctx, pk_seed, adrs, lnode, rnode, node);
+        if (!ctx->hash_func->H(&ctx->hash_ctx, pk_seed, adrs, lnode, rnode, node))
+            return 0;
     }
+    return 1;
 }
 
 /**
@@ -107,10 +114,11 @@ static void slh_fors_node(SLH_DSA_CTX *ctx, const uint8_t *sk_seed,
  * @param sig_out The generated XMSS signature which consists of a WOTS+
  *                signature and authentication path
  * @param sig_len  The size of |sig| which is (2 * n + 3) * n + tree_height * n.
+ * @returns 1 on success, or 0 on error.
  */
-void ossl_slh_fors_sign(SLH_DSA_CTX *ctx, const uint8_t *md,
-                        const uint8_t *sk_seed, const uint8_t *pk_seed,
-                        SLH_ADRS adrs, uint8_t *sig, size_t sig_len)
+int ossl_slh_fors_sign(SLH_DSA_CTX *ctx, const uint8_t *md,
+                       const uint8_t *sk_seed, const uint8_t *pk_seed,
+                       SLH_ADRS adrs, uint8_t *sig, size_t sig_len)
 {
     uint32_t i, j, s;
     uint32_t ids[SLH_MAX_K];
@@ -131,20 +139,23 @@ void ossl_slh_fors_sign(SLH_DSA_CTX *ctx, const uint8_t *md,
     for (i = 0; i < k; ++i) {
         uint32_t id = ids[i]; /* |id| = |a| bits */
 
-        slh_fors_sk_gen(ctx, sk_seed, pk_seed, adrs,
-                        id + t_times_i, psig);
+        if (!slh_fors_sk_gen(ctx, sk_seed, pk_seed, adrs,
+                             id + t_times_i, psig))
+            return 0;
         psig += n;
 
         for (j = 0; j < a; ++j) {
             s = id ^ 1;
-            slh_fors_node(ctx, sk_seed, pk_seed, adrs, s + i * (1 << (a - j)),
-                          j, psig);
+            if (!slh_fors_node(ctx, sk_seed, pk_seed, adrs, s + i * (1 << (a - j)),
+                               j, psig))
+                return 0;
             id >>= 1;
             psig += n;
         }
         t_times_i += t;
     }
     assert((size_t)(psig - sig) == sig_len);
+    return 1;
 }
 
 /**
@@ -160,10 +171,11 @@ void ossl_slh_fors_sign(SLH_DSA_CTX *ctx, const uint8_t *md,
  *             the type set to FORS_TREE, and the keypair address set to the
  *             index of the WOTS+ key that signs the FORS key.
  * @param pk_out The returned candidate FORS public key of size |n|
+ * @returns 1 on success, or 0 on error.
  */
-void ossl_slh_fors_pk_from_sig(SLH_DSA_CTX *ctx, const uint8_t *sig,
-                               const uint8_t *md, const uint8_t *pk_seed,
-                               SLH_ADRS adrs, uint8_t *pk_out)
+int ossl_slh_fors_pk_from_sig(SLH_DSA_CTX *ctx, const uint8_t *sig,
+                              const uint8_t *md, const uint8_t *pk_seed,
+                              SLH_ADRS adrs, uint8_t *pk_out)
 {
     SLH_ADRS_DECLARE(pk_adrs);
     SLH_ADRS_FUNC_DECLARE(ctx, adrsf);
@@ -191,7 +203,8 @@ void ossl_slh_fors_pk_from_sig(SLH_DSA_CTX *ctx, const uint8_t *sig,
 
         set_tree_height(adrs, 0);
         set_tree_index(adrs, node_id);
-        F(hctx, pk_seed, adrs, sig, n, node);
+        if (!F(hctx, pk_seed, adrs, sig, n, node))
+            return 0;
         sig += n;
 
         for (j = 0; j < a; ++j) {
@@ -199,11 +212,13 @@ void ossl_slh_fors_pk_from_sig(SLH_DSA_CTX *ctx, const uint8_t *sig,
             if ((id & 1) == 0) {
                 node_id >>= 1;
                 set_tree_index(adrs, node_id);
-                H(hctx, pk_seed, adrs, node, sig, node);
+                if (!H(hctx, pk_seed, adrs, node, sig, node))
+                    return 0;
             } else {
                 node_id = (node_id - 1) >> 1;
                 set_tree_index(adrs, node_id);
-                H(hctx, pk_seed, adrs, sig, node, node);
+                if (!H(hctx, pk_seed, adrs, sig, node, node))
+                    return 0;
             }
             id >>= 1;
             sig += n;
@@ -217,7 +232,7 @@ void ossl_slh_fors_pk_from_sig(SLH_DSA_CTX *ctx, const uint8_t *sig,
     adrsf->copy(pk_adrs, adrs);
     adrsf->set_type_and_clear(pk_adrs, SLH_ADRS_TYPE_FORS_ROOTS);
     adrsf->copy_keypair_address(pk_adrs, adrs);
-    hashf->T(hctx, pk_seed, pk_adrs, roots, node - roots, pk_out);
+    return hashf->T(hctx, pk_seed, pk_adrs, roots, node - roots, pk_out);
 }
 
 /**

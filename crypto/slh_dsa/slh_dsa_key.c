@@ -219,7 +219,7 @@ int ossl_slh_dsa_key_fromdata(SLH_DSA_KEY *key, const OSSL_PARAM params[],
  * @param ctx Contains SLH_DSA algorithm functions and constants.
  * @param out A SLH_DSA key containing the private key (seed and prf) and public key seed.
  *            The public root key is written to this key.
- * @returns 1 if the root key is generated.
+ * @returns 1 if the root key is generated, or 0 on error.
  */
 static int slh_dsa_compute_pk_root(SLH_DSA_CTX *ctx, SLH_DSA_KEY *out)
 {
@@ -232,9 +232,8 @@ static int slh_dsa_compute_pk_root(SLH_DSA_CTX *ctx, SLH_DSA_KEY *out)
     adrsf->zero(adrs);
     adrsf->set_layer_address(adrs, params->d - 1);
     /* Generate the ROOT public key */
-    ossl_slh_xmss_node(ctx, SLH_DSA_SK_SEED(out), 0, params->hm,
-                       SLH_DSA_PK_SEED(out), adrs, SLH_DSA_PK_ROOT(out));
-    return 1;
+    return ossl_slh_xmss_node(ctx, SLH_DSA_SK_SEED(out), 0, params->hm,
+                              SLH_DSA_PK_SEED(out), adrs, SLH_DSA_PK_ROOT(out));
 }
 
 /**

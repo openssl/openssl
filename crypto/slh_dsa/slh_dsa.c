@@ -82,11 +82,11 @@ static int slh_sign_internal(SLH_DSA_CTX *ctx, const SLH_DSA_KEY *priv,
 
     adrsf->zero(adrs);
     /* calculate Randomness value r, and output to the signature */
-    hashf->PRF_MSG(hctx, SLH_DSA_SK_PRF(priv), opt_rand, msg, msg_len, r);
-
-    /* generate a digest of size |params->m| bytes where m is (30..49) */
-    hashf->H_MSG(hctx, r, pk_seed, SLH_DSA_PK_ROOT(priv), msg, msg_len,
-                 m_digest);
+    if (!hashf->PRF_MSG(hctx, SLH_DSA_SK_PRF(priv), opt_rand, msg, msg_len, r)
+            /* generate a digest of size |params->m| bytes where m is (30..49) */
+            || !hashf->H_MSG(hctx, r, pk_seed, SLH_DSA_PK_ROOT(priv), msg, msg_len,
+                             m_digest))
+        return 0;
     /* Grab selected bytes from the digest to select tree and leaf id's */
     get_tree_ids(m_digest, params, &tree_id, &leaf_id);
 
@@ -96,13 +96,11 @@ static int slh_sign_internal(SLH_DSA_CTX *ctx, const SLH_DSA_KEY *priv,
 
     /* generate the FORS signature and append it to the signature */
     md = m_digest;
-    ossl_slh_fors_sign(ctx, md, sk_seed, pk_seed, adrs, sig_fors, sig_fors_len);
-    /* Calculate the FORS public key */
-    ossl_slh_fors_pk_from_sig(ctx, sig_fors, md, pk_seed, adrs, pk_fors);
-
-    ossl_slh_ht_sign(ctx, pk_fors, sk_seed, pk_seed, tree_id, leaf_id,
-                     sig_ht, sig_ht_len);
-    return 1;
+    return ossl_slh_fors_sign(ctx, md, sk_seed, pk_seed, adrs, sig_fors, sig_fors_len)
+        /* Calculate the FORS public key */
+        && ossl_slh_fors_pk_from_sig(ctx, sig_fors, md, pk_seed, adrs, pk_fors)
+        && ossl_slh_ht_sign(ctx, pk_fors, sk_seed, pk_seed, tree_id, leaf_id,
+                            sig_ht, sig_ht_len);
 }
 
 /**
@@ -155,15 +153,17 @@ static int slh_verify_internal(SLH_DSA_CTX *ctx, const SLH_DSA_KEY *pub,
     pk_seed = SLH_DSA_PK_SEED(pub);
     pk_root = SLH_DSA_PK_ROOT(pub);
 
-    hashf->H_MSG(hctx, r, pk_seed, pk_root, msg, msg_len, mdigest);
+    if (!hashf->H_MSG(hctx, r, pk_seed, pk_root, msg, msg_len, mdigest))
+        return 0;
     md = mdigest;
     get_tree_ids(mdigest, params, &tree_id, &leaf_id);
 
     adrsf->set_tree_address(adrs, tree_id);
     adrsf->set_type_and_clear(adrs, SLH_ADRS_TYPE_FORS_TREE);
     adrsf->set_keypair_address(adrs, leaf_id);
-    ossl_slh_fors_pk_from_sig(ctx, sig_fors, md, pk_seed, adrs, pk_fors);
-    return ossl_slh_ht_verify(ctx, pk_fors, sig_ht, pk_seed, tree_id, leaf_id, pk_root);
+    return ossl_slh_fors_pk_from_sig(ctx, sig_fors, md, pk_seed, adrs, pk_fors)
+        && ossl_slh_ht_verify(ctx, pk_fors, sig_ht, pk_seed,
+                              tree_id, leaf_id, pk_root);
 }
 
 /**
@@ -221,6 +221,7 @@ static uint8_t *msg_encode(const uint8_t *msg, size_t msg_len,
 
 /**
  * See FIPS 205 Section 10.2.1 Algorithm 22
+ * @returns 1 on success, or 0 on error.
  */
 int ossl_slh_dsa_sign(SLH_DSA_CTX *slh_ctx, const SLH_DSA_KEY *priv,
                       const uint8_t *msg, size_t msg_len,
@@ -246,6 +247,7 @@ int ossl_slh_dsa_sign(SLH_DSA_CTX *slh_ctx, const SLH_DSA_KEY *priv,
 
 /**
  * See FIPS 205 Section 10.3 Algorithm 24
+ * @returns 1 on success, or 0 on error.
  */
 int ossl_slh_dsa_verify(SLH_DSA_CTX *slh_ctx, const SLH_DSA_KEY *pub,
                         const uint8_t *msg, size_t msg_len,
