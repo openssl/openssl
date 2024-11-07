@@ -1858,7 +1858,7 @@ int speed_main(int argc, char **argv)
     unsigned int size_num = SIZE_NUM;
     unsigned int i, k, loopargs_len = 0, async_jobs = 0;
     unsigned int idx;
-    int keylen;
+    int keylen = 0;
     int buflen;
     size_t declen;
     BIGNUM *bn = NULL;
