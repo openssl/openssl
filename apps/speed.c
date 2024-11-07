@@ -3062,8 +3062,10 @@ int speed_main(int argc, char **argv)
                 Time_F(START);
                 count = run_benchmark(async_jobs, loopfunc, loopargs);
                 d = Time_F(STOP);
-                for (k = 0; k < loopargs_len; k++)
+                for (k = 0; k < loopargs_len; k++) {
+                    OPENSSL_clear_free(loopargs[k].key, keylen);
                     EVP_CIPHER_CTX_free(loopargs[k].ctx);
+                }
                 print_result(D_EVP, testnum, count, d);
             }
         } else if (evp_md_name != NULL) {
