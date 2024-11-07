@@ -71,7 +71,7 @@ CSP 3.x.
 
 =item SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS
 
-Disables a countermeasure against a SSL 3.0/TLS 1.0 protocol
+Disables a countermeasure against an SSL 3.0/TLS 1.0 protocol
 vulnerability affecting CBC ciphers, which cannot be handled by some
 broken SSL implementations.  This option has no effect for connections
 using other ciphers.
@@ -357,7 +357,7 @@ Disable version rollback attack detection.
 During the client key exchange, the client must send the same information
 about acceptable SSL/TLS protocol levels as during the first hello. Some
 clients violate this rule by adapting to the server's answer. (Example:
-the client sends a SSLv2 hello and accepts up to SSLv3.1=TLSv1, the server
+the client sends an SSLv2 hello and accepts up to SSLv3.1=TLSv1, the server
 only understands up to SSLv3. In this case the client must still use the
 same SSLv3.1=TLSv1 announcement. Some clients step down to SSLv3 with respect
 to the server's answer and violate the version rollback protection.)

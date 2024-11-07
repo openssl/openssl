@@ -47,7 +47,7 @@ which can support blocking mode and explicitly call SSL_set_blocking_mode().
 =head1 RETURN VALUES
 
 SSL_set_blocking_mode() returns 1 on success and 0 on failure. The function
-fails if called on a SSL object which does not represent a QUIC connection,
+fails if called on an SSL object which does not represent a QUIC connection,
 or if blocking mode cannot be used for the given connection.
 
 SSL_get_blocking_mode() returns 1 if blocking is currently enabled. It returns

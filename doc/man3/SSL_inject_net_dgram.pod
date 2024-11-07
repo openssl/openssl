@@ -33,7 +33,7 @@ given addresses.
 =head1 RETURN VALUES
 
 Returns 1 on success or 0 on failure. This function always fails if called
-on a SSL object which is not a QUIC connection SSL object.
+on an SSL object which is not a QUIC connection SSL object.
 
 =head1 SEE ALSO
 

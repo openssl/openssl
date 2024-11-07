@@ -151,7 +151,7 @@ Initial packets. It is only used temporarily.
 `SSL_new` using a QUIC method.
 
 **QCTX**: QUIC Context. This is a utility object defined within the QUIC APL
-which helps to unwrap a SSL object pointer (a QCSO or QSSO) into the relevant
+which helps to unwrap an SSL object pointer (a QCSO or QSSO) into the relevant
 structure pointers such as `QUIC_CONNECTION` or `QUIC_XSO`.
 
 **QRL:** QUIC record layer. Refers collectively to the QRX and QTX.

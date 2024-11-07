@@ -28,8 +28,8 @@ set the SSL_SENT_SHUTDOWN state.
 If a session was closed cleanly, the session object will be kept and all
 settings corresponding. This explicitly means, that e.g. the special method
 used during the session will be kept for the next handshake. So if the
-session was a TLSv1 session, a SSL client object will use a TLSv1 client
-method for the next handshake and a SSL server object will use a TLSv1
+session was a TLSv1 session, an SSL client object will use a TLSv1 client
+method for the next handshake and an SSL server object will use a TLSv1
 server method, even if TLS_*_methods were chosen on startup. This
 will might lead to connection failures (see L<SSL_new(3)>)
 for a description of the method's properties.

@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
     if (!SSL_CTX_load_verify_locations(ssl_ctx, CAfile, NULL))
         goto err;
 
-    /* Lets make a SSL structure */
+    /* Let's make an SSL structure */
     ssl = SSL_new(ssl_ctx);
     SSL_set_connect_state(ssl);
 

@@ -91,7 +91,7 @@ The fields of B<SSL_POLL_ITEM> are as follows:
 
 The resource being polled for readiness, as represented by a
 B<BIO_POLL_DESCRIPTOR>. Currently, this must be a poll descriptor of type
-B<BIO_POLL_DESCRIPTOR_TYPE_SSL>, representing a SSL object pointer, and the SSL
+B<BIO_POLL_DESCRIPTOR_TYPE_SSL>, representing an SSL object pointer, and the SSL
 object must be a QUIC connection SSL object or QUIC stream SSL object.
 
 If a B<SSL_POLL_ITEM> has a poll descriptor type of

@@ -75,7 +75,7 @@ for errors happening in the internal assistance thread. When a permanent error
 is detected the error stack entries are moved to this error stack in
 QUIC_CHANNEL.
 
-When returning to an application from a SSL_read()/SSL_write() call with
+When returning to an application from an SSL_read()/SSL_write() call with
 a permanent connection error, entries from the QUIC_CHANNEL error stack
 are copied to the thread local error stack. They are always kept on
 the QUIC_CHANNEL error stack as well for possible further calls from

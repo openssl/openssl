@@ -122,7 +122,7 @@ The following additional changes needed to be made:
 The following changes were foreseen to be necessary, but turned out to actually
 not be necessary:
 
-- The need to change code which pushes a `BIO_f_buffer()` after a SSL BIO
+- The need to change code which pushes a `BIO_f_buffer()` after an SSL BIO
   was foreseen as use of buffering on the network side is unworkable with
   QUIC. This turned out not to be necessary since we can just reject the
   BIO_push() call. The buffer should still be freed eventually when the
