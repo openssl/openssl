@@ -9,6 +9,7 @@
 
 #include <assert.h>
 #include <string.h>
+#include <openssl/crypto.h>
 #include "slh_dsa_local.h"
 
 /* k = 14, 17, 22, 33, 35 (number of trees) */
@@ -74,6 +75,7 @@ static int slh_fors_node(SLH_DSA_CTX *ctx, const uint8_t *sk_seed,
                          const uint8_t *pk_seed, SLH_ADRS adrs, uint32_t node_id,
                          uint32_t height, uint8_t *node)
 {
+    int ret = 0;
     SLH_ADRS_FUNC_DECLARE(ctx, adrsf);
     uint8_t sk[SLH_MAX_N], lnode[SLH_MAX_N], rnode[SLH_MAX_N];
     uint32_t n = ctx->params->n;
@@ -83,8 +85,9 @@ static int slh_fors_node(SLH_DSA_CTX *ctx, const uint8_t *sk_seed,
             return 0;
         adrsf->set_tree_height(adrs, 0);
         adrsf->set_tree_index(adrs, node_id);
-        if (!ctx->hash_func->F(&ctx->hash_ctx, pk_seed, adrs, sk, n, node))
-            return 0;
+        ret = ctx->hash_func->F(&ctx->hash_ctx, pk_seed, adrs, sk, n, node);
+        OPENSSL_cleanse(sk, n);
+        return ret;
     } else {
         if (!slh_fors_node(ctx, sk_seed, pk_seed, adrs, 2 * node_id, height - 1,
                            lnode)

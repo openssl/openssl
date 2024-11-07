@@ -9,6 +9,7 @@
 
 #include <assert.h>
 #include <string.h>
+#include <openssl/crypto.h>
 #include "slh_dsa_local.h"
 
 /* For the parameter sets defined there is only one w value */
@@ -128,13 +129,14 @@ int ossl_slh_wots_pk_gen(SLH_DSA_CTX *ctx,
                          const uint8_t *sk_seed, const uint8_t *pk_seed,
                          SLH_ADRS adrs, uint8_t *pk_out)
 {
+    int ret = 0;
     SLH_HASH_FUNC_DECLARE(ctx, hashf, hctx);
     SLH_ADRS_FUNC_DECLARE(ctx, adrsf);
     SLH_HASH_FN_DECLARE(hashf, PRF);
     SLH_ADRS_FN_DECLARE(adrsf, set_chain_address);
     SLH_ADRS_DECLARE(sk_adrs);
     SLH_ADRS_DECLARE(wots_pk_adrs);
-    size_t i, len;
+    size_t i, len = 0;
     size_t n = ctx->params->n;
     uint8_t tmp[SLH_WOTS_LEN_MAX * SLH_MAX_N], *ptmp = tmp;
     uint8_t sk[32];
@@ -147,11 +149,11 @@ int ossl_slh_wots_pk_gen(SLH_DSA_CTX *ctx,
     for (i = 0; i < len; ++i) {
         set_chain_address(sk_adrs, i);
         if (!PRF(hctx, pk_seed, sk_seed, sk_adrs, sk))
-            return 0;
+            goto end;
 
         set_chain_address(adrs, i);
         if (!slh_wots_chain(ctx, sk, 0, NIBBLE_MASK, pk_seed, adrs, ptmp))
-            return 0;
+            goto end;
         ptmp += n;
     }
 
@@ -159,7 +161,11 @@ int ossl_slh_wots_pk_gen(SLH_DSA_CTX *ctx,
     adrsf->copy(wots_pk_adrs, adrs);
     adrsf->set_type_and_clear(wots_pk_adrs, SLH_ADRS_TYPE_WOTS_PK);
     adrsf->copy_keypair_address(wots_pk_adrs, adrs);
-    return hashf->T(hctx, pk_seed, wots_pk_adrs, tmp, len, pk_out);
+    ret = hashf->T(hctx, pk_seed, wots_pk_adrs, tmp, len, pk_out);
+end:
+    OPENSSL_cleanse(tmp, sizeof(tmp));
+    OPENSSL_cleanse(sk, n);
+    return ret;
 }
 
 /**
@@ -182,6 +188,7 @@ int ossl_slh_wots_sign(SLH_DSA_CTX *ctx, const uint8_t *msg,
                        const uint8_t *sk_seed, const uint8_t *pk_seed,
                        SLH_ADRS adrs, uint8_t *sig, size_t sig_len)
 {
+    int ret = 0;
     SLH_HASH_FUNC_DECLARE(ctx, hashf, hctx);
     SLH_ADRS_FUNC_DECLARE(ctx, adrsf);
     SLH_HASH_FN_DECLARE(hashf, PRF);
@@ -212,16 +219,19 @@ int ossl_slh_wots_sign(SLH_DSA_CTX *ctx, const uint8_t *msg,
         set_chain_address(sk_adrs, i);
         /* compute chain i secret */
         if (!PRF(hctx, pk_seed, sk_seed, sk_adrs, sk))
-            return 0;
+            goto err;
         set_chain_address(adrs, i);
         /* compute chain i signature */
         if (!slh_wots_chain(ctx, sk, 0, msg_and_csum_nibbles[i],
                             pk_seed, adrs, psig))
-            return 0;
+            goto err;
         psig += n;
     }
     assert(sig_len == (size_t)(psig - sig));
-    return 1;
+    ret = 1;
+err:
+    OPENSSL_cleanse(sk, n);
+    return ret;
 }
 
 /**
