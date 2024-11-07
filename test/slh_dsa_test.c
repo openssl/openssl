@@ -135,18 +135,20 @@ end:
 static int slh_dsa_key_eq_test(void)
 {
     int ret = 0;
-    EVP_PKEY *key[2] = { NULL, NULL };
+    EVP_PKEY *key[3] = { NULL, NULL, NULL };
     SLH_DSA_SIG_TEST_DATA *td1 = &slh_dsa_sig_testdata[0];
+    SLH_DSA_SIG_TEST_DATA *td2 = &slh_dsa_sig_testdata[1];
 #ifndef OPENSSL_NO_EC
     EVP_PKEY *eckey = NULL;
 #endif
 
     if (!TEST_ptr(key[0] = slh_dsa_pubkey_from_data(td1->alg, td1->pub, td1->pub_len))
-            || !TEST_ptr(key[1] = slh_dsa_pubkey_from_data(td1->alg, td1->pub, td1->pub_len)))
+            || !TEST_ptr(key[1] = slh_dsa_pubkey_from_data(td1->alg, td1->pub, td1->pub_len))
+            || !TEST_ptr(key[2] = slh_dsa_pubkey_from_data(td2->alg, td2->pub, td2->pub_len)))
         goto end;
 
-    ret = TEST_int_eq(EVP_PKEY_eq(key[0], key[1]), 1);
-    if (ret == 0)
+    if (!TEST_int_eq(EVP_PKEY_eq(key[0], key[1]), 1)
+            || !TEST_int_ne(EVP_PKEY_eq(key[0], key[2]), 1))
         goto end;
 
 #ifndef OPENSSL_NO_EC
@@ -156,6 +158,7 @@ static int slh_dsa_key_eq_test(void)
     EVP_PKEY_free(eckey);
 #endif
 end:
+    EVP_PKEY_free(key[2]);
     EVP_PKEY_free(key[1]);
     EVP_PKEY_free(key[0]);
     return ret;
@@ -216,14 +219,14 @@ err:
     return ret;
 }
 
-static int slh_dsa_sign_verify_test(void)
+static int slh_dsa_sign_verify_test(int tst_id)
 {
     int ret = 0;
-    SLH_DSA_SIG_TEST_DATA *td = &slh_dsa_sig_testdata[0];
+    SLH_DSA_SIG_TEST_DATA *td = &slh_dsa_sig_testdata[tst_id];
     EVP_PKEY_CTX *sctx = NULL;
     EVP_PKEY *pkey = NULL;
     EVP_SIGNATURE *sig_alg = NULL;
-    OSSL_PARAM params[3], *p = params;
+    OSSL_PARAM params[4], *p = params;
     uint8_t sig[64 * 1024];
     size_t sig_len = sizeof(sig);
     uint8_t digest[32];
@@ -232,6 +235,10 @@ static int slh_dsa_sign_verify_test(void)
 
     *p++ = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_DETERMINISTIC, &deterministic);
     *p++ = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_MESSAGE_ENCODING, &encode);
+    if (td->add_random != NULL)
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_SIGNATURE_PARAM_ADD_RANDOM,
+                                                 (char *)td->add_random,
+                                                 td->add_random_len);
     *p = OSSL_PARAM_construct_end();
 
     /*
@@ -266,16 +273,18 @@ err:
     return ret;
 }
 
-static int slh_dsa_keygen_test(void)
+static int slh_dsa_keygen_test(int tst_id)
 {
     int ret = 0;
-    const SLH_DSA_KEYGEN_TEST_DATA *tst = &slh_dsa_keygen_testdata[0];
+    const SLH_DSA_KEYGEN_TEST_DATA *tst = &slh_dsa_keygen_testdata[tst_id];
     EVP_PKEY *pkey = NULL;
     uint8_t priv[32 * 2], pub[32 * 2];
     size_t priv_len, pub_len;
+    size_t key_len = tst->priv_len / 2;
+    size_t n = key_len / 2;
 
-    if (!TEST_true(set_entropy(tst->priv, tst->priv_len,
-                               tst->pub_seed, tst->pub_seed_len)))
+    if (!TEST_true(set_entropy(tst->priv, key_len,
+                               tst->priv + key_len, n)))
         goto err;
 
     fake_rand_set_callback(RAND_get0_private(NULL), &fake_rand_cb);
@@ -289,8 +298,10 @@ static int slh_dsa_keygen_test(void)
     if (!TEST_true(EVP_PKEY_get_octet_string_param(pkey, OSSL_PKEY_PARAM_PUB_KEY,
                                                    pub, sizeof(pub), &pub_len)))
         goto err;
-    if (!TEST_size_t_eq(priv_len, tst->priv_len)
-            || !TEST_size_t_eq(pub_len, tst->priv_len))
+    if (!TEST_size_t_eq(priv_len, key_len)
+            || !TEST_size_t_eq(pub_len, key_len))
+        goto err;
+    if (!TEST_mem_eq(pub, pub_len, tst->priv + key_len, key_len))
         goto err;
     ret = 1;
 err:
@@ -311,9 +322,11 @@ static int slh_dsa_pub_root_from_data_test(void)
     size_t priv_len = 0, pub_len = 0;
     EVP_PKEY *pkey = NULL;
     const SLH_DSA_KEYGEN_TEST_DATA *tst = &slh_dsa_keygen_testdata[0];
+    size_t key_len = tst->priv_len / 2;
+    size_t n = key_len / 2;
 
-    if (!slh_dsa_create_keypair(&pkey, tst->name, tst->priv, tst->priv_len,
-                                tst->pub_seed, tst->pub_seed_len))
+    if (!slh_dsa_create_keypair(&pkey, tst->name, tst->priv, key_len,
+                                tst->priv + key_len, n))
         goto err;
 
     if (!TEST_true(EVP_PKEY_get_octet_string_param(pkey, OSSL_PKEY_PARAM_PRIV_KEY,
@@ -322,7 +335,7 @@ static int slh_dsa_pub_root_from_data_test(void)
     if (!TEST_true(EVP_PKEY_get_octet_string_param(pkey, OSSL_PKEY_PARAM_PUB_KEY,
                                                    pub, sizeof(pub), &pub_len)))
         goto err;
-    if (!TEST_mem_eq(pub, pub_len, tst->pub_expected, tst->pub_expected_len))
+    if (!TEST_mem_eq(pub, pub_len, tst->priv + key_len, key_len))
         goto err;
     ret = 1;
 err:
@@ -340,8 +353,8 @@ int setup_tests(void)
     ADD_TEST(slh_dsa_bad_pub_len_test);
     ADD_TEST(slh_dsa_key_validate_test);
     ADD_TEST(slh_dsa_key_eq_test);
-    ADD_TEST(slh_dsa_sign_verify_test);
-    ADD_TEST(slh_dsa_keygen_test);
+    ADD_ALL_TESTS(slh_dsa_sign_verify_test, OSSL_NELEM(slh_dsa_sig_testdata));
+    ADD_ALL_TESTS(slh_dsa_keygen_test, OSSL_NELEM(slh_dsa_keygen_testdata));
     ADD_TEST(slh_dsa_pub_root_from_data_test);
     return 1;
 }

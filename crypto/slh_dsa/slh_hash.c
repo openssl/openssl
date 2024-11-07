@@ -32,6 +32,13 @@ static OSSL_SLH_HASHFUNC_F slh_f_sha2;
 static OSSL_SLH_HASHFUNC_H slh_h_sha2;
 static OSSL_SLH_HASHFUNC_T slh_t_sha2;
 
+static OSSL_SLH_HASHFUNC_H_MSG slh_hmsg_shake;
+static OSSL_SLH_HASHFUNC_PRF slh_prf_shake;
+static OSSL_SLH_HASHFUNC_PRF_MSG slh_prf_msg_shake;
+static OSSL_SLH_HASHFUNC_F slh_f_shake;
+static OSSL_SLH_HASHFUNC_H slh_h_shake;
+static OSSL_SLH_HASHFUNC_T slh_t_shake;
+
 static EVP_MAC_CTX *hmac_ctx_new(OSSL_LIB_CTX *lib_ctx, const char *propq)
 {
     EVP_MAC_CTX *mctx = NULL;
@@ -119,6 +126,92 @@ void ossl_slh_hash_ctx_cleanup(SLH_HASH_CTX *ctx)
     if (ctx->md_big_ctx != ctx->md_ctx)
         EVP_MD_CTX_free(ctx->md_big_ctx);
     EVP_MD_CTX_free(ctx->md_ctx);
+}
+
+static ossl_inline int xof_digest_3(EVP_MD_CTX *ctx,
+                                      const uint8_t *in1, size_t in1_len,
+                                      const uint8_t *in2, size_t in2_len,
+                                      const uint8_t *in3, size_t in3_len,
+                                      uint8_t *out, size_t out_len)
+{
+    return (EVP_DigestInit_ex2(ctx, NULL, NULL) == 1
+        && EVP_DigestUpdate(ctx, in1, in1_len) == 1
+        && EVP_DigestUpdate(ctx, in2, in2_len) == 1
+        && EVP_DigestUpdate(ctx, in3, in3_len) == 1
+        && EVP_DigestFinalXOF(ctx, out, out_len) == 1);
+}
+
+static ossl_inline int xof_digest_4(EVP_MD_CTX *ctx,
+                                      const uint8_t *in1, size_t in1_len,
+                                      const uint8_t *in2, size_t in2_len,
+                                      const uint8_t *in3, size_t in3_len,
+                                      const uint8_t *in4, size_t in4_len,
+                                      uint8_t *out, size_t out_len)
+{
+    return (EVP_DigestInit_ex2(ctx, NULL, NULL) == 1
+        && EVP_DigestUpdate(ctx, in1, in1_len) == 1
+        && EVP_DigestUpdate(ctx, in2, in2_len) == 1
+        && EVP_DigestUpdate(ctx, in3, in3_len) == 1
+        && EVP_DigestUpdate(ctx, in4, in4_len) == 1
+        && EVP_DigestFinalXOF(ctx, out, out_len) == 1);
+}
+
+/* See FIPS 205 Section 11.1 */
+static void
+slh_hmsg_shake(SLH_HASH_CTX *hctx, const uint8_t *r, const uint8_t *pk_seed,
+               const uint8_t *pk_root, const uint8_t *msg, size_t msg_len,
+               uint8_t *out)
+{
+    size_t m = hctx->m;
+    size_t n = hctx->n;
+
+    xof_digest_4(hctx->md_ctx, r, n, pk_seed, n, pk_root, n, msg, msg_len, out, m);
+}
+
+static void
+slh_prf_shake(SLH_HASH_CTX *hctx, const uint8_t *pk_seed, const uint8_t *sk_seed,
+              const SLH_ADRS adrs, uint8_t *out)
+{
+    size_t n = hctx->n;
+
+    xof_digest_3(hctx->md_ctx, pk_seed, n, adrs, SLH_ADRS_SIZE, sk_seed, n, out, n);
+}
+
+static void
+slh_prf_msg_shake(SLH_HASH_CTX *hctx, const uint8_t *sk_prf,
+                  const uint8_t *opt_rand, const uint8_t *msg, size_t msg_len,
+                  uint8_t *out)
+{
+    size_t n = hctx->n;
+
+    xof_digest_3(hctx->md_ctx, sk_prf, n, opt_rand, n, msg, msg_len, out, n);
+}
+
+static void
+slh_f_shake(SLH_HASH_CTX *hctx, const uint8_t *pk_seed, const SLH_ADRS adrs,
+            const uint8_t *m1, size_t m1_len, uint8_t *out)
+{
+    size_t n = hctx->n;
+
+    xof_digest_3(hctx->md_ctx, pk_seed, n, adrs, SLH_ADRS_SIZE, m1, m1_len, out, n);
+}
+
+static void
+slh_h_shake(SLH_HASH_CTX *hctx, const uint8_t *pk_seed, const SLH_ADRS adrs,
+            const uint8_t *m1, const uint8_t *m2, uint8_t *out)
+{
+    size_t n = hctx->n;
+
+    xof_digest_4(hctx->md_ctx, pk_seed, n, adrs, SLH_ADRS_SIZE, m1, n, m2, n, out, n);
+}
+
+static void
+slh_t_shake(SLH_HASH_CTX *hctx, const uint8_t *pk_seed, const SLH_ADRS adrs,
+            const uint8_t *ml, size_t ml_len, uint8_t *out)
+{
+    size_t n = hctx->n;
+
+    xof_digest_3(hctx->md_ctx, pk_seed, n, adrs, SLH_ADRS_SIZE, ml, ml_len, out, n);
 }
 
 static ossl_inline int
@@ -250,6 +343,14 @@ const SLH_HASH_FUNC *ossl_slh_get_hash_fn(int is_shake)
 {
     static const SLH_HASH_FUNC methods[] = {
         {
+            slh_hmsg_shake,
+            slh_prf_shake,
+            slh_prf_msg_shake,
+            slh_f_shake,
+            slh_h_shake,
+            slh_t_shake
+        },
+        {
             slh_hmsg_sha2,
             slh_prf_sha2,
             slh_prf_msg_sha2,
@@ -258,5 +359,5 @@ const SLH_HASH_FUNC *ossl_slh_get_hash_fn(int is_shake)
             slh_t_sha2
         }
     };
-    return &methods[0];
+    return &methods[is_shake ? 0 : 1];
 }

@@ -323,6 +323,17 @@ extern const OSSL_DISPATCH ossl_sm2_keymgmt_functions[];
 #endif
 #ifndef OPENSSL_NO_SLH_DSA
 extern const OSSL_DISPATCH ossl_slh_dsa_sha2_128s_keymgmt_functions[];
+extern const OSSL_DISPATCH ossl_slh_dsa_sha2_128f_keymgmt_functions[];
+extern const OSSL_DISPATCH ossl_slh_dsa_sha2_192s_keymgmt_functions[];
+extern const OSSL_DISPATCH ossl_slh_dsa_sha2_192f_keymgmt_functions[];
+extern const OSSL_DISPATCH ossl_slh_dsa_sha2_256s_keymgmt_functions[];
+extern const OSSL_DISPATCH ossl_slh_dsa_sha2_256f_keymgmt_functions[];
+extern const OSSL_DISPATCH ossl_slh_dsa_shake_128s_keymgmt_functions[];
+extern const OSSL_DISPATCH ossl_slh_dsa_shake_128f_keymgmt_functions[];
+extern const OSSL_DISPATCH ossl_slh_dsa_shake_192s_keymgmt_functions[];
+extern const OSSL_DISPATCH ossl_slh_dsa_shake_192f_keymgmt_functions[];
+extern const OSSL_DISPATCH ossl_slh_dsa_shake_256s_keymgmt_functions[];
+extern const OSSL_DISPATCH ossl_slh_dsa_shake_256f_keymgmt_functions[];
 #endif /* OPENSSL_NO_SLH_DSA */
 
 /* Key Exchange */
@@ -388,6 +399,17 @@ extern const OSSL_DISPATCH ossl_mac_legacy_cmac_signature_functions[];
 extern const OSSL_DISPATCH ossl_sm2_signature_functions[];
 #ifndef OPENSSL_NO_SLH_DSA
 extern const OSSL_DISPATCH ossl_slh_dsa_sha2_128s_signature_functions[];
+extern const OSSL_DISPATCH ossl_slh_dsa_sha2_128f_signature_functions[];
+extern const OSSL_DISPATCH ossl_slh_dsa_sha2_192s_signature_functions[];
+extern const OSSL_DISPATCH ossl_slh_dsa_sha2_192f_signature_functions[];
+extern const OSSL_DISPATCH ossl_slh_dsa_sha2_256s_signature_functions[];
+extern const OSSL_DISPATCH ossl_slh_dsa_sha2_256f_signature_functions[];
+extern const OSSL_DISPATCH ossl_slh_dsa_shake_128s_signature_functions[];
+extern const OSSL_DISPATCH ossl_slh_dsa_shake_128f_signature_functions[];
+extern const OSSL_DISPATCH ossl_slh_dsa_shake_192s_signature_functions[];
+extern const OSSL_DISPATCH ossl_slh_dsa_shake_192f_signature_functions[];
+extern const OSSL_DISPATCH ossl_slh_dsa_shake_256s_signature_functions[];
+extern const OSSL_DISPATCH ossl_slh_dsa_shake_256f_signature_functions[];
 #endif /* OPENSSL_NO_SLH_DSA */
 
 /* Asym Cipher */
