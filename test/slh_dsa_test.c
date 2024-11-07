@@ -179,10 +179,16 @@ end:
     return ret;
 }
 
-static int slh_dsa_sig_verify_test(void)
+/*
+ * Rather than having to store the full signature into a file, we just do a
+ * verify using the output of a sign. The sign test already does a Known answer
+ * test (KAT) using the digest of the signature, so this should be sufficient to
+ * run as a KAT for the verify.
+ */
+static int do_slh_dsa_verify(const SLH_DSA_SIG_TEST_DATA *td,
+                             uint8_t *sig, size_t sig_len)
 {
     int ret = 0;
-    SLH_DSA_SIG_TEST_DATA *td = &slh_dsa_sig_testdata[0];
     EVP_PKEY_CTX *vctx = NULL;
     EVP_PKEY *key = NULL;
     EVP_SIGNATURE *sig_alg = NULL;
@@ -199,7 +205,7 @@ static int slh_dsa_sig_verify_test(void)
     if (!TEST_ptr(sig_alg = EVP_SIGNATURE_fetch(libctx, td->alg, NULL)))
         goto err;
     if (!TEST_int_eq(EVP_PKEY_verify_init_ex2(vctx, sig_alg, params), 1)
-            || !TEST_int_eq(EVP_PKEY_verify(vctx, td->sig, td->sig_len,
+            || !TEST_int_eq(EVP_PKEY_verify(vctx, sig, sig_len,
                                             td->msg, td->msg_len), 1))
         goto err;
     ret = 1;
@@ -207,6 +213,56 @@ err:
     EVP_SIGNATURE_free(sig_alg);
     EVP_PKEY_free(key);
     EVP_PKEY_CTX_free(vctx);
+    return ret;
+}
+
+static int slh_dsa_sign_verify_test(void)
+{
+    int ret = 0;
+    SLH_DSA_SIG_TEST_DATA *td = &slh_dsa_sig_testdata[0];
+    EVP_PKEY_CTX *sctx = NULL;
+    EVP_PKEY *pkey = NULL;
+    EVP_SIGNATURE *sig_alg = NULL;
+    OSSL_PARAM params[3], *p = params;
+    uint8_t sig[64 * 1024];
+    size_t sig_len = sizeof(sig);
+    uint8_t digest[32];
+    size_t digest_len = sizeof(digest);
+    int encode = 0, deterministic = 1;
+
+    *p++ = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_DETERMINISTIC, &deterministic);
+    *p++ = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_MESSAGE_ENCODING, &encode);
+    *p = OSSL_PARAM_construct_end();
+
+    /*
+     * This just uses from data here, but keygen also works.
+     * The keygen path is tested via slh_dsa_keygen_test
+     */
+    if (!slh_dsa_create_keypair(&pkey, td->alg, td->priv, td->priv_len,
+                                td->pub, td->pub_len))
+        goto err;
+
+    if (!TEST_ptr(sctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, NULL)))
+        goto err;
+    if (!TEST_ptr(sig_alg = EVP_SIGNATURE_fetch(libctx, td->alg, NULL)))
+        goto err;
+    if (!TEST_int_eq(EVP_PKEY_sign_init_ex2(sctx, sig_alg, params), 1)
+            || !TEST_int_eq(EVP_PKEY_sign(sctx, sig, &sig_len,
+                                          td->msg, td->msg_len), 1))
+        goto err;
+
+    if (!TEST_int_eq(EVP_Q_digest(libctx, "SHA256", NULL, sig, sig_len,
+                                  digest, &digest_len), 1))
+        goto err;
+    if (!TEST_mem_eq(digest, digest_len, td->sig_digest, td->sig_digest_len))
+        goto err;
+    if (!do_slh_dsa_verify(td, sig, sig_len))
+        goto err;
+    ret = 1;
+err:
+    EVP_SIGNATURE_free(sig_alg);
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_CTX_free(sctx);
     return ret;
 }
 
@@ -246,7 +302,7 @@ err:
 
 /*
  * Given raw values for the private key + public key seed
- * generate the public root also when using from data.
+ * generate the public root using from data.
  */
 static int slh_dsa_pub_root_from_data_test(void)
 {
@@ -284,7 +340,7 @@ int setup_tests(void)
     ADD_TEST(slh_dsa_bad_pub_len_test);
     ADD_TEST(slh_dsa_key_validate_test);
     ADD_TEST(slh_dsa_key_eq_test);
-    ADD_TEST(slh_dsa_sig_verify_test);
+    ADD_TEST(slh_dsa_sign_verify_test);
     ADD_TEST(slh_dsa_keygen_test);
     ADD_TEST(slh_dsa_pub_root_from_data_test);
     return 1;
