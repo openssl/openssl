@@ -100,7 +100,7 @@ int OSSL_PARAM_allocate_from_text(OSSL_PARAM *to,
                                   const char *key, const char *value,
                                   size_t value_n, int *found);
 
-int OSSL_PARAM_print_to_buf(const OSSL_PARAM params[], char **buf,
+int OSSL_PARAM_print_to_bio(const OSSL_PARAM params[], BIO *bio,
                             int print_values);
 
 int OSSL_PARAM_get_int(const OSSL_PARAM *p, int *val);
