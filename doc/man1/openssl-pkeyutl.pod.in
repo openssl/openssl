@@ -81,12 +81,12 @@ The B<-digest> option implies B<-rawin> since OpenSSL 3.5.
 =item B<-digest> I<algorithm>
 
 This option can only be used with B<-sign> and B<-verify>.
-It specifies the digest algorithm which is used to hash the input data before
-signing or verifying it with the input key. This option could be omitted if the
-signature algorithm does not require preprocessing the input through a
-pluggable hash function before signing (for instance, EdDSA). If this option
+It specifies the digest algorithm that is used to hash the input data
+before signing or verifying it with the input key. This option could be omitted
+if the signature algorithm does not require preprocessing the input through
+a pluggable hash function before signing (for instance, EdDSA). If this option
 is omitted but the signature algorithm requires one and the B<-rawin> option
-is given or implied, a default value will be used (see B<-rawin> for details).
+is given, a default value will be used (see B<-rawin> for details).
 If this option is present, then the B<-rawin> option
 is implied since OpenSSL 3.5, and required in earlier versions.
 
@@ -148,8 +148,8 @@ This cannot be used in conjunction with B<-rawin>.
 =item B<-sign>
 
 Sign the input data and output the signed result. This requires a private key.
-Using a message digest operation along with this is recommended -
-see the B<-rawin> and B<-digest> options for details.
+Using a message digest operation along with this is recommended,
+when applicable, see the B<-rawin> and B<-digest> options for details.
 Otherwise, the input data given with the B<-in> option is assumed to already
 be a digest, but this may then require an additional B<-pkeyopt> C<digest:>I<md>
 in some cases (e.g., RSA with the default PKCS#1 padding mode).
@@ -172,7 +172,7 @@ Verify the input data and output the recovered data (signature payload). For
 example, in the case of RSA PKCS#1 the recovered data is the B<EMSA-PKCS-v1_5>
 DER encoding of the digest algorithm OID and value as specified in
 L<RFC8017 Section 9.2|https://datatracker.ietf.org/doc/html/rfc8017#section-9.2>.
-The input data given with the B<-in> option should be a hash value.
+The input data given with the B<-in> option must be a hash value.
 
 =item B<-encrypt>
 
