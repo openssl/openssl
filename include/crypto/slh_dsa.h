@@ -36,13 +36,17 @@ const uint8_t *ossl_slh_dsa_key_get_pub(const SLH_DSA_KEY *key);
 const uint8_t *ossl_slh_dsa_key_get_priv(const SLH_DSA_KEY *key);
 size_t ossl_slh_dsa_key_get_len(const SLH_DSA_KEY *key);
 size_t ossl_slh_dsa_key_get_n(const SLH_DSA_KEY *key);
-
 int ossl_slh_dsa_key_type_matches(SLH_DSA_CTX *ctx, const SLH_DSA_KEY *key);
 
 SLH_DSA_CTX *ossl_slh_dsa_ctx_new(const char *alg,
                                   OSSL_LIB_CTX *lib_ctx, const char *propq);
 void ossl_slh_dsa_ctx_free(SLH_DSA_CTX *ctx);
 
+int ossl_slh_dsa_sign(SLH_DSA_CTX *slh_ctx, const SLH_DSA_KEY *priv,
+                      const uint8_t *msg, size_t msg_len,
+                      const uint8_t *ctx, size_t ctx_len,
+                      const uint8_t *add_rand, int encode,
+                      unsigned char *sig, size_t *siglen, size_t sigsize);
 int ossl_slh_dsa_verify(SLH_DSA_CTX *slh_ctx, const SLH_DSA_KEY *pub,
                         const uint8_t *msg, size_t msg_len,
                         const uint8_t *ctx, size_t ctx_len, int encode,

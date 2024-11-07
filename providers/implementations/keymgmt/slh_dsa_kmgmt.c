@@ -219,6 +219,7 @@ static void slh_dsa_gen_cleanup(void *genctx)
 
 #define MAKE_KEYMGMT_FUNCTIONS(alg, fn)                                        \
 static OSSL_FUNC_keymgmt_new_fn slh_dsa_##fn##_new_key;                        \
+static OSSL_FUNC_keymgmt_gen_fn slh_dsa_##fn##_gen;                            \
 static void *slh_dsa_##fn##_new_key(void *provctx)                             \
 {                                                                              \
     return slh_dsa_new_key(provctx, alg);                                      \
