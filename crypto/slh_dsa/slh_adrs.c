@@ -34,8 +34,21 @@
 #define SLH_ADRSC_SIZE_TYPECLEAR    SLH_ADRS_SIZE_TYPECLEAR
 #define SLH_ADRSC_SIZE_KEYPAIR_ADDR SLH_ADRS_SIZE_KEYPAIR_ADDR
 
+#define slh_adrs_set_tree_height slh_adrs_set_chain_address
+#define slh_adrs_set_tree_index slh_adrs_set_hash_address
+
 #define slh_adrsc_set_tree_height slh_adrsc_set_chain_address
 #define slh_adrsc_set_tree_index slh_adrsc_set_hash_address
+
+static OSSL_SLH_ADRS_FUNC_set_layer_address slh_adrs_set_layer_address;
+static OSSL_SLH_ADRS_FUNC_set_tree_address slh_adrs_set_tree_address;
+static OSSL_SLH_ADRS_FUNC_set_type_and_clear slh_adrs_set_type_and_clear;
+static OSSL_SLH_ADRS_FUNC_set_keypair_address slh_adrs_set_keypair_address;
+static OSSL_SLH_ADRS_FUNC_copy_keypair_address slh_adrs_copy_keypair_address;
+static OSSL_SLH_ADRS_FUNC_set_chain_address slh_adrs_set_chain_address;
+static OSSL_SLH_ADRS_FUNC_set_hash_address slh_adrs_set_hash_address;
+static OSSL_SLH_ADRS_FUNC_zero slh_adrs_zero;
+static OSSL_SLH_ADRS_FUNC_copy slh_adrs_copy;
 
 static OSSL_SLH_ADRS_FUNC_set_layer_address slh_adrsc_set_layer_address;
 static OSSL_SLH_ADRS_FUNC_set_tree_address slh_adrsc_set_tree_address;
@@ -69,6 +82,55 @@ static ossl_inline void U64TOSTR(unsigned char *out, uint64_t in)
     out[2] = (unsigned char)((in >> 40) & 0xff);
     out[1] = (unsigned char)((in >> 48) & 0xff);
     out[0] = (unsigned char)((in >> 56) & 0xff);
+}
+
+/*
+ * The non compressed versions of the ADRS functions use 32 bytes
+ * This is only used by SHAKE.
+ */
+static void slh_adrs_set_layer_address(SLH_ADRS adrs, uint32_t layer)
+{
+    U32TOSTR(adrs + SLH_ADRS_OFF_LAYER_ADR, layer);
+}
+static void slh_adrs_set_tree_address(SLH_ADRS adrs, uint64_t address)
+{
+    /*
+     * There are 12 bytes reserved for this - but the largest number
+     * used by the parameter sets is only 64 bits. Because this is BE the
+     * first 4 of the 12 bytes will be zeros. This assumes that the 4 bytes
+     * are zero initially.
+     */
+    U64TOSTR(adrs + SLH_ADRS_OFF_TREE_ADR + 4, address);
+}
+static void slh_adrs_set_type_and_clear(SLH_ADRS adrs, uint32_t type)
+{
+    U32TOSTR(adrs + SLH_ADRS_OFF_TYPE, type);
+    memset(adrs + SLH_ADRS_OFF_TYPE + SLH_ADRS_SIZE_TYPE, 0, SLH_ADRS_SIZE_TYPECLEAR);
+}
+static void slh_adrs_set_keypair_address(SLH_ADRS adrs, uint32_t in)
+{
+    U32TOSTR(adrs + SLH_ADRS_OFF_KEYPAIR_ADDR, in);
+}
+static void slh_adrs_copy_keypair_address(SLH_ADRS dst, const SLH_ADRS src)
+{
+    memcpy(dst + SLH_ADRS_OFF_KEYPAIR_ADDR, src + SLH_ADRS_OFF_KEYPAIR_ADDR,
+           SLH_ADRS_SIZE_KEYPAIR_ADDR);
+}
+static void slh_adrs_set_chain_address(SLH_ADRS adrs, uint32_t in)
+{
+    U32TOSTR(adrs + SLH_ADRS_OFF_CHAIN_ADDR, in);
+}
+static void slh_adrs_set_hash_address(SLH_ADRS adrs, uint32_t in)
+{
+    U32TOSTR(adrs + SLH_ADRS_OFF_HASH_ADDR, in);
+}
+static void slh_adrs_zero(SLH_ADRS adrs)
+{
+    memset(adrs, 0, SLH_ADRS_SIZE);
+}
+static void slh_adrs_copy(SLH_ADRS dst, const SLH_ADRS src)
+{
+    memcpy(dst, src, SLH_ADRS_SIZE);
 }
 
 /* Compressed versions of ADRS functions See Table 3 */
@@ -115,6 +177,19 @@ const SLH_ADRS_FUNC *ossl_slh_get_adrs_fn(int is_compressed)
 {
     static const SLH_ADRS_FUNC methods[] = {
         {
+            slh_adrs_set_layer_address,
+            slh_adrs_set_tree_address,
+            slh_adrs_set_type_and_clear,
+            slh_adrs_set_keypair_address,
+            slh_adrs_copy_keypair_address,
+            slh_adrs_set_chain_address,
+            slh_adrs_set_tree_height,
+            slh_adrs_set_hash_address,
+            slh_adrs_set_tree_index,
+            slh_adrs_zero,
+            slh_adrs_copy,
+        },
+        {
             slh_adrsc_set_layer_address,
             slh_adrsc_set_tree_address,
             slh_adrsc_set_type_and_clear,
@@ -128,5 +203,5 @@ const SLH_ADRS_FUNC *ossl_slh_get_adrs_fn(int is_compressed)
             slh_adrsc_copy,
         }
     };
-    return &methods[0];
+    return &methods[is_compressed == 0 ? 0 : 1];
 }
