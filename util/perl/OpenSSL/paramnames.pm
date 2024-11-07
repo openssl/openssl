@@ -431,6 +431,9 @@ my %params = (
     'PKEY_PARAM_FIPS_SIGN_CHECK' =>            "sign-check",
     'PKEY_PARAM_FIPS_APPROVED_INDICATOR' => '*ALG_PARAM_FIPS_APPROVED_INDICATOR',
 
+# SLH_DSA Key generation parameters
+    'PKEY_PARAM_SLH_DSA_ENTROPY' =>         "entropy",
+    
 # SLH_DSA parameters
     'PKEY_PARAM_SLH_DSA_PUB_SEED' => "pk-seed",
 
@@ -471,7 +474,7 @@ my %params = (
     'SIGNATURE_PARAM_SIGNATURE' =>          "signature",
     'SIGNATURE_PARAM_MESSAGE_ENCODING' =>   "message-encoding",
     'SIGNATURE_PARAM_DETERMINISTIC' =>      "deterministic",
-    'SIGNATURE_PARAM_ADD_RANDOM' =>         "additional-random",
+    'SIGNATURE_PARAM_ADD_RANDOM' =>         "additional-random",   
 
 # Asym cipher parameters
     'ASYM_CIPHER_PARAM_DIGEST' =>                   '*PKEY_PARAM_DIGEST',
