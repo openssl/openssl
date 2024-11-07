@@ -89,10 +89,11 @@ static ossl_inline void compute_checksum_nibbles(const uint8_t *in, size_t in_le
  * @param adrs An ADRS object which has a type of WOTS_HASH, and has a layer
  *             address, tree address, key pair address and chain address
  * @param pk_seed A public key seed (which is added to the hash)
+ * @returns 1 on success, or 0 on error.
  */
-static void slh_wots_chain(SLH_DSA_CTX *ctx, const uint8_t *in,
-                           uint8_t start_index, uint8_t steps,
-                           const uint8_t *pk_seed, uint8_t *adrs, uint8_t *out)
+static int slh_wots_chain(SLH_DSA_CTX *ctx, const uint8_t *in,
+                          uint8_t start_index, uint8_t steps,
+                          const uint8_t *pk_seed, uint8_t *adrs, uint8_t *out)
 {
     SLH_HASH_FUNC_DECLARE(ctx, hashf, hctx);
     SLH_ADRS_FUNC_DECLARE(ctx, adrsf);
@@ -105,8 +106,10 @@ static void slh_wots_chain(SLH_DSA_CTX *ctx, const uint8_t *in,
 
     for (j = start_index; j < end_index; ++j) {
         set_hash_address(adrs, j);
-        F(hctx, pk_seed, adrs, out, n, out);
+        if (!F(hctx, pk_seed, adrs, out, n, out))
+            return 0;
     }
+    return 1;
 }
 
 /**
@@ -119,10 +122,11 @@ static void slh_wots_chain(SLH_DSA_CTX *ctx, const uint8_t *in,
  * @param adrs An ADRS object containing the layer address, tree address and
  *             keypair address of the WOTS+ public key to generate.
  * @param pk_out The generated public key of size |n|
+ * @returns 1 on success, or 0 on error.
  */
-void ossl_slh_wots_pk_gen(SLH_DSA_CTX *ctx,
-                          const uint8_t *sk_seed, const uint8_t *pk_seed,
-                          SLH_ADRS adrs, uint8_t *pk_out)
+int ossl_slh_wots_pk_gen(SLH_DSA_CTX *ctx,
+                         const uint8_t *sk_seed, const uint8_t *pk_seed,
+                         SLH_ADRS adrs, uint8_t *pk_out)
 {
     SLH_HASH_FUNC_DECLARE(ctx, hashf, hctx);
     SLH_ADRS_FUNC_DECLARE(ctx, adrsf);
@@ -142,10 +146,12 @@ void ossl_slh_wots_pk_gen(SLH_DSA_CTX *ctx,
     len = SLH_WOTS_LEN(n); /* See Section 5 intro */
     for (i = 0; i < len; ++i) {
         set_chain_address(sk_adrs, i);
-        PRF(hctx, pk_seed, sk_seed, sk_adrs, sk);
+        if (!PRF(hctx, pk_seed, sk_seed, sk_adrs, sk))
+            return 0;
 
         set_chain_address(adrs, i);
-        slh_wots_chain(ctx, sk, 0, NIBBLE_MASK, pk_seed, adrs, ptmp);
+        if (!slh_wots_chain(ctx, sk, 0, NIBBLE_MASK, pk_seed, adrs, ptmp))
+            return 0;
         ptmp += n;
     }
 
@@ -153,7 +159,7 @@ void ossl_slh_wots_pk_gen(SLH_DSA_CTX *ctx,
     adrsf->copy(wots_pk_adrs, adrs);
     adrsf->set_type_and_clear(wots_pk_adrs, SLH_ADRS_TYPE_WOTS_PK);
     adrsf->copy_keypair_address(wots_pk_adrs, adrs);
-    hashf->T(hctx, pk_seed, wots_pk_adrs, tmp, len, pk_out);
+    return hashf->T(hctx, pk_seed, wots_pk_adrs, tmp, len, pk_out);
 }
 
 /**
@@ -170,10 +176,11 @@ void ossl_slh_wots_pk_gen(SLH_DSA_CTX *ctx,
  * @param sig The returned signature.
  * @param sig_len The size of |sig| which should be len * |n| bytes.
  *                (where len = 2 * |n| + 3)
+ * @returns 1 on success, or 0 on error.
  */
-void ossl_slh_wots_sign(SLH_DSA_CTX *ctx, const uint8_t *msg,
-                        const uint8_t *sk_seed, const uint8_t *pk_seed,
-                        SLH_ADRS adrs, uint8_t *sig, size_t sig_len)
+int ossl_slh_wots_sign(SLH_DSA_CTX *ctx, const uint8_t *msg,
+                       const uint8_t *sk_seed, const uint8_t *pk_seed,
+                       SLH_ADRS adrs, uint8_t *sig, size_t sig_len)
 {
     SLH_HASH_FUNC_DECLARE(ctx, hashf, hctx);
     SLH_ADRS_FUNC_DECLARE(ctx, adrsf);
@@ -204,13 +211,17 @@ void ossl_slh_wots_sign(SLH_DSA_CTX *ctx, const uint8_t *msg,
     for (i = 0; i < len; ++i) {
         set_chain_address(sk_adrs, i);
         /* compute chain i secret */
-        PRF(hctx, pk_seed, sk_seed, sk_adrs, sk);
+        if (!PRF(hctx, pk_seed, sk_seed, sk_adrs, sk))
+            return 0;
         set_chain_address(adrs, i);
         /* compute chain i signature */
-        slh_wots_chain(ctx, sk, 0, msg_and_csum_nibbles[i], pk_seed, adrs, psig);
+        if (!slh_wots_chain(ctx, sk, 0, msg_and_csum_nibbles[i],
+                            pk_seed, adrs, psig))
+            return 0;
         psig += n;
     }
     assert(sig_len == (size_t)(psig - sig));
+    return 1;
 }
 
 /**
@@ -224,11 +235,12 @@ void ossl_slh_wots_sign(SLH_DSA_CTX *ctx, const uint8_t *msg,
  * @param adrs An ADRS object containing the layer address, tree address and
  *             key pair address that of the WOTS+ key used to sign the message.
  * @param pk_out The returned public key candidate of size |n|
+ * @returns 1 on success, or 0 on error.
  */
-void ossl_slh_wots_pk_from_sig(SLH_DSA_CTX *ctx,
-                               const uint8_t *sig, const uint8_t *msg,
-                               const uint8_t *pk_seed, uint8_t *adrs,
-                               uint8_t *pk_out)
+int ossl_slh_wots_pk_from_sig(SLH_DSA_CTX *ctx,
+                              const uint8_t *sig, const uint8_t *msg,
+                              const uint8_t *pk_seed, uint8_t *adrs,
+                              uint8_t *pk_out)
 {
     SLH_HASH_FUNC_DECLARE(ctx, hashf, hctx);
     SLH_ADRS_FUNC_DECLARE(ctx, adrsf);
@@ -247,9 +259,10 @@ void ossl_slh_wots_pk_from_sig(SLH_DSA_CTX *ctx,
     /* Compute the end nodes for each of the chains */
     for (i = 0; i < len; ++i) {
         set_chain_address(adrs, i);
-        slh_wots_chain(ctx, sig, msg_and_csum_nibbles[i],
-                       NIBBLE_MASK - msg_and_csum_nibbles[i],
-                       pk_seed, adrs, ptmp);
+        if (!slh_wots_chain(ctx, sig, msg_and_csum_nibbles[i],
+                            NIBBLE_MASK - msg_and_csum_nibbles[i],
+                            pk_seed, adrs, ptmp))
+            return 0;
         sig += n;
         ptmp += n;
     }
@@ -257,5 +270,5 @@ void ossl_slh_wots_pk_from_sig(SLH_DSA_CTX *ctx,
     adrsf->copy(wots_pk_adrs, adrs);
     adrsf->set_type_and_clear(wots_pk_adrs, SLH_ADRS_TYPE_WOTS_PK);
     adrsf->copy_keypair_address(wots_pk_adrs, adrs);
-    hashf->T(hctx, pk_seed, wots_pk_adrs, tmp, ptmp - tmp, pk_out);
+    return hashf->T(hctx, pk_seed, wots_pk_adrs, tmp, ptmp - tmp, pk_out);
 }
