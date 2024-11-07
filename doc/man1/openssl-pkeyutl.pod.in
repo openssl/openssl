@@ -104,7 +104,7 @@ Specifies the output filename to write the secret to on I<-encap>.
 
 =item B<-sigfile> I<file>
 
-Signature file, required for B<-verify> operations only
+Signature file, required and allowed for B<-verify> operations only
 
 =item B<-inkey> I<filename>|I<uri>
 
@@ -168,11 +168,16 @@ from the signature or take a default value, it should also be specified.
 
 =item B<-verifyrecover>
 
-Verify the input data and output the recovered data (signature payload). For
-example, in the case of RSA PKCS#1 the recovered data is the B<EMSA-PKCS-v1_5>
+Verify the given signature and output the recovered data (signature payload).
+For example, in case of RSA PKCS#1 the recovered data is the B<EMSA-PKCS-v1_5>
 DER encoding of the digest algorithm OID and value as specified in
 L<RFC8017 Section 9.2|https://datatracker.ietf.org/doc/html/rfc8017#section-9.2>.
-The input data given with the B<-in> option is assumed to be a hash value.
+
+Note that here the input given with the B<-in> option is not a signature input
+(as with the B<-sign> and B<-verify> options) but a signature output value,
+typically produced using the B<-sign> option.
+
+This option is available only for use with RSA keys.
 
 =item B<-encrypt>
 
@@ -241,8 +246,9 @@ hex dump the output data.
 
 =item B<-asn1parse>
 
-Parse the ASN.1 output data, this is useful when combined with the
-B<-verifyrecover> option when an ASN1 structure is signed.
+Parse the ASN.1 output data to check its DER encoding and print any errors.
+When combined with the B<-verifyrecover> option, this may be useful only in case
+an ASN.1 DER-encoded structure had been signed directly (without hashing it).
 
 {- $OpenSSL::safe::opt_engine_item -}
 
@@ -266,8 +272,8 @@ engine I<id> for crypto operations.
 The operations and options supported vary according to the key algorithm
 and its implementation. The OpenSSL operations and options are indicated below.
 
-Unless otherwise mentioned all algorithms support the B<digest:>I<alg> option
-which specifies the digest in use for sign, verify and verifyrecover operations.
+Unless otherwise mentioned, all algorithms support the B<digest:>I<alg> option,
+which specifies the digest in use for the signing and verification operations.
 The value I<alg> should represent a digest name as used in the
 EVP_get_digestbyname() function for example B<sha1>. This value is not used to
 hash the input data. It is used (by some algorithms) for sanity-checking the
