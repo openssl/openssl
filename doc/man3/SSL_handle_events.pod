@@ -12,7 +12,7 @@ SSL_handle_events - advance asynchronous state machine and perform network I/O
 
 =head1 DESCRIPTION
 
-SSL_handle_events() performs any internal processing which is due on a SSL object. The
+SSL_handle_events() performs any internal processing which is due on an SSL object. The
 exact operations performed by SSL_handle_events() vary depending on what kind of protocol
 is being used with the given SSL object. For example, SSL_handle_events() may handle
 timeout events which have become due, or may attempt, to the extent currently

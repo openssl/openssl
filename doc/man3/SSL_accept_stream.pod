@@ -52,11 +52,11 @@ functionality.
 
 SSL_accept_stream() returns a newly allocated QUIC stream SSL object, or NULL if
 no new incoming streams are available, or if the connection has been terminated,
-or if called on a SSL object other than a QUIC connection SSL object.
+or if called on an SSL object other than a QUIC connection SSL object.
 L<SSL_get_error(3)> can be used to obtain further information in this case.
 
 SSL_get_accept_stream_queue_len() returns the number of incoming streams
-currently waiting in the accept queue, or 0 if called on a SSL object other than
+currently waiting in the accept queue, or 0 if called on an SSL object other than
 a QUIC connection SSL object.
 
 =head1 SEE ALSO

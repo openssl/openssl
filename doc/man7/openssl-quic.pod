@@ -598,7 +598,7 @@ Gets the QUIC connection SSL object from a QUIC stream SSL object.
 
 =item L<SSL_is_connection(3)>
 
-Returns 1 if a SSL object is not a QUIC stream SSL object.
+Returns 1 if an SSL object is not a QUIC stream SSL object.
 
 =item L<SSL_get_stream_type(3)>
 

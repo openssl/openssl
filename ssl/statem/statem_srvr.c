@@ -1532,7 +1532,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL_CONNECTION *s, PACKET *pkt)
             || mt != SSL2_MT_CLIENT_HELLO) {
             /*
              * Should never happen. We should have tested this in the record
-             * layer in order to have determined that this is a SSLv2 record
+             * layer in order to have determined that this is an SSLv2 record
              * in the first place
              */
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);

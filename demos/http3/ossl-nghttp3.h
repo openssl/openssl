@@ -57,7 +57,7 @@ OSSL_DEMO_H3_CONN *OSSL_DEMO_H3_CONN_new_for_conn(BIO *qconn_bio,
  * underlying QUIC connection SSL object is owned by the OSSL_DEMO_H3_CONN and
  * can be subsequently retrieved using OSSL_DEMO_H3_CONN_get0_connection.
  *
- * Returns NULL on failure. ctx must be a SSL_CTX using a QUIC client
+ * Returns NULL on failure. ctx must be an SSL_CTX using a QUIC client
  * SSL_METHOD.
  */
 OSSL_DEMO_H3_CONN *OSSL_DEMO_H3_CONN_new_for_addr(SSL_CTX *ctx,

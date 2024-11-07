@@ -24,7 +24,7 @@ SSL_VALUE_STREAM_WRITE_BUF_USED,
 SSL_get_stream_write_buf_used,
 SSL_VALUE_STREAM_WRITE_BUF_AVAIL,
 SSL_get_stream_write_buf_avail -
-manage negotiable features and configuration values for a SSL object
+manage negotiable features and configuration values for an SSL object
 
 =head1 SYNOPSIS
 

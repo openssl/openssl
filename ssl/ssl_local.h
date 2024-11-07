@@ -820,7 +820,7 @@ struct ssl_ctx_st {
     /*
      * If this callback is not null, it will be called each time a session id
      * is added to the cache.  If this function returns 1, it means that the
-     * callback will do a SSL_SESSION_free() when it has finished using it.
+     * callback will do an SSL_SESSION_free() when it has finished using it.
      * Otherwise, on 0, it means the callback has finished with it. If
      * remove_session_cb is not null, it will be called when a session-id is
      * removed from the cache.  After the call, OpenSSL will

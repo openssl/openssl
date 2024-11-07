@@ -69,7 +69,7 @@ shutdown process was first initiated by the local application or by the peer.
 
 =head2 Locally-Initiated Shutdown
 
-Calling SSL_shutdown() on a SSL/TLS or DTLS SSL object initiates the shutdown
+Calling SSL_shutdown() on an SSL/TLS or DTLS SSL object initiates the shutdown
 process and causes OpenSSL to try to send a close_notify shutdown alert to the
 peer. The shutdown process will then be considered completed once the peer
 responds in turn with a close_notify shutdown alert message.
@@ -204,7 +204,7 @@ which indicates unambiguously when all data has been sent.
 
 =head2 Session Ticket Handling
 
-If a client application only writes to a SSL/TLS or DTLS connection and never
+If a client application only writes to an SSL/TLS or DTLS connection and never
 reads, OpenSSL may never process new SSL/TLS session tickets sent by the server.
 This is because OpenSSL ordinarily processes handshake messages received from a
 peer during calls to L<SSL_read(3)> by the application.

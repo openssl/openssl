@@ -36,7 +36,7 @@ has no effect if called on a QUIC SSL object.
 
 =head1 NOTES
 
-Normally when a SSL connection is finished, the parties must send out
+Normally when an SSL connection is finished, the parties must send out
 close_notify alert messages using L<SSL_shutdown(3)>
 for a clean shutdown.
 
