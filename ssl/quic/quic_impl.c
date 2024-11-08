@@ -2478,13 +2478,15 @@ static int quic_validate_for_write(QUIC_XSO *xso, int *err)
         /* FALLTHROUGH */
     case QUIC_SSTREAM_STATE_SEND:
     case QUIC_SSTREAM_STATE_DATA_SENT:
-    case QUIC_SSTREAM_STATE_DATA_RECVD:
         if (ossl_quic_sstream_get_final_size(xso->stream->sstream, NULL)) {
             *err = SSL_R_STREAM_FINISHED;
             return 0;
         }
-
         return 1;
+
+    case QUIC_SSTREAM_STATE_DATA_RECVD:
+        *err = SSL_R_STREAM_FINISHED;
+        return 0;
 
     case QUIC_SSTREAM_STATE_RESET_SENT:
     case QUIC_SSTREAM_STATE_RESET_RECVD:
