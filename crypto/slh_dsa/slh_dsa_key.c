@@ -137,9 +137,8 @@ int ossl_slh_dsa_key_fromdata(SLH_DSA_KEY *key, const OSSL_PARAM params[],
                               int include_private)
 {
     size_t n, key_len, len = 0;
-    const OSSL_PARAM *param_priv = NULL, *param_pub, *param_pk_seed = NULL;
+    const OSSL_PARAM *param_priv = NULL, *param_pub = NULL;
     void *p;
-    SLH_DSA_CTX *dsa_ctx = NULL;
 
     if (key == NULL)
         return 0;
@@ -158,24 +157,20 @@ int ossl_slh_dsa_key_fromdata(SLH_DSA_KEY *key, const OSSL_PARAM params[],
     /*
      * There must always be a public key, since the private key cannot exist
      * without the public key elements.
-     * If there is only the public seed then the private key MUST be present in
-     * order to compute the pk_root element.
      */
     param_pub = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PUB_KEY);
-    if (param_pub == NULL) {
-        param_pk_seed = OSSL_PARAM_locate_const(params,
-                                                OSSL_PKEY_PARAM_SLH_DSA_PUB_SEED);
-        if (param_pk_seed == NULL || param_priv == NULL)
-            return 0;
-    }
+    if (param_pub == NULL)
+        return 0;
 
-    if (param_pub != NULL) {
-        p = key->pub;
-        if (!OSSL_PARAM_get_octet_string(param_pub, &p, key_len, &len))
-            return 0;
-        if (len != key_len)
-            return 0;
-    }
+    p = key->pub;
+    if (!OSSL_PARAM_get_octet_string(param_pub, &p, key_len, &len))
+        return 0;
+    /*
+     * This does not allow you to pass in just the PK SEED, this can be done
+     * via key generation
+     */
+    if (len != key_len)
+        return 0;
     if (param_priv != NULL) {
         p = key->priv;
         if (!OSSL_PARAM_get_octet_string(param_priv, &p, key_len, &len))
@@ -185,29 +180,11 @@ int ossl_slh_dsa_key_fromdata(SLH_DSA_KEY *key, const OSSL_PARAM params[],
             goto err;
         key->has_priv = 1;
     }
-    if (param_pk_seed != NULL) {
-        /*
-         * In this case we need to generate the pk_root
-         * which requires both the private key element(s) and the public key seed.
-         */
-        p = SLH_DSA_PK_SEED(key);
-        if (!OSSL_PARAM_get_octet_string(param_pk_seed, &p, n, &len))
-            goto err;
-        if (len != n)
-            goto err;
-        /* Compute the pk_root element */
-        dsa_ctx = ossl_slh_dsa_ctx_new(key->params->alg, key->libctx, key->propq);
-        if (dsa_ctx == NULL
-                || !slh_dsa_compute_pk_root(dsa_ctx, key))
-            goto err;
-        ossl_slh_dsa_ctx_free(dsa_ctx);
-    }
     key->key_len = key_len; /* This indicates the public key is present */
     return 1;
  err:
     key->key_len = 0;
     key->has_priv = 0;
-    ossl_slh_dsa_ctx_free(dsa_ctx);
     OPENSSL_cleanse(key->priv, key_len);
     return 0;
 }
@@ -323,4 +300,9 @@ size_t ossl_slh_dsa_key_get_len(const SLH_DSA_KEY *key)
 size_t ossl_slh_dsa_key_get_n(const SLH_DSA_KEY *key)
 {
     return key->params->n;
+}
+
+size_t ossl_slh_dsa_key_get_sig_len(const SLH_DSA_KEY *key)
+{
+    return key->params->sig_len;
 }

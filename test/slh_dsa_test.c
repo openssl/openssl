@@ -59,9 +59,6 @@ static int slh_dsa_create_keypair(EVP_PKEY **pkey, const char *name,
     OSSL_PARAM *params = NULL;
     const char *pub_name = OSSL_PKEY_PARAM_PUB_KEY;
 
-    if (pub_len != priv_len)
-        pub_name = OSSL_PKEY_PARAM_SLH_DSA_PUB_SEED;
-
     if (!TEST_ptr(bld = OSSL_PARAM_BLD_new())
             || !TEST_true(OSSL_PARAM_BLD_push_octet_string(bld,
                                                            OSSL_PKEY_PARAM_PRIV_KEY,
@@ -210,8 +207,8 @@ static int slh_dsa_sign_verify_test(int tst_id)
     EVP_PKEY *pkey = NULL;
     EVP_SIGNATURE *sig_alg = NULL;
     OSSL_PARAM params[4], *p = params;
-    uint8_t sig[64 * 1024];
-    size_t sig_len = sizeof(sig);
+    uint8_t *psig = NULL;
+    size_t psig_len = 0, sig_len2 = 0;
     uint8_t digest[32];
     size_t digest_len = sizeof(digest);
     int encode = 0, deterministic = 1;
@@ -237,22 +234,29 @@ static int slh_dsa_sign_verify_test(int tst_id)
     if (!TEST_ptr(sig_alg = EVP_SIGNATURE_fetch(lib_ctx, td->alg, NULL)))
         goto err;
     if (!TEST_int_eq(EVP_PKEY_sign_init_ex2(sctx, sig_alg, params), 1)
-            || !TEST_int_eq(EVP_PKEY_sign(sctx, sig, &sig_len,
+            || !TEST_int_eq(EVP_PKEY_sign(sctx, NULL, &psig_len,
+                                          td->msg, td->msg_len), 1)
+            || !TEST_true(EVP_PKEY_get_size_t_param(pkey, OSSL_PKEY_PARAM_MAX_SIZE,
+                                                 &sig_len2))
+            || !TEST_int_eq(sig_len2, psig_len)
+            || !TEST_ptr(psig = OPENSSL_zalloc(psig_len))
+            || !TEST_int_eq(EVP_PKEY_sign(sctx, psig, &psig_len,
                                           td->msg, td->msg_len), 1))
         goto err;
 
-    if (!TEST_int_eq(EVP_Q_digest(lib_ctx, "SHA256", NULL, sig, sig_len,
+    if (!TEST_int_eq(EVP_Q_digest(lib_ctx, "SHA256", NULL, psig, psig_len,
                                   digest, &digest_len), 1))
         goto err;
     if (!TEST_mem_eq(digest, digest_len, td->sig_digest, td->sig_digest_len))
         goto err;
-    if (!do_slh_dsa_verify(td, sig, sig_len))
+    if (!do_slh_dsa_verify(td, psig, psig_len))
         goto err;
     ret = 1;
 err:
     EVP_SIGNATURE_free(sig_alg);
     EVP_PKEY_free(pkey);
     EVP_PKEY_CTX_free(sctx);
+    OPENSSL_free(psig);
     return ret;
 }
 
@@ -287,6 +291,7 @@ static int slh_dsa_keygen_test(int tst_id)
     size_t priv_len, pub_len;
     size_t key_len = tst->priv_len / 2;
     size_t n = key_len / 2;
+    int bits = 0, sec_bits = 0, sig_len = 0;
 
     if (!TEST_ptr(pkey = do_gen_key(tst->name, tst->priv, key_len + n)))
         goto err;
@@ -297,6 +302,17 @@ static int slh_dsa_keygen_test(int tst_id)
     if (!TEST_true(EVP_PKEY_get_octet_string_param(pkey, OSSL_PKEY_PARAM_PUB_KEY,
                                                    pub, sizeof(pub), &pub_len)))
         goto err;
+    if (!TEST_true(EVP_PKEY_get_int_param(pkey, OSSL_PKEY_PARAM_BITS, &bits))
+            || !TEST_int_eq(bits, 8 * key_len)
+            || !TEST_true(EVP_PKEY_get_int_param(pkey, OSSL_PKEY_PARAM_SECURITY_BITS,
+                                                 &sec_bits))
+            || !TEST_int_eq(sec_bits, 8 * n)
+            || !TEST_true(EVP_PKEY_get_int_param(pkey, OSSL_PKEY_PARAM_MAX_SIZE,
+                                                 &sig_len))
+            || !TEST_int_ge(sig_len, 7856)
+            || !TEST_int_le(sig_len, 49856))
+        goto err;
+
     if (!TEST_size_t_eq(priv_len, key_len)
             || !TEST_size_t_eq(pub_len, key_len))
         goto err;
@@ -304,39 +320,6 @@ static int slh_dsa_keygen_test(int tst_id)
         goto err;
     ret = 1;
 err:
-    EVP_PKEY_free(pkey);
-    return ret;
-}
-
-/*
- * Given raw values for the private key + public key seed
- * generate the public root using from data.
- */
-static int slh_dsa_pub_root_from_data_test(void)
-{
-    int ret = 0;
-    uint8_t priv[64], pub[64];
-    size_t priv_len = 0, pub_len = 0;
-    EVP_PKEY *pkey = NULL;
-    const SLH_DSA_KEYGEN_TEST_DATA *tst = &slh_dsa_keygen_testdata[0];
-    size_t key_len = tst->priv_len / 2;
-    size_t n = key_len / 2;
-
-    if (!slh_dsa_create_keypair(&pkey, tst->name, tst->priv, key_len,
-                                tst->priv + key_len, n))
-        goto err;
-
-    if (!TEST_true(EVP_PKEY_get_octet_string_param(pkey, OSSL_PKEY_PARAM_PRIV_KEY,
-                                                   priv, sizeof(priv), &priv_len)))
-        goto err;
-    if (!TEST_true(EVP_PKEY_get_octet_string_param(pkey, OSSL_PKEY_PARAM_PUB_KEY,
-                                                   pub, sizeof(pub), &pub_len)))
-        goto err;
-    if (!TEST_mem_eq(pub, pub_len, tst->priv + key_len, key_len))
-        goto err;
-    ret = 1;
-err:
-    OPENSSL_cleanse(priv, priv_len);
     EVP_PKEY_free(pkey);
     return ret;
 }
@@ -377,7 +360,6 @@ int setup_tests(void)
     ADD_TEST(slh_dsa_key_eq_test);
     ADD_ALL_TESTS(slh_dsa_sign_verify_test, OSSL_NELEM(slh_dsa_sig_testdata));
     ADD_ALL_TESTS(slh_dsa_keygen_test, OSSL_NELEM(slh_dsa_keygen_testdata));
-    ADD_TEST(slh_dsa_pub_root_from_data_test);
     return 1;
 }
 

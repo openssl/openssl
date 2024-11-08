@@ -447,9 +447,6 @@ my %params = (
 
 # SLH_DSA Key generation parameters
     'PKEY_PARAM_SLH_DSA_ENTROPY' =>         "entropy",
-    
-# SLH_DSA parameters
-    'PKEY_PARAM_SLH_DSA_PUB_SEED' => "pk-seed",
 
 # Key Exchange parameters
     'EXCHANGE_PARAM_PAD' =>                   "pad",# uint

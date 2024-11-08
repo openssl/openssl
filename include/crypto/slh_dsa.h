@@ -37,6 +37,7 @@ __owur const uint8_t *ossl_slh_dsa_key_get_pub(const SLH_DSA_KEY *key);
 __owur const uint8_t *ossl_slh_dsa_key_get_priv(const SLH_DSA_KEY *key);
 __owur size_t ossl_slh_dsa_key_get_len(const SLH_DSA_KEY *key);
 __owur size_t ossl_slh_dsa_key_get_n(const SLH_DSA_KEY *key);
+__owur size_t ossl_slh_dsa_key_get_sig_len(const SLH_DSA_KEY *key);
 __owur int ossl_slh_dsa_key_type_matches(SLH_DSA_CTX *ctx, const SLH_DSA_KEY *key);
 
 __owur SLH_DSA_CTX *ossl_slh_dsa_ctx_new(const char *alg,

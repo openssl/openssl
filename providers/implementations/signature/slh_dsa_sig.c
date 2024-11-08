@@ -127,13 +127,16 @@ static int slh_sign(void *vctx, unsigned char *sig, size_t *siglen,
 
     if (!ossl_prov_is_running())
         return 0;
-    if (ctx->add_random_len != 0) {
-        opt_rand = ctx->add_random;
-    } else if (ctx->deterministic == 0) {
-        n = ossl_slh_dsa_key_get_n(ctx->key);
-        if (RAND_priv_bytes_ex(ctx->libctx, add_rand, n, 0) <= 0)
-            return 0;
-        opt_rand = add_rand;
+
+    if (sig != NULL) {
+        if (ctx->add_random_len != 0) {
+            opt_rand = ctx->add_random;
+        } else if (ctx->deterministic == 0) {
+            n = ossl_slh_dsa_key_get_n(ctx->key);
+            if (RAND_priv_bytes_ex(ctx->libctx, add_rand, n, 0) <= 0)
+                return 0;
+            opt_rand = add_rand;
+        }
     }
     ret = ossl_slh_dsa_sign(ctx->ctx, ctx->key, msg, msg_len,
                             ctx->context_string, ctx->context_string_len,
