@@ -5716,6 +5716,32 @@ static const struct script_op script_86[] = {
     OP_END
 };
 
+
+/* 87. Test stream reset functionality */
+static const struct script_op script_87[] = {
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+    OP_C_NEW_STREAM_BIDI    (a, C_BIDI_ID(0))
+    OP_C_NEW_STREAM_BIDI    (b, C_BIDI_ID(1))
+
+    OP_C_WRITE              (a, "apple", 5)
+
+    OP_C_WRITE              (b, "strawberry", 10)
+
+    OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
+    OP_S_BIND_STREAM_ID     (b, C_BIDI_ID(1))
+    OP_S_READ_EXPECT        (b, "strawberry", 10)
+    /* Reset streams, which have all data received */
+    OP_C_STREAM_RESET       (b, 42)
+    OP_C_STREAM_RESET       (a, 42)
+    OP_CHECK                (check_stream_reset, C_BIDI_ID(0))
+    OP_CHECK                (check_stream_reset, C_BIDI_ID(1))
+
+    OP_END
+};
+
 static const struct script_op *const scripts[] = {
     script_1,
     script_2,
@@ -5802,7 +5828,8 @@ static const struct script_op *const scripts[] = {
     script_83,
     script_84,
     script_85,
-    script_86
+    script_86,
+    script_87
 };
 
 static int test_script(int idx)
