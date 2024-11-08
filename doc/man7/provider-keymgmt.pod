@@ -509,7 +509,8 @@ L<EVP_PKEY-RSA(7)>,
 L<EVP_PKEY-DSA(7)>,
 L<EVP_PKEY-DH(7)>,
 L<EVP_PKEY-ML-DSA(7)>,
-L<EVP_PKEY-ML-KEM(7)>.
+L<EVP_PKEY-ML-KEM(7)>,
+L<EVP_PKEY-SLH-DSA(7)>.
 
 =head1 HISTORY
 
@@ -523,7 +524,7 @@ OSSL_FUNC_keymgmt_gen_gettable_params() were added in OpenSSL 3.4.
 
 The parameters "sign-check" and "fips-indicator" were added in OpenSSL 3.4.
 
-Support for the B<ML-DSA> and B<ML-KEM> algorithms was added in OpenSSL 3.5.
+Support for the B<ML-DSA>, B<ML-KEM> and B<SLH-DSA> algorithms was added in OpenSSL 3.5.
 
 =head1 COPYRIGHT
 

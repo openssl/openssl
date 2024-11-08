@@ -275,13 +275,14 @@ L<EVP_PKEY-DH(7)>,
 L<EVP_PKEY-X25519(7)>,
 L<EVP_PKEY-X448(7)>,
 L<EVP_PKEY-ML-DSA(7)>,
-L<EVP_PKEY-ML-KEM(7)>.
+L<EVP_PKEY-ML-KEM(7)>,
+L<EVP_PKEY-SLH-DSA(7)>.
 
 =head1 HISTORY
 
 These functions were added in OpenSSL 3.0.
 
-Support for B<ML-DSA> and B<ML-KEM> was added in OpenSSL 3.5.
+Support for B<ML-DSA>, B<ML-KEM> and B<SLH-DSA> was added in OpenSSL 3.5.
 
 =head1 COPYRIGHT
 

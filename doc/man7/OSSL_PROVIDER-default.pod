@@ -195,6 +195,8 @@ The OpenSSL default provider supports these operations and algorithms:
 
 =item ECDSA, see L<EVP_SIGNATURE-ECDSA(7)>
 
+=item SLH-DSA, see L<EVP_SIGNATURE-SLH-DSA(7)>
+
 =item SM2
 
 =item ML-DSA-44, see L<EVP_SIGNATURE-ML-DSA(7)>
