@@ -39,7 +39,7 @@ OpenSSL 3.5
 
   *Neil Horman*
 
-* Add SLH-DSA as specified by FIPS 205.
+* Add SLH-DSA as specified in FIPS 205.
 
   *Shane Lontis*
 
