@@ -172,6 +172,8 @@ for signature generation, but may be used for verification for legacy use cases.
 
 =item ML-DSA-87, see L<EVP_SIGNATURE-ML-DSA(7)>
 
+=item SLH-DSA, see L<EVP_SIGNATURE-SLH-DSA(7)>
+
 =item HMAC, see L<EVP_SIGNATURE-HMAC(7)>
 
 =item CMAC, see L<EVP_SIGNATURE-CMAC(7)>
