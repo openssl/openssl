@@ -30,7 +30,7 @@ OpenSSL 3.5
 
 ### Changes between 3.4 and 3.5 [xx XXX xxxx]
 
-* Add SLH-DSA as specified by FIPS 205.
+* Add SLH-DSA as specified in FIPS 205.
 
   *Shane Lontis*
 
