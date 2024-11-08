@@ -187,6 +187,7 @@ struct script_op {
 #define OPK_POP_ERR                                 51
 #define OPK_C_WRITE_EX2                             52
 #define OPK_SKIP_IF_BLOCKING                        53
+#define OPK_C_STREAM_RESET_FAIL                     54
 
 #define EXPECT_CONN_CLOSE_APP       (1U << 0)
 #define EXPECT_CONN_CLOSE_REMOTE    (1U << 1)
@@ -285,6 +286,8 @@ struct script_op {
     {OPK_S_READ_FAIL, NULL, (allow_zero_len), NULL, #stream_name},
 #define OP_C_STREAM_RESET(stream_name, aec)  \
     {OPK_C_STREAM_RESET, NULL, 0, NULL, #stream_name, (aec)},
+#define OP_C_STREAM_RESET_FAIL(stream_name, aec)  \
+    {OPK_C_STREAM_RESET_FAIL, NULL, 0, NULL, #stream_name, (aec)},
 #define OP_S_ACCEPT_STREAM_WAIT(stream_name)  \
     {OPK_S_ACCEPT_STREAM_WAIT, NULL, 0, NULL, #stream_name},
 #define OP_NEW_THREAD(num_threads, script) \
@@ -1830,6 +1833,7 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
             break;
 
         case OPK_C_STREAM_RESET:
+        case OPK_C_STREAM_RESET_FAIL:
             {
                 SSL_STREAM_RESET_ARGS args = {0};
 
@@ -1837,9 +1841,13 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                     goto out;
 
                 args.quic_error_code = op->arg2;
-
-                if (!TEST_true(SSL_stream_reset(c_tgt, &args, sizeof(args))))
-                    goto out;
+                if (op->op == OPK_C_STREAM_RESET) {
+                    if (!TEST_true(SSL_stream_reset(c_tgt, &args, sizeof(args))))
+                        goto out;
+                } else {
+                    if (!TEST_false(SSL_stream_reset(c_tgt, &args, sizeof(args))))
+                        goto out;
+                }
             }
             break;
 
@@ -5716,6 +5724,26 @@ static const struct script_op script_86[] = {
     OP_END
 };
 
+
+/* 87. Test stream reset functionality */
+static const struct script_op script_87[] = {
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+    OP_C_NEW_STREAM_BIDI    (a, C_BIDI_ID(0))
+    OP_C_WRITE              (a, "apple", 5)
+    OP_C_CONCLUDE           (a)
+    OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
+    OP_S_READ_EXPECT        (a, "apple", 5)
+    OP_S_EXPECT_FIN         (a)
+    OP_S_WRITE              (a, "orange", 6)
+    OP_C_READ_EXPECT        (a, "orange", 6)
+    OP_S_CONCLUDE           (a)
+    OP_C_EXPECT_FIN         (a)
+    OP_SLEEP                (1000)
+    OP_C_STREAM_RESET_FAIL  (a, 42)
+    OP_END
+};
+
 static const struct script_op *const scripts[] = {
     script_1,
     script_2,
@@ -5802,7 +5830,8 @@ static const struct script_op *const scripts[] = {
     script_83,
     script_84,
     script_85,
-    script_86
+    script_86,
+    script_87
 };
 
 static int test_script(int idx)
