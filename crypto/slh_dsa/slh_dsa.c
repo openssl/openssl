@@ -64,12 +64,14 @@ static int slh_sign_internal(SLH_DSA_CTX *ctx, const SLH_DSA_KEY *priv,
     uint8_t *sig_ht = sig_fors + sig_fors_len;
     const uint8_t *md, *pk_seed, *sk_seed;
 
-    if (sig_size < sig_len_expected)
-        return 0;
     if (sig_len != NULL)
         *sig_len = sig_len_expected;
+
     if (sig == NULL)
-        return 1;
+        return (sig_len != NULL);
+
+    if (sig_size < sig_len_expected)
+        return 0;
     /* Exit if private key is not set */
     if (priv->has_priv == 0)
         return 0;
@@ -229,16 +231,16 @@ int ossl_slh_dsa_sign(SLH_DSA_CTX *slh_ctx, const SLH_DSA_KEY *priv,
                       const uint8_t *add_rand, int encode,
                       unsigned char *sig, size_t *siglen, size_t sigsize)
 {
-    uint8_t *m;
-    size_t m_len;
-    uint8_t m_tmp[1024];
+    uint8_t m_tmp[1024], *m = m_tmp;
+    size_t m_len = 0;
     int ret = 0;
 
-    m = msg_encode(msg, msg_len, ctx, ctx_len, encode, m_tmp, sizeof(m_tmp),
-                   &m_len);
-    if (m == NULL)
-        return 0;
-
+    if (sig != NULL) {
+        m = msg_encode(msg, msg_len, ctx, ctx_len, encode, m_tmp, sizeof(m_tmp),
+                       &m_len);
+        if (m == NULL)
+            return 0;
+    }
     ret = slh_sign_internal(slh_ctx, priv, m, m_len, sig, siglen, sigsize, add_rand);
     if (m != msg && m != m_tmp)
         OPENSSL_free(m);

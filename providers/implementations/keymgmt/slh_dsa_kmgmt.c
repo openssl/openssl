@@ -93,12 +93,14 @@ static int slh_dsa_import(void *keydata, int selection, const OSSL_PARAM params[
     return ossl_slh_dsa_key_fromdata(key, params, include_priv);
 }
 
+#define SLH_DSA_IMEXPORTABLE_PARAMETERS \
+    OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PUB_KEY, NULL, 0), \
+    OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PRIV_KEY, NULL, 0)
+
 static const OSSL_PARAM slh_dsa_key_types[] = {
-    OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PUB_KEY, NULL, 0),
-    OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PRIV_KEY, NULL, 0),
+    SLH_DSA_IMEXPORTABLE_PARAMETERS,
     OSSL_PARAM_END
 };
-
 static const OSSL_PARAM *slh_dsa_imexport_types(int selection)
 {
     if ((selection & SLH_DSA_POSSIBLE_SELECTIONS) == 0)
@@ -106,9 +108,16 @@ static const OSSL_PARAM *slh_dsa_imexport_types(int selection)
     return slh_dsa_key_types;
 }
 
+static const OSSL_PARAM slh_dsa_params[] = {
+    OSSL_PARAM_int(OSSL_PKEY_PARAM_BITS, NULL),
+    OSSL_PARAM_int(OSSL_PKEY_PARAM_SECURITY_BITS, NULL),
+    OSSL_PARAM_int(OSSL_PKEY_PARAM_MAX_SIZE, NULL),
+    SLH_DSA_IMEXPORTABLE_PARAMETERS,
+    OSSL_PARAM_END
+};
 static const OSSL_PARAM *slh_dsa_gettable_params(void *provctx)
 {
-    return slh_dsa_key_types;
+    return slh_dsa_params;
 }
 
 static int key_to_params(SLH_DSA_KEY *key, OSSL_PARAM_BLD *tmpl,
@@ -137,6 +146,17 @@ static int key_to_params(SLH_DSA_KEY *key, OSSL_PARAM_BLD *tmpl,
 static int slh_dsa_get_params(void *keydata, OSSL_PARAM params[])
 {
     SLH_DSA_KEY *key = keydata;
+    OSSL_PARAM *p;
+
+    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_BITS)) != NULL
+            && !OSSL_PARAM_set_int(p, 8 * ossl_slh_dsa_key_get_len(key)))
+        return 0;
+    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_SECURITY_BITS)) != NULL
+            && !OSSL_PARAM_set_int(p, 8 * ossl_slh_dsa_key_get_n(key)))
+        return 0;
+    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_MAX_SIZE)) != NULL
+            && !OSSL_PARAM_set_int(p, ossl_slh_dsa_key_get_sig_len(key)))
+        return 0;
 
     return key_to_params(key, NULL, params, 1);
 }
