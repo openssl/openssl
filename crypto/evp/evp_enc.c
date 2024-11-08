@@ -440,6 +440,164 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
     return 1;
 }
 
+/*
+ * This function is basically evp_cipher_init_internal without ENGINE support.
+ * They should be combined when engines are not supported any longer.
+ */
+static int evp_cipher_init_skey_internal(EVP_CIPHER_CTX *ctx,
+                                         const EVP_CIPHER *cipher,
+                                         const EVP_SKEY *skey,
+                                         const unsigned char *iv, size_t iv_len,
+                                         int enc, const OSSL_PARAM params[])
+{
+    void *pkeydata = (skey == NULL) ? NULL : skey->keydata;
+    const unsigned char *raw_key = (skey == NULL) ? NULL : skey->keybytes;
+    size_t keylen = (skey == NULL) ? 0 : skey->keybyteslen;
+    int ret;
+
+    /*
+     * enc == 1 means we are encrypting.
+     * enc == 0 means we are decrypting.
+     * enc == -1 means, use the previously initialised value for encrypt/decrypt
+     */
+    if (enc == -1) {
+        enc = ctx->encrypt;
+    } else {
+        if (enc)
+            enc = 1;
+        ctx->encrypt = enc;
+    }
+
+    if (cipher == NULL && ctx->cipher == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_NO_CIPHER_SET);
+        return 0;
+    }
+
+    /*
+     * If there are engines involved then we throw an error
+     */
+    if (ctx->engine != NULL
+            || (cipher != NULL && cipher->origin == EVP_ORIG_METH)
+            || (cipher == NULL && ctx->cipher != NULL
+                && ctx->cipher->origin == EVP_ORIG_METH)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+        return 0;
+    }
+    /*
+     * Ensure a context left lying around from last time is cleared
+     * (legacy code)
+     */
+    if (cipher != NULL && ctx->cipher != NULL) {
+        if (ctx->cipher->cleanup != NULL && !ctx->cipher->cleanup(ctx))
+            return 0;
+        OPENSSL_clear_free(ctx->cipher_data, ctx->cipher->ctx_size);
+        ctx->cipher_data = NULL;
+    }
+
+    /* Ensure a context left lying around from last time is cleared */
+    if (cipher != NULL && ctx->cipher != NULL) {
+        unsigned long flags = ctx->flags;
+
+        EVP_CIPHER_CTX_reset(ctx);
+        /* Restore encrypt and flags */
+        ctx->encrypt = enc;
+        ctx->flags = flags;
+    }
+
+    if (cipher == NULL)
+        cipher = ctx->cipher;
+
+    if (cipher->prov == NULL) {
+        /* We only do explicit fetches inside the FIPS module */
+        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+        return 0;
+    }
+
+    if (cipher != ctx->fetched_cipher) {
+        if (!EVP_CIPHER_up_ref((EVP_CIPHER *)cipher)) {
+            ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+            return 0;
+        }
+        EVP_CIPHER_free(ctx->fetched_cipher);
+        /* Coverity false positive, the reference counting is confusing it */
+        /* coverity[use_after_free] */
+        ctx->fetched_cipher = (EVP_CIPHER *)cipher;
+    }
+    ctx->cipher = cipher;
+    if (ctx->algctx == NULL) {
+        ctx->algctx = ctx->cipher->newctx(ossl_provider_ctx(cipher->prov));
+        if (ctx->algctx == NULL) {
+            ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+            return 0;
+        }
+    }
+
+    if (skey != NULL && skey->keymgmt != NULL && ctx->cipher->prov != skey->keymgmt->prov) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+        return 0;
+    }
+
+    if ((ctx->flags & EVP_CIPH_NO_PADDING) != 0) {
+        /*
+         * If this ctx was already set up for no padding then we need to tell
+         * the new cipher about it.
+         */
+        if (!EVP_CIPHER_CTX_set_padding(ctx, 0))
+            return 0;
+    }
+
+    if (iv == NULL)
+        iv_len = 0;
+
+    /* The EVP_SKEY object is a classical key wrapper, use classical callbacks */
+    if (raw_key != NULL) {
+        if (enc) {
+            if (ctx->cipher->einit == NULL) {
+                ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+                return 0;
+            }
+
+            return ctx->cipher->einit(ctx->algctx, raw_key, keylen, iv, iv_len, params);
+        }
+
+        if (ctx->cipher->dinit == NULL) {
+            ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+            return 0;
+        }
+
+        return ctx->cipher->dinit(ctx->algctx, raw_key, keylen, iv, iv_len, params);
+    }
+
+    /* We have a data managed via key management, using the new callbacks */
+    if (enc) {
+        if (ctx->cipher->einit_opaque == NULL) {
+            ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+            return 0;
+        }
+
+        ret = ctx->cipher->einit_opaque(ctx->algctx, pkeydata,
+                                        iv, iv_len, params);
+    }
+
+    if (ctx->cipher->dinit_opaque == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+        return 0;
+    }
+
+    ret = ctx->cipher->dinit_opaque(ctx->algctx, pkeydata,
+                                    iv, iv_len, params);
+
+    return ret;
+}
+
+int EVP_CipherInit_skey(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
+                        const EVP_SKEY *skey,
+                        const unsigned char *iv, size_t iv_len,
+                        int enc, const OSSL_PARAM params[])
+{
+    return evp_cipher_init_skey_internal(ctx, cipher, skey, iv, iv_len, enc, params);
+}
+
 int EVP_CipherInit_ex2(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
                        const unsigned char *key, const unsigned char *iv,
                        int enc, const OSSL_PARAM params[])
@@ -1609,6 +1767,18 @@ static void *evp_cipher_from_algorithm(const int name_id,
             if (cipher->dinit != NULL)
                 break;
             cipher->dinit = OSSL_FUNC_cipher_decrypt_init(fns);
+            fnciphcnt++;
+            break;
+        case OSSL_FUNC_CIPHER_ENCRYPT_OPAQUE_INIT:
+            if (cipher->einit_opaque != NULL)
+                break;
+            cipher->einit_opaque = OSSL_FUNC_cipher_encrypt_opaque_init(fns);
+            fnciphcnt++;
+            break;
+        case OSSL_FUNC_CIPHER_DECRYPT_OPAQUE_INIT:
+            if (cipher->dinit_opaque != NULL)
+                break;
+            cipher->dinit_opaque = OSSL_FUNC_cipher_decrypt_opaque_init(fns);
             fnciphcnt++;
             break;
         case OSSL_FUNC_CIPHER_UPDATE:

@@ -267,6 +267,12 @@ struct evp_Encode_Ctx_st {
     unsigned int flags;
 };
 
+struct raw_key_details_st {
+    unsigned char **key;
+    size_t *len;
+    int selection;
+};
+
 typedef struct evp_pbe_st EVP_PBE_CTL;
 DEFINE_STACK_OF(EVP_PBE_CTL)
 
@@ -381,3 +387,5 @@ int evp_names_do_all(OSSL_PROVIDER *prov, int number,
                      void (*fn)(const char *name, void *data),
                      void *data);
 int evp_cipher_cache_constants(EVP_CIPHER *cipher);
+
+OSSL_CALLBACK ossl_get_raw_key_details;

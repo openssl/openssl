@@ -118,6 +118,7 @@ my %params = (
     'CIPHER_PARAM_TLS1_MULTIBLOCK' =>      "tls-multi",   # int, 0 or 1
     'CIPHER_PARAM_HAS_RAND_KEY' =>         "has-randkey", # int, 0 or 1
     'CIPHER_PARAM_KEYLEN' =>               "keylen",      # size_t
+    'CIPHER_PARAM_KEY' =>                  "key",         # octet_string OR octet_ptr
     'CIPHER_PARAM_IVLEN' =>                "ivlen",       # size_t
     'CIPHER_PARAM_IV' =>                   "iv",          # octet_string OR octet_ptr
     'CIPHER_PARAM_UPDATED_IV' =>           "updated-iv",  # octet_string OR octet_ptr

@@ -348,7 +348,9 @@ struct evp_cipher_st {
     OSSL_FUNC_cipher_gettable_params_fn *gettable_params;
     OSSL_FUNC_cipher_gettable_ctx_params_fn *gettable_ctx_params;
     OSSL_FUNC_cipher_settable_ctx_params_fn *settable_ctx_params;
-} /* EVP_CIPHER */ ;
+    OSSL_FUNC_cipher_encrypt_opaque_init_fn *einit_opaque;
+    OSSL_FUNC_cipher_decrypt_opaque_init_fn *dinit_opaque;
+} /* EVP_CIPHER */;
 
 /* Macros to code block cipher wrappers */
 
@@ -745,6 +747,24 @@ struct evp_pkey_st {
 
 # define EVP_PKEY_CTX_IS_KEM_OP(ctx) \
     (((ctx)->operation & EVP_PKEY_OP_TYPE_KEM) != 0)
+
+struct evp_skey_st {
+    /* == Common attributes == */
+    CRYPTO_REF_COUNT references;
+    CRYPTO_RWLOCK *lock;
+
+    /*
+     * Special case - raw bytes key.
+     * When it is set, we MUST have keymgmt == NULL.
+     * We use this raw buffer with functionality that doesn't know EVP_SKEY
+     * (if available)
+     */
+    unsigned char *keybytes;
+    size_t keybyteslen;
+
+    void *keydata; /* Alg-specific key data */
+    EVP_KEYMGMT *keymgmt; /* Mostly for freeing keydata */
+}; /* EVP_SKEY */
 
 void openssl_add_all_ciphers_int(void);
 void openssl_add_all_digests_int(void);
