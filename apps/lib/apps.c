@@ -902,7 +902,7 @@ static const char *format2string(int format)
     return NULL;
 }
 
-/* Set type expectation, but set to 0 if objects of several types expected. */
+/* Set type expectation, but set to 0 if objects of multiple types expected. */
 #define SET_EXPECT(val) \
     (expect = expect < 0 ? (val) : (expect == (val) ? (val) : 0))
 #define SET_EXPECT1(pvar, val) \
@@ -918,7 +918,7 @@ static const char *format2string(int format)
      pcrl != NULL ? "CRL" : pcrls != NULL ? "CRLs" : NULL)
 /*
  * Load those types of credentials for which the result pointer is not NULL.
- * Reads from stdio if 'uri' is NULL and 'maybe_stdin' is nonzero.
+ * Reads from stdin if 'uri' is NULL and 'maybe_stdin' is nonzero.
  * 'format' parameter may be FORMAT_PEM, FORMAT_ASN1, or 0 for no hint.
  * desc may contain more detail on the credential(s) to be loaded for error msg
  * For non-NULL ppkey, pcert, and pcrl the first suitable value found is loaded.
@@ -962,12 +962,24 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
     SET_EXPECT1(ppubkey, OSSL_STORE_INFO_PUBKEY);
     SET_EXPECT1(pparams, OSSL_STORE_INFO_PARAMS);
     SET_EXPECT1(pcert, OSSL_STORE_INFO_CERT);
+    /*
+     * Up to here, the follwing holds.
+     * If just one of the ppkey, ppubkey, pparams, and pcert function parameters
+     * is nonzero, expect > 0 indicates which type of credential is expected.
+     * If expect == 0, more than one of them is nonzero (multiple types expected).
+     */
+
     if (pcerts != NULL) {
         if (*pcerts == NULL && (*pcerts = sk_X509_new_null()) == NULL) {
             if (!quiet)
                 BIO_printf(bio_err, "Out of memory loading");
             goto end;
         }
+        /*
+         * Adapt the 'expect' variable:
+         * set to OSSL_STORE_INFO_CERT if no other type is expected so far,
+         * otherwise set to 0 (indicating that multiple types are expected).
+         */
         SET_EXPECT(OSSL_STORE_INFO_CERT);
     }
     SET_EXPECT1(pcrl, OSSL_STORE_INFO_CRL);
@@ -977,6 +989,11 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
                 BIO_printf(bio_err, "Out of memory loading");
             goto end;
         }
+        /*
+         * Adapt the 'expect' variable:
+         * set to OSSL_STORE_INFO_CRL if no other type is expected so far,
+         * otherwise set to 0 (indicating that multiple types are expected).
+         */
         SET_EXPECT(OSSL_STORE_INFO_CRL);
     }
 
