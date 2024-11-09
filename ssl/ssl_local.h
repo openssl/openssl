@@ -1069,7 +1069,7 @@ struct ssl_ctx_st {
 
         unsigned char cookie_hmac_key[SHA256_DIGEST_LENGTH];
 # ifndef OPENSSL_NO_ECH
-        OSSL_CTX_ECH ech;
+        OSSL_ECH_CTX ech;
 # endif
     } ext;
 

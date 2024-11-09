@@ -69,15 +69,15 @@ err:
 }
 
 /* duplicate an OSSL_ECHSTORE as needed */
-int ossl_echstore_dup(OSSL_ECHSTORE **new, const OSSL_ECHSTORE *old)
+OSSL_ECHSTORE *ossl_echstore_dup(const OSSL_ECHSTORE *old)
 {
     OSSL_ECHSTORE *cp = NULL;
 
-    if (new == NULL || old == NULL)
-        return 0;
+    if (old == NULL)
+        return NULL;
     cp = OPENSSL_zalloc(sizeof(*cp));
     if (cp == NULL)
-        return 0;
+        return NULL;
     cp->libctx = old->libctx;
     if (old->propq != NULL) {
         cp->propq = OPENSSL_strdup(old->propq);
@@ -91,14 +91,13 @@ int ossl_echstore_dup(OSSL_ECHSTORE **new, const OSSL_ECHSTORE *old)
         if (cp->entries == NULL)
             goto err;
     }
-    *new = cp;
-    return 1;
+    return cp;
 err:
     OSSL_ECHSTORE_free(cp);
-    return 0;
+    return NULL;
 }
 
-void ossl_ctx_ech_free(OSSL_CTX_ECH *ce)
+void ossl_ech_ctx_clear(OSSL_ECH_CTX *ce)
 {
     if (ce == NULL)
         return;
@@ -107,7 +106,7 @@ void ossl_ctx_ech_free(OSSL_CTX_ECH *ce)
     return;
 }
 
-void ossl_ech_conn_free(OSSL_ECH_CONN *ec)
+void ossl_ech_conn_clear(OSSL_ECH_CONN *ec)
 {
     if (ec == NULL)
         return;
@@ -132,13 +131,10 @@ void ossl_ech_conn_free(OSSL_ECH_CONN *ec)
 int ossl_ech_conn_init(SSL_CONNECTION *s, SSL_CTX *ctx,
                        const SSL_METHOD *method)
 {
-    OSSL_ECHSTORE *new = NULL;
-
     memset(&s->ext.ech, 0, sizeof(s->ext.ech));
-    if (ctx->ext.ech.es != NULL && !ossl_echstore_dup(&new, ctx->ext.ech.es))
+    if (ctx->ext.ech.es != NULL
+        && (s->ext.ech.es = ossl_echstore_dup(ctx->ext.ech.es)) == NULL)
         goto err;
-    s->ext.ech.es = new;
-    new = NULL;
     s->ext.ech.cb = ctx->ext.ech.cb;
     if (ctx->ext.ech.alpn_outer != NULL) {
         s->ext.ech.alpn_outer = OPENSSL_memdup(ctx->ext.ech.alpn_outer,

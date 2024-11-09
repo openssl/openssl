@@ -21,7 +21,7 @@ int SSL_CTX_set1_echstore(SSL_CTX *ctx, OSSL_ECHSTORE *es)
     ctx->ext.ech.es = NULL;
     if (es == NULL)
         return 1;
-    if (ossl_echstore_dup(&ctx->ext.ech.es, es) != 1) {
+    if ((ctx->ext.ech.es = ossl_echstore_dup(es)) == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return 0;
     }
@@ -39,7 +39,7 @@ int SSL_set1_echstore(SSL *ssl, OSSL_ECHSTORE *es)
     s->ext.ech.es = NULL;
     if (es == NULL)
         return 1;
-    if (ossl_echstore_dup(&s->ext.ech.es, es) != 1) {
+    if ((s->ext.ech.es = ossl_echstore_dup(es)) == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
     }
@@ -61,7 +61,7 @@ OSSL_ECHSTORE *SSL_CTX_get1_echstore(const SSL_CTX *ctx)
     }
     if (ctx->ext.ech.es == NULL)
         return NULL;
-    if (ossl_echstore_dup(&dup, ctx->ext.ech.es) != 1) {
+    if ((dup = ossl_echstore_dup(ctx->ext.ech.es)) == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return NULL;
     }
@@ -78,7 +78,7 @@ OSSL_ECHSTORE *SSL_get1_echstore(const SSL *ssl)
         return NULL;
     if (s->ext.ech.es == NULL)
         return NULL;
-    if (ossl_echstore_dup(&dup, s->ext.ech.es) != 1) {
+    if ((dup = ossl_echstore_dup(s->ext.ech.es)) == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return NULL;
     }
@@ -132,6 +132,11 @@ int SSL_ech_set1_outer_server_name(SSL *ssl, const char *outer_name,
     return 1;
 }
 
+/*
+ * Note that this function returns 1 for success and 0 for error. This
+ * contrasts with SSL_set1_alpn_protos() which (unusually for OpenSSL)
+ * returns 0 for success and 1 on error.
+ */
 int SSL_ech_set1_outer_alpn_protos(SSL *ssl, const unsigned char *protos,
                                    const size_t protos_len)
 {
@@ -292,12 +297,12 @@ int SSL_ech_get1_retry_config(SSL *ssl, unsigned char **ec, size_t *eclen)
         return 1;
     }
     /*
-     * To not hand rubbish to application, we'll decode and re-encode
-     * the value we have so only syntactically good things are passed
-     * up. We won't insist though that every entry in the retry_config
-     * list seems good - it could be that e.g. one is a newer version
-     * than we support now, and letting the application see that might
-     * cause someone to do an upgrade.
+     * To not hand rubbish to application, we'll decode the value we have
+     * so only syntactically good things are passed up. We won't insist
+     * though that every entry in the retry_config list seems good - it
+     * could be that e.g. one is a newer version than we support now,
+     * and letting the application see that might cause someone to do an
+     * upgrade.
      */
     if ((in = BIO_new(BIO_s_mem())) == NULL
         || BIO_write(in, s->ext.ech.returned, s->ext.ech.returned_len) <= 0
@@ -322,6 +327,11 @@ err:
     return rv;
 }
 
+/*
+ * Note that this function returns 1 for success and 0 for error. This
+ * contrasts with SSL_CTX_set1_alpn_protos() which (unusually for OpenSSL)
+ * returns 0 for success and 1 on error.
+ */
 int SSL_CTX_ech_set1_outer_alpn_protos(SSL_CTX *ctx,
                                        const unsigned char *protos,
                                        const size_t protos_len)
@@ -392,7 +402,7 @@ int SSL_set1_ech_config_list(SSL *ssl, const uint8_t *ecl, size_t ecl_len)
         return 1;
     }
     if (ecl_len == 0) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_PASSED_NULL_PARAMETER);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_PASSED_INVALID_ARGUMENT);
         goto err;
     }
     if ((es_in = BIO_new_mem_buf(ecl, ecl_len)) == NULL

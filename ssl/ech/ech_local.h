@@ -115,7 +115,7 @@ typedef struct ossl_ctx_ech_st {
     unsigned char *alpn_outer;
     size_t alpn_outer_len;
     SSL_ech_cb_func cb; /* callback function for when ECH "done" */
-} OSSL_CTX_ECH;
+} OSSL_ECH_CTX;
 
 /* ECH details associated with an SSL_CONNECTION */
 typedef struct ossl_ech_conn_st {
@@ -209,12 +209,12 @@ typedef struct ossl_ech_conn_st {
 
 /* Internal ECH APIs */
 
-int ossl_echstore_dup(OSSL_ECHSTORE **new, const OSSL_ECHSTORE *old);
+OSSL_ECHSTORE *ossl_echstore_dup(const OSSL_ECHSTORE *old);
 void ossl_echstore_entry_free(OSSL_ECHSTORE_ENTRY *ee);
-void ossl_ctx_ech_free(OSSL_CTX_ECH *ce);
+void ossl_ech_ctx_clear(OSSL_ECH_CTX *ce);
 int ossl_ech_conn_init(SSL_CONNECTION *s, SSL_CTX *ctx,
                        const SSL_METHOD *method);
-void ossl_ech_conn_free(OSSL_ECH_CONN *ec);
+void ossl_ech_conn_clear(OSSL_ECH_CONN *ec);
 void ossl_echext_free(OSSL_ECHEXT *e);
 OSSL_ECHEXT *ossl_echext_dup(const OSSL_ECHEXT *src);
 

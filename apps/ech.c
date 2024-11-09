@@ -253,8 +253,9 @@ int ech_main(int argc, char **argv)
                 OPENSSL_free(ec);
                 goto end;
             }
-            BIO_printf(bio_err, "ECH entry: %d public_name: %s age: %d%s\n",
-                       oi_ind, pn, (int)secs, has_priv ? " (has private key)" : "");
+            BIO_printf(bio_err, "ECH entry: %d public_name: %s age: %lld%s\n",
+                       oi_ind, pn, (long long)secs,
+                       has_priv ? " (has private key)" : "");
             BIO_printf(bio_err, "\t%s\n", ec);
             OPENSSL_free(pn);
             OPENSSL_free(ec);

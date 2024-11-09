@@ -1497,7 +1497,7 @@ void ossl_ssl_connection_free(SSL *ssl)
     s->rbio = NULL;
     OPENSSL_free(s->s3.tmp.valid_flags);
 #ifndef OPENSSL_NO_ECH
-    ossl_ech_conn_free(&s->ext.ech);
+    ossl_ech_conn_clear(&s->ext.ech);
 #endif
 }
 
@@ -4128,10 +4128,6 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
         goto err;
     }
 
-#ifndef OPENSSL_NO_ECH
-    memset(&ret->ext.ech, 0, sizeof(ret->ext.ech));
-#endif
-
     return ret;
  err:
     SSL_CTX_free(ret);
@@ -4259,7 +4255,7 @@ void SSL_CTX_free(SSL_CTX *a)
 #endif
 
 #ifndef OPENSSL_NO_ECH
-    ossl_ctx_ech_free(&a->ext.ech);
+    ossl_ech_ctx_clear(&a->ext.ech);
 #endif
 
     OPENSSL_free(a);

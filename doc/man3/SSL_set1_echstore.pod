@@ -175,6 +175,11 @@ SSL_CTX_ech_set1_outer_alpn_protos() returns zero on error
 SSL_CTX_ech_raw_decrypt() returns zero on error
 SSL_CTX_ech_set_callback() returns zero on error
 
+Note that SSL_CTX_ech_set1_outer_alpn_protos() and
+SSL_ech_set1_outer_alpn_protos() and return zero on error and 1 on success.
+This is in contrast to SSL_CTX_set1_alpn_protos() and SSL_set1_alpn_protos()
+which (unusually for OpenSSL) return 0 on success and 1 on error.
+
 =head1 SEE ALSO
 
 The Encrypted ClientHello specification: L<https://datatracker.ietf.org/doc/draft-ietf-tls-esni/>

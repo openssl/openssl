@@ -98,6 +98,11 @@ OSSL_ECHSTORE *SSL_get1_echstore(const SSL *s);
 int SSL_ech_set1_server_names(SSL *s, const char *inner_name,
                               const char *outer_name, int no_outer);
 int SSL_ech_set1_outer_server_name(SSL *s, const char *outer_name, int no_outer);
+/*
+ * Note that this function returns 1 for success and 0 for error. This
+ * contrasts with SSL_set1_alpn_protos() which (unusually for OpenSSL)
+ * returns 0 for success and 1 on error.
+ */
 int SSL_ech_set1_outer_alpn_protos(SSL *s, const unsigned char *protos,
                                    const size_t protos_len);
 
@@ -108,6 +113,11 @@ typedef unsigned int (*SSL_ech_cb_func)(SSL *s, const char *str);
 void SSL_ech_set_callback(SSL *s, SSL_ech_cb_func f);
 int SSL_ech_get1_retry_config(SSL *s, unsigned char **ec, size_t *eclen);
 
+/*
+ * Note that this function returns 1 for success and 0 for error. This
+ * contrasts with SSL_set1_alpn_protos() which (unusually for OpenSSL)
+ * returns 0 for success and 1 on error.
+ */
 int SSL_CTX_ech_set1_outer_alpn_protos(SSL_CTX *s, const unsigned char *protos,
                                        const size_t protos_len);
 int SSL_CTX_ech_raw_decrypt(SSL_CTX *ctx,
