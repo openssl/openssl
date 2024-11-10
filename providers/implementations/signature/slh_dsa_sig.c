@@ -24,9 +24,9 @@
 #define SLH_DSA_MESSAGE_ENCODE_RAW  0
 #define SLH_DSA_MESSAGE_ENCODE_PURE 1
 
-static OSSL_FUNC_signature_sign_init_fn slh_sign_init;
+static OSSL_FUNC_signature_sign_message_init_fn slh_sign_msg_init;
 static OSSL_FUNC_signature_sign_fn slh_sign;
-static OSSL_FUNC_signature_verify_init_fn slh_verify_init;
+static OSSL_FUNC_signature_verify_message_init_fn slh_verify_msg_init;
 static OSSL_FUNC_signature_verify_fn slh_verify;
 static OSSL_FUNC_signature_freectx_fn slh_freectx;
 static OSSL_FUNC_signature_set_ctx_params_fn slh_set_ctx_params;
@@ -81,9 +81,9 @@ static void *slh_newctx(void *provctx, const char *alg, const char *propq)
     return NULL;
 }
 
-static int slh_signverify_init(void *vctx, void *vkey,
-                               const OSSL_PARAM params[], int operation,
-                               const char *desc)
+static int slh_signverify_msg_init(void *vctx, void *vkey,
+                                   const OSSL_PARAM params[], int operation,
+                                   const char *desc)
 {
     PROV_SLH_DSA_CTX *ctx = (PROV_SLH_DSA_CTX *)vctx;
     SLH_DSA_KEY *key = vkey;
@@ -111,10 +111,10 @@ static int slh_signverify_init(void *vctx, void *vkey,
     return 1;
 }
 
-static int slh_sign_init(void *vctx, void *vkey, const OSSL_PARAM params[])
+static int slh_sign_msg_init(void *vctx, void *vkey, const OSSL_PARAM params[])
 {
-    return slh_signverify_init(vctx, vkey, params,
-                               EVP_PKEY_OP_SIGN, "SLH_DSA Sign Init");
+    return slh_signverify_msg_init(vctx, vkey, params,
+                                   EVP_PKEY_OP_SIGN, "SLH_DSA Sign Init");
 }
 
 static int slh_sign(void *vctx, unsigned char *sig, size_t *siglen,
@@ -147,11 +147,11 @@ static int slh_sign(void *vctx, unsigned char *sig, size_t *siglen,
     return ret;
 }
 
-static int slh_verify_init(void *vctx, void *vkey,
+static int slh_verify_msg_init(void *vctx, void *vkey,
                            const OSSL_PARAM params[])
 {
-    return slh_signverify_init(vctx, vkey, params, EVP_PKEY_OP_VERIFY,
-                               "SLH_DSA Verify Init");
+    return slh_signverify_msg_init(vctx, vkey, params, EVP_PKEY_OP_VERIFY,
+                                   "SLH_DSA Verify Init");
 }
 
 static int slh_verify(void *vctx,
@@ -233,9 +233,11 @@ static void *slh_##fn##_newctx(void *provctx, const char *propq)               \
 }                                                                              \
 const OSSL_DISPATCH ossl_slh_dsa_##fn##_signature_functions[] = {              \
     { OSSL_FUNC_SIGNATURE_NEWCTX, (void (*)(void))slh_##fn##_newctx },         \
-    { OSSL_FUNC_SIGNATURE_SIGN_INIT, (void (*)(void))slh_sign_init },          \
+    { OSSL_FUNC_SIGNATURE_SIGN_MESSAGE_INIT,                                   \
+      (void (*)(void))slh_sign_msg_init },                                     \
     { OSSL_FUNC_SIGNATURE_SIGN, (void (*)(void))slh_sign },                    \
-    { OSSL_FUNC_SIGNATURE_VERIFY_INIT, (void (*)(void))slh_verify_init },      \
+    { OSSL_FUNC_SIGNATURE_VERIFY_MESSAGE_INIT,                                 \
+      (void (*)(void))slh_verify_msg_init },                                   \
     { OSSL_FUNC_SIGNATURE_VERIFY, (void (*)(void))slh_verify },                \
     { OSSL_FUNC_SIGNATURE_FREECTX, (void (*)(void))slh_freectx },              \
     { OSSL_FUNC_SIGNATURE_SET_CTX_PARAMS, (void (*)(void))slh_set_ctx_params },\
