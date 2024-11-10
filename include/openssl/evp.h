@@ -37,6 +37,7 @@
 # define EVP_MAX_BLOCK_LENGTH            32
 # define EVP_MAX_AEAD_TAG_LENGTH         16
 
+/* Maximum pipes in cipher pipelining */
 # define EVP_MAX_PIPES                   32
 
 # define PKCS5_SALT_LEN                  8
