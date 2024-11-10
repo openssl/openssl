@@ -187,7 +187,7 @@ static int do_slh_dsa_verify(const SLH_DSA_SIG_TEST_DATA *td,
         goto err;
     if (!TEST_ptr(sig_alg = EVP_SIGNATURE_fetch(lib_ctx, td->alg, NULL)))
         goto err;
-    if (!TEST_int_eq(EVP_PKEY_verify_init_ex2(vctx, sig_alg, params), 1)
+    if (!TEST_int_eq(EVP_PKEY_verify_message_init(vctx, sig_alg, params), 1)
             || !TEST_int_eq(EVP_PKEY_verify(vctx, sig, sig_len,
                                             td->msg, td->msg_len), 1))
         goto err;
@@ -233,7 +233,7 @@ static int slh_dsa_sign_verify_test(int tst_id)
         goto err;
     if (!TEST_ptr(sig_alg = EVP_SIGNATURE_fetch(lib_ctx, td->alg, NULL)))
         goto err;
-    if (!TEST_int_eq(EVP_PKEY_sign_init_ex2(sctx, sig_alg, params), 1)
+    if (!TEST_int_eq(EVP_PKEY_sign_message_init(sctx, sig_alg, params), 1)
             || !TEST_int_eq(EVP_PKEY_sign(sctx, NULL, &psig_len,
                                           td->msg, td->msg_len), 1)
             || !TEST_true(EVP_PKEY_get_size_t_param(pkey, OSSL_PKEY_PARAM_MAX_SIZE,
