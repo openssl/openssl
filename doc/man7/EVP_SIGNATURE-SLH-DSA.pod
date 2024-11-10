@@ -29,8 +29,8 @@ FIPS 205 Section 11 Table 2.
 3 different security categories also depending on the type.
 
 L<EVP_SIGNATURE_fetch(3)> can be used to explicitely fetch one of the 12
-algorithms which can then be used with L<EVP_PKEY_sign_init_ex2(3)>,
-L<EVP_PKEY_sign(3)>, L<EVP_PKEY_verify_init_ex2(3)>, and
+algorithms which can then be used with L<EVP_PKEY_sign_message_init(3)>,
+L<EVP_PKEY_sign(3)>, L<EVP_PKEY_verify_message_init(3)>, and
 L<EVP_PKEY_verify(3)> to sign or verify one-shot messages.
 
 The normal signing process (called Pure SLH-DSA Signature Generation)
@@ -96,7 +96,7 @@ To sign a message using an SLH-DSA EVP_PKEY structure:
         EVP_PKEY_CTX *sctx = EVP_PKEY_CTX_new_from_pkey(NULL, pkey, NULL);
         EVP_SIGNATURE *sig_alg = EVP_SIGNATURE_fetch(NULL, "SLH-DSA-SHA2-128s", NULL);
 
-        EVP_PKEY_sign_init_ex2(sctx, sig_alg, params);
+        EVP_PKEY_sign_message_init(sctx, sig_alg, params);
         /* Calculate the required size for the signature by passing a NULL buffer. */
         EVP_PKEY_sign(sctx, NULL, &sig_len, msg, msg_len);
         sig = OPENSSL_zalloc(sig_len);

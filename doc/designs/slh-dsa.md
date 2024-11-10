@@ -89,6 +89,15 @@ Currently I do not support the Pre Hash variant as this does not sit well with t
 OpenSSL API's. The user could do the encoding themselves and then set the settable
 to not encode the passed in message.
 
+Signing API
+-------------
+
+As only the one shot implementation is required and the message is not digested
+the API's used should be
+
+EVP_PKEY_sign_message_init(), EVP_PKEY_sign(),
+EVP_PKEY_verify_message_init(), EVP_PKEY_verify().
+
 Buffers
 -------
 
@@ -97,3 +106,12 @@ various sizes which are often updated in loops in parts, all of these sizes
 are known quantities. Currently there is no attempt to use wpacket to pass
 around these sizes. asserts are currently done by the child functions to check
 that the expected size does not exceed the size passed in by the parent.
+
+Constant Time Considerations
+----------------------------
+
+As the security of SLH-DSA depends only on hash functions, I do not foresee
+there being any constant time issues. Some if statements have been added to
+detect failures in hash operations, and these errors are propagated all the way
+up the function call stack. These errors should not happen in general so should
+not affect the security of the algorithms.
