@@ -31,6 +31,11 @@ EVP_DecryptFinal,
 EVP_CipherInit,
 EVP_CipherFinal,
 EVP_Cipher,
+EVP_CIPHER_can_pipeline,
+EVP_CipherPipelineEncryptInit,
+EVP_CipherPipelineDecryptInit,
+EVP_CipherPipelineUpdate,
+EVP_CipherPipelineFinal,
 EVP_get_cipherbyname,
 EVP_get_cipherbynid,
 EVP_get_cipherbyobj,
@@ -155,6 +160,25 @@ EVP_CIPHER_CTX_mode
 
  int EVP_Cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                 const unsigned char *in, unsigned int inl);
+
+ int EVP_CIPHER_can_pipeline(const EVP_CIPHER *cipher, int enc);
+ int EVP_CipherPipelineEncryptInit(EVP_CIPHER_CTX *ctx,
+                                   const EVP_CIPHER *cipher,
+                                   const unsigned char *key, size_t keylen,
+                                   size_t numpipes,
+                                   const unsigned char **iv, size_t ivlen);
+ int EVP_CipherPipelineDecryptInit(EVP_CIPHER_CTX *ctx,
+                                   const EVP_CIPHER *cipher,
+                                   const unsigned char *key, size_t keylen,
+                                   size_t numpipes,
+                                   const unsigned char **iv, size_t ivlen);
+ int EVP_CipherPipelineUpdate(EVP_CIPHER_CTX *ctx,
+                              unsigned char **out, size_t *outl,
+                              const size_t *outsize,
+                              const unsigned char **in, const size_t *inl);
+ int EVP_CipherPipelineFinal(EVP_CIPHER_CTX *ctx,
+                             unsigned char **outm, size_t *outl,
+                             const size_t *outsize);
 
  int EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *x, int padding);
  int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *x, int keylen);
@@ -461,6 +485,51 @@ has that flag set, then I<inl> can be any size.
 Due to the constraints of the API contract of this function it shouldn't be used
 in applications, please consider using EVP_CipherUpdate() and
 EVP_CipherFinal_ex() instead.
+
+=item EVP_CIPHER_can_pipeline()
+
+This function checks if a B<EVP_CIPHER> fetched using EVP_CIPHER_fetch() supports
+cipher pipelining. If the cipher supports pipelining, it returns 1, otherwise 0.
+This function will return 0 for non-fetched ciphers such as EVP_aes_128_gcm().
+There are currently no built-in ciphers that support pipelining.
+
+Cipher pipelining support allows an application to submit multiple chunks of
+data in one set of EVP_CipherUpdate()/EVP_CipherFinal calls, thereby allowing
+the provided implementation to take advantage of parallel computing. This is
+beneficial for hardware accelerators as pipeline amortizes the latency over
+multiple chunks.
+
+For non-fetched ciphers, EVP_CipherPipelineEncryptInit() or
+EVP_CipherPipelineDecryptInit() may be directly called, which will perform a
+fetch and return an error if a pipeline supported implementation is not found.
+
+=item EVP_CipherPipelineEncryptInit(), EVP_CipherPipelineDecryptInit(), EVP_CipherPipelineUpdate() and EVP_CipherPipelineFinal()
+
+These functions can be used to perform multiple encryption or decryption
+operations in parallel. EVP_CIPHER_can_pipeline() may be called to check if the
+cipher supports pipelining. These functions are analogous to
+EVP_EncryptInit_ex2(), EVP_DecryptInit_ex2(), EVP_CipherUpdate() and
+EVP_CipherFinal() but take an array of pointers for iv, input and output buffers.
+
+The I<key>, of length I<keylen>, is the symmetric key to use. The I<numpipes>
+parameter specifies the number of parallel operations to perform. The
+I<numpipes> cannot exceed B<EVP_MAX_PIPES>. The I<iv> parameter is an array of
+buffer pointers, containing IVs. The array size must be equal to I<numpipes>.
+The size of each IV buffer must be equal to I<ivlen>. When IV is not provided,
+I<iv> must be NULL, rather than an array of NULL pointers. The I<in>
+parameters takes an array of buffer pointers, each pointing to a buffer
+containing the input data. The buffers can be of different sizes. The I<inl>
+parameter is an array of size_t, each specifying the size of the corresponding
+input buffer. The I<out> and I<outm> parameters are arrays of buffer pointers,
+each pointing to a buffer where the output data will be written. The I<outsize>
+parameter is an array of size_t, each specifying the size of the corresponding
+output buffer. The I<outl> parameter is an array of size_t which will be updated
+with the size of the output data written to the corresponding output buffer.
+For size requirement of the output buffers, see the description of EVP_CipherUpdate().
+
+The EVP_CipherPipelineUpdate() function can be called multiple times to encrypt
+successive blocks of data. For AAD data, the I<out>, and I<outsize> parameter
+should be NULL, rather than an array of NULL pointers.
 
 =item EVP_get_cipherbyname(), EVP_get_cipherbynid() and EVP_get_cipherbyobj()
 
@@ -772,6 +841,13 @@ See also EVP_CIPHER_CTX_get_key_length() and EVP_CIPHER_CTX_set_key_length().
 
 Gets or sets the AEAD tag for the associated cipher context I<ctx>.
 See L<EVP_EncryptInit(3)/AEAD Interface>.
+
+=item "pipeline-tag" (B<OSSL_CIPHER_PARAM_PIPELINE_AEAD_TAG>) <octet ptr>
+
+Gets or sets the AEAD tag when using cipher pipelining. The pointer must 
+point to an array of buffers, where the aead tag will be read from or written to.
+The array size must be equal to I<numpipes> used in
+EVP_CipherPipelineEncryptInit() or EVP_CipherPipelineDecryptInit().
 
 =item "keybits" (B<OSSL_CIPHER_PARAM_RC2_KEYBITS>) <unsigned integer>
 
@@ -1316,6 +1392,14 @@ EVP_Cipher() returns the number of bytes written to I<out> for
 encryption/decryption, or the number of bytes authenticated in a call specifying
 AAD for an AEAD cipher, if the flag B<EVP_CIPH_FLAG_CUSTOM_CIPHER> is set for
 the cipher.
+
+EVP_CIPHER_can_pipeline() returns 1 if the cipher can be used in a pipeline, 0 otherwise.
+
+EVP_CipherPipelineEncryptInit() and EVP_CipherPipelineDecryptInit()
+return 1 for success and 0 for failure.
+
+EVP_CipherPipelineUpdate() and EVP_CipherPipelineFinal()
+return 1 for success and 0 for failure.
 
 EVP_CIPHER_CTX_reset() returns 1 for success and 0 for failure.
 
