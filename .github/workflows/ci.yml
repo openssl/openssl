@@ -99,7 +99,7 @@ jobs:
       run: |
         util/wrap.pl -fips apps/openssl list -providers | grep 'name: CI FIPS Provider for OpenSSL$'
     - name: save artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: "ci@basic-gcc"
         path: artifacts.tar.gz
@@ -121,7 +121,7 @@ jobs:
     - name: make test
       run: .github/workflows/make-test
     - name: save artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: "ci@basic-clang"
         path: artifacts.tar.gz
@@ -146,7 +146,7 @@ jobs:
     - name: make test
       run: .github/workflows/make-test
     - name: save artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: "ci@self-hosted-${{ matrix.os }}"
         path: artifacts.tar.gz
@@ -168,7 +168,7 @@ jobs:
     - name: make test
       run: .github/workflows/make-test
     - name: save artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: "ci@minimal"
         path: artifacts.tar.gz
@@ -190,7 +190,7 @@ jobs:
     - name: make test
       run: .github/workflows/make-test
     - name: save artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: "ci@no-deprecated"
         path: artifacts.tar.gz
@@ -212,7 +212,7 @@ jobs:
     - name: make test
       run: .github/workflows/make-test
     - name: save artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: "ci@no-shared-ubuntu"
         path: artifacts.tar.gz
@@ -239,7 +239,7 @@ jobs:
     - name: make test
       run: .github/workflows/make-test
     - name: save artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: "ci@no-shared-${{ matrix.os }}"
         path: artifacts.tar.gz
@@ -265,7 +265,7 @@ jobs:
     - name: make test
       run: .github/workflows/make-test OPENSSL_TEST_RAND_ORDER=0 TESTS="-test_fuzz* -test_ssl_* -test_sslapi -test_evp -test_cmp_http -test_verify -test_cms -test_store -test_enc -[01][0-9]"
     - name: save artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: "ci@non-caching"
         path: artifacts.tar.gz
@@ -291,7 +291,7 @@ jobs:
     - name: make test
       run: .github/workflows/make-test OPENSSL_TEST_RAND_ORDER=0
     - name: save artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: "ci@address_ub_sanitizer"
         path: artifacts.tar.gz
@@ -317,7 +317,7 @@ jobs:
     - name: make test
       run: .github/workflows/make-test OPENSSL_TEST_RAND_ORDER=0 TESTS="test_fuzz*"
     - name: save artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: "ci@fuzz_tests"
         path: artifacts.tar.gz
@@ -345,7 +345,7 @@ jobs:
     - name: make test
       run: .github/workflows/make-test OPENSSL_TEST_RAND_ORDER=0
     - name: save artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: "ci@memory_sanitizer"
         path: artifacts.tar.gz
@@ -371,7 +371,7 @@ jobs:
     - name: make test
       run: .github/workflows/make-test V=1 TESTS="test_threads test_internal_provider test_provfetch test_provider test_pbe test_evp_kdf test_pkcs12 test_store test_evp test_quic*"
     - name: save artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: "ci@threads_sanitizer"
         path: artifacts.tar.gz
@@ -395,7 +395,7 @@ jobs:
     - name: make test
       run: .github/workflows/make-test
     - name: save artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: "ci@enable_non-default_options"
         path: artifacts.tar.gz
@@ -425,7 +425,7 @@ jobs:
     - name: make test
       run: .github/workflows/make-test
     - name: save artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: "ci@full_featured"
         path: artifacts.tar.gz
@@ -447,7 +447,7 @@ jobs:
     - name: make test
       run: .github/workflows/make-test
     - name: save artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: "ci@no-legacy"
         path: artifacts.tar.gz
@@ -469,7 +469,7 @@ jobs:
     - name: make test
       run: .github/workflows/make-test
     - name: save artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: "ci@legacy"
         path: artifacts.tar.gz
@@ -511,7 +511,7 @@ jobs:
       run: ../source/.github/workflows/make-test
       working-directory: ./build
     - name: save artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: "ci@out-of-readonly-source-and-install-ubuntu"
         path: build/artifacts.tar.gz
@@ -556,7 +556,7 @@ jobs:
       run: ../source/.github/workflows/make-test
       working-directory: ./build
     - name: save artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: "ci@out-of-readonly-source-and-install-${{ matrix.os }}"
         path: build/artifacts.tar.gz
