@@ -109,7 +109,7 @@ struct ossl_echstore_st {
 };
 
 /* ECH details associated with an SSL_CTX */
-typedef struct ossl_ctx_ech_st {
+typedef struct ossl_ech_ctx_st {
     /* TODO(ECH): consider making es ref-counted */
     OSSL_ECHSTORE *es;
     unsigned char *alpn_outer;
