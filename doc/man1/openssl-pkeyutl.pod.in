@@ -75,8 +75,6 @@ the default digest algorithm is SHA-256. For SM2, it is SM3.
 This option can only be used with B<-sign> and B<-verify>.
 For EdDSA (the Ed25519 and Ed448 algorithms) this option is required.
  
-The B<-digest> option implies B<-rawin> since OpenSSL 3.5.
-
 =item B<-digest> I<algorithm>
 
 This option can only be used with B<-sign> and B<-verify>.
