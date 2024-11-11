@@ -5912,6 +5912,109 @@ static int test_invalid_ctx_for_digest(void)
     return ret;
 }
 
+static int test_ml_kem(void)
+{
+    EVP_PKEY *akey, *bkey = NULL;
+    int res = 0;
+    size_t publen;
+    unsigned char *rawpub = NULL;
+    EVP_PKEY_CTX *ctx = NULL;
+    unsigned char *wrpkey = NULL, *agenkey = NULL, *bgenkey = NULL;
+    size_t wrpkeylen, agenkeylen, bgenkeylen, i;
+
+    /* Generate Alice's key */
+    akey = EVP_PKEY_Q_keygen(testctx, NULL, "ML-KEM-768");
+    if (!TEST_ptr(akey))
+        goto err;
+
+    /* Get the raw public key */
+    publen = EVP_PKEY_get1_encoded_public_key(akey, &rawpub);
+    if (!TEST_size_t_gt(publen, 0))
+        goto err;
+
+    /* Create Bob's key and populate it with Alice's public key data */
+    bkey = EVP_PKEY_new();
+    if (!TEST_ptr(bkey))
+        goto err;
+
+    if (!TEST_int_gt(EVP_PKEY_copy_parameters(bkey, akey), 0))
+        goto err;
+
+    if (!TEST_true(EVP_PKEY_set1_encoded_public_key(bkey, rawpub, publen)))
+        goto err;
+
+    /* Encapsulate Bob's key */
+    ctx = EVP_PKEY_CTX_new_from_pkey(testctx, bkey, NULL);
+    if (!TEST_ptr(ctx))
+        goto err;
+
+    if (!TEST_int_gt(EVP_PKEY_encapsulate_init(ctx, NULL), 0))
+        goto err;
+
+    if (!TEST_int_gt(EVP_PKEY_encapsulate(ctx, NULL, &wrpkeylen, NULL,
+                                          &bgenkeylen), 0))
+        goto err;
+
+    if (!TEST_size_t_gt(wrpkeylen, 0) || !TEST_size_t_gt(bgenkeylen, 0))
+        goto err;
+
+    wrpkey = OPENSSL_zalloc(wrpkeylen);
+    bgenkey = OPENSSL_zalloc(bgenkeylen);
+    if (!TEST_ptr(wrpkey) || !TEST_ptr(bgenkey))
+        goto err;
+
+    if (!TEST_int_gt(EVP_PKEY_encapsulate(ctx, wrpkey, &wrpkeylen, bgenkey,
+                                          &bgenkeylen), 0))
+        goto err;
+
+    EVP_PKEY_CTX_free(ctx);
+
+    /* Alice now decapsulates Bob's key */
+    ctx = EVP_PKEY_CTX_new_from_pkey(testctx, akey, NULL);
+    if (!TEST_ptr(ctx))
+        goto err;
+
+    if (!TEST_int_gt(EVP_PKEY_decapsulate_init(ctx, NULL), 0))
+        goto err;
+
+    if (!TEST_int_gt(EVP_PKEY_decapsulate(ctx, NULL, &agenkeylen, wrpkey,
+                                          wrpkeylen), 0))
+        goto err;
+
+    if (!TEST_size_t_gt(agenkeylen, 0))
+        goto err;
+
+    agenkey = OPENSSL_zalloc(agenkeylen);
+    if (!TEST_ptr(agenkey))
+        goto err;
+
+    if (!TEST_int_gt(EVP_PKEY_decapsulate(ctx, agenkey, &agenkeylen, wrpkey,
+                                          wrpkeylen), 0))
+        goto err;
+
+    /* Hopefully we ended up with a shared key */
+    if (!TEST_mem_eq(agenkey, agenkeylen, bgenkey, bgenkeylen))
+        goto err;
+
+    /* Verify we generated a non-zero shared key */
+    for (i = 0; i < agenkeylen; i++)
+        if (agenkey[i] != 0)
+            break;
+    if (!TEST_size_t_ne(i, agenkeylen))
+        return 0;
+
+    res = 1;
+ err:
+    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_free(akey);
+    EVP_PKEY_free(bkey);
+    OPENSSL_free(rawpub);
+    OPENSSL_free(wrpkey);
+    OPENSSL_free(agenkey);
+    OPENSSL_free(bgenkey);
+    return res;
+}
+
 static int test_evp_cipher_pipeline(void)
 {
     OSSL_PROVIDER *fake_pipeline = NULL;
@@ -6310,6 +6413,7 @@ int setup_tests(void)
 #endif
 
     ADD_TEST(test_invalid_ctx_for_digest);
+    ADD_TEST(test_ml_kem);
 
     ADD_TEST(test_evp_cipher_pipeline);
 
