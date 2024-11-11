@@ -997,6 +997,13 @@ IF[{- !$disabled{tests} -}]
     INCLUDE[asn1_dsa_internal_test]=.. ../include ../apps/include
     DEPEND[asn1_dsa_internal_test]=../libcrypto.a libtestutil.a
 
+    IF[{- !$disabled{'mlkem'} -}]
+      PROGRAMS{noinst}=mlkem_internal_test
+      SOURCE[mlkem_internal_test]=mlkem_internal_test.c
+      INCLUDE[mlkem_internal_test]=../include ../apps/include
+      DEPEND[mlkem_internal_test]=../libcrypto.a libtestutil.a
+    ENDIF
+
     SOURCE[keymgmt_internal_test]=keymgmt_internal_test.c
     INCLUDE[keymgmt_internal_test]=.. ../include ../apps/include
     DEPEND[keymgmt_internal_test]=../libcrypto.a libtestutil.a
