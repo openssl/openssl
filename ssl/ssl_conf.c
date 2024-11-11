@@ -666,22 +666,19 @@ static int cmd_RecordPadding(SSL_CONF_CTX *cctx, const char *value)
 
     copy = OPENSSL_strdup(value);
     if (copy == NULL)
-        return 0;
+        goto out;
     commap = strstr(copy, ",");
     if (commap != NULL) {
         *commap = '\0';
-        if (*(commap + 1) == '\0') {
-            OPENSSL_free(copy);
-            return 0;
-        }
+        if (*(commap + 1) == '\0')
+            goto out;
         if (!OPENSSL_strtoul(commap + 1, &endptr, 0, &hs_padding))
-            return 0;
+            goto out;
     }
     if (!OPENSSL_strtoul(copy, &endptr, 0, &block_padding))
-        return 0;
+        goto out;
     if (commap == NULL)
         hs_padding = block_padding;
-    OPENSSL_free(copy);
 
     /*
      * All we care about are non-negative values,
@@ -693,6 +690,8 @@ static int cmd_RecordPadding(SSL_CONF_CTX *cctx, const char *value)
     if (cctx->ssl)
         rv = SSL_set_block_padding_ex(cctx->ssl, (size_t)block_padding,
                                       (size_t)hs_padding);
+out:
+    OPENSSL_free(copy);
     return rv;
 }
 
