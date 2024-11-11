@@ -219,7 +219,7 @@ jobs:
                   TESTS="test_evp*" \
                   QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }}
     - name: save artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: "cross-compiles@${{ matrix.platform.arch }}"
         path: artifacts.tar.gz
