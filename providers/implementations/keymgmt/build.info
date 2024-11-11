@@ -10,6 +10,7 @@ $MAC_GOAL=../../libdefault.a ../../libfips.a
 $RSA_GOAL=../../libdefault.a ../../libfips.a
 $TEMPLATE_GOAL=../../libtemplate.a
 $ML_DSA_GOAL=../../libdefault.a ../../libfips.a
+$MLKEM_GOAL=../../libdefault.a
 
 IF[{- !$disabled{dh} -}]
   SOURCE[$DH_GOAL]=dh_kmgmt.c
@@ -49,3 +50,4 @@ SOURCE[$TEMPLATE_GOAL]=template_kmgmt.c
 IF[{- !$disabled{'ml-dsa'} -}]
   SOURCE[$ML_DSA_GOAL]=ml_dsa_kmgmt.c
 ENDIF
+SOURCE[$MLKEM_GOAL]=mlkem_kmgmt.c
