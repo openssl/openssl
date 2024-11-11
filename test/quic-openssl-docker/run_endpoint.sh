@@ -85,8 +85,20 @@ if [ "$ROLE" == "client" ]; then
         ;;
     esac
 elif [ "$ROLE" == "server" ]; then
-    echo "UNSUPPORTED"
-    exit 127
+    echo "TESTCASE is $TESTCASE"
+    rm -f $CURLRC 
+    case "$TESTCASE" in
+    "handshake"|"transfer"|"retry"|"resumption")
+     	SSLKEYLOGFILE=/logs/keys.log FILEPREFIX=/www quic-hq-interop-server 443 /certs/cert.pem /certs/priv.key
+        ;;
+    "chacha20")
+        SSL_CIPHER_SUITES=TLS_CHACHA20_POLY1305_SHA256 SSLKEYLOGFILE=/logs/keys.log FILEPREFIX=/www quic-hq-interop-server 443 /certs/cert.pem /certs/priv.key
+        ;;
+    *)
+        echo "UNSUPPORTED TESTCASE $TESTCASE"
+        exit 127
+        ;;
+    esac
 else
     echo "Unknown ROLE $ROLE"
     exit 127
