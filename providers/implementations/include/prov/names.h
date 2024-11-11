@@ -390,3 +390,5 @@
 #define PROV_DESCS_ML_DSA_65 "OpenSSL ML-DSA-65 implementation"
 #define PROV_NAMES_ML_DSA_87 "ML-DSA-87:2.16.840.1.101.3.4.3.19:id-ml-dsa-87"
 #define PROV_DESCS_ML_DSA_87 "OpenSSL ML-DSA-87 implementation"
+#define PROV_NAMES_MLKEM768 "ML-KEM-768"
+#define PROV_DESCS_MLKEM768 "OpenSSL ML-KEM-768 implementation"

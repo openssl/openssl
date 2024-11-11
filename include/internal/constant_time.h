@@ -42,7 +42,6 @@ static ossl_inline unsigned int constant_time_lt(unsigned int a,
 /* Convenience method for getting an 8-bit mask. */
 static ossl_inline unsigned char constant_time_lt_8(unsigned int a,
                                                     unsigned int b);
-
 /* Convenience method for uint32_t. */
 static ossl_inline uint32_t constant_time_lt_32(uint32_t a, uint32_t b);
 
