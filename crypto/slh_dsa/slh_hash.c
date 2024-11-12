@@ -129,31 +129,31 @@ void ossl_slh_hash_ctx_cleanup(SLH_HASH_CTX *ctx)
 }
 
 static ossl_inline int xof_digest_3(EVP_MD_CTX *ctx,
-                                      const uint8_t *in1, size_t in1_len,
-                                      const uint8_t *in2, size_t in2_len,
-                                      const uint8_t *in3, size_t in3_len,
-                                      uint8_t *out, size_t out_len)
+                                    const uint8_t *in1, size_t in1_len,
+                                    const uint8_t *in2, size_t in2_len,
+                                    const uint8_t *in3, size_t in3_len,
+                                    uint8_t *out, size_t out_len)
 {
     return (EVP_DigestInit_ex2(ctx, NULL, NULL) == 1
-        && EVP_DigestUpdate(ctx, in1, in1_len) == 1
-        && EVP_DigestUpdate(ctx, in2, in2_len) == 1
-        && EVP_DigestUpdate(ctx, in3, in3_len) == 1
-        && EVP_DigestFinalXOF(ctx, out, out_len) == 1);
+            && EVP_DigestUpdate(ctx, in1, in1_len) == 1
+            && EVP_DigestUpdate(ctx, in2, in2_len) == 1
+            && EVP_DigestUpdate(ctx, in3, in3_len) == 1
+            && EVP_DigestFinalXOF(ctx, out, out_len) == 1);
 }
 
 static ossl_inline int xof_digest_4(EVP_MD_CTX *ctx,
-                                      const uint8_t *in1, size_t in1_len,
-                                      const uint8_t *in2, size_t in2_len,
-                                      const uint8_t *in3, size_t in3_len,
-                                      const uint8_t *in4, size_t in4_len,
-                                      uint8_t *out, size_t out_len)
+                                    const uint8_t *in1, size_t in1_len,
+                                    const uint8_t *in2, size_t in2_len,
+                                    const uint8_t *in3, size_t in3_len,
+                                    const uint8_t *in4, size_t in4_len,
+                                    uint8_t *out, size_t out_len)
 {
     return (EVP_DigestInit_ex2(ctx, NULL, NULL) == 1
-        && EVP_DigestUpdate(ctx, in1, in1_len) == 1
-        && EVP_DigestUpdate(ctx, in2, in2_len) == 1
-        && EVP_DigestUpdate(ctx, in3, in3_len) == 1
-        && EVP_DigestUpdate(ctx, in4, in4_len) == 1
-        && EVP_DigestFinalXOF(ctx, out, out_len) == 1);
+            && EVP_DigestUpdate(ctx, in1, in1_len) == 1
+            && EVP_DigestUpdate(ctx, in2, in2_len) == 1
+            && EVP_DigestUpdate(ctx, in3, in3_len) == 1
+            && EVP_DigestUpdate(ctx, in4, in4_len) == 1
+            && EVP_DigestFinalXOF(ctx, out, out_len) == 1);
 }
 
 /* See FIPS 205 Section 11.1 */

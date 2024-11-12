@@ -46,9 +46,6 @@ static int slh_sign_internal(SLH_DSA_CTX *ctx, const SLH_DSA_KEY *priv,
     int ret = 0;
     const SLH_DSA_PARAMS *params = ctx->params;
     size_t sig_len_expected = params->sig_len;
-    SLH_HASH_FUNC_DECLARE(ctx, hashf, hctx);
-    SLH_ADRS_FUNC_DECLARE(ctx, adrsf);
-    SLH_ADRS_DECLARE(adrs);
     uint8_t m_digest[SLH_MAX_M];
     const uint8_t *md; /* The first md_len bytes of m_digest */
     size_t md_len = MD_LEN(params); /* The size of the digest |md| */
@@ -60,6 +57,10 @@ static int slh_sign_internal(SLH_DSA_CTX *ctx, const SLH_DSA_KEY *priv,
     uint8_t pk_fors[SLH_MAX_N];
     uint64_t tree_id;
     uint32_t leaf_id;
+
+    SLH_ADRS_DECLARE(adrs);
+    SLH_HASH_FUNC_DECLARE(ctx, hashf, hctx);
+    SLH_ADRS_FUNC_DECLARE(ctx, adrsf);
 
     if (sig_len != NULL)
         *sig_len = sig_len_expected;

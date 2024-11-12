@@ -79,9 +79,10 @@ static int slh_fors_node(SLH_DSA_CTX *ctx, const uint8_t *sk_seed,
                          uint32_t height, uint8_t *node, size_t node_len)
 {
     int ret = 0;
-    SLH_ADRS_FUNC_DECLARE(ctx, adrsf);
     uint8_t sk[SLH_MAX_N], lnode[SLH_MAX_N], rnode[SLH_MAX_N];
     uint32_t n = ctx->params->n;
+
+    SLH_ADRS_FUNC_DECLARE(ctx, adrsf);
 
     if (height == 0) {
         /* Gets here for leaf nodes */
@@ -179,7 +180,7 @@ int ossl_slh_fors_sign(SLH_DSA_CTX *ctx, const uint8_t *md,
             if (!slh_fors_node(ctx, sk_seed, pk_seed, adrs,
                                s + tree_offset, layer, out, sizeof(out)))
                 return 0;
-            node_id >>= 1;/* Get the parent node id */
+            node_id >>= 1; /* Get the parent node id */
             tree_offset >>= 1; /* Each layer up has half as many nodes */
             WPACKET_memcpy(sig_wpkt, out, n);
         }
@@ -211,13 +212,6 @@ int ossl_slh_fors_pk_from_sig(SLH_DSA_CTX *ctx, PACKET *fors_sig_rpkt,
                               SLH_ADRS adrs, uint8_t *pk_out, size_t pk_out_len)
 {
     int ret = 0;
-    SLH_ADRS_DECLARE(pk_adrs);
-    SLH_ADRS_FUNC_DECLARE(ctx, adrsf);
-    SLH_ADRS_FN_DECLARE(adrsf, set_tree_index);
-    SLH_ADRS_FN_DECLARE(adrsf, set_tree_height);
-    SLH_HASH_FUNC_DECLARE(ctx, hashf, hctx);
-    SLH_HASH_FN_DECLARE(hashf, F);
-    SLH_HASH_FN_DECLARE(hashf, H);
     uint32_t i, j, aoff = 0;
     uint32_t ids[SLH_MAX_K];
     const SLH_DSA_PARAMS *params = ctx->params;
@@ -230,6 +224,14 @@ int ossl_slh_fors_pk_from_sig(SLH_DSA_CTX *ctx, PACKET *fors_sig_rpkt,
     size_t roots_len = 0; /* The size of |roots| */
     uint8_t *node0, *node1; /* Pointers into roots[] */
     WPACKET root_pkt, *wroot_pkt = &root_pkt; /* Points to |roots| buffer */
+
+    SLH_ADRS_DECLARE(pk_adrs);
+    SLH_ADRS_FUNC_DECLARE(ctx, adrsf);
+    SLH_ADRS_FN_DECLARE(adrsf, set_tree_index);
+    SLH_ADRS_FN_DECLARE(adrsf, set_tree_height);
+    SLH_HASH_FUNC_DECLARE(ctx, hashf, hctx);
+    SLH_HASH_FN_DECLARE(hashf, F);
+    SLH_HASH_FN_DECLARE(hashf, H);
 
     if (!WPACKET_init_static_len(wroot_pkt, roots, sizeof(roots), 0))
         return 0;
