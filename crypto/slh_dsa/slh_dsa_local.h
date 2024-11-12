@@ -50,8 +50,8 @@ __owur int ossl_slh_wots_pk_gen(SLH_DSA_CTX *ctx, const uint8_t *sk_seed,
                                 const uint8_t *pk_seed, SLH_ADRS adrs,
                                 uint8_t *pk_out, size_t pk_out_len);
 __owur int ossl_slh_wots_sign(SLH_DSA_CTX *ctx, const uint8_t *msg,
-                             const uint8_t *sk_seed, const uint8_t *pk_seed,
-                             SLH_ADRS adrs, WPACKET *sig_wpkt);
+                              const uint8_t *sk_seed, const uint8_t *pk_seed,
+                              SLH_ADRS adrs, WPACKET *sig_wpkt);
 __owur int ossl_slh_wots_pk_from_sig(SLH_DSA_CTX *ctx,
                                      PACKET *sig_rpkt, const uint8_t *msg,
                                      const uint8_t *pk_seed, SLH_ADRS adrs,

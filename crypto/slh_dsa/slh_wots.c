@@ -13,14 +13,14 @@
 #include "slh_dsa_local.h"
 
 /* For the parameter sets defined there is only one w value */
-#define SLH_WOTS_LOGW               4
-#define SLH_WOTS_W                  16
-#define SLH_WOTS_LEN1(n)            (2 * (n))
-#define SLH_WOTS_LEN2                3
-#define SLH_WOTS_CHECKSUM_LEN    ((SLH_WOTS_LEN2 + SLH_WOTS_LOGW + 7) / 8)
-#define SLH_WOTS_LEN_MAX         SLH_WOTS_LEN(SLH_MAX_N)
-#define NIBBLE_MASK                 15
-#define NIBBLE_SHIFT                4
+#define SLH_WOTS_LOGW 4
+#define SLH_WOTS_W 16
+#define SLH_WOTS_LEN1(n) (2 * (n))
+#define SLH_WOTS_LEN2 3
+#define SLH_WOTS_CHECKSUM_LEN ((SLH_WOTS_LEN2 + SLH_WOTS_LOGW + 7) / 8)
+#define SLH_WOTS_LEN_MAX SLH_WOTS_LEN(SLH_MAX_N)
+#define NIBBLE_MASK 15
+#define NIBBLE_SHIFT 4
 
 /*
  * @brief Convert a byte array to a byte array of (4 bit) nibbles
@@ -142,18 +142,19 @@ int ossl_slh_wots_pk_gen(SLH_DSA_CTX *ctx,
                          SLH_ADRS adrs, uint8_t *pk_out, size_t pk_out_len)
 {
     int ret = 0;
+    size_t n = ctx->params->n;
+    size_t i, len = SLH_WOTS_LEN(n); /* 2 * n + 3 */
+    uint8_t sk[SLH_MAX_N];
+    uint8_t tmp[SLH_WOTS_LEN_MAX * SLH_MAX_N];
+    WPACKET pkt, *tmp_wpkt = &pkt; /* Points to the |tmp| buffer */
+    size_t tmp_len = 0;
+
     SLH_HASH_FUNC_DECLARE(ctx, hashf, hctx);
     SLH_ADRS_FUNC_DECLARE(ctx, adrsf);
     SLH_HASH_FN_DECLARE(hashf, PRF);
     SLH_ADRS_FN_DECLARE(adrsf, set_chain_address);
     SLH_ADRS_DECLARE(sk_adrs);
     SLH_ADRS_DECLARE(wots_pk_adrs);
-    size_t n = ctx->params->n;
-    size_t i, len = SLH_WOTS_LEN(n); /*2 * n + 3 */
-    uint8_t sk[SLH_MAX_N];
-    uint8_t tmp[SLH_WOTS_LEN_MAX * SLH_MAX_N];
-    WPACKET pkt, *tmp_wpkt = &pkt; /* Points to the |tmp| buffer */
-    size_t tmp_len = 0;
 
     if (!WPACKET_init_static_len(tmp_wpkt, tmp, sizeof(tmp), 0))
         return 0;
@@ -206,18 +207,18 @@ int ossl_slh_wots_sign(SLH_DSA_CTX *ctx, const uint8_t *msg,
                        SLH_ADRS adrs, WPACKET *sig_wpkt)
 {
     int ret = 0;
+    uint8_t msg_and_csum_nibbles[SLH_WOTS_LEN_MAX]; /* size is >= 2 * n + 3 */
+    uint8_t sk[SLH_MAX_N];
+    size_t i;
+    size_t n = ctx->params->n;
+    size_t len1 = SLH_WOTS_LEN1(n); /* 2 * n = the msg length in nibbles */
+    size_t len = len1 + SLH_WOTS_LEN2;  /* 2 * n + 3 (3 checksum nibbles) */
+
+    SLH_ADRS_DECLARE(sk_adrs);
     SLH_HASH_FUNC_DECLARE(ctx, hashf, hctx);
     SLH_ADRS_FUNC_DECLARE(ctx, adrsf);
     SLH_HASH_FN_DECLARE(hashf, PRF);
     SLH_ADRS_FN_DECLARE(adrsf, set_chain_address);
-    SLH_ADRS_DECLARE(sk_adrs);
-    uint8_t msg_and_csum_nibbles[SLH_WOTS_LEN_MAX]; /* size is >= 2 * n + 3 */
-    uint8_t sk[SLH_MAX_N];
-    size_t i, len1, len;
-    size_t n = ctx->params->n;
-
-    len1 = SLH_WOTS_LEN1(n); /* 2 * n is for the message length in nibbles */
-    len = len1 + SLH_WOTS_LEN2;  /* 2 * n + 3 (3 checksum nibbles) */
 
     /*
      * Convert n message bytes to 2*n base w=16 integers
@@ -269,19 +270,20 @@ int ossl_slh_wots_pk_from_sig(SLH_DSA_CTX *ctx,
                               uint8_t *pk_out, size_t pk_out_len)
 {
     int ret = 0;
-    SLH_HASH_FUNC_DECLARE(ctx, hashf, hctx);
-    SLH_ADRS_FUNC_DECLARE(ctx, adrsf);
-    SLH_ADRS_FN_DECLARE(adrsf, set_chain_address);
-    SLH_ADRS_DECLARE(wots_pk_adrs);
     uint8_t msg_and_csum_nibbles[SLH_WOTS_LEN_MAX];
-    size_t i, len1, len, n = ctx->params->n;
-    const uint8_t *sig_i;  /* Pointer into |pkt_sig| buffer */
+    size_t i;
+    size_t n = ctx->params->n;
+    size_t len1 = SLH_WOTS_LEN1(n);
+    size_t len = len1 + SLH_WOTS_LEN2; /* 2n + 3 */
+    const uint8_t *sig_i;  /* Pointer into |sig_rpkt| buffer */
     uint8_t tmp[SLH_WOTS_LEN_MAX * SLH_MAX_N];
     WPACKET pkt, *tmp_pkt = &pkt;
     size_t tmp_len = 0;
 
-    len1 = SLH_WOTS_LEN1(n);
-    len = len1 + SLH_WOTS_LEN2; /* 2n + 3 */
+    SLH_HASH_FUNC_DECLARE(ctx, hashf, hctx);
+    SLH_ADRS_FUNC_DECLARE(ctx, adrsf);
+    SLH_ADRS_FN_DECLARE(adrsf, set_chain_address);
+    SLH_ADRS_DECLARE(wots_pk_adrs);
 
     if (!WPACKET_init_static_len(tmp_pkt, tmp, sizeof(tmp), 0))
         return 0;
@@ -305,7 +307,7 @@ int ossl_slh_wots_pk_from_sig(SLH_DSA_CTX *ctx,
     if (!WPACKET_get_total_written(tmp_pkt, &tmp_len))
         goto err;
     ret = hashf->T(hctx, pk_seed, wots_pk_adrs, tmp, tmp_len,
-                    pk_out, pk_out_len);
+                   pk_out, pk_out_len);
  err:
     if (!WPACKET_finish(tmp_pkt))
         ret = 0;

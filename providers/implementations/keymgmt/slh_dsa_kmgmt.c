@@ -162,7 +162,7 @@ static int slh_dsa_get_params(void *keydata, OSSL_PARAM params[])
 }
 
 static int slh_dsa_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
-                      void *cbarg)
+                          void *cbarg)
 {
     SLH_DSA_KEY *key = keydata;
     OSSL_PARAM_BLD *tmpl;
@@ -307,37 +307,37 @@ static void slh_dsa_gen_cleanup(void *genctx)
 }
 
 #define MAKE_KEYMGMT_FUNCTIONS(alg, fn)                                        \
-static OSSL_FUNC_keymgmt_new_fn slh_dsa_##fn##_new_key;                        \
-static OSSL_FUNC_keymgmt_gen_fn slh_dsa_##fn##_gen;                            \
-static void *slh_dsa_##fn##_new_key(void *provctx)                             \
-{                                                                              \
-    return slh_dsa_new_key(provctx, alg);                                      \
-}                                                                              \
-static void *slh_dsa_##fn##_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)\
-{                                                                              \
-    return slh_dsa_gen(genctx, alg);                                           \
-}                                                                              \
-const OSSL_DISPATCH ossl_slh_dsa_##fn##_keymgmt_functions[] = {                \
-    { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))slh_dsa_##fn##_new_key },         \
-    { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))slh_dsa_free_key },              \
-    { OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))slh_dsa_has },                    \
-    { OSSL_FUNC_KEYMGMT_MATCH, (void (*)(void))slh_dsa_match },                \
-    { OSSL_FUNC_KEYMGMT_IMPORT, (void (*)(void))slh_dsa_import },              \
-    { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))slh_dsa_imexport_types },\
-    { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))slh_dsa_export },              \
-    { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))slh_dsa_imexport_types },\
-    { OSSL_FUNC_KEYMGMT_LOAD, (void (*)(void))slh_dsa_load },                  \
-    { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*) (void))slh_dsa_get_params },     \
-    { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (void (*) (void))slh_dsa_gettable_params }, \
-    { OSSL_FUNC_KEYMGMT_GEN_INIT, (void (*)(void))slh_dsa_gen_init },          \
-    { OSSL_FUNC_KEYMGMT_GEN, (void (*)(void))slh_dsa_##fn##_gen },             \
-    { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (void (*)(void))slh_dsa_gen_cleanup },    \
-    { OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS,                                        \
-      (void (*)(void))slh_dsa_gen_set_params },                                \
-    { OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS,                                   \
-      (void (*)(void))slh_dsa_gen_settable_params },                           \
-    OSSL_DISPATCH_END                                                          \
-}
+    static OSSL_FUNC_keymgmt_new_fn slh_dsa_##fn##_new_key;                    \
+    static OSSL_FUNC_keymgmt_gen_fn slh_dsa_##fn##_gen;                        \
+    static void *slh_dsa_##fn##_new_key(void *provctx)                         \
+    {                                                                          \
+        return slh_dsa_new_key(provctx, alg);                                  \
+    }                                                                          \
+    static void *slh_dsa_##fn##_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)\
+    {                                                                          \
+        return slh_dsa_gen(genctx, alg);                                       \
+    }                                                                          \
+    const OSSL_DISPATCH ossl_slh_dsa_##fn##_keymgmt_functions[] = {            \
+        { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))slh_dsa_##fn##_new_key },     \
+        { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))slh_dsa_free_key },          \
+        { OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))slh_dsa_has },                \
+        { OSSL_FUNC_KEYMGMT_MATCH, (void (*)(void))slh_dsa_match },            \
+        { OSSL_FUNC_KEYMGMT_IMPORT, (void (*)(void))slh_dsa_import },          \
+        { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))slh_dsa_imexport_types },\
+        { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))slh_dsa_export },          \
+        { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))slh_dsa_imexport_types },\
+        { OSSL_FUNC_KEYMGMT_LOAD, (void (*)(void))slh_dsa_load },              \
+        { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*) (void))slh_dsa_get_params }, \
+        { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (void (*) (void))slh_dsa_gettable_params },\
+        { OSSL_FUNC_KEYMGMT_GEN_INIT, (void (*)(void))slh_dsa_gen_init },      \
+        { OSSL_FUNC_KEYMGMT_GEN, (void (*)(void))slh_dsa_##fn##_gen },         \
+        { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (void (*)(void))slh_dsa_gen_cleanup },\
+        { OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS,                                    \
+          (void (*)(void))slh_dsa_gen_set_params },                            \
+        { OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS,                               \
+          (void (*)(void))slh_dsa_gen_settable_params },                       \
+        OSSL_DISPATCH_END                                                      \
+    }
 
 MAKE_KEYMGMT_FUNCTIONS("SLH-DSA-SHA2-128s", sha2_128s);
 MAKE_KEYMGMT_FUNCTIONS("SLH-DSA-SHA2-128f", sha2_128f);

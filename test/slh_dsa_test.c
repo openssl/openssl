@@ -237,7 +237,7 @@ static int slh_dsa_sign_verify_test(int tst_id)
             || !TEST_int_eq(EVP_PKEY_sign(sctx, NULL, &psig_len,
                                           td->msg, td->msg_len), 1)
             || !TEST_true(EVP_PKEY_get_size_t_param(pkey, OSSL_PKEY_PARAM_MAX_SIZE,
-                                                 &sig_len2))
+                                                    &sig_len2))
             || !TEST_int_eq(sig_len2, psig_len)
             || !TEST_ptr(psig = OPENSSL_zalloc(psig_len))
             || !TEST_int_eq(EVP_PKEY_sign(sctx, psig, &psig_len,
