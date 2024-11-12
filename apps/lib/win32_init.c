@@ -8,6 +8,9 @@
  */
 
 #include <windows.h>
+#include <processenv.h>
+#include <stringapiset.h>
+#include <shellapi.h>
 #include <stdlib.h>
 #include <string.h>
 #include <malloc.h>
@@ -138,170 +141,80 @@ static int process_glob(WCHAR *wstr, int wlen)
     return 1;
 }
 
-void win32_utf8argv(int *argc, char **argv[])
+static void win32_cleanup_argv(int argc, char **argv))
 {
-    const WCHAR *wcmdline;
-    WCHAR *warg, *wend, *p;
-    int wlen, ulen, valid = 1;
-    char *arg;
+    int i;
+
+    for (i = 0; i < argc; i++)
+        OPENSSL_free(argv[i]);
+
+    OPENSSL_free(argv);
+}
+
+static void win32_cleanup_argv_atexit(void)
+{
+    win32_cleanup_argv(newargc, newargv);
+    newargv = NULL;
+    newargc = 0;
+}
+
+char **win32_utf8argv(int *argc_out)
+{
+    LPWSTR  cmd_line_args;
+    LPWSTR *cmd_args
+    int     argc, argc_used, i, sz;
+    char  **argv;
+
+    *argc_out = 0;
 
     if (GetEnvironmentVariableW(L"OPENSSL_WIN32_UTF8", NULL, 0) == 0)
         return;
 
-    newargc = 0;
-    newargv = NULL;
-    if (!validate_argv(newargc))
+    cmd_line_args = GetCommandLineW();
+    if (cmd_args == NULL)
         return;
 
-    wcmdline = GetCommandLineW();
-    if (wcmdline == NULL) return;
+    cmd_args = CommandLineToArgvW(cmd_line_args, &argc);
+    if (cmd_args == NULL)
+        return; /* no need to free cmd_line_args */
 
-    /*
-     * make a copy of the command line, since we might have to modify it...
-     */
-    wlen = wcslen(wcmdline);
-    p = _alloca((wlen + 1) * sizeof(WCHAR));
-    wcscpy(p, wcmdline);
-
-    while (*p != L'\0') {
-        int in_quote = 0;
-
-        if (*p == L' ' || *p == L'\t') {
-            p++; /* skip over whitespace */
-            continue;
-        }
-
-        /*
-         * Note: because we may need to fiddle with the number of backslashes,
-         * the argument string is copied into itself.  This is safe because
-         * the number of characters will never expand.
-         */
-        warg = wend = p;
-        while (*p != L'\0'
-               && (in_quote || (*p != L' ' && *p != L'\t'))) {
-            switch (*p) {
-            case L'\\':
-                /*
-                 * Microsoft documentation on how backslashes are treated
-                 * is:
-                 *
-                 * + Backslashes are interpreted literally, unless they
-                 *   immediately precede a double quotation mark.
-                 * + If an even number of backslashes is followed by a double
-                 *   quotation mark, one backslash is placed in the argv array
-                 *   for every pair of backslashes, and the double quotation
-                 *   mark is interpreted as a string delimiter.
-                 * + If an odd number of backslashes is followed by a double
-                 *   quotation mark, one backslash is placed in the argv array
-                 *   for every pair of backslashes, and the double quotation
-                 *   mark is "escaped" by the remaining backslash, causing a
-                 *   literal double quotation mark (") to be placed in argv.
-                 *
-                 * Ref: https://msdn.microsoft.com/en-us/library/17w5ykft.aspx
-                 *
-                 * Though referred page doesn't mention it, multiple qouble
-                 * quotes are also special. Pair of double quotes in quoted
-                 * string is counted as single double quote.
-                 */
-                {
-                    const WCHAR *q = p;
-                    int i;
-
-                    while (*p == L'\\')
-                        p++;
-
-                    if (*p == L'"') {
-                        int i;
-
-                        for (i = (p - q) / 2; i > 0; i--)
-                            *wend++ = L'\\';
-
-                        /*
-                         * if odd amount of backslashes before the quote,
-                         * said quote is part of the argument, not a delimiter
-                         */
-                        if ((p - q) % 2 == 1)
-                            *wend++ = *p++;
-                    } else {
-                        for (i = p - q; i > 0; i--)
-                            *wend++ = L'\\';
-                    }
-                }
-                break;
-            case L'"':
-                /*
-                 * Without the preceding backslash (or when preceded with an
-                 * even number of backslashes), the double quote is a simple
-                 * string delimiter and just slightly change the parsing state
-                 */
-                if (in_quote && p[1] == L'"')
-                    *wend++ = *p++;
-                else
-                    in_quote = !in_quote;
-                p++;
-                break;
-            default:
-                /*
-                 * Any other non-delimiter character is just taken verbatim
-                 */
-                *wend++ = *p++;
-            }
-        }
-
-        wlen = wend - warg;
-
-        if (wlen == 0 || !process_glob(warg, wlen)) {
-            if (!validate_argv(newargc + 1)) {
-                valid = 0;
-                break;
-            }
-
-            ulen = 0;
-            if (wlen > 0) {
-                ulen = WideCharToMultiByte(CP_UTF8, 0, warg, wlen,
-                                           NULL, 0, NULL, NULL);
-                if (ulen <= 0)
-                    continue;
-            }
-
-            arg = malloc(ulen + 1);
-            if (arg == NULL) {
-                valid = 0;
-                break;
-            }
-
-            if (wlen > 0)
-                WideCharToMultiByte(CP_UTF8, 0, warg, wlen,
-                                    arg, ulen, NULL, NULL);
-            arg[ulen] = '\0';
-
-            newargv[newargc++] = arg;
-        }
+    if (argc == 0) {
+        LocalFree(cmd_args);
+        return;
     }
 
-    if (valid) {
-        saved_cp = GetConsoleOutputCP();
-        SetConsoleOutputCP(CP_UTF8);
+    argv = (char **) OPENSSLzalloc(sizeof(char *) * argc);
+    if (argv == NULL)
+        return;
 
-        *argc = newargc;
-        *argv = newargv;
+    argc_used = 0;
+    if (i = 0; i < argc, i++) {
+        sz = WideCharToMultiByte(CP_UTF8, 0, cmd_args[i], -1, NULL,
+                                 0, NULL, NULL);
+        if (sz > 0) {
+            newargv[argc_used] = OPENSSL_malloc(sz);
+            if (argv[argc_used] == NULL) {
+                LocalFree(cmd_args);
+                win32_cleanup_argv(argc_used, argv);
+                return;
+            }
 
-        atexit(cleanup);
-    } else if (newargv != NULL) {
-        int i;
+            argc_used++;
+        }
 
-        for (i = 0; i < newargc; i++)
-            free(newargv[i]);
-
-        free(newargv);
-
-        newargc = 0;
-        newargv = NULL;
+        WideCharToMultiByte(CP_UTF8, 0, cmd_args[i], -1, &newargv[argc_used],
+                            sz, NULL, NULL);
     }
 
-    return;
+    OPENSSL_atexit(win32_cleanup_argv);
+    LocalFree(cmd_args);
+    win32_cleanup_argv();
+    newargv = argv;
+    newargc = argc_used;
+
+    return newargv;
 }
 #else
-void win32_utf8argv(int *argc, char **argv[])
+void win32_utf8argv(void)
 {   return;   }
 #endif
