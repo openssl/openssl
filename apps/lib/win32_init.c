@@ -15,6 +15,8 @@
 #include <string.h>
 #include <malloc.h>
 
+#include <openssl/crypto.h>
+
 #if defined(CP_UTF8)
 
 static UINT saved_cp;
@@ -141,7 +143,7 @@ static int process_glob(WCHAR *wstr, int wlen)
     return 1;
 }
 
-static void win32_cleanup_argv(int argc, char **argv))
+static void win32_cleanup_argv(int argc, char **argv)
 {
     int i;
 
@@ -161,7 +163,7 @@ static void win32_cleanup_argv_atexit(void)
 void win32_utf8argv(int *argc_out, char ***argv_out)
 {
     LPWSTR  cmd_line_args;
-    LPWSTR *cmd_args
+    LPWSTR *cmd_args;
     int     argc, argc_used, i, sz;
     char  **argv;
 
