@@ -33,9 +33,9 @@
  * @returns 1 on success, or 0 on error.
  */
 int ossl_slh_xmss_node(SLH_DSA_CTX *ctx, const uint8_t *sk_seed,
-                        uint32_t node_id, uint32_t h,
-                        const uint8_t *pk_seed, SLH_ADRS adrs,
-                        uint8_t *pk_out, size_t pk_out_len)
+                       uint32_t node_id, uint32_t h,
+                       const uint8_t *pk_seed, SLH_ADRS adrs,
+                       uint8_t *pk_out, size_t pk_out_len)
 {
     SLH_ADRS_FUNC_DECLARE(ctx, adrsf);
 
