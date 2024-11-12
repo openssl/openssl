@@ -25,6 +25,7 @@
     SSL_CONNECTION_FROM_SSL_ONLY_int(ssl, const)
 # define SSL_CONNECTION_GET_CTX(sc) ((sc)->ssl.ctx)
 # define SSL_CONNECTION_GET_SSL(sc) (&(sc)->ssl)
+# define SSL_CONNECTION_GET_USER_SSL(sc) ((sc)->user_ssl)
 # ifndef OPENSSL_NO_QUIC
 struct ssl_connection_st *ossl_quic_obj_get0_handshake_layer(QUIC_OBJ *obj);
 #  define SSL_CONNECTION_FROM_SSL_int(ssl, c)                                           \
