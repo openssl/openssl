@@ -158,7 +158,7 @@ static void win32_cleanup_argv_atexit(void)
     newargc = 0;
 }
 
-char **win32_utf8argv(int *argc_out)
+void win32_utf8argv(int *argc_out, char ***argv_out)
 {
     LPWSTR  cmd_line_args;
     LPWSTR *cmd_args
@@ -166,6 +166,7 @@ char **win32_utf8argv(int *argc_out)
     char  **argv;
 
     *argc_out = 0;
+    *argv_out = NULL;
 
     if (GetEnvironmentVariableW(L"OPENSSL_WIN32_UTF8", NULL, 0) == 0)
         return;
@@ -183,16 +184,16 @@ char **win32_utf8argv(int *argc_out)
         return;
     }
 
-    argv = (char **) OPENSSLzalloc(sizeof(char *) * argc);
+    argv = (char **) OPENSSL_zalloc(sizeof(char *) * argc);
     if (argv == NULL)
         return;
 
     argc_used = 0;
-    if (i = 0; i < argc, i++) {
+    if (i = 0; i < argc; i++) {
         sz = WideCharToMultiByte(CP_UTF8, 0, cmd_args[i], -1, NULL,
                                  0, NULL, NULL);
         if (sz > 0) {
-            newargv[argc_used] = OPENSSL_malloc(sz);
+            argv[argc_used] = (char *) OPENSSL_malloc(sz);
             if (argv[argc_used] == NULL) {
                 LocalFree(cmd_args);
                 win32_cleanup_argv(argc_used, argv);
@@ -202,8 +203,8 @@ char **win32_utf8argv(int *argc_out)
             argc_used++;
         }
 
-        WideCharToMultiByte(CP_UTF8, 0, cmd_args[i], -1, &newargv[argc_used],
-                            sz, NULL, NULL);
+        WideCharToMultiByte(CP_UTF8, 0, cmd_args[i], -1, argv[argc_used], sz,
+            NULL, NULL);
     }
 
     OPENSSL_atexit(win32_cleanup_argv);
@@ -212,7 +213,8 @@ char **win32_utf8argv(int *argc_out)
     newargv = argv;
     newargc = argc_used;
 
-    return newargv;
+    *argc_out = argc_used;
+    *argv_out = argv;
 }
 #else
 void win32_utf8argv(void)
