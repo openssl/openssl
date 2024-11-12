@@ -71,7 +71,7 @@ void win32_utf8argv(int *argc_out, char ***argv_out)
         return;
 
     argc_used = 0;
-    if (i = 0; i < argc; i++) {
+    for (i = 0; i < argc; i++) {
         sz = WideCharToMultiByte(CP_UTF8, 0, cmd_args[i], -1, NULL,
                                  0, NULL, NULL);
         if (sz > 0) {
@@ -89,9 +89,9 @@ void win32_utf8argv(int *argc_out, char ***argv_out)
             NULL, NULL);
     }
 
-    OPENSSL_atexit(win32_cleanup_argv);
+    OPENSSL_atexit(win32_cleanup_argv_atexit);
     LocalFree(cmd_args);
-    win32_cleanup_argv();
+    win32_cleanup_argv_atexit();
     newargv = argv;
     newargc = argc_used;
 
