@@ -101,11 +101,12 @@ EVP_PKEY_verify_message_init(), EVP_PKEY_verify().
 Buffers
 -------
 
-Many functions need to pass around key elements and return signature buffers of
-various sizes which are often updated in loops in parts, all of these sizes
-are known quantities. Currently there is no attempt to use wpacket to pass
-around these sizes. asserts are currently done by the child functions to check
-that the expected size does not exceed the size passed in by the parent.
+There are many functions pass buffers of size |n| Where n is one of 16,24,32
+depending on the algorithm name. These are used for key elements and hashes, so
+PACKETS are not used for these.
+
+Where it makes sense to, WPACKET is used for output (such as signature generation)
+and PACKET for reading signature data.
 
 Constant Time Considerations
 ----------------------------

@@ -160,10 +160,12 @@ static ossl_inline int xof_digest_4(EVP_MD_CTX *ctx,
 static int
 slh_hmsg_shake(SLH_HASH_CTX *hctx, const uint8_t *r, const uint8_t *pk_seed,
                const uint8_t *pk_root, const uint8_t *msg, size_t msg_len,
-               uint8_t *out)
+               uint8_t *out, size_t out_len)
 {
     size_t m = hctx->m;
     size_t n = hctx->n;
+
+    assert(m <= out_len);
 
     return xof_digest_4(hctx->md_ctx, r, n, pk_seed, n, pk_root, n,
                         msg, msg_len, out, m);
@@ -171,9 +173,11 @@ slh_hmsg_shake(SLH_HASH_CTX *hctx, const uint8_t *r, const uint8_t *pk_seed,
 
 static int
 slh_prf_shake(SLH_HASH_CTX *hctx, const uint8_t *pk_seed, const uint8_t *sk_seed,
-              const SLH_ADRS adrs, uint8_t *out)
+              const SLH_ADRS adrs, uint8_t *out, size_t out_len)
 {
     size_t n = hctx->n;
+
+    assert(n <= out_len);
 
     return xof_digest_3(hctx->md_ctx, pk_seed, n, adrs, SLH_ADRS_SIZE,
                         sk_seed, n, out, n);
@@ -182,19 +186,25 @@ slh_prf_shake(SLH_HASH_CTX *hctx, const uint8_t *pk_seed, const uint8_t *sk_seed
 static int
 slh_prf_msg_shake(SLH_HASH_CTX *hctx, const uint8_t *sk_prf,
                   const uint8_t *opt_rand, const uint8_t *msg, size_t msg_len,
-                  uint8_t *out)
+                  WPACKET *pkt)
 {
+    unsigned char out[SLH_MAX_N];
     size_t n = hctx->n;
 
+    assert(n <= sizeof(out));
+
     return xof_digest_3(hctx->md_ctx, sk_prf, n, opt_rand, n,
-                        msg, msg_len, out, n);
+                        msg, msg_len, out, n)
+        && WPACKET_memcpy(pkt, out, n);
 }
 
 static int
 slh_f_shake(SLH_HASH_CTX *hctx, const uint8_t *pk_seed, const SLH_ADRS adrs,
-            const uint8_t *m1, size_t m1_len, uint8_t *out)
+            const uint8_t *m1, size_t m1_len, uint8_t *out, size_t out_len)
 {
     size_t n = hctx->n;
+
+    assert(n <= out_len);
 
     return xof_digest_3(hctx->md_ctx, pk_seed, n, adrs, SLH_ADRS_SIZE,
                         m1, m1_len, out, n);
@@ -202,9 +212,11 @@ slh_f_shake(SLH_HASH_CTX *hctx, const uint8_t *pk_seed, const SLH_ADRS adrs,
 
 static int
 slh_h_shake(SLH_HASH_CTX *hctx, const uint8_t *pk_seed, const SLH_ADRS adrs,
-            const uint8_t *m1, const uint8_t *m2, uint8_t *out)
+            const uint8_t *m1, const uint8_t *m2, uint8_t *out, size_t out_len)
 {
     size_t n = hctx->n;
+
+    assert(n <= out_len);
 
     return xof_digest_4(hctx->md_ctx, pk_seed, n, adrs, SLH_ADRS_SIZE,
                         m1, n, m2, n, out, n);
@@ -212,9 +224,11 @@ slh_h_shake(SLH_HASH_CTX *hctx, const uint8_t *pk_seed, const SLH_ADRS adrs,
 
 static int
 slh_t_shake(SLH_HASH_CTX *hctx, const uint8_t *pk_seed, const SLH_ADRS adrs,
-            const uint8_t *ml, size_t ml_len, uint8_t *out)
+            const uint8_t *ml, size_t ml_len, uint8_t *out, size_t out_len)
 {
     size_t n = hctx->n;
+
+    assert(n <= out_len);
 
     return xof_digest_3(hctx->md_ctx, pk_seed, n, adrs, SLH_ADRS_SIZE,
                         ml, ml_len, out, n);
@@ -239,13 +253,15 @@ digest_4(EVP_MD_CTX *ctx,
 static int
 slh_hmsg_sha2(SLH_HASH_CTX *hctx, const uint8_t *r, const uint8_t *pk_seed,
               const uint8_t *pk_root, const uint8_t *msg, size_t msg_len,
-              uint8_t *out)
+              uint8_t *out, size_t out_len)
 {
+    size_t m = hctx->m;
     size_t n = hctx->n;
     uint8_t seed[2 * SLH_MAX_N + MAX_DIGEST_SIZE];
     int sz = EVP_MD_get_size(hctx->md);
     size_t seed_len = (size_t)sz + 2 * n;
 
+    assert(m <= out_len);
     assert(sz > 0);
     assert(seed_len <= sizeof(seed));
 
@@ -253,13 +269,13 @@ slh_hmsg_sha2(SLH_HASH_CTX *hctx, const uint8_t *r, const uint8_t *pk_seed,
     memcpy(seed + n, pk_seed, n);
     return digest_4(hctx->md_big_ctx, r, n, pk_seed, n, pk_root, n, msg, msg_len,
                     seed + 2 * n)
-        && (PKCS1_MGF1(out, hctx->m, seed, seed_len, hctx->md) == 0);
+        && (PKCS1_MGF1(out, m, seed, seed_len, hctx->md) == 0);
 }
 
 static int
 slh_prf_msg_sha2(SLH_HASH_CTX *hctx,
                  const uint8_t *sk_prf, const uint8_t *opt_rand,
-                 const uint8_t *msg, size_t msg_len, uint8_t *out)
+                 const uint8_t *msg, size_t msg_len, WPACKET *pkt)
 {
     int ret;
     EVP_MAC_CTX *mctx = hctx->hmac_ctx;
@@ -288,19 +304,20 @@ slh_prf_msg_sha2(SLH_HASH_CTX *hctx,
     ret = EVP_MAC_init(mctx, sk_prf, n, p) == 1
         && EVP_MAC_update(mctx, opt_rand, n) == 1
         && EVP_MAC_update(mctx, msg, msg_len) == 1
-        && EVP_MAC_final(mctx, mac, NULL, sizeof(mac)) == 1;
-    memcpy(out, mac, n); /* Truncate output to n bytes */
+        && EVP_MAC_final(mctx, mac, NULL, sizeof(mac)) == 1
+        && WPACKET_memcpy(pkt, mac, n); /* Truncate output to n bytes */
     return ret;
 }
 
 static ossl_inline int
 do_hash(EVP_MD_CTX *ctx, size_t n, const uint8_t *pk_seed, const SLH_ADRS adrs,
-        const uint8_t *m, size_t m_len, size_t b, uint8_t *out)
+        const uint8_t *m, size_t m_len, size_t b, uint8_t *out, size_t out_len)
 {
     int ret;
     uint8_t zeros[128] = { 0 };
     uint8_t digest[MAX_DIGEST_SIZE];
 
+    assert(n <= out_len);
     assert(b - n < sizeof(zeros));
 
     ret = digest_4(ctx, pk_seed, n, zeros, b - n, adrs, SLH_ADRSC_SIZE,
@@ -312,25 +329,26 @@ do_hash(EVP_MD_CTX *ctx, size_t n, const uint8_t *pk_seed, const SLH_ADRS adrs,
 
 static int
 slh_prf_sha2(SLH_HASH_CTX *hctx, const uint8_t *pk_seed,
-             const uint8_t *sk_seed, const SLH_ADRS adrs, uint8_t *out)
+             const uint8_t *sk_seed, const SLH_ADRS adrs,
+             uint8_t *out, size_t out_len)
 {
     size_t n = hctx->n;
 
     return do_hash(hctx->md_ctx, n, pk_seed, adrs, sk_seed, n,
-                   SHA2_NUM_ZEROS_BOUND1, out);
+                   SHA2_NUM_ZEROS_BOUND1, out, out_len);
 }
 
 static int
 slh_f_sha2(SLH_HASH_CTX *hctx, const uint8_t *pk_seed, const SLH_ADRS adrs,
-           const uint8_t *m1, size_t m1_len, uint8_t *out)
+           const uint8_t *m1, size_t m1_len, uint8_t *out, size_t out_len)
 {
     return do_hash(hctx->md_ctx, hctx->n, pk_seed, adrs, m1, m1_len,
-                   SHA2_NUM_ZEROS_BOUND1, out);
+                   SHA2_NUM_ZEROS_BOUND1, out, out_len);
 }
 
 static int
 slh_h_sha2(SLH_HASH_CTX *hctx, const uint8_t *pk_seed, const SLH_ADRS adrs,
-           const uint8_t *m1, const uint8_t *m2, uint8_t *out)
+           const uint8_t *m1, const uint8_t *m2, uint8_t *out, size_t out_len)
 {
     uint8_t m[SLH_MAX_N * 2];
     size_t n = hctx->n;
@@ -338,15 +356,15 @@ slh_h_sha2(SLH_HASH_CTX *hctx, const uint8_t *pk_seed, const SLH_ADRS adrs,
     memcpy(m, m1, n);
     memcpy(m + n, m2, n);
     return do_hash(hctx->md_big_ctx, n, pk_seed, adrs, m, 2 * n,
-                   hctx->sha2_h_and_t_bound, out);
+                   hctx->sha2_h_and_t_bound, out, out_len);
 }
 
 static int
 slh_t_sha2(SLH_HASH_CTX *hctx, const uint8_t *pk_seed, const SLH_ADRS adrs,
-           const uint8_t *ml, size_t ml_len, uint8_t *out)
+           const uint8_t *ml, size_t ml_len, uint8_t *out, size_t out_len)
 {
     return do_hash(hctx->md_big_ctx, hctx->n, pk_seed, adrs, ml, ml_len,
-                   hctx->sha2_h_and_t_bound, out);
+                   hctx->sha2_h_and_t_bound, out, out_len);
 }
 
 const SLH_HASH_FUNC *ossl_slh_get_hash_fn(int is_shake)

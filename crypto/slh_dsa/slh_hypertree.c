@@ -11,11 +11,11 @@
 #include <string.h>
 #include "slh_dsa_local.h"
 
-#define SLH_XMSS_SIG_LEN(n, hm) ((SLH_WOTS_LEN(n) + (hm)) * (n))
-
 /**
  * @brief Generate a Hypertree Signature
  * See FIPS 205 Section 7.1 Algorithm 12
+ *
+ * This writes |d| XMSS signatures i.e. ((|h| + |d| * |len|) * |n|)
  *
  * @param ctx Contains SLH_DSA algorithm functions and constants.
  * @param msg A message of size |n|.
@@ -23,15 +23,13 @@
  * @param pk_seed The public key seed of size |n|
  * @param tree_id Index of the XMSS tree that will sign the message
  * @param leaf_id Index of the WOTS+ key within the XMSS tree that will signed the message
- * @param sig The returned Hypertree Signature (which is |d| XMSS signatures)
- * @param sig_len The size of |sig| which is (|h| + |d| * |len|) * |n|)
+ * @param sig_wpkt A WPACKET object to write the Hypertree Signature to.
  * @returns 1 on success, or 0 on error.
  */
 int ossl_slh_ht_sign(SLH_DSA_CTX *ctx,
                      const uint8_t *msg, const uint8_t *sk_seed,
                      const uint8_t *pk_seed,
-                     uint64_t tree_id, uint32_t leaf_id,
-                     uint8_t *sig, size_t sig_len)
+                     uint64_t tree_id, uint32_t leaf_id, WPACKET *sig_wpkt)
 {
     SLH_ADRS_FUNC_DECLARE(ctx, adrsf);
     SLH_ADRS_DECLARE(adrs);
@@ -40,8 +38,8 @@ int ossl_slh_ht_sign(SLH_DSA_CTX *ctx,
     uint32_t n = ctx->params->n;
     uint32_t d = ctx->params->d;
     uint32_t hm = ctx->params->hm;
-    uint8_t *psig = sig;
-    size_t xmss_sig_len = SLH_XMSS_SIG_LEN(n, hm);
+    uint8_t *psig;
+    PACKET rpkt, *xmss_sig_rpkt = &rpkt;
 
     mask = (1 << hm) - 1; /* A mod 2^h = A & ((2^h - 1))) */
 
@@ -49,21 +47,23 @@ int ossl_slh_ht_sign(SLH_DSA_CTX *ctx,
     memcpy(root, msg, n);
 
     for (layer = 0; layer < d; ++layer) {
+        /* type = SLH_ADRS_TYPE_WOTS_HASH */
         adrsf->set_layer_address(adrs, layer);
         adrsf->set_tree_address(adrs, tree_id);
+        psig = WPACKET_get_curr(sig_wpkt);
         if (!ossl_slh_xmss_sign(ctx, root, sk_seed, leaf_id, pk_seed, adrs,
-                                psig, xmss_sig_len))
+                                sig_wpkt))
+            return 0;
+        if (!PACKET_buf_init(xmss_sig_rpkt, psig,  WPACKET_get_curr(sig_wpkt) - psig))
             return 0;
         if (layer < d - 1) {
-            if (!ossl_slh_xmss_pk_from_sig(ctx, leaf_id, psig, root,
-                                           pk_seed, adrs, root))
+            if (!ossl_slh_xmss_pk_from_sig(ctx, leaf_id, xmss_sig_rpkt, root,
+                                           pk_seed, adrs, root, sizeof(root)))
                 return 0;
         }
-        psig += xmss_sig_len;
         leaf_id = tree_id & mask;
         tree_id >>= hm;
     }
-    assert((size_t)(psig - sig) == sig_len);
     return 1;
 }
 
@@ -81,21 +81,19 @@ int ossl_slh_ht_sign(SLH_DSA_CTX *ctx,
  *
  * @returns 1 if the computed XMSS public key matches pk_root, or 0 otherwise.
  */
-int ossl_slh_ht_verify(SLH_DSA_CTX *ctx, const uint8_t *msg, const uint8_t *sig,
+int ossl_slh_ht_verify(SLH_DSA_CTX *ctx, const uint8_t *msg, PACKET *sig_pkt,
                        const uint8_t *pk_seed, uint64_t tree_id, uint32_t leaf_id,
                        const uint8_t *pk_root)
 {
     SLH_ADRS_FUNC_DECLARE(ctx, adrsf);
     SLH_ADRS_DECLARE(adrs);
     uint8_t node[SLH_MAX_N];
-    uint32_t layer, len, mask, d, n, tree_height;
     const SLH_DSA_PARAMS *params = ctx->params;
-
-    tree_height = params->hm;
-    n = params->n;
-    d = params->d;
-    len = SLH_XMSS_SIG_LEN(n, tree_height);
-    mask = (1 << tree_height) - 1;
+    uint32_t tree_height = params->hm;
+    uint32_t n = params->n;
+    uint32_t d = params->d;
+    uint32_t mask = (1 << tree_height) - 1;
+    uint32_t layer;
 
     adrsf->zero(adrs);
     memcpy(node, msg, n);
@@ -103,10 +101,9 @@ int ossl_slh_ht_verify(SLH_DSA_CTX *ctx, const uint8_t *msg, const uint8_t *sig,
     for (layer = 0; layer < d; ++layer) {
         adrsf->set_layer_address(adrs, layer);
         adrsf->set_tree_address(adrs, tree_id);
-        if (!ossl_slh_xmss_pk_from_sig(ctx, leaf_id, sig, node,
-                                       pk_seed, adrs, node))
+        if (!ossl_slh_xmss_pk_from_sig(ctx, leaf_id, sig_pkt, node,
+                                       pk_seed, adrs, node, sizeof(node)))
             return 0;
-        sig += len;
         leaf_id = tree_id & mask;
         tree_id >>= tree_height;
     }
