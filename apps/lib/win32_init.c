@@ -54,7 +54,7 @@ void win32_utf8argv(int *argc_out, char ***argv_out)
         return;
 
     cmd_line_args = GetCommandLineW();
-    if (cmd_args == NULL)
+    if (cmd_line_args == NULL)
         return;
 
     cmd_args = CommandLineToArgvW(cmd_line_args, &argc);
