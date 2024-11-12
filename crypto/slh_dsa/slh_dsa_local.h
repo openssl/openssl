@@ -46,42 +46,43 @@ struct slh_dsa_ctx_st {
     SLH_HASH_CTX hash_ctx;
 };
 
-__owur int ossl_slh_wots_pk_gen(SLH_DSA_CTX *ctx,
-                                const uint8_t *sk_seed, const uint8_t *pk_seed,
-                                SLH_ADRS adrs, uint8_t *pk_out);
+__owur int ossl_slh_wots_pk_gen(SLH_DSA_CTX *ctx, const uint8_t *sk_seed,
+                                const uint8_t *pk_seed, SLH_ADRS adrs,
+                                uint8_t *pk_out, size_t pk_out_len);
 __owur int ossl_slh_wots_sign(SLH_DSA_CTX *ctx, const uint8_t *msg,
                              const uint8_t *sk_seed, const uint8_t *pk_seed,
-                             SLH_ADRS adrs, uint8_t *sig, size_t sig_len);
+                             SLH_ADRS adrs, WPACKET *sig_wpkt);
 __owur int ossl_slh_wots_pk_from_sig(SLH_DSA_CTX *ctx,
-                                     const uint8_t *sig, const uint8_t *msg,
-                                     const uint8_t *pk_seed, uint8_t *adrs,
-                                     uint8_t *pk_out);
+                                     PACKET *sig_rpkt, const uint8_t *msg,
+                                     const uint8_t *pk_seed, SLH_ADRS adrs,
+                                     uint8_t *pk_out, size_t pk_out_len);
 
 __owur int ossl_slh_xmss_node(SLH_DSA_CTX *ctx, const uint8_t *sk_seed,
                               uint32_t node_id, uint32_t height,
                               const uint8_t *pk_seed, SLH_ADRS adrs,
-                              uint8_t *pk_out);
+                              uint8_t *pk_out, size_t pk_out_len);
 __owur int ossl_slh_xmss_sign(SLH_DSA_CTX *ctx, const uint8_t *msg,
                               const uint8_t *sk_seed, uint32_t node_id,
                               const uint8_t *pk_seed, SLH_ADRS adrs,
-                              uint8_t *sig, size_t sig_len);
+                              WPACKET *sig_wpkt);
 __owur int ossl_slh_xmss_pk_from_sig(SLH_DSA_CTX *ctx, uint32_t node_id,
-                                     const uint8_t *sig, const uint8_t *msg,
+                                     PACKET *sig_rpkt, const uint8_t *msg,
                                      const uint8_t *pk_seed, SLH_ADRS adrs,
-                                     uint8_t *pk_out);
+                                     uint8_t *pk_out, size_t pk_out_len);
 
 __owur int ossl_slh_ht_sign(SLH_DSA_CTX *ctx, const uint8_t *msg,
                             const uint8_t *sk_seed, const uint8_t *pk_seed,
                             uint64_t tree_id, uint32_t leaf_id,
-                            uint8_t *sig_out, size_t sig_out_len);
+                            WPACKET *sig_wpkt);
 __owur int ossl_slh_ht_verify(SLH_DSA_CTX *ctx, const uint8_t *msg,
-                              const uint8_t *sig, const uint8_t *pk_seed,
+                              PACKET *sig_rpkt, const uint8_t *pk_seed,
                               uint64_t tree_id, uint32_t leaf_id,
                               const uint8_t *pk_root);
 
 __owur int ossl_slh_fors_sign(SLH_DSA_CTX *ctx, const uint8_t *md,
                               const uint8_t *sk_seed, const uint8_t *pk_seed,
-                              SLH_ADRS adrs, uint8_t *sig, size_t sig_len);
-__owur int ossl_slh_fors_pk_from_sig(SLH_DSA_CTX *ctx, const uint8_t *sig,
+                              SLH_ADRS adrs, WPACKET *sig_wpkt);
+__owur int ossl_slh_fors_pk_from_sig(SLH_DSA_CTX *ctx, PACKET *sig_rpkt,
                                      const uint8_t *md, const uint8_t *pk_seed,
-                                     SLH_ADRS adrs, uint8_t *pk_out);
+                                     SLH_ADRS adrs,
+                                     uint8_t *pk_out, size_t pk_out_len);

@@ -243,7 +243,6 @@ static int slh_dsa_sign_verify_test(int tst_id)
             || !TEST_int_eq(EVP_PKEY_sign(sctx, psig, &psig_len,
                                           td->msg, td->msg_len), 1))
         goto err;
-
     if (!TEST_int_eq(EVP_Q_digest(lib_ctx, "SHA256", NULL, psig, psig_len,
                                   digest, &digest_len), 1))
         goto err;
