@@ -23,126 +23,6 @@ static UINT saved_cp;
 static int newargc;
 static char **newargv;
 
-static void cleanup(void)
-{
-    int i;
-
-    SetConsoleOutputCP(saved_cp);
-
-    for (i = 0; i < newargc; i++)
-        free(newargv[i]);
-
-    free(newargv);
-}
-
-/*
- * Incrementally [re]allocate newargv and keep it NULL-terminated.
- */
-static int validate_argv(int argc)
-{
-    static int size = 0;
-
-    if (argc >= size) {
-        char **ptr;
-
-        while (argc >= size)
-            size += 64;
-
-        ptr = realloc(newargv, size * sizeof(newargv[0]));
-        if (ptr == NULL)
-            return 0;
-
-        (newargv = ptr)[argc] = NULL;
-    } else {
-        newargv[argc] = NULL;
-    }
-
-    return 1;
-}
-
-static int process_glob(WCHAR *wstr, int wlen)
-{
-    int i, slash, udlen;
-    WCHAR saved_char;
-    WIN32_FIND_DATAW data;
-    HANDLE h;
-
-    /*
-     * Note that we support wildcard characters only in filename part
-     * of the path, and not in directories. Windows users are used to
-     * this, that's why recursive glob processing is not implemented.
-     */
-    /*
-     * Start by looking for last slash or backslash, ...
-     */
-    for (slash = 0, i = 0; i < wlen; i++)
-        if (wstr[i] == L'/' || wstr[i] == L'\\')
-            slash = i + 1;
-    /*
-     * ... then look for asterisk or question mark in the file name.
-     */
-    for (i = slash; i < wlen; i++)
-        if (wstr[i] == L'*' || wstr[i] == L'?')
-            break;
-
-    if (i == wlen)
-        return 0;   /* definitely not a glob */
-
-    saved_char = wstr[wlen];
-    wstr[wlen] = L'\0';
-    h = FindFirstFileW(wstr, &data);
-    wstr[wlen] = saved_char;
-    if (h == INVALID_HANDLE_VALUE)
-        return 0;   /* not a valid glob, just pass... */
-
-    if (slash)
-        udlen = WideCharToMultiByte(CP_UTF8, 0, wstr, slash,
-                                    NULL, 0, NULL, NULL);
-    else
-        udlen = 0;
-
-    do {
-        int uflen;
-        char *arg;
-
-        /*
-         * skip over . and ..
-         */
-        if (data.cFileName[0] == L'.') {
-            if ((data.cFileName[1] == L'\0') ||
-                (data.cFileName[1] == L'.' && data.cFileName[2] == L'\0'))
-                continue;
-        }
-
-        if (!validate_argv(newargc + 1))
-            break;
-
-        /*
-         * -1 below means "scan for trailing '\0' *and* count it",
-         * so that |uflen| covers even trailing '\0'.
-         */
-        uflen = WideCharToMultiByte(CP_UTF8, 0, data.cFileName, -1,
-                                    NULL, 0, NULL, NULL);
-
-        arg = malloc(udlen + uflen);
-        if (arg == NULL)
-            break;
-
-        if (udlen)
-            WideCharToMultiByte(CP_UTF8, 0, wstr, slash,
-                                arg, udlen, NULL, NULL);
-
-        WideCharToMultiByte(CP_UTF8, 0, data.cFileName, -1,
-                            arg + udlen, uflen, NULL, NULL);
-
-        newargv[newargc++] = arg;
-    } while (FindNextFileW(h, &data));
-
-    CloseHandle(h);
-
-    return 1;
-}
-
 static void win32_cleanup_argv(int argc, char **argv)
 {
     int i;
@@ -219,6 +99,6 @@ void win32_utf8argv(int *argc_out, char ***argv_out)
     *argv_out = argv;
 }
 #else
-void win32_utf8argv(void)
+void win32_utf8argv(int *argc_out, char ***argv_out)
 {   return;   }
 #endif
