@@ -22,7 +22,7 @@
  * @param sk_seed The private key seed of size |n|
  * @param pk_seed The public key seed of size |n|
  * @param tree_id Index of the XMSS tree that will sign the message
- * @param leaf_id Index of the WOTS+ key within the XMSS tree that will signed the message
+ * @param leaf_id Index of the WOTS+ key within the XMSS tree that will sign the message
  * @param sig_wpkt A WPACKET object to write the Hypertree Signature to.
  * @returns 1 on success, or 0 on error.
  */
@@ -54,7 +54,7 @@ int ossl_slh_ht_sign(SLH_DSA_CTX *ctx,
         if (!ossl_slh_xmss_sign(ctx, root, sk_seed, leaf_id, pk_seed, adrs,
                                 sig_wpkt))
             return 0;
-        if (!PACKET_buf_init(xmss_sig_rpkt, psig,  WPACKET_get_curr(sig_wpkt) - psig))
+        if (!PACKET_buf_init(xmss_sig_rpkt, psig, WPACKET_get_curr(sig_wpkt) - psig))
             return 0;
         if (layer < d - 1) {
             if (!ossl_slh_xmss_pk_from_sig(ctx, leaf_id, xmss_sig_rpkt, root,
