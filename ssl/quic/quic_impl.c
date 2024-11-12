@@ -575,7 +575,7 @@ SSL *ossl_quic_new(SSL_CTX *ctx)
 #endif
 
     /* Create the handshake layer. */
-    qc->tls = ossl_ssl_connection_new_int(ctx, &qc->ssl, TLS_method());
+    qc->tls = ossl_ssl_connection_new_int(ctx, &qc->obj.ssl, TLS_method());
     if (qc->tls == NULL || (sc = SSL_CONNECTION_FROM_SSL(qc->tls)) == NULL) {
         QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_INTERNAL_ERROR, NULL);
         goto err;
