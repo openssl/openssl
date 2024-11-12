@@ -204,13 +204,12 @@ static int slh_dsa_compute_pk_root(SLH_DSA_CTX *ctx, SLH_DSA_KEY *out)
     SLH_ADRS_DECLARE(adrs);
     const SLH_DSA_PARAMS *params = out->params;
 
-    assert(params != NULL);
-
     adrsf->zero(adrs);
     adrsf->set_layer_address(adrs, params->d - 1);
     /* Generate the ROOT public key */
     return ossl_slh_xmss_node(ctx, SLH_DSA_SK_SEED(out), 0, params->hm,
-                              SLH_DSA_PK_SEED(out), adrs, SLH_DSA_PK_ROOT(out));
+                              SLH_DSA_PK_SEED(out), adrs,
+                              SLH_DSA_PK_ROOT(out), params->n);
 }
 
 /**
