@@ -13,6 +13,7 @@
 
 # include <openssl/e_os2.h>
 # include "slh_adrs.h"
+# include "internal/packet.h"
 
 # define SLH_HASH_FUNC_DECLARE(ctx, hashf, hashctx)   \
     const SLH_HASH_FUNC *hashf = ctx->hash_func;      \
@@ -40,22 +41,26 @@ typedef struct slh_hash_ctx_st {
  */
 typedef int (OSSL_SLH_HASHFUNC_H_MSG)(SLH_HASH_CTX *ctx, const uint8_t *r,
     const uint8_t *pk_seed, const uint8_t *pk_root,
-    const uint8_t *msg, size_t msg_len, uint8_t *out);
+    const uint8_t *msg, size_t msg_len, uint8_t *out, size_t out_len);
 
 typedef int (OSSL_SLH_HASHFUNC_PRF)(SLH_HASH_CTX *ctx, const uint8_t *pk_seed,
-    const uint8_t *sk_seed, const SLH_ADRS adrs, uint8_t *out);
+    const uint8_t *sk_seed, const SLH_ADRS adrs,
+    uint8_t *out, size_t out_len);
 
 typedef int (OSSL_SLH_HASHFUNC_PRF_MSG)(SLH_HASH_CTX *ctx, const uint8_t *sk_prf,
-    const uint8_t *opt_rand, const uint8_t *msg, size_t msg_len, uint8_t *out);
+    const uint8_t *opt_rand, const uint8_t *msg, size_t msg_len, WPACKET *pkt);
 
 typedef int (OSSL_SLH_HASHFUNC_F)(SLH_HASH_CTX *ctx, const uint8_t *pk_seed,
-    const SLH_ADRS adrs, const uint8_t *m1, size_t m1_len, uint8_t *out);
+    const SLH_ADRS adrs, const uint8_t *m1, size_t m1_len,
+    uint8_t *out, size_t out_len);
 
 typedef int (OSSL_SLH_HASHFUNC_H)(SLH_HASH_CTX *ctx, const uint8_t *pk_seed,
-    const SLH_ADRS adrs, const uint8_t *m1, const uint8_t *m2, uint8_t *out);
+    const SLH_ADRS adrs, const uint8_t *m1, const uint8_t *m2,
+    uint8_t *out, size_t out_len);
 
 typedef int (OSSL_SLH_HASHFUNC_T)(SLH_HASH_CTX *ctx, const uint8_t *pk_seed,
-    const SLH_ADRS adrs, const uint8_t *m1, size_t m1_len, uint8_t *out);
+    const SLH_ADRS adrs, const uint8_t *m1, size_t m1_len,
+    uint8_t *out, size_t out_len);
 
 typedef struct slh_hash_func_st {
     OSSL_SLH_HASHFUNC_H_MSG *H_MSG;
