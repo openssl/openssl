@@ -23,7 +23,7 @@ permissions:
 
 jobs:
   check_update:
-    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    runs-on: ubuntu-latest
     steps:
     - name: install unifdef
       run: |
@@ -42,7 +42,7 @@ jobs:
       run: git diff --exit-code
 
   check_docs:
-    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     - name: config
@@ -62,7 +62,7 @@ jobs:
   # We are not as strict with libraries, but rather adapt to what's
   # expected to be available in a certain version of each platform.
   check-ansi:
-    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     - name: config
@@ -71,7 +71,7 @@ jobs:
       run: make -s -j4
 
   basic_gcc:
-    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -91,7 +91,7 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
   basic_clang:
-    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -128,7 +128,7 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
   minimal:
-    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -145,7 +145,7 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
   no-deprecated:
-    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -162,7 +162,7 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
   no-shared-ubuntu:
-    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -183,7 +183,6 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos-13, macos-14]
-    if: github.server_url == 'https://github.com'
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
@@ -201,7 +200,7 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
   non-caching:
-    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -222,7 +221,7 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} OPENSSL_TEST_RAND_ORDER=0 TESTS="-test_fuzz* -test_ssl_* -test_sslapi -test_evp -test_cmp_http -test_verify -test_cms -test_store -test_enc -[01][0-9]"
 
   address_ub_sanitizer:
-    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -243,7 +242,7 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} OPENSSL_TEST_RAND_ORDER=0
 
   fuzz_tests:
-    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -264,7 +263,7 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} OPENSSL_TEST_RAND_ORDER=0 TESTS="test_fuzz*"
 
   memory_sanitizer:
-    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -286,7 +285,7 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} OPENSSL_TEST_RAND_ORDER=0
 
   threads_sanitizer:
-    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -307,7 +306,7 @@ jobs:
       run: make V=1 TESTS="test_threads test_internal_provider test_provfetch test_provider test_pbe test_evp_kdf test_pkcs12 test_store test_evp test_quic*" test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
   enable_non-default_options:
-    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -326,7 +325,7 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
   fips_and_ktls:
-    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -345,7 +344,7 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
   no-legacy:
-    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -362,7 +361,7 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
   legacy:
-    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -384,7 +383,7 @@ jobs:
   # - That building, testing and installing works with a read-only source
   #   tree
   out-of-readonly-source-and-install-ubuntu:
-    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
       with:
@@ -424,7 +423,6 @@ jobs:
       matrix:
         os: [macos-13, macos-14]
     runs-on: ${{ matrix.os }}
-    if: github.server_url == 'https://github.com'
     steps:
     - uses: actions/checkout@v4
       with:
@@ -459,7 +457,7 @@ jobs:
       working-directory: ./build
 
   external-tests:
-    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
       with:
@@ -492,7 +490,7 @@ jobs:
       run: make test TESTS="test_external_oqsprovider"
 
   external-test-pyca:
-    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         RUST:
@@ -522,7 +520,7 @@ jobs:
       run: make test TESTS="test_external_pyca" VERBOSE=1
 
   external-test-cf-quiche:
-    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
       with:
