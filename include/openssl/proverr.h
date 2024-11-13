@@ -33,6 +33,7 @@
 # define PROV_R_COFACTOR_REQUIRED                         236
 # define PROV_R_DERIVATION_FUNCTION_INIT_FAILED           205
 # define PROV_R_DIGEST_NOT_ALLOWED                        174
+# define PROV_R_DUPLICATE_VALUES_FOR_GETTER               245
 # define PROV_R_EMS_NOT_ENABLED                           233
 # define PROV_R_ENTROPY_SOURCE_FAILED_CONTINUOUS_TESTS    244
 # define PROV_R_ENTROPY_SOURCE_STRENGTH_TOO_WEAK          186
