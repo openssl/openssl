@@ -7,8 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <stddef.h>
-#include <openssl/params.h>
+#ifndef OSSL_INTERNAL_PARAMS_H
+# define OSSL_INTERNAL_PARAMS_H
+
+# include <stddef.h>
+# include <openssl/params.h>
 
 /*
  * Extract the parameter into an allocated buffer.
@@ -21,6 +24,7 @@
  */
 int ossl_param_get1_octet_string(const OSSL_PARAM *params, const char *name,
                                  unsigned char **out, size_t *out_len);
+
 /*
  * Concatenate all of the matching params together.
  * *out will point to an allocated buffer on successful return.
@@ -36,3 +40,19 @@ int ossl_param_get1_octet_string(const OSSL_PARAM *params, const char *name,
 int ossl_param_get1_concat_octet_string(const OSSL_PARAM *params, const char *name,
                                         unsigned char **out, size_t *out_len,
                                         size_t maxsize);
+
+/*
+ * Count the number of elements in a parameter list.
+ * A count of zero is returned if plist == NULL.
+ * The returned count does not include the terminating record.
+ */
+size_t ossl_param_nelem(const OSSL_PARAM *plist);
+
+/*
+ * Check if a param list is NULL or empty.
+ */
+static ossl_inline int ossl_param_is_empty(const OSSL_PARAM *params)
+{
+    return params == NULL || params->key == NULL;
+}
+#endif
