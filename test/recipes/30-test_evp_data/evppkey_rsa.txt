@@ -625,25 +625,29 @@ Reason = key size too small
 Title = Test RSASVE (KEM)
 
 # RSA Encapsulate/Decapsulate
-Kem = RSA-2048
+Kem = RSA
+KeyName = RSA-2048
 Op = RSASVE
 
 # RSA Decapsulate
-Kem = RSA-2048
+Kem = RSA
+KeyName = RSA-2048
 Op = RSASVE
 Input = 431937b777ae3ddda69da20ea602aeb76f87a7e120f24ff2bf7757de4302413fd875eb740d5ea108d0bce1102d9f0ec1613aa433ab33164afeb06b531334e4a0ea0965a4ef1c06ad783ce5799a35a62c1f8926b878be7400bd39a35a144ddccb1161f9b22891afb84bff8c31028fee69eaeca4c73d9d1dc0db371d52f33c950d7a3d51c2032567d07e1c2af36b4a4e13af04ba165ca3242cafcc2e1778ff205ede37397c1b71aa88ff16927b2ed6e7b04fd980b9a9392ce7ce902c11ac22e0d72633eb6d0b85c766e22a5f80bca7161d7bf544af4790b3d2af0d7631faf6204c3908be1072d52a5be47687cad09a978b856f4d72e659650adccd05b343630d7b
 Output = 01fd95c07b4f4888f4efaf6d69d9309f677b4c0cd2179f10572e4576163c25046917340e8c5098f64d580f56614856a4c46e7e14843a62f5c387b0b30f09d456302534bfa2c944af66bb8a172ea3064d59ed9855797436ea70e218ef59181c6497222819cb1903cdf6febc6d484f1cb8a44946ee7be9e734e6423c83d4aaf509d84980292fe996000d34c9727146157a422110047b7441e0ecd81824b96e09a5fe3a1f0a46099625aeb0a3712e991293a7401bc01dca8bb5e72aaee9a9367ff3294ca158b64404a651c2fd3bab21178e54f27dd0ca25f64f3a6f44a284f8687459a7e453e6c3cc8c2f58da214047d7c416167923b6d6c61d5988e96dff15fad9
 
 # Test small RSA keys are not allowed for Encapsulation in FIPS mode
 FIPSversion = >=3.4.0
-Kem = RSA-512
+Kem = RSA
+KeyName = RSA-512
 Securitycheck = 1
 Op = RSASVE
 Result = TEST_ENCAPSULATE_INIT_ERROR
 
 # Test small RSA keys are not allowed for Decapsulation in FIPS mode
 FIPSversion = >=3.4.0
-Kem = RSA-512
+Kem = RSA
+KeyName = RSA-512
 Securitycheck = 1
 Op = RSASVE
 Input = 431937b777ae3ddda69da20ea602aeb76f87a7e120f24ff2bf7757de4302413fd875eb740d5ea108d0bce1102d9f0ec1613aa433ab33164afeb06b531334e4a0ea0965a4ef1c06ad783ce5799a35a62c1f8926b878be7400bd39a35a144ddccb1161f9b22891afb84bff8c31028fee69eaeca4c73d9d1dc0db371d52f33c950d
@@ -651,7 +655,8 @@ Result = TEST_DECAPSULATE_INIT_ERROR
 
 # Test FIPS indicator callback is triggered
 FIPSversion = >=3.4.0
-Kem = RSA-512
+Kem = RSA
+KeyName = RSA-512
 Securitycheck = 1
 Unapproved = 1
 CtrlInit = key-check:0
