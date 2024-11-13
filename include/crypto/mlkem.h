@@ -131,44 +131,97 @@ extern "C" {
   /* ossl_mlkem768_SHARED_SECRET_BYTES is the number of bytes in an ML-KEM shared secret. */
 #  define OSSL_MLKEM768_SHARED_SECRET_BYTES 32
 
-    /*
-     * ossl_mlkem768_encap encrypts a random shared secret for |public_key|, writes the
-     * ciphertext to |out_ciphertext|, and writes the random shared secret to
-     * |out_shared_secret|.
-     * it is assumed out_ciphertext has been allocated ossl_mlkem768_CIPHERTEXT_BYTES bytes
-     * and out_shared_secret has been allocated MLKEM_SHARED_SECRET_BYTES bytes
-     */
-    int ossl_mlkem768_encap(uint8_t *out_ciphertext,
-                            uint8_t *out_shared_secret,
-                            const ossl_mlkem768_public_key *public_key,
-                            ossl_mlkem_ctx *mlkem_ctx);
+/*
+ * ossl_mlkem768_encap encrypts a random shared secret for |public_key|, writes
+ * the ciphertext to |out_ciphertext|, and writes the random shared secret to
+ * |out_shared_secret|. It is assumed out_ciphertext has been allocated
+ * ossl_mlkem768_CIPHERTEXT_BYTES bytes and out_shared_secret has been allocated
+ * MLKEM_SHARED_SECRET_BYTES bytes
+ */
+int ossl_mlkem768_encap(uint8_t *out_ciphertext,
+                        uint8_t *out_shared_secret,
+                        const ossl_mlkem768_public_key *public_key,
+                        ossl_mlkem_ctx *mlkem_ctx);
 
-    /*
-     * ossl_mlkem768_decap decrypts a shared secret from |ciphertext| using |private_key|
-     * and writes it to |out_shared_secret|. If |ciphertext_len| is incorrect it
-     * returns 0, otherwise it returns 1. If |ciphertext| is invalid (but of the
-     * correct length), |out_shared_secret| is filled with a key that will always be
-     * the same for the same |ciphertext| and |private_key|, but which appears to be
-     * random unless one has access to |private_key|. These alternatives occur in
-     * constant time. Any subsequent symmetric encryption using |out_shared_secret|
-     * must use an authenticated encryption scheme in order to discover the
-     * decapsulation failure.
-     * it is assumed out_shared_secret has been allocated MLKEM_SHARED_SECRET_BYTES bytes
-     */
-    int ossl_mlkem768_decap(uint8_t *out_shared_secret,
-                            const uint8_t *ciphertext, size_t ciphertext_len,
-                            const ossl_mlkem768_private_key *private_key,
-                            ossl_mlkem_ctx *mlkem_ctx);
+/*
+ * MLKEM_ENCAP_ENTROPY is the number of bytes of uniformly random entropy
+ * necessary to encapsulate a secret. The entropy will be leaked to the
+ * decapsulating party.
+ */
+#  define MLKEM_ENCAP_ENTROPY 32
 
-    /*
-     * ossl_mlkem768_recreate_public_key recreates a fully formed ossl_mlkem768_public_key
-     * from an input |encoded_public_key| of size ossl_mlkem768_PUBLIC_KEY_BYTES.
-     * |pub| is expected to point to an allocated memory area of
-     * sizeof(ossl_mlkem768_public_key)
-     */
-    int ossl_mlkem768_recreate_public_key(const uint8_t *encoded_public_key,
-                                          ossl_mlkem768_public_key *pub,
-                                          ossl_mlkem_ctx *mlkem_ctx);
+/*
+ * The same as ossl_mlkem768_encap except this also uses a given entropy for
+ * deterministic output.
+ */
+int ossl_mlkem768_encap_external_entropy(uint8_t *out_ciphertext,
+                                         uint8_t *out_shared_secret,
+                                         const ossl_mlkem768_public_key *public_key,
+                                         const uint8_t *entropy,
+                                         ossl_mlkem_ctx *mlkem_ctx);
+
+/*
+ * ossl_mlkem768_decap decrypts a shared secret from |ciphertext| using
+ * |private_key| and writes it to |out_shared_secret|. If |ciphertext_len| is
+ * incorrect it returns 0, otherwise it returns 1. If |ciphertext| is invalid
+ * (but of the correct length), |out_shared_secret| is filled with a key that
+ * will always be the same for the same |ciphertext| and |private_key|, but
+ * which appears to be random unless one has access to |private_key|. These
+ * alternatives occur in constant time. Any subsequent symmetric encryption
+ * using |out_shared_secret| must use an authenticated encryption scheme in
+ * order to discover the decapsulation failure. it is assumed out_shared_secret
+ * has been allocated MLKEM_SHARED_SECRET_BYTES bytes
+ */
+int ossl_mlkem768_decap(uint8_t *out_shared_secret,
+                        const uint8_t *ciphertext, size_t ciphertext_len,
+                        const ossl_mlkem768_private_key *private_key,
+                        ossl_mlkem_ctx *mlkem_ctx);
+
+/* Serialisation of keys. */
+
+/*
+ * ossl_mlkem768_marshal_public_key serializes |public_key| to |out| in the
+ * standard format for ML-KEM-768 public keys. It returns one on success or zero
+ * on allocation error.
+ */
+int ossl_mlkem768_marshal_public_key(uint8_t *out,
+                                     const struct ossl_mlkem768_public_key *public_key);
+
+/*
+ * ossl_mlkem768_parse_public_key parses a public key, in the format generated
+ * by |ossl_mlkem768_marshal_public_key|, from |in| and writes the result to
+ * |out_public_key|. It returns one on success or zero on parse error.
+ */
+int ossl_mlkem768_parse_public_key(struct ossl_mlkem768_public_key *out_public_key,
+                                   uint8_t *in,
+                                   ossl_mlkem_ctx *mlkem_ctx);
+
+/*
+ * MLKEM768_PRIVATE_KEY_BYTES is the length of the data produced by
+ * |MLKEM768_marshal_private_key|.
+ */
+#  define ossl_mlkem768_PRIVATE_KEY_BYTES 2400
+
+/*
+ * ossl_mlkem768_marshal_public_key serializes |private_key| to |out| in the
+ * standard format for ML-KEM-768 private keys. It returns one on success or
+ * zero on allocation error. This format is verbose and should be avoided.
+ * Private keys should be stored as seeds and parsed using
+ * |ossl_mlkem768_private_key_from_seed|.
+ */
+int ossl_mlkem768_marshal_private_key(uint8_t *out,
+                                      struct ossl_mlkem768_private_key *private_key);
+
+/*
+ * ossl_mlkem768_parse_private_key parses a private key, in NIST's format for
+ * private keys, from |in| and writes the result to |out_private_key|. It
+ * returns one on success or zero on parse error or if there are trailing bytes
+ * in |in|. This format is verbose and should be avoided. Private keys should be
+ * stored as seeds and parsed using |ossl_mlkem768_private_key_from_seed|.
+ */
+int ossl_mlkem768_parse_private_key(struct ossl_mlkem768_private_key *out_private_key,
+                                    uint8_t *in,
+                                    ossl_mlkem_ctx *mlkem_ctx);
 
 # endif /* OPENSSL_NO_MLKEM */
 
