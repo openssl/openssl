@@ -5912,6 +5912,7 @@ static int test_invalid_ctx_for_digest(void)
     return ret;
 }
 
+#ifndef OPENSSL_NO_MLKEM
 static int test_ml_kem(void)
 {
     EVP_PKEY *akey, *bkey = NULL;
@@ -6014,6 +6015,7 @@ static int test_ml_kem(void)
     OPENSSL_free(bgenkey);
     return res;
 }
+#endif
 
 static int test_evp_cipher_pipeline(void)
 {
@@ -6413,7 +6415,10 @@ int setup_tests(void)
 #endif
 
     ADD_TEST(test_invalid_ctx_for_digest);
+
+#ifndef OPENSSL_NO_MLKEM
     ADD_TEST(test_ml_kem);
+#endif
 
     ADD_TEST(test_evp_cipher_pipeline);
 
