@@ -129,7 +129,7 @@ jobs:
             tests: none
           }
         ]
-    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    runs-on: ubuntu-latest
     steps:
     - name: install packages
       run: |

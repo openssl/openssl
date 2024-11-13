@@ -25,7 +25,7 @@ jobs:
             config: enable-fips
           - arch: win32
             config: --strict-warnings no-fips
-    runs-on: ${{ github.server_url == 'https://github.com' && matrix.os || format('{0}-self-hosted', matrix.os) }}
+    runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
     - uses: ilammy/msvc-dev-cmd@v1
@@ -61,7 +61,7 @@ jobs:
         os:
           - windows-2019
           - windows-2022
-    runs-on: ${{ github.server_url == 'https://github.com' && matrix.os || format('{0}-self-hosted', matrix.os) }}
+    runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
     - uses: ilammy/msvc-dev-cmd@v1
@@ -85,7 +85,7 @@ jobs:
         os:
           - windows-2019
           - windows-2022
-    runs-on: ${{ github.server_url == 'https://github.com' && matrix.os || format('{0}-self-hosted', matrix.os) }}
+    runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
     - uses: ilammy/msvc-dev-cmd@v1
