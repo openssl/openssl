@@ -11,6 +11,7 @@
 #include <openssl/params.h>
 #include <openssl/param_build.h>
 #include "internal/param_build_set.h"
+#include "internal/params.h"
 
 #define OSSL_PARAM_ALLOCATED_END    127
 #define OSSL_PARAM_MERGE_LIST_MAX   128
@@ -233,4 +234,44 @@ void OSSL_PARAM_free(OSSL_PARAM *params)
             OPENSSL_secure_clear_free(p->data, p->data_size);
         OPENSSL_free(params);
     }
+}
+
+size_t ossl_param_nelem(const OSSL_PARAM *plist)
+{
+    size_t n;
+
+    for (n = 0; !ossl_param_is_empty(plist); plist++)
+        n++;
+    return n;
+}
+
+/*
+ * Merge multiple (n) parameter lists together.
+ * Duplicates are removed but not in a specified order.
+ */
+OSSL_PARAM *ossl_param_merge(size_t n, const OSSL_PARAM **plists)
+{
+    OSSL_PARAM *r, *p;
+    const OSSL_PARAM *q;
+    size_t i, m = 1;    /* one extra for the terminator record */
+
+    for (i = 0; i < n; i++)
+        m += ossl_param_nelem(plists[i]);
+    if (m == 0)
+        return OPENSSL_zalloc(sizeof(OSSL_PARAM));
+    p = r = OPENSSL_malloc(sizeof(*r) * m);
+    if (r == NULL)
+        return NULL;
+    for (i = 0; i < n; i++)
+        if (!ossl_param_is_empty(q = plists[i]))
+            while (q->key != NULL)
+                *p++ = *q++;
+    *p = OSSL_PARAM_construct_end();
+    qsort(r, m - 1, sizeof(*r), &compare_params);
+    for (q = 1 + (p = r); q->key != NULL; q++)
+        if (OPENSSL_strcasecmp(p->key, q->key) != 0 && ++p != q)
+            *p = *q;
+    if (++p != q)
+        *p = *q;
+    return r;
 }
