@@ -38,7 +38,6 @@ typedef struct {
 typedef struct {
     HYBRID_COMMON_FIELDS;
     EVP_PKEY *keys[MAX_HYBRID_ALGS];
-    CRYPTO_REF_COUNT references;
 } HYBRID_PKEY;
 
 typedef struct {
@@ -68,7 +67,6 @@ typedef struct {
 HYBRID_PKEY *ossl_hybrid_kmgmt_new(void *provctx,
                                    const HYBRID_ALG_INFO *info);
 void ossl_hybrid_pkey_free(HYBRID_PKEY *key);
-int ossl_hybrid_pkey_up_ref(HYBRID_PKEY *key);
 
 HYBRID_PKEY_CTX *ossl_hybrid_pkey_ctx_alloc(OSSL_LIB_CTX *libctx,
                                             const HYBRID_ALG_INFO *info);
