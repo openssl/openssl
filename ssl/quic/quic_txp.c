@@ -2226,6 +2226,7 @@ static int txp_generate_stream_frames(OSSL_QUIC_TX_PACKETISER *txp,
             rc = 1;
             goto err;
         }
+        chunks[i].shdr.stream_id = id;
     }
 
     for (i = 0;; ++i) {
@@ -2339,7 +2340,6 @@ static int txp_generate_stream_frames(OSSL_QUIC_TX_PACKETISER *txp,
         if (wpkt == NULL)
             goto err; /* alloc error */
 
-        shdr->stream_id = id;
         if (!ossl_assert(ossl_quic_wire_encode_frame_stream_hdr(wpkt, shdr))) {
             /* (Should not be possible.) */
             tx_helper_rollback(h);
