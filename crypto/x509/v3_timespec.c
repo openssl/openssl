@@ -514,8 +514,6 @@ static int i2r_OSSL_PERIOD(X509V3_EXT_METHOD *method,
             if (!BIO_puts(out, "\n"))
                 return 0;
         }
-        if (!BIO_puts(out, "\n"))
-            return 0;
     }
     if (p->days) {
         if (p->days->type == OSSL_TIME_SPEC_DAY_TYPE_INT) {
