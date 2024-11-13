@@ -26,7 +26,7 @@ env:
 
 jobs:
   check_update:
-    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    runs-on: ubuntu-latest
     steps:
     - name: install unifdef
       run: |
@@ -45,7 +45,7 @@ jobs:
       run: git diff --exit-code
 
   check_docs:
-    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     - name: config
@@ -65,7 +65,7 @@ jobs:
   # We are not as strict with libraries, but rather adapt to what's
   # expected to be available in a certain version of each platform.
   check-ansi:
-    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     - name: config
@@ -74,7 +74,7 @@ jobs:
       run: make -s -j4
 
   basic_gcc:
-    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -99,7 +99,7 @@ jobs:
         path: artifacts.tar.gz
 
   basic_clang:
-    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -146,7 +146,7 @@ jobs:
         path: artifacts.tar.gz
 
   minimal:
-    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -168,7 +168,7 @@ jobs:
         path: artifacts.tar.gz
 
   no-deprecated:
-    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -190,7 +190,7 @@ jobs:
         path: artifacts.tar.gz
 
   no-shared-ubuntu:
-    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -216,7 +216,6 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos-13, macos-14]
-    if: github.server_url == 'https://github.com'
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
@@ -239,7 +238,7 @@ jobs:
         path: artifacts.tar.gz
 
   non-caching:
-    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -265,7 +264,7 @@ jobs:
         path: artifacts.tar.gz
 
   address_ub_sanitizer:
-    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -291,7 +290,7 @@ jobs:
         path: artifacts.tar.gz
 
   fuzz_tests:
-    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -318,7 +317,7 @@ jobs:
         if-no-files-found: ignore
 
   memory_sanitizer:
-    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -345,7 +344,7 @@ jobs:
         path: artifacts.tar.gz
 
   threads_sanitizer:
-    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -371,7 +370,7 @@ jobs:
         path: artifacts.tar.gz
 
   enable_non-default_options:
-    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -395,7 +394,7 @@ jobs:
         path: artifacts.tar.gz
 
   full_featured:
-    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -425,7 +424,7 @@ jobs:
         path: artifacts.tar.gz
 
   no-legacy:
-    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -447,7 +446,7 @@ jobs:
         path: artifacts.tar.gz
 
   legacy:
-    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -474,7 +473,7 @@ jobs:
   # - That building, testing and installing works with a read-only source
   #   tree
   out-of-readonly-source-and-install-ubuntu:
-    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
       with:
@@ -519,7 +518,6 @@ jobs:
       matrix:
         os: [macos-13, macos-14]
     runs-on: ${{ matrix.os }}
-    if: github.server_url == 'https://github.com'
     steps:
     - uses: actions/checkout@v4
       with:
@@ -559,7 +557,7 @@ jobs:
       working-directory: ./build
 
   external-tests:
-    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
       with:
@@ -592,7 +590,7 @@ jobs:
       run: make test TESTS="test_external_oqsprovider"
 
   external-test-pyca:
-    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         RUST:
@@ -622,7 +620,7 @@ jobs:
       run: make test TESTS="test_external_pyca" VERBOSE=1
 
   external-test-cf-quiche:
-    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
       with:
