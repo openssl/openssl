@@ -18,7 +18,7 @@
 #include "testutil.h"
 #include "testutil/output.h"
 
-int main(void)
+static int sanity_test(void)
 {
     uint8_t out_encoded_public_key[OSSL_MLKEM768_PUBLIC_KEY_BYTES];
     uint8_t out_ciphertext[OSSL_MLKEM768_CIPHERTEXT_BYTES];
@@ -30,9 +30,6 @@ int main(void)
     uint8_t *p1, *p2;
     ossl_mlkem_ctx *mlkem_ctx = ossl_mlkem_newctx(NULL, NULL);
     int ret = 1;
-
-    /* enable TEST_* API */
-    test_open_streams();
 
     /* first, generate a key pair */
     if (!ossl_mlkem768_generate_key(out_encoded_public_key, NULL,
@@ -46,8 +43,8 @@ int main(void)
         goto end;
     }
     /* try to re-create public key structure from encoded public key */
-    if (!ossl_mlkem768_recreate_public_key(out_encoded_public_key,
-                                           &recreated_public_key, mlkem_ctx)) {
+    if (!ossl_mlkem768_parse_public_key(&recreated_public_key,
+                                        out_encoded_public_key, mlkem_ctx)) {
         ret = -3;
         goto end;
     }
@@ -87,4 +84,12 @@ int main(void)
 end:
     ossl_mlkem_ctx_free(mlkem_ctx);
     return ret;
+}
+
+int setup_tests(void)
+{
+#ifndef OPENSSL_NO_MLKEM
+    ADD_TEST(sanity_test);
+#endif
+    return 1;
 }

@@ -20,6 +20,7 @@
 #include <openssl/pkcs12.h>
 #include <openssl/kdf.h>
 #include <openssl/params.h>
+#include <openssl/param_build.h>
 #include <openssl/core_names.h>
 #include <openssl/fips_names.h>
 #include <openssl/thread.h>
@@ -2130,28 +2131,35 @@ typedef struct kem_data_st {
     unsigned char *output;
     size_t outputlen;
     STACK_OF(OPENSSL_STRING) *init_ctrls;
+    /* Algorithm name */
+    char *algname;
+    /* Name of previously generated key */
+    char *keyname;
+    /* Encoded public key */
+    unsigned char *encoded_pub_key;
+    size_t encoded_pub_key_len;
+    /* Encoded private key */
+    unsigned char *encoded_priv_key;
+    size_t encoded_priv_key_len;
+    /* Entropy for encapsulation */
+    unsigned char *entropy;
+    size_t entropylen;
+    /* Ciphertext */
+    unsigned char *ciphertext;
+    size_t ciphertext_len;
 } KEM_DATA;
 
-static int kem_test_init(EVP_TEST *t, const char *name)
+static int kem_test_init(EVP_TEST *t, const char *alg)
 {
     KEM_DATA *kdata = NULL;
     EVP_PKEY *pkey = NULL;
-    int rv;
 
-    rv = find_key(&pkey, name, private_keys);
-    if (rv == 0 || pkey == NULL) {
-        TEST_info("skipping, key '%s' is disabled", name);
-        t->skip = 1;
-        return 1;
-    }
-
-    if (!TEST_ptr(kdata = OPENSSL_zalloc(sizeof(*kdata))))
-        goto err;
-    if (!TEST_ptr(kdata->ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, propquery)))
+    if (!TEST_ptr(kdata = OPENSSL_zalloc(sizeof(*kdata)))
+        || !TEST_ptr(kdata->algname = OPENSSL_strdup(alg)))
         goto err;
 
-    t->data = kdata;
     kdata->init_ctrls = sk_OPENSSL_STRING_new_null();
+    t->data = kdata;
     return 1;
 err:
     EVP_PKEY_free(pkey);
@@ -2166,6 +2174,12 @@ static void kem_test_cleanup(EVP_TEST *t)
     ctrlfree(kdata->init_ctrls);
     OPENSSL_free(kdata->input);
     OPENSSL_free(kdata->output);
+    OPENSSL_free(kdata->algname);
+    OPENSSL_free(kdata->keyname);
+    OPENSSL_free(kdata->encoded_pub_key);
+    OPENSSL_free(kdata->encoded_priv_key);
+    OPENSSL_free(kdata->entropy);
+    OPENSSL_free(kdata->ciphertext);
     EVP_PKEY_CTX_free(kdata->ctx);
 }
 
@@ -2183,6 +2197,18 @@ static int kem_test_parse(EVP_TEST *t, const char *keyword, const char *value)
         return parse_bin(value, &kdata->input, &kdata->inputlen);
     if (strcmp(keyword, "Output") == 0)
         return parse_bin(value, &kdata->output, &kdata->outputlen);
+    if (strcmp(keyword, "EncodedPublicKey") == 0)
+        return parse_bin(value, &kdata->encoded_pub_key,
+                         &kdata->encoded_pub_key_len);
+    if (strcmp(keyword, "EncodedPrivateKey") == 0)
+        return parse_bin(value, &kdata->encoded_priv_key,
+                         &kdata->encoded_priv_key_len);
+    if (strcmp(keyword, "Entropy") == 0)
+        return parse_bin(value, &kdata->entropy, &kdata->entropylen);
+    if (strcmp(keyword, "Ciphertext") == 0)
+        return parse_bin(value, &kdata->ciphertext, &kdata->ciphertext_len);
+    if (strcmp(keyword, "KeyName") == 0)
+        return TEST_ptr(kdata->keyname = OPENSSL_strdup(value));
     return 1;
 }
 
@@ -2194,22 +2220,37 @@ static int encapsulate(EVP_TEST *t, EVP_PKEY_CTX *ctx, const char *op,
     KEM_DATA *kdata = t->data;
     unsigned char *wrapped = NULL, *secret = NULL;
     size_t wrappedlen = 0, secretlen = 0;
-    OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+    OSSL_PARAM *params = NULL;
+    OSSL_PARAM_BLD *bld = NULL;
     size_t params_n = 0, params_n_allocated = 0;
-    OSSL_PARAM *p = NULL;
 
     if (sk_OPENSSL_STRING_num(kdata->init_ctrls) > 0) {
-        if (ctrl2params(t, kdata->init_ctrls, NULL,
-                        params, OSSL_NELEM(params), &params_n))
+        if (!TEST_ptr(params = OPENSSL_malloc(sizeof(OSSL_PARAM) * 2)))
             goto err;
-        p = params;
+        params[0] = OSSL_PARAM_construct_end();
+        params[1] = OSSL_PARAM_construct_end();
+        if (ctrl2params(t, kdata->init_ctrls, NULL, params, 2, &params_n))
+            goto err;
     }
-    if (EVP_PKEY_encapsulate_init(ctx, p) <= 0) {
+
+    if (kdata->entropy != NULL
+        && (!TEST_ptr(bld = OSSL_PARAM_BLD_new())
+            || !TEST_int_eq(OSSL_PARAM_BLD_push_octet_string(bld,
+                                                             OSSL_KEM_PARAM_MLKEM_ENC_ENTROPY,
+                                                             kdata->entropy,
+                                                             kdata->entropylen),
+                            1)
+            || !TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld)))) {
+        ret = 0;
+        goto err;
+    }
+
+    if (EVP_PKEY_encapsulate_init(ctx, params) <= 0) {
         t->err = "TEST_ENCAPSULATE_INIT_ERROR";
         goto err;
     }
 
-    if (EVP_PKEY_CTX_set_kem_op(ctx, op) <= 0) {
+    if (op != NULL && EVP_PKEY_CTX_set_kem_op(ctx, op) <= 0) {
         t->err = "TEST_SET_KEM_OP_ERROR";
         goto err;
     }
@@ -2228,6 +2269,19 @@ static int encapsulate(EVP_TEST *t, EVP_PKEY_CTX *ctx, const char *op,
         goto err;
     }
     ret = pkey_check_fips_approved(ctx, t);
+
+    if (kdata->ciphertext != NULL
+        && !TEST_mem_eq(wrapped, wrappedlen, kdata->ciphertext, kdata->ciphertext_len)) {
+        ret = 0;
+        goto err;
+    }
+
+    if (kdata->output != NULL
+        && !TEST_mem_eq(secret, secretlen, kdata->output, kdata->outputlen)) {
+        ret = 0;
+        goto err;
+    }
+
     if (ret == 0)
         goto err;
 
@@ -2242,7 +2296,10 @@ err:
     OPENSSL_free(wrapped);
     OPENSSL_free(secret);
 end:
-    ctrl2params_free(params, params_n, params_n_allocated);
+    if (sk_OPENSSL_STRING_num(kdata->init_ctrls) > 0)
+        ctrl2params_free(params, params_n, params_n_allocated);
+    OSSL_PARAM_free(params);
+    OSSL_PARAM_BLD_free(bld);
     return ret;
 }
 
@@ -2260,16 +2317,17 @@ static int decapsulate(EVP_TEST *t, EVP_PKEY_CTX *ctx, const char *op,
 
     if (sk_OPENSSL_STRING_num(kdata->init_ctrls) > 0) {
         if (!ctrl2params(t, kdata->init_ctrls, NULL,
-                        params, OSSL_NELEM(params), &params_n))
+                         params, 2, &params_n))
             goto err;
         p = params;
     }
+
     if (EVP_PKEY_decapsulate_init(ctx, p) <= 0) {
         t->err = "TEST_DECAPSULATE_INIT_ERROR";
         goto err;
     }
 
-    if (EVP_PKEY_CTX_set_kem_op(ctx, op) <= 0) {
+    if (op != NULL && EVP_PKEY_CTX_set_kem_op(ctx, op) <= 0) {
         t->err = "TEST_SET_KEM_OP_ERROR";
         goto err;
     }
@@ -2294,15 +2352,52 @@ static int decapsulate(EVP_TEST *t, EVP_PKEY_CTX *ctx, const char *op,
     ret = 1;
 err:
     OPENSSL_free(out);
-    ctrl2params_free(params, params_n, params_n_allocated);
+    if (sk_OPENSSL_STRING_num(kdata->init_ctrls) > 0)
+        ctrl2params_free(params, params_n, params_n_allocated);
     return ret;
 }
 
 static int kem_test_run(EVP_TEST *t)
 {
-    int ret = 0;
+    int ret = 0, found_key = 0;
+    EVP_PKEY *pkey = NULL;
     KEM_DATA *kdata = t->data;
     unsigned char *wrapped = NULL, *secret = NULL;
+
+    /* Generate either public or private key based on given params */
+    if (kdata->keyname != NULL) {
+        /* Previously generated private key */
+        found_key = find_key(&pkey, kdata->keyname, private_keys);
+        if (found_key == 0 || pkey == NULL) {
+            TEST_info("skipping, key '%s' is disabled", kdata->keyname);
+            t->skip = 1;
+            goto ok;
+        }
+    } else if (kdata->encoded_pub_key != NULL) {
+        /* Encoded public key */
+        if ((pkey = EVP_PKEY_new_raw_public_key_ex(libctx, kdata->algname,
+                                                   propquery,
+                                                   kdata->encoded_pub_key,
+                                                   kdata->encoded_pub_key_len)) == NULL) {
+            t->err = "TEST_PARSE_PUBLIC_KEY_ERROR";
+            goto ok;
+        }
+    } else if (kdata->encoded_priv_key != NULL) {
+        /* Encoded private key */
+        if ((pkey = EVP_PKEY_new_raw_private_key_ex(libctx, kdata->algname,
+                                                    propquery,
+                                                    kdata->encoded_priv_key,
+                                                    kdata->encoded_priv_key_len)) == NULL) {
+            t->err = "TEST_PARSE_PRIVATE_KEY_ERROR";
+            goto ok;
+        }
+    } else {
+        TEST_info("Missing parameters to create key");
+        goto err;
+    }
+
+    if (!TEST_ptr(kdata->ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, propquery)))
+        goto err;
 
     if (kdata->input == NULL) {
         size_t wrappedlen = 0, secretlen = 0;
@@ -2311,13 +2406,21 @@ static int kem_test_run(EVP_TEST *t)
                           &secret, &secretlen);
         if (ret == 0 || t->err != NULL)
             goto err;
-        ret = decapsulate(t, kdata->ctx, kdata->op, wrapped, wrappedlen,
-                          secret, secretlen);
+
+        /* Also attempt to decrypt if we have the private key */
+        if (found_key || kdata->encoded_priv_key != NULL)
+            ret = decapsulate(t, kdata->ctx, kdata->op, wrapped, wrappedlen,
+                              secret, secretlen);
     } else {
         ret = decapsulate(t, kdata->ctx, kdata->op, kdata->input, kdata->inputlen,
                           kdata->output, kdata->outputlen);
     }
+
+ok:
+    ret = 1;
 err:
+    if (!found_key)
+        EVP_PKEY_free(pkey);
     OPENSSL_free(wrapped);
     OPENSSL_free(secret);
     return ret;
@@ -4072,6 +4175,12 @@ typedef struct keygen_test_data_st {
     char *alg;
     STACK_OF(OPENSSL_STRING) *in_controls; /* Collection of controls */
     STACK_OF(OPENSSL_STRING) *out_controls;
+    unsigned char *seed;
+    size_t seed_len;
+    unsigned char *encoded_pub_key;
+    size_t encoded_pub_key_len;
+    unsigned char *encoded_priv_key;
+    size_t encoded_priv_key_len;
 } KEYGEN_TEST_DATA;
 
 static int keygen_test_init(EVP_TEST *t, const char *alg)
@@ -4083,7 +4192,7 @@ static int keygen_test_init(EVP_TEST *t, const char *alg)
         return 1;
     }
 
-    if (!TEST_ptr(data = OPENSSL_malloc(sizeof(*data))))
+    if (!TEST_ptr(data = OPENSSL_zalloc(sizeof(*data))))
         return 0;
     data->keyname = NULL;
     data->paramname = NULL;
@@ -4104,6 +4213,9 @@ static void keygen_test_cleanup(EVP_TEST *t)
     OPENSSL_free(keygen->alg);
     OPENSSL_free(keygen->keyname);
     OPENSSL_free(keygen->paramname);
+    OPENSSL_free(keygen->seed);
+    OPENSSL_free(keygen->encoded_pub_key);
+    OPENSSL_free(keygen->encoded_priv_key);
     OPENSSL_free(t->data);
     t->data = NULL;
 }
@@ -4121,6 +4233,14 @@ static int keygen_test_parse(EVP_TEST *t,
         return ctrladd(keygen->in_controls, value);
     if (strcmp(keyword, "CtrlOut") == 0)
         return ctrladd(keygen->out_controls, value);
+    if (strcmp(keyword, "Seed") == 0)
+        return parse_bin(value, &keygen->seed, &keygen->seed_len);
+    if (strcmp(keyword, "EncodedPublicKey") == 0)
+        return parse_bin(value, &keygen->encoded_pub_key,
+                         &keygen->encoded_pub_key_len);
+    if (strcmp(keyword, "EncodedPrivateKey") == 0)
+        return parse_bin(value, &keygen->encoded_priv_key,
+                         &keygen->encoded_priv_key_len);
     return 0;
 }
 
@@ -4168,8 +4288,10 @@ static int keygen_test_run(EVP_TEST *t)
     EVP_PKEY *pkey = NULL, *keyparams = NULL;
     EVP_PKEY_CTX *genctx = NULL; /* Keygen context to use */
     int rv = 1;
-    OSSL_PARAM params[4];
-    size_t params_n = 0;
+    OSSL_PARAM_BLD *bld = NULL;
+    OSSL_PARAM *params = NULL;
+    size_t params_n = 0, priv_len, pub_len;
+    uint8_t *enc_pub_key = NULL, *enc_priv_key = NULL;
 
     if (keygen->paramname != NULL) {
         rv = find_key(&keyparams, keygen->paramname, public_keys);
@@ -4194,15 +4316,31 @@ static int keygen_test_run(EVP_TEST *t)
     }
 
     if (sk_OPENSSL_STRING_num(keygen->in_controls) > 0) {
+        if ((params = OPENSSL_malloc(sizeof(OSSL_PARAM) * 4)) == NULL)
+            goto err;
         if (!ctrl2params(t, keygen->in_controls,
                          EVP_PKEY_CTX_settable_params(genctx),
-                         params, OSSL_NELEM(params), &params_n))
+                         params, 4, &params_n))
             goto err;
         if (!EVP_PKEY_CTX_set_params(genctx, params)) {
             t->err = "PKEY_CTRL_ERROR";
             goto err;
         }
+    } else if (keygen->seed != NULL) {
+        if (!TEST_ptr(bld = OSSL_PARAM_BLD_new())
+            || !TEST_int_eq(OSSL_PARAM_BLD_push_octet_string(bld,
+                                                             OSSL_PKEY_PARAM_MLKEM_SEED,
+                                                             keygen->seed,
+                                                             64),
+                            1)
+            || !TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld))
+            || !EVP_PKEY_CTX_set_params(genctx, params)) {
+            rv = 0;
+            goto err;
+        }
     } else {
+        if ((params = OPENSSL_malloc(sizeof(OSSL_PARAM))) == NULL)
+            goto err;
         params[0] = OSSL_PARAM_construct_end();
     }
 
@@ -4243,14 +4381,46 @@ static int keygen_test_run(EVP_TEST *t)
         key->next = private_keys;
         private_keys = key;
         rv = 1;
-    } else {
+    } else if (keygen->seed != NULL) {
+        rv = 0;
+        if (!TEST_int_eq(EVP_PKEY_get_octet_string_param(pkey,
+                                                         OSSL_PKEY_PARAM_PRIV_KEY,
+                                                         NULL, 0, &priv_len), 1)
+            || !TEST_ptr(enc_priv_key = OPENSSL_zalloc(priv_len))
+            || !TEST_int_eq(EVP_PKEY_get_octet_string_param(pkey,
+                                                            OSSL_PKEY_PARAM_PRIV_KEY,
+                                                            enc_priv_key,
+                                                            priv_len,
+                                                            NULL),
+                            1))
+            goto err;
+
+        if (!TEST_size_t_gt((pub_len = EVP_PKEY_get1_encoded_public_key(pkey,
+                                                                        &enc_pub_key)),
+                            0))
+            goto err;
+
+        if (!TEST_mem_eq(enc_priv_key, priv_len, keygen->encoded_priv_key,
+                         keygen->encoded_priv_key_len)
+            || !TEST_mem_eq(enc_pub_key, pub_len, keygen->encoded_pub_key,
+                            keygen->encoded_pub_key_len))
+            goto err;
+        rv = 1;
         EVP_PKEY_free(pkey);
     }
 
     t->err = NULL;
- err:
-    ctrl2params_free(params, params_n, 0);
+    goto ok;
+err:
+    EVP_PKEY_free(pkey);
+ok:
     EVP_PKEY_CTX_free(genctx);
+    if (sk_OPENSSL_STRING_num(keygen->in_controls) > 0)
+        ctrl2params_free(params, params_n, 0);
+    OSSL_PARAM_free(params);
+    OSSL_PARAM_BLD_free(bld);
+    OPENSSL_free(enc_pub_key);
+    OPENSSL_free(enc_priv_key);
     return rv;
 }
 

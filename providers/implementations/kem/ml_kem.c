@@ -45,6 +45,7 @@ typedef struct {
     OSSL_LIB_CTX *libctx;
     MLKEM768_KEY *key;
     int op;
+    uint8_t *entropy;
 } PROV_MLKEM_CTX;
 
 static OSSL_FUNC_kem_newctx_fn mlkem_newctx;
@@ -73,12 +74,13 @@ static void mlkem_freectx(void *vctx)
 {
     PROV_MLKEM_CTX *ctx = (PROV_MLKEM_CTX *)vctx;
 
+    OPENSSL_free(ctx->entropy);
     debug_print("MLKEMKEM freectx %p\n", ctx);
     OPENSSL_free(ctx);
 }
 
 static int mlkem_init(void *vctx, int operation, void *vkey, void *vauth,
-                      ossl_unused const OSSL_PARAM params[])
+                      const OSSL_PARAM params[])
 {
     PROV_MLKEM_CTX *ctx = (PROV_MLKEM_CTX *)vctx;
     MLKEM768_KEY *mlkemkey = vkey;
@@ -92,6 +94,11 @@ static int mlkem_init(void *vctx, int operation, void *vkey, void *vauth,
 
     ctx->key = mlkemkey;
     ctx->op = operation;
+    ctx->entropy = NULL;
+
+    if (!mlkem_set_ctx_params(vctx, params))
+        return 0;
+
     debug_print("MLKEMKEM init OK\n");
     return 1;
 }
@@ -111,6 +118,7 @@ static int mlkem_decapsulate_init(void *vctx, void *vkey,
 static int mlkem_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     PROV_MLKEM_CTX *ctx = (PROV_MLKEM_CTX *)vctx;
+    const OSSL_PARAM *p;
 
     debug_print("MLKEMKEM set ctx params %p\n", ctx);
     if (ctx == NULL)
@@ -118,11 +126,17 @@ static int mlkem_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (params == NULL)
         return 1;
 
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_KEM_PARAM_MLKEM_ENC_ENTROPY)) != NULL
+        && (p->data_size != MLKEM_ENCAP_ENTROPY
+            || (ctx->entropy = OPENSSL_memdup(p->data, MLKEM_ENCAP_ENTROPY)) == NULL))
+        return 0;
+
     debug_print("MLKEMKEM set ctx params OK\n");
     return 1;
 }
 
 static const OSSL_PARAM known_settable_mlkem_ctx_params[] = {
+    OSSL_PARAM_octet_string(OSSL_KEM_PARAM_MLKEM_ENC_ENTROPY, NULL, 0),
     OSSL_PARAM_END
 };
 
@@ -150,12 +164,20 @@ static int mlkem_encapsulate(void *vctx, unsigned char *out, size_t *outlen,
     }
 
     if (ctx->key == NULL
-            || ctx->key->keytype != MLKEM_KEY_TYPE_768
-            || ctx->key->pubkey_initialized == 0
-            || secret == NULL)
+        || ctx->key->keytype != MLKEM_KEY_TYPE_768
+        || ctx->key->encoded_pubkey == NULL
+        || secret == NULL)
         return 0;
 
-    ret = ossl_mlkem768_encap(out, (uint8_t *)secret, &ctx->key->pubkey, ctx->key->mlkem_ctx);
+    if (ctx->entropy != NULL) {
+        ret = ossl_mlkem768_encap_external_entropy(out, secret,
+                                                   &ctx->key->pubkey,
+                                                   ctx->entropy,
+                                                   ctx->key->mlkem_ctx);
+    } else {
+        ret = ossl_mlkem768_encap(out, (uint8_t *)secret, &ctx->key->pubkey,
+                                  ctx->key->mlkem_ctx);
+    }
 
     debug_print("MLKEMKEM encaps returns %d\n", ret);
     return ret;
@@ -178,15 +200,15 @@ static int mlkem_decapsulate(void *vctx, unsigned char *out, size_t *outlen,
     }
 
     if (ctx->key == NULL
-            || ctx->key->keytype != MLKEM_KEY_TYPE_768
-            || ctx->key->seckey_initialized == 0
-            || in == NULL)
+        || ctx->key->keytype != MLKEM_KEY_TYPE_768
+        || ctx->key->encoded_privkey == NULL
+        || in == NULL)
         return 0;
 
     if (inlen != OSSL_MLKEM768_CIPHERTEXT_BYTES)
         return 0;
 
-    ret = ossl_mlkem768_decap((uint8_t *)out, (uint8_t *)in, inlen, &ctx->key->seckey,
+    ret = ossl_mlkem768_decap((uint8_t *)out, (uint8_t *)in, inlen, &ctx->key->privkey,
                               ctx->key->mlkem_ctx);
 
     debug_print("MLKEMKEM decaps returns %d\n", ret);

@@ -22,11 +22,10 @@
 
 typedef struct mlkem768_key_st {
     int keytype;
-    ossl_mlkem768_private_key seckey;
+    ossl_mlkem768_private_key privkey;
     ossl_mlkem768_public_key pubkey;
     uint8_t *encoded_pubkey;
-    int pubkey_initialized;
-    int seckey_initialized;
+    uint8_t *encoded_privkey;
     ossl_mlkem_ctx *mlkem_ctx;
     void *provctx;
 } MLKEM768_KEY;

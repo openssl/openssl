@@ -32,6 +32,7 @@ my $no_sm2 = disabled("sm2");
 my $no_siv = disabled("siv");
 my $no_argon2 = disabled("argon2");
 my $no_ml_dsa = disabled("ml-dsa");
+my $no_mlkem = disabled("mlkem");
 
 # Default config depends on if the legacy module is built or not
 my $defaultcnf = $no_legacy ? 'default.cnf' : 'default-and-legacy.cnf';
@@ -144,6 +145,11 @@ push @defltfiles, qw(
                      evppkey_ml_dsa_siggen.txt
                      evppkey_ml_dsa_sigver.txt
                     ) unless $no_ml_dsa;
+push @defltfiles, qw(
+                     evppkey_mlkem768_keygen.txt
+                     evppkey_mlkem768_encap.txt
+                     evppkey_mlkem768_decap.txt
+                    ) unless $no_mlkem;
 
 plan tests =>
     + (scalar(@configs) * scalar(@files))

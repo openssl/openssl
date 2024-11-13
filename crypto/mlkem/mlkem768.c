@@ -97,13 +97,6 @@ static ossl_inline size_t encoded_public_key_size(int rank)
     return encoded_vector_size(rank) + /* sizeof(rho)= */ 32;
 }
 
-/*
- * MLKEM_ENCAP_ENTROPY is the number of bytes of uniformly random entropy
- * necessary to encapsulate a secret. The entropy will be leaked to the
- * decapsulating party.
- */
-# define MLKEM_ENCAP_ENTROPY 32
-
 /* MD&XOF handles */
 
 /* Cache mgmt as per https://github.com/openssl/private/issues/700 */
@@ -893,24 +886,6 @@ static int mlkem_marshal_public_key(uint8_t *out,
     return 1;
 }
 
-int ossl_mlkem768_recreate_public_key(const uint8_t *encoded_public_key,
-                                      ossl_mlkem768_public_key *ext_pub,
-                                      ossl_mlkem_ctx *mlkem_ctx)
-{
-    struct public_key_RANK768 *pub = public_key_768_from_external(ext_pub);
-
-    print_hex(encoded_public_key, OSSL_MLKEM768_PUBLIC_KEY_BYTES, "Encoded key");
-    if (!vector_decode(&pub->t, encoded_public_key, kLog2Prime))
-        return 0;
-    memcpy(pub->rho, encoded_public_key + encoded_vector_size(RANK768), sizeof(pub->rho));
-    if (!matrix_expand(&pub->m, pub->rho, mlkem_ctx)
-        || (!hash_h(pub->public_key_hash, encoded_public_key,
-                    encoded_public_key_size(RANK768), mlkem_ctx)))
-        return 0;
-    print_hex((uint8_t *)pub, sizeof(public_key_RANK768), "recreated PK");
-    return 1;
-}
-
 static int mlkem_generate_key_external_seed(uint8_t *out_encoded_public_key,
                                             private_key_RANK768 *priv,
                                             const uint8_t *seed,
@@ -965,7 +940,7 @@ int ossl_mlkem768_generate_key(uint8_t *out_encoded_public_key,
                                ossl_mlkem768_private_key *out_private_key,
                                ossl_mlkem_ctx *mlkem_ctx)
 {
-    uint8_t seed[MLKEM_SEED_BYTES];
+    uint8_t seed[OSSL_MLKEM_SEED_BYTES];
 
     if (mlkem_ctx == NULL)
         return 0;
@@ -987,7 +962,7 @@ int ossl_mlkem768_private_key_from_seed(ossl_mlkem768_private_key *out_private_k
 {
     uint8_t public_key_bytes[OSSL_MLKEM768_PUBLIC_KEY_BYTES];
 
-    if (seed_len != MLKEM_SEED_BYTES)
+    if (seed_len != OSSL_MLKEM_SEED_BYTES)
         return 0;
     ossl_mlkem768_generate_key_external_seed(public_key_bytes, out_private_key,
                                              seed, mlkem_ctx);
@@ -1082,7 +1057,6 @@ static int mlkem_encap_external_entropy(uint8_t *out_ciphertext,
  * out_shared_secret[ossl_mlkem768_SHARED_SECRET_BYTES],
  * entropy[MLKEM_ENCAP_ENTROPY])
  */
-static
 int ossl_mlkem768_encap_external_entropy(uint8_t *out_ciphertext,
                                          uint8_t *out_shared_secret,
                                          const ossl_mlkem768_public_key *public_key,
@@ -1109,7 +1083,8 @@ int ossl_mlkem768_encap(uint8_t *out_ciphertext,
 
     /* TODO(ML-KEM): Review requested randomness strength */
     if (RAND_bytes_ex(mlkem_ctx->libctx, entropy, MLKEM_ENCAP_ENTROPY, 256) != 1
-        || !ossl_mlkem768_encap_external_entropy(out_ciphertext, out_shared_secret, public_key,
+        || !ossl_mlkem768_encap_external_entropy(out_ciphertext,
+                                                 out_shared_secret, public_key,
                                                  entropy, mlkem_ctx))
         return 0;
     print_hex((uint8_t *)public_key, sizeof(ossl_mlkem768_public_key), "PK");
@@ -1192,6 +1167,104 @@ int ossl_mlkem768_decap(uint8_t *out_shared_secret,
     }
     priv = private_key_768_from_external(private_key);
     return mlkem_decap(out_shared_secret, ciphertext, priv, mlkem_ctx);
+}
+
+int ossl_mlkem768_marshal_public_key(uint8_t *out,
+                                     const struct ossl_mlkem768_public_key *public_key)
+{
+    struct public_key_RANK768 *pub = public_key_768_from_external(public_key);
+
+    return mlkem_marshal_public_key(out, pub);
+}
+
+/*
+ * mlkem_parse_public_key_no_hash parses |in| into |pub| but doesn't calculate
+ * the value of |pub->public_key_hash|.
+ */
+static int mlkem_parse_public_key_no_hash(public_key_RANK768 *pub, uint8_t *in,
+                                          ossl_mlkem_ctx *mlkem_ctx)
+{
+    if (vector_decode(&pub->t, in, kLog2Prime) != 1)
+        return 0;
+    memcpy(pub->rho, in + encoded_vector_size(RANK768), sizeof(pub->rho));
+    matrix_expand(&pub->m, pub->rho, mlkem_ctx);
+    return 1;
+}
+
+static int mlkem_parse_public_key(public_key_RANK768 *pub, uint8_t *in,
+                                  ossl_mlkem_ctx *mlkem_ctx)
+{
+    if (!mlkem_parse_public_key_no_hash(pub, in, mlkem_ctx)
+        || !hash_h(pub->public_key_hash, in, OSSL_MLKEM768_PUBLIC_KEY_BYTES,
+                   mlkem_ctx))
+        return 0;
+    return 1;
+}
+
+int ossl_mlkem768_parse_public_key(struct ossl_mlkem768_public_key *public_key,
+                                   uint8_t *in, ossl_mlkem_ctx *mlkem_ctx)
+{
+    struct public_key_RANK768 *pub = public_key_768_from_external(public_key);
+
+    return mlkem_parse_public_key(pub, in, mlkem_ctx);
+}
+
+static int mlkem_marshal_private_key(uint8_t *out,
+                                     const struct private_key_RANK768 *priv)
+{
+    uint8_t *out_curr = out;
+
+    vector_encode(out_curr, &priv->s, kLog2Prime);
+    out_curr += encoded_vector_size(RANK768);
+
+    if (mlkem_marshal_public_key(out_curr, &priv->pub) != 1)
+        return 0;
+    out_curr += OSSL_MLKEM768_PUBLIC_KEY_BYTES;
+
+    memcpy(out_curr, priv->pub.public_key_hash,
+           sizeof(priv->pub.public_key_hash));
+    out_curr += sizeof(priv->pub.public_key_hash);
+
+    memcpy(out_curr, priv->fo_failure_secret, sizeof(priv->fo_failure_secret));
+    return 1;
+}
+
+int ossl_mlkem768_marshal_private_key(uint8_t *out,
+                                      struct ossl_mlkem768_private_key *private_key)
+{
+    struct private_key_RANK768 *priv = private_key_768_from_external(private_key);
+
+    return mlkem_marshal_private_key(out, priv);
+}
+
+static int mlkem_parse_private_key(private_key_RANK768 *priv, uint8_t *in,
+                                   ossl_mlkem_ctx *mlkem_ctx)
+{
+    uint8_t *in_curr = in;
+
+    if (!vector_decode(&priv->s, in_curr, kLog2Prime))
+        return 0;
+    in_curr += encoded_vector_size(RANK768);
+
+    if (!mlkem_parse_public_key_no_hash(&priv->pub, in_curr, mlkem_ctx))
+        return 0;
+    in_curr += OSSL_MLKEM768_PUBLIC_KEY_BYTES;
+
+    memcpy(priv->pub.public_key_hash, in_curr,
+           sizeof(priv->pub.public_key_hash));
+    in_curr += sizeof(priv->pub.public_key_hash);
+
+    memcpy(priv->fo_failure_secret, in_curr, sizeof(priv->fo_failure_secret));
+    return 1;
+}
+
+int ossl_mlkem768_parse_private_key(ossl_mlkem768_private_key *out_private_key,
+                                    uint8_t *in, ossl_mlkem_ctx *mlkem_ctx)
+{
+    struct private_key_RANK768 *priv =
+        private_key_768_from_external(out_private_key);
+
+    return mlkem_parse_private_key(priv, in, mlkem_ctx);
 }
 
 #endif /* OPENSSL_NO_MLKEM */
