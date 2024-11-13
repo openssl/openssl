@@ -11,6 +11,7 @@
 #include <openssl/params.h>
 #include <openssl/param_build.h>
 #include "internal/param_build_set.h"
+#include "internal/params.h"
 
 #define OSSL_PARAM_ALLOCATED_END    127
 #define OSSL_PARAM_MERGE_LIST_MAX   128
@@ -233,4 +234,13 @@ void OSSL_PARAM_free(OSSL_PARAM *params)
             OPENSSL_secure_clear_free(p->data, p->data_size);
         OPENSSL_free(params);
     }
+}
+
+size_t ossl_param_nelem(const OSSL_PARAM *plist)
+{
+    size_t n;
+
+    for (n = 0; !ossl_param_is_empty(plist); plist++)
+        n++;
+    return n;
 }
