@@ -27,7 +27,7 @@ jobs:
           - arch: win32
             os: windows-2022
             config: --strict-warnings no-fips
-    runs-on: ${{ github.server_url == 'https://github.com' && matrix.platform.os || format('{0}-self-hosted', matrix.platform.os) }}
+    runs-on: ${{ matrix.platform.os }}
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -94,7 +94,7 @@ jobs:
         os:
 # Reducing CI footprint  - windows-2019
           - windows-2022
-    runs-on: ${{ github.server_url == 'https://github.com' && matrix.os || format('{0}-self-hosted', matrix.os) }}
+    runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -131,7 +131,7 @@ jobs:
         os:
           - windows-2019
 # Reducing CI footprint  - windows-2022
-    runs-on: ${{ github.server_url == 'https://github.com' && matrix.os || format('{0}-self-hosted', matrix.os) }}
+    runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -176,7 +176,7 @@ jobs:
 # are we really learning sth new from win32? So let's save some CO2 for now disabling this
 #          - arch: win32
 #            config: -DCMAKE_C_COMPILER=gcc --strict-warnings no-fips
-    runs-on: ${{ github.server_url == 'https://github.com' && matrix.os || format('{0}-self-hosted', matrix.os) }}
+    runs-on: ${{ matrix.os }}
     env:
       CYGWIN_NOWINPATH: 1
       SHELLOPTS: igncr
