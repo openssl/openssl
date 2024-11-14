@@ -240,7 +240,6 @@ int BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
                                  * when there is only the value '1' in the
                                  * buffer. */
     wstart = bits - 1;          /* The top bit of the window */
-    wend = 0;                   /* The bottom bit of the window */
 
     if (r == p) {
         BIGNUM *p_dup = BN_CTX_get(ctx);
@@ -393,7 +392,6 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
                                  * when there is only the value '1' in the
                                  * buffer. */
     wstart = bits - 1;          /* The top bit of the window */
-    wend = 0;                   /* The bottom bit of the window */
 
 #if 1                           /* by Shay Gueron's suggestion */
     j = m->top;                 /* borrow j */
@@ -1372,7 +1370,6 @@ int BN_mod_exp_simple(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
                                  * when there is only the value '1' in the
                                  * buffer. */
     wstart = bits - 1;          /* The top bit of the window */
-    wend = 0;                   /* The bottom bit of the window */
 
     if (r == p) {
         BIGNUM *p_dup = BN_CTX_get(ctx);

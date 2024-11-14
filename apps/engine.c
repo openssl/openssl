@@ -361,7 +361,6 @@ int engine_main(int argc, char **argv)
     }
 
     /* Any remaining arguments are engine names. */
-    argc = opt_num_rest();
     argv = opt_rest();
     for ( ; *argv; argv++) {
         if (**argv == '-') {

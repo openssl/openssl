@@ -2767,7 +2767,7 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
 #ifdef CHARSET_EBCDIC
             ebcdic2ascii(buf, buf, i);
 #endif
-            l = k = 0;
+            l = 0;
             for (;;) {
                 /* should do a select for the write */
 #ifdef RENEG

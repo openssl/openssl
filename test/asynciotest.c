@@ -339,7 +339,7 @@ static int test_asyncio(int test)
          * Write some test data. It should never take more than 2 attempts
          * (the first one might be a retryable fail).
          */
-        for (ret = -1, i = 0, len = 0; len != sizeof(testdata) && i < 2;
+        for (i = 0, len = 0; len != sizeof(testdata) && i < 2;
             i++) {
             ret = SSL_write(clientssl, testdata + len,
                 sizeof(testdata) - len);
@@ -361,7 +361,7 @@ static int test_asyncio(int test)
          * it could fail once for each byte read, including all overhead
          * bytes from the record header/padding etc.
          */
-        for (ret = -1, i = 0, len = 0; len != sizeof(testdata) &&
+        for (i = 0, len = 0; len != sizeof(testdata) &&
                 i < MAX_ATTEMPTS; i++) {
             ret = SSL_read(serverssl, buf + len, sizeof(buf) - len);
             if (ret > 0) {
