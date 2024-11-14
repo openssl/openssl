@@ -4167,10 +4167,8 @@ static int keygen_test_init(EVP_TEST *t, const char *alg)
         return 1;
     }
 
-    if (!TEST_ptr(data = OPENSSL_malloc(sizeof(*data))))
+    if (!TEST_ptr(data = OPENSSL_zalloc(sizeof(*data))))
         return 0;
-    data->keyname = NULL;
-    data->paramname = NULL;
     data->controls = sk_OPENSSL_STRING_new_null();
     data->alg = OPENSSL_strdup(alg);
     t->data = data;
@@ -4186,10 +4184,10 @@ static void keygen_test_cleanup(EVP_TEST *t)
     OPENSSL_free(keygen->alg);
     OPENSSL_free(keygen->keyname);
     OPENSSL_free(keygen->paramname);
-    OPENSSL_free(t->data);
     OPENSSL_free(keygen->seed);
     OPENSSL_free(keygen->encoded_pub_key);
     OPENSSL_free(keygen->encoded_priv_key);
+    OPENSSL_free(t->data);
     t->data = NULL;
 }
 

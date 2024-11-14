@@ -193,7 +193,6 @@ static int mlkem_match(const void *keydata1, const void *keydata2, int selection
     return ok;
 }
 
-/* TODO(ML-KEM) as and when encode/decode becomes needed/standardized */
 static int key_to_params(MLKEM768_KEY *key, OSSL_PARAM_BLD *tmpl,
                          OSSL_PARAM params[], int include_private)
 {
