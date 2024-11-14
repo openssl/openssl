@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-openssl-pkeyutl - public key algorithm command
+openssl-pkeyutl - asymmetric key command
 
 =head1 SYNOPSIS
 
@@ -45,8 +45,8 @@ B<openssl> B<pkeyutl>
 
 =head1 DESCRIPTION
 
-This command can be used to perform low-level public key
-operations using any supported algorithm.
+This command can be used to perform low-level operations
+on asymmetric (public or private) keys using any supported algorithm.
 
 By default the signing operation (see B<-sign> option) is assumed.
 
@@ -95,8 +95,7 @@ so the B<-digest> option cannot be used with EdDSA.
 
 =item B<-out> I<filename>
 
-Specifies the output filename to write to or standard output by
-default.
+Specifies the output filename to write to or standard output by default.
 
 =item B<-secret> I<filename>
 
@@ -104,7 +103,7 @@ Specifies the output filename to write the secret to on I<-encap>.
 
 =item B<-sigfile> I<file>
 
-Signature file, required and allowed for B<-verify> operations only
+Signature file, required and allowed for B<-verify> operations only.
 
 =item B<-inkey> I<filename>|I<uri>
 
@@ -249,8 +248,9 @@ hex dump the output data.
 =item B<-asn1parse>
 
 Parse the ASN.1 output data to check its DER encoding and print any errors.
-When combined with the B<-verifyrecover> option, this may be useful only in case
-an ASN.1 DER-encoded structure had been signed directly (without hashing it).
+When combined with the B<-verifyrecover> option, this may be useful in case
+an ASN.1 DER-encoded structure had been signed directly (without hashing it)
+and when checking a signature in PKCS#1 v1.5 format, which has a DER encoding.
 
 {- $OpenSSL::safe::opt_engine_item -}
 
@@ -274,13 +274,14 @@ engine I<id> for crypto operations.
 The operations and options supported vary according to the key algorithm
 and its implementation. The OpenSSL operations and options are indicated below.
 
-Unless otherwise mentioned, all algorithms support the B<digest:>I<alg> option,
+Unless otherwise mentioned, the B<-pkeyopt> option supports
+for all public-key types the I<digest>:I<alg> argument,
 which specifies the digest in use for the signing and verification operations.
 The value I<alg> should represent a digest name as used in the
 EVP_get_digestbyname() function for example B<sha1>. This value is not used to
 hash the input data. It is used (by some algorithms) for sanity-checking the
 lengths of data passed in and for creating the structures that make up the
-signature (e.g. B<DigestInfo> in RSASSA PKCS#1 v1.5 signatures).
+signature (e.g., B<DigestInfo> in RSASSA PKCS#1 v1.5 signatures).
 
 This command does not hash the input data (except where -rawin is used) but
 rather it will use the data directly as input to the signature algorithm.
@@ -406,8 +407,7 @@ no additional options.
 
 These algorithms only support signing and verifying. OpenSSL only implements the
 "pure" variants of these algorithms so raw data can be passed directly to them
-without hashing them first. The option B<-rawin> must be used with these
-algorithms with no B<-digest> specified. Additionally OpenSSL only supports
+without hashing them first. OpenSSL only supports
 "oneshot" operation with these algorithms. This means that the entire file to
 be signed/verified must be read into memory before processing it. Signing or
 Verifying very large files should be avoided. Additionally the size of the file
