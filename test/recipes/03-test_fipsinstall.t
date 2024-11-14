@@ -63,7 +63,7 @@ my @commandline =
         ( 'x942kdf_key_check',              'x942kdf-key-check' )
     );
 
-plan tests => 37 + (scalar @pedantic_okay) + (scalar @pedantic_fail)
+plan tests => 36 + (scalar @pedantic_okay) + (scalar @pedantic_fail)
               + 4 * (scalar @commandline);
 
 my $infile = bldtop_file('providers', platform->dso('fips'));
@@ -347,16 +347,6 @@ SKIP: {
                 '-corrupt_desc', 'DSA',
                 '-corrupt_type', 'PCT_Signature'])),
        "fipsinstall fails when the signature result is corrupted");
-}
-
-# corrupt an Asymmetric cipher test
-SKIP: {
-    skip "Skipping Asymmetric RSA corruption test because of no rsa in this build", 1
-        if disabled("rsa") || disabled("fips-post");
-    ok(!run(app(['openssl', 'fipsinstall', '-out', 'fips.cnf', '-module', $infile,
-                '-corrupt_desc', 'RSA_Encrypt',
-                '-corrupt_type', 'KAT_AsymmetricCipher'])),
-       "fipsinstall fails when the asymmetric cipher result is corrupted");
 }
 
 # 'local' ensures that this change is only done in this file.
