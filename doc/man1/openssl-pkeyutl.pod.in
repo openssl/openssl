@@ -18,8 +18,6 @@ B<openssl> B<pkeyutl>
 [B<-inkey> I<filename>|I<uri>]
 [B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
 [B<-passin> I<arg>]
-[B<-peerkey> I<file>]
-[B<-peerform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
 [B<-pubin>]
 [B<-certin>]
 [B<-rev>]
@@ -29,6 +27,8 @@ B<openssl> B<pkeyutl>
 [B<-encrypt>]
 [B<-decrypt>]
 [B<-derive>]
+[B<-peerkey> I<file>]
+[B<-peerform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
 [B<-encap>]
 [B<-decap>]
 [B<-kdf> I<algorithm>]
@@ -116,15 +116,6 @@ See L<openssl-format-options(1)> for details.
 The input key password source. For more information about the format of I<arg>
 see L<openssl-passphrase-options(1)>.
 
-=item B<-peerkey> I<file>
-
-The peer key file, used by key derivation (agreement) operations.
-
-=item B<-peerform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
-
-The peer key format; unspecified by default.
-See L<openssl-format-options(1)> for details.
-
 =item B<-pubin>
 
 By default a private key is read from the key input.
@@ -185,7 +176,18 @@ Decrypt the input data using a private key.
 
 =item B<-derive>
 
-Derive a shared secret using the peer key.
+Derive a shared secret using own private (EC)DH key and peer key.
+
+=item B<-peerkey> I<file>
+
+File containing the peer public or private (EC)DH key
+to use with the key derivation (agreement) operation.
+Its type must match the type of the own private key given with B<-inkey>.
+
+=item B<-peerform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
+
+The peer key format; unspecified by default.
+See L<openssl-format-options(1)> for details.
 
 =item B<-encap>
 
