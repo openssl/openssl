@@ -281,6 +281,11 @@ static int rsasve_generate(PROV_RSA_CTX *prsactx,
     int ret;
     size_t nlen;
 
+    if (!ossl_rsa_check_key_size(prsactx->rsa, 1)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
+        return 0;
+    }
+
     /* Step (1): nlen = Ceil(len(n)/8) */
     nlen = RSA_size(prsactx->rsa);
 
@@ -356,6 +361,11 @@ static int rsasve_recover(PROV_RSA_CTX *prsactx,
 {
     size_t nlen;
     int ret;
+
+    if (!ossl_rsa_check_key_size(prsactx->rsa, 1)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
+        return 0;
+    }
 
     /* Step (1): get the byte length of n */
     nlen = RSA_size(prsactx->rsa);
