@@ -64,6 +64,8 @@ static int ch_retry(QUIC_CHANNEL *ch,
                     const unsigned char *retry_token,
                     size_t retry_token_len,
                     const QUIC_CONN_ID *retry_scid);
+static int ch_restart(QUIC_CHANNEL *ch);
+
 static void ch_cleanup(QUIC_CHANNEL *ch);
 static int ch_generate_transport_params(QUIC_CHANNEL *ch);
 static int ch_on_transport_params(const unsigned char *params,
@@ -2184,6 +2186,8 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch, int channel_only)
     uint32_t enc_level;
     int old_have_processed_any_pkt = ch->have_processed_any_pkt;
     OSSL_QTX_IOVEC iovec;
+    uint32_t *supported_ver;
+    size_t remaining_len;
 
     assert(ch->qrx_pkt != NULL);
 
@@ -2255,6 +2259,84 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch, int channel_only)
          * packet. We only ever use v1, so require it.
          */
         return;
+
+    if (ch->qrx_pkt->hdr->type == QUIC_PKT_TYPE_VERSION_NEG) {
+
+        /*
+         * Sanity check.  Version negotiation packet MUST have a version
+         * value of 0 according to the RFC.  We must discard such packets
+         */
+        if (ch->qrx_pkt->hdr->version != 0)
+            return;
+
+        /*
+         * RFC 9000 s. 6.2: If a client receives a version negotiation
+         * packet, we need to do the following:
+         * a) If the negotiation packet lists the version we initially sent
+         *    then we must abandon this connection attempt
+         * b) We have to select a version from the list provided in the
+         *    version negotiation packet, and retry the connection attempt
+         *    in much the same way that ch_retry does, but we can reuse the
+         *    connection id values
+         */
+
+        if (old_have_processed_any_pkt == 1) {
+            /*
+             * We've gotten previous packets, need to discard this.
+             */
+            return;
+        }
+
+        /*
+         * Indicate that we have processed a packet, as any subsequently
+         * received version negotiation packet must be discarded above
+         */
+        ch->have_processed_any_pkt = 1;
+
+        /*
+         * Following the header, version negotiation packets
+         * contain an array of 32 bit integers representing
+         * the supported versions that the server honors
+         * this array, bounded by the hdr->len field
+         * needs to be traversed so that we can find a matching
+         * version
+         */
+        supported_ver = (uint32_t *)ch->qrx_pkt->hdr->data;
+        remaining_len = ch->qrx_pkt->hdr->len;
+        while (remaining_len > 0) {
+            /*
+             * We only support quic version 1 at the moment, so
+             * look to see if thats offered
+             */
+            if (*supported_ver == QUIC_VERSION_1) {
+                /*
+                 * If the server supports version 1, set it as
+                 * the packetisers version
+                 */
+                ossl_quic_tx_packetiser_set_protocol_version(ch->txp, QUIC_VERSION_1);
+
+                /*
+                 * And then request a restart of the QUIC connection 
+                 */
+                if (!ch_restart(ch))
+                    ossl_quic_channel_raise_protocol_error(ch,
+                                                           OSSL_QUIC_ERR_INTERNAL_ERROR,
+                                                           0, "handling ver negotiation packet");
+                return;
+            }
+            /* move to the next supported ver */
+            supported_ver++;
+            remaining_len -= sizeof(uint32_t);
+        }
+
+        /*
+         * If we get here, then the server doesn't support a version of the
+         * protocol that we can handle, abandon the connection
+         */
+        ossl_quic_channel_raise_protocol_error(ch, OSSL_QUIC_ERR_CONNECTION_REFUSED,
+                                               0, "unsupported protocol version");
+        return;
+    }
 
     ch->have_processed_any_pkt = 1;
 
@@ -2712,6 +2794,26 @@ void ossl_quic_channel_local_close(QUIC_CHANNEL *ch, uint64_t app_error_code,
 static void free_token(const unsigned char *buf, size_t buf_len, void *arg)
 {
     OPENSSL_free((unsigned char *)buf);
+}
+
+/**
+ * ch_restart - Restarts the QUIC channel by simulating loss of the initial
+ * packet. This forces the packet to be regenerated with the updated protocol
+ * version number.
+ *
+ * @ch: Pointer to the QUIC_CHANNEL structure.
+ *
+ * Returns 1 on success, 0 on failure.
+ */
+static int ch_restart(QUIC_CHANNEL *ch)
+{
+
+    /*
+     * Just pretend we lost our first initial packet, so it gets
+     * regenerated, with our updated protocol version number
+     */
+   return ossl_ackm_mark_packet_pseudo_lost(ch->ackm, QUIC_PN_SPACE_INITIAL,
+                                            /* PN= */ 0);
 }
 
 /* Called when a server asks us to do a retry. */
