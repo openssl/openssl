@@ -1117,7 +1117,7 @@ static int pcipher_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
                          */
                         0,
                         1,
-                        0, &hdr, NULL))
+                        0, &hdr, NULL, NULL))
                     goto out;
 
                 /*

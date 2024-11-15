@@ -92,7 +92,7 @@ static int pkt_split_dgram_recvmmsg(BIO *bio, BIO_MSG *msg, size_t stride,
          * TODO(QUIC SERVER): We need to query the short connection id len
          * here, e.g. via some API SSL_get_short_conn_id_len()
          */
-        if (ossl_quic_wire_decode_pkt_hdr(&pkt, 0, 0, 0, &hdr, NULL) != 1)
+        if (ossl_quic_wire_decode_pkt_hdr(&pkt, 0, 0, 0, &hdr, NULL, NULL) != 1)
             return 0;
         remain = PACKET_remaining(&pkt);
         if (remain > 0) {
