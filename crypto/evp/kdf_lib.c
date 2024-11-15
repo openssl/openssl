@@ -147,8 +147,10 @@ int EVP_KDF_derive(EVP_KDF_CTX *ctx, unsigned char *key, size_t keylen,
 int EVP_KDF_derive_SKEY(EVP_KDF_CTX *ctx, EVP_SKEY *skey,
                         const OSSL_PARAM params[])
 {
-    if (ctx == NULL || skey == NULL)
+    if (ctx == NULL || skey == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
+    }
 
     if (ctx->meth->derive_opaque == NULL) {
         ERR_raise(ERR_R_EVP_LIB, ERR_R_UNSUPPORTED);
