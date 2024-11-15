@@ -310,7 +310,7 @@ int pkeyutl_main(int argc, char **argv)
         goto opthelp;
     } else if (peerkey != NULL && pkey_op != EVP_PKEY_OP_DERIVE) {
         BIO_printf(bio_err,
-                   "%s: -peerkey option needlessly given (when not performing -derive).\n", prog);
+                   "%s: -peerkey option not allowed without -derive.\n", prog);
         goto opthelp;
     } else if (peerkey == NULL && pkey_op == EVP_PKEY_OP_DERIVE) {
         BIO_printf(bio_err,
