@@ -51,7 +51,7 @@ static void *evp_keyexch_from_algorithm(int name_id,
 {
     const OSSL_DISPATCH *fns = algodef->implementation;
     EVP_KEYEXCH *exchange = NULL;
-    int fncnt = 0, sparamfncnt = 0, gparamfncnt = 0;
+    int fncnt = 0, sparamfncnt = 0, gparamfncnt = 0, derive_found = 0;
 
     if ((exchange = evp_keyexch_new(prov)) == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_EVP_LIB);
@@ -86,7 +86,7 @@ static void *evp_keyexch_from_algorithm(int name_id,
             if (exchange->derive != NULL)
                 break;
             exchange->derive = OSSL_FUNC_keyexch_derive(fns);
-            fncnt++;
+            derive_found = 1;
             break;
         case OSSL_FUNC_KEYEXCH_FREECTX:
             if (exchange->freectx != NULL)
@@ -125,8 +125,15 @@ static void *evp_keyexch_from_algorithm(int name_id,
                 = OSSL_FUNC_keyexch_settable_ctx_params(fns);
             sparamfncnt++;
             break;
+        case OSSL_FUNC_KEYEXCH_DERIVE_SKEY:
+            if (exchange->derive_skey != NULL)
+                break;
+            exchange->derive_skey = OSSL_FUNC_keyexch_derive_skey(fns);
+            derive_found = 1;
+            break;
         }
     }
+    fncnt += derive_found;
     if (fncnt != 4
             || (gparamfncnt != 0 && gparamfncnt != 2)
             || (sparamfncnt != 0 && sparamfncnt != 2)) {
@@ -542,6 +549,95 @@ int EVP_PKEY_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *pkeylen)
 
     M_check_autoarg(ctx, key, pkeylen, EVP_F_EVP_PKEY_DERIVE)
         return ctx->pmeth->derive(ctx, key, pkeylen);
+}
+
+EVP_SKEY *EVP_PKEY_derive_SKEY(EVP_PKEY_CTX *ctx, const char *key_type,
+                               size_t keylen, const char *propquery)
+{
+    EVP_SKEYMGMT *skeymgmt = NULL;
+    EVP_SKEY *ret = NULL;
+
+    if (ctx == NULL || key_type == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return NULL;
+    }
+
+    if (!EVP_PKEY_CTX_IS_DERIVE_OP(ctx)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_INITIALIZED);
+        return NULL;
+    }
+
+    if (ctx->op.kex.algctx == NULL) {
+        ERR_raise(ERR_R_EVP_LIB, ERR_R_UNSUPPORTED);
+        return 0;
+    }
+
+    skeymgmt = evp_skeymgmt_fetch_from_prov(ctx->op.kex.exchange->prov,
+                                            key_type, propquery);
+    if (skeymgmt == NULL) {
+        /*
+         * The provider does not support skeymgmt, let's try to fallback
+         * to a provider that supports it
+         */
+        skeymgmt = EVP_SKEYMGMT_fetch(ctx->libctx, key_type, propquery);
+    }
+    if (skeymgmt == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_FETCH_FAILED);
+        return NULL;
+    }
+
+    /* Fallback to raw derive + import if possible */
+    if (skeymgmt->prov != ctx->op.kex.exchange->prov ||
+        ctx->op.kex.exchange->derive_skey == NULL) {
+        size_t tmplen = keylen;
+        unsigned char *key = NULL;
+
+        EVP_SKEYMGMT_free(skeymgmt);
+
+        if (ctx->op.kex.exchange->derive == NULL) {
+            ERR_raise(ERR_R_EVP_LIB, ERR_R_UNSUPPORTED);
+            return NULL;
+        }
+
+        key = OPENSSL_zalloc(keylen);
+        if (key == NULL) {
+            ERR_raise(ERR_R_EVP_LIB, ERR_R_CRYPTO_LIB);
+            return NULL;
+        }
+
+        if (!ctx->op.kex.exchange->derive(ctx->op.kex.algctx, key, &tmplen,
+                                          tmplen)) {
+            OPENSSL_free(key);
+            return NULL;
+        }
+
+        if (keylen != tmplen) {
+            OPENSSL_free(key);
+            ERR_raise(ERR_R_EVP_LIB, ERR_R_INTERNAL_ERROR);
+            return NULL;
+        }
+
+        ret = EVP_SKEY_import_raw_key(ctx->libctx, key_type, key, keylen,
+                                      propquery);
+        OPENSSL_clear_free(key, keylen);
+        return ret;
+    }
+
+    ret = evp_skey_int();
+    if (ret == NULL) {
+        EVP_SKEYMGMT_free(skeymgmt);
+        return NULL;
+    }
+
+    ret->skeymgmt = skeymgmt;
+
+    ret->keydata = ctx->op.kex.exchange->derive_skey(ctx->op.kex.algctx);
+    if (ret->keydata != NULL) {
+        EVP_SKEY_free(ret);
+        return NULL;
+    }
+
+    return ret;
 }
 
 int evp_keyexch_get_number(const EVP_KEYEXCH *keyexch)

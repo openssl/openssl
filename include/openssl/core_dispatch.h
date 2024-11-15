@@ -734,6 +734,7 @@ OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, keymgmt_export_types_ex,
 # define OSSL_FUNC_KEYEXCH_SETTABLE_CTX_PARAMS         8
 # define OSSL_FUNC_KEYEXCH_GET_CTX_PARAMS              9
 # define OSSL_FUNC_KEYEXCH_GETTABLE_CTX_PARAMS        10
+# define OSSL_FUNC_KEYEXCH_DERIVE_SKEY                11
 
 OSSL_CORE_MAKE_FUNC(void *, keyexch_newctx, (void *provctx))
 OSSL_CORE_MAKE_FUNC(int, keyexch_init, (void *ctx, void *provkey,
@@ -751,6 +752,7 @@ OSSL_CORE_MAKE_FUNC(int, keyexch_get_ctx_params, (void *ctx,
                                                      OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, keyexch_gettable_ctx_params,
                     (void *ctx, void *provctx))
+OSSL_CORE_MAKE_FUNC(void *, keyexch_derive_skey, (void *ctx))
 
 /* Signature */
 
