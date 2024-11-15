@@ -2109,7 +2109,6 @@ static int qc_wait_for_default_xso_for_read(QCTX *ctx, int peek)
             return QUIC_RAISE_NON_NORMAL_ERROR(ctx, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
         } else if (!qctx_blocking(ctx)) {
             /* Non-blocking mode, so just bail immediately. */
-            /* Non-blocking mode, so just bail immediately. */
             return QUIC_RAISE_NORMAL_ERROR(ctx, SSL_ERROR_WANT_READ);
         }
 
