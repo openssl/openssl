@@ -405,7 +405,8 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
             break;
     }
 
-    if (sk_IMPLEMENTATION_push(alg->impls, impl)) {
+    if (i == sk_IMPLEMENTATION_num(alg->impls)
+        && sk_IMPLEMENTATION_push(alg->impls, impl)) {
         ret = 1;
         OSSL_TRACE_BEGIN(QUERY) {
             BIO_printf(trc_out, "Adding to method store "
@@ -503,7 +504,8 @@ alg_cleanup_by_provider(ossl_uintmax_t idx, ALGORITHM *alg, void *arg)
                 char buf[512];
                 size_t size;
 
-                size = ossl_property_list_to_string(NULL, impl->properties, buf, 512);
+                size = ossl_property_list_to_string(NULL, impl->properties, buf,
+                                                    sizeof(buf));
                 BIO_printf(trc_out, "Removing implementation from "
                            "query cache\nproperties %s\nprovider %s\n",
                            size == 0 ? "none" : buf,

@@ -1668,20 +1668,20 @@ const OSSL_PARAM *ossl_provider_gettable_params(const OSSL_PROVIDER *prov)
         ret = prov->gettable_params(prov->provctx);
 
 #ifndef FIPS_MODULE
-        OSSL_TRACE_BEGIN(PROVIDER) {
-            char *buf = NULL;
+    OSSL_TRACE_BEGIN(PROVIDER) {
+        char *buf = NULL;
 
-            BIO_printf(trc_out, "(provider %s) gettable params\n",
-                       ossl_provider_name(prov));
-            BIO_printf(trc_out, "Parameters:\n");
-            if (prov->gettable_params != NULL) {
-                if (!OSSL_PARAM_print_to_bio(ret, trc_out, 0))
-                    BIO_printf(trc_out, "Failed to parse param values\n");
-                OPENSSL_free(buf);
-            } else {
-                BIO_printf(trc_out, "Provider doesn't implement gettable_params\n");
-            }
-        } OSSL_TRACE_END(PROVIDER);
+        BIO_printf(trc_out, "(provider %s) gettable params\n",
+                   ossl_provider_name(prov));
+        BIO_printf(trc_out, "Parameters:\n");
+        if (prov->gettable_params != NULL) {
+            if (!OSSL_PARAM_print_to_bio(ret, trc_out, 0))
+                BIO_printf(trc_out, "Failed to parse param values\n");
+            OPENSSL_free(buf);
+        } else {
+            BIO_printf(trc_out, "Provider doesn't implement gettable_params\n");
+        }
+    } OSSL_TRACE_END(PROVIDER);
 #endif
 
     return ret;
@@ -1710,18 +1710,18 @@ int ossl_provider_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
 
     ret = prov->get_params(prov->provctx, params);
 #ifndef FIPS_MODULE
-    if (ret == 1) {
-        OSSL_TRACE_BEGIN(PROVIDER) {
-            char *buf = NULL;
+    OSSL_TRACE_BEGIN(PROVIDER) {
 
-            BIO_printf(trc_out,
-                       "(provider %s) calling get_params\n", prov->name);
+        BIO_printf(trc_out,
+                   "(provider %s) calling get_params\n", prov->name);
+        if (ret == 1) {
             BIO_printf(trc_out, "Parameters:\n");
             if (!OSSL_PARAM_print_to_bio(params, trc_out, 1))
                 BIO_printf(trc_out, "Failed to parse param values\n");
-            OPENSSL_free(buf);
-        } OSSL_TRACE_END(PROVIDER);
-    }
+        } else {
+            BIO_printf(trc_out, "get_params call failed\n");
+        }
+    } OSSL_TRACE_END(PROVIDER);
 #endif
     return ret;
 }
@@ -1837,10 +1837,9 @@ const OSSL_ALGORITHM *ossl_provider_query_operation(const OSSL_PROVIDER *prov,
 
     res = prov->query_operation(prov->provctx, operation_id, no_cache);
 #ifndef FIPS_MODULE
-    if (res != NULL) {
-        OSSL_TRACE_BEGIN(PROVIDER) {
-            const OSSL_ALGORITHM *idx;
-
+    OSSL_TRACE_BEGIN(PROVIDER) {
+        const OSSL_ALGORITHM *idx;
+        if (res != NULL) {
             BIO_printf(trc_out,
                        "(provider %s) Calling query, available algs are:\n", prov->name);
 
@@ -1855,8 +1854,10 @@ const OSSL_ALGORITHM *ossl_provider_query_operation(const OSSL_PROVIDER *prov,
                            res->algorithm_description == NULL ? "none" :
                            res->algorithm_description);
             }
-        } OSSL_TRACE_END(PROVIDER);
-    }
+        } else {
+            BIO_printf(trc_out, "(provider %s) query_operation failed\n", prov->name);
+        }
+    } OSSL_TRACE_END(PROVIDER);
 #endif
 
 #if defined(OPENSSL_NO_CACHED_FETCH)

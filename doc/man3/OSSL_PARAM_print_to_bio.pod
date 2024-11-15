@@ -15,11 +15,11 @@ OSSL_PARAM_print_to_bio
 =head1 DESCRIPTION
 
 OSSL_PARAM_print_to_bio() formats each parameter contained in the
-passed in array of OSSL_PARAM values B<p>, and prints both the key,
+passed in array of OSSL_PARAM values I<p>, and prints both the key,
 and optionally its value, to a provided BIO.
-B<p> must be a non-null array of OSSL_PARAM values, terminated
-with a value containing a null B<key> member.
-B<print_values> is a control parameter, indicating that key values should be
+I<p> must be a non-null array of OSSL_PARAM values, terminated
+with a value containing a null I<key> member.
+I<print_values> is a control parameter, indicating that key values should be
 printed, in addition to key names.
 
 =head1 RETURN VALUES

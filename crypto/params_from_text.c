@@ -14,7 +14,6 @@
 #include <openssl/params.h>
 #include <openssl/buffer.h>
 
-
 /*
  * When processing text to params, we're trying to be smart with numbers.
  * Instead of handling each specific separate integer type, we use a bignum
@@ -214,7 +213,7 @@ static int construct_from_text(OSSL_PARAM *to, const OSSL_PARAM *paramdef,
  *
  * Return:    1 on success, 0 on failure.
  */
-int OSSL_PARAM_print_to_bio(const OSSL_PARAM p[], BIO *bio, int print_values)
+int OSSL_PARAM_print_to_bio(const OSSL_PARAM *p, BIO *bio, int print_values)
 {
     int64_t i;
     uint64_t u;
