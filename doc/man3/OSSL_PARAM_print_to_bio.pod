@@ -15,8 +15,8 @@ OSSL_PARAM_print_to_bio
 =head1 DESCRIPTION
 
 OSSL_PARAM_print_to_bio() formats each parameter contained in the
-passed in array of OSSL_PARAM values I<p>, and prints both the key,
-and optionally its value, to a provided BIO.
+passed in array of B<OSSL_PARAM> values I<p>, and prints both the key,
+and optionally its value, to a provided B<BIO>.
 I<p> must be a non-null array of OSSL_PARAM values, terminated
 with a value containing a null I<key> member.
 I<print_values> is a control parameter, indicating that key values should be
@@ -28,7 +28,7 @@ OSSL_PARAM_print_to_bio() returns 1 on success, and 0 on failure
 
 =head1 HISTORY
 
-OSSL_PARAM_print_to_bio was added in OpenSSL 3.5
+OSSL_PARAM_print_to_bio() was added in OpenSSL 3.5
 
 =head1 COPYRIGHT
 
