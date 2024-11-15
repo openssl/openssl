@@ -1239,7 +1239,7 @@ static int rsa_digest_sign_update(void *vprsactx, const unsigned char *data,
 {
     PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
 
-    if (prsactx == NULL)
+    if (!ossl_prov_is_running() || prsactx == NULL)
         return 0;
     /* Sigalg implementations shouldn't do digest_sign */
     if (prsactx->flag_sigalg)
@@ -1283,7 +1283,7 @@ static int rsa_digest_verify_update(void *vprsactx, const unsigned char *data,
 {
     PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
 
-    if (prsactx == NULL)
+    if (!ossl_prov_is_running() || prsactx == NULL)
         return 0;
     /* Sigalg implementations shouldn't do digest_sign */
     if (prsactx->flag_sigalg)

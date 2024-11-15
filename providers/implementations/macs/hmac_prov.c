@@ -215,6 +215,9 @@ static int hmac_update(void *vmacctx, const unsigned char *data,
 {
     struct hmac_data_st *macctx = vmacctx;
 
+    if (!ossl_prov_is_running())
+        return 0;
+
     if (macctx->tls_data_size > 0) {
         /* We're doing a TLS HMAC */
         if (!macctx->tls_header_set) {
