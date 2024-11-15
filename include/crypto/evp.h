@@ -246,6 +246,7 @@ struct evp_kdf_st {
     OSSL_FUNC_kdf_get_params_fn *get_params;
     OSSL_FUNC_kdf_get_ctx_params_fn *get_ctx_params;
     OSSL_FUNC_kdf_set_ctx_params_fn *set_ctx_params;
+    OSSL_FUNC_kdf_derive_opaque_fn *derive_opaque;
 };
 
 #define EVP_ORIG_DYNAMIC    0

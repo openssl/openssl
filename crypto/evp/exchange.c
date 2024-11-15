@@ -41,7 +41,7 @@ static void *evp_keyexch_from_algorithm(int name_id,
 {
     const OSSL_DISPATCH *fns = algodef->implementation;
     EVP_KEYEXCH *exchange = NULL;
-    int fncnt = 0, sparamfncnt = 0, gparamfncnt = 0;
+    int fncnt = 0, sparamfncnt = 0, gparamfncnt = 0, derive_found = 0;
 
     if ((exchange = evp_keyexch_new(prov)) == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_EVP_LIB);
@@ -76,7 +76,7 @@ static void *evp_keyexch_from_algorithm(int name_id,
             if (exchange->derive != NULL)
                 break;
             exchange->derive = OSSL_FUNC_keyexch_derive(fns);
-            fncnt++;
+            derive_found = 1;
             break;
         case OSSL_FUNC_KEYEXCH_FREECTX:
             if (exchange->freectx != NULL)
