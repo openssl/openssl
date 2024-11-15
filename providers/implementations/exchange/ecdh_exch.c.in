@@ -36,6 +36,7 @@ static OSSL_FUNC_keyexch_newctx_fn ecdh_newctx;
 static OSSL_FUNC_keyexch_init_fn ecdh_init;
 static OSSL_FUNC_keyexch_set_peer_fn ecdh_set_peer;
 static OSSL_FUNC_keyexch_derive_fn ecdh_derive;
+static OSSL_FUNC_keyexch_derive_skey_fn ecdh_derive_skey;
 static OSSL_FUNC_keyexch_freectx_fn ecdh_freectx;
 static OSSL_FUNC_keyexch_dupctx_fn ecdh_dupctx;
 static OSSL_FUNC_keyexch_set_ctx_params_fn ecdh_set_ctx_params;
@@ -617,10 +618,45 @@ int ecdh_derive(void *vpecdhctx, unsigned char *secret,
     return 0;
 }
 
+static
+void *ecdh_derive_skey(void *vpecdhctx, void *provctx, OSSL_FUNC_skeymgmt_import_fn *import,
+                       size_t outlen, const OSSL_PARAM params_in[] ossl_unused)
+{
+    unsigned char *secret = NULL;
+    size_t secretlen = 0;
+    void *ret = NULL;
+    OSSL_PARAM params[2] = {OSSL_PARAM_END, OSSL_PARAM_END};
+
+    if (import == NULL || outlen == 0)
+        return NULL;
+
+    if (ecdh_derive(vpecdhctx, secret, &secretlen, outlen) == 0)
+        return NULL;
+
+    if ((secret = OPENSSL_malloc(secretlen)) == NULL)
+        return NULL;
+
+    if (ecdh_derive(vpecdhctx, secret, &secretlen, outlen) == 0
+        || secretlen != outlen) {
+        OPENSSL_clear_free(secret, secretlen);
+        return NULL;
+    }
+
+    params[0] = OSSL_PARAM_construct_octet_string(OSSL_SKEY_PARAM_RAW_BYTES,
+                                                  (void *)secret, outlen);
+
+    /* This is mandatory, no need to check for its presence */
+    ret = import(provctx, OSSL_SKEYMGMT_SELECT_SECRET_KEY, params);
+    OPENSSL_clear_free(secret, secretlen);
+
+    return ret;
+}
+
 const OSSL_DISPATCH ossl_ecdh_keyexch_functions[] = {
     { OSSL_FUNC_KEYEXCH_NEWCTX, (void (*)(void))ecdh_newctx },
     { OSSL_FUNC_KEYEXCH_INIT, (void (*)(void))ecdh_init },
     { OSSL_FUNC_KEYEXCH_DERIVE, (void (*)(void))ecdh_derive },
+    { OSSL_FUNC_KEYEXCH_DERIVE_SKEY, (void (*)(void))ecdh_derive_skey },
     { OSSL_FUNC_KEYEXCH_SET_PEER, (void (*)(void))ecdh_set_peer },
     { OSSL_FUNC_KEYEXCH_FREECTX, (void (*)(void))ecdh_freectx },
     { OSSL_FUNC_KEYEXCH_DUPCTX, (void (*)(void))ecdh_dupctx },

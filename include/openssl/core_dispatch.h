@@ -825,6 +825,7 @@ OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, keymgmt_export_types_ex,
 # define OSSL_FUNC_KEYEXCH_SETTABLE_CTX_PARAMS         8
 # define OSSL_FUNC_KEYEXCH_GET_CTX_PARAMS              9
 # define OSSL_FUNC_KEYEXCH_GETTABLE_CTX_PARAMS        10
+# define OSSL_FUNC_KEYEXCH_DERIVE_SKEY                11
 
 OSSL_CORE_MAKE_FUNC(void *, keyexch_newctx, (void *provctx))
 OSSL_CORE_MAKE_FUNC(int, keyexch_init, (void *ctx, void *provkey,
@@ -842,6 +843,9 @@ OSSL_CORE_MAKE_FUNC(int, keyexch_get_ctx_params, (void *ctx,
                                                      OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, keyexch_gettable_ctx_params,
                     (void *ctx, void *provctx))
+OSSL_CORE_MAKE_FUNC(void *, keyexch_derive_skey, (void *ctx, void *provctx,
+                                                  OSSL_FUNC_skeymgmt_import_fn *import,
+                                                  size_t keylen, const OSSL_PARAM params[]))
 
 /* Signature */
 
@@ -954,52 +958,6 @@ OSSL_CORE_MAKE_FUNC(int, signature_set_ctx_md_params,
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, signature_settable_ctx_md_params,
                     (void *ctx))
 OSSL_CORE_MAKE_FUNC(const char **, signature_query_key_types, (void))
-
-/*-
- * Symmetric key management
- *
- * The Key Management takes care of provider side of symmetric key objects, and
- * includes essentially everything that manipulates the keys  themselves and
- * their parameters.
- *
- * The key objects are commonly referred to as |keydata|, and it MUST be able
- * to contain parameters if the key has any, and the secret key.
- *
- * Key objects are created with OSSL_FUNC_skeymgmt_import() (there is no
- * dedicated memory allocation function), exported with
- * OSSL_FUNC_skeymgmt_export() and destroyed with OSSL_FUNC_keymgmt_free().
- *
- */
-
-/* Key data subset selection - individual bits */
-# define OSSL_SKEYMGMT_SELECT_PARAMETERS      0x01
-# define OSSL_SKEYMGMT_SELECT_SECRET_KEY      0x02
-
-/* Key data subset selection - combinations */
-# define OSSL_SKEYMGMT_SELECT_ALL                \
-    (OSSL_SKEYMGMT_SELECT_PARAMETERS | OSSL_SKEYMGMT_SELECT_SECRET_KEY)
-
-# define OSSL_FUNC_SKEYMGMT_FREE                1
-# define OSSL_FUNC_SKEYMGMT_IMPORT              2
-# define OSSL_FUNC_SKEYMGMT_EXPORT              3
-# define OSSL_FUNC_SKEYMGMT_GENERATE            4
-# define OSSL_FUNC_SKEYMGMT_GET_KEY_ID          5
-# define OSSL_FUNC_SKEYMGMT_IMP_SETTABLE_PARAMS 6
-# define OSSL_FUNC_SKEYMGMT_GEN_SETTABLE_PARAMS 7
-
-OSSL_CORE_MAKE_FUNC(void, skeymgmt_free, (void *keydata))
-OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *,
-                    skeymgmt_imp_settable_params, (void *provctx))
-OSSL_CORE_MAKE_FUNC(void *, skeymgmt_import, (void *provctx, int selection,
-                                              const OSSL_PARAM params[]))
-OSSL_CORE_MAKE_FUNC(int, skeymgmt_export,
-                    (void *keydata, int selection,
-                     OSSL_CALLBACK *param_cb, void *cbarg))
-OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *,
-                    skeymgmt_gen_settable_params, (void *provctx))
-OSSL_CORE_MAKE_FUNC(void *, skeymgmt_generate, (void *provctx,
-                                                const OSSL_PARAM params[]))
-OSSL_CORE_MAKE_FUNC(const char *, skeymgmt_get_key_id, (void *keydata))
 
 /* Asymmetric Ciphers */
 
