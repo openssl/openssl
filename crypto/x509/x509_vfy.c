@@ -423,16 +423,16 @@ static X509 *get0_best_issuer_sk(X509_STORE_CTX *ctx, int trusted,
  */
 int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
 {
-    const X509_NAME *xn = X509_get_issuer_name(x);
-    STACK_OF(X509) *certs = ossl_x509_store_ctx_get_certs(ctx, xn, 0);
+    STACK_OF(X509) *certs = X509_STORE_CTX_get1_certs(ctx, X509_get_issuer_name(x));
+    int ret = 0;
 
     if (certs == NULL)
         return -1;
     *issuer = get0_best_issuer_sk(ctx, 1 /* trusted */, 0, certs, x);
-    sk_X509_free(certs);
-    if (*issuer == NULL)
-        return 0;
-    return X509_up_ref(*issuer) ? 1 : -1;
+    if (*issuer != NULL)
+        ret = X509_up_ref(*issuer) ? 1 : -1;
+    OSSL_STACK_OF_X509_free(certs);
+    return ret;
 }
 
 /* Check that the given certificate |x| is issued by the certificate |issuer| */

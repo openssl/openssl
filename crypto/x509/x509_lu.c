@@ -651,12 +651,10 @@ STACK_OF(X509) *X509_STORE_get1_all_certs(X509_STORE *store)
 
 /*-
  * Collect from |ctx->store| all certs with subject matching |nm|.
- * Caller must free on ret == 1 the resulting list |*certs|.
- * Caller must also free its entries if up_refs != 0.
  * Returns NULL on internal/fatal error, empty stack if not found.
  */
-STACK_OF(X509) *ossl_x509_store_ctx_get_certs(X509_STORE_CTX *ctx,
-                                              const X509_NAME *nm, int up_refs)
+STACK_OF(X509) *X509_STORE_CTX_get1_certs(X509_STORE_CTX *ctx,
+                                          const X509_NAME *nm)
 {
     int i, idx, cnt;
     STACK_OF(X509) *sk = NULL;
@@ -693,25 +691,15 @@ STACK_OF(X509) *ossl_x509_store_ctx_get_certs(X509_STORE_CTX *ctx,
     for (i = 0; i < cnt; i++, idx++) {
         obj = sk_X509_OBJECT_value(store->objs, idx);
         x = obj->data.x509;
-        if (!X509_add_cert(sk, x, up_refs ? X509_ADD_FLAG_UP_REF : 0)) {
+        if (!X509_add_cert(sk, x, X509_ADD_FLAG_UP_REF)) {
             X509_STORE_unlock(store);
-            if (up_refs)
-                OSSL_STACK_OF_X509_free(sk);
-            else
-                sk_X509_free(sk);
+            OSSL_STACK_OF_X509_free(sk);
             return NULL;
         }
     }
  end:
     X509_STORE_unlock(store);
     return sk;
-}
-
-/* Returns NULL on internal/fatal error, empty stack if not found */
-STACK_OF(X509) *X509_STORE_CTX_get1_certs(X509_STORE_CTX *ctx,
-                                          const X509_NAME *nm)
-{
-    return ossl_x509_store_ctx_get_certs(ctx, nm, 1 /* up_refs */);
 }
 
 /* Returns NULL on internal/fatal error, empty stack if not found */
