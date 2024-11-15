@@ -418,8 +418,13 @@ int ssl_print_tmp_key(BIO *out, SSL *s)
 {
     EVP_PKEY *key;
 
-    if (!SSL_get_peer_tmp_key(s, &key))
+    if (!SSL_get_peer_tmp_key(s, &key)) {
+        if (SSL_version(s) == TLS1_3_VERSION)
+            BIO_printf(out, "Negotiated TLS1.3 group: %s\n",
+                       SSL_group_to_name(s, SSL_get_negotiated_group(s)));
         return 1;
+    }
+
     BIO_puts(out, "Server Temp Key: ");
     switch (EVP_PKEY_get_id(key)) {
     case EVP_PKEY_RSA:
@@ -1327,12 +1332,8 @@ void print_ssl_summary(SSL *s)
     if (SSL_is_server(s))
         ssl_print_groups(bio_err, s, 1);
 #endif
-    if (!SSL_is_server(s)) {
-        if (SSL_version(s) == TLS1_3_VERSION)
-            BIO_printf(bio_err, "Negotiated TLS1.3 group: %s\n",
-                       SSL_group_to_name(s, SSL_get_negotiated_group(s)));
+    if (!SSL_is_server(s))
         ssl_print_tmp_key(bio_err, s);
-    }
 }
 
 int config_ctx(SSL_CONF_CTX *cctx, STACK_OF(OPENSSL_STRING) *str,
