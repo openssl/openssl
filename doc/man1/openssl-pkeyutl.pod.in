@@ -70,7 +70,7 @@ which is not hashed by any message digest algorithm.
 Except with EdDSA,
 the user can specify a digest algorithm by using the B<-digest> option.
 For signature algorithms like RSA, DSA and ECDSA,
-the default digest algorithm is SHA-256. For SM2, it is SM3.
+the default digest algorithm is SHA256. For SM2, it is SM3.
 
 This option can only be used with B<-sign> and B<-verify>.
 For EdDSA (the Ed25519 and Ed448 algorithms) this option is required.
@@ -271,25 +271,27 @@ The operations and options supported vary according to the key algorithm
 and its implementation. The OpenSSL operations and options are indicated below.
 
 Unless otherwise mentioned, the B<-pkeyopt> option supports
-for all public-key types the I<digest>:I<alg> argument,
+for all public-key types the C<digest:>I<alg> argument,
 which specifies the digest in use for the signing and verification operations.
 The value I<alg> should represent a digest name as used in the
-EVP_get_digestbyname() function for example B<sha1>. This value is not used to
+EVP_get_digestbyname() function for example B<sha256>. This value is not used to
 hash the input data. It is used (by some algorithms) for sanity-checking the
 lengths of data passed in and for creating the structures that make up the
 signature (e.g., B<DigestInfo> in RSASSA PKCS#1 v1.5 signatures).
 
-This command does not hash the input data (except where -rawin is used) but
-rather it will use the data directly as input to the signature algorithm.
+For instance,
+if the value of the B<-pkeyopt> option C<digest> argument is B<sha256>,
+the signature or verification input should be the 32 bytes long binary value
+of the SHA256 hash function output.
+
+Unless B<-rawin> is used or implied, this command does not hash the input data
+but rather it will use the data directly as input to the signature algorithm.
 Depending on the key type, signature type, and mode of padding, the maximum
-acceptable lengths of input data differ. The signed data can't be longer than
-the key modulus with RSA. In case of ECDSA and DSA the data shouldn't be longer
+sensible lengths of input data differ. With RSA the signed data cannot be longer
+than the key modulus. In case of ECDSA and DSA the data should not be longer
 than the field size, otherwise it will be silently truncated to the field size.
 In any event the input size must not be larger than the largest supported digest
-size.
-
-In other words, if the value of digest is B<sha1> the input should be the 20
-bytes long binary encoding of the SHA-1 hash function output.
+output size B<EVP_MAX_MD_SIZE>, which currently is 64 bytes.
 
 =head1 RSA ALGORITHM
 
@@ -341,7 +343,7 @@ explicitly set in PSS mode then the signing digest is used.
 =item B<rsa_oaep_md:>I<digest>
 
 Sets the digest used for the OAEP hash function. If not explicitly set then
-SHA1 is used.
+SHA256 is used.
 
 =item B<rsa_pkcs1_implicit_rejection:>I<flag>
 
@@ -380,7 +382,7 @@ value less than the minimum restriction.
 =head1 DSA ALGORITHM
 
 The DSA algorithm supports signing and verification operations only. Currently
-there are no additional B<-pkeyopt> options other than B<digest>. The SHA1
+there are no additional B<-pkeyopt> options other than B<digest>. The SHA256
 digest is assumed by default.
 
 =head1 DH ALGORITHM
@@ -391,8 +393,8 @@ B<-pkeyopt> options.
 =head1 EC ALGORITHM
 
 The EC algorithm supports sign, verify and derive operations. The sign and
-verify operations use ECDSA and derive uses ECDH. SHA1 is assumed by default for
-the B<-pkeyopt> B<digest> option.
+verify operations use ECDSA and derive uses ECDH. SHA256 is assumed by default
+for the B<-pkeyopt> B<digest> option.
 
 =head1 X25519 AND X448 ALGORITHMS
 
