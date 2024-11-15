@@ -17,8 +17,10 @@
 #include <openssl/err.h>
 #include <openssl/randerr.h>
 #include <openssl/proverr.h>
+#include <openssl/self_test.h>
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
+#include "prov/providercommon.h"
 #include "crypto/rand.h"
 #include "crypto/rand_pool.h"
 
@@ -98,10 +100,12 @@ static size_t get_jitter_random_value(PROV_JITTER *s,
 
         /*
          * Permanent Failure
-         * https://github.com/smuellerDD/jitterentropy-library/issues/118
+         * https://github.com/smuellerDD/jitterentropy-library/blob/master/doc/jitterentropy.3#L234
          */
-        if (result < -5)
+        if (result < -5) {
+            ossl_set_error_state(OSSL_SELF_TEST_TYPE_CRNG);
             break;
+        }
 
         /* Success */
         if (result >= 0 && (size_t)result == len)
