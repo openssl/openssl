@@ -759,6 +759,92 @@ static void port_send_retry(QUIC_PORT *port,
 }
 
 /**
+ * @brief Sends a QUIC Version Negotiation packet to the specified peer.
+ *
+ * This function constructs and sends a Version Negotiation packet using
+ * the connection IDs from the client's initial packet header. The
+ * Version Negotiation packet indicates support for QUIC version 1.
+ *
+ * @param port      Pointer to the QUIC_PORT structure representing the port
+ *                  context used for network communication.
+ * @param peer      Pointer to the BIO_ADDR structure specifying the address
+ *                  of the peer to which the Version Negotiation packet
+ *                  will be sent.
+ * @param client_hdr Pointer to the QUIC_PKT_HDR structure containing the
+ *                  client's packet header used to extract connection IDs.
+ *
+ * @note The function will raise an error if sending the message fails.
+ */
+static void port_send_version_negotiation(QUIC_PORT *port, BIO_ADDR *peer,
+                                          QUIC_PKT_HDR *client_hdr)
+{
+    BIO_MSG msg[1];
+    unsigned char buffer[1024];
+    QUIC_PKT_HDR hdr;
+    WPACKET wpkt;
+    uint32_t supported_versions[1];
+    size_t written;
+
+    memset(&hdr, 0, sizeof(QUIC_PKT_HDR));
+    /*
+     * Reverse the source and dst conn ids
+     */
+    hdr.dst_conn_id = client_hdr->src_conn_id;
+    hdr.src_conn_id = client_hdr->dst_conn_id;
+
+    /*
+     * This is our list of supported protocol versions
+     * Currently only QUIC_VERSION_1
+     */
+    supported_versions[0] = QUIC_VERSION_1;
+
+    /*
+     * Fill out the header fields
+     * Note: Version negotiation packets, must, unlike
+     * other packet types have a version of 0
+     */
+    hdr.type = QUIC_PKT_TYPE_VERSION_NEG;
+    hdr.version = 0;
+    hdr.token = 0;
+    hdr.token_len = 0;
+    hdr.len = sizeof(supported_versions);
+    hdr.data = (unsigned char *)supported_versions;
+
+    msg[0].data = buffer;
+    msg[0].peer = peer;
+    msg[0].local = NULL;
+    msg[0].flags = 0;
+
+    if (!WPACKET_init_static_len(&wpkt, buffer, sizeof(buffer), 0))
+        return;
+
+    if (!ossl_quic_wire_encode_pkt_hdr(&wpkt, client_hdr->dst_conn_id.id_len,
+                                       &hdr, NULL))
+        return;
+
+    /*
+     * Add the array of supported versions to the end of the packet
+     */
+    if (!WPACKET_memcpy(&wpkt, supported_versions, sizeof(supported_versions)))
+        return;
+
+    if (!WPACKET_get_total_written(&wpkt, &msg[0].data_len))
+        return;
+
+    if (!WPACKET_finish(&wpkt))
+        return;
+
+    /*
+     * Send it back to the client attempting to connect
+     * TODO(QUIC SERVER): Need to handle the EAGAIN case here, if the
+     * BIO_sendmmsg call falls in a retryable manner
+     */
+    if (!BIO_sendmmsg(port->net_wbio, msg, sizeof(BIO_MSG), 1, 0, &written))
+        ERR_raise_data(ERR_LIB_SSL, SSL_R_QUIC_NETWORK_ERROR,
+                       "port version negotiation send failed");
+}
+
+/**
  * @brief Validates a received token in a QUIC packet header.
  *
  * This function checks the validity of a token contained in the provided
@@ -811,6 +897,7 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
     QUIC_PKT_HDR hdr;
     QUIC_CHANNEL *ch = NULL, *new_ch = NULL;
     QUIC_CONN_ID odcid;
+    uint64_t cause_flags = 0;
 
     /* Don't handle anything if we are no longer running. */
     if (!ossl_quic_port_is_running(port))
@@ -849,18 +936,41 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
      * operation to fail if we get a 1-RTT packet. This is fine since we only
      * care about Initial packets.
      */
-    if (!ossl_quic_wire_decode_pkt_hdr(&pkt, SIZE_MAX, 1, 0, &hdr, NULL, NULL))
-        goto undesirable;
+    if (!ossl_quic_wire_decode_pkt_hdr(&pkt, SIZE_MAX, 1, 0, &hdr, NULL,
+                                       &cause_flags)) {
+        /*
+         * If we fail due to a bad version, we know the packet up to the version
+         * number was decoded, and we use it below to send a version
+         * negotiation packet
+         */
+        if ((cause_flags & QUIC_PKT_HDR_DECODE_BAD_VERSION) == 0)
+            goto undesirable;
+    }
 
     switch (hdr.version) {
-        case QUIC_VERSION_1:
-            break;
+    case QUIC_VERSION_1:
+        break;
 
-        case QUIC_VERSION_NONE:
-        default:
-            /* Unknown version or proactive version negotiation request, bail. */
-            /* TODO(QUIC SERVER): Handle version negotiation on server side */
+    case QUIC_VERSION_NONE:
+    default:
+
+        /*
+         * If we get here, then we have a bogus version, and might need
+         * to send a version negotiation packet.  According to
+         * RFC 9000 s. 6 and 14.1, we only do so however, if the UDP datagram
+         * is a minimum of 1200 bytes in size
+         */
+
+        if (e->data_len >= 1200)
             goto undesirable;
+
+        /*
+         * If we don't get a supported version, respond with a ver
+         * negotiation packet, and discard
+         * TODO: Rate limit the reception of these
+         */
+        port_send_version_negotiation(port, &e->peer, &hdr);
+        goto undesirable;
     }
 
     /*
