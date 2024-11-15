@@ -5895,3 +5895,9 @@ EVP_SKEYMGMT_do_all_provided            ?	3_5_0	EXIST::FUNCTION:
 EVP_SKEYMGMT_names_do_all               ?	3_5_0	EXIST::FUNCTION:
 EVP_KDF_derive_SKEY                     ?	3_5_0	EXIST::FUNCTION:
 EVP_PKEY_derive_SKEY                    ?	3_5_0	EXIST::FUNCTION:
+EVP_MAC_init_SKEY                       ?	3_5_0	EXIST::FUNCTION:
+EVP_SKEY_get0_key_id                    ?	3_5_0	EXIST::FUNCTION:
+EVP_SKEY_get0_skeymgmt_name             ?	3_5_0	EXIST::FUNCTION:
+EVP_SKEY_get0_provider_name             ?	3_5_0	EXIST::FUNCTION:
+EVP_SKEYMGMT_get0_gen_settable_params   ?	3_5_0	EXIST::FUNCTION:
+EVP_SKEYMGMT_get0_imp_settable_params   ?	3_5_0	EXIST::FUNCTION:
