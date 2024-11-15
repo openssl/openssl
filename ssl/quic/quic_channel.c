@@ -280,6 +280,7 @@ static int ch_init(QUIC_CHANNEL *ch)
     txp_args.now_arg                = ch;
     txp_args.get_qlog_cb            = ch_get_qlog_cb;
     txp_args.get_qlog_cb_arg        = ch;
+    txp_args.protocol_version       = QUIC_VERSION_1;
 
     for (pn_space = QUIC_PN_SPACE_INITIAL; pn_space < QUIC_PN_SPACE_NUM; ++pn_space) {
         ch->crypto_send[pn_space] = ossl_quic_sstream_new(INIT_CRYPTO_SEND_BUF_LEN);

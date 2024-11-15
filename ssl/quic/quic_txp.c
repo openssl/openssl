@@ -464,7 +464,8 @@ OSSL_QUIC_TX_PACKETISER *ossl_quic_tx_packetiser_new(const OSSL_QUIC_TX_PACKETIS
         || args->conn_txfc == NULL
         || args->conn_rxfc == NULL
         || args->max_streams_bidi_rxfc == NULL
-        || args->max_streams_uni_rxfc == NULL) {
+        || args->max_streams_uni_rxfc == NULL
+        || args->protocol_version == 0) {
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
     }
@@ -577,6 +578,13 @@ int ossl_quic_tx_packetiser_set_initial_token(OSSL_QUIC_TX_PACKETISER *txp,
     txp->initial_token_len          = token_len;
     txp->initial_token_free_cb      = free_cb;
     txp->initial_token_free_cb_arg  = free_cb_arg;
+    return 1;
+}
+
+int ossl_quic_tx_packetiser_set_protocol_version(OSSL_QUIC_TX_PACKETISER *txp,
+                                                 uint32_t protocol_version)
+{
+    txp->args.protocol_version = protocol_version;
     return 1;
 }
 
@@ -1224,7 +1232,7 @@ static int txp_determine_geometry(OSSL_QUIC_TX_PACKETISER *txp,
     phdr->partial       = 0;
     phdr->fixed         = 1;
     phdr->reserved      = 0;
-    phdr->version       = QUIC_VERSION_1;
+    phdr->version       = txp->args.protocol_version;
     phdr->dst_conn_id   = txp->args.cur_dcid;
     phdr->src_conn_id   = txp->args.cur_scid;
 
