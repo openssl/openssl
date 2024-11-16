@@ -209,7 +209,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[hpke_test]=../include ../apps/include
   DEPEND[hpke_test]=../libcrypto.a libtestutil.a
 
-  SOURCE[evp_extra_test2]=evp_extra_test2.c $INITSRC
+  SOURCE[evp_extra_test2]=evp_extra_test2.c $INITSRC tls-provider.c
   INCLUDE[evp_extra_test2]=../include ../apps/include
   DEPEND[evp_extra_test2]=../libcrypto libtestutil.a
 
