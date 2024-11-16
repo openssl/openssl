@@ -28,6 +28,12 @@
 #include "testutil.h"
 #include "internal/nelem.h"
 
+/* Defined in tls-provider.c */
+int tls_provider_init(const OSSL_CORE_HANDLE *handle,
+                      const OSSL_DISPATCH *in,
+                      const OSSL_DISPATCH **out,
+                      void **provctx);
+
 static OSSL_LIB_CTX *mainctx = NULL;
 static OSSL_PROVIDER *nullprov = NULL;
 
@@ -487,6 +493,56 @@ static int test_ec_tofrom_data_select(void)
 
     ret = TEST_ptr(key = EVP_PKEY_Q_keygen(mainctx, NULL, "EC", "P-256"))
           && TEST_true(do_pkey_tofrom_data_select(key, "EC"));
+    EVP_PKEY_free(key);
+    return ret;
+}
+
+static int test_new_keytype(void)
+{
+    int ret = 0;
+    EVP_PKEY *key = EVP_PKEY_Q_keygen(mainctx, NULL, "XOR");
+    OSSL_PROVIDER *tlsprov = NULL;
+    EVP_PKEY_CTX *ctx = NULL;
+    size_t outlen, secretlen, secretlen2;
+    unsigned char *out = NULL, *secret = NULL, *secret2 = NULL;
+
+    /* without tls-provider key should not have been created */
+    if (TEST_ptr(key))
+        goto err;
+    /* prepare loading tls-provider */
+    if (!TEST_true(OSSL_PROVIDER_add_builtin(mainctx, "tls-provider",
+                                             tls_provider_init)))
+        goto err;
+
+    /* now load tls-provider */
+    tlsprov = OSSL_PROVIDER_load(mainctx, "tls-provider");
+    if (!TEST_ptr(tlsprov))
+        goto err;
+    /* now try creating key again, should work this time */
+    if (!TEST_ptr(key = EVP_PKEY_Q_keygen(mainctx, NULL, "XOR")))
+        goto err;
+    /* now do encaps/decaps to validate all is good */
+    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new(key, NULL)))
+        goto err;
+    if (!TEST_int_eq(EVP_PKEY_encapsulate_init(ctx, NULL), 1)
+        || !TEST_int_eq(EVP_PKEY_encapsulate(ctx, NULL, &outlen, NULL, &secretlen), 1))
+        goto err;
+    out = OPENSSL_malloc(outlen);
+    secret = OPENSSL_malloc(secretlen);
+    secret2 = OPENSSL_malloc(secretlen);
+    if (out == NULL || secret == NULL || secret2 == NULL
+        || !TEST_int_eq(EVP_PKEY_encapsulate(ctx, out, &outlen, secret, &secretlen), 1)
+        || !TEST_int_eq(EVP_PKEY_decapsulate_init(ctx, NULL), 1)
+        || !TEST_int_eq(EVP_PKEY_decapsulate(ctx, secret2, &secretlen2, out, outlen), 1)
+        || secretlen != secretlen2 || memcmp(secret, secret2, secretlen))
+        goto err;
+    ret = OSSL_PROVIDER_unload(tlsprov);
+
+err:
+    OPENSSL_free(out);
+    OPENSSL_free(secret);
+    OPENSSL_free(secret2);
+    EVP_PKEY_CTX_free(ctx);
     EVP_PKEY_free(key);
     return ret;
 }
@@ -1355,6 +1411,7 @@ int setup_tests(void)
     ADD_TEST(evp_test_name_parsing);
     ADD_TEST(test_alternative_default);
     ADD_ALL_TESTS(test_d2i_AutoPrivateKey_ex, OSSL_NELEM(keydata));
+    ADD_TEST(test_new_keytype);
 #ifndef OPENSSL_NO_EC
     ADD_ALL_TESTS(test_d2i_PrivateKey_ex, 2);
     ADD_TEST(test_ec_tofrom_data_select);
