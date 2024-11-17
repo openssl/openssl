@@ -159,7 +159,7 @@ available online.
 Demos
 -----
 
-The are numerous source code demos for using various OpenSSL capabilities in the
+There are numerous source code demos for using various OpenSSL capabilities in the
 [demos subfolder](./demos).
 
 Wiki
