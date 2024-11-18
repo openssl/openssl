@@ -11,7 +11,10 @@ X509_CRL_get_ext_by_NID, X509_CRL_get_ext_by_OBJ, X509_CRL_get_ext_by_critical,
 X509_CRL_delete_ext, X509_CRL_add_ext, X509_REVOKED_get_ext_count,
 X509_REVOKED_get_ext, X509_REVOKED_get_ext_by_NID, X509_REVOKED_get_ext_by_OBJ,
 X509_REVOKED_get_ext_by_critical, X509_REVOKED_delete_ext,
-X509_REVOKED_add_ext - extension stack utility functions
+X509_REVOKED_add_ext, X509_acert_get_ext_count, X509_acert_get_ext,
+X509_acert_get_ext_by_NID, X509_acert_get_ext_by_OBJ,
+X509_acert_get_ext_by_critical, X509_acert_add_ext, X509_acert_delete_ext
+- extension stack utility functions
 
 =head1 SYNOPSIS
 
@@ -59,6 +62,16 @@ X509_REVOKED_add_ext - extension stack utility functions
  X509_EXTENSION *X509_REVOKED_delete_ext(X509_REVOKED *x, int loc);
  int X509_REVOKED_add_ext(X509_REVOKED *x, X509_EXTENSION *ex, int loc);
 
+ #include <openssl/x509_acert.h>
+
+ int X509_acert_get_ext_count(const X509_ACERT *x);
+ X509_EXTENSION *X509_acert_get_ext(const X509_ACERT *x, int loc);
+ int X509_acert_get_ext_by_NID(const X509_ACERT *x, int nid, int lastpos);
+ int X509_acert_get_ext_by_OBJ(const X509_ACERT *x, const ASN1_OBJECT *obj, int lastpos);
+ int X509_acert_get_ext_by_critical(const X509_ACERT *x, int crit, int lastpos);
+ int X509_acert_add_ext(X509_ACERT *x, X509_EXTENSION *ex, int loc);
+ X509_EXTENSION *X509_acert_delete_ext(X509_ACERT *x, int loc);
+
 =head1 DESCRIPTION
 
 X509v3_get_ext_count() retrieves the number of extensions in I<x>.
@@ -97,6 +110,12 @@ X509_get_ext_count(), X509_get_ext(), X509_get_ext_by_NID(),
 X509_get_ext_by_OBJ(), X509_get_ext_by_critical(), X509_delete_ext()
 and X509_add_ext() operate on the extensions of certificate I<x>. They are
 otherwise identical to the X509v3 functions.
+
+X509_acert_get_ext_count(), X509_acert_get_ext(),
+X509_acert_get_ext_by_NID(), X509_acert_get_ext_by_OBJ(),
+X509_acert_get_ext_by_critical(), X509_acert_add_ext(), and
+X509_acert_delete_ext() work like their non-"acert" analogs, except they operate
+on an X.509 attribute certificate instead of a public key certificate.
 
 X509_CRL_get_ext_count(), X509_CRL_get_ext(), X509_CRL_get_ext_by_NID(),
 X509_CRL_get_ext_by_OBJ(), X509_CRL_get_ext_by_critical(),
