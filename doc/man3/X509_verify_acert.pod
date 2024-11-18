@@ -1,0 +1,58 @@
+=pod
+
+=head1 NAME
+
+X509_verify_acert,
+
+=head1 SYNOPSIS
+
+ #include <openssl/x509_acert.h>
+
+ int X509_verify_acert(X509_STORE_CTX *ctx, X509_ACERT *acert);
+
+=head1 DESCRIPTION
+
+The X509_verify_acert() function attempts to discover and validate a single
+attribute certificate with respect to a public key certification path based on
+parameters in the verification context, I<ctx>. The verification context, of
+type B<X509_STORE_CTX>, can be constructed using L<X509_STORE_CTX_new(3)> and
+L<X509_STORE_CTX_init(3)>.
+
+X509_verify_acert() B<DOES NOT> verify the public key certification path in
+I<ctx>. It is assumed that the certification path in I<ctx> was already
+verified. This function B<ONLY> verifies that the attribute certificate I<acert>
+was issued by a certificate trusted in I<ctx>.
+
+A negative return value from X509_verify_acert() can occur if it is invoked
+incorrectly, such as with no certificate set in I<ctx>, or when it is called
+twice in succession without reinitialising I<ctx> for the second call.
+A negative return value can also happen due to internal resource problems
+or because an internal inconsistency has been detected.
+Applications must interpret any return value <= 0 as an error.
+
+=head1 RETURN VALUES
+
+X509_verify_acert() returns 1 if a complete chain can be built and validated,
+otherwise they return 0, and in exceptional circumstances (such as malloc
+failure and internal errors) it can also return a negative code.
+
+If a complete chain can be built and validated both functions return 1.
+If the certificate must be rejected on the basis of the data available
+or any required certificate status data is not available they return 0.
+If no definite answer possible they usually return a negative code.
+
+On error or failure additional error information can be obtained by
+examining I<ctx> using, for example, L<X509_STORE_CTX_get_error(3)>. Even if
+verification indicated success, the stored error code may be different from
+X509_V_OK, likely because a verification callback function has waived the error.
+
+=head1 COPYRIGHT
+
+Copyright 2024 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

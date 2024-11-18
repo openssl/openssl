@@ -3067,6 +3067,10 @@ DEPEND[html/man3/X509_verify.html]=man3/X509_verify.pod
 GENERATE[html/man3/X509_verify.html]=man3/X509_verify.pod
 DEPEND[man/man3/X509_verify.3]=man3/X509_verify.pod
 GENERATE[man/man3/X509_verify.3]=man3/X509_verify.pod
+DEPEND[html/man3/X509_verify_acert.html]=man3/X509_verify_acert.pod
+GENERATE[html/man3/X509_verify_acert.html]=man3/X509_verify_acert.pod
+DEPEND[man/man3/X509_verify_acert.3]=man3/X509_verify_acert.pod
+GENERATE[man/man3/X509_verify_acert.3]=man3/X509_verify_acert.pod
 DEPEND[html/man3/X509_verify_cert.html]=man3/X509_verify_cert.pod
 GENERATE[html/man3/X509_verify_cert.html]=man3/X509_verify_cert.pod
 DEPEND[man/man3/X509_verify_cert.3]=man3/X509_verify_cert.pod
@@ -3770,6 +3774,7 @@ html/man3/X509_load_http.html \
 html/man3/X509_new.html \
 html/man3/X509_sign.html \
 html/man3/X509_verify.html \
+html/man3/X509_verify_acert.html \
 html/man3/X509_verify_cert.html \
 html/man3/X509v3_get_ext_by_NID.html \
 html/man3/b2i_PVK_bio_ex.html \
@@ -4433,6 +4438,7 @@ man/man3/X509_load_http.3 \
 man/man3/X509_new.3 \
 man/man3/X509_sign.3 \
 man/man3/X509_verify.3 \
+man/man3/X509_verify_acert.3 \
 man/man3/X509_verify_cert.3 \
 man/man3/X509v3_get_ext_by_NID.3 \
 man/man3/b2i_PVK_bio_ex.3 \
