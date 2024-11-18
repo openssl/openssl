@@ -456,34 +456,30 @@ static int test_dh_paramfromdata(void)
 
 #endif
 
+/* Test that calling EVP_PKEY_Q_keygen() for a non-standard keytype works as expected */
 static int test_new_keytype(void)
 {
     int ret = 0;
-    EVP_PKEY *key = EVP_PKEY_Q_keygen(mainctx, NULL, "XOR");
+    EVP_PKEY *key = NULL;
     OSSL_PROVIDER *tlsprov = NULL;
     EVP_PKEY_CTX *ctx = NULL;
     size_t outlen, secretlen, secretlen2;
     unsigned char *out = NULL, *secret = NULL, *secret2 = NULL;
 
-    /* without tls-provider key should not have been created */
-    if (TEST_ptr(key))
+    /* without tls-provider key should not be create-able */
+    if (TEST_ptr(key = EVP_PKEY_Q_keygen(mainctx, NULL, "XOR")))
         goto err;
-    /* prepare loading tls-provider */
+    /* prepare & load tls-provider */
     if (!TEST_true(OSSL_PROVIDER_add_builtin(mainctx, "tls-provider",
-                                             tls_provider_init)))
-        goto err;
-
-    /* now load tls-provider */
-    tlsprov = OSSL_PROVIDER_load(mainctx, "tls-provider");
-    if (!TEST_ptr(tlsprov))
+                                             tls_provider_init))
+        || !TEST_ptr(tlsprov = OSSL_PROVIDER_load(mainctx, "tls-provider")))
         goto err;
     /* now try creating key again, should work this time */
     if (!TEST_ptr(key = EVP_PKEY_Q_keygen(mainctx, NULL, "XOR")))
         goto err;
     /* now do encaps/decaps to validate all is good */
-    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new(key, NULL)))
-        goto err;
-    if (!TEST_int_eq(EVP_PKEY_encapsulate_init(ctx, NULL), 1)
+    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new(key, NULL))
+        || !TEST_int_eq(EVP_PKEY_encapsulate_init(ctx, NULL), 1)
         || !TEST_int_eq(EVP_PKEY_encapsulate(ctx, NULL, &outlen, NULL, &secretlen), 1))
         goto err;
     out = OPENSSL_malloc(outlen);
@@ -493,7 +489,8 @@ static int test_new_keytype(void)
         || !TEST_int_eq(EVP_PKEY_encapsulate(ctx, out, &outlen, secret, &secretlen), 1)
         || !TEST_int_eq(EVP_PKEY_decapsulate_init(ctx, NULL), 1)
         || !TEST_int_eq(EVP_PKEY_decapsulate(ctx, secret2, &secretlen2, out, outlen), 1)
-        || secretlen != secretlen2 || memcmp(secret, secret2, secretlen))
+        || !TEST_int_eq(secretlen, secretlen2)
+        || !TEST_int_eq(memcmp(secret, secret2, secretlen), 0))
         goto err;
     ret = OSSL_PROVIDER_unload(tlsprov);
 
