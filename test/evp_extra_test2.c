@@ -489,8 +489,7 @@ static int test_new_keytype(void)
         || !TEST_int_eq(EVP_PKEY_encapsulate(ctx, out, &outlen, secret, &secretlen), 1)
         || !TEST_int_eq(EVP_PKEY_decapsulate_init(ctx, NULL), 1)
         || !TEST_int_eq(EVP_PKEY_decapsulate(ctx, secret2, &secretlen2, out, outlen), 1)
-        || !TEST_int_eq(secretlen, secretlen2)
-        || !TEST_int_eq(memcmp(secret, secret2, secretlen), 0))
+        || !TEST_mem_eq(secret, secretlen, secret2, secretlen2))
         goto err;
     ret = OSSL_PROVIDER_unload(tlsprov);
 
