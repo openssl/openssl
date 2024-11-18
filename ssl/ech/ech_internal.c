@@ -51,9 +51,9 @@ static OSSL_ECHSTORE_ENTRY *ossl_echstore_entry_dup(const OSSL_ECHSTORE_ENTRY *o
     }
     ret->loadtime = orig->loadtime;
     if (orig->keyshare != NULL) {
-        ret->keyshare = orig->keyshare;
         if (!EVP_PKEY_up_ref(orig->keyshare))
             goto err;
+        ret->keyshare = orig->keyshare;
     }
     ret->for_retry = orig->for_retry;
     if (orig->encoded != NULL) {
@@ -144,8 +144,8 @@ int ossl_ech_conn_init(SSL_CONNECTION *s, SSL_CTX *ctx,
         s->ext.ech.alpn_outer_len = ctx->ext.ech.alpn_outer_len;
     }
     /* initialise type/cid to unknown */
-    s->ext.ech.attempted_type = TLSEXT_TYPE_ech_unknown;
-    s->ext.ech.attempted_cid = TLSEXT_TYPE_ech_config_id_unset;
+    s->ext.ech.attempted_type = OSSL_ECH_type_unknown;
+    s->ext.ech.attempted_cid = OSSL_ECH_config_id_unset;
     if (s->ext.ech.es != NULL)
         s->ext.ech.attempted = 1;
     if (ctx->options & SSL_OP_ECH_GREASE)

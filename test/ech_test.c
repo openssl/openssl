@@ -1096,7 +1096,7 @@ end:
 /*
  * Test boringssl compatibility API. We don't need exhaustive
  * tests here as this is a simple enough wrapper on things
- * tests elsewhere.
+ * tested elsewhere.
  */
 static int ech_boring_compat(void)
 {

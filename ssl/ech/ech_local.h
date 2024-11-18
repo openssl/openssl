@@ -37,9 +37,9 @@
 #  define OSSL_ECH_IS_GREASE 1 /* when decryption failed or GREASE wanted */
 
 /* value for uninitialised ECH version */
-#  define TLSEXT_TYPE_ech_unknown 0xffff
+#  define OSSL_ECH_type_unknown 0xffff
 /* value for not yet set ECH config_id */
-#  define TLSEXT_TYPE_ech_config_id_unset -1
+#  define OSSL_ECH_config_id_unset -1
 
 #  define OSSL_ECH_CIPHER_LEN 4 /* ECHCipher length (2 for kdf, 2 for aead) */
 /*

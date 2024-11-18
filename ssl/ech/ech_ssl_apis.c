@@ -74,12 +74,14 @@ OSSL_ECHSTORE *SSL_get1_echstore(const SSL *ssl)
     OSSL_ECHSTORE *dup = NULL;
 
     s = SSL_CONNECTION_FROM_SSL(ssl);
-    if (s == NULL)
+    if (s == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
+    }
     if (s->ext.ech.es == NULL)
         return NULL;
     if ((dup = ossl_echstore_dup(s->ext.ech.es)) == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return NULL;
     }
     return dup;
@@ -167,10 +169,12 @@ int SSL_ech_get1_status(SSL *ssl, char **inner_sni, char **outer_sni)
     char *souter = NULL;
     SSL_CONNECTION *s = SSL_CONNECTION_FROM_SSL(ssl);
 
-    if (s == NULL)
+    if (s == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
         return SSL_ECH_STATUS_FAILED;
+    }
     if (outer_sni == NULL || inner_sni == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return SSL_ECH_STATUS_FAILED;
     }
     *outer_sni = NULL;
@@ -185,7 +189,7 @@ int SSL_ech_get1_status(SSL *ssl, char **inner_sni, char **outer_sni)
     if (s->ext.ech.backend == 1) {
         if (s->ext.hostname != NULL
             && (*inner_sni = OPENSSL_strdup(s->ext.hostname)) == NULL) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
             return SSL_ECH_STATUS_FAILED;
         }
         return SSL_ECH_STATUS_BACKEND;
@@ -215,12 +219,12 @@ int SSL_ech_get1_status(SSL *ssl, char **inner_sni, char **outer_sni)
         vr = SSL_get_verify_result(ssl);
         if (sinner != NULL
             && (*inner_sni = OPENSSL_strdup(sinner)) == NULL) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
             return SSL_ECH_STATUS_FAILED;
         }
         if (souter != NULL
             && (*outer_sni = OPENSSL_strdup(souter)) == NULL) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
             return SSL_ECH_STATUS_FAILED;
         }
         if (s->ext.ech.success == 1) {
@@ -233,7 +237,7 @@ int SSL_ech_get1_status(SSL *ssl, char **inner_sni, char **outer_sni)
                 return SSL_ECH_STATUS_FAILED_ECH;
             else if (vr != X509_V_OK && s->ext.ech.returned != NULL)
                 return SSL_ECH_STATUS_FAILED_ECH_BAD_NAME;
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
             return SSL_ECH_STATUS_FAILED;
         }
     }
@@ -308,11 +312,11 @@ int SSL_ech_get1_retry_config(SSL *ssl, unsigned char **ec, size_t *eclen)
         || BIO_write(in, s->ext.ech.returned, s->ext.ech.returned_len) <= 0
         || (ve = OSSL_ECHSTORE_new(s->ext.ech.es->libctx,
                                    s->ext.ech.es->propq)) == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         goto err;
     }
     if (OSSL_ECHSTORE_read_echconfiglist(ve, in) != 1) {
-        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         goto err;
     }
     /* all good, copy and return */
@@ -394,22 +398,24 @@ int SSL_set1_ech_config_list(SSL *ssl, const uint8_t *ecl, size_t ecl_len)
     BIO *es_in = NULL;
 
     s = SSL_CONNECTION_FROM_SSL(ssl);
-    if (s == NULL)
+    if (s == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
         goto err;
+    }
     if (ecl == NULL) {
         OSSL_ECHSTORE_free(s->ext.ech.es);
         s->ext.ech.es = NULL;
         return 1;
     }
     if (ecl_len == 0) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_PASSED_INVALID_ARGUMENT);
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         goto err;
     }
     if ((es_in = BIO_new_mem_buf(ecl, ecl_len)) == NULL
         || (es = OSSL_ECHSTORE_new(NULL, NULL)) == NULL
         || OSSL_ECHSTORE_read_echconfiglist(es, es_in) != 1
         || SSL_set1_echstore(ssl, es) != 1) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         goto err;
     }
     rv = 1;
