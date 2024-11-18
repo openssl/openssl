@@ -79,7 +79,6 @@ Derive=BOB_cf_c2pnb163v1
 PeerKey=MALICE_cf_c2pnb163v1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
 Availablein = default
@@ -87,7 +86,6 @@ Derive=ALICE_cf_c2pnb163v1
 PeerKey=MALICE_cf_c2pnb163v1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Reason=point at infinity
 
 Title=c2pnb163v2 curve tests
 
@@ -157,7 +155,6 @@ Derive=BOB_cf_c2pnb163v2
 PeerKey=MALICE_cf_c2pnb163v2_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
 Availablein = default
@@ -165,7 +162,6 @@ Derive=ALICE_cf_c2pnb163v2
 PeerKey=MALICE_cf_c2pnb163v2_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Reason=point at infinity
 
 Title=c2pnb163v3 curve tests
 
@@ -235,7 +231,6 @@ Derive=BOB_cf_c2pnb163v3
 PeerKey=MALICE_cf_c2pnb163v3_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
 Availablein = default
@@ -243,7 +238,6 @@ Derive=ALICE_cf_c2pnb163v3
 PeerKey=MALICE_cf_c2pnb163v3_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Reason=point at infinity
 
 Title=c2pnb176v1 curve tests
 
@@ -313,7 +307,6 @@ Derive=BOB_cf_c2pnb176v1
 PeerKey=MALICE_cf_c2pnb176v1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
 Availablein = default
@@ -321,7 +314,6 @@ Derive=ALICE_cf_c2pnb176v1
 PeerKey=MALICE_cf_c2pnb176v1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Reason=point at infinity
 
 Title=c2pnb208w1 curve tests
 
@@ -4000,14 +3992,12 @@ Derive=BOB_cf_sect233k1
 PeerKey=MALICE_cf_sect233k1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
 Derive=ALICE_cf_sect233k1
 PeerKey=MALICE_cf_sect233k1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Reason=point at infinity
 
 Title=sect233r1 curve tests
 
@@ -4074,14 +4064,12 @@ Derive=BOB_cf_sect233r1
 PeerKey=MALICE_cf_sect233r1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
 Derive=ALICE_cf_sect233r1
 PeerKey=MALICE_cf_sect233r1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Reason=point at infinity
 
 Title=sect283k1 curve tests
 
@@ -4148,14 +4136,12 @@ Derive=BOB_cf_sect283k1
 PeerKey=MALICE_cf_sect283k1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
 Derive=ALICE_cf_sect283k1
 PeerKey=MALICE_cf_sect283k1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Reason=point at infinity
 
 Title=sect283r1 curve tests
 
@@ -4222,14 +4208,12 @@ Derive=BOB_cf_sect283r1
 PeerKey=MALICE_cf_sect283r1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
 Derive=ALICE_cf_sect283r1
 PeerKey=MALICE_cf_sect283r1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Reason=point at infinity
 
 Title=sect409k1 curve tests
 
@@ -4299,14 +4283,12 @@ Derive=BOB_cf_sect409k1
 PeerKey=MALICE_cf_sect409k1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
 Derive=ALICE_cf_sect409k1
 PeerKey=MALICE_cf_sect409k1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Reason=point at infinity
 
 Title=sect409r1 curve tests
 
@@ -4376,14 +4358,12 @@ Derive=BOB_cf_sect409r1
 PeerKey=MALICE_cf_sect409r1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
 Derive=ALICE_cf_sect409r1
 PeerKey=MALICE_cf_sect409r1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Reason=point at infinity
 
 Title=sect571k1 curve tests
 
@@ -4453,14 +4433,12 @@ Derive=BOB_cf_sect571k1
 PeerKey=MALICE_cf_sect571k1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
 Derive=ALICE_cf_sect571k1
 PeerKey=MALICE_cf_sect571k1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Reason=point at infinity
 
 Title=sect571r1 curve tests
 
@@ -4526,6 +4504,8 @@ aNQcWRNUKesEHXqhJVkC5jYsSACodKsLYFNrWEYM0gwG8DQONZSn93G+38EM45tkaZsIRDt2HEM=
 -----END PUBLIC KEY-----
 
 # ECC CDH Bob with Malice peer
+Availablein = default
+FIPSversion = <3.5.0
 Derive=BOB_cf_sect571r1
 PeerKey=MALICE_cf_sect571r1_PUB
 Ctrl=ecdh_cofactor_mode:1
@@ -4533,11 +4513,31 @@ Result=DERIVE_ERROR
 Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
+Availablein = default
+FIPSversion = <3.5.0
 Derive=ALICE_cf_sect571r1
 PeerKey=MALICE_cf_sect571r1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
 Reason=point at infinity
+
+# ECC CDH Bob with Malice peer
+Availablein = fips
+FIPSversion = >=3.5.0
+Derive=BOB_cf_sect571r1
+PeerKey=MALICE_cf_sect571r1_PUB
+Ctrl=ecdh_cofactor_mode:1
+Result=DERIVE_ERROR
+Reason=wrong order
+
+# ECC CDH Alice with Malice peer
+Availablein = fips
+FIPSversion = >=3.5.0
+Derive=ALICE_cf_sect571r1
+PeerKey=MALICE_cf_sect571r1_PUB
+Ctrl=ecdh_cofactor_mode:1
+Result=DERIVE_ERROR
+Reason=wrong order
 
 Title = Test EC keygen
 
