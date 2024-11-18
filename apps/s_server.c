@@ -2437,7 +2437,6 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
     char *buf = NULL;
     fd_set readfds;
     int ret = 1, width;
-    int k;
     unsigned long l;
     SSL *con = NULL;
     BIO *sbio;
@@ -2769,6 +2768,7 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
 #endif
             l = 0;
             for (;;) {
+                int k;
                 /* should do a select for the write */
 #ifdef RENEG
                 static count = 0;

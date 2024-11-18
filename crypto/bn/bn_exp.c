@@ -270,7 +270,7 @@ int BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
          * set bit before the end of the window
          */
         wvalue = 1;
-        wend = 0;
+        wend = 0;               /* The bottom bit of the window */
         for (i = 1; i < window; i++) {
             if (wstart - i < 0)
                 break;
@@ -393,7 +393,6 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
                                  * buffer. */
     wstart = bits - 1;          /* The top bit of the window */
 
-#if 1                           /* by Shay Gueron's suggestion */
     j = m->top;                 /* borrow j */
     if (m->d[j - 1] & (((BN_ULONG)1) << (BN_BITS2 - 1))) {
         if (bn_wexpand(r, j) == NULL)
@@ -405,7 +404,6 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
         r->top = j;
         r->flags |= BN_FLG_FIXED_TOP;
     } else
-#endif
     if (!bn_to_mont_fixed_top(r, BN_value_one(), mont, ctx))
         goto err;
     for (;;) {
@@ -427,7 +425,7 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
          * set bit before the end of the window
          */
         wvalue = 1;
-        wend = 0;
+        wend = 0;               /* The bottom bit of the window */
         for (i = 1; i < window; i++) {
             if (wstart - i < 0)
                 break;
