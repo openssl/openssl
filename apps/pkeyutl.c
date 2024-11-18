@@ -326,7 +326,6 @@ int pkeyutl_main(int argc, char **argv)
             if (is_EdDSA(pkey) && digestname != NULL) {
                 BIO_printf(bio_err,
                            "%s: -digest (prehash) is not supported with EdDSA\n", prog);
-                EVP_PKEY_free(pkey);
                 goto end;
             }
             rawin = 1; /* implied for Ed25519(ph) and Ed448(ph) and maybe others in the future */
@@ -334,20 +333,17 @@ int pkeyutl_main(int argc, char **argv)
     } else if (digestname != NULL || rawin) {
         BIO_printf(bio_err,
                    "%s: -digest and -rawin can only be used with -sign or -verify\n", prog);
-        EVP_PKEY_free(pkey);
         goto opthelp;
     }
 
     if (rawin && rev) {
         BIO_printf(bio_err, "%s: -rev cannot be used with raw input\n", prog);
-        EVP_PKEY_free(pkey);
         goto opthelp;
     }
 
     if (rawin) {
         if ((mctx = EVP_MD_CTX_new()) == NULL) {
             BIO_printf(bio_err, "Error: out of memory\n");
-            EVP_PKEY_free(pkey);
             goto end;
         }
     }
@@ -573,6 +569,7 @@ int pkeyutl_main(int argc, char **argv)
         ERR_print_errors(bio_err);
     EVP_MD_CTX_free(mctx);
     EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_free(pkey);
     EVP_MD_free(md);
     release_engine(e);
     BIO_free(in);
@@ -655,7 +652,7 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
             if (kdfnid == NID_undef) {
                 BIO_printf(bio_err, "The given KDF \"%s\" is unknown.\n",
                            kdfalg);
-                goto end;
+                return NULL;
             }
         }
         if (impl != NULL)
@@ -664,19 +661,17 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
             ctx = EVP_PKEY_CTX_new_from_name(libctx, kdfalg, propq);
     } else {
         if (pkey == NULL)
-            goto end;
+            return NULL;
 
         *pkeysize = EVP_PKEY_get_size(pkey);
         if (impl != NULL)
             ctx = EVP_PKEY_CTX_new(pkey, impl);
         else
             ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, propq);
-        EVP_PKEY_free(pkey);
-        pkey = NULL;
     }
 
     if (ctx == NULL)
-        goto end;
+        return NULL;
 
     if (rawin) {
         EVP_MD_CTX_set_pkey_ctx(mctx, ctx);
@@ -739,10 +734,6 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
     }
 
     return ctx;
-
- end:
-    EVP_PKEY_free(pkey);
-    return NULL;
 }
 
 static int setup_peer(EVP_PKEY_CTX *ctx, int peerform, const char *file,
