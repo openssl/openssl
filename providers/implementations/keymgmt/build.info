@@ -8,6 +8,7 @@ $ECX_GOAL=../../libdefault.a ../../libfips.a
 $KDF_GOAL=../../libdefault.a ../../libfips.a
 $MAC_GOAL=../../libdefault.a ../../libfips.a
 $RSA_GOAL=../../libdefault.a ../../libfips.a
+$HYBRID_GOAL=../../libdefault.a
 $TEMPLATE_GOAL=../../libtemplate.a
 $ML_KEM_GOAL=../../libdefault.a
 
@@ -43,6 +44,12 @@ SOURCE[$RSA_GOAL]=rsa_kmgmt.c
 SOURCE[$KDF_GOAL]=kdf_legacy_kmgmt.c
 
 SOURCE[$MAC_GOAL]=mac_legacy_kmgmt.c
+
+IF[{- !$disabled{ec} -}]
+  IF[{- !$disabled{ecx} -}]
+    SOURCE[$HYBRID_GOAL]=hybrid_kmgmt.c
+  ENDIF
+ENDIF
 
 SOURCE[$TEMPLATE_GOAL]=template_kmgmt.c
 
