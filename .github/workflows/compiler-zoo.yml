@@ -41,6 +41,9 @@ jobs:
             distro: ubuntu-22.04,
             gcc-ppa-name: ubuntu-toolchain-r/test
           }, {
+            cc: gcc-14,
+            distro: ubuntu-24.04,
+          },{
             cc: clang-6.0,
             distro: ubuntu-20.04
           }, {
@@ -77,6 +80,10 @@ jobs:
             llvm-ppa-name: jammy
           }, {
             cc: clang-17,
+            distro: ubuntu-22.04,
+            llvm-ppa-name: jammy
+          }, {
+            cc: clang-18,
             distro: ubuntu-22.04,
             llvm-ppa-name: jammy
           }
