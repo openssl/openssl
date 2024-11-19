@@ -20,6 +20,7 @@
 #endif
 #include "prov/providercommon.h"
 #include "prov/provider_util.h"
+#include "internal/params.h"
 
 void ossl_prov_cipher_reset(PROV_CIPHER *pc)
 {
