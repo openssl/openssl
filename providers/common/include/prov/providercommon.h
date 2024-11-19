@@ -9,6 +9,7 @@
 
 #include <openssl/provider.h>
 #include <openssl/core_dispatch.h>
+#include "internal/params.h"
 
 const OSSL_CORE_HANDLE *FIPS_get_core_handle(OSSL_LIB_CTX *ctx);
 
@@ -22,8 +23,3 @@ void ossl_set_error_state(const char *type);
 
 /* Return true if the module is in a usable condition */
 int ossl_prov_is_running(void);
-
-static ossl_inline int ossl_param_is_empty(const OSSL_PARAM params[])
-{
-    return params == NULL || params->key == NULL;
-}
