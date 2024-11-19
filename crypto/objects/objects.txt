@@ -1122,6 +1122,20 @@ sigAlgs 14	: id-rsassa-pkcs1-v1_5-with-sha3-256	: RSA-SHA3-256
 sigAlgs 15	: id-rsassa-pkcs1-v1_5-with-sha3-384	: RSA-SHA3-384
 sigAlgs 16	: id-rsassa-pkcs1-v1_5-with-sha3-512	: RSA-SHA3-512
 
+#Pure SLH-DSA
+sigAlgs 20  : id-slh-dsa-sha2-128s : SLH-DSA-SHA2-128s
+sigAlgs 21  : id-slh-dsa-sha2-128f : SLH-DSA-SHA2-128f
+sigAlgs 22  : id-slh-dsa-sha2-192s : SLH-DSA-SHA2-192s
+sigAlgs 23  : id-slh-dsa-sha2-192f : SLH-DSA-SHA2-192f
+sigAlgs 24  : id-slh-dsa-sha2-256s : SLH-DSA-SHA2-256s
+sigAlgs 25  : id-slh-dsa-sha2-256f : SLH-DSA-SHA2-256f
+sigAlgs 26  : id-slh-dsa-shake-128s : SLH-DSA-SHAKE-128s
+sigAlgs 27  : id-slh-dsa-shake-128f : SLH-DSA-SHAKE-128f
+sigAlgs 28  : id-slh-dsa-shake-192s : SLH-DSA-SHAKE-192s
+sigAlgs 29  : id-slh-dsa-shake-192f : SLH-DSA-SHAKE-192f
+sigAlgs 30  : id-slh-dsa-shake-256s : SLH-DSA-SHAKE-256s
+sigAlgs 31  : id-slh-dsa-shake-256f : SLH-DSA-SHAKE-256f
+
 # Hold instruction CRL entry extension
 !Cname hold-instruction-code
 id-ce 23		: holdInstructionCode	: Hold Instruction Code

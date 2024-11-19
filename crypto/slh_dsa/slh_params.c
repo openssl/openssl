@@ -44,6 +44,8 @@ const SLH_DSA_PARAMS *ossl_slh_dsa_params_get(const char *alg)
 {
     const SLH_DSA_PARAMS *p;
 
+    if (alg == NULL)
+        return NULL;
     for (p = slh_dsa_params; p->alg != NULL; ++p) {
         if (strcmp(p->alg, alg) == 0)
             return p;
