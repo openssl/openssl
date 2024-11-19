@@ -85,8 +85,8 @@ typedef struct ossl_mlkem768_private_key {
  */
 #  define OSSL_MLKEM768_PUBLIC_KEY_BYTES 1184
 
-/* MLKEM_SEED_BYTES is the number of bytes in an ML-KEM seed. */
-#  define MLKEM_SEED_BYTES 64
+/* OSSL_MLKEM_SEED_BYTES is the number of bytes in an ML-KEM seed. */
+#  define OSSL_MLKEM_SEED_BYTES 64
 
 /*
  * ossl_mlkem768_generate_key generates a random public/private key pair, writes
@@ -94,7 +94,7 @@ typedef struct ossl_mlkem768_private_key {
  * to the private key. If |optional_out_seed| is not NULL then the seed used to
  * generate the private key is written to it as well. out_encoded_public_key
  * must be allocated to store ossl_mlkem768_PUBLIC_KEY_BYTES optional_out_seed
- * if not NULL must be allocated to store MLKEM_SEED_BYTES
+ * if not NULL must be allocated to store OSSL_MLKEM_SEED_BYTES
  */
 int ossl_mlkem768_generate_key(uint8_t *out_encoded_public_key,
                                uint8_t *optional_out_seed,
@@ -196,10 +196,10 @@ int ossl_mlkem768_parse_public_key(struct ossl_mlkem768_public_key *out_public_k
                                    ossl_mlkem_ctx *mlkem_ctx);
 
 /*
- * MLKEM768_PRIVATE_KEY_BYTES is the length of the data produced by
+ * OSSL_MLKEM768_PRIVATE_KEY_BYTES is the length of the data produced by
  * |MLKEM768_marshal_private_key|.
  */
-#  define ossl_mlkem768_PRIVATE_KEY_BYTES 2400
+#  define OSSL_MLKEM768_PRIVATE_KEY_BYTES 2400
 
 /*
  * ossl_mlkem768_marshal_public_key serializes |private_key| to |out| in the

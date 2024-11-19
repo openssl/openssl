@@ -4330,6 +4330,7 @@ static int keygen_test_run(EVP_TEST *t)
                             keygen->encoded_pub_key_len))
             goto err;
         rv = 1;
+        EVP_PKEY_free(pkey);
     }
 
     t->err = NULL;

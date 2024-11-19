@@ -214,7 +214,7 @@ static int key_to_params(MLKEM768_KEY *key, OSSL_PARAM_BLD *tmpl,
         && !ossl_param_build_set_octet_string(tmpl, params,
                                               OSSL_PKEY_PARAM_PRIV_KEY,
                                               key->encoded_privkey,
-                                              ossl_mlkem768_PRIVATE_KEY_BYTES))
+                                              OSSL_MLKEM768_PRIVATE_KEY_BYTES))
         return 0;
 
     return 1;
@@ -299,12 +299,12 @@ static int ossl_mlkem_key_fromdata(MLKEM768_KEY *key,
     if (param_priv_key != NULL) {
         if (!OSSL_PARAM_get_octet_string(param_priv_key,
                                          (void **)&key->encoded_privkey,
-                                         ossl_mlkem768_PRIVATE_KEY_BYTES,
+                                         OSSL_MLKEM768_PRIVATE_KEY_BYTES,
                                          &privkeylen))
             return 0;
-        if (privkeylen != ossl_mlkem768_PRIVATE_KEY_BYTES) {
+        if (privkeylen != OSSL_MLKEM768_PRIVATE_KEY_BYTES) {
             debug_print("sec key len mismatch in import: %ld vs %d\n",
-                        privkeylen, ossl_mlkem768_PRIVATE_KEY_BYTES);
+                        privkeylen, OSSL_MLKEM768_PRIVATE_KEY_BYTES);
             return 0;
         }
         if (!ossl_mlkem768_parse_private_key(&key->privkey, key->encoded_privkey,
@@ -380,10 +380,10 @@ static int mlkem_get_params(void *key, OSSL_PARAM params[])
     }
     if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_PRIV_KEY)) != NULL
         && mkey->encoded_privkey != NULL) {
-        if (!OSSL_PARAM_set_octet_string(p, mkey->encoded_privkey, ossl_mlkem768_PRIVATE_KEY_BYTES))
+        if (!OSSL_PARAM_set_octet_string(p, mkey->encoded_privkey, OSSL_MLKEM768_PRIVATE_KEY_BYTES))
             return 0;
-        debug_print("MLKEMKM got encoded private key of len %d\n", ossl_mlkem768_PRIVATE_KEY_BYTES);
-        print_hex(mkey->encoded_privkey, ossl_mlkem768_PRIVATE_KEY_BYTES, "enc SK");
+        debug_print("MLKEMKM got encoded private key of len %d\n", OSSL_MLKEM768_PRIVATE_KEY_BYTES);
+        print_hex(mkey->encoded_privkey, OSSL_MLKEM768_PRIVATE_KEY_BYTES, "enc SK");
     }
 
     debug_print("MLKEMKM get params OK\n");
@@ -431,9 +431,9 @@ static int mlkem_set_params(void *key, const OSSL_PARAM params[])
     }
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PRIV_KEY)) != NULL) {
-        if (p->data_size != ossl_mlkem768_PRIVATE_KEY_BYTES
+        if (p->data_size != OSSL_MLKEM768_PRIVATE_KEY_BYTES
             || !OSSL_PARAM_get_octet_string(p, (void **)&mkey->encoded_privkey,
-                                            ossl_mlkem768_PRIVATE_KEY_BYTES,
+                                            OSSL_MLKEM768_PRIVATE_KEY_BYTES,
                                             &len_stored))
             return 0;
         ossl_mlkem768_parse_private_key(&mkey->privkey, mkey->encoded_privkey,
@@ -491,8 +491,8 @@ static int mlkem_gen_set_params(void *genctx, const OSSL_PARAM params[])
         if (gctx->seed != NULL)
             OPENSSL_free(gctx->seed);
         if (p->data_type != OSSL_PARAM_OCTET_STRING
-            || p->data_size != MLKEM_SEED_BYTES
-            || (gctx->seed = OPENSSL_memdup(p->data, MLKEM_SEED_BYTES)) == NULL)
+            || p->data_size != OSSL_MLKEM_SEED_BYTES
+            || (gctx->seed = OPENSSL_memdup(p->data, OSSL_MLKEM_SEED_BYTES)) == NULL)
             return 0;
     }
 
@@ -504,7 +504,7 @@ static const OSSL_PARAM *mlkem_gen_settable_params(ossl_unused void *genctx,
                                                    ossl_unused void *provctx)
 {
     static OSSL_PARAM settable[] = {
-        OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_EC_SEED, NULL, 0),
+        OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_MLKEM_SEED, NULL, 0),
         OSSL_PARAM_END
     };
     return settable;
@@ -539,7 +539,7 @@ static void *mlkem_gen(void *vctx, OSSL_CALLBACK *osslcb, void *cbarg)
     }
 
     if (mkey->encoded_privkey == NULL) {
-        mkey->encoded_privkey = OPENSSL_malloc(ossl_mlkem768_PRIVATE_KEY_BYTES);
+        mkey->encoded_privkey = OPENSSL_malloc(OSSL_MLKEM768_PRIVATE_KEY_BYTES);
         if (mkey->encoded_privkey == NULL)
             goto err;
     }
@@ -547,7 +547,7 @@ static void *mlkem_gen(void *vctx, OSSL_CALLBACK *osslcb, void *cbarg)
     if (gctx->seed != NULL) {
         debug_print("MLKEMKM generate keys from seed");
         if (!ossl_mlkem768_private_key_from_seed(&mkey->privkey, gctx->seed,
-                                                 MLKEM_SEED_BYTES,
+                                                 OSSL_MLKEM_SEED_BYTES,
                                                  mkey->mlkem_ctx)
             || !ossl_mlkem768_marshal_private_key(mkey->encoded_privkey,
                                                   &mkey->privkey)
@@ -610,7 +610,7 @@ static void *mlkem_dup(const void *vsrckey, int selection)
         memcpy((void *)&dstkey->privkey, (void *)&srckey->privkey,
                sizeof(srckey->privkey));
         if ((dstkey->encoded_privkey = OPENSSL_memdup(srckey->encoded_privkey,
-                                                      ossl_mlkem768_PRIVATE_KEY_BYTES)) == NULL)
+                                                      OSSL_MLKEM768_PRIVATE_KEY_BYTES)) == NULL)
             return NULL;
     }
 

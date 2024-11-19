@@ -940,7 +940,7 @@ int ossl_mlkem768_generate_key(uint8_t *out_encoded_public_key,
                                ossl_mlkem768_private_key *out_private_key,
                                ossl_mlkem_ctx *mlkem_ctx)
 {
-    uint8_t seed[MLKEM_SEED_BYTES];
+    uint8_t seed[OSSL_MLKEM_SEED_BYTES];
 
     if (mlkem_ctx == NULL)
         return 0;
@@ -962,7 +962,7 @@ int ossl_mlkem768_private_key_from_seed(ossl_mlkem768_private_key *out_private_k
 {
     uint8_t public_key_bytes[OSSL_MLKEM768_PUBLIC_KEY_BYTES];
 
-    if (seed_len != MLKEM_SEED_BYTES)
+    if (seed_len != OSSL_MLKEM_SEED_BYTES)
         return 0;
     ossl_mlkem768_generate_key_external_seed(public_key_bytes, out_private_key,
                                              seed, mlkem_ctx);
