@@ -3,6 +3,7 @@
 
 $RSA_KEM_GOAL=../../libdefault.a ../../libfips.a
 $EC_KEM_GOAL=../../libdefault.a
+$HYBRID_GOAL=../../libdefault.a
 $TEMPLATE_KEM_GOAL=../../libtemplate.a
 $ML_KEM_GOAL=../../libdefault.a
 
@@ -12,6 +13,12 @@ IF[{- !$disabled{ec} -}]
   SOURCE[$EC_KEM_GOAL]=kem_util.c ec_kem.c
   IF[{- !$disabled{ecx} -}]
     SOURCE[$EC_KEM_GOAL]=ecx_kem.c
+  ENDIF
+ENDIF
+
+IF[{- !$disabled{ec} -}]
+  IF[{- !$disabled{ecx} -}]
+    SOURCE[$HYBRID_GOAL]=hybrid_kem.c
   ENDIF
 ENDIF
 
