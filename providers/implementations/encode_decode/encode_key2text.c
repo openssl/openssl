@@ -24,6 +24,7 @@
 #include "crypto/ec.h"           /* ossl_ec_key_get_libctx */
 #include "crypto/ecx.h"          /* ECX_KEY, etc... */
 #include "crypto/rsa.h"          /* RSA_PSS_PARAMS_30, etc... */
+#include "crypto/slh_dsa.h"
 #include "prov/bio.h"
 #include "prov/implementations.h"
 #include "internal/encoder.h"
@@ -433,6 +434,46 @@ static int ecx_to_text(BIO *out, const void *key, int selection)
 
 /* ---------------------------------------------------------------------- */
 
+#ifndef OPENSSL_NO_SLH_DSA
+static int slh_dsa_to_text(BIO *out, const void *key, int selection)
+{
+    const char *name;
+
+    if (out == NULL || key == NULL) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    if (ossl_slh_dsa_key_get_pub(key) == NULL) {
+        /* Regardless of the |selection|, there must be a public key */
+        ERR_raise(ERR_LIB_PROV, PROV_R_NOT_A_PUBLIC_KEY);
+        return 0;
+    }
+
+    name = ossl_slh_dsa_key_get_name(key);
+    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
+        if (ossl_slh_dsa_key_get_priv(key) == NULL) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_NOT_A_PRIVATE_KEY);
+            return 0;
+        }
+        if (BIO_printf(out, "%s Private-Key:\n", name) <= 0)
+            return 0;
+        if (!print_labeled_buf(out, "priv:", ossl_slh_dsa_key_get_priv(key),
+                               ossl_slh_dsa_key_get_priv_len(key)))
+            return 0;
+    } else if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
+        if (BIO_printf(out, "%s Public-Key:\n", name) <= 0)
+            return 0;
+    }
+
+    if (!print_labeled_buf(out, "pub:", ossl_slh_dsa_key_get_pub(key),
+                           ossl_slh_dsa_key_get_pub_len(key)))
+        return 0;
+
+    return 1;
+}
+
+#endif /* OPENSSL_NO_SLH_DSA */
+
 static int rsa_to_text(BIO *out, const void *key, int selection)
 {
     const RSA *rsa = key;
@@ -681,3 +722,17 @@ MAKE_TEXT_ENCODER(x448, ecx);
 #endif
 MAKE_TEXT_ENCODER(rsa, rsa);
 MAKE_TEXT_ENCODER(rsapss, rsa);
+#ifndef OPENSSL_NO_SLH_DSA
+MAKE_TEXT_ENCODER(slh_dsa_sha2_128s, slh_dsa);
+MAKE_TEXT_ENCODER(slh_dsa_sha2_128f, slh_dsa);
+MAKE_TEXT_ENCODER(slh_dsa_sha2_192s, slh_dsa);
+MAKE_TEXT_ENCODER(slh_dsa_sha2_192f, slh_dsa);
+MAKE_TEXT_ENCODER(slh_dsa_sha2_256s, slh_dsa);
+MAKE_TEXT_ENCODER(slh_dsa_sha2_256f, slh_dsa);
+MAKE_TEXT_ENCODER(slh_dsa_shake_128s, slh_dsa);
+MAKE_TEXT_ENCODER(slh_dsa_shake_128f, slh_dsa);
+MAKE_TEXT_ENCODER(slh_dsa_shake_192s, slh_dsa);
+MAKE_TEXT_ENCODER(slh_dsa_shake_192f, slh_dsa);
+MAKE_TEXT_ENCODER(slh_dsa_shake_256s, slh_dsa);
+MAKE_TEXT_ENCODER(slh_dsa_shake_256f, slh_dsa);
+#endif
