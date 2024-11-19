@@ -18,7 +18,7 @@ ENDIF
 
 IF[{- !$disabled{ec} -}]
   IF[{- !$disabled{ecx} -}]
-    SOURCE[$HYBRID_GOAL]=hybrid_kem.c
+    SOURCE[$HYBRID_GOAL]=hybrid_kem.c 25519_448_kem.c
   ENDIF
 ENDIF
 
