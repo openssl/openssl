@@ -47,7 +47,7 @@ SOURCE[$MAC_GOAL]=mac_legacy_kmgmt.c
 
 IF[{- !$disabled{ec} -}]
   IF[{- !$disabled{ecx} -}]
-    SOURCE[$HYBRID_GOAL]=hybrid_kmgmt.c
+    SOURCE[$HYBRID_GOAL]=hybrid_kmgmt.c 25519_448_kmgmt.c
   ENDIF
 ENDIF
 
