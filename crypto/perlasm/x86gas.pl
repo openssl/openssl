@@ -167,10 +167,14 @@ sub ::file_end
 	}
     }
     if (grep {/\b${nmdecor}OPENSSL_ia32cap_P\b/i} @out) {
-	my $tmp=".comm\t${nmdecor}OPENSSL_ia32cap_P,16";
-	if ($::macosx)	{ push (@out,"$tmp,2\n"); }
-	elsif ($::elf)	{ push (@out,"$tmp,4\n"); }
-	else		{ push (@out,"$tmp\n"); }
+        if (grep {/\.hidden.*\b${nmdecor}OPENSSL_ia32cap_P\b/i} @out)
+        {   my $tmp=".comm\t${nmdecor}OPENSSL_ia32cap_P,16";
+            if ($::macosx)      { push (@out,"$tmp,2\n"); }
+            elsif ($::elf)      { push (@out,"$tmp,4\n"); }
+            else                { push (@out,"$tmp\n"); }
+        }
+        else
+        {   push (@out,".extern\t${nmdecor}OPENSSL_ia32cap_P\n"); }
     }
     push(@out,$initseg) if ($initseg);
     if ($::elf) {
