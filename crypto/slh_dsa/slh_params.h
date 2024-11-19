@@ -11,7 +11,7 @@
 
 /*
  * Refer to FIPS 205 Section 11 parameter sets.
- * lgw has been omitted since it is 4 for all algorithms i.e log(16)
+ * lgw has been omitted since it is 4 for all algorithms i.e. log(16)
  */
 typedef struct slh_dsa_params_st {
     const char *alg;

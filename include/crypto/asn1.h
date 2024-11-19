@@ -103,6 +103,19 @@ extern const EVP_PKEY_ASN1_METHOD ossl_sm2_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD ossl_rsa_asn1_meths[2];
 extern const EVP_PKEY_ASN1_METHOD ossl_rsa_pss_asn1_meth;
 
+extern const EVP_PKEY_ASN1_METHOD ossl_slh_dsa_sha2_128s_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD ossl_slh_dsa_sha2_128f_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD ossl_slh_dsa_sha2_192s_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD ossl_slh_dsa_sha2_192f_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD ossl_slh_dsa_sha2_256s_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD ossl_slh_dsa_sha2_256f_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD ossl_slh_dsa_shake_128s_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD ossl_slh_dsa_shake_128f_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD ossl_slh_dsa_shake_192s_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD ossl_slh_dsa_shake_192f_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD ossl_slh_dsa_shake_256s_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD ossl_slh_dsa_shake_256f_asn1_meth;
+
 /*
  * These are used internally in the ASN1_OBJECT to keep track of whether the
  * names and data need to be free()ed

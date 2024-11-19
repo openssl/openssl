@@ -22,7 +22,7 @@ static int slh_dsa_compute_pk_root(SLH_DSA_CTX *ctx, SLH_DSA_KEY *out);
  * @brief Create a new SLH_DSA_KEY object
  *
  * @param libctx A OSSL_LIB_CTX object used for fetching algorithms.
- * @param alg The algrithm name associated with the key type
+ * @param alg The algorithm name associated with the key type
  * @returns The new SLH_DSA_KEY object on success, or NULL on malloc failure
  */
 SLH_DSA_KEY *ossl_slh_dsa_key_new(OSSL_LIB_CTX *libctx, const char *alg)
@@ -61,7 +61,7 @@ void ossl_slh_dsa_key_free(SLH_DSA_KEY *key)
         return;
     REF_ASSERT_ISNT(i < 0);
 
-    OPENSSL_cleanse(&key->priv, sizeof(key->priv));
+    OPENSSL_cleanse(&key->priv, sizeof(key->priv) >> 1);
     OPENSSL_free(key->propq);
     CRYPTO_FREE_REF(&key->references);
     OPENSSL_free(key);
@@ -86,7 +86,7 @@ int ossl_slh_dsa_key_up_ref(SLH_DSA_KEY *key)
 /**
  * @brief Are 2 keys equal?
  *
- * To be equal the keys must have the same key data.
+ * To be equal the keys must have the same key data and algorithm name.
  *
  * @param key1 A SLH_DSA_KEY object
  * @param key2 A SLH_DSA_KEY object
@@ -99,14 +99,32 @@ int ossl_slh_dsa_key_equal(const SLH_DSA_KEY *key1, const SLH_DSA_KEY *key2,
     int ok = 1;
 
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
-        if (key1->key_len != key2->key_len)
+        /* The parameter sets must match - i.e. The same algorithm name */
+        if (key1->params != key2->params)
             return 0;
-        ok = (memcmp(key1->pub, key2->pub, key1->key_len) == 0);
-    }
-    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
-        ok = ok && (key1->has_priv == key2->has_priv);
-        if (key1->has_priv)
-            ok = ok && (memcmp(key1->priv, key2->priv, key1->key_len) == 0);
+        /*
+         * If both keys dont have a public key return 1
+         * If only one of the keys has a public key return 0.
+         */
+        if (key1->pub == NULL)
+            return (key2->pub == NULL);
+        else if (key2->pub == NULL)
+            return 0;
+        /*
+         * Gets here if both keys have a public key
+         * Since the public key always exists with the private key, check either
+         * that the private key matches (which includes the public key) OR
+         * check that the public key matches depending on the selection.
+         */
+        if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
+            ok = ok && (key1->has_priv == key2->has_priv);
+            if (key1->has_priv)
+                ok = ok && (memcmp(key1->priv, key2->priv,
+                                   ossl_slh_dsa_key_get_priv_len(key1)) == 0);
+        } else {
+            ok = ok && (memcmp(key1->pub, key2->pub,
+                               ossl_slh_dsa_key_get_pub_len(key1)) == 0);
+        }
     }
     return ok;
 }
@@ -114,11 +132,11 @@ int ossl_slh_dsa_key_equal(const SLH_DSA_KEY *key1, const SLH_DSA_KEY *key2,
 int ossl_slh_dsa_key_has(const SLH_DSA_KEY *key, int selection)
 {
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
-        if (key->key_len == 0)
-            return 0;
+        if (key->pub == NULL)
+            return 0; /* No public key */
         if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0
                 && key->has_priv == 0)
-            return 0;
+            return 0; /* No private key */
         return 1;
     }
     return 0;
@@ -136,56 +154,55 @@ int ossl_slh_dsa_key_has(const SLH_DSA_KEY *key, int selection)
 int ossl_slh_dsa_key_fromdata(SLH_DSA_KEY *key, const OSSL_PARAM params[],
                               int include_private)
 {
-    size_t n, key_len, len = 0;
+    size_t priv_len, key_len, data_len = 0;
     const OSSL_PARAM *param_priv = NULL, *param_pub = NULL;
     void *p;
 
     if (key == NULL)
         return 0;
-    n = key->params->n;
-    assert(n != 0);
-    /* Both the public and private key are composed of 2 elements of size n */
-    key_len = 2 * n;
+
+    /* The private key consists of 4 elements SK_SEED, SK_PRF, PK_SEED and PK_ROOT */
+    priv_len = ossl_slh_dsa_key_get_priv_len(key);
+    /* The size of either SK_SEED + SK_PRF OR PK_SEED + PK_ROOT */
+    key_len = priv_len >> 1;
 
     /* Private key is optional */
     if (include_private) {
         param_priv = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PRIV_KEY);
-        if (param_priv == NULL)
-            return 0;
+        if (param_priv != NULL) {
+            p = key->priv;
+            if (!OSSL_PARAM_get_octet_string(param_priv, &p, priv_len, &data_len))
+                return 0;
+            /* If the data read includes all 4 elements then we are finished */
+            if (data_len == priv_len) {
+                key->has_priv = 1;
+                key->pub = SLH_DSA_PUB(key);
+                return 1;
+            }
+            /* Otherwise it must be just SK_SEED + SK_PRF */
+            if (data_len != key_len)
+                goto err;
+            key->has_priv = 1;
+        }
     }
-
     /*
-     * There must always be a public key, since the private key cannot exist
-     * without the public key elements.
+     * In the case where the passed in private key does not contain the public key
+     * there MUST be a separate public key, since the private key cannot exist
+     * without the public key elements. NOTE that this does not accept half of
+     * the public key, (Keygen must be used for this case currently).
      */
+    p = SLH_DSA_PUB(key);
     param_pub = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PUB_KEY);
-    if (param_pub == NULL)
-        return 0;
-
-    p = key->pub;
-    if (!OSSL_PARAM_get_octet_string(param_pub, &p, key_len, &len))
-        return 0;
-    /*
-     * This does not allow you to pass in just the PK SEED, this can be done
-     * via key generation
-     */
-    if (len != key_len)
-        return 0;
-    if (param_priv != NULL) {
-        p = key->priv;
-        if (!OSSL_PARAM_get_octet_string(param_priv, &p, key_len, &len))
-            return 0;
-        /* This is assuming that the private component contains no public elements */
-        if (len != key_len)
-            goto err;
-        key->has_priv = 1;
-    }
-    key->key_len = key_len; /* This indicates the public key is present */
+    if (param_pub == NULL
+            || !OSSL_PARAM_get_octet_string(param_pub, &p, key_len, &data_len)
+            || data_len != key_len)
+        goto err;
+    key->pub = p;
     return 1;
  err:
-    key->key_len = 0;
+    key->pub = NULL;
     key->has_priv = 0;
-    OPENSSL_cleanse(key->priv, key_len);
+    OPENSSL_cleanse(key->priv, priv_len);
     return 0;
 }
 
@@ -231,29 +248,32 @@ int ossl_slh_dsa_generate_key(SLH_DSA_CTX *ctx, OSSL_LIB_CTX *lib_ctx,
                               SLH_DSA_KEY *out)
 {
     size_t n = ctx->params->n;
-    size_t key_len = 2 * n;
+    size_t secret_key_len = 2 * n; /* The length of SK_SEED + SK_PRF */
+    size_t pk_seed_len = n;        /* The length of PK_SEED */
+    size_t entropy_len_expected = secret_key_len + pk_seed_len;
+    uint8_t *priv = SLH_DSA_PRIV(out);
+    uint8_t *pub = SLH_DSA_PUB(out);
 
     assert(ctx->params == out->params);
 
     if (entropy != NULL && entropy_len != 0) {
-        if (entropy_len < (key_len + n))
+        if (entropy_len < entropy_len_expected)
             goto err;
-        memcpy(out->priv, entropy, key_len);
-        memcpy(out->pub, entropy + key_len, n);
+        memcpy(priv, entropy, entropy_len_expected);
     } else {
-        if (RAND_priv_bytes_ex(lib_ctx, out->priv, key_len, 0) <= 0
-                || RAND_bytes_ex(lib_ctx, out->pub, n, 0) <= 0)
+        if (RAND_priv_bytes_ex(lib_ctx, priv, secret_key_len, 0) <= 0
+                || RAND_bytes_ex(lib_ctx, pub, pk_seed_len, 0) <= 0)
             goto err;
     }
     if (!slh_dsa_compute_pk_root(ctx, out))
         goto err;
-    out->key_len = key_len;
+    out->pub = pub;
     out->has_priv = 1;
     return 1;
 err:
+    out->pub = NULL;
     out->has_priv = 0;
-    out->key_len = 0;
-    OPENSSL_cleanse(&out->priv, sizeof(out->priv));
+    OPENSSL_cleanse(priv, secret_key_len);
     return 0;
 }
 
@@ -272,28 +292,32 @@ int ossl_slh_dsa_key_type_matches(SLH_DSA_CTX *ctx, const SLH_DSA_KEY *key)
     return (key->params == ctx->params);
 }
 
-/*
- * @returns 1 if the SLH_DSA key contains a private component, or 0 if the
- *          key is just a public key.
- */
-int ossl_slh_dsa_key_is_private(const SLH_DSA_KEY *key)
-{
-    return key->has_priv;
-}
-
+/* Returns the public key data or NULL if there is no public key */
 const uint8_t *ossl_slh_dsa_key_get_pub(const SLH_DSA_KEY *key)
 {
     return key->pub;
 }
 
-const uint8_t *ossl_slh_dsa_key_get_priv(const SLH_DSA_KEY *key)
+/* Returns the constant 2 * |n| which is the size of PK_SEED + PK_ROOT */
+size_t ossl_slh_dsa_key_get_pub_len(const SLH_DSA_KEY *key)
 {
-    return key->priv;
+    return 2 * key->params->n;
 }
 
-size_t ossl_slh_dsa_key_get_len(const SLH_DSA_KEY *key)
+/* Returns the private key data or NULL if there is no private key */
+const uint8_t *ossl_slh_dsa_key_get_priv(const SLH_DSA_KEY *key)
 {
-    return key->key_len;
+    return key->has_priv ? key->priv : NULL;
+}
+
+/*
+ * Returns the constant 4 * |n| which is the size of both
+ * the private and public key components.
+ * SK_SEED + SK_ROOT + PK_SEED + PK_ROOT
+ */
+size_t ossl_slh_dsa_key_get_priv_len(const SLH_DSA_KEY *key)
+{
+    return 4 * key->params->n;
 }
 
 size_t ossl_slh_dsa_key_get_n(const SLH_DSA_KEY *key)
@@ -304,4 +328,33 @@ size_t ossl_slh_dsa_key_get_n(const SLH_DSA_KEY *key)
 size_t ossl_slh_dsa_key_get_sig_len(const SLH_DSA_KEY *key)
 {
     return key->params->sig_len;
+}
+void ossl_slh_dsa_key_set0_libctx(SLH_DSA_KEY *key, OSSL_LIB_CTX *lib_ctx)
+{
+    key->libctx = lib_ctx;
+}
+
+const char *ossl_slh_dsa_key_get_name(const SLH_DSA_KEY *key)
+{
+    return key->params->alg;
+}
+
+int ossl_slh_dsa_set_priv(SLH_DSA_KEY *key, const uint8_t *priv, size_t priv_len)
+{
+    if (ossl_slh_dsa_key_get_priv_len(key) != priv_len)
+        return 0;
+    memcpy(key->priv, priv, priv_len);
+    key->has_priv = 1;
+    key->pub = SLH_DSA_PUB(key);
+    return 1;
+}
+
+int ossl_slh_dsa_set_pub(SLH_DSA_KEY *key, const uint8_t *pub, size_t pub_len)
+{
+    if (ossl_slh_dsa_key_get_pub_len(key) != pub_len)
+        return 0;
+    key->pub = SLH_DSA_PUB(key);
+    memcpy(key->pub, pub, pub_len);
+    key->has_priv = 0;
+    return 1;
 }

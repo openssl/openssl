@@ -242,6 +242,30 @@ This is an unapproved algorithm.
 
 =item ML-DSA-87, see L<EVP_KEYMGMT-ML-DSA(7)>
 
+=item SLH-DSA-SHA2-128s, see L<EVP_KEYMGMT-SLH-DSA(7)>
+
+=item SLH-DSA-SHA2-128f, see L<EVP_KEYMGMT-SLH-DSA(7)>
+
+=item SLH-DSA-SHA2-192s, see L<EVP_KEYMGMT-SLH-DSA(7)>
+
+=item SLH-DSA-SHA2-192f, see L<EVP_KEYMGMT-SLH-DSA(7)>
+
+=item SLH-DSA-SHA2-256s, see L<EVP_KEYMGMT-SLH-DSA(7)>
+
+=item SLH-DSA-SHA2-256f, see L<EVP_KEYMGMT-SLH-DSA(7)>
+
+=item SLH-DSA-SHAKE-128s, see L<EVP_KEYMGMT-SLH-DSA(7)>
+
+=item SLH-DSA-SHAKE-128f, see L<EVP_KEYMGMT-SLH-DSA(7)>
+
+=item SLH-DSA-SHAKE-192s, see L<EVP_KEYMGMT-SLH-DSA(7)>
+
+=item SLH-DSA-SHAKE-192f, see L<EVP_KEYMGMT-SLH-DSA(7)>
+
+=item SLH-DSA-SHAKE-256s, see L<EVP_KEYMGMT-SLH-DSA(7)>
+
+=item SLH-DSA-SHAKE-256f, see L<EVP_KEYMGMT-SLH-DSA(7)>
+
 =back
 
 =head2 Random Number Generation
