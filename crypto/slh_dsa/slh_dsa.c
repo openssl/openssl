@@ -158,7 +158,7 @@ static int slh_verify_internal(SLH_DSA_CTX *ctx, const SLH_DSA_KEY *pub,
     uint32_t leaf_id;
 
     /* Exit if public key is not set */
-    if (pub->key_len == 0)
+    if (pub->pub == NULL)
         return 0;
 
     /* Exit if signature is invalid size */

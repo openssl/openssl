@@ -121,35 +121,35 @@ static const OSSL_PARAM *slh_dsa_gettable_params(void *provctx)
 }
 
 static int key_to_params(SLH_DSA_KEY *key, OSSL_PARAM_BLD *tmpl,
-                         OSSL_PARAM params[], int include_private)
+                         int include_private)
 {
-    if (key == NULL)
+    /* Error if there is no key or public key */
+    if (key == NULL || ossl_slh_dsa_key_get_pub(key) == NULL)
         return 0;
-
-    if (!ossl_param_build_set_octet_string(tmpl, params,
-                                           OSSL_PKEY_PARAM_PUB_KEY,
-                                           ossl_slh_dsa_key_get_pub(key),
-                                           ossl_slh_dsa_key_get_len(key)))
-        return 0;
-
-    if (include_private
-        && ossl_slh_dsa_key_is_private(key)
-        && !ossl_param_build_set_octet_string(tmpl, params,
-                                              OSSL_PKEY_PARAM_PRIV_KEY,
-                                              ossl_slh_dsa_key_get_priv(key),
-                                              ossl_slh_dsa_key_get_len(key)))
-        return 0;
-
-    return 1;
+    /*
+     * Note that the private key always contains the public key elements so we
+     * just save the one blob and return.
+     */
+    if (include_private && ossl_slh_dsa_key_get_priv(key) != NULL)
+        return ossl_param_build_set_octet_string(tmpl, NULL,
+                                                 OSSL_PKEY_PARAM_PRIV_KEY,
+                                                 ossl_slh_dsa_key_get_priv(key),
+                                                 ossl_slh_dsa_key_get_priv_len(key));
+    /* Otherwise write out the public key element */
+    return ossl_param_build_set_octet_string(tmpl, NULL,
+                                             OSSL_PKEY_PARAM_PUB_KEY,
+                                             ossl_slh_dsa_key_get_pub(key),
+                                             ossl_slh_dsa_key_get_pub_len(key));
 }
 
 static int slh_dsa_get_params(void *keydata, OSSL_PARAM params[])
 {
     SLH_DSA_KEY *key = keydata;
     OSSL_PARAM *p;
+    const uint8_t *pub, *priv;
 
     if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_BITS)) != NULL
-            && !OSSL_PARAM_set_int(p, 8 * ossl_slh_dsa_key_get_len(key)))
+            && !OSSL_PARAM_set_int(p, 8 * ossl_slh_dsa_key_get_pub_len(key)))
         return 0;
     if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_SECURITY_BITS)) != NULL
             && !OSSL_PARAM_set_int(p, 8 * ossl_slh_dsa_key_get_n(key)))
@@ -158,7 +158,25 @@ static int slh_dsa_get_params(void *keydata, OSSL_PARAM params[])
             && !OSSL_PARAM_set_int(p, ossl_slh_dsa_key_get_sig_len(key)))
         return 0;
 
-    return key_to_params(key, NULL, params, 1);
+    pub = ossl_slh_dsa_key_get_pub(key);
+    priv = ossl_slh_dsa_key_get_priv(key);
+
+    /* This just gets the private elements */
+    p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_PRIV_KEY);
+    if (p != NULL) {
+        if (priv == NULL
+                || !OSSL_PARAM_set_octet_string(p, priv,
+                                                ossl_slh_dsa_key_get_priv_len(key) / 2))
+            return 0;
+    }
+    p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_PUB_KEY);
+    if (p != NULL) {
+        if (pub == NULL
+                || !OSSL_PARAM_set_octet_string(p, pub,
+                                                ossl_slh_dsa_key_get_pub_len(key)))
+        return 0;
+    }
+    return 1;
 }
 
 static int slh_dsa_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
@@ -183,7 +201,7 @@ static int slh_dsa_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
         return 0;
 
     include_private = ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0);
-    if (!key_to_params(key, tmpl, NULL, include_private))
+    if (!key_to_params(key, tmpl, include_private))
         goto err;
 
     params = OSSL_PARAM_BLD_to_param(tmpl);

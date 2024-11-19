@@ -33,6 +33,7 @@
 #include "crypto/ecx.h"
 #include "crypto/rsa.h"
 #include "crypto/ml_dsa.h"
+#include "crypto/slh_dsa.h"
 #include "crypto/x509.h"
 #include "crypto/ml_kem.h"
 #include "openssl/obj_mac.h"
@@ -620,6 +621,146 @@ ml_kem_d2i_PUBKEY(const uint8_t **der, long der_len,
 
 #endif
 
+
+# ifndef OPENSSL_NO_SLH_DSA
+
+/* SLH_DSA only implements PKCS#8 and SubjectPublicKeyInfo */
+
+static void *slh_dsa_d2i_PKCS8(void **key, const unsigned char **der, long der_len,
+                               struct der2key_ctx_st *ctx)
+{
+    return der2key_decode_p8(der, der_len, ctx,
+                             (key_from_pkcs8_t *)ossl_slh_dsa_key_from_pkcs8);
+}
+
+static void slh_dsa_key_adjust(void *key, struct der2key_ctx_st *ctx)
+{
+    ossl_slh_dsa_key_set0_libctx(key, PROV_LIBCTX_OF(ctx->provctx));
+}
+
+#  define slh_dsa_sha2_128s_evp_type        EVP_PKEY_SLH_DSA_SHA2_128S
+#  define slh_dsa_sha2_128s_d2i_private_key NULL
+#  define slh_dsa_sha2_128s_d2i_public_key  NULL
+#  define slh_dsa_sha2_128s_d2i_key_params  NULL
+#  define slh_dsa_sha2_128s_d2i_PKCS8       slh_dsa_d2i_PKCS8
+#  define slh_dsa_sha2_128s_d2i_PUBKEY      (d2i_of_void *)ossl_d2i_SLH_DSA_SHA2_128S_PUBKEY
+#  define slh_dsa_sha2_128s_free            (free_key_fn *)ossl_slh_dsa_key_free
+#  define slh_dsa_sha2_128s_check           NULL
+#  define slh_dsa_sha2_128s_adjust          slh_dsa_key_adjust
+
+#  define slh_dsa_sha2_128f_evp_type        EVP_PKEY_SLH_DSA_SHA2_128F
+#  define slh_dsa_sha2_128f_d2i_private_key NULL
+#  define slh_dsa_sha2_128f_d2i_public_key  NULL
+#  define slh_dsa_sha2_128f_d2i_key_params  NULL
+#  define slh_dsa_sha2_128f_d2i_PKCS8       slh_dsa_d2i_PKCS8
+#  define slh_dsa_sha2_128f_d2i_PUBKEY      (d2i_of_void *)ossl_d2i_SLH_DSA_SHA2_128F_PUBKEY
+#  define slh_dsa_sha2_128f_free            (free_key_fn *)ossl_slh_dsa_key_free
+#  define slh_dsa_sha2_128f_check           NULL
+#  define slh_dsa_sha2_128f_adjust          slh_dsa_key_adjust
+
+#  define slh_dsa_sha2_192s_evp_type        EVP_PKEY_SLH_DSA_SHA2_192S
+#  define slh_dsa_sha2_192s_d2i_private_key NULL
+#  define slh_dsa_sha2_192s_d2i_public_key  NULL
+#  define slh_dsa_sha2_192s_d2i_key_params  NULL
+#  define slh_dsa_sha2_192s_d2i_PKCS8       slh_dsa_d2i_PKCS8
+#  define slh_dsa_sha2_192s_d2i_PUBKEY      (d2i_of_void *)ossl_d2i_SLH_DSA_SHA2_192S_PUBKEY
+#  define slh_dsa_sha2_192s_free            (free_key_fn *)ossl_slh_dsa_key_free
+#  define slh_dsa_sha2_192s_check           NULL
+#  define slh_dsa_sha2_192s_adjust          slh_dsa_key_adjust
+
+#  define slh_dsa_sha2_192f_evp_type        EVP_PKEY_SLH_DSA_SHA2_192F
+#  define slh_dsa_sha2_192f_d2i_private_key NULL
+#  define slh_dsa_sha2_192f_d2i_public_key  NULL
+#  define slh_dsa_sha2_192f_d2i_key_params  NULL
+#  define slh_dsa_sha2_192f_d2i_PKCS8       slh_dsa_d2i_PKCS8
+#  define slh_dsa_sha2_192f_d2i_PUBKEY      (d2i_of_void *)ossl_d2i_SLH_DSA_SHA2_192F_PUBKEY
+#  define slh_dsa_sha2_192f_free            (free_key_fn *)ossl_slh_dsa_key_free
+#  define slh_dsa_sha2_192f_check           NULL
+#  define slh_dsa_sha2_192f_adjust          slh_dsa_key_adjust
+
+#  define slh_dsa_sha2_256s_evp_type        EVP_PKEY_SLH_DSA_SHA2_256S
+#  define slh_dsa_sha2_256s_d2i_private_key NULL
+#  define slh_dsa_sha2_256s_d2i_public_key  NULL
+#  define slh_dsa_sha2_256s_d2i_key_params  NULL
+#  define slh_dsa_sha2_256s_d2i_PKCS8       slh_dsa_d2i_PKCS8
+#  define slh_dsa_sha2_256s_d2i_PUBKEY      (d2i_of_void *)ossl_d2i_SLH_DSA_SHA2_256S_PUBKEY
+#  define slh_dsa_sha2_256s_free            (free_key_fn *)ossl_slh_dsa_key_free
+#  define slh_dsa_sha2_256s_check           NULL
+#  define slh_dsa_sha2_256s_adjust          slh_dsa_key_adjust
+
+#  define slh_dsa_sha2_256f_evp_type        EVP_PKEY_SLH_DSA_SHA2_256F
+#  define slh_dsa_sha2_256f_d2i_private_key NULL
+#  define slh_dsa_sha2_256f_d2i_public_key  NULL
+#  define slh_dsa_sha2_256f_d2i_key_params  NULL
+#  define slh_dsa_sha2_256f_d2i_PKCS8       slh_dsa_d2i_PKCS8
+#  define slh_dsa_sha2_256f_d2i_PUBKEY      (d2i_of_void *)ossl_d2i_SLH_DSA_SHA2_256F_PUBKEY
+#  define slh_dsa_sha2_256f_free            (free_key_fn *)ossl_slh_dsa_key_free
+#  define slh_dsa_sha2_256f_check           NULL
+#  define slh_dsa_sha2_256f_adjust          slh_dsa_key_adjust
+
+#  define slh_dsa_shake_128s_evp_type        EVP_PKEY_SLH_DSA_SHAKE_128S
+#  define slh_dsa_shake_128s_d2i_private_key NULL
+#  define slh_dsa_shake_128s_d2i_public_key  NULL
+#  define slh_dsa_shake_128s_d2i_key_params  NULL
+#  define slh_dsa_shake_128s_d2i_PKCS8       slh_dsa_d2i_PKCS8
+#  define slh_dsa_shake_128s_d2i_PUBKEY      (d2i_of_void *)ossl_d2i_SLH_DSA_SHAKE_128S_PUBKEY
+#  define slh_dsa_shake_128s_free            (free_key_fn *)ossl_slh_dsa_key_free
+#  define slh_dsa_shake_128s_check           NULL
+#  define slh_dsa_shake_128s_adjust          slh_dsa_key_adjust
+
+#  define slh_dsa_shake_128f_evp_type        EVP_PKEY_SLH_DSA_SHAKE_128F
+#  define slh_dsa_shake_128f_d2i_private_key NULL
+#  define slh_dsa_shake_128f_d2i_public_key  NULL
+#  define slh_dsa_shake_128f_d2i_key_params  NULL
+#  define slh_dsa_shake_128f_d2i_PKCS8       slh_dsa_d2i_PKCS8
+#  define slh_dsa_shake_128f_d2i_PUBKEY      (d2i_of_void *)ossl_d2i_SLH_DSA_SHAKE_128F_PUBKEY
+#  define slh_dsa_shake_128f_free            (free_key_fn *)ossl_slh_dsa_key_free
+#  define slh_dsa_shake_128f_check           NULL
+#  define slh_dsa_shake_128f_adjust          slh_dsa_key_adjust
+
+#  define slh_dsa_shake_192s_evp_type        EVP_PKEY_SLH_DSA_SHAKE_192S
+#  define slh_dsa_shake_192s_d2i_private_key NULL
+#  define slh_dsa_shake_192s_d2i_public_key  NULL
+#  define slh_dsa_shake_192s_d2i_key_params  NULL
+#  define slh_dsa_shake_192s_d2i_PKCS8       slh_dsa_d2i_PKCS8
+#  define slh_dsa_shake_192s_d2i_PUBKEY      (d2i_of_void *)ossl_d2i_SLH_DSA_SHAKE_192S_PUBKEY
+#  define slh_dsa_shake_192s_free            (free_key_fn *)ossl_slh_dsa_key_free
+#  define slh_dsa_shake_192s_check           NULL
+#  define slh_dsa_shake_192s_adjust          slh_dsa_key_adjust
+
+#  define slh_dsa_shake_192f_evp_type        EVP_PKEY_SLH_DSA_SHAKE_192F
+#  define slh_dsa_shake_192f_d2i_private_key NULL
+#  define slh_dsa_shake_192f_d2i_public_key  NULL
+#  define slh_dsa_shake_192f_d2i_key_params  NULL
+#  define slh_dsa_shake_192f_d2i_PKCS8       slh_dsa_d2i_PKCS8
+#  define slh_dsa_shake_192f_d2i_PUBKEY      (d2i_of_void *)ossl_d2i_SLH_DSA_SHAKE_192F_PUBKEY
+#  define slh_dsa_shake_192f_free            (free_key_fn *)ossl_slh_dsa_key_free
+#  define slh_dsa_shake_192f_check           NULL
+#  define slh_dsa_shake_192f_adjust          slh_dsa_key_adjust
+
+#  define slh_dsa_shake_256s_evp_type        EVP_PKEY_SLH_DSA_SHAKE_256S
+#  define slh_dsa_shake_256s_d2i_private_key NULL
+#  define slh_dsa_shake_256s_d2i_public_key  NULL
+#  define slh_dsa_shake_256s_d2i_key_params  NULL
+#  define slh_dsa_shake_256s_d2i_PKCS8       slh_dsa_d2i_PKCS8
+#  define slh_dsa_shake_256s_d2i_PUBKEY      (d2i_of_void *)ossl_d2i_SLH_DSA_SHAKE_256S_PUBKEY
+#  define slh_dsa_shake_256s_free            (free_key_fn *)ossl_slh_dsa_key_free
+#  define slh_dsa_shake_256s_check           NULL
+#  define slh_dsa_shake_256s_adjust          slh_dsa_key_adjust
+
+#  define slh_dsa_shake_256f_evp_type        EVP_PKEY_SLH_DSA_SHAKE_256F
+#  define slh_dsa_shake_256f_d2i_private_key NULL
+#  define slh_dsa_shake_256f_d2i_public_key  NULL
+#  define slh_dsa_shake_256f_d2i_key_params  NULL
+#  define slh_dsa_shake_256f_d2i_PKCS8       slh_dsa_d2i_PKCS8
+#  define slh_dsa_shake_256f_d2i_PUBKEY      (d2i_of_void *)ossl_d2i_SLH_DSA_SHAKE_256F_PUBKEY
+#  define slh_dsa_shake_256f_free            (free_key_fn *)ossl_slh_dsa_key_free
+#  define slh_dsa_shake_256f_check           NULL
+#  define slh_dsa_shake_256f_adjust          slh_dsa_key_adjust
+
+
+# endif /* OPENSSL_NO_SLH_DSA */
+
 /* ---------------------------------------------------------------------- */
 
 #define rsa_evp_type                    EVP_PKEY_RSA
@@ -999,6 +1140,33 @@ MAKE_DECODER("ML-KEM-768", ml_kem_768, ml_kem_768, SubjectPublicKeyInfo);
 MAKE_DECODER("ML-KEM-1024", ml_kem_1024, ml_kem_1024, PrivateKeyInfo);
 MAKE_DECODER("ML-KEM-1024", ml_kem_1024, ml_kem_1024, SubjectPublicKeyInfo);
 #endif
+#ifndef OPENSSL_NO_SLH_DSA
+MAKE_DECODER("SLH-DSA-SHA2-128s", slh_dsa_sha2_128s, slh_dsa, PrivateKeyInfo);
+MAKE_DECODER("SLH-DSA-SHA2-128f", slh_dsa_sha2_128f, slh_dsa, PrivateKeyInfo);
+MAKE_DECODER("SLH-DSA-SHA2-192s", slh_dsa_sha2_192s, slh_dsa, PrivateKeyInfo);
+MAKE_DECODER("SLH-DSA-SHA2-192f", slh_dsa_sha2_192f, slh_dsa, PrivateKeyInfo);
+MAKE_DECODER("SLH-DSA-SHA2-256s", slh_dsa_sha2_256s, slh_dsa, PrivateKeyInfo);
+MAKE_DECODER("SLH-DSA-SHA2-256f", slh_dsa_sha2_256f, slh_dsa, PrivateKeyInfo);
+MAKE_DECODER("SLH-DSA-SHAKE-128s", slh_dsa_shake_128s, slh_dsa, PrivateKeyInfo);
+MAKE_DECODER("SLH-DSA-SHAKE-128f", slh_dsa_shake_128f, slh_dsa, PrivateKeyInfo);
+MAKE_DECODER("SLH-DSA-SHAKE-192s", slh_dsa_shake_192s, slh_dsa, PrivateKeyInfo);
+MAKE_DECODER("SLH-DSA-SHAKE-192f", slh_dsa_shake_192f, slh_dsa, PrivateKeyInfo);
+MAKE_DECODER("SLH-DSA-SHAKE-256s", slh_dsa_shake_256s, slh_dsa, PrivateKeyInfo);
+MAKE_DECODER("SLH-DSA-SHAKE-256f", slh_dsa_shake_256f, slh_dsa, PrivateKeyInfo);
+
+MAKE_DECODER("SLH-DSA-SHA2-128s", slh_dsa_sha2_128s, slh_dsa, SubjectPublicKeyInfo);
+MAKE_DECODER("SLH-DSA-SHA2-128f", slh_dsa_sha2_128f, slh_dsa, SubjectPublicKeyInfo);
+MAKE_DECODER("SLH-DSA-SHA2-192s", slh_dsa_sha2_192s, slh_dsa, SubjectPublicKeyInfo);
+MAKE_DECODER("SLH-DSA-SHA2-192f", slh_dsa_sha2_192f, slh_dsa, SubjectPublicKeyInfo);
+MAKE_DECODER("SLH-DSA-SHA2-256s", slh_dsa_sha2_256s, slh_dsa, SubjectPublicKeyInfo);
+MAKE_DECODER("SLH-DSA-SHA2-256f", slh_dsa_sha2_256f, slh_dsa, SubjectPublicKeyInfo);
+MAKE_DECODER("SLH-DSA-SHAKE-128s", slh_dsa_shake_128s, slh_dsa, SubjectPublicKeyInfo);
+MAKE_DECODER("SLH-DSA-SHAKE-128f", slh_dsa_shake_128f, slh_dsa, SubjectPublicKeyInfo);
+MAKE_DECODER("SLH-DSA-SHAKE-192s", slh_dsa_shake_192s, slh_dsa, SubjectPublicKeyInfo);
+MAKE_DECODER("SLH-DSA-SHAKE-192f", slh_dsa_shake_192f, slh_dsa, SubjectPublicKeyInfo);
+MAKE_DECODER("SLH-DSA-SHAKE-256s", slh_dsa_shake_256s, slh_dsa, SubjectPublicKeyInfo);
+MAKE_DECODER("SLH-DSA-SHAKE-256f", slh_dsa_shake_256f, slh_dsa, SubjectPublicKeyInfo);
+#endif /* OPENSSL_NO_SLH_DSA */
 MAKE_DECODER("RSA", rsa, rsa, PrivateKeyInfo);
 MAKE_DECODER("RSA", rsa, rsa, SubjectPublicKeyInfo);
 MAKE_DECODER("RSA", rsa, rsa, type_specific_keypair);

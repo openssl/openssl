@@ -4,6 +4,6 @@ $COMMON=slh_adrs.c slh_dsa.c slh_dsa_ctx.c slh_dsa_key.c slh_fors.c slh_hash.c \
         slh_hypertree.c slh_params.c slh_wots.c slh_xmss.c
 
 IF[{- !$disabled{'slh_dsa'} -}]
-  SOURCE[../../libcrypto]=$COMMON
+  SOURCE[../../libcrypto]=$COMMON slh_dsa_backend.c slh_dsa_meth.c
   SOURCE[../../providers/libfips.a]=$COMMON
 ENDIF

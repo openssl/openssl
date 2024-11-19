@@ -32,13 +32,23 @@ __owur int ossl_slh_dsa_key_fromdata(SLH_DSA_KEY *key, const OSSL_PARAM *params,
 __owur int ossl_slh_dsa_generate_key(SLH_DSA_CTX *ctx, OSSL_LIB_CTX *libctx,
                                      const uint8_t *entropy, size_t entropy_len,
                                      SLH_DSA_KEY *out);
-__owur int ossl_slh_dsa_key_is_private(const SLH_DSA_KEY *key);
 __owur const uint8_t *ossl_slh_dsa_key_get_pub(const SLH_DSA_KEY *key);
 __owur const uint8_t *ossl_slh_dsa_key_get_priv(const SLH_DSA_KEY *key);
-__owur size_t ossl_slh_dsa_key_get_len(const SLH_DSA_KEY *key);
+__owur size_t ossl_slh_dsa_key_get_pub_len(const SLH_DSA_KEY *key);
+__owur int ossl_slh_dsa_set_priv(SLH_DSA_KEY *key, const uint8_t *priv,
+                                 size_t priv_len);
+__owur int ossl_slh_dsa_set_pub(SLH_DSA_KEY *key, const uint8_t *pub,
+                                size_t pub_len);
+__owur size_t ossl_slh_dsa_key_get_priv_len(const SLH_DSA_KEY *key);
 __owur size_t ossl_slh_dsa_key_get_n(const SLH_DSA_KEY *key);
 __owur size_t ossl_slh_dsa_key_get_sig_len(const SLH_DSA_KEY *key);
+__owur const char *ossl_slh_dsa_key_get_name(const SLH_DSA_KEY *key);
 __owur int ossl_slh_dsa_key_type_matches(SLH_DSA_CTX *ctx, const SLH_DSA_KEY *key);
+__owur int ossl_slh_dsa_key_to_text(BIO *out, const SLH_DSA_KEY *key, int selection);
+void ossl_slh_dsa_key_set0_libctx(SLH_DSA_KEY *key, OSSL_LIB_CTX *lib_ctx);
+SLH_DSA_KEY *ossl_slh_dsa_key_from_pkcs8(const PKCS8_PRIV_KEY_INFO *p8inf,
+                                         OSSL_LIB_CTX *libctx, const char *propq);
+SLH_DSA_KEY *ossl_evp_pkey_get1_SLH_DSA_KEY(EVP_PKEY *pkey);
 
 __owur SLH_DSA_CTX *ossl_slh_dsa_ctx_new(const char *alg,
                                          OSSL_LIB_CTX *lib_ctx, const char *propq);
