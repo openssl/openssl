@@ -30,6 +30,10 @@ OpenSSL 3.4
 
 ### Changes between 3.4 and 3.5 [xx XXX xxxx]
 
+* Add hybrid KEM and key manager algorithm implementations.
+
+  *Dr Paul Dale*
+
  * Enhanced PKCS#7 inner contents verification.
    In the PKCS7_verify() function, the BIO *indata parameter refers to the
    signed data if the content is detached from p7. Otherwise, indata should be
