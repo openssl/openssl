@@ -254,6 +254,9 @@ int ossl_cipher_generic_block_update(void *vctx, unsigned char *out,
     size_t blksz = ctx->blocksize;
     size_t nextblocks;
 
+    if (!ossl_prov_is_running())
+        return 0;
+
     if (!ctx->key_set) {
         ERR_raise(ERR_LIB_PROV, PROV_R_NO_KEY_SET);
         return 0;

@@ -76,6 +76,9 @@ static int keccak_update(void *vctx, const unsigned char *inp, size_t len)
     const size_t bsz = ctx->block_size;
     size_t num, rem;
 
+    if (!ossl_prov_is_running())
+        return 0;
+
     if (len == 0)
         return 1;
 

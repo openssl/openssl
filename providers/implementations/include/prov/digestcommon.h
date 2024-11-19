@@ -35,6 +35,14 @@ static int name##_get_params(OSSL_PARAM params[])                              \
 { OSSL_FUNC_DIGEST_GETTABLE_PARAMS,                                            \
   (void (*)(void))ossl_digest_default_gettable_params }
 
+# define PROV_FUNC_DIGEST_UPDATE(name, upd)                                    \
+static OSSL_FUNC_digest_update_fn name##_internal_update;                      \
+static int name##_internal_update(void *ctx, const unsigned char *in,          \
+                                  size_t inl)                                  \
+{                                                                              \
+    return ossl_prov_is_running() && upd(ctx, in, inl);                        \
+}
+
 # define PROV_FUNC_DIGEST_FINAL(name, dgstsize, fin)                           \
 static OSSL_FUNC_digest_final_fn name##_internal_final;                        \
 static int name##_internal_final(void *ctx, unsigned char *out, size_t *outl,  \
@@ -70,11 +78,12 @@ static void *name##_dupctx(void *ctx)                                          \
         *ret = *in;                                                            \
     return ret;                                                                \
 }                                                                              \
+PROV_FUNC_DIGEST_UPDATE(name, upd)                                             \
 PROV_FUNC_DIGEST_FINAL(name, dgstsize, fin)                                    \
 PROV_FUNC_DIGEST_GET_PARAM(name, blksize, dgstsize, flags)                     \
 const OSSL_DISPATCH ossl_##name##_functions[] = {                              \
     { OSSL_FUNC_DIGEST_NEWCTX, (void (*)(void))name##_newctx },                \
-    { OSSL_FUNC_DIGEST_UPDATE, (void (*)(void))upd },                          \
+    { OSSL_FUNC_DIGEST_UPDATE, (void (*)(void))name##_internal_update },       \
     { OSSL_FUNC_DIGEST_FINAL, (void (*)(void))name##_internal_final },         \
     { OSSL_FUNC_DIGEST_FREECTX, (void (*)(void))name##_freectx },              \
     { OSSL_FUNC_DIGEST_DUPCTX, (void (*)(void))name##_dupctx },                \
