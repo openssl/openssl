@@ -130,6 +130,7 @@ ignore-words-list =
     Gost,
     GOST,
     Hart,
+    hashin,
     hasTable,
     hel,
     hist,
