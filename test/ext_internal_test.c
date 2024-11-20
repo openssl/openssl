@@ -72,6 +72,13 @@ static EXT_LIST ext_list[] = {
     EXT_ENTRY(compress_certificate),
     EXT_ENTRY(early_data),
     EXT_ENTRY(certificate_authorities),
+#ifndef OPENSSL_NO_ECH
+    EXT_ENTRY(ech),
+    EXT_ENTRY(outer_extensions),
+#else
+    EXT_EXCEPTION(ech),
+    EXT_EXCEPTION(outer_extensions),
+#endif
     EXT_ENTRY(padding),
     EXT_ENTRY(psk),
     EXT_END(num_builtins)
