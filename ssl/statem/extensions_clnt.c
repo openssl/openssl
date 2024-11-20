@@ -12,6 +12,9 @@
 #include "internal/cryptlib.h"
 #include "internal/ssl_unwrap.h"
 #include "statem_local.h"
+#ifndef OPENSSL_NO_ECH
+# include <openssl/rand.h>
+#endif
 
 EXT_RETURN tls_construct_ctos_renegotiate(SSL_CONNECTION *s, WPACKET *pkt,
                                           unsigned int context, X509 *x,
@@ -35,6 +38,9 @@ EXT_RETURN tls_construct_ctos_renegotiate(SSL_CONNECTION *s, WPACKET *pkt,
             return EXT_RETURN_NOT_SENT;
         }
 
+#ifndef OPENSSL_NO_ECH
+        ECH_SAME_EXT(s, pkt)
+#endif
 
         if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_renegotiate)
             || !WPACKET_start_sub_packet_u16(pkt)
@@ -46,6 +52,10 @@ EXT_RETURN tls_construct_ctos_renegotiate(SSL_CONNECTION *s, WPACKET *pkt,
 
         return EXT_RETURN_SENT;
     }
+
+#ifndef OPENSSL_NO_ECH
+    ECH_SAME_EXT(s, pkt)
+#endif
 
     /* Add a complete RI extension if renegotiating */
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_renegotiate)
@@ -64,6 +74,43 @@ EXT_RETURN tls_construct_ctos_server_name(SSL_CONNECTION *s, WPACKET *pkt,
                                           unsigned int context, X509 *x,
                                           size_t chainidx)
 {
+#ifndef OPENSSL_NO_ECH
+    char *chosen = s->ext.hostname;
+    OSSL_HPKE_SUITE suite;
+    OSSL_ECHSTORE_ENTRY *ee = NULL;
+
+    if (s->ext.ech.es != NULL) {
+        if (ossl_ech_pick_matching_cfg(s, &ee, &suite) != 1) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return EXT_RETURN_NOT_SENT;
+        }
+        /* Don't send outer SNI if external API says so */
+        if (s->ext.ech.ch_depth == 0 && s->ext.ech.no_outer == 1)
+            return EXT_RETURN_NOT_SENT;
+        if (s->ext.ech.ch_depth == 1) /* inner */
+            chosen = s->ext.hostname;
+        if (s->ext.ech.ch_depth == 0) { /* outer */
+            if (s->ext.ech.outer_hostname != NULL) /* prefer API */
+                chosen = s->ext.ech.outer_hostname;
+            else /* use name from ECHConfig */
+                chosen = ee->public_name;
+        }
+    }
+    if (chosen == NULL)
+        return EXT_RETURN_NOT_SENT;
+    /* Add TLS extension servername to the Client Hello message */
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_server_name)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_put_bytes_u8(pkt, TLSEXT_NAMETYPE_host_name)
+            || !WPACKET_sub_memcpy_u16(pkt, chosen, strlen(chosen))
+            || !WPACKET_close(pkt)
+            || !WPACKET_close(pkt)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+    return EXT_RETURN_SENT;
+#else
     if (s->ext.hostname == NULL)
         return EXT_RETURN_NOT_SENT;
 
@@ -83,6 +130,7 @@ EXT_RETURN tls_construct_ctos_server_name(SSL_CONNECTION *s, WPACKET *pkt,
     }
 
     return EXT_RETURN_SENT;
+#endif
 }
 
 /* Push a Max Fragment Len extension into ClientHello */
@@ -92,6 +140,9 @@ EXT_RETURN tls_construct_ctos_maxfragmentlen(SSL_CONNECTION *s, WPACKET *pkt,
 {
     if (s->ext.max_fragment_len_mode == TLSEXT_max_fragment_length_DISABLED)
         return EXT_RETURN_NOT_SENT;
+#ifndef OPENSSL_NO_ECH
+    ECH_SAME_EXT(s, pkt)
+#endif
 
     /* Add Max Fragment Length extension if client enabled it. */
     /*-
@@ -118,6 +169,9 @@ EXT_RETURN tls_construct_ctos_srp(SSL_CONNECTION *s, WPACKET *pkt,
     /* Add SRP username if there is one */
     if (s->srp_ctx.login == NULL)
         return EXT_RETURN_NOT_SENT;
+# ifndef OPENSSL_NO_ECH
+    ECH_SAME_EXT(s, pkt)
+# endif
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_srp)
                /* Sub-packet for SRP extension */
@@ -196,6 +250,9 @@ EXT_RETURN tls_construct_ctos_ec_pt_formats(SSL_CONNECTION *s, WPACKET *pkt,
     }
     if (!use_ecc(s, min_version, max_version))
         return EXT_RETURN_NOT_SENT;
+#ifndef OPENSSL_NO_ECH
+    ECH_SAME_EXT(s, pkt)
+#endif
 
     /* Add TLS extension ECPointFormats to the ClientHello message */
     tls1_get_formatlist(s, &pformats, &num_formats);
@@ -233,6 +290,9 @@ EXT_RETURN tls_construct_ctos_supported_groups(SSL_CONNECTION *s, WPACKET *pkt,
     if (!use_ecc(s, min_version, max_version)
             && (SSL_CONNECTION_IS_DTLS(s) || max_version < TLS1_3_VERSION))
         return EXT_RETURN_NOT_SENT;
+#ifndef OPENSSL_NO_ECH
+    ECH_SAME_EXT(s, pkt)
+#endif
 
     /*
      * Add TLS extension supported_groups to the ClientHello message
@@ -289,6 +349,9 @@ EXT_RETURN tls_construct_ctos_session_ticket(SSL_CONNECTION *s, WPACKET *pkt,
 
     if (!tls_use_ticket(s))
         return EXT_RETURN_NOT_SENT;
+#ifndef OPENSSL_NO_ECH
+    ECH_SAME_EXT(s, pkt)
+#endif
 
     if (!s->new_session && s->session != NULL
             && s->session->ext.tick != NULL
@@ -345,6 +408,9 @@ EXT_RETURN tls_construct_ctos_sig_algs(SSL_CONNECTION *s, WPACKET *pkt,
                 && DTLS_VERSION_LT(s->version, DTLS1_2_VERSION)))
         return EXT_RETURN_NOT_SENT;
     }
+#ifndef OPENSSL_NO_ECH
+    ECH_SAME_EXT(s, pkt)
+#endif
 
     salglen = tls12_get_psigalgs(s, 1, &salg);
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_signature_algorithms)
@@ -375,6 +441,9 @@ EXT_RETURN tls_construct_ctos_status_request(SSL_CONNECTION *s, WPACKET *pkt,
 
     if (s->ext.status_type != TLSEXT_STATUSTYPE_ocsp)
         return EXT_RETURN_NOT_SENT;
+# ifndef OPENSSL_NO_ECH
+    ECH_SAME_EXT(s, pkt)
+# endif
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_status_request)
                /* Sub-packet for status request extension */
@@ -435,6 +504,9 @@ EXT_RETURN tls_construct_ctos_npn(SSL_CONNECTION *s, WPACKET *pkt,
     if (SSL_CONNECTION_GET_CTX(s)->ext.npn_select_cb == NULL
         || !SSL_IS_FIRST_HANDSHAKE(s))
         return EXT_RETURN_NOT_SENT;
+# ifndef OPENSSL_NO_ECH
+    ECH_SAME_EXT(s, pkt)
+# endif
 
     /*
      * The client advertises an empty extension to indicate its support
@@ -454,8 +526,46 @@ EXT_RETURN tls_construct_ctos_alpn(SSL_CONNECTION *s, WPACKET *pkt,
                                    unsigned int context,
                                    X509 *x, size_t chainidx)
 {
-    s->s3.alpn_sent = 0;
+#ifndef OPENSSL_NO_ECH
+    unsigned char *aval = NULL;
+    size_t alen = 0;
+#endif
 
+    s->s3.alpn_sent = 0;
+#ifndef OPENSSL_NO_ECH
+    /*
+     * If we have different alpn and alpn_outer values, then we set
+     * the appropriate one for inner and outer.
+     * If no alpn is set (for inner or outer), we don't send any.
+     * If only an inner is set then we send the same in both.
+     * Logic above is on the basis that alpn's aren't that sensitive,
+     * usually, so special action is needed to do better.
+     * We also don't support a way to send alpn only in the inner.
+     * If you don't want the inner value in the outer, you have to
+     * pick what to send in the outer and send that.
+     */
+    if (!SSL_IS_FIRST_HANDSHAKE(s))
+        return EXT_RETURN_NOT_SENT;
+    aval = s->ext.alpn;
+    alen = s->ext.alpn_len;
+    if (s->ext.ech.ch_depth == 1 && s->ext.alpn == NULL)  /* inner */
+        return EXT_RETURN_NOT_SENT;
+    if (s->ext.ech.ch_depth == 0 && s->ext.alpn == NULL
+        && s->ext.ech.alpn_outer == NULL) /* outer */
+        return EXT_RETURN_NOT_SENT;
+    if (s->ext.ech.ch_depth == 0 && s->ext.ech.alpn_outer != NULL) {
+        aval = s->ext.ech.alpn_outer;
+        alen = s->ext.ech.alpn_outer_len;
+    }
+    if (!WPACKET_put_bytes_u16(pkt,
+                               TLSEXT_TYPE_application_layer_protocol_negotiation)
+        || !WPACKET_start_sub_packet_u16(pkt)
+        || !WPACKET_sub_memcpy_u16(pkt, aval, alen)
+        || !WPACKET_close(pkt)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+#else
     if (s->ext.alpn == NULL || !SSL_IS_FIRST_HANDSHAKE(s))
         return EXT_RETURN_NOT_SENT;
 
@@ -468,6 +578,7 @@ EXT_RETURN tls_construct_ctos_alpn(SSL_CONNECTION *s, WPACKET *pkt,
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return EXT_RETURN_FAIL;
     }
+#endif
     s->s3.alpn_sent = 1;
 
     return EXT_RETURN_SENT;
@@ -485,6 +596,9 @@ EXT_RETURN tls_construct_ctos_use_srtp(SSL_CONNECTION *s, WPACKET *pkt,
 
     if (clnt == NULL)
         return EXT_RETURN_NOT_SENT;
+# ifndef OPENSSL_NO_ECH
+    ECH_SAME_EXT(s, pkt)
+# endif
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_use_srtp)
                /* Sub-packet for SRTP extension */
@@ -523,6 +637,9 @@ EXT_RETURN tls_construct_ctos_etm(SSL_CONNECTION *s, WPACKET *pkt,
 {
     if (s->options & SSL_OP_NO_ENCRYPT_THEN_MAC)
         return EXT_RETURN_NOT_SENT;
+#ifndef OPENSSL_NO_ECH
+    ECH_SAME_EXT(s, pkt)
+#endif
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_encrypt_then_mac)
             || !WPACKET_put_bytes_u16(pkt, 0)) {
@@ -544,6 +661,9 @@ EXT_RETURN tls_construct_ctos_sct(SSL_CONNECTION *s, WPACKET *pkt,
     /* Not defined for client Certificates */
     if (x != NULL)
         return EXT_RETURN_NOT_SENT;
+# ifndef OPENSSL_NO_ECH
+    ECH_SAME_EXT(s, pkt)
+# endif
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_signed_certificate_timestamp)
             || !WPACKET_put_bytes_u16(pkt, 0)) {
@@ -561,6 +681,9 @@ EXT_RETURN tls_construct_ctos_ems(SSL_CONNECTION *s, WPACKET *pkt,
 {
     if (s->options & SSL_OP_NO_EXTENDED_MASTER_SECRET)
         return EXT_RETURN_NOT_SENT;
+#ifndef OPENSSL_NO_ECH
+    ECH_SAME_EXT(s, pkt)
+#endif
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_extended_master_secret)
             || !WPACKET_put_bytes_u16(pkt, 0)) {
@@ -589,6 +712,9 @@ EXT_RETURN tls_construct_ctos_supported_versions(SSL_CONNECTION *s, WPACKET *pkt
      */
     if (max_version < TLS1_3_VERSION)
         return EXT_RETURN_NOT_SENT;
+#ifndef OPENSSL_NO_ECH
+    ECH_SAME_EXT(s, pkt)
+#endif
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_supported_versions)
             || !WPACKET_start_sub_packet_u16(pkt)
@@ -620,6 +746,10 @@ EXT_RETURN tls_construct_ctos_psk_kex_modes(SSL_CONNECTION *s, WPACKET *pkt,
 {
 #ifndef OPENSSL_NO_TLS1_3
     int nodhe = s->options & SSL_OP_ALLOW_NO_DHE_KEX;
+
+# ifndef OPENSSL_NO_ECH
+    ECH_SAME_EXT(s, pkt)
+# endif
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_psk_kex_modes)
             || !WPACKET_start_sub_packet_u16(pkt)
@@ -692,6 +822,22 @@ static int add_key_share(SSL_CONNECTION *s, WPACKET *pkt, unsigned int group_id,
         s->s3.tmp.num_ks_pkey++;
 
     OPENSSL_free(encoded_pubkey);
+# ifndef OPENSSL_NO_ECH
+    if (s->ext.ech.ch_depth == 1) { /* stash inner */
+        EVP_PKEY_up_ref(key_share_key);
+        EVP_PKEY_free(s->ext.ech.tmp_pkey);
+        s->ext.ech.tmp_pkey = key_share_key;
+        s->ext.ech.group_id = curve_id;
+    }
+# endif
+    /*
+     * When changing to send more than one key_share we're
+     * going to need to be able to save more than one EVP_PKEY. For now
+     * we reuse the existing tmp.pkey
+     */
+    s->s3.tmp.pkey = key_share_key;
+    s->s3.group_id = curve_id;
+    OPENSSL_free(encoded_point);
 
     return 1;
  err:
@@ -712,6 +858,10 @@ EXT_RETURN tls_construct_ctos_key_share(SSL_CONNECTION *s, WPACKET *pkt,
     uint16_t group_id = 0;
     int add_only_one = 0;
     size_t valid_keyshare = 0;
+
+# ifndef OPENSSL_NO_ECH
+    ECH_SAME_EXT(s, pkt)
+# endif
 
     /* key_share extension */
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_key_share)
@@ -792,6 +942,9 @@ EXT_RETURN tls_construct_ctos_cookie(SSL_CONNECTION *s, WPACKET *pkt,
     /* Should only be set if we've had an HRR */
     if (s->ext.tls13_cookie_len == 0)
         return EXT_RETURN_NOT_SENT;
+#ifndef OPENSSL_NO_ECH
+    ECH_SAME_EXT(s, pkt)
+#endif
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_cookie)
                /* Extension data sub-packet */
@@ -826,6 +979,33 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
     const EVP_MD *handmd = NULL;
     SSL *ussl = SSL_CONNECTION_GET_USER_SSL(s);
 
+#ifndef OPENSSL_NO_ECH
+    /*
+     * If we're attempting ECH and processing the outer CH
+     * then we only need to check if the extension is to be
+     * sent or not - any other processing (with side effects)
+     * happened already for the inner CH.
+     */
+    if (s->ext.ech.es != NULL && s->ext.ech.ch_depth == 0) {
+        /*
+         * if we called this for inner and did send then
+         * the following two things should be set, if so,
+         * then send again in the outer CH.
+         */
+        if (s->ext.early_data == SSL_EARLY_DATA_REJECTED
+            && s->ext.early_data_ok == 1) {
+            if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_early_data)
+                || !WPACKET_start_sub_packet_u16(pkt)
+                || !WPACKET_close(pkt)) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                return EXT_RETURN_FAIL;
+            }
+            return EXT_RETURN_SENT;
+        } else {
+            return EXT_RETURN_NOT_SENT;
+        }
+    }
+#endif
     if (s->hello_retry_request == SSL_HRR_PENDING)
         handmd = ssl_handshake_md(s);
 
@@ -1206,6 +1386,89 @@ EXT_RETURN tls_construct_ctos_psk(SSL_CONNECTION *s, WPACKET *pkt,
         return EXT_RETURN_FAIL;
     }
 
+# ifndef OPENSSL_NO_ECH
+    /*
+     * For ECH if we're processing the outer CH and the inner CH
+     * has a PSK, then we want to send a GREASE PSK in the outer.
+     * We'll do that by just replacing the ticket value itself
+     * with random values of the same length.
+     */
+    if (s->ext.ech.es != NULL && s->ext.ech.ch_depth == 0) {
+        unsigned char *rndbuf = NULL;
+        size_t totalrndsize = 0;
+
+        if (s->session == NULL) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return EXT_RETURN_FAIL;
+        }
+        totalrndsize = s->session->ext.ticklen
+            + 4 /* agems */
+            + s->psksession_id_len
+            + reshashsize
+            + pskhashsize;
+        rndbuf = OPENSSL_malloc(totalrndsize);
+        if (rndbuf == NULL) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return EXT_RETURN_FAIL;
+        }
+        /* outer CH allocate a similar sized random value */
+        if (RAND_bytes_ex(s->ssl.ctx->libctx, rndbuf, totalrndsize,
+                          RAND_DRBG_STRENGTH) <= 0) {
+            OPENSSL_free(rndbuf);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return EXT_RETURN_FAIL;
+        }
+        /* set agems from random buffer */
+        agems = *((uint32_t *)(rndbuf + s->session->ext.ticklen));
+        if (dores != 0) {
+            if (!WPACKET_sub_memcpy_u16(pkt, rndbuf,
+                                        s->session->ext.ticklen)
+                || !WPACKET_put_bytes_u32(pkt, agems)) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                OPENSSL_free(rndbuf);
+                return EXT_RETURN_FAIL;
+            }
+        }
+        if (s->psksession != NULL) {
+            if (!WPACKET_sub_memcpy_u16(pkt,
+                                        rndbuf + s->session->ext.ticklen + 4,
+                                        s->psksession_id_len)
+                || !WPACKET_put_bytes_u32(pkt, 0)) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                OPENSSL_free(rndbuf);
+                return EXT_RETURN_FAIL;
+            }
+        }
+        if (!WPACKET_close(pkt)
+            || !WPACKET_get_total_written(pkt, &binderoffset)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || (dores == 1
+                && !WPACKET_sub_memcpy_u8(pkt,
+                                          rndbuf + s->session->ext.ticklen
+                                          + 4 + s->psksession_id_len,
+                                          reshashsize))
+            || (s->psksession != NULL
+                && !WPACKET_sub_memcpy_u8(pkt,
+                                          rndbuf + s->session->ext.ticklen
+                                          + 4 + s->psksession_id_len
+                                          + reshashsize,
+                                          pskhashsize))
+            || !WPACKET_close(pkt)
+            || !WPACKET_close(pkt)
+            || !WPACKET_get_total_written(pkt, &msglen)
+            /*
+             * We need to fill in all the sub-packet lengths now so we can
+             * calculate the HMAC of the message up to the binders
+             */
+            || !WPACKET_fill_lengths(pkt)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            OPENSSL_free(rndbuf);
+            return EXT_RETURN_FAIL;
+        }
+        OPENSSL_free(rndbuf);
+        return EXT_RETURN_SENT;
+    }
+# endif /* OPENSSL_NO_ECH */
     if (dores) {
         if (!WPACKET_sub_memcpy_u16(pkt, s->session->ext.tick,
                                            s->session->ext.ticklen)
@@ -1274,6 +1537,9 @@ EXT_RETURN tls_construct_ctos_post_handshake_auth(SSL_CONNECTION *s, WPACKET *pk
 #ifndef OPENSSL_NO_TLS1_3
     if (!s->pha_enabled)
         return EXT_RETURN_NOT_SENT;
+# ifndef OPENSSL_NO_ECH
+    ECH_SAME_EXT(s, pkt)
+# endif
 
     /* construct extension - 0 length, no contents */
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_post_handshake_auth)
@@ -1393,6 +1659,32 @@ int tls_parse_stoc_server_name(SSL_CONNECTION *s, PACKET *pkt,
                                unsigned int context,
                                X509 *x, size_t chainidx)
 {
+#ifndef OPENSSL_NO_ECH
+    char *eff_sni = s->ext.hostname;
+
+    /* if we tried ECH and failed, the outer is what's expected */
+    if (s->ext.ech.es != NULL && s->ext.ech.success == 0)
+        eff_sni = s->ext.ech.outer_hostname;
+    if (eff_sni == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    if (PACKET_remaining(pkt) > 0) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+    if (!s->hit) {
+        if (s->session->ext.hostname != NULL) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+        s->session->ext.hostname = OPENSSL_strdup(eff_sni);
+        if (s->session->ext.hostname == NULL) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+    }
+#else
     if (s->ext.hostname == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
@@ -1414,7 +1706,7 @@ int tls_parse_stoc_server_name(SSL_CONNECTION *s, PACKET *pkt,
             return 0;
         }
     }
-
+#endif
     return 1;
 }
 
@@ -2170,6 +2462,9 @@ EXT_RETURN tls_construct_ctos_client_cert_type(SSL_CONNECTION *sc, WPACKET *pkt,
     sc->ext.client_cert_type_ctos = OSSL_CERT_TYPE_CTOS_NONE;
     if (sc->client_cert_type == NULL)
         return EXT_RETURN_NOT_SENT;
+#ifndef OPENSSL_NO_ECH
+    ECH_SAME_EXT(sc, pkt)
+#endif
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_client_cert_type)
             || !WPACKET_start_sub_packet_u16(pkt)
@@ -2222,6 +2517,9 @@ EXT_RETURN tls_construct_ctos_server_cert_type(SSL_CONNECTION *sc, WPACKET *pkt,
     sc->ext.server_cert_type_ctos = OSSL_CERT_TYPE_CTOS_NONE;
     if (sc->server_cert_type == NULL)
         return EXT_RETURN_NOT_SENT;
+#ifndef OPENSSL_NO_ECH
+    ECH_SAME_EXT(sc, pkt)
+#endif
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_server_cert_type)
             || !WPACKET_start_sub_packet_u16(pkt)
@@ -2266,3 +2564,96 @@ int tls_parse_stoc_server_cert_type(SSL_CONNECTION *sc, PACKET *pkt,
     sc->ext.server_cert_type = type;
     return 1;
 }
+
+#ifndef OPENSSL_NO_ECH
+EXT_RETURN tls_construct_ctos_ech(SSL_CONNECTION *s, WPACKET *pkt,
+                                  unsigned int context, X509 *x,
+                                  size_t chainidx)
+{
+    if (s->ext.ech.attempted_type != TLSEXT_TYPE_ech
+        && s->ext.ech.grease != OSSL_ECH_IS_GREASE
+        && !(s->options & SSL_OP_ECH_GREASE))
+        return EXT_RETURN_NOT_SENT;
+    /* send grease if not really attempting ECH */
+    if (s->ext.ech.attempted == 0
+        && (s->ext.ech.grease == OSSL_ECH_IS_GREASE
+            || (s->options & SSL_OP_ECH_GREASE))) {
+        if (s->hello_retry_request == SSL_HRR_PENDING
+            && s->ext.ech.sent != NULL) {
+            /* re-tx already sent GREASEy ECH */
+            if (WPACKET_memcpy(pkt, s->ext.ech.sent,
+                               s->ext.ech.sent_len) != 1) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                return EXT_RETURN_FAIL;
+            }
+            return EXT_RETURN_SENT;
+        }
+        /* if nobody set a type, use the defaulf */
+        if (s->ext.ech.attempted_type == OSSL_ECH_type_unknown)
+            s->ext.ech.attempted_type = TLSEXT_TYPE_ech;
+        if (ossl_ech_send_grease(s, pkt) != 1) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return EXT_RETURN_NOT_SENT;
+        }
+        return EXT_RETURN_SENT;
+    }
+    /*
+     * If not GREASEing we fake sending the outer value - after the
+     * entire thing has been constructed we only then finally encode
+     * and encrypt - need to do it that way as we need the rest of
+     * the outer CH as AAD input to the encryption.
+     */
+    if (s->ext.ech.ch_depth == 0)
+        return EXT_RETURN_NOT_SENT;
+    /* For the inner CH - we simply include one of these saying "inner" */
+    if (s->ext.ech.ch_depth == 1) {
+        if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_ech)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_put_bytes_u8(pkt, OSSL_ECH_INNER_CH_TYPE)
+            || !WPACKET_close(pkt)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return EXT_RETURN_FAIL;
+        }
+        return EXT_RETURN_SENT;
+    }
+    return EXT_RETURN_FAIL;
+}
+
+/* if the server thinks we GREASE'd then we may get an ECHConfigList */
+int tls_parse_stoc_ech(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
+                       X509 *x, size_t chainidx)
+{
+    unsigned int rlen = 0;
+    const unsigned char *rval = NULL;
+    unsigned char *srval = NULL;
+
+    /*
+     * An HRR will have an ECH extension with the
+     * 8-octet confirmation value, already handled
+     */
+    if (context == SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST)
+        return 1;
+    /* othewise we expect retry-configs */
+    if (!PACKET_get_net_2(pkt, &rlen)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
+        return 0;
+    }
+    if (!PACKET_get_bytes(pkt, &rval, rlen)) {
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_LENGTH_MISMATCH);
+        return 0;
+    }
+    OPENSSL_free(s->ext.ech.returned);
+    s->ext.ech.returned = NULL;
+    srval = OPENSSL_malloc(rlen + 2);
+    if (srval == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    srval[0] = (rlen >> 8) & 0xff;
+    srval[1] = rlen & 0xff;
+    memcpy(srval + 2, rval, rlen);
+    s->ext.ech.returned = srval;
+    s->ext.ech.returned_len = rlen + 2;
+    return 1;
+}
+#endif /* END_OPENSSL_NO_ECH */

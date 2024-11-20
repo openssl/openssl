@@ -37,8 +37,6 @@ static MSG_PROCESS_RETURN tls_process_encrypted_extensions(SSL_CONNECTION *s,
 
 static ossl_inline int cert_req_allowed(SSL_CONNECTION *s);
 static int key_exchange_expected(SSL_CONNECTION *s);
-static int ssl_cipher_list_to_bytes(SSL_CONNECTION *s, STACK_OF(SSL_CIPHER) *sk,
-                                    WPACKET *pkt);
 
 static ossl_inline int received_server_cert(SSL_CONNECTION *sc)
 {
@@ -1163,7 +1161,252 @@ WORK_STATE ossl_statem_client_post_process_message(SSL_CONNECTION *s,
     }
 }
 
-CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s, WPACKET *pkt)
+#ifndef OPENSSL_NO_ECH
+/*
+ * Wrap the existing ClientHello construction with ECH code.
+ *
+ * As needed, we'll call the existing CH constructor twice,
+ * first for inner, and then for outer.
+ *
+ * So the old tls_construct_client_hello is renamed to the _aux
+ * variant, and the new tls_construct_client_hello just calls
+ * that if there's no ECH involved, but otherwise does ECH
+ * things around calls to the _aux variant.
+ *
+ * Our basic model is that, when really attempting ECH we
+ * indicate via the ch_depth field whether we're dealing
+ * with inner or outer CH (1 for inner, 0 for outer).
+ *
+ * After creating the fields for the inner CH, we encode
+ * those (so we can re-use existing code) then decode again
+ * (using the existing tls_process_client_hello previously
+ * only used on servers), again to maximise code re-use.
+ *
+ * We next re-encode inner but this time including the
+ * optimisations for inner CH "compression" (outer exts etc.)
+ * to produce our plaintext for encrypting.
+ *
+ * We then process the outer CH in more or less the
+ * usual manner.
+ *
+ * We lastly form up the AAD etc and encrypt to give us
+ * the ciphertext for inclusion in the value of the outer
+ * CH ECH extension.
+ *
+ * It may seem odd to form up the outer CH before
+ * encrypting, but we need to do it that way so we get
+ * the octets for the AAD used in encryption.
+ *
+ * Phew!
+ */
+static int tls_construct_client_hello_aux(SSL_CONNECTION *s, WPACKET *pkt);
+
+__owur CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s,
+                                                  WPACKET *pkt)
+{
+    unsigned char *innerch_full = NULL, *innerch_end = NULL;
+    WPACKET inner; /* "fake" pkt for inner */
+    BUF_MEM *inner_mem = NULL;
+    PACKET rpkt; /* we'll decode back the inner ch to help make the outer */
+    SSL_SESSION *sess = NULL;
+    size_t sess_id_len = 0, innerlen = 0;
+    int mt = SSL3_MT_CLIENT_HELLO, rv = 0;
+    OSSL_HPKE_SUITE suite;
+    OSSL_ECHSTORE_ENTRY *ee = NULL;
+    /* Work out what SSL/TLS/DTLS version to use */
+    int protverr = ssl_set_client_hello_version(s);
+
+    if (protverr != 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, protverr);
+        return 0;
+    }
+    /* If we're not really attempting ECH, just call existing code.  */
+    if (s->ext.ech.es == NULL)
+        return tls_construct_client_hello_aux(s, pkt);
+    /* note version we're attempting and that an attempt is being made */
+    if (s->ext.ech.es->entries != NULL) {
+        if (ossl_ech_pick_matching_cfg(s, &ee, &suite) != 1 || ee == NULL) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, protverr);
+            return 0;
+        }
+        if (ee->version != OSSL_ECH_RFCXXXX_VERSION) {
+            /* we only support that version for now */
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, protverr);
+            return 0;
+        }
+        s->ext.ech.attempted_type = TLSEXT_TYPE_ech;
+        s->ext.ech.attempted_cid = ee->config_id;
+        s->ext.ech.attempted = 1;
+        if (s->ext.ech.outer_hostname == NULL && ee->public_name != NULL) {
+            s->ext.ech.outer_hostname = OPENSSL_strdup((char *)ee->public_name);
+            if (s->ext.ech.outer_hostname == NULL) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                return 0;
+            }
+        }
+    }
+    /* If doing real ECH and application requested GREASE too, over-ride that */
+    if (s->ext.ech.grease == OSSL_ECH_IS_GREASE && s->ext.ech.attempted == 1)
+        s->ext.ech.grease = OSSL_ECH_NOT_GREASE;
+    /*
+     * Session ID is handled "oddly" by not being encoded into inner CH (an
+     * optimisation) so is the same for both inner and outer.
+     */
+    sess = s->session;
+    if (sess == NULL
+        || !ssl_version_supported(s, sess->ssl_version, NULL)
+        || !SSL_SESSION_is_resumable(sess)) {
+        if (s->hello_retry_request == SSL_HRR_NONE
+            && !ssl_get_new_session(s, 0))
+            return 0; /* SSLfatal() already called */
+    }
+    if (s->new_session || s->session->ssl_version == TLS1_3_VERSION) {
+        if (s->version == TLS1_3_VERSION
+            && (s->options & SSL_OP_ENABLE_MIDDLEBOX_COMPAT) != 0) {
+            sess_id_len = sizeof(s->tmp_session_id);
+            s->tmp_session_id_len = sess_id_len;
+            if (s->hello_retry_request == SSL_HRR_NONE
+                && RAND_bytes_ex(s->ssl.ctx->libctx, s->tmp_session_id,
+                                 sess_id_len, RAND_DRBG_STRENGTH) <= 0) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                return 0;
+            }
+            memcpy(s->session->session_id, s->tmp_session_id, sess_id_len);
+            s->session->session_id_length = sess_id_len;
+        } else {
+            sess_id_len = 0;
+        }
+    } else {
+        assert(s->session->session_id_length <= sizeof(s->session->session_id));
+        sess_id_len = s->session->session_id_length;
+        if (s->version == TLS1_3_VERSION) {
+            s->tmp_session_id_len = sess_id_len;
+            memcpy(s->tmp_session_id, s->session->session_id, sess_id_len);
+        }
+    }
+    if (s->hello_retry_request != SSL_HRR_NONE) {
+        s->ext.ech.n_outer_only = 0; /* reset count of "compressed" exts */
+        OPENSSL_free(s->ext.ech.encoded_innerch);
+        s->ext.ech.encoded_innerch = NULL;
+        s->ext.ech.encoded_innerch_len = 0;
+        if (s->ext.ech.innerch != NULL) {
+            OPENSSL_free(s->ext.ech.innerch1);
+            s->ext.ech.innerch1 = s->ext.ech.innerch;
+            s->ext.ech.innerch1_len = s->ext.ech.innerch_len;
+            s->ext.ech.innerch_len = 0;
+            s->ext.ech.innerch = NULL;
+        }
+    }
+    /*
+     * Set CH depth flag so that other code (e.g. extension handlers)
+     * know where we're at: 1 is "inner CH", 0 is "outer CH"
+     */
+    s->ext.ech.ch_depth = 1;
+    if ((inner_mem = BUF_MEM_new()) == NULL
+        || !WPACKET_init(&inner, inner_mem)
+        || !ssl_set_handshake_header(s, &inner, mt)
+        || tls_construct_client_hello_aux(s, &inner) != 1
+        || !WPACKET_close(&inner)
+        || !WPACKET_get_length(&inner, &innerlen)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, protverr);
+        goto err;
+    }
+    innerch_full = OPENSSL_malloc(innerlen);
+    if (innerch_full == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+    innerch_end = WPACKET_get_curr(&inner);
+    memcpy(innerch_full, innerch_end - innerlen, innerlen);
+    OPENSSL_free(s->ext.ech.innerch);
+    s->ext.ech.innerch = innerch_full;
+    s->ext.ech.innerch_len = innerlen;
+    WPACKET_cleanup(&inner);
+    BUF_MEM_free(inner_mem);
+    inner_mem = NULL;
+# ifdef OSSL_ECH_SUPERVERBOSE
+    ossl_ech_pbuf("inner CH", s->ext.ech.innerch, s->ext.ech.innerch_len);
+    ossl_ech_pbuf("inner, client_random", s->ext.ech.client_random,
+                  SSL3_RANDOM_SIZE);
+    ossl_ech_pbuf("inner, session_id", s->session->session_id,
+                  s->session->session_id_length);
+# endif
+    /* Decode inner so that we can make up encoded inner */
+    if (!PACKET_buf_init(&rpkt, (unsigned char *)s->ext.ech.innerch + 4,
+                         s->ext.ech.innerch_len - 4)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+    /*
+     * Parse the full inner CH (usually done on server). This gets us
+     * individually encoded extensions so we can choose to compress
+     * and/or to re-use the same value in outer.
+     */
+    if (!tls_process_client_hello(s, &rpkt)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+    /* Make ClientHelloInner and EncodedClientHelloInner as per spec. */
+    if (ossl_ech_encode_inner(s) != 1) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+# ifdef OSSL_ECH_SUPERVERBOSE
+    ossl_ech_pbuf("encoded inner CH", s->ext.ech.encoded_innerch,
+                  s->ext.ech.encoded_innerch_len);
+# endif
+    s->ext.ech.ch_depth = 0; /* set depth for outer CH */
+    /*
+     * If we want different key shares for inner and outer, then
+     * zap the one for the inner. The inner key_share is stashed
+     * in s.ext.ech.tmp_pkey already.
+     */
+    if (ossl_ech_same_key_share() == 0) {
+        EVP_PKEY_free(s->s3.tmp.pkey);
+        s->s3.tmp.pkey = NULL;
+    }
+    /* Make second call into CH construction for outer CH. */
+    rv = tls_construct_client_hello_aux(s, pkt);
+    if (rv != 1) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, protverr);
+        goto err;
+    }
+# ifdef OSSL_ECH_SUPERVERBOSE
+    ossl_ech_pbuf("outer, client_random", s->s3.client_random,
+                  SSL3_RANDOM_SIZE);
+    ossl_ech_pbuf("outer, session_id", s->session->session_id,
+                  s->session->session_id_length);
+# endif
+    /* Finally, calculate AAD and encrypt using HPKE */
+    if (ossl_ech_aad_and_encrypt(s, pkt) != 1) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+    /* Free up raw exts as needed (happens like this on real server) */
+    if (s->clienthello != NULL
+        && s->clienthello->pre_proc_exts != NULL) {
+        OPENSSL_free(s->clienthello->pre_proc_exts);
+        OPENSSL_free(s->clienthello);
+        s->clienthello = NULL;
+    }
+    return 1;
+err:
+    if (inner_mem != NULL) {
+        WPACKET_cleanup(&inner);
+        BUF_MEM_free(inner_mem);
+    }
+    if (s->clienthello != NULL) {
+        OPENSSL_free(s->clienthello->pre_proc_exts);
+        OPENSSL_free(s->clienthello);
+        s->clienthello = NULL;
+    }
+    return 0;
+}
+
+static int tls_construct_client_hello_aux(SSL_CONNECTION *s, WPACKET *pkt)
+#else
+__owur CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s, WPACKET *pkt)
+#endif
 {
     unsigned char *p;
     size_t sess_id_len;
@@ -1182,18 +1425,30 @@ CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s, WPACKET *pkt)
         return CON_FUNC_ERROR;
     }
 
-    if (sess == NULL
+#ifndef OPENSSL_NO_ECH
+    /* if we're doing ECH, re-use session ID setup earlier */
+    if (s->ext.ech.es == NULL)
+#endif
+        if (sess == NULL
             || !ssl_version_supported(s, sess->ssl_version, NULL)
             || !SSL_SESSION_is_resumable(sess)) {
-        if (s->hello_retry_request == SSL_HRR_NONE
-                && !ssl_get_new_session(s, 0)) {
-            /* SSLfatal() already called */
-            return CON_FUNC_ERROR;
+            if (s->hello_retry_request == SSL_HRR_NONE
+                    && !ssl_get_new_session(s, 0)) {
+                /* SSLfatal() already called */
+                return CON_FUNC_ERROR;
+            }
         }
-    }
-    /* else use the pre-loaded session */
+        /* else use the pre-loaded session */
 
+#ifndef OPENSSL_NO_ECH
+    /* use different client_random fields for inner and outer */
+    if (s->ext.ech.es != NULL && s->ext.ech.ch_depth == 1)
+        p = s->ext.ech.client_random;
+    else
+        p = s->s3.client_random;
+#else
     p = s->s3.client_random;
+#endif
 
     /*
      * for DTLS if client_random is initialized, reuse it, we are
@@ -1251,37 +1506,55 @@ CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s, WPACKET *pkt)
      * For TLS 1.3 we always set the ClientHello version to 1.2 and rely on the
      * supported_versions extension for the real supported versions.
      */
+#ifndef OPENSSL_NO_ECH
+    if (!WPACKET_put_bytes_u16(pkt, s->client_version)
+            || !WPACKET_memcpy(pkt, p, SSL3_RANDOM_SIZE)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return CON_FUNC_ERROR;
+    }
+#else
     if (!WPACKET_put_bytes_u16(pkt, s->client_version)
             || !WPACKET_memcpy(pkt, s->s3.client_random, SSL3_RANDOM_SIZE)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return CON_FUNC_ERROR;
     }
+#endif
 
     /* Session ID */
     session_id = s->session->session_id;
-    if (s->new_session || s->session->ssl_version == TLS1_3_VERSION) {
-        if (s->version == TLS1_3_VERSION
-                && (s->options & SSL_OP_ENABLE_MIDDLEBOX_COMPAT) != 0) {
-            sess_id_len = sizeof(s->tmp_session_id);
-            s->tmp_session_id_len = sess_id_len;
-            session_id = s->tmp_session_id;
-            if (s->hello_retry_request == SSL_HRR_NONE
-                    && RAND_bytes_ex(sctx->libctx, s->tmp_session_id,
-                                     sess_id_len, 0) <= 0) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                return CON_FUNC_ERROR;
+#ifndef OPENSSL_NO_ECH
+    /* same session ID is used for inner/outer when doing ECH */
+    if (s->ext.ech.es != NULL) {
+        sess_id_len = sizeof(s->tmp_session_id);
+    } else {
+#endif
+        if (s->new_session || s->session->ssl_version == TLS1_3_VERSION) {
+            if (s->version == TLS1_3_VERSION
+                    && (s->options & SSL_OP_ENABLE_MIDDLEBOX_COMPAT) != 0) {
+                sess_id_len = sizeof(s->tmp_session_id);
+                s->tmp_session_id_len = sess_id_len;
+                session_id = s->tmp_session_id;
+                if (s->hello_retry_request == SSL_HRR_NONE
+                        && RAND_bytes_ex(sctx->libctx, s->tmp_session_id,
+                                         sess_id_len, 0) <= 0) {
+                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                    return CON_FUNC_ERROR;
+                }
+            } else {
+                sess_id_len = 0;
             }
         } else {
-            sess_id_len = 0;
+            assert(s->session->session_id_length <= sizeof(s->session->session_id));
+            sess_id_len = s->session->session_id_length;
+            if (s->version == TLS1_3_VERSION) {
+                s->tmp_session_id_len = sess_id_len;
+                memcpy(s->tmp_session_id, s->session->session_id, sess_id_len);
+            }
         }
-    } else {
-        assert(s->session->session_id_length <= sizeof(s->session->session_id));
-        sess_id_len = s->session->session_id_length;
-        if (s->version == TLS1_3_VERSION) {
-            s->tmp_session_id_len = sess_id_len;
-            memcpy(s->tmp_session_id, s->session->session_id, sess_id_len);
-        }
+#ifndef OPENSSL_NO_ECH
     }
+#endif
+
     if (!WPACKET_start_sub_packet_u8(pkt)
             || (sess_id_len != 0 && !WPACKET_memcpy(pkt, session_id,
                                                     sess_id_len))
@@ -1470,6 +1743,24 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
 #ifndef OPENSSL_NO_COMP
     SSL_COMP *comp;
 #endif
+#ifndef OPENSSL_NO_ECH
+    const unsigned char *shbuf = NULL;
+    size_t shlen, chend, fixedshbuf_len, alen;
+    /*
+     * client and server accept signal buffers, initialise in case of
+     * e.g. memory fail when calculating, only really applies when
+     * SUPERVERBOSE is defined and we trace these.
+     */
+    unsigned char c_signal[OSSL_ECH_SIGNAL_LEN] = { 0 }; 
+    unsigned char s_signal[OSSL_ECH_SIGNAL_LEN] = { 0xff };
+    unsigned char *abuf = NULL;
+
+    shlen = PACKET_remaining(pkt);
+    if (PACKET_peek_bytes(pkt, &shbuf, shlen) != 1) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
+        goto err;
+    }
+#endif
 
     if (!PACKET_get_net_2(pkt, &sversion)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
@@ -1524,6 +1815,71 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
         goto err;
     }
+
+#ifndef OPENSSL_NO_ECH
+    /*
+     * If we sent an ECH then check if that worked based on the
+     * ServerHello.random confirmation trick. If that is good
+     * then we'll swap over the inner and outer contexts and
+     * proceed with inner. There are some HRR wrinkles too
+     * though.
+     */
+    if (s->ext.ech.es != NULL
+        && s->ext.ech.done != 1 && s->ext.ech.ch_depth == 0
+        && s->ext.ech.grease == OSSL_ECH_NOT_GREASE
+        && s->ext.ech.attempted_type == TLSEXT_TYPE_ech) {
+        /* try set this earlier see what happens */
+        if (!set_client_ciphersuite(s, cipherchars)) {
+            /* SSLfatal() already called */
+            goto err;
+        }
+        /* check the ECH accept signal */
+        if (ossl_ech_calc_confirm(s, hrr, c_signal, shbuf, shlen) != 1
+            || ossl_ech_find_confirm(s, hrr, s_signal, shbuf, shlen) != 1
+            || memcmp(s_signal, c_signal, sizeof(c_signal)) != 0) {
+            OSSL_TRACE(TLS, "ECH accept check failed\n");
+# ifdef OSSL_ECH_SUPERVERBOSE
+            ossl_ech_pbuf("ECH client accept val:", c_signal, sizeof(c_signal));
+            ossl_ech_pbuf("ECH server accept val:", s_signal, sizeof(s_signal));
+# endif
+            s->ext.ech.success = 0;
+        } else { /* match, ECH worked */
+            OSSL_TRACE_BEGIN(TLS) {
+                BIO_printf(trc_out, "ECH accept check ok\n");
+                BIO_printf(trc_out, "ECH set session hostname to %s\n",
+                           s->ext.hostname ? s->ext.hostname : "NULL");
+            } OSSL_TRACE_END(TLS);
+            s->ext.ech.success = 1;
+        }
+        if (!hrr && s->ext.ech.success == 1) {
+            if (ossl_ech_swaperoo(s) != 1
+                || ossl_ech_make_transcript_buffer(s, hrr, shbuf, shlen,
+                                                   &abuf, &alen,
+                                                   &chend, &fixedshbuf_len) != 1
+                || ossl_ech_reset_hs_buffer(s, abuf, alen) != 1) {
+                OPENSSL_free(abuf);
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
+            OPENSSL_free(abuf);
+        } else if (!hrr) {
+            /*
+             * If we got retry_configs then we should be validating
+             * the outer CH, so we better set the hostname for the
+             * connection accordingly.
+             */
+            s->ext.ech.former_inner = s->ext.hostname;
+            s->ext.hostname = NULL;
+            if (s->ext.ech.outer_hostname != NULL) {
+                s->ext.hostname = OPENSSL_strdup(s->ext.ech.outer_hostname);
+                if (s->ext.hostname == NULL) {
+                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                    goto err;
+                }
+            }
+        }
+    }
+#endif
 
     /* TLS extensions */
     if (PACKET_remaining(pkt) == 0 && !hrr) {
@@ -2974,6 +3330,18 @@ int tls_process_initial_server_flight(SSL_CONNECTION *s)
     }
 #endif
 
+#ifndef OPENSSL_NO_ECH
+    /* check result of ech and return error if needed */
+    if (!s->server
+        && s->ext.ech.es != NULL
+        && s->ext.ech.attempted == 1
+        && s->ext.ech.success != 1
+        && s->ext.ech.grease != OSSL_ECH_IS_GREASE) {
+        SSLfatal(s, SSL_AD_ECH_REQUIRED, SSL_R_ECH_REQUIRED);
+        return 0;
+    }
+#endif /* OPENSSL_NO_ECH */
+
     return 1;
 }
 
@@ -4077,110 +4445,6 @@ int ssl_do_client_cert_cb(SSL_CONNECTION *s, X509 **px509, EVP_PKEY **ppkey)
     if (sctx->client_cert_cb)
         i = sctx->client_cert_cb(SSL_CONNECTION_GET_USER_SSL(s), px509, ppkey);
     return i;
-}
-
-int ssl_cipher_list_to_bytes(SSL_CONNECTION *s, STACK_OF(SSL_CIPHER) *sk,
-                             WPACKET *pkt)
-{
-    int i;
-    size_t totlen = 0, len, maxlen, maxverok = 0;
-    int empty_reneg_info_scsv = !s->renegotiate
-                                && !SSL_CONNECTION_IS_DTLS(s)
-                                && ssl_security(s, SSL_SECOP_VERSION, 0, TLS1_VERSION, NULL)
-                                && s->min_proto_version <= TLS1_VERSION;
-    SSL *ssl = SSL_CONNECTION_GET_SSL(s);
-
-    /* Set disabled masks for this session */
-    if (!ssl_set_client_disabled(s)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_NO_PROTOCOLS_AVAILABLE);
-        return 0;
-    }
-
-    if (sk == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return 0;
-    }
-
-#ifdef OPENSSL_MAX_TLS1_2_CIPHER_LENGTH
-# if OPENSSL_MAX_TLS1_2_CIPHER_LENGTH < 6
-#  error Max cipher length too short
-# endif
-    /*
-     * Some servers hang if client hello > 256 bytes as hack workaround
-     * chop number of supported ciphers to keep it well below this if we
-     * use TLS v1.2
-     */
-    if (TLS1_get_version(ssl) >= TLS1_2_VERSION)
-        maxlen = OPENSSL_MAX_TLS1_2_CIPHER_LENGTH & ~1;
-    else
-#endif
-        /* Maximum length that can be stored in 2 bytes. Length must be even */
-        maxlen = 0xfffe;
-
-    if (empty_reneg_info_scsv)
-        maxlen -= 2;
-    if (s->mode & SSL_MODE_SEND_FALLBACK_SCSV)
-        maxlen -= 2;
-
-    for (i = 0; i < sk_SSL_CIPHER_num(sk) && totlen < maxlen; i++) {
-        const SSL_CIPHER *c;
-
-        c = sk_SSL_CIPHER_value(sk, i);
-        /* Skip disabled ciphers */
-        if (ssl_cipher_disabled(s, c, SSL_SECOP_CIPHER_SUPPORTED, 0))
-            continue;
-
-        if (!ssl->method->put_cipher_by_char(c, pkt, &len)) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            return 0;
-        }
-
-        /* Sanity check that the maximum version we offer has ciphers enabled */
-        if (!maxverok) {
-            int minproto = SSL_CONNECTION_IS_DTLS(s) ? c->min_dtls : c->min_tls;
-            int maxproto = SSL_CONNECTION_IS_DTLS(s) ? c->max_dtls : c->max_tls;
-
-            if (ssl_version_cmp(s, maxproto, s->s3.tmp.max_ver) >= 0
-                    && ssl_version_cmp(s, minproto, s->s3.tmp.max_ver) <= 0)
-                maxverok = 1;
-        }
-
-        totlen += len;
-    }
-
-    if (totlen == 0 || !maxverok) {
-        const char *maxvertext =
-            !maxverok
-            ? "No ciphers enabled for max supported SSL/TLS version"
-            : NULL;
-
-        SSLfatal_data(s, SSL_AD_INTERNAL_ERROR, SSL_R_NO_CIPHERS_AVAILABLE,
-                      maxvertext);
-        return 0;
-    }
-
-    if (totlen != 0) {
-        if (empty_reneg_info_scsv) {
-            static const SSL_CIPHER scsv = {
-                0, NULL, NULL, SSL3_CK_SCSV, 0, 0, 0, 0, 0, 0, 0, 0, 0
-            };
-            if (!ssl->method->put_cipher_by_char(&scsv, pkt, &len)) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                return 0;
-            }
-        }
-        if (s->mode & SSL_MODE_SEND_FALLBACK_SCSV) {
-            static const SSL_CIPHER scsv = {
-                0, NULL, NULL, SSL3_CK_FALLBACK_SCSV, 0, 0, 0, 0, 0, 0, 0, 0, 0
-            };
-            if (!ssl->method->put_cipher_by_char(&scsv, pkt, &len)) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                return 0;
-            }
-        }
-    }
-
-    return 1;
 }
 
 CON_FUNC_RETURN tls_construct_end_of_early_data(SSL_CONNECTION *s, WPACKET *pkt)
