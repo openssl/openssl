@@ -31,8 +31,6 @@ Header:
           ffdhe2048 (256)
           ffdhe3072 (257)
         extension_type=session_ticket(35), length=0
-        extension_type=application_layer_protocol_negotiation(16), length=11
-          ossltest
         extension_type=encrypt_then_mac(22), length=0
         extension_type=extended_master_secret(23), length=0
         extension_type=signature_algorithms(13), length=?
@@ -67,6 +65,8 @@ Header:
             key_exchange:  (len=32): ?
         extension_type=compress_certificate(27), length=3
           zlib (1)
+        extension_type=application_layer_protocol_negotiation(16), length=11
+          ossltest
 
 Sent Frame: Crypto
     Offset: 0
