@@ -140,7 +140,9 @@ ___
 
     if (grep {/\b${nmdecor}OPENSSL_ia32cap_P\b/i} @out)
     {	my $comm=<<___;
-EXTERN	${nmdecor}OPENSSL_ia32cap_P:DWORD:4
+.bss	SEGMENT 'BSS'
+COMM	${nmdecor}OPENSSL_ia32cap_P:DWORD:4
+.bss	ENDS
 ___
 	# comment out OPENSSL_ia32cap_P declarations
 	grep {s/(^EXTERN\s+${nmdecor}OPENSSL_ia32cap_P)/\;$1/} @out;
