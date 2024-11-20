@@ -430,7 +430,7 @@ static void *dsa_gen_init(void *provctx, int selection,
         OSSL_FIPS_IND_INIT(gctx)
     }
     if (!dsa_gen_set_params(gctx, params)) {
-        OPENSSL_free(gctx);
+        dsa_gen_cleanup(gctx);
         gctx = NULL;
     }
     return gctx;
