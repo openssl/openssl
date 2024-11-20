@@ -107,6 +107,9 @@ static int keymatexportlen = 20;
 static BIO *bio_c_out = NULL;
 static int c_quiet = 0;
 static char *sess_out = NULL;
+# ifndef OPENSSL_NO_ECH
+static char *ech_config_list = NULL;
+# endif
 static SSL_SESSION *psksess = NULL;
 
 static void print_stuff(BIO *berr, SSL *con, int full);
@@ -517,6 +520,9 @@ typedef enum OPTION_choice {
     OPT_ENABLE_CLIENT_RPK,
     OPT_SCTP_LABEL_BUG,
     OPT_KTLS,
+# ifndef OPENSSL_NO_ECH
+    OPT_ECHCONFIGLIST,
+# endif
     OPT_R_ENUM, OPT_PROV_ENUM
 } OPTION_CHOICE;
 
@@ -709,6 +715,10 @@ const OPTIONS s_client_options[] = {
     {"enable_pha", OPT_ENABLE_PHA, '-', "Enable post-handshake-authentication"},
     {"enable_server_rpk", OPT_ENABLE_SERVER_RPK, '-', "Enable raw public keys (RFC7250) from the server"},
     {"enable_client_rpk", OPT_ENABLE_CLIENT_RPK, '-', "Enable raw public keys (RFC7250) from the client"},
+# ifndef OPENSSL_NO_ECH
+    {"ech_config_list", OPT_ECHCONFIGLIST, 's',
+     "Set ECHConfigList, value is base 64 encoded ECHConfigList"},
+# endif
 #ifndef OPENSSL_NO_SRTP
     {"use_srtp", OPT_USE_SRTP, 's',
      "Offer SRTP key management with a colon-separated profile list"},
@@ -1502,6 +1512,11 @@ int s_client_main(int argc, char **argv)
         case OPT_SERVERNAME:
             servername = opt_arg();
             break;
+# ifndef OPENSSL_NO_ECH
+        case OPT_ECHCONFIGLIST:
+            ech_config_list = opt_arg();
+            break;
+# endif
         case OPT_NOSERVERNAME:
             noservername = 1;
             break;
@@ -2103,6 +2118,13 @@ int s_client_main(int argc, char **argv)
             goto end;
         }
     }
+
+# ifndef OPENSSL_NO_ECH
+    if (ech_config_list != NULL
+        && SSL_set1_ech_config_list(con, (unsigned char *)ech_config_list,
+                                    strlen(ech_config_list)) != 1)
+        goto end;
+# endif
 
     if (dane_tlsa_domain != NULL) {
         if (SSL_dane_enable(con, dane_tlsa_domain) <= 0) {
@@ -3375,6 +3397,101 @@ static void print_cert_key_info(BIO *bio, X509 *cert)
     OPENSSL_free(curve);
 }
 
+# ifndef OPENSSL_NO_ECH
+static void print_ech_retry_configs(BIO *bio, SSL *s)
+{
+    int ind, cnt = 0, has_priv, for_retry;
+    OSSL_ECHSTORE *es = NULL;
+    time_t secs = 0;
+    char *pn = NULL, *ec = NULL;
+    size_t rtlen = 0;
+    unsigned char *rtval = NULL;
+    BIO *biom = NULL;
+
+    if (SSL_ech_get1_retry_config(s, &rtval, &rtlen) != 1) {
+        BIO_printf(bio, "ECH: Error getting retry-configs\n");
+        return;
+    }
+    /*
+     * print nicely, note that any non-supported versions
+     * sent by server will have been filtered out by now
+     */
+    if ((biom = BIO_new(BIO_s_mem())) == NULL
+        || BIO_write(biom, rtval, rtlen) <= 0
+        || (es = OSSL_ECHSTORE_new(NULL, NULL)) == NULL
+        || OSSL_ECHSTORE_read_echconfiglist(es, biom) != 1) {
+        BIO_printf(bio, "ECH: Error loading retry-configs\n");
+        goto end;
+    }
+    if (OSSL_ECHSTORE_num_entries(es, &cnt) != 1)
+        goto end;
+    BIO_printf(bio, "ECH: Got %d retry-configs\n", cnt);
+    for (ind = 0; ind != cnt; ind++) {
+        if (OSSL_ECHSTORE_get1_info(es, ind, &secs, &pn, &ec,
+                                    &has_priv, &for_retry) != 1) {
+            BIO_printf(bio, "ECH: Error getting retry-config %d\n", ind);
+            goto end;
+        }
+        BIO_printf(bio, "ECH: entry: %d public_name: %s age: %d%s\n",
+                   ind, pn, (int)secs, has_priv ? " (has private key)" : "");
+        BIO_printf(bio, "ECH: \t%s\n", ec);
+        OPENSSL_free(pn);
+        pn = NULL;
+        OPENSSL_free(ec);
+        ec = NULL;
+    }
+end:
+    BIO_free_all(biom);
+    OPENSSL_free(rtval);
+    OPENSSL_free(pn);
+    OPENSSL_free(ec);
+    OSSL_ECHSTORE_free(es);
+    return;
+}
+
+static void print_ech_status(BIO *bio, SSL *s, int estat)
+{
+    switch (estat) {
+    case SSL_ECH_STATUS_NOT_TRIED:
+        BIO_printf(bio, "ECH: not tried: %d\n", estat);
+        break;
+    case SSL_ECH_STATUS_FAILED:
+        BIO_printf(bio, "ECH: tried but failed: %d\n", estat);
+        break;
+    case SSL_ECH_STATUS_FAILED_ECH:
+        BIO_printf(bio, "ECH: failed+retry-configs: %d\n", estat);
+        break;
+    case SSL_ECH_STATUS_SUCCESS:
+        BIO_printf(bio, "ECH: success: %d\n", estat);
+        break;
+    case SSL_ECH_STATUS_GREASE_ECH:
+        BIO_printf(bio, "ECH: GREASE+retry-configs%d\n", estat);
+        break;
+    case SSL_ECH_STATUS_BACKEND:
+        BIO_printf(bio, "ECH: BACKEND: %d\n", estat);
+        break;
+    case SSL_ECH_STATUS_GREASE:
+        BIO_printf(bio, "ECH: GREASE: %d\n", estat);
+        break;
+    case SSL_ECH_STATUS_BAD_CALL:
+        BIO_printf(bio, "ECH: BAD CALL: %d\n", estat);
+        break;
+    case SSL_ECH_STATUS_BAD_NAME:
+        BIO_printf(bio, "ECH: BAD NAME: %d\n", estat);
+        break;
+    case SSL_ECH_STATUS_NOT_CONFIGURED:
+        BIO_printf(bio, "ECH: NOT CONFIGURED: %d\n", estat);
+        break;
+    case SSL_ECH_STATUS_FAILED_ECH_BAD_NAME:
+        BIO_printf(bio, "ECH: failed+retry-configs: %d\n", estat);
+        break;
+    default:
+        BIO_printf(bio, "ECH: unexpected status: %d\n", estat);
+    }
+    return;
+}
+# endif
+
 static void print_stuff(BIO *bio, SSL *s, int full)
 {
     X509 *peer = NULL;
@@ -3618,6 +3735,26 @@ static void print_stuff(BIO *bio, SSL *s, int full)
         OPENSSL_free(exportedkeymat);
     }
     BIO_printf(bio, "---\n");
+# ifndef OPENSSL_NO_ECH
+    {
+        char *inner = NULL, *outer = NULL;
+        int estat = 0;
+
+        estat = SSL_ech_get1_status(s, &inner, &outer);
+        print_ech_status(bio, s, estat);
+        if (estat == SSL_ECH_STATUS_SUCCESS) {
+            BIO_printf(bio, "ECH: inner: %s\n", inner);
+            BIO_printf(bio, "ECH: outer: %s\n", outer);
+        }
+        if (estat == SSL_ECH_STATUS_FAILED_ECH
+            || estat == SSL_ECH_STATUS_FAILED_ECH_BAD_NAME)
+            print_ech_retry_configs(bio, s);
+        OPENSSL_free(inner);
+        OPENSSL_free(outer);
+    }
+    BIO_printf(bio, "---\n");
+# endif
+
     /* flush, or debugging output gets mixed with http response */
     (void)BIO_flush(bio);
 }

@@ -2250,3 +2250,107 @@ const char *OSSL_default_ciphersuites(void)
            "TLS_CHACHA20_POLY1305_SHA256:"
            "TLS_AES_128_GCM_SHA256";
 }
+
+int ssl_cipher_list_to_bytes(SSL_CONNECTION *s, STACK_OF(SSL_CIPHER) *sk,
+                             WPACKET *pkt)
+{
+    int i;
+    size_t totlen = 0, len, maxlen, maxverok = 0;
+    int empty_reneg_info_scsv = !s->renegotiate
+                                && !SSL_CONNECTION_IS_DTLS(s)
+                                && ssl_security(s, SSL_SECOP_VERSION, 0, TLS1_VERSION, NULL)
+                                && s->min_proto_version <= TLS1_VERSION;
+    SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+
+    /* Set disabled masks for this session */
+    if (!ssl_set_client_disabled(s)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_NO_PROTOCOLS_AVAILABLE);
+        return 0;
+    }
+
+    if (sk == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+#ifdef OPENSSL_MAX_TLS1_2_CIPHER_LENGTH
+# if OPENSSL_MAX_TLS1_2_CIPHER_LENGTH < 6
+#  error Max cipher length too short
+# endif
+    /*
+     * Some servers hang if client hello > 256 bytes as hack workaround
+     * chop number of supported ciphers to keep it well below this if we
+     * use TLS v1.2
+     */
+    if (TLS1_get_version(ssl) >= TLS1_2_VERSION)
+        maxlen = OPENSSL_MAX_TLS1_2_CIPHER_LENGTH & ~1;
+    else
+#endif
+        /* Maximum length that can be stored in 2 bytes. Length must be even */
+        maxlen = 0xfffe;
+
+    if (empty_reneg_info_scsv)
+        maxlen -= 2;
+    if (s->mode & SSL_MODE_SEND_FALLBACK_SCSV)
+        maxlen -= 2;
+
+    for (i = 0; i < sk_SSL_CIPHER_num(sk) && totlen < maxlen; i++) {
+        const SSL_CIPHER *c;
+
+        c = sk_SSL_CIPHER_value(sk, i);
+        /* Skip disabled ciphers */
+        if (ssl_cipher_disabled(s, c, SSL_SECOP_CIPHER_SUPPORTED, 0))
+            continue;
+
+        if (!ssl->method->put_cipher_by_char(c, pkt, &len)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+
+        /* Sanity check that the maximum version we offer has ciphers enabled */
+        if (!maxverok) {
+            int minproto = SSL_CONNECTION_IS_DTLS(s) ? c->min_dtls : c->min_tls;
+            int maxproto = SSL_CONNECTION_IS_DTLS(s) ? c->max_dtls : c->max_tls;
+
+            if (ssl_version_cmp(s, maxproto, s->s3.tmp.max_ver) >= 0
+                    && ssl_version_cmp(s, minproto, s->s3.tmp.max_ver) <= 0)
+                maxverok = 1;
+        }
+
+        totlen += len;
+    }
+
+    if (totlen == 0 || !maxverok) {
+        const char *maxvertext =
+            !maxverok
+            ? "No ciphers enabled for max supported SSL/TLS version"
+            : NULL;
+
+        SSLfatal_data(s, SSL_AD_INTERNAL_ERROR, SSL_R_NO_CIPHERS_AVAILABLE,
+                      maxvertext);
+        return 0;
+    }
+
+    if (totlen != 0) {
+        if (empty_reneg_info_scsv) {
+            static const SSL_CIPHER scsv = {
+                0, NULL, NULL, SSL3_CK_SCSV, 0, 0, 0, 0, 0, 0, 0, 0, 0
+            };
+            if (!ssl->method->put_cipher_by_char(&scsv, pkt, &len)) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                return 0;
+            }
+        }
+        if (s->mode & SSL_MODE_SEND_FALLBACK_SCSV) {
+            static const SSL_CIPHER scsv = {
+                0, NULL, NULL, SSL3_CK_FALLBACK_SCSV, 0, 0, 0, 0, 0, 0, 0, 0, 0
+            };
+            if (!ssl->method->put_cipher_by_char(&scsv, pkt, &len)) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                return 0;
+            }
+        }
+    }
+
+    return 1;
+}

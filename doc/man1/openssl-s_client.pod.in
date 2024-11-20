@@ -122,6 +122,7 @@ B<openssl> B<s_client>
 [B<-enable_server_rpk>]
 [B<-enable_client_rpk>]
 [I<host>:I<port>]
+[B<-ech_config_list>]
 
 =head1 DESCRIPTION
 
@@ -175,6 +176,15 @@ When used with the B<-connect> flag, the program uses the host and port
 specified with this flag and issues an HTTP CONNECT command to connect
 to the desired server.
 If the host string is an IPv6 address, it must be enclosed in C<[> and C<]>.
+
+=item B<-ech_config_list> I<value>
+
+Specifies the ECHConfigList value to use for Encrypted Client Hello (ECH) for
+the TLS session. The value must be a base64 encoded ECHConfigList.
+
+The ECHConfigList structure is defined in RFC XXXX. (That's currently in
+L<https://datatracker.ietf.org/doc/html/draft-ietf-tls-esni/>)
+=for comment TODO(ECH): replace XXXX when RFC published.
 
 =item B<-proxy_user> I<userid>
 
