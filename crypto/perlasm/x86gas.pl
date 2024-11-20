@@ -167,8 +167,8 @@ sub ::file_end
 	}
     }
     if (grep {/\b${nmdecor}OPENSSL_ia32cap_P\b/i} @out) {
-	my $tmp=".bss\n";
 	my $tmp=".comm\t${nmdecor}OPENSSL_ia32cap_P,16";
+	push (@out,".bss\n");
 	if ($::elf)	{ push (@out,"$tmp,4\n"); }
 	else		{ push (@out,"$tmp\n"); }
     }
