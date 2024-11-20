@@ -23,6 +23,7 @@
 # include <openssl/engine.h>
 #endif
 #include <openssl/self_test.h>
+#include <openssl/core_names.h>
 #include "prov/providercommon.h"
 #include "prov/ecx.h"
 #include "crypto/bn.h"
@@ -1099,11 +1100,26 @@ int EC_KEY_can_sign(const EC_KEY *eckey)
 static int ecdsa_keygen_pairwise_test(EC_KEY *eckey, OSSL_CALLBACK *cb,
                                       void *cbarg)
 {
+    OSSL_LIB_CTX *libctx = eckey->libctx;
+    char *propq = eckey->propq;
     int ret = 0;
-    unsigned char dgst[16] = {0};
-    int dgst_len = (int)sizeof(dgst);
-    ECDSA_SIG *sig = NULL;
+    OSSL_PARAM paramskey[4];
+    OSSL_PARAM paramsinit[1];
+    EVP_SIGNATURE *sigalg = NULL;
+    EVP_PKEY_CTX *ctx = NULL;
+    EVP_PKEY_CTX *fromctx = NULL;
+    EVP_PKEY *pkey = NULL;
+    unsigned char sig[256];
+    size_t siglen = sizeof(sig);
     OSSL_SELF_TEST *st = NULL;
+    EC_GROUP *group = NULL;
+    char *curve_name = NULL;
+    unsigned char *keyoct = NULL;
+    size_t keylen = 0;
+    unsigned char *privoct = NULL;
+    size_t privlen = 0;
+    const unsigned char msg[] = "Hello World!";
+    size_t msglen = sizeof(msg);
 
     st = OSSL_SELF_TEST_new(cb, cbarg);
     if (st == NULL)
@@ -1112,19 +1128,51 @@ static int ecdsa_keygen_pairwise_test(EC_KEY *eckey, OSSL_CALLBACK *cb,
     OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_PCT,
                            OSSL_SELF_TEST_DESC_PCT_ECDSA);
 
-    sig = ECDSA_do_sign(dgst, dgst_len, eckey);
-    if (sig == NULL)
+    group = EC_KEY_get0_group(eckey);
+    curve_name = OPENSSL_strdup(EC_curve_nid2nist(EC_GROUP_get_curve_name(group)));
+    keylen = EC_KEY_key2buf(eckey, POINT_CONVERSION_UNCOMPRESSED, &keyoct, NULL);
+    if (keylen == 0)
+        goto err;
+    privlen = EC_KEY_priv2buf(eckey, &privoct);
+    if (privlen == 0)
+        goto err;
+    paramskey[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME, curve_name, 0);
+    paramskey[1] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_PUB_KEY, keyoct, keylen);
+    paramskey[2] = OSSL_PARAM_construct_BN(OSSL_PKEY_PARAM_PRIV_KEY, privoct, privlen);
+    paramskey[3] = OSSL_PARAM_construct_end();
+    paramsinit[0] = OSSL_PARAM_construct_end();
+
+    fromctx = EVP_PKEY_CTX_new_from_name(libctx, "EC", propq);
+    if (fromctx == NULL)
+        goto err;
+    if (EVP_PKEY_fromdata_init(fromctx) <= 0
+            || EVP_PKEY_fromdata(fromctx, &pkey, EVP_PKEY_KEYPAIR, paramskey) <= 0)
         goto err;
 
-    OSSL_SELF_TEST_oncorrupt_byte(st, dgst);
-
-    if (ECDSA_do_verify(dgst, dgst_len, sig, eckey) != 1)
+    sigalg = EVP_SIGNATURE_fetch(libctx, "ECDSA-SHA512", propq);
+    if (sigalg == NULL)
+        goto err;
+    ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, propq);
+    if (ctx == NULL)
+        goto err;
+    if (EVP_PKEY_sign_message_init(ctx, sigalg, paramsinit) <= 0)
+        goto err;
+    if (EVP_PKEY_sign(ctx, sig, &siglen, msg, msglen) <= 0)
+        goto err;
+    if (EVP_PKEY_verify_message_init(ctx, sigalg, NULL) <= 0)
+        goto err;
+    OSSL_SELF_TEST_oncorrupt_byte(st, sig);
+    if (EVP_PKEY_verify(ctx, sig, siglen, msg, msglen) <= 0)
         goto err;
 
     ret = 1;
 err:
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_CTX_free(fromctx);
+    EVP_PKEY_CTX_free(ctx);
+    EVP_SIGNATURE_free(sigalg);
+    OPENSSL_free(curve_name);
     OSSL_SELF_TEST_onend(st, ret);
     OSSL_SELF_TEST_free(st);
-    ECDSA_SIG_free(sig);
     return ret;
 }
