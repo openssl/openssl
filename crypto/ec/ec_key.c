@@ -1100,10 +1100,13 @@ static int ecdsa_keygen_pairwise_test(EC_KEY *eckey, OSSL_CALLBACK *cb,
                                       void *cbarg)
 {
     int ret = 0;
-    unsigned char dgst[16] = {0};
-    int dgst_len = (int)sizeof(dgst);
+    unsigned char dgst[EVP_MAX_MD_SIZE];
+    unsigned int dgst_len = 0;
+    unsigned char msg[] = "Hello World!";
     ECDSA_SIG *sig = NULL;
     OSSL_SELF_TEST *st = NULL;
+    EVP_MD_CTX *ctx = EVP_MD_CTX_new();
+    EVP_MD *md = EVP_MD_fetch(eckey->libctx, "SHA512", NULL);
 
     st = OSSL_SELF_TEST_new(cb, cbarg);
     if (st == NULL)
@@ -1112,17 +1115,36 @@ static int ecdsa_keygen_pairwise_test(EC_KEY *eckey, OSSL_CALLBACK *cb,
     OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_PCT,
                            OSSL_SELF_TEST_DESC_PCT_ECDSA);
 
+    if (ctx == NULL
+        || md == NULL
+        || !EVP_DigestInit_ex(ctx, md, NULL)
+        || !EVP_DigestUpdate(ctx, msg, sizeof(msg))
+        || !EVP_DigestFinal(ctx, dgst, &dgst_len))
+        goto err;
+
     sig = ECDSA_do_sign(dgst, dgst_len, eckey);
     if (sig == NULL)
         goto err;
 
-    OSSL_SELF_TEST_oncorrupt_byte(st, dgst);
+    OPENSSL_cleanse(dgst, dgst_len);
+
+    OSSL_SELF_TEST_oncorrupt_byte(st, msg);
+
+    if (ctx == NULL
+        || md == NULL
+        || !EVP_DigestInit_ex(ctx, md, NULL)
+        || !EVP_DigestUpdate(ctx, msg, sizeof(msg))
+        || !EVP_DigestFinal(ctx, dgst, &dgst_len))
+        goto err;
 
     if (ECDSA_do_verify(dgst, dgst_len, sig, eckey) != 1)
         goto err;
 
     ret = 1;
 err:
+    EVP_MD_free(md);
+    EVP_MD_CTX_free(ctx);
+    OPENSSL_cleanse(dgst, dgst_len);
     OSSL_SELF_TEST_onend(st, ret);
     OSSL_SELF_TEST_free(st);
     ECDSA_SIG_free(sig);
