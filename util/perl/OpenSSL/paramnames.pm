@@ -427,6 +427,9 @@ my %params = (
     'PKEY_PARAM_FIPS_SIGN_CHECK' =>            "sign-check",
     'PKEY_PARAM_FIPS_APPROVED_INDICATOR' => '*ALG_PARAM_FIPS_APPROVED_INDICATOR',
 
+# SLH_DSA Key generation parameters
+    'PKEY_PARAM_SLH_DSA_ENTROPY' =>         "entropy",
+
 # Key Exchange parameters
     'EXCHANGE_PARAM_PAD' =>                   "pad",# uint
     'EXCHANGE_PARAM_EC_ECDH_COFACTOR_MODE' => "ecdh-cofactor-mode",# int
@@ -462,6 +465,9 @@ my %params = (
     'SIGNATURE_PARAM_FIPS_SIGN_X931_PAD_CHECK' => "sign-x931-pad-check",
     'SIGNATURE_PARAM_FIPS_APPROVED_INDICATOR' => '*ALG_PARAM_FIPS_APPROVED_INDICATOR',
     'SIGNATURE_PARAM_SIGNATURE' =>          "signature",
+    'SIGNATURE_PARAM_MESSAGE_ENCODING' =>   "message-encoding",
+    'SIGNATURE_PARAM_DETERMINISTIC' =>      "deterministic",
+    'SIGNATURE_PARAM_ADD_RANDOM' =>         "additional-random",   
 
 # Asym cipher parameters
     'ASYM_CIPHER_PARAM_DIGEST' =>                   '*PKEY_PARAM_DIGEST',

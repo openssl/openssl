@@ -10,7 +10,7 @@
  */
 
 /* Serialized OID's */
-static const unsigned char so[9220] = {
+static const unsigned char so[9328] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,                 /* [    0] OBJ_rsadsi */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,            /* [    6] OBJ_pkcs */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,       /* [   13] OBJ_md2 */
@@ -1315,9 +1315,21 @@ static const unsigned char so[9220] = {
     0x67,0x81,0x05,0x13,0x02,0x23,                 /* [ 9201] OBJ_tcg_tr_cat_platformFirmwareUpdateCompliance */
     0x67,0x81,0x05,0x13,0x02,0x24,                 /* [ 9207] OBJ_tcg_tr_cat_RTM */
     0x67,0x81,0x05,0x13,0x02,0x25,                 /* [ 9213] OBJ_tcg_tr_cat_PublicKey */
+    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x14,  /* [ 9219] OBJ_SLH_DSA_SHA2_128s */
+    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x15,  /* [ 9228] OBJ_SLH_DSA_SHA2_128f */
+    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x16,  /* [ 9237] OBJ_SLH_DSA_SHA2_192s */
+    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x17,  /* [ 9246] OBJ_SLH_DSA_SHA2_192f */
+    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x18,  /* [ 9255] OBJ_SLH_DSA_SHA2_256s */
+    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x19,  /* [ 9264] OBJ_SLH_DSA_SHA2_256f */
+    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x1A,  /* [ 9273] OBJ_SLH_DSA_SHAKE_128s */
+    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x1B,  /* [ 9282] OBJ_SLH_DSA_SHAKE_128f */
+    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x1C,  /* [ 9291] OBJ_SLH_DSA_SHAKE_192s */
+    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x1D,  /* [ 9300] OBJ_SLH_DSA_SHAKE_192f */
+    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x1E,  /* [ 9309] OBJ_SLH_DSA_SHAKE_256s */
+    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x1F,  /* [ 9318] OBJ_SLH_DSA_SHAKE_256f */
 };
 
-#define NUM_NID 1454
+#define NUM_NID 1466
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2773,9 +2785,21 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"tcg-tr-cat-platformFirmwareUpdateCompliance", "Platform Firmware Update Compliance Trait Category", NID_tcg_tr_cat_platformFirmwareUpdateCompliance, 6, &so[9201]},
     {"tcg-tr-cat-RTM", "Root of Trust of Measurement Trait Category", NID_tcg_tr_cat_RTM, 6, &so[9207]},
     {"tcg-tr-cat-PublicKey", "Public Key Trait Category", NID_tcg_tr_cat_PublicKey, 6, &so[9213]},
+    {"id-slh-dsa-sha2-128s", "SLH-DSA-SHA2-128s", NID_SLH_DSA_SHA2_128s, 9, &so[9219]},
+    {"id-slh-dsa-sha2-128f", "SLH-DSA-SHA2-128f", NID_SLH_DSA_SHA2_128f, 9, &so[9228]},
+    {"id-slh-dsa-sha2-192s", "SLH-DSA-SHA2-192s", NID_SLH_DSA_SHA2_192s, 9, &so[9237]},
+    {"id-slh-dsa-sha2-192f", "SLH-DSA-SHA2-192f", NID_SLH_DSA_SHA2_192f, 9, &so[9246]},
+    {"id-slh-dsa-sha2-256s", "SLH-DSA-SHA2-256s", NID_SLH_DSA_SHA2_256s, 9, &so[9255]},
+    {"id-slh-dsa-sha2-256f", "SLH-DSA-SHA2-256f", NID_SLH_DSA_SHA2_256f, 9, &so[9264]},
+    {"id-slh-dsa-shake-128s", "SLH-DSA-SHAKE-128s", NID_SLH_DSA_SHAKE_128s, 9, &so[9273]},
+    {"id-slh-dsa-shake-128f", "SLH-DSA-SHAKE-128f", NID_SLH_DSA_SHAKE_128f, 9, &so[9282]},
+    {"id-slh-dsa-shake-192s", "SLH-DSA-SHAKE-192s", NID_SLH_DSA_SHAKE_192s, 9, &so[9291]},
+    {"id-slh-dsa-shake-192f", "SLH-DSA-SHAKE-192f", NID_SLH_DSA_SHAKE_192f, 9, &so[9300]},
+    {"id-slh-dsa-shake-256s", "SLH-DSA-SHAKE-256s", NID_SLH_DSA_SHAKE_256s, 9, &so[9309]},
+    {"id-slh-dsa-shake-256f", "SLH-DSA-SHAKE-256f", NID_SLH_DSA_SHAKE_256f, 9, &so[9318]},
 };
 
-#define NUM_SN 1445
+#define NUM_SN 1457
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -3549,6 +3573,18 @@ static const unsigned int sn_objs[NUM_SN] = {
     1119,    /* "id-rsassa-pkcs1-v1_5-with-sha3-512" */
      973,    /* "id-scrypt" */
      512,    /* "id-set" */
+    1455,    /* "id-slh-dsa-sha2-128f" */
+    1454,    /* "id-slh-dsa-sha2-128s" */
+    1457,    /* "id-slh-dsa-sha2-192f" */
+    1456,    /* "id-slh-dsa-sha2-192s" */
+    1459,    /* "id-slh-dsa-sha2-256f" */
+    1458,    /* "id-slh-dsa-sha2-256s" */
+    1461,    /* "id-slh-dsa-shake-128f" */
+    1460,    /* "id-slh-dsa-shake-128s" */
+    1463,    /* "id-slh-dsa-shake-192f" */
+    1462,    /* "id-slh-dsa-shake-192s" */
+    1465,    /* "id-slh-dsa-shake-256f" */
+    1464,    /* "id-slh-dsa-shake-256s" */
      191,    /* "id-smime-aa" */
      215,    /* "id-smime-aa-contentHint" */
      218,    /* "id-smime-aa-contentIdentifier" */
@@ -4224,7 +4260,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1289,    /* "zstd" */
 };
 
-#define NUM_LN 1445
+#define NUM_LN 1457
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -4480,6 +4516,18 @@ static const unsigned int ln_objs[NUM_LN] = {
     1452,    /* "Root of Trust of Measurement Trait Category" */
      188,    /* "S/MIME" */
      167,    /* "S/MIME Capabilities" */
+    1455,    /* "SLH-DSA-SHA2-128f" */
+    1454,    /* "SLH-DSA-SHA2-128s" */
+    1457,    /* "SLH-DSA-SHA2-192f" */
+    1456,    /* "SLH-DSA-SHA2-192s" */
+    1459,    /* "SLH-DSA-SHA2-256f" */
+    1458,    /* "SLH-DSA-SHA2-256s" */
+    1461,    /* "SLH-DSA-SHAKE-128f" */
+    1460,    /* "SLH-DSA-SHAKE-128s" */
+    1463,    /* "SLH-DSA-SHAKE-192f" */
+    1462,    /* "SLH-DSA-SHAKE-192s" */
+    1465,    /* "SLH-DSA-SHAKE-256f" */
+    1464,    /* "SLH-DSA-SHAKE-256s" */
     1204,    /* "SM2-with-SM3" */
     1006,    /* "SNILS" */
      387,    /* "SNMPv2" */
@@ -5673,7 +5721,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      125,    /* "zlib compression" */
 };
 
-#define NUM_OBJ 1311
+#define NUM_OBJ 1323
 static const unsigned int obj_objs[NUM_OBJ] = {
        0,    /* OBJ_undef                        0 */
      181,    /* OBJ_iso                          1 */
@@ -6762,6 +6810,18 @@ static const unsigned int obj_objs[NUM_OBJ] = {
     1117,    /* OBJ_RSA_SHA3_256                 2 16 840 1 101 3 4 3 14 */
     1118,    /* OBJ_RSA_SHA3_384                 2 16 840 1 101 3 4 3 15 */
     1119,    /* OBJ_RSA_SHA3_512                 2 16 840 1 101 3 4 3 16 */
+    1454,    /* OBJ_SLH_DSA_SHA2_128s            2 16 840 1 101 3 4 3 20 */
+    1455,    /* OBJ_SLH_DSA_SHA2_128f            2 16 840 1 101 3 4 3 21 */
+    1456,    /* OBJ_SLH_DSA_SHA2_192s            2 16 840 1 101 3 4 3 22 */
+    1457,    /* OBJ_SLH_DSA_SHA2_192f            2 16 840 1 101 3 4 3 23 */
+    1458,    /* OBJ_SLH_DSA_SHA2_256s            2 16 840 1 101 3 4 3 24 */
+    1459,    /* OBJ_SLH_DSA_SHA2_256f            2 16 840 1 101 3 4 3 25 */
+    1460,    /* OBJ_SLH_DSA_SHAKE_128s           2 16 840 1 101 3 4 3 26 */
+    1461,    /* OBJ_SLH_DSA_SHAKE_128f           2 16 840 1 101 3 4 3 27 */
+    1462,    /* OBJ_SLH_DSA_SHAKE_192s           2 16 840 1 101 3 4 3 28 */
+    1463,    /* OBJ_SLH_DSA_SHAKE_192f           2 16 840 1 101 3 4 3 29 */
+    1464,    /* OBJ_SLH_DSA_SHAKE_256s           2 16 840 1 101 3 4 3 30 */
+    1465,    /* OBJ_SLH_DSA_SHAKE_256f           2 16 840 1 101 3 4 3 31 */
       71,    /* OBJ_netscape_cert_type           2 16 840 1 113730 1 1 */
       72,    /* OBJ_netscape_base_url            2 16 840 1 113730 1 2 */
       73,    /* OBJ_netscape_revocation_url      2 16 840 1 113730 1 3 */
