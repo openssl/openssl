@@ -60,7 +60,7 @@ The fields 'key_len' and 'has_priv' are used to determine if a key has loaded
 the public and private key elements.
 The 'params' field is the parameter set which is resolved via the algorithm name.
 
-The FIPS 205 the SLH_DSA private key contains the public key.
+In FIPS 205 the SLH_DSA private key contains the public key.
 In OpenSSL these components are stored separately, so there must always be a
 public key in order for the key to be valid.
 

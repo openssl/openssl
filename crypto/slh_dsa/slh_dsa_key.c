@@ -15,8 +15,10 @@
 #include <openssl/rand.h>
 #include "slh_dsa_local.h"
 #include "slh_dsa_key.h"
+#include "internal/encoder.h"
 
-static int slh_dsa_compute_pk_root(SLH_DSA_CTX *ctx, SLH_DSA_KEY *out);
+static int slh_dsa_compute_pk_root(SLH_DSA_CTX *ctx, SLH_DSA_KEY *out,
+                                   int verify);
 
 /**
  * @brief Create a new SLH_DSA_KEY object
@@ -142,6 +144,22 @@ int ossl_slh_dsa_key_has(const SLH_DSA_KEY *key, int selection)
     return 0;
 }
 
+int ossl_slh_dsa_key_pairwise_check(const SLH_DSA_KEY *key)
+{
+    int ret;
+    SLH_DSA_CTX *ctx = NULL;
+
+    if (key->pub == NULL || key->has_priv == 0)
+        return 0;
+
+    ctx = ossl_slh_dsa_ctx_new(key->params->alg, key->libctx, key->propq);
+    if (ctx == NULL)
+        return 0;
+    ret = slh_dsa_compute_pk_root(ctx, (SLH_DSA_KEY *)key, 1);
+    ossl_slh_dsa_ctx_free(ctx);
+    return ret;
+}
+
 /**
  * @brief Load a SLH_DSA key from raw data.
  *
@@ -213,20 +231,28 @@ int ossl_slh_dsa_key_fromdata(SLH_DSA_KEY *key, const OSSL_PARAM params[],
  * @param ctx Contains SLH_DSA algorithm functions and constants.
  * @param out A SLH_DSA key containing the private key (seed and prf) and public key seed.
  *            The public root key is written to this key.
- * @returns 1 if the root key is generated, or 0 on error.
+ * @param validate If set to 1 the computed public key is not written to the key,
+ *                 but will be compared to the existing value.
+ * @returns 1 if the root key is generated or compared successfully, or 0 on error.
  */
-static int slh_dsa_compute_pk_root(SLH_DSA_CTX *ctx, SLH_DSA_KEY *out)
+static int slh_dsa_compute_pk_root(SLH_DSA_CTX *ctx, SLH_DSA_KEY *out,
+                                   int validate)
 {
     SLH_ADRS_FUNC_DECLARE(ctx, adrsf);
     SLH_ADRS_DECLARE(adrs);
     const SLH_DSA_PARAMS *params = out->params;
+    size_t n = params->n;
+    uint8_t pk_root[SLH_DSA_MAX_N], *dst;
 
     adrsf->zero(adrs);
     adrsf->set_layer_address(adrs, params->d - 1);
+
+    dst = validate ? pk_root : SLH_DSA_PK_ROOT(out);
+
     /* Generate the ROOT public key */
     return ossl_slh_xmss_node(ctx, SLH_DSA_SK_SEED(out), 0, params->hm,
-                              SLH_DSA_PK_SEED(out), adrs,
-                              SLH_DSA_PK_ROOT(out), params->n);
+                              SLH_DSA_PK_SEED(out), adrs, dst, n)
+        && (validate == 0 || memcmp(dst, SLH_DSA_PK_ROOT(out), n) == 0);
 }
 
 /**
@@ -265,7 +291,7 @@ int ossl_slh_dsa_generate_key(SLH_DSA_CTX *ctx, OSSL_LIB_CTX *lib_ctx,
                 || RAND_bytes_ex(lib_ctx, pub, pk_seed_len, 0) <= 0)
             goto err;
     }
-    if (!slh_dsa_compute_pk_root(ctx, out))
+    if (!slh_dsa_compute_pk_root(ctx, out, 0))
         goto err;
     out->pub = pub;
     out->has_priv = 1;
@@ -356,5 +382,42 @@ int ossl_slh_dsa_set_pub(SLH_DSA_KEY *key, const uint8_t *pub, size_t pub_len)
     key->pub = SLH_DSA_PUB(key);
     memcpy(key->pub, pub, pub_len);
     key->has_priv = 0;
+    return 1;
+}
+
+int ossl_slh_dsa_key_to_text(BIO *out, const SLH_DSA_KEY *key, int selection)
+{
+    const char *name;
+
+    if (out == NULL || key == NULL) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    if (ossl_slh_dsa_key_get_pub(key) == NULL) {
+        /* Regardless of the |selection|, there must be a public key */
+        ERR_raise(ERR_LIB_PROV, PROV_R_NOT_A_PUBLIC_KEY);
+        return 0;
+    }
+
+    name = ossl_slh_dsa_key_get_name(key);
+    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
+        if (ossl_slh_dsa_key_get_priv(key) == NULL) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_NOT_A_PRIVATE_KEY);
+            return 0;
+        }
+        if (BIO_printf(out, "%s Private-Key:\n", name) <= 0)
+            return 0;
+        if (!ossl_bio_print_labeled_buf(out, "priv:", ossl_slh_dsa_key_get_priv(key),
+                                        ossl_slh_dsa_key_get_priv_len(key)))
+            return 0;
+    } else if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
+        if (BIO_printf(out, "%s Public-Key:\n", name) <= 0)
+            return 0;
+    }
+
+    if (!ossl_bio_print_labeled_buf(out, "pub:", ossl_slh_dsa_key_get_pub(key),
+                                    ossl_slh_dsa_key_get_pub_len(key)))
+        return 0;
+
     return 1;
 }

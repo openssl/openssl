@@ -110,7 +110,8 @@ static EVP_PKEY *make_template(const char *type, OSSL_PARAM *genparams)
     !defined(OPENSSL_NO_DSA) || \
     !defined(OPENSSL_NO_EC) || \
     !defined(OPENSSL_NO_ML_DSA) || \
-    !defined(OPENSSL_NO_ML_KEM)
+    !defined(OPENSSL_NO_ML_KEM) || \
+    !defined(OPENSSL_NO_SLH_DSA)
 static EVP_PKEY *make_key(const char *type, EVP_PKEY *template,
                           OSSL_PARAM *genparams)
 {
@@ -1396,7 +1397,7 @@ int setup_tests(void)
 
     /* FIPS(3.0.0): provider imports explicit params but they won't work #17998 */
     is_fips_3_0_0 = is_fips && fips_provider_version_eq(testctx, 3, 0, 0);
-    /* FIPS(3.5.0) is the first to support ML-KEM and ML-DSA */
+    /* FIPS(3.5.0) is the first to support ML-DSA, ML-KEM and SLH-DSA */
     is_fips_lt_3_5 = is_fips && fips_provider_version_lt(testctx, 3, 5, 0);
 
 #ifdef STATIC_LEGACY
@@ -1480,18 +1481,20 @@ int setup_tests(void)
     }
 #endif
 #ifndef OPENSSL_NO_SLH_DSA
-    MAKE_KEYS(SLH_DSA_SHA2_128s, "SLH-DSA-SHA2-128s", NULL);
-    MAKE_KEYS(SLH_DSA_SHA2_128f, "SLH-DSA-SHA2-128f", NULL);
-    MAKE_KEYS(SLH_DSA_SHA2_192s, "SLH-DSA-SHA2-192s", NULL);
-    MAKE_KEYS(SLH_DSA_SHA2_192f, "SLH-DSA-SHA2-192f", NULL);
-    MAKE_KEYS(SLH_DSA_SHA2_256s, "SLH-DSA-SHA2-256s", NULL);
-    MAKE_KEYS(SLH_DSA_SHA2_256f, "SLH-DSA-SHA2-256f", NULL);
-    MAKE_KEYS(SLH_DSA_SHAKE_128s, "SLH-DSA-SHAKE-128s", NULL);
-    MAKE_KEYS(SLH_DSA_SHAKE_128f, "SLH-DSA-SHAKE-128f", NULL);
-    MAKE_KEYS(SLH_DSA_SHAKE_192s, "SLH-DSA-SHAKE-192s", NULL);
-    MAKE_KEYS(SLH_DSA_SHAKE_192f, "SLH-DSA-SHAKE-192f", NULL);
-    MAKE_KEYS(SLH_DSA_SHAKE_256s, "SLH-DSA-SHAKE-256s", NULL);
-    MAKE_KEYS(SLH_DSA_SHAKE_256f, "SLH-DSA-SHAKE-256f", NULL);
+    if (!is_fips_lt_3_5) {
+        MAKE_KEYS(SLH_DSA_SHA2_128s, "SLH-DSA-SHA2-128s", NULL);
+        MAKE_KEYS(SLH_DSA_SHA2_128f, "SLH-DSA-SHA2-128f", NULL);
+        MAKE_KEYS(SLH_DSA_SHA2_192s, "SLH-DSA-SHA2-192s", NULL);
+        MAKE_KEYS(SLH_DSA_SHA2_192f, "SLH-DSA-SHA2-192f", NULL);
+        MAKE_KEYS(SLH_DSA_SHA2_256s, "SLH-DSA-SHA2-256s", NULL);
+        MAKE_KEYS(SLH_DSA_SHA2_256f, "SLH-DSA-SHA2-256f", NULL);
+        MAKE_KEYS(SLH_DSA_SHAKE_128s, "SLH-DSA-SHAKE-128s", NULL);
+        MAKE_KEYS(SLH_DSA_SHAKE_128f, "SLH-DSA-SHAKE-128f", NULL);
+        MAKE_KEYS(SLH_DSA_SHAKE_192s, "SLH-DSA-SHAKE-192s", NULL);
+        MAKE_KEYS(SLH_DSA_SHAKE_192f, "SLH-DSA-SHAKE-192f", NULL);
+        MAKE_KEYS(SLH_DSA_SHAKE_256s, "SLH-DSA-SHAKE-256s", NULL);
+        MAKE_KEYS(SLH_DSA_SHAKE_256f, "SLH-DSA-SHAKE-256f", NULL);
+    }
 #endif /* OPENSSL_NO_SLH_DSA */
 
     TEST_info("Loading RSA key...");
@@ -1581,18 +1584,20 @@ int setup_tests(void)
 #endif /* OPENSSL_NO_ML_DSA */
 
 #ifndef OPENSSL_NO_SLH_DSA
-        ADD_TEST_SUITE(SLH_DSA_SHA2_128s);
-        ADD_TEST_SUITE(SLH_DSA_SHA2_128f);
-        ADD_TEST_SUITE(SLH_DSA_SHA2_192s);
-        ADD_TEST_SUITE(SLH_DSA_SHA2_192f);
-        ADD_TEST_SUITE(SLH_DSA_SHA2_256s);
-        ADD_TEST_SUITE(SLH_DSA_SHA2_256f);
-        ADD_TEST_SUITE(SLH_DSA_SHAKE_128s);
-        ADD_TEST_SUITE(SLH_DSA_SHAKE_128f);
-        ADD_TEST_SUITE(SLH_DSA_SHAKE_192s);
-        ADD_TEST_SUITE(SLH_DSA_SHAKE_192f);
-        ADD_TEST_SUITE(SLH_DSA_SHAKE_256s);
-        ADD_TEST_SUITE(SLH_DSA_SHAKE_256f);
+        if (!is_fips_lt_3_5) {
+            ADD_TEST_SUITE(SLH_DSA_SHA2_128s);
+            ADD_TEST_SUITE(SLH_DSA_SHA2_128f);
+            ADD_TEST_SUITE(SLH_DSA_SHA2_192s);
+            ADD_TEST_SUITE(SLH_DSA_SHA2_192f);
+            ADD_TEST_SUITE(SLH_DSA_SHA2_256s);
+            ADD_TEST_SUITE(SLH_DSA_SHA2_256f);
+            ADD_TEST_SUITE(SLH_DSA_SHAKE_128s);
+            ADD_TEST_SUITE(SLH_DSA_SHAKE_128f);
+            ADD_TEST_SUITE(SLH_DSA_SHAKE_192s);
+            ADD_TEST_SUITE(SLH_DSA_SHAKE_192f);
+            ADD_TEST_SUITE(SLH_DSA_SHAKE_256s);
+            ADD_TEST_SUITE(SLH_DSA_SHAKE_256f);
+        }
 #endif /* OPENSSL_NO_SLH_DSA */
     }
 
@@ -1659,18 +1664,20 @@ void cleanup_tests(void)
 #endif /* OPENSSL_NO_ML_DSA */
 
 #ifndef OPENSSL_NO_SLH_DSA
-    FREE_KEYS(SLH_DSA_SHA2_128s);
-    FREE_KEYS(SLH_DSA_SHA2_128f);
-    FREE_KEYS(SLH_DSA_SHA2_192s);
-    FREE_KEYS(SLH_DSA_SHA2_192f);
-    FREE_KEYS(SLH_DSA_SHA2_256s);
-    FREE_KEYS(SLH_DSA_SHA2_256f);
-    FREE_KEYS(SLH_DSA_SHAKE_128s);
-    FREE_KEYS(SLH_DSA_SHAKE_128f);
-    FREE_KEYS(SLH_DSA_SHAKE_192s);
-    FREE_KEYS(SLH_DSA_SHAKE_192f);
-    FREE_KEYS(SLH_DSA_SHAKE_256s);
-    FREE_KEYS(SLH_DSA_SHAKE_256f);
+    if (!is_fips_lt_3_5) {
+        FREE_KEYS(SLH_DSA_SHA2_128s);
+        FREE_KEYS(SLH_DSA_SHA2_128f);
+        FREE_KEYS(SLH_DSA_SHA2_192s);
+        FREE_KEYS(SLH_DSA_SHA2_192f);
+        FREE_KEYS(SLH_DSA_SHA2_256s);
+        FREE_KEYS(SLH_DSA_SHA2_256f);
+        FREE_KEYS(SLH_DSA_SHAKE_128s);
+        FREE_KEYS(SLH_DSA_SHAKE_128f);
+        FREE_KEYS(SLH_DSA_SHAKE_192s);
+        FREE_KEYS(SLH_DSA_SHAKE_192f);
+        FREE_KEYS(SLH_DSA_SHAKE_256s);
+        FREE_KEYS(SLH_DSA_SHAKE_256f);
+    }
 #endif /* OPENSSL_NO_SLH_DSA */
 
     OSSL_PROVIDER_unload(nullprov);

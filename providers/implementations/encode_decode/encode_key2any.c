@@ -1628,8 +1628,6 @@ MAKE_ENCODER(slh_dsa_shake_192s, slh_dsa, EVP_PKEY_SLH_DSA_SHAKE_192S, Encrypted
 MAKE_ENCODER(slh_dsa_shake_192f, slh_dsa, EVP_PKEY_SLH_DSA_SHAKE_192F, EncryptedPrivateKeyInfo, pem);
 MAKE_ENCODER(slh_dsa_shake_256s, slh_dsa, EVP_PKEY_SLH_DSA_SHAKE_256S, EncryptedPrivateKeyInfo, pem);
 MAKE_ENCODER(slh_dsa_shake_256f, slh_dsa, EVP_PKEY_SLH_DSA_SHAKE_256F, EncryptedPrivateKeyInfo, pem);
-
-
 MAKE_ENCODER(slh_dsa_sha2_128s, slh_dsa, EVP_PKEY_SLH_DSA_SHA2_128S, PrivateKeyInfo, der);
 MAKE_ENCODER(slh_dsa_sha2_128f, slh_dsa, EVP_PKEY_SLH_DSA_SHA2_128F, PrivateKeyInfo, der);
 MAKE_ENCODER(slh_dsa_sha2_192s, slh_dsa, EVP_PKEY_SLH_DSA_SHA2_192S, PrivateKeyInfo, der);
@@ -1654,7 +1652,6 @@ MAKE_ENCODER(slh_dsa_shake_192s, slh_dsa, EVP_PKEY_SLH_DSA_SHAKE_192S, PrivateKe
 MAKE_ENCODER(slh_dsa_shake_192f, slh_dsa, EVP_PKEY_SLH_DSA_SHAKE_192F, PrivateKeyInfo, pem);
 MAKE_ENCODER(slh_dsa_shake_256s, slh_dsa, EVP_PKEY_SLH_DSA_SHAKE_256S, PrivateKeyInfo, pem);
 MAKE_ENCODER(slh_dsa_shake_256f, slh_dsa, EVP_PKEY_SLH_DSA_SHAKE_256F, PrivateKeyInfo, pem);
-
 MAKE_ENCODER(slh_dsa_sha2_128s, slh_dsa, EVP_PKEY_SLH_DSA_SHA2_128S, SubjectPublicKeyInfo, der);
 MAKE_ENCODER(slh_dsa_sha2_128f, slh_dsa, EVP_PKEY_SLH_DSA_SHA2_128F, SubjectPublicKeyInfo, der);
 MAKE_ENCODER(slh_dsa_sha2_192s, slh_dsa, EVP_PKEY_SLH_DSA_SHA2_192S, SubjectPublicKeyInfo, der);

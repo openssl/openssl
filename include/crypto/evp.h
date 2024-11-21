@@ -663,9 +663,9 @@ union legacy_pkey_st {
 #   ifndef OPENSSL_NO_ECX
     ECX_KEY *ecx;           /* X25519, X448, Ed25519, Ed448 */
 #   endif
-#   ifndef OPENSSL_NO_SLH_DSA
+#  endif
+#  ifndef OPENSSL_NO_SLH_DSA
     SLH_DSA_KEY *slh_dsa;  /* SLH_DSA_* */
-#   endif
 #  endif
 };
 
