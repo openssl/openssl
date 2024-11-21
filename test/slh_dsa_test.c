@@ -28,20 +28,22 @@ static OSSL_LIB_CTX *lib_ctx = NULL;
 static OSSL_PROVIDER *null_prov = NULL;
 static OSSL_PROVIDER *lib_prov = NULL;
 
-static EVP_PKEY *slh_dsa_pubkey_from_data(const char *alg,
-                                          const unsigned char *data, size_t datalen)
+static EVP_PKEY *slh_dsa_key_from_data(const char *alg,
+                                       const unsigned char *data, size_t datalen,
+                                       int public)
 {
     int ret;
     EVP_PKEY_CTX *ctx = NULL;
     EVP_PKEY *key = NULL;
     OSSL_PARAM params[2];
+    const char *keytype = public ? OSSL_PKEY_PARAM_PUB_KEY : OSSL_PKEY_PARAM_PRIV_KEY;
+    int selection = public ? EVP_PKEY_PUBLIC_KEY : EVP_PKEY_KEYPAIR;
 
-    params[0] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_PUB_KEY,
-                                                  (unsigned char *)data, datalen);
+    params[0] = OSSL_PARAM_construct_octet_string(keytype, (uint8_t *)data, datalen);
     params[1] = OSSL_PARAM_construct_end();
     ret = TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(lib_ctx, alg, NULL))
         && TEST_int_eq(EVP_PKEY_fromdata_init(ctx), 1)
-        && (EVP_PKEY_fromdata(ctx, &key, EVP_PKEY_PUBLIC_KEY, params) == 1);
+        && (EVP_PKEY_fromdata(ctx, &key, selection, params) == 1);
     if (ret == 0) {
         EVP_PKEY_free(key);
         key = NULL;
@@ -96,10 +98,10 @@ static int slh_dsa_bad_pub_len_test(void)
     OPENSSL_cleanse(pubdata, sizeof(pubdata));
     memcpy(pubdata, td->pub, td->pub_len);
 
-    if (!TEST_ptr_null(pkey = slh_dsa_pubkey_from_data(td->alg, pubdata,
-                                                       td->pub_len - 1))
-            || !TEST_ptr_null(pkey = slh_dsa_pubkey_from_data(td->alg, pubdata,
-                                                              td->pub_len + 1)))
+    if (!TEST_ptr_null(pkey = slh_dsa_key_from_data(td->alg, pubdata,
+                                                    td->pub_len - 1, 1))
+            || !TEST_ptr_null(pkey = slh_dsa_key_from_data(td->alg, pubdata,
+                                                           td->pub_len + 1, 1)))
         goto end;
 
     ret = 1;
@@ -121,9 +123,9 @@ static int slh_dsa_key_eq_test(void)
     EVP_PKEY *eckey = NULL;
 #endif
 
-    if (!TEST_ptr(key[0] = slh_dsa_pubkey_from_data(td1->alg, td1->pub, td1->pub_len))
-            || !TEST_ptr(key[1] = slh_dsa_pubkey_from_data(td1->alg, td1->pub, td1->pub_len))
-            || !TEST_ptr(key[2] = slh_dsa_pubkey_from_data(td2->alg, td2->pub, td2->pub_len)))
+    if (!TEST_ptr(key[0] = slh_dsa_key_from_data(td1->alg, td1->pub, td1->pub_len, 1))
+            || !TEST_ptr(key[1] = slh_dsa_key_from_data(td1->alg, td1->pub, td1->pub_len, 1))
+            || !TEST_ptr(key[2] = slh_dsa_key_from_data(td2->alg, td2->pub, td2->pub_len, 1)))
         goto end;
 
     if (!TEST_int_eq(EVP_PKEY_eq(key[0], key[1]), 1)
@@ -152,13 +154,44 @@ static int slh_dsa_key_validate_test(void)
     EVP_PKEY_CTX *vctx = NULL;
     EVP_PKEY *key = NULL;
 
-    if (!TEST_ptr(key = slh_dsa_pubkey_from_data(td->alg, td->pub, td->pub_len)))
+    if (!TEST_ptr(key = slh_dsa_key_from_data(td->alg, td->pub, td->pub_len, 1)))
         return 0;
     if (!TEST_ptr(vctx = EVP_PKEY_CTX_new_from_pkey(lib_ctx, key, NULL)))
         goto end;
-    ret = TEST_int_eq(EVP_PKEY_check(vctx), 1);
-    EVP_PKEY_CTX_free(vctx);
+    if (!TEST_int_eq(EVP_PKEY_public_check(vctx), 1))
+        goto end;
+    if (!TEST_int_eq(EVP_PKEY_private_check(vctx), 0))
+        goto end;
+    if (!TEST_int_eq(EVP_PKEY_pairwise_check(vctx), 0))
+        goto end;
+    ret = 1;
 end:
+    EVP_PKEY_CTX_free(vctx);
+    EVP_PKEY_free(key);
+    return ret;
+}
+
+static int slh_dsa_key_validate_failure_test(void)
+{
+    int ret = 0;
+    EVP_PKEY_CTX *vctx = NULL;
+    EVP_PKEY *key = NULL;
+
+    /*
+     * Loading 128s private key data into a 128f algorithm will have an incorrect
+     * public key.
+     */
+    if (!TEST_ptr(key = slh_dsa_key_from_data("SLH-DSA-SHA2-128f",
+                                              slh_dsa_sha2_128s_0_keygen_priv,
+                                              sizeof(slh_dsa_sha2_128s_0_keygen_priv), 0)))
+        return 0;
+    if (!TEST_ptr(vctx = EVP_PKEY_CTX_new_from_pkey(lib_ctx, key, NULL)))
+        goto end;
+    if (!TEST_int_eq(EVP_PKEY_pairwise_check(vctx), 0))
+        goto end;
+    ret = 1;
+end:
+    EVP_PKEY_CTX_free(vctx);
     EVP_PKEY_free(key);
     return ret;
 }
@@ -182,7 +215,7 @@ static int do_slh_dsa_verify(const SLH_DSA_SIG_TEST_DATA *td,
     *p++ = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_MESSAGE_ENCODING, &encode);
     *p = OSSL_PARAM_construct_end();
 
-    if (!TEST_ptr(key = slh_dsa_pubkey_from_data(td->alg, td->pub, td->pub_len)))
+    if (!TEST_ptr(key = slh_dsa_key_from_data(td->alg, td->pub, td->pub_len, 1)))
         return 0;
     if (!TEST_ptr(vctx = EVP_PKEY_CTX_new_from_pkey(lib_ctx, key, NULL)))
         goto err;
@@ -365,6 +398,10 @@ static int slh_dsa_usage_test(void)
             || !TEST_ptr(sig = OPENSSL_malloc(sig_len))
             || !TEST_int_eq(EVP_PKEY_sign(sctx, sig, &sig_len, msg, msg_len), 1))
         goto err;
+    if (!TEST_true(EVP_PKEY_pairwise_check(sctx))
+            || !TEST_true(EVP_PKEY_public_check(sctx))
+            || !TEST_true(EVP_PKEY_private_check(sctx)))
+        goto err;
     /* Read the public key and add to a verify ctx */
     if (!TEST_ptr(PEM_read_bio_PUBKEY_ex(pub_bio, &pub, NULL, NULL, lib_ctx, NULL))
             || !TEST_ptr(vctx = EVP_PKEY_CTX_new_from_pkey(lib_ctx, pub, NULL)))
@@ -373,6 +410,7 @@ static int slh_dsa_usage_test(void)
     if (!TEST_int_eq(EVP_PKEY_verify_message_init(vctx, sig_alg, NULL), 1)
             || !TEST_int_eq(EVP_PKEY_verify(vctx, sig, sig_len, msg, msg_len), 1))
         goto err;
+
     ret = 1;
 err:
     EVP_CIPHER_free(cipher);
@@ -495,6 +533,7 @@ int setup_tests(void)
 
     ADD_TEST(slh_dsa_bad_pub_len_test);
     ADD_TEST(slh_dsa_key_validate_test);
+    ADD_TEST(slh_dsa_key_validate_failure_test);
     ADD_TEST(slh_dsa_key_eq_test);
     ADD_TEST(slh_dsa_usage_test);
     ADD_TEST(slh_dsa_deterministic_usage_test);

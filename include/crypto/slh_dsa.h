@@ -27,6 +27,7 @@ __owur int ossl_slh_dsa_key_up_ref(SLH_DSA_KEY *key);
 __owur int ossl_slh_dsa_key_equal(const SLH_DSA_KEY *key1, const SLH_DSA_KEY *key2,
                                   int selection);
 __owur int ossl_slh_dsa_key_has(const SLH_DSA_KEY *key, int selection);
+__owur int ossl_slh_dsa_key_pairwise_check(const SLH_DSA_KEY *key);
 __owur int ossl_slh_dsa_key_fromdata(SLH_DSA_KEY *key, const OSSL_PARAM *params,
                                      int include_private);
 __owur int ossl_slh_dsa_generate_key(SLH_DSA_CTX *ctx, OSSL_LIB_CTX *libctx,
