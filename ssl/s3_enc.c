@@ -292,33 +292,6 @@ int ssl3_finish_mac(SSL_CONNECTION *s, const unsigned char *buf, size_t len)
     return 1;
 }
 
-static int dtls1_read_hm_header(unsigned char *msgheaderstart,
-                                struct hm_header_st *msg_hdr)
-{
-    unsigned long msg_len, frag_off, frag_len;
-    unsigned int msg_seq, msg_type;
-    PACKET msgheader;
-
-    if (!PACKET_buf_init(&msgheader, msgheaderstart, DTLS1_HM_HEADER_LENGTH)
-        || !PACKET_get_1(&msgheader, &msg_type)
-        || !PACKET_get_net_3(&msgheader, &msg_len)
-        || !PACKET_get_net_2(&msgheader, &msg_seq)
-        || !PACKET_get_net_3(&msgheader, &frag_off)
-        || !PACKET_get_net_3(&msgheader, &frag_len)
-        || PACKET_remaining(&msgheader) != 0) {
-        return 0;
-    }
-
-    /* We just checked that values did not exceed max size so cast must be alright */
-    msg_hdr->type = (unsigned char)msg_type;
-    msg_hdr->msg_len = (size_t)msg_len;
-    msg_hdr->seq = (unsigned short)msg_seq;
-    msg_hdr->frag_off = (size_t)frag_off;
-    msg_hdr->frag_len = (size_t)frag_len;
-
-    return 1;
-}
-
 int ssl3_digest_cached_records(SSL_CONNECTION *s, int keep)
 {
     const EVP_MD *md;
@@ -350,20 +323,23 @@ int ssl3_digest_cached_records(SSL_CONNECTION *s, int keep)
         }
 
         if (SSL_CONNECTION_IS_DTLS13(s)) {
-            struct hm_header_st hmhdr;
+            PACKET hmhdr;
             size_t remlen = hdatalen;
+            unsigned long msglen;
 
             while (remlen > 0) {
                 if (remlen < DTLS1_HM_HEADER_LENGTH
-                    || !dtls1_read_hm_header(hdata, &hmhdr)
-                    || (hmhdr.msg_len + DTLS1_HM_HEADER_LENGTH) > remlen
-                    || !ssl3_finish_mac(s, hdata, hmhdr.msg_len + DTLS1_HM_HEADER_LENGTH)) {
+                    || !PACKET_buf_init(&hmhdr, hdata, DTLS1_HM_HEADER_LENGTH)
+                    || !PACKET_forward(&hmhdr, 1)
+                    || !PACKET_get_net_3(&hmhdr, &msglen)
+                    || (msglen + DTLS1_HM_HEADER_LENGTH) > remlen
+                    || !ssl3_finish_mac(s, hdata, msglen + DTLS1_HM_HEADER_LENGTH)) {
                     SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                     return 0;
                 }
 
-                hdata += hmhdr.msg_len + DTLS1_HM_HEADER_LENGTH;
-                remlen -= hmhdr.msg_len + DTLS1_HM_HEADER_LENGTH;
+                hdata += msglen + DTLS1_HM_HEADER_LENGTH;
+                remlen -= msglen + DTLS1_HM_HEADER_LENGTH;
             }
         } else {
             if (!ssl3_finish_mac(s, hdata, hdatalen)) {
