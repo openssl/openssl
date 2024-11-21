@@ -54,9 +54,10 @@ typedef struct st_kat_st {
 #define CIPHER_MODE_ALL     (CIPHER_MODE_ENCRYPT | CIPHER_MODE_DECRYPT)
 
 /* FIPS 140-3 only allows DSA verification for legacy purposes */
-#define SIGNATURE_MODE_VERIFY_ONLY 1
-#define SIGNATURE_MODE_SIGN_ONLY   2
-#define SIGNATURE_MODE_DIGESTED    4
+#define SIGNATURE_MODE_VERIFY_ONLY  1
+#define SIGNATURE_MODE_SIGN_ONLY    2
+#define SIGNATURE_MODE_DIGESTED     4
+#define SIGNATURE_MODE_SIG_DIGESTED 8
 
 typedef ST_KAT ST_KAT_DIGEST;
 typedef struct st_kat_cipher_st {
@@ -2851,6 +2852,74 @@ static const ST_KAT_PARAM ml_dsa_sig_init[] = {
 };
 #endif /* OPENSSL_NO_ML_DSA */
 
+#ifndef OPENSSL_NO_SLH_DSA
+/*
+ * Deterministic SLH_DSA key generation supplies the private key elements and
+ * Half of the public key.
+ */
+static const uint8_t slh_dsa_sha2_128s_keygen_entropy[] = {
+    0xaa, 0x9c, 0xc7, 0xdc, 0xa4, 0x91, 0xfc, 0x86, 0xbc, 0xb1, 0x5a, 0x70, 0x9a, 0x15, 0xe9, 0xb3,
+    0x90, 0x5c, 0x80, 0x0b, 0x6e, 0x2f, 0xb9, 0xb5, 0x4b, 0x6b, 0x05, 0x0e, 0xe5, 0xe4, 0xde, 0x9a,
+    0xfa, 0x54, 0x64, 0xd1, 0xc6, 0x61, 0xfe, 0xd3, 0x8b, 0x2a, 0x51, 0xca, 0x3e, 0xae, 0x71, 0xba,
+};
+/* The expected outputs for the public and private key elements */
+static const uint8_t slh_dsa_sha2_128s_keygen_priv[] = {
+    0xaa, 0x9c, 0xc7, 0xdc, 0xa4, 0x91, 0xfc, 0x86, 0xbc, 0xb1, 0x5a, 0x70, 0x9a, 0x15, 0xe9, 0xb3,
+    0x90, 0x5c, 0x80, 0x0b, 0x6e, 0x2f, 0xb9, 0xb5, 0x4b, 0x6b, 0x05, 0x0e, 0xe5, 0xe4, 0xde, 0x9a,
+};
+static const uint8_t slh_dsa_sha2_128s_keygen_pub[] = {
+    0xfa, 0x54, 0x64, 0xd1, 0xc6, 0x61, 0xfe, 0xd3, 0x8b, 0x2a, 0x51, 0xca, 0x3e, 0xae, 0x71, 0xba,
+    0xca, 0xe3, 0xd1, 0x86, 0x52, 0x15, 0xe3, 0xd3, 0x85, 0x0e, 0x8c, 0x1b, 0x82, 0x92, 0xbf, 0x42,
+};
+static const ST_KAT_PARAM slh_dsa_sha2_128s_keygen_init_params[] = {
+    ST_KAT_PARAM_OCTET(OSSL_PKEY_PARAM_SLH_DSA_ENTROPY,
+                       slh_dsa_sha2_128s_keygen_entropy),
+    ST_KAT_PARAM_END()
+};
+static const ST_KAT_PARAM slh_dsa_128_keygen_expected_params[] = {
+    ST_KAT_PARAM_OCTET(OSSL_PKEY_PARAM_PRIV_KEY,
+                       slh_dsa_sha2_128s_keygen_priv),
+    ST_KAT_PARAM_OCTET(OSSL_PKEY_PARAM_PUB_KEY,
+                       slh_dsa_sha2_128s_keygen_pub),
+    ST_KAT_PARAM_END()
+};
+
+static const unsigned char slh_dsa_sig_msg[] = {
+    0x01, 0x02, 0x03, 0x04
+};
+static int deterministic = 1;
+static const ST_KAT_PARAM slh_dsa_sig_params[] = {
+    ST_KAT_PARAM_INT(OSSL_SIGNATURE_PARAM_DETERMINISTIC, deterministic),
+    ST_KAT_PARAM_END()
+};
+
+static const unsigned char slh_dsa_sha2_128f_priv_pub[] = {
+    0xbb, 0xc7, 0x43, 0x06, 0xf7, 0x5d, 0xc2, 0xda, 0xf7, 0x37, 0x2b, 0x3c, 0x98, 0x41, 0xa4, 0xd6,
+    0x85, 0x2c, 0x17, 0xb4, 0x59, 0xf1, 0x69, 0x2b, 0x8e, 0x9a, 0x1a, 0x0d, 0xac, 0xe5, 0xba, 0x26,
+    0x38, 0x0c, 0x99, 0x30, 0x4a, 0x0d, 0xdd, 0x32, 0xf3, 0x44, 0xb9, 0x51, 0x44, 0xe1, 0xfd, 0xef,
+    0x60, 0xbb, 0xc2, 0x34, 0x0e, 0x08, 0x77, 0x0f, 0xb4, 0x1a, 0x80, 0xa7, 0x6c, 0xb0, 0x8e, 0x34,
+};
+
+static const ST_KAT_PARAM slh_dsa_shake_128f_key_params[] = {
+    ST_KAT_PARAM_OCTET(OSSL_PKEY_PARAM_PRIV_KEY, slh_dsa_sha2_128f_priv_pub),
+    ST_KAT_PARAM_END()
+};
+
+/* This is the SHA256 digest of the signature */
+static const unsigned char slh_dsa_sha2_128s_sig_digest[] = {
+     0x64, 0x4b, 0x4b, 0xed, 0xc6, 0x21, 0x40, 0x5e,
+     0x95, 0x2d, 0xe1, 0x94, 0xf6, 0x36, 0x2c, 0xbc,
+     0x05, 0xf8, 0xb4, 0x9d, 0x66, 0xe0, 0xda, 0xfd,
+     0xe8, 0x24, 0xd5, 0x38, 0xe6, 0xbb, 0x5b, 0x3a,
+};
+static const unsigned char slh_dsa_shake_128f_sig_digest[] = {
+     0xb7, 0xeb, 0x1f, 0x00, 0x33, 0x41, 0xff, 0x11,
+     0x3f, 0xc7, 0x4d, 0xce, 0x90, 0x6c, 0x55, 0xf7,
+     0x4a, 0x54, 0x8b, 0x86, 0xc1, 0xb1, 0x08, 0x48,
+     0x89, 0x77, 0x00, 0x72, 0x03, 0x92, 0xd1, 0xa6,
+};
+#endif /* OPENSSL_NO_SLH_DSA */
+
 /* Hash DRBG inputs for signature KATs */
 static const unsigned char sig_kat_entropyin[] = {
     0x06, 0x6d, 0xc8, 0xce, 0x75, 0xb2, 0x89, 0x66, 0xa6, 0x85, 0x16, 0x3f,
@@ -2932,6 +3001,7 @@ static const ST_KAT_SIGN st_kat_sign_tests[] = {
         ITM(dsa_expected_sig)
     },
 #endif /* OPENSSL_NO_DSA */
+
 #ifndef OPENSSL_NO_ML_DSA
     {
         OSSL_SELF_TEST_DESC_SIGN_ML_DSA,
@@ -2946,6 +3016,26 @@ static const ST_KAT_SIGN st_kat_sign_tests[] = {
         ml_dsa_sig_init
     },
 #endif /* OPENSSL_NO_ML_DSA */
+#ifndef OPENSSL_NO_SLH_DSA
+    {
+        OSSL_SELF_TEST_DESC_SIGN_SLH_DSA,
+        "SLH-DSA-SHA2-128s", "SLH-DSA-SHA2-128s", SIGNATURE_MODE_SIG_DIGESTED,
+        slh_dsa_128_keygen_expected_params,
+        ITM(slh_dsa_sig_msg),
+        NULL, 0, NULL, 0, NULL, 0,
+        ITM(slh_dsa_sha2_128s_sig_digest),
+        slh_dsa_sig_params
+    },
+    {
+        OSSL_SELF_TEST_DESC_SIGN_SLH_DSA,
+        "SLH-DSA-SHAKE-128f", "SLH-DSA-SHAKE-128f", SIGNATURE_MODE_SIG_DIGESTED,
+        slh_dsa_shake_128f_key_params,
+        ITM(slh_dsa_sig_msg),
+        NULL, 0, NULL, 0, NULL, 0,
+        ITM(slh_dsa_shake_128f_sig_digest),
+        slh_dsa_sig_params
+    },
+#endif /* OPENSSL_NO_SLH_DSA */
 };
 
 #if !defined(OPENSSL_NO_ML_DSA)
@@ -2953,16 +3043,28 @@ static const ST_KAT_PARAM ml_dsa_keygen_params[] = {
     ST_KAT_PARAM_OCTET(OSSL_PKEY_PARAM_ML_DSA_SEED, sig_kat_entropyin),
     ST_KAT_PARAM_END()
 };
+#endif
 
+#if !defined(OPENSSL_NO_ML_DSA) || !defined(OPENSSL_NO_SLH_DSA)
 static const ST_KAT_ASYM_KEYGEN st_kat_asym_keygen_tests[] = {
+# if !defined(OPENSSL_NO_ML_DSA)
     {
         OSSL_SELF_TEST_DESC_KEYGEN_ML_DSA,
         "ML-DSA-65",
         ml_dsa_keygen_params,
         ml_dsa_key
     },
+# endif
+# if !defined(OPENSSL_NO_SLH_DSA)
+    {
+        OSSL_SELF_TEST_DESC_KEYGEN_SLH_DSA,
+        "SLH-DSA-SHA2-128s",
+        slh_dsa_sha2_128s_keygen_init_params,
+        slh_dsa_128_keygen_expected_params
+    },
+# endif
 };
-#endif /* !OPENSSL_NO_ML_DSA */
+#endif /* !OPENSSL_NO_ML_DSA || !OPENSSL_NO_SLH_DSA */
 
 /*- KEM SELF TEST DATA */
 

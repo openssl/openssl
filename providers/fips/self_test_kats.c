@@ -448,6 +448,26 @@ err:
 }
 #endif /* !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC) */
 
+static int digest_signature(const uint8_t *sig, size_t sig_len,
+                            uint8_t *out, size_t *out_len,
+                            OSSL_LIB_CTX *lib_ctx)
+{
+    int ret;
+    unsigned int len = 0;
+    EVP_MD_CTX *ctx = EVP_MD_CTX_new();
+    EVP_MD *md = EVP_MD_fetch(lib_ctx, "SHA256", NULL);
+
+    ret = ctx != NULL
+        && md != NULL
+        && EVP_DigestInit_ex(ctx, md, NULL) == 1
+        && EVP_DigestUpdate(ctx, sig, sig_len) == 1
+        && EVP_DigestFinal(ctx, out, &len) == 1;
+    EVP_MD_free(md);
+    EVP_MD_CTX_free(ctx);
+    *out_len = len;
+    return ret;
+}
+
 static int self_test_digest_sign(const ST_KAT_SIGN *t,
                                  OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
 {
@@ -458,9 +478,9 @@ static int self_test_digest_sign(const ST_KAT_SIGN *t,
     EVP_PKEY_CTX *ctx = NULL;
     EVP_PKEY_CTX *fromctx = NULL;
     EVP_PKEY *pkey = NULL;
-    unsigned char sig[MAX_ML_DSA_SIG_LEN];
+    unsigned char sig[MAX_ML_DSA_SIG_LEN], *psig = sig;
     BN_CTX *bnctx = NULL;
-    size_t siglen = sizeof(sig);
+    size_t siglen;
     int digested = 0;
     const char *typ = OSSL_SELF_TEST_TYPE_KAT_SIGNATURE;
 
@@ -516,8 +536,8 @@ static int self_test_digest_sign(const ST_KAT_SIGN *t,
     digested = ((t->mode & SIGNATURE_MODE_DIGESTED) != 0);
 
     if ((t->mode & SIGNATURE_MODE_VERIFY_ONLY) != 0) {
-        memcpy(sig, t->sig_expected, t->sig_expected_len);
         siglen = t->sig_expected_len;
+        memcpy(psig, t->sig_expected, siglen);
     } else {
         if (digested) {
             if (EVP_PKEY_sign_init_ex2(ctx, sigalg, paramsinit) <= 0)
@@ -526,13 +546,35 @@ static int self_test_digest_sign(const ST_KAT_SIGN *t,
             if (EVP_PKEY_sign_message_init(ctx, sigalg, paramsinit) <= 0)
                 goto err;
         }
-        if (EVP_PKEY_sign(ctx, sig, &siglen, t->msg, t->msg_len) <= 0)
+        siglen = sizeof(sig);
+        if ((t->mode & SIGNATURE_MODE_SIG_DIGESTED) != 0) {
+            if (EVP_PKEY_sign(ctx, NULL, &siglen, t->msg, t->msg_len) <= 0)
+                goto err;
+            if (siglen > sizeof(sig)) {
+                psig = OPENSSL_malloc(siglen);
+                if (psig == NULL)
+                    goto err;
+            }
+        }
+        if (EVP_PKEY_sign(ctx, psig, &siglen, t->msg, t->msg_len) <= 0)
             goto err;
 
-        if (t->sig_expected != NULL
-                && (siglen != t->sig_expected_len
-                    || memcmp(sig, t->sig_expected, t->sig_expected_len) != 0))
-            goto err;
+        if (t->sig_expected != NULL) {
+            if ((t->mode & SIGNATURE_MODE_SIG_DIGESTED) != 0) {
+                uint8_t digested_sig[EVP_MAX_MD_SIZE];
+                size_t digested_sig_len = 0;
+
+                if (!digest_signature(psig, siglen, digested_sig,
+                                      &digested_sig_len, libctx)
+                        || digested_sig_len != t->sig_expected_len
+                        || memcmp(digested_sig, t->sig_expected, t->sig_expected_len) != 0)
+                    goto err;
+            } else {
+                if (siglen != t->sig_expected_len
+                        || memcmp(psig, t->sig_expected, t->sig_expected_len) != 0)
+                    goto err;
+            }
+        }
     }
 
     if ((t->mode & SIGNATURE_MODE_SIGN_ONLY) == 0) {
@@ -543,12 +585,14 @@ static int self_test_digest_sign(const ST_KAT_SIGN *t,
             if (EVP_PKEY_verify_message_init(ctx, sigalg, paramsverify) <= 0)
                 goto err;
         }
-        OSSL_SELF_TEST_oncorrupt_byte(st, sig);
-        if (EVP_PKEY_verify(ctx, sig, siglen, t->msg, t->msg_len) <= 0)
+        OSSL_SELF_TEST_oncorrupt_byte(st, psig);
+        if (EVP_PKEY_verify(ctx, psig, siglen, t->msg, t->msg_len) <= 0)
             goto err;
     }
     ret = 1;
 err:
+    if (psig != sig)
+        OPENSSL_free(psig);
     BN_CTX_free(bnctx);
     EVP_PKEY_free(pkey);
     EVP_PKEY_CTX_free(fromctx);
@@ -568,7 +612,7 @@ err:
     return ret;
 }
 
-#ifndef OPENSSL_NO_ML_DSA
+#if !defined(OPENSSL_NO_ML_DSA) || !defined(OPENSSL_NO_SLH_DSA)
 /*
  * Test that a deterministic key generation produces the correct key
  */
@@ -1054,7 +1098,7 @@ static int setup_main_random(OSSL_LIB_CTX *libctx)
 
 static int self_test_asym_keygens(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
 {
-#ifndef OPENSSL_NO_ML_DSA
+#if !defined(OPENSSL_NO_ML_DSA) || !defined(OPENSSL_NO_SLH_DSA)
     int i, ret = 1;
 
     for (i = 0; i < (int)OSSL_NELEM(st_kat_asym_keygen_tests); ++i) {

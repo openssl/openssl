@@ -11,6 +11,7 @@
 #include <openssl/evp.h>
 #include <openssl/param_build.h>
 #include <openssl/rand.h>
+#include <openssl/pem.h>
 #include "crypto/slh_dsa.h"
 #include "internal/nelem.h"
 #include "testutil.h"
@@ -323,6 +324,144 @@ err:
     return ret;
 }
 
+static int slh_dsa_usage_test(void)
+{
+    int ret = 0;
+    EVP_CIPHER *cipher = NULL; /* Used to encrypt the private key */
+    char *pass = "Password";
+    BIO *pub_bio = NULL, *priv_bio = NULL;
+    EVP_PKEY_CTX *gctx = NULL, *sctx = NULL, *vctx = NULL;
+    EVP_PKEY *gkey = NULL, *pub = NULL, *priv = NULL;
+    EVP_SIGNATURE *sig_alg = NULL;
+    uint8_t *sig  = NULL;
+    size_t sig_len = 0;
+    uint8_t msg[] = "Hello World";
+    size_t msg_len = sizeof(msg) - 1;
+
+    /* Generate a key */
+    if (!TEST_ptr(gctx = EVP_PKEY_CTX_new_from_name(lib_ctx, "SLH-DSA-SHA2-128s", NULL))
+            || !TEST_int_eq(EVP_PKEY_keygen_init(gctx), 1)
+            || !TEST_int_eq(EVP_PKEY_keygen(gctx, &gkey), 1))
+        goto err;
+
+    /* Save it to a BIO - it uses a mem bio for testing */
+    if (!TEST_ptr(pub_bio = BIO_new(BIO_s_mem()))
+            || !TEST_ptr(priv_bio = BIO_new(BIO_s_mem()))
+            || !TEST_ptr(cipher = EVP_CIPHER_fetch(lib_ctx, "AES-256-CBC", NULL))
+            || !TEST_true(PEM_write_bio_PUBKEY_ex(pub_bio, gkey, lib_ctx, NULL))
+            || !TEST_true(PEM_write_bio_PrivateKey_ex(priv_bio, gkey, cipher,
+                                                      NULL, 0, NULL, (void *)pass,
+                                                      lib_ctx, NULL)))
+        goto err;
+
+    /* Read the private key and add to a signing ctx */
+    if (!TEST_ptr(PEM_read_bio_PrivateKey_ex(priv_bio, &priv, NULL, pass, lib_ctx, NULL))
+            || !TEST_ptr(sctx = EVP_PKEY_CTX_new_from_pkey(lib_ctx, priv, NULL))
+            || !TEST_ptr(sig_alg = EVP_SIGNATURE_fetch(lib_ctx, "SLH-DSA-SHA2-128s", NULL))
+            || !TEST_int_eq(EVP_PKEY_sign_message_init(sctx, sig_alg, NULL), 1))
+        goto err;
+    /* Determine the size of the signature & allocate space */
+    if (!TEST_int_eq(EVP_PKEY_sign(sctx, NULL, &sig_len, msg, msg_len), 1)
+            || !TEST_ptr(sig = OPENSSL_malloc(sig_len))
+            || !TEST_int_eq(EVP_PKEY_sign(sctx, sig, &sig_len, msg, msg_len), 1))
+        goto err;
+    /* Read the public key and add to a verify ctx */
+    if (!TEST_ptr(PEM_read_bio_PUBKEY_ex(pub_bio, &pub, NULL, NULL, lib_ctx, NULL))
+            || !TEST_ptr(vctx = EVP_PKEY_CTX_new_from_pkey(lib_ctx, pub, NULL)))
+        goto err;
+    /* verify the signature */
+    if (!TEST_int_eq(EVP_PKEY_verify_message_init(vctx, sig_alg, NULL), 1)
+            || !TEST_int_eq(EVP_PKEY_verify(vctx, sig, sig_len, msg, msg_len), 1))
+        goto err;
+    ret = 1;
+err:
+    EVP_CIPHER_free(cipher);
+    EVP_SIGNATURE_free(sig_alg);
+    EVP_PKEY_free(gkey);
+    EVP_PKEY_free(pub);
+    EVP_PKEY_free(priv);
+    EVP_PKEY_CTX_free(gctx);
+    EVP_PKEY_CTX_free(sctx);
+    EVP_PKEY_CTX_free(vctx);
+    BIO_free(pub_bio);
+    BIO_free(priv_bio);
+    OPENSSL_free(sig);
+    return ret;
+}
+
+static int slh_dsa_deterministic_usage_test(void)
+{
+    int ret = 0;
+    EVP_CIPHER *cipher = NULL; /* Used to encrypt the private key */
+    char *pass = "Password";
+    BIO *pub_bio = NULL, *priv_bio = NULL;
+    EVP_PKEY_CTX *gctx = NULL, *sctx = NULL, *vctx = NULL;
+    EVP_PKEY *gkey = NULL, *pub = NULL, *priv = NULL;
+    EVP_SIGNATURE *sig_alg = NULL;
+    uint8_t *sig  = NULL;
+    size_t sig_len = 0;
+    uint8_t msg[] = { 0x01, 0x02, 0x03, 0x04 };
+    size_t msg_len = sizeof(msg);
+    const SLH_DSA_KEYGEN_TEST_DATA *tst = &slh_dsa_keygen_testdata[0];
+    size_t key_len = tst->priv_len / 2;
+    size_t n = key_len / 2;
+    int deterministic = 1;
+    OSSL_PARAM params[2], *p = params;
+
+    /* Generate a key */
+    if (!TEST_ptr(gkey = do_gen_key(tst->name, tst->priv, key_len + n)))
+        goto err;
+
+    /* Save it to a BIO - it uses a mem bio for testing */
+    if (!TEST_ptr(pub_bio = BIO_new(BIO_s_mem()))
+            || !TEST_ptr(priv_bio = BIO_new(BIO_s_mem()))
+            || !TEST_ptr(cipher = EVP_CIPHER_fetch(lib_ctx, "AES-256-CBC", NULL))
+            || !TEST_true(PEM_write_bio_PUBKEY_ex(pub_bio, gkey, lib_ctx, NULL))
+            || !TEST_true(PEM_write_bio_PrivateKey_ex(priv_bio, gkey, cipher,
+                                                      NULL, 0, NULL, (void *)pass,
+                                                      lib_ctx, NULL)))
+        goto err;
+
+    *p++ = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_DETERMINISTIC, &deterministic);
+    *p = OSSL_PARAM_construct_end();
+
+    /* Read the private key and add to a signing ctx */
+    if (!TEST_ptr(PEM_read_bio_PrivateKey_ex(priv_bio, &priv, NULL, pass, lib_ctx, NULL))
+            || !TEST_ptr(sctx = EVP_PKEY_CTX_new_from_pkey(lib_ctx, priv, NULL))
+            /* Init the signature */
+            || !TEST_ptr(sig_alg = EVP_SIGNATURE_fetch(lib_ctx, tst->name, NULL))
+            || !TEST_int_eq(EVP_PKEY_sign_message_init(sctx, sig_alg, params), 1))
+        goto err;
+
+    /* Determine the size of the signature & allocate space */
+    if (!TEST_int_eq(EVP_PKEY_sign(sctx, NULL, &sig_len, msg, msg_len), 1)
+            || !TEST_ptr(sig = OPENSSL_malloc(sig_len))
+            || !TEST_int_eq(EVP_PKEY_sign(sctx, sig, &sig_len, msg, msg_len), 1))
+        goto err;
+    /* Read the public key and add to a verify ctx */
+    if (!TEST_ptr(PEM_read_bio_PUBKEY_ex(pub_bio, &pub, NULL, NULL, lib_ctx, NULL))
+            || !TEST_ptr(vctx = EVP_PKEY_CTX_new_from_pkey(lib_ctx, pub, NULL)))
+        goto err;
+    /* verify the signature */
+    if (!TEST_int_eq(EVP_PKEY_verify_message_init(vctx, sig_alg, NULL), 1)
+            || !TEST_int_eq(EVP_PKEY_verify(vctx, sig, sig_len, msg, msg_len), 1))
+        goto err;
+    ret = 1;
+err:
+    EVP_CIPHER_free(cipher);
+    EVP_SIGNATURE_free(sig_alg);
+    EVP_PKEY_free(gkey);
+    EVP_PKEY_free(pub);
+    EVP_PKEY_free(priv);
+    EVP_PKEY_CTX_free(gctx);
+    EVP_PKEY_CTX_free(sctx);
+    EVP_PKEY_CTX_free(vctx);
+    BIO_free(pub_bio);
+    BIO_free(priv_bio);
+    OPENSSL_free(sig);
+    return ret;
+}
+
 const OPTIONS *test_get_options(void)
 {
     static const OPTIONS options[] = {
@@ -357,6 +496,8 @@ int setup_tests(void)
     ADD_TEST(slh_dsa_bad_pub_len_test);
     ADD_TEST(slh_dsa_key_validate_test);
     ADD_TEST(slh_dsa_key_eq_test);
+    ADD_TEST(slh_dsa_usage_test);
+    ADD_TEST(slh_dsa_deterministic_usage_test);
     ADD_ALL_TESTS(slh_dsa_sign_verify_test, OSSL_NELEM(slh_dsa_sig_testdata));
     ADD_ALL_TESTS(slh_dsa_keygen_test, OSSL_NELEM(slh_dsa_keygen_testdata));
     return 1;
