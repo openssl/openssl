@@ -188,7 +188,7 @@ static int slh_dsa_get_params(void *keydata, OSSL_PARAM params[])
         if (pub == NULL
                 || !OSSL_PARAM_set_octet_string(p, pub,
                                                 ossl_slh_dsa_key_get_pub_len(key)))
-        return 0;
+            return 0;
     }
     return 1;
 }
@@ -292,7 +292,7 @@ static int slh_dsa_fips140_pairwise_test(SLH_DSA_CTX *ctx, const SLH_DSA_KEY *ke
     if (sig == NULL)
         goto err;
 
-    if (ossl_slh_dsa_sign(ctx, key, msg, msg_len, NULL, 0, NULL,  0,
+    if (ossl_slh_dsa_sign(ctx, key, msg, msg_len, NULL, 0, NULL, 0,
                           sig, &sig_len, sig_len) != 1)
         goto err;
 

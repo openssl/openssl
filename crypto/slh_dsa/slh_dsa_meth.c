@@ -15,6 +15,22 @@
 #include "crypto/x509.h"
 #include "crypto/slh_dsa.h"
 
+/* Minimal ASN1 method table to support PUB_KEY decoding */
+#define IMPLEMENT_PKEY_ASN1_METHOD(alg, name, PKEY_NAME)                       \
+    const EVP_PKEY_ASN1_METHOD ossl_slh_dsa_##name##_asn1_meth =               \
+    {                                                                          \
+        EVP_PKEY_SLH_DSA_##PKEY_NAME, EVP_PKEY_SLH_DSA_##PKEY_NAME,            \
+        0,                                                                     \
+        alg,                                                                   \
+        "OpenSSL " alg " algorithm",                                           \
+        slh_dsa_pub_decode, NULL, NULL, NULL,                                  \
+        NULL, NULL, NULL,                                                      \
+        NULL, NULL, NULL,                                                      \
+        NULL, NULL, NULL, NULL, NULL, NULL,                                    \
+        NULL,                                                                  \
+        slh_dsa_free,                                                          \
+    }
+
 static SLH_DSA_KEY *ossl_slh_dsa_key_create(const X509_ALGOR *palg,
                                             const unsigned char *p, int p_len,
                                             int id, int public,
@@ -81,21 +97,6 @@ static int slh_dsa_pub_decode(EVP_PKEY *pkey, const X509_PUBKEY *pubkey)
 static void slh_dsa_free(EVP_PKEY *pkey)
 {
     ossl_slh_dsa_key_free(pkey->pkey.slh_dsa);
-}
-
-/* Minimal ASN1 method table to support PUB_KEY decoding */
-#define IMPLEMENT_PKEY_ASN1_METHOD(alg, name, PKEY_NAME)                       \
-const EVP_PKEY_ASN1_METHOD ossl_slh_dsa_##name##_asn1_meth = {                 \
-    EVP_PKEY_SLH_DSA_##PKEY_NAME, EVP_PKEY_SLH_DSA_##PKEY_NAME,                \
-    0,                                                                         \
-    alg,                                                                       \
-    "OpenSSL " alg " algorithm",                                               \
-    slh_dsa_pub_decode, NULL, NULL, NULL,                                      \
-    NULL, NULL, NULL,                                                          \
-    NULL, NULL, NULL,                                                          \
-    NULL, NULL, NULL, NULL, NULL, NULL,                                        \
-    NULL,                                                                      \
-    slh_dsa_free,                                                              \
 }
 
 IMPLEMENT_PKEY_ASN1_METHOD("SLH-DSA-SHA2-128s", sha2_128s, SHA2_128S);

@@ -251,7 +251,7 @@ static int slh_dsa_compute_pk_root(SLH_DSA_CTX *ctx, SLH_DSA_KEY *out,
     /* Generate the ROOT public key */
     return ossl_slh_xmss_node(ctx, SLH_DSA_SK_SEED(out), 0, params->hm,
                               SLH_DSA_PK_SEED(out), adrs, dst, n)
-           && (validate == 0 || memcmp(dst, SLH_DSA_PK_ROOT(out), n) == 0);
+        && (validate == 0 || memcmp(dst, SLH_DSA_PK_ROOT(out), n) == 0);
 }
 
 /**
