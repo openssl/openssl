@@ -30,6 +30,13 @@ OpenSSL 3.5
 
 ### Changes between 3.4 and 3.5 [xx XXX xxxx]
 
+ * Remove FIPS provider configuration option to disallow the use of
+   truncated digests with Hash and HMAC DRBGs (q.v. FIPS 140-3 IG
+   D.R. -> W.2). As I.G. has been withdrawn. The option
+   '-no_drbg_truncated_digests' is removed from 'openssl fipsinstall'.
+
+   *Dimitri John Ledkov*
+
 * Support DEFAULT keyword and '-' prefix in SSL_CTX_set1_groups_list().
   SSL_CTX_set1_groups_list() now supports the DEFAULT keyword which sets the
   available groups to the default selection. The '-' prefix allows the calling
