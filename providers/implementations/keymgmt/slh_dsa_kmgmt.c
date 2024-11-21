@@ -10,6 +10,7 @@
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/param_build.h>
+#include <openssl/self_test.h>
 #include "crypto/slh_dsa.h"
 #include "internal/param_build_set.h"
 #include "prov/implementations.h"
@@ -248,6 +249,54 @@ static void *slh_dsa_gen_init(void *provctx, int selection,
     return gctx;
 }
 
+#ifdef FIPS_MODULE
+/*
+ * Refer to FIPS 140-3 IG 10.3.A Additional Comment 1
+ * Perform a pairwise test for SLH_DSA by signing and verifying a signature.
+ */
+static int slh_dsa_fips140_pairwise_test(SLH_DSA_CTX *ctx, const SLH_DSA_KEY *key,
+                                         OSSL_LIB_CTX *lib_ctx)
+{
+    int ret = 0;
+    OSSL_SELF_TEST *st = NULL;
+    OSSL_CALLBACK *cb = NULL;
+    void *cb_arg = NULL;
+    uint8_t msg[16] = {0};
+    size_t msg_len = sizeof(msg);
+    uint8_t *sig = NULL;
+    size_t sig_len;
+
+    OSSL_SELF_TEST_get_callback(lib_ctx, &cb, &cb_arg);
+    st = OSSL_SELF_TEST_new(cb, cb_arg);
+    if (st == NULL)
+        return 0;
+
+    OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_PCT,
+                           OSSL_SELF_TEST_DESC_PCT_SLH_DSA);
+
+    sig_len = ossl_slh_dsa_key_get_sig_len(key);
+    sig = OPENSSL_malloc(sig_len);
+    if (sig == NULL)
+        goto err;
+
+    if (ossl_slh_dsa_sign(ctx, key, msg, msg_len, NULL, 0, NULL,  0,
+                          sig, &sig_len, sig_len) != 1)
+        goto err;
+
+    OSSL_SELF_TEST_oncorrupt_byte(st, sig);
+
+    if (ossl_slh_dsa_verify(ctx, key, msg, msg_len, NULL, 0, 0, sig, sig_len) != 1)
+        goto err;
+
+    ret = 1;
+err:
+    OPENSSL_free(sig);
+    OSSL_SELF_TEST_onend(st, ret);
+    OSSL_SELF_TEST_free(st);
+    return ret;
+}
+#endif /* FIPS_MODULE */
+
 static void *slh_dsa_gen(void *genctx, const char *alg)
 {
     struct slh_dsa_gen_ctx *gctx = genctx;
@@ -265,6 +314,10 @@ static void *slh_dsa_gen(void *genctx, const char *alg)
     if (!ossl_slh_dsa_generate_key(ctx, gctx->libctx,
                                    gctx->entropy, gctx->entropy_len, key))
         goto err;
+#ifdef FIPS_MODULE
+    if (!slh_dsa_fips140_pairwise_test(ctx, key, gctx->libctx))
+        goto err;
+#endif /* FIPS_MODULE */
     ossl_slh_dsa_ctx_free(ctx);
     return key;
  err:
