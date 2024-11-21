@@ -27,6 +27,7 @@ static OSSL_FUNC_keymgmt_export_types_fn slh_dsa_imexport_types;
 static OSSL_FUNC_keymgmt_load_fn slh_dsa_load;
 static OSSL_FUNC_keymgmt_get_params_fn slh_dsa_get_params;
 static OSSL_FUNC_keymgmt_gettable_params_fn slh_dsa_gettable_params;
+static OSSL_FUNC_keymgmt_validate_fn slh_dsa_validate;
 static OSSL_FUNC_keymgmt_gen_init_fn slh_dsa_gen_init;
 static OSSL_FUNC_keymgmt_gen_cleanup_fn slh_dsa_gen_cleanup;
 static OSSL_FUNC_keymgmt_gen_set_params_fn slh_dsa_gen_set_params;
@@ -77,6 +78,18 @@ static int slh_dsa_match(const void *keydata1, const void *keydata2, int selecti
     if (key1 == NULL || key2 == NULL)
         return 0;
     return ossl_slh_dsa_key_equal(key1, key2, selection);
+}
+
+static int slh_dsa_validate(const void *key_data, int selection, int check_type)
+{
+    const SLH_DSA_KEY *key = key_data;
+
+    if (!slh_dsa_has(key, selection))
+        return 0;
+
+    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == OSSL_KEYMGMT_SELECT_KEYPAIR)
+        return ossl_slh_dsa_key_pairwise_check(key);
+    return 1;
 }
 
 static int slh_dsa_import(void *keydata, int selection, const OSSL_PARAM params[])
@@ -400,6 +413,7 @@ static void slh_dsa_gen_cleanup(void *genctx)
         { OSSL_FUNC_KEYMGMT_LOAD, (void (*)(void))slh_dsa_load },              \
         { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*) (void))slh_dsa_get_params }, \
         { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (void (*) (void))slh_dsa_gettable_params },\
+        { OSSL_FUNC_KEYMGMT_VALIDATE, (void (*)(void))slh_dsa_validate },      \
         { OSSL_FUNC_KEYMGMT_GEN_INIT, (void (*)(void))slh_dsa_gen_init },      \
         { OSSL_FUNC_KEYMGMT_GEN, (void (*)(void))slh_dsa_##fn##_gen },         \
         { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (void (*)(void))slh_dsa_gen_cleanup },\
