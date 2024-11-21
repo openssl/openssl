@@ -1054,17 +1054,17 @@ static int i2d_SLH_DSA_PUBKEY(const SLH_DSA_KEY *a, unsigned char **pp,
     return ret;
 }
 
-#define IMPLEMENT_SLH_DSA_PUBKEY_D2I_I2D(alg)                                  \
-int ossl_i2d_SLH_DSA_##alg##_PUBKEY(const SLH_DSA_KEY *a, unsigned char **pp)  \
-{                                                                              \
-    return i2d_SLH_DSA_PUBKEY(a, pp, EVP_PKEY_SLH_DSA_##alg);                  \
-}                                                                              \
-SLH_DSA_KEY *ossl_d2i_SLH_DSA_##alg##_PUBKEY(SLH_DSA_KEY **a,                  \
-                                             const unsigned char **pp,         \
-                                             long length)                      \
-{                                                                              \
-    return d2i_SLH_DSA_PUBKEY(a, pp, length, EVP_PKEY_SLH_DSA_##alg);          \
-}
+# define IMPLEMENT_SLH_DSA_PUBKEY_D2I_I2D(alg)                                 \
+    int ossl_i2d_SLH_DSA_##alg##_PUBKEY(const SLH_DSA_KEY *a, unsigned char **pp)\
+    {                                                                          \
+        return i2d_SLH_DSA_PUBKEY(a, pp, EVP_PKEY_SLH_DSA_##alg);              \
+    }                                                                          \
+    SLH_DSA_KEY *ossl_d2i_SLH_DSA_##alg##_PUBKEY(SLH_DSA_KEY **a,              \
+                                                 const unsigned char **pp,     \
+                                                 long length)                  \
+    {                                                                          \
+        return d2i_SLH_DSA_PUBKEY(a, pp, length, EVP_PKEY_SLH_DSA_##alg);      \
+    }
 
 IMPLEMENT_SLH_DSA_PUBKEY_D2I_I2D(SHA2_128S)
 IMPLEMENT_SLH_DSA_PUBKEY_D2I_I2D(SHA2_128F)
