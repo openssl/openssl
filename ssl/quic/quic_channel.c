@@ -2186,8 +2186,8 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch, int channel_only)
     uint32_t enc_level;
     int old_have_processed_any_pkt = ch->have_processed_any_pkt;
     OSSL_QTX_IOVEC iovec;
-    uint32_t *supported_ver;
-    size_t remaining_len;
+    PACKET vpkt;
+    unsigned long supported_ver;
 
     assert(ch->qrx_pkt != NULL);
 
@@ -2301,14 +2301,20 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch, int channel_only)
          * needs to be traversed so that we can find a matching
          * version
          */
-        supported_ver = (uint32_t *)ch->qrx_pkt->hdr->data;
-        remaining_len = ch->qrx_pkt->hdr->len;
-        while (remaining_len > 0) {
+        if (!PACKET_buf_init(&vpkt, ch->qrx_pkt->hdr->data,
+                             ch->qrx_pkt->hdr->len))
+            return;
+
+        while (PACKET_remaining(&vpkt) > 0) {
             /*
              * We only support quic version 1 at the moment, so
              * look to see if thats offered
              */
-            if (*supported_ver == QUIC_VERSION_1) {
+            if (!PACKET_get_net_4(&vpkt, &supported_ver))
+                return;
+
+            supported_ver = ntohl(supported_ver);
+            if (supported_ver == QUIC_VERSION_1) {
                 /*
                  * If the server supports version 1, set it as
                  * the packetisers version
@@ -2324,9 +2330,6 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch, int channel_only)
                                                            0, "handling ver negotiation packet");
                 return;
             }
-            /* move to the next supported ver */
-            supported_ver++;
-            remaining_len -= sizeof(uint32_t);
         }
 
         /*
