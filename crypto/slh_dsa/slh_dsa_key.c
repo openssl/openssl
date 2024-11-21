@@ -15,6 +15,7 @@
 #include <openssl/rand.h>
 #include "slh_dsa_local.h"
 #include "slh_dsa_key.h"
+#include "internal/encoder.h"
 
 static int slh_dsa_compute_pk_root(SLH_DSA_CTX *ctx, SLH_DSA_KEY *out,
                                    int verify);
@@ -251,7 +252,7 @@ static int slh_dsa_compute_pk_root(SLH_DSA_CTX *ctx, SLH_DSA_KEY *out,
     /* Generate the ROOT public key */
     return ossl_slh_xmss_node(ctx, SLH_DSA_SK_SEED(out), 0, params->hm,
                               SLH_DSA_PK_SEED(out), adrs, dst, n)
-           && (validate == 0 || memcmp(dst, SLH_DSA_PK_ROOT(out), n) == 0);
+        && (validate == 0 || memcmp(dst, SLH_DSA_PK_ROOT(out), n) == 0);
 }
 
 /**
@@ -381,5 +382,42 @@ int ossl_slh_dsa_set_pub(SLH_DSA_KEY *key, const uint8_t *pub, size_t pub_len)
     key->pub = SLH_DSA_PUB(key);
     memcpy(key->pub, pub, pub_len);
     key->has_priv = 0;
+    return 1;
+}
+
+int ossl_slh_dsa_key_to_text(BIO *out, const SLH_DSA_KEY *key, int selection)
+{
+    const char *name;
+
+    if (out == NULL || key == NULL) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    if (ossl_slh_dsa_key_get_pub(key) == NULL) {
+        /* Regardless of the |selection|, there must be a public key */
+        ERR_raise(ERR_LIB_PROV, PROV_R_NOT_A_PUBLIC_KEY);
+        return 0;
+    }
+
+    name = ossl_slh_dsa_key_get_name(key);
+    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
+        if (ossl_slh_dsa_key_get_priv(key) == NULL) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_NOT_A_PRIVATE_KEY);
+            return 0;
+        }
+        if (BIO_printf(out, "%s Private-Key:\n", name) <= 0)
+            return 0;
+        if (!ossl_bio_print_labeled_buf(out, "priv:", ossl_slh_dsa_key_get_priv(key),
+                                        ossl_slh_dsa_key_get_priv_len(key)))
+            return 0;
+    } else if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
+        if (BIO_printf(out, "%s Public-Key:\n", name) <= 0)
+            return 0;
+    }
+
+    if (!ossl_bio_print_labeled_buf(out, "pub:", ossl_slh_dsa_key_get_pub(key),
+                                    ossl_slh_dsa_key_get_pub_len(key)))
+        return 0;
+
     return 1;
 }

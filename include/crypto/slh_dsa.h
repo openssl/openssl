@@ -33,6 +33,7 @@ __owur int ossl_slh_dsa_key_fromdata(SLH_DSA_KEY *key, const OSSL_PARAM *params,
 __owur int ossl_slh_dsa_generate_key(SLH_DSA_CTX *ctx, OSSL_LIB_CTX *libctx,
                                      const uint8_t *entropy, size_t entropy_len,
                                      SLH_DSA_KEY *out);
+__owur int ossl_slh_dsa_key_to_text(BIO *out, const SLH_DSA_KEY *key, int selection);
 __owur const uint8_t *ossl_slh_dsa_key_get_pub(const SLH_DSA_KEY *key);
 __owur const uint8_t *ossl_slh_dsa_key_get_priv(const SLH_DSA_KEY *key);
 __owur size_t ossl_slh_dsa_key_get_pub_len(const SLH_DSA_KEY *key);

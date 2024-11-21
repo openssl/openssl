@@ -17,13 +17,13 @@
  * It is the size used by WOTS+ public and private key elements as well as
  * signature elements.
  */
-#define SLH_MAX_N                   32
+#define SLH_MAX_N 32
 /*
  * For the given standard w=16 for all parameter sets.
  * A n byte message is converted into 2 * n base 16 Integers followed
  * by 3 Integers for the checksum of these values.
  */
-#define SLH_WOTS_LEN(n)             (2 * (n) + 3)
+#define SLH_WOTS_LEN(n) (2 * (n) + 3)
 
 /*
  * FIPS 205 SLH_DSA algorithms have many different parameters which includes:

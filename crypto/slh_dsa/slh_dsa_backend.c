@@ -29,7 +29,7 @@ SLH_DSA_KEY *ossl_slh_dsa_key_from_pkcs8(const PKCS8_PRIV_KEY_INFO *p8_info,
 
     X509_ALGOR_get0(NULL, &alg_param_type, NULL, alg);
     if (alg_param_type != V_ASN1_UNDEF)
-         return 0;
+        return 0;
 
     oct = d2i_ASN1_OCTET_STRING(NULL, &p, p_len);
     if (oct == NULL) {
