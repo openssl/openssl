@@ -612,8 +612,8 @@ static int self_test_asym_keygen(const ST_KAT_ASYM_KEYGEN *t, OSSL_SELF_TEST *st
 {
     int ret = 0;
     const ST_KAT_PARAM *expected;
-    OSSL_PARAM *key_params;
-    OSSL_PARAM_BLD *key_bld;
+    OSSL_PARAM *key_params = NULL;
+    OSSL_PARAM_BLD *key_bld = NULL;
     EVP_PKEY_CTX *key_ctx = NULL;
     EVP_PKEY *key = NULL;
     uint8_t out[256];
