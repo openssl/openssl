@@ -784,6 +784,7 @@ static void port_send_version_negotiation(QUIC_PORT *port, BIO_ADDR *peer,
     WPACKET wpkt;
     uint32_t supported_versions[1];
     size_t written;
+    size_t i;
 
     memset(&hdr, 0, sizeof(QUIC_PKT_HDR));
     /*
@@ -825,8 +826,10 @@ static void port_send_version_negotiation(QUIC_PORT *port, BIO_ADDR *peer,
     /*
      * Add the array of supported versions to the end of the packet
      */
-    if (!WPACKET_memcpy(&wpkt, supported_versions, sizeof(supported_versions)))
-        return;
+    for (i = 0; i < OSSL_NELEM(supported_versions); i++) {
+        if (!WPACKET_put_bytes_u32(&wpkt, htonl(supported_versions[i])))
+            return;
+    }
 
     if (!WPACKET_get_total_written(&wpkt, &msg[0].data_len))
         return;
@@ -967,7 +970,7 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
         /*
          * If we don't get a supported version, respond with a ver
          * negotiation packet, and discard
-         * TODO: Rate limit the reception of these
+         * TODO(QUIC SERVER): Rate limit the reception of these
          */
         port_send_version_negotiation(port, &e->peer, &hdr);
         goto undesirable;
