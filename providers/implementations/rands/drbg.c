@@ -984,46 +984,15 @@ int ossl_drbg_set_ctx_params(PROV_DRBG *drbg, const OSSL_PARAM params[])
     return 1;
 }
 
-#ifdef FIPS_MODULE
-static int digest_allowed(const EVP_MD *md)
-{
-    /* FIPS 140-3 IG D.R limited DRBG digests to a specific set */
-    static const char *const allowed_digests[] = {
-        "SHA1",                     /* SHA 1 allowed */
-        "SHA2-256", "SHA2-512",     /* non-truncated SHA2 allowed */
-        "SHA3-256", "SHA3-512",     /* non-truncated SHA3 allowed */
-    };
-    size_t i;
-
-    for (i = 0; i < OSSL_NELEM(allowed_digests); i++) {
-        if (EVP_MD_is_a(md, allowed_digests[i]))
-            return 1;
-    }
-    return 0;
-}
-#endif
-
 /* Confirm digest is allowed to be used with a DRBG */
 int ossl_drbg_verify_digest(PROV_DRBG *drbg, OSSL_LIB_CTX *libctx,
                             const EVP_MD *md)
 {
-#ifdef FIPS_MODULE
-    int approved = digest_allowed(md);
-
-    if (!approved) {
-        if (!OSSL_FIPS_IND_ON_UNAPPROVED(drbg, OSSL_FIPS_IND_SETTABLE0,
-                                         libctx, "DRBG", "Digest",
-                                         ossl_fips_config_restricted_drbg_digests)) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED);
-            return 0;
-        }
-    }
-#else   /* FIPS_MODULE */
-    /* Outside of FIPS, any digests that are not XOF are allowed */
+    /* Any digests that are not XOF are allowed */
     if (EVP_MD_xof(md)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_XOF_DIGESTS_NOT_ALLOWED);
         return 0;
     }
-#endif  /* FIPS_MODULE */
+
     return 1;
 }

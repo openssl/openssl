@@ -102,10 +102,6 @@ See L<openssl-fipsinstall(1)/OPTIONS> B<-ems_check>
 
 See L<openssl-fipsinstall(1)/OPTIONS> B<-no_short_mac>
 
-=item B<drbg-no-trunc-md>
-
-See L<openssl-fipsinstall(1)/OPTIONS> B<-no_drbg_truncated_digests>
-
 =item B<signature-digest-check>
 
 See L<openssl-fipsinstall(1)/OPTIONS> B<-signature_digest_check>

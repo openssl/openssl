@@ -35,7 +35,6 @@ my %params = (
     'PROV_PARAM_KMAC_KEY_CHECK' =>     "kmac-key-check",     # uint
     'PROV_PARAM_TLS1_PRF_EMS_CHECK' => "tls1-prf-ems-check", # uint
     'PROV_PARAM_NO_SHORT_MAC' =>       "no-short-mac",       # uint
-    'PROV_PARAM_DRBG_TRUNC_DIGEST' =>  "drbg-no-trunc-md",   # uint
     'PROV_PARAM_HKDF_DIGEST_CHECK' =>      "hkdf-digest-check",      # uint
     'PROV_PARAM_TLS13_KDF_DIGEST_CHECK' => "tls13-kdf-digest-check", # uint
     'PROV_PARAM_TLS1_PRF_DIGEST_CHECK' =>  "tls1-prf-digest-check",  # uint

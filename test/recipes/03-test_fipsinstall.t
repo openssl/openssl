@@ -26,9 +26,7 @@ plan skip_all => "Test only supported in a fips build" if disabled("fips");
 
 # Compatible options for pedantic FIPS compliance
 my @pedantic_okay =
-    ( 'ems_check', 'no_drbg_truncated_digests', 'self_test_onload',
-      'signature_digest_check'
-    );
+    ( 'ems_check', 'self_test_onload', 'signature_digest_check' );
 
 # Incompatible options for pedantic FIPS compliance
 my @pedantic_fail =
@@ -40,7 +38,6 @@ my @commandline =
     (
         ( 'ems_check',                      'tls1-prf-ems-check' ),
         ( 'no_short_mac',                   'no-short-mac' ),
-        ( 'no_drbg_truncated_digests',      'drbg-no-trunc-md' ),
         ( 'signature_digest_check',         'signature-digest-check' ),
         ( 'hkdf_digest_check',              'hkdf-digest-check' ),
         ( 'tls13_kdf_digest_check',         'tls13-kdf-digest-check' ),
@@ -63,7 +60,7 @@ my @commandline =
         ( 'x942kdf_key_check',              'x942kdf-key-check' )
     );
 
-plan tests => 36 + (scalar @pedantic_okay) + (scalar @pedantic_fail)
+plan tests => 33 + (scalar @pedantic_okay) + (scalar @pedantic_fail)
               + 4 * (scalar @commandline);
 
 my $infile = bldtop_file('providers', platform->dso('fips'));
@@ -427,19 +424,6 @@ SKIP: {
                 '-ems_check'])),
        "fipsinstall fails when attempting to run self tests on install");
 }
-
-ok(find_line_file('drbg-no-trunc-md = 0', 'fips.cnf') == 1,
-   'fipsinstall defaults to not banning truncated digests with DRBGs');
-
-ok(run(app(['openssl', 'fipsinstall', '-out', 'fips.cnf', '-module', $infile,
-           '-provider_name', 'fips', '-mac_name', 'HMAC',
-           '-macopt', 'digest:SHA256', '-macopt', "hexkey:$fipskey",
-           '-section_name', 'fips_sect', '-no_drbg_truncated_digests'])),
-   "fipsinstall knows about allowing truncated digests in DRBGs");
-
-ok(find_line_file('drbg-no-trunc-md = 1', 'fips.cnf') == 1,
-   'fipsinstall will allow option for truncated digests with DRBGs');
-
 
 ok(run(app(['openssl', 'fipsinstall', '-out', 'fips-pedantic.cnf',
             '-module', $infile, '-pedantic'])),
