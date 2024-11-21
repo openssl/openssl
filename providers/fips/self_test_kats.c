@@ -638,8 +638,7 @@ static int self_test_asym_keygen(const ST_KAT_ASYM_KEYGEN *t, OSSL_SELF_TEST *st
             || EVP_PKEY_generate(key_ctx, &key) != 1)
         goto err;
 
-    for (expected = t->expected_params; expected->data != NULL; ++expected)
-    {
+    for (expected = t->expected_params; expected->data != NULL; ++expected) {
         if (expected->type != OSSL_PARAM_OCTET_STRING
                 || !EVP_PKEY_get_octet_string_param(key, expected->name,
                                                     out, sizeof(out), &out_len))
