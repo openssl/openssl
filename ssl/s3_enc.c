@@ -260,12 +260,62 @@ int ssl3_finish_mac(SSL_CONNECTION *s, const unsigned char *buf, size_t len)
             return 0;
         }
     } else {
-        ret = EVP_DigestUpdate(s->s3.handshake_dgst, buf, len);
+        /*
+         * rfc9147:
+         * In DTLS 1.3, the message transcript is computed over the
+         * original TLS 1.3-style Handshake messages without the
+         * message_seq, fragment_oﬀset, and fragment_length values. Note
+         * that this is a change from DTLS 1.2 where those values were
+         * included in the transcript.
+         *
+         * So this means that we record the full handshake messages in
+         * s->s3.handshake_buffer while s->s3.handshake_dgst is not in use and then
+         * we calculate the digest when initiating s->s3.handshake_dgst at which
+         * point we know what the protocol version is.
+         */
+
+        if (0 && SSL_CONNECTION_IS_DTLS13(s)
+                && ossl_assert(len >= DTLS1_HM_HEADER_LENGTH)) {
+            ret = EVP_DigestUpdate(s->s3.handshake_dgst, buf, SSL3_HM_HEADER_LENGTH);
+            ret += EVP_DigestUpdate(s->s3.handshake_dgst,
+                                    buf + DTLS1_HM_HEADER_LENGTH,
+                                    len - DTLS1_HM_HEADER_LENGTH);
+        } else {
+            ret = EVP_DigestUpdate(s->s3.handshake_dgst, buf, len);
+        }
+
         if (!ret) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return 0;
         }
     }
+    return 1;
+}
+
+static int dtls1_read_hm_header(unsigned char *msgheaderstart,
+                                struct hm_header_st *msg_hdr)
+{
+    unsigned long msg_len, frag_off, frag_len;
+    unsigned int msg_seq, msg_type;
+    PACKET msgheader;
+
+    if (!PACKET_buf_init(&msgheader, msgheaderstart, DTLS1_HM_HEADER_LENGTH)
+        || !PACKET_get_1(&msgheader, &msg_type)
+        || !PACKET_get_net_3(&msgheader, &msg_len)
+        || !PACKET_get_net_2(&msgheader, &msg_seq)
+        || !PACKET_get_net_3(&msgheader, &frag_off)
+        || !PACKET_get_net_3(&msgheader, &frag_len)
+        || PACKET_remaining(&msgheader) != 0) {
+        return 0;
+    }
+
+    /* We just checked that values did not exceed max size so cast must be alright */
+    msg_hdr->type = (unsigned char)msg_type;
+    msg_hdr->msg_len = (size_t)msg_len;
+    msg_hdr->seq = (unsigned short)msg_seq;
+    msg_hdr->frag_off = (size_t)frag_off;
+    msg_hdr->frag_len = (size_t)frag_len;
+
     return 1;
 }
 
@@ -294,10 +344,32 @@ int ssl3_digest_cached_records(SSL_CONNECTION *s, int keep)
                      SSL_R_NO_SUITABLE_DIGEST_ALGORITHM);
             return 0;
         }
-        if (!EVP_DigestInit_ex(s->s3.handshake_dgst, md, NULL)
-            || !EVP_DigestUpdate(s->s3.handshake_dgst, hdata, hdatalen)) {
+        if (!EVP_DigestInit_ex(s->s3.handshake_dgst, md, NULL)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return 0;
+        }
+
+        if (SSL_CONNECTION_IS_DTLS13(s)) {
+            struct hm_header_st hmhdr;
+            size_t remlen = hdatalen;
+
+            while (remlen > 0) {
+                if (remlen < DTLS1_HM_HEADER_LENGTH
+                    || !dtls1_read_hm_header(hdata, &hmhdr)
+                    || (hmhdr.msg_len + DTLS1_HM_HEADER_LENGTH) > remlen
+                    || !ssl3_finish_mac(s, hdata, hmhdr.msg_len + DTLS1_HM_HEADER_LENGTH)) {
+                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                    return 0;
+                }
+
+                hdata += hmhdr.msg_len + DTLS1_HM_HEADER_LENGTH;
+                remlen -= hmhdr.msg_len + DTLS1_HM_HEADER_LENGTH;
+            }
+        } else {
+            if (!ssl3_finish_mac(s, hdata, hdatalen)) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                return 0;
+            }
         }
     }
     if (keep == 0) {

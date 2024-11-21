@@ -1688,18 +1688,21 @@ int tls_get_message_body(SSL_CONNECTION *s, size_t *len)
          * The TLsv1.3 handshake transcript stops at the ClientFinished
          * message.
          */
-#define SERVER_HELLO_RANDOM_OFFSET  (SSL3_HM_HEADER_LENGTH + 2)
+        const size_t hdr_len = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_HM_HEADER_LENGTH
+                                                         : SSL3_HM_HEADER_LENGTH;
+        const size_t srvhellorandom_offs = hdr_len + 2;
+
         /* KeyUpdate and NewSessionTicket do not need to be added */
         if (!SSL_CONNECTION_IS_VERSION13(s)
             || (s->s3.tmp.message_type != SSL3_MT_NEWSESSION_TICKET
                          && s->s3.tmp.message_type != SSL3_MT_KEY_UPDATE)) {
             if (s->s3.tmp.message_type != SSL3_MT_SERVER_HELLO
-                    || s->init_num < SERVER_HELLO_RANDOM_OFFSET + SSL3_RANDOM_SIZE
+                    || s->init_num < srvhellorandom_offs + SSL3_RANDOM_SIZE
                     || memcmp(hrrrandom,
-                              s->init_buf->data + SERVER_HELLO_RANDOM_OFFSET,
+                              s->init_buf->data + srvhellorandom_offs,
                               SSL3_RANDOM_SIZE) != 0) {
                 if (!ssl3_finish_mac(s, (unsigned char *)s->init_buf->data,
-                                     s->init_num + SSL3_HM_HEADER_LENGTH)) {
+                                     s->init_num + hdr_len)) {
                     /* SSLfatal() already called */
                     *len = 0;
                     return 0;
@@ -2624,9 +2627,11 @@ int create_synthetic_message_hash(SSL_CONNECTION *s,
                                   size_t hrrlen)
 {
     unsigned char hashvaltmp[EVP_MAX_MD_SIZE];
-    unsigned char msghdr[SSL3_HM_HEADER_LENGTH];
+    unsigned char synmsghdr[SSL3_HM_HEADER_LENGTH];
+    size_t currmsghdr_len = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_HM_HEADER_LENGTH
+                                                      : SSL3_HM_HEADER_LENGTH;
 
-    memset(msghdr, 0, sizeof(msghdr));
+    memset(synmsghdr, 0, sizeof(synmsghdr));
 
     if (hashval == NULL) {
         hashval = hashvaltmp;
@@ -2647,9 +2652,9 @@ int create_synthetic_message_hash(SSL_CONNECTION *s,
     }
 
     /* Inject the synthetic message_hash message */
-    msghdr[0] = SSL3_MT_MESSAGE_HASH;
-    msghdr[SSL3_HM_HEADER_LENGTH - 1] = (unsigned char)hashlen;
-    if (!ssl3_finish_mac(s, msghdr, SSL3_HM_HEADER_LENGTH)
+    synmsghdr[0] = SSL3_MT_MESSAGE_HASH;
+    synmsghdr[SSL3_HM_HEADER_LENGTH - 1] = (unsigned char)hashlen;
+    if (!ssl3_finish_mac(s, synmsghdr, SSL3_HM_HEADER_LENGTH)
             || !ssl3_finish_mac(s, hashval, hashlen)) {
         /* SSLfatal() already called */
         return 0;
@@ -2663,8 +2668,7 @@ int create_synthetic_message_hash(SSL_CONNECTION *s,
     if (hrr != NULL
             && (!ssl3_finish_mac(s, hrr, hrrlen)
                 || !ssl3_finish_mac(s, (unsigned char *)s->init_buf->data,
-                                    s->s3.tmp.message_size
-                                    + SSL3_HM_HEADER_LENGTH))) {
+                                    s->s3.tmp.message_size + currmsghdr_len))) {
         /* SSLfatal() already called */
         return 0;
     }
