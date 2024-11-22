@@ -123,7 +123,13 @@ sub ::function_end_B
 }
 
 sub ::file_end
-{  push (@out,$initseg) if ($initseg);
+{   if (grep {/\b${nmdecor}OPENSSL_ia32cap_P\b/i} @out)
+    {	my $comm=<<___;
+${drdecor}extern	${nmdecor}OPENSSL_ia32cap_P 16
+___
+	push (@out,$comm)
+    }
+    push (@out,$initseg) if ($initseg);
 }
 
 sub ::comment {   foreach (@_) { push(@out,"\t; $_\n"); }   }
