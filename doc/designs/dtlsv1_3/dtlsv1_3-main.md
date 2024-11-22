@@ -70,6 +70,11 @@ section 5.9.
 The DTLSv1.3 implementation modifies the epoch according to RFC9147 section 6.1
 for DTLSv1.3 connections.
 
+#### DTLS 1.3 Transcript Hash
+
+The DTLSv1.3 implementation does not include the message sequence number,
+fragment offset and fragment length as is the case the previous versions of DTLS.
+
 Implementation progress
 -----------------------
 

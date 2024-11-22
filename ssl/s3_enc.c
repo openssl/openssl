@@ -323,6 +323,7 @@ int ssl3_digest_cached_records(SSL_CONNECTION *s, int keep)
         }
 
         if (SSL_CONNECTION_IS_DTLS13(s)) {
+            unsigned char *hm = hdata;
             size_t remlen = hdatalen;
 
             while (remlen > 0) {
@@ -330,16 +331,16 @@ int ssl3_digest_cached_records(SSL_CONNECTION *s, int keep)
                 unsigned long msglen;
 
                 if (remlen < DTLS1_HM_HEADER_LENGTH
-                    || !PACKET_buf_init(&hmhdr, hdata, DTLS1_HM_HEADER_LENGTH)
+                    || !PACKET_buf_init(&hmhdr, hm, DTLS1_HM_HEADER_LENGTH)
                     || !PACKET_forward(&hmhdr, 1)
                     || !PACKET_get_net_3(&hmhdr, &msglen)
                     || (msglen + DTLS1_HM_HEADER_LENGTH) > remlen
-                    || !ssl3_finish_mac(s, hdata, msglen + DTLS1_HM_HEADER_LENGTH, 1)) {
+                    || !ssl3_finish_mac(s, hm, msglen + DTLS1_HM_HEADER_LENGTH, 1)) {
                     SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                     return 0;
                 }
 
-                hdata += msglen + DTLS1_HM_HEADER_LENGTH;
+                hm += msglen + DTLS1_HM_HEADER_LENGTH;
                 remlen -= msglen + DTLS1_HM_HEADER_LENGTH;
             }
         } else {
