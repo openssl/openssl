@@ -244,7 +244,7 @@ void ssl3_free_digest_list(SSL_CONNECTION *s)
     s->s3.handshake_dgst = NULL;
 }
 
-int ssl3_finish_mac(SSL_CONNECTION *s, const unsigned char *buf, size_t len)
+int ssl3_finish_mac(SSL_CONNECTION *s, const unsigned char *buf, size_t len, int hmhdr_incl)
 {
     int ret;
 
@@ -274,7 +274,7 @@ int ssl3_finish_mac(SSL_CONNECTION *s, const unsigned char *buf, size_t len)
          * point we know what the protocol version is.
          */
 
-        if (0 && SSL_CONNECTION_IS_DTLS13(s)
+        if (SSL_CONNECTION_IS_DTLS13(s) && hmhdr_incl
                 && ossl_assert(len >= DTLS1_HM_HEADER_LENGTH)) {
             ret = EVP_DigestUpdate(s->s3.handshake_dgst, buf, SSL3_HM_HEADER_LENGTH);
             ret += EVP_DigestUpdate(s->s3.handshake_dgst,
@@ -323,17 +323,18 @@ int ssl3_digest_cached_records(SSL_CONNECTION *s, int keep)
         }
 
         if (SSL_CONNECTION_IS_DTLS13(s)) {
-            PACKET hmhdr;
             size_t remlen = hdatalen;
-            unsigned long msglen;
 
             while (remlen > 0) {
+                PACKET hmhdr;
+                unsigned long msglen;
+
                 if (remlen < DTLS1_HM_HEADER_LENGTH
                     || !PACKET_buf_init(&hmhdr, hdata, DTLS1_HM_HEADER_LENGTH)
                     || !PACKET_forward(&hmhdr, 1)
                     || !PACKET_get_net_3(&hmhdr, &msglen)
                     || (msglen + DTLS1_HM_HEADER_LENGTH) > remlen
-                    || !ssl3_finish_mac(s, hdata, msglen + DTLS1_HM_HEADER_LENGTH)) {
+                    || !ssl3_finish_mac(s, hdata, msglen + DTLS1_HM_HEADER_LENGTH, 1)) {
                     SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                     return 0;
                 }
@@ -342,7 +343,7 @@ int ssl3_digest_cached_records(SSL_CONNECTION *s, int keep)
                 remlen -= msglen + DTLS1_HM_HEADER_LENGTH;
             }
         } else {
-            if (!ssl3_finish_mac(s, hdata, hdatalen)) {
+            if (!ssl3_finish_mac(s, hdata, hdatalen, 1)) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 return 0;
             }

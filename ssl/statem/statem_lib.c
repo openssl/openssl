@@ -106,7 +106,7 @@ int ssl3_do_write(SSL_CONNECTION *s, uint8_t type)
                                  && s->statem.hand_state != TLS_ST_SW_KEY_UPDATE))
             if (!ssl3_finish_mac(s,
                                  (unsigned char *)&s->init_buf->data[s->init_off],
-                                 written))
+                                 written, 1))
                 return -1;
     if (written == s->init_num) {
         s->statem.write_in_progress = 0;
@@ -1673,7 +1673,7 @@ int tls_get_message_body(SSL_CONNECTION *s, size_t *len)
     /* Feed this message into MAC computation. */
     if (RECORD_LAYER_is_sslv2_record(&s->rlayer)) {
         if (!ssl3_finish_mac(s, (unsigned char *)s->init_buf->data,
-                             s->init_num)) {
+                             s->init_num, 1)) {
             /* SSLfatal() already called */
             *len = 0;
             return 0;
@@ -1702,7 +1702,7 @@ int tls_get_message_body(SSL_CONNECTION *s, size_t *len)
                               s->init_buf->data + srvhellorandom_offs,
                               SSL3_RANDOM_SIZE) != 0) {
                 if (!ssl3_finish_mac(s, (unsigned char *)s->init_buf->data,
-                                     s->init_num + hdr_len)) {
+                                     s->init_num + hdr_len, 1)) {
                     /* SSLfatal() already called */
                     *len = 0;
                     return 0;
@@ -2654,8 +2654,8 @@ int create_synthetic_message_hash(SSL_CONNECTION *s,
     /* Inject the synthetic message_hash message */
     synmsghdr[0] = SSL3_MT_MESSAGE_HASH;
     synmsghdr[SSL3_HM_HEADER_LENGTH - 1] = (unsigned char)hashlen;
-    if (!ssl3_finish_mac(s, synmsghdr, SSL3_HM_HEADER_LENGTH)
-            || !ssl3_finish_mac(s, hashval, hashlen)) {
+    if (!ssl3_finish_mac(s, synmsghdr, SSL3_HM_HEADER_LENGTH, 0)
+            || !ssl3_finish_mac(s, hashval, hashlen, 0)) {
         /* SSLfatal() already called */
         return 0;
     }
@@ -2666,9 +2666,9 @@ int create_synthetic_message_hash(SSL_CONNECTION *s,
      * receiving a ClientHello2 with a cookie.
      */
     if (hrr != NULL
-            && (!ssl3_finish_mac(s, hrr, hrrlen)
+            && (!ssl3_finish_mac(s, hrr, hrrlen, 1)
                 || !ssl3_finish_mac(s, (unsigned char *)s->init_buf->data,
-                                    s->s3.tmp.message_size + currmsghdr_len))) {
+                                    s->s3.tmp.message_size + currmsghdr_len, 1))) {
         /* SSLfatal() already called */
         return 0;
     }

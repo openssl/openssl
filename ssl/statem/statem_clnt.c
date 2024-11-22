@@ -1895,7 +1895,7 @@ static MSG_PROCESS_RETURN tls_process_as_hello_retry_request(SSL_CONNECTION *s,
      * for HRR messages.
      */
     if (!ssl3_finish_mac(s, (unsigned char *)s->init_buf->data,
-                         s->init_num + msghdrlen)) {
+                         s->init_num + msghdrlen, 1)) {
         /* SSLfatal() already called */
         goto err;
     }
