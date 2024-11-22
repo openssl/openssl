@@ -125,7 +125,7 @@ sub ::function_end_B
 sub ::file_end
 {   if (grep {/\b${nmdecor}OPENSSL_ia32cap_P\b/i} @out)
     {	my $comm=<<___;
-${drdecor}extern	${nmdecor}OPENSSL_ia32cap_P 16
+${drdecor}extern	${nmdecor}OPENSSL_ia32cap_P
 ___
 	push (@out,$comm)
     }
