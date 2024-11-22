@@ -138,6 +138,12 @@ ___
 
     push(@out,"$segment	ENDS\n");
 
+    if (grep {/\b${nmdecor}OPENSSL_ia32cap_P\b/i} @out)
+    {	my $comm=<<___;
+EXTERN ${nmdecor}OPENSSL_ia32cap_P)
+___
+	push (@out,$comm);
+    }
     push (@out,$initseg) if ($initseg);
     push (@out,"END\n");
 }
