@@ -240,11 +240,13 @@ int genpkey_main(int argc, char **argv)
     mem_out = BIO_new(BIO_s_mem());
     if (mem_out == NULL)
         goto end;
+    BIO_set_mem_eof_return(mem_out, 0);
 
     if (outpubkeyfile != NULL) {
         mem_outpubkey = BIO_new(BIO_s_mem());
         if (mem_outpubkey == NULL)
             goto end;
+        BIO_set_mem_eof_return(mem_outpubkey, 0);
     }
 
     if (verbose)
@@ -300,12 +302,12 @@ int genpkey_main(int argc, char **argv)
         if (mem_outpubkey != NULL) {
             rv = mem_bio_to_file(mem_outpubkey, outpubkeyfile, outformat, private);
             if (!rv)
-                BIO_puts(bio_err, "Error writing to outpubkey\n");
+                BIO_printf(bio_err, "Error writing to outpubkey: '%s'. Error: %s\n", outpubkeyfile, strerror(errno));
         }
         if (mem_out != NULL) {
             rv = mem_bio_to_file(mem_out, outfile, outformat, private);
             if (!rv)
-                BIO_puts(bio_err, "Error writing to outfile\n");
+                BIO_printf(bio_err, "Error writing to outfile: '%s'. Error: %s\n", outpubkeyfile, strerror(errno));
         }
     }
     EVP_PKEY_free(pkey);
