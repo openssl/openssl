@@ -8,7 +8,7 @@ CN2 = Brother 2
 [ req ]
 distinguished_name	= req_distinguished_name
 encrypt_rsa_key		= no
-default_md		= sha1
+default_md		= sha256
 
 [ req_distinguished_name ]
 countryName			= Country Name (2 letter code)
@@ -70,7 +70,7 @@ name_opt 	= ca_default
 cert_opt 	= ca_default
 default_days	= 365
 default_crl_days= 30
-default_md	= sha1
+default_md	= sha256
 preserve	= no
 policy		= policy_anything
 
