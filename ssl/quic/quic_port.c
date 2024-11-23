@@ -51,11 +51,21 @@ static void port_rx_pre(QUIC_PORT *port);
  * A character array for the integrity tag, with a length defined by
  * `QUIC_RETRY_INTEGRITY_TAG_LEN`. This tag is used to verify the integrity
  * of the token during the connection process.
+ *
+ * @var validation_token::marshalled_buf
+ * This is holding space used to marshall the previous pointers in the struct
+ * in order to properly marshall the data, we need to point token_buf,
+ * token_odcid and integrity_tag into this buffer (see port_send_retry and
+ * port_validate_token).  We do this because QUIC_CONN_ID has a maximally sized
+ * id array as a member which is not fully used, leading to spans of garbage
+ * data in the token if we don't serialize them properly
  */
 struct validation_token {
-    char token_buf[sizeof("openssltoken") - 1];
+    char *token_buf;
     QUIC_CONN_ID token_odcid;
-    char integrity_tag[QUIC_RETRY_INTEGRITY_TAG_LEN];
+    QUIC_CONN_ID new_dcid;
+    unsigned char *integrity_tag;
+    unsigned char marshalled_buf[512];
 };
 
 DEFINE_LIST_OF_IMPL(ch, QUIC_CHANNEL);
@@ -647,9 +657,174 @@ static int port_try_handle_stateless_reset(QUIC_PORT *port, const QUIC_URXE *e)
     return i > 0;
 }
 
-#define TOKEN_LEN (sizeof("openssltoken") + \
-                   QUIC_RETRY_INTEGRITY_TAG_LEN - 1 + \
-                   sizeof(unsigned char))
+/**
+ * @brief Copies data from a source to a destination and updates the pointer.
+ *
+ * This macro copies `len` bytes of data from the source pointer (`src`) to
+ * the destination pointer (`dst`) using `memcpy`. After the copy operation,
+ * the destination pointer (`dst`) is incremented by `len`.
+ *
+ * @param dst The destination pointer where data will be copied to. This
+ *            pointer will be incremented by `len` after the operation.
+ * @param src The source pointer from which data will be copied.
+ * @param len The number of bytes to copy from `src` to `dst`.
+ *
+ * @note Ensure that the memory regions pointed to by `dst` and `src` do not
+ *       overlap, as `memcpy` does not handle overlapping memory safely.
+ * @warning Use this macro carefully, as it evaluates `dst`, `src`, and `len`
+ *          multiple times, which may cause unexpected behavior with complex
+ *          expressions.
+ */
+static ossl_inline int marshall_element(unsigned char **dst, unsigned char *src,
+                                        size_t len)
+{
+    memcpy(*dst, src, len);
+    *dst += len;
+    return len;
+}
+
+/**
+ * @brief Marshals a retry token into a buffer and calculates its total length.
+ *
+ * This function serializes a retry token into a marshaled buffer by copying
+ * various components, including the token buffer, original destination
+ * connection ID (ODCID), and the new destination connection ID (DCID). It
+ * also reserves space for the retry integrity tag and updates the total
+ * token length.
+ *
+ * @param tok       Pointer to a `struct validation_token` containing the
+ *                  components of the retry token to be marshaled.
+ * @param token_len Pointer to a `size_t` where the total length of the
+ *                  marshaled token will be stored.
+ *
+ * @return A pointer to the marshaled buffer containing the serialized token.
+ *
+ * @note The buffer for marshaling (`tok->marshalled_buf`) must be large
+ *       enough to hold all components of the token.
+ * @warning Ensure that the input pointers are valid and the structure
+ *          contains correctly initialized values.
+ *
+ * The marshaling process:
+ * - Copies the token string from `tok->token_buf`.
+ * - Serializes the ODCID, including its length and identifier.
+ * - Serializes the new DCID, including its length and identifier.
+ * - Allocates space for the integrity tag and sets its pointer in
+ *   `tok->integrity_tag`.
+ *
+ * Note: This function allocates no memory, it only returns the
+ * marshalled_buf array within the validation_token struct.  As such
+ * No pointer returned from this function should be freed.
+ */
+static unsigned char *marshall_retry_token(struct validation_token *tok,
+                                           size_t *token_len)
+{
+    unsigned char *idx = &tok->marshalled_buf[0];
+    size_t elen;
+
+    *token_len = 0;
+
+    /* add one here for the NULL terminator */
+    elen = strlen(tok->token_buf) + 1;
+    *token_len += marshall_element(&idx, (unsigned char *)tok->token_buf, elen);
+
+    elen = tok->token_odcid.id_len + sizeof(tok->token_odcid.id_len);
+    *token_len += marshall_element(&idx, &tok->token_odcid.id_len, elen);
+
+    elen = tok->new_dcid.id_len + sizeof(tok->new_dcid.id_len);
+    *token_len += marshall_element(&idx, &tok->new_dcid.id_len, elen);
+
+    *token_len += QUIC_RETRY_INTEGRITY_TAG_LEN;
+    tok->integrity_tag = idx;
+
+    return tok->marshalled_buf;
+}
+
+/**
+ * @brief Unmarshals a retry token from a serialized buffer.
+ *
+ * This function parses a serialized retry token and extracts its components
+ * into a `struct validation_token`. It verifies the token's validity by
+ * checking a specific marker string and ensures that the parsed data does
+ * not exceed the provided buffer length.
+ *
+ * @param token     Pointer to the serialized token buffer to be parsed.
+ * @param tok       Pointer to a `struct validation_token` where the
+ *                  unmarshalled data will be stored.
+ * @param token_len The length of the serialized token buffer.
+ *
+ * @return `1` if the unmarshalling and validation are successful, otherwise
+ *         `0`.
+ *
+ * @note The function validates the token using the string `"openssltoken"`.
+ *       The `struct validation_token` is cleared before being populated.
+ *
+ * @warning Ensure that `token` is a valid pointer and that `tok` points to
+ *          a valid memory region. The function assumes that the serialized
+ *          buffer contains properly formatted data.
+ *
+ * The unmarshalling process:
+ * - Verifies the token marker string.
+ * - Extracts the original destination connection ID (ODCID) and its length.
+ * - Extracts the new destination connection ID (DCID) and its length.
+ * - Ensures that all parsed lengths are within bounds of `token_len`.
+ */
+static int unmarshall_retry_token(const unsigned char *token,
+                                  struct validation_token *tok,
+                                  size_t token_len)
+{
+    unsigned char *idx = (unsigned char *)token;
+    int valid;
+    size_t parsed_len = 0;
+
+    memset(tok, 0, sizeof(struct validation_token));
+
+    tok->token_buf = (char *)idx;
+
+    /*
+     * make sure our token has the proper leading id string
+     */
+    valid = memcmp(tok->token_buf, "openssltoken", strlen("openssltoken"));
+    if (valid != 0)
+        return 0;
+
+    /*
+     * Advance the idx pointer beyond the above string
+     */
+    parsed_len += strlen(tok->token_buf) + 1;
+    idx += strlen(tok->token_buf) + 1;
+
+    /*
+     * Make sure we're still within our token boundary
+     */
+    if (parsed_len > token_len)
+        return 0;
+
+    /*
+     * repeat extracting the odcid value
+     */
+    tok->token_odcid.id_len = (unsigned char) *idx;
+    memcpy(&tok->token_odcid, idx,
+           sizeof(tok->token_odcid.id_len) + tok->token_odcid.id_len);
+    parsed_len += sizeof(tok->token_odcid.id_len) + tok->token_odcid.id_len;
+    idx += sizeof(tok->token_odcid.id_len) + tok->token_odcid.id_len;
+
+    if (parsed_len > token_len)
+        return 0;
+
+    /*
+     * repeat again, extracting the new dcid we should use
+     */
+    tok->new_dcid.id_len = (unsigned char) *idx;
+    memcpy(&tok->new_dcid, idx,
+           sizeof(tok->new_dcid.id_len) + tok->new_dcid.id_len);
+    parsed_len += sizeof(tok->new_dcid.id_len) + tok->new_dcid.id_len;
+    idx += sizeof(tok->new_dcid.id_len) + tok->new_dcid.id_len;
+
+    if (parsed_len > token_len)
+        return 0;
+
+    return 1;
+}
 
 /**
  * @brief Sends a QUIC Retry packet to a client.
@@ -679,21 +854,21 @@ static void port_send_retry(QUIC_PORT *port,
 {
     BIO_MSG msg[1];
     unsigned char buffer[512];
+    unsigned char *mtoken = NULL;
     WPACKET wpkt;
     size_t written;
     QUIC_PKT_HDR hdr;
     struct validation_token token;
-    size_t token_len = TOKEN_LEN;
-    unsigned char *integrity_tag;
+    size_t token_len = 0;
     int ok;
 
+    memset(&token, 0, sizeof(struct validation_token));
+
     /* TODO(QUIC_SERVER): generate proper validation token */
-    memcpy(token.token_buf, "openssltoken", sizeof("openssltoken") - 1);
+    token.token_buf = "openssltoken";
 
     token.token_odcid = client_hdr->dst_conn_id;
-    token_len += token.token_odcid.id_len;
-    integrity_tag = (unsigned char *)&token.token_odcid +
-        token.token_odcid.id_len + sizeof(token.token_odcid.id_len);
+
     /*
      * 17.2.5.1 Sending a Retry packet
      *   dst ConnId is src ConnId we got from client
@@ -710,20 +885,25 @@ static void port_send_retry(QUIC_PORT *port,
     if (ok == 0)
         return;
 
+    token.new_dcid = hdr.src_conn_id;
+
+    mtoken = marshall_retry_token(&token, &token_len);
+
     hdr.dst_conn_id = client_hdr->src_conn_id;
     hdr.type = QUIC_PKT_TYPE_RETRY;
     hdr.fixed = 1;
     hdr.version = 1;
     hdr.len = token_len;
-    hdr.data = (unsigned char *)&token;
+    hdr.data = mtoken;
+
     ok = ossl_quic_calculate_retry_integrity_tag(port->engine->libctx,
                                                  port->engine->propq, &hdr,
                                                  &client_hdr->dst_conn_id,
-                                                 integrity_tag);
+                                                 token.integrity_tag);
     if (ok == 0)
         return;
 
-    hdr.token = (unsigned char *)&token;
+    hdr.token = mtoken;
     hdr.token_len = token_len;
 
     msg[0].data = buffer;
@@ -755,7 +935,6 @@ static void port_send_retry(QUIC_PORT *port,
     if (!BIO_sendmmsg(port->net_wbio, msg, sizeof(BIO_MSG), 1, 0, &written))
         ERR_raise_data(ERR_LIB_SSL, SSL_R_QUIC_NETWORK_ERROR,
                        "port retry send failed due to network BIO I/O error");
-
 }
 
 /**
@@ -781,20 +960,29 @@ static void port_send_retry(QUIC_PORT *port,
 static int port_validate_token(QUIC_PKT_HDR *hdr, QUIC_CONN_ID *odcid)
 {
     int valid;
-    struct validation_token *token;
+    struct validation_token token;
 
     memset(odcid, 0, sizeof(QUIC_CONN_ID));
 
-    token = (struct validation_token *)hdr->token;
-    if (token == NULL || hdr->token_len <= (TOKEN_LEN - QUIC_RETRY_INTEGRITY_TAG_LEN))
+    if (hdr->token == NULL || hdr->token_len <= (QUIC_RETRY_INTEGRITY_TAG_LEN))
         return 0;
 
-    valid = memcmp(token->token_buf, "openssltoken", sizeof("openssltoken") - 1);
+    if (!unmarshall_retry_token(hdr->token, &token, hdr->token_len))
+        return 0;
+
+    /*
+     * We're parsing a packet header before its gone through AEAD validation
+     * here, so there is a chance we are dealing with corrupted data.  Make
+     * Sure the dcid encoded in the token matches the headers dcid to mitigate
+     * that
+     * TODO (QUIC SERVER): Consider handling AEAD validation at the port level
+     * rather than the QRX/channel level to eliminate the need for this
+     */
+    valid = memcmp(token.new_dcid.id, hdr->dst_conn_id.id, hdr->dst_conn_id.id_len);
     if (valid != 0)
         return 0;
 
-    odcid->id_len = token->token_odcid.id_len;
-    memcpy(odcid->id, token->token_odcid.id, token->token_odcid.id_len);
+    *odcid = token.token_odcid;
 
     return 1;
 }
