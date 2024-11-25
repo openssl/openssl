@@ -369,9 +369,6 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt)
     if (magic_len > 0)
         salt_out += 2 + magic_len;
 
-    if (salt_len > 8)
-        goto err;
-
     md = EVP_MD_CTX_new();
     if (md == NULL
         || !EVP_DigestInit_ex(md, EVP_md5(), NULL)
