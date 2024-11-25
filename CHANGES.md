@@ -30,6 +30,11 @@ OpenSSL 3.5
 
 ### Changes between 3.4 and 3.5 [xx XXX xxxx]
 
+ * Add new configure option disable-fips186-4-ffc for DH keys.
+   When compiling with enable-fips, this option allows to compile out
+   support for legacy-only use of FIPS 186-4 FFC-style params for DH
+   keys.
+
 * Support DEFAULT keyword and '-' prefix in SSL_CTX_set1_groups_list().
   SSL_CTX_set1_groups_list() now supports the DEFAULT keyword which sets the
   available groups to the default selection. The '-' prefix allows the calling

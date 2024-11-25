@@ -194,7 +194,10 @@ int ossl_dsa_check_key(const DSA *dsa, int sign)
  */
 int ossl_dh_check_key(const DH *dh)
 {
-    size_t L, N;
+    size_t L;
+# if !defined(FIPS_MODULE) || !defined(OPENSSL_NO_FIPS186_4_FFC)
+    size_t N;
+# endif
     const BIGNUM *p, *q;
 
     if (dh == NULL)
@@ -213,9 +216,13 @@ int ossl_dh_check_key(const DH *dh)
     if (DH_get_nid(dh))
         return 1;
 
+# if !defined(FIPS_MODULE) || !defined(OPENSSL_NO_FIPS186_4_FFC)
     /* If not then it must be FFC, which only allows certain sizes. */
     N = BN_num_bits(q);
 
     return (L == 2048 && (N == 224 || N == 256));
+# else
+    return 0;
+# endif
 }
 #endif /* OPENSSL_NO_DH */

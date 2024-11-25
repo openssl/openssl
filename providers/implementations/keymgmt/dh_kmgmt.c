@@ -420,6 +420,12 @@ static int dh_validate(const void *keydata, int selection, int checktype)
     if ((selection & DH_POSSIBLE_SELECTIONS) == 0)
         return 1; /* nothing to validate */
 
+#if defined(FIPS_MODULE) && defined(OPENSSL_NO_FIPS186_4_FFC)
+    /*
+     * Block operations on keys with FIPS 186-4 params.
+     */
+    ok = ok && DH_check_ex(dh);
+#endif
     if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0) {
         /*
          * Both of these functions check parameters. DH_check_params_ex()
