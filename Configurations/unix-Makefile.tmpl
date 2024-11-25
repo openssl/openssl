@@ -318,10 +318,9 @@ LIBDIR={- our $libdir = $config{libdir};
           unless ($libdir) {
               $libdir = "lib$target{multilib}";
           }
-          file_name_is_absolute($libdir) ? "" : $libdir -}
+          $libdir -}
 # $(libdir) is chosen to be compatible with the GNU coding standards
-libdir={- file_name_is_absolute($libdir)
-          ? $libdir : '$(INSTALLTOP)/$(LIBDIR)' -}
+libdir={- '$(INSTALLTOP)/$(LIBDIR)' -}
 ENGINESDIR=$(libdir)/engines-{- $sover_dirname -}
 MODULESDIR=$(libdir)/ossl-modules
 
