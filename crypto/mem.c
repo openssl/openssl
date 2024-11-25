@@ -38,7 +38,7 @@ static TSAN_QUALIFIER int free_count;
 #  define LOAD(x)      tsan_load(&x)
 # endif /* TSAN_REQUIRES_LOCKING */
 
-static char md_failbuf[CRYPTO_MEM_CHECK_MAX_FS+1];
+static char md_failbuf[CRYPTO_MEM_CHECK_MAX_FS + 1];
 static char *md_failstring = md_failbuf;
 static long md_count;
 static int md_fail_percent = 0;
