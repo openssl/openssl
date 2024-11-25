@@ -131,7 +131,6 @@ static int rsakem_init(void *vprsactx, void *vrsa,
                        const char *desc)
 {
     PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
-    int protect = 0;
 
     if (!ossl_prov_is_running())
         return 0;
@@ -139,8 +138,6 @@ static int rsakem_init(void *vprsactx, void *vrsa,
     if (prsactx == NULL || vrsa == NULL)
         return 0;
 
-    if (!ossl_rsa_key_op_get_protect(vrsa, operation, &protect))
-        return 0;
     if (!RSA_up_ref(vrsa))
         return 0;
     RSA_free(prsactx->rsa);
@@ -152,7 +149,7 @@ static int rsakem_init(void *vprsactx, void *vrsa,
 #ifdef FIPS_MODULE
     if (!ossl_fips_ind_rsa_key_check(OSSL_FIPS_IND_GET(prsactx),
                                      OSSL_FIPS_IND_SETTABLE0, prsactx->libctx,
-                                     prsactx->rsa, desc, protect))
+                                     prsactx->rsa, desc, 1))
         return 0;
 #endif
     return 1;
