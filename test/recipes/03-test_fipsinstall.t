@@ -337,6 +337,10 @@ SKIP: {
 SKIP: {
     skip "Skipping Asymmetric RSA corruption test because of no rsa in this build", 1
         if disabled("rsa") || disabled("fips-post");
+    run(test(["fips_version_test", "-config", $provconf, "<3.5.0"]),
+             capture => 1, statusvar => \my $exit);
+    skip "FIPS provider version is too new for Asymmetric RSA corruption test", 1
+        if !$exit;
     ok(!run(app(['openssl', 'fipsinstall', '-out', 'fips.cnf', '-module', $infile,
                 '-corrupt_desc', 'RSA_Encrypt',
                 '-corrupt_type', 'KAT_AsymmetricCipher'])),
