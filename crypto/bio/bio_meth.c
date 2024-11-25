@@ -55,6 +55,7 @@ void BIO_meth_free(BIO_METHOD *biom)
     }
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_5
 int (*BIO_meth_get_write(const BIO_METHOD *biom)) (BIO *, const char *, int)
 {
     return biom->bwrite_old;
@@ -65,6 +66,7 @@ int (*BIO_meth_get_write_ex(const BIO_METHOD *biom)) (BIO *, const char *, size_
 {
     return biom->bwrite;
 }
+#endif
 
 /* Conversion for old style bwrite to new style */
 int bwrite_conv(BIO *bio, const char *data, size_t datal, size_t *written)
@@ -102,6 +104,7 @@ int BIO_meth_set_write_ex(BIO_METHOD *biom,
     return 1;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_5
 int (*BIO_meth_get_read(const BIO_METHOD *biom)) (BIO *, char *, int)
 {
     return biom->bread_old;
@@ -111,6 +114,7 @@ int (*BIO_meth_get_read_ex(const BIO_METHOD *biom)) (BIO *, char *, size_t, size
 {
     return biom->bread;
 }
+#endif
 
 /* Conversion for old style bread to new style */
 int bread_conv(BIO *bio, char *data, size_t datal, size_t *readbytes)
@@ -148,10 +152,12 @@ int BIO_meth_set_read_ex(BIO_METHOD *biom,
     return 1;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_5
 int (*BIO_meth_get_puts(const BIO_METHOD *biom)) (BIO *, const char *)
 {
     return biom->bputs;
 }
+#endif
 
 int BIO_meth_set_puts(BIO_METHOD *biom,
                       int (*bputs) (BIO *, const char *))
@@ -160,10 +166,12 @@ int BIO_meth_set_puts(BIO_METHOD *biom,
     return 1;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_5
 int (*BIO_meth_get_gets(const BIO_METHOD *biom)) (BIO *, char *, int)
 {
     return biom->bgets;
 }
+#endif
 
 int BIO_meth_set_gets(BIO_METHOD *biom,
                       int (*bgets) (BIO *, char *, int))
@@ -172,10 +180,12 @@ int BIO_meth_set_gets(BIO_METHOD *biom,
     return 1;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_5
 long (*BIO_meth_get_ctrl(const BIO_METHOD *biom)) (BIO *, int, long, void *)
 {
     return biom->ctrl;
 }
+#endif
 
 int BIO_meth_set_ctrl(BIO_METHOD *biom,
                       long (*ctrl) (BIO *, int, long, void *))
@@ -184,10 +194,12 @@ int BIO_meth_set_ctrl(BIO_METHOD *biom,
     return 1;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_5
 int (*BIO_meth_get_create(const BIO_METHOD *biom)) (BIO *)
 {
     return biom->create;
 }
+#endif
 
 int BIO_meth_set_create(BIO_METHOD *biom, int (*create) (BIO *))
 {
@@ -195,10 +207,12 @@ int BIO_meth_set_create(BIO_METHOD *biom, int (*create) (BIO *))
     return 1;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_5
 int (*BIO_meth_get_destroy(const BIO_METHOD *biom)) (BIO *)
 {
     return biom->destroy;
 }
+#endif
 
 int BIO_meth_set_destroy(BIO_METHOD *biom, int (*destroy) (BIO *))
 {
@@ -206,10 +220,12 @@ int BIO_meth_set_destroy(BIO_METHOD *biom, int (*destroy) (BIO *))
     return 1;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_5
 long (*BIO_meth_get_callback_ctrl(const BIO_METHOD *biom)) (BIO *, int, BIO_info_cb *)
 {
     return biom->callback_ctrl;
 }
+#endif
 
 int BIO_meth_set_callback_ctrl(BIO_METHOD *biom,
                                long (*callback_ctrl) (BIO *, int,
@@ -226,9 +242,11 @@ int BIO_meth_set_sendmmsg(BIO_METHOD *biom,
     return 1;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_5
 int (*BIO_meth_get_sendmmsg(const BIO_METHOD *biom))(BIO *, BIO_MSG *, size_t, size_t, uint64_t, size_t *) {
     return biom->bsendmmsg;
 }
+#endif
 
 int BIO_meth_set_recvmmsg(BIO_METHOD *biom,
                           int (*brecvmmsg) (BIO *, BIO_MSG *, size_t, size_t, uint64_t, size_t *))
@@ -237,6 +255,8 @@ int BIO_meth_set_recvmmsg(BIO_METHOD *biom,
     return 1;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_5
 int (*BIO_meth_get_recvmmsg(const BIO_METHOD *biom))(BIO *, BIO_MSG *, size_t, size_t, uint64_t, size_t *) {
     return biom->brecvmmsg;
 }
+#endif
