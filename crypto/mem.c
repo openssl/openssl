@@ -38,7 +38,8 @@ static TSAN_QUALIFIER int free_count;
 #  define LOAD(x)      tsan_load(&x)
 # endif /* TSAN_REQUIRES_LOCKING */
 
-static char *md_failstring;
+static char md_failbuf[CRYPTO_MEM_CHECK_MAX_FS + 1];
+static char *md_failstring = NULL;
 static long md_count;
 static int md_fail_percent = 0;
 static int md_tracefd = -1;
@@ -164,9 +165,17 @@ static int shouldfail(void)
 void ossl_malloc_setup_failures(void)
 {
     const char *cp = getenv("OPENSSL_MALLOC_FAILURES");
+    size_t cplen = 0;
 
-    if (cp != NULL && (md_failstring = strdup(cp)) != NULL)
-        parseit();
+    if (cp != NULL) {
+        /* if the value is too long we'll just ignore it */
+        cplen = strlen(cp);
+        if (cplen <= CRYPTO_MEM_CHECK_MAX_FS) {
+            strncpy(md_failbuf, cp, CRYPTO_MEM_CHECK_MAX_FS);
+            md_failstring = md_failbuf;
+            parseit();
+        }
+    }
     if ((cp = getenv("OPENSSL_MALLOC_FD")) != NULL)
         md_tracefd = atoi(cp);
     if ((cp = getenv("OPENSSL_MALLOC_SEED")) != NULL)

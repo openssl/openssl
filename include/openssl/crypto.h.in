@@ -368,6 +368,9 @@ void OPENSSL_cleanse(void *ptr, size_t len);
 # define CRYPTO_MEM_CHECK_ENABLE  0x2   /* Control and mode bit */
 # define CRYPTO_MEM_CHECK_DISABLE 0x3   /* Control only */
 
+/* max allowed length for value of OPENSSL_MALLOC_FAILURES env var. */
+#  define CRYPTO_MEM_CHECK_MAX_FS 256
+
 void CRYPTO_get_alloc_counts(int *mcount, int *rcount, int *fcount);
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
 #    define OPENSSL_mem_debug_push(info) \
