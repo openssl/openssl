@@ -211,6 +211,13 @@ sub read_config;
 # chosen target and any target it inherits from.
 sub resolve_config;
 
+sub broken {
+    my (%err_dict) = @_;
+
+    print STDERR $err_dict{"error"};
+
+    return undef;
+}
 
 # Information collection #############################################
 
@@ -1822,7 +1829,8 @@ if ($builder eq "unified") {
                                          sourcedir => abs2rel($sourced, $blddir),
                                          buildtop => abs2rel($blddir, $blddir),
                                          sourcetop => abs2rel($srcdir, $blddir) },
-                               DELIMITERS => [ "{-", "-}" ]);
+                               DELIMITERS => [ "{-", "-}" ],
+                               BROKEN => \&broken);
 
         # The top item of this stack has the following values
         # -2 positive already run and we found ELSE (following ELSIF should fail)
