@@ -170,7 +170,7 @@ void ossl_malloc_setup_failures(void)
     if (cp != NULL) {
         /* if the value is too long we'll just ignore it */
         cplen = strlen(cp);
-        if (cplen <= sizeof(md_failbuf) - 1) {
+        if (cplen <= CRYPTO_MEM_CHECK_MAX_FS) {
             strncpy(md_failbuf, cp, CRYPTO_MEM_CHECK_MAX_FS);
             md_failstring = md_failbuf;
             parseit();
