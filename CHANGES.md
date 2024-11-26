@@ -9199,6 +9199,7 @@ OpenSSL 1.0.1
            EC_GFp_nistp224_method()
            EC_GFp_nistp256_method()
            EC_GFp_nistp521_method()
+           EC_GFp_secp256k1_method()
 
    EC_GROUP_new_by_curve_name() will automatically use these (while
    EC_GROUP_new_curve_GFp() currently prefers the more flexible
