@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-X509_verify_acert,
+X509_verify_acert - verification of an attribute certificate
 
 =head1 SYNOPSIS
 
