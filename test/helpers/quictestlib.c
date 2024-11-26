@@ -193,6 +193,8 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
         goto err;
 #endif
     } else {
+        BIO_ADDR *localaddr = NULL;
+
         if (!TEST_true(BIO_new_bio_dgram_pair(&cbio, 0, &sbio, 0)))
             goto err;
 
@@ -200,6 +202,18 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
                 || !TEST_true(BIO_dgram_set_caps(sbio, BIO_DGRAM_CAP_HANDLES_DST_ADDR)))
             goto err;
 
+        if (!TEST_ptr(localaddr = BIO_ADDR_new()))
+            goto err;
+        /* Dummy client local addresses */
+        if (!TEST_true(BIO_ADDR_rawmake(localaddr, AF_INET, &ina, sizeof(ina),
+                                        htons(0)))) {
+            BIO_ADDR_free(localaddr);
+            goto err;
+        }
+        if (!TEST_int_eq(BIO_dgram_set0_local_addr(cbio, localaddr), 1)) {
+            BIO_ADDR_free(localaddr);
+            goto err;
+        }
         /* Dummy server address */
         if (!TEST_true(BIO_ADDR_rawmake(peeraddr, AF_INET, &ina, sizeof(ina),
                                         htons(0))))
