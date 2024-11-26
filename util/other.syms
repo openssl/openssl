@@ -181,6 +181,7 @@ BIO_ctrl_set_connected                  define
 BIO_dgram_get_mtu_overhead              define
 BIO_dgram_get_peer                      define
 BIO_dgram_set_peer                      define
+BIO_dgram_set0_local_addr               define
 BIO_dgram_recv_timedout                 define
 BIO_dgram_send_timedout                 define
 BIO_dgram_detect_peer_addr              define
