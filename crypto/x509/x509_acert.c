@@ -327,61 +327,75 @@ const STACK_OF(X509_EXTENSION) *X509_ACERT_get0_extensions(const X509_ACERT *x)
     return x->acinfo->extensions;
 }
 
-int X509_verify_acert(X509_STORE_CTX *ctx, X509_ACERT *acert) {
+int X509_verify_acert(X509_STORE_CTX *ctx, X509_ACERT *acert)
+{
     return 0; /* Stub implementation. To be replaced. */
 }
 
-OSSL_ISSUER_SERIAL *X509_get_issuer_serial(X509 *x) {
+OSSL_ISSUER_SERIAL *X509_get_issuer_serial(X509 *x)
+{
     return NULL; /* Stub implementation. To be replaced. */
 }
 
-int X509_acert_get_ext_count(const X509_ACERT *x) {
+int X509_acert_get_ext_count(const X509_ACERT *x)
+{
     return 0; /* Stub implementation. To be replaced. */
 }
 
-X509_EXTENSION *X509_acert_get_ext(const X509_ACERT *x, int loc) {
+X509_EXTENSION *X509_acert_get_ext(const X509_ACERT *x, int loc)
+{
     return 0; /* Stub implementation. To be replaced. */
 }
 
-int X509_acert_get_ext_by_NID(const X509_ACERT *x, int nid, int lastpos) {
+int X509_acert_get_ext_by_NID(const X509_ACERT *x, int nid, int lastpos)
+{
     return 0; /* Stub implementation. To be replaced. */
 }
 
 int X509_acert_get_ext_by_OBJ(const X509_ACERT *x, const ASN1_OBJECT *obj,
-                              int lastpos) {
+                              int lastpos)
+{
     return 0; /* Stub implementation. To be replaced. */
 }
 
-int X509_acert_get_ext_by_critical(const X509_ACERT *x, int crit, int lastpos) {
+int X509_acert_get_ext_by_critical(const X509_ACERT *x, int crit, int lastpos)
+{
     return 0; /* Stub implementation. To be replaced. */
 }
 
-int X509_acert_add_ext(X509_ACERT *x, X509_EXTENSION *ex, int loc) {
+int X509_acert_add_ext(X509_ACERT *x, X509_EXTENSION *ex, int loc)
+{
     return 0; /* Stub implementation. To be replaced. */
 }
 
-X509_EXTENSION *X509_acert_delete_ext(X509_ACERT *x, int loc) {
+X509_EXTENSION *X509_acert_delete_ext(X509_ACERT *x, int loc)
+{
     return NULL;
 }
 
-int ossl_check_acert_crl(X509_STORE_CTX *ctx, X509_CRL *crl, X509_ACERT *x) {
+int ossl_check_acert_crl(X509_STORE_CTX *ctx, X509_CRL *crl, X509_ACERT *x)
+{
     return 0; /* Stub implementation. To be replaced. */
 }
 
-int ossl_check_acert_time(X509_STORE_CTX *ctx, X509_ACERT *acert) {
+int ossl_check_acert_time(X509_STORE_CTX *ctx, X509_ACERT *acert)
+{
     return 0; /* Stub implementation. To be replaced. */
 }
 
-int ossl_check_acert_exts(X509_ACERT *acert) {
+int ossl_check_acert_exts(X509_ACERT *acert)
+{
     return 0; /* Stub implementation. To be replaced. */
 }
 
 int ossl_acert_add_nconf(CONF *conf, X509V3_CTX *ctx, const char *section,
-                         X509_ACERT *acert) {
+                         X509_ACERT *acert)
+{
     return 0; /* Stub implementation. To be replaced. */
 }
 
 int ossl_acert_add_conf(LHASH_OF(CONF_VALUE) *conf, X509V3_CTX *ctx,
-                        const char *section, X509_ACERT *acert) {
+                        const char *section, X509_ACERT *acert)
+{
     return 0; /* Stub implementation. To be replaced. */
 }
