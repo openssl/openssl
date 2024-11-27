@@ -88,7 +88,7 @@ extern "C" {
 #  define ENGINE_FLAGS_BY_ID_COPY         (int)0x0004
 
 /*
- * This flag if for an ENGINE that does not want its methods registered as
+ * This flag is for an ENGINE that does not want its methods registered as
  * part of ENGINE_register_all_complete() for example if the methods are not
  * usable as default methods.
  */
