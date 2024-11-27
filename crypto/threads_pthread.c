@@ -993,7 +993,7 @@ int CRYPTO_atomic_store(uint64_t *dst, uint64_t val, CRYPTO_RWLOCK *lock)
     }
 # elif defined(__sun) && (defined(__SunOS_5_10) || defined(__SunOS_5_11))
     /* This will work for all future Solaris versions. */
-    if (ret != NULL) {
+    if (dst != NULL) {
         atomic_swap_64(dst, val);
         return 1;
     }
