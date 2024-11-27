@@ -1084,6 +1084,17 @@ static int port_validate_token(QUIC_PKT_HDR *hdr, QUIC_PORT *port,
      * source connection ID for SCID.
      */
     if (token.is_retry) {
+        /*
+         * We're parsing a packet header before its gone through AEAD validation
+         * here, so there is a chance we are dealing with corrupted data. Make
+         * Sure the dcid encoded in the token matches the headers dcid to
+         * mitigate that.
+         * TODO(QUIC SERVER): Consider handling AEAD validation at the port
+         * level rather than the QRX/channel level to eliminate the need for
+         * this.
+         */
+        if (!memcmp(&token.rscid, &hdr->dst_conn_id, sizeof(QUIC_CONN_ID)))
+            goto err;
         memcpy(odcid, &token.odcid, sizeof(QUIC_CONN_ID));
         memcpy(scid, &token.rscid, sizeof(QUIC_CONN_ID));
     } else {
