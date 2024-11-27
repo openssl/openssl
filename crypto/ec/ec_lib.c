@@ -746,7 +746,7 @@ void EC_POINT_free(EC_POINT *point)
     if (point == NULL)
         return;
 
-#ifdef FIPS_MODULE
+#ifdef OPENSSL_PEDANTIC_ZEROIZATION
     EC_POINT_clear_free(point);
 #else
     if (point->meth->point_finish != 0)
