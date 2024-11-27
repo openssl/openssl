@@ -289,7 +289,9 @@ err:
     OSSL_SELF_TEST_onend(ev, ret);
     EVP_MAC_CTX_free(ctx);
     EVP_MAC_free(mac);
+# ifdef OPENSSL_PEDANTIC_ZEROIZATION
     OPENSSL_cleanse(out, sizeof(out));
+# endif
     return ret;
 }
 #endif /* OPENSSL_NO_FIPS_POST */
