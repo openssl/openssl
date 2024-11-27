@@ -35,28 +35,39 @@ static void port_rx_pre(QUIC_PORT *port);
  * @brief Represents a validation token for secure connection handling.
  *
  * This struct is used to store information related to a validation token,
- * including the token buffer, original connection ID, and an integrity tag
- * for secure validation of QUIC connections.
+ * including an integrity tag for secure validation of QUIC connections.
  *
- * @var validation_token::token_buf
- * A character array holding the token data. The size of this array is
- * based on the length of the string "openssltoken" minus one for the null
- * terminator.
+ * @var validation_token::is_retry
+ * True iff this validation token is for a token sent in a RETRY packet.
+ * Otherwise, this token is from a NEW_TOKEN_packet. Iff this value is true,
+ * then ODCID and RSCID are set.
  *
- * @var validation_token::token_odcid
+ * @var validation_token::timestamp
+ * Time that the validation token was minted.
+ *
+ * @var validation_token::remote_addr_len
+ * Length of the following character array.
+ *
+ * @var validation_token::remote_addr
+ * A character array holding the raw address of the client requesting the
+ * connection.
+ *
+ * @var validation_token::odcid
  * An original connection ID (`QUIC_CONN_ID`) used to identify the QUIC
  * connection. This ID helps associate the token with a specific connection.
  *
- * @var validation_token::integrity_tag
- * A character array for the integrity tag, with a length defined by
- * `QUIC_RETRY_INTEGRITY_TAG_LEN`. This tag is used to verify the integrity
- * of the token during the connection process.
+ * @var validation_token::rscid
+ * The original retry source connection ID (`QUIC_CONN_ID`).
  */
-struct validation_token {
-    char token_buf[sizeof("openssltoken") - 1];
-    QUIC_CONN_ID token_odcid;
-    char integrity_tag[QUIC_RETRY_INTEGRITY_TAG_LEN];
-};
+typedef struct validation_token {
+    int is_retry;
+    OSSL_TIME timestamp;
+    size_t remote_addr_len;
+    unsigned char *remote_addr;
+    /* Only set for retry tokens */
+    QUIC_CONN_ID odcid;
+    QUIC_CONN_ID rscid;
+} QUIC_VALIDATION_TOKEN;
 
 DEFINE_LIST_OF_IMPL(ch, QUIC_CHANNEL);
 DEFINE_LIST_OF_IMPL(incoming_ch, QUIC_CHANNEL);
@@ -647,9 +658,164 @@ static int port_try_handle_stateless_reset(QUIC_PORT *port, const QUIC_URXE *e)
     return i > 0;
 }
 
-#define TOKEN_LEN (sizeof("openssltoken") + \
-                   QUIC_RETRY_INTEGRITY_TAG_LEN - 1 + \
-                   sizeof(unsigned char))
+static void cleanup_validation_token(QUIC_VALIDATION_TOKEN *token)
+{
+    OPENSSL_free(token->remote_addr);
+}
+
+/**
+ * @brief Generates a validation token for a RETRY packet.
+ *
+ * @param peer  Address of the client peer receiving the packet.
+ * @param odcid DCID of the connection attempt.
+ * @param rscid Retry source connection ID of the connection attempt.
+ * @param token Address of token to fill data.
+ *
+ * @return 1 if validation token is filled successfully, 0 otherwise.
+ */
+static int generate_retry_token(BIO_ADDR *peer, QUIC_CONN_ID odcid,
+                                QUIC_CONN_ID rscid, QUIC_VALIDATION_TOKEN *token)
+{
+    token->is_retry = 1;
+    token->timestamp = ossl_time_now();
+    token->remote_addr = NULL;
+    token->odcid = odcid;
+    token->rscid = rscid;
+
+    if (!BIO_ADDR_rawaddress(peer, NULL, &token->remote_addr_len)
+        || token->remote_addr_len == 0
+        || (token->remote_addr = OPENSSL_malloc(token->remote_addr_len)) == NULL
+        || !BIO_ADDR_rawaddress(peer, token->remote_addr,
+                                &token->remote_addr_len)) {
+        OPENSSL_free(token->remote_addr);
+        return 0;
+    }
+
+    return 1;
+}
+
+/**
+ * @brief Marshals a validation token into a new buffer.
+ *
+ * Dynamically allocates |buffer| and stores the size of |buffer| in BUFFER_LEN.
+ * The caller is responsible for freeing |buffer|.
+ *
+ * @param token      Validation token.
+ * @param buffer     Callee will allocate a buffer and store the address here.
+ * @param buffer_len Size of |buffer|.
+ */
+static int marshal_validation_token(QUIC_VALIDATION_TOKEN *token,
+                                    unsigned char **buffer, size_t *buffer_len)
+{
+    size_t offset = 0;
+    unsigned char *buf;
+
+    buf = OPENSSL_malloc(1 + sizeof(token->timestamp)
+                         + sizeof(token->remote_addr_len));
+    if (!buf)
+        return 0;
+
+    if (token->is_retry != 0 && token->is_retry != 1)
+        return 0;
+    memset(buf, token->is_retry, 1);
+    offset += 1;
+
+    memcpy(buf + offset, &token->timestamp, sizeof(token->timestamp));
+    offset += sizeof(token->timestamp);
+
+    memcpy(buf + offset, &token->remote_addr_len,
+           sizeof(token->remote_addr_len));
+
+    offset += sizeof(token->remote_addr_len);
+
+    buf = OPENSSL_realloc(buf, offset + token->remote_addr_len);
+    if (!buf)
+        return 0;
+
+    memcpy(buf + offset, token->remote_addr, token->remote_addr_len);
+    offset += token->remote_addr_len;
+
+    if (token->is_retry) {
+        buf = OPENSSL_realloc(buf, offset + sizeof(token->odcid)
+                              + sizeof(token->rscid));
+        if (!buf)
+            return 0;
+
+        memcpy(buf + offset, &token->odcid, sizeof(token->odcid));
+        offset += sizeof(token->odcid);
+        memcpy(buf + offset, &token->rscid, sizeof(token->rscid));
+        offset += sizeof(token->rscid);
+    }
+
+    *buffer = buf;
+    *buffer_len = offset;
+    return 1;
+}
+
+/**
+ * @brief Parses contents of a buffer into a validation token.
+ *
+ * VALIDATION_TOKEN should already be initalized. Does some basic sanity checks.
+ *
+ * @param validation_token Validation token to fill data in.
+ * @param buf              Buffer of previously marshaled validation token.
+ * @param buf_len          Length of |buf|.
+ */
+static int parse_validation_token(QUIC_VALIDATION_TOKEN *validation_token,
+                                  const unsigned char *buf, size_t buf_len)
+{
+    const unsigned char *curr = buf;
+    size_t curr_len;
+    QUIC_VALIDATION_TOKEN token = { 0 };
+
+    if (buf == NULL || validation_token == NULL)
+        goto err;
+
+    token.remote_addr = NULL;
+    if (buf_len < 1 + sizeof(token.timestamp) + sizeof(token.remote_addr_len))
+        goto err;
+
+    token.is_retry = *curr;
+    if (token.is_retry != 0 && token.is_retry != 1)
+        goto err;
+    curr += 1;
+
+    memcpy(&token.timestamp, curr, sizeof(token.timestamp));
+    curr += sizeof(token.timestamp);
+
+    token.remote_addr_len = *curr;
+    curr += sizeof(token.remote_addr_len);
+
+    curr_len = (size_t)(curr - buf);
+    if (buf_len < curr_len + token.remote_addr_len)
+        goto err;
+    token.remote_addr = OPENSSL_malloc(token.remote_addr_len);
+    if (token.remote_addr == NULL)
+        goto err;
+    memcpy(token.remote_addr, curr, token.remote_addr_len);
+    curr += token.remote_addr_len;
+
+    if (token.is_retry) {
+        if (buf_len < sizeof(token.odcid) + sizeof(token.rscid))
+            goto err;
+
+        memcpy(&token.odcid, curr, sizeof(token.odcid));
+        curr += sizeof(token.odcid);
+
+        memcpy(&token.rscid, curr, sizeof(token.rscid));
+        curr += sizeof(token.rscid);
+    }
+
+    curr_len = (size_t)(curr - buf);
+    if (curr_len != buf_len)
+        goto err;
+
+    memcpy(validation_token, &token, sizeof(token));
+    return 1;
+err:
+    cleanup_validation_token(&token);
+    return 0;
+}
 
 /**
  * @brief Sends a QUIC Retry packet to a client.
@@ -678,22 +844,13 @@ static void port_send_retry(QUIC_PORT *port,
                             QUIC_PKT_HDR *client_hdr)
 {
     BIO_MSG msg[1];
-    unsigned char buffer[512];
+    unsigned char buffer[512], *token_buf;
     WPACKET wpkt;
-    size_t written;
+    size_t written, token_buf_len;
     QUIC_PKT_HDR hdr;
-    struct validation_token token;
-    size_t token_len = TOKEN_LEN;
-    unsigned char *integrity_tag;
+    QUIC_VALIDATION_TOKEN token = { 0 };
     int ok;
 
-    /* TODO(QUIC_SERVER): generate proper validation token */
-    memcpy(token.token_buf, "openssltoken", sizeof("openssltoken") - 1);
-
-    token.token_odcid = client_hdr->dst_conn_id;
-    token_len += token.token_odcid.id_len;
-    integrity_tag = (unsigned char *)&token.token_odcid +
-        token.token_odcid.id_len + sizeof(token.token_odcid.id_len);
     /*
      * 17.2.5.1 Sending a Retry packet
      *   dst ConnId is src ConnId we got from client
@@ -708,23 +865,36 @@ static void port_send_retry(QUIC_PORT *port,
      */
     ok = ossl_quic_lcidm_get_unused_cid(port->lcidm, &hdr.src_conn_id);
     if (ok == 0)
-        return;
+        goto err;
+
+    /* Generate retry validation token */
+    if (!generate_retry_token(peer, client_hdr->dst_conn_id,
+                              client_hdr->src_conn_id, &token)
+        || !marshal_validation_token(&token, &token_buf, &token_buf_len))
+        goto err;
+
+    /* Make space for integrity tag */
+    token_buf_len += QUIC_RETRY_INTEGRITY_TAG_LEN;
+    token_buf = OPENSSL_realloc(token_buf, token_buf_len);
+    if (token_buf == NULL)
+        goto err;
 
     hdr.dst_conn_id = client_hdr->src_conn_id;
     hdr.type = QUIC_PKT_TYPE_RETRY;
     hdr.fixed = 1;
     hdr.version = 1;
-    hdr.len = token_len;
-    hdr.data = (unsigned char *)&token;
+    hdr.len = token_buf_len;
+    hdr.data = token_buf;
     ok = ossl_quic_calculate_retry_integrity_tag(port->engine->libctx,
                                                  port->engine->propq, &hdr,
                                                  &client_hdr->dst_conn_id,
-                                                 integrity_tag);
+                                                 token_buf + token_buf_len
+                                                 - QUIC_RETRY_INTEGRITY_TAG_LEN);
     if (ok == 0)
-        return;
+        goto err;
 
-    hdr.token = (unsigned char *)&token;
-    hdr.token_len = token_len;
+    hdr.token = hdr.data;
+    hdr.token_len = hdr.len;
 
     msg[0].data = buffer;
     msg[0].peer = peer;
@@ -733,20 +903,20 @@ static void port_send_retry(QUIC_PORT *port,
 
     ok = WPACKET_init_static_len(&wpkt, buffer, sizeof(buffer), 0);
     if (ok == 0)
-        return;
+        goto err;
 
     ok = ossl_quic_wire_encode_pkt_hdr(&wpkt, client_hdr->dst_conn_id.id_len,
                                        &hdr, NULL);
     if (ok == 0)
-        return;
+        goto err;
 
     ok = WPACKET_get_total_written(&wpkt, &msg[0].data_len);
     if (ok == 0)
-        return;
+        goto err;
 
     ok = WPACKET_finish(&wpkt);
     if (ok == 0)
-        return;
+        goto err;
 
     /*
      * TODO(QUIC SERVER) need to retry this in the event it return EAGAIN
@@ -756,6 +926,8 @@ static void port_send_retry(QUIC_PORT *port,
         ERR_raise_data(ERR_LIB_SSL, SSL_R_QUIC_NETWORK_ERROR,
                        "port retry send failed due to network BIO I/O error");
 
+err:
+    cleanup_validation_token(&token);
 }
 
 /**
@@ -853,39 +1025,78 @@ static void port_send_version_negotiation(QUIC_PORT *port, BIO_ADDR *peer,
  * This function checks the validity of a token contained in the provided
  * QUIC packet header (`QUIC_PKT_HDR *hdr`). The validation process involves
  * verifying that the token matches an expected format and value. If the
- * token is valid, the function extracts the original connection ID (ODCID)
- * and stores it in the provided `QUIC_CONN_ID *odcid`.
+ * token is from a RETRY packet, the function extracts the original connection
+ * ID (ODCID)/original source connection ID (SCID) and stores it in the provided
+ * parameters. If the token is from a NEW_TOKEN packet, the values will be
+ * derived instead.
  *
  * @param hdr   Pointer to the QUIC packet header containing the token.
- * @param odcid Pointer to the connection ID structure to store the ODCID if
- *              the token is valid.
- * @return      1 if the token is valid and ODCID is extracted successfully,
+ * @param port  Pointer to the QUIC port from which to send the packet.
+ * @param peer  Address of the client peer receiving the packet.
+ * @param odcid Pointer to the connection ID structure to store the ODCID if the
+ *              token is valid.
+ * @param scid  Pointer to the connection ID structure to store the SCID if the
+ *              token is valid.
+ *
+ * @return      1 if the token is valid and ODCID/SCID are successfully set.
  *              0 otherwise.
  *
  * The function performs the following checks:
- * - Verifies that the token length meets the required minimum.
- * - Confirms the token buffer matches the expected "openssltoken" string.
- * -
+ * - Token length meets the required minimum.
+ * - Buffer matches expected format.
+ * - Peer address matches previous connection address.
+ * - Token has not expired. Currently set to 10 seconds for tokens from RETRY
+ *   packets and 60 minutes for tokens from NEW_TOKEN packets. This may be
+ *   configurable in the future.
  */
-static int port_validate_token(QUIC_PKT_HDR *hdr, QUIC_CONN_ID *odcid)
+static int port_validate_token(QUIC_PKT_HDR *hdr, QUIC_PORT *port,
+                               BIO_ADDR *peer, QUIC_CONN_ID *odcid,
+                               QUIC_CONN_ID *scid)
 {
-    int valid;
-    struct validation_token *token;
+    int ret = 0;
+    QUIC_VALIDATION_TOKEN token = { 0 };
+    unsigned long long time_diff;
+    size_t remote_addr_len;
+    unsigned char *remote_addr = NULL;
 
-    memset(odcid, 0, sizeof(QUIC_CONN_ID));
+    if (!parse_validation_token(&token, hdr->token, hdr->token_len))
+        goto err;
 
-    token = (struct validation_token *)hdr->token;
-    if (token == NULL || hdr->token_len <= (TOKEN_LEN - QUIC_RETRY_INTEGRITY_TAG_LEN))
-        return 0;
+    /* Validate token timestamp */
+    /* FIXME: Will this handle different timezones, leap seconds, etc? */
+    time_diff = ossl_time2seconds(ossl_time_abs_difference(token.timestamp,
+                                                           ossl_time_now()));
+    if ((token.is_retry && time_diff > 10)
+        || (!token.is_retry && time_diff > 3600))
+        goto err;
 
-    valid = memcmp(token->token_buf, "openssltoken", sizeof("openssltoken") - 1);
-    if (valid != 0)
-        return 0;
+    /* Validate remote address */
+    if (!BIO_ADDR_rawaddress(peer, NULL, &remote_addr_len)
+        || remote_addr_len != token.remote_addr_len
+        || (remote_addr = OPENSSL_malloc(remote_addr_len)) == NULL
+        || !BIO_ADDR_rawaddress(peer, remote_addr, &remote_addr_len)
+        || CRYPTO_memcmp(remote_addr, token.remote_addr, remote_addr_len) != 0)
+        goto err;
 
-    odcid->id_len = token->token_odcid.id_len;
-    memcpy(odcid->id, token->token_odcid.id, token->token_odcid.id_len);
+    /*
+     * Set ODCID and SCID. If the token is from a RETRY packet, retrieve both
+     * from the token. Otherwise, generate a new ODCID and use the header's
+     * source connection ID for SCID.
+     */
+    if (token.is_retry) {
+        memcpy(odcid, &token.odcid, sizeof(QUIC_CONN_ID));
+        memcpy(scid, &token.rscid, sizeof(QUIC_CONN_ID));
+    } else {
+        if (!ossl_quic_lcidm_get_unused_cid(port->lcidm, odcid))
+            goto err;
+        memcpy(scid, &hdr->src_conn_id, sizeof(QUIC_CONN_ID));
+    }
 
-    return 1;
+    ret = 1;
+err:
+    cleanup_validation_token(&token);
+    OPENSSL_free(remote_addr);
+    return ret;
 }
 
 /*
@@ -899,7 +1110,7 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
     PACKET pkt;
     QUIC_PKT_HDR hdr;
     QUIC_CHANNEL *ch = NULL, *new_ch = NULL;
-    QUIC_CONN_ID odcid;
+    QUIC_CONN_ID odcid, scid;
     uint64_t cause_flags = 0;
 
     /* Don't handle anything if we are no longer running. */
@@ -991,11 +1202,11 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
     if (hdr.token == NULL) {
         port_send_retry(port, &e->peer, &hdr);
         goto undesirable;
-    } else if (port_validate_token(&hdr, &odcid) == 0) {
+    } else if (port_validate_token(&hdr, port, &e->peer, &odcid, &scid) != 1) {
         goto undesirable;
     }
 
-    port_bind_channel(port, &e->peer, &hdr.src_conn_id, &hdr.dst_conn_id,
+    port_bind_channel(port, &e->peer, &scid, &hdr.dst_conn_id,
                       &odcid, &new_ch);
 
     /*
