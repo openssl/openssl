@@ -134,6 +134,8 @@ jobs:
           no-zlib,
           enable-zlib-dynamic,
           no-zlib-dynamic,
+          -DOPENSSL_PEDANTIC_ZEROIZATION,
+          -DOPENSSL_PEDANTIC_ZEROIZATION enable-fips,
           -DOPENSSL_NO_BUILTIN_OVERFLOW_CHECKING,
           -DSSL3_ALIGN_PAYLOAD=4
         ]
