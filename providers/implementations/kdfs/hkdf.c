@@ -128,7 +128,7 @@ static void kdf_hkdf_reset(void *vctx)
     void *provctx = ctx->provctx;
 
     ossl_prov_digest_reset(&ctx->digest);
-#ifdef FIPS_MODULE
+#ifdef OPENSSL_PEDANTIC_ZEROIZATION
     OPENSSL_clear_free(ctx->salt, ctx->salt_len);
 #else
     OPENSSL_free(ctx->salt);
