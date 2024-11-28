@@ -964,7 +964,7 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
          * is a minimum of 1200 bytes in size
          */
 
-        if (e->data_len >= 1200)
+        if (e->data_len < 1200)
             goto undesirable;
 
         /*
