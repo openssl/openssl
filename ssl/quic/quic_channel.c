@@ -63,7 +63,8 @@ static OSSL_TIME ch_determine_next_tick_deadline(QUIC_CHANNEL *ch);
 static int ch_retry(QUIC_CHANNEL *ch,
                     const unsigned char *retry_token,
                     size_t retry_token_len,
-                    const QUIC_CONN_ID *retry_scid);
+                    const QUIC_CONN_ID *retry_scid,
+                    int drop_later_pn);
 static int ch_restart(QUIC_CHANNEL *ch);
 
 static void ch_cleanup(QUIC_CHANNEL *ch);
@@ -91,7 +92,8 @@ static void rxku_detected(QUIC_PN pn, void *arg);
 static int ch_retry(QUIC_CHANNEL *ch,
                     const unsigned char *retry_token,
                     size_t retry_token_len,
-                    const QUIC_CONN_ID *retry_scid);
+                    const QUIC_CONN_ID *retry_scid,
+                    int drop_later_pn);
 static void ch_update_idle(QUIC_CHANNEL *ch);
 static int ch_discard_el(QUIC_CHANNEL *ch,
                          uint32_t enc_level);
@@ -2401,7 +2403,7 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch, int channel_only)
 
         if (!ch_retry(ch, ch->qrx_pkt->hdr->data,
                       ch->qrx_pkt->hdr->len - QUIC_RETRY_INTEGRITY_TAG_LEN,
-                      &ch->qrx_pkt->hdr->src_conn_id))
+                      &ch->qrx_pkt->hdr->src_conn_id, old_have_processed_any_pkt))
             ossl_quic_channel_raise_protocol_error(ch, OSSL_QUIC_ERR_INTERNAL_ERROR,
                                                    0, "handling retry packet");
         break;
@@ -2492,6 +2494,7 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch, int channel_only)
         assert(0);
         break;
     }
+
 }
 
 static void ch_rx_handle_version_neg(QUIC_CHANNEL *ch, OSSL_QRX_PKT *pkt)
@@ -2810,9 +2813,8 @@ static void free_token(const unsigned char *buf, size_t buf_len, void *arg)
  */
 static int ch_restart(QUIC_CHANNEL *ch)
 {
-
     /*
-     * Just pretend we lost our first initial packet, so it gets
+     * Just pretend we lost our initial packet, so it gets
      * regenerated, with our updated protocol version number
      */
    return ossl_ackm_mark_packet_pseudo_lost(ch->ackm, QUIC_PN_SPACE_INITIAL,
@@ -2823,9 +2825,11 @@ static int ch_restart(QUIC_CHANNEL *ch)
 static int ch_retry(QUIC_CHANNEL *ch,
                     const unsigned char *retry_token,
                     size_t retry_token_len,
-                    const QUIC_CONN_ID *retry_scid)
+                    const QUIC_CONN_ID *retry_scid,
+                    int drop_later_pn)
 {
     void *buf;
+    QUIC_PN pn = 0;
 
     /*
      * RFC 9000 s. 17.2.5.1: "A client MUST discard a Retry packet that contains
@@ -2862,6 +2866,13 @@ static int ch_retry(QUIC_CHANNEL *ch,
     ch->doing_retry = 1;
 
     /*
+     * If a retry isn't our first response, we need to drop packet number
+     * one instead (i.e. the case where we did version negotiation first
+     */
+    if (drop_later_pn == 1)
+        pn = 1;
+
+    /*
      * We need to stimulate the Initial EL to generate the first CRYPTO frame
      * again. We can do this most cleanly by simply forcing the ACKM to consider
      * the first Initial packet as lost, which it effectively was as the server
@@ -2872,7 +2883,7 @@ static int ch_retry(QUIC_CHANNEL *ch,
      * repeated retries.
      */
     if (!ossl_ackm_mark_packet_pseudo_lost(ch->ackm, QUIC_PN_SPACE_INITIAL,
-                                           /*PN=*/0))
+                                           pn))
         return 0;
 
     /*
