@@ -190,6 +190,14 @@ static int jitter_generate(void *vseed, unsigned char *out, size_t outlen,
         return 0;
     }
 
+    if (adin != NULL && adin_len > 0) {
+        if (!ossl_rand_pool_add(pool, adin, adin_len, 0)) {
+            ERR_raise(ERR_LIB_PROV, ERR_R_RAND_LIB);
+            ossl_rand_pool_free(pool);
+            return 0;
+        }
+    }
+
     /* Get entropy from jitter entropy library. */
     entropy_available = ossl_prov_acquire_entropy_from_jitter(s, pool);
 
