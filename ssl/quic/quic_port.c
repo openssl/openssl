@@ -70,21 +70,6 @@ typedef struct validation_token {
     unsigned char *remote_addr;
 } QUIC_VALIDATION_TOKEN;
 
-/*
- * The QUIC_CONN_ID has unused bytes in it (the struct is maximally sized to a
- * 20 byte id array, but we only use an 8 byte one). We can save 12 bytes per
- * conn_id by copying only conn_id.id_len + 1 bytes (for the id_len field) and
- * restoring it in the same way on validation.
-*/
-#define QUIC_CONN_ID_LEN 9
-
-/*
- * The length of a marshalled QUIC_VALIDATION_TOKEN, which doesn't include
- * remote_addr.
- */
-#define MARSHALLED_TOKEN_LEN 1 + sizeof(OSSL_TIME) + QUIC_CONN_ID_LEN          \
-    + QUIC_CONN_ID_LEN + sizeof(size_t)
-
 DEFINE_LIST_OF_IMPL(ch, QUIC_CHANNEL);
 DEFINE_LIST_OF_IMPL(incoming_ch, QUIC_CHANNEL);
 DEFINE_LIST_OF_IMPL(port, QUIC_PORT);
@@ -714,6 +699,7 @@ static int generate_retry_token(BIO_ADDR *peer, QUIC_CONN_ID odcid,
  * @brief Marshals a validation token into a new buffer.
  *
  * Dynamically allocates |buffer| and stores the size of |buffer| in BUFFER_LEN.
+ * Note that it will also allocate an extra QUIC_RETRY_INTEGRITY_TAG_LEN bytes.
  * The caller is responsible for freeing |buffer|.
  *
  * @param token      Validation token.
@@ -726,7 +712,17 @@ static int marshal_validation_token(QUIC_VALIDATION_TOKEN *token,
     size_t offset = 0;
     unsigned char *buf;
 
-    buf = OPENSSL_malloc(MARSHALLED_TOKEN_LEN + token->remote_addr_len);
+    /*
+     * The QUIC_CONN_ID has unused bytes in it (the struct is maximally sized to
+     * a 20 byte id array, but we only use an 8 byte one). We can save 12 bytes
+     * per conn_id by copying only conn_id.id_len + 1 bytes (for the id_len
+     * field) and restoring it in the same way on validation.
+    */
+    buf = OPENSSL_malloc(1 + sizeof(OSSL_TIME)
+                         + sizeof(token->odcid.id_len) + token->odcid.id_len
+                         + sizeof(token->rscid.id_len) + token->rscid.id_len
+                         + token->remote_addr_len
+                         + QUIC_RETRY_INTEGRITY_TAG_LEN);
     if (!buf)
         return 0;
 
@@ -738,21 +734,25 @@ static int marshal_validation_token(QUIC_VALIDATION_TOKEN *token,
     memcpy(buf + offset, &token->timestamp, sizeof(token->timestamp));
     offset += sizeof(token->timestamp);
 
-    memcpy(buf + offset, &token->odcid, QUIC_CONN_ID_LEN);
-    offset += QUIC_CONN_ID_LEN;
-    memcpy(buf + offset, &token->rscid, QUIC_CONN_ID_LEN);
-    offset += QUIC_CONN_ID_LEN;
+    memcpy(buf + offset, &token->odcid.id_len, sizeof(token->odcid.id_len));
+    offset += sizeof(token->odcid.id_len);
+    memcpy(buf + offset, &token->odcid.id, token->odcid.id_len);
+    offset += token->odcid.id_len;
+
+    memcpy(buf + offset, &token->rscid.id_len, sizeof(token->rscid.id_len));
+    offset += sizeof(token->rscid.id_len);
+    memcpy(buf + offset, &token->rscid.id, token->rscid.id_len);
+    offset += token->rscid.id_len;
 
     memcpy(buf + offset, &token->remote_addr_len,
            sizeof(token->remote_addr_len));
-
     offset += sizeof(token->remote_addr_len);
 
     memcpy(buf + offset, token->remote_addr, token->remote_addr_len);
     offset += token->remote_addr_len;
 
     *buffer = buf;
-    *buffer_len = offset;
+    *buffer_len = offset + QUIC_RETRY_INTEGRITY_TAG_LEN;
     return 1;
 }
 
@@ -776,8 +776,6 @@ static int parse_validation_token(QUIC_VALIDATION_TOKEN *validation_token,
         goto err;
 
     token.remote_addr = NULL;
-    if (buf_len < MARSHALLED_TOKEN_LEN)
-        goto err;
 
     token.is_retry = *curr;
     if (token.is_retry != 0 && token.is_retry != 1)
@@ -787,11 +785,15 @@ static int parse_validation_token(QUIC_VALIDATION_TOKEN *validation_token,
     memcpy(&token.timestamp, curr, sizeof(token.timestamp));
     curr += sizeof(token.timestamp);
 
-    memcpy(&token.odcid, curr, QUIC_CONN_ID_LEN);
-    curr += QUIC_CONN_ID_LEN;
+    memcpy(&token.odcid.id_len, curr, sizeof(token.odcid.id_len));
+    curr += sizeof(token.odcid.id_len);
+    memcpy(&token.odcid.id, curr, token.odcid.id_len);
+    curr += token.odcid.id_len;
 
-    memcpy(&token.rscid, curr, QUIC_CONN_ID_LEN);
-    curr += QUIC_CONN_ID_LEN;
+    memcpy(&token.rscid.id_len, curr, sizeof(token.rscid.id_len));
+    curr += sizeof(token.rscid.id_len);
+    memcpy(&token.rscid.id, curr, token.rscid.id_len);
+    curr += token.rscid.id_len;
 
     token.remote_addr_len = *curr;
     curr += sizeof(token.remote_addr_len);
@@ -843,7 +845,7 @@ static void port_send_retry(QUIC_PORT *port,
                             QUIC_PKT_HDR *client_hdr)
 {
     BIO_MSG msg[1];
-    unsigned char buffer[512], *token_buf = NULL, *tmp_buf = NULL;
+    unsigned char buffer[512], *token_buf = NULL;
     WPACKET wpkt;
     size_t written, token_buf_len;
     QUIC_PKT_HDR hdr;
@@ -871,16 +873,6 @@ static void port_send_retry(QUIC_PORT *port,
                               client_hdr->src_conn_id, &token)
         || !marshal_validation_token(&token, &token_buf, &token_buf_len))
         goto err;
-
-    /* Make space for integrity tag */
-    token_buf_len += QUIC_RETRY_INTEGRITY_TAG_LEN;
-    tmp_buf = OPENSSL_realloc(token_buf, token_buf_len);
-    if (tmp_buf != NULL) {
-        token_buf = tmp_buf;
-        tmp_buf = NULL;
-    } else {
-        goto err;
-    }
 
     hdr.dst_conn_id = client_hdr->src_conn_id;
     hdr.type = QUIC_PKT_TYPE_RETRY;
