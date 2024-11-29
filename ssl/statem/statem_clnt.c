@@ -430,23 +430,6 @@ static int do_compressed_cert(SSL_CONNECTION *sc)
         && sc->ext.compress_certificate_from_peer[0] != TLSEXT_comp_cert_none;
 }
 
-int any_sent_messages_are_missing_acknowledge(SSL_CONNECTION *s) {
-    pitem *item;
-    piterator iter = pqueue_iterator(s->d1->sent_messages);
-
-    while ((item = pqueue_next(&iter)) != NULL) {
-        dtls_sent_msg *msg = (dtls_sent_msg *)item->data;
-        size_t idx = 0;
-
-        do {
-            if (msg->rec_nums[idx].acknowledged == 0)
-                return 1;
-        } while (++idx < msg->rec_nums_idx);
-    }
-
-    return 0;
-}
-
 /*
  * ossl_statem_client13_write_transition() works out what handshake state to
  * move to next when the TLSv1.3 client is writing messages to be sent to the
@@ -550,7 +533,7 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL_CONNECTION *s)
 
     case TLS_ST_CR_ACK:
         if (SSL_CONNECTION_IS_DTLS13(s)
-                && any_sent_messages_are_missing_acknowledge(s)) {
+            && dtls_any_sent_messages_are_missing_acknowledge(s)) {
             /* We wait for ACK */
             return WRITE_TRAN_FINISHED;
         }

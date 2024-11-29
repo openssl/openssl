@@ -1084,7 +1084,7 @@ int tls13_common_post_process_record(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec)
     if (rec->type != SSL3_RT_APPLICATION_DATA
             && rec->type != SSL3_RT_ALERT
             && rec->type != SSL3_RT_HANDSHAKE
-            && rec->type != SSL3_RT_ACK) {
+            && (!rl->isdtls || rec->type != SSL3_RT_ACK)) {
         RLAYERfatal(rl, SSL_AD_UNEXPECTED_MESSAGE, SSL_R_BAD_RECORD_TYPE);
         return 0;
     }

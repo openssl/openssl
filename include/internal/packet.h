@@ -235,7 +235,7 @@ __owur static ossl_inline int PACKET_peek_net_4(const PACKET *pkt,
 __owur static ossl_inline int PACKET_peek_net_6(const PACKET *pkt,
                                                 uint64_t *data)
 {
-    if (PACKET_remaining(pkt) < 8)
+    if (PACKET_remaining(pkt) < 6)
         return 0;
 
     *data = ((uint64_t)(*(pkt->curr))) << 40;

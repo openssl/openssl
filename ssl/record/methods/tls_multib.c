@@ -127,6 +127,7 @@ static int tls_write_records_multiblock_int(OSSL_RECORD_LAYER *rl,
             || !WPACKET_get_total_written(&aad_pkt, &aad_written)
             || aad_written != sizeof(aad)
             || !WPACKET_finish(&aad_pkt)) {
+        WPACKET_cleanup(&aad_pkt);
         RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return -1;
     }

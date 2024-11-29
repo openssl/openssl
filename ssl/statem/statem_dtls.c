@@ -482,7 +482,7 @@ static int dtls1_preprocess_fragment(SSL_CONNECTION *s,
     return 1;
 }
 
-void add_record_to_ack_list(SSL_CONNECTION *sc, uint64_t epoch, uint64_t sequence) {
+static void add_record_to_ack_list(SSL_CONNECTION *sc, uint64_t epoch, uint64_t sequence) {
     size_t rec_num_idx;
 
     for (rec_num_idx = 0; rec_num_idx < sc->d1->ack_rec_num_idx; rec_num_idx++) {
@@ -816,6 +816,23 @@ static int dtls1_process_out_of_seq_message(SSL_CONNECTION *s,
  err:
     if (item == NULL)
         dtls1_hm_fragment_free(frag);
+    return 0;
+}
+
+int dtls_any_sent_messages_are_missing_acknowledge(SSL_CONNECTION *s) {
+    pitem *item;
+    piterator iter = pqueue_iterator(s->d1->sent_messages);
+
+    while ((item = pqueue_next(&iter)) != NULL) {
+        dtls_sent_msg *msg = (dtls_sent_msg *)item->data;
+        size_t idx = 0;
+
+        do {
+            if (msg->rec_nums[idx].acknowledged == 0)
+                return 1;
+        } while (++idx < msg->rec_nums_idx);
+    }
+
     return 0;
 }
 
@@ -1258,6 +1275,7 @@ void dtls1_get_queue_priority(unsigned char *prio64be, unsigned short seq,
      */
     int lsb = (record_type == SSL3_RT_CHANGE_CIPHER_SPEC);
     const uint16_t prio = seq * 2 - lsb;
+
     memset(prio64be, 0, 8);
     prio64be[6] = (unsigned char)(prio >> 8);
     prio64be[7] = (unsigned char)(prio);
@@ -1281,7 +1299,7 @@ int dtls1_retransmit_sent_messages(SSL_CONNECTION *s)
             }
 
             if (ack_count == sent_msg->rec_nums_idx)
-                /* rfc9147: Implementations must not retransmit acknowledged msgs*/
+                /* rfc9147: Implementations must not retransmit acknowledged msgs */
                 continue;
 
         }

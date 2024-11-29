@@ -716,16 +716,8 @@ static int digest_sha512_final(EVP_MD_CTX *ctx, unsigned char *md)
 /*
  * AES128 Implementation
  */
-
-static int ossltest_aes128_cbc_init_key(EVP_CIPHER_CTX *ctx,
-                                        const unsigned char *key,
-                                        const unsigned char *iv, int enc)
-{
-    return EVP_CIPHER_meth_get_init(EVP_aes_128_cbc()) (ctx, key, iv, enc);
-}
-
-static int ossltest_aes128_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-                                      const unsigned char *in, size_t inl)
+static int ossltest_cipher(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
+                           unsigned char *out, const unsigned char *in, size_t inl)
 {
     unsigned char *tmpbuf;
     int ret;
@@ -741,14 +733,28 @@ static int ossltest_aes128_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
         memcpy(tmpbuf, in, inl);
 
     /* Go through the motions of encrypting it */
-    ret = EVP_CIPHER_meth_get_do_cipher(EVP_aes_128_cbc())(ctx, out, in, inl);
+    ret = EVP_CIPHER_meth_get_do_cipher(cipher)(ctx, out, in, inl);
 
     /* Throw it all away and just use the plaintext as the output */
     if (tmpbuf != NULL)
         memcpy(out, tmpbuf, inl);
+
     OPENSSL_free(tmpbuf);
 
     return ret;
+}
+
+static int ossltest_aes128_cbc_init_key(EVP_CIPHER_CTX *ctx,
+                                        const unsigned char *key,
+                                        const unsigned char *iv, int enc)
+{
+    return EVP_CIPHER_meth_get_init(EVP_aes_128_cbc()) (ctx, key, iv, enc);
+}
+
+static int ossltest_aes128_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+                                      const unsigned char *in, size_t inl)
+{
+    return ossltest_cipher(ctx, EVP_aes_128_cbc(), out, in, inl);
 }
 
 static int ossltest_aes128_ecb_init_key(EVP_CIPHER_CTX *ctx,
@@ -761,29 +767,7 @@ static int ossltest_aes128_ecb_init_key(EVP_CIPHER_CTX *ctx,
 static int ossltest_aes128_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                                       const unsigned char *in, size_t inl)
 {
-    unsigned char *tmpbuf;
-    int ret;
-
-    tmpbuf = OPENSSL_malloc(inl);
-
-    /* OPENSSL_malloc will return NULL if inl == 0 */
-    if (tmpbuf == NULL && inl > 0)
-        return -1;
-
-    /* Remember what we were asked to encrypt */
-    if (tmpbuf != NULL)
-        memcpy(tmpbuf, in, inl);
-
-    /* Go through the motions of encrypting it */
-    ret = EVP_CIPHER_meth_get_do_cipher(EVP_aes_128_ecb())(ctx, out, in, inl);
-
-    /* Throw it all away and just use the plaintext as the output */
-    if (tmpbuf != NULL)
-        memcpy(out, tmpbuf, inl);
-
-    OPENSSL_free(tmpbuf);
-
-    return ret;
+    return ossltest_cipher(ctx, EVP_aes_128_ecb(), out, in, inl);
 }
 
 static int ossltest_aes128_gcm_init_key(EVP_CIPHER_CTX *ctx,

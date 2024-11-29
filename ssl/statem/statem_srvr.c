@@ -586,8 +586,9 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
             if (SSL_CONNECTION_IS_DTLS13(s)) {
                 st->deferred_ack_state = TLS_ST_OK;
                 st->hand_state = TLS_ST_SW_ACK;
-            } else
+            } else {
                 st->hand_state = TLS_ST_OK;
+            }
 
             return WRITE_TRAN_CONTINUE;
         }
@@ -629,7 +630,7 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
 
     case TLS_ST_SR_ACK:
         if (SSL_CONNECTION_IS_DTLS13(s)
-                && any_sent_messages_are_missing_acknowledge(s)) {
+            && dtls_any_sent_messages_are_missing_acknowledge(s)) {
             /* We wait for ACK */
             return WRITE_TRAN_FINISHED;
         }

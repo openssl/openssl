@@ -255,8 +255,10 @@ static int ssl3_mac(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec, unsigned char *md
             || !WPACKET_put_bytes_u8(&hdr, rec->type)
             || !WPACKET_put_bytes_u16(&hdr, rec->length)
             || !WPACKET_finish(&hdr)
-            || !WPACKET_get_total_written(&hdr, &hdr_written))
+            || !WPACKET_get_total_written(&hdr, &hdr_written)) {
+        WPACKET_cleanup(&hdr);
         return 0;
+    }
 
     if (cbc_encrypted) {
 #ifdef OPENSSL_NO_DEPRECATED_3_0

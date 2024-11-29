@@ -171,6 +171,7 @@ static int setup_record_header(const OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec,
             || !WPACKET_finish(&hdr)
             || !WPACKET_get_total_written(&hdr, &hdrsize)
             || hdrsize != EVP_AEAD_TLS1_AAD_LEN) {
+        WPACKET_cleanup(&hdr);
         return 0;
     }
 
