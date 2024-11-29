@@ -73,4 +73,4 @@ SKIP: {
     ok(find_line_file('NIST CURVE: P-256', 'ec.txt') == 1,
        'Printing an FIPS provider EC private key');
 }
-
+}
