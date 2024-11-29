@@ -800,6 +800,10 @@ __owur int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx,
                                  const EVP_CIPHER *cipher, ENGINE *impl,
                                  const unsigned char *key,
                                  const unsigned char *iv, int enc);
+__owur int EVP_CipherInit_skey(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
+                               const EVP_SKEY *skey,
+                               const unsigned char *iv, size_t iv_len,
+                               int enc, const OSSL_PARAM params[]);
 __owur int EVP_CipherInit_ex2(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
                               const unsigned char *key, const unsigned char *iv,
                               int enc, const OSSL_PARAM params[]);
@@ -1236,6 +1240,7 @@ unsigned char *EVP_Q_mac(OSSL_LIB_CTX *libctx, const char *name, const char *pro
                          unsigned char *out, size_t outsize, size_t *outlen);
 int EVP_MAC_init(EVP_MAC_CTX *ctx, const unsigned char *key, size_t keylen,
                  const OSSL_PARAM params[]);
+int EVP_MAC_init_SKEY(EVP_MAC_CTX *ctx, const EVP_SKEY *skey, const OSSL_PARAM params[]);
 int EVP_MAC_update(EVP_MAC_CTX *ctx, const unsigned char *data, size_t datalen);
 int EVP_MAC_final(EVP_MAC_CTX *ctx,
                   unsigned char *out, size_t *outl, size_t outsize);
@@ -1979,6 +1984,7 @@ int EVP_PKEY_derive_set_peer_ex(EVP_PKEY_CTX *ctx, EVP_PKEY *peer,
                                 int validate_peer);
 int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer);
 int EVP_PKEY_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen);
+int EVP_PKEY_derive_SKEY(EVP_PKEY_CTX *ctx, EVP_SKEY *skey);
 
 int EVP_PKEY_encapsulate_init(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[]);
 int EVP_PKEY_auth_encapsulate_init(EVP_PKEY_CTX *ctx, EVP_PKEY *authpriv,
@@ -2225,6 +2231,15 @@ int EVP_PKEY_get_group_name(const EVP_PKEY *pkey, char *name, size_t name_sz,
 OSSL_LIB_CTX *EVP_PKEY_CTX_get0_libctx(EVP_PKEY_CTX *ctx);
 const char *EVP_PKEY_CTX_get0_propq(const EVP_PKEY_CTX *ctx);
 const OSSL_PROVIDER *EVP_PKEY_CTX_get0_provider(const EVP_PKEY_CTX *ctx);
+
+EVP_SKEY *EVP_SKEY_new(OSSL_LIB_CTX *libctx, const char *keymgmtname, const char *propquery);
+EVP_SKEY *EVP_SKEY_new_raw_key(const unsigned char *key, size_t keylen);
+int EVP_SKEY_get_raw_key(const EVP_SKEY *skey, unsigned char *key, size_t *len);
+int EVP_SKEY_import(EVP_SKEY *skey, const OSSL_PARAM *params);
+int EVP_SKEY_export(const EVP_SKEY *skey, int selection,
+                    OSSL_CALLBACK *export_cb, void *export_cbarg);
+int EVP_SKEY_up_ref(EVP_SKEY *skey);
+void EVP_SKEY_free(EVP_SKEY *skey);
 
 # ifdef  __cplusplus
 }

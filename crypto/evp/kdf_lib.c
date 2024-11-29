@@ -144,6 +144,32 @@ int EVP_KDF_derive(EVP_KDF_CTX *ctx, unsigned char *key, size_t keylen,
     return ctx->meth->derive(ctx->algctx, key, keylen, params);
 }
 
+int EVP_KDF_derive_SKEY(EVP_KDF_CTX *ctx, EVP_SKEY *skey,
+                        const OSSL_PARAM params[])
+{
+    if (ctx == NULL || skey == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    if (ctx->meth->derive_opaque == NULL) {
+        ERR_raise(ERR_R_EVP_LIB, ERR_R_UNSUPPORTED);
+        return 0;
+    }
+
+    if (skey->keymgmt->prov != ctx->meth->prov) {
+        ERR_raise(ERR_R_EVP_LIB, ERR_R_UNSUPPORTED);
+        return 0;
+    }
+
+    if (skey->keydata != NULL) {
+        ERR_raise(ERR_R_EVP_LIB, ERR_R_UNSUPPORTED);
+        return 0;
+    }
+
+    return ctx->meth->derive_opaque(ctx->algctx, &(skey->keydata), params);
+}
+
 /*
  * The {get,set}_params functions return 1 if there is no corresponding
  * function in the implementation.  This is the same as if there was one,
