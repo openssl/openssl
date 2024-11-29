@@ -410,9 +410,6 @@ int dtls_get_message(SSL_CONNECTION *s, int *mt)
  */
 int dtls_get_message_body(SSL_CONNECTION *s, size_t *len)
 {
-    unsigned char *msg = (unsigned char *)s->init_buf->data;
-    size_t msg_len = s->init_num + DTLS1_HM_HEADER_LENGTH;
-
     if (s->s3.tmp.message_type == SSL3_MT_CHANGE_CIPHER_SPEC) {
         /* Nothing to be done */
         goto end;
@@ -426,12 +423,7 @@ int dtls_get_message_body(SSL_CONNECTION *s, size_t *len)
         return 0;
     }
 
-    if (s->version == DTLS1_BAD_VER) {
-        msg += DTLS1_HM_HEADER_LENGTH;
-        msg_len -= DTLS1_HM_HEADER_LENGTH;
-    }
-
-    if (!ssl3_finish_mac(s, msg, msg_len, 1))
+    if (!tls_common_finish_mac(s))
         return 0;
 
     if (s->msg_callback)
