@@ -415,7 +415,6 @@ my %params = (
 
 # MLKEM parameters
     'PKEY_PARAM_MLKEM_SEED' => "seed",
-    'KEM_PARAM_MLKEM_ENC_ENTROPY' => "entropy",
 
 # Key generation parameters
     'PKEY_PARAM_FFC_TYPE' =>         "type",
