@@ -264,7 +264,7 @@ int ssl3_finish_mac(SSL_CONNECTION *s, const unsigned char *buf, size_t len, int
          * rfc9147:
          * In DTLS 1.3, the message transcript is computed over the
          * original TLS 1.3-style Handshake messages without the
-         * message_seq, fragment_oﬀset, and fragment_length values. Note
+         * message_seq, fragment_offset, and fragment_length values. Note
          * that this is a change from DTLS 1.2 where those values were
          * included in the transcript.
          *
@@ -277,7 +277,7 @@ int ssl3_finish_mac(SSL_CONNECTION *s, const unsigned char *buf, size_t len, int
         if (SSL_CONNECTION_IS_DTLS13(s) && hmhdr_incl
                 && ossl_assert(len >= DTLS1_HM_HEADER_LENGTH)) {
             ret = EVP_DigestUpdate(s->s3.handshake_dgst, buf, SSL3_HM_HEADER_LENGTH);
-            ret += EVP_DigestUpdate(s->s3.handshake_dgst,
+            ret &= EVP_DigestUpdate(s->s3.handshake_dgst,
                                     buf + DTLS1_HM_HEADER_LENGTH,
                                     len - DTLS1_HM_HEADER_LENGTH);
         } else {

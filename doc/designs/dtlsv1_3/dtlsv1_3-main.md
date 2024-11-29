@@ -73,7 +73,7 @@ for DTLSv1.3 connections.
 #### DTLS 1.3 Transcript Hash
 
 The DTLSv1.3 implementation does not include the message sequence number,
-fragment offset and fragment length as is the case the previous versions of DTLS.
+fragment offset and fragment length as is the case with previous versions of DTLS.
 
 Implementation progress
 -----------------------
