@@ -126,8 +126,8 @@ static int mlkem_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (params == NULL)
         return 1;
 
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_KEM_PARAM_MLKEM_ENC_ENTROPY)) != NULL
-        && (p->data_size != MLKEM_ENCAP_ENTROPY
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_KEM_PARAM_IKME)) != NULL
+        && (p->data_size < MLKEM_ENCAP_ENTROPY
             || (ctx->entropy = OPENSSL_memdup(p->data, MLKEM_ENCAP_ENTROPY)) == NULL))
         return 0;
 
@@ -136,7 +136,7 @@ static int mlkem_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 }
 
 static const OSSL_PARAM known_settable_mlkem_ctx_params[] = {
-    OSSL_PARAM_octet_string(OSSL_KEM_PARAM_MLKEM_ENC_ENTROPY, NULL, 0),
+    OSSL_PARAM_octet_string(OSSL_KEM_PARAM_IKME, NULL, 0),
     OSSL_PARAM_END
 };
 
