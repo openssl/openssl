@@ -709,51 +709,35 @@ static int generate_retry_token(BIO_ADDR *peer, QUIC_CONN_ID odcid,
 static int marshal_validation_token(QUIC_VALIDATION_TOKEN *token,
                                     unsigned char **buffer, size_t *buffer_len)
 {
-    size_t offset = 0;
-    unsigned char *buf;
+    WPACKET wpkt = {0};
+    BUF_MEM *buf_mem = BUF_MEM_new();
+    int ret = 0;
 
-    /*
-     * The QUIC_CONN_ID has unused bytes in it (the struct is maximally sized to
-     * a 20 byte id array, but we only use an 8 byte one). We can save 12 bytes
-     * per conn_id by copying only conn_id.id_len + 1 bytes (for the id_len
-     * field) and restoring it in the same way on validation.
-    */
-    buf = OPENSSL_malloc(1 + sizeof(OSSL_TIME)
-                         + sizeof(token->odcid.id_len) + token->odcid.id_len
-                         + sizeof(token->rscid.id_len) + token->rscid.id_len
-                         + token->remote_addr_len
-                         + QUIC_RETRY_INTEGRITY_TAG_LEN);
-    if (!buf)
+    if (buf_mem == NULL || (token->is_retry != 0 && token->is_retry != 1))
         return 0;
 
-    if (token->is_retry != 0 && token->is_retry != 1)
-        return 0;
-    memset(buf, token->is_retry, 1);
-    offset += 1;
+    if (!WPACKET_init(&wpkt, buf_mem)
+        || !WPACKET_memset(&wpkt, token->is_retry, 1)
+        || !WPACKET_memcpy(&wpkt, &token->timestamp, sizeof(token->timestamp))
+        || !WPACKET_memcpy(&wpkt, &token->odcid.id_len, sizeof(token->odcid.id_len))
+        || !WPACKET_memcpy(&wpkt, &token->odcid.id, token->odcid.id_len)
+        || !WPACKET_memcpy(&wpkt, &token->rscid.id_len, sizeof(token->rscid.id_len))
+        || !WPACKET_memcpy(&wpkt, &token->rscid.id, token->rscid.id_len)
+        || !WPACKET_memcpy(&wpkt, &token->remote_addr_len, sizeof(token->remote_addr_len))
+        || !WPACKET_memcpy(&wpkt, token->remote_addr, token->remote_addr_len)
+        || !WPACKET_get_total_written(&wpkt, buffer_len)
+        || !WPACKET_finish(&wpkt)
+        || (*buffer = OPENSSL_malloc(*buffer_len + QUIC_RETRY_INTEGRITY_TAG_LEN)) == NULL) {
+        WPACKET_cleanup(&wpkt);
+        goto err;
+    }
 
-    memcpy(buf + offset, &token->timestamp, sizeof(token->timestamp));
-    offset += sizeof(token->timestamp);
-
-    memcpy(buf + offset, &token->odcid.id_len, sizeof(token->odcid.id_len));
-    offset += sizeof(token->odcid.id_len);
-    memcpy(buf + offset, &token->odcid.id, token->odcid.id_len);
-    offset += token->odcid.id_len;
-
-    memcpy(buf + offset, &token->rscid.id_len, sizeof(token->rscid.id_len));
-    offset += sizeof(token->rscid.id_len);
-    memcpy(buf + offset, &token->rscid.id, token->rscid.id_len);
-    offset += token->rscid.id_len;
-
-    memcpy(buf + offset, &token->remote_addr_len,
-           sizeof(token->remote_addr_len));
-    offset += sizeof(token->remote_addr_len);
-
-    memcpy(buf + offset, token->remote_addr, token->remote_addr_len);
-    offset += token->remote_addr_len;
-
-    *buffer = buf;
-    *buffer_len = offset + QUIC_RETRY_INTEGRITY_TAG_LEN;
-    return 1;
+    memcpy(*buffer, buf_mem->data, *buffer_len);
+    *buffer_len += QUIC_RETRY_INTEGRITY_TAG_LEN;
+    ret = 1;
+err:
+    BUF_MEM_free(buf_mem);
+    return ret;
 }
 
 /**
@@ -795,7 +779,7 @@ static int parse_validation_token(QUIC_VALIDATION_TOKEN *validation_token,
     memcpy(&token.rscid.id, curr, token.rscid.id_len);
     curr += token.rscid.id_len;
 
-    token.remote_addr_len = *curr;
+    token.remote_addr_len = (size_t)*curr;
     curr += sizeof(token.remote_addr_len);
 
     curr_len = (size_t)(curr - buf);
@@ -811,7 +795,7 @@ static int parse_validation_token(QUIC_VALIDATION_TOKEN *validation_token,
     if (curr_len != buf_len)
         goto err;
 
-    memcpy(validation_token, &token, sizeof(token));
+    *validation_token = token;
     return 1;
 err:
     cleanup_validation_token(&token);
@@ -848,7 +832,7 @@ static void port_send_retry(QUIC_PORT *port,
     unsigned char buffer[512], *token_buf = NULL;
     WPACKET wpkt;
     size_t written, token_buf_len;
-    QUIC_PKT_HDR hdr;
+    QUIC_PKT_HDR hdr = {0};
     QUIC_VALIDATION_TOKEN token = { 0 };
     int ok;
 
@@ -871,7 +855,8 @@ static void port_send_retry(QUIC_PORT *port,
     /* Generate retry validation token */
     if (!generate_retry_token(peer, client_hdr->dst_conn_id,
                               client_hdr->src_conn_id, &token)
-        || !marshal_validation_token(&token, &token_buf, &token_buf_len))
+        || !marshal_validation_token(&token, &token_buf, &token_buf_len)
+        || !ossl_assert(token_buf_len >= QUIC_RETRY_INTEGRITY_TAG_LEN))
         goto err;
 
     hdr.dst_conn_id = client_hdr->src_conn_id;
@@ -1054,13 +1039,16 @@ static int port_validate_token(QUIC_PKT_HDR *hdr, QUIC_PORT *port,
     unsigned long long time_diff;
     size_t remote_addr_len;
     unsigned char *remote_addr = NULL;
+    OSSL_TIME now = ossl_time_now();
 
     if (!parse_validation_token(&token, hdr->token, hdr->token_len))
         goto err;
 
     /* Validate token timestamp */
+    if (ossl_time_compare(now, token.timestamp) <= 0)
+        goto err;
     time_diff = ossl_time2seconds(ossl_time_abs_difference(token.timestamp,
-                                                           ossl_time_now()));
+                                                           now));
     if ((token.is_retry && time_diff > 10)
         || (!token.is_retry && time_diff > 3600))
         goto err;
@@ -1070,7 +1058,7 @@ static int port_validate_token(QUIC_PKT_HDR *hdr, QUIC_PORT *port,
         || remote_addr_len != token.remote_addr_len
         || (remote_addr = OPENSSL_malloc(remote_addr_len)) == NULL
         || !BIO_ADDR_rawaddress(peer, remote_addr, &remote_addr_len)
-        || CRYPTO_memcmp(remote_addr, token.remote_addr, remote_addr_len) != 0)
+        || memcmp(remote_addr, token.remote_addr, remote_addr_len) != 0)
         goto err;
 
     /*
@@ -1090,12 +1078,12 @@ static int port_validate_token(QUIC_PKT_HDR *hdr, QUIC_PORT *port,
          */
         if (!memcmp(&token.rscid, &hdr->dst_conn_id, sizeof(QUIC_CONN_ID)))
             goto err;
-        memcpy(odcid, &token.odcid, sizeof(QUIC_CONN_ID));
-        memcpy(scid, &token.rscid, sizeof(QUIC_CONN_ID));
+        *odcid = token.odcid;
+        *scid = token.rscid;
     } else {
         if (!ossl_quic_lcidm_get_unused_cid(port->lcidm, odcid))
             goto err;
-        memcpy(scid, &hdr->src_conn_id, sizeof(QUIC_CONN_ID));
+        *scid = hdr->src_conn_id;
     }
 
     ret = 1;
