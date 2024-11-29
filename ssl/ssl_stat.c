@@ -128,7 +128,7 @@ const char *SSL_state_string_long(const SSL *s)
     case TLS_ST_CW_ACK:
         return "DTLSv1.3 write client ack";
     case TLS_ST_SR_ACK:
-        return "DTLSv1.3 read client ack";
+        return "DTLSv1.3 read server ack";
     case TLS_ST_SW_ACK:
         return "DTLSv1.3 write server ack";
     default:
