@@ -9,9 +9,9 @@
 
 /**
  * @file quic-hq-interop-server.c
- * @brief Minimal QUIC HTTP/1.0 server implementation.
+ * @brief Minimal QUIC HTTP/0.9 server implementation.
  *
- * This file implements a lightweight QUIC server supporting the HTTP/1.0
+ * This file implements a lightweight QUIC server supporting the HTTP/0.9
  * protocol for interoperation testing. It includes functions for setting
  * up a secure QUIC connection, handling ALPN negotiation, and serving client
  * requests.  Intended for use with the quic-interop-runner 
@@ -21,7 +21,7 @@
  * - Setting up SSL_CTX with QUIC support.
  * - Negotiating ALPN strings during the TLS handshake.
  * - Listening and accepting incoming QUIC connections.
- * - Handling client requests via HTTP/1.0 protocol.
+ * - Handling client requests via HTTP/0.9 protocol.
  *
  * Usage:
  *   <port> <server.crt> <server.key>
@@ -585,7 +585,7 @@ err:
 }
 
 /**
- * @brief Entry point for the minimal QUIC HTTP/1.0 server.
+ * @brief Entry point for the minimal QUIC HTTP/0.9 server.
  *
  * This function initializes the server, sets up a QUIC context, binds a UDP
  * socket to the specified port, and starts the main QUIC server loop to handle
