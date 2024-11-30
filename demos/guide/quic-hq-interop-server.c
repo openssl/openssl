@@ -275,10 +275,7 @@ static BIO *create_socket(uint16_t port)
     BIO_ADDR *addr = NULL;
     struct in_addr ina;
 
-    /*
-     * using an s_addr value of 0 here binds us to INADDR_ANY
-     */
-    ina.s_addr = 0;
+    ina.s_addr = INADDR_ANY;
 
     /* Retrieve the file descriptor for a new UDP socket */
     if ((fd = BIO_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP, 0)) < 0) {
@@ -346,7 +343,7 @@ err:
  * retrieves the requested file from the server's file system, and sends the
  * file contents back to the client over the stream.
  *
- * @param stream Pointer to the SSL stream representing the QUIC connection.
+ * @param Pointer to the SSL object representing the QUIC stream.
  *
  * Operation:
  * - Reads the HTTP/0.9 GET request from the client.
@@ -384,13 +381,10 @@ static void process_new_stream(SSL *stream)
     int rc;
 
     memset(buf, 0, BUF_SIZE);
-    if (SSL_read_ex(stream, buf, sizeof(buf), &nread) <= 0)
+    if (SSL_read_ex(stream, buf, sizeof(buf) - 1, &nread) <= 0)
         return;
 
     /* We should have a valid http 0.9 GET request here */
-
-    /* NULL terminate it and cast it to a string */
-    buf[nread] = '\0';
     fprintf(stderr, "Request is %s\n", req);
 
     /* Look for the first '/' char in the request */
@@ -539,7 +533,7 @@ static int run_quic_server(SSL_CTX *ctx, BIO *sock)
                                             SSL_INCOMING_STREAM_POLICY_ACCEPT,
                                             0)) {
             fprintf(stderr, "Failed to set incomming stream policy\n");
-            goto err;
+            goto close_conn;
         }
 
         /*
@@ -573,6 +567,7 @@ static int run_quic_server(SSL_CTX *ctx, BIO *sock)
          * Shut down the connection. We may need to call this multiple times
          * to ensure the connection is shutdown completely.
          */
+close_conn:
         while (SSL_shutdown(conn) != 1)
             continue;
 
@@ -672,10 +667,10 @@ int main(int argc, char *argv[])
         goto out;
     }
 
+    res = EXIT_SUCCESS;
 out:
     /* Free resources. */
     SSL_CTX_free(ctx);
     BIO_free(sock);
-    res = EXIT_SUCCESS;
     return res;
 }
