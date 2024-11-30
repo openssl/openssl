@@ -417,9 +417,8 @@ my %params = (
 # EC, X25519 and X448 Key generation parameters
     'PKEY_PARAM_DHKEM_IKM' =>        "dhkem-ikm",
 
-# MLKEM parameters
-    'PKEY_PARAM_MLKEM_SEED' => "seed",
-    'KEM_PARAM_MLKEM_ENC_ENTROPY' => "entropy",
+# ML-KEM parameters
+    'PKEY_PARAM_ML_KEM_SEED' => "seed",
 
 # Key generation parameters
     'PKEY_PARAM_FFC_TYPE' =>         "type",
