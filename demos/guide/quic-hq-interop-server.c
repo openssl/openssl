@@ -13,8 +13,9 @@
  *
  * This file implements a lightweight QUIC server supporting the HTTP/1.0
  * protocol for interoperation testing. It includes functions for setting
- * up a secure QUIC connection, handling ALPN negotiation, serving client
- * requests, and echoing responses.
+ * up a secure QUIC connection, handling ALPN negotiation, and serving client
+ * requests.  Intended for use with the quic-interop-runner 
+ * available at https://interop.seemann.io
  *
  * Key functionalities:
  * - Setting up SSL_CTX with QUIC support.
