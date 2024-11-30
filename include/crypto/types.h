@@ -29,4 +29,8 @@ typedef struct dsa_st DSA;
 typedef struct ecx_key_st ECX_KEY;
 # endif
 
+# ifndef OPENSSL_NO_ML_KEM
+typedef struct ossl_ml_kem_key_st ML_KEM_KEY;
+# endif
+
 #endif
