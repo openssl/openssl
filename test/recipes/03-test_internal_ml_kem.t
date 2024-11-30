@@ -6,6 +6,10 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
-use OpenSSL::Test::Simple;
+use OpenSSL::Test;
+use OpenSSL::Test::Utils;
+use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
-simple_test("test_internal_mlkem", "mlkem_internal_test", "mlkem");
+plan tests => 1;
+setup("ml_kem_internal_test");
+ok(run(test(["ml_kem_internal_test", srctop_file("test", "default.cnf")])));
