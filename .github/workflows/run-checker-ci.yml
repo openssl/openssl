@@ -27,6 +27,7 @@ jobs:
           no-dtls,
           no-ec,
           no-ecx,
+          no-ml-kem,
           no-http,
           no-legacy,
           no-sock,

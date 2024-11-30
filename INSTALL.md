@@ -887,8 +887,13 @@ Don't generate dependencies.
 
 ### no-ml-dsa
 
-Disable Module-Lattice-Based Digital Signature Standard (ML-DSA) Support.
-(ML-DSA is based on CRYSTALS-DILITHIUM. See NIST.FIPS.204)
+Disable Module-Lattice-Based Digital Signature Standard (ML-DSA) support.
+ML-DSA is based on CRYSTALS-DILITHIUM. See [FIPS 204].
+
+### no-ml-kem
+
+Disable Module-Lattice-Based Key-Encapsulation Mechanism Standard (ML-KEM)
+support.  ML-KEM is based on CRYSTALS-KYBER. See [FIPS 203].
 
 ### no-module
 
@@ -1205,8 +1210,8 @@ Build with support for the specified algorithm.
 ### no-{algorithm}
 
     no-{aria|bf|blake2|camellia|cast|chacha|cmac|
-        des|dh|dsa|ecdh|ecdsa|idea|md4|mdc2|ocb|
-        poly1305|rc2|rc4|rmd160|scrypt|seed|
+        des|dh|dsa|ecdh|ecdsa|idea|md4|mdc2|ml-kem|
+        ocb|poly1305|rc2|rc4|rmd160|scrypt|seed|
         siphash|siv|sm2|sm3|sm4|whirlpool}
 
 Build without support for the specified algorithm.
@@ -2041,6 +2046,12 @@ is used, as it is the version of the GNU assembler that will be checked.
 
 [ESV]:
     <https://csrc.nist.gov/Projects/cryptographic-module-validation-program/entropy-validations>
+
+[FIPS 203]:
+    <https://csrc.nist.gov/pubs/fips/203/final>
+
+[FIPS 204]:
+    <https://csrc.nist.gov/pubs/fips/204/final>
 
 [SP 800-90B]:
     <https://csrc.nist.gov/pubs/sp/800/90/b/final>

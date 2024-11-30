@@ -15,218 +15,218 @@
 #include <openssl/params.h>
 #include <openssl/err.h>
 #include <openssl/proverr.h>
+#include "crypto/ml_kem.h"
 #include "prov/provider_ctx.h"
 #include "prov/implementations.h"
 #include "prov/securitycheck.h"
 #include "prov/providercommon.h"
-#include "prov/mlkem.h"
 
-#define BUFSIZE 1000
-#if defined(NDEBUG) || defined(OPENSSL_NO_STDIO)
-/* TODO(ML-KEM) to remove or replace with TRACE */
-static void debug_print(char *fmt, ...)
-{
-}
-#else
-static void debug_print(char *fmt, ...)
-{
-    char out[BUFSIZE];
-    va_list argptr;
-
-    va_start(argptr, fmt);
-    vsnprintf(out, BUFSIZE, fmt, argptr);
-    va_end(argptr);
-    if (getenv("TEMPLATEKM"))
-        fprintf(stderr, "TEMPLATE_KM: %s", out);
-}
-#endif
+static OSSL_FUNC_kem_newctx_fn ml_kem_newctx;
+static OSSL_FUNC_kem_freectx_fn ml_kem_freectx;
+static OSSL_FUNC_kem_encapsulate_init_fn ml_kem_encapsulate_init;
+static OSSL_FUNC_kem_encapsulate_fn ml_kem_encapsulate;
+static OSSL_FUNC_kem_decapsulate_init_fn ml_kem_decapsulate_init;
+static OSSL_FUNC_kem_decapsulate_fn ml_kem_decapsulate;
+static OSSL_FUNC_kem_set_ctx_params_fn ml_kem_set_ctx_params;
+static OSSL_FUNC_kem_settable_ctx_params_fn ml_kem_settable_ctx_params;
 
 typedef struct {
     OSSL_LIB_CTX *libctx;
-    MLKEM768_KEY *key;
-    int op;
+    ML_KEM_KEY *key;
+    uint8_t entropy_buf[ML_KEM_RANDOM_BYTES];
     uint8_t *entropy;
-} PROV_MLKEM_CTX;
+} PROV_ML_KEM_CTX;
 
-static OSSL_FUNC_kem_newctx_fn mlkem_newctx;
-static OSSL_FUNC_kem_encapsulate_init_fn mlkem_encapsulate_init;
-static OSSL_FUNC_kem_encapsulate_fn mlkem_encapsulate;
-static OSSL_FUNC_kem_decapsulate_init_fn mlkem_decapsulate_init;
-static OSSL_FUNC_kem_decapsulate_fn mlkem_decapsulate;
-static OSSL_FUNC_kem_freectx_fn mlkem_freectx;
-static OSSL_FUNC_kem_set_ctx_params_fn mlkem_set_ctx_params;
-
-static void *mlkem_newctx(void *provctx)
+static void *ml_kem_newctx(void *provctx)
 {
-    PROV_MLKEM_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
+    PROV_ML_KEM_CTX *ctx;
 
-    debug_print("MLKEMKEM newctx called\n");
-    if (ctx == NULL)
+    if ((ctx = OPENSSL_malloc(sizeof(*ctx))) == NULL)
         return NULL;
 
     ctx->libctx = PROV_LIBCTX_OF(provctx);
-
-    debug_print("MLKEMKEM newctx returns %p\n", ctx);
+    ctx->key = NULL;
+    ctx->entropy = NULL;
     return ctx;
 }
 
-static void mlkem_freectx(void *vctx)
+static void ml_kem_freectx(void *vctx)
 {
-    PROV_MLKEM_CTX *ctx = (PROV_MLKEM_CTX *)vctx;
+    PROV_ML_KEM_CTX *ctx = vctx;
 
-    OPENSSL_free(ctx->entropy);
-    debug_print("MLKEMKEM freectx %p\n", ctx);
+    if (ctx->entropy != NULL)
+        OPENSSL_cleanse(ctx->entropy, ML_KEM_RANDOM_BYTES);
     OPENSSL_free(ctx);
 }
 
-static int mlkem_init(void *vctx, int operation, void *vkey, void *vauth,
-                      const OSSL_PARAM params[])
+static int ml_kem_init(void *vctx, int unused_op, void *key,
+                       const OSSL_PARAM params[])
 {
-    PROV_MLKEM_CTX *ctx = (PROV_MLKEM_CTX *)vctx;
-    MLKEM768_KEY *mlkemkey = vkey;
+    PROV_ML_KEM_CTX *ctx = vctx;
 
-    debug_print("MLKEMKEM init %p / %p\n", ctx, mlkemkey);
     if (!ossl_prov_is_running())
         return 0;
+    ctx->key = key;
+    return ml_kem_set_ctx_params(vctx, params);
+}
 
-    if (mlkemkey->keytype != MLKEM_KEY_TYPE_768)
+static int ml_kem_encapsulate_init(void *vctx, void *vkey,
+                                   const OSSL_PARAM params[])
+{
+    ML_KEM_KEY *key = vkey;
+
+    if (!ossl_ml_kem_have_pubkey(key)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_KEY);
         return 0;
+    }
+    return ml_kem_init(vctx, EVP_PKEY_OP_ENCAPSULATE, key, params);
+}
 
-    ctx->key = mlkemkey;
-    ctx->op = operation;
-    ctx->entropy = NULL;
+static int ml_kem_decapsulate_init(void *vctx, void *vkey,
+                                   const OSSL_PARAM params[])
+{
+    ML_KEM_KEY *key = vkey;
 
-    if (!mlkem_set_ctx_params(vctx, params))
+    if (!ossl_ml_kem_have_prvkey(key)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_KEY);
         return 0;
-
-    debug_print("MLKEMKEM init OK\n");
-    return 1;
+    }
+    return ml_kem_init(vctx, EVP_PKEY_OP_DECAPSULATE, key, params);
 }
 
-static int mlkem_encapsulate_init(void *vctx, void *vkey,
-                                  const OSSL_PARAM params[])
+static int ml_kem_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
-    return mlkem_init(vctx, EVP_PKEY_OP_ENCAPSULATE, vkey, NULL, params);
-}
-
-static int mlkem_decapsulate_init(void *vctx, void *vkey,
-                                  const OSSL_PARAM params[])
-{
-    return mlkem_init(vctx, EVP_PKEY_OP_DECAPSULATE, vkey, NULL, params);
-}
-
-static int mlkem_set_ctx_params(void *vctx, const OSSL_PARAM params[])
-{
-    PROV_MLKEM_CTX *ctx = (PROV_MLKEM_CTX *)vctx;
+    PROV_ML_KEM_CTX *ctx = vctx;
     const OSSL_PARAM *p;
 
-    debug_print("MLKEMKEM set ctx params %p\n", ctx);
     if (ctx == NULL)
         return 0;
-    if (params == NULL)
+    if (ossl_param_is_empty(params))
         return 1;
 
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_KEM_PARAM_MLKEM_ENC_ENTROPY)) != NULL
-        && (p->data_size != MLKEM_ENCAP_ENTROPY
-            || (ctx->entropy = OPENSSL_memdup(p->data, MLKEM_ENCAP_ENTROPY)) == NULL))
-        return 0;
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_KEM_PARAM_IKME)) != NULL) {
+        size_t len = ML_KEM_RANDOM_BYTES;
 
-    debug_print("MLKEMKEM set ctx params OK\n");
+        ctx->entropy = ctx->entropy_buf;
+        if (OSSL_PARAM_get_octet_string(p, (void **)&ctx->entropy,
+                                        len, &len)
+            && len == ML_KEM_RANDOM_BYTES)
+            return 1;
+
+        /* Possibly, but much less likely wrong type */
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_SEED_LENGTH);
+        ctx->entropy = NULL;
+        return 0;
+    }
     return 1;
 }
 
-static const OSSL_PARAM known_settable_mlkem_ctx_params[] = {
-    OSSL_PARAM_octet_string(OSSL_KEM_PARAM_MLKEM_ENC_ENTROPY, NULL, 0),
-    OSSL_PARAM_END
-};
-
-static const OSSL_PARAM *mlkem_settable_ctx_params(ossl_unused void *vctx,
-                                                   ossl_unused void *provctx)
+static const OSSL_PARAM *ml_kem_settable_ctx_params(ossl_unused void *vctx,
+                                                    ossl_unused void *provctx)
 {
-    return known_settable_mlkem_ctx_params;
+    static const OSSL_PARAM params[] = {
+        OSSL_PARAM_octet_string(OSSL_KEM_PARAM_IKME, NULL, 0),
+        OSSL_PARAM_END
+    };
+
+    return params;
 }
 
-static int mlkem_encapsulate(void *vctx, unsigned char *out, size_t *outlen,
-                             unsigned char *secret, size_t *secretlen)
+static int ml_kem_encapsulate(void *vctx, unsigned char *out, size_t *outlen,
+                              unsigned char *secret, size_t *secretlen)
 {
-    PROV_MLKEM_CTX *ctx = (PROV_MLKEM_CTX *)vctx;
-    int ret;
+    PROV_ML_KEM_CTX *ctx = vctx;
+    ML_KEM_KEY *key = ctx->key;
+    const ML_KEM_VINFO *v;
+    int ret = 0;
 
-    debug_print("MLKEMKEM encaps %p to %p\n", ctx, out);
-    if (outlen != NULL)
-        *outlen = OSSL_MLKEM768_CIPHERTEXT_BYTES;
-    if (secretlen != NULL)
-        *secretlen = OSSL_MLKEM768_SHARED_SECRET_BYTES;
+    if (!ossl_ml_kem_have_pubkey(key)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_KEY);
+        goto end;
+    }
+    v = ossl_ml_kem_key_vinfo(key);
 
     if (out == NULL) {
-        debug_print("MLKEMKEM encaps outlens set to %ld and %ld\n", *outlen, *secretlen);
+        if (outlen == NULL && secretlen == NULL)
+            return 0;
+        if (outlen != NULL)
+            *outlen = v->ctext_bytes;
+        if (secretlen != NULL)
+            *secretlen = ML_KEM_SHARED_SECRET_BYTES;
         return 1;
     }
 
-    if (ctx->key == NULL
-        || ctx->key->keytype != MLKEM_KEY_TYPE_768
-        || ctx->key->encoded_pubkey == NULL
-        || secret == NULL)
-        return 0;
+    if (*secretlen < ML_KEM_SHARED_SECRET_BYTES) {
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_BAD_LENGTH,
+                       "short ML-KEM encapsulate shared secret");
+        goto end;
+    }
+    if (*outlen < v->ctext_bytes) {
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_BAD_LENGTH,
+                       "short ML-KEM encapsulate ciphertext");
+        goto end;
+    }
 
+    if (secret == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_SECRET);
+        goto end;
+    }
+
+    *secretlen = ML_KEM_SHARED_SECRET_BYTES;
+    *outlen = v->ctext_bytes;
+    if (ctx->entropy != NULL)
+        ret = ossl_ml_kem_encap_seed(out, *outlen, secret, *secretlen,
+                                      ctx->entropy, ML_KEM_RANDOM_BYTES, key);
+    else
+        ret = ossl_ml_kem_encap_rand(out, *outlen, secret, *secretlen, key);
+
+  end:
     if (ctx->entropy != NULL) {
-        ret = ossl_mlkem768_encap_external_entropy(out, secret,
-                                                   &ctx->key->pubkey,
-                                                   ctx->entropy,
-                                                   ctx->key->mlkem_ctx);
-    } else {
-        ret = ossl_mlkem768_encap(out, (uint8_t *)secret, &ctx->key->pubkey,
-                                  ctx->key->mlkem_ctx);
+        OPENSSL_cleanse(ctx->entropy, ML_KEM_RANDOM_BYTES);
+        ctx->entropy = NULL;
     }
-
-    debug_print("MLKEMKEM encaps returns %d\n", ret);
     return ret;
 }
 
-static int mlkem_decapsulate(void *vctx, unsigned char *out, size_t *outlen,
-                             const unsigned char *in, size_t inlen)
+static int ml_kem_decapsulate(void *vctx, unsigned char *out, size_t *outlen,
+                              const unsigned char *in, size_t inlen)
 {
-    PROV_MLKEM_CTX *ctx = (PROV_MLKEM_CTX *)vctx;
-    int ret;
+    PROV_ML_KEM_CTX *ctx = vctx;
+    ML_KEM_KEY *key = ctx->key;
 
-    debug_print("MLKEMKEM decaps %p to %p\n", ctx, out);
-    debug_print("MLKEMKEM decaps inlen at %ld\n", inlen);
-    if (outlen != NULL)
-        *outlen = OSSL_MLKEM768_SHARED_SECRET_BYTES;
+    if (!ossl_ml_kem_have_prvkey(key)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_KEY);
+        return 0;
+    }
 
     if (out == NULL) {
-        debug_print("MLKEMKEM decaps outlen set to %ld \n", *outlen);
+        if (outlen == NULL)
+            return 0;
+        *outlen = ML_KEM_SHARED_SECRET_BYTES;
         return 1;
     }
 
-    if (ctx->key == NULL
-        || ctx->key->keytype != MLKEM_KEY_TYPE_768
-        || ctx->key->encoded_privkey == NULL
-        || in == NULL)
+    if (*outlen < ML_KEM_SHARED_SECRET_BYTES) {
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_BAD_LENGTH,
+                       "short ML-KEM decapsulate shared secret");
         return 0;
+    }
 
-    if (inlen != OSSL_MLKEM768_CIPHERTEXT_BYTES)
-        return 0;
-
-    ret = ossl_mlkem768_decap((uint8_t *)out, (uint8_t *)in, inlen, &ctx->key->privkey,
-                              ctx->key->mlkem_ctx);
-
-    debug_print("MLKEMKEM decaps returns %d\n", ret);
-    return ret;
+    /* ML-KEM decap handles incorrect ciphertext lengths internally */
+    *outlen = ML_KEM_SHARED_SECRET_BYTES;
+    return ossl_ml_kem_decap(out, *outlen, in, inlen, key);
 }
 
-const OSSL_DISPATCH ossl_mlkem768_asym_kem_functions[] = {
-    { OSSL_FUNC_KEM_NEWCTX, (void (*)(void))mlkem_newctx },
-    { OSSL_FUNC_KEM_ENCAPSULATE_INIT,
-      (void (*)(void))mlkem_encapsulate_init },
-    { OSSL_FUNC_KEM_ENCAPSULATE, (void (*)(void))mlkem_encapsulate },
-    { OSSL_FUNC_KEM_DECAPSULATE_INIT,
-      (void (*)(void))mlkem_decapsulate_init },
-    { OSSL_FUNC_KEM_DECAPSULATE, (void (*)(void))mlkem_decapsulate },
-    { OSSL_FUNC_KEM_FREECTX, (void (*)(void))mlkem_freectx },
-    { OSSL_FUNC_KEM_SET_CTX_PARAMS,
-      (void (*)(void))mlkem_set_ctx_params },
-    { OSSL_FUNC_KEM_SETTABLE_CTX_PARAMS,
-      (void (*)(void))mlkem_settable_ctx_params },
+typedef void (*func_ptr_t)(void);
+
+const OSSL_DISPATCH ossl_ml_kem_asym_kem_functions[] = {
+    { OSSL_FUNC_KEM_NEWCTX, (func_ptr_t) ml_kem_newctx },
+    { OSSL_FUNC_KEM_ENCAPSULATE_INIT, (func_ptr_t) ml_kem_encapsulate_init },
+    { OSSL_FUNC_KEM_ENCAPSULATE, (func_ptr_t) ml_kem_encapsulate },
+    { OSSL_FUNC_KEM_DECAPSULATE_INIT, (func_ptr_t) ml_kem_decapsulate_init },
+    { OSSL_FUNC_KEM_DECAPSULATE, (func_ptr_t) ml_kem_decapsulate },
+    { OSSL_FUNC_KEM_FREECTX, (func_ptr_t) ml_kem_freectx },
+    { OSSL_FUNC_KEM_SET_CTX_PARAMS, (func_ptr_t) ml_kem_set_ctx_params },
+    { OSSL_FUNC_KEM_SETTABLE_CTX_PARAMS, (func_ptr_t) ml_kem_settable_ctx_params },
     OSSL_DISPATCH_END
 };
