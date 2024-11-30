@@ -18,10 +18,14 @@
 #include "internal/tlsgroups.h"
 #include "prov/providercommon.h"
 #include "internal/e_os.h"
-#include "crypto/mlkem.h"
+#include "crypto/ml_kem.h"
 
-/* If neither ec or dh is available then we have no TLS-GROUP capabilities */
-#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
+/*
+ * If none of EC, DH OR ML-KEM are available then we have no TLS-GROUP
+ * capabilities.
+ */
+#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH) || \
+    !defined(OPENSSL_NO_ML_KEM)
 typedef struct tls_group_constants_st {
     unsigned int group_id;   /* Group ID */
     unsigned int secbits;    /* Bits of security */
@@ -97,8 +101,11 @@ static const TLS_GROUP_CONSTANTS group_list[] = {
     { OSSL_TLS_GROUP_ID_ffdhe4096, 128, TLS1_3_VERSION, 0, -1, -1, 0 },
     { OSSL_TLS_GROUP_ID_ffdhe6144, 128, TLS1_3_VERSION, 0, -1, -1, 0 },
     { OSSL_TLS_GROUP_ID_ffdhe8192, 192, TLS1_3_VERSION, 0, -1, -1, 0 },
-    { OSSL_TLS_GROUP_ID_mlkem768, OSSL_MLKEM768_SECURITY_BITS,
-      TLS1_3_VERSION, 0, -1, -1, 1 },
+#ifndef OPENSSL_NO_ML_KEM
+    { OSSL_TLS_GROUP_ID_mlkem512, ML_KEM_512_RNGSEC, TLS1_3_VERSION, 0, -1, -1, 1 },
+    { OSSL_TLS_GROUP_ID_mlkem768, ML_KEM_768_RNGSEC, TLS1_3_VERSION, 0, -1, -1, 1 },
+    { OSSL_TLS_GROUP_ID_mlkem1024, ML_KEM_1024_RNGSEC, TLS1_3_VERSION, 0, -1, -1, 1 },
+#endif
 };
 
 #define TLS_GROUP_ENTRY(tlsname, realname, algorithm, idx) \
@@ -210,14 +217,18 @@ static const OSSL_PARAM param_group_list[][11] = {
     TLS_GROUP_ENTRY("ffdhe6144", "ffdhe6144", "DH", 36),
     TLS_GROUP_ENTRY("ffdhe8192", "ffdhe8192", "DH", 37),
 # endif
-    /* TODO(ML-KEM): Decide final name, e.g., ML-KEM768 or MLKEM768 */
-    TLS_GROUP_ENTRY("MLKEM768", "MLKEM768", "ML-KEM-768", 38),
+# if !defined(OPENSSL_NO_ML_KEM) && !defined(FIPS_MODULE)
+    /* https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-8 */
+    TLS_GROUP_ENTRY("MLKEM512", "MLKEM512", "ML-KEM-512", 38),
+    TLS_GROUP_ENTRY("MLKEM768", "MLKEM768", "ML-KEM-768", 39),
+    TLS_GROUP_ENTRY("MLKEM1024", "MLKEM1024", "ML-KEM-1024", 40),
+# endif
 };
-#endif /* !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH) */
+#endif /* !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_ML_KEM) */
 
 static int tls_group_capability(OSSL_CALLBACK *cb, void *arg)
 {
-#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
+#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_ML_KEM)
     size_t i;
 
     for (i = 0; i < OSSL_NELEM(param_group_list); i++)

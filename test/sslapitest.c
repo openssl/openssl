@@ -4934,8 +4934,13 @@ static int test_ciphersuite_change(void)
  * Test 9 = Test NID_ffdhe4096 with TLSv1.3 client and server
  * Test 10 = Test NID_ffdhe6144 with TLSv1.3 client and server
  * Test 11 = Test NID_ffdhe8192 with TLSv1.3 client and server
- * Test 12 = Test all ECDHE with TLSv1.2 client and server
- * Test 13 = Test all FFDHE with TLSv1.2 client and server
+ * Test 12 = Test all ML-KEM with TLSv1.3 client and server
+ * Test 13 = Test MLKEM512
+ * Test 14 = Test MLKEM768
+ * Test 15 = Test MLKEM1024
+ * Test 16 = Test all ML-KEM with TLSv1.2 client and server
+ * Test 17 = Test all FFDHE with TLSv1.2 client and server
+ * Test 18 = Test all ECDHE with TLSv1.2 client and server
  */
 # ifndef OPENSSL_NO_EC
 static int ecdhe_kexch_groups[] = {NID_X9_62_prime256v1, NID_secp384r1,
@@ -4954,16 +4959,18 @@ static int test_key_exchange(int idx)
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *serverssl = NULL, *clientssl = NULL;
     int testresult = 0;
-    int kexch_alg;
+    int kexch_alg = NID_undef;
     int *kexch_groups = &kexch_alg;
     int kexch_groups_size = 1;
     int max_version = TLS1_3_VERSION;
     char *kexch_name0 = NULL;
+    const char *kexch_names = NULL;
+    int shared_group0;
 
     switch (idx) {
 # ifndef OPENSSL_NO_EC
 # ifndef OPENSSL_NO_TLS1_2
-        case 12:
+        case 18:
             max_version = TLS1_2_VERSION;
 # endif
             /* Fall through */
@@ -5001,7 +5008,7 @@ static int test_key_exchange(int idx)
 # endif
 # ifndef OPENSSL_NO_DH
 # ifndef OPENSSL_NO_TLS1_2
-        case 13:
+        case 17:
             max_version = TLS1_2_VERSION;
             kexch_name0 = "ffdhe2048";
 # endif
@@ -5032,10 +5039,61 @@ static int test_key_exchange(int idx)
             kexch_name0 = "ffdhe8192";
             break;
 # endif
+# ifndef OPENSSL_NO_ML_KEM
+#  if !defined(OPENSSL_NO_TLS1_2)
+        case 16:
+            max_version = TLS1_2_VERSION;
+#   if !defined(OPENSSL_NO_EC)
+            /* Set at least one EC group so the handshake completes */
+            kexch_names = "MLKEM512:MLKEM768:MLKEM1024:secp256r1";
+#   elif !defined(OPENSSL_NO_DH)
+            kexch_names = "MLKEM512:MLKEM768:MLKEM1024";
+#   else
+            /* With neither EC nor DH TLS 1.2 can't happen */
+            return 1;
+#   endif
+#  endif
+            /* Fall through */
+        case 12:
+            kexch_groups = NULL;
+            if (kexch_names == NULL)
+                kexch_names = "MLKEM512:MLKEM768:MLKEM1024";
+            kexch_name0 = "MLKEM512";
+            break;
+        case 13:
+            if (is_fips) {
+                testresult = 1;
+                goto end;
+            };
+            kexch_groups = NULL;
+            kexch_name0 = "MLKEM512";
+            kexch_names = kexch_name0;
+            break;
+        case 14:
+            if (is_fips) {
+                testresult = 1;
+                goto end;
+            };
+            kexch_groups = NULL;
+            kexch_name0 = "MLKEM768";
+            kexch_names = kexch_name0;
+            break;
+        case 15:
+            kexch_groups = NULL;
+            kexch_name0 = "MLKEM1024";
+            kexch_names = kexch_name0;
+            break;
+# endif
         default:
             /* We're skipping this test */
             return 1;
     }
+
+    /* ML-KEM not yet supported in the FIPS module */
+    if (is_fips && idx >= 12 && idx <= 16) {
+        testresult = 1;
+        goto end;
+    };
 
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
                                        TLS_client_method(), TLS1_VERSION,
@@ -5072,35 +5130,53 @@ static int test_key_exchange(int idx)
                                              NULL, NULL)))
         goto end;
 
-    if (!TEST_true(SSL_set1_groups(serverssl, kexch_groups, kexch_groups_size))
-        || !TEST_true(SSL_set1_groups(clientssl, kexch_groups, kexch_groups_size)))
-        goto end;
+    if (kexch_groups != NULL) {
+        if (!TEST_true(SSL_set1_groups(serverssl, kexch_groups, kexch_groups_size))
+            || !TEST_true(SSL_set1_groups(clientssl, kexch_groups, kexch_groups_size)))
+            goto end;
+    } else {
+        if (!TEST_true(SSL_set1_groups_list(serverssl, kexch_names))
+            || !TEST_true(SSL_set1_groups_list(clientssl, kexch_names)))
+            goto end;
+    }
 
     if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
         goto end;
 
     /*
      * If Handshake succeeds the negotiated kexch alg should be the first one in
-     * configured, except in the case of FFDHE groups (idx 13), which are
-     * TLSv1.3 only so we expect no shared group to exist.
+     * configured, except in the case of FFDHE and ML-KEM groups (idx == 17, 18),
+     * which are TLSv1.3 only so we expect no shared group to exist.
      */
-    if (!TEST_int_eq(SSL_get_shared_group(serverssl, 0),
-                     idx == 13 ? 0 : kexch_groups[0]))
-        goto end;
-
-    if (!TEST_str_eq(SSL_group_to_name(serverssl, kexch_groups[0]),
-                     kexch_name0))
-        goto end;
-
-    /* We don't implement RFC 7919 named groups for TLS 1.2. */
-    if (idx != 13) {
+    shared_group0 = SSL_get_shared_group(serverssl, 0);
+    switch (idx) {
+    case 16:
+# if !defined(OPENSSL_NO_EC)
+        /* MLKEM + TLS 1.2 and no DH => "secp526r1" */
+        if (!TEST_int_eq(shared_group0, NID_X9_62_prime256v1))
+            goto end;
+        break;
+# endif
+        /* Fall through */
+    case 17:
+        if (!TEST_int_eq(shared_group0, 0))
+            goto end;
+        break;
+    default:
+        if (kexch_groups != NULL
+            && !TEST_int_eq(shared_group0, kexch_groups[0]))
+            goto end;
+        if (!TEST_str_eq(SSL_group_to_name(serverssl, shared_group0),
+                         kexch_name0))
+            goto end;
         if (!TEST_str_eq(SSL_get0_group_name(serverssl), kexch_name0)
             || !TEST_str_eq(SSL_get0_group_name(clientssl), kexch_name0))
             goto end;
-        if (!TEST_int_eq(SSL_get_negotiated_group(serverssl), kexch_groups[0]))
+        if (!TEST_int_eq(SSL_get_negotiated_group(serverssl), shared_group0))
             goto end;
-        if (!TEST_int_eq(SSL_get_negotiated_group(clientssl), kexch_groups[0]))
+        if (!TEST_int_eq(SSL_get_negotiated_group(clientssl), shared_group0))
             goto end;
+        break;
     }
 
     testresult = 1;
@@ -12885,7 +12961,7 @@ int setup_tests(void)
 #endif /* OSSL_NO_USABLE_TLS1_3 */
 # ifndef OPENSSL_NO_TLS1_2
     /* Test with both TLSv1.3 and 1.2 versions */
-    ADD_ALL_TESTS(test_key_exchange, 14);
+    ADD_ALL_TESTS(test_key_exchange, 18);
 #  if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_DH)
     ADD_ALL_TESTS(test_negotiated_group,
                   4 * (OSSL_NELEM(ecdhe_kexch_groups)
@@ -12893,7 +12969,7 @@ int setup_tests(void)
 #  endif
 # else
     /* Test with only TLSv1.3 versions */
-    ADD_ALL_TESTS(test_key_exchange, 12);
+    ADD_ALL_TESTS(test_key_exchange, 15);
 # endif
     ADD_ALL_TESTS(test_custom_exts, 6);
     ADD_TEST(test_stateless);
