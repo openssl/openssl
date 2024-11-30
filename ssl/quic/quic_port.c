@@ -745,61 +745,43 @@ err:
  *
  * VALIDATION_TOKEN should already be initalized. Does some basic sanity checks.
  *
- * @param validation_token Validation token to fill data in.
- * @param buf              Buffer of previously marshaled validation token.
- * @param buf_len          Length of |buf|.
+ * @param token   Validation token to fill data in.
+ * @param buf     Buffer of previously marshaled validation token.
+ * @param buf_len Length of |buf|.
  */
-static int parse_validation_token(QUIC_VALIDATION_TOKEN *validation_token,
+static int parse_validation_token(QUIC_VALIDATION_TOKEN *token,
                                   const unsigned char *buf, size_t buf_len)
 {
-    const unsigned char *curr = buf;
-    size_t curr_len;
-    QUIC_VALIDATION_TOKEN token = { 0 };
+    PACKET pkt;
 
-    if (buf == NULL || validation_token == NULL)
-        goto err;
+    if (buf == NULL || token == NULL)
+        return 0;
 
-    token.remote_addr = NULL;
+    token->remote_addr = NULL;
 
-    token.is_retry = *curr;
-    if (token.is_retry != 0 && token.is_retry != 1)
-        goto err;
-    curr += 1;
+    if (!PACKET_buf_init(&pkt, buf, buf_len)
+        || !PACKET_copy_bytes(&pkt, &token->is_retry, sizeof(token->is_retry))
+        || !(token->is_retry == 0 || token->is_retry == 1)
+        || !PACKET_copy_bytes(&pkt, (unsigned char *)&token->timestamp,
+                              sizeof(token->timestamp))
+        || !PACKET_copy_bytes(&pkt, &token->odcid.id_len,
+                              sizeof(token->odcid.id_len))
+        || !PACKET_copy_bytes(&pkt, (unsigned char *)&token->odcid.id,
+                              token->odcid.id_len)
+        || !PACKET_copy_bytes(&pkt, &token->rscid.id_len,
+                              sizeof(token->rscid.id_len))
+        || !PACKET_copy_bytes(&pkt, (unsigned char *)&token->rscid.id,
+                              token->rscid.id_len)
+        || !PACKET_copy_bytes(&pkt, (unsigned char *)&token->remote_addr_len,
+                              sizeof(token->remote_addr_len))
+        || (token->remote_addr = OPENSSL_malloc(token->remote_addr_len)) == NULL
+        || !PACKET_copy_bytes(&pkt, token->remote_addr, token->remote_addr_len)
+        || PACKET_remaining(&pkt) != 0) {
+        cleanup_validation_token(token);
+        return 0;
+    }
 
-    memcpy(&token.timestamp, curr, sizeof(token.timestamp));
-    curr += sizeof(token.timestamp);
-
-    memcpy(&token.odcid.id_len, curr, sizeof(token.odcid.id_len));
-    curr += sizeof(token.odcid.id_len);
-    memcpy(&token.odcid.id, curr, token.odcid.id_len);
-    curr += token.odcid.id_len;
-
-    memcpy(&token.rscid.id_len, curr, sizeof(token.rscid.id_len));
-    curr += sizeof(token.rscid.id_len);
-    memcpy(&token.rscid.id, curr, token.rscid.id_len);
-    curr += token.rscid.id_len;
-
-    token.remote_addr_len = (size_t)*curr;
-    curr += sizeof(token.remote_addr_len);
-
-    curr_len = (size_t)(curr - buf);
-    if (buf_len < curr_len + token.remote_addr_len)
-        goto err;
-    token.remote_addr = OPENSSL_malloc(token.remote_addr_len);
-    if (token.remote_addr == NULL)
-        goto err;
-    memcpy(token.remote_addr, curr, token.remote_addr_len);
-    curr += token.remote_addr_len;
-
-    curr_len = (size_t)(curr - buf);
-    if (curr_len != buf_len)
-        goto err;
-
-    *validation_token = token;
     return 1;
-err:
-    cleanup_validation_token(&token);
-    return 0;
 }
 
 /**
