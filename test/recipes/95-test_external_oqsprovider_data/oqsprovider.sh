@@ -33,6 +33,16 @@ export PATH="$O_EXE:$PATH"
 export LD_LIBRARY_PATH="$O_LIB:$LD_LIBRARY_PATH"
 export OPENSSL_ROOT_DIR="$O_LIB"
 
+# Temporarily override IANA ML-KEM TLS group codepoints
+export OQS_CODEPOINT_FRODO640AES=65024
+export OQS_CODEPOINT_FRODO640SHAKE=65025
+export OQS_CODEPOINT_FRODO976AES=65026
+
+# These ensure oqsprovider uses ML-KEM at the right code points
+export OQS_CODEPOINT_MLKEM512=512
+export OQS_CODEPOINT_MLKEM768=513
+export OQS_CODEPOINT_MLKEM1024=514
+
 # Check/Set openssl version
 OPENSSL_VERSION=`openssl version | cut -f 2 -d ' '`
 

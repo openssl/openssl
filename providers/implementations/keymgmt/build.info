@@ -9,7 +9,7 @@ $KDF_GOAL=../../libdefault.a ../../libfips.a
 $MAC_GOAL=../../libdefault.a ../../libfips.a
 $RSA_GOAL=../../libdefault.a ../../libfips.a
 $TEMPLATE_GOAL=../../libtemplate.a
-$MLKEM_GOAL=../../libdefault.a
+$ML_KEM_GOAL=../../libdefault.a
 
 IF[{- !$disabled{dh} -}]
   SOURCE[$DH_GOAL]=dh_kmgmt.c
@@ -46,4 +46,6 @@ SOURCE[$MAC_GOAL]=mac_legacy_kmgmt.c
 
 SOURCE[$TEMPLATE_GOAL]=template_kmgmt.c
 
-SOURCE[$MLKEM_GOAL]=mlkem_kmgmt.c
+IF[{- !$disabled{'ml-kem'} -}]
+  SOURCE[$ML_KEM_GOAL]=ml_kem_kmgmt.c
+ENDIF
