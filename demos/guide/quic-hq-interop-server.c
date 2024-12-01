@@ -529,6 +529,13 @@ static int run_quic_server(SSL_CTX *ctx, BIO *sock)
         }
         printf("Accepted new connection\n");
 
+        /*
+         * Quic requires that we inform the connection that
+         * we always want to accept new streams, rather than reject them
+         * Additionally, while we don't make an explicit call here, we
+         * are using the default stream mode, as would be specified by
+         * a call to SSL_set_default_stream_mode
+         */
         if (!SSL_set_incoming_stream_policy(conn,
                                             SSL_INCOMING_STREAM_POLICY_ACCEPT,
                                             0)) {
@@ -541,6 +548,10 @@ static int run_quic_server(SSL_CTX *ctx, BIO *sock)
          * requests and serve them
          */
         for (;;) {
+            /*
+             * Note that conn is a blocking conne connections, so 
+             * we don't need to handle retry operations here
+             */
             stream = SSL_accept_stream(conn, 0);
             if (stream == NULL) {
                 /*
