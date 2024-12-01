@@ -19,6 +19,10 @@
 #include "crypto/bn.h"
 #include "crypto/dh.h"
 #include "crypto/security_bits.h"
+#ifdef FIPS_MODULE
+#include <openssl/self_test.h>
+#include "prov/providercommon.h"
+#endif
 
 #ifdef FIPS_MODULE
 # define MIN_STRENGTH 112
@@ -393,6 +397,7 @@ static int generate_key(DH *dh)
     dh->priv_key = priv_key;
 #ifdef FIPS_MODULE
     if (ossl_dh_check_pairwise(dh) <= 0) {
+        ossl_set_error_state(OSSL_SELF_TEST_TYPE_PCT);
         ERR_raise(ERR_LIB_PROV, DH_R_CHECK_PUBKEY_INVALID);
         goto err;
     }
