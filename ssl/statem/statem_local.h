@@ -27,6 +27,7 @@
 #define SERVER_HELLO_DONE_MAX_LENGTH    0
 #define KEY_UPDATE_MAX_LENGTH           1
 #define CCS_MAX_LENGTH                  1
+#define ACK_MAX_LENGTH                  65538
 
 /* Max ServerHello size permitted by RFC 8446 */
 #define SERVER_HELLO_MAX_LENGTH         65607
@@ -77,6 +78,7 @@ int construct_ca_names(SSL_CONNECTION *s, const STACK_OF(X509_NAME) *ca_sk,
                        WPACKET *pkt);
 size_t construct_key_exchange_tbs(SSL_CONNECTION *s, unsigned char **ptbs,
                                   const void *param, size_t paramlen);
+int dtls_any_sent_messages_are_missing_acknowledge(SSL_CONNECTION *s);
 
 /*
  * TLS/DTLS client state machine functions
@@ -123,6 +125,7 @@ __owur CON_FUNC_RETURN  tls_construct_change_cipher_spec(SSL_CONNECTION *s,
                                                          WPACKET *pkt);
 __owur CON_FUNC_RETURN dtls_construct_change_cipher_spec(SSL_CONNECTION *s,
                                                          WPACKET *pkt);
+__owur CON_FUNC_RETURN dtls_construct_ack(SSL_CONNECTION *s, WPACKET *pkt);
 
 __owur CON_FUNC_RETURN tls_construct_finished(SSL_CONNECTION *s, WPACKET *pkt);
 __owur CON_FUNC_RETURN tls_construct_key_update(SSL_CONNECTION *s, WPACKET *pkt);
@@ -194,6 +197,7 @@ __owur CON_FUNC_RETURN tls_construct_next_proto(SSL_CONNECTION *s, WPACKET *pkt)
 #endif
 __owur MSG_PROCESS_RETURN tls_process_hello_req(SSL_CONNECTION *s, PACKET *pkt);
 __owur MSG_PROCESS_RETURN dtls_process_hello_verify(SSL_CONNECTION *s, PACKET *pkt);
+__owur MSG_PROCESS_RETURN dtls_process_ack(SSL_CONNECTION *s, PACKET *pkt);
 __owur CON_FUNC_RETURN tls_construct_end_of_early_data(SSL_CONNECTION *s,
                                                        WPACKET *pkt);
 
