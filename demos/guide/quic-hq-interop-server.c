@@ -388,7 +388,7 @@ static void process_new_stream(SSL *stream)
     fprintf(stderr, "Request is %s\n", req);
 
     /* Look for the first '/' char in the request */
-    reqname = strchr(req, '/');
+    reqname = strrchr(req, '/');
     if (reqname == NULL)
         return;
     reqname++;
@@ -405,7 +405,7 @@ static void process_new_stream(SSL *stream)
     if (readbio == NULL) {
         fprintf(stderr, "Unable to open %s\n", path);
         ERR_print_errors_fp(stderr);
-        return;
+        goto done;
     }
 
     /* Read the readbio file into a buffer, and just send it to the requestor */
