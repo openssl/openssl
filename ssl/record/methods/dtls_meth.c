@@ -15,20 +15,14 @@
 /* mod 128 saturating subtract of two 64-bit values */
 static int satsub64be(uint64_t l1, uint64_t l2)
 {
-    int64_t ret = l1 - l2;
+    uint64_t max = l1 > l2 ? l1 : l2;
+    uint64_t min = l1 > l2 ? l2 : l1;
+    int sign = l1 > l2 ? 1 : -1;
 
-    /* We do not permit wrap-around */
-    if (l1 > l2 && ret < 0)
-        return 128;
-    else if (l2 > l1 && ret > 0)
-        return -128;
+    if (max - min > 128)
+        return sign * 128;
 
-    if (ret > 128)
-        return 128;
-    else if (ret < -128)
-        return -128;
-    else
-        return (int)ret;
+    return sign * ((int)(max - min));
 }
 
 static int dtls_record_replay_check(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
