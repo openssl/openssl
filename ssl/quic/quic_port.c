@@ -1026,9 +1026,13 @@ static int port_validate_token(QUIC_PKT_HDR *hdr, QUIC_PORT *port,
     if (!parse_validation_token(&token, hdr->token, hdr->token_len))
         goto err;
 
-    /* Validate token timestamp */
-    if (ossl_time_compare(now, token.timestamp) <= 0)
+    /*
+     * Validate token timestamp
+     * current time should not be before the timestamp
+     */
+    if (ossl_time_compare(now, token.timestamp) < 0)
         goto err;
+
     time_diff = ossl_time2seconds(ossl_time_abs_difference(token.timestamp,
                                                            now));
     if ((token.is_retry && time_diff > 10)
