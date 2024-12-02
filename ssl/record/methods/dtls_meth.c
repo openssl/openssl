@@ -15,9 +15,18 @@
 /* mod 128 saturating subtract of two 64-bit values */
 static int satsub64be(uint64_t l1, uint64_t l2)
 {
-    uint64_t max = l1 > l2 ? l1 : l2;
-    uint64_t min = l1 > l2 ? l2 : l1;
-    int sign = l1 > l2 ? 1 : -1;
+    uint64_t max, min;
+    int sign;
+
+    if (l1 > l2) {
+        max = l1;
+        min = l2;
+        sign = 1;
+    } else {
+        max = l2;
+        min = l1;
+        sign = -1;
+    }
 
     if (max - min > 128)
         return sign * 128;
