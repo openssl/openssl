@@ -1657,8 +1657,8 @@ int tls_common_finish_mac(SSL_CONNECTION *s) {
     } else {
         /*
          * We defer feeding in the HRR until later. We'll do it as part of
-         * processing the message
-         * The TLsv1.3 handshake transcript stops at the ClientFinished
+         * the message processing.
+         * The (D)TLSv1.3 handshake transcript stops at the ClientFinished
          * message.
          */
         const size_t srvhellorandom_offs = hdr_len + 2;
