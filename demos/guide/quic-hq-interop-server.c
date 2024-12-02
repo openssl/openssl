@@ -387,7 +387,7 @@ static void process_new_stream(SSL *stream)
     /* We should have a valid http 0.9 GET request here */
     fprintf(stderr, "Request is %s\n", req);
 
-    /* Look for the first '/' char in the request */
+    /* Look for the last '/' char in the request */
     reqname = strrchr(req, '/');
     if (reqname == NULL)
         return;
