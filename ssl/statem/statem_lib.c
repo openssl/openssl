@@ -1638,14 +1638,14 @@ int tls_common_finish_mac(SSL_CONNECTION *s) {
     size_t msg_len = s->init_num;
     size_t hdr_len = 0;
 
-    if (!SSL_CONNECTION_IS_DTLS(s) && !RECORD_LAYER_is_sslv2_record(&s->rlayer))
+    if (SSL_CONNECTION_IS_DTLS(s)) {
+        if (s->version != DTLS1_BAD_VER)
+            hdr_len = DTLS1_HM_HEADER_LENGTH;
+        else
+            msg += DTLS1_HM_HEADER_LENGTH;
+    } else if (!RECORD_LAYER_is_sslv2_record(&s->rlayer)) {
         hdr_len = SSL3_HM_HEADER_LENGTH;
-
-    if (SSL_CONNECTION_IS_DTLS(s) && s->version != DTLS1_BAD_VER)
-        hdr_len = DTLS1_HM_HEADER_LENGTH;
-
-    if (SSL_CONNECTION_IS_DTLS(s) && s->version == DTLS1_BAD_VER)
-        msg += DTLS1_HM_HEADER_LENGTH;
+    }
 
     msg_len += hdr_len;
 
