@@ -549,8 +549,10 @@ static int run_quic_server(SSL_CTX *ctx, BIO *sock)
          */
         for (;;) {
             /*
-             * Note that conn is a blocking conne connections, so 
-             * we don't need to handle retry operations here
+             * Note that SSL_accept_stream is blocking here, as the
+             * conn SSL object inherited the deafult blocking property
+             * from its parent, the listener SSL object.  As such there
+             * is no need to handle retry failures here.
              */
             stream = SSL_accept_stream(conn, 0);
             if (stream == NULL) {
