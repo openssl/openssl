@@ -1177,8 +1177,10 @@ MSG_PROCESS_RETURN dtls_process_ack(SSL_CONNECTION *s, PACKET *pkt)
 
             do {
                 if (msg->rec_nums[idx].epoch == epoch
-                        && msg->rec_nums[idx].seqnum == sequence_number)
+                        && msg->rec_nums[idx].seqnum == sequence_number) {
                     msg->rec_nums[idx].acknowledged = 1;
+                    break;
+                }
             } while (++idx < msg->rec_nums_idx);
         }
     }
