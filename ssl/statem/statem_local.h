@@ -27,6 +27,7 @@
 #define SERVER_HELLO_DONE_MAX_LENGTH    0
 #define KEY_UPDATE_MAX_LENGTH           1
 #define CCS_MAX_LENGTH                  1
+#define ACK_MAX_LENGTH                  65538
 
 /* Max ServerHello size permitted by RFC 8446 */
 #define SERVER_HELLO_MAX_LENGTH         65607
