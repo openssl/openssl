@@ -344,7 +344,6 @@ int dtls_get_message(SSL_CONNECTION *s, int *mt)
     unsigned char *rec_data;
     size_t tmplen;
     int errtype;
-    int record_type;
 
     s->d1->r_msg_seq = 0;
 
@@ -362,25 +361,11 @@ int dtls_get_message(SSL_CONNECTION *s, int *mt)
 
     rec_data = (unsigned char *)s->init_buf->data;
 
-    /* Convert from possible dummy message type */
-    if (*mt == SSL3_MT_CHANGE_CIPHER_SPEC)
-        record_type = SSL3_RT_CHANGE_CIPHER_SPEC;
-    else if (*mt == DTLS13_MT_ACK)
-        record_type = SSL3_RT_ACK;
-    else
-        record_type = SSL3_RT_HANDSHAKE;
-
-    if (record_type != SSL3_RT_HANDSHAKE) {
-        if (record_type == SSL3_RT_CHANGE_CIPHER_SPEC && s->msg_callback) {
-            s->msg_callback(0, s->version, record_type,
-                            rec_data, 1, SSL_CONNECTION_GET_USER_SSL(s),
-                            s->msg_callback_arg);
-        }
-        /*
-         * This isn't a real handshake message so skip the processing below.
-         */
+    /*
+     * If this isn't a real handshake message skip the processing below.
+     */
+    if (*mt == SSL3_MT_CHANGE_CIPHER_SPEC || *mt == DTLS13_MT_ACK)
         return 1;
-    }
 
     /* reconstruct message header */
     dtls1_write_hm_header(rec_data, s->s3.tmp.message_type, s->s3.tmp.message_size,
@@ -402,19 +387,28 @@ int dtls_get_message(SSL_CONNECTION *s, int *mt)
  */
 int dtls_get_message_body(SSL_CONNECTION *s, size_t *len)
 {
+    unsigned char *msg = (unsigned char *)s->init_buf->data;
+    size_t msg_len;
+    int recordtype;
+
     switch (s->s3.tmp.message_type) {
     default:
+        recordtype = SSL3_RT_HANDSHAKE;
+        msg_len = s->init_num + DTLS1_HM_HEADER_LENGTH;
+
         break;
     case DTLS13_MT_ACK:
-        if (s->msg_callback)
-            s->msg_callback(0, s->version, SSL3_RT_ACK,
-                            s->init_buf->data, s->init_num,
-                            SSL_CONNECTION_GET_SSL(s), s->msg_callback_arg);
-        /* fallthrough */
+        recordtype = SSL3_RT_ACK;
+        msg_len = s->init_num;
+
+        goto end;
     case SSL3_MT_CHANGE_CIPHER_SPEC:
-        /* Nothing to be done */
+        recordtype = SSL3_RT_CHANGE_CIPHER_SPEC;
+        msg_len = 1;
+
         goto end;
     }
+
     /*
      * If receiving Finished, record MAC of prior handshake messages for
      * Finished verification.
@@ -427,12 +421,11 @@ int dtls_get_message_body(SSL_CONNECTION *s, size_t *len)
     if (!tls_common_finish_mac(s))
         return 0;
 
+end:
     if (s->msg_callback)
-        s->msg_callback(0, s->version, SSL3_RT_HANDSHAKE,
-                        s->init_buf->data, s->init_num + DTLS1_HM_HEADER_LENGTH,
-                        SSL_CONNECTION_GET_USER_SSL(s), s->msg_callback_arg);
+        s->msg_callback(0, s->version, recordtype, msg, msg_len,
+                        SSL_CONNECTION_GET_SSL(s), s->msg_callback_arg);
 
- end:
     *len = s->init_num;
     return 1;
 }

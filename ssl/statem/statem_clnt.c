@@ -1102,7 +1102,7 @@ size_t ossl_statem_client_max_message_size(SSL_CONNECTION *s)
         return KEY_UPDATE_MAX_LENGTH;
 
     case TLS_ST_CR_ACK:
-        return 2 + (0x1 << 16) - 1;
+        return ACK_MAX_LENGTH;
     }
 }
 
