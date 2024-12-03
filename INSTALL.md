@@ -885,6 +885,11 @@ Disabling this also disables the legacy algorithms: MD2 (already disabled by def
 
 Don't generate dependencies.
 
+### no-ml-dsa
+
+Disable Module-Lattice-Based Digital Signature Standard (ML-DSA) Support.
+(ML-DSA is based on CRYSTALS-DILITHIUM. See NIST.FIPS.204)
+
 ### no-module
 
 Don't build any dynamically loadable engines.
