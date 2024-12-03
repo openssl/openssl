@@ -12,7 +12,7 @@
  * @brief Minimal QUIC HTTP/0.9 server implementation.
  *
  * This file implements a lightweight QUIC server supporting the HTTP/0.9
- * protocol for interoperation testing. It includes functions for setting
+ * protocol for interoperability testing. It includes functions for setting
  * up a secure QUIC connection, handling ALPN negotiation, and serving client
  * requests.  Intended for use with the quic-interop-runner 
  * available at https://interop.seemann.io
