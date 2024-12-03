@@ -716,34 +716,15 @@ static int marshal_validation_token(QUIC_VALIDATION_TOKEN *token,
         return 0;
 
     if (!WPACKET_init(&wpkt, buf_mem)
-        || !WPACKET_start_sub_packet(&wpkt)
         || !WPACKET_memset(&wpkt, token->is_retry, 1)
-        || !WPACKET_close(&wpkt)
-        || !WPACKET_start_sub_packet(&wpkt)
         || !WPACKET_memcpy(&wpkt, &token->timestamp,
                            sizeof(token->timestamp))
-        || !WPACKET_close(&wpkt)
-        || !WPACKET_start_sub_packet(&wpkt)
-        || !WPACKET_memcpy(&wpkt, &token->odcid.id_len,
-                           sizeof(token->odcid.id_len))
-        || !WPACKET_close(&wpkt)
-        || !WPACKET_start_sub_packet(&wpkt)
-        || !WPACKET_memcpy(&wpkt, &token->odcid.id, token->odcid.id_len)
-        || !WPACKET_close(&wpkt)
-        || !WPACKET_start_sub_packet(&wpkt)
-        || !WPACKET_memcpy(&wpkt, &token->rscid.id_len,
-                           sizeof(token->rscid.id_len))
-        || !WPACKET_close(&wpkt)
-        || !WPACKET_start_sub_packet(&wpkt)
-        || !WPACKET_memcpy(&wpkt, &token->rscid.id, token->rscid.id_len)
-        || !WPACKET_close(&wpkt)
-        || !WPACKET_start_sub_packet(&wpkt)
-        || !WPACKET_memcpy(&wpkt, &token->remote_addr_len,
-                           sizeof(token->remote_addr_len))
-        || !WPACKET_close(&wpkt)
-        || !WPACKET_start_sub_packet(&wpkt)
-        || !WPACKET_memcpy(&wpkt, token->remote_addr, token->remote_addr_len)
-        || !WPACKET_close(&wpkt)
+        || (token->is_retry
+            && (!WPACKET_sub_memcpy_u8(&wpkt, &token->odcid.id,
+                                       token->odcid.id_len)
+                || !WPACKET_sub_memcpy_u8(&wpkt, &token->rscid.id,
+                                          token->rscid.id_len)))
+        || !WPACKET_sub_memcpy_u8(&wpkt, token->remote_addr, token->remote_addr_len)
         || !WPACKET_get_total_written(&wpkt, buffer_len)
         || !WPACKET_finish(&wpkt)
         || !BUF_MEM_grow(buf_mem, *buffer_len + QUIC_RETRY_INTEGRITY_TAG_LEN)) {
@@ -771,7 +752,7 @@ static int marshal_validation_token(QUIC_VALIDATION_TOKEN *token,
 static int parse_validation_token(QUIC_VALIDATION_TOKEN *token,
                                   const unsigned char *buf, size_t buf_len)
 {
-    PACKET pkt, subpkt;
+    PACKET pkt;
 
     if (buf == NULL || token == NULL)
         return 0;
@@ -779,32 +760,24 @@ static int parse_validation_token(QUIC_VALIDATION_TOKEN *token,
     token->remote_addr = NULL;
 
     if (!PACKET_buf_init(&pkt, buf, buf_len)
-        || !PACKET_get_sub_packet(&pkt, &subpkt, sizeof(token->is_retry))
-        || !PACKET_copy_bytes(&subpkt, &token->is_retry, sizeof(token->is_retry))
+        || !PACKET_copy_bytes(&pkt, &token->is_retry, sizeof(token->is_retry))
         || !(token->is_retry == 0 || token->is_retry == 1)
-        || !PACKET_get_sub_packet(&pkt, &subpkt, sizeof(token->timestamp))
-        || !PACKET_copy_bytes(&subpkt, (unsigned char *)&token->timestamp,
+        || !PACKET_copy_bytes(&pkt, (unsigned char *)&token->timestamp,
                               sizeof(token->timestamp))
-        || !PACKET_get_sub_packet(&pkt, &subpkt, sizeof(token->odcid.id_len))
-        || !PACKET_copy_bytes(&subpkt, &token->odcid.id_len,
-                              sizeof(token->odcid.id_len))
-        || token->odcid.id_len > QUIC_MAX_CONN_ID_LEN
-        || !PACKET_get_sub_packet(&pkt, &subpkt, token->odcid.id_len)
-        || !PACKET_copy_bytes(&subpkt, (unsigned char *)&token->odcid.id,
-                              token->odcid.id_len)
-        || !PACKET_get_sub_packet(&pkt, &subpkt, sizeof(token->rscid.id_len))
-        || !PACKET_copy_bytes(&subpkt, &token->rscid.id_len,
-                              sizeof(token->rscid.id_len))
-        || token->odcid.id_len > QUIC_MAX_CONN_ID_LEN
-        || !PACKET_get_sub_packet(&pkt, &subpkt, token->rscid.id_len)
-        || !PACKET_copy_bytes(&subpkt, (unsigned char *)&token->rscid.id,
-                              token->rscid.id_len)
-        || !PACKET_get_sub_packet(&pkt, &subpkt, sizeof(token->remote_addr_len))
-        || !PACKET_copy_bytes(&subpkt, (unsigned char *)&token->remote_addr_len,
-                              sizeof(token->remote_addr_len))
+        || (token->is_retry
+            && (!PACKET_copy_bytes(&pkt, &token->odcid.id_len,
+                sizeof(token->odcid.id_len))
+                || token->odcid.id_len > QUIC_MAX_CONN_ID_LEN
+                || !PACKET_copy_bytes(&pkt, (unsigned char *)&token->odcid.id,
+                                      token->odcid.id_len)
+                || !PACKET_copy_bytes(&pkt, &token->rscid.id_len,
+                                     sizeof(token->rscid.id_len))
+                || token->rscid.id_len > QUIC_MAX_CONN_ID_LEN
+                || !PACKET_copy_bytes(&pkt, (unsigned char *)&token->rscid.id,
+                                      token->rscid.id_len)))
+        || !PACKET_get_1_len(&pkt, &token->remote_addr_len)
         || (token->remote_addr = OPENSSL_malloc(token->remote_addr_len)) == NULL
-        || !PACKET_get_sub_packet(&pkt, &subpkt, token->remote_addr_len)
-        || !PACKET_copy_bytes(&subpkt, token->remote_addr, token->remote_addr_len)
+        || !PACKET_copy_bytes(&pkt, token->remote_addr, token->remote_addr_len)
         || PACKET_remaining(&pkt) != 0) {
         cleanup_validation_token(token);
         return 0;
@@ -1055,7 +1028,10 @@ static int port_validate_token(QUIC_PKT_HDR *hdr, QUIC_PORT *port,
     if (!parse_validation_token(&token, hdr->token, hdr->token_len))
         goto err;
 
-    /* Validate token timestamp */
+    /*
+     * Validate token timestamp. Current time should not be before the token
+     * timestamp.
+     */
     if (ossl_time_compare(now, token.timestamp) < 0)
         goto err;
     time_diff = ossl_time2seconds(ossl_time_abs_difference(token.timestamp,
