@@ -265,7 +265,7 @@ static int asn1_get_int64(int64_t *pr, const unsigned char *b, size_t blen,
             *pr = -(int64_t)r;
         } else if (r == ABS_INT64_MIN) {
             /* This never happens if INT64_MAX == ABS_INT64_MIN, e.g.
-             * on ones'-complement system. */
+             * on one's-complement system. */
             *pr = (int64_t)(0 - r);
         } else {
             ERR_raise(ERR_LIB_ASN1, ASN1_R_TOO_SMALL);
