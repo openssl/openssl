@@ -54,6 +54,11 @@ typedef struct quic_port_args_st {
      * for a single connection, so a zero-length local CID can be used.
      */
     int             is_multi_conn;
+
+    /*
+     * if 1, this port should do server address validation
+     */
+    int             do_addr_validation;
 } QUIC_PORT_ARGS;
 
 /* Only QUIC_ENGINE should use this function. */
