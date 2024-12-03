@@ -361,7 +361,7 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
             if (si_chains == NULL)
                 goto err;
         }
-        if ((untrusted = CMS_get1_certs(cms)) == NULL)
+        if (!ossl_cms_get1_certs_ex(cms, &untrusted))
             goto err;
         if (sk_X509_num(certs) > 0
             && !ossl_x509_add_certs_new(&untrusted, certs,
@@ -370,7 +370,7 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
             goto err;
 
         if ((flags & CMS_NOCRL) == 0
-            && (crls = CMS_get1_crls(cms)) == NULL)
+            && !ossl_cms_get1_crls_ex(cms, &crls))
             goto err;
         for (i = 0; i < scount; i++) {
             si = sk_CMS_SignerInfo_value(sinfos, i);
