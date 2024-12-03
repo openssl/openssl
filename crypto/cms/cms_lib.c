@@ -620,59 +620,91 @@ int CMS_add1_crl(CMS_ContentInfo *cms, X509_CRL *crl)
 STACK_OF(X509) *CMS_get1_certs(CMS_ContentInfo *cms)
 {
     STACK_OF(X509) *certs = NULL;
+
+    if (!ossl_cms_get1_certs_ex(cms, &certs))
+        return NULL;
+    if (sk_X509_num(certs) == 0) {
+        sk_X509_free(certs);
+        return NULL;
+    }
+    return certs;
+}
+
+int ossl_cms_get1_certs_ex(CMS_ContentInfo *cms, STACK_OF(X509) **certs)
+{
     CMS_CertificateChoices *cch;
     STACK_OF(CMS_CertificateChoices) **pcerts;
     int i, n;
 
+    if (certs == NULL)
+        return 0;
+    *certs = NULL;
     pcerts = cms_get0_certificate_choices(cms);
     if (pcerts == NULL)
-        return NULL;
+        return 0;
 
-    /* make sure to return NULL only on error */
+    /* make sure to return NULL *certs only on error */
     n = sk_CMS_CertificateChoices_num(*pcerts);
-    if ((certs = sk_X509_new_reserve(NULL, n)) == NULL)
-        return NULL;
+    if ((*certs = sk_X509_new_reserve(NULL, n)) == NULL)
+        return 0;
 
     for (i = 0; i < n; i++) {
         cch = sk_CMS_CertificateChoices_value(*pcerts, i);
         if (cch->type == 0) {
-            if (!ossl_x509_add_cert_new(&certs, cch->d.certificate,
-                                        X509_ADD_FLAG_UP_REF)) {
-                OSSL_STACK_OF_X509_free(certs);
-                return NULL;
+            if (!X509_add_cert(*certs, cch->d.certificate,
+                               X509_ADD_FLAG_UP_REF)) {
+                OSSL_STACK_OF_X509_free(*certs);
+                *certs = NULL;
+                return 0;
             }
         }
     }
-    return certs;
+    return 1;
 }
 
 STACK_OF(X509_CRL) *CMS_get1_crls(CMS_ContentInfo *cms)
 {
     STACK_OF(X509_CRL) *crls = NULL;
+
+    if (!ossl_cms_get1_crls_ex(cms, &crls))
+        return NULL;
+    if (sk_X509_CRL_num(crls) == 0) {
+        sk_X509_CRL_free(crls);
+        return NULL;
+    }
+    return crls;
+}
+
+int ossl_cms_get1_crls_ex(CMS_ContentInfo *cms, STACK_OF(X509_CRL) **crls)
+{
     STACK_OF(CMS_RevocationInfoChoice) **pcrls;
     CMS_RevocationInfoChoice *rch;
     int i, n;
 
+    if (crls == NULL)
+        return 0;
+    *crls = NULL;
     pcrls = cms_get0_revocation_choices(cms);
     if (pcrls == NULL)
-        return NULL;
+        return 0;
 
-    /* make sure to return NULL only on error */
+    /* make sure to return NULL *crls only on error */
     n = sk_CMS_RevocationInfoChoice_num(*pcrls);
-    if ((crls = sk_X509_CRL_new_reserve(NULL, n)) == NULL)
-        return NULL;
+    if ((*crls = sk_X509_CRL_new_reserve(NULL, n)) == NULL)
+        return 0;
 
     for (i = 0; i < n; i++) {
         rch = sk_CMS_RevocationInfoChoice_value(*pcrls, i);
         if (rch->type == 0) {
-            if (!sk_X509_CRL_push(crls, rch->d.crl)
+            if (!sk_X509_CRL_push(*crls, rch->d.crl)
                     || !X509_CRL_up_ref(rch->d.crl)) {
-                sk_X509_CRL_pop_free(crls, X509_CRL_free);
-                return NULL;
+                sk_X509_CRL_pop_free(*crls, X509_CRL_free);
+                *crls = NULL;
+                return 0;
             }
         }
     }
-    return crls;
+    return 1;
 }
 
 int ossl_cms_ias_cert_cmp(CMS_IssuerAndSerialNumber *ias, X509 *cert)
