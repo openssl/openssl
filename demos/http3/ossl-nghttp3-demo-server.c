@@ -15,6 +15,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <sys/socket.h>
 
 #define nghttp3_arraylen(A) (sizeof(A) / sizeof(*(A)))
 
