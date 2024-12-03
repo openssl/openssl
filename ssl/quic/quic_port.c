@@ -711,33 +711,35 @@ static int marshal_validation_token(QUIC_VALIDATION_TOKEN *token,
 {
     WPACKET wpkt = {0};
     BUF_MEM *buf_mem = BUF_MEM_new();
-    int ret = 0;
 
     if (buf_mem == NULL || (token->is_retry != 0 && token->is_retry != 1))
         return 0;
 
     if (!WPACKET_init(&wpkt, buf_mem)
         || !WPACKET_memset(&wpkt, token->is_retry, 1)
-        || !WPACKET_memcpy(&wpkt, &token->timestamp, sizeof(token->timestamp))
-        || !WPACKET_memcpy(&wpkt, &token->odcid.id_len, sizeof(token->odcid.id_len))
+        || !WPACKET_memcpy(&wpkt, &token->timestamp,
+                           sizeof(token->timestamp))
+        || !WPACKET_memcpy(&wpkt, &token->odcid.id_len,
+                           sizeof(token->odcid.id_len))
         || !WPACKET_memcpy(&wpkt, &token->odcid.id, token->odcid.id_len)
-        || !WPACKET_memcpy(&wpkt, &token->rscid.id_len, sizeof(token->rscid.id_len))
+        || !WPACKET_memcpy(&wpkt, &token->rscid.id_len,
+                           sizeof(token->rscid.id_len))
         || !WPACKET_memcpy(&wpkt, &token->rscid.id, token->rscid.id_len)
-        || !WPACKET_memcpy(&wpkt, &token->remote_addr_len, sizeof(token->remote_addr_len))
+        || !WPACKET_memcpy(&wpkt, &token->remote_addr_len,
+                           sizeof(token->remote_addr_len))
         || !WPACKET_memcpy(&wpkt, token->remote_addr, token->remote_addr_len)
         || !WPACKET_get_total_written(&wpkt, buffer_len)
         || !WPACKET_finish(&wpkt)
-        || (*buffer = OPENSSL_malloc(*buffer_len + QUIC_RETRY_INTEGRITY_TAG_LEN)) == NULL) {
+        || (*buffer = OPENSSL_realloc(buf_mem->data, *buffer_len +
+                                      QUIC_RETRY_INTEGRITY_TAG_LEN)) == NULL) {
         WPACKET_cleanup(&wpkt);
-        goto err;
+        BUF_MEM_free(buf_mem);
+        return 0;
     }
 
-    memcpy(*buffer, buf_mem->data, *buffer_len);
     *buffer_len += QUIC_RETRY_INTEGRITY_TAG_LEN;
-    ret = 1;
-err:
-    BUF_MEM_free(buf_mem);
-    return ret;
+    OPENSSL_free(buf_mem);
+    return 1;
 }
 
 /**
@@ -815,7 +817,7 @@ static void port_send_retry(QUIC_PORT *port,
     WPACKET wpkt;
     size_t written, token_buf_len;
     QUIC_PKT_HDR hdr = {0};
-    QUIC_VALIDATION_TOKEN token = { 0 };
+    QUIC_VALIDATION_TOKEN token = {0};
     int ok;
 
     /*
@@ -836,7 +838,7 @@ static void port_send_retry(QUIC_PORT *port,
 
     /* Generate retry validation token */
     if (!generate_retry_token(peer, client_hdr->dst_conn_id,
-                              client_hdr->src_conn_id, &token)
+                              hdr.src_conn_id, &token)
         || !marshal_validation_token(&token, &token_buf, &token_buf_len)
         || !ossl_assert(token_buf_len >= QUIC_RETRY_INTEGRITY_TAG_LEN))
         goto err;
@@ -1027,7 +1029,7 @@ static int port_validate_token(QUIC_PKT_HDR *hdr, QUIC_PORT *port,
         goto err;
 
     /* Validate token timestamp */
-    if (ossl_time_compare(now, token.timestamp) <= 0)
+    if (ossl_time_compare(now, token.timestamp) < 0)
         goto err;
     time_diff = ossl_time2seconds(ossl_time_abs_difference(token.timestamp,
                                                            now));
@@ -1058,7 +1060,9 @@ static int port_validate_token(QUIC_PKT_HDR *hdr, QUIC_PORT *port,
          * level rather than the QRX/channel level to eliminate the need for
          * this.
          */
-        if (!memcmp(&token.rscid, &hdr->dst_conn_id, sizeof(QUIC_CONN_ID)))
+        if (token.rscid.id_len != hdr->dst_conn_id.id_len
+            || memcmp(&token.rscid.id, &hdr->dst_conn_id.id,
+                      token.rscid.id_len) != 0)
             goto err;
         *odcid = token.odcid;
         *scid = token.rscid;
