@@ -49,7 +49,7 @@ struct h3ssl {
     int datadone;             /* h3 has given openssl all the data of the response */
     int has_uni;              /* we have the 3 uni directional stream needed */
     int close_done;           /* connection begins terminating EVENT_EC */
-    int close_wait;           /* we are wait for a close or a new request */
+    int close_wait;           /* we are waiting for a close or a new request */
     int done;                 /* connection terminated EVENT_ECD, after EVENT_EC */
     int new_conn;             /* a new connection has been received */
     int received_from_two;    /* workaround for -607 on nghttp3_conn_read_stream on stream 2 */
