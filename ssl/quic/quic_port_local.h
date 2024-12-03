@@ -92,6 +92,9 @@ struct quic_port_st {
     /* Is this port created to support multiple connections? */
     unsigned int                    is_multi_conn                   : 1;
 
+    /* Is this port doing server address validation */
+    unsigned int                    validate_addr                   : 1;
+
     /* Has this port sent any packet of any kind yet? */
     unsigned int                    have_sent_any_pkt               : 1;
 
