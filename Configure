@@ -486,6 +486,7 @@ my @disablables = (
     "md2",
     "md4",
     "mdc2",
+    "ml-dsa",
     "module",
     "msan",
     "multiblock",
