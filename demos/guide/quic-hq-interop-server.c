@@ -216,11 +216,6 @@ static SSL_CTX *create_ctx(const char *cert_path, const char *key_path)
     }
 
     /*
-     * Clients rarely employ certificate-based authentication, and so we don't
-     * require "mutual" TLS authentication (indeed there's no way to know
-     * whether or how the client authenticated the server, so the term "mutual"
-     * is potentially misleading).
-     *
      * Since we're not soliciting or processing client certificates, we don't
      * need to configure a trusted-certificate store, so no call to
      * SSL_CTX_set_default_verify_paths() is needed.  The server's own
@@ -530,7 +525,7 @@ static int run_quic_server(SSL_CTX *ctx, BIO *sock)
         printf("Accepted new connection\n");
 
         /*
-         * Quic requires that we inform the connection that
+         * QUIC requires that we inform the connection that
          * we always want to accept new streams, rather than reject them
          * Additionally, while we don't make an explicit call here, we
          * are using the default stream mode, as would be specified by
