@@ -431,6 +431,9 @@ my %params = (
     'PKEY_PARAM_FIPS_SIGN_CHECK' =>            "sign-check",
     'PKEY_PARAM_FIPS_APPROVED_INDICATOR' => '*ALG_PARAM_FIPS_APPROVED_INDICATOR',
 
+# ML_DSA Key generation parameter
+    'PKEY_PARAM_ML_DSA_SEED' =>             "seed",
+
 # Key Exchange parameters
     'EXCHANGE_PARAM_PAD' =>                   "pad",# uint
     'EXCHANGE_PARAM_EC_ECDH_COFACTOR_MODE' => "ecdh-cofactor-mode",# int
