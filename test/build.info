@@ -284,6 +284,13 @@ IF[{- !$disabled{tests} -}]
     DEPEND[casttest]=../libcrypto libtestutil.a
   ENDIF
 
+  IF[{- !$disabled{'ml-dsa'} -}]
+    PROGRAMS{noinst}=ml_dsa_test
+    SOURCE[ml_dsa_test]=ml_dsa_test.c
+    INCLUDE[ml_dsa_test]=../include ../apps/include
+    DEPEND[ml_dsa_test]=../libcrypto.a libtestutil.a
+  ENDIF
+
   SOURCE[v3nametest]=v3nametest.c
   INCLUDE[v3nametest]=../include ../apps/include
   DEPEND[v3nametest]=../libcrypto libtestutil.a
