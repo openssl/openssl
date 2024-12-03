@@ -265,7 +265,7 @@ static int asn1_get_int64(int64_t *pr, const unsigned char *b, size_t blen,
             *pr = -(int64_t)r;
         } else if (r == ABS_INT64_MIN) {
             /* This never happens if INT64_MAX == ABS_INT64_MIN, e.g.
-             * on ones'-complement system. */
+             * on ones' complement system. */
             *pr = (int64_t)(0 - r);
         } else {
             ERR_raise(ERR_LIB_ASN1, ASN1_R_TOO_SMALL);
@@ -347,8 +347,8 @@ static int asn1_string_set_int64(ASN1_STRING *a, int64_t r, int itype)
     if (r < 0) {
         /* Most obvious '-r' triggers undefined behaviour for most
          * common INT64_MIN. Even though below '0 - (uint64_t)r' can
-         * appear two's-complement centric, it does produce correct/
-         * expected result even on one's-complement. This is because
+         * appear two's complement centric, it does produce correct/
+         * expected result even on ones' complement. This is because
          * cast to unsigned has to change bit pattern... */
         off = asn1_put_uint64(tbuf, 0 - (uint64_t)r);
         a->type |= V_ASN1_NEG;

@@ -149,7 +149,7 @@ static j_data jf_data[] = {
     { 0xffffffffffffffffULL, "%jx", "ffffffffffffffff" },
     { 0x8000000000000000ULL, "%ju", "9223372036854775808" },
     /*
-     * These tests imply two's-complement, but it's the only binary
+     * These tests imply two's complement, but it's the only binary
      * representation we support, see test/sanitytest.c...
      */
     { 0x8000000000000000ULL, "%ji", "-9223372036854775808" },
