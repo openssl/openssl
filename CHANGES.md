@@ -81,7 +81,15 @@ OpenSSL 3.5
 OpenSSL 3.4
 -----------
 
-### Changes between 3.3 and 3.4 [xx XXX xxxx]
+### Changes between 3.4.0 and 3.4.1 [xx XXX xxxx]
+
+ * Reverted the behavior change of CMS_get1_certs() and CMS_get1_crls()
+   that happened in the 3.4.0 release. These functions now return NULL
+   again if there are no certs or crls in the CMS object.
+
+   *Tomáš Mráz*
+
+### Changes between 3.3 and 3.4.0 [22 Oct 2024]
 
  * For the FIPS provider only, replaced the primary DRBG with a continuous
    health check module.  This also removes the now forbidden DRBG chaining.
