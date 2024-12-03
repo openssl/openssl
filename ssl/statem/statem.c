@@ -850,7 +850,6 @@ static SUB_STATE_RETURN write_state_machine(SSL_CONNECTION *s)
 
             case WRITE_TRAN_FINISHED:
                 return SUB_STATE_FINISHED;
-                break;
 
             case WRITE_TRAN_ERROR:
                 check_fatal(s);
