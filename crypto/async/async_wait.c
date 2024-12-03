@@ -40,6 +40,7 @@ void ASYNC_WAIT_CTX_free(ASYNC_WAIT_CTX *ctx)
 
     OPENSSL_free(ctx);
 }
+
 int ASYNC_WAIT_CTX_set_wait_fd(ASYNC_WAIT_CTX *ctx, const void *key,
                                OSSL_ASYNC_FD fd, void *custom_data,
                                void (*cleanup)(ASYNC_WAIT_CTX *, const void *,
