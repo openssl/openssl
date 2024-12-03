@@ -604,9 +604,20 @@ static void port_bind_channel(QUIC_PORT *port, const BIO_ADDR *peer,
     if (ch == NULL)
         return;
 
-    if (!ossl_quic_bind_channel(ch, peer, scid, dcid, odcid)) {
-        ossl_quic_channel_free(ch);
-        return;
+    if (odcid->id_len != 0) {
+        if (!ossl_quic_bind_channel(ch, peer, scid, dcid, odcid)) {
+            ossl_quic_channel_free(ch);
+            return;
+        }
+    } else {
+        /*
+         * No odcid means we didn't do server validation, so we need to
+         * generate a cid via ossl_quic_channel_on_new_conn
+         */
+        if (!ossl_quic_channel_on_new_conn(ch, peer, scid, dcid)) {
+            ossl_quic_channel_free(ch);
+            return;
+        }
     }
 
     ossl_list_incoming_ch_insert_tail(&port->incoming_channel_list, ch);
@@ -1177,6 +1188,8 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
      */
     if (hdr.type != QUIC_PKT_TYPE_INITIAL)
         goto undesirable;
+
+    odcid.id_len = 0;
 
     /*
      * TODO(QUIC SERVER): there should be some logic similar to accounting half-open
