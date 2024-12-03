@@ -69,7 +69,7 @@ static ossl_inline void siv128_xorblock(SIV_BLOCK *x,
  * Doubles |b|, which is 16 bytes representing an element
  * of GF(2**128) modulo the irreducible polynomial
  * x**128 + x**7 + x**2 + x + 1.
- * Assumes two's-complement arithmetic
+ * Assumes two's complement arithmetic
  */
 static ossl_inline void siv128_dbl(SIV_BLOCK *b)
 {
