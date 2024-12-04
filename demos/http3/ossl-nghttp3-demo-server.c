@@ -76,25 +76,12 @@ static void init_ids(struct h3ssl *h3ssl)
     struct ssl_id *ssl_ids;
     int i;
 
+    memset (h3ssl, 0, sizeof (struct h3ssl));
+
     ssl_ids = h3ssl->ssl_ids;
     for (i = 0; i < MAXSSL_IDS; i++) {
-        ssl_ids[i].s = NULL;
         ssl_ids[i].id = UINT64_MAX;
-        ssl_ids[i].status = 0;
     }
-    h3ssl->end_headers_received = 0;
-    h3ssl->datadone = 0;
-    h3ssl->has_uni = 0;
-    h3ssl->close_done = 0;
-    h3ssl->close_wait = 0;
-    h3ssl->done = 0;
-    h3ssl->new_conn = 0;
-    h3ssl->received_from_two = 0;
-    h3ssl->restart = 0;
-    memset(h3ssl->url, '\0', sizeof(h3ssl->url));
-    h3ssl->ptr_data = NULL;
-    h3ssl->offset_data = 0;
-    h3ssl->ldata = 0;
     h3ssl->id_bidi = UINT64_MAX;
 }
 
@@ -176,7 +163,7 @@ static void set_id_status(uint64_t id, int status, struct h3ssl *h3ssl)
             return;
         }
     }
-    printf("Oops can't set status, can't find stream!!!\n");
+    printf("Oops can't get status, can't find stream!!!\n");
     assert(0);
 }
 static int get_id_status(uint64_t id, struct h3ssl *h3ssl)
@@ -512,7 +499,7 @@ static int read_from_ssl_ids(nghttp3_conn **curh3conn, struct h3ssl *h3ssl)
 
             add_id_at(-1, conn, 1, h3ssl);
             printf("SSL_accept_connection\n");
-            processed_event = processed_event + SSL_POLL_EVENT_IC;
+            processed_event = processed_event | SSL_POLL_EVENT_IC;
         }
         /* SSL_accept_stream if SSL_POLL_EVENT_ISB or SSL_POLL_EVENT_ISU */
         if ((item->revents & SSL_POLL_EVENT_ISB) ||
@@ -556,14 +543,14 @@ static int read_from_ssl_ids(nghttp3_conn **curh3conn, struct h3ssl *h3ssl)
                 hassomething++;
 
             if (item->revents & SSL_POLL_EVENT_ISB)
-                processed_event = processed_event + SSL_POLL_EVENT_ISB;
+                processed_event = processed_event | SSL_POLL_EVENT_ISB;
             if (item->revents & SSL_POLL_EVENT_ISU)
-                processed_event = processed_event + SSL_POLL_EVENT_ISU;
+                processed_event = processed_event | SSL_POLL_EVENT_ISU;
         }
         if (item->revents & SSL_POLL_EVENT_OSB) {
             /* Create new streams when allowed */
             /* at least one bidi */
-            processed_event = processed_event + SSL_POLL_EVENT_OSB;
+            processed_event = processed_event | SSL_POLL_EVENT_OSB;
             printf("Create bidi?\n");
         }
         if (item->revents & SSL_POLL_EVENT_OSU) {
@@ -571,7 +558,7 @@ static int read_from_ssl_ids(nghttp3_conn **curh3conn, struct h3ssl *h3ssl)
             /* we have 4 streams from the client 2, 6 , 10 and 0 */
             /* need 3 streams to the client */
             printf("Create uni?\n");
-            processed_event = processed_event + SSL_POLL_EVENT_OSU;
+            processed_event = processed_event | SSL_POLL_EVENT_OSU;
             if (!h3ssl->has_uni) {
                 printf("Create uni\n");
                 ret = quic_server_h3streams(h3conn, h3ssl);
@@ -593,14 +580,14 @@ static int read_from_ssl_ids(nghttp3_conn **curh3conn, struct h3ssl *h3ssl)
                 h3ssl->done = 1;
             }
             hassomething++;
-            processed_event = processed_event + SSL_POLL_EVENT_EC;
+            processed_event = processed_event | SSL_POLL_EVENT_EC;
         }
         if (item->revents & SSL_POLL_EVENT_ECD) {
             /* the connection is terminated */
             printf("Connection terminated\n");
             h3ssl->done = 1;
             hassomething++;
-            processed_event = processed_event + SSL_POLL_EVENT_ECD;
+            processed_event = processed_event | SSL_POLL_EVENT_ECD;
         }
 
         if (item->revents & SSL_POLL_EVENT_R) {
@@ -619,7 +606,7 @@ static int read_from_ssl_ids(nghttp3_conn **curh3conn, struct h3ssl *h3ssl)
                 goto err;
             }
             hassomething++;
-            processed_event = processed_event + SSL_POLL_EVENT_R;
+            processed_event = processed_event | SSL_POLL_EVENT_R;
         }
         if (item->revents & SSL_POLL_EVENT_ER) {
             /* mark it closed */
@@ -634,11 +621,11 @@ static int read_from_ssl_ids(nghttp3_conn **curh3conn, struct h3ssl *h3ssl)
                 set_id_status(id, CLIENTCLOSED, h3ssl);
                 hassomething++;
             }
-            processed_event = processed_event + SSL_POLL_EVENT_ER;
+            processed_event = processed_event | SSL_POLL_EVENT_ER;
         }
         if (item->revents & SSL_POLL_EVENT_W) {
             /* we ignore those for the moment */
-            processed_event = processed_event + SSL_POLL_EVENT_W;
+            processed_event = processed_event | SSL_POLL_EVENT_W;
         }
         if (item->revents & SSL_POLL_EVENT_EW) {
             /* write part received a STOP_SENDING */
@@ -654,7 +641,7 @@ static int read_from_ssl_ids(nghttp3_conn **curh3conn, struct h3ssl *h3ssl)
                 has_ids_to_remove++;
                 hassomething++;
             }
-            processed_event = processed_event + SSL_POLL_EVENT_EW;
+            processed_event = processed_event | SSL_POLL_EVENT_EW;
         }
         if (item->revents != processed_event) {
             /* Figure out ??? */
