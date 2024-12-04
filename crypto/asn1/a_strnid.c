@@ -56,7 +56,7 @@ int ASN1_STRING_set_default_mask_asc(const char *p)
         mask = strtoul(p, &end, 0);
         if (*end)
             return 0;
-    } else if (strcmp(p, "nombstr") == 0)
+    } else if (strcmp(p, "nobmp") == 0)
         mask = ~((unsigned long)(B_ASN1_BMPSTRING | B_ASN1_UTF8STRING));
     else if (strcmp(p, "pkix") == 0)
         mask = ~((unsigned long)B_ASN1_T61STRING);
