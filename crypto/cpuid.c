@@ -14,7 +14,7 @@
         defined(__x86_64) || defined(__x86_64__) || \
         defined(_M_AMD64) || defined(_M_X64)
 
-extern unsigned int OPENSSL_ia32cap_P[4];
+extern unsigned int OPENSSL_ia32cap_P[OPENSSL_IA32CAP_P_MAX_INDEXES];
 
 # if defined(OPENSSL_CPUID_OBJ)
 
@@ -29,7 +29,7 @@ extern unsigned int OPENSSL_ia32cap_P[4];
  */
 #  ifdef _WIN32
 typedef WCHAR variant_char;
-
+#   define OPENSSL_IA32CAP_P_MAX_CHAR_SIZE 256
 static variant_char *ossl_getenv(const char *name)
 {
     /*
@@ -37,10 +37,10 @@ static variant_char *ossl_getenv(const char *name)
      * just ignore |name| and use equivalent wide-char L-literal.
      * As well as to ignore excessively long values...
      */
-    static WCHAR value[48];
-    DWORD len = GetEnvironmentVariableW(L"OPENSSL_ia32cap", value, 48);
+    static WCHAR value[OPENSSL_IA32CAP_P_MAX_CHAR_SIZE];
+    DWORD len = GetEnvironmentVariableW(L"OPENSSL_ia32cap", value, OPENSSL_IA32CAP_P_MAX_CHAR_SIZE);
 
-    return (len > 0 && len < 48) ? value : NULL;
+    return (len > 0 && len < OPENSSL_IA32CAP_P_MAX_CHAR_SIZE) ? value : NULL;
 }
 #  else
 typedef char variant_char;
@@ -98,6 +98,7 @@ void OPENSSL_cpuid_setup(void)
     IA32CAP OPENSSL_ia32_cpuid(unsigned int *);
     IA32CAP vec;
     const variant_char *env;
+    int index = 2;
 
     if (trigger)
         return;
@@ -126,23 +127,37 @@ void OPENSSL_cpuid_setup(void)
             vec = OPENSSL_ia32_cpuid(OPENSSL_ia32cap_P);
         }
 
-        if ((env = ossl_strchr(env, ':')) != NULL) {
-            IA32CAP vecx;
-
+        /* Processed indexes 0, 1 */
+        if ((env = ossl_strchr(env, ':')) != NULL)
             env++;
-            off = (env[0] == '~') ? 1 : 0;
-            vecx = ossl_strtouint64(env + off);
-            if (off) {
-                OPENSSL_ia32cap_P[2] &= ~(unsigned int)vecx;
-                OPENSSL_ia32cap_P[3] &= ~(unsigned int)(vecx >> 32);
-            } else {
-                OPENSSL_ia32cap_P[2] = (unsigned int)vecx;
-                OPENSSL_ia32cap_P[3] = (unsigned int)(vecx >> 32);
+        for (; index < OPENSSL_IA32CAP_P_MAX_INDEXES; index += 2) {
+            if ((env != NULL) && (env[0] != '\0')) {
+                /* if env[0] == ':' current index is skipped */
+                if (env[0] != ':') {
+                    IA32CAP vecx;
+
+                    off = (env[0] == '~') ? 1 : 0;
+                    vecx = ossl_strtouint64(env + off);
+                    if (off) {
+                        OPENSSL_ia32cap_P[index] &= ~(unsigned int)vecx;
+                        OPENSSL_ia32cap_P[index + 1] &= ~(unsigned int)(vecx >> 32);
+                    } else {
+                        OPENSSL_ia32cap_P[index] = (unsigned int)vecx;
+                        OPENSSL_ia32cap_P[index + 1] = (unsigned int)(vecx >> 32);
+                    }
+                }
+                /* skip delimeter */
+                if ((env = ossl_strchr(env, ':')) != NULL)
+                    env++;
+            } else { /* zeroize the next two indexes */
+                OPENSSL_ia32cap_P[index] = 0;
+                OPENSSL_ia32cap_P[index + 1] = 0;
             }
-        } else {
-            OPENSSL_ia32cap_P[2] = 0;
-            OPENSSL_ia32cap_P[3] = 0;
         }
+
+        /* If AVX10 is disabled, zero out its detailed cap bits */
+        if (!(OPENSSL_ia32cap_P[6] & (1 << 19)))
+            OPENSSL_ia32cap_P[9] = 0;
     } else {
         vec = OPENSSL_ia32_cpuid(OPENSSL_ia32cap_P);
     }
@@ -156,7 +171,7 @@ void OPENSSL_cpuid_setup(void)
     OPENSSL_ia32cap_P[1] = (unsigned int)(vec >> 32);
 }
 # else
-unsigned int OPENSSL_ia32cap_P[4];
+unsigned int OPENSSL_ia32cap_P[OPENSSL_IA32CAP_P_MAX_INDEXES];
 # endif
 #endif
 

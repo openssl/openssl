@@ -78,6 +78,12 @@ OpenSSL 3.5
 
    *Paul Dale*
 
+ * Extended `OPENSSL_ia32cap` support to accommodate additional `CPUID`
+   feature/capability bits in leaf `0x7` (Extended Feature Flags) as well
+   as leaf `0x24` (Converged Vector ISA).
+
+   *Dan Zimmerman, Alina Elizarova*
+
 OpenSSL 3.4
 -----------
 
