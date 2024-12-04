@@ -515,13 +515,13 @@ static double sigs_results[MAX_SIG_NUM][3];  /* keygen, sign, verify */
 #define COND(unused_cond) (run && count < (testmode ? 1 : INT_MAX))
 #define COUNT(d) (count)
 
-#define TAG_LEN 16
+#define TAG_LEN 16 /* 16 bytes tag length works for all AEAD modes */
+#define AEAD_IVLEN 12 /* 12 bytes iv length works for all AEAD modes */
 
 static unsigned int mode_op; /* AE Mode of operation */
 static unsigned int aead = 0; /* AEAD flag */
-static unsigned char aead_iv[12]; /* For AEAD modes */
+static unsigned char aead_iv[AEAD_IVLEN]; /* For AEAD modes */
 static unsigned char aad[EVP_AEAD_TLS1_AAD_LEN] = { 0xcc };
-static int aead_ivlen = sizeof(aead_iv);
 
 typedef struct loopargs_st {
     ASYNC_JOB *inprogress_job;
@@ -932,7 +932,7 @@ static int EVP_Update_loop_aead_enc(void *args)
         /* Set length of iv (Doesn't apply to SIV mode) */
         if (mode_op != EVP_CIPH_SIV_MODE) {
             if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN,
-                                     aead_ivlen, NULL)) {
+                                     AEAD_IVLEN, NULL)) {
                 BIO_printf(bio_err, "\nFailed to set iv length\n");
                 dofail();
                 exit(1);
@@ -1004,7 +1004,7 @@ static int EVP_Update_loop_aead_dec(void *args)
         /* Set the length of iv (Doesn't apply to SIV mode) */
         if (mode_op != EVP_CIPH_SIV_MODE) {
             if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN,
-                                     aead_ivlen, NULL)) {
+                                     AEAD_IVLEN, NULL)) {
                 BIO_printf(bio_err, "\nFailed to set iv length\n");
                 dofail();
                 exit(1);
@@ -3014,7 +3014,7 @@ int speed_main(int argc, char **argv)
                         if (mode_op != EVP_CIPH_SIV_MODE) {
                             if (!EVP_CIPHER_CTX_ctrl(loopargs[k].ctx,
                                                      EVP_CTRL_AEAD_SET_IVLEN,
-                                                     aead_ivlen, NULL)) {
+                                                     AEAD_IVLEN, NULL)) {
                                 BIO_printf(bio_err, "\nFailed to set iv length\n");
                                 dofail();
                                 exit(1);
