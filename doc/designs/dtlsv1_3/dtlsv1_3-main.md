@@ -40,7 +40,7 @@ as a feature request in issue ###########.
 
 ### DTLSv1.3 connection id
 
-OpenSSL does not support Connection ID's (RFC 9146). Notably Openssl DTLSv1.3 clients
+OpenSSL does not support Connection IDs (RFC 9146). Notably Openssl DTLSv1.3 clients
 will not offer the "connection_id" extension even though RFC 9147 states:
 
 > DTLS clients which do not want to receive a Connection ID SHOULD still offer
