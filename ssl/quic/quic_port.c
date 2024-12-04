@@ -1197,14 +1197,21 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
      * states in TCP. If we reach certain threshold, then we want to
      * validate clients.
      */
-    if (port->validate_addr == 1) {
-        if (hdr.token == NULL) {
-            port_send_retry(port, &e->peer, &hdr);
+    if (port->validate_addr == 1 && hdr.token == NULL) {
+        port_send_retry(port, &e->peer, &hdr);
+        goto undesirable;
+    }
+
+    /*
+     * Note, even if we don't enforce the sending of retry frames for
+     * server address validation, we may still get a token if we sent
+     * a NEW_TOKEN frame during a prior connection, which we should still
+     * validate here
+     */
+    if (hdr.token != NULL) {
+        if (port_validate_token(&hdr, port, &e->peer,
+                                &odcid, &scid) == 0)
             goto undesirable;
-        } else if (port_validate_token(&hdr, port, &e->peer,
-                                       &odcid, &scid) == 0) {
-            goto undesirable;
-        }
     }
 
     port_bind_channel(port, &e->peer, &scid, &hdr.dst_conn_id,
