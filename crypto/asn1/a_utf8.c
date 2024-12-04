@@ -14,7 +14,7 @@
 
 /* UTF8 utilities */
 
-/*-
+/*
  * This parses a UTF8 string one character at a time. It is passed a pointer
  * to the string and the length of the string. It sets 'value' to the value of
  * the current character. It returns the number of characters read or a

@@ -325,7 +325,7 @@ typedef struct ASN1_VALUE_st ASN1_VALUE;
 typedef void *d2i_of_void(void **, const unsigned char **, long);
 typedef int i2d_of_void(const void *, unsigned char **);
 
-/*-
+/*
  * The following macros and typedefs allow an ASN1_ITEM
  * to be embedded in a structure and referenced. Since
  * the ASN1_ITEM pointers need to be globally accessible
@@ -573,10 +573,10 @@ int ASN1_STRING_copy(ASN1_STRING *dst, const ASN1_STRING *str);
 DECLARE_ASN1_DUP_FUNCTION(ASN1_STRING)
 ASN1_STRING *ASN1_STRING_type_new(int type);
 int ASN1_STRING_cmp(const ASN1_STRING *a, const ASN1_STRING *b);
-  /*
-   * Since this is used to store all sorts of things, via macros, for now,
-   * make its data void *
-   */
+/*
+ * Since this is used to store all sorts of things, via macros, for now,
+ * make its data void *
+ */
 int ASN1_STRING_set(ASN1_STRING *str, const void *data, int len);
 void ASN1_STRING_set0(ASN1_STRING *str, void *data, int len);
 int ASN1_STRING_length(const ASN1_STRING *x);

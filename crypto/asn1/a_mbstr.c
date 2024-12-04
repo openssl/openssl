@@ -311,7 +311,7 @@ static int cpy_asc(unsigned long value, void *arg)
     return 1;
 }
 
-/* Copy two byte per character BMPStrings */
+/* Copy two bytes per character BMPStrings */
 
 static int cpy_bmp(unsigned long value, void *arg)
 {
@@ -324,7 +324,7 @@ static int cpy_bmp(unsigned long value, void *arg)
     return 1;
 }
 
-/* Copy four byte per character UniversalStrings */
+/* Copy four bytes per character UniversalStrings */
 
 static int cpy_univ(unsigned long value, void *arg)
 {

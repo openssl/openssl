@@ -35,7 +35,7 @@ unsigned long ASN1_STRING_get_default_mask(void)
     return global_mask;
 }
 
-/*-
+/*
  * This function sets the default to various "flavours" of configuration.
  * based on an ASCII string. Currently this is:
  * MASK:XXXX : a numerical mask value.
@@ -104,7 +104,7 @@ ASN1_STRING *ASN1_STRING_set_by_NID(ASN1_STRING **out,
 }
 
 /*
- * Now the tables and helper functions for the string table:
+ * Now the tables and helper functions for the string table
  */
 
 #include "tbl_standard.h"
