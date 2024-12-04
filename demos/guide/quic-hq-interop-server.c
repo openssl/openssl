@@ -33,6 +33,7 @@
  *   Defaults to "./downloads" if not set.
  * - SSLKEYLOGFILE: specifies that keylogging should be preformed on the server
  *   should be set to a file name to record keylog data to
+ * - NO_ADDR_VALIDATE: Disables server address validation of clients
  *
  */
 
@@ -491,13 +492,21 @@ static int run_quic_server(SSL_CTX *ctx, BIO *sock)
     int ok = 0;
     SSL *listener, *conn, *stream;
     unsigned long errcode;
+    uint64_t flags = 0;
+
+    /*
+     * If NO_ADDR_VALIDATE exists in our environment
+     * then disable address validation on our listener
+     */
+    if (getenv("NO_ADDR_VALIDATE") != NULL)
+        flags |= SSL_LISTENER_FLAG_NO_VALIDATE;
 
     /*
      * Create a new QUIC listener. Listeners, and other QUIC objects, default
      * to operating in blocking mode. The configured behaviour is inherited by
      * child objects.
      */
-    if ((listener = SSL_new_listener(ctx, 0)) == NULL)
+    if ((listener = SSL_new_listener(ctx, flags)) == NULL)
         goto err;
 
     /* Provide the listener with our UDP socket. */
