@@ -165,7 +165,10 @@ SSL_new_from_listener().
 
 To disable client address validation on a listener SSL object, the flag
 B<SSL_LISTENER_FLAG_NO_VALIDATE> may be passed in the flags field of both
-SSL_new_listener() and SSL_new_listener_from(). 
+SSL_new_listener() and SSL_new_listener_from().  Note that this flag only
+impacts the sending of retry frames for server address validation.  Tokens may
+still be communicated from the server via NEW_TOKEN frames, which will still
+be validated on receipt in future connections.
 
 The SSL_new_from_listener() creates a client connection under a given listener
 SSL object. For QUIC, it is also possible to use SSL_new_from_listener() in
