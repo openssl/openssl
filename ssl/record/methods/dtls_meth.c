@@ -541,8 +541,7 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
             recseqnumlen = sbitisset ? 2 : 1;
             recseqnumoffs = sizeof(recseqnum) - recseqnumlen;
 
-            if (/* OpenSSL does not support connection ID's and a connection ID
-                 * is only set if one has been negotiated: silently discard */
+            if (/* OpenSSL does not support connection IDs: silently discard */
                 cbitisset
                 /*
                  * Naive approach? We expect sequence number to be filled already
