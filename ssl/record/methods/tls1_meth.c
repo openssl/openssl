@@ -626,12 +626,7 @@ int tls1_initialise_write_packets(OSSL_RECORD_LAYER *rl,
         prefixtempl->type = SSL3_RT_APPLICATION_DATA;
 
         wb = &bufs[0];
-
-#if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD != 0
-        align = (size_t)TLS_BUFFER_get_buf(wb) + SSL3_RT_HEADER_LENGTH;
-        align = SSL3_ALIGN_PAYLOAD - 1
-                - ((align - 1) % SSL3_ALIGN_PAYLOAD);
-#endif
+        align = tls_get_record_body_alignment_offset(rl, TLS_BUFFER_get_buf(wb));
         TLS_BUFFER_set_offset(wb, align);
 
         if (!WPACKET_init_static_len(&pkt[0], TLS_BUFFER_get_buf(wb),
