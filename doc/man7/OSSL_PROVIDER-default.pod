@@ -223,6 +223,12 @@ The OpenSSL default provider supports these operations and algorithms:
 
 =item EC, see L<EVP_KEM-EC(7)>
 
+=item ML-KEM-512, see L<EVP_KEM-ML-KEM-512(7)>
+
+=item ML-KEM-768, see L<EVP_KEM-ML-KEM-768(7)>
+
+=item ML-KEM-1024, see L<EVP_KEM-ML-KEM-1024(7)>
+
 =back
 
 =head2 Asymmetric Key Management
@@ -264,6 +270,12 @@ The OpenSSL default provider supports these operations and algorithms:
 =item CMAC, see L<EVP_KEYMGMT-CMAC(7)>
 
 =item SM2, see L<EVP_KEYMGMT-SM2(7)>
+
+=item ML-KEM-512, see L<EVP_KEYMGMT-ML-KEM-512(7)>
+
+=item ML-KEM-768, see L<EVP_KEYMGMT-ML-KEM-768(7)>
+
+=item ML-KEM-1024, see L<EVP_KEYMGMT-ML-KEM-1024(7)>
 
 =back
 
