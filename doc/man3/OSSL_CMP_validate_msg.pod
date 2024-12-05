@@ -44,7 +44,7 @@ any self-issued certificate from the I<msg> extraCerts field may also be used
 as trust anchor for the path verification of an acceptable cert if it can be
 used also to validate the issued certificate returned in the IP message. This is
 according to TS 33.310 [Network Domain Security (NDS); Authentication Framework
-(AF)] document specified by the The 3rd Generation Partnership Project (3GPP).
+(AF)] document specified by The 3rd Generation Partnership Project (3GPP).
 
 Any cert that has been found as described above is cached and tried first when
 validating the signatures of subsequent messages in the same transaction.
