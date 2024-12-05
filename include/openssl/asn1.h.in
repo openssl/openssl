@@ -54,9 +54,9 @@ extern "C" {
 # define V_ASN1_PRIMITIVE_TAG            0x1f
 # define V_ASN1_PRIMATIVE_TAG /*compat*/ V_ASN1_PRIMITIVE_TAG
 
-# define V_ASN1_APP_CHOOSE               -2/* let the recipient choose */
-# define V_ASN1_OTHER                    -3/* used in ASN1_TYPE */
-# define V_ASN1_ANY                      -4/* used in ASN1 template code */
+# define V_ASN1_APP_CHOOSE               -2 /* let the recipient choose */
+# define V_ASN1_OTHER                    -3 /* used in ASN1_TYPE */
+# define V_ASN1_ANY                      -4 /* used in ASN1 template code */
 
 # define V_ASN1_UNDEF                    -1
 /* ASN.1 tag values */
@@ -77,14 +77,14 @@ extern "C" {
 # define V_ASN1_NUMERICSTRING            18
 # define V_ASN1_PRINTABLESTRING          19
 # define V_ASN1_T61STRING                20
-# define V_ASN1_TELETEXSTRING            20/* alias */
+# define V_ASN1_TELETEXSTRING            20 /* alias */
 # define V_ASN1_VIDEOTEXSTRING           21
 # define V_ASN1_IA5STRING                22
 # define V_ASN1_UTCTIME                  23
 # define V_ASN1_GENERALIZEDTIME          24
 # define V_ASN1_GRAPHICSTRING            25
 # define V_ASN1_ISO64STRING              26
-# define V_ASN1_VISIBLESTRING            26/* alias */
+# define V_ASN1_VISIBLESTRING            26 /* alias */
 # define V_ASN1_GENERALSTRING            27
 # define V_ASN1_UNIVERSALSTRING          28
 # define V_ASN1_BMPSTRING                30
