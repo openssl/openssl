@@ -15,6 +15,7 @@
 #include <openssl/asn1.h>
 #include <openssl/cms.h>
 #include "internal/sizes.h"
+#include "internal/cryptlib.h"
 #include "crypto/x509.h"
 #include "cms_local.h"
 
@@ -696,8 +697,9 @@ int ossl_cms_get1_crls_ex(CMS_ContentInfo *cms, STACK_OF(X509_CRL) **crls)
     for (i = 0; i < n; i++) {
         rch = sk_CMS_RevocationInfoChoice_value(*pcrls, i);
         if (rch->type == 0) {
-            if (!sk_X509_CRL_push(*crls, rch->d.crl)
-                    || !X509_CRL_up_ref(rch->d.crl)) {
+            if (!X509_CRL_up_ref(rch->d.crl)
+                || !ossl_assert(sk_X509_CRL_push(*crls, rch->d.crl))) {
+                /* push cannot fail on reserved stack */
                 sk_X509_CRL_pop_free(*crls, X509_CRL_free);
                 *crls = NULL;
                 return 0;
