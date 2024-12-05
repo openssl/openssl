@@ -29,7 +29,11 @@ OpenSSL 3.4
 
 ### Changes between 3.4.0 and 3.4.1 [xx XXX xxxx]
 
- * none yet
+ * Reverted the behavior change of CMS_get1_certs() and CMS_get1_crls()
+   that happened in the 3.4.0 release. These functions now return NULL
+   again if there are no certs or crls in the CMS object.
+
+   *Tomáš Mráz*
 
 ### Changes between 3.3 and 3.4.0 [22 Oct 2024]
 
