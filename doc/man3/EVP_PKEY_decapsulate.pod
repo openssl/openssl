@@ -93,7 +93,8 @@ Decapsulate data using RSA:
 
 L<EVP_PKEY_CTX_new_from_pkey(3)>,
 L<EVP_PKEY_encapsulate(3)>,
-L<EVP_KEM-RSA(7)>, L<EVP_KEM-X25519(7)>, L<EVP_KEM-EC(7)>
+L<EVP_KEM-RSA(7)>, L<EVP_KEM-X25519(7)>, L<EVP_KEM-EC(7)>,
+L<EVP_KEM-ML-KEM-512(7)>, L<EVP_KEM-ML-KEM-768(7)>, L<EVP_KEM-ML-KEM-1024(7)>
 
 =head1 HISTORY
 
