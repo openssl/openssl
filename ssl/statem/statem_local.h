@@ -94,6 +94,7 @@ MSG_PROCESS_RETURN ossl_statem_client_process_message(SSL_CONNECTION *s,
                                                       PACKET *pkt);
 WORK_STATE ossl_statem_client_post_process_message(SSL_CONNECTION *s,
                                                    WORK_STATE wst);
+int ossl_statem_dtls_client_use_timer(SSL_CONNECTION *s);
 
 /*
  * TLS/DTLS server state machine functions
@@ -109,6 +110,7 @@ MSG_PROCESS_RETURN ossl_statem_server_process_message(SSL_CONNECTION *s,
                                                       PACKET *pkt);
 WORK_STATE ossl_statem_server_post_process_message(SSL_CONNECTION *s,
                                                    WORK_STATE wst);
+int ossl_statem_dtls_server_use_timer(SSL_CONNECTION *s);
 
 /* Functions for getting new message data */
 __owur int tls_get_message_header(SSL_CONNECTION *s, int *mt);
