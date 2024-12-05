@@ -43,9 +43,6 @@ struct quic_tserver_st {
     /* SSL for the underlying TLS connection */
     SSL *tls;
 
-    /* The current peer L4 address. AF_UNSPEC if we do not have a peer yet. */
-    BIO_ADDR        cur_peer_addr;
-
     /* Are we connected to a peer? */
     unsigned int    connected       : 1;
 };
