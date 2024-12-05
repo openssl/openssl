@@ -4233,7 +4233,7 @@ SSL *ossl_quic_new_listener(SSL_CTX *ctx, uint64_t flags)
 
     port_args.channel_ctx       = ctx;
     port_args.is_multi_conn     = 1;
-    if (!(flags & SSL_LISTENER_FLAG_NO_VALIDATE))
+    if ((flags & SSL_LISTENER_FLAG_NO_VALIDATE) == 0)
         port_args.do_addr_validation = 1;
     ql->port = ossl_quic_engine_create_port(ql->engine, &port_args);
     if (ql->port == NULL) {
