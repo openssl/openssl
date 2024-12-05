@@ -725,9 +725,9 @@ static int marshal_validation_token(QUIC_VALIDATION_TOKEN *token,
                 || !WPACKET_sub_memcpy_u8(&wpkt, &token->rscid.id,
                                           token->rscid.id_len)))
         || !WPACKET_sub_memcpy_u8(&wpkt, token->remote_addr, token->remote_addr_len)
+        || !WPACKET_allocate_bytes(&wpkt, QUIC_RETRY_INTEGRITY_TAG_LEN, NULL)
         || !WPACKET_get_total_written(&wpkt, buffer_len)
-        || !WPACKET_finish(&wpkt)
-        || !BUF_MEM_grow(buf_mem, *buffer_len + QUIC_RETRY_INTEGRITY_TAG_LEN)) {
+        || !WPACKET_finish(&wpkt)) {
         WPACKET_cleanup(&wpkt);
         BUF_MEM_free(buf_mem);
         return 0;
@@ -736,7 +736,6 @@ static int marshal_validation_token(QUIC_VALIDATION_TOKEN *token,
     *buffer = (unsigned char *)buf_mem->data;
     buf_mem->data = NULL;
     BUF_MEM_free(buf_mem);
-    *buffer_len += QUIC_RETRY_INTEGRITY_TAG_LEN;
     return 1;
 }
 
@@ -752,7 +751,7 @@ static int marshal_validation_token(QUIC_VALIDATION_TOKEN *token,
 static int parse_validation_token(QUIC_VALIDATION_TOKEN *token,
                                   const unsigned char *buf, size_t buf_len)
 {
-    PACKET pkt;
+    PACKET pkt, subpkt;
 
     if (buf == NULL || token == NULL)
         return 0;
@@ -765,19 +764,21 @@ static int parse_validation_token(QUIC_VALIDATION_TOKEN *token,
         || !PACKET_copy_bytes(&pkt, (unsigned char *)&token->timestamp,
                               sizeof(token->timestamp))
         || (token->is_retry
-            && (!PACKET_copy_bytes(&pkt, &token->odcid.id_len,
-                sizeof(token->odcid.id_len))
-                || token->odcid.id_len > QUIC_MAX_CONN_ID_LEN
-                || !PACKET_copy_bytes(&pkt, (unsigned char *)&token->odcid.id,
+            && (!PACKET_get_length_prefixed_1(&pkt, &subpkt)
+                || (token->odcid.id_len = (unsigned char)PACKET_remaining(&subpkt))
+                    > QUIC_MAX_CONN_ID_LEN
+                || !PACKET_copy_bytes(&subpkt,
+                                      (unsigned char *)&token->odcid.id,
                                       token->odcid.id_len)
-                || !PACKET_copy_bytes(&pkt, &token->rscid.id_len,
-                                     sizeof(token->rscid.id_len))
-                || token->rscid.id_len > QUIC_MAX_CONN_ID_LEN
-                || !PACKET_copy_bytes(&pkt, (unsigned char *)&token->rscid.id,
+                || !PACKET_get_length_prefixed_1(&pkt, &subpkt)
+                || (token->rscid.id_len = (unsigned char)PACKET_remaining(&subpkt))
+                    > QUIC_MAX_CONN_ID_LEN
+                || !PACKET_copy_bytes(&subpkt, (unsigned char *)&token->rscid.id,
                                       token->rscid.id_len)))
-        || !PACKET_get_1_len(&pkt, &token->remote_addr_len)
+        || !PACKET_get_length_prefixed_1(&pkt, &subpkt)
+        || (token->remote_addr_len = PACKET_remaining(&subpkt)) == 0
         || (token->remote_addr = OPENSSL_malloc(token->remote_addr_len)) == NULL
-        || !PACKET_copy_bytes(&pkt, token->remote_addr, token->remote_addr_len)
+        || !PACKET_copy_bytes(&subpkt, token->remote_addr, token->remote_addr_len)
         || PACKET_remaining(&pkt) != 0) {
         cleanup_validation_token(token);
         return 0;
