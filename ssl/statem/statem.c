@@ -817,6 +817,7 @@ static SUB_STATE_RETURN write_state_machine(SSL_CONNECTION *s)
                                     CON_FUNC_RETURN (**confunc) (SSL_CONNECTION *s,
                                                                  WPACKET *pkt),
                                     int *mt);
+    int (*dtls_use_timer) (SSL_CONNECTION *s);
     void (*cb) (const SSL *ssl, int type, int val) = NULL;
     CON_FUNC_RETURN (*confunc) (SSL_CONNECTION *s, WPACKET *pkt);
     int mt;
@@ -830,11 +831,13 @@ static SUB_STATE_RETURN write_state_machine(SSL_CONNECTION *s)
         pre_work = ossl_statem_server_pre_work;
         post_work = ossl_statem_server_post_work;
         get_construct_message_f = ossl_statem_server_construct_message;
+        dtls_use_timer = ossl_statem_dtls_server_use_timer;
     } else {
         transition = ossl_statem_client_write_transition;
         pre_work = ossl_statem_client_pre_work;
         post_work = ossl_statem_client_post_work;
         get_construct_message_f = ossl_statem_client_construct_message;
+        dtls_use_timer = ossl_statem_dtls_client_use_timer;
     }
 
     while (1) {
@@ -924,9 +927,7 @@ static SUB_STATE_RETURN write_state_machine(SSL_CONNECTION *s)
             /* Fall through */
 
         case WRITE_STATE_SEND:
-            if (SSL_CONNECTION_IS_DTLS(s) && st->use_timer
-                    && st->hand_state != TLS_ST_CW_ACK
-                    && st->hand_state != TLS_ST_SW_ACK) {
+            if (SSL_CONNECTION_IS_DTLS(s) && dtls_use_timer(s)) {
                 dtls1_start_timer(s);
             }
             ret = statem_do_write(s);

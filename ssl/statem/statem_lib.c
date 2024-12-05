@@ -237,9 +237,6 @@ int tls_setup_handshake(SSL_CONNECTION *s)
         s->hit = 0;
 
         s->s3.tmp.cert_req = 0;
-
-        if (SSL_CONNECTION_IS_DTLS(s))
-            s->statem.use_timer = 1;
     }
 
     return 1;
