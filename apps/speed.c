@@ -932,7 +932,7 @@ static int EVP_Update_loop_aead_enc(void *args)
         /* Set length of iv (Doesn't apply to SIV mode) */
         if (mode_op != EVP_CIPH_SIV_MODE) {
             if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN,
-                                     AEAD_IVLEN, NULL)) {
+                                     sizeof(aead_iv), NULL)) {
                 BIO_printf(bio_err, "\nFailed to set iv length\n");
                 dofail();
                 exit(1);
@@ -1004,7 +1004,7 @@ static int EVP_Update_loop_aead_dec(void *args)
         /* Set the length of iv (Doesn't apply to SIV mode) */
         if (mode_op != EVP_CIPH_SIV_MODE) {
             if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN,
-                                     AEAD_IVLEN, NULL)) {
+                                     sizeof(aead_iv), NULL)) {
                 BIO_printf(bio_err, "\nFailed to set iv length\n");
                 dofail();
                 exit(1);
@@ -3014,7 +3014,7 @@ int speed_main(int argc, char **argv)
                         if (mode_op != EVP_CIPH_SIV_MODE) {
                             if (!EVP_CIPHER_CTX_ctrl(loopargs[k].ctx,
                                                      EVP_CTRL_AEAD_SET_IVLEN,
-                                                     AEAD_IVLEN, NULL)) {
+                                                     sizeof(aead_iv), NULL)) {
                                 BIO_printf(bio_err, "\nFailed to set iv length\n");
                                 dofail();
                                 exit(1);
