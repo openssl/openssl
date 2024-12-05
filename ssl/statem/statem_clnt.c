@@ -726,6 +726,34 @@ WRITE_TRAN ossl_statem_client_write_transition(SSL_CONNECTION *s)
     }
 }
 
+int ossl_statem_dtls_client_use_timer(SSL_CONNECTION *s)
+{
+    OSSL_STATEM *st = &s->statem;
+
+    switch (st->hand_state) {
+    default:
+        break;
+
+    case TLS_ST_CW_CHANGE:
+        /*
+         * We're into the last flight so we don't retransmit these
+         * messages unless we need to.
+         */
+        if (s->hit)
+            return 0;
+
+        break;
+
+    case TLS_ST_CW_ACK:
+        /* Fall through */
+
+    case TLS_ST_OK:
+        return 0;
+    }
+
+    return 1;
+}
+
 /*
  * Perform any pre work that needs to be done prior to sending a message from
  * the client to the server.
@@ -769,13 +797,6 @@ WORK_STATE ossl_statem_client_pre_work(SSL_CONNECTION *s, WORK_STATE wst)
 
     case TLS_ST_CW_CHANGE:
         if (SSL_CONNECTION_IS_DTLS(s)) {
-            if (s->hit) {
-                /*
-                 * We're into the last flight so we don't retransmit these
-                 * messages unless we need to.
-                 */
-                st->use_timer = 0;
-            }
 #ifndef OPENSSL_NO_SCTP
             if (BIO_dgram_is_sctp(SSL_get_wbio(SSL_CONNECTION_GET_SSL(s)))) {
                 /* Calls SSLfatal() as required */

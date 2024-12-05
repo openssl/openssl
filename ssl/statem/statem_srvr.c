@@ -784,6 +784,35 @@ WRITE_TRAN ossl_statem_server_write_transition(SSL_CONNECTION *s)
     }
 }
 
+int ossl_statem_dtls_server_use_timer(SSL_CONNECTION *s)
+{
+    OSSL_STATEM *st = &s->statem;
+
+    switch (st->hand_state) {
+    default:
+        break;
+
+    case TLS_ST_SW_CHANGE:
+        /* Fall through */
+
+    case TLS_ST_SW_SESSION_TICKET:
+        if (SSL_CONNECTION_IS_DTLS13(s))
+            return 1;
+        /* Fall through */
+
+    case DTLS_ST_SW_HELLO_VERIFY_REQUEST:
+        /* Fall through */
+
+    case TLS_ST_SW_ACK:
+        /* Fall through */
+
+    case TLS_ST_OK:
+        return 0;
+    }
+
+    return 1;
+}
+
 /*
  * Perform any pre work that needs to be done prior to sending a message from
  * the server to the client.
@@ -799,28 +828,12 @@ WORK_STATE ossl_statem_server_pre_work(SSL_CONNECTION *s, WORK_STATE wst)
         break;
 
     case TLS_ST_SW_HELLO_REQ:
+        /* fall-through */
+    case DTLS_ST_SW_HELLO_VERIFY_REQUEST:
         s->shutdown = 0;
         if (SSL_CONNECTION_IS_DTLS(s))
             dtls1_clear_sent_buffer(s);
-        break;
 
-    case DTLS_ST_SW_HELLO_VERIFY_REQUEST:
-        s->shutdown = 0;
-        if (SSL_CONNECTION_IS_DTLS(s)) {
-            dtls1_clear_sent_buffer(s);
-            /* We don't buffer this message so don't use the timer */
-            st->use_timer = 0;
-        }
-        break;
-
-    case TLS_ST_SW_SRVR_HELLO:
-        if (SSL_CONNECTION_IS_DTLS(s)) {
-            /*
-             * Messages we write from now on should be buffered and
-             * retransmitted if necessary, so we need to use the timer now
-             */
-            st->use_timer = 1;
-        }
         break;
 
     case TLS_ST_SW_SRVR_DONE:
@@ -844,13 +857,6 @@ WORK_STATE ossl_statem_server_pre_work(SSL_CONNECTION *s, WORK_STATE wst)
              */
             return tls_finish_handshake(s, wst, 0, 0);
         }
-        if (SSL_CONNECTION_IS_DTLS(s)) {
-            /*
-             * We're into the last flight. We don't retransmit the last flight
-             * unless we need to, so we don't use the timer
-             */
-            st->use_timer = 0;
-        }
         break;
 
     case TLS_ST_SW_CHANGE:
@@ -866,15 +872,6 @@ WORK_STATE ossl_statem_server_pre_work(SSL_CONNECTION *s, WORK_STATE wst)
         if (!ssl->method->ssl3_enc->setup_key_block(s)) {
             /* SSLfatal() already called */
             return WORK_ERROR;
-        }
-        if (SSL_CONNECTION_IS_DTLS(s)) {
-            /*
-             * We're into the last flight. We don't retransmit the last flight
-             * unless we need to, so we don't use the timer. This might have
-             * already been set to 0 if we sent a NewSessionTicket message,
-             * but we'll set it again here in case we didn't.
-             */
-            st->use_timer = 0;
         }
         return WORK_FINISHED_CONTINUE;
 
