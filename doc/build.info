@@ -4601,6 +4601,10 @@ DEPEND[html/man7/EVP_KEM-EC.html]=man7/EVP_KEM-EC.pod
 GENERATE[html/man7/EVP_KEM-EC.html]=man7/EVP_KEM-EC.pod
 DEPEND[man/man7/EVP_KEM-EC.7]=man7/EVP_KEM-EC.pod
 GENERATE[man/man7/EVP_KEM-EC.7]=man7/EVP_KEM-EC.pod
+DEPEND[html/man7/EVP_KEM-MLKEM.html]=man7/EVP_KEM-MLKEM.pod
+GENERATE[html/man7/EVP_KEM-MLKEM.html]=man7/EVP_KEM-MLKEM.pod
+DEPEND[man/man7/EVP_KEM-MLKEM.7]=man7/EVP_KEM-MLKEM.pod
+GENERATE[man/man7/EVP_KEM-MLKEM.7]=man7/EVP_KEM-MLKEM.pod
 DEPEND[html/man7/EVP_KEM-RSA.html]=man7/EVP_KEM-RSA.pod
 GENERATE[html/man7/EVP_KEM-RSA.html]=man7/EVP_KEM-RSA.pod
 DEPEND[man/man7/EVP_KEM-RSA.7]=man7/EVP_KEM-RSA.pod
@@ -4733,6 +4737,10 @@ DEPEND[html/man7/EVP_PKEY-HMAC.html]=man7/EVP_PKEY-HMAC.pod
 GENERATE[html/man7/EVP_PKEY-HMAC.html]=man7/EVP_PKEY-HMAC.pod
 DEPEND[man/man7/EVP_PKEY-HMAC.7]=man7/EVP_PKEY-HMAC.pod
 GENERATE[man/man7/EVP_PKEY-HMAC.7]=man7/EVP_PKEY-HMAC.pod
+DEPEND[html/man7/EVP_PKEY-MLKEM.html]=man7/EVP_PKEY-MLKEM.pod
+GENERATE[html/man7/EVP_PKEY-MLKEM.html]=man7/EVP_PKEY-MLKEM.pod
+DEPEND[man/man7/EVP_PKEY-MLKEM.7]=man7/EVP_PKEY-MLKEM.pod
+GENERATE[man/man7/EVP_PKEY-MLKEM.7]=man7/EVP_PKEY-MLKEM.pod
 DEPEND[html/man7/EVP_PKEY-RSA.html]=man7/EVP_PKEY-RSA.pod
 GENERATE[html/man7/EVP_PKEY-RSA.html]=man7/EVP_PKEY-RSA.pod
 DEPEND[man/man7/EVP_PKEY-RSA.7]=man7/EVP_PKEY-RSA.pod
@@ -5095,6 +5103,7 @@ html/man7/EVP_KDF-X942-ASN1.html \
 html/man7/EVP_KDF-X942-CONCAT.html \
 html/man7/EVP_KDF-X963.html \
 html/man7/EVP_KEM-EC.html \
+html/man7/EVP_KEM-MLKEM.html \
 html/man7/EVP_KEM-RSA.html \
 html/man7/EVP_KEM-X25519.html \
 html/man7/EVP_KEYEXCH-DH.html \
@@ -5128,6 +5137,7 @@ html/man7/EVP_PKEY-DSA.html \
 html/man7/EVP_PKEY-EC.html \
 html/man7/EVP_PKEY-FFC.html \
 html/man7/EVP_PKEY-HMAC.html \
+html/man7/EVP_PKEY-MLKEM.html \
 html/man7/EVP_PKEY-RSA.html \
 html/man7/EVP_PKEY-SM2.html \
 html/man7/EVP_PKEY-X25519.html \
@@ -5242,6 +5252,7 @@ man/man7/EVP_KDF-X942-ASN1.7 \
 man/man7/EVP_KDF-X942-CONCAT.7 \
 man/man7/EVP_KDF-X963.7 \
 man/man7/EVP_KEM-EC.7 \
+man/man7/EVP_KEM-MLKEM.7 \
 man/man7/EVP_KEM-RSA.7 \
 man/man7/EVP_KEM-X25519.7 \
 man/man7/EVP_KEYEXCH-DH.7 \
@@ -5275,6 +5286,7 @@ man/man7/EVP_PKEY-DSA.7 \
 man/man7/EVP_PKEY-EC.7 \
 man/man7/EVP_PKEY-FFC.7 \
 man/man7/EVP_PKEY-HMAC.7 \
+man/man7/EVP_PKEY-MLKEM.7 \
 man/man7/EVP_PKEY-RSA.7 \
 man/man7/EVP_PKEY-SM2.7 \
 man/man7/EVP_PKEY-X25519.7 \
