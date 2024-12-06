@@ -197,15 +197,10 @@ static int jitter_generate(void *vseed, unsigned char *out, size_t outlen,
     /* Get entropy from jitter entropy library. */
     entropy_available = ossl_prov_acquire_entropy_from_jitter(s, pool);
 
-    if (entropy_available > 0)
+    if (entropy_available > 0) {
+        if (!ossl_rand_pool_adin_mix_in(pool, adin, adin_len))
+            return 0;
         memcpy(out, ossl_rand_pool_buffer(pool), ossl_rand_pool_length(pool));
-
-    if (adin != NULL && adin_len > 0) {
-        size_t i;
-
-        /* xor the additional data into the output */
-        for (i = 0; i < adin_len; ++i)
-            out[i % outlen] ^= adin[i];
     }
 
     ossl_rand_pool_free(pool);
@@ -275,7 +270,6 @@ static size_t jitter_get_seed(void *vseed, unsigned char **pout,
 {
     size_t ret = 0;
     size_t entropy_available = 0;
-    size_t i;
     RAND_POOL *pool;
     PROV_JITTER *s = (PROV_JITTER *)vseed;
 
@@ -288,13 +282,10 @@ static size_t jitter_get_seed(void *vseed, unsigned char **pout,
     /* Get entropy from jitter entropy library. */
     entropy_available = ossl_prov_acquire_entropy_from_jitter(s, pool);
 
-    if (entropy_available > 0) {
+    if (entropy_available > 0
+        && ossl_rand_pool_adin_mix_in(pool, adin, adin_len)) {
         ret = ossl_rand_pool_length(pool);
         *pout = ossl_rand_pool_detach(pool);
-
-        /* xor the additional data into the output */
-        for (i = 0; i < adin_len; ++i)
-            (*pout)[i % ret] ^= adin[i];
     } else {
         ERR_raise(ERR_LIB_PROV, PROV_R_ENTROPY_SOURCE_STRENGTH_TOO_WEAK);
     }

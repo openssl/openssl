@@ -1203,6 +1203,7 @@ RAND_R_PERSONALISATION_STRING_TOO_LONG:116:personalisation string too long
 RAND_R_PREDICTION_RESISTANCE_NOT_SUPPORTED:133:\
 	prediction resistance not supported
 RAND_R_PRNG_NOT_SEEDED:100:PRNG not seeded
+RAND_R_RANDOM_POOL_IS_EMPTY:142:random pool is empty
 RAND_R_RANDOM_POOL_OVERFLOW:125:random pool overflow
 RAND_R_RANDOM_POOL_UNDERFLOW:134:random pool underflow
 RAND_R_REQUEST_TOO_LARGE_FOR_DRBG:117:request too large for drbg
