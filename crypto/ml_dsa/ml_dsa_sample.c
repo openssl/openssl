@@ -90,7 +90,7 @@ static ossl_inline int coeff_from_nibble_2(uint32_t nibble, uint32_t *out)
  *
  * See FIPS 204, Algorithm 30, RejNTTPoly()
  *
- * @param g_ctx A prefetched SHAKE128 context used for sampling the seed.
+ * @param g_ctx A pre-fetched SHAKE128 context used for sampling the seed.
  * @param seed The seed to use for sampling.
  * @param seed_len The size of |seed|
  * @param out The returned polynomial with coefficients in the range of
@@ -130,8 +130,8 @@ static int rej_ntt_poly(EVP_MD_CTX *g_ctx,
  * SHAKE256 is used to absorb the seed, and then samples are squeezed.
  * See FIPS 204, Algorithm 31, RejBoundedPoly()
  *
- * @param h_ctx A prefetched SHAKE256 context used for sampling the seed.
- * @param coef_from_nibble A function that is dependant on eta, which takes a
+ * @param h_ctx A pre-fetched SHAKE256 context used for sampling the seed.
+ * @param coef_from_nibble A function that is dependent on eta, which takes a
  *                         nibble and tries to see if it is in the correct range.
  * @param seed The seed to use for sampling.
  * @param seed_len The size of |seed|
@@ -173,9 +173,9 @@ static int rej_bounded_poly(EVP_MD_CTX *h_ctx,
 /**
  * @brief Generate a k * l matrix that has uniformly distributed polynomial
  *        elements using rejection sampling.
- * See FIPS 204, Algorithm 32 ExpandA()
+ * See FIPS 204, Algorithm 32, ExpandA()
  *
- * @param g_ctx A prefetched SHAKE128 context used for rejection sampling
+ * @param g_ctx A pre-fetched SHAKE128 context used for rejection sampling
  *              seed values generated from the seed rho.
  * @param rho A 32 byte seed to generated the matrix from.
  * @param out The generated k * l matrix of polynomials with coefficients
@@ -214,7 +214,7 @@ err:
  * See FIPS 204, Algorithm 33, ExpandS().
  * Note that in FIPS 204 the range -eta..eta is used.
  *
- * @param h_ctx A prefetched SHAKE256 context used for sampling the seed.
+ * @param h_ctx A pre-fetched SHAKE256 context used for sampling the seed.
  * @param eta Is either 2 or 4, and determines the range of the coefficients for
  *            s1 and s2.
  * @param seed A 64 byte seed to use for sampling.

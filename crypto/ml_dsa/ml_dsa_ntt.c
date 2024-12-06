@@ -21,7 +21,7 @@
  * 2) Montgomery multiplication
  * The multiplication of a.b mod q requires division by q which is a slow operation.
  *
- * When many multiplications mod q are requires montgomery multiplication
+ * When many multiplications mod q are required montgomery multiplication
  * can be used. This requires a number R > N such that R & N are coprime
  * (i.e. GCD(N, R) = 1), so that division happens using R instead of q.
  * If r is a power of 2 then this division can be done as a bit shift.
@@ -29,7 +29,7 @@
  * Given that q = 2^23 - 2^13 + 1
  * We can chose a Montgomery multiplier of R = 2^32.
  *
- * To tranform a into montogomery form m
+ * To transform a into montgomery form m
  *   m = a mod q * ((2^32)*(2^32) mod q)
  */
 

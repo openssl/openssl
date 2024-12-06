@@ -455,7 +455,7 @@ int ossl_ml_dsa_sk_encode(ML_DSA_KEY *key)
     if (enc == NULL)
         return 0;
 
-    /* Eta is the range of private key coefficients (-eta...eta) */
+    /* eta is the range of private key coefficients (-eta...eta) */
     if (params->eta == 4)
         encode_fn = poly_encode_signed_4;
     else
@@ -510,7 +510,7 @@ int ossl_ml_dsa_sk_decode(const uint8_t *in, size_t in_len, ML_DSA_KEY *key)
     if (enc == NULL)
         return 0;
 
-    /* Eta is the range of private key coefficents (-eta...eta) */
+    /* eta is the range of private key coefficients (-eta...eta) */
     if (params->eta == 4)
         decode_fn = poly_decode_signed_4;
     else

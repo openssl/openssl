@@ -66,7 +66,7 @@ poly_equal(const POLY *a, const POLY *b)
  * @param t A polynomial containing coefficients in the range 0..q-1
  * @param t1 The returned polynomial containing coefficients that represent
  *           the top 10 MSB of each coefficient in t (i.e each ranging from 0..1023)
- * @param t0 The remainder coefficents of t in the range (0..4096 or q-4095..q-1)
+ * @param t0 The remainder coefficients of t in the range (0..4096 or q-4095..q-1)
  *           Each t0 coefficient has an effective range of 8192 (i.e. 13 bits).
  */
 static ossl_inline ossl_unused void

@@ -44,7 +44,7 @@ typedef struct matrix_st MATRIX;
  * FIPS 204 ML-DSA algorithms have different parameters which includes:
  *   - A set of constants (Section 4. contains 3 parameter sets)
  *
- *   - OpenSSL also uses prefetched EVP_MD_CTX objects for Hashing purposes.
+ *   - OpenSSL also uses pre-fetched EVP_MD_CTX objects for Hashing purposes.
  *
  * ML_DSA_CTX is a container to hold all these objects. This object is
  * resolved early and is then passed to most ML-DSA related functions.
