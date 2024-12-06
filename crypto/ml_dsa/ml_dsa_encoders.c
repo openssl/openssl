@@ -25,43 +25,26 @@ static ossl_inline int constant_time_declassify_int(int v)
     return value_barrier_32(v);
 }
 
-/* Bit packing */
+/* Bit packing Algorithms */
 
-// FIPS 204, Algorithm 16 (`SimpleBitPack`). Specialized to bitlen(b) = 4.
-
-#if 0
 /*
- * @param s A scalar with coefficients all in the range (0..15)
- */
-static int poly_encode_4(WPACKET *pkt, const POLY *s)
-{
-    uint8_t *out;
-    uint32_t *in, end = s->c + 256;
-
-    if (!WPACKET_reserve_bytes(pkt, 256 / 2, &out))
-        return 0;
-
-    for (in = s->c; in < end; ) {
-        uint32_t c0 = *in++;
-        uint32_t c1 = *in++;
-        uint32_t c2 = *in++;
-        uint32_t c3 = *in++;
-
-        *out++ = c0 | c1 << 4;
-        *out++ = c2 | c3 << 4;
-    }
-    return 1;
-}
-#endif
-
-// FIPS 204, Algorithm 16 (`SimpleBitPack`). Specialized to bitlen(b) = 10
-/* We use 10 bits from each coefficient and pack them into bytes
- * So every 4 coefficients fit into 5 bytes.
+ * Encodes a polynomial into a byte string, assuming that all coefficients are
+ * 10 bits.
+ *
+ * See FIPS 204, Algorithm 16, SimpleBitPack(w, b) where b = 10 bits
+ *
+ * i.e. Use 10 bits from each coefficient and pack them into bytes
+ * So every 4 coefficients (c0..c3) fit into 5 bytes.
  *  |c0||c1||c2||c3|
  *   |\  |\  |\  |\
  *  |8|2 6|4 4|6 2|8|
  *
- * @param s A scalar with coefficients all in the range (0..1023)
+ * This is used to save t1 (the high part of public key polynomial t)
+ *
+ * @param p A polynomial with coefficients all in the range (0..1023)
+ * @param pkt A packet object to write 320 bytes to.
+ *
+ * @returns 1 on success, or 0 on error.
  */
 static int poly_encode_10_bits(WPACKET *pkt, const POLY *p)
 {
@@ -86,7 +69,15 @@ static int poly_encode_10_bits(WPACKET *pkt, const POLY *p)
     return 1;
 }
 
-// FIPS 204, Algorithm 18 (`SimpleBitUnpack`). Specialized for bitlen(b) == 10.
+/*
+ * @brief Reverses the procedure of poly_encode_10_bits().
+ * See FIPS 204, Algorithm 18, SimpleBitUnpack(v, b) where b = 10.
+ *
+ * @param pkt A packet object to read 320 bytes from.
+ * @param p A polynomial to write coefficients to.
+ *
+ * @returns 1 on success, or 0 on error.
+ */
 static int poly_decode_10_bits(PACKET *pkt, POLY *p)
 {
     int i, ret = 0;
@@ -107,20 +98,26 @@ err:
     return ret;
 }
 
-// FIPS 204, Algorithm 17 (`BitPack`). Specialized to bitlen(b) = 4 and b = 4.
-
 /*
- * For coefficients in the range -4..4
- * We use 4 bits from each coefficient and pack them into bytes
+ * @brief Encodes a polynomial into a byte string, assuming that all
+ * coefficients are in the range -4..4.
+ * See FIPS 204, Algorithm 17, BitPack(w, a, b). (a = 4, b = 4)
+ *
+ * It uses a nibble from each coefficient and packs them into bytes
  * So every 2 coefficients fit into 1 byte.
  *
- * @param pkt A packet to write the encoded scalar to.
- * @param s An array of 256 coefficients all in the range -4..4
+ * This is used to encode the private key polynomial elements of s1 and s2
+ * for ML-DSA-65 (i.e. eta = 4)
+ *
+ * @param pkt A packet to write 128 bytes of encoded polynomial coefficients to.
+ * @param p An array of 256 coefficients all in the range -4..4
+ *
+ * @returns 1 on success, or 0 on error.
  */
-static int poly_encode_signed_4(WPACKET *pkt, const POLY *s)
+static int poly_encode_signed_4(WPACKET *pkt, const POLY *p)
 {
     uint8_t *out;
-    const uint32_t *in = s->coeff, *end = in + 256;
+    const uint32_t *in = p->coeff, *end = in + 256;
 
     if (!WPACKET_allocate_bytes(pkt, 32 * 4, &out))
         return 0;
@@ -134,6 +131,16 @@ static int poly_encode_signed_4(WPACKET *pkt, const POLY *s)
     return 1;
 }
 
+/*
+ * @brief Reverses the procedure of poly_encode_signed_4().
+ * See FIPS 204, Algorithm 19, BitUnpack(v, a, b) where a = b = 4.
+ *
+ * @param pkt A packet object to read 128 bytes from.
+ * @param p A polynomial to write coefficients to.
+ *
+ * @returns 1 on success, or 0 on error. An error will occur if any of the
+ *          coefficients are not in the correct range.
+ */
 static int poly_decode_signed_4(PACKET *pkt, POLY *s)
 {
     int i, ret = 0;
@@ -144,13 +151,18 @@ static int poly_decode_signed_4(PACKET *pkt, POLY *s)
         if (!PACKET_get_bytes(pkt, &in, 4))
             goto err;
         memcpy(&v, &in, 4);
-        // None of the nibbles may be >= 9. So if the MSB of any nibble is set, none
-        // of the other bits may be set. First, select all the MSBs.
+
+        /*
+         * None of the nibbles may be >= 9. So if the MSB of any nibble is set,
+         * none of the other bits may be set. First, select all the MSBs.
+         */
         const uint32_t msbs = v & 0x88888888u;
-        // For each nibble where the MSB is set, form a mask of all the other bits.
+        /* For each nibble where the MSB is set, form a mask of all the other bits. */
         const uint32_t mask = (msbs >> 1) | (msbs >> 2) | (msbs >> 3);
-        // A nibble is only out of range in the case of invalid input, in which case
-        // it is okay to leak the value.
+        /*
+         * A nibble is only out of range in the case of invalid input, in which case
+         * it is okay to leak the value.
+         */
         if (constant_time_declassify_int((mask & v) != 0))
             goto err;
 
@@ -169,15 +181,26 @@ static int poly_decode_signed_4(PACKET *pkt, POLY *s)
 }
 
 /*
- * For coefficients in the range -2..2
- * We use 3 bits from each coefficient and pack them into bytes
+ * @brief Encodes a polynomial into a byte string, assuming that all
+ * coefficients are in the range -2..2.
+ * See FIPS 204, Algorithm 17, BitPack(w, a, b). where a = b = 2.
+ *
+ * This is used to encode the private key polynomial elements of s1 and s2
+ * for ML-DSA-44 and ML-DSA-87 (i.e. eta = 2)
+ *
+ * @param pkt A packet to write 128 bytes of encoded polynomial coefficients to.
+ * @param p An array of 256 coefficients all in the range -2..2
+ *
+ * Use 3 bits from each coefficient and pack them into bytes
  * So every 8 coefficients fit into 3 bytes.
  *  |c0 c1 c2 c3 c4 c5 c6 c7|
  *   | /  / | |  / / | |  /
  *  |3 3 2| 1 3 3 1| 2 3 3|
  *
- * @param pkt A packet to write the encoded scalar to.
- * @param s An array of 256 coefficients all in the range -2..2
+ * @param pkt A packet to write 64 bytes of encoded polynomial coefficients to.
+ * @param p An array of 256 coefficients all in the range -2..2
+ *
+ * @returns 1 on success, or 0 on error.
  */
 static int poly_encode_signed_2(WPACKET *pkt, const POLY *s)
 {
@@ -204,24 +227,38 @@ static int poly_encode_signed_2(WPACKET *pkt, const POLY *s)
     return 1;
 }
 
-static int poly_decode_signed_2(PACKET *pkt, POLY *s)
+/*
+ * @brief Reverses the procedure of poly_encode_signed_2().
+ * See FIPS 204, Algorithm 19, BitUnpack(v, a, b) where a = b = 2.
+ *
+ * @param pkt A packet object to read 64 encoded bytes from.
+ * @param p A polynomial to write coefficients to.
+ *
+ * @returns 1 on success, or 0 on error. An error will occur if any of the
+ *          coefficients are not in the correct range.
+ */
+static int poly_decode_signed_2(PACKET *pkt, POLY *p)
 {
     int i, ret = 0;
-    uint32_t v = 0, *out = s->coeff;
+    uint32_t v = 0, *out = p->coeff;
     const uint8_t *in;
 
     for (i = 0; i < (ML_DSA_NUM_POLY_COEFFICIENTS / 8); i++) {
         if (!PACKET_get_bytes(pkt, &in, 3))
             goto err;
         memcpy(&v, &in, 3);
-        // Each octal value (3 bits) must be <= 4, So if the MSB is set then the
-        // bottom 2 bits must not be set.
-        // First, select all the MSBs (we use octal representation for the mask)
+        /*
+         * Each octal value (3 bits) must be <= 4, So if the MSB is set then the
+         * bottom 2 bits must not be set.
+         * First, select all the MSBs (Use octal representation for the mask)
+         */
         const uint32_t msbs = v & 044444444;
-        // For each octal value where the MSB is set, form a mask of the 2 other bits.
+        /* For each octal value where the MSB is set, form a mask of the 2 other bits. */
         const uint32_t mask = (msbs >> 1) | (msbs >> 2);
-        // A nibble is only out of range in the case of invalid input, in which case
-        // it is okay to leak the value.
+        /*
+         * A nibble is only out of range in the case of invalid input, in which
+         * case it is okay to leak the value.
+         */
         if (constant_time_declassify_int((mask & v) != 0))
             goto err;
 
@@ -240,19 +277,30 @@ static int poly_decode_signed_2(PACKET *pkt, POLY *s)
 }
 
 /*
- * FIPS 204, Algorithm 17 (`BitPack`).
- * For coefficients ranging from -2^(13-1)+1 ... 2^(13-1)
- * We use 13 bits from each coefficient and pack them into bytes
+ * @brief Encodes a polynomial into a byte string, assuming that all
+ * coefficients are in the range (-2^12 + 1)..2^12.
+ * See FIPS 204, Algorithm 17, BitPack(w, a, b). where a = 2^12 - 1, b = 2^12.
+ *
+ * This is used to encode the LSB of the public key polynomial elements of t0
+ * (which are encoded as part of the encoded private key).
+ *
+ * Use 13 bits from each coefficient and pack them into bytes
  *
  * The code below packs them into 2 64 bits blocks by doing..
- * z0 z1 z2 z3  z4  z5 z6  z7
- * |   |  | |   / \  |  |  |
- *|13 13 13 13 12 |1 13 13 13 |
+ *  z0 z1 z2 z3  z4  z5 z6  z7 0
+ *  |   |  | |   / \  |  |  |  |
+ * |13 13 13 13 12 |1 13 13 13 24
+ *
+ * @param pkt A packet to write 416 (13 * 256 / 8) bytes of encoded polynomial
+ *            coefficients to.
+ * @param p An array of 256 coefficients all in the range -2^12+1..2^12
+ *
+ * @returns 1 on success, or 0 on error.
  */
-static int poly_encode_signed_two_to_power_12(WPACKET *pkt, const POLY *s)
+static int poly_encode_signed_two_to_power_12(WPACKET *pkt, const POLY *p)
 {
     static const uint32_t range = 1u << 12;
-    const uint32_t *in = s->coeff, *end = in + 256;
+    const uint32_t *in = p->coeff, *end = in + 256;
 
     while (in < end) {
         uint64_t z0 = mod_sub(range, *in++); /* < 2^13 */
@@ -273,12 +321,20 @@ static int poly_encode_signed_two_to_power_12(WPACKET *pkt, const POLY *s)
     return 1;
 }
 
-// FIPS 204, Algorithm 18 (`SimpleBitUnpack`).
-static int poly_decode_signed_two_to_power_12(PACKET *pkt, POLY *s)
+/*
+ * @brief Reverses the procedure of poly_encode_signed_two_to_power_12().
+ * See FIPS 204, Algorithm 19, BitUnpack(v, a, b) where a = 2^12 - 1, b = 2^12.
+ *
+ * @param pkt A packet object to read 416 encoded bytes from.
+ * @param p A polynomial to write coefficients to.
+ *
+ * @returns 1 on success, or 0 on error.
+ */
+static int poly_decode_signed_two_to_power_12(PACKET *pkt, POLY *p)
 {
     int i, ret = 0;
     uint64_t a1 = 0, a2 = 0;
-    uint32_t *out = s->coeff;
+    uint32_t *out = p->coeff;
     const uint8_t *in;
     static const uint32_t range = 1u << 12;
     static const uint32_t mask_13_bits = (1u << 13) - 1;
@@ -289,8 +345,10 @@ static int poly_decode_signed_two_to_power_12(PACKET *pkt, POLY *s)
         memcpy(&a1, &in, 8);
         memcpy(&a2, in + 8, 5);
 
-        // It's not possible for a 13-bit number to be out of range when the
-        // max is 2^12.
+        /*
+         * It is not possible for a 13-bit number to be out of range when the
+         * max is 2^12.
+         */
         *out++ = mod_sub(range, a1 & mask_13_bits);
         *out++ = mod_sub(range, (a1 >> 13) & mask_13_bits);
         *out++ = mod_sub(range, (a1 >> 26) & mask_13_bits);
@@ -335,7 +393,16 @@ err:
     return ret;
 }
 
-// FIPS 204, Algorithm 23 (`pkDecode`).
+/*
+ * @brief The reverse of ossl_ml_dsa_pk_encode().
+ * See FIPS 204, Algorithm 23, pkDecode().
+ *
+ * @param in An encoded public key.
+ * @param in_len The size of |in|
+ * @param key A key object to store the decoded public key into.
+ *
+ * @returns 1 if the public key was decoded successfully or 0 otherwise.
+ */
 int ossl_ml_dsa_pk_decode(const uint8_t *in, size_t in_len, ML_DSA_KEY *key)
 {
     int ret = 0;
@@ -357,8 +424,14 @@ err:
     return ret;
 }
 
-// FIPS 204, Algorithm 24 (`skEncode`)
-
+/*
+ * @brief Encode the private key as an array of bytes.
+ * See FIPS 204, Algorithm 24, skEncode().
+ *
+ * @param key A key object containing private key values. The encoded private
+ *            key data is stored in this key.
+ * @returns 1 if the private key was encoded successfully or 0 otherwise.
+ */
 int ossl_ml_dsa_sk_encode(ML_DSA_KEY *key)
 {
     int ret = 0;
@@ -367,13 +440,13 @@ int ossl_ml_dsa_sk_encode(ML_DSA_KEY *key)
     PRIV_ENCODE_FN *encode_fn;
     size_t enc_len = params->sk_len;
     const POLY *t0 = key->t0.poly;
-    uint8_t *enc = OPENSSL_zalloc(enc_len);
     WPACKET pkt;
+    uint8_t *enc = OPENSSL_zalloc(enc_len);
 
     if (enc == NULL)
         return 0;
 
-    /* Eta is the range of private key coefficents (-eta...eta) */
+    /* Eta is the range of private key coefficients (-eta...eta) */
     if (params->eta == 4)
         encode_fn = poly_encode_signed_4;
     else
@@ -403,16 +476,29 @@ err:
     return ret;
 }
 
-// FIPS 204, Algorithm 25 (`skDecode`).
+/*
+ * @brief The reverse of ossl_ml_dsa_sk_encode().
+ * See FIPS 204, Algorithm 24, skDecode().
+ *
+ * @param in An encoded private key.
+ * @param in_len The size of |in|
+ * @param key A key object to store the decoded private key into.
+ *
+ * @returns 1 if the private key was decoded successfully or 0 otherwise.
+ */
 int ossl_ml_dsa_sk_decode(const uint8_t *in, size_t in_len, ML_DSA_KEY *key)
 {
     int ret = 0;
+    uint8_t *enc = NULL;
     PRIV_DECODE_FN *decode_fn;
     const ML_DSA_PARAMS *params = key->params;
     size_t i, k = params->k, l = params->l;
     PACKET pkt;
 
     if (in_len != key->params->sk_len)
+        return 0;
+    enc = OPENSSL_memdup(in, in_len);
+    if (enc == NULL)
         return 0;
 
     /* Eta is the range of private key coefficents (-eta...eta) */
@@ -439,13 +525,14 @@ int ossl_ml_dsa_sk_decode(const uint8_t *in, size_t in_len, ML_DSA_KEY *key)
     if (PACKET_remaining(&pkt) != 0)
         goto err;
     OPENSSL_clear_free(key->priv_encoding, in_len);
-    key->priv_encoding = OPENSSL_memdup(in, in_len);
+    key->priv_encoding = enc;
     ret = 1;
 err:
     return ret;
 }
 
 #if 0
+/* TODO signing related encoders */
 int ossl_ml_dsa_sig_encode(WPACKET *pkt,...);
 int ossl_ml_dsa_sig_decode(PACKET *pkt,...);
 int ossl_ml_dsa_w1_encode();

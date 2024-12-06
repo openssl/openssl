@@ -9,10 +9,9 @@
 
 #include <openssl/e_os2.h>
 
-
 /*
  * Refer to FIPS 204 Section 4 Parameter sets.
- * Fields that are shared between all algorithms have been omitted.
+ * Fields that are shared between all algorithms (such as q & d) have been omitted.
  */
 typedef struct ml_dsa_params_st {
     const char *alg;

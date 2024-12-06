@@ -7,8 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <assert.h>
-#include <string.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/params.h>
@@ -168,11 +166,19 @@ int ossl_ml_dsa_key_fromdata(ML_DSA_KEY *key, const OSSL_PARAM params[],
 }
 
 /*
- * Given private key values for rho, s1 & s2 generate the public value t.
- * This is composed of higher order bits t1 and lower order bits t0.
+ * @brief Given a key containing private key values for rho, s1 & s2
+ * generate the public value t and return the compressed values t1, t0.
+ *
+ * @param ctx A Object containing algorithm specific constants and hash contexts.
+ * @param key A private key containing rh0, s1 & s2.
+ * @param t1 The returned polynomial encoding of the 10 MSB of each coefficient
+ *        of the uncompressed public key polynomial t.
+ * @param t0 The returned polynomial encoding of the 13 LSB of each coefficient
+ *        of the uncompressed public key polynomial t.
+ * @returns 1 on success, or 0 on failure.
  */
-static void public_from_private(ML_DSA_CTX *ctx, const ML_DSA_KEY *key,
-                                VECTOR *t1, VECTOR *t0)
+static int public_from_private(ML_DSA_CTX *ctx, const ML_DSA_KEY *key,
+                               VECTOR *t1, VECTOR *t0)
 {
     MATRIX a_ntt;
     VECTOR s1_ntt;
@@ -184,7 +190,8 @@ static void public_from_private(ML_DSA_CTX *ctx, const ML_DSA_KEY *key,
     vector_init(&t, params->k);
 
     /* Using rho generate A' = A in NTT form */
-    ossl_ml_dsa_sample_expandA(ctx->g_ctx, key->rho, &a_ntt);
+    if (!ossl_ml_dsa_sample_expandA(ctx->g_ctx, key->rho, &a_ntt))
+        return 0;
 
     /* t = NTT_inv(A' * NTT(s1)) + s2 */
     vector_copy(&s1_ntt, &key->s1);
@@ -199,11 +206,12 @@ static void public_from_private(ML_DSA_CTX *ctx, const ML_DSA_KEY *key,
 
     /* Zeroize secret */
     vector_zero(&s1_ntt);
+    return 1;
 }
 
 int ossl_ml_dsa_key_pairwise_check(const ML_DSA_KEY *key)
 {
-    int ret;
+    int ret = 0;
     ML_DSA_CTX *ctx = NULL;
     VECTOR t1, t0;
 
@@ -216,9 +224,11 @@ int ossl_ml_dsa_key_pairwise_check(const ML_DSA_KEY *key)
 
     vector_init(&t1, key->params->k);
     vector_init(&t0, key->params->k);
-    public_from_private(ctx, key, &t1, &t0);
+    if (!public_from_private(ctx, key, &t1, &t0))
+        goto err;
 
     ret = vector_equal(&t1, &key->t1) && vector_equal(&t0, &key->t0);
+err:
     ossl_ml_dsa_ctx_free(ctx);
     return ret;
 }
@@ -232,7 +242,7 @@ static int shake_xof(EVP_MD_CTX *ctx, const uint8_t *in, size_t in_len,
 }
 
 /*
- * @brief Generate a public-private keypair from a seed.
+ * @brief Generate a public-private key pair from a seed.
  * See FIPS 204, Algorithm 6 ML-DSA.KeyGen_internal().
  *
  * @param entropy The input seed
@@ -246,10 +256,10 @@ static int keygen_internal(ML_DSA_CTX *ctx, const uint8_t *seed, size_t seed_len
 {
     int ret = 0;
     uint8_t augmented_seed[ML_DSA_SEED_BYTES + 2];
-    uint8_t expanded_seed[ML_DSA_RHO_BYTES + ML_DSA_SIGMA_BYTES + ML_DSA_K_BYTES];
+    uint8_t expanded_seed[ML_DSA_RHO_BYTES + ML_DSA_PRIV_SEED_BYTES + ML_DSA_K_BYTES];
     const uint8_t *const rho = expanded_seed; /* p = Public Random Seed */
-    const uint8_t *const sigma = expanded_seed + ML_DSA_RHO_BYTES;
-    const uint8_t *const K = sigma + ML_DSA_SIGMA_BYTES;
+    const uint8_t *const priv_seed = expanded_seed + ML_DSA_RHO_BYTES;
+    const uint8_t *const K = priv_seed + ML_DSA_PRIV_SEED_BYTES;
     const ML_DSA_PARAMS *params = ctx->params;
 
     /* augmented_seed = seed || k || l */
@@ -264,13 +274,10 @@ static int keygen_internal(ML_DSA_CTX *ctx, const uint8_t *seed, size_t seed_len
     memcpy(out->rho, rho, sizeof(out->rho));
     memcpy(out->K, K, sizeof(out->K));
 
-    if (!ossl_ml_dsa_sample_expandS(ctx->h_ctx, params->eta, sigma,
-                                    &out->s1, &out->s2))
-        goto err;
-
-    public_from_private(ctx, out, &out->t1, &out->t0);
-
-    ret = ossl_ml_dsa_pk_encode(out)
+    ret = ossl_ml_dsa_sample_expandS(ctx->h_ctx, params->eta, priv_seed,
+                                     &out->s1, &out->s2)
+        && public_from_private(ctx, out, &out->t1, &out->t0)
+        && ossl_ml_dsa_pk_encode(out)
         && shake_xof(ctx->h_ctx, out->pub_encoding, out->params->pk_len,
                      out->tr, sizeof(out->tr))
         && ossl_ml_dsa_sk_encode(out);
@@ -288,7 +295,8 @@ int ossl_ml_dsa_generate_key(ML_DSA_CTX *ctx, OSSL_LIB_CTX *lib_ctx,
     uint8_t seed[32];
     size_t seed_len = sizeof(seed);
 
-    assert(ctx->params == out->params);
+    if (ctx->params != out->params)
+        return 0;
 
     if (entropy != NULL && entropy_len != 0) {
         if (entropy_len < seed_len)

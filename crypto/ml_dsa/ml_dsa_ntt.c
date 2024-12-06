@@ -7,22 +7,43 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/deprecated.h"
-#include <openssl/sha.h>
-
-#include <assert.h>
-#include <string.h>
-#include <openssl/core_dispatch.h>
-#include <openssl/core_names.h>
-#include <openssl/params.h>
-#include <openssl/rand.h>
 #include "ml_dsa_local.h"
-#include "ml_dsa_key.h"
+#include "ml_dsa_poly.h"
 
-/* 256^-1 mod kPrime, in Montgomery form */
-static const uint32_t kInverseDegreeMontgomery = 41978;
+/*
+ * This file has multiple parts required for fast matrix multiplication,
+ * 1) NTT (See https://eprint.iacr.org/2024/585.pdf)
+ * NTT and NTT inverse transformations are Discrete Fourier Transforms in a
+ * polynomial ring. Fast-Fourier Transformations can then be applied to make
+ * multiplications n log(n). This uses the symmetry of the transformation to
+ * reduce computations.
+ *
+ * 2) Montgomery multiplication
+ * The multiplication of a.b mod q requires division by q which is a slow operation.
+ *
+ * When many multiplications mod q are requires montgomery multiplication
+ * can be used. This requires a number R > N such that R & N are coprime
+ * (i.e. GCD(N, R) = 1), so that division happens using R instead of q.
+ * If r is a power of 2 then this division can be done as a bit shift.
+ *
+ * Given that q = 2^23 - 2^13 + 1
+ * We can chose a Montgomery multiplier of R = 2^32.
+ *
+ * To tranform a into montogomery form m
+ *   m = a mod q * ((2^32)*(2^32) mod q)
+ */
 
-static const uint32_t kNTTRootsMontgomery[256] = {
+/*
+ * The table in FIPS 204 Appendix B uses the following formula
+ * zeta[k]= 1753^bitrev(k) mod q for (k = 1..255) (The first value is not used).
+ *
+ * As this implementation uses montgomery form with a multiplier of 2^32.
+ * The values need to be transformed i.e.
+ *
+ * zetasMontgomery[k] = reduce_montgomery(zeta[k] * (2^32 * 2^32 mod(q)))
+ * reduce_montgomery() is defined below..
+ */
+static const uint32_t zetas_montgomery[256] = {
     4193792, 25847,   5771523, 7861508, 237124,  7602457, 7504169, 466468,
     1826347, 2353451, 8021166, 6288512, 3119733, 5495562, 3111497, 2680103,
     2725464, 1024112, 7300517, 3585928, 7830929, 7260833, 2619752, 6271868,
@@ -57,95 +78,120 @@ static const uint32_t kNTTRootsMontgomery[256] = {
     7826001, 3919660, 8332111, 7018208, 3937738, 1400424, 7534263, 1976782
 };
 
-    /*
-     * @brief Computes x *
-     * See FIPS 204 Algorithm 49
-     */
-//declassify_assert(x <= ((uint64_t)kPrime << 32));
-//declassify_assert((b & 0xffffffff) == 0);
-static uint32_t reduce_montgomery(uint64_t x)
+/*
+ * @brief When multiplying 2 numbers mod q that are in montgomery form, the
+ * product mod q needs to be multiplied by 2^-32 to be in montgomery form.
+ * See FIPS 204, Algorithm 49, MontgomeryReduce()
+ * Note it is slightly different due to the input range being positive
+ *
+ * @param a is the result of a multiply of 2 numbers in montgomery form,
+ *          in the range 0...(2^32)*q
+ * @returns The Montgomery form of 'a' with multiplier 2^32 in the range 0..q-1
+ *          The result is congruent to x * 2^-32 mod q
+ */
+static uint32_t reduce_montgomery(uint64_t a)
 {
-    uint64_t a = (uint32_t)x * (uint32_t)ML_DSA_Q_NEG_INV;
-    uint64_t b = x + a * ML_DSA_Q;
-    uint32_t c = b >> 32;
+    uint64_t t = (uint32_t)a * (uint32_t)ML_DSA_Q_NEG_INV; /* a * -qinv */
+    uint64_t b = a + t * ML_DSA_Q; /* a - t * q */
+    uint32_t c = b >> 32; /* /2^32  = 0..2q */
 
-    return reduce_once(c);
+    return reduce_once(c); /* 0..q */
 }
 
-// Multiply two polynomials in the number theoretically transformed state.
+/*
+ * @brief Multiply two polynomials in the number theoretically transformed state.
+ * See FIPS 204, Algorithm 45, MultiplyNTT()
+ * This function has been modified to use montgomery multiplication
+ *
+ * @param lhs A polynomial multiplicand
+ * @param rhs A polynomial multiplier
+ * @param out The returned result of the polynomial multiply
+ */
 void ossl_ml_dsa_poly_ntt_mult(const POLY *lhs, const POLY *rhs, POLY *out)
 {
     int i;
 
     for (i = 0; i < ML_DSA_NUM_POLY_COEFFICIENTS; i++)
-        out->coeff[i] = reduce_montgomery((uint64_t)lhs->coeff[i] * (uint64_t)rhs->coeff[i]);
+        out->coeff[i] =
+            reduce_montgomery((uint64_t)lhs->coeff[i] * (uint64_t)rhs->coeff[i]);
 }
 
 /*
- * In place number theoretic transform of a given scalar.
+ * In place number theoretic transform of a given polynomial.
  *
- * See FIPS 204, Algorithm 41 (`NTT`).
+ * See FIPS 204, Algorithm 41, NTT()
+ * This function uses montgomery multiplication.
+ *
+ * @param p a polynomial that is used as the input, that is replaced with
+ *        the NTT of the polynomial
  */
-void ossl_ml_dsa_poly_ntt(POLY *s)
+void ossl_ml_dsa_poly_ntt(POLY *p)
 {
     int i, j, k;
-    int step; /* step is powers of 2 (1, 2, 4, 8, ..., 128) */
-    int offset = ML_DSA_NUM_POLY_COEFFICIENTS; /* offset is powers of 2 (128, 64, ..., 1) */
-// Step: 1, 2, 4, 8, ..., 128
-// Offset: 128, 64, 32, 16, ..., 1
+    int step;
+    int offset = ML_DSA_NUM_POLY_COEFFICIENTS;
+
+    /* Step: 1, 2, 4, 8, ..., 128 */
     for (step = 1; step < ML_DSA_NUM_POLY_COEFFICIENTS; step <<= 1) {
         k = 0;
-        offset >>= 1;
+        offset >>= 1; /* Offset: 128, 64, 32, 16, ..., 1 */
         for (i = 0; i < step; i++) {
-          //assert(k == 2 * offset * i);
-          const uint32_t step_root = kNTTRootsMontgomery[step + i];
-          for (j = k; j < k + offset; j++) {
-            uint32_t even = s->coeff[j];
-            // |reduce_montgomery| works on values up to kPrime*R and R > 2*kPrime.
-            // |step_root| < kPrime because it's static data. |s->c[...]| is <
-            // kPrime by the invariants of that struct.
-            uint32_t odd =
-                reduce_montgomery((uint64_t)step_root * (uint64_t)s->coeff[j + offset]);
-            s->coeff[j] = reduce_once(odd + even);
-            s->coeff[j + offset] = mod_sub(even, odd);
-          }
-          k += 2 * offset;
+            const uint32_t z_step_root = zetas_montgomery[step + i];
+
+            for (j = k; j < k + offset; j++) {
+                uint32_t w_even = p->coeff[j];
+                uint32_t t_odd =
+                    reduce_montgomery((uint64_t)z_step_root
+                                      * (uint64_t)p->coeff[j + offset]);
+
+                p->coeff[j] = reduce_once(w_even + t_odd);
+                p->coeff[j + offset] = mod_sub(w_even, t_odd);
+            }
+            k += 2 * offset;
         }
     }
 }
 
-// In place inverse number theoretic transform of a given scalar.
-//
-// FIPS 204, Algorithm 42 (`NTT^-1`).
-void ossl_ml_dsa_poly_ntt_inverse(POLY *s)
+/*
+ * @brief In place inverse number theoretic transform of a given polynomial.
+ * See FIPS 204, Algorithm 42,  NTT^-1()
+ *
+ * @param p a polynomial that is used as the input, that is overwritten with
+ *          the inverse of the NTT.
+ */
+void ossl_ml_dsa_poly_ntt_inverse(POLY *p)
 {
-    // Step: 128, 64, 32, 16, ..., 1
-    // Offset: 1, 2, 4, 8, ..., 128
+    /*
+     * Step: 128, 64, 32, 16, ..., 1
+     * Offset: 1, 2, 4, 8, ..., 128
+     */
     int i, j, k, offset, step = ML_DSA_NUM_POLY_COEFFICIENTS;
+    /*
+     * The multiplicative inverse of 256 mod q, in Montgomery form is
+     * ((256^-1 mod q) * ((2^32 * 2^32) mod q)) mod q = (8347681 * 2365951) mod 8380417
+     */
+    static const uint32_t inverse_degree_montgomery = 41978;
 
     for (offset = 1; offset < ML_DSA_NUM_POLY_COEFFICIENTS; offset <<= 1) {
         step >>= 1;
         k = 0;
         for (i = 0; i < step; i++) {
-            //assert(k == 2 * offset * i);
-            const uint32_t step_root = ML_DSA_Q - kNTTRootsMontgomery[step + (step - 1 - i)];
-            for (j = k; j < k + offset; j++) {
-                uint32_t even = s->coeff[j];
-                uint32_t odd = s->coeff[j + offset];
-                s->coeff[j] = reduce_once(odd + even);
+            const uint32_t step_root = ML_DSA_Q
+                                       - zetas_montgomery[step + (step - 1 - i)];
 
-                // |reduce_montgomery| works on values up to kPrime*R and R > 2*kPrime.
-                // kPrime + even < 2*kPrime because |even| < kPrime, by the invariants
-                // of that structure. Thus kPrime + even - odd < 2*kPrime because odd >=
-                // 0, because it's unsigned and less than kPrime. Lastly step_root <
-                // kPrime, because |kNTTRootsMontgomery| is static data.
-                s->coeff[j + offset] = reduce_montgomery((uint64_t)step_root *
-                                                     (uint64_t)(ML_DSA_Q + even - odd));
+            for (j = k; j < k + offset; j++) {
+                uint32_t even = p->coeff[j];
+                uint32_t odd = p->coeff[j + offset];
+
+                p->coeff[j] = reduce_once(odd + even);
+                p->coeff[j + offset] =
+                    reduce_montgomery((uint64_t)step_root
+                                      * (uint64_t)(ML_DSA_Q + even - odd));
             }
             k += 2 * offset;
         }
     }
     for (i = 0; i < ML_DSA_NUM_POLY_COEFFICIENTS; i++)
-        s->coeff[i] = reduce_montgomery((uint64_t)s->coeff[i] *
-                                        (uint64_t)kInverseDegreeMontgomery);
+        p->coeff[i] = reduce_montgomery((uint64_t)p->coeff[i] *
+                                        (uint64_t)inverse_degree_montgomery);
 }

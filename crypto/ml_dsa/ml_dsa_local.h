@@ -16,6 +16,7 @@
 /* Maximimum size of the 'A' matrix */
 # define ML_DSA_K_MAX 8
 # define ML_DSA_L_MAX 7
+
 # define ML_DSA_SEED_BYTES 32
 # define ML_DSA_Q 8380417   /* The modulus is 23 bits (2^23 - 2^13 + 1) */
 # define ML_DSA_Q_MINUS1_DIV2 ((ML_DSA_Q - 1) / 2)
@@ -28,16 +29,16 @@
 # define ML_DSA_D_BITS 13   /* The number of bits dropped from t */
 # define ML_DSA_NUM_POLY_COEFFICIENTS 256  /* The number of coefficients in the polynomials */
 # define ML_DSA_RHO_BYTES 32   /* p = Public Random Seed */
-# define ML_DSA_SIGMA_BYTES 64 /* p' = Private random seed */
+# define ML_DSA_PRIV_SEED_BYTES 64 /* p' = Private random seed */
 # define ML_DSA_K_BYTES 32 /* K = Private random seed for signing */
 # define ML_DSA_TR_BYTES 64 /* Hash of public key used for signing */
 # define ML_DSA_MU_BYTES 64
 # define ML_DSA_RHO_PRIME_BYTES 64
 
+typedef struct ml_dsa_params_st ML_DSA_PARAMS;
 typedef struct poly_st POLY;
 typedef struct vector_st VECTOR;
 typedef struct matrix_st MATRIX;
-typedef struct ml_dsa_params_st ML_DSA_PARAMS;
 
 /*
  * FIPS 204 ML-DSA algorithms have different parameters which includes:
@@ -82,23 +83,23 @@ int ossl_ml_dsa_sk_decode(const uint8_t *in, size_t in_len, ML_DSA_KEY *key);
  * @brief Reduces x mod q in constant time
  * i.e. return x < q ? x : x - q;
  *
- * @param x is in the range 0 <= x < 2*q
+ * @param x Where x is assumed to be in the range 0 <= x < 2*q
  * @returns the difference in the range 0..q-1
  */
-static ossl_inline ossl_unused uint32_t reduce_once(uint32_t x) {
-  //assert(x < 2 * ML_DSA_Q);
-  return constant_time_select_32(constant_time_lt(x, ML_DSA_Q), x, x - ML_DSA_Q);
+static ossl_inline ossl_unused uint32_t reduce_once(uint32_t x)
+{
+    return constant_time_select_32(constant_time_lt(x, ML_DSA_Q), x, x - ML_DSA_Q);
 }
 
 /*
  * @brief Calculate The positive value of (a-b) mod q in constant time.
  *
  * a - b mod q gives a value in the range -(q-1)..(q-1)
- * By adding q we get a range of 1..(2q-1). Reducing this once then gives the
- * range 0..q-1
+ * By adding q we get a range of 1..(2q-1).
+ * Reducing this once then gives the range 0..q-1
  *
- * @param a is the minuend in the range 0..q-1
- * @param b is the subtracthend in the range 0..q-1.
+ * @param a The minuend assumed to be in the range 0..q-1
+ * @param b The subtracthend assumed to be in the range 0..q-1.
  * @returns The value (q + a - b) mod q
  */
 static ossl_inline ossl_unused uint32_t mod_sub(uint32_t a, uint32_t b)

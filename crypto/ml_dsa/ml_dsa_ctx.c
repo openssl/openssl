@@ -6,8 +6,7 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-#include <stddef.h>
-#include <openssl/crypto.h>
+
 #include <openssl/evp.h>
 #include "ml_dsa_local.h"
 #include "ml_dsa_params.h"
@@ -27,15 +26,15 @@ static EVP_MD_CTX *md_ctx_new(EVP_MD *md)
 }
 
 /**
- * @brief Create a SLH_DSA_CTX that contains parameters, functions, and
- * pre-fetched HASH related objects for a SLH_DSA algorithm.This context is passed
- * to most SLH-DSA functions.
+ * @brief Create a ML_DSA_CTX that contains parameters, and pre-fetched hash
+ * related objects for a ML-DSA algorithm. This context is passed
+ * to many ML-DSA related functions.
  *
- * @param alg An SLH-DSA algorithm name such as "SLH-DSA-SHA2-128s"
+ * @param alg An ML-DSA algorithm name such as "ML-DSA-65"
  * @param lib_ctx A library context used for fetching. Can be NULL
- * @param propq A propqery query to use for algorithm fetching. Can be NULL.
+ * @param propq A property query to use for algorithm fetching. Can be NULL.
  *
- * @returns The created SLH_DSA_CTX object or NULL on failure.
+ * @returns The created ML_DSA_CTX object or NULL on failure.
  */
 ML_DSA_CTX *ossl_ml_dsa_ctx_new(const char *alg,
                                 OSSL_LIB_CTX *lib_ctx, const char *propq)
@@ -70,9 +69,9 @@ err:
 }
 
 /**
- * @brief Destroy a SLH_DSA_CTX
+ * @brief Destroy a ML_DSA_CTX
  *
- * @param ctx The SLH_DSA_CTX object to destroy.
+ * @param ctx The ML_DSA_CTX object to destroy.
  */
 void ossl_ml_dsa_ctx_free(ML_DSA_CTX *ctx)
 {

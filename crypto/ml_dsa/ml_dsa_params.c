@@ -12,7 +12,7 @@
 
 /*
  * See FIPS 204 Section 4 Table 1 & Table 2
- *                     tau strength gamma1   k  l eta beta omega sc sk    pk   sig
+ *                    tau strength gamma1 k l eta beta omega sc sklen  pklen siglen
  */
 #define OSSL_ML_DSA_65  49, 192, 1 << 19, 6, 5, 4, 196, 55, 3, 4032, 1952, 3309
 
