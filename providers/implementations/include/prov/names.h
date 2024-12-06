@@ -384,3 +384,5 @@
 #define PROV_DESCS_RSA_PSS "OpenSSL RSA-PSS implementation"
 #define PROV_NAMES_SM2 "SM2:1.2.156.10197.1.301"
 #define PROV_DESCS_SM2 "OpenSSL SM2 implementation"
+#define PROV_NAMES_ML_DSA_65 "ML-DSA-65:2.16.840.1.101.3.4.3.18"
+#define PROV_DESCS_ML_DSA_65 "OpenSSL ML-DSA-65 implementation"
