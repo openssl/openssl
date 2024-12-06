@@ -9,12 +9,11 @@
 
 #include <openssl/e_os2.h>
 
-
 /*
  * Refer to FIPS 204 Section 4 Parameter sets.
- * Fields that are shared between all algorithms have been omitted.
+ * Fields that are shared between all algorithms (such as q & d) have been omitted.
  */
-typedef struct ml_dsa_params_st {
+struct ml_dsa_params_st {
     const char *alg;
     int tau;    /* Number of +/-1's in polynomial c */
     int strength; /* The collision strength */
@@ -27,6 +26,6 @@ typedef struct ml_dsa_params_st {
     size_t sk_len; /* private key size */
     size_t pk_len; /* public key size */
     size_t sig_len; /* signature size */
-} ML_DSA_PARAMS;
+};
 
-const ML_DSA_PARAMS *ossl_ml_dsa_params_get(const char *alg);
+const struct ml_dsa_params_st *ossl_ml_dsa_params_get(const char *alg);

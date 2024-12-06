@@ -51,35 +51,17 @@ static int ml_dsa_keygen_test(int tst_id)
     int ret = 0;
     const ML_DSA_KEYGEN_TEST_DATA *tst = &ml_dsa_keygen_testdata[tst_id];
     EVP_PKEY *pkey = NULL;
-    uint8_t priv[5*1024], pub[3*1024];
+    uint8_t priv[5 * 1024], pub[3 * 1024];
     size_t priv_len, pub_len;
-    //int bits = 0, sec_bits = 0, sig_len = 0;
 
     if (!TEST_ptr(pkey = do_gen_key(tst->name, tst->seed, tst->seed_len)))
         goto err;
-
     if (!TEST_true(EVP_PKEY_get_octet_string_param(pkey, OSSL_PKEY_PARAM_PRIV_KEY,
                                                    priv, sizeof(priv), &priv_len)))
         goto err;
     if (!TEST_true(EVP_PKEY_get_octet_string_param(pkey, OSSL_PKEY_PARAM_PUB_KEY,
                                                    pub, sizeof(pub), &pub_len)))
         goto err;
-/*
-    if (!TEST_true(EVP_PKEY_get_int_param(pkey, OSSL_PKEY_PARAM_BITS, &bits))
-            || !TEST_int_eq(bits, 8 * key_len)
-            || !TEST_true(EVP_PKEY_get_int_param(pkey, OSSL_PKEY_PARAM_SECURITY_BITS,
-                                                 &sec_bits))
-            || !TEST_int_eq(sec_bits, 8 * n)
-            || !TEST_true(EVP_PKEY_get_int_param(pkey, OSSL_PKEY_PARAM_MAX_SIZE,
-                                                 &sig_len))
-            || !TEST_int_ge(sig_len, 7856)
-            || !TEST_int_le(sig_len, 49856))
-        goto err;
-    if (!TEST_size_t_eq(priv_len, key_len)
-            || !TEST_size_t_eq(pub_len, key_len))
-        goto err;
-*/
-
     if (!TEST_mem_eq(pub, pub_len, tst->pub, tst->pub_len))
         goto err;
     if (!TEST_mem_eq(priv, priv_len, tst->priv, tst->priv_len))

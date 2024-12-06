@@ -193,8 +193,8 @@ static int ml_dsa_get_params(void *keydata, OSSL_PARAM params[])
     return 1;
 }
 
-static int ml_dsa_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
-                          void *cbarg)
+static int ml_dsa_export(void *keydata, int selection,
+                         OSSL_CALLBACK *param_cb, void *cbarg)
 {
     ML_DSA_KEY *key = keydata;
     OSSL_PARAM_BLD *tmpl;
@@ -244,7 +244,7 @@ static void *ml_dsa_load(const void *reference, size_t reference_sz)
 }
 
 static void *ml_dsa_gen_init(void *provctx, int selection,
-                              const OSSL_PARAM params[])
+                             const OSSL_PARAM params[])
 {
     OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(provctx);
     struct ml_dsa_gen_ctx *gctx = NULL;
@@ -277,7 +277,7 @@ static void *ml_dsa_gen(void *genctx, const char *alg)
     if (key == NULL)
         return NULL;
     if (!ossl_ml_dsa_generate_key(ctx, gctx->libctx,
-                                   gctx->entropy, gctx->entropy_len, key))
+                                  gctx->entropy, gctx->entropy_len, key))
         goto err;
     ossl_ml_dsa_ctx_free(ctx);
     return key;
@@ -319,7 +319,7 @@ static int ml_dsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
 }
 
 static const OSSL_PARAM *ml_dsa_gen_settable_params(ossl_unused void *genctx,
-                                                     ossl_unused void *provctx)
+                                                    ossl_unused void *provctx)
 {
     static OSSL_PARAM settable[] = {
         OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_PROPERTIES, NULL, 0),

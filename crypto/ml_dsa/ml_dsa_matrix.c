@@ -11,6 +11,15 @@
 #include "ml_dsa_vector.h"
 #include "ml_dsa_matrix.h"
 
+/*
+ * Matrix multiply of a k*l matrix of polynomials by a 1 * l vector of
+ * polynomials to produce a 1 * k vector of polynomial results.
+ * i.e. t = a * s
+ *
+ * @param a A k * l matrix of polynomials in NTT form
+ * @param s A 1 * l vector of polynomials in NTT form
+ * @param t 1 * k vector of polynomial results in NTT form
+ */
 void ossl_ml_dsa_matrix_mult_vector(const MATRIX *a, const VECTOR *s,
                                     VECTOR *t)
 {

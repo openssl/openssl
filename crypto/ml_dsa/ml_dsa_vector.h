@@ -15,18 +15,21 @@ struct vector_st {
     size_t num_poly; /* Either k or l */
 };
 
+/* @brief Set the number of polynomial elements that will be present in the vector */
 static ossl_inline ossl_unused
-void vector_init(VECTOR *v, size_t v_len)
+void vector_init(VECTOR *v, size_t num_polys)
 {
-    v->num_poly = v_len;
+    v->num_poly = num_polys;
 }
 
+/* @brief zeroize a vectors polynomial coefficients */
 static ossl_inline ossl_unused
 void vector_zero(VECTOR *va)
 {
     memset(va->poly, 0, va->num_poly * sizeof(va->poly[0]));
 }
 
+/* @brief add 2 vectors */
 static ossl_inline ossl_unused void
 vector_add(const VECTOR *lhs, const VECTOR *rhs, VECTOR *out)
 {
@@ -36,6 +39,7 @@ vector_add(const VECTOR *lhs, const VECTOR *rhs, VECTOR *out)
         poly_add(&lhs->poly[i], &rhs->poly[i], &out->poly[i]);
 }
 
+/* @brief subtract 2 vectors */
 static ossl_inline ossl_unused void
 vector_sub(const VECTOR *lhs, const VECTOR *rhs, VECTOR *out)
 {
@@ -45,6 +49,7 @@ vector_sub(const VECTOR *lhs, const VECTOR *rhs, VECTOR *out)
         poly_sub(&lhs->poly[i], &rhs->poly[i], &out->poly[i]);
 }
 
+/* @brief multiply a vector by a polynomial */
 static ossl_inline ossl_unused void
 vector_ntt_mult_poly(const VECTOR *lhs, const POLY *rhs, VECTOR *out)
 {
@@ -54,6 +59,7 @@ vector_ntt_mult_poly(const VECTOR *lhs, const POLY *rhs, VECTOR *out)
         ossl_ml_dsa_poly_ntt_mult(&lhs->poly[i], rhs, &out->poly[i]);
 }
 
+/* @brief copy a vector */
 static ossl_inline ossl_unused void
 vector_copy(VECTOR *dst, const VECTOR *src)
 {
@@ -61,6 +67,7 @@ vector_copy(VECTOR *dst, const VECTOR *src)
     memcpy(dst->poly, src->poly, sizeof(src->poly));
 }
 
+/* @brief return 1 if 2 vectors are equal, or 0 otherwise */
 static ossl_inline ossl_unused int
 vector_equal(const VECTOR *a, const VECTOR *b)
 {
@@ -75,6 +82,7 @@ vector_equal(const VECTOR *a, const VECTOR *b)
     return 1;
 }
 
+/* @brief convert a vector in place into NTT form */
 static ossl_inline ossl_unused void
 vector_ntt(VECTOR *va)
 {
@@ -84,6 +92,7 @@ vector_ntt(VECTOR *va)
         ossl_ml_dsa_poly_ntt(&va->poly[i]);
 }
 
+/* @brief convert a vector in place into inverse NTT form */
 static ossl_inline ossl_unused void
 vector_ntt_inverse(VECTOR *va)
 {
@@ -93,7 +102,11 @@ vector_ntt_inverse(VECTOR *va)
         ossl_ml_dsa_poly_ntt_inverse(&va->poly[i]);
 }
 
-
+/*
+ * @brief Decompose all polynomial coefficients of a vector into (t1, t0) such
+ * that coeff[i] == t1[i] * 2^13 + t0[i] mod q.
+ * See FIPS 204, Algorithm 35, Power2Round()
+ */
 static ossl_inline ossl_unused void
 vector_power2_round(const VECTOR *t, VECTOR *t1, VECTOR *t0)
 {
