@@ -41,7 +41,22 @@
 /* value for not yet set ECH config_id */
 #  define OSSL_ECH_config_id_unset -1
 
+#  define OSSL_ECH_OUTER_CH_TYPE 0 /* outer ECHClientHello enum */
+#  define OSSL_ECH_INNER_CH_TYPE 1 /* inner ECHClientHello enum */
+
 #  define OSSL_ECH_CIPHER_LEN 4 /* ECHCipher length (2 for kdf, 2 for aead) */
+
+#  define OSSL_ECH_SIGNAL_LEN 8 /* length of ECH acceptance signal */
+
+#  ifndef CLIENT_VERSION_LEN
+/*
+ * This is the legacy version length, i.e. len(0x0303). The same
+ * label is used in e.g. test/sslapitest.c and elsewhere but not
+ * defined in a header file I could find.
+ */
+#   define CLIENT_VERSION_LEN 2
+#  endif
+
 /*
  * Reminder of what goes in DNS for ECH RFC XXXX
  *
@@ -84,7 +99,7 @@ typedef struct ossl_echext_st {
 DEFINE_STACK_OF(OSSL_ECHEXT)
 
 typedef struct ossl_echstore_entry_st {
-    uint16_t version; /* 0xff0d for draft-13 */
+    uint16_t version; /* 0xfe0d for RFC XXXX */
     char *public_name;
     size_t pub_len;
     unsigned char *pub;
@@ -133,14 +148,19 @@ typedef struct ossl_ech_conn_st {
      */
     char *former_inner;
     /*
-     * TODO(ECH): The next 4 buffers (and lengths) may change later
-     * if a better way to handle the mutiple transcripts needed is
-     * suggested/invented. I'd suggest we review these when that code
-     * is part of a PR (which won't be for a few PR's yet.)
+     * TODO(ECH): The next 4 buffers (and lengths) may change if a
+     * better way to handle the mutiple transcripts needed is
+     * suggested/invented. I suggest re-factoring transcript handling
+     * (which is probably needed) after/with the PR that includes the
+     * server-side ECH code. That should be much easier as at that point
+     * the full set of tests can be run, whereas for now, we're limited
+     * to testing the client side really works via bodged s_client
+     * scripts, so there'd be a bigger risk of breaking something
+     * subtly if we try re-factor now.
      */
     /*
      * encoded inner ClientHello before/after ECH compression, which`
-     * is nitty/complex (to avoid repeating the same extenstion value
+     * is nitty/complex (to avoid repeating the same extension value
      * in outer and inner, thus saving bandwidth) but (re-)calculating
      * the compression is a pain, so we'll store those as we make them
      */
@@ -174,7 +194,7 @@ typedef struct ossl_ech_conn_st {
      * to avoid the need to change a couple of extension APIs.
      * TODO(ECH): check if there's another way to get that value
      */
-    size_t ext_ind;
+    int ext_ind;
     /* ECH status vars */
     int ch_depth; /* set during CH creation, 0: doing outer, 1: doing inner */
     int attempted; /* 1 if ECH was or is being attempted, 0 otherwise */
@@ -207,6 +227,39 @@ typedef struct ossl_ech_conn_st {
     unsigned char client_random[SSL3_RANDOM_SIZE]; /* CH random */
 } OSSL_ECH_CONN;
 
+/* Return values from ossl_ech_same_ext */
+#  define OSSL_ECH_SAME_EXT_ERR 0 /* bummer something wrong */
+#  define OSSL_ECH_SAME_EXT_DONE 1 /* proceed with same value in inner/outer */
+#  define OSSL_ECH_SAME_EXT_CONTINUE 2 /* generate a new value for outer CH */
+
+/*
+ * During extension construction (in extensions_clnt.c and surprisingly also in
+ * extensions.c), we need to handle inner/outer CH cloning - ossl_ech_same_ext
+ * will (depending on compile time handling options) copy the value from
+ * CH.inner to CH.outer or else processing will continue, for a 2nd call,
+ * likely generating a fresh value for the outer CH. The fresh value could well
+ * be the same as in the inner.
+ *
+ * This macro should be called in each _ctos_ function that doesn't explicitly
+ * have special ECH handling.
+ *
+ * Note that the placement of this macro needs a bit of thought - it has to go
+ * after declarations (to keep the ansi-c compile happy) and also after any
+ * checks that result in the extension not being sent but before any relevant
+ * state changes that would affect a possible 2nd call to the constructor.
+ * Luckily, that's usually not too hard, but it's not mechanical.
+ */
+#  define ECH_SAME_EXT(s, pkt) \
+    if (s->ext.ech.es != NULL && s->ext.ech.grease == 0) { \
+        int ech_iosame_rv = ossl_ech_same_ext(s, pkt); \
+        \
+        if (ech_iosame_rv == OSSL_ECH_SAME_EXT_ERR) \
+            return EXT_RETURN_FAIL; \
+        if (ech_iosame_rv == OSSL_ECH_SAME_EXT_DONE) \
+            return EXT_RETURN_SENT; \
+        /* otherwise continue as normal */ \
+    }
+
 /* Internal ECH APIs */
 
 OSSL_ECHSTORE *ossl_echstore_dup(const OSSL_ECHSTORE *old);
@@ -217,6 +270,36 @@ int ossl_ech_conn_init(SSL_CONNECTION *s, SSL_CTX *ctx,
 void ossl_ech_conn_clear(OSSL_ECH_CONN *ec);
 void ossl_echext_free(OSSL_ECHEXT *e);
 OSSL_ECHEXT *ossl_echext_dup(const OSSL_ECHEXT *src);
+#  ifdef OSSL_ECH_SUPERVERBOSE
+void ossl_ech_pbuf(const char *msg,
+                   const unsigned char *buf, const size_t blen);
+void ossl_ech_ptranscript(SSL_CONNECTION *s, const char *msg);
+#  endif
+int ossl_ech_get_retry_configs(SSL_CONNECTION *s, unsigned char **rcfgs,
+                               size_t *rcfgslen);
+int ossl_ech_send_grease(SSL_CONNECTION *s, WPACKET *pkt);
+int ossl_ech_pick_matching_cfg(SSL_CONNECTION *s, OSSL_ECHSTORE_ENTRY **ee,
+                               OSSL_HPKE_SUITE *suite);
+int ossl_ech_encode_inner(SSL_CONNECTION *s);
+int ossl_ech_find_confirm(SSL_CONNECTION *s, int hrr,
+                          unsigned char acbuf[OSSL_ECH_SIGNAL_LEN],
+                          const unsigned char *shbuf, const size_t shlen);
+int ossl_ech_make_transcript_buffer(SSL_CONNECTION *s, int for_hrr,
+                                    const unsigned char *shbuf, size_t shlen,
+                                    unsigned char **tbuf, size_t *tlen,
+                                    size_t *chend, size_t *fixedshbuf_len);
+int ossl_ech_reset_hs_buffer(SSL_CONNECTION *s, const unsigned char *buf,
+                             size_t blen);
+int ossl_ech_aad_and_encrypt(SSL_CONNECTION *s, WPACKET *pkt);
+int ossl_ech_swaperoo(SSL_CONNECTION *s);
+int ossl_ech_calc_confirm(SSL_CONNECTION *s, int for_hrr,
+                          unsigned char acbuf[OSSL_ECH_SIGNAL_LEN],
+                          const unsigned char *shbuf, const size_t shlen);
+
+/* these are internal but located in ssl/statem/extensions.c */
+int ossl_ech_same_ext(SSL_CONNECTION *s, WPACKET *pkt);
+int ossl_ech_same_key_share(void);
+int ossl_ech_2bcompressed(int ind);
 
 # endif
 #endif
