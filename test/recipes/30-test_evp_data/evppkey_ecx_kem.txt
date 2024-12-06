@@ -1,0 +1,41 @@
+# Copyright 2024 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+# Decapsulation KATs for ML-KEM-768 from BoringSSL
+# https://boringssl.googlesource.com/boringssl/+/refs/heads/master/crypto/mlkem/mlkem768_decap_tests.txt
+
+# Keys genreated using:
+#   openssl genpkey -algorithm x25519 -out x25519-priv.pem
+#   openssl pkey -in x25519-priv.pem -text
+#   openssl genpkey -algorithm x448 -out x448-priv.pem
+#   openssl pkey -in x448-priv.pem -text
+
+Title = ECX Encapsulation and Decapsulation KATs
+
+Kem = X25519
+Op = DHKEM
+Entropy = 0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901
+EncodedPublicKey = 4a0f10117bc9dfdc30be24223a2f3880ac1dca90102ad1dfe20f9b0495be4176
+Ciphertext = 3ef57be540018cbef222052346f8b9c570e91bd2027468b89429aea21a993a10
+
+Kem = X25519
+Op = DHKEM
+EncodedPrivateKey = b00c4fffc620eb1f7b13b21be44d5251fabd1e3c62faab7422786a31ec82a55e
+Input = 3ef57be540018cbef222052346f8b9c570e91bd2027468b89429aea21a993a10
+Output = f64a563e94642c44f616c40865ca1546133136de6b5129f584100a71e60bb013
+
+Kem = X448
+Op = DHKEM
+Entropy = 0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901
+EncodedPublicKey = 105234af034a40fcb64fb79cfaeb45cdb7def886c2dad64260bc644cb225881a25c1d0c66f3d55a90ea86ed5d14f2bf9ec93843461e76d1b
+Ciphertext = 37b7d2a26277d6d00dfcf8c1eaa8d72711e1a9c1a4776625b00d51aaf17b773bb900d9abd1f6385997313f9b6ed9ad85e734134b1e4e7ec3
+
+Kem = X448
+Op = DHKEM
+EncodedPrivateKey = 7ce94fc6e0bf533c1cb481cf422c1ad9b43ce1e63186726406622a2681227c1a899fd4aa16b3ef1864fcf5cc55c28c06de36dad295b83c8e
+Input = 37b7d2a26277d6d00dfcf8c1eaa8d72711e1a9c1a4776625b00d51aaf17b773bb900d9abd1f6385997313f9b6ed9ad85e734134b1e4e7ec3
+Output = aa6dd78e6be63b438518da22351e2c60e2caca0725551b0d17a1b0ce8dff6199e9e793518d1264b4074fc0cd9d867bf611456d094c8b4b3f60b3837d174cb8ff
