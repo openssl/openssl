@@ -2648,10 +2648,10 @@ int X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
             ptmp = X509_PURPOSE_get0(idx);
         }
         /* If trust not set then get from purpose default */
-        if (trust == 0)
+        if (trust == X509_TRUST_DEFAULT)
             trust = ptmp->trust;
     }
-    if (trust != 0) {
+    if (trust != X509_TRUST_DEFAULT) {
         idx = X509_TRUST_get_by_id(trust);
         if (idx == -1) {
             ERR_raise(ERR_LIB_X509, X509_R_UNKNOWN_TRUST_ID);
@@ -2661,7 +2661,7 @@ int X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
 
     if (ctx->param->purpose == 0 && purpose != 0)
         ctx->param->purpose = purpose;
-    if (ctx->param->trust == 0 && trust != 0)
+    if (ctx->param->trust == X509_TRUST_DEFAULT && trust != X509_TRUST_DEFAULT)
         ctx->param->trust = trust;
     return 1;
 }
