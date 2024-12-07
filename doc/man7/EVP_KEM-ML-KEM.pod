@@ -2,12 +2,12 @@
 
 =head1 NAME
 
-EVP_KEM-ML-KEM-512,EVP_KEM-ML-KEM-768,EVP_KEM-ML-KEM-1024,EVP_KEM-MLKEM
+EVP_KEM-ML-KEM-512,EVP_KEM-ML-KEM-768,EVP_KEM-ML-KEM-1024,EVP_KEM-ML-KEM
 - EVP_KEM ML-KEM keytype and algorithm support
 
 =head1 DESCRIPTION
 
-The B<ML-KEM> keytypes and parameters are described in L<EVP_PKEY-MLKEM(7)>.
+The B<ML-KEM> keytypes and parameters are described in L<EVP_PKEY-ML-KEM(7)>.
 See L<EVP_PKEY_encapsulate(3)> and L<EVP_PKEY_decapsulate(3)> for more info
 regarding the basic KEM operations.
 
@@ -15,7 +15,7 @@ regarding the basic KEM operations.
 
 =over 4
 
-=item "entropy" (B<OSSL_KEM_PARAM_MLKEM_ENC_ENTROPY>)<UTF8 string>
+=item "ikme" (B<OSSL_KEM_PARAM_IKME>)<UTF8 string>
 
 The OpenSSL ML-KEM encapsulation mechanism can only be modified by
 setting randomness during encapsulation facilitating testing as per
