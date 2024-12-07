@@ -467,6 +467,10 @@ consistent with the supplied purpose.
 No TLS records were configured to validate the raw public key, or DANE was not
 enabled on the connection.
 
+=item B<X509_V_ERR_INVALID_PURPOSE: unsupported Extended Key Usage>
+
+The target certificate cannot be used for the specified Extended Key Usage (EKU).
+
 =back
 
 =head1 NOTES
