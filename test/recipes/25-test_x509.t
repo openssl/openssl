@@ -16,7 +16,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_x509");
 
-plan tests => 111;
+plan tests => 122;
 
 # Prevent MSys2 filename munging for arguments that look like file paths but
 # aren't
@@ -353,6 +353,43 @@ cert_contains($attr_desc_cert,
 cert_contains($attr_desc_cert,
               "Algorithm: sha256",
               1, 'X.509 Attribute Descriptor');
+
+my $time_spec_abs_cert = srctop_file(@certs, "ext-timeSpecification-absolute.pem");
+cert_contains($time_spec_abs_cert,
+              "Timezone: UTC-05:00",
+              1, 'X.509 Time Specification (Absolute)');
+cert_contains($time_spec_abs_cert,
+              "Absolute: Any time between Dec 20 13:07:21 2022 GMT and Dec 20 13:07:21 2022 GMT",
+              1, 'X.509 Time Specification (Absolute)');
+
+my $time_spec_per_cert = srctop_file(@certs, "ext-timeSpecification-periodic.pem");
+cert_contains($time_spec_per_cert,
+              "Timezone: UTC-05:00",
+              1, 'X.509 Time Specification (Periodic)');
+cert_contains($time_spec_per_cert,
+              "NOT this time:",
+              1, 'X.509 Time Specification (Periodic)');
+cert_contains($time_spec_per_cert,
+              "05:43:21 - 12:34:56",
+              1, 'X.509 Time Specification (Periodic)');
+cert_contains($time_spec_per_cert,
+              "Days of the week: SUN, MON",
+              1, 'X.509 Time Specification (Periodic)');
+cert_contains($time_spec_per_cert,
+              "Weeks of the month: 3, 4",
+              1, 'X.509 Time Specification (Periodic)');
+cert_contains($time_spec_per_cert,
+              "Months: MAY, JUN",
+              1, 'X.509 Time Specification (Periodic)');
+cert_contains($time_spec_per_cert,
+              "Years: 2022, 2023",
+              1, 'X.509 Time Specification (Periodic)');
+cert_contains($time_spec_per_cert,
+              "Months: JUL, AUG",
+              1, 'X.509 Time Specification (Periodic)');
+cert_contains($time_spec_per_cert,
+              "Years: 2023, 2024",
+              1, 'X.509 Time Specification (Periodic)');
 
 sub test_errors { # actually tests diagnostics of OSSL_STORE
     my ($expected, $cert, @opts) = @_;
