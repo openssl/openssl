@@ -28,7 +28,7 @@ void ossl_ml_kem_ctx_free(ossl_ml_kem_ctx *ctx);
 
 #  define ML_KEM_DEGREE 256
 /*
- * With (q-1) an odd multiple of 256, and 17 ("zeta") as a primive 256th root
+ * With (q-1) an odd multiple of 256, and 17 ("zeta") as a primitive 256th root
  * of unity, the polynomial (X^256+1) splits in Z_q[X] into 128 irreducible
  * quadratic factors of the form (X^2 - zeta^(2i + 1)).  This is used to
  * implement efficient multiplication in the ring R_q via the "NTT" transform.

@@ -80,7 +80,7 @@ static int sanity_test(void)
 {
     EVP_RAND_CTX *privctx;
     EVP_RAND_CTX *pubctx;
-    const EVP_MD *sha256 = EVP_MD_fetch(NULL, "sha256", NULL);
+    EVP_MD *sha256 = EVP_MD_fetch(NULL, "sha256", NULL);
     ossl_ml_kem_ctx *mctx;
     const ossl_ml_kem_vinfo *v[3];
     int i, ret = 0;
@@ -244,6 +244,7 @@ static int sanity_test(void)
         OPENSSL_free(out_ciphertext);
     }
     ossl_ml_kem_ctx_free(mctx);
+    EVP_MD_free(sha256);
     return ret == 0;
 }
 
