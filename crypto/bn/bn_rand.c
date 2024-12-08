@@ -36,8 +36,8 @@ static int bnrand(BNRAND_FLAG flag, BIGNUM *rnd, int bits, int top, int bottom,
     if (bits < 0 || (bits == 1 && top > 0))
         goto toosmall;
 
-    bytes = (bits + 7) / 8;
     bit = (bits - 1) % 8;
+    bytes = bits / 8 + (14 - bit) / 8;  /* Same as (bits + 7) / 8 but can't overflow */
     mask = 0xff << (bit + 1);
 
     buf = OPENSSL_malloc(bytes);
