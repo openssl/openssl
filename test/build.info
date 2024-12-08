@@ -193,14 +193,14 @@ IF[{- !$disabled{tests} -}]
     DEFINE[evp_test]=NO_LEGACY_MODULE
   ENDIF
 
-  SOURCE[evp_extra_test]=evp_extra_test.c fake_rsaprov.c
-  INCLUDE[evp_extra_test]=../include ../apps/include
+  SOURCE[evp_extra_test]=evp_extra_test.c fake_rsaprov.c fake_pipelineprov.c
+  INCLUDE[evp_extra_test]=../include ../apps/include \
+                          ../providers/common/include \
+                          ../providers/implementations/include
   DEPEND[evp_extra_test]=../libcrypto.a libtestutil.a
   IF[{- !$disabled{module} && !$disabled{legacy} -}]
     DEFINE[evp_extra_test]=STATIC_LEGACY
     SOURCE[evp_extra_test]=../providers/legacyprov.c
-    INCLUDE[evp_extra_test]=../providers/common/include \
-                            ../providers/implementations/include
     DEPEND[evp_extra_test]=../providers/liblegacy.a \
                            ../providers/libcommon.a
   ENDIF
