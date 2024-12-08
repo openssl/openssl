@@ -411,7 +411,8 @@ effect.
 
 =item B<-trusted> I<file>
 
-Parse I<file> as a set of one or more certificates.
+Parse I<file> as a set of certificates.
+When the file is in PEM format, it may contain multiple certificates.
 Each of them qualifies as trusted if has a suitable positive trust attribute
 or it is self-signed or the B<-partial_chain> option is specified.
 This option implies the B<-no-CAfile>, B<-no-CApath>, and B<-no-CAstore> options
@@ -421,7 +422,8 @@ This option may be used multiple times.
 
 =item B<-untrusted> I<file>
 
-Parse I<file> as a set of one or more certificates.
+Parse I<file> as a set of certificates.
+When the file is in PEM format, it may contain multiple certificates.
 All certificates (typically of intermediate CAs) are considered untrusted
 and may be used to
 construct a certificate chain from the target certificate to a trust anchor.
