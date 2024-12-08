@@ -106,7 +106,7 @@ cleanup:
 int genpkey_main(int argc, char **argv)
 {
     CONF *conf = NULL;
-    BIO *in = NULL, *out = NULL, *outpubkey = NULL;
+    BIO *mem_out = NULL, *mem_outpubkey = NULL;
     ENGINE *e = NULL;
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
@@ -237,14 +237,16 @@ int genpkey_main(int argc, char **argv)
         goto end;
     }
 
-    out = bio_open_owner(outfile, outformat, private);
-    if (out == NULL)
+    mem_out = BIO_new(BIO_s_mem());
+    if (mem_out == NULL)
         goto end;
+    BIO_set_mem_eof_return(mem_out, 0);
 
     if (outpubkeyfile != NULL) {
-        outpubkey = bio_open_owner(outpubkeyfile, outformat, private);
-        if (outpubkey == NULL)
+        mem_outpubkey = BIO_new(BIO_s_mem());
+        if (mem_outpubkey == NULL)
             goto end;
+        BIO_set_mem_eof_return(mem_outpubkey, 0);
     }
 
     if (verbose)
@@ -257,17 +259,17 @@ int genpkey_main(int argc, char **argv)
         goto end;
 
     if (do_param) {
-        rv = PEM_write_bio_Parameters(out, pkey);
+        rv = PEM_write_bio_Parameters(mem_out, pkey);
     } else if (outformat == FORMAT_PEM) {
         assert(private);
-        rv = PEM_write_bio_PrivateKey(out, pkey, cipher, NULL, 0, NULL, pass);
-        if (rv > 0 && outpubkey != NULL)
-           rv = PEM_write_bio_PUBKEY(outpubkey, pkey);
+        rv = PEM_write_bio_PrivateKey(mem_out, pkey, cipher, NULL, 0, NULL, pass);
+        if (rv > 0 && mem_outpubkey != NULL)
+            rv = PEM_write_bio_PUBKEY(mem_outpubkey, pkey);
     } else if (outformat == FORMAT_ASN1) {
         assert(private);
-        rv = i2d_PrivateKey_bio(out, pkey);
-        if (rv > 0 && outpubkey != NULL)
-           rv = i2d_PUBKEY_bio(outpubkey, pkey);
+        rv = i2d_PrivateKey_bio(mem_out, pkey);
+        if (rv > 0 && mem_outpubkey != NULL)
+            rv = i2d_PUBKEY_bio(mem_outpubkey, pkey);
     } else {
         BIO_printf(bio_err, "Bad format specified for key\n");
         goto end;
@@ -282,9 +284,9 @@ int genpkey_main(int argc, char **argv)
 
     if (text) {
         if (do_param)
-            rv = EVP_PKEY_print_params(out, pkey, 0, NULL);
+            rv = EVP_PKEY_print_params(mem_out, pkey, 0, NULL);
         else
-            rv = EVP_PKEY_print_private(out, pkey, 0, NULL);
+            rv = EVP_PKEY_print_private(mem_out, pkey, 0, NULL);
 
         if (rv <= 0) {
             BIO_puts(bio_err, "Error printing key\n");
@@ -294,14 +296,25 @@ int genpkey_main(int argc, char **argv)
 
  end:
     sk_OPENSSL_STRING_free(keyopt);
-    if (ret != 0)
+    if (ret != 0) {
         ERR_print_errors(bio_err);
+    } else {
+        if (mem_outpubkey != NULL) {
+            rv = mem_bio_to_file(mem_outpubkey, outpubkeyfile, outformat, private);
+            if (!rv)
+                BIO_printf(bio_err, "Error writing to outpubkey: '%s'. Error: %s\n", outpubkeyfile, strerror(errno));
+        }
+        if (mem_out != NULL) {
+            rv = mem_bio_to_file(mem_out, outfile, outformat, private);
+            if (!rv)
+                BIO_printf(bio_err, "Error writing to outfile: '%s'. Error: %s\n", outpubkeyfile, strerror(errno));
+        }
+    }
     EVP_PKEY_free(pkey);
     EVP_PKEY_CTX_free(ctx);
     EVP_CIPHER_free(cipher);
-    BIO_free_all(out);
-    BIO_free_all(outpubkey);
-    BIO_free(in);
+    BIO_free_all(mem_out);
+    BIO_free_all(mem_outpubkey);
     release_engine(e);
     OPENSSL_free(pass);
     NCONF_free(conf);
