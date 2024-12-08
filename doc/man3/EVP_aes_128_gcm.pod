@@ -46,7 +46,16 @@ EVP_aes_128_wrap_pad,
 EVP_aes_192_wrap_pad,
 EVP_aes_256_wrap_pad,
 EVP_aes_128_xts,
-EVP_aes_256_xts
+EVP_aes_256_xts,
+EVP_aes_128_cbc_hmac_sha1_etm,
+EVP_aes_128_cbc_hmac_sha256_etm,
+EVP_aes_128_cbc_hmac_sha512_etm,
+EVP_aes_192_cbc_hmac_sha1_etm,
+EVP_aes_192_cbc_hmac_sha256_etm,
+EVP_aes_192_cbc_hmac_sha512_etm,
+EVP_aes_256_cbc_hmac_sha1_etm,
+EVP_aes_256_cbc_hmac_sha256_etm,
+EVP_aes_256_cbc_hmac_sha512_etm
 - EVP AES cipher
 
 =head1 SYNOPSIS
@@ -114,6 +123,27 @@ is 256 bits long.
 WARNING: this is not intended for usage outside of TLS and requires calling of
 some undocumented ctrl functions. These ciphers do not conform to the EVP AEAD
 interface.
+
+=item EVP_aes_128_cbc_hmac_sha1_etm(),
+EVP_aes_192_cbc_hmac_sha1_etm()
+EVP_aes_256_cbc_hmac_sha1_etm()
+
+Authenticated encryption in encrypt-then-mac order with AES in CBC mode using
+SHA-1 as HMAC, with keys of 128,192 and 256 bits length respectively.
+
+=item EVP_aes_128_cbc_hmac_sha256_etm(),
+EVP_aes_192_cbc_hmac_sha256_etm()
+EVP_aes_256_cbc_hmac_sha256_etm()
+
+Authenticated encryption in encrypt-then-mac order with AES in CBC mode using
+SHA-256 as HMAC, with keys of 128,192 and 256 bits length respectively.
+
+=item EVP_aes_128_cbc_hmac_sha512_etm(),
+EVP_aes_192_cbc_hmac_sha512_etm()
+EVP_aes_256_cbc_hmac_sha512_etm()
+
+Authenticated encryption in encrypt-then-mac order with AES in CBC mode using
+SHA-512 as HMAC, with keys of 128,192 and 256 bits length respectively.
 
 =item EVP_aes_128_ccm(),
 EVP_aes_192_ccm(),
