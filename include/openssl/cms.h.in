@@ -57,6 +57,8 @@ DECLARE_ASN1_FUNCTIONS(CMS_ContentInfo)
 DECLARE_ASN1_FUNCTIONS(CMS_ReceiptRequest)
 DECLARE_ASN1_PRINT_FUNCTION(CMS_ContentInfo)
 
+DECLARE_ASN1_DUP_FUNCTION(CMS_EnvelopedData)
+
 CMS_ContentInfo *CMS_ContentInfo_new_ex(OSSL_LIB_CTX *libctx, const char *propq);
 
 # define CMS_SIGNERINFO_ISSUER_SERIAL    0

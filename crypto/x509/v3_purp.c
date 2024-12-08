@@ -102,7 +102,7 @@ int X509_check_purpose(X509 *x, int id, int non_leaf)
 
 int X509_PURPOSE_set(int *p, int purpose)
 {
-    if (X509_PURPOSE_get_by_id(purpose) == -1) {
+    if (purpose != 0 && X509_PURPOSE_get_by_id(purpose) == -1) {
         ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_PURPOSE);
         return 0;
     }
