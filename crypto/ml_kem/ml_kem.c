@@ -159,7 +159,7 @@ int hash_h(uint8_t out[ML_KEM_PKHASH_BYTES], const uint8_t *in, size_t len,
  * length input, producing 64 bytes of output, in particular the seeds
  * (d,z) for key generation.
  */
-static
+static __owur
 int hash_g(uint8_t out[ML_KEM_SEED_BYTES], const uint8_t *in, size_t len,
            mctx *ctx)
 {
@@ -789,7 +789,7 @@ end:
  *
  * Caller passes storage for |y|, |e1| and |u|.
  */
-static
+static __owur
 int encrypt_cpa(uint8_t *out, const uint8_t *message, const scalar *m,
                 const scalar *t, const uint8_t *randomness, scalar *y,
                 scalar *e1, scalar *u, vinfo_t vinfo, mctx *ctx)
@@ -1135,9 +1135,9 @@ int ossl_ml_kem_encap_seed(uint8_t *out,
                            const scalar *t,
                            const uint8_t rho[ML_KEM_RANDOM_BYTES],
                            const uint8_t pkhash[ML_KEM_PKHASH_BYTES],
-                           scalar *y,
-                           scalar *e1,
-                           scalar *u,
+                           scalar *tmp_y,
+                           scalar *tmp_e1,
+                           scalar *tmp_u,
                            vinfo_t vinfo,
                            mctx *ctx)
 {
@@ -1152,7 +1152,8 @@ int ossl_ml_kem_encap_seed(uint8_t *out,
     memcpy(input, entropy, ML_KEM_RANDOM_BYTES);
     memcpy(input + ML_KEM_RANDOM_BYTES, pkhash, ML_KEM_PKHASH_BYTES);
     if (!hash_g(Kr, input, sizeof(input), ctx)
-        || !encrypt_cpa(out, entropy, m, t, r, y, e1, u, vinfo, ctx))
+        || !encrypt_cpa(out, entropy, m, t, r, tmp_y, tmp_e1, tmp_u,
+                        vinfo, ctx))
         return 0;
     memcpy(out_shared_secret, Kr, ML_KEM_SHARED_SECRET_BYTES);
     return 1;
@@ -1160,8 +1161,10 @@ int ossl_ml_kem_encap_seed(uint8_t *out,
 
 /*
  * FIPS 203, Section 6.3, Algorithm 18: ML-KEM.Decaps_internal
- * This is fully deterministic, the randomness for the FO transform is
- * extracted during private key generation.
+ *
+ * Barring failure of the supporting SHA3/SHAKE primitives, this is fully
+ * deterministic, the randomness for the FO transform is extracted during
+ * private key generation.
  */
 int ossl_ml_kem_decap(uint8_t *shared_secret,
                       const uint8_t *ctext,
@@ -1172,9 +1175,9 @@ int ossl_ml_kem_decap(uint8_t *shared_secret,
                       const uint8_t rho[ML_KEM_RANDOM_BYTES],
                       const uint8_t pkhash[ML_KEM_PKHASH_BYTES],
                       const uint8_t z[ML_KEM_RANDOM_BYTES],
-                      scalar *y,
-                      scalar *e1,
-                      scalar *u,
+                      scalar *tmp_y,
+                      scalar *tmp_e1,
+                      scalar *tmp_u,
                       vinfo_t vinfo,
                       mctx *ctx)
 {
@@ -1185,11 +1188,35 @@ int ossl_ml_kem_decap(uint8_t *shared_secret,
     uint8_t mask;
     int i;
 
-    decrypt_cpa(decrypted, ctext, s, u, vinfo);
+# if ML_KEM_SHARED_SECRET_BYTES != ML_KEM_RANDOM_BYTES
+#  error "Invalid unequal lengths of ML-KEM shared secret and random inputs"
+# endif
+
+    /*
+     * If our KDF is unavailable, fail early! Otherwise, keep going ignoring
+     * any further errors, returning success, and whatever we got for a shared
+     * secret.  The decrypt_cpa() function is just arithmetic on secret data,
+     * so should not be subject to failure that makes its output predictable.
+     *
+     * We guard against "should never happen" catastrophic failure of the
+     * "pure" function |hash_g| by overwriting the shared secret with the
+     * content of the failure key and returning early, if nevertheless hash_g
+     * fails.  This is not constant-time, but a failure of |hash_g| already
+     * implies loss of side-channel resistance.
+     *
+     * The same action is taken, if also |encrypt_cpa| should catastrophically
+     * fail, due to failure of the |PRF| underlyign the CBD functions.
+     */
+    if (!kdf(failure_key, z, ctext, vinfo->ctext_bytes, ctx))
+        return 0;
+    decrypt_cpa(decrypted, ctext, s, tmp_u, vinfo);
     memcpy(decrypted + ML_KEM_SHARED_SECRET_BYTES, pkhash, ML_KEM_PKHASH_BYTES);
-    hash_g(Kr, decrypted, sizeof(decrypted), ctx);
-    encrypt_cpa(tmp_ctext, decrypted, m, t, r, y, e1, u, vinfo, ctx);
-    kdf(failure_key, z, ctext, vinfo->ctext_bytes, ctx);
+    if (!hash_g(Kr, decrypted, sizeof(decrypted), ctx)
+        || !encrypt_cpa(tmp_ctext, decrypted, m, t, r, tmp_y, tmp_e1, tmp_u,
+                        vinfo, ctx)) {
+        memcpy(shared_secret, failure_key, ML_KEM_SHARED_SECRET_BYTES);
+        return 1;
+    }
     mask = constant_time_eq_int_8(0,
         CRYPTO_memcmp(ctext, tmp_ctext, vinfo->ctext_bytes));
     for (i = 0; i < ML_KEM_SHARED_SECRET_BYTES; i++)

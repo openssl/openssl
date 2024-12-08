@@ -223,15 +223,15 @@ int decap(uint8_t *shared_secret, const uint8_t *ctext, size_t len,
     /* Scratch space the called function can't stack-allocate in C90 */
     vector tmp_y, tmp_e1, tmp_u;
 
-    if (len != vinfo.ctext_bytes) {
+    if (len != vinfo.ctext_bytes
+        || !ossl_ml_kem_decap(shared_secret, ctext, cbuf, *pub->m.v, priv->s.v,
+                              pub->t.v, pub->rho, pub->pkhash, priv->z,
+                              tmp_y.v, tmp_e1.v, tmp_u.v, &vinfo, ctx)) {
         RAND_bytes_ex(ctx->libctx, shared_secret,
                       ML_KEM_SHARED_SECRET_BYTES, vinfo.secbits);
         return 0;
     }
-
-    return ossl_ml_kem_decap(shared_secret, ctext, cbuf, *pub->m.v, priv->s.v,
-                             pub->t.v, pub->rho, pub->pkhash, priv->z,
-                             tmp_y.v, tmp_e1.v, tmp_u.v, &vinfo, ctx);
+    return 1;
 }
 
 vinfo_t get_vinfo(void)
