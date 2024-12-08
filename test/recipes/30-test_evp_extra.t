@@ -17,9 +17,12 @@ setup("test_evp_extra");
 
 my $no_conf_autoload = disabled('autoload-config');
 
-plan tests => $no_conf_autoload ? 3 : 4;
+plan tests => $no_conf_autoload ? 4 : 5;
 
 ok(run(test(["evp_extra_test"])), "running evp_extra_test");
+
+# Use manually fed RNG to test the ML-KEM "randomised" interface.
+ok(run(test(["evp_extra_test", "-test-rand"])), "non-derandomised ML-KEM test");
 
 unless ($no_conf_autoload) {
     local $ENV{OPENSSL_CONF} = srctop_file("test","default-for-evptest.cnf");
