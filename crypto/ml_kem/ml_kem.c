@@ -100,7 +100,9 @@ static const uint16_t kModRoots[128] = {
     2110, 1219, 2935, 394,  885,  2444, 2154, 1175,
 };
 
-# define STATIC_CHECK(cond) ((void)sizeof(char[1 - 2 * !(cond)]))
+# define SIZELT(t1, t2)             ((sizeof(t1) < sizeof(t2)) ? -1 : 1)
+# define SIZE_UINT_LT_UINT32        SIZELT(unsigned int, uint32_t)
+# define CHECK_SIZE_UINT_GE_UINT32  ((void)sizeof(char[SIZE_UINT_LT_UINT32]))
 
 /*
  * single_keccak hashes |inlen| bytes from |in| and writes |outlen| bytes of
@@ -868,13 +870,13 @@ mctx *ossl_ml_kem_newctx(OSSL_LIB_CTX *libctx, const char *properties)
 {
     mctx *ctx = OPENSSL_zalloc(sizeof(*ctx));
 
+    /* Precondition of ML-KEM implementation correctness */
+    CHECK_SIZE_UINT_GE_UINT32;
+
     if (ctx == NULL) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
-
-    /* Precondition of ML-KEM implementation correctness */
-    STATIC_CHECK(sizeof(unsigned int) >= sizeof (uint32_t));
 
     ctx->libctx = libctx;
     ctx->shake128_cache = EVP_MD_fetch(libctx, "SHAKE128", properties);
