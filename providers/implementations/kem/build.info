@@ -16,4 +16,4 @@ IF[{- !$disabled{ec} -}]
 ENDIF
 
 SOURCE[$TEMPLATE_KEM_GOAL]=template_kem.c
-SOURCE[$ML_KEM_GOAL]=ml_kem.c
+SOURCE[$ML_KEM_GOAL] = ml_kem.c
