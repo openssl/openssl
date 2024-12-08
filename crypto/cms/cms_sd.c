@@ -644,7 +644,7 @@ int CMS_SignerInfo_cert_cmp(CMS_SignerInfo *si, X509 *cert)
     return ossl_cms_SignerIdentifier_cert_cmp(si->sid, cert);
 }
 
-int CMS_set1_signers_certs(CMS_ContentInfo *cms, STACK_OF(X509) *scerts,
+int CMS_set1_signers_certs(CMS_ContentInfo *cms, const STACK_OF(X509) *scerts,
                            unsigned int flags)
 {
     CMS_SignedData *sd;
@@ -1074,8 +1074,9 @@ int CMS_SignerInfo_verify_content(CMS_SignerInfo *si, BIO *chain)
 }
 
 BIO *CMS_SignedData_verify(CMS_SignedData *sd, BIO *detached_data,
-                           STACK_OF(X509) *scerts, X509_STORE *store,
-                           STACK_OF(X509) *extra, STACK_OF(X509_CRL) *crls,
+                           const STACK_OF(X509) *scerts, X509_STORE *store,
+                           const STACK_OF(X509) *extra,
+                           const STACK_OF(X509_CRL) *crls,
                            unsigned int flags,
                            OSSL_LIB_CTX *libctx, const char *propq)
 {
