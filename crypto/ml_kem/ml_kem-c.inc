@@ -85,6 +85,8 @@ typedef kemsym(ossl_ml_kem,private_key) private_key;
 # define encode_private_key         kemsym(ossl_ml_kem,encode_private_key)
 # define get_vinfo                  kemsym(ossl_ml_kem,get_vinfo)
 
+typedef const ossl_ml_kem_vinfo *vinfo_t;
+
 /*
  * Per-variant fixed parameters
  */

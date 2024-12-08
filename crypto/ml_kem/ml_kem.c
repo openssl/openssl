@@ -17,6 +17,9 @@
 # include <crypto/ml_kem.h>
 # include "ml_kem_local.h"
 
+typedef ossl_ml_kem_cbd_func cbd_t;
+typedef const ossl_ml_kem_vinfo *vinfo_t;
+
 # define DEGREE ML_KEM_DEGREE
 static const int kPrime = ML_KEM_PRIME;
 

@@ -73,15 +73,12 @@ DECLARE_VARIANT_STRUCTS(1024, ML_KEM_1024_RANK);
 #  undef DECLARE_ML_KEM_PRV_ST
 #  undef ossl_ml_kem_name
 
-typedef ossl_ml_kem_cbd_func cbd_t;
-typedef const ossl_ml_kem_vinfo *vinfo_t;
-
 /*
  * Variant-specific CBD vector generation helpers, these generate a single CBD
  * scalar.
  */
-__owur cbd_t ossl_ml_kem_cbd_2;
-__owur cbd_t ossl_ml_kem_cbd_3;
+__owur ossl_ml_kem_cbd_func ossl_ml_kem_cbd_2;
+__owur ossl_ml_kem_cbd_func ossl_ml_kem_cbd_3;
 
 /*
  * These functions implement the internals of the variant-specific API.
@@ -94,32 +91,35 @@ __owur cbd_t ossl_ml_kem_cbd_3;
  */
 void ossl_ml_kem_encode_public_key(
         uint8_t *out, const scalar *t, const uint8_t rho[ML_KEM_RANDOM_BYTES],
-        vinfo_t vinfo);
+        const ossl_ml_kem_vinfo *vinfo);
 
 void ossl_ml_kem_encode_private_key(
         uint8_t *out, const scalar *s, const scalar *t,
         const uint8_t rho[ML_KEM_RANDOM_BYTES],
         const uint8_t pkhash[ML_KEM_PKHASH_BYTES],
         const uint8_t z[ML_KEM_RANDOM_BYTES],
-        vinfo_t vinfo);
+        const ossl_ml_kem_vinfo *vinfo);
 
 int ossl_ml_kem_parse_public_key(
         const uint8_t *in, scalar *m, scalar *t,
         uint8_t rho[ML_KEM_RANDOM_BYTES],
-        uint8_t pkhash[ML_KEM_PKHASH_BYTES], vinfo_t vinfo, mctx *ctx);
+        uint8_t pkhash[ML_KEM_PKHASH_BYTES],
+        const ossl_ml_kem_vinfo *vinfo, mctx *ctx);
 
 __owur
 int ossl_ml_kem_parse_private_key(
         const uint8_t *in, scalar *m, scalar *s, scalar *t,
         uint8_t rho[ML_KEM_RANDOM_BYTES], uint8_t pkhash[ML_KEM_PKHASH_BYTES],
-        uint8_t z[ML_KEM_RANDOM_BYTES], vinfo_t vinfo, mctx *ctx);
+        uint8_t z[ML_KEM_RANDOM_BYTES],
+        const ossl_ml_kem_vinfo *vinfo, mctx *ctx);
 
 __owur
 int ossl_ml_kem_genkey(
         const uint8_t *seed, uint8_t *pubenc, scalar *m, scalar *s,
         scalar *tmp_e, scalar *t, uint8_t rho[ML_KEM_RANDOM_BYTES],
         uint8_t pkhash[ML_KEM_PKHASH_BYTES],
-        uint8_t z[ML_KEM_RANDOM_BYTES], vinfo_t vinfo, mctx *ctx);
+        uint8_t z[ML_KEM_RANDOM_BYTES],
+        const ossl_ml_kem_vinfo *vinfo, mctx *ctx);
 
 int ossl_ml_kem_encap_seed(
         uint8_t *ctext, uint8_t *shared_secret,
@@ -127,7 +127,8 @@ int ossl_ml_kem_encap_seed(
         const scalar *m, const scalar *t,
         const uint8_t rho[ML_KEM_RANDOM_BYTES],
         const uint8_t pkhash[ML_KEM_PKHASH_BYTES],
-        scalar *y, scalar *e1, scalar *u, vinfo_t vinfo, mctx *ctx);
+        scalar *tmp_y, scalar *tmp_e1, scalar *tmp_u,
+        const ossl_ml_kem_vinfo *vinfo, mctx *ctx);
 
 __owur
 int ossl_ml_kem_decap(
@@ -135,5 +136,6 @@ int ossl_ml_kem_decap(
         const scalar *m, const scalar *s, const scalar *t,
         const uint8_t rho[ML_KEM_RANDOM_BYTES],
         const uint8_t pkhash[ML_KEM_PKHASH_BYTES],
-        const uint8_t z[ML_KEM_RANDOM_BYTES], scalar *y, scalar *e1, scalar *u,
-        vinfo_t vinfo, mctx *ctx);
+        const uint8_t z[ML_KEM_RANDOM_BYTES],
+        scalar *tmp_y, scalar *tmp_e1, scalar *tmp_u,
+        const ossl_ml_kem_vinfo *vinfo, mctx *ctx);
