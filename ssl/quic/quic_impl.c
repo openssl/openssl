@@ -781,10 +781,11 @@ void ossl_quic_free(SSL *s)
      */
     if (ctx.qc->default_xso != NULL) {
         QUIC_XSO *xso = ctx.qc->default_xso;
-        ctx.qc->default_xso = NULL;
+
         qctx_unlock(&ctx);
         SSL_free(&xso->obj.ssl);
         qctx_lock(&ctx);
+        ctx.qc->default_xso = NULL;
     }
 
     /* Ensure we have no remaining XSOs. */
