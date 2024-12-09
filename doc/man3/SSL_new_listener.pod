@@ -168,11 +168,11 @@ B<SSL_LISTENER_FLAG_NO_VALIDATE> may be passed in the flags field of both
 SSL_new_listener() and SSL_new_listener_from().  Note that this flag only
 impacts the sending of retry frames for server address validation.  Tokens may
 still be communicated from the server via NEW_TOKEN frames, which will still
-be validated on receipt in furute connections.  Note that this setting is not
-recommended and may be dangerous in untrusted environments.  Not preforming
+be validated on receipt in future connections.  Note that this setting is not
+recommended and may be dangerous in untrusted environments.  Not performing 
 address validation exposes the server to malicious clients that may open large
 numbers of connections and never transact data on them (roughly equivalent to
-a TCP syn flood attack), whcih address validation mitigates.
+a TCP syn flood attack), which address validation mitigates.
 
 The SSL_new_from_listener() creates a client connection under a given listener
 SSL object. For QUIC, it is also possible to use SSL_new_from_listener() in
@@ -206,7 +206,7 @@ SSL_listen() returns 1 on success or 0 on failure.
 SSL_accept_connection() returns a pointer to a new SSL object on success or NULL
 on failure. On success, the caller assumes ownership of the reference.
 
-SSL_get_accept_connection_queue_len() returns a nonnegative value, or 0 if
+SSL_get_accept_connection_queue_len() returns a non-negative value, or 0 if
 called on an unsupported SSL object type.
 
 SSL_new_from_listener() returns a pointer to a new SSL object on success or NULL
