@@ -781,11 +781,10 @@ void ossl_quic_free(SSL *s)
      */
     if (ctx.qc->default_xso != NULL) {
         QUIC_XSO *xso = ctx.qc->default_xso;
-
+        ctx.qc->default_xso = NULL;
         qctx_unlock(&ctx);
         SSL_free(&xso->obj.ssl);
         qctx_lock(&ctx);
-        ctx.qc->default_xso = NULL;
     }
 
     /* Ensure we have no remaining XSOs. */
@@ -4378,7 +4377,7 @@ SSL *ossl_quic_new_from_listener(SSL *ssl, uint64_t flags)
 #endif
 #if !defined(OPENSSL_NO_QUIC_THREAD_ASSIST)
     qc->is_thread_assisted
-        = ((ql->obj.domain_flags & SSL_DOMAIN_FLAG_THREAD_ASSISTED) != 0);
+    = ((ql->obj.domain_flags & SSL_DOMAIN_FLAG_THREAD_ASSISTED) != 0);
 #endif
 
     /* Create the handshake layer. */
@@ -4389,11 +4388,10 @@ SSL *ossl_quic_new_from_listener(SSL *ssl, uint64_t flags)
     }
     sc->s3.flags |= TLS1_FLAGS_QUIC;
 
-    qc->default_ssl_options = OSSL_QUIC_PERMITTED_OPTIONS_CONN |
-                              OSSL_QUIC_PERMITTED_OPTIONS_STREAM;
+    qc->default_ssl_options = OSSL_QUIC_PERMITTED_OPTIONS;
     qc->last_error = SSL_ERROR_NONE;
 
-    /* this is QCSO */
+    /* this is QCSO, we don't expect to accept connections */
     qc->ch = ossl_quic_port_create_outgoing(qc->port, qc->tls);
     if (qc->ch == NULL)
         goto err;
@@ -4432,7 +4430,7 @@ SSL *ossl_quic_new_from_listener(SSL *ssl, uint64_t flags)
 
 err:
     if (qc != NULL) {
-        qc_cleanup(qc, /*have_lock=*/0);
+        qc_cleanup(qc, /*have_lock=*/ 0);
         OPENSSL_free(qc);
     }
     qctx_unlock(&ctx);

@@ -1288,7 +1288,7 @@ static int ch_on_transport_params(const unsigned char *params,
              * Keep in mind the client always sends QUIC_TPARAM_INITIAL_SCID
              * empty (cid.id_len == 0 (see ch_generate_transport_params()).
              */
-            if (cid.id_len != 0 &&  !ossl_quic_conn_id_eq(&ch->init_scid, &cid)) {
+            if (cid.id_len != 0 && !ossl_quic_conn_id_eq(&ch->init_scid, &cid)) {
                 reason = TP_REASON_EXPECTED_VALUE("INITIAL_SCID");
                 goto malformed;
             }
