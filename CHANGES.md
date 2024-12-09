@@ -30,6 +30,13 @@ OpenSSL 3.5
 
 ### Changes between 3.4 and 3.5 [xx XXX xxxx]
 
+* Added `-rounds` option to the `passwd` command. Previously, the number of
+  rounds could only be specified as part of the salt. With the `-rounds`
+  option, a custom number of rounds can be specified while letting `passwd`
+  generate a random salt.
+
+  *Alexander Beyn*
+
 * All the BIO_meth_get_*() functions allowing reuse of the internal OpenSSL
   BIO method implementations were deprecated. The reuse is unsafe due to
   dependency on the code of the internal methods not changing.

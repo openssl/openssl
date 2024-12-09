@@ -15,6 +15,7 @@ B<openssl passwd>
 [B<-5>]
 [B<-6>]
 [B<-salt> I<string>]
+[B<-rounds> I<count>]
 [B<-in> I<file>]
 [B<-stdin>]
 [B<-noverify>]
@@ -63,6 +64,10 @@ See L<https://www.akkadia.org/drepper/SHA-crypt.txt>.
 
 Use the specified salt.
 When reading a password from the terminal, this implies B<-noverify>.
+
+=item B<-rounds> I<count>
+
+Use the specified number of rounds with SHA256 and SHA512 algorithms.
 
 =item B<-in> I<file>
 

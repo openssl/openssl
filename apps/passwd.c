@@ -47,13 +47,14 @@ typedef enum {
 
 static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
                      char *passwd, BIO *out, int quiet, int table,
-                     int reverse, size_t pw_maxlen, passwd_modes mode);
+                     int reverse, size_t pw_maxlen, passwd_modes mode,
+                     unsigned int rounds);
 
 typedef enum OPTION_choice {
     OPT_COMMON,
     OPT_IN,
     OPT_NOVERIFY, OPT_QUIET, OPT_TABLE, OPT_REVERSE, OPT_APR1,
-    OPT_1, OPT_5, OPT_6, OPT_AIXMD5, OPT_SALT, OPT_STDIN,
+    OPT_1, OPT_5, OPT_6, OPT_AIXMD5, OPT_SALT, OPT_ROUNDS, OPT_STDIN,
     OPT_R_ENUM, OPT_PROV_ENUM
 } OPTION_CHOICE;
 
@@ -76,6 +77,7 @@ const OPTIONS passwd_options[] = {
 
     OPT_SECTION("Cryptographic"),
     {"salt", OPT_SALT, 's', "Use provided salt"},
+    {"rounds", OPT_ROUNDS, 'p', "Number of rounds to perform"},
     {"6", OPT_6, '-', "SHA512-based password algorithm"},
     {"5", OPT_5, '-', "SHA256-based password algorithm"},
     {"apr1", OPT_APR1, '-', "MD5-based password algorithm, Apache variant"},
@@ -100,7 +102,7 @@ int passwd_main(int argc, char **argv)
 #ifndef OPENSSL_NO_UI_CONSOLE
     int in_noverify = 0;
 #endif
-    int passed_salt = 0, quiet = 0, table = 0, reverse = 0;
+    int passed_salt = 0, quiet = 0, table = 0, reverse = 0, rounds = 0;
     int ret = 1;
     passwd_modes mode = passwd_unset;
     size_t passwd_malloc_size = 0;
@@ -167,6 +169,9 @@ int passwd_main(int argc, char **argv)
         case OPT_SALT:
             passed_salt = 1;
             salt = opt_arg();
+            break;
+        case OPT_ROUNDS:
+            rounds = opt_int_arg();
             break;
         case OPT_STDIN:
             if (pw_source_defined)
@@ -260,7 +265,7 @@ int passwd_main(int argc, char **argv)
         do {                    /* loop over list of passwords */
             passwd = *passwds++;
             if (!do_passwd(passed_salt, &salt, &salt_malloc, passwd, bio_out,
-                           quiet, table, reverse, pw_maxlen, mode))
+                           quiet, table, reverse, pw_maxlen, mode, rounds))
                 goto end;
         } while (*passwds != NULL);
     } else {
@@ -284,7 +289,7 @@ int passwd_main(int argc, char **argv)
 
                 if (!do_passwd
                     (passed_salt, &salt, &salt_malloc, passwd, bio_out, quiet,
-                     table, reverse, pw_maxlen, mode))
+                     table, reverse, pw_maxlen, mode, rounds))
                     goto end;
             }
             done = (r <= 0);
@@ -492,7 +497,7 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt)
  * https://www.akkadia.org/drepper/SHA-crypt.txt
  * (note that it's in the public domain)
  */
-static char *shacrypt(const char *passwd, const char *magic, const char *salt)
+static char *shacrypt(const char *passwd, const char *magic, const char *salt, unsigned int rounds)
 {
     /* Prefix for optional rounds specification.  */
     static const char rounds_prefix[] = "rounds=";
@@ -517,8 +522,7 @@ static char *shacrypt(const char *passwd, const char *magic, const char *salt)
     EVP_MD_CTX *md = NULL, *md2 = NULL;
     const EVP_MD *sha = NULL;
     size_t passwd_len, salt_len, magic_len;
-    unsigned int rounds = ROUNDS_DEFAULT;        /* Default */
-    char rounds_custom = 0;
+    char rounds_custom = 1;
     char *p_bytes = NULL;
     char *s_bytes = NULL;
     char *cp = NULL;
@@ -544,6 +548,9 @@ static char *shacrypt(const char *passwd, const char *magic, const char *salt)
     }
 
     if (strncmp(salt, rounds_prefix, sizeof(rounds_prefix) - 1) == 0) {
+        if (rounds != 0) /* rounds specified explicitly and in salt */
+            return NULL;
+
         const char *num = salt + sizeof(rounds_prefix) - 1;
         char *endp;
         unsigned long int srounds = strtoul (num, &endp, 10);
@@ -559,6 +566,11 @@ static char *shacrypt(const char *passwd, const char *magic, const char *salt)
         } else {
             return NULL;
         }
+    }
+
+    if (rounds == 0) {
+        rounds = ROUNDS_DEFAULT;
+        rounds_custom = 0;
     }
 
     OPENSSL_strlcpy(ascii_magic, magic, sizeof(ascii_magic));
@@ -775,7 +787,8 @@ static char *shacrypt(const char *passwd, const char *magic, const char *salt)
 
 static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
                      char *passwd, BIO *out, int quiet, int table,
-                     int reverse, size_t pw_maxlen, passwd_modes mode)
+                     int reverse, size_t pw_maxlen, passwd_modes mode,
+                     unsigned int rounds)
 {
     char *hash = NULL;
 
@@ -830,7 +843,7 @@ static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
     if (mode == passwd_aixmd5)
         hash = md5crypt(passwd, "", *salt_p);
     if (mode == passwd_sha256 || mode == passwd_sha512)
-        hash = shacrypt(passwd, (mode == passwd_sha256 ? "5" : "6"), *salt_p);
+        hash = shacrypt(passwd, (mode == passwd_sha256 ? "5" : "6"), *salt_p, rounds);
     assert(hash != NULL);
 
     if (table && !reverse)

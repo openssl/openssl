@@ -80,7 +80,7 @@ my @sha_high_rounds_tests =
        expected => '$6$rounds=123456$asaltof16chars..$BtCwjqMJGx5hrJhZywWvt0RLE8uZ4oPwcelCjmw2kSYu.Ec6ycULevoBK25fs2xXgMNrCzIMVcgEJAstJeonj1' },
     );
 
-plan tests => 9 + scalar @sha_tests + scalar @sha_high_rounds_tests;
+plan tests => 11 + scalar @sha_tests + scalar @sha_high_rounds_tests;
 
 
 ok(compare1stline_re([qw{openssl passwd -1 password}], '^\$1\$.{8}\$.{22}\R$'),
@@ -102,6 +102,11 @@ ok(compare1stline([qw{openssl passwd -salt xxxxxxxxxxxxxxxx -5 password}], '$5$x
    'SHA256 password with salt xxxxxxxxxxxxxxxx');
 ok(compare1stline([qw{openssl passwd -salt xxxxxxxxxxxxxxxx -6 password}], '$6$xxxxxxxxxxxxxxxx$VjGUrXBG6/8yW0f6ikBJVOb/lK/Tm9LxHJmFfwMvT7cpk64N9BW7ZQhNeMXAYFbOJ6HDG7wb0QpxJyYQn0rh81'),
    'SHA512 password with salt xxxxxxxxxxxxxxxx');
+
+ok(compare1stline([qw{openssl passwd -salt xxxxxxxx -rounds 1000 -5 password}], '$5$rounds=1000$xxxxxxxx$V7USPiytk9bYx/Pqb7W/Ix18twfe0ScGU/kNT28GbC8'),
+   'SHA256 password with salt xxxxxxxx and 1000 rounds');
+ok(compare1stline([qw{openssl passwd -salt xxxxxxxx -rounds 1000 -6 password}], '$6$rounds=1000$xxxxxxxx$SPxLCi62D8mh9OsqNJanM3gMG0qjD0tFSZz0.v2nERt8ayKwlF9gUDktRxdNqqrU1.zbEuCmRZ8EeT5PT.eBE0'),
+   'SHA512 password with salt xxxxxxxx and 1000 rounds');
 
 foreach (@sha_tests) {
     ok(compare1stline([qw{openssl passwd}, '-'.$_->{type}, '-salt', $_->{salt},
