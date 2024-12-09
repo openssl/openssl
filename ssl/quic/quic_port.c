@@ -11,6 +11,7 @@
 #include "internal/quic_channel.h"
 #include "internal/quic_lcidm.h"
 #include "internal/quic_srtm.h"
+#include "internal/quic_txp.h"
 #include "internal/ssl_unwrap.h"
 #include "quic_port_local.h"
 #include "quic_channel_local.h"
@@ -606,6 +607,12 @@ static void port_bind_channel(QUIC_PORT *port, const BIO_ADDR *peer,
         return;
 
     if (odcid->id_len != 0) {
+        /*
+         * If we have an odcid, then we wen't through server address validation
+         * and as such, this channel need not conform to the 3x validation cap
+         * See RFC 9000 s. 8.1
+         */
+        ossl_quic_tx_packetiser_set_validated(ch->txp);
         if (!ossl_quic_bind_channel(ch, peer, scid, dcid, odcid)) {
             ossl_quic_channel_free(ch);
             return;
@@ -1170,7 +1177,6 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
          * RFC 9000 s. 6 and 14.1, we only do so however, if the UDP datagram
          * is a minimum of 1200 bytes in size
          */
-
         if (e->data_len < 1200)
             goto undesirable;
 
