@@ -1257,8 +1257,7 @@ int ossl_quic_conn_set_initial_peer_addr(SSL *s,
         return 1;
     }
 
-    ctx.qc->init_peer_addr = *peer_addr;
-    return 1;
+    return BIO_ADDR_copy(&ctx.qc->init_peer_addr, peer_addr);
 }
 
 /*
@@ -4328,10 +4327,114 @@ err:
 /*
  * SSL_new_from_listener
  * ---------------------
+ * code here is derived from ossl_quic_new(). The `ssl` argument is
+ * a listener object which already comes with QUIC port/engine. The newly
+ * created QUIC connection object (QCSO) is going to share the port/engine
+ * with listener (`ssl`).  The `ssl` also becomes a parent of QCSO created
+ * by this function. The caller uses QCSO instance to connect to
+ * remote QUIC server.
+ *
+ * The QCSO created here requires us to also create a channel so we
+ * can connect to remote server.
  */
 SSL *ossl_quic_new_from_listener(SSL *ssl, uint64_t flags)
 {
-    /* TODO(QUIC SERVER): Implement SSL_new_from_listener */
+    QCTX ctx;
+    QUIC_CONNECTION *qc;
+    QUIC_LISTENER *ql;
+    SSL_CONNECTION *sc = NULL;
+
+    if (flags != 0)
+        return NULL;
+
+    if (!expect_quic_listener(ssl, &ctx))
+        return NULL;
+
+    if (!SSL_up_ref(&ctx.ql->obj.ssl))
+        return NULL;
+
+    qctx_lock(&ctx);
+
+    ql = ctx.ql;
+
+    if ((qc = OPENSSL_zalloc(sizeof(*qc))) == NULL) {
+        QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_CRYPTO_LIB, NULL);
+        goto err;
+    }
+
+    /*
+     * NOTE: setting a listener here is needed so `qc_cleanup()` does the right
+     * thing. Setting listener to ql avoids premature destruction of port in
+     * qc_cleanup()
+     */
+    qc->listener = ql;
+    qc->engine = ql->engine;
+    qc->port = ql->port;
+/* create channel */
+#if defined(OPENSSL_THREADS)
+    /* this is the engine mutex */
+    qc->mutex = ql->mutex;
+#endif
+#if !defined(OPENSSL_NO_QUIC_THREAD_ASSIST)
+    qc->is_thread_assisted
+    = ((ql->obj.domain_flags & SSL_DOMAIN_FLAG_THREAD_ASSISTED) != 0);
+#endif
+
+    /* Create the handshake layer. */
+    qc->tls = ossl_ssl_connection_new_int(ql->obj.ssl.ctx, NULL, TLS_method());
+    if (qc->tls == NULL || (sc = SSL_CONNECTION_FROM_SSL(qc->tls)) == NULL) {
+        QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_INTERNAL_ERROR, NULL);
+        goto err;
+    }
+    sc->s3.flags |= TLS1_FLAGS_QUIC;
+
+    qc->default_ssl_options = OSSL_QUIC_PERMITTED_OPTIONS;
+    qc->last_error = SSL_ERROR_NONE;
+
+    /*
+     * This is QCSO, we don't expect to accept connections
+     * on success the channel assumes ownership of tls, we need
+     * to grab reference for qc.
+     */
+    qc->ch = ossl_quic_port_create_outgoing(qc->port, qc->tls);
+
+    ossl_quic_channel_set_msg_callback(qc->ch, ql->obj.ssl.ctx->msg_callback, &qc->obj.ssl);
+    ossl_quic_channel_set_msg_callback_arg(qc->ch, ql->obj.ssl.ctx->msg_callback_arg);
+
+    /*
+     * We deliberately pass NULL for engine and port, because we don't want to
+     * to turn QCSO we create here into an event leader, nor port leader.
+     * Both those roles are occupied already by listener (`ssl`) we use
+     * to create a new QCSO here.
+     */
+    if (!ossl_quic_obj_init(&qc->obj, ql->obj.ssl.ctx,
+                            SSL_TYPE_QUIC_CONNECTION,
+                            &ql->obj.ssl, NULL, NULL)) {
+        QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_INTERNAL_ERROR, NULL);
+        goto err;
+    }
+
+    /* Initialise libssl APL-related state. */
+    qc->default_stream_mode = SSL_DEFAULT_STREAM_MODE_AUTO_BIDI;
+    qc->default_ssl_mode = qc->obj.ssl.ctx->mode;
+    qc->default_ssl_options = qc->obj.ssl.ctx->options & OSSL_QUIC_PERMITTED_OPTIONS;
+    qc->incoming_stream_policy = SSL_INCOMING_STREAM_POLICY_AUTO;
+    qc->last_error = SSL_ERROR_NONE;
+
+    qc_update_reject_policy(qc);
+
+    qctx_unlock(&ctx);
+
+    return &qc->obj.ssl;
+
+err:
+    if (qc != NULL) {
+        qc_cleanup(qc, /* have_lock= */ 0);
+        OPENSSL_free(qc);
+    }
+    qctx_unlock(&ctx);
+    SSL_free(&ctx.ql->obj.ssl);
+
     return NULL;
 }
 
