@@ -66,6 +66,13 @@ typedef struct ossl_quic_tx_packetiser_args_st {
 
 OSSL_QUIC_TX_PACKETISER *ossl_quic_tx_packetiser_new(const OSSL_QUIC_TX_PACKETISER_ARGS *args);
 
+void ossl_quic_tx_packetiser_set_validated(OSSL_QUIC_TX_PACKETISER *txp);
+void ossl_quic_tx_packetiser_add_unvalidated_credit(OSSL_QUIC_TX_PACKETISER *txp,
+                                                    size_t credit);
+void ossl_quic_tx_packetiser_consume_unvalidated_credit(OSSL_QUIC_TX_PACKETISER *txp,
+                                                        size_t credit);
+size_t ossl_quic_tx_packetiser_get_unvalidated_credit(OSSL_QUIC_TX_PACKETISER *txp);
+
 typedef void (ossl_quic_initial_token_free_fn)(const unsigned char *buf,
                                                size_t buf_len, void *arg);
 
