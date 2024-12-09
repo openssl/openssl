@@ -2217,19 +2217,19 @@ static int encapsulate(EVP_TEST *t, EVP_PKEY_CTX *ctx, const char *op,
     OSSL_PARAM params[10];
     size_t params_n = 0, params_n_allocated = 0;
 
+    memset(params, 0, sizeof(params));
+
     if (sk_OPENSSL_STRING_num(kdata->init_ctrls) > 0)
         if (ctrl2params(t, kdata->init_ctrls, NULL, params,
                         OSSL_NELEM(params) - 2, &params_n))
             goto err;
 
-    if (kdata->entropy != NULL) {
+    if (kdata->entropy != NULL)
         /* Input key material a.k.a entropy */
-        params[params_n] =
+        params[params_n++] =
             OSSL_PARAM_construct_octet_string(OSSL_KEM_PARAM_IKME,
                                               kdata->entropy,
                                               kdata->entropylen);
-        params[params_n + 1] = OSSL_PARAM_construct_end();
-    }
 
     if (EVP_PKEY_encapsulate_init(ctx, params) <= 0) {
         t->err = "TEST_ENCAPSULATE_INIT_ERROR";
