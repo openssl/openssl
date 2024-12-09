@@ -9,16 +9,16 @@
 
 #include "ml_dsa_poly.h"
 
-/* Either a 1 * l column vector or a k * 1 row vector of polynomial entries */
 struct vector_st {
-    POLY poly[ML_DSA_K_MAX];
-    size_t num_poly; /* Either k or l */
+    POLY *poly;
+    size_t num_poly;
 };
 
 /* @brief Set the number of polynomial elements that will be present in the vector */
 static ossl_inline ossl_unused
-void vector_init(VECTOR *v, size_t num_polys)
+void vector_init(VECTOR *v, POLY *polys, size_t num_polys)
 {
+    v->poly = polys;
     v->num_poly = num_polys;
 }
 
@@ -64,7 +64,7 @@ static ossl_inline ossl_unused void
 vector_copy(VECTOR *dst, const VECTOR *src)
 {
     dst->num_poly = src->num_poly;
-    memcpy(dst->poly, src->poly, sizeof(src->poly));
+    memcpy(dst->poly, src->poly, src->num_poly * sizeof(src->poly[0]));
 }
 
 /* @brief return 1 if 2 vectors are equal, or 0 otherwise */

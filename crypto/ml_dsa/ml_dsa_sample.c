@@ -188,6 +188,7 @@ int ossl_ml_dsa_sample_expandA(EVP_MD_CTX *g_ctx, const uint8_t *rho,
     int ret = 0;
     size_t i, j;
     uint8_t derived_seed[ML_DSA_RHO_BYTES + 2];
+    POLY *poly = out->m_poly;
 
     /* The seed used for each matrix element is rho + column_index + row_index */
     memcpy(derived_seed, rho, ML_DSA_RHO_BYTES);
@@ -197,8 +198,7 @@ int ossl_ml_dsa_sample_expandA(EVP_MD_CTX *g_ctx, const uint8_t *rho,
             derived_seed[ML_DSA_RHO_BYTES + 1] = (uint8_t)i;
             derived_seed[ML_DSA_RHO_BYTES] = (uint8_t)j;
             /* Generate the polynomial for each matrix element using a unique seed */
-            if (!rej_ntt_poly(g_ctx, derived_seed, sizeof(derived_seed),
-                              &out->m_poly[i][j]))
+            if (!rej_ntt_poly(g_ctx, derived_seed, sizeof(derived_seed), poly++))
                 goto err;
         }
     }

@@ -24,6 +24,7 @@ void ossl_ml_dsa_matrix_mult_vector(const MATRIX *a, const VECTOR *s,
                                     VECTOR *t)
 {
     size_t i, j;
+    POLY *poly = a->m_poly;
 
     vector_zero(t);
 
@@ -31,7 +32,7 @@ void ossl_ml_dsa_matrix_mult_vector(const MATRIX *a, const VECTOR *s,
         for (j = 0; j < a->l; j++) {
             POLY product;
 
-            ossl_ml_dsa_poly_ntt_mult(&a->m_poly[i][j], &s->poly[j], &product);
+            ossl_ml_dsa_poly_ntt_mult(poly++, &s->poly[j], &product);
             poly_add(&product, &t->poly[i], &t->poly[i]);
         }
     }

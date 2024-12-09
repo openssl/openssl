@@ -9,15 +9,16 @@
 
 /* A 'k' by 'l' Matrix object ('k' rows and 'l' columns) containing polynomial entries */
 struct matrix_st {
-    POLY m_poly[ML_DSA_K_MAX][ML_DSA_L_MAX];
+    POLY *m_poly;
     size_t k, l;
 };
 
 static ossl_inline ossl_unused void
-matrix_init(MATRIX *m, size_t k, size_t l)
+matrix_init(MATRIX *m, POLY *polys, size_t k, size_t l)
 {
     m->k = k;
     m->l = l;
+    m->m_poly = polys;
 }
 
 void ossl_ml_dsa_matrix_mult_vector(const MATRIX *matrix_kl, const VECTOR *vl,

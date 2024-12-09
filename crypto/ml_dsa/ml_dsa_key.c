@@ -26,12 +26,15 @@
 ML_DSA_KEY *ossl_ml_dsa_key_new(OSSL_LIB_CTX *libctx, const char *alg)
 {
     ML_DSA_KEY *ret;
+    size_t sz;
     const ML_DSA_PARAMS *params = ossl_ml_dsa_params_get(alg);
+    POLY *poly;
 
     if (params == NULL)
         return NULL;
 
-    ret = OPENSSL_zalloc(sizeof(*ret));
+    sz = sizeof(POLY) * (params->k * 3 + params->l);
+    ret = OPENSSL_zalloc(sizeof(*ret) + sz);
     if (ret != NULL) {
         if (!CRYPTO_NEW_REF(&ret->references, 1)) {
             OPENSSL_free(ret);
@@ -39,10 +42,11 @@ ML_DSA_KEY *ossl_ml_dsa_key_new(OSSL_LIB_CTX *libctx, const char *alg)
         }
         ret->libctx = libctx;
         ret->params = params;
-        vector_init(&ret->t0, params->k);
-        vector_init(&ret->t1, params->k);
-        vector_init(&ret->s2, params->k);
-        vector_init(&ret->s1, params->l);
+        poly = (POLY *)((uint8_t *)ret + sizeof(*ret));
+        vector_init(&ret->t0, poly, params->k);
+        vector_init(&ret->t1, poly + params->k, params->k);
+        vector_init(&ret->s2, poly + 2 * params->k, params->k);
+        vector_init(&ret->s1, poly + 3 * params->k, params->l);
     }
     return ret;
 }
@@ -180,14 +184,15 @@ int ossl_ml_dsa_key_fromdata(ML_DSA_KEY *key, const OSSL_PARAM params[],
 static int public_from_private(ML_DSA_CTX *ctx, const ML_DSA_KEY *key,
                                VECTOR *t1, VECTOR *t0)
 {
+    const ML_DSA_PARAMS *params = ctx->params;
+    POLY polys[ML_DSA_K_MAX + ML_DSA_L_MAX + ML_DSA_K_MAX * ML_DSA_L_MAX];
     MATRIX a_ntt;
     VECTOR s1_ntt;
     VECTOR t;
-    const ML_DSA_PARAMS *params = ctx->params;
 
-    matrix_init(&a_ntt,  params->k, params->l);
-    vector_init(&s1_ntt, params->l);
-    vector_init(&t, params->k);
+    vector_init(&t, polys, params->k);
+    vector_init(&s1_ntt, polys + params->k, params->l);
+    matrix_init(&a_ntt, polys + params->k + params->l, params->k, params->l);
 
     /* Using rho generate A' = A in NTT form */
     if (!ossl_ml_dsa_sample_expandA(ctx->g_ctx, key->rho, &a_ntt))
@@ -214,6 +219,7 @@ int ossl_ml_dsa_key_pairwise_check(const ML_DSA_KEY *key)
     int ret = 0;
     ML_DSA_CTX *ctx = NULL;
     VECTOR t1, t0;
+    POLY polys[ML_DSA_K_MAX * 2];
 
     if (key->pub_encoding == NULL || key->priv_encoding == 0)
         return 0;
@@ -222,8 +228,8 @@ int ossl_ml_dsa_key_pairwise_check(const ML_DSA_KEY *key)
     if (ctx == NULL)
         return 0;
 
-    vector_init(&t1, key->params->k);
-    vector_init(&t0, key->params->k);
+    vector_init(&t1, polys, key->params->k);
+    vector_init(&t0, polys + key->params->k, key->params->k);
     if (!public_from_private(ctx, key, &t1, &t0))
         goto err;
 
