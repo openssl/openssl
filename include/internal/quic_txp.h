@@ -71,7 +71,8 @@ void ossl_quic_tx_packetiser_add_unvalidated_credit(OSSL_QUIC_TX_PACKETISER *txp
                                                     size_t credit);
 void ossl_quic_tx_packetiser_consume_unvalidated_credit(OSSL_QUIC_TX_PACKETISER *txp,
                                                         size_t credit);
-size_t ossl_quic_tx_packetiser_get_unvalidated_credit(OSSL_QUIC_TX_PACKETISER *txp);
+int ossl_quic_tx_packetiser_check_unvalidated_credit(OSSL_QUIC_TX_PACKETISER *txp,
+                                                     size_t req_credit);
 
 typedef void (ossl_quic_initial_token_free_fn)(const unsigned char *buf,
                                                size_t buf_len, void *arg);
