@@ -22,8 +22,8 @@
  * The multiplication of a.b mod q requires division by q which is a slow operation.
  *
  * When many multiplications mod q are required montgomery multiplication
- * can be used. This requires a number R > N such that R & N are coprime
- * (i.e. GCD(N, R) = 1), so that division happens using R instead of q.
+ * can be used. This requires a number R > q such that R & q are coprime
+ * (i.e. GCD(R, q) = 1), so that division happens using R instead of q.
  * If r is a power of 2 then this division can be done as a bit shift.
  *
  * Given that q = 2^23 - 2^13 + 1
