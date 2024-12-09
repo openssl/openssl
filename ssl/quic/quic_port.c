@@ -688,7 +688,7 @@ static int generate_retry_token(BIO_ADDR *peer, QUIC_CONN_ID odcid,
         || (token->remote_addr = OPENSSL_malloc(token->remote_addr_len)) == NULL
         || !BIO_ADDR_rawaddress(peer, token->remote_addr,
                                 &token->remote_addr_len)) {
-        OPENSSL_free(token->remote_addr);
+        cleanup_validation_token(token);
         return 0;
     }
 
