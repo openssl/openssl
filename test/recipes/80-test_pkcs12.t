@@ -288,7 +288,7 @@ with({ exit_checker => sub { return shift == 1; } },
            "test bad pkcs12 file 3 (info)");
      });
 
-#Test that mac verification doesn't fail when mac is absent in the file
+# Test that mac verification doesn't fail when mac is absent in the file
 {
     my $nomac = srctop_file("test", "recipes", "80-test_pkcs12_data", "nomac_parse.p12");
     ok(run(app(["openssl", "pkcs12", "-in", $nomac, "-passin", "pass:testpassword"])),
