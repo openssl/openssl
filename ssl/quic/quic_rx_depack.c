@@ -1411,6 +1411,7 @@ int ossl_quic_handle_frames(QUIC_CHANNEL *ch, OSSL_QRX_PKT *qpacket)
     PACKET pkt;
     OSSL_ACKM_RX_PKT ackm_data;
     uint32_t enc_level;
+    size_t dgram_len = qpacket->datagram_len;
 
     /*
      * ok has three states:
@@ -1443,6 +1444,18 @@ int ossl_quic_handle_frames(QUIC_CHANNEL *ch, OSSL_QRX_PKT *qpacket)
 
     ok = 0; /* Still assume the worst */
     ackm_data.pkt_space = ossl_quic_enc_level_to_pn_space(enc_level);
+
+    /*
+     * RFC 9000 s. 8.1
+     * If we recieve a packet from a client protected with handshake keys
+     * We can consider the connection validated, and the amplification limit
+     * no longer applies.  Otherwise
+     * Add this packet length to the unvalidated credit we have
+     */
+    if (enc_level == QUIC_ENC_LEVEL_HANDSHAKE)
+        ossl_quic_tx_packetiser_set_validated(ch->txp);
+    else
+        ossl_quic_tx_packetiser_add_unvalidated_credit(ch->txp, dgram_len);
 
     /* Now that special cases are out of the way, parse frames */
     if (!PACKET_buf_init(&pkt, qpacket->hdr->data, qpacket->hdr->len)
