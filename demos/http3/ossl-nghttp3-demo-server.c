@@ -24,7 +24,9 @@
 #define nghttp3_arraylen(A) (sizeof(A) / sizeof(*(A)))
 
 /* The crappy test wants 20 bytes */
-static uint8_t nulldata[20] = "12345678901234567890";
+#define NULL_PAYLOAD "12345678901234567890"
+static uint8_t *nulldata = (uint8_t *) NULL_PAYLOAD;
+static size_t nulldata_sz = sizeof(NULL_PAYLOAD) - 1;
 
 /* The nghttp3 variable we need in the main part and read_from_ssl_ids */
 static nghttp3_settings settings;
@@ -281,13 +283,16 @@ static int on_recv_header(nghttp3_conn *conn, int64_t stream_id, int32_t token,
     fprintf(stderr, "\n");
 
     if (token == NGHTTP3_QPACK_TOKEN__PATH) {
-        memcpy(h3ssl->url, vvalue.base, vvalue.len);
+        int len = (((vvalue.len) < (MAXURL)) ? (vvalue.len) : (MAXURL));
+
+        memcpy(h3ssl->url, vvalue.base, len);
         if (h3ssl->url[0] == '/') {
             if (h3ssl->url[1] == '\0') {
-                strcpy(h3ssl->url, "index.html");
+                strncpy(h3ssl->url, "index.html", MAXURL);
+                h3ssl->url[MAXURL - 1] = '\0';
             } else {
-                memcpy(h3ssl->url, h3ssl->url + 1, vvalue.len - 1);
-                h3ssl->url[vvalue.len - 1] = '\0';
+                memcpy(h3ssl->url, h3ssl->url + 1, len - 1);
+                h3ssl->url[len - 1] = '\0';
             }
         }
     }
@@ -374,52 +379,53 @@ static int quic_server_read(nghttp3_conn *h3conn, SSL *stream, uint64_t id, stru
  */
 static int quic_server_h3streams(nghttp3_conn *h3conn, struct h3ssl *h3ssl)
 {
-    SSL *rstream;
-    SSL *pstream;
-    SSL *cstream;
+    SSL *rstream = NULL;
+    SSL *pstream = NULL;
+    SSL *cstream = NULL;
+    SSL *conn;
     uint64_t r_streamid, p_streamid, c_streamid;
-    struct ssl_id *ssl_ids = h3ssl->ssl_ids;
 
-    rstream = SSL_new_stream(ssl_ids[1].s, SSL_STREAM_FLAG_UNI);
+    conn = get_ids_connection(h3ssl);
+    if (conn == NULL) {
+        fprintf(stderr, "quic_server_h3streams no connection\n");
+        fflush(stderr);
+        return -1;
+    }
+    rstream = SSL_new_stream(conn, SSL_STREAM_FLAG_UNI);
     if (rstream != NULL) {
-        fprintf(stderr, "=> Opened on %llu\n",
+        printf("=> Opened on %llu\n",
                 (unsigned long long)SSL_get_stream_id(rstream));
-        fflush(stderr);
     } else {
         fprintf(stderr, "=> Stream == NULL!\n");
-        fflush(stderr);
-        return -1;
+        goto err;
     }
-    pstream = SSL_new_stream(ssl_ids[1].s, SSL_STREAM_FLAG_UNI);
+    pstream = SSL_new_stream(conn, SSL_STREAM_FLAG_UNI);
     if (pstream != NULL) {
-        fprintf(stderr, "=> Opened on %llu\n",
+        printf("=> Opened on %llu\n",
                 (unsigned long long)SSL_get_stream_id(pstream));
-        fflush(stderr);
     } else {
         fprintf(stderr, "=> Stream == NULL!\n");
-        fflush(stderr);
-        return -1;
+        goto err;
     }
-    cstream = SSL_new_stream(ssl_ids[1].s, SSL_STREAM_FLAG_UNI);
+    cstream = SSL_new_stream(conn, SSL_STREAM_FLAG_UNI);
     if (cstream != NULL) {
         fprintf(stderr, "=> Opened on %llu\n",
                 (unsigned long long)SSL_get_stream_id(cstream));
         fflush(stderr);
     } else {
         fprintf(stderr, "=> Stream == NULL!\n");
-        fflush(stderr);
-        return -1;
+        goto err;
     }
     r_streamid = SSL_get_stream_id(rstream);
     p_streamid = SSL_get_stream_id(pstream);
     c_streamid = SSL_get_stream_id(cstream);
     if (nghttp3_conn_bind_qpack_streams(h3conn, p_streamid, r_streamid)) {
         fprintf(stderr, "nghttp3_conn_bind_qpack_streams failed!\n");
-        return -1;
+        goto err;
     }
     if (nghttp3_conn_bind_control_stream(h3conn, c_streamid)) {
         fprintf(stderr, "nghttp3_conn_bind_qpack_streams failed!\n");
-        return -1;
+        goto err;
     }
     printf("control: %llu enc %llu dec %llu\n",
            (unsigned long long)c_streamid,
@@ -430,6 +436,15 @@ static int quic_server_h3streams(nghttp3_conn *h3conn, struct h3ssl *h3ssl)
     add_id(SSL_get_stream_id(cstream), cstream, h3ssl);
 
     return 0;
+err:
+    fflush(stderr);
+    if (rstream != NULL)
+        SSL_free(rstream);
+    if (pstream != NULL)
+        SSL_free(pstream);
+    if (cstream != NULL)
+        SSL_free(cstream);
+    return -1;
 }
 
 /* Try to read from the streams we have */
@@ -487,14 +502,9 @@ static int read_from_ssl_ids(nghttp3_conn **curh3conn, struct h3ssl *h3ssl)
     h3ssl->done = 0;
 
     /* Process all the item we have polled */
-    item = NULL;
-    for (i = 0; i < numitem; i++) {
+    for (i = 0, item = items; i < numitem; i++, item++) {
         SSL *s;
 
-        if (!item)
-            item = items;
-        else
-            item++;
         if (item->revents == SSL_POLL_EVENT_NONE)
             continue;
         processed_event = 0;
@@ -1123,9 +1133,9 @@ static int run_quic_server(SSL_CTX *ctx, int fd)
         h3ssl.ldata = get_file_length(&h3ssl);
         if (h3ssl.ldata == 0) {
             /* We don't find the file: use default test string */
-            sprintf(slength, "%d", 20);
             h3ssl.ptr_data = nulldata;
-            h3ssl.ldata = 20;
+            h3ssl.ldata = nulldata_sz;
+            sprintf(slength, "%d", h3ssl.ldata);
             /* content-type: text/html */
             make_nv(&resp[num_nv++], "content-type", "text/html");
         } else if (h3ssl.ldata == INT_MAX) {
