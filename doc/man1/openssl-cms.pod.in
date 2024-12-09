@@ -191,6 +191,10 @@ to the output file.
 Verify signed data. Expects a signed data on input and outputs
 the signed data. Both clear text and opaque signing is supported.
 
+By default, validation of signer certificates and their chain
+is done w.r.t. the S/MIME signing (C<smimesign>) purpose.
+For details see L<openssl-verification-options(1)/Certificate Extensions>.
+
 =item B<-resign>
 
 Resign a message: take an existing message and one or more new signers.
