@@ -22,6 +22,14 @@ struct ml_dsa_key_st {
     uint8_t rho[ML_DSA_RHO_BYTES]; /* public random seed */
     uint8_t tr[ML_DSA_TR_BYTES];   /* Pre-cached public key Hash */
     uint8_t K[ML_DSA_K_BYTES];     /* Private random seed for signing */
+
+    /*
+     * The encoded public and private keys, these are non NULL if the key
+     * components are generated or loaded.
+     */
+    uint8_t *pub_encoding;
+    uint8_t *priv_encoding;
+
     /*
      * t0 is the Polynomial encoding of the 13 LSB of each coefficient of the
      * uncompressed public key polynomial t. This is saved as part of the
@@ -35,13 +43,6 @@ struct ml_dsa_key_st {
      * (There are 23 bits in q-modulus.. i.e 10 bits = 23 - 13)
      */
     VECTOR t1;
-    VECTOR s1; /* private secret of size L with short coefficients (-4..4) or (-2..2) */
     VECTOR s2; /* private secret of size K with short coefficients (-4..4) or (-2..2) */
-
-    /*
-     * The encoded public and private keys, these are non NULL if the key
-     * components are generated or loaded.
-     */
-    uint8_t *pub_encoding;
-    uint8_t *priv_encoding;
+    VECTOR s1; /* private secret of size L with short coefficients (-4..4) or (-2..2) */
 };
