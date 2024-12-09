@@ -2220,28 +2220,27 @@ static int encapsulate(EVP_TEST *t, EVP_PKEY_CTX *ctx, const char *op,
     KEM_DATA *kdata = t->data;
     unsigned char *wrapped = NULL, *secret = NULL;
     size_t wrappedlen = 0, secretlen = 0;
-    OSSL_PARAM params[10] = { OSSL_PARAM_END };
+    OSSL_PARAM params[10];
     size_t params_n = 0;
+    /* Reserve space for the terminator and possibly IKME */
+    const size_t params_max = OSSL_NELEM(params) - 1 - (kdata->entropy != NULL);
 
     if (sk_OPENSSL_STRING_num(kdata->init_ctrls) > 0)
-        if (ctrl2params(t, kdata->init_ctrls, NULL, params,
-                        OSSL_NELEM(params) - 1, &params_n))
+        if (ctrl2params(t, kdata->init_ctrls, NULL, params, params_max,
+                        &params_n))
             goto err;
 
     /* We don't expect very many controls here */
-    if (params_n >= 9) {
-        TEST_error("Too many encapsulate test case parameters %zd", params_n);
+    if (!TEST_size_t_lt(params_n, params_max))
         goto err;
-    }
 
-    if (kdata->entropy != NULL) {
+    if (kdata->entropy != NULL)
         /* Input key material a.k.a entropy */
-        params[params_n] =
+        params[params_n++] =
             OSSL_PARAM_construct_octet_string(OSSL_KEM_PARAM_IKME,
                                               kdata->entropy,
                                               kdata->entropylen);
-        params[params_n + 1] = OSSL_PARAM_construct_end();
-    }
+    params[params_n] = OSSL_PARAM_construct_end();
 
     if (EVP_PKEY_encapsulate_init(ctx, params) <= 0) {
         t->err = "TEST_ENCAPSULATE_INIT_ERROR";
