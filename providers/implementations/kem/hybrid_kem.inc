@@ -37,11 +37,11 @@ static void *NAME(newctx)(void *provctx)
 }
 
 static const OSSL_PARAM *NAME(ctx_gettable_params)(void *vctx, void *provctx) {
-    return ossl_hybrid_ettable_common(OSSL_NAME(ctx_gettable_params));
+    return ossl_hybrid_gettable_common(OSSL_NAME(ctx_gettable_params));
 }
 
 static const OSSL_PARAM *NAME(ctx_settable_params)(void *vctx, void *provctx) {
-    return ossl_hybrid_ettable_common(OSSL_NAME(ctx_settable_params));
+    return ossl_hybrid_settable_common(OSSL_NAME(ctx_settable_params));
 }
 
 const OSSL_DISPATCH OSSL_NAME(functions)[] = {

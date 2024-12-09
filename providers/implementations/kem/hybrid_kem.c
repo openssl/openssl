@@ -177,7 +177,8 @@ int ossl_hybrid_kem_encapsulate(void *vctx, unsigned char *enc, size_t *enclen,
         return 0;
 
     if (secretlen == NULL || enclen == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise_data(ERR_LIB_PROV, ERR_R_PASSED_NULL_PARAMETER,
+                       "secretlen is NULL");
         return 0;
     }
     if (enc == NULL) {
@@ -185,12 +186,11 @@ int ossl_hybrid_kem_encapsulate(void *vctx, unsigned char *enc, size_t *enclen,
         *secretlen = ctx->shared_secret_bytes;
         return 1;
     }
-    if (secretlen == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_NULL_PARAMETER);
+    if (secret == NULL) {
+        ERR_raise_data(ERR_LIB_PROV, ERR_R_PASSED_NULL_PARAMETER,
+                       "secret is NULL");
         return 0;
     }
-
-    /* Error checking */
     if (*secretlen < ctx->shared_secret_bytes) {
         ERR_raise_data(ERR_LIB_PROV, PROV_R_BAD_LENGTH, "*secretlen too small");
         return 0;
@@ -233,9 +233,19 @@ int ossl_hybrid_kem_decapsulate(void *vctx,
     if (ctx->key_length == 0)
         return 0;
 
+    if (secretlen == NULL) {
+        ERR_raise_data(ERR_LIB_PROV, ERR_R_PASSED_NULL_PARAMETER,
+                       "secretlen is NULL");
+        return 0;
+    }
     if (secret == NULL) {
         *secretlen = ctx->shared_secret_bytes;
         return 1;
+    }
+    if (enc == NULL) {
+        ERR_raise_data(ERR_LIB_PROV, ERR_R_PASSED_NULL_PARAMETER,
+                       "enc is NULL");
+        return 0;
     }
     if (*secretlen < ctx->shared_secret_bytes) {
         ERR_raise_data(ERR_LIB_PROV, PROV_R_BAD_LENGTH, "*secretlen too small");
