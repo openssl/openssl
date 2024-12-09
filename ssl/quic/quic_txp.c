@@ -67,6 +67,8 @@ struct ossl_quic_tx_packetiser_st {
     uint64_t        next_pn[QUIC_PN_SPACE_NUM]; /* Next PN to use in given PN space. */
     OSSL_TIME       last_tx_time;               /* Last time a packet was generated, or 0. */
 
+    size_t          unvalidated_credit;         /* Limit of data we can send until validated */
+
     /* Internal state - frame (re)generation flags. */
     unsigned int    want_handshake_done     : 1;
     unsigned int    want_max_data           : 1;
@@ -450,6 +452,83 @@ static int txp_pkt_commit(OSSL_QUIC_TX_PACKETISER *txp, struct txp_pkt *pkt,
                           uint32_t archetype, int *txpim_pkt_reffed);
 static uint32_t txp_determine_archetype(OSSL_QUIC_TX_PACKETISER *txp,
                                         uint64_t cc_limit);
+
+/**
+ * Sets the validated state of a QUIC TX packetiser.
+ *
+ * This function marks the provided QUIC TX packetiser as having its credit
+ * fully validated by setting its `unvalidated_credit` field to `SIZE_MAX`.
+ *
+ * @param txp A pointer to the OSSL_QUIC_TX_PACKETISER structure to update.
+ */
+void ossl_quic_tx_packetiser_set_validated(OSSL_QUIC_TX_PACKETISER *txp)
+{
+    txp->unvalidated_credit = SIZE_MAX;
+    return;
+}
+
+/**
+ * Adds unvalidated credit to a QUIC TX packetiser.
+ *
+ * This function increases the unvalidated credit of the provided QUIC TX
+ * packetiser. If the current unvalidated credit is not `SIZE_MAX`, the
+ * function adds three times the specified `credit` value, ensuring it does
+ * not exceed the maximum allowable value (`SIZE_MAX - 1`). If the addition
+ * would cause an overflow, the unvalidated credit is capped at
+ * `SIZE_MAX - 1`. If the current unvalidated credit is already `SIZE_MAX`,
+ * the function does nothing.
+ *
+ * @param txp    A pointer to the OSSL_QUIC_TX_PACKETISER structure to update.
+ * @param credit The amount of credit to add, multiplied by 3.
+ */
+void ossl_quic_tx_packetiser_add_unvalidated_credit(OSSL_QUIC_TX_PACKETISER *txp,
+                                                    size_t credit)
+{
+    if (txp->unvalidated_credit != SIZE_MAX) {
+        if (SIZE_MAX - txp->unvalidated_credit < credit * 3)
+            txp->unvalidated_credit += credit * 3;
+        else
+            txp->unvalidated_credit = SIZE_MAX - 1;
+    }
+    return;
+}
+
+/**
+ * Consumes unvalidated credit from a QUIC TX packetiser.
+ *
+ * This function decreases the unvalidated credit of the specified
+ * QUIC TX packetiser by the given `credit` value. If the unvalidated credit
+ * is set to `SIZE_MAX`, the function does nothing, as `SIZE_MAX` represents
+ * an unlimited credit state.
+ *
+ * @param txp    A pointer to the OSSL_QUIC_TX_PACKETISER structure to update.
+ * @param credit The amount of credit to consume.
+ */
+void ossl_quic_tx_packetiser_consume_unvalidated_credit(OSSL_QUIC_TX_PACKETISER *txp,
+                                                        size_t credit)
+{
+    if (txp->unvalidated_credit != SIZE_MAX)
+        txp->unvalidated_credit -= credit;
+
+}
+
+/**
+ * Checks if the QUIC TX packetiser has sufficient unvalidated credit.
+ *
+ * This function determines whether the unvalidated credit of the specified
+ * QUIC TX packetiser exceeds the required credit value (`req_credit`).
+ * If the unvalidated credit is greater than `req_credit`, the function
+ * returns 1 (true); otherwise, it returns 0 (false).
+ *
+ * @param txp        A pointer to the OSSL_QUIC_TX_PACKETISER structure to check.
+ * @param req_credit The required credit value to compare against.
+ *
+ * @return 1 if the unvalidated credit exceeds `req_credit`, 0 otherwise.
+ */
+int ossl_quic_tx_packetiser_check_unvalidated_credit(OSSL_QUIC_TX_PACKETISER *txp, size_t req_credit)
+{
+    return txp->unvalidated_credit;
+}
 
 OSSL_QUIC_TX_PACKETISER *ossl_quic_tx_packetiser_new(const OSSL_QUIC_TX_PACKETISER_ARGS *args)
 {
