@@ -829,6 +829,12 @@ int pkcs12_main(int argc, char **argv)
         const ASN1_OBJECT *macobj;
 
         PKCS12_get0_mac(NULL, &macalgid, NULL, NULL, p12);
+
+        if (macalgid == NULL) {
+            BIO_printf(bio_err, "Warning: MAC is absent!\n");
+            goto dump;
+        }
+
         X509_ALGOR_get0(&macobj, NULL, NULL, macalgid);
 
         if (OBJ_obj2nid(macobj) != NID_pbmac1) {
