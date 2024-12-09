@@ -13,6 +13,39 @@
 #include <crypto/asn1.h>
 #include "ext_dat.h"
 
+static const char* WEEKDAY_NAMES[7] = {
+    "SUN",
+    "MON",
+    "TUE",
+    "WED",
+    "THU",
+    "FRI",
+    "SAT"
+};
+
+static const char* WEEK_NAMES[5] = {
+    "first",
+    "second",
+    "third",
+    "fourth",
+    "final"
+};
+
+static const char* MONTH_NAMES[12] = {
+    "JAN",
+    "FEB",
+    "MAR",
+    "APR",
+    "MAY",
+    "JUN",
+    "JUL",
+    "AUG",
+    "SEPT",
+    "OCT",
+    "NOV",
+    "DEC"
+};
+
 ASN1_SEQUENCE(OSSL_TIME_SPEC_ABSOLUTE) = {
     ASN1_EXP_OPT(OSSL_TIME_SPEC_ABSOLUTE, startTime, ASN1_GENERALIZEDTIME, 0),
     ASN1_EXP_OPT(OSSL_TIME_SPEC_ABSOLUTE, endTime, ASN1_GENERALIZEDTIME, 1),
@@ -196,91 +229,17 @@ static int print_int_month(BIO *out, int64_t month)
 
 static int print_bit_month(BIO *out, ASN1_BIT_STRING *bs)
 {
-    int i = 0;
+    int i = OSSL_TIME_SPEC_BIT_MONTH_JAN;
+    int j = 0;
 
-    if (ASN1_BIT_STRING_get_bit(bs, OSSL_TIME_SPEC_BIT_MONTH_JAN)) {
-        if (i > 0 && !BIO_puts(out, ", "))
-            return 0;
-        i++;
-        if (!BIO_puts(out, "JAN"))
-            return 0;
-    }
-    if (ASN1_BIT_STRING_get_bit(bs, OSSL_TIME_SPEC_BIT_MONTH_FEB)) {
-        if (i > 0 && !BIO_puts(out, ", "))
-            return 0;
-        i++;
-        if (!BIO_puts(out, "FEB"))
-            return 0;
-    }
-    if (ASN1_BIT_STRING_get_bit(bs, OSSL_TIME_SPEC_BIT_MONTH_MAR)) {
-        if (i > 0 && !BIO_puts(out, ", "))
-            return 0;
-        i++;
-        if (!BIO_puts(out, "MAR"))
-            return 0;
-    }
-    if (ASN1_BIT_STRING_get_bit(bs, OSSL_TIME_SPEC_BIT_MONTH_APR)) {
-        if (i > 0 && !BIO_puts(out, ", "))
-            return 0;
-        i++;
-        if (!BIO_puts(out, "APR"))
-            return 0;
-    }
-    if (ASN1_BIT_STRING_get_bit(bs, OSSL_TIME_SPEC_BIT_MONTH_MAY)) {
-        if (i > 0 && !BIO_puts(out, ", "))
-            return 0;
-        i++;
-        if (!BIO_puts(out, "MAY"))
-            return 0;
-    }
-    if (ASN1_BIT_STRING_get_bit(bs, OSSL_TIME_SPEC_BIT_MONTH_JUN)) {
-        if (i > 0 && !BIO_puts(out, ", "))
-            return 0;
-        i++;
-        if (!BIO_puts(out, "JUN"))
-            return 0;
-    }
-    if (ASN1_BIT_STRING_get_bit(bs, OSSL_TIME_SPEC_BIT_MONTH_JUL)) {
-        if (i > 0 && !BIO_puts(out, ", "))
-            return 0;
-        i++;
-        if (!BIO_puts(out, "JUL"))
-            return 0;
-    }
-    if (ASN1_BIT_STRING_get_bit(bs, OSSL_TIME_SPEC_BIT_MONTH_AUG)) {
-        if (i > 0 && !BIO_puts(out, ", "))
-            return 0;
-        i++;
-        if (!BIO_puts(out, "AUG"))
-            return 0;
-    }
-    if (ASN1_BIT_STRING_get_bit(bs, OSSL_TIME_SPEC_BIT_MONTH_SEP)) {
-        if (i > 0 && !BIO_puts(out, ", "))
-            return 0;
-        i++;
-        if (!BIO_puts(out, "SEP"))
-            return 0;
-    }
-    if (ASN1_BIT_STRING_get_bit(bs, OSSL_TIME_SPEC_BIT_MONTH_OCT)) {
-        if (i > 0 && !BIO_puts(out, ", "))
-            return 0;
-        i++;
-        if (!BIO_puts(out, "OCT"))
-            return 0;
-    }
-    if (ASN1_BIT_STRING_get_bit(bs, OSSL_TIME_SPEC_BIT_MONTH_NOV)) {
-        if (i > 0 && !BIO_puts(out, ", "))
-            return 0;
-        i++;
-        if (!BIO_puts(out, "NOV"))
-            return 0;
-    }
-    if (ASN1_BIT_STRING_get_bit(bs, OSSL_TIME_SPEC_BIT_MONTH_DEC)) {
-        if (i > 0 && !BIO_puts(out, ", "))
-            return 0;
-        i++;
-        if (!BIO_puts(out, "DEC"))
-            return 0;
+    for (; i <= OSSL_TIME_SPEC_BIT_MONTH_DEC; i++) {
+        if (ASN1_BIT_STRING_get_bit(bs, i)) {
+            if (j > 0 && !BIO_puts(out, ", "))
+                return 0;
+            j++;
+            if (!BIO_puts(out, MONTH_NAMES[i]))
+                return 0;
+        }
     }
     return 1;
 }
@@ -292,105 +251,41 @@ static int print_bit_month(BIO *out, ASN1_BIT_STRING *bs)
  */
 static int print_bit_week(BIO *out, ASN1_BIT_STRING *bs)
 {
-    int i = 0;
+    int i = OSSL_TIME_SPEC_BIT_WEEKS_1;
+    int j = 0;
 
-    if (ASN1_BIT_STRING_get_bit(bs, OSSL_TIME_SPEC_BIT_WEEKS_1)) {
-        if (i > 0 && !BIO_puts(out, ", "))
-            return 0;
-        i++;
-        if (!BIO_puts(out, "first"))
-            return 0;
-    }
-    if (ASN1_BIT_STRING_get_bit(bs, OSSL_TIME_SPEC_BIT_WEEKS_2)) {
-        if (i > 0 && !BIO_puts(out, ", "))
-            return 0;
-        i++;
-        if (!BIO_puts(out, "second"))
-            return 0;
-    }
-    if (ASN1_BIT_STRING_get_bit(bs, OSSL_TIME_SPEC_BIT_WEEKS_3)) {
-        if (i > 0 && !BIO_puts(out, ", "))
-            return 0;
-        i++;
-        if (!BIO_puts(out, "third"))
-            return 0;
-    }
-    if (ASN1_BIT_STRING_get_bit(bs, OSSL_TIME_SPEC_BIT_WEEKS_4)) {
-        if (i > 0 && !BIO_puts(out, ", "))
-            return 0;
-        i++;
-        if (!BIO_puts(out, "fourth"))
-            return 0;
-    }
-    if (ASN1_BIT_STRING_get_bit(bs, OSSL_TIME_SPEC_BIT_WEEKS_5)) {
-        if (i > 0 && !BIO_puts(out, ", "))
-            return 0;
-        i++;
-        if (!BIO_puts(out, "final"))
-            return 0;
+    for (; i <= OSSL_TIME_SPEC_BIT_WEEKS_5; i++) {
+        if (ASN1_BIT_STRING_get_bit(bs, i)) {
+            if (j > 0 && !BIO_puts(out, ", "))
+                return 0;
+            j++;
+            if (!BIO_puts(out, WEEK_NAMES[i]))
+                return 0;
+        }
     }
     return 1;
 }
 
 static int print_day_of_week(BIO *out, ASN1_BIT_STRING *bs)
 {
-    int i = 0;
+    int i = OSSL_TIME_SPEC_DAY_BIT_SUN;
+    int j = 0;
 
-    if (ASN1_BIT_STRING_get_bit(bs, OSSL_TIME_SPEC_DAY_BIT_SUN)) {
-        if (i > 0 && !BIO_puts(out, ", "))
-            return 0;
-        i++;
-        if (!BIO_puts(out, "SUN"))
-            return 0;
-    }
-    if (ASN1_BIT_STRING_get_bit(bs, OSSL_TIME_SPEC_DAY_BIT_MON)) {
-        if (i > 0 && !BIO_puts(out, ", "))
-            return 0;
-        i++;
-        if (!BIO_puts(out, "MON"))
-            return 0;
-    }
-    if (ASN1_BIT_STRING_get_bit(bs, OSSL_TIME_SPEC_DAY_BIT_TUE)) {
-        if (i > 0 && !BIO_puts(out, ", "))
-            return 0;
-        i++;
-        if (!BIO_puts(out, "TUE"))
-            return 0;
-    }
-    if (ASN1_BIT_STRING_get_bit(bs, OSSL_TIME_SPEC_DAY_BIT_WED)) {
-        if (i > 0 && !BIO_puts(out, ", "))
-            return 0;
-        i++;
-        if (!BIO_puts(out, "WED"))
-            return 0;
-    }
-    if (ASN1_BIT_STRING_get_bit(bs, OSSL_TIME_SPEC_DAY_BIT_THU)) {
-        if (i > 0 && !BIO_puts(out, ", "))
-            return 0;
-        i++;
-        if (!BIO_puts(out, "THU"))
-            return 0;
-    }
-    if (ASN1_BIT_STRING_get_bit(bs, OSSL_TIME_SPEC_DAY_BIT_FRI)) {
-        if (i > 0 && !BIO_puts(out, ", "))
-            return 0;
-        i++;
-        if (!BIO_puts(out, "FRI"))
-            return 0;
-    }
-    if (ASN1_BIT_STRING_get_bit(bs, OSSL_TIME_SPEC_DAY_BIT_SAT)) {
-        if (i > 0 && !BIO_puts(out, ", "))
-            return 0;
-        i++;
-        if (!BIO_puts(out, "SAT"))
-            return 0;
+    for (; i <= OSSL_TIME_SPEC_DAY_BIT_SAT; i++) {
+        if (ASN1_BIT_STRING_get_bit(bs, i)) {
+            if (j > 0 && !BIO_puts(out, ", "))
+                return 0;
+            j++;
+            if (!BIO_puts(out, WEEKDAY_NAMES[i]))
+                return 0;
+        }
     }
     return 1;
 }
 
-static int print_int_day_of_week(BIO *out, int64_t month)
+static int print_int_day_of_week(BIO *out, int64_t dow)
 {
-    switch (month) {
+    switch (dow) {
     case (OSSL_TIME_SPEC_DAY_INT_SUN):
         return BIO_puts(out, "SUN");
     case (OSSL_TIME_SPEC_DAY_INT_MON):
@@ -434,60 +329,9 @@ static int print_int_named_day(BIO *out, int64_t nd)
     return 0;
 }
 
-static int print_bit_named_day(BIO *out, ASN1_BIT_STRING *bs)
+static inline int print_bit_named_day(BIO *out, ASN1_BIT_STRING *bs)
 {
-    int i = 0;
-
-    if (ASN1_BIT_STRING_get_bit(bs, OSSL_NAMED_DAY_BIT_SUN)) {
-        if (i > 0 && !BIO_puts(out, ", "))
-            return 0;
-        i++;
-        if (!BIO_puts(out, "SUN"))
-            return 0;
-    }
-    if (ASN1_BIT_STRING_get_bit(bs, OSSL_NAMED_DAY_BIT_MON)) {
-        if (i > 0 && !BIO_puts(out, ", "))
-            return 0;
-        i++;
-        if (!BIO_puts(out, "MON"))
-            return 0;
-    }
-    if (ASN1_BIT_STRING_get_bit(bs, OSSL_NAMED_DAY_BIT_TUE)) {
-        if (i > 0 && !BIO_puts(out, ", "))
-            return 0;
-        i++;
-        if (!BIO_puts(out, "TUE"))
-            return 0;
-    }
-    if (ASN1_BIT_STRING_get_bit(bs, OSSL_NAMED_DAY_BIT_WED)) {
-        if (i > 0 && !BIO_puts(out, ", "))
-            return 0;
-        i++;
-        if (!BIO_puts(out, "WED"))
-            return 0;
-    }
-    if (ASN1_BIT_STRING_get_bit(bs, OSSL_NAMED_DAY_BIT_THU)) {
-        if (i > 0 && !BIO_puts(out, ", "))
-            return 0;
-        i++;
-        if (!BIO_puts(out, "THU"))
-            return 0;
-    }
-    if (ASN1_BIT_STRING_get_bit(bs, OSSL_NAMED_DAY_BIT_FRI)) {
-        if (i > 0 && !BIO_puts(out, ", "))
-            return 0;
-        i++;
-        if (!BIO_puts(out, "FRI"))
-            return 0;
-    }
-    if (ASN1_BIT_STRING_get_bit(bs, OSSL_NAMED_DAY_BIT_SAT)) {
-        if (i > 0 && !BIO_puts(out, ", "))
-            return 0;
-        i++;
-        if (!BIO_puts(out, "SAT"))
-            return 0;
-    }
-    return 1;
+    return print_day_of_week(out, bs);
 }
 
 static int i2r_OSSL_PERIOD(X509V3_EXT_METHOD *method,
