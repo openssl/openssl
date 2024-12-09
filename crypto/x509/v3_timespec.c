@@ -13,7 +13,7 @@
 #include <crypto/asn1.h>
 #include "ext_dat.h"
 
-static const char* WEEKDAY_NAMES[7] = {
+static const char *WEEKDAY_NAMES[7] = {
     "SUN",
     "MON",
     "TUE",
@@ -23,7 +23,7 @@ static const char* WEEKDAY_NAMES[7] = {
     "SAT"
 };
 
-static const char* WEEK_NAMES[5] = {
+static const char *WEEK_NAMES[5] = {
     "first",
     "second",
     "third",
@@ -31,7 +31,7 @@ static const char* WEEK_NAMES[5] = {
     "final"
 };
 
-static const char* MONTH_NAMES[12] = {
+static const char *MONTH_NAMES[12] = {
     "JAN",
     "FEB",
     "MAR",
@@ -329,7 +329,7 @@ static int print_int_named_day(BIO *out, int64_t nd)
     return 0;
 }
 
-static inline int print_bit_named_day(BIO *out, ASN1_BIT_STRING *bs)
+static int print_bit_named_day(BIO *out, ASN1_BIT_STRING *bs)
 {
     return print_day_of_week(out, bs);
 }
