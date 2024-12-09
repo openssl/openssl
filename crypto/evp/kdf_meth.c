@@ -137,9 +137,15 @@ static void *evp_kdf_from_algorithm(int name_id,
                 break;
             kdf->set_ctx_params = OSSL_FUNC_kdf_set_ctx_params(fns);
             break;
+        case OSSL_FUNC_KDF_DERIVE_OPAQUE:
+            if (kdf->derive_opaque != NULL)
+                break;
+            kdf->derive_opaque = OSSL_FUNC_kdf_derive_opaque(fns);
+            fnkdfcnt++;
+            break;
         }
     }
-    if (fnkdfcnt != 1 || fnctxcnt != 2) {
+    if (fnkdfcnt == 0 || fnctxcnt != 2) {
         /*
          * In order to be a consistent set of functions we must have at least
          * a derive function, and a complete set of context management

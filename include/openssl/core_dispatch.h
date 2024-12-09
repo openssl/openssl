@@ -351,6 +351,8 @@ OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, digest_gettable_ctx_params,
 # define OSSL_FUNC_CIPHER_GETTABLE_PARAMS           12
 # define OSSL_FUNC_CIPHER_GETTABLE_CTX_PARAMS       13
 # define OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS       14
+# define OSSL_FUNC_CIPHER_ENCRYPT_OPAQUE_INIT       15
+# define OSSL_FUNC_CIPHER_DECRYPT_OPAQUE_INIT       16
 
 OSSL_CORE_MAKE_FUNC(void *, cipher_newctx, (void *provctx))
 OSSL_CORE_MAKE_FUNC(int, cipher_encrypt_init, (void *cctx,
@@ -389,6 +391,16 @@ OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, cipher_settable_ctx_params,
                     (void *cctx, void *provctx))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, cipher_gettable_ctx_params,
                     (void *cctx, void *provctx))
+OSSL_CORE_MAKE_FUNC(int, cipher_encrypt_opaque_init, (void *cctx,
+                                                      void *skeydata,
+                                                      const unsigned char *iv,
+                                                      size_t ivlen,
+                                                      const OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(int, cipher_decrypt_opaque_init, (void *cctx,
+                                                      void *skeydata,
+                                                      const unsigned char *iv,
+                                                      size_t ivlen,
+                                                      const OSSL_PARAM params[]))
 
 /* MACs */
 
@@ -404,6 +416,7 @@ OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, cipher_gettable_ctx_params,
 # define OSSL_FUNC_MAC_GETTABLE_PARAMS              10
 # define OSSL_FUNC_MAC_GETTABLE_CTX_PARAMS          11
 # define OSSL_FUNC_MAC_SETTABLE_CTX_PARAMS          12
+# define OSSL_FUNC_MAC_INIT_OPAQUE                  13
 
 OSSL_CORE_MAKE_FUNC(void *, mac_newctx, (void *provctx))
 OSSL_CORE_MAKE_FUNC(void *, mac_dupctx, (void *src))
@@ -425,6 +438,7 @@ OSSL_CORE_MAKE_FUNC(int, mac_get_ctx_params,
                     (void *mctx, OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(int, mac_set_ctx_params,
                     (void *mctx, const OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(int, mac_init_opaque, (void *mctx, const void *key, const OSSL_PARAM params[]))
 
 /* KDFs and PRFs */
 
@@ -439,6 +453,7 @@ OSSL_CORE_MAKE_FUNC(int, mac_set_ctx_params,
 # define OSSL_FUNC_KDF_GET_PARAMS                    9
 # define OSSL_FUNC_KDF_GET_CTX_PARAMS               10
 # define OSSL_FUNC_KDF_SET_CTX_PARAMS               11
+# define OSSL_FUNC_KDF_DERIVE_OPAQUE                12
 
 OSSL_CORE_MAKE_FUNC(void *, kdf_newctx, (void *provctx))
 OSSL_CORE_MAKE_FUNC(void *, kdf_dupctx, (void *src))
@@ -456,6 +471,8 @@ OSSL_CORE_MAKE_FUNC(int, kdf_get_ctx_params,
                     (void *kctx, OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(int, kdf_set_ctx_params,
                     (void *kctx, const OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(int, kdf_derive_opaque, (void *kctx, void *key,
+                                             const OSSL_PARAM params[]))
 
 /* RAND */
 
@@ -567,6 +584,7 @@ OSSL_CORE_MAKE_FUNC(void,rand_clear_seed,
 # define OSSL_KEYMGMT_SELECT_PRIVATE_KEY            0x01
 # define OSSL_KEYMGMT_SELECT_PUBLIC_KEY             0x02
 # define OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS      0x04
+# define OSSL_KEYMGMT_SELECT_SECRET_KEY             0x08
 # define OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS       0x80
 
 /* Key data subset selection - combinations */
@@ -696,6 +714,7 @@ OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, keymgmt_export_types_ex,
 # define OSSL_FUNC_KEYEXCH_SETTABLE_CTX_PARAMS         8
 # define OSSL_FUNC_KEYEXCH_GET_CTX_PARAMS              9
 # define OSSL_FUNC_KEYEXCH_GETTABLE_CTX_PARAMS        10
+# define OSSL_FUNC_KEYEXCH_DERIVE_OPAQUE              11
 
 OSSL_CORE_MAKE_FUNC(void *, keyexch_newctx, (void *provctx))
 OSSL_CORE_MAKE_FUNC(int, keyexch_init, (void *ctx, void *provkey,
@@ -713,6 +732,7 @@ OSSL_CORE_MAKE_FUNC(int, keyexch_get_ctx_params, (void *ctx,
                                                      OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, keyexch_gettable_ctx_params,
                     (void *ctx, void *provctx))
+OSSL_CORE_MAKE_FUNC(int, keyexch_derive_opaque, (void *ctx, void *secret))
 
 /* Signature */
 

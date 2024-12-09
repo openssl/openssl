@@ -1,0 +1,86 @@
+=pod
+
+=head1 NAME
+
+EVP_SKEY_import, EVP_SKEY_export, EVP_SKEY_get_raw_key
+- functions to create opaque symmetric keys from user data and export keydata
+
+=head1 SYNOPSIS
+
+ #include <openssl/evp.h>
+
+ int EVP_SKEY_import(EVP_SKEY *skey, const OSSL_PARAM *params);
+ int EVP_SKEY_export(const EVP_SKEY *skey, int selection,
+                     OSSL_CALLBACK *export_cb, void *export_cbarg);
+ int EVP_SKEY_get_raw_key(const EVP_SKEY *skey, unsigned char *key, size_t *len);
+
+=head1 DESCRIPTION
+
+The functions described here are used to create new keys from user
+provided key data, such as I<n>, I<e> and I<d> for a minimal RSA
+keypair.
+
+The EVP_SKEY_import() function creates the structure to store a key to a
+B<EVP_SKEY> object created by EVP_SKEY_new() The exact key data that the user
+can pass depends on the key type and the provider in use.  These are passed as
+an L<OSSL_PARAM(3)> array.
+
+Parameters in the I<params> array that are not among the settable parameters
+for the given I<selection> are ignored.
+
+The EVP_SKEY_export() function extracts values from a key I<skey> using the
+I<selection>.  I<selection> is described below. It uses a callback I<export_cb>
+that gets passed the value of I<export_cbarg>.  See L<openssl-core.h(7)> for
+more information about the callback. Note that the L<OSSL_PARAM(3)> array that
+is passed to the callback is not persistent after the callback returns.
+
+L<OSSL_PARAM_free(3)> should be used to free the returned parameters in
+I<*params>.
+
+The EVP_SKEY_get_raw_key() function copies raw key bytes to the passed buffer
+and sets the real key len. The operation can fail when the underlying key
+management doesn't support export of the secret key.
+
+=head2 Selections
+
+The following constants can be used for I<selection>:
+
+=over 4
+
+=item B<OSSL_KEYMGMT_SELECT_SECRET_KEY>
+
+Only raw key representation will be selected.
+
+=item B<OSSL_KEYMGMT_SELECT_ALL_PARAMETERS>
+
+Only key parameters will be selected. This includes optional key
+parameters.
+
+=item B<OSSL_KEYMGMT_SELECT_ALL>
+
+All parameters will be selected.
+
+=back
+
+=head1 RETURN VALUES
+
+EVP_SKEY_import() and EVP_SKEY_export() return 1 for success and 0 for failure.
+
+=head1 SEE ALSO
+
+L<EVP_SKEY_new(3)>, L<provider(7)>, L<OSSL_PARAM(3)>
+
+=head1 HISTORY
+
+These functions were added in OpenSSL 3.5.
+
+=head1 COPYRIGHT
+
+Copyright 2024 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

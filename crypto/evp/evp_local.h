@@ -155,6 +155,7 @@ struct evp_keyexch_st {
     OSSL_FUNC_keyexch_settable_ctx_params_fn *settable_ctx_params;
     OSSL_FUNC_keyexch_get_ctx_params_fn *get_ctx_params;
     OSSL_FUNC_keyexch_gettable_ctx_params_fn *gettable_ctx_params;
+    OSSL_FUNC_keyexch_derive_opaque_fn *derive_opaque;
 } /* EVP_KEYEXCH */;
 
 struct evp_signature_st {
@@ -265,6 +266,12 @@ struct evp_Encode_Ctx_st {
     /* number read on current line */
     int line_num;
     unsigned int flags;
+};
+
+struct raw_key_details_st {
+    unsigned char **key;
+    size_t *len;
+    int selection;
 };
 
 typedef struct evp_pbe_st EVP_PBE_CTL;
@@ -381,3 +388,5 @@ int evp_names_do_all(OSSL_PROVIDER *prov, int number,
                      void (*fn)(const char *name, void *data),
                      void *data);
 int evp_cipher_cache_constants(EVP_CIPHER *cipher);
+
+OSSL_CALLBACK ossl_get_raw_key_details;
