@@ -49,30 +49,30 @@ static void *NAME(gen_init)(void *provctx, int selection,
 }
 
 static const OSSL_PARAM *NAME(gettable_params)(void *vkey) {
-    return ossl_hybrid_ettable_common(OSSL_NAME(gettable_params));
+    return ossl_hybrid_gettable_common(OSSL_NAME(gettable_params));
 }
 
 static const OSSL_PARAM *NAME(settable_params)(void *vkey) {
-    return ossl_hybrid_ettable_common(OSSL_NAME(settable_params));
+    return ossl_hybrid_settable_common(OSSL_NAME(settable_params));
 }
 
 static const OSSL_PARAM *NAME(ctx_gettable_params)(void *vctx, void *provctx) {
-    return ossl_hybrid_ettable_common(OSSL_NAME(ctx_gettable_params));
+    return ossl_hybrid_gettable_common(OSSL_NAME(ctx_gettable_params));
 }
 
 static const OSSL_PARAM *NAME(ctx_settable_params)(void *vctx, void *provctx) {
-    return ossl_hybrid_ettable_common(OSSL_NAME(ctx_settable_params));
+    return ossl_hybrid_settable_common(OSSL_NAME(ctx_settable_params));
 }
 
 static const OSSL_PARAM *NAME(import_types)(int selection) {
     if (selection & OSSL_KEYMGMT_SELECT_KEYPAIR)
-        return ossl_hybrid_ettable_common(OSSL_NAME(import_types));
+        return ossl_hybrid_settable_common(OSSL_NAME(import_types));
     return NULL;
 }
 
 static const OSSL_PARAM *NAME(export_types)(int selection) {
     if (selection & OSSL_KEYMGMT_SELECT_KEYPAIR)
-        return ossl_hybrid_ettable_common(OSSL_NAME(export_types));
+        return ossl_hybrid_gettable_common(OSSL_NAME(export_types));
     return NULL;
 }
 

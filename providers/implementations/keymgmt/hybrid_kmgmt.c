@@ -103,6 +103,8 @@ void *ossl_hybrid_kmgmt_dup(const void *vold, ossl_unused int selection)
     for (i = 0; i < key->info->num_algs; i++)
         if ((key->keys[i] = EVP_PKEY_dup(old->keys[i])) == NULL)
             goto err;
+    if (!CRYPTO_NEW_REF(&key->references, 1))
+        goto err;
     key->info = old->info;
     key->key_length = old->key_length;
     key->bits = old->bits;
@@ -243,6 +245,8 @@ int ossl_hybrid_kmgmt_get_params(void *vkey, OSSL_PARAM params[])
             break;
 #endif
 
+        case PIDX_PKEY_PARAM_PUB_KEY:
+        case PIDX_PKEY_PARAM_PRIV_KEY:
         case PIDX_PKEY_PARAM_ENCODED_PUBLIC_KEY:
             if (key->key_length > p->data_size) {
                 ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH,
@@ -263,8 +267,6 @@ int ossl_hybrid_kmgmt_get_params(void *vkey, OSSL_PARAM params[])
             }
             break;
 
-        case PIDX_PKEY_PARAM_PUB_KEY:
-        case PIDX_PKEY_PARAM_PRIV_KEY:
         default:
             if (!key_subalg_get_param(key->info->num_algs, key->keys, p))
                 return 0;
@@ -777,6 +779,10 @@ err:
     return ret;
 }
 
-const OSSL_PARAM *ossl_hybrid_ettable_common(const OSSL_PARAM *r) {
+const OSSL_PARAM *ossl_hybrid_gettable_common(const OSSL_PARAM *r) {
+    return r->key == NULL ? NULL : r;
+}
+
+const OSSL_PARAM *ossl_hybrid_settable_common(const OSSL_PARAM *r) {
     return r->key == NULL ? NULL : r;
 }
