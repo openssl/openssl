@@ -485,11 +485,12 @@ void ossl_quic_tx_packetiser_add_unvalidated_credit(OSSL_QUIC_TX_PACKETISER *txp
                                                     size_t credit)
 {
     if (txp->unvalidated_credit != SIZE_MAX) {
-        if (SIZE_MAX - txp->unvalidated_credit < credit * 3)
+        if ((SIZE_MAX - txp->unvalidated_credit) > (credit * 3))
             txp->unvalidated_credit += credit * 3;
         else
             txp->unvalidated_credit = SIZE_MAX - 1;
     }
+
     return;
 }
 
@@ -507,9 +508,12 @@ void ossl_quic_tx_packetiser_add_unvalidated_credit(OSSL_QUIC_TX_PACKETISER *txp
 void ossl_quic_tx_packetiser_consume_unvalidated_credit(OSSL_QUIC_TX_PACKETISER *txp,
                                                         size_t credit)
 {
-    if (txp->unvalidated_credit != SIZE_MAX)
-        txp->unvalidated_credit -= credit;
-
+    if (txp->unvalidated_credit != SIZE_MAX) {
+        if (txp->unvalidated_credit < credit)
+            txp->unvalidated_credit = 0;
+        else
+            txp->unvalidated_credit -= credit;
+    }
 }
 
 /**
@@ -525,9 +529,10 @@ void ossl_quic_tx_packetiser_consume_unvalidated_credit(OSSL_QUIC_TX_PACKETISER 
  *
  * @return 1 if the unvalidated credit exceeds `req_credit`, 0 otherwise.
  */
-int ossl_quic_tx_packetiser_check_unvalidated_credit(OSSL_QUIC_TX_PACKETISER *txp, size_t req_credit)
+int ossl_quic_tx_packetiser_check_unvalidated_credit(OSSL_QUIC_TX_PACKETISER *txp,
+                                                     size_t req_credit)
 {
-    return txp->unvalidated_credit;
+    return (txp->unvalidated_credit > req_credit);
 }
 
 OSSL_QUIC_TX_PACKETISER *ossl_quic_tx_packetiser_new(const OSSL_QUIC_TX_PACKETISER_ARGS *args)
@@ -859,12 +864,13 @@ int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
     uint64_t cc_limit = txp->args.cc_method->get_tx_allowance(txp->args.cc_data);
     int need_padding = 0, txpim_pkt_reffed;
 
+    memset(status, 0, sizeof(*status));
+
     for (enc_level = QUIC_ENC_LEVEL_INITIAL;
          enc_level < QUIC_ENC_LEVEL_NUM;
          ++enc_level)
         pkt[enc_level].h_valid = 0;
 
-    memset(status, 0, sizeof(*status));
 
     /*
      * Should not be needed, but a sanity check in case anyone else has been
@@ -986,6 +992,13 @@ int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
             /* Nothing was generated for this EL, so skip. */
             continue;
 
+        if (!ossl_quic_tx_packetiser_check_unvalidated_credit(txp,
+                                                              pkt[enc_level].h.bytes_appended)) {
+            res = TXP_ERR_SPACE;
+            goto out;
+        }
+        ossl_quic_tx_packetiser_consume_unvalidated_credit(txp, pkt[enc_level].h.bytes_appended);
+
         rc = txp_pkt_commit(txp, &pkt[enc_level], archetype,
                             &txpim_pkt_reffed);
         if (rc) {
@@ -1006,6 +1019,7 @@ int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
             goto out;
 
         ++pkts_done;
+
     }
 
     /* Flush & Cleanup */

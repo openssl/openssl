@@ -570,6 +570,7 @@ static int run_quic_server(SSL_CTX *ctx, BIO *sock)
                  * Filter on the shutdown error, and only print an error
                  * message if the cause is not SHUTDOWN
                  */
+                ERR_print_errors_fp(stderr);
                 errcode = ERR_get_error();
                 if (ERR_GET_REASON(errcode) != SSL_R_PROTOCOL_IS_SHUTDOWN)
                     fprintf(stderr, "Failure in accept stream, error %s\n",
