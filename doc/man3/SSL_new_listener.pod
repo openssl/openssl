@@ -206,7 +206,7 @@ SSL_listen() returns 1 on success or 0 on failure.
 SSL_accept_connection() returns a pointer to a new SSL object on success or NULL
 on failure. On success, the caller assumes ownership of the reference.
 
-SSL_get_accept_connection_queue_len() returns a non-negative value, or 0 if
+SSL_get_accept_connection_queue_len() returns a nonnegative value, or 0 if
 called on an unsupported SSL object type.
 
 SSL_new_from_listener() returns a pointer to a new SSL object on success or NULL
