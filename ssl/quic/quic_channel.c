@@ -298,6 +298,10 @@ static int ch_init(QUIC_CHANNEL *ch)
     if (ch->txp == NULL)
         goto err;
 
+    /* clients have no amplification limit, so are considered always valid */
+    if (!ch->is_server)
+        ossl_quic_tx_packetiser_set_validated(ch->txp);
+
     ossl_quic_tx_packetiser_set_ack_tx_cb(ch->txp, ch_on_txp_ack_tx, ch);
 
     qrx_args.libctx             = ch->port->engine->libctx;
@@ -1051,6 +1055,13 @@ static int ch_on_handshake_complete(void *arg)
 
     if (!ossl_assert(ch->tx_enc_level == QUIC_ENC_LEVEL_1RTT))
         return 0;
+
+    /*
+     * When handshake is complete, we no longer need to abide by the
+     * 3x amplification limit, though we should be validated as soon
+     * as we see a handshake key encrypted packet (see ossl_quic_handle_packet)
+     */
+    ossl_quic_tx_packetiser_set_validated(ch->txp);
 
     if (!ch->got_remote_transport_params) {
         /*
