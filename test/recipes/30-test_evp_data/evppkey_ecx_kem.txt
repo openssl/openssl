@@ -8,7 +8,7 @@
 # Decapsulation KATs for ML-KEM-768 from BoringSSL
 # https://boringssl.googlesource.com/boringssl/+/refs/heads/master/crypto/mlkem/mlkem768_decap_tests.txt
 
-# Keys genreated using:
+# Keys generated using:
 #   openssl genpkey -algorithm x25519 -out x25519-priv.pem
 #   openssl pkey -in x25519-priv.pem -text
 #   openssl genpkey -algorithm x448 -out x448-priv.pem

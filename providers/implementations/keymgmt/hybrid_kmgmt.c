@@ -220,7 +220,7 @@ int ossl_hybrid_kmgmt_get_params(void *vkey, OSSL_PARAM params[])
             break;
 
         case PIDX_PKEY_PARAM_BITS:
-            if (!!OSSL_PARAM_set_size_t(p, key->bits))
+            if (!OSSL_PARAM_set_size_t(p, key->bits))
                 return 0;
             break;
 
@@ -267,6 +267,14 @@ int ossl_hybrid_kmgmt_get_params(void *vkey, OSSL_PARAM params[])
             }
             break;
 
+        case PIDX_KEM_PARAM_IKME:
+            /*
+             * If NIST decides to validate hybrid algorithms using ACVP
+             * testing, we would need to support whatever format they use for
+             * input key material and some special processing would likely be
+             * required for this parameter.  Until NIST does this, we'll just
+             * pass the key material through unmolested.
+             */
         default:
             if (!key_subalg_get_param(key->info->num_algs, key->keys, p))
                 return 0;
@@ -281,7 +289,7 @@ int ossl_hybrid_kmgmt_set_params(void *vkey, const OSSL_PARAM params[])
     HYBRID_PKEY *key = (HYBRID_PKEY *)vkey;
     OSSL_PARAM prms[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
     unsigned char *q;
-    char *str = NULL;
+    char *str;
     const OSSL_PARAM *p;
     unsigned int i;
     int type;
@@ -311,6 +319,7 @@ int ossl_hybrid_kmgmt_set_params(void *vkey, const OSSL_PARAM params[])
             break;
 
         case PIDX_PKEY_PARAM_PROPERTIES:
+            str = NULL;     /* Force allocation of value */
             if (!OSSL_PARAM_get_utf8_string(p, &str, SIZE_MAX))
                 return 0;
             OPENSSL_free(key->propq);
@@ -393,9 +402,7 @@ HYBRID_PKEY_CTX *ossl_hybrid_kmgmt_gen_init(void *provctx,
         EVP_PKEY_CTX_free(ctx->ctxs[i]);
         ctx->ctxs[i] = EVP_PKEY_CTX_new_from_name(libctx, info->alg[i].name,
                                                   ctx->propq);
-        if (ctx->ctxs[i] == NULL)
-            return 0;
-        if (!EVP_PKEY_keygen_init(ctx->ctxs[i]))
+        if (ctx->ctxs[i] == NULL || !EVP_PKEY_keygen_init(ctx->ctxs[i]))
             goto err;
     }
 
@@ -553,20 +560,6 @@ void ossl_hybrid_kmgmt_gen_cleanup(void *vctx)
     }
 }
 
-void *ossl_hybrid_kmgmt_load(const void *reference, size_t reference_sz)
-{
-    HYBRID_PKEY *key = NULL;
-
-    if (ossl_prov_is_running() && reference_sz == sizeof(key)) {
-        /* The contents of the reference is the address to our object */
-        key = *(HYBRID_PKEY **)reference;
-        /* We grabbed, so we detach it */
-        *(HYBRID_PKEY **)reference = NULL;
-        return key;
-    }
-    return NULL;
-}
-
 int ossl_hybrid_kmgmt_import(void *keydata, int selection,
                              const OSSL_PARAM params[])
 {
@@ -576,13 +569,14 @@ int ossl_hybrid_kmgmt_import(void *keydata, int selection,
     size_t *plen = NULL;
     OSSL_PARAM *lprm = NULL;
     unsigned int i, j, k, nparams;
-    size_t data_size, t;
+    size_t data_size;
     int res = 0;
 
     nparams = ossl_param_nelem(params);
     if (nparams == 0)
         return 0;
 
+    /* Allocate storage for a copy of the OSSL_PARAMS and working pointers */
     lprm = OPENSSL_memdup(params, (1 + nparams) * sizeof(*params));
     pptr = OPENSSL_malloc(nparams * sizeof(*pptr));
     plen = OPENSSL_malloc(nparams * sizeof(*plen));
@@ -594,35 +588,17 @@ int ossl_hybrid_kmgmt_import(void *keydata, int selection,
         plen[j] = params[j].data_size;
     }
 
+    /* For each key, build a set of OSSL_PARAMs */
     for (i = 0; i < key->info->num_algs; i++) {
         for (k = j = 0; j < nparams; j++) {
-            /*
-             * Variable length unsigned integer encoding.
-             *
-             * The top two bits of the first byte specify the length of the
-             * size field.  The number of _additional_ length bytes is:
-             * first_byte >> 6.  The bottom six bits of the first byte
-             * and all of the subsequent bytes represent an unsigned integer
-             * in big endian format.  The maximum length is thus 1Gb - 1 bytes.
-             * A length of zero indicates that this parameter is not applicable
-             * for this algorithm.
-             *
-             * The length is followed by a data block of the specified size.
-             * This is treated as opaque data for the sub-algorithm.
-             *
-             * The rationale behind this encoding is that we do not know
-             * what parameters (or their associated sizes) are required for
-             * each sub-algorithm.
-             */
-            if (plen[j] == 0)
+            /* Each is length prefixed in big endian format */
+            if (plen[j] < 4)
                 goto err;
-            t = (*pptr[j] & 0300) >> 6;
-            data_size = *pptr[j]++ & 077;
-            if (--plen[j] < t)
-                goto err;
-            plen[j] -= t;
-            while (t-- > 0)
-                data_size = data_size << 8 | *pptr[j]++;
+            plen[j] -= 4;
+            data_size = *pptr[j]++ << 24;
+            data_size += *pptr[j]++ << 16;
+            data_size += *pptr[j]++ << 8;
+            data_size += *pptr[j]++;
 
             /* Only include this param if it's got an associated value */
             if (data_size > 0) {
@@ -675,6 +651,7 @@ static int hybrid_export_cb(const OSSL_PARAM params[], void *varg)
     int pos;
     OSSL_PARAM *p;
 
+    /* Record information about each OSSL_PARAM this algorithm exports */
     for (i = 0; params[i].key != NULL; i++) {
         if ((p = OSSL_PARAM_locate(arg->params, params[i].key)) == NULL) {
             if (arg->param_n == MAX_HYBRID_PARAMS)
@@ -695,39 +672,6 @@ static int hybrid_export_cb(const OSSL_PARAM params[], void *varg)
     return 1;
 }
 
-/*
- * Write out a length field.
- * This is variable length.  The top two bits of the first byte determine the
- * total number of trailing bytes.  The number is stored in big endian order.
- */
-static unsigned char *write_length(unsigned char *p, size_t l)
-{
-    /* Determine the length 1 - 4 bytes */
-    const unsigned int n = 1 + !!(l >> 6) + !!(l >> 14) + !!(l >> 22);
-
-    switch (n) {
-    case 0:
-        *p++ = l & 077;
-        break;
-    case 1:
-        *p++ = (l >> 6 & 077) | 0100;
-        *p++ = l & 0xff;
-        break;
-    case 2:
-        *p++ = (l >> 14 & 077) | 0200;
-        *p++ = l >> 8 & 0xff;
-        *p++ = l & 0xff;
-        break;
-    case 3:
-        *p++ = (l >> 22 & 077) | 0300;
-        *p++ = l >> 16 & 0xff;
-        *p++ = l >> 8 & 0xff;
-        *p++ = l & 0xff;
-        break;
-    }
-    return p;
-}
-
 int ossl_hybrid_kmgmt_export(void *keydata, int selection,
                              OSSL_CALLBACK *param_cb, void *cbarg)
 {
@@ -739,16 +683,19 @@ int ossl_hybrid_kmgmt_export(void *keydata, int selection,
     if (!ossl_prov_is_running() || key == NULL)
         return 0;
 
+    /* Gather all the key data */
     memset(&arg, 0, sizeof(arg));
     for (i = 0; i < key->info->num_algs; i++)
         if (!EVP_PKEY_export(key->keys[i], selection,
                              &hybrid_export_cb, &arg))
             goto err;
 
+    /* Package each OSSL_PARAM */
     for (i = 0; i < arg.param_n; i++) {
         size_t total = sizeof(size_t) * key->info->num_algs;
         unsigned char *p;
 
+        /* Allocate sufficient space */
         for (j = 0; j < key->info->num_algs; j++)
             if (arg.d[i][j]->data != NULL)
                 total += arg.d[i][j]->data_size;
@@ -756,9 +703,17 @@ int ossl_hybrid_kmgmt_export(void *keydata, int selection,
         if (p == NULL)
             goto err;
 
+        /*
+         * Concatenate each individual OSSL_PARAM together.
+         * Each value is prefixed with its length in big endian order.
+         */
         arg.params[i].data = p;
         for (j = 0; j < key->info->num_algs; j++) {
-            p = write_length(p, arg.d[i][j]->data_size);
+            *p++ = 0xff & (arg.d[i][j]->data_size >> 24);
+            *p++ = 0xff & (arg.d[i][j]->data_size >> 16);
+            *p++ = 0xff & (arg.d[i][j]->data_size >> 8);
+            *p++ = 0xff & (arg.d[i][j]->data_size);
+
             if (arg.d[i][j]->data != NULL) {
                 memcpy(p, arg.d[i][j]->data, arg.d[i][j]->data_size);
                 p += arg.d[i][j]->data_size;
@@ -767,6 +722,7 @@ int ossl_hybrid_kmgmt_export(void *keydata, int selection,
         arg.params[i].data_size = p - (unsigned char *)arg.params[i].data;
     }
 
+    /* Finished, pass to caller's call back */
     arg.params[arg.param_n] = OSSL_PARAM_construct_end();
     ret = param_cb(arg.params, cbarg);
 err:
@@ -779,10 +735,12 @@ err:
     return ret;
 }
 
-const OSSL_PARAM *ossl_hybrid_gettable_common(const OSSL_PARAM *r) {
+const OSSL_PARAM *ossl_hybrid_gettable_common(const OSSL_PARAM *r)
+{
     return r->key == NULL ? NULL : r;
 }
 
-const OSSL_PARAM *ossl_hybrid_settable_common(const OSSL_PARAM *r) {
+const OSSL_PARAM *ossl_hybrid_settable_common(const OSSL_PARAM *r)
+{
     return r->key == NULL ? NULL : r;
 }
