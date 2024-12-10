@@ -187,6 +187,10 @@ static int ossl_statem_client13_read_transition(SSL_CONNECTION *s, int mt)
             st->hand_state = TLS_ST_CR_ACK;
             return 1;
         }
+        if (mt == SSL3_MT_NEWSESSION_TICKET) {
+            st->hand_state = TLS_ST_CR_SESSION_TICKET;
+            return 1;
+        }
         break;
 
     case TLS_ST_OK:
