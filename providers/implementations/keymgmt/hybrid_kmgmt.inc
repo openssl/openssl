@@ -107,7 +107,6 @@ const OSSL_DISPATCH OSSL_NAME(functions)[] = {
       (void (*)(void))NAME(ctx_settable_params) },
     { OSSL_FUNC_KEYMGMT_GEN, (void (*)(void))ossl_hybrid_kmgmt_gen },
     { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (void (*)(void))ossl_hybrid_kmgmt_gen_cleanup },
-    { OSSL_FUNC_KEYMGMT_LOAD, (void (*)(void))ossl_hybrid_kmgmt_load },
     { OSSL_FUNC_KEYMGMT_DUP, (void (*)(void))ossl_hybrid_kmgmt_dup },
     OSSL_DISPATCH_END
 };
