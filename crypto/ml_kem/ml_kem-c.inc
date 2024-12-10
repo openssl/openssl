@@ -11,8 +11,8 @@
 
 #include <stdlib.h>
 #include <openssl/e_os2.h>
+#include <openssl/evp.h>
 #include <openssl/rand.h>
-#include <internal/sha3.h>
 #include <internal/constant_time.h>
 #include <internal/common.h>
 #include <crypto/ml_kem.h>
@@ -112,10 +112,17 @@ void encode_public_key(uint8_t *out, const public_key *pub)
     ossl_ml_kem_encode_public_key(out, pub->t.v, pub->rho, &vinfo);
 }
 
-int parse_public_key(public_key *pub, const uint8_t *in, mctx *ctx)
+int parse_public_key(public_key *pub, const uint8_t *in, const mctx *ctx)
 {
-    return ossl_ml_kem_parse_public_key(in, *pub->m.v, pub->t.v, pub->rho,
-                                        pub->pkhash, &vinfo, ctx);
+    EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
+    int ret;
+
+    if (mdctx == NULL)
+        return 0;
+    ret = ossl_ml_kem_parse_public_key(in, *pub->m.v, pub->t.v, pub->rho,
+                                        pub->pkhash, mdctx, ctx);
+    EVP_MD_CTX_free(mdctx);
+    return ret;
 }
 
 void encode_private_key(uint8_t *out, const private_key *priv)
@@ -128,13 +135,19 @@ void encode_private_key(uint8_t *out, const private_key *priv)
 
 /* Loading of explicit private keys is a test-only interface. */
 __owur
-int parse_private_key(private_key *priv, const uint8_t *in, mctx *ctx)
+int parse_private_key(private_key *priv, const uint8_t *in, const mctx *ctx)
 {
+    EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
     public_key *pub = &priv->pub;
+    int ret;
 
-    return ossl_ml_kem_parse_private_key(in, *pub->m.v, priv->s.v, pub->t.v,
-                                         pub->rho, pub->pkhash, priv->z,
-                                         &vinfo, ctx);
+    if (mdctx == NULL)
+        return 0;
+    ret = ossl_ml_kem_parse_private_key(in, *pub->m.v, priv->s.v, pub->t.v,
+                                        pub->rho, pub->pkhash, priv->z,
+                                        mdctx, ctx);
+    EVP_MD_CTX_free(mdctx);
+    return ret;
 }
 
 /*
@@ -144,20 +157,26 @@ int parse_private_key(private_key *priv, const uint8_t *in, mctx *ctx)
  */
 static __owur
 int internal_genkey(const uint8_t *seed, uint8_t *pubenc, private_key *priv,
-                    mctx *ctx)
+                    const mctx *ctx)
 {
     uint8_t tmp_pubenc[PUBKEY_BYTES];
+    EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
     uint8_t *encptr = pubenc != NULL ? pubenc : tmp_pubenc;
     public_key *pub = &priv->pub;
     /* Scratch space the called function can't stack-allocate in C90 */
-    vector tmp_e;
+    vector tmp;
+    int ret;
 
-    return ossl_ml_kem_genkey(seed, encptr, *pub->m.v, priv->s.v, tmp_e.v,
-                              pub->t.v, pub->rho, pub->pkhash, priv->z,
-                              &vinfo, ctx);
+    if (mdctx == NULL)
+        return 0;
+    ret = ossl_ml_kem_genkey(seed, encptr, *pub->m.v, priv->s.v, pub->t.v,
+                             pub->rho, pub->pkhash, priv->z, tmp.v,
+                             mdctx, ctx);
+    EVP_MD_CTX_free(mdctx);
+    return ret;
 }
 
-int genkey_rand(uint8_t *seed, uint8_t *pubenc, private_key *priv, mctx *ctx)
+int genkey_rand(uint8_t *seed, uint8_t *pubenc, private_key *priv, const mctx *ctx)
 {
     uint8_t tmp_seed[ML_KEM_SEED_BYTES];
     uint8_t *sptr = seed == NULL ? tmp_seed : seed;
@@ -172,7 +191,7 @@ int genkey_rand(uint8_t *seed, uint8_t *pubenc, private_key *priv, mctx *ctx)
 }
 
 int genkey_seed(const uint8_t *seed, size_t seed_len, uint8_t *pubenc,
-                private_key *priv, mctx *ctx)
+                private_key *priv, const mctx *ctx)
 {
     if (seed_len != ML_KEM_SEED_BYTES)
         return 0;
@@ -184,15 +203,21 @@ int genkey_seed(const uint8_t *seed, size_t seed_len, uint8_t *pubenc,
  * This is the deterministic version with randomness supplied externally.
  */
 int encap_seed(uint8_t *out, uint8_t *out_shared_secret,
-               const public_key *pub, const uint8_t *entropy, mctx *ctx)
+               const public_key *pub, const uint8_t *entropy,
+               const mctx *ctx)
 {
+    EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
     /* Scratch space the called function can't stack-allocate in C90 */
-    vector tmp_y, tmp_e1, tmp_u;
+    vector tmp1, tmp2;
+    int ret;
 
-    return ossl_ml_kem_encap_seed(out, out_shared_secret, entropy,
+    if (mdctx == NULL)
+        return 0;
+    ret = ossl_ml_kem_encap_seed(out, out_shared_secret, entropy,
                                   *pub->m.v, pub->t.v, pub->rho, pub->pkhash,
-                                  tmp_y.v, tmp_e1.v, tmp_u.v, &vinfo, ctx);
-    return 1;
+                                  tmp1.v, tmp2.v, mdctx, ctx);
+    EVP_MD_CTX_free(mdctx);
+    return ret;
 }
 
 /*
@@ -200,7 +225,7 @@ int encap_seed(uint8_t *out, uint8_t *out_shared_secret,
  * Calls |encap_ext|, with random bytes obtained from the RNG.
  */
 int encap_rand(uint8_t *ctext, uint8_t *shared_secret, const public_key *pub,
-               mctx *ctx)
+               const mctx *ctx)
 {
     uint8_t entropy[ML_KEM_RANDOM_BYTES];
 
@@ -216,22 +241,26 @@ int encap_rand(uint8_t *ctext, uint8_t *shared_secret, const public_key *pub,
  * are computed on input, and not checked here on every call.
  */
 int decap(uint8_t *shared_secret, const uint8_t *ctext, size_t len,
-          const private_key *priv, mctx *ctx)
+          const private_key *priv, const mctx *ctx)
 {
     uint8_t cbuf[CTEXT_BYTES];
+    EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
     const public_key *pub = &priv->pub;
     /* Scratch space the called function can't stack-allocate in C90 */
-    vector tmp_y, tmp_e1, tmp_u;
+    vector tmp1, tmp2;
+    int ret = 1;
 
-    if (len != vinfo.ctext_bytes
+    if (mdctx == NULL
+        || len != vinfo.ctext_bytes
         || !ossl_ml_kem_decap(shared_secret, ctext, cbuf, *pub->m.v, priv->s.v,
                               pub->t.v, pub->rho, pub->pkhash, priv->z,
-                              tmp_y.v, tmp_e1.v, tmp_u.v, &vinfo, ctx)) {
+                              tmp1.v, tmp2.v, mdctx, ctx)) {
         RAND_bytes_ex(ctx->libctx, shared_secret,
                       ML_KEM_SHARED_SECRET_BYTES, vinfo.secbits);
-        return 0;
+        ret = 0;
     }
-    return 1;
+    EVP_MD_CTX_free(mdctx);
+    return ret;
 }
 
 vinfo_t get_vinfo(void)

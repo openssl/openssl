@@ -107,7 +107,7 @@ static int ml_kem_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 
     if (ctx == NULL)
         return 0;
-    if (params == NULL)
+    if (ossl_param_is_empty(params))
         return 1;
 
     p = OSSL_PARAM_locate_const(params, OSSL_KEM_PARAM_IKME);
@@ -184,7 +184,7 @@ static int ml_kem_encapsulate(void *vctx, unsigned char *out, size_t *outlen,
     }
 
     *secretlen = ML_KEM_SHARED_SECRET_BYTES;
-    *outlen = key->vinfo->ctext_bytes;
+    *outlen = v->ctext_bytes;
     if (ctx->entropy != NULL)
         ret = ossl_ml_kem_vencap_seed(v, out, *outlen, secret, *secretlen,
                                       key->pubkey, key->prvkey, ctx->entropy,

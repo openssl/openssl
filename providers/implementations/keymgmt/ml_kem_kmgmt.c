@@ -64,8 +64,8 @@ static void *ml_kem_new(void *provctx, vinfo_t v, char *propq)
     key = OPENSSL_zalloc(sizeof(ML_KEM_PROVIDER_KEYPAIR));
     if (key != NULL) {
         key->provctx = provctx;
+        key->ctx = ossl_ml_kem_newctx(libctx, propq, v);
         key->vinfo = v;
-        key->ctx = ossl_ml_kem_newctx(libctx, propq);
         if (key->ctx == NULL) {
             OPENSSL_free(key);
             return NULL;
@@ -77,13 +77,15 @@ static void *ml_kem_new(void *provctx, vinfo_t v, char *propq)
 static void ml_kem_free(void *vkey)
 {
     ML_KEM_PROVIDER_KEYPAIR *key = vkey;
+    vinfo_t v;
 
     if (key == NULL)
         return;
+    v = key->vinfo;
 
     /* Free all key material, zeroing any private parts. */
     OPENSSL_free(key->pubkey);
-    ossl_ml_kem_vcleanse_prvkey(key->vinfo, &key->prvkey);
+    ossl_ml_kem_vcleanse_prvkey(v, &key->prvkey);
     ossl_ml_kem_ctx_free(key->ctx);
     OPENSSL_free(key);
 }
@@ -116,6 +118,8 @@ static int ml_kem_match(const void *vkey1, const void *vkey2, int selection)
 {
     const ML_KEM_PROVIDER_KEYPAIR *k1 = vkey1;
     const ML_KEM_PROVIDER_KEYPAIR *k2 = vkey2;
+    vinfo_t v1 = k1->vinfo;
+    vinfo_t v2 = k2->vinfo;
 
     if (!ossl_prov_is_running())
         return 0;
@@ -124,8 +128,8 @@ static int ml_kem_match(const void *vkey1, const void *vkey2, int selection)
     if (!(selection & OSSL_KEYMGMT_SELECT_KEYPAIR))
         return 1;
 
-    return ossl_ml_kem_vcompare_pubkeys(k1->vinfo, k1->pubkey, k1->prvkey,
-                                        k2->vinfo, k2->pubkey, k2->prvkey);
+    return ossl_ml_kem_vcompare_pubkeys(v1, k1->pubkey, k1->prvkey,
+                                        v2, k2->pubkey, k2->prvkey);
 }
 
 static int ml_kem_export(void *vkey, int selection, OSSL_CALLBACK *param_cb,
@@ -180,7 +184,7 @@ static int ml_kem_export(void *vkey, int selection, OSSL_CALLBACK *param_cb,
                                             key->pubkey, key->prvkey)
             || !ossl_param_build_set_octet_string(
                    tmpl, params, OSSL_PKEY_PARAM_PUB_KEY,
-                   pubenc, key->vinfo->pubkey_bytes))
+                   pubenc, v->pubkey_bytes))
             goto err;
 
     /* The private key on request */
@@ -189,7 +193,7 @@ static int ml_kem_export(void *vkey, int selection, OSSL_CALLBACK *param_cb,
                                              key->prvkey)
             || !ossl_param_build_set_octet_string(
                     tmpl, params, OSSL_PKEY_PARAM_PRIV_KEY,
-                    prvenc, key->vinfo->prvkey_bytes))
+                    prvenc, v->prvkey_bytes))
             goto err;
 
     params = OSSL_PARAM_BLD_to_param(tmpl);
@@ -201,7 +205,7 @@ static int ml_kem_export(void *vkey, int selection, OSSL_CALLBACK *param_cb,
 
 err:
     OSSL_PARAM_BLD_free(tmpl);
-    OPENSSL_secure_clear_free(prvenc, key->vinfo->prvkey_bytes);
+    OPENSSL_secure_clear_free(prvenc, v->prvkey_bytes);
     OPENSSL_free(pubenc);
     return ret;
 }
@@ -259,11 +263,11 @@ static int ossl_ml_kem_key_fromdata(ML_KEM_PROVIDER_KEYPAIR *key,
      * is also provided, the public key will be otherwise ignored.  We could
      * look for a matching encoded block, but unclear this is useful.
      */
-    if (publen != 0 && publen != key->vinfo->pubkey_bytes) {
+    if (publen != 0 && publen != v->pubkey_bytes) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
         return 0;
     }
-    if (prvlen != 0 && prvlen != key->vinfo->prvkey_bytes) {
+    if (prvlen != 0 && prvlen != v->prvkey_bytes) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
         return 0;
     }
@@ -347,7 +351,7 @@ static int ml_kem_get_params(void *vkey, OSSL_PARAM params[])
     if (p != NULL && have_keys(key)) {
         if (p->data_type != OSSL_PARAM_OCTET_STRING)
             return 0;
-        p->return_size = key->vinfo->pubkey_bytes;
+        p->return_size = v->pubkey_bytes;
         if (p->data != NULL) {
             if (p->data_size < p->return_size)
                 return 0;
@@ -361,7 +365,7 @@ static int ml_kem_get_params(void *vkey, OSSL_PARAM params[])
     if (p != NULL && key->prvkey != NULL) {
         if (p->data_type != OSSL_PARAM_OCTET_STRING)
             return 0;
-        p->return_size = key->vinfo->prvkey_bytes;
+        p->return_size = v->prvkey_bytes;
         if (p->data != NULL) {
             if (p->data_size < p->return_size)
                 return 0;
@@ -508,7 +512,7 @@ static void *ml_kem_gen(void *vgctx, OSSL_CALLBACK *osslcb, void *cbarg)
     if (gctx == NULL)
         return NULL;
 
-    key = ml_kem_new(gctx->provctx, gctx->vinfo, gctx->propq);
+    key = ml_kem_new(gctx->provctx, v, gctx->propq);
     if (key == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
         return NULL;
@@ -561,7 +565,7 @@ static void *ml_kem_dup(const void *vkey, int selection)
     if ((newkey->ctx = ossl_ml_kem_ctx_dup(key->ctx)) == NULL)
         goto err;
     newkey->provctx = key->provctx;
-    newkey->vinfo = v;
+    newkey->vinfo = key->vinfo;
 
     /* If key material is requested, clone the entire structure */
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0)

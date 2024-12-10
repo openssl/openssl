@@ -98,7 +98,6 @@ static int sanity_test(void)
     EVP_RAND_CTX *privctx;
     EVP_RAND_CTX *pubctx;
     EVP_MD *sha256 = EVP_MD_fetch(NULL, "sha256", NULL);
-    ossl_ml_kem_ctx *mctx;
     const ossl_ml_kem_vinfo *v[3];
     int i, ret = 0;
 
@@ -114,9 +113,6 @@ static int sanity_test(void)
         || (v[2] = ossl_ml_kem_1024_get_vinfo()) == NULL) {
         return -1;
     }
-    if ((mctx = ossl_ml_kem_newctx(NULL, NULL)) == NULL)
-        return -1;
-
     for (i = 0; i < 3; ++i) {
         OSSL_PARAM params[3], *p;
         uint8_t hash[32];
@@ -124,13 +120,16 @@ static int sanity_test(void)
         uint8_t out_shared_secret2[ML_KEM_SHARED_SECRET_BYTES];
         uint8_t *out_encoded_public_key = OPENSSL_malloc(v[i]->pubkey_bytes);
         uint8_t *out_ciphertext = OPENSSL_malloc(v[i]->ctext_bytes);
+        ossl_ml_kem_ctx *mctx = ossl_ml_kem_newctx(NULL, NULL, v[i]);
         void *private_key = NULL;
         void *public_key = NULL;
         int ret2 = -1;
         unsigned char c;
         unsigned int strength = 256;
 
-        if (out_encoded_public_key == NULL || out_ciphertext == NULL)
+        if (mctx == NULL
+            || out_encoded_public_key == NULL
+            || out_ciphertext == NULL)
             goto done;
 
         /* Configure the private RNG to output just the keygen seed */
@@ -262,8 +261,8 @@ static int sanity_test(void)
         OPENSSL_free(public_key);
         OPENSSL_free(out_encoded_public_key);
         OPENSSL_free(out_ciphertext);
+        ossl_ml_kem_ctx_free(mctx);
     }
-    ossl_ml_kem_ctx_free(mctx);
     EVP_MD_free(sha256);
     return ret == 0;
 }

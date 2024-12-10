@@ -20,12 +20,6 @@
 
 typedef struct ossl_ml_kem_ctx_st ossl_ml_kem_ctx;
 
-/* General ctx functions */
-ossl_ml_kem_ctx *ossl_ml_kem_newctx(OSSL_LIB_CTX *libctx,
-                                    const char *properties);
-ossl_ml_kem_ctx *ossl_ml_kem_ctx_dup(ossl_ml_kem_ctx *ctx);
-void ossl_ml_kem_ctx_free(ossl_ml_kem_ctx *ctx);
-
 #  define ML_KEM_DEGREE 256
 /*
  * With (q-1) an odd multiple of 256, and 17 ("zeta") as a primitive 256th root
@@ -104,7 +98,7 @@ void ossl_ml_kem_ctx_free(ossl_ml_kem_ctx *ctx);
 typedef __owur
 int ossl_ml_kem_cbd_func(ossl_ml_kem_scalar *out,
                          uint8_t in[ML_KEM_RANDOM_BYTES + 1],
-                         ossl_ml_kem_ctx *ctx);
+                         EVP_MD_CTX *mdctx, const ossl_ml_kem_ctx *ctx);
 
 /*
  * The wire form of a losslessly encoded vector (12-bits per element)
@@ -194,7 +188,7 @@ int ossl_ml_kem_cbd_func(ossl_ml_kem_scalar *out,
         uint8_t *optional_out_seed, \
         uint8_t *out_encoded_public_key, \
         ossl_ml_kem_name(v,private_key) *out_private_key, \
-        ossl_ml_kem_ctx *ctx)
+        const ossl_ml_kem_ctx *ctx)
 DECLARE_ML_KEM_GENKEY_RAND(512);
 DECLARE_ML_KEM_GENKEY_RAND(768);
 DECLARE_ML_KEM_GENKEY_RAND(1024);
@@ -213,7 +207,7 @@ DECLARE_ML_KEM_GENKEY_RAND(1024);
         const uint8_t *seed, size_t seed_len, \
         uint8_t *out_encoded_public_key, \
         ossl_ml_kem_name(v,private_key) *out_private_key, \
-        ossl_ml_kem_ctx *ctx)
+        const ossl_ml_kem_ctx *ctx)
 DECLARE_ML_KEM_GENKEY_SEED(512);
 DECLARE_ML_KEM_GENKEY_SEED(768);
 DECLARE_ML_KEM_GENKEY_SEED(1024);
@@ -234,7 +228,7 @@ DECLARE_ML_KEM_GENKEY_SEED(1024);
         uint8_t *out_ciphertext, \
         uint8_t *out_shared_secret, \
         const ossl_ml_kem_name(v,public_key) *public_key, \
-        ossl_ml_kem_ctx *ctx)
+        const ossl_ml_kem_ctx *ctx)
 DECLARE_ML_KEM_ENCAP_RAND(512);
 DECLARE_ML_KEM_ENCAP_RAND(768);
 DECLARE_ML_KEM_ENCAP_RAND(1024);
@@ -252,7 +246,7 @@ DECLARE_ML_KEM_ENCAP_RAND(1024);
         uint8_t *out_shared_secret, \
         const ossl_ml_kem_name(v,public_key) *public_key, \
         const uint8_t *entropy, \
-        ossl_ml_kem_ctx *ctx)
+        const ossl_ml_kem_ctx *ctx)
 DECLARE_ML_KEM_ENCAP_SEED(512);
 DECLARE_ML_KEM_ENCAP_SEED(768);
 DECLARE_ML_KEM_ENCAP_SEED(1024);
@@ -279,7 +273,7 @@ DECLARE_ML_KEM_ENCAP_SEED(1024);
         const uint8_t *ciphertext, \
         size_t ciphertext_len, \
         const ossl_ml_kem_name(v,private_key) *private_key, \
-        ossl_ml_kem_ctx *ctx)
+        const ossl_ml_kem_ctx *ctx)
 DECLARE_ML_KEM_DECAP(512);
 DECLARE_ML_KEM_DECAP(768);
 DECLARE_ML_KEM_DECAP(1024);
@@ -298,7 +292,7 @@ DECLARE_ML_KEM_DECAP(1024);
     __owur int ossl_ml_kem_name(v,parse_public_key)( \
         ossl_ml_kem_name(v,public_key) *out_public_key, \
         const uint8_t *in, \
-        ossl_ml_kem_ctx *ctx)
+        const ossl_ml_kem_ctx *ctx)
 DECLARE_ML_KEM_PARSE_PUB(512);
 DECLARE_ML_KEM_PARSE_PUB(768);
 DECLARE_ML_KEM_PARSE_PUB(1024);
@@ -347,7 +341,7 @@ DECLARE_ML_KEM_ENCODE_PRV(1024);
     __owur int ossl_ml_kem_name(v,parse_private_key)( \
         ossl_ml_kem_name(v,private_key) *out_private_key, \
         const uint8_t *in, \
-        ossl_ml_kem_ctx *ctx)
+        const ossl_ml_kem_ctx *ctx)
 DECLARE_ML_KEM_PARSE_PRV(512);
 DECLARE_ML_KEM_PARSE_PRV(768);
 DECLARE_ML_KEM_PARSE_PRV(1024);
@@ -372,6 +366,13 @@ typedef struct {
     int dv;
     int secbits;
 } ossl_ml_kem_vinfo;
+
+/* General ctx functions */
+ossl_ml_kem_ctx *ossl_ml_kem_newctx(OSSL_LIB_CTX *libctx,
+                                    const char *properties,
+                                    const ossl_ml_kem_vinfo *vinfo);
+ossl_ml_kem_ctx *ossl_ml_kem_ctx_dup(const ossl_ml_kem_ctx *ctx);
+void ossl_ml_kem_ctx_free(ossl_ml_kem_ctx *ctx);
 
 /* Retrive variant-specific parameters */
 const ossl_ml_kem_vinfo *ossl_ml_kem_512_get_vinfo(void);
@@ -404,13 +405,13 @@ int ossl_ml_kem_vparse_public_key(const ossl_ml_kem_vinfo *v,
                                   void **pub,
                                   const uint8_t *in,
                                   size_t len,
-                                  ossl_ml_kem_ctx *ctx);
+                                  const ossl_ml_kem_ctx *ctx);
 __owur
 int ossl_ml_kem_vparse_private_key(const ossl_ml_kem_vinfo *v,
                                    void **priv,
                                    const uint8_t *in,
                                    size_t len,
-                                   ossl_ml_kem_ctx *ctx);
+                                   const ossl_ml_kem_ctx *ctx);
 __owur
 int ossl_ml_kem_vgenkey_rand(const ossl_ml_kem_vinfo *v,
                              uint8_t *seed,
@@ -418,7 +419,7 @@ int ossl_ml_kem_vgenkey_rand(const ossl_ml_kem_vinfo *v,
                              uint8_t *pubenc,
                              size_t publen,
                              void **prv,
-                             ossl_ml_kem_ctx *ctx);
+                             const ossl_ml_kem_ctx *ctx);
 __owur
 int ossl_ml_kem_vgenkey_seed(const ossl_ml_kem_vinfo *v,
                              const uint8_t *seed,
@@ -426,7 +427,7 @@ int ossl_ml_kem_vgenkey_seed(const ossl_ml_kem_vinfo *v,
                              uint8_t *pubenc,
                              size_t publen,
                              void **priv,
-                             ossl_ml_kem_ctx *ctx);
+                             const ossl_ml_kem_ctx *ctx);
 __owur
 int ossl_ml_kem_vencap_seed(const ossl_ml_kem_vinfo *v,
                             uint8_t *ctext,
@@ -437,7 +438,7 @@ int ossl_ml_kem_vencap_seed(const ossl_ml_kem_vinfo *v,
                             const void *prv,
                             const uint8_t *entropy,
                             size_t elen,
-                            ossl_ml_kem_ctx *ctx);
+                            const ossl_ml_kem_ctx *ctx);
 __owur
 int ossl_ml_kem_vencap_rand(const ossl_ml_kem_vinfo *v,
                             uint8_t *ctext,
@@ -446,7 +447,7 @@ int ossl_ml_kem_vencap_rand(const ossl_ml_kem_vinfo *v,
                             size_t slen,
                             const void *pub,
                             void *prv,
-                            ossl_ml_kem_ctx *ctx);
+                            const ossl_ml_kem_ctx *ctx);
 __owur
 int ossl_ml_kem_vdecap(const ossl_ml_kem_vinfo *v,
                        uint8_t *shared_secret,
@@ -454,7 +455,7 @@ int ossl_ml_kem_vdecap(const ossl_ml_kem_vinfo *v,
                        const uint8_t *ctext,
                        size_t clen,
                        const void *prv,
-                       ossl_ml_kem_ctx *ctx);
+                       const ossl_ml_kem_ctx *ctx);
 /*
  * For each compare public key or public part (p ptr) of private key (k ptr).
  */
