@@ -80,5 +80,5 @@ int ossl_hybrid_get_ctx_params(HYBRID_PKEY_CTX *ctx, OSSL_PARAM params[]);
 int ossl_hybrid_set_ctx_params(HYBRID_PKEY_CTX *ctx,
                                const OSSL_PARAM params[]);
 
-/* Common helper to return NULL for empty param lists */
-const OSSL_PARAM *ossl_hybrid_ettable_common(const OSSL_PARAM *r);
+const OSSL_PARAM *ossl_hybrid_gettable_common(const OSSL_PARAM *r);
+const OSSL_PARAM *ossl_hybrid_settable_common(const OSSL_PARAM *r);
