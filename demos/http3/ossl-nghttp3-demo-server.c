@@ -438,12 +438,9 @@ static int quic_server_h3streams(nghttp3_conn *h3conn, struct h3ssl *h3ssl)
     return 0;
 err:
     fflush(stderr);
-    if (rstream != NULL)
-        SSL_free(rstream);
-    if (pstream != NULL)
-        SSL_free(pstream);
-    if (cstream != NULL)
-        SSL_free(cstream);
+    SSL_free(rstream);
+    SSL_free(pstream);
+    SSL_free(cstream);
     return -1;
 }
 
