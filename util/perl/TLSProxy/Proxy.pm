@@ -335,7 +335,7 @@ sub clientstart
     if ($self->execute) {
         my $pid;
         my $execcmd = $self->execute
-             ." s_client -engine ossltest"
+             ." s_client -engine ossltest -state"
              ." -connect $self->{proxy_addr}:$self->{proxy_port}";
         if ($self->{isdtls}) {
             $execcmd .= " -dtls -max_protocol DTLSv1.3"

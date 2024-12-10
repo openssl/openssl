@@ -136,6 +136,8 @@ static int ossl_statem_server13_read_transition(SSL_CONNECTION *s, int mt)
             return 1;
         }
         break;
+
+    case TLS_ST_SR_ACK:
     case TLS_ST_SW_KEY_UPDATE:
     case TLS_ST_SW_SESSION_TICKET:
         if (mt == DTLS13_MT_ACK) {

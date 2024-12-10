@@ -2023,6 +2023,9 @@ typedef struct dtls_sent_msg_st {
     struct dtls1_retransmit_state saved_retransmit_state;
 } dtls_sent_msg;
 
+int dtls_any_sent_messages_are_missing_acknowledge(SSL_CONNECTION *s);
+int dtls_sent_message_is_missing_acknowledge(dtls_sent_msg *msg);
+
 #define SSL_MSG_IS_IMPLICITLY_ACKED(sentbyserver, msgtype)                      \
     ((msgtype) != SSL3_MT_NEWSESSION_TICKET && (msgtype) != SSL3_MT_KEY_UPDATE  \
      && ((msgtype) != SSL3_MT_FINISHED || (sentbyserver)))
@@ -2803,6 +2806,7 @@ void dtls1_get_queue_priority(unsigned char *prio64be, unsigned short seq,
 int dtls1_retransmit_sent_messages(SSL_CONNECTION *s);
 void dtls1_clear_received_buffer(SSL_CONNECTION *s);
 void dtls1_clear_sent_buffer(SSL_CONNECTION *s);
+void dtls1_acknowledge_sent_buffer(SSL_CONNECTION *s, uint16_t before_epoch);
 __owur OSSL_TIME dtls1_default_timeout(void);
 __owur int dtls1_get_timeout(const SSL_CONNECTION *s, OSSL_TIME *timeleft);
 __owur int dtls1_check_timeout_num(SSL_CONNECTION *s);

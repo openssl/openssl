@@ -129,17 +129,39 @@ void dtls1_clear_received_buffer(SSL_CONNECTION *s)
     }
 }
 
-void dtls1_clear_sent_buffer(SSL_CONNECTION *s)
-{
+void dtls1_acknowledge_sent_buffer(SSL_CONNECTION *s, uint16_t before_epoch) {
     pitem *item = NULL;
+    piterator iter = pqueue_iterator(s->d1->sent_messages);
+
+    while ((item = pqueue_next(&iter)) != NULL) {
+        dtls_sent_msg *sent_msg = (dtls_sent_msg *)item->data;
+        size_t idx = 0;
+
+        for (idx = 0; idx < sent_msg->rec_nums_idx; idx++) {
+            if (sent_msg->rec_nums[idx].epoch < before_epoch) {
+                sent_msg->rec_nums[idx].acknowledged = 1;
+            }
+        }
+    }
+}
+
+void dtls1_clear_sent_buffer(SSL_CONNECTION *s) {
+    pitem *item = NULL;
+    pqueue *remaining_sent_messages = pqueue_new();
     pqueue *sent_messages = &s->d1->sent_messages;
 
     while ((item = pqueue_pop(sent_messages)) != NULL) {
-        dtls_sent_msg *sent_msg = (dtls_sent_msg *)item->data;
+        dtls_sent_msg *sent_msg = (dtls_sent_msg *) item->data;
+
+        if (SSL_CONNECTION_IS_DTLS13(s)
+            && dtls_sent_message_is_missing_acknowledge(sent_msg)) {
+            pqueue_insert(remaining_sent_messages, item);
+            continue;
+        }
 
         if (sent_msg->msg_info.record_type == SSL3_RT_CHANGE_CIPHER_SPEC
-                && sent_msg->saved_retransmit_state.wrlmethod != NULL
-                && s->rlayer.wrl != sent_msg->saved_retransmit_state.wrl) {
+            && sent_msg->saved_retransmit_state.wrlmethod != NULL
+            && s->rlayer.wrl != sent_msg->saved_retransmit_state.wrl) {
             /*
              * If we're freeing the CCS then we're done with the old wrl and it
              * can bee freed
@@ -150,8 +172,40 @@ void dtls1_clear_sent_buffer(SSL_CONNECTION *s)
         dtls1_sent_msg_free(sent_msg);
         pitem_free(item);
     }
+
+    if (SSL_CONNECTION_IS_DTLS13(s)) {
+        while ((item = pqueue_pop(remaining_sent_messages)) != NULL) {
+            pqueue_insert(s->d1->sent_messages, item);
+        }
+    }
+
+    pqueue_free(remaining_sent_messages);
 }
 
+int dtls_sent_message_is_missing_acknowledge(dtls_sent_msg *msg) {
+    size_t idx;
+
+    for (idx = 0; idx < msg->rec_nums_idx; idx++) {
+        if (msg->rec_nums[idx].acknowledged == 0)
+            return 1;
+    }
+
+    return 0;
+}
+
+int dtls_any_sent_messages_are_missing_acknowledge(SSL_CONNECTION *s) {
+    pitem *item;
+    piterator iter = pqueue_iterator(s->d1->sent_messages);
+
+    while ((item = pqueue_next(&iter)) != NULL) {
+        dtls_sent_msg *msg = (dtls_sent_msg *)item->data;
+
+        if (dtls_sent_message_is_missing_acknowledge(msg))
+            return 1;
+    }
+
+    return 0;
+}
 
 void dtls1_free(SSL *ssl)
 {

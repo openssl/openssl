@@ -812,23 +812,6 @@ static int dtls1_process_out_of_seq_message(SSL_CONNECTION *s,
     return 0;
 }
 
-int dtls_any_sent_messages_are_missing_acknowledge(SSL_CONNECTION *s) {
-    pitem *item;
-    piterator iter = pqueue_iterator(s->d1->sent_messages);
-
-    while ((item = pqueue_next(&iter)) != NULL) {
-        dtls_sent_msg *msg = (dtls_sent_msg *)item->data;
-        size_t idx = 0;
-
-        do {
-            if (msg->rec_nums[idx].acknowledged == 0)
-                return 1;
-        } while (++idx < msg->rec_nums_idx);
-    }
-
-    return 0;
-}
-
 static int dtls1_read_hm_header(unsigned char *msgheaderstart,
                                 struct hm_header_st *msg_hdr)
 {
@@ -1284,20 +1267,10 @@ int dtls1_retransmit_sent_messages(SSL_CONNECTION *s)
     for (item = pqueue_next(&iter); item != NULL; item = pqueue_next(&iter)) {
         dtls_sent_msg *sent_msg = (dtls_sent_msg *)item->data;
 
-        if (SSL_CONNECTION_IS_DTLS13(s)) {
-            size_t idx = 0, ack_count = 0;
-
-            if (sent_msg->rec_nums_idx > 0) {
-                do {
-                    ack_count += (size_t)sent_msg->rec_nums[idx].acknowledged;
-                } while (++idx < sent_msg->rec_nums_idx);
-            }
-
-            if (ack_count == sent_msg->rec_nums_idx)
-                /* rfc9147: Implementations must not retransmit acknowledged msgs */
-                continue;
-
-        }
+        if (SSL_CONNECTION_IS_DTLS13(s)
+                && !dtls_sent_message_is_missing_acknowledge(sent_msg))
+            /* rfc9147: Implementations must not retransmit acknowledged msgs */
+            continue;
 
         if (dtls1_retransmit_message(s, sent_msg) <= 0)
             return -1;
@@ -1365,6 +1338,9 @@ int dtls1_retransmit_message(SSL_CONNECTION *s, dtls_sent_msg *sent_msg)
         header_length = DTLS1_CCS_HEADER_LENGTH;
     else
         header_length = DTLS1_HM_HEADER_LENGTH;
+
+    /* Clear the record number list ot be acked for retransmitted messages */
+    sent_msg->rec_nums_idx = 0;
 
     memcpy(s->init_buf->data, sent_msg->msg_buf,
            sent_msg->msg_info.msg_body_len + header_length);

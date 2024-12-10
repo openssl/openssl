@@ -78,7 +78,6 @@ int construct_ca_names(SSL_CONNECTION *s, const STACK_OF(X509_NAME) *ca_sk,
                        WPACKET *pkt);
 size_t construct_key_exchange_tbs(SSL_CONNECTION *s, unsigned char **ptbs,
                                   const void *param, size_t paramlen);
-int dtls_any_sent_messages_are_missing_acknowledge(SSL_CONNECTION *s);
 
 /*
  * TLS/DTLS client state machine functions

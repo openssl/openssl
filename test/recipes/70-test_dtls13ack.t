@@ -39,7 +39,7 @@ my $proxy = TLSProxy::Proxy->new_dtls(
     (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
 );
 
-my $testcount = 1;
+my $testcount = 2;
 
 plan tests => $testcount;
 
@@ -58,24 +58,23 @@ my $missing_count = @missing;
 ok($missing_count == 0 && $expected_count > 0,
     "Check that all record numbers are acked");
 
-# TODO(DTLSv1.3): Disabled because client finish message is never retransmitted.
-#Test 2: Check that records that are missing are not acked during a handshake
-#$proxy->clear();
-#my $found_first_client_finish_msg = 0;
-#$proxy->serverflags("-min_protocol DTLSv1.3 -max_protocol DTLSv1.3");
-#$proxy->clientflags("-min_protocol DTLSv1.3 -max_protocol DTLSv1.3");
-#$proxy->filter(\&drop_first_client_finish_filter);
-#TLSProxy::Message->successondata(1);
-#$proxy->start();
-#
-#@expected = get_expected_ack_record_numbers();
-#@actual = get_actual_acked_record_numbers();
-#@missing = record_numbers_missing(\@expected, \@actual);
-#$expected_count = @expected;
-#$missing_count = @missing;
-#
-#ok($missing_count == 1 && $expected_count > 0,
-#   "Check that all record numbers except one are acked");
+# Test 2: Check that records that are missing are not acked during a handshake
+$proxy->clear();
+my $found_first_client_finish_msg = 0;
+$proxy->serverflags("-min_protocol DTLSv1.3 -max_protocol DTLSv1.3");
+$proxy->clientflags("-min_protocol DTLSv1.3 -max_protocol DTLSv1.3");
+$proxy->filter(\&drop_first_client_finish_filter);
+TLSProxy::Message->successondata(1);
+$proxy->start();
+
+@expected = get_expected_ack_record_numbers();
+@actual = get_actual_acked_record_numbers();
+@missing = record_numbers_missing(\@expected, \@actual);
+$expected_count = @expected;
+$missing_count = @missing;
+
+ok($missing_count == 1 && $expected_count > 0,
+   "Check that all record numbers except one are acked");
 
 sub get_expected_ack_record_numbers
 {
@@ -175,20 +174,20 @@ sub record_numbers_missing
     return @missing_record_numbers;
 }
 
-#sub drop_first_client_finish_filter
-#{
-#    my $inproxy = shift;
-#
-#    foreach my $record (@{$inproxy->record_list}) {
-#        next if ($record->{sent} == 1 || $record->serverissender || $found_first_client_finish_msg == 1);
-#
-#        my @messages = TLSProxy::Message->get_messages($record);
-#        foreach my $message (@messages) {
-#            if ($message->mt == TLSProxy::Message::MT_FINISHED) {
-#                $record->{sent} = 1;
-#                $found_first_client_finish_msg = 1;
-#                last;
-#            }
-#        }
-#    }
-#}
+sub drop_first_client_finish_filter
+{
+    my $inproxy = shift;
+
+    foreach my $record (@{$inproxy->record_list}) {
+        next if ($record->{sent} == 1 || $record->serverissender || $found_first_client_finish_msg == 1);
+
+        my @messages = TLSProxy::Message->get_messages($record);
+        foreach my $message (@messages) {
+            if ($message->mt == TLSProxy::Message::MT_FINISHED) {
+                $record->{sent} = 1;
+                $found_first_client_finish_msg = 1;
+                last;
+            }
+        }
+    }
+}
