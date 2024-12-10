@@ -309,7 +309,7 @@ with a certificate chain can be seen. As a side effect the connection
 will never fail due to a server certificate verify failure.
 
 By default, validation of server certificates and their chain
-is done w.r.t. the (D)TLS Server> (C<sslserver>) purpose.
+is done w.r.t. the (D)TLS Server (C<sslserver>) purpose.
 For details see L<openssl-verification-options(1)/Certificate Extensions>.
 
 

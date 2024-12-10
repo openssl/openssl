@@ -26,7 +26,7 @@ starting from the I<target certificate> that is to be verified
 and ending in a certificate that due to some policy is trusted.
 Certificate validation can be performed in the context of a I<purpose>, which
 is a high-level specification of the intended use of the target certificate,
-such C<sslserver> for TLS servers, or (by default) for any purpose.
+such as C<sslserver> for TLS servers, or (by default) for any purpose.
 
 The details of how each OpenSSL command handles errors
 are documented on the specific command page.
@@ -590,8 +590,8 @@ and consequently the standard certification path validation described
 in its section 6 does not include EKU checks for CA certificates.
 The CA/Browser Forum requires for TLS server, S/MIME, and code signing use
 the presence of respective EKUs in subordinate CA certificates (while excluding
-them for root CA certificates), which is self-contradictory because OTOH they
-take over the certificate validity concept and path validation from RFC 5280.
+them for root CA certificates), while taking over from RFC 5280
+the certificate validity concept and certificate path validation.
 
 For historic reasons, OpenSSL has its own way of interpreting and checking
 EKU extensions on CA certificates, which may change in the future.
@@ -600,8 +600,7 @@ but in case the verification purpose is
 C<sslclient>, C<nssslserver>, C<sslserver>, C<smimesign>, or C<smimeencrypt>,
 it checks that any present EKU extension (that does not contain
 B<anyExtendedKeyUsage>) contains the respective EKU as detailed below.
-Moreover, it does these checks even for trust anchor certificates,
-for which the EKU extension (like most other extensions) should be irrelevant.
+Moreover, it does these checks even for trust anchor certificates.
 
 =head3 Checks Implied by Specific Predefined Policies
 
