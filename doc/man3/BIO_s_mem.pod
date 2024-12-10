@@ -197,6 +197,10 @@ and BUF_MEM structure:
  ...
  free(data);
 
+=head1 HISTORY
+
+BIO_s_dgram_mem() was added in OpenSSL 3.2.
+
 =head1 COPYRIGHT
 
 Copyright 2000-2023 The OpenSSL Project Authors. All Rights Reserved.
