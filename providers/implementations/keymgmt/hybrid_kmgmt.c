@@ -576,7 +576,7 @@ int ossl_hybrid_kmgmt_import(void *keydata, int selection,
     size_t *plen = NULL;
     OSSL_PARAM *lprm = NULL;
     unsigned int i, j, k, nparams;
-    size_t data_size, t;
+    size_t data_size;
     int res = 0;
 
     nparams = ossl_param_nelem(params);
@@ -596,33 +596,13 @@ int ossl_hybrid_kmgmt_import(void *keydata, int selection,
 
     for (i = 0; i < key->info->num_algs; i++) {
         for (k = j = 0; j < nparams; j++) {
-            /*
-             * Variable length unsigned integer encoding.
-             *
-             * The top two bits of the first byte specify the length of the
-             * size field.  The number of _additional_ length bytes is:
-             * first_byte >> 6.  The bottom six bits of the first byte
-             * and all of the subsequent bytes represent an unsigned integer
-             * in big endian format.  The maximum length is thus 1Gb - 1 bytes.
-             * A length of zero indicates that this parameter is not applicable
-             * for this algorithm.
-             *
-             * The length is followed by a data block of the specified size.
-             * This is treated as opaque data for the sub-algorithm.
-             *
-             * The rationale behind this encoding is that we do not know
-             * what parameters (or their associated sizes) are required for
-             * each sub-algorithm.
-             */
-            if (plen[j] == 0)
+            if (plen[j] < 4)
                 goto err;
-            t = (*pptr[j] & 0300) >> 6;
-            data_size = *pptr[j]++ & 077;
-            if (--plen[j] < t)
-                goto err;
-            plen[j] -= t;
-            while (t-- > 0)
-                data_size = data_size << 8 | *pptr[j]++;
+            plen[j] -= 4;
+            data_size = *pptr[j]++ << 24;
+            data_size += *pptr[j]++ << 16;
+            data_size += *pptr[j]++ << 8;
+            data_size += *pptr[j]++;
 
             /* Only include this param if it's got an associated value */
             if (data_size > 0) {
@@ -695,39 +675,6 @@ static int hybrid_export_cb(const OSSL_PARAM params[], void *varg)
     return 1;
 }
 
-/*
- * Write out a length field.
- * This is variable length.  The top two bits of the first byte determine the
- * total number of trailing bytes.  The number is stored in big endian order.
- */
-static unsigned char *write_length(unsigned char *p, size_t l)
-{
-    /* Determine the length 1 - 4 bytes */
-    const unsigned int n = 1 + !!(l >> 6) + !!(l >> 14) + !!(l >> 22);
-
-    switch (n) {
-    case 0:
-        *p++ = l & 077;
-        break;
-    case 1:
-        *p++ = (l >> 6 & 077) | 0100;
-        *p++ = l & 0xff;
-        break;
-    case 2:
-        *p++ = (l >> 14 & 077) | 0200;
-        *p++ = l >> 8 & 0xff;
-        *p++ = l & 0xff;
-        break;
-    case 3:
-        *p++ = (l >> 22 & 077) | 0300;
-        *p++ = l >> 16 & 0xff;
-        *p++ = l >> 8 & 0xff;
-        *p++ = l & 0xff;
-        break;
-    }
-    return p;
-}
-
 int ossl_hybrid_kmgmt_export(void *keydata, int selection,
                              OSSL_CALLBACK *param_cb, void *cbarg)
 {
@@ -758,7 +705,11 @@ int ossl_hybrid_kmgmt_export(void *keydata, int selection,
 
         arg.params[i].data = p;
         for (j = 0; j < key->info->num_algs; j++) {
-            p = write_length(p, arg.d[i][j]->data_size);
+            *p++ = 0xff & (arg.d[i][j]->data_size >> 24);
+            *p++ = 0xff & (arg.d[i][j]->data_size >> 16);
+            *p++ = 0xff & (arg.d[i][j]->data_size >> 8);
+            *p++ = 0xff & (arg.d[i][j]->data_size);
+
             if (arg.d[i][j]->data != NULL) {
                 memcpy(p, arg.d[i][j]->data, arg.d[i][j]->data_size);
                 p += arg.d[i][j]->data_size;
