@@ -167,14 +167,9 @@ done:
 
 static void close_fake_file(BIO *mbio)
 {
-    char *buf;
-
     if (mbio == NULL)
         return;
 
-    BIO_reset(mbio);
-    BIO_get_mem_data(mbio, &buf);
-    free(buf);
     BIO_free(mbio);
 }
 
@@ -252,8 +247,10 @@ static void process_new_stream(SSL *ssl_qlistener, SSL *stream)
     SSL *ssl_qconn = NULL;
 
     memset(buf, 0, BUF_SIZE);
-    if (SSL_read_ex(stream, buf, sizeof(buf) - 1, &nread) <= 0)
+    if (SSL_read_ex(stream, buf, sizeof(buf) - 1, &nread) <= 0) {
+        quit = 1;
         return;
+    }
 
     fprintf(stdout, "(Server) Request is %s\n", req);
 
@@ -291,6 +288,7 @@ static void process_new_stream(SSL *ssl_qlistener, SSL *stream)
                 fprintf(stderr, "[ Server ] BIO_lookup_ex(%s, %s) error (%s)\n",
                         dst_host, dst_port_str,
                         ERR_reason_error_string(ERR_get_error()));
+                quit = 1;
                 goto done;
             }
 
@@ -298,18 +296,21 @@ static void process_new_stream(SSL *ssl_qlistener, SSL *stream)
             if (ssl_qconn == NULL) {
                 fprintf(stderr, "[ Server ] SSL_new_from_listener error (%s)\n",
                         ERR_reason_error_string(ERR_get_error()));
+                quit = 1;
                 goto done;
             }
 
             if (!SSL_set1_initial_peer_addr(ssl_qconn, BIO_ADDRINFO_address(bai))) {
                 fprintf(stderr, "[ Server ] SSL_new_from_listener error (%s)\n",
                         ERR_reason_error_string(ERR_get_error()));
+                quit = 1;
                 goto done;
             }
 
             if (SSL_set_alpn_protos(ssl_qconn, alpn_ossltest, sizeof(alpn_ossltest)) != 0) {
                 fprintf(stderr, "[ Client ] ]: SSL_set_alpn_protos failed %s\n",
                         ERR_reason_error_string(ERR_get_error()));
+                quit = 1;
                 goto done;
             }
 
@@ -317,6 +318,7 @@ static void process_new_stream(SSL *ssl_qlistener, SSL *stream)
                 fprintf(stderr, "[ Server ] SSL_connect() to %s:%s failed (%s)\n",
                         dst_host, dst_port_str,
                         ERR_reason_error_string(ERR_get_error()));
+                quit = 1;
                 goto done;
             }
 
@@ -330,6 +332,7 @@ static void process_new_stream(SSL *ssl_qlistener, SSL *stream)
                                                 0)) {
                 fprintf(stderr, "[ Server ] %s SSL_set_incoming_stream_policy %s\n",
                         __func__, ERR_reason_error_string(ERR_get_error()));
+                quit = 1;
                 goto shutdown;
             }
 
@@ -340,6 +343,7 @@ static void process_new_stream(SSL *ssl_qlistener, SSL *stream)
                 fprintf(stderr, "[ Server ] SSL_new_stream() to %s:%s failed (%s)\n",
                         dst_host, dst_port_str,
                         ERR_reason_error_string(ERR_get_error()));
+                quit = 1;
                 goto shutdown;
             }
             fprintf(stdout, "( Server ) got stream\n");
@@ -390,7 +394,7 @@ static int run_quic_server(SSL_CTX *ctx, BIO *sock)
             goto close_conn;
         }
 
-        for (;;) {
+        while (quit == 0) {
             stream = SSL_accept_stream(conn, 0);
             if (stream == NULL) {
                 errcode = ERR_get_error();

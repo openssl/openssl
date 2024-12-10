@@ -18,7 +18,7 @@ setup("test_quic_new_from_listener");
 
 plan tests => 1;
 
-ok(run(test(["quic_test_new_from_listener",
+ok(run(test(["quic_new_from_listener_test",
              "4444",
              srctop_file("test", "certs", "servercert.pem"),
              srctop_file("test", "certs", "serverkey.pem")])));
