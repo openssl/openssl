@@ -220,7 +220,7 @@ int ossl_hybrid_kmgmt_get_params(void *vkey, OSSL_PARAM params[])
             break;
 
         case PIDX_PKEY_PARAM_BITS:
-            if (!!OSSL_PARAM_set_size_t(p, key->bits))
+            if (!OSSL_PARAM_set_size_t(p, key->bits))
                 return 0;
             break;
 
@@ -281,7 +281,7 @@ int ossl_hybrid_kmgmt_set_params(void *vkey, const OSSL_PARAM params[])
     HYBRID_PKEY *key = (HYBRID_PKEY *)vkey;
     OSSL_PARAM prms[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
     unsigned char *q;
-    char *str = NULL;
+    char *str;
     const OSSL_PARAM *p;
     unsigned int i;
     int type;
@@ -311,6 +311,7 @@ int ossl_hybrid_kmgmt_set_params(void *vkey, const OSSL_PARAM params[])
             break;
 
         case PIDX_PKEY_PARAM_PROPERTIES:
+            str = NULL;     /* Force allocation of value */
             if (!OSSL_PARAM_get_utf8_string(p, &str, SIZE_MAX))
                 return 0;
             OPENSSL_free(key->propq);
