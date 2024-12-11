@@ -160,6 +160,9 @@ void dtls1_free(SSL *ssl)
     if (s == NULL)
         return;
 
+    if (s->d1 != NULL)
+        dtls1_clear_queues(s);
+
     DTLS_RECORD_LAYER_free(&s->rlayer);
     ssl3_free(ssl);
     OPENSSL_free(s->d1);
