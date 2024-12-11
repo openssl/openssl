@@ -904,7 +904,7 @@ int main(int argc, char *argv[])
     }
 
     /* QUIC server connection acceptance loop. */
-    if (!run_quic_server(ssl_ctx, bio_sock)) {
+    if (run_quic_server(ssl_ctx, bio_sock) != 0) {
         ERR_print_errors_fp(stderr);
         fprintf(stderr, "[ Server ] Failed to run quic server\n");
         goto out;
