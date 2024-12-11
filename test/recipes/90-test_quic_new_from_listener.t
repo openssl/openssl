@@ -12,9 +12,11 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_quic_new_from_listener");
 
-# skip on windows build (where fork() is not present 
-#plan skip_all => "No external tests in this configuration"
-#    if disabled("external-tests");
+#
+# skip on windows build where fork() is not present
+#
+plan skip_all => "This test requires fork(2)"
+    if $^O eq 'MSWin32';
 
 plan tests => 1;
 
