@@ -490,8 +490,9 @@ static int dtls1_retrieve_buffered_fragment(SSL_CONNECTION *s, size_t *len)
     hm_fragment *frag;
     int ret;
     int chretran = 0;
+    pqueue *buffered_messages = &s->d1->buffered_messages;
 
-    iter = pqueue_iterator(&s->d1->buffered_messages);
+    iter = pqueue_iterator(buffered_messages);
     do {
         item = pqueue_next(&iter);
         if (item == NULL)
@@ -512,7 +513,7 @@ static int dtls1_retrieve_buffered_fragment(SSL_CONNECTION *s, size_t *len)
                  * It is safe to pop this message from the queue even though
                  * we have an active iterator
                  */
-                pqueue_pop(&s->d1->buffered_messages);
+                pqueue_pop(buffered_messages);
                 dtls1_hm_fragment_free(frag);
                 pitem_free(item);
                 item = NULL;
@@ -532,7 +533,7 @@ static int dtls1_retrieve_buffered_fragment(SSL_CONNECTION *s, size_t *len)
                         * We have fragments for both a ClientHello without
                         * cookie and one with. Ditch the one without.
                         */
-                        pqueue_pop(&s->d1->buffered_messages);
+                        pqueue_pop(buffered_messages);
                         dtls1_hm_fragment_free(frag);
                         pitem_free(item);
                         item = next;
@@ -554,7 +555,7 @@ static int dtls1_retrieve_buffered_fragment(SSL_CONNECTION *s, size_t *len)
     if (s->d1->handshake_read_seq == frag->msg_header.seq || chretran) {
         size_t frag_len = frag->msg_header.frag_len;
 
-        pqueue_pop(&s->d1->buffered_messages);
+        pqueue_pop(buffered_messages);
 
         /* Calls SSLfatal() as required */
         ret = dtls1_preprocess_fragment(s, &frag->msg_header);
