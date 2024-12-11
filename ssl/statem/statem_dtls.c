@@ -564,6 +564,7 @@ static int dtls1_retrieve_buffered_fragment(SSL_CONNECTION *s, size_t *len)
 
     if (s->d1->handshake_read_seq == frag->msg_header.seq || chretran) {
         size_t frag_len = frag->msg_header.frag_len;
+
         pqueue_pop(&s->d1->rcvd_messages);
 
         /* Calls SSLfatal() as required */
