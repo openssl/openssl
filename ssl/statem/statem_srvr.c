@@ -173,7 +173,7 @@ static int ossl_statem_server13_read_transition(SSL_CONNECTION *s, int mt)
             return 1;
         }
 
-        if (mt == DTLS13_MT_ACK) { /*TODO(DTLSv1.3): Delete?*/
+        if (mt == DTLS13_MT_ACK) {
             st->hand_state = TLS_ST_SR_ACK;
             return 1;
         }
