@@ -1899,6 +1899,11 @@ typedef struct hm_fragment_st {
 typedef struct pqueue_st pqueue;
 typedef struct pitem_st pitem;
 
+struct pqueue_st {
+    pitem *items;
+    int count;
+};
+
 struct pitem_st {
     unsigned char priority[8];  /* 64-bit value in big-endian encoding */
     void *data;
@@ -1928,9 +1933,9 @@ typedef struct dtls1_state_st {
     unsigned short next_handshake_write_seq;
     unsigned short handshake_read_seq;
     /* Buffered handshake messages */
-    pqueue *buffered_messages;
+    pqueue buffered_messages;
     /* Buffered (sent) handshake records */
-    pqueue *sent_messages;
+    pqueue sent_messages;
     size_t link_mtu;      /* max on-the-wire DTLS packet size */
     size_t mtu;           /* max DTLS packet size */
     struct hm_header_st w_msg_hdr;
