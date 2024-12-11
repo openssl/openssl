@@ -94,7 +94,7 @@ typedef struct rcu_cb_item *prcu_cb_item;
 
 # if defined(__GNUC__) && defined(__ATOMIC_ACQUIRE) && !defined(BROKEN_CLANG_ATOMICS) \
     && !defined(USE_ATOMIC_FALLBACKS)
-#  if defined(__APPLE__) && defined(__clang__) && defined(__aarch64__)
+#  if defined(__APPLE__) && defined(__clang__) && defined(__aarch64__) && defined(__LP64__)
 /*
  * For pointers, Apple M1 virtualized cpu seems to have some problem using the
  * ldapr instruction (see https://github.com/openssl/openssl/pull/23974)
@@ -102,7 +102,8 @@ typedef struct rcu_cb_item *prcu_cb_item;
  * atomic loads, which is bad.  So, if
  * 1) We are building on a target that defines __APPLE__ AND
  * 2) We are building on a target using clang (__clang__) AND
- * 3) We are building for an M1 processor (__aarch64__)
+ * 3) We are building for an M1 processor (__aarch64__) AND
+ * 4) We are building with 64 bit pointers
  * Then we should not use __atomic_load_n and instead implement our own
  * function to issue the ldar instruction instead, which produces the proper
  * sequencing guarantees
