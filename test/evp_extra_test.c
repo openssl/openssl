@@ -37,6 +37,7 @@
 #include "internal/sizes.h"
 #include "crypto/evp.h"
 #include "fake_rsaprov.h"
+#include "fake_pipelineprov.h"
 
 #ifdef STATIC_LEGACY
 OSSL_provider_init_fn ossl_legacy_provider_init;
@@ -5911,6 +5912,210 @@ static int test_invalid_ctx_for_digest(void)
     return ret;
 }
 
+static int test_evp_cipher_pipeline(void)
+{
+    OSSL_PROVIDER *fake_pipeline = NULL;
+    int testresult = 0;
+    EVP_CIPHER *cipher = NULL;
+    EVP_CIPHER *pipeline_cipher = NULL;
+    EVP_CIPHER_CTX *ctx = NULL;
+    unsigned char key[32];
+    size_t keylen = 32;
+    size_t ivlen = EVP_GCM_TLS_EXPLICIT_IV_LEN + EVP_GCM_TLS_FIXED_IV_LEN;
+    size_t taglen = EVP_GCM_TLS_TAG_LEN;
+    unsigned char *iv_array[EVP_MAX_PIPES], *tag_array[EVP_MAX_PIPES];
+    unsigned char *plaintext_array[EVP_MAX_PIPES];
+    unsigned char *ciphertext_array_p[EVP_MAX_PIPES];
+    void **aead_tags = (void **)&tag_array;
+    unsigned char *temp[EVP_MAX_PIPES];
+    size_t outsize_array[EVP_MAX_PIPES], outlen_array[EVP_MAX_PIPES];
+    size_t ciphertextlen_array[EVP_MAX_PIPES];
+    size_t inlen_array[EVP_MAX_PIPES];
+    OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+    unsigned char *ciphertext = NULL, *exp_plaintext = NULL, *tag = NULL;
+    size_t numpipes, plaintextlen, i;
+
+    if (!TEST_ptr(fake_pipeline = fake_pipeline_start(testctx)))
+        return 0;
+    if (!TEST_ptr(pipeline_cipher = EVP_CIPHER_fetch(testctx, "AES-256-GCM",
+                                                     "provider=fake-pipeline"))
+        || !TEST_ptr(cipher = EVP_CIPHER_fetch(testctx, "AES-256-GCM", testpropq))
+        || !TEST_ptr(ctx = EVP_CIPHER_CTX_new()))
+        goto end;
+    memset(key, 0x01, sizeof(key));
+
+    /* Negative tests */
+    if (!TEST_false(EVP_CIPHER_can_pipeline(cipher, 1)))
+        goto end;
+    if (!TEST_false(EVP_CIPHER_can_pipeline(EVP_aes_256_gcm(), 1)))
+        goto end;
+    if (!TEST_false(EVP_CipherPipelineEncryptInit(ctx, pipeline_cipher,
+                                                  key, keylen,
+                                                  EVP_MAX_PIPES + 1, NULL, 0)))
+        goto end;
+
+    /* Positive tests */
+    for (numpipes = 1; numpipes <= EVP_MAX_PIPES; numpipes++) {
+        for (plaintextlen = 1; plaintextlen <= 256; plaintextlen++) {
+            size_t ciphertextlen = 0;
+            int outlen = 0;
+
+            /* Allocate fresh buffers with exact size to catch buffer overwrites */
+            for (i = 0; i < numpipes; i++) {
+                if (!TEST_ptr(iv_array[i] = OPENSSL_malloc(ivlen))
+                    || !TEST_ptr(plaintext_array[i] = OPENSSL_malloc(plaintextlen))
+                    || !TEST_ptr(ciphertext_array_p[i] =
+                                 OPENSSL_malloc(plaintextlen + EVP_MAX_BLOCK_LENGTH))
+                    || !TEST_ptr(tag_array[i] = OPENSSL_malloc(taglen)))
+                    goto end;
+
+                memset(iv_array[i], i + 33, ivlen);
+                memset(plaintext_array[i], i + 1, plaintextlen);
+                inlen_array[i] = plaintextlen;
+                outlen_array[i] = 0;
+                ciphertextlen_array[i] = 0;
+                outsize_array[i] = plaintextlen + EVP_MAX_BLOCK_LENGTH;
+            }
+            if (!TEST_ptr(ciphertext =
+                          OPENSSL_malloc(plaintextlen + EVP_MAX_BLOCK_LENGTH))
+                || !TEST_ptr(tag = OPENSSL_malloc(taglen))
+                || !TEST_ptr(exp_plaintext = OPENSSL_malloc(plaintextlen)))
+                goto end;
+
+            /* Encrypt using pipeline API */
+            if (!TEST_true(EVP_CIPHER_CTX_reset(ctx))
+                || !TEST_true(EVP_CIPHER_can_pipeline(pipeline_cipher, 1))
+                || !TEST_true(EVP_CipherPipelineEncryptInit(ctx, pipeline_cipher,
+                                                            key, keylen, numpipes,
+                                                            (const unsigned char **)iv_array,
+                                                            ivlen))
+                /* reuse plaintext for AAD as it won't affect test */
+                || !TEST_true(EVP_CipherPipelineUpdate(ctx, NULL, outlen_array, NULL,
+                                                       (const unsigned char **)plaintext_array,
+                                                       inlen_array))
+                || !TEST_true(EVP_CipherPipelineUpdate(ctx, ciphertext_array_p,
+                                                       outlen_array, outsize_array,
+                                                       (const unsigned char **)plaintext_array,
+                                                       inlen_array)))
+                goto err;
+
+            for (i = 0; i < numpipes; i++) {
+                ciphertextlen_array[i] = outlen_array[i];
+                temp[i] = ciphertext_array_p[i] + ciphertextlen_array[i];
+                outsize_array[i] = outsize_array[i] - ciphertextlen_array[i];
+            }
+
+            if (!TEST_true(EVP_CipherPipelineFinal(ctx, temp, outlen_array, outsize_array)))
+                goto err;
+
+            for (i = 0; i < numpipes; i++)
+                ciphertextlen_array[i] += outlen_array[i];
+
+            params[0] = OSSL_PARAM_construct_octet_ptr(OSSL_CIPHER_PARAM_PIPELINE_AEAD_TAG,
+                                                       (void **)&aead_tags, taglen);
+            if (!TEST_true(EVP_CIPHER_CTX_get_params(ctx, params)))
+                goto err;
+
+            /* Encrypt using non-pipeline API and compare */
+            if (!TEST_true(EVP_CIPHER_CTX_reset(ctx)))
+                goto err;
+
+            for (i = 0; i < numpipes; i++) {
+                if (!TEST_true(EVP_EncryptInit(ctx, cipher, key, iv_array[i]))
+                    || !TEST_true(EVP_EncryptUpdate(ctx, NULL, &outlen,
+                                                    plaintext_array[i],
+                                                    plaintextlen))
+                    || !TEST_true(EVP_EncryptUpdate(ctx, ciphertext, &outlen,
+                                                    plaintext_array[i],
+                                                    plaintextlen)))
+                    goto err;
+                ciphertextlen = outlen;
+
+                if (!TEST_true(EVP_EncryptFinal_ex(ctx, ciphertext + outlen, &outlen)))
+                    goto err;
+                ciphertextlen += outlen;
+
+                params[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
+                                                              (void *)tag, taglen);
+                if (!TEST_true(EVP_CIPHER_CTX_get_params(ctx, params)))
+                    goto err;
+
+                if (!TEST_mem_eq(ciphertext_array_p[i], ciphertextlen_array[i],
+                                 ciphertext, ciphertextlen)
+                    || !TEST_mem_eq(tag_array[i], taglen, tag, taglen))
+                    goto err;
+            }
+
+            for (i = 0; i < numpipes; i++)
+                outsize_array[i] = plaintextlen;
+
+            /* Decrypt using pipeline API and compare */
+            params[0] = OSSL_PARAM_construct_octet_ptr(OSSL_CIPHER_PARAM_PIPELINE_AEAD_TAG,
+                                                       (void **)&aead_tags, taglen);
+            if (!TEST_true(EVP_CIPHER_CTX_reset(ctx))
+                || !TEST_true(EVP_CIPHER_can_pipeline(pipeline_cipher, 0))
+                || !TEST_true(EVP_CipherPipelineDecryptInit(ctx, pipeline_cipher,
+                                                            key, keylen, numpipes,
+                                                            (const unsigned char **)iv_array,
+                                                            ivlen))
+                || !TEST_true(EVP_CIPHER_CTX_set_params(ctx, params))
+                || !TEST_true(EVP_CipherPipelineUpdate(ctx, NULL, outlen_array, NULL,
+                                                       (const unsigned char **)plaintext_array,
+                                                       inlen_array))
+                || !TEST_true(EVP_CipherPipelineUpdate(ctx, plaintext_array,
+                                                       outlen_array, outsize_array,
+                                                       (const unsigned char **)ciphertext_array_p,
+                                                       ciphertextlen_array)))
+                goto err;
+
+            for (i = 0; i < numpipes; i++) {
+                temp[i] = plaintext_array[i] + outlen_array[i];
+                outsize_array[i] = outsize_array[i] - outlen_array[i];
+            }
+
+            if (!TEST_true(EVP_CipherPipelineFinal(ctx, temp, outlen_array, outsize_array)))
+                goto err;
+
+            for (i = 0; i < numpipes; i++) {
+                memset(exp_plaintext, i + 1, plaintextlen);
+                if (!TEST_mem_eq(plaintext_array[i], plaintextlen,
+                                 exp_plaintext, plaintextlen))
+                    goto err;
+            }
+
+            for (i = 0; i < numpipes; i++) {
+                OPENSSL_free(iv_array[i]);
+                OPENSSL_free(plaintext_array[i]);
+                OPENSSL_free(ciphertext_array_p[i]);
+                OPENSSL_free(tag_array[i]);
+            }
+            OPENSSL_free(exp_plaintext);
+            OPENSSL_free(ciphertext);
+            OPENSSL_free(tag);
+        }
+    }
+
+    testresult = 1;
+    goto end;
+
+err:
+    for (i = 0; i < numpipes; i++) {
+        OPENSSL_free(iv_array[i]);
+        OPENSSL_free(plaintext_array[i]);
+        OPENSSL_free(ciphertext_array_p[i]);
+        OPENSSL_free(tag_array[i]);
+    }
+    OPENSSL_free(exp_plaintext);
+    OPENSSL_free(ciphertext);
+    OPENSSL_free(tag);
+end:
+    EVP_CIPHER_CTX_free(ctx);
+    EVP_CIPHER_free(cipher);
+    EVP_CIPHER_free(pipeline_cipher);
+    fake_pipeline_finish(fake_pipeline);
+    return testresult;
+}
+
 int setup_tests(void)
 {
     char *config_file = NULL;
@@ -6095,6 +6300,8 @@ int setup_tests(void)
 #endif
 
     ADD_TEST(test_invalid_ctx_for_digest);
+
+    ADD_TEST(test_evp_cipher_pipeline);
 
     return 1;
 }
