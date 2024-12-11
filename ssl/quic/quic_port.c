@@ -84,6 +84,7 @@ QUIC_PORT *ossl_quic_port_new(const QUIC_PORT_ARGS *args)
     port->engine        = args->engine;
     port->channel_ctx   = args->channel_ctx;
     port->is_multi_conn = args->is_multi_conn;
+    port->validate_addr = args->do_addr_validation;
 
     if (!port_init(port)) {
         OPENSSL_free(port);
@@ -604,9 +605,20 @@ static void port_bind_channel(QUIC_PORT *port, const BIO_ADDR *peer,
     if (ch == NULL)
         return;
 
-    if (!ossl_quic_bind_channel(ch, peer, scid, dcid, odcid)) {
-        ossl_quic_channel_free(ch);
-        return;
+    if (odcid->id_len != 0) {
+        if (!ossl_quic_bind_channel(ch, peer, scid, dcid, odcid)) {
+            ossl_quic_channel_free(ch);
+            return;
+        }
+    } else {
+        /*
+         * No odcid means we didn't do server validation, so we need to
+         * generate a cid via ossl_quic_channel_on_new_conn
+         */
+        if (!ossl_quic_channel_on_new_conn(ch, peer, scid, dcid)) {
+            ossl_quic_channel_free(ch);
+            return;
+        }
     }
 
     ossl_list_incoming_ch_insert_tail(&port->incoming_channel_list, ch);
@@ -1178,16 +1190,28 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
     if (hdr.type != QUIC_PKT_TYPE_INITIAL)
         goto undesirable;
 
+    odcid.id_len = 0;
+
     /*
      * TODO(QUIC SERVER): there should be some logic similar to accounting half-open
      * states in TCP. If we reach certain threshold, then we want to
      * validate clients.
      */
-    if (hdr.token == NULL) {
+    if (port->validate_addr == 1 && hdr.token == NULL) {
         port_send_retry(port, &e->peer, &hdr);
         goto undesirable;
-    } else if (port_validate_token(&hdr, port, &e->peer, &odcid, &scid) != 1) {
-        goto undesirable;
+    }
+
+    /*
+     * Note, even if we don't enforce the sending of retry frames for
+     * server address validation, we may still get a token if we sent
+     * a NEW_TOKEN frame during a prior connection, which we should still
+     * validate here
+     */
+    if (hdr.token != NULL) {
+        if (port_validate_token(&hdr, port, &e->peer,
+                                &odcid, &scid) == 0)
+            goto undesirable;
     }
 
     port_bind_channel(port, &e->peer, &scid, &hdr.dst_conn_id,
