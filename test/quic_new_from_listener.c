@@ -233,7 +233,7 @@ static BIO *open_fake_file(const char *filename)
      * fill buffer with 'OpenSSLOpenSSLOpenS...' pattern
      */
     for (i = 0; i < fsize; i++)
-        tmp_buf[i] = "OpenSSL"[i % (sizeof ("OpenSSL") - 1)]; 
+        tmp_buf[i] = "OpenSSL"[i % (sizeof ("OpenSSL") - 1)];
 
 done:
     free(tmp_buf);
