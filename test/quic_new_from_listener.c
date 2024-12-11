@@ -29,6 +29,46 @@
 #define LOCALHOST_IP 0x7f000001
 
 /*
+ * We use QUIC client and QUIC server to test SSL_new_from_listener(3)
+ * API call. The main() function uses fork(2) syscall to create a client
+ * process. The main() then continues to run as a server. The main()
+ * expects those command line arguments:
+ *	port
+ *	path to server certificate
+ *	path to server key
+ *
+ * Both client and server use QUIC API in multistream mode with blocking
+ * calls to libssl.
+ *
+ * Yo test SSL_new_from_listener() works as expected we need to implement
+ * application which transfers files in active-FTP like fashion.
+ * Once client connects to server it opens a stream (ssl_qstream_cmd) to
+ * transfer request (command) to fetch desired file. The request looks as
+ * follows:
+ *	/localhost:4445/file_1024.txt
+ * The request above has two path components:
+ *	- host component (localhost:4445)
+ *	- filename component (file_1024.txt)
+ * This tells server to connect back to localhost:4445 and transfer
+ * desired file to client. Client concludes ssl_stream_cmd as soon as
+ * request is written.
+ *
+ * The unit test here also implements http-like mode. In http-like mode
+ * client sends request with filename component only. Such request
+ * looks as follows:
+ *	- /file_1024.txt
+ * In http-like mode client writes request to stream and then reads
+ * the server's response from the same stream.
+ *
+ * When testing is done client sends request 'QUIT' to terminate
+ * server's loop and exit.
+ *
+ * Rather than sending real files the server generates content on
+ * the fly. For example 'some_file_2048.txt' tells server to send
+ * back a payload of 2048 bytes.
+ */
+
+/*
  * hq-interop application protocol
  */
 static const unsigned char alpn_ossltest[] = {
@@ -54,6 +94,10 @@ static SSL_CTX *create_ctx(const char *cert_path, const char *key_path)
     SSL_CTX *ssl_ctx;
     int chk;
 
+    /*
+     * If cert and keys are missing we assume a QUIC client,
+     * otherwise we try to create a context for QUIC server.
+     */
     if (cert_path == NULL && key_path == NULL) {
         ssl_ctx = SSL_CTX_new(OSSL_QUIC_client_method());
         if (!TEST_ptr(ssl_ctx)) {
@@ -147,6 +191,10 @@ err:
     return NULL;
 }
 
+/*
+ * We use mem BIO to generate a payload for client.
+ * we expect filename to be in format like abc_1234.txt
+ */
 static BIO *open_fake_file(const char *filename)
 {
     size_t fsize, i;
@@ -193,6 +241,9 @@ done:
     return bio_fakef;
 }
 
+/*
+ * writes pauload specified by filename to ssl_qstream
+ */
 static void send_file(SSL *ssl_qstream, const char *filename)
 {
     unsigned char buf[BUF_SIZE];
@@ -255,6 +306,18 @@ done:
     return;
 }
 
+/*
+ * reads request from ssl_qstream. Two things may happen here depending on
+ * request type:
+ *    - if we deal with http-like request (GET /file_123.txt) function
+ *      writes response directly to ssl_qstream
+ *
+ *    - if we deal with active-FTP-like mode (GET /localhost:xxxx/file_123.txt)
+ *      function closes ssl_qstream and uses ssl_qlistener to create a new
+ *      QUIC connection object (ssl_qconn). Function uses ssl_qconn to
+ *      connect back to client and open stream to send response.
+ * In both cases function always frees ssl_qstream passed by caller.
+ */
 static void process_new_stream(SSL *ssl_qlistener, SSL *ssl_qstream)
 {
     unsigned char buf[BUF_SIZE];
@@ -398,6 +461,14 @@ done:
     BIO_ADDRINFO_free(bio_addr);
 }
 
+/*
+ * server handles one connection at a time. There are two nested
+ * loops. The outer loop accepts connection from client, the inner
+ * loop accepts streams initiated by client and dispatches them
+ * to  process_new_stream(). Once client hangs up inner loop
+ * terminates and program arrives back to SSL_accept_connection()
+ * to handle new connection.
+ */
 static int run_quic_server(SSL_CTX *ssl_ctx, BIO *bio_sock)
 {
     int err = 1;
@@ -463,6 +534,11 @@ err:
     return err;
 }
 
+/*
+ * Read data sent by server over ssl_qstream. Function reports
+ * failure if expected size is not received. Argument filename
+ * is just for logging here.
+ */
 static int client_stream_transfer(SSL *ssl_qstream, size_t expected,
                                   const char *filename)
 {
@@ -500,7 +576,11 @@ static int client_stream_transfer(SSL *ssl_qstream, size_t expected,
     return 0;
 }
 
-int client_passive_transfer(SSL *ssl_qstream, const char *filename)
+/*
+ * Function requests file filename from server. It sends request over
+ * ssl_qstream and reads desired response from ssl_qstream too.
+ */
+int client_httplike_transfer(SSL *ssl_qstream, const char *filename)
 {
     char buf[1024];
     char *fsize_str, *p;
@@ -547,7 +627,15 @@ done:
     return err;
 }
 
-int client_active_transfer(SSL *ssl_stream_cmd, SSL *ssl_qconn_listener,
+/*
+ * Function requests file filename from server. It uses ftp-like
+ * transfer. The request is sent over `ssl_qstream_cmd`. The
+ * response is received from stream which is arranged over yet
+ * another QUIC connection. Function uses ssl_qconn_listener to
+ * accept a new connection from server. Once server connects
+ * function accepts new connection from server to receive data.
+ */
+int client_ftplike_transfer(SSL *ssl_qstream_cmd, SSL *ssl_qconn_listener,
                            const char *filename)
 {
     char buf[1024];
@@ -587,7 +675,7 @@ int client_active_transfer(SSL *ssl_stream_cmd, SSL *ssl_qconn_listener,
      */
     snprintf(buf, sizeof(buf), "GET /%s:%u/%s\r\n", "localhost",
              (unsigned short)port + 1, filename);
-    chk = SSL_write_ex(ssl_stream_cmd, buf, strlen(buf), &transfered);
+    chk = SSL_write_ex(ssl_qstream_cmd, buf, strlen(buf), &transfered);
     if (TEST_int_eq(chk, 0)) {
         TEST_error("[ Client ] %s SSL_write_ex() failed %s\n",
                    __func__, ERR_reason_error_string(ERR_get_error()));
@@ -597,7 +685,7 @@ int client_active_transfer(SSL *ssl_stream_cmd, SSL *ssl_qconn_listener,
      * we are done with transfer command, we must accept stream
      * on data connection to receive file.
      */
-    SSL_stream_conclude(ssl_stream_cmd, 0);
+    SSL_stream_conclude(ssl_qstream_cmd, 0);
 
     /*
      * accept QUIC connection for data first.
@@ -630,15 +718,18 @@ done:
     return err;
 }
 
+/*
+ * let server know it's time to quit.
+ */
 void client_send_quit(SSL *ssl_qconn)
 {
-    SSL *ssl_stream;
+    SSL *ssl_qstream;
 
-    ssl_stream = SSL_new_stream(ssl_qconn, SSL_STREAM_FLAG_UNI);
-    if (TEST_ptr(ssl_stream)) {
-        SSL_write(ssl_stream, "QUIT\r\n", sizeof("QUIT\r\n") - 1);
-        SSL_stream_conclude(ssl_stream, 0);
-        SSL_free(ssl_stream);
+    ssl_qstream = SSL_new_stream(ssl_qconn, SSL_STREAM_FLAG_UNI);
+    if (TEST_ptr(ssl_qstream)) {
+        SSL_write(ssl_qstream, "QUIT\r\n", sizeof("QUIT\r\n") - 1);
+        SSL_stream_conclude(ssl_qstream, 0);
+        SSL_free(ssl_qstream);
     } else {
         TEST_error("[ Client ] %s can not create stream %s\n",
                    __func__, ERR_reason_error_string(ERR_get_error()));
@@ -647,7 +738,7 @@ void client_send_quit(SSL *ssl_qconn)
 
 int client_run(SSL *ssl_qconn, SSL *ssl_qconn_listener)
 {
-    SSL *ssl_stream_cmd;
+    SSL *ssl_qstream_cmd;
     const char *filenames[] = {
         "file_1024.txt",
         "file_2048.txt",
@@ -660,8 +751,8 @@ int client_run(SSL *ssl_qconn, SSL *ssl_qconn_listener)
     int err = 0;
 
     while (err == 0 && *filename != NULL) {
-        ssl_stream_cmd = SSL_new_stream(ssl_qconn, 0);
-        if (!TEST_ptr(ssl_stream_cmd)) {
+        ssl_qstream_cmd = SSL_new_stream(ssl_qconn, 0);
+        if (!TEST_ptr(ssl_qstream_cmd)) {
             TEST_error("[ Client ] %s SSL_new_stream failed (%s)\n",
                        __func__, ERR_reason_error_string(ERR_get_error()));
             err = 1;
@@ -670,14 +761,14 @@ int client_run(SSL *ssl_qconn, SSL *ssl_qconn_listener)
 
         TEST_info("( Client ) %s getting %s\n", __func__, *filename);
         if (ssl_qconn_listener == NULL)
-            err = client_passive_transfer(ssl_stream_cmd, *filename);
+            err = client_httplike_transfer(ssl_qstream_cmd, *filename);
         else
-            err = client_active_transfer(ssl_stream_cmd, ssl_qconn_listener,
-                                         *filename);
+            err = client_ftplike_transfer(ssl_qstream_cmd, ssl_qconn_listener,
+                                          *filename);
         if (err == 0)
             filename++;
 
-        SSL_free(ssl_stream_cmd);
+        SSL_free(ssl_qstream_cmd);
     }
 
     if (TEST_int_ne(err, 0))
@@ -687,6 +778,9 @@ int client_run(SSL *ssl_qconn, SSL *ssl_qconn_listener)
     return err;
 }
 
+/*
+ * This is the main() for client, we arrive here right after fork().
+ */
 int client_main(int argc, char *argv[])
 {
     SSL_CTX *ssl_ctx = NULL;
@@ -865,6 +959,10 @@ done:
     return err;
 }
 
+/*
+ * main program: * after it forks client it continues to run
+ * as a server, until client tells it's time to quit.
+ */
 int main(int argc, char *argv[])
 {
     int res = EXIT_FAILURE;
