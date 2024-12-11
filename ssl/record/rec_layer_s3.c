@@ -1461,7 +1461,7 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
      */
     if (!SSL_CONNECTION_IS_DTLS(s)
             || direction == OSSL_RECORD_DIRECTION_READ
-            || pqueue_peek(s->d1->sent_messages) == NULL) {
+            || pqueue_peek(&s->d1->sent_messages) == NULL) {
         if (*thismethod != NULL && !(*thismethod)->free(*thisrl)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return 0;
