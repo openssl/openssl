@@ -64,7 +64,8 @@ IF[{- !$disabled{tests} -}]
           ca_internals_test bio_tfo_test membio_test bio_dgram_test list_test \
           fips_version_test x509_test hpke_test pairwise_fail_test \
           nodefltctxtest evp_xof_test x509_load_cert_file_test bio_meth_test \
-          x509_acert_test x509_req_test strtoultest bio_pw_callback_test
+          x509_acert_test x509_req_test strtoultest bio_pw_callback_test \
+          quic_new_from_listener_test
 
   IF[{- !$disabled{'rpk'} -}]
     PROGRAMS{noinst}=rpktest
@@ -1214,6 +1215,10 @@ ENDIF
     SOURCE[quic_cc_test]=quic_cc_test.c
     INCLUDE[quic_cc_test]=../include ../apps/include
     DEPEND[quic_cc_test]=../libcrypto.a ../libssl.a libtestutil.a
+
+     SOURCE[quic_new_from_listener_test]=quic_new_from_listener.c
+     INCLUDE[quic_new_from_listener_test]=../include ../apps/include
+     DEPEND[quic_new_from_listener_test]=../libcrypto ../libssl.a libtestutil.a
   ENDIF
 
   SOURCE[cert_comp_test]=cert_comp_test.c helpers/ssltestlib.c
