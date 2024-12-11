@@ -525,7 +525,8 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
     if (!BIO_dgram_is_sctp(rl->bio)) {
 #endif
         /* Check whether this is a repeat, or aged record. */
-        if (!dtls_record_replay_check(rl, bitmap)) {
+        if (!(rl->options & SSL_OP_NO_DTLS_RECORD_REPLAY_CHECK)
+            && !dtls_record_replay_check(rl, bitmap)) {
             rr->length = 0;
             rl->packet_length = 0; /* dump this record */
             goto again;         /* get another record */
