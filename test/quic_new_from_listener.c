@@ -283,7 +283,7 @@ static void send_file(SSL *ssl_qstream, const char *filename)
                 chk = SSL_get_error(ssl_qstream, chk);
                 switch (chk) {
                 case SSL_ERROR_WANT_WRITE:
-                    TEST_error("[ Server ] %s Send buffer full, retrying\n", 
+                    TEST_error("[ Server ] %s Send buffer full, retrying\n",
                                __func__);
                     continue;
                 default:
@@ -1019,7 +1019,7 @@ int main(int argc, char *argv[])
     wait(NULL);
 
     if (error == 0)
-    	res = EXIT_SUCCESS;
+        res = EXIT_SUCCESS;
 
 out:
     /* Free resources. */
