@@ -796,6 +796,14 @@ static int nc_uri(ASN1_IA5STRING *uri, ASN1_IA5STRING *base)
 
     /* Determine length of hostname part of URI */
 
+    /*
+     * First look if there is a userinfo; if there is, skip it
+     * to get to the actual start of the hostname.
+     */
+    p = ia5memchr(uri, hostptr, '@');
+    if (p != NULL)
+        hostptr = p + 1;
+
     /* Look for a port indicator as end of hostname first */
 
     p = ia5memchr(uri, hostptr, ':');
