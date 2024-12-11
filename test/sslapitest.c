@@ -2066,8 +2066,12 @@ static int execute_test_session(int maxprot, int use_int_cache,
 # ifndef OPENSSL_NO_TLS1_1
     SSL *serverssl3 = NULL, *clientssl3 = NULL;
 # endif
-    SSL_SESSION *sess1 = NULL, *sess2 = NULL;
+    SSL_SESSION *sess1 = NULL, *sess2 = NULL, *sess3 = NULL;
     int testresult = 0, numnewsesstick = 1;
+    const unsigned char cache_id[] = "this is a test";
+    size_t cache_id_len = sizeof("this is a test");
+    const unsigned char *new_cache_id;
+    size_t new_cache_id_len;
 
     new_called = remove_called = 0;
 
@@ -2107,10 +2111,25 @@ static int execute_test_session(int maxprot, int use_int_cache,
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl1, &clientssl1,
                                       NULL, NULL))
-            || !TEST_true(create_ssl_connection(serverssl1, clientssl1,
-                                                SSL_ERROR_NONE))
+            || !TEST_true(SSL_set1_cache_id(clientssl1, cache_id, cache_id_len))
+            || !TEST_true(SSL_get0_cache_id(clientssl1, &new_cache_id, &new_cache_id_len))
+            || !TEST_mem_eq(cache_id, cache_id_len, new_cache_id, new_cache_id_len)
+            || !TEST_true(create_ssl_connection(serverssl1, clientssl1, SSL_ERROR_NONE))
+            || !TEST_false(SSL_set1_cache_id(clientssl1, cache_id, cache_id_len))
             || !TEST_ptr(sess1 = SSL_get1_session(clientssl1)))
         goto end;
+
+    if (use_int_cache
+        && (!TEST_true(SSL_SESSION_get0_cache_id(sess1, &new_cache_id, &new_cache_id_len))
+            || !TEST_mem_eq(cache_id, cache_id_len, new_cache_id, new_cache_id_len)
+            || !TEST_ptr(sess3 = SSL_get1_previous_client_session(clientssl1))
+            || !TEST_ptr_eq(sess1, sess3)
+            || !TEST_false(SSL_SESSION_set1_cache_id(sess1, cache_id, cache_id_len))))
+        goto end;
+
+    /* no longer used */
+    SSL_SESSION_free(sess3);
+    sess3 = NULL;
 
     /* Should fail because it should already be in the cache */
     if (use_int_cache && !TEST_false(SSL_CTX_add_session(cctx, sess1)))
@@ -2367,6 +2386,7 @@ static int execute_test_session(int maxprot, int use_int_cache,
 # endif
     SSL_SESSION_free(sess1);
     SSL_SESSION_free(sess2);
+    SSL_SESSION_free(sess3);
     SSL_CTX_free(sctx);
     SSL_CTX_free(cctx);
 
