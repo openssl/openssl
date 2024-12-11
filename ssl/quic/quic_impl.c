@@ -4431,7 +4431,7 @@ SSL *ossl_quic_new_from_listener(SSL *ssl, uint64_t flags)
 
 err:
     if (qc != NULL) {
-        qc_cleanup(qc, /*have_lock=*/ 0);
+        qc_cleanup(qc, /* have_lock= */ 0);
         OPENSSL_free(qc);
     }
     qctx_unlock(&ctx);
