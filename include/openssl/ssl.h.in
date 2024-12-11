@@ -2825,6 +2825,13 @@ __owur int SSL_get0_server_cert_type(const SSL *s, unsigned char **t, size_t *le
 __owur int SSL_CTX_get0_client_cert_type(const SSL_CTX *ctx, unsigned char **t, size_t *len);
 __owur int SSL_CTX_get0_server_cert_type(const SSL_CTX *s, unsigned char **t, size_t *len);
 
+/* RFC 8701 GREASE support */
+
+int SSL_CTX_add_grease_to_extension(SSL_CTX *ctx, unsigned int extension, unsigned int value);
+int SSL_CTX_add_grease_to_ciphers(SSL_CTX *ctx, unsigned int value);
+int SSL_CTX_add_grease_extension(SSL_CTX *ctx, unsigned int extension, unsigned char* value, size_t length);
+void SSL_CTX_clean_grease(SSL_CTX *ctx);
+
 # ifdef  __cplusplus
 }
 # endif
