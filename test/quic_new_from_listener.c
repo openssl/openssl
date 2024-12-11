@@ -71,7 +71,7 @@ static SSL_CTX *create_ctx(const char *cert_path, const char *key_path)
 
     if (cert_path != NULL) {
         chk =  SSL_CTX_use_certificate_chain_file(ssl_ctx, cert_path);
-        if (chk <= 0) {
+        if (chk != 1) {
             fprintf(stderr,
                     "[ %s ] %s SSL_CTX_use_certificate_chain_file(%s) %s\n",
                     whoami, __func__, cert_path,
@@ -82,7 +82,7 @@ static SSL_CTX *create_ctx(const char *cert_path, const char *key_path)
 
     if (key_path != NULL) {
         chk = SSL_CTX_use_PrivateKey_file(ssl_ctx, key_path, SSL_FILETYPE_PEM);
-        if (chk <= 0) {
+        if (chk != 1) {
             fprintf(stderr, "[ %s ] %s SSL_CTX_use_PrivateKey(%s)  %s\n",
                     whoami, __func__, key_path,
                     ERR_reason_error_string(ERR_get_error()));
@@ -131,7 +131,7 @@ static BIO *create_socket(uint16_t port, struct in_addr *ina)
     }
 
     chk = BIO_set_fd(bio_sock, fd, BIO_CLOSE);
-    if (chk == 0) {
+    if (chk != 1) {
         fprintf(stderr, "[ %s ] %s BIO_set_fd %s\n", whoami, __func__,
                 ERR_reason_error_string(ERR_get_error()));
         goto err;
@@ -213,7 +213,7 @@ static void send_file(SSL *ssl_qstream, const char *filename)
         chk = BIO_read_ex(bio_fakef, buf, BUF_SIZE, &bytes_read);
         if (chk == 0) {
             chk = BIO_eof(bio_fakef);
-            if (chk <= 0) {
+            if (chk != 1) {
                 fprintf(stderr, "[ Server ] Failed to read from %s\n", filename);
                 ERR_print_errors_fp(stderr);
                 goto done;
@@ -226,7 +226,7 @@ static void send_file(SSL *ssl_qstream, const char *filename)
         for (;;) {
             bytes_written = 0;
             chk = SSL_write_ex(ssl_qstream, &buf[offset], bytes_read, &bytes_written);
-            if (chk <= 0) {
+            if (chk == 0) {
                 chk = SSL_get_error(ssl_qstream, chk);
                 switch (chk) {
                 case SSL_ERROR_WANT_WRITE:
@@ -269,7 +269,7 @@ static void process_new_stream(SSL *ssl_qlistener, SSL *ssl_qstream)
 
     memset(buf, 0, BUF_SIZE);
     chk = SSL_read_ex(ssl_qstream, buf, sizeof(buf) - 1, &nread);
-    if (chk <= 0) {
+    if (chk == 0) {
         quit = 1;
         return;
     }
@@ -342,7 +342,7 @@ static void process_new_stream(SSL *ssl_qlistener, SSL *ssl_qstream)
             }
 
             chk = SSL_connect(ssl_qconn);
-            if (chk < 1) {
+            if (chk != 1) {
                 fprintf(stderr, "[ Server ] %s SSL_connect() to %s:%s failed (%s)\n",
                         __func__, dst_host, dst_port_str,
                         ERR_reason_error_string(ERR_get_error()));
@@ -398,13 +398,14 @@ static int run_quic_server(SSL_CTX *ssl_ctx, BIO *bio_sock)
     SSL *ssl_qlistener, *ssl_qconn, *ssl_qstream;
     unsigned long errcode;
 
-    if ((ssl_qlistener = SSL_new_listener(ssl_ctx, 0)) == NULL)
+    ssl_qlistener = SSL_new_listener(ssl_ctx, 0);
+    if (ssl_qlistener == NULL)
         goto err;
 
     SSL_set_bio(ssl_qlistener, bio_sock, bio_sock);
 
     chk = SSL_listen(ssl_qlistener);
-    if (chk != 0)
+    if (chk == 0)
         goto err;
 
     while (quit == 0) {
@@ -422,7 +423,7 @@ static int run_quic_server(SSL_CTX *ssl_ctx, BIO *bio_sock)
         chk = SSL_set_incoming_stream_policy(ssl_qconn,
                                              SSL_INCOMING_STREAM_POLICY_ACCEPT,
                                              0);
-        if (chk != 0) {
+        if (chk == 0) {
             fprintf(stderr,
                     "[ Server ] %s SSL_set_incoming_stream_policy %s\n",
                     __func__, ERR_reason_error_string(ERR_get_error()));
@@ -456,12 +457,51 @@ err:
     return err;
 }
 
-int client_passive_transfer(SSL *ssl_stream, const char *filename)
+static int client_stream_transfer(SSL *ssl_qstream, size_t expected,
+                                  const char *filename)
+{
+    char buf[1024];
+    size_t transfered, x;
+    int chk;
+
+    transfered = 0;
+    while (transfered < expected) {
+        fprintf(stdout, "( Client ) reading from stream ... \n");
+        chk = SSL_read_ex(ssl_qstream, buf, sizeof(buf), &x);
+        if (chk == 0) {
+            fprintf(stderr, "[ Client ] %s SSL_read_ex(%s) { %lu } %s\n",
+                    __func__, filename, transfered,
+                    ERR_reason_error_string(ERR_get_error()));
+            return 1;
+        }
+        fprintf(stdout, "( Client ) got %lu bytes\n", x);
+        transfered += x;
+    }
+
+    if (transfered != expected) {
+        fprintf(stderr, "[ Client ] %s transfer %s incomplete, missing %ld\n",
+                __func__, filename, expected - transfered);
+        return 1;
+    }
+
+    chk = SSL_read_ex(ssl_qstream, buf, sizeof(buf), &x);
+    if (chk == 1) {
+        fprintf(stderr,
+                "[ Client ] %s there is more than %lu to receive in %s\n",
+                __func__, expected, filename);
+        return 1;
+    }
+
+    return 0;
+}
+
+int client_passive_transfer(SSL *ssl_qstream, const char *filename)
 {
     char buf[1024];
     char *fsize_str, *p;
-    size_t fsize, transfered, x;
+    size_t fsize, transfered;
     int err = 1;
+    int chk;
 
     strlcpy(buf, filename, sizeof(buf) - 1);
     fsize_str = strchr(buf, '_');
@@ -488,31 +528,15 @@ int client_passive_transfer(SSL *ssl_stream, const char *filename)
     }
 
     snprintf(buf, sizeof(buf), "GET /%s\r\n", filename);
-    if (!SSL_write_ex(ssl_stream, buf, strlen(buf), &transfered)) {
-        fprintf(stderr, "[ Client ] %s SSL_write_ex() failed %s\n",
-                __func__, ERR_reason_error_string(ERR_get_error()));
+    chk = SSL_write_ex(ssl_qstream, buf, strlen(buf), &transfered);
+    if (chk == 0) {
+        fprintf(stderr, "[ Client ] %s SSL_write_ex('GET /%s') failed %s\n",
+                __func__, filename, ERR_reason_error_string(ERR_get_error()));
         goto done;
     }
 
-    transfered = 0;
-    while (transfered < fsize) {
-        if (!SSL_read_ex(ssl_stream, buf, sizeof(buf), &x)) {
-            fprintf(stderr, "[ Client ] %s SSL_read_ex(%s) { %lu } %s\n",
-                    __func__, filename, transfered,
-                    ERR_reason_error_string(ERR_get_error()));
-            goto done;
-        }
-        transfered += x;
-    }
+    err = client_stream_transfer(ssl_qstream, fsize, filename);
 
-    if (transfered != fsize
-        || SSL_read_ex(ssl_stream, buf, sizeof(buf), &x) != 0) {
-        fprintf(stderr, "[ Client ] %s there is more than %lu to receive\n",
-                __func__, fsize);
-        goto done;
-    }
-
-    err = 0;
 done:
     return err;
 }
@@ -522,10 +546,11 @@ int client_active_transfer(SSL *ssl_stream_cmd, SSL *ssl_qconn_listener,
 {
     char buf[1024];
     char *fsize_str, *p;
-    size_t fsize, transfered, x;
+    size_t fsize, transfered;
     SSL *ssl_qconn_data = NULL;
-    SSL *ssl_stream_data = NULL;
+    SSL *ssl_qstream_data = NULL;
     int err = 1;
+    int chk;
 
     strlcpy(buf, filename, sizeof(buf) - 1);
     fsize_str = strchr(buf, '_');
@@ -556,7 +581,8 @@ int client_active_transfer(SSL *ssl_stream_cmd, SSL *ssl_qconn_listener,
      */
     snprintf(buf, sizeof(buf), "GET /%s:%u/%s\r\n", "localhost",
              (unsigned short)port + 1, filename);
-    if (!SSL_write_ex(ssl_stream_cmd, buf, strlen(buf), &transfered)) {
+    chk = SSL_write_ex(ssl_stream_cmd, buf, strlen(buf), &transfered);
+    if (chk == 0) {
         fprintf(stderr, "[ Client ] %s SSL_write_ex() failed %s\n",
                 __func__, ERR_reason_error_string(ERR_get_error()));
         goto done;
@@ -579,39 +605,20 @@ int client_active_transfer(SSL *ssl_stream_cmd, SSL *ssl_qconn_listener,
     /*
      * create data stream to receive data from server.
      */
-    ssl_stream_data = SSL_accept_stream(ssl_qconn_data, 0);
-    if (ssl_stream_data == NULL) {
+    ssl_qstream_data = SSL_accept_stream(ssl_qconn_data, 0);
+    if (ssl_qstream_data == NULL) {
         fprintf(stderr, "[ Client ] %s SSL_new_stream failed %s\n",
                 __func__, ERR_reason_error_string(ERR_get_error()));
         ERR_print_errors_fp(stderr);
         goto done;
     }
 
-    transfered = 0;
-    while (transfered < fsize) {
-        fprintf(stdout, "( Client ) reading from stream ... \n");
-        if (!SSL_read_ex(ssl_stream_data, buf, sizeof(buf), &x)) {
-            fprintf(stderr, "[ Client ] %s SSL_read_ex(%s) { %lu } %s\n",
-                    __func__, filename, transfered,
-                    ERR_reason_error_string(ERR_get_error()));
-            goto done;
-        }
-        fprintf(stdout, "( Client ) got %lu bytes\n", x);
-        transfered += x;
-    }
+    err = client_stream_transfer(ssl_qstream_data, fsize, filename);
 
-    if (transfered != fsize
-        || SSL_read_ex(ssl_stream_data, buf, sizeof(buf), &x) != 0) {
-        fprintf(stderr, "[ Client ] %s there is more than %lu to receive\n",
-                __func__, fsize);
-        goto done;
-    }
-
-    err = 0;
-    SSL_stream_conclude(ssl_stream_data, 0);
+    SSL_stream_conclude(ssl_qstream_data, 0);
 done:
     SSL_shutdown(ssl_qconn_data);
-    SSL_free(ssl_stream_data);
+    SSL_free(ssl_qstream_data);
     SSL_free(ssl_qconn_data);
 
     return err;
@@ -774,7 +781,7 @@ int client_main(int argc, char *argv[])
     }
 
     chk = SSL_connect(ssl_qconn);
-    if (chk < 1) {
+    if (chk != 1) {
         fprintf(stderr, "[ Client ]:  SSL_connect (%s)\n",
                  ERR_reason_error_string(ERR_get_error()));
         ERR_print_errors_fp(stderr);
