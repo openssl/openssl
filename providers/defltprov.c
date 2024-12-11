@@ -478,9 +478,9 @@ static const OSSL_ALGORITHM deflt_asym_kem[] = {
     { PROV_NAMES_EC, "provider=default", ossl_ec_asym_kem_functions },
 #endif
 #ifndef OPENSSL_NO_ML_KEM
-    { PROV_NAMES_ML_KEM_512, "provider=default", ossl_ml_kem_512_asym_kem_functions },
-    { PROV_NAMES_ML_KEM_768, "provider=default", ossl_ml_kem_768_asym_kem_functions },
-    { PROV_NAMES_ML_KEM_1024, "provider=default", ossl_ml_kem_1024_asym_kem_functions },
+    { PROV_NAMES_ML_KEM_512, "provider=default", ossl_ml_kem_asym_kem_functions },
+    { PROV_NAMES_ML_KEM_768, "provider=default", ossl_ml_kem_asym_kem_functions },
+    { PROV_NAMES_ML_KEM_1024, "provider=default", ossl_ml_kem_asym_kem_functions },
 #endif
     { NULL, NULL, NULL }
 };

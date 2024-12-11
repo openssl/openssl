@@ -10,6 +10,7 @@ use OpenSSL::Test;
 use OpenSSL::Test::Utils;
 use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
-plan tests => 1;
-setup("ml_kem_internal_test");
-ok(run(test(["ml_kem_internal_test"])));
+plan tests => 2;
+setup("ml_kem_extra_test");
+ok(run(test(["ml_kem_evp_extra_test"])));
+ok(run(test(["ml_kem_evp_extra_test", "-test-rand"])));

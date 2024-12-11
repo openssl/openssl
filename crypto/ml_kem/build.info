@@ -1,5 +1,5 @@
 LIBS = ../../libcrypto
 
 IF[{- !$disabled{'ml-kem'} -}]
-    SOURCE[../../libcrypto]=ml_kem.c ml_kem_512.c ml_kem_768.c ml_kem_1024.c
+    SOURCE[../../libcrypto]=ml_kem.c
 ENDIF

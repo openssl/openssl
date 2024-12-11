@@ -21,18 +21,7 @@
 #include "prov/providercommon.h"
 #include "prov/ml_kem.h"
 
-typedef struct {
-    OSSL_LIB_CTX *libctx;
-    const ossl_ml_kem_vinfo *vinfo;
-    ML_KEM_PROVIDER_KEYPAIR *key;
-    int op;
-    uint8_t entropy_buf[ML_KEM_RANDOM_BYTES];
-    uint8_t *entropy;
-} PROV_ML_KEM_CTX;
-
-static OSSL_FUNC_kem_newctx_fn ml_kem_512_newctx;
-static OSSL_FUNC_kem_newctx_fn ml_kem_768_newctx;
-static OSSL_FUNC_kem_newctx_fn ml_kem_1024_newctx;
+static OSSL_FUNC_kem_newctx_fn ml_kem_newctx;
 static OSSL_FUNC_kem_freectx_fn ml_kem_freectx;
 static OSSL_FUNC_kem_encapsulate_init_fn ml_kem_encapsulate_init;
 static OSSL_FUNC_kem_encapsulate_fn ml_kem_encapsulate;
@@ -41,17 +30,24 @@ static OSSL_FUNC_kem_decapsulate_fn ml_kem_decapsulate;
 static OSSL_FUNC_kem_set_ctx_params_fn ml_kem_set_ctx_params;
 
 typedef const ossl_ml_kem_vinfo *vinfo_t;
+typedef struct {
+    OSSL_LIB_CTX *libctx;
+    ML_KEM_KEY *key;
+    int op;
+    uint8_t entropy_buf[ML_KEM_RANDOM_BYTES];
+    uint8_t *entropy;
+} PROV_ML_KEM_CTX;
 
-static void *ml_kem_newctx(void *provctx, vinfo_t v)
+static void *ml_kem_newctx(void *provctx)
 {
     PROV_ML_KEM_CTX *ctx;
 
-    if (v == NULL
-        || (ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL)
+    if ((ctx = OPENSSL_malloc(sizeof(*ctx))) == NULL)
         return NULL;
 
     ctx->libctx = PROV_LIBCTX_OF(provctx);
-    ctx->vinfo = v;
+    ctx->key = NULL;
+    ctx->entropy = NULL;
     return ctx;
 }
 
@@ -79,9 +75,9 @@ static int ml_kem_init(void *vctx, int op, void *key,
 static int ml_kem_encapsulate_init(void *vctx, void *vkey,
                                    const OSSL_PARAM params[])
 {
-    ML_KEM_PROVIDER_KEYPAIR *key = vkey;
+    ML_KEM_KEY *key = vkey;
 
-    if (key == NULL || !have_keys(key)) {
+    if (!ossl_ml_kem_have_pubkey(key)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_KEY);
         return 0;
     }
@@ -91,9 +87,9 @@ static int ml_kem_encapsulate_init(void *vctx, void *vkey,
 static int ml_kem_decapsulate_init(void *vctx, void *vkey,
                                    const OSSL_PARAM params[])
 {
-    ML_KEM_PROVIDER_KEYPAIR *key = vkey;
+    ML_KEM_KEY *key = vkey;
 
-    if (key == NULL || key->prvkey == NULL) {
+    if (!ossl_ml_kem_have_prvkey(key)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_KEY);
         return 0;
     }
@@ -147,15 +143,15 @@ static int ml_kem_encapsulate(void *vctx, unsigned char *out, size_t *outlen,
                               unsigned char *secret, size_t *secretlen)
 {
     PROV_ML_KEM_CTX *ctx = vctx;
-    ML_KEM_PROVIDER_KEYPAIR *key = ctx->key;
+    ML_KEM_KEY *key = ctx->key;
     vinfo_t v;
     int ret = 0;
 
-    if (key == NULL || !have_keys(key)) {
+    if (!ossl_ml_kem_have_pubkey(key)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_KEY);
         goto end;
     }
-    v = key->vinfo;
+    v = ossl_ml_kem_key_vinfo(key);
 
     if (out == NULL) {
         if (outlen == NULL && secretlen == NULL)
@@ -186,12 +182,10 @@ static int ml_kem_encapsulate(void *vctx, unsigned char *out, size_t *outlen,
     *secretlen = ML_KEM_SHARED_SECRET_BYTES;
     *outlen = v->ctext_bytes;
     if (ctx->entropy != NULL)
-        ret = ossl_ml_kem_vencap_seed(v, out, *outlen, secret, *secretlen,
-                                      key->pubkey, key->prvkey, ctx->entropy,
-                                      ML_KEM_RANDOM_BYTES, key->ctx);
+        ret = ossl_ml_kem_encap_seed(out, *outlen, secret, *secretlen,
+                                      ctx->entropy, ML_KEM_RANDOM_BYTES, key);
     else
-        ret = ossl_ml_kem_vencap_rand(v, out, *outlen, secret, *secretlen,
-                                      key->pubkey, key->prvkey, key->ctx);
+        ret = ossl_ml_kem_encap_rand(out, *outlen, secret, *secretlen, key);
 
   end:
     if (ctx->entropy != NULL) {
@@ -205,14 +199,12 @@ static int ml_kem_decapsulate(void *vctx, unsigned char *out, size_t *outlen,
                               const unsigned char *in, size_t inlen)
 {
     PROV_ML_KEM_CTX *ctx = vctx;
-    ML_KEM_PROVIDER_KEYPAIR *key = ctx->key;
-    vinfo_t v;
+    ML_KEM_KEY *key = ctx->key;
 
-    if (key == NULL || key->prvkey == NULL) {
+    if (!ossl_ml_kem_have_prvkey(key)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_KEY);
         return 0;
     }
-    v = key->vinfo;
 
     if (out == NULL) {
         if (outlen == NULL)
@@ -229,31 +221,19 @@ static int ml_kem_decapsulate(void *vctx, unsigned char *out, size_t *outlen,
 
     /* ML-KEM decap handles incorrect ciphertext lengths internally */
     *outlen = ML_KEM_SHARED_SECRET_BYTES;
-    return ossl_ml_kem_vdecap(v, out, *outlen, in, inlen, key->prvkey,
-                              key->ctx);
+    return ossl_ml_kem_decap(out, *outlen, in, inlen, key);
 }
 
-#define DECLARE_VARIANT(bits) \
-    static void *ml_kem_##bits##_newctx(void *provctx) \
-    { \
-        return ml_kem_newctx(provctx, ossl_ml_kem_##bits##_get_vinfo()); \
-    } \
-    const OSSL_DISPATCH ossl_ml_kem_##bits##_asym_kem_functions[] = { \
-        { OSSL_FUNC_KEM_NEWCTX, (void (*)(void))ml_kem_##bits##_newctx }, \
-        { OSSL_FUNC_KEM_ENCAPSULATE_INIT, \
-          (void (*)(void))ml_kem_encapsulate_init }, \
-        { OSSL_FUNC_KEM_ENCAPSULATE, (void (*)(void))ml_kem_encapsulate }, \
-        { OSSL_FUNC_KEM_DECAPSULATE_INIT, \
-          (void (*)(void))ml_kem_decapsulate_init }, \
-        { OSSL_FUNC_KEM_DECAPSULATE, (void (*)(void))ml_kem_decapsulate }, \
-        { OSSL_FUNC_KEM_FREECTX, (void (*)(void))ml_kem_freectx }, \
-        { OSSL_FUNC_KEM_SET_CTX_PARAMS, \
-          (void (*)(void))ml_kem_set_ctx_params }, \
-        { OSSL_FUNC_KEM_SETTABLE_CTX_PARAMS, \
-          (void (*)(void))ml_kem_settable_ctx_params }, \
-        OSSL_DISPATCH_END \
-    }
+typedef void (*funcPtr)(void);
 
-DECLARE_VARIANT(512);
-DECLARE_VARIANT(768);
-DECLARE_VARIANT(1024);
+const OSSL_DISPATCH ossl_ml_kem_asym_kem_functions[] = {
+    { OSSL_FUNC_KEM_NEWCTX, (funcPtr) ml_kem_newctx },
+    { OSSL_FUNC_KEM_ENCAPSULATE_INIT, (funcPtr) ml_kem_encapsulate_init },
+    { OSSL_FUNC_KEM_ENCAPSULATE, (funcPtr) ml_kem_encapsulate },
+    { OSSL_FUNC_KEM_DECAPSULATE_INIT, (funcPtr) ml_kem_decapsulate_init },
+    { OSSL_FUNC_KEM_DECAPSULATE, (funcPtr) ml_kem_decapsulate },
+    { OSSL_FUNC_KEM_FREECTX, (funcPtr) ml_kem_freectx },
+    { OSSL_FUNC_KEM_SET_CTX_PARAMS, (funcPtr) ml_kem_set_ctx_params },
+    { OSSL_FUNC_KEM_SETTABLE_CTX_PARAMS, (funcPtr) ml_kem_settable_ctx_params },
+    OSSL_DISPATCH_END
+};

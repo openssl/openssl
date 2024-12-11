@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <assert.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/params.h>
@@ -16,14 +17,12 @@
 #include <openssl/self_test.h>
 #include "internal/param_build_set.h"
 #include <openssl/param_build.h>
-#include "prov/ml_kem.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
 #include "prov/securitycheck.h"
-#include <assert.h>
+#include "prov/ml_kem.h"
 
-static OSSL_FUNC_keymgmt_free_fn ml_kem_free;
 static OSSL_FUNC_keymgmt_gen_fn ml_kem_gen;
 static OSSL_FUNC_keymgmt_gen_cleanup_fn ml_kem_gen_cleanup;
 static OSSL_FUNC_keymgmt_gen_set_params_fn ml_kem_gen_set_params;
@@ -43,83 +42,43 @@ static OSSL_FUNC_keymgmt_dup_fn ml_kem_dup;
 typedef const ossl_ml_kem_vinfo *vinfo_t;
 
 struct ml_kem_gen_ctx {
-    void *provctx;
+    OSSL_LIB_CTX *libctx;
     char *propq;
-    vinfo_t vinfo;
+    unsigned int variant;
+    int selection;
     uint8_t seedbuf[ML_KEM_SEED_BYTES];
     uint8_t *seed;
-    int selection;
 };
 
-static void *ml_kem_new(void *provctx, vinfo_t v, char *propq)
+static void *ml_kem_new(OSSL_LIB_CTX *libctx, char *propq, unsigned int variant)
 {
-    OSSL_LIB_CTX *libctx = NULL;
-    ML_KEM_PROVIDER_KEYPAIR *key;
-
-    if (!ossl_prov_is_running() || v == NULL)
-        return 0;
-    if (provctx != NULL)
-        libctx = PROV_LIBCTX_OF(provctx);
-
-    key = OPENSSL_zalloc(sizeof(ML_KEM_PROVIDER_KEYPAIR));
-    if (key != NULL) {
-        key->provctx = provctx;
-        key->ctx = ossl_ml_kem_newctx(libctx, propq, v);
-        key->vinfo = v;
-        if (key->ctx == NULL) {
-            OPENSSL_free(key);
-            return NULL;
-        }
-    }
-    return key;
-}
-
-static void ml_kem_free(void *vkey)
-{
-    ML_KEM_PROVIDER_KEYPAIR *key = vkey;
-    vinfo_t v;
-
-    if (key == NULL)
-        return;
-    v = key->vinfo;
-
-    /* Free all key material, zeroing any private parts. */
-    OPENSSL_free(key->pubkey);
-    ossl_ml_kem_vcleanse_prvkey(v, &key->prvkey);
-    ossl_ml_kem_ctx_free(key->ctx);
-    OPENSSL_free(key);
+    if (!ossl_prov_is_running())
+        return NULL;
+    return ossl_ml_kem_key_new(libctx, propq, variant);
 }
 
 static int ml_kem_has(const void *vkey, int selection)
 {
-    static int selectable =
-        OSSL_KEYMGMT_SELECT_PUBLIC_KEY |
-        OSSL_KEYMGMT_SELECT_PRIVATE_KEY;
-    const ML_KEM_PROVIDER_KEYPAIR *key = vkey;
+    const ML_KEM_KEY *key = vkey;
 
+    /* A NULL key MUST fail to have anything */
     if (!ossl_prov_is_running() || key == NULL)
         return 0;
-    if ((selection & selectable) == 0)
+
+    switch (selection & OSSL_KEYMGMT_SELECT_KEYPAIR) {
+    case 0:
         return 1;
-
-    /*
-     * Fail if the public key (or if requested the private key) is unavailable.
-     * The public key is available when either was provided.
-     */
-    if (!have_keys(key)
-        || ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0
-            && key->prvkey == NULL))
-        return 0;
-
-    return 1;
+    case OSSL_KEYMGMT_SELECT_PUBLIC_KEY:
+        return ossl_ml_kem_have_pubkey(key);
+    default:
+        return ossl_ml_kem_have_prvkey(key);
+    }
 }
 
 static int ml_kem_match(const void *vkey1, const void *vkey2, int selection)
 {
-    const ML_KEM_PROVIDER_KEYPAIR *k1 = vkey1;
-    const ML_KEM_PROVIDER_KEYPAIR *k2 = vkey2;
-    vinfo_t v1 = k1->vinfo;
-    vinfo_t v2 = k2->vinfo;
+    const ML_KEM_KEY *key1 = vkey1;
+    const ML_KEM_KEY *key2 = vkey2;
 
     if (!ossl_prov_is_running())
         return 0;
@@ -128,19 +87,18 @@ static int ml_kem_match(const void *vkey1, const void *vkey2, int selection)
     if (!(selection & OSSL_KEYMGMT_SELECT_KEYPAIR))
         return 1;
 
-    return ossl_ml_kem_vcompare_pubkeys(v1, k1->pubkey, k1->prvkey,
-                                        v2, k2->pubkey, k2->prvkey);
+    return ossl_ml_kem_pubkey_cmp(key1, key2);
 }
 
 static int ml_kem_export(void *vkey, int selection, OSSL_CALLBACK *param_cb,
                          void *cbarg)
 {
-    ML_KEM_PROVIDER_KEYPAIR *key = vkey;
-    vinfo_t v;
+    ML_KEM_KEY *key = vkey;
     OSSL_PARAM_BLD *tmpl = NULL;
     OSSL_PARAM *params = NULL;
     uint8_t *pubenc = NULL;
     uint8_t *prvenc = NULL;
+    vinfo_t v;
     int ret = 0;
 
     if (!ossl_prov_is_running() || key == NULL)
@@ -150,11 +108,11 @@ static int ml_kem_export(void *vkey, int selection, OSSL_CALLBACK *param_cb,
         return 0;
 
     /* Fail when no key material has yet been provided */
-    if (key == NULL || !have_keys(key)) {
+    if (!ossl_ml_kem_have_pubkey(key)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_KEY);
         return 0;
     }
-    v = key->vinfo;
+    v = ossl_ml_kem_key_vinfo(key);
 
     if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
         pubenc = OPENSSL_malloc(v->pubkey_bytes);
@@ -162,7 +120,7 @@ static int ml_kem_export(void *vkey, int selection, OSSL_CALLBACK *param_cb,
             goto err;
     }
 
-    if (key->prvkey != NULL
+    if (ossl_ml_kem_have_prvkey(key)
         && (selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
         /*
          * Allocated on the secure heap if configured, this is detected in
@@ -180,17 +138,15 @@ static int ml_kem_export(void *vkey, int selection, OSSL_CALLBACK *param_cb,
 
     /* The public key on request; it is always available when either is */
     if (pubenc != NULL)
-        if (!ossl_ml_kem_vencode_public_key(v, pubenc, v->pubkey_bytes,
-                                            key->pubkey, key->prvkey)
+        if (!ossl_ml_kem_encode_public_key(pubenc, v->pubkey_bytes, key)
             || !ossl_param_build_set_octet_string(
                    tmpl, params, OSSL_PKEY_PARAM_PUB_KEY,
                    pubenc, v->pubkey_bytes))
             goto err;
 
     /* The private key on request */
-    if (prvenc != NULL && key->prvkey != NULL)
-        if (!ossl_ml_kem_vencode_private_key(v, prvenc, v->prvkey_bytes,
-                                             key->prvkey)
+    if (prvenc != NULL && ossl_ml_kem_have_prvkey(key))
+        if (!ossl_ml_kem_encode_private_key(prvenc, v->prvkey_bytes, key)
             || !ossl_param_build_set_octet_string(
                     tmpl, params, OSSL_PKEY_PARAM_PRIV_KEY,
                     prvenc, v->prvkey_bytes))
@@ -223,7 +179,7 @@ static const OSSL_PARAM *ml_kem_imexport_types(int selection)
     return NULL;
 }
 
-static int ossl_ml_kem_key_fromdata(ML_KEM_PROVIDER_KEYPAIR *key,
+static int ossl_ml_kem_key_fromdata(ML_KEM_KEY *key,
                                     const OSSL_PARAM params[],
                                     int include_private)
 {
@@ -232,13 +188,10 @@ static int ossl_ml_kem_key_fromdata(ML_KEM_PROVIDER_KEYPAIR *key,
     size_t publen = 0, prvlen = 0;
     vinfo_t v;
 
-    if (key == NULL)
-        return 0;
-    v = key->vinfo;
-
     /* Invalid attempt to mutate a key, what is the right error to report? */
-    if (have_keys(key))
+    if (key == NULL || ossl_ml_kem_have_pubkey(key))
         return 0;
+    v = ossl_ml_kem_key_vinfo(key);
 
     /* What does the caller want to set? */
     param_pub_key = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PUB_KEY);
@@ -276,27 +229,14 @@ static int ossl_ml_kem_key_fromdata(ML_KEM_PROVIDER_KEYPAIR *key,
      * If the private key is given, we'll ignore the public key data, taking
      * the embedded public key as authoritative.
      */
-    if (prvlen != 0) {
-        if (ossl_ml_kem_vparse_private_key(v, &key->prvkey, prvenc, prvlen,
-                                           key->ctx) == 1)
-            return 1;
-        ossl_ml_kem_vcleanse_prvkey(v, &key->prvkey);
-        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY);
-        return 0;
-    }
-
-    if (ossl_ml_kem_vparse_public_key(v, &key->pubkey, pubenc, publen,
-                                      key->ctx) == 1)
-        return 1;
-    OPENSSL_free(key->pubkey);
-    key->pubkey = NULL;
-    ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY);
-    return 0;
+    if (prvlen != 0)
+        return ossl_ml_kem_parse_private_key(prvenc, prvlen, key);
+    return ossl_ml_kem_parse_public_key(pubenc, publen, key);
 }
 
 static int ml_kem_import(void *vkey, int selection, const OSSL_PARAM params[])
 {
-    ML_KEM_PROVIDER_KEYPAIR *key = vkey;
+    ML_KEM_KEY *key = vkey;
     int include_private;
 
     if (!ossl_prov_is_running() || key == NULL)
@@ -328,8 +268,8 @@ static const OSSL_PARAM *ml_kem_gettable_params(void *provctx)
  */
 static int ml_kem_get_params(void *vkey, OSSL_PARAM params[])
 {
-    ML_KEM_PROVIDER_KEYPAIR *key = vkey;
-    vinfo_t v = key->vinfo;
+    ML_KEM_KEY *key = vkey;
+    vinfo_t v = ossl_ml_kem_key_vinfo(key);
     OSSL_PARAM *p;
 
     p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_BITS);
@@ -348,29 +288,27 @@ static int ml_kem_get_params(void *vkey, OSSL_PARAM params[])
             return 0;
 
     p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY);
-    if (p != NULL && have_keys(key)) {
+    if (p != NULL && ossl_ml_kem_have_pubkey(key)) {
         if (p->data_type != OSSL_PARAM_OCTET_STRING)
             return 0;
         p->return_size = v->pubkey_bytes;
         if (p->data != NULL) {
             if (p->data_size < p->return_size)
                 return 0;
-            if (!ossl_ml_kem_vencode_public_key(v, p->data, p->return_size,
-                                                key->pubkey, key->prvkey))
+            if (!ossl_ml_kem_encode_public_key(p->data, p->return_size, key))
                 return 0;
         }
     }
 
     p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_PRIV_KEY);
-    if (p != NULL && key->prvkey != NULL) {
+    if (p != NULL && ossl_ml_kem_have_prvkey(key)) {
         if (p->data_type != OSSL_PARAM_OCTET_STRING)
             return 0;
         p->return_size = v->prvkey_bytes;
         if (p->data != NULL) {
             if (p->data_size < p->return_size)
                 return 0;
-            if (!ossl_ml_kem_vencode_private_key(v, p->data, p->return_size,
-                                                 key->prvkey))
+            if (!ossl_ml_kem_encode_private_key(p->data, p->return_size, key))
                 return 0;
         }
     }
@@ -389,8 +327,8 @@ static const OSSL_PARAM *ml_kem_settable_params(void *provctx)
 
 static int ml_kem_set_params(void *vkey, const OSSL_PARAM params[])
 {
-    ML_KEM_PROVIDER_KEYPAIR *key = vkey;
-    vinfo_t v = key->vinfo;
+    ML_KEM_KEY *key = vkey;
+    vinfo_t v = ossl_ml_kem_key_vinfo(key);
     const OSSL_PARAM *p;
     const void *pubenc = NULL;
     size_t publen = 0;
@@ -402,8 +340,8 @@ static int ml_kem_set_params(void *vkey, const OSSL_PARAM params[])
     if (p == NULL)
         return 1;
 
-    /* Key mutation is reported generally not allowed */
-    if (have_keys(key)) {
+    /* Key mutation is reportedly generally not allowed */
+    if (ossl_ml_kem_have_pubkey(key)) {
         ERR_raise_data(ERR_LIB_PROV,
                        PROV_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE,
                        "ML-KEM keys cannot be mutated");
@@ -417,14 +355,8 @@ static int ml_kem_set_params(void *vkey, const OSSL_PARAM params[])
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY);
         return 0;
     }
-    if (ossl_ml_kem_vparse_public_key(v, &key->pubkey, pubenc, publen,
-                                      key->ctx) == 1)
-        return 1;
 
-    OPENSSL_free(key->pubkey);
-    key->pubkey = NULL;
-    ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY);
-    return 0;
+    return ossl_ml_kem_parse_public_key(pubenc, publen, key);
 }
 
 static int ml_kem_gen_set_params(void *vgctx, const OSSL_PARAM params[])
@@ -442,8 +374,7 @@ static int ml_kem_gen_set_params(void *vgctx, const OSSL_PARAM params[])
         if (p->data_type != OSSL_PARAM_UTF8_STRING)
             return 0;
         OPENSSL_free(gctx->propq);
-        gctx->propq = OPENSSL_strdup(p->data);
-        if (gctx->propq == NULL)
+        if ((gctx->propq = OPENSSL_strdup(p->data)) == NULL)
             return 0;
     }
 
@@ -467,27 +398,26 @@ static int ml_kem_gen_set_params(void *vgctx, const OSSL_PARAM params[])
     return 1;
 }
 
-static void *ml_kem_gen_init(void *provctx, vinfo_t v,
-                             int selection, const OSSL_PARAM params[])
+static void *ml_kem_gen_init(void *provctx, int selection,
+                             const OSSL_PARAM params[], unsigned int variant)
 {
     struct ml_kem_gen_ctx *gctx = NULL;
 
-    if (!ossl_prov_is_running())
+    if (!ossl_prov_is_running()
+        || (gctx = OPENSSL_zalloc(sizeof(*gctx))) == NULL)
         return NULL;
 
-    if ((gctx = OPENSSL_zalloc(sizeof(*gctx))) == NULL)
-        return NULL;
-
-    gctx->provctx = provctx;
-    gctx->vinfo = v;
+    if (provctx != NULL)
+        gctx->libctx = PROV_LIBCTX_OF(provctx);
     gctx->selection = selection;
+    gctx->variant = variant;
 
-    if (!ml_kem_gen_set_params(gctx, params)) {
-        OPENSSL_free(gctx->propq);
-        OPENSSL_free(gctx);
-        gctx = NULL;
-    }
-    return gctx;
+    if (ml_kem_gen_set_params(gctx, params))
+        return gctx;
+
+    OPENSSL_free(gctx->propq);
+    OPENSSL_free(gctx);
+    return NULL;
 }
 
 static const OSSL_PARAM *ml_kem_gen_settable_params(ossl_unused void *vgctx,
@@ -503,41 +433,33 @@ static const OSSL_PARAM *ml_kem_gen_settable_params(ossl_unused void *vgctx,
 static void *ml_kem_gen(void *vgctx, OSSL_CALLBACK *osslcb, void *cbarg)
 {
     struct ml_kem_gen_ctx *gctx = vgctx;
-    ML_KEM_PROVIDER_KEYPAIR *key;
+    ML_KEM_KEY *key;
     uint8_t *nopub = NULL;
-    size_t seedlen = ML_KEM_SEED_BYTES;
-    vinfo_t v = gctx->vinfo;
+    uint8_t *seed = gctx->seed;
+    size_t slen = seed == NULL ? 0 : ML_KEM_SEED_BYTES;
     int genok = 0;
 
-    if (gctx == NULL)
+    if (gctx == NULL
+        || (key = ml_kem_new(gctx->libctx, gctx->propq, gctx->variant)) == NULL)
         return NULL;
-
-    key = ml_kem_new(gctx->provctx, v, gctx->propq);
-    if (key == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
-        return NULL;
-    }
 
     /* Actual keypair generation may optionally be deferred */
     if ((gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0)
         return key;
 
-    genok = gctx->seed != NULL ?
-        ossl_ml_kem_vgenkey_seed(v, gctx->seed, seedlen, nopub, 0, &key->prvkey,
-                                 key->ctx) :
-        ossl_ml_kem_vgenkey_rand(v, NULL, 0, nopub, 0, &key->prvkey, key->ctx);
+    genok = seed != NULL ?
+        ossl_ml_kem_genkey_seed(seed, slen, nopub, 0, key) :
+        ossl_ml_kem_genkey_rand(seed, slen, nopub, 0, key);
 
-    /* Single-use seeds */
-    if (gctx->seed)
-        OPENSSL_cleanse(gctx->seed, ML_KEM_SEED_BYTES);
+    /* Erase the single-use seed */
+    if (seed)
+        OPENSSL_cleanse(seed, ML_KEM_SEED_BYTES);
     gctx->seed = NULL;
 
     if (genok)
         return key;
 
-    /* The pubkey is always NULL in a generated key */
-    ossl_ml_kem_vcleanse_prvkey(v, &key->prvkey);
-    OPENSSL_free(key);
+    ossl_ml_kem_key_free(key);
     return NULL;
 }
 
@@ -548,86 +470,52 @@ static void ml_kem_gen_cleanup(void *vgctx)
     if (gctx->seed != NULL)
         OPENSSL_cleanse(gctx->seed, ML_KEM_RANDOM_BYTES);
     OPENSSL_free(gctx->propq);
-    OPENSSL_free(vgctx);
+    OPENSSL_free(gctx);
 }
 
 static void *ml_kem_dup(const void *vkey, int selection)
 {
-    const ML_KEM_PROVIDER_KEYPAIR *key = vkey;
-    vinfo_t v = key->vinfo;
-    ML_KEM_PROVIDER_KEYPAIR *newkey;
+    const ML_KEM_KEY *key = vkey;
 
     if (!ossl_prov_is_running())
         return NULL;
 
-    if ((newkey = OPENSSL_zalloc(sizeof(*key))) == NULL)
-        return NULL;
-    if ((newkey->ctx = ossl_ml_kem_ctx_dup(key->ctx)) == NULL)
-        goto err;
-    newkey->provctx = key->provctx;
-    newkey->vinfo = key->vinfo;
-
-    /* If key material is requested, clone the entire structure */
-    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0)
-        return newkey;
-
-    if (key->prvkey != NULL
-        && (selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
-        newkey->prvkey = OPENSSL_memdup(key->prvkey, v->prvalloc);
-        if (newkey->prvkey != NULL)
-            return newkey;
-        goto err;
-    }
-
-    if (key->pubkey != NULL) {
-        newkey->pubkey = OPENSSL_memdup(key->pubkey, v->puballoc);
-        if (newkey->pubkey != NULL)
-            return newkey;
-    }
-
-  err:
-    ml_kem_free(newkey);
-    return NULL;
+    return ossl_ml_kem_key_dup(key, selection);
 }
+
+typedef void (*fPtr)(void);
 
 #define DECLARE_VARIANT(bits) \
     static void *ml_kem_##bits##_new(void *provctx) \
     { \
-        return ml_kem_new(provctx, ossl_ml_kem_##bits##_get_vinfo(), NULL); \
+        return ml_kem_new(provctx == NULL ? NULL : PROV_LIBCTX_OF(provctx), \
+                          NULL, ML_KEM_##bits); \
     } \
     static void *ml_kem_##bits##_gen_init(void *provctx, int selection, \
-                                        const OSSL_PARAM params[]) \
+                                          const OSSL_PARAM params[]) \
     { \
-        return ml_kem_gen_init(provctx, ossl_ml_kem_##bits##_get_vinfo(), \
-                              selection, params); \
+        return ml_kem_gen_init(provctx, selection, params, ML_KEM_##bits); \
     } \
     const OSSL_DISPATCH ossl_ml_kem_##bits##_keymgmt_functions[] = { \
-        { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))ml_kem_##bits##_new }, \
-        { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))ml_kem_free }, \
-        { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*) (void))ml_kem_get_params }, \
-        { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, \
-            (void (*) (void))ml_kem_gettable_params }, \
-        { OSSL_FUNC_KEYMGMT_SET_PARAMS, (void (*) (void))ml_kem_set_params }, \
-        { OSSL_FUNC_KEYMGMT_SETTABLE_PARAMS, \
-            (void (*) (void))ml_kem_settable_params }, \
-        { OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))ml_kem_has }, \
-        { OSSL_FUNC_KEYMGMT_MATCH, (void (*)(void))ml_kem_match }, \
-        { OSSL_FUNC_KEYMGMT_GEN_INIT, \
-            (void (*)(void))ml_kem_##bits##_gen_init }, \
-        { OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS, \
-            (void (*)(void))ml_kem_gen_set_params }, \
+        { OSSL_FUNC_KEYMGMT_NEW, (fPtr) ml_kem_##bits##_new }, \
+        { OSSL_FUNC_KEYMGMT_FREE, (fPtr) ossl_ml_kem_key_free }, \
+        { OSSL_FUNC_KEYMGMT_GET_PARAMS, (fPtr) ml_kem_get_params }, \
+        { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (fPtr) ml_kem_gettable_params }, \
+        { OSSL_FUNC_KEYMGMT_SET_PARAMS, (fPtr) ml_kem_set_params }, \
+        { OSSL_FUNC_KEYMGMT_SETTABLE_PARAMS, (fPtr) ml_kem_settable_params }, \
+        { OSSL_FUNC_KEYMGMT_HAS, (fPtr) ml_kem_has }, \
+        { OSSL_FUNC_KEYMGMT_MATCH, (fPtr) ml_kem_match }, \
+        { OSSL_FUNC_KEYMGMT_GEN_INIT, (fPtr) ml_kem_##bits##_gen_init }, \
+        { OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS, (fPtr) ml_kem_gen_set_params }, \
         { OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS, \
-          (void (*)(void))ml_kem_gen_settable_params }, \
-        { OSSL_FUNC_KEYMGMT_GEN, (void (*)(void))ml_kem_gen }, \
-        { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, \
-            (void (*)(void))ml_kem_gen_cleanup }, \
-        { OSSL_FUNC_KEYMGMT_DUP, (void (*)(void))ml_kem_dup }, \
-        { OSSL_FUNC_KEYMGMT_IMPORT, (void (*)(void))ml_kem_import }, \
-        { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, \
-            (void (*)(void))ml_kem_imexport_types }, \
-        { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))ml_kem_export }, \
-        { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, \
-            (void (*)(void))ml_kem_imexport_types }, \
+            (fPtr) ml_kem_gen_settable_params }, \
+        { OSSL_FUNC_KEYMGMT_GEN, (fPtr) ml_kem_gen }, \
+        { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (fPtr) ml_kem_gen_cleanup }, \
+        { OSSL_FUNC_KEYMGMT_DUP, (fPtr) ml_kem_dup }, \
+        { OSSL_FUNC_KEYMGMT_IMPORT, (fPtr) ml_kem_import }, \
+        { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (fPtr) ml_kem_imexport_types }, \
+        { OSSL_FUNC_KEYMGMT_EXPORT, (fPtr) ml_kem_export }, \
+        { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (fPtr) ml_kem_imexport_types }, \
         OSSL_DISPATCH_END \
     }
 DECLARE_VARIANT(512);
