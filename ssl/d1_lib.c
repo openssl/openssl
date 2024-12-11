@@ -90,29 +90,20 @@ int dtls1_new(SSL *ssl)
 
     if (!ssl3_new(ssl))
         return 0;
-    if ((d1 = OPENSSL_zalloc(sizeof(*d1))) == NULL) {
+    if ((d1 = OPENSSL_zalloc(sizeof(*d1) + 2 * sizeof(struct pqueue_st))) == NULL) {
         ssl3_free(ssl);
         return 0;
     }
 
-    d1->rcvd_messages = pqueue_new();
-    d1->sent_messages = pqueue_new();
+    d1->buffered_messages = (pqueue *)(d1 + 1);
+    d1->sent_messages = d1->buffered_messages + 1;
 
-    if (s->server) {
+    if (s->server)
         d1->cookie_len = sizeof(s->d1->cookie);
-    }
 
     d1->link_mtu = 0;
     d1->mtu = 0;
     d1->hello_verify_request = SSL_HVR_NONE;
-
-    if (d1->rcvd_messages == NULL || d1->sent_messages == NULL) {
-        pqueue_free(d1->rcvd_messages);
-        pqueue_free(d1->sent_messages);
-        OPENSSL_free(d1);
-        ssl3_free(ssl);
-        return 0;
-    }
 
     s->d1 = d1;
 
@@ -170,16 +161,8 @@ void dtls1_free(SSL *ssl)
     if (s == NULL)
         return;
 
-    if (s->d1 != NULL) {
-        dtls1_clear_queues(s);
-        pqueue_free(s->d1->rcvd_messages);
-        pqueue_free(s->d1->sent_messages);
-    }
-
     DTLS_RECORD_LAYER_free(&s->rlayer);
-
     ssl3_free(ssl);
-
     OPENSSL_free(s->d1);
     s->d1 = NULL;
 }
