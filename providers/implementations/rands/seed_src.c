@@ -112,8 +112,10 @@ static int seed_src_generate(void *vseed, unsigned char *out, size_t outlen,
     entropy_available = ossl_pool_acquire_entropy(pool);
 
     if (entropy_available > 0) {
-        if (!ossl_rand_pool_adin_mix_in(pool, adin, adin_len))
+        if (!ossl_rand_pool_adin_mix_in(pool, adin, adin_len)) {
+            ossl_rand_pool_free(pool);
             return 0;
+        }
         memcpy(out, ossl_rand_pool_buffer(pool), ossl_rand_pool_length(pool));
     }
 
