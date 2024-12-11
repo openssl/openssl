@@ -95,24 +95,12 @@ int dtls1_new(SSL *ssl)
         return 0;
     }
 
-    d1->rcvd_messages = pqueue_new();
-    d1->sent_messages = pqueue_new();
-
-    if (s->server) {
+    if (s->server)
         d1->cookie_len = sizeof(s->d1->cookie);
-    }
 
     d1->link_mtu = 0;
     d1->mtu = 0;
     d1->hello_verify_request = SSL_HVR_NONE;
-
-    if (d1->rcvd_messages == NULL || d1->sent_messages == NULL) {
-        pqueue_free(d1->rcvd_messages);
-        pqueue_free(d1->sent_messages);
-        OPENSSL_free(d1);
-        ssl3_free(ssl);
-        return 0;
-    }
 
     s->d1 = d1;
 
@@ -132,8 +120,9 @@ void dtls1_clear_received_buffer(SSL_CONNECTION *s)
 {
     pitem *item = NULL;
     hm_fragment *frag = NULL;
+    pqueue *rcvd_messages = &s->d1->rcvd_messages;
 
-    while ((item = pqueue_pop(s->d1->rcvd_messages)) != NULL) {
+    while ((item = pqueue_pop(rcvd_messages)) != NULL) {
         frag = (hm_fragment *)item->data;
         dtls1_hm_fragment_free(frag);
         pitem_free(item);
@@ -143,8 +132,9 @@ void dtls1_clear_received_buffer(SSL_CONNECTION *s)
 void dtls1_clear_sent_buffer(SSL_CONNECTION *s)
 {
     pitem *item = NULL;
+    pqueue *sent_messages = &s->d1->sent_messages;
 
-    while ((item = pqueue_pop(s->d1->sent_messages)) != NULL) {
+    while ((item = pqueue_pop(sent_messages)) != NULL) {
         dtls_sent_msg *sent_msg = (dtls_sent_msg *)item->data;
 
         if (sent_msg->record_type == SSL3_RT_CHANGE_CIPHER_SPEC
@@ -170,24 +160,17 @@ void dtls1_free(SSL *ssl)
     if (s == NULL)
         return;
 
-    if (s->d1 != NULL) {
+    if (s->d1 != NULL)
         dtls1_clear_queues(s);
-        pqueue_free(s->d1->rcvd_messages);
-        pqueue_free(s->d1->sent_messages);
-    }
 
     DTLS_RECORD_LAYER_free(&s->rlayer);
-
     ssl3_free(ssl);
-
     OPENSSL_free(s->d1);
     s->d1 = NULL;
 }
 
 int dtls1_clear(SSL *ssl)
 {
-    pqueue *rcvd_messages;
-    pqueue *sent_messages;
     size_t mtu;
     size_t link_mtu;
 
@@ -201,8 +184,6 @@ int dtls1_clear(SSL *ssl)
     if (s->d1) {
         DTLS_timer_cb timer_cb = s->d1->timer_cb;
 
-        rcvd_messages = s->d1->rcvd_messages;
-        sent_messages = s->d1->sent_messages;
         mtu = s->d1->mtu;
         link_mtu = s->d1->link_mtu;
 
@@ -221,9 +202,6 @@ int dtls1_clear(SSL *ssl)
             s->d1->mtu = mtu;
             s->d1->link_mtu = link_mtu;
         }
-
-        s->d1->rcvd_messages = rcvd_messages;
-        s->d1->sent_messages = sent_messages;
     }
 
     if (!ssl3_clear(ssl))

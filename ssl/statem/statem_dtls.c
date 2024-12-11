@@ -492,8 +492,9 @@ static int dtls1_retrieve_buffered_fragment(SSL_CONNECTION *s, size_t *len)
     hm_fragment *frag;
     int ret;
     int chretran = 0;
+    pqueue *rcvd_messages = &s->d1->rcvd_messages;
 
-    iter = pqueue_iterator(s->d1->rcvd_messages);
+    iter = pqueue_iterator(rcvd_messages);
     do {
         item = pqueue_next(&iter);
         if (item == NULL)
@@ -514,7 +515,7 @@ static int dtls1_retrieve_buffered_fragment(SSL_CONNECTION *s, size_t *len)
                  * It is safe to pop this message from the queue even though
                  * we have an active iterator
                  */
-                pqueue_pop(s->d1->rcvd_messages);
+                pqueue_pop(rcvd_messages);
                 dtls1_hm_fragment_free(frag);
                 pitem_free(item);
                 item = NULL;
@@ -534,7 +535,7 @@ static int dtls1_retrieve_buffered_fragment(SSL_CONNECTION *s, size_t *len)
                         * We have fragments for both a ClientHello without
                         * cookie and one with. Ditch the one without.
                         */
-                        pqueue_pop(s->d1->rcvd_messages);
+                        pqueue_pop(rcvd_messages);
                         dtls1_hm_fragment_free(frag);
                         pitem_free(item);
                         item = next;
@@ -555,7 +556,8 @@ static int dtls1_retrieve_buffered_fragment(SSL_CONNECTION *s, size_t *len)
 
     if (s->d1->handshake_read_seq == frag->msg_header.seq || chretran) {
         size_t frag_len = frag->msg_header.frag_len;
-        pqueue_pop(s->d1->rcvd_messages);
+
+        pqueue_pop(rcvd_messages);
 
         /* Calls SSLfatal() as required */
         ret = dtls1_preprocess_fragment(s, &frag->msg_header);
@@ -616,7 +618,7 @@ static int dtls1_reassemble_fragment(SSL_CONNECTION *s,
     memset(seq64be, 0, sizeof(seq64be));
     seq64be[6] = (unsigned char)(msg_hdr->seq >> 8);
     seq64be[7] = (unsigned char)msg_hdr->seq;
-    item = pqueue_find(s->d1->rcvd_messages, seq64be);
+    item = pqueue_find(&s->d1->rcvd_messages, seq64be);
 
     if (item == NULL) {
         frag = dtls1_hm_fragment_new(msg_hdr->msg_len, 1);
@@ -678,7 +680,7 @@ static int dtls1_reassemble_fragment(SSL_CONNECTION *s,
         if (item == NULL)
             goto err;
 
-        item = pqueue_insert(s->d1->rcvd_messages, item);
+        item = pqueue_insert(&s->d1->rcvd_messages, item);
         /*
          * pqueue_insert fails iff a duplicate item is inserted. However,
          * |item| cannot be a duplicate. If it were, |pqueue_find|, above,
@@ -715,7 +717,7 @@ static int dtls1_process_out_of_seq_message(SSL_CONNECTION *s,
     memset(seq64be, 0, sizeof(seq64be));
     seq64be[6] = (unsigned char)(msg_hdr->seq >> 8);
     seq64be[7] = (unsigned char)msg_hdr->seq;
-    item = pqueue_find(s->d1->rcvd_messages, seq64be);
+    item = pqueue_find(&s->d1->rcvd_messages, seq64be);
 
     /*
      * If we already have an entry and this one is a fragment, don't discard
@@ -773,7 +775,7 @@ static int dtls1_process_out_of_seq_message(SSL_CONNECTION *s,
         if (item == NULL)
             goto err;
 
-        item = pqueue_insert(s->d1->rcvd_messages, item);
+        item = pqueue_insert(&s->d1->rcvd_messages, item);
         /*
          * pqueue_insert fails iff a duplicate item is inserted. However,
          * |item| cannot be a duplicate. If it were, |pqueue_find|, above,
@@ -1110,7 +1112,7 @@ int dtls1_get_queue_priority(unsigned short seq, int record_type)
 
 int dtls1_retransmit_sent_messages(SSL_CONNECTION *s)
 {
-    piterator iter = pqueue_iterator(s->d1->sent_messages);
+    piterator iter = pqueue_iterator(&s->d1->sent_messages);
     pitem *item;
     int found = 0;
 
@@ -1179,7 +1181,7 @@ int dtls1_buffer_sent_message(SSL_CONNECTION *s, int record_type)
         return 0;
     }
 
-    pqueue_insert(s->d1->sent_messages, item);
+    pqueue_insert(&s->d1->sent_messages, item);
     return 1;
 }
 
@@ -1198,7 +1200,7 @@ int dtls1_retransmit_message(SSL_CONNECTION *s, unsigned short seq, int *found)
     seq64be[6] = (unsigned char)(seq >> 8);
     seq64be[7] = (unsigned char)seq;
 
-    item = pqueue_find(s->d1->sent_messages, seq64be);
+    item = pqueue_find(&s->d1->sent_messages, seq64be);
     if (item == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         *found = 0;
