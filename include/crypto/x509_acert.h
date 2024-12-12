@@ -71,5 +71,4 @@ struct X509_acert_st {
 int ossl_check_acert_crl(X509_STORE_CTX *ctx, X509_CRL *crl, X509_ACERT *x);
 int ossl_check_acert_time(X509_STORE_CTX *ctx, X509_ACERT *acert);
 
-
 #endif
