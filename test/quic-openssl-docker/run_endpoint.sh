@@ -92,7 +92,7 @@ elif [ "$ROLE" == "server" ]; then
      	SSLKEYLOGFILE=/logs/keys.log FILEPREFIX=/www quic-hq-interop-server 443 /certs/cert.pem /certs/priv.key
         ;;
     "http3")
-        SSLKEYLOGFILE=/logs/keys.log ossl-nghttp3-demo-server 443 /certs/cert.pem /certs/priv.key
+        FILEPREFIX=/www/ SSLKEYLOGFILE=/logs/keys.log ossl-nghttp3-demo-server 443 /certs/cert.pem /certs/priv.key
         ;;
     "chacha20")
         SSL_CIPHER_SUITES=TLS_CHACHA20_POLY1305_SHA256 SSLKEYLOGFILE=/logs/keys.log FILEPREFIX=/www quic-hq-interop-server 443 /certs/cert.pem /certs/priv.key
