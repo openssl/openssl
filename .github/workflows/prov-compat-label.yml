@@ -89,7 +89,7 @@ jobs:
                                                  -providers
         working-directory: ${{ matrix.release.dir }}
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.release.tgz }}
           path: ${{ matrix.release.tgz }}
@@ -174,7 +174,7 @@ jobs:
           ./util/opensslwrap.sh version -c
         working-directory: ${{ matrix.branch.dir }}
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.branch.tgz }}
           path: ${{ matrix.branch.tgz }}
@@ -218,7 +218,7 @@ jobs:
           fi
         continue-on-error: true
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         if: steps.early_exit.outcome == 'success'
         with:
           name: ${{ matrix.tree_a }}.tar.gz
@@ -226,7 +226,7 @@ jobs:
         if: steps.early_exit.outcome == 'success'
         run: tar xzf "${{ matrix.tree_a }}.tar.gz"
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         if: steps.early_exit.outcome == 'success'
         with:
           name: ${{ matrix.tree_b }}.tar.gz
