@@ -212,6 +212,10 @@ must supply a certificate or an error occurs.
 If the cipher suite cannot request a client certificate (for example an
 anonymous cipher suite or PSK) this option has no effect.
 
+By default, validation of any supplied client certificate and its chain
+is done w.r.t. the (D)TLS Client (C<sslclient>) purpose.
+For details see L<openssl-verification-options(1)/Certificate Extensions>.
+
 =item B<-cert> I<infile>
 
 The certificate to use, most servers cipher suites require the use of a

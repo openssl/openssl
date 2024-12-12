@@ -303,14 +303,20 @@ see L<openssl-passphrase-options(1)>.
 
 The verify depth to use. This specifies the maximum length of the
 server certificate chain and turns on server certificate verification.
-Currently the verify operation continues after errors so all the problems
+Unless the B<-verify_return_error> option is given,
+the verify operation continues after errors so all the problems
 with a certificate chain can be seen. As a side effect the connection
 will never fail due to a server certificate verify failure.
 
+By default, validation of server certificates and their chain
+is done w.r.t. the (D)TLS Server (C<sslserver>) purpose.
+For details see L<openssl-verification-options(1)/Certificate Extensions>.
+
 =item B<-verify_return_error>
 
-Return verification errors instead of continuing. This will typically
-abort the handshake with a fatal error.
+Turns on server certificate verification, like with B<-verify>,
+but returns verification errors instead of continuing.
+This will typically abort the handshake with a fatal error.
 
 =item B<-verify_quiet>
 
