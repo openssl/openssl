@@ -46,14 +46,13 @@ static int i2r_ATTRIBUTE_MAPPING(X509V3_EXT_METHOD *method,
     ASN1_TYPE *local_val, *remote_val;
 
     switch (am->type) {
-    case (ATTR_MAP_TYPE): {
+    case (ATTR_MAP_TYPE):
         if (i2a_ASN1_OBJECT(out, am->choice.typeMappings->local) <= 0)
             return 0;
         if (BIO_puts(out, " == ") <= 0)
             return 0;
         return i2a_ASN1_OBJECT(out, am->choice.typeMappings->remote);
-    }
-    case (ATTR_MAP_VALUE): {
+    case (ATTR_MAP_VALUE):
         local_type = am->choice.typeValueMappings->local->type;
         remote_type = am->choice.typeValueMappings->remote->type;
         local_val = am->choice.typeValueMappings->local->value;
@@ -73,7 +72,6 @@ static int i2r_ATTRIBUTE_MAPPING(X509V3_EXT_METHOD *method,
         if (BIO_puts(out, ":") <= 0)
             return 0;
         return ossl_print_attribute_value(out, remote_attr_nid, remote_val, 0);
-    }
     default:
         return 0;
     }

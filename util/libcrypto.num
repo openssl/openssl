@@ -5856,3 +5856,4 @@ i2d_ATTRIBUTE_MAPPINGS                  ?	3_5_0	EXIST::FUNCTION:
 ATTRIBUTE_MAPPINGS_free                 ?	3_5_0	EXIST::FUNCTION:
 ATTRIBUTE_MAPPINGS_new                  ?	3_5_0	EXIST::FUNCTION:
 ATTRIBUTE_MAPPINGS_it                   ?	3_5_0	EXIST::FUNCTION:
+ATAV_it                                 ?	3_5_0	EXIST::FUNCTION:
