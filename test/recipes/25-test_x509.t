@@ -16,7 +16,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_x509");
 
-plan tests => 122;
+plan tests => 124;
 
 # Prevent MSys2 filename munging for arguments that look like file paths but
 # aren't
@@ -390,6 +390,16 @@ cert_contains($time_spec_per_cert,
 cert_contains($time_spec_per_cert,
               "Years: 2023, 2024",
               1, 'X.509 Time Specification (Periodic)');
+
+my $attr_map_cert = srctop_file(@certs, "ext-attributeMappings.pem");
+cert_contains($attr_map_cert,
+              "commonName == localityName",
+              1, 'X.509 Attribute Mappings');
+# localityName has an INTEGER value here, which was intentional to test the
+# display of non-string values.
+cert_contains($attr_map_cert,
+              "commonName:asdf == localityName:03:3E",
+              1, 'X.509 Attribute Mappings');
 
 sub test_errors { # actually tests diagnostics of OSSL_STORE
     my ($expected, $cert, @opts) = @_;
