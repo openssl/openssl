@@ -17,6 +17,7 @@
 #include "quic_channel_local.h"
 #include "quic_engine_local.h"
 #include "../ssl_local.h"
+#include <openssl/rand.h>
 
 /*
  * QUIC Port Structure
@@ -71,6 +72,26 @@ typedef struct validation_token {
     unsigned char is_retry;
 } QUIC_VALIDATION_TOKEN;
 
+/*
+ * Maximum length of a marshalled validation token.
+ *
+ * - timestamp is 8 bytes
+ * - odcid and rscid are maximally 42 bytes in total
+ * - remote_addr_len is a size_t (8 bytes)
+ * - remote_addr is in the worst case 110 bytes (in the case of using a
+ *   maximally sized AF_UNIX socket)
+ * - is_retry is a single byte
+ */
+#define MARSHALLED_TOKEN_MAX_LEN 197
+
+/*
+ * Maximum length of an encrypted marshalled validation token.
+ *
+ * This will include the size of the marshalled validation token plus a 16 byte
+ * tag and a 12 byte IV, so in total 197 bytes.
+ */
+#define ENCRYPTED_TOKEN_MAX_LEN (MARSHALLED_TOKEN_MAX_LEN + 16 + 12)
+
 DEFINE_LIST_OF_IMPL(ch, QUIC_CHANNEL);
 DEFINE_LIST_OF_IMPL(incoming_ch, QUIC_CHANNEL);
 DEFINE_LIST_OF_IMPL(port, QUIC_PORT);
@@ -107,6 +128,10 @@ void ossl_quic_port_free(QUIC_PORT *port)
 static int port_init(QUIC_PORT *port)
 {
     size_t rx_short_dcid_len = (port->is_multi_conn ? INIT_DCID_LEN : 0);
+    int key_len;
+    EVP_CIPHER *cipher = NULL;
+    unsigned char *token_key = NULL;
+    int ret = 0;
 
     if (port->engine == NULL || port->channel_ctx == NULL)
         goto err;
@@ -138,11 +163,25 @@ static int port_init(QUIC_PORT *port)
     ossl_list_port_insert_tail(&port->engine->port_list, port);
     port->on_engine_list    = 1;
     port->bio_changed       = 1;
-    return 1;
 
+    /* Generate random key for token encryption */
+    if ((port->token_ctx = EVP_CIPHER_CTX_new()) == NULL
+        || (cipher = EVP_CIPHER_fetch(port->engine->libctx,
+                                      "AES-256-GCM", NULL)) == NULL
+        || !EVP_EncryptInit_ex(port->token_ctx, cipher, NULL, NULL, NULL)
+        || (key_len = EVP_CIPHER_CTX_get_key_length(port->token_ctx)) <= 0
+        || (token_key = OPENSSL_malloc(key_len)) == NULL
+        || !RAND_bytes_ex(port->engine->libctx, token_key, key_len, 0)
+        || !EVP_EncryptInit_ex(port->token_ctx, NULL, NULL, token_key, NULL))
+        goto err;
+
+    ret = 1;
 err:
-    port_cleanup(port);
-    return 0;
+    EVP_CIPHER_free(cipher);
+    OPENSSL_free(token_key);
+    if (!ret)
+        port_cleanup(port);
+    return ret;
 }
 
 static void port_cleanup(QUIC_PORT *port)
@@ -165,6 +204,9 @@ static void port_cleanup(QUIC_PORT *port)
         ossl_list_port_remove(&port->engine->port_list, port);
         port->on_engine_list = 0;
     }
+
+    EVP_CIPHER_CTX_free(port->token_ctx);
+    port->token_ctx = NULL;
 }
 
 static void port_transition_failed(QUIC_PORT *port)
@@ -717,21 +759,21 @@ static int generate_retry_token(BIO_ADDR *peer, QUIC_CONN_ID odcid,
 /**
  * @brief Marshals a validation token into a new buffer.
  *
- * Dynamically allocates |buffer| and stores the size of |buffer| in BUFFER_LEN.
- * Note that it will also allocate an extra QUIC_RETRY_INTEGRITY_TAG_LEN bytes.
- * The caller is responsible for freeing |buffer|.
+ * |buffer| should already be allocated and at least MARSHALLED_TOKEN_MAX_LEN
+ * bytes long. Stores the actual data stored in |buffer| in |buffer_len|.
  *
  * @param token      Validation token.
- * @param buffer     Callee will allocate a buffer and store the address here.
- * @param buffer_len Size of |buffer|.
+ * @param buffer     Address to store the marshalled token.
+ * @param buffer_len Size of data stored in |buffer|.
  */
 static int marshal_validation_token(QUIC_VALIDATION_TOKEN *token,
-                                    unsigned char **buffer, size_t *buffer_len)
+                                    unsigned char *buffer, size_t *buffer_len)
 {
     WPACKET wpkt = {0};
     BUF_MEM *buf_mem = BUF_MEM_new();
 
-    if (buf_mem == NULL || (token->is_retry != 0 && token->is_retry != 1))
+    if (buffer == NULL || buf_mem == NULL
+        || (token->is_retry != 0 && token->is_retry != 1))
         return 0;
 
     if (!WPACKET_init(&wpkt, buf_mem)
@@ -744,18 +786,125 @@ static int marshal_validation_token(QUIC_VALIDATION_TOKEN *token,
                 || !WPACKET_sub_memcpy_u8(&wpkt, &token->rscid.id,
                                           token->rscid.id_len)))
         || !WPACKET_sub_memcpy_u8(&wpkt, token->remote_addr, token->remote_addr_len)
-        || !WPACKET_allocate_bytes(&wpkt, QUIC_RETRY_INTEGRITY_TAG_LEN, NULL)
         || !WPACKET_get_total_written(&wpkt, buffer_len)
+        || *buffer_len > MARSHALLED_TOKEN_MAX_LEN
         || !WPACKET_finish(&wpkt)) {
         WPACKET_cleanup(&wpkt);
         BUF_MEM_free(buf_mem);
         return 0;
     }
 
-    *buffer = (unsigned char *)buf_mem->data;
-    buf_mem->data = NULL;
+    memcpy(buffer, buf_mem->data, *buffer_len);
     BUF_MEM_free(buf_mem);
     return 1;
+}
+
+/**
+ * @brief Encrypts a validation token using AES-256-GCM
+ *
+ * @param port       The QUIC port containing the encryption key
+ * @param plaintext  The data to encrypt
+ * @param pt_len     Length of the plaintext
+ * @param ciphertext Buffer to receive encrypted data. If NULL, ct_len will be
+ *                   set to the required buffer size and function returns
+ *                   immediately.
+ * @param ct_len     Pointer to size_t that will receive the ciphertext length.
+ *                   This also includes bytes for QUIC_RETRY_INTEGRITY_TAG_LEN.
+ *
+ * @return 1 on success, 0 on failure
+ *
+ * The ciphertext format is:
+ * [EVP_GCM_IV_LEN bytes IV][encrypted data][EVP_GCM_TAG_LEN bytes tag]
+ */
+static int encrypt_validation_token(const QUIC_PORT *port,
+                                    const unsigned char *plaintext,
+                                    size_t pt_len,
+                                    unsigned char *ciphertext,
+                                    size_t *ct_len)
+{
+    int iv_len, len, ret = 0;
+    size_t tag_len;
+    unsigned char *iv = ciphertext, *data, *tag;
+
+    if ((tag_len = EVP_CIPHER_CTX_get_tag_length(port->token_ctx)) == 0
+        || (iv_len = EVP_CIPHER_CTX_get_iv_length(port->token_ctx)) <= 0)
+        goto err;
+
+    *ct_len = iv_len + pt_len + tag_len + QUIC_RETRY_INTEGRITY_TAG_LEN;
+    if (ciphertext == NULL) {
+        ret = 1;
+        goto err;
+    }
+
+    data = ciphertext + iv_len;
+    tag = data + pt_len;
+
+    if (!RAND_bytes_ex(port->engine->libctx, ciphertext, iv_len, 0)
+        || !EVP_EncryptInit_ex(port->token_ctx, NULL, NULL, NULL, iv)
+        || !EVP_EncryptUpdate(port->token_ctx, data, &len, plaintext, pt_len)
+        || !EVP_EncryptFinal_ex(port->token_ctx, data + pt_len, &len)
+        || !EVP_CIPHER_CTX_ctrl(port->token_ctx, EVP_CTRL_GCM_GET_TAG, tag_len, tag))
+        goto err;
+
+    ret = 1;
+err:
+    return ret;
+}
+
+/**
+ * @brief Decrypts a validation token using AES-256-GCM
+ *
+ * @param port       The QUIC port containing the decryption key
+ * @param ciphertext The encrypted data (including IV and tag)
+ * @param ct_len     Length of the ciphertext
+ * @param plaintext  Buffer to receive decrypted data. If NULL, pt_len will be
+ *                   set to the required buffer size.
+ * @param pt_len     Pointer to size_t that will receive the plaintext length
+ *
+ * @return 1 on success, 0 on failure
+ *
+ * Expected ciphertext format:
+ * [EVP_GCM_IV_LEN bytes IV][encrypted data][EVP_GCM_TAG_LEN bytes tag]
+ */
+static int decrypt_validation_token(const QUIC_PORT *port,
+                                    const unsigned char *ciphertext,
+                                    size_t ct_len,
+                                    unsigned char *plaintext,
+                                    size_t *pt_len)
+{
+    int iv_len, len = 0, ret = 0;
+    size_t tag_len;
+    const unsigned char *iv = ciphertext, *data, *tag;
+
+    if ((tag_len = EVP_CIPHER_CTX_get_tag_length(port->token_ctx)) == 0
+        || (iv_len = EVP_CIPHER_CTX_get_iv_length(port->token_ctx)) <= 0)
+        goto err;
+
+    /* Prevent decryption of a buffer that is not within reasonable bounds */
+    if (ct_len < (iv_len + tag_len) || ct_len > ENCRYPTED_TOKEN_MAX_LEN)
+        goto err;
+
+    *pt_len = ct_len - iv_len - tag_len;
+    if (plaintext == NULL) {
+        ret = 1;
+        goto err;
+    }
+
+    data = ciphertext + iv_len;
+    tag = ciphertext + ct_len - tag_len;
+
+    if (!EVP_DecryptInit_ex(port->token_ctx, NULL, NULL, NULL, iv)
+        || !EVP_DecryptUpdate(port->token_ctx, plaintext, &len, data,
+                              ct_len - iv_len - tag_len)
+        || !EVP_CIPHER_CTX_ctrl(port->token_ctx, EVP_CTRL_GCM_SET_TAG, tag_len,
+                                (void *)tag)
+        || !EVP_DecryptFinal_ex(port->token_ctx, plaintext + len, &len))
+        goto err;
+
+    ret = 1;
+
+err:
+    return ret;
 }
 
 /**
@@ -833,13 +982,21 @@ static void port_send_retry(QUIC_PORT *port,
                             QUIC_PKT_HDR *client_hdr)
 {
     BIO_MSG msg[1];
-    unsigned char buffer[512], *token_buf = NULL;
+    /*
+     * Buffer is used for both marshalling the token as well as for the RETRY
+     * packet. The size of buffer should not be less than
+     * MARSHALLED_TOKEN_MAX_LEN.
+     */
+    unsigned char buffer[512];
+    unsigned char ct_buf[ENCRYPTED_TOKEN_MAX_LEN];
     WPACKET wpkt;
-    size_t written, token_buf_len;
+    size_t written, token_buf_len, ct_len;
     QUIC_PKT_HDR hdr = {0};
     QUIC_VALIDATION_TOKEN token = {0};
     int ok;
 
+    if (!ossl_assert(sizeof(buffer) >= MARSHALLED_TOKEN_MAX_LEN))
+        return;
     /*
      * 17.2.5.1 Sending a Retry packet
      *   dst ConnId is src ConnId we got from client
@@ -859,20 +1016,25 @@ static void port_send_retry(QUIC_PORT *port,
     /* Generate retry validation token */
     if (!generate_retry_token(peer, client_hdr->dst_conn_id,
                               hdr.src_conn_id, &token)
-        || !marshal_validation_token(&token, &token_buf, &token_buf_len)
-        || !ossl_assert(token_buf_len >= QUIC_RETRY_INTEGRITY_TAG_LEN))
+        || !marshal_validation_token(&token, buffer, &token_buf_len)
+        || !encrypt_validation_token(port, buffer, token_buf_len, NULL,
+                                     &ct_len)
+        || ct_len > ENCRYPTED_TOKEN_MAX_LEN
+        || !encrypt_validation_token(port, buffer, token_buf_len, ct_buf,
+                                     &ct_len)
+        || !ossl_assert(ct_len >= QUIC_RETRY_INTEGRITY_TAG_LEN))
         goto err;
 
     hdr.dst_conn_id = client_hdr->src_conn_id;
     hdr.type = QUIC_PKT_TYPE_RETRY;
     hdr.fixed = 1;
     hdr.version = 1;
-    hdr.len = token_buf_len;
-    hdr.data = token_buf;
+    hdr.len = ct_len;
+    hdr.data = ct_buf;
     ok = ossl_quic_calculate_retry_integrity_tag(port->engine->libctx,
                                                  port->engine->propq, &hdr,
                                                  &client_hdr->dst_conn_id,
-                                                 token_buf + token_buf_len
+                                                 ct_buf + ct_len
                                                  - QUIC_RETRY_INTEGRITY_TAG_LEN);
     if (ok == 0)
         goto err;
@@ -912,7 +1074,6 @@ static void port_send_retry(QUIC_PORT *port,
 
 err:
     cleanup_validation_token(&token);
-    OPENSSL_free(token_buf);
 }
 
 /**
@@ -1041,11 +1202,16 @@ static int port_validate_token(QUIC_PKT_HDR *hdr, QUIC_PORT *port,
     int ret = 0;
     QUIC_VALIDATION_TOKEN token = { 0 };
     unsigned long long time_diff;
-    size_t remote_addr_len;
-    unsigned char *remote_addr = NULL;
+    size_t remote_addr_len, dec_token_len;
+    unsigned char *remote_addr = NULL, dec_token[MARSHALLED_TOKEN_MAX_LEN];
     OSSL_TIME now = ossl_time_now();
 
-    if (!parse_validation_token(&token, hdr->token, hdr->token_len))
+    if (!decrypt_validation_token(port, hdr->token, hdr->token_len, NULL,
+                                  &dec_token_len)
+        || dec_token_len > MARSHALLED_TOKEN_MAX_LEN
+        || !decrypt_validation_token(port, hdr->token, hdr->token_len,
+                                     dec_token, &dec_token_len)
+        || !parse_validation_token(&token, dec_token, dec_token_len))
         goto err;
 
     /*

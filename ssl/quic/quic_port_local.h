@@ -110,6 +110,9 @@ struct quic_port_st {
 
     /* Has the BIO been changed since we last updated reactor pollability? */
     unsigned int                    bio_changed                     : 1;
+
+    /* AES-256 GCM context for token encryption */
+    EVP_CIPHER_CTX *token_ctx;
 };
 
 # endif
