@@ -46,3 +46,4 @@ extern const X509V3_EXT_METHOD ossl_v3_authority_attribute_identifier;
 extern const X509V3_EXT_METHOD ossl_v3_role_spec_cert_identifier;
 extern const X509V3_EXT_METHOD ossl_v3_attribute_descriptor;
 extern const X509V3_EXT_METHOD ossl_v3_time_specification;
+extern const X509V3_EXT_METHOD ossl_v3_attribute_mappings;
