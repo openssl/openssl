@@ -12,6 +12,7 @@ jobs:
       matrix:
         tests: [http3, transfer, handshake, retry, chacha20, resumption]
         servers: [quic-go, ngtcp2, mvfst, quiche, nginx, msquic, haproxy]
+        clients: [quic-go, ngtcp2, mvfst, quiche, msquic, openssl]
       fail-fast: false
     runs-on: ubuntu-latest
     steps:
@@ -37,5 +38,5 @@ jobs:
           python3 ./run.py -c openssl -t ${{ matrix.tests }} -s ${{ matrix.servers }} --log-dir ./logs-client -d
       - name: "run interop with openssl server"
         run: |
-          python3 ./run.py -s openssl -t ${{ matrix.tests }} -c ${{ matrix.servers }} --log-dir ./logs-server -d
+          python3 ./run.py -s openssl -t ${{ matrix.tests }} -c ${{ matrix.clients }} --log-dir ./logs-server -d
 
