@@ -5759,3 +5759,5 @@ X509_acert_get_ext_by_OBJ               ?	3_5_0	EXIST::FUNCTION:
 X509_acert_get_ext_by_critical          ?	3_5_0	EXIST::FUNCTION:
 X509_acert_add_ext                      ?	3_5_0	EXIST::FUNCTION:
 X509_acert_delete_ext                   ?	3_5_0	EXIST::FUNCTION:
+X509_ACERT_EXT_add_nconf                ?	3_5_0	EXIST::FUNCTION:
+X509_ACERT_EXT_add_conf                 ?	3_5_0	EXIST::FUNCTION:
