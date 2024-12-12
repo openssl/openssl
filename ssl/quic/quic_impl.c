@@ -4361,12 +4361,10 @@ SSL *ossl_quic_new_from_listener(SSL *ssl, uint64_t flags)
     }
 
     /*
-     * XXX setting listener here is needed so `qc_cleanup()` does
-     * a right thing. There is `TOOD` comment in `qc_cleanup()`, which
-     * makes me believe line below is correct for now.
-     * Without this might be destroying port prematurely.
-     *
-     * Perhaps we should be grabbing a references to engine and port here.
+     * NOTE: setting a listener here is needed so `qc_cleanup()` does a right
+     * thing. There is `TOOD` comment in `qc_cleanup()`, which makes me believe
+     * line below is correct for now.  Without this we might be destroying port
+     * prematurely.
      */
     qc->listener = ql;
     qc->engine = ql->engine;
@@ -4401,11 +4399,10 @@ SSL *ossl_quic_new_from_listener(SSL *ssl, uint64_t flags)
     ossl_quic_channel_set_msg_callback_arg(qc->ch, ql->obj.ssl.ctx->msg_callback_arg);
 
     /*
-     * we deliberately pass NULL for engine and port, because we don't want to
-     * to turn QCSO we create here into an event leader, nor port leader,
-     * because the listener (`ssl`) took both those roles already. The question
-     * is what happens with listener gets destroyed, who will be the leader then?
-     * I still need to convince myself there is a plan for this.
+     * We deliberately pass NULL for engine and port, because we don't want to
+     * to turn QCSO we create here into an event leader, nor port leader.
+     * Both those roles are occupied already by listener (`ssl`) we use
+     * to create a new QCSO here.
      */
     if (!ossl_quic_obj_init(&qc->obj, ql->obj.ssl.ctx,
                             SSL_TYPE_QUIC_CONNECTION,
@@ -4421,7 +4418,6 @@ SSL *ossl_quic_new_from_listener(SSL *ssl, uint64_t flags)
     qc->default_ssl_options = qc->obj.ssl.ctx->options & OSSL_QUIC_PERMITTED_OPTIONS;
     qc->incoming_stream_policy = SSL_INCOMING_STREAM_POLICY_AUTO;
     qc->last_error = SSL_ERROR_NONE;
-    /* qc->obj.ssl.method = OSSL_QUIC_client_method(); */
 
     qc_update_reject_policy(qc);
 
