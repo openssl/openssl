@@ -383,19 +383,14 @@ int ossl_check_acert_time(X509_STORE_CTX *ctx, X509_ACERT *acert)
     return 0; /* Stub implementation. To be replaced. */
 }
 
-int ossl_check_acert_exts(X509_ACERT *acert)
+int X509_ACERT_EXT_add_nconf(CONF *conf, X509V3_CTX *ctx, const char *section,
+                             X509_ACERT *acert)
 {
     return 0; /* Stub implementation. To be replaced. */
 }
 
-int ossl_acert_add_nconf(CONF *conf, X509V3_CTX *ctx, const char *section,
-                         X509_ACERT *acert)
-{
-    return 0; /* Stub implementation. To be replaced. */
-}
-
-int ossl_acert_add_conf(LHASH_OF(CONF_VALUE) *conf, X509V3_CTX *ctx,
-                        const char *section, X509_ACERT *acert)
+int X509_ACERT_EXT_add_conf(LHASH_OF(CONF_VALUE) *conf, X509V3_CTX *ctx,
+                            const char *section, X509_ACERT *acert)
 {
     return 0; /* Stub implementation. To be replaced. */
 }
