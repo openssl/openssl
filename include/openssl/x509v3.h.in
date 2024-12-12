@@ -1278,6 +1278,43 @@ DECLARE_ASN1_FUNCTIONS(OSSL_TIME_PERIOD)
     generate_stack_macros("OSSL_DAY_TIME_BAND");
 -}
 
+/* Attribute Type and Value */
+typedef struct atav_st {
+    ASN1_OBJECT *type;
+    ASN1_TYPE *value;
+} ATAV;
+
+typedef struct ATTRIBUTE_TYPE_MAPPING_st {
+    ASN1_OBJECT *local;
+    ASN1_OBJECT *remote;
+} ATTRIBUTE_TYPE_MAPPING;
+
+typedef struct ATTRIBUTE_VALUE_MAPPING_st {
+    ATAV *local;
+    ATAV *remote;
+} ATTRIBUTE_VALUE_MAPPING;
+
+#define ATTR_MAP_TYPE   0
+#define ATTR_MAP_VALUE  1
+
+typedef struct ATTRIBUTE_MAPPING_st {
+    int type;
+    union {
+        ATTRIBUTE_TYPE_MAPPING *typeMappings;
+        ATTRIBUTE_VALUE_MAPPING *typeValueMappings;
+    } choice;
+} ATTRIBUTE_MAPPING;
+
+typedef STACK_OF(ATTRIBUTE_MAPPING) ATTRIBUTE_MAPPINGS;
+DECLARE_ASN1_FUNCTIONS(ATTRIBUTE_TYPE_MAPPING)
+DECLARE_ASN1_FUNCTIONS(ATTRIBUTE_VALUE_MAPPING)
+DECLARE_ASN1_FUNCTIONS(ATTRIBUTE_MAPPING)
+DECLARE_ASN1_FUNCTIONS(ATTRIBUTE_MAPPINGS)
+
+{-
+    generate_stack_macros("ATTRIBUTE_MAPPING");
+-}
+
 # ifdef  __cplusplus
 }
 # endif
