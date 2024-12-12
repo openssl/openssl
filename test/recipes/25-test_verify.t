@@ -29,7 +29,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 193;
+plan tests => 202;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -103,6 +103,26 @@ ok(!verify("ee-cert", "sslserver", [qw(sroot-anyEKU)], [qw(ca-cert)]),
    "fail wildcard mistrust with server purpose");
 ok(!verify("ee-cert", "sslserver", [qw(croot-anyEKU)], [qw(ca-cert)]),
    "fail wildcard mistrust with client purpose");
+
+# Directly checking Extended Key Usage
+ok(verify("ee-cert", "", ["root-cert"], ["ca-cert"], "-eku", "serverAuth"),
+   "accept required EKU OID contained in EE cert, no EKU in CA cert");
+ok(verify("ee-cert", "sslclient", ["root-cert"], ["ca-cert"], "-eku", "serverAuth"),
+   "accept required EKU OID contained in EE cert, overriding -purpose");
+ok(verify("ee-cert", "", ["root-cert"], ["ca-cert"], "-eku", "anyExtendedKeyUsage"),
+   "accept required anyExtendedKeyUsage OID, which is not contained in EE cert");
+ok(verify("ee_anyEKU", "", ["root-cert"], ["ca-cert"], "-eku", "serverAuth"),
+   "accept required EKU OID with anyEKU contained in EE cert");
+ok(verify("ee_noEKU", "", ["root-cert"], ["ca-cert"], "-eku", "serverAuth"),
+   "accept required EKU OID with no EKU contained in EE cert");
+ok(!verify("ee-cert", "", ["root-cert"], ["ca-cert"], "-eku", "clientAuth"),
+   "reject required EKU OID not contained in EE cert");
+ok(verify("ee-cert", "", ["root-cert"], ["sca-cert"], "-eku", "serverAuth"),
+   "accept required EKU OID contained in CA cert");
+ok(!verify("ee-cert", "", ["root-cert"], ["cca-cert"], "-eku", "serverAuth"),
+   "reject required EKU OID not contained in CA cert");
+ok(verify("ee-cert", "", ["root-cert"], ["ca_anyEKU"], "-eku", "serverAuth"),
+   "accept required EKU OID with anyEKU contained in CA cert");
 
 # Check that trusted-first is on by setting up paths to different roots
 # depending on whether the intermediate is the trusted or untrusted one.

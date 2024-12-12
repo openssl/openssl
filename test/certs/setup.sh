@@ -11,6 +11,8 @@ DAYS=-1 ./mkcert.sh genroot "Root CA" root-key root-expired
 ./mkcert.sh genroot "Cross Root" cross-key cross-root
 ./mkcert.sh genca "Root CA" root-key root-cross-cert cross-key cross-root
 # trust variants: +serverAuth -serverAuth +clientAuth -clientAuth
+#
+./mkcert.sh genroot "Root CA" root-key root_anyEKU anyExtendedKeyUsage
 openssl x509 -in root-cert.pem -trustout \
     -addtrust serverAuth -out root+serverAuth.pem
 openssl x509 -in root-cert.pem -trustout \
@@ -87,6 +89,8 @@ openssl x509 -in sroot-cert.pem -trustout \
 ./mkcert.sh genca "CA" ca-key ca-root2 root-key2 root-cert2
 DAYS=-1 ./mkcert.sh genca "CA" ca-key ca-expired root-key root-cert
 # trust variants: +serverAuth, -serverAuth, +clientAuth, -clientAuth
+#
+./mkcert.sh genca -p anyExtendedKeyUsage "CA" ca-key ca_anyEKU root-key root-cert
 openssl x509 -in ca-cert.pem -trustout \
     -addtrust serverAuth -out ca+serverAuth.pem
 openssl x509 -in ca-cert.pem -trustout \
@@ -165,6 +169,11 @@ openssl x509 -in sca-cert.pem -trustout \
 # purpose variants: clientAuth
 ./mkcert.sh genee -p clientAuth server.example ee-key ee-client ca-key ca-cert
 # trust variants: +serverAuth, -serverAuth, +clientAuth, -clientAuth
+#
+# EKU variants: anyExtendedKeyUsage, none
+./mkcert.sh genee -p anyExtendedKeyUsage anyEKU.example ee-key ee_anyEKU ca-key ca-cert
+./mkcert.sh genee noEKU.example ee-key ee_noEKU ca-key ca-cert \
+    -extfile <(echo "basicConstraints=CA:false") # bash needed here
 openssl x509 -in ee-cert.pem -trustout \
     -addtrust serverAuth -out ee+serverAuth.pem
 openssl x509 -in ee-cert.pem -trustout \
