@@ -5857,3 +5857,7 @@ i2d_OSSL_ATTRIBUTE_MAPPINGS             ?	3_5_0	EXIST::FUNCTION:
 OSSL_ATTRIBUTE_MAPPINGS_free            ?	3_5_0	EXIST::FUNCTION:
 OSSL_ATTRIBUTE_MAPPINGS_new             ?	3_5_0	EXIST::FUNCTION:
 OSSL_ATTRIBUTE_MAPPINGS_it              ?	3_5_0	EXIST::FUNCTION:
+d2i_OSSL_ATAV                           ?	3_5_0	EXIST::FUNCTION:
+i2d_OSSL_ATAV                           ?	3_5_0	EXIST::FUNCTION:
+OSSL_ATAV_free                          ?	3_5_0	EXIST::FUNCTION:
+OSSL_ATAV_new                           ?	3_5_0	EXIST::FUNCTION:
