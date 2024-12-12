@@ -25,13 +25,13 @@ of macros to minimize source code duplication is used. Note that C++ templates a
 
 ML-KEM makes extensive use of SHA3 primitives, SHA3-256, SHA3-512, SHAKE256 and SHAKE128.
 To improve ML-KEM execution performance the EVP handles for these are pre-fetched during ML-KEM
-key initialisation and stored in an MLKEM_CTX object.
+key initialisation and stored in an ossl_ml_kem_ctx object.
 These are then used in key generation, encapsulation and decapsulation.
 The context is also duplicated (EVP_MD handles uprefed) when the ML-KEM key is duplicated.
 
-This MLKEM_CTX is then passed to all functions.
+This ossl_ml_kem_ctx is then passed to all functions.
 As already noted, it is presently allocated on a per-key basis in the providers'
-MLKEM key context, but if there's some way to do this just once during provider
+ML-KEM key context, but if there's some way to do this just once during provider
 initialisation, or once per thread, ... performance might noticeably improve.
 
 ML-KEM keys
@@ -88,7 +88,7 @@ Keys can therefore be generated as "usual" by way of the EVP functions
 EVP_PKEY_generate() and EVP_PKEY_Q_keygen().
 
 An explicit seed can be specified by setting the OSSL_PARAM value
-"OSSL_PKEY_PARAM_MLKEM_SEED" to a 64-byte octet-string before key generation.
+"OSSL_PKEY_PARAM_ML_KEM_SEED" to a 64-byte octet-string before key generation.
 The octet-string value must be the concatenation of the B<d> and B<z> strings in that
 order.
 
@@ -103,7 +103,7 @@ EVP_PKEY_decapsulate_init(), EVP_PKEY_decapsulate().
 
 For the encapsulation operation, a test-only option exists to avoid the
 otherwise mandatory use of a random number generator for passing in a
-known "entropy" by way of the OSSL_PARAM "OSSL_KEM_PARAM_MLKEM_ENC_ENTROPY".
+known "entropy" by way of the OSSL_PARAM "OSSL_KEM_PARAM_IKME".
 
 Buffers
 -------

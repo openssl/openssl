@@ -24,7 +24,7 @@ By default, no parameters are required for generating a key pair.
 
 =over 4
 
-=item "seed" (B<OSSL_PKEY_PARAM_MLKEM_SEED>) <octet string>
+=item "seed" (B<OSSL_PKEY_PARAM_ML_KEM_SEED>) <octet string>
 
 ML-KEM internally requires the generation of a keypair using a random value (seed).
 This optional parameter can be used to set the value prior to key pair generation.
