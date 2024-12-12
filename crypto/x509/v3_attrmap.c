@@ -10,6 +10,7 @@
 #include <openssl/asn1t.h>
 #include <openssl/x509v3.h>
 #include <crypto/x509.h>
+#include "ext_dat.h"
 
 ASN1_SEQUENCE(ATAV) = {
     ASN1_SIMPLE(ATAV, type, ASN1_OBJECT),
