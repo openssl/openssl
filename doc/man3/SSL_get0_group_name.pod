@@ -16,7 +16,6 @@ agreement of the current TLS session establishment
 SSL_get0_group_name() returns the name of the group that was used for
 the key agreement of the current TLS session establishment.
 
-
 =head1 RETURN VALUES
 
 If non-NULL, SSL_get0_group_name() returns the name of the group that was used for
@@ -31,9 +30,13 @@ SSL object I<ssl>.
 
 L<ssl(7)>
 
+=head1 HISTORY
+
+This function was added in OpenSSL 3.2.
+
 =head1 COPYRIGHT
 
-Copyright 2023 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2023-2024 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
