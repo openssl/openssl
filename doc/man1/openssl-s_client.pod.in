@@ -312,7 +312,6 @@ By default, validation of server certificates and their chain
 is done w.r.t. the (D)TLS Server (C<sslserver>) purpose.
 For details see L<openssl-verification-options(1)/Certificate Extensions>.
 
-
 =item B<-verify_return_error>
 
 Turns on server certificate verification, like with B<-verify>,
