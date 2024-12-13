@@ -261,10 +261,11 @@ static int ch_init(QUIC_CHANNEL *ch)
     ch->have_qsm = 1;
 
     if (!ch->is_server
-        && !ossl_quic_lcidm_generate_initial(ch->lcidm, ch, &txp_args.cur_scid))
+        && !ossl_quic_lcidm_generate_initial(ch->lcidm, ch, &ch->init_scid))
         goto err;
 
     /* We use a zero-length SCID. */
+    txp_args.cur_scid               = ch->init_scid;
     txp_args.cur_dcid               = ch->init_dcid;
     txp_args.ack_delay_exponent     = 3;
     txp_args.qtx                    = ch->qtx;
@@ -1283,12 +1284,7 @@ static int ch_on_transport_params(const unsigned char *params,
                 goto malformed;
             }
 
-            /*
-             * Must match SCID of first Initial packet from server.
-             * Keep in mind the client always sends QUIC_TPARAM_INITIAL_SCID
-             * empty (cid.id_len == 0, see ch_generate_transport_params()).
-             */
-            if (cid.id_len != 0 && !ossl_quic_conn_id_eq(&ch->init_scid, &cid)) {
+            if (!ossl_quic_conn_id_eq(&ch->init_scid, &cid)) {
                 reason = TP_REASON_EXPECTED_VALUE("INITIAL_SCID");
                 goto malformed;
             }
@@ -1769,8 +1765,8 @@ static int ch_generate_transport_params(QUIC_CHANNEL *ch)
                 goto err;
     } else {
         /* Client always uses an empty SCID. */
-        if (ossl_quic_wire_encode_transport_param_bytes(&wpkt, QUIC_TPARAM_INITIAL_SCID,
-                                                        NULL, 0) == NULL)
+        if (!ossl_quic_wire_encode_transport_param_cid(&wpkt, QUIC_TPARAM_INITIAL_SCID,
+                                                       &ch->init_scid))
             goto err;
     }
 
