@@ -289,15 +289,15 @@ static int on_recv_header(nghttp3_conn *conn, int64_t stream_id, int32_t token,
     if (token == NGHTTP3_QPACK_TOKEN__PATH) {
         int len = (((vvalue.len) < (MAXURL)) ? (vvalue.len) : (MAXURL));
 
-        memcpy(h3ssl->url, vvalue.base, len);
-        if (h3ssl->url[0] == '/') {
-            if (h3ssl->url[1] == '\0') {
+        memset(h3ssl->url, 0, sizeof(h3ssl->url));
+        if (vvalue.base[0] == '/') {
+            if (vvalue.base[1] == '\0') {
                 strncpy(h3ssl->url, "index.html", MAXURL);
-                h3ssl->url[MAXURL - 1] = '\0';
             } else {
-                memcpy(h3ssl->url, h3ssl->url + 1, len - 1);
-                h3ssl->url[len - 1] = '\0';
+                memcpy(h3ssl->url, &vvalue.base[1], len - 1);
             }
+        } else {
+            memcpy(h3ssl->url, vvalue.base, len);
         }
     }
 
