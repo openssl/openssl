@@ -521,21 +521,21 @@ ASN1_SEQUENCE(OSSL_AA_DIST_POINT) = {
 
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_AA_DIST_POINT)
 
-static int print_boolean (BIO *out, ASN1_BOOLEAN b) {
+static int print_boolean(BIO *out, ASN1_BOOLEAN b)
+{
     return b ? BIO_puts(out, "TRUE") : BIO_puts(out, "FALSE");
 }
 
 static OSSL_AA_DIST_POINT *aaidp_from_section(X509V3_CTX *ctx,
                                               STACK_OF(CONF_VALUE) *nval)
 {
-    int i;
+    int i, ret;
     CONF_VALUE *cnf;
     OSSL_AA_DIST_POINT *point = OSSL_AA_DIST_POINT_new();
 
     if (point == NULL)
         goto err;
     for (i = 0; i < sk_CONF_VALUE_num(nval); i++) {
-        int ret;
         cnf = sk_CONF_VALUE_value(nval, i);
         ret = set_dist_point_name(&point->distpoint, ctx, cnf);
         if (ret > 0)
@@ -575,17 +575,17 @@ static void *v2i_aaidp(const X509V3_EXT_METHOD *method,
     CONF_VALUE *cnf;
     int i = 0;
     OSSL_AA_DIST_POINT *point = NULL;
+    STACK_OF(CONF_VALUE) *dpsect;
 
     cnf = sk_CONF_VALUE_value(nval, i);
     if (cnf->value == NULL) {
-        STACK_OF(CONF_VALUE) *dpsect;
         dpsect = X509V3_get_section(ctx, cnf->name);
         if (!dpsect)
             goto err;
         point = aaidp_from_section(ctx, dpsect);
         X509V3_section_free(ctx, dpsect);
         if (point == NULL)
-            goto err;            
+            goto err;
     } else {
         if ((gen = v2i_GENERAL_NAME(method, ctx, cnf)) == NULL)
             goto err;
@@ -620,7 +620,6 @@ static void *v2i_aaidp(const X509V3_EXT_METHOD *method,
     return NULL;
 }
 
-
 static int i2r_aaidp(const X509V3_EXT_METHOD *method, void *dp, BIO *out,
                      int indent)
 {
@@ -649,7 +648,8 @@ static int i2r_aaidp(const X509V3_EXT_METHOD *method, void *dp, BIO *out,
             return 0;
     }
     if (pdp->containsAACerts) {
-        if (BIO_printf(out, "%*sContains Attribute Authority (AA) Certificates: ", indent, "") <= 0)
+        if (BIO_printf(out, "%*sContains Attribute Authority (AA) Certificates: ",
+                       indent, "") <= 0)
             return 0;
         if (print_boolean(out, pdp->containsAACerts) <= 0)
             return 0;
@@ -657,7 +657,9 @@ static int i2r_aaidp(const X509V3_EXT_METHOD *method, void *dp, BIO *out,
             return 0;
     }
     if (pdp->containsSOAPublicKeyCerts) {
-        if (BIO_printf(out, "%*sContains Source Of Authority (SOA) Public Key Certificates: ", indent, "") <= 0)
+        if (BIO_printf(out,
+                       "%*sContains Source Of Authority (SOA) Public Key Certificates: ",
+                       indent, "") <= 0)
             return 0;
         if (print_boolean(out, pdp->containsSOAPublicKeyCerts) <= 0)
             return 0;
