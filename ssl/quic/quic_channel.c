@@ -264,7 +264,6 @@ static int ch_init(QUIC_CHANNEL *ch)
         && !ossl_quic_lcidm_generate_initial(ch->lcidm, ch, &ch->init_scid))
         goto err;
 
-    /* We use a zero-length SCID. */
     txp_args.cur_scid               = ch->init_scid;
     txp_args.cur_dcid               = ch->init_dcid;
     txp_args.ack_delay_exponent     = 3;
