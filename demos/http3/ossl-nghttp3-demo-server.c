@@ -84,6 +84,7 @@ static void init_ids(struct h3ssl *h3ssl)
 {
     struct ssl_id *ssl_ids;
     int i;
+    char *prior_fileprefix = h3ssl->fileprefix;
 
     memset (h3ssl, 0, sizeof (struct h3ssl));
 
@@ -92,6 +93,9 @@ static void init_ids(struct h3ssl *h3ssl)
         ssl_ids[i].id = UINT64_MAX;
     }
     h3ssl->id_bidi = UINT64_MAX;
+
+    /* restore the fileprefix */
+    h3ssl->fileprefix = prior_fileprefix;
 }
 
 static void reuse_h3ssl(struct h3ssl *h3ssl)
