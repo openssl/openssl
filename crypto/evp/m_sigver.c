@@ -701,8 +701,10 @@ int EVP_DigestVerify(EVP_MD_CTX *ctx, const unsigned char *sigret,
         }
     } else {
         /* legacy */
-        if (ctx->pctx->pmeth != NULL && ctx->pctx->pmeth->digestverify != NULL)
-            return ctx->pctx->pmeth->digestverify(ctx, sigret, siglen, tbs, tbslen);
+        if (pctx == NULL)
+            return -1;
+        if (pctx->pmeth != NULL && pctx->pmeth->digestverify != NULL)
+            return pctx->pmeth->digestverify(ctx, sigret, siglen, tbs, tbslen);
     }
     if (EVP_DigestVerifyUpdate(ctx, tbs, tbslen) <= 0)
         return -1;
