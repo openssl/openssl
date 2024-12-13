@@ -16,7 +16,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_x509");
 
-plan tests => 126;
+plan tests => 130;
 
 # Prevent MSys2 filename munging for arguments that look like file paths but
 # aren't
@@ -407,6 +407,26 @@ cert_contains($aaa_cert,
 cert_contains($aaa_cert,
               "Holder Domain: email:jonathan.wilbur",
               1, 'X.509 Allowed Attribute Assignments');
+
+my $aa_idp_cert = srctop_file(@certs, "ext-aAissuingDistributionPoint.pem");
+cert_contains($aa_idp_cert,
+              "DirName:CN = Wildboar",
+              1, 'X.509 Attribute Authority Issuing Distribution Point');
+cert_contains($aa_idp_cert,
+              "CA Compromise",
+              1, 'X.509 Attribute Authority Issuing Distribution Point');
+cert_contains($aa_idp_cert,
+              "Indirect CRL: TRUE",
+              1, 'X.509 Attribute Authority Issuing Distribution Point');
+cert_contains($aa_idp_cert,
+              "Contains User Attribute Certificates: TRUE",
+              1, 'X.509 Attribute Authority Issuing Distribution Point');
+cert_contains($aa_idp_cert,
+              "Contains Attribute Authority \\(AA\\) Certificates: TRUE",
+              1, 'X.509 Attribute Authority Issuing Distribution Point');
+cert_contains($aa_idp_cert,
+              "Contains Source Of Authority \\(SOA\\) Public Key Certificates: TRUE",
+              1, 'X.509 Attribute Authority Issuing Distribution Point');
 
 sub test_errors { # actually tests diagnostics of OSSL_STORE
     my ($expected, $cert, @opts) = @_;
