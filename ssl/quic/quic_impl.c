@@ -4325,7 +4325,7 @@ err:
  * SSL_new_from_listener
  * ---------------------
  * code here is derived from ossl_quic_new(). The `ssl` argument is
- * a listener object which already come with QUIC port/engine. The newly
+ * a listener object which already comes with QUIC port/engine. The newly
  * created QUIC connection object (QCSO) is going to share the port/engine
  * with listener (`ssl`).  The `ssl` also becomes a parent of QCSO created
  * by this function. The caller uses QCSO instance to connect to
