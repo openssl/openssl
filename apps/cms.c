@@ -1261,6 +1261,7 @@ int cms_main(int argc, char **argv)
     X509_free(cert);
     X509_free(recip);
     X509_free(signer);
+    X509_free(originator);
     EVP_PKEY_free(key);
     EVP_CIPHER_free(cipher);
     EVP_CIPHER_free(wrap_cipher);
