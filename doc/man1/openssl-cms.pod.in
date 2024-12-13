@@ -378,7 +378,8 @@ See L<openssl-format-options(1)> for details.
 =item B<-originator> I<file>
 
 A certificate of the originator of the encrypted message. Necessary for
-decryption when Key Agreement is in use for a shared key.
+decryption when Key Agreement is in use for a shared key. Currently, not
+allowed for encryption.
 
 =item B<-recip> I<file>
 
