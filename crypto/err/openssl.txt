@@ -325,6 +325,8 @@ CMS_R_ERROR_READING_MESSAGEDIGEST_ATTRIBUTE:114:\
 	error reading messagedigest attribute
 CMS_R_ERROR_SETTING_KEY:115:error setting key
 CMS_R_ERROR_SETTING_RECIPIENTINFO:116:error setting recipientinfo
+CMS_R_ERROR_UNSUPPORTED_STATIC_KEY_AGREEMENT:196:\
+	error unsupported static key agreement
 CMS_R_ESS_SIGNING_CERTID_MISMATCH_ERROR:183:ess signing certid mismatch error
 CMS_R_INVALID_ENCRYPTED_KEY_LENGTH:117:invalid encrypted key length
 CMS_R_INVALID_KEY_ENCRYPTION_PARAMETER:176:invalid key encryption parameter
