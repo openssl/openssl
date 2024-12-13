@@ -1346,6 +1346,18 @@ DECLARE_ASN1_FUNCTIONS(OSSL_ALLOWED_ATTRIBUTES_SYNTAX)
     generate_stack_macros("OSSL_ALLOWED_ATTRIBUTES_ITEM");
 -}
 
+typedef struct AA_DIST_POINT_st {
+    DIST_POINT_NAME *distpoint;
+    ASN1_BIT_STRING *reasons;
+    int dp_reasons;
+    ASN1_BOOLEAN indirectCRL;
+    ASN1_BOOLEAN containsUserAttributeCerts;
+    ASN1_BOOLEAN containsAACerts;
+    ASN1_BOOLEAN containsSOAPublicKeyCerts;
+} OSSL_AA_DIST_POINT;
+
+DECLARE_ASN1_FUNCTIONS(OSSL_AA_DIST_POINT)
+
 # ifdef  __cplusplus
 }
 # endif
