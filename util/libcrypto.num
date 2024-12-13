@@ -5836,7 +5836,6 @@ EVP_CipherPipelineEncryptInit           ?	3_5_0	EXIST::FUNCTION:
 EVP_CipherPipelineDecryptInit           ?	3_5_0	EXIST::FUNCTION:
 EVP_CipherPipelineUpdate                ?	3_5_0	EXIST::FUNCTION:
 EVP_CipherPipelineFinal                 ?	3_5_0	EXIST::FUNCTION:
-OSSL_ATAV_it                            ?	3_5_0	EXIST::FUNCTION:
 d2i_OSSL_ATTRIBUTE_TYPE_MAPPING         ?	3_5_0	EXIST::FUNCTION:
 i2d_OSSL_ATTRIBUTE_TYPE_MAPPING         ?	3_5_0	EXIST::FUNCTION:
 OSSL_ATTRIBUTE_TYPE_MAPPING_free        ?	3_5_0	EXIST::FUNCTION:
@@ -5861,3 +5860,4 @@ d2i_OSSL_ATAV                           ?	3_5_0	EXIST::FUNCTION:
 i2d_OSSL_ATAV                           ?	3_5_0	EXIST::FUNCTION:
 OSSL_ATAV_free                          ?	3_5_0	EXIST::FUNCTION:
 OSSL_ATAV_new                           ?	3_5_0	EXIST::FUNCTION:
+OSSL_ATAV_it                            ?	3_5_0	EXIST::FUNCTION:
