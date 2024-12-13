@@ -502,6 +502,13 @@ int ossl_cms_RecipientInfo_kari_encrypt(const CMS_ContentInfo *cms,
         oik->d.originatorKey = M_ASN1_new_of(CMS_OriginatorPublicKey);
         if (!oik->d.originatorKey)
             return 0;
+    } else {
+        /*
+         * Currently it is not possible to get public key as it is not stored
+         * during kari initialization.
+         */
+        ERR_raise(ERR_LIB_CMS, CMS_R_ERROR_UNSUPPORTED_STATIC_KEY_AGREEMENT);
+        return 0;
     }
     /* Initialise KDF algorithm */
     if (!ossl_cms_env_asn1_ctrl(ri, 0))
