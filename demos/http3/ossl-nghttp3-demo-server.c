@@ -348,9 +348,16 @@ static int quic_server_read(nghttp3_conn *h3conn, SSL *stream, uint64_t id, stru
         fprintf(stderr, "SSL_read %d on %llu failed\n",
                 SSL_get_error(stream, ret),
                 (unsigned long long) id);
-        if (SSL_get_error(stream, ret) == SSL_ERROR_WANT_READ)
-            return 0; /* retry we need more data */
-        ERR_print_errors_fp(stderr);
+        switch(SSL_get_error(stream, ret)) {
+        case SSL_ERROR_WANT_READ:
+        case SSL_ERROR_ZERO_RETURN:
+            return 0;
+            break;
+        default:
+            ERR_print_errors_fp(stderr);
+            return -1;
+            break;
+        }
         return -1;
     }
 
