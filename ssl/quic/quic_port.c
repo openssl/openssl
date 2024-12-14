@@ -1116,7 +1116,6 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
     QUIC_CONN_ID odcid, scid;
     uint64_t cause_flags = 0;
 
-
     /* Don't handle anything if we are no longer running. */
     if (!ossl_quic_port_is_running(port))
         goto undesirable;

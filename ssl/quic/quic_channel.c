@@ -1037,7 +1037,7 @@ static int ch_on_handshake_complete(void *arg)
         return 0;
 
     /*
-     * When handshake is complete, we no longer need to abide by the 
+     * When handshake is complete, we no longer need to abide by the
      * 3x amplification limit, though we should be validated as soon
      * as we see a handshake key encrypted packet (see ossl_quic_handle_packet)
      */
