@@ -684,13 +684,17 @@ int EVP_DigestVerify(EVP_MD_CTX *ctx, const unsigned char *sigret,
 {
     EVP_PKEY_CTX *pctx = ctx->pctx;
 
+    if (pctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+        return -1;
+    }
+
     if ((ctx->flags & EVP_MD_CTX_FLAG_FINALISED) != 0) {
         ERR_raise(ERR_LIB_EVP, EVP_R_FINAL_ERROR);
         return 0;
     }
 
-    if (pctx != NULL
-            && pctx->operation == EVP_PKEY_OP_VERIFYCTX
+    if (pctx->operation == EVP_PKEY_OP_VERIFYCTX
             && pctx->op.sig.algctx != NULL
             && pctx->op.sig.signature != NULL) {
         if (pctx->op.sig.signature->digest_verify != NULL) {
@@ -701,8 +705,6 @@ int EVP_DigestVerify(EVP_MD_CTX *ctx, const unsigned char *sigret,
         }
     } else {
         /* legacy */
-        if (pctx == NULL)
-            return -1;
         if (pctx->pmeth != NULL && pctx->pmeth->digestverify != NULL)
             return pctx->pmeth->digestverify(ctx, sigret, siglen, tbs, tbslen);
     }
