@@ -803,14 +803,12 @@ static int encrypt_validation_token(const QUIC_PORT *port,
                                     unsigned char *ciphertext,
                                     size_t *ct_len)
 {
-    int len, ret = 0;
-    size_t iv_len, tag_len;
+    int iv_len, len, ret = 0;
+    size_t tag_len;
     unsigned char *iv = ciphertext, *data, *tag;
-    const EVP_CIPHER *cipher = EVP_CIPHER_CTX_get0_cipher(port->token_ctx);
 
-    if (cipher == NULL
-        || (tag_len = EVP_CIPHER_CTX_get_tag_length(port->token_ctx)) == 0
-        || (iv_len = EVP_CIPHER_get_iv_length(cipher)) == 0)
+    if ((tag_len = EVP_CIPHER_CTX_get_tag_length(port->token_ctx)) == 0
+        || (iv_len = EVP_CIPHER_CTX_get_iv_length(port->token_ctx)) <= 0)
         goto err;
 
     *ct_len = iv_len + pt_len + tag_len + QUIC_RETRY_INTEGRITY_TAG_LEN;
@@ -855,14 +853,12 @@ static int decrypt_validation_token(const QUIC_PORT *port,
                                     unsigned char *plaintext,
                                     size_t *pt_len)
 {
-    int len = 0, ret = 0;
-    size_t iv_len, tag_len;
+    int iv_len, len = 0, ret = 0;
+    size_t tag_len;
     const unsigned char *iv = ciphertext, *data, *tag;
-    const EVP_CIPHER *cipher = EVP_CIPHER_CTX_get0_cipher(port->token_ctx);
 
-    if (cipher == NULL
-        || (tag_len = EVP_CIPHER_CTX_get_tag_length(port->token_ctx)) == 0
-        || (iv_len = EVP_CIPHER_get_iv_length(cipher)) == 0)
+    if ((tag_len = EVP_CIPHER_CTX_get_tag_length(port->token_ctx)) == 0
+        || (iv_len = EVP_CIPHER_CTX_get_iv_length(port->token_ctx)) <= 0)
         goto err;
 
     /* Prevent decryption of a buffer that is not within reasonable bounds */
