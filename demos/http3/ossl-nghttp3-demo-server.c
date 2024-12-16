@@ -86,6 +86,9 @@ static void init_ids(struct h3ssl *h3ssl)
     int i;
     char *prior_fileprefix = h3ssl->fileprefix;
 
+    if (h3ssl->ptr_data != NULL && h3ssl->ptr_data != nulldata)
+        free(h3ssl->ptr_data);
+
     memset(h3ssl, 0, sizeof(struct h3ssl));
 
     ssl_ids = h3ssl->ssl_ids;
@@ -350,8 +353,10 @@ static int quic_server_read(nghttp3_conn *h3conn, SSL *stream, uint64_t id, stru
                 (unsigned long long) id);
         switch (SSL_get_error(stream, ret)) {
         case SSL_ERROR_WANT_READ:
-        case SSL_ERROR_ZERO_RETURN:
             return 0;
+            break;
+        case SSL_ERROR_ZERO_RETURN:
+            return 1;
             break;
         default:
             ERR_print_errors_fp(stderr);
