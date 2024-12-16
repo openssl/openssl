@@ -271,9 +271,14 @@ static BIO *create_socket(uint16_t port)
     BIO *sock = NULL;
     BIO_ADDR *addr = NULL;
     int opt = 0;
+#ifdef _WIN32
+    struct in6_addr in6addr_any;
+
+    memset(&in6addr_any, 0, sizeof(in6addr_any));
+#endif
 
     /* Retrieve the file descriptor for a new UDP socket */
-    if ((fd = BIO_socket(AF_INET6, SOCK_DGRAM, 0, 0)) < 0) {
+    if ((fd = BIO_socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP, 0)) < 0) {
         fprintf(stderr, "cannot create socket");
         goto err;
     }
