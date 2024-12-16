@@ -989,6 +989,7 @@ done:
 int main(int argc, char *argv[])
 {
     int res = EXIT_FAILURE;
+#if not defined(_WIN32)
     SSL_CTX *ssl_ctx = NULL;
     BIO *bio_sock = NULL;
     struct in_addr ina;
@@ -1048,6 +1049,7 @@ out:
     /* Free resources. */
     SSL_CTX_free(ssl_ctx);
     BIO_free(bio_sock);
+#endif
 
     return res;
 }
