@@ -42,43 +42,43 @@ if [ "$ROLE" == "client" ]; then
         SSL_CERT_FILE=/certs/ca.pem curl --config $CURLRC || exit 1
         exit 0
         ;;
-    "handshake"|"transfer"|"retry")
-       HOSTNAME=none
-       for req in $REQUESTS
-       do
-           OUTFILE=$(basename $req)
-           if [ "$HOSTNAME" == "none" ]
-           then
-               HOSTNAME=$(printf "%s\n" "$req" | sed -ne 's,^https://\([^/:]*\).*,\1,p')
-               HOSTPORT=$(printf "%s\n" "$req" | sed -ne 's,^https://[^:/]*:\([^/]*\).*,\1,p')
-           fi
-           echo -n "$OUTFILE " >> ./reqfile.txt
-       done
-       SSLKEYLOGFILE=/logs/keys.log SSL_CERT_FILE=/certs/ca.pem SSL_CERT_DIR=/certs quic-hq-interop $HOSTNAME $HOSTPORT ./reqfile.txt || exit 1
-       exit 0
-       ;; 
+    "handshake"|"transfer"|"retry"|"ipv6")
+        HOSTNAME=none
+        for req in $REQUESTS
+        do
+            OUTFILE=$(basename $req)
+            if [ "$HOSTNAME" == "none" ]
+            then
+                HOSTNAME=$(printf "%s\n" "$req" | sed -ne 's,^https://\([^/:]*\).*,\1,p')
+                HOSTPORT=$(printf "%s\n" "$req" | sed -ne 's,^https://[^:/]*:\([^/]*\).*,\1,p')
+            fi
+            echo -n "$OUTFILE " >> ./reqfile.txt
+        done
+        SSLKEYLOGFILE=/logs/keys.log SSL_CERT_FILE=/certs/ca.pem SSL_CERT_DIR=/certs quic-hq-interop $HOSTNAME $HOSTPORT ./reqfile.txt || exit 1
+        exit 0
+        ;;
     "resumption")
-       for req in $REQUESTS
-       do
-           OUTFILE=$(basename $req)
-           echo -n "$OUTFILE " > ./reqfile.txt
-           HOSTNAME=$(printf "%s\n" "$req" | sed -ne 's,^https://\([^/:]*\).*,\1,p')
-           HOSTPORT=$(printf "%s\n" "$req" | sed -ne 's,^https://[^:/]*:\([^/]*\).*,\1,p')
-           SSL_SESSION_FILE=./session.db SSLKEYLOGFILE=/logs/keys.log SSL_CERT_FILE=/certs/ca.pem SSL_CERT_DIR=/certs quic-hq-interop $HOSTNAME $HOSTPORT ./reqfile.txt || exit 1
-       done
-       exit 0
-       ;;
+        for req in $REQUESTS
+        do
+            OUTFILE=$(basename $req)
+            echo -n "$OUTFILE " > ./reqfile.txt
+            HOSTNAME=$(printf "%s\n" "$req" | sed -ne 's,^https://\([^/:]*\).*,\1,p')
+            HOSTPORT=$(printf "%s\n" "$req" | sed -ne 's,^https://[^:/]*:\([^/]*\).*,\1,p')
+            SSL_SESSION_FILE=./session.db SSLKEYLOGFILE=/logs/keys.log SSL_CERT_FILE=/certs/ca.pem SSL_CERT_DIR=/certs quic-hq-interop $HOSTNAME $HOSTPORT ./reqfile.txt || exit 1
+        done
+        exit 0
+        ;;
     "chacha20")
-       for req in $REQUESTS
-       do
-           OUTFILE=$(basename $req)
-           printf "%s " "$OUTFILE" >> ./reqfile.txt
-           HOSTNAME=$(printf "%s\n" "$req" | sed -ne 's,^https://\([^/:]*\).*,\1,p')
-           HOSTPORT=$(printf "%s\n" "$req" | sed -ne 's,^https://[^:/]*:\([^/]*\).*,\1,p')
-       done
-       SSL_CIPHER_SUITES=TLS_CHACHA20_POLY1305_SHA256 SSL_SESSION_FILE=./session.db SSLKEYLOGFILE=/logs/keys.log SSL_CERT_FILE=/certs/ca.pem SSL_CERT_DIR=/certs quic-hq-interop $HOSTNAME $HOSTPORT ./reqfile.txt || exit 1
-       exit 0
-       ;; 
+        for req in $REQUESTS
+        do
+            OUTFILE=$(basename $req)
+            printf "%s " "$OUTFILE" >> ./reqfile.txt
+            HOSTNAME=$(printf "%s\n" "$req" | sed -ne 's,^https://\([^/:]*\).*,\1,p')
+            HOSTPORT=$(printf "%s\n" "$req" | sed -ne 's,^https://[^:/]*:\([^/]*\).*,\1,p')
+        done
+        SSL_CIPHER_SUITES=TLS_CHACHA20_POLY1305_SHA256 SSL_SESSION_FILE=./session.db SSLKEYLOGFILE=/logs/keys.log SSL_CERT_FILE=/certs/ca.pem SSL_CERT_DIR=/certs quic-hq-interop $HOSTNAME $HOSTPORT ./reqfile.txt || exit 1
+        exit 0
+        ;;
     *)
         echo "UNSUPPORTED TESTCASE $TESTCASE"
         exit 127
@@ -88,7 +88,7 @@ elif [ "$ROLE" == "server" ]; then
     echo "TESTCASE is $TESTCASE"
     rm -f $CURLRC 
     case "$TESTCASE" in
-    "handshake"|"transfer")
+    "handshake"|"transfer"|"ipv6")
         NO_ADDR_VALIDATE=yes SSLKEYLOGFILE=/logs/keys.log FILEPREFIX=/www quic-hq-interop-server 443 /certs/cert.pem /certs/priv.key
         ;;
     "retry"|"resumption")
