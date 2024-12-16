@@ -75,7 +75,7 @@ static const unsigned char alpn_ossltest[] = {
 static const char *whoami = "Server";
 static unsigned long server_port;
 static int quit, error;
-static const char *arg0;
+static const char *progname;
 static const char *portstr;
 static const char *servercert;
 static const char *serverkey;
@@ -1058,7 +1058,7 @@ out:
 static int run_client_server(void)
 {
     const char *argv[] = {
-        arg0,
+        progname,
         portstr,
         servercert,
         serverkey
@@ -1085,9 +1085,10 @@ int setup_tests(void)
         return 0;
     }
 
-    portstr = test_get_argument(1);
-    servercert = test_get_argument(2);
-    serverkey = test_get_argument(3);
+    progname = "quic_new_from_listener_test";
+    portstr = test_get_argument(0);
+    servercert = test_get_argument(1);
+    serverkey = test_get_argument(2);
 
     ADD_TEST(run_client_server);
 
