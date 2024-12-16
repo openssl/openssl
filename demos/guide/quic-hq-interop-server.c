@@ -14,7 +14,7 @@
  * This file implements a lightweight QUIC server supporting the HTTP/0.9
  * protocol for interoperability testing. It includes functions for setting
  * up a secure QUIC connection, handling ALPN negotiation, and serving client
- * requests.  Intended for use with the quic-interop-runner 
+ * requests.  Intended for use with the quic-interop-runner
  * available at https://interop.seemann.io
  *
  * Key functionalities:
@@ -261,7 +261,8 @@ err:
  *   connections.
  *
  * Notes:
- * - This function assumes the use of IPv4 (`AF_INET`) and UDP (`SOCK_DGRAM`).
+ * - This function assumes UDP (`SOCK_DGRAM`).
+ * - This function accepts on both IPv4 and IPv6.
  * - The specified port is converted to network byte order using `htons`.
  */
 static BIO *create_socket(uint16_t port)
@@ -269,13 +270,17 @@ static BIO *create_socket(uint16_t port)
     int fd = -1;
     BIO *sock = NULL;
     BIO_ADDR *addr = NULL;
-    struct in_addr ina;
-
-    ina.s_addr = INADDR_ANY;
+    int opt = 0;
 
     /* Retrieve the file descriptor for a new UDP socket */
-    if ((fd = BIO_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP, 0)) < 0) {
+    if ((fd = BIO_socket(AF_INET6, SOCK_DGRAM, 0, 0)) < 0) {
         fprintf(stderr, "cannot create socket");
+        goto err;
+    }
+
+    /* Disable IPV6_V6ONLY to accept both IPv4 and IPv6 */
+    if (setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, &opt, sizeof(opt)) < 0) {
+        fprintf(stderr, "setsockopt IPV6_V6ONLY failed");
         goto err;
     }
 
@@ -289,9 +294,9 @@ static BIO *create_socket(uint16_t port)
     }
 
     /*
-     * Build a INADDR_ANY BIO_ADDR
+     * Build an INADDR_ANY BIO_ADDR
      */
-    if (!BIO_ADDR_rawmake(addr, AF_INET, &ina, sizeof(ina), htons(port))) {
+    if (!BIO_ADDR_rawmake(addr, AF_INET6, &in6addr_any, sizeof(in6addr_any), htons(port))) {
         fprintf(stderr, "unable to bind to port %d\n", port);
         goto err;
     }
