@@ -23,6 +23,7 @@ permissions:
 
 env:
   OSSL_RUN_CI_TESTS: 1
+  SCCACHE_GHA_ENABLED: "true"
 
 jobs:
   check_update:
@@ -86,7 +87,9 @@ jobs:
       run: echo "FIPS_VENDOR=CI" >> VERSION.dat
     - name: config
       # enable-quic is on by default, but we leave it here to check we're testing the explicit enable somewhere
-      run: CC=gcc ./config --banner=Configured enable-demos enable-h3demo enable-sslkeylog enable-fips enable-quic --strict-warnings && perl configdata.pm --dump
+      run: CC="sccache gcc" ./config --banner=Configured enable-demos enable-h3demo enable-sslkeylog enable-fips enable-quic --strict-warnings && perl configdata.pm --dump
+    - name: Run sccache-cache
+      uses: mozilla-actions/sccache-action@v0.0.7
     - name: make
       run: make -s -j4
     - name: get cpu info
@@ -111,7 +114,9 @@ jobs:
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config
-      run: CC=clang ./config --banner=Configured enable-demos enable-h3demo no-fips --strict-warnings && perl configdata.pm --dump
+      run: CC="sccache clang" ./config --banner=Configured enable-demos enable-h3demo no-fips --strict-warnings && perl configdata.pm --dump
+    - name: Run sccache-cache
+      uses: mozilla-actions/sccache-action@v0.0.7
     - name: make
       run: make -s -j4
     - name: get cpu info
@@ -136,9 +141,11 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: config
-      run: ./config enable-demos enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
+      run: CC="sccache gcc" ./config enable-demos enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
     - name: config dump
       run: ./configdata.pm --dump
+    - name: Run sccache-cache
+      uses: mozilla-actions/sccache-action@v0.0.7
     - name: make
       run: make -j4
     - name: get cpu info
@@ -158,7 +165,9 @@ jobs:
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config
-      run: ./config --banner=Configured --strict-warnings enable-demos enable-h3demo no-bulk no-pic no-asm -DOPENSSL_NO_SECURE_MEMORY -DOPENSSL_SMALL_FOOTPRINT && perl configdata.pm --dump
+      run: CC="sccache gcc" ./config --banner=Configured --strict-warnings enable-demos enable-h3demo no-bulk no-pic no-asm -DOPENSSL_NO_SECURE_MEMORY -DOPENSSL_SMALL_FOOTPRINT && perl configdata.pm --dump
+    - name: Run sccache-cache
+      uses: mozilla-actions/sccache-action@v0.0.7
     - name: make
       run: make -j4 # verbose, so no -s here
     - name: get cpu info
@@ -180,7 +189,9 @@ jobs:
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config
-      run: ./config --banner=Configured --strict-warnings enable-demos enable-h3demo no-deprecated enable-fips && perl configdata.pm --dump
+      run: CC="sccache gcc" ./config --banner=Configured --strict-warnings enable-demos enable-h3demo no-deprecated enable-fips && perl configdata.pm --dump
+    - name: Run sccache-cache
+      uses: mozilla-actions/sccache-action@v0.0.7
     - name: make
       run: make -s -j4
     - name: get cpu info
@@ -202,7 +213,9 @@ jobs:
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config
-      run: ./config --banner=Configured --strict-warnings enable-demos enable-h3demo no-shared no-fips && perl configdata.pm --dump
+      run: CC="sccache gcc" ./config --banner=Configured --strict-warnings enable-demos enable-h3demo no-shared no-fips && perl configdata.pm --dump
+    - name: Run sccache-cache
+      uses: mozilla-actions/sccache-action@v0.0.7
     - name: make
       run: make -s -j4
     - name: get cpu info
@@ -228,7 +241,9 @@ jobs:
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config
-      run: ./config --banner=Configured --strict-warnings enable-demos enable-h3demo no-shared no-fips && perl configdata.pm --dump
+      run: CC="sccache gcc" ./config --banner=Configured --strict-warnings enable-demos enable-h3demo no-shared no-fips && perl configdata.pm --dump
+    - name: Run sccache-cache
+      uses: mozilla-actions/sccache-action@v0.0.7
     - name: make
       run: make -s -j4
     - name: get cpu info
@@ -254,7 +269,9 @@ jobs:
         sudo cat /proc/sys/vm/mmap_rnd_bits
         sudo sysctl -w vm.mmap_rnd_bits=28
     - name: config
-      run: ./config --banner=Configured --debug enable-demos enable-h3demo enable-asan enable-ubsan no-cached-fetch no-fips no-dtls no-tls1 no-tls1-method no-tls1_1 no-tls1_1-method no-async && perl configdata.pm --dump
+      run: CC="sccache gcc" ./config --banner=Configured --debug enable-demos enable-h3demo enable-asan enable-ubsan no-cached-fetch no-fips no-dtls no-tls1 no-tls1-method no-tls1_1 no-tls1_1-method no-async && perl configdata.pm --dump
+    - name: Run sccache-cache
+      uses: mozilla-actions/sccache-action@v0.0.7
     - name: make
       run: make -s -j4
     - name: get cpu info
@@ -280,7 +297,9 @@ jobs:
         sudo cat /proc/sys/vm/mmap_rnd_bits
         sudo sysctl -w vm.mmap_rnd_bits=28
     - name: config
-      run: ./config --banner=Configured --debug enable-demos enable-h3demo enable-asan enable-ubsan enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-fips && perl configdata.pm --dump
+      run: CC="sccache gcc" ./config --banner=Configured --debug enable-demos enable-h3demo enable-asan enable-ubsan enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-fips && perl configdata.pm --dump
+    - name: Run sccache-cache
+      uses: mozilla-actions/sccache-action@v0.0.7
     - name: make
       run: make -s -j4
     - name: get cpu info
@@ -306,7 +325,9 @@ jobs:
         sudo cat /proc/sys/vm/mmap_rnd_bits
         sudo sysctl -w vm.mmap_rnd_bits=28
     - name: config
-      run: ./config --banner=Configured --debug -DPEDANTIC -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION enable-asan enable-ubsan enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-weak-ssl-ciphers enable-ssl3 enable-ssl3-method enable-nextprotoneg && perl configdata.pm --dump
+      run: CC="sccache gcc" ./config --banner=Configured --debug -DPEDANTIC -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION enable-asan enable-ubsan enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-weak-ssl-ciphers enable-ssl3 enable-ssl3-method enable-nextprotoneg && perl configdata.pm --dump
+    - name: Run sccache-cache
+      uses: mozilla-actions/sccache-action@v0.0.7    
     - name: make
       run: make -s -j4
     - name: get cpu info
@@ -334,7 +355,9 @@ jobs:
         sudo sysctl -w vm.mmap_rnd_bits=28
     - name: config
       # --debug -O1 is to produce a debug build that runs in a reasonable amount of time
-      run: CC=clang ./config --banner=Configured --debug -O1 -fsanitize=memory -DOSSL_SANITIZE_MEMORY -fno-optimize-sibling-calls enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-fips && perl configdata.pm --dump
+      run: CC="sccache clang" ./config --banner=Configured --debug -O1 -fsanitize=memory -DOSSL_SANITIZE_MEMORY -fno-optimize-sibling-calls enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-fips && perl configdata.pm --dump
+    - name: Run sccache-cache
+      uses: mozilla-actions/sccache-action@v0.0.7    
     - name: make
       run: make -s -j4
     - name: get cpu info
@@ -360,7 +383,9 @@ jobs:
         sudo cat /proc/sys/vm/mmap_rnd_bits
         sudo sysctl -w vm.mmap_rnd_bits=28
     - name: config
-      run: CC=clang ./config --banner=Configured no-fips --strict-warnings -fsanitize=thread && perl configdata.pm --dump
+      run: CC="sccache clang" ./config --banner=Configured no-fips --strict-warnings -fsanitize=thread && perl configdata.pm --dump
+    - name: Run sccache-cache
+      uses: mozilla-actions/sccache-action@v0.0.7
     - name: make
       run: make -s -j4
     - name: get cpu info
@@ -384,7 +409,9 @@ jobs:
     - name: modprobe tls
       run: sudo modprobe tls
     - name: config
-      run: ./config --banner=Configured --strict-warnings enable-demos enable-h3demo no-ec enable-ssl-trace enable-zlib enable-zlib-dynamic enable-crypto-mdebug enable-egd enable-ktls enable-fips no-threads && perl configdata.pm --dump
+      run: CC="sccache gcc" ./config --banner=Configured --strict-warnings enable-demos enable-h3demo no-ec enable-ssl-trace enable-zlib enable-zlib-dynamic enable-crypto-mdebug enable-egd enable-ktls enable-fips no-threads && perl configdata.pm --dump
+    - name: Run sccache-cache
+      uses: mozilla-actions/sccache-action@v0.0.7
     - name: make
       run: make -s -j4
     - name: get cpu info
@@ -414,7 +441,9 @@ jobs:
     - name: install extra config support
       run: sudo apt-get -y install libsctp-dev abigail-tools libzstd-dev zstd
     - name: config
-      run: ./config --banner=Configured --strict-warnings enable-demos enable-h3demo enable-ktls enable-fips enable-egd enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-sctp enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-trace enable-zlib enable-zstd && perl configdata.pm --dump
+      run: CC="sccache gcc" ./config --banner=Configured --strict-warnings enable-demos enable-h3demo enable-ktls enable-fips enable-egd enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-sctp enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-trace enable-zlib enable-zstd && perl configdata.pm --dump
+    - name: Run sccache-cache
+      uses: mozilla-actions/sccache-action@v0.0.7    
     - name: make
       run: make -s -j4
     - name: get cpu info
@@ -436,7 +465,9 @@ jobs:
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config
-      run: ./config --banner=Configured --strict-warnings enable-demos enable-h3demo no-legacy enable-fips && perl configdata.pm --dump
+      run: CC="sccache gcc" ./config --banner=Configured --strict-warnings enable-demos enable-h3demo no-legacy enable-fips && perl configdata.pm --dump
+    - name: Run sccache-cache
+      uses: mozilla-actions/sccache-action@v0.0.7
     - name: make
       run: make -s -j4
     - name: get cpu info
@@ -458,7 +489,9 @@ jobs:
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config
-      run: ./config --banner=Configured -Werror --debug no-afalgeng enable-demos enable-h3demo no-shared enable-crypto-mdebug enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 no-fips && perl configdata.pm --dump
+      run: CC="sccache gcc" ./config --banner=Configured -Werror --debug no-afalgeng enable-demos enable-h3demo no-shared enable-crypto-mdebug enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 no-fips && perl configdata.pm --dump
+    - name: Run sccache-cache
+      uses: mozilla-actions/sccache-action@v0.0.7
     - name: make
       run: make -s -j4
     - name: get cpu info
@@ -495,9 +528,11 @@ jobs:
         mkdir ./install
     - name: config
       run: |
-        ../source/config --banner=Configured enable-demos enable-h3demo enable-fips enable-quic enable-acvp-tests --strict-warnings --prefix=$(cd ../install; pwd)
+        CC="sccache gcc" ../source/config --banner=Configured enable-demos enable-h3demo enable-fips enable-quic enable-acvp-tests --strict-warnings --prefix=$(cd ../install; pwd)
         perl configdata.pm --dump
       working-directory: ./build
+    - name: Run sccache-cache
+      uses: mozilla-actions/sccache-action@v0.0.7
     - name: make
       run: make -s -j4
       working-directory: ./build
@@ -539,9 +574,11 @@ jobs:
         mkdir ./install
     - name: config
       run: |
-        ../source/config --banner=Configured enable-fips enable-demos enable-h3demo enable-quic enable-acvp-tests --strict-warnings --prefix=$(cd ../install; pwd)
+        CC="sccache gcc" ../source/config --banner=Configured enable-fips enable-demos enable-h3demo enable-quic enable-acvp-tests --strict-warnings --prefix=$(cd ../install; pwd)
         perl configdata.pm --dump
       working-directory: ./build
+    - name: Run sccache-cache
+      uses: mozilla-actions/sccache-action@v0.0.7
     - name: make
       run: make -s -j4
       working-directory: ./build
@@ -579,7 +616,9 @@ jobs:
     - name: setup hostname workaround
       run: sudo hostname localhost
     - name: config
-      run: ./config --banner=Configured --strict-warnings --debug no-afalgeng enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 enable-external-tests no-fips && perl configdata.pm --dump
+      run: CC="sccache gcc" ./config --banner=Configured --strict-warnings --debug no-afalgeng enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 enable-external-tests no-fips && perl configdata.pm --dump
+    - name: Run sccache-cache
+      uses: mozilla-actions/sccache-action@v0.0.7
     - name: make
       run: make -s -j4
     - uses: dtolnay/rust-toolchain@stable
@@ -612,7 +651,9 @@ jobs:
         sudo apt-get update
         sudo apt-get -yq install meson pkg-config gnutls-bin libnss3-tools libnss3-dev libsofthsm2 opensc expect
     - name: config
-      run: ./config --banner=Configured --strict-warnings --debug enable-external-tests && perl configdata.pm --dump
+      run: CC="sccache gcc" ./config --banner=Configured --strict-warnings --debug enable-external-tests && perl configdata.pm --dump
+    - name: Run sccache-cache
+      uses: mozilla-actions/sccache-action@v0.0.7
     - name: make
       run: make -s -j4
     - name: get cpu info
@@ -637,7 +678,9 @@ jobs:
       with:
         submodules: recursive
     - name: Configure OpenSSL
-      run: ./config --banner=Configured --strict-warnings --debug enable-external-tests && perl configdata.pm --dump
+      run: CC="sccache gcc" ./config --banner=Configured --strict-warnings --debug enable-external-tests && perl configdata.pm --dump
+    - name: Run sccache-cache
+      uses: mozilla-actions/sccache-action@v0.0.7
     - name: make
       run: make -s -j4
     - name: Setup Python
