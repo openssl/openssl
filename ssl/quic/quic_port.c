@@ -203,7 +203,7 @@ static void port_cleanup(QUIC_PORT *port)
         port->on_engine_list = 0;
     }
 
-    OPENSSL_free(port->token_ctx);
+    EVP_CIPHER_CTX_free(port->token_ctx);
     port->token_ctx = NULL;
 }
 
@@ -862,7 +862,7 @@ static int decrypt_validation_token(const QUIC_PORT *port,
         goto err;
 
     /* Prevent decryption of a buffer that is not within reasonable bounds */
-    if (ct_len < iv_len + tag_len || ct_len > ENCRYPTED_TOKEN_MAX_LEN)
+    if (ct_len < (iv_len + tag_len) || ct_len > ENCRYPTED_TOKEN_MAX_LEN)
         goto err;
 
     *pt_len = ct_len - iv_len - tag_len;
