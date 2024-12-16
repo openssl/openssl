@@ -591,7 +591,8 @@ static int client_httplike_transfer(SSL *ssl_qstream, const char *filename)
     int err = 1;
     int chk;
 
-    strlcpy(buf, filename, sizeof(buf) - 1);
+    strncpy(buf, filename, sizeof(buf) - 1);
+    buf[sizeof(buf) - 1] = '\0';
     fsize_str = strchr(buf, '_');
     if (!TEST_ptr(fsize_str)) {
         TEST_error("[ Client ] %s no '_' found in %s\n",
@@ -650,7 +651,8 @@ static int client_ftplike_transfer(SSL *ssl_qstream_cmd,
     int err = 1;
     int chk;
 
-    strlcpy(buf, filename, sizeof(buf) - 1);
+    strncpy(buf, filename, sizeof(buf) - 1);
+    buf[sizeof(buf) - 1] = '\0';
     fsize_str = strchr(buf, '_');
     if (!TEST_ptr(fsize_str)) {
         TEST_error("[ Client ] no '_' found in %s\n", filename);
