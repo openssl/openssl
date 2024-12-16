@@ -229,7 +229,9 @@ static int get_cert_by_subject_ex(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
         X509_CRL crl;
     } data;
     int ok = 0;
-    int i, j, k;
+    int i, j, k, l;
+    unsigned long hash[2];
+    int valid_hash[2]; /* '0' for invalid value in `hash` array */
     unsigned long h;
     BUF_MEM *b = NULL;
     X509_OBJECT stmp, *tmp;
@@ -257,165 +259,179 @@ static int get_cert_by_subject_ex(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
     }
 
     ctx = (BY_DIR *)xl->method_data;
-    h = X509_NAME_hash_ex(name, libctx, propq, &i);
-    if (i == 0)
-        goto finish;
-    for (i = 0; i < sk_BY_DIR_ENTRY_num(ctx->dirs); i++) {
-        BY_DIR_ENTRY *ent;
-        int idx;
-        BY_DIR_HASH htmp, *hent;
 
-        ent = sk_BY_DIR_ENTRY_value(ctx->dirs, i);
-        j = strlen(ent->dir) + 1 + 8 + 6 + 1 + 1;
-        if (!BUF_MEM_grow(b, j)) {
-            ERR_raise(ERR_LIB_X509, ERR_R_BUF_LIB);
-            goto finish;
-        }
-        if (type == X509_LU_CRL && ent->hashes) {
-            htmp.hash = h;
-            if (!CRYPTO_THREAD_read_lock(ctx->lock))
-                goto finish;
-            idx = sk_BY_DIR_HASH_find(ent->hashes, &htmp);
-            if (idx >= 0) {
-                hent = sk_BY_DIR_HASH_value(ent->hashes, idx);
-                k = hent->suffix;
-            } else {
-                hent = NULL;
-                k = 0;
-            }
-            CRYPTO_THREAD_unlock(ctx->lock);
-        } else {
-            k = 0;
-            hent = NULL;
-        }
-        for (;;) {
-            char c = '/';
-
-#ifdef OPENSSL_SYS_VMS
-            c = ent->dir[strlen(ent->dir) - 1];
-            if (c != ':' && c != '>' && c != ']') {
-                /*
-                 * If no separator is present, we assume the directory
-                 * specifier is a logical name, and add a colon.  We really
-                 * should use better VMS routines for merging things like
-                 * this, but this will do for now... -- Richard Levitte
-                 */
-                c = ':';
-            } else {
-                c = '\0';
-            }
-
-            if (c == '\0') {
-                /*
-                 * This is special.  When c == '\0', no directory separator
-                 * should be added.
-                 */
-                BIO_snprintf(b->data, b->max,
-                             "%s%08lx.%s%d", ent->dir, h, postfix, k);
-            } else
+    hash[0] = X509_NAME_hash_ex(name, libctx, propq, &l); /* SHA1 name hash */
+    valid_hash[0] = (l != 0);
+#ifndef OPENSSL_NO_MD5    
+    hash[1] = X509_NAME_hash_old(name); /* MD5 name hash */
+    valid_hash[1] = 1;
+#else
+    valid_hash[1] = 0;
 #endif
-            {
-                BIO_snprintf(b->data, b->max,
-                             "%s%c%08lx.%s%d", ent->dir, c, h, postfix, k);
-            }
-#ifndef OPENSSL_NO_POSIX_IO
-# ifdef _WIN32
-#  define stat _stat
-# endif
-            {
-                struct stat st;
-                if (stat(b->data, &st) < 0)
-                    break;
-            }
-#endif
-            /* found one. */
-            if (type == X509_LU_X509) {
-                if ((X509_load_cert_file_ex(xl, b->data, ent->dir_type, libctx,
-                                            propq)) == 0)
-                    break;
-            } else if (type == X509_LU_CRL) {
-                if ((X509_load_crl_file(xl, b->data, ent->dir_type)) == 0)
-                    break;
-            }
-            /* else case will caught higher up */
-            k++;
-        }
 
-        /*
-         * we have added it to the cache so now pull it out again
-         *
-         * Note: quadratic time find here since the objects won't generally be
-         *       sorted and sorting the would result in O(n^2 log n) complexity.
-         */
-        if (k > 0) {
-            if (!X509_STORE_lock(xl->store_ctx))
+    for (l = 0; l < 2; ++l) {
+        h = hash[l];
+        if (valid_hash[l] == 0)
+            continue; /* skip invalid hash */
+
+        for (i = 0; i < sk_BY_DIR_ENTRY_num(ctx->dirs); i++) {
+            BY_DIR_ENTRY *ent;
+            int idx;
+            BY_DIR_HASH htmp, *hent;
+
+            ent = sk_BY_DIR_ENTRY_value(ctx->dirs, i);
+            j = strlen(ent->dir) + 1 + 8 + 6 + 1 + 1;
+            if (!BUF_MEM_grow(b, j)) {
+                ERR_raise(ERR_LIB_X509, ERR_R_BUF_LIB);
                 goto finish;
-            j = sk_X509_OBJECT_find(xl->store_ctx->objs, &stmp);
-            tmp = sk_X509_OBJECT_value(xl->store_ctx->objs, j);
-            X509_STORE_unlock(xl->store_ctx);
-        } else {
-            tmp = NULL;
-        }
-        /*
-         * If a CRL, update the last file suffix added for this.
-         * We don't need to add an entry if k is 0 as this is the initial value.
-         * This avoids the need for a write lock and sort operation in the
-         * simple case where no CRL is present for a hash.
-         */
-        if (type == X509_LU_CRL && k > 0) {
-            if (!CRYPTO_THREAD_write_lock(ctx->lock))
-                goto finish;
-            /*
-             * Look for entry again in case another thread added an entry
-             * first.
-             */
-            if (hent == NULL) {
+            }
+            if (type == X509_LU_CRL && ent->hashes) {
                 htmp.hash = h;
+                if (!CRYPTO_THREAD_read_lock(ctx->lock))
+                    goto finish;
                 idx = sk_BY_DIR_HASH_find(ent->hashes, &htmp);
-                hent = sk_BY_DIR_HASH_value(ent->hashes, idx);
-            }
-            if (hent == NULL) {
-                hent = OPENSSL_malloc(sizeof(*hent));
-                if (hent == NULL) {
-                    CRYPTO_THREAD_unlock(ctx->lock);
-                    ok = 0;
-                    goto finish;
+                if (idx >= 0) {
+                    hent = sk_BY_DIR_HASH_value(ent->hashes, idx);
+                    k = hent->suffix;
+                } else {
+                    hent = NULL;
+                    k = 0;
                 }
-                hent->hash = h;
-                hent->suffix = k;
-                if (!sk_BY_DIR_HASH_push(ent->hashes, hent)) {
-                    CRYPTO_THREAD_unlock(ctx->lock);
-                    OPENSSL_free(hent);
-                    ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
-                    ok = 0;
-                    goto finish;
+                CRYPTO_THREAD_unlock(ctx->lock);
+            } else {
+                k = 0;
+                hent = NULL;
+            }
+            for (;;) {
+                char c = '/';
+
+    #ifdef OPENSSL_SYS_VMS
+                c = ent->dir[strlen(ent->dir) - 1];
+                if (c != ':' && c != '>' && c != ']') {
+                    /*
+                     * If no separator is present, we assume the directory
+                     * specifier is a logical name, and add a colon.  We really
+                     * should use better VMS routines for merging things like
+                     * this, but this will do for now... -- Richard Levitte
+                     */
+                    c = ':';
+                } else {
+                    c = '\0';
                 }
 
-                /*
-                 * Ensure stack is sorted so that subsequent sk_BY_DIR_HASH_find
-                 * will not mutate the stack and therefore require a write lock.
-                 */
-                sk_BY_DIR_HASH_sort(ent->hashes);
-            } else if (hent->suffix < k) {
-                hent->suffix = k;
+                if (c == '\0') {
+                    /*
+                     * This is special.  When c == '\0', no directory separator
+                     * should be added.
+                     */
+                    BIO_snprintf(b->data, b->max,
+                                "%s%08lx.%s%d", ent->dir, h, postfix, k);
+                } else
+    #endif
+                {
+                    BIO_snprintf(b->data, b->max,
+                                "%s%c%08lx.%s%d", ent->dir, c, h, postfix, k);
+                }
+    #ifndef OPENSSL_NO_POSIX_IO
+    # ifdef _WIN32
+    #  define stat _stat
+    # endif
+                {
+                    struct stat st;
+
+                    if (stat(b->data, &st) < 0)
+                        break;
+                }
+    #endif
+                /* found one. */
+                if (type == X509_LU_X509) {
+                    if ((X509_load_cert_file_ex(xl, b->data, ent->dir_type, libctx,
+                                                propq)) == 0)
+                        break;
+                } else if (type == X509_LU_CRL) {
+                    if ((X509_load_crl_file(xl, b->data, ent->dir_type)) == 0)
+                        break;
+                }
+                /* else case will caught higher up */
+                k++;
             }
-
-            CRYPTO_THREAD_unlock(ctx->lock);
-
-        }
-
-        if (tmp != NULL) {
-            ok = 1;
-            ret->type = tmp->type;
-            memcpy(&ret->data, &tmp->data, sizeof(ret->data));
 
             /*
-             * Clear any errors that might have been raised processing empty
-             * or malformed files.
+             * we have added it to the cache so now pull it out again
+             *
+             * Note: quadratic time find here since the objects won't generally be
+             *       sorted and sorting the would result in O(n^2 log n) complexity.
              */
-            ERR_clear_error();
+            if (k > 0) {
+                if (!X509_STORE_lock(xl->store_ctx))
+                    goto finish;
+                j = sk_X509_OBJECT_find(xl->store_ctx->objs, &stmp);
+                tmp = sk_X509_OBJECT_value(xl->store_ctx->objs, j);
+                X509_STORE_unlock(xl->store_ctx);
+            } else {
+                tmp = NULL;
+            }
+            /*
+             * If a CRL, update the last file suffix added for this.
+             * We don't need to add an entry if k is 0 as this is the initial value.
+             * This avoids the need for a write lock and sort operation in the
+             * simple case where no CRL is present for a hash.
+             */
+            if (type == X509_LU_CRL && k > 0) {
+                if (!CRYPTO_THREAD_write_lock(ctx->lock))
+                    goto finish;
+                /*
+                 * Look for entry again in case another thread added an entry
+                 * first.
+                 */
+                if (hent == NULL) {
+                    htmp.hash = h;
+                    idx = sk_BY_DIR_HASH_find(ent->hashes, &htmp);
+                    hent = sk_BY_DIR_HASH_value(ent->hashes, idx);
+                }
+                if (hent == NULL) {
+                    hent = OPENSSL_malloc(sizeof(*hent));
+                    if (hent == NULL) {
+                        CRYPTO_THREAD_unlock(ctx->lock);
+                        ok = 0;
+                        goto finish;
+                    }
+                    hent->hash = h;
+                    hent->suffix = k;
+                    if (!sk_BY_DIR_HASH_push(ent->hashes, hent)) {
+                        CRYPTO_THREAD_unlock(ctx->lock);
+                        OPENSSL_free(hent);
+                        ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
+                        ok = 0;
+                        goto finish;
+                    }
 
-            goto finish;
+                    /*
+                     * Ensure stack is sorted so that subsequent sk_BY_DIR_HASH_find
+                     * will not mutate the stack and therefore require a write lock.
+                     */
+                    sk_BY_DIR_HASH_sort(ent->hashes);
+                } else if (hent->suffix < k) {
+                    hent->suffix = k;
+                }
+
+                CRYPTO_THREAD_unlock(ctx->lock);
+
+            }
+
+            if (tmp != NULL) {
+                ok = 1;
+                ret->type = tmp->type;
+                memcpy(&ret->data, &tmp->data, sizeof(ret->data));
+
+                /*
+                 * Clear any errors that might have been raised processing empty
+                 * or malformed files.
+                 */
+                ERR_clear_error();
+
+                goto finish;
+            }
         }
     }
  finish:
