@@ -1183,9 +1183,9 @@ static int port_validate_token(QUIC_PKT_HDR *hdr, QUIC_PORT *port,
 
     if (!decrypt_validation_token(port, hdr->token, hdr->token_len, NULL,
                                   &dec_token_len)
+        || dec_token_len > MARSHALLED_TOKEN_MAX_LEN
         || !decrypt_validation_token(port, hdr->token, hdr->token_len,
                                      dec_token, &dec_token_len)
-        || dec_token_len > MARSHALLED_TOKEN_MAX_LEN
         || !parse_validation_token(&token, dec_token, dec_token_len))
         goto err;
 
