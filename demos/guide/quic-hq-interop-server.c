@@ -14,7 +14,7 @@
  * This file implements a lightweight QUIC server supporting the HTTP/0.9
  * protocol for interoperability testing. It includes functions for setting
  * up a secure QUIC connection, handling ALPN negotiation, and serving client
- * requests.  Intended for use with the quic-interop-runner 
+ * requests.  Intended for use with the quic-interop-runner
  * available at https://interop.seemann.io
  *
  * Key functionalities:
@@ -43,6 +43,7 @@
 #ifdef _WIN32
 # include <stdarg.h>
 # include <winsock2.h>
+# include <ws2tcpip.h>
 #else
 # include <sys/socket.h>
 # include <netinet/in.h>
@@ -261,7 +262,8 @@ err:
  *   connections.
  *
  * Notes:
- * - This function assumes the use of IPv4 (`AF_INET`) and UDP (`SOCK_DGRAM`).
+ * - This function assumes UDP (`SOCK_DGRAM`).
+ * - This function accepts on both IPv4 and IPv6.
  * - The specified port is converted to network byte order using `htons`.
  */
 static BIO *create_socket(uint16_t port)
@@ -269,15 +271,30 @@ static BIO *create_socket(uint16_t port)
     int fd = -1;
     BIO *sock = NULL;
     BIO_ADDR *addr = NULL;
-    struct in_addr ina;
+    int opt = 0;
+#ifdef _WIN32
+    struct in6_addr in6addr_any;
 
-    ina.s_addr = INADDR_ANY;
+    memset(&in6addr_any, 0, sizeof(in6addr_any));
+#endif
 
     /* Retrieve the file descriptor for a new UDP socket */
-    if ((fd = BIO_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP, 0)) < 0) {
+    if ((fd = BIO_socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP, 0)) < 0) {
         fprintf(stderr, "cannot create socket");
         goto err;
     }
+
+    /*
+     * IPv6_V6ONLY is only available on some platforms. If it is defined,
+     * disable it to accept both IPv4 and IPv6 connections. Otherwise, the
+     * server will only accept IPv6 connections.
+     */
+#ifdef IPV6_V6ONLY
+    if (setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, &opt, sizeof(opt)) < 0) {
+        fprintf(stderr, "setsockopt IPV6_V6ONLY failed");
+        goto err;
+    }
+#endif
 
     /*
      * Create a new BIO_ADDR
@@ -289,9 +306,9 @@ static BIO *create_socket(uint16_t port)
     }
 
     /*
-     * Build a INADDR_ANY BIO_ADDR
+     * Build an INADDR_ANY BIO_ADDR
      */
-    if (!BIO_ADDR_rawmake(addr, AF_INET, &ina, sizeof(ina), htons(port))) {
+    if (!BIO_ADDR_rawmake(addr, AF_INET6, &in6addr_any, sizeof(in6addr_any), htons(port))) {
         fprintf(stderr, "unable to bind to port %d\n", port);
         goto err;
     }
