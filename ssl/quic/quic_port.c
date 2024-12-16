@@ -963,8 +963,12 @@ static void port_send_retry(QUIC_PORT *port,
                             QUIC_PKT_HDR *client_hdr)
 {
     BIO_MSG msg[1];
+    /*
+     * Buffer is used for both marshalling the token as well as for the RETRY
+     * packet. The size of buffer should not be less than
+     * MARSHALLED_TOKEN_MAX_LEN.
+     */
     unsigned char buffer[512];
-    unsigned char token_buf[MARSHALLED_TOKEN_MAX_LEN];
     unsigned char ct_buf[ENCRYPTED_TOKEN_MAX_LEN];
     WPACKET wpkt;
     size_t written, token_buf_len, ct_len;
@@ -972,6 +976,8 @@ static void port_send_retry(QUIC_PORT *port,
     QUIC_VALIDATION_TOKEN token = {0};
     int ok;
 
+    if (!ossl_assert(sizeof(buffer) >= MARSHALLED_TOKEN_MAX_LEN))
+        return;
     /*
      * 17.2.5.1 Sending a Retry packet
      *   dst ConnId is src ConnId we got from client
@@ -991,11 +997,11 @@ static void port_send_retry(QUIC_PORT *port,
     /* Generate retry validation token */
     if (!generate_retry_token(peer, client_hdr->dst_conn_id,
                               hdr.src_conn_id, &token)
-        || !marshal_validation_token(&token, token_buf, &token_buf_len)
-        || !encrypt_validation_token(port, token_buf, token_buf_len, NULL,
+        || !marshal_validation_token(&token, buffer, &token_buf_len)
+        || !encrypt_validation_token(port, buffer, token_buf_len, NULL,
                                      &ct_len)
         || ct_len > ENCRYPTED_TOKEN_MAX_LEN
-        || !encrypt_validation_token(port, token_buf, token_buf_len, ct_buf,
+        || !encrypt_validation_token(port, buffer, token_buf_len, ct_buf,
                                      &ct_len)
         || !ossl_assert(ct_len >= QUIC_RETRY_INTEGRITY_TAG_LEN))
         goto err;
