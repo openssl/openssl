@@ -457,7 +457,7 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
                 goto err;
             }
         }
-        if (flags & CMS_NO_SIGNING_TIME) {
+        if ((flags & CMS_NO_SIGNING_TIME) != 0) {
             /*
              * The signing-time signed attribute (NID_pkcs9_signingTime)
              * would normally be added later, in CMS_SignerInfo_sign(),
@@ -848,7 +848,7 @@ int CMS_SignerInfo_sign(CMS_SignerInfo *si)
                     si->digestAlgorithm->algorithm, 0) <= 0)
         return 0;
 
-    if ((!si->omit_signing_time)
+    if (!si->omit_signing_time
         && (CMS_signed_get_attr_by_NID(si, NID_pkcs9_signingTime, -1) < 0)) {
         if (!cms_add1_signingTime(si, NULL))
             goto err;
