@@ -168,6 +168,13 @@ include/openssl/bio.h: macro BIO_set_dgram_bar(3) undocumented
 make: *** [Makefile:3833: doc-nits] Error 1
 ```
 
+Additionally, public symbols added should contain an entry in the HISTORY
+section of their documentation explaining the exact OpenSSL version in which
+they have appeared for the first time. The option -i for "find-doc-nits"
+can be utilized to check for this. A completely new documentation file
+should also contain a HISTORY section with wording along this line, e.g.
+"These functions have been added in OpenSSL version xxx.".
+
 Summary
 -------
 
