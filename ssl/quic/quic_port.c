@@ -608,7 +608,7 @@ static void port_bind_channel(QUIC_PORT *port, const BIO_ADDR *peer,
 
     if (odcid->id_len != 0) {
         /*
-         * If we have an odcid, then we wen't through server address validation
+         * If we have an odcid, then we went through server address validation
          * and as such, this channel need not conform to the 3x validation cap
          * See RFC 9000 s. 8.1
          */
