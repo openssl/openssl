@@ -4436,8 +4436,6 @@ SSL *ossl_quic_accept_connection(SSL *ssl, uint64_t flags)
 
 out:
     qctx_unlock(&ctx);
-    if (qc != NULL)
-        ossl_quic_do_handshake(&qc->obj.ssl);
     return qc != NULL ? &qc->obj.ssl : NULL;
 }
 
