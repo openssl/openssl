@@ -28,7 +28,7 @@ newly allocated string is always returned but it may have strlen == 0.
 
 =head1 HISTORY
 
-This call was added in OpenSSL 3.4.
+This function was added in OpenSSL 3.4.
 
 =head1 COPYRIGHT
 

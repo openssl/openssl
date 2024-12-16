@@ -212,6 +212,8 @@ L<OSSL_LIB_CTX(3)>, L<EVP_PKEY-EC(7)>
 
 =head1 HISTORY
 
+EC_GROUP_to_params() was added in OpenSSL 3.2.
+
 =over 2
 
 =item *
@@ -236,7 +238,7 @@ instead.
 
 =head1 COPYRIGHT
 
-Copyright 2013-2023 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2013-2024 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

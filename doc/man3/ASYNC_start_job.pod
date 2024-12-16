@@ -363,6 +363,8 @@ ASYNC_init_thread, ASYNC_cleanup_thread,
 ASYNC_start_job, ASYNC_pause_job, ASYNC_get_current_job, ASYNC_get_wait_ctx(),
 ASYNC_block_pause(), ASYNC_unblock_pause() and ASYNC_is_capable() were first
 added in OpenSSL 1.1.0.
+ASYNC_set_mem_functions(), ASYNC_get_mem_functions() were added
+in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 

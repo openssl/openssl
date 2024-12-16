@@ -127,6 +127,9 @@ added in OpenSSL 1.0.0 as a macro.
 
 X509_NAME_hash() was turned into a macro and deprecated in OpenSSL 3.0.
 
+X509_ACERT_get0_issuerName(), X509_ACERT_set1_issuerName()
+were added in OpenSSL 3.4.
+
 =head1 COPYRIGHT
 
 Copyright 2015-2024 The OpenSSL Project Authors. All Rights Reserved.

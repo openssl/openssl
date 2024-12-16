@@ -113,10 +113,12 @@ L<X509_verify_cert(3)>
 
 =head1 HISTORY
 
-These functions are available in all versions of OpenSSL.
-
 X509_get_notBefore() and X509_get_notAfter() were deprecated in OpenSSL
-1.1.0
+1.1.0.
+
+X509_ACERT_get0_notBefore(), X509_ACERT_get0_notAfter(),
+X509_ACERT_set1_notBefore(), X509_ACERT_set1_notAfter()
+were added in OpenSSL 3.4.
 
 =head1 COPYRIGHT
 

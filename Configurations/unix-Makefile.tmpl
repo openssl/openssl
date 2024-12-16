@@ -1173,7 +1173,7 @@ generate_buildinfo: generate_doc_buildinfo
 
 .PHONY: doc-nits md-nits
 doc-nits: build_generated_pods ## Evaluate OpenSSL documentation
-	$(PERL) $(SRCDIR)/util/find-doc-nits -c -n -l -e
+	$(PERL) $(SRCDIR)/util/find-doc-nits -c -n -l -e -i
 
 # This uses "mdl", the markdownlint application, which is written in ruby.
 # The source is at https://github.com/markdownlint/markdownlint

@@ -246,6 +246,11 @@ L<X509_new(3)>,
 L<X509_sign(3)>,
 L<X509_verify_cert(3)>
 
+=head1 HISTORY
+
+X509_ACERT_get_ext_d2i(), X509_ACERT_add1_ext_i2d(),
+X509_ACERT_get0_extensions() were added in OpenSSL 3.4.
+
 =head1 COPYRIGHT
 
 Copyright 2015-2024 The OpenSSL Project Authors. All Rights Reserved.
