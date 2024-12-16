@@ -19,7 +19,6 @@
 #include <openssl/err.h>
 #include <openssl/quic.h>
 
-#include "testutil/output.h"
 #include "testutil.h"
 
 #define BUF_SIZE 4096
@@ -76,6 +75,10 @@ static const unsigned char alpn_ossltest[] = {
 static const char *whoami = "Server";
 static unsigned long server_port;
 static int quit, error;
+static const char *arg0;
+static const char *portstr;
+static const char *servercert;
+static const char *serverkey;
 
 static int select_alpn(SSL *ssl, const unsigned char **out,
                        unsigned char *out_len, const unsigned char *in,
@@ -554,12 +557,12 @@ static int client_stream_transfer(SSL *ssl_qstream, size_t expected,
         TEST_info("( Client ) reading from stream ... \n");
         chk = SSL_read_ex(ssl_qstream, buf, sizeof(buf), &x);
         if (TEST_int_eq(chk, 0)) {
-            TEST_error("[ Client ] %s SSL_read_ex(%s) { %lu } %s\n",
+            TEST_error("[ Client ] %s SSL_read_ex(%s) { %zu } %s\n",
                        __func__, filename, transfered,
                        ERR_reason_error_string(ERR_get_error()));
             return 1;
         }
-        TEST_info("( Client ) got %lu bytes\n", x);
+        TEST_info("( Client ) got %zu bytes\n", x);
         transfered += x;
     }
 
@@ -571,7 +574,7 @@ static int client_stream_transfer(SSL *ssl_qstream, size_t expected,
 
     chk = SSL_read_ex(ssl_qstream, buf, sizeof(buf), &x);
     if (TEST_int_eq(chk, 1)) {
-        TEST_error("[ Client ] %s there is more than %lu to receive in %s\n",
+        TEST_error("[ Client ] %s there is more than %zu to receive in %s\n",
                    __func__, expected, filename);
         return 1;
     }
@@ -805,7 +808,7 @@ static int client_run(SSL *ssl_qconn, SSL *ssl_qconn_listener)
 /*
  * This is the main() for client, we arrive here right after fork().
  */
-static int client_main(int argc, char *argv[])
+static int client_main(int argc, const char *argv[])
 {
     SSL_CTX *ssl_ctx = NULL;
     SSL_CTX *ssl_ctx_data = NULL;
@@ -988,17 +991,14 @@ done:
  * main program: * after it forks client it continues to run
  * as a server, until client tells it's time to quit.
  */
-int main(int argc, char *argv[])
+static int server_main(int argc, const char *argv[])
 {
     int res = EXIT_FAILURE;
-#if !defined(_WIN32)
     SSL_CTX *ssl_ctx = NULL;
     BIO *bio_sock = NULL;
     struct in_addr ina;
 
     ina.s_addr = INADDR_ANY;
-
-    test_open_streams();
 
     if (TEST_int_ne(argc, 4)) {
         TEST_error("usage: %s <port> <server.crt> <server.key>\n", argv[0]);
@@ -1051,7 +1051,45 @@ out:
     /* Free resources. */
     SSL_CTX_free(ssl_ctx);
     BIO_free(bio_sock);
-#endif
 
     return res;
+}
+
+static int run_client_server(void)
+{
+    const char *argv[] = {
+        arg0,
+        portstr,
+        servercert,
+        serverkey
+    };
+
+    return server_main(4, argv);
+}
+
+OPT_TEST_DECLARE_USAGE("port certfile privkeyfile\n")
+
+int setup_tests(void)
+{
+    int argc;
+
+    if (!test_skip_common_options()) {
+        TEST_error("Error parsing test options\n");
+        return 0;
+    }
+
+    argc = test_get_argument_count();
+    if (argc != 3) {
+        TEST_error("quic_new_from_listener_test port "
+                   "servercert.pem serverkey.pem\n");
+        return 0;
+    }
+
+    portstr = test_get_argument(1);
+    servercert = test_get_argument(2);
+    serverkey = test_get_argument(3);
+
+    ADD_TEST(run_client_server);
+
+    return 1;
 }
