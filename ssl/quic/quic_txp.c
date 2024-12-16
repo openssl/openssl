@@ -532,7 +532,7 @@ void ossl_quic_tx_packetiser_consume_unvalidated_credit(OSSL_QUIC_TX_PACKETISER 
 int ossl_quic_tx_packetiser_check_unvalidated_credit(OSSL_QUIC_TX_PACKETISER *txp,
                                                      size_t req_credit)
 {
-    return (txp->unvalidated_credit > req_credit) ? 1 : 0;
+    return (txp->unvalidated_credit > req_credit);
 }
 
 OSSL_QUIC_TX_PACKETISER *ossl_quic_tx_packetiser_new(const OSSL_QUIC_TX_PACKETISER_ARGS *args)

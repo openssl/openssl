@@ -1447,10 +1447,11 @@ int ossl_quic_handle_frames(QUIC_CHANNEL *ch, OSSL_QRX_PKT *qpacket)
 
     /*
      * RFC 9000 s. 8.1
-     * If we recieve a packet from a client protected with handshake keys
-     * We can consider the connection validated, and the amplification limit
-     * no longer applies.  Otherwise
-     * Add this packet length to the unvalidated credit we have
+     * We can consider the connection to be validated, if we receive a packet
+     * from the client protected via handshake keys, meaning that the
+     * amplification limit no longer applies (i.e. we can set it as validated.
+     * Otherwise, add the size of this packet to the unvalidated credit for
+     * the connection.
      */
     if (enc_level == QUIC_ENC_LEVEL_HANDSHAKE)
         ossl_quic_tx_packetiser_set_validated(ch->txp);
