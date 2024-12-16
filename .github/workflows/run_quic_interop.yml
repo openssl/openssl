@@ -10,7 +10,7 @@ jobs:
   run_quic_interop:
     strategy:
       matrix:
-        tests: [http3, transfer, handshake, retry, chacha20, resumption, amplificationlimit]
+        tests: [http3, transfer, handshake, retry, chacha20, resumption, amplificationlimit, ipv6]
         servers: [quic-go, ngtcp2, mvfst, quiche, nginx, msquic, haproxy]
       fail-fast: false
     runs-on: ubuntu-latest 
