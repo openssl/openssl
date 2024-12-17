@@ -227,7 +227,7 @@ static BIO *open_fake_file(const char *filename)
         goto done;
 
     free(tmp_buf);
-    tmp_buf = (char *)malloc(fsize);
+    tmp_buf = (char *)OPENSSL_malloc(fsize);
     if (tmp_buf == NULL)
         goto done;
 
@@ -241,8 +241,10 @@ static BIO *open_fake_file(const char *filename)
     for (i = 0; i < fsize; i++)
         tmp_buf[i] = "OpenSSL"[i % (sizeof ("OpenSSL") - 1)];
 
+    tmp_buf = NULL;
+
 done:
-    free(tmp_buf);
+    OPENSSL_free(tmp_buf);
 
     return bio_fakef;
 }
