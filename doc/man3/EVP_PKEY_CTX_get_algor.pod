@@ -66,7 +66,7 @@ the B<EVP_I<TYPE>> implementation.
 
 =head1 HISTORY
 
-These functions were added in OpenSSL 3.4.0.
+These functions were added in OpenSSL 3.4.
 
 =head1 COPYRIGHT
 

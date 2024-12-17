@@ -587,7 +587,7 @@ PEM_write_bio_DHparams() and PEM_write_DHparams() were deprecated in 3.0.
 
 PEM_read_bio_X509_ACERT(), PEM_read_X509_ACERT(),
 PEM_write_bio_X509_ACERT(), PEM_write_X509_ACERT()
-were added in OpenSSL 3.4.0.
+were added in OpenSSL 3.4.
 
 =head1 COPYRIGHT
 

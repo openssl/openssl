@@ -506,7 +506,7 @@ The functions DSAparams_dup(), RSAPrivateKey_dup() and RSAPublicKey_dup() were
 deprecated in 3.0.
 
 CMS_EnvelopedData_it(), CMS_SignedData_free(), CMS_SignedData_new()
-were added in OpenSSL 3.2.0.
+were added in OpenSSL 3.2.
 
 DIST_POINT_NAME_dup(), OSSL_IETF_ATTR_SYNTAX_free(), OSSL_IETF_ATTR_SYNTAX_it(),
 OSSL_IETF_ATTR_SYNTAX_new(), OSSL_ATTRIBUTES_SYNTAX_free(),
@@ -528,7 +528,7 @@ PBMAC1PARAM_new(), X509_ACERT_dup(), X509_ACERT_free(), X509_ACERT_it(),
 X509_ACERT_new(), X509_ACERT_INFO_free(), X509_ACERT_INFO_it(),
 X509_ACERT_INFO_new(), X509_ACERT_ISSUER_V2FORM_free(),
 X509_ACERT_ISSUER_V2FORM_new()
-were added in OpenSSL 3.4.0.
+were added in OpenSSL 3.4.
 
 OSSL_ATTRIBUTE_DESCRIPTOR_free(), OSSL_ATTRIBUTE_DESCRIPTOR_new(),
 OSSL_ATTRIBUTE_DESCRIPTOR_it(), OSSL_AUTHORITY_ATTRIBUTE_ID_SYNTAX_free(),
@@ -555,7 +555,7 @@ OSSL_TIME_SPEC_WEEKS_free(), OSSL_TIME_SPEC_WEEKS_it(),
 OSSL_TIME_SPEC_WEEKS_new(), OSSL_TIME_SPEC_X_DAY_OF_free(),
 OSSL_TIME_SPEC_X_DAY_OF_it(), OSSL_TIME_SPEC_X_DAY_OF_new(),
 OSSL_TIME_SPEC_free(), OSSL_TIME_SPEC_it(), OSSL_TIME_SPEC_new()
-were added in OpenSSL 3.5.0.
+were added in OpenSSL 3.5.
 
 =head1 COPYRIGHT
 

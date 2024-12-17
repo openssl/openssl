@@ -118,7 +118,7 @@ X509_get_notBefore() and X509_get_notAfter() were deprecated in OpenSSL
 
 X509_ACERT_get0_notBefore(), X509_ACERT_get0_notAfter(),
 X509_ACERT_set1_notBefore(), X509_ACERT_set1_notAfter()
-were added in OpenSSL 3.4.0.
+were added in OpenSSL 3.4.
 
 =head1 COPYRIGHT
 

@@ -325,7 +325,7 @@ In OpenSSL 3.1, B<DEFINE_LHASH_OF_EX>() was introduced and B<DEFINE_LHASH_OF>()
 was deprecated.
 
 OPENSSL_LH_doall_arg_thunk(), OPENSSL_LH_set_thunks() were added in
-OpenSSL 3.3.0.
+OpenSSL 3.3.
 
 =head1 COPYRIGHT
 

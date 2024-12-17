@@ -212,7 +212,7 @@ L<BIO_s_bio(3)>, L<bio(7)>
 
 =head1 HISTORY
 
-BIO_s_dgram_pair(), BIO_new_bio_dgram_pair() were added in OpenSSL 3.2.0.
+BIO_s_dgram_pair(), BIO_new_bio_dgram_pair() were added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 

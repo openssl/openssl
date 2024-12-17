@@ -212,7 +212,7 @@ L<OSSL_LIB_CTX(3)>, L<EVP_PKEY-EC(7)>
 
 =head1 HISTORY
 
-EC_GROUP_to_params() was added in OpenSSL 3.2.0.
+EC_GROUP_to_params() was added in OpenSSL 3.2.
 
 =over 2
 

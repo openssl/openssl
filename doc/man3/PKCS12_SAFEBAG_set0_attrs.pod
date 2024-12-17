@@ -22,7 +22,7 @@ PKCS12_SAFEBAG_set0_attrs() does not return a value.
 
 =head1 HISTORY
 
-This function was added in OpenSSL 3.2.0.
+This function was added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 
