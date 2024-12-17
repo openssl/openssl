@@ -1007,7 +1007,6 @@ done:
 static int server_main(int argc, const char *argv[])
 {
     int res = EXIT_FAILURE;
-
 #if !defined(_WIN32)
     SSL_CTX *ssl_ctx = NULL;
     BIO *bio_sock = NULL;
