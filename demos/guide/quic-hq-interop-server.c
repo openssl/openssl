@@ -394,7 +394,7 @@ static int handle_io_failure(SSL *ssl, int res)
          * information about it from SSL_get_verify_result().
          */
         if (SSL_get_verify_result(ssl) != X509_V_OK)
-        fprintf(stderr, "Verify error: %s\n",
+            fprintf(stderr, "Verify error: %s\n",
                     X509_verify_cert_error_string(SSL_get_verify_result(ssl)));
         return -1;
 
@@ -466,7 +466,7 @@ static void process_new_stream(SSL *stream)
                 break;
             } else {
                 /* permanent failure, abort */
-                fprintf(stderr, "Failure on stream %lu\n", SSL_get_stream_id(stream));
+                fprintf(stderr, "Failure on stream\n");
                 return;
             }
         }
