@@ -11,11 +11,10 @@
 
 #if !defined(_WIN32)
 # include <sys/socket.h>
+# include <sys/wait.h>
+# include <netinet/in.h>
+# include <unistd.h>
 #endif
-
-#include <sys/wait.h>
-#include <netinet/in.h>
-#include <unistd.h>
 
 #include <openssl/bio.h>
 #include <openssl/ssl.h>
