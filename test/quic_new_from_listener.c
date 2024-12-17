@@ -454,13 +454,11 @@ static void process_new_stream(SSL *ssl_qlistener, SSL *ssl_qstream)
     }
 
     send_file(ssl_qstream, path);
-    (void) SSL_stream_conclude(ssl_qstream, 0);
-/*
+    chk = SSL_stream_conclude(ssl_qstream, 0);
     if (!TEST_true(chk)) {
         TEST_info("( Server ) %s SSL_stream_conclude(ssl_qstream) %s\n",
                   __func__, ERR_reason_error_string(ERR_get_error()));
     }
-*/
 
 shutdown:
     SSL_shutdown(ssl_qconn);
@@ -699,13 +697,11 @@ static int client_ftplike_transfer(SSL *ssl_qstream_cmd,
      * we are done with transfer command, we must accept stream
      * on data connection to receive file.
      */
-    (void) SSL_stream_conclude(ssl_qstream_cmd, 0);
-/*
+    chk = SSL_stream_conclude(ssl_qstream_cmd, 0);
     if (!TEST_true(chk)) {
         TEST_info("( Client ) %s SSL_stream_conclude(ssl_qstream) %s\n",
                   __func__, ERR_reason_error_string(ERR_get_error()));
     }
-*/
 
     /*
      * accept QUIC connection for data first.
@@ -730,13 +726,11 @@ static int client_ftplike_transfer(SSL *ssl_qstream_cmd,
     err = client_stream_transfer(ssl_qstream_data, fsize, filename);
 
     if (err == 0) {
-        (void) SSL_stream_conclude(ssl_qstream_data, 0);
-/*
+        chk = SSL_stream_conclude(ssl_qstream_data, 0);
         if (!TEST_true(chk)) {
             TEST_info("( Client ) %s SSL_stream_conclude(ssl_qstream_data) %s\n",
                       __func__, ERR_reason_error_string(ERR_get_error()));
         }
-*/
     }
 done:
     SSL_shutdown(ssl_qconn_data);
@@ -762,13 +756,11 @@ static void client_send_quit(SSL *ssl_qconn)
             TEST_info("( Client ) %s SSL_write_ex(ssl_qstream, 'QUIT')) %s\n",
                       __func__, ERR_reason_error_string(ERR_get_error()));
         }
-        (void) SSL_stream_conclude(ssl_qstream, 0);
-/*
+        chk = SSL_stream_conclude(ssl_qstream, 0);
         if (!TEST_true(chk)) {
             TEST_info("( Client ) %s SSL_stream_conclude(ssl_qstream) %s\n",
                       __func__, ERR_reason_error_string(ERR_get_error()));
         }
-*/
         SSL_free(ssl_qstream);
     } else {
         TEST_error("[ Client ] %s can not create stream %s\n",
@@ -835,8 +827,6 @@ static int client_main(int argc, const char *argv[])
     BIO_ADDR *bio_addr = NULL;
 
     whoami = "Client";
-    OSSL_sleep(30000);
-
 
     /*
      * We are creating two QUIC SSL objects here:
