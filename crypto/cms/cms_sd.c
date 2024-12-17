@@ -849,7 +849,7 @@ int CMS_SignerInfo_sign(CMS_SignerInfo *si)
         return 0;
 
     if (!si->omit_signing_time
-        && (CMS_signed_get_attr_by_NID(si, NID_pkcs9_signingTime, -1) < 0)) {
+        && CMS_signed_get_attr_by_NID(si, NID_pkcs9_signingTime, -1) < 0) {
         if (!cms_add1_signingTime(si, NULL))
             goto err;
     }
