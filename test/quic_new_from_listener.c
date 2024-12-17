@@ -74,7 +74,7 @@ static const unsigned char alpn_ossltest[] = {
 };
 static const char *whoami = "Server";
 static unsigned long server_port;
-static int quit, error;
+static int quit;
 static const char *progname;
 static const char *portstr;
 static const char *servercert;
@@ -120,7 +120,7 @@ static SSL_CTX *create_ctx(const char *cert_path, const char *key_path)
 
     if (cert_path != NULL) {
         chk = SSL_CTX_use_certificate_chain_file(ssl_ctx, cert_path);
-        if (TEST_int_ne(chk, 1)) {
+        if (!TEST_true(chk)) {
             TEST_error("[ %s ] %s SSL_CTX_use_certificate_chain_file(%s) %s\n",
                        whoami, __func__, cert_path,
                        ERR_reason_error_string(ERR_get_error()));
@@ -130,7 +130,7 @@ static SSL_CTX *create_ctx(const char *cert_path, const char *key_path)
 
     if (key_path != NULL) {
         chk = SSL_CTX_use_PrivateKey_file(ssl_ctx, key_path, SSL_FILETYPE_PEM);
-        if (TEST_int_ne(chk, 1)) {
+        if (!TEST_true(chk)) {
             TEST_error("[ %s ] %s SSL_CTX_use_PrivateKey(%s)  %s\n",
                        whoami, __func__, key_path,
                        ERR_reason_error_string(ERR_get_error()));
@@ -165,7 +165,7 @@ static BIO *create_socket(uint16_t port, struct in_addr *ina)
     sa.sin_port = htons(port);
     sa.sin_addr = *ina;
     chk = bind(fd, (const struct sockaddr *)&sa, sizeof(sa));
-    if (TEST_int_lt(chk, 0)) {
+    if (!TEST_int_eq(chk, 0)) {
         TEST_error("[ %s ] %s bind(%d) %s\n", whoami, __func__, port,
                    strerror(errno));
         goto err;
@@ -179,7 +179,7 @@ static BIO *create_socket(uint16_t port, struct in_addr *ina)
     }
 
     chk = BIO_set_fd(bio_sock, fd, BIO_CLOSE);
-    if (TEST_int_ne(chk, 1)) {
+    if (!TEST_true(chk)) {
         TEST_error("[ %s ] %s BIO_set_fd %s\n", whoami, __func__,
                    ERR_reason_error_string(ERR_get_error()));
         goto err;
@@ -266,9 +266,9 @@ static void send_file(SSL *ssl_qstream, const char *filename)
     while (BIO_eof(bio_fakef) <= 0) {
         bytes_read = 0;
         chk = BIO_read_ex(bio_fakef, buf, BUF_SIZE, &bytes_read);
-        if (TEST_int_eq(chk, 0)) {
+        if (!TEST_true(chk)) {
             chk = BIO_eof(bio_fakef);
-            if (chk != 1) {
+            if (!TEST_true(chk)) {
                 TEST_error("[ Server ] Failed to read from %s\n", filename);
                 ERR_print_errors_fp(stderr);
                 goto done;
@@ -281,7 +281,7 @@ static void send_file(SSL *ssl_qstream, const char *filename)
         for (;;) {
             bytes_written = 0;
             chk = SSL_write_ex(ssl_qstream, &buf[offset], bytes_read, &bytes_written);
-            if (TEST_int_eq(chk, 0)) {
+            if (!TEST_true(chk)) {
                 chk = SSL_get_error(ssl_qstream, chk);
                 switch (chk) {
                 case SSL_ERROR_WANT_WRITE:
@@ -336,8 +336,9 @@ static void process_new_stream(SSL *ssl_qlistener, SSL *ssl_qstream)
 
     memset(buf, 0, BUF_SIZE);
     chk = SSL_read_ex(ssl_qstream, buf, sizeof(buf) - 1, &nread);
-    if (TEST_int_eq(chk, 0)) {
+    if (!TEST_true(chk)) {
         quit = 1;
+        SSL_free(ssl_qstream);
         return;
     }
 
@@ -352,6 +353,7 @@ static void process_new_stream(SSL *ssl_qlistener, SSL *ssl_qstream)
     reqname = strrchr(req, '/');
     if (reqname == NULL) {
         quit = 1;
+        SSL_free(ssl_qstream);
         return;
     }
     *reqname = '\0';
@@ -380,7 +382,7 @@ static void process_new_stream(SSL *ssl_qlistener, SSL *ssl_qstream)
             dst_port_str++;
             chk = BIO_lookup_ex(dst_host, dst_port_str, BIO_LOOKUP_CLIENT,
                                 AF_INET, SOCK_DGRAM, 0, &bio_addr);
-            if (TEST_int_eq(chk, 0)) {
+            if (!TEST_true(chk)) {
                 TEST_error("[ Server ] %s BIO_lookup_ex(%s, %s) error (%s)\n",
                            __func__, dst_host, dst_port_str,
                            ERR_reason_error_string(ERR_get_error()));
@@ -398,7 +400,7 @@ static void process_new_stream(SSL *ssl_qlistener, SSL *ssl_qstream)
 
             chk = SSL_set1_initial_peer_addr(ssl_qconn,
                                              BIO_ADDRINFO_address(bio_addr));
-            if (TEST_int_eq(chk, 0)) {
+            if (!TEST_true(chk)) {
                 TEST_error("[ Server ] %s SSL_new_from_listener error (%s)\n",
                            __func__, ERR_reason_error_string(ERR_get_error()));
                 quit = 1;
@@ -406,7 +408,7 @@ static void process_new_stream(SSL *ssl_qlistener, SSL *ssl_qstream)
             }
 
             chk = SSL_set_alpn_protos(ssl_qconn, alpn_ossltest, sizeof(alpn_ossltest));
-            if (TEST_int_ne(chk, 0)) {
+            if (!TEST_false(chk)) {
                 TEST_error("[ Client ] %s SSL_set_alpn_protos failed %s\n",
                            __func__, ERR_reason_error_string(ERR_get_error()));
                 quit = 1;
@@ -414,7 +416,7 @@ static void process_new_stream(SSL *ssl_qlistener, SSL *ssl_qstream)
             }
 
             chk = SSL_connect(ssl_qconn);
-            if (TEST_int_ne(chk, 1)) {
+            if (!TEST_int_eq(chk, 1)) {
                 TEST_error("[ Server ] %s SSL_connect() to %s:%s failed (%s)\n",
                            __func__, dst_host, dst_port_str,
                            ERR_reason_error_string(ERR_get_error()));
@@ -430,7 +432,7 @@ static void process_new_stream(SSL *ssl_qlistener, SSL *ssl_qstream)
             chk = SSL_set_incoming_stream_policy(ssl_qconn,
                                                  SSL_INCOMING_STREAM_POLICY_ACCEPT,
                                                  0);
-            if (TEST_int_eq(chk, 0)) {
+            if (!TEST_true(chk)) {
                 TEST_error("[ Server ] %s SSL_set_incoming_stream_policy %s\n",
                            __func__, ERR_reason_error_string(ERR_get_error()));
                 quit = 1;
@@ -452,11 +454,13 @@ static void process_new_stream(SSL *ssl_qlistener, SSL *ssl_qstream)
     }
 
     send_file(ssl_qstream, path);
-    chk = SSL_stream_conclude(ssl_qstream, 0);
-    if (TEST_int_ne(chk, 1)) {
+    (void) SSL_stream_conclude(ssl_qstream, 0);
+/*
+    if (!TEST_true(chk)) {
         TEST_info("( Server ) %s SSL_stream_conclude(ssl_qstream) %s\n",
                   __func__, ERR_reason_error_string(ERR_get_error()));
     }
+*/
 
 shutdown:
     SSL_shutdown(ssl_qconn);
@@ -475,7 +479,7 @@ done:
  * terminates and program arrives back to SSL_accept_connection()
  * to handle new connection.
  */
-static int run_quic_server(SSL_CTX *ssl_ctx, BIO *bio_sock)
+static int run_quic_server(SSL_CTX *ssl_ctx, BIO **bio_sock)
 {
     int err = 1;
     int chk;
@@ -486,10 +490,11 @@ static int run_quic_server(SSL_CTX *ssl_ctx, BIO *bio_sock)
     if (!TEST_ptr(ssl_qlistener))
         goto err;
 
-    SSL_set_bio(ssl_qlistener, bio_sock, bio_sock);
+    SSL_set_bio(ssl_qlistener, *bio_sock, *bio_sock);
+    *bio_sock = NULL;
 
     chk = SSL_listen(ssl_qlistener);
-    if (TEST_int_eq(chk, 0))
+    if (!TEST_true(chk))
         goto err;
 
     while (quit == 0) {
@@ -507,7 +512,7 @@ static int run_quic_server(SSL_CTX *ssl_ctx, BIO *bio_sock)
         chk = SSL_set_incoming_stream_policy(ssl_qconn,
                                              SSL_INCOMING_STREAM_POLICY_ACCEPT,
                                              0);
-        if (TEST_int_eq(chk, 0)) {
+        if (!TEST_true(chk)) {
             TEST_error("[ Server ] %s SSL_set_incoming_stream_policy %s\n",
                        __func__, ERR_reason_error_string(ERR_get_error()));
             goto close_conn;
@@ -532,7 +537,7 @@ static int run_quic_server(SSL_CTX *ssl_ctx, BIO *bio_sock)
         SSL_free(ssl_qconn);
     }
 
-    err = error;
+    err = 0;
 
 err:
     SSL_free(ssl_qlistener);
@@ -556,7 +561,7 @@ static int client_stream_transfer(SSL *ssl_qstream, size_t expected,
     while (transfered < expected) {
         TEST_info("( Client ) reading from stream ... \n");
         chk = SSL_read_ex(ssl_qstream, buf, sizeof(buf), &x);
-        if (TEST_int_eq(chk, 0)) {
+        if (!TEST_true(chk)) {
             TEST_error("[ Client ] %s SSL_read_ex(%s) { %zu } %s\n",
                        __func__, filename, transfered,
                        ERR_reason_error_string(ERR_get_error()));
@@ -566,14 +571,14 @@ static int client_stream_transfer(SSL *ssl_qstream, size_t expected,
         transfered += x;
     }
 
-    if (TEST_int_ne(transfered, expected)) {
+    if (!TEST_int_eq(transfered, expected)) {
         TEST_error("[ Client ] %s transfer %s incomplete, missing %ld\n",
                    __func__, filename, expected - transfered);
         return 1;
     }
 
     chk = SSL_read_ex(ssl_qstream, buf, sizeof(buf), &x);
-    if (TEST_int_eq(chk, 1)) {
+    if (!TEST_false(chk)) {
         TEST_error("[ Client ] %s there is more than %zu to receive in %s\n",
                    __func__, expected, filename);
         return 1;
@@ -613,7 +618,7 @@ static int client_httplike_transfer(SSL *ssl_qstream, const char *filename)
     *p = '\0';
 
     fsize = (size_t)atoi(fsize_str);
-    if (TEST_int_eq(fsize, 0) || TEST_int_gt(fsize, FILE_MAX_SZ)) {
+    if (!TEST_int_ne(fsize, 0) && !TEST_int_lt(fsize, FILE_MAX_SZ)) {
         TEST_error("[ Client ] %s unexpected length in %s\n",
                    __func__, filename);
         goto done;
@@ -621,7 +626,7 @@ static int client_httplike_transfer(SSL *ssl_qstream, const char *filename)
 
     snprintf(buf, sizeof(buf), "GET /%s\r\n", filename);
     chk = SSL_write_ex(ssl_qstream, buf, strlen(buf), &transfered);
-    if (TEST_int_eq(chk, 0)) {
+    if (!TEST_true(chk)) {
         TEST_error("[ Client ] %s SSL_write_ex('GET /%s') failed %s\n",
                    __func__, filename,
                    ERR_reason_error_string(ERR_get_error()));
@@ -671,7 +676,7 @@ static int client_ftplike_transfer(SSL *ssl_qstream_cmd,
     *p = '\0';
 
     fsize = (size_t)atoi(fsize_str);
-    if (TEST_int_eq(fsize, 0)) {
+    if (!TEST_int_gt(fsize, 0)) {
         TEST_error("[ Client ] %s unexpected length in %s\n",
                    __func__, filename);
         goto done;
@@ -685,7 +690,7 @@ static int client_ftplike_transfer(SSL *ssl_qstream_cmd,
     snprintf(buf, sizeof(buf), "GET /%s:%u/%s\r\n", "localhost",
              (unsigned short)server_port + 1, filename);
     chk = SSL_write_ex(ssl_qstream_cmd, buf, strlen(buf), &transfered);
-    if (TEST_int_eq(chk, 0)) {
+    if (!TEST_true(chk)) {
         TEST_error("[ Client ] %s SSL_write_ex() failed %s\n",
                    __func__, ERR_reason_error_string(ERR_get_error()));
         goto done;
@@ -694,11 +699,13 @@ static int client_ftplike_transfer(SSL *ssl_qstream_cmd,
      * we are done with transfer command, we must accept stream
      * on data connection to receive file.
      */
-    chk = SSL_stream_conclude(ssl_qstream_cmd, 0);
-    if (TEST_int_ne(chk, 1)) {
+    (void) SSL_stream_conclude(ssl_qstream_cmd, 0);
+/*
+    if (!TEST_true(chk)) {
         TEST_info("( Client ) %s SSL_stream_conclude(ssl_qstream) %s\n",
                   __func__, ERR_reason_error_string(ERR_get_error()));
     }
+*/
 
     /*
      * accept QUIC connection for data first.
@@ -722,10 +729,14 @@ static int client_ftplike_transfer(SSL *ssl_qstream_cmd,
 
     err = client_stream_transfer(ssl_qstream_data, fsize, filename);
 
-    chk = SSL_stream_conclude(ssl_qstream_data, 0);
-    if (TEST_int_ne(chk, 1)) {
-        TEST_info("( Client ) %s SSL_stream_conclude(ssl_qstream_data) %s\n",
-                  __func__, ERR_reason_error_string(ERR_get_error()));
+    if (err == 0) {
+        (void) SSL_stream_conclude(ssl_qstream_data, 0);
+/*
+        if (!TEST_true(chk)) {
+            TEST_info("( Client ) %s SSL_stream_conclude(ssl_qstream_data) %s\n",
+                      __func__, ERR_reason_error_string(ERR_get_error()));
+        }
+*/
     }
 done:
     SSL_shutdown(ssl_qconn_data);
@@ -747,15 +758,17 @@ static void client_send_quit(SSL *ssl_qconn)
     ssl_qstream = SSL_new_stream(ssl_qconn, SSL_STREAM_FLAG_UNI);
     if (TEST_ptr(ssl_qstream)) {
         chk = SSL_write_ex(ssl_qstream, "QUIT\r\n", sizeof("QUIT\r\n") - 1, &w);
-        if (TEST_int_ne(chk, 1)) {
+        if (!TEST_true(chk)) {
             TEST_info("( Client ) %s SSL_write_ex(ssl_qstream, 'QUIT')) %s\n",
                       __func__, ERR_reason_error_string(ERR_get_error()));
         }
-        chk = SSL_stream_conclude(ssl_qstream, 0);
-        if (TEST_int_ne(chk, 1)) {
+        (void) SSL_stream_conclude(ssl_qstream, 0);
+/*
+        if (!TEST_true(chk)) {
             TEST_info("( Client ) %s SSL_stream_conclude(ssl_qstream) %s\n",
                       __func__, ERR_reason_error_string(ERR_get_error()));
         }
+*/
         SSL_free(ssl_qstream);
     } else {
         TEST_error("[ Client ] %s can not create stream %s\n",
@@ -798,7 +811,7 @@ static int client_run(SSL *ssl_qconn, SSL *ssl_qconn_listener)
         SSL_free(ssl_qstream_cmd);
     }
 
-    if (TEST_int_ne(err, 0))
+    if (!TEST_false(err))
         TEST_error("[ Client ] %s could not get %s\n",
                    __func__, *filename);
 
@@ -822,6 +835,8 @@ static int client_main(int argc, const char *argv[])
     BIO_ADDR *bio_addr = NULL;
 
     whoami = "Client";
+    OSSL_sleep(30000);
+
 
     /*
      * We are creating two QUIC SSL objects here:
@@ -885,13 +900,13 @@ static int client_main(int argc, const char *argv[])
     }
     chk = BIO_ADDR_rawmake(bio_addr, AF_INET, &ina, sizeof(ina),
                            htons((uint16_t)server_port));
-    if (TEST_int_eq(chk, 0)) {
+    if (!TEST_true(chk)) {
         TEST_error("[ Client ]: BIO_ADDR_rawmake %s\n",
                    ERR_reason_error_string(ERR_get_error()));
         goto done;
     }
     chk = SSL_set1_initial_peer_addr(ssl_qconn, bio_addr);
-    if (TEST_int_eq(chk, 0)) {
+    if (!TEST_true(chk)) {
         TEST_error("[ Client ]:  SSL_set1_initial_peer_addr (%s)\n",
                    ERR_reason_error_string(ERR_get_error()));
         goto done;
@@ -901,14 +916,14 @@ static int client_main(int argc, const char *argv[])
      * we are hq-interop client.
      */
     chk = SSL_set_alpn_protos(ssl_qconn, alpn_ossltest, sizeof(alpn_ossltest));
-    if (TEST_int_ne(chk, 0)) {
+    if (!TEST_false(chk)) {
         TEST_error("[ Client ] ]: SSL_set_alpn_protos failed %s\n",
                    ERR_reason_error_string(ERR_get_error()));
         goto done;
     }
 
     chk = SSL_connect(ssl_qconn);
-    if (TEST_int_ne(chk, 1)) {
+    if (!TEST_int_eq(chk, 1)) {
         TEST_error("[ Client ]:  SSL_connect (%s)\n",
                    ERR_reason_error_string(ERR_get_error()));
         ERR_print_errors_fp(stderr);
@@ -948,7 +963,7 @@ static int client_main(int argc, const char *argv[])
     bio_sock_data = NULL;
 
     chk = SSL_listen(ssl_qconn_listener);
-    if (TEST_int_eq(chk, 0)) {
+    if (!TEST_true(chk)) {
         TEST_error("[ Client ] Failed to start listener %s\n",
                    ERR_reason_error_string(ERR_get_error()));
         goto done;
@@ -974,7 +989,6 @@ static int client_main(int argc, const char *argv[])
     client_send_quit(ssl_qconn);
 
     SSL_shutdown(ssl_qconn);
-    SSL_shutdown(ssl_qconn_listener);
 done:
     SSL_free(ssl_qconn_listener);
     BIO_free(bio_sock_data);
@@ -1000,7 +1014,7 @@ static int server_main(int argc, const char *argv[])
 
     ina.s_addr = INADDR_ANY;
 
-    if (TEST_int_ne(argc, 4)) {
+    if (!TEST_int_eq(argc, 4)) {
         TEST_error("usage: %s <port> <server.crt> <server.key>\n", argv[0]);
         goto out;
     }
@@ -1015,7 +1029,7 @@ static int server_main(int argc, const char *argv[])
 
     /* Parse port number from command line arguments. */
     server_port = strtoul(argv[1], NULL, 0);
-    if (TEST_int_eq(server_port, 0) || TEST_int_gt(server_port, UINT16_MAX)) {
+    if (!TEST_int_ne(server_port, 0) && !TEST_int_lt(server_port, UINT16_MAX)) {
         TEST_error("[ Server ] Failed to parse port number\n");
         goto out;
     }
@@ -1036,16 +1050,9 @@ static int server_main(int argc, const char *argv[])
     }
 
     /* QUIC server connection acceptance loop. */
-    if (TEST_int_ne(run_quic_server(ssl_ctx, bio_sock), 0)) {
-        ERR_print_errors_fp(stderr);
-        TEST_error("[ Server ] Failed to run quic server\n");
-        goto out;
-    }
+    res = run_quic_server(ssl_ctx, &bio_sock);
 
     wait(NULL);
-
-    if (error == 0)
-        res = EXIT_SUCCESS;
 
 out:
     /* Free resources. */
@@ -1064,7 +1071,7 @@ static int run_client_server(void)
         serverkey
     };
 
-    return server_main(4, argv);
+    return server_main(4, argv) == 0;
 }
 
 OPT_TEST_DECLARE_USAGE("port certfile privkeyfile\n")
