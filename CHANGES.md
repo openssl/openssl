@@ -95,6 +95,11 @@ OpenSSL 3.5
 
    *Ramkumar*
 
+ * Generate the ECH acceptance confirmation when an encrypted_client_hello
+   extension indicates that OpenSSL is handling an inner client hello.
+
+   *Naomi Kirby*
+
 OpenSSL 3.4
 -----------
 

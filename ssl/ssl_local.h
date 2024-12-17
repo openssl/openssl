@@ -1682,7 +1682,7 @@ struct ssl_connection_st {
         uint8_t server_cert_type;
         uint8_t server_cert_type_ctos;
 
-        /* This is the encrytpted client hello type, or -1 if the not found. */
+        /* This is the encrytpted client hello type, or -1 if not found. */
         int ech_type;
     } ext;
 
