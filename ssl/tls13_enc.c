@@ -114,6 +114,55 @@ int tls13_hkdf_expand(SSL_CONNECTION *s, const EVP_MD *md,
     return ret;
 }
 
+int tls13_hkdf_extract_ex(OSSL_LIB_CTX *libctx, const char *propq,
+                          const EVP_MD *md,
+                          const unsigned char *salt, size_t saltlen,
+                          const unsigned char *ikm, size_t ikmlen,
+                          unsigned char *out, int raise_error)
+{
+    EVP_PKEY *pkey;
+    EVP_MD_CTX *hctx;
+    const char *mdname = EVP_MD_get0_name(md);
+    int ret = 0;
+
+    pkey = EVP_PKEY_new_raw_private_key_ex(libctx, "HMAC", propq,
+                                           salt, saltlen);
+    hctx = EVP_MD_CTX_create();
+    if (hctx == NULL || pkey == NULL)
+        goto err;
+
+    size_t outlen;
+    if (EVP_DigestSignInit_ex(hctx, NULL, mdname, libctx, propq, pkey, NULL) <= 0
+            || EVP_DigestSignUpdate(hctx, ikm, ikmlen) <= 0
+            || EVP_DigestSignFinal(hctx, out, &outlen))
+        goto err;
+    ret = 1;
+
+err:
+    if (ret == 0 && raise_error)
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+    EVP_MD_CTX_free(hctx);
+    EVP_PKEY_free(pkey);
+    return ret;
+}
+
+int tls13_hkdf_extract(SSL_CONNECTION *s, const EVP_MD *md,
+                       const unsigned char *salt, size_t saltlen,
+                       const unsigned char *ikm, size_t ikmlen,
+                       unsigned char *out, int fatal)
+{
+    int ret;
+    SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+
+    ret = tls13_hkdf_extract_ex(sctx->libctx, sctx->propq, md,
+                                salt, saltlen, ikm, ikmlen,
+                                out, !fatal);
+    if (ret == 0 && fatal)
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+
+    return ret;
+}
+
 /*
  * Given a |secret| generate a |key| of length |keylen| bytes. Returns 1 on
  * success  0 on failure.

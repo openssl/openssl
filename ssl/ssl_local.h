@@ -690,6 +690,7 @@ typedef enum tlsext_index_en {
     TLSEXT_IDX_compress_certificate,
     TLSEXT_IDX_early_data,
     TLSEXT_IDX_certificate_authorities,
+    TLSEXT_IDX_encrypted_client_hello,
     TLSEXT_IDX_padding,
     TLSEXT_IDX_psk,
     /* Dummy index - must always be the last entry */
@@ -1680,6 +1681,9 @@ struct ssl_connection_st {
         uint8_t client_cert_type_ctos;
         uint8_t server_cert_type;
         uint8_t server_cert_type_ctos;
+
+        /* This is the encrytpted client hello type, or -1 if the not found. */
+        int ech_type;
     } ext;
 
     /*
@@ -2250,6 +2254,11 @@ typedef enum downgrade_en {
 #define TLSEXT_KEX_MODE_FLAG_KE                                 1
 #define TLSEXT_KEX_MODE_FLAG_KE_DHE                             2
 
+#define TLSEXT_ECH_TYPE_OUTER                                   0
+#define TLSEXT_ECH_TYPE_INNER                                   1
+
+#define TLS13_ECH_ACCEPT_CONFIRM_LENGTH                         8
+
 #define SSL_USE_PSS(s) (s->s3.tmp.peer_sigalg != NULL && \
                         s->s3.tmp.peer_sigalg->sig == EVP_PKEY_RSA_PSS)
 
@@ -2743,6 +2752,16 @@ __owur int tls13_hkdf_expand_ex(OSSL_LIB_CTX *libctx, const char *propq,
                                 const unsigned char *data, size_t datalen,
                                 unsigned char *out, size_t outlen,
                                 int raise_error);
+__owur int tls13_hkdf_extract(SSL_CONNECTION *s,
+                              const EVP_MD *md,
+                              const unsigned char *salt, size_t saltlen,
+                              const unsigned char *data, size_t datalen,
+                              unsigned char *out, int fatal);
+__owur int tls13_hkdf_extract_ex(OSSL_LIB_CTX *libctx, const char *propq,
+                                 const EVP_MD *md,
+                                 const unsigned char *salt, size_t saltlen,
+                                 const unsigned char *data, size_t datalen,
+                                 unsigned char *out, int raise_error);
 __owur int tls13_derive_key(SSL_CONNECTION *s, const EVP_MD *md,
                             const unsigned char *secret, unsigned char *key,
                             size_t keylen);
