@@ -14,6 +14,7 @@
 # include <sys/wait.h>
 # include <netinet/in.h>
 # include <unistd.h>
+# include <signal.h>
 #endif
 
 #include <openssl/bio.h>
@@ -81,10 +82,16 @@ static const char *progname = "";
 static const char *portstr = "";
 static const char *servercert = "";
 static const char *serverkey = "";
+static pid_t parent_pid;
 
 #ifndef __func__
 # define __func__ ""
 #endif
+
+static void sighandler(int signum)
+{
+    quit = 1;
+}
 
 static int select_alpn(SSL *ssl, const unsigned char **out,
                        unsigned char *out_len, const unsigned char *in,
@@ -996,6 +1003,13 @@ done:
     SSL_CTX_free(ssl_ctx);
     BIO_ADDR_free(bio_addr);
 
+    /*
+     * Send signal to parent on error, so it does not get stuck waiting
+     * for I/O.
+     */
+    if (err == 1)
+        kill(parent_pid, SIGINT);
+
     return err;
 }
 
@@ -1010,6 +1024,9 @@ static int server_main(int argc, const char *argv[])
     SSL_CTX *ssl_ctx = NULL;
     BIO *bio_sock = NULL;
     struct in_addr ina;
+    struct sigaction sa;
+    sigset_t mask;
+    int chk;
 
     ina.s_addr = INADDR_ANY;
 
@@ -1017,6 +1034,21 @@ static int server_main(int argc, const char *argv[])
         TEST_error("usage: %s <port> <server.crt> <server.key>\n", argv[0]);
         goto out;
     }
+
+    /*
+     * child process sends us a SIGINT when it fails to carry on with test.
+     */
+    sigemptyset(&mask);
+    sigaddset(&mask, SIGINT);
+    sa.sa_handler = sighandler;
+    sa.sa_mask = mask;
+    sa.sa_flags = 0;
+    chk = sigaction(SIGINT, &sa, NULL);
+    if (!TEST_int_eq(chk, 0)) {
+        TEST_error("%s sigaction(SIGINT, ...) %s\n", argv[0], strerror(errno));
+        goto out;
+    }
+    parent_pid = getpid();
 
     if (fork() == 0)
         return client_main(argc, argv);
