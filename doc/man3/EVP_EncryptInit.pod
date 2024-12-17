@@ -394,7 +394,7 @@ For stream ciphers, the amount of data written can be anything from zero
 bytes to inl bytes.
 Thus, the buffer pointed to by I<out> must contain sufficient room for the
 operation being performed.
-The actual number of bytes written is placed in I<outl>.
+The actual length of the plaintext is placed in I<outl>.
 
 If padding is enabled (the default) then EVP_EncryptFinal_ex() encrypts
 the "final" data, that is any data that remains in a partial block.
