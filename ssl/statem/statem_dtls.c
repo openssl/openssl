@@ -1121,7 +1121,7 @@ CON_FUNC_RETURN dtls_construct_ack(SSL_CONNECTION *s, WPACKET *pkt) {
             }
 
             ossl_list_record_number_remove(&s->d1->ack_rec_num, recnum);
-            dtls1_record_number_free(recnum);
+            OPENSSL_free(recnum);
         }
     }
 
@@ -1171,15 +1171,16 @@ MSG_PROCESS_RETURN dtls_process_ack(SSL_CONNECTION *s, PACKET *pkt)
 
         while ((item = pqueue_next(&iter)) != NULL) {
             dtls_sent_msg *msg = (dtls_sent_msg *)item->data;
-            DTLS1_RECORD_NUMBER *recnum = ossl_list_record_number_head(&msg->rec_nums);
+            DTLS1_RECORD_NUMBER *recnum;
+            DTLS1_RECORD_NUMBER *recnum_next = ossl_list_record_number_head(&msg->rec_nums);
 
-            while (recnum != NULL) {
+            while ((recnum = recnum_next) != NULL) {
+                recnum_next = ossl_list_record_number_next(recnum_next);
+
                 if (recnum->epoch == epoch && recnum->seqnum == sequence_number) {
                     ossl_list_record_number_remove(&msg->rec_nums, recnum);
-                    dtls1_record_number_free(recnum);
+                    OPENSSL_free(recnum);
                 }
-
-                recnum = ossl_list_record_number_next(recnum);
             }
         }
     }

@@ -137,7 +137,7 @@ void ossl_list_record_number_elem_free(OSSL_LIST(record_number) *p_list) {
     while ((p_elem = p_elem_next) != NULL) {
         p_elem_next = ossl_list_record_number_next(p_elem_next);
         ossl_list_record_number_remove(p_list, p_elem);
-        dtls1_record_number_free(p_elem);
+        OPENSSL_free(p_elem);
     }
 }
 
@@ -159,14 +159,16 @@ void dtls1_acknowledge_sent_buffer(SSL_CONNECTION *s, uint16_t before_epoch) {
 
     while ((item = pqueue_next(&iter)) != NULL) {
         dtls_sent_msg *sent_msg = (dtls_sent_msg *)item->data;
-        DTLS1_RECORD_NUMBER *recnum = ossl_list_record_number_head(&sent_msg->rec_nums);
+        DTLS1_RECORD_NUMBER *recnum;
+        DTLS1_RECORD_NUMBER *recnum_next = ossl_list_record_number_head(&sent_msg->rec_nums);
 
-        while (recnum != NULL) {
+        while ((recnum = recnum_next) != NULL) {
+            recnum_next = ossl_list_record_number_next(recnum_next);
+
             if (recnum->epoch < before_epoch) {
                 ossl_list_record_number_remove(&sent_msg->rec_nums, recnum);
-                dtls1_record_number_free(recnum);
+                OPENSSL_free(recnum);
             }
-            recnum = ossl_list_record_number_next(recnum);
         }
     }
 }
