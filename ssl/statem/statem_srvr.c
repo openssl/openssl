@@ -834,7 +834,7 @@ WORK_STATE ossl_statem_server_pre_work(SSL_CONNECTION *s, WORK_STATE wst)
     case DTLS_ST_SW_HELLO_VERIFY_REQUEST:
         s->shutdown = 0;
         if (SSL_CONNECTION_IS_DTLS(s))
-            dtls1_clear_sent_buffer(s);
+            dtls1_clear_sent_buffer(s, 1);
 
         break;
 

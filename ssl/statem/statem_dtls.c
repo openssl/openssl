@@ -67,6 +67,9 @@ static dtls_sent_msg *dtls1_sent_msg_new(size_t msg_len)
 
 void dtls1_sent_msg_free(dtls_sent_msg *msg)
 {
+    if (msg != NULL)
+        ossl_list_record_number_elem_free(&msg->rec_nums);
+
     OPENSSL_free(msg);
 }
 
@@ -475,21 +478,25 @@ static int dtls1_preprocess_fragment(SSL_CONNECTION *s,
     return 1;
 }
 
-static void add_record_to_ack_list(SSL_CONNECTION *sc, uint64_t epoch, uint64_t sequence) {
-    DTLS1_RECORD_NUMBER_RECV *recnum = ossl_list_record_number_recv_head(&sc->d1->ack_rec_num);
+static int add_record_to_ack_list(SSL_CONNECTION *sc) {
+    DTLS1_RECORD_NUMBER *recnum;
+    uint64_t epoch = sc->s3.tmp.record_epoch;
+    uint64_t sequence = sc->s3.tmp.record_seq_num;
 
-    while (recnum != NULL) {
+    LIST_FOREACH(recnum, record_number, &sc->d1->ack_rec_num) {
         /* Is the record number already in the list? */
         if (recnum->epoch == epoch && recnum->seqnum == sequence)
-            return;
-        recnum = ossl_list_record_number_recv_next(recnum);
+            return 1;
     }
 
-    recnum = OPENSSL_malloc(sizeof(*recnum));
-    recnum->epoch = epoch;
-    recnum->seqnum = sequence;
+    recnum = dtls1_record_number_new(epoch, sequence);
 
-    ossl_list_record_number_recv_insert_tail(&sc->d1->ack_rec_num, recnum);
+    if (recnum == NULL)
+        return 0;
+
+    ossl_list_record_number_insert_tail(&sc->d1->ack_rec_num, recnum);
+
+    return 1;
 }
 
 /*
@@ -704,8 +711,9 @@ static int dtls1_reassemble_fragment(SSL_CONNECTION *s,
             goto err;
     }
 
-    if (!SSL_MSG_IS_IMPLICITLY_ACKED(!s->server, msg_hdr->type))
-        add_record_to_ack_list(s, s->s3.tmp.record_epoch, s->s3.tmp.record_seq_num);
+    if (!SSL_MSG_IS_IMPLICITLY_ACKED(!s->server, msg_hdr->type)
+            && !add_record_to_ack_list(s))
+        goto err;
 
     return DTLS1_HM_FRAGMENT_RETRY;
 
@@ -787,8 +795,9 @@ static int dtls1_process_out_of_seq_message(SSL_CONNECTION *s,
         if (item == NULL)
             goto err;
 
-        if (!SSL_MSG_IS_IMPLICITLY_ACKED(!s->server, msg_hdr->type))
-            add_record_to_ack_list(s, s->s3.tmp.record_epoch, s->s3.tmp.record_seq_num);
+        if (!SSL_MSG_IS_IMPLICITLY_ACKED(!s->server, msg_hdr->type)
+                && !add_record_to_ack_list(s))
+            goto err;
 
         item = pqueue_insert(&s->d1->rcvd_messages, item);
         /*
@@ -1033,8 +1042,11 @@ static int dtls_get_reassembled_message(SSL_CONNECTION *s, int *errtype,
         s->d1->next_handshake_write_seq = 0;
     }
 
-    if (!SSL_MSG_IS_IMPLICITLY_ACKED(!s->server, msg_hdr.type))
-        add_record_to_ack_list(s, s->s3.tmp.record_epoch, s->s3.tmp.record_seq_num);
+    if (!SSL_MSG_IS_IMPLICITLY_ACKED(!s->server, msg_hdr.type)
+        && !add_record_to_ack_list(s)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        goto f_err;
+    }
 
     /*
      * Note that s->init_num is *not* used as current offset in
@@ -1073,8 +1085,8 @@ CON_FUNC_RETURN dtls_construct_change_cipher_spec(SSL_CONNECTION *s,
 }
 
 CON_FUNC_RETURN dtls_construct_ack(SSL_CONNECTION *s, WPACKET *pkt) {
-    DTLS1_RECORD_NUMBER_RECV *recnum;
-    DTLS1_RECORD_NUMBER_RECV *recnumnext = ossl_list_record_number_recv_head(&s->d1->ack_rec_num);
+    DTLS1_RECORD_NUMBER *recnum;
+    DTLS1_RECORD_NUMBER *recnumnext = ossl_list_record_number_head(&s->d1->ack_rec_num);
 
     if (!WPACKET_start_sub_packet_u16(pkt)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -1092,7 +1104,7 @@ CON_FUNC_RETURN dtls_construct_ack(SSL_CONNECTION *s, WPACKET *pkt) {
          *      } RecordNumber;
          */
 
-        recnumnext = ossl_list_record_number_recv_next(recnum);
+        recnumnext = ossl_list_record_number_next(recnum);
 
         if (recnum->epoch <= dtls1_get_epoch(s, SSL3_CC_WRITE)) {
             /*
@@ -1106,8 +1118,8 @@ CON_FUNC_RETURN dtls_construct_ack(SSL_CONNECTION *s, WPACKET *pkt) {
                 return CON_FUNC_ERROR;
             }
 
-            ossl_list_record_number_recv_remove(&s->d1->ack_rec_num, recnum);
-            OPENSSL_free(recnum);
+            ossl_list_record_number_remove(&s->d1->ack_rec_num, recnum);
+            dtls1_record_number_free(recnum);
         }
     }
 
@@ -1157,14 +1169,15 @@ MSG_PROCESS_RETURN dtls_process_ack(SSL_CONNECTION *s, PACKET *pkt)
 
         while ((item = pqueue_next(&iter)) != NULL) {
             dtls_sent_msg *msg = (dtls_sent_msg *)item->data;
-            DTLS1_RECORD_NUMBER_SENT *recnum = ossl_list_record_number_sent_head(&msg->rec_nums);
+            DTLS1_RECORD_NUMBER *recnum = ossl_list_record_number_head(&msg->rec_nums);
 
             while (recnum != NULL) {
                 if (recnum->epoch == epoch && recnum->seqnum == sequence_number) {
-                    recnum->acknowledged = 1;
-                    break;
+                    ossl_list_record_number_remove(&msg->rec_nums, recnum);
+                    dtls1_record_number_free(recnum);
                 }
-                recnum = ossl_list_record_number_sent_next(recnum);
+
+                recnum = ossl_list_record_number_next(recnum);
             }
         }
     }
@@ -1269,7 +1282,7 @@ int dtls1_retransmit_sent_messages(SSL_CONNECTION *s)
         dtls_sent_msg *sent_msg = (dtls_sent_msg *)item->data;
 
         if (SSL_CONNECTION_IS_DTLS13(s)
-                && !dtls_sent_message_is_missing_acknowledge(sent_msg))
+                && ossl_list_record_number_is_empty(&sent_msg->rec_nums))
             /* rfc9147: Implementations must not retransmit acknowledged msgs */
             continue;
 
@@ -1329,17 +1342,6 @@ int dtls1_buffer_sent_message(SSL_CONNECTION *s, int record_type)
     return 1;
 }
 
-static void dtls1_clear_rec_num_sent_list(dtls_sent_msg *sent_msg)
-{
-    DTLS1_RECORD_NUMBER_SENT *recnum;
-    DTLS1_RECORD_NUMBER_SENT *recnum_next = ossl_list_record_number_sent_head(&sent_msg->rec_nums);
-    while ((recnum = recnum_next) != NULL) {
-        recnum_next = ossl_list_record_number_sent_next(recnum);
-        ossl_list_record_number_sent_remove(&sent_msg->rec_nums, recnum);
-        OPENSSL_free(recnum);
-    }
-}
-
 int dtls1_retransmit_message(SSL_CONNECTION *s, dtls_sent_msg *sent_msg)
 {
     int ret;
@@ -1351,8 +1353,8 @@ int dtls1_retransmit_message(SSL_CONNECTION *s, dtls_sent_msg *sent_msg)
     else
         header_length = DTLS1_HM_HEADER_LENGTH;
 
-    /* Clear the record number list ot be acked for retransmitted messages */
-    dtls1_clear_rec_num_sent_list(sent_msg);
+    /* Clear the record number list to be acked for retransmitted messages */
+    ossl_list_record_number_elem_free(&sent_msg->rec_nums);
 
     memcpy(s->init_buf->data, sent_msg->msg_buf,
            sent_msg->msg_info.msg_body_len + header_length);

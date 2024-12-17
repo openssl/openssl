@@ -1999,12 +1999,6 @@ pitem *pqueue_iterator(pqueue *pq);
 pitem *pqueue_next(piterator *iter);
 size_t pqueue_size(pqueue *pq);
 
-/* rfc9147, section 4 */
-typedef struct dtls1_record_number_st {
-    uint64_t epoch;
-    uint64_t seqnum;
-    int acknowledged;
-} DTLS1_RECORD_NUMBER;
 
 typedef struct dtls_msg_info_st {
     unsigned char record_type;
@@ -2013,40 +2007,37 @@ typedef struct dtls_msg_info_st {
     unsigned short msg_seq;
 } dtls_msg_info;
 
-typedef struct dtls1_record_number_sent_st DTLS1_RECORD_NUMBER_SENT;
+/* rfc9147, section 4 */
+typedef struct dtls1_record_number_st DTLS1_RECORD_NUMBER;
 
-struct dtls1_record_number_sent_st {
+struct dtls1_record_number_st {
     uint64_t epoch;
     uint64_t seqnum;
-    int acknowledged;
-    OSSL_LIST_MEMBER(record_number_sent, DTLS1_RECORD_NUMBER_SENT);
+    OSSL_LIST_MEMBER(record_number, DTLS1_RECORD_NUMBER);
 };
 
-DEFINE_LIST_OF(record_number_sent, DTLS1_RECORD_NUMBER_SENT);
+DEFINE_LIST_OF(record_number, DTLS1_RECORD_NUMBER);
+
+DTLS1_RECORD_NUMBER *dtls1_record_number_new(uint64_t epoch, uint64_t seqnum);
+
+static inline void dtls1_record_number_free(DTLS1_RECORD_NUMBER *p) {
+    OPENSSL_free(p);
+};
+
+void ossl_list_record_number_elem_free(OSSL_LIST(record_number) *p_list);
 
 typedef struct dtls_sent_msg_st {
     dtls_msg_info msg_info;
-    OSSL_LIST(record_number_sent) rec_nums;
+    OSSL_LIST(record_number) rec_nums;
     unsigned char *msg_buf;
     struct dtls1_retransmit_state saved_retransmit_state;
 } dtls_sent_msg;
 
 int dtls_any_sent_messages_are_missing_acknowledge(SSL_CONNECTION *s);
-int dtls_sent_message_is_missing_acknowledge(dtls_sent_msg *msg);
 
 #define SSL_MSG_IS_IMPLICITLY_ACKED(sentbyserver, msgtype)                      \
     ((msgtype) != SSL3_MT_NEWSESSION_TICKET && (msgtype) != SSL3_MT_KEY_UPDATE  \
      && ((msgtype) != SSL3_MT_FINISHED || (sentbyserver)))
-
-typedef struct dtls1_record_number_recv_st DTLS1_RECORD_NUMBER_RECV;
-
-struct dtls1_record_number_recv_st {
-    uint64_t epoch;
-    uint64_t seqnum;
-    OSSL_LIST_MEMBER(record_number_recv, DTLS1_RECORD_NUMBER_RECV);
-};
-
-DEFINE_LIST_OF(record_number_recv, DTLS1_RECORD_NUMBER_RECV);
 
 typedef struct dtls1_state_st {
     unsigned char cookie[DTLS1_COOKIE_LENGTH];
@@ -2082,7 +2073,7 @@ typedef struct dtls1_state_st {
 # endif
 
     /* Sequence numbers that are to be acknowledged */
-    OSSL_LIST(record_number_recv) ack_rec_num;
+    OSSL_LIST(record_number) ack_rec_num;
 
     DTLS_timer_cb timer_cb;
 
@@ -2820,8 +2811,7 @@ void dtls1_get_queue_priority(unsigned char *prio64be, unsigned short seq,
                               int record_type);
 int dtls1_retransmit_sent_messages(SSL_CONNECTION *s);
 void dtls1_clear_received_buffer(SSL_CONNECTION *s);
-void dtls1_clear_sent_buffer(SSL_CONNECTION *s);
-void dtls1_clear_record_number_buffer(SSL_CONNECTION *s);
+void dtls1_clear_sent_buffer(SSL_CONNECTION *s, int keep_unacked_msgs);
 void dtls1_acknowledge_sent_buffer(SSL_CONNECTION *s, uint16_t before_epoch);
 __owur OSSL_TIME dtls1_default_timeout(void);
 __owur int dtls1_get_timeout(const SSL_CONNECTION *s, OSSL_TIME *timeleft);
