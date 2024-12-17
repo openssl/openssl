@@ -333,19 +333,19 @@ err:
 }
 
 /**
- * @brief Handles I/O failures on an SSL connection based on the result code.
+ * @brief Handles I/O failures on an SSL stream based on the result code.
  *
  * This function processes the result of an SSL I/O operation and handles
  * different types of errors that may occur during the operation. It takes
  * appropriate actions such as retrying the operation, reporting errors, or
  * returning specific status codes based on the error type.
  *
- * @param ssl A pointer to the SSL object representing the connection.
+ * @param ssl A pointer to the SSL object representing the stream.
  * @param res The result code from the SSL I/O operation.
  * @return An integer indicating the outcome:
  *         - 1: Temporary failure, the operation should be retried.
- *         - 0: EOF, indicating the connection has been closed.
- *         - -1: A fatal error occurred or the connection has been reset.
+ *         - 0: EOF, indicating the stream has been closed.
+ *         - -1: A fatal error occurred or the stream has been reset.
  *
  *
  * @note If the failure is due to an SSL verification error, additional
