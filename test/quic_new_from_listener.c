@@ -571,7 +571,7 @@ static int client_stream_transfer(SSL *ssl_qstream, size_t expected,
 
     if (!TEST_int_eq(transfered, expected)) {
         TEST_error("[ Client ] %s transfer %s incomplete, missing %ld\n",
-                   __func__, filename, expected - transfered);
+                   __func__, filename, (long)(expected - transfered));
         return 1;
     }
 
