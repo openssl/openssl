@@ -88,10 +88,7 @@ elif [ "$ROLE" == "server" ]; then
     echo "TESTCASE is $TESTCASE"
     rm -f $CURLRC 
     case "$TESTCASE" in
-    "handshake")
-        NO_ADDR_VALIDATE=yes SSLKEYLOGFILE=/logs/keys.log FILEPREFIX=/www quic-hq-interop-server 443 /certs/cert.pem /certs/priv.key
-        ;;
-    "transfer")
+    "handshake"|"transfer")
         NO_ADDR_VALIDATE=yes SSLKEYLOGFILE=/logs/keys.log FILEPREFIX=/www quic-hq-interop-server 443 /certs/cert.pem /certs/priv.key
         ;;
     "retry"|"resumption")
