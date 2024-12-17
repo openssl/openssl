@@ -1064,12 +1064,12 @@ out:
 
 static int run_client_server(void)
 {
-    const char *argv[4] = {
-        progname,
-        portstr,
-        servercert,
-        serverkey
-    };
+    const char *argv[4];
+
+    argv[0] = progname;
+    argv[1] = portstr;
+    argv[2] = ervercert;
+    argv[3] = serverkey;
 
     return server_main(4, argv) == 0;
 }
