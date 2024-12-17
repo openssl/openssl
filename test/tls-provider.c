@@ -783,7 +783,6 @@ static void *xor_dup(const void *vfromkey, int selection)
         xor_freekey(tokey);
         tokey = NULL;
     }
-    return tokey;
 }
 
 static ossl_inline int xor_get_params(void *vkey, OSSL_PARAM params[])
