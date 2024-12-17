@@ -80,6 +80,10 @@ static const char *portstr;
 static const char *servercert;
 static const char *serverkey;
 
+#ifndef __func__
+# define __func__ "???()"
+#endif
+
 static int select_alpn(SSL *ssl, const unsigned char **out,
                        unsigned char *out_len, const unsigned char *in,
                        unsigned int in_len, void *arg)
