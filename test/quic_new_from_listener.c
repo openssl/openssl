@@ -9,7 +9,10 @@
 
 #include <string.h>
 
-#include <sys/socket.h>
+#if !defined(_WIN32)
+# include <sys/socket.h>
+#endif
+
 #include <sys/wait.h>
 #include <netinet/in.h>
 #include <unistd.h>
@@ -1004,6 +1007,8 @@ done:
 static int server_main(int argc, const char *argv[])
 {
     int res = EXIT_FAILURE;
+
+#if !defined(_WIN32)
     SSL_CTX *ssl_ctx = NULL;
     BIO *bio_sock = NULL;
     struct in_addr ina;
@@ -1054,6 +1059,7 @@ out:
     /* Free resources. */
     SSL_CTX_free(ssl_ctx);
     BIO_free(bio_sock);
+#endif
 
     return res;
 }
