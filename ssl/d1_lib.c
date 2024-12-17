@@ -114,6 +114,7 @@ static void dtls1_clear_queues(SSL_CONNECTION *s)
 {
     dtls1_clear_received_buffer(s);
     dtls1_clear_sent_buffer(s);
+    dtls1_clear_record_number_buffer(s);
 }
 
 void dtls1_clear_received_buffer(SSL_CONNECTION *s)
@@ -126,6 +127,18 @@ void dtls1_clear_received_buffer(SSL_CONNECTION *s)
         frag = (hm_fragment *)item->data;
         dtls1_hm_fragment_free(frag);
         pitem_free(item);
+    }
+}
+
+void dtls1_clear_record_number_buffer(SSL_CONNECTION *s)
+{
+    DTLS1_RECORD_NUMBER_RECV *x;
+    DTLS1_RECORD_NUMBER_RECV *xnext = ossl_list_record_number_recv_head(&s->d1->ack_rec_num);
+
+    while ((x = xnext) != NULL) {
+        xnext = ossl_list_record_number_recv_next(x);
+        ossl_list_record_number_recv_remove(&s->d1->ack_rec_num, x);
+        OPENSSL_free(x);
     }
 }
 

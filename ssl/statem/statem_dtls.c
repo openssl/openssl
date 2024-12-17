@@ -476,21 +476,20 @@ static int dtls1_preprocess_fragment(SSL_CONNECTION *s,
 }
 
 static void add_record_to_ack_list(SSL_CONNECTION *sc, uint64_t epoch, uint64_t sequence) {
-    size_t rec_num_idx;
+    DTLS1_RECORD_NUMBER_RECV *recnum = ossl_list_record_number_recv_head(&sc->d1->ack_rec_num);
 
-    for (rec_num_idx = 0; rec_num_idx < sc->d1->ack_rec_num_idx; rec_num_idx++) {
+    while (recnum != NULL) {
         /* Is the record number already in the list? */
-        if (sc->d1->ack_rec_num[rec_num_idx].epoch == epoch
-            && sc->d1->ack_rec_num[rec_num_idx].seqnum == sequence)
+        if (recnum->epoch == epoch && recnum->seqnum == sequence)
             return;
+        recnum = ossl_list_record_number_recv_next(recnum);
     }
 
-    if (!ossl_assert(rec_num_idx < DTLS_ACK_REC_NUM_LEN))
-        return;
+    recnum = OPENSSL_malloc(sizeof(*recnum));
+    recnum->epoch = epoch;
+    recnum->seqnum = sequence;
 
-    sc->d1->ack_rec_num[rec_num_idx].epoch = epoch;
-    sc->d1->ack_rec_num[rec_num_idx].seqnum = sequence;
-    sc->d1->ack_rec_num_idx++;
+    ossl_list_record_number_recv_insert_tail(&sc->d1->ack_rec_num, recnum);
 }
 
 /*
@@ -1074,14 +1073,15 @@ CON_FUNC_RETURN dtls_construct_change_cipher_spec(SSL_CONNECTION *s,
 }
 
 CON_FUNC_RETURN dtls_construct_ack(SSL_CONNECTION *s, WPACKET *pkt) {
-    size_t i;
+    DTLS1_RECORD_NUMBER_RECV *recnum;
+    DTLS1_RECORD_NUMBER_RECV *recnumnext = ossl_list_record_number_recv_head(&s->d1->ack_rec_num);
 
     if (!WPACKET_start_sub_packet_u16(pkt)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return CON_FUNC_ERROR;
     }
 
-    for (i = 0; i < s->d1->ack_rec_num_idx; i++) {
+    while ((recnum = recnumnext) != NULL) {
         /*
          * rfc9147: section 4.
          *
@@ -1091,29 +1091,30 @@ CON_FUNC_RETURN dtls_construct_ack(SSL_CONNECTION *s, WPACKET *pkt) {
          *           uint64 sequence_number;
          *      } RecordNumber;
          */
-        const uint64_t epoch = s->d1->ack_rec_num[i].epoch;
-        const uint64_t sequence_number = s->d1->ack_rec_num[i].seqnum;
 
-        /*
-         * rfc9147:
-         * During the handshake, ACK records MUST be sent with an epoch which
-         * is equal to or higher than the record which is being acknowledged
-         */
-        if (epoch <= dtls1_get_epoch(s, SSL3_CC_WRITE))
-            if (!WPACKET_put_bytes_u64(pkt, epoch)
-                    || !WPACKET_put_bytes_u64(pkt, sequence_number)) {
+        recnumnext = ossl_list_record_number_recv_next(recnum);
+
+        if (recnum->epoch <= dtls1_get_epoch(s, SSL3_CC_WRITE)) {
+            /*
+             * rfc9147:
+             * During the handshake, ACK records MUST be sent with an epoch which
+             * is equal to or higher than the record which is being acknowledged
+             */
+            if (!WPACKET_put_bytes_u64(pkt, recnum->epoch)
+                || !WPACKET_put_bytes_u64(pkt, recnum->seqnum)) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 return CON_FUNC_ERROR;
             }
+
+            ossl_list_record_number_recv_remove(&s->d1->ack_rec_num, recnum);
+            OPENSSL_free(recnum);
+        }
     }
 
     if (!WPACKET_close(pkt)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return CON_FUNC_ERROR;
     }
-
-    /* Avoid acknowledging the same record numbers again */
-    s->d1->ack_rec_num_idx = 0;
 
     return CON_FUNC_SUCCESS;
 }
