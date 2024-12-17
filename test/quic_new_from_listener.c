@@ -1068,7 +1068,7 @@ static int run_client_server(void)
 
     argv[0] = progname;
     argv[1] = portstr;
-    argv[2] = ervercert;
+    argv[2] = servercert;
     argv[3] = serverkey;
 
     return server_main(4, argv) == 0;
