@@ -423,7 +423,7 @@ void dtls1_stop_timer(SSL_CONNECTION *s)
     s->d1->timeout_duration_us = 1000000;
     dtls1_bio_set_next_timeout(s->rbio, s->d1);
     /* Clear retransmission buffer */
-    dtls1_clear_sent_buffer(s, 1);
+    dtls1_clear_sent_buffer(s, 0);
 }
 
 int dtls1_check_timeout_num(SSL_CONNECTION *s)
