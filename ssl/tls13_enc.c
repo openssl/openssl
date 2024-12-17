@@ -808,7 +808,7 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
             dtls1_clear_received_buffer(s);
             dtls1_acknowledge_sent_buffer(s, dtls1_get_epoch(s, which));
         } else {
-            dtls1_clear_sent_buffer(s, 0);
+            dtls1_clear_sent_buffer(s, 1);
         }
     }
 
