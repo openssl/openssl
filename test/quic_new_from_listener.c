@@ -1065,7 +1065,7 @@ out:
 
 static int run_client_server(void)
 {
-    const char *argv[] = {
+    const char *argv[4] = {
         progname,
         portstr,
         servercert,
