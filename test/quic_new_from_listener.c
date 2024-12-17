@@ -75,10 +75,10 @@ static const unsigned char alpn_ossltest[] = {
 static const char *whoami = "Server";
 static unsigned long server_port;
 static int quit;
-static const char *progname;
-static const char *portstr;
-static const char *servercert;
-static const char *serverkey;
+static const char *progname = "";
+static const char *portstr = "";
+static const char *servercert = "";
+static const char *serverkey = "";
 
 #ifndef __func__
 # define __func__ ""
