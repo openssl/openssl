@@ -44,6 +44,13 @@ void ossl_hwsm3_block_data_order(SM3_CTX *c, const void *p, size_t num);
 #  define HWSM3_CAPABLE 1
 void ossl_hwsm3_block_data_order(SM3_CTX *c, const void *p, size_t num);
 # endif
+#if (defined(__x86_64) || defined(__x86_64__) || defined(_M_X64))
+#  define HWSM3_CAPABLE 1
+void ossl_hwsm3_block_data_order(SM3_CTX *c, const void *p, size_t num);
+void ossl_hwsm3_ni_x86_block_data_order(SM3_CTX *c, const void *p, size_t num);
+/* Returns non-zero when SM3 Instructions are available */
+int ossl_sm3_ni_x86_capable(void);
+#endif
 #endif
 
 #if defined(HWSM3_CAPABLE)

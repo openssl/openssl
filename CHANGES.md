@@ -84,6 +84,10 @@ OpenSSL 3.5
 
    *Dan Zimmerman, Alina Elizarova*
 
+ * Enabled x86-64 SM3 optimizations with SM3 ISA Extension.
+
+   *Alina Elizarova*
+
 OpenSSL 3.4
 -----------
 

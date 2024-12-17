@@ -193,3 +193,15 @@ void ossl_sm3_block_data_order(SM3_CTX *ctx, const void *p, size_t num)
         ctx->H ^= H;
     }
 }
+
+#if defined(OPENSSL_SM3_ASM) && (defined(__x86_64) || defined(__x86_64__) || defined(_M_X64))
+
+void ossl_hwsm3_block_data_order(SM3_CTX *c, const void *p, size_t num)
+{
+    if (ossl_sm3_ni_x86_capable())
+        ossl_hwsm3_ni_x86_block_data_order(c, p, num);
+    else
+        ossl_sm3_block_data_order(c, p, num);
+}
+
+#endif
