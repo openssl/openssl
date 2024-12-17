@@ -439,10 +439,7 @@ and EVP_DecryptFinal_ex()
 These functions are the corresponding decryption operations.
 EVP_DecryptFinal() will return an error code if padding is enabled and the
 final block is not correctly formatted. The parameters and restrictions are
-identical to the encryption operations except that if padding is enabled the
-decrypted data buffer I<out> passed to EVP_DecryptUpdate() should have
-sufficient room for (I<inl> + cipher_block_size) bytes unless the cipher block
-size is 1 in which case I<inl> bytes is sufficient. I<ctx> B<MUST NOT> be NULL.
+identical to the encryption operations. I<ctx> B<MUST NOT> be NULL.
 
 =item EVP_CipherInit_ex2(), EVP_CipherInit_ex(), EVP_CipherUpdate() and
 EVP_CipherFinal_ex()
