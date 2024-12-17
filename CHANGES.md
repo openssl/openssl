@@ -114,6 +114,10 @@ OpenSSL 3.5
 
    *Juhász Péter*
 
+ * Enabled x86-64 SM3 optimizations with SM3 ISA Extension.
+
+   *Alina Elizarova*
+
 OpenSSL 3.4
 -----------
 
