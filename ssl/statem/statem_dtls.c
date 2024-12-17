@@ -483,7 +483,9 @@ static int add_record_to_ack_list(SSL_CONNECTION *sc) {
     uint64_t epoch = sc->s3.tmp.record_epoch;
     uint64_t sequence = sc->s3.tmp.record_seq_num;
 
-    LIST_FOREACH(recnum, record_number, &sc->d1->ack_rec_num) {
+    for (recnum = ossl_list_record_number_head(&sc->d1->ack_rec_num);
+         recnum != NULL;
+         recnum = ossl_list_record_number_next(recnum)) {
         /* Is the record number already in the list? */
         if (recnum->epoch == epoch && recnum->seqnum == sequence)
             return 1;
