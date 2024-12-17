@@ -2022,7 +2022,7 @@ DTLS1_RECORD_NUMBER *dtls1_record_number_new(uint64_t epoch, uint64_t seqnum);
 
 static inline void dtls1_record_number_free(DTLS1_RECORD_NUMBER *p) {
     OPENSSL_free(p);
-};
+}
 
 void ossl_list_record_number_elem_free(OSSL_LIST(record_number) *p_list);
 
