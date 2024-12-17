@@ -691,10 +691,10 @@ int do_dtls1_write(SSL_CONNECTION *sc, uint8_t type, const unsigned char *buf,
      * Add record number to the buffered sent message
      */
     if (type == SSL3_RT_HANDSHAKE && ret > 0 && SSL_CONNECTION_IS_DTLS13(sc)) {
-        size_t record_numbers_idx;
         pitem *item;
         dtls_sent_msg *sent_msg;
         unsigned char prio[8];
+        DTLS1_RECORD_NUMBER_SENT *rec_num;
 
         dtls1_get_queue_priority(prio, sc->d1->w_msg.msg_seq, 0);
         item = pqueue_find(sc->d1->sent_messages, prio);
@@ -703,14 +703,15 @@ int do_dtls1_write(SSL_CONNECTION *sc, uint8_t type, const unsigned char *buf,
             return ret;
 
         sent_msg = (dtls_sent_msg *)item->data;
-        record_numbers_idx = sent_msg->rec_nums_idx++;
 
-        if (!ossl_assert(record_numbers_idx < DTLS_MSG_REC_NUM_LEN))
-            return ret;
+        if ((rec_num = OPENSSL_zalloc(sizeof(*rec_num))) == NULL)
+            return -1;
 
-        sent_msg->rec_nums[record_numbers_idx].epoch = tmpl.epoch;
-        sent_msg->rec_nums[record_numbers_idx].seqnum = tmpl.sequence_number;
-        sent_msg->rec_nums[record_numbers_idx].acknowledged = SSL_MSG_IS_IMPLICITLY_ACKED(sc->server, sc->d1->w_msg.msg_type);
+        rec_num->epoch = tmpl.epoch;
+        rec_num->seqnum = tmpl.sequence_number;
+        rec_num->acknowledged = SSL_MSG_IS_IMPLICITLY_ACKED(sc->server, sc->d1->w_msg.msg_type);
+
+        ossl_list_record_number_sent_insert_tail(&sent_msg->rec_nums, rec_num);
     }
 
     return ret;

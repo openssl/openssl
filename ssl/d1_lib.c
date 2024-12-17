@@ -148,12 +148,13 @@ void dtls1_acknowledge_sent_buffer(SSL_CONNECTION *s, uint16_t before_epoch) {
 
     while ((item = pqueue_next(&iter)) != NULL) {
         dtls_sent_msg *sent_msg = (dtls_sent_msg *)item->data;
-        size_t idx = 0;
 
-        for (idx = 0; idx < sent_msg->rec_nums_idx; idx++) {
-            if (sent_msg->rec_nums[idx].epoch < before_epoch) {
-                sent_msg->rec_nums[idx].acknowledged = 1;
-            }
+        DTLS1_RECORD_NUMBER_SENT *rec_num = ossl_list_record_number_sent_head(&sent_msg->rec_nums);
+        while (rec_num != NULL) {
+            if (rec_num->epoch < before_epoch)
+                rec_num->acknowledged = 1;
+
+            rec_num = ossl_list_record_number_sent_next(rec_num);
         }
     }
 }
@@ -186,21 +187,20 @@ void dtls1_clear_sent_buffer(SSL_CONNECTION *s) {
         pitem_free(item);
     }
 
-    if (SSL_CONNECTION_IS_DTLS13(s)) {
-        while ((item = pqueue_pop(remaining_sent_messages)) != NULL) {
+    if (SSL_CONNECTION_IS_DTLS13(s))
+        while ((item = pqueue_pop(remaining_sent_messages)) != NULL)
             pqueue_insert(s->d1->sent_messages, item);
-        }
-    }
 
     pqueue_free(remaining_sent_messages);
 }
 
 int dtls_sent_message_is_missing_acknowledge(dtls_sent_msg *msg) {
-    size_t idx;
+    DTLS1_RECORD_NUMBER_SENT *rec_num = ossl_list_record_number_sent_head(&msg->rec_nums);
 
-    for (idx = 0; idx < msg->rec_nums_idx; idx++) {
-        if (msg->rec_nums[idx].acknowledged == 0)
+    while (rec_num != NULL) {
+        if (rec_num->acknowledged == 0)
             return 1;
+        rec_num = ossl_list_record_number_sent_next(rec_num);
     }
 
     return 0;

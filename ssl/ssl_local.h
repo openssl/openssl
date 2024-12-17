@@ -2013,12 +2013,20 @@ typedef struct dtls_msg_info_st {
     unsigned short msg_seq;
 } dtls_msg_info;
 
-#define DTLS_MSG_REC_NUM_LEN 256
+typedef struct dtls1_record_number_sent_st DTLS1_RECORD_NUMBER_SENT;
+
+struct dtls1_record_number_sent_st {
+    uint64_t epoch;
+    uint64_t seqnum;
+    int acknowledged;
+    OSSL_LIST_MEMBER(record_number_sent, DTLS1_RECORD_NUMBER_SENT);
+};
+
+DEFINE_LIST_OF(record_number_sent, DTLS1_RECORD_NUMBER_SENT);
 
 typedef struct dtls_sent_msg_st {
     dtls_msg_info msg_info;
-    DTLS1_RECORD_NUMBER rec_nums[DTLS_MSG_REC_NUM_LEN];
-    size_t rec_nums_idx;
+    OSSL_LIST(record_number_sent) rec_nums;
     unsigned char *msg_buf;
     struct dtls1_retransmit_state saved_retransmit_state;
 } dtls_sent_msg;
