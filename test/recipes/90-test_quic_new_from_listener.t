@@ -18,6 +18,9 @@ setup("test_quic_new_from_listener");
 plan skip_all => "This test requires fork(2)"
     if $^O eq 'MSWin32';
 
+plan skip_all => "QUIC protocol is not supported by this OpenSSL build"
+    if disabled('quic');
+
 plan tests => 1;
 
 ok(run(test(["quic_new_from_listener_test",
