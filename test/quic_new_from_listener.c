@@ -1018,6 +1018,9 @@ static int server_main(int argc, const char *argv[])
         goto out;
     }
 
+    if (fork() == 0)
+        return client_main(argc, argv);
+
     /* Create SSL_CTX that supports QUIC. */
     ssl_ctx = create_ctx(argv[2], argv[3]);
     if (!TEST_ptr(ssl_ctx)) {
@@ -1040,12 +1043,6 @@ static int server_main(int argc, const char *argv[])
         TEST_error("[ Server ] Failed to create socket\n");
         ERR_print_errors_fp(stderr);
         goto out;
-    }
-
-    if (fork() == 0) {
-        SSL_CTX_free(ssl_ctx);
-        BIO_free(bio_sock);
-        return (client_main(argc, argv));
     }
 
     /* QUIC server connection acceptance loop. */
