@@ -343,7 +343,6 @@ err:
  * @param ssl A pointer to the SSL object representing the stream.
  * @param res The result code from the SSL I/O operation.
  * @return An integer indicating the outcome:
- *         - 1: Temporary failure, the operation should be retried.
  *         - 0: EOF, indicating the stream has been closed.
  *         - -1: A fatal error occurred or the stream has been reset.
  *
@@ -453,10 +452,7 @@ static void process_new_stream(SSL *stream)
         total_read += nread;
         if (ret <= 0) {
             ret = handle_io_failure(stream, ret);
-            if (ret >= 1) {
-                /* Transient failure, retry */
-                continue;
-            } else if (ret == 0) {
+            if (ret == 0) {
                 /* EOF condition, fin bit set, we got the whole request */
                 break;
             } else {
