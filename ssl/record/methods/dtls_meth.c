@@ -554,7 +554,7 @@ again:
      */
     if (is_next_epoch) {
         if (rl->in_init) {
-            if (dtls_rlayer_buffer_record(rl, rl->unprocessed_rcds,
+            if (dtls_rlayer_buffer_record(rl, &rl->unprocessed_rcds,
                     rr->seq_num)
                 < 0) {
                 /* RLAYERfatal() already called */
@@ -611,17 +611,14 @@ static int dtls_free(OSSL_RECORD_LAYER *rl)
         rbuf->left = 0;
     }
 
-    if (rl->unprocessed_rcds != NULL) {
-        while ((item = pqueue_pop(rl->unprocessed_rcds)) != NULL) {
-            rdata = (DTLS_RLAYER_RECORD_DATA *)item->data;
-            /* Push to the next record layer */
-            ret &= BIO_write_ex(rl->next, rdata->packet, rdata->packet_length,
-                &written);
-            OPENSSL_free(rdata->packet);
-            OPENSSL_free(item->data);
-            pitem_free(item);
-        }
-        pqueue_free(rl->unprocessed_rcds);
+    while ((item = pqueue_pop(&rl->unprocessed_rcds)) != NULL) {
+        rdata = (DTLS_RLAYER_RECORD_DATA *)item->data;
+        /* Push to the next record layer */
+        ret &= BIO_write_ex(rl->next, rdata->packet, rdata->packet_length,
+            &written);
+        OPENSSL_free(rdata->packet);
+        OPENSSL_free(item->data);
+        pitem_free(item);
     }
 
     return tls_free(rl) && ret;
@@ -653,15 +650,6 @@ dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
 
     if (ret != OSSL_RECORD_RETURN_SUCCESS)
         return ret;
-
-    (*retrl)->unprocessed_rcds = pqueue_new();
-
-    if ((*retrl)->unprocessed_rcds == NULL) {
-        dtls_free(*retrl);
-        *retrl = NULL;
-        ERR_raise(ERR_LIB_SSL, ERR_R_SSL_LIB);
-        return OSSL_RECORD_RETURN_FATAL;
-    }
 
     (*retrl)->isdtls = 1;
     (*retrl)->epoch = epoch;

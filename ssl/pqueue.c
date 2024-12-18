@@ -10,11 +10,6 @@
 #include "ssl_local.h"
 #include <openssl/bn.h>
 
-struct pqueue_st {
-    pitem *items;
-    int count;
-};
-
 pitem *pitem_new(unsigned char *prio64be, void *data)
 {
     pitem *item = OPENSSL_malloc(sizeof(*item));
