@@ -120,7 +120,7 @@ static void ossl_method_construct_this(OSSL_PROVIDER *provider,
      * It is *expected* that the put function increments the refcnt
      * of the passed method.
      */
-    data->mcm->put(data->store, method, provider, algo->algorithm_names,
+    data->mcm->put(no_store ? data->store : NULL, method, provider, algo->algorithm_names,
                    algo->property_definition, data->mcm_data);
 
     /* refcnt-- because we're dropping the reference */
