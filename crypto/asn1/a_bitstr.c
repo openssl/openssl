@@ -37,9 +37,9 @@ int ossl_i2c_ASN1_BIT_STRING(ASN1_BIT_STRING *a, unsigned char **pp)
                     break;
             }
 
-            if (len == 0)
+            if (len == 0) {
                 bits = 0;
-            else {
+            } else {
                 j = a->data[len - 1];
                 if (j & 0x01)
                     bits = 0;
