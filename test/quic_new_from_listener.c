@@ -263,6 +263,16 @@ done:
     return bio_fakef;
 }
 
+static void close_fake_file(BIO *bio_fakef)
+{
+    char *tmp_buf;
+
+    BIO_reset(bio_fakef);
+    BIO_get_mem_data(bio_fakef, &tmp_buf);
+    BIO_free(bio_fakef);
+    OPENSSL_free(tmp_buf);
+}
+
 /*
  * writes pauload specified by filename to ssl_qstream
  */
@@ -323,7 +333,7 @@ static void send_file(SSL *ssl_qstream, const char *filename)
     }
 
 done:
-    BIO_free(bio_fakef);
+    close_fake_file(bio_fakef);
 
     return;
 }
