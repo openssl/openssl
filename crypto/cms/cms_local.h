@@ -100,6 +100,8 @@ struct CMS_SignerInfo_st {
     EVP_MD_CTX *mctx;
     EVP_PKEY_CTX *pctx;
     const CMS_CTX *cms_ctx;
+    /* Set to 1 if signing time attribute is to be omitted */
+    int omit_signing_time;
 };
 
 struct CMS_SignerIdentifier_st {
