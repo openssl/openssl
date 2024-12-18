@@ -284,11 +284,17 @@ static BIO *create_socket(uint16_t port)
         goto err;
     }
 
-    /* Disable IPV6_V6ONLY to accept both IPv4 and IPv6 */
+    /*
+     * IPv6_V6ONLY is only available on some platforms. If it is defined,
+     * disable it to accept both IPv4 and IPv6 connections. Otherwise, the
+     * server will only accept IPv6 connections.
+     */
+#ifdef IPV6_V6ONLY
     if (setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, &opt, sizeof(opt)) < 0) {
         fprintf(stderr, "setsockopt IPV6_V6ONLY failed");
         goto err;
     }
+#endif
 
     /*
      * Create a new BIO_ADDR
