@@ -1004,11 +1004,12 @@ done:
     BIO_ADDR_free(bio_addr);
 
     /*
-     * Send signal to parent on error, so it does not get stuck waiting
-     * for I/O.
+     * Send signal to parent on error, so it does not get stuck waiting for
+     * I/O. SIGSTOP signal can not be ignored and forces parent process to
+     * terminate.
      */
     if (err == 1)
-        kill(parent_pid, SIGINT);
+        kill(parent_pid, SIGSTOP);
 
     return err;
 }
