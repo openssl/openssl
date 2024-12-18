@@ -807,9 +807,9 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
         if (direction == OSSL_RECORD_DIRECTION_READ) {
             dtls1_clear_received_buffer(s);
             dtls1_acknowledge_sent_buffer(s, dtls1_get_epoch(s, which));
-        } else {
-            dtls1_clear_sent_buffer(s, 1);
         }
+
+        dtls1_clear_sent_buffer(s, 1);
     }
 
     if (!ssl_set_new_record_layer(s, s->version, direction, level, secret,
