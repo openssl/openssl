@@ -5134,8 +5134,8 @@ static int test_key_exchange(int idx)
             || !TEST_true(SSL_set1_groups(clientssl, kexch_groups, kexch_groups_size)))
             goto end;
     } else {
-        if (!TEST_true(SSL_set1_curves_list(serverssl, kexch_names))
-            || !TEST_true(SSL_set1_curves_list(clientssl, kexch_names)))
+        if (!TEST_true(SSL_set1_groups_list(serverssl, kexch_names))
+            || !TEST_true(SSL_set1_groups_list(clientssl, kexch_names)))
             goto end;
     }
 
