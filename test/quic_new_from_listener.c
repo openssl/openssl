@@ -1005,11 +1005,11 @@ done:
 
     /*
      * Send signal to parent on error, so it does not get stuck waiting for
-     * I/O. SIGSTOP signal can not be ignored and forces parent process to
+     * I/O. SIGKILL signal can not be ignored and forces parent process to
      * terminate.
      */
     if (err == 1)
-        kill(parent_pid, SIGSTOP);
+        kill(parent_pid, SIGKILL);
 
     return err;
 }
