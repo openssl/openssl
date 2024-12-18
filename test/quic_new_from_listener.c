@@ -212,6 +212,7 @@ static BIO *open_fake_file(const char *filename)
     char *p;
     char *fsize_str;
     BIO *bio_fakef = NULL;
+    int chk;
 
     if (tmp_buf == NULL)
         goto done;
@@ -238,6 +239,13 @@ static BIO *open_fake_file(const char *filename)
     bio_fakef = BIO_new_mem_buf(tmp_buf, fsize);
     if (bio_fakef == NULL)
         goto done;
+
+    chk = BIO_set_close(bio_fakef, BIO_CLOSE);
+    if (chk == 0) {
+        BIO_free(bio_fakef);
+        bio_fakef = NULL;
+        goto done;
+    }
 
     /*
      * fill buffer with 'OpenSSLOpenSSLOpenS...' pattern
