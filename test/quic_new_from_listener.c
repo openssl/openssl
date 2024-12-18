@@ -88,11 +88,6 @@ static pid_t parent_pid;
 # define __func__ ""
 #endif
 
-static void sighandler(int signum)
-{
-    quit = 1;
-}
-
 static int select_alpn(SSL *ssl, const unsigned char **out,
                        unsigned char *out_len, const unsigned char *in,
                        unsigned int in_len, void *arg)
@@ -1025,9 +1020,6 @@ static int server_main(int argc, const char *argv[])
     SSL_CTX *ssl_ctx = NULL;
     BIO *bio_sock = NULL;
     struct in_addr ina;
-    struct sigaction sa;
-    sigset_t mask;
-    int chk;
 
     ina.s_addr = INADDR_ANY;
 
@@ -1036,21 +1028,7 @@ static int server_main(int argc, const char *argv[])
         goto out;
     }
 
-    /*
-     * child process sends us a SIGINT when it fails to carry on with test.
-     */
-    sigemptyset(&mask);
-    sigaddset(&mask, SIGINT);
-    sa.sa_handler = sighandler;
-    sa.sa_mask = mask;
-    sa.sa_flags = 0;
-    chk = sigaction(SIGINT, &sa, NULL);
-    if (!TEST_int_eq(chk, 0)) {
-        TEST_error("%s sigaction(SIGINT, ...) %s\n", argv[0], strerror(errno));
-        goto out;
-    }
     parent_pid = getpid();
-
     if (fork() == 0)
         return client_main(argc, argv);
 
