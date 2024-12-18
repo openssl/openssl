@@ -354,14 +354,11 @@ static int quic_server_read(nghttp3_conn *h3conn, SSL *stream, uint64_t id, stru
         switch (SSL_get_error(stream, ret)) {
         case SSL_ERROR_WANT_READ:
             return 0;
-            break;
         case SSL_ERROR_ZERO_RETURN:
             return 1;
-            break;
         default:
             ERR_print_errors_fp(stderr);
             return -1;
-            break;
         }
         return -1;
     }
