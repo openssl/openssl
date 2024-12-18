@@ -333,6 +333,72 @@ err:
 }
 
 /**
+ * @brief Handles I/O failures on an SSL stream based on the result code.
+ *
+ * This function processes the result of an SSL I/O operation and handles
+ * different types of errors that may occur during the operation. It takes
+ * appropriate actions such as retrying the operation, reporting errors, or
+ * returning specific status codes based on the error type.
+ *
+ * @param ssl A pointer to the SSL object representing the stream.
+ * @param res The result code from the SSL I/O operation.
+ * @return An integer indicating the outcome:
+ *         - 0: EOF, indicating the stream has been closed.
+ *         - -1: A fatal error occurred or the stream has been reset.
+ *
+ *
+ * @note If the failure is due to an SSL verification error, additional
+ * information will be logged to stderr.
+ */
+static int handle_io_failure(SSL *ssl, int res)
+{
+    switch (SSL_get_error(ssl, res)) {
+    case SSL_ERROR_ZERO_RETURN:
+        /* EOF */
+        return 0;
+
+    case SSL_ERROR_SYSCALL:
+        return -1;
+
+    case SSL_ERROR_SSL:
+        /*
+         * Some stream fatal error occurred. This could be because of a
+         * stream reset - or some failure occurred on the underlying
+         * connection.
+         */
+        switch (SSL_get_stream_read_state(ssl)) {
+        case SSL_STREAM_STATE_RESET_REMOTE:
+            fprintf(stderr, "Stream reset occurred\n");
+            /*
+             * The stream has been reset but the connection is still
+             * healthy.
+             */
+            break;
+
+        case SSL_STREAM_STATE_CONN_CLOSED:
+            fprintf(stderr, "Connection closed\n");
+            /* Connection is already closed. */
+            break;
+
+        default:
+            fprintf(stderr, "Unknown stream failure\n");
+            break;
+        }
+        /*
+         * If the failure is due to a verification error we can get more
+         * information about it from SSL_get_verify_result().
+         */
+        if (SSL_get_verify_result(ssl) != X509_V_OK)
+            fprintf(stderr, "Verify error: %s\n",
+                    X509_verify_cert_error_string(SSL_get_verify_result(ssl)));
+        return -1;
+
+    default:
+        return -1;
+    }
+}
+
+/**
  * @brief Processes a new incoming QUIC stream for an HTTP/0.9 GET request.
  *
  * This function reads an HTTP/0.9 GET request from the provided QUIC stream,
@@ -375,10 +441,27 @@ static void process_new_stream(SSL *stream)
     size_t bytes_written = 0;
     size_t offset = 0;
     int rc;
+    int ret;
+    size_t total_read = 0;
 
     memset(buf, 0, BUF_SIZE);
-    if (SSL_read_ex(stream, buf, sizeof(buf) - 1, &nread) <= 0)
-        return;
+    for (;;) {
+        nread = 0;
+        ret = SSL_read_ex(stream, &buf[total_read],
+                          sizeof(buf) - total_read - 1, &nread);
+        total_read += nread;
+        if (ret <= 0) {
+            ret = handle_io_failure(stream, ret);
+            if (ret == 0) {
+                /* EOF condition, fin bit set, we got the whole request */
+                break;
+            } else {
+                /* permanent failure, abort */
+                fprintf(stderr, "Failure on stream\n");
+                return;
+            }
+        }
+    }
 
     /* We should have a valid http 0.9 GET request here */
     fprintf(stderr, "Request is %s\n", req);
