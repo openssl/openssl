@@ -998,6 +998,7 @@ done:
     SSL_CTX_free(ssl_ctx);
     BIO_ADDR_free(bio_addr);
 
+#if !defined(_WIN32)
     /*
      * Send signal to parent on error, so it does not get stuck waiting for
      * I/O. SIGKILL signal can not be ignored and forces parent process to
@@ -1005,6 +1006,7 @@ done:
      */
     if (err == 1)
         kill(parent_pid, SIGKILL);
+#endif
 
     return err;
 }
