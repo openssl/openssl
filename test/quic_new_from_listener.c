@@ -82,7 +82,9 @@ static const char *progname = "";
 static const char *portstr = "";
 static const char *servercert = "";
 static const char *serverkey = "";
+#if !defined(_WIN32)
 static pid_t parent_pid;
+#endif
 
 #ifndef __func__
 # define __func__ ""
