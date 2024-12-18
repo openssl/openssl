@@ -1963,6 +1963,11 @@ typedef struct hm_fragment_st {
 typedef struct pqueue_st pqueue;
 typedef struct pitem_st pitem;
 
+struct pqueue_st {
+    pitem *items;
+    int count;
+};
+
 struct pitem_st {
     unsigned char priority[8];  /* 64-bit value in big-endian encoding */
     void *data;
