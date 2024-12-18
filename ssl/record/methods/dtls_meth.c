@@ -518,7 +518,7 @@ again:
      */
     if (is_next_epoch) {
         if (rl->in_init) {
-            if (dtls_rlayer_buffer_record(rl, rl->unprocessed_rcds,
+            if (dtls_rlayer_buffer_record(rl, &rl->unprocessed_rcds,
                     rr->seq_num)
                 < 0) {
                 /* RLAYERfatal() already called */
