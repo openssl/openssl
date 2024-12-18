@@ -439,26 +439,10 @@ static void process_new_stream(SSL *ssl_qlistener, SSL *ssl_qstream)
                            __func__, dst_host, dst_port_str,
                            ERR_reason_error_string(ERR_get_error()));
                 quit = 1;
-                goto done;
-            }
-
-            SSL_free(ssl_qstream);
-            /*
-             * We connect back to client, but still expect client to initiate
-             * a QUIC stream for transfer.
-             */
-            chk = SSL_set_incoming_stream_policy(ssl_qconn,
-                                                 SSL_INCOMING_STREAM_POLICY_ACCEPT,
-                                                 0);
-            if (!TEST_true(chk)) {
-                TEST_error("[ Server ] %s SSL_set_incoming_stream_policy %s\n",
-                           __func__, ERR_reason_error_string(ERR_get_error()));
-                quit = 1;
                 goto shutdown;
             }
 
-            TEST_info("( Server ) waiting for stream\n");
-
+            SSL_free(ssl_qstream);
             ssl_qstream = SSL_new_stream(ssl_qconn, 0);
             if (!TEST_ptr(ssl_qstream)) {
                 TEST_error("[ Server ] %s SSL_new_stream() to %s:%s failed (%s)\n",
