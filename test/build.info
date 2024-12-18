@@ -1042,6 +1042,12 @@ IF[{- !$disabled{tests} -}]
     DEPEND[tls13secretstest]=../libcrypto ../libssl libtestutil.a
   ENDIF
 
+  PROGRAMS{noinst}=tls13hkdftest
+  SOURCE[tls13hkdftest]=tls13hkdftest.c
+  SOURCE[tls13hkdftest]= ../ssl/tls13_enc.c ../crypto/packet.c ../crypto/quic_vlint.c
+  INCLUDE[tls13hkdftest]=.. ../include ../apps/include
+  DEPEND[tls13hkdftest]=../libcrypto ../libssl libtestutil.a
+
   SOURCE[sslbuffertest]=sslbuffertest.c helpers/ssltestlib.c
   INCLUDE[sslbuffertest]=../include ../apps/include
   DEPEND[sslbuffertest]=../libcrypto ../libssl libtestutil.a

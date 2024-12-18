@@ -134,7 +134,7 @@ int tls13_hkdf_extract_ex(OSSL_LIB_CTX *libctx, const char *propq,
     size_t outlen;
     if (EVP_DigestSignInit_ex(hctx, NULL, mdname, libctx, propq, pkey, NULL) <= 0
             || EVP_DigestSignUpdate(hctx, ikm, ikmlen) <= 0
-            || EVP_DigestSignFinal(hctx, out, &outlen))
+            || EVP_DigestSignFinal(hctx, out, &outlen) <= 0)
         goto err;
     ret = 1;
 
