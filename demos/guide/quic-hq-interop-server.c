@@ -354,10 +354,6 @@ err:
 static int handle_io_failure(SSL *ssl, int res)
 {
     switch (SSL_get_error(ssl, res)) {
-    case SSL_ERROR_WANT_READ:
-    case SSL_ERROR_WANT_WRITE:
-        return 1;
-
     case SSL_ERROR_ZERO_RETURN:
         /* EOF */
         return 0;
@@ -459,7 +455,6 @@ static void process_new_stream(SSL *stream)
             ret = handle_io_failure(stream, ret);
             if (ret >= 1) {
                 /* Transient failure, retry */
-                fprintf(stderr, "Transient read failure, retrying\n");
                 continue;
             } else if (ret == 0) {
                 /* EOF condition, fin bit set, we got the whole request */
