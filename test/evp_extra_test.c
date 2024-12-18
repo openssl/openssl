@@ -5932,7 +5932,7 @@ static int test_evp_cipher_pipeline(void)
     size_t ciphertextlen_array[EVP_MAX_PIPES];
     size_t inlen_array[EVP_MAX_PIPES];
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
-    unsigned char *ciphertext = NULL, *exp_plaintext = NULL, *tag = NULL;
+    unsigned char *ciphertext, *exp_plaintext, *tag;
     size_t numpipes, plaintextlen, i;
 
     if (!TEST_ptr(fake_pipeline = fake_pipeline_start(testctx)))
@@ -5960,6 +5960,15 @@ static int test_evp_cipher_pipeline(void)
             size_t ciphertextlen = 0;
             int outlen = 0;
 
+            /* Cleanup to be able to error out */
+            memset(iv_array, 0, sizeof(iv_array));
+            memset(plaintext_array, 0, sizeof(plaintext_array));
+            memset(ciphertext_array_p, 0, sizeof(ciphertext_array_p));
+            memset(tag_array, 0, sizeof(tag_array));
+            ciphertext = NULL;
+            exp_plaintext = NULL;
+            tag = NULL;
+
             /* Allocate fresh buffers with exact size to catch buffer overwrites */
             for (i = 0; i < numpipes; i++) {
                 if (!TEST_ptr(iv_array[i] = OPENSSL_malloc(ivlen))
@@ -5967,7 +5976,7 @@ static int test_evp_cipher_pipeline(void)
                     || !TEST_ptr(ciphertext_array_p[i] =
                                  OPENSSL_malloc(plaintextlen + EVP_MAX_BLOCK_LENGTH))
                     || !TEST_ptr(tag_array[i] = OPENSSL_malloc(taglen)))
-                    goto end;
+                    goto err;
 
                 memset(iv_array[i], i + 33, ivlen);
                 memset(plaintext_array[i], i + 1, plaintextlen);
@@ -5980,7 +5989,7 @@ static int test_evp_cipher_pipeline(void)
                           OPENSSL_malloc(plaintextlen + EVP_MAX_BLOCK_LENGTH))
                 || !TEST_ptr(tag = OPENSSL_malloc(taglen))
                 || !TEST_ptr(exp_plaintext = OPENSSL_malloc(plaintextlen)))
-                goto end;
+                goto err;
 
             /* Encrypt using pipeline API */
             if (!TEST_true(EVP_CIPHER_CTX_reset(ctx))
@@ -6129,13 +6138,13 @@ int setup_tests(void)
             if (!TEST_ptr(testctx))
                 return 0;
 #ifdef STATIC_LEGACY
-	    /*
-	     * This test is always statically linked against libcrypto. We must not
-	     * attempt to load legacy.so that might be dynamically linked against
-	     * libcrypto. Instead we use a built-in version of the legacy provider.
-	     */
-	    if (!OSSL_PROVIDER_add_builtin(testctx, "legacy", ossl_legacy_provider_init))
-		return 0;
+            /*
+             * This test is always statically linked against libcrypto. We must not
+             * attempt to load legacy.so that might be dynamically linked against
+             * libcrypto. Instead we use a built-in version of the legacy provider.
+             */
+            if (!OSSL_PROVIDER_add_builtin(testctx, "legacy", ossl_legacy_provider_init))
+                return 0;
 #endif
             /* Swap the libctx to test non-default context only */
             nullprov = OSSL_PROVIDER_load(NULL, "null");
