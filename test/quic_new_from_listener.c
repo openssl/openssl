@@ -1028,6 +1028,13 @@ static int server_main(int argc, const char *argv[])
         goto out;
     }
 
+    /* Parse port number from command line arguments. */
+    server_port = strtoul(argv[1], NULL, 0);
+    if (!TEST_int_ne(server_port, 0) && !TEST_int_lt(server_port, UINT16_MAX)) {
+        TEST_error("[ Server ] Failed to parse port number\n");
+        goto out;
+    }
+
     parent_pid = getpid();
     if (fork() == 0)
         return client_main(argc, argv);
@@ -1040,12 +1047,6 @@ static int server_main(int argc, const char *argv[])
         goto out;
     }
 
-    /* Parse port number from command line arguments. */
-    server_port = strtoul(argv[1], NULL, 0);
-    if (!TEST_int_ne(server_port, 0) && !TEST_int_lt(server_port, UINT16_MAX)) {
-        TEST_error("[ Server ] Failed to parse port number\n");
-        goto out;
-    }
     TEST_info("( Server ) Binding to port %lu\n", server_port);
 
     /* Create and bind a UDP socket. */
