@@ -162,6 +162,7 @@ extern "C" {
 
 /* Temporary extension type */
 # define TLSEXT_TYPE_renegotiate                 0xff01
+# define TLSEXT_TYPE_encrypted_client_hello      0xfe0d
 
 # ifndef OPENSSL_NO_NEXTPROTONEG
 /* This is not an IANA defined extension number */

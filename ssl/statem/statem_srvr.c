@@ -2493,6 +2493,26 @@ CON_FUNC_RETURN tls_construct_server_hello(SSL_CONNECTION *s, WPACKET *pkt)
             /* SSLfatal() already called */
             return CON_FUNC_ERROR;
         }
+    } else if (usetls13 && s->ext.ech_type == TLSEXT_ECH_TYPE_INNER) {
+        unsigned char ech_accept[TLS13_ECH_ACCEPT_CONFIRM_LENGTH];
+        PACKET shpkt;
+        unsigned char *shstart;
+        size_t shlength;
+
+        WPACKET_get_length(pkt, &shlength);
+        shstart = WPACKET_get_curr(pkt) - shlength;
+        PACKET_buf_init(&shpkt, shstart, shlength);
+
+        if (!tls13_ech_generate_accept_confirm(s, &shpkt, ech_accept)) {
+            /* SSLfatal() already called */
+            return CON_FUNC_ERROR;
+        } else {
+            /* Update the server random */
+            memcpy(s->s3.server_random + SSL3_RANDOM_SIZE - sizeof(ech_accept),
+                   ech_accept, sizeof(ech_accept));
+            memcpy(shstart + 2 + SSL3_RANDOM_SIZE - sizeof(ech_accept),
+                   ech_accept, sizeof(ech_accept));
+        }
     } else if (!(s->verify_mode & SSL_VERIFY_PEER)
                 && !ssl3_digest_cached_records(s, 0)) {
         /* SSLfatal() already called */;
