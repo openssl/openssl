@@ -1909,6 +1909,7 @@ static WORK_STATE tls_post_process_server_rpk(SSL_CONNECTION *sc,
 {
     size_t certidx;
     const SSL_CERT_LOOKUP *clu;
+    int v_ok;
 
     if (sc->session->peer_rpk == NULL) {
         SSLfatal(sc, SSL_AD_ILLEGAL_PARAMETER,
@@ -1918,9 +1919,19 @@ static WORK_STATE tls_post_process_server_rpk(SSL_CONNECTION *sc,
 
     if (sc->rwstate == SSL_RETRY_VERIFY)
         sc->rwstate = SSL_NOTHING;
-    if (ssl_verify_rpk(sc, sc->session->peer_rpk) > 0
-            && sc->rwstate == SSL_RETRY_VERIFY)
+
+    ERR_set_mark();
+    v_ok = ssl_verify_rpk(sc, sc->session->peer_rpk);
+    if (v_ok <= 0 && sc->verify_mode != SSL_VERIFY_NONE) {
+        ERR_clear_last_mark();
+        SSLfatal(sc, ssl_x509err2alert(sc->verify_result),
+                 SSL_R_CERTIFICATE_VERIFY_FAILED);
+        return WORK_ERROR;
+    }
+    ERR_pop_to_mark();      /* but we keep s->verify_result */
+    if (v_ok > 0 && sc->rwstate == SSL_RETRY_VERIFY) {
         return WORK_MORE_A;
+    }
 
     if ((clu = ssl_cert_lookup_by_pkey(sc->session->peer_rpk, &certidx,
                                        SSL_CONNECTION_GET_CTX(sc))) == NULL) {
