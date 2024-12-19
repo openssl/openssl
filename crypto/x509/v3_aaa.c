@@ -51,7 +51,7 @@ static int i2r_ALLOWED_ATTRIBUTES_CHOICE(X509V3_EXT_METHOD *method,
             return 0;
         if (i2a_ASN1_OBJECT(out, a->choice.attributeType) <= 0)
             return 0;
-        return BIO_puts(out, "\n");
+        return BIO_puts(out, "\n") > 0;
     case (OSSL_AAA_ATTRIBUTE_VALUES):
         attr = a->choice.attributeTypeandValues;
         attr_obj = X509_ATTRIBUTE_get0_object(attr);
