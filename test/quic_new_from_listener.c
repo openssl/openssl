@@ -267,8 +267,8 @@ static void close_fake_file(BIO *bio_fakef)
 {
     char *tmp_buf;
 
-    BIO_reset(bio_fakef);
-    BIO_get_mem_data(bio_fakef, &tmp_buf);
+    (void) BIO_reset(bio_fakef);
+    (void) BIO_get_mem_data(bio_fakef, &tmp_buf);
     BIO_free(bio_fakef);
     OPENSSL_free(tmp_buf);
 }
