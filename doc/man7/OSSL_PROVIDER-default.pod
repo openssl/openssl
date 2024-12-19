@@ -167,6 +167,12 @@ The OpenSSL default provider supports these operations and algorithms:
 
 =item X448, see L<EVP_KEYEXCH-X448(7)>
 
+=item ML-KEM-512, see L<EVP_KEM-ML-KEM-512(7)>
+
+=item ML-KEM-768, see L<EVP_KEM-ML-KEM-768(7)>
+
+=item ML-KEM-1024, see L<EVP_KEM-ML-KEM-1024(7)>
+
 =item TLS1-PRF
 
 =item HKDF
@@ -261,6 +267,8 @@ The OpenSSL default provider supports these operations and algorithms:
 
 =item ED448, see L<EVP_KEYMGMT-ED448(7)>
 
+=for comment We don't yet have the corresponding MLKEM doc in the works.
+
 =item TLS1-PRF
 
 =item HKDF
@@ -344,6 +352,8 @@ are also available in the base provider.
 
 =item ML-DSA-87
 
+=for comment Some day encoders for MLKEM...
+
 =back
 
 In addition to this provider, all of these encoding algorithms are also
@@ -383,6 +393,8 @@ combination with the FIPS provider.
 =item ML-DSA-87
 
 =item DER
+
+=for comment Some day decoders for MLKEM...
 
 =back
 
