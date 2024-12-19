@@ -83,6 +83,7 @@ Signing options:
 [B<-nocerts>]
 [B<-noattr>]
 [B<-nosmimecap>]
+[B<-no_signing_time>]
 [B<-receipt_request_all>]
 [B<-receipt_request_first>]
 [B<-receipt_request_from> I<emailaddress>]
@@ -492,7 +493,12 @@ option they are not included.
 =item B<-nosmimecap>
 
 Exclude the list of supported algorithms from signed attributes, other options
-such as signing time and content type are still included.
+such as content type and (optionally) signing time are still included.
+
+=item B<-no_signing_time>
+
+Exclude the signing time from signed attributes, other options
+such as content type are still included.
 
 =item B<-receipt_request_all>, B<-receipt_request_first>
 
