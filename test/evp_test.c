@@ -2210,34 +2210,26 @@ static int encapsulate(EVP_TEST *t, EVP_PKEY_CTX *ctx, const char *op,
                        unsigned char **outwrapped, size_t *outwrappedlen,
                        unsigned char **outsecret, size_t *outsecretlen)
 {
-    int ret = 1;
+    int ret = 0;
     KEM_DATA *kdata = t->data;
     unsigned char *wrapped = NULL, *secret = NULL;
     size_t wrappedlen = 0, secretlen = 0;
-    OSSL_PARAM *params = NULL;
-    OSSL_PARAM_BLD *bld = NULL;
+    OSSL_PARAM params[10];
     size_t params_n = 0, params_n_allocated = 0;
 
-    if (sk_OPENSSL_STRING_num(kdata->init_ctrls) > 0) {
-        if (!TEST_ptr(params = OPENSSL_malloc(sizeof(OSSL_PARAM) * 2)))
-            goto err;
-        params[0] = OSSL_PARAM_construct_end();
-        params[1] = OSSL_PARAM_construct_end();
-        if (ctrl2params(t, kdata->init_ctrls, NULL, params, 2, &params_n))
-            goto err;
-    }
+    memset(params, 0, sizeof(params));
 
-    if (kdata->entropy != NULL
-        && (!TEST_ptr(bld = OSSL_PARAM_BLD_new())
-            || !TEST_int_eq(OSSL_PARAM_BLD_push_octet_string(bld,
-                                                             OSSL_KEM_PARAM_MLKEM_ENC_ENTROPY,
-                                                             kdata->entropy,
-                                                             kdata->entropylen),
-                            1)
-            || !TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld)))) {
-        ret = 0;
-        goto err;
-    }
+    if (sk_OPENSSL_STRING_num(kdata->init_ctrls) > 0)
+        if (ctrl2params(t, kdata->init_ctrls, NULL, params,
+                        OSSL_NELEM(params) - 2, &params_n))
+            goto err;
+
+    if (kdata->entropy != NULL)
+        /* Input key material a.k.a entropy */
+        params[params_n++] =
+            OSSL_PARAM_construct_octet_string(OSSL_KEM_PARAM_IKME,
+                                              kdata->entropy,
+                                              kdata->entropylen);
 
     if (EVP_PKEY_encapsulate_init(ctx, params) <= 0) {
         t->err = "TEST_ENCAPSULATE_INIT_ERROR";
@@ -2292,8 +2284,6 @@ err:
 end:
     if (sk_OPENSSL_STRING_num(kdata->init_ctrls) > 0)
         ctrl2params_free(params, params_n, params_n_allocated);
-    OSSL_PARAM_free(params);
-    OSSL_PARAM_BLD_free(bld);
     return ret;
 }
 
@@ -2301,7 +2291,7 @@ static int decapsulate(EVP_TEST *t, EVP_PKEY_CTX *ctx, const char *op,
                        const unsigned char *in, size_t inlen,
                        const unsigned char *expected, size_t expectedlen)
 {
-    int ret = 1;
+    int ret = 0;
     KEM_DATA *kdata = t->data;
     size_t outlen = 0;
     unsigned char *out = NULL;
