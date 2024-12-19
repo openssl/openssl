@@ -120,9 +120,9 @@ void dtls1_clear_received_buffer(SSL_CONNECTION *s)
 {
     pitem *item = NULL;
     hm_fragment *frag = NULL;
-    pqueue *buffered_messages = &s->d1->buffered_messages;
+    pqueue *rcvd_messages = &s->d1->rcvd_messages;
 
-    while ((item = pqueue_pop(buffered_messages)) != NULL) {
+    while ((item = pqueue_pop(rcvd_messages)) != NULL) {
         frag = (hm_fragment *)item->data;
         dtls1_hm_fragment_free(frag);
         pitem_free(item);
