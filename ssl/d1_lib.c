@@ -180,6 +180,8 @@ void dtls1_clear_sent_buffer(SSL_CONNECTION *s, int keep_unacked_msgs) {
 
     while ((item = pqueue_pop(sent_messages)) != NULL) {
         dtls_sent_msg *sent_msg = (dtls_sent_msg *) item->data;
+        unsigned char msg_type = sent_msg->msg_info.msg_type;
+        unsigned char record_type = sent_msg->msg_info.record_type;
 
         if (SSL_CONNECTION_IS_DTLS13(s)
             && !ossl_list_record_number_is_empty(&sent_msg->rec_nums)
@@ -188,8 +190,9 @@ void dtls1_clear_sent_buffer(SSL_CONNECTION *s, int keep_unacked_msgs) {
             continue;
         }
 
-        if ((sent_msg->msg_info.record_type == SSL3_RT_CHANGE_CIPHER_SPEC
-                || (SSL_CONNECTION_IS_DTLS13(s) && sent_msg->msg_info.msg_type == SSL3_MT_FINISHED))
+        if (((!SSL_CONNECTION_IS_DTLS13(s) && record_type == SSL3_RT_CHANGE_CIPHER_SPEC)
+             || (SSL_CONNECTION_IS_DTLS13(s)
+                 && (msg_type == SSL3_MT_FINISHED || msg_type == SSL3_MT_KEY_UPDATE)))
             && sent_msg->saved_retransmit_state.wrlmethod != NULL
             && s->rlayer.wrl != sent_msg->saved_retransmit_state.wrl) {
             /*
