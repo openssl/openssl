@@ -785,9 +785,38 @@ static int qtx_mutate_write(OSSL_QTX *qtx, const OSSL_QTX_PKT *pkt, TXE *txe,
 
 static int addr_eq(const BIO_ADDR *a, const BIO_ADDR *b)
 {
-    return ((a == NULL || BIO_ADDR_family(a) == AF_UNSPEC)
-            && (b == NULL || BIO_ADDR_family(b) == AF_UNSPEC))
-        || (a != NULL && b != NULL && memcmp(a, b, sizeof(*a)) == 0);
+    int rv = 0;
+    const void *a_buf, *b_buf;
+
+    if (((a == NULL || BIO_ADDR_family(a) == AF_UNSPEC)
+          && (b == NULL || BIO_ADDR_family(b) == AF_UNSPEC))
+            || (a != NULL && b != NULL
+            && BIO_ADDR_family(a) == BIO_ADDR_family(b)
+            && BIO_ADDR_rawport(a) == BIO_ADDR_rawport(b))) {
+        switch (BIO_ADDR_family(a)) {
+        case AF_INET:
+            a_buf = &a->s_in.sin_addr;
+            b_buf = &b->s_in.sin_addr;
+            rv = memcmp(a_buf, b_buf, 4) == 0;
+            break;
+#if OPENSSL_USE_IPV6
+        case AF_INET6:
+            a_buf = &a->s_in6.sin6_addr;
+            b_buf = &b->s_in6.sin6_addr;
+            rv = memcmp(a_buf, b_buf, 16) == 0;
+            break;
+#endif
+#ifndef OPENSSL_NO_UNIX_SOCK
+        case AF_UNIX:
+            rv = strncmp(a->s_un.sun_path, b->s_un.sun_path,
+                         sizeof(b->s_un.sun_path)) == 0;
+            break;
+#endif
+        default:
+            rv = 0;
+        }
+    }
+    return rv;
 }
 
 int ossl_qtx_write_pkt(OSSL_QTX *qtx, const OSSL_QTX_PKT *pkt)
