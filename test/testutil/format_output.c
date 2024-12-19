@@ -320,7 +320,6 @@ static void test_fail_bignum_common(const char *prefix, const char *file,
         n2 = convert_bn_memory(m2, bytes, b2, &lz2, bn2);
 
         diff = real_diff = 0;
-        i = 0;
         p = bdiff;
         for (i=0; b1[i] != '\0'; i++)
             if (b1[i] == b2[i] || b1[i] == ' ' || b2[i] == ' ') {
