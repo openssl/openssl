@@ -220,8 +220,6 @@ int ossl_hybrid_kmgmt_get_params(void *vkey, OSSL_PARAM params[])
             break;
 #endif
 
-        case PIDX_PKEY_PARAM_PUB_KEY:
-        case PIDX_PKEY_PARAM_PRIV_KEY:
         case PIDX_PKEY_PARAM_ENCODED_PUBLIC_KEY:
             if (key->pubkey_length > p->data_size) {
                 ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH,
@@ -240,6 +238,11 @@ int ossl_hybrid_kmgmt_get_params(void *vkey, OSSL_PARAM params[])
                         || !OSSL_PARAM_modified(prms))
                     return 0;
             }
+            break;
+
+        case PIDX_PKEY_PARAM_PUB_KEY:
+        case PIDX_PKEY_PARAM_PRIV_KEY:
+            /* We don't support these, so don't pass to sub-algorithms */
             break;
 
         case PIDX_KEM_PARAM_IKME:
