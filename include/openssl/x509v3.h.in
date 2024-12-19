@@ -1358,6 +1358,10 @@ typedef struct AA_DIST_POINT_st {
 
 DECLARE_ASN1_FUNCTIONS(OSSL_AA_DIST_POINT)
 
+{-
+    generate_stack_macros("OSSL_AA_DIST_POINT");
+-}
+
 # ifdef  __cplusplus
 }
 # endif
