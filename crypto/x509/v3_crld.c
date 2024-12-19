@@ -578,9 +578,11 @@ static void *v2i_aaidp(const X509V3_EXT_METHOD *method,
     STACK_OF(CONF_VALUE) *dpsect;
 
     cnf = sk_CONF_VALUE_value(nval, i);
+    if (cnf == NULL)
+        return NULL;
     if (cnf->value == NULL) {
         dpsect = X509V3_get_section(ctx, cnf->name);
-        if (!dpsect)
+        if (dpsect == NULL)
             goto err;
         point = aaidp_from_section(ctx, dpsect);
         X509V3_section_free(ctx, dpsect);
@@ -613,8 +615,7 @@ static void *v2i_aaidp(const X509V3_EXT_METHOD *method,
     return point;
 
  err:
-    if (point != NULL)
-        OSSL_AA_DIST_POINT_free(point);
+    OSSL_AA_DIST_POINT_free(point);
     GENERAL_NAME_free(gen);
     GENERAL_NAMES_free(gens);
     return NULL;
