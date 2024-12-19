@@ -77,14 +77,14 @@ fragment offset and fragment length as is the case with previous versions of DTL
 
 #### DTLS ACK records (RFC9147 Section 7)
 
-ACK's are sent for KeyUpdates, NewSessionTicket and Finish (client).
+ACKs are sent for KeyUpdates, NewSessionTicket and Finish (client).
 
 Notes on RFC9147 Section 7.1:
 
 * The implementation does not offer any logic to determine that there is disruption
   when receiving messages which means it will not send ACKs for the example given
   in RFC9147 Figure 12.
-* ACKs are always sent immediately after receiving a full message to be ACK'ed.
+* ACKs are always sent immediately after receiving a full message to be ACKed.
 * If the implementation does not receive an ACK for all fragments of a message,
   then the full message wil be retransmitted.
 * Empty ACKs are never sent.
@@ -94,6 +94,23 @@ Notes on RFC9147 Section 7.1:
 * The implementation only accepts ACKs after DTLSv1.3 has been negotiated. ACKs
   that are received when DTLSv1.3 has not been negotiated is handled with a fatal
   alert as any other unexpected message.
+
+Missing functionality:
+
+There's need for a lot more corner case testing:
+
+* Correct handling of ACKs during KeyUpdate and SessionTicket updates.
+* Currently only retransmission after a missing ACK of client Finish message is
+  tested.
+* TLSProxy does not support testing post handshake message ACK testing. Such
+  testing probably needs to be performed by another framework.
+* This comment also forms a great test case:
+  https://github.com/openssl/openssl/pull/25119#discussion_r1871643459
+
+The implementation does not support the case where a client is sending a client
+certificate, then the client's final leg has three messages in it, all three of 
+which must be ACKed for the client to stop retransmitting. As noted by David
+Benjamin in https://github.com/openssl/openssl/pull/25119#discussion_r1871638449.
 
 Implementation progress
 -----------------------
