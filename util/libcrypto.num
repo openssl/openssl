@@ -5836,3 +5836,8 @@ EVP_CipherPipelineEncryptInit           ?	3_5_0	EXIST::FUNCTION:
 EVP_CipherPipelineDecryptInit           ?	3_5_0	EXIST::FUNCTION:
 EVP_CipherPipelineUpdate                ?	3_5_0	EXIST::FUNCTION:
 EVP_CipherPipelineFinal                 ?	3_5_0	EXIST::FUNCTION:
+d2i_OSSL_AA_DIST_POINT                  ?	3_5_0	EXIST::FUNCTION:
+i2d_OSSL_AA_DIST_POINT                  ?	3_5_0	EXIST::FUNCTION:
+OSSL_AA_DIST_POINT_free                 ?	3_5_0	EXIST::FUNCTION:
+OSSL_AA_DIST_POINT_new                  ?	3_5_0	EXIST::FUNCTION:
+OSSL_AA_DIST_POINT_it                   ?	3_5_0	EXIST::FUNCTION:
