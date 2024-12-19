@@ -1958,6 +1958,11 @@ typedef struct hm_fragment_st {
 typedef struct pqueue_st pqueue;
 typedef struct pitem_st pitem;
 
+struct pqueue_st {
+    pitem *items;
+    int count;
+};
+
 struct pitem_st {
     unsigned char priority[8];  /* 64-bit value in big-endian encoding */
     void *data;
@@ -2000,9 +2005,9 @@ typedef struct dtls1_state_st {
     unsigned short next_handshake_write_seq;
     unsigned short handshake_read_seq;
     /* Buffered received handshake messages */
-    pqueue *rcvd_messages;
+    pqueue rcvd_messages;
     /* Buffered (sent) handshake records */
-    pqueue *sent_messages;
+    pqueue sent_messages;
     /* Flag to indicate current HelloVerifyRequest status */
     enum {SSL_HVR_NONE = 0, SSL_HVR_RECEIVED, SSL_HVR_SENT} hello_verify_request;
     DOWNGRADE downgrade_after_hvr; /* Only used by a stateful server */
