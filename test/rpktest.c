@@ -490,24 +490,22 @@ static int test_rpk(int idx)
     }
 
     /* Make sure client gets RPK or certificate as configured */
-    if (expected == 1) {
-        if (idx_server_server_rpk && idx_client_server_rpk) {
-            if (!TEST_long_eq(SSL_get_verify_result(clientssl), client_verify_result))
-                goto end;
-            if (!TEST_ptr(SSL_get0_peer_rpk(clientssl)))
-                goto end;
-            if (!TEST_int_eq(SSL_get_negotiated_server_cert_type(serverssl), TLSEXT_cert_type_rpk))
-                goto end;
-            if (!TEST_int_eq(SSL_get_negotiated_server_cert_type(clientssl), TLSEXT_cert_type_rpk))
-                goto end;
-        } else {
-            if (!TEST_ptr(SSL_get0_peer_certificate(clientssl)))
-                goto end;
-            if (!TEST_int_eq(SSL_get_negotiated_server_cert_type(serverssl), TLSEXT_cert_type_x509))
-                goto end;
-            if (!TEST_int_eq(SSL_get_negotiated_server_cert_type(clientssl), TLSEXT_cert_type_x509))
-                goto end;
-        }
+    if (idx_server_server_rpk && idx_client_server_rpk) {
+        if (!TEST_long_eq(SSL_get_verify_result(clientssl), client_verify_result))
+            goto end;
+        if (!TEST_ptr(SSL_get0_peer_rpk(clientssl)))
+            goto end;
+        if (!TEST_int_eq(SSL_get_negotiated_server_cert_type(serverssl), TLSEXT_cert_type_rpk))
+            goto end;
+        if (!TEST_int_eq(SSL_get_negotiated_server_cert_type(clientssl), TLSEXT_cert_type_rpk))
+            goto end;
+    } else {
+        if (!TEST_ptr(SSL_get0_peer_certificate(clientssl)))
+            goto end;
+        if (!TEST_int_eq(SSL_get_negotiated_server_cert_type(serverssl), TLSEXT_cert_type_x509))
+            goto end;
+        if (!TEST_int_eq(SSL_get_negotiated_server_cert_type(clientssl), TLSEXT_cert_type_x509))
+            goto end;
     }
 
     if (idx == 9) {
@@ -534,8 +532,7 @@ static int test_rpk(int idx)
             if (!TEST_int_eq(SSL_get_negotiated_client_cert_type(clientssl), TLSEXT_cert_type_rpk))
                 goto end;
         } else {
-            /* only if connection is expected to succeed */
-            if (expected == 1 && !TEST_ptr(SSL_get0_peer_certificate(serverssl)))
+            if (!TEST_ptr(SSL_get0_peer_certificate(serverssl)))
                 goto end;
             if (!TEST_int_eq(SSL_get_negotiated_client_cert_type(serverssl), TLSEXT_cert_type_x509))
                 goto end;
@@ -625,7 +622,7 @@ static int test_rpk(int idx)
         }
 
         ret = create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE);
-        if (!TEST_int_eq(expected, ret))
+        if (!TEST_true(ret))
             goto end;
         verify = SSL_get_verify_result(clientssl);
         if (!TEST_int_eq(client_expected, verify))
