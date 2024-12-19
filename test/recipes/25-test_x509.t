@@ -16,7 +16,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_x509");
 
-plan tests => 122;
+plan tests => 124;
 
 # Prevent MSys2 filename munging for arguments that look like file paths but
 # aren't
@@ -390,6 +390,14 @@ cert_contains($time_spec_per_cert,
 cert_contains($time_spec_per_cert,
               "Years: 2023, 2024",
               1, 'X.509 Time Specification (Periodic)');
+
+my $aaa_cert = srctop_file(@certs, "ext-allowedAttributeAssignments.pem");
+cert_contains($aaa_cert,
+              "Attribute Type: commonName",
+              1, 'X.509 Allowed Attribute Assignments');
+cert_contains($aaa_cert,
+              "Holder Domain: email:jonathan.wilbur",
+              1, 'X.509 Allowed Attribute Assignments');
 
 sub test_errors { # actually tests diagnostics of OSSL_STORE
     my ($expected, $cert, @opts) = @_;
