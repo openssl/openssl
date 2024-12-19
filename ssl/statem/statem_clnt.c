@@ -2081,10 +2081,7 @@ WORK_STATE tls_post_process_server_certificate(SSL_CONNECTION *s,
 
     if (s->rwstate == SSL_RETRY_VERIFY)
         s->rwstate = SSL_NOTHING;
-    i = ssl_verify_cert_chain(s, s->session->peer_chain);
-    if (i > 0 && s->rwstate == SSL_RETRY_VERIFY) {
-        return WORK_MORE_A;
-    }
+
     /*
      * The documented interface is that SSL_VERIFY_PEER should be set in order
      * for client side verification of the server certificate to take place.
@@ -2099,12 +2096,17 @@ WORK_STATE tls_post_process_server_certificate(SSL_CONNECTION *s,
      * (less clean) historic behaviour of performing validation if any flag is
      * set. The *documented* interface remains the same.
      */
-    if (s->verify_mode != SSL_VERIFY_NONE && i <= 0) {
+    ERR_set_mark();
+    i = ssl_verify_cert_chain(s, s->session->peer_chain);
+    if (i <= 0 && s->verify_mode != SSL_VERIFY_NONE) {
+        ERR_clear_last_mark();
         SSLfatal(s, ssl_x509err2alert(s->verify_result),
                  SSL_R_CERTIFICATE_VERIFY_FAILED);
         return WORK_ERROR;
     }
-    ERR_clear_error();          /* but we keep s->verify_result */
+    ERR_pop_to_mark();      /* but we keep s->verify_result */
+    if (i > 0 && s->rwstate == SSL_RETRY_VERIFY)
+        return WORK_MORE_A;
 
     /*
      * Inconsistency alert: cert_chain does include the peer's certificate,
