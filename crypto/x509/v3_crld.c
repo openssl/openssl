@@ -260,7 +260,7 @@ static void *v2i_crld(const X509V3_EXT_METHOD *method,
         if (cnf->value == NULL) {
             STACK_OF(CONF_VALUE) *dpsect;
             dpsect = X509V3_get_section(ctx, cnf->name);
-            if (dpsect == NULL)
+            if (!dpsect)
                 goto err;
             point = crldp_from_section(ctx, dpsect);
             X509V3_section_free(ctx, dpsect);
@@ -574,59 +574,49 @@ static void *v2i_aaidp(const X509V3_EXT_METHOD *method,
     GENERAL_NAME *gen = NULL;
     CONF_VALUE *cnf;
     int i = 0;
-    OSSL_AA_DIST_POINT *point;
-    STACK_OF(OSSL_AA_DIST_POINT) *points;
+    OSSL_AA_DIST_POINT *point = NULL;
     STACK_OF(CONF_VALUE) *dpsect;
-    const int num = sk_CONF_VALUE_num(nval);
 
-    points = sk_OSSL_AA_DIST_POINT_new_reserve(NULL, num);
-    if (points == NULL) {
-        ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
-        goto err;
-    }
-    for (i = 0; i < num; i++) {
-        cnf = sk_CONF_VALUE_value(nval, i);
-        if (cnf->value == NULL) {
-            dpsect = X509V3_get_section(ctx, cnf->name);
-            if (!dpsect)
-                goto err;
-            point = aaidp_from_section(ctx, dpsect);
-            X509V3_section_free(ctx, dpsect);
-            if (point == NULL)
-                goto err;
-            sk_OSSL_AA_DIST_POINT_push(points, point); /* no failure as it was reserved */
-        } else {
-            if ((gen = v2i_GENERAL_NAME(method, ctx, cnf)) == NULL)
-                goto err;
-            if ((gens = GENERAL_NAMES_new()) == NULL) {
-                ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
-                goto err;
-            }
-            if (!sk_GENERAL_NAME_push(gens, gen)) {
-                ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
-                goto err;
-            }
-            gen = NULL;
-            if ((point = OSSL_AA_DIST_POINT_new()) == NULL) {
-                ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
-                goto err;
-            }
-            sk_OSSL_AA_DIST_POINT_push(points, point); /* no failure as it was reserved */
-            if ((point->distpoint = DIST_POINT_NAME_new()) == NULL) {
-                ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
-                goto err;
-            }
-            point->distpoint->name.fullname = gens;
-            point->distpoint->type = 0;
-            gens = NULL;
+    cnf = sk_CONF_VALUE_value(nval, i);
+    if (cnf->value == NULL) {
+        dpsect = X509V3_get_section(ctx, cnf->name);
+        if (!dpsect)
+            goto err;
+        point = aaidp_from_section(ctx, dpsect);
+        X509V3_section_free(ctx, dpsect);
+        if (point == NULL)
+            goto err;
+    } else {
+        if ((gen = v2i_GENERAL_NAME(method, ctx, cnf)) == NULL)
+            goto err;
+        if ((gens = GENERAL_NAMES_new()) == NULL) {
+            ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
+            goto err;
         }
+        if (!sk_GENERAL_NAME_push(gens, gen)) {
+            ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
+            goto err;
+        }
+        gen = NULL;
+        if ((point = OSSL_AA_DIST_POINT_new()) == NULL) {
+            ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
+            goto err;
+        }
+        if ((point->distpoint = DIST_POINT_NAME_new()) == NULL) {
+            ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
+            goto err;
+        }
+        point->distpoint->name.fullname = gens;
+        point->distpoint->type = 0;
+        gens = NULL;
     }
-    return points;
+    return point;
 
  err:
+    if (point != NULL)
+        OSSL_AA_DIST_POINT_free(point);
     GENERAL_NAME_free(gen);
     GENERAL_NAMES_free(gens);
-    sk_OSSL_AA_DIST_POINT_pop_free(points, OSSL_AA_DIST_POINT_free);
     return NULL;
 }
 
