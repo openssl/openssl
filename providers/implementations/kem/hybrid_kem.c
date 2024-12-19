@@ -207,10 +207,14 @@ int ossl_hybrid_kem_encapsulate(void *vctx, unsigned char *enc, size_t *enclen,
         if (!EVP_PKEY_encapsulate(ctx->ctxs[i], enc, &ciphertext_bytes,
                                   secret, &shared_secret_bytes))
             return 0;
-        if (ciphertext_bytes != ctx->info->alg[i].ciphertext_bytes
-                || shared_secret_bytes != ctx->info->alg[i].shared_secret_bytes) {
-            ERR_raise_data(ERR_LIB_PROV, PROV_R_BAD_LENGTH,
-                           "secretlen or enclen changed");
+        if (ciphertext_bytes != ctx->info->alg[i].ciphertext_bytes) {
+            ERR_raise_data(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR,
+                           "enclen changed");
+            return 0;
+        }
+        if (shared_secret_bytes != ctx->info->alg[i].shared_secret_bytes) {
+            ERR_raise_data(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR,
+                           "secretlen changed");
             return 0;
         }
         secret += shared_secret_bytes;
