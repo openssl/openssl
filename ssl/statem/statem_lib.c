@@ -2813,6 +2813,123 @@ int tls13_save_handshake_digest_for_pha(SSL_CONNECTION *s)
 }
 
 /*
+ * Calculate the hash of the transcript_ech_conf, which covers the handshake
+ * transcript up to the ServerHello plus the modified server hello with the
+ * last 8 bytes of the server_random overwritten with zeros.
+ */
+static int tls13_hash_transcript_ech_conf(SSL_CONNECTION *s, const EVP_MD *md,
+                                          PACKET *pkt, unsigned char *hash,
+                                          unsigned int *hashsize)
+{
+    EVP_MD_CTX *mdctx;
+    void *hsdata;
+    long hsdatalen;
+    int ret = 0;
+
+    mdctx = EVP_MD_CTX_new();
+    if (mdctx == NULL)
+        return 1;
+
+    do {
+        if (!EVP_DigestInit_ex(mdctx, md, NULL))
+            break;
+
+        /*
+         * Hash the handshake digest buffer, which should include everything up
+         * to and including the ClientHelloInner
+         */
+        hsdatalen = BIO_get_mem_data(s->s3.handshake_buffer, &hsdata);
+        if (hsdatalen <= 0 || !EVP_DigestUpdate(mdctx, hsdata, hsdatalen))
+            break;
+
+        /* Build and hash the handshake header. */
+        unsigned char header[4] = {
+            SSL3_MT_SERVER_HELLO, 0,
+            (PACKET_remaining(pkt) >> 8) & 0xff, PACKET_remaining(pkt) & 0xff
+        };
+        if (!EVP_DigestUpdate(mdctx, header, sizeof(header)))
+            break;
+
+        /*
+         * Hash the Server hello up to, but not including the last 8 bytes
+         * of the server_random.
+         */
+        int chunklen = 2 + SSL3_RANDOM_SIZE - TLS13_ECH_ACCEPT_CONFIRM_LENGTH;
+        if (PACKET_remaining(pkt) < chunklen)
+            break;
+        if (!EVP_DigestUpdate(mdctx, PACKET_data(pkt), chunklen))
+            break;
+        PACKET_forward(pkt, chunklen);
+
+        /* Hash 8 bytes of zeros instead of the remaining server_random. */
+        unsigned char zeros[TLS13_ECH_ACCEPT_CONFIRM_LENGTH];
+        memset(zeros, 0, TLS13_ECH_ACCEPT_CONFIRM_LENGTH);
+        if (!EVP_DigestUpdate(mdctx, zeros, TLS13_ECH_ACCEPT_CONFIRM_LENGTH))
+            break;
+        if (!PACKET_forward(pkt, TLS13_ECH_ACCEPT_CONFIRM_LENGTH))
+            break;
+
+        /* Hash the remainder of the server hello. */
+        if (!EVP_DigestUpdate(mdctx, PACKET_data(pkt), PACKET_remaining(pkt)))
+            break;
+
+        /* Finalize and output the digest. */
+        ret = EVP_DigestFinal_ex(mdctx, hash, hashsize);
+    } while (0);
+
+    EVP_MD_CTX_free(mdctx);
+    return ret;
+}
+
+/*
+ * Calculate the TLS1.3 ECH acceptance confirmation. As per the ECH draft
+ * this is calculated from:
+ *
+ *  accept_confirmation = HKDF-Expand-Label(
+ *     HKDF-Extract(0, ClientHelloInner.random),
+ *     "ech accept confirmation",
+ *     transcript_ech_conf,
+ *     8)
+ */
+int tls13_ech_generate_accept_confirm(SSL_CONNECTION *s, PACKET *pkt,
+                                      unsigned char *ech_confirm)
+{
+    const EVP_MD *md;
+    unsigned char accept_secret[EVP_MAX_MD_SIZE];
+    unsigned char zeros[EVP_MAX_MD_SIZE];
+    unsigned char hash[EVP_MAX_MD_SIZE];
+    unsigned int hashsize;
+
+    /* Generate a hash of the transcript_ech_conf */
+    md = ssl_md(SSL_CONNECTION_GET_CTX(s), s->s3.tmp.new_cipher->algorithm2);
+    if (!tls13_hash_transcript_ech_conf(s, md, pkt, hash, &hashsize)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    /*
+     * Generate secret = HKDF-Extract(0, ClientHelloInner.random)
+     *
+     * where:
+     *   HKDF-Extract = HMAC-Hash(salt, ikm)
+     *   0 = byte string with length equal to the hash size, filled with zero.
+     */
+    memset(zeros, 0, sizeof(zeros));
+    if (!tls13_hkdf_extract(s, md, zeros, hashsize,
+                            s->s3.client_random, SSL3_RANDOM_SIZE,
+                            accept_secret, 1)) {
+        /* SSLfatal() already called */
+        return 0;
+    }
+
+    /* Generate the ECH accept confirmation */
+    const unsigned char label[] = "ech accept confirmation";
+    return tls13_hkdf_expand(s, md, accept_secret, label, sizeof(label) - 1,
+                             hash, hashsize,
+                             ech_confirm, TLS13_ECH_ACCEPT_CONFIRM_LENGTH, 1);
+}
+
+/*
  * Restores the Post-Handshake Auth handshake digest
  * Done just before sending/processing the Cert Request
  */
