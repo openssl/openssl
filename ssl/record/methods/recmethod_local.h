@@ -352,8 +352,8 @@ struct ossl_record_layer_st
     size_t taglen;
 
     /* DTLS received handshake records (processed and unprocessed) */
-    struct pqueue_st *unprocessed_rcds;
-    struct pqueue_st *processed_rcds;
+    pqueue unprocessed_rcds;
+    pqueue processed_rcds;
 
     /* records being received in the current epoch */
     DTLS_BITMAP bitmap;
