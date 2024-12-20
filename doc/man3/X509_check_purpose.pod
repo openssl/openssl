@@ -23,7 +23,7 @@ X509_PURPOSE_set - functions related to checking the purpose of a certificate
  int X509_check_purpose(X509 *x, int id, int ca);
 
  int X509_PURPOSE_get_count(void);
- int X509_PURPOSE_get_unused_id(void);
+ int X509_PURPOSE_get_unused_id(OSSL_LIB_CTX *libctx);
  int X509_PURPOSE_get_by_sname(const char *sname);
  int X509_PURPOSE_get_by_id(int id);
  int X509_PURPOSE_add(int id, int trust, int flags,
@@ -65,6 +65,7 @@ keyUsage, extendedKeyUsage, and basicConstraints.
 X509_PURPOSE_get_count() returns the number of currently defined purposes.
 
 X509_PURPOSE_get_unused_id() returns the smallest purpose id not yet used.
+The I<libctx> parameter should be used to provide the library context.
 
 X509_PURPOSE_get_by_sname() returns the index of
 the purpose with the given short name or -1 if not found.

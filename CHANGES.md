@@ -70,8 +70,8 @@ OpenSSL 3.5
 
    *David von Oheimb*
 
- * `X509_PURPOSE_add()` has been fixed to take as the primary purpose identifier
-   not the `id` but the `sname` parameter.
+ * `X509_PURPOSE_add()` has been modified
+   to take `sname` instead of `id` as the primary purpose identifier.
    For its convenient use, `X509_PURPOSE_get_unused_id()` has been added.
 
    This work was sponsored by Siemens AG.
