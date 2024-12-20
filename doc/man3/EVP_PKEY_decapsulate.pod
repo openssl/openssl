@@ -40,7 +40,7 @@ Instead, the shared secret must be used to derive a key that is used to
 authenticate data subsequently received from the peer.
 If I<unwrapped> is NULL then the size of the output shared secret buffer is
 written to I<*unwrappedlen> and no decapsulation is performed, this makes it
-possible to determine the required buffer size at runtime.  Otherwise, the
+possible to determine the required buffer size at run time.  Otherwise, the
 decapsulated secret data is written to I<unwrapped> and the length of shared
 secret is written to I<*unwrappedlen>.
 
@@ -51,8 +51,8 @@ validate it is of sufficient size to hold the result of the operation.
 Absent detailed prior knowledge of the internals of the specific KEM
 algorithm, callers SHOULD NOT assume that the returned shared secret
 is necessarily of the maximum possible length.
-The actual length returned via I<*unwrappedlen> SHOULD be used to determine the
-actual length of the output.
+The length returned via I<*unwrappedlen> SHOULD be used to determine the actual
+length of the output.
 
 =head1 NOTES
 
