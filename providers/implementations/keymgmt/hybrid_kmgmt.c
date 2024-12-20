@@ -410,8 +410,14 @@ HYBRID_PKEY_CTX *ossl_hybrid_kmgmt_gen_init(void *provctx,
         EVP_PKEY_CTX_free(ctx->ctxs[i]);
         ctx->ctxs[i] = EVP_PKEY_CTX_new_from_name(libctx, info->alg[i].name,
                                                   ctx->propq);
-        if (ctx->ctxs[i] == NULL || !EVP_PKEY_keygen_init(ctx->ctxs[i]))
+        if (ctx->ctxs[i] == NULL)
             goto err;
+        if (selection == OSSL_KEYMGMT_SELECT_ALL_PARAMETERS) {
+            if (!EVP_PKEY_paramgen_init(ctx->ctxs[i]))
+                goto err;
+        } else if (!EVP_PKEY_keygen_init(ctx->ctxs[i])) {
+            goto err;
+        }
     }
 
     if (!ossl_hybrid_kmgmt_gen_set_params(ctx, params))
@@ -548,7 +554,7 @@ void *ossl_hybrid_kmgmt_gen(void *vctx, OSSL_CALLBACK *osslcb, void *cbarg)
     }
     INIT_ACCUMULATE_HYBRID_NUMBERS(key);
     for (i = 0; i < ctx->info->num_algs; i++) {
-        if (EVP_PKEY_keygen(ctx->ctxs[i], key->keys + i) <= 0)
+        if (EVP_PKEY_generate(ctx->ctxs[i], key->keys + i) <= 0)
             goto err;
         ACCUMULATE_HYBRID_NUMBERS(key, i);
     }

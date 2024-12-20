@@ -85,6 +85,7 @@ const OSSL_PARAM OSSL_NAME(ctx_gettable_params)[] = {
 };
 
 const OSSL_PARAM OSSL_NAME(ctx_settable_params)[] = {
+        OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME, NULL, 0),
         OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_PROPERTIES, NULL, 0),
         OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_DHKEM_IKM, NULL, 0),
         OSSL_PARAM_END
