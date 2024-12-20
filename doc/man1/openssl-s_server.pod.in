@@ -675,11 +675,14 @@ Signature algorithms to support for client certificate authentication
 
 Specifies the elliptic curve to use. NOTE: this is single curve, not a list.
 
-The list of all supported groups includes named EC parameters as well as X25519
-and X448 or FFDHE groups, and may also include groups implemented in 3rd-party
-providers. For a list of named EC parameters, use:
+The list of available groups includes various built-in named EC curves, as well
+as X25519 and X448, FFDHE groups, and any additional groups implemented in the
+default or 3rd-party providers.
+The commands below list the available groups for TLS 1.2 and TLS 1.3,
+respectively.
 
-    $ openssl ecparam -list_curves
+    $ openssl list -tls1_2 -tls-groups
+    $ openssl list -tls1_3 -tls-groups
 
 =item B<-cipher> I<val>
 
