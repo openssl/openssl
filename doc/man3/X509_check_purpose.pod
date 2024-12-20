@@ -66,6 +66,7 @@ X509_PURPOSE_get_count() returns the number of currently defined purposes.
 
 X509_PURPOSE_get_unused_id() returns the smallest purpose id not yet used.
 The I<libctx> parameter should be used to provide the library context.
+It is currently ignored as the purpose mapping table is global.
 
 X509_PURPOSE_get_by_sname() returns the index of
 the purpose with the given short name or -1 if not found.
