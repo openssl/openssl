@@ -202,7 +202,13 @@ static int ctrladd(STACK_OF(OPENSSL_STRING) *controls, const char *value)
 
     if (data == NULL)
         return -1;
-    return sk_OPENSSL_STRING_push(controls, data) > 0;
+
+    if (sk_OPENSSL_STRING_push(controls, data) <= 0) {
+        OPENSSL_free(data);
+        return -1;
+    }
+
+    return 1;
 }
 
 /* Because OPENSSL_free is a macro, it can't be passed as a function pointer */
