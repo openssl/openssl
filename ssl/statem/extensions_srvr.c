@@ -2138,3 +2138,36 @@ int tls_parse_ctos_server_cert_type(SSL_CONNECTION *sc, PACKET *pkt,
     SSLfatal(sc, SSL_AD_UNSUPPORTED_CERTIFICATE, SSL_R_BAD_EXTENSION);
     return 0;
 }
+
+int tls_parse_ctos_encrypted_client_hello(SSL_CONNECTION *sc, PACKET *pkt,
+                                          unsigned int context,
+                                          X509 *x, size_t chainidx)
+{
+    unsigned char ech_type;
+    size_t len;
+
+    /* Parse the ECHClientHelloType type. */
+    if ((len = PACKET_remaining(pkt)) == 0) {
+        SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+    if (!PACKET_copy_bytes(pkt, &ech_type, 1)) {
+        SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+    sc->ext.ech_type = ech_type;
+    if (sc->ext.ech_type == TLSEXT_ECH_TYPE_INNER)
+        return 1;
+
+    /*
+     * TODO: There is more to parse in order to support ECH decryption, but that
+     * is work for a future pull request. By ignoring the remainder of this
+     * extension we will continue the handshake using ClientHelloOuter.
+     */
+    if (sc->ext.ech_type == TLSEXT_ECH_TYPE_OUTER)
+        return 1;
+
+    /* Otherwise, we did not receive a known ECH type */
+    SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+    return 0;
+}
