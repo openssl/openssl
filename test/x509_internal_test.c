@@ -189,7 +189,7 @@ static int tests_X509_PURPOSE(void)
 #define SN "SN_test"
 #undef ARGS
 #define ARGS(id, sn) id, X509_TRUST_MAX, 0, ck_purp, LN, sn, NULL
-    return TEST_int_gt((id = X509_PURPOSE_get_fresh_id()), X509_PURPOSE_MAX)
+    return TEST_int_gt((id = X509_PURPOSE_get_unused_id()), X509_PURPOSE_MAX)
         && TEST_int_eq(X509_PURPOSE_get_count() + 1, id)
         && TEST_int_eq(X509_PURPOSE_get_by_id(id), -1)
         && TEST_int_eq(X509_PURPOSE_get_by_sname(SN), -1)

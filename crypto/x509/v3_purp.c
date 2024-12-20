@@ -121,7 +121,7 @@ int X509_PURPOSE_get_count(void)
 }
 
 /* find smallest identifier not yet taken - note there might be gaps */
-int X509_PURPOSE_get_fresh_id(void)
+int X509_PURPOSE_get_unused_id(void)
 {
     int id = X509_PURPOSE_MAX + 1;
 

@@ -477,7 +477,6 @@ typedef struct x509_purpose_st {
     generate_stack_macros("X509_PURPOSE");
 -}
 
-
 # define X509_PURPOSE_DEFAULT_ANY        0
 # define X509_PURPOSE_SSL_CLIENT         1
 # define X509_PURPOSE_SSL_SERVER         2
@@ -742,7 +741,7 @@ const GENERAL_NAMES *X509_get0_authority_issuer(X509 *x);
 const ASN1_INTEGER *X509_get0_authority_serial(X509 *x);
 
 int X509_PURPOSE_get_count(void);
-int X509_PURPOSE_get_fresh_id(void);
+int X509_PURPOSE_get_unused_id(void);
 int X509_PURPOSE_get_by_sname(const char *sname);
 int X509_PURPOSE_get_by_id(int id);
 int X509_PURPOSE_add(int id, int trust, int flags,
