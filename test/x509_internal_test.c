@@ -172,9 +172,59 @@ static int test_a2i_ipaddress(int idx)
     return good;
 }
 
+static int ck_purp(ossl_unused const X509_PURPOSE *purpose,
+                   ossl_unused const X509 *x, int ca)
+{
+    return 1;
+}
+
+static int tests_X509_PURPOSE(void)
+{
+    OSSL_LIB_CTX *libctx = NULL;
+    int id, idx, *p;
+    X509_PURPOSE *xp;
+
+#undef LN
+#define LN "LN_test"
+#undef SN
+#define SN "SN_test"
+#undef ARGS
+#define ARGS(id, sn) id, X509_TRUST_MAX, 0, ck_purp, LN, sn, NULL
+    return TEST_int_gt((id = X509_PURPOSE_get_unused_id(libctx)), X509_PURPOSE_MAX)
+        && TEST_int_eq(X509_PURPOSE_get_count() + 1, id)
+        && TEST_int_eq(X509_PURPOSE_get_by_id(id), -1)
+        && TEST_int_eq(X509_PURPOSE_get_by_sname(SN), -1)
+
+        /* add new entry with fresh id and fresh sname: */
+        && TEST_int_eq(X509_PURPOSE_add(ARGS(id, SN)), 1)
+        && TEST_int_ne((idx = X509_PURPOSE_get_by_sname(SN)), -1)
+        && TEST_int_eq(X509_PURPOSE_get_by_id(id), idx)
+
+        /* overwrite same entry, should be idempotent: */
+        && TEST_int_eq(X509_PURPOSE_add(ARGS(id, SN)), 1)
+        && TEST_int_eq(X509_PURPOSE_get_by_sname(SN), idx)
+        && TEST_int_eq(X509_PURPOSE_get_by_id(id), idx)
+
+        /* fail adding entry with same sname but existing conflicting id: */
+        && TEST_int_eq(X509_PURPOSE_add(ARGS(X509_PURPOSE_MAX, SN)), 0)
+        /* fail adding entry with same existing id but conflicting sname: */
+        && TEST_int_eq(X509_PURPOSE_add(ARGS(id, SN"_different")), 0)
+
+        && TEST_ptr((xp = X509_PURPOSE_get0(idx)))
+        && TEST_int_eq(X509_PURPOSE_get_id(xp), id)
+        && TEST_str_eq(X509_PURPOSE_get0_name(xp), LN)
+        && TEST_str_eq(X509_PURPOSE_get0_sname(xp), SN)
+        && TEST_int_eq(X509_PURPOSE_get_trust(xp), X509_TRUST_MAX)
+
+        && TEST_int_eq(*(p = &xp->purpose), id)
+        && TEST_int_eq(X509_PURPOSE_set(p, X509_PURPOSE_DEFAULT_ANY), 1)
+        && TEST_int_eq(X509_PURPOSE_get_id(xp), X509_PURPOSE_DEFAULT_ANY);
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_standard_exts);
     ADD_ALL_TESTS(test_a2i_ipaddress, OSSL_NELEM(a2i_ipaddress_tests));
+    ADD_TEST(tests_X509_PURPOSE);
     return 1;
 }
