@@ -447,6 +447,9 @@ static const OSSL_ALGORITHM deflt_signature[] = {
     { PROV_NAMES_SM2, "provider=default", ossl_sm2_signature_functions },
 # endif
 #endif
+#ifndef OPENSSL_NO_ML_DSA
+    { PROV_NAMES_ML_DSA_65, "provider=default", ossl_ml_dsa_65_signature_functions },
+#endif
     { PROV_NAMES_HMAC, "provider=default", ossl_mac_legacy_hmac_signature_functions },
     { PROV_NAMES_SIPHASH, "provider=default",
       ossl_mac_legacy_siphash_signature_functions },

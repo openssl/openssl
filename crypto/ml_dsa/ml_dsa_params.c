@@ -11,14 +11,35 @@
 #include "ml_dsa_local.h"
 #include "ml_dsa_params.h"
 
-/*
- * See FIPS 204 Section 4 Table 1 & Table 2
- *                    tau strength gamma1 k l eta beta omega sc sklen  pklen siglen
- */
-#define OSSL_ML_DSA_65  49, 192, 1 << 19, 6, 5, 4, 196, 55, 3, 4032, 1952, 3309
+/* See FIPS 204 Section 4 Table 1 & Table 2 */
+#define ML_DSA_65_TAU 49
+#define ML_DSA_65_LAMBDA 192
+#define ML_DSA_65_K 6
+#define ML_DSA_65_L 5
+#define ML_DSA_65_ETA ML_DSA_ETA_4
+#define ML_DSA_65_BETA 196
+#define ML_DSA_65_OMEGA 55
+#define ML_DSA_65_SECURITY_CATEGORY 3
+#define ML_DSA_65_PRIV_LEN 4032
+#define ML_DSA_65_PUB_LEN 1952
+#define ML_DSA_65_SIG_LEN 3309
 
 static const ML_DSA_PARAMS ml_dsa_params[] = {
-    {"ML-DSA-65", OSSL_ML_DSA_65},
+    { "ML-DSA-65",
+      ML_DSA_65_TAU,
+      ML_DSA_65_LAMBDA,
+      ML_DSA_GAMMA1_TWO_POWER_19,
+      ML_DSA_GAMMA2_Q_MINUS1_DIV32,
+      ML_DSA_65_K,
+      ML_DSA_65_L,
+      ML_DSA_65_ETA,
+      ML_DSA_65_BETA,
+      ML_DSA_65_OMEGA,
+      ML_DSA_65_SECURITY_CATEGORY,
+      ML_DSA_65_PRIV_LEN,
+      ML_DSA_65_PUB_LEN,
+      ML_DSA_65_SIG_LEN
+    },
     {NULL},
 };
 

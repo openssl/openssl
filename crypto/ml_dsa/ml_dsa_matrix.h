@@ -7,12 +7,21 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* A 'k' by 'l' Matrix object ('k' rows and 'l' columns) containing polynomial entries */
+/* A 'k' by 'l' Matrix object ('k' rows and 'l' columns) containing polynomial scalars */
 struct matrix_st {
     POLY *m_poly;
     size_t k, l;
 };
 
+/**
+ * @brief Initialize a Matrix object.
+ *
+ * @param m The matrix object.
+ * @param polys A preallocated array of k * l polynomial blocks. |m| does not
+ *              own/free this.
+ * @param k The number of rows
+ * @param l The number of columns
+ */
 static ossl_inline ossl_unused void
 matrix_init(MATRIX *m, POLY *polys, size_t k, size_t l)
 {
@@ -21,5 +30,14 @@ matrix_init(MATRIX *m, POLY *polys, size_t k, size_t l)
     m->m_poly = polys;
 }
 
-void ossl_ml_dsa_matrix_mult_vector(const MATRIX *matrix_kl, const VECTOR *vl,
-                                    VECTOR *vk);
+static ossl_inline ossl_unused void
+matrix_mult_vector(const MATRIX *a, const VECTOR *s, VECTOR *t)
+{
+    ossl_ml_dsa_matrix_mult_vector(a, s, t);
+}
+
+static ossl_inline ossl_unused int
+matrix_expand_A(EVP_MD_CTX *g_ctx, const uint8_t *rho, MATRIX *out)
+{
+    return ossl_ml_dsa_matrix_expand_A(g_ctx, rho, out);
+}
