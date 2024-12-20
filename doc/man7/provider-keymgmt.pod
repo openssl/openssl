@@ -524,7 +524,7 @@ OSSL_FUNC_keymgmt_gen_gettable_params() were added in OpenSSL 3.4.
 
 The parameters "sign-check" and "fips-indicator" were added in OpenSSL 3.4.
 
-Suport for the B<ML-KEM> algorithms was added in OpenSSL 3.5.
+Support for the B<ML-KEM> algorithms was added in OpenSSL 3.5.
 
 =head1 COPYRIGHT
 
