@@ -4390,10 +4390,18 @@ SSL *ossl_quic_new_from_listener(SSL *ssl, uint64_t flags)
     qc->default_ssl_options = OSSL_QUIC_PERMITTED_OPTIONS;
     qc->last_error = SSL_ERROR_NONE;
 
-    /* this is QCSO, we don't expect to accept connections */
+    /*
+     * this is QCSO, we don't expect to accept connections
+     * on success channel assumes ownership of tls, we need
+     * to grab reference for qc.
+     */
     qc->ch = ossl_quic_port_create_outgoing(qc->port, qc->tls);
     if (qc->ch == NULL)
         goto err;
+    if (!SSL_up_ref(qc->tls)) {
+        qc->tls = NULL;
+        goto err;
+    }
 
     ossl_quic_channel_set_msg_callback(qc->ch, ql->obj.ssl.ctx->msg_callback, &qc->obj.ssl);
     ossl_quic_channel_set_msg_callback_arg(qc->ch, ql->obj.ssl.ctx->msg_callback_arg);
