@@ -542,6 +542,7 @@ SSL_CTX_disable_ct                      define
 SSL_CTX_generate_session_ticket_fn      define
 SSL_CTX_get0_chain_certs                define
 SSL_CTX_get0_chain_cert_store           define
+SSL_CTX_get0_implemented_groups         define
 SSL_CTX_get0_verify_cert_store          define
 SSL_CTX_get_default_read_ahead          define
 SSL_CTX_get_extra_chain_certs           define

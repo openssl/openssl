@@ -1141,6 +1141,8 @@ PROV_R_NOT_XOF_OR_INVALID_LENGTH:113:not xof or invalid length
 PROV_R_NO_INSTANCE_ALLOWED:242:no instance allowed
 PROV_R_NO_KEY_SET:114:no key set
 PROV_R_NO_PARAMETERS_SET:177:no parameters set
+PROV_R_NULL_LENGTH_POINTER:247:null length pointer
+PROV_R_NULL_OUTPUT_BUFFER:245:null output buffer
 PROV_R_ONESHOT_CALL_OUT_OF_ORDER:239:oneshot call out of order
 PROV_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE:178:\
 	operation not supported for this keytype
@@ -1176,9 +1178,11 @@ PROV_R_UNSUPPORTED_CEK_ALG:145:unsupported cek alg
 PROV_R_UNSUPPORTED_KEY_SIZE:153:unsupported key size
 PROV_R_UNSUPPORTED_MAC_TYPE:137:unsupported mac type
 PROV_R_UNSUPPORTED_NUMBER_OF_ROUNDS:152:unsupported number of rounds
+PROV_R_UNSUPPORTED_SELECTION:248:unsupported selection
 PROV_R_UPDATE_CALL_OUT_OF_ORDER:240:update call out of order
 PROV_R_URI_AUTHORITY_UNSUPPORTED:223:uri authority unsupported
 PROV_R_VALUE_ERROR:138:value error
+PROV_R_WRONG_CIPHERTEXT_SIZE:246:wrong ciphertext size
 PROV_R_WRONG_FINAL_BLOCK_LENGTH:107:wrong final block length
 PROV_R_WRONG_OUTPUT_BUFFER_SIZE:139:wrong output buffer size
 PROV_R_XOF_DIGESTS_NOT_ALLOWED:183:xof digests not allowed

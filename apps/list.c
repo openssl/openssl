@@ -23,6 +23,8 @@
 #include <openssl/store.h>
 #include <openssl/core_names.h>
 #include <openssl/rand.h>
+#include <openssl/safestack.h>
+#include <openssl/ssl.h>
 #include <openssl/tls1.h>
 #include "apps.h"
 #include "app_params.h"
@@ -776,6 +778,42 @@ static int list_tls_sigalg_caps(OSSL_PROVIDER *provider, void *cbdata)
     return 1;
 }
 
+#if !defined(OPENSSL_NO_TLS1_3) || !defined(OPENSSL_NO_TLS1_2)
+static void list_tls_groups(int version, int all)
+{
+    SSL_CTX *ctx = NULL;
+    STACK_OF(OPENSSL_CSTRING) *groups;
+    size_t i, num;
+
+    if ((groups = sk_OPENSSL_CSTRING_new_null()) == NULL) {
+        BIO_printf(bio_err, "ERROR: Memory allocation\n");
+        return;
+    }
+    if ((ctx = SSL_CTX_new(TLS_method())) == NULL) {
+        BIO_printf(bio_err, "ERROR: Memory allocation\n");
+        goto err;
+    }
+    if (!SSL_CTX_set_min_proto_version(ctx, version)
+        || !SSL_CTX_set_max_proto_version(ctx, version)) {
+        BIO_printf(bio_err, "ERROR: setting TLS protocol version\n");
+        goto err;
+    }
+    if (!SSL_CTX_get0_implemented_groups(ctx, all, groups)) {
+        BIO_printf(bio_err, "ERROR: getting implemented TLS group list\n");
+        goto err;
+    }
+    num = sk_OPENSSL_CSTRING_num(groups);
+    for (i = 0; i < num; ++i) {
+        BIO_printf(bio_out, "%s%c", sk_OPENSSL_CSTRING_value(groups, i),
+                   (i < num - 1) ? ':' : '\n');
+    }
+  err:
+    SSL_CTX_free(ctx);
+    sk_OPENSSL_CSTRING_free(groups);
+    return;
+}
+#endif
+
 static void list_tls_signatures(void)
 {
     int tls_sigalg_listed = 0;
@@ -1515,6 +1553,15 @@ typedef enum HELPLIST_CHOICE {
     OPT_TLS_SIGNATURE_ALGORITHMS, OPT_ASYM_CIPHER_ALGORITHMS,
     OPT_STORE_LOADERS, OPT_PROVIDER_INFO, OPT_OBJECTS,
     OPT_SELECT_NAME,
+#if !defined(OPENSSL_NO_TLS1_3) || !defined(OPENSSL_NO_TLS1_2)
+    OPT_ALL_TLS_GROUPS, OPT_TLS_GROUPS,
+# if !defined(OPENSSL_NO_TLS1_2)
+    OPT_TLS1_2,
+# endif
+# if !defined(OPENSSL_NO_TLS1_3)
+    OPT_TLS1_3,
+# endif
+#endif
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     OPT_ENGINES,
 #endif
@@ -1572,6 +1619,20 @@ const OPTIONS list_options[] = {
      "List of public key methods"},
     {"store-loaders", OPT_STORE_LOADERS, '-',
      "List of store loaders"},
+#if !defined(OPENSSL_NO_TLS1_2) || !defined(OPENSSL_NO_TLS1_3)
+    {"tls-groups", OPT_TLS_GROUPS, '-',
+     "List implemented TLS key exchange 'groups'" },
+    {"all-tls-groups", OPT_ALL_TLS_GROUPS, '-',
+     "List implemented TLS key exchange 'groups' and all aliases" },
+# ifndef OPENSSL_NO_TLS1_2
+    {"tls1_2", OPT_TLS1_2, '-',
+     "When listing 'groups', list those compatible with TLS1.2"},
+# endif
+# ifndef OPENSSL_NO_TLS1_3
+    {"tls1_3", OPT_TLS1_3, '-',
+     "When listing 'groups', list those compatible with TLS1.3"},
+# endif
+#endif
     {"providers", OPT_PROVIDER_INFO, '-',
      "List of provider information"},
 #ifndef OPENSSL_NO_DEPRECATED_3_0
@@ -1594,6 +1655,14 @@ int list_main(int argc, char **argv)
     HELPLIST_CHOICE o;
     int one = 0, done = 0;
     int print_newline = 0;
+#if !defined(OPENSSL_NO_TLS1_3) || !defined(OPENSSL_NO_TLS1_2)
+    int all_tls_groups = 0;
+# if !defined(OPENSSL_NO_TLS1_3)
+    unsigned int tls_version = TLS1_3_VERSION;
+# else
+    unsigned int tls_version = TLS1_2_VERSION;
+# endif
+#endif
     struct {
         unsigned int commands:1;
         unsigned int all_algorithms:1;
@@ -1612,6 +1681,7 @@ int list_main(int argc, char **argv)
         unsigned int tls_signature_algorithms:1;
         unsigned int keyexchange_algorithms:1;
         unsigned int kem_algorithms:1;
+        unsigned int tls_groups:1;
         unsigned int asym_cipher_algorithms:1;
         unsigned int pk_algorithms:1;
         unsigned int pk_method:1;
@@ -1692,6 +1762,25 @@ opthelp:
         case OPT_KEM_ALGORITHMS:
             todo.kem_algorithms = 1;
             break;
+#if !defined(OPENSSL_NO_TLS1_3) || !defined(OPENSSL_NO_TLS1_2)
+        case OPT_TLS_GROUPS:
+            todo.tls_groups = 1;
+            break;
+        case OPT_ALL_TLS_GROUPS:
+            all_tls_groups = 1;
+            todo.tls_groups = 1;
+            break;
+# if !defined(OPENSSL_NO_TLS1_2)
+        case OPT_TLS1_2:
+            tls_version = TLS1_2_VERSION;
+            break;
+# endif
+# if !defined(OPENSSL_NO_TLS1_3)
+        case OPT_TLS1_3:
+            tls_version = TLS1_3_VERSION;
+            break;
+# endif
+#endif
         case OPT_ASYM_CIPHER_ALGORITHMS:
             todo.asym_cipher_algorithms = 1;
             break;
@@ -1811,6 +1900,10 @@ opthelp:
         MAYBE_ADD_NL(list_keyexchanges());
     if (todo.kem_algorithms)
         MAYBE_ADD_NL(list_kems());
+#if !defined(OPENSSL_NO_TLS1_3) || !defined(OPENSSL_NO_TLS1_2)
+    if (todo.tls_groups)
+        MAYBE_ADD_NL(list_tls_groups(tls_version, all_tls_groups));
+#endif
     if (todo.pk_algorithms)
         MAYBE_ADD_NL(list_pkey());
     if (todo.pk_method)

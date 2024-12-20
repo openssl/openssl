@@ -4079,6 +4079,12 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
                                     &ctx->ext.tuples_len,
                                     parg);
 
+    case SSL_CTRL_GET0_IMPLEMENTED_GROUPS:
+        return tls1_get0_implemented_groups(ctx->min_proto_version,
+                                            ctx->max_proto_version,
+                                            ctx->group_list,
+                                            ctx->group_list_len, larg, parg);
+
     case SSL_CTRL_SET_SIGALGS:
         return tls1_set_sigalgs(ctx->cert, parg, larg, 0);
 

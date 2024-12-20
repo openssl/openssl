@@ -977,6 +977,81 @@ static int tls1_in_list(uint16_t id, const uint16_t *list, size_t listlen)
     return 0;
 }
 
+typedef struct {
+    TLS_GROUP_INFO *grp;
+    size_t ix;
+} TLS_GROUP_IX;
+
+DEFINE_STACK_OF(TLS_GROUP_IX)
+
+static void free_wrapper(TLS_GROUP_IX *a)
+{
+    OPENSSL_free(a);
+}
+
+static int tls_group_ix_cmp(const TLS_GROUP_IX *const *a,
+                            const TLS_GROUP_IX *const *b)
+{
+    int idcmpab = (*a)->grp->group_id < (*b)->grp->group_id;
+    int idcmpba = (*b)->grp->group_id < (*a)->grp->group_id;
+    int ixcmpab = (*a)->ix < (*b)->ix;
+    int ixcmpba = (*b)->ix < (*a)->ix;
+
+    /* Ascending by group id */
+    if (idcmpab != idcmpba)
+        return (idcmpba - idcmpab);
+    /* Ascending by original appearance index */
+    return ixcmpba - ixcmpab;
+}
+
+int tls1_get0_implemented_groups(int min_proto_version, int max_proto_version,
+                                 TLS_GROUP_INFO *grps, size_t num, long all,
+                                 STACK_OF(OPENSSL_CSTRING) *out)
+{
+    STACK_OF(TLS_GROUP_IX) *collect = NULL;
+    TLS_GROUP_IX *gix;
+    uint16_t id = 0;
+    int ret = 0;
+    size_t ix;
+
+    if ((collect = sk_TLS_GROUP_IX_new(tls_group_ix_cmp)) == NULL)
+        return 0;
+
+    if (grps == NULL || out == NULL)
+        return 0;
+    for (ix = 0; ix < num; ++ix, ++grps) {
+        if (grps->mintls > 0 && max_proto_version > 0
+             && grps->mintls > max_proto_version)
+            continue;
+        if (grps->maxtls > 0 && min_proto_version > 0
+            && grps->maxtls < min_proto_version)
+            continue;
+
+        if ((gix = OPENSSL_malloc(sizeof(*gix))) == NULL)
+            goto end;
+        gix->grp = grps;
+        gix->ix = ix;
+        if (sk_TLS_GROUP_IX_push(collect, gix) <= 0)
+            goto end;
+    }
+
+    sk_TLS_GROUP_IX_sort(collect);
+    num = sk_TLS_GROUP_IX_num(collect);
+    for (ix = 0; ix < num; ++ix) {
+        gix = sk_TLS_GROUP_IX_value(collect, ix);
+        if (!all && gix->grp->group_id == id)
+            continue;
+        id = gix->grp->group_id;
+        if (sk_OPENSSL_CSTRING_push(out, gix->grp->tlsname) <= 0)
+            goto end;
+    }
+    return 1;
+
+  end:
+    sk_TLS_GROUP_IX_pop_free(collect, free_wrapper);
+    return ret;
+}
+
 /*-
  * For nmatch >= 0, return the id of the |nmatch|th shared group or 0
  * if there is no match.
