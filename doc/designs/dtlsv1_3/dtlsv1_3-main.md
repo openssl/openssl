@@ -105,12 +105,12 @@ There's need for a lot more corner case testing:
 * TLSProxy does not support testing post handshake message ACK testing. Such
   testing probably needs to be performed by another framework.
 * This comment also forms a great test case:
-  https://github.com/openssl/openssl/pull/25119#discussion_r1871643459
+  <https://github.com/openssl/openssl/pull/25119#discussion_r1871643459>
 
 The implementation does not support the case where a client is sending a client
-certificate, then the client's final leg has three messages in it, all three of 
+certificate, then the client's final leg has three messages in it, all three of
 which must be ACKed for the client to stop retransmitting. As noted by David
-Benjamin in https://github.com/openssl/openssl/pull/25119#discussion_r1871638449.
+Benjamin in <https://github.com/openssl/openssl/pull/25119#discussion_r1871638449>.
 
 Implementation progress
 -----------------------
