@@ -476,6 +476,14 @@ static const OSSL_ALGORITHM deflt_asym_kem[] = {
     { PROV_NAMES_X448, "provider=default", ossl_ecx_asym_kem_functions },
 # endif
     { PROV_NAMES_EC, "provider=default", ossl_ec_asym_kem_functions },
+# ifndef OPENSSL_NO_ECX
+#    ifndef OPENSSL_NO_ML_KEM
+       { "X25519_ML-KEM-768", "provider=default", ossl_mlx_kem_asym_kem_functions },
+       { "X448_ML-KEM-1024", "provider=default", ossl_mlx_kem_asym_kem_functions },
+       { "P256_ML-KEM-768", "provider=default", ossl_mlx_kem_asym_kem_functions },
+       { "P384_ML-KEM-1024", "provider=default", ossl_mlx_kem_asym_kem_functions },
+#    endif
+# endif
 #endif
 #ifndef OPENSSL_NO_ML_KEM
     { PROV_NAMES_ML_KEM_512, "provider=default", ossl_ml_kem_asym_kem_functions },
@@ -512,6 +520,18 @@ static const OSSL_ALGORITHM deflt_keymgmt[] = {
       PROV_DESCS_ED25519 },
     { PROV_NAMES_ED448, "provider=default", ossl_ed448_keymgmt_functions,
       PROV_DESCS_ED448 },
+# endif
+# ifndef OPENSSL_NO_ECX
+#  ifndef OPENSSL_NO_ML_KEM
+    { "X25519_ML-KEM-768", "provider=default", ossl_mlx_x25519_kem_kmgmt_functions,
+      "X25519 + ML-KEM-768 hybrid implementation" },
+    { "X448_ML-KEM-1024", "provider=default", ossl_mlx_x448_kem_kmgmt_functions,
+      "X448 + ML-KEM-1024 hybrid implementation" },
+    { "P256_ML-KEM-768", "provider=default", ossl_mlx_p256_kem_kmgmt_functions,
+      "P256 + ML-KEM-768 hybrid implementation" },
+    { "P384_ML-KEM-1024", "provider=default", ossl_mlx_p384_kem_kmgmt_functions,
+      "P384 + ML-KEM-1024 hybrid implementation" },
+#  endif
 # endif
 #endif
     { PROV_NAMES_TLS1_PRF, "provider=default", ossl_kdf_keymgmt_functions,
