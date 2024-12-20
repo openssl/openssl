@@ -477,7 +477,8 @@ static void process_new_stream(SSL *ssl_qlistener, SSL *ssl_qstream)
 done:
     SSL_free(ssl_qstream);
     if (ssl_qconn != NULL) {
-        SSL_shutdown(ssl_qconn);
+        while (SSL_shutdown(ssl_qconn) != 1)
+            continue;
         SSL_free(ssl_qconn);
     }
     BIO_ADDRINFO_free(bio_addr);
@@ -747,8 +748,9 @@ static int client_ftplike_transfer(SSL *ssl_qstream_cmd,
         }
     }
 done:
-    SSL_shutdown(ssl_qconn_data);
     SSL_free(ssl_qstream_data);
+    while (SSL_shutdown(ssl_qconn_data) != 1)
+        continue;
     SSL_free(ssl_qconn_data);
 
     return err;
@@ -992,7 +994,8 @@ static int client_main(int argc, const char *argv[])
      */
     client_send_quit(ssl_qconn);
 
-    SSL_shutdown(ssl_qconn);
+    while (SSL_shutdown(ssl_qconn) != 1)
+        continue;
 done:
     SSL_free(ssl_qconn_listener);
     BIO_free(bio_sock_data);
