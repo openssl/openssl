@@ -7,13 +7,15 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/evp.h>
 #include "ml_dsa_local.h"
 #include "ml_dsa_vector.h"
 #include "ml_dsa_matrix.h"
+#include "ml_dsa_hash.h"
+#include "internal/sha3.h"
+#include "internal/packet.h"
 
-#define SHAKE128_BLOCKSIZE 168
-#define SHAKE256_BLOCKSIZE 136
+#define SHAKE128_BLOCKSIZE SHA3_BLOCKSIZE(128)
+#define SHAKE256_BLOCKSIZE SHA3_BLOCKSIZE(256)
 
 typedef int (COEFF_FROM_NIBBLE_FUNC)(uint32_t nibble, uint32_t *out);
 
@@ -104,23 +106,22 @@ static int rej_ntt_poly(EVP_MD_CTX *g_ctx,
     int j = 0;
     uint8_t blocks[SHAKE128_BLOCKSIZE], *b, *end = blocks + sizeof(blocks);
 
-    if (EVP_DigestInit_ex2(g_ctx, NULL, NULL) != 1
-            || EVP_DigestUpdate(g_ctx, seed, seed_len) != 1)
+    /*
+     * Instead of just squeezing 3 bytes at a time, we grab a whole block
+     * Note that the shake128 blocksize of 168 is divisible by 3.
+     */
+    if (!shake_xof(g_ctx, seed, seed_len, blocks, sizeof(blocks)))
         return 0;
 
     while (1) {
-        /*
-         * Instead of just squeezing 3 bytes at a time, we grab a whole block
-         * Note that the shake128 blocksize of 168 is divisible by 3.
-         */
-        if (!EVP_DigestSqueeze(g_ctx, blocks, sizeof(blocks)))
-            return 0;
         for (b = blocks; b < end; b += 3) {
             if (coeff_from_three_bytes(b, &(out->coeff[j]))) {
                 if (++j >= ML_DSA_NUM_POLY_COEFFICIENTS)
                     return 1;   /* finished */
             }
         }
+        if (!EVP_DigestSqueeze(g_ctx, blocks, sizeof(blocks)))
+            return 0;
     }
 }
 
@@ -148,14 +149,11 @@ static int rej_bounded_poly(EVP_MD_CTX *h_ctx,
     uint32_t z0, z1;
     uint8_t blocks[SHAKE256_BLOCKSIZE], *b, *end = blocks + sizeof(blocks);
 
-    if (EVP_DigestInit_ex2(h_ctx, NULL, NULL) != 1
-            || EVP_DigestUpdate(h_ctx, seed, seed_len) != 1)
+    /* Instead of just squeezing 1 byte at a time, we grab a whole block */
+    if (!shake_xof(h_ctx, seed, seed_len, blocks, sizeof(blocks)))
         return 0;
 
     while (1) {
-        /* Instead of just squeezing 1 byte at a time, we grab a whole block */
-        if (!EVP_DigestSqueeze(h_ctx, blocks, sizeof(blocks)))
-            return 0;
         for (b = blocks; b < end; b++) {
             z0 = *b & 0x0F; /* lower nibble of byte */
             z1 = *b >> 4;   /* high nibble of byte */
@@ -167,6 +165,8 @@ static int rej_bounded_poly(EVP_MD_CTX *h_ctx,
                     && ++j >= ML_DSA_NUM_POLY_COEFFICIENTS)
                 return 1;
         }
+        if (!EVP_DigestSqueeze(h_ctx, blocks, sizeof(blocks)))
+            return 0;
     }
 }
 
@@ -182,8 +182,8 @@ static int rej_bounded_poly(EVP_MD_CTX *h_ctx,
  *            in the range of 0..q-1.
  * @returns 1 if the matrix was generated, or 0 on error.
  */
-int ossl_ml_dsa_sample_expandA(EVP_MD_CTX *g_ctx, const uint8_t *rho,
-                               MATRIX *out)
+int ossl_ml_dsa_matrix_expand_A(EVP_MD_CTX *g_ctx, const uint8_t *rho,
+                                MATRIX *out)
 {
     int ret = 0;
     size_t i, j;
@@ -224,8 +224,8 @@ err:
  *           the range (q-eta)..0..eta
  * @returns 1 if s1 and s2 were successfully generated, or 0 otherwise.
  */
-int ossl_ml_dsa_sample_expandS(EVP_MD_CTX *h_ctx, int eta, const uint8_t *seed,
-                               VECTOR *s1, VECTOR *s2)
+int ossl_ml_dsa_vector_expand_S(EVP_MD_CTX *h_ctx, int eta, const uint8_t *seed,
+                                VECTOR *s1, VECTOR *s2)
 {
     int ret = 0;
     size_t i;
@@ -234,7 +234,7 @@ int ossl_ml_dsa_sample_expandS(EVP_MD_CTX *h_ctx, int eta, const uint8_t *seed,
     uint8_t derived_seed[ML_DSA_PRIV_SEED_BYTES + 2];
     COEFF_FROM_NIBBLE_FUNC *coef_from_nibble_fn;
 
-    coef_from_nibble_fn = (eta == 4) ? coeff_from_nibble_4 : coeff_from_nibble_2;
+    coef_from_nibble_fn = (eta == ML_DSA_ETA_4) ? coeff_from_nibble_4 : coeff_from_nibble_2;
 
     /*
      * Each polynomial generated uses a unique seed that consists of
@@ -259,4 +259,83 @@ int ossl_ml_dsa_sample_expandS(EVP_MD_CTX *h_ctx, int eta, const uint8_t *seed,
     ret = 1;
 err:
     return ret;
+}
+
+/* See FIPS 204, Algorithm 34, ExpandMask(), Step 4 & 5 */
+int ossl_ml_dsa_poly_expand_mask(POLY *out,
+                                 const uint8_t *seed, size_t seed_len,
+                                 uint32_t gamma1, EVP_MD_CTX *h_ctx)
+{
+    uint8_t buf[32 * 20];
+    size_t buf_len = 32 * (gamma1 == ML_DSA_GAMMA1_TWO_POWER_19 ? 20 : 18);
+
+    return shake_xof(h_ctx, seed, seed_len, buf, buf_len)
+        && ossl_ml_dsa_poly_decode_expand_mask(out, buf, buf_len, gamma1);
+}
+
+/*
+ * @brief Sample a polynomial with coefficients in the range {-1..1}.
+ * The number of non zero values (hamming weight) is given by tau
+ *
+ * See FIPS 204, Algorithm 29, SampleInBall()
+ * This function is assumed to not be constant time.
+ * The algorithm is based on Durstenfeld's version of the Fisher-Yates shuffle.
+ *
+ * Note that the coefficients returned by this implementation are positive
+ * i.e one of q-1, 0, or 1.
+ *
+ * @param tau is the number of +1 or -1's in the polynomial 'out_c' (39, 49 or 60)
+ *            that is less than or equal to 64
+ */
+int ossl_ml_dsa_poly_sample_in_ball(POLY *out_c, const uint8_t *seed, int seed_len,
+                                    EVP_MD_CTX *h_ctx, uint32_t tau)
+{
+    uint8_t block[SHAKE256_BLOCKSIZE];
+    uint64_t signs;
+    int offset = 8;
+    size_t end;
+
+    /*
+     * Rather than squeeze 8 bytes followed by lots of 1 byte squeezes
+     * the SHAKE blocksize is squeezed each time and buffered into 'block'.
+     */
+    if (!shake_xof(h_ctx, seed, seed_len, block, sizeof(block)))
+        return 0;
+
+    /*
+     * grab the first 64 bits - since tau < 64
+     * Each bit gives a +1 or -1 value.
+     */
+    memcpy(&signs, block, 8);
+
+    poly_zero(out_c);
+
+    /* Loop tau times */
+    for (end = 256 - tau; end < 256; end++) {
+        size_t index; /* index is a random offset to write +1 or -1 */
+
+        /* rejection sample in {0..end} to choose an index to place -1 or 1 into */
+        for (;;) {
+            if (offset == sizeof(block)) {
+                /* squeeze another block if the bytes from block have been used */
+                if (!EVP_DigestSqueeze(h_ctx, block, sizeof(block)))
+                    return 0;
+                offset = 0;
+            }
+
+            index = block[offset++];
+            if (index <= end)
+                break;
+        }
+
+        /*
+         * In-place swap the coefficient we are about to replace to the end so
+         * we don't lose any values that have been already written.
+         */
+        out_c->coeff[end] = out_c->coeff[index];
+        /* set the random coefficient value to either 1 or q-1 */
+        out_c->coeff[index] = mod_sub(1, 2 * (signs & 1));
+        signs >>= 1; /* grab the next random bit */
+    }
+    return 1;
 }

@@ -6,6 +6,7 @@ $EC_GOAL=../../libdefault.a ../../libfips.a
 $MAC_GOAL=../../libdefault.a ../../libfips.a
 $RSA_GOAL=../../libdefault.a ../../libfips.a
 $SM2_GOAL=../../libdefault.a
+$ML_DSA_GOAL=../../libdefault.a
 
 IF[{- !$disabled{dsa} -}]
   SOURCE[$DSA_GOAL]=dsa_sig.c
@@ -31,3 +32,7 @@ DEPEND[eddsa_sig.o]=../../common/include/prov/der_ecx.h
 DEPEND[sm2_sig.o]=../../common/include/prov/der_sm2.h
 
 SOURCE[$MAC_GOAL]=mac_legacy_sig.c
+
+IF[{- !$disabled{ml-dsa} -}]
+  SOURCE[$DSA_GOAL]=ml_dsa_sig.c
+ENDIF
