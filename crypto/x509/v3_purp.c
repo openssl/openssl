@@ -100,9 +100,10 @@ int X509_check_purpose(X509 *x, int id, int non_leaf)
     return pt->check_purpose(pt, x, non_leaf);
 }
 
+/* resets to default (any) purpose if purpose == X509_PURPOSE_DEFAULT_ANY (0) */
 int X509_PURPOSE_set(int *p, int purpose)
 {
-    if (X509_PURPOSE_get_by_id(purpose) == -1) {
+    if (purpose != X509_PURPOSE_DEFAULT_ANY && X509_PURPOSE_get_by_id(purpose) == -1) {
         ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_PURPOSE);
         return 0;
     }

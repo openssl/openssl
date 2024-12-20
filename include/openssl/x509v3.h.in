@@ -478,6 +478,7 @@ typedef struct x509_purpose_st {
 -}
 
 
+# define X509_PURPOSE_DEFAULT_ANY        0
 # define X509_PURPOSE_SSL_CLIENT         1
 # define X509_PURPOSE_SSL_SERVER         2
 # define X509_PURPOSE_NS_SSL_SERVER      3
