@@ -52,7 +52,7 @@ my ($no_des, $no_dh, $no_dsa, $no_ec, $no_ec2m, $no_rc2, $no_zlib)
 
 $no_rc2 = 1 if disabled("legacy");
 
-plan tests => 25;
+plan tests => 26;
 
 ok(run(test(["pkcs7_test"])), "test pkcs7");
 
@@ -1227,6 +1227,22 @@ ok(!run(app(['openssl', 'cms', '-verify',
                                 "SignedInvalidMappingFromanyPolicyTest7.eml")
             ])),
    "issue#19643");
+
+# Check that kari encryption with originator does not segfault
+with({ exit_checker => sub { return shift == 3; } },
+  sub {
+    SKIP: {
+      skip "EC is not supported in this build", 1 if $no_ec;
+
+      ok(run(app(['openssl', 'cms', '-encrypt',
+                  '-in', srctop_file("test", "smcont.txt"), '-aes128',
+                  '-recip', catfile($smdir, "smec1.pem"),
+                  '-originator', catfile($smdir, "smec3.pem"),
+                  '-inkey', catfile($smdir, "smec3.pem")
+                ])),
+          "Check failure for currently not supported kari encryption with static originator");
+    }
+  });
 
 # Check that we get the expected failure return code
 with({ exit_checker => sub { return shift == 6; } },
