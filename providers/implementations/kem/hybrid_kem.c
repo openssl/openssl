@@ -204,8 +204,8 @@ int ossl_hybrid_kem_encapsulate(void *vctx, unsigned char *enc, size_t *enclen,
     for (i = 0; i < ctx->info->num_algs; i++) {
         ciphertext_bytes = ctx->info->alg[i].ciphertext_bytes;
         shared_secret_bytes = ctx->info->alg[i].shared_secret_bytes;
-        if (!EVP_PKEY_encapsulate(ctx->ctxs[i], enc, &ciphertext_bytes,
-                                  secret, &shared_secret_bytes))
+        if (EVP_PKEY_encapsulate(ctx->ctxs[i], enc, &ciphertext_bytes,
+                                 secret, &shared_secret_bytes) <= 0)
             return 0;
         if (ciphertext_bytes != ctx->info->alg[i].ciphertext_bytes) {
             ERR_raise_data(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR,
@@ -265,8 +265,8 @@ int ossl_hybrid_kem_decapsulate(void *vctx,
     /* Decapsulate */
     for (i = 0; i < ctx->info->num_algs; i++) {
         shared_secret_bytes = ctx->info->alg[i].shared_secret_bytes;
-        if (!EVP_PKEY_decapsulate(ctx->ctxs[i], secret, &shared_secret_bytes,
-                                  enc, ctx->info->alg[i].ciphertext_bytes))
+        if (EVP_PKEY_decapsulate(ctx->ctxs[i], secret, &shared_secret_bytes,
+                                 enc, ctx->info->alg[i].ciphertext_bytes) <= 0)
             return 0;
         if (shared_secret_bytes != ctx->info->alg[i].shared_secret_bytes) {
             ERR_raise_data(ERR_LIB_PROV, PROV_R_BAD_LENGTH,

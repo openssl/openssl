@@ -213,6 +213,7 @@ static int ecxkem_init(void *vecxctx, int operation, void *vecx, void *vauth,
     }
 
     ctx->op = operation;
+    ctx->mode = KEM_MODE_DHKEM;
     return ecxkem_set_ctx_params(vecxctx, params);
 }
 
