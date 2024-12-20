@@ -1811,6 +1811,7 @@ X509V3_R_POLICY_PATH_LENGTH_ALREADY_DEFINED:157:\
 	policy path length already defined
 X509V3_R_POLICY_WHEN_PROXY_LANGUAGE_REQUIRES_NO_POLICY:159:\
 	policy when proxy language requires no policy
+X509V3_R_PURPOSE_NOT_UNIQUE:173:purpose not unique
 X509V3_R_SECTION_NOT_FOUND:150:section not found
 X509V3_R_UNABLE_TO_GET_ISSUER_DETAILS:122:unable to get issuer details
 X509V3_R_UNABLE_TO_GET_ISSUER_KEYID:123:unable to get issuer keyid
