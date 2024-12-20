@@ -63,6 +63,7 @@
 # define RAND_R_UNABLE_TO_FETCH_DRBG                      144
 # define RAND_R_UNABLE_TO_GET_PARENT_RESEED_PROP_COUNTER  141
 # define RAND_R_UNABLE_TO_GET_PARENT_STRENGTH             138
+# define RAND_R_UNABLE_TO_LOAD_RANDOM_PROVIDER            145
 # define RAND_R_UNABLE_TO_LOCK_PARENT                     140
 # define RAND_R_UNSUPPORTED_DRBG_FLAGS                    132
 # define RAND_R_UNSUPPORTED_DRBG_TYPE                     120

@@ -90,6 +90,8 @@ static const ERR_STRING_DATA RAND_str_reasons[] = {
      "unable to get parent reseed prop counter"},
     {ERR_PACK(ERR_LIB_RAND, 0, RAND_R_UNABLE_TO_GET_PARENT_STRENGTH),
      "unable to get parent strength"},
+    {ERR_PACK(ERR_LIB_RAND, 0, RAND_R_UNABLE_TO_LOAD_RANDOM_PROVIDER),
+     "unable to load random provider"},
     {ERR_PACK(ERR_LIB_RAND, 0, RAND_R_UNABLE_TO_LOCK_PARENT),
      "unable to lock parent"},
     {ERR_PACK(ERR_LIB_RAND, 0, RAND_R_UNSUPPORTED_DRBG_FLAGS),
