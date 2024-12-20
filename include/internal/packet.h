@@ -229,6 +229,37 @@ __owur static ossl_inline int PACKET_peek_net_4(const PACKET *pkt,
 }
 
 /*
+ * Peek ahead at 6 bytes in network order from |pkt| and store the value in
+ * |*data|
+ */
+__owur static ossl_inline int PACKET_peek_net_6(const PACKET *pkt,
+                                                uint64_t *data)
+{
+    if (PACKET_remaining(pkt) < 6)
+        return 0;
+
+    *data = ((uint64_t)(*(pkt->curr))) << 40;
+    *data |= ((uint64_t)(*(pkt->curr + 1))) << 32;
+    *data |= ((uint64_t)(*(pkt->curr + 2))) << 24;
+    *data |= ((uint64_t)(*(pkt->curr + 3))) << 16;
+    *data |= ((uint64_t)(*(pkt->curr + 4))) << 8;
+    *data |= *(pkt->curr + 5);
+
+    return 1;
+}
+
+/* Get 6 bytes in network order from |pkt| and store the value in |*data| */
+__owur static ossl_inline int PACKET_get_net_6(PACKET *pkt, uint64_t *data)
+{
+    if (!PACKET_peek_net_6(pkt, data))
+        return 0;
+
+    packet_forward(pkt, 6);
+
+    return 1;
+}
+
+/*
  * Peek ahead at 8 bytes in network order from |pkt| and store the value in
  * |*data|
  */
@@ -894,6 +925,8 @@ int WPACKET_put_bytes__(WPACKET *pkt, uint64_t val, size_t bytes);
     WPACKET_put_bytes__((pkt), (val), 3)
 #define WPACKET_put_bytes_u32(pkt, val) \
     WPACKET_put_bytes__((pkt), (val), 4)
+#define WPACKET_put_bytes_u48(pkt, val) \
+    WPACKET_put_bytes__((pkt), (val), 6)
 #define WPACKET_put_bytes_u64(pkt, val) \
     WPACKET_put_bytes__((pkt), (val), 8)
 
