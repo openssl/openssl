@@ -594,7 +594,6 @@ int dtls1_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
     case SSL3_RT_CHANGE_CIPHER_SPEC:
     case SSL3_RT_ALERT:
     case SSL3_RT_HANDSHAKE:
-    case SSL3_RT_ACK:
         /*
          * we already handled all of these, with the possible exception of
          * SSL3_RT_HANDSHAKE when ossl_statem_get_in_handshake(s) is true, but
@@ -602,6 +601,34 @@ int dtls1_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
          */
         SSLfatal(sc, SSL_AD_UNEXPECTED_MESSAGE, ERR_R_INTERNAL_ERROR);
         return -1;
+
+    case SSL3_RT_ACK:
+        switch(sc->rlayer.rrlmethod->get_protocol_version(sc->rlayer.rrl)) {
+        case DTLS1_3_VERSION:
+            /* ACK should have been handled if DTLSv1.3 has been negotiated. */
+            SSLfatal(sc, SSL_AD_UNEXPECTED_MESSAGE, ERR_R_INTERNAL_ERROR);
+            return -1;
+
+        case DTLS_ANY_VERSION:
+            /*
+             * This must be an ACK from a DTLSv1.3 server for a partial
+             * ClientHello. We always send the full message again if the
+             * ClientHello is not responded to with a ServerHello before the
+             * timer runs out. Drop the record.
+             */
+            if (!ssl_release_record(sc, rr, 0))
+                return -1;
+            goto start;
+
+        default:
+            /*
+             * If we receive an ACK record when we have negotiated a lower version
+             * than DTLSv1.3 then we respond with an unexpected record fatal alert.
+             */
+            SSLfatal(sc, SSL_AD_UNEXPECTED_MESSAGE, SSL_R_UNEXPECTED_RECORD);
+            return -1;
+        }
+
     case SSL3_RT_APPLICATION_DATA:
         /*
          * At this point, we were expecting handshake data, but have

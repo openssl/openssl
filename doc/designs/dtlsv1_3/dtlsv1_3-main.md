@@ -93,7 +93,10 @@ Notes on RFC9147 Section 7.1:
   implementation will be encrypted.
 * The implementation only accepts ACKs after DTLSv1.3 has been negotiated. ACKs
   that are received when DTLSv1.3 has not been negotiated is handled with a fatal
-  alert as any other unexpected message.
+  alert as any other unexpected message. ACKs that are received before version
+  negotiation are dropped.
+* The implementation ignores ACKs received for messages other than KeyUpdates, 
+  NewSessionTicket and Finish (client).
 
 Missing functionality:
 
