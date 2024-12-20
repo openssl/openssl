@@ -246,6 +246,10 @@ int ossl_hybrid_kmgmt_get_params(void *vkey, OSSL_PARAM params[])
 #endif
 
         case PIDX_PKEY_PARAM_ENCODED_PUBLIC_KEY:
+            if (p->data == NULL) {
+                p->return_size = key->pubkey_length;
+                break;
+            }
             if (key->pubkey_length > p->data_size) {
                 ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH,
                                "length is %u bytes, have %u bytes",
@@ -263,6 +267,7 @@ int ossl_hybrid_kmgmt_get_params(void *vkey, OSSL_PARAM params[])
                         || !OSSL_PARAM_modified(prms))
                     return 0;
             }
+            p->return_size = key->pubkey_length;
             break;
 
         case PIDX_PKEY_PARAM_PUB_KEY:
@@ -530,6 +535,9 @@ void *ossl_hybrid_kmgmt_gen(void *vctx, OSSL_CALLBACK *osslcb, void *cbarg)
 
     if (key == NULL)
         return NULL;
+
+    if (!CRYPTO_NEW_REF(&key->references, 1))
+        goto err;
 
     key->libctx = ctx->libctx;
     key->info = ctx->info;
