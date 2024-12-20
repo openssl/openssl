@@ -362,6 +362,7 @@ static void process_new_stream(SSL *ssl_qlistener, SSL *ssl_qstream)
     char *creturn;
     BIO_ADDRINFO *bio_addr = NULL;
     SSL *ssl_qconn = NULL;
+    SSL *ssl_qstream_data = NULL;
     int chk;
 
     memset(buf, 0, BUF_SIZE);
@@ -454,9 +455,8 @@ static void process_new_stream(SSL *ssl_qlistener, SSL *ssl_qstream)
                 goto done;
             }
 
-            SSL_free(ssl_qstream);
-            ssl_qstream = SSL_new_stream(ssl_qconn, 0);
-            if (!TEST_ptr(ssl_qstream)) {
+            ssl_qstream_data = SSL_new_stream(ssl_qconn, 0);
+            if (!TEST_ptr(ssl_qstream_data)) {
                 TEST_error("[ Server ] %s SSL_new_stream() to %s:%s failed (%s)\n",
                            __func__, dst_host, dst_port_str,
                            ERR_reason_error_string(ERR_get_error()));
@@ -464,14 +464,22 @@ static void process_new_stream(SSL *ssl_qlistener, SSL *ssl_qstream)
                 goto done;
             }
             TEST_info("( Server ) got stream\n");
-        }
-    }
 
-    send_file(ssl_qstream, path);
-    chk = SSL_stream_conclude(ssl_qstream, 0);
-    if (!TEST_true(chk)) {
-        TEST_info("( Server ) %s SSL_stream_conclude(ssl_qstream) %s\n",
-                  __func__, ERR_reason_error_string(ERR_get_error()));
+            send_file(ssl_qstream_data, path);
+            chk = SSL_stream_conclude(ssl_qstream_data, 0);
+            if (!TEST_true(chk)) {
+                TEST_info("( Server ) %s SSL_stream_conclude(ssl_qstream) %s\n",
+                          __func__, ERR_reason_error_string(ERR_get_error()));
+            }
+            SSL_free(ssl_qstream_data);
+        }
+    } else {
+        send_file(ssl_qstream, path);
+        chk = SSL_stream_conclude(ssl_qstream, 0);
+        if (!TEST_true(chk)) {
+            TEST_info("( Server ) %s SSL_stream_conclude(ssl_qstream) %s\n",
+                      __func__, ERR_reason_error_string(ERR_get_error()));
+        }
     }
 
 done:
