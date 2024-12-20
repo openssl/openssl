@@ -411,6 +411,12 @@ int do_server(int *accept_sock, const char *host, const char *port,
                 BIO_closesocket(asock);
                 break;
             }
+
+            if (naccept != -1)
+                naccept--;
+            if (naccept == 0)
+                BIO_closesocket(asock);
+
             BIO_set_tcp_ndelay(sock, 1);
             i = (*cb)(sock, type, protocol, context);
 
@@ -441,11 +447,12 @@ int do_server(int *accept_sock, const char *host, const char *port,
 
             BIO_closesocket(sock);
         } else {
+            if (naccept != -1)
+                naccept--;
+
             i = (*cb)(asock, type, protocol, context);
         }
 
-        if (naccept != -1)
-            naccept--;
         if (i < 0 || naccept == 0) {
             BIO_closesocket(asock);
             ret = i;
