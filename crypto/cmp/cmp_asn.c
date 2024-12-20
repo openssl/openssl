@@ -797,9 +797,9 @@ OSSL_CMP_ITAV *OSSL_CMP_ITAV_new_crls(const X509_CRL *crl)
 
     if (crl != NULL) {
         if ((crls = sk_X509_CRL_new_reserve(NULL, 1)) == NULL
-                || (crl_copy = X509_CRL_dup(crl)) == NULL)
+                || (crl_copy = X509_CRL_dup(crl)) == NULL
+                || !sk_X509_CRL_push(crls, crl_copy))
             goto err;
-        (void)sk_X509_CRL_push(crls, crl_copy); /* cannot fail */
     }
 
     itav->infoType = OBJ_nid2obj(NID_id_it_crls);
@@ -807,6 +807,7 @@ OSSL_CMP_ITAV *OSSL_CMP_ITAV_new_crls(const X509_CRL *crl)
     return itav;
 
  err:
+    OPENSSL_free(crl_copy);
     sk_X509_CRL_free(crls);
     OSSL_CMP_ITAV_free(itav);
     return NULL;
