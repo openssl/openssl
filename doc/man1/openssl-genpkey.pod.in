@@ -87,6 +87,9 @@ the standard built-in ones.
 Valid built-in algorithm names for private key generation are RSA, RSA-PSS, EC,
 X25519, X448, ED25519 and ED448.
 
+=for comment TODO(ML-KEM) Soon also ML-KEM, once we have a standard private key
+             format (and a PEM header name) and encoders/decoders.
+
 Valid built-in algorithm names for parameter generation (see the B<-genparam>
 option) are DH, DSA and EC.
 
@@ -137,6 +140,9 @@ The options supported by each algorithm and indeed each implementation of an
 algorithm can vary. The options for the OpenSSL implementations are detailed
 below. There are no key generation options defined for the X25519, X448, ED25519
 or ED448 algorithms.
+
+=for comment TODO(ML-KEM) Soon also ML-KEM, once we have a standard private key
+             format (and a PEM header name) and encoders/decoders.
 
 =head2 RSA Key Generation Options
 
@@ -501,12 +507,18 @@ Generate an ED448 private key:
 
  openssl genpkey -algorithm ED448 -out xkey.pem
 
+=for comment TODO(ML-KEM) Soon also ML-KEM, once we have a standard private key
+             format (and a PEM header name) and encoders/decoders.
+
 =head1 HISTORY
 
 The ability to use NIST curve names, and to generate an EC key directly,
 were added in OpenSSL 1.0.2.
 The ability to generate X25519 keys was added in OpenSSL 1.1.0.
 The ability to generate X448, ED25519 and ED448 keys was added in OpenSSL 1.1.1.
+
+=for comment TODO(ML-KEM) Soon also ML-KEM, once we have a standard private key
+             format (and a PEM header name) and encoders/decoders.
 
 The B<-engine> option was deprecated in OpenSSL 3.0.
 
