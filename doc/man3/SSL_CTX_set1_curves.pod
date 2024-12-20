@@ -6,7 +6,7 @@ SSL_CTX_set1_groups, SSL_CTX_set1_groups_list, SSL_set1_groups,
 SSL_set1_groups_list, SSL_get1_groups, SSL_get0_iana_groups,
 SSL_get_shared_group, SSL_get_negotiated_group, SSL_CTX_set1_curves,
 SSL_CTX_set1_curves_list, SSL_set1_curves, SSL_set1_curves_list,
-SSL_get1_curves, SSL_get_shared_curve
+SSL_get1_curves, SSL_get_shared_curve, SSL_CTX_get0_implemented_groups
 - EC supported curve functions
 
 =head1 SYNOPSIS
@@ -32,6 +32,9 @@ SSL_get1_curves, SSL_get_shared_curve
 
  int SSL_get1_curves(SSL *ssl, int *curves);
  int SSL_get_shared_curve(SSL *s, int n);
+
+ int SSL_CTX_get0_implemented_groups(SSL_CTX *ctx, int all,
+                                     STACK_OF(OPENSSL_CSTRING) *names);
 
 =head1 DESCRIPTION
 
@@ -88,23 +91,12 @@ SSL_CTX_set1_groups_list() sets the supported groups for B<ctx> to
 string B<list>. The string is a colon separated list of group names, for example
 "P-521:P-384:P-256:X25519:ffdhe2048". The groups are used as in
 SSL_CTX_set1_groups(), described above.
-The supported groups for B<TLSv1.3> include:
-B<P-256>,
-B<P-384>,
-B<P-521>,
-B<X25519>,
-B<X448>,
-B<ffdhe2048>,
-B<ffdhe3072>,
-B<ffdhe4096>,
-B<ffdhe6144>
-B<ffdhe8192>,
-B<MLKEM512>,
-B<MLKEM768>,
-B<MLKEM1024>,
-B<brainpoolP256r1tls13>,
-B<brainpoolP384r1tls13>, and
-B<brainpoolP512r1tls13>.
+
+The commands below list the available groups for TLS 1.2 and TLS 1.3,
+respectively:
+
+    $ openssl list -tls1_2 -tls-groups
+    $ openssl list -tls1_3 -tls-groups
 
 Support for other groups may be added by external providers, however note the
 discussion on TLS 1.3 selection criteria above. If a group name is preceded
@@ -151,6 +143,19 @@ current, non-resumption, connection).  This can be called by either client or
 server. If the NID for the shared group is unknown then the value is set to the
 bitwise OR of TLSEXT_nid_unknown (0x1000000) and the id of the group.
 
+SSL_CTX_get0_implemented_groups() populates a stack with the names of TLS
+groups that are compatible with the TLS version of the B<ctx> argument.
+The returned names are references to internal constants and must not be
+modified or freed.  When B<all> is nonzero, the returned list includes not
+only the preferred IANA names of the groups, but also any associated aliases.
+If the SSL_CTX is version-flexible, the groups will be those compatible
+with any configured minimum and maximum protocol versions.
+The B<names> stack should be allocated by the caller and be empty, the
+matching group names are appended to the provided stack.
+The B<-tls-groups> and B<-all-tls-groups> options of the
+L<openssl list|openssl-list(1)> command output these lists for either
+TLS 1.2 or TLS 1.3 (by default).
+
 All these functions are implemented as macros.
 
 The curve functions are synonyms for the equivalently named group functions and
@@ -167,8 +172,9 @@ consider using the SSL_CONF interface instead of manually parsing options.
 
 =head1 RETURN VALUES
 
-SSL_CTX_set1_groups(), SSL_CTX_set1_groups_list(), SSL_set1_groups() and
-SSL_set1_groups_list(), return 1 for success and 0 for failure.
+SSL_CTX_set1_groups(), SSL_CTX_set1_groups_list(), SSL_set1_groups(),
+SSL_set1_groups_list(), and SSL_CTX_get0_implemented_groups() return 1 for
+success and 0 for failure.
 
 SSL_get1_groups() returns the number of groups, which may be zero.
 
@@ -199,6 +205,8 @@ Support for ignoring unknown groups in SSL_CTX_set1_groups_list() and
 SSL_set1_groups_list() was added in OpenSSL 3.3.
 
 Support for B<ML-KEM> was added in OpenSSL 3.5.
+
+B<SSL_CTX_get0_implemented_groups> was first implemented in OpenSSL 3.5.
 
 Earlier versions of this document described the list as a preference order.
 However, OpenSSL's behavior as a TLS 1.3 server is to consider I<all>

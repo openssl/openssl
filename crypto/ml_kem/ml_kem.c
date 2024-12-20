@@ -7,8 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* Copyright (c) 2024, Google Inc. */
-
 #include <internal/common.h>
 #include <internal/constant_time.h>
 #include <internal/sha3.h>
