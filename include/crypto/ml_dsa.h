@@ -28,6 +28,7 @@ __owur int ossl_ml_dsa_key_equal(const ML_DSA_KEY *key1, const ML_DSA_KEY *key2,
                                  int selection);
 __owur int ossl_ml_dsa_key_has(const ML_DSA_KEY *key, int selection);
 __owur int ossl_ml_dsa_key_pairwise_check(const ML_DSA_KEY *key);
+__owur int ossl_ml_dsa_key_public_from_private(ML_DSA_KEY *key, ML_DSA_CTX *ctx);
 __owur int ossl_ml_dsa_key_fromdata(ML_DSA_KEY *key, const OSSL_PARAM *params,
                                     int include_private);
 __owur int ossl_ml_dsa_generate_key(ML_DSA_CTX *ctx, OSSL_LIB_CTX *libctx,
@@ -51,5 +52,15 @@ void ossl_ml_dsa_key_set0_libctx(ML_DSA_KEY *key, OSSL_LIB_CTX *lib_ctx);
 __owur ML_DSA_CTX *ossl_ml_dsa_ctx_new(const char *alg,
                                        OSSL_LIB_CTX *lib_ctx, const char *propq);
 void ossl_ml_dsa_ctx_free(ML_DSA_CTX *ctx);
+
+__owur int ossl_ml_dsa_sign(ML_DSA_CTX *ctx, const ML_DSA_KEY *priv,
+                            const uint8_t *msg, size_t msg_len,
+                            const uint8_t *context, size_t context_len,
+                            const uint8_t *rand, size_t rand_len, int encode,
+                            unsigned char *sig, size_t *siglen, size_t sigsize);
+__owur int ossl_ml_dsa_verify(ML_DSA_CTX *ctx, ML_DSA_KEY *pub,
+                              const uint8_t *msg, size_t msg_len,
+                              const uint8_t *context, size_t context_len,
+                              int encode, const uint8_t *sig, size_t sig_len);
 
 #endif /* OSSL_CRYPTO_SLH_DSA_H */

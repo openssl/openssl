@@ -16,8 +16,9 @@
 struct ml_dsa_params_st {
     const char *alg;
     int tau;    /* Number of +/-1's in polynomial c */
-    int strength; /* The collision strength */
+    int bit_strength; /* The collision strength (lambda) */
     int gamma1; /* coefficient range of y */
+    int gamma2; /* coefficient range of ? */
     size_t k, l; /* matrix dimensions of 'A' */
     int eta;    /* Private key range */
     int beta;   /* tau * eta */
