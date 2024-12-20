@@ -140,6 +140,9 @@ This is an unapproved algorithm.
 
 =item X448, see L<EVP_KEYEXCH-X448(7)>
 
+=for comment TODO(ML-KEM) L<EVP_KEM-ML-KEM(7)> once ML-KEM is supported in the
+             FIPS module.
+
 =item TLS1-PRF
 
 =item HKDF
