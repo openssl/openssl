@@ -451,7 +451,7 @@ static void process_new_stream(SSL *ssl_qlistener, SSL *ssl_qstream)
                            __func__, dst_host, dst_port_str,
                            ERR_reason_error_string(ERR_get_error()));
                 quit = 1;
-                goto shutdown;
+                goto done;
             }
 
             SSL_free(ssl_qstream);
@@ -461,7 +461,7 @@ static void process_new_stream(SSL *ssl_qlistener, SSL *ssl_qstream)
                            __func__, dst_host, dst_port_str,
                            ERR_reason_error_string(ERR_get_error()));
                 quit = 1;
-                goto shutdown;
+                goto done;
             }
             TEST_info("( Server ) got stream\n");
         }
@@ -474,12 +474,12 @@ static void process_new_stream(SSL *ssl_qlistener, SSL *ssl_qstream)
                   __func__, ERR_reason_error_string(ERR_get_error()));
     }
 
-shutdown:
-    SSL_shutdown(ssl_qconn);
-
 done:
     SSL_free(ssl_qstream);
-    SSL_free(ssl_qconn);
+    if (ssl_qconn != NULL) {
+        SSL_shutdown(ssl_qconn);
+        SSL_free(ssl_qconn);
+    }
     BIO_ADDRINFO_free(bio_addr);
 }
 
