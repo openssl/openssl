@@ -180,6 +180,11 @@ See L<EVP_PKEY_CTX_set_kem_op(3)> and algorithm-specific KEM documentation e.g.
 L<EVP_KEM-RSA(7)>, L<EVP_KEM-EC(7)>, L<EVP_KEM-X25519(7)>, and
 L<EVP_KEM-X448(7)>.
 
+=for comment TODO(ML-KEM) Add ML-KEM, once we have encoder/decoder support the
+             associated keys.  Specifically, the private key format is yet to
+             be decided (may need to support two versions, the full FIPS203
+             encoding or just the seed).
+
 =item B<-kdf> I<algorithm>
 
 Use key derivation function I<algorithm>.  The supported algorithms are
@@ -362,6 +367,8 @@ the B<-pkeyopt> B<digest> option.
 
 The X25519 and X448 algorithms support key derivation only. Currently there are
 no additional options.
+
+=for comment TODO(ML-KEM) Likewise for ML-KEM, once we have encoders/decoders.
 
 =head1 ED25519 AND ED448 ALGORITHMS
 
