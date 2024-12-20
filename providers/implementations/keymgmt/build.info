@@ -47,9 +47,13 @@ SOURCE[$MAC_GOAL]=mac_legacy_kmgmt.c
 
 IF[{- !$disabled{ec} -}]
   IF[{- !$disabled{ecx} -}]
-    SOURCE[$HYBRID_GOAL]=hybrid_kmgmt.c 25519_448_kmgmt.c
+    IF[{- !$disabled{'ml-kem'} -}]
+      $ML_KEM_HYBRID_SOURCE=x25519_ml_kem_768_kmgmt.c
+    ENDIF
+    SOURCE[$HYBRID_GOAL]=hybrid_kmgmt.c 25519_448_kmgmt.c $ML_KEM_HYBRID_SOURCE
   ENDIF
 ENDIF
+
 
 SOURCE[$TEMPLATE_GOAL]=template_kmgmt.c
 

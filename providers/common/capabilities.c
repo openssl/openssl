@@ -106,6 +106,9 @@ static const TLS_GROUP_CONSTANTS group_list[] = {
     { OSSL_TLS_GROUP_ID_mlkem768, ML_KEM_768_RNGSEC, TLS1_3_VERSION, 0, -1, -1, 1 },
     { OSSL_TLS_GROUP_ID_mlkem1024, ML_KEM_1024_RNGSEC, TLS1_3_VERSION, 0, -1, -1, 1 },
 #endif
+#if !defined(OPENSSL_NO_ML_KEM) && !defined(OPENSSL_NO_ECX)
+    { OSSL_TLS_GROUP_ID_X25519MLKEM768, ML_KEM_768_RNGSEC, TLS1_3_VERSION, 0, -1, -1, 1 },
+#endif
 };
 
 #define TLS_GROUP_ENTRY(tlsname, realname, algorithm, idx) \
@@ -222,6 +225,9 @@ static const OSSL_PARAM param_group_list[][11] = {
     TLS_GROUP_ENTRY("MLKEM512", "MLKEM512", "ML-KEM-512", 38),
     TLS_GROUP_ENTRY("MLKEM768", "MLKEM768", "ML-KEM-768", 39),
     TLS_GROUP_ENTRY("MLKEM1024", "MLKEM1024", "ML-KEM-1024", 40),
+# endif
+# if !defined(OPENSSL_NO_ML_KEM) && !defined(OPENSSL_NO_ECX)
+    TLS_GROUP_ENTRY("X25519MLKEM768", "X25519", "X25519-ML-KEM-768", 41),
 # endif
 };
 #endif /* !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_ML_KEM) */

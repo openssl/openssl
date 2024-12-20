@@ -18,7 +18,10 @@ ENDIF
 
 IF[{- !$disabled{ec} -}]
   IF[{- !$disabled{ecx} -}]
-    SOURCE[$HYBRID_GOAL]=hybrid_kem.c 25519_448_kem.c
+    IF[{- !$disabled{'ml-kem'} -}]
+      $ML_KEM_HYBRID_SOURCE=x25519_ml_kem_768_kem.c
+    ENDIF
+    SOURCE[$HYBRID_GOAL]=hybrid_kem.c 25519_448_kem.c $ML_KEM_HYBRID_SOURCE
   ENDIF
 ENDIF
 

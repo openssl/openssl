@@ -479,6 +479,9 @@ static const OSSL_ALGORITHM deflt_asym_kem[] = {
 # ifndef OPENSSL_NO_ECX
     /* Temporary until PQC hybrids exist */
     { "X25519-X448", "provider=default", ossl_X25519_X448_kem_functions },
+#    ifndef OPENSSL_NO_ML_KEM
+       { "X25519-ML-KEM-768", "provider=default", ossl_X25519_MLKEM768_kem_functions },
+#    endif
 # endif
 #endif
 #ifndef OPENSSL_NO_ML_KEM
@@ -521,6 +524,10 @@ static const OSSL_ALGORITHM deflt_keymgmt[] = {
     /* Temporary until PQC hybrids exist */
     { "X25519-X448", "provider=default", ossl_X25519_X448_kmgmt_functions,
       "X25519-X448 hybrid implementation" },
+#  ifndef OPENSSL_NO_ML_KEM
+    { "X25519-ML-KEM-768", "provider=default", ossl_X25519_MLKEM768_kmgmt_functions,
+      "X25519-ML-KEM-768 hybrid implementation" },
+#  endif
 # endif
 #endif
     { PROV_NAMES_TLS1_PRF, "provider=default", ossl_kdf_keymgmt_functions,

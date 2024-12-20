@@ -598,3 +598,7 @@ extern const OSSL_DISPATCH ossl_winstore_store_functions[];
 extern const OSSL_DISPATCH ossl_X25519_X448_kem_functions[];
 extern const OSSL_DISPATCH ossl_X25519_X448_kmgmt_functions[];
 #endif
+#if !defined(OPENSSL_NO_ECX) && !defined(OPENSSL_NO_ML_KEM)
+extern const OSSL_DISPATCH ossl_X25519_MLKEM768_kem_functions[];
+extern const OSSL_DISPATCH ossl_X25519_MLKEM768_kmgmt_functions[];
+#endif
