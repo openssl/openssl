@@ -12,6 +12,7 @@ Groups
 
  * OpenSSL Software Services, Inc.
  * OpenSSL Software Foundation, Inc.
+ * Google LLC
 
 Individuals
 -----------
