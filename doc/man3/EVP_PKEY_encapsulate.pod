@@ -58,7 +58,7 @@ is large enough to hold the result written to I<wrapped>.
 Absent detailed prior knowledge of the internals of the specific KEM
 algorithm, callers SHOULD NOT assume that the returned shared secret and
 ciphertext are necessarily of the maximum possible length.
-The actual lengths returned via I<*wrappedkeylen> and I<*genkeylen> SHOULD
+The lengths returned via I<*wrappedkeylen> and I<*genkeylen> SHOULD
 be used to determine the actual lengths of the outputs.
 
 =head1 NOTES
