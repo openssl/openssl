@@ -98,8 +98,10 @@ it may be reasonable to avoid protecting it with a password, since
 otherwise someone would have to type in the password every time the
 server needs to access the key.
 
-For X25519 and X448, it's treated as a distinct algorithm but not as one of
-the curves listed with 'ecparam -list_curves' option. You can use
-the following command to generate an X25519 key:
+X25519, X448, Ed25519 and Ed448 are treated as distinct algorithms and not as
+one of the EC curves listed with 'ecparam -list_curves' option. You can use the
+following command to generate an X25519 key:
 
   openssl genpkey -algorithm X25519 -out xkey.pem
+
+# TODO(ML-KEM) Likewise ML-KEM once we have codecs.
