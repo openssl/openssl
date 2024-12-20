@@ -785,6 +785,10 @@ static int qtx_mutate_write(OSSL_QTX *qtx, const OSSL_QTX_PKT *pkt, TXE *txe,
 
 static int addr_eq(const BIO_ADDR *a, const BIO_ADDR *b)
 {
+    return ((a == NULL || BIO_ADDR_family(a) == AF_UNSPEC)
+            && (b == NULL || BIO_ADDR_family(b) == AF_UNSPEC))
+        || (a != NULL && b != NULL && memcmp(a, b, sizeof(*a)) == 0);
+#if 0
     int rv = 0;
     const void *a_buf, *b_buf;
 
@@ -817,6 +821,7 @@ static int addr_eq(const BIO_ADDR *a, const BIO_ADDR *b)
         }
     }
     return rv;
+#endif
 }
 
 int ossl_qtx_write_pkt(OSSL_QTX *qtx, const OSSL_QTX_PKT *pkt)
