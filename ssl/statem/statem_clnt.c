@@ -1856,8 +1856,12 @@ static MSG_PROCESS_RETURN tls_process_as_hello_retry_request(SSL_CONNECTION *s,
         /* SSLfatal already called */
         goto err;
     }
-    /* We are definitely going to be using TLSv1.3 */
-    s->rlayer.wrlmethod->set_protocol_version(s->rlayer.wrl, version1_3);
+
+    /* We are definitely going to be using (D)TLSv1.3 */
+    if (!s->rlayer.wrlmethod->set_protocol_version(s->rlayer.wrl, version1_3)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
 
     if (!tls_collect_extensions(s, extpkt, SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST,
                                 &extensions, NULL, 1)
