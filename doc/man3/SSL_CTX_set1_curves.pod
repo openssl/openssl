@@ -44,12 +44,22 @@ functions (i.e. SSL_CTX_set1_groups_list() and SSL_set1_groups_list()).
 
 SSL_CTX_set1_groups() sets the supported groups for B<ctx> to B<glistlen>
 groups in the array B<glist>. The array consist of all NIDs of supported groups.
-Currently supported groups for B<TLSv1.3> are B<NID_X9_62_prime256v1>,
-B<NID_secp384r1>, B<NID_secp521r1>, B<NID_X25519>, B<NID_X448>,
-B<NID_brainpoolP256r1tls13>, B<NID_brainpoolP384r1tls13>,
-B<NID_brainpoolP512r1tls13>, B<NID_ffdhe2048>, B<NID_ffdhe3072>,
-B<NID_ffdhe4096>, B<NID_ffdhe6144> and B<NID_ffdhe8192>.
-OpenSSL will use this array in different ways depending on TLS role and version:
+The supported groups for B<TLSv1.3> include:
+B<NID_X9_62_prime256v1>,
+B<NID_secp384r1>,
+B<NID_secp521r1>,
+B<NID_X25519>,
+B<NID_X448>,
+B<NID_brainpoolP256r1tls13>,
+B<NID_brainpoolP384r1tls13>,
+B<NID_brainpoolP512r1tls13>,
+B<NID_ffdhe2048>,
+B<NID_ffdhe3072>,
+B<NID_ffdhe4096>,
+B<NID_ffdhe6144>, and
+B<NID_ffdhe8192>.
+OpenSSL will use this array in different ways based on the TLS version, and
+whether the groups are used in a client or server.
 
 For a TLS client, the groups are used directly in the supported groups
 extension. The extension's preference order, to be evaluated by the server, is
@@ -73,11 +83,27 @@ to use SSL_CTX_set1_groups_list() with the ability to specify group tuples.
 
 SSL_CTX_set1_groups_list() sets the supported groups for B<ctx> to
 string I<list>. In contrast to SSL_CTX_set1_groups(), the names of the
-groups, rather than their NIDs, are used. Currently supported groups for
-B<TLSv1.3> are B<P-256>, B<P-384>, B<P-521>, B<X25519>, B<X448>,
-B<brainpoolP256r1tls13>, B<brainpoolP384r1tls13>, B<brainpoolP512r1tls13>,
-B<ffdhe2048>, B<ffdhe3072>, B<ffdhe4096>, B<ffdhe6144> and B<ffdhe8192>. Support
-for other groups may be added by external providers.
+groups, rather than their NIDs, are used.
+
+The supported groups for B<TLSv1.3> include:
+B<P-256>,
+B<P-384>,
+B<P-521>,
+B<X25519>,
+B<X448>,
+B<ffdhe2048>,
+B<ffdhe3072>,
+B<ffdhe4096>,
+B<ffdhe6144>
+B<ffdhe8192>,
+B<MLKEM512>,
+B<MLKEM768>,
+B<MLKEM1024>,
+B<brainpoolP256r1tls13>,
+B<brainpoolP384r1tls13>, and
+B<brainpoolP512r1tls13>.
+Support for other groups may be added by external providers.
+
 Each group can be either the B<NIST> name (e.g. B<P-256>), some other commonly
 used name where applicable (e.g. B<X25519>, B<ffdhe2048>) or an OpenSSL OID name
 (e.g. B<prime256v1>). Group names are case sensitive. The preferred group names
@@ -246,6 +272,8 @@ was added in OpenSSL 3.0.0.
 
 Support for ignoring unknown groups in SSL_CTX_set1_groups_list() and
 SSL_set1_groups_list() was added in OpenSSL 3.3.
+
+Support for B<ML-KEM> was added in OpenSSL 3.5.
 
 Earlier versions of this document described the list as a preference order.
 However, OpenSSL's behavior as a TLS 1.3 server is to consider I<all>

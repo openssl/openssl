@@ -169,10 +169,25 @@ Since TLS 1.2 has neither keyshares nor a hello retry mechanism, with TLS 1.2
 the enriched syntax is ultimately equivalent to just a simple ordered list of
 groups, as with the simple form above.
 
-Groups for B<TLSv1.3> in the default provider are B<P-256>, B<P-384>,
-B<P-521>, B<X25519>, B<X448>, B<ffdhe2048>, B<ffdhe3072>, B<ffdhe4096>,
-B<ffdhe6144>, B<ffdhe8192>, B<brainpoolP256r1tls13>,
-B<brainpoolP384r1tls13> and B<brainpoolP512r1tls13>.
+The supported groups for B<TLSv1.3> include:
+B<secp256r1>,
+B<secp384r1>,
+B<secp521r1>,
+B<x25519>,
+B<x448>,
+B<brainpoolP256r1tls13>,
+B<brainpoolP384r1tls13>,
+B<brainpoolP512r1tls13>,
+B<ffdhe2048>,
+B<ffdhe3072>,
+B<ffdhe4096>,
+B<ffdhe6144>,
+B<ffdhe8192>
+B<MLKEM512>,
+B<MLKEM768>,
+and
+B<MLKEM1024>.
+
 Additional providers may make available further algorithms via the
 TLS-GROUP capability. See L<provider-base(7)>.
 
@@ -441,9 +456,24 @@ applicable (e.g. B<X25519>, B<ffdhe2048>) or an OpenSSL OID name
 (e.g. B<prime256v1>). Group names are case sensitive. The list should be in
 order of preference with the most preferred group first.
 
-Currently supported groups for B<TLSv1.3> are B<P-256>, B<P-384>, B<P-521>,
-B<X25519>, B<X448>, B<ffdhe2048>, B<ffdhe3072>, B<ffdhe4096>, B<ffdhe6144>,
-B<ffdhe8192>.
+The supported groups for B<TLSv1.3> include:
+B<secp256r1>,
+B<secp384r1>,
+B<secp521r1>,
+B<x25519>,
+B<x448>,
+B<brainpoolP256r1tls13>,
+B<brainpoolP384r1tls13>,
+B<brainpoolP512r1tls13>,
+B<ffdhe2048>,
+B<ffdhe3072>,
+B<ffdhe4096>,
+B<ffdhe6144>,
+B<ffdhe8192>
+B<MLKEM512>,
+B<MLKEM768>,
+and
+B<MLKEM1024>.
 
 =item B<Curves>
 
@@ -822,6 +852,8 @@ The B<TxCertificateCompression> and B<RxCertificateCompression> options were
 added in OpenSSL 3.2.
 
 B<PreferNoDHEKEX> was added in OpenSSL 3.3.
+
+Support for B<ML-KEM> was added in OpenSSL 3.5.
 
 =head1 COPYRIGHT
 
