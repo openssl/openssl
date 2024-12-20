@@ -12,28 +12,49 @@
 
 # include "crypto/ml_dsa.h"
 # include "internal/constant_time.h"
+# include "internal/packet.h"
 
-/* Maximimum size of the 'A' matrix */
-# define ML_DSA_K_MAX 8
-# define ML_DSA_L_MAX 7
-
+/* The following constants are shared by ML-DSA-44, ML-DSA-65 & ML-DSA-87 */
 # define ML_DSA_SEED_BYTES 32
 # define ML_DSA_Q 8380417   /* The modulus is 23 bits (2^23 - 2^13 + 1) */
 # define ML_DSA_Q_MINUS1_DIV2 ((ML_DSA_Q - 1) / 2)
-# define ML_DSA_Q_MINUS1_DIV32 ((ML_DSA_Q - 1) / 32)
+
 # define ML_DSA_Q_BITS 23
 # define ML_DSA_Q_INV 58728449  /* q^-1 satisfies: q^-1 * q = 1 mod 2^32 */
 # define ML_DSA_Q_NEG_INV 4236238847 /* Inverse of -q modulo 2^32 */
 # define ML_DSA_DEGREE_INV_MONTGOMERY 41978 /* Inverse of 256 mod q, in Montgomery form. */
 
-# define ML_DSA_D_BITS 13   /* The number of bits dropped from t */
+# define ML_DSA_D_BITS 13   /* The number of bits dropped from the public vector t */
 # define ML_DSA_NUM_POLY_COEFFICIENTS 256  /* The number of coefficients in the polynomials */
 # define ML_DSA_RHO_BYTES 32   /* p = Public Random Seed */
 # define ML_DSA_PRIV_SEED_BYTES 64 /* p' = Private random seed */
 # define ML_DSA_K_BYTES 32 /* K = Private random seed for signing */
-# define ML_DSA_TR_BYTES 64 /* Hash of public key used for signing */
-# define ML_DSA_MU_BYTES 64
-# define ML_DSA_RHO_PRIME_BYTES 64
+# define ML_DSA_TR_BYTES 64 /* Size of the Hash of the public key used for signing */
+# define ML_DSA_MU_BYTES 64 /* Size of the Hash for the message representative */
+# define ML_DSA_RHO_PRIME_BYTES 64 /* private random seed size */
+
+/*
+ * There is special case code related to encoding/decoding that tests the
+ * for the following values.
+ */
+/*
+ * The possible value for eta - If a new value is added, then all code
+ * that accesses ML_DSA_ETA_4 would need to be modified.
+ */
+# define ML_DSA_ETA_4 4
+# define ML_DSA_ETA_2 2
+/*
+ * The possible values of gamma1 - If a new value is added, then all code
+ * that accesses ML_DSA_GAMMA1_TWO_POWER_19 would need to be modified.
+ */
+# define ML_DSA_GAMMA1_TWO_POWER_19 (1 << 19)
+# define ML_DSA_GAMMA1_TWO_POWER_17 (1 << 17)
+/*
+ * The possible values for gamma2 - If a new value is added, then all code
+ * that accesses ML_DSA_GAMMA2_Q_MINUS1_DIV32 would need to be modified.
+ */
+# define ML_DSA_GAMMA2_Q_MINUS1_DIV32 ((ML_DSA_Q - 1) / 32)
+# define ML_DSA_GAMMA2_Q_MINUS1_DIV88 ((ML_DSA_Q - 1) / 88)
 
 typedef struct ml_dsa_params_st ML_DSA_PARAMS;
 typedef struct poly_st POLY;
@@ -47,7 +68,8 @@ typedef struct matrix_st MATRIX;
  *   - OpenSSL also uses pre-fetched EVP_MD_CTX objects for Hashing purposes.
  *
  * ML_DSA_CTX is a container to hold all these objects. This object is
- * resolved early and is then passed to most ML-DSA related functions.
+ * resolved early and can then be used to pass these values to
+ * most ML-DSA related functions.
  */
 struct ml_dsa_ctx_st {
     const ML_DSA_PARAMS *params;
@@ -55,9 +77,19 @@ struct ml_dsa_ctx_st {
     EVP_MD_CTX *g_ctx; /* SHAKE-128 */
 };
 
-int ossl_ml_dsa_sample_expandA(EVP_MD_CTX *g_ctx, const uint8_t *rho, MATRIX *out);
-int ossl_ml_dsa_sample_expandS(EVP_MD_CTX *h_ctx, int eta, const uint8_t *seed,
-                               VECTOR *s1, VECTOR *s2);
+typedef struct ml_dsa_sig_st ML_DSA_SIG;
+
+int ossl_ml_dsa_matrix_expand_A(EVP_MD_CTX *g_ctx, const uint8_t *rho, MATRIX *out);
+int ossl_ml_dsa_vector_expand_S(EVP_MD_CTX *h_ctx, int eta, const uint8_t *seed,
+                                VECTOR *s1, VECTOR *s2);
+void ossl_ml_dsa_matrix_mult_vector(const MATRIX *matrix_kl, const VECTOR *vl,
+                                    VECTOR *vk);
+int ossl_ml_dsa_poly_expand_mask(POLY *out,
+                                 const uint8_t *seed, size_t seed_len,
+                                 uint32_t gamma1, EVP_MD_CTX *h_ctx);
+int ossl_ml_dsa_poly_sample_in_ball(POLY *out_c, const uint8_t *seed, int seed_len,
+                                    EVP_MD_CTX *h_ctx, uint32_t tau);
+
 void ossl_ml_dsa_poly_ntt(POLY *s);
 void ossl_ml_dsa_poly_ntt_inverse(POLY *s);
 void ossl_ml_dsa_poly_ntt_mult(const POLY *lhs, const POLY *rhs, POLY *out);
@@ -75,9 +107,19 @@ uint32_t ossl_ml_dsa_key_compress_use_hint(uint32_t hint, uint32_t r,
                                            uint32_t gamma2);
 
 int ossl_ml_dsa_pk_encode(ML_DSA_KEY *key);
-int ossl_ml_dsa_pk_decode(const uint8_t *in, size_t in_len, ML_DSA_KEY *key);
+int ossl_ml_dsa_pk_decode(ML_DSA_KEY *key, const uint8_t *in, size_t in_len);
 int ossl_ml_dsa_sk_encode(ML_DSA_KEY *key);
-int ossl_ml_dsa_sk_decode(const uint8_t *in, size_t in_len, ML_DSA_KEY *key);
+int ossl_ml_dsa_sk_decode(ML_DSA_KEY *key, const uint8_t *in, size_t in_len);
+
+int ossl_ml_dsa_sig_encode(const ML_DSA_SIG *sig, const ML_DSA_PARAMS *params,
+                           uint8_t *out);
+int ossl_ml_dsa_sig_decode(ML_DSA_SIG *sig, const uint8_t *in, size_t in_len,
+                           const ML_DSA_PARAMS *params);
+int ossl_ml_dsa_w1_encode(const VECTOR *w1, uint32_t gamma2,
+                          uint8_t *out, size_t out_len);
+int ossl_ml_dsa_poly_decode_expand_mask(POLY *out,
+                                        const uint8_t *in, size_t in_len,
+                                        uint32_t gamma1);
 
 /*
  * @brief Reduces x mod q in constant time
@@ -105,6 +147,37 @@ static ossl_inline ossl_unused uint32_t reduce_once(uint32_t x)
 static ossl_inline ossl_unused uint32_t mod_sub(uint32_t a, uint32_t b)
 {
     return reduce_once(ML_DSA_Q + a - b);
+}
+
+/*
+ * @brief Returns the absolute value in constant time.
+ * i.e. return is_positive(x) ? x : -x;
+ * Note: MSVC doesn't like applying the unary minus operator to unsigned types
+ * (warning C4146), so we write the negation as a bitwise not plus one
+ * (assuming two's complement representation).
+ */
+static ossl_inline ossl_unused uint32_t abs_signed(uint32_t x)
+{
+    return constant_time_select_int(constant_time_lt(x, 0x80000000), x, 0u - x);
+}
+
+/*
+ * @brief Returns the absolute value modulo q in constant time
+ * i.e return x > (q-1)/2 ? q - x : x;
+ */
+static ossl_inline ossl_unused uint32_t abs_mod_prime(uint32_t x)
+{
+    return constant_time_select_int(constant_time_lt(ML_DSA_Q_MINUS1_DIV2, x),
+                                                     ML_DSA_Q - x, x);
+}
+
+/*
+ * @brief Returns the maximum of two values in constant time.
+ * i.e return x < y ? y : x;
+ */
+static ossl_inline ossl_unused uint32_t maximum(uint32_t x, uint32_t y)
+{
+    return constant_time_select_int(constant_time_lt(x, y), y, x);
 }
 
 #endif /* OSSL_CRYPTO_ML_DSA_LOCAL_H */

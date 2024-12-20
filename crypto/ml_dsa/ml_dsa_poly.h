@@ -15,6 +15,12 @@ struct poly_st {
     uint32_t coeff[ML_DSA_NUM_POLY_COEFFICIENTS];
 };
 
+static ossl_inline ossl_unused void
+poly_zero(POLY *p)
+{
+    memset(p->coeff, 0, sizeof(*p));
+}
+
 /**
  * @brief Polynomial addition.
  *
@@ -58,6 +64,29 @@ poly_equal(const POLY *a, const POLY *b)
     return CRYPTO_memcmp(a, b, sizeof(*a)) == 0;
 }
 
+static ossl_inline ossl_unused void
+poly_ntt(POLY *p)
+{
+    ossl_ml_dsa_poly_ntt(p);
+}
+
+static ossl_inline ossl_unused int
+poly_sample_in_ball_ntt(POLY *out, const uint8_t *seed, int seed_len,
+                        EVP_MD_CTX *h_ctx, uint32_t tau)
+{
+    if (!ossl_ml_dsa_poly_sample_in_ball(out, seed, seed_len, h_ctx, tau))
+        return 0;
+    poly_ntt(out);
+    return 1;
+}
+
+static ossl_inline ossl_unused int
+poly_expand_mask(POLY *out, const uint8_t *seed, size_t seed_len,
+                 uint32_t gamma1, EVP_MD_CTX *h_ctx)
+{
+    return ossl_ml_dsa_poly_expand_mask(out, seed, seed_len, gamma1, h_ctx);
+}
+
 /**
  * @brief Decompose the coefficients of a polynomial into (r1, r0) such that
  * coeff[i] == t1[i] * 2^13 + t0[i] mod q
@@ -76,5 +105,107 @@ poly_power2_round(const POLY *t, POLY *t1, POLY *t0)
 
     for (i = 0; i < ML_DSA_NUM_POLY_COEFFICIENTS; i++)
         ossl_ml_dsa_key_compress_power2_round(t->coeff[i],
-                                              &t1->coeff[i], &t0->coeff[i]);
+                                              t1->coeff + i, t0->coeff + i);
 }
+
+static ossl_inline ossl_unused void
+poly_scale_power2_round(POLY *in, POLY *out)
+{
+    int i;
+
+    for (i = 0; i < ML_DSA_NUM_POLY_COEFFICIENTS; i++)
+        out->coeff[i] = (in->coeff[i] << ML_DSA_D_BITS);
+}
+
+static ossl_inline ossl_unused void
+poly_high_bits(const POLY *in, uint32_t gamma2, POLY *out)
+{
+    int i;
+
+    for (i = 0; i < ML_DSA_NUM_POLY_COEFFICIENTS; i++)
+        out->coeff[i] = ossl_ml_dsa_key_compress_high_bits(in->coeff[i], gamma2);
+}
+
+static ossl_inline ossl_unused void
+poly_low_bits(const POLY *in, uint32_t gamma2, POLY *out)
+{
+    int i;
+
+    for (i = 0; i < ML_DSA_NUM_POLY_COEFFICIENTS; i++)
+        out->coeff[i] = ossl_ml_dsa_key_compress_low_bits(in->coeff[i], gamma2);
+}
+
+static ossl_inline ossl_unused void
+poly_make_hint(const POLY *ct0, const POLY *cs2, const POLY *w, uint32_t gamma2,
+               POLY *out)
+{
+    int i;
+
+    for (i = 0; i < ML_DSA_NUM_POLY_COEFFICIENTS; i++)
+        out->coeff[i] = ossl_ml_dsa_key_compress_make_hint(ct0->coeff[i],
+                                                           cs2->coeff[i],
+                                                           gamma2, w->coeff[i]);
+}
+
+static ossl_inline ossl_unused void
+poly_use_hint(const POLY *h, const POLY *r, uint32_t gamma2, POLY *out)
+{
+    int i;
+
+    for (i = 0; i < ML_DSA_NUM_POLY_COEFFICIENTS; i++)
+        out->coeff[i] = ossl_ml_dsa_key_compress_use_hint(h->coeff[i],
+                                                          r->coeff[i], gamma2);
+}
+
+static ossl_inline ossl_unused void
+poly_max(const POLY *p, uint32_t *mx)
+{
+    int i;
+
+    for (i = 0; i < ML_DSA_NUM_POLY_COEFFICIENTS; i++) {
+        uint32_t c = p->coeff[i];
+        uint32_t abs = abs_mod_prime(c);
+
+        *mx = maximum(*mx, abs);
+    }
+}
+
+static ossl_inline ossl_unused void
+poly_max_signed(const POLY *p, uint32_t *mx)
+{
+    int i;
+
+    for (i = 0; i < ML_DSA_NUM_POLY_COEFFICIENTS; i++) {
+        uint32_t c = p->coeff[i];
+        uint32_t abs = abs_signed(c);
+
+        *mx = maximum(*mx, abs);
+    }
+}
+
+#if defined(ML_DSA_DEBUG)
+static ossl_inline ossl_unused void poly_print(const POLY *p)
+{
+    size_t i;
+
+    for (i = 0; i < ML_DSA_NUM_POLY_COEFFICIENTS; ++i) {
+        if (i > 0 && ((i & 31) == 0))
+            printf("\n");
+        printf("%3x,", p->coeff[i]);
+    }
+    printf("\n");
+}
+
+static ossl_inline ossl_unused void poly_print_signed(const POLY *p)
+{
+    size_t i;
+
+    for (i = 0; i < ML_DSA_NUM_POLY_COEFFICIENTS; ++i) {
+        if (i > 0 && ((i & 31) == 0))
+            printf("\n");
+        printf("%3d,", p->coeff[i] > ML_DSA_Q_MINUS1_DIV2
+                       ? (int)p->coeff[i] - (int)ML_DSA_Q : (int)p->coeff[i]);
+    }
+    printf("\n");
+}
+#endif
