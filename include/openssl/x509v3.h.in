@@ -727,7 +727,6 @@ int X509V3_extensions_print(BIO *out, const char *title,
 int X509_check_ca(X509 *x);
 int X509_check_purpose(X509 *x, int id, int ca);
 int X509_supported_extension(X509_EXTENSION *ex);
-int X509_PURPOSE_set(int *p, int purpose);
 int X509_check_issued(X509 *issuer, X509 *subject);
 int X509_check_akid(const X509 *issuer, const AUTHORITY_KEYID *akid);
 void X509_set_proxy_flag(X509 *x);
@@ -743,22 +742,26 @@ const GENERAL_NAMES *X509_get0_authority_issuer(X509 *x);
 const ASN1_INTEGER *X509_get0_authority_serial(X509 *x);
 
 int X509_PURPOSE_get_count(void);
-X509_PURPOSE *X509_PURPOSE_get0(int idx);
+int X509_PURPOSE_get_fresh_id(void);
 int X509_PURPOSE_get_by_sname(const char *sname);
 int X509_PURPOSE_get_by_id(int id);
 int X509_PURPOSE_add(int id, int trust, int flags,
                      int (*ck) (const X509_PURPOSE *, const X509 *, int),
                      const char *name, const char *sname, void *arg);
+void X509_PURPOSE_cleanup(void);
+
+X509_PURPOSE *X509_PURPOSE_get0(int idx);
+int X509_PURPOSE_get_id(const X509_PURPOSE *);
 char *X509_PURPOSE_get0_name(const X509_PURPOSE *xp);
 char *X509_PURPOSE_get0_sname(const X509_PURPOSE *xp);
 int X509_PURPOSE_get_trust(const X509_PURPOSE *xp);
-void X509_PURPOSE_cleanup(void);
-int X509_PURPOSE_get_id(const X509_PURPOSE *);
+int X509_PURPOSE_set(int *p, int purpose);
 
 STACK_OF(OPENSSL_STRING) *X509_get1_email(X509 *x);
 STACK_OF(OPENSSL_STRING) *X509_REQ_get1_email(X509_REQ *x);
 void X509_email_free(STACK_OF(OPENSSL_STRING) *sk);
 STACK_OF(OPENSSL_STRING) *X509_get1_ocsp(X509 *x);
+
 /* Flags for X509_check_* functions */
 
 /*

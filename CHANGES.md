@@ -70,6 +70,14 @@ OpenSSL 3.5
 
    *David von Oheimb*
 
+ * `X509_PURPOSE_add()` has been fixed to take as the primary purpose identifier
+   not the `id` but the `sname` parameter.
+   For its convenient use, `X509_PURPOSE_get_fresh_id()` has been added.
+
+   This work was sponsored by Siemens AG.
+
+   *David von Oheimb*
+
  * Optionally allow the FIPS provider to use the `JITTER` entropy source.
    Note that using this option will require the resulting FIPS provider
    to undergo entropy source validation [ESV] by the [CMVP], without this
