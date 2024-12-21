@@ -29,9 +29,10 @@ see L<openssl_user_macros(7)>:
 EVP_PKEY_set1_encoded_public_key() can be used to set the public key value
 within an existing EVP_PKEY object, which does not yet have a either a
 public or private key assigned. For the built-in OpenSSL algorithms this
-currently only works for those that support key exchange. Parameters are not
-set as part of this operation, so typically an application will create an
-EVP_PKEY first, set the parameters on it, and then call this function.
+currently only works for those that support key exchange or key encapsulation.
+Parameters are not set as part of this operation, so typically an application
+will create an EVP_PKEY first, set the parameters on it, and then call this
+function.
 For example setting the parameters might be done using
 L<EVP_PKEY_copy_parameters(3)>.
 

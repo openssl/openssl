@@ -104,4 +104,4 @@ following command to generate an X25519 key:
 
   openssl genpkey -algorithm X25519 -out xkey.pem
 
-=for comment (TODO(ML-KEM)) Likewise ML-KEM once we have codecs.
+# TODO(ML-KEM) Likewise ML-KEM once we have codecs.

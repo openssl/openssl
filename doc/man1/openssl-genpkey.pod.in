@@ -141,8 +141,8 @@ algorithm can vary. The options for the OpenSSL implementations are detailed
 below. There are no key generation options defined for the X25519, X448, ED25519
 or ED448 algorithms.
 
-=for comment Soon also ML-KEM, once we have a standard private key format (and
-             a PEM header name) and encoders/decoders.
+=for comment TODO(ML-KEM) Soon also ML-KEM, once we have a standard private key
+             format (and a PEM header name) and encoders/decoders.
 
 =head2 RSA Key Generation Options
 
