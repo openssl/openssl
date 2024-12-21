@@ -1,6 +1,6 @@
 /*
  * Copyright 2024 The OpenSSL Project Authors. All Rights Reserved.
-
+ *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
@@ -16,7 +16,6 @@
 # include <openssl/e_os2.h>
 # include <openssl/core_dispatch.h>
 # include <crypto/evp.h>
-# include <crypto/types.h>
 
 # define ML_KEM_DEGREE 256
 /*
@@ -24,13 +23,8 @@
  * of unity, the polynomial (X^256+1) splits in Z_q[X] into 128 irreducible
  * quadratic factors of the form (X^2 - zeta^(2i + 1)).  This is used to
  * implement efficient multiplication in the ring R_q via the "NTT" transform.
- *
- * 12 bits are sufficient to losslessly represent values in [0, q-1].
- * INVERSE_DEGREE is (n/2)^-1 mod q; used in inverse NTT.
  */
 # define ML_KEM_PRIME          (ML_KEM_DEGREE * 13 + 1)
-# define ML_KEM_LOG2PRIME      12
-# define ML_KEM_INVERSE_DEGREE (ML_KEM_PRIME - 2 * 13)
 
 /*
  * Various ML-KEM primitives need random input, 32-bytes at a time.  Key
@@ -90,86 +84,50 @@
  */
 
 /*
- * The wire form of a losslessly encoded vector (12-bits per element)
- */
-# define ML_KEM_VECTOR_BYTES(rank) \
-    ((3 * ML_KEM_DEGREE / 2) * (rank))
-
-/*
- * The wire-form public key consists of the lossless encoding of the vector
- * "t" = "A" * "s" + "e", followed by public seed "rho".
- */
-# define ML_KEM_PUBKEY_BYTES(rank) \
-    (ML_KEM_VECTOR_BYTES(rank) + ML_KEM_RANDOM_BYTES)
-
-/*
- * Our internal serialised private key concatenates serialisations of "s", the
- * public key, the public key hash, and the failure secret "z".
- */
-# define ML_KEM_PRVKEY_BYTES(rank) \
-    (ML_KEM_VECTOR_BYTES(rank) + ML_KEM_PUBKEY_BYTES(rank) \
-     + ML_KEM_PKHASH_BYTES + ML_KEM_RANDOM_BYTES)
-
-/*
- * Encapsulation produces a vector "u" and a scalar "v", whose coordinates
- * (numbers modulo the ML-KEM prime "q") are lossily encoded using as "du" and
- * "dv" bits, respectively.  This encoding is the ciphertext input for
- * decapsulation.
- */
-# define ML_KEM_U_VECTOR_BYTES(rank, du) \
-    ((ML_KEM_DEGREE / 8) * (du) * (rank))
-# define ML_KEM_V_SCALAR_BYTES(dv) \
-    ((ML_KEM_DEGREE / 8) * (dv))
-# define ML_KEM_CTEXT_BYTES(rank, du, dv) \
-    (ML_KEM_U_VECTOR_BYTES(rank, du) + ML_KEM_V_SCALAR_BYTES(dv))
-
-/*
  * Variant-specific constants and structures
  * -----------------------------------------
  */
-# define ML_KEM_512_RANK       2
-# define ML_KEM_512_ETA1       3
-# define ML_KEM_512_ETA2       2
-# define ML_KEM_512_DU         10
-# define ML_KEM_512_DV         4
-# define ML_KEM_512_RNGSEC     128
+# define ML_KEM_512_VARIANT     0
+# define ML_KEM_512_BITS        512
+# define ML_KEM_512_RANK        2
+# define ML_KEM_512_ETA1        3
+# define ML_KEM_512_ETA2        2
+# define ML_KEM_512_DU          10
+# define ML_KEM_512_DV          4
+# define ML_KEM_512_SECBITS     128
 
-# define ML_KEM_768_RANK       3
-# define ML_KEM_768_ETA1       2
-# define ML_KEM_768_ETA2       2
-# define ML_KEM_768_DU         10
-# define ML_KEM_768_DV         4
-# define ML_KEM_768_RNGSEC     192
+# define ML_KEM_768_VARIANT     1
+# define ML_KEM_768_BITS        768
+# define ML_KEM_768_RANK        3
+# define ML_KEM_768_ETA1        2
+# define ML_KEM_768_ETA2        2
+# define ML_KEM_768_DU          10
+# define ML_KEM_768_DV          4
+# define ML_KEM_768_SECBITS     192
 
-# define ML_KEM_1024_RANK      4
-# define ML_KEM_1024_ETA1      2
-# define ML_KEM_1024_ETA2      2
-# define ML_KEM_1024_DU        11
-# define ML_KEM_1024_DV        5
-# define ML_KEM_1024_RNGSEC    256
+# define ML_KEM_1024_VARIANT    2
+# define ML_KEM_1024_BITS       1024
+# define ML_KEM_1024_RANK       4
+# define ML_KEM_1024_ETA1       2
+# define ML_KEM_1024_ETA2       2
+# define ML_KEM_1024_DU         11
+# define ML_KEM_1024_DV         5
+# define ML_KEM_1024_SECBITS    256
 
 /*
  * External variant-specific API
  * -----------------------------
  */
 
-/*
- * Each variant parameter set is associated with an ordinal number which
- * represents that parameter set.
- */
-# define ML_KEM_512     0
-# define ML_KEM_768     1
-# define ML_KEM_1024    2
-
 typedef struct {
     const char *algorithm_name;
-    size_t vector_bytes;
     size_t prvkey_bytes;
-    size_t pubkey_bytes;
-    size_t ctext_bytes;
-    size_t u_vector_bytes;
-    size_t puballoc;
     size_t prvalloc;
+    size_t pubkey_bytes;
+    size_t puballoc;
+    size_t ctext_bytes;
+    size_t vector_bytes;
+    size_t u_vector_bytes;
     int variant;
     int bits;
     int rank;
@@ -182,7 +140,7 @@ typedef struct {
 const ML_KEM_VINFO *ossl_ml_kem_get_vinfo(int variant);
 
 /* Known as ML_KEM_KEY via crypto/types.h */
-struct ossl_ml_kem_key_st {
+typedef struct ossl_ml_kem_key_st {
     /* Variant metadata, for one of ML-KEM-{512,768,1024} */
     const ML_KEM_VINFO *vinfo;
 
@@ -207,11 +165,12 @@ struct ossl_ml_kem_key_st {
     struct ossl_ml_kem_scalar_st *m;        /* Pre-computed pubkey matrix */
     struct ossl_ml_kem_scalar_st *s;        /* Private key secret vector */
     uint8_t *z;                             /* Private key FO failure secret */
+    uint8_t *d;                             /* Private key seed */
 
     /* Fixed-size/offset built-ins */
     uint8_t rho[ML_KEM_RANDOM_BYTES];       /* Matrix recovery seed */
     uint8_t pkhash[ML_KEM_PKHASH_BYTES];    /* Hash of wire-form public key */
-};
+} ML_KEM_KEY;
 
 /* The public key is always present, when the private is */
 # define ossl_ml_kem_key_vinfo(key)        ((key)->vinfo)
@@ -221,8 +180,6 @@ struct ossl_ml_kem_key_st {
 /*
  * ----- ML-KEM key lifecycle
  */
-
-# ifndef OPENSSL_NO_ML_KEM
 
 /*
  * Allocate a "bare" key for given ML-KEM variant. Initially without any public
@@ -257,13 +214,9 @@ __owur
 int ossl_ml_kem_parse_private_key(const uint8_t *in, size_t len,
                                   ML_KEM_KEY *key);
 __owur
-int ossl_ml_kem_genkey_rand(uint8_t *seed, size_t seedlen,
-                            uint8_t *pubenc, size_t publen,
-                            ML_KEM_KEY *key);
-__owur
-int ossl_ml_kem_genkey_seed(const uint8_t *seed, size_t seed_len,
-                            uint8_t *pubenc, size_t publen,
-                            ML_KEM_KEY *key);
+int ossl_ml_kem_genkey(const uint8_t *d, const uint8_t *z,
+                       uint8_t *pubenc, size_t publen,
+                       ML_KEM_KEY *key);
 
 /*
  * Perform an ML-KEM operation with a given ML-KEM key.  The key can generally
@@ -294,7 +247,5 @@ int ossl_ml_kem_decap(uint8_t *shared_secret, size_t slen,
 /* Compare the public key hashes of two keys */
 __owur
 int ossl_ml_kem_pubkey_cmp(const ML_KEM_KEY *key1, const ML_KEM_KEY *key2);
-
-# endif /* OPENSSL_NO_ML_KEM */
 
 #endif  /* OPENSSL_HEADER_ML_KEM_H */
