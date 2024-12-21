@@ -31,10 +31,10 @@ static OSSL_FUNC_kem_set_ctx_params_fn ml_kem_set_ctx_params;
 static OSSL_FUNC_kem_settable_ctx_params_fn ml_kem_settable_ctx_params;
 
 typedef struct {
-    OSSL_LIB_CTX *libctx;
     ML_KEM_KEY *key;
     uint8_t entropy_buf[ML_KEM_RANDOM_BYTES];
     uint8_t *entropy;
+    int op;
 } PROV_ML_KEM_CTX;
 
 static void *ml_kem_newctx(void *provctx)
@@ -44,9 +44,9 @@ static void *ml_kem_newctx(void *provctx)
     if ((ctx = OPENSSL_malloc(sizeof(*ctx))) == NULL)
         return NULL;
 
-    ctx->libctx = PROV_LIBCTX_OF(provctx);
     ctx->key = NULL;
     ctx->entropy = NULL;
+    ctx->op = 0;
     return ctx;
 }
 
@@ -59,7 +59,7 @@ static void ml_kem_freectx(void *vctx)
     OPENSSL_free(ctx);
 }
 
-static int ml_kem_init(void *vctx, int unused_op, void *key,
+static int ml_kem_init(void *vctx, int op, void *key,
                        const OSSL_PARAM params[])
 {
     PROV_ML_KEM_CTX *ctx = vctx;
@@ -67,6 +67,7 @@ static int ml_kem_init(void *vctx, int unused_op, void *key,
     if (!ossl_prov_is_running())
         return 0;
     ctx->key = key;
+    ctx->op = op;
     return ml_kem_set_ctx_params(vctx, params);
 }
 
@@ -101,10 +102,19 @@ static int ml_kem_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 
     if (ctx == NULL)
         return 0;
+
+    if (ctx->op == EVP_PKEY_OP_DECAPSULATE && ctx->entropy != NULL) {
+        /* Decapsulation is deterministic */
+        OPENSSL_cleanse(ctx->entropy, ML_KEM_RANDOM_BYTES);
+        ctx->entropy = NULL;
+    }
+
     if (ossl_param_is_empty(params))
         return 1;
 
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_KEM_PARAM_IKME)) != NULL) {
+    /* Encapsulation ephemeral input key material "ikmE" */
+    if (ctx->op == EVP_PKEY_OP_ENCAPSULATE
+        && (p = OSSL_PARAM_locate_const(params, OSSL_KEM_PARAM_IKME)) != NULL) {
         size_t len = ML_KEM_RANDOM_BYTES;
 
         ctx->entropy = ctx->entropy_buf;
@@ -118,6 +128,7 @@ static int ml_kem_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         ctx->entropy = NULL;
         return 0;
     }
+
     return 1;
 }
 
@@ -132,12 +143,14 @@ static const OSSL_PARAM *ml_kem_settable_ctx_params(ossl_unused void *vctx,
     return params;
 }
 
-static int ml_kem_encapsulate(void *vctx, unsigned char *out, size_t *outlen,
-                              unsigned char *secret, size_t *secretlen)
+static int ml_kem_encapsulate(void *vctx, unsigned char *ctext, size_t *clen,
+                              unsigned char *shsec, size_t *slen)
 {
     PROV_ML_KEM_CTX *ctx = vctx;
     ML_KEM_KEY *key = ctx->key;
     const ML_KEM_VINFO *v;
+    size_t encap_clen;
+    size_t encap_slen;
     int ret = 0;
 
     if (!ossl_ml_kem_have_pubkey(key)) {
@@ -145,42 +158,59 @@ static int ml_kem_encapsulate(void *vctx, unsigned char *out, size_t *outlen,
         goto end;
     }
     v = ossl_ml_kem_key_vinfo(key);
+    encap_clen = v->ctext_bytes;
+    encap_slen = ML_KEM_SHARED_SECRET_BYTES;
 
-    if (out == NULL) {
-        if (outlen == NULL && secretlen == NULL)
+    if (ctext == NULL) {
+        if (clen == NULL && slen == NULL)
             return 0;
-        if (outlen != NULL)
-            *outlen = v->ctext_bytes;
-        if (secretlen != NULL)
-            *secretlen = ML_KEM_SHARED_SECRET_BYTES;
+        if (clen != NULL)
+            *clen = encap_clen;
+        if (slen != NULL)
+            *slen = encap_slen;
         return 1;
     }
-
-    if (*secretlen < ML_KEM_SHARED_SECRET_BYTES) {
-        ERR_raise_data(ERR_LIB_PROV, PROV_R_BAD_LENGTH,
-                       "short ML-KEM encapsulate shared secret");
-        goto end;
-    }
-    if (*outlen < v->ctext_bytes) {
-        ERR_raise_data(ERR_LIB_PROV, PROV_R_BAD_LENGTH,
-                       "short ML-KEM encapsulate ciphertext");
+    if (shsec == NULL) {
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL,
+                       "NULL shared-secret buffer");
         goto end;
     }
 
-    if (secret == NULL) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_SECRET);
+    /* For now tolerate newly-deprecated NULL length pointers. */
+    if (clen == NULL) {
+        clen = &encap_clen;
+    } else if (*clen < encap_clen) {
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL,
+                       "ciphertext buffer too small");
         goto end;
+    } else {
+        *clen = encap_clen;
     }
 
-    *secretlen = ML_KEM_SHARED_SECRET_BYTES;
-    *outlen = v->ctext_bytes;
+    if (slen == NULL) {
+        slen = &encap_slen;
+    } else if (*slen < encap_slen) {
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL,
+                       "shared-secret buffer too small");
+        goto end;
+    } else {
+        *slen = encap_slen;
+    }
+
     if (ctx->entropy != NULL)
-        ret = ossl_ml_kem_encap_seed(out, *outlen, secret, *secretlen,
-                                      ctx->entropy, ML_KEM_RANDOM_BYTES, key);
+        ret = ossl_ml_kem_encap_seed(ctext, encap_clen, shsec, encap_slen,
+                                     ctx->entropy, ML_KEM_RANDOM_BYTES, key);
     else
-        ret = ossl_ml_kem_encap_rand(out, *outlen, secret, *secretlen, key);
+        ret = ossl_ml_kem_encap_rand(ctext, encap_clen, shsec, encap_slen, key);
 
   end:
+    /*
+     * One shot entropy, each encapsulate call must either provide a new
+     * "ikmE", or else will use a random value.  If a caller sets an explicit
+     * ikmE once for testing, and later performs multiple encapsulations
+     * without again calling encapsulate_init(), these should not share the
+     * original entropy.
+     */
     if (ctx->entropy != NULL) {
         OPENSSL_cleanse(ctx->entropy, ML_KEM_RANDOM_BYTES);
         ctx->entropy = NULL;
@@ -188,33 +218,38 @@ static int ml_kem_encapsulate(void *vctx, unsigned char *out, size_t *outlen,
     return ret;
 }
 
-static int ml_kem_decapsulate(void *vctx, unsigned char *out, size_t *outlen,
-                              const unsigned char *in, size_t inlen)
+static int ml_kem_decapsulate(void *vctx, uint8_t *shsec, size_t *slen,
+                              const uint8_t *ctext, size_t clen)
 {
     PROV_ML_KEM_CTX *ctx = vctx;
     ML_KEM_KEY *key = ctx->key;
+    size_t decap_slen = ML_KEM_SHARED_SECRET_BYTES;
 
     if (!ossl_ml_kem_have_prvkey(key)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_KEY);
         return 0;
     }
 
-    if (out == NULL) {
-        if (outlen == NULL)
+    if (shsec == NULL) {
+        if (slen == NULL)
             return 0;
-        *outlen = ML_KEM_SHARED_SECRET_BYTES;
+        *slen = ML_KEM_SHARED_SECRET_BYTES;
         return 1;
     }
 
-    if (*outlen < ML_KEM_SHARED_SECRET_BYTES) {
-        ERR_raise_data(ERR_LIB_PROV, PROV_R_BAD_LENGTH,
-                       "short ML-KEM decapsulate shared secret");
+    /* For now tolerate newly-deprecated NULL length pointers. */
+    if (slen == NULL) {
+        slen = &decap_slen;
+    } else if (*slen < decap_slen) {
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL,
+                       "shared-secret buffer too small");
         return 0;
+    } else {
+        *slen = decap_slen;
     }
 
     /* ML-KEM decap handles incorrect ciphertext lengths internally */
-    *outlen = ML_KEM_SHARED_SECRET_BYTES;
-    return ossl_ml_kem_decap(out, *outlen, in, inlen, key);
+    return ossl_ml_kem_decap(shsec, decap_slen, ctext, clen, key);
 }
 
 typedef void (*func_ptr_t)(void);
