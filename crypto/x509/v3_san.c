@@ -320,9 +320,10 @@ static GENERAL_NAMES *v2i_issuer_alt(X509V3_EXT_METHOD *method,
         } else {
             GENERAL_NAME *gen = v2i_GENERAL_NAME(method, ctx, cnf);
 
-            if (gen == NULL)
+            if (gen == NULL
+                /* no failure as it was reserved */
+                || ! ossl_assert(sk_GENERAL_NAME_push(gens, gen)))
                 goto err;
-            sk_GENERAL_NAME_push(gens, gen); /* no failure as it was reserved */
         }
     }
     return gens;
@@ -363,7 +364,9 @@ static int copy_issuer(X509V3_CTX *ctx, GENERAL_NAMES *gens)
 
     for (i = 0; i < num; i++) {
         gen = sk_GENERAL_NAME_value(ialt, i);
-        sk_GENERAL_NAME_push(gens, gen);     /* no failure as it was reserved */
+        /* no failure as it was reserved */
+        if (!ossl_assert(sk_GENERAL_NAME_push(gens, gen)))
+            goto err;
     }
     sk_GENERAL_NAME_free(ialt);
 
@@ -402,9 +405,10 @@ static GENERAL_NAMES *v2i_subject_alt(X509V3_EXT_METHOD *method,
                 goto err;
         } else {
             GENERAL_NAME *gen;
-            if ((gen = v2i_GENERAL_NAME(method, ctx, cnf)) == NULL)
+            if ((gen = v2i_GENERAL_NAME(method, ctx, cnf)) == NULL
+                   /* no failure as it was reserved */
+                || !ossl_assert(sk_GENERAL_NAME_push(gens, gen)))
                 goto err;
-            sk_GENERAL_NAME_push(gens, gen); /* no failure as it was reserved */
         }
     }
     return gens;
@@ -487,9 +491,10 @@ GENERAL_NAMES *v2i_GENERAL_NAMES(const X509V3_EXT_METHOD *method,
 
     for (i = 0; i < num; i++) {
         cnf = sk_CONF_VALUE_value(nval, i);
-        if ((gen = v2i_GENERAL_NAME(method, ctx, cnf)) == NULL)
+        if ((gen = v2i_GENERAL_NAME(method, ctx, cnf)) == NULL
+               /* no failure as it was reserved */
+            || !ossl_assert(sk_GENERAL_NAME_push(gens, gen)))
             goto err;
-        sk_GENERAL_NAME_push(gens, gen);    /* no failure as it was reserved */
     }
     return gens;
  err:

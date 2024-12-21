@@ -453,7 +453,8 @@ int x509_main(int argc, char **argv)
                            prog, opt_arg());
                 goto opthelp;
             }
-            sk_ASN1_OBJECT_push(trust, objtmp);
+            if (!sk_ASN1_OBJECT_push(trust, objtmp))
+                goto end;
             trustout = 1;
             break;
         case OPT_ADDREJECT:
@@ -464,7 +465,8 @@ int x509_main(int argc, char **argv)
                            prog, opt_arg());
                 goto opthelp;
             }
-            sk_ASN1_OBJECT_push(reject, objtmp);
+            if (!sk_ASN1_OBJECT_push(trust, objtmp))
+                goto end;
             trustout = 1;
             break;
         case OPT_SETALIAS:

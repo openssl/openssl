@@ -264,9 +264,10 @@ static void *v2i_crld(const X509V3_EXT_METHOD *method,
                 goto err;
             point = crldp_from_section(ctx, dpsect);
             X509V3_section_free(ctx, dpsect);
-            if (point == NULL)
+            if (point == NULL
+                   /* no failure as it was reserved */
+                || !ossl_assert(sk_DIST_POINT_push(crld, point)))
                 goto err;
-            sk_DIST_POINT_push(crld, point); /* no failure as it was reserved */
         } else {
             if ((gen = v2i_GENERAL_NAME(method, ctx, cnf)) == NULL)
                 goto err;
@@ -279,11 +280,13 @@ static void *v2i_crld(const X509V3_EXT_METHOD *method,
                 goto err;
             }
             gen = NULL;
-            if ((point = DIST_POINT_new()) == NULL) {
+            if ((point = DIST_POINT_new()) == NULL
+                /* no failure as it was reserved */
+                || !ossl_assert(sk_DIST_POINT_push(crld, point))) {
+                DIST_POINT_free(point);
                 ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
                 goto err;
             }
-            sk_DIST_POINT_push(crld, point); /* no failure as it was reserved */
             if ((point->distpoint = DIST_POINT_NAME_new()) == NULL) {
                 ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
                 goto err;

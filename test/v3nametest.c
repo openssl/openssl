@@ -157,7 +157,8 @@ static int set_altname(X509 *crt, ...)
         default:
             abort();
         }
-        sk_GENERAL_NAME_push(gens, gen);
+        if (!sk_GENERAL_NAME_push(gens, gen))
+            goto out;
         gen = NULL;
     }
     if (!X509_add1_ext_i2d(crt, NID_subject_alt_name, gens, 0, 0))

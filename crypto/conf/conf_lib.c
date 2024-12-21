@@ -228,6 +228,7 @@ static void collect_section_name(const CONF_VALUE *v, SECTION_NAMES *names)
 {
     /* A section is a CONF_VALUE with name == NULL */
     if (v->name == NULL)
+        /* TODO: Handle a failure? */
         sk_OPENSSL_CSTRING_push(names, v->section);
 }
 
