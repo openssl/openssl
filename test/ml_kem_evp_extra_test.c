@@ -230,7 +230,7 @@ static int test_non_derandomised_ml_kem(void)
     if (!TEST_ptr(sha256 = EVP_MD_fetch(NULL, "sha256", NULL)))
         return 0;
 
-    for (i = ML_KEM_512; i < ML_KEM_1024; ++i) {
+    for (i = ML_KEM_512_VARIANT; i < ML_KEM_1024_VARIANT; ++i) {
         const ML_KEM_VINFO *v;
         OSSL_PARAM params[3], *p;
         uint8_t hash[32];
