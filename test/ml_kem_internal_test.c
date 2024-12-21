@@ -107,7 +107,7 @@ static int sanity_test(void)
 
     decap_entropy = ml_kem_public_entropy + ML_KEM_RANDOM_BYTES;
 
-    for (i = ML_KEM_512; i < ML_KEM_1024; ++i) {
+    for (i = ML_KEM_512_VARIANT; i < ML_KEM_1024_VARIANT; ++i) {
         OSSL_PARAM params[3];
         uint8_t hash[32];
         uint8_t shared_secret[ML_KEM_SHARED_SECRET_BYTES];
@@ -145,8 +145,8 @@ static int sanity_test(void)
 
         ret2 = -2;
         /* Generate a private key */
-        if (!ossl_ml_kem_genkey_rand(NULL, 0, encoded_public_key,
-                                     v->pubkey_bytes, private_key))
+        if (!ossl_ml_kem_genkey(NULL, NULL, encoded_public_key,
+                                v->pubkey_bytes, private_key))
             goto done;
 
         /* Check that no more entropy is available! */
