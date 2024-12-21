@@ -593,23 +593,20 @@ OSSL_CMP_MSG *ossl_cmp_rp_new(OSSL_CMP_CTX *ctx, const OSSL_CMP_PKISI *si,
         goto err;
     rep = msg->body->value.rp;
 
-    if ((si1 = OSSL_CMP_PKISI_dup(si)) == NULL)
+    if ((si1 = OSSL_CMP_PKISI_dup(si)) == NULL
+            || !sk_OSSL_CMP_PKISI_push(rep->status, si1))
         goto err;
 
-    if (!sk_OSSL_CMP_PKISI_push(rep->status, si1)) {
-        OSSL_CMP_PKISI_free(si1);
-        goto err;
-    }
+    si1 = NULL; /* ownership transferred to rep->status */
 
     if ((rep->revCerts = sk_OSSL_CRMF_CERTID_new_null()) == NULL)
         goto err;
     if (cid != NULL) {
-        if ((cid_copy = OSSL_CRMF_CERTID_dup(cid)) == NULL)
+        if ((cid_copy = OSSL_CRMF_CERTID_dup(cid)) == NULL
+                || !sk_OSSL_CRMF_CERTID_push(rep->revCerts, cid_copy))
             goto err;
-        if (!sk_OSSL_CRMF_CERTID_push(rep->revCerts, cid_copy)) {
-            OSSL_CRMF_CERTID_free(cid_copy);
-            goto err;
-        }
+
+        cid_copy = NULL; /* ownership transferred to rep->revCerts */
     }
 
     if (!unprotectedErrors
@@ -621,6 +618,8 @@ OSSL_CMP_MSG *ossl_cmp_rp_new(OSSL_CMP_CTX *ctx, const OSSL_CMP_PKISI *si,
 
  err:
     ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_CREATING_RP);
+    OSSL_CMP_PKISI_free(si1);
+    OSSL_CRMF_CERTID_free(cid_copy);
     OSSL_CMP_MSG_free(msg);
     return NULL;
 }
