@@ -597,7 +597,7 @@ int cms_main(int argc, char **argv)
                 if (skkeys == NULL
                     && (skkeys = sk_OPENSSL_STRING_new_null()) == NULL)
                     goto end;
-                if (sk_OPENSSL_STRING_push(skkeys, keyfile))
+                if (!sk_OPENSSL_STRING_push(skkeys, keyfile))
                     goto end;
                 keyfile = NULL;
             }
