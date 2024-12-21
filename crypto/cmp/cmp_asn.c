@@ -666,8 +666,8 @@ static GENERAL_NAMES *gennames_new(const X509_NAME *nm)
     if ((names = sk_GENERAL_NAME_new_reserve(NULL, 1)) == NULL)
         return NULL;
     if (!GENERAL_NAME_set1_X509_NAME(&name, nm)
-            /* sk_GENERAL_NAME_push() cannot fail */
-        || !ossl_assert(sk_GENERAL_NAME_push(names, name);)) {
+        /* sk_GENERAL_NAME_push() cannot fail */
+        || !ossl_assert(sk_GENERAL_NAME_push(names, name))) {
         sk_GENERAL_NAME_free(names);
         return NULL;
     }

@@ -265,7 +265,7 @@ static void *v2i_crld(const X509V3_EXT_METHOD *method,
             point = crldp_from_section(ctx, dpsect);
             X509V3_section_free(ctx, dpsect);
             if (point == NULL
-                   /* no failure as it was reserved */
+                /* no failure as it was reserved */
                 || !ossl_assert(sk_DIST_POINT_push(crld, point)))
                 goto err;
         } else {

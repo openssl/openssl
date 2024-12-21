@@ -463,8 +463,7 @@ static int test_encode_tls_sct(void)
         return 0;
     }
 
-    if (!sk_SCT_push(fixture->sct_list, sct))
-    {
+    if (!sk_SCT_push(fixture->sct_list, sct)) {
         tear_down(fixture);
         return 0;
     }
