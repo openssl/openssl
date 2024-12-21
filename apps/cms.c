@@ -767,14 +767,12 @@ int cms_main(int argc, char **argv)
                 goto end;
             if (!sk_OPENSSL_STRING_push(sksigners, signerfile))
                 goto end;
-            signerfile = NULL;
             if (skkeys == NULL && (skkeys = sk_OPENSSL_STRING_new_null()) == NULL)
                 goto end;
             if (keyfile == NULL)
                 keyfile = signerfile;
             if (!sk_OPENSSL_STRING_push(skkeys, keyfile))
                 goto end;
-            keyfile = NULL;
         }
         if (sksigners == NULL) {
             BIO_printf(bio_err, "No signer certificate specified\n");
