@@ -353,10 +353,12 @@ int engine_main(int argc, char **argv)
             test_avail++;
             break;
         case OPT_PRE:
-            sk_OPENSSL_STRING_push(pre_cmds, opt_arg());
+            if (sk_OPENSSL_STRING_push(pre_cmds, opt_arg()) <= 0)
+                goto end;
             break;
         case OPT_POST:
-            sk_OPENSSL_STRING_push(post_cmds, opt_arg());
+            if (sk_OPENSSL_STRING_push(post_cmds, opt_arg()) <= 0)
+                goto end;
             break;
         }
     }

@@ -328,7 +328,8 @@ int pkcs12_main(int argc, char **argv)
             if (canames == NULL
                 && (canames = sk_OPENSSL_STRING_new_null()) == NULL)
                 goto end;
-            sk_OPENSSL_STRING_push(canames, opt_arg());
+            if (sk_OPENSSL_STRING_push(canames, opt_arg()) <= 0)
+                goto end;
             break;
         case OPT_IN:
             infile = opt_arg();
