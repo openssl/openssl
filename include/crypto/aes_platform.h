@@ -29,6 +29,23 @@ void vpaes_cbc_encrypt(const unsigned char *in,
 # endif /* VPAES_ASM */
 
 # ifdef BSAES_ASM
+
+#  if defined(OPENSSL_AES_CONST_TIME) && !defined(AES_ASM)
+int ossl_bsaes_set_encrypt_key(const unsigned char *userKey, const int bits,
+                               AES_KEY *key);
+int ossl_bsaes_set_decrypt_key(const unsigned char *userKey, const int bits,
+                               AES_KEY *key);
+void ossl_bsaes_encrypt(const unsigned char *in, unsigned char *out,
+                        const AES_KEY *key);
+void ossl_bsaes_decrypt(const unsigned char *in, unsigned char *out,
+                        const AES_KEY *key);
+#  else
+#   define ossl_bsaes_set_encrypt_key AES_set_encrypt_key
+#   define ossl_bsaes_set_decrypt_key AES_set_decrypt_key
+#   define ossl_bsaes_encrypt         AES_encrypt
+#   define ossl_bsaes_decrypt         AES_decrypt
+#  endif
+
 void ossl_bsaes_cbc_encrypt(const unsigned char *in, unsigned char *out,
                             size_t length, const AES_KEY *key,
                             unsigned char ivec[16], int enc);
