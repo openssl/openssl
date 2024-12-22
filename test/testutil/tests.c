@@ -453,16 +453,22 @@ static const char *print_time(const ASN1_TIME *t)
                                const char *s1, const char *s2,          \
                                const time_t t1, const time_t t2)        \
     {                                                                   \
-        ASN1_TIME *at1 = ASN1_TIME_set(NULL, t1);                       \
-        ASN1_TIME *at2 = ASN1_TIME_set(NULL, t2);                       \
-        int r = at1 != NULL && at2 != NULL                              \
+        int r;                                                          \
+        ASN1_TIME *at1, *at2;                                           \
+        if (t1 op t2) {                                                 \
+            r = 1;                                                      \
+        } else {                                                        \
+            at1 = ASN1_TIME_set(NULL, t1);                              \
+            at2 = ASN1_TIME_set(NULL, t2);                              \
+            r = at1 != NULL && at2 != NULL                              \
                 && ASN1_TIME_compare(at1, at2) op 0;                    \
-        if (!r)                                                         \
-            test_fail_message(NULL, file, line, "time_t", s1, s2, #op,  \
-                              "[%s] compared to [%s]",                  \
-                              print_time(at1), print_time(at2));        \
-        ASN1_STRING_free(at1);                                          \
-        ASN1_STRING_free(at2);                                          \
+            if (!r)                                                     \
+                test_fail_message(NULL, file, line, "time_t", s1, s2,   \
+                                  #op, "[%s] compared to [%s]",         \
+                                  print_time(at1), print_time(at2));    \
+            ASN1_STRING_free(at1);                                      \
+            ASN1_STRING_free(at2);                                      \
+        }                                                               \
         return r;                                                       \
     }
 DEFINE_TIME_T_COMPARISON(eq, ==)
