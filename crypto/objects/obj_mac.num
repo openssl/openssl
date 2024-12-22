@@ -1451,3 +1451,12 @@ tcg_tr_cat_platformFirmwareSignatureVerification		1450
 tcg_tr_cat_platformFirmwareUpdateCompliance		1451
 tcg_tr_cat_RTM		1452
 tcg_tr_cat_PublicKey		1453
+aes_128_cbc_hmac_sha1_etm		1454
+aes_192_cbc_hmac_sha1_etm		1455
+aes_256_cbc_hmac_sha1_etm		1456
+aes_128_cbc_hmac_sha256_etm		1457
+aes_192_cbc_hmac_sha256_etm		1458
+aes_256_cbc_hmac_sha256_etm		1459
+aes_128_cbc_hmac_sha512_etm		1460
+aes_192_cbc_hmac_sha512_etm		1461
+aes_256_cbc_hmac_sha512_etm		1462
