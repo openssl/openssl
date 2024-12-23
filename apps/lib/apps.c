@@ -3225,6 +3225,32 @@ BIO *bio_open_default_quiet(const char *filename, char mode, int format)
     return bio_open_default_(filename, mode, format, 1);
 }
 
+int mem_bio_to_file(BIO *in, const char *filename, int format, int private)
+{
+    int rv = 0, ret = 0;
+    BIO *out = NULL;
+    BUF_MEM *mem_buffer = NULL;
+
+    rv = BIO_get_mem_ptr(in, &mem_buffer);
+    if (rv <= 0) {
+        BIO_puts(bio_err, "Error reading mem buffer\n");
+        goto end;
+    }
+    out = bio_open_owner(filename, format, private);
+    if (out == NULL)
+        goto end;
+    rv = BIO_write(out, mem_buffer->data, mem_buffer->length);
+    if (rv < 0 || (size_t)rv != mem_buffer->length)
+        BIO_printf(bio_err, "Error writing to output file: '%s'\n", filename);
+    else
+        ret = 1;
+end:
+    if (!ret)
+        ERR_print_errors(bio_err);
+    BIO_free_all(out);
+    return ret;
+}
+
 void wait_for_async(SSL *s)
 {
     /* On Windows select only works for sockets, so we simply don't wait  */
