@@ -104,6 +104,7 @@ void BIO_ADDR_clear(BIO_ADDR *ap)
  */
 int BIO_ADDR_make(BIO_ADDR *ap, const struct sockaddr *sa)
 {
+    memset(ap, 0, sizeof(BIO_ADDR));
     if (sa->sa_family == AF_INET) {
         memcpy(&(ap->s_in), sa, sizeof(struct sockaddr_in));
         return 1;
