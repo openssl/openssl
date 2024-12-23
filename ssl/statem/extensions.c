@@ -73,6 +73,7 @@ static EXT_RETURN tls_construct_compress_certificate(SSL_CONNECTION *sc, WPACKET
 static int tls_parse_compress_certificate(SSL_CONNECTION *sc, PACKET *pkt,
                                           unsigned int context,
                                           X509 *x, size_t chainidx);
+static int init_encrypted_client_hello(SSL_CONNECTION *s, unsigned int context);
 
 /* Structure to define a built-in extension */
 typedef struct extensions_definition_st {
@@ -412,6 +413,12 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         tls_parse_certificate_authorities, tls_parse_certificate_authorities,
         tls_construct_certificate_authorities,
         tls_construct_certificate_authorities, NULL,
+    },
+    {
+        TLSEXT_TYPE_encrypted_client_hello,
+        SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_3_ONLY,
+        init_encrypted_client_hello, tls_parse_ctos_encrypted_client_hello,
+        NULL, NULL, NULL, NULL
     },
     {
         /* Must be immediately before pre_shared_key */
@@ -1941,5 +1948,11 @@ static int init_client_cert_type(SSL_CONNECTION *sc, unsigned int context)
         sc->ext.client_cert_type_ctos = OSSL_CERT_TYPE_CTOS_NONE;
         sc->ext.client_cert_type = TLSEXT_cert_type_x509;
     }
+    return 1;
+}
+
+int init_encrypted_client_hello(SSL_CONNECTION *sc, unsigned int context)
+{
+    sc->ext.ech_type = -1;
     return 1;
 }

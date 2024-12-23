@@ -541,6 +541,8 @@ int tls_parse_stoc_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
 
 int tls_handle_alpn(SSL_CONNECTION *s);
 
+int tls13_ech_generate_accept_confirm(SSL_CONNECTION *s, PACKET *pkt, unsigned char *out);
+
 int tls13_save_handshake_digest_for_pha(SSL_CONNECTION *s);
 int tls13_restore_handshake_digest_for_pha(SSL_CONNECTION *s);
 
@@ -570,3 +572,7 @@ int tls_parse_ctos_server_cert_type(SSL_CONNECTION *sc, PACKET *pkt,
 int tls_parse_stoc_server_cert_type(SSL_CONNECTION *s, PACKET *pkt,
                                     unsigned int context,
                                     X509 *x, size_t chainidx);
+
+int tls_parse_ctos_encrypted_client_hello(SSL_CONNECTION *sc, PACKET *pkt,
+                                          unsigned int context,
+                                          X509 *x, size_t chainidx);
