@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef OSSL_MLKEM_CONSTANTS_H
-# define OSSL_MLKEM_CONSTANTS_H
+#ifndef OPENSSL_ML_KEM_H
+# define OPENSSL_ML_KEM_H
 # pragma once
 
 # define OSSL_ML_KEM_SHARED_SECRET_BYTES    32

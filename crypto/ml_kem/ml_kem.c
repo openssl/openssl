@@ -105,7 +105,7 @@ typedef struct ossl_ml_kem_scalar_st {
     DECLARE_ML_KEM_KEYDATA(pubkey_##bits, ML_KEM_##bits##_RANK,;); \
     DECLARE_ML_KEM_KEYDATA(prvkey_##bits, ML_KEM_##bits##_RANK,;\
         scalar sbuf[ML_KEM_##bits##_RANK]; \
-        uint8_t zbuf[ML_KEM_RANDOM_BYTES];)
+        uint8_t zbuf[2 * ML_KEM_RANDOM_BYTES];)
 DECLARE_ML_KEM_VARIANT_KEYDATA(512);
 DECLARE_ML_KEM_VARIANT_KEYDATA(768);
 DECLARE_ML_KEM_VARIANT_KEYDATA(1024);
@@ -317,7 +317,7 @@ int hash_h(uint8_t out[ML_KEM_PKHASH_BYTES], const uint8_t *in, size_t len,
 /* Incremental hash_h of expanded public key */
 static int
 hash_h_pubkey(uint8_t pkhash[ML_KEM_PKHASH_BYTES],
-            EVP_MD_CTX *mdctx, ML_KEM_KEY *key)
+              EVP_MD_CTX *mdctx, ML_KEM_KEY *key)
 {
     const ML_KEM_VINFO *vinfo = key->vinfo;
     const scalar *t = key->t, *end = t + vinfo->rank;
@@ -1391,8 +1391,10 @@ int genkey(const uint8_t d[ML_KEM_RANDOM_BYTES],
            return 0;
     }
 
-    /* Save "z" portion of seed for "implicit rejection" on failure. */
+    /* Save |z| portion of seed for "implicit rejection" on failure. */
     memcpy(key->z, z, ML_KEM_RANDOM_BYTES);
+    /* Also save |d| portion, in suport of likely alternative key format. */
+    memcpy(key->d = key->z + ML_KEM_RANDOM_BYTES, d, ML_KEM_RANDOM_BYTES);
     return 1;
 }
 
@@ -1491,11 +1493,15 @@ int add_storage(scalar *p, int private, ML_KEM_KEY *key)
         return 0;
     /* A public key needs space for |t| and |m| */
     key->m = (key->t = p) + rank;
-    /* A private key also needs space for |s| and |z| */
+    /*
+     * A private key also needs space for |s| and |z|.
+     * The |z| buffer always includes additional space for |d|, but a key's |d|
+     * pointer is left NULL when parsed from the NIST format, which omits that
+     * information.  Only keys generated from a (d, z) seed pair will have a
+     * non-NULL |d| pointer.
+     */
     if (private)
         key->z = (uint8_t *)(rank + (key->s = key->m + rank * rank));
-    else
-        key->z = (uint8_t *)(key->s = NULL);
     return 1;
 }
 
@@ -1509,7 +1515,7 @@ free_storage(ML_KEM_KEY *key)
     if (key->t == NULL)
         return;
     OPENSSL_free(key->t);
-    key->z = (uint8_t *)(key->s = key->m = key->t = NULL);
+    key->d = key->z = (uint8_t *)(key->s = key->m = key->t = NULL);
 }
 
 /*
@@ -1545,7 +1551,7 @@ ML_KEM_KEY *ossl_ml_kem_key_new(OSSL_LIB_CTX *libctx, const char *properties,
     key->shake256_md = EVP_MD_fetch(libctx, "SHAKE256", properties);
     key->sha3_256_md = EVP_MD_fetch(libctx, "SHA3-256", properties);
     key->sha3_512_md = EVP_MD_fetch(libctx, "SHA3-512", properties);
-    key->z = (uint8_t *)(key->s = key->m = key->t = NULL);
+    key->d = key->z = (uint8_t *)(key->s = key->m = key->t = NULL);
 
     if (key->shake128_md != NULL
         && key->shake256_md != NULL
@@ -1582,6 +1588,9 @@ ML_KEM_KEY *ossl_ml_kem_key_dup(const ML_KEM_KEY *key, int selection)
         break;
     case OSSL_KEYMGMT_SELECT_PRIVATE_KEY:
         ok = add_storage(OPENSSL_memdup(key->t, key->vinfo->prvalloc), 1, ret);
+        /* Duplicated keys retain |d|, if available */
+        if (key->d != NULL)
+            ret->d = ret->z + ML_KEM_RANDOM_BYTES;
         break;
     }
 
@@ -1611,10 +1620,11 @@ void ossl_ml_kem_key_free(ML_KEM_KEY *key)
     /*-
      * Cleanse any sensitive data:
      * - The private vector |s| is immediately followed by the FO failure
-     *   secret |z|, we can cleanse both in one call.
+     *   secret |z|, and seed |d|, we can cleanse all three in one call.
      */
     if (key->s != NULL)
-        OPENSSL_cleanse(key->s, key->vinfo->vector_bytes + ML_KEM_RANDOM_BYTES);
+        OPENSSL_cleanse(key->s,
+                        key->vinfo->vector_bytes + 2 * ML_KEM_RANDOM_BYTES);
 
     /* Free the key material */
     OPENSSL_free(key->t);
@@ -1695,7 +1705,7 @@ int ossl_ml_kem_parse_private_key(const uint8_t *in, size_t len,
 }
 
 /*
- * Generate a new keypair from either from given seeds (when non-null), giving
+ * Generate a new keypair either from the input seeds (when non-null), yielding
  * a deterministic result for running tests, or securely generated random data.
  */
 int ossl_ml_kem_genkey(const uint8_t *d, const uint8_t *z,

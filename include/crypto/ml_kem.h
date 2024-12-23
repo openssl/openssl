@@ -165,6 +165,7 @@ typedef struct ossl_ml_kem_key_st {
     struct ossl_ml_kem_scalar_st *m;        /* Pre-computed pubkey matrix */
     struct ossl_ml_kem_scalar_st *s;        /* Private key secret vector */
     uint8_t *z;                             /* Private key FO failure secret */
+    uint8_t *d;                             /* Private key seed */
 
     /* Fixed-size/offset built-ins */
     uint8_t rho[ML_KEM_RANDOM_BYTES];       /* Matrix recovery seed */
