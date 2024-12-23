@@ -573,11 +573,10 @@ static void *v2i_aaidp(const X509V3_EXT_METHOD *method,
     GENERAL_NAMES *gens = NULL;
     GENERAL_NAME *gen = NULL;
     CONF_VALUE *cnf;
-    int i = 0;
     OSSL_AA_DIST_POINT *point = NULL;
     STACK_OF(CONF_VALUE) *dpsect;
 
-    cnf = sk_CONF_VALUE_value(nval, i);
+    cnf = sk_CONF_VALUE_value(nval, 0);
     if (cnf == NULL)
         return NULL;
     if (cnf->value == NULL) {
