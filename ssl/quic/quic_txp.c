@@ -611,8 +611,7 @@ int ossl_quic_tx_packetiser_set_peer(OSSL_QUIC_TX_PACKETISER *txp,
         return 1;
     }
 
-    txp->args.peer = *peer;
-    return 1;
+    return BIO_ADDR_copy(&txp->args.peer, peer);
 }
 
 void ossl_quic_tx_packetiser_set_ack_tx_cb(OSSL_QUIC_TX_PACKETISER *txp,

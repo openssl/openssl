@@ -803,15 +803,19 @@ int ossl_qtx_write_pkt(OSSL_QTX *qtx, const OSSL_QTX_PKT *pkt)
 
         if (!was_coalescing) {
             /* Set addresses in TXE. */
-            if (pkt->peer != NULL)
-                txe->peer = *pkt->peer;
-            else
+            if (pkt->peer != NULL) {
+                if (!BIO_ADDR_copy(&txe->peer, pkt->peer))
+                    return 0;
+            } else {
                 BIO_ADDR_clear(&txe->peer);
+            }
 
-            if (pkt->local != NULL)
-                txe->local = *pkt->local;
-            else
+            if (pkt->local != NULL) {
+                if (!BIO_ADDR_copy(&txe->local, pkt->local))
+                    return 0;
+            } else {
                 BIO_ADDR_clear(&txe->local);
+            }
         }
 
         ret = qtx_write(qtx, pkt, txe, enc_level);
