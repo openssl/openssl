@@ -40,7 +40,7 @@ Instead, the shared secret must be used to derive a key that is used to
 authenticate data subsequently received from the peer.
 If I<unwrapped> is NULL then the size of the output shared secret buffer is
 written to I<*unwrappedlen> and no decapsulation is performed, this makes it
-possible to determine the required buffer size at runtime.  Otherwise, the
+possible to determine the required buffer size at run time.  Otherwise, the
 decapsulated secret data is written to I<unwrapped> and the length of shared
 secret is written to I<*unwrappedlen>.
 
