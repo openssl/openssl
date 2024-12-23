@@ -4355,7 +4355,6 @@ SSL *ossl_quic_new_from_listener(SSL *ssl, uint64_t flags)
 
     if ((qc = OPENSSL_zalloc(sizeof(*qc))) == NULL) {
         QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_CRYPTO_LIB, NULL);
-        SSL_free(&ql->obj.ssl);
         goto err;
     }
 
@@ -4409,7 +4408,6 @@ SSL *ossl_quic_new_from_listener(SSL *ssl, uint64_t flags)
                             SSL_TYPE_QUIC_CONNECTION,
                             &ql->obj.ssl, NULL, NULL)) {
         QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_INTERNAL_ERROR, NULL);
-        SSL_free(&ql->obj.ssl);
         goto err;
     }
 
