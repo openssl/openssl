@@ -541,7 +541,7 @@ OSSL_PROPERTY_LIST *ossl_property_merge(const OSSL_PROPERTY_LIST *a,
     const OSSL_PROPERTY_DEFINITION *const ap = a->properties;
     const OSSL_PROPERTY_DEFINITION *const bp = b->properties;
     const OSSL_PROPERTY_DEFINITION *copy;
-    OSSL_PROPERTY_LIST *r;
+    OSSL_PROPERTY_LIST *r, *rtmp;
     int i, j, n;
     const int t = a->num_properties + b->num_properties;
 
@@ -567,8 +567,12 @@ OSSL_PROPERTY_LIST *ossl_property_merge(const OSSL_PROPERTY_LIST *a,
         r->has_optional |= copy->optional;
     }
     r->num_properties = n;
-    if (n != t)
-        r = OPENSSL_realloc(r, sizeof(*r) + (n - 1) * sizeof(r->properties[0]));
+    if (n != t) {
+        rtmp = OPENSSL_realloc(r, sizeof(*r) + (n - 1) * sizeof(r->properties[0]));
+        if (rtmp == NULL)
+            OPENSSL_free(r);
+        r = rtmp;
+    }
     return r;
 }
 

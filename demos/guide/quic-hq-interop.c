@@ -911,6 +911,8 @@ int main(int argc, char *argv[])
     while (req != NULL) {
         total_requests++;
         req_array = OPENSSL_realloc(req_array, sizeof(char *) * total_requests);
+        if (req_array == NULL)
+            goto end;
         req_array[total_requests - 1] = req;
         req = strtok(NULL, " ");
     }
