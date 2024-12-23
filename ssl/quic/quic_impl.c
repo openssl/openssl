@@ -1026,8 +1026,7 @@ int ossl_quic_conn_set_initial_peer_addr(SSL *s,
         return 1;
     }
 
-    ctx.qc->init_peer_addr = *peer_addr;
-    return 1;
+    return BIO_ADDR_copy(&ctx.qc->init_peer_addr, peer_addr);
 }
 
 /*
