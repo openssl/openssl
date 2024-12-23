@@ -474,8 +474,7 @@ int ossl_quic_channel_get_peer_addr(QUIC_CHANNEL *ch, BIO_ADDR *peer_addr)
     if (!ch->addressed_mode)
         return 0;
 
-    *peer_addr = ch->cur_peer_addr;
-    return 1;
+    return BIO_ADDR_copy(peer_addr, &ch->cur_peer_addr);
 }
 
 int ossl_quic_channel_set_peer_addr(QUIC_CHANNEL *ch, const BIO_ADDR *peer_addr)
@@ -489,8 +488,12 @@ int ossl_quic_channel_set_peer_addr(QUIC_CHANNEL *ch, const BIO_ADDR *peer_addr)
         return 1;
     }
 
-    ch->cur_peer_addr   = *peer_addr;
-    ch->addressed_mode  = 1;
+    if (!BIO_ADDR_copy(&ch->cur_peer_addr, peer_addr)) {
+        ch->addressed_mode = 0;
+        return 0;
+    }
+    ch->addressed_mode = 1;
+
     return 1;
 }
 
@@ -3344,7 +3347,9 @@ int ossl_quic_channel_on_new_conn(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
         return 0;
 
     /* Note our newly learnt peer address and CIDs. */
-    ch->cur_peer_addr   = *peer;
+    if (!BIO_ADDR_copy(&ch->cur_peer_addr, peer))
+        return 0;
+
     ch->init_dcid       = *peer_dcid;
     ch->cur_remote_dcid = *peer_scid;
 
