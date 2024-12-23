@@ -492,6 +492,7 @@ int ossl_quic_channel_set_peer_addr(QUIC_CHANNEL *ch, const BIO_ADDR *peer_addr)
         ch->addressed_mode = 0;
         return 0;
     }
+    ch->addressed_mode = 1;
 
     return 1;
 }
