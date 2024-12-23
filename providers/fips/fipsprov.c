@@ -108,8 +108,13 @@ void *ossl_fips_prov_ossl_ctx_new(OSSL_LIB_CTX *libctx)
     if (fgbl == NULL)
         return NULL;
 
-#define OSSL_FIPS_PARAM(structname, paramname, initvalue) \
-    init_fips_option(&fgbl->fips_##structname, initvalue);
+#ifdef OPENSSL_NO_FIPS_PEDANTICONLY
+# define OSSL_FIPS_PARAM(structname, paramname, initvalue) \
+     init_fips_option(&fgbl->fips_##structname, initvalue);
+#else
+# define OSSL_FIPS_PARAM(structname, paramname, initvalue) \
+     init_fips_option(&fgbl->fips_##structname, 1);
+#endif
 #include "fips_indicator_params.inc"
 #undef OSSL_FIPS_PARAM
 
@@ -139,6 +144,7 @@ static int fips_get_params_from_core(FIPS_GLOBAL *fgbl)
 #include "fips_selftest_params.inc"
 #undef OSSL_FIPS_PARAM
 
+#ifdef OPENSSL_NO_FIPS_PEDANTICONLY
 /* FIPS indicator options can be enabled or disabled independently */
 #define OSSL_FIPS_PARAM(structname, paramname, initvalue)                      \
     *p++ = OSSL_PARAM_construct_utf8_ptr(                                      \
@@ -147,6 +153,7 @@ static int fips_get_params_from_core(FIPS_GLOBAL *fgbl)
             sizeof(fgbl->fips_##structname.option));
 #include "fips_indicator_params.inc"
 #undef OSSL_FIPS_PARAM
+#endif
 
     *p = OSSL_PARAM_construct_end();
 
@@ -791,6 +798,7 @@ int OSSL_provider_init_int(const OSSL_CORE_HANDLE *handle,
      * Disable the conditional error check if it's disabled in the fips config
      * file.
      */
+#ifdef OPENSSL_NO_FIPS_PEDANTICONLY
     if (fgbl->selftest_params.conditional_error_check != NULL
         && strcmp(fgbl->selftest_params.conditional_error_check, "0") == 0)
         SELF_TEST_disable_conditional_error_state();
@@ -807,6 +815,7 @@ int OSSL_provider_init_int(const OSSL_CORE_HANDLE *handle,
     }
 #include "fips_indicator_params.inc"
 #undef OSSL_FIPS_PARAM
+#endif
 
     ossl_prov_cache_exported_algorithms(fips_ciphers, exported_fips_ciphers);
 
