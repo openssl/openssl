@@ -34,27 +34,6 @@
 #  error openssl/bio.h included before bio_local.h
 # endif
 
-# ifdef AI_PASSIVE
-
-/*
- * There's a bug in VMS C header file netdb.h, where struct addrinfo
- * always is the P32 variant, but the functions that handle that structure,
- * such as getaddrinfo() and freeaddrinfo() adapt to the initial pointer
- * size.  The easiest workaround is to force struct addrinfo to be the
- * 64-bit variant when compiling in P64 mode.
- */
-#  if defined(OPENSSL_SYS_VMS) && __INITIAL_POINTER_SIZE == 64
-#   define addrinfo __addrinfo64
-#  endif
-
-#  define bio_addrinfo_st addrinfo
-#  define bai_family      ai_family
-#  define bai_socktype    ai_socktype
-#  define bai_protocol    ai_protocol
-#  define bai_addrlen     ai_addrlen
-#  define bai_addr        ai_addr
-#  define bai_next        ai_next
-# else
 struct bio_addrinfo_st {
     int bai_family;
     int bai_socktype;
@@ -62,8 +41,8 @@ struct bio_addrinfo_st {
     size_t bai_addrlen;
     struct sockaddr *bai_addr;
     struct bio_addrinfo_st *bai_next;
+    union bio_addr_st bai_abuf;
 };
-# endif
 #endif
 
 /* END BIO_ADDRINFO/BIO_ADDR stuff. */

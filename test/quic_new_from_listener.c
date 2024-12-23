@@ -16,7 +16,6 @@
 # include <netinet/in.h>
 # include <unistd.h>
 # include <signal.h>
-# include <netdb.h>
 #endif
 
 #include <openssl/bio.h>
@@ -354,7 +353,6 @@ done:
  */
 static void process_new_stream(SSL *ssl_qlistener, SSL *ssl_qstream)
 {
-#if !defined(_WIN32)
     unsigned char buf[BUF_SIZE];
     char path[BUF_SIZE];
     char *req = (char *)buf;
@@ -363,9 +361,7 @@ static void process_new_stream(SSL *ssl_qlistener, SSL *ssl_qstream)
     char *dst_port_str;
     size_t nread;
     char *creturn;
-    struct addrinfo hints_ai;
-    struct addrinfo *ai = NULL;
-    char bio_addr_buf[512];
+    BIO_ADDRINFO *bai = NULL;
     SSL *ssl_qconn = NULL;
     int chk;
 
@@ -415,22 +411,14 @@ static void process_new_stream(SSL *ssl_qlistener, SSL *ssl_qstream)
         } else {
             *dst_port_str = '\0';
             dst_port_str++;
-            memset(&hints_ai, 0, sizeof(struct addrinfo));
-            hints_ai.ai_family = AF_INET;
-            hints_ai.ai_socktype = SOCK_DGRAM;
-            hints_ai.ai_flags |= AI_PASSIVE;
-            chk = getaddrinfo(dst_host, dst_port_str, &hints_ai, &ai);
-            if (!TEST_false(chk)) {
+            chk = BIO_lookup_ex(dst_host, dst_port_str, BIO_LOOKUP_CLIENT,
+                                AF_INET, SOCK_DGRAM, 0, &bai);
+            if (!TEST_true(chk)) {
                 TEST_error("[ Server ] %s BIO_lookup_ex(%s, %s) error (%s)\n",
                            __func__, dst_host, dst_port_str, strerror(errno));
                 quit = 1;
                 goto done;
             }
-            memset(bio_addr_buf, 0, sizeof(bio_addr_buf));
-            memcpy(bio_addr_buf, ai->ai_addr,
-                   ai->ai_addrlen < (socklen_t)sizeof(bio_addr_buf) ?
-                   ai->ai_addrlen : (socklen_t)sizeof(bio_addr_buf));
-            freeaddrinfo(ai);
 
             ssl_qconn = SSL_new_from_listener(ssl_qlistener, 0);
             if (!TEST_ptr(ssl_qconn)) {
@@ -441,7 +429,7 @@ static void process_new_stream(SSL *ssl_qlistener, SSL *ssl_qstream)
             }
 
             chk = SSL_set1_initial_peer_addr(ssl_qconn,
-                                             (BIO_ADDR *)bio_addr_buf);
+                                             BIO_ADDRINFO_address(bai));
             if (!TEST_true(chk)) {
                 TEST_error("[ Server ] %s SSL_new_from_listener error (%s)\n",
                            __func__, ERR_reason_error_string(ERR_get_error()));
@@ -493,7 +481,7 @@ done:
             continue;
         SSL_free(ssl_qconn);
     }
-#endif
+    BIO_ADDRINFO_free(bai);
 }
 
 /*
