@@ -296,6 +296,7 @@ int X509_VERIFY_PARAM_set_inh_flags(X509_VERIFY_PARAM *param, uint32_t flags)
     return 1;
 }
 
+/* resets to default (any) purpose if |purpose| == X509_PURPOSE_DEFAULT_ANY */
 int X509_VERIFY_PARAM_set_purpose(X509_VERIFY_PARAM *param, int purpose)
 {
     return X509_PURPOSE_set(&param->purpose, purpose);
