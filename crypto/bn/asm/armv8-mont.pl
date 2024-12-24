@@ -84,7 +84,7 @@ bn_mul_mont:
 	b.ne	.Lmul_mont
 	cmp	$num,#32
 	b.le	.Lscalar_impl
-#ifndef	__KERNEL__
+#ifndef	__KERNEL__ && !defined(__AARCH64EB__)
 	adrp	x17,OPENSSL_armv8_rsa_neonized
 	ldr	w17,[x17,#:lo12:OPENSSL_armv8_rsa_neonized]
 	cbnz	w17, bn_mul8x_mont_neon
