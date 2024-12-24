@@ -2,14 +2,14 @@
 
 =head1 NAME
 
-EVP_KEM-ML-KEM-512,EVP_KEM-ML-KEM-768,EVP_KEM-ML-KEM-1024,EVP_KEM-ML-KEM
+EVP_KEM-ML-KEM-512, EVP_KEM-ML-KEM-768, EVP_KEM-ML-KEM-1024, EVP_KEM-ML-KEM
 - EVP_KEM ML-KEM keytype and algorithm support
 
 =head1 DESCRIPTION
 
 The B<ML-KEM> keytypes and parameters are described in L<EVP_PKEY-ML-KEM(7)>.
-See L<EVP_PKEY_encapsulate(3)> and L<EVP_PKEY_decapsulate(3)> for more info
-regarding the basic KEM operations.
+See L<EVP_PKEY_encapsulate(3)> and L<EVP_PKEY_decapsulate(3)> for more details
+about basic KEM operations.
 
 =head2 ML-KEM KEM parameters
 
@@ -18,10 +18,10 @@ regarding the basic KEM operations.
 =item "ikme" (B<OSSL_KEM_PARAM_IKME>)<UTF8 string>
 
 The OpenSSL ML-KEM encapsulation mechanism can only be modified by
-setting randomness during encapsulation facilitating testing as per
+setting randomness during encapsulation, this enables testing, as per
 FIPS 203, section 6.2, algorithm 17.
 
-This parameter is not to be set for other purposes than testing.
+This parameter should not be used for purposes other than testing.
 This parameter is disabled for use in the FIPS provider (TODO(ML-KEM)).
 
 When this parameter is not set, encapsulation proceeds as per FIPS 203,
@@ -44,7 +44,7 @@ This can be set when using EVP_PKEY_encapsulate_init().
 =head1 SEE ALSO
 
 L<EVP_PKEY_encapsulate(3)>,
-L<EVP_PKEY_decapsulate(3)>
+L<EVP_PKEY_decapsulate(3)>,
 L<EVP_KEYMGMT(3)>,
 L<EVP_PKEY(3)>,
 L<provider-keymgmt(7)>

@@ -460,6 +460,8 @@ codepoints. Valid (case-insensitive) names are:
 String variants of the numbers listed in L</OSSL_HPKE_SUITE Identifiers>
 can also be used.
 
+=for comment TODO(ML-KEM) There's an HPKE in the works for ML-KEM
+
 =head1 RETURN VALUES
 
 OSSL_HPKE_CTX_new() returns an OSSL_HPKE_CTX pointer or NULL on error.

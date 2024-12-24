@@ -13,8 +13,8 @@ EVP_PKEY-ML-KEM
 
 =head1 DESCRIPTION
 
-The B<ML-KEM-512>, B<ML-KEM-768>, and B<ML-KEM-1024> keytypes are implemented in
-OpenSSL's default provider.
+The B<ML-KEM-512>, B<ML-KEM-768>, and B<ML-KEM-1024> keytypes are implemented
+in OpenSSL's B<default> provider.
 
 =for comment (TODO(ML-KEM): Add FIPS support).
 
@@ -26,15 +26,17 @@ By default, no parameters are required for generating a key pair.
 
 =item "seed" (B<OSSL_PKEY_PARAM_ML_KEM_SEED>) <octet string>
 
-ML-KEM internally requires the generation of a keypair using a random value (seed).
-This optional parameter can be used to set the value prior to key pair generation.
-According to FIPS 203, section 3.3, this parameter should only be used for
-test purposes and be treated with the same care as private key material.
-The length of the seed is 64 bytes.
+Internally, ML-KEM generates keys using a 64-byte random value (seed), which is
+the concatenation of the 32-byte I<d> and I<z> parameters described in FIPS 203.
+The optional parameter can be used to set a pre-determined seed prior to
+keypair generation.
+According to FIPS 203, section 3.3, this parameter should only be used for test
+purposes and be treated with the same care as private key material.
 
 This parameter is only settable.
 
-See L<provider-keymgmt(7)/Common Information Parameters> for further information.
+See L<provider-keymgmt(7)/Common Information Parameters> for further
+information.
 
 =back
 
@@ -52,20 +54,24 @@ support the following.
 
 The public key value.
 
-This parameter is used when importing or exporting the public key value with the
-EVP_PKEY_fromdata() and EVP_PKEY_todata() functions.
+This parameter is used when importing or exporting the public key value with
+the EVP_PKEY_fromdata() and EVP_PKEY_todata() functions.  The same underlying
+FIPS 203 public key format is used for import, import, get and set operations.
 
 =item "priv" (B<OSSL_PKEY_PARAM_PRIV_KEY>) <octet string>
 
 The private key value.
 
-This parameter is used when importing or exporting the public key value with the
-EVP_PKEY_fromdata() and EVP_PKEY_todata() functions.
+This parameter is used when importing or exporting the private key value with
+the EVP_PKEY_fromdata() and EVP_PKEY_todata() functions.
+The key format is that of B<dk> in FIPS 203, Algorithm 16:
+B<ML-KEM.KeyGen_internal>.
 
 =item "encoded-pub-key" (B<OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY>) <octet string>
 
-Used for getting and setting the encoding of a public key. Public keys are
-expected be encoded in a format as defined by FIPS 203.
+Used for getting and setting the encoding of a public key.
+The key format is that of B<ek> in FIPS 203, Algorithm 16:
+B<ML-KEM.KeyGen_internal>.
 
 This parameter is gettable and settable.
 
@@ -90,11 +96,13 @@ An B<ML-KEM-768> key can be generated like this:
 
     pkey = EVP_PKEY_Q_keygen(NULL, NULL, "ML-KEM-768");
 
-Equivalent calls are possible for B<ML-KEM-512> and B<ML-KEM-1024>.
+Equivalent calls are available for B<ML-KEM-512> and B<ML-KEM-1024>.
 
 =head1 SEE ALSO
 
-L<EVP_KEYMGMT(3)>, L<EVP_PKEY(3)>, L<provider-keymgmt(7)>,
+L<EVP_KEYMGMT(3)>,
+L<EVP_PKEY(3)>,
+L<provider-keymgmt(7)>,
 L<EVP_KEM-ML-KEM(7)>
 
 =head1 HISTORY

@@ -657,6 +657,14 @@ default operation, e.g. RSA, this function must be called before
 EVP_PKEY_encapsulate() or EVP_PKEY_decapsulate(). The supported values for the
 built-in algorithms are enumerated in L<EVP_KEM-RSA(7)>, L<EVP_KEM-EC(7)>,
 L<EVP_KEM-X25519(7)>, and L<EVP_KEM-X448(7)>.
+= for comment Is this an "operation" or an "operating mode".  I'd would have
+              though the "operation" is always "decapsulate" or "encapsulate"
+              and that options like "RSASVE" are "operating modes", is in
+              the comment "Set the mode - only 'RSASVE' is currently supported",
+              the code example.
+
+=for comment TODO(ML-KEM): Probably nothing, there aren't presently any modes
+             for ML-KEM.
 
 =head1 RETURN VALUES
 
