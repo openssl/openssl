@@ -442,7 +442,8 @@ static void *ml_kem_gen(void *vgctx, OSSL_CALLBACK *osslcb, void *cbarg)
     ML_KEM_KEY *key;
     uint8_t *nopub = NULL;
     uint8_t *seed = gctx->seed;
-    size_t slen = seed == NULL ? 0 : ML_KEM_SEED_BYTES;
+    uint8_t *d = seed != NULL ? seed : NULL;
+    uint8_t *z = seed != NULL ? seed + ML_KEM_RANDOM_BYTES : NULL;
     int genok = 0;
 
     if (gctx == NULL
@@ -454,9 +455,7 @@ static void *ml_kem_gen(void *vgctx, OSSL_CALLBACK *osslcb, void *cbarg)
     if ((gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0)
         return key;
 
-    genok = seed != NULL
-        ? ossl_ml_kem_genkey_seed(seed, slen, nopub, 0, key)
-        : ossl_ml_kem_genkey_rand(NULL, slen, nopub, 0, key);
+    genok = ossl_ml_kem_genkey(d, z, nopub, 0, key);
 
     /* Erase the single-use seed */
     if (seed != NULL)
@@ -496,12 +495,12 @@ typedef void (*func_ptr_t)(void);
     static void *ml_kem_##bits##_new(void *provctx) \
     { \
         return ml_kem_new(provctx == NULL ? NULL : PROV_LIBCTX_OF(provctx), \
-                          NULL, ML_KEM_##bits); \
+                          NULL, ML_KEM_##bits##_VARIANT); \
     } \
     static void *ml_kem_##bits##_gen_init(void *provctx, int selection, \
                                           const OSSL_PARAM params[]) \
     { \
-        return ml_kem_gen_init(provctx, selection, params, ML_KEM_##bits); \
+        return ml_kem_gen_init(provctx, selection, params, ML_KEM_##bits##_VARIANT); \
     } \
     const OSSL_DISPATCH ossl_ml_kem_##bits##_keymgmt_functions[] = { \
         { OSSL_FUNC_KEYMGMT_NEW, (func_ptr_t) ml_kem_##bits##_new }, \

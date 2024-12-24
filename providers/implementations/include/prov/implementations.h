@@ -593,3 +593,11 @@ extern const OSSL_DISPATCH ossl_pem_to_der_decoder_functions[];
 
 extern const OSSL_DISPATCH ossl_file_store_functions[];
 extern const OSSL_DISPATCH ossl_winstore_store_functions[];
+
+#if !defined(OPENSSL_NO_ECX) && !defined(OPENSSL_NO_ML_KEM)
+extern const OSSL_DISPATCH ossl_mlx_kem_asym_kem_functions[];
+extern const OSSL_DISPATCH ossl_mlx_x25519_kem_kmgmt_functions[];
+extern const OSSL_DISPATCH ossl_mlx_x448_kem_kmgmt_functions[];
+extern const OSSL_DISPATCH ossl_mlx_p256_kem_kmgmt_functions[];
+extern const OSSL_DISPATCH ossl_mlx_p384_kem_kmgmt_functions[];
+#endif
