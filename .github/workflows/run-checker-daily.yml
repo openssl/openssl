@@ -132,7 +132,8 @@ jobs:
           enable-zlib-dynamic,
           no-zlib-dynamic,
           -DOPENSSL_NO_BUILTIN_OVERFLOW_CHECKING,
-          -DSSL3_ALIGN_PAYLOAD=4
+          -DSSL3_ALIGN_PAYLOAD=4,
+          -DOPENSSL_TLS_SECURITY_LEVEL=0
         ]
     runs-on: ubuntu-latest
     steps:
