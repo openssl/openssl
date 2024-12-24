@@ -99,7 +99,11 @@ static void *v2i_POLICY_MAPPINGS(const X509V3_EXT_METHOD *method,
         pmap->issuerDomainPolicy = obj1;
         pmap->subjectDomainPolicy = obj2;
         obj1 = obj2 = NULL;
-        sk_POLICY_MAPPING_push(pmaps, pmap); /* no failure as it was reserved */
+        /* no failure as it was reserved */
+        if (!ossl_assert(sk_POLICY_MAPPING_push(pmaps, pmap))) {
+            POLICY_MAPPING_free(pmap);
+            goto err;
+        }
     }
     return pmaps;
  err:

@@ -115,11 +115,10 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
         ASN1_GENERALIZEDTIME *revtime, *thisupd, *nextupd;
 
         certs = sk_X509_new_null();
-        if (certs == NULL)
+        if (certs == NULL
+            || !sk_X509_push(certs, x509_1)
+            || !sk_X509_push(certs, x509_2))
             goto err;
-
-        sk_X509_push(certs, x509_1);
-        sk_X509_push(certs, x509_2);
 
         OCSP_basic_verify(bs, certs, store, OCSP_PARTIAL_CHAIN);
 

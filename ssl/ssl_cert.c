@@ -566,12 +566,14 @@ STACK_OF(X509_NAME) *SSL_dup_CA_list(const STACK_OF(X509_NAME) *sk)
     }
     for (i = 0; i < num; i++) {
         name = X509_NAME_dup(sk_X509_NAME_value(sk, i));
-        if (name == NULL) {
+        if (name == NULL
+                /* sk_X509_NAME_push() cannot fail after reserve call */
+                || !ossl_assert(sk_X509_NAME_push(ret, name))) {
             ERR_raise(ERR_LIB_SSL, ERR_R_X509_LIB);
             sk_X509_NAME_pop_free(ret, X509_NAME_free);
+            X509_NAME_free(name);
             return NULL;
         }
-        sk_X509_NAME_push(ret, name);   /* Cannot fail after reserve call */
     }
     return ret;
 }

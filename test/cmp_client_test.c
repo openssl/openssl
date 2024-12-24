@@ -187,8 +187,11 @@ static int test_exec_IR_ses(void)
     fixture->req_type = OSSL_CMP_PKIBODY_IR;
     fixture->expected = OSSL_CMP_PKISTATUS_accepted;
     fixture->caPubs = sk_X509_new_null();
-    sk_X509_push(fixture->caPubs, server_cert);
-    sk_X509_push(fixture->caPubs, server_cert);
+    if (!sk_X509_push(fixture->caPubs, server_cert)
+        || !sk_X509_push(fixture->caPubs, server_cert)) {
+        tear_down(fixture);
+        return 0;
+    }
     ossl_cmp_mock_srv_set1_caPubsOut(fixture->srv_ctx, fixture->caPubs);
     EXECUTE_TEST(execute_exec_certrequest_ses_test, tear_down);
     return result;
