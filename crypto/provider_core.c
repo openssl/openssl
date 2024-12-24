@@ -1111,8 +1111,13 @@ static int provider_deactivate(OSSL_PROVIDER *prov, int upcalls,
         return -1;
     }
 
-    if (!CRYPTO_atomic_add(&prov->activatecnt, -1, &count, prov->activatecnt_lock))
+    if (!CRYPTO_atomic_add(&prov->activatecnt, -1, &count, prov->activatecnt_lock)) {
+        if (lock) {
+            CRYPTO_THREAD_unlock(prov->flag_lock);
+            CRYPTO_THREAD_unlock(store->lock);
+        }
         return -1;
+    }
 
 #ifndef FIPS_MODULE
     if (count >= 1 && prov->ischild && upcalls) {
