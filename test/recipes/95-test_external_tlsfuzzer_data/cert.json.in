@@ -318,5 +318,30 @@
        {"name" : "test-dsa-sig-flexibility.py",
         "arguments" : ["-p", "@PORT@"]}
      ]
+    },
+
+    {"server_command": ["@SERVER@", "s_server", "-www",
+                 "-CAfile", "@DATADIR@/rsa-ca.pem",
+                 "-key", "@DATADIR@/rsa-server-key.pem",
+                 "-cert", "@DATADIR@/rsa-server.pem",
+                 "-Verify", "1",
+                 "-cipher", "DEFAULT:@SECLEVEL=0"],
+     "environment": {"PYTHONPATH" : "."},
+     "server_hostname": "localhost",
+     "server_port": @PORT@,
+     "tests" : [
+       {"name" : "test-rsa-sigs-on-certificate-verify.py",
+        "arguments" : ["-p", "@PORT@", "-n", "0", "-k",
+        "@DATADIR@/rsa-client-key.pem", "-c", "@DATADIR@/rsa-client.pem"]},
+       {"name" : "test-rsa-pss-sigs-on-certificate-verify.py",
+        "arguments" : ["-p", "@PORT@", "-n", "0", "-k",
+        "@DATADIR@/rsa-client-key.pem", "-c", "@DATADIR@/rsa-client.pem"]},
+       {"name" : "test-certificate-verify-malformed-sig.py",
+        "arguments" : ["-p", "@PORT@", "-n", "0", "-k",
+        "@DATADIR@/rsa-client-key.pem", "-c", "@DATADIR@/rsa-client.pem"]},
+       {"name" : "test-tls13-certificate-verify.py",
+        "arguments" : ["-p", "@PORT@", "-n", "0", "-k",
+        "@DATADIR@/rsa-client-key.pem", "-c", "@DATADIR@/rsa-client.pem"]}
+     ]
     }
 ]
