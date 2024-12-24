@@ -60,6 +60,7 @@ SKIP: {
     #Test 3: TLS 1.2 client does not send the Reneg extension. Reneg should fail
 
     $proxy->clear();
+    $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
     $proxy->filter(\&reneg_ext_filter);
     $proxy->clientflags("-no_tls1_3");
     $proxy->serverflags("-client_renegotiation");
