@@ -2516,7 +2516,7 @@ static STACK_OF(X509_CRL) *crls_http_cb(const X509_STORE_CTX *ctx,
     crl = load_crl_crldp(crldp);
     sk_DIST_POINT_pop_free(crldp, DIST_POINT_free);
 
-    if (!crl || !sk_X509_CRL_push(crls, crl))
+    if (crl == NULL || !sk_X509_CRL_push(crls, crl))
         goto error;
 
     /* Try to download delta CRL */
@@ -2524,12 +2524,13 @@ static STACK_OF(X509_CRL) *crls_http_cb(const X509_STORE_CTX *ctx,
     crl = load_crl_crldp(crldp);
     sk_DIST_POINT_pop_free(crldp, DIST_POINT_free);
 
-    if (crl && !sk_X509_CRL_push(crls, crl))
+    if (crl != NULL && !sk_X509_CRL_push(crls, crl))
         goto error;
 
     return crls;
 
 error:
+    X509_CRL_free(crl);
     sk_X509_CRL_free(crls);
     return NULL;
 }
