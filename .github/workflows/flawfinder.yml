@@ -2,12 +2,11 @@ name: flawfinder
 
 on:
   push:
-    branches: [ "master" ]
+    branches: ["master", "develop", "release/*"]
   pull_request:
-    branches: [ "master" ]
+    branches: ["master", "develop", "release/*"]
   schedule:
-    - cron: '42 1 * * 2'
-
+    - cron: '49 17 * * 3'
 jobs:
   flawfinder:
     name: Flawfinder
