@@ -16,6 +16,9 @@ jobs:
       actions: read
       contents: read
       security-events: write
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
