@@ -597,12 +597,16 @@ OSSL_CMP_MSG *ossl_cmp_rp_new(OSSL_CMP_CTX *ctx, const OSSL_CMP_PKISI *si,
             || !sk_OSSL_CMP_PKISI_push(rep->status, si1))
         goto err;
 
+    si1 = NULL; /* ownership transferred to rep->status */
+
     if ((rep->revCerts = sk_OSSL_CRMF_CERTID_new_null()) == NULL)
         goto err;
     if (cid != NULL) {
         if ((cid_copy = OSSL_CRMF_CERTID_dup(cid)) == NULL
                 || !sk_OSSL_CRMF_CERTID_push(rep->revCerts, cid_copy))
             goto err;
+
+        cid_copy = NULL; /* ownership transferred to rep->revCerts */
     }
 
     if (!unprotectedErrors
