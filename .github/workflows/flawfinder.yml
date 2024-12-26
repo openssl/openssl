@@ -3,7 +3,7 @@ name: flawfinder
 on: [pull_request, push]
 
 permissions:
-  contents: read, write
+  contents: read
 
 jobs:
 
@@ -18,7 +18,7 @@ jobs:
     uses: github/codeql-action/upload-sarif@v3
     with:
       sarif_file: ${{github.workspace}}/flawfinder_results.sarif
-  cross-compilation:
+  - cross-compilation:
     strategy:
       fail-fast: false
       matrix:
