@@ -16,6 +16,7 @@ X509 certificate list addition functions
 =head1 DESCRIPTION
 
 X509_add_cert() adds a certificate I<cert> to the given list I<sk>.
+It is an error for the I<cert> argument to be NULL.
 
 X509_add_certs() adds a list of certificate I<certs> to the given list I<sk>.
 The I<certs> argument may be NULL, which implies no effect.
