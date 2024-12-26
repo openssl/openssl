@@ -2,44 +2,24 @@ name: flawfinder
 
 on:
   push:
-    branches: [ "master" ]
+    branches: ["master", "develop", "release/*"]
   pull_request:
-    branches: [ "master" ]
+    branches: ["master", "develop", "release/*"]
   schedule:
-    - cron: '42 1 * * 2'
-
-permissions:
-  contents: read
-  security-events: write
-
+    - cron: '49 17 * * 3'
 jobs:
   flawfinder:
     name: Flawfinder
     runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: flawfinder_scan
-        uses: david-a-wheeler/flawfinder@8e4a779ad59dbfaee5da586aa9210853b701959c
-        with:
-          arguments: '--sarif ./'
-          output: 'flawfinder_results.sarif'
-
-      - name: Upload analysis results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: ${{ github.workspace }}/flawfinder_results.sarif
-
-  cross-compilation:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        platform: [
+    
+      platforms: [
           {
             arch: i386-pc-msdosdjgpp,
             libs: libc-djgpp-dev libwatt-djgpp-dev djgpp-utils,
@@ -216,3 +196,17 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: flawfinder_scan
+        uses: david-a-wheeler/flawfinder@8e4a779ad59dbfaee5da586aa9210853b701959c
+        with:
+          arguments: '--sarif ./'
+          output: 'flawfinder_results.sarif'
+
+      - name: Upload analysis results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: ${{github.workspace}}/flawfinder_results.sari
