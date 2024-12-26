@@ -138,7 +138,8 @@ jobs:
           -DOPENSSL_PEDANTIC_ZEROIZATION,
           -DOPENSSL_PEDANTIC_ZEROIZATION enable-fips,
           -DOPENSSL_NO_BUILTIN_OVERFLOW_CHECKING,
-          -DSSL3_ALIGN_PAYLOAD=4
+          -DSSL3_ALIGN_PAYLOAD=4,
+          -DOPENSSL_TLS_SECURITY_LEVEL=0
         ]
     runs-on: ubuntu-latest
     steps:
