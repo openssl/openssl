@@ -192,7 +192,7 @@ int ossl_x509_add_cert_new(STACK_OF(X509) **p_sk, X509 *cert, int flags)
 
 int X509_add_cert(STACK_OF(X509) *sk, X509 *cert, int flags)
 {
-    if (sk == NULL) {
+    if (sk == NULL || cert == NULL) {
         ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
