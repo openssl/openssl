@@ -196,6 +196,8 @@ int X509_add_cert(STACK_OF(X509) *sk, X509 *cert, int flags)
         ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
+    if (cert == NULL)
+        return 0;
     if ((flags & X509_ADD_FLAG_NO_DUP) != 0) {
         /*
          * not using sk_X509_set_cmp_func() and sk_X509_find()
