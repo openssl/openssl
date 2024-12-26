@@ -6,10 +6,9 @@ updates:
       interval: "daily"
     commit-message:
       prefix: "Dependabot update\n\nCLA: trivial\n\n"
-      include: "scope"
     labels:
       - "dependencies"
       - "cla: trivial"
       - "approval: review pending"
     reviewers:
-      - "openssl/committers"
+      - "fochoao-alt"
