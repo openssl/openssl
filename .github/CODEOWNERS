@@ -1,0 +1,8 @@
+# Restrict all files related to deploying to
+# require lead maintainer approval.
+
+.github/workflows/              @openssl
+.github/CODEOWNERS              @openssl
+CODE_OF_CONDUCT.md              @openssl
+LICENSE                         @openssl
+README.md                       @openssl
