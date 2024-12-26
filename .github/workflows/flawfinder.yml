@@ -114,81 +114,80 @@ jobs:
             tests: none
           }, {
             arch: mips-linux-gnu,
-            libs: libc6-dev-mips-cross,
-            target: linux-mips32,
-            tests: none
-          }, {
-            arch: mips64-linux-gnuabi64,
-            libs: libc6-dev-mips64-cross,
-            target: linux64-mips64,
-            tests: none
-          },
-
-          # This build doesn't execute either with or without shared libraries.
-          {
-            arch: sparc64-linux-gnu,
-            libs: libc6-dev-sparc64-cross,
-            target: linux64-sparcv9,
-            tests: none
-          }
-        ]
-    runs-on: ubuntu-latest
-    steps:
-    - name: install package repository
-      if: matrix.platform.ppa != ''
-      run: |
-        sudo add-apt-repository ppa:${{ matrix.platform.ppa }}
-    - name: install packages
-      run: |
-        sudo apt-get update
-        sudo apt-get -yq --force-yes install \
-            gcc-${{ matrix.platform.arch }} \
-            ${{ matrix.platform.libs }}
-    - uses: actions/checkout@v4
-    - name: checkout fuzz/corpora submodule
-      run: git submodule update --init --depth 1 fuzz/corpora
-
-    - name: config with FIPS
-      if: matrix.platform.fips != 'no'
-      run: |
-        ./config --banner=Configured --strict-warnings enable-fips \
-                 --cross-compile-prefix=${{ matrix.platform.arch }}- \
-                 ${{ matrix.platform.target }}
-    - name: config without FIPS
-      if: matrix.platform.fips == 'no'
-      run: |
-        ./config --banner=Configured --strict-warnings \
-                 --cross-compile-prefix=${{ matrix.platform.arch }}- \
-                 ${{ matrix.platform.target }}
-    - name: config dump
-      run: ./configdata.pm --dump
-
-    - name: make
-      run: make -s -j4
-
-    - name: install qemu
-      if: matrix.platform.tests != 'none'
-      run: sudo apt-get -yq --force-yes install qemu-user
-
-    - name: Set QEMU environment
-      if: matrix.platform.qemucpu != ''
-      run: echo "QEMU_CPU=${{ matrix.platform.qemucpu }}" >> $GITHUB_ENV
-
-    - name: Set OpenSSL caps environment
-      if: matrix.platform.opensslcapsname != ''
-      run: echo "OPENSSL_${{ matrix.platform.opensslcapsname }}=\
-                 ${{ matrix.platform.opensslcaps }}" >> $GITHUB_ENV
-
-    - name: get cpu info
-      run: cat /proc/cpuinfo
-
-    - name: make all tests
-      if: github.event_name == 'push' && matrix.platform.tests == ''
-      run: |
-        .github/workflows/make-test \
-                  TESTS="-test_afalg" \
-                  QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }}
-    - name: make some tests
+        runs-on: ubuntu-latest
+        steps:
+        - name: install package repository
+          if: matrix.platform.ppa != ''
+          run: |
+            sudo add-apt-repository ppa:${{ matrix.platform.ppa }}
+        - name: install packages
+          run: |
+            sudo apt-get update
+            sudo apt-get -yq --force-yes install \
+                gcc-${{ matrix.platform.arch }} \
+                ${{ matrix.platform.libs }}
+        - uses: actions/checkout@v4
+        - name: checkout fuzz/corpora submodule
+          run: git submodule update --init --depth 1 fuzz/corpora
+    
+        - name: config with FIPS
+          if: matrix.platform.fips != 'no'
+          run: |
+            ./config --banner=Configured --strict-warnings enable-fips \
+                     --cross-compile-prefix=${{ matrix.platform.arch }}- \
+                     ${{ matrix.platform.target }}
+        - name: config without FIPS
+          if: matrix.platform.fips == 'no'
+          run: |
+            ./config --banner=Configured --strict-warnings \
+                     --cross-compile-prefix=${{ matrix.platform.arch }}- \
+                     ${{ matrix.platform.target }}
+        - name: config dump
+          run: ./configdata.pm --dump
+    
+        - name: make
+          run: make -s -j4
+    
+        - name: install qemu
+          if: matrix.platform.tests != 'none'
+          run: sudo apt-get -yq --force-yes install qemu-user
+    
+        - name: Set QEMU environment
+          if: matrix.platform.qemucpu != ''
+          run: echo "QEMU_CPU=${{ matrix.platform.qemucpu }}" >> $GITHUB_ENV
+    
+        - name: Set OpenSSL caps environment
+          if: matrix.platform.opensslcapsname != ''
+          run: echo "OPENSSL_${{ matrix.platform.opensslcapsname }}=\
+                     ${{ matrix.platform.opensslcaps }}" >> $GITHUB_ENV
+    
+        - name: get cpu info
+          run: cat /proc/cpuinfo
+    
+        - name: make all tests
+          if: github.event_name == 'push' && matrix.platform.tests == ''
+          run: |
+            .github/workflows/make-test \
+                      TESTS="-test_afalg" \
+                      QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }}
+        - name: make some tests
+          if: github.event_name == 'push' && matrix.platform.tests != 'none' && matrix.platform.tests != ''
+          run: |
+            .github/workflows/make-test \
+                      TESTS="${{ matrix.platform.tests }} -test_afalg" \
+                      QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }}
+        - name: make evp tests
+          if: github.event_name == 'pull_request' && matrix.platform.tests != 'none'
+          run: |
+            .github/workflows/make-test \
+                      TESTS="test_evp*" \
+                      QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }}
+        - name: save artifacts
+          uses: actions/upload-artifact@v4
+          with:
+            name: "cross-compiles@${{ matrix.platform.arch }}"
+            path: artifacts.tar.gz
+            if-no-files-found: ignore
       if: github.event_name == 'push' && matrix.platform.tests != 'none' && matrix.platform.tests != ''
       run: |
         .github/workflows/make-test \
