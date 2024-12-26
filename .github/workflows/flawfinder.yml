@@ -1,23 +1,15 @@
-name: flawfinder
-
-<<<<<<< HEAD
-on: [pull_request, push]
-
 permissions:
-  contents: read
-=======
+  contents: write
 on:
-  push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
-  schedule:
-    - cron: '42 1 * * 2'
+  cross-compilation:
+  strategy:
+  fail-fast: false
+  matrix:
+  platform: [
 
 permissions:
-  contents: read
+  contents: write
   security-events: write
->>>>>>> refs/remotes/origin/master
 
 jobs:
 
@@ -112,100 +104,93 @@ jobs:
             target: no-async linux-latomic,
             tests: -test_includes -test_store -test_x509_store
           },
-
-          # These build with shared libraries but they crash when run
-          # They mirror static builds above in order to cover more of the
-          # code base.
           {
             arch: hppa-linux-gnu,
             libs: libc6-dev-hppa-cross,
-            target: linux-generic32,
-            tests: none
-          }, {
-            arch: m68k-linux-gnu,
-            libs: libc6-dev-m68k-cross,
-            target: -mcfv4e -mxgot linux-latomic -Wno-stringop-overflow no-quic,
-            tests: none
-          }, {
-            arch: mips-linux-gnu,
-            libs: libc6-dev-mips-cross,
-            target: linux-mips32,
-            tests: none
-          }, {
-            arch: mips64-linux-gnuabi64,
-            libs: libc6-dev-mips64-cross,
-            target: linux64-mips64,
-            tests: none
-          },
-
-          # This build doesn't execute either with or without shared libraries.
-          {
-            arch: sparc64-linux-gnu,
-            libs: libc6-dev-sparc64-cross,
-            target: linux64-sparcv9,
-            tests: none
-          }
-        ]
-    runs-on: ubuntu-latest
-<<<<<<< HEAD
-    steps:
-    - name: install package repository
-      if: matrix.platform.ppa != ''
-      run: |
-        sudo add-apt-repository ppa:${{ matrix.platform.ppa }}
-    - name: install packages
-      run: |
-        sudo apt-get update
-        sudo apt-get -yq --force-yes install \
-            gcc-${{ matrix.platform.arch }} \
-            ${{ matrix.platform.libs }}
-    - uses: actions/checkout@v4
-    - name: checkout fuzz/corpora submodule
-      run: git submodule update --init --depth 1 fuzz/corpora
-
-    - name: config with FIPS
-      if: matrix.platform.fips != 'no'
-      run: |
-        ./config --banner=Configured --strict-warnings enable-fips \
-                 --cross-compile-prefix=${{ matrix.platform.arch }}- \
-                 ${{ matrix.platform.target }}
-    - name: config without FIPS
-      if: matrix.platform.fips == 'no'
-      run: |
-        ./config --banner=Configured --strict-warnings \
-                 --cross-compile-prefix=${{ matrix.platform.arch }}- \
-                 ${{ matrix.platform.target }}
-    - name: config dump
-      run: ./configdata.pm --dump
-
-    - name: make
-      run: make -s -j4
-
-    - name: install qemu
-      if: matrix.platform.tests != 'none'
-      run: sudo apt-get -yq --force-yes install qemu-user
-
-    - name: Set QEMU environment
-      if: matrix.platform.qemucpu != ''
-      run: echo "QEMU_CPU=${{ matrix.platform.qemucpu }}" >> $GITHUB_ENV
-
-    - name: Set OpenSSL caps environment
-      if: matrix.platform.opensslcapsname != ''
-      run: echo "OPENSSL_${{ matrix.platform.opensslcapsname }}=\
-                 ${{ matrix.platform.opensslcaps }}" >> $GITHUB_ENV
-
-    - name: get cpu info
+        runs-on: ubuntu-latest
+        steps:
+        - name: install package repository
+          if: matrix.platform.ppa != ''
+          run: |
+            sudo add-apt-repository ppa:${{ matrix.platform.ppa }}
+        - name: install packages
+          run: |
+            sudo apt-get update
+            sudo apt-get -yq --force-yes install \
+                gcc-${{ matrix.platform.arch }} \
+                ${{ matrix.platform.libs }}
+        - uses: actions/checkout@v4
+        - name: checkout fuzz/corpora submodule
+          run: git submodule update --init --depth 1 fuzz/corpora
+    
+        - name: config with FIPS
+          if: matrix.platform.fips != 'no'
+          run: |
+            ./config --banner=Configured --strict-warnings enable-fips \
+                     --cross-compile-prefix=${{ matrix.platform.arch }}- \
+                     ${{ matrix.platform.target }}
+        - name: config without FIPS
+          if: matrix.platform.fips == 'no'
+          run: |
+            ./config --banner=Configured --strict-warnings \
+                     --cross-compile-prefix=${{ matrix.platform.arch }}- \
+                     ${{ matrix.platform.target }}
+        - name: config dump
+          run: ./configdata.pm --dump
+    
+        - name: make
+          run: make -s -j4
+    
+        - name: install qemu
+          if: matrix.platform.tests != 'none'
+          run: sudo apt-get -yq --force-yes install qemu-user
+    
+        - name: Set QEMU environment
+          if: matrix.platform.qemucpu != ''
+          run: echo "QEMU_CPU=${{ matrix.platform.qemucpu }}" >> $GITHUB_ENV
+    
+        - name: Set OpenSSL caps environment
+          if: matrix.platform.opensslcapsname != ''
+          run: echo "OPENSSL_${{ matrix.platform.opensslcapsname }}=\
+                     ${{ matrix.platform.opensslcaps }}" >> $GITHUB_ENV
+    
+        - name: get cpu info
+          run: cat /proc/cpuinfo
+    
+        - name: make all tests
+          if: github.event_name == 'push' && matrix.platform.tests == ''
+          run: |
+            .github/workflows/make-test \
+                      TESTS="-test_afalg" \
+                      QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }}
+        - name: make some tests
+          if: github.event_name == 'push' && matrix.platform.tests != 'none' && matrix.platform.tests != ''
+          run: |
+            .github/workflows/make-test \
+                      TESTS="${{ matrix.platform.tests }} -test_afalg" \
+                      QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }}
+        - name: make evp tests
+          if: github.event_name == 'pull_request' && matrix.platform.tests != 'none'
+          run: |
+            .github/workflows/make-test \
+                      TESTS="test_evp*" \
+                      QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }}
+        - name: save artifacts
+          uses: actions/upload-artifact@v4
+          with:
+            name: "cross-compiles@${{ matrix.platform.arch }}"
+            path: artifacts.tar.gz
+            if-no-files-found: ignore
       run: cat /proc/cpuinfo
-
-    - name: make all tests
-      if: github.event_name == 'push' && matrix.platform.tests == ''
-      run: |
-        .github/workflows/make-test \
+      - name: make all tests
+        if: github.event_name == 'push' && matrix.platform.tests == ''
+        run: |
+            .github/workflows/make-test \
                   TESTS="-test_afalg" \
                   QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }}
-    - name: make some tests
-      if: github.event_name == 'push' && matrix.platform.tests != 'none' && matrix.platform.tests != ''
-      run: |
+      - name: make some tests
+        if: github.event_name == 'push' && matrix.platform.tests != 'none' && matrix.platform.tests != ''
+        run: |
         .github/workflows/make-test \
                   TESTS="${{ matrix.platform.tests }} -test_afalg" \
                   QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }}
@@ -304,199 +289,3 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-=======
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: flawfinder_scan
-        uses: david-a-wheeler/flawfinder@8e4a779ad59dbfaee5da586aa9210853b701959c
-        with:
-          arguments: '--sarif ./'
-          output: 'flawfinder_results.sarif'
-
-      - name: Upload analysis results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: ${{ github.workspace }}/flawfinder_results.sarif
-
-  cross-compilation:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        platform: [
-          {
-            arch: i386-pc-msdosdjgpp,
-            libs: libc-djgpp-dev libwatt-djgpp-dev djgpp-utils,
-            target: no-threads 386 DJGPP,
-            tests: none,
-            ppa: jwt27/djgpp-toolchain
-          },
-          {
-            arch: aarch64-linux-gnu,
-            libs: libc6-dev-arm64-cross,
-            target: linux-aarch64
-          },
-          {
-            arch: alpha-linux-gnu,
-            libs: libc6.1-dev-alpha-cross,
-            target: linux-alpha-gcc
-          },
-          {
-            arch: arm-linux-gnueabi,
-            libs: libc6-dev-armel-cross,
-            target: linux-armv4,
-            tests: -test_includes -test_store -test_x509_store
-          },
-          {
-            arch: arm-linux-gnueabihf,
-            libs: libc6-dev-armhf-cross,
-            target: linux-armv4,
-            tests: -test_includes -test_store -test_x509_store
-          },
-          {
-            arch: hppa-linux-gnu,
-            libs: libc6-dev-hppa-cross,
-            target: -static -O1 linux-generic32,
-            fips: no,
-            tests: -test_includes -test_store -test_x509_store
-          },
-          {
-            arch: m68k-linux-gnu,
-            libs: libc6-dev-m68k-cross,
-            target: -static -m68040 linux-latomic -Wno-stringop-overflow,
-            fips: no,
-            tests: -test_includes -test_store -test_x509_store
-          },
-          {
-            arch: mips-linux-gnu,
-            libs: libc6-dev-mips-cross,
-            target: -static linux-mips32,
-            fips: no,
-            tests: -test_includes -test_store -test_x509_store
-          },
-          {
-            arch: mips64-linux-gnuabi64,
-            libs: libc6-dev-mips64-cross,
-            target: -static linux64-mips64,
-            fips: no
-          },
-          {
-            arch: mipsel-linux-gnu,
-            libs: libc6-dev-mipsel-cross,
-            target: linux-mips32,
-            tests: -test_includes -test_store -test_x509_store
-          },
-          {
-            arch: powerpc64le-linux-gnu,
-            libs: libc6-dev-ppc64el-cross,
-            target: -O2 linux-ppc64le
-          },
-          {
-            arch: riscv64-linux-gnu,
-            libs: libc6-dev-riscv64-cross,
-            target: linux64-riscv64
-          },
-          {
-            arch: s390x-linux-gnu,
-            libs: libc6-dev-s390x-cross,
-            target: linux64-s390x -Wno-stringop-overflow
-          },
-          {
-            arch: sh4-linux-gnu,
-            libs: libc6-dev-sh4-cross,
-            target: no-async linux-latomic,
-            tests: -test_includes -test_store -test_x509_store
-          }
-        ]
-    steps:
-      - name: Install package repository
-        if: matrix.platform.ppa != ''
-        run: |
-          sudo add-apt-repository ppa:${{ matrix.platform.ppa }}
-      - name: Install packages
-        run: |
-          sudo apt-get update
-          sudo apt-get -yq --force-yes install \
-              gcc-${{ matrix.platform.arch }} \
-              ${{ matrix.platform.libs }}
-      - uses: actions/checkout@v4
-      - name: Checkout fuzz/corpora submodule
-        run: git submodule update --init --depth 1 fuzz/corpora
-      - name: Config with FIPS
-        if: matrix.platform.fips != 'no'
-        run: |
-          ./config --banner=Configured --strict-warnings enable-fips \
-                   --cross-compile-prefix=${{ matrix.platform.arch }}- \
-                   ${{ matrix.platform.target }}
-      - name: Config without FIPS
-        if: matrix.platform.fips == 'no'
-        run: |
-          ./config --banner=Configured --strict-warnings \
-                   --cross-compile-prefix=${{ matrix.platform.arch }}- \
-                   ${{ matrix.platform.target }}
-      - name: Config dump
-        run: ./configdata.pm --dump
-      - name: Make
-        run: make -s -j4
-      - name: Install qemu
-        if: matrix.platform.tests != 'none'
-        run: sudo apt-get -yq --force-yes install qemu-user
-      - name: Set QEMU environment
-        if: matrix.platform.qemucpu != ''
-        run: echo "QEMU_CPU=${{ matrix.platform.qemucpu }}" >> $GITHUB_ENV
-      - name: Set OpenSSL caps environment
-        if: matrix.platform.opensslcapsname != ''
-        run: echo "OPENSSL_${{ matrix.platform.opensslcapsname }}=\
-                   ${{ matrix.platform.opensslcaps }}" >> $GITHUB_ENV
-      - name: Get CPU info
-        run: cat /proc/cpuinfo
-      - name: Make all tests
-        if: github.event_name == 'push' && matrix.platform.tests == ''
-        run: |
-          .github/workflows/make-test \
-                    TESTS="-test_afalg" \
-                    QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }}
-      - name: Make some tests
-        if: github.event_name == 'push' && matrix.platform.tests != 'none' && matrix.platform.tests != ''
-        run: |
-          .github/workflows/make-test \
-                    TESTS="${{ matrix.platform.tests }} -test_afalg" \
-                    QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }}
-      - name: Make evp tests
-        if: github.event_name == 'pull_request' && matrix.platform.tests != 'none'
-        run: |
-          .github/workflows/make-test \
-                    TESTS="test_evp*" \
-                    QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }}
-      - name: Save artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: "cross-compiles@${{ matrix.platform.arch }}"
-          path: artifacts.tar.gz
-          if-no-files-found: ignore
-
-    runs-on: ubuntu-latest
-    permissions:
-      actions: read
-      contents: read
-      security-events: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: flawfinder_scan
-        uses: david-a-wheeler/flawfinder@8e4a779ad59dbfaee5da586aa9210853b701959c
-        with:
-          arguments: '--sarif ./'
-          output: 'flawfinder_results.sarif'
-
-      - name: Upload analysis results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: ${{github.workspace}}/flawfinder_results.sarif
->>>>>>> refs/remotes/origin/master
