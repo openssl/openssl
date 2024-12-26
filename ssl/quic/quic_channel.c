@@ -158,8 +158,8 @@ static QLOG *ch_get_qlog_cb(void *arg)
 
 #define DEFAULT_INIT_CONN_MAX_STREAMS           100
 
-static int ch_init(QUIC_CHANNEL *ch)
-{
+static void ch_update_idle(QUIC_CHANNEL *ch) {
+    ch->idle_deadline = ossl_time_add(get_time(ch), ch_get_effective_idle_timeout_duration(ch));
     OSSL_QUIC_TX_PACKETISER_ARGS txp_args = {0};
     OSSL_QTX_ARGS qtx_args = {0};
     OSSL_QRX_ARGS qrx_args = {0};
@@ -173,7 +173,7 @@ static int ch_init(QUIC_CHANNEL *ch)
 
     rx_short_dcid_len = ossl_quic_port_get_rx_short_dcid_len(ch->port);
     tx_init_dcid_len = ossl_quic_port_get_tx_init_dcid_len(ch->port);
-
+    }
     /* For clients, generate our initial DCID. */
     if (!ch->is_server
         && !ossl_quic_gen_rand_conn_id(ch->port->engine->libctx, tx_init_dcid_len,
