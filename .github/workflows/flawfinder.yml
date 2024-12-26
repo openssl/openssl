@@ -3,7 +3,7 @@ name: flawfinder
 on: [pull_request, push]
 
 permissions:
-  contents: read
+  contents: read, write
 
 jobs:
 
