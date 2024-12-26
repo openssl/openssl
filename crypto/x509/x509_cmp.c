@@ -192,7 +192,7 @@ int ossl_x509_add_cert_new(STACK_OF(X509) **p_sk, X509 *cert, int flags)
 
 int X509_add_cert(STACK_OF(X509) *sk, X509 *cert, int flags)
 {
-    if (sk == NULL || cert == NULL) {
+    if (sk == NULL) {
         ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
@@ -219,7 +219,7 @@ int X509_add_cert(STACK_OF(X509) *sk, X509 *cert, int flags)
         ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
         return 0;
     }
-    if ((flags & X509_ADD_FLAG_UP_REF) != 0)
+    if ((flags & X509_ADD_FLAG_UP_REF) != 0 && cert != NULL)
         (void)X509_up_ref(cert);
     return 1;
 }
