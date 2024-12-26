@@ -15,6 +15,10 @@
 #include <crypto/ml_kem.h>
 #include <openssl/rand.h>
 
+#if defined(OPENSSL_CONSTANT_TIME_VALIDATION)
+#include <valgrind/memcheck.h>
+#endif
+
 #if ML_KEM_SEED_BYTES != ML_KEM_SHARED_SECRET_BYTES + ML_KEM_RANDOM_BYTES
 # error "ML-KEM keygen seed length != shared secret + random bytes length"
 #endif
@@ -139,6 +143,39 @@ static void scalar_encode_12(uint8_t out[3 * DEGREE / 2], const scalar *s);
 #define U_VECTOR_BYTES(b)   ((DEGREE / 8) * ML_KEM_##b##_DU * ML_KEM_##b##_RANK)
 #define V_SCALAR_BYTES(b)   ((DEGREE / 8) * ML_KEM_##b##_DV)
 #define CTEXT_BYTES(b)      (U_VECTOR_BYTES(b) + V_SCALAR_BYTES(b))
+
+#if defined(OPENSSL_CONSTANT_TIME_VALIDATION)
+
+/*
+ * CONSTTIME_SECRET takes a pointer and a number of bytes and marks that region
+ * of memory as secret. Secret data is tracked as it flows to registers and
+ * other parts of a memory. If secret data is used as a condition for a branch,
+ * or as a memory index, it will trigger warnings in valgrind.
+ */
+# define CONSTTIME_SECRET(ptr, len) VALGRIND_MAKE_MEM_UNDEFINED(ptr, len)
+
+/*
+ * CONSTTIME_DECLASSIFY takes a pointer and a number of bytes and marks that
+ * region of memory as public. Public data is not subject to constant-time
+ * rules.
+ */
+# define CONSTTIME_DECLASSIFY(ptr, len) VALGRIND_MAKE_MEM_DEFINED(ptr, len)
+
+#else
+
+# define CONSTTIME_SECRET(ptr, len)
+# define CONSTTIME_DECLASSIFY(ptr, len)
+
+#endif
+
+/*
+ * Negligible to no performance impact, used only in ciphertext decoding when
+ * extracting the |u| vector and |v| scalar.
+ */
+static ossl_inline int constant_time_declassify_int(int v) {
+  CONSTTIME_DECLASSIFY(&v, sizeof(v));
+  return value_barrier(v);
+}
 
 /*
  * Per-variant fixed parameters
@@ -705,7 +742,7 @@ static int scalar_decode(scalar *out, const uint8_t *in, int bits)
             in_byte >>= chunk_bits;
             element_bits_done += chunk_bits;
         }
-        if (element >= kPrime)
+        if (constant_time_declassify_int(element >= kPrime))
             return 0;
         out->c[i] = element;
     }
@@ -722,9 +759,10 @@ int scalar_decode_12(scalar *out, const uint8_t in[3 * DEGREE / 2])
         uint8_t b1 = *in++;
         uint8_t b2 = *in++;
         uint8_t b3 = *in++;
+        int outOfRange1 = (*c++ = b1 | ((b2 & 0x0f) << 8)) >= kPrime;
+        int outOfRange2 = (*c++ = (b2 >> 4) | (b3 << 4)) >= kPrime;
 
-        if ((*c++ = b1 | ((b2 & 0x0f) << 8)) >= kPrime
-            || (*c++ = (b2 >> 4) | (b3 << 4)) >= kPrime)
+        if (outOfRange1 | outOfRange2)
             return 0;
     }
     return 1;
@@ -1372,6 +1410,9 @@ int genkey(const uint8_t d[ML_KEM_RANDOM_BYTES],
     if (!hash_g(hashed, augmented_seed, sizeof(augmented_seed), mdctx, key))
         return 0;
     memcpy(key->rho, hashed, ML_KEM_RANDOM_BYTES);
+    /* The |rho| matrix seed is public */
+    CONSTTIME_DECLASSIFY(key->rho, ML_KEM_RANDOM_BYTES);
+
     /* FIPS 203 |e| vector is initial value of key->t */
     if (!matrix_expand(mdctx, key)
         || !gencbd_vector_ntt(key->s, cbd_1, &counter, sigma, rank, mdctx, key)
@@ -1380,6 +1421,8 @@ int genkey(const uint8_t d[ML_KEM_RANDOM_BYTES],
 
     /* To |e| we now add the product of transpose |m| and |s|, giving |t|. */
     matrix_mult_transpose_add(key->t, key->m, key->s, rank);
+    /* The |t| vector is public */
+    CONSTTIME_DECLASSIFY(key->t, vinfo->rank * sizeof(scalar));
 
     if (pubenc == NULL) {
         /* Incremental digest of public key without in-full serialisation. */
@@ -1734,14 +1777,30 @@ int ossl_ml_kem_genkey(const uint8_t *d, const uint8_t *z,
         d = tmpseed;
         z = tmpseed + ML_KEM_RANDOM_BYTES;
     }
+    /*
+     * Data derived from (d, z) defaults secret, and to avoid side-channel
+     * leaks should not influence control flow.
+     */
+    CONSTTIME_SECRET(d, ML_KEM_RANDOM_BYTES);
+    CONSTTIME_SECRET(z, ML_KEM_RANDOM_BYTES);
 
     if (add_storage(OPENSSL_malloc(vinfo->prvalloc), 1, key))
         ret = genkey(d, z, mdctx, pubenc, key);
 
-    if (!ret)
-        free_storage(key);
+    /* Declassify secret inputs and derived outputs before returning control */
+    CONSTTIME_DECLASSIFY(d, ML_KEM_RANDOM_BYTES);
+    CONSTTIME_DECLASSIFY(z, ML_KEM_RANDOM_BYTES);
+
     EVP_MD_CTX_free(mdctx);
-    return ret;
+    if (!ret) {
+        free_storage(key);
+        return 0;
+    }
+
+    /* The public components are already declassified */
+    CONSTTIME_DECLASSIFY(key->s, vinfo->rank * sizeof(scalar));
+    CONSTTIME_DECLASSIFY(key->z, 2 * ML_KEM_RANDOM_BYTES);
+    return 1;
 }
 
 /*
@@ -1766,6 +1825,11 @@ int ossl_ml_kem_encap_seed(uint8_t *ctext, size_t clen,
         || entropy == NULL || elen != ML_KEM_RANDOM_BYTES
         || key == NULL || (mdctx = EVP_MD_CTX_new()) == NULL)
         return 0;
+    /*
+     * Data derived from the encap entropy defaults secret, and to avoid
+     * side-channel leaks should not influence control flow.
+     */
+    CONSTTIME_SECRET(entropy, elen);
 
     /*-
      * This avoids the need to handle allocation failures for two (max 2KB
@@ -1786,6 +1850,11 @@ int ossl_ml_kem_encap_seed(uint8_t *ctext, size_t clen,
     case_encap_seed(1024);
     }
 #   undef case_encap_seed
+
+    /* Declassify secret inputs and derived outputs before returning control */
+    CONSTTIME_DECLASSIFY(entropy, elen);
+    CONSTTIME_DECLASSIFY(ctext, clen);
+    CONSTTIME_DECLASSIFY(shared_secret, slen);
 
     EVP_MD_CTX_free(mdctx);
     return ret;
@@ -1815,6 +1884,9 @@ int ossl_ml_kem_decap(uint8_t *shared_secret, size_t slen,
     const ML_KEM_VINFO *vinfo;
     EVP_MD_CTX *mdctx;
     int ret = 0;
+#if defined(OPENSSL_CONSTANT_TIME_VALIDATION)
+    int classify_bytes;
+#endif
 
     /* Need a private key here */
     if (!ossl_ml_kem_have_prvkey(key))
@@ -1828,6 +1900,14 @@ int ossl_ml_kem_decap(uint8_t *shared_secret, size_t slen,
                       ML_KEM_SHARED_SECRET_BYTES, vinfo->secbits);
         return 0;
     }
+#if defined(OPENSSL_CONSTANT_TIME_VALIDATION)
+    /*
+     * Data derived from |s| and |z| defaults secret, and to avoid side-channel
+     * leaks should not influence control flow.
+     */
+    classify_bytes = 2 * sizeof(scalar) + ML_KEM_RANDOM_BYTES;
+    CONSTTIME_SECRET(key->s, classify_bytes);
+#endif
 
     /*-
      * This avoids the need to handle allocation failures for two (max 2KB
@@ -1842,15 +1922,20 @@ int ossl_ml_kem_decap(uint8_t *shared_secret, size_t slen,
             scalar tmp[2 * ML_KEM_##bits##_RANK];                       \
                                                                         \
             ret = decap(shared_secret, ctext, cbuf, tmp, mdctx, key);   \
-            EVP_MD_CTX_free(mdctx);                                     \
-            return ret;                                                 \
+            break;                                                      \
         }
     switch (vinfo->variant) {
     case_decap(512);
     case_decap(768);
     case_decap(1024);
     }
-    return 0;
+
+    /* Declassify secret inputs and derived outputs before returning control */
+    CONSTTIME_DECLASSIFY(key->s, classify_bytes);
+    CONSTTIME_DECLASSIFY(shared_secret, slen);
+    EVP_MD_CTX_free(mdctx);
+
+    return ret;
 #   undef case_decap
 }
 
