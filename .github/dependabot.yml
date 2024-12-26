@@ -11,4 +11,4 @@ updates:
       - "cla: trivial"
       - "approval: review pending"
     reviewers:
-      - "fochoao-alt"
+      - "openssl/committers"
