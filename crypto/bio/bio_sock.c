@@ -256,7 +256,7 @@ int BIO_get_accept_socket(char *host, int bind_mode)
     BIO_ADDRINFO *res = NULL;
 
     if (!BIO_parse_hostserv(host, &h, &p, BIO_PARSE_PRIO_SERV))
-        goto err;
+        return INVALID_SOCKET;
 
     if (BIO_sock_init() != 1)
         goto err;
