@@ -2785,7 +2785,8 @@ __owur int tls1_check_group_id(SSL_CONNECTION *s, uint16_t group_id,
                                int check_own_curves);
 __owur int tls1_get0_implemented_groups(int min_proto_version,
                                         int max_proto_version,
-                                        TLS_GROUP_INFO *grps, size_t num,
+                                        TLS_GROUP_INFO *grps,
+                                        size_t num, long all,
                                         STACK_OF(OPENSSL_CSTRING) *out);
 __owur uint16_t tls1_shared_group(SSL_CONNECTION *s, int nmatch);
 __owur int tls1_set_groups(uint16_t **pext, size_t *pextlen,
