@@ -654,17 +654,18 @@ EVP_PKEY_CTX_set_kem_op() sets the KEM operation to run. This can be set after
 EVP_PKEY_encapsulate_init() or EVP_PKEY_decapsulate_init() to select the kem
 operation. For the key types that support encapsulation and don't have the
 default operation, e.g. RSA, this function must be called before
-EVP_PKEY_encapsulate() or EVP_PKEY_decapsulate(). The supported values for the
-built-in algorithms are enumerated in L<EVP_KEM-RSA(7)>, L<EVP_KEM-EC(7)>,
-L<EVP_KEM-X25519(7)>, and L<EVP_KEM-X448(7)>.
-= for comment Is this an "operation" or an "operating mode".  I'd would have
-              though the "operation" is always "decapsulate" or "encapsulate"
-              and that options like "RSASVE" are "operating modes", is in
-              the comment "Set the mode - only 'RSASVE' is currently supported",
-              the code example.
+EVP_PKEY_encapsulate() or EVP_PKEY_decapsulate().
 
-=for comment TODO(ML-KEM): Probably nothing, there aren't presently any modes
-             for ML-KEM.
+=for comment Is this an "operation" or an "operating mode".  I would have
+             thought the "operation" is always "decapsulate" or "encapsulate"
+             and that tweaks like "RSASVE" are "operating modes" (what kind of
+             encapsulation or decapsulation to perform, not which of the two),
+             as, for example, in the comment "Set the mode - only 'RSASVE' is
+             currently supported".
+
+The supported parameters for the built-in algorithms are documented in
+L<EVP_KEM-RSA(7)>, L<EVP_KEM-EC(7)>, L<EVP_KEM-X25519(7)>,
+L<EVP_KEM-X448(7)>, and L<EVP_KEM-ML-KEM(7)>.
 
 =head1 RETURN VALUES
 
