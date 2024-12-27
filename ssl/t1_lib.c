@@ -909,6 +909,29 @@ static int tls1_in_list(uint16_t id, const uint16_t *list, size_t listlen)
     return 0;
 }
 
+int tls1_get0_implemented_groups(int min_proto_version, int max_proto_version,
+                                 TLS_GROUP_INFO *grps, size_t num,
+                                 STACK_OF(OPENSSL_CSTRING) *out)
+{
+    uint16_t id = 0;
+
+    if (grps == NULL || out == NULL)
+        return 0;
+    for (; num-- > 0; ++grps) {
+        /* Skip aliases */
+        if (id == grps->group_id)
+            continue;
+        id = grps->group_id;
+        if ((grps->mintls <= 0 || max_proto_version <= 0
+             || grps->mintls <= max_proto_version)
+            && (grps->maxtls <= 0 || min_proto_version <= 0
+                || grps->maxtls >= min_proto_version)
+            && sk_OPENSSL_CSTRING_push(out, grps->tlsname) <= 0)
+            return 0;
+    }
+    return 1;
+}
+
 /*-
  * For nmatch >= 0, return the id of the |nmatch|th shared group or 0
  * if there is no match.

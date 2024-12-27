@@ -88,23 +88,12 @@ SSL_CTX_set1_groups_list() sets the supported groups for B<ctx> to
 string B<list>. The string is a colon separated list of group names, for example
 "P-521:P-384:P-256:X25519:ffdhe2048". The groups are used as in
 SSL_CTX_set1_groups(), described above.
-The supported groups for B<TLSv1.3> include:
-B<P-256>,
-B<P-384>,
-B<P-521>,
-B<X25519>,
-B<X448>,
-B<ffdhe2048>,
-B<ffdhe3072>,
-B<ffdhe4096>,
-B<ffdhe6144>
-B<ffdhe8192>,
-B<MLKEM512>,
-B<MLKEM768>,
-B<MLKEM1024>,
-B<brainpoolP256r1tls13>,
-B<brainpoolP384r1tls13>, and
-B<brainpoolP512r1tls13>.
+
+The commands below list the available groups for TLS 1.2 and TLS 1.3,
+respectively:
+
+    $ openssl list -tls1_2 -tls-groups
+    $ openssl list -tls1_3 -tls-groups
 
 Support for other groups may be added by external providers, however note the
 discussion on TLS 1.3 selection criteria above. If a group name is preceded

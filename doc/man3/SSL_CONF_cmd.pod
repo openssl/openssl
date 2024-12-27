@@ -155,27 +155,37 @@ group to use. This setting affects groups used for signatures (in TLSv1.2
 and earlier) and key exchange. The first group listed will also be used
 for the B<key_share> sent by a client in a TLSv1.3 B<ClientHello>.
 
-The B<groups> argument is a colon separated list of groups. The group can
-be either the B<NIST> name (e.g. B<P-256>), some other commonly used name
-where applicable (e.g. B<X25519>, B<ffdhe2048>) or an OpenSSL OID name
-(e.g. B<prime256v1>). Group names are case sensitive. The list should be
-in order of preference with the most preferred group first.
+The B<groups> argument is a colon separated list of groups.  The preferred
+names are those listed in the IANA
+L<TLS Supported Groups|https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-8>
+registry.  For some groups, OpenSSL supports additional aliases, such as their
+B<NIST> name (e.g. B<P-256>), another commonly used name (e.g. B<X25519>,
+B<ffdhe2048>) or an OpenSSL OID name (e.g. B<prime256v1>).  Group names are
+case sensitive. The list should be in order of preference with the most
+preferred group first.
 
-The supported groups for B<TLSv1.3> include:
-B<P-256>,
-B<P-384>,
-B<P-521>,
-B<X25519>,
-B<X448>,
-B<ffdhe2048>,
-B<ffdhe3072>,
-B<ffdhe4096>,
-B<ffdhe6144>,
-B<ffdhe8192>,
-B<MLKEM512>,
-B<MLKEM768>,
+The commands below list the IANA names for TLS 1.2 and TLS 1.3,
+respectively:
+
+    $ openssl list -tls1_2 -tls-groups
+    $ openssl list -tls1_3 -tls-groups
+
+The recommended groups (in order of decreasing performance) for TLS 1.3 are presently:
+
+B<x25519>,
+B<secp256r1>,
+B<x448>,
 and
-B<MLKEM1024>.
+B<secp384r1>.
+
+The stronger security margins of the last two, come at a significant
+performance penalty.
+
+OpenSSL 3.5 introduces support for a few hybrid ECDH post-quantum (PQ) key
+exchange TLS I<groups>.  Among these B<X25519MLKEM768> offers reasonable
+performance, be at the cost of much larger key exchange messages (~1200 bytes,
+in comparison with 32 bytes for B<X25519> and 65 bytes for B<secp256r1>, a.k.a.
+NIST B<P-256>).
 
 =item B<-curves> I<groups>
 
@@ -436,27 +446,20 @@ signatures (in TLSv1.2 and earlier) and key exchange. The first group listed
 will also be used for the B<key_share> sent by a client in a TLSv1.3
 B<ClientHello>.
 
-The B<value> argument is a colon separated list of groups. The group can be
-either the B<NIST> name (e.g. B<P-256>), some other commonly used name where
-applicable (e.g. B<X25519>, B<ffdhe2048>) or an OpenSSL OID name
-(e.g. B<prime256v1>). Group names are case sensitive. The list should be in
-order of preference with the most preferred group first.
+The B<groups> argument is a colon separated list of groups.  The preferred
+names are those listed in the IANA
+L<TLS Supported Groups|https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-8>
+registry.  For some groups, OpenSSL supports additional aliases, such as their
+B<NIST> name (e.g. B<P-256>), another commonly used name (e.g. B<X25519>,
+B<ffdhe2048>) or an OpenSSL OID name (e.g. B<prime256v1>).  Group names are
+case sensitive. The list should be in order of preference with the most
+preferred group first.
 
-The supported groups for B<TLSv1.3> include:
-B<P-256>,
-B<P-384>,
-B<P-521>,
-B<X25519>,
-B<X448>,
-B<ffdhe2048>,
-B<ffdhe3072>,
-B<ffdhe4096>,
-B<ffdhe6144>,
-B<ffdhe8192>,
-B<MLKEM512>,
-B<MLKEM768>,
-and
-B<MLKEM1024>.
+The commands below list the available groups for TLS 1.2 and TLS 1.3,
+respectively:
+
+    $ openssl list -tls1_2 -tls-groups
+    $ openssl list -tls1_3 -tls-groups
 
 =item B<Curves>
 
