@@ -12,40 +12,36 @@
 #include "../record_local.h"
 #include "recmethod_local.h"
 
-/* mod 128 saturating subtract of two 64-bit values in big-endian order */
-static int satsub64be(const unsigned char *v1, const unsigned char *v2)
+/* mod 128 saturating subtract of two 64-bit values */
+static int satsub64be(uint64_t l1, uint64_t l2)
 {
-    int64_t ret;
-    uint64_t l1, l2;
+    uint64_t max, min;
+    int sign;
 
-    n2l8(v1, l1);
-    n2l8(v2, l2);
+    if (l1 > l2) {
+        max = l1;
+        min = l2;
+        sign = 1;
+    } else {
+        max = l2;
+        min = l1;
+        sign = -1;
+    }
 
-    ret = l1 - l2;
+    if (max - min > 128)
+        return sign * 128;
 
-    /* We do not permit wrap-around */
-    if (l1 > l2 && ret < 0)
-        return 128;
-    else if (l2 > l1 && ret > 0)
-        return -128;
-
-    if (ret > 128)
-        return 128;
-    else if (ret < -128)
-        return -128;
-    else
-        return (int)ret;
+    return sign * ((int)(max - min));
 }
 
 static int dtls_record_replay_check(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
 {
     int cmp;
     unsigned int shift;
-    const unsigned char *seq = rl->sequence;
 
-    cmp = satsub64be(seq, bitmap->max_seq_num);
+    cmp = satsub64be(rl->sequence, bitmap->max_seq_num);
     if (cmp > 0) {
-        ossl_tls_rl_record_set_seq_num(&rl->rrec[0], seq);
+        rl->rrec[0].seq_num = rl->sequence;
         return 1;               /* this record in new */
     }
     shift = -cmp;
@@ -54,25 +50,23 @@ static int dtls_record_replay_check(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
     else if (bitmap->map & ((uint64_t)1 << shift))
         return 0;               /* record previously received */
 
-    ossl_tls_rl_record_set_seq_num(&rl->rrec[0], seq);
+    rl->rrec[0].seq_num = rl->sequence;
     return 1;
 }
 
-static void dtls_record_bitmap_update(OSSL_RECORD_LAYER *rl,
-                                      DTLS_BITMAP *bitmap)
+static void dtls_record_bitmap_update(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
 {
     int cmp;
     unsigned int shift;
-    const unsigned char *seq = rl->sequence;
 
-    cmp = satsub64be(seq, bitmap->max_seq_num);
+    cmp = satsub64be(rl->sequence, bitmap->max_seq_num);
     if (cmp > 0) {
         shift = cmp;
         if (shift < sizeof(bitmap->map) * 8)
             bitmap->map <<= shift, bitmap->map |= 1UL;
         else
             bitmap->map = 1UL;
-        memcpy(bitmap->max_seq_num, seq, SEQ_NUM_SIZE);
+        bitmap->max_seq_num = rl->sequence;
     } else {
         shift = -cmp;
         if (shift < sizeof(bitmap->map) * 8)
@@ -279,7 +273,7 @@ static int dtls_process_record(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
 }
 
 static int dtls_rlayer_buffer_record(OSSL_RECORD_LAYER *rl, struct pqueue_st *queue,
-                                     unsigned char *priority)
+                                     uint64_t priority)
 {
     DTLS_RLAYER_RECORD_DATA *rdata;
     pitem *item;
@@ -289,7 +283,7 @@ static int dtls_rlayer_buffer_record(OSSL_RECORD_LAYER *rl, struct pqueue_st *qu
         return 0;
 
     rdata = OPENSSL_malloc(sizeof(*rdata));
-    item = pitem_new(priority, rdata);
+    item = pitem_new_u64(priority, rdata);
     if (rdata == NULL || item == NULL) {
         OPENSSL_free(rdata);
         pitem_free(item);
@@ -331,6 +325,7 @@ static int dtls_rlayer_buffer_record(OSSL_RECORD_LAYER *rl, struct pqueue_st *qu
 static int dtls_copy_rlayer_record(OSSL_RECORD_LAYER *rl, pitem *item)
 {
     DTLS_RLAYER_RECORD_DATA *rdata;
+    PACKET pkt;
 
     rdata = (DTLS_RLAYER_RECORD_DATA *)item->data;
 
@@ -342,7 +337,10 @@ static int dtls_copy_rlayer_record(OSSL_RECORD_LAYER *rl, pitem *item)
     memcpy(&rl->rrec[0], &(rdata->rrec), sizeof(TLS_RL_RECORD));
 
     /* Set proper sequence number for mac calculation */
-    memcpy(&(rl->sequence[2]), &(rdata->packet[5]), 6);
+    if (!PACKET_buf_init(&pkt, rdata->packet, rdata->packet_length)
+            || !PACKET_forward(&pkt, 5)
+            || !PACKET_get_net_6(&pkt, &rl->sequence))
+        return 0;
 
     return 1;
 }
@@ -366,14 +364,13 @@ static int dtls_retrieve_rlayer_buffered_record(OSSL_RECORD_LAYER *rl,
 }
 
 /* rfc9147 section 4.2.3 */
-int dtls_crypt_sequence_number(EVP_CIPHER_CTX *ctx, unsigned char *seq,
+int dtls_crypt_sequence_number(EVP_CIPHER_CTX *ctx, unsigned char *seq, size_t seq_len,
                                unsigned char *rec_data, size_t rec_data_offs)
 {
     unsigned char mask[16];
     int outlen, inlen;
     unsigned char *iv, *in;
     size_t i;
-    size_t seq_len = 6;
 
     if (ossl_assert(sizeof(mask) > rec_data_offs))
         inlen = (int)(sizeof(mask) - rec_data_offs);
@@ -386,11 +383,15 @@ int dtls_crypt_sequence_number(EVP_CIPHER_CTX *ctx, unsigned char *seq,
 
     if (!ossl_assert(inlen >= 0)
             || (size_t)inlen > sizeof(mask)
+            || !EVP_CIPHER_CTX_set_padding(ctx, 0)
             || EVP_CipherInit_ex2(ctx, NULL, NULL, iv, 1, NULL) <= 0
             || EVP_CipherUpdate(ctx, mask, &outlen, in, inlen) <= 0
             || outlen != inlen
             || EVP_CipherFinal_ex(ctx, mask + outlen, &outlen) <= 0
             || outlen != 0)
+        return 0;
+
+    if (!ossl_assert(sizeof(mask) > seq_len))
         return 0;
 
     for (i = 0; i < seq_len; i++)
@@ -412,14 +413,15 @@ int dtls_crypt_sequence_number(EVP_CIPHER_CTX *ctx, unsigned char *seq,
  */
 int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
 {
-    int ssl_major, ssl_minor;
+    int ssl_major;
     int rret;
     size_t more, n;
     TLS_RL_RECORD *rr;
-    unsigned char *p = NULL;
     DTLS_BITMAP *bitmap;
     unsigned int is_next_epoch;
+    unsigned char recseqnum[6];
 
+    memset(recseqnum, 0, sizeof(recseqnum));
     rl->num_recs = 0;
     rl->curr_rec = 0;
     rl->num_released = 0;
@@ -443,8 +445,11 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
     /* get something from the wire */
 
     /* check if we have the header */
-    if ((rl->rstate != SSL_ST_READ_BODY) ||
-        (rl->packet_length < DTLS1_RT_HEADER_LENGTH)) {
+    if (rl->rstate != SSL_ST_READ_BODY
+            || rl->packet_length < DTLS1_RT_HEADER_LENGTH) {
+        PACKET pkt;
+        unsigned int record_type, version, epoch;
+
         rret = rl->funcs->read_n(rl, DTLS1_RT_HEADER_LENGTH,
                                  TLS_BUFFER_get_len(&rl->rbuf), 0, 1, &n);
         /* read timeout is handled by dtls1_read_bytes */
@@ -461,21 +466,21 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
 
         rl->rstate = SSL_ST_READ_BODY;
 
-        p = rl->packet;
-
         /* Pull apart the header into the DTLS1_RECORD */
-        rr->type = *(p++);
-        ssl_major = *(p++);
-        ssl_minor = *(p++);
-        rr->rec_version = (ssl_major << 8) | ssl_minor;
+        if (!PACKET_buf_init(&pkt, rl->packet, rl->packet_length)
+                || !PACKET_get_1(&pkt, &record_type)
+                || !PACKET_get_net_2(&pkt, &version)
+                || !PACKET_get_net_2(&pkt, &epoch)
+                || !PACKET_copy_bytes(&pkt, recseqnum, sizeof(recseqnum))
+                || !PACKET_get_net_2_len(&pkt, &rr->length)) {
+            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return OSSL_RECORD_RETURN_FATAL;
+        }
 
-        /* sequence number is 64 bits, with top 2 bytes = epoch */
-        n2s(p, rr->epoch);
-
-        memcpy(&(rl->sequence[2]), p, 6);
-        p += 6;
-
-        n2s(p, rr->length);
+        rr->type = record_type;
+        ssl_major = version >> 8;
+        rr->rec_version = version;
+        rr->epoch = epoch;
 
         if (rl->msg_callback != NULL)
             rl->msg_callback(0, rr->rec_version, SSL3_RT_HEADER, rl->packet, DTLS1_RT_HEADER_LENGTH,
@@ -561,7 +566,8 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
      */
     if (rl->sn_enc_ctx != NULL
             && (rl->packet_length < DTLS1_RT_HEADER_LENGTH + 16
-                || !dtls_crypt_sequence_number(rl->sn_enc_ctx, &(rl->sequence[2]),
+                || !dtls_crypt_sequence_number(rl->sn_enc_ctx, recseqnum,
+                                               sizeof(recseqnum),
                                                rl->packet + DTLS1_RT_HEADER_LENGTH,
                                                rl->sn_enc_offs))) {
         /* sequence number encryption failed dump record */
@@ -569,6 +575,13 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
         rl->packet_length = 0;
         goto again;
     }
+
+    rl->sequence =  ((uint64_t)recseqnum[0]) << 40;
+    rl->sequence ^= ((uint64_t)recseqnum[1]) << 32;
+    rl->sequence ^= ((uint64_t)recseqnum[2]) << 24;
+    rl->sequence ^= ((uint64_t)recseqnum[3]) << 16;
+    rl->sequence ^= ((uint64_t)recseqnum[4]) << 8;
+    rl->sequence ^= ((uint64_t)recseqnum[5]) << 0;
 
     /* match epochs.  NULL means the packet is dropped on the floor */
     bitmap = dtls_get_bitmap(rl, rr, &is_next_epoch);
@@ -743,16 +756,18 @@ int dtls_prepare_record_header(OSSL_RECORD_LAYER *rl,
 {
     size_t maxcomplen;
 
+    templ->sequence_number = rl->sequence;
+    templ->epoch = rl->epoch;
     *recdata = NULL;
-
     maxcomplen = templ->buflen;
+
     if (rl->compctx != NULL)
         maxcomplen += SSL3_RT_MAX_COMPRESSED_OVERHEAD;
 
     if (!WPACKET_put_bytes_u8(thispkt, rectype)
             || !WPACKET_put_bytes_u16(thispkt, templ->version)
-            || !WPACKET_put_bytes_u16(thispkt, rl->epoch)
-            || !WPACKET_memcpy(thispkt, &(rl->sequence[2]), 6)
+            || !WPACKET_put_bytes_u16(thispkt, templ->epoch)
+            || !WPACKET_put_bytes_u48(thispkt, templ->sequence_number)
             || !WPACKET_start_sub_packet_u16(thispkt)
             || (rl->eivlen > 0
                 && !WPACKET_allocate_bytes(thispkt, rl->eivlen, NULL))
@@ -833,6 +848,7 @@ const OSSL_RECORD_METHOD ossl_dtls_record_method = {
     tls_get_alert_code,
     tls_set1_bio,
     tls_set_protocol_version,
+    tls_get_protocol_version,
     tls_set_plain_alerts,
     tls_set_first_handshake,
     tls_set_max_pipelines,
