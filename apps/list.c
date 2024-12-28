@@ -104,8 +104,9 @@ static void collect_ciphers(EVP_CIPHER *cipher, void *stack)
     STACK_OF(EVP_CIPHER) *cipher_stack = stack;
 
     if (is_cipher_fetchable(cipher)
-            && sk_EVP_CIPHER_push(cipher_stack, cipher) > 0)
-        EVP_CIPHER_up_ref(cipher);
+            && EVP_CIPHER_up_ref(cipher)
+            && sk_EVP_CIPHER_push(cipher_stack, cipher) <= 0)
+        EVP_CIPHER_free(cipher); /* up-ref successful but push to stack failed */
 }
 
 static void list_ciphers(const char *prefix)
@@ -188,8 +189,9 @@ static void collect_digests(EVP_MD *digest, void *stack)
     STACK_OF(EVP_MD) *digest_stack = stack;
 
     if (is_digest_fetchable(digest)
-            && sk_EVP_MD_push(digest_stack, digest) > 0)
-        EVP_MD_up_ref(digest);
+            && EVP_MD_up_ref(digest)
+            && sk_EVP_MD_push(digest_stack, digest) <= 0)
+        EVP_MD_free(digest); /* up-ref successful but push to stack failed */
 }
 
 static void list_digests(const char *prefix)
@@ -320,8 +322,9 @@ static void collect_kdfs(EVP_KDF *kdf, void *stack)
     STACK_OF(EVP_KDF) *kdf_stack = stack;
 
     if (is_kdf_fetchable(kdf)
-            && sk_EVP_KDF_push(kdf_stack, kdf) > 0)
-        EVP_KDF_up_ref(kdf);
+            && EVP_KDF_up_ref(kdf)
+            && sk_EVP_KDF_push(kdf_stack, kdf) <= 0)
+        EVP_KDF_free(kdf); /* up-ref successful but push to stack failed */
 }
 
 static void list_kdfs(void)
@@ -390,8 +393,9 @@ static void collect_rands(EVP_RAND *rand, void *stack)
     STACK_OF(EVP_RAND) *rand_stack = stack;
 
     if (is_rand_fetchable(rand)
-            && sk_EVP_RAND_push(rand_stack, rand) > 0)
-        EVP_RAND_up_ref(rand);
+            && EVP_RAND_up_ref(rand)
+            && sk_EVP_RAND_push(rand_stack, rand) <= 0)
+        EVP_RAND_free(rand); /* up-ref successful but push to stack failed */
 }
 
 static void list_random_generators(void)
@@ -516,8 +520,9 @@ static void collect_encoders(OSSL_ENCODER *encoder, void *stack)
     STACK_OF(OSSL_ENCODER) *encoder_stack = stack;
 
     if (is_encoder_fetchable(encoder)
-            && sk_OSSL_ENCODER_push(encoder_stack, encoder) > 0)
-        OSSL_ENCODER_up_ref(encoder);
+            && OSSL_ENCODER_up_ref(encoder)
+            && sk_OSSL_ENCODER_push(encoder_stack, encoder) <= 0)
+        OSSL_ENCODER_free(encoder); /* up-ref successful but push to stack failed */
 }
 
 static void list_encoders(void)
@@ -581,8 +586,9 @@ static void collect_decoders(OSSL_DECODER *decoder, void *stack)
     STACK_OF(OSSL_DECODER) *decoder_stack = stack;
 
     if (is_decoder_fetchable(decoder)
-            && sk_OSSL_DECODER_push(decoder_stack, decoder) > 0)
-        OSSL_DECODER_up_ref(decoder);
+            && OSSL_DECODER_up_ref(decoder)
+            && sk_OSSL_DECODER_push(decoder_stack, decoder) <= 0)
+        OSSL_DECODER_free(decoder); /* up-ref successful but push to stack failed */
 }
 
 static void list_decoders(void)
@@ -643,8 +649,9 @@ static void collect_keymanagers(EVP_KEYMGMT *km, void *stack)
     STACK_OF(EVP_KEYMGMT) *km_stack = stack;
 
     if (is_keymgmt_fetchable(km)
-            && sk_EVP_KEYMGMT_push(km_stack, km) > 0)
-        EVP_KEYMGMT_up_ref(km);
+            && EVP_KEYMGMT_up_ref(km)
+            && sk_EVP_KEYMGMT_push(km_stack, km) <= 0)
+        EVP_KEYMGMT_free(km); /* up-ref successful but push to stack failed */
 }
 
 static void list_keymanagers(void)
@@ -761,8 +768,9 @@ static void collect_signatures(EVP_SIGNATURE *sig, void *stack)
     STACK_OF(EVP_SIGNATURE) *sig_stack = stack;
 
     if (is_signature_fetchable(sig)
-            && sk_EVP_SIGNATURE_push(sig_stack, sig) > 0)
-        EVP_SIGNATURE_up_ref(sig);
+            && EVP_SIGNATURE_up_ref(sig)
+            && sk_EVP_SIGNATURE_push(sig_stack, sig) <= 0)
+        EVP_SIGNATURE_free(sig); /* up-ref successful but push to stack failed */
 }
 
 static void list_signatures(void)
@@ -905,8 +913,9 @@ static void collect_kem(EVP_KEM *kem, void *stack)
     STACK_OF(EVP_KEM) *kem_stack = stack;
 
     if (is_kem_fetchable(kem)
-            && sk_EVP_KEM_push(kem_stack, kem) > 0)
-        EVP_KEM_up_ref(kem);
+            && EVP_KEM_up_ref(kem)
+            && sk_EVP_KEM_push(kem_stack, kem) <= 0)
+        EVP_KEM_free(kem); /* up-ref successful but push to stack failed */
 }
 
 static void list_kems(void)
@@ -964,8 +973,9 @@ static void collect_asymciph(EVP_ASYM_CIPHER *asym_cipher, void *stack)
     STACK_OF(EVP_ASYM_CIPHER) *asym_cipher_stack = stack;
 
     if (is_asym_cipher_fetchable(asym_cipher)
-            && sk_EVP_ASYM_CIPHER_push(asym_cipher_stack, asym_cipher) > 0)
-        EVP_ASYM_CIPHER_up_ref(asym_cipher);
+            && EVP_ASYM_CIPHER_up_ref(asym_cipher)
+            && sk_EVP_ASYM_CIPHER_push(asym_cipher_stack, asym_cipher) <= 0)
+        EVP_ASYM_CIPHER_free(asym_cipher); /* up-ref successful but push to stack failed */
 }
 
 static void list_asymciphers(void)
@@ -1026,8 +1036,9 @@ static void collect_kex(EVP_KEYEXCH *kex, void *stack)
     STACK_OF(EVP_KEYEXCH) *kex_stack = stack;
 
     if (is_keyexch_fetchable(kex)
-            && sk_EVP_KEYEXCH_push(kex_stack, kex) > 0)
-        EVP_KEYEXCH_up_ref(kex);
+            && EVP_KEYEXCH_up_ref(kex)
+            && sk_EVP_KEYEXCH_push(kex_stack, kex) <= 0)
+        EVP_KEYEXCH_free(kex); /* up-ref successful but push to stack failed */
 }
 
 static void list_keyexchanges(void)
@@ -1306,8 +1317,9 @@ static void collect_store_loaders(OSSL_STORE_LOADER *store, void *stack)
 {
     STACK_OF(OSSL_STORE_LOADER) *store_stack = stack;
 
-    if (sk_OSSL_STORE_LOADER_push(store_stack, store) > 0)
-        OSSL_STORE_LOADER_up_ref(store);
+    if (OSSL_STORE_LOADER_up_ref(store)
+            && sk_OSSL_STORE_LOADER_push(store_stack, store) <= 0)
+        OSSL_STORE_LOADER_free(store); /* up-ref successful but push to stack failed */
 }
 
 static void list_store_loaders(void)

@@ -2141,8 +2141,12 @@ WORK_STATE tls_post_process_server_certificate(SSL_CONNECTION *s,
         }
     }
 
+    if (!X509_up_ref(x)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return WORK_ERROR;
+    }
+
     X509_free(s->session->peer);
-    X509_up_ref(x);
     s->session->peer = x;
     s->session->verify_result = s->verify_result;
     /* Ensure there is no RPK */

@@ -3854,7 +3854,9 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
         if (sc->session == NULL || sc->s3.peer_tmp == NULL) {
             return 0;
         } else {
-            EVP_PKEY_up_ref(sc->s3.peer_tmp);
+            if (!EVP_PKEY_up_ref(sc->s3.peer_tmp))
+                return 0;
+
             *(EVP_PKEY **)parg = sc->s3.peer_tmp;
             return 1;
         }
@@ -3863,7 +3865,9 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
         if (sc->session == NULL || sc->s3.tmp.pkey == NULL) {
             return 0;
         } else {
-            EVP_PKEY_up_ref(sc->s3.tmp.pkey);
+            if (!EVP_PKEY_up_ref(sc->s3.tmp.pkey))
+                return 0;
+
             *(EVP_PKEY **)parg = sc->s3.tmp.pkey;
             return 1;
         }

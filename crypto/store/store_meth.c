@@ -48,12 +48,15 @@ static OSSL_STORE_LOADER *new_loader(OSSL_PROVIDER *prov)
     OSSL_STORE_LOADER *loader;
 
     if ((loader = OPENSSL_zalloc(sizeof(*loader))) == NULL
-        || !CRYPTO_NEW_REF(&loader->refcnt, 1)) {
+        || !CRYPTO_NEW_REF(&loader->refcnt, 1)
+        || !ossl_provider_up_ref(prov)) {
+        if (loader != NULL)
+            CRYPTO_FREE_REF(&loader->refcnt);
         OPENSSL_free(loader);
         return NULL;
     }
+
     loader->prov = prov;
-    ossl_provider_up_ref(prov);
 
     return loader;
 }

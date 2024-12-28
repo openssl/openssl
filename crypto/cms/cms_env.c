@@ -357,8 +357,12 @@ static int cms_RecipientInfo_ktri_init(CMS_RecipientInfo *ri, X509 *recip,
     if (!ossl_cms_set1_SignerIdentifier(ktri->rid, recip, idtype, ctx))
         return 0;
 
-    X509_up_ref(recip);
-    EVP_PKEY_up_ref(pk);
+    if (!X509_up_ref(recip))
+        return 0;
+    if (!EVP_PKEY_up_ref(pk)) {
+        X509_free(recip);
+        return 0;
+    }
 
     ktri->pkey = pk;
     ktri->recip = recip;

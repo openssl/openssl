@@ -121,10 +121,8 @@ And here's the implementation of the FOO method fetcher:
         if ((foo = OPENSSL_zalloc(sizeof(*foo))) == NULL)
             return NULL;
 
-        if (!CRYPTO_NEW_REF(&foo->refcnt, 1)) {
-            OPENSSL_free(foo);
-            return NULL;
-        }
+        if (!CRYPTO_NEW_REF(&foo->refcnt, 1))
+            goto err;
 
         foo->name_id = name_id;
 
@@ -147,11 +145,18 @@ And here's the implementation of the FOO method fetcher:
                 break;
             }
         }
+        if (prov != NULL && !ossl_provider_up_ref(prov))
+            goto err;
+
         foo->prov = prov;
-        if (prov)
-            ossl_provider_up_ref(prov);
 
         return foo;
+
+    err:
+        if (foo != NULL)
+            CRYPTO_FREE_REF(&foo->refcnt);
+        OPENSSL_free(foo);
+        return NULL
     }
 
     EVP_FOO_meth_free(EVP_FOO *foo)
