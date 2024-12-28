@@ -22,7 +22,7 @@
 /*
  * values for ext_defs ech_handling field
  * exceptionally, we don't conditionally compile that field to avoid a pile of
- * fndefs all over the ext_defs values
+ * ifndefs all over the ext_defs values
  */
 #define OSSL_ECH_HANDLING_CALL_BOTH 1 /* call constructor both times */
 #define OSSL_ECH_HANDLING_COMPRESS  2 /* compress outer value into inner */
@@ -119,8 +119,8 @@ typedef struct extensions_definition_st {
      */
     unsigned int context;
     /*
-     * exceptionally, we don't conditionally compile this field to avoid a pile of
-     * fndefs all over the ext_defs values
+     * exceptionally, we don't conditionally compile this field to avoid a
+     * pile of ifndefs all over the ext_defs values
      */
     int ech_handling;  /* how to handle ECH for this extension type */
     /*
@@ -545,8 +545,8 @@ static const EXTENSION_DEFINITION ext_defs[] = {
  * inner CH must have been pre-decoded into s->clienthello->pre_proc_exts
  * already.
  */
-static int ech_copy_inner2outer(SSL_CONNECTION *s, uint16_t ext_type,
-                                int ind, WPACKET *pkt)
+int ossl_ech_copy_inner2outer(SSL_CONNECTION *s, uint16_t ext_type,
+                              int ind, WPACKET *pkt)
 {
     RAW_EXTENSION *myext = NULL, *raws = NULL;
 
@@ -629,6 +629,7 @@ int ossl_ech_same_ext(SSL_CONNECTION *s, WPACKET *pkt)
 # endif
     if (s == NULL || s->ext.ech.es == NULL)
         return OSSL_ECH_SAME_EXT_CONTINUE; /* nothing to do */
+    /* TODO(ECH): we need a better way to handle indexing exts */
     tind = s->ext.ech.ext_ind;
     /* If this index'd extension won't be compressed, we're done */
     if (tind < 0 || tind >= nexts)
@@ -656,7 +657,7 @@ int ossl_ech_same_ext(SSL_CONNECTION *s, WPACKET *pkt)
         if (ext_defs[tind].ech_handling == OSSL_ECH_HANDLING_CALL_BOTH)
             return OSSL_ECH_SAME_EXT_CONTINUE;
         else
-            return ech_copy_inner2outer(s, type, tind, pkt);
+            return ossl_ech_copy_inner2outer(s, type, tind, pkt);
     }
     /* just in case - shouldn't happen */
     return OSSL_ECH_SAME_EXT_ERR;
@@ -1127,12 +1128,12 @@ int tls_construct_extensions(SSL_CONNECTION *s, WPACKET *pkt,
 
 #ifndef OPENSSL_NO_ECH
     /*
-     * Two passes - we first construct the to-be-ECH-compressed
-     * extensions, and then go around again constructing those that
-     * aren't to be ECH-compressed. We need to ensure this ordering
-     * so that all the ECH-compressed extensions are contiguous
-     * in the encoding. The actual compression happens later in
-     * ech_encode_inner().
+     * Two passes if doing real ECH - we first construct the
+     * to-be-ECH-compressed extensions, and then go around again
+     * constructing those that aren't to be ECH-compressed. We
+     * need to ensure this ordering so that all the ECH-compressed
+     * extensions are contiguous in the encoding. The actual
+     * compression happens later in ech_encode_inner().
      */
     for (pass = 0; pass <= 1; pass++)
 #endif
@@ -1823,13 +1824,6 @@ int tls_psk_do_binder(SSL_CONNECTION *s, const EVP_MD *md,
     int ret = -1;
     int usepskfored = 0;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
-#ifndef OPENSSL_NO_ECH
-    unsigned char hashval[EVP_MAX_MD_SIZE];
-    unsigned int hashlen = 0;
-    EVP_MD_CTX *ctx = NULL;
-    WPACKET tpkt;
-    BUF_MEM *tpkt_mem = NULL;
-#endif
 
     /* Ensure cast to size_t is safe */
     if (!ossl_assert(hashsizei > 0)) {
@@ -1914,33 +1908,10 @@ int tls_psk_do_binder(SSL_CONNECTION *s, const EVP_MD *md,
 #ifndef OPENSSL_NO_ECH
         /* handle the hashing as per ECH needs (on client) */
         if (s->ext.ech.attempted == 1 && s->ext.ech.ch_depth == 1) {
-            if ((tpkt_mem = BUF_MEM_new()) == NULL
-                || !BUF_MEM_grow(tpkt_mem, SSL3_RT_MAX_PLAIN_LENGTH)
-                || !WPACKET_init(&tpkt, tpkt_mem)) {
+            if (ossl_ech_intbuf_fetch(s, (unsigned char **)&hdata, &hdatalen) != 1) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
-            hashlen = EVP_MD_size(md);
-            if ((ctx = EVP_MD_CTX_new()) == NULL
-                || EVP_DigestInit_ex(ctx, md, NULL) <= 0
-                || EVP_DigestUpdate(ctx, s->ext.ech.innerch1,
-                                    s->ext.ech.innerch1_len) <= 0
-                || EVP_DigestFinal_ex(ctx, hashval, &hashlen) <= 0) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                goto err;
-            }
-            EVP_MD_CTX_free(ctx);
-            ctx = NULL;
-            if (!WPACKET_put_bytes_u8(&tpkt, SSL3_MT_MESSAGE_HASH)
-                || !WPACKET_put_bytes_u24(&tpkt, hashlen)
-                || !WPACKET_memcpy(&tpkt, hashval, hashlen)
-                || !WPACKET_memcpy(&tpkt, s->ext.ech.kepthrr,
-                                   s->ext.ech.kepthrr_len)
-                || !WPACKET_get_length(&tpkt, &hdatalen)) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                goto err;
-            }
-            hdata = WPACKET_get_curr(&tpkt) - hdatalen;
         } else {
 #endif
             hdatalen = hdatalen_l =
@@ -2019,14 +1990,6 @@ int tls_psk_do_binder(SSL_CONNECTION *s, const EVP_MD *md,
     OPENSSL_cleanse(finishedkey, sizeof(finishedkey));
     EVP_PKEY_free(mackey);
     EVP_MD_CTX_free(mctx);
-#ifndef OPENSSL_NO_ECH
-    EVP_MD_CTX_free(ctx);
-    if (tpkt_mem != NULL) {
-        WPACKET_cleanup(&tpkt);
-        BUF_MEM_free(tpkt_mem);
-    }
-#endif
-
     return ret;
 }
 

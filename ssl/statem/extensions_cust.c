@@ -200,6 +200,65 @@ int custom_ext_add(SSL_CONNECTION *s, int context, WPACKET *pkt, X509 *x,
             if (!(meth->ext_flags & SSL_EXT_FLAG_RECEIVED))
                 continue;
         }
+
+#ifndef OPENSSL_NO_ECH
+        if ((context & SSL_EXT_CLIENT_HELLO) != 0
+            && s->ext.ech.attempted == 1) {
+            if (s->ext.ech.ch_depth == 1) {
+                /* mark custom CH ext for ECH compression, if doing ECH */
+                if (s->ext.ech.n_outer_only >= OSSL_ECH_OUTERS_MAX) {
+                    OSSL_TRACE_BEGIN(TLS) {
+                        BIO_printf(trc_out,
+                                "Too many outers to compress (max=%d)\n",
+                                OSSL_ECH_OUTERS_MAX);
+                    } OSSL_TRACE_END(TLS);
+                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_EXTENSION);
+                    return 0;
+                }
+                s->ext.ech.outer_only[s->ext.ech.n_outer_only] = meth->ext_type;
+                s->ext.ech.n_outer_only++;
+                OSSL_TRACE_BEGIN(TLS) {
+                    BIO_printf(trc_out, "ECH compressing type "
+                            "0x%04x (tot: %d)\n",
+                            (int) meth->ext_type,
+                            (int) s->ext.ech.n_outer_only);
+                } OSSL_TRACE_END(TLS);
+            }
+            if (s->ext.ech.ch_depth == 0) {
+                /* TODO(ECH): we need a better way to handle indexing exts */
+                /* copy over the extension octets (if any) to outer */
+                int j, tind = -1;
+                RAW_EXTENSION *raws = NULL;
+
+                /* we gotta find the relevant index to copy over this ext */
+                if (s->clienthello == NULL
+                    || s->clienthello->pre_proc_exts == NULL) {
+                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_EXTENSION);
+                    return 0;
+                }
+                raws = s->clienthello->pre_proc_exts;
+                for (j = 0; j != (int) s->clienthello->pre_proc_exts_len; j++) {
+                    if (raws[j].type == meth->ext_type) {
+                        tind = j;
+                        break;
+                    }
+                }
+                if (tind == -1) {
+                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_EXTENSION);
+                    return 0;
+                }
+                if (ossl_ech_copy_inner2outer(s, meth->ext_type, tind, pkt)
+                        != OSSL_ECH_SAME_EXT_DONE) {
+                    /* for custom exts, we really should have found it */
+                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_EXTENSION);
+                    return 0;
+                }
+                /* we're done with that one now */
+                continue;
+            }
+        }
+#endif
+
         /*
          * We skip it if the callback is absent - except for a ClientHello where
          * we add an empty extension.
@@ -393,7 +452,19 @@ int ossl_tls_add_custom_ext_intern(SSL_CTX *ctx, custom_ext_methods *exts,
      * for extension types that previously were not supported, but now are.
      */
     if (SSL_extension_supported(ext_type)
+#if !defined(OPENSSL_NO_ECH) && defined(OPENSSL_ECH_ALLOW_CUST_INJECT)
+            /*
+             * Do this conditionally so we can test an ECH in TLSv1.2 
+             * via the custom extensions API.
+             * OPENSSL_ECH_ALLOW_CUST_INJECT is defined (or not) in
+             * include/openssl/ech.h and if defined enables a test in
+             * test/ech_test.c
+             */
+            && ext_type != TLSEXT_TYPE_ech
             && ext_type != TLSEXT_TYPE_signed_certificate_timestamp)
+#else
+            && ext_type != TLSEXT_TYPE_signed_certificate_timestamp)
+#endif
         return 0;
 
     /* Extension type must fit in 16 bits */
@@ -546,6 +617,10 @@ int SSL_extension_supported(unsigned int ext_type)
     case TLSEXT_TYPE_compress_certificate:
     case TLSEXT_TYPE_client_cert_type:
     case TLSEXT_TYPE_server_cert_type:
+#ifndef OPENSSL_NO_ECH
+    case TLSEXT_TYPE_ech:
+    case TLSEXT_TYPE_outer_extensions:
+#endif
         return 1;
     default:
         return 0;

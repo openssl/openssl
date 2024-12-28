@@ -703,8 +703,7 @@ int OSSL_ECHSTORE_new_config(OSSL_ECHSTORE *es,
         goto err;
     }
     /* random config_id */
-    if (RAND_bytes_ex(es->libctx, (unsigned char *)&config_id, 1,
-                      RAND_DRBG_STRENGTH) <= 0) {
+    if (RAND_bytes_ex(es->libctx, (unsigned char *)&config_id, 1, 0) <= 0) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         goto err;
     }
@@ -1124,7 +1123,7 @@ int OSSL_ECHSTORE_flush_keys(OSSL_ECHSTORE *es, time_t age)
             ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
             return 0;
         }
-        if (ee->keyshare != NULL && ee->loadtime + age >= now) {
+        if (ee->keyshare != NULL && ee->loadtime + age <= now) {
             ossl_echstore_entry_free(ee);
             sk_OSSL_ECHSTORE_ENTRY_delete(es->entries, i);
         }
