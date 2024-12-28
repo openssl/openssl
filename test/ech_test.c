@@ -24,6 +24,8 @@ static char *cert = NULL;
 static char *privkey = NULL;
 static char *rootcert = NULL;
 
+/* TODO(ECH): add some testing of SSL_OP_ECH_IGNORE_CID */
+
 /* callback */
 static unsigned int test_cb(SSL *s, const char *str)
 {
@@ -887,10 +889,19 @@ static int ech_ingest_test(int run)
         || !TEST_false(OSSL_ECHSTORE_write_pem(es, 100, out)))
         goto end;
     flush_time = time(0);
+    /*
+     * Occasionally, flush_time will be 1 more than add_time. We'll
+     * check for that as that should catch a few more code paths
+     * in the flush_keys API.
+     */
     if (!TEST_true(OSSL_ECHSTORE_flush_keys(es, flush_time - add_time))
         || !TEST_int_eq(OSSL_ECHSTORE_num_keys(es, &keysaftr), 1)
-        || !TEST_int_eq(keysaftr, 0))
+        || ((flush_time <= add_time) && !TEST_int_eq(keysaftr, 0))
+        || ((flush_time > add_time) && !TEST_int_eq(keysaftr, 1))) {
+        TEST_info("Flush time: %lld, add_time: %lld", (long long)flush_time,
+                  (long long)add_time);
         goto end;
+    }
     rv = 1;
 end:
     OPENSSL_free(pn);
