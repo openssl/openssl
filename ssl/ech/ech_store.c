@@ -1124,7 +1124,7 @@ int OSSL_ECHSTORE_flush_keys(OSSL_ECHSTORE *es, time_t age)
             ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
             return 0;
         }
-        if (ee->keyshare != NULL && ((ee->loadtime + age) > now)) {
+        if (ee->keyshare != NULL && ee->loadtime + age >= now) {
             ossl_echstore_entry_free(ee);
             sk_OSSL_ECHSTORE_ENTRY_delete(es->entries, i);
         }
