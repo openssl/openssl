@@ -2754,7 +2754,9 @@ static int test_EVP_PKEY_check(int i)
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     ctx2 = EVP_PKEY_CTX_new_id(0xdefaced, NULL);
     /* assign the pkey directly, as an internal test */
-    EVP_PKEY_up_ref(pkey);
+    if (!EVP_PKEY_up_ref(pkey))
+        goto done;
+
     ctx2->pkey = pkey;
 
     if (!TEST_int_eq(EVP_PKEY_check(ctx2), 0xbeef))
@@ -2772,9 +2774,10 @@ static int test_EVP_PKEY_check(int i)
  done:
     EVP_PKEY_CTX_free(ctx);
 #ifndef OPENSSL_NO_DEPRECATED_3_0
+    if (ctx2 != NULL)
+        EVP_PKEY_free(ctx2->pkey);
     EVP_PKEY_CTX_free(ctx2);
 #endif
-    EVP_PKEY_free(pkey);
     return ret;
 }
 

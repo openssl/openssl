@@ -2692,9 +2692,8 @@ static int test_psk_tickets(void)
                                       NULL, NULL)))
         goto end;
     clientpsk = serverpsk = create_a_psk(clientssl, SHA384_DIGEST_LENGTH);
-    if (!TEST_ptr(clientpsk))
+    if (!TEST_ptr(clientpsk) || !TEST_true(SSL_SESSION_up_ref(clientpsk)))
         goto end;
-    SSL_SESSION_up_ref(clientpsk);
 
     if (!TEST_true(create_ssl_connection(serverssl, clientssl,
                                                 SSL_ERROR_NONE))
@@ -3004,10 +3003,13 @@ static int test_ssl_set_bio(int idx)
          * each BIO that will have ownership transferred in the SSL_set_bio()
          * call
          */
-        if (irbio != NULL)
-            BIO_up_ref(irbio);
-        if (iwbio != NULL && iwbio != irbio)
-            BIO_up_ref(iwbio);
+        if (irbio != NULL && !BIO_up_ref(irbio))
+            goto end;
+        if (iwbio != NULL && iwbio != irbio && !BIO_up_ref(iwbio)) {
+            if (irbio != NULL)
+                BIO_free(irbio);
+            goto end;
+        }
     }
 
     if (conntype != CONNTYPE_NO_CONNECTION
@@ -3027,11 +3029,18 @@ static int test_ssl_set_bio(int idx)
     if (nrbio != NULL
             && nrbio != irbio
             && (nwbio != iwbio || nrbio != nwbio))
-        BIO_up_ref(nrbio);
+        if (!TEST_true(BIO_up_ref(nrbio)))
+            goto end;
     if (nwbio != NULL
             && nwbio != nrbio
             && (nwbio != iwbio || (nwbio == iwbio && irbio == iwbio)))
-        BIO_up_ref(nwbio);
+        if (!TEST_true(BIO_up_ref(nwbio))) {
+            if (nrbio != NULL
+                    && nrbio != irbio
+                    && (nwbio != iwbio || nrbio != nwbio))
+                BIO_free(nrbio);
+            goto end;
+        }
 
     SSL_set_bio(clientssl, nrbio, nwbio);
 
@@ -3276,8 +3285,8 @@ static int use_session_cb(SSL *ssl, const EVP_MD *md, const unsigned char **id,
         return 0;
     }
 
-    if (clientpsk != NULL)
-        SSL_SESSION_up_ref(clientpsk);
+    if (clientpsk != NULL && !SSL_SESSION_up_ref(clientpsk))
+        return 0;
 
     *sess = clientpsk;
     *id = (const unsigned char *)pskid;
@@ -3325,7 +3334,7 @@ static int find_session_cb(SSL *ssl, const unsigned char *identity,
     if (find_session_cb_cnt > 2)
         return 0;
 
-    if (serverpsk == NULL)
+    if (serverpsk == NULL || !SSL_SESSION_up_ref(serverpsk))
         return 0;
 
     /* Identity should match that set by the client */
@@ -3336,7 +3345,6 @@ static int find_session_cb(SSL *ssl, const unsigned char *identity,
         return 1;
     }
 
-    SSL_SESSION_up_ref(serverpsk);
     *sess = serverpsk;
 
     return 1;

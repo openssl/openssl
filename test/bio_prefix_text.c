@@ -101,8 +101,10 @@ static int setup_bio_chain(const char *progname)
     if (chain != NULL) {
         size_t i;
 
+        if (!BIO_up_ref(bio_out)) /* Protection against freeing */
+            goto err;
+
         next = bio_out;
-        BIO_up_ref(next);        /* Protection against freeing */
 
         for (i = 0; n > 0; i++, n--) {
             BIO *curr = BIO_new(BIO_f_prefix());

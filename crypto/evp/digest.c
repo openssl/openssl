@@ -630,15 +630,16 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
     } else {
         evp_md_ctx_reset_ex(out, 1);
         digest_change = (out->fetched_digest != in->fetched_digest);
+
+        if (digest_change && in->fetched_digest != NULL
+            && !EVP_MD_up_ref(in->fetched_digest))
+            return 0;
         if (digest_change && out->fetched_digest != NULL)
             EVP_MD_free(out->fetched_digest);
         *out = *in;
         /* NULL out pointers in case of error */
         out->pctx = NULL;
         out->algctx = NULL;
-
-        if (digest_change && in->fetched_digest != NULL)
-            EVP_MD_up_ref(in->fetched_digest);
 
         if (in->algctx != NULL) {
             out->algctx = in->digest->dupctx(in->algctx);
@@ -1030,16 +1031,14 @@ static void *evp_md_from_algorithm(int name_id,
     if (!evp_names_do_all(prov, name_id, set_legacy_nid, &md->type)
             || md->type == -1) {
         ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
-        EVP_MD_free(md);
-        return NULL;
+        goto err;
     }
 #endif
 
     md->name_id = name_id;
-    if ((md->type_name = ossl_algorithm_get1_first_name(algodef)) == NULL) {
-        EVP_MD_free(md);
-        return NULL;
-    }
+    if ((md->type_name = ossl_algorithm_get1_first_name(algodef)) == NULL)
+        goto err;
+
     md->description = algodef->algorithm_description;
 
     for (; fns->function_id != 0; fns++) {
@@ -1130,21 +1129,24 @@ static void *evp_md_from_algorithm(int name_id,
          * The "digest" function can standalone. We at least need one way to
          * generate digests.
          */
-        EVP_MD_free(md);
         ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_PROVIDER_FUNCTIONS);
-        return NULL;
+        goto err;
     }
+    if (prov != NULL && !ossl_provider_up_ref(prov))
+        goto err;
+
     md->prov = prov;
-    if (prov != NULL)
-        ossl_provider_up_ref(prov);
 
     if (!evp_md_cache_constants(md)) {
-        EVP_MD_free(md);
         ERR_raise(ERR_LIB_EVP, EVP_R_CACHE_CONSTANTS_FAILED);
-        md = NULL;
+        goto err;
     }
 
     return md;
+
+err:
+    EVP_MD_free(md);
+    return NULL;
 }
 
 static int evp_md_up_ref(void *md)

@@ -1191,8 +1191,14 @@ int create_ssl_objects(SSL_CTX *serverctx, SSL_CTX *clientctx, SSL **sssl,
 
     /* Up ref these as we are passing them to two SSL objects */
     SSL_set_bio(serverssl, c_to_s_bio, s_to_c_bio);
-    BIO_up_ref(s_to_c_bio);
-    BIO_up_ref(c_to_s_bio);
+
+    if (!BIO_up_ref(s_to_c_bio))
+        goto error;
+    if (!BIO_up_ref(c_to_s_bio)) {
+        BIO_free(s_to_c_bio);
+        goto error;
+    }
+
     SSL_set_bio(clientssl, s_to_c_bio, c_to_s_bio);
     *sssl = serverssl;
     *cssl = clientssl;

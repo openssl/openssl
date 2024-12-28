@@ -208,7 +208,8 @@ static int psk_use_session_cb(SSL *s, const EVP_MD *md,
     const SSL_CIPHER *cipher = NULL;
 
     if (psksess != NULL) {
-        SSL_SESSION_up_ref(psksess);
+        if (!SSL_SESSION_up_ref(psksess))
+            goto err;
         usesess = psksess;
     } else {
         long key_len;

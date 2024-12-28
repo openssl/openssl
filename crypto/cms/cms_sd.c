@@ -356,8 +356,12 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
     /* Call for side-effect of computing hash and caching extensions */
     X509_check_purpose(signer, -1, -1);
 
-    X509_up_ref(signer);
-    EVP_PKEY_up_ref(pk);
+    if (!X509_up_ref(signer))
+        goto err;
+    if (!EVP_PKEY_up_ref(pk)) {
+        X509_free(signer);
+        goto err;
+    }
 
     si->cms_ctx = ctx;
     si->pkey = pk;
@@ -633,7 +637,8 @@ STACK_OF(X509) *CMS_get0_signers(CMS_ContentInfo *cms)
 void CMS_SignerInfo_set1_signer_cert(CMS_SignerInfo *si, X509 *signer)
 {
     if (signer != NULL) {
-        X509_up_ref(signer);
+        if (!X509_up_ref(signer))
+            return;
         EVP_PKEY_free(si->pkey);
         si->pkey = X509_get_pubkey(signer);
     }
