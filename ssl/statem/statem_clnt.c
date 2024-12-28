@@ -1202,7 +1202,8 @@ static int tls_construct_client_hello_aux(SSL_CONNECTION *s, WPACKET *pkt);
 __owur CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s,
                                                   WPACKET *pkt)
 {
-    unsigned char *innerch_full = NULL, *innerch_end = NULL;
+    unsigned char *innerch_full = NULL, *innerch_end = NULL, *encoded = NULL;
+    size_t encoded_len;
     WPACKET inner; /* "fake" pkt for inner */
     BUF_MEM *inner_mem = NULL;
     PACKET rpkt; /* we'll decode back the inner ch to help make the outer */
@@ -1282,19 +1283,8 @@ __owur CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s,
             memcpy(s->tmp_session_id, s->session->session_id, sess_id_len);
         }
     }
-    if (s->hello_retry_request != SSL_HRR_NONE) {
+    if (s->hello_retry_request != SSL_HRR_NONE)
         s->ext.ech.n_outer_only = 0; /* reset count of "compressed" exts */
-        OPENSSL_free(s->ext.ech.encoded_innerch);
-        s->ext.ech.encoded_innerch = NULL;
-        s->ext.ech.encoded_innerch_len = 0;
-        if (s->ext.ech.innerch != NULL) {
-            OPENSSL_free(s->ext.ech.innerch1);
-            s->ext.ech.innerch1 = s->ext.ech.innerch;
-            s->ext.ech.innerch1_len = s->ext.ech.innerch_len;
-            s->ext.ech.innerch_len = 0;
-            s->ext.ech.innerch = NULL;
-        }
-    }
     /*
      * Set CH depth flag so that other code (e.g. extension handlers)
      * know where we're at: 1 is "inner CH", 0 is "outer CH"
@@ -1319,6 +1309,11 @@ __owur CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s,
     OPENSSL_free(s->ext.ech.innerch);
     s->ext.ech.innerch = innerch_full;
     s->ext.ech.innerch_len = innerlen;
+    /* add inner to transcript */
+    if (ossl_ech_intbuf_add(s, innerch_full, innerlen, 0) != 1) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
     WPACKET_cleanup(&inner);
     BUF_MEM_free(inner_mem);
     inner_mem = NULL;
@@ -1345,13 +1340,12 @@ __owur CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s,
         goto err;
     }
     /* Make ClientHelloInner and EncodedClientHelloInner as per spec. */
-    if (ossl_ech_encode_inner(s) != 1) {
+    if (ossl_ech_encode_inner(s, &encoded, &encoded_len) != 1) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     }
 # ifdef OSSL_ECH_SUPERVERBOSE
-    ossl_ech_pbuf("encoded inner CH", s->ext.ech.encoded_innerch,
-                  s->ext.ech.encoded_innerch_len);
+    ossl_ech_pbuf("encoded inner CH", encoded, encoded_len);
 # endif
     s->ext.ech.ch_depth = 0; /* set depth for outer CH */
     /*
@@ -1376,10 +1370,11 @@ __owur CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s,
                   s->session->session_id_length);
 # endif
     /* Finally, calculate AAD and encrypt using HPKE */
-    if (ossl_ech_aad_and_encrypt(s, pkt) != 1) {
+    if (ossl_ech_aad_and_encrypt(s, pkt, encoded, encoded_len) != 1) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     }
+    OPENSSL_free(encoded);
     /* Free up raw exts as needed (happens like this on real server) */
     if (s->clienthello != NULL
         && s->clienthello->pre_proc_exts != NULL) {
@@ -1389,6 +1384,7 @@ __owur CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s,
     }
     return 1;
 err:
+    OPENSSL_free(encoded);
     if (inner_mem != NULL) {
         WPACKET_cleanup(&inner);
         BUF_MEM_free(inner_mem);
@@ -1743,7 +1739,7 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
 #endif
 #ifndef OPENSSL_NO_ECH
     const unsigned char *shbuf = NULL;
-    size_t shlen, chend, fixedshbuf_len, alen;
+    size_t shlen, alen;
     /*
      * client and server accept signal buffers, initialise in case of
      * e.g. memory fail when calculating, only really applies when
@@ -1791,7 +1787,6 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
             goto err;
         }
     }
-
     /* Get the session-id. */
     if (!PACKET_get_length_prefixed_1(pkt, &session_id)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
@@ -1831,6 +1826,20 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
             /* SSLfatal() already called */
             goto err;
         }
+        /* add any SH/HRR to inner transcript if we tried ECH */
+        if (s->ext.ech.attempted == 1) {
+            unsigned char prelude[4];
+
+            prelude[0] = SSL3_MT_SERVER_HELLO;
+            prelude[1] = (shlen >> 16) & 0xff;
+            prelude[2] = (shlen >> 8) & 0xff;
+            prelude[3] = shlen & 0xff;
+            if (ossl_ech_intbuf_add(s, prelude, 4, hrr) != 1 
+                || ossl_ech_intbuf_add(s, shbuf, shlen, 0) != 1) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
+        }
         /* check the ECH accept signal */
         if (ossl_ech_calc_confirm(s, hrr, c_signal, shbuf, shlen) != 1
             || ossl_ech_find_confirm(s, hrr, s_signal, shbuf, shlen) != 1
@@ -1851,15 +1860,11 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
         }
         if (!hrr && s->ext.ech.success == 1) {
             if (ossl_ech_swaperoo(s) != 1
-                || ossl_ech_make_transcript_buffer(s, hrr, shbuf, shlen,
-                                                   &abuf, &alen,
-                                                   &chend, &fixedshbuf_len) != 1
+                || ossl_ech_intbuf_fetch(s, &abuf, &alen) != 1
                 || ossl_ech_reset_hs_buffer(s, abuf, alen) != 1) {
-                OPENSSL_free(abuf);
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
-            OPENSSL_free(abuf);
         } else if (!hrr) {
             /*
              * If we got retry_configs then we should be validating
