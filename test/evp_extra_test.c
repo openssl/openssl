@@ -5939,7 +5939,8 @@ static int test_evp_cipher_pipeline(void)
         return 0;
     if (!TEST_ptr(pipeline_cipher = EVP_CIPHER_fetch(testctx, "AES-256-GCM",
                                                      "provider=fake-pipeline"))
-        || !TEST_ptr(cipher = EVP_CIPHER_fetch(testctx, "AES-256-GCM", testpropq))
+        || !TEST_ptr(cipher = EVP_CIPHER_fetch(testctx, "AES-256-GCM",
+                                               "provider!=fake-pipeline"))
         || !TEST_ptr(ctx = EVP_CIPHER_CTX_new()))
         goto end;
     memset(key, 0x01, sizeof(key));
