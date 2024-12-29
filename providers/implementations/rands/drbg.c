@@ -449,7 +449,7 @@ int ossl_prov_drbg_instantiate(PROV_DRBG *drbg, unsigned int strength,
         ERR_raise(ERR_LIB_PROV, PROV_R_ERROR_INSTANTIATING_DRBG);
         goto end;
     }
-    l_prov_drbg_instantiate(PROV_DRBG *drbg, unsigned int strength, entropy)
+    ossl_prov_drbg_instantiate(PROV_DRBG *drbg, unsigned int strength, entropy)
      if (entropy != NULL) 
         cleanup_entropy(drbg, entropy, entropylen);
         entropy = NULL;
