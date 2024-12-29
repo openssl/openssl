@@ -186,11 +186,11 @@ algorithms, so it is not possible to provide the required key material.
 
 =item B<-decap>
 
-Decode an encapsulation ciphertext, with the use of a B<-private> key, to
-derive the same shared-secret as that obtained when the ciphertext was
-encapsulated to the corresponding public key.
-The ciphertext is by default read from the standard input, or else from the
-file specified with B<-in>.
+Decode an encapsulated secret, with the use of a B<-private> key, to derive the
+same shared-secret as that obtained when the secret was encapsulated to the
+corresponding public key.
+The encapsulated secret is by default read from the standard input, or else
+from the file specified with B<-in>.
 The derived shared-secret is written to the file specified with the B<-secret>
 option, which I<must> also be provided.
 Decapsulation is supported with a number of public key algorithms, currently:
@@ -210,7 +210,7 @@ This option is used with the I<-encap>/I<-decap> commands and specifies the KEM
 operation (mode) specific for the key algorithm when there is no default way
 to encapsulate and decapsulate shared secrets with the chosen key type.
 This is needed only for RSA, where B<RSASVE>, is not the default mode, even
-though it is preesntly the only RSA KEM supported.
+though it is presently the only RSA KEM supported.
 See L<EVP_PKEY_CTX_set_kem_op(3)> and L<EVP_KEM-RSA(7)>.
 
 =item B<-kdf> I<algorithm>

@@ -417,9 +417,20 @@ int pkeyutl_main(int argc, char **argv)
         if (in == NULL)
             goto end;
     }
-    out = bio_open_default(outfile, 'w', FORMAT_BINARY);
-    if (out == NULL)
-        goto end;
+    if (pkey_op == EVP_PKEY_OP_DECAPSULATE && outfile != NULL) {
+        if (secoutfile != NULL) {
+            BIO_printf(bio_err, "%s: Decapsulation produces only a shared "
+                                "secret and no output. The '-out' option "
+                                "is not applicable.\n", prog);
+            goto end;
+        }
+        if ((out = bio_open_owner(outfile, 'w', FORMAT_BINARY)) == NULL)
+            goto end;
+    } else {
+        out = bio_open_default(outfile, 'w', FORMAT_BINARY);
+        if (out == NULL)
+            goto end;
+    }
 
     if (pkey_op == EVP_PKEY_OP_ENCAPSULATE
         || pkey_op == EVP_PKEY_OP_DECAPSULATE) {
