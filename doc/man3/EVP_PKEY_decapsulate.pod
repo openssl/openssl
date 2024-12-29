@@ -51,8 +51,8 @@ validate it is of sufficient size to hold the result of the operation.
 Absent detailed prior knowledge of the internals of the specific KEM
 algorithm, callers SHOULD NOT assume that the returned shared secret
 is necessarily of the maximum possible length.
-The actual length returned via I<*unwrappedlen> SHOULD be used to determine the
-actual length of the output.
+The length returned via I<*unwrappedlen> SHOULD be used to determine the actual
+length of the output.
 
 =head1 NOTES
 

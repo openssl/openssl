@@ -656,13 +656,6 @@ operation. For the key types that support encapsulation and don't have the
 default operation, e.g. RSA, this function must be called before
 EVP_PKEY_encapsulate() or EVP_PKEY_decapsulate().
 
-=for comment Is this an "operation" or an "operating mode".  I would have
-             thought the "operation" is always "decapsulate" or "encapsulate"
-             and that tweaks like "RSASVE" are "operating modes" (what kind of
-             encapsulation or decapsulation to perform, not which of the two),
-             as, for example, in the comment "Set the mode - only 'RSASVE' is
-             currently supported".
-
 The supported parameters for the built-in algorithms are documented in
 L<EVP_KEM-RSA(7)>, L<EVP_KEM-EC(7)>, L<EVP_KEM-X25519(7)>,
 L<EVP_KEM-X448(7)>, and L<EVP_KEM-ML-KEM(7)>.
