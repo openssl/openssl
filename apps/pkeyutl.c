@@ -247,6 +247,7 @@ int pkeyutl_main(int argc, char **argv)
             pkey_op = EVP_PKEY_OP_DECAPSULATE;
             break;
         case OPT_ENCAP:
+            key_type = KEY_PUBKEY;
             pkey_op = EVP_PKEY_OP_ENCAPSULATE;
             break;
         case OPT_KEMOP:
@@ -449,17 +450,31 @@ int pkeyutl_main(int argc, char **argv)
         if (in == NULL)
             goto end;
     }
-    out = bio_open_default(outfile, 'w', FORMAT_BINARY);
-    if (out == NULL)
-        goto end;
-
-    if (pkey_op == EVP_PKEY_OP_ENCAPSULATE) {
-        if (secoutfile == NULL) {
-            BIO_printf(bio_err, "Encapsulation requires '-secret' argument\n");
+    if (pkey_op == EVP_PKEY_OP_DECAPSULATE && outfile != NULL) {
+        if (secoutfile != NULL) {
+            BIO_printf(bio_err, "%s: Decapsulation produces only a shared "
+                                "secret and no output. The '-out' option "
+                                "is not applicable.\n", prog);
             goto end;
         }
-        secout = bio_open_default(secoutfile, 'w', FORMAT_BINARY);
-        if (secout == NULL)
+        if ((out = bio_open_owner(outfile, 'w', FORMAT_BINARY)) == NULL)
+            goto end;
+    } else {
+        out = bio_open_default(outfile, 'w', FORMAT_BINARY);
+        if (out == NULL)
+            goto end;
+    }
+
+    if (pkey_op == EVP_PKEY_OP_ENCAPSULATE
+        || pkey_op == EVP_PKEY_OP_DECAPSULATE) {
+        if (secoutfile == NULL && pkey_op == EVP_PKEY_OP_ENCAPSULATE) {
+            BIO_printf(bio_err, "KEM-based shared-secret derivation requires "
+                                "the '-secret <file>' option\n");
+            goto end;
+        }
+        /* For backwards compatibility, default decap secrets to the output */
+        if (secoutfile != NULL
+            && (secout = bio_open_owner(secoutfile, 'w', FORMAT_BINARY)) == NULL)
             goto end;
     }
 
@@ -538,8 +553,12 @@ int pkeyutl_main(int argc, char **argv)
             rv = do_keyop(ctx, pkey_op, NULL, (size_t *)&buf_outlen,
                           buf_in, (size_t)buf_inlen, NULL, (size_t *)&secretlen);
         }
-        if (rv > 0 && buf_outlen != 0) {
-            buf_out = app_malloc(buf_outlen, "buffer output");
+        if (rv > 0
+            && (secretlen > 0 || (pkey_op != EVP_PKEY_OP_ENCAPSULATE
+                                  && pkey_op != EVP_PKEY_OP_DECAPSULATE))
+            && (buf_outlen > 0 || pkey_op == EVP_PKEY_OP_DECAPSULATE)) {
+            if (buf_outlen > 0)
+                buf_out = app_malloc(buf_outlen, "buffer output");
             if (secretlen > 0)
                 secret = app_malloc(secretlen, "secret output");
             rv = do_keyop(ctx, pkey_op,
@@ -565,8 +584,9 @@ int pkeyutl_main(int argc, char **argv)
     } else {
         BIO_write(out, buf_out, buf_outlen);
     }
+    /* Backwards compatible decap output fallback */
     if (secretlen > 0)
-        BIO_write(secout, secret, secretlen);
+        BIO_write(secout ? secout : out, secret, secretlen);
 
  end:
     if (ret != 0)
@@ -801,7 +821,7 @@ static int do_keyop(EVP_PKEY_CTX *ctx, int pkey_op,
         break;
 
     case EVP_PKEY_OP_DECAPSULATE:
-        rv = EVP_PKEY_decapsulate(ctx, out, poutlen, in, inlen);
+        rv = EVP_PKEY_decapsulate(ctx, secret, pseclen, in, inlen);
         break;
 
     }
