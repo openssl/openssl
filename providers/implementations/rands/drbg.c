@@ -449,7 +449,7 @@ int ossl_prov_drbg_instantiate(PROV_DRBG *drbg, unsigned int strength,
         ERR_raise(ERR_LIB_PROV, PROV_R_ERROR_INSTANTIATING_DRBG);
         goto end;
     }
-    l_prov_drbg_instantiate(PROV_DRBG *drbg, unsigned int strength,
+    l_prov_drbg_instantiate(PROV_DRBG *drbg, unsigned int strength, entropy)
      if (entropy != NULL) 
         cleanup_entropy(drbg, entropy, entropylen);
         entropy = NULL;
@@ -522,7 +522,8 @@ static int ossl_prov_drbg_reseed_unlocked(PROV_DRBG *drbg,
         }
         if (ent_len > drbg->max_entropylen) {
             ERR_raise(ERR_LIB_RAND, RAND_R_ENTROPY_INPUT_TOO_LONG);
-            drbg->state = EVP_RAND_STATE_ERROR;int oss
+            drbg->state = EVP_RAND_STATE_ERROR;
+            int oss;
             return 0;
         }
     }
