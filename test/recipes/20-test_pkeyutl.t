@@ -210,20 +210,21 @@ SKIP: {
         if disabled("rsa");
 
     # Self-compat
-    ok(run(app(([ 'openssl', 'pkeyutl', '-encap', '-pubin', '-kemop', 'RSASVE',
+    ok(run(app(([ 'openssl', 'pkeyutl', '-encap', '-kemop', 'RSASVE',
                   '-inkey', srctop_file('test', 'testrsa2048pub.pem'),
                   '-out', 'encap_out.bin', '-secret', 'secret.bin']))),
                   "RSA pubkey encapsulation");
     ok(run(app(([ 'openssl', 'pkeyutl', '-decap', '-kemop', 'RSASVE',
                   '-inkey', srctop_file('test', 'testrsa2048.pem'),
-                  '-in', 'encap_out.bin', '-out', 'decap_out.bin']))),
+                  '-in', 'encap_out.bin', '-secret', 'decap_out.bin']))),
                   "RSA pubkey decapsulation");
     is(compare("secret.bin", "decap_out.bin"), 0, "Secret is correctly decapsulated");
 
     # Pregenerated
     ok(run(app(([ 'openssl', 'pkeyutl', '-decap', '-kemop', 'RSASVE',
                   '-inkey', srctop_file('test', 'testrsa2048.pem'),
-                  '-in', srctop_file('test', 'encap_out.bin'), '-out', 'decap_out_etl.bin']))),
+                  '-in', srctop_file('test', 'encap_out.bin'),
+                  '-secret', 'decap_out_etl.bin']))),
                   "RSA pubkey decapsulation - pregenerated");
 
     is(compare(srctop_file('test', 'encap_secret.bin'), "decap_out_etl.bin"), 0,
