@@ -297,6 +297,4 @@ Sent Packet
   Payload length: 60
   Packet Number: 0x00000000
 Sent Datagram
-  Length: 1119
-Sent Datagram
-  Length: 81
+  Length: 1200
