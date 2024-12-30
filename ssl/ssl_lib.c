@@ -6859,7 +6859,12 @@ int SSL_alloc_buffers(SSL *ssl)
 
 void SSL_CTX_set_keylog_callback(SSL_CTX *ctx, SSL_CTX_keylog_cb_func cb)
 {
+#ifndef OPENSSL_NO_SSLKEYLOG_CB
     ctx->keylog_callback = cb;
+#else
+    ERR_raise_data(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR,
+                   "Keylogging not supported"); 
+#endif
 }
 
 SSL_CTX_keylog_cb_func SSL_CTX_get_keylog_callback(const SSL_CTX *ctx)
