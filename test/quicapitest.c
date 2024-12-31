@@ -2345,6 +2345,159 @@ static int test_early_ticks(void)
     return testresult;
 }
 
+#if 0
+static int test_ssl_new_from_listener(void)
+{
+    SSL_CTX *lctx = NULL;
+    SSL *qlistener = NULL, *qconn = 0;
+    QUIC_TSERVER *qtserv = NULL;
+    SSL *unused = NULL;
+    static unsigned char alpn[] = { 8, 'o', 's', 's', 'l', 't', 'e', 's', 't' };
+    int testresult = 0;
+    int chk;
+    BIO *bio;
+    BIO_ADDR *peeraddr = NULL;
+    struct in_addr ina = {0};
+
+    if (!TEST_ptr(lctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_server_method()))
+        || !TEST_true(SSL_CTX_set_ciphersuites(lctx, "TLS_AES_128_GCM_SHA256"))
+        || !TEST_true(SSL_CTX_use_certificate_chain_file(lctx, cert))
+        || !TEST_true(SSL_CTX_use_PrivateKey_file(lctx, privkey, SSL_FILETYPE_PEM))
+        || !TEST_true(qtest_create_quic_objects(libctx,
+                                                SSL_CTX_new_ex(libctx, NULL,
+                                                               OSSL_QUIC_client_method()),
+                                                NULL, cert, privkey,
+                                                QTEST_FLAG_BLOCK, &qtserv, &unused, NULL, NULL)))
+        goto err;
+
+    
+    if (!TEST_ptr(qlistener = SSL_new_listener(lctx, 0)))
+        goto err;
+
+    bio = ossl_quic_tserver_get0_rbio(qtserv);
+    if (!TEST_ptr(bio))
+        goto err;
+
+    if (!TEST_true(BIO_up_ref(bio)))
+        goto err;
+
+    SSL_set_bio(qlistener, bio, bio);
+
+    if (!TEST_ptr(qconn = SSL_new_from_listener(qlistener, 0)))
+        goto err;
+
+    if (!TEST_false(SSL_set_alpn_protos(qconn, alpn, sizeof(alpn))))
+        goto err;
+
+    if (!TEST_ptr(peeraddr = BIO_ADDR_new()))
+        goto err;
+
+    if (!TEST_true(BIO_ADDR_rawmake(peeraddr, AF_INET, &ina, sizeof(ina), 0)))
+        goto err;
+
+    if (!TEST_true(SSL_set1_initial_peer_addr(qconn, peeraddr)))
+        goto err;
+
+    while ((chk = SSL_do_handshake(qconn)) == 0) 
+        ossl_quic_tserver_tick(qtserv);
+
+    if (!TEST_int_gt(chk, 0)) {
+        ERR_print_errors_fp(stderr);
+        goto err;
+    }
+
+    testresult = 1;
+ err:
+    BIO_ADDR_free(peeraddr);
+    SSL_free(qconn);
+    SSL_free(qlistener);
+    SSL_free(unused);
+    ossl_quic_tserver_free(qtserv);
+    SSL_CTX_free(lctx);
+
+    return testresult;
+}
+#endif
+static int select_alpn(SSL *ssl, const unsigned char **out,
+                       unsigned char *out_len, const unsigned char *in,
+                       unsigned int in_len, void *arg)
+{
+    static unsigned char alpn[] = { 8, 'o', 's', 's', 'l', 't', 'e', 's', 't' };
+
+    if (SSL_select_next_proto((unsigned char **)out, out_len, alpn, sizeof(alpn),
+                              in, in_len) == OPENSSL_NPN_NEGOTIATED)
+        return SSL_TLSEXT_ERR_OK;
+    return SSL_TLSEXT_ERR_ALERT_FATAL;
+}
+
+static int test_ssl_new_from_listener(void)
+{
+    SSL_CTX *lctx = NULL, *sctx = NULL;
+    SSL *qlistener = NULL, *qserver = NULL, *qconn = 0;
+    static unsigned char alpn[] = { 8, 'o', 's', 's', 'l', 't', 'e', 's', 't' };
+    int testresult = 0;
+    int chk;
+    BIO *lbio = NULL, *sbio = NULL;
+    
+    if (!TEST_ptr(lctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_server_method()))
+        || !TEST_ptr(sctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_server_method()))
+        || !TEST_true(SSL_CTX_use_certificate_file(lctx, cert, SSL_FILETYPE_PEM)) 
+        || !TEST_true(SSL_CTX_use_PrivateKey_file(lctx, privkey, SSL_FILETYPE_PEM))
+        || !TEST_true(SSL_CTX_use_certificate_file(sctx, cert, SSL_FILETYPE_PEM)) 
+        || !TEST_true(SSL_CTX_use_PrivateKey_file(sctx, privkey, SSL_FILETYPE_PEM))
+        || !TEST_true(BIO_new_bio_dgram_pair(&lbio, 0, &sbio, 0)))
+        goto err;
+
+    SSL_CTX_set_alpn_select_cb(lctx, select_alpn, NULL);
+    SSL_CTX_set_verify(lctx, SSL_VERIFY_NONE, NULL);
+    SSL_CTX_set_alpn_select_cb(sctx, select_alpn, NULL);
+    SSL_CTX_set_verify(sctx, SSL_VERIFY_NONE, NULL);
+
+    if (!TEST_ptr(qserver = SSL_new_listener(lctx, 0)))
+        goto err;
+
+    SSL_set_bio(qserver, sbio, sbio);
+    sbio = NULL;
+
+    if (!TEST_true(SSL_listen(qserver)))
+        goto err;
+
+    if (!TEST_ptr(qlistener = SSL_new_listener(lctx, 0)))
+        goto err;
+
+    SSL_set_bio(qlistener, lbio, lbio);
+    lbio = NULL;
+
+    if (!TEST_ptr(qconn = SSL_new_from_listener(qlistener, 0)))
+        goto err;
+
+    if (!TEST_false(SSL_set_alpn_protos(qconn, alpn, sizeof(alpn))))
+        goto err;
+
+    while ((chk = SSL_do_handshake(qconn)) == 0) {
+        SSL_handle_events(qserver);
+        SSL_handle_events(qconn);
+    }
+
+    if (!TEST_int_gt(chk, 0)) {
+        TEST_info("%s %s\n", __func__,
+                  ERR_reason_error_string(ERR_get_error()));
+        goto err;
+    }
+
+    testresult = 1;
+ err:
+    SSL_free(qconn);
+    SSL_free(qlistener);
+    SSL_free(qserver);
+    BIO_free(lbio);
+    BIO_free(sbio);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(lctx);
+
+    return testresult;
+}
+
 /***********************************************************************************/
 
 OPT_TEST_DECLARE_USAGE("provider config certsdir datadir\n")
@@ -2440,6 +2593,7 @@ int setup_tests(void)
     ADD_TEST(test_session_cb);
     ADD_TEST(test_domain_flags);
     ADD_TEST(test_early_ticks);
+    ADD_TEST(test_ssl_new_from_listener);
     return 1;
  err:
     cleanup_tests();
