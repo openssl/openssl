@@ -676,7 +676,7 @@ static int check_extensions(X509_STORE_CTX *ctx)
         }
 
         /* check_purpose() makes the callback as needed */
-        if (purpose > 0 && !check_purpose(ctx, x, purpose, i, must_be_ca))
+        if (purpose >= X509_PURPOSE_MIN && !check_purpose(ctx, x, purpose, i, must_be_ca))
             return 0;
         /* Check path length */
         CB_FAIL_IF(i > 1 && x->ex_pathlen != -1
