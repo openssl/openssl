@@ -325,10 +325,10 @@ int pkcs12_main(int argc, char **argv)
             csp_name = opt_arg();
             break;
         case OPT_CANAME:
-            if (canames == NULL
-                && (canames = sk_OPENSSL_STRING_new_null()) == NULL)
+            if ((canames == NULL &&
+                 (canames = sk_OPENSSL_STRING_new_null()) == NULL) ||
+                !sk_OPENSSL_STRING_push(canames, opt_arg()))
                 goto end;
-            sk_OPENSSL_STRING_push(canames, opt_arg());
             break;
         case OPT_IN:
             infile = opt_arg();
