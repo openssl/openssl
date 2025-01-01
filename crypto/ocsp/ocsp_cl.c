@@ -81,7 +81,7 @@ int OCSP_request_sign(OCSP_REQUEST *req,
                       X509 *signer,
                       EVP_PKEY *key,
                       const EVP_MD *dgst,
-                      STACK_OF(X509) *certs, unsigned long flags)
+                      const STACK_OF(X509) *certs, unsigned long flags)
 {
     if (!OCSP_request_set1_name(req, X509_get_subject_name(signer)))
         goto err;
