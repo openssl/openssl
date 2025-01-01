@@ -867,8 +867,10 @@ const DSA *EVP_PKEY_get0_DSA(const EVP_PKEY *pkey)
 int EVP_PKEY_set1_DSA(EVP_PKEY *pkey, DSA *key)
 {
     int ret = EVP_PKEY_assign_DSA(pkey, key);
+
     if (ret && !DSA_up_ref(key))
         return 0;
+
     return ret;
 }
 DSA *EVP_PKEY_get1_DSA(EVP_PKEY *pkey)
