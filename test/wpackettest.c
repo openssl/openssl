@@ -590,7 +590,7 @@ static int test_WPACKET_quic_vlint_random(void)
         if (!TEST_int_gt(RAND_bytes(rand_data, sizeof(rand_data)), 0))
             return cleanup(&pkt);
 
-        expected = *(uint64_t*)rand_data;
+        memcpy(&expected, rand_data, sizeof(expected));
 
         /*
          * Ensure that all size classes get tested with equal probability.
