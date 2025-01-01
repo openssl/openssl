@@ -45,8 +45,7 @@ to provide fallback data for the authority key identifier extension.
 
 =head1 RETURN VALUES
 
-X509V3_set_ctx() and X509V3_set_issuer_pkey()
-return 1 on success and 0 on error.
+X509V3_set_issuer_pkey() returns 1 on success and 0 on error.
 
 =head1 SEE ALSO
 
