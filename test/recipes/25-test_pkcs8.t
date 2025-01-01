@@ -11,7 +11,7 @@ use warnings;
 
 use OpenSSL::Test::Utils;
 use File::Copy;
-use File::Compare qw(compare_text compare);
+use File::Compare qw(compare_text);
 use OpenSSL::Test qw/:DEFAULT srctop_file ok_nofips is_nofips/;
 
 setup("test_pkcs8");
@@ -28,7 +28,7 @@ ok(run(app(['openssl', 'pkcs8', '-topk8', '-in', $inout,
 ok(run(app(['openssl', 'pkcs8', '-in', $inout,
             '-out', $inout, '-passin', 'pass:password'])),
    "identical infile and outfile, from PKCS#8");
-is(compare($pc5_key, $inout), 0,
+is(compare_text($pc5_key, $inout), 0,
    "Same file contents after converting forth and back");
 
 ok(run(app(([ 'openssl', 'pkcs8', '-topk8',

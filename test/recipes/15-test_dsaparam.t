@@ -11,7 +11,7 @@ use warnings;
 
 use File::Spec;
 use File::Copy;
-use File::Compare qw/compare/;
+use File::Compare qw/compare_text/;
 use OpenSSL::Glob;
 use OpenSSL::Test qw/:DEFAULT data_file/;
 use OpenSSL::Test::Utils;
@@ -84,4 +84,4 @@ my $inout = "inout.pem";
 copy($input, $inout);
 ok(run(app(['openssl', 'dsaparam', '-in', $inout, '-out', $inout])),
     "identical infile and outfile");
-ok(!compare($input, $inout), "converted file $inout did not change");
+ok(!compare_text($input, $inout), "converted file $inout did not change");
