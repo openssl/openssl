@@ -175,7 +175,6 @@ static size_t last_blocks_correction_nist(const unsigned char *in,
     /* flip two last blocks */
     memcpy(out + len, in + len + 16, tail);
     memcpy(out + len + tail, in + len, 16);
-    len += 16 + tail;
     tail = 16;
 
     return tail;
