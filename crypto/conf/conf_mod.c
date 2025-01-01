@@ -687,6 +687,7 @@ char *CONF_get1_default_config_file(void)
     const char *t;
     char *file, *sep = "";
     size_t size;
+    BIO *biofile;
 
     if ((file = ossl_safe_getenv("OPENSSL_CONF")) != NULL)
         return OPENSSL_strdup(file);
@@ -713,6 +714,17 @@ char *CONF_get1_default_config_file(void)
     if (file == NULL)
         return NULL;
     BIO_snprintf(file, size, "%s%s%s", t, sep, OPENSSL_CONF);
+
+    ERR_set_mark();
+    biofile = BIO_new_file(file, "r");
+    if (biofile == NULL) {
+        ERR_pop_to_mark();
+        OPENSSL_free(file);
+        return OPENSSL_strdup("");
+    } else {
+        ERR_clear_last_mark();
+        BIO_free(biofile);
+    }
 
     return file;
 }
