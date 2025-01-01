@@ -203,7 +203,7 @@ static int ctrladd(STACK_OF(OPENSSL_STRING) *controls, const char *value)
     if (data == NULL)
         return -1;
 
-    if (!sk_OPENSSL_STRING_push(controls, data)) {
+    if (sk_OPENSSL_STRING_push(controls, data) <= 0) {
         OPENSSL_free(data);
         return 0;
     }

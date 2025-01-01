@@ -122,7 +122,7 @@ static int by_store_ctrl_ex(X509_LOOKUP *ctx, int cmd, const char *argp,
                 uris = sk_OPENSSL_STRING_new_null();
                 X509_LOOKUP_set_method_data(ctx, uris);
             }
-            if (!sk_OPENSSL_STRING_push(uris, data)) {
+            if (sk_OPENSSL_STRING_push(uris, data) <= 0) {
                 OPENSSL_free(data);
                 return 0;
             }

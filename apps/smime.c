@@ -315,14 +315,14 @@ int smime_main(int argc, char **argv)
                 if (sksigners == NULL
                     && (sksigners = sk_OPENSSL_STRING_new_null()) == NULL)
                     goto end;
-                if (!sk_OPENSSL_STRING_push(sksigners, signerfile))
+                if (sk_OPENSSL_STRING_push(sksigners, signerfile) <= 0)
                     goto end;
                 if (keyfile == NULL)
                     keyfile = signerfile;
                 if (skkeys == NULL
                     && (skkeys = sk_OPENSSL_STRING_new_null()) == NULL)
                     goto end;
-                if (!sk_OPENSSL_STRING_push(skkeys, keyfile))
+                if (sk_OPENSSL_STRING_push(skkeys, keyfile) <= 0)
                     goto end;
                 keyfile = NULL;
             }
@@ -348,13 +348,13 @@ int smime_main(int argc, char **argv)
                 if (sksigners == NULL
                     && (sksigners = sk_OPENSSL_STRING_new_null()) == NULL)
                     goto end;
-                if (!sk_OPENSSL_STRING_push(sksigners, signerfile))
+                if (sk_OPENSSL_STRING_push(sksigners, signerfile) <= 0)
                     goto end;
                 signerfile = NULL;
                 if (skkeys == NULL
                     && (skkeys = sk_OPENSSL_STRING_new_null()) == NULL)
                     goto end;
-                if (!sk_OPENSSL_STRING_push(skkeys, keyfile))
+                if (sk_OPENSSL_STRING_push(skkeys, keyfile) <= 0)
                     goto end;
             }
             keyfile = opt_arg();
@@ -428,13 +428,13 @@ int smime_main(int argc, char **argv)
             if (sksigners == NULL
                 && (sksigners = sk_OPENSSL_STRING_new_null()) == NULL)
                 goto end;
-            if (!sk_OPENSSL_STRING_push(sksigners, signerfile))
+            if (sk_OPENSSL_STRING_push(sksigners, signerfile) <= 0)
                 goto end;
             if (!skkeys && (skkeys = sk_OPENSSL_STRING_new_null()) == NULL)
                 goto end;
             if (!keyfile)
                 keyfile = signerfile;
-            if (!sk_OPENSSL_STRING_push(skkeys, keyfile))
+            if (sk_OPENSSL_STRING_push(skkeys, keyfile) <= 0)
                 goto end;
         }
         if (sksigners == NULL) {
