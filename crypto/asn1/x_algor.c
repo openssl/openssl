@@ -107,34 +107,27 @@ int X509_ALGOR_cmp(const X509_ALGOR *a, const X509_ALGOR *b)
 
 int X509_ALGOR_copy(X509_ALGOR *dest, const X509_ALGOR *src)
 {
+    X509_ALGOR* tmp = NULL;
     if (src == NULL || dest == NULL)
         return 0;
 
-    if (dest->algorithm)
-         ASN1_OBJECT_free(dest->algorithm);
-    dest->algorithm = NULL;
+    if (src == dest)
+        return 1;
 
-    if (dest->parameter)
-        ASN1_TYPE_free(dest->parameter);
-    dest->parameter = NULL;
+    tmp = X509_ALGOR_dup(src);
+    if (tmp == NULL)
+        return 0;
+    
+    ASN1_OBJECT_free(dest->algorithm);
+    dest->algorithm = tmp->algorithm;
 
-    if (src->algorithm)
-        if ((dest->algorithm = OBJ_dup(src->algorithm)) == NULL)
-            return 0;
+    ASN1_TYPE_free(dest->parameter);
+    dest->parameter = tmp->parameter;
 
-    if (src->parameter != NULL) {
-        dest->parameter = ASN1_TYPE_new();
-        if (dest->parameter == NULL)
-            return 0;
+    tmp->algorithm = NULL;
+    tmp->parameter = NULL;
 
-        /* Assuming this is also correct for a BOOL.
-         * set does copy as a side effect.
-         */
-        if (ASN1_TYPE_set1(dest->parameter, src->parameter->type,
-                           src->parameter->value.ptr) == 0)
-            return 0;
-    }
-
+    X509_ALGOR_free(tmp);
     return 1;
 }
 
