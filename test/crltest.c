@@ -307,9 +307,8 @@ static STACK_OF(X509_CRL) *make_CRL_stack(X509_CRL *x1, X509_CRL *x2)
     STACK_OF(X509_CRL) *sk = sk_X509_CRL_new_null();
 
     if (x1 != NULL) {
-        if (!X509_CRL_up_ref(x1)) {
+        if (!X509_CRL_up_ref(x1))
             goto err;
-        }
         if (!sk_X509_CRL_push(sk, x1)) {
             X509_CRL_free(x1);
             goto err;
@@ -317,9 +316,8 @@ static STACK_OF(X509_CRL) *make_CRL_stack(X509_CRL *x1, X509_CRL *x2)
     }
 
     if (x2 != NULL) {
-        if (!X509_CRL_up_ref(x2)) {
+        if (!X509_CRL_up_ref(x2))
             goto err;
-        }
         if (!sk_X509_CRL_push(sk, x2)) {
             X509_CRL_free(x2);
             goto err;

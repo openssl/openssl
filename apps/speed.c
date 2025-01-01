@@ -1818,9 +1818,8 @@ static void collect_kem(EVP_KEM *kem, void *stack)
 
     if (is_kem_fetchable(kem)
             && EVP_KEM_up_ref(kem)
-            && sk_EVP_KEM_push(kem_stack, kem) <= 0) {
+            && sk_EVP_KEM_push(kem_stack, kem) <= 0)
         EVP_KEM_free(kem); /* up-ref successful but push to stack failed */
-    }
 }
 
 static int kem_locate(const char *algo, unsigned int *idx)
