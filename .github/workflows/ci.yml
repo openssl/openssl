@@ -107,13 +107,8 @@ jobs:
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
-  self-hosted:
-    if: github.repository == 'openssl/openssl'
-    strategy:
-      matrix:
-        os: [freebsd-13.2, ubuntu-arm64-22.04]
-    runs-on: ${{ matrix.os }}-self-hosted
-    continue-on-error: true
+  linux-arm64:
+    runs-on: linux-arm64
     steps:
     - uses: actions/checkout@v4
     - name: config
@@ -123,9 +118,47 @@ jobs:
     - name: make
       run: make -j4
     - name: get cpu info
-      run: ./util/opensslwrap.sh version -c
+      run: |
+        cat /proc/cpuinfo
+        ./util/opensslwrap.sh version -c
     - name: make test
-      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+      run: .github/workflows/make-test
+
+  freebsd-x86_64:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: config
+      uses: cross-platform-actions/action@v0.26.0
+      with:
+        operating_system: freebsd
+        version: "13.4"
+        shutdown_vm: false
+        run: |
+          sudo pkg install -y gcc perl5
+          ./config enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
+    - name: config dump
+      uses: cross-platform-actions/action@v0.26.0
+      with:
+        operating_system: freebsd
+        version: "13.4"
+        shutdown_vm: false
+        run: ./configdata.pm --dump
+    - name: make
+      uses: cross-platform-actions/action@v0.26.0
+      with:
+        operating_system: freebsd
+        version: "13.4"
+        shutdown_vm: false
+        run: make -j4
+    - name: make test
+      uses: cross-platform-actions/action@v0.26.0
+      with:
+        operating_system: freebsd
+        version: "13.4"
+        run: |
+          ./util/opensslwrap.sh version -c
+          .github/workflows/make-test
 
   minimal:
     runs-on: ubuntu-latest
