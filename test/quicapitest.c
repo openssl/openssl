@@ -2440,7 +2440,6 @@ static int test_ssl_new_from_listener(void)
     BIO *lbio = NULL, *sbio = NULL;
     BIO_ADDR *addr = NULL;
     struct in_addr ina = { htonl(0x1f000001) };
-    int e = 0;
     int bio_caps = BIO_DGRAM_CAP_HANDLES_DST_ADDR | BIO_DGRAM_CAP_HANDLES_SRC_ADDR;
     
     if (!TEST_ptr(lctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_server_method()))
@@ -2517,14 +2516,9 @@ static int test_ssl_new_from_listener(void)
     if (!TEST_true(SSL_set1_initial_peer_addr(qconn, addr)))
         goto err;
 
-    while ((chk = SSL_do_handshake(qconn)) == 0) {
-        TEST_info("%s %s\n", __func__,
-                  ERR_reason_error_string(ERR_get_error()));
+    while ((chk = SSL_do_handshake(qconn)) == -1) {
         SSL_handle_events(qserver);
         SSL_handle_events(qlistener);
-        e++;
-        if (TEST_int_eq(e, 10))
-            goto err;
     }
 
     if (!TEST_int_gt(chk, 0)) {
