@@ -126,13 +126,8 @@ jobs:
         name: "ci@basic-clang"
         path: artifacts.tar.gz
 
-  self-hosted:
-    if: github.repository == 'openssl/openssl'
-    strategy:
-      matrix:
-        os: [freebsd-13.2, ubuntu-arm64-22.04]
-    runs-on: ${{ matrix.os }}-self-hosted
-    continue-on-error: true
+  linux-arm64:
+    runs-on: linux-arm64
     steps:
     - uses: actions/checkout@v4
     - name: config
@@ -142,13 +137,36 @@ jobs:
     - name: make
       run: make -j4
     - name: get cpu info
-      run: ./util/opensslwrap.sh version -c
+      run: |
+        cat /proc/cpuinfo
+        ./util/opensslwrap.sh version -c
     - name: make test
       run: .github/workflows/make-test
     - name: save artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: "ci@self-hosted-${{ matrix.os }}"
+        name: "ci@linux-arm64"
+        path: artifacts.tar.gz
+  
+  BSD-x86_64:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: cross-platform-actions/action@v0.26.0
+      with:
+        operating_system: freebsd
+        image_url: https://github.com/quarckster/freebsd-builder/releases/download/25-01-02-2/freebsd-13.4-x86-64.qcow2
+        version: "13.4"
+        run: |
+          ./config enable-demos enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
+          ./configdata.pm --dump
+          make -j4
+          ./util/opensslwrap.sh version -c
+          .github/workflows/make-test
+    - name: save artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: "ci@BSD-x86_64"
         path: artifacts.tar.gz
 
   minimal:
