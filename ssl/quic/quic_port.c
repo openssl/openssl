@@ -82,7 +82,7 @@ typedef struct validation_token {
  *   maximally sized AF_UNIX socket)
  * - is_retry is a single byte
  */
-#define MARSHALLED_TOKEN_MAX_LEN 197
+#define MARSHALLED_TOKEN_MAX_LEN 169
 
 /*
  * Maximum length of an encrypted marshalled validation token.
@@ -760,7 +760,7 @@ static int generate_retry_token(BIO_ADDR *peer, QUIC_CONN_ID odcid,
  * @brief Marshals a validation token into a new buffer.
  *
  * |buffer| should already be allocated and at least MARSHALLED_TOKEN_MAX_LEN
- * bytes long. Stores the actual data stored in |buffer| in |buffer_len|.
+ * bytes long. Stores the length of data stored in |buffer| in |buffer_len|.
  *
  * @param token      Validation token.
  * @param buffer     Address to store the marshalled token.
