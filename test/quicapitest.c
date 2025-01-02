@@ -2450,8 +2450,7 @@ static int test_ssl_new_from_listener(void)
     }
 
     if (!TEST_int_gt(chk, 0)) {
-        TEST_info("%s %s\n", __func__,
-                  ERR_reason_error_string(ERR_get_error()));
+        TEST_info("%s\n", ERR_reason_error_string(ERR_get_error()));
         goto err;
     }
 
