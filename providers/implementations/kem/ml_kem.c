@@ -252,16 +252,14 @@ static int ml_kem_decapsulate(void *vctx, uint8_t *shsec, size_t *slen,
     return ossl_ml_kem_decap(shsec, decap_slen, ctext, clen, key);
 }
 
-typedef void (*func_ptr_t)(void);
-
 const OSSL_DISPATCH ossl_ml_kem_asym_kem_functions[] = {
-    { OSSL_FUNC_KEM_NEWCTX, (func_ptr_t) ml_kem_newctx },
-    { OSSL_FUNC_KEM_ENCAPSULATE_INIT, (func_ptr_t) ml_kem_encapsulate_init },
-    { OSSL_FUNC_KEM_ENCAPSULATE, (func_ptr_t) ml_kem_encapsulate },
-    { OSSL_FUNC_KEM_DECAPSULATE_INIT, (func_ptr_t) ml_kem_decapsulate_init },
-    { OSSL_FUNC_KEM_DECAPSULATE, (func_ptr_t) ml_kem_decapsulate },
-    { OSSL_FUNC_KEM_FREECTX, (func_ptr_t) ml_kem_freectx },
-    { OSSL_FUNC_KEM_SET_CTX_PARAMS, (func_ptr_t) ml_kem_set_ctx_params },
-    { OSSL_FUNC_KEM_SETTABLE_CTX_PARAMS, (func_ptr_t) ml_kem_settable_ctx_params },
+    { OSSL_FUNC_KEM_NEWCTX, (OSSL_FUNC) ml_kem_newctx },
+    { OSSL_FUNC_KEM_ENCAPSULATE_INIT, (OSSL_FUNC) ml_kem_encapsulate_init },
+    { OSSL_FUNC_KEM_ENCAPSULATE, (OSSL_FUNC) ml_kem_encapsulate },
+    { OSSL_FUNC_KEM_DECAPSULATE_INIT, (OSSL_FUNC) ml_kem_decapsulate_init },
+    { OSSL_FUNC_KEM_DECAPSULATE, (OSSL_FUNC) ml_kem_decapsulate },
+    { OSSL_FUNC_KEM_FREECTX, (OSSL_FUNC) ml_kem_freectx },
+    { OSSL_FUNC_KEM_SET_CTX_PARAMS, (OSSL_FUNC) ml_kem_set_ctx_params },
+    { OSSL_FUNC_KEM_SETTABLE_CTX_PARAMS, (OSSL_FUNC) ml_kem_settable_ctx_params },
     OSSL_DISPATCH_END
 };

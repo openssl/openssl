@@ -327,8 +327,8 @@ extern const OSSL_DISPATCH ossl_sm2_keymgmt_functions[];
 extern const OSSL_DISPATCH ossl_ml_kem_512_keymgmt_functions[];
 extern const OSSL_DISPATCH ossl_ml_kem_768_keymgmt_functions[];
 extern const OSSL_DISPATCH ossl_ml_kem_1024_keymgmt_functions[];
-# if !defined(OPENSSL_NO_EC)
-#  if !defined(OPENSSL_NO_ECX)
+# ifndef OPENSSL_NO_EC
+#  ifndef OPENSSL_NO_ECX
 extern const OSSL_DISPATCH ossl_mlx_x25519_kem_kmgmt_functions[];
 extern const OSSL_DISPATCH ossl_mlx_x448_kem_kmgmt_functions[];
 #  endif
@@ -411,15 +411,15 @@ extern const OSSL_DISPATCH ossl_sm2_asym_cipher_functions[];
 
 /* Asym Key encapsulation  */
 extern const OSSL_DISPATCH ossl_rsa_asym_kem_functions[];
-#if !defined(OPENSSL_NO_EC)
+#ifndef OPENSSL_NO_EC
 extern const OSSL_DISPATCH ossl_ec_asym_kem_functions[];
-# if !defined(OPENSSL_NO_ECX)
+# ifndef OPENSSL_NO_ECX
 extern const OSSL_DISPATCH ossl_ecx_asym_kem_functions[];
 # endif
 #endif
-#if !defined(OPENSSL_NO_ML_KEM)
+#ifndef OPENSSL_NO_ML_KEM
 extern const OSSL_DISPATCH ossl_ml_kem_asym_kem_functions[];
-# if !defined(OPENSSL_NO_EC)
+# ifndef OPENSSL_NO_EC
 extern const OSSL_DISPATCH ossl_mlx_kem_asym_kem_functions[];
 # endif
 #endif

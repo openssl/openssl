@@ -132,6 +132,8 @@ static int mlx_kem_match(const void *vkey1, const void *vkey2, int selection)
 
     if (have_pub1 ^ have_pub2)
         return 0;
+
+    /* As in other providers, equal when both have no key material. */
     if (!have_pub1)
         return 1;
 
@@ -140,6 +142,7 @@ static int mlx_kem_match(const void *vkey1, const void *vkey2, int selection)
 }
 
 typedef struct export_cb_arg_st {
+    const char *algorithm_name;
     uint8_t *pubenc;
     uint8_t *prvenc;
     int      pubcount;
@@ -159,20 +162,37 @@ static int export_sub_cb(const OSSL_PARAM *params, void *varg)
     void *pub = sub_arg->pubenc + sub_arg->puboff;
     void *prv = sub_arg->prvenc + sub_arg->prvoff;
 
+    /*
+     * The caller will decide whether anything essential is missing, but, if
+     * some key material was returned, it should have the right (parameter)
+     * data type and length.
+     */
     if (ossl_param_is_empty(params))
         return 1;
-    if (sub_arg->pubenc
+    if (sub_arg->pubenc != NULL
         && (p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PUB_KEY)) != NULL) {
-        if (OSSL_PARAM_get_octet_string(p, &pub, sub_arg->publen, &len) != 1
-            || len != sub_arg->publen)
+        if (OSSL_PARAM_get_octet_string(p, &pub, sub_arg->publen, &len) != 1)
             return 0;
+        if (len != sub_arg->publen) {
+            ERR_raise_data(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR,
+                           "Unexpected %s public key length %lu != %lu",
+                           sub_arg->algorithm_name, (unsigned long) len,
+                           sub_arg->publen);
+            return 0;
+        }
         ++sub_arg->pubcount;
     }
-    if (sub_arg->prvenc
+    if (sub_arg->prvenc != NULL
         && (p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PRIV_KEY)) != NULL) {
-        if (OSSL_PARAM_get_octet_string(p, &prv, sub_arg->prvlen, &len) != 1
-            || len != sub_arg->prvlen)
+        if (OSSL_PARAM_get_octet_string(p, &prv, sub_arg->prvlen, &len) != 1)
             return 0;
+        if (len != sub_arg->prvlen) {
+            ERR_raise_data(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR,
+                           "Unexpected %s private key length %lu != %lu",
+                           sub_arg->algorithm_name, (unsigned long) len,
+                           (unsigned long) sub_arg->publen);
+            return 0;
+        }
         ++sub_arg->prvcount;
     }
     return 1;
@@ -183,6 +203,13 @@ export_sub(EXPORT_CB_ARG *sub_arg, int selection, MLX_KEY *key)
 {
     int slot;
 
+    /*
+     * The caller is responsible for initialising only the pubenc and prvenc
+     * pointer fields, the rest are set here or in the callback.
+     */
+    sub_arg->pubcount = 0;
+    sub_arg->prvcount = 0;
+
     for (slot = 0; slot < 2; ++slot) {
         int ml_kem_slot = key->xinfo->ml_kem_slot;
         EVP_PKEY *pkey;
@@ -190,12 +217,14 @@ export_sub(EXPORT_CB_ARG *sub_arg, int selection, MLX_KEY *key)
         /* Export the parts of each component into its storage slot */
         if (slot == ml_kem_slot) {
             pkey = key->mkey;
+            sub_arg->algorithm_name = key->minfo->algorithm_name;
             sub_arg->puboff = slot * key->xinfo->pubkey_bytes;
             sub_arg->prvoff = slot * key->xinfo->prvkey_bytes;
             sub_arg->publen = key->minfo->pubkey_bytes;
             sub_arg->prvlen = key->minfo->prvkey_bytes;
         } else {
             pkey = key->xkey;
+            sub_arg->algorithm_name = key->xinfo->algorithm_name;
             sub_arg->puboff = (1 - ml_kem_slot) * key->minfo->pubkey_bytes;
             sub_arg->prvoff = (1 - ml_kem_slot) * key->minfo->prvkey_bytes;
             sub_arg->publen = key->xinfo->pubkey_bytes;
@@ -231,8 +260,6 @@ static int mlx_kem_export(void *vkey, int selection, OSSL_CALLBACK *param_cb,
     }
     publen = key->minfo->pubkey_bytes + key->xinfo->pubkey_bytes;
     prvlen = key->minfo->prvkey_bytes + key->xinfo->prvkey_bytes;
-    sub_arg.pubcount = 0;
-    sub_arg.prvcount = 0;
     sub_arg.pubenc = NULL;
     sub_arg.prvenc = NULL;
 
@@ -329,13 +356,13 @@ load_slot(OSSL_LIB_CTX *libctx, const char *propq, const char *pname,
     val = (void *)(in + off);
 
     if ((ctx = EVP_PKEY_CTX_new_from_name(libctx, alg, propq)) == NULL
-        || !EVP_PKEY_fromdata_init(ctx))
+        || EVP_PKEY_fromdata_init(ctx) <= 0)
         goto err;
     parr[0] = OSSL_PARAM_construct_octet_string(pname, val, len);
     if (group != NULL)
         parr[1] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
                                                    group, 0);
-    if (EVP_PKEY_fromdata(ctx, ppkey, selection, parr))
+    if (EVP_PKEY_fromdata(ctx, ppkey, selection, parr) > 0)
         ret = 1;
 
   err:
@@ -348,11 +375,9 @@ load_keys(MLX_KEY *key,
           const uint8_t *pubenc, size_t publen,
           const uint8_t *prvenc, size_t prvlen)
 {
+    static const int selection = OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS
+        | OSSL_KEYMGMT_SELECT_KEYPAIR;
     int slot;
-    int selection;
-
-    selection = OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS;
-    selection |= OSSL_KEYMGMT_SELECT_KEYPAIR;
 
     for (slot = 0; slot < 2; ++slot) {
         if (prvlen) {
@@ -496,10 +521,15 @@ static int mlx_kem_get_params(void *vkey, OSSL_PARAM params[])
         if (pub->data_type != OSSL_PARAM_OCTET_STRING)
             return 0;
         pub->return_size = publen;
-        if (pub->data == NULL)
+        if (pub->data == NULL) {
             pub = NULL;
-        else if (pub->data_size < publen)
+        } else if (pub->data_size < publen) {
+            ERR_raise_data(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL,
+                           "public key output buffer too short: %lu < %lu",
+                           (unsigned long) pub->data_size,
+                           (unsigned long) publen);
             return 0;
+        }
     }
     if (mlx_kem_have_prvkey(key)) {
         prv = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_PRIV_KEY);
@@ -507,10 +537,15 @@ static int mlx_kem_get_params(void *vkey, OSSL_PARAM params[])
             if (prv->data_type != OSSL_PARAM_OCTET_STRING)
                 return 0;
             prv->return_size = prvlen;
-            if (prv->data == NULL)
+            if (prv->data == NULL) {
                 prv = NULL;
-            else if (prv->data_size < prvlen)
+            } else if (prv->data_size < prvlen) {
+                ERR_raise_data(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL,
+                               "private key output buffer too short: %lu < %lu",
+                               (unsigned long) prv->data_size,
+                               (unsigned long) prvlen);
                 return 0;
+            }
         }
     }
     if (pub == NULL && prv == NULL)
@@ -518,8 +553,6 @@ static int mlx_kem_get_params(void *vkey, OSSL_PARAM params[])
 
     sub_arg.pubenc = pub ? pub->data : NULL;
     sub_arg.prvenc = prv ? prv->data : NULL;
-    sub_arg.pubcount = 0;
-    sub_arg.prvcount = 0;
 
     selection = prv == NULL ? 0 : OSSL_KEYMGMT_SELECT_PRIVATE_KEY;
     selection |= pub == NULL ? 0 : OSSL_KEYMGMT_SELECT_PUBLIC_KEY;
@@ -557,6 +590,7 @@ static int mlx_kem_set_params(void *vkey, const OSSL_PARAM params[])
     if (ossl_param_is_empty(params))
         return 1;
 
+    /* Only one settable parameter is supported */
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY);
     if (p == NULL)
         return 1;
@@ -612,8 +646,7 @@ static int mlx_kem_gen_set_params(void *vgctx, const OSSL_PARAM params[])
 static void *mlx_kem_gen_init(int v, OSSL_LIB_CTX *libctx, int selection,
                               const OSSL_PARAM params[])
 {
-    static const int minimal =
-        OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS
+    static const int minimal = OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS
         | OSSL_KEYMGMT_SELECT_PRIVATE_KEY;
     PROV_ML_KEM_GEN_CTX *gctx = NULL;
 
@@ -694,27 +727,25 @@ static void mlx_kem_gen_cleanup(void *vgctx)
 static void *mlx_kem_dup(const void *vkey, int selection)
 {
     const MLX_KEY *key = vkey;
-    MLX_KEY *new;
+    MLX_KEY *ret;
 
     if (!ossl_prov_is_running()
-        || (new = OPENSSL_memdup(key, sizeof(*new))) == NULL)
+        || (ret = OPENSSL_memdup(key, sizeof(*ret))) == NULL)
         return NULL;
 
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0) {
-        new->xkey = new->mkey = NULL;
-        return new;
+        ret->xkey = ret->mkey = NULL;
+        return ret;
     }
 
-    new->mkey = EVP_PKEY_dup(key->mkey);
-    new->xkey = EVP_PKEY_dup(key->xkey);
-    if (new->xkey != NULL && new->mkey != NULL)
-        return new;
+    ret->mkey = EVP_PKEY_dup(key->mkey);
+    ret->xkey = EVP_PKEY_dup(key->xkey);
+    if (ret->xkey != NULL && ret->mkey != NULL)
+        return ret;
 
-    mlx_kem_key_free(new);
+    mlx_kem_key_free(ret);
     return NULL;
 }
-
-typedef void (*func_ptr_t)(void);
 
 #define DECLARE_DISPATCH(name, variant) \
     static OSSL_FUNC_keymgmt_new_fn mlx_##name##_kem_new; \
@@ -735,24 +766,24 @@ typedef void (*func_ptr_t)(void);
         return mlx_kem_gen_init(variant, libctx, selection, params); \
     } \
     const OSSL_DISPATCH ossl_mlx_##name##_kem_kmgmt_functions[] = { \
-        { OSSL_FUNC_KEYMGMT_NEW, (func_ptr_t) mlx_##name##_kem_new }, \
-        { OSSL_FUNC_KEYMGMT_FREE, (func_ptr_t) mlx_kem_key_free }, \
-        { OSSL_FUNC_KEYMGMT_GET_PARAMS, (func_ptr_t) mlx_kem_get_params }, \
-        { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (func_ptr_t) mlx_kem_gettable_params }, \
-        { OSSL_FUNC_KEYMGMT_SET_PARAMS, (func_ptr_t) mlx_kem_set_params }, \
-        { OSSL_FUNC_KEYMGMT_SETTABLE_PARAMS, (func_ptr_t) mlx_kem_settable_params }, \
-        { OSSL_FUNC_KEYMGMT_HAS, (func_ptr_t) mlx_kem_has }, \
-        { OSSL_FUNC_KEYMGMT_MATCH, (func_ptr_t) mlx_kem_match }, \
-        { OSSL_FUNC_KEYMGMT_GEN_INIT, (func_ptr_t) mlx_##name##_kem_gen_init }, \
-        { OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS, (func_ptr_t) mlx_kem_gen_set_params }, \
-        { OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS, (func_ptr_t) mlx_kem_gen_settable_params }, \
-        { OSSL_FUNC_KEYMGMT_GEN, (func_ptr_t) mlx_kem_gen }, \
-        { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (func_ptr_t) mlx_kem_gen_cleanup }, \
-        { OSSL_FUNC_KEYMGMT_DUP, (func_ptr_t) mlx_kem_dup }, \
-        { OSSL_FUNC_KEYMGMT_IMPORT, (func_ptr_t) mlx_kem_import }, \
-        { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (func_ptr_t) mlx_kem_imexport_types }, \
-        { OSSL_FUNC_KEYMGMT_EXPORT, (func_ptr_t) mlx_kem_export }, \
-        { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (func_ptr_t) mlx_kem_imexport_types }, \
+        { OSSL_FUNC_KEYMGMT_NEW, (OSSL_FUNC) mlx_##name##_kem_new }, \
+        { OSSL_FUNC_KEYMGMT_FREE, (OSSL_FUNC) mlx_kem_key_free }, \
+        { OSSL_FUNC_KEYMGMT_GET_PARAMS, (OSSL_FUNC) mlx_kem_get_params }, \
+        { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (OSSL_FUNC) mlx_kem_gettable_params }, \
+        { OSSL_FUNC_KEYMGMT_SET_PARAMS, (OSSL_FUNC) mlx_kem_set_params }, \
+        { OSSL_FUNC_KEYMGMT_SETTABLE_PARAMS, (OSSL_FUNC) mlx_kem_settable_params }, \
+        { OSSL_FUNC_KEYMGMT_HAS, (OSSL_FUNC) mlx_kem_has }, \
+        { OSSL_FUNC_KEYMGMT_MATCH, (OSSL_FUNC) mlx_kem_match }, \
+        { OSSL_FUNC_KEYMGMT_GEN_INIT, (OSSL_FUNC) mlx_##name##_kem_gen_init }, \
+        { OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS, (OSSL_FUNC) mlx_kem_gen_set_params }, \
+        { OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS, (OSSL_FUNC) mlx_kem_gen_settable_params }, \
+        { OSSL_FUNC_KEYMGMT_GEN, (OSSL_FUNC) mlx_kem_gen }, \
+        { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (OSSL_FUNC) mlx_kem_gen_cleanup }, \
+        { OSSL_FUNC_KEYMGMT_DUP, (OSSL_FUNC) mlx_kem_dup }, \
+        { OSSL_FUNC_KEYMGMT_IMPORT, (OSSL_FUNC) mlx_kem_import }, \
+        { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (OSSL_FUNC) mlx_kem_imexport_types }, \
+        { OSSL_FUNC_KEYMGMT_EXPORT, (OSSL_FUNC) mlx_kem_export }, \
+        { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (OSSL_FUNC) mlx_kem_imexport_types }, \
         OSSL_DISPATCH_END \
     }
 /* See |hybrid_vtable| above */
