@@ -2438,6 +2438,10 @@ static int test_ssl_new_from_listener(void)
     int testresult = 0;
     int chk;
     BIO *lbio = NULL, *sbio = NULL;
+    BIO_ADDR *addr = NULL;
+    struct in_addr ina = { htonl(0x1f000001) };
+    int e = 0;
+    int bio_caps = BIO_DGRAM_CAP_HANDLES_DST_ADDR | BIO_DGRAM_CAP_HANDLES_SRC_ADDR;
     
     if (!TEST_ptr(lctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_server_method()))
         || !TEST_ptr(sctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_server_method()))
@@ -2447,6 +2451,32 @@ static int test_ssl_new_from_listener(void)
         || !TEST_true(SSL_CTX_use_PrivateKey_file(sctx, privkey, SSL_FILETYPE_PEM))
         || !TEST_true(BIO_new_bio_dgram_pair(&lbio, 0, &sbio, 0)))
         goto err;
+
+    if (!TEST_true(BIO_dgram_set_caps(lbio, bio_caps))
+        || !TEST_true(BIO_dgram_set_caps(sbio, bio_caps)))
+        goto err;
+
+    if (!TEST_ptr(addr = BIO_ADDR_new()))
+        goto err;
+
+    if (!TEST_true(BIO_ADDR_rawmake(addr, AF_INET, &ina, sizeof(ina),
+                                    htons(8040))))
+        goto err;
+
+    if (!TEST_int_eq(BIO_dgram_set0_local_addr(lbio, addr), 1))
+        goto err;
+    addr = NULL;
+
+    if (!TEST_ptr(addr = BIO_ADDR_new()))
+        goto err;
+
+    if (!TEST_true(BIO_ADDR_rawmake(addr, AF_INET, &ina, sizeof(ina),
+                                    htons(4080))))
+        goto err;
+
+    if (!TEST_int_eq(BIO_dgram_set0_local_addr(sbio, addr), 1))
+        goto err;
+    addr = NULL;
 
     SSL_CTX_set_alpn_select_cb(lctx, select_alpn, NULL);
     SSL_CTX_set_verify(lctx, SSL_VERIFY_NONE, NULL);
@@ -2468,15 +2498,33 @@ static int test_ssl_new_from_listener(void)
     SSL_set_bio(qlistener, lbio, lbio);
     lbio = NULL;
 
+    if (!TEST_true(SSL_listen(qlistener)))
+        goto err;
+
     if (!TEST_ptr(qconn = SSL_new_from_listener(qlistener, 0)))
         goto err;
 
     if (!TEST_false(SSL_set_alpn_protos(qconn, alpn, sizeof(alpn))))
         goto err;
 
+    if (!TEST_ptr(addr = BIO_ADDR_new()))
+        goto err;
+
+    if (!TEST_true(BIO_ADDR_rawmake(addr, AF_INET, &ina, sizeof(ina),
+                                    htons(4080))))
+        goto err;
+
+    if (!TEST_true(SSL_set1_initial_peer_addr(qconn, addr)))
+        goto err;
+
     while ((chk = SSL_do_handshake(qconn)) == 0) {
+        TEST_info("%s %s\n", __func__,
+                  ERR_reason_error_string(ERR_get_error()));
         SSL_handle_events(qserver);
-        SSL_handle_events(qconn);
+        SSL_handle_events(qlistener);
+        e++;
+        if (TEST_int_eq(e, 10))
+            goto err;
     }
 
     if (!TEST_int_gt(chk, 0)) {
@@ -2494,6 +2542,7 @@ static int test_ssl_new_from_listener(void)
     BIO_free(sbio);
     SSL_CTX_free(sctx);
     SSL_CTX_free(lctx);
+    BIO_ADDR_free(addr);
 
     return testresult;
 }
