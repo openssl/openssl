@@ -2345,79 +2345,6 @@ static int test_early_ticks(void)
     return testresult;
 }
 
-#if 0
-static int test_ssl_new_from_listener(void)
-{
-    SSL_CTX *lctx = NULL;
-    SSL *qlistener = NULL, *qconn = 0;
-    QUIC_TSERVER *qtserv = NULL;
-    SSL *unused = NULL;
-    static unsigned char alpn[] = { 8, 'o', 's', 's', 'l', 't', 'e', 's', 't' };
-    int testresult = 0;
-    int chk;
-    BIO *bio;
-    BIO_ADDR *peeraddr = NULL;
-    struct in_addr ina = {0};
-
-    if (!TEST_ptr(lctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_server_method()))
-        || !TEST_true(SSL_CTX_set_ciphersuites(lctx, "TLS_AES_128_GCM_SHA256"))
-        || !TEST_true(SSL_CTX_use_certificate_chain_file(lctx, cert))
-        || !TEST_true(SSL_CTX_use_PrivateKey_file(lctx, privkey, SSL_FILETYPE_PEM))
-        || !TEST_true(qtest_create_quic_objects(libctx,
-                                                SSL_CTX_new_ex(libctx, NULL,
-                                                               OSSL_QUIC_client_method()),
-                                                NULL, cert, privkey,
-                                                QTEST_FLAG_BLOCK, &qtserv, &unused, NULL, NULL)))
-        goto err;
-
-    
-    if (!TEST_ptr(qlistener = SSL_new_listener(lctx, 0)))
-        goto err;
-
-    bio = ossl_quic_tserver_get0_rbio(qtserv);
-    if (!TEST_ptr(bio))
-        goto err;
-
-    if (!TEST_true(BIO_up_ref(bio)))
-        goto err;
-
-    SSL_set_bio(qlistener, bio, bio);
-
-    if (!TEST_ptr(qconn = SSL_new_from_listener(qlistener, 0)))
-        goto err;
-
-    if (!TEST_false(SSL_set_alpn_protos(qconn, alpn, sizeof(alpn))))
-        goto err;
-
-    if (!TEST_ptr(peeraddr = BIO_ADDR_new()))
-        goto err;
-
-    if (!TEST_true(BIO_ADDR_rawmake(peeraddr, AF_INET, &ina, sizeof(ina), 0)))
-        goto err;
-
-    if (!TEST_true(SSL_set1_initial_peer_addr(qconn, peeraddr)))
-        goto err;
-
-    while ((chk = SSL_do_handshake(qconn)) == 0) 
-        ossl_quic_tserver_tick(qtserv);
-
-    if (!TEST_int_gt(chk, 0)) {
-        ERR_print_errors_fp(stderr);
-        goto err;
-    }
-
-    testresult = 1;
- err:
-    BIO_ADDR_free(peeraddr);
-    SSL_free(qconn);
-    SSL_free(qlistener);
-    SSL_free(unused);
-    ossl_quic_tserver_free(qtserv);
-    SSL_CTX_free(lctx);
-
-    return testresult;
-}
-#endif
 static int select_alpn(SSL *ssl, const unsigned char **out,
                        unsigned char *out_len, const unsigned char *in,
                        unsigned int in_len, void *arg)
@@ -2441,12 +2368,12 @@ static int test_ssl_new_from_listener(void)
     BIO_ADDR *addr = NULL;
     struct in_addr ina = { htonl(0x1f000001) };
     int bio_caps = BIO_DGRAM_CAP_HANDLES_DST_ADDR | BIO_DGRAM_CAP_HANDLES_SRC_ADDR;
-    
+
     if (!TEST_ptr(lctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_server_method()))
         || !TEST_ptr(sctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_server_method()))
-        || !TEST_true(SSL_CTX_use_certificate_file(lctx, cert, SSL_FILETYPE_PEM)) 
+        || !TEST_true(SSL_CTX_use_certificate_file(lctx, cert, SSL_FILETYPE_PEM))
         || !TEST_true(SSL_CTX_use_PrivateKey_file(lctx, privkey, SSL_FILETYPE_PEM))
-        || !TEST_true(SSL_CTX_use_certificate_file(sctx, cert, SSL_FILETYPE_PEM)) 
+        || !TEST_true(SSL_CTX_use_certificate_file(sctx, cert, SSL_FILETYPE_PEM))
         || !TEST_true(SSL_CTX_use_PrivateKey_file(sctx, privkey, SSL_FILETYPE_PEM))
         || !TEST_true(BIO_new_bio_dgram_pair(&lbio, 0, &sbio, 0)))
         goto err;
