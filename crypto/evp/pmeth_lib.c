@@ -466,7 +466,7 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *pctx)
         return NULL;
 
     if (pctx->pkey != NULL && !EVP_PKEY_up_ref(pctx->pkey))
-        return NULL;
+        goto err;
 
     rctx->pkey = pctx->pkey;
     rctx->operation = pctx->operation;

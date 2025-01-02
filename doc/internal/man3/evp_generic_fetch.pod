@@ -153,6 +153,8 @@ And here's the implementation of the FOO method fetcher:
         return foo;
 
     err:
+        if (foo != NULL)
+            CRYPTO_FREE_REF(&foo->refcnt);
         OPENSSL_free(foo);
         return NULL
     }

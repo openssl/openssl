@@ -3342,6 +3342,9 @@ static int find_session_cb(SSL *ssl, const unsigned char *identity,
             || strncmp(srvid, (const char *)identity, identity_len) != 0) {
         /* No PSK found, continue but without a PSK */
         *sess = NULL;
+
+        SSL_SESSION_free(serverpsk);
+
         return 1;
     }
 

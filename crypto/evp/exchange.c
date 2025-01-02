@@ -27,6 +27,7 @@ static EVP_KEYEXCH *evp_keyexch_new(OSSL_PROVIDER *prov)
 
     if (!CRYPTO_NEW_REF(&exchange->refcnt, 1)
         || !ossl_provider_up_ref(prov)) {
+        CRYPTO_FREE_REF(&exchange->refcnt);
         OPENSSL_free(exchange);
         return NULL;
     }

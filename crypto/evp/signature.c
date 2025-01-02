@@ -29,6 +29,7 @@ static EVP_SIGNATURE *evp_signature_new(OSSL_PROVIDER *prov)
 
     if (!CRYPTO_NEW_REF(&signature->refcnt, 1)
         || !ossl_provider_up_ref(prov)) {
+        CRYPTO_FREE_REF(&signature->refcnt);
         OPENSSL_free(signature);
         return NULL;
     }

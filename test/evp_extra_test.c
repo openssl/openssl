@@ -2774,10 +2774,9 @@ static int test_EVP_PKEY_check(int i)
  done:
     EVP_PKEY_CTX_free(ctx);
 #ifndef OPENSSL_NO_DEPRECATED_3_0
-    if (ctx2 != NULL)
-        EVP_PKEY_free(ctx2->pkey);
     EVP_PKEY_CTX_free(ctx2);
 #endif
+    EVP_PKEY_free(pkey);
     return ret;
 }
 
