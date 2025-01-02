@@ -2366,9 +2366,10 @@ static int test_ssl_new_from_listener(void)
     int chk;
     BIO *lbio = NULL, *sbio = NULL;
     BIO_ADDR *addr = NULL;
-    struct in_addr ina = { htonl(0x1f000001) };
+    struct in_addr ina;
     int bio_caps = BIO_DGRAM_CAP_HANDLES_DST_ADDR | BIO_DGRAM_CAP_HANDLES_SRC_ADDR;
 
+    ina.s_addr = htonl(0x1f000001);
     if (!TEST_ptr(lctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_server_method()))
         || !TEST_ptr(sctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_server_method()))
         || !TEST_true(SSL_CTX_use_certificate_file(lctx, cert, SSL_FILETYPE_PEM))
