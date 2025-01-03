@@ -527,6 +527,7 @@ my @disablables = (
     "static-engine",
     "stdio",
     "sslkeylog",
+    "sslkeylog-cb",
     "tests",
     "tfo",
     "thread-pool",
