@@ -51,7 +51,7 @@ static void down_ref(void *p)
 static int test_property_string(void)
 {
     OSSL_LIB_CTX *ctx;
-    OSSL_METHOD_STORE *store;
+    OSSL_METHOD_STORE *store = NULL;
     int res = 0;
     OSSL_PROPERTY_IDX i, j;
 
