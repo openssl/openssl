@@ -226,7 +226,7 @@ L<EVP_PKEY_set1_encoded_public_key(3)>.
 Generally caution is advised for using an B<EVP_PKEY> structure across
 different library contexts. In many circumstances it is possible that an
 B<EVP_PKEY> structure can be used in a library context B after having been
-created in a library context A, namely iff both library contexts contain a
+created in a library context A, namely if both library contexts contain a
 provider implementing the key management interface for the given key type,
 and the key manager in context A also implements the OSSL_FUNC_keymgmt_export()
 function, and the key manager in context B does implement the
