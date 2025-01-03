@@ -39,6 +39,9 @@ static OSSL_FUNC_keymgmt_import_types_fn mlx_kem_imexport_types;
 static OSSL_FUNC_keymgmt_export_types_fn mlx_kem_imexport_types;
 static OSSL_FUNC_keymgmt_dup_fn mlx_kem_dup;
 
+static const int minimal_selection = OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS
+    | OSSL_KEYMGMT_SELECT_PRIVATE_KEY;
+
 /* Must match DECLARE_DISPATCH invocations at the end of the file */
 static const ECDH_VINFO hybrid_vtable[] = {
     { "EC",  "P-256", 65, 32, 32, 1, ML_KEM_768_VARIANT },
@@ -260,8 +263,7 @@ static int mlx_kem_export(void *vkey, int selection, OSSL_CALLBACK *param_cb,
     }
     publen = key->minfo->pubkey_bytes + key->xinfo->pubkey_bytes;
     prvlen = key->minfo->prvkey_bytes + key->xinfo->prvkey_bytes;
-    sub_arg.pubenc = NULL;
-    sub_arg.prvenc = NULL;
+    memset(&sub_arg, 0, sizeof(sub_arg));
 
     if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
         sub_arg.pubenc = OPENSSL_malloc(publen);
@@ -375,21 +377,19 @@ load_keys(MLX_KEY *key,
           const uint8_t *pubenc, size_t publen,
           const uint8_t *prvenc, size_t prvlen)
 {
-    static const int selection = OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS
-        | OSSL_KEYMGMT_SELECT_KEYPAIR;
     int slot;
 
     for (slot = 0; slot < 2; ++slot) {
         if (prvlen) {
             /* Ignore public keys when private provided */
             if (!load_slot(key->libctx, key->propq, OSSL_PKEY_PARAM_PRIV_KEY,
-                           selection, key, slot, prvenc,
+                           minimal_selection, key, slot, prvenc,
                            key->minfo->prvkey_bytes, key->xinfo->prvkey_bytes))
                 goto err;
         } else if (publen) {
             /* Absent private key data, import public keys */
             if (!load_slot(key->libctx, key->propq, OSSL_PKEY_PARAM_PUB_KEY,
-                           selection, key, slot, pubenc,
+                           minimal_selection, key, slot, pubenc,
                            key->minfo->pubkey_bytes, key->xinfo->pubkey_bytes))
                 goto err;
         }
@@ -516,6 +516,8 @@ static int mlx_kem_get_params(void *vkey, OSSL_PARAM params[])
 
     if (!mlx_kem_have_pubkey(key))
         return 1;
+
+    memset(&sub_arg, 0, sizeof(sub_arg));
     pub = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY);
     if (pub != NULL) {
         if (pub->data_type != OSSL_PARAM_OCTET_STRING)
@@ -529,6 +531,8 @@ static int mlx_kem_get_params(void *vkey, OSSL_PARAM params[])
                            (unsigned long) pub->data_size,
                            (unsigned long) publen);
             return 0;
+        } else {
+            sub_arg.pubenc = pub->data;
         }
     }
     if (mlx_kem_have_prvkey(key)) {
@@ -545,14 +549,13 @@ static int mlx_kem_get_params(void *vkey, OSSL_PARAM params[])
                                (unsigned long) prv->data_size,
                                (unsigned long) prvlen);
                 return 0;
+            } else {
+                sub_arg.prvenc = prv->data;
             }
         }
     }
     if (pub == NULL && prv == NULL)
         return 1;
-
-    sub_arg.pubenc = pub ? pub->data : NULL;
-    sub_arg.prvenc = prv ? prv->data : NULL;
 
     selection = prv == NULL ? 0 : OSSL_KEYMGMT_SELECT_PRIVATE_KEY;
     selection |= pub == NULL ? 0 : OSSL_KEYMGMT_SELECT_PUBLIC_KEY;
@@ -646,8 +649,6 @@ static int mlx_kem_gen_set_params(void *vgctx, const OSSL_PARAM params[])
 static void *mlx_kem_gen_init(int v, OSSL_LIB_CTX *libctx, int selection,
                               const OSSL_PARAM params[])
 {
-    static const int minimal = OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS
-        | OSSL_KEYMGMT_SELECT_PRIVATE_KEY;
     PROV_ML_KEM_GEN_CTX *gctx = NULL;
 
     /*
@@ -655,7 +656,7 @@ static void *mlx_kem_gen_init(int v, OSSL_LIB_CTX *libctx, int selection,
      * appropriate.
      */
     if (!ossl_prov_is_running()
-        || (selection & minimal) == 0
+        || (selection & minimal_selection) == 0
         || (gctx = OPENSSL_zalloc(sizeof(*gctx))) == NULL)
         return NULL;
 

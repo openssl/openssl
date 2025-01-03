@@ -44,6 +44,9 @@ static OSSL_FUNC_keymgmt_import_types_fn ml_kem_imexport_types;
 static OSSL_FUNC_keymgmt_export_types_fn ml_kem_imexport_types;
 static OSSL_FUNC_keymgmt_dup_fn ml_kem_dup;
 
+static const int minimal_selection = OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS
+    | OSSL_KEYMGMT_SELECT_PRIVATE_KEY;
+
 typedef struct ml_kem_gen_ctx_st {
     OSSL_LIB_CTX *libctx;
     char *propq;
@@ -401,8 +404,6 @@ static int ml_kem_gen_set_params(void *vgctx, const OSSL_PARAM params[])
 static void *ml_kem_gen_init(void *provctx, int selection,
                              const OSSL_PARAM params[], int variant)
 {
-    static const int minimal = OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS
-        | OSSL_KEYMGMT_SELECT_PRIVATE_KEY;
     PROV_ML_KEM_GEN_CTX *gctx = NULL;
 
     /*
@@ -410,7 +411,7 @@ static void *ml_kem_gen_init(void *provctx, int selection,
      * appropriate.
      */
     if (!ossl_prov_is_running()
-        || (selection & minimal) == 0
+        || (selection & minimal_selection) == 0
         || (gctx = OPENSSL_zalloc(sizeof(*gctx))) == NULL)
         return NULL;
 

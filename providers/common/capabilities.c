@@ -223,10 +223,10 @@ static const OSSL_PARAM param_group_list[][11] = {
 # endif
 # if !defined(OPENSSL_NO_ML_KEM) && !defined(OPENSSL_NO_EC)
 #  if !defined(OPENSSL_NO_ECX)
-    TLS_GROUP_ENTRY("X25519MLKEM768", "", "X25519/MLKEM768", 41),
+    TLS_GROUP_ENTRY("X25519MLKEM768", "", "X25519MLKEM768", 41),
 #  endif
-    TLS_GROUP_ENTRY("SecP256r1MLKEM768", "", "SecP256r1/MLKEM768", 42),
-    TLS_GROUP_ENTRY("SecP384r1MLKEM1024", "", "SecP384r1/MLKEM1024", 43),
+    TLS_GROUP_ENTRY("SecP256r1MLKEM768", "", "SecP256r1MLKEM768", 42),
+    TLS_GROUP_ENTRY("SecP384r1MLKEM1024", "", "SecP384r1MLKEM1024", 43),
 # endif
 };
 #endif /* !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_ML_KEM) */

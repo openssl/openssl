@@ -482,12 +482,12 @@ static const OSSL_ALGORITHM deflt_asym_kem[] = {
     { PROV_NAMES_ML_KEM_768, "provider=default", ossl_ml_kem_asym_kem_functions },
     { PROV_NAMES_ML_KEM_1024, "provider=default", ossl_ml_kem_asym_kem_functions },
 # if !defined(OPENSSL_NO_ECX)
-    { "X25519/MLKEM768", "provider=default", ossl_mlx_kem_asym_kem_functions },
-    { "X448/MLKEM1024", "provider=default", ossl_mlx_kem_asym_kem_functions },
+    { "X25519MLKEM768", "provider=default", ossl_mlx_kem_asym_kem_functions },
+    { "X448MLKEM1024", "provider=default", ossl_mlx_kem_asym_kem_functions },
 # endif
 # if !defined(OPENSSL_NO_EC)
-    { "SecP256r1/MLKEM768", "provider=default", ossl_mlx_kem_asym_kem_functions },
-    { "SecP384r1/MLKEM1024", "provider=default", ossl_mlx_kem_asym_kem_functions },
+    { "SecP256r1MLKEM768", "provider=default", ossl_mlx_kem_asym_kem_functions },
+    { "SecP384r1MLKEM1024", "provider=default", ossl_mlx_kem_asym_kem_functions },
 # endif
 #endif
     { NULL, NULL, NULL }
@@ -553,15 +553,15 @@ static const OSSL_ALGORITHM deflt_keymgmt[] = {
       PROV_DESCS_ML_KEM_1024 },
 # if !defined(OPENSSL_NO_EC)
 #  if !defined(OPENSSL_NO_ECX)
-    { "X25519/MLKEM768", "provider=default", ossl_mlx_x25519_kem_kmgmt_functions,
-      "X25519/ML-KEM-768 TLS hybrid implementation" },
-    { "X448/MLKEM1024", "provider=default", ossl_mlx_x448_kem_kmgmt_functions,
-      "X448/ML-KEM-1024 TLS hybrid implementation" },
+    { "X25519MLKEM768", "provider=default", ossl_mlx_x25519_kem_kmgmt_functions,
+      "X25519+ML-KEM-768 TLS hybrid implementation" },
+    { "X448MLKEM1024", "provider=default", ossl_mlx_x448_kem_kmgmt_functions,
+      "X448+ML-KEM-1024 TLS hybrid implementation" },
 #  endif
-    { "SecP256r1/MLKEM768", "provider=default", ossl_mlx_p256_kem_kmgmt_functions,
-      "P-256/ML-KEM-768 TLS hybrid implementation" },
-    { "SecP384r1/MLKEM1024", "provider=default", ossl_mlx_p384_kem_kmgmt_functions,
-      "P-384/ML-KEM-1024 TLS hybrid implementation" },
+    { "SecP256r1MLKEM768", "provider=default", ossl_mlx_p256_kem_kmgmt_functions,
+      "P-256+ML-KEM-768 TLS hybrid implementation" },
+    { "SecP384r1MLKEM1024", "provider=default", ossl_mlx_p384_kem_kmgmt_functions,
+      "P-384+ML-KEM-1024 TLS hybrid implementation" },
 # endif
 #endif
     { NULL, NULL, NULL }
