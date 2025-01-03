@@ -24,10 +24,15 @@
 
 int EVP_PKEY_set1_RSA(EVP_PKEY *pkey, RSA *key)
 {
-    int ret = EVP_PKEY_assign_RSA(pkey, key);
+    int ret;
 
-    if (ret && !RSA_up_ref(key))
+    if (!RSA_up_ref(key))
         return 0;
+
+    ret = EVP_PKEY_assign_RSA(pkey, key);
+
+    if (!ret)
+        RSA_free(key);
 
     return ret;
 }

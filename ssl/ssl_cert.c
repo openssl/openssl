@@ -343,8 +343,12 @@ int ssl_cert_add0_chain_cert(SSL_CONNECTION *s, SSL_CTX *ctx, X509 *x)
 
 int ssl_cert_add1_chain_cert(SSL_CONNECTION *s, SSL_CTX *ctx, X509 *x)
 {
-    if (!X509_up_ref(x) || !ssl_cert_add0_chain_cert(s, ctx, x))
+    if (!X509_up_ref(x))
         return 0;
+    if (!ssl_cert_add0_chain_cert(s, ctx, x)) {
+        X509_free(x);
+        return 0;
+    }
     return 1;
 }
 

@@ -3006,8 +3006,7 @@ static int test_ssl_set_bio(int idx)
         if (irbio != NULL && !BIO_up_ref(irbio))
             goto end;
         if (iwbio != NULL && iwbio != irbio && !BIO_up_ref(iwbio)) {
-            if (irbio != NULL)
-                BIO_free(irbio);
+            BIO_free(irbio);
             goto end;
         }
     }
@@ -3035,8 +3034,7 @@ static int test_ssl_set_bio(int idx)
             && nwbio != nrbio
             && (nwbio != iwbio || (nwbio == iwbio && irbio == iwbio)))
         if (!TEST_true(BIO_up_ref(nwbio))) {
-            if (nrbio != NULL
-                    && nrbio != irbio
+            if (nrbio != irbio
                     && (nwbio != iwbio || nrbio != nwbio))
                 BIO_free(nrbio);
             goto end;

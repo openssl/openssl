@@ -218,7 +218,8 @@ int X509_add_cert(STACK_OF(X509) *sk, X509 *cert, int flags)
         return 0;
     if (!sk_X509_insert(sk, cert,
                         (flags & X509_ADD_FLAG_PREPEND) != 0 ? 0 : -1)) {
-        X509_free(cert);
+        if ((flags & X509_ADD_FLAG_UP_REF) != 0)
+            X509_free(cert);
         ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
         return 0;
     }

@@ -702,22 +702,17 @@ SSL *SSL_new(SSL_CTX *ctx)
 
 int ossl_ssl_init(SSL *ssl, SSL_CTX *ctx, const SSL_METHOD *method, int type)
 {
+    if (!SSL_CTX_up_ref(ctx))
+        return 0;
+
     ssl->lock = CRYPTO_THREAD_lock_new();
-    if (ssl->lock == NULL)
-        return 0;
 
-    if (!CRYPTO_NEW_REF(&ssl->references, 1)) {
-        CRYPTO_THREAD_lock_free(ssl->lock);
-        ssl->lock = NULL;
-        return 0;
-    }
+    if (ssl->lock == NULL || !CRYPTO_NEW_REF(&ssl->references, 1))
+        goto err;
 
-    if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL, ssl, &ssl->ex_data)
-            || !SSL_CTX_up_ref(ctx)) {
-        CRYPTO_THREAD_lock_free(ssl->lock);
+    if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL, ssl, &ssl->ex_data)) {
         CRYPTO_FREE_REF(&ssl->references);
-        ssl->lock = NULL;
-        return 0;
+        goto err;
     }
 
     ssl->ctx = ctx;
@@ -725,6 +720,12 @@ int ossl_ssl_init(SSL *ssl, SSL_CTX *ctx, const SSL_METHOD *method, int type)
     ssl->defltmeth = ssl->method = method;
 
     return 1;
+
+err:
+    CRYPTO_THREAD_lock_free(ssl->lock);
+    ssl->lock = NULL;
+    SSL_CTX_up_ref(ctx);
+    return 0;
 }
 
 SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, SSL *user_ssl,

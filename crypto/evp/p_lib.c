@@ -866,10 +866,15 @@ const DSA *EVP_PKEY_get0_DSA(const EVP_PKEY *pkey)
 
 int EVP_PKEY_set1_DSA(EVP_PKEY *pkey, DSA *key)
 {
-    int ret = EVP_PKEY_assign_DSA(pkey, key);
+    int ret;
 
-    if (ret && !DSA_up_ref(key))
+    if (!DSA_up_ref(key))
         return 0;
+
+    ret = EVP_PKEY_assign_DSA(pkey, key);
+
+    if (!ret)
+        DSA_free(key);
 
     return ret;
 }
@@ -945,10 +950,13 @@ int EVP_PKEY_set1_DH(EVP_PKEY *pkey, DH *dhkey)
     else
         type = DH_get0_q(dhkey) == NULL ? EVP_PKEY_DH : EVP_PKEY_DHX;
 
+    if (!DH_up_ref(dhkey))
+        return 0;
+
     ret = EVP_PKEY_assign(pkey, type, dhkey);
 
-    if (ret && !DH_up_ref(dhkey))
-        return 0;
+    if (!ret)
+        DH_free(dhkey);
 
     return ret;
 }

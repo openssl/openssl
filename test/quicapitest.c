@@ -1175,8 +1175,10 @@ static int find_session_cb(SSL *ssl, const unsigned char *identity,
 
     /* Identity should match that set by the client */
     if (strlen(pskid) != identity_len
-            || strncmp(pskid, (const char *)identity, identity_len) != 0)
+            || strncmp(pskid, (const char *)identity, identity_len) != 0) {
+        SSL_SESSION_free(serverpsk);
         return 0;
+    }
 
     *sess = serverpsk;
 
