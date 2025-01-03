@@ -4360,9 +4360,8 @@ SSL *ossl_quic_new_from_listener(SSL *ssl, uint64_t flags)
 
     /*
      * NOTE: setting a listener here is needed so `qc_cleanup()` does the right
-     * thing. There is `TOOD` comment in `qc_cleanup()`, which makes me believe
-     * line below is correct for now.  Without this we might be destroying port
-     * prematurely.
+     * thing. Setting listener to ql avoids premature destruction of port in
+     * qc_cleanup()
      */
     qc->listener = ql;
     qc->engine = ql->engine;
@@ -4389,8 +4388,8 @@ SSL *ossl_quic_new_from_listener(SSL *ssl, uint64_t flags)
     qc->last_error = SSL_ERROR_NONE;
 
     /*
-     * this is QCSO, we don't expect to accept connections
-     * on success channel assumes ownership of tls, we need
+     * This is QCSO, we don't expect to accept connections
+     * on success the channel assumes ownership of tls, we need
      * to grab reference for qc.
      */
     qc->ch = ossl_quic_port_create_outgoing(qc->port, qc->tls);
