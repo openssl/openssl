@@ -16,7 +16,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_x509");
 
-plan tests => 130;
+plan tests => 132;
 
 # Prevent MSys2 filename munging for arguments that look like file paths but
 # aren't
@@ -400,6 +400,7 @@ cert_contains($attr_map_cert,
 cert_contains($attr_map_cert,
               "commonName:asdf == localityName:03:3E",
               1, 'X.509 Attribute Mappings');
+
 my $aaa_cert = srctop_file(@certs, "ext-allowedAttributeAssignments.pem");
 cert_contains($aaa_cert,
               "Attribute Type: commonName",
