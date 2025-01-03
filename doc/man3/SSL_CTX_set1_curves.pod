@@ -203,6 +203,8 @@ SSL_set1_groups_list() was added in OpenSSL 3.3.
 
 Support for B<ML-KEM> was added in OpenSSL 3.5.
 
+B<SSL_CTX_get0_implemented_groups> was first implemented in OpenSSL 3.5.
+
 Earlier versions of this document described the list as a preference order.
 However, OpenSSL's behavior as a TLS 1.3 server is to consider I<all>
 supported groups as comparable in security.

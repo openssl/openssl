@@ -533,7 +533,7 @@ static int mlx_kem_get_params(void *vkey, OSSL_PARAM params[])
     }
     if (mlx_kem_have_prvkey(key)) {
         prv = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_PRIV_KEY);
-        if (prv) {
+        if (prv != NULL) {
             if (prv->data_type != OSSL_PARAM_OCTET_STRING)
                 return 0;
             prv->return_size = prvlen;
@@ -556,7 +556,7 @@ static int mlx_kem_get_params(void *vkey, OSSL_PARAM params[])
 
     selection = prv == NULL ? 0 : OSSL_KEYMGMT_SELECT_PRIVATE_KEY;
     selection |= pub == NULL ? 0 : OSSL_KEYMGMT_SELECT_PUBLIC_KEY;
-    if (key->xinfo->group_name)
+    if (key->xinfo->group_name != NULL)
         selection |= OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS;
 
     /* Extract sub-component key material */
@@ -699,7 +699,7 @@ static void *mlx_kem_gen(void *vgctx, OSSL_CALLBACK *osslcb, void *cbarg)
     if ((gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0)
         return key;
 
-    /* XXX: Using same "propq" for all components */
+    /* For now, using the same "propq" for all components */
     key->mkey = EVP_PKEY_Q_keygen(gctx->libctx, gctx->propq,
                                   key->minfo->algorithm_name);
     key->xkey = EVP_PKEY_Q_keygen(gctx->libctx, gctx->propq,
