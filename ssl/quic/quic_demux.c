@@ -442,6 +442,7 @@ int ossl_quic_demux_inject(QUIC_DEMUX *demux,
 
     /* Move from free list to pending list. */
     ossl_list_urxe_remove(&demux->urx_free, urxe);
+    urxe->datagram_id = demux->next_datagram_id++;
     ossl_list_urxe_insert_tail(&demux->urx_pending, urxe);
     urxe->demux_state = URXE_DEMUX_STATE_PENDING;
 

@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
      */
     int exitcode = EXIT_FAILURE;
 #endif
-    char *lost;
+    char *volatile lost;
 
     lost = OPENSSL_malloc(3);
     if (!TEST_ptr(lost))
