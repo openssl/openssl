@@ -26,8 +26,9 @@ int EVP_PKEY_set1_RSA(EVP_PKEY *pkey, RSA *key)
 {
     int ret = EVP_PKEY_assign_RSA(pkey, key);
 
-    if (ret)
-        RSA_up_ref(key);
+    if (ret && !RSA_up_ref(key))
+        return 0;
+
     return ret;
 }
 
@@ -49,8 +50,9 @@ RSA *EVP_PKEY_get1_RSA(EVP_PKEY *pkey)
 {
     RSA *ret = evp_pkey_get0_RSA_int(pkey);
 
-    if (ret != NULL)
-        RSA_up_ref(ret);
+    if (ret != NULL && !RSA_up_ref(ret))
+        ret = NULL;
+
     return ret;
 }
 

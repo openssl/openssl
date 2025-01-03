@@ -68,23 +68,18 @@ CERT *ssl_cert_new(size_t ssl_pkey_num)
     if (!ossl_assert(ssl_pkey_num >= SSL_PKEY_NUM))
         return NULL;
 
-    ret = OPENSSL_zalloc(sizeof(*ret));
+    ret = OPENSSL_zalloc(sizeof(*ret) + ssl_pkey_num * sizeof(CERT_PKEY));
     if (ret == NULL)
         return NULL;
 
     ret->ssl_pkey_num = ssl_pkey_num;
-    ret->pkeys = OPENSSL_zalloc(ret->ssl_pkey_num * sizeof(CERT_PKEY));
-    if (ret->pkeys == NULL) {
-        OPENSSL_free(ret);
-        return NULL;
-    }
+    ret->pkeys = (CERT_PKEY *)(ret + 1);
 
     ret->key = &(ret->pkeys[SSL_PKEY_RSA]);
     ret->sec_cb = ssl_security_default_callback;
     ret->sec_level = OPENSSL_TLS_SECURITY_LEVEL;
     ret->sec_ex = NULL;
     if (!CRYPTO_NEW_REF(&ret->references, 1)) {
-        OPENSSL_free(ret->pkeys);
         OPENSSL_free(ret);
         return NULL;
     }
@@ -94,7 +89,7 @@ CERT *ssl_cert_new(size_t ssl_pkey_num)
 
 CERT *ssl_cert_dup(CERT *cert)
 {
-    CERT *ret = OPENSSL_zalloc(sizeof(*ret));
+    CERT *ret = OPENSSL_zalloc(sizeof(*ret) + cert->ssl_pkey_num * sizeof(CERT_PKEY));
     size_t i;
 #ifndef OPENSSL_NO_COMP_ALG
     int j;
@@ -104,22 +99,18 @@ CERT *ssl_cert_dup(CERT *cert)
         return NULL;
 
     ret->ssl_pkey_num = cert->ssl_pkey_num;
-    ret->pkeys = OPENSSL_zalloc(ret->ssl_pkey_num * sizeof(CERT_PKEY));
-    if (ret->pkeys == NULL) {
-        OPENSSL_free(ret);
-        return NULL;
-    }
+    ret->pkeys = (CERT_PKEY *)(ret + 1);
 
     ret->key = &ret->pkeys[cert->key - cert->pkeys];
     if (!CRYPTO_NEW_REF(&ret->references, 1)) {
-        OPENSSL_free(ret->pkeys);
         OPENSSL_free(ret);
         return NULL;
     }
 
     if (cert->dh_tmp != NULL) {
+        if (!EVP_PKEY_up_ref(cert->dh_tmp))
+            goto err;
         ret->dh_tmp = cert->dh_tmp;
-        EVP_PKEY_up_ref(ret->dh_tmp);
     }
 
     ret->dh_tmp_cb = cert->dh_tmp_cb;
@@ -130,13 +121,15 @@ CERT *ssl_cert_dup(CERT *cert)
         CERT_PKEY *rpk = ret->pkeys + i;
 
         if (cpk->x509 != NULL) {
+            if (!X509_up_ref(cpk->x509))
+                goto err;
             rpk->x509 = cpk->x509;
-            X509_up_ref(rpk->x509);
         }
 
         if (cpk->privatekey != NULL) {
+            if (!EVP_PKEY_up_ref(cpk->privatekey))
+                goto err;
             rpk->privatekey = cpk->privatekey;
-            EVP_PKEY_up_ref(cpk->privatekey);
         }
 
         if (cpk->chain) {
@@ -200,12 +193,14 @@ CERT *ssl_cert_dup(CERT *cert)
     ret->cert_cb_arg = cert->cert_cb_arg;
 
     if (cert->verify_store) {
-        X509_STORE_up_ref(cert->verify_store);
+        if (!X509_STORE_up_ref(cert->verify_store))
+            goto err;
         ret->verify_store = cert->verify_store;
     }
 
     if (cert->chain_store) {
-        X509_STORE_up_ref(cert->chain_store);
+        if (!X509_STORE_up_ref(cert->chain_store))
+            goto err;
         ret->chain_store = cert->chain_store;
     }
 
@@ -286,7 +281,6 @@ void ssl_cert_free(CERT *c)
 #ifndef OPENSSL_NO_PSK
     OPENSSL_free(c->psk_identity_hint);
 #endif
-    OPENSSL_free(c->pkeys);
     CRYPTO_FREE_REF(&c->references);
     OPENSSL_free(c);
 }
@@ -349,9 +343,8 @@ int ssl_cert_add0_chain_cert(SSL_CONNECTION *s, SSL_CTX *ctx, X509 *x)
 
 int ssl_cert_add1_chain_cert(SSL_CONNECTION *s, SSL_CTX *ctx, X509 *x)
 {
-    if (!ssl_cert_add0_chain_cert(s, ctx, x))
+    if (!X509_up_ref(x) || !ssl_cert_add0_chain_cert(s, ctx, x))
         return 0;
-    X509_up_ref(x);
     return 1;
 }
 
@@ -1161,14 +1154,17 @@ int ssl_build_cert_chain(SSL_CONNECTION *s, SSL_CTX *ctx, int flags)
 int ssl_cert_set_cert_store(CERT *c, X509_STORE *store, int chain, int ref)
 {
     X509_STORE **pstore;
+
+    if (ref && store && !X509_STORE_up_ref(store))
+        return 0;
+
     if (chain)
         pstore = &c->chain_store;
     else
         pstore = &c->verify_store;
     X509_STORE_free(*pstore);
     *pstore = store;
-    if (ref && store)
-        X509_STORE_up_ref(store);
+
     return 1;
 }
 

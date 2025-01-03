@@ -150,8 +150,10 @@ int TS_RESP_verify_signature(PKCS7 *token, STACK_OF(X509) *certs,
     }
 
     if (signer_out) {
+        if (!X509_up_ref(signer))
+            goto err;
+
         *signer_out = signer;
-        X509_up_ref(signer);
     }
     ret = 1;
 

@@ -266,9 +266,13 @@ static int verify(X509 *leaf, X509 *root, STACK_OF(X509_CRL) *crls,
         goto err;
 
     /* Create a stack; upref the cert because we free it below. */
-    X509_up_ref(root);
-    if (!TEST_true(sk_X509_push(roots, root))
-        || !TEST_true(X509_STORE_CTX_init(ctx, store, leaf, NULL)))
+    if (!TEST_true(X509_up_ref(root)))
+        goto err;
+    if (!TEST_true(sk_X509_push(roots, root))) {
+        X509_free(root);
+        goto err;
+    }
+    if (!TEST_true(X509_STORE_CTX_init(ctx, store, leaf, NULL)))
         goto err;
     X509_STORE_CTX_set0_trusted_stack(ctx, roots);
     X509_STORE_CTX_set0_crls(ctx, crls);
@@ -302,13 +306,29 @@ static STACK_OF(X509_CRL) *make_CRL_stack(X509_CRL *x1, X509_CRL *x2)
 {
     STACK_OF(X509_CRL) *sk = sk_X509_CRL_new_null();
 
-    sk_X509_CRL_push(sk, x1);
-    X509_CRL_up_ref(x1);
-    if (x2 != NULL) {
-        sk_X509_CRL_push(sk, x2);
-        X509_CRL_up_ref(x2);
+    if (x1 != NULL) {
+        if (!X509_CRL_up_ref(x1))
+            goto err;
+        if (!sk_X509_CRL_push(sk, x1)) {
+            X509_CRL_free(x1);
+            goto err;
+        }
     }
+
+    if (x2 != NULL) {
+        if (!X509_CRL_up_ref(x2))
+            goto err;
+        if (!sk_X509_CRL_push(sk, x2)) {
+            X509_CRL_free(x2);
+            goto err;
+        }
+    }
+
     return sk;
+
+err:
+    sk_X509_CRL_pop_free(sk, X509_CRL_free);
+    return NULL;
 }
 
 static int test_basic_crl(void)

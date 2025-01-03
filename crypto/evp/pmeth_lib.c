@@ -321,9 +321,13 @@ static EVP_PKEY_CTX *int_ctx_new(OSSL_LIB_CTX *libctx,
     ret->engine = e;
     ret->pmeth = pmeth;
     ret->operation = EVP_PKEY_OP_UNDEFINED;
+
+    if (pkey != NULL && !EVP_PKEY_up_ref(pkey)) {
+        EVP_PKEY_CTX_free(ret);
+        return NULL;
+    }
+
     ret->pkey = pkey;
-    if (pkey != NULL)
-        EVP_PKEY_up_ref(pkey);
 
     if (pmeth != NULL && pmeth->init != NULL) {
         if (pmeth->init(ret) <= 0) {
@@ -461,8 +465,9 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *pctx)
     if (rctx == NULL)
         return NULL;
 
-    if (pctx->pkey != NULL)
-        EVP_PKEY_up_ref(pctx->pkey);
+    if (pctx->pkey != NULL && !EVP_PKEY_up_ref(pctx->pkey))
+        goto err;
+
     rctx->pkey = pctx->pkey;
     rctx->operation = pctx->operation;
     rctx->libctx = pctx->libctx;
@@ -569,8 +574,9 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *pctx)
     rctx->engine = pctx->engine;
 # endif
 
-    if (pctx->peerkey != NULL)
-        EVP_PKEY_up_ref(pctx->peerkey);
+    if (pctx->peerkey != NULL && !EVP_PKEY_up_ref(pctx->peerkey))
+        goto err;
+
     rctx->peerkey = pctx->peerkey;
 
     if (pctx->pmeth == NULL) {
