@@ -371,9 +371,9 @@ int OSSL_CMP_get1_crlUpdate(OSSL_CMP_CTX *ctx, const X509 *crlcert,
         ERR_raise(ERR_LIB_CMP, CMP_R_GENERATE_CRLSTATUS);
         goto end;
     }
+    (void)sk_OSSL_CMP_CRLSTATUS_push(list, status); /* cannot fail */
 
-    if (!ossl_assert(sk_OSSL_CMP_CRLSTATUS_push(list, status)) /* cannot fail */
-        || (req = OSSL_CMP_ITAV_new0_crlStatusList(list)) == NULL)
+    if ((req = OSSL_CMP_ITAV_new0_crlStatusList(list)) == NULL)
         goto end;
     status = NULL;
     list = NULL;

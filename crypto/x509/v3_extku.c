@@ -120,11 +120,7 @@ static void *v2i_EXTENDED_KEY_USAGE(const X509V3_EXT_METHOD *method,
                            "%s", extval);
             return NULL;
         }
-        if (!ossl_assert(sk_ASN1_OBJECT_push(extku, objtmp))) {
-            sk_ASN1_OBJECT_pop_free(extku, ASN1_OBJECT_free);
-            ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
-            return NULL;
-        }
+        sk_ASN1_OBJECT_push(extku, objtmp);  /* no failure as it was reserved */
     }
     return extku;
 }
