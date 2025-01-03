@@ -138,7 +138,9 @@ int crl2pkcs7_main(int argc, char **argv)
         if ((crl_stack = sk_X509_CRL_new_null()) == NULL)
             goto end;
         p7s->crl = crl_stack;
-        sk_X509_CRL_push(crl_stack, crl);
+
+        if (!sk_X509_CRL_push(crl_stack, crl))
+            goto end;
         crl = NULL;             /* now part of p7 for OPENSSL_freeing */
     }
 

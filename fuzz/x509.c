@@ -98,10 +98,10 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
 
     if (crl != NULL) {
         crls = sk_X509_CRL_new_null();
-        if (crls == NULL)
+        if (crls == NULL
+            || !sk_X509_CRL_push(crls, crl))
             goto err;
 
-        sk_X509_CRL_push(crls, crl);
         X509_STORE_CTX_set0_crls(ctx, crls);
     }
 
