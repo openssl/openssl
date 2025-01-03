@@ -127,7 +127,8 @@ int asn1parse_main(int argc, char **argv)
             dump = strtol(opt_arg(), NULL, 0);
             break;
         case OPT_STRPARSE:
-            sk_OPENSSL_STRING_push(osk, opt_arg());
+            if (sk_OPENSSL_STRING_push(osk, opt_arg()) <= 0)
+                goto end;
             break;
         case OPT_GENSTR:
             genstr = opt_arg();
