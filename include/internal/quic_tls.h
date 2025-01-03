@@ -11,10 +11,8 @@
 # define OSSL_QUIC_TLS_H
 
 # include <openssl/ssl.h>
-# include "internal/quic_stream.h"
-# include "internal/quic_predef.h"
 
-# ifndef OPENSSL_NO_QUIC
+typedef struct quic_tls_st QUIC_TLS;
 
 typedef struct quic_tls_args_st {
     /*
@@ -43,7 +41,6 @@ typedef struct quic_tls_args_st {
     void *crypto_recv_rcd_cb_arg;
     int (*crypto_release_rcd_cb)(size_t bytes_read, void *arg);
     void *crypto_release_rcd_cb_arg;
-
 
     /*
      * Called when a traffic secret is available for a given TLS protection
@@ -110,7 +107,5 @@ int ossl_quic_tls_get_error(QUIC_TLS *qtls,
 
 int ossl_quic_tls_is_cert_request(QUIC_TLS *qtls);
 int ossl_quic_tls_has_bad_max_early_data(QUIC_TLS *qtls);
-
-# endif
 
 #endif

@@ -12403,7 +12403,7 @@ static int test_alpn(int idx)
     return testresult;
 }
 
-#if !defined(OPENSSL_NO_QUIC) && !defined(OSSL_NO_USABLE_TLS1_3)
+#if !defined(OSSL_NO_USABLE_TLS1_3)
 struct quic_tls_test_data {
     struct quic_tls_test_data *peer;
     uint32_t renc_level;
@@ -12622,7 +12622,7 @@ static int test_quic_tls(void)
 
     return testresult;
 }
-#endif /* !defined(OPENSSL_NO_QUIC) && !defined(OSSL_NO_USABLE_TLS1_3) */
+#endif /* !defined(OSSL_NO_USABLE_TLS1_3) */
 
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile srpvfile tmpfile provider config dhfile\n")
 
@@ -12946,7 +12946,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_npn, 5);
 #endif
     ADD_ALL_TESTS(test_alpn, 4);
-#if !defined(OPENSSL_NO_QUIC) && !defined(OSSL_NO_USABLE_TLS1_3)
+#if !defined(OSSL_NO_USABLE_TLS1_3)
     ADD_TEST(test_quic_tls);
 #endif
     return 1;
