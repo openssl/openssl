@@ -11,6 +11,7 @@
 #include "internal/quic_tls.h"
 #include "../ssl_local.h"
 #include "internal/quic_error.h"
+#include "internal/quic_types.h"
 
 #define QUIC_TLS_FATAL(rl, ad, err) \
     do { \
@@ -143,6 +144,7 @@ quic_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
         qdir = 1;
 
     if (rl->qtls->args.ossl_quic) {
+#ifndef OPENSSL_NO_QUIC
         /*
          * We only look up the suite_id/MD for internal callers. Not used in the
          * public API. We assume that a 3rd party QUIC stack will want to
@@ -166,6 +168,10 @@ quic_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
             QUIC_TLS_FATAL(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             goto err;
         }
+#else
+        if (!ossl_assert("Should not happen" == NULL))
+            goto err;
+#endif
     }
 
     if (!rl->qtls->args.yield_secret_cb(level, qdir, suite_id,
@@ -632,7 +638,7 @@ QUIC_TLS *ossl_quic_tls_new(const QUIC_TLS_ARGS *args)
     if (qtls == NULL)
         return NULL;
 
-    if ((qtls->error_state = OSSL_ERR_STATE_new()) == NULL) {
+    if (args->ossl_quic && (qtls->error_state = OSSL_ERR_STATE_new()) == NULL) {
         OPENSSL_free(qtls);
         return NULL;
     }
@@ -660,23 +666,27 @@ static int raise_error(QUIC_TLS *qtls, uint64_t error_code,
      * with any underlying libssl errors underneath it (but our cover error may
      * be the only error in some cases). Then capture this into an ERR_STATE so
      * we can report it later if need be when the QUIC_CHANNEL asks for it.
+     * For external QUIC TLS we just raise the error.
      */
     ERR_new();
     ERR_set_debug(src_file, src_line, src_func);
     ERR_set_error(ERR_LIB_SSL, SSL_R_QUIC_HANDSHAKE_LAYER_ERROR,
                   "handshake layer error, error code %llu (0x%llx) (\"%s\")",
                   error_code, error_code, error_msg);
-    OSSL_ERR_STATE_save_to_mark(qtls->error_state);
 
-    /*
-     * We record the error information reported via the QUIC protocol
-     * separately.
-     */
-    qtls->error_code        = error_code;
-    qtls->error_msg         = error_msg;
-    qtls->inerror           = 1;
+    if (qtls->args.ossl_quic) {
+        OSSL_ERR_STATE_save_to_mark(qtls->error_state);
 
-    ERR_pop_to_mark();
+        /*
+        * We record the error information reported via the QUIC protocol
+        * separately.
+        */
+        qtls->error_code        = error_code;
+        qtls->error_msg         = error_msg;
+        qtls->inerror           = 1;
+
+        ERR_pop_to_mark();
+    }
     return 0;
 }
 
@@ -684,8 +694,13 @@ static int raise_error(QUIC_TLS *qtls, uint64_t error_code,
     raise_error((qtls), (error_code), (error_msg), \
                 OPENSSL_FILE, OPENSSL_LINE, OPENSSL_FUNC)
 
-#define RAISE_INTERNAL_ERROR(qtls) \
+#ifndef OPENSSL_NO_QUIC
+# define RAISE_INTERNAL_ERROR(qtls) \
     RAISE_ERROR((qtls), OSSL_QUIC_ERR_INTERNAL_ERROR, "internal error")
+#else
+# define RAISE_INTERNAL_ERROR(qtls) \
+    RAISE_ERROR((qtls), 0x01, "internal error")
+#endif
 
 int ossl_quic_tls_configure(QUIC_TLS *qtls)
 {
@@ -714,6 +729,7 @@ int ossl_quic_tls_configure(QUIC_TLS *qtls)
     return 1;
 }
 
+#ifndef OPENSSL_NO_QUIC
 int ossl_quic_tls_tick(QUIC_TLS *qtls)
 {
     int ret, err;
@@ -829,6 +845,7 @@ int ossl_quic_tls_tick(QUIC_TLS *qtls)
     ERR_pop_to_mark();
     return 1;
 }
+#endif
 
 int ossl_quic_tls_set_transport_params(QUIC_TLS *qtls,
                                        const unsigned char *transport_params,

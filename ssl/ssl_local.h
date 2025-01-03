@@ -39,6 +39,7 @@
 # include "internal/cryptlib.h"
 # include "record/record.h"
 # include "internal/quic_predef.h"
+# include "internal/quic_tls.h"
 
 # ifdef OPENSSL_BUILD_SHLIBSSL
 #  undef OPENSSL_EXTERN
