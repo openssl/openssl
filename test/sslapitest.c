@@ -3334,7 +3334,7 @@ static int find_session_cb(SSL *ssl, const unsigned char *identity,
     if (find_session_cb_cnt > 2)
         return 0;
 
-    if (serverpsk == NULL || !SSL_SESSION_up_ref(serverpsk))
+    if (serverpsk == NULL)
         return 0;
 
     /* Identity should match that set by the client */
@@ -3342,11 +3342,11 @@ static int find_session_cb(SSL *ssl, const unsigned char *identity,
             || strncmp(srvid, (const char *)identity, identity_len) != 0) {
         /* No PSK found, continue but without a PSK */
         *sess = NULL;
-
-        SSL_SESSION_free(serverpsk);
-
         return 1;
     }
+
+    if (!SSL_SESSION_up_ref(serverpsk))
+        return 0;
 
     *sess = serverpsk;
 
