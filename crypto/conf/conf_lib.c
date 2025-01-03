@@ -228,7 +228,8 @@ static void collect_section_name(const CONF_VALUE *v, SECTION_NAMES *names)
 {
     /* A section is a CONF_VALUE with name == NULL */
     if (v->name == NULL)
-        sk_OPENSSL_CSTRING_push(names, v->section);
+        /* A failure to push cannot be handled so we ignore the result. */
+        (void)sk_OPENSSL_CSTRING_push(names, v->section);
 }
 
 static int section_name_cmp(OPENSSL_CSTRING const *a, OPENSSL_CSTRING const *b)

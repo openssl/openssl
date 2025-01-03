@@ -216,7 +216,10 @@ static int add_certs_from_file(STACK_OF(X509) *stack, char *certfile)
     while (sk_X509_INFO_num(sk)) {
         xi = sk_X509_INFO_shift(sk);
         if (xi->x509 != NULL) {
-            sk_X509_push(stack, xi->x509);
+            if (!sk_X509_push(stack, xi->x509)) {
+                X509_INFO_free(xi);
+                goto end;
+            }
             xi->x509 = NULL;
             count++;
         }

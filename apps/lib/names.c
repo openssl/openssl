@@ -22,7 +22,8 @@ void collect_names(const char *name, void *vdata)
 {
     STACK_OF(OPENSSL_CSTRING) *names = vdata;
 
-    sk_OPENSSL_CSTRING_push(names, name);
+    /* A failure to push cannot be handled so we ignore the result. */
+    (void)sk_OPENSSL_CSTRING_push(names, name);
 }
 
 void print_names(BIO *out, STACK_OF(OPENSSL_CSTRING) *names)
