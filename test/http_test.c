@@ -332,6 +332,16 @@ static int test_http_url_dns(void)
     return test_http_url_ok("host:65535/path", 0, "host", "65535", "/path");
 }
 
+static int test_http_url_timestamp(void)
+{
+    return test_http_url_ok("host/p/2017-01-03T00:00:00", 0, "host", "80",
+                            "/p/2017-01-03T00:00:00")
+        && test_http_url_ok("http://host/p/2017-01-03T00:00:00", 0, "host",
+                            "80", "/p/2017-01-03T00:00:00")
+        && test_http_url_ok("https://host/p/2017-01-03T00:00:00", 1, "host",
+                            "443", "/p/2017-01-03T00:00:00");
+}
+
 static int test_http_url_path_query(void)
 {
     return test_http_url_path_query_ok("http://usr@host:1/p?q=x#frag", "/p?q=x")
@@ -559,6 +569,7 @@ int setup_tests(void)
         return 0;
 
     ADD_TEST(test_http_url_dns);
+    ADD_TEST(test_http_url_timestamp);
     ADD_TEST(test_http_url_path_query);
     ADD_TEST(test_http_url_userinfo_query_fragment);
     ADD_TEST(test_http_url_ipv4);
