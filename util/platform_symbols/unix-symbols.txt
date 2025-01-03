@@ -142,6 +142,7 @@ strdup
 strlen
 strncmp
 strncpy
+strpbrk
 strrchr
 strspn
 strstr
