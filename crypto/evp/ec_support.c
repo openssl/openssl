@@ -150,6 +150,7 @@ int ossl_ec_curve_name2nid(const char *name)
 /* Functions to translate between common NIST curve names and NIDs */
 
 static const EC_NAME2NID nist_curves[] = {
+#ifndef OPENSSL_NO_EC2M
     {"B-163", NID_sect163r2},
     {"B-233", NID_sect233r1},
     {"B-283", NID_sect283r1},
@@ -160,6 +161,7 @@ static const EC_NAME2NID nist_curves[] = {
     {"K-283", NID_sect283k1},
     {"K-409", NID_sect409k1},
     {"K-571", NID_sect571k1},
+#endif
     {"P-192", NID_X9_62_prime192v1},
     {"P-224", NID_secp224r1},
     {"P-256", NID_X9_62_prime256v1},
