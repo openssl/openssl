@@ -17,6 +17,16 @@
 #include "crypto/evp.h"
 #include "evp_local.h"
 
+static void evp_asym_cipher_free(void *data)
+{
+    EVP_ASYM_CIPHER_free(data);
+}
+
+static int evp_asym_cipher_up_ref(void *data)
+{
+    return EVP_ASYM_CIPHER_up_ref(data);
+}
+
 static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation,
                                      const OSSL_PARAM params[])
 {
@@ -484,8 +494,8 @@ EVP_ASYM_CIPHER *EVP_ASYM_CIPHER_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
 {
     return evp_generic_fetch(ctx, OSSL_OP_ASYM_CIPHER, algorithm, properties,
                              evp_asym_cipher_from_algorithm,
-                             (int (*)(void *))EVP_ASYM_CIPHER_up_ref,
-                             (void (*)(void *))EVP_ASYM_CIPHER_free);
+                             evp_asym_cipher_up_ref,
+                             evp_asym_cipher_free);
 }
 
 EVP_ASYM_CIPHER *evp_asym_cipher_fetch_from_prov(OSSL_PROVIDER *prov,
@@ -495,8 +505,8 @@ EVP_ASYM_CIPHER *evp_asym_cipher_fetch_from_prov(OSSL_PROVIDER *prov,
     return evp_generic_fetch_from_prov(prov, OSSL_OP_ASYM_CIPHER,
                                        algorithm, properties,
                                        evp_asym_cipher_from_algorithm,
-                                       (int (*)(void *))EVP_ASYM_CIPHER_up_ref,
-                                       (void (*)(void *))EVP_ASYM_CIPHER_free);
+                                       evp_asym_cipher_up_ref,
+                                       evp_asym_cipher_free);
 }
 
 int EVP_ASYM_CIPHER_is_a(const EVP_ASYM_CIPHER *cipher, const char *name)
@@ -527,8 +537,8 @@ void EVP_ASYM_CIPHER_do_all_provided(OSSL_LIB_CTX *libctx,
     evp_generic_do_all(libctx, OSSL_OP_ASYM_CIPHER,
                        (void (*)(void *, void *))fn, arg,
                        evp_asym_cipher_from_algorithm,
-                       (int (*)(void *))EVP_ASYM_CIPHER_up_ref,
-                       (void (*)(void *))EVP_ASYM_CIPHER_free);
+                       evp_asym_cipher_up_ref,
+                       evp_asym_cipher_free);
 }
 
 

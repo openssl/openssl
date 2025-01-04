@@ -20,6 +20,16 @@
 #include "crypto/evp.h"
 #include "evp_local.h"
 
+static void evp_signature_free(void *data)
+{
+    EVP_SIGNATURE_free(data);
+}
+
+static int evp_signature_up_ref(void *data)
+{
+    return EVP_SIGNATURE_up_ref(data);
+}
+
 static EVP_SIGNATURE *evp_signature_new(OSSL_PROVIDER *prov)
 {
     EVP_SIGNATURE *signature = OPENSSL_zalloc(sizeof(EVP_SIGNATURE));
@@ -404,8 +414,8 @@ EVP_SIGNATURE *EVP_SIGNATURE_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
 {
     return evp_generic_fetch(ctx, OSSL_OP_SIGNATURE, algorithm, properties,
                              evp_signature_from_algorithm,
-                             (int (*)(void *))EVP_SIGNATURE_up_ref,
-                             (void (*)(void *))EVP_SIGNATURE_free);
+                             evp_signature_up_ref,
+                             evp_signature_free);
 }
 
 EVP_SIGNATURE *evp_signature_fetch_from_prov(OSSL_PROVIDER *prov,
@@ -415,8 +425,8 @@ EVP_SIGNATURE *evp_signature_fetch_from_prov(OSSL_PROVIDER *prov,
     return evp_generic_fetch_from_prov(prov, OSSL_OP_SIGNATURE,
                                        algorithm, properties,
                                        evp_signature_from_algorithm,
-                                       (int (*)(void *))EVP_SIGNATURE_up_ref,
-                                       (void (*)(void *))EVP_SIGNATURE_free);
+                                       evp_signature_up_ref,
+                                       evp_signature_free);
 }
 
 int EVP_SIGNATURE_is_a(const EVP_SIGNATURE *signature, const char *name)
@@ -448,8 +458,8 @@ void EVP_SIGNATURE_do_all_provided(OSSL_LIB_CTX *libctx,
     evp_generic_do_all(libctx, OSSL_OP_SIGNATURE,
                        (void (*)(void *, void *))fn, arg,
                        evp_signature_from_algorithm,
-                       (int (*)(void *))EVP_SIGNATURE_up_ref,
-                       (void (*)(void *))EVP_SIGNATURE_free);
+                       evp_signature_up_ref,
+                       evp_signature_free);
 }
 
 

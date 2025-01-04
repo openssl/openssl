@@ -18,6 +18,16 @@
 #include "crypto/evp.h"
 #include "evp_local.h"
 
+static void evp_keyexch_free(void *data)
+{
+    EVP_KEYEXCH_free(data);
+}
+
+static int evp_keyexch_up_ref(void *data)
+{
+    return EVP_KEYEXCH_up_ref(data);
+}
+
 static EVP_KEYEXCH *evp_keyexch_new(OSSL_PROVIDER *prov)
 {
     EVP_KEYEXCH *exchange = OPENSSL_zalloc(sizeof(EVP_KEYEXCH));
@@ -172,8 +182,8 @@ EVP_KEYEXCH *EVP_KEYEXCH_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
 {
     return evp_generic_fetch(ctx, OSSL_OP_KEYEXCH, algorithm, properties,
                              evp_keyexch_from_algorithm,
-                             (int (*)(void *))EVP_KEYEXCH_up_ref,
-                             (void (*)(void *))EVP_KEYEXCH_free);
+                             evp_keyexch_up_ref,
+                             evp_keyexch_free);
 }
 
 EVP_KEYEXCH *evp_keyexch_fetch_from_prov(OSSL_PROVIDER *prov,
@@ -183,8 +193,8 @@ EVP_KEYEXCH *evp_keyexch_fetch_from_prov(OSSL_PROVIDER *prov,
     return evp_generic_fetch_from_prov(prov, OSSL_OP_KEYEXCH,
                                        algorithm, properties,
                                        evp_keyexch_from_algorithm,
-                                       (int (*)(void *))EVP_KEYEXCH_up_ref,
-                                       (void (*)(void *))EVP_KEYEXCH_free);
+                                       evp_keyexch_up_ref,
+                                       evp_keyexch_free);
 }
 
 int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
@@ -562,8 +572,8 @@ void EVP_KEYEXCH_do_all_provided(OSSL_LIB_CTX *libctx,
     evp_generic_do_all(libctx, OSSL_OP_KEYEXCH,
                        (void (*)(void *, void *))fn, arg,
                        evp_keyexch_from_algorithm,
-                       (int (*)(void *))EVP_KEYEXCH_up_ref,
-                       (void (*)(void *))EVP_KEYEXCH_free);
+                       evp_keyexch_up_ref,
+                       evp_keyexch_free);
 }
 
 int EVP_KEYEXCH_names_do_all(const EVP_KEYEXCH *keyexch,
