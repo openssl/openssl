@@ -7,6 +7,7 @@
 
 use strict;
 use POSIX ":sys_wait_h";
+use IPC::Open2;
 
 package TLSProxy::Proxy;
 
@@ -243,16 +244,19 @@ sub start
     if ($self->debug) {
         print STDERR "Server command: $execcmd\n";
     }
+    my $sin = undef;
+    my $sout = undef;
+    if ("$^O" eq "MSWin32") {
+        $pid = IPC::Open2::open2($sout, $sin, $execcmd) or die "Failed to $execcmd: $!\n";
+    } else {
+        $pid = IPC::Open3::open3($sin, $sout, undef, $execcmd) or die "Failed to $execcmd: $!\n";
+    }
 
-    open(my $savedin, "<&STDIN");
-
-    # Temporarily replace STDIN so that sink process can inherit it...
-    $pid = open(STDIN, "$execcmd 2>&1 |") or die "Failed to $execcmd: $!\n";
     $self->{real_serverpid} = $pid;
 
     # Process the output from s_server until we find the ACCEPT line, which
     # tells us what the accepting address and port are.
-    while (<>) {
+    while (<$sout>) {
         print;
         s/\R$//;                # Better chomp
         next unless (/^ACCEPT\s.*:(\d+)$/);
@@ -287,10 +291,6 @@ sub start
             $error = $!;
         }
     }
-
-    # Change back to original stdin
-    open(STDIN, "<&", $savedin);
-    close($savedin);
 
     if (!defined($pid)) {
         kill(3, $self->{real_serverpid});
