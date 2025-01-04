@@ -44,6 +44,9 @@ static OSSL_FUNC_keymgmt_import_types_fn ml_kem_imexport_types;
 static OSSL_FUNC_keymgmt_export_types_fn ml_kem_imexport_types;
 static OSSL_FUNC_keymgmt_dup_fn ml_kem_dup;
 
+static const int minimal_selection = OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS
+    | OSSL_KEYMGMT_SELECT_PRIVATE_KEY;
+
 typedef struct ml_kem_gen_ctx_st {
     OSSL_LIB_CTX *libctx;
     char *propq;
@@ -401,9 +404,6 @@ static int ml_kem_gen_set_params(void *vgctx, const OSSL_PARAM params[])
 static void *ml_kem_gen_init(void *provctx, int selection,
                              const OSSL_PARAM params[], int variant)
 {
-    static const int minimal =
-        OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS
-        | OSSL_KEYMGMT_SELECT_PRIVATE_KEY;
     PROV_ML_KEM_GEN_CTX *gctx = NULL;
 
     /*
@@ -411,7 +411,7 @@ static void *ml_kem_gen_init(void *provctx, int selection,
      * appropriate.
      */
     if (!ossl_prov_is_running()
-        || (selection & minimal) == 0
+        || (selection & minimal_selection) == 0
         || (gctx = OPENSSL_zalloc(sizeof(*gctx))) == NULL)
         return NULL;
 
@@ -489,8 +489,6 @@ static void *ml_kem_dup(const void *vkey, int selection)
     return ossl_ml_kem_key_dup(key, selection);
 }
 
-typedef void (*func_ptr_t)(void);
-
 #define DECLARE_VARIANT(bits) \
     static void *ml_kem_##bits##_new(void *provctx) \
     { \
@@ -503,24 +501,24 @@ typedef void (*func_ptr_t)(void);
         return ml_kem_gen_init(provctx, selection, params, ML_KEM_##bits##_VARIANT); \
     } \
     const OSSL_DISPATCH ossl_ml_kem_##bits##_keymgmt_functions[] = { \
-        { OSSL_FUNC_KEYMGMT_NEW, (func_ptr_t) ml_kem_##bits##_new }, \
-        { OSSL_FUNC_KEYMGMT_FREE, (func_ptr_t) ossl_ml_kem_key_free }, \
-        { OSSL_FUNC_KEYMGMT_GET_PARAMS, (func_ptr_t) ml_kem_get_params }, \
-        { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (func_ptr_t) ml_kem_gettable_params }, \
-        { OSSL_FUNC_KEYMGMT_SET_PARAMS, (func_ptr_t) ml_kem_set_params }, \
-        { OSSL_FUNC_KEYMGMT_SETTABLE_PARAMS, (func_ptr_t) ml_kem_settable_params }, \
-        { OSSL_FUNC_KEYMGMT_HAS, (func_ptr_t) ml_kem_has }, \
-        { OSSL_FUNC_KEYMGMT_MATCH, (func_ptr_t) ml_kem_match }, \
-        { OSSL_FUNC_KEYMGMT_GEN_INIT, (func_ptr_t) ml_kem_##bits##_gen_init }, \
-        { OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS, (func_ptr_t) ml_kem_gen_set_params }, \
-        { OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS, (func_ptr_t) ml_kem_gen_settable_params }, \
-        { OSSL_FUNC_KEYMGMT_GEN, (func_ptr_t) ml_kem_gen }, \
-        { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (func_ptr_t) ml_kem_gen_cleanup }, \
-        { OSSL_FUNC_KEYMGMT_DUP, (func_ptr_t) ml_kem_dup }, \
-        { OSSL_FUNC_KEYMGMT_IMPORT, (func_ptr_t) ml_kem_import }, \
-        { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (func_ptr_t) ml_kem_imexport_types }, \
-        { OSSL_FUNC_KEYMGMT_EXPORT, (func_ptr_t) ml_kem_export }, \
-        { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (func_ptr_t) ml_kem_imexport_types }, \
+        { OSSL_FUNC_KEYMGMT_NEW, (OSSL_FUNC) ml_kem_##bits##_new }, \
+        { OSSL_FUNC_KEYMGMT_FREE, (OSSL_FUNC) ossl_ml_kem_key_free }, \
+        { OSSL_FUNC_KEYMGMT_GET_PARAMS, (OSSL_FUNC) ml_kem_get_params }, \
+        { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (OSSL_FUNC) ml_kem_gettable_params }, \
+        { OSSL_FUNC_KEYMGMT_SET_PARAMS, (OSSL_FUNC) ml_kem_set_params }, \
+        { OSSL_FUNC_KEYMGMT_SETTABLE_PARAMS, (OSSL_FUNC) ml_kem_settable_params }, \
+        { OSSL_FUNC_KEYMGMT_HAS, (OSSL_FUNC) ml_kem_has }, \
+        { OSSL_FUNC_KEYMGMT_MATCH, (OSSL_FUNC) ml_kem_match }, \
+        { OSSL_FUNC_KEYMGMT_GEN_INIT, (OSSL_FUNC) ml_kem_##bits##_gen_init }, \
+        { OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS, (OSSL_FUNC) ml_kem_gen_set_params }, \
+        { OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS, (OSSL_FUNC) ml_kem_gen_settable_params }, \
+        { OSSL_FUNC_KEYMGMT_GEN, (OSSL_FUNC) ml_kem_gen }, \
+        { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (OSSL_FUNC) ml_kem_gen_cleanup }, \
+        { OSSL_FUNC_KEYMGMT_DUP, (OSSL_FUNC) ml_kem_dup }, \
+        { OSSL_FUNC_KEYMGMT_IMPORT, (OSSL_FUNC) ml_kem_import }, \
+        { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (OSSL_FUNC) ml_kem_imexport_types }, \
+        { OSSL_FUNC_KEYMGMT_EXPORT, (OSSL_FUNC) ml_kem_export }, \
+        { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (OSSL_FUNC) ml_kem_imexport_types }, \
         OSSL_DISPATCH_END \
     }
 DECLARE_VARIANT(512);

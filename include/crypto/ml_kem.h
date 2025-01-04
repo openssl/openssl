@@ -7,8 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* Copyright (c) 2024, Google Inc. */
-
 #ifndef OPENSSL_HEADER_ML_KEM_H
 # define OPENSSL_HEADER_ML_KEM_H
 # pragma once

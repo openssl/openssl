@@ -365,7 +365,7 @@ categories. See L<OSSL_trace_enabled(3)>.
 L<EVP_PKEY_public_check(3)> and L<EVP_PKEY_param_check(3)> now work for
 more key types. This includes RSA, DSA, ED25519, X25519, ED448 and X448.
 Previously (in 1.1.1) they would return -2. For key types that do not have
-parameters then L<EVP_PKEY_param_check(3)> will always return 1.
+parameters L<EVP_PKEY_param_check(3)> will always return 1.
 
 =head3 Other notable deprecations and changes
 

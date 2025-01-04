@@ -4937,9 +4937,12 @@ static int test_ciphersuite_change(void)
  * Test 13 = Test MLKEM512
  * Test 14 = Test MLKEM768
  * Test 15 = Test MLKEM1024
- * Test 16 = Test all ML-KEM with TLSv1.2 client and server
- * Test 17 = Test all FFDHE with TLSv1.2 client and server
- * Test 18 = Test all ECDHE with TLSv1.2 client and server
+ * Test 16 = Test X25519MLKEM768
+ * Test 17 = Test SecP256r1MLKEM768
+ * Test 18 = Test SecP384r1MLKEM1024
+ * Test 19 = Test all ML-KEM with TLSv1.2 client and server
+ * Test 20 = Test all FFDHE with TLSv1.2 client and server
+ * Test 21 = Test all ECDHE with TLSv1.2 client and server
  */
 # ifndef OPENSSL_NO_EC
 static int ecdhe_kexch_groups[] = {NID_X9_62_prime256v1, NID_secp384r1,
@@ -4969,7 +4972,7 @@ static int test_key_exchange(int idx)
     switch (idx) {
 # ifndef OPENSSL_NO_EC
 # ifndef OPENSSL_NO_TLS1_2
-        case 18:
+        case 21:
             max_version = TLS1_2_VERSION;
 # endif
             /* Fall through */
@@ -5007,7 +5010,7 @@ static int test_key_exchange(int idx)
 # endif
 # ifndef OPENSSL_NO_DH
 # ifndef OPENSSL_NO_TLS1_2
-        case 17:
+        case 20:
             max_version = TLS1_2_VERSION;
             kexch_name0 = "ffdhe2048";
 # endif
@@ -5040,7 +5043,7 @@ static int test_key_exchange(int idx)
 # endif
 # ifndef OPENSSL_NO_ML_KEM
 #  if !defined(OPENSSL_NO_TLS1_2)
-        case 16:
+        case 19:
             max_version = TLS1_2_VERSION;
 #   if !defined(OPENSSL_NO_EC)
             /* Set at least one EC group so the handshake completes */
@@ -5082,6 +5085,25 @@ static int test_key_exchange(int idx)
             kexch_name0 = "MLKEM1024";
             kexch_names = kexch_name0;
             break;
+#  ifndef OPENSSL_NO_EC
+#   ifndef OPENSSL_NO_ECX
+        case 16:
+            kexch_groups = NULL;
+            kexch_name0 = "X25519MLKEM768";
+            kexch_names = kexch_name0;
+            break;
+#   endif
+        case 17:
+            kexch_groups = NULL;
+            kexch_name0 = "SecP256r1MLKEM768";
+            kexch_names = kexch_name0;
+            break;
+        case 18:
+            kexch_groups = NULL;
+            kexch_name0 = "SecP384r1MLKEM1024";
+            kexch_names = kexch_name0;
+            break;
+#  endif
 # endif
         default:
             /* We're skipping this test */
@@ -5089,7 +5111,7 @@ static int test_key_exchange(int idx)
     }
 
     /* ML-KEM not yet supported in the FIPS module */
-    if (is_fips && idx >= 12 && idx <= 16) {
+    if (is_fips && idx >= 12 && idx <= 19) {
         testresult = 1;
         goto end;
     };
@@ -5143,13 +5165,14 @@ static int test_key_exchange(int idx)
         goto end;
 
     /*
-     * If Handshake succeeds the negotiated kexch alg should be the first one in
-     * configured, except in the case of FFDHE and ML-KEM groups (idx == 17, 18),
-     * which are TLSv1.3 only so we expect no shared group to exist.
+     * If the handshake succeeds the negotiated kexch alg should be the first
+     * one in configured, except in the case of "all" FFDHE and "all" ML-KEM
+     * groups (idx == 19, 20), which are TLSv1.3 only so we expect no shared
+     * group to exist.
      */
     shared_group0 = SSL_get_shared_group(serverssl, 0);
     switch (idx) {
-    case 16:
+    case 19:
 # if !defined(OPENSSL_NO_EC)
         /* MLKEM + TLS 1.2 and no DH => "secp526r1" */
         if (!TEST_int_eq(shared_group0, NID_X9_62_prime256v1))
@@ -5157,7 +5180,7 @@ static int test_key_exchange(int idx)
         break;
 # endif
         /* Fall through */
-    case 17:
+    case 20:
         if (!TEST_int_eq(shared_group0, 0))
             goto end;
         break;
@@ -12653,7 +12676,7 @@ int setup_tests(void)
 #endif /* OSSL_NO_USABLE_TLS1_3 */
 # ifndef OPENSSL_NO_TLS1_2
     /* Test with both TLSv1.3 and 1.2 versions */
-    ADD_ALL_TESTS(test_key_exchange, 18);
+    ADD_ALL_TESTS(test_key_exchange, 21);
 #  if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_DH)
     ADD_ALL_TESTS(test_negotiated_group,
                   4 * (OSSL_NELEM(ecdhe_kexch_groups)
@@ -12661,7 +12684,7 @@ int setup_tests(void)
 #  endif
 # else
     /* Test with only TLSv1.3 versions */
-    ADD_ALL_TESTS(test_key_exchange, 15);
+    ADD_ALL_TESTS(test_key_exchange, 18);
 # endif
     ADD_ALL_TESTS(test_custom_exts, 6);
     ADD_TEST(test_stateless);
