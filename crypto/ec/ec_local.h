@@ -646,6 +646,13 @@ const EC_METHOD *EC_GFp_s390x_nistp384_method(void);
 const EC_METHOD *EC_GFp_s390x_nistp521_method(void);
 #endif
 
+#if !defined(OPENSSL_NO_EC_NISTP_64_GCC_128)
+/** Returns optimized methods for secp256k1 curve.
+ *  \return  EC_METHOD object
+ */
+const EC_METHOD *EC_GFp_secp256k1_method(void);
+#endif
+
 size_t ossl_ec_key_simple_priv2oct(const EC_KEY *eckey,
                                    unsigned char *buf, size_t len);
 int ossl_ec_key_simple_oct2priv(EC_KEY *eckey, const unsigned char *buf,
