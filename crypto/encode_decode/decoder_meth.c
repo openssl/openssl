@@ -24,6 +24,14 @@
  */
 #define NAME_SEPARATOR ':'
 
+static void ossl_decoder_free(void *data) {
+    OSSL_DECODER_free((OSSL_DECODER *)data);
+}
+
+static int ossl_decoder_up_ref(void *data) {
+    return OSSL_DECODER_up_ref((OSSL_DECODER *)data);
+}
+
 /* Simple method structure constructor and destructor */
 static OSSL_DECODER *ossl_decoder_new(void)
 {
@@ -191,8 +199,8 @@ static int put_decoder_in_store(void *store, void *method,
         return 0;
 
     return ossl_method_store_add(store, prov, id, propdef, method,
-                                 (int (*)(void *))OSSL_DECODER_up_ref,
-                                 (void (*)(void *))OSSL_DECODER_free);
+                                 ossl_decoder_up_ref,
+                                 ossl_decoder_free);
 }
 
 /* Create and populate a decoder method */
