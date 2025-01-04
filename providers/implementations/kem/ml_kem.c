@@ -176,9 +176,10 @@ static int ml_kem_encapsulate(void *vctx, unsigned char *ctext, size_t *clen,
         goto end;
     }
 
-    /* For now tolerate newly-deprecated NULL length pointers. */
     if (clen == NULL) {
-        clen = &encap_clen;
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_NULL_LENGTH_POINTER,
+                       "null ciphertext input/output length pointer");
+        goto end;
     } else if (*clen < encap_clen) {
         ERR_raise_data(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL,
                        "ciphertext buffer too small");
@@ -188,7 +189,9 @@ static int ml_kem_encapsulate(void *vctx, unsigned char *ctext, size_t *clen,
     }
 
     if (slen == NULL) {
-        slen = &encap_slen;
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_NULL_LENGTH_POINTER,
+                       "null shared secret input/output length pointer");
+        goto end;
     } else if (*slen < encap_slen) {
         ERR_raise_data(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL,
                        "shared-secret buffer too small");
