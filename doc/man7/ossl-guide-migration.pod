@@ -367,10 +367,6 @@ more key types. This includes RSA, DSA, ED25519, X25519, ED448 and X448.
 Previously (in 1.1.1) they would return -2. For key types that do not have
 parameters L<EVP_PKEY_param_check(3)> will always return 1.
 
-=for comment TODO(ML-KEM) It is not yet clear whether pairwise key checks make
-             sense for for purely provided algorithms like ML-KEM where there's
-             no mechanism to create keys in an inconsistent state.
-
 =head3 Other notable deprecations and changes
 
 =head4 The function code part of an OpenSSL error code is no longer relevant

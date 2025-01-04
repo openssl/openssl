@@ -701,9 +701,9 @@ static void *mlx_kem_gen(void *vgctx, OSSL_CALLBACK *osslcb, void *cbarg)
         return key;
 
     /* For now, using the same "propq" for all components */
-    key->mkey = EVP_PKEY_Q_keygen(gctx->libctx, gctx->propq,
+    key->mkey = EVP_PKEY_Q_keygen(key->libctx, key->propq,
                                   key->minfo->algorithm_name);
-    key->xkey = EVP_PKEY_Q_keygen(gctx->libctx, gctx->propq,
+    key->xkey = EVP_PKEY_Q_keygen(key->libctx, key->propq,
                                   key->xinfo->algorithm_name,
                                   key->xinfo->group_name);
     if (key->mkey != NULL && key->xkey != NULL) {
@@ -734,15 +734,21 @@ static void *mlx_kem_dup(const void *vkey, int selection)
         || (ret = OPENSSL_memdup(key, sizeof(*ret))) == NULL)
         return NULL;
 
-    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0) {
+    switch (selection & OSSL_KEYMGMT_SELECT_KEYPAIR) {
+    case 0:
         ret->xkey = ret->mkey = NULL;
         return ret;
+    case OSSL_KEYMGMT_SELECT_KEYPAIR:
+        ret->mkey = EVP_PKEY_dup(key->mkey);
+        ret->xkey = EVP_PKEY_dup(key->xkey);
+        if (ret->xkey != NULL && ret->mkey != NULL)
+            return ret;
+        break;
+    default:
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_UNSUPPORTED_SELECTION,
+                       "duplication of partial key material not supported");
+        break;
     }
-
-    ret->mkey = EVP_PKEY_dup(key->mkey);
-    ret->xkey = EVP_PKEY_dup(key->xkey);
-    if (ret->xkey != NULL && ret->mkey != NULL)
-        return ret;
 
     mlx_kem_key_free(ret);
     return NULL;
