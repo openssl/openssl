@@ -659,7 +659,7 @@ static int bring_ocsp_resp_in_correct_order(SSL *s, tlsextstatusctx *srctx,
         /* search the stack for the requested OCSP response */
         cert_id = OCSP_cert_to_id(NULL, x, issuer);
 
-        if (cert_id == NULL){
+        if (cert_id == NULL) {
             sk_OCSP_RESPONSE_insert(*sk_resp, NULL, -1);
             continue;
         }
@@ -674,7 +674,7 @@ static int bring_ocsp_resp_in_correct_order(SSL *s, tlsextstatusctx *srctx,
             found = OCSP_resp_find(bs, cert_id, -1);
             OCSP_BASICRESP_free(bs);
             if (found > -1) {
-                /* remove the found OCSP response from the unordered list*/
+                /* remove the found OCSP response from the unordered list */
                 sk_OCSP_RESPONSE_delete(sk_resp_unordered, j);
                 break;
             }
@@ -708,7 +708,8 @@ static int get_ocsp_resp_from_files(SSL *s, tlsextstatusctx *srctx,
     int i;
     int ret = SSL_TLSEXT_ERR_OK;
 
-    sk_resp_unordered = sk_OCSP_RESPONSE_new_reserve(NULL, sk_OPENSSL_STRING_num(srctx->sk_resp_in));
+    sk_resp_unordered = sk_OCSP_RESPONSE_new_reserve(NULL,
+                                                     sk_OPENSSL_STRING_num(srctx->sk_resp_in));
 
     if (sk_resp_unordered == NULL) {
         BIO_puts(bio_err, "cert_status: Cannot reserve memory for OCSP responses\n");
