@@ -767,6 +767,9 @@ EVP_RAND_CTX *RAND_get0_public(OSSL_LIB_CTX *ctx)
             return NULL;
 
         ctx = ossl_lib_ctx_get_concrete(ctx);
+
+        if (ctx == NULL)
+            return NULL;
         /*
          * If the private is also NULL then this is the first time we've
          * used this thread.
@@ -800,6 +803,9 @@ EVP_RAND_CTX *RAND_get0_private(OSSL_LIB_CTX *ctx)
             return NULL;
 
         ctx = ossl_lib_ctx_get_concrete(ctx);
+
+        if (ctx == NULL)
+            return NULL;
         /*
          * If the public is also NULL then this is the first time we've
          * used this thread.
