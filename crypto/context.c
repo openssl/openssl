@@ -54,17 +54,23 @@ struct ossl_lib_ctx_st {
 
 int ossl_lib_ctx_write_lock(OSSL_LIB_CTX *ctx)
 {
-    return CRYPTO_THREAD_write_lock(ossl_lib_ctx_get_concrete(ctx)->lock);
+    if ((ctx = ossl_lib_ctx_get_concrete(ctx)) == NULL)
+        return 0;
+    return CRYPTO_THREAD_write_lock(ctx->lock);
 }
 
 int ossl_lib_ctx_read_lock(OSSL_LIB_CTX *ctx)
 {
-    return CRYPTO_THREAD_read_lock(ossl_lib_ctx_get_concrete(ctx)->lock);
+    if ((ctx = ossl_lib_ctx_get_concrete(ctx)) == NULL)
+        return 0;
+    return CRYPTO_THREAD_read_lock(ctx->lock);
 }
 
 int ossl_lib_ctx_unlock(OSSL_LIB_CTX *ctx)
 {
-    return CRYPTO_THREAD_unlock(ossl_lib_ctx_get_concrete(ctx)->lock);
+    if ((ctx = ossl_lib_ctx_get_concrete(ctx)) == NULL)
+        return 0;
+    return CRYPTO_THREAD_unlock(ctx->lock);
 }
 
 int ossl_lib_ctx_is_child(OSSL_LIB_CTX *ctx)
@@ -410,7 +416,7 @@ static OSSL_LIB_CTX *get_default_context(void)
 {
     OSSL_LIB_CTX *current_defctx = get_thread_default_context();
 
-    if (current_defctx == NULL)
+    if (current_defctx == NULL && default_context_inited)
         current_defctx = &default_context_int;
     return current_defctx;
 }
