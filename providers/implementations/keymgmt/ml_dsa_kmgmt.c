@@ -372,4 +372,6 @@ static void ml_dsa_gen_cleanup(void *genctx)
         OSSL_DISPATCH_END                                                      \
     }
 
+MAKE_KEYMGMT_FUNCTIONS("ML-DSA-44", 44);
 MAKE_KEYMGMT_FUNCTIONS("ML-DSA-65", 65);
+MAKE_KEYMGMT_FUNCTIONS("ML-DSA-87", 87);

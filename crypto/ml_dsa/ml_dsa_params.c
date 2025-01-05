@@ -12,6 +12,19 @@
 #include "ml_dsa_params.h"
 
 /* See FIPS 204 Section 4 Table 1 & Table 2 */
+#define ML_DSA_44_TAU 39
+#define ML_DSA_44_LAMBDA 128
+#define ML_DSA_44_K 4
+#define ML_DSA_44_L 4
+#define ML_DSA_44_ETA ML_DSA_ETA_2
+#define ML_DSA_44_BETA 78
+#define ML_DSA_44_OMEGA 80
+#define ML_DSA_44_SECURITY_CATEGORY 2
+#define ML_DSA_44_PRIV_LEN 2560
+#define ML_DSA_44_PUB_LEN 1312
+#define ML_DSA_44_SIG_LEN 2420
+
+/* See FIPS 204 Section 4 Table 1 & Table 2 */
 #define ML_DSA_65_TAU 49
 #define ML_DSA_65_LAMBDA 192
 #define ML_DSA_65_K 6
@@ -24,7 +37,35 @@
 #define ML_DSA_65_PUB_LEN 1952
 #define ML_DSA_65_SIG_LEN 3309
 
+/* See FIPS 204 Section 4 Table 1 & Table 2 */
+#define ML_DSA_87_TAU 60
+#define ML_DSA_87_LAMBDA 256
+#define ML_DSA_87_K 8
+#define ML_DSA_87_L 7
+#define ML_DSA_87_ETA ML_DSA_ETA_2
+#define ML_DSA_87_BETA 120
+#define ML_DSA_87_OMEGA 75
+#define ML_DSA_87_SECURITY_CATEGORY 5
+#define ML_DSA_87_PRIV_LEN 4896
+#define ML_DSA_87_PUB_LEN 2592
+#define ML_DSA_87_SIG_LEN 4627
+
 static const ML_DSA_PARAMS ml_dsa_params[] = {
+    { "ML-DSA-44",
+      ML_DSA_44_TAU,
+      ML_DSA_44_LAMBDA,
+      ML_DSA_GAMMA1_TWO_POWER_17,
+      ML_DSA_GAMMA2_Q_MINUS1_DIV88,
+      ML_DSA_44_K,
+      ML_DSA_44_L,
+      ML_DSA_44_ETA,
+      ML_DSA_44_BETA,
+      ML_DSA_44_OMEGA,
+      ML_DSA_44_SECURITY_CATEGORY,
+      ML_DSA_44_PRIV_LEN,
+      ML_DSA_44_PUB_LEN,
+      ML_DSA_44_SIG_LEN
+    },
     { "ML-DSA-65",
       ML_DSA_65_TAU,
       ML_DSA_65_LAMBDA,
@@ -39,6 +80,21 @@ static const ML_DSA_PARAMS ml_dsa_params[] = {
       ML_DSA_65_PRIV_LEN,
       ML_DSA_65_PUB_LEN,
       ML_DSA_65_SIG_LEN
+    },
+    { "ML-DSA-87",
+      ML_DSA_87_TAU,
+      ML_DSA_87_LAMBDA,
+      ML_DSA_GAMMA1_TWO_POWER_19,
+      ML_DSA_GAMMA2_Q_MINUS1_DIV32,
+      ML_DSA_87_K,
+      ML_DSA_87_L,
+      ML_DSA_87_ETA,
+      ML_DSA_87_BETA,
+      ML_DSA_87_OMEGA,
+      ML_DSA_87_SECURITY_CATEGORY,
+      ML_DSA_87_PRIV_LEN,
+      ML_DSA_87_PUB_LEN,
+      ML_DSA_87_SIG_LEN
     },
     {NULL},
 };
