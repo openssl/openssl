@@ -107,7 +107,7 @@ err:
 static int ml_dsa_siggen_test(int tst_id)
 {
     int ret = 0;
-    ML_DSA_SIG_TEST_DATA *td = &ml_dsa_siggen_testdata[tst_id];
+    const ML_DSA_SIG_TEST_DATA *td = &ml_dsa_siggen_testdata[tst_id];
     EVP_PKEY_CTX *sctx = NULL;
     EVP_PKEY *pkey = NULL;
     EVP_SIGNATURE *sig_alg = NULL;

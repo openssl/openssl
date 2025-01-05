@@ -59,16 +59,12 @@ static int ml_dsa_sign_internal(ML_DSA_CTX *ctx, const ML_DSA_KEY *priv,
     uint32_t k = params->k, l = params->l;
     uint32_t gamma1 = params->gamma1, gamma2 = params->gamma2;
     uint8_t *alloc = NULL, *w1_encoded;
-    size_t w1_encoded_len = 128 * k;
+    size_t alloc_len, w1_encoded_len;
     size_t num_polys_sig_k = 2 * k;
     size_t num_polys_k = 5 * k;
     size_t num_polys_l = 3 * l;
     size_t num_polys_k_by_l = k * l;
     POLY *polys = NULL, *p, *c_ntt;
-    size_t alloc_len = w1_encoded_len
-                       + sizeof(*polys)
-                       * (1 + num_polys_k + num_polys_l
-                          + num_polys_k_by_l + num_polys_sig_k);
     VECTOR s1_ntt, s2_ntt, t0_ntt, w, w1, cs1, cs2, y;
     MATRIX a_ntt;
     ML_DSA_SIG sig;
@@ -82,6 +78,10 @@ static int ml_dsa_sign_internal(ML_DSA_CTX *ctx, const ML_DSA_KEY *priv,
      * Allocate a single blob for most of the variable size temporary variables.
      * Mostly used for VECTOR POLYNOMIALS (every POLY is 1K).
      */
+    w1_encoded_len = k * (gamma2 == ML_DSA_GAMMA2_Q_MINUS1_DIV88 ? 192 : 128);
+    alloc_len = w1_encoded_len
+        + sizeof(*polys) * (1 + num_polys_k + num_polys_l
+                            + num_polys_k_by_l + num_polys_sig_k);
     alloc = OPENSSL_malloc(alloc_len);
     if (alloc == NULL)
         return 0;
@@ -139,7 +139,7 @@ static int ml_dsa_sign_internal(ML_DSA_CTX *ctx, const ML_DSA_KEY *priv,
         vector_high_bits(&w, gamma2, &w1);
         ossl_ml_dsa_w1_encode(&w1, gamma2, w1_encoded, w1_encoded_len);
 
-        if (!shake_xof_2(h_ctx, mu, sizeof(mu), w1_encoded, 128 * k,
+        if (!shake_xof_2(h_ctx, mu, sizeof(mu), w1_encoded, w1_encoded_len,
                          c_tilde, c_tilde_len))
             break;
 
@@ -203,7 +203,8 @@ static int ml_dsa_verify_internal(ML_DSA_CTX *ctx, const ML_DSA_KEY *pub,
     const ML_DSA_PARAMS *params = ctx->params;
     uint32_t k = pub->params->k;
     uint32_t l = pub->params->l;
-    size_t w1_encoded_len = 128 * k;
+    uint32_t gamma2 = params->gamma2;
+    size_t w1_encoded_len;
     size_t num_polys_sig = k + l;
     size_t num_polys_k = 2 * k;
     size_t num_polys_l = 1 * l;
@@ -216,6 +217,7 @@ static int ml_dsa_verify_internal(ML_DSA_CTX *ctx, const ML_DSA_KEY *pub,
     uint32_t z_max;
 
     /* Allocate space for all the POLYNOMIALS used by temporary VECTORS */
+    w1_encoded_len = k * (gamma2 == ML_DSA_GAMMA2_Q_MINUS1_DIV88 ? 192 : 128);
     alloc = OPENSSL_malloc(w1_encoded_len
                            + sizeof(*polys) * (1 + num_polys_k
                                                + num_polys_l
@@ -261,8 +263,8 @@ static int ml_dsa_verify_internal(ML_DSA_CTX *ctx, const ML_DSA_KEY *pub,
 
     /* compute w1_encoded */
     w1 = w_approx;
-    vector_use_hint(&sig.hint, w_approx, params->gamma2, w1);
-    ossl_ml_dsa_w1_encode(w1, params->gamma2, w1_encoded, w1_encoded_len);
+    vector_use_hint(&sig.hint, w_approx, gamma2, w1);
+    ossl_ml_dsa_w1_encode(w1, gamma2, w1_encoded, w1_encoded_len);
 
     if (!shake_xof_3(h_ctx, mu, sizeof(mu), w1_encoded, w1_encoded_len, NULL, 0,
                      c_tilde, c_tilde_len))
