@@ -61,7 +61,7 @@ void ossl_ml_dsa_key_compress_power2_round(uint32_t r, uint32_t *r1, uint32_t *r
  */
 uint32_t ossl_ml_dsa_key_compress_high_bits(uint32_t r, uint32_t gamma2)
 {
-    uint32_t r1 = (r + 127) >> 7;
+    int32_t r1 = (r + 127) >> 7;
 
     /* TODO - figure out what this is doing */
     if (gamma2 == ML_DSA_GAMMA2_Q_MINUS1_DIV32) {
@@ -141,7 +141,7 @@ uint32_t ossl_ml_dsa_key_compress_use_hint(uint32_t hint, uint32_t r,
         return r0 > 0 ? (r1 + 1) & 15 : (r1 - 1) & 15;
     } else {
         /* m = 44 if gamma2 = ((q - 1) / 88) */
-        if (r1 > 0)
+        if (r0 > 0)
             return (r1 == 43) ? 0 : r1 + 1;
         else
             return (r1 == 0) ? 43 : r1 - 1;
