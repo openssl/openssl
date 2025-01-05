@@ -24,11 +24,13 @@
  */
 #define NAME_SEPARATOR ':'
 
-static void ossl_encoder_free(void *data) {
+static void ossl_encoder_free(void *data)
+{
     OSSL_ENCODER_free((OSSL_ENCODER *)data);
 }
 
-static int ossl_encoder_up_ref(void *data) {
+static int ossl_encoder_up_ref(void *data)
+{
     return OSSL_ENCODER_up_ref((OSSL_ENCODER *)data);
 }
 
