@@ -37,10 +37,6 @@ ML_DSA_KEY *ossl_ml_dsa_key_new(OSSL_LIB_CTX *libctx, const char *alg)
     poly_sz = sizeof(POLY) * (params->k * 3 + params->l);
     ret = OPENSSL_zalloc(sizeof(*ret) + poly_sz);
     if (ret != NULL) {
-        if (!CRYPTO_NEW_REF(&ret->references, 1)) {
-            OPENSSL_free(ret);
-            return NULL;
-        }
         ret->libctx = libctx;
         ret->params = params;
         poly = (POLY *)((uint8_t *)ret + sizeof(*ret));
@@ -57,38 +53,13 @@ ML_DSA_KEY *ossl_ml_dsa_key_new(OSSL_LIB_CTX *libctx, const char *alg)
  */
 void ossl_ml_dsa_key_free(ML_DSA_KEY *key)
 {
-    int i;
-
     if (key == NULL)
         return;
-
-    CRYPTO_DOWN_REF(&key->references, &i);
-    REF_PRINT_COUNT("ML_DSA_KEY", key);
-    if (i > 0)
-        return;
-    REF_ASSERT_ISNT(i < 0);
 
     OPENSSL_free(key->pub_encoding);
     OPENSSL_free(key->priv_encoding);
     OPENSSL_free(key->propq);
-    CRYPTO_FREE_REF(&key->references);
     OPENSSL_free(key);
-}
-
-/*
- * @brief Increase the reference count for a ML_DSA_KEY object.
- * @returns 1 on success or 0 otherwise.
- */
-int ossl_ml_dsa_key_up_ref(ML_DSA_KEY *key)
-{
-    int i;
-
-    if (CRYPTO_UP_REF(&key->references, &i) <= 0)
-        return 0;
-
-    REF_PRINT_COUNT("ML_DSA_KEY", key);
-    REF_ASSERT_ISNT(i < 2);
-    return ((i > 1) ? 1 : 0);
 }
 
 /**

@@ -52,7 +52,6 @@ static void ml_dsa_freectx(void *vctx)
 
     OPENSSL_free(ctx->propq);
     ossl_ml_dsa_ctx_free(ctx->ctx);
-    ossl_ml_dsa_key_free(ctx->key);
     OPENSSL_cleanse(ctx->test_entropy, ctx->test_entropy_len);
     OPENSSL_free(ctx);
 }
@@ -101,9 +100,6 @@ static int ml_dsa_signverify_msg_init(void *vctx, void *vkey,
     if (key != NULL) {
         if (!ossl_ml_dsa_key_type_matches(ctx->ctx, key))
             return 0;
-        if (!ossl_ml_dsa_key_up_ref(vkey))
-            return 0;
-        ossl_ml_dsa_key_free(ctx->key);
         ctx->key = vkey;
     }
 
@@ -244,4 +240,6 @@ static const OSSL_PARAM *ml_dsa_settable_ctx_params(void *vctx,
         OSSL_DISPATCH_END                                                      \
     }
 
+MAKE_SIGNATURE_FUNCTIONS("ML-DSA-44", 44);
 MAKE_SIGNATURE_FUNCTIONS("ML-DSA-65", 65);
+MAKE_SIGNATURE_FUNCTIONS("ML-DSA-87", 87);
