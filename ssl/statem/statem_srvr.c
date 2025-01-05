@@ -2285,6 +2285,7 @@ WORK_STATE tls_post_process_client_hello(SSL_CONNECTION *s, WORK_STATE wst)
 
     if (wst == WORK_MORE_A) {
         int rv = tls_early_post_process_client_hello(s);
+
         if (rv == 0) {
             /* SSLfatal() was already called */
             goto err;
