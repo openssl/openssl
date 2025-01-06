@@ -10,6 +10,7 @@
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/param_build.h>
+#include <openssl/proverr.h>
 #include <openssl/self_test.h>
 #include "crypto/ml_dsa.h"
 #include "internal/param_build_set.h"
@@ -33,10 +34,7 @@ static OSSL_FUNC_keymgmt_gen_cleanup_fn ml_dsa_gen_cleanup;
 static OSSL_FUNC_keymgmt_gen_set_params_fn ml_dsa_gen_set_params;
 static OSSL_FUNC_keymgmt_gen_settable_params_fn ml_dsa_gen_settable_params;
 
-#define ML_DSA_POSSIBLE_SELECTIONS (OSSL_KEYMGMT_SELECT_KEYPAIR)
-
 struct ml_dsa_gen_ctx {
-    ML_DSA_CTX *ctx;
     OSSL_LIB_CTX *libctx;
     char *propq;
     uint8_t entropy[32];
@@ -48,7 +46,7 @@ static void *ml_dsa_new_key(void *provctx, const char *alg)
     if (!ossl_prov_is_running())
         return 0;
 
-    return ossl_ml_dsa_key_new(PROV_LIBCTX_OF(provctx), alg);
+    return ossl_ml_dsa_key_new(PROV_LIBCTX_OF(provctx), NULL, alg);
 }
 
 static void ml_dsa_free_key(void *keydata)
@@ -62,7 +60,7 @@ static int ml_dsa_has(const void *keydata, int selection)
 
     if (!ossl_prov_is_running() || key == NULL)
         return 0;
-    if ((selection & ML_DSA_POSSIBLE_SELECTIONS) == 0)
+    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0)
         return 1; /* the selection is not missing */
 
     return ossl_ml_dsa_key_has(key, selection);
@@ -100,7 +98,7 @@ static int ml_dsa_import(void *keydata, int selection, const OSSL_PARAM params[]
     if (!ossl_prov_is_running() || key == NULL)
         return 0;
 
-    if ((selection & ML_DSA_POSSIBLE_SELECTIONS) == 0)
+    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0)
         return 0;
 
     include_priv = ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0);
@@ -117,7 +115,7 @@ static const OSSL_PARAM ml_dsa_key_types[] = {
 };
 static const OSSL_PARAM *ml_dsa_imexport_types(int selection)
 {
-    if ((selection & ML_DSA_POSSIBLE_SELECTIONS) == 0)
+    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0)
         return NULL;
     return ml_dsa_key_types;
 }
@@ -266,23 +264,19 @@ static void *ml_dsa_gen(void *genctx, const char *alg)
 {
     struct ml_dsa_gen_ctx *gctx = genctx;
     ML_DSA_KEY *key = NULL;
-    ML_DSA_CTX *ctx = NULL;
 
     if (!ossl_prov_is_running())
         return NULL;
-    ctx = ossl_ml_dsa_ctx_new(alg, gctx->libctx, gctx->propq);
-    if (ctx == NULL)
-        return NULL;
-    key = ossl_ml_dsa_key_new(gctx->libctx, alg);
+    key = ossl_ml_dsa_key_new(gctx->libctx, gctx->propq, alg);
     if (key == NULL)
         return NULL;
-    if (!ossl_ml_dsa_generate_key(ctx, gctx->libctx,
-                                  gctx->entropy, gctx->entropy_len, key))
+    if (!ossl_ml_dsa_generate_key(gctx->libctx, gctx->entropy, gctx->entropy_len,
+                                  key)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GENERATE_KEY);
         goto err;
-    ossl_ml_dsa_ctx_free(ctx);
+    }
     return key;
  err:
-    ossl_ml_dsa_ctx_free(ctx);
     ossl_ml_dsa_key_free(key);
     return NULL;
 }
@@ -308,11 +302,9 @@ static int ml_dsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
 
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PROPERTIES);
     if (p != NULL) {
-        if (p->data_type != OSSL_PARAM_UTF8_STRING)
-            return 0;
         OPENSSL_free(gctx->propq);
-        gctx->propq = OPENSSL_strdup(p->data);
-        if (gctx->propq == NULL)
+        gctx->propq = NULL;
+        if (!OSSL_PARAM_get_utf8_string(p, &gctx->propq, 0))
             return 0;
     }
     return 1;

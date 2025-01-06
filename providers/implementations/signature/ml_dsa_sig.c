@@ -35,23 +35,20 @@ static OSSL_FUNC_signature_settable_ctx_params_fn ml_dsa_settable_ctx_params;
 
 typedef struct {
     ML_DSA_KEY *key;
-    ML_DSA_CTX *ctx;
+    OSSL_LIB_CTX *libctx;
     uint8_t context_string[ML_DSA_MAX_CONTEXT_STRING_LEN];
     size_t context_string_len;
     uint8_t test_entropy[ML_DSA_ENTROPY_LEN];
     size_t test_entropy_len;
     int msg_encode;
     int deterministic;
-    OSSL_LIB_CTX *libctx;
-    char *propq;
+    const char *alg;
 } PROV_ML_DSA_CTX;
 
 static void ml_dsa_freectx(void *vctx)
 {
     PROV_ML_DSA_CTX *ctx = (PROV_ML_DSA_CTX *)vctx;
 
-    OPENSSL_free(ctx->propq);
-    ossl_ml_dsa_ctx_free(ctx->ctx);
     OPENSSL_cleanse(ctx->test_entropy, ctx->test_entropy_len);
     OPENSSL_free(ctx);
 }
@@ -68,17 +65,10 @@ static void *ml_dsa_newctx(void *provctx, const char *alg, const char *propq)
         return NULL;
 
     ctx->libctx = PROV_LIBCTX_OF(provctx);
-    if (propq != NULL && (ctx->propq = OPENSSL_strdup(propq)) == NULL)
-        goto err;
-    ctx->ctx = ossl_ml_dsa_ctx_new(alg, ctx->libctx, ctx->propq);
-    if (ctx->ctx == NULL)
-        goto err;
     ctx->msg_encode = ML_DSA_MESSAGE_ENCODE_PURE;
+    ctx->alg = alg;
 
     return ctx;
- err:
-    ml_dsa_freectx(ctx);
-    return NULL;
 }
 
 static int ml_dsa_signverify_msg_init(void *vctx, void *vkey,
@@ -97,15 +87,12 @@ static int ml_dsa_signverify_msg_init(void *vctx, void *vkey,
         return 0;
     }
 
-    if (key != NULL) {
-        if (!ossl_ml_dsa_key_type_matches(ctx->ctx, key))
-            return 0;
+    if (key != NULL)
         ctx->key = vkey;
-    }
-
-    if (!ml_dsa_set_ctx_params(ctx, params))
+    if (!ossl_ml_dsa_key_matches(ctx->key, ctx->alg))
         return 0;
-    return 1;
+
+    return ml_dsa_set_ctx_params(ctx, params);
 }
 
 static int ml_dsa_sign_msg_init(void *vctx, void *vkey, const OSSL_PARAM params[])
@@ -136,7 +123,7 @@ static int ml_dsa_sign(void *vctx, unsigned char *sig, size_t *siglen,
                 return 0;
         }
     }
-    ret = ossl_ml_dsa_sign(ctx->ctx, ctx->key, msg, msg_len,
+    ret = ossl_ml_dsa_sign(ctx->key, msg, msg_len,
                            ctx->context_string, ctx->context_string_len,
                            rnd, sizeof(rand_tmp), ctx->msg_encode,
                            sig, siglen, sigsize);
@@ -148,7 +135,7 @@ static int ml_dsa_sign(void *vctx, unsigned char *sig, size_t *siglen,
 static int ml_dsa_verify_msg_init(void *vctx, void *vkey, const OSSL_PARAM params[])
 {
     return ml_dsa_signverify_msg_init(vctx, vkey, params, EVP_PKEY_OP_VERIFY,
-                                   "ML_DSA Verify Init");
+                                      "ML_DSA Verify Init");
 }
 
 static int ml_dsa_verify(void *vctx, const unsigned char *sig, size_t siglen,
@@ -158,7 +145,7 @@ static int ml_dsa_verify(void *vctx, const unsigned char *sig, size_t siglen,
 
     if (!ossl_prov_is_running())
         return 0;
-    return ossl_ml_dsa_verify(ctx->ctx, ctx->key, msg, msg_len,
+    return ossl_ml_dsa_verify(ctx->key, msg, msg_len,
                               ctx->context_string, ctx->context_string_len,
                               ctx->msg_encode, sig, siglen);
 }
@@ -187,10 +174,13 @@ static int ml_dsa_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (p != NULL) {
         void *vp = pctx->test_entropy;
 
+        pctx->test_entropy_len = 0;
         if (!OSSL_PARAM_get_octet_string(p, &vp, sizeof(pctx->test_entropy),
-                                         &(pctx->test_entropy_len))
-                || pctx->test_entropy_len != sizeof(pctx->test_entropy)) {
+                                         &(pctx->test_entropy_len)))
+                return 0;
+        if (pctx->test_entropy_len != sizeof(pctx->test_entropy)) {
             pctx->test_entropy_len = 0;
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_SEED_LENGTH);
             return 0;
         }
     }
