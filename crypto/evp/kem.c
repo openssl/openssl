@@ -24,7 +24,7 @@ static void evp_kem_free(void *data)
 
 static int evp_kem_up_ref(void *data)
 {
-    return EVP_KEM_up_ref( data);
+    return EVP_KEM_up_ref(data);
 }
 
 static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation,
