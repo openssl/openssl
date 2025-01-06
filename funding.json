@@ -42,7 +42,7 @@
         "plans": [
             {
                 "guid": "premiersponsorship",
-                "status": "Active",
+                "status": "active",
                 "name": "Premier Sponsorship",
                 "description": "Organizations that contribute $100,000 USD or more are recognized as Premier Sponsors for one year.",
                 "amount": 100000,
@@ -52,7 +52,7 @@
             },
             {
                 "guid": "platinumsponsorship",
-                "status": "Active",
+                "status": "active",
                 "name": "Platinum Sponsorship",
                 "description": "Organizations that contribute $50,000 USD are recognized as Platinum Sponsors for one year.",
                 "amount": 50000,
@@ -62,7 +62,7 @@
             },
             {
                 "guid": "goldsponsorship",
-                "status": "Active",
+                "status": "active",
                 "name": "Gold Sponsorship",
                 "description": "Organizations that contribute $25,000 USD or more are recognized as Gold Sponsors for one year.",
                 "amount": 25000,
@@ -72,7 +72,7 @@
             },
             {
                 "guid": "silversponsorship",
-                "status": "Active",
+                "status": "active",
                 "name": "Silver Sponsorship",
                 "description": "Organizations that contribute $10,000 USD or more are recognized as Silver Sponsors for one year.",
                 "amount": 10000,
@@ -82,7 +82,7 @@
             },
             {
                 "guid": "bronzesponsorship",
-                "status": "Active",
+                "status": "active",
                 "name": "Bronze Sponsorship",
                 "description": "Organizations that contribute $5,000 USD or more are recognized as Bronze Sponsors for one year.",
                 "amount": 5000,
@@ -92,7 +92,7 @@
             },
             {
                 "guid": "coppersponsorship",
-                "status": "Active",
+                "status": "active",
                 "name": "Copper Sponsorship",
                 "description": "Organizations that contribute a gift of any amount under $5,000 USD are recognized as Copper Sponsors for one year.",
                 "amount": 0,
