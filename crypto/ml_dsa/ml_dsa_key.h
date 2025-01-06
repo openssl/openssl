@@ -13,11 +13,12 @@
 #include "ml_dsa_vector.h"
 
 struct ml_dsa_key_st {
-
-    CRYPTO_REF_COUNT references;
     OSSL_LIB_CTX *libctx;
     const ML_DSA_PARAMS *params;
     char *propq;
+
+    EVP_MD *shake128_md;
+    EVP_MD *shake256_md;
 
     uint8_t rho[ML_DSA_RHO_BYTES]; /* public random seed */
     uint8_t tr[ML_DSA_TR_BYTES];   /* Pre-cached public key Hash */
@@ -31,18 +32,20 @@ struct ml_dsa_key_st {
     uint8_t *priv_encoding;
 
     /*
+     * t1 is the Polynomial encoding of the 10 MSB of each coefficient of the
+     * uncompressed public key polynomial t. This is saved as part of the
+     * public key. It is column vector of K polynomials.
+     * (There are 23 bits in q-modulus.. i.e 10 bits = 23 - 13)
+     * t1->poly is allocated.
+     */
+    VECTOR t1;
+    /*
      * t0 is the Polynomial encoding of the 13 LSB of each coefficient of the
      * uncompressed public key polynomial t. This is saved as part of the
      * private key. It is column vector of K polynomials.
      */
     VECTOR t0;
-    /*
-     * t1 is the Polynomial encoding of the 10 MSB of each coefficient of the
-     * uncompressed public key polynomial t. This is saved as part of the
-     * public key. It is column vector of K polynomials.
-     * (There are 23 bits in q-modulus.. i.e 10 bits = 23 - 13)
-     */
-    VECTOR t1;
     VECTOR s2; /* private secret of size K with short coefficients (-4..4) or (-2..2) */
     VECTOR s1; /* private secret of size L with short coefficients (-4..4) or (-2..2) */
+               /* The s1->poly block is allocated and has space for s2 and t0 also */
 };
