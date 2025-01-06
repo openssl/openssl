@@ -191,14 +191,14 @@ jobs:
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
-  BSD-x86_64:
+  freebsd-x86_64:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     - uses: cross-platform-actions/action@v0.26.0
       with:
         operating_system: freebsd
-        image_url: https://github.com/quarckster/freebsd-builder/releases/download/25-01-02-2/freebsd-13.4-x86-64.qcow2
+        image_url: https://github.com/openssl/freebsd-builder/releases/download/25-01-02-2/freebsd-13.4-x86-64.qcow2
         version: "13.4"
         run: |
           ./config enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
