@@ -61,34 +61,20 @@ typedef struct poly_st POLY;
 typedef struct vector_st VECTOR;
 typedef struct matrix_st MATRIX;
 
-/*
- * FIPS 204 ML-DSA algorithms have different parameters which includes:
- *   - A set of constants (Section 4. contains 3 parameter sets)
- *
- *   - OpenSSL also uses pre-fetched EVP_MD_CTX objects for Hashing purposes.
- *
- * ML_DSA_CTX is a container to hold all these objects. This object is
- * resolved early and can then be used to pass these values to
- * most ML-DSA related functions.
- */
-struct ml_dsa_ctx_st {
-    const ML_DSA_PARAMS *params;
-    EVP_MD_CTX *h_ctx; /* SHAKE-256 */
-    EVP_MD_CTX *g_ctx; /* SHAKE-128 */
-};
-
 typedef struct ml_dsa_sig_st ML_DSA_SIG;
 
-int ossl_ml_dsa_matrix_expand_A(EVP_MD_CTX *g_ctx, const uint8_t *rho, MATRIX *out);
-int ossl_ml_dsa_vector_expand_S(EVP_MD_CTX *h_ctx, int eta, const uint8_t *seed,
-                                VECTOR *s1, VECTOR *s2);
+int ossl_ml_dsa_matrix_expand_A(EVP_MD_CTX *g_ctx, const EVP_MD *md,
+                                const uint8_t *rho, MATRIX *out);
+int ossl_ml_dsa_vector_expand_S(EVP_MD_CTX *h_ctx, const EVP_MD *md, int eta,
+                                const uint8_t *seed, VECTOR *s1, VECTOR *s2);
 void ossl_ml_dsa_matrix_mult_vector(const MATRIX *matrix_kl, const VECTOR *vl,
                                     VECTOR *vk);
-int ossl_ml_dsa_poly_expand_mask(POLY *out,
-                                 const uint8_t *seed, size_t seed_len,
-                                 uint32_t gamma1, EVP_MD_CTX *h_ctx);
+int ossl_ml_dsa_poly_expand_mask(POLY *out, const uint8_t *seed, size_t seed_len,
+                                 uint32_t gamma1,
+                                 EVP_MD_CTX *h_ctx, const EVP_MD *md);
 int ossl_ml_dsa_poly_sample_in_ball(POLY *out_c, const uint8_t *seed, int seed_len,
-                                    EVP_MD_CTX *h_ctx, uint32_t tau);
+                                    EVP_MD_CTX *h_ctx, const EVP_MD *md,
+                                    uint32_t tau);
 
 void ossl_ml_dsa_poly_ntt(POLY *s);
 void ossl_ml_dsa_poly_ntt_inverse(POLY *s);
@@ -130,7 +116,7 @@ int ossl_ml_dsa_poly_decode_expand_mask(POLY *out,
  */
 static ossl_inline ossl_unused uint32_t reduce_once(uint32_t x)
 {
-    return constant_time_select_32(constant_time_lt(x, ML_DSA_Q), x, x - ML_DSA_Q);
+    return constant_time_select_32(constant_time_lt_32(x, ML_DSA_Q), x, x - ML_DSA_Q);
 }
 
 /*
@@ -152,23 +138,20 @@ static ossl_inline ossl_unused uint32_t mod_sub(uint32_t a, uint32_t b)
 /*
  * @brief Returns the absolute value in constant time.
  * i.e. return is_positive(x) ? x : -x;
- * Note: MSVC doesn't like applying the unary minus operator to unsigned types
- * (warning C4146), so we write the negation as a bitwise not plus one
- * (assuming two's complement representation).
  */
 static ossl_inline ossl_unused uint32_t abs_signed(uint32_t x)
 {
-    return constant_time_select_int(constant_time_lt(x, 0x80000000), x, 0u - x);
+    return constant_time_select_32(constant_time_lt_32(x, 0x80000000), x, 0u - x);
 }
 
 /*
  * @brief Returns the absolute value modulo q in constant time
- * i.e return x > (q-1)/2 ? q - x : x;
+ * i.e return x > (q - 1) / 2 ? q - x : x;
  */
 static ossl_inline ossl_unused uint32_t abs_mod_prime(uint32_t x)
 {
-    return constant_time_select_int(constant_time_lt(ML_DSA_Q_MINUS1_DIV2, x),
-                                                     ML_DSA_Q - x, x);
+    return constant_time_select_32(constant_time_lt_32(ML_DSA_Q_MINUS1_DIV2, x),
+                                                       ML_DSA_Q - x, x);
 }
 
 /*

@@ -72,9 +72,9 @@ poly_ntt(POLY *p)
 
 static ossl_inline ossl_unused int
 poly_sample_in_ball_ntt(POLY *out, const uint8_t *seed, int seed_len,
-                        EVP_MD_CTX *h_ctx, uint32_t tau)
+                        EVP_MD_CTX *h_ctx, const EVP_MD *md, uint32_t tau)
 {
-    if (!ossl_ml_dsa_poly_sample_in_ball(out, seed, seed_len, h_ctx, tau))
+    if (!ossl_ml_dsa_poly_sample_in_ball(out, seed, seed_len, h_ctx, md, tau))
         return 0;
     poly_ntt(out);
     return 1;
@@ -82,9 +82,9 @@ poly_sample_in_ball_ntt(POLY *out, const uint8_t *seed, int seed_len,
 
 static ossl_inline ossl_unused int
 poly_expand_mask(POLY *out, const uint8_t *seed, size_t seed_len,
-                 uint32_t gamma1, EVP_MD_CTX *h_ctx)
+                 uint32_t gamma1, EVP_MD_CTX *h_ctx, const EVP_MD *md)
 {
-    return ossl_ml_dsa_poly_expand_mask(out, seed, seed_len, gamma1, h_ctx);
+    return ossl_ml_dsa_poly_expand_mask(out, seed, seed_len, gamma1, h_ctx, md);
 }
 
 /**
@@ -182,30 +182,3 @@ poly_max_signed(const POLY *p, uint32_t *mx)
         *mx = maximum(*mx, abs);
     }
 }
-
-#if defined(ML_DSA_DEBUG)
-static ossl_inline ossl_unused void poly_print(const POLY *p)
-{
-    size_t i;
-
-    for (i = 0; i < ML_DSA_NUM_POLY_COEFFICIENTS; ++i) {
-        if (i > 0 && ((i & 31) == 0))
-            printf("\n");
-        printf("%3x,", p->coeff[i]);
-    }
-    printf("\n");
-}
-
-static ossl_inline ossl_unused void poly_print_signed(const POLY *p)
-{
-    size_t i;
-
-    for (i = 0; i < ML_DSA_NUM_POLY_COEFFICIENTS; ++i) {
-        if (i > 0 && ((i & 31) == 0))
-            printf("\n");
-        printf("%3d,", p->coeff[i] > ML_DSA_Q_MINUS1_DIV2
-                       ? (int)p->coeff[i] - (int)ML_DSA_Q : (int)p->coeff[i]);
-    }
-    printf("\n");
-}
-#endif

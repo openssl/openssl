@@ -8,13 +8,15 @@
  */
 
 #include <openssl/byteorder.h>
-#include <assert.h>
+#include <openssl/evp.h>
 #include "ml_dsa_local.h"
+#include "ml_dsa_hash.h"
 #include "ml_dsa_key.h"
 #include "ml_dsa_params.h"
 #include "ml_dsa_sign.h"
 #include "internal/packet.h"
 
+#define POLY_COEFF_NUM_BYTES(bits)  ((bits) * (ML_DSA_NUM_POLY_COEFFICIENTS / 8))
 /* Cast mod_sub result in support of left-shifts that create 64-bit values. */
 #define mod_sub_64(a, b) ((uint64_t) mod_sub(a, b))
 
@@ -53,7 +55,7 @@ static int poly_encode_4_bits(const POLY *p, WPACKET *pkt)
     uint8_t *out;
     const uint32_t *in = p->coeff, *end = in + ML_DSA_NUM_POLY_COEFFICIENTS;
 
-    if (!WPACKET_allocate_bytes(pkt, 32 * 4, &out))
+    if (!WPACKET_allocate_bytes(pkt, POLY_COEFF_NUM_BYTES(4), &out))
         return 0;
 
     do {
@@ -90,7 +92,7 @@ static int poly_encode_6_bits(const POLY *p, WPACKET *pkt)
     uint8_t *out;
     const uint32_t *in = p->coeff, *end = in + ML_DSA_NUM_POLY_COEFFICIENTS;
 
-    if (!WPACKET_allocate_bytes(pkt, 32 * 6, &out))
+    if (!WPACKET_allocate_bytes(pkt, POLY_COEFF_NUM_BYTES(6), &out))
         return 0;
 
     do {
@@ -130,7 +132,7 @@ static int poly_encode_10_bits(const POLY *p, WPACKET *pkt)
     uint8_t *out;
     const uint32_t *in = p->coeff, *end = in + ML_DSA_NUM_POLY_COEFFICIENTS;
 
-    if (!WPACKET_allocate_bytes(pkt, 32 * 10, &out))
+    if (!WPACKET_allocate_bytes(pkt, POLY_COEFF_NUM_BYTES(10), &out))
         return 0;
 
     do {
@@ -287,7 +289,7 @@ static int poly_encode_signed_2(const POLY *p, WPACKET *pkt)
     uint8_t *out;
     const uint32_t *in = p->coeff, *end = in + ML_DSA_NUM_POLY_COEFFICIENTS;
 
-    if (!WPACKET_allocate_bytes(pkt, 32 * 3, &out))
+    if (!WPACKET_allocate_bytes(pkt, POLY_COEFF_NUM_BYTES(3), &out))
         return 0;
 
     do {
@@ -620,11 +622,11 @@ static int poly_decode_signed_two_to_power_17(POLY *p, PACKET *pkt)
 int ossl_ml_dsa_pk_encode(ML_DSA_KEY *key)
 {
     int ret = 0;
-    size_t i;
+    size_t i, written = 0;
     const POLY *t1 = key->t1.poly;
     size_t t1_len = key->t1.num_poly;
     size_t enc_len = key->params->pk_len;
-    uint8_t *enc = OPENSSL_zalloc(enc_len);
+    uint8_t *enc = OPENSSL_malloc(enc_len);
     WPACKET pkt;
 
     if (enc == NULL)
@@ -636,6 +638,9 @@ int ossl_ml_dsa_pk_encode(ML_DSA_KEY *key)
     for (i = 0; i < t1_len; i++)
         if (!poly_encode_10_bits(t1 + i, &pkt))
             goto err;
+    if (!WPACKET_get_total_written(&pkt, &written)
+            || written != enc_len)
+        goto err;
     OPENSSL_free(key->pub_encoding);
     key->pub_encoding = enc;
     ret = 1;
@@ -661,19 +666,33 @@ int ossl_ml_dsa_pk_decode(ML_DSA_KEY *key, const uint8_t *in, size_t in_len)
     int ret = 0;
     size_t i;
     PACKET pkt;
+    EVP_MD_CTX *ctx;
 
+    if (key->priv_encoding != NULL || key->pub_encoding != NULL)
+        return 0; /* Do not allow key mutation */
     if (in_len != key->params->pk_len)
         return 0;
 
+    if (!ossl_ml_dsa_key_pub_alloc(key))
+        return 0;
+    ctx = EVP_MD_CTX_new();
+    if (ctx == NULL)
+        goto err;
     if (!PACKET_buf_init(&pkt, in, in_len)
-            || PACKET_copy_bytes(&pkt, key->rho, sizeof(key->rho)))
+            || !PACKET_copy_bytes(&pkt, key->rho, sizeof(key->rho)))
         goto err;
     for (i = 0; i < key->t1.num_poly; i++)
         if (!poly_decode_10_bits(key->t1.poly + i, &pkt))
             goto err;
-    memcpy(key->pub_encoding, in, in_len);
-    ret = 1;
+
+    /* cache the hash of the encoded public key */
+    if (!shake_xof(ctx, key->shake256_md, in, in_len, key->tr, sizeof(key->tr)))
+        goto err;
+
+    key->pub_encoding = OPENSSL_memdup(in, in_len);
+    ret = (key->pub_encoding != NULL);
 err:
+    EVP_MD_CTX_free(ctx);
     return ret;
 }
 
@@ -689,12 +708,12 @@ int ossl_ml_dsa_sk_encode(ML_DSA_KEY *key)
 {
     int ret = 0;
     const ML_DSA_PARAMS *params = key->params;
-    size_t i, k = params->k, l = params->l;
+    size_t i, written = 0, k = params->k, l = params->l;
     ENCODE_FN *encode_fn;
     size_t enc_len = params->sk_len;
     const POLY *t0 = key->t0.poly;
     WPACKET pkt;
-    uint8_t *enc = OPENSSL_zalloc(enc_len);
+    uint8_t *enc = OPENSSL_malloc(enc_len);
 
     if (enc == NULL)
         return 0;
@@ -719,6 +738,9 @@ int ossl_ml_dsa_sk_encode(ML_DSA_KEY *key)
     for (i = 0; i < k; ++i)
         if (!poly_encode_signed_two_to_power_12(t0++, &pkt))
             goto err;
+    if (!WPACKET_get_total_written(&pkt, &written)
+            || written != enc_len)
+        goto err;
     OPENSSL_clear_free(key->priv_encoding, enc_len);
     key->priv_encoding = enc;
     ret = 1;
@@ -741,17 +763,16 @@ err:
  */
 int ossl_ml_dsa_sk_decode(ML_DSA_KEY *key, const uint8_t *in, size_t in_len)
 {
-    int ret = 0;
-    uint8_t *enc = NULL;
     DECODE_FN *decode_fn;
     const ML_DSA_PARAMS *params = key->params;
     size_t i, k = params->k, l = params->l;
     PACKET pkt;
 
+    if (key->priv_encoding != NULL || key->pub_encoding != NULL)
+        return 0; /* Do not allow key mutation */
     if (in_len != key->params->sk_len)
         return 0;
-    enc = OPENSSL_memdup(in, in_len);
-    if (enc == NULL)
+    if (!ossl_ml_dsa_key_priv_alloc(key))
         return 0;
 
     /* eta is the range of private key coefficients (-eta...eta) */
@@ -777,11 +798,10 @@ int ossl_ml_dsa_sk_decode(ML_DSA_KEY *key, const uint8_t *in, size_t in_len)
             goto err;
     if (PACKET_remaining(&pkt) != 0)
         goto err;
-    OPENSSL_clear_free(key->priv_encoding, in_len);
-    key->priv_encoding = enc;
-    ret = 1;
+    key->priv_encoding = OPENSSL_memdup(in, in_len);
+    return key->priv_encoding != NULL;
 err:
-    return ret;
+    return 0;
 }
 
 /*
@@ -804,10 +824,8 @@ static int hint_bits_encode(const VECTOR *hint, WPACKET *pkt, uint32_t omega)
 
     for (i = 0; i < k; i++, p++) {
         for (j = 0; j < ML_DSA_NUM_POLY_COEFFICIENTS; j++)
-            if (p->coeff[j] != 0) {
-                assert(coeff_index < omega);
+            if (p->coeff[j] != 0)
                 data[coeff_index++] = j;
-            }
         data[omega + i] = (uint8_t)coeff_index;
     }
     return 1;
