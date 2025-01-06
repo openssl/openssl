@@ -19,12 +19,12 @@
 
 static void evp_kem_free(void *data)
 {
-    EVP_KEM_free((EVP_KEM *)data);
+    EVP_KEM_free(data);
 }
 
 static int evp_kem_up_ref(void *data)
 {
-    return EVP_KEM_up_ref((EVP_KEM *)data);
+    return EVP_KEM_up_ref( data);
 }
 
 static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation,

@@ -17,6 +17,16 @@
 #include "crypto/evp.h"
 #include "evp_local.h"
 
+static void evp_keymgmt_free(void *data)
+{
+    EVP_KEYMGMT_free(data);
+}
+
+static int evp_keymgmt_up_ref(void *data)
+{
+    return EVP_KEYMGMT_up_ref(data);
+}
+
 static void *keymgmt_new(void)
 {
     EVP_KEYMGMT *keymgmt = NULL;
@@ -259,16 +269,6 @@ static void *keymgmt_from_algorithm(int name_id,
 #endif
 
     return keymgmt;
-}
-
-static void evp_keymgmt_free(void *data)
-{
-    EVP_KEYMGMT_free((EVP_KEYMGMT *)data);
-}
-
-static int evp_keymgmt_up_ref(void *data)
-{
-    return EVP_KEYMGMT_up_ref((EVP_KEYMGMT *)data);
 }
 
 EVP_KEYMGMT *evp_keymgmt_fetch_from_prov(OSSL_PROVIDER *prov,

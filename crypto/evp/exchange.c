@@ -20,12 +20,12 @@
 
 static void evp_keyexch_free(void *data)
 {
-    EVP_KEYEXCH_free((EVP_KEYEXCH *)data);
+    EVP_KEYEXCH_free(data);
 }
 
 static int evp_keyexch_up_ref(void *data)
 {
-    return EVP_KEYEXCH_up_ref((EVP_KEYEXCH *)data);
+    return EVP_KEYEXCH_up_ref(data);
 }
 
 static EVP_KEYEXCH *evp_keyexch_new(OSSL_PROVIDER *prov)

@@ -22,12 +22,12 @@
 
 static void evp_signature_free(void *data)
 {
-    EVP_SIGNATURE_free((EVP_SIGNATURE *)data);
+    EVP_SIGNATURE_free(data);
 }
 
 static int evp_signature_up_ref(void *data)
 {
-    return EVP_SIGNATURE_up_ref((EVP_SIGNATURE *)data);
+    return EVP_SIGNATURE_up_ref(data);
 }
 
 static EVP_SIGNATURE *evp_signature_new(OSSL_PROVIDER *prov)

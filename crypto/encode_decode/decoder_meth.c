@@ -26,12 +26,12 @@
 
 static void ossl_decoder_free(void *data)
 {
-    OSSL_DECODER_free((OSSL_DECODER *)data);
+    OSSL_DECODER_free(data);
 }
 
 static int ossl_decoder_up_ref(void *data)
 {
-    return OSSL_DECODER_up_ref((OSSL_DECODER *)data);
+    return OSSL_DECODER_up_ref(data);
 }
 
 /* Simple method structure constructor and destructor */

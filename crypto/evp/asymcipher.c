@@ -19,12 +19,12 @@
 
 static void evp_asym_cipher_free(void *data)
 {
-    EVP_ASYM_CIPHER_free((EVP_ASYM_CIPHER *)data);
+    EVP_ASYM_CIPHER_free(data);
 }
 
 static int evp_asym_cipher_up_ref(void *data)
 {
-    return EVP_ASYM_CIPHER_up_ref((EVP_ASYM_CIPHER *)data);
+    return EVP_ASYM_CIPHER_up_ref(data);
 }
 
 static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation,
