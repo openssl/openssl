@@ -593,3 +593,8 @@ extern const OSSL_DISPATCH ossl_pem_to_der_decoder_functions[];
 
 extern const OSSL_DISPATCH ossl_file_store_functions[];
 extern const OSSL_DISPATCH ossl_winstore_store_functions[];
+
+#ifndef OPENSSL_NO_ECX
+extern const OSSL_DISPATCH ossl_X25519_X448_kem_functions[];
+extern const OSSL_DISPATCH ossl_X25519_X448_kmgmt_functions[];
+#endif
