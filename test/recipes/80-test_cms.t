@@ -52,7 +52,7 @@ my ($no_des, $no_dh, $no_dsa, $no_ec, $no_ec2m, $no_rc2, $no_zlib)
 
 $no_rc2 = 1 if disabled("legacy");
 
-plan tests => 25;
+plan tests => 26;
 
 ok(run(test(["pkcs7_test"])), "test pkcs7");
 
