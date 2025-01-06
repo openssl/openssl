@@ -107,7 +107,7 @@ err:
 static int ml_dsa_siggen_test(int tst_id)
 {
     int ret = 0;
-    const ML_DSA_SIG_TEST_DATA *td = &ml_dsa_siggen_testdata[tst_id];
+    const ML_DSA_SIG_GEN_TEST_DATA *td = &ml_dsa_siggen_testdata[tst_id];
     EVP_PKEY_CTX *sctx = NULL;
     EVP_PKEY *pkey = NULL;
     EVP_SIGNATURE *sig_alg = NULL;
@@ -153,17 +153,44 @@ static int ml_dsa_siggen_test(int tst_id)
         goto err;
     if (!TEST_mem_eq(digest, digest_len, td->sig_digest, td->sig_digest_len))
         goto err;
-
-    if (!TEST_int_eq(EVP_PKEY_verify_message_init(sctx, sig_alg, params), 1)
-            || !TEST_int_eq(EVP_PKEY_verify(sctx, psig, psig_len,
-                                            td->msg, td->msg_len), 1))
-        goto err;
     ret = 1;
 err:
     EVP_SIGNATURE_free(sig_alg);
     EVP_PKEY_free(pkey);
     EVP_PKEY_CTX_free(sctx);
     OPENSSL_free(psig);
+    return ret;
+}
+
+static int ml_dsa_sigver_test(int tst_id)
+{
+    int ret = 0;
+    const ML_DSA_SIG_VER_TEST_DATA *td = &ml_dsa_sigver_testdata[tst_id];
+    EVP_PKEY_CTX *vctx = NULL;
+    EVP_PKEY *pkey = NULL;
+    EVP_SIGNATURE *sig_alg = NULL;
+    OSSL_PARAM params[2], *p = params;
+    int encode = 0;
+
+    *p++ = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_MESSAGE_ENCODING, &encode);
+    *p = OSSL_PARAM_construct_end();
+
+    if (!ml_dsa_create_keypair(&pkey, td->alg, NULL, 0, td->pub, td->pub_len))
+        goto err;
+
+    if (!TEST_ptr(vctx = EVP_PKEY_CTX_new_from_pkey(lib_ctx, pkey, NULL)))
+        goto err;
+    if (!TEST_ptr(sig_alg = EVP_SIGNATURE_fetch(lib_ctx, td->alg, NULL)))
+        goto err;
+    if (!TEST_int_eq(EVP_PKEY_verify_message_init(vctx, sig_alg, params), 1)
+            || !TEST_int_eq(EVP_PKEY_verify(vctx, td->sig, td->sig_len,
+                                            td->msg, td->msg_len), td->expected))
+        goto err;
+    ret = 1;
+err:
+    EVP_SIGNATURE_free(sig_alg);
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_CTX_free(vctx);
     return ret;
 }
 
@@ -200,6 +227,7 @@ int setup_tests(void)
 
     ADD_ALL_TESTS(ml_dsa_keygen_test, OSSL_NELEM(ml_dsa_keygen_testdata));
     ADD_ALL_TESTS(ml_dsa_siggen_test, OSSL_NELEM(ml_dsa_siggen_testdata));
+    ADD_ALL_TESTS(ml_dsa_sigver_test, OSSL_NELEM(ml_dsa_sigver_testdata));
     return 1;
 }
 

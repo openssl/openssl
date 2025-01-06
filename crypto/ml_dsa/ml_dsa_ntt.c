@@ -29,8 +29,9 @@
  * Given that q = 2^23 - 2^13 + 1
  * We can chose a Montgomery multiplier of R = 2^32.
  *
- * To transform a into montgomery form m
+ * To transform |a| into Montgomery form |m| we use
  *   m = a mod q * ((2^32)*(2^32) mod q)
+ * which is then Montgomery reduced, removing the excess factor of R = 2^32.
  */
 
 /*
