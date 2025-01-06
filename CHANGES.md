@@ -331,6 +331,11 @@ OpenSSL 3.4
 
    *Watson Ladd*
 
+ * Parallel dual-prime 1024/1536/2048-bit modular exponentiation for
+   AVX_IFMA capable processors.
+
+   *Zhiguo Zhou, Wangyang Guo (Intel Corp)*
+
 OpenSSL 3.3
 -----------
 

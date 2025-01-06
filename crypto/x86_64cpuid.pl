@@ -78,6 +78,7 @@ OPENSSL_ia32_cpuid:
 
 	xor	%eax,%eax
 	mov	%rax,8(%rdi)		# clear extended feature flags
+	mov	%rax,16(%rdi)
 	cpuid
 	mov	%eax,%r11d		# max value for standard query level
 
