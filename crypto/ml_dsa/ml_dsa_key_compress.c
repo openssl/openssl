@@ -52,18 +52,17 @@ void ossl_ml_dsa_key_compress_power2_round(uint32_t r, uint32_t *r1, uint32_t *r
 
 /*
  * @brief return the r1 component of Decomposing r into (r1, r0) such that
- * r == r1 * (2 & gamma) + r0 mod q
+ * r == r1 * (2 * gamma2) + r0 mod q
  * See FIPS 204, Algorithm 37, HighBits()
  *
  * @param r A value to decompose in the range (0..q-1)
  * @param gamma2 Depending on the algorithm gamma2 is either (q-1)/32 or (q-1)/88
- * @returns r1
+ * @returns r1 (The high order bits)
  */
 uint32_t ossl_ml_dsa_key_compress_high_bits(uint32_t r, uint32_t gamma2)
 {
     int32_t r1 = (r + 127) >> 7;
 
-    /* TODO - figure out what this is doing */
     if (gamma2 == ML_DSA_GAMMA2_Q_MINUS1_DIV32) {
         r1 = (r1 * 1025 + (1 << 21)) >> 22;
         r1 &= 15; /* mod 16 */
@@ -76,8 +75,13 @@ uint32_t ossl_ml_dsa_key_compress_high_bits(uint32_t r, uint32_t gamma2)
 }
 
 /**
- * TODO - document this
+ * @brief Decomposes r into (r1, r0) such that r == r1 * (2*gamma2) + r0 mod q.
  * See FIPS 204, Algorithm 36, Decompose()
+ *
+ * @param r A value to decompose in the range (0..q-1)
+ * @param gamma2 Depending on the algorithm gamma2 is either (q-1)/32 or (q-1)/88
+ * @param r1 The returned high order bits
+ * @param r0 The returned low order bits
  */
 void ossl_ml_dsa_key_compress_decompose(uint32_t r, uint32_t gamma2,
                                         uint32_t *r1, int32_t *r0)
@@ -89,8 +93,13 @@ void ossl_ml_dsa_key_compress_decompose(uint32_t r, uint32_t gamma2,
 }
 
 /**
- * TODO - document this
+ * @brief return the r0 component of Decomposing r into (r1, r0) such that
+ * r == r1 * (2 * gamma2) + r0 mod q
  * See FIPS 204, Algorithm 38, LowBits()
+ *
+ * @param r A value to decompose in the range (0..q-1)
+ * @param gamma2 Depending on the algorithm gamma2 is either (q-1)/32 or (q-1)/88
+ * @param r0 The returned low order bits
  */
 int32_t ossl_ml_dsa_key_compress_low_bits(uint32_t r, uint32_t gamma2)
 {
@@ -102,14 +111,24 @@ int32_t ossl_ml_dsa_key_compress_low_bits(uint32_t r, uint32_t gamma2)
 }
 
 /*
- * See FIPS 204, Algorithm 39 (`MakeHint`).
+ * @brief Computes hint bit indicating whether adding z to r alters the high
+ * bits of r
+ * See FIPS 204, Algorithm 39, MakeHint().
  *
  * In the spec this takes two arguments, z and r, and is called with
  *   z = -ct0
  *   r = w - cs2 + ct0
  *
  * It then computes HighBits (algorithm 37) of z and z+r.
- * But z+r is just w - cs2, so this takes three arguments and saves an addition.
+ * But z + r is just w - cs2, so this takes three arguments and saves an addition.
+ *
+ * @params ct0 A polynomial c (with coefficients of (-1,0,1)) multiplied by the
+ *             polynomial vector t0 (which encodes the least significant bits of each coefficient of the
+               uncompressed public-key polynomial t)
+ * @params cs2 A polynomial c (with coefficients of (-1,0,1)) multiplied by s2 (a secret polynomial)
+ * @params gamma2 Depending on the algorithm gamma2 is either (q-1)/32 or (q-1)/88
+ * @params w  (A * y)
+ * @returns The hint bit.
  */
 int32_t ossl_ml_dsa_key_compress_make_hint(uint32_t ct0, uint32_t cs2,
                                            uint32_t gamma2, uint32_t w)
@@ -122,8 +141,15 @@ int32_t ossl_ml_dsa_key_compress_make_hint(uint32_t ct0, uint32_t cs2,
 }
 
 /*
- * FIPS 204, Algorithm 40 (`UseHint`).
- * This is not constant time
+ * @brief Returns the high bits of |r| adjusted according to hint |h|.
+ * FIPS 204, Algorithm 40, UseHint().
+ * This is not constant time.
+ *
+ * @param hint The hint bit which is either 0 or 1
+ * @param r A value to decompose in the range (0..q-1)
+ * @param gamma2 Depending on the algorithm gamma2 is either (q-1)/32 or (q-1)/88
+ *
+ * @returns The adjusted high bits or r.
  */
 uint32_t ossl_ml_dsa_key_compress_use_hint(uint32_t hint, uint32_t r,
                                            uint32_t gamma2)
