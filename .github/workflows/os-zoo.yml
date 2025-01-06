@@ -198,9 +198,9 @@ jobs:
     - uses: cross-platform-actions/action@v0.26.0
       with:
         operating_system: freebsd
-        image_url: https://github.com/openssl/freebsd-builder/releases/download/25-01-02-2/freebsd-13.4-x86-64.qcow2
         version: "13.4"
         run: |
+          sudo pkg install -y gcc perl5
           ./config enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
           ./configdata.pm --dump
           make -j4
