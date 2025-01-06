@@ -10,7 +10,7 @@
  */
 
 /* Serialized OID's */
-static const unsigned char so[9409] = {
+static const unsigned char so[9517] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,                 /* [    0] OBJ_rsadsi */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,            /* [    6] OBJ_pkcs */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,       /* [   13] OBJ_md2 */
@@ -1336,9 +1336,21 @@ static const unsigned char so[9409] = {
     0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x20,  /* [ 9381] OBJ_HASH_ML_DSA_44_WITH_SHA512 */
     0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x21,  /* [ 9390] OBJ_HASH_ML_DSA_65_WITH_SHA512 */
     0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x22,  /* [ 9399] OBJ_HASH_ML_DSA_87_WITH_SHA512 */
+    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x23,  /* [ 9408] OBJ_SLH_DSA_SHA2_128S_WITH_SHA256 */
+    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x24,  /* [ 9417] OBJ_SLH_DSA_SHA2_128F_WITH_SHA256 */
+    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x25,  /* [ 9426] OBJ_SLH_DSA_SHA2_192S_WITH_SHA512 */
+    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x26,  /* [ 9435] OBJ_SLH_DSA_SHA2_192F_WITH_SHA512 */
+    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x27,  /* [ 9444] OBJ_SLH_DSA_SHA2_256S_WITH_SHA512 */
+    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x28,  /* [ 9453] OBJ_SLH_DSA_SHA2_256F_WITH_SHA512 */
+    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x29,  /* [ 9462] OBJ_SLH_DSA_SHAKE_128S_WITH_SHAKE128 */
+    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x2A,  /* [ 9471] OBJ_SLH_DSA_SHAKE_128F_WITH_SHAKE128 */
+    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x2B,  /* [ 9480] OBJ_SLH_DSA_SHAKE_192S_WITH_SHAKE256 */
+    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x2C,  /* [ 9489] OBJ_SLH_DSA_SHAKE_192F_WITH_SHAKE256 */
+    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x2D,  /* [ 9498] OBJ_SLH_DSA_SHAKE_256S_WITH_SHAKE256 */
+    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x2E,  /* [ 9507] OBJ_SLH_DSA_SHAKE_256F_WITH_SHAKE256 */
 };
 
-#define NUM_NID 1475
+#define NUM_NID 1487
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2815,9 +2827,21 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"id-hash-ml-dsa-44-with-sha512", "HASH-ML-DSA-44-WITH-SHA512", NID_HASH_ML_DSA_44_WITH_SHA512, 9, &so[9381]},
     {"id-hash-ml-dsa-65-with-sha512", "HASH-ML-DSA-65-WITH-SHA512", NID_HASH_ML_DSA_65_WITH_SHA512, 9, &so[9390]},
     {"id-hash-ml-dsa-87-with-sha512", "HASH-ML-DSA-87-WITH-SHA512", NID_HASH_ML_DSA_87_WITH_SHA512, 9, &so[9399]},
+    {"id-hash-slh-dsa-sha2-128s-with-sha256", "SLH-DSA-SHA2-128S-WITH-SHA256", NID_SLH_DSA_SHA2_128S_WITH_SHA256, 9, &so[9408]},
+    {"id-hash-slh-dsa-sha2-128f-with-sha256", "SLH-DSA-SHA2-128F-WITH-SHA256", NID_SLH_DSA_SHA2_128F_WITH_SHA256, 9, &so[9417]},
+    {"id-hash-slh-dsa-sha2-192s-with-sha512", "SLH-DSA-SHA2-192S-WITH-SHA512", NID_SLH_DSA_SHA2_192S_WITH_SHA512, 9, &so[9426]},
+    {"id-hash-slh-dsa-sha2-192f-with-sha512", "SLH-DSA-SHA2-192F-WITH-SHA512", NID_SLH_DSA_SHA2_192F_WITH_SHA512, 9, &so[9435]},
+    {"id-hash-slh-dsa-sha2-256s-with-sha512", "SLH-DSA-SHA2-256S-WITH-SHA512", NID_SLH_DSA_SHA2_256S_WITH_SHA512, 9, &so[9444]},
+    {"id-hash-slh-dsa-sha2-256f-with-sha512", "SLH-DSA-SHA2-256F-WITH-SHA512", NID_SLH_DSA_SHA2_256F_WITH_SHA512, 9, &so[9453]},
+    {"id-hash-slh-dsa-shake-128s-with-shake128", "SLH-DSA-SHAKE-128S-WITH-SHAKE128", NID_SLH_DSA_SHAKE_128S_WITH_SHAKE128, 9, &so[9462]},
+    {"id-hash-slh-dsa-shake-128f-with-shake128", "SLH-DSA-SHAKE-128F-WITH-SHAKE128", NID_SLH_DSA_SHAKE_128F_WITH_SHAKE128, 9, &so[9471]},
+    {"id-hash-slh-dsa-shake-192s-with-shake256", "SLH-DSA-SHAKE-192S-WITH-SHAKE256", NID_SLH_DSA_SHAKE_192S_WITH_SHAKE256, 9, &so[9480]},
+    {"id-hash-slh-dsa-shake-192f-with-shake256", "SLH-DSA-SHAKE-192F-WITH-SHAKE256", NID_SLH_DSA_SHAKE_192F_WITH_SHAKE256, 9, &so[9489]},
+    {"id-hash-slh-dsa-shake-256s-with-shake256", "SLH-DSA-SHAKE-256S-WITH-SHAKE256", NID_SLH_DSA_SHAKE_256S_WITH_SHAKE256, 9, &so[9498]},
+    {"id-hash-slh-dsa-shake-256f-with-shake256", "SLH-DSA-SHAKE-256F-WITH-SHAKE256", NID_SLH_DSA_SHAKE_256F_WITH_SHAKE256, 9, &so[9507]},
 };
 
-#define NUM_SN 1466
+#define NUM_SN 1478
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -3498,6 +3522,18 @@ static const unsigned int sn_objs[NUM_SN] = {
     1472,    /* "id-hash-ml-dsa-44-with-sha512" */
     1473,    /* "id-hash-ml-dsa-65-with-sha512" */
     1474,    /* "id-hash-ml-dsa-87-with-sha512" */
+    1476,    /* "id-hash-slh-dsa-sha2-128f-with-sha256" */
+    1475,    /* "id-hash-slh-dsa-sha2-128s-with-sha256" */
+    1478,    /* "id-hash-slh-dsa-sha2-192f-with-sha512" */
+    1477,    /* "id-hash-slh-dsa-sha2-192s-with-sha512" */
+    1480,    /* "id-hash-slh-dsa-sha2-256f-with-sha512" */
+    1479,    /* "id-hash-slh-dsa-sha2-256s-with-sha512" */
+    1482,    /* "id-hash-slh-dsa-shake-128f-with-shake128" */
+    1481,    /* "id-hash-slh-dsa-shake-128s-with-shake128" */
+    1484,    /* "id-hash-slh-dsa-shake-192f-with-shake256" */
+    1483,    /* "id-hash-slh-dsa-shake-192s-with-shake256" */
+    1486,    /* "id-hash-slh-dsa-shake-256f-with-shake256" */
+    1485,    /* "id-hash-slh-dsa-shake-256s-with-shake256" */
      508,    /* "id-hex-multipart-message" */
      507,    /* "id-hex-partial-message" */
     1102,    /* "id-hmacWithSHA3-224" */
@@ -4287,7 +4323,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1289,    /* "zstd" */
 };
 
-#define NUM_LN 1466
+#define NUM_LN 1478
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -4553,17 +4589,29 @@ static const unsigned int ln_objs[NUM_LN] = {
      188,    /* "S/MIME" */
      167,    /* "S/MIME Capabilities" */
     1461,    /* "SLH-DSA-SHA2-128F" */
+    1476,    /* "SLH-DSA-SHA2-128F-WITH-SHA256" */
     1460,    /* "SLH-DSA-SHA2-128S" */
+    1475,    /* "SLH-DSA-SHA2-128S-WITH-SHA256" */
     1463,    /* "SLH-DSA-SHA2-192F" */
+    1478,    /* "SLH-DSA-SHA2-192F-WITH-SHA512" */
     1462,    /* "SLH-DSA-SHA2-192S" */
+    1477,    /* "SLH-DSA-SHA2-192S-WITH-SHA512" */
     1465,    /* "SLH-DSA-SHA2-256F" */
+    1480,    /* "SLH-DSA-SHA2-256F-WITH-SHA512" */
     1464,    /* "SLH-DSA-SHA2-256S" */
+    1479,    /* "SLH-DSA-SHA2-256S-WITH-SHA512" */
     1467,    /* "SLH-DSA-SHAKE-128F" */
+    1482,    /* "SLH-DSA-SHAKE-128F-WITH-SHAKE128" */
     1466,    /* "SLH-DSA-SHAKE-128S" */
+    1481,    /* "SLH-DSA-SHAKE-128S-WITH-SHAKE128" */
     1469,    /* "SLH-DSA-SHAKE-192F" */
+    1484,    /* "SLH-DSA-SHAKE-192F-WITH-SHAKE256" */
     1468,    /* "SLH-DSA-SHAKE-192S" */
+    1483,    /* "SLH-DSA-SHAKE-192S-WITH-SHAKE256" */
     1471,    /* "SLH-DSA-SHAKE-256F" */
+    1486,    /* "SLH-DSA-SHAKE-256F-WITH-SHAKE256" */
     1470,    /* "SLH-DSA-SHAKE-256S" */
+    1485,    /* "SLH-DSA-SHAKE-256S-WITH-SHAKE256" */
     1204,    /* "SM2-with-SM3" */
     1006,    /* "SNILS" */
      387,    /* "SNMPv2" */
@@ -5757,7 +5805,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      125,    /* "zlib compression" */
 };
 
-#define NUM_OBJ 1332
+#define NUM_OBJ 1344
 static const unsigned int obj_objs[NUM_OBJ] = {
        0,    /* OBJ_undef                        0 */
      181,    /* OBJ_iso                          1 */
@@ -6864,6 +6912,18 @@ static const unsigned int obj_objs[NUM_OBJ] = {
     1472,    /* OBJ_HASH_ML_DSA_44_WITH_SHA512   2 16 840 1 101 3 4 3 32 */
     1473,    /* OBJ_HASH_ML_DSA_65_WITH_SHA512   2 16 840 1 101 3 4 3 33 */
     1474,    /* OBJ_HASH_ML_DSA_87_WITH_SHA512   2 16 840 1 101 3 4 3 34 */
+    1475,    /* OBJ_SLH_DSA_SHA2_128S_WITH_SHA256 2 16 840 1 101 3 4 3 35 */
+    1476,    /* OBJ_SLH_DSA_SHA2_128F_WITH_SHA256 2 16 840 1 101 3 4 3 36 */
+    1477,    /* OBJ_SLH_DSA_SHA2_192S_WITH_SHA512 2 16 840 1 101 3 4 3 37 */
+    1478,    /* OBJ_SLH_DSA_SHA2_192F_WITH_SHA512 2 16 840 1 101 3 4 3 38 */
+    1479,    /* OBJ_SLH_DSA_SHA2_256S_WITH_SHA512 2 16 840 1 101 3 4 3 39 */
+    1480,    /* OBJ_SLH_DSA_SHA2_256F_WITH_SHA512 2 16 840 1 101 3 4 3 40 */
+    1481,    /* OBJ_SLH_DSA_SHAKE_128S_WITH_SHAKE128 2 16 840 1 101 3 4 3 41 */
+    1482,    /* OBJ_SLH_DSA_SHAKE_128F_WITH_SHAKE128 2 16 840 1 101 3 4 3 42 */
+    1483,    /* OBJ_SLH_DSA_SHAKE_192S_WITH_SHAKE256 2 16 840 1 101 3 4 3 43 */
+    1484,    /* OBJ_SLH_DSA_SHAKE_192F_WITH_SHAKE256 2 16 840 1 101 3 4 3 44 */
+    1485,    /* OBJ_SLH_DSA_SHAKE_256S_WITH_SHAKE256 2 16 840 1 101 3 4 3 45 */
+    1486,    /* OBJ_SLH_DSA_SHAKE_256F_WITH_SHAKE256 2 16 840 1 101 3 4 3 46 */
     1454,    /* OBJ_ML_KEM_512                   2 16 840 1 101 3 4 4 1 */
     1455,    /* OBJ_ML_KEM_768                   2 16 840 1 101 3 4 4 2 */
     1456,    /* OBJ_ML_KEM_1024                  2 16 840 1 101 3 4 4 3 */

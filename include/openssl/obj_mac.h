@@ -3521,6 +3521,66 @@
 #define NID_HASH_ML_DSA_87_WITH_SHA512          1474
 #define OBJ_HASH_ML_DSA_87_WITH_SHA512          OBJ_sigAlgs,34L
 
+#define SN_SLH_DSA_SHA2_128S_WITH_SHA256                "id-hash-slh-dsa-sha2-128s-with-sha256"
+#define LN_SLH_DSA_SHA2_128S_WITH_SHA256                "SLH-DSA-SHA2-128S-WITH-SHA256"
+#define NID_SLH_DSA_SHA2_128S_WITH_SHA256               1475
+#define OBJ_SLH_DSA_SHA2_128S_WITH_SHA256               OBJ_sigAlgs,35L
+
+#define SN_SLH_DSA_SHA2_128F_WITH_SHA256                "id-hash-slh-dsa-sha2-128f-with-sha256"
+#define LN_SLH_DSA_SHA2_128F_WITH_SHA256                "SLH-DSA-SHA2-128F-WITH-SHA256"
+#define NID_SLH_DSA_SHA2_128F_WITH_SHA256               1476
+#define OBJ_SLH_DSA_SHA2_128F_WITH_SHA256               OBJ_sigAlgs,36L
+
+#define SN_SLH_DSA_SHA2_192S_WITH_SHA512                "id-hash-slh-dsa-sha2-192s-with-sha512"
+#define LN_SLH_DSA_SHA2_192S_WITH_SHA512                "SLH-DSA-SHA2-192S-WITH-SHA512"
+#define NID_SLH_DSA_SHA2_192S_WITH_SHA512               1477
+#define OBJ_SLH_DSA_SHA2_192S_WITH_SHA512               OBJ_sigAlgs,37L
+
+#define SN_SLH_DSA_SHA2_192F_WITH_SHA512                "id-hash-slh-dsa-sha2-192f-with-sha512"
+#define LN_SLH_DSA_SHA2_192F_WITH_SHA512                "SLH-DSA-SHA2-192F-WITH-SHA512"
+#define NID_SLH_DSA_SHA2_192F_WITH_SHA512               1478
+#define OBJ_SLH_DSA_SHA2_192F_WITH_SHA512               OBJ_sigAlgs,38L
+
+#define SN_SLH_DSA_SHA2_256S_WITH_SHA512                "id-hash-slh-dsa-sha2-256s-with-sha512"
+#define LN_SLH_DSA_SHA2_256S_WITH_SHA512                "SLH-DSA-SHA2-256S-WITH-SHA512"
+#define NID_SLH_DSA_SHA2_256S_WITH_SHA512               1479
+#define OBJ_SLH_DSA_SHA2_256S_WITH_SHA512               OBJ_sigAlgs,39L
+
+#define SN_SLH_DSA_SHA2_256F_WITH_SHA512                "id-hash-slh-dsa-sha2-256f-with-sha512"
+#define LN_SLH_DSA_SHA2_256F_WITH_SHA512                "SLH-DSA-SHA2-256F-WITH-SHA512"
+#define NID_SLH_DSA_SHA2_256F_WITH_SHA512               1480
+#define OBJ_SLH_DSA_SHA2_256F_WITH_SHA512               OBJ_sigAlgs,40L
+
+#define SN_SLH_DSA_SHAKE_128S_WITH_SHAKE128             "id-hash-slh-dsa-shake-128s-with-shake128"
+#define LN_SLH_DSA_SHAKE_128S_WITH_SHAKE128             "SLH-DSA-SHAKE-128S-WITH-SHAKE128"
+#define NID_SLH_DSA_SHAKE_128S_WITH_SHAKE128            1481
+#define OBJ_SLH_DSA_SHAKE_128S_WITH_SHAKE128            OBJ_sigAlgs,41L
+
+#define SN_SLH_DSA_SHAKE_128F_WITH_SHAKE128             "id-hash-slh-dsa-shake-128f-with-shake128"
+#define LN_SLH_DSA_SHAKE_128F_WITH_SHAKE128             "SLH-DSA-SHAKE-128F-WITH-SHAKE128"
+#define NID_SLH_DSA_SHAKE_128F_WITH_SHAKE128            1482
+#define OBJ_SLH_DSA_SHAKE_128F_WITH_SHAKE128            OBJ_sigAlgs,42L
+
+#define SN_SLH_DSA_SHAKE_192S_WITH_SHAKE256             "id-hash-slh-dsa-shake-192s-with-shake256"
+#define LN_SLH_DSA_SHAKE_192S_WITH_SHAKE256             "SLH-DSA-SHAKE-192S-WITH-SHAKE256"
+#define NID_SLH_DSA_SHAKE_192S_WITH_SHAKE256            1483
+#define OBJ_SLH_DSA_SHAKE_192S_WITH_SHAKE256            OBJ_sigAlgs,43L
+
+#define SN_SLH_DSA_SHAKE_192F_WITH_SHAKE256             "id-hash-slh-dsa-shake-192f-with-shake256"
+#define LN_SLH_DSA_SHAKE_192F_WITH_SHAKE256             "SLH-DSA-SHAKE-192F-WITH-SHAKE256"
+#define NID_SLH_DSA_SHAKE_192F_WITH_SHAKE256            1484
+#define OBJ_SLH_DSA_SHAKE_192F_WITH_SHAKE256            OBJ_sigAlgs,44L
+
+#define SN_SLH_DSA_SHAKE_256S_WITH_SHAKE256             "id-hash-slh-dsa-shake-256s-with-shake256"
+#define LN_SLH_DSA_SHAKE_256S_WITH_SHAKE256             "SLH-DSA-SHAKE-256S-WITH-SHAKE256"
+#define NID_SLH_DSA_SHAKE_256S_WITH_SHAKE256            1485
+#define OBJ_SLH_DSA_SHAKE_256S_WITH_SHAKE256            OBJ_sigAlgs,45L
+
+#define SN_SLH_DSA_SHAKE_256F_WITH_SHAKE256             "id-hash-slh-dsa-shake-256f-with-shake256"
+#define LN_SLH_DSA_SHAKE_256F_WITH_SHAKE256             "SLH-DSA-SHAKE-256F-WITH-SHAKE256"
+#define NID_SLH_DSA_SHAKE_256F_WITH_SHAKE256            1486
+#define OBJ_SLH_DSA_SHAKE_256F_WITH_SHAKE256            OBJ_sigAlgs,46L
+
 #define SN_hold_instruction_code                "holdInstructionCode"
 #define LN_hold_instruction_code                "Hold Instruction Code"
 #define NID_hold_instruction_code               430

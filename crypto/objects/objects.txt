@@ -1139,6 +1139,18 @@ sigAlgs 31      : id-slh-dsa-shake-256f	: SLH-DSA-SHAKE-256F
 sigAlgs 32      : id-hash-ml-dsa-44-with-sha512 : HASH-ML-DSA-44-WITH-SHA512
 sigAlgs 33      : id-hash-ml-dsa-65-with-sha512 : HASH-ML-DSA-65-WITH-SHA512
 sigAlgs 34      : id-hash-ml-dsa-87-with-sha512 : HASH-ML-DSA-87-WITH-SHA512
+sigAlgs 35      : id-hash-slh-dsa-sha2-128s-with-sha256    : SLH-DSA-SHA2-128S-WITH-SHA256
+sigAlgs 36      : id-hash-slh-dsa-sha2-128f-with-sha256    : SLH-DSA-SHA2-128F-WITH-SHA256
+sigAlgs 37      : id-hash-slh-dsa-sha2-192s-with-sha512    : SLH-DSA-SHA2-192S-WITH-SHA512
+sigAlgs 38      : id-hash-slh-dsa-sha2-192f-with-sha512    : SLH-DSA-SHA2-192F-WITH-SHA512
+sigAlgs 39      : id-hash-slh-dsa-sha2-256s-with-sha512    : SLH-DSA-SHA2-256S-WITH-SHA512
+sigAlgs 40      : id-hash-slh-dsa-sha2-256f-with-sha512    : SLH-DSA-SHA2-256F-WITH-SHA512
+sigAlgs 41      : id-hash-slh-dsa-shake-128s-with-shake128 : SLH-DSA-SHAKE-128S-WITH-SHAKE128
+sigAlgs 42      : id-hash-slh-dsa-shake-128f-with-shake128 : SLH-DSA-SHAKE-128F-WITH-SHAKE128
+sigAlgs 43      : id-hash-slh-dsa-shake-192s-with-shake256 : SLH-DSA-SHAKE-192S-WITH-SHAKE256
+sigAlgs 44      : id-hash-slh-dsa-shake-192f-with-shake256 : SLH-DSA-SHAKE-192F-WITH-SHAKE256
+sigAlgs 45      : id-hash-slh-dsa-shake-256s-with-shake256 : SLH-DSA-SHAKE-256S-WITH-SHAKE256
+sigAlgs 46      : id-hash-slh-dsa-shake-256f-with-shake256 : SLH-DSA-SHAKE-256F-WITH-SHAKE256
 
 # Hold instruction CRL entry extension
 !Cname hold-instruction-code
@@ -1155,7 +1167,7 @@ holdInstruction 3	: holdInstructionReject	: Hold Instruction Reject
 # them are also mentioned in RFC 2247
 # OIDs specific to Electronic Signature Standard/CAdES are as specified in
 # ETSI EN 319 122-1 V1.2.1 (2021-10):
-# Electronic Signatures and Infrastructures (ESI); CAdES digital signatures; 
+# Electronic Signatures and Infrastructures (ESI); CAdES digital signatures;
 # Part 1: Building blocks and CAdES baseline signatures
 itu-t 4			: itu-t-identified-organization
 itu-t-identified-organization 0: etsi
