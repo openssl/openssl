@@ -302,11 +302,12 @@ static STACK_OF(X509_CRL) *make_CRL_stack(X509_CRL *x1, X509_CRL *x2)
 {
     STACK_OF(X509_CRL) *sk = sk_X509_CRL_new_null();
 
-    if (x1 != NULL && sk_X509_CRL_push(sk, x1))
-        X509_CRL_up_ref(x1);
-    if (x2 != NULL && sk_X509_CRL_push(sk, x2))
+    sk_X509_CRL_push(sk, x1);
+    X509_CRL_up_ref(x1);
+    if (x2 != NULL) {
+        sk_X509_CRL_push(sk, x2);
         X509_CRL_up_ref(x2);
-
+    }
     return sk;
 }
 
