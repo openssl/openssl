@@ -724,7 +724,7 @@ int ossl_ssl_init(SSL *ssl, SSL_CTX *ctx, const SSL_METHOD *method, int type)
 err:
     CRYPTO_THREAD_lock_free(ssl->lock);
     ssl->lock = NULL;
-    SSL_CTX_up_ref(ctx);
+    SSL_CTX_free(ctx);
     return 0;
 }
 
