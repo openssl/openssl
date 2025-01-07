@@ -162,8 +162,6 @@ static int export_sub_cb(const OSSL_PARAM *params, void *varg)
     EXPORT_CB_ARG *sub_arg = varg;
     const OSSL_PARAM *p = NULL;
     size_t len;
-    void *pub = sub_arg->pubenc + sub_arg->puboff;
-    void *prv = sub_arg->prvenc + sub_arg->prvoff;
 
     /*
      * The caller will decide whether anything essential is missing, but, if
@@ -174,6 +172,8 @@ static int export_sub_cb(const OSSL_PARAM *params, void *varg)
         return 1;
     if (sub_arg->pubenc != NULL
         && (p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PUB_KEY)) != NULL) {
+        void *pub = sub_arg->pubenc + sub_arg->puboff;
+
         if (OSSL_PARAM_get_octet_string(p, &pub, sub_arg->publen, &len) != 1)
             return 0;
         if (len != sub_arg->publen) {
@@ -187,6 +187,8 @@ static int export_sub_cb(const OSSL_PARAM *params, void *varg)
     }
     if (sub_arg->prvenc != NULL
         && (p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PRIV_KEY)) != NULL) {
+        void *prv = sub_arg->prvenc + sub_arg->prvoff;
+
         if (OSSL_PARAM_get_octet_string(p, &prv, sub_arg->prvlen, &len) != 1)
             return 0;
         if (len != sub_arg->prvlen) {
