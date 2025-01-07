@@ -20,8 +20,8 @@
 /* QUIC encryption levels. */
 enum {
     QUIC_ENC_LEVEL_INITIAL = 0,
-    QUIC_ENC_LEVEL_HANDSHAKE,
     QUIC_ENC_LEVEL_0RTT,
+    QUIC_ENC_LEVEL_HANDSHAKE,
     QUIC_ENC_LEVEL_1RTT,
     QUIC_ENC_LEVEL_NUM       /* Must be the ultimate entry */
 };
