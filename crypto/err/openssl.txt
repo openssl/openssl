@@ -396,8 +396,7 @@ CMS_R_UNWRAP_FAILURE:180:unwrap failure
 CMS_R_VERIFICATION_FAILURE:158:verification failure
 CMS_R_WRAP_ERROR:159:wrap error
 COMP_R_BROTLI_DECODE_ERROR:102:brotli decode error
-COMP_R_BROTLI_DEFLATE_ERROR:103:brotli deflate error
-COMP_R_BROTLI_ENCODE_ERROR:106:brotli encode error
+COMP_R_BROTLI_ENCODE_ERROR:103:brotli encode error
 COMP_R_BROTLI_INFLATE_ERROR:104:brotli inflate error
 COMP_R_BROTLI_NOT_SUPPORTED:105:brotli not supported
 COMP_R_ZLIB_DEFLATE_ERROR:99:zlib deflate error
