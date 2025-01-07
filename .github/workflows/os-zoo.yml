@@ -195,14 +195,34 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - uses: cross-platform-actions/action@v0.26.0
+    - name: config
+      uses: cross-platform-actions/action@v0.26.0
+      with:
+        operating_system: freebsd
+        version: "13.4"
+        shutdown_vm: false
+        run: |
+          sudo pkg install -y gcc perl5
+          ./config enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
+    - name: config dump
+      uses: cross-platform-actions/action@v0.26.0
+      with:
+        operating_system: freebsd
+        version: "13.4"
+        shutdown_vm: false
+        run: ./configdata.pm --dump
+    - name: make
+      uses: cross-platform-actions/action@v0.26.0
+      with:
+        operating_system: freebsd
+        version: "13.4"
+        shutdown_vm: false
+        run: make -j4
+    - name: make test
+      uses: cross-platform-actions/action@v0.26.0
       with:
         operating_system: freebsd
         version: "13.4"
         run: |
-          sudo pkg install -y gcc perl5
-          ./config enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
-          ./configdata.pm --dump
-          make -j4
           ./util/opensslwrap.sh version -c
-          make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+          .github/workflows/make-test
