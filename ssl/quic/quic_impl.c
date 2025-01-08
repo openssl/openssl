@@ -4522,7 +4522,7 @@ SSL *ossl_quic_accept_connection(SSL *ssl, uint64_t flags)
 {
     int ret;
     QCTX ctx;
-    QUIC_CONNECTION *qc = NULL;
+    SSL *conn_ssl = NULL;
     QUIC_CHANNEL *new_ch = NULL;
     int no_block = ((flags & SSL_ACCEPT_CONNECTION_NO_BLOCK) != 0);
 
@@ -4561,15 +4561,16 @@ SSL *ossl_quic_accept_connection(SSL *ssl, uint64_t flags)
             goto out;
     }
 
-    qc = create_qc_from_incoming_conn(ctx.ql, new_ch);
-    if (qc == NULL) {
-        ossl_quic_channel_free(new_ch);
-        goto out;
-    }
-
+    /*
+     * port_make_channel pre-allocates our user_ssl for us for each newly
+     * created channel, so once we pop the new channel from the port above
+     * we just need to extract it
+     */
+    conn_ssl = ossl_quic_channel_get0_tls(new_ch);
+    conn_ssl = SSL_CONNECTION_GET_USER_SSL(SSL_CONNECTION_FROM_SSL(conn_ssl));
 out:
     qctx_unlock(&ctx);
-    return qc != NULL ? &qc->obj.ssl : NULL;
+    return conn_ssl;
 }
 
 static QUIC_CONNECTION *create_qc_from_incoming_conn(QUIC_LISTENER *ql, QUIC_CHANNEL *ch)
