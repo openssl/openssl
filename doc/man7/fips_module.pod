@@ -568,8 +568,6 @@ internally for non security purposes.
 The unapproved (non FIPS validated) algorithms have a property query value of
 "fips=no".
 
-=for comment TODO(ML-KEM) Once in the FIPS module.
-
 The following algorithms use a unique indicator and do not trigger the
 indicator callback.
 
