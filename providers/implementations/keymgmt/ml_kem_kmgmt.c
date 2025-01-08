@@ -56,6 +56,72 @@ typedef struct ml_kem_gen_ctx_st {
     uint8_t *seed;
 } PROV_ML_KEM_GEN_CTX;
 
+#ifdef FIPS_MODULE
+static int ml_kem_pairwise_test(const ML_KEM_KEY *key)
+{
+    int ret = 0;
+    OSSL_SELF_TEST *st = NULL;
+    OSSL_CALLBACK *cb = NULL;
+    void *cbarg = NULL;
+    unsigned char secret[ML_KEM_SHARED_SECRET_BYTES];
+    unsigned char out[ML_KEM_SHARED_SECRET_BYTES];
+    unsigned char entropy[ML_KEM_RANDOM_BYTES];
+    unsigned char *ctext = NULL;
+    const ML_KEM_VINFO *v = ossl_ml_kem_key_vinfo(key);
+    int operation_result = 0;
+
+    /* Unless we have both a public and private key, we can't do the test */
+    if (!ossl_ml_kem_have_prvkey(key))
+        return 1;
+
+    /*
+     * The functions `OSSL_SELF_TEST_*` will return directly if parameter `st`
+     * is NULL.
+     */
+    OSSL_SELF_TEST_get_callback(key->libctx, &cb, &cbarg);
+
+    st = OSSL_SELF_TEST_new(cb, cbarg);
+    if (st == NULL)
+        return 0;
+
+    OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_PCT,
+                           OSSL_SELF_TEST_DESC_PCT_ML_KEM);
+
+    /*
+     * Initialise output buffers to avoid collecting random stack memory.
+     * The `entropy' buffer is filled with an arbitrary non-zero value.
+     */
+    memset(out, 0, sizeof(out));
+    memset(entropy, 0125, sizeof(entropy));
+
+    ctext = OPENSSL_malloc(v->ctext_bytes);
+    if (ctext == NULL)
+        goto err;
+
+    operation_result = ossl_ml_kem_encap_seed(ctext, v->ctext_bytes,
+                                              secret, sizeof(secret),
+                                              entropy, sizeof(entropy),
+                                              key);
+    if (operation_result != 1)
+        goto err;
+
+    OSSL_SELF_TEST_oncorrupt_byte(st, ctext);
+
+    operation_result = ossl_ml_kem_decap(out, sizeof(out), ctext, v->ctext_bytes,
+                                         key);
+    if (operation_result != 1
+            || memcmp(out, secret, sizeof(out)) != 0)
+        goto err;
+
+    ret = 1;
+err:
+    OPENSSL_free(ctext);
+    OSSL_SELF_TEST_onend(st, ret);
+    OSSL_SELF_TEST_free(st);
+    return ret;
+}
+#endif  /* FIPS_MODULE */
+
 static void *ml_kem_new(OSSL_LIB_CTX *libctx, char *propq, int variant)
 {
     if (!ossl_prov_is_running())
@@ -244,6 +310,7 @@ static int ml_kem_import(void *vkey, int selection, const OSSL_PARAM params[])
 {
     ML_KEM_KEY *key = vkey;
     int include_private;
+    int res;
 
     if (!ossl_prov_is_running() || key == NULL)
         return 0;
@@ -252,7 +319,14 @@ static int ml_kem_import(void *vkey, int selection, const OSSL_PARAM params[])
         return 0;
 
     include_private = selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY ? 1 : 0;
-    return ml_kem_key_fromdata(key, params, include_private);
+    res = ml_kem_key_fromdata(key, params, include_private);
+#ifdef FIPS_MODULE
+    if (res > 0 && include_private && !ml_kem_pairwise_test(key)) {
+        ossl_set_error_state(OSSL_SELF_TEST_TYPE_PCT);
+        res = 0;
+    }
+#endif  /* FIPS_MODULE */
+    return res;
 }
 
 static const OSSL_PARAM *ml_kem_gettable_params(void *provctx)
@@ -462,8 +536,16 @@ static void *ml_kem_gen(void *vgctx, OSSL_CALLBACK *osslcb, void *cbarg)
         OPENSSL_cleanse(seed, ML_KEM_SEED_BYTES);
     gctx->seed = NULL;
 
-    if (genok)
+    if (genok) {
+#ifdef FIPS_MODULE
+        if (!ml_kem_pairwise_test(key)) {
+            ossl_set_error_state(OSSL_SELF_TEST_TYPE_PCT);
+            ossl_ml_kem_key_free(key);
+            return NULL;
+        }
+#endif  /* FIPS_MODULE */
         return key;
+    }
 
     ossl_ml_kem_key_free(key);
     return NULL;
