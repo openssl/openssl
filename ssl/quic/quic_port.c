@@ -451,12 +451,14 @@ static SSL *port_new_handshake_layer(QUIC_PORT *port, QUIC_CHANNEL *ch)
     SSL_CONNECTION *tls_conn = NULL;
     SSL *user_ssl = NULL;
     QUIC_CONNECTION *qc = NULL;
+    QUIC_LISTENER *ql = NULL;
 
     if (port->get_conn_user_ssl != NULL) {
         user_ssl = port->get_conn_user_ssl(ch, port->user_ssl_arg);
         if (user_ssl == NULL)
             return NULL;
         qc = (QUIC_CONNECTION *)user_ssl;
+        ql = (QUIC_LISTENER *)port->user_ssl_arg;
     }
 
     tls = ossl_ssl_connection_new_int(port->channel_ctx, user_ssl, TLS_method());
@@ -471,8 +473,11 @@ static SSL *port_new_handshake_layer(QUIC_PORT *port, QUIC_CHANNEL *ch)
         qc->tls = tls;
 
     if (ql != NULL && ql->obj.ssl.ctx->new_pending_ssl_cb != NULL)
-        ql->obj.ssl.ctx->new_pending_ssl_cb(ql->obj.ssl.ctx, user_ssl,
-                                            ql->obj.ssl.ctx->new_pending_ssl_arg);
+        if (!ql->obj.ssl.ctx->new_pending_ssl_cb(ql->obj.ssl.ctx, user_ssl,
+                                                 ql->obj.ssl.ctx->new_pending_ssl_arg)) {
+            SSL_free(tls);
+            return NULL;
+    }
 
     /* Override the user_ssl of the inner connection. */
     tls_conn->s3.flags      |= TLS1_FLAGS_QUIC;
