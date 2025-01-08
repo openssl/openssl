@@ -131,6 +131,45 @@ static int ssl_attach_bio_dgram(SSL *ssl,
     return 1;
 }
 
+/*
+ * Test to make sure that SSL_accept_connection returns the same ssl object
+ * that is used in the various TLS callbacks
+ *
+ * Unlike TCP, QUIC processes new connections independently from their
+ * acceptance, and so we need to pre-allocate tls objects to return during
+ * connection acceptance via the user_ssl.  This is just a quic test to validate
+ * that:
+ * 1) The new callback to inform the user of a new pending ssl acceptance works
+ *    properly
+ * 2) That the object returned from SSL_accept_connection matches the one passed
+ *    to various callbacks
+ *
+ * It would be better as its own test, but currently the tserver used in the
+ * other quic_tests doesn't actually accept connections (it pre-creates them
+ * and fixes them up in place), so testing there is not feasible at the moment
+ *
+ * For details on this issue see:
+ * https://github.com/openssl/project/issues/918
+ */
+static SSL *pending_ssl_obj = NULL;
+static SSL *client_hello_ssl_obj = NULL;
+static int check_pending_match = 0;
+static int pending_cb_called = 0;
+static int hello_cb_called = 0;
+static int new_pending_cb(SSL_CTX *ctx, SSL *new_ssl, void *arg)
+{
+    pending_ssl_obj = new_ssl;
+    pending_cb_called = 1;
+    return 1;
+}
+
+static int client_hello_cb(SSL *s, int *al, void *arg)
+{
+    client_hello_ssl_obj = s;
+    hello_cb_called = 1;
+    return 1;
+}
+
 DEF_FUNC(hf_new_ssl)
 {
     int ok = 0;
@@ -165,6 +204,9 @@ DEF_FUNC(hf_new_ssl)
             goto err;
 
     } else if (is_server) {
+        SSL_CTX_set_new_pending_ssl_cb(ctx, new_pending_cb, NULL);
+        SSL_CTX_set_client_hello_cb(ctx, client_hello_cb, NULL);
+        check_pending_match = 1;
         if (!TEST_ptr(ssl = SSL_new_listener(ctx, 0)))
             goto err;
     } else {
@@ -298,6 +340,23 @@ DEF_FUNC(hf_accept_conn)
         goto err;
     }
 
+    if (check_pending_match) {
+        if (!pending_cb_called || !hello_cb_called) {
+            TEST_info("Callbacks not called, skipping user_ssl check\n");
+        } else {
+            if (!TEST_ptr_eq(pending_ssl_obj, client_hello_ssl_obj)) {
+                SSL_free(conn);
+                goto err;
+            }
+            if (!TEST_ptr_eq(pending_ssl_obj, conn)) {
+                SSL_free(conn);
+                goto err;
+            }
+        }
+        pending_ssl_obj = client_hello_ssl_obj = NULL;
+        check_pending_match = 0;
+        pending_cb_called = hello_cb_called = 0;
+    }
     ok = 1;
 err:
     return ok;
