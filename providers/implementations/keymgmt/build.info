@@ -10,7 +10,7 @@ $MAC_GOAL=../../libdefault.a ../../libfips.a
 $RSA_GOAL=../../libdefault.a ../../libfips.a
 $TEMPLATE_GOAL=../../libtemplate.a
 $ML_DSA_GOAL=../../libdefault.a ../../libfips.a
-$ML_KEM_GOAL=../../libdefault.a
+$ML_KEM_GOAL=../../libdefault.a ../../libfips.a
 $TLS_ML_KEM_HYBRID_GOAL=../../libdefault.a
 
 IF[{- !$disabled{dh} -}]
