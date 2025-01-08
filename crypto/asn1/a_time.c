@@ -492,7 +492,7 @@ int ossl_asn1_time_print_ex(BIO *bp, const ASN1_TIME *tm, unsigned long flags)
     char *v;
     int l;
     struct tm stm;
-    const char upper_z = 0x5A, period = 0x2E;
+    const char period = 0x2E;
 
     /* ossl_asn1_time_to_tm will check the time type */
     if (!ossl_asn1_time_to_tm(&stm, tm))
@@ -518,27 +518,25 @@ int ossl_asn1_time_print_ex(BIO *bp, const ASN1_TIME *tm, unsigned long flags)
 
         if ((flags & ASN1_DTFLGS_TYPE_MASK) == ASN1_DTFLGS_ISO8601) {
             return BIO_printf(bp, "%4d-%02d-%02d %02d:%02d:%02d%.*sZ",
-                          stm.tm_year + 1900, stm.tm_mon + 1,
-                          stm.tm_mday, stm.tm_hour,
-                          stm.tm_min, stm.tm_sec, f_len, f) > 0;
-        }
-        else {
+                              stm.tm_year + 1900, stm.tm_mon + 1,
+                              stm.tm_mday, stm.tm_hour,
+                              stm.tm_min, stm.tm_sec, f_len, f) > 0;
+        } else {
             return BIO_printf(bp, "%s %2d %02d:%02d:%02d%.*s %d GMT",
-                          _asn1_mon[stm.tm_mon], stm.tm_mday, stm.tm_hour,
-                          stm.tm_min, stm.tm_sec, f_len, f,
-                          stm.tm_year + 1900) > 0;
+                              _asn1_mon[stm.tm_mon], stm.tm_mday, stm.tm_hour,
+                              stm.tm_min, stm.tm_sec, f_len, f,
+                              stm.tm_year + 1900) > 0;
         }
     } else {
         if ((flags & ASN1_DTFLGS_TYPE_MASK) == ASN1_DTFLGS_ISO8601) {
             return BIO_printf(bp, "%4d-%02d-%02d %02d:%02d:%02dZ",
-                          stm.tm_year + 1900, stm.tm_mon + 1,
-                          stm.tm_mday, stm.tm_hour,
-                          stm.tm_min, stm.tm_sec) > 0;
-        }
-        else {
+                              stm.tm_year + 1900, stm.tm_mon + 1,
+                              stm.tm_mday, stm.tm_hour,
+                              stm.tm_min, stm.tm_sec) > 0;
+        } else {
             return BIO_printf(bp, "%s %2d %02d:%02d:%02d %d GMT",
-                          _asn1_mon[stm.tm_mon], stm.tm_mday, stm.tm_hour,
-                          stm.tm_min, stm.tm_sec, stm.tm_year + 1900) > 0;
+                              _asn1_mon[stm.tm_mon], stm.tm_mday, stm.tm_hour,
+                              stm.tm_min, stm.tm_sec, stm.tm_year + 1900) > 0;
         }
     }
 }
