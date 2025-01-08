@@ -140,8 +140,7 @@ This is an unapproved algorithm.
 
 =item X448, see L<EVP_KEYEXCH-X448(7)>
 
-=for comment TODO(ML-KEM) L<EVP_KEM-ML-KEM(7)> once ML-KEM is supported in the
-             FIPS module.
+=item ML-KEM, see L<EVP_KEM-ML-KEM(7)>
 
 =item TLS1-PRF
 
@@ -309,6 +308,10 @@ Known answer test for a key derivation function.
 
 Known answer test for key agreement.
 
+=item "KAT_KEM" (B<OSSL_SELF_TEST_TYPE_KAT_KEM>)
+
+Known answer test for key encapsulation.
+
 =item "DRBG" (B<OSSL_SELF_TEST_TYPE_DRBG>)
 
 Known answer test for a Deterministic Random Bit Generator.
@@ -351,6 +354,8 @@ The FIPS module passes the following descriptions(s) to OSSL_SELF_TEST_onbegin()
 =item "EDDSA" (B<OSSL_SELF_TEST_DESC_PCT_EDDSA>)
 
 =item "DSA" (B<OSSL_SELF_TEST_DESC_PCT_DSA>)
+
+=item "ML-KEM" (B<OSSL_SELF_TEST_DESC_PCT_ML_KEM>)
 
 Key generation tests used with the "Pairwise_Consistency_Test" type.
 
@@ -411,6 +416,16 @@ Key agreement tests used with the "KAT_KA" type.
 =item "TLS12_PRF" (B<OSSL_SELF_TEST_DESC_KDF_TLS12_PRF>)
 
 =item "KBKDF" (B<OSSL_SELF_TEST_DESC_KDF_KBKDF>)
+
+Key Encapsulation Function tests used with the "KAT_KEM" type.
+
+=item "KEM_Encap" (B<OSSL_SELF_TEST_DESC_ENCAP_KEM>)
+
+=item "KEM_Decap" (B<OSSL_SELF_TEST_DESC_DECAP_KEM>)
+
+=item "KEM_Decap_Reject" (B<OSSL_SELF_TEST_DESC_DECAP_REJ_KEM>)
+
+=item "KEM_Keygen" (B<OSSL_SELF_TEST_DESC_KEYGEN_KEM>)
 
 Key Derivation Function tests used with the "KAT_KDF" type.
 
