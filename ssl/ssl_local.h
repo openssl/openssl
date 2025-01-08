@@ -989,6 +989,10 @@ struct ssl_ctx_st {
     SSL_client_hello_cb_fn client_hello_cb;
     void *client_hello_cb_arg;
 
+    /* Callback to announce new pending ssl objects in the accept queue */
+    SSL_new_pending_ssl_cb_fn new_pending_ssl_cb;
+    void *new_pending_ssl_arg;
+
     /* TLS extensions. */
     struct {
         /* TLS extensions servername callback */
