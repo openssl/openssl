@@ -52,6 +52,7 @@ extern "C" {
 # define OSSL_SELF_TEST_DESC_PCT_EDDSA      "EDDSA"
 # define OSSL_SELF_TEST_DESC_PCT_DSA        "DSA"
 # define OSSL_SELF_TEST_DESC_PCT_ML_DSA     "ML-DSA"
+# define OSSL_SELF_TEST_DESC_PCT_ML_KEM     "ML-KEM"
 # define OSSL_SELF_TEST_DESC_CIPHER_AES_GCM "AES_GCM"
 # define OSSL_SELF_TEST_DESC_CIPHER_AES_ECB "AES_ECB_Decrypt"
 # define OSSL_SELF_TEST_DESC_CIPHER_TDES    "TDES"
@@ -84,6 +85,10 @@ extern "C" {
 # define OSSL_SELF_TEST_DESC_KDF_TLS13_EXPAND   "TLS13_KDF_EXPAND"
 # define OSSL_SELF_TEST_DESC_RNG            "RNG"
 # define OSSL_SELF_TEST_DESC_KEYGEN_ML_DSA  "ML-DSA"
+# define OSSL_SELF_TEST_DESC_ENCAP_KEM      "KEM_Encap"
+# define OSSL_SELF_TEST_DESC_DECAP_KEM      "KEM_Decap"
+# define OSSL_SELF_TEST_DESC_DECAP_KEM_FAIL "KEM_Decap_Reject"
+# define OSSL_SELF_TEST_DESC_KEYGEN_KEM     "KEM_Keygen"
 
 void OSSL_SELF_TEST_set_callback(OSSL_LIB_CTX *libctx, OSSL_CALLBACK *cb,
                                  void *cbarg);
