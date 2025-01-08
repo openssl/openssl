@@ -490,7 +490,7 @@ int ASN1_TIME_print_ex(BIO *bp, const ASN1_TIME *tm, unsigned long flags)
 int ossl_asn1_time_print_ex(BIO *bp, const ASN1_TIME *tm, unsigned long flags)
 {
     char *v;
-    int gmt = 0, l;
+    int l;
     struct tm stm;
     const char upper_z = 0x5A, period = 0x2E;
 
@@ -500,8 +500,6 @@ int ossl_asn1_time_print_ex(BIO *bp, const ASN1_TIME *tm, unsigned long flags)
 
     l = tm->length;
     v = (char *)tm->data;
-    if (v[l - 1] == upper_z)
-        gmt = 1;
 
     if (tm->type == V_ASN1_GENERALIZEDTIME) {
         char *f = NULL;
@@ -519,31 +517,28 @@ int ossl_asn1_time_print_ex(BIO *bp, const ASN1_TIME *tm, unsigned long flags)
         }
 
         if ((flags & ASN1_DTFLGS_TYPE_MASK) == ASN1_DTFLGS_ISO8601) {
-            return BIO_printf(bp, "%4d-%02d-%02d %02d:%02d:%02d%.*s%s",
+            return BIO_printf(bp, "%4d-%02d-%02d %02d:%02d:%02d%.*sZ",
                           stm.tm_year + 1900, stm.tm_mon + 1,
                           stm.tm_mday, stm.tm_hour,
-                          stm.tm_min, stm.tm_sec, f_len, f,
-                          (gmt ? "Z" : "")) > 0;
+                          stm.tm_min, stm.tm_sec, f_len, f) > 0;
         }
         else {
-            return BIO_printf(bp, "%s %2d %02d:%02d:%02d%.*s %d%s",
+            return BIO_printf(bp, "%s %2d %02d:%02d:%02d%.*s %d GMT",
                           _asn1_mon[stm.tm_mon], stm.tm_mday, stm.tm_hour,
-                          stm.tm_min, stm.tm_sec, f_len, f, stm.tm_year + 1900,
-                          (gmt ? " GMT" : "")) > 0;
+                          stm.tm_min, stm.tm_sec, f_len, f,
+                          stm.tm_year + 1900) > 0;
         }
     } else {
         if ((flags & ASN1_DTFLGS_TYPE_MASK) == ASN1_DTFLGS_ISO8601) {
-            return BIO_printf(bp, "%4d-%02d-%02d %02d:%02d:%02d%s",
+            return BIO_printf(bp, "%4d-%02d-%02d %02d:%02d:%02dZ",
                           stm.tm_year + 1900, stm.tm_mon + 1,
                           stm.tm_mday, stm.tm_hour,
-                          stm.tm_min, stm.tm_sec,
-                          (gmt ? "Z" : "")) > 0;
+                          stm.tm_min, stm.tm_sec) > 0;
         }
         else {
-            return BIO_printf(bp, "%s %2d %02d:%02d:%02d %d%s",
+            return BIO_printf(bp, "%s %2d %02d:%02d:%02d %d GMT",
                           _asn1_mon[stm.tm_mon], stm.tm_mday, stm.tm_hour,
-                          stm.tm_min, stm.tm_sec, stm.tm_year + 1900,
-                          (gmt ? " GMT" : "")) > 0;
+                          stm.tm_min, stm.tm_sec, stm.tm_year + 1900) > 0;
         }
     }
 }
