@@ -429,7 +429,12 @@ static void ch_cleanup(QUIC_CHANNEL *ch)
 #endif
 }
 
-QUIC_CHANNEL *ossl_quic_channel_new(const QUIC_CHANNEL_ARGS *args)
+int ossl_quic_channel_init(QUIC_CHANNEL *ch)
+{
+    return ch_init(ch);
+}
+
+QUIC_CHANNEL *ossl_quic_channel_alloc(const QUIC_CHANNEL_ARGS *args)
 {
     QUIC_CHANNEL *ch = NULL;
 
@@ -451,11 +456,6 @@ QUIC_CHANNEL *ossl_quic_channel_new(const QUIC_CHANNEL_ARGS *args)
         }
     }
 #endif
-
-    if (!ch_init(ch)) {
-        OPENSSL_free(ch);
-        return NULL;
-    }
 
     return ch;
 }
