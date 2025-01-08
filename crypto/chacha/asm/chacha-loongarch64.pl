@@ -72,7 +72,7 @@ ChaCha20_ctr32:
 
 	beqz		$len,.Lno_data
 	ori			$t3,$zero,64
-	la.pcrel	$t0,OPENSSL_loongarch_hwcap_P
+	la.global	$t0,OPENSSL_loongarch_hwcap_P
 	ld.w		$t0,$t0,0
 
 	bleu		$len,$t3,.LChaCha20_1x  # goto 1x when len <= 64
