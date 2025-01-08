@@ -299,7 +299,7 @@ const char *OSSL_HTTP_adapt_proxy(const char *proxy, const char *no_proxy,
     if (proxy == NULL)
         proxy = ossl_safe_getenv(use_ssl ? "https_proxy" : "http_proxy");
     if (proxy == NULL)
-        proxy = ossl_safe_getenv(use_ssl ? OPENSSL_HTTP_PROXY : OPENSSL_HTTPS_PROXY);
+        proxy = ossl_safe_getenv(use_ssl ? OPENSSL_HTTPS_PROXY : OPENSSL_HTTP_PROXY);
 
     if (proxy == NULL || *proxy == '\0' || !use_proxy(no_proxy, server))
         return NULL;
