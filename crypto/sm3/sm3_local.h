@@ -10,6 +10,7 @@
  */
 
 #include <string.h>
+#include "internal/cryptlib.h"
 #include "internal/sm3.h"
 
 #define DATA_ORDER_IS_BIG_ENDIAN
@@ -45,11 +46,8 @@ void ossl_hwsm3_block_data_order(SM3_CTX *c, const void *p, size_t num);
 void ossl_hwsm3_block_data_order(SM3_CTX *c, const void *p, size_t num);
 # endif
 #if (defined(__x86_64) || defined(__x86_64__) || defined(_M_X64))
-#  define HWSM3_CAPABLE 1
+#  define HWSM3_CAPABLE ((OPENSSL_ia32cap_P[2] & (1<<5)) && (OPENSSL_ia32cap_P[5] & (1<<1)))
 void ossl_hwsm3_block_data_order(SM3_CTX *c, const void *p, size_t num);
-void ossl_hwsm3_ni_x86_block_data_order(SM3_CTX *c, const void *p, size_t num);
-/* Returns non-zero when SM3 Instructions are available */
-int ossl_sm3_ni_x86_capable(void);
 #endif
 #endif
 
