@@ -16,6 +16,7 @@
 #include "quic_port_local.h"
 #include "quic_channel_local.h"
 #include "quic_engine_local.h"
+#include "quic_local.h"
 #include "../ssl_local.h"
 #include <openssl/rand.h>
 
@@ -444,19 +445,34 @@ int ossl_quic_port_set_net_wbio(QUIC_PORT *port, BIO *net_wbio)
  * ============================
  */
 
-static SSL *port_new_handshake_layer(QUIC_PORT *port)
+static SSL *port_new_handshake_layer(QUIC_PORT *port, QUIC_CHANNEL *ch)
 {
     SSL *tls = NULL;
     SSL_CONNECTION *tls_conn = NULL;
+    SSL *user_ssl = NULL;
+    QUIC_CONNECTION *qc = NULL;
 
-    /*
-     * TODO(QUIC SERVER): NULL below needs to be replaced with a real user SSL
-     * object of either the listener or the domain which is associated with
-     * the port. https://github.com/openssl/project/issues/918
-     */
-    tls = ossl_ssl_connection_new_int(port->channel_ctx, NULL, TLS_method());
+    if (port->get_conn_user_ssl != NULL) {
+        user_ssl = port->get_conn_user_ssl(ch, port->user_ssl_arg);
+        if (user_ssl == NULL)
+            return NULL;
+        qc = (QUIC_CONNECTION *)user_ssl;
+    }
+
+    tls = ossl_ssl_connection_new_int(port->channel_ctx, user_ssl, TLS_method());
     if (tls == NULL || (tls_conn = SSL_CONNECTION_FROM_SSL(tls)) == NULL)
         return NULL;
+
+    /*
+     * If we got a user ssl, which will be embedded in a quic connection
+     * we need to fix up the connections tls pointer here
+     */
+    if (qc != NULL)
+        qc->tls = tls;
+
+    if (ql != NULL && ql->obj.ssl.ctx->new_pending_ssl_cb != NULL)
+        ql->obj.ssl.ctx->new_pending_ssl_cb(ql->obj.ssl.ctx, user_ssl,
+                                            ql->obj.ssl.ctx->new_pending_ssl_arg);
 
     /* Override the user_ssl of the inner connection. */
     tls_conn->s3.flags      |= TLS1_FLAGS_QUIC;
@@ -474,22 +490,49 @@ static QUIC_CHANNEL *port_make_channel(QUIC_PORT *port, SSL *tls, int is_server)
 
     args.port       = port;
     args.is_server  = is_server;
-    args.tls        = (tls != NULL ? tls : port_new_handshake_layer(port));
     args.lcidm      = port->lcidm;
     args.srtm       = port->srtm;
-    if (args.tls == NULL)
+
+    /*
+     * Creating a a new channel is made a bit tricky here as there is a
+     * bit of a circular dependency.  Initalizing a channel requires that
+     * the ch->tls and optionally the qlog_title be configured prior to
+     * initalization, but we need the channel at least partially configured
+     * to create the new handshake layer, so we have to do this in a few steps.
+     */
+
+    /*
+     * start by allocation and provisioning as much of the channel as we can
+     */
+    ch = ossl_quic_channel_alloc(&args);
+    if (ch == NULL)
         return NULL;
 
+    /*
+     * Fixup the channel tls connection here before we init the channel
+     */
+    ch->tls = (tls != NULL) ? tls : port_new_handshake_layer(port, ch);
+
 #ifndef OPENSSL_NO_QLOG
-    args.use_qlog   = 1; /* disabled if env not set */
-    args.qlog_title = args.tls->ctx->qlog_title;
+    /*
+     * If we're using qlog, make sure the tls get further configured properly
+     */
+    ch->use_qlog = 1;
+    if (ch->tls->ctx->qlog_title != NULL) {
+        if ((ch->qlog_title = OPENSSL_strdup(ch->tls->ctx->qlog_title)) == NULL) {
+            OPENSSL_free(ch);
+            return NULL;
+        }
+    }
 #endif
 
-    ch = ossl_quic_channel_new(&args);
-    if (ch == NULL) {
-        if (tls == NULL)
-            SSL_free(args.tls);
-
+    /*
+     * And finally init the channel struct
+     */
+    if (!ossl_quic_channel_init(ch)) {
+        if (ch->tls == NULL)
+            SSL_free(ch->tls);
+        OPENSSL_free(ch);
         return NULL;
     }
 
