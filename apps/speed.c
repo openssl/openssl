@@ -2998,7 +2998,7 @@ int speed_main(int argc, char **argv)
 
                     if (!ae_mode) {
                         if (!EVP_CipherInit_ex(loopargs[k].ctx, NULL, NULL,
-                                               loopargs[k].key, NULL, -1)) {
+                                               loopargs[k].key, iv, -1)) {
                             BIO_printf(bio_err, "\nFailed to set the key\n");
                             dofail();
                             exit(1);
