@@ -510,6 +510,11 @@ static const OSSL_ALGORITHM fips_asym_cipher[] = {
 
 static const OSSL_ALGORITHM fips_asym_kem[] = {
     { PROV_NAMES_RSA, FIPS_DEFAULT_PROPERTIES, ossl_rsa_asym_kem_functions },
+#ifndef OPENSSL_NO_ML_KEM
+    { PROV_NAMES_ML_KEM_512, FIPS_DEFAULT_PROPERTIES, ossl_ml_kem_asym_kem_functions },
+    { PROV_NAMES_ML_KEM_768, FIPS_DEFAULT_PROPERTIES, ossl_ml_kem_asym_kem_functions },
+    { PROV_NAMES_ML_KEM_1024, FIPS_DEFAULT_PROPERTIES, ossl_ml_kem_asym_kem_functions },
+#endif
     { NULL, NULL, NULL }
 };
 
@@ -559,6 +564,14 @@ static const OSSL_ALGORITHM fips_keymgmt[] = {
 #ifndef OPENSSL_NO_CMAC
     { PROV_NAMES_CMAC, FIPS_DEFAULT_PROPERTIES,
       ossl_cmac_legacy_keymgmt_functions, PROV_DESCS_CMAC_SIGN },
+#endif
+#ifndef OPENSSL_NO_ML_KEM
+    { PROV_NAMES_ML_KEM_512, FIPS_DEFAULT_PROPERTIES,
+      ossl_ml_kem_512_keymgmt_functions, PROV_DESCS_ML_KEM_512 },
+    { PROV_NAMES_ML_KEM_768, FIPS_DEFAULT_PROPERTIES,
+      ossl_ml_kem_768_keymgmt_functions, PROV_DESCS_ML_KEM_768 },
+    { PROV_NAMES_ML_KEM_1024, FIPS_DEFAULT_PROPERTIES,
+      ossl_ml_kem_1024_keymgmt_functions, PROV_DESCS_ML_KEM_1024 },
 #endif
     { NULL, NULL, NULL }
 };
