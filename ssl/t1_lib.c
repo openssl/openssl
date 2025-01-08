@@ -234,7 +234,6 @@ static int add_provider_groups(const OSSL_PARAM params[], void *data)
 {
     struct provider_ctx_data_st *pgd = data;
     SSL_CTX *ctx = pgd->ctx;
-    OSSL_PROVIDER *provider = pgd->provider;
     const OSSL_PARAM *p;
     TLS_GROUP_INFO *ginf = NULL;
     EVP_KEYMGMT *keymgmt;
@@ -344,23 +343,9 @@ static int add_provider_groups(const OSSL_PARAM params[], void *data)
     ERR_set_mark();
     keymgmt = EVP_KEYMGMT_fetch(ctx->libctx, ginf->algorithm, ctx->propq);
     if (keymgmt != NULL) {
-        /*
-         * We have successfully fetched the algorithm - however if the provider
-         * doesn't match this one then we ignore it.
-         *
-         * Note: We're cheating a little here. Technically if the same algorithm
-         * is available from more than one provider then it is undefined which
-         * implementation you will get back. Theoretically this could be
-         * different every time...we assume here that you'll always get the
-         * same one back if you repeat the exact same fetch. Is this a reasonable
-         * assumption to make (in which case perhaps we should document this
-         * behaviour)?
-         */
-        if (EVP_KEYMGMT_get0_provider(keymgmt) == provider) {
-            /* We have a match - so we will use this group */
-            ctx->group_list_len++;
-            ginf = NULL;
-        }
+        /* We have successfully fetched the algorithm, we can use the group. */
+        ctx->group_list_len++;
+        ginf = NULL;
         EVP_KEYMGMT_free(keymgmt);
     }
     ERR_pop_to_mark();
