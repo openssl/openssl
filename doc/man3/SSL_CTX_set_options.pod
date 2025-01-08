@@ -362,6 +362,18 @@ only understands up to SSLv3. In this case the client must still use the
 same SSLv3.1=TLSv1 announcement. Some clients step down to SSLv3 with respect
 to the server's answer and violate the version rollback protection.)
 
+=item SSL_OP_NO_END_OF_EARLY_DATA
+
+The TLS EndOfEarlyData message is not used with QUIC. when this option is
+set, The server will skip the EndOfEarlyData message, and the client will
+not send the EndOfEarlyData message.
+
+Please note that this option can only be used when the Epoch is explicitly
+carried in the transport layer (such as QUIC and DTLS), as EndOfEarlyData
+messages are not required in this scenario. If it is TLS over TCP (implicit
+Epoch), this option MUST NOT be set. Without EndOfEarlyData, the server
+cannot know when to switch states.
+
 =back
 
 The following options no longer have any effect but their identifiers are

@@ -426,6 +426,8 @@ typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
 
 #define SSL_OP_PREFER_NO_DHE_KEX                         SSL_OP_BIT(35)
 
+# define SSL_OP_NO_END_OF_EARLY_DATA                     SSL_OP_BIT(36)
+
 /*
  * Option "collections."
  */
