@@ -144,8 +144,8 @@ ___
   if ($win64) {
 
     # ; xmm6:xmm15 need to be preserved on Windows
-    foreach my $reg_idx (0 .. 12) {
-      my $xmm_reg_offset = ($reg_idx) * 16;
+    foreach my $reg_idx (6 .. 15) {
+      my $xmm_reg_offset = ($reg_idx - 6) * 16;
       $code .= <<___;
         vmovdqu           %xmm${reg_idx},$xmm_reg_offset(%rsp)
 .L${func_name}_seh_save_xmm${reg_idx}:
@@ -277,8 +277,8 @@ $code.=<<___;
     vzeroupper
 ___
   if ($win64) {
-    # ; restore xmm12:xmm0
-    for (my $reg_idx = 12; $reg_idx >= 0; $reg_idx--) {
+    # ; restore xmm15:xmm6
+    for (my $reg_idx = 15; $reg_idx >= 06; $reg_idx--) {
       my $xmm_reg_offset = -$XMM_STORAGE + ($reg_idx) * 16;
       $code .= <<___;
         vmovdqu           $xmm_reg_offset(%rbp),%xmm${reg_idx},
