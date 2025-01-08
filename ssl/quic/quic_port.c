@@ -107,6 +107,8 @@ QUIC_PORT *ossl_quic_port_new(const QUIC_PORT_ARGS *args)
     port->channel_ctx   = args->channel_ctx;
     port->is_multi_conn = args->is_multi_conn;
     port->validate_addr = args->do_addr_validation;
+    port->get_conn_user_ssl = args->get_conn_user_ssl;
+    port->user_ssl_arg = args->user_ssl_arg;
 
     if (!port_init(port)) {
         OPENSSL_free(port);
