@@ -14,7 +14,7 @@ EVP_PKEY-ML-KEM
 =head1 DESCRIPTION
 
 The B<ML-KEM-512>, B<ML-KEM-768>, and B<ML-KEM-1024> keytypes are implemented
-in OpenSSL's B<default> provider.
+in OpenSSL's default and FIPS providers.
 
 =for comment (TODO(ML-KEM): Add FIPS support).
 
