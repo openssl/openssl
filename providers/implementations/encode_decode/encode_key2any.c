@@ -535,8 +535,6 @@ static int dh_check_key_type(const void *dh, int expected_type)
 
 # define dh_evp_type            EVP_PKEY_DH
 # define dhx_evp_type           EVP_PKEY_DHX
-# define dh_input_type          "DH"
-# define dhx_input_type         "DHX"
 # define dh_pem_type            "DH"
 # define dhx_pem_type           "X9.42 DH"
 #endif
@@ -632,7 +630,6 @@ static int dsa_pki_priv_to_der(const void *dsa, unsigned char **pder)
 
 # define dsa_check_key_type     NULL
 # define dsa_evp_type           EVP_PKEY_DSA
-# define dsa_input_type         "DSA"
 # define dsa_pem_type           "DSA"
 #endif
 
@@ -736,7 +733,6 @@ static int ec_pki_priv_to_der(const void *veckey, unsigned char **pder)
 
 # define ec_check_key_type      NULL
 # define ec_evp_type            EVP_PKEY_EC
-# define ec_input_type          "EC"
 # define ec_pem_type            "EC"
 
 # ifndef OPENSSL_NO_SM2
@@ -749,7 +745,6 @@ static int ec_pki_priv_to_der(const void *veckey, unsigned char **pder)
  * in AlgorithmIdentified.params).
  */
 #  define sm2_evp_type          ec_evp_type
-#  define sm2_input_type        "SM2"
 #  define sm2_pem_type          "SM2"
 # endif
 #endif
@@ -814,10 +809,6 @@ static int ecx_pki_priv_to_der(const void *vecxkey, unsigned char **pder)
 # define ed448_evp_type         EVP_PKEY_ED448
 # define x25519_evp_type        EVP_PKEY_X25519
 # define x448_evp_type          EVP_PKEY_X448
-# define ed25519_input_type     "ED25519"
-# define ed448_input_type       "ED448"
-# define x25519_input_type      "X25519"
-# define x448_input_type        "X448"
 # define ed25519_pem_type       "ED25519"
 # define ed448_pem_type         "ED448"
 # define x25519_pem_type        "X25519"
@@ -930,8 +921,6 @@ static int rsa_check_key_type(const void *rsa, int expected_type)
 
 #define rsa_evp_type            EVP_PKEY_RSA
 #define rsapss_evp_type         EVP_PKEY_RSA_PSS
-#define rsa_input_type          "RSA"
-#define rsapss_input_type       "RSA-PSS"
 #define rsa_pem_type            "RSA"
 #define rsapss_pem_type         "RSA-PSS"
 
