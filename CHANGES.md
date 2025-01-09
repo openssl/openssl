@@ -578,7 +578,97 @@ OpenSSL 3.3
 OpenSSL 3.2
 -----------
 
-### Changes between 3.2.1 and 3.2.2 [xx XXX xxxx]
+### Changes between 3.2.3 and 3.2.4 [xx XXX xxxx]
+
+ * Fixed possible OOB memory access with invalid low-level GF(2^m) elliptic
+   curve parameters.
+
+   Use of the low-level GF(2^m) elliptic curve APIs with untrusted
+   explicit values for the field polynomial can lead to out-of-bounds memory
+   reads or writes.
+   Applications working with "exotic" explicit binary (GF(2^m)) curve
+   parameters, that make it possible to represent invalid field polynomials
+   with a zero constant term, via the above or similar APIs, may terminate
+   abruptly as a result of reading or writing outside of array bounds. Remote
+   code execution cannot easily be ruled out.
+
+   ([CVE-2024-9143])
+
+   *Viktor Dukhovni*
+
+### Changes between 3.2.2 and 3.2.3 [3 Sep 2024]
+
+ * Fixed possible denial of service in X.509 name checks.
+
+   Applications performing certificate name checks (e.g., TLS clients checking
+   server certificates) may attempt to read an invalid memory address when
+   comparing the expected name with an `otherName` subject alternative name of
+   an X.509 certificate. This may result in an exception that terminates the
+   application program.
+
+   ([CVE-2024-6119])
+
+   *Viktor Dukhovni*
+
+ * Fixed possible buffer overread in SSL_select_next_proto().
+
+   Calling the OpenSSL API function SSL_select_next_proto with an empty
+   supported client protocols buffer may cause a crash or memory contents
+   to be sent to the peer.
+
+   ([CVE-2024-5535])
+
+   *Matt Caswell*
+
+### Changes between 3.2.1 and 3.2.2 [4 Jun 2024]
+
+ * Fixed potential use after free after SSL_free_buffers() is called.
+
+   The SSL_free_buffers function is used to free the internal OpenSSL
+   buffer used when processing an incoming record from the network.
+   The call is only expected to succeed if the buffer is not currently
+   in use. However, two scenarios have been identified where the buffer
+   is freed even when still in use.
+
+   The first scenario occurs where a record header has been received
+   from the network and processed by OpenSSL, but the full record body
+   has not yet arrived. In this case calling SSL_free_buffers will succeed
+   even though a record has only been partially processed and the buffer
+   is still in use.
+
+   The second scenario occurs where a full record containing application
+   data has been received and processed by OpenSSL but the application has
+   only read part of this data. Again a call to SSL_free_buffers will
+   succeed even though the buffer is still in use.
+
+   ([CVE-2024-4741])
+
+   *Matt Caswell*
+
+ * Fixed an issue where checking excessively long DSA keys or parameters may
+   be very slow.
+
+   Applications that use the functions EVP_PKEY_param_check() or
+   EVP_PKEY_public_check() to check a DSA public key or DSA parameters may
+   experience long delays. Where the key or parameters that are being checked
+   have been obtained from an untrusted source this may lead to a Denial of
+   Service.
+
+   To resolve this issue DSA keys larger than OPENSSL_DSA_MAX_MODULUS_BITS
+   will now fail the check immediately with a DSA_R_MODULUS_TOO_LARGE error
+   reason.
+
+   ([CVE-2024-4603])
+
+   *Tomáš Mráz*
+
+ * Improved EC/DSA nonce generation routines to avoid bias and timing
+   side channel leaks.
+
+   Thanks to Florian Sieck from Universität zu Lübeck and George Pantelakis
+   and Hubert Kario from Red Hat for reporting the issues.
+
+   *Tomáš Mráz and Paul Dale*
 
  * Fixed an issue where some non-default TLS server configurations can cause
    unbounded memory growth when processing TLSv1.3 sessions. An attacker may
@@ -597,6 +687,12 @@ OpenSSL 3.2
    ([CVE-2024-2511])
 
    *Matt Caswell*
+
+ * New atexit configuration switch, which controls whether the OPENSSL_cleanup
+   is registered when libcrypto is unloaded. This can be used on platforms
+   where using atexit() from shared libraries causes crashes on exit.
+
+   *Randall S. Becker*
 
  * Fixed bug where SSL_export_keying_material() could not be used with QUIC
    connections. (#23560)
