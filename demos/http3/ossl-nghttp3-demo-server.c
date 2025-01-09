@@ -792,7 +792,7 @@ static int get_file_length(struct h3ssl *h3ssl)
 static char *get_file_data(struct h3ssl *h3ssl)
 {
     char filename[PATH_MAX];
-    int size = get_file_length(h3ssl);
+    size_t size = get_file_length(h3ssl);
     char *res;
     int fd;
 
@@ -813,7 +813,7 @@ static char *get_file_data(struct h3ssl *h3ssl)
         return NULL;
     }
     close(fd);
-    printf("read from %s : %d\n", filename, size);
+    printf("read from %s : %lu\n", filename, size);
     return res;
 }
 
