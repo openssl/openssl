@@ -39,6 +39,8 @@ B<openssl> B<enc>|I<cipher>
 [B<-v>]
 [B<-debug>]
 [B<-none>]
+[B<-skeymgmt> I<skeymgmt>]
+[B<-skeyopt> I<opt>:I<value>]
 {- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
 
@@ -216,6 +218,21 @@ or zlib-dynamic option.
 =item B<-none>
 
 Use NULL cipher (no encryption or decryption of input).
+
+=item B<-skeymgmt> I<skeymgmt>
+
+Some providers may support opaque symmetric keys objects. To use them, we need
+to know the name of the B<EVP_SKEYMGMT> to be used. If not specified, the name
+of the cipher will be used.
+
+To find out the name of the suitable symmetric key management,
+please refer to the output of the C<openssl list -skey-managers> command.
+
+=item B<-skeyopt> I<opt>:I<value>
+
+To obtain an existing opaque symmetric key or generate a new one, key
+options are specified as opt:value. These options can't be used together with
+any options implying raw key directly or indirectly.
 
 {- $OpenSSL::safe::opt_r_item -}
 
@@ -477,6 +494,10 @@ The B<openssl enc> command only supports a fixed number of algorithms with
 certain parameters. So if, for example, you want to use RC2 with a
 76 bit key or RC4 with an 84 bit key you can't use this program.
 
+=head1 SEE ALSO
+
+L<openssl-list(1)>, L<EVP_SKEY(3)>
+
 =head1 HISTORY
 
 The default digest was changed from MD5 to SHA256 in OpenSSL 1.1.0.
@@ -486,6 +507,8 @@ The B<-list> option was added in OpenSSL 1.1.1e.
 The B<-ciphers> and B<-engine> options were deprecated in OpenSSL 3.0.
 
 The B<-saltlen> option was added in OpenSSL 3.2.
+
+The B<-skeymgmt> and B<-skeyopt> options were added in OpenSSL 3.5.
 
 =head1 COPYRIGHT
 
