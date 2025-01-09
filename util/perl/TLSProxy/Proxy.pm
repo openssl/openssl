@@ -290,14 +290,8 @@ sub start
     if ($self->debug) {
         print STDERR "Server command: $execcmd\n";
     }
-    my $sin = undef;
-    my $sout = undef;
-    if ("$^O" eq "MSWin32") {
-        $pid = IPC::Open2::open2($sout, $sin, $execcmd) or die "Failed to $execcmd: $!\n";
-    } else {
-        $pid = IPC::Open3::open3($sin, $sout, undef, $execcmd) or die "Failed to $execcmd: $!\n";
-    }
 
+    $pid = IPC::Open2::open2(my $sout, my $sin, $execcmd) or die "Failed to $execcmd: $!\n";
     $self->{serverpid} = $pid;
 
     # Process the output from s_server until we find the ACCEPT line, which
