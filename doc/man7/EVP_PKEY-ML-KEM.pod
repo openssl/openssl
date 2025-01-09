@@ -56,24 +56,47 @@ The public key value.
 
 This parameter is used when importing or exporting the public key value with
 the EVP_PKEY_fromdata() and EVP_PKEY_todata() functions.  The same underlying
-FIPS 203 public key format is used for import, import, get and set operations.
+FIPS 203 (Algorithm 16: B<ML-KEM.KeyGen_internal>) B<ek> public key format is
+used for import, export, get and set operations.
 
 =item "priv" (B<OSSL_PKEY_PARAM_PRIV_KEY>) <octet string>
 
-The private key value.
+The private key, in seed form when available.
 
 This parameter is used when importing or exporting the private key value with
 the EVP_PKEY_fromdata() and EVP_PKEY_todata() functions.
-The key format is that of B<dk> in FIPS 203, Algorithm 16:
-B<ML-KEM.KeyGen_internal>.
+On import, the private key key length is used to infer the key format.
+If the key length is 64 bytes, the key format is assumed to be the 64-byte
+input seed of FIPS 203, Algorithm 16: B<ML-KEM.KeyGen_internal>, with the B<d>
+and B<z> values concatenated in that order.
+If, on the other hand, the key length is that of the FIPS 203 (Algorithm 16:
+B<ML-KEM.KeyGen_internal>) B<dk> private key for the given ML-KEM variant, then
+the key is assumed to be in that format.
+
+Keys originally imported in the B<dk> FIPS 203 form cannot be exported in seed
+form as the B<d> seed is not available in that case, and the exported key will
+then be the FIPS 203 B<dk> format in which the key was imported.
+Generated keys retain the seed value, and are exported in seed form.
 
 =item "encoded-pub-key" (B<OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY>) <octet string>
 
 Used for getting and setting the encoding of a public key.
 The key format is that of B<ek> in FIPS 203, Algorithm 16:
 B<ML-KEM.KeyGen_internal>.
+Updates of the public and private key components are only allowed on keys that
+are empty.
+Once a public or private key component is set, no further changes are allowed.
 
 This parameter is gettable and settable.
+
+=item "encoded-priv-key" (B<PKEY_PARAM_ENCODED_PRIVATE_KEY>) <octet string>
+
+Used for getting the I<expanded> encoding of a private key.
+The key format is that of B<dk> in FIPS 203, Algorithm 16: B<ML-KEM.KeyGen_internal>.
+The private key format returned from key export is the B<(d, z)> seed, when
+available, but is otherwise the same as the encoded form.
+
+This parameter is only gettable.
 
 =back
 

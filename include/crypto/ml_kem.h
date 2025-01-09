@@ -85,7 +85,7 @@
  * Variant-specific constants and structures
  * -----------------------------------------
  */
-# define ML_KEM_512_VARIANT     0
+# define EVP_PKEY_ML_KEM_512    NID_ML_KEM_512
 # define ML_KEM_512_BITS        512
 # define ML_KEM_512_RANK        2
 # define ML_KEM_512_ETA1        3
@@ -94,7 +94,7 @@
 # define ML_KEM_512_DV          4
 # define ML_KEM_512_SECBITS     128
 
-# define ML_KEM_768_VARIANT     1
+# define EVP_PKEY_ML_KEM_768    NID_ML_KEM_768
 # define ML_KEM_768_BITS        768
 # define ML_KEM_768_RANK        3
 # define ML_KEM_768_ETA1        2
@@ -103,7 +103,7 @@
 # define ML_KEM_768_DV          4
 # define ML_KEM_768_SECBITS     192
 
-# define ML_KEM_1024_VARIANT    2
+# define EVP_PKEY_ML_KEM_1024   NID_ML_KEM_1024
 # define ML_KEM_1024_BITS       1024
 # define ML_KEM_1024_RANK       4
 # define ML_KEM_1024_ETA1       2
@@ -126,7 +126,7 @@ typedef struct {
     size_t ctext_bytes;
     size_t vector_bytes;
     size_t u_vector_bytes;
-    int variant;
+    int evp_type;
     int bits;
     int rank;
     int du;
@@ -135,7 +135,7 @@ typedef struct {
 } ML_KEM_VINFO;
 
 /* Retrive global variant-specific parameters */
-const ML_KEM_VINFO *ossl_ml_kem_get_vinfo(int variant);
+const ML_KEM_VINFO *ossl_ml_kem_get_vinfo(int evp_type);
 
 /* Known as ML_KEM_KEY via crypto/types.h */
 typedef struct ossl_ml_kem_key_st {
@@ -171,9 +171,10 @@ typedef struct ossl_ml_kem_key_st {
 } ML_KEM_KEY;
 
 /* The public key is always present, when the private is */
-# define ossl_ml_kem_key_vinfo(key)        ((key)->vinfo)
-# define ossl_ml_kem_have_pubkey(key)      ((key)->t != NULL)
-# define ossl_ml_kem_have_prvkey(key)      ((key)->s != NULL)
+# define ossl_ml_kem_key_vinfo(key)         ((key)->vinfo)
+# define ossl_ml_kem_have_pubkey(key)       ((key)->t != NULL)
+# define ossl_ml_kem_have_prvkey(key)       ((key)->s != NULL)
+# define ossl_ml_kem_have_seed(key)         ((key)->d != NULL)
 
 /*
  * ----- ML-KEM key lifecycle
@@ -185,7 +186,7 @@ typedef struct ossl_ml_kem_key_st {
  */
 ML_KEM_KEY *ossl_ml_kem_key_new(OSSL_LIB_CTX *libctx,
                                 const char *properties,
-                                int variant);
+                                int evp_type);
 /* Deallocate the key */
 void ossl_ml_kem_key_free(ML_KEM_KEY *key);
 /*
@@ -227,6 +228,9 @@ int ossl_ml_kem_encode_public_key(uint8_t *out, size_t len,
 __owur
 int ossl_ml_kem_encode_private_key(uint8_t *out, size_t len,
                                    const ML_KEM_KEY *key);
+__owur
+int ossl_ml_kem_encode_key_seed(uint8_t *out, size_t len,
+                                const ML_KEM_KEY *key);
 
 __owur
 int ossl_ml_kem_encap_seed(uint8_t *ctext, size_t clen,

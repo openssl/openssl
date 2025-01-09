@@ -92,6 +92,7 @@ static uint8_t ml_kem_expected_shared_secret[3][32] = {
 
 static int sanity_test(void)
 {
+    static const int alg[3] = { NID_ML_KEM_512, NID_ML_KEM_768, NID_ML_KEM_1024 };
     EVP_RAND_CTX *privctx;
     EVP_RAND_CTX *pubctx;
     EVP_MD *sha256 = EVP_MD_fetch(NULL, "sha256", NULL);
@@ -107,7 +108,7 @@ static int sanity_test(void)
 
     decap_entropy = ml_kem_public_entropy + ML_KEM_RANDOM_BYTES;
 
-    for (i = ML_KEM_512_VARIANT; i < ML_KEM_1024_VARIANT; ++i) {
+    for (i = 0; i < (int) OSSL_NELEM(alg); ++i) {
         OSSL_PARAM params[3];
         uint8_t hash[32];
         uint8_t shared_secret[ML_KEM_SHARED_SECRET_BYTES];
@@ -132,8 +133,8 @@ static int sanity_test(void)
         if (!TEST_true(EVP_RAND_CTX_set_params(privctx, params)))
             return 0;
 
-        public_key = ossl_ml_kem_key_new(NULL, NULL, i);
-        private_key = ossl_ml_kem_key_new(NULL, NULL, i);
+        public_key = ossl_ml_kem_key_new(NULL, NULL, alg[i]);
+        private_key = ossl_ml_kem_key_new(NULL, NULL, alg[i]);
         if (private_key == NULL || public_key == NULL
             || (v = ossl_ml_kem_key_vinfo(public_key)) == NULL)
             goto done;

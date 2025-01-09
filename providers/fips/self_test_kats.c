@@ -708,8 +708,8 @@ static EVP_PKEY *self_test_kem_keygen(const ST_KAT_KEM *t, OSSL_SELF_TEST *st,
         goto err;
 
     /* Compare outputs */
-    *params = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_PRIV_KEY,
-                                                buf, s);
+    *params = OSSL_PARAM_construct_octet_string(
+        OSSL_PKEY_PARAM_ENCODED_PRIVATE_KEY, buf, s);
     if (!EVP_PKEY_get_params(r, params))
         goto err;
     OSSL_SELF_TEST_oncorrupt_byte(st, buf);
