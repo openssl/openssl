@@ -1363,6 +1363,14 @@ DEPEND[html/man3/EVP_SIGNATURE.html]=man3/EVP_SIGNATURE.pod
 GENERATE[html/man3/EVP_SIGNATURE.html]=man3/EVP_SIGNATURE.pod
 DEPEND[man/man3/EVP_SIGNATURE.3]=man3/EVP_SIGNATURE.pod
 GENERATE[man/man3/EVP_SIGNATURE.3]=man3/EVP_SIGNATURE.pod
+DEPEND[html/man3/EVP_SKEY.html]=man3/EVP_SKEY.pod
+GENERATE[html/man3/EVP_SKEY.html]=man3/EVP_SKEY.pod
+DEPEND[man/man3/EVP_SKEY.3]=man3/EVP_SKEY.pod
+GENERATE[man/man3/EVP_SKEY.3]=man3/EVP_SKEY.pod
+DEPEND[html/man3/EVP_SKEYMGMT.html]=man3/EVP_SKEYMGMT.pod
+GENERATE[html/man3/EVP_SKEYMGMT.html]=man3/EVP_SKEYMGMT.pod
+DEPEND[man/man3/EVP_SKEYMGMT.3]=man3/EVP_SKEYMGMT.pod
+GENERATE[man/man3/EVP_SKEYMGMT.3]=man3/EVP_SKEYMGMT.pod
 DEPEND[html/man3/EVP_SealInit.html]=man3/EVP_SealInit.pod
 GENERATE[html/man3/EVP_SealInit.html]=man3/EVP_SealInit.pod
 DEPEND[man/man3/EVP_SealInit.3]=man3/EVP_SealInit.pod
@@ -3348,6 +3356,8 @@ html/man3/EVP_PKEY_verify.html \
 html/man3/EVP_PKEY_verify_recover.html \
 html/man3/EVP_RAND.html \
 html/man3/EVP_SIGNATURE.html \
+html/man3/EVP_SKEY.html \
+html/man3/EVP_SKEYMGMT.html \
 html/man3/EVP_SealInit.html \
 html/man3/EVP_SignInit.html \
 html/man3/EVP_VerifyInit.html \
@@ -4012,6 +4022,8 @@ man/man3/EVP_PKEY_verify.3 \
 man/man3/EVP_PKEY_verify_recover.3 \
 man/man3/EVP_RAND.3 \
 man/man3/EVP_SIGNATURE.3 \
+man/man3/EVP_SKEY.3 \
+man/man3/EVP_SKEYMGMT.3 \
 man/man3/EVP_SealInit.3 \
 man/man3/EVP_SignInit.3 \
 man/man3/EVP_VerifyInit.3 \
@@ -5045,6 +5057,10 @@ DEPEND[html/man7/provider-signature.html]=man7/provider-signature.pod
 GENERATE[html/man7/provider-signature.html]=man7/provider-signature.pod
 DEPEND[man/man7/provider-signature.7]=man7/provider-signature.pod
 GENERATE[man/man7/provider-signature.7]=man7/provider-signature.pod
+DEPEND[html/man7/provider-skeymgmt.html]=man7/provider-skeymgmt.pod
+GENERATE[html/man7/provider-skeymgmt.html]=man7/provider-skeymgmt.pod
+DEPEND[man/man7/provider-skeymgmt.7]=man7/provider-skeymgmt.pod
+GENERATE[man/man7/provider-skeymgmt.7]=man7/provider-skeymgmt.pod
 DEPEND[html/man7/provider-storemgmt.html]=man7/provider-storemgmt.pod
 GENERATE[html/man7/provider-storemgmt.html]=man7/provider-storemgmt.pod
 DEPEND[man/man7/provider-storemgmt.7]=man7/provider-storemgmt.pod
@@ -5210,6 +5226,7 @@ html/man7/provider-mac.html \
 html/man7/provider-object.html \
 html/man7/provider-rand.html \
 html/man7/provider-signature.html \
+html/man7/provider-skeymgmt.html \
 html/man7/provider-storemgmt.html \
 html/man7/provider.html \
 html/man7/proxy-certificates.html \
@@ -5357,6 +5374,7 @@ man/man7/provider-mac.7 \
 man/man7/provider-object.7 \
 man/man7/provider-rand.7 \
 man/man7/provider-signature.7 \
+man/man7/provider-skeymgmt.7 \
 man/man7/provider-storemgmt.7 \
 man/man7/provider.7 \
 man/man7/proxy-certificates.7 \
