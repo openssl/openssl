@@ -56,6 +56,7 @@ IS_FETCHABLE(mac, EVP_MAC)
 IS_FETCHABLE(kdf, EVP_KDF)
 IS_FETCHABLE(rand, EVP_RAND)
 IS_FETCHABLE(keymgmt, EVP_KEYMGMT)
+IS_FETCHABLE(skeymgmt, EVP_SKEYMGMT)
 IS_FETCHABLE(signature, EVP_SIGNATURE)
 IS_FETCHABLE(kem, EVP_KEM)
 IS_FETCHABLE(asym_cipher, EVP_ASYM_CIPHER)
@@ -688,6 +689,61 @@ static void list_keymanagers(void)
         sk_OPENSSL_CSTRING_free(names);
     }
     sk_EVP_KEYMGMT_pop_free(km_stack, EVP_KEYMGMT_free);
+}
+
+DEFINE_STACK_OF(EVP_SKEYMGMT)
+static int skeymanager_cmp(const EVP_SKEYMGMT * const *a,
+                           const EVP_SKEYMGMT * const *b)
+{
+    return strcmp(OSSL_PROVIDER_get0_name(EVP_SKEYMGMT_get0_provider(*a)),
+                  OSSL_PROVIDER_get0_name(EVP_SKEYMGMT_get0_provider(*b)));
+}
+
+static void collect_skeymanagers(EVP_SKEYMGMT *km, void *stack)
+{
+    STACK_OF(EVP_SKEYMGMT) *km_stack = stack;
+
+    if (is_skeymgmt_fetchable(km)
+            && sk_EVP_SKEYMGMT_push(km_stack, km) > 0)
+        EVP_SKEYMGMT_up_ref(km);
+}
+
+static void list_skeymanagers(void)
+{
+    int i;
+    STACK_OF(EVP_SKEYMGMT) *km_stack = sk_EVP_SKEYMGMT_new(skeymanager_cmp);
+
+    EVP_SKEYMGMT_do_all_provided(app_get0_libctx(), collect_skeymanagers,
+                                 km_stack);
+    sk_EVP_SKEYMGMT_sort(km_stack);
+
+    for (i = 0; i < sk_EVP_SKEYMGMT_num(km_stack); i++) {
+        EVP_SKEYMGMT *k = sk_EVP_SKEYMGMT_value(km_stack, i);
+        STACK_OF(OPENSSL_CSTRING) *names = NULL;
+
+        if (select_name != NULL && !EVP_SKEYMGMT_is_a(k, select_name))
+            continue;
+
+        names = sk_OPENSSL_CSTRING_new(name_cmp);
+        if (names != NULL && EVP_SKEYMGMT_names_do_all(k, collect_names, names)) {
+            const char *desc = EVP_SKEYMGMT_get0_description(k);
+
+            BIO_printf(bio_out, "  Name: ");
+            if (desc != NULL)
+                BIO_printf(bio_out, "%s", desc);
+            else
+                BIO_printf(bio_out, "%s", sk_OPENSSL_CSTRING_value(names, 0));
+            BIO_printf(bio_out, "\n");
+            BIO_printf(bio_out, "    Type: Provider Algorithm\n");
+            BIO_printf(bio_out, "    IDs: ");
+            print_names(bio_out, names);
+            BIO_printf(bio_out, " @ %s\n",
+                       OSSL_PROVIDER_get0_name(EVP_SKEYMGMT_get0_provider(k)));
+
+        }
+        sk_OPENSSL_CSTRING_free(names);
+    }
+    sk_EVP_SKEYMGMT_pop_free(km_stack, EVP_SKEYMGMT_free);
 }
 
 DEFINE_STACK_OF(EVP_SIGNATURE)
@@ -1510,6 +1566,7 @@ typedef enum HELPLIST_CHOICE {
     OPT_PK_ALGORITHMS, OPT_PK_METHOD, OPT_DISABLED,
     OPT_KDF_ALGORITHMS, OPT_RANDOM_INSTANCES, OPT_RANDOM_GENERATORS,
     OPT_ENCODERS, OPT_DECODERS, OPT_KEYMANAGERS, OPT_KEYEXCHANGE_ALGORITHMS,
+    OPT_SKEYMANAGERS,
     OPT_KEM_ALGORITHMS, OPT_SIGNATURE_ALGORITHMS,
     OPT_TLS_SIGNATURE_ALGORITHMS, OPT_ASYM_CIPHER_ALGORITHMS,
     OPT_STORE_LOADERS, OPT_PROVIDER_INFO, OPT_OBJECTS,
@@ -1555,6 +1612,7 @@ const OPTIONS list_options[] = {
     {"encoders", OPT_ENCODERS, '-', "List of encoding methods" },
     {"decoders", OPT_DECODERS, '-', "List of decoding methods" },
     {"key-managers", OPT_KEYMANAGERS, '-', "List of key managers" },
+    {"skey-managers", OPT_SKEYMANAGERS, '-', "List of symmetric key managers" },
     {"key-exchange-algorithms", OPT_KEYEXCHANGE_ALGORITHMS, '-',
      "List of key exchange algorithms" },
     {"kem-algorithms", OPT_KEM_ALGORITHMS, '-',
@@ -1607,6 +1665,7 @@ int list_main(int argc, char **argv)
         unsigned int encoder_algorithms:1;
         unsigned int decoder_algorithms:1;
         unsigned int keymanager_algorithms:1;
+        unsigned int skeymanager_algorithms:1;
         unsigned int signature_algorithms:1;
         unsigned int tls_signature_algorithms:1;
         unsigned int keyexchange_algorithms:1;
@@ -1678,6 +1737,9 @@ opthelp:
             break;
         case OPT_KEYMANAGERS:
             todo.keymanager_algorithms = 1;
+            break;
+        case OPT_SKEYMANAGERS:
+            todo.skeymanager_algorithms = 1;
             break;
         case OPT_SIGNATURE_ALGORITHMS:
             todo.signature_algorithms = 1;
@@ -1800,6 +1862,8 @@ opthelp:
         MAYBE_ADD_NL(list_decoders());
     if (todo.keymanager_algorithms)
         MAYBE_ADD_NL(list_keymanagers());
+    if (todo.skeymanager_algorithms)
+        MAYBE_ADD_NL(list_skeymanagers());
     if (todo.signature_algorithms)
         MAYBE_ADD_NL(list_signatures());
     if (todo.tls_signature_algorithms)
