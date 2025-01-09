@@ -1107,7 +1107,6 @@ static int ec_gen_set_params(void *genctx, const OSSL_PARAM params[])
     int ret = 0;
     struct ec_gen_ctx *gctx = genctx;
     const OSSL_PARAM *p;
-    EC_GROUP *group = NULL;
 
     if (!OSSL_FIPS_IND_SET_CTX_PARAM(gctx, OSSL_FIPS_IND_SETTABLE0, params,
                                      OSSL_PKEY_PARAM_FIPS_KEY_CHECK))
@@ -1136,7 +1135,6 @@ static int ec_gen_set_params(void *genctx, const OSSL_PARAM params[])
 
     ret = 1;
 err:
-    EC_GROUP_free(group);
     return ret;
 }
 
