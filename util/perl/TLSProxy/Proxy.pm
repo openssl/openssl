@@ -297,8 +297,7 @@ sub start
     # Process the output from s_server until we find the ACCEPT line, which
     # tells us what the accepting address and port are.
     while (<$sout>) {
-        print;
-        s/\R$//; # chomp does not work on windows.
+        chomp;
         next unless (/^ACCEPT\s.*:(\d+)$/);
         $self->{server_port} = $1;
         last;
