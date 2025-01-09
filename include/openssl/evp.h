@@ -808,6 +808,9 @@ __owur int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx,
                                  const EVP_CIPHER *cipher, ENGINE *impl,
                                  const unsigned char *key,
                                  const unsigned char *iv, int enc);
+__owur int EVP_CipherInit_SKEY(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
+                               EVP_SKEY *skey, const unsigned char *iv, size_t iv_len,
+                               int enc, const OSSL_PARAM params[]);
 __owur int EVP_CipherInit_ex2(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
                               const unsigned char *key, const unsigned char *iv,
                               int enc, const OSSL_PARAM params[]);
@@ -1829,6 +1832,23 @@ const OSSL_PARAM *EVP_KEYMGMT_settable_params(const EVP_KEYMGMT *keymgmt);
 const OSSL_PARAM *EVP_KEYMGMT_gen_settable_params(const EVP_KEYMGMT *keymgmt);
 const OSSL_PARAM *EVP_KEYMGMT_gen_gettable_params(const EVP_KEYMGMT *keymgmt);
 
+EVP_SKEYMGMT *EVP_SKEYMGMT_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
+                                 const char *properties);
+int EVP_SKEYMGMT_up_ref(EVP_SKEYMGMT *keymgmt);
+void EVP_SKEYMGMT_free(EVP_SKEYMGMT *keymgmt);
+const OSSL_PROVIDER *EVP_SKEYMGMT_get0_provider(const EVP_SKEYMGMT *keymgmt);
+const char *EVP_SKEYMGMT_get0_name(const EVP_SKEYMGMT *keymgmt);
+const char *EVP_SKEYMGMT_get0_description(const EVP_SKEYMGMT *keymgmt);
+int EVP_SKEYMGMT_is_a(const EVP_SKEYMGMT *keymgmt, const char *name);
+void EVP_SKEYMGMT_do_all_provided(OSSL_LIB_CTX *libctx,
+                                  void (*fn)(EVP_SKEYMGMT *keymgmt, void *arg),
+                                  void *arg);
+int EVP_SKEYMGMT_names_do_all(const EVP_SKEYMGMT *keymgmt,
+                              void (*fn)(const char *name, void *data),
+                              void *data);
+const OSSL_PARAM *EVP_SKEYMGMT_get0_gen_settable_params(const EVP_SKEYMGMT *skeymgmt);
+const OSSL_PARAM *EVP_SKEYMGMT_get0_imp_settable_params(const EVP_SKEYMGMT *skeymgmt);
+
 EVP_PKEY_CTX *EVP_PKEY_CTX_new(EVP_PKEY *pkey, ENGINE *e);
 EVP_PKEY_CTX *EVP_PKEY_CTX_new_id(int id, ENGINE *e);
 EVP_PKEY_CTX *EVP_PKEY_CTX_new_from_name(OSSL_LIB_CTX *libctx,
@@ -2250,6 +2270,23 @@ int EVP_PKEY_get_group_name(const EVP_PKEY *pkey, char *name, size_t name_sz,
 OSSL_LIB_CTX *EVP_PKEY_CTX_get0_libctx(EVP_PKEY_CTX *ctx);
 const char *EVP_PKEY_CTX_get0_propq(const EVP_PKEY_CTX *ctx);
 const OSSL_PROVIDER *EVP_PKEY_CTX_get0_provider(const EVP_PKEY_CTX *ctx);
+
+EVP_SKEY *EVP_SKEY_import(OSSL_LIB_CTX *libctx, const char *skeymgmtname, const char *propquery,
+                          int selection, const OSSL_PARAM *params);
+EVP_SKEY *EVP_SKEY_generate(OSSL_LIB_CTX *libctx, const char *skeymgmtname,
+                            const char *propquery, const OSSL_PARAM *params);
+EVP_SKEY *EVP_SKEY_import_raw_key(OSSL_LIB_CTX *libctx, const char *skeymgmtname,
+                                  unsigned char *key, size_t keylen,
+                                  const char *propquery);
+int EVP_SKEY_get_raw_key(const EVP_SKEY *skey, const unsigned char **key,
+                         size_t *len);
+const char *EVP_SKEY_get0_key_id(const EVP_SKEY *skey);
+int EVP_SKEY_export(const EVP_SKEY *skey, int selection,
+                    OSSL_CALLBACK *export_cb, void *export_cbarg);
+int EVP_SKEY_up_ref(EVP_SKEY *skey);
+void EVP_SKEY_free(EVP_SKEY *skey);
+const char *EVP_SKEY_get0_skeymgmt_name(const EVP_SKEY *skey);
+const char *EVP_SKEY_get0_provider_name(const EVP_SKEY *skey);
 
 # ifdef  __cplusplus
 }
