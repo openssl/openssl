@@ -424,6 +424,54 @@ tracker][issue tracker].
 OpenSSL 3.1
 -----------
 
+### Major changes between OpenSSL 3.1.7 and OpenSSL 3.1.8 [under development]
+
+OpenSSL 3.1.8 is a security patch release. The most severe CVE fixed in this
+release is Low.
+
+This release incorporates the following bug fixes and mitigations:
+
+  * Fixed possible OOB memory access with invalid low-level GF(2^m) elliptic
+    curve parameters.
+    ([CVE-2024-9143])
+
+### Major changes between OpenSSL 3.1.6 and OpenSSL 3.1.7 [3 Sep 2024]
+
+OpenSSL 3.1.7 is a security patch release. The most severe CVE fixed in this
+release is Moderate.
+
+This release incorporates the following bug fixes and mitigations:
+
+  * Fixed possible denial of service in X.509 name checks
+    ([CVE-2024-6119])
+
+  * Fixed possible buffer overread in SSL_select_next_proto()
+    ([CVE-2024-5535])
+
+### Major changes between OpenSSL 3.1.5 and OpenSSL 3.1.6 [4 Jun 2024]
+
+  * Fixed potential use after free after SSL_free_buffers() is called
+    ([CVE-2024-4741])
+
+  * Fixed an issue where checking excessively long DSA keys or parameters may
+    be very slow
+    ([CVE-2024-4603])
+
+  * Fixed unbounded memory growth with session handling in TLSv1.3
+    ([CVE-2024-2511])
+
+### Major changes between OpenSSL 3.1.4 and OpenSSL 3.1.5 [30 Jan 2024]
+
+  * Fixed PKCS12 Decoding crashes
+    ([CVE-2024-0727])
+  * Fixed Excessive time spent checking invalid RSA public keys
+    ([CVE-2023-6237])
+  * Fixed POLY1305 MAC implementation corrupting vector registers on PowerPC
+    CPUs which support PowerISA 2.07
+    ([CVE-2023-6129])
+  * Fix excessive time spent in DH check / generation with large Q parameter
+    value ([CVE-2023-5678])
+
 ### Major changes between OpenSSL 3.1.3 and OpenSSL 3.1.4 [24 Oct 2023]
 
   * Mitigate incorrect resize handling for symmetric cipher keys and IVs.
