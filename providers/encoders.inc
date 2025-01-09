@@ -67,6 +67,11 @@ ENCODER_TEXT("X448", x448, yes),
 ENCODER_TEXT("SM2", sm2, no),
 # endif
 #endif
+#ifndef OPENSSL_NO_ML_KEM
+ENCODER_TEXT("ML-KEM-512", ml_kem_512, yes),
+ENCODER_TEXT("ML-KEM-768", ml_kem_768, yes),
+ENCODER_TEXT("ML-KEM-1024", ml_kem_1024, yes),
+#endif
 
 # ifndef OPENSSL_NO_ML_DSA
 ENCODER_TEXT("ML-DSA-44", ml_dsa_44, yes),
@@ -189,6 +194,16 @@ ENCODER_w_structure("EC", ec, yes, pem, PrivateKeyInfo),
 ENCODER_w_structure("EC", ec, yes, der, SubjectPublicKeyInfo),
 ENCODER_w_structure("EC", ec, yes, pem, SubjectPublicKeyInfo),
 
+# ifndef OPENSSL_NO_SM2
+ENCODER_w_structure("SM2", sm2, no, der, EncryptedPrivateKeyInfo),
+ENCODER_w_structure("SM2", sm2, no, pem, EncryptedPrivateKeyInfo),
+ENCODER_w_structure("SM2", sm2, no, der, PrivateKeyInfo),
+ENCODER_w_structure("SM2", sm2, no, pem, PrivateKeyInfo),
+ENCODER_w_structure("SM2", sm2, no, der, SubjectPublicKeyInfo),
+ENCODER_w_structure("SM2", sm2, no, pem, SubjectPublicKeyInfo),
+# endif
+#endif
+
 #ifndef OPENSSL_NO_ECX
 ENCODER_w_structure("X25519", x25519, yes, der, EncryptedPrivateKeyInfo),
 ENCODER_w_structure("X25519", x25519, yes, pem, EncryptedPrivateKeyInfo),
@@ -217,16 +232,29 @@ ENCODER_w_structure("ED448", ed448, yes, der, PrivateKeyInfo),
 ENCODER_w_structure("ED448", ed448, yes, pem, PrivateKeyInfo),
 ENCODER_w_structure("ED448", ed448, yes, der, SubjectPublicKeyInfo),
 ENCODER_w_structure("ED448", ed448, yes, pem, SubjectPublicKeyInfo),
-# endif
+#endif
 
-# ifndef OPENSSL_NO_SM2
-ENCODER_w_structure("SM2", sm2, no, der, EncryptedPrivateKeyInfo),
-ENCODER_w_structure("SM2", sm2, no, pem, EncryptedPrivateKeyInfo),
-ENCODER_w_structure("SM2", sm2, no, der, PrivateKeyInfo),
-ENCODER_w_structure("SM2", sm2, no, pem, PrivateKeyInfo),
-ENCODER_w_structure("SM2", sm2, no, der, SubjectPublicKeyInfo),
-ENCODER_w_structure("SM2", sm2, no, pem, SubjectPublicKeyInfo),
-# endif
+#ifndef OPENSSL_NO_ML_KEM
+ENCODER_w_structure("ML-KEM-512", ml_kem_512, yes, der, EncryptedPrivateKeyInfo),
+ENCODER_w_structure("ML-KEM-512", ml_kem_512, yes, pem, EncryptedPrivateKeyInfo),
+ENCODER_w_structure("ML-KEM-512", ml_kem_512, yes, der, PrivateKeyInfo),
+ENCODER_w_structure("ML-KEM-512", ml_kem_512, yes, pem, PrivateKeyInfo),
+ENCODER_w_structure("ML-KEM-512", ml_kem_512, yes, der, SubjectPublicKeyInfo),
+ENCODER_w_structure("ML-KEM-512", ml_kem_512, yes, pem, SubjectPublicKeyInfo),
+
+ENCODER_w_structure("ML-KEM-768", ml_kem_768, yes, der, EncryptedPrivateKeyInfo),
+ENCODER_w_structure("ML-KEM-768", ml_kem_768, yes, pem, EncryptedPrivateKeyInfo),
+ENCODER_w_structure("ML-KEM-768", ml_kem_768, yes, der, PrivateKeyInfo),
+ENCODER_w_structure("ML-KEM-768", ml_kem_768, yes, pem, PrivateKeyInfo),
+ENCODER_w_structure("ML-KEM-768", ml_kem_768, yes, der, SubjectPublicKeyInfo),
+ENCODER_w_structure("ML-KEM-768", ml_kem_768, yes, pem, SubjectPublicKeyInfo),
+
+ENCODER_w_structure("ML-KEM-1024", ml_kem_1024, yes, der, EncryptedPrivateKeyInfo),
+ENCODER_w_structure("ML-KEM-1024", ml_kem_1024, yes, pem, EncryptedPrivateKeyInfo),
+ENCODER_w_structure("ML-KEM-1024", ml_kem_1024, yes, der, PrivateKeyInfo),
+ENCODER_w_structure("ML-KEM-1024", ml_kem_1024, yes, pem, PrivateKeyInfo),
+ENCODER_w_structure("ML-KEM-1024", ml_kem_1024, yes, der, SubjectPublicKeyInfo),
+ENCODER_w_structure("ML-KEM-1024", ml_kem_1024, yes, pem, SubjectPublicKeyInfo),
 #endif
 
 # ifndef OPENSSL_NO_ML_DSA

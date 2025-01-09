@@ -29,6 +29,7 @@
 #include "internal/passphrase.h"
 #include "internal/cryptlib.h"
 #include "crypto/ecx.h"
+#include "crypto/ml_kem.h"
 #include "crypto/rsa.h"
 #include "crypto/ml_dsa.h"
 #include "prov/implementations.h"
@@ -877,6 +878,83 @@ static int ml_dsa_pki_priv_to_der(const void *vkey, unsigned char **pder,
 
 /* ---------------------------------------------------------------------- */
 
+#ifndef OPENSSL_NO_ML_KEM
+
+static int ml_kem_spki_pub_to_der(const void *vkey, unsigned char **pder,
+                                  ossl_unused void *ctx)
+{
+    const ML_KEM_KEY *key = vkey;
+    size_t publen;
+
+    if (!ossl_ml_kem_have_pubkey(key)) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    publen = key->vinfo->pubkey_bytes;
+
+    if (pder != NULL
+        && ((*pder = OPENSSL_malloc(publen)) == NULL
+            || !ossl_ml_kem_encode_public_key(*pder, publen, key)))
+        return 0;
+
+    return publen;
+}
+
+static int ml_kem_pki_priv_to_der(const void *vkey, unsigned char **pder,
+                                  ossl_unused void *ctx)
+{
+    const ML_KEM_KEY *key = vkey;
+    int len = ML_KEM_SEED_BYTES;
+
+    if (!ossl_ml_kem_have_prvkey(key)) {
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_MISSING_KEY,
+                       "no %s private key data available",
+                       key->vinfo->algorithm_name);
+        return 0;
+    }
+
+    /*
+     * Output the seed bytes directly when available, but otherwise, be
+     * compatible with Bouncy Castle's non-seed "long" output format, which is
+     * just the FIPS 203 |dk| private key bytes sans DER octet-string wrapping.
+     */
+    if (ossl_ml_kem_have_seed(key))
+        len = ML_KEM_SEED_BYTES;
+    else
+        len = key->vinfo->prvkey_bytes;
+
+    if (pder == NULL)
+        return len;
+
+    if ((*pder = OPENSSL_malloc(len)) == NULL)
+        return 0;
+
+    if (ossl_ml_kem_have_seed(key)) {
+        if (ossl_ml_kem_encode_key_seed(*pder, len, key))
+            return len;
+    } else {
+        if (ossl_ml_kem_encode_private_key(*pder, len, key))
+            return len;
+    }
+
+    OPENSSL_free(*pder);
+    return 0;
+}
+
+# define ml_kem_epki_priv_to_der ml_kem_pki_priv_to_der
+# define prepare_ml_kem_params   NULL
+# define ml_kem_check_key_type   NULL
+
+# define ml_kem_512_evp_type        EVP_PKEY_ML_KEM_512
+# define ml_kem_512_pem_type        "ML-KEM-512"
+# define ml_kem_768_evp_type        EVP_PKEY_ML_KEM_768
+# define ml_kem_768_pem_type        "ML-KEM-768"
+# define ml_kem_1024_evp_type       EVP_PKEY_ML_KEM_1024
+# define ml_kem_1024_pem_type       "ML-KEM-1024"
+#endif
+
+/* ---------------------------------------------------------------------- */
+
 /*
  * Helper functions to prepare RSA-PSS params for encoding.  We would
  * have simply written the whole AlgorithmIdentifier, but existing libcrypto
@@ -1476,6 +1554,29 @@ MAKE_ENCODER(x448, ecx, PrivateKeyInfo, pem);
 MAKE_ENCODER(x448, ecx, SubjectPublicKeyInfo, der);
 MAKE_ENCODER(x448, ecx, SubjectPublicKeyInfo, pem);
 # endif
+#endif
+
+#ifndef OPENSSL_NO_ML_KEM
+MAKE_ENCODER(ml_kem_512, ml_kem, EncryptedPrivateKeyInfo, der);
+MAKE_ENCODER(ml_kem_512, ml_kem, EncryptedPrivateKeyInfo, pem);
+MAKE_ENCODER(ml_kem_512, ml_kem, PrivateKeyInfo, der);
+MAKE_ENCODER(ml_kem_512, ml_kem, PrivateKeyInfo, pem);
+MAKE_ENCODER(ml_kem_512, ml_kem, SubjectPublicKeyInfo, der);
+MAKE_ENCODER(ml_kem_512, ml_kem, SubjectPublicKeyInfo, pem);
+
+MAKE_ENCODER(ml_kem_768, ml_kem, EncryptedPrivateKeyInfo, der);
+MAKE_ENCODER(ml_kem_768, ml_kem, EncryptedPrivateKeyInfo, pem);
+MAKE_ENCODER(ml_kem_768, ml_kem, PrivateKeyInfo, der);
+MAKE_ENCODER(ml_kem_768, ml_kem, PrivateKeyInfo, pem);
+MAKE_ENCODER(ml_kem_768, ml_kem, SubjectPublicKeyInfo, der);
+MAKE_ENCODER(ml_kem_768, ml_kem, SubjectPublicKeyInfo, pem);
+
+MAKE_ENCODER(ml_kem_1024, ml_kem, EncryptedPrivateKeyInfo, der);
+MAKE_ENCODER(ml_kem_1024, ml_kem, EncryptedPrivateKeyInfo, pem);
+MAKE_ENCODER(ml_kem_1024, ml_kem, PrivateKeyInfo, der);
+MAKE_ENCODER(ml_kem_1024, ml_kem, PrivateKeyInfo, pem);
+MAKE_ENCODER(ml_kem_1024, ml_kem, SubjectPublicKeyInfo, der);
+MAKE_ENCODER(ml_kem_1024, ml_kem, SubjectPublicKeyInfo, pem);
 #endif
 
 /*

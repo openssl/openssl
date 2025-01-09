@@ -4379,17 +4379,14 @@ static int keygen_test_run(EVP_TEST *t)
         private_keys = key;
         rv = 1;
     } else if (keygen->seed != NULL) {
+        const char *prvparam = OSSL_PKEY_PARAM_ENCODED_PRIVATE_KEY;
         rv = 0;
-        if (!TEST_int_eq(EVP_PKEY_get_octet_string_param(pkey,
-                                                         OSSL_PKEY_PARAM_PRIV_KEY,
-                                                         NULL, 0, &priv_len), 1)
+        if (!TEST_int_eq(EVP_PKEY_get_octet_string_param(pkey, prvparam, NULL,
+                                                         0, &priv_len), 1)
             || !TEST_ptr(enc_priv_key = OPENSSL_zalloc(priv_len))
-            || !TEST_int_eq(EVP_PKEY_get_octet_string_param(pkey,
-                                                            OSSL_PKEY_PARAM_PRIV_KEY,
+            || !TEST_int_eq(EVP_PKEY_get_octet_string_param(pkey, prvparam,
                                                             enc_priv_key,
-                                                            priv_len,
-                                                            NULL),
-                            1))
+                                                            priv_len, NULL), 1))
             goto err;
 
         if (!TEST_size_t_gt((pub_len = EVP_PKEY_get1_encoded_public_key(pkey,
