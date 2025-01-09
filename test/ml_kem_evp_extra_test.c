@@ -217,7 +217,7 @@ static int test_ml_kem(void)
 
 static int test_non_derandomised_ml_kem(void)
 {
-    static const char *alg[3] = { "ML-KEM-512", "ML-KEM-768", "ML-KEM-1024" };
+    static const int alg[3] = { NID_ML_KEM_512, NID_ML_KEM_768, NID_ML_KEM_1024 };
     EVP_RAND_CTX *privctx;
     EVP_RAND_CTX *pubctx;
     EVP_MD *sha256;
@@ -230,7 +230,7 @@ static int test_non_derandomised_ml_kem(void)
     if (!TEST_ptr(sha256 = EVP_MD_fetch(NULL, "sha256", NULL)))
         return 0;
 
-    for (i = ML_KEM_512_VARIANT; i < ML_KEM_1024_VARIANT; ++i) {
+    for (i = 0; i < (int) OSSL_NELEM(alg); ++i) {
         const ML_KEM_VINFO *v;
         OSSL_PARAM params[3], *p;
         uint8_t hash[32];
@@ -244,6 +244,9 @@ static int test_non_derandomised_ml_kem(void)
         unsigned char c;
         int res = -1;
 
+        if ((v = ossl_ml_kem_get_vinfo(alg[i])) == NULL)
+            goto done;
+
         /* Configure the private RNG to output just the keygen seed */
         p = params;
         *p++ = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY,
@@ -255,11 +258,8 @@ static int test_non_derandomised_ml_kem(void)
 
         res = -2;
         /* Generate Alice's key */
-        akey = EVP_PKEY_Q_keygen(testctx, NULL, alg[i]);
+        akey = EVP_PKEY_Q_keygen(testctx, NULL, v->algorithm_name);
         if (!TEST_ptr(akey))
-            goto done;
-
-        if ((v = ossl_ml_kem_get_vinfo(i)) == NULL)
             goto done;
 
         /* Check that no more entropy is available! */
