@@ -293,7 +293,7 @@ sub start_server {
                           $args ? $args : ()]), display => 1);
     print "Current directory is ".getcwd()."\n";
     print "Launching $server_name server: $cmd\n";
-    my $pid = open($server_fh, "$cmd|");
+    my $pid = open($server_fh, "$cmd 2>error.txt |");
     unless ($pid) {
         print "Error launching $cmd, cannot obtain $server_name server PID";
         return 0;
