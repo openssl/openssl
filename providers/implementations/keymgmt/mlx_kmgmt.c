@@ -44,11 +44,11 @@ static const int minimal_selection = OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS
 
 /* Must match DECLARE_DISPATCH invocations at the end of the file */
 static const ECDH_VINFO hybrid_vtable[] = {
-    { "EC",  "P-256", 65, 32, 32, 1, ML_KEM_768_VARIANT },
-    { "EC",  "P-384", 97, 48, 48, 1, ML_KEM_1024_VARIANT },
+    { "EC",  "P-256", 65, 32, 32, 1, NID_ML_KEM_768 },
+    { "EC",  "P-384", 97, 48, 48, 1, NID_ML_KEM_1024 },
 #if !defined(OPENSSL_NO_ECX)
-    { "X25519", NULL, 32, 32, 32, 0, ML_KEM_768_VARIANT },
-    { "X448",   NULL, 56, 56, 56, 0, ML_KEM_1024_VARIANT },
+    { "X25519", NULL, 32, 32, 32, 0, NID_ML_KEM_768 },
+    { "X448",   NULL, 56, 56, 56, 0, NID_ML_KEM_1024 },
 #endif
 };
 
@@ -56,7 +56,7 @@ typedef struct mlx_kem_gen_ctx_st {
     OSSL_LIB_CTX *libctx;
     char *propq;
     int selection;
-    unsigned int variant;
+    unsigned int evp_type;
 } PROV_ML_KEM_GEN_CTX;
 
 static void mlx_kem_key_free(void *vkey)
@@ -648,8 +648,8 @@ static int mlx_kem_gen_set_params(void *vgctx, const OSSL_PARAM params[])
     return 1;
 }
 
-static void *mlx_kem_gen_init(int v, OSSL_LIB_CTX *libctx, int selection,
-                              const OSSL_PARAM params[])
+static void *mlx_kem_gen_init(int evp_type, OSSL_LIB_CTX *libctx,
+                              int selection, const OSSL_PARAM params[])
 {
     PROV_ML_KEM_GEN_CTX *gctx = NULL;
 
@@ -662,7 +662,7 @@ static void *mlx_kem_gen_init(int v, OSSL_LIB_CTX *libctx, int selection,
         || (gctx = OPENSSL_zalloc(sizeof(*gctx))) == NULL)
         return NULL;
 
-    gctx->variant = v;
+    gctx->evp_type = evp_type;
     gctx->libctx = libctx;
     gctx->selection = selection;
     if (mlx_kem_gen_set_params(gctx, params))
@@ -696,7 +696,7 @@ static void *mlx_kem_gen(void *vgctx, OSSL_CALLBACK *osslcb, void *cbarg)
 
     /* Lose ownership of propq */
     gctx->propq = NULL;
-    if ((key = mlx_kem_key_new(gctx->variant, gctx->libctx, propq)) == NULL)
+    if ((key = mlx_kem_key_new(gctx->evp_type, gctx->libctx, propq)) == NULL)
         return NULL;
 
     if ((gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0)
