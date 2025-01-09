@@ -68,7 +68,7 @@ struct h3ssl {
     char *fileprefix;         /* prefix of the directory to fetch files from */
     char url[MAXURL];         /* url to serve the request */
     uint8_t *ptr_data;        /* pointer to the data to send */
-    unsigned int ldata;       /* amount of bytes to send */
+    size_t ldata;             /* amount of bytes to send */
     int offset_data;          /* offset to next data to send */
 };
 
@@ -764,7 +764,7 @@ static void handle_events_from_ids(struct h3ssl *h3ssl)
     }
 }
 
-static int get_file_length(struct h3ssl *h3ssl)
+static size_t get_file_length(struct h3ssl *h3ssl)
 {
     char filename[PATH_MAX];
     struct stat st;
@@ -776,13 +776,13 @@ static int get_file_length(struct h3ssl *h3ssl)
 
     if (strcmp(h3ssl->url, "big") == 0) {
         printf("big!!!\n");
-        return INT_MAX;
+        return (size_t)INT_MAX;
     }
     if (stat(filename, &st) == 0) {
         /* Only process regular files */
         if (S_ISREG(st.st_mode)) {
             printf("get_file_length %s %lld\n", filename, (unsigned long long) st.st_size);
-            return st.st_size;
+            return (size_t)st.st_size;
         }
     }
     printf("Can't get_file_length %s\n", filename);
@@ -792,7 +792,7 @@ static int get_file_length(struct h3ssl *h3ssl)
 static char *get_file_data(struct h3ssl *h3ssl)
 {
     char filename[PATH_MAX];
-    int size = get_file_length(h3ssl);
+    size_t size = get_file_length(h3ssl);
     char *res;
     int fd;
 
@@ -813,7 +813,7 @@ static char *get_file_data(struct h3ssl *h3ssl)
         return NULL;
     }
     close(fd);
-    printf("read from %s : %d\n", filename, size);
+    printf("read from %s : %zu\n", filename, size);
     return res;
 }
 
@@ -829,7 +829,7 @@ static nghttp3_ssize step_read_data(nghttp3_conn *conn, int64_t stream_id,
         return 0;
     }
     /* send the data */
-    printf("step_read_data for %s %d\n", h3ssl->url, h3ssl->ldata);
+    printf("step_read_data for %s %zu\n", h3ssl->url, h3ssl->ldata);
     if (h3ssl->ldata <= 4096) {
         vec[0].base = &(h3ssl->ptr_data[h3ssl->offset_data]);
         vec[0].len = h3ssl->ldata;
@@ -1086,7 +1086,7 @@ static int run_quic_server(SSL_CTX *ctx, int fd)
         nghttp3_data_reader dr;
         int ret;
         int numtimeout;
-        char slength[11];
+        char slength[22];
         int hasnothing;
 
         init_ids(&h3ssl);
@@ -1166,17 +1166,17 @@ static int run_quic_server(SSL_CTX *ctx, int fd)
             /* We don't find the file: use default test string */
             h3ssl.ptr_data = nulldata;
             h3ssl.ldata = nulldata_sz;
-            sprintf(slength, "%d", h3ssl.ldata);
+            sprintf(slength, "%zu", h3ssl.ldata);
             /* content-type: text/html */
             make_nv(&resp[num_nv++], "content-type", "text/html");
         } else if (h3ssl.ldata == INT_MAX) {
             /* endless file for tests */
-            sprintf(slength, "%d", h3ssl.ldata);
+            sprintf(slength, "%zu", h3ssl.ldata);
             h3ssl.ptr_data = (uint8_t *) malloc(4096);
             memset(h3ssl.ptr_data, 'A', 4096);
         } else {
             /* normal file we have opened */
-            sprintf(slength, "%d", h3ssl.ldata);
+            sprintf(slength, "%zu", h3ssl.ldata);
             h3ssl.ptr_data = (uint8_t *) get_file_data(&h3ssl);
             if (h3ssl.ptr_data == NULL)
                 abort();
