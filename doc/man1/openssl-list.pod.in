@@ -30,6 +30,7 @@ B<openssl list>
 -}[B<-encoders>]
 [B<-decoders>]
 [B<-key-managers>]
+[B<-skey-managers>]
 [B<-key-exchange-algorithms>]
 [B<-kem-algorithms>]
 [B<-tls-groups>]
@@ -99,6 +100,8 @@ Display lists of all algorithms.  These include:
 =item Key exchange algorithms (KEX)
 
 =item Key managers
+
+=item Symmetric key managers
 
 =item Message authentication code algorithms (MAC)
 
@@ -186,6 +189,10 @@ Display a list of public key methods.
 =item B<-key-managers>
 
 Display a list of key managers.
+
+=item B<-skey-managers>
+
+Display a list of symmetric key managers.
 
 =item B<-key-exchange-algorithms>
 
@@ -304,6 +311,8 @@ In both cases, C<bar> is the name of the provider.
 
 The B<-engines>, B<-digest-commands>, and B<-cipher-commands> options
 were deprecated in OpenSSL 3.0.
+
+The B<-skey-managers> option was added in OpenSSL 3.5.
 
 =head1 COPYRIGHT
 
