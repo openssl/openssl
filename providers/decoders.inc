@@ -74,6 +74,14 @@ DECODER_w_structure("SM2", der, SubjectPublicKeyInfo, sm2, no),
 DECODER_w_structure("SM2", der, type_specific_no_pub, sm2, no),
 # endif
 #endif
+#ifndef OPENSSL_NO_ML_KEM
+DECODER_w_structure("ML-KEM-512", der, PrivateKeyInfo, ml_kem_512, yes),
+DECODER_w_structure("ML-KEM-512", der, SubjectPublicKeyInfo, ml_kem_512, yes),
+DECODER_w_structure("ML-KEM-768", der, PrivateKeyInfo, ml_kem_768, yes),
+DECODER_w_structure("ML-KEM-768", der, SubjectPublicKeyInfo, ml_kem_768, yes),
+DECODER_w_structure("ML-KEM-1024", der, PrivateKeyInfo, ml_kem_1024, yes),
+DECODER_w_structure("ML-KEM-1024", der, SubjectPublicKeyInfo, ml_kem_1024, yes),
+#endif
 DECODER_w_structure("RSA", der, PrivateKeyInfo, rsa, yes),
 DECODER_w_structure("RSA", der, SubjectPublicKeyInfo, rsa, yes),
 DECODER_w_structure("RSA", der, type_specific_keypair, rsa, yes),

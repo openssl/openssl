@@ -188,7 +188,7 @@ static const ML_KEM_VINFO vinfo_map[3] = {
         CTEXT_BYTES(512),
         VECTOR_BYTES(512),
         U_VECTOR_BYTES(512),
-        ML_KEM_512_VARIANT,
+        NID_ML_KEM_512,
         ML_KEM_512_BITS,
         ML_KEM_512_RANK,
         ML_KEM_512_DU,
@@ -204,7 +204,7 @@ static const ML_KEM_VINFO vinfo_map[3] = {
         CTEXT_BYTES(768),
         VECTOR_BYTES(768),
         U_VECTOR_BYTES(768),
-        ML_KEM_768_VARIANT,
+        NID_ML_KEM_768,
         ML_KEM_768_BITS,
         ML_KEM_768_RANK,
         ML_KEM_768_DU,
@@ -220,7 +220,7 @@ static const ML_KEM_VINFO vinfo_map[3] = {
         CTEXT_BYTES(1024),
         VECTOR_BYTES(1024),
         U_VECTOR_BYTES(1024),
-        ML_KEM_1024_VARIANT,
+        NID_ML_KEM_1024,
         ML_KEM_1024_BITS,
         ML_KEM_1024_RANK,
         ML_KEM_1024_DU,
@@ -1182,7 +1182,7 @@ int gencbd_vector_ntt(scalar *out, CBD_FUNC cbd, uint8_t *counter,
 }
 
 /* The |ETA1| value for ML-KEM-512 is 3, the rest and all ETA2 values are 2. */
-static CBD_FUNC const cbd1[ML_KEM_1024_VARIANT + 1] = { cbd_3, cbd_2, cbd_2 };
+#define CBD1(evp_type)  ((evp_type) == NID_ML_KEM_512 ? cbd_3 : cbd_2)
 
 /*
  * FIPS 203, Section 5.2, Algorithm 14: K-PKE.Encrypt.
@@ -1207,7 +1207,7 @@ int encrypt_cpa(uint8_t out[ML_KEM_SHARED_SECRET_BYTES],
                 EVP_MD_CTX *mdctx, const ML_KEM_KEY *key)
 {
     const ML_KEM_VINFO *vinfo = key->vinfo;
-    CBD_FUNC cbd_1 = cbd1[vinfo->variant];
+    CBD_FUNC cbd_1 = CBD1(vinfo->evp_type);
     int rank = vinfo->rank;
     /* We can use tmp[0..rank-1] as storage for |y|, then |e1|, ... */
     scalar *y = &tmp[0], *e1 = y, *e2 = y;
@@ -1395,7 +1395,7 @@ int genkey(const uint8_t d[ML_KEM_RANDOM_BYTES],
     const uint8_t *const sigma = hashed + ML_KEM_RANDOM_BYTES;
     uint8_t augmented_seed[ML_KEM_RANDOM_BYTES + 1];
     const ML_KEM_VINFO *vinfo = key->vinfo;
-    CBD_FUNC cbd_1 = cbd1[vinfo->variant];
+    CBD_FUNC cbd_1 = CBD1(vinfo->evp_type);
     int rank = vinfo->rank;
     uint8_t counter = 0;
 
@@ -1567,17 +1567,23 @@ free_storage(ML_KEM_KEY *key)
  */
 
 /* Retrieve the parameters of one of the ML-KEM variants */
-const ML_KEM_VINFO *ossl_ml_kem_get_vinfo(int variant)
+const ML_KEM_VINFO *ossl_ml_kem_get_vinfo(int evp_type)
 {
-    if (variant > ML_KEM_1024_VARIANT)
-        return NULL;
-    return &vinfo_map[variant];
+    switch (evp_type) {
+    case NID_ML_KEM_512:
+        return &vinfo_map[0];
+    case NID_ML_KEM_768:
+        return &vinfo_map[1];
+    case NID_ML_KEM_1024:
+        return &vinfo_map[2];
+    }
+    return NULL;
 }
 
 ML_KEM_KEY *ossl_ml_kem_key_new(OSSL_LIB_CTX *libctx, const char *properties,
-                                int variant)
+                                int evp_type)
 {
-    const ML_KEM_VINFO *vinfo = ossl_ml_kem_get_vinfo(variant);
+    const ML_KEM_VINFO *vinfo = ossl_ml_kem_get_vinfo(evp_type);
     ML_KEM_KEY *key;
 
     if (vinfo == NULL)
@@ -1691,6 +1697,17 @@ int ossl_ml_kem_encode_private_key(uint8_t *out, size_t len,
         || len != key->vinfo->prvkey_bytes)
         return 0;
     encode_prvkey(out, key);
+    return 1;
+}
+
+int ossl_ml_kem_encode_key_seed(uint8_t *out, size_t len,
+                                const ML_KEM_KEY *key)
+{
+    if (key == NULL || key->d == NULL || len != ML_KEM_SEED_BYTES)
+        return 0;
+    memcpy(out, key->d, ML_KEM_RANDOM_BYTES);
+    out += ML_KEM_RANDOM_BYTES;
+    memcpy(out, key->z, ML_KEM_RANDOM_BYTES);
     return 1;
 }
 
@@ -1834,15 +1851,15 @@ int ossl_ml_kem_encap_seed(uint8_t *ctext, size_t clen,
      * each) vectors, that are never retained on return from this function.
      * We stack-allocate these.
      */
-#   define case_encap_seed(bits) \
-    case ML_KEM_##bits##_VARIANT: \
-        { \
-            scalar tmp[2 * ML_KEM_##bits##_RANK]; \
-                                                                         \
-            ret = encap(ctext, shared_secret, entropy, tmp, mdctx, key); \
-            break; \
+#   define case_encap_seed(bits)                                            \
+    case NID_ML_KEM_##bits:                                                 \
+        {                                                                   \
+            scalar tmp[2 * ML_KEM_##bits##_RANK];                           \
+                                                                            \
+            ret = encap(ctext, shared_secret, entropy, tmp, mdctx, key);    \
+            break;                                                          \
         }
-    switch (vinfo->variant) {
+    switch (vinfo->evp_type) {
     case_encap_seed(512);
     case_encap_seed(768);
     case_encap_seed(1024);
@@ -1914,7 +1931,7 @@ int ossl_ml_kem_decap(uint8_t *shared_secret, size_t slen,
      * We stack-allocate these.
      */
 #   define case_decap(bits)                                             \
-    case ML_KEM_##bits##_VARIANT:                                       \
+    case NID_ML_KEM_##bits:                                             \
         {                                                               \
             uint8_t cbuf[CTEXT_BYTES(bits)];                            \
             scalar tmp[2 * ML_KEM_##bits##_RANK];                       \
@@ -1922,7 +1939,7 @@ int ossl_ml_kem_decap(uint8_t *shared_secret, size_t slen,
             ret = decap(shared_secret, ctext, cbuf, tmp, mdctx, key);   \
             break;                                                      \
         }
-    switch (vinfo->variant) {
+    switch (vinfo->evp_type) {
     case_decap(512);
     case_decap(768);
     case_decap(1024);
