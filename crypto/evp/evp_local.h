@@ -201,6 +201,29 @@ struct evp_signature_st {
     OSSL_FUNC_signature_query_key_types_fn *query_key_types;
 } /* EVP_SIGNATURE */;
 
+struct evp_skeymgmt_st {
+    int name_id;
+    char *type_name;
+    const char *description;
+    OSSL_PROVIDER *prov;
+    CRYPTO_REF_COUNT refcnt;
+
+    /* Import and export routines */
+    OSSL_FUNC_skeymgmt_imp_settable_params_fn *imp_params;
+    OSSL_FUNC_skeymgmt_import_fn *import;
+    OSSL_FUNC_skeymgmt_export_fn *export;
+
+    /* Key generation */
+    OSSL_FUNC_skeymgmt_gen_settable_params_fn *gen_params;
+    OSSL_FUNC_skeymgmt_generate_fn *generate;
+
+    /* Key identifier */
+    OSSL_FUNC_skeymgmt_get_key_id_fn *get_key_id;
+
+    /* destructor */
+    OSSL_FUNC_skeymgmt_free_fn *free;
+} /* EVP_SKEYMGMT */;
+
 struct evp_asym_cipher_st {
     int name_id;
     char *type_name;
@@ -382,3 +405,5 @@ int evp_names_do_all(OSSL_PROVIDER *prov, int number,
                      void (*fn)(const char *name, void *data),
                      void *data);
 int evp_cipher_cache_constants(EVP_CIPHER *cipher);
+
+EVP_SKEY *evp_skey_alloc(void);
