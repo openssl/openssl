@@ -23,6 +23,7 @@
 #include "crypto/dsa.h"          /* ossl_dsa_get0_params() */
 #include "crypto/ec.h"           /* ossl_ec_key_get_libctx */
 #include "crypto/ecx.h"          /* ECX_KEY, etc... */
+#include "crypto/ml_kem.h"       /* ML_KEM_KEY, etc... */
 #include "crypto/rsa.h"          /* RSA_PSS_PARAMS_30, etc... */
 #include "prov/bio.h"
 #include "prov/implementations.h"
@@ -428,7 +429,74 @@ static int ecx_to_text(BIO *out, const void *key, int selection)
 
     return 1;
 }
+#endif
 
+/* ---------------------------------------------------------------------- */
+
+#ifndef OPENSSL_NO_ML_KEM
+static int ml_kem_to_text(BIO *out, const void *vkey, int selection)
+{
+    const ML_KEM_KEY *key = vkey;
+    uint8_t seed[ML_KEM_SEED_BYTES], *prvenc = NULL, *pubenc = NULL;
+    size_t publen, prvlen;
+    const char *type_label = NULL;
+    int ret = 0;
+
+    if (out == NULL || key == NULL) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    type_label = key->vinfo->algorithm_name;
+    publen = key->vinfo->pubkey_bytes;
+    prvlen = key->vinfo->prvkey_bytes;
+
+    if (!ossl_ml_kem_have_pubkey(key)) {
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_MISSING_KEY,
+                       "no %s key material available",
+                       type_label);
+        return 0;
+    }
+
+    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
+        if (!ossl_ml_kem_have_prvkey(key)) {
+            ERR_raise_data(ERR_LIB_PROV, PROV_R_MISSING_KEY,
+                           "no %s private key material available",
+                           key->vinfo->algorithm_name);
+            return 0;
+        }
+        if (BIO_printf(out, "%s Private-Key:\n", type_label) <= 0)
+            return 0;
+
+        if ((prvenc = OPENSSL_malloc(prvlen)) == NULL)
+            return 0;
+
+        if (ossl_ml_kem_have_seed(key)) {
+            if (!ossl_ml_kem_encode_key_seed(seed, sizeof(seed), key))
+                goto end;
+            if (!ossl_bio_print_labeled_buf(out, "seed:", seed, sizeof(seed)))
+                goto end;
+        }
+
+        if (!ossl_ml_kem_encode_private_key(prvenc, prvlen, key))
+            goto end;
+        if (!ossl_bio_print_labeled_buf(out, "dk:", prvenc, prvlen))
+            goto end;
+
+    } else if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
+        if (BIO_printf(out, "%s Public-Key:\n", type_label) <= 0)
+            goto end;
+    }
+
+    pubenc = OPENSSL_malloc(key->vinfo->pubkey_bytes);
+    if (pubenc != NULL)
+        ret = ossl_ml_kem_encode_public_key(pubenc, publen, key)
+            && ossl_bio_print_labeled_buf(out, "ek:", pubenc, publen);
+
+  end:
+    OPENSSL_free(pubenc);
+    OPENSSL_free(prvenc);
+    return ret;
+}
 #endif
 
 /* ---------------------------------------------------------------------- */
@@ -678,6 +746,11 @@ MAKE_TEXT_ENCODER(ed448, ecx);
 MAKE_TEXT_ENCODER(x25519, ecx);
 MAKE_TEXT_ENCODER(x448, ecx);
 # endif
+#endif
+#ifndef OPENSSL_NO_ML_KEM
+MAKE_TEXT_ENCODER(ml_kem_512, ml_kem);
+MAKE_TEXT_ENCODER(ml_kem_768, ml_kem);
+MAKE_TEXT_ENCODER(ml_kem_1024, ml_kem);
 #endif
 MAKE_TEXT_ENCODER(rsa, rsa);
 MAKE_TEXT_ENCODER(rsapss, rsa);
