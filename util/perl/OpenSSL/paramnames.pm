@@ -299,6 +299,7 @@ my %params = (
     'PKEY_PARAM_MGF1_DIGEST' =>         "mgf1-digest",
     'PKEY_PARAM_MGF1_PROPERTIES' =>     "mgf1-properties",
     'PKEY_PARAM_ENCODED_PUBLIC_KEY' =>  "encoded-pub-key",
+    'PKEY_PARAM_ENCODED_PRIVATE_KEY' => "encoded-priv-key",
     'PKEY_PARAM_GROUP_NAME' =>          "group",
     'PKEY_PARAM_DIST_ID' =>             "distid",
     'PKEY_PARAM_PUB_KEY' =>             "pub",

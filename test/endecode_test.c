@@ -106,8 +106,11 @@ static EVP_PKEY *make_template(const char *type, OSSL_PARAM *genparams)
 }
 #endif
 
-#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_DSA) \
-    || !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_ML_DSA)
+#if !defined(OPENSSL_NO_DH) || \
+    !defined(OPENSSL_NO_DSA) || \
+    !defined(OPENSSL_NO_EC) || \
+    !defined(OPENSSL_NO_ML_DSA) || \
+    !defined(OPENSSL_NO_ML_KEM)
 static EVP_PKEY *make_key(const char *type, EVP_PKEY *template,
                           OSSL_PARAM *genparams)
 {
@@ -1038,6 +1041,12 @@ IMPLEMENT_TEST_SUITE_LEGACY(ECExplicitTri2G, "EC")
 KEYS(SM2);
 IMPLEMENT_TEST_SUITE(SM2, "SM2", 0)
 # endif
+#endif
+#ifndef OPENSSL_NO_ECX
+/*
+ * ED25519, ED448, X25519 and X448 have no support for
+ * PEM_write_bio_PrivateKey_traditional(), so no legacy tests.
+ */
 KEYS(ED25519);
 IMPLEMENT_TEST_SUITE(ED25519, "ED25519", 1)
 KEYS(ED448);
@@ -1046,10 +1055,19 @@ KEYS(X25519);
 IMPLEMENT_TEST_SUITE(X25519, "X25519", 1)
 KEYS(X448);
 IMPLEMENT_TEST_SUITE(X448, "X448", 1)
+#endif
+#ifndef OPENSSL_NO_ML_KEM
 /*
- * ED25519, ED448, X25519 and X448 have no support for
- * PEM_write_bio_PrivateKey_traditional(), so no legacy tests.
+ * ML-KEM has no support for PEM_write_bio_PrivateKey_traditional(), so no
+ * legacy tests.
+ * TODO(ML-KEM): FIPS
  */
+KEYS(ML_KEM_512);
+IMPLEMENT_TEST_SUITE(ML_KEM_512, "ML-KEM-512", 1)
+KEYS(ML_KEM_768);
+IMPLEMENT_TEST_SUITE(ML_KEM_768, "ML-KEM-768", 1)
+KEYS(ML_KEM_1024);
+IMPLEMENT_TEST_SUITE(ML_KEM_1024, "ML-KEM-1024", 1)
 #endif
 KEYS(RSA);
 IMPLEMENT_TEST_SUITE(RSA, "RSA", 1)
@@ -1415,6 +1433,8 @@ int setup_tests(void)
 # ifndef OPENSSL_NO_SM2
     MAKE_KEYS(SM2, "SM2", NULL);
 # endif
+#endif
+#ifndef OPENSSL_NO_ECX
     MAKE_KEYS(ED25519, "ED25519", NULL);
     MAKE_KEYS(ED448, "ED448", NULL);
     MAKE_KEYS(X25519, "X25519", NULL);
@@ -1427,6 +1447,11 @@ int setup_tests(void)
         MAKE_KEYS(ML_DSA_87, "ML-DSA-87", NULL);
     }
 #endif /* OPENSSL_NO_ML_DSA */
+#ifndef OPENSSL_NO_ML_KEM
+    MAKE_KEYS(ML_KEM_512, "ML-KEM-512", NULL);
+    MAKE_KEYS(ML_KEM_768, "ML-KEM-768", NULL);
+    MAKE_KEYS(ML_KEM_1024, "ML-KEM-1024", NULL);
+#endif
 
     TEST_info("Loading RSA key...");
     ok = ok && TEST_ptr(key_RSA = load_pkey_pem(rsa_file, keyctx));
@@ -1475,15 +1500,22 @@ int setup_tests(void)
             ADD_TEST_SUITE(SM2);
         }
 # endif
+#endif
+#ifndef OPENSSL_NO_ECX
         ADD_TEST_SUITE(ED25519);
         ADD_TEST_SUITE(ED448);
         ADD_TEST_SUITE(X25519);
         ADD_TEST_SUITE(X448);
+#endif
+#ifndef OPENSSL_NO_ML_KEM
+        ADD_TEST_SUITE(ML_KEM_512);
+        ADD_TEST_SUITE(ML_KEM_768);
+        ADD_TEST_SUITE(ML_KEM_1024);
+#endif
         /*
          * ED25519, ED448, X25519 and X448 have no support for
          * PEM_write_bio_PrivateKey_traditional(), so no legacy tests.
          */
-#endif
         ADD_TEST_SUITE(RSA);
         ADD_TEST_SUITE_LEGACY(RSA);
         ADD_TEST_SUITE(RSA_PSS);
@@ -1543,10 +1575,17 @@ void cleanup_tests(void)
 # ifndef OPENSSL_NO_SM2
     FREE_KEYS(SM2);
 # endif
+#endif
+#ifndef OPENSSL_NO_ECX
     FREE_KEYS(ED25519);
     FREE_KEYS(ED448);
     FREE_KEYS(X25519);
     FREE_KEYS(X448);
+#endif
+#ifndef OPENSSL_NO_ML_KEM
+    FREE_KEYS(ML_KEM_512);
+    FREE_KEYS(ML_KEM_768);
+    FREE_KEYS(ML_KEM_1024);
 #endif
     FREE_KEYS(RSA);
     FREE_KEYS(RSA_PSS);
