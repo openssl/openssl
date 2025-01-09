@@ -1249,10 +1249,6 @@ static int key2any_encode(KEY2ANY_CTX *ctx, OSSL_CORE_BIO *cout,
  * type         This is the type name for the set of functions that implement
  *              the key type.  For example, ed25519, ed448, x25519 and x448
  *              are all implemented with the exact same set of functions.
- * evp_type     The corresponding EVP_PKEY_xxx type macro for each key.
- *              Necessary because we currently use EVP_PKEY with legacy
- *              native keys internally.  This will need to be refactored
- *              when that legacy support goes away.
  * kind         What kind of support to implement.  These translate into
  *              the DO_##kind macros above.
  * output       The output type to implement.  may be der or pem.
@@ -1262,7 +1258,7 @@ static int key2any_encode(KEY2ANY_CTX *ctx, OSSL_CORE_BIO *cout,
  *
  * ossl_##impl##_to_##kind##_##output##_encoder_functions
  */
-#define MAKE_ENCODER(impl, type, evp_type, kind, output)                    \
+#define MAKE_ENCODER(impl, type, kind, output)                              \
     static OSSL_FUNC_encoder_import_object_fn                               \
     impl##_to_##kind##_##output##_import_object;                            \
     static OSSL_FUNC_encoder_free_object_fn                                 \
@@ -1332,18 +1328,18 @@ static int key2any_encode(KEY2ANY_CTX *ctx, OSSL_CORE_BIO *cout,
  * Replacements for i2d_{TYPE}PrivateKey, i2d_{TYPE}PublicKey,
  * i2d_{TYPE}params, as they exist.
  */
-MAKE_ENCODER(rsa, rsa, EVP_PKEY_RSA, type_specific_keypair, der);
+MAKE_ENCODER(rsa, rsa, type_specific_keypair, der);
 #ifndef OPENSSL_NO_DH
-MAKE_ENCODER(dh, dh, EVP_PKEY_DH, type_specific_params, der);
-MAKE_ENCODER(dhx, dh, EVP_PKEY_DHX, type_specific_params, der);
+MAKE_ENCODER(dh, dh, type_specific_params, der);
+MAKE_ENCODER(dhx, dh, type_specific_params, der);
 #endif
 #ifndef OPENSSL_NO_DSA
-MAKE_ENCODER(dsa, dsa, EVP_PKEY_DSA, type_specific, der);
+MAKE_ENCODER(dsa, dsa, type_specific, der);
 #endif
 #ifndef OPENSSL_NO_EC
-MAKE_ENCODER(ec, ec, EVP_PKEY_EC, type_specific_no_pub, der);
+MAKE_ENCODER(ec, ec, type_specific_no_pub, der);
 # ifndef OPENSSL_NO_SM2
-MAKE_ENCODER(sm2, ec, EVP_PKEY_EC, type_specific_no_pub, der);
+MAKE_ENCODER(sm2, ec, type_specific_no_pub, der);
 # endif
 #endif
 
@@ -1351,18 +1347,18 @@ MAKE_ENCODER(sm2, ec, EVP_PKEY_EC, type_specific_no_pub, der);
  * Replacements for PEM_write_bio_{TYPE}PrivateKey,
  * PEM_write_bio_{TYPE}PublicKey, PEM_write_bio_{TYPE}params, as they exist.
  */
-MAKE_ENCODER(rsa, rsa, EVP_PKEY_RSA, type_specific_keypair, pem);
+MAKE_ENCODER(rsa, rsa, type_specific_keypair, pem);
 #ifndef OPENSSL_NO_DH
-MAKE_ENCODER(dh, dh, EVP_PKEY_DH, type_specific_params, pem);
-MAKE_ENCODER(dhx, dh, EVP_PKEY_DHX, type_specific_params, pem);
+MAKE_ENCODER(dh, dh, type_specific_params, pem);
+MAKE_ENCODER(dhx, dh, type_specific_params, pem);
 #endif
 #ifndef OPENSSL_NO_DSA
-MAKE_ENCODER(dsa, dsa, EVP_PKEY_DSA, type_specific, pem);
+MAKE_ENCODER(dsa, dsa, type_specific, pem);
 #endif
 #ifndef OPENSSL_NO_EC
-MAKE_ENCODER(ec, ec, EVP_PKEY_EC, type_specific_no_pub, pem);
+MAKE_ENCODER(ec, ec, type_specific_no_pub, pem);
 # ifndef OPENSSL_NO_SM2
-MAKE_ENCODER(sm2, ec, EVP_PKEY_EC, type_specific_no_pub, pem);
+MAKE_ENCODER(sm2, ec, type_specific_no_pub, pem);
 # endif
 #endif
 
@@ -1374,80 +1370,80 @@ MAKE_ENCODER(sm2, ec, EVP_PKEY_EC, type_specific_no_pub, pem);
  * For PEM, these are expected to be used by PEM_write_bio_PrivateKey(),
  * PEM_write_bio_PUBKEY() and PEM_write_bio_Parameters().
  */
-MAKE_ENCODER(rsa, rsa, EVP_PKEY_RSA, EncryptedPrivateKeyInfo, der);
-MAKE_ENCODER(rsa, rsa, EVP_PKEY_RSA, EncryptedPrivateKeyInfo, pem);
-MAKE_ENCODER(rsa, rsa, EVP_PKEY_RSA, PrivateKeyInfo, der);
-MAKE_ENCODER(rsa, rsa, EVP_PKEY_RSA, PrivateKeyInfo, pem);
-MAKE_ENCODER(rsa, rsa, EVP_PKEY_RSA, SubjectPublicKeyInfo, der);
-MAKE_ENCODER(rsa, rsa, EVP_PKEY_RSA, SubjectPublicKeyInfo, pem);
-MAKE_ENCODER(rsapss, rsa, EVP_PKEY_RSA_PSS, EncryptedPrivateKeyInfo, der);
-MAKE_ENCODER(rsapss, rsa, EVP_PKEY_RSA_PSS, EncryptedPrivateKeyInfo, pem);
-MAKE_ENCODER(rsapss, rsa, EVP_PKEY_RSA_PSS, PrivateKeyInfo, der);
-MAKE_ENCODER(rsapss, rsa, EVP_PKEY_RSA_PSS, PrivateKeyInfo, pem);
-MAKE_ENCODER(rsapss, rsa, EVP_PKEY_RSA_PSS, SubjectPublicKeyInfo, der);
-MAKE_ENCODER(rsapss, rsa, EVP_PKEY_RSA_PSS, SubjectPublicKeyInfo, pem);
+MAKE_ENCODER(rsa, rsa, EncryptedPrivateKeyInfo, der);
+MAKE_ENCODER(rsa, rsa, EncryptedPrivateKeyInfo, pem);
+MAKE_ENCODER(rsa, rsa, PrivateKeyInfo, der);
+MAKE_ENCODER(rsa, rsa, PrivateKeyInfo, pem);
+MAKE_ENCODER(rsa, rsa, SubjectPublicKeyInfo, der);
+MAKE_ENCODER(rsa, rsa, SubjectPublicKeyInfo, pem);
+MAKE_ENCODER(rsapss, rsa, EncryptedPrivateKeyInfo, der);
+MAKE_ENCODER(rsapss, rsa, EncryptedPrivateKeyInfo, pem);
+MAKE_ENCODER(rsapss, rsa, PrivateKeyInfo, der);
+MAKE_ENCODER(rsapss, rsa, PrivateKeyInfo, pem);
+MAKE_ENCODER(rsapss, rsa, SubjectPublicKeyInfo, der);
+MAKE_ENCODER(rsapss, rsa, SubjectPublicKeyInfo, pem);
 #ifndef OPENSSL_NO_DH
-MAKE_ENCODER(dh, dh, EVP_PKEY_DH, EncryptedPrivateKeyInfo, der);
-MAKE_ENCODER(dh, dh, EVP_PKEY_DH, EncryptedPrivateKeyInfo, pem);
-MAKE_ENCODER(dh, dh, EVP_PKEY_DH, PrivateKeyInfo, der);
-MAKE_ENCODER(dh, dh, EVP_PKEY_DH, PrivateKeyInfo, pem);
-MAKE_ENCODER(dh, dh, EVP_PKEY_DH, SubjectPublicKeyInfo, der);
-MAKE_ENCODER(dh, dh, EVP_PKEY_DH, SubjectPublicKeyInfo, pem);
-MAKE_ENCODER(dhx, dh, EVP_PKEY_DHX, EncryptedPrivateKeyInfo, der);
-MAKE_ENCODER(dhx, dh, EVP_PKEY_DHX, EncryptedPrivateKeyInfo, pem);
-MAKE_ENCODER(dhx, dh, EVP_PKEY_DHX, PrivateKeyInfo, der);
-MAKE_ENCODER(dhx, dh, EVP_PKEY_DHX, PrivateKeyInfo, pem);
-MAKE_ENCODER(dhx, dh, EVP_PKEY_DHX, SubjectPublicKeyInfo, der);
-MAKE_ENCODER(dhx, dh, EVP_PKEY_DHX, SubjectPublicKeyInfo, pem);
+MAKE_ENCODER(dh, dh, EncryptedPrivateKeyInfo, der);
+MAKE_ENCODER(dh, dh, EncryptedPrivateKeyInfo, pem);
+MAKE_ENCODER(dh, dh, PrivateKeyInfo, der);
+MAKE_ENCODER(dh, dh, PrivateKeyInfo, pem);
+MAKE_ENCODER(dh, dh, SubjectPublicKeyInfo, der);
+MAKE_ENCODER(dh, dh, SubjectPublicKeyInfo, pem);
+MAKE_ENCODER(dhx, dh, EncryptedPrivateKeyInfo, der);
+MAKE_ENCODER(dhx, dh, EncryptedPrivateKeyInfo, pem);
+MAKE_ENCODER(dhx, dh, PrivateKeyInfo, der);
+MAKE_ENCODER(dhx, dh, PrivateKeyInfo, pem);
+MAKE_ENCODER(dhx, dh, SubjectPublicKeyInfo, der);
+MAKE_ENCODER(dhx, dh, SubjectPublicKeyInfo, pem);
 #endif
 #ifndef OPENSSL_NO_DSA
-MAKE_ENCODER(dsa, dsa, EVP_PKEY_DSA, EncryptedPrivateKeyInfo, der);
-MAKE_ENCODER(dsa, dsa, EVP_PKEY_DSA, EncryptedPrivateKeyInfo, pem);
-MAKE_ENCODER(dsa, dsa, EVP_PKEY_DSA, PrivateKeyInfo, der);
-MAKE_ENCODER(dsa, dsa, EVP_PKEY_DSA, PrivateKeyInfo, pem);
-MAKE_ENCODER(dsa, dsa, EVP_PKEY_DSA, SubjectPublicKeyInfo, der);
-MAKE_ENCODER(dsa, dsa, EVP_PKEY_DSA, SubjectPublicKeyInfo, pem);
+MAKE_ENCODER(dsa, dsa, EncryptedPrivateKeyInfo, der);
+MAKE_ENCODER(dsa, dsa, EncryptedPrivateKeyInfo, pem);
+MAKE_ENCODER(dsa, dsa, PrivateKeyInfo, der);
+MAKE_ENCODER(dsa, dsa, PrivateKeyInfo, pem);
+MAKE_ENCODER(dsa, dsa, SubjectPublicKeyInfo, der);
+MAKE_ENCODER(dsa, dsa, SubjectPublicKeyInfo, pem);
 #endif
 #ifndef OPENSSL_NO_EC
-MAKE_ENCODER(ec, ec, EVP_PKEY_EC, EncryptedPrivateKeyInfo, der);
-MAKE_ENCODER(ec, ec, EVP_PKEY_EC, EncryptedPrivateKeyInfo, pem);
-MAKE_ENCODER(ec, ec, EVP_PKEY_EC, PrivateKeyInfo, der);
-MAKE_ENCODER(ec, ec, EVP_PKEY_EC, PrivateKeyInfo, pem);
-MAKE_ENCODER(ec, ec, EVP_PKEY_EC, SubjectPublicKeyInfo, der);
-MAKE_ENCODER(ec, ec, EVP_PKEY_EC, SubjectPublicKeyInfo, pem);
+MAKE_ENCODER(ec, ec, EncryptedPrivateKeyInfo, der);
+MAKE_ENCODER(ec, ec, EncryptedPrivateKeyInfo, pem);
+MAKE_ENCODER(ec, ec, PrivateKeyInfo, der);
+MAKE_ENCODER(ec, ec, PrivateKeyInfo, pem);
+MAKE_ENCODER(ec, ec, SubjectPublicKeyInfo, der);
+MAKE_ENCODER(ec, ec, SubjectPublicKeyInfo, pem);
 # ifndef OPENSSL_NO_SM2
-MAKE_ENCODER(sm2, ec, EVP_PKEY_EC, EncryptedPrivateKeyInfo, der);
-MAKE_ENCODER(sm2, ec, EVP_PKEY_EC, EncryptedPrivateKeyInfo, pem);
-MAKE_ENCODER(sm2, ec, EVP_PKEY_EC, PrivateKeyInfo, der);
-MAKE_ENCODER(sm2, ec, EVP_PKEY_EC, PrivateKeyInfo, pem);
-MAKE_ENCODER(sm2, ec, EVP_PKEY_EC, SubjectPublicKeyInfo, der);
-MAKE_ENCODER(sm2, ec, EVP_PKEY_EC, SubjectPublicKeyInfo, pem);
+MAKE_ENCODER(sm2, ec, EncryptedPrivateKeyInfo, der);
+MAKE_ENCODER(sm2, ec, EncryptedPrivateKeyInfo, pem);
+MAKE_ENCODER(sm2, ec, PrivateKeyInfo, der);
+MAKE_ENCODER(sm2, ec, PrivateKeyInfo, pem);
+MAKE_ENCODER(sm2, ec, SubjectPublicKeyInfo, der);
+MAKE_ENCODER(sm2, ec, SubjectPublicKeyInfo, pem);
 # endif
 # ifndef OPENSSL_NO_ECX
-MAKE_ENCODER(ed25519, ecx, EVP_PKEY_ED25519, EncryptedPrivateKeyInfo, der);
-MAKE_ENCODER(ed25519, ecx, EVP_PKEY_ED25519, EncryptedPrivateKeyInfo, pem);
-MAKE_ENCODER(ed25519, ecx, EVP_PKEY_ED25519, PrivateKeyInfo, der);
-MAKE_ENCODER(ed25519, ecx, EVP_PKEY_ED25519, PrivateKeyInfo, pem);
-MAKE_ENCODER(ed25519, ecx, EVP_PKEY_ED25519, SubjectPublicKeyInfo, der);
-MAKE_ENCODER(ed25519, ecx, EVP_PKEY_ED25519, SubjectPublicKeyInfo, pem);
-MAKE_ENCODER(ed448, ecx, EVP_PKEY_ED448, EncryptedPrivateKeyInfo, der);
-MAKE_ENCODER(ed448, ecx, EVP_PKEY_ED448, EncryptedPrivateKeyInfo, pem);
-MAKE_ENCODER(ed448, ecx, EVP_PKEY_ED448, PrivateKeyInfo, der);
-MAKE_ENCODER(ed448, ecx, EVP_PKEY_ED448, PrivateKeyInfo, pem);
-MAKE_ENCODER(ed448, ecx, EVP_PKEY_ED448, SubjectPublicKeyInfo, der);
-MAKE_ENCODER(ed448, ecx, EVP_PKEY_ED448, SubjectPublicKeyInfo, pem);
-MAKE_ENCODER(x25519, ecx, EVP_PKEY_X25519, EncryptedPrivateKeyInfo, der);
-MAKE_ENCODER(x25519, ecx, EVP_PKEY_X25519, EncryptedPrivateKeyInfo, pem);
-MAKE_ENCODER(x25519, ecx, EVP_PKEY_X25519, PrivateKeyInfo, der);
-MAKE_ENCODER(x25519, ecx, EVP_PKEY_X25519, PrivateKeyInfo, pem);
-MAKE_ENCODER(x25519, ecx, EVP_PKEY_X25519, SubjectPublicKeyInfo, der);
-MAKE_ENCODER(x25519, ecx, EVP_PKEY_X25519, SubjectPublicKeyInfo, pem);
-MAKE_ENCODER(x448, ecx, EVP_PKEY_ED448, EncryptedPrivateKeyInfo, der);
-MAKE_ENCODER(x448, ecx, EVP_PKEY_ED448, EncryptedPrivateKeyInfo, pem);
-MAKE_ENCODER(x448, ecx, EVP_PKEY_ED448, PrivateKeyInfo, der);
-MAKE_ENCODER(x448, ecx, EVP_PKEY_ED448, PrivateKeyInfo, pem);
-MAKE_ENCODER(x448, ecx, EVP_PKEY_ED448, SubjectPublicKeyInfo, der);
-MAKE_ENCODER(x448, ecx, EVP_PKEY_ED448, SubjectPublicKeyInfo, pem);
+MAKE_ENCODER(ed25519, ecx, EncryptedPrivateKeyInfo, der);
+MAKE_ENCODER(ed25519, ecx, EncryptedPrivateKeyInfo, pem);
+MAKE_ENCODER(ed25519, ecx, PrivateKeyInfo, der);
+MAKE_ENCODER(ed25519, ecx, PrivateKeyInfo, pem);
+MAKE_ENCODER(ed25519, ecx, SubjectPublicKeyInfo, der);
+MAKE_ENCODER(ed25519, ecx, SubjectPublicKeyInfo, pem);
+MAKE_ENCODER(ed448, ecx, EncryptedPrivateKeyInfo, der);
+MAKE_ENCODER(ed448, ecx, EncryptedPrivateKeyInfo, pem);
+MAKE_ENCODER(ed448, ecx, PrivateKeyInfo, der);
+MAKE_ENCODER(ed448, ecx, PrivateKeyInfo, pem);
+MAKE_ENCODER(ed448, ecx, SubjectPublicKeyInfo, der);
+MAKE_ENCODER(ed448, ecx, SubjectPublicKeyInfo, pem);
+MAKE_ENCODER(x25519, ecx, EncryptedPrivateKeyInfo, der);
+MAKE_ENCODER(x25519, ecx, EncryptedPrivateKeyInfo, pem);
+MAKE_ENCODER(x25519, ecx, PrivateKeyInfo, der);
+MAKE_ENCODER(x25519, ecx, PrivateKeyInfo, pem);
+MAKE_ENCODER(x25519, ecx, SubjectPublicKeyInfo, der);
+MAKE_ENCODER(x25519, ecx, SubjectPublicKeyInfo, pem);
+MAKE_ENCODER(x448, ecx, EncryptedPrivateKeyInfo, der);
+MAKE_ENCODER(x448, ecx, EncryptedPrivateKeyInfo, pem);
+MAKE_ENCODER(x448, ecx, PrivateKeyInfo, der);
+MAKE_ENCODER(x448, ecx, PrivateKeyInfo, pem);
+MAKE_ENCODER(x448, ecx, SubjectPublicKeyInfo, der);
+MAKE_ENCODER(x448, ecx, SubjectPublicKeyInfo, pem);
 # endif
 #endif
 
@@ -1459,39 +1455,39 @@ MAKE_ENCODER(x448, ecx, EVP_PKEY_ED448, SubjectPublicKeyInfo, pem);
  * ED25519, ED448, X25519 or X448, and they therefore only have PKCS#8
  * and SubjectPublicKeyInfo implementations as implemented above.
  */
-MAKE_ENCODER(rsa, rsa, EVP_PKEY_RSA, RSA, der);
-MAKE_ENCODER(rsa, rsa, EVP_PKEY_RSA, RSA, pem);
+MAKE_ENCODER(rsa, rsa, RSA, der);
+MAKE_ENCODER(rsa, rsa, RSA, pem);
 #ifndef OPENSSL_NO_DH
-MAKE_ENCODER(dh, dh, EVP_PKEY_DH, DH, der);
-MAKE_ENCODER(dh, dh, EVP_PKEY_DH, DH, pem);
-MAKE_ENCODER(dhx, dh, EVP_PKEY_DHX, DHX, der);
-MAKE_ENCODER(dhx, dh, EVP_PKEY_DHX, DHX, pem);
+MAKE_ENCODER(dh, dh, DH, der);
+MAKE_ENCODER(dh, dh, DH, pem);
+MAKE_ENCODER(dhx, dh, DHX, der);
+MAKE_ENCODER(dhx, dh, DHX, pem);
 #endif
 #ifndef OPENSSL_NO_DSA
-MAKE_ENCODER(dsa, dsa, EVP_PKEY_DSA, DSA, der);
-MAKE_ENCODER(dsa, dsa, EVP_PKEY_DSA, DSA, pem);
+MAKE_ENCODER(dsa, dsa, DSA, der);
+MAKE_ENCODER(dsa, dsa, DSA, pem);
 #endif
 #ifndef OPENSSL_NO_EC
-MAKE_ENCODER(ec, ec, EVP_PKEY_EC, EC, der);
-MAKE_ENCODER(ec, ec, EVP_PKEY_EC, EC, pem);
+MAKE_ENCODER(ec, ec, EC, der);
+MAKE_ENCODER(ec, ec, EC, pem);
 # ifndef OPENSSL_NO_SM2
-MAKE_ENCODER(sm2, ec, EVP_PKEY_EC, SM2, der);
-MAKE_ENCODER(sm2, ec, EVP_PKEY_EC, SM2, pem);
+MAKE_ENCODER(sm2, ec, SM2, der);
+MAKE_ENCODER(sm2, ec, SM2, pem);
 # endif
 #endif
 
 /* Convenience structure names */
-MAKE_ENCODER(rsa, rsa, EVP_PKEY_RSA, PKCS1, der);
-MAKE_ENCODER(rsa, rsa, EVP_PKEY_RSA, PKCS1, pem);
-MAKE_ENCODER(rsapss, rsa, EVP_PKEY_RSA_PSS, PKCS1, der);
-MAKE_ENCODER(rsapss, rsa, EVP_PKEY_RSA_PSS, PKCS1, pem);
+MAKE_ENCODER(rsa, rsa, PKCS1, der);
+MAKE_ENCODER(rsa, rsa, PKCS1, pem);
+MAKE_ENCODER(rsapss, rsa, PKCS1, der);
+MAKE_ENCODER(rsapss, rsa, PKCS1, pem);
 #ifndef OPENSSL_NO_DH
-MAKE_ENCODER(dh, dh, EVP_PKEY_DH, PKCS3, der); /* parameters only */
-MAKE_ENCODER(dh, dh, EVP_PKEY_DH, PKCS3, pem); /* parameters only */
-MAKE_ENCODER(dhx, dh, EVP_PKEY_DHX, X9_42, der); /* parameters only */
-MAKE_ENCODER(dhx, dh, EVP_PKEY_DHX, X9_42, pem); /* parameters only */
+MAKE_ENCODER(dh, dh, PKCS3, der); /* parameters only */
+MAKE_ENCODER(dh, dh, PKCS3, pem); /* parameters only */
+MAKE_ENCODER(dhx, dh, X9_42, der); /* parameters only */
+MAKE_ENCODER(dhx, dh, X9_42, pem); /* parameters only */
 #endif
 #ifndef OPENSSL_NO_EC
-MAKE_ENCODER(ec, ec, EVP_PKEY_EC, X9_62, der);
-MAKE_ENCODER(ec, ec, EVP_PKEY_EC, X9_62, pem);
+MAKE_ENCODER(ec, ec, X9_62, der);
+MAKE_ENCODER(ec, ec, X9_62, pem);
 #endif
