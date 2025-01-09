@@ -270,7 +270,7 @@ sub start_mock_server {
     print "Current directory is ".getcwd()."\n";
     print "Launching mock server: $cmd\n";
     die "Invalid port: $server_port" unless $server_port =~ m/^\d+$/;
-    my $pid = open($server_fh, "$cmd|") or die "Trying to $cmd";
+    my $pid = open($server_fh, "$cmd 2>".result_dir()."/error.txt |") or die "Trying to $cmd";
     print "Pid is: $pid\n";
     if ($server_port == 0) {
         # Find out the actual server port
