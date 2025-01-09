@@ -36,6 +36,11 @@ OpenSSL 3.5
 
   *Tomáš Mráz*
 
+* Initial support for opaque symmetric keys objects.  These replace the ad-hoc byte
+  arrays that are pervasive throughout the library.
+
+  *Dmitry Belyavskiy and Simo Sorce*
+
 * Support DEFAULT keyword and '-' prefix in SSL_CTX_set1_groups_list().
   SSL_CTX_set1_groups_list() now supports the DEFAULT keyword which sets the
   available groups to the default selection. The '-' prefix allows the calling
