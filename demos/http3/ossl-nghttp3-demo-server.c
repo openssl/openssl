@@ -813,7 +813,7 @@ static char *get_file_data(struct h3ssl *h3ssl)
         return NULL;
     }
     close(fd);
-    printf("read from %s : %lu\n", filename, size);
+    printf("read from %s : %zu\n", filename, size);
     return res;
 }
 
