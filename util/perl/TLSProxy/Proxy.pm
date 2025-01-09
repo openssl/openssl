@@ -7,7 +7,6 @@
 
 use strict;
 use POSIX ":sys_wait_h";
-use IPC::Open2;
 
 package TLSProxy::Proxy;
 
@@ -205,7 +204,7 @@ sub connect_to_server
                              Proto => $self->{isdtls} ? 'udp' : 'tcp');
     if (!defined($sock)) {
         my $err = $!;
-        kill(3, $self->{serverpid});
+        kill(3, $self->{real_serverpid});
         die "unable to connect: $err\n";
     }
 
@@ -291,13 +290,17 @@ sub start
         print STDERR "Server command: $execcmd\n";
     }
 
-    $pid = IPC::Open2::open2(my $sout, my $sin, $execcmd) or die "Failed to $execcmd: $!\n";
-    $self->{serverpid} = $pid;
+    open(my $savedin, "<&STDIN");
+
+    # Temporarily replace STDIN so that sink process can inherit it...
+    $pid = open(STDIN, "$execcmd 2>&1 |") or die "Failed to $execcmd: $!\n";
+    $self->{real_serverpid} = $pid;
 
     # Process the output from s_server until we find the ACCEPT line, which
     # tells us what the accepting address and port are.
-    while (<$sout>) {
-        chomp;
+    while (<>) {
+        print;
+        s/\R$//;                # Better chomp
         next unless (/^ACCEPT\s.*:(\d+)$/);
         $self->{server_port} = $1;
         last;
@@ -309,6 +312,38 @@ sub start
         waitpid($pid, 0);
         die "no ACCEPT detected in '$execcmd' output: $?\n";
     }
+
+    # Just make sure everything else is simply printed [as separate lines].
+    # The sub process simply inherits our STD* and will keep consuming
+    # server's output and printing it as long as there is anything there,
+    # out of our way.
+    my $error;
+    $pid = undef;
+    if (eval { require Win32::Process; 1; }) {
+        if (Win32::Process::Create(my $h, $^X, "perl -ne print", 0, 0, ".")) {
+            $pid = $h->GetProcessID();
+            $self->{proc_handle} = $h;  # hold handle till next round [or exit]
+        } else {
+            $error = Win32::FormatMessage(Win32::GetLastError());
+        }
+    } else {
+        if (defined($pid = fork)) {
+            $pid or exec("$^X -ne print") or exit($!);
+        } else {
+            $error = $!;
+        }
+    }
+
+    # Change back to original stdin
+    open(STDIN, "<&", $savedin);
+    close($savedin);
+
+    if (!defined($pid)) {
+        kill(3, $self->{real_serverpid});
+        die "Failed to capture s_server's output: $error\n";
+    }
+
+    $self->{serverpid} = $pid;
 
     print STDERR "Server responds on ",
                  "$self->{server_addr}:$self->{server_port}\n";
@@ -366,7 +401,7 @@ sub clientstart
         # dead-lock...
         if (!($pid = open(STDOUT, "| $execcmd"))) {
             my $err = $!;
-            kill(3, $self->{serverpid});
+            kill(3, $self->{real_serverpid});
             die "Failed to $execcmd: $err\n";
         }
         $self->{clientpid} = $pid;
@@ -382,7 +417,7 @@ sub clientstart
     # Wait for incoming connection from client
     my $fdset = IO::Select->new($self->{proxy_sock});
     if (!$fdset->can_read(60)) {
-        kill(3, $self->{serverpid});
+        kill(3, $self->{real_serverpid});
         die "s_client didn't try to connect\n";
     }
 
@@ -441,14 +476,14 @@ sub clientstart
                     $server_sock->shutdown(SHUT_WR);
                 }
             } else {
-                kill(3, $self->{serverpid});
+                kill(3, $self->{real_serverpid});
                 die "Unexpected handle";
             }
         }
     }
 
     if ($ctr >= 10) {
-        kill(3, $self->{serverpid});
+        kill(3, $self->{real_serverpid});
         print "No progress made\n";
         $success = 0;
     }
@@ -467,6 +502,15 @@ sub clientstart
     my $pid;
     if (--$self->{serverconnects} == 0) {
         $pid = $self->{serverpid};
+        print "Waiting for 'perl -ne print' process to close: $pid...\n";
+        $pid = waitpid($pid, 0);
+        if ($pid > 0) {
+            die "exit code $? from 'perl -ne print' process\n" if $? != 0;
+        } elsif ($pid == 0) {
+            kill(3, $self->{real_serverpid});
+            die "lost control over $self->{serverpid}?";
+        }
+        $pid = $self->{real_serverpid};
         print "Waiting for s_server process to close: $pid...\n";
         # it's done already, just collect the exit code [and reap]...
         waitpid($pid, 0);
