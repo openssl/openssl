@@ -63,7 +63,7 @@ my @commandline =
         ( 'x942kdf_key_check',              'x942kdf-key-check' )
     );
 
-plan tests => 36 + (scalar @pedantic_okay) + (scalar @pedantic_fail)
+plan tests => 40 + (scalar @pedantic_okay) + (scalar @pedantic_fail)
               + 4 * (scalar @commandline);
 
 my $infile = bldtop_file('providers', platform->dso('fips'));
@@ -347,6 +347,49 @@ SKIP: {
                 '-corrupt_desc', 'DSA',
                 '-corrupt_type', 'PCT_Signature'])),
        "fipsinstall fails when the signature result is corrupted");
+}
+
+# corrupt ML-KEM tests
+SKIP: {
+    skip "Skipping ML_KEM corruption tests because of no ML-KEM in this build", 4
+        if disabled("ml-kem") || disabled("fips-post");
+
+    run(test(["fips_version_test", "-config", $provconf, ">=3.5.0"]),
+             capture => 1, statusvar => \my $exit);
+    skip "FIPS provider version doesn't support ML-KEM", 4
+        if !$exit;
+
+    ok(!run(app(['openssl', 'fipsinstall', '-out', 'fips.cnf', '-module', $infile,
+                '-provider_name', 'fips', '-mac_name', 'HMAC',
+                '-macopt', 'digest:SHA256', '-macopt', "hexkey:$fipskey",
+                '-section_name', 'fips_sect',
+                '-corrupt_desc', 'KEM_Keygen',
+                '-corrupt_type', 'KAT_KEM'])),
+       "fipsinstall fails when the ML-KEM key generation result is corrupted");
+
+    ok(!run(app(['openssl', 'fipsinstall', '-out', 'fips.cnf', '-module', $infile,
+                '-provider_name', 'fips', '-mac_name', 'HMAC',
+                '-macopt', 'digest:SHA256', '-macopt', "hexkey:$fipskey",
+                '-section_name', 'fips_sect',
+                '-corrupt_desc', 'KEM_Encap',
+                '-corrupt_type', 'KAT_KEM'])),
+       "fipsinstall fails when the ML-KEM encapsulate result is corrupted");
+
+    ok(!run(app(['openssl', 'fipsinstall', '-out', 'fips.cnf', '-module', $infile,
+                '-provider_name', 'fips', '-mac_name', 'HMAC',
+                '-macopt', 'digest:SHA256', '-macopt', "hexkey:$fipskey",
+                '-section_name', 'fips_sect',
+                '-corrupt_desc', 'KEM_Decap',
+                '-corrupt_type', 'KAT_KEM'])),
+       "fipsinstall fails when the ML-KEM decapsulate result is corrupted");
+
+    ok(!run(app(['openssl', 'fipsinstall', '-out', 'fips.cnf', '-module', $infile,
+                '-provider_name', 'fips', '-mac_name', 'HMAC',
+                '-macopt', 'digest:SHA256', '-macopt', "hexkey:$fipskey",
+                '-section_name', 'fips_sect',
+                '-corrupt_desc', 'KEM_Decap_Reject',
+                '-corrupt_type', 'KAT_KEM'])),
+       "fipsinstall fails when the ML-KEM decapsulate implicit failure result is corrupted");
 }
 
 # 'local' ensures that this change is only done in this file.
