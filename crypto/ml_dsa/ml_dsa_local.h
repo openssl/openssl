@@ -93,9 +93,7 @@ uint32_t ossl_ml_dsa_key_compress_use_hint(uint32_t hint, uint32_t r,
                                            uint32_t gamma2);
 
 int ossl_ml_dsa_pk_encode(ML_DSA_KEY *key);
-int ossl_ml_dsa_pk_decode(ML_DSA_KEY *key, const uint8_t *in, size_t in_len);
 int ossl_ml_dsa_sk_encode(ML_DSA_KEY *key);
-int ossl_ml_dsa_sk_decode(ML_DSA_KEY *key, const uint8_t *in, size_t in_len);
 
 int ossl_ml_dsa_sig_encode(const ML_DSA_SIG *sig, const ML_DSA_PARAMS *params,
                            uint8_t *out);

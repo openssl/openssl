@@ -68,6 +68,12 @@ ENCODER_TEXT("SM2", sm2, no),
 # endif
 #endif
 
+# ifndef OPENSSL_NO_ML_DSA
+ENCODER_TEXT("ML-DSA-44", ml_dsa_44, no),
+ENCODER_TEXT("ML-DSA-65", ml_dsa_65, no),
+ENCODER_TEXT("ML-DSA-87", ml_dsa_87, no),
+# endif
+
 /*
  * Entries for key type specific output formats.  The structure name on these
  * is the same as the key type name.  This allows us to say something like:
@@ -222,6 +228,29 @@ ENCODER_w_structure("SM2", sm2, no, der, SubjectPublicKeyInfo),
 ENCODER_w_structure("SM2", sm2, no, pem, SubjectPublicKeyInfo),
 # endif
 #endif
+
+# ifndef OPENSSL_NO_ML_DSA
+ENCODER_w_structure("ML-DSA-44", ml_dsa_44, no, der, EncryptedPrivateKeyInfo),
+ENCODER_w_structure("ML-DSA-44", ml_dsa_44, no, pem, EncryptedPrivateKeyInfo),
+ENCODER_w_structure("ML-DSA-44", ml_dsa_44, no, der, PrivateKeyInfo),
+ENCODER_w_structure("ML-DSA-44", ml_dsa_44, no, pem, PrivateKeyInfo),
+ENCODER_w_structure("ML-DSA-44", ml_dsa_44, no, der, SubjectPublicKeyInfo),
+ENCODER_w_structure("ML-DSA-44", ml_dsa_44, no, pem, SubjectPublicKeyInfo),
+
+ENCODER_w_structure("ML-DSA-65", ml_dsa_65, no, der, EncryptedPrivateKeyInfo),
+ENCODER_w_structure("ML-DSA-65", ml_dsa_65, no, pem, EncryptedPrivateKeyInfo),
+ENCODER_w_structure("ML-DSA-65", ml_dsa_65, no, der, PrivateKeyInfo),
+ENCODER_w_structure("ML-DSA-65", ml_dsa_65, no, pem, PrivateKeyInfo),
+ENCODER_w_structure("ML-DSA-65", ml_dsa_65, no, der, SubjectPublicKeyInfo),
+ENCODER_w_structure("ML-DSA-65", ml_dsa_65, no, pem, SubjectPublicKeyInfo),
+
+ENCODER_w_structure("ML-DSA-87", ml_dsa_87, no, der, EncryptedPrivateKeyInfo),
+ENCODER_w_structure("ML-DSA-87", ml_dsa_87, no, pem, EncryptedPrivateKeyInfo),
+ENCODER_w_structure("ML-DSA-87", ml_dsa_87, no, der, PrivateKeyInfo),
+ENCODER_w_structure("ML-DSA-87", ml_dsa_87, no, pem, PrivateKeyInfo),
+ENCODER_w_structure("ML-DSA-87", ml_dsa_87, no, der, SubjectPublicKeyInfo),
+ENCODER_w_structure("ML-DSA-87", ml_dsa_87, no, pem, SubjectPublicKeyInfo),
+# endif /* OPENSSL_NO_ML_DSA */
 
 /*
  * Entries for key type specific output formats.  These are exactly the
