@@ -79,6 +79,67 @@ static int test_kdf_tls1_prf(void)
     return ret;
 }
 
+static int test_kdf_tls1_prf_set_skey(void)
+{
+    int ret;
+    EVP_KDF_CTX *kctx = NULL;
+    unsigned char out[16];
+    OSSL_PARAM params[3] = {OSSL_PARAM_END, OSSL_PARAM_END, OSSL_PARAM_END};
+    OSSL_PARAM *p = params;
+    static const unsigned char expected[sizeof(out)] = {
+        0x8e, 0x4d, 0x93, 0x25, 0x30, 0xd7, 0x65, 0xa0,
+        0xaa, 0xe9, 0x74, 0xc3, 0x04, 0x73, 0x5e, 0xcc
+    };
+    EVP_SKEY *skey = NULL;
+
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+                                            "sha256", 0);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SECRET,
+                                             "secret", 6);
+    skey = EVP_SKEY_import_raw_key(NULL, OSSL_SKEY_TYPE_GENERIC,
+                                   (unsigned char *)"seed", 4, NULL);
+    if (skey == NULL)
+        return 0;
+
+    ret = TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_TLS1_PRF))
+        && TEST_int_gt(EVP_KDF_CTX_set_SKEY(kctx, skey, OSSL_KDF_PARAM_SEED), 0)
+        && TEST_int_gt(EVP_KDF_derive(kctx, out, sizeof(out), params), 0)
+        && TEST_mem_eq(out, sizeof(out), expected, sizeof(expected));
+
+    EVP_KDF_CTX_free(kctx);
+    EVP_SKEY_free(skey);
+    return ret;
+}
+
+static int test_kdf_tls1_prf_derive_skey(void)
+{
+    int ret;
+    EVP_KDF_CTX *kctx = NULL;
+    unsigned char out[16];
+    OSSL_PARAM *params;
+    static const unsigned char expected[sizeof(out)] = {
+        0x8e, 0x4d, 0x93, 0x25, 0x30, 0xd7, 0x65, 0xa0,
+        0xaa, 0xe9, 0x74, 0xc3, 0x04, 0x73, 0x5e, 0xcc
+    };
+    const unsigned char *export = NULL;
+    size_t export_size = 0;
+    EVP_SKEY *skey = NULL;
+
+    params = construct_tls1_prf_params("sha256", "secret", "seed");
+
+    ret = TEST_ptr(params)
+        && TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_TLS1_PRF))
+        && TEST_ptr(skey = EVP_KDF_derive_SKEY(kctx, OSSL_SKEY_TYPE_GENERIC,
+                                                sizeof(expected), NULL, params))
+        && TEST_int_eq(EVP_SKEY_get_raw_key(skey, &export, &export_size), 1)
+        && TEST_mem_eq(export, export_size, expected, sizeof(expected));
+
+    EVP_SKEY_free(skey);
+    EVP_KDF_CTX_free(kctx);
+    OPENSSL_free(params);
+    return ret;
+}
+
 static int test_kdf_tls1_prf_invalid_digest(void)
 {
     int ret;
@@ -2053,6 +2114,8 @@ int setup_tests(void)
         ADD_TEST(test_kdf_kbkdf_kmac);
     ADD_TEST(test_kdf_get_kdf);
     ADD_TEST(test_kdf_tls1_prf);
+    ADD_TEST(test_kdf_tls1_prf_set_skey);
+    ADD_TEST(test_kdf_tls1_prf_derive_skey);
     ADD_TEST(test_kdf_tls1_prf_invalid_digest);
     ADD_TEST(test_kdf_tls1_prf_zero_output_size);
     ADD_TEST(test_kdf_tls1_prf_empty_secret);
