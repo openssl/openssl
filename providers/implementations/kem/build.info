@@ -20,7 +20,7 @@ IF[{- !$disabled{'ml-kem'} -}]
   IF[{- !$disabled{ec} -}]
     SOURCE[$TLS_ML_KEM_HYBRID_GOAL]=mlx_kem.c
   ENDIF
-  SOURCE[$ML_KEM_GOAL] = ml-kem_kem.c
+  SOURCE[$ML_KEM_GOAL] = ml_kem_kem.c
 ENDIF
 
 SOURCE[$TEMPLATE_KEM_GOAL]=template_kem.c
