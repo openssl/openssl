@@ -324,11 +324,13 @@ static long enc_ctrl(BIO *b, int cmd, long num, void *ptr)
             ret = BIO_ctrl(next, cmd, num, ptr);
         break;
     case BIO_CTRL_WPENDING:
+        OPENSSL_assert(ctx->buf_len >= ctx->buf_off);
         ret = ctx->buf_len - ctx->buf_off;
         if (ret <= 0)
             ret = BIO_ctrl(next, cmd, num, ptr);
         break;
     case BIO_CTRL_PENDING:     /* More to read in buffer */
+        OPENSSL_assert(ctx->buf_len >= ctx->buf_off);
         ret = ctx->buf_len - ctx->buf_off;
         if (ret <= 0)
             ret = BIO_ctrl(next, cmd, num, ptr);
