@@ -475,6 +475,7 @@ OSSL_CORE_MAKE_FUNC(int, mac_set_ctx_params,
 # define OSSL_FUNC_KDF_GET_PARAMS                    9
 # define OSSL_FUNC_KDF_GET_CTX_PARAMS               10
 # define OSSL_FUNC_KDF_SET_CTX_PARAMS               11
+# define OSSL_FUNC_KDF_DERIVE_SKEY                  12
 
 OSSL_CORE_MAKE_FUNC(void *, kdf_newctx, (void *provctx))
 OSSL_CORE_MAKE_FUNC(void *, kdf_dupctx, (void *src))
@@ -492,6 +493,7 @@ OSSL_CORE_MAKE_FUNC(int, kdf_get_ctx_params,
                     (void *kctx, OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(int, kdf_set_ctx_params,
                     (void *kctx, const OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(void *, kdf_derive_skey, (void *kctx, const OSSL_PARAM params[]))
 
 /* RAND */
 

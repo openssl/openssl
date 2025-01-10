@@ -144,6 +144,88 @@ int EVP_KDF_derive(EVP_KDF_CTX *ctx, unsigned char *key, size_t keylen,
     return ctx->meth->derive(ctx->algctx, key, keylen, params);
 }
 
+EVP_SKEY *EVP_KDF_derive_SKEY(EVP_KDF_CTX *ctx, const char *key_type,
+                              size_t keylen, const OSSL_PARAM params[])
+{
+    EVP_SKEYMGMT *skeymgmt = NULL;
+    EVP_SKEY *ret = NULL;
+
+    if (ctx == NULL || key_type == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return NULL;
+    }
+
+    /*
+     * FIXME: we have libctx but don't have the propquery here,
+     * mostly needed for the fallbacks.
+     *
+     * We may want to pass it either explicitly or though params.
+     */
+
+    skeymgmt = evp_skeymgmt_fetch_from_prov(ctx->meth->prov,
+                                            key_type, NULL);
+    if (skeymgmt == NULL) {
+        /*
+         * The provider does not support skeymgmt, let's try to fallback
+         * to a provider that supports it
+         */
+        skeymgmt = EVP_SKEYMGMT_fetch(ossl_provider_libctx(ctx->meth->prov),
+                                      key_type, NULL);
+    }
+
+    if (skeymgmt == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_FETCH_FAILED);
+        return NULL;
+    }
+
+    /* Fallback to raw derive + import if possible */
+    if (skeymgmt->prov != ctx->meth->prov ||
+        ctx->meth->derive_skey == NULL) {
+        unsigned char *key = NULL;
+
+        EVP_SKEYMGMT_free(skeymgmt);
+
+        if (ctx->meth->derive == NULL) {
+            ERR_raise(ERR_R_EVP_LIB, ERR_R_UNSUPPORTED);
+            return NULL;
+        }
+
+        key = OPENSSL_zalloc(keylen);
+        if (!key) {
+            EVP_SKEY_free(ret);
+            return NULL;
+        }
+
+        if (!ctx->meth->derive(ctx->algctx, key, keylen, params)) {
+            EVP_SKEY_free(ret);
+            OPENSSL_free(key);
+            return NULL;
+        }
+
+        /* FIXME no propquery */
+        ret = EVP_SKEY_import_raw_key(ossl_provider_libctx(skeymgmt->prov),
+                                      key_type, key, keylen, NULL);
+        OPENSSL_clear_free(key, keylen);
+        return ret;
+    }
+
+    ret = evp_skey_int();
+    if (ret == NULL) {
+        EVP_SKEYMGMT_free(skeymgmt);
+        return NULL;
+    }
+
+    ret->skeymgmt = skeymgmt;
+
+    ret->keydata = ctx->meth->derive_skey(ctx->algctx, keylen, params);
+    if (ret->keydata == NULL) {
+        EVP_SKEY_free(ret);
+        return NULL;
+    }
+
+    return ret;
+}
+
 /*
  * The {get,set}_params functions return 1 if there is no corresponding
  * function in the implementation.  This is the same as if there was one,

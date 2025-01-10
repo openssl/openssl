@@ -5893,3 +5893,4 @@ EVP_SKEYMGMT_get0_description           ?	3_5_0	EXIST::FUNCTION:
 EVP_SKEYMGMT_is_a                       ?	3_5_0	EXIST::FUNCTION:
 EVP_SKEYMGMT_do_all_provided            ?	3_5_0	EXIST::FUNCTION:
 EVP_SKEYMGMT_names_do_all               ?	3_5_0	EXIST::FUNCTION:
+EVP_KDF_derive_SKEY                     ?	3_5_0	EXIST::FUNCTION:
