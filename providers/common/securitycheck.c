@@ -63,12 +63,15 @@ int ossl_rsa_key_op_get_protect(const RSA *rsa, int operation, int *outprotect)
  * signing), and for legacy purposes 80 bits (for decryption or verifying).
  * Set protect = 1 for encryption or signing operations, or 0 otherwise. See
  * https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-131Ar2.pdf.
+ *
+ * drafts raise these to 3072/2048 for post-2030, or infinity/3072 for
+ * post-2035 PQC.
  */
 int ossl_rsa_check_key_size(const RSA *rsa, int protect)
 {
     int sz = RSA_bits(rsa);
 
-    if (protect ? (sz < 2048) : (sz < 1024))
+    if (protect ? (sz < 2048) : (sz < 2048))
         return 0;
     return 1;
 }
