@@ -452,6 +452,27 @@ nonlegacy:
     return 1;
 }
 
+struct raw_key_data {
+    unsigned char *data;
+    size_t length;
+};
+
+static int export_key_cb(const OSSL_PARAM params[], void *arg)
+{
+    struct raw_key_data *key = arg;
+    const OSSL_PARAM *raw_bytes;
+
+    raw_bytes = OSSL_PARAM_locate_const(params, OSSL_SKEY_PARAM_RAW_BYTES);
+    if (raw_bytes == NULL)
+        return 0;
+
+    if (!OSSL_PARAM_get_octet_string(raw_bytes, (void **)&key->data, 0,
+                                     &key->length))
+        return 0;
+
+    return 1;
+}
+
 /*
  * This function is basically evp_cipher_init_internal without ENGINE support.
  * They should be combined when engines are not supported any longer.
@@ -561,20 +582,40 @@ static int evp_cipher_init_skey_internal(EVP_CIPHER_CTX *ctx,
     /* We have a data managed via key management, using the new callbacks */
     if (enc) {
         if (ctx->cipher->einit_skey == NULL) {
-            ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
-            return 0;
-        }
+            /* Attempt fallback for providers that do not support SKEYs */
+            struct raw_key_data key = { 0 };
 
-        ret = ctx->cipher->einit_skey(ctx->algctx, skey->keydata, iv, iv_len,
-                                      params);
+            if (!EVP_SKEY_export(skey, OSSL_SKEYMGMT_SELECT_SECRET_KEY,
+                                 export_key_cb, &key)) {
+                ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+                return 0;
+            }
+
+            ret = ctx->cipher->einit(ctx->algctx, key.data, key.length,
+                                     iv, iv_len, params);
+            OPENSSL_free(key.data);
+        } else {
+            ret = ctx->cipher->einit_skey(ctx->algctx, skey->keydata,
+                                          iv, iv_len, params);
+        }
     } else {
         if (ctx->cipher->dinit_skey == NULL) {
-            ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
-            return 0;
-        }
+            /* Attempt fallback for providers that do not support SKEYs */
+            struct raw_key_data key = { 0 };
 
-        ret = ctx->cipher->dinit_skey(ctx->algctx, skey->keydata, iv, iv_len,
-                                      params);
+            if (!EVP_SKEY_export(skey, OSSL_SKEYMGMT_SELECT_SECRET_KEY,
+                                 export_key_cb, &key)) {
+                ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+                return 0;
+            }
+
+            ret = ctx->cipher->dinit(ctx->algctx, key.data, key.length,
+                                     iv, iv_len, params);
+            OPENSSL_free(key.data);
+        } else {
+            ret = ctx->cipher->dinit_skey(ctx->algctx, skey->keydata,
+                                          iv, iv_len, params);
+        }
     }
 
     return ret;

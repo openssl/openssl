@@ -11,7 +11,7 @@
 # define OSSL_CRYPTO_SKEY_H
 
 /* Known symmetric key type definitions */
-# define SKEY_TYPE_GENERIC 1 /* generic bytes container when the type is not known */
+# define SKEY_TYPE_GENERIC 1 /* generic bytes container unknown key types */
 # define SKEY_TYPE_AES 2 /* AES keys */
 
 struct symmetric_key_st {
