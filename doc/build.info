@@ -1679,6 +1679,10 @@ DEPEND[html/man3/OSSL_CRMF_pbmp_new.html]=man3/OSSL_CRMF_pbmp_new.pod
 GENERATE[html/man3/OSSL_CRMF_pbmp_new.html]=man3/OSSL_CRMF_pbmp_new.pod
 DEPEND[man/man3/OSSL_CRMF_pbmp_new.3]=man3/OSSL_CRMF_pbmp_new.pod
 GENERATE[man/man3/OSSL_CRMF_pbmp_new.3]=man3/OSSL_CRMF_pbmp_new.pod
+DEPEND[html/man3/OSSL_CRYPTO_load_u16_le.html]=man3/OSSL_CRYPTO_load_u16_le.pod
+GENERATE[html/man3/OSSL_CRYPTO_load_u16_le.html]=man3/OSSL_CRYPTO_load_u16_le.pod
+DEPEND[man/man3/OSSL_CRYPTO_load_u16_le.3]=man3/OSSL_CRYPTO_load_u16_le.pod
+GENERATE[man/man3/OSSL_CRYPTO_load_u16_le.3]=man3/OSSL_CRYPTO_load_u16_le.pod
 DEPEND[html/man3/OSSL_DECODER.html]=man3/OSSL_DECODER.pod
 GENERATE[html/man3/OSSL_DECODER.html]=man3/OSSL_DECODER.pod
 DEPEND[man/man3/OSSL_DECODER.3]=man3/OSSL_DECODER.pod
@@ -3427,6 +3431,7 @@ html/man3/OSSL_CRMF_MSG_set0_validity.html \
 html/man3/OSSL_CRMF_MSG_set1_regCtrl_regToken.html \
 html/man3/OSSL_CRMF_MSG_set1_regInfo_certReq.html \
 html/man3/OSSL_CRMF_pbmp_new.html \
+html/man3/OSSL_CRYPTO_load_u16_le.html \
 html/man3/OSSL_DECODER.html \
 html/man3/OSSL_DECODER_CTX.html \
 html/man3/OSSL_DECODER_CTX_new_for_pkey.html \
@@ -4091,6 +4096,7 @@ man/man3/OSSL_CRMF_MSG_set0_validity.3 \
 man/man3/OSSL_CRMF_MSG_set1_regCtrl_regToken.3 \
 man/man3/OSSL_CRMF_MSG_set1_regInfo_certReq.3 \
 man/man3/OSSL_CRMF_pbmp_new.3 \
+man/man3/OSSL_CRYPTO_load_u16_le.3 \
 man/man3/OSSL_DECODER.3 \
 man/man3/OSSL_DECODER_CTX.3 \
 man/man3/OSSL_DECODER_CTX_new_for_pkey.3 \
