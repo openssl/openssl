@@ -118,7 +118,6 @@ my %params = (
     'CIPHER_PARAM_TLS1_MULTIBLOCK' =>      "tls-multi",   # int, 0 or 1
     'CIPHER_PARAM_HAS_RAND_KEY' =>         "has-randkey", # int, 0 or 1
     'CIPHER_PARAM_KEYLEN' =>               "keylen",      # size_t
-    'CIPHER_PARAM_KEY'    =>               "key",         # octet_string OR octet_ptr
     'CIPHER_PARAM_IVLEN' =>                "ivlen",       # size_t
     'CIPHER_PARAM_IV' =>                   "iv",          # octet_string OR octet_ptr
     'CIPHER_PARAM_UPDATED_IV' =>           "updated-iv",  # octet_string OR octet_ptr
@@ -589,6 +588,9 @@ my %params = (
     'LIBSSL_RECORD_LAYER_PARAM_MAX_EARLY_DATA' => "max_early_data",
     'LIBSSL_RECORD_LAYER_PARAM_BLOCK_PADDING' =>  "block_padding",
     'LIBSSL_RECORD_LAYER_PARAM_HS_PADDING' =>     "hs_padding",
+
+# Symmetric Key parametes
+    'SKEY_PARAM_RAW_BYTES' => "raw-bytes",
 );
 
 # Generate string based macros for public consumption

@@ -40,6 +40,9 @@
  * Symmetric ciphers
  * -----------------
  */
+#define PROV_NAMES_AES "AES:2.16.840.1.101.3.4.1"
+#define PROV_DESCS_AES "OpenSSL opaque AES Symmetric Key"
+
 #define PROV_NAMES_AES_256_ECB "AES-256-ECB:2.16.840.1.101.3.4.1.41"
 #define PROV_NAMES_AES_192_ECB "AES-192-ECB:2.16.840.1.101.3.4.1.21"
 #define PROV_NAMES_AES_128_ECB "AES-128-ECB:2.16.840.1.101.3.4.1.1"

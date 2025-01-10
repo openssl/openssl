@@ -462,9 +462,6 @@ static int evp_cipher_init_skey_internal(EVP_CIPHER_CTX *ctx,
                                          const unsigned char *iv, size_t iv_len,
                                          int enc, const OSSL_PARAM params[])
 {
-    void *pkeydata = (skey == NULL) ? NULL : skey->keydata;
-    const unsigned char *raw_key = (skey == NULL) ? NULL : skey->keybytes;
-    size_t keylen = (skey == NULL) ? 0 : skey->keybyteslen;
     int ret;
 
     /*
@@ -561,25 +558,6 @@ static int evp_cipher_init_skey_internal(EVP_CIPHER_CTX *ctx,
     if (iv == NULL)
         iv_len = 0;
 
-    /* The EVP_SKEY object is a classical key wrapper, use classical callbacks */
-    if (raw_key != NULL) {
-        if (enc) {
-            if (ctx->cipher->einit == NULL) {
-                ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
-                return 0;
-            }
-
-            return ctx->cipher->einit(ctx->algctx, raw_key, keylen, iv, iv_len, params);
-        }
-
-        if (ctx->cipher->dinit == NULL) {
-            ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
-            return 0;
-        }
-
-        return ctx->cipher->dinit(ctx->algctx, raw_key, keylen, iv, iv_len, params);
-    }
-
     /* We have a data managed via key management, using the new callbacks */
     if (enc) {
         if (ctx->cipher->einit_skey == NULL) {
@@ -587,14 +565,16 @@ static int evp_cipher_init_skey_internal(EVP_CIPHER_CTX *ctx,
             return 0;
         }
 
-        ret = ctx->cipher->einit_skey(ctx->algctx, pkeydata, iv, iv_len, params);
+        ret = ctx->cipher->einit_skey(ctx->algctx, skey->keydata, iv, iv_len,
+                                      params);
     } else {
         if (ctx->cipher->dinit_skey == NULL) {
             ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
             return 0;
         }
 
-        ret = ctx->cipher->dinit_skey(ctx->algctx, pkeydata, iv, iv_len, params);
+        ret = ctx->cipher->dinit_skey(ctx->algctx, skey->keydata, iv, iv_len,
+                                      params);
     }
 
     return ret;

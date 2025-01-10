@@ -82,27 +82,6 @@ EVP_SKEY *EVP_SKEY_import(OSSL_LIB_CTX *libctx, const char *skeymgmtname, const 
     return NULL;
 }
 
-EVP_SKEY *EVP_SKEY_new_raw_key(const unsigned char *key, size_t keylen)
-{
-    EVP_SKEY *skey = evp_skey_int();
-
-    if (skey == NULL)
-        return NULL;
-
-    skey->keybytes = OPENSSL_malloc(keylen);
-    if (skey->keybytes == NULL)
-        goto err;
-
-    memcpy(skey->keybytes, key, keylen);
-    skey->keybyteslen = keylen;
-
-    return skey;
-
- err:
-    EVP_SKEY_free(skey);
-    return NULL;
-}
-
 struct raw_key_details_st {
     unsigned char **key;
     size_t *len;
@@ -115,7 +94,7 @@ static int get_secret_key(const OSSL_PARAM params[], void *arg)
     struct raw_key_details_st *raw_key = arg;
 
     if (raw_key->selection == OSSL_SKEYMGMT_SELECT_SECRET_KEY) {
-        if ((p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_KEY)) != NULL)
+        if ((p = OSSL_PARAM_locate_const(params, OSSL_SKEY_PARAM_RAW_BYTES)) != NULL)
             return OSSL_PARAM_get_octet_string(p, (void **)raw_key->key,
                                                raw_key->key == NULL ? 0 : *raw_key->len,
                                                raw_key->len);
@@ -126,30 +105,32 @@ static int get_secret_key(const OSSL_PARAM params[], void *arg)
 
 int EVP_SKEY_get_raw_key(const EVP_SKEY *skey, unsigned char *key, size_t *len)
 {
+    struct raw_key_details_st raw_key;
+
     if (skey == NULL)
         return 0;
 
-    if (skey->skeymgmt != NULL) {
-        struct raw_key_details_st raw_key;
+    raw_key.key = key == NULL ? NULL : &key;
+    raw_key.len = len;
+    raw_key.selection = OSSL_SKEYMGMT_SELECT_SECRET_KEY;
 
-        raw_key.key = key == NULL ? NULL : &key;
-        raw_key.len = len;
-        raw_key.selection = OSSL_SKEYMGMT_SELECT_SECRET_KEY;
+    return evp_skeymgmt_export(skey->skeymgmt, skey->keydata,
+                               OSSL_SKEYMGMT_SELECT_SECRET_KEY,
+                               get_secret_key, &raw_key);
+}
 
-        return evp_skeymgmt_export(skey->skeymgmt, skey->keydata, OSSL_SKEYMGMT_SELECT_SECRET_KEY,
-                                   get_secret_key, &raw_key);
-    }
+EVP_SKEY *EVP_SKEY_import_raw_key(OSSL_LIB_CTX *libctx, const char *skeymgmtname,
+                                  unsigned char *key, size_t keylen,
+                                  const char *propquery)
+{
+    OSSL_PARAM params[2];
 
-    if (key == NULL && len != NULL) {
-        *len = skey->keybyteslen;
-        return 1;
-    } else if (key != NULL && len != NULL && *len >= skey->keybyteslen) {
-        memcpy(key, skey->keybytes, skey->keybyteslen);
-        *len = skey->keybyteslen;
-        return 1;
-    }
+    params[0] = OSSL_PARAM_construct_octet_string(OSSL_SKEY_PARAM_RAW_BYTES,
+                                                  key, keylen);
+    params[1] = OSSL_PARAM_construct_end();
 
-    return 0;
+    return EVP_SKEY_import(libctx, skeymgmtname, propquery,
+                           OSSL_SKEYMGMT_SELECT_SECRET_KEY, params);
 }
 
 int EVP_SKEY_up_ref(EVP_SKEY *skey)
@@ -180,9 +161,6 @@ void EVP_SKEY_free(EVP_SKEY *skey)
         evp_skeymgmt_freedata(skey->skeymgmt, skey->keydata);
 
     EVP_SKEYMGMT_free(skey->skeymgmt);
-
-    if (skey->keybytes != NULL)
-        OPENSSL_clear_free(skey->keybytes, skey->keybyteslen);
 
     CRYPTO_THREAD_lock_free(skey->lock);
     CRYPTO_FREE_REF(&skey->references);

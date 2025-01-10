@@ -534,6 +534,12 @@ static const OSSL_ALGORITHM deflt_keymgmt[] = {
     { NULL, NULL, NULL }
 };
 
+static const OSSL_ALGORITHM deflt_skeymgmt[] = {
+    { PROV_NAMES_AES, "provider=default", ossl_aes_skeymgmt_functions,
+      PROV_DESCS_AES },
+    { NULL, NULL, NULL }
+};
+
 static const OSSL_ALGORITHM deflt_encoder[] = {
 #define ENCODER_PROVIDER "default"
 #include "encoders.inc"

@@ -84,14 +84,8 @@ static void *skeymgmt_from_algorithm(int name_id,
             break;
         }
     }
-    /*
-     * Try to check that the method is sensible.
-     * At least one constructor and the destructor are MANDATORY
-     * The functions 'has' is MANDATORY
-     * It makes no sense being able to free stuff if you can't create it.
-     * It makes no sense providing OSSL_PARAM descriptors for import and
-     * export if you can't import or export.
-     */
+
+    /* Check that the provider is sensible */
     if (skeymgmt->free == NULL
         || skeymgmt->import == NULL
         || skeymgmt->export == NULL) {

@@ -9,6 +9,7 @@
 
 #include <openssl/provider.h>
 #include <openssl/params.h>
+#include <openssl/param_build.h>
 #include <openssl/core_names.h>
 #include <openssl/evp.h>
 #include "testutil.h"
@@ -104,6 +105,8 @@ static int test_raw_skey(void)
     EVP_CIPHER *aes_cbc = NULL;
     EVP_CIPHER_CTX *ctx = NULL;
     EVP_SKEY *skey = NULL;
+    OSSL_PARAM_BLD *tmpl = NULL;
+    OSSL_PARAM *params = NULL;
     int ret = 0;
 
     deflprov = OSSL_PROVIDER_load(libctx, "default");
@@ -122,7 +125,12 @@ static int test_raw_skey(void)
         goto end;
 
     /* Create EVP_SKEY */
-    skey = EVP_SKEY_new_raw_key(aes_key, KEY_SIZE);
+    if ((tmpl = OSSL_PARAM_BLD_new()) == NULL
+        || !OSSL_PARAM_BLD_push_octet_string(tmpl, OSSL_SKEY_PARAM_RAW_BYTES, aes_key, KEY_SIZE)
+        || (params = OSSL_PARAM_BLD_to_param(tmpl)) == NULL)
+        goto end;
+
+    skey = EVP_SKEY_import(libctx, "AES", NULL, OSSL_SKEYMGMT_SELECT_ALL, params);
     if (!TEST_ptr(skey))
         goto end;
 

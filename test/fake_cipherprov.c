@@ -87,7 +87,7 @@ static int fake_skeymgmt_export(void *keydata, int selection,
         goto end;
 
     if (selection & OSSL_SKEYMGMT_SELECT_SECRET_KEY
-        && OSSL_PARAM_BLD_push_octet_string(tmpl, OSSL_CIPHER_PARAM_KEY,
+        && OSSL_PARAM_BLD_push_octet_string(tmpl, OSSL_SKEY_PARAM_RAW_BYTES,
                                             &(ctx->key), 1) == 0)
         goto end;
 

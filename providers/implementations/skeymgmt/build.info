@@ -1,0 +1,6 @@
+# We make separate GOAL variables for each algorithm, to make it easy to
+# switch each to the Legacy provider when needed.
+
+$AES_GOAL=../../libdefault.a ../../libfips.a
+
+SOURCE[$AES_GOAL]=aes_skmgmt.c

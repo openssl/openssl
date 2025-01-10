@@ -129,16 +129,6 @@ int EVP_MAC_init_SKEY(EVP_MAC_CTX *ctx, const EVP_SKEY *skey, const OSSL_PARAM p
         return 0;
     }
 
-    /* We have raw bytes implementation inside the EVP_SKEY object */
-    if (skey->skeymgmt == NULL) {
-        if (ctx->meth->init == NULL) {
-            ERR_raise(ERR_R_EVP_LIB, ERR_R_UNSUPPORTED);
-            return 0;
-        }
-
-        return ctx->meth->init(ctx->algctx, skey->keybytes, skey->keybyteslen, params);
-    }
-
     if (skey->skeymgmt->prov != ctx->meth->prov) {
         ERR_raise(ERR_R_EVP_LIB, ERR_R_UNSUPPORTED);
         return 0;

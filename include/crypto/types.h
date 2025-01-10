@@ -29,4 +29,6 @@ typedef struct dsa_st DSA;
 typedef struct ecx_key_st ECX_KEY;
 # endif
 
+typedef struct symmetric_key_st SKEY;
+
 #endif

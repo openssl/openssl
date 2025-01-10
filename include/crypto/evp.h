@@ -760,17 +760,8 @@ struct evp_skey_st {
     CRYPTO_REF_COUNT references;
     CRYPTO_RWLOCK *lock;
 
-    /*
-     * Special case - a EVP_SKEY as a wrapper around raw bytes key.  When we
-     * create an EVP_SKEY object from raw bytes, we set skeymgmt to NULL.  Such
-     * EVP_SKEYs are compatible with the implementations that consume the
-     * symmetric keys as a byte array.
-     */
-    unsigned char *keybytes;
-    size_t keybyteslen;
-
     void *keydata; /* Alg-specific key data */
-    EVP_SKEYMGMT *skeymgmt; /* Import, export, mana */
+    EVP_SKEYMGMT *skeymgmt; /* Import, export, manage */
 }; /* EVP_SKEY */
 
 void openssl_add_all_ciphers_int(void);
