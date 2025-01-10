@@ -107,7 +107,7 @@ jobs:
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
     - name: make test
-      run: .github/workflows/make-test
+      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
   freebsd-x86_64:
     runs-on: ubuntu-latest
@@ -143,7 +143,8 @@ jobs:
         version: "13.4"
         run: |
           ./util/opensslwrap.sh version -c
-          .github/workflows/make-test
+          if ( ! $?HARNESS_JOBS ) setenv HARNESS_JOBS 4
+          make test HARNESS_JOBS=${HARNESS_JOBS}
 
   minimal:
     runs-on: ubuntu-latest
