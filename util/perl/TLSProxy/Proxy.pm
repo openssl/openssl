@@ -216,7 +216,6 @@ sub start
     my ($self) = shift;
     my $pid;
 
-
     # Create the Proxy socket
     my $proxaddr = $self->{proxy_addr};
     $proxaddr =~ s/[\[\]]//g; # Remove [ and ]
