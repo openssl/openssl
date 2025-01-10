@@ -562,7 +562,8 @@ OSSL_CORE_MAKE_FUNC(const char *, skeymgmt_get_key_id, (void *keydata))
 # define OSSL_FUNC_KDF_GET_PARAMS                    9
 # define OSSL_FUNC_KDF_GET_CTX_PARAMS               10
 # define OSSL_FUNC_KDF_SET_CTX_PARAMS               11
-# define OSSL_FUNC_KDF_DERIVE_SKEY                  12
+# define OSSL_FUNC_KDF_SET_SKEY                     12
+# define OSSL_FUNC_KDF_DERIVE_SKEY                  13
 
 OSSL_CORE_MAKE_FUNC(void *, kdf_newctx, (void *provctx))
 OSSL_CORE_MAKE_FUNC(void *, kdf_dupctx, (void *src))

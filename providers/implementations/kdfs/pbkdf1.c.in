@@ -21,7 +21,9 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "internal/common.h"
 #include "internal/cryptlib.h"
 #include "internal/numbers.h"
+#include "internal/skey.h"
 #include "crypto/evp.h"
+#include "crypto/types.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
@@ -36,6 +38,8 @@ static OSSL_FUNC_kdf_settable_ctx_params_fn kdf_pbkdf1_settable_ctx_params;
 static OSSL_FUNC_kdf_set_ctx_params_fn kdf_pbkdf1_set_ctx_params;
 static OSSL_FUNC_kdf_gettable_ctx_params_fn kdf_pbkdf1_gettable_ctx_params;
 static OSSL_FUNC_kdf_get_ctx_params_fn kdf_pbkdf1_get_ctx_params;
+static OSSL_FUNC_kdf_set_skey_fn kdf_pbkdf1_set_skey;
+static OSSL_FUNC_kdf_derive_skey_fn kdf_pbkdf1_derive_skey;
 
 typedef struct {
     void *provctx;
@@ -178,6 +182,27 @@ static int kdf_pbkdf1_set_membuf(unsigned char **buffer, size_t *buflen,
     return 1;
 }
 
+static int kdf_pbkdf1_set_membuf_skey(unsigned char **buffer, size_t *buflen,
+                                      const PROV_SKEY *pskey)
+{
+    OPENSSL_clear_free(*buffer, *buflen);
+    *buffer = NULL;
+    *buflen = 0;
+
+    if (pskey->length == 0) {
+        if ((*buffer = OPENSSL_malloc(1)) == NULL)
+            return 0;
+    } else if (pskey->data != NULL) {
+        *buffer = OPENSSL_malloc(pskey->length);
+        if (*buffer == NULL)
+            return 0;
+
+        memcpy(*buffer, pskey->data, pskey->length);
+        *buflen = pskey->length;
+    }
+    return 1;
+}
+
 static int kdf_pbkdf1_derive(void *vctx, unsigned char *key, size_t keylen,
                              const OSSL_PARAM params[])
 {
@@ -266,6 +291,51 @@ static const OSSL_PARAM *kdf_pbkdf1_gettable_ctx_params(ossl_unused void *ctx,
     return pbkdf1_get_ctx_params_list;
 }
 
+static int kdf_pbkdf1_set_skey(void *vctx, void *skeydata, const char *paramname)
+{
+    KDF_PBKDF1 *ctx = (KDF_PBKDF1 *)vctx;
+    PROV_SKEY *pskey = (PROV_SKEY *)skeydata;
+
+    if (paramname == NULL || skeydata == NULL)
+        return 0;
+
+    if (strcmp(paramname, OSSL_KDF_PARAM_PASSWORD) == 0)
+        return kdf_pbkdf1_set_membuf_skey(&ctx->pass, &ctx->pass_len, pskey);
+
+    if (strcmp(paramname, OSSL_KDF_PARAM_SALT) == 0)
+        return kdf_pbkdf1_set_membuf_skey(&ctx->salt, &ctx->salt_len, pskey);
+
+    return 0;
+}
+
+static
+void *kdf_pbkdf1_derive_skey(void *vctx, void *provctx, OSSL_FUNC_skeymgmt_import_fn *import,
+                             size_t keylen, const OSSL_PARAM params[])
+{
+    unsigned char *key = NULL;
+    void *ret = NULL;
+    OSSL_PARAM import_params[2] = {OSSL_PARAM_END, OSSL_PARAM_END};
+
+    if (import == NULL || keylen == 0)
+        return NULL;
+
+    if ((key = OPENSSL_zalloc(keylen)) == NULL)
+        return NULL;
+
+    if (kdf_pbkdf1_derive(vctx, key, keylen, params) == 0) {
+        OPENSSL_free(key);
+        return NULL;
+    }
+
+    import_params[0] = OSSL_PARAM_construct_octet_string(OSSL_SKEY_PARAM_RAW_BYTES,
+                                                         (void *)key, keylen);
+
+    ret = import(provctx, OSSL_SKEYMGMT_SELECT_SECRET_KEY, import_params);
+    OPENSSL_free(key);
+
+    return ret;
+}
+
 const OSSL_DISPATCH ossl_kdf_pbkdf1_functions[] = {
     { OSSL_FUNC_KDF_NEWCTX, (void(*)(void))kdf_pbkdf1_new },
     { OSSL_FUNC_KDF_DUPCTX, (void(*)(void))kdf_pbkdf1_dup },
@@ -278,5 +348,7 @@ const OSSL_DISPATCH ossl_kdf_pbkdf1_functions[] = {
     { OSSL_FUNC_KDF_GETTABLE_CTX_PARAMS,
       (void(*)(void))kdf_pbkdf1_gettable_ctx_params },
     { OSSL_FUNC_KDF_GET_CTX_PARAMS, (void(*)(void))kdf_pbkdf1_get_ctx_params },
+    { OSSL_FUNC_KDF_SET_SKEY, (void(*)(void))kdf_pbkdf1_set_skey },
+    { OSSL_FUNC_KDF_DERIVE_SKEY, (void(*)(void))kdf_pbkdf1_derive_skey },
     OSSL_DISPATCH_END
 };
