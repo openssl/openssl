@@ -204,7 +204,7 @@ DEF_FUNC(hf_new_ssl)
             goto err;
 
     } else if (is_server) {
-        SSL_CTX_set_new_pending_ssl_cb(ctx, new_pending_cb, NULL);
+        SSL_CTX_set_new_pending_conn_cb(ctx, new_pending_cb, NULL);
         SSL_CTX_set_client_hello_cb(ctx, client_hello_cb, NULL);
         check_pending_match = 1;
         if (!TEST_ptr(ssl = SSL_new_listener(ctx, 0)))
