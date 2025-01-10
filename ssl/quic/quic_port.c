@@ -472,12 +472,12 @@ static SSL *port_new_handshake_layer(QUIC_PORT *port, QUIC_CHANNEL *ch)
     if (qc != NULL)
         qc->tls = tls;
 
-    if (ql != NULL && ql->obj.ssl.ctx->new_pending_ssl_cb != NULL)
-        if (!ql->obj.ssl.ctx->new_pending_ssl_cb(ql->obj.ssl.ctx, user_ssl,
-                                                 ql->obj.ssl.ctx->new_pending_ssl_arg)) {
+    if (ql != NULL && ql->obj.ssl.ctx->new_pending_conn_cb != NULL)
+        if (!ql->obj.ssl.ctx->new_pending_conn_cb(ql->obj.ssl.ctx, user_ssl,
+                                                  ql->obj.ssl.ctx->new_pending_conn_arg)) {
             SSL_free(tls);
             return NULL;
-    }
+        }
 
     /* Override the user_ssl of the inner connection. */
     tls_conn->s3.flags      |= TLS1_FLAGS_QUIC;
