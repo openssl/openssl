@@ -182,6 +182,8 @@ CRYPTO_RCU_LOCK *ossl_rcu_lock_new(int num_writers, OSSL_LIB_CTX *ctx)
     new->alloc_lock = ossl_crypto_mutex_new();
     new->prior_lock = ossl_crypto_mutex_new();
     new->qp_group = allocate_new_qp_group(new, num_writers);
+    /* By default the first qp is already alloced */
+    new->writers_alloced = 1;
     if (new->qp_group == NULL
         || new->alloc_signal == NULL
         || new->prior_signal == NULL
@@ -200,8 +202,6 @@ CRYPTO_RCU_LOCK *ossl_rcu_lock_new(int num_writers, OSSL_LIB_CTX *ctx)
         new = NULL;
     }
 
-    /* By default the first qp is already alloced */
-    new->writers_alloced = 1;
     return new;
 
 }
