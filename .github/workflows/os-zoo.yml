@@ -217,4 +217,4 @@ jobs:
         version: "13.4"
         run: |
           ./util/opensslwrap.sh version -c
-          .github/workflows/make-test
+          make test HARNESS_JOBS=${HARNESS_JOBS:-4}
