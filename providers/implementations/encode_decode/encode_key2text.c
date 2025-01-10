@@ -28,6 +28,7 @@
 #include "crypto/ec.h"           /* ossl_ec_key_get_libctx */
 #include "crypto/ecx.h"          /* ECX_KEY, etc... */
 #include "crypto/rsa.h"          /* RSA_PSS_PARAMS_30, etc... */
+#include "crypto/ml_dsa.h"
 #include "prov/bio.h"
 #include "prov/implementations.h"
 #include "endecoder_local.h"
@@ -130,7 +131,8 @@ err:
 /* Number of octets per line */
 #define LABELED_BUF_PRINT_WIDTH    15
 
-#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_EC)
+#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_DSA) \
+    || !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_ML_DSA)
 static int print_labeled_buf(BIO *out, const char *label,
                              const unsigned char *buf, size_t buflen)
 {
@@ -767,6 +769,47 @@ static int rsa_to_text(BIO *out, const void *key, int selection)
 
 /* ---------------------------------------------------------------------- */
 
+#ifndef OPENSSL_NO_ML_DSA
+static int ml_dsa_to_text(BIO *out, const void *key, int selection)
+{
+    const char *name;
+
+    if (out == NULL || key == NULL) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    if (ossl_ml_dsa_key_get_pub(key) == NULL) {
+        /* Regardless of the |selection|, there must be a public key */
+        ERR_raise(ERR_LIB_PROV, PROV_R_NOT_A_PUBLIC_KEY);
+        return 0;
+    }
+
+    name = ossl_ml_dsa_key_get_name(key);
+    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
+        if (ossl_ml_dsa_key_get_priv(key) == NULL) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_NOT_A_PRIVATE_KEY);
+            return 0;
+        }
+        if (BIO_printf(out, "%s Private-Key:\n", name) <= 0)
+            return 0;
+        if (!print_labeled_buf(out, "priv:", ossl_ml_dsa_key_get_priv(key),
+                               ossl_ml_dsa_key_get_priv_len(key)))
+            return 0;
+    } else if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
+        if (BIO_printf(out, "%s Public-Key:\n", name) <= 0)
+            return 0;
+    }
+
+    if (!print_labeled_buf(out, "pub:", ossl_ml_dsa_key_get_pub(key),
+                           ossl_ml_dsa_key_get_pub_len(key)))
+        return 0;
+
+    return 1;
+}
+#endif /* OPENSSL_NO_ML_DSA */
+
+/* ---------------------------------------------------------------------- */
+
 static void *key2text_newctx(void *provctx)
 {
     return provctx;
@@ -861,3 +904,9 @@ MAKE_TEXT_ENCODER(x448, ecx);
 #endif
 MAKE_TEXT_ENCODER(rsa, rsa);
 MAKE_TEXT_ENCODER(rsapss, rsa);
+
+#ifndef OPENSSL_NO_ML_DSA
+MAKE_TEXT_ENCODER(ml_dsa_44, ml_dsa);
+MAKE_TEXT_ENCODER(ml_dsa_65, ml_dsa);
+MAKE_TEXT_ENCODER(ml_dsa_87, ml_dsa);
+#endif
