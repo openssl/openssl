@@ -588,4 +588,5 @@ extern const OSSL_DISPATCH ossl_pem_to_der_decoder_functions[];
 extern const OSSL_DISPATCH ossl_file_store_functions[];
 extern const OSSL_DISPATCH ossl_winstore_store_functions[];
 
+extern const OSSL_DISPATCH ossl_generic_skeymgmt_functions[];
 extern const OSSL_DISPATCH ossl_aes_skeymgmt_functions[];

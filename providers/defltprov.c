@@ -537,6 +537,8 @@ static const OSSL_ALGORITHM deflt_keymgmt[] = {
 static const OSSL_ALGORITHM deflt_skeymgmt[] = {
     { PROV_NAMES_AES, "provider=default", ossl_aes_skeymgmt_functions,
       PROV_DESCS_AES },
+    { PROV_NAMES_GENERIC, "provider=default", ossl_generic_skeymgmt_functions,
+      PROV_DESCS_GENERIC },
     { NULL, NULL, NULL }
 };
 
