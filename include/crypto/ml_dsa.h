@@ -27,6 +27,7 @@ void ossl_ml_dsa_key_free(ML_DSA_KEY *key);
 __owur ML_DSA_KEY *ossl_ml_dsa_key_dup(const ML_DSA_KEY *src, int selection);
 __owur int ossl_ml_dsa_key_equal(const ML_DSA_KEY *key1, const ML_DSA_KEY *key2,
                                  int selection);
+__owur int ossl_ml_dsa_to_text(BIO *out, ML_DSA_KEY *key, int selection);
 __owur int ossl_ml_dsa_key_has(const ML_DSA_KEY *key, int selection);
 __owur int ossl_ml_dsa_key_pairwise_check(const ML_DSA_KEY *key);
 __owur int ossl_ml_dsa_key_fromdata(ML_DSA_KEY *key, const OSSL_PARAM *params,
@@ -42,6 +43,10 @@ __owur size_t ossl_ml_dsa_key_get_priv_len(const ML_DSA_KEY *key);
 __owur size_t ossl_ml_dsa_key_get_sig_len(const ML_DSA_KEY *key);
 __owur int ossl_ml_dsa_key_matches(const ML_DSA_KEY *key, const char *alg);
 __owur const char *ossl_ml_dsa_key_get_name(const ML_DSA_KEY *key);
+
+__owur int ossl_ml_dsa_key_public_from_private(ML_DSA_KEY *key);
+__owur int ossl_ml_dsa_pk_decode(ML_DSA_KEY *key, const uint8_t *in, size_t in_len);
+__owur int ossl_ml_dsa_sk_decode(ML_DSA_KEY *key, const uint8_t *in, size_t in_len);
 
 __owur int ossl_ml_dsa_key_public_from_private(ML_DSA_KEY *key);
 __owur int ossl_ml_dsa_pk_decode(ML_DSA_KEY *key, const uint8_t *in, size_t in_len);
