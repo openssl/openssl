@@ -145,6 +145,7 @@ void test_perror(const char *s)
 
 void test_note(const char *fmt, ...)
 {
+    test_flush_stdout();
     if (fmt != NULL) {
         va_list ap;
 
