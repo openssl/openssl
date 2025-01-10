@@ -247,6 +247,7 @@ struct evp_kdf_st {
     OSSL_FUNC_kdf_get_params_fn *get_params;
     OSSL_FUNC_kdf_get_ctx_params_fn *get_ctx_params;
     OSSL_FUNC_kdf_set_ctx_params_fn *set_ctx_params;
+    OSSL_FUNC_kdf_set_skey_fn *set_skey;
     OSSL_FUNC_kdf_derive_skey_fn *derive_skey;
 };
 
