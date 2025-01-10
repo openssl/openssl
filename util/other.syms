@@ -834,3 +834,15 @@ EVP_PKEY_base_id                        define
 SSL_set_retry_verify                    define
 TS_VERIFY_CTX                           define
 CMAC_CTX                                define
+OPENSSL_load_u16_be                     inline
+OPENSSL_load_u16_le                     inline
+OPENSSL_store_u16_be                    inline
+OPENSSL_store_u16_le                    inline
+OPENSSL_load_u32_be                     inline
+OPENSSL_load_u32_le                     inline
+OPENSSL_store_u32_be                    inline
+OPENSSL_store_u32_le                    inline
+OPENSSL_load_u64_be                     inline
+OPENSSL_load_u64_le                     inline
+OPENSSL_store_u64_be                    inline
+OPENSSL_store_u64_le                    inline

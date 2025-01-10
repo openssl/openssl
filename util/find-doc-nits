@@ -108,6 +108,8 @@ my $ignored = qr/(?| ^i2d_
                  |   ^SKM_DEFINE_STACK_OF_INTERNAL
                  |   ^lh_
                  |   ^DEFINE_LHASH_OF_(INTERNAL|DEPRECATED)
+                 |   ^OSSL_HTO[BL]E(16|32|64)   # undefed
+                 |   ^OSSL_[BL]E(16|32|64)TOH   # undefed
                  )/x;
 
 # A common regexp for C symbol names
