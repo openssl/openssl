@@ -4,7 +4,7 @@
 
 EVP_KDF, EVP_KDF_fetch, EVP_KDF_free, EVP_KDF_up_ref,
 EVP_KDF_CTX, EVP_KDF_CTX_new, EVP_KDF_CTX_free, EVP_KDF_CTX_dup,
-EVP_KDF_CTX_reset, EVP_KDF_derive,
+EVP_KDF_CTX_reset, EVP_KDF_derive, EVP_KDF_derive_SKEY,
 EVP_KDF_CTX_get_kdf_size,
 EVP_KDF_get0_provider, EVP_KDF_CTX_kdf, EVP_KDF_is_a,
 EVP_KDF_get0_name, EVP_KDF_names_do_all, EVP_KDF_get0_description,
@@ -28,6 +28,8 @@ EVP_KDF_CTX_gettable_params, EVP_KDF_CTX_settable_params - EVP KDF routines
  size_t EVP_KDF_CTX_get_kdf_size(EVP_KDF_CTX *ctx);
  int EVP_KDF_derive(EVP_KDF_CTX *ctx, unsigned char *key, size_t keylen,
                     const OSSL_PARAM params[]);
+ EVP_SKEY *EVP_KDF_derive_SKEY(EVP_KDF_CTX *ctx, EVP_SKEYMGMT *skeymgmt,
+                               const OSSL_PARAM params[]);
  int EVP_KDF_up_ref(EVP_KDF *kdf);
  void EVP_KDF_free(EVP_KDF *kdf);
  EVP_KDF *EVP_KDF_fetch(OSSL_LIB_CTX *libctx, const char *algorithm,
@@ -58,10 +60,10 @@ The EVP KDF routines are a high-level interface to Key Derivation Function
 algorithms and should be used instead of algorithm-specific functions.
 
 After creating a B<EVP_KDF_CTX> for the required algorithm using
-EVP_KDF_CTX_new(), inputs to the algorithm are supplied either by
-passing them as part of the EVP_KDF_derive() call or using calls
-to EVP_KDF_CTX_set_params() before calling EVP_KDF_derive() to derive
-the key.
+EVP_KDF_CTX_new(), inputs to the algorithm are supplied either by passing them
+as part of the EVP_KDF_derive() or EVP_KDF_derive_SKEY() call or using calls to
+EVP_KDF_CTX_set_params() before calling EVP_KDF_derive() or
+EVP_KDF_derive_SKEY() to derive the key.
 
 =head2 Types
 
@@ -107,6 +109,11 @@ I<keylen> bytes of key material and places it in the I<key> buffer.
 If the algorithm produces a fixed amount of output then an error will
 occur unless the I<keylen> parameter is equal to that output size,
 as returned by EVP_KDF_CTX_get_kdf_size().
+
+EVP_KDF_derive_SKEY() behaves similar except it returns an B<EVP_SKEY> object.
+If the KDF doesn't support dealing with opaque keys or the passed
+B<EVP_SKEYMGMT> is from a different provider than the KDF method, the operation
+will fail.
 
 EVP_KDF_get_params() retrieves details about the implementation
 I<kdf>.
@@ -283,6 +290,8 @@ EVP_KDF_get0_name() returns the name of the KDF, or NULL on error.
 EVP_KDF_names_do_all() returns 1 if the callback was called for all names. A
 return value of 0 means that the callback was not called for any names.
 
+EVP_KDF_derive_SKEY() returns the B<EVP_SKEY> object on success or NULL on failure.
+
 The remaining functions return 1 for success and 0 for failure.
 
 =head1 NOTES
@@ -299,6 +308,8 @@ L<life_cycle-kdf(7)>.
 =head1 HISTORY
 
 This functionality was added in OpenSSL 3.0.
+
+EVP_KDF_derive_SKEY() function was introduced in OpenSSL 3.5.
 
 =head1 COPYRIGHT
 
