@@ -4,7 +4,8 @@
 
 EVP_KDF, EVP_KDF_fetch, EVP_KDF_free, EVP_KDF_up_ref,
 EVP_KDF_CTX, EVP_KDF_CTX_new, EVP_KDF_CTX_free, EVP_KDF_CTX_dup,
-EVP_KDF_CTX_reset, EVP_KDF_derive, EVP_KDF_derive_SKEY,
+EVP_KDF_CTX_reset, EVP_KDF_derive,
+EVP_KDF_CTX_set_SKEY, EVP_KDF_derive_SKEY,
 EVP_KDF_CTX_get_kdf_size,
 EVP_KDF_get0_provider, EVP_KDF_CTX_kdf, EVP_KDF_is_a,
 EVP_KDF_get0_name, EVP_KDF_names_do_all, EVP_KDF_get0_description,
@@ -28,6 +29,7 @@ EVP_KDF_CTX_gettable_params, EVP_KDF_CTX_settable_params - EVP KDF routines
  size_t EVP_KDF_CTX_get_kdf_size(EVP_KDF_CTX *ctx);
  int EVP_KDF_derive(EVP_KDF_CTX *ctx, unsigned char *key, size_t keylen,
                     const OSSL_PARAM params[]);
+ int EVP_KDF_CTX_set_SKEY(EVP_KDF_CTX *ctx, EVP_SKEY *key, const char *paramname);
  EVP_SKEY *EVP_KDF_derive_SKEY(EVP_KDF_CTX *ctx, EVP_SKEYMGMT *skeymgmt,
                                const OSSL_PARAM params[]);
  int EVP_KDF_up_ref(EVP_KDF *kdf);
@@ -62,8 +64,8 @@ algorithms and should be used instead of algorithm-specific functions.
 After creating a B<EVP_KDF_CTX> for the required algorithm using
 EVP_KDF_CTX_new(), inputs to the algorithm are supplied either by passing them
 as part of the EVP_KDF_derive() or EVP_KDF_derive_SKEY() call or using calls to
-EVP_KDF_CTX_set_params() before calling EVP_KDF_derive() or
-EVP_KDF_derive_SKEY() to derive the key.
+EVP_KDF_CTX_set_params() or EVP_KDF_CTX_set_SKEY() before calling
+EVP_KDF_derive() or EVP_KDF_derive_SKEY() to derive the key.
 
 =head2 Types
 
@@ -114,6 +116,13 @@ EVP_KDF_derive_SKEY() behaves similar except it returns an B<EVP_SKEY> object.
 If the KDF doesn't support dealing with opaque keys or the passed
 B<EVP_SKEYMGMT> is from a different provider than the KDF method, the operation
 will fail.
+
+EVP_KDF_CTX_set_SKEY() allows setting an skey object as the input key for the
+derivation functions. As different KDFs may accept several parameters as key
+names, we can specify the particular parameter name we set.
+If null is passed, the parameter B<OSSL_KDF_PARAM_KEY> is implied.
+It is used when the input key is represented by B<EVP_SKEY> rather than raw
+bytes.
 
 EVP_KDF_get_params() retrieves details about the implementation
 I<kdf>.
