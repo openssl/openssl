@@ -293,6 +293,7 @@ sub start
     open(my $savedin, "<&STDIN");
 
     # Temporarily replace STDIN so that sink process can inherit it...
+    open(STDIN, "$^X -e 'sleep(1)' |");
     $pid = open(STDIN, "$execcmd 2>&1 |") or die "Failed to $execcmd: $!\n";
     $self->{real_serverpid} = $pid;
 
