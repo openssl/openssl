@@ -2367,10 +2367,10 @@ DEPEND[html/man3/SSL_CTX_set_msg_callback.html]=man3/SSL_CTX_set_msg_callback.po
 GENERATE[html/man3/SSL_CTX_set_msg_callback.html]=man3/SSL_CTX_set_msg_callback.pod
 DEPEND[man/man3/SSL_CTX_set_msg_callback.3]=man3/SSL_CTX_set_msg_callback.pod
 GENERATE[man/man3/SSL_CTX_set_msg_callback.3]=man3/SSL_CTX_set_msg_callback.pod
-DEPEND[html/man3/SSL_CTX_set_new_pending_ssl_cb.html]=man3/SSL_CTX_set_new_pending_ssl_cb.pod
-GENERATE[html/man3/SSL_CTX_set_new_pending_ssl_cb.html]=man3/SSL_CTX_set_new_pending_ssl_cb.pod
-DEPEND[man/man3/SSL_CTX_set_new_pending_ssl_cb.3]=man3/SSL_CTX_set_new_pending_ssl_cb.pod
-GENERATE[man/man3/SSL_CTX_set_new_pending_ssl_cb.3]=man3/SSL_CTX_set_new_pending_ssl_cb.pod
+DEPEND[html/man3/SSL_CTX_set_new_pending_conn_cb.html]=man3/SSL_CTX_set_new_pending_conn_cb.pod
+GENERATE[html/man3/SSL_CTX_set_new_pending_conn_cb.html]=man3/SSL_CTX_set_new_pending_conn_cb.pod
+DEPEND[man/man3/SSL_CTX_set_new_pending_conn_cb.3]=man3/SSL_CTX_set_new_pending_conn_cb.pod
+GENERATE[man/man3/SSL_CTX_set_new_pending_conn_cb.3]=man3/SSL_CTX_set_new_pending_conn_cb.pod
 DEPEND[html/man3/SSL_CTX_set_num_tickets.html]=man3/SSL_CTX_set_num_tickets.pod
 GENERATE[html/man3/SSL_CTX_set_num_tickets.html]=man3/SSL_CTX_set_num_tickets.pod
 DEPEND[man/man3/SSL_CTX_set_num_tickets.3]=man3/SSL_CTX_set_num_tickets.pod
@@ -3623,7 +3623,7 @@ html/man3/SSL_CTX_set_max_cert_list.html \
 html/man3/SSL_CTX_set_min_proto_version.html \
 html/man3/SSL_CTX_set_mode.html \
 html/man3/SSL_CTX_set_msg_callback.html \
-html/man3/SSL_CTX_set_new_pending_ssl_cb.html \
+html/man3/SSL_CTX_set_new_pending_conn_cb.html \
 html/man3/SSL_CTX_set_num_tickets.html \
 html/man3/SSL_CTX_set_options.html \
 html/man3/SSL_CTX_set_psk_client_callback.html \
@@ -4293,7 +4293,7 @@ man/man3/SSL_CTX_set_max_cert_list.3 \
 man/man3/SSL_CTX_set_min_proto_version.3 \
 man/man3/SSL_CTX_set_mode.3 \
 man/man3/SSL_CTX_set_msg_callback.3 \
-man/man3/SSL_CTX_set_new_pending_ssl_cb.3 \
+man/man3/SSL_CTX_set_new_pending_conn_cb.3 \
 man/man3/SSL_CTX_set_num_tickets.3 \
 man/man3/SSL_CTX_set_options.3 \
 man/man3/SSL_CTX_set_psk_client_callback.3 \

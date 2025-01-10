@@ -1901,10 +1901,10 @@ OSSL_DEPRECATEDIN_3_0 __owur char *SSL_get_srp_userinfo(SSL *s);
 typedef int (*SSL_client_hello_cb_fn) (SSL *s, int *al, void *arg);
 void SSL_CTX_set_client_hello_cb(SSL_CTX *c, SSL_client_hello_cb_fn cb,
                                  void *arg);
-typedef int (*SSL_new_pending_ssl_cb_fn) (SSL_CTX *ctx, SSL *new_ssl,
+typedef int (*SSL_new_pending_conn_cb_fn) (SSL_CTX *ctx, SSL *new_ssl,
                                            void *arg);
-void SSL_CTX_set_new_pending_ssl_cb(SSL_CTX *c, SSL_new_pending_ssl_cb_fn cb,
-                                    void *arg);
+void SSL_CTX_set_new_pending_conn_cb(SSL_CTX *c, SSL_new_pending_conn_cb_fn cb,
+                                     void *arg);
 
 int SSL_client_hello_isv2(SSL *s);
 unsigned int SSL_client_hello_get0_legacy_version(SSL *s);

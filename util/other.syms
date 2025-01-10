@@ -116,6 +116,7 @@ SSL_psk_client_cb_func                  datatype
 SSL_psk_find_session_cb_func            datatype
 SSL_psk_server_cb_func                  datatype
 SSL_psk_use_session_cb_func             datatype
+SSL_set_new_pending_conn_cb_fn          datatype
 SSL_verify_cb                           datatype
 UI                                      datatype
 UI_METHOD                               datatype
