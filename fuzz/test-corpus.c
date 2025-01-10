@@ -40,14 +40,12 @@ static void testfile(const char *pathname)
     FILE *f;
     unsigned char *buf;
     size_t s;
-
-    if (stat(pathname, &st) < 0 || !S_ISREG(st.st_mode))
-        return;
-    printf("# %s\n", pathname);
-    fflush(stdout);
+    
     f = fopen(pathname, "rb");
     if (f == NULL)
         return;
+    printf("# %s\n", pathname);
+    fflush(stdout);
     buf = malloc(st.st_size);
     if (buf != NULL) {
         s = fread(buf, 1, st.st_size, f);
