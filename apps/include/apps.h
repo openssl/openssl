@@ -63,6 +63,7 @@ BIO *dup_bio_err(int format);
 BIO *bio_open_owner(const char *filename, int format, int private);
 BIO *bio_open_default(const char *filename, char mode, int format);
 BIO *bio_open_default_quiet(const char *filename, char mode, int format);
+int mem_bio_to_file(BIO *in, const char *filename, int format, int private);
 char *app_conf_try_string(const CONF *cnf, const char *group, const char *name);
 int app_conf_try_number(const CONF *conf, const char *group, const char *name,
                         long *result);
