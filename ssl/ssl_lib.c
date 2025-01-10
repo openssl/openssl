@@ -6685,11 +6685,11 @@ void SSL_CTX_set_client_hello_cb(SSL_CTX *c, SSL_client_hello_cb_fn cb,
     c->client_hello_cb_arg = arg;
 }
 
-void SSL_CTX_set_new_pending_ssl_cb(SSL_CTX *c, SSL_new_pending_ssl_cb_fn cb,
-                                    void *arg)
+void SSL_CTX_set_new_pending_conn_cb(SSL_CTX *c, SSL_new_pending_conn_cb_fn cb,
+                                     void *arg)
 {
-    c->new_pending_ssl_cb = cb;
-    c->new_pending_ssl_arg = arg;
+    c->new_pending_conn_cb = cb;
+    c->new_pending_conn_arg = arg;
 }
 
 int SSL_client_hello_isv2(SSL *s)
