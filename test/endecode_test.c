@@ -105,7 +105,8 @@ static EVP_PKEY *make_template(const char *type, OSSL_PARAM *genparams)
 }
 #endif
 
-#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_EC)
+#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_DSA) \
+    || !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_ML_DSA)
 static EVP_PKEY *make_key(const char *type, EVP_PKEY *template,
                           OSSL_PARAM *genparams)
 {
@@ -1064,6 +1065,15 @@ IMPLEMENT_TEST_SUITE_UNPROTECTED_PVK(RSA, "RSA")
 IMPLEMENT_TEST_SUITE_PROTECTED_PVK(RSA, "RSA")
 #endif
 
+#ifndef OPENSSL_ML_DSA
+KEYS(ML_DSA_44);
+KEYS(ML_DSA_65);
+KEYS(ML_DSA_87);
+IMPLEMENT_TEST_SUITE(ML_DSA_44, "ML-DSA-44", 0)
+IMPLEMENT_TEST_SUITE(ML_DSA_65, "ML-DSA-65", 0)
+IMPLEMENT_TEST_SUITE(ML_DSA_87, "ML-DSA-87", 0)
+#endif /*  OPENSSL_ML_DSA */
+
 #ifndef OPENSSL_NO_EC
 /* Explicit parameters that match a named curve */
 static int do_create_ec_explicit_prime_params(OSSL_PARAM_BLD *bld,
@@ -1407,6 +1417,12 @@ int setup_tests(void)
     MAKE_KEYS(X25519, "X25519", NULL);
     MAKE_KEYS(X448, "X448", NULL);
 #endif
+#ifndef OPENSSL_ML_DSA
+    MAKE_KEYS(ML_DSA_44, "ML-DSA-44", NULL);
+    MAKE_KEYS(ML_DSA_65, "ML-DSA-65", NULL);
+    MAKE_KEYS(ML_DSA_87, "ML-DSA-87", NULL);
+#endif /* OPENSSL_ML_DSA */
+
     TEST_info("Loading RSA key...");
     ok = ok && TEST_ptr(key_RSA = load_pkey_pem(rsa_file, keyctx));
     TEST_info("Loading RSA_PSS key...");
@@ -1475,6 +1491,12 @@ int setup_tests(void)
 # ifndef OPENSSL_NO_RC4
         ADD_TEST_SUITE_PROTECTED_PVK(RSA);
 # endif
+
+#ifndef OPENSSL_ML_DSA
+        ADD_TEST_SUITE(ML_DSA_44);
+        ADD_TEST_SUITE(ML_DSA_65);
+        ADD_TEST_SUITE(ML_DSA_87);
+#endif /* OPENSSL_ML_DSA */
     }
 
     return 1;
@@ -1521,6 +1543,12 @@ void cleanup_tests(void)
 #endif
     FREE_KEYS(RSA);
     FREE_KEYS(RSA_PSS);
+
+#ifndef OPENSSL_ML_DSA
+    FREE_KEYS(ML_DSA_44);
+    FREE_KEYS(ML_DSA_65);
+    FREE_KEYS(ML_DSA_87);
+#endif /* OPENSSL_ML_DSA */
 
     OSSL_PROVIDER_unload(nullprov);
     OSSL_PROVIDER_unload(deflprov);
