@@ -652,12 +652,8 @@ ml_dsa_d2i_PKCS8(const uint8_t **der, long der_len, struct der2key_ctx_st *ctx)
         goto end;
 
     /* Algorithm parameters must be absent */
-    if ((X509_ALGOR_get0(NULL, &ptype, NULL, alg), ptype != V_ASN1_UNDEF)) {
-        ERR_raise_data(ERR_LIB_PROV, PROV_R_UNEXPECTED_KEY_PARAMETERS,
-                       "unexpected parameters with a PKCS#8 %s private key",
-                       ctx->desc->keytype_name);
+    if ((X509_ALGOR_get0(NULL, &ptype, NULL, alg), ptype != V_ASN1_UNDEF))
         goto end;
-    }
     if (OBJ_obj2nid(alg->algorithm) != ctx->desc->evp_type)
         goto end;
     if ((key = ossl_ml_dsa_key_new(libctx, ctx->propq,
