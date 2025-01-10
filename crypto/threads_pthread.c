@@ -666,8 +666,11 @@ CRYPTO_RCU_LOCK *ossl_rcu_lock_new(int num_writers, OSSL_LIB_CTX *ctx)
 {
     struct rcu_lock_st *new;
 
-    if (num_writers < 1)
-        num_writers = 1;
+    /*
+     * We need a minimum of 3 qp's
+     */
+    if (num_writers < 3)
+        num_writers = 3;
 
     ctx = ossl_lib_ctx_get_concrete(ctx);
     if (ctx == NULL)
@@ -683,11 +686,15 @@ CRYPTO_RCU_LOCK *ossl_rcu_lock_new(int num_writers, OSSL_LIB_CTX *ctx)
     pthread_mutex_init(&new->alloc_lock, NULL);
     pthread_cond_init(&new->prior_signal, NULL);
     pthread_cond_init(&new->alloc_signal, NULL);
-    new->qp_group = allocate_new_qp_group(new, num_writers + 1);
+    /* By default our first writer is already alloced */
+    new->writers_alloced = 1;
+
+    new->qp_group = allocate_new_qp_group(new, num_writers);
     if (new->qp_group == NULL) {
         OPENSSL_free(new);
         new = NULL;
     }
+
     return new;
 }
 
