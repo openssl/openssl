@@ -247,6 +247,7 @@ struct evp_kdf_st {
     OSSL_FUNC_kdf_get_params_fn *get_params;
     OSSL_FUNC_kdf_get_ctx_params_fn *get_ctx_params;
     OSSL_FUNC_kdf_set_ctx_params_fn *set_ctx_params;
+    OSSL_FUNC_kdf_set_skey_fn *set_skey;
     OSSL_FUNC_kdf_derive_skey_fn *derive_skey;
 };
 
@@ -874,6 +875,9 @@ void evp_skeymgmt_freedata(const EVP_SKEYMGMT *keymgmt, void *keyddata);
 void *evp_skeymgmt_import(const EVP_SKEYMGMT *skeymgmt, int selection, const OSSL_PARAM params[]);
 int evp_skeymgmt_export(const EVP_SKEYMGMT *skeymgmt, void *keydata,
                         int selection, OSSL_CALLBACK *param_cb, void *cbarg);
+EVP_SKEYMGMT *evp_skeymgmt_fetch_from_prov(OSSL_PROVIDER *prov,
+                                           const char *name,
+                                           const char *properties);
 /* Pulling defines out of C source files */
 
 # define EVP_RC4_KEY_SIZE 16

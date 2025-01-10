@@ -19,6 +19,7 @@
 #include "internal/numbers.h"
 #include "internal/provider.h"
 #include "evp_local.h"
+#include "internal/param_build_set.h"
 
 EVP_KDF_CTX *EVP_KDF_CTX_new(EVP_KDF *kdf)
 {
@@ -144,21 +145,81 @@ int EVP_KDF_derive(EVP_KDF_CTX *ctx, unsigned char *key, size_t keylen,
     return ctx->meth->derive(ctx->algctx, key, keylen, params);
 }
 
-EVP_SKEY *EVP_KDF_derive_SKEY(EVP_KDF_CTX *ctx, EVP_SKEYMGMT *skeymgmt,
-                              const OSSL_PARAM params[])
+static int convert_key_cb(const OSSL_PARAM params[], void *arg)
+{
+    OSSL_PARAM_BLD *tmpl = arg;
+    const OSSL_PARAM *raw_bytes;
+    unsigned char *key_data;
+    size_t key_length;
+
+    raw_bytes = OSSL_PARAM_locate_const(params, OSSL_SKEY_PARAM_RAW_BYTES);
+    if (raw_bytes == NULL)
+        return 0;
+
+    if (!OSSL_PARAM_get_octet_string(raw_bytes, (void **)&key_data, 0,
+                                     &key_length))
+        return 0;
+
+    /*
+     * FIXME: Some kdfs of course decided to use a different name
+     * (OSSL_KDF_PARAM_SECRET) instead of OSSL_KDF_PARAM_KEY so we may need
+     * to have a fallback, or use get_settable params to find the correct
+     * name.
+     */
+    return ossl_param_build_set_octet_string(tmpl, NULL, OSSL_KDF_PARAM_KEY,
+                                             key_data, key_length);
+}
+
+int EVP_KDF_CTX_set_skey(EVP_KDF_CTX *ctx, EVP_SKEY *key)
+{
+    if (ctx == NULL)
+        return 0;
+
+    if (ctx->meth->set_skey != NULL) {
+        if (ctx->meth->prov != key->skeymgmt->prov) {
+            /* TODO: export/import dance */
+            return 0;
+        }
+        return ctx->meth->set_skey(ctx->algctx, key->keydata);
+    } else {
+        /*
+         * Provider does not support opaque keys, try to export and
+         * set params.
+         */
+        OSSL_PARAM_BLD *tmpl = NULL;
+        OSSL_PARAM *params = NULL;
+        int ret = 0;
+
+        if (!ctx->meth->set_ctx_params)
+            return 0;
+
+        tmpl = OSSL_PARAM_BLD_new();
+        if (tmpl == NULL)
+            return 0;
+
+        if (EVP_SKEY_export(key, OSSL_SKEYMGMT_SELECT_SECRET_KEY,
+                            convert_key_cb, tmpl)) {
+            params = OSSL_PARAM_BLD_to_param(tmpl);
+            if (params == NULL)
+                goto end;
+
+            ret = ctx->meth->set_ctx_params(ctx->algctx, params);
+        }
+
+    end:
+        OSSL_PARAM_free(params);
+        OSSL_PARAM_BLD_free(tmpl);
+        return ret;
+    }
+}
+
+EVP_SKEY *EVP_KDF_derive_SKEY(EVP_KDF_CTX *ctx, const char *key_type,
+                              size_t keylen, const OSSL_PARAM params[])
 {
     EVP_SKEY *ret = NULL;
 
-    if (ctx == NULL || skeymgmt == NULL) {
+    if (ctx == NULL || key_type == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
-        return NULL;
-    }
-    if (ret->skeymgmt->prov != ctx->meth->prov) {
-        ERR_raise(ERR_R_EVP_LIB, ERR_R_UNSUPPORTED);
-        return NULL;
-    }
-    if (ctx->meth->derive_skey == NULL) {
-        ERR_raise(ERR_R_EVP_LIB, ERR_R_UNSUPPORTED);
         return NULL;
     }
 
@@ -166,9 +227,70 @@ EVP_SKEY *EVP_KDF_derive_SKEY(EVP_KDF_CTX *ctx, EVP_SKEYMGMT *skeymgmt,
     if (ret == NULL)
         return NULL;
 
-    ret->skeymgmt = skeymgmt;
+    /*
+     * FIXME: we do not have libctx or propquery here, may have to add
+     * EVP_KDF_CTX_new_ctx that allows specifying and storing them ...
+     *
+     * Mostly needed for the fallbacks.
+     */
 
-    ret->keydata = ctx->meth->derive_skey(ctx->algctx, params);
+    ret->skeymgmt = evp_skeymgmt_fetch_from_prov(ctx->meth->prov,
+                                                 key_type, NULL);
+    if (ret->skeymgmt == NULL) {
+        /*
+         * The provider does not support skeymgmt, let's try to fallback
+         * to a provider that supports it
+         */
+        ret->skeymgmt = EVP_SKEYMGMT_fetch(NULL, key_type, NULL);
+    }
+
+    if (ret->skeymgmt == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_FETCH_FAILED);
+        EVP_SKEY_free(ret);
+        return NULL;
+    }
+
+    /* Fallback to raw derive + import if possible */
+    if (ret->skeymgmt->prov != ctx->meth->prov ||
+        ctx->meth->derive_skey == NULL) {
+        unsigned char *key = OPENSSL_zalloc(keylen);
+        OSSL_PARAM import[2] = { 0 };
+
+        if (!key) {
+            EVP_SKEY_free(ret);
+            return NULL;
+        }
+
+        if (ctx->meth->derive == NULL) {
+            ERR_raise(ERR_R_EVP_LIB, ERR_R_UNSUPPORTED);
+            EVP_SKEY_free(ret);
+            OPENSSL_free(key);
+            return NULL;
+        }
+
+        if (!ctx->meth->derive(ctx->algctx, key, keylen, params)) {
+            EVP_SKEY_free(ret);
+            OPENSSL_free(key);
+            return NULL;
+        }
+
+        import[0] = OSSL_PARAM_construct_octet_string(OSSL_SKEY_PARAM_RAW_BYTES,
+                                                      key, keylen);
+        import[1] = OSSL_PARAM_construct_end();
+
+        /* FIXME me, no libctx, no propquery */
+        if (!EVP_SKEY_import(NULL, key_type, NULL,
+                             OSSL_SKEYMGMT_SELECT_ALL, import)) {
+            EVP_SKEY_free(ret);
+            OPENSSL_free(key);
+            return NULL;
+        }
+
+        OPENSSL_free(key);
+        return ret;
+    }
+
+    ret->keydata = ctx->meth->derive_skey(ctx->algctx, keylen, params);
     if (ret->keydata == NULL) {
         EVP_SKEY_free(ret);
         return NULL;
