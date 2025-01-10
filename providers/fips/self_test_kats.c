@@ -17,6 +17,7 @@
 #include "internal/cryptlib.h"
 #include "internal/nelem.h"
 #include "self_test.h"
+#include "crypto/ml_kem.h"
 #include "self_test_data.inc"
 
 static int set_kat_drbg(OSSL_LIB_CTX *ctx,
@@ -627,20 +628,19 @@ static int self_test_kem_decapsulate(const ST_KAT_KEM *t, OSSL_SELF_TEST *st,
     int ret = 0;
     EVP_PKEY_CTX *ctx = NULL;
     unsigned char *secret = NULL, *alloced = NULL;
+    const unsigned char *test_secret = t->secret;
     const unsigned char *cipher_text = t->cipher_text;
-    size_t secretlen;
+    size_t secretlen = t->secret_len;
 
     OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_KAT_KEM,
                            reject ? OSSL_SELF_TEST_DESC_DECAP_KEM_FAIL
                                   : OSSL_SELF_TEST_DESC_DECAP_KEM);
 
     if (reject) {
-        cipher_text = alloced = OPENSSL_memdup(t->cipher_text,
-                                               t->cipher_text_len);
+        cipher_text = alloced = OPENSSL_zalloc(t->cipher_text_len);
         if (alloced == NULL)
             goto err;
-        /* Corrupt the first byte to ensure a failure */
-        *alloced ^= 1;
+        test_secret = t->reject_secret;
     }
 
     ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, "");
@@ -650,10 +650,7 @@ static int self_test_kem_decapsulate(const ST_KAT_KEM *t, OSSL_SELF_TEST *st,
     if (EVP_PKEY_decapsulate_init(ctx, NULL) <= 0)
         goto err;
 
-    /* Get output size */
-    if (EVP_PKEY_decapsulate(ctx, NULL, &secretlen,
-                             cipher_text, t->cipher_text_len) <= 0)
-        goto err;
+    /* Allocate output buffer */
     secret = OPENSSL_malloc(secretlen);
     if (secret == NULL)
         goto err;
@@ -666,7 +663,7 @@ static int self_test_kem_decapsulate(const ST_KAT_KEM *t, OSSL_SELF_TEST *st,
     /* Compare output */
     OSSL_SELF_TEST_oncorrupt_byte(st, secret);
     if (secretlen != t->secret_len
-            || (memcmp(secret, t->secret, t->secret_len) != 0) == !reject)
+            || memcmp(secret, test_secret, t->secret_len) != 0)
         goto err;
 
     ret = 1;
@@ -786,7 +783,6 @@ static int self_test_ciphers(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
     }
     return ret;
 }
-
 
 static int self_test_kems(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
 {
