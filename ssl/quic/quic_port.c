@@ -794,7 +794,8 @@ static void cleanup_validation_token(QUIC_VALIDATION_TOKEN *token)
 }
 
 /**
- * @brief Generates a validation token for a RETRY packet.
+ * @brief Generates a validation token for a RETRY/NEW_TOKEN packet.
+ *
  *
  * @param peer  Address of the client peer receiving the packet.
  * @param odcid DCID of the connection attempt.
@@ -803,10 +804,11 @@ static void cleanup_validation_token(QUIC_VALIDATION_TOKEN *token)
  *
  * @return 1 if validation token is filled successfully, 0 otherwise.
  */
-static int generate_retry_token(BIO_ADDR *peer, QUIC_CONN_ID odcid,
-                                QUIC_CONN_ID rscid, QUIC_VALIDATION_TOKEN *token)
+static int generate_token(BIO_ADDR *peer, QUIC_CONN_ID odcid,
+                          QUIC_CONN_ID rscid, QUIC_VALIDATION_TOKEN *token,
+                          int is_retry)
 {
-    token->is_retry = 1;
+    token->is_retry = is_retry;
     token->timestamp = ossl_time_now();
     token->remote_addr = NULL;
     token->odcid = odcid;
@@ -1082,8 +1084,8 @@ static void port_send_retry(QUIC_PORT *port,
         goto err;
 
     /* Generate retry validation token */
-    if (!generate_retry_token(peer, client_hdr->dst_conn_id,
-                              hdr.src_conn_id, &token)
+    if (!generate_token(peer, client_hdr->dst_conn_id,
+                        hdr.src_conn_id, &token, 1)
         || !marshal_validation_token(&token, buffer, &token_buf_len)
         || !encrypt_validation_token(port, buffer, token_buf_len, NULL,
                                      &ct_len)
@@ -1336,6 +1338,36 @@ err:
     return ret;
 }
 
+static void generate_new_token(QUIC_CHANNEL *ch, BIO_ADDR *peer)
+{
+    QUIC_CONN_ID rscid = { 0 };
+    QUIC_VALIDATION_TOKEN token;
+    unsigned char buffer[ENCRYPTED_TOKEN_MAX_LEN];
+    unsigned char ct_buf[ENCRYPTED_TOKEN_MAX_LEN];
+    size_t ct_len;
+    size_t token_buf_len = 0;
+
+    /* Clients never send a NEW_TOKEN */
+    if (!ch->is_server)
+        return;
+
+    if (!ossl_quic_lcidm_get_unused_cid(ch->port->lcidm, &rscid))
+        return;
+
+    if (!generate_token(peer, ch->init_dcid, rscid, &token, 0)
+        || !marshal_validation_token(&token, buffer, &token_buf_len)
+        || !encrypt_validation_token(ch->port, buffer, token_buf_len, NULL,
+                                     &ct_len)
+        || ct_len > ENCRYPTED_TOKEN_MAX_LEN
+        || !encrypt_validation_token(ch->port, buffer, token_buf_len, ct_buf,
+                                     &ct_len)
+        || !ossl_assert(ct_len >= QUIC_RETRY_INTEGRITY_TAG_LEN))
+        return;
+
+    ossl_quic_channel_schedule_new_token(ch, ct_buf, ct_len);
+    cleanup_validation_token(&token);
+}
+
 /*
  * This is called by the demux when we get a packet not destined for any known
  * DCID.
@@ -1456,6 +1488,11 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
 
     port_bind_channel(port, &e->peer, &scid, &hdr.dst_conn_id,
                       &odcid, &new_ch);
+
+    /*
+     * Generate a token for sending in a later NEW_TOKEN frame
+     */
+    generate_new_token(new_ch, &e->peer);
 
     /*
      * The channel will do all the LCID registration needed, but as an
