@@ -517,6 +517,55 @@ SSL *ossl_quic_channel_get0_tls(QUIC_CHANNEL *ch)
     return ch->tls;
 }
 
+static void free_buf_mem(unsigned char *buf, size_t buf_len, void *arg)
+{
+    BUF_MEM_free((BUF_MEM *)arg);
+}
+
+int ossl_quic_channel_schedule_new_token(QUIC_CHANNEL *ch,
+                                         const unsigned char *token,
+                                         size_t token_len)
+{
+    int rc = 0;
+    QUIC_CFQ_ITEM *cfq_item;
+    WPACKET wpkt;
+    BUF_MEM *buf_mem = NULL;
+    size_t l = 0;
+
+    buf_mem = BUF_MEM_new();
+    if (buf_mem == NULL)
+        goto err;
+
+    if (!WPACKET_init(&wpkt, buf_mem))
+        goto err;
+
+    if (!ossl_quic_wire_encode_frame_new_token(&wpkt, token,
+                                               token_len)) {
+        WPACKET_cleanup(&wpkt);
+        goto err;
+    }
+
+    WPACKET_finish(&wpkt);
+
+    if (!WPACKET_get_total_written(&wpkt, &l))
+        goto err;
+
+    cfq_item = ossl_quic_cfq_add_frame(ch->cfq, 1,
+                                       QUIC_PN_SPACE_APP,
+                                       OSSL_QUIC_FRAME_TYPE_NEW_TOKEN, 0,
+                                       (unsigned char *)buf_mem->data, l,
+                                       free_buf_mem,
+                                       buf_mem);
+    if (cfq_item == NULL)
+        goto err;
+
+    rc = 1;
+err:
+    if (!rc)
+        BUF_MEM_free(buf_mem);
+    return rc;
+}
+
 QUIC_STREAM *ossl_quic_channel_get_stream_by_id(QUIC_CHANNEL *ch,
                                                 uint64_t stream_id)
 {
