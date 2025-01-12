@@ -58,7 +58,7 @@ Quick start
 
  1. Install Perl
 
- 2. Install NASM
+ 2. Install NASM (optional - required for x86 based platforms)
 
  3. Make sure both Perl and NASM are on your %PATH%
 
