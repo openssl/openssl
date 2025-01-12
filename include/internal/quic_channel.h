@@ -210,6 +210,13 @@ int ossl_quic_channel_start(QUIC_CHANNEL *ch);
 void ossl_quic_channel_local_close(QUIC_CHANNEL *ch, uint64_t app_error_code,
                                    const char *app_reason);
 
+/**
+ * @brief schedules a NEW_TOKEN frame for sending on the channel
+ */
+int ossl_quic_channel_schedule_new_token(QUIC_CHANNEL *ch,
+                                         const unsigned char *token,
+                                         size_t token_len);
+
 /*
  * Called when the handshake is confirmed.
  */
