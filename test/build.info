@@ -35,7 +35,7 @@ IF[{- !$disabled{tests} -}]
           versions \
           aborttest test_test pkcs12_format_test \
           sanitytest rsa_complex exdatatest bntest \
-          ecstresstest gmdifftest pbelutest \
+          ecstresstest ec_comp_test gmdifftest pbelutest \
           destest mdc2test sha_test \
           exptest pbetest localetest evp_pkey_ctx_new_from_name\
           evp_pkey_provided_test evp_test evp_extra_test evp_extra_test2 \
@@ -105,6 +105,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[ectest]=ectest.c
   INCLUDE[ectest]=../include ../apps/include
   DEPEND[ectest]=../libcrypto.a libtestutil.a
+
+  SOURCE[ec_comp_test]=ec_comp_test.c
+  INCLUDE[ec_comp_test]=../include ../apps/include
+  DEPEND[ec_comp_test]=../libcrypto libtestutil.a
 
   SOURCE[ecstresstest]=ecstresstest.c
   INCLUDE[ecstresstest]=../include ../apps/include
