@@ -43,7 +43,7 @@ void ossl_lms_key_free(LMS_KEY *lmskey)
         return;
 
     CRYPTO_DOWN_REF(&lmskey->references, &i);
-    REF_PRINT_COUNT("LMS_KEY", lmskey);
+    REF_PRINT_COUNT("LMS_KEY", i, lmskey);
     if (i > 0)
         return;
     REF_ASSERT_ISNT(i < 0);
@@ -66,7 +66,7 @@ int ossl_lms_key_up_ref(LMS_KEY *key)
     if (CRYPTO_UP_REF(&key->references, &i) <= 0)
         return 0;
 
-    REF_PRINT_COUNT("LMS_KEY", key);
+    REF_PRINT_COUNT("LMS_KEY", i, key);
     REF_ASSERT_ISNT(i < 2);
     return ((i > 1) ? 1 : 0);
 }
