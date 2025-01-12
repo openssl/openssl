@@ -507,10 +507,6 @@ static int scrypt_alg(const char *pass, size_t passlen,
         return 0;
     }
 
-    /* Check that the maximum memory doesn't exceed a size_t limits */
-    if (maxmem > SIZE_MAX)
-        maxmem = SIZE_MAX;
-
     if (Blen + Vlen > maxmem) {
         ERR_raise(ERR_LIB_EVP, EVP_R_MEMORY_LIMIT_EXCEEDED);
         return 0;
