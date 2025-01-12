@@ -417,7 +417,7 @@ Key agreement tests used with the "KAT_KA" type.
 
 =item "KBKDF" (B<OSSL_SELF_TEST_DESC_KDF_KBKDF>)
 
-Key Encapsulation Function tests used with the "KAY_KEM" type.
+Key Encapsulation Function tests used with the "KAT_KEM" type.
 
 =item "KEM_Encap" (B<OSSL_SELF_TEST_DESC_ENCAP_KEM>)
 
