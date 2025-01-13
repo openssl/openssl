@@ -30,6 +30,11 @@ OpenSSL 3.5
 
 ### Changes between 3.4 and 3.5 [xx XXX xxxx]
 
+* Add ML-DSA as specified in FIPS 204.
+
+  The base code was derived from BoringSSL C++ code.
+  *Shane Lontis, Viktor Dukhovni and Paul Dale*
+
 * New inline functions were added to support loads and stores of unsigned
   16-bit, 32-bit and 64-bit integers in either little-endian or big-endian
   form, regardless of the host byte-order.  See the `OPENSSL_load_u16_le(3)`
