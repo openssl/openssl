@@ -191,6 +191,8 @@ The OpenSSL default provider supports these operations and algorithms:
 
 =item SM2
 
+=item ML-DSA, see L<EVP_SIGNATURE-ML-DSA(7)>
+
 =item HMAC, see L<EVP_SIGNATURE-HMAC(7)>
 
 =item SIPHASH, see L<EVP_SIGNATURE-Siphash(7)>
@@ -265,6 +267,8 @@ The OpenSSL default provider supports these operations and algorithms:
 
 =item SM2, see L<EVP_KEYMGMT-SM2(7)>
 
+=item ML-DSA, see L<EVP_KEYMGMT-ML-DSA(7)>
+
 =back
 
 =head2 Random Number Generation
@@ -314,6 +318,12 @@ are also available in the base provider.
 
 =item SM2
 
+=item ML-DSA-44
+
+=item ML-DSA-65
+
+=item ML-DSA-87
+
 =back
 
 In addition to this provider, all of these encoding algorithms are also
@@ -345,6 +355,12 @@ combination with the FIPS provider.
 =item X448
 
 =item SM2
+
+=item ML-DSA-44
+
+=item ML-DSA-65
+
+=item ML-DSA-87
 
 =item DER
 
