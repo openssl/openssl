@@ -480,6 +480,52 @@ static int digest_signature(const uint8_t *sig, size_t sig_len,
     return ret;
 }
 
+#ifndef OPENSSL_NO_LMS
+static int self_test_LMS(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
+{
+    int ret = 0;
+    OSSL_PARAM pm[2];
+    const ST_KAT_LMS *t = &st_kat_lms_test;
+    EVP_PKEY_CTX *ctx = NULL;
+    EVP_PKEY *pkey = NULL;
+    EVP_SIGNATURE *sig = NULL;
+
+    OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_KAT_SIGNATURE,
+                           OSSL_SELF_TEST_DESC_SIGN_LMS);
+
+    pm[0] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY,
+                                              (unsigned char *)t->pub,
+                                              t->publen);
+    pm[1] = OSSL_PARAM_construct_end();
+
+    ctx = EVP_PKEY_CTX_new_from_name(libctx, "LMS", "");
+    if (ctx == NULL
+            || EVP_PKEY_fromdata_init(ctx) <= 0
+            || EVP_PKEY_fromdata(ctx, &pkey, EVP_PKEY_PUBLIC_KEY, pm) <= 0)
+        goto err;
+    EVP_PKEY_CTX_free(ctx);
+    ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, "");
+    if (ctx == NULL)
+        goto err;
+
+    sig = EVP_SIGNATURE_fetch(libctx, "LMS", NULL);
+    if (sig == NULL
+            || EVP_PKEY_verify_message_init(ctx, sig, NULL) <= 0
+            || EVP_PKEY_verify(ctx, t->sig, t->siglen,
+                               t->msg, t->msglen) <= 0)
+        goto err;
+
+    ret = 1;
+ err:
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_CTX_free(ctx);
+    EVP_SIGNATURE_free(sig);
+
+    OSSL_SELF_TEST_onend(st, ret);
+    return ret;
+}
+#endif  /* OPENSSL_NO_LMS */
+
 static int self_test_digest_sign(const ST_KAT_SIGN *t,
                                  OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
 {
@@ -1080,6 +1126,19 @@ int SELF_TEST_kats(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
         ret = 0;
     if (!self_test_ciphers(st, libctx))
         ret = 0;
+#ifndef OPENSSL_NO_LMS
+    /*
+     * FIPS 140-3 IG 10.3.A Note 5 mandates a CAST for LMS.
+     *
+     * It permits this to be omitted if HSS is also implemented and has
+     * the relevant self tests.  Once HSS is implemented, this test can be
+     * removed.  This IG permits the digest's CAST to be subsumed into this
+     * test, however, because this will be removed, the underlying digest
+     * test has been retained elsewhere lest it is accidentally omitted.
+     */
+    if (!self_test_LMS(st, libctx))
+        ret = 0;
+#endif  /* OPENSSL_NO_LMS */
     if (!self_test_signatures(st, libctx))
         ret = 0;
     if (!self_test_kdfs(st, libctx))
