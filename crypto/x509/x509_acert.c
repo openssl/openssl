@@ -327,11 +327,6 @@ const STACK_OF(X509_EXTENSION) *X509_ACERT_get0_extensions(const X509_ACERT *x)
     return x->acinfo->extensions;
 }
 
-int X509_verify_acert(X509_STORE_CTX *ctx, X509_ACERT *acert)
-{
-    return 0; /* Stub implementation. To be replaced. */
-}
-
 OSSL_ISSUER_SERIAL *X509_get_issuer_serial(X509 *x)
 {
     return NULL; /* Stub implementation. To be replaced. */
@@ -371,11 +366,6 @@ int X509_acert_add_ext(X509_ACERT *x, X509_EXTENSION *ex, int loc)
 X509_EXTENSION *X509_acert_delete_ext(X509_ACERT *x, int loc)
 {
     return NULL;
-}
-
-int ossl_check_acert_crl(X509_STORE_CTX *ctx, X509_CRL *crl, X509_ACERT *x)
-{
-    return 0; /* Stub implementation. To be replaced. */
 }
 
 int ossl_check_acert_time(X509_STORE_CTX *ctx, X509_ACERT *acert)
