@@ -71,7 +71,7 @@ static int ml_kem_pairwise_test(const ML_KEM_KEY *key)
     int operation_result = 0;
 
     /* Unless we have both a public and private key, we can't do the test */
-    if (!ossl_ml_kem_have_prvkey(key) || !ossl_ml_kem_have_pubkey(key))
+    if (!ossl_ml_kem_have_prvkey(key))
         return 1;
 
     /*
