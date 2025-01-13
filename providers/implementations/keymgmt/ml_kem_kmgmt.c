@@ -640,12 +640,13 @@ static void *ml_kem_dup(const void *vkey, int selection)
     static void *ml_kem_##bits##_new(void *provctx) \
     { \
         return ml_kem_new(provctx == NULL ? NULL : PROV_LIBCTX_OF(provctx), \
-                          NULL, NID_ML_KEM_##bits); \
+                          NULL, EVP_PKEY_ML_KEM_##bits); \
     } \
     static void *ml_kem_##bits##_gen_init(void *provctx, int selection, \
                                           const OSSL_PARAM params[]) \
     { \
-        return ml_kem_gen_init(provctx, selection, params, NID_ML_KEM_##bits); \
+        return ml_kem_gen_init(provctx, selection, params, \
+                               EVP_PKEY_ML_KEM_##bits); \
     } \
     const OSSL_DISPATCH ossl_ml_kem_##bits##_keymgmt_functions[] = { \
         { OSSL_FUNC_KEYMGMT_NEW, (OSSL_FUNC) ml_kem_##bits##_new }, \

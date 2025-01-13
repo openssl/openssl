@@ -44,11 +44,11 @@ static const int minimal_selection = OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS
 
 /* Must match DECLARE_DISPATCH invocations at the end of the file */
 static const ECDH_VINFO hybrid_vtable[] = {
-    { "EC",  "P-256", 65, 32, 32, 1, NID_ML_KEM_768 },
-    { "EC",  "P-384", 97, 48, 48, 1, NID_ML_KEM_1024 },
+    { "EC",  "P-256", 65, 32, 32, 1, EVP_PKEY_ML_KEM_768 },
+    { "EC",  "P-384", 97, 48, 48, 1, EVP_PKEY_ML_KEM_1024 },
 #if !defined(OPENSSL_NO_ECX)
-    { "X25519", NULL, 32, 32, 32, 0, NID_ML_KEM_768 },
-    { "X448",   NULL, 56, 56, 56, 0, NID_ML_KEM_1024 },
+    { "X25519", NULL, 32, 32, 32, 0, EVP_PKEY_ML_KEM_768 },
+    { "X448",   NULL, 56, 56, 56, 0, EVP_PKEY_ML_KEM_1024 },
 #endif
 };
 
