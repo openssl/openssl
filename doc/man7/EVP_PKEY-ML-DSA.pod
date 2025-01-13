@@ -42,11 +42,18 @@ Use EVP_PKEY_CTX_set_params() after calling EVP_PKEY_keygen_init().
 =head2 Common ML-DSA parameters
 
 In addition to the common parameters that all keytypes should support (see
-L<provider-keymgmt(7)/Common parameters>), the implementation of these key types
-support the following.
+L<provider-keymgmt(7)/Common Information Parameters>, the implementation of
+these key types support the following.
 
 The following parameters are gettable using EVP_PKEY_get_octet_string_param(),
 and settable when using EVP_PKEY_fromdata().
+
+The following octet string parameters are gettable using
+L<EVP_PKEY_get_octet_string_param(3)> or L<EVP_PKEY_get_params(3)>.
+They can be set into L<EVP_PKEY_fromdata(3)>, and are returned by
+L<EVP_PKEY_todata(3)> given a suitable I<selection>.
+Once a public or private key is configured, it can no longer be modified,
+nor can another key component be added.
 
 =over 4
 
