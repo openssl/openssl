@@ -30,6 +30,13 @@ OpenSSL 3.5
 
 ### Changes between 3.4 and 3.5 [xx XXX xxxx]
 
+* New inline functions were added to support loads and stores of unsigned
+  16-bit, 32-bit and 64-bit integers in either little-endian or big-endian
+  form, regardless of the host byte-order.  See the `OPENSSL_load_u16_le(3)`
+  manpage for details.
+
+  *Viktor Dukhovni*
+
 * All the BIO_meth_get_*() functions allowing reuse of the internal OpenSSL
   BIO method implementations were deprecated. The reuse is unsafe due to
   dependency on the code of the internal methods not changing.

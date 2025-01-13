@@ -1579,6 +1579,10 @@ DEPEND[html/man3/OPENSSL_load_builtin_modules.html]=man3/OPENSSL_load_builtin_mo
 GENERATE[html/man3/OPENSSL_load_builtin_modules.html]=man3/OPENSSL_load_builtin_modules.pod
 DEPEND[man/man3/OPENSSL_load_builtin_modules.3]=man3/OPENSSL_load_builtin_modules.pod
 GENERATE[man/man3/OPENSSL_load_builtin_modules.3]=man3/OPENSSL_load_builtin_modules.pod
+DEPEND[html/man3/OPENSSL_load_u16_le.html]=man3/OPENSSL_load_u16_le.pod
+GENERATE[html/man3/OPENSSL_load_u16_le.html]=man3/OPENSSL_load_u16_le.pod
+DEPEND[man/man3/OPENSSL_load_u16_le.3]=man3/OPENSSL_load_u16_le.pod
+GENERATE[man/man3/OPENSSL_load_u16_le.3]=man3/OPENSSL_load_u16_le.pod
 DEPEND[html/man3/OPENSSL_malloc.html]=man3/OPENSSL_malloc.pod
 GENERATE[html/man3/OPENSSL_malloc.html]=man3/OPENSSL_malloc.pod
 DEPEND[man/man3/OPENSSL_malloc.3]=man3/OPENSSL_malloc.pod
@@ -1679,10 +1683,6 @@ DEPEND[html/man3/OSSL_CRMF_pbmp_new.html]=man3/OSSL_CRMF_pbmp_new.pod
 GENERATE[html/man3/OSSL_CRMF_pbmp_new.html]=man3/OSSL_CRMF_pbmp_new.pod
 DEPEND[man/man3/OSSL_CRMF_pbmp_new.3]=man3/OSSL_CRMF_pbmp_new.pod
 GENERATE[man/man3/OSSL_CRMF_pbmp_new.3]=man3/OSSL_CRMF_pbmp_new.pod
-DEPEND[html/man3/OSSL_CRYPTO_load_u16_le.html]=man3/OSSL_CRYPTO_load_u16_le.pod
-GENERATE[html/man3/OSSL_CRYPTO_load_u16_le.html]=man3/OSSL_CRYPTO_load_u16_le.pod
-DEPEND[man/man3/OSSL_CRYPTO_load_u16_le.3]=man3/OSSL_CRYPTO_load_u16_le.pod
-GENERATE[man/man3/OSSL_CRYPTO_load_u16_le.3]=man3/OSSL_CRYPTO_load_u16_le.pod
 DEPEND[html/man3/OSSL_DECODER.html]=man3/OSSL_DECODER.pod
 GENERATE[html/man3/OSSL_DECODER.html]=man3/OSSL_DECODER.pod
 DEPEND[man/man3/OSSL_DECODER.3]=man3/OSSL_DECODER.pod
@@ -3406,6 +3406,7 @@ html/man3/OPENSSL_init_crypto.html \
 html/man3/OPENSSL_init_ssl.html \
 html/man3/OPENSSL_instrument_bus.html \
 html/man3/OPENSSL_load_builtin_modules.html \
+html/man3/OPENSSL_load_u16_le.html \
 html/man3/OPENSSL_malloc.html \
 html/man3/OPENSSL_riscvcap.html \
 html/man3/OPENSSL_s390xcap.html \
@@ -3431,7 +3432,6 @@ html/man3/OSSL_CRMF_MSG_set0_validity.html \
 html/man3/OSSL_CRMF_MSG_set1_regCtrl_regToken.html \
 html/man3/OSSL_CRMF_MSG_set1_regInfo_certReq.html \
 html/man3/OSSL_CRMF_pbmp_new.html \
-html/man3/OSSL_CRYPTO_load_u16_le.html \
 html/man3/OSSL_DECODER.html \
 html/man3/OSSL_DECODER_CTX.html \
 html/man3/OSSL_DECODER_CTX_new_for_pkey.html \
@@ -4071,6 +4071,7 @@ man/man3/OPENSSL_init_crypto.3 \
 man/man3/OPENSSL_init_ssl.3 \
 man/man3/OPENSSL_instrument_bus.3 \
 man/man3/OPENSSL_load_builtin_modules.3 \
+man/man3/OPENSSL_load_u16_le.3 \
 man/man3/OPENSSL_malloc.3 \
 man/man3/OPENSSL_riscvcap.3 \
 man/man3/OPENSSL_s390xcap.3 \
@@ -4096,7 +4097,6 @@ man/man3/OSSL_CRMF_MSG_set0_validity.3 \
 man/man3/OSSL_CRMF_MSG_set1_regCtrl_regToken.3 \
 man/man3/OSSL_CRMF_MSG_set1_regInfo_certReq.3 \
 man/man3/OSSL_CRMF_pbmp_new.3 \
-man/man3/OSSL_CRYPTO_load_u16_le.3 \
 man/man3/OSSL_DECODER.3 \
 man/man3/OSSL_DECODER_CTX.3 \
 man/man3/OSSL_DECODER_CTX_new_for_pkey.3 \
