@@ -65,8 +65,15 @@ EVP_SKEY *EVP_SKEY_import(OSSL_LIB_CTX *libctx, const char *skeymgmtname, const 
 
     skeymgmt = EVP_SKEYMGMT_fetch(libctx, skeymgmtname, propquery);
     if (skeymgmt == NULL) {
-        ERR_raise(ERR_LIB_EVP, ERR_R_FETCH_FAILED);
-        goto err;
+        /*
+         * if the specific key_type is unknown, attempt to use the generic
+         * key management
+         */
+        skeymgmt = EVP_SKEYMGMT_fetch(libctx, OSSL_SKEY_TYPE_GENERIC, propquery);
+        if (skeymgmt == NULL) {
+            ERR_raise(ERR_LIB_EVP, ERR_R_FETCH_FAILED);
+            goto err;
+        }
     }
     skey->skeymgmt = skeymgmt;
 
