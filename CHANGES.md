@@ -30,6 +30,11 @@ OpenSSL 3.5
 
 ### Changes between 3.4 and 3.5 [xx XXX xxxx]
 
+* Add ML-DSA as specified in FIPS 204.
+
+  The base code was derived from BoringSSL C++ code.
+  *Shane Lontis, Viktor Dukhovni and Paul Dale*
+
  * Added new API calls to enable 3rd party QUIC stacks to use the OpenSSL TLS
    implementation.
 
