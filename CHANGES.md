@@ -43,6 +43,15 @@ OpenSSL 3.5
 
   *Tomáš Mráz*
 
+* Added support for a new callback registration SSL_CTX_set_new_pending_conn_cb,
+  which allows for application notification of new connection SSL object
+  creation, which occurs independently of calls to SSL_accept_connection().
+  Note: QUIC objects passed through SSL callbacks should not have their state
+  mutated via calls back into the SSL api until such time as they have been
+  received via a call to SSL_accept_connection().
+
+  *Neil Horman*
+
 * Support DEFAULT keyword and '-' prefix in SSL_CTX_set1_groups_list().
   SSL_CTX_set1_groups_list() now supports the DEFAULT keyword which sets the
   available groups to the default selection. The '-' prefix allows the calling
