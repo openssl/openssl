@@ -217,7 +217,11 @@ static int test_ml_kem(void)
 
 static int test_non_derandomised_ml_kem(void)
 {
-    static const int alg[3] = { NID_ML_KEM_512, NID_ML_KEM_768, NID_ML_KEM_1024 };
+    static const int alg[3] = {
+        EVP_PKEY_ML_KEM_512,
+        EVP_PKEY_ML_KEM_768,
+        EVP_PKEY_ML_KEM_1024
+    };
     EVP_RAND_CTX *privctx;
     EVP_RAND_CTX *pubctx;
     EVP_MD *sha256;

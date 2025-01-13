@@ -862,9 +862,15 @@ static int ml_kem_spki_pub_to_der(const void *vkey, unsigned char **pder,
     publen = key->vinfo->pubkey_bytes;
 
     if (pder != NULL
-        && ((*pder = OPENSSL_malloc(publen)) == NULL
-            || !ossl_ml_kem_encode_public_key(*pder, publen, key)))
+        && (*pder = OPENSSL_malloc(publen)) == NULL)
         return 0;
+    if (!ossl_ml_kem_encode_public_key(*pder, publen, key)) {
+        ERR_raise_data(ERR_LIB_OSSL_ENCODER, ERR_R_INTERNAL_ERROR,
+                       "error encoding %s public key",
+                       key->vinfo->algorithm_name);
+        OPENSSL_free(*pder);
+        return 0;
+    }
 
     return publen;
 }
