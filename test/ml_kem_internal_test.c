@@ -92,7 +92,11 @@ static uint8_t ml_kem_expected_shared_secret[3][32] = {
 
 static int sanity_test(void)
 {
-    static const int alg[3] = { NID_ML_KEM_512, NID_ML_KEM_768, NID_ML_KEM_1024 };
+    static const int alg[3] = {
+        EVP_PKEY_ML_KEM_512,
+        EVP_PKEY_ML_KEM_768,
+        EVP_PKEY_ML_KEM_1024
+    };
     EVP_RAND_CTX *privctx;
     EVP_RAND_CTX *pubctx;
     EVP_MD *sha256 = EVP_MD_fetch(NULL, "sha256", NULL);
