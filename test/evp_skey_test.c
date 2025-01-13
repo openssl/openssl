@@ -206,8 +206,8 @@ static int test_des_raw_skey(void)
         goto end;
 
     /* Create EVP_SKEY */
-    skey = EVP_SKEY_import_raw_key(libctx, "GENERIC-SECRET", des_key,
-                                   sizeof(des_key), NULL);
+    skey = EVP_SKEY_import_raw_key(libctx, "DES", des_key, sizeof(des_key),
+                                   NULL);
     if (!TEST_ptr(skey))
         goto end;
 
