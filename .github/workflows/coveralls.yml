@@ -80,8 +80,6 @@ jobs:
     - name: generate coverage info
       run: lcov -d . -c
              --exclude "${PWD}/test/*"
-             --exclude "${PWD}/test/helpers/*"
-             --exclude "${PWD}/test/testutil/*"
              --exclude "${PWD}/fuzz/*"
              --exclude "/usr/include/*"
              --ignore-errors mismatch
