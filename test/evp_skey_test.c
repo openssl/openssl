@@ -215,7 +215,7 @@ static int test_des_raw_skey(void)
         || (params = OSSL_PARAM_BLD_to_param(tmpl)) == NULL)
         goto end;
 
-    skey = EVP_SKEY_import(libctx, "GENERIC_SECRET", NULL, OSSL_SKEYMGMT_SELECT_ALL, params);
+    skey = EVP_SKEY_import(libctx, "DES", NULL, OSSL_SKEYMGMT_SELECT_ALL, params);
     if (!TEST_ptr(skey))
         goto end;
 
