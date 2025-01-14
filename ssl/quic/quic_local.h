@@ -205,6 +205,9 @@ struct quic_conn_st {
     unsigned int                    addressed_mode_w        : 1;
     unsigned int                    addressed_mode_r        : 1;
 
+    /* Flag to indicate if this connection has been accepted */
+    unsigned int                    accepted                : 1;
+
     /* Default stream type. Defaults to SSL_DEFAULT_STREAM_MODE_AUTO_BIDI. */
     uint32_t                        default_stream_mode;
 
