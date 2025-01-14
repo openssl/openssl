@@ -805,7 +805,13 @@ void ossl_quic_free(SSL *s)
     qc_cleanup(ctx.qc, /*have_lock=*/1);
     /* Note: SSL_free calls OPENSSL_free(qc) for us */
 
-    if (ctx.qc->listener != NULL)
+    /*
+     * Just because we have a listener doesn't mean we have a ref on it
+     * QUIC pre-creates user ssls to return to applications.
+     * Those don't hold a reference until they are accepted, so only drop
+     * the count if the application has accepted them
+     */
+    if (ctx.qc->accepted == 1 && ctx.qc->listener != NULL)
         SSL_free(&ctx.qc->listener->obj.ssl);
     if (ctx.qc->domain != NULL)
         SSL_free(&ctx.qc->domain->obj.ssl);
@@ -4455,6 +4461,7 @@ SSL *ossl_quic_new_from_listener(SSL *ssl, uint64_t flags)
 
     qctx_unlock(&ctx);
 
+    qc->accepted = 1;
     return &qc->obj.ssl;
 
 err:
@@ -4524,6 +4531,7 @@ SSL *ossl_quic_accept_connection(SSL *ssl, uint64_t flags)
     QCTX ctx;
     SSL *conn_ssl = NULL;
     QUIC_CHANNEL *new_ch = NULL;
+    QUIC_CONNECTION *qc;
     int no_block = ((flags & SSL_ACCEPT_CONNECTION_NO_BLOCK) != 0);
 
     if (!expect_quic_listener(ssl, &ctx))
@@ -4568,6 +4576,15 @@ SSL *ossl_quic_accept_connection(SSL *ssl, uint64_t flags)
      */
     conn_ssl = ossl_quic_channel_get0_tls(new_ch);
     conn_ssl = SSL_CONNECTION_GET_USER_SSL(SSL_CONNECTION_FROM_SSL(conn_ssl));
+    qc = (QUIC_CONNECTION *)conn_ssl;
+    qc->accepted = 1;
+
+    if (!SSL_up_ref(&ctx.ql->obj.ssl)) {
+        SSL_free(conn_ssl);
+        SSL_free(ossl_quic_channel_get0_tls(new_ch));
+        conn_ssl = NULL;
+    }
+
 out:
     qctx_unlock(&ctx);
     return conn_ssl;
@@ -4577,14 +4594,8 @@ static QUIC_CONNECTION *create_qc_from_incoming_conn(QUIC_LISTENER *ql, QUIC_CHA
 {
     QUIC_CONNECTION *qc = NULL;
 
-    if (!SSL_up_ref(&ql->obj.ssl)) {
-        QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_INTERNAL_ERROR, NULL);
-        goto err;
-    }
-
     if ((qc = OPENSSL_zalloc(sizeof(*qc))) == NULL) {
         QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_CRYPTO_LIB, NULL);
-        SSL_free(&ql->obj.ssl);
         goto err;
     }
 
@@ -4592,11 +4603,11 @@ static QUIC_CONNECTION *create_qc_from_incoming_conn(QUIC_LISTENER *ql, QUIC_CHA
                             SSL_TYPE_QUIC_CONNECTION,
                             &ql->obj.ssl, NULL, NULL)) {
         QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_INTERNAL_ERROR, NULL);
-        SSL_free(&ql->obj.ssl);
         goto err;
     }
 
     ossl_quic_channel_get_peer_addr(ch, &qc->init_peer_addr); /* best effort */
+    qc->accepted = 0;
     qc->listener                = ql;
     qc->engine                  = ql->engine;
     qc->port                    = ql->port;
