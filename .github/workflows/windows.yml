@@ -200,3 +200,60 @@ jobs:
 # Disable testing for now. TBD: Need local cygwin installation to debug .
 #    - name: Run openssl tests
 #      run: bash -c "cd openssl && make V=1 test"
+  msys2:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        sys:
+          - clang64
+          - mingw64
+          - ucrt64
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - name: Disable autocrlf
+        shell: pwsh
+        run: |
+          git config --global core.autocrlf false
+          git config --global core.eol lf
+      - uses: actions/checkout@v4
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: ${{ matrix.sys }}
+          update: true
+          install: git
+          pacboy: >-
+            autotools
+            make
+            perl
+            pkgconf
+            ca-certificates:p
+            cc:p
+            zlib:p
+      - name: Build
+        run: |
+          ls ./ && mkdir build && cd build
+          ../Configure mingw64 enable-tests no-fips
+          perl configdata.pm --dump
+          make -j4
+      - name: download coreinfo
+        uses: suisei-cn/actions-download-file@v1.6.0
+        with:
+          url: "https://download.sysinternals.com/files/Coreinfo.zip"
+          target: ./coreinfo/
+      - name: get cpu info
+        working-directory: build
+        continue-on-error: true
+        run: |
+          7z.exe x ../coreinfo/Coreinfo.zip
+          ./Coreinfo64.exe -accepteula -f
+          ./apps/openssl.exe version -c
+      - name: Check platform symbol usage
+        working-directory: build
+        run: perl ../util/checkplatformsyms.pl ../util/platform_symbols/windows-symbols.txt libcrypto-3-x64.dll ./libssl-3-x64.dll
+      - name: test
+        working-directory: build
+        run: |
+          make test HARNESS_JOBS=4
