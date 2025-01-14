@@ -45,10 +45,10 @@ void ossl_hwsm3_block_data_order(SM3_CTX *c, const void *p, size_t num);
 #  define HWSM3_CAPABLE 1
 void ossl_hwsm3_block_data_order(SM3_CTX *c, const void *p, size_t num);
 # endif
-#if (defined(__x86_64) || defined(__x86_64__) || defined(_M_X64))
-#  define HWSM3_CAPABLE ((OPENSSL_ia32cap_P[2] & (1<<5)) && (OPENSSL_ia32cap_P[5] & (1<<1)))
+# if (defined(__x86_64) || defined(__x86_64__) || defined(_M_X64))
+#  define HWSM3_CAPABLE ((OPENSSL_ia32cap_P[2] & (1 << 5)) && (OPENSSL_ia32cap_P[5] & (1 << 1)))
 void ossl_hwsm3_block_data_order(SM3_CTX *c, const void *p, size_t num);
-#endif
+# endif
 #endif
 
 #if defined(HWSM3_CAPABLE)
