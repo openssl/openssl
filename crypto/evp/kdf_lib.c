@@ -178,11 +178,26 @@ int EVP_KDF_CTX_set_SKEY(EVP_KDF_CTX *ctx, EVP_SKEY *key, const char *paramname)
     ckey.name = (paramname != NULL) ? paramname : OSSL_KDF_PARAM_KEY;
 
     if (ctx->meth->set_skey != NULL) {
+        EVP_SKEY *tmp_key = NULL;
+        int ret;
+
+        /* Transfer key to meth provider if different from key's */
         if (ctx->meth->prov != key->skeymgmt->prov) {
-            /* TODO: export/import dance */
-            return 0;
+            OSSL_LIB_CTX *libctx = ossl_provider_libctx(ctx->meth->prov);
+            char *propquery = EVP_get1_default_properties(libctx);
+
+            tmp_key = EVP_SKEY_to_provider(key, libctx, ctx->meth->prov, propquery);
+            OPENSSL_free(propquery);
+            if (tmp_key == NULL)
+                return 0;
+        } else {
+            tmp_key = key;
         }
-        return ctx->meth->set_skey(ctx->algctx, key->keydata, ckey.name);
+        ret = ctx->meth->set_skey(ctx->algctx, key->keydata, ckey.name);
+        if (tmp_key != key)
+            EVP_SKEY_free(tmp_key);
+
+        return ret;
     } else {
         /*
          * Provider does not support opaque keys, try to export and
