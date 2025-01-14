@@ -30,17 +30,20 @@ die "can't locate x86_64-xlate.pl";
 # Check Intel(R) SM3 instructions support
 if (`$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
 		=~ /GNU assembler version ([2-9]\.[0-9]+)/) {
-	$avx2_sm3_ni = ($1>=2.42); # support added at GNU asm 2.42
+	$avx2_sm3_ni = ($1>=2.22); # minimal avx2 supported version, binary translation for SM3 instructions (sub sm3op) is used
+    $avx2_sm3_ni_native = ($1>=2.42); # support added at GNU asm 2.42
 }
 
 if (!$avx2_sm3_ni && $win64 && ($flavour =~ /nasm/ || $ENV{ASM} =~ /nasm/) &&
 	   `nasm -v 2>&1` =~ /NASM version ([2-9])\.([0-9]+)\.([0-9]+)/) {
     my ($major, $minor, $patch) = ($1, $2, $3);
-	$avx2_sm3_ni = ($major > 2) || ($major == 2 && $minor > 16) || ($major == 2 && $minor == 16 && $patch >= 2); # support added at NASM 2.16.02
+    $avx2_sm3_ni = ($major > 2) || ($major == 2 && $minor > 10); # minimal avx2 supported version, binary translation for SM3 instructions (sub sm3op) is used
+	$avx2_sm3_ni_native = ($major > 2) || ($major == 2 && $minor > 16) || ($major == 2 && $minor == 16 && $patch >= 2); # support added at NASM 2.16.02
 }
 
 if (!$avx2_sm3_ni && `$ENV{CC} -v 2>&1` =~ /((?:clang|LLVM) version|.*based on LLVM) ([0-9]+\.[0-9]+)/) {
-	$avx2_sm3_ni = ($2>=17.0); # support added at LLVM 17.0.1
+	$avx2_sm3_ni = ($2>=7.0); # minimal tested version, binary translation for SM3 instructions (sub sm3op) is used
+    $avx2_sm3_ni_native = ($2>=17.0); # support added at LLVM 17.0.1
 }
 
 open OUT,"| \"$^X\" \"$xlate\" $flavour \"$output\""
@@ -74,11 +77,12 @@ ___
 #   - updates SM3 state registers: ABEF and CDGH
 sub sm3rounds4 {
 my ($ABEF, $CDGH, $W03_00, $W07_04, $T1,$R)=@_;
+my $R2 = $R + 2;
 $code.=<<___;
     vpunpcklqdq     $W07_04, $W03_00, $T1
     vsm3rnds2       \$$R, $T1, $ABEF, $CDGH
     vpunpckhqdq     $W07_04, $W03_00, $T1
-    vsm3rnds2       \$($R + 2), $T1, $CDGH, $ABEF
+    vsm3rnds2       \$$R2, $T1, $CDGH, $ABEF
 ___
 }
 
@@ -297,6 +301,45 @@ ossl_hwsm3_block_data_order:
 ___
 } # avx2_sm3_ni
 
-$code =~ s/\`([^\`]*)\`/eval $1/gem;
-print $code;
+if ($avx2_sm3_ni_native > 0) { # SM3 instructions are supported in asm
+  $code =~ s/\`([^\`]*)\`/eval $1/gem;
+  print $code;
+} else { # binary translation for SM3 instructions
+sub sm3op {
+  my $instr = shift;
+  my $args = shift;
+  if ($args =~ /^(.+)\s*#/) {
+    $args = $1; # drop comment and its leading whitespace
+  }
+  if (($instr eq "vsm3msg1") && ($args =~ /%xmm(\d{1,2})\s*,\s*%xmm(\d{1,2})\s*,\s*%xmm(\d{1,2})/)) {
+    my $b1 = sprintf("0x%02x", 0x42 | ((1-int($1/8))<<5) | ((1-int($3/8))<<7) );
+    my $b2 = sprintf("0x%02x", 0x00 | (15 - $2 & 15)<<3                       );
+    my $b3 = sprintf("0x%02x", 0xc0 | ($1 & 7) | (($3 & 7)<<3)                );
+    return ".byte 0xc4,".$b1.",".$b2.",0xda,".$b3;
+  }
+  elsif (($instr eq "vsm3msg2") && ($args =~ /%xmm(\d{1,2})\s*,\s*%xmm(\d{1,2})\s*,\s*%xmm(\d{1,2})/)) {
+    my $b1 = sprintf("0x%02x", 0x42 | ((1-int($1/8))<<5) | ((1-int($3/8))<<7) );
+    my $b2 = sprintf("0x%02x", 0x01 | (15 - $2 & 15)<<3                       );
+    my $b3 = sprintf("0x%02x", 0xc0 | ($1 & 7) | (($3 & 7)<<3)                );
+    return ".byte 0xc4,".$b1.",".$b2.",0xda,".$b3;
+  }
+  elsif (($instr eq "vsm3rnds2") && ($args =~ /\$(0x[0-9a-fA-F]+|\d{1,2})\s*,\s*%xmm(\d{1,2})\s*,\s*%xmm(\d{1,2})\s*,\s*%xmm(\d{1,2})/)) {
+    my $b1 = sprintf("0x%02x", $1                                             );
+    my $b2 = sprintf("0x%02x", 0x43 | ((1-int($2/8))<<5) | ((1-int($4/8))<<7) );
+    my $b3 = sprintf("0x%02x", 0x01 | (15 - $3 & 15)<<3                       );
+    my $b4 = sprintf("0x%02x", 0xc0 | ($2 & 7) | (($4 & 7)<<3)                );
+    return ".byte 0xc4,".$b2.",".$b3.",0xde,".$b4.",".$b1;
+  }
+
+  return $instr."\t".$args;
+}
+
+foreach (split("\n",$code)) {
+  s/\`([^\`]*)\`/eval $1/geo;
+  s/\b(vsm3[^\s]*)\s+(.*)/sm3op($1,$2)/geo;
+  print $_,"\n";
+}
+
+}
+
 close STDOUT or die "error closing STDOUT: $!";
