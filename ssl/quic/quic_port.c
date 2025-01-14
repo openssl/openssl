@@ -462,8 +462,10 @@ static SSL *port_new_handshake_layer(QUIC_PORT *port, QUIC_CHANNEL *ch)
     }
 
     tls = ossl_ssl_connection_new_int(port->channel_ctx, user_ssl, TLS_method());
-    if (tls == NULL || (tls_conn = SSL_CONNECTION_FROM_SSL(tls)) == NULL)
+    if (tls == NULL || (tls_conn = SSL_CONNECTION_FROM_SSL(tls)) == NULL) {
+        SSL_free(user_ssl);
         return NULL;
+    }
 
     /*
      * If we got a user ssl, which will be embedded in a quic connection
@@ -476,6 +478,8 @@ static SSL *port_new_handshake_layer(QUIC_PORT *port, QUIC_CHANNEL *ch)
         if (!ql->obj.ssl.ctx->new_pending_conn_cb(ql->obj.ssl.ctx, user_ssl,
                                                   ql->obj.ssl.ctx->new_pending_conn_arg)) {
             SSL_free(tls);
+            SSL_free(user_ssl);
+            qc->tls = NULL;
             return NULL;
         }
 
@@ -535,8 +539,7 @@ static QUIC_CHANNEL *port_make_channel(QUIC_PORT *port, SSL *tls, int is_server)
      * And finally init the channel struct
      */
     if (!ossl_quic_channel_init(ch)) {
-        if (ch->tls == NULL)
-            SSL_free(ch->tls);
+        SSL_free(ch->tls);
         OPENSSL_free(ch);
         return NULL;
     }
@@ -583,6 +586,7 @@ void ossl_quic_port_drop_incoming(QUIC_PORT *port)
 {
     QUIC_CHANNEL *ch;
     SSL *tls;
+    SSL *user_ssl;
 
     for (;;) {
         ch = ossl_quic_port_pop_incoming(port);
@@ -590,8 +594,21 @@ void ossl_quic_port_drop_incoming(QUIC_PORT *port)
             break;
 
         tls = ossl_quic_channel_get0_tls(ch);
-        ossl_quic_channel_free(ch);
-        SSL_free(tls);
+        /*
+         * The user ssl may or may not have been created via the
+         * get_conn_user_ssl callback in the QUIC stack.  The
+         * differentiation being if the user_ssl pointer and tls pointer
+         * are different.  If they are, then the user_ssl needs freeing here
+         * which sends us through ossl_quic_free, which then drops the actual
+         * ch->tls ref and frees the channel
+         */
+        user_ssl = SSL_CONNECTION_GET_USER_SSL(SSL_CONNECTION_FROM_SSL(tls));
+        if (user_ssl == tls) {
+            ossl_quic_channel_free(ch);
+            SSL_free(tls);
+        } else {
+            SSL_free(user_ssl);
+        }
     }
 }
 
