@@ -130,6 +130,15 @@ providers/common/include/prov/der_sm2.h
 /demos/cipher/aesgcm
 /demos/cipher/aeskeywrap
 /demos/cipher/ariacbc
+/demos/cms/cms_comp
+/demos/cms/cms_ddec
+/demos/cms/cms_dec
+/demos/cms/cms_denc
+/demos/cms/cms_enc
+/demos/cms/cms_sign
+/demos/cms/cms_sign2
+/demos/cms/cms_uncomp
+/demos/cms/cms_ver
 /demos/digest/BIO_f_md
 /demos/digest/EVP_MD_demo
 /demos/digest/EVP_MD_stdin
@@ -137,8 +146,15 @@ providers/common/include/prov/der_sm2.h
 /demos/encode/ec_encode
 /demos/encode/rsa_encode
 /demos/encrypt/rsa_encrypt
+/demos/guide/quic-client-block
+/demos/guide/quic-client-non-block
+/demos/guide/quic-hq-interop
+/demos/guide/quic-multi-stream
+/demos/guide/tls-client-block
+/demos/guide/tls-client-non-block
 /demos/http3/libnghttp3.pc
 /demos/http3/nghttp3/
+/demos/http3/ossl-nghttp3-demo
 /demos/kdf/argon2
 /demos/kdf/hkdf
 /demos/kdf/pbkdf2
@@ -159,6 +175,11 @@ providers/common/include/prov/der_sm2.h
 /demos/signature/EVP_ED_Signature_demo
 /demos/signature/rsa_pss_direct
 /demos/signature/rsa_pss_hash
+/demos/smime/smdec
+/demos/smime/smenc
+/demos/smime/smsign
+/demos/smime/smsign2
+/demos/smime/smver
 /demos/sslecho/sslecho
 
 # Certain files that get created by tests on the fly
