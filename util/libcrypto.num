@@ -5896,3 +5896,5 @@ EVP_KDF_derive_SKEY                     ?	3_5_0	EXIST::FUNCTION:
 EVP_PKEY_derive_SKEY                    ?	3_5_0	EXIST::FUNCTION:
 EVP_MAC_init_SKEY                       ?	3_5_0	EXIST::FUNCTION:
 EVP_KDF_CTX_set_skey                    ?	3_5_0	EXIST::FUNCTION:
+EVP_SKEY_is_a                           ?	3_5_0	EXIST::FUNCTION:
+EVP_SKEY_to_provider                    ?	3_5_0	EXIST::FUNCTION:
