@@ -233,3 +233,78 @@ const char *EVP_SKEY_get0_provider_name(const EVP_SKEY *skey)
 
     return ossl_provider_name(skey->skeymgmt->prov);
 }
+
+int EVP_SKEY_is_a(const EVP_SKEY *skey, const char *name)
+{
+    if (skey == NULL)
+        return 0;
+
+    if (skey->skeymgmt == NULL)
+        return 0;
+
+    return EVP_SKEYMGMT_is_a(skey->skeymgmt, name);
+}
+
+struct transfer_cb_ctx {
+    int selection;
+    EVP_SKEYMGMT *skeymgmt;
+    void *keydata;
+};
+
+static int transfer_cb(const OSSL_PARAM params[], void *arg)
+{
+    struct transfer_cb_ctx *ctx = arg;
+
+    ctx->keydata = evp_skeymgmt_import(ctx->skeymgmt, ctx->selection, params);
+    return 1;
+}
+
+EVP_SKEY *EVP_SKEY_to_provider(EVP_SKEY *skey, OSSL_LIB_CTX *libctx,
+                               OSSL_PROVIDER *prov, const char *propquery)
+{
+    struct transfer_cb_ctx ctx = { 0 };
+    EVP_SKEYMGMT *skeymgmt = NULL;
+    EVP_SKEY *ret = NULL;
+
+    if (prov != NULL) {
+        skeymgmt = evp_skeymgmt_fetch_from_prov(prov, skey->skeymgmt->type_name,
+                                                propquery);
+
+    } else {
+        /* If no provider, get the default skeymgmt */
+        skeymgmt = EVP_SKEYMGMT_fetch(libctx, skey->skeymgmt->type_name,
+                                      propquery);
+    }
+
+    /* Short-circuit if destination provider is the same as origin */
+    if (skey->skeymgmt->name_id == skeymgmt->name_id
+        && skey->skeymgmt->prov == skeymgmt->prov) {
+        if (!EVP_SKEY_up_ref(skey))
+            goto err;
+        EVP_SKEYMGMT_free(skeymgmt);
+        return skey;
+    }
+
+    ctx.selection = OSSL_SKEYMGMT_SELECT_ALL;
+    ctx.skeymgmt = skeymgmt;
+
+    if (!EVP_SKEY_export(skey, ctx.selection, transfer_cb, &ctx))
+        goto err;
+
+    if (ctx.keydata == NULL)
+        goto err;
+
+    ret = evp_skey_alloc();
+    if (ret == NULL)
+        goto err;
+
+    ret->keydata = ctx.keydata;
+    ret->skeymgmt = skeymgmt;
+
+    return ret;
+
+ err:
+    EVP_SKEYMGMT_free(skeymgmt);
+    EVP_SKEY_free(ret);
+    return NULL;
+}
