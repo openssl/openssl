@@ -169,7 +169,7 @@ static int poly_decode_10_bits(POLY *p, PACKET *pkt)
         if (!PACKET_get_bytes(pkt, &in, 5))
             return 0;
 
-        in = OSSL_CRYPTO_load_u32_le(&v, in);
+        in = OPENSSL_load_u32_le(&v, in);
         w = *in;
 
         *out++ = v & mask;
@@ -232,7 +232,7 @@ static int poly_decode_signed_4(POLY *p, PACKET *pkt)
     for (i = 0; i < (ML_DSA_NUM_POLY_COEFFICIENTS / 8); i++) {
         if (!PACKET_get_bytes(pkt, &in, 4))
             goto err;
-        in = OSSL_CRYPTO_load_u32_le(&v, in);
+        in = OPENSSL_load_u32_le(&v, in);
 
         /*
          * None of the nibbles may be >= 9. So if the MSB of any nibble is set,
@@ -304,7 +304,7 @@ static int poly_encode_signed_2(const POLY *p, WPACKET *pkt)
         z |= mod_sub(2, *in++) << 18;
         z |= mod_sub(2, *in++) << 21;
 
-        out = OSSL_CRYPTO_store_u16_le(out, (uint16_t) z);
+        out = OPENSSL_store_u16_le(out, (uint16_t) z);
         *out++ = (uint8_t) (z >> 16);
     } while (in < end);
     return 1;
@@ -331,7 +331,7 @@ static int poly_decode_signed_2(POLY *p, PACKET *pkt)
         if (!PACKET_get_bytes(pkt, &in, 3))
             goto err;
         memcpy(&u, in, 3);
-        OSSL_CRYPTO_load_u32_le(&v, (uint8_t *)&u);
+        OPENSSL_load_u32_le(&v, (uint8_t *)&u);
 
         /*
          * Each octal value (3 bits) must be <= 4, So if the MSB is set then the
@@ -404,8 +404,8 @@ static int poly_encode_signed_two_to_power_12(const POLY *p, WPACKET *pkt)
         a2 |= mod_sub_64(range, *in++) << 14;
         a2 |= mod_sub_64(range, *in++) << 27;
 
-        out = OSSL_CRYPTO_store_u64_le(out, a1);
-        out = OSSL_CRYPTO_store_u32_le(out, (uint32_t) a2);
+        out = OPENSSL_store_u64_le(out, a1);
+        out = OPENSSL_store_u32_le(out, (uint32_t) a2);
         *out = (uint8_t) (a2 >> 32);
     } while (in < end);
     return 1;
@@ -434,8 +434,8 @@ static int poly_decode_signed_two_to_power_12(POLY *p, PACKET *pkt)
 
         if (!PACKET_get_bytes(pkt, &in, 13))
             goto err;
-        in = OSSL_CRYPTO_load_u64_le(&a1, in);
-        in = OSSL_CRYPTO_load_u32_le(&a2, in);
+        in = OPENSSL_load_u64_le(&a1, in);
+        in = OPENSSL_load_u32_le(&a2, in);
         b13 = (uint32_t) *in;
 
         *out++ = mod_sub(range, a1 & mask_13_bits);
@@ -489,9 +489,9 @@ static int poly_encode_signed_two_to_power_19(const POLY *p, WPACKET *pkt)
         z1 = (z1 >> 12) | (mod_sub(range, *in++) << 8);
         z1 |= (z2 = mod_sub(range, *in++)) << 28;
 
-        out = OSSL_CRYPTO_store_u32_le(out, z0);
-        out = OSSL_CRYPTO_store_u32_le(out, z1);
-        out = OSSL_CRYPTO_store_u16_le(out, (uint16_t) (z2 >> 4));
+        out = OPENSSL_store_u32_le(out, z0);
+        out = OPENSSL_store_u32_le(out, z1);
+        out = OPENSSL_store_u16_le(out, (uint16_t) (z2 >> 4));
     } while (in < end);
     return 1;
 }
@@ -519,9 +519,9 @@ static int poly_decode_signed_two_to_power_19(POLY *p, PACKET *pkt)
 
         if (!PACKET_get_bytes(pkt, &in, 10))
             goto err;
-        in = OSSL_CRYPTO_load_u32_le(&a1, in);
-        in = OSSL_CRYPTO_load_u32_le(&a2, in);
-        in = OSSL_CRYPTO_load_u16_le(&a3, in);
+        in = OPENSSL_load_u32_le(&a1, in);
+        in = OPENSSL_load_u32_le(&a2, in);
+        in = OPENSSL_load_u16_le(&a3, in);
 
         *out++ = mod_sub(range, a1 & mask_20_bits);
         *out++ = mod_sub(range, (a1 >> 20) | ((a2 & 0xFF) << 12));
@@ -570,8 +570,8 @@ static int poly_encode_signed_two_to_power_17(const POLY *p, WPACKET *pkt)
         z1 = (z1 >> 14) | (mod_sub(range, *in++) << 4);
         z1 |= (z2 = mod_sub(range, *in++)) << 22;
 
-        out = OSSL_CRYPTO_store_u32_le(out, z0);
-        out = OSSL_CRYPTO_store_u32_le(out, z1);
+        out = OPENSSL_store_u32_le(out, z0);
+        out = OPENSSL_store_u32_le(out, z1);
         *out = z2 >> 10;
     } while (in < end);
     return 1;
@@ -599,8 +599,8 @@ static int poly_decode_signed_two_to_power_17(POLY *p, PACKET *pkt)
 
         if (!PACKET_get_bytes(pkt, &in, 9))
             return 0;
-        in = OSSL_CRYPTO_load_u32_le(&a1, in);
-        in = OSSL_CRYPTO_load_u32_le(&a2, in);
+        in = OPENSSL_load_u32_le(&a1, in);
+        in = OPENSSL_load_u32_le(&a2, in);
         a3 = (uint32_t) *in;
 
         *out++ = mod_sub(range, a1 & mask_18_bits);
