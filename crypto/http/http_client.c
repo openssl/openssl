@@ -35,6 +35,7 @@
 #define HTTP_STATUS_CODE_OK                200
 #define HTTP_STATUS_CODE_MOVED_PERMANENTLY 301
 #define HTTP_STATUS_CODE_FOUND             302
+#define HTTP_STATUS_CODES_NONFATAL_ERROR   400
 
 /* Stateful HTTP request code, supporting blocking and non-blocking I/O */
 
@@ -431,7 +432,7 @@ static OSSL_HTTP_REQ_CTX *http_req_ctx_new(int free_wbio, BIO *wbio, BIO *rbio,
 
 static int parse_http_line1(char *line, int *found_keep_alive)
 {
-    int i, retcode, err;
+    int i, retcode;
     char *code, *reason, *end;
 
     if (!CHECK_AND_SKIP_PREFIX(line, HTTP_PREFIX_VERSION))
@@ -487,14 +488,11 @@ static int parse_http_line1(char *line, int *found_keep_alive)
     case HTTP_STATUS_CODE_FOUND:
         return retcode;
     default:
-        err = HTTP_R_RECEIVED_ERROR;
-        if (retcode < 400)
-            err = HTTP_R_STATUS_CODE_UNSUPPORTED;
-        if (*reason == '\0')
-            ERR_raise_data(ERR_LIB_HTTP, err, "code=%s", code);
-        else
-            ERR_raise_data(ERR_LIB_HTTP, err, "code=%s, reason=%s", code,
-                           reason);
+        if (retcode < HTTP_STATUS_CODES_NONFATAL_ERROR) {
+            ERR_raise_data(ERR_LIB_HTTP, HTTP_R_STATUS_CODE_UNSUPPORTED, "code=%s", code);
+            if (*reason != '\0')
+                ERR_add_error_data(2, ", reason=", reason);
+        } /* must return content normally if status >= 400 */
         return retcode;
     }
 
@@ -752,7 +750,8 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
 
         /* First line in response header */
         if (rctx->state == OHS_FIRSTLINE) {
-            switch (parse_http_line1(buf, &found_keep_alive)) {
+            i = parse_http_line1(buf, &found_keep_alive);
+            switch (i) {
             case HTTP_STATUS_CODE_OK:
                 rctx->state = OHS_HEADERS;
                 goto next_line;
@@ -766,8 +765,10 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
                 /* redirection is not supported/recommended for POST */
                 /* fall through */
             default:
-                rctx->state = OHS_HEADERS_ERROR;
-                goto next_line; /* continue parsing and reporting header */
+                /* must return content if status >= 400 */
+                rctx->state = i < HTTP_STATUS_CODES_NONFATAL_ERROR
+                    ? OHS_HEADERS_ERROR : OHS_HEADERS;
+                goto next_line; /* continue parsing, also on HTTP error */
             }
         }
         key = buf;
@@ -864,6 +865,8 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
                             got_text ? "text" : "ASN.1");
                 goto next_line;
             }
+            /* discard response content when trace not enabled */
+            (void)BIO_reset(rctx->rbio);
             return 0;
         }
 
