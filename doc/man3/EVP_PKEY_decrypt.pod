@@ -61,7 +61,7 @@ used private key. They had to be processed in a side-channel free way.
 Since version 3.2.0, the EVP_PKEY_decrypt() method when used with PKCS#1
 v1.5 padding as implemented in the B<default> provider implements
 the implicit rejection mechanism (see
-B<OSSL_PKEY_PARAM_IMPLICIT_REJECTION> in L<provider-asym_cipher(7)>).
+B<OSSL_ASYM_CIPHER_PARAM_IMPLICIT_REJECTION> in L<provider-asym_cipher(7)>).
 That means it doesn't return an error when it detects an error in padding,
 instead it returns a pseudo-randomly generated message, removing the need
 of side-channel secure code from applications using OpenSSL.
