@@ -15,6 +15,7 @@
 # include <openssl/asn1.h>
 # include <openssl/x509.h>
 # include <openssl/conf.h>
+# include <openssl/x509_acert.h>
 # include "crypto/types.h"
 # include "crypto/x509_acert.h"
 
@@ -207,8 +208,6 @@ struct x509_st {
     OSSL_LIB_CTX *libctx;
     char *propq;
 } /* X509 */ ;
-
-typedef struct X509_acert_st X509_ACERT;
 
 /*
  * This is a used when verifying cert chains.  Since the gathering of the
