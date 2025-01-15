@@ -1188,6 +1188,7 @@ struct ssl_ctx_st {
 
 # ifndef OPENSSL_NO_QUIC
     uint64_t domain_flags;
+    SSL_TOKEN_STORE_HANDLE *tokencache;
 # endif
 
 # ifndef OPENSSL_NO_QLOG
