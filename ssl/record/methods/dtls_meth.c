@@ -105,7 +105,8 @@ static void dtls_set_in_init(OSSL_RECORD_LAYER *rl, int in_init)
     rl->in_init = in_init;
 }
 
-size_t dtls_get_rec_header_size(uint8_t hdr_first_byte) {
+size_t dtls_get_rec_header_size(uint8_t hdr_first_byte)
+{
     size_t size = 0;
 
     if (DTLS13_UNI_HDR_FIX_BITS_IS_SET(hdr_first_byte)
@@ -608,8 +609,8 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
         }
 
         if (rr->rec_version >> 8 !=
-                (rl->version == DTLS_ANY_VERSION ? DTLS1_VERSION_MAJOR
-                                                 : rl->version >> 8)) {
+            (rl->version == DTLS_ANY_VERSION ? DTLS1_VERSION_MAJOR
+                                             : rl->version >> 8)) {
             /* wrong version, silently discard record */
             rr->length = 0;
             rl->packet_length = 0;

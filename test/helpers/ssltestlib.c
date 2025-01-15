@@ -574,8 +574,8 @@ int mempacket_test_inject(BIO *bio, const char *in, int inl, int pktnum,
             len = inl;
         }
     } else {
-        len = ((inu[RECORD_LEN_HI] << 8) | inu[RECORD_LEN_LO])
-                + DTLS1_RT_HEADER_LENGTH;
+        len = ((inu[RECORD_LEN_HI] << 8) | inu[RECORD_LEN_LO]);
+        len += DTLS1_RT_HEADER_LENGTH;
     }
 
     if (ctx == NULL)
