@@ -332,38 +332,38 @@ OSSL_ISSUER_SERIAL *X509_get_issuer_serial(X509 *x)
     return NULL; /* Stub implementation. To be replaced. */
 }
 
-int X509_acert_get_ext_count(const X509_ACERT *x)
+int X509_ACERT_get_ext_count(const X509_ACERT *x)
 {
     return 0; /* Stub implementation. To be replaced. */
 }
 
-X509_EXTENSION *X509_acert_get_ext(const X509_ACERT *x, int loc)
+X509_EXTENSION *X509_ACERT_get_ext(const X509_ACERT *x, int loc)
 {
     return 0; /* Stub implementation. To be replaced. */
 }
 
-int X509_acert_get_ext_by_NID(const X509_ACERT *x, int nid, int lastpos)
+int X509_ACERT_get_ext_by_NID(const X509_ACERT *x, int nid, int lastpos)
 {
     return 0; /* Stub implementation. To be replaced. */
 }
 
-int X509_acert_get_ext_by_OBJ(const X509_ACERT *x, const ASN1_OBJECT *obj,
+int X509_ACERT_get_ext_by_OBJ(const X509_ACERT *x, const ASN1_OBJECT *obj,
                               int lastpos)
 {
     return 0; /* Stub implementation. To be replaced. */
 }
 
-int X509_acert_get_ext_by_critical(const X509_ACERT *x, int crit, int lastpos)
+int X509_ACERT_get_ext_by_critical(const X509_ACERT *x, int crit, int lastpos)
 {
     return 0; /* Stub implementation. To be replaced. */
 }
 
-int X509_acert_add_ext(X509_ACERT *x, X509_EXTENSION *ex, int loc)
+int X509_ACERT_add_ext(X509_ACERT *x, X509_EXTENSION *ex, int loc)
 {
     return 0; /* Stub implementation. To be replaced. */
 }
 
-X509_EXTENSION *X509_acert_delete_ext(X509_ACERT *x, int loc)
+X509_EXTENSION *X509_ACERT_delete_ext(X509_ACERT *x, int loc)
 {
     return NULL;
 }
