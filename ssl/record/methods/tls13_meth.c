@@ -113,7 +113,7 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
     unsigned char recheader[SSL3_RT_HEADER_LENGTH];
     unsigned char tag[EVP_MAX_MD_SIZE];
     size_t nonce_len, offset, loop, hdrlen, taglen, exphdrlen;
-    int isdtls, sbit, addlen;
+    int isdtls, sbit = 0, addlen;
     unsigned char *staticiv;
     unsigned char *nonce;
     unsigned char *seq = rl->sequence;
