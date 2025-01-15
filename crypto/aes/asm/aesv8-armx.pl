@@ -110,7 +110,7 @@ my ($zero,$rcon,$mask,$in0,$in1,$tmp,$key)=
 # This file generates .s file for 64-bit and 32-bit CPUs.
 # We don't implement .rodata on 32-bit CPUs yet.
 #
-$code.=".rodata\n"	if ($flavour =~ /64/);
+$code.=".rodata\n"	if ($flavour =~ /.*64/);
 $code.=<<___;
 .align	5
 .Lrcon:
@@ -118,7 +118,7 @@ $code.=<<___;
 .long	0x0c0f0e0d,0x0c0f0e0d,0x0c0f0e0d,0x0c0f0e0d	// rotate-n-splat
 .long	0x1b,0x1b,0x1b,0x1b
 ___
-$code.=".previous\n"	if ($flavour =~ /64/);
+$code.=".previous\n"	if ($flavour =~ /.*64/);
 
 $code.=<<___;
 .globl	${prefix}_set_encrypt_key
