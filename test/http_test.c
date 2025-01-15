@@ -17,7 +17,7 @@
 
 static const ASN1_ITEM *x509_it = NULL;
 static X509 *x509 = NULL;
-#define RPATH "/path/result.crt"
+#define RPATH "/path"
 
 typedef struct {
     BIO *out;
@@ -62,6 +62,7 @@ static int mock_http_server(BIO *in, BIO *out, char version, int keep_alive,
         return 0;
     if (!TEST_char_eq(*hdr++, '\r') || !TEST_char_eq(*hdr++, '\n'))
         return 0;
+
     count -= (hdr - req);
     if (count < 0 || out == NULL)
         return 0;
@@ -90,7 +91,7 @@ static int mock_http_server(BIO *in, BIO *out, char version, int keep_alive,
         if (txt != NULL)
             return BIO_puts(out, txt);
         return ASN1_item_i2d_bio(it, out, rsp);
-    } else {
+    } else { /* respond on POST request */
         if (CHECK_AND_SKIP_PREFIX(hdr, "Connection: ")) {
             /* skip req Connection header */
             hdr = strstr(hdr, "\r\n");
@@ -503,6 +504,7 @@ int setup_tests(void)
     ADD_TEST(test_http_url_invalid_prefix);
     ADD_TEST(test_http_url_invalid_port);
     ADD_TEST(test_http_url_invalid_path);
+
     ADD_TEST(test_http_get_txt);
     ADD_TEST(test_http_post_txt);
     ADD_TEST(test_http_get_x509);
@@ -515,6 +517,7 @@ int setup_tests(void)
     ADD_TEST(test_http_keep_alive_1_require_yes);
     ADD_TEST(test_http_keep_alive_0_require_no);
     ADD_TEST(test_http_keep_alive_1_require_no);
+
     ADD_TEST(test_hdr_resp_hdr_limit_none);
     ADD_TEST(test_hdr_resp_hdr_limit_short);
     ADD_TEST(test_hdr_resp_hdr_limit_256);
