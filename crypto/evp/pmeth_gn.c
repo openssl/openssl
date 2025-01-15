@@ -21,6 +21,7 @@
 #include "crypto/asn1.h"
 #endif
 #include "crypto/evp.h"
+#include "crypto/aarch64_dit.h"
 #include "evp_local.h"
 
 static int gen_init(EVP_PKEY_CTX *ctx, int operation)
@@ -106,6 +107,8 @@ int EVP_PKEY_generate(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
     EVP_PKEY *allocated_pkey = NULL;
     /* Legacy compatible keygen callback info, only used with provider impls */
     int gentmp[2];
+
+    OSSL_ENABLE_DIT_FOR_SCOPE
 
     if (ppkey == NULL)
         return -1;
