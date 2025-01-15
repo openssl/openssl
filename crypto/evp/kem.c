@@ -16,6 +16,7 @@
 #include "internal/core.h"
 #include "internal/usdt.h"
 #include "crypto/evp.h"
+#include "crypto/aarch64_dit.h"
 #include "evp_local.h"
 
 static void evp_kem_free(void *data)
@@ -245,6 +246,8 @@ int EVP_PKEY_encapsulate(EVP_PKEY_CTX *ctx,
     unsigned char *out, size_t *outlen,
     unsigned char *secret, size_t *secretlen)
 {
+    OSSL_ENABLE_DIT_FOR_SCOPE
+
     if (ctx == NULL)
         return 0;
 
@@ -282,6 +285,8 @@ int EVP_PKEY_decapsulate(EVP_PKEY_CTX *ctx,
     unsigned char *secret, size_t *secretlen,
     const unsigned char *in, size_t inlen)
 {
+    OSSL_ENABLE_DIT_FOR_SCOPE
+
     if (ctx == NULL
         || (in == NULL || inlen == 0)
         || (secret == NULL && secretlen == NULL))
