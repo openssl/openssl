@@ -4,20 +4,18 @@
 
 EVP_SIGNATURE-ML-DSA,
 EVP_SIGNATURE-ML-DSA-44, EVP_SIGNATURE-ML-DSA-65, EVP_SIGNATURE-ML-DSA-87,
-- EVP_PKEY ML-DSA support
+- EVP_SIGNATURE ML-DSA support
 
 =head1 DESCRIPTION
 
-The B<ML-DSA-44>, B<EVP_PKEY_ML_DSA_44>,
-B<ML-DSA-65>, B<EVP_PKEY_ML_DSA_65>,
-B<ML-DSA-87> and B<EVP_PKEY_ML_DSA_87> EVP_PKEY implementations
+The B<ML-DSA-44>, B<ML-DSA-65> and B<ML-DSA-87> EVP_PKEY implementations
 support key generation, and one-shot sign and verify using the ML-DSA
 signature schemes described in FIPS 204.
 
 The different algorithms names correspond to the parameter sets defined in
 FIPS 204 Section 4 Table 1.
-(The signatures range from ~2.5K to ~4.5K depending on the type chosen). There are
-3 different security categories also depending on the type.
+(The signatures range in size from ~2.5K to ~4.5K depending on the type chosen).
+There are 3 different security categories also depending on the type.
 
 L<EVP_SIGNATURE_fetch(3)> can be used to explicitely fetch one of the 3
 algorithms which can then be used with L<EVP_PKEY_sign_message_init(3)>,
@@ -59,7 +57,7 @@ but can also be used for 'Pre Hash ML-DSA Signature Generation'.
 
 =item "test-entropy" (B<OSSL_SIGNATURE_PARAM_TEST_ENTROPY <octet string>
 
-Used for testing to pass a optional deterministic per message random value.
+Used for testing to pass an optional deterministic per message random value.
 If set the size must be 32 bytes.
 
 =item "deterministic" (B<OSSL_SIGNATURE_PARAM_DETERMINISTIC>) <integer>

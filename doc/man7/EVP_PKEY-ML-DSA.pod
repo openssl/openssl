@@ -1,7 +1,5 @@
 =pod
 
-=pod
-
 =head1 NAME
 
 EVP_PKEY-ML-DSA, EVP_KEYMGMT-ML-DSA,
@@ -79,7 +77,7 @@ An B<EVP_PKEY> context can be obtained by calling:
     EVP_PKEY_CTX *pctx =
         EVP_PKEY_CTX_new_from_name(NULL, "ML-DSA-44", NULL);
 
-An B<SLH-DSA> key can be generated like this:
+An B<ML-DSA> key can be generated like this:
 
     pkey = EVP_PKEY_Q_keygen(NULL, NULL, "ML-DSA-44");
 
