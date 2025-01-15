@@ -4741,6 +4741,131 @@ int ossl_quic_set_token_store(SSL_CTX *ctx, SSL_TOKEN_STORE_HANDLE *hdl)
     return 1;
 }
 
+/**
+ * @brief build a new QUIC_TOKEN
+ *
+ * This function creates a new token storage structure for saving in our 
+ * tokencache
+ *
+ * In an effort to make allocation and freeing of these tokens a bit faster
+ * We do them in a single allocation in this format
+ * +---------------+        --\
+ * |   hashkey *   |---|      |
+ * |   hashkey_len |   |      | QUIC_TOKEN
+ * |   token *     |---|--|   |
+ * |   token_len   |   |  |   |
+ * +---------------+<--|  | --/
+ * |  hashkey buf  |      |
+ * |               |      |
+ * |---------------|<-----|
+ * |  token buf    |
+ * |               |
+ * +---------------+
+ *
+ * @param peer - the peer address that sent the token
+ * @param token - the buffer holding the token
+ * @param token_len - the size of token
+ *
+ * @returns a QUIC_TOKEN pointer or NULL on error
+ */
+static QUIC_TOKEN *ossl_quic_build_new_token(BIO_ADDR *peer, uint8_t *token,
+                                             size_t token_len)
+{
+    QUIC_TOKEN *new_token;
+    size_t hashkey_len = 0;
+    size_t addr_len = 0;
+    int family;
+    unsigned short port;
+    int *famptr;
+    unsigned short *portptr;
+    uint8_t *addrptr;
+
+    if (!BIO_ADDR_rawaddress(peer, NULL, &addr_len))
+        return NULL;
+    family = BIO_ADDR_family(peer);
+    port = BIO_ADDR_rawport(peer);
+
+    hashkey_len += sizeof(int); /*hashkey(family)*/
+    hashkey_len += sizeof(unsigned short); /*hashkey(port)*/
+    hashkey_len += addr_len; /*hashkey(address)*/
+
+    new_token = OPENSSL_zalloc(sizeof(QUIC_TOKEN) + hashkey_len + token_len);
+    if (new_token == NULL)
+        return NULL;
+    new_token->hashkey_len = hashkey_len;
+    new_token->hashkey = (uint8_t *)(new_token + 1); /*hashkey lives after the struct */
+    new_token->token = new_token->hashkey + hashkey_len; /*token follows */
+    new_token->token_len = token_len;
+    famptr = (int *)new_token->hashkey;
+    portptr = (unsigned short *)(famptr + 1);
+    addrptr = (uint8_t *)(portptr + 1);
+    *famptr = family;
+    *portptr = port;
+    BIO_ADDR_rawaddress(peer, addrptr, NULL);
+    if (token != NULL)
+        memcpy(new_token->token, token, token_len);
+
+    return new_token;
+}
+
+int ossl_quic_update_peer_token(SSL_CTX *ctx, BIO_ADDR *peer,
+                                uint8_t *token, size_t token_len)
+{
+    SSL_TOKEN_STORE *c = ctx->tokencache;
+    QUIC_TOKEN *tok, *old = NULL;
+
+    if (ctx->tokencache == NULL)
+        return 0;
+
+    tok = ossl_quic_build_new_token(peer, token, token_len);
+    if (tok == NULL)
+        return 0;
+
+    /* we might be sharing this cache, lock it */
+    ossl_crypto_mutex_lock(c->mutex);
+
+    old = lh_QUIC_TOKEN_retrieve(c->cache, tok);
+    if (old != NULL)
+        lh_QUIC_TOKEN_delete(c->cache, tok);
+    lh_QUIC_TOKEN_insert(c->cache, tok);
+
+    ossl_crypto_mutex_unlock(c->mutex);
+    free_quic_token(old);
+    return 1;
+}
+
+int ossl_quic_get_peer_token(SSL_CTX *ctx, BIO_ADDR *peer,
+                             uint8_t **token, size_t *token_len)
+{
+    SSL_TOKEN_STORE *c = ctx->tokencache;
+    QUIC_TOKEN *key = NULL;
+    QUIC_TOKEN *tok = NULL;
+    int rc = 0;
+
+    if (c == NULL)
+        return 0;
+
+    key = ossl_quic_build_new_token(peer, NULL, 0);
+    ossl_crypto_mutex_lock(c->mutex);
+    tok = lh_QUIC_TOKEN_retrieve(c->cache, key);
+    if (tok != NULL) {
+        if (tok->token_len > *token_len) {
+            tok = NULL; /*allow reuse here */
+            goto out;
+        }
+        memcpy(*token, tok->token, tok->token_len);
+        *token_len = tok->token_len;
+        lh_QUIC_TOKEN_delete(c->cache, key);
+        rc = 1;
+    }
+   
+out:
+    ossl_crypto_mutex_unlock(c->mutex);
+    free_quic_token(tok);
+    free_quic_token(key);
+    return rc;
+}
+
 /*
  * SSL_get_accept_connection_queue_len
  * -----------------------------------
