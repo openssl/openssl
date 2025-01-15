@@ -969,22 +969,22 @@ size_t DTLS_get_data_mtu(const SSL *ssl)
 
     if (SSL_version(ssl) == DTLS1_3_VERSION) {
         switch (SSL_get_state(ssl)) {
-            case TLS_ST_BEFORE:
-            case DTLS_ST_CR_HELLO_VERIFY_REQUEST:
-            case TLS_ST_CR_SRVR_HELLO:
-            case TLS_ST_CW_CLNT_HELLO:
-            case TLS_ST_CW_COMP_CERT:
-            case TLS_ST_CW_KEY_EXCH:
-            case TLS_ST_SW_HELLO_REQ:
-            case TLS_ST_SR_CLNT_HELLO:
-            case DTLS_ST_SW_HELLO_VERIFY_REQUEST:
-            case TLS_ST_SW_SRVR_HELLO:
-            case TLS_ST_CR_HELLO_REQ:
-                rechdrlen = DTLS1_RT_HEADER_LENGTH;
-                break;
-            default:
-                rechdrlen = DTLS13_UNI_HDR_FIXED_LENGTH;
-                break;
+        case TLS_ST_BEFORE:
+        case DTLS_ST_CR_HELLO_VERIFY_REQUEST:
+        case TLS_ST_CR_SRVR_HELLO:
+        case TLS_ST_CW_CLNT_HELLO:
+        case TLS_ST_CW_COMP_CERT:
+        case TLS_ST_CW_KEY_EXCH:
+        case TLS_ST_SW_HELLO_REQ:
+        case TLS_ST_SR_CLNT_HELLO:
+        case DTLS_ST_SW_HELLO_VERIFY_REQUEST:
+        case TLS_ST_SW_SRVR_HELLO:
+        case TLS_ST_CR_HELLO_REQ:
+            rechdrlen = DTLS1_RT_HEADER_LENGTH;
+            break;
+        default:
+            rechdrlen = DTLS13_UNI_HDR_FIXED_LENGTH;
+            break;
         }
     } else {
         rechdrlen = DTLS1_RT_HEADER_LENGTH;

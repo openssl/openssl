@@ -121,19 +121,19 @@ static void copy_flags(BIO *bio)
 #define MSG_FRAG_LEN_LO         11
 
 /* Returns true if the unified header fixed bits are set (rfc9147 section 4) */
-# define DTLS13_UNI_HDR_FIX_BITS_IS_SET(byte) \
+#define DTLS13_UNI_HDR_FIX_BITS_IS_SET(byte) \
     (((byte) & DTLS13_UNI_HDR_FIX_BITS_MASK) == DTLS13_UNI_HDR_FIX_BITS)
 
 /* Returns true if the unified header connection id bit is set (rfc9147 section 4) */
-# define DTLS13_UNI_HDR_CID_BIT_IS_SET(byte) \
+#define DTLS13_UNI_HDR_CID_BIT_IS_SET(byte) \
     (((byte) & DTLS13_UNI_HDR_CID_BIT) == DTLS13_UNI_HDR_CID_BIT)
 
 /* Returns true if the unified header sequence number bit is set (rfc9147 section 4) */
-# define DTLS13_UNI_HDR_SEQ_BIT_IS_SET(byte) \
+#define DTLS13_UNI_HDR_SEQ_BIT_IS_SET(byte) \
     (((byte) & DTLS13_UNI_HDR_SEQ_BIT) == DTLS13_UNI_HDR_SEQ_BIT)
 
 /* Returns true if the unified header length bit is set (rfc9147 section 4) */
-# define DTLS13_UNI_HDR_LEN_BIT_IS_SET(byte) \
+#define DTLS13_UNI_HDR_LEN_BIT_IS_SET(byte) \
     (((byte) & DTLS13_UNI_HDR_LEN_BIT) == DTLS13_UNI_HDR_LEN_BIT)
 
 static void dump_data(const char *data, int len)
@@ -575,7 +575,7 @@ int mempacket_test_inject(BIO *bio, const char *in, int inl, int pktnum,
         }
     } else {
         len = ((inu[RECORD_LEN_HI] << 8) | inu[RECORD_LEN_LO])
-              + DTLS1_RT_HEADER_LENGTH;
+                + DTLS1_RT_HEADER_LENGTH;
     }
 
     if (ctx == NULL)

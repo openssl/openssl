@@ -278,7 +278,7 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
      * any AAD.
      */
     if ((mode == EVP_CIPH_CCM_MODE
-                 && EVP_CipherUpdate(enc_ctx, NULL, &lenu, NULL, (int)rec->length) <= 0)
+         && EVP_CipherUpdate(enc_ctx, NULL, &lenu, NULL, (int)rec->length) <= 0)
             || EVP_CipherUpdate(enc_ctx, NULL, &lenu, recheader, (int)hdrlen) <= 0
             || EVP_CipherUpdate(enc_ctx, rec->data, &lenu, rec->input, (int)rec->length) <= 0
             || EVP_CipherFinal_ex(enc_ctx, rec->data + lenu, &lenf) <= 0
@@ -369,8 +369,12 @@ static uint8_t tls13_get_record_type(OSSL_RECORD_LAYER *rl,
      * record type from the template.
      */
     if (rl->isdtls) {
-        return DTLS13_UNI_HDR_FIX_BITS | DTLS13_UNI_HDR_SEQ_BIT | DTLS13_UNI_HDR_LEN_BIT
-               | (DTLS13_UNI_HDR_EPOCH_BITS_MASK & rl->epoch);
+        const unsigned char fixed = DTLS13_UNI_HDR_FIX_BITS;
+        const unsigned char sbit = DTLS13_UNI_HDR_SEQ_BIT;
+        const unsigned char lbit = DTLS13_UNI_HDR_LEN_BIT;
+        const unsigned char epochbits = DTLS13_UNI_HDR_EPOCH_BITS_MASK & rl->epoch;
+
+        return fixed | sbit | lbit | epochbits;
     }
 
     return SSL3_RT_APPLICATION_DATA;

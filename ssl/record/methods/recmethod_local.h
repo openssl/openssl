@@ -424,19 +424,19 @@ int tls_default_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
 int tls_get_more_records(OSSL_RECORD_LAYER *rl);
 
 /* Returns true if the unified header fixed bits are set (rfc9147 section 4) */
-# define DTLS13_UNI_HDR_FIX_BITS_IS_SET(byte) \
+#define DTLS13_UNI_HDR_FIX_BITS_IS_SET(byte) \
     (((byte) & DTLS13_UNI_HDR_FIX_BITS_MASK) == DTLS13_UNI_HDR_FIX_BITS)
 
 /* Returns true if the unified header connection id bit is set (rfc9147 section 4) */
-# define DTLS13_UNI_HDR_CID_BIT_IS_SET(byte) \
+#define DTLS13_UNI_HDR_CID_BIT_IS_SET(byte) \
     (((byte) & DTLS13_UNI_HDR_CID_BIT) == DTLS13_UNI_HDR_CID_BIT)
 
 /* Returns true if the unified header sequence number bit is set (rfc9147 section 4) */
-# define DTLS13_UNI_HDR_SEQ_BIT_IS_SET(byte) \
+#define DTLS13_UNI_HDR_SEQ_BIT_IS_SET(byte) \
     (((byte) & DTLS13_UNI_HDR_SEQ_BIT) == DTLS13_UNI_HDR_SEQ_BIT)
 
 /* Returns true if the unified header length bit is set (rfc9147 section 4) */
-# define DTLS13_UNI_HDR_LEN_BIT_IS_SET(byte) \
+#define DTLS13_UNI_HDR_LEN_BIT_IS_SET(byte) \
     (((byte) & DTLS13_UNI_HDR_LEN_BIT) == DTLS13_UNI_HDR_LEN_BIT)
 
 size_t dtls_get_rec_header_size(uint8_t hdr_first_byte);

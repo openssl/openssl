@@ -63,7 +63,7 @@ extern "C" {
 # define DTLS13_UNI_HDR_FIX_BITS_MASK    0xe0
 # define DTLS13_UNI_HDR_EPOCH_BITS_MASK  0x03
 
-#ifdef  __cplusplus
+# ifdef __cplusplus
 }
-#endif
+# endif
 #endif

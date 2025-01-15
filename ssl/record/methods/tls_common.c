@@ -650,7 +650,8 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
                 }
 
                 if (rl->msg_callback != NULL)
-                    rl->msg_callback(0, version, SSL3_RT_HEADER, p, SSL3_RT_HEADER_LENGTH, rl->cbarg);
+                    rl->msg_callback(0, version, SSL3_RT_HEADER, p,
+                                     SSL3_RT_HEADER_LENGTH, rl->cbarg);
 
                 if (thisrr->length >
                     TLS_BUFFER_get_len(rbuf) - SSL3_RT_HEADER_LENGTH) {
@@ -1557,7 +1558,8 @@ int tls_allocate_write_buffers_default(OSSL_RECORD_LAYER *rl,
 }
 
 size_t tls_get_record_body_alignment_offset(OSSL_RECORD_LAYER *rl,
-                                            const unsigned char *rec) {
+                                            const unsigned char *rec)
+{
     size_t alignoffset = 0;
     size_t headersize = tls_get_record_header_len(rl);
 
@@ -1731,12 +1733,10 @@ int tls_post_encryption_processing_default(OSSL_RECORD_LAYER *rl,
     recordstart = WPACKET_get_curr(thispkt) - written;
     recordstart += tls_get_record_body_alignment_offset(rl, recordstart);
 
-    if (rl->isdtls) {
+    if (rl->isdtls)
         rechdrlen = dtls_get_rec_header_size(*recordstart);
-    } else {
+    else
         rechdrlen = SSL3_RT_HEADER_LENGTH;
-    }
-
 
     if (rl->isdtls && DTLS13_UNI_HDR_FIX_BITS_IS_SET(*recordstart)) {
         size_t seqnumlen = DTLS13_UNI_HDR_SEQ_BIT_IS_SET(*recordstart) ? 2 : 1;
@@ -2028,7 +2028,8 @@ int tls_set1_bio(OSSL_RECORD_LAYER *rl, BIO *bio)
     return 1;
 }
 
-size_t tls_get_record_header_len(OSSL_RECORD_LAYER *rl) {
+size_t tls_get_record_header_len(OSSL_RECORD_LAYER *rl)
+{
     size_t headerlen;
 
     if (rl->isdtls) {
