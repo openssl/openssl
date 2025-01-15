@@ -21,6 +21,7 @@
 #include "internal/common.h"
 #include "internal/safe_math.h"
 #include "crypto/evp.h"
+#include "crypto/aarch64_dit.h"
 #include "evp_local.h"
 
 OSSL_SAFE_MATH_SIGNED(int, int)
@@ -656,6 +657,8 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     size_t soutl, inl_ = (size_t)inl;
     int blocksize;
 
+    OSSL_ENABLE_DIT_FOR_SCOPE
+
     if (inl < 0) {
         ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_LENGTH);
         return 0;
@@ -717,6 +720,8 @@ int EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
     size_t soutl;
     int blocksize;
 
+    OSSL_ENABLE_DIT_FOR_SCOPE
+
     if (outl != NULL) {
         *outl = 0;
     } else {
@@ -766,6 +771,8 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     int ret;
     size_t soutl, inl_ = (size_t)inl;
     int blocksize;
+
+    OSSL_ENABLE_DIT_FOR_SCOPE
 
     if (inl < 0) {
         ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_LENGTH);
@@ -827,6 +834,8 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
     size_t soutl;
     int ret;
     int blocksize;
+
+    OSSL_ENABLE_DIT_FOR_SCOPE
 
     if (outl != NULL) {
         *outl = 0;
