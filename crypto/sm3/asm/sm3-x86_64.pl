@@ -262,7 +262,6 @@ $code.=<<___;
     vmovdqu         %xmm7, 16($ctx)
 .done_hash:
     # Epilog
-    vzeroupper
 ___
   if ($win64) {
     # ; restore xmm15:xmm6
