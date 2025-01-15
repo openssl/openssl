@@ -4809,7 +4809,7 @@ static QUIC_TOKEN *ossl_quic_build_new_token(BIO_ADDR *peer, uint8_t *token,
 }
 
 int ossl_quic_update_peer_token(SSL_CTX *ctx, BIO_ADDR *peer,
-                                uint8_t *token, size_t token_len)
+                                const uint8_t *token, size_t token_len)
 {
     SSL_TOKEN_STORE *c = ctx->tokencache;
     QUIC_TOKEN *tok, *old = NULL;
@@ -4817,7 +4817,7 @@ int ossl_quic_update_peer_token(SSL_CTX *ctx, BIO_ADDR *peer,
     if (ctx->tokencache == NULL)
         return 0;
 
-    tok = ossl_quic_build_new_token(peer, token, token_len);
+    tok = ossl_quic_build_new_token(peer, (uint8_t *)token, token_len);
     if (tok == NULL)
         return 0;
 
