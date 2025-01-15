@@ -603,6 +603,10 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
     }
 
     switch (rctx->state) {
+    case OHS_ERROR:
+    default:
+        return 0;
+
     case OHS_ADD_HEADERS:
         /* Last operation was adding headers: need a final \r\n */
         if (BIO_write(rctx->mem, "\r\n", 2) != 2) {
@@ -681,9 +685,6 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
             return -1;
 
         rctx->state = OHS_ERROR;
-        return 0;
-
-    case OHS_ERROR:
         return 0;
 
         /* State machine could be broken up at this point and bulky code sections factorized out. */
@@ -943,7 +944,6 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
 
         /* Fall thru */
     case OHS_ASN1_CONTENT:
-    default:
         n = BIO_get_mem_data(rctx->mem, NULL);
         if (n < 0 || (size_t)n < rctx->resp_len)
             goto next_io;
