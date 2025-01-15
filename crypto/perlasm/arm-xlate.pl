@@ -33,6 +33,15 @@ my $rodata = sub {
     SWITCH: for ($flavour) {
 	/linux/		&& return ".section\t.rodata";
 	/ios/		&& return ".section\t__TEXT,__const";
+	/win64/		&& return ".section\t.rodata";
+	last;
+    }
+};
+my $previous = sub {
+    SWITCH: for ($flavour) {
+	/linux/		&& return ".previous";
+	/ios/		&& return ".previous";
+	/win64/		&& return ".text";
 	last;
     }
 };
