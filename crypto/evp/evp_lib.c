@@ -25,6 +25,7 @@
 #include <openssl/dh.h>
 #include <openssl/ec.h>
 #include "crypto/evp.h"
+#include "crypto/aarch64_dit.h"
 #include "crypto/cryptlib.h"
 #include "internal/provider.h"
 #include "evp_local.h"
@@ -391,6 +392,8 @@ int EVP_Cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 
     if (blocksize == 0)
         return 0;
+
+    OSSL_ENABLE_DIT_FOR_SCOPE
 
     if (ctx->cipher->ccipher != NULL)
         ret = ctx->cipher->ccipher(ctx->algctx, out, &outl,
