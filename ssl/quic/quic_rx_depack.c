@@ -350,7 +350,9 @@ static int depack_do_frame_new_token(PACKET *pkt, QUIC_CHANNEL *ch,
         return 0;
     }
 
-    /* TODO(QUIC FUTURE): ADD CODE to send |token| to the session manager */
+    /* store the new token in our token cache */
+    ossl_quic_update_peer_token(ossl_quic_port_get_channel_ctx(ch->port),
+                                &ch->cur_peer_addr, token, token_len);
 
     return 1;
 }
