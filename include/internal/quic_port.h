@@ -113,6 +113,7 @@ BIO *ossl_quic_port_get_net_rbio(QUIC_PORT *port);
 BIO *ossl_quic_port_get_net_wbio(QUIC_PORT *port);
 int ossl_quic_port_set_net_rbio(QUIC_PORT *port, BIO *net_rbio);
 int ossl_quic_port_set_net_wbio(QUIC_PORT *port, BIO *net_wbio);
+SSL_CTX *ossl_quic_port_get_channel_ctx(QUIC_PORT *port);
 
 /*
  * Re-poll the network BIOs already set to determine if their support for
