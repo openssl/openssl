@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <openssl/crypto.h>
+#include <crypto/aarch64_dit.h>
 #ifdef __APPLE__
 #include <sys/sysctl.h>
 #else
@@ -146,6 +147,7 @@ static unsigned long getauxval(unsigned long key)
 #define OSSL_HWCAP_CE_SM4 (1 << 19)
 #define OSSL_HWCAP_CE_SHA512 (1 << 21)
 #define OSSL_HWCAP_SVE (1 << 22)
+#define OSSL_HWCAP_DIT (1 << 24)
 /* AT_HWCAP2 */
 #define OSSL_HWCAP2 26
 #define OSSL_HWCAP2_SVE2 (1 << 1)
@@ -221,6 +223,7 @@ void _armv8_eor3_probe(void);
 void _armv8_sve_probe(void);
 void _armv8_sve2_probe(void);
 void _armv8_rng_probe(void);
+void _armv8_dit_probe(void);
 #endif
 #endif /* !__APPLE__ && !OSSL_IMPLEMENT_GETAUXVAL */
 
@@ -316,6 +319,7 @@ void OPENSSL_cpuid_setup(void)
         /* More recent extensions are indicated by sysctls */
         OPENSSL_armcap_P |= sysctl_query("hw.optional.armv8_2_sha512", ARMV8_SHA512);
         OPENSSL_armcap_P |= sysctl_query("hw.optional.armv8_2_sha3", ARMV8_SHA3);
+        OPENSSL_armcap_P |= sysctl_query("hw.optional.arm.FEAT_DIT", ARMV8_DIT);
 
         if (OPENSSL_armcap_P & ARMV8_SHA3) {
             char uarch[64];
@@ -368,6 +372,9 @@ void OPENSSL_cpuid_setup(void)
     if (getauxval(OSSL_HWCAP) & OSSL_HWCAP_SVE)
         OPENSSL_armcap_P |= ARMV8_SVE;
 
+    if (getauxval(OSSL_HWCAP) & OSSL_HWCAP_DIT)
+        OPENSSL_armcap_P |= ARMV8_DIT;
+
     if (getauxval(OSSL_HWCAP2) & OSSL_HWCAP2_SVE2)
         OPENSSL_armcap_P |= ARMV9_SVE2;
 
@@ -416,6 +423,7 @@ void OPENSSL_cpuid_setup(void)
     OPENSSL_armcap_P |= arm_probe_for(_armv8_sve_probe, ARMV8_SVE);
     OPENSSL_armcap_P |= arm_probe_for(_armv8_sve2_probe, ARMV9_SVE2);
     OPENSSL_armcap_P |= arm_probe_for(_armv8_rng_probe, ARMV8_RNG);
+    OPENSSL_armcap_P |= arm_probe_for(_armv8_dit_probe, ARMV8_DIT);
 #endif
 
     /*
@@ -489,3 +497,83 @@ void OPENSSL_cpuid_setup(void)
 #endif
 }
 #endif /* _WIN32, __ARM_MAX_ARCH__ >= 7 */
+
+#if defined(__aarch64__) && !defined(OSSL_NO_DIT)
+
+/* For PSTATE.DIT */
+
+/**
+ * @brief                   Gets the current value of the DIT flag.
+ *
+ * @note                    MUST NOT be called unless OPENSSL_armcap_P has ARMV8_DIT set.
+ *
+ * @return                  Current value of DIT flag: 0 for off, 1 for on.
+ */
+static ossl_inline uint64_t ossl_get_dit(void)
+{
+    uint64_t val = 0;
+
+    /* In case we're used with an older assembler that doesn't understand DIT */
+    __asm__ volatile("mrs %0, s3_3_c4_c2_5" : "=r"(val));
+
+    return (val >> 24) & 1;
+}
+
+/**
+ * @brief                   Sets DIT on.
+ *
+ * @note                    MUST NOT be called unless OPENSSL_armcap_P has ARMV8_DIT set.
+ */
+static ossl_inline void ossl_set_dit_on(void)
+{
+    __asm__ volatile(".inst 0xD503415F"); /* msr dit, #1 */
+}
+
+/**
+ * @brief                   Sets DIT off.
+ *
+ * @note                    MUST NOT be called unless OPENSSL_armcap_P has ARMV8_DIT set.
+ */
+static ossl_inline void ossl_set_dit_off(void)
+{
+    __asm__ volatile(".inst 0xD503405F"); /* msr dit, #0 */
+}
+
+/**
+ * @brief                   Sets DIT on and returns original value. We allow the caller to supply
+ *                          the "on" value returned so that bit flags can be supported more easily.
+ *
+ * @param value_for_on      Value to be returned if DIT was on prior to calling this function.
+ *
+ * @return                  Original DIT state: 0 for off, value given for on.
+ */
+int ossl_ensure_dit_on(int value_for_on)
+{
+    if ((OPENSSL_armcap_P & ARMV8_DIT)) {
+        if (ossl_get_dit()) {
+            return value_for_on; /* If its already enabled, tell caller to leave it on. */
+        }
+        ossl_set_dit_on();
+    }
+
+    return 0;
+}
+
+/**
+ * @brief                   Sets the DIT flag to its previous value. This function is intended to be
+ *                          called when DIT is already on.
+ *
+ * @param dit_prev          Previous DIT state: 0 for off, non-zero for on.
+ */
+void ossl_restore_original_dit(volatile int *dit_prev)
+{
+    if (!(OPENSSL_armcap_P & ARMV8_DIT)) /* Nothing to do */
+        return;
+
+    if (*dit_prev) /* Was previously set, so leave */
+        return;
+
+    ossl_set_dit_off();
+}
+
+#endif
