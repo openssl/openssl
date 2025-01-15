@@ -5876,3 +5876,13 @@ i2d_OSSL_ALLOWED_ATTRIBUTES_SYNTAX      ?	3_5_0	EXIST::FUNCTION:
 OSSL_ALLOWED_ATTRIBUTES_SYNTAX_free     ?	3_5_0	EXIST::FUNCTION:
 OSSL_ALLOWED_ATTRIBUTES_SYNTAX_new      ?	3_5_0	EXIST::FUNCTION:
 OSSL_ALLOWED_ATTRIBUTES_SYNTAX_it       ?	3_5_0	EXIST::FUNCTION:
+X509_get_issuer_serial                  ?	3_5_0	EXIST::FUNCTION:
+X509_ACERT_get_ext_count                ?	3_5_0	EXIST::FUNCTION:
+X509_ACERT_get_ext                      ?	3_5_0	EXIST::FUNCTION:
+X509_ACERT_get_ext_by_NID               ?	3_5_0	EXIST::FUNCTION:
+X509_ACERT_get_ext_by_OBJ               ?	3_5_0	EXIST::FUNCTION:
+X509_ACERT_get_ext_by_critical          ?	3_5_0	EXIST::FUNCTION:
+X509_ACERT_add_ext                      ?	3_5_0	EXIST::FUNCTION:
+X509_ACERT_delete_ext                   ?	3_5_0	EXIST::FUNCTION:
+X509_ACERT_EXT_add_nconf                ?	3_5_0	EXIST::FUNCTION:
+X509_ACERT_EXT_add_conf                 ?	3_5_0	EXIST::FUNCTION:
