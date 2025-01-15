@@ -303,6 +303,9 @@ my %params = (
     'PKEY_PARAM_DIST_ID' =>             "distid",
     'PKEY_PARAM_PUB_KEY' =>             "pub",
     'PKEY_PARAM_PRIV_KEY' =>            "priv",
+    # PKEY_PARAM_IMPLICIT_REJECTION isn't actually used, or meaningful.  We keep
+    # it for API stability, but please use ASYM_CIPHER_PARAM_IMPLICIT_REJECTION
+    # instead.
     'PKEY_PARAM_IMPLICIT_REJECTION' =>  "implicit-rejection",
     'PKEY_PARAM_FIPS_DIGEST_CHECK' =>   "digest-check",
     'PKEY_PARAM_FIPS_KEY_CHECK' =>      "key-check",
