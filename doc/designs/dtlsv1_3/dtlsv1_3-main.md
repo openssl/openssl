@@ -40,7 +40,7 @@ as a feature request in issue ###########.
 
 ### DTLSv1.3 connection id
 
-OpenSSL does not support Connection ID's (RFC 9146). Notably Openssl DTLSv1.3 clients
+OpenSSL does not support Connection IDs (RFC 9146). Notably Openssl DTLSv1.3 clients
 will not offer the "connection_id" extension even though RFC 9147 states:
 
 > DTLS clients which do not want to receive a Connection ID SHOULD still offer
@@ -88,14 +88,12 @@ A summary of larger work items that needs to be addressed.
 Notice that some of the requirements mentioned in [List of DTLSv1.3 requirements](#list-of-dtls-13-requirements)
 is not covered by these workitems and must be implemented separately.
 
-| Summary                                             | #PR            |
-|-----------------------------------------------------|----------------|
-| ACK messages                                        | -              |
-| Use HelloRetryRequest instead of HelloVerifyRequest | #22985, #22400 |
-| ClientHello                                         | #23320         |
-| EndOfEarlyData message                              | -              |
-| Variable length header                              | -              |
-| DTLSv1.3 Fuzzer                                     | -              |
+| Summary                                             | #PR    |
+|-----------------------------------------------------|--------|
+| ACK messages                                        | #25119 |
+| Use HelloRetryRequest instead of HelloVerifyRequest | #22985 |
+| EndOfEarlyData message                              | -      |
+| DTLSv1.3 Fuzzer                                     | -      |
 
 ### Changes from DTLS 1.2 and/or TLS 1.3
 
