@@ -4214,6 +4214,9 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
     ret->num_tickets = 2;
 
 # ifndef OPENSSL_NO_QUIC
+    /* only create a cache for client CTX-es */
+    if (meth == OSSL_QUIC_client_method())
+        ret->tokencache = ossl_quic_new_token_store();
     ret->domain_flags = 0;
     if (IS_QUIC_METHOD(meth)) {
 #  if defined(OPENSSL_THREADS)
@@ -4416,6 +4419,10 @@ void SSL_CTX_free(SSL_CTX *a)
     OPENSSL_free(a->propq);
 #ifndef OPENSSL_NO_QLOG
     OPENSSL_free(a->qlog_title);
+#endif
+
+#ifndef OPENSSL_NO_QUIC
+    ossl_quic_free_token_store(a->tokencache);
 #endif
 
     OPENSSL_free(a);
@@ -7976,6 +7983,24 @@ SSL *SSL_new_from_listener(SSL *ssl, uint64_t flags)
     return ossl_quic_new_from_listener(ssl, flags);
 #else
     return NULL;
+#endif
+}
+
+SSL_TOKEN_STORE_HANDLE *SSL_CTX_get0_token_store(SSL_CTX *ctx)
+{
+#ifndef OPENSSL_NO_QUIC
+    return ossl_quic_get_token_store(ctx);
+#else
+    return NULL;
+#endif
+}
+
+int SSL_CTX_set_token_store(SSL_CTX *ctx, SSL_TOKEN_STORE_HANDLE *hdl)
+{
+#ifndef OPENSSL_NO_QUIC
+    return ossl_quic_set_token_store(ctx, hdl);
+#else
+    return 0;
 #endif
 }
 
