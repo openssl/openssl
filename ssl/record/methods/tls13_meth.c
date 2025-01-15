@@ -112,7 +112,8 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
     EVP_CIPHER_CTX *enc_ctx;
     unsigned char recheader[SSL3_RT_HEADER_LENGTH];
     unsigned char tag[EVP_MAX_MD_SIZE];
-    size_t nonce_len, offset, loop, hdrlen, taglen;
+    size_t nonce_len, offset, loop, hdrlen, taglen, exphdrlen;
+    int sbit, addlen;
     unsigned char *staticiv;
     unsigned char *nonce;
     unsigned char *seq = rl->sequence;
@@ -185,18 +186,46 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
     for (loop = 0; loop < SEQ_NUM_SIZE; loop++)
         nonce[offset + loop] = staticiv[offset + loop] ^ seq[loop];
 
-    if (!tls_increment_sequence_ctr(rl)) {
+    if (!rl->isdtls && !tls_increment_sequence_ctr(rl)) {
         /* RLAYERfatal already called */
         return 0;
     }
 
-    /* Set up the AAD */
-    if (!WPACKET_init_static_len(&wpkt, recheader, sizeof(recheader), 0)
+    /*-
+     * Set up the additional data as described in rfc8446 section 5.2:
+     *   "and the additional data input is the record header.
+     *   I.e.,
+     *      additional_data = TLSCiphertext.opaque_type ||
+     *                        TLSCiphertext.legacy_record_version ||
+     *                        TLSCiphertext.length"
+     * and in rfc1947 section 4:
+     *   "The entire header value shown in Figure 4 (but prior to record number
+     *   encryption; see Section 4.2.3) is used as the additional data value for
+     *   the AEAD function. For instance, if the minimal variant is used, the
+     *   Associated Data (AD) is 2 octets long."
+     *
+     *   For DTLS: at this point rec->type is just the first byte of the variable
+     *   header. So it is not an actual record type. The record type is set in
+     *   tls13_post_process_record() for incoming records.
+     */
+    if (rl->isdtls) {
+        exphdrlen = dtls_get_rec_header_size(rec->type);
+        sbit = DTLS13_UNI_HDR_SEQ_BIT_IS_SET(rec->type);
+        addlen = DTLS13_UNI_HDR_LEN_BIT_IS_SET(rec->type);
+    } else {
+        exphdrlen = SSL3_RT_HEADER_LENGTH;
+        addlen = 1;
+    }
+
+    if ((rl->isdtls && !ossl_assert(!DTLS13_UNI_HDR_CID_BIT_IS_SET(rec->type)))
+            || !WPACKET_init_static_len(&wpkt, recheader, sizeof(recheader), 0)
             || !WPACKET_put_bytes_u8(&wpkt, rec->type)
-            || !WPACKET_put_bytes_u16(&wpkt, rec->rec_version)
-            || !WPACKET_put_bytes_u16(&wpkt, rec->length + rl->taglen)
+            || (rl->isdtls && (sbit ? !WPACKET_memcpy(&wpkt, rl->sequence + 6, 2)
+                                    : !WPACKET_memcpy(&wpkt, rl->sequence + 7, 1)))
+            || (!rl->isdtls && !WPACKET_put_bytes_u16(&wpkt, rec->rec_version))
+            || (addlen && !WPACKET_put_bytes_u16(&wpkt, rec->length + rl->taglen))
             || !WPACKET_get_total_written(&wpkt, &hdrlen)
-            || hdrlen != SSL3_RT_HEADER_LENGTH
+            || hdrlen != exphdrlen
             || !WPACKET_finish(&wpkt)) {
         RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         WPACKET_cleanup(&wpkt);
