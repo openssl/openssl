@@ -1181,6 +1181,19 @@ static int depack_process_frames(QUIC_CHANNEL *ch, PACKET *pkt,
                                                        "NEW_TOKEN valid only in 1-RTT");
                 return 0;
             }
+
+            /*
+             * RFC 9000 s. 19.7: "A server MUST treat receipt of a NEW_TOKEN
+             * frame as a connection error of type PROTOCOL_VIOLATION."
+             */
+            if (ch->is_server) {
+                ossl_quic_channel_raise_protocol_error(ch,
+                                                       OSSL_QUIC_ERR_PROTOCOL_VIOLATION,
+                                                       frame_type,
+                                                       "NEW_TOKEN can only be sent by a server");
+                return 0;
+            }
+
             if (!depack_do_frame_new_token(pkt, ch, ackm_data))
                 return 0;
             break;
