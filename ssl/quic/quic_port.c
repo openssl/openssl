@@ -440,6 +440,11 @@ int ossl_quic_port_set_net_wbio(QUIC_PORT *port, BIO *net_wbio)
     return 1;
 }
 
+SSL_CTX *ossl_quic_port_get_channel_ctx(QUIC_PORT *port)
+{
+    return port->channel_ctx;
+}
+
 /*
  * QUIC Port: Channel Lifecycle
  * ============================
