@@ -234,14 +234,14 @@ The TLS protocol version first requested by the client.
 
 The negotiated TLS protocol version.
 
-=item "implicit-rejection" (B<OSSL_PKEY_PARAM_IMPLICIT_REJECTION>) <unsigned integer>
+=item "implicit-rejection" (B<OSSL_ASYM_CIPHER_PARAM_IMPLICIT_REJECTION>) <unsigned integer>
 
-Gets of sets the use of the implicit rejection mechanism for RSA PKCS#1 v1.5
+Gets or sets the use of the implicit rejection mechanism for RSA PKCS#1 v1.5
 decryption. When set (non zero value), the decryption API will return
 a deterministically random value if the PKCS#1 v1.5 padding check fails.
 This makes exploitation of the Bleichenbacher significantly harder, even
 if the code using the RSA decryption API is not implemented in side-channel
-free manner. Set by default. Requires provider support.
+free manner. Set by default in OpenSSL providers.
 
 =back
 
