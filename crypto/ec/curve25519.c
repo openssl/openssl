@@ -15,6 +15,7 @@
 
 #include <string.h>
 #include "crypto/ecx.h"
+#include "crypto/aarch64_dit.h"
 #include "ec_local.h"
 #include <openssl/evp.h>
 #include <openssl/sha.h>
@@ -5638,6 +5639,8 @@ int ossl_ed25519_sign(uint8_t *out_sig, const uint8_t *tbs, size_t tbs_len,
     unsigned int sz;
     int res = 0;
 
+    OSSL_ENABLE_DIT_FOR_SCOPE
+
     if (context == NULL)
         context_len = 0;
 
@@ -5698,6 +5701,8 @@ err:
 int ossl_ed25519_pubkey_verify(const uint8_t *pub, size_t pub_len)
 {
     ge_p3 A;
+
+    /* OSSL_ENABLE_DIT_FOR_SCOPE explicitly omitted on verify */
 
     if (pub_len != ED25519_KEYLEN)
         return 0;
@@ -5820,6 +5825,8 @@ int ossl_ed25519_public_from_private(OSSL_LIB_CTX *ctx, uint8_t out_public_key[3
     int r;
     EVP_MD *sha512 = NULL;
 
+    OSSL_ENABLE_DIT_FOR_SCOPE
+
     sha512 = EVP_MD_fetch(ctx, SN_sha512, propq);
     if (sha512 == NULL)
         return 0;
@@ -5845,6 +5852,9 @@ int ossl_x25519(uint8_t out_shared_key[32], const uint8_t private_key[32],
     const uint8_t peer_public_value[32])
 {
     static const uint8_t kZeros[32] = { 0 };
+
+    OSSL_ENABLE_DIT_FOR_SCOPE
+
     x25519_scalar_mult(out_shared_key, private_key, peer_public_value);
     /* The all-zero output results when the input is a point of small order. */
     return CRYPTO_memcmp(kZeros, out_shared_key, 32) != 0;
@@ -5856,6 +5866,8 @@ void ossl_x25519_public_from_private(uint8_t out_public_value[32],
     uint8_t e[32];
     ge_p3 A;
     fe zplusy, zminusy, zminusy_inv;
+
+    OSSL_ENABLE_DIT_FOR_SCOPE
 
     memcpy(e, private_key, 32);
     e[0] &= 248;
