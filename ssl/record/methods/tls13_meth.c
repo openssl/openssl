@@ -113,7 +113,7 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
     unsigned char recheader[SSL3_RT_HEADER_LENGTH];
     unsigned char tag[EVP_MAX_MD_SIZE];
     size_t nonce_len, offset, loop, hdrlen, taglen, exphdrlen;
-    int sbit, addlen;
+    int isdtls, sbit, addlen;
     unsigned char *staticiv;
     unsigned char *nonce;
     unsigned char *seq = rl->sequence;
@@ -133,6 +133,7 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
     enc_ctx = rl->enc_ctx; /* enc_ctx is ignored when rl->mac_ctx != NULL */
     staticiv = rl->iv;
     nonce = rl->nonce;
+    isdtls = rl->isdtls;
 
     if (enc_ctx == NULL && rl->mac_ctx == NULL) {
         RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -186,7 +187,7 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
     for (loop = 0; loop < SEQ_NUM_SIZE; loop++)
         nonce[offset + loop] = staticiv[offset + loop] ^ seq[loop];
 
-    if (!rl->isdtls && !tls_increment_sequence_ctr(rl)) {
+    if (!isdtls && !tls_increment_sequence_ctr(rl)) {
         /* RLAYERfatal already called */
         return 0;
     }
@@ -208,7 +209,7 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
      *   header. So it is not an actual record type. The record type is set in
      *   tls13_post_process_record() for incoming records.
      */
-    if (rl->isdtls) {
+    if (isdtls) {
         exphdrlen = dtls_get_rec_header_size(rec->type);
         sbit = DTLS13_UNI_HDR_SEQ_BIT_IS_SET(rec->type);
         addlen = DTLS13_UNI_HDR_LEN_BIT_IS_SET(rec->type);
@@ -217,12 +218,12 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
         addlen = 1;
     }
 
-    if ((rl->isdtls && !ossl_assert(!DTLS13_UNI_HDR_CID_BIT_IS_SET(rec->type)))
+    if ((isdtls && !ossl_assert(!DTLS13_UNI_HDR_CID_BIT_IS_SET(rec->type)))
             || !WPACKET_init_static_len(&wpkt, recheader, sizeof(recheader), 0)
             || !WPACKET_put_bytes_u8(&wpkt, rec->type)
-            || (rl->isdtls && (sbit ? !WPACKET_memcpy(&wpkt, rl->sequence + 6, 2)
-                                    : !WPACKET_memcpy(&wpkt, rl->sequence + 7, 1)))
-            || (!rl->isdtls && !WPACKET_put_bytes_u16(&wpkt, rec->rec_version))
+            || (isdtls && (sbit ? !WPACKET_memcpy(&wpkt, rl->sequence + 6, 2)
+                                : !WPACKET_memcpy(&wpkt, rl->sequence + 7, 1)))
+            || (!isdtls && !WPACKET_put_bytes_u16(&wpkt, rec->rec_version))
             || (addlen && !WPACKET_put_bytes_u16(&wpkt, rec->length + rl->taglen))
             || !WPACKET_get_total_written(&wpkt, &hdrlen)
             || hdrlen != exphdrlen
