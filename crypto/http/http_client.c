@@ -788,6 +788,8 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
                 rctx->redirection_url = value;
                 if (OSSL_TRACE_ENABLED(HTTP))
                     OSSL_TRACE(HTTP, "]\n");
+                /* stop reading due to redirect */
+                (void)BIO_reset(rctx->rbio);
                 return 0;
             }
             if (OPENSSL_strcasecmp(key, "Content-Type") == 0) {
@@ -1205,7 +1207,7 @@ BIO *OSSL_HTTP_exchange(OSSL_HTTP_REQ_CTX *rctx, char **redirection_url)
                         && reason == CMP_R_POTENTIALLY_INVALID_CERTIFICATE)
 #endif
                 ) {
-                if (rctx->server != NULL) {
+                if (rctx->server != NULL && *rctx->server != '\0') {
                     BIO_snprintf(buf, sizeof(buf), "server=http%s://%s%s%s",
                                  rctx->use_ssl ? "s" : "", rctx->server,
                                  rctx->port != NULL ? ":" : "",

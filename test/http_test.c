@@ -121,17 +121,21 @@ static long http_bio_cb_ex(BIO *bio, int oper, const char *argp, size_t len,
 #define REAL_SERVER_URL "http://httpbin.org/"
 #define DOCTYPE_HTML "<!DOCTYPE html>\n"
 
+/* do_get > 1 used for testing redirection */
 static int test_http_method(int do_get, int do_txt)
 {
     BIO *wbio = BIO_new(BIO_s_mem());
     BIO *rbio = BIO_new(BIO_s_mem());
     server_args mock_args = { NULL, NULL, NULL, '0', 0 };
     BIO *req, *rsp;
+    char path[80];
     STACK_OF(CONF_VALUE) *headers = NULL;
     const char *content_type;
     int res = 0;
     int real_server = do_txt && 0; /* remove "&& 0" for using real server */
 
+    snprintf(path, sizeof(path), "%s",
+             do_get > 1 ? "/will-be-redirected" : RPATH);
     if (do_txt) {
         content_type = "text/plain";
         req = BIO_new(BIO_s_mem());
@@ -156,8 +160,7 @@ static int test_http_method(int do_get, int do_txt)
     BIO_set_callback_arg(wbio, (char *)&mock_args);
 
     rsp = do_get ?
-        OSSL_HTTP_get(real_server ? REAL_SERVER_URL :
-                      do_txt ? RPATH : "/will-be-redirected",
+        OSSL_HTTP_get(real_server ? REAL_SERVER_URL : path,
                       NULL /* proxy */, NULL /* no_proxy */,
                       real_server ? NULL : wbio,
                       real_server ? NULL : rbio,
@@ -166,8 +169,8 @@ static int test_http_method(int do_get, int do_txt)
                       real_server ? "text/html; charset=utf-8":  content_type,
                       !do_txt /* expect_asn1 */,
                       OSSL_HTTP_DEFAULT_MAX_RESP_LEN, 0 /* timeout */)
-        : OSSL_HTTP_transfer(NULL, NULL /* host */, NULL /* port */, RPATH,
-                             0 /* use_ssl */,NULL /* proxy */, NULL /* no_pr */,
+        : OSSL_HTTP_transfer(NULL, NULL /* host */, NULL /* port */, path,
+                             0 /* use_ssl */, NULL /* proxy */, NULL /* no_pr */,
                              wbio, rbio, NULL /* bio_fn */, NULL /* arg */,
                              0 /* buf_size */, headers, content_type,
                              req, content_type, !do_txt /* expect_asn1 */,
@@ -362,6 +365,11 @@ static int test_http_get_txt(void)
     return test_http_method(1 /* GET */, 1);
 }
 
+static int test_http_get_txt_redirected(void)
+{
+    return test_http_method(2 /* GET with redirection */, 1);
+}
+
 static int test_http_post_txt(void)
 {
     return test_http_method(0 /* POST */, 1);
@@ -369,7 +377,12 @@ static int test_http_post_txt(void)
 
 static int test_http_get_x509(void)
 {
-    return test_http_method(1 /* GET */, 0); /* includes redirection */
+    return test_http_method(1 /* GET */, 0);
+}
+
+static int test_http_get_x509_redirected(void)
+{
+    return test_http_method(2 /* GET with redirection */, 0);
 }
 
 static int test_http_post_x509(void)
@@ -506,8 +519,10 @@ int setup_tests(void)
     ADD_TEST(test_http_url_invalid_path);
 
     ADD_TEST(test_http_get_txt);
+    ADD_TEST(test_http_get_txt_redirected);
     ADD_TEST(test_http_post_txt);
     ADD_TEST(test_http_get_x509);
+    ADD_TEST(test_http_get_x509_redirected);
     ADD_TEST(test_http_post_x509);
     ADD_TEST(test_http_keep_alive_0_no_no);
     ADD_TEST(test_http_keep_alive_1_no_no);
