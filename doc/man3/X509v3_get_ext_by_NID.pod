@@ -175,9 +175,14 @@ L<X509V3_get_d2i(3)>
 
 X509v3_add_extensions() was added in OpenSSL 3.4.
 
+X509_acert_add_ext(), X509_acert_delete_ext(), X509_acert_get_ext(),
+X509_acert_get_ext_by_NID(), X509_acert_get_ext_by_OBJ(),
+X509_acert_get_ext_by_critical(), and X509_acert_get_ext_count() were added in
+OpenSSL 3.5.
+
 =head1 COPYRIGHT
 
-Copyright 2015-2024 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2015-2025 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
