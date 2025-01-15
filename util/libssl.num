@@ -605,3 +605,5 @@ SSL_CTX_set_domain_flags                ?	3_5_0	EXIST::FUNCTION:
 SSL_CTX_get_domain_flags                ?	3_5_0	EXIST::FUNCTION:
 SSL_get_domain_flags                    ?	3_5_0	EXIST::FUNCTION:
 SSL_CTX_set_new_pending_conn_cb         ?	3_5_0	EXIST::FUNCTION:
+SSL_CTX_get0_token_store                ?	3_5_0	EXIST::FUNCTION:
+SSL_CTX_set_token_store                 ?	3_5_0	EXIST::FUNCTION:

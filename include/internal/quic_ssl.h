@@ -24,6 +24,12 @@ __owur SSL *ossl_quic_new_listener(SSL_CTX *ctx, uint64_t flags);
 __owur SSL *ossl_quic_new_listener_from(SSL *ssl, uint64_t flags);
 __owur SSL *ossl_quic_new_from_listener(SSL *ssl, uint64_t flags);
 __owur SSL *ossl_quic_new_domain(SSL_CTX *ctx, uint64_t flags);
+
+SSL_TOKEN_STORE_HANDLE *ossl_quic_new_token_store(void);
+void ossl_quic_free_token_store(SSL_TOKEN_STORE_HANDLE *hdl);
+SSL_TOKEN_STORE_HANDLE *ossl_quic_get_token_store(SSL_CTX *ctx);
+int ossl_quic_set_token_store(SSL_CTX *ctx, SSL_TOKEN_STORE_HANDLE *hdl);
+
 __owur int ossl_quic_init(SSL *s);
 void ossl_quic_deinit(SSL *s);
 void ossl_quic_free(SSL *s);
