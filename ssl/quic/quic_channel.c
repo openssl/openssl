@@ -18,6 +18,7 @@
 #include "internal/qlog_event_helpers.h"
 #include "internal/quic_txp.h"
 #include "internal/quic_tls.h"
+#include "internal/quic_ssl.h"
 #include "../ssl_local.h"
 #include "quic_channel_local.h"
 #include "quic_port_local.h"
@@ -2770,8 +2771,24 @@ static void ch_record_state_transition(QUIC_CHANNEL *ch, uint32_t new_state)
                                                           ch->handshake_confirmed);
 }
 
+static void free_token(const unsigned char *token, size_t token_len, void *arg)
+{
+    /*
+     * Note: This is the callback for ossl_quic_tx_packetiser_set_initial_token
+     * Normally we would free the token pointer here, but because our cache
+     * stores tokens at an offset from the allocated QUIC_TOKEN struct, its not
+     * appropriate for freeing.  Instead, we pass the pointer to the start of
+     * the allocation as arg, and free that
+     */
+    OPENSSL_free(arg);
+}
+
 int ossl_quic_channel_start(QUIC_CHANNEL *ch)
 {
+    uint8_t *token;
+    size_t token_len;
+    void *token_ptr;
+
     if (ch->is_server)
         /*
          * This is not used by the server. The server moves to active
@@ -2787,6 +2804,19 @@ int ossl_quic_channel_start(QUIC_CHANNEL *ch)
     if (!ossl_quic_tx_packetiser_set_peer(ch->txp, &ch->cur_peer_addr))
         return 0;
 
+    /*
+     * Look to see if we have a token, and if so, set it on the packetiser
+     */
+    if (!ch->is_server &&ossl_quic_get_peer_token(ch->port->channel_ctx,
+                                                  &ch->cur_peer_addr,
+                                                  &token, &token_len,
+                                                  &token_ptr)) {
+        if (!ossl_quic_tx_packetiser_set_initial_token(ch->txp, token,
+                                                       token_len, free_token,
+                                                       token_ptr)) {
+            free_token(NULL, 0, token_ptr);
+        }
+    }
     /* Plug in secrets for the Initial EL. */
     if (!ossl_quic_provide_initial_secret(ch->port->engine->libctx,
                                           ch->port->engine->propq,
@@ -2833,11 +2863,6 @@ void ossl_quic_channel_local_close(QUIC_CHANNEL *ch, uint64_t app_error_code,
     tcause.reason       = app_reason;
     tcause.reason_len   = app_reason != NULL ? strlen(app_reason) : 0;
     ch_start_terminating(ch, &tcause, 0);
-}
-
-static void free_token(const unsigned char *buf, size_t buf_len, void *arg)
-{
-    OPENSSL_free((unsigned char *)buf);
 }
 
 /**
