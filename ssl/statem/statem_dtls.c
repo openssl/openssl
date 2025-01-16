@@ -152,9 +152,10 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t recordtype)
     size_t len, overhead, used_len;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
     SSL *ussl = SSL_CONNECTION_GET_USER_SSL(s);
-    const size_t msg_len = s->d1->w_msg.msg_body_len; /* Only used for recordtype == SSL3_RT_HANDSHAKE */
-    const unsigned short msg_seq = s->d1->w_msg.msg_seq; /* Only used for recordtype == SSL3_RT_HANDSHAKE */
-    const unsigned char msg_type = s->d1->w_msg.msg_type; /* Only used for recordtype == SSL3_RT_HANDSHAKE */
+    /* msg_len, msg_seq, msg_type are only used for recordtype == SSL3_RT_HANDSHAKE */
+    const size_t msg_len = s->d1->w_msg.msg_body_len;
+    const unsigned short msg_seq = s->d1->w_msg.msg_seq;
+    const unsigned char msg_type = s->d1->w_msg.msg_type;
 
     if (!dtls1_query_mtu(s))
         return -1;
@@ -478,7 +479,8 @@ static int dtls1_preprocess_fragment(SSL_CONNECTION *s,
     return 1;
 }
 
-static int add_record_to_ack_list(SSL_CONNECTION *sc) {
+static int add_record_to_ack_list(SSL_CONNECTION *sc)
+{
     DTLS1_RECORD_NUMBER *recnum;
     uint64_t epoch = sc->s3.tmp.record_epoch;
     uint64_t sequence = sc->s3.tmp.record_seq_num;
@@ -1086,7 +1088,8 @@ CON_FUNC_RETURN dtls_construct_change_cipher_spec(SSL_CONNECTION *s,
     return CON_FUNC_SUCCESS;
 }
 
-CON_FUNC_RETURN dtls_construct_ack(SSL_CONNECTION *s, WPACKET *pkt) {
+CON_FUNC_RETURN dtls_construct_ack(SSL_CONNECTION *s, WPACKET *pkt)
+{
     DTLS1_RECORD_NUMBER *recnum;
     DTLS1_RECORD_NUMBER *recnumnext = ossl_list_record_number_head(&s->d1->ack_rec_num);
 
@@ -1155,7 +1158,6 @@ MSG_PROCESS_RETURN dtls_process_ack(SSL_CONNECTION *s, PACKET *pkt)
          *           uint64 sequence_number;
          *      } RecordNumber;
          */
-
         pitem *item;
         piterator iter;
         uint64_t epoch;
@@ -1187,7 +1189,6 @@ MSG_PROCESS_RETURN dtls_process_ack(SSL_CONNECTION *s, PACKET *pkt)
 
     return MSG_PROCESS_FINISHED_READING;
 }
-
 
 #ifndef OPENSSL_NO_SCTP
 /*

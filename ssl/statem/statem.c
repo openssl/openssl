@@ -541,8 +541,8 @@ static void init_read_state_machine(SSL_CONNECTION *s)
     st->read_state = READ_STATE_HEADER;
 }
 
-static int grow_init_buf(SSL_CONNECTION *s, size_t size) {
-
+static int grow_init_buf(SSL_CONNECTION *s, size_t size)
+{
     size_t msg_offset = (char *)s->init_msg - s->init_buf->data;
 
     if (!BUF_MEM_grow_clean(s->init_buf, (int)size))
@@ -750,14 +750,20 @@ static int statem_do_write(SSL_CONNECTION *s)
     int record_type;
     OSSL_STATEM *st = &s->statem;
 
-    if (st->hand_state == TLS_ST_CW_CHANGE
-            || st->hand_state == TLS_ST_SW_CHANGE)
+    switch (st->hand_state) {
+    case TLS_ST_CW_CHANGE:
+    case TLS_ST_SW_CHANGE:
         record_type = SSL3_RT_CHANGE_CIPHER_SPEC;
-    else if (st->hand_state == TLS_ST_CW_ACK
-                || st->hand_state == TLS_ST_SW_ACK)
+
+        break;
+    case TLS_ST_CW_ACK:
+    case TLS_ST_SW_ACK:
         record_type = SSL3_RT_ACK;
-    else
+
+        break;
+    default:
         return ssl_do_write(s);
+    }
 
     if (SSL_CONNECTION_IS_DTLS(s))
         return dtls1_do_write(s, record_type);
@@ -927,9 +933,9 @@ static SUB_STATE_RETURN write_state_machine(SSL_CONNECTION *s)
             /* Fall through */
 
         case WRITE_STATE_SEND:
-            if (SSL_CONNECTION_IS_DTLS(s) && dtls_use_timer(s)) {
+            if (SSL_CONNECTION_IS_DTLS(s) && dtls_use_timer(s))
                 dtls1_start_timer(s);
-            }
+
             ret = statem_do_write(s);
             if (ret <= 0) {
                 return SUB_STATE_ERROR;

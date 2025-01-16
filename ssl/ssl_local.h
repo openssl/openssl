@@ -2000,7 +2000,6 @@ pitem *pqueue_iterator(pqueue *pq);
 pitem *pqueue_next(piterator *iter);
 size_t pqueue_size(pqueue *pq);
 
-
 typedef struct dtls_msg_info_st {
     unsigned char record_type;
     unsigned char msg_type;
@@ -2032,7 +2031,7 @@ typedef struct dtls_sent_msg_st {
 
 int dtls_any_sent_messages_are_missing_acknowledge(SSL_CONNECTION *s);
 
-#define SSL_MSG_IS_IMPLICITLY_ACKED(sentbyserver, msgtype)                      \
+# define SSL_MSG_IS_IMPLICITLY_ACKED(sentbyserver, msgtype)                      \
     ((msgtype) != SSL3_MT_NEWSESSION_TICKET && (msgtype) != SSL3_MT_KEY_UPDATE  \
      && ((msgtype) != SSL3_MT_FINISHED || (sentbyserver)))
 
