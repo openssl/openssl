@@ -4357,6 +4357,15 @@ SSL *ossl_quic_new_from_listener(SSL *ssl, uint64_t flags)
 
     ql = ctx.ql;
 
+    /*
+     * listeners (server) contexts don't typically
+     * allocate a token cache because they don't need
+     * to store them, but here we are using a server side
+     * ctx as a client, so we should allocate one now
+     */
+    if (ssl->ctx->tokencache == NULL) 
+        ssl->ctx->tokencache = ossl_quic_new_token_store();
+
     if ((qc = OPENSSL_zalloc(sizeof(*qc))) == NULL) {
         QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_CRYPTO_LIB, NULL);
         goto err;
