@@ -133,7 +133,8 @@ pitem *pqueue_find(pqueue *pq, unsigned char *prio64be)
     return found;
 }
 
-pitem *pqueue_find_u64(pqueue *pq, uint64_t prio) {
+pitem *pqueue_find_u64(pqueue *pq, uint64_t prio)
+{
     unsigned char prio64be[8], *p_prio64be = prio64be;
 
     l2n8(prio, p_prio64be);

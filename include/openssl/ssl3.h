@@ -220,7 +220,7 @@ extern "C" {
 # define SSL3_RT_ALERT                   21
 # define SSL3_RT_HANDSHAKE               22
 # define SSL3_RT_APPLICATION_DATA        23
-# define SSL3_RT_ACK                     26 /*RFC 9147*/
+# define SSL3_RT_ACK                     26 /* RFC 9147 */
 
 /* Pseudo content types to indicate additional parameters */
 # define TLS1_RT_CRYPTO                  0x1000

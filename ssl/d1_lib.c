@@ -141,7 +141,8 @@ void dtls1_clear_received_buffer(SSL_CONNECTION *s)
     }
 }
 
-void ossl_list_record_number_elem_free(OSSL_LIST(record_number) *p_list) {
+void ossl_list_record_number_elem_free(OSSL_LIST(record_number) *p_list)
+{
     DTLS1_RECORD_NUMBER *p_elem;
     DTLS1_RECORD_NUMBER *p_elem_next = ossl_list_record_number_head(p_list);
 
@@ -164,7 +165,8 @@ DTLS1_RECORD_NUMBER *dtls1_record_number_new(uint64_t epoch, uint64_t seqnum)
     return recnum;
 }
 
-void dtls1_acknowledge_sent_buffer(SSL_CONNECTION *s, uint16_t before_epoch) {
+void dtls1_acknowledge_sent_buffer(SSL_CONNECTION *s, uint16_t before_epoch)
+{
     pitem *item = NULL;
     piterator iter = pqueue_iterator(s->d1->sent_messages);
 
@@ -184,7 +186,8 @@ void dtls1_acknowledge_sent_buffer(SSL_CONNECTION *s, uint16_t before_epoch) {
     }
 }
 
-void dtls1_clear_sent_buffer(SSL_CONNECTION *s, int keep_unacked_msgs) {
+void dtls1_clear_sent_buffer(SSL_CONNECTION *s, int keep_unacked_msgs)
+{
     pitem *item = NULL;
     pqueue *remaining_sent_messages = pqueue_new();
 
@@ -223,7 +226,8 @@ void dtls1_clear_sent_buffer(SSL_CONNECTION *s, int keep_unacked_msgs) {
     pqueue_free(remaining_sent_messages);
 }
 
-int dtls_any_sent_messages_are_missing_acknowledge(SSL_CONNECTION *s) {
+int dtls_any_sent_messages_are_missing_acknowledge(SSL_CONNECTION *s)
+{
     pitem *item;
     piterator iter = pqueue_iterator(s->d1->sent_messages);
 

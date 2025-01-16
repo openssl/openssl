@@ -237,8 +237,8 @@ struct ossl_record_method_st {
      * multiple records in one go and buffer them.
      */
     int (*read_record)(OSSL_RECORD_LAYER *rl, void **rechandle, int *rversion,
-                      uint8_t *type, const unsigned char **data, size_t *datalen,
-                      uint16_t *epoch, uint64_t *seq_num);
+                       uint8_t *type, const unsigned char **data, size_t *datalen,
+                       uint16_t *epoch, uint64_t *seq_num);
     /*
      * Release length bytes from a buffer associated with a record previously
      * read with read_record. Once all the bytes from a record are released, the

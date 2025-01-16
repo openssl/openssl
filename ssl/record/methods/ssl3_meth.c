@@ -244,9 +244,12 @@ static int ssl3_mac(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec, unsigned char *md
     md_size = t;
     npad = (48 / md_size) * md_size;
 
-    cbc_encrypted = !sending
-                    && EVP_CIPHER_CTX_get_mode(rl->enc_ctx) == EVP_CIPH_CBC_MODE
-                    && ssl3_cbc_record_digest_supported(hash);
+    if (!sending
+        && EVP_CIPHER_CTX_get_mode(rl->enc_ctx) == EVP_CIPH_CBC_MODE
+        && ssl3_cbc_record_digest_supported(hash))
+        cbc_encrypted = 1;
+    else
+        cbc_encrypted = 0;
 
     if (!WPACKET_init_static_len(&hdr, header, sizeof(header), 0)
             || !WPACKET_memcpy(&hdr, rl->mac_secret, md_size)

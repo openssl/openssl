@@ -156,7 +156,8 @@ static int tls1_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
 }
 
 static int setup_record_header(const OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec,
-                               unsigned char *buf, size_t buflen) {
+                               unsigned char *buf, size_t buflen)
+{
     WPACKET hdr;
     size_t hdrsize;
 
@@ -508,9 +509,8 @@ static int tls1_mac(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec, unsigned char *md
             && EVP_MD_CTX_ctrl(mac_ctx, EVP_MD_CTRL_TLSTREE, 0, seq) <= 0)
         goto end;
 
-    if (!setup_record_header(rl, rec, header, sizeof(header))) {
+    if (!setup_record_header(rl, rec, header, sizeof(header)))
         goto end;
-    }
 
     if (!sending && !rl->use_etm
         && EVP_CIPHER_CTX_get_mode(rl->enc_ctx) == EVP_CIPH_CBC_MODE
