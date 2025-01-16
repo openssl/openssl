@@ -847,6 +847,26 @@ SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, SSL *user_ssl,
         }
         s->ext.supportedgroups_len = ctx->ext.supportedgroups_len;
     }
+    if (ctx->ext.keyshares != NULL) {
+        s->ext.keyshares =
+            OPENSSL_memdup(ctx->ext.keyshares,
+                           ctx->ext.keyshares_len * sizeof(*ctx->ext.keyshares));
+        if (s->ext.keyshares == NULL) {
+            s->ext.keyshares_len = 0;
+            goto err;
+        }
+        s->ext.keyshares_len = ctx->ext.keyshares_len;
+    }
+    if (ctx->ext.tuples != NULL) {
+        s->ext.tuples =
+            OPENSSL_memdup(ctx->ext.tuples,
+                           ctx->ext.tuples_len * sizeof(*ctx->ext.tuples));
+        if (s->ext.tuples == NULL) {
+            s->ext.tuples_len = 0;
+            goto err;
+        }
+        s->ext.tuples_len = ctx->ext.tuples_len;
+    }
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
     s->ext.npn = NULL;
@@ -1445,6 +1465,8 @@ void ossl_ssl_connection_free(SSL *ssl)
     OPENSSL_free(s->ext.ecpointformats);
     OPENSSL_free(s->ext.peer_ecpointformats);
     OPENSSL_free(s->ext.supportedgroups);
+    OPENSSL_free(s->ext.keyshares);
+    OPENSSL_free(s->ext.tuples);
     OPENSSL_free(s->ext.peer_supportedgroups);
     sk_X509_EXTENSION_pop_free(s->ext.ocsp.exts, X509_EXTENSION_free);
 #ifndef OPENSSL_NO_OCSP
@@ -3065,11 +3087,12 @@ static int ssl_tsan_load(SSL_CTX *ctx, TSAN_QUALIFIER int *stat)
 long SSL_CTX_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 {
     long l;
-    /* For some cases with ctx == NULL perform syntax checks */
+
+    /* For some cases with ctx == NULL or larg == 1 perform syntax checks */
+    if (cmd == SSL_CTRL_SET_GROUPS_LIST && larg == 1)
+        return tls1_set_groups_list(ctx, NULL, NULL, NULL, NULL, NULL, NULL, parg);
     if (ctx == NULL) {
         switch (cmd) {
-        case SSL_CTRL_SET_GROUPS_LIST:
-            return tls1_set_groups_list(ctx, NULL, NULL, parg);
         case SSL_CTRL_SET_SIGALGS_LIST:
         case SSL_CTRL_SET_CLIENT_SIGALGS_LIST:
             return tls1_set_sigalgs_list(ctx, NULL, parg, 0);
@@ -4327,6 +4350,8 @@ void SSL_CTX_free(SSL_CTX *a)
 
     OPENSSL_free(a->ext.ecpointformats);
     OPENSSL_free(a->ext.supportedgroups);
+    OPENSSL_free(a->ext.keyshares);
+    OPENSSL_free(a->ext.tuples);
     OPENSSL_free(a->ext.supported_groups_default);
     OPENSSL_free(a->ext.alpn);
     OPENSSL_secure_free(a->ext.secure);

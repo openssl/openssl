@@ -152,14 +152,22 @@ value set for B<-sigalgs> will be used instead.
 This sets the supported groups. For clients, the groups are sent using
 the supported groups extension. For servers, it is used to determine which
 group to use. This setting affects groups used for signatures (in TLSv1.2
-and earlier) and key exchange. The first group listed will also be used
-for the B<key_share> sent by a client in a TLSv1.3 B<ClientHello>.
+and earlier) and key exchange.
 
-The B<groups> argument is a colon separated list of groups. The group can
-be either the B<NIST> name (e.g. B<P-256>), some other commonly used name
-where applicable (e.g. B<X25519>, B<ffdhe2048>) or an OpenSSL OID name
-(e.g. B<prime256v1>). Group names are case sensitive. The list should be
-in order of preference with the most preferred group first.
+In its simplest form the I<groups> argument is a colon separated list of
+groups. Each group can be either the B<NIST> name (e.g. B<P-256>), some other
+commonly used name where applicable (e.g. B<X25519>, B<ffdhe2048>) or an
+OpenSSL OID name (e.g. B<prime256v1>). Group names are case sensitive. The list
+should be in order of preference with the most preferred group first.
+The first group listed will also be used for the B<key_share> sent by a client
+in a TLSv1.3 B<ClientHello>.
+
+An enriched alternative syntax, that enables clients to send multiple keyshares
+and allows servers to prioritise some groups over others, is described in
+L<SSL_CTX_set1_groups_list(3)>.
+Since TLS 1.2 has neither keyshares nor a hello retry mechanism, with TLS 1.2
+the enriched syntax is ultimately equivalent to just a simple ordered list of
+groups, as with the simple form above.
 
 Groups for B<TLSv1.3> in the default provider are B<P-256>, B<P-384>,
 B<P-521>, B<X25519>, B<X448>, B<ffdhe2048>, B<ffdhe3072>, B<ffdhe4096>,
