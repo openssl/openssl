@@ -222,7 +222,7 @@ static int mem_write(BIO *b, const char *in, int inl)
         goto end;
     }
     BIO_clear_retry_flags(b);
-    if (inl == 0)
+    if (inl <= 0)
         return 0;
     if (in == NULL) {
         ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_NULL_PARAMETER);
