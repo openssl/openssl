@@ -136,7 +136,7 @@ static int provider_conf_params_internal(OSSL_PROVIDER *prov,
     } else {
         OSSL_TRACE2(CONF, "Provider params: %s = %s\n", name, value);
         if (prov != NULL)
-            ok = ossl_provider_add_parameter(prov, name, value);
+            ok = OSSL_PROVIDER_add_conf_parameter(prov, name, value);
         else
             ok = ossl_provider_info_add_parameter(provinfo, name, value);
     }
@@ -272,8 +272,8 @@ static int provider_conf_activate(OSSL_LIB_CTX *libctx, const char *name,
     return ok;
 }
 
-static int provider_conf_parse_bool_setting(const char *confname,
-                                            const char *confvalue, int *val)
+int ossl_provider_conf_parse_bool_setting(const char *confname,
+                                          const char *confvalue, int *val)
 {
 
     if (confvalue == NULL) {
@@ -345,15 +345,15 @@ static int provider_conf_load(OSSL_LIB_CTX *libctx, const char *name,
         if (strcmp(confname, "identity") == 0) {
             name = confvalue;
         } else if (strcmp(confname, "soft_load") == 0) {
-            if (!provider_conf_parse_bool_setting(confname,
-                                                  confvalue, &soft))
+            if (!ossl_provider_conf_parse_bool_setting(confname,
+                                                       confvalue, &soft))
                 return 0;
         /* Load a dynamic PROVIDER */
         } else if (strcmp(confname, "module") == 0) {
             path = confvalue;
         } else if (strcmp(confname, "activate") == 0) {
-            if (!provider_conf_parse_bool_setting(confname,
-                                                  confvalue, &activate))
+            if (!ossl_provider_conf_parse_bool_setting(confname,
+                                                       confvalue, &activate))
                 return 0;
         }
     }

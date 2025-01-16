@@ -38,8 +38,6 @@ void ossl_provider_free(OSSL_PROVIDER *prov);
 
 /* Setters */
 int ossl_provider_set_module_path(OSSL_PROVIDER *prov, const char *module_path);
-int ossl_provider_add_parameter(OSSL_PROVIDER *prov, const char *name,
-                                const char *value);
 
 int ossl_provider_is_child(const OSSL_PROVIDER *prov);
 int ossl_provider_set_child(OSSL_PROVIDER *prov, const OSSL_CORE_HANDLE *handle);
@@ -105,6 +103,8 @@ int ossl_provider_test_operation_bit(OSSL_PROVIDER *provider, size_t bitnum,
 
 /* Configuration */
 void ossl_provider_add_conf_module(void);
+int ossl_provider_conf_parse_bool_setting(const char *confname,
+                                          const char *confvalue, int *val);
 
 /* Child providers */
 int ossl_provider_init_as_child(OSSL_LIB_CTX *ctx,

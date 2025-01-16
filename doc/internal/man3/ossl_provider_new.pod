@@ -3,9 +3,8 @@
 =head1 NAME
 
 ossl_provider_find, ossl_provider_new, ossl_provider_up_ref,
-ossl_provider_free,
-ossl_provider_set_module_path,
-ossl_provider_add_parameter, ossl_provider_set_child, ossl_provider_get_parent,
+ossl_provider_free, ossl_provider_set_module_path,
+ossl_provider_set_child, ossl_provider_get_parent,
 ossl_provider_up_ref_parent, ossl_provider_free_parent,
 ossl_provider_default_props_update, ossl_provider_get0_dispatch,
 ossl_provider_init_as_child, ossl_provider_deinit_child,
@@ -36,8 +35,6 @@ ossl_provider_get_capabilities
 
  /* Setters */
  int ossl_provider_set_module_path(OSSL_PROVIDER *prov, const char *path);
- int ossl_provider_add_parameter(OSSL_PROVIDER *prov, const char *name,
-                                 const char *value);
 
  /* Child Providers */
  int ossl_provider_set_child(OSSL_PROVIDER *prov,
@@ -166,13 +163,6 @@ on this in L</NOTES>).
 
 ossl_provider_libctx() returns the library context the given
 provider I<prov> is registered in.
-
-ossl_provider_add_parameter() adds a global parameter for the provider
-to retrieve as it sees fit.
-The parameters are a combination of I<name> and I<value>, and the
-provider will use the name to find the value it wants.
-Only text parameters can be given, and it's up to the provider to
-interpret them.
 
 ossl_provider_set_child() marks this provider as a child of a provider in the
 parent library context. I<handle> is the B<OSSL_CORE_HANDLE> object passed to
