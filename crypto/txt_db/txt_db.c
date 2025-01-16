@@ -22,7 +22,7 @@ TXT_DB *TXT_DB_read(BIO *in, int num)
     TXT_DB *ret = NULL;
     int esc = 0;
     int n;
-    size_t i, add, size = BUFSIZE, offset = 0;
+    size_t i, add, size = BUFSIZE, offset = 0, unum = num;
     char *p, *f;
     OPENSSL_STRING *pp;
     BUF_MEM *buf = NULL;
@@ -43,7 +43,7 @@ TXT_DB *TXT_DB_read(BIO *in, int num)
         goto err;
     if ((ret->qual = OPENSSL_malloc(sizeof(*(ret->qual)) * num)) == NULL)
         goto err;
-    for (i = 0; i < num; i++) {
+    for (i = 0; i < unum; i++) {
         ret->index[i] = NULL;
         ret->qual[i] = NULL;
     }
