@@ -109,7 +109,7 @@ static int opt_provider_param(const char *arg)
      */
     if ((p.key = strchr(copy, ':')) != NULL) {
         *p.key++ = '\0';
-        p.name = *copy != '\0'? copy : NULL;
+        p.name = *copy != '\0' ? copy : NULL;
     } else {
         p.name = NULL;
         p.key = copy;

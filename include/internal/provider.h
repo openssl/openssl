@@ -103,8 +103,6 @@ int ossl_provider_test_operation_bit(OSSL_PROVIDER *provider, size_t bitnum,
 
 /* Configuration */
 void ossl_provider_add_conf_module(void);
-int ossl_provider_conf_parse_bool_setting(const char *confname,
-                                          const char *confvalue, int *val);
 
 /* Child providers */
 int ossl_provider_init_as_child(OSSL_LIB_CTX *ctx,

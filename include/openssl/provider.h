@@ -47,9 +47,7 @@ int OSSL_PROVIDER_get_capabilities(const OSSL_PROVIDER *prov,
 /*-
  * Provider configuration parameters are normally set in the configuration file,
  * but can also be set early in the main program before a provider is in use by
- * multiple threads.  The "default" provider does not load any parameters from
- * the configuration file and this is the only way to set "default" provider
- * parameters.
+ * multiple threads.
  *
  * Only UTF8-string values are supported.
  */

@@ -94,7 +94,7 @@ $OpenSSL::safe::opt_r_item = ""
 $OpenSSL::safe::opt_provider_synopsis = ""
 . "[B<-provider> I<name>]\n"
 . "[B<-provider-path> I<path>]\n"
-. "[B<-provparam> I<[name]key=value>]\n"
+. "[B<-provparam> I<[name:]key=value>]\n"
 . "[B<-propquery> I<propq>]";
 $OpenSSL::safe::opt_provider_item = ""
 . "=item B<-provider> I<name>\n"

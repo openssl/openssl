@@ -689,6 +689,9 @@ loaded providers.
 This option can be specified multiple times, to set multiple parameters.
 Options that specify nondefault providers to load should precede this option
 if the setting is intended to apply to the to be loaded providers.
+Parameters that only affect provider initialisation must, for now, be set in
+the configuration file, only parameters that are also queried as needed later
+have any affect when set via this interface.
 Only UTF8-string-valued parameters are supported.
 See the documentation of the specific provider and associated algorithms for
 any supported parameters.

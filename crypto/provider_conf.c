@@ -272,8 +272,8 @@ static int provider_conf_activate(OSSL_LIB_CTX *libctx, const char *name,
     return ok;
 }
 
-int ossl_provider_conf_parse_bool_setting(const char *confname,
-                                          const char *confvalue, int *val)
+static int provider_conf_parse_bool_setting(const char *confname,
+                                            const char *confvalue, int *val)
 {
 
     if (confvalue == NULL) {
@@ -345,15 +345,15 @@ static int provider_conf_load(OSSL_LIB_CTX *libctx, const char *name,
         if (strcmp(confname, "identity") == 0) {
             name = confvalue;
         } else if (strcmp(confname, "soft_load") == 0) {
-            if (!ossl_provider_conf_parse_bool_setting(confname,
-                                                       confvalue, &soft))
+            if (!provider_conf_parse_bool_setting(confname,
+                                                  confvalue, &soft))
                 return 0;
         /* Load a dynamic PROVIDER */
         } else if (strcmp(confname, "module") == 0) {
             path = confvalue;
         } else if (strcmp(confname, "activate") == 0) {
-            if (!ossl_provider_conf_parse_bool_setting(confname,
-                                                       confvalue, &activate))
+            if (!provider_conf_parse_bool_setting(confname,
+                                                  confvalue, &activate))
                 return 0;
         }
     }
