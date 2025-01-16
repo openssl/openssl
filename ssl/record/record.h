@@ -37,7 +37,7 @@ typedef struct tls_record_st {
     /* epoch number. DTLS only */
     uint16_t epoch;
     /* sequence number. DTLS only */
-    unsigned char seq_num[SEQ_NUM_SIZE];
+    uint64_t seq_num;
 #ifndef OPENSSL_NO_SCTP
     struct bio_dgram_sctp_rcvinfo recordinfo;
 #endif
@@ -160,6 +160,7 @@ int do_dtls1_write(SSL_CONNECTION *s, uint8_t type, const unsigned char *buf,
                    size_t len, size_t *written);
 void dtls1_increment_epoch(SSL_CONNECTION *s, int rw);
 uint16_t dtls1_get_epoch(SSL_CONNECTION *s, int rw);
+uint64_t dtls1_get_record_sequence_number(SSL_CONNECTION *s);
 int ssl_release_record(SSL_CONNECTION *s, TLS_RECORD *rr, size_t length);
 
 # define HANDLE_RLAYER_READ_RETURN(s, ret) \

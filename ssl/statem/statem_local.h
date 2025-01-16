@@ -27,6 +27,7 @@
 #define SERVER_HELLO_DONE_MAX_LENGTH    0
 #define KEY_UPDATE_MAX_LENGTH           1
 #define CCS_MAX_LENGTH                  1
+#define ACK_MAX_LENGTH                  65538
 
 /* Max ServerHello size permitted by RFC 8446 */
 #define SERVER_HELLO_MAX_LENGTH         65607
@@ -92,6 +93,7 @@ MSG_PROCESS_RETURN ossl_statem_client_process_message(SSL_CONNECTION *s,
                                                       PACKET *pkt);
 WORK_STATE ossl_statem_client_post_process_message(SSL_CONNECTION *s,
                                                    WORK_STATE wst);
+int ossl_statem_dtls_client_use_timer(SSL_CONNECTION *s);
 
 /*
  * TLS/DTLS server state machine functions
@@ -107,6 +109,7 @@ MSG_PROCESS_RETURN ossl_statem_server_process_message(SSL_CONNECTION *s,
                                                       PACKET *pkt);
 WORK_STATE ossl_statem_server_post_process_message(SSL_CONNECTION *s,
                                                    WORK_STATE wst);
+int ossl_statem_dtls_server_use_timer(SSL_CONNECTION *s);
 
 /* Functions for getting new message data */
 __owur int tls_get_message_header(SSL_CONNECTION *s, int *mt);
@@ -124,6 +127,7 @@ __owur CON_FUNC_RETURN  tls_construct_change_cipher_spec(SSL_CONNECTION *s,
                                                          WPACKET *pkt);
 __owur CON_FUNC_RETURN dtls_construct_change_cipher_spec(SSL_CONNECTION *s,
                                                          WPACKET *pkt);
+__owur CON_FUNC_RETURN dtls_construct_ack(SSL_CONNECTION *s, WPACKET *pkt);
 
 __owur CON_FUNC_RETURN tls_construct_finished(SSL_CONNECTION *s, WPACKET *pkt);
 __owur CON_FUNC_RETURN tls_construct_key_update(SSL_CONNECTION *s, WPACKET *pkt);
@@ -195,6 +199,7 @@ __owur CON_FUNC_RETURN tls_construct_next_proto(SSL_CONNECTION *s, WPACKET *pkt)
 #endif
 __owur MSG_PROCESS_RETURN tls_process_hello_req(SSL_CONNECTION *s, PACKET *pkt);
 __owur MSG_PROCESS_RETURN dtls_process_hello_verify(SSL_CONNECTION *s, PACKET *pkt);
+__owur MSG_PROCESS_RETURN dtls_process_ack(SSL_CONNECTION *s, PACKET *pkt);
 __owur CON_FUNC_RETURN tls_construct_end_of_early_data(SSL_CONNECTION *s,
                                                        WPACKET *pkt);
 
