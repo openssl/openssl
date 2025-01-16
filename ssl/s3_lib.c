@@ -3403,6 +3403,7 @@ int ssl3_new(SSL *s)
 void ssl3_free(SSL *s)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+    size_t i;
 
     if (sc == NULL)
         return;
@@ -3411,8 +3412,21 @@ void ssl3_free(SSL *s)
 
     EVP_PKEY_free(sc->s3.peer_tmp);
     sc->s3.peer_tmp = NULL;
-    EVP_PKEY_free(sc->s3.tmp.pkey);
-    sc->s3.tmp.pkey = NULL;
+
+    for (i = 0; i < sc->s3.tmp.num_ks_pkey; i++)
+        if (sc->s3.tmp.ks_pkey[i] != NULL) {
+            if (sc->s3.tmp.pkey == sc->s3.tmp.ks_pkey[i])
+                sc->s3.tmp.pkey = NULL;
+
+            EVP_PKEY_free(sc->s3.tmp.ks_pkey[i]);
+            sc->s3.tmp.ks_pkey[i] = NULL;
+        }
+    sc->s3.tmp.num_ks_pkey = 0;
+
+    if (sc->s3.tmp.pkey != NULL) {
+        EVP_PKEY_free(sc->s3.tmp.pkey);
+        sc->s3.tmp.pkey = NULL;
+    }
 
     ssl_evp_cipher_free(sc->s3.tmp.new_sym_enc);
     ssl_evp_md_free(sc->s3.tmp.new_hash);
@@ -3442,6 +3456,7 @@ int ssl3_clear(SSL *s)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
     int flags;
+    size_t i;
 
     if (sc == NULL)
         return 0;
@@ -3455,8 +3470,22 @@ int ssl3_clear(SSL *s)
     OPENSSL_free(sc->s3.tmp.peer_cert_sigalgs);
     OPENSSL_free(sc->s3.tmp.valid_flags);
 
-    EVP_PKEY_free(sc->s3.tmp.pkey);
     EVP_PKEY_free(sc->s3.peer_tmp);
+
+    for (i = 0; i < sc->s3.tmp.num_ks_pkey; i++)
+        if (sc->s3.tmp.ks_pkey[i] != NULL) {
+            if (sc->s3.tmp.pkey == sc->s3.tmp.ks_pkey[i])
+                sc->s3.tmp.pkey = NULL;
+
+            EVP_PKEY_free(sc->s3.tmp.ks_pkey[i]);
+            sc->s3.tmp.ks_pkey[i] = NULL;
+        }
+    sc->s3.tmp.num_ks_pkey = 0;
+
+    if (sc->s3.tmp.pkey != NULL) {
+        EVP_PKEY_free(sc->s3.tmp.pkey);
+        sc->s3.tmp.pkey = NULL;
+    }
 
     ssl3_free_digest_list(sc);
 
@@ -3561,6 +3590,10 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
             }
             return ssl_set_tmp_ecdh_groups(&sc->ext.supportedgroups,
                                            &sc->ext.supportedgroups_len,
+                                           &sc->ext.keyshares,
+                                           &sc->ext.keyshares_len,
+                                           &sc->ext.tuples,
+                                           &sc->ext.tuples_len,
                                            parg);
         }
 #endif                          /* !OPENSSL_NO_DEPRECATED_3_0 */
@@ -3713,11 +3746,22 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 
     case SSL_CTRL_SET_GROUPS:
         return tls1_set_groups(&sc->ext.supportedgroups,
-                               &sc->ext.supportedgroups_len, parg, larg);
+                               &sc->ext.supportedgroups_len,
+                               &sc->ext.keyshares,
+                               &sc->ext.keyshares_len,
+                               &sc->ext.tuples,
+                               &sc->ext.tuples_len,
+                               parg, larg);
 
     case SSL_CTRL_SET_GROUPS_LIST:
-        return tls1_set_groups_list(s->ctx, &sc->ext.supportedgroups,
-                                    &sc->ext.supportedgroups_len, parg);
+        return tls1_set_groups_list(s->ctx,
+                                    &sc->ext.supportedgroups,
+                                    &sc->ext.supportedgroups_len,
+                                    &sc->ext.keyshares,
+                                    &sc->ext.keyshares_len,
+                                    &sc->ext.tuples,
+                                    &sc->ext.tuples_len,
+                                    parg);
 
     case SSL_CTRL_GET_SHARED_GROUP:
         {
@@ -3913,6 +3957,10 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
             }
             return ssl_set_tmp_ecdh_groups(&ctx->ext.supportedgroups,
                                            &ctx->ext.supportedgroups_len,
+                                           &ctx->ext.keyshares,
+                                           &ctx->ext.keyshares_len,
+                                           &ctx->ext.tuples,
+                                           &ctx->ext.tuples_len,
                                            parg);
         }
 #endif                          /* !OPENSSL_NO_DEPRECATED_3_0 */
@@ -4014,11 +4062,20 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
     case SSL_CTRL_SET_GROUPS:
         return tls1_set_groups(&ctx->ext.supportedgroups,
                                &ctx->ext.supportedgroups_len,
+                               &ctx->ext.keyshares,
+                               &ctx->ext.keyshares_len,
+                               &ctx->ext.tuples,
+                               &ctx->ext.tuples_len,
                                parg, larg);
 
     case SSL_CTRL_SET_GROUPS_LIST:
-        return tls1_set_groups_list(ctx, &ctx->ext.supportedgroups,
+        return tls1_set_groups_list(ctx,
+                                    &ctx->ext.supportedgroups,
                                     &ctx->ext.supportedgroups_len,
+                                    &ctx->ext.keyshares,
+                                    &ctx->ext.keyshares_len,
+                                    &ctx->ext.tuples,
+                                    &ctx->ext.tuples_len,
                                     parg);
 
     case SSL_CTRL_SET_SIGALGS:

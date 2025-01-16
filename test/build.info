@@ -178,6 +178,13 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[tls13ccstest]=../include ../apps/include
   DEPEND[tls13ccstest]=../libcrypto ../libssl libtestutil.a
 
+  IF[{- !$disabled{ecx} && !$disabled{tls} && !$disabled{tls1_3} -}]
+    PROGRAMS{noinst}=tls13groupselection_test
+    SOURCE[tls13groupselection_test]=tls13groupselection_test.c helpers/ssltestlib.c
+    INCLUDE[tls13groupselection_test]=../include ../apps/include
+    DEPEND[tls13groupselection_test]=../libcrypto ../libssl libtestutil.a
+  ENDIF
+
   SOURCE[upcallstest]=upcallstest.c
   INCLUDE[upcallstest]=../include ../apps/include
   DEPEND[upcallstest]=../libcrypto libtestutil.a

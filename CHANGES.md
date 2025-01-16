@@ -30,6 +30,13 @@ OpenSSL 3.5
 
 ### Changes between 3.4 and 3.5 [xx XXX xxxx]
 
+* For TLSv1.3: Add capability for a client to send multiple key shares. Extend the scope of
+  `SSL_OP_CIPHER_SERVER_PREFERENCE` to cover server-side key exchange group selection.
+  Extend the server-side key exchange group selection algorithm and related group list syntax
+  to support multiple group priorities, e.g. to prioritize (hybrid-)KEMs.
+
+  *David Kelsey*, *Martin Schmatz*
+
 * A new random generation API has been introduced which modifies all
   of the L<RAND_bytes(3)> family of calls so they are routed through a
   specific named provider instead of being resolved via the normal DRBG

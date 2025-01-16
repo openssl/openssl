@@ -787,6 +787,11 @@ typedef struct {
 
 # define TLS_GROUP_FFDHE_FOR_TLS1_3 (TLS_GROUP_FFDHE|TLS_GROUP_ONLY_FOR_TLS1_3)
 
+/* We limit the number of key shares sent */
+# ifndef OPENSSL_CLIENT_MAX_KEY_SHARES
+#  define OPENSSL_CLIENT_MAX_KEY_SHARES 4
+# endif
+
 struct ssl_ctx_st {
     OSSL_LIB_CTX *libctx;
 
@@ -1015,6 +1020,12 @@ struct ssl_ctx_st {
 
         size_t supportedgroups_len;
         uint16_t *supportedgroups;
+
+        size_t keyshares_len;
+        uint16_t *keyshares;
+
+        size_t tuples_len; /* Number of group tuples */
+        size_t *tuples; /* Number of groups in each group tuple */
 
         uint16_t *supported_groups_default;
         size_t supported_groups_default_len;
@@ -1315,6 +1326,10 @@ struct ssl_connection_st {
             /* used to hold the new cipher we are going to use */
             const SSL_CIPHER *new_cipher;
             EVP_PKEY *pkey;         /* holds short lived key exchange key */
+            /* holds the array of short lived key exchange key (pointers) */
+            EVP_PKEY *ks_pkey[OPENSSL_CLIENT_MAX_KEY_SHARES];
+            uint16_t ks_group_id[OPENSSL_CLIENT_MAX_KEY_SHARES]; /* The IDs of the keyshare keys */
+            size_t num_ks_pkey; /* how many keyshares are there */
             /* used for certificate requests */
             int cert_req;
             /* Certificate types in certificate request message. */
@@ -1433,7 +1448,8 @@ struct ssl_connection_st {
         /* The group_id for the key exchange key */
         uint16_t group_id;
         EVP_PKEY *peer_tmp;
-
+        /* The cached group_id candidate for the key exchange key */
+        uint16_t group_id_candidate;
     } s3;
 
     struct dtls1_state_st *d1;  /* DTLSv1 variables */
@@ -1597,20 +1613,27 @@ struct ssl_connection_st {
         int ticket_expected;
         /* TLS 1.3 tickets requested by the application. */
         int extra_tickets_expected;
+
+        /* our list */
         size_t ecpointformats_len;
-        /* our list */
         unsigned char *ecpointformats;
-
-        size_t peer_ecpointformats_len;
         /* peer's list */
+        size_t peer_ecpointformats_len;
         unsigned char *peer_ecpointformats;
-        size_t supportedgroups_len;
-        /* our list */
-        uint16_t *supportedgroups;
 
+        /* our list */
+        size_t supportedgroups_len;
+        uint16_t *supportedgroups;
+        /* peer's list */
         size_t peer_supportedgroups_len;
-         /* peer's list */
         uint16_t *peer_supportedgroups;
+
+        /* key shares */
+        size_t keyshares_len;
+        uint16_t *keyshares;
+        /* supported groups tuples */
+        size_t tuples_len;
+        size_t *tuples;
 
         /* TLS Session Ticket extension override */
         TLS_SESSION_TICKET_EXT *session_ticket;
@@ -2594,6 +2617,8 @@ __owur int ssl_encapsulate(SSL_CONNECTION *s, EVP_PKEY *pubkey,
                            int gensecret);
 __owur EVP_PKEY *ssl_dh_to_pkey(DH *dh);
 __owur int ssl_set_tmp_ecdh_groups(uint16_t **pext, size_t *pextlen,
+                                   uint16_t **ksext, size_t *ksextlen,
+                                   size_t **tplext, size_t *tplextlen,
                                    void *key);
 __owur unsigned int ssl_get_max_send_fragment(const SSL_CONNECTION *sc);
 __owur unsigned int ssl_get_split_send_fragment(const SSL_CONNECTION *sc);
@@ -2793,9 +2818,14 @@ __owur uint16_t tls1_nid2group_id(int nid);
 __owur int tls1_check_group_id(SSL_CONNECTION *s, uint16_t group_id,
                                int check_own_curves);
 __owur uint16_t tls1_shared_group(SSL_CONNECTION *s, int nmatch);
-__owur int tls1_set_groups(uint16_t **pext, size_t *pextlen,
+__owur int tls1_set_groups(uint16_t **grpext, size_t *grpextlen,
+                           uint16_t **ksext, size_t *ksextlen,
+                           size_t **tplext, size_t *tplextlen,
                            int *curves, size_t ncurves);
-__owur int tls1_set_groups_list(SSL_CTX *ctx, uint16_t **pext, size_t *pextlen,
+__owur int tls1_set_groups_list(SSL_CTX *ctx,
+                                uint16_t **grpext, size_t *grpextlen,
+                                uint16_t **ksext, size_t *ksextlen,
+                                size_t **tplext, size_t *tplextlen,
                                 const char *str);
 __owur EVP_PKEY *ssl_generate_pkey_group(SSL_CONNECTION *s, uint16_t id);
 __owur int tls_valid_group(SSL_CONNECTION *s, uint16_t group_id, int minversion,
@@ -2808,6 +2838,10 @@ __owur int tls1_check_ec_tmp_key(SSL_CONNECTION *s, unsigned long id);
 __owur int tls_group_allowed(SSL_CONNECTION *s, uint16_t curve, int op);
 void tls1_get_supported_groups(SSL_CONNECTION *s, const uint16_t **pgroups,
                                size_t *pgroupslen);
+void tls1_get_requested_keyshare_groups(SSL_CONNECTION *s, const uint16_t **pgroups,
+                                        size_t *pgroupslen);
+void tls1_get_group_tuples(SSL_CONNECTION *s, const size_t **ptuples,
+                           size_t *ptupleslen);
 
 __owur int tls1_set_server_sigalgs(SSL_CONNECTION *s);
 
