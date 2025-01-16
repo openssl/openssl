@@ -523,7 +523,7 @@ IMPLEMENT_ASN1_FUNCTIONS(OSSL_AA_DIST_POINT)
 
 static int print_boolean(BIO *out, ASN1_BOOLEAN b)
 {
-    return b ? BIO_puts(out, "TRUE") : BIO_puts(out, "FALSE");
+    return BIO_puts(out, b ? "TRUE" : "FALSE");
 }
 
 static OSSL_AA_DIST_POINT *aaidp_from_section(X509V3_CTX *ctx,
