@@ -136,7 +136,7 @@ static int provider_conf_params_internal(OSSL_PROVIDER *prov,
     } else {
         OSSL_TRACE2(CONF, "Provider params: %s = %s\n", name, value);
         if (prov != NULL)
-            ok = ossl_provider_add_parameter(prov, name, value);
+            ok = OSSL_PROVIDER_add_conf_parameter(prov, name, value);
         else
             ok = ossl_provider_info_add_parameter(provinfo, name, value);
     }

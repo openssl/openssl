@@ -681,6 +681,21 @@ See L<provider(7)> for a more detailed description.
 Specifies the search path that is to be used for looking for providers.
 Equivalently, the B<OPENSSL_MODULES> environment variable may be set.
 
+=item B<-provparam> I<[name:]key=value>
+
+Set configuration parameter I<key> to value I<val> in provider I<name>
+(optional), if I<name> is not specified, the setting will be applied to all
+loaded providers.
+This option can be specified multiple times, to set multiple parameters.
+Options that specify nondefault providers to load should precede this option
+if the setting is intended to apply to the to be loaded providers.
+Parameters that only affect provider initialisation must, for now, be set in
+the configuration file, only parameters that are also queried as needed later
+have any affect when set via this interface.
+Only UTF8-string-valued parameters are supported.
+See the documentation of the specific provider and associated algorithms for
+any supported parameters.
+
 =item B<-propquery> I<propq>
 
 Specifies the I<property query clause> to be used when fetching algorithms

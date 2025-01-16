@@ -11,6 +11,7 @@ OSSL_PROVIDER_gettable_params, OSSL_PROVIDER_get_params,
 OSSL_PROVIDER_query_operation, OSSL_PROVIDER_unquery_operation,
 OSSL_PROVIDER_get0_provider_ctx, OSSL_PROVIDER_get0_dispatch,
 OSSL_PROVIDER_add_builtin, OSSL_PROVIDER_get0_name, OSSL_PROVIDER_get_capabilities,
+OSSL_PROVIDER_add_conf_parameter, OSSL_PROVIDER_get_conf_parameters,
 OSSL_PROVIDER_self_test
 - provider routines
 
@@ -59,6 +60,10 @@ OSSL_PROVIDER_self_test
                                     const char *capability,
                                     OSSL_CALLBACK *cb,
                                     void *arg);
+ int OSSL_PROVIDER_add_conf_parameter(OSSL_PROVIDER *prov, const char *name,
+                                      const char *value);
+ int OSSL_PROVIDER_get_conf_parameters(OSSL_PROVIDER *prov,
+                                       OSSL_PARAM params[]);
  int OSSL_PROVIDER_self_test(const OSSL_PROVIDER *prov);
 
 =head1 DESCRIPTION
@@ -137,6 +142,25 @@ The caller must prepare the L<OSSL_PARAM(3)> array before calling this
 function, and the variables acting as buffers for this parameter array
 should be filled with data when it returns successfully.
 
+OSSL_PROVIDER_add_conf_parameter() sets the provider configuration parameter
+I<name> to B<value>.
+Provider configuration parameters are managed by the OpenSSL core and normally
+set in the configuration file, but can also be set early in the main program
+before a provider is in use by multiple threads.
+Parameters that only affect provider initialisation must, for now, be set in
+the configuration file, only parameters that are also queried later have any
+affect when set via this interface.
+Only text parameters can be given, and it's up to the provider to
+interpret them.
+
+OSSL_PROVIDER_get_conf_parameters() retrieves global configuration parameters
+associated with B<prov>.
+These configuration parameters are stored for each provider by the OpenSSL core,
+not the provider itself, parameters managed by the provider are queried via
+B<OSSL_PROVIDER_get_params()> described above.
+The parameters are returned by reference, not as copies, and so the elements of
+the I<param> array must have B<OSSL_PARAM_UTF8_PTR> as their B<data_type>.
+
 OSSL_PROVIDER_self_test() is used to run a provider's self tests on demand.
 If the self tests fail then the provider will fail to provide any further
 services and algorithms. L<OSSL_SELF_TEST_set_callback(3)> may be called
@@ -177,7 +201,9 @@ L<provider-base(7)/CAPABILTIIES>.
 =head1 RETURN VALUES
 
 OSSL_PROVIDER_set_default_search_path(), OSSL_PROVIDER_add(),
-OSSL_PROVIDER_unload(), OSSL_PROVIDER_get_params() and
+OSSL_PROVIDER_unload(), OSSL_PROVIDER_get_params(),
+OSSL_PROVIDER_add_conf_parameter(), OSSL_PROVIDER_get_conf_parameters()
+and
 OSSL_PROVIDER_get_capabilities() return 1 on success, or 0 on error.
 
 OSSL_PROVIDER_get0_default_search_path() returns a pointer to a path on success,

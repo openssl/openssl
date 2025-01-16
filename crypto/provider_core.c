@@ -800,10 +800,28 @@ static int infopair_add(STACK_OF(INFOPAIR) **infopairsk, const char *name,
     return 0;
 }
 
-int ossl_provider_add_parameter(OSSL_PROVIDER *prov,
-                                const char *name, const char *value)
+int OSSL_PROVIDER_add_conf_parameter(OSSL_PROVIDER *prov,
+                                     const char *name, const char *value)
 {
     return infopair_add(&prov->parameters, name, value);
+}
+
+int OSSL_PROVIDER_get_conf_parameters(OSSL_PROVIDER *prov, OSSL_PARAM params[])
+{
+    int i;
+
+    if (prov->parameters == NULL)
+        return 1;
+
+    for (i = 0; i < sk_INFOPAIR_num(prov->parameters); i++) {
+        INFOPAIR *pair = sk_INFOPAIR_value(prov->parameters, i);
+        OSSL_PARAM *p = OSSL_PARAM_locate(params, pair->name);
+
+        if (p != NULL
+            && !OSSL_PARAM_set_utf8_ptr(p, pair->value))
+            return 0;
+    }
+    return 1;
 }
 
 int ossl_provider_info_add_parameter(OSSL_PROVIDER_INFO *provinfo,
@@ -2203,7 +2221,6 @@ static const OSSL_PARAM *core_gettable_params(const OSSL_CORE_HANDLE *handle)
 
 static int core_get_params(const OSSL_CORE_HANDLE *handle, OSSL_PARAM params[])
 {
-    int i;
     OSSL_PARAM *p;
     /*
      * We created this object originally and we know it is actually an
@@ -2222,16 +2239,7 @@ static int core_get_params(const OSSL_CORE_HANDLE *handle, OSSL_PARAM params[])
         OSSL_PARAM_set_utf8_ptr(p, ossl_provider_module_path(prov));
 #endif
 
-    if (prov->parameters == NULL)
-        return 1;
-
-    for (i = 0; i < sk_INFOPAIR_num(prov->parameters); i++) {
-        INFOPAIR *pair = sk_INFOPAIR_value(prov->parameters, i);
-
-        if ((p = OSSL_PARAM_locate(params, pair->name)) != NULL)
-            OSSL_PARAM_set_utf8_ptr(p, pair->value);
-    }
-    return 1;
+    return OSSL_PROVIDER_get_conf_parameters(prov, params);
 }
 
 static OPENSSL_CORE_CTX *core_get_libctx(const OSSL_CORE_HANDLE *handle)
