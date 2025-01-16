@@ -179,7 +179,7 @@ starting with B<ASN1_UTCTIME> and B<ASN1_GENERALIZEDTIME> act only on that
 specific time format. The functions starting with B<ASN1_TIME> will operate on
 either format.
 
-Users familiar with RFC822 should note that even if specifying the flag
+Users familiar with RFC822 should note that when specifying the flag
 B<ASN1_DTFLGS_RFC822> the year will be formatted as documented above,
 i.e., using 4 digits, not 2 as specified in RFC822.
 
