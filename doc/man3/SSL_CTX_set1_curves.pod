@@ -75,17 +75,81 @@ to downgrade connections to a weaker algorithm.
 =back
 
 SSL_CTX_set1_groups_list() sets the supported groups for B<ctx> to
-string B<list>. The string is a colon separated list of group names, for example
-"P-521:P-384:P-256:X25519:ffdhe2048". The groups are used as in
+string B<list>. In contrast to SSL_CTX_set1_groups(), the names of the
+groups, rather than their NIDs, are used. The groups are used as in
 SSL_CTX_set1_groups(), described above. Currently supported groups for
 B<TLSv1.3> are B<P-256>, B<P-384>, B<P-521>, B<X25519>, B<X448>,
 B<brainpoolP256r1tls13>, B<brainpoolP384r1tls13>, B<brainpoolP512r1tls13>,
 B<ffdhe2048>, B<ffdhe3072>, B<ffdhe4096>, B<ffdhe6144> and B<ffdhe8192>. Support
-for other groups may be added by external providers, however note the discussion
-on TLS 1.3 selection criteria above. If a group name is preceded with the C<?>
-character, it will be ignored if an implementation is missing. The "DEFAULT"
-group name is used to select the default selection of groups. Group names that
-are preceded with the C<-> character will be removed from the selected groups.
+for other groups may be added by external providers.
+Each group can be either the B<NIST> name (e.g. B<P-256>), some other commonly
+used name where applicable (e.g. B<X25519>, B<ffdhe2048>) or an OpenSSL OID name
+(e.g. B<prime256v1>). Group names are case sensitive.
+
+The B<list> can be used to define several group tuples of comparable security
+levels, and can specify which key shares should be sent by a client.
+The specified list elements can optionally be ignored, if not implemented
+(listing unknown groups otherwise results in error).
+It is also possible to specify the built-in default set of groups, and to explicitly
+remove a group from that list.
+
+In it's simplest form, the string B<list> is just a colon separated list
+of group names, for example "P-521:P-384:P-256:X25519:ffdhe2048". The first
+group listed will also be used for the B<key_share> sent by a client in a
+TLSv1.3 B<ClientHello>. For servers note the discussion above. The list should
+be in order of preference with the most preferred group first.
+
+Group tuples of comparable security are defined by enclosing each tuple in B<{..}> braces.
+Keyshares to be sent by a client are specified by prepending a C<*> to the group name,
+for example:
+{P-521:*P-256}:{*P-384}:{*X25519:P-384:ffdhe2048}.
+The general syntax for the string B<list> is:
+C<[{] [-][?][*]group1 rep[:[-][?][*]groupN] [}] rep[: {[-][?][*]groupM rep[:[-][?][*]groupP]} ]>
+
+If a group name is preceded with the C<?> character, it will be ignored if an
+implementation is missing. If a group name is preceded with the C<-> character, it
+will removed from the list of groups if present, ignored otherwise. The "DEFAULT"
+group name can be used to select the OpenSSL built-in default list of groups.
+
+With TLS 1.3, on the client side, all the groups are added to the supported groups
+extension, in the order in which they are listed, ignoring any braces designating
+group tuples.
+The extension's preference order, to be evaluated by the server,
+is determined by the order of the elements in the array. If a group name is preceded
+by C<*>, a key share will be sent for this group. A maximum of 4 key shares are supported.
+If no C<*> is used anywhere in the list, a single key share for the leftmost group is sent.
+
+For a TLS 1.3 server, the groups in string B<list> will be used to determine which group
+is used for the key agreement. The preference order of the group tuples is determined
+by the order of the tuples in the array, and the preference order of the groups within
+a group tuple is determined by the order of the groups in the tuple. Any C<*> will be
+ignored by a server. Server preference can be enforced by using
+C<SSL_OP_CIPHER_SERVER_PREFERENCE> (default: client preference).
+
+The server will select the group to be used for a key agreement using the following
+pseudo-code algorithm:
+
+ FOR each group tuple
+     IF client preference (= default)
+         FOR each client key-share group
+             IF current key-share group is also part of current group tuple: SH, return success
+         FOR each client supported groups
+             IF current supported group is also part of current group tuple: HRR, return success
+     ELSE (= server preference = with SSL_OP_CIPHER_SERVER_PREFERENCE option set)
+         FOR each group in current tuple
+             IF current group is also part of client key-share groups: SH, return success
+             IF current group is also part of client supported groups: HRR, return success
+ return failure
+
+ with : SH:  Server hello with current group
+        HRR: Server retry request with current group
+
+Hence, if a client supports a group in a server group tuple, a HRR is triggered if
+the client has not also sent a key share for this group. For the example:
+{P-521:*P-256}:{*P-384}:{*X25519:P-384:ffdhe2048}
+if a client supports C<P-521> but does not send a key share, and it supports
+C<P-384> including key share, a HRR will be triggered for C<P-521>
+despite the availability of a key share.
 
 SSL_set1_groups() and SSL_set1_groups_list() are similar except they set
 supported groups for the SSL structure B<ssl>.

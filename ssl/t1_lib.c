@@ -415,6 +415,25 @@ int ssl_load_groups(SSL_CTX *ctx)
            num_deflt_grps * sizeof(tmp_supp_groups[0]));
     ctx->ext.supported_groups_default_len = num_deflt_grps;
 
+    /*
+     * Default groups have no explicit key share nor a tuple,
+     * hence we'll generate a key share for the first group and
+     * define one big tuple consisting of all default groups
+     */
+    ctx->ext.keyshares_len = 1;
+    if (ctx->ext.keyshares == NULL)
+        ctx->ext.keyshares = OPENSSL_malloc(sizeof(*ctx->ext.keyshares));
+    if (ctx->ext.keyshares == NULL)
+        return 0;
+
+    ctx->ext.keyshares[0] = 0;
+    ctx->ext.tuples_len = 1;
+    if (ctx->ext.tuples == NULL)
+        ctx->ext.tuples = OPENSSL_malloc(sizeof(*ctx->ext.tuples));
+    if (ctx->ext.tuples == NULL)
+        return 0;
+    ctx->ext.tuples[0] = ctx->ext.supported_groups_default_len;
+
     return 1;
 }
 
@@ -843,6 +862,34 @@ void tls1_get_supported_groups(SSL_CONNECTION *s, const uint16_t **pgroups,
     }
 }
 
+void tls1_get_requested_keyshare_groups(SSL_CONNECTION *s, const uint16_t **pgroups,
+                                        size_t *pgroupslen)
+{
+    SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+
+    if (s->ext.supportedgroups == NULL) {
+        *pgroups = sctx->ext.supported_groups_default;
+        *pgroupslen = sctx->ext.supported_groups_default_len;
+    } else {
+        *pgroups = s->ext.keyshares;
+        *pgroupslen = s->ext.keyshares_len;
+    }
+}
+
+void tls1_get_group_tuples(SSL_CONNECTION *s, const uint16_t **ptuples,
+                           size_t *ptupleslen)
+{
+    SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+
+    if (s->ext.supportedgroups == NULL) {
+        *ptuples = sctx->ext.tuples;
+        *ptupleslen = sctx->ext.tuples_len;
+    } else {
+        *ptuples = s->ext.tuples;
+        *ptupleslen = s->ext.tuples_len;
+    }
+}
+
 int tls_valid_group(SSL_CONNECTION *s, uint16_t group_id,
                     int minversion, int maxversion,
                     int isec, int *okfortls13)
@@ -990,9 +1037,11 @@ uint16_t tls1_shared_group(SSL_CONNECTION *s, int nmatch)
 }
 
 int tls1_set_groups(uint16_t **pext, size_t *pextlen,
+                    uint16_t **ksext, size_t *ksextlen,
+                    uint16_t **tplext, size_t *tplextlen,
                     int *groups, size_t ngroups)
 {
-    uint16_t *glist;
+    uint16_t *glist, *kslist, *tpllist;
     size_t i;
     /*
      * Bitmap of groups included to detect duplicates: two variables are added
@@ -1008,6 +1057,10 @@ int tls1_set_groups(uint16_t **pext, size_t *pextlen,
     }
     if ((glist = OPENSSL_malloc(ngroups * sizeof(*glist))) == NULL)
         return 0;
+    if ((kslist = OPENSSL_malloc(1 * sizeof(*kslist))) == NULL)
+        return 0;
+    if ((tpllist = OPENSSL_malloc(1 * sizeof(*tpllist))) == NULL)
+        return 0;
     for (i = 0; i < ngroups; i++) {
         unsigned long idmask;
         uint16_t id;
@@ -1022,60 +1075,169 @@ int tls1_set_groups(uint16_t **pext, size_t *pextlen,
         glist[i] = id;
     }
     OPENSSL_free(*pext);
+    OPENSSL_free(*ksext);
+    OPENSSL_free(*tplext);
     *pext = glist;
     *pextlen = ngroups;
+    kslist[0] = glist[0];
+    *ksext = kslist;
+    *ksextlen = 1;
+    tpllist[0] = ngroups;
+    *tplext = tpllist;
+    *tplextlen = 1;
     return 1;
 err:
     OPENSSL_free(glist);
+    OPENSSL_free(kslist);
+    OPENSSL_free(tpllist);
     return 0;
 }
 
-# define GROUPLIST_INCREMENT   40
-# define GROUP_NAME_BUFFER_LENGTH 64
+/*
+ * Group list management:
+ * We establish three lists along with their related size counters:
+ * 1) List of (unique) groups
+ * 2) List of number of groups per group-priority-tuple
+ * 3) List of (unique) key share groups
+ */
+#define GROUPLIST_INCREMENT 32 /* Memory allocation chunk size (64 Bytes chunks) */
+#define GROUP_NAME_BUFFER_LENGTH 64 /* Max length of a group name */
+
+/*
+ * Preparation of the prefix used to indicate the desire to send a key share,
+ * the characters to indicate the start and the end of a group tuple, the
+ * character to indicate that an unknown group should be ignored, and the
+ * character to indicate that a group should be deleted from a list
+ */
+#ifndef TUPLE_START_CHARACTER
+/* The prefix characters to indicate group tuple boundaries */
+# define TUPLE_START_CHARACTER '{'
+# define TUPLE_END_CHARACTER '}'
+#endif
+#ifndef IGNORE_UNKNOWN_GROUP_CHARACTER
+/* The prefix character to ignore unknown groups */
+# define IGNORE_UNKNOWN_GROUP_CHARACTER '?'
+#endif
+#ifndef KEY_SHARE_INDICATOR_CHARACTER
+/* The prefix character to trigger a key share addition */
+# define KEY_SHARE_INDICATOR_CHARACTER '*'
+#endif
+#ifndef REMOVE_GROUP_INDICATOR_CHARACTER
+/* The prefix character to trigger a key share removal */
+# define REMOVE_GROUP_INDICATOR_CHARACTER '-'
+#endif
+static const char prefixes[] = {TUPLE_START_CHARACTER,
+                                TUPLE_END_CHARACTER,
+                                IGNORE_UNKNOWN_GROUP_CHARACTER,
+                                KEY_SHARE_INDICATOR_CHARACTER,
+                                REMOVE_GROUP_INDICATOR_CHARACTER,
+                                '\0'};
+
 typedef struct {
     SSL_CTX *ctx;
-    size_t gidcnt;
-    size_t gidmax;
-    uint16_t *gid_arr;
+    size_t gidmax; /* The memory allocation chunk size for the group IDs */
+    size_t gidcnt; /* Number of groups */
+    uint16_t *gid_arr; /* The IDs of the supported groups */
+    size_t tplmax; /* The memory allocation chunk size for the tuple counters */
+    size_t tplcnt; /* Number of tuples */
+    uint16_t *tuplcnt_arr; /* The number of groups inside a tuple */
+    size_t ksidmax; /* The memory allocation chunk size */
+    size_t ksidcnt; /* Number of key shares */
+    uint16_t *ksid_arr; /* The IDs of the key share groups */
+    size_t ks_selection_detected; /* A flag to indicate that key shares are explicitly requested */
+    int inside_tuple; /* Flag to indicate that we're currently inside a tuple */
+    int groups_in_tuple; /* Counter for number of groups in current tuple */
 } gid_cb_st;
 
 static int gid_cb(const char *elem, int len, void *arg)
 {
     gid_cb_st *garg = arg;
-    size_t i;
+    size_t i, j;
     uint16_t gid = 0;
     char etmp[GROUP_NAME_BUFFER_LENGTH];
+    int retval = 1;
     int ignore_unknown = 0;
+    int add_keyshare = 0;
+    int tuple_closed = 0;
     int remove_group = 0;
     int found_group = 0;
-    int add_default_groups = 0;
+    int add_default_groups = 0, currently_inside_tuple = 0;
     size_t groups_to_add = 0;
+    char *current_prefix;
 
+    /* Sanity checks */
+    if (garg == NULL)
+        return 0;
     if (elem == NULL)
         return 0;
 
-    while (((elem[0] == '-' && !remove_group) || (elem[0] == '?' && !ignore_unknown))
-           && len > 0) {
-        if (elem[0] == '-') {
-            remove_group = 1;
-            ++elem;
-            --len;
-        }
-        if (elem[0] == '?') {
+    /* Where have we left off in the previouc call to this function: Inside a tuple or not? */
+    currently_inside_tuple = garg->inside_tuple;
+
+    /* Check the possible prefixes (remark: Leading and trailing spaces already cleared) */
+    while ((current_prefix = strchr(prefixes, elem[0])) != NULL) {
+        switch (*current_prefix) {
+        case IGNORE_UNKNOWN_GROUP_CHARACTER:
+            if (ignore_unknown)
+                return -1; /* Only single ? allowed -> sytax error */
             ignore_unknown = 1;
             ++elem;
             --len;
+            break;
+        case TUPLE_START_CHARACTER:
+            if (garg->inside_tuple)
+                return -1; /* We're already inside a tuple -> sytax error */
+            garg->inside_tuple = 1;
+            ++elem;
+            --len;
+            break;
+        case TUPLE_END_CHARACTER:
+            return -1; /* Not a valid prefix -> sytax error */
+            break;
+        case KEY_SHARE_INDICATOR_CHARACTER:
+            if (add_keyshare)
+                return -1; /* Only single key share prefix allowed -> sytax error */
+            add_keyshare = 1;
+            ++elem;
+            --len;
+            break;
+        case REMOVE_GROUP_INDICATOR_CHARACTER:
+            if (remove_group)
+                return -1; /* Only single remove group prefix allowed -> sytax error */
+            remove_group = 1;
+            ++elem;
+            --len;
+            break;
+        default:
+            break;
         }
     }
 
+    /* Check tuple syntax validity */
+    if (garg->tplcnt != 0 /* at least one complete tuple is present */ &&
+        !currently_inside_tuple /* and we are curtently not inside a tuple */ &&
+        !garg->inside_tuple /* and no fresh tuple was just started based on prefix analysis */)
+        return -1; /* A previous tuple was closed, but no new tuple is started --> syntax error */
+
+    /* Check whether we've reached the end of a tuple */
+    if (elem[len - 1] == TUPLE_END_CHARACTER) {
+        if (!garg->inside_tuple)
+            return -1; /* Can't close a tuple if not in tuple -> sytax error */
+        /* ignore (~='delete') closing bracket and update book keeping */
+        --len;
+        tuple_closed = 1;
+        garg->inside_tuple = 0;
+    }
+
+    /* Check whether the DEFAULT group list should be added */
     if (len == strlen("DEFAULT") && OPENSSL_strncasecmp("DEFAULT", elem, len) == 0)
         add_default_groups = 1;
-
     if (add_default_groups)
         groups_to_add = garg->ctx->ext.supported_groups_default_len;
     else if (!remove_group)
         groups_to_add = 1;
 
+    /* Memory management in case more groups are present compared to initial allocation */
     if (groups_to_add > garg->gidmax - garg->gidcnt) {
         size_t list_increment = groups_to_add > GROUPLIST_INCREMENT ? groups_to_add
                                                                     : GROUPLIST_INCREMENT;
@@ -1089,89 +1251,192 @@ static int gid_cb(const char *elem, int len, void *arg)
         garg->gidmax += list_increment;
         garg->gid_arr = tmp;
     }
+    /* Memory management for tuples and key share groups */
+    if (garg->tplcnt == garg->tplmax) {
+        uint16_t *tmp =
+            OPENSSL_realloc(garg->tuplcnt_arr,
+                            (garg->tplmax + GROUPLIST_INCREMENT) * sizeof(*garg->tuplcnt_arr));
 
+        if (tmp == NULL)
+            return 0;
+        garg->tplmax += GROUPLIST_INCREMENT;
+        garg->tuplcnt_arr = tmp;
+    }
+    if (garg->ksidcnt == garg->ksidmax) {
+        uint16_t *tmp =
+            OPENSSL_realloc(garg->ksid_arr,
+                            (garg->ksidmax + GROUPLIST_INCREMENT) * sizeof(*garg->ksid_arr));
+
+        if (tmp == NULL)
+            return 0;
+        garg->ksidmax += GROUPLIST_INCREMENT;
+        garg->ksid_arr = tmp;
+    }
+
+    if (len > (int)(sizeof(etmp) - 1))
+        return -1; /* group name to long  -> sytax error */
+
+    /* For the DEFAULT 'placeholder' group name, we add all default groups if not already present */
     if (add_default_groups) {
-        size_t j;
+        if (remove_group)
+            return -1; /* remove indicator in front of DEFAULT is not allowed --> Syntax error */
 
         for (j = 0; j < garg->ctx->ext.supported_groups_default_len; j++) {
             gid = garg->ctx->ext.supported_groups_default[j];
             found_group = 0;
-
+            /* Check whether this default group is already in the list ... */
             for (i = 0; i < garg->gidcnt; i++) {
                 if (garg->gid_arr[i] == gid) {
                     found_group = 1;
                     break;
                 }
             }
-
-            if (!found_group)
+            /* ... and only add if not yet in list */
+            if (!found_group) {
                 garg->gid_arr[garg->gidcnt++] = gid;
+                garg->groups_in_tuple++;
+            }
+        }
+    } else { /* Add or remove a single group */
+
+        /* Create a \0-terminated string and get the gid for this group if possible */
+        memcpy(etmp, elem, len);
+        etmp[len] = 0;
+        gid = tls1_group_name2id(garg->ctx, etmp);
+
+        if (gid == 0) {
+            /* Unknown group - ignore if ignore_unknown; trigger error otherwise */
+            retval = ignore_unknown;
+            goto done;
         }
 
-        return 1;
-    }
+        if (remove_group) { /* Remove group from list if present, ignore if not present */
+            for (i = 0; i < garg->gidcnt; i++)
+                if (garg->gid_arr[i] == gid) {
+                    found_group = 1;
+                    break;
+                }
+            if (found_group) {
+                for (j = i + 1; j < garg->gidcnt; j++)
+                    garg->gid_arr[j - 1] = garg->gid_arr[j];
 
-    if (len > (int) (sizeof(etmp) - 1))
-        return 0;
-    memcpy(etmp, elem, len);
-    etmp[len] = 0;
-
-    gid = tls1_group_name2id(garg->ctx, etmp);
-    if (gid == 0) {
-        /* Unknown group - ignore, if ignore_unknown */
-        return ignore_unknown;
-    }
-
-    for (i = 0; i < garg->gidcnt; i++)
-        if (garg->gid_arr[i] == gid) {
-            found_group = 1;
-            break;
+                garg->gidcnt--;
+                garg->groups_in_tuple--;
+                if (garg->groups_in_tuple == 0)
+                    retval = -1; /* we have deleted all groups from this tuple --> syntax error */
+            }
+        } else { /* Processing of a single new group to be added */
+            for (i = 0; i < garg->gidcnt; i++)
+                if (garg->gid_arr[i] == gid) {
+                    /* Duplicate group - ignore */
+                    retval = 1;
+                    goto done;
+                }
+            /* We memorize the current group */
+            garg->gid_arr[garg->gidcnt++] = gid;
+            /* We update the book keeping */
+            garg->groups_in_tuple++;
+            /* We memorize that we want to add a key share for the current group if needed */
+            if (add_keyshare)
+                garg->ksid_arr[garg->ksidcnt++] = gid;
         }
-
-    if (found_group && remove_group) {
-        size_t j;
-
-        for (j = i + 1; j < garg->gidcnt; j++)
-            garg->gid_arr[j - 1] = garg->gid_arr[j];
-
-        garg->gidcnt--;
     }
 
-    if (!found_group && !remove_group)
-        garg->gid_arr[garg->gidcnt++] = gid;
+done:
+    if (tuple_closed) {
+        /*
+         * The tuple is closed, hence increase the tuple counter and
+         * memorize how many groups are in this tuple (and reset the counter)
+         */
+        garg->tuplcnt_arr[garg->tplcnt++] = garg->groups_in_tuple;
+        garg->groups_in_tuple = 0;
+    }
 
-    return 1;
+    return retval;
 }
 
-/* Set groups based on a colon separated list */
-int tls1_set_groups_list(SSL_CTX *ctx, uint16_t **pext, size_t *pextlen,
+/* Set groups based on a colon separated list (including '* { }'-syntax enhancements) */
+int tls1_set_groups_list(SSL_CTX *ctx,
+                         uint16_t **pext, size_t *pextlen,
+                         uint16_t **ksext, size_t *ksextlen,
+                         uint16_t **tplext, size_t *tplextlen,
                          const char *str)
 {
     gid_cb_st gcb;
     uint16_t *tmparr;
-    int ret = 0;
+    int ret = 0, parse_ret = 0;
 
+    gcb.inside_tuple = 0;
+    gcb.groups_in_tuple = 0;
     gcb.gidcnt = 0;
+    gcb.ksidcnt = 0;
+    gcb.tplcnt = 0;
     gcb.gidmax = GROUPLIST_INCREMENT;
+    gcb.tplmax = GROUPLIST_INCREMENT;
+    gcb.ksidmax = GROUPLIST_INCREMENT;
+    gcb.ctx = ctx;
+
     gcb.gid_arr = OPENSSL_malloc(gcb.gidmax * sizeof(*gcb.gid_arr));
     if (gcb.gid_arr == NULL)
         return 0;
-    gcb.ctx = ctx;
-    if (!CONF_parse_list(str, ':', 1, gid_cb, &gcb))
+    gcb.tuplcnt_arr = OPENSSL_malloc(gcb.tplmax * sizeof(*gcb.tuplcnt_arr));
+    if (gcb.tuplcnt_arr == NULL)
+        return 0;
+    gcb.ksid_arr = OPENSSL_malloc(gcb.ksidmax * sizeof(*gcb.ksid_arr));
+    if (gcb.ksid_arr == NULL)
+        return 0;
+
+    parse_ret = CONF_parse_list(str, ':', 1, gid_cb, &gcb);
+
+    if (parse_ret == 0)
         goto end;
+    if (parse_ret == -1) {
+        ERR_raise_data(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT,
+                       "Syntax error in '%s'", str);
+        goto end;
+    }
     if (gcb.gidcnt == 0) {
         ERR_raise_data(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT,
                        "No valid groups in '%s'", str);
         goto end;
     }
-    if (pext == NULL) {
+    if (gcb.inside_tuple) {
+        ERR_raise_data(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT,
+                       "Tuple not closed in '%s'", str);
+        goto end;
+    }
+    if (gcb.ksidcnt > OPENSSL_CLIENT_MAX_KEY_SHARES) {
+        ERR_raise_data(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT,
+                       "To many keyshares requested in '%s' (max = %d)",
+                       str, OPENSSL_CLIENT_MAX_KEY_SHARES);
+        goto end;
+    }
+    if (gcb.tplcnt == 0) {
+        /*
+         * No {..}:{..}:{..} tuple syntax was used, hence we treat the group list as
+         * one single tuple of groups with groups in this tuple equal to number of groups
+         */
+        gcb.tplcnt = 1;
+        gcb.tuplcnt_arr[0] = gcb.gidcnt;
+    }
+    if (gcb.ksidcnt == 0) { /* No keyshare group prefix used */
+        /*
+         * No key share group prefix character was used, hence we indicate that a single
+         * key share should be sent and flag that it should come from the supported_groups list
+         */
+        gcb.ksidcnt = 1;
+        gcb.ksid_arr[0] = 0;
+    }
+
+    if (pext == NULL || ksext == NULL || tplext == NULL ||
+        pextlen == NULL || ksextlen == NULL || tplextlen == NULL) {
         ret = 1;
         goto end;
     }
 
     /*
-     * gid_cb ensurse there are no duplicates so we can just go ahead and set
-     * the result
+     * gid_cb ensures there are no duplicates or unknown groups so we
+     * can just go ahead and set the results
      */
     tmparr = OPENSSL_memdup(gcb.gid_arr, gcb.gidcnt * sizeof(*tmparr));
     if (tmparr == NULL)
@@ -1179,9 +1444,24 @@ int tls1_set_groups_list(SSL_CTX *ctx, uint16_t **pext, size_t *pextlen,
     OPENSSL_free(*pext);
     *pext = tmparr;
     *pextlen = gcb.gidcnt;
+    tmparr = OPENSSL_memdup(gcb.ksid_arr, gcb.ksidcnt * sizeof(*tmparr));
+    if (tmparr == NULL)
+        goto end;
+    OPENSSL_free(*ksext);
+    *ksext = tmparr;
+    *ksextlen = gcb.ksidcnt;
+    tmparr = OPENSSL_memdup(gcb.tuplcnt_arr, gcb.tplcnt * sizeof(*tmparr));
+    if (tmparr == NULL)
+        goto end;
+    OPENSSL_free(*tplext);
+    *tplext = tmparr;
+    *tplextlen = gcb.tplcnt;
+
     ret = 1;
  end:
     OPENSSL_free(gcb.gid_arr);
+    OPENSSL_free(gcb.tuplcnt_arr);
+    OPENSSL_free(gcb.ksid_arr);
     return ret;
 }
 

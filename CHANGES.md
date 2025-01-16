@@ -30,6 +30,13 @@ OpenSSL 3.5
 
 ### Changes between 3.4 and 3.5 [xx XXX xxxx]
 
+* For TLSv1.3: Add capability for a client to send multiple key shares. Extend the scope of
+  `SSL_OP_CIPHER_SERVER_PREFERENCE` to cover server-side key exchange group selection.
+  Extend the server-side key exchange group selection algorithm and related group list syntax
+  to support multiple group priorities, e.g. to prioritize (hybrid-)KEMs.
+
+  *David Kelsey*, *Martin Schmatz*
+
 * New inline functions were added to support loads and stores of unsigned
   16-bit, 32-bit and 64-bit integers in either little-endian or big-endian
   form, regardless of the host byte-order.  See the `OPENSSL_load_u16_le(3)`

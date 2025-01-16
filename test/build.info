@@ -55,8 +55,8 @@ IF[{- !$disabled{tests} -}]
           x509_time_test x509_dup_cert_test x509_check_cert_pkey_test \
           recordlentest drbgtest rand_status_test sslbuffertest \
           time_offset_test pemtest ssl_cert_table_internal_test ciphername_test \
-          servername_test ocspapitest fatalerrtest tls13ccstest \
-          sysdefaulttest errtest ssl_ctx_test build_wincrypt_test \
+          servername_test ocspapitest fatalerrtest tls12groupselection_test tls13ccstest \
+          tls13groupselection_test sysdefaulttest errtest ssl_ctx_test build_wincrypt_test \
           context_internal_test aesgcmtest params_test evp_pkey_dparams_test \
           keymgmt_internal_test hexstr_test provider_status_test defltfips_test \
           bio_readbuffer_test user_property_test pkcs7_test upcallstest \
@@ -177,6 +177,14 @@ IF[{- !$disabled{tests} -}]
   SOURCE[tls13ccstest]=tls13ccstest.c helpers/ssltestlib.c
   INCLUDE[tls13ccstest]=../include ../apps/include
   DEPEND[tls13ccstest]=../libcrypto ../libssl libtestutil.a
+
+  SOURCE[tls12groupselection_test]=tls12groupselection_test.c helpers/ssltestlib.c
+  INCLUDE[tls12groupselection_test]=../include ../apps/include
+  DEPEND[tls12groupselection_test]=../libcrypto ../libssl libtestutil.a
+
+  SOURCE[tls13groupselection_test]=tls13groupselection_test.c helpers/ssltestlib.c
+  INCLUDE[tls13groupselection_test]=../include ../apps/include
+  DEPEND[tls13groupselection_test]=../libcrypto ../libssl libtestutil.a
 
   SOURCE[upcallstest]=upcallstest.c
   INCLUDE[upcallstest]=../include ../apps/include
