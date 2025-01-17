@@ -510,34 +510,36 @@ int ossl_asn1_time_print_ex(BIO *bp, const ASN1_TIME *tm, unsigned long flags)
          * 'fraction point' in a GeneralizedTime string.
          */
         if (tm->length > 15 && v[14] == period) {
-            f = &v[14];
-            f_len = 1;
-            while (14 + f_len < l && ossl_ascii_isdigit(f[f_len]))
+            /* exclude the . itself */
+            f = &v[15];
+            f_len = 0;
+            while (15 + f_len < l && ossl_ascii_isdigit(f[f_len]))
                 ++f_len;
         }
 
-        if ((flags & ASN1_DTFLGS_TYPE_MASK) == ASN1_DTFLGS_ISO8601) {
-            return BIO_printf(bp, "%4d-%02d-%02d %02d:%02d:%02d%.*sZ",
-                              stm.tm_year + 1900, stm.tm_mon + 1,
-                              stm.tm_mday, stm.tm_hour,
-                              stm.tm_min, stm.tm_sec, f_len, f) > 0;
-        } else {
-            return BIO_printf(bp, "%s %2d %02d:%02d:%02d%.*s %d GMT",
-                              _asn1_mon[stm.tm_mon], stm.tm_mday, stm.tm_hour,
-                              stm.tm_min, stm.tm_sec, f_len, f,
-                              stm.tm_year + 1900) > 0;
+        if (f_len > 0) {
+            if ((flags & ASN1_DTFLGS_TYPE_MASK) == ASN1_DTFLGS_ISO8601) {
+                return BIO_printf(bp, "%4d-%02d-%02d %02d:%02d:%02d.%.*sZ",
+                                  stm.tm_year + 1900, stm.tm_mon + 1,
+                                  stm.tm_mday, stm.tm_hour,
+                                  stm.tm_min, stm.tm_sec, f_len, f) > 0;
+            } else {
+                return BIO_printf(bp, "%s %2d %02d:%02d:%02d.%.*s %d GMT",
+                                  _asn1_mon[stm.tm_mon], stm.tm_mday, stm.tm_hour,
+                                  stm.tm_min, stm.tm_sec, f_len, f,
+                                  stm.tm_year + 1900) > 0;
+            }
         }
+    }
+    if ((flags & ASN1_DTFLGS_TYPE_MASK) == ASN1_DTFLGS_ISO8601) {
+        return BIO_printf(bp, "%4d-%02d-%02d %02d:%02d:%02dZ",
+                          stm.tm_year + 1900, stm.tm_mon + 1,
+                          stm.tm_mday, stm.tm_hour,
+                          stm.tm_min, stm.tm_sec) > 0;
     } else {
-        if ((flags & ASN1_DTFLGS_TYPE_MASK) == ASN1_DTFLGS_ISO8601) {
-            return BIO_printf(bp, "%4d-%02d-%02d %02d:%02d:%02dZ",
-                              stm.tm_year + 1900, stm.tm_mon + 1,
-                              stm.tm_mday, stm.tm_hour,
-                              stm.tm_min, stm.tm_sec) > 0;
-        } else {
-            return BIO_printf(bp, "%s %2d %02d:%02d:%02d %d GMT",
-                              _asn1_mon[stm.tm_mon], stm.tm_mday, stm.tm_hour,
-                              stm.tm_min, stm.tm_sec, stm.tm_year + 1900) > 0;
-        }
+        return BIO_printf(bp, "%s %2d %02d:%02d:%02d %d GMT",
+                          _asn1_mon[stm.tm_mon], stm.tm_mday, stm.tm_hour,
+                          stm.tm_min, stm.tm_sec, stm.tm_year + 1900) > 0;
     }
 }
 
