@@ -2543,7 +2543,10 @@ static int pkey_test_run_init(EVP_TEST *t)
 {
     PKEY_DATA *data = t->data;
     int i, ret = 0;
-    OSSL_PARAM params[3] = { OSSL_PARAM_END, OSSL_PARAM_END, OSSL_PARAM_END };
+    OSSL_PARAM params[5] = {
+        OSSL_PARAM_END, OSSL_PARAM_END, OSSL_PARAM_END,
+        OSSL_PARAM_END, OSSL_PARAM_END
+    };
     OSSL_PARAM *p = NULL;
     size_t params_n = 0, params_n_allocstart = 0;
 
@@ -2608,6 +2611,7 @@ static int pkey_test_run(EVP_TEST *t)
         t->err = "KEYOP_ERROR";
         goto err;
     }
+
     if (!memory_err_compare(t, "KEYOP_MISMATCH",
                             expected->output, expected->output_len,
                             got, got_len))
@@ -2770,6 +2774,20 @@ static int verify_message_test_init(EVP_TEST *t, const char *name)
 static const EVP_TEST_METHOD pverify_message_test_method = {
     "Verify-Message",
     verify_message_test_init,
+    pkey_test_cleanup,
+    pkey_test_parse,
+    verify_test_run
+};
+
+static int verify_message_public_test_init(EVP_TEST *t, const char *name)
+{
+    return pkey_test_init_ex2(t, name, 1,
+                              EVP_PKEY_verify_message_init, NULL);
+}
+
+static const EVP_TEST_METHOD pverify_message_public_test_method = {
+    "Verify-Message-Public",
+    verify_message_public_test_init,
     pkey_test_cleanup,
     pkey_test_parse,
     verify_test_run
@@ -4052,7 +4070,8 @@ typedef struct keygen_test_data_st {
     char *keyname; /* Key name to store key or NULL */
     char *paramname;
     char *alg;
-    STACK_OF(OPENSSL_STRING) *controls; /* Collection of controls */
+    STACK_OF(OPENSSL_STRING) *in_controls; /* Collection of controls */
+    STACK_OF(OPENSSL_STRING) *out_controls;
 } KEYGEN_TEST_DATA;
 
 static int keygen_test_init(EVP_TEST *t, const char *alg)
@@ -4068,7 +4087,8 @@ static int keygen_test_init(EVP_TEST *t, const char *alg)
         return 0;
     data->keyname = NULL;
     data->paramname = NULL;
-    data->controls = sk_OPENSSL_STRING_new_null();
+    data->in_controls = sk_OPENSSL_STRING_new_null();
+    data->out_controls = sk_OPENSSL_STRING_new_null();
     data->alg = OPENSSL_strdup(alg);
     t->data = data;
     t->err = NULL;
@@ -4079,7 +4099,8 @@ static void keygen_test_cleanup(EVP_TEST *t)
 {
     KEYGEN_TEST_DATA *keygen = t->data;
 
-    ctrlfree(keygen->controls);
+    ctrlfree(keygen->in_controls);
+    ctrlfree(keygen->out_controls);
     OPENSSL_free(keygen->alg);
     OPENSSL_free(keygen->keyname);
     OPENSSL_free(keygen->paramname);
@@ -4097,8 +4118,48 @@ static int keygen_test_parse(EVP_TEST *t,
     if (strcmp(keyword, "KeyParam") == 0)
         return TEST_ptr(keygen->paramname = OPENSSL_strdup(value));
     if (strcmp(keyword, "Ctrl") == 0)
-        return ctrladd(keygen->controls, value);
+        return ctrladd(keygen->in_controls, value);
+    if (strcmp(keyword, "CtrlOut") == 0)
+        return ctrladd(keygen->out_controls, value);
     return 0;
+}
+
+/* Iterate thru the key's expected values */
+static int check_pkey_expected_values(EVP_TEST *t, const EVP_PKEY *pkey,
+                                      STACK_OF(OPENSSL_STRING) *out_controls)
+{
+    int ret = 0;
+    OSSL_PARAM out_params[4], *p;
+    size_t out_params_n = 0, len;
+
+    if (sk_OPENSSL_STRING_num(out_controls) > 0) {
+
+        if (!ctrl2params(t, out_controls,
+                         EVP_PKEY_gettable_params(pkey),
+                         out_params, OSSL_NELEM(out_params), &out_params_n))
+            goto err;
+        for (p = out_params; p->key != NULL; ++p) {
+            if (p->data_type == OSSL_PARAM_OCTET_STRING) {
+                uint8_t *data = OPENSSL_malloc(p->data_size);
+
+                if (data == NULL)
+                    goto err;
+                ret = EVP_PKEY_get_octet_string_param(pkey, p->key, data,
+                                                      p->data_size, &len)
+                    && len == p->data_size
+                    && (TEST_mem_eq(p->data, len, data, len) == 1);
+                OPENSSL_free(data);
+                if (ret == 0) {
+                    TEST_error("Expected %s value is incorrect", p->key);
+                    goto err;
+                }
+            }
+        }
+    }
+    ret = 1;
+err:
+    ctrl2params_free(out_params, out_params_n, 0);
+    return ret;
 }
 
 static int keygen_test_run(EVP_TEST *t)
@@ -4132,8 +4193,8 @@ static int keygen_test_run(EVP_TEST *t)
         goto err;
     }
 
-    if (sk_OPENSSL_STRING_num(keygen->controls) > 0) {
-        if (!ctrl2params(t, keygen->controls,
+    if (sk_OPENSSL_STRING_num(keygen->in_controls) > 0) {
+        if (!ctrl2params(t, keygen->in_controls,
                          EVP_PKEY_CTX_settable_params(genctx),
                          params, OSSL_NELEM(params), &params_n))
             goto err;
@@ -4149,6 +4210,7 @@ static int keygen_test_run(EVP_TEST *t)
         t->err = "KEYGEN_GENERATE_ERROR";
         goto err;
     }
+
     if (!pkey_check_fips_approved(genctx, t)) {
         rv = 0;
         goto err;
@@ -4158,6 +4220,12 @@ static int keygen_test_run(EVP_TEST *t)
         TEST_info("Warning: legacy key generated %s", keygen->keyname);
         goto err;
     }
+
+    if (!check_pkey_expected_values(t, pkey, keygen->out_controls)) {
+        t->err = "KEYGEN_PKEY_MISMATCH_ERROR";
+        goto err;
+    }
+
     if (keygen->keyname != NULL) {
         KEY_LIST *key;
 
@@ -4576,6 +4644,7 @@ static const EVP_TEST_METHOD *evp_test_list[] = {
     &pverify_recover_test_method,
     &pverify_test_method,
     &pverify_message_test_method,
+    &pverify_message_public_test_method,
     &pkey_kem_test_method,
     NULL
 };
