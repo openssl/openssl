@@ -849,7 +849,8 @@ static int ecx_pki_priv_to_der(const void *vecxkey, unsigned char **pder,
 
 #ifndef OPENSSL_NO_ML_KEM
 
-static int ml_kem_spki_pub_to_der(const void *vkey, unsigned char **pder)
+static int ml_kem_spki_pub_to_der(const void *vkey, unsigned char **pder,
+                                  ossl_unused void *ctx)
 {
     const ML_KEM_KEY *key = vkey;
     size_t publen;
@@ -874,7 +875,8 @@ static int ml_kem_spki_pub_to_der(const void *vkey, unsigned char **pder)
     return publen;
 }
 
-static int ml_kem_pki_priv_to_der(const void *vkey, unsigned char **pder)
+static int ml_kem_pki_priv_to_der(const void *vkey, unsigned char **pder,
+                                  ossl_unused void *ctx)
 {
     const ML_KEM_KEY *key = vkey;
     int len = ML_KEM_SEED_BYTES;
@@ -903,7 +905,7 @@ static int ml_kem_pki_priv_to_der(const void *vkey, unsigned char **pder)
         return 0;
 
     if (ossl_ml_kem_have_seed(key)) {
-        if (ossl_ml_kem_encode_key_seed(*pder, len, key))
+        if (ossl_ml_kem_encode_seed(*pder, len, key))
             return len;
     } else {
         if (ossl_ml_kem_encode_private_key(*pder, len, key))

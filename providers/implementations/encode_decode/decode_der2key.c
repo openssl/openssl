@@ -23,6 +23,7 @@
 #include <openssl/params.h>
 #include <openssl/pem.h>         /* PEM_BUFSIZE and public PEM functions */
 #include <openssl/pkcs12.h>
+#include <openssl/provider.h>
 #include <openssl/x509.h>
 #include <openssl/proverr.h>
 #include "internal/cryptlib.h"   /* ossl_assert() */
@@ -624,6 +625,7 @@ ml_kem_d2i_PKCS8(const uint8_t **der, long der_len, struct der2key_ctx_st *ctx)
     ML_KEM_PRIV_FMT fmt;
     int plen, ptype, privlen, pairlen;
     uint16_t keylen;
+    int retain;
 
     /* Extract the key OID and any parameters (we want none of those) */
     if ((p8inf = d2i_PKCS8_PRIV_KEY_INFO(NULL, der, der_len)) == NULL)
@@ -663,13 +665,14 @@ ml_kem_d2i_PKCS8(const uint8_t **der, long der_len, struct der2key_ctx_st *ctx)
                        "unexpected PKCS#8 private key length: %d", plen);
         break;
     case SEED_FMT:
-        if ((key = ossl_ml_kem_key_new(libctx, ctx->propq,
-                                       ctx->desc->evp_type)) != NULL
-            && ossl_ml_kem_genkey(p, p + ML_KEM_RANDOM_BYTES, NULL, 0, key))
-            ret = key;
+        retain = ossl_prov_ctx_get_bool_param(
+            ctx->provctx, OSSL_PKEY_PARAM_ML_KEM_RETAIN_SEED, 1);
+        if ((key = ossl_ml_kem_key_new(libctx, ctx->propq, retain,
+                                       ctx->desc->evp_type)) != NULL)
+            ret = ossl_ml_kem_set_seed(p, plen, key);
         else
-            ERR_raise_data(ERR_LIB_PROV, PROV_R_GENERATE_ERROR,
-                           "error generating %s private key from seed",
+            ERR_raise_data(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR,
+                           "error storing %s private key seed",
                            vinfo->algorithm_name);
         break;
     case ASN1_FMT:
@@ -681,7 +684,7 @@ ml_kem_d2i_PKCS8(const uint8_t **der, long der_len, struct der2key_ctx_st *ctx)
         /* fallthrough */
     case LONG_FMT:
         /* Check public key consistency if provided? */
-        if ((key = ossl_ml_kem_key_new(libctx, ctx->propq,
+        if ((key = ossl_ml_kem_key_new(libctx, ctx->propq, 1,
                                        ctx->desc->evp_type)) != NULL
             && ossl_ml_kem_parse_private_key(p, vinfo->prvkey_bytes, key))
             ret = key;
@@ -754,7 +757,7 @@ ml_kem_d2i_PUBKEY(const uint8_t **der, long der_len,
         goto end;
     }
 
-    ret = ossl_ml_kem_key_new(libctx, ctx->propq, ctx->desc->evp_type);
+    ret = ossl_ml_kem_key_new(libctx, ctx->propq, 1, ctx->desc->evp_type);
     if (ret == NULL
         || !ossl_ml_kem_parse_public_key(spki->pubkey->data,
                                          spki->pubkey->length, ret)) {
