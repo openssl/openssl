@@ -534,6 +534,14 @@ static const OSSL_ALGORITHM deflt_keymgmt[] = {
     { NULL, NULL, NULL }
 };
 
+static const OSSL_ALGORITHM deflt_skeymgmt[] = {
+    { PROV_NAMES_AES, "provider=default", ossl_aes_skeymgmt_functions,
+      PROV_DESCS_AES },
+    { PROV_NAMES_GENERIC, "provider=default", ossl_generic_skeymgmt_functions,
+      PROV_DESCS_GENERIC },
+    { NULL, NULL, NULL }
+};
+
 static const OSSL_ALGORITHM deflt_encoder[] = {
 #define ENCODER_PROVIDER "default"
 #include "encoders.inc"
@@ -588,6 +596,8 @@ static const OSSL_ALGORITHM *deflt_query(void *provctx, int operation_id,
         return deflt_decoder;
     case OSSL_OP_STORE:
         return deflt_store;
+    case OSSL_OP_SKEYMGMT:
+        return deflt_skeymgmt;
     }
     return NULL;
 }

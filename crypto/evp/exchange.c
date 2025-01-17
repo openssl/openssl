@@ -51,7 +51,7 @@ static void *evp_keyexch_from_algorithm(int name_id,
 {
     const OSSL_DISPATCH *fns = algodef->implementation;
     EVP_KEYEXCH *exchange = NULL;
-    int fncnt = 0, sparamfncnt = 0, gparamfncnt = 0;
+    int fncnt = 0, sparamfncnt = 0, gparamfncnt = 0, derive_found = 0;
 
     if ((exchange = evp_keyexch_new(prov)) == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_EVP_LIB);
@@ -86,7 +86,7 @@ static void *evp_keyexch_from_algorithm(int name_id,
             if (exchange->derive != NULL)
                 break;
             exchange->derive = OSSL_FUNC_keyexch_derive(fns);
-            fncnt++;
+            derive_found = 1;
             break;
         case OSSL_FUNC_KEYEXCH_FREECTX:
             if (exchange->freectx != NULL)
@@ -125,8 +125,15 @@ static void *evp_keyexch_from_algorithm(int name_id,
                 = OSSL_FUNC_keyexch_settable_ctx_params(fns);
             sparamfncnt++;
             break;
+        case OSSL_FUNC_KEYEXCH_DERIVE_SKEY:
+            if (exchange->derive_skey != NULL)
+                break;
+            exchange->derive_skey = OSSL_FUNC_keyexch_derive_skey(fns);
+            derive_found = 1;
+            break;
         }
     }
+    fncnt += derive_found;
     if (fncnt != 4
             || (gparamfncnt != 0 && gparamfncnt != 2)
             || (sparamfncnt != 0 && sparamfncnt != 2)) {
@@ -542,6 +549,59 @@ int EVP_PKEY_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *pkeylen)
 
     M_check_autoarg(ctx, key, pkeylen, EVP_F_EVP_PKEY_DERIVE)
         return ctx->pmeth->derive(ctx, key, pkeylen);
+}
+
+EVP_SKEY *EVP_PKEY_derive_SKEY(EVP_PKEY_CTX *ctx, const char *skeymgmtname,
+                               const char *propquery)
+{
+    EVP_SKEY *ret = NULL;
+    EVP_SKEYMGMT *skeymgmt = NULL;
+
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return NULL;
+    }
+
+    if (!EVP_PKEY_CTX_IS_DERIVE_OP(ctx)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_INITIALIZED);
+        return NULL;
+    }
+
+    if (ctx->op.kex.algctx == NULL || ctx->op.kex.exchange->derive_skey == NULL
+        || ctx->op.kex.exchange->prov == NULL) {
+        ERR_raise(ERR_R_EVP_LIB, ERR_R_UNSUPPORTED);
+        return 0;
+    }
+
+    ret = evp_skey_int();
+    if (ret == NULL)
+        return NULL;
+
+    skeymgmt = EVP_SKEYMGMT_fetch(ctx->libctx,
+                                  skeymgmtname ?
+                                  skeymgmtname : EVP_KEYEXCH_get0_name(ctx->op.kex.exchange),
+                                  propquery);
+    if (skeymgmt == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_FETCH_FAILED);
+        goto err;
+    }
+
+    ret->skeymgmt = skeymgmt;
+    if (ret->skeymgmt->prov != ctx->op.kex.exchange->prov) {
+        ERR_raise(ERR_R_EVP_LIB, ERR_R_UNSUPPORTED);
+        goto err;
+    }
+
+    ret->keydata = ctx->op.kex.exchange->derive_skey(ctx->op.kex.algctx);
+    if (ret->keydata != NULL) {
+        ERR_raise(ERR_R_EVP_LIB, ERR_R_UNSUPPORTED);
+        goto err;
+    }
+
+ err:
+    EVP_SKEYMGMT_free(skeymgmt);
+    EVP_SKEY_free(ret);
+    return NULL;
 }
 
 int evp_keyexch_get_number(const EVP_KEYEXCH *keyexch)
