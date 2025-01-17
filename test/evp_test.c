@@ -4379,7 +4379,7 @@ static int keygen_test_run(EVP_TEST *t)
         private_keys = key;
         rv = 1;
     } else if (keygen->seed != NULL) {
-        const char *prvparam = OSSL_PKEY_PARAM_ENCODED_PRIVATE_KEY;
+        const char *prvparam = OSSL_PKEY_PARAM_PRIV_KEY;
         rv = 0;
         if (!TEST_int_eq(EVP_PKEY_get_octet_string_param(pkey, prvparam, NULL,
                                                          0, &priv_len), 1)

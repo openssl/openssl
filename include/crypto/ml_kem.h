@@ -49,6 +49,10 @@
 # define ML_KEM_PKHASH_BYTES        32 /* Salts the shared-secret */
 # define ML_KEM_SHARED_SECRET_BYTES 32
 
+# if ML_KEM_PKHASH_BYTES != ML_KEM_RANDOM_BYTES
+#  error "unexpected ML-KEM public key hash size"
+# endif
+
 /*-
  * The ML-KEM specification can be found in
  * https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.203.pdf
@@ -159,15 +163,22 @@ typedef struct ossl_ml_kem_key_st {
      * storage is allocated once a public or private key is specified, at
      * which point the key becomes immutable.
      */
+    uint8_t *rho;                           /* Public matrix seed */
+    uint8_t *pkhash;                        /* Public key hash */
     struct ossl_ml_kem_scalar_st *t;        /* Public key vector */
     struct ossl_ml_kem_scalar_st *m;        /* Pre-computed pubkey matrix */
     struct ossl_ml_kem_scalar_st *s;        /* Private key secret vector */
     uint8_t *z;                             /* Private key FO failure secret */
     uint8_t *d;                             /* Private key seed */
+    int retain_seed;                        /* Retain the seed after keygen? */
 
-    /* Fixed-size/offset built-ins */
-    uint8_t rho[ML_KEM_RANDOM_BYTES];       /* Matrix recovery seed */
-    uint8_t pkhash[ML_KEM_PKHASH_BYTES];    /* Hash of wire-form public key */
+    /*
+     * Fixed-size built-in buffer, which holds the |rho| and the public key
+     * |pkhash| in that order, once we have expanded key material.
+     * With seed-only keys, that are not yet expanded, this instead holds the
+     * |z| and |d| components in that order.
+     */
+    uint8_t seedbuf[64];                    /* |rho| + |pkhash| / |z| + |d| */
 } ML_KEM_KEY;
 
 /* The public key is always present, when the private is */
@@ -186,7 +197,7 @@ typedef struct ossl_ml_kem_key_st {
  */
 ML_KEM_KEY *ossl_ml_kem_key_new(OSSL_LIB_CTX *libctx,
                                 const char *properties,
-                                int evp_type);
+                                int retain_seed, int evp_type);
 /* Deallocate the key */
 void ossl_ml_kem_key_free(ML_KEM_KEY *key);
 /*
@@ -212,10 +223,10 @@ int ossl_ml_kem_parse_public_key(const uint8_t *in, size_t len,
 __owur
 int ossl_ml_kem_parse_private_key(const uint8_t *in, size_t len,
                                   ML_KEM_KEY *key);
+ML_KEM_KEY *ossl_ml_kem_set_seed(const uint8_t *seed, size_t seedlen,
+                                 ML_KEM_KEY *key);
 __owur
-int ossl_ml_kem_genkey(const uint8_t *d, const uint8_t *z,
-                       uint8_t *pubenc, size_t publen,
-                       ML_KEM_KEY *key);
+int ossl_ml_kem_genkey(uint8_t *pubenc, size_t publen, ML_KEM_KEY *key);
 
 /*
  * Perform an ML-KEM operation with a given ML-KEM key.  The key can generally
@@ -228,9 +239,8 @@ int ossl_ml_kem_encode_public_key(uint8_t *out, size_t len,
 __owur
 int ossl_ml_kem_encode_private_key(uint8_t *out, size_t len,
                                    const ML_KEM_KEY *key);
-__owur
-int ossl_ml_kem_encode_key_seed(uint8_t *out, size_t len,
-                                const ML_KEM_KEY *key);
+int ossl_ml_kem_encode_seed(uint8_t *out, size_t len,
+                            const ML_KEM_KEY *key);
 
 __owur
 int ossl_ml_kem_encap_seed(uint8_t *ctext, size_t clen,
