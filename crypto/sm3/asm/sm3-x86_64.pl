@@ -147,8 +147,11 @@ ___
     or $num, $num
     je .done_hash
 
-    vmovdqu         ($ctx), %xmm6
-    vmovdqu         16($ctx), %xmm7
+    # xmm = D C B A
+    # D - most significant word in an `xmm`
+    # A - least significant word in an `xmm`
+    vmovdqu         ($ctx), %xmm6 # xmm6 = D C B A
+    vmovdqu         16($ctx), %xmm7 # xmm7 = H G F E
 
     vpshufd         \$0x1B, %xmm6, %xmm0
     vpshufd         \$0x1B, %xmm7, %xmm1
@@ -160,6 +163,7 @@ ___
     vpsrld          \$19, %xmm7, %xmm4
     vpslld          \$13, %xmm7, %xmm5
     vpxor           %xmm5, %xmm4, %xmm0
+    # xmm7 = ROL32(C, 23) ROL32(D, 23) ROL32(G, 13) ROL32(H, 13)
     vpblendd        \$0x3, %xmm0, %xmm1, %xmm7
 
     vmovdqa         SHUFF_MASK(%rip), %xmm12
