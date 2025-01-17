@@ -6,7 +6,7 @@ FIPS 204 clearly states most of the requirements of ML-DSA and has comprehensive
 pseudo code for all its algorithms.
 
 The base code for OpenSSL has been derived from the BoringSSL C++ code.
-As OpenSSL is c code, templates can not be used. The openSSL code instead uses
+As OpenSSL is c code, templates can not be used. The OpenSSL code instead uses
 parameters to pass algorithm specific constants, and also uses these constants
 to run different conditional functions when required.
 
@@ -110,7 +110,7 @@ detect constant time issues.
 There are many places that do hashing in the code, and these are capable (although
 it is not likely) of returning errors. There is not attempt to deal with these cases.
 
-CHanges from BoringSSL
+Changes from BoringSSL
 ----------------------
 
 At the time of writing, BoringSSL code only supported ML-DSA-65. Since there
