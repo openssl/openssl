@@ -710,7 +710,7 @@ WORK_STATE ossl_statem_client_pre_work(SSL_CONNECTION *s, WORK_STATE wst)
 
     case TLS_ST_CW_CLNT_HELLO:
         s->shutdown = 0;
-        if (SSL_CONNECTION_IS_DTLS(s)) {
+        if (SSL_CONNECTION_IS_DTLS(s) && s->hello_retry_request != SSL_HRR_PENDING) {
             /* every DTLS ClientHello resets Finished MAC */
             if (!ssl3_init_finished_mac(s)) {
                 /* SSLfatal() already called */
@@ -1900,7 +1900,7 @@ static MSG_PROCESS_RETURN tls_process_as_hello_retry_request(SSL_CONNECTION *s,
      * for HRR messages.
      */
     if (!ssl3_finish_mac(s, (unsigned char *)s->init_buf->data,
-                         s->init_num + msghdrlen, 1)) {
+                         s->init_num + msghdrlen)) {
         /* SSLfatal() already called */
         goto err;
     }
