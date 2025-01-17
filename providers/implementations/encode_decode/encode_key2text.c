@@ -471,7 +471,7 @@ static int ml_kem_to_text(BIO *out, const void *vkey, int selection)
             return 0;
 
         if (ossl_ml_kem_have_seed(key)) {
-            if (!ossl_ml_kem_encode_key_seed(seed, sizeof(seed), key))
+            if (!ossl_ml_kem_encode_seed(seed, sizeof(seed), key))
                 goto end;
             if (!ossl_bio_print_labeled_buf(out, "seed:", seed, sizeof(seed)))
                 goto end;
