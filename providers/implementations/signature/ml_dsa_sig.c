@@ -32,6 +32,7 @@ static OSSL_FUNC_signature_verify_fn ml_dsa_verify;
 static OSSL_FUNC_signature_freectx_fn ml_dsa_freectx;
 static OSSL_FUNC_signature_set_ctx_params_fn ml_dsa_set_ctx_params;
 static OSSL_FUNC_signature_settable_ctx_params_fn ml_dsa_settable_ctx_params;
+static OSSL_FUNC_signature_dupctx_fn ml_dsa_dupctx;
 
 typedef struct {
     ML_DSA_KEY *key;
@@ -69,6 +70,20 @@ static void *ml_dsa_newctx(void *provctx, const char *alg, const char *propq)
     ctx->alg = alg;
 
     return ctx;
+}
+
+static void *ml_dsa_dupctx(void *vctx)
+{
+    PROV_ML_DSA_CTX *srcctx = (PROV_ML_DSA_CTX *)vctx;
+
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    /*
+     * Note that the ML_DSA_KEY is ref counted via EVP_PKEY so we can just copy
+     * the key here.
+     */
+    return OPENSSL_memdup(srcctx, sizeof(*srcctx));
 }
 
 static int ml_dsa_signverify_msg_init(void *vctx, void *vkey,
@@ -227,6 +242,7 @@ static const OSSL_PARAM *ml_dsa_settable_ctx_params(void *vctx,
           (void (*)(void))ml_dsa_set_ctx_params },                             \
         { OSSL_FUNC_SIGNATURE_SETTABLE_CTX_PARAMS,                             \
           (void (*)(void))ml_dsa_settable_ctx_params },                        \
+        { OSSL_FUNC_SIGNATURE_DUPCTX, (void (*)(void))ml_dsa_dupctx },         \
         OSSL_DISPATCH_END                                                      \
     }
 
