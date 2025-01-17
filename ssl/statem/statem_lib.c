@@ -107,7 +107,7 @@ int ssl3_do_write(SSL_CONNECTION *s, uint8_t type)
                                  && s->statem.hand_state != TLS_ST_SW_KEY_UPDATE))
             if (!ssl3_finish_mac(s,
                                  (unsigned char *)&s->init_buf->data[s->init_off],
-                                 written, 1))
+                                 written))
                 return -1;
     if (written == s->init_num) {
         s->statem.write_in_progress = 0;
@@ -1657,7 +1657,7 @@ int tls_common_finish_mac(SSL_CONNECTION *s) {
 
     /* Feed this message into MAC computation. */
     if (RECORD_LAYER_is_sslv2_record(&s->rlayer)
-            && !ssl3_finish_mac(s, msg, msg_len, 1)) {
+            && !ssl3_finish_mac(s, msg, msg_len)) {
         /* SSLfatal() already called */
         return 0;
     } else {
@@ -1678,7 +1678,7 @@ int tls_common_finish_mac(SSL_CONNECTION *s) {
                 || memcmp(hrrrandom,
                           s->init_buf->data + srvhellorandom_offs,
                           SSL3_RANDOM_SIZE) != 0) {
-                if (!ssl3_finish_mac(s, msg, msg_len, 1))
+                if (!ssl3_finish_mac(s, msg, msg_len))
                     /* SSLfatal() already called */
                     return 0;
             }
@@ -2654,23 +2654,27 @@ int create_synthetic_message_hash(SSL_CONNECTION *s,
                                   size_t hashlen, const unsigned char *hrr,
                                   size_t hrrlen)
 {
-    unsigned char hashvaltmp[EVP_MAX_MD_SIZE];
-    unsigned char synmsghdr[SSL3_HM_HEADER_LENGTH];
+    unsigned char *hashvaltmp;
+    unsigned char synmsg[SSL3_HM_HEADER_LENGTH + EVP_MAX_MD_SIZE];
     size_t currmsghdr_len = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_HM_HEADER_LENGTH
                                                       : SSL3_HM_HEADER_LENGTH;
 
-    memset(synmsghdr, 0, sizeof(synmsghdr));
+    memset(synmsg, 0, SSL3_HM_HEADER_LENGTH);
+    hashvaltmp = synmsg + SSL3_HM_HEADER_LENGTH;
 
     if (hashval == NULL) {
-        hashval = hashvaltmp;
-        hashlen = 0;
         /* Get the hash of the initial ClientHello */
         if (!ssl3_digest_cached_records(s, 0)
-                || !ssl_handshake_hash(s, hashvaltmp, sizeof(hashvaltmp),
+                || !ssl_handshake_hash(s, hashvaltmp, EVP_MAX_MD_SIZE,
                                        &hashlen)) {
             /* SSLfatal() already called */
             return 0;
         }
+    } else {
+        if (!ossl_assert(hashlen <= EVP_MAX_MD_SIZE))
+            return 0;
+
+        memcpy(hashvaltmp, hashval, hashlen);
     }
 
     /* Reinitialise the transcript hash */
@@ -2680,10 +2684,9 @@ int create_synthetic_message_hash(SSL_CONNECTION *s,
     }
 
     /* Inject the synthetic message_hash message */
-    synmsghdr[0] = SSL3_MT_MESSAGE_HASH;
-    synmsghdr[SSL3_HM_HEADER_LENGTH - 1] = (unsigned char)hashlen;
-    if (!ssl3_finish_mac(s, synmsghdr, SSL3_HM_HEADER_LENGTH, 0)
-            || !ssl3_finish_mac(s, hashval, hashlen, 0)) {
+    synmsg[0] = SSL3_MT_MESSAGE_HASH;
+    synmsg[SSL3_HM_HEADER_LENGTH - 1] = (unsigned char)hashlen;
+    if (!ssl3_finish_mac(s, synmsg, SSL3_HM_HEADER_LENGTH + hashlen)) {
         /* SSLfatal() already called */
         return 0;
     }
@@ -2694,9 +2697,9 @@ int create_synthetic_message_hash(SSL_CONNECTION *s,
      * receiving a ClientHello2 with a cookie.
      */
     if (hrr != NULL
-            && (!ssl3_finish_mac(s, hrr, hrrlen, 1)
+            && (!ssl3_finish_mac(s, hrr, hrrlen)
                 || !ssl3_finish_mac(s, (unsigned char *)s->init_buf->data,
-                                    s->s3.tmp.message_size + currmsghdr_len, 1))) {
+                                    s->s3.tmp.message_size + currmsghdr_len))) {
         /* SSLfatal() already called */
         return 0;
     }

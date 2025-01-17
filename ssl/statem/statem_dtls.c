@@ -291,15 +291,14 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t recordtype)
             assert(s->s3.tmp.new_compression != NULL
                    || BIO_wpending(s->wbio) <= (int)s->d1->mtu);
 
-            if (recordtype == SSL3_RT_HANDSHAKE && !s->d1->retransmitting) {
-                /*
-                 * should not be done for 'Hello Request's, but in that case
-                 * we'll ignore the result anyway
-                 */
-                size_t xlen;
-                int hmhdr_incl;
+            if (recordtype == SSL3_RT_HANDSHAKE && !s->d1->retransmitting
+                    && s->init_off == 0) {
+                size_t xlen = s->init_num;
 
-                if (s->init_off == 0 && s->version != DTLS1_BAD_VER) {
+                if (s->version == DTLS1_BAD_VER) {
+                    msgstart += DTLS1_HM_HEADER_LENGTH;
+                    xlen -= DTLS1_HM_HEADER_LENGTH;
+                } else {
                     /*
                      * Now prepare to calculate the transcript hash. For
                      * versions prior to DTLSv1.3 this means:
@@ -318,14 +317,8 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t recordtype)
                     if (!dtls1_write_hm_header(msgstart, msg_type, msg_len,
                                                msg_seq, 0, msg_len))
                         return -1;
-
-                    xlen = written;
-                    hmhdr_incl = 1;
-                } else {
-                    msgstart += DTLS1_HM_HEADER_LENGTH;
-                    xlen = written - DTLS1_HM_HEADER_LENGTH;
-                    hmhdr_incl = 0;
                 }
+
                 /*
                  * should not be done for 'Hello Request's, but in that case we'll
                  * ignore the result anyway
@@ -334,12 +327,10 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t recordtype)
                 if (!SSL_CONNECTION_IS_DTLS13(s)
                     || (s->statem.hand_state != TLS_ST_SW_SESSION_TICKET
                         && s->statem.hand_state != TLS_ST_CW_KEY_UPDATE
-                        && s->statem.hand_state != TLS_ST_SW_KEY_UPDATE)) {
-                    if (!ssl3_finish_mac(s, msgstart, xlen, hmhdr_incl))
+                        && s->statem.hand_state != TLS_ST_SW_KEY_UPDATE))
+                    if (!ssl3_finish_mac(s, msgstart, xlen))
                         return -1;
-                }
             }
-
             if (written == s->init_num) {
                 if (s->msg_callback)
                     s->msg_callback(1, s->version, recordtype, s->init_buf->data,

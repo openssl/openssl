@@ -1476,11 +1476,14 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
 
 int ssl_set_record_protocol_version(SSL_CONNECTION *s, int vers)
 {
-    if (!ossl_assert(s->rlayer.rrlmethod != NULL)
+    if ((s->negotiated_version != PROTO_VERSION_UNSET && s->negotiated_version != vers)
+            || !ossl_assert(s->rlayer.rrlmethod != NULL)
             || !ossl_assert(s->rlayer.wrlmethod != NULL)
             || !s->rlayer.rrlmethod->set_protocol_version(s->rlayer.rrl, vers)
             || !s->rlayer.wrlmethod->set_protocol_version(s->rlayer.wrl, vers))
         return 0;
+
+    s->negotiated_version = vers;
 
     return 1;
 }
