@@ -2575,7 +2575,7 @@ done:
 #endif
 
 #ifndef OPENSSL_NO_ML_KEM
-static const uint8_t ml_kem_prvkey[] = {
+static const uint8_t ml_kem_seed[] = {
   0x7c, 0x99, 0x35, 0xa0, 0xb0, 0x76, 0x94, 0xaa, 0x0c, 0x6d, 0x10, 0xe4,
   0xdb, 0x6b, 0x1a, 0xdd, 0x2f, 0xd8, 0x1a, 0x25, 0xcc, 0xb1, 0x48, 0x03,
   0x2d, 0xcd, 0x73, 0x99, 0x36, 0x73, 0x7f, 0x2d, 0x86, 0x26, 0xed, 0x79,
@@ -2946,17 +2946,58 @@ static struct keys_st {
 #endif
 #ifndef OPENSSL_NO_ML_KEM
     {
-        NID_undef, ml_kem_prvkey, ml_kem_512_pubkey,
+        NID_undef, ml_kem_seed, ml_kem_512_pubkey,
         "ML-KEM-512", ML_KEM_SEED_BYTES, sizeof(ml_kem_512_pubkey)
     }, {
-        NID_undef, ml_kem_prvkey, ml_kem_768_pubkey,
+        NID_undef, ml_kem_seed, ml_kem_768_pubkey,
         "ML-KEM-768", ML_KEM_SEED_BYTES, sizeof(ml_kem_768_pubkey)
     }, {
-        NID_undef, ml_kem_prvkey, ml_kem_1024_pubkey,
+        NID_undef, ml_kem_seed, ml_kem_1024_pubkey,
         "ML-KEM-1024", ML_KEM_SEED_BYTES, sizeof(ml_kem_1024_pubkey)
     },
 #endif
 };
+
+#ifndef OPENSSL_NO_ML_KEM
+static int
+ml_kem_seed_to_priv(const char *alg, const unsigned char *seed, int seedlen,
+                    unsigned char **ret, size_t *retlen)
+{
+    OSSL_PARAM parr[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+    EVP_PKEY_CTX *ctx = NULL;
+    EVP_PKEY *pkey = NULL;
+    const OSSL_PARAM *p;
+    OSSL_PARAM *params = NULL;
+    int selection = OSSL_KEYMGMT_SELECT_PRIVATE_KEY;
+    int ok = 0;
+
+    /* Import the seed to generate a key */
+    ctx = EVP_PKEY_CTX_new_from_name(testctx, alg, NULL);
+    if (!TEST_ptr(ctx)
+        || !TEST_int_gt(EVP_PKEY_fromdata_init(ctx), 0))
+        goto done;
+    parr[0] = OSSL_PARAM_construct_octet_string(
+        OSSL_PKEY_PARAM_ML_KEM_SEED, (unsigned char *)seed, seedlen);
+    if (!TEST_int_gt(EVP_PKEY_fromdata(ctx, &pkey, selection, parr), 0))
+        goto done;
+
+    /* Export the key to get the encoded form */
+    if (!TEST_true(EVP_PKEY_todata(pkey, OSSL_KEYMGMT_SELECT_PRIVATE_KEY, &params)))
+        goto done;
+
+    p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PRIV_KEY);
+    if (!TEST_ptr(p)
+        || !TEST_true(OSSL_PARAM_get_octet_string(p, (void **)ret, 0, retlen)))
+        goto done;
+    ok = 1;
+
+  done:
+    EVP_PKEY_free(pkey);
+    OSSL_PARAM_free(params);
+    EVP_PKEY_CTX_free(ctx);
+    return ok;
+}
+#endif
 
 static int test_set_get_raw_keys_int(int tst, int pub, int uselibctx)
 {
@@ -2965,7 +3006,8 @@ static int test_set_get_raw_keys_int(int tst, int pub, int uselibctx)
     const uint8_t *in;
     uint8_t shortbuf[1];
     size_t inlen, len = 0, shortlen = sizeof(shortbuf);
-    EVP_PKEY *pkey;
+    EVP_PKEY *pkey = NULL;
+    unsigned char *privalloc = NULL;
     const char *name;
 
     /* Check if this algorithm supports public keys */
@@ -2997,6 +3039,14 @@ static int test_set_get_raw_keys_int(int tst, int pub, int uselibctx)
     } else {
         inlen = keys[tst].privlen;
         in = keys[tst].priv;
+#ifndef OPENSSL_NO_ML_KEM
+        if (in == ml_kem_seed) {
+            if (!TEST_true(ml_kem_seed_to_priv(name, in, inlen,
+                                               &privalloc, &inlen)))
+                goto done;
+            in = privalloc;
+        }
+#endif
         if (uselibctx || keys[tst].name != NULL) {
             pkey = EVP_PKEY_new_raw_private_key_ex(
                         testctx,
@@ -3038,6 +3088,7 @@ static int test_set_get_raw_keys_int(int tst, int pub, int uselibctx)
 
     ret = 1;
  done:
+    OPENSSL_free(privalloc);
     OPENSSL_free(buf);
     EVP_PKEY_free(pkey);
     return ret;
