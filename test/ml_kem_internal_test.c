@@ -137,8 +137,8 @@ static int sanity_test(void)
         if (!TEST_true(EVP_RAND_CTX_set_params(privctx, params)))
             return 0;
 
-        public_key = ossl_ml_kem_key_new(NULL, NULL, alg[i]);
-        private_key = ossl_ml_kem_key_new(NULL, NULL, alg[i]);
+        public_key = ossl_ml_kem_key_new(NULL, NULL, 0, alg[i]);
+        private_key = ossl_ml_kem_key_new(NULL, NULL, 0, alg[i]);
         if (private_key == NULL || public_key == NULL
             || (v = ossl_ml_kem_key_vinfo(public_key)) == NULL)
             goto done;
@@ -150,8 +150,8 @@ static int sanity_test(void)
 
         ret2 = -2;
         /* Generate a private key */
-        if (!ossl_ml_kem_genkey(NULL, NULL, encoded_public_key,
-                                v->pubkey_bytes, private_key))
+        if (!ossl_ml_kem_genkey(encoded_public_key, v->pubkey_bytes,
+                                private_key))
             goto done;
 
         /* Check that no more entropy is available! */
