@@ -26,6 +26,7 @@ static OSSL_FUNC_keymgmt_export_fn ml_dsa_export;
 static OSSL_FUNC_keymgmt_import_types_fn ml_dsa_imexport_types;
 static OSSL_FUNC_keymgmt_export_types_fn ml_dsa_imexport_types;
 static OSSL_FUNC_keymgmt_load_fn ml_dsa_load;
+static OSSL_FUNC_keymgmt_dup_fn ml_dsa_dup_key;
 static OSSL_FUNC_keymgmt_get_params_fn ml_dsa_get_params;
 static OSSL_FUNC_keymgmt_gettable_params_fn ml_dsa_gettable_params;
 static OSSL_FUNC_keymgmt_validate_fn ml_dsa_validate;
@@ -52,6 +53,13 @@ static void *ml_dsa_new_key(void *provctx, const char *alg)
 static void ml_dsa_free_key(void *keydata)
 {
     ossl_ml_dsa_key_free((ML_DSA_KEY *)keydata);
+}
+
+static void *ml_dsa_dup_key(const void *keydata_from, int selection)
+{
+    if (ossl_prov_is_running())
+        return ossl_ml_dsa_key_dup(keydata_from, selection);
+    return NULL;
 }
 
 static int ml_dsa_has(const void *keydata, int selection)
@@ -361,6 +369,7 @@ static void ml_dsa_gen_cleanup(void *genctx)
           (void (*)(void))ml_dsa_gen_set_params },                             \
         { OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS,                               \
           (void (*)(void))ml_dsa_gen_settable_params },                        \
+        { OSSL_FUNC_KEYMGMT_DUP, (void (*)(void))ml_dsa_dup_key },             \
         OSSL_DISPATCH_END                                                      \
     }
 

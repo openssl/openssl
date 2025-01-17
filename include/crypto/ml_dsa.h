@@ -24,6 +24,7 @@ __owur ML_DSA_KEY *ossl_ml_dsa_key_new(OSSL_LIB_CTX *libctx, const char *propq,
 __owur int ossl_ml_dsa_key_pub_alloc(ML_DSA_KEY *key);
 __owur int ossl_ml_dsa_key_priv_alloc(ML_DSA_KEY *key);
 void ossl_ml_dsa_key_free(ML_DSA_KEY *key);
+__owur ML_DSA_KEY *ossl_ml_dsa_key_dup(const ML_DSA_KEY *src, int selection);
 __owur int ossl_ml_dsa_key_equal(const ML_DSA_KEY *key1, const ML_DSA_KEY *key2,
                                  int selection);
 __owur int ossl_ml_dsa_key_has(const ML_DSA_KEY *key, int selection);
