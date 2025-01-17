@@ -862,7 +862,7 @@ int ossl_ech_swaperoo(SSL_CONNECTION *s)
             BIO_free(handbuf);
             return 0;
         }
-        if (ssl3_finish_mac(s, s->ext.ech.innerch, s->ext.ech.innerch_len, 1) == 0) {
+        if (ssl3_finish_mac(s, s->ext.ech.innerch, s->ext.ech.innerch_len) == 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             BIO_free(handbuf);
             return 0;
@@ -878,7 +878,7 @@ int ossl_ech_swaperoo(SSL_CONNECTION *s)
                 return 0;
             }
             if (PACKET_remaining(&pkt) > 0) {
-                if (ssl3_finish_mac(s, PACKET_data(&pkt), PACKET_remaining(&pkt), 1) == 0) {
+                if (ssl3_finish_mac(s, PACKET_data(&pkt), PACKET_remaining(&pkt)) == 0) {
                     SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                     BIO_free(handbuf);
                     return 0;
