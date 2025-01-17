@@ -1348,6 +1348,7 @@ int genkey(const uint8_t d[ML_KEM_RANDOM_BYTES],
     CBD_FUNC cbd_1 = CBD1(vinfo->evp_type);
     int rank = vinfo->rank;
     uint8_t counter = 0;
+    int ret = 0;
 
     /*
      * Use the "d" seed salted with the rank to derive the public and private
@@ -1356,7 +1357,7 @@ int genkey(const uint8_t d[ML_KEM_RANDOM_BYTES],
     memcpy(augmented_seed, d, ML_KEM_RANDOM_BYTES);
     augmented_seed[ML_KEM_RANDOM_BYTES] = (uint8_t) rank;
     if (!hash_g(hashed, augmented_seed, sizeof(augmented_seed), mdctx, key))
-        return 0;
+        goto end;
     memcpy(key->rho, hashed, ML_KEM_RANDOM_BYTES);
     /* The |rho| matrix seed is public */
     CONSTTIME_DECLASSIFY(key->rho, ML_KEM_RANDOM_BYTES);
@@ -1365,7 +1366,7 @@ int genkey(const uint8_t d[ML_KEM_RANDOM_BYTES],
     if (!matrix_expand(mdctx, key)
         || !gencbd_vector_ntt(key->s, cbd_1, &counter, sigma, rank, mdctx, key)
         || !gencbd_vector_ntt(key->t, cbd_1, &counter, sigma, rank, mdctx, key))
-        return 0;
+        goto end;
 
     /* To |e| we now add the product of transpose |m| and |s|, giving |t|. */
     matrix_mult_transpose_add(key->t, key->m, key->s, rank);
@@ -1375,18 +1376,23 @@ int genkey(const uint8_t d[ML_KEM_RANDOM_BYTES],
     if (pubenc == NULL) {
         /* Incremental digest of public key without in-full serialisation. */
         if (!hash_h_pubkey(key->pkhash, mdctx, key))
-            return 0;
+            goto end;
     } else {
         encode_pubkey(pubenc, key);
         if (!hash_h(key->pkhash, pubenc, vinfo->pubkey_bytes, mdctx, key))
-           return 0;
+            goto end;
     }
 
     /* Save |z| portion of seed for "implicit rejection" on failure. */
     memcpy(key->z, z, ML_KEM_RANDOM_BYTES);
     /* Also save |d| portion, in suport of likely alternative key format. */
     memcpy(key->d = key->z + ML_KEM_RANDOM_BYTES, d, ML_KEM_RANDOM_BYTES);
-    return 1;
+
+    ret = 1;
+  end:
+    OPENSSL_cleanse((void *)augmented_seed, ML_KEM_RANDOM_BYTES);
+    OPENSSL_cleanse((void *)sigma, ML_KEM_RANDOM_BYTES);
+    return ret;
 }
 
 /*-
@@ -1405,14 +1411,17 @@ int encap(uint8_t *ctext, uint8_t secret[ML_KEM_SHARED_SECRET_BYTES],
     uint8_t input[ML_KEM_RANDOM_BYTES + ML_KEM_PKHASH_BYTES];
     uint8_t Kr[ML_KEM_SHARED_SECRET_BYTES + ML_KEM_RANDOM_BYTES];
     uint8_t *r = Kr + ML_KEM_SHARED_SECRET_BYTES;
+    int ret;
 
     memcpy(input, entropy, ML_KEM_RANDOM_BYTES);
     memcpy(input + ML_KEM_RANDOM_BYTES, key->pkhash, ML_KEM_PKHASH_BYTES);
-    if (!hash_g(Kr, input, sizeof(input), mdctx, key)
-        || !encrypt_cpa(ctext, entropy, r, tmp, mdctx, key))
-        return 0;
-    memcpy(secret, Kr, ML_KEM_SHARED_SECRET_BYTES);
-    return 1;
+    ret = hash_g(Kr, input, sizeof(input), mdctx, key)
+        && encrypt_cpa(ctext, entropy, r, tmp, mdctx, key);
+
+    if (ret)
+        memcpy(secret, Kr, ML_KEM_SHARED_SECRET_BYTES);
+    OPENSSL_cleanse((void *)input, sizeof(input));
+    return ret;
 }
 
 /*
@@ -1462,12 +1471,15 @@ int decap(uint8_t secret[ML_KEM_SHARED_SECRET_BYTES],
     if (!hash_g(Kr, decrypted, sizeof(decrypted), mdctx, key)
         || !encrypt_cpa(tmp_ctext, decrypted, r, tmp, mdctx, key)) {
         memcpy(secret, failure_key, ML_KEM_SHARED_SECRET_BYTES);
+        OPENSSL_cleanse(decrypted, ML_KEM_SHARED_SECRET_BYTES);
         return 1;
     }
     mask = constant_time_eq_int_8(0,
         CRYPTO_memcmp(ctext, tmp_ctext, vinfo->ctext_bytes));
     for (i = 0; i < ML_KEM_SHARED_SECRET_BYTES; i++)
         secret[i] = constant_time_select_8(mask, Kr[i], failure_key[i]);
+    OPENSSL_cleanse(decrypted, ML_KEM_SHARED_SECRET_BYTES);
+    OPENSSL_cleanse(Kr, sizeof(Kr));
     return 1;
 }
 
@@ -1505,6 +1517,14 @@ free_storage(ML_KEM_KEY *key)
 {
     if (key->t == NULL)
         return;
+    /*-
+     * Cleanse any sensitive data:
+     * - The private vector |s| is immediately followed by the FO failure
+     *   secret |z|, and seed |d|, we can cleanse all three in one call.
+     */
+    if (ossl_ml_kem_have_prvkey(key))
+        OPENSSL_cleanse(key->s,
+                        key->vinfo->vector_bytes + 2 * ML_KEM_RANDOM_BYTES);
     OPENSSL_free(key->t);
     key->d = key->z = (uint8_t *)(key->s = key->m = key->t = NULL);
 }
@@ -1568,6 +1588,8 @@ ML_KEM_KEY *ossl_ml_kem_key_dup(const ML_KEM_KEY *key, int selection)
     if (key == NULL
         || (ret = OPENSSL_memdup(key, sizeof(*key))) == NULL)
         return NULL;
+    ret->d = ret->z = NULL;
+    ret->s = ret->m = ret->t = NULL;
 
     /* Clear selection bits we can't fulfill */
     if (!ossl_ml_kem_have_pubkey(key))
@@ -1577,7 +1599,6 @@ ML_KEM_KEY *ossl_ml_kem_key_dup(const ML_KEM_KEY *key, int selection)
 
     switch (selection & OSSL_KEYMGMT_SELECT_KEYPAIR) {
     case 0:
-        ret->z = (uint8_t *)(ret->s = ret->m = ret->t = NULL);
         ok = 1;
         break;
     case OSSL_KEYMGMT_SELECT_PUBLIC_KEY:
@@ -1614,17 +1635,7 @@ void ossl_ml_kem_key_free(ML_KEM_KEY *key)
     EVP_MD_free(key->sha3_256_md);
     EVP_MD_free(key->sha3_512_md);
 
-    /*-
-     * Cleanse any sensitive data:
-     * - The private vector |s| is immediately followed by the FO failure
-     *   secret |z|, and seed |d|, we can cleanse all three in one call.
-     */
-    if (key->s != NULL)
-        OPENSSL_cleanse(key->s,
-                        key->vinfo->vector_bytes + 2 * ML_KEM_RANDOM_BYTES);
-
-    /* Free the key material */
-    OPENSSL_free(key->t);
+    free_storage(key);
     OPENSSL_free(key);
 }
 
@@ -1807,6 +1818,7 @@ int ossl_ml_kem_encap_seed(uint8_t *ctext, size_t clen,
             scalar tmp[2 * ML_KEM_##bits##_RANK];                           \
                                                                             \
             ret = encap(ctext, shared_secret, entropy, tmp, mdctx, key);    \
+            OPENSSL_cleanse((void *)tmp, sizeof(tmp));                      \
             break;                                                          \
         }
     switch (vinfo->evp_type) {
@@ -1887,6 +1899,7 @@ int ossl_ml_kem_decap(uint8_t *shared_secret, size_t slen,
             scalar tmp[2 * ML_KEM_##bits##_RANK];                       \
                                                                         \
             ret = decap(shared_secret, ctext, cbuf, tmp, mdctx, key);   \
+            OPENSSL_cleanse((void *)tmp, sizeof(tmp));                  \
             break;                                                      \
         }
     switch (vinfo->evp_type) {
