@@ -61,7 +61,6 @@ The encoded form of both the public and private key are calculated and stored wi
 the key, as well as the hash of the encoded public key. The stored encoded bytes
 determine if the public or public key component are present.
 
-
 The key generation process uses a seed to create a private key, and the public
 key is then generated using this private key.
 
@@ -105,7 +104,7 @@ Constant Time Considerations
 ----------------------------
 
 Similar code to BoringSSL will be added that allows ctgrind to be used to
-detect constant time issues. 
+detect constant time issues.
 
 There are many places that do hashing in the code, and these are capable (although
 it is not likely) of returning errors. There is not attempt to deal with these cases.
@@ -125,4 +124,3 @@ The symmetric modulus operation normally gives a result in the range -a/2 ... a/
 BoringSSL chose to keep the result positive by adding q and reducing once is required.
 
 Montgomery multiplication is used to speed up multiplications (See FIPS 204 Appendix A).
-
