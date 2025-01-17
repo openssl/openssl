@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <openssl/byteorder.h>
 #include "ml_dsa_local.h"
 #include "ml_dsa_vector.h"
 #include "ml_dsa_matrix.h"
@@ -322,7 +323,7 @@ int ossl_ml_dsa_poly_sample_in_ball(POLY *out_c, const uint8_t *seed, int seed_l
      * grab the first 64 bits - since tau < 64
      * Each bit gives a +1 or -1 value.
      */
-    memcpy(&signs, block, 8);
+    OPENSSL_load_u64_le(&signs, block);
 
     poly_zero(out_c);
 
