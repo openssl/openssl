@@ -806,7 +806,8 @@ int OSSL_PROVIDER_add_conf_parameter(OSSL_PROVIDER *prov,
     return infopair_add(&prov->parameters, name, value);
 }
 
-int OSSL_PROVIDER_get_conf_parameters(OSSL_PROVIDER *prov, OSSL_PARAM params[])
+int OSSL_PROVIDER_get_conf_parameters(const OSSL_PROVIDER *prov,
+                                      OSSL_PARAM params[])
 {
     int i;
 
@@ -822,6 +823,36 @@ int OSSL_PROVIDER_get_conf_parameters(OSSL_PROVIDER *prov, OSSL_PARAM params[])
             return 0;
     }
     return 1;
+}
+
+int OSSL_PROVIDER_conf_get_bool(const OSSL_PROVIDER *prov,
+                                const char *name, int defval)
+{
+    char *val = NULL;
+    OSSL_PARAM param[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+
+    param[0].key = (char *)name;
+    param[0].data_type = OSSL_PARAM_UTF8_PTR;
+    param[0].data = (void *) &val;
+    param[0].data_size = sizeof(val);
+    param[0].return_size = OSSL_PARAM_UNMODIFIED;
+
+    /* Errors are ignored, returning the default value */
+    if (OSSL_PROVIDER_get_conf_parameters(prov, param)
+        && OSSL_PARAM_modified(param)
+        && val != NULL) {
+        if ((strcmp(val, "1") == 0)
+            || (OPENSSL_strcasecmp(val, "yes") == 0)
+            || (OPENSSL_strcasecmp(val, "true") == 0)
+            || (OPENSSL_strcasecmp(val, "on") == 0))
+            return 1;
+        else if ((strcmp(val, "0") == 0)
+                   || (OPENSSL_strcasecmp(val, "no") == 0)
+                   || (OPENSSL_strcasecmp(val, "false") == 0)
+                   || (OPENSSL_strcasecmp(val, "off") == 0))
+            return 0;
+    }
+    return defval;
 }
 
 int ossl_provider_info_add_parameter(OSSL_PROVIDER_INFO *provinfo,
