@@ -97,6 +97,73 @@ void ossl_ml_dsa_key_free(ML_DSA_KEY *key)
 }
 
 /**
+ * @brief Duplicate a key
+ *
+ * @param src A ML_DSA_KEY object to copy
+ * @param selection to select public and/or private components. Selecting the
+ *                  private key will also select the public key
+ * @returns The duplicated key, or NULL on failure.
+ */
+ML_DSA_KEY *ossl_ml_dsa_key_dup(const ML_DSA_KEY *src, int selection)
+{
+    ML_DSA_KEY *ret = NULL;
+
+    if (src == NULL)
+        return NULL;
+
+    ret = OPENSSL_zalloc(sizeof(*ret));
+    if (ret != NULL) {
+        ret->libctx = src->libctx;
+        ret->params = src->params;
+        if (src->propq != NULL) {
+            if ((ret->propq = OPENSSL_strdup(src->propq)) == NULL)
+                goto err;
+        }
+        if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
+            if (src->pub_encoding != NULL) {
+                /* The public components are present if the private key is present */
+                memcpy(ret->rho, src->rho, sizeof(src->rho));
+                memcpy(ret->tr, src->tr, sizeof(src->tr));
+                if (src->t1.poly != NULL) {
+                    if (!ossl_ml_dsa_key_pub_alloc(ret))
+                        goto err;
+                    vector_copy(&ret->t1, &src->t1);
+                }
+                if ((ret->pub_encoding = OPENSSL_memdup(src->pub_encoding,
+                                                        src->params->pk_len)) == NULL)
+                    goto err;
+            }
+            if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
+                if (src->priv_encoding != NULL) {
+                    memcpy(ret->K, src->K, sizeof(src->K));
+                    if (src->s1.poly != NULL) {
+                        if (!ossl_ml_dsa_key_priv_alloc(ret))
+                            goto err;
+                        vector_copy(&ret->s1, &src->s1);
+                        vector_copy(&ret->s2, &src->s2);
+                        vector_copy(&ret->t0, &src->t0);
+                    }
+                    if (src->priv_encoding != NULL) {
+                        if ((ret->priv_encoding =
+                                OPENSSL_memdup(src->priv_encoding,
+                                               src->params->sk_len)) == NULL)
+                            goto err;
+                    }
+                }
+            }
+        }
+        EVP_MD_up_ref(src->shake128_md);
+        EVP_MD_up_ref(src->shake256_md);
+        ret->shake128_md = src->shake128_md;
+        ret->shake256_md = src->shake256_md;
+    }
+    return ret;
+ err:
+    ossl_ml_dsa_key_free(ret);
+    return NULL;
+}
+
+/**
  * @brief Are 2 keys equal?
  *
  * To be equal the keys must have matching public or private key data and
