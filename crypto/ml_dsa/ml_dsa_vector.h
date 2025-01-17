@@ -45,6 +45,7 @@ void vector_free(VECTOR *v)
 {
     OPENSSL_free(v->poly);
     v->poly = NULL;
+    v->num_poly = 0;
 }
 
 /* @brief zeroize a vectors polynomial coefficients */
