@@ -1337,8 +1337,7 @@ static int parse_prvkey(const uint8_t *in, EVP_MD_CTX *mdctx, ML_KEM_KEY *key)
  * and correctly encoded) ciphertext inputs.
  */
 static __owur
-int genkey(const uint8_t d[ML_KEM_RANDOM_BYTES],
-           const uint8_t z[ML_KEM_RANDOM_BYTES],
+int genkey(const uint8_t seed[ML_KEM_SEED_BYTES],
            EVP_MD_CTX *mdctx, uint8_t *pubenc, ML_KEM_KEY *key)
 {
     uint8_t hashed[2 * ML_KEM_RANDOM_BYTES];
@@ -1354,7 +1353,7 @@ int genkey(const uint8_t d[ML_KEM_RANDOM_BYTES],
      * Use the "d" seed salted with the rank to derive the public and private
      * seeds rho and sigma.
      */
-    memcpy(augmented_seed, d, ML_KEM_RANDOM_BYTES);
+    memcpy(augmented_seed, seed, ML_KEM_RANDOM_BYTES);
     augmented_seed[ML_KEM_RANDOM_BYTES] = (uint8_t) rank;
     if (!hash_g(hashed, augmented_seed, sizeof(augmented_seed), mdctx, key))
         goto end;
@@ -1384,9 +1383,16 @@ int genkey(const uint8_t d[ML_KEM_RANDOM_BYTES],
     }
 
     /* Save |z| portion of seed for "implicit rejection" on failure. */
-    memcpy(key->z, z, ML_KEM_RANDOM_BYTES);
-    /* Also save |d| portion, in suport of likely alternative key format. */
-    memcpy(key->d = key->z + ML_KEM_RANDOM_BYTES, d, ML_KEM_RANDOM_BYTES);
+    memcpy(key->z, seed + ML_KEM_RANDOM_BYTES, ML_KEM_RANDOM_BYTES);
+
+    /* Optionally save the |d| portion of the seed */
+    key->d = key->z + ML_KEM_RANDOM_BYTES;
+    if (key->retain_seed) {
+        memcpy(key->d, seed, ML_KEM_RANDOM_BYTES);
+    } else {
+        OPENSSL_cleanse(key->d, ML_KEM_RANDOM_BYTES);
+        key->d = NULL;
+    }
 
     ret = 1;
   end:
@@ -1494,8 +1500,19 @@ int add_storage(scalar *p, int private, ML_KEM_KEY *key)
 
     if (p == NULL)
         return 0;
+
+    /*
+     * We're adding key material, the seed buffer will now hold |rho| and
+     * |pkhash|.
+     */
+    memset(key->seedbuf, 0, sizeof(key->seedbuf));
+    key->rho = key->seedbuf;
+    key->pkhash = key->seedbuf + ML_KEM_RANDOM_BYTES;
+    key->d = key->z = NULL;
+
     /* A public key needs space for |t| and |m| */
     key->m = (key->t = p) + rank;
+
     /*
      * A private key also needs space for |s| and |z|.
      * The |z| buffer always includes additional space for |d|, but a key's |d|
@@ -1521,10 +1538,14 @@ free_storage(ML_KEM_KEY *key)
      * Cleanse any sensitive data:
      * - The private vector |s| is immediately followed by the FO failure
      *   secret |z|, and seed |d|, we can cleanse all three in one call.
+     *
+     * - Otherwise, when key->d is set, cleanse the stashed seed.
      */
     if (ossl_ml_kem_have_prvkey(key))
         OPENSSL_cleanse(key->s,
                         key->vinfo->vector_bytes + 2 * ML_KEM_RANDOM_BYTES);
+    else if (ossl_ml_kem_have_seed(key))
+        OPENSSL_cleanse(key->seedbuf, sizeof(key->seedbuf));
     OPENSSL_free(key->t);
     key->d = key->z = (uint8_t *)(key->s = key->m = key->t = NULL);
 }
@@ -1550,8 +1571,12 @@ const ML_KEM_VINFO *ossl_ml_kem_get_vinfo(int evp_type)
     return NULL;
 }
 
+/*
+ * The |retain_seed| parameter indicates whether the seed should be retained
+ * once the key is generated.
+ */
 ML_KEM_KEY *ossl_ml_kem_key_new(OSSL_LIB_CTX *libctx, const char *properties,
-                                int evp_type)
+                                int retain_seed, int evp_type)
 {
     const ML_KEM_VINFO *vinfo = ossl_ml_kem_get_vinfo(evp_type);
     ML_KEM_KEY *key;
@@ -1564,11 +1589,13 @@ ML_KEM_KEY *ossl_ml_kem_key_new(OSSL_LIB_CTX *libctx, const char *properties,
 
     key->vinfo = vinfo;
     key->libctx = libctx;
+    key->retain_seed = retain_seed;
     key->shake128_md = EVP_MD_fetch(libctx, "SHAKE128", properties);
     key->shake256_md = EVP_MD_fetch(libctx, "SHAKE256", properties);
     key->sha3_256_md = EVP_MD_fetch(libctx, "SHA3-256", properties);
     key->sha3_512_md = EVP_MD_fetch(libctx, "SHA3-512", properties);
-    key->d = key->z = (uint8_t *)(key->s = key->m = key->t = NULL);
+    key->d = key->z = key->rho = key->pkhash = NULL;
+    key->s = key->m = key->t = NULL;
 
     if (key->shake128_md != NULL
         && key->shake256_md != NULL
@@ -1588,8 +1615,16 @@ ML_KEM_KEY *ossl_ml_kem_key_dup(const ML_KEM_KEY *key, int selection)
     if (key == NULL
         || (ret = OPENSSL_memdup(key, sizeof(*key))) == NULL)
         return NULL;
-    ret->d = ret->z = NULL;
+    ret->d = ret->z = ret->rho = ret->pkhash = NULL;
     ret->s = ret->m = ret->t = NULL;
+
+    /* Handle seed-only keys */
+    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0
+        && !ossl_ml_kem_have_prvkey(key)
+        && ossl_ml_kem_have_seed(key)) {
+        ret->z = ret->seedbuf;
+        ret->d = ret->z + ML_KEM_RANDOM_BYTES;
+    }
 
     /* Clear selection bits we can't fulfill */
     if (!ossl_ml_kem_have_pubkey(key))
@@ -1603,6 +1638,8 @@ ML_KEM_KEY *ossl_ml_kem_key_dup(const ML_KEM_KEY *key, int selection)
         break;
     case OSSL_KEYMGMT_SELECT_PUBLIC_KEY:
         ok = add_storage(OPENSSL_memdup(key->t, key->vinfo->puballoc), 0, ret);
+        ret->rho = ret->seedbuf;
+        ret->pkhash = ret->rho + ML_KEM_RANDOM_BYTES;
         break;
     case OSSL_KEYMGMT_SELECT_PRIVATE_KEY:
         ok = add_storage(OPENSSL_memdup(key->t, key->vinfo->prvalloc), 1, ret);
@@ -1661,15 +1698,43 @@ int ossl_ml_kem_encode_private_key(uint8_t *out, size_t len,
     return 1;
 }
 
-int ossl_ml_kem_encode_key_seed(uint8_t *out, size_t len,
-                                const ML_KEM_KEY *key)
+int ossl_ml_kem_encode_seed(uint8_t *out, size_t len,
+                            const ML_KEM_KEY *key)
 {
     if (key == NULL || key->d == NULL || len != ML_KEM_SEED_BYTES)
         return 0;
+    /*
+     * Both in the seed buffer, and in the allocated storage, the |d| component
+     * of the seed is stored last, so we must copy each separately.
+     */
     memcpy(out, key->d, ML_KEM_RANDOM_BYTES);
     out += ML_KEM_RANDOM_BYTES;
     memcpy(out, key->z, ML_KEM_RANDOM_BYTES);
     return 1;
+}
+
+/*
+ * Stash the seed without (yet) performing a keygen, used during decoding, to
+ * avoid an extra keygen if we're only going to export the key again to load
+ * into another provider.
+ */
+ML_KEM_KEY *ossl_ml_kem_set_seed(const uint8_t *seed, size_t seedlen, ML_KEM_KEY *key)
+{
+    if (key == NULL
+        || ossl_ml_kem_have_pubkey(key)
+        || ossl_ml_kem_have_seed(key)
+        || seedlen != ML_KEM_SEED_BYTES)
+        return NULL;
+    /*
+     * With no public or private key material on hand, we can use the seed
+     * buffer for |z| and |d|, in that order.
+     */
+    key->z = key->seedbuf;
+    key->d = key->z + ML_KEM_RANDOM_BYTES;
+    memcpy(key->d, seed, ML_KEM_RANDOM_BYTES);
+    seed += ML_KEM_RANDOM_BYTES;
+    memcpy(key->z, seed, ML_KEM_RANDOM_BYTES);
+    return key;
 }
 
 /* Parse input as a public key */
@@ -1724,14 +1789,12 @@ int ossl_ml_kem_parse_private_key(const uint8_t *in, size_t len,
 }
 
 /*
- * Generate a new keypair either from the input seeds (when non-null), yielding
- * a deterministic result for running tests, or securely generated random data.
+ * Generate a new keypair, either from the saved seed (when non-null), or from
+ * the RNG.
  */
-int ossl_ml_kem_genkey(const uint8_t *d, const uint8_t *z,
-                       uint8_t *pubenc, size_t publen,
-                       ML_KEM_KEY *key)
+int ossl_ml_kem_genkey(uint8_t *pubenc, size_t publen, ML_KEM_KEY *key)
 {
-    uint8_t tmpseed[2 * ML_KEM_RANDOM_BYTES];
+    uint8_t seed[ML_KEM_SEED_BYTES];
     EVP_MD_CTX *mdctx = NULL;
     const ML_KEM_VINFO *vinfo;
     int ret = 0;
@@ -1740,32 +1803,30 @@ int ossl_ml_kem_genkey(const uint8_t *d, const uint8_t *z,
         return 0;
     vinfo = key->vinfo;
 
-    /* Both seeds or neither must be NULL */
-    if (((d == NULL) ^ (z == NULL)) != 0
-        || (pubenc != NULL && publen != vinfo->pubkey_bytes)
+    if ((pubenc != NULL && publen != vinfo->pubkey_bytes)
         || (mdctx = EVP_MD_CTX_new()) == NULL)
         return 0;
 
-    if (d == NULL) {
-        if (RAND_priv_bytes_ex(key->libctx, tmpseed, 2 * ML_KEM_RANDOM_BYTES,
-                              key->vinfo->secbits) <= 0)
-            return 0;
-        d = tmpseed;
-        z = tmpseed + ML_KEM_RANDOM_BYTES;
+    if (ossl_ml_kem_have_seed(key)) {
+        ossl_ml_kem_encode_seed(seed, sizeof(seed), key);
+        key->d = key->z = NULL;
+    } else if (RAND_priv_bytes_ex(key->libctx, seed, sizeof(seed),
+                                  key->vinfo->secbits) <= 0) {
+        return 0;
     }
+
     /*
      * Data derived from (d, z) defaults secret, and to avoid side-channel
      * leaks should not influence control flow.
      */
-    CONSTTIME_SECRET(d, ML_KEM_RANDOM_BYTES);
-    CONSTTIME_SECRET(z, ML_KEM_RANDOM_BYTES);
+    CONSTTIME_SECRET(seed, ML_KEM_SEED_BYTES);
 
     if (add_storage(OPENSSL_malloc(vinfo->prvalloc), 1, key))
-        ret = genkey(d, z, mdctx, pubenc, key);
+        ret = genkey(seed, mdctx, pubenc, key);
+    OPENSSL_cleanse(seed, sizeof(seed));
 
     /* Declassify secret inputs and derived outputs before returning control */
-    CONSTTIME_DECLASSIFY(d, ML_KEM_RANDOM_BYTES);
-    CONSTTIME_DECLASSIFY(z, ML_KEM_RANDOM_BYTES);
+    CONSTTIME_DECLASSIFY(seed, ML_KEM_SEED_BYTES);
 
     EVP_MD_CTX_free(mdctx);
     if (!ret) {
