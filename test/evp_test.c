@@ -4146,8 +4146,8 @@ static int check_pkey_expected_values(EVP_TEST *t, const EVP_PKEY *pkey,
                     goto err;
                 ret = EVP_PKEY_get_octet_string_param(pkey, p->key, data,
                                                       p->data_size, &len)
-                      && len == p->data_size
-                      && (TEST_mem_eq(p->data, len, data, len) == 1);
+                    && len == p->data_size
+                    && (TEST_mem_eq(p->data, len, data, len) == 1);
                 OPENSSL_free(data);
                 if (ret == 0) {
                     TEST_error("Expected %s value is incorrect", p->key);
@@ -4161,7 +4161,6 @@ err:
     ctrl2params_free(out_params, out_params_n, 0);
     return ret;
 }
-
 
 static int keygen_test_run(EVP_TEST *t)
 {
