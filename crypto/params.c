@@ -810,7 +810,7 @@ int OSSL_PARAM_set_int64(OSSL_PARAM *p, int64_t val)
         }
         switch (p->data_size) {
         case sizeof(uint32_t):
-            if (val >= 0 && val <= UINT32_MAX) {
+            if (val <= UINT32_MAX) {
                 p->return_size = sizeof(uint32_t);
                 *(uint32_t *)p->data = (uint32_t)val;
                 return 1;
@@ -818,13 +818,9 @@ int OSSL_PARAM_set_int64(OSSL_PARAM *p, int64_t val)
             err_out_of_range;
             return 0;
         case sizeof(uint64_t):
-            if (val >= 0) {
-                p->return_size = sizeof(uint64_t);
-                *(uint64_t *)p->data = (uint64_t)val;
-                return 1;
-            }
-            err_out_of_range;
-            return 0;
+            p->return_size = sizeof(uint64_t);
+            *(uint64_t *)p->data = (uint64_t)val;
+            return 1;
         }
 #endif
         return general_set_int(p, &val, sizeof(val));
@@ -1230,14 +1226,14 @@ int OSSL_PARAM_get_double(const OSSL_PARAM *p, double *val)
     return 0;
 }
 
-# define D_POW_31 ((double) (((uint32_t) 1) << 31))
-static double d_pow_31 = D_POW_31;
-static double d_pow_32 = 2.0 * D_POW_31;
-static double d_pow_63 = 2.0 * D_POW_31 * D_POW_31;
-static double d_pow_64 = 4.0 * D_POW_31 * D_POW_31;
-
 int OSSL_PARAM_set_double(OSSL_PARAM *p, double val)
 {
+#   define D_POW_31 ((double) (((uint32_t) 1) << 31))
+    const double d_pow_31 = D_POW_31;
+    const double d_pow_32 = 2.0 * D_POW_31;
+    const double d_pow_63 = 2.0 * D_POW_31 * D_POW_31;
+    const double d_pow_64 = 4.0 * D_POW_31 * D_POW_31;
+
     if (p == NULL) {
         err_null_argument;
         return 0;
