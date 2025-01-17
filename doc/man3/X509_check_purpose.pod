@@ -160,6 +160,12 @@ X509_PURPOSE_get_trust() returns the trust id of the given B<X509_PURPOSE>.
 
 X509_PURPOSE_set() returns 1 on success, 0 on error.
 
+=head1 BUGS
+
+The X509_PURPOSE implementation so far is not thread-safe.
+There may be race conditions retrieving purpose information while
+X509_PURPOSE_add() or X509_PURPOSE_cleanup(void) is being called.
+
 =head1 HISTORY
 
 X509_PURPOSE_get_unused_id() was added in OpensSL 3.5.
