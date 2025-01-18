@@ -68,6 +68,92 @@ When this parameter is simply omitted, and the C<ml-kem.retain_seed> provider
 configuration parameter is set to a false boolean value, the seed is not
 retained, otherwise it is retained (see also L<OSSL_PROVIDER_conf_get_bool(3)>).
 
+=item C<ml-kem.input_formats> (B<OSSL_PKEY_PARAM_ML_KEM_INPUT_FORMATS>) <UTF8 string>
+
+List of enabled private key input formats in PKCS#8 files.
+List elements are separated by commas and/or spaces or tabs.
+The list of enabled formats can be specified in the configuration file, as seen
+in the L</EXAMPLES> section below, or the via the B<-provparam> command-line
+option.
+
+Values specified on the command-line override any configuration file settings.
+By default all the supported formats are enabled.
+The supported formats are:
+
+=over 4
+
+=item C<seed-priv>:
+
+This format represents keys in which both the 64-byte B<(d, z)> seed and the
+FIPS 203 decapsulation private key B<dk> are present in the PKCS#8 private key
+as part of the DER encoding of the ASN.1 sequence:
+
+ PrivateKey ::= SEQUENCE {
+    seed OCTET STRING OPTIONAL,
+    expandedKey [1] IMPLICIT OCTET STRING OPTIONAL }
+   (WITH COMPONENTS {..., seed  PRESENT } |
+    WITH COMPONENTS {..., expandedKey  PRESENT })
+
+If the C<seed-priv> format is not included in the list, this format will not be
+recognised on input.
+
+=item C<seed-only>:
+
+This format represents keys in which only the 64-byte B<(d, z)> seed is present
+in the above sequence.
+If the C<seed-only> format is not included in the list, this format will not be
+recognised on input.
+
+=item C<priv-only>:
+
+This format represents keys in which only the FIPS 203 decapsulation key B<dk>
+is present in the above sequence.
+If the C<priv-only> format is not included in the list, this format will not be
+recognised on input.
+
+=item C<priv-oqs>:
+
+This format represents keys in which the private key value is a DER encoding of an
+octet string containing the FIPS 203 decapsulation key B<dk>.
+This format is used in some builds of the C<oqsprovider>, with a non-NIST value of
+the algorithm OID by default.
+For interoperability with OpenSSL, environment variable settings, such as
+C<OQS_OID_MLKEM768=2.16.840.1.101.3.4.4.2>, need to be used to configure
+C<oqsprovider> to use the expected NIST OIDs for B<ML-kEM>.
+If the C<priv-oqs> format is not included in the list, this format will not be
+recognised on input.
+
+=item C<pair-oqs>:
+
+This format represents keys in which the private keys a DER encoding of an
+octet string containing the concatenaton of the FIPS 203 decapsulation key B<dk> and
+the encapsulation key B<ek>.
+This encoding is used in some builds of the C<oqsprovider>, with a non-NIST
+value of the OID by default.
+For interoperability with OpenSSL, environment variable settings, such as
+C<OQS_OID_MLKEM512=2.16.840.1.101.3.4.4.1>, need to be used to configure
+C<oqsprovider> to use the expected NIST OIDs for B<ML-kEM>.
+If the C<pair-oqs> format is not included in the list, this format will not be
+recognised on input.
+
+=back
+
+=item C<ml-kem.output_formats> (B<OSSL_PKEY_PARAM_ML_KEM_INPUT_FORMATS>) <UTF8 string>
+
+Ordered list of enabled private key output formats when writing PKCS#8 files.
+List elements are separated by commas and/or spaces or tabs.
+The list of enabled formats can be specified in the configuration file, as seen
+in the L</EXAMPLES> section below, or the via the B<-provparam> command-line
+option.
+
+This supports the same set of formats as described under C<ml-kem.input_formats>
+above.
+The order in which elements are listed is important, the selected format will be
+the first one that is possible to output.
+If the key seed is known, the first listed format will be selected.
+If the key seed is not known, the first format that omits the seed will be selected.
+By default C<seed-priv> is listed first and C<priv-only> second.
+
 =back
 
 Use EVP_PKEY_CTX_set_params() after calling EVP_PKEY_keygen_init().
@@ -153,7 +239,11 @@ In the B<openssl.cnf> file, this looks like:
 
  # Can be referenced in one or more provider sections
  [ml_kem_sect]
- retain_seed = no
+ retain_seed = yes
+ # OQS legacy formats disabled
+ input_formats = seed-priv, seed-only, priv-only
+ # Output either the seed alone, or else the key alone
+ output_formats = seed-only, priv-only
 
  [providers_sect]
  default = default_sect
