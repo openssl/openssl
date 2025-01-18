@@ -109,6 +109,7 @@
 # define PROV_R_MISSING_SESSION_ID                        133
 # define PROV_R_MISSING_TYPE                              134
 # define PROV_R_MISSING_XCGHASH                           135
+# define PROV_R_ML_KEM_NO_FORMAT                          251
 # define PROV_R_MODULE_INTEGRITY_FAILURE                  214
 # define PROV_R_NOT_A_PRIVATE_KEY                         221
 # define PROV_R_NOT_A_PUBLIC_KEY                          220

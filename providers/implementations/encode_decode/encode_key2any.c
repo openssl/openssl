@@ -12,6 +12,7 @@
  */
 #include "internal/deprecated.h"
 
+#include <openssl/byteorder.h>
 #include <openssl/core.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
@@ -883,68 +884,17 @@ static int ml_dsa_pki_priv_to_der(const void *vkey, unsigned char **pder,
 static int ml_kem_spki_pub_to_der(const void *vkey, unsigned char **pder,
                                   ossl_unused void *ctx)
 {
-    const ML_KEM_KEY *key = vkey;
-    size_t publen;
-
-    if (!ossl_ml_kem_have_pubkey(key)) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_NULL_PARAMETER);
-        return 0;
-    }
-    publen = key->vinfo->pubkey_bytes;
-
-    if (pder != NULL
-        && (*pder = OPENSSL_malloc(publen)) == NULL)
-        return 0;
-    if (!ossl_ml_kem_encode_public_key(*pder, publen, key)) {
-        ERR_raise_data(ERR_LIB_OSSL_ENCODER, ERR_R_INTERNAL_ERROR,
-                       "error encoding %s public key",
-                       key->vinfo->algorithm_name);
-        OPENSSL_free(*pder);
-        return 0;
-    }
-
-    return publen;
+    return ossl_ml_kem_i2d_pubkey(vkey, pder);
 }
 
 static int ml_kem_pki_priv_to_der(const void *vkey, unsigned char **pder,
-                                  ossl_unused void *ctx)
+                                  void *vctx)
 {
-    const ML_KEM_KEY *key = vkey;
-    int len = ML_KEM_SEED_BYTES;
+    KEY2ANY_CTX *ctx = vctx;
+    const char *fmtkey = OSSL_PKEY_PARAM_ML_KEM_OUTPUT_FORMATS;
+    const char *formats = ossl_prov_ctx_get_param(ctx->provctx, fmtkey, NULL);
 
-    if (!ossl_ml_kem_have_prvkey(key)) {
-        ERR_raise_data(ERR_LIB_PROV, PROV_R_MISSING_KEY,
-                       "no %s private key data available",
-                       key->vinfo->algorithm_name);
-        return 0;
-    }
-
-    /*
-     * Output the seed bytes directly when available, but otherwise, be
-     * compatible with Bouncy Castle's non-seed "long" output format, which is
-     * just the FIPS 203 |dk| private key bytes sans DER octet-string wrapping.
-     */
-    if (ossl_ml_kem_have_seed(key))
-        len = ML_KEM_SEED_BYTES;
-    else
-        len = key->vinfo->prvkey_bytes;
-
-    if (pder == NULL)
-        return len;
-
-    if ((*pder = OPENSSL_malloc(len)) == NULL)
-        return 0;
-
-    if (ossl_ml_kem_have_seed(key)) {
-        if (ossl_ml_kem_encode_seed(*pder, len, key))
-            return len;
-    } else {
-        if (ossl_ml_kem_encode_private_key(*pder, len, key))
-            return len;
-    }
-
-    OPENSSL_free(*pder);
-    return 0;
+    return ossl_ml_kem_i2d_prvkey(vkey, pder, formats);
 }
 
 # define ml_kem_epki_priv_to_der ml_kem_pki_priv_to_der

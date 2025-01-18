@@ -13,7 +13,6 @@
  */
 #include "internal/deprecated.h"
 
-#include <openssl/asn1t.h>
 #include <openssl/byteorder.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
@@ -42,26 +41,6 @@
 #include "endecoder_local.h"
 #include "internal/nelem.h"
 #include "ml_dsa_codecs.h"
-
-#ifndef OPENSSL_NO_ML_KEM
-typedef struct {
-    ASN1_OBJECT *oid;
-} BARE_ALGOR;
-
-typedef struct {
-    BARE_ALGOR algor;
-    ASN1_BIT_STRING *pubkey;
-} BARE_PUBKEY;
-
-ASN1_SEQUENCE(BARE_ALGOR) = {
-    ASN1_SIMPLE(BARE_ALGOR, oid, ASN1_OBJECT),
-} static_ASN1_SEQUENCE_END(BARE_ALGOR)
-
-ASN1_SEQUENCE(BARE_PUBKEY) = {
-    ASN1_EMBED(BARE_PUBKEY, algor, BARE_ALGOR),
-    ASN1_SIMPLE(BARE_PUBKEY, pubkey, ASN1_BIT_STRING)
-} static_ASN1_SEQUENCE_END(BARE_PUBKEY)
-#endif
 
 struct der2key_ctx_st;           /* Forward declaration */
 typedef int check_key_fn(void *, struct der2key_ctx_st *ctx);
@@ -583,199 +562,35 @@ static void *sm2_d2i_PKCS8(const unsigned char **der, long der_len,
 /* ---------------------------------------------------------------------- */
 
 #ifndef OPENSSL_NO_ML_KEM
-
-/* For lengths between 256 and 65535 the DER encoding is 4 bytes longer */
-#define ML_KEM_OCTET_STRING_OVERHEAD   4
-
-/*-
- * The DER ASN.1 encoding of ML-KEM and ML-DSA public keys prepends 22 bytes to
- * the encoded public key:
- *
- * - 4 byte outer sequence tag and length
- * -  2 byte algorithm sequence tag and length
- * -    2 byte algorithm OID tag and length
- * -      9 byte algorithm OID (from NIST CSOR OID arc)
- * -  4 byte bit string tag and length
- * -    1 bitstring lead byte
- */
-#define ML_KEM_SPKI_OVERHEAD   22
-
-/*
- * The accepted private key format is either the 64-bytes (d, z) seed pair, or
- * else the optionally DER wrapped octet-string encoding  (one byte tag, three
- * byte length) of the FIPS 203 expanded |dk| key, optionally concatenated with
- * the public |ek|.  We don't need to worry about whether the public key is or
- * isn't appended, those are just ignored bytes at the end of an input buffer.
- */
-typedef enum {
-    NONE_FMT,   /* Unknown or unsupported format */
-    SEED_FMT,   /* Just the seed, no DER wrapping */
-    LONG_FMT,   /* Key(s), no octet-string DER wrapping */
-    ASN1_FMT    /* Key(s), octet-string DER wrapped */
-} ML_KEM_PRIV_FMT;
-
 static void *
 ml_kem_d2i_PKCS8(const uint8_t **der, long der_len, struct der2key_ctx_st *ctx)
 {
-    const ML_KEM_VINFO *vinfo;
-    ML_KEM_KEY *key = NULL, *ret = NULL;
+    ML_KEM_KEY *key;
     OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
-    PKCS8_PRIV_KEY_INFO *p8inf = NULL;
-    const unsigned char *p;
-    const X509_ALGOR *alg = NULL;
-    ML_KEM_PRIV_FMT fmt;
-    int plen, ptype, privlen, pairlen;
-    uint16_t keylen;
-    int retain;
-
-    /* Extract the key OID and any parameters (we want none of those) */
-    if ((p8inf = d2i_PKCS8_PRIV_KEY_INFO(NULL, der, der_len)) == NULL)
-        return 0;
-    if (!PKCS8_pkey_get0(NULL, &p, &plen, &alg, p8inf))
-        goto end;
-
-    /* Bail out early if this is some other key type. */
-    if (OBJ_obj2nid(alg->algorithm) != ctx->desc->evp_type)
-        goto end;
-    vinfo = ossl_ml_kem_get_vinfo(ctx->desc->evp_type);
-
-    /* Parameters must be absent. */
-    X509_ALGOR_get0(NULL, &ptype, NULL, alg);
-    if (ptype != V_ASN1_UNDEF) {
-        ERR_raise_data(ERR_LIB_PROV, PROV_R_UNEXPECTED_KEY_PARAMETERS,
-                       "unexpected parameters with a PKCS#8 %s private key",
-                       vinfo->algorithm_name);
-        goto end;
-    }
-    privlen = (int) vinfo->prvkey_bytes;
-    pairlen = (int) (vinfo->prvkey_bytes + vinfo->pubkey_bytes);
-
-    if (plen == ML_KEM_SEED_BYTES)
-        fmt = SEED_FMT;
-    else if (plen == privlen || plen == pairlen)
-        fmt = LONG_FMT;
-    else if (plen == ML_KEM_OCTET_STRING_OVERHEAD + privlen
-             || plen == ML_KEM_OCTET_STRING_OVERHEAD + pairlen)
-        fmt = ASN1_FMT;
-    else
-        fmt = NONE_FMT;
-
-    switch (fmt) {
-    case NONE_FMT:
-        ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH,
-                       "unexpected PKCS#8 private key length: %d", plen);
-        break;
-    case SEED_FMT:
-        retain = ossl_prov_ctx_get_bool_param(
+    int retain_seed = ossl_prov_ctx_get_bool_param(
             ctx->provctx, OSSL_PKEY_PARAM_ML_KEM_RETAIN_SEED, 1);
-        if ((key = ossl_ml_kem_key_new(libctx, ctx->propq, retain,
-                                       ctx->desc->evp_type)) != NULL)
-            ret = ossl_ml_kem_set_seed(p, plen, key);
-        else
-            ERR_raise_data(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR,
-                           "error storing %s private key seed",
-                           vinfo->algorithm_name);
-        break;
-    case ASN1_FMT:
-        if (*p++ != V_ASN1_OCTET_STRING || *p++ != 0x82)
-            break;
-        p = OPENSSL_load_u16_be(&keylen, p);
-        if (keylen != (plen -= ML_KEM_OCTET_STRING_OVERHEAD))
-            break;
-        /* fallthrough */
-    case LONG_FMT:
-        /* Check public key consistency if provided? */
-        if ((key = ossl_ml_kem_key_new(libctx, ctx->propq, 1,
-                                       ctx->desc->evp_type)) != NULL
-            && ossl_ml_kem_parse_private_key(p, vinfo->prvkey_bytes, key))
-            ret = key;
-        else
-            ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY,
-                           "error parsing %s private key",
-                           vinfo->algorithm_name);
-        break;
-    }
+    const char *formats = ossl_prov_ctx_get_param(
+            ctx->provctx, OSSL_PKEY_PARAM_ML_KEM_INPUT_FORMATS, NULL);
 
-  end:
-    PKCS8_PRIV_KEY_INFO_free(p8inf);
-    if (ret == NULL)
-        ossl_ml_kem_key_free(key);
-    return ret;
+    key = ossl_ml_kem_d2i_PKCS8(*der, der_len, retain_seed, formats,
+                                ctx->desc->evp_type, libctx, ctx->propq);
+    if (key != NULL)
+        *der += der_len;
+    return key;
 }
 
 static ossl_inline void *
 ml_kem_d2i_PUBKEY(const uint8_t **der, long der_len,
                   struct der2key_ctx_st *ctx)
 {
-    const ML_KEM_VINFO *vinfo = ossl_ml_kem_get_vinfo(ctx->desc->evp_type);
-    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
-    ML_KEM_KEY *ret = NULL;
-    BARE_PUBKEY *spki;
-    const uint8_t *end = *der;
+    ML_KEM_KEY *key;
 
-    /*
-     * Not our NID!  Is there a sensible error to report here?  Why was this
-     * decoder called?
-     */
-    if (vinfo == NULL)
-        return NULL;
-
-    /*
-     * Check that we have the right OID, the bit string has no "bits left" and
-     * that we consume all the input exactly.
-     */
-    if (der_len != ML_KEM_SPKI_OVERHEAD + (long) vinfo->pubkey_bytes) {
-        ERR_raise_data(ERR_LIB_PROV, PROV_R_BAD_ENCODING,
-                       "unexpected %s public key length: %ld != %ld",
-                       vinfo->algorithm_name, der_len,
-                       ML_KEM_SPKI_OVERHEAD + (long) vinfo->pubkey_bytes);
-        return NULL;
-    }
-
-    if ((spki = OPENSSL_zalloc(sizeof(*spki))) == NULL)
-        return NULL;
-
-    /* The spki storage is freed on error */
-    if (ASN1_item_d2i_ex((ASN1_VALUE **)&spki, &end, der_len,
-                            ASN1_ITEM_rptr(BARE_PUBKEY), NULL, NULL) == NULL) {
-        ERR_raise_data(ERR_LIB_PROV, PROV_R_BAD_ENCODING,
-                       "malformed %s public key ASN.1 encoding",
-                       vinfo->algorithm_name);
-        return NULL;
-    }
-
-    /* The spki structure now owns some memory */
-    if ((spki->pubkey->flags & 0x7) != 0 || end != *der + der_len) {
-        ERR_raise_data(ERR_LIB_PROV, PROV_R_BAD_ENCODING,
-                       "malformed %s public key ASN.1 encoding",
-                       vinfo->algorithm_name);
-        goto end;
-    }
-    if (OBJ_cmp(OBJ_nid2obj(ctx->desc->evp_type), spki->algor.oid) != 0) {
-        ERR_raise_data(ERR_LIB_PROV, PROV_R_BAD_ENCODING,
-                       "unexpected algorithm OID for an %s public key",
-                       vinfo->algorithm_name);
-        goto end;
-    }
-
-    ret = ossl_ml_kem_key_new(libctx, ctx->propq, 1, ctx->desc->evp_type);
-    if (ret == NULL
-        || !ossl_ml_kem_parse_public_key(spki->pubkey->data,
-                                         spki->pubkey->length, ret)) {
-        ossl_ml_kem_key_free(ret);
-        ret = NULL;
-        ERR_raise_data(ERR_LIB_PROV, PROV_R_BAD_ENCODING,
-                       "failed to parse %s public key from the input data",
-                       vinfo->algorithm_name);
-    }
-
-  end:
-    ASN1_OBJECT_free(spki->algor.oid);
-    ASN1_BIT_STRING_free(spki->pubkey);
-    OPENSSL_free(spki);
-    return ret;
+    key = ossl_ml_kem_d2i_PUBKEY(*der, der_len, ctx->desc->evp_type,
+                                 PROV_LIBCTX_OF(ctx->provctx), ctx->propq);
+    if (key != NULL)
+        *der += der_len;
+    return key;
 }
-
 
 # define ml_kem_512_evp_type                EVP_PKEY_ML_KEM_512
 # define ml_kem_512_d2i_private_key         NULL
