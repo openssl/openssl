@@ -238,7 +238,11 @@ int X509_load_cert_crl_file_ex(X509_LOOKUP *ctx, const char *file, int type,
 
     if (type != X509_FILETYPE_PEM)
         return X509_load_cert_file_ex(ctx, file, type, libctx, propq);
+#if defined(OPENSSL_SYS_WINDOWS)
+    in = BIO_new_file(file, "rb");
+#else
     in = BIO_new_file(file, "r");
+#endif
     if (in == NULL) {
         ERR_raise(ERR_LIB_X509, ERR_R_BIO_LIB);
         return 0;
