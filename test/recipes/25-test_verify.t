@@ -29,7 +29,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 193;
+plan tests => 194;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -38,6 +38,8 @@ ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
 # Root CA variants
 ok(!verify("ee-cert", "sslserver", [qw(root-nonca)], [qw(ca-cert)]),
    "fail trusted non-ca root");
+ok(!verify("ee-cert", "sslserver", [qw(root-no-KeyCertSign)], [qw(ca-cert)]),
+   "fail trusted root excluding key usage KeyCertSign");
 ok(!verify("ee-cert", "sslserver", [qw(nroot+serverAuth)], [qw(ca-cert)]),
    "fail server trust non-ca root");
 ok(!verify("ee-cert", "sslserver", [qw(nroot+anyEKU)], [qw(ca-cert)]),
