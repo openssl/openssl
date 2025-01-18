@@ -436,66 +436,7 @@ static int ecx_to_text(BIO *out, const void *key, int selection)
 #ifndef OPENSSL_NO_ML_KEM
 static int ml_kem_to_text(BIO *out, const void *vkey, int selection)
 {
-    const ML_KEM_KEY *key = vkey;
-    uint8_t seed[ML_KEM_SEED_BYTES], *prvenc = NULL, *pubenc = NULL;
-    size_t publen, prvlen;
-    const char *type_label = NULL;
-    int ret = 0;
-
-    if (out == NULL || key == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_NULL_PARAMETER);
-        return 0;
-    }
-    type_label = key->vinfo->algorithm_name;
-    publen = key->vinfo->pubkey_bytes;
-    prvlen = key->vinfo->prvkey_bytes;
-
-    if (!ossl_ml_kem_have_pubkey(key)) {
-        ERR_raise_data(ERR_LIB_PROV, PROV_R_MISSING_KEY,
-                       "no %s key material available",
-                       type_label);
-        return 0;
-    }
-
-    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
-        if (!ossl_ml_kem_have_prvkey(key)) {
-            ERR_raise_data(ERR_LIB_PROV, PROV_R_MISSING_KEY,
-                           "no %s private key material available",
-                           key->vinfo->algorithm_name);
-            return 0;
-        }
-        if (BIO_printf(out, "%s Private-Key:\n", type_label) <= 0)
-            return 0;
-
-        if ((prvenc = OPENSSL_malloc(prvlen)) == NULL)
-            return 0;
-
-        if (ossl_ml_kem_have_seed(key)) {
-            if (!ossl_ml_kem_encode_seed(seed, sizeof(seed), key))
-                goto end;
-            if (!ossl_bio_print_labeled_buf(out, "seed:", seed, sizeof(seed)))
-                goto end;
-        }
-
-        if (!ossl_ml_kem_encode_private_key(prvenc, prvlen, key))
-            goto end;
-        if (!ossl_bio_print_labeled_buf(out, "dk:", prvenc, prvlen))
-            goto end;
-
-    } else if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
-        if (BIO_printf(out, "%s Public-Key:\n", type_label) <= 0)
-            goto end;
-    }
-
-    pubenc = OPENSSL_malloc(key->vinfo->pubkey_bytes);
-    if (pubenc != NULL)
-        ret = ossl_ml_kem_encode_public_key(pubenc, publen, key)
-            && ossl_bio_print_labeled_buf(out, "ek:", pubenc, publen);
-
-  end:
-    OPENSSL_free(pubenc);
-    OPENSSL_free(prvenc);
-    return ret;
+    return ossl_ml_kem_key_to_text(out, (ML_KEM_KEY *)vkey, selection);
 }
 #endif
 

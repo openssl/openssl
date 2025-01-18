@@ -12,6 +12,7 @@
 # pragma once
 
 # include <openssl/e_os2.h>
+# include <openssl/bio.h>
 # include <openssl/core_dispatch.h>
 # include <crypto/evp.h>
 
@@ -121,8 +122,49 @@
  * -----------------------------
  */
 
+ /*-
+  * The DER ASN.1 encoding of ML-KEM (and ML-DSA) public keys prepends 22 bytes
+  * to the encoded public key:
+  *
+  * - 4 byte outer sequence tag and length
+  * -  2 byte algorithm sequence tag and length
+  * -    2 byte algorithm OID tag and length
+  * -      9 byte algorithm OID (from NIST CSOR OID arc)
+  * -  4 byte bit string tag and length
+  * -    1 bitstring lead byte
+  */
+# define ML_KEM_SPKI_OVERHEAD   22
+typedef struct {
+    const uint8_t asn1_prefix[ML_KEM_SPKI_OVERHEAD];
+} ML_KEM_SPKI_INFO;
+
+/*-
+ * For each algorithm we support a few PKCS#8 input formats,
+ *
+ * - Seed: SEQUENCE(OCTET STRING)
+ * - Private key: SEQUENCE([1] IMPLICIT OCTET STRING)
+ * - Seed & private key: SEQUENCE(OCTET STRING, [1] IMPLICIT OCTET STRING)
+ * - OQS private key: OCTET STRING
+ * - OQS private + public key: OCTET STRING
+ *   (The public key is ignored, just as with PKCS#8 v2.)
+ *
+ * An offset of zero means that particular field is absent.
+ */
+typedef struct {
+    const char *p8_name;
+    size_t p8_bytes;
+    uint32_t p8_magic;
+    uint16_t seed_magic;
+    size_t seed_offset;
+    uint32_t priv_magic;
+    size_t priv_offset;
+    size_t pub_offset;
+} ML_KEM_PKCS8_INFO;
+
 typedef struct {
     const char *algorithm_name;
+    const ML_KEM_SPKI_INFO *spki_info;
+    const ML_KEM_PKCS8_INFO *pkcs8_info;
     size_t prvkey_bytes;
     size_t prvalloc;
     size_t pubkey_bytes;
@@ -226,6 +268,17 @@ int ossl_ml_kem_parse_private_key(const uint8_t *in, size_t len,
 ML_KEM_KEY *ossl_ml_kem_set_seed(const uint8_t *seed, size_t seedlen,
                                  ML_KEM_KEY *key);
 __owur
+ML_KEM_KEY *ossl_ml_kem_d2i_PUBKEY(const uint8_t *pubenc, int publen,
+                                   int evp_type, OSSL_LIB_CTX *libctx,
+                                   const char *propq);
+__owur
+ML_KEM_KEY *ossl_ml_kem_d2i_PKCS8(const uint8_t *prvenc, int prvlen,
+                                  int retain_seed, const char *formats,
+                                  int evp_type, OSSL_LIB_CTX *ctx,
+                                  const char *propq);
+__owur
+int ossl_ml_kem_key_to_text(BIO *out, const ML_KEM_KEY *key, int selection);
+__owur
 int ossl_ml_kem_genkey(uint8_t *pubenc, size_t publen, ML_KEM_KEY *key);
 
 /*
@@ -237,8 +290,13 @@ __owur
 int ossl_ml_kem_encode_public_key(uint8_t *out, size_t len,
                                   const ML_KEM_KEY *key);
 __owur
+int ossl_ml_kem_i2d_pubkey(const ML_KEM_KEY *key, unsigned char **out);
+__owur
 int ossl_ml_kem_encode_private_key(uint8_t *out, size_t len,
                                    const ML_KEM_KEY *key);
+__owur
+int ossl_ml_kem_i2d_prvkey(const ML_KEM_KEY *key, unsigned char **out,
+                           const char *formats);
 int ossl_ml_kem_encode_seed(uint8_t *out, size_t len,
                             const ML_KEM_KEY *key);
 
