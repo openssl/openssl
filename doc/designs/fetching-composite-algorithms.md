@@ -20,19 +20,19 @@ Public API - Add variants of `EVP_PKEY_CTX` initializers
 
 As far as this design is concerned, these API sets are affected:
 
-- SIGNATURE (DigestSign and DigestVerify)
+- SIGNATURE
 - ASYM_CIPHER
 - KEYEXCH
 
-The proposal is to add these functions:
+The proposal is to add these initializer functions:
 
 ``` C
-EVP_DigestSignInit_ex2(EVP_PKEY_CTX **pctx,
-                       EVP_SIGNATURE *sig, EVP_PKEY *pkey,
-                       OSSL_LIB_CTX *libctx, const OSSL_PARAM params[]);
-EVP_DigestVerifyInit_ex2(EVP_PKEY_CTX **pctx,
-                         EVP_SIGNATURE *sig, EVP_PKEY *pkey,
-                         OSSL_LIB_CTX *libctx, const OSSL_PARAM params[]);
+int EVP_PKEY_sign_init_ex2(EVP_PKEY_CTX *pctx,
+                           EVP_SIGNATURE *algo, const OSSL_PARAM params[]);
+int EVP_PKEY_verify_init_ex2(EVP_PKEY_CTX *pctx,
+                             EVP_SIGNATURE *algo, const OSSL_PARAM params[]);
+int EVP_PKEY_verify_recover_init_ex2(EVP_PKEY_CTX *pctx,
+                                     EVP_SIGNATURE *algo, const OSSL_PARAM params[]);
 
 int EVP_PKEY_encrypt_init_ex2(EVP_PKEY_CTX *ctx, EVP_ASYM_CIPHER *asymciph,
                               const OSSL_PARAM params[]);
@@ -43,68 +43,12 @@ int EVP_PKEY_derive_init_ex2(EVP_PKEY_CTX *ctx, EVP_KEYEXCH *exchange,
                              const OSSL_PARAM params[]);
 ```
 
-Because `EVP_SIGNATURE`, `EVP_ASYM_CIPHER` and `EVP_KEYEXCH` aren't limited
-to composite algorithms, these functions can be used just as well with
-explicit fetches of simple algorithms, say "RSA".  In that case, the caller
-will need to pass necessary auxiliary parameters through the `OSSL_PARAM` or
-a call to a corresponding `set_params` function.
+Detailed proposal for these APIs will be or are prepared in other design
+documents:
 
-Requirements on the providers
------------------------------
-
-Because it's not immediately obvious from a composite algorithm name what
-key type it requires / supports, at least in code, allowing the use of an
-explicitly fetched implementation of a composite algorithm requires that
-providers cooperate by declaring what key type is required / supported by
-each algorithm.
-
-For non-composite operation algorithms (like "RSA"), this is not necessary,
-see the fallback strategies below.
-
-There are two ways this could be implemented:
-
-1.  through an added provider function that would work like keymgmt's
-    `query_operation_name` function, but would return a key type name
-    instead:
-
-    ``` C
-    # define OSSL_FUNC_SIGNATURE_QUERY_KEY_TYPE         26
-    OSSL_CORE_MAKE_FUNC(const char *, signature_query_key_type, (void))
-
-    # define OSSL_FUNC ASYM_CIPHER_QUERY_KEY_TYPE       12
-    OSSL_CORE_MAKE_FUNC(const char *, asym_cipher_query_key_type, (void))
-
-    # define OSSL_FUNC_KEYEXCH_QUERY_KEY_TYPE           11
-    OSSL_CORE_MAKE_FUNC(const char *, keyexch_query_key_type, (void))
-    ```
-
-2.  through a gettable `OSSL_PARAM`, using the param identity "keytype"
-
-Fallback strategies
--------------------
-
-Because existing providers haven't been updated to declare composite
-algorithms, or to respond to the key type query, some fallback strategies
-will be needed to find out if the `EVP_PKEY` key type is possible to use
-with the fetched algorithm:
-
--   Check if the fetched operation name matches the key type (keymgmt name)
-    of the `EVP_PKEY` that's involved in the operation.  For example, this
-    is useful when someone fetched the `EVP_SIGNATURE` "RSA".
--   Check if the fetched algorithm name matches the name returned by the
-    keymgmt's `query_operation_name` function.  For example, this is useful
-    when someone fetched the `EVP_SIGNATURE` "ECDSA", for which the key type
-    to use is "EC".
--   libcrypto currently has knowledge of some composite algorithm names and
-    what they are composed of, accessible with `OBJ_find_sigid_algs` and
-    similar functionality.  This knowledge is regarded legacy, but can be
-    used to figure out the key type.
-
-If none of these strategies work out, the operation initialization should
-fail.
-
-These strategies have their limitations, but the built-in legacy knowledge
-we currently have in libcrypto should be enough to cover most bases.
+- [Functions for explicitly fetched signature algorithms]
+- [Functions for explicitly fetched asym-cipher algorithms] (not yet designed)
+- [Functions for explicitly fetched keyexch algorithms] (not yet designed)
 
 -----
 
@@ -185,3 +129,7 @@ This is hurtful in multiple ways:
     use the result.
 -   It fails discoverability, for example through the `openssl list`
     command.
+
+<!-- links -->
+[Functions for explicitly fetched signature algorithms]:
+    functions-for-explicitly-fetched-signature-algorithms.md
