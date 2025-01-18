@@ -276,7 +276,9 @@ static int test_exec_KUR_ses(int transfer_error, int pubkey, int raverified)
     if (pubkey) {
         EVP_PKEY *key = raverified /* wrong key */ ? server_key : client_key;
 
-        EVP_PKEY_up_ref(key);
+        if (!EVP_PKEY_up_ref(key))
+            return 0;
+
         OSSL_CMP_CTX_set0_newPkey(fixture->cmp_ctx, 0 /* not priv */, key);
         OSSL_CMP_SRV_CTX_set_accept_raverified(fixture->srv_ctx, 1);
     }

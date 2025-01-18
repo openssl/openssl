@@ -35,12 +35,13 @@ static EVP_KEYEXCH *evp_keyexch_new(OSSL_PROVIDER *prov)
     if (exchange == NULL)
         return NULL;
 
-    if (!CRYPTO_NEW_REF(&exchange->refcnt, 1)) {
+    if (!CRYPTO_NEW_REF(&exchange->refcnt, 1)
+        || !ossl_provider_up_ref(prov)) {
+        CRYPTO_FREE_REF(&exchange->refcnt);
         OPENSSL_free(exchange);
         return NULL;
     }
     exchange->prov = prov;
-    ossl_provider_up_ref(prov);
 
     return exchange;
 }
@@ -493,17 +494,20 @@ int EVP_PKEY_derive_set_peer_ex(EVP_PKEY_CTX *ctx, EVP_PKEY *peer,
         return -1;
     }
 
+    if (!EVP_PKEY_up_ref(peer))
+        return -1;
+
     EVP_PKEY_free(ctx->peerkey);
     ctx->peerkey = peer;
 
     ret = ctx->pmeth->ctrl(ctx, EVP_PKEY_CTRL_PEER_KEY, 1, peer);
 
     if (ret <= 0) {
+        EVP_PKEY_free(ctx->peerkey);
         ctx->peerkey = NULL;
         return ret;
     }
 
-    EVP_PKEY_up_ref(peer);
     return 1;
 #endif
 }
