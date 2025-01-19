@@ -197,12 +197,16 @@ err:
 static int lms_key_eq_test(void)
 {
     int ret = 0;
-    EVP_PKEY *key[4] = { NULL, NULL, NULL };
+    EVP_PKEY *key[4];
     LMS_ACVP_TEST_DATA *td1 = &lms_testdata[0];
     LMS_ACVP_TEST_DATA *td2 = &lms_testdata[1];
+    size_t i;
 #ifndef OPENSSL_NO_EC
     EVP_PKEY *eckey = NULL;
 #endif
+
+    for (i = 0; i < OSSL_NELEM(key); i++)
+        key[i] = NULL;
 
     if (!TEST_ptr(key[0] = lms_pubkey_from_data(td1->pub, td1->publen))
             || !TEST_ptr(key[1] = lms_pubkey_from_data(td1->pub, td1->publen))
