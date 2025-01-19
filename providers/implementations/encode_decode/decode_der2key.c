@@ -685,10 +685,9 @@ ml_dsa_d2i_PKCS8(const uint8_t **der, long der_len, struct der2key_ctx_st *ctx)
 static ossl_inline void * ml_dsa_d2i_PUBKEY(const uint8_t **der, long der_len,
                                             struct der2key_ctx_st *ctx)
 {
-    int ok = 0;
     OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
     ML_DSA_KEY *ret = NULL;
-    BARE_PUBKEY *spki = NULL;
+    BARE_PUBKEY *spki;
     const uint8_t *end = *der;
     size_t len;
 
@@ -716,11 +715,11 @@ static ossl_inline void * ml_dsa_d2i_PUBKEY(const uint8_t **der, long der_len,
                        "unexpected %s public key length: %ld != %ld",
                        ctx->desc->keytype_name, der_len,
                        22 + (long)len);
-        goto err;
+        return NULL;
     }
 
     if ((spki = OPENSSL_zalloc(sizeof(*spki))) == NULL)
-        goto err;
+        return NULL;
 
     /* The spki storage is freed on error */
     if (ASN1_item_d2i_ex((ASN1_VALUE **)&spki, &end, der_len,
@@ -728,7 +727,7 @@ static ossl_inline void * ml_dsa_d2i_PUBKEY(const uint8_t **der, long der_len,
         ERR_raise_data(ERR_LIB_PROV, PROV_R_BAD_ENCODING,
                        "malformed %s public key ASN.1 encoding",
                        ossl_ml_dsa_key_get_name(ret));
-        goto err;
+        return NULL;
     }
 
     /* The spki structure now owns some memory */
@@ -736,32 +735,29 @@ static ossl_inline void * ml_dsa_d2i_PUBKEY(const uint8_t **der, long der_len,
         ERR_raise_data(ERR_LIB_PROV, PROV_R_BAD_ENCODING,
                        "malformed %s public key ASN.1 encoding",
                        ossl_ml_dsa_key_get_name(ret));
-        goto err;
+        goto end;
     }
     if (OBJ_cmp(OBJ_nid2obj(ctx->desc->evp_type), spki->algor.oid) != 0) {
         ERR_raise_data(ERR_LIB_PROV, PROV_R_BAD_ENCODING,
                        "unexpected algorithm OID for an %s public key",
                        ossl_ml_dsa_key_get_name(ret));
-        goto err;
+        goto end;
     }
 
-    if (!ossl_ml_dsa_pk_decode(ret, spki->pubkey->data, spki->pubkey->length)) {
+    ret = ossl_ml_dsa_key_new(libctx, ctx->propq, ctx->desc->keytype_name);
+    if (ret == NULL
+        || !ossl_ml_dsa_pk_decode(ret, spki->pubkey->data, spki->pubkey->length)) {
+        ossl_ml_dsa_key_free(ret);
+        ret = NULL;
         ERR_raise_data(ERR_LIB_PROV, PROV_R_BAD_ENCODING,
                        "failed to parse %s public key from the input data",
                        ossl_ml_dsa_key_get_name(ret));
-        goto err;
     }
-    ok = 1;
- err:
-    if (spki != NULL) {
-        ASN1_OBJECT_free(spki->algor.oid);
-        ASN1_BIT_STRING_free(spki->pubkey);
-        OPENSSL_free(spki);
-    }
-    if (!ok) {
-        ossl_ml_dsa_key_free(ret);
-        ret = NULL;
-    }
+
+ end:
+    ASN1_OBJECT_free(spki->algor.oid);
+    ASN1_BIT_STRING_free(spki->pubkey);
+    OPENSSL_free(spki);
     return ret;
 }
 
