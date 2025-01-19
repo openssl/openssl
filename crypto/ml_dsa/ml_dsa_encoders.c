@@ -821,6 +821,7 @@ static int hint_bits_encode(const VECTOR *hint, WPACKET *pkt, uint32_t omega)
 
     if (!WPACKET_allocate_bytes(pkt, omega + k, &data))
         return 0;
+    memset(data, 0, omega + k);
 
     for (i = 0; i < k; i++, p++) {
         for (j = 0; j < ML_DSA_NUM_POLY_COEFFICIENTS; j++)
