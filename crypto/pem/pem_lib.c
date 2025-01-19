@@ -316,10 +316,11 @@ int PEM_ASN1_write(i2d_of_void *i2d, const char *name, FILE *fp,
 }
 #endif
 
-int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
-                       const void *x, const EVP_CIPHER *enc,
-                       const unsigned char *kstr, int klen,
-                       pem_password_cb *callback, void *u)
+static int
+PEM_ASN1_write_bio_internal(
+    i2d_of_void *i2d, OSSL_i2d_of_void_ctx *i2d_ctx, void *vctx,
+    const char *name, BIO *bp, const void *x, const EVP_CIPHER *enc,
+    const unsigned char *kstr, int klen, pem_password_cb *callback, void *u)
 {
     EVP_CIPHER_CTX *ctx = NULL;
     int dsize = 0, i = 0, j = 0, ret = 0;
@@ -344,7 +345,13 @@ int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
         }
     }
 
-    if ((dsize = i2d(x, NULL)) <= 0) {
+    if (i2d == NULL && i2d_ctx == NULL) {
+        ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_INVALID_NULL_ARGUMENT);
+        dsize = 0;
+        goto err;
+    }
+    dsize = i2d != NULL ? i2d(x, NULL) : i2d_ctx(x, NULL, vctx);
+    if (dsize <= 0) {
         ERR_raise(ERR_LIB_PEM, ERR_R_ASN1_LIB);
         dsize = 0;
         goto err;
@@ -355,7 +362,7 @@ int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
     if (data == NULL)
         goto err;
     p = data;
-    i = i2d(x, &p);
+    i = i2d != NULL ? i2d(x, &p) : i2d_ctx(x, &p, vctx);
 
     if (enc != NULL) {
         if (kstr == NULL) {
@@ -414,6 +421,24 @@ int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
     OPENSSL_cleanse(buf, PEM_BUFSIZE);
     OPENSSL_clear_free(data, (unsigned int)dsize);
     return ret;
+}
+
+int
+PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp, const void *x,
+                   const EVP_CIPHER *enc, const unsigned char *kstr, int klen,
+                   pem_password_cb *callback, void *u)
+{
+    return PEM_ASN1_write_bio_internal(i2d, NULL, NULL, name, bp, x, enc,
+                                       kstr, klen, callback, u);
+}
+
+int PEM_ASN1_write_bio_ctx(OSSL_i2d_of_void_ctx *i2d, void *vctx,
+                           const char *name, BIO *bp, const void *x,
+                           const EVP_CIPHER *enc, const unsigned char *kstr,
+                           int klen, pem_password_cb *callback, void *u)
+{
+    return PEM_ASN1_write_bio_internal(NULL, i2d, vctx, name, bp, x, enc,
+                                       kstr, klen, callback, u);
 }
 
 int PEM_do_header(EVP_CIPHER_INFO *cipher, unsigned char *data, long *plen,

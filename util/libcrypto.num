@@ -5884,3 +5884,4 @@ i2d_OSSL_AA_DIST_POINT                  ?	3_5_0	EXIST::FUNCTION:
 OSSL_AA_DIST_POINT_free                 ?	3_5_0	EXIST::FUNCTION:
 OSSL_AA_DIST_POINT_new                  ?	3_5_0	EXIST::FUNCTION:
 OSSL_AA_DIST_POINT_it                   ?	3_5_0	EXIST::FUNCTION:
+PEM_ASN1_write_bio_ctx                  ?	3_5_0	EXIST::FUNCTION:
