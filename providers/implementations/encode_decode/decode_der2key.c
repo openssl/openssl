@@ -634,6 +634,7 @@ static void rsa_adjust(void *key, struct der2key_ctx_st *ctx)
 #define rsapss_check                    rsa_check
 #define rsapss_adjust                   rsa_adjust
 
+
 /* ---------------------------------------------------------------------- */
 
 #ifndef OPENSSL_NO_ML_DSA
@@ -675,7 +676,7 @@ ml_dsa_d2i_PKCS8(const uint8_t **der, long der_len, struct der2key_ctx_st *ctx)
             || !ossl_ml_dsa_key_public_from_private(key))
         goto end;
     ret = key;
- end:
+  end:
     PKCS8_PRIV_KEY_INFO_free(p8inf);
     if (ret == NULL)
         ossl_ml_dsa_key_free(key);
@@ -754,7 +755,7 @@ static ossl_inline void * ml_dsa_d2i_PUBKEY(const uint8_t **der, long der_len,
                        ossl_ml_dsa_key_get_name(ret));
     }
 
- end:
+  end:
     ASN1_OBJECT_free(spki->algor.oid);
     ASN1_BIT_STRING_free(spki->pubkey);
     OPENSSL_free(spki);
@@ -792,6 +793,8 @@ static ossl_inline void * ml_dsa_d2i_PUBKEY(const uint8_t **der, long der_len,
 # define ml_dsa_87_adjust                 NULL
 
 #endif
+
+
 
 /* ---------------------------------------------------------------------- */
 
