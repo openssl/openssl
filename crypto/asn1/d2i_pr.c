@@ -54,9 +54,9 @@ d2i_PrivateKey_decoder(int keytype, EVP_PKEY **a, const unsigned char **pp,
     if (p8info != NULL) {
         int64_t v;
 
-        /* ascertain version is 0 as per RFC5208 */
+        /* ascertain version is 0 or 1 as per RFC5958 */
         if (!ASN1_INTEGER_get_int64(&v, p8info->version)
-            || v != 0) {
+            || (v != 0 && v != 1)) {
             ERR_raise(ERR_LIB_ASN1, ASN1_R_ASN1_PARSE_ERROR);
             goto err;
         }
