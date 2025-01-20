@@ -1221,8 +1221,6 @@ $code.=<<___;
 .align	5
 ${prefix}_xts_encrypt${std}:
 	AARCH64_SIGN_LINK_REGISTER
-	stp	x15, x16, [sp, #-0x10]!
-	stp	x17, x18, [sp, #-0x10]!
 	stp	x19, x20, [sp, #-0x10]!
 	stp	x21, x22, [sp, #-0x10]!
 	stp	x23, x24, [sp, #-0x10]!
@@ -1532,8 +1530,6 @@ $code.=<<___;
 	ldp		x23, x24, [sp], #0x10
 	ldp		x21, x22, [sp], #0x10
 	ldp		x19, x20, [sp], #0x10
-	ldp		x17, x18, [sp], #0x10
-	ldp		x15, x16, [sp], #0x10
 	AARCH64_VALIDATE_LINK_REGISTER
 	ret
 .size	${prefix}_xts_encrypt${std},.-${prefix}_xts_encrypt${std}
