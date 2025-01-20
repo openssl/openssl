@@ -857,7 +857,7 @@ err:
 #ifndef OPENSSL_NO_SCRYPT
 static int test_kdf_scrypt(void)
 {
-    int ret;
+    int i, ret;
     EVP_KDF_CTX *kctx;
     OSSL_PARAM params[7], *p = params;
     unsigned char out[64];
@@ -883,15 +883,21 @@ static int test_kdf_scrypt(void)
     *p++ = OSSL_PARAM_construct_uint(OSSL_KDF_PARAM_SCRYPT_MAXMEM, &maxmem);
     *p = OSSL_PARAM_construct_end();
 
-    ret =
-        TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_SCRYPT))
-        && TEST_true(EVP_KDF_CTX_set_params(kctx, params))
-        /* failure test *//*
-        && TEST_int_le(EVP_KDF_derive(kctx, out, sizeof(out), NULL), 0)*/
-        && TEST_true(OSSL_PARAM_set_uint(p - 1, 10 * 1024 * 1024))
-        && TEST_true(EVP_KDF_CTX_set_params(kctx, p - 1))
-        && TEST_int_gt(EVP_KDF_derive(kctx, out, sizeof(out), NULL), 0)
-        && TEST_mem_eq(out, sizeof(out), expected, sizeof(expected));
+    ret = TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_SCRYPT));
+    for (i = 0; ret && i < 2; ++i) {
+        ret = ret
+            && TEST_true(EVP_KDF_CTX_set_params(kctx, params));
+        if (i == 0)
+            ret = ret
+                && TEST_int_le(EVP_KDF_derive(kctx, out, sizeof(out), NULL), 0)
+                && TEST_true(OSSL_PARAM_set_uint(p - 1, 10 * 1024 * 1024))
+                && TEST_true(EVP_KDF_CTX_set_params(kctx, p - 1));
+        ret = ret
+            && TEST_int_gt(EVP_KDF_derive(kctx, out, sizeof(out), NULL), 0)
+            && TEST_mem_eq(out, sizeof(out), expected, sizeof(expected));
+        if (i == 0)
+            EVP_KDF_CTX_reset(kctx);
+    }
 
     EVP_KDF_CTX_free(kctx);
     return ret;
