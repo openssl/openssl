@@ -35,5 +35,5 @@ DEPEND[sm2_sig.o]=../../common/include/prov/der_sm2.h
 SOURCE[$MAC_GOAL]=mac_legacy_sig.c
 
 IF[{- !$disabled{'ml-dsa'} -}]
-  SOURCE[$DSA_GOAL]=ml_dsa_sig.c
+  SOURCE[$ML_DSA_GOAL]=ml_dsa_sig.c
 ENDIF
