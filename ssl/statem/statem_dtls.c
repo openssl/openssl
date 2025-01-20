@@ -291,48 +291,45 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t recordtype)
             assert(s->s3.tmp.new_compression != NULL
                    || BIO_wpending(s->wbio) <= (int)s->d1->mtu);
 
-            if (recordtype == SSL3_RT_HANDSHAKE && !s->d1->retransmitting) {
-                if (s->init_off == 0) {
-                    size_t xlen = s->init_num;
+            if (recordtype == SSL3_RT_HANDSHAKE && !s->d1->retransmitting
+                    && s->init_off == 0) {
+                size_t xlen = s->init_num;
 
-                    if (s->version == DTLS1_BAD_VER) {
-                        msgstart += DTLS1_HM_HEADER_LENGTH;
-                        xlen -= DTLS1_HM_HEADER_LENGTH;
-                    } else {
-                        /*
-                         * Now prepare to calculate the transcript hash. For
-                         * versions prior to DTLSv1.3 this means:
-                         *
-                         * rfc6347: Hash calculations include entire handshake
-                         *   messages, including DTLS-specific fields: message_seq,
-                         *   fragment_offset, and fragment_length. However, the
-                         *   Finished MAC MUST be computed as if each handshake
-                         *   message had been sent as a single fragment.
-                         *
-                         * For DTLSv1.3 DTLS-specific fields: message_seq,
-                         * fragment_offset, and fragment_length are not used in the
-                         * calculation i.e. the MAC-calculation is the same as TLS
-                         * even though DTLS handshake messages may be fragmented.
-                         */
-                        if (!dtls1_write_hm_header(msgstart, msg_type, msg_len,
-                                                   msg_seq, 0, msg_len))
-                            return -1;
-                    }
-
+                if (s->version == DTLS1_BAD_VER) {
+                    msgstart += DTLS1_HM_HEADER_LENGTH;
+                    xlen -= DTLS1_HM_HEADER_LENGTH;
+                } else {
                     /*
-                     * should not be done for 'Hello Request's, but in that case we'll
-                     * ignore the result anyway
-                     * DTLS1.3 KeyUpdate and NewSessionTicket do not need to be added
+                     * Now prepare to calculate the transcript hash. For
+                     * versions prior to DTLSv1.3 this means:
+                     *
+                     * rfc6347: Hash calculations include entire handshake
+                     *   messages, including DTLS-specific fields: message_seq,
+                     *   fragment_offset, and fragment_length. However, the
+                     *   Finished MAC MUST be computed as if each handshake
+                     *   message had been sent as a single fragment.
+                     *
+                     * For DTLSv1.3 DTLS-specific fields: message_seq,
+                     * fragment_offset, and fragment_length are not used in the
+                     * calculation i.e. the MAC-calculation is the same as TLS
+                     * even though DTLS handshake messages may be fragmented.
                      */
-                    if (!SSL_CONNECTION_IS_DTLS13(s)
-                        || (s->statem.hand_state != TLS_ST_SW_SESSION_TICKET
-                            && s->statem.hand_state != TLS_ST_CW_KEY_UPDATE
-                            && s->statem.hand_state != TLS_ST_SW_KEY_UPDATE)) {
-                        if (!ssl3_finish_mac(s, msgstart, xlen)) {
-                            return -1;
-                        }
-                    }
+                    if (!dtls1_write_hm_header(msgstart, msg_type, msg_len,
+                                               msg_seq, 0, msg_len))
+                        return -1;
                 }
+
+                /*
+                 * should not be done for 'Hello Request's, but in that case we'll
+                 * ignore the result anyway
+                 * DTLS1.3 KeyUpdate and NewSessionTicket do not need to be added
+                 */
+                if (!SSL_CONNECTION_IS_DTLS13(s)
+                    || (s->statem.hand_state != TLS_ST_SW_SESSION_TICKET
+                        && s->statem.hand_state != TLS_ST_CW_KEY_UPDATE
+                        && s->statem.hand_state != TLS_ST_SW_KEY_UPDATE))
+                    if (!ssl3_finish_mac(s, msgstart, xlen))
+                        return -1;
             }
             if (written == s->init_num) {
                 if (s->msg_callback)
