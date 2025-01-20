@@ -85,6 +85,12 @@ OpenSSL 3.5
 
    *David von Oheimb*
 
+ * Added support for central key generation in CMP.
+
+   This work was sponsored by Siemens AG.
+
+    *Rajeev Ranjan*
+
  * Optionally allow the FIPS provider to use the `JITTER` entropy source.
    Note that using this option will require the resulting FIPS provider
    to undergo entropy source validation [ESV] by the [CMVP], without this

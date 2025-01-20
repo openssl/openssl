@@ -4,6 +4,7 @@
 
 X509_VERIFY_PARAM_set_flags, X509_VERIFY_PARAM_clear_flags,
 X509_VERIFY_PARAM_get_flags, X509_VERIFY_PARAM_set_purpose,
+X509_VERIFY_PARAM_get_purpose,
 X509_VERIFY_PARAM_get_inh_flags, X509_VERIFY_PARAM_set_inh_flags,
 X509_VERIFY_PARAM_set_trust, X509_VERIFY_PARAM_set_depth,
 X509_VERIFY_PARAM_get_depth, X509_VERIFY_PARAM_set_auth_level,
@@ -35,6 +36,7 @@ X509_VERIFY_PARAM_set1_ip_asc
  uint32_t X509_VERIFY_PARAM_get_inh_flags(const X509_VERIFY_PARAM *param);
 
  int X509_VERIFY_PARAM_set_purpose(X509_VERIFY_PARAM *param, int purpose);
+ int X509_VERIFY_PARAM_get_purpose(X509_VERIFY_PARAM *param);
  int X509_VERIFY_PARAM_set_trust(X509_VERIFY_PARAM *param, int trust);
 
  void X509_VERIFY_PARAM_set_time(X509_VERIFY_PARAM *param, time_t t);
@@ -91,6 +93,8 @@ X509_VERIFY_PARAM_set_purpose() sets the verification purpose in B<param>
 to B<purpose>. This determines the acceptable purpose of the certificate
 chain, for example B<X509_PURPOSE_SSL_CLIENT>.
 The purpose requirement is cleared if B<purpose> is X509_PURPOSE_DEFAULT_ANY.
+
+X509_VERIFY_PARAM_get_purpose() returns the purpose in B<param>.
 
 X509_VERIFY_PARAM_set_trust() sets the trust setting in B<param> to
 B<trust>.
@@ -239,6 +243,8 @@ X509_VERIFY_PARAM_get_depth() returns the current verification depth.
 
 X509_VERIFY_PARAM_get_auth_level() returns the current authentication security
 level.
+
+X509_VERIFY_PARAM_get_purpose() returns the current purpose.
 
 =head1 VERIFICATION FLAGS
 
@@ -404,6 +410,8 @@ and X509_VERIFY_PARAM_get1_ip_asc() functions were added in OpenSSL 3.0.
 The function X509_VERIFY_PARAM_add0_policy() was historically documented as
 enabling policy checking however the implementation has never done this.
 The documentation was changed to align with the implementation.
+
+The X509_VERIFY_PARAM_get_purpose() function was added in OpenSSL 3.5.
 
 =head1 COPYRIGHT
 

@@ -32,6 +32,8 @@ plan skip_all => "These tests are not supported in a no-sock build"
     if disabled("sock");
 plan skip_all => "These tests are not supported in a no-http build"
     if disabled("http");
+plan skip_all => "These tests are not supported in a no-cms build"
+    if disabled("cms"); # central key pair generation
 
 plan skip_all => "Tests involving local HTTP server not available on Windows or VMS"
     if $^O =~ /^(VMS|MSWin32|msys)$/;
