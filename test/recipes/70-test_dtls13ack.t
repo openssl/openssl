@@ -39,7 +39,7 @@ my $proxy = TLSProxy::Proxy->new_dtls(
     (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
 );
 
-my $testcount = 2;
+my $testcount = 3;
 
 plan tests => $testcount;
 
@@ -55,7 +55,7 @@ my @missing = record_numbers_missing(\@expected, \@actual);
 my $expected_count = @expected;
 my $missing_count = @missing;
 
-ok($missing_count == 0 && $expected_count > 0,
+ok($missing_count == 0 && $expected_count == 1,
     "Check that all record numbers are acked");
 
 # Test 2: Check that records that are missing are not acked during a handshake
@@ -73,8 +73,27 @@ $proxy->start();
 $expected_count = @expected;
 $missing_count = @missing;
 
-ok($missing_count == 1 && $expected_count > 0,
+ok($missing_count == 1 && $expected_count == 2,
    "Check that all record numbers except one are acked");
+
+# Test 3: Check that client cert and verify messages are also acked
+$proxy->clear();
+$proxy->filter(undef);
+$found_first_client_finish_msg = 0;
+$proxy->serverflags("-min_protocol DTLSv1.3 -max_protocol DTLSv1.3 -Verify 1");
+$proxy->clientflags("-mtu 2000 -min_protocol DTLSv1.3 -max_protocol DTLSv1.3 -cert "
+                    .srctop_file("apps", "server.pem"));
+TLSProxy::Message->successondata(1);
+$proxy->start();
+
+@expected = get_expected_ack_record_numbers();
+@actual = get_actual_acked_record_numbers();
+@missing = record_numbers_missing(\@expected, \@actual);
+$expected_count = @expected;
+$missing_count = @missing;
+
+ok($missing_count == 0 && $expected_count == 3,
+    "Check that all record numbers are acked");
 
 sub get_expected_ack_record_numbers
 {
@@ -97,7 +116,10 @@ sub get_expected_ack_record_numbers
 
             foreach (@messages) {
                 my $message = $_;
-                if (($message->mt == TLSProxy::Message::MT_FINISHED && !$serverissender)
+                if (!$serverissender
+                    && ($message->mt == TLSProxy::Message::MT_FINISHED
+                        || $message->mt == TLSProxy::Message::MT_CERTIFICATE
+                        || $message->mt == TLSProxy::Message::MT_CERTIFICATE_VERIFY)
                 # The ACK of the following messages are never processed by the proxy
                 # because s_client is closed too early send it:
                 #        || $message->mt == TLSProxy::Message::MT_KEY_UPDATE

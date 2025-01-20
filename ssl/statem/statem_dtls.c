@@ -715,7 +715,7 @@ static int dtls1_reassemble_fragment(SSL_CONNECTION *s,
             goto err;
     }
 
-    if (!SSL_MSG_IS_IMPLICITLY_ACKED(!s->server, msg_hdr->type)
+    if (dtls_msg_needs_ack(!s->server, msg_hdr->type)
             && !add_record_to_ack_list(s))
         goto err;
 
@@ -799,7 +799,7 @@ static int dtls1_process_out_of_seq_message(SSL_CONNECTION *s,
         if (item == NULL)
             goto err;
 
-        if (!SSL_MSG_IS_IMPLICITLY_ACKED(!s->server, msg_hdr->type)
+        if (dtls_msg_needs_ack(!s->server, msg_hdr->type)
                 && !add_record_to_ack_list(s))
             goto err;
 
@@ -1046,7 +1046,7 @@ static int dtls_get_reassembled_message(SSL_CONNECTION *s, int *errtype,
         s->d1->next_handshake_write_seq = 0;
     }
 
-    if (!SSL_MSG_IS_IMPLICITLY_ACKED(!s->server, msg_hdr.type)
+    if (dtls_msg_needs_ack(!s->server, msg_hdr.type)
         && !add_record_to_ack_list(s)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto f_err;

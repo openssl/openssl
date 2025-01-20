@@ -2031,9 +2031,22 @@ typedef struct dtls_sent_msg_st {
 
 int dtls_any_sent_messages_are_missing_acknowledge(SSL_CONNECTION *s);
 
-# define SSL_MSG_IS_IMPLICITLY_ACKED(sentbyserver, msgtype)                      \
-    ((msgtype) != SSL3_MT_NEWSESSION_TICKET && (msgtype) != SSL3_MT_KEY_UPDATE  \
-     && ((msgtype) != SSL3_MT_FINISHED || (sentbyserver)))
+static ossl_inline int dtls_msg_needs_ack(int sentbyserver, unsigned char msgtype) {
+    switch (msgtype) {
+    case SSL3_MT_NEWSESSION_TICKET:
+    case SSL3_MT_KEY_UPDATE:
+        return 1;
+
+    case SSL3_MT_CERTIFICATE:
+    case SSL3_MT_CERTIFICATE_VERIFY:
+    case SSL3_MT_FINISHED:
+        if (!sentbyserver)
+            return 1;
+        /* fall-through */
+    default:
+        return 0;
+    }
+}
 
 typedef struct dtls1_state_st {
     unsigned char cookie[DTLS1_COOKIE_LENGTH];
