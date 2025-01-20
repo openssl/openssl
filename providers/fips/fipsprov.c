@@ -489,6 +489,11 @@ static const OSSL_ALGORITHM fips_signature[] = {
     { PROV_NAMES_ECDSA_SHA3_384, FIPS_DEFAULT_PROPERTIES, ossl_ecdsa_sha3_384_signature_functions },
     { PROV_NAMES_ECDSA_SHA3_512, FIPS_DEFAULT_PROPERTIES, ossl_ecdsa_sha3_512_signature_functions },
 #endif
+#ifndef OPENSSL_NO_ML_DSA
+    { PROV_NAMES_ML_DSA_44, FIPS_DEFAULT_PROPERTIES, ossl_ml_dsa_44_signature_functions },
+    { PROV_NAMES_ML_DSA_65, FIPS_DEFAULT_PROPERTIES, ossl_ml_dsa_65_signature_functions },
+    { PROV_NAMES_ML_DSA_87, FIPS_DEFAULT_PROPERTIES, ossl_ml_dsa_87_signature_functions },
+#endif
     { PROV_NAMES_HMAC, FIPS_DEFAULT_PROPERTIES,
       ossl_mac_legacy_hmac_signature_functions },
 #ifndef OPENSSL_NO_CMAC
