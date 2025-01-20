@@ -324,6 +324,7 @@ typedef struct ASN1_VALUE_st ASN1_VALUE;
 
 typedef void *d2i_of_void(void **, const unsigned char **, long);
 typedef int i2d_of_void(const void *, unsigned char **);
+typedef int OSSL_i2d_of_void_ctx(const void *, unsigned char **, void *vctx);
 
 /*-
  * The following macros and typedefs allow an ASN1_ITEM
