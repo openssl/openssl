@@ -525,8 +525,8 @@ sub compute_tweak_vec() {
 	my $std = shift;
 	&rbit(@vtmp[2],$src,$std);
 $code.=<<___;
-	adrp $xtmp2, _${prefix}_consts
-	ldr  @qtmp[0], [$xtmp2,#:lo12:.Lxts_magic]
+	adrp x10, _${prefix}_consts
+	ldr  @qtmp[0], [x10,#:lo12:.Lxts_magic]
 	shl  $des.16b, @vtmp[2].16b, #1
 	ext  @vtmp[1].16b, @vtmp[2].16b, @vtmp[2].16b,#15
 	ushr @vtmp[1].16b, @vtmp[1].16b, #7
