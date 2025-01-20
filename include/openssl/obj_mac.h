@@ -3446,65 +3446,65 @@
 #define NID_ML_DSA_87           1459
 #define OBJ_ML_DSA_87           OBJ_sigAlgs,19L
 
-#define SN_SLH_DSA_SHA2_128S            "id-slh-dsa-sha2-128s"
-#define LN_SLH_DSA_SHA2_128S            "SLH-DSA-SHA2-128S"
-#define NID_SLH_DSA_SHA2_128S           1460
-#define OBJ_SLH_DSA_SHA2_128S           OBJ_sigAlgs,20L
+#define SN_SLH_DSA_SHA2_128s            "id-slh-dsa-sha2-128s"
+#define LN_SLH_DSA_SHA2_128s            "SLH-DSA-SHA2-128s"
+#define NID_SLH_DSA_SHA2_128s           1460
+#define OBJ_SLH_DSA_SHA2_128s           OBJ_sigAlgs,20L
 
-#define SN_SLH_DSA_SHA2_128F            "id-slh-dsa-sha2-128f"
-#define LN_SLH_DSA_SHA2_128F            "SLH-DSA-SHA2-128F"
-#define NID_SLH_DSA_SHA2_128F           1461
-#define OBJ_SLH_DSA_SHA2_128F           OBJ_sigAlgs,21L
+#define SN_SLH_DSA_SHA2_128f            "id-slh-dsa-sha2-128f"
+#define LN_SLH_DSA_SHA2_128f            "SLH-DSA-SHA2-128f"
+#define NID_SLH_DSA_SHA2_128f           1461
+#define OBJ_SLH_DSA_SHA2_128f           OBJ_sigAlgs,21L
 
-#define SN_SLH_DSA_SHA2_192S            "id-slh-dsa-sha2-192s"
-#define LN_SLH_DSA_SHA2_192S            "SLH-DSA-SHA2-192S"
-#define NID_SLH_DSA_SHA2_192S           1462
-#define OBJ_SLH_DSA_SHA2_192S           OBJ_sigAlgs,22L
+#define SN_SLH_DSA_SHA2_192s            "id-slh-dsa-sha2-192s"
+#define LN_SLH_DSA_SHA2_192s            "SLH-DSA-SHA2-192s"
+#define NID_SLH_DSA_SHA2_192s           1462
+#define OBJ_SLH_DSA_SHA2_192s           OBJ_sigAlgs,22L
 
-#define SN_SLH_DSA_SHA2_192F            "id-slh-dsa-sha2-192f"
-#define LN_SLH_DSA_SHA2_192F            "SLH-DSA-SHA2-192F"
-#define NID_SLH_DSA_SHA2_192F           1463
-#define OBJ_SLH_DSA_SHA2_192F           OBJ_sigAlgs,23L
+#define SN_SLH_DSA_SHA2_192f            "id-slh-dsa-sha2-192f"
+#define LN_SLH_DSA_SHA2_192f            "SLH-DSA-SHA2-192f"
+#define NID_SLH_DSA_SHA2_192f           1463
+#define OBJ_SLH_DSA_SHA2_192f           OBJ_sigAlgs,23L
 
-#define SN_SLH_DSA_SHA2_256S            "id-slh-dsa-sha2-256s"
-#define LN_SLH_DSA_SHA2_256S            "SLH-DSA-SHA2-256S"
-#define NID_SLH_DSA_SHA2_256S           1464
-#define OBJ_SLH_DSA_SHA2_256S           OBJ_sigAlgs,24L
+#define SN_SLH_DSA_SHA2_256s            "id-slh-dsa-sha2-256s"
+#define LN_SLH_DSA_SHA2_256s            "SLH-DSA-SHA2-256s"
+#define NID_SLH_DSA_SHA2_256s           1464
+#define OBJ_SLH_DSA_SHA2_256s           OBJ_sigAlgs,24L
 
-#define SN_SLH_DSA_SHA2_256F            "id-slh-dsa-sha2-256f"
-#define LN_SLH_DSA_SHA2_256F            "SLH-DSA-SHA2-256F"
-#define NID_SLH_DSA_SHA2_256F           1465
-#define OBJ_SLH_DSA_SHA2_256F           OBJ_sigAlgs,25L
+#define SN_SLH_DSA_SHA2_256f            "id-slh-dsa-sha2-256f"
+#define LN_SLH_DSA_SHA2_256f            "SLH-DSA-SHA2-256f"
+#define NID_SLH_DSA_SHA2_256f           1465
+#define OBJ_SLH_DSA_SHA2_256f           OBJ_sigAlgs,25L
 
-#define SN_SLH_DSA_SHAKE_128S           "id-slh-dsa-shake-128s"
-#define LN_SLH_DSA_SHAKE_128S           "SLH-DSA-SHAKE-128S"
-#define NID_SLH_DSA_SHAKE_128S          1466
-#define OBJ_SLH_DSA_SHAKE_128S          OBJ_sigAlgs,26L
+#define SN_SLH_DSA_SHAKE_128s           "id-slh-dsa-shake-128s"
+#define LN_SLH_DSA_SHAKE_128s           "SLH-DSA-SHAKE-128s"
+#define NID_SLH_DSA_SHAKE_128s          1466
+#define OBJ_SLH_DSA_SHAKE_128s          OBJ_sigAlgs,26L
 
-#define SN_SLH_DSA_SHAKE_128F           "id-slh-dsa-shake-128f"
-#define LN_SLH_DSA_SHAKE_128F           "SLH-DSA-SHAKE-128F"
-#define NID_SLH_DSA_SHAKE_128F          1467
-#define OBJ_SLH_DSA_SHAKE_128F          OBJ_sigAlgs,27L
+#define SN_SLH_DSA_SHAKE_128f           "id-slh-dsa-shake-128f"
+#define LN_SLH_DSA_SHAKE_128f           "SLH-DSA-SHAKE-128f"
+#define NID_SLH_DSA_SHAKE_128f          1467
+#define OBJ_SLH_DSA_SHAKE_128f          OBJ_sigAlgs,27L
 
-#define SN_SLH_DSA_SHAKE_192S           "id-slh-dsa-shake-192s"
-#define LN_SLH_DSA_SHAKE_192S           "SLH-DSA-SHAKE-192S"
-#define NID_SLH_DSA_SHAKE_192S          1468
-#define OBJ_SLH_DSA_SHAKE_192S          OBJ_sigAlgs,28L
+#define SN_SLH_DSA_SHAKE_192s           "id-slh-dsa-shake-192s"
+#define LN_SLH_DSA_SHAKE_192s           "SLH-DSA-SHAKE-192s"
+#define NID_SLH_DSA_SHAKE_192s          1468
+#define OBJ_SLH_DSA_SHAKE_192s          OBJ_sigAlgs,28L
 
-#define SN_SLH_DSA_SHAKE_192F           "id-slh-dsa-shake-192f"
-#define LN_SLH_DSA_SHAKE_192F           "SLH-DSA-SHAKE-192F"
-#define NID_SLH_DSA_SHAKE_192F          1469
-#define OBJ_SLH_DSA_SHAKE_192F          OBJ_sigAlgs,29L
+#define SN_SLH_DSA_SHAKE_192f           "id-slh-dsa-shake-192f"
+#define LN_SLH_DSA_SHAKE_192f           "SLH-DSA-SHAKE-192f"
+#define NID_SLH_DSA_SHAKE_192f          1469
+#define OBJ_SLH_DSA_SHAKE_192f          OBJ_sigAlgs,29L
 
-#define SN_SLH_DSA_SHAKE_256S           "id-slh-dsa-shake-256s"
-#define LN_SLH_DSA_SHAKE_256S           "SLH-DSA-SHAKE-256S"
-#define NID_SLH_DSA_SHAKE_256S          1470
-#define OBJ_SLH_DSA_SHAKE_256S          OBJ_sigAlgs,30L
+#define SN_SLH_DSA_SHAKE_256s           "id-slh-dsa-shake-256s"
+#define LN_SLH_DSA_SHAKE_256s           "SLH-DSA-SHAKE-256s"
+#define NID_SLH_DSA_SHAKE_256s          1470
+#define OBJ_SLH_DSA_SHAKE_256s          OBJ_sigAlgs,30L
 
-#define SN_SLH_DSA_SHAKE_256F           "id-slh-dsa-shake-256f"
-#define LN_SLH_DSA_SHAKE_256F           "SLH-DSA-SHAKE-256F"
-#define NID_SLH_DSA_SHAKE_256F          1471
-#define OBJ_SLH_DSA_SHAKE_256F          OBJ_sigAlgs,31L
+#define SN_SLH_DSA_SHAKE_256f           "id-slh-dsa-shake-256f"
+#define LN_SLH_DSA_SHAKE_256f           "SLH-DSA-SHAKE-256f"
+#define NID_SLH_DSA_SHAKE_256f          1471
+#define OBJ_SLH_DSA_SHAKE_256f          OBJ_sigAlgs,31L
 
 #define SN_HASH_ML_DSA_44_WITH_SHA512           "id-hash-ml-dsa-44-with-sha512"
 #define LN_HASH_ML_DSA_44_WITH_SHA512           "HASH-ML-DSA-44-WITH-SHA512"
@@ -3521,65 +3521,65 @@
 #define NID_HASH_ML_DSA_87_WITH_SHA512          1474
 #define OBJ_HASH_ML_DSA_87_WITH_SHA512          OBJ_sigAlgs,34L
 
-#define SN_SLH_DSA_SHA2_128S_WITH_SHA256                "id-hash-slh-dsa-sha2-128s-with-sha256"
-#define LN_SLH_DSA_SHA2_128S_WITH_SHA256                "SLH-DSA-SHA2-128S-WITH-SHA256"
-#define NID_SLH_DSA_SHA2_128S_WITH_SHA256               1475
-#define OBJ_SLH_DSA_SHA2_128S_WITH_SHA256               OBJ_sigAlgs,35L
+#define SN_SLH_DSA_SHA2_128s_WITH_SHA256                "id-hash-slh-dsa-sha2-128s-with-sha256"
+#define LN_SLH_DSA_SHA2_128s_WITH_SHA256                "SLH-DSA-SHA2-128s-WITH-SHA256"
+#define NID_SLH_DSA_SHA2_128s_WITH_SHA256               1475
+#define OBJ_SLH_DSA_SHA2_128s_WITH_SHA256               OBJ_sigAlgs,35L
 
-#define SN_SLH_DSA_SHA2_128F_WITH_SHA256                "id-hash-slh-dsa-sha2-128f-with-sha256"
-#define LN_SLH_DSA_SHA2_128F_WITH_SHA256                "SLH-DSA-SHA2-128F-WITH-SHA256"
-#define NID_SLH_DSA_SHA2_128F_WITH_SHA256               1476
-#define OBJ_SLH_DSA_SHA2_128F_WITH_SHA256               OBJ_sigAlgs,36L
+#define SN_SLH_DSA_SHA2_128f_WITH_SHA256                "id-hash-slh-dsa-sha2-128f-with-sha256"
+#define LN_SLH_DSA_SHA2_128f_WITH_SHA256                "SLH-DSA-SHA2-128f-WITH-SHA256"
+#define NID_SLH_DSA_SHA2_128f_WITH_SHA256               1476
+#define OBJ_SLH_DSA_SHA2_128f_WITH_SHA256               OBJ_sigAlgs,36L
 
-#define SN_SLH_DSA_SHA2_192S_WITH_SHA512                "id-hash-slh-dsa-sha2-192s-with-sha512"
-#define LN_SLH_DSA_SHA2_192S_WITH_SHA512                "SLH-DSA-SHA2-192S-WITH-SHA512"
-#define NID_SLH_DSA_SHA2_192S_WITH_SHA512               1477
-#define OBJ_SLH_DSA_SHA2_192S_WITH_SHA512               OBJ_sigAlgs,37L
+#define SN_SLH_DSA_SHA2_192s_WITH_SHA512                "id-hash-slh-dsa-sha2-192s-with-sha512"
+#define LN_SLH_DSA_SHA2_192s_WITH_SHA512                "SLH-DSA-SHA2-192s-WITH-SHA512"
+#define NID_SLH_DSA_SHA2_192s_WITH_SHA512               1477
+#define OBJ_SLH_DSA_SHA2_192s_WITH_SHA512               OBJ_sigAlgs,37L
 
-#define SN_SLH_DSA_SHA2_192F_WITH_SHA512                "id-hash-slh-dsa-sha2-192f-with-sha512"
-#define LN_SLH_DSA_SHA2_192F_WITH_SHA512                "SLH-DSA-SHA2-192F-WITH-SHA512"
-#define NID_SLH_DSA_SHA2_192F_WITH_SHA512               1478
-#define OBJ_SLH_DSA_SHA2_192F_WITH_SHA512               OBJ_sigAlgs,38L
+#define SN_SLH_DSA_SHA2_192f_WITH_SHA512                "id-hash-slh-dsa-sha2-192f-with-sha512"
+#define LN_SLH_DSA_SHA2_192f_WITH_SHA512                "SLH-DSA-SHA2-192f-WITH-SHA512"
+#define NID_SLH_DSA_SHA2_192f_WITH_SHA512               1478
+#define OBJ_SLH_DSA_SHA2_192f_WITH_SHA512               OBJ_sigAlgs,38L
 
-#define SN_SLH_DSA_SHA2_256S_WITH_SHA512                "id-hash-slh-dsa-sha2-256s-with-sha512"
-#define LN_SLH_DSA_SHA2_256S_WITH_SHA512                "SLH-DSA-SHA2-256S-WITH-SHA512"
-#define NID_SLH_DSA_SHA2_256S_WITH_SHA512               1479
-#define OBJ_SLH_DSA_SHA2_256S_WITH_SHA512               OBJ_sigAlgs,39L
+#define SN_SLH_DSA_SHA2_256s_WITH_SHA512                "id-hash-slh-dsa-sha2-256s-with-sha512"
+#define LN_SLH_DSA_SHA2_256s_WITH_SHA512                "SLH-DSA-SHA2-256s-WITH-SHA512"
+#define NID_SLH_DSA_SHA2_256s_WITH_SHA512               1479
+#define OBJ_SLH_DSA_SHA2_256s_WITH_SHA512               OBJ_sigAlgs,39L
 
-#define SN_SLH_DSA_SHA2_256F_WITH_SHA512                "id-hash-slh-dsa-sha2-256f-with-sha512"
-#define LN_SLH_DSA_SHA2_256F_WITH_SHA512                "SLH-DSA-SHA2-256F-WITH-SHA512"
-#define NID_SLH_DSA_SHA2_256F_WITH_SHA512               1480
-#define OBJ_SLH_DSA_SHA2_256F_WITH_SHA512               OBJ_sigAlgs,40L
+#define SN_SLH_DSA_SHA2_256f_WITH_SHA512                "id-hash-slh-dsa-sha2-256f-with-sha512"
+#define LN_SLH_DSA_SHA2_256f_WITH_SHA512                "SLH-DSA-SHA2-256f-WITH-SHA512"
+#define NID_SLH_DSA_SHA2_256f_WITH_SHA512               1480
+#define OBJ_SLH_DSA_SHA2_256f_WITH_SHA512               OBJ_sigAlgs,40L
 
-#define SN_SLH_DSA_SHAKE_128S_WITH_SHAKE128             "id-hash-slh-dsa-shake-128s-with-shake128"
-#define LN_SLH_DSA_SHAKE_128S_WITH_SHAKE128             "SLH-DSA-SHAKE-128S-WITH-SHAKE128"
-#define NID_SLH_DSA_SHAKE_128S_WITH_SHAKE128            1481
-#define OBJ_SLH_DSA_SHAKE_128S_WITH_SHAKE128            OBJ_sigAlgs,41L
+#define SN_SLH_DSA_SHAKE_128s_WITH_SHAKE128             "id-hash-slh-dsa-shake-128s-with-shake128"
+#define LN_SLH_DSA_SHAKE_128s_WITH_SHAKE128             "SLH-DSA-SHAKE-128s-WITH-SHAKE128"
+#define NID_SLH_DSA_SHAKE_128s_WITH_SHAKE128            1481
+#define OBJ_SLH_DSA_SHAKE_128s_WITH_SHAKE128            OBJ_sigAlgs,41L
 
-#define SN_SLH_DSA_SHAKE_128F_WITH_SHAKE128             "id-hash-slh-dsa-shake-128f-with-shake128"
-#define LN_SLH_DSA_SHAKE_128F_WITH_SHAKE128             "SLH-DSA-SHAKE-128F-WITH-SHAKE128"
-#define NID_SLH_DSA_SHAKE_128F_WITH_SHAKE128            1482
-#define OBJ_SLH_DSA_SHAKE_128F_WITH_SHAKE128            OBJ_sigAlgs,42L
+#define SN_SLH_DSA_SHAKE_128f_WITH_SHAKE128             "id-hash-slh-dsa-shake-128f-with-shake128"
+#define LN_SLH_DSA_SHAKE_128f_WITH_SHAKE128             "SLH-DSA-SHAKE-128f-WITH-SHAKE128"
+#define NID_SLH_DSA_SHAKE_128f_WITH_SHAKE128            1482
+#define OBJ_SLH_DSA_SHAKE_128f_WITH_SHAKE128            OBJ_sigAlgs,42L
 
-#define SN_SLH_DSA_SHAKE_192S_WITH_SHAKE256             "id-hash-slh-dsa-shake-192s-with-shake256"
-#define LN_SLH_DSA_SHAKE_192S_WITH_SHAKE256             "SLH-DSA-SHAKE-192S-WITH-SHAKE256"
-#define NID_SLH_DSA_SHAKE_192S_WITH_SHAKE256            1483
-#define OBJ_SLH_DSA_SHAKE_192S_WITH_SHAKE256            OBJ_sigAlgs,43L
+#define SN_SLH_DSA_SHAKE_192s_WITH_SHAKE256             "id-hash-slh-dsa-shake-192s-with-shake256"
+#define LN_SLH_DSA_SHAKE_192s_WITH_SHAKE256             "SLH-DSA-SHAKE-192s-WITH-SHAKE256"
+#define NID_SLH_DSA_SHAKE_192s_WITH_SHAKE256            1483
+#define OBJ_SLH_DSA_SHAKE_192s_WITH_SHAKE256            OBJ_sigAlgs,43L
 
-#define SN_SLH_DSA_SHAKE_192F_WITH_SHAKE256             "id-hash-slh-dsa-shake-192f-with-shake256"
-#define LN_SLH_DSA_SHAKE_192F_WITH_SHAKE256             "SLH-DSA-SHAKE-192F-WITH-SHAKE256"
-#define NID_SLH_DSA_SHAKE_192F_WITH_SHAKE256            1484
-#define OBJ_SLH_DSA_SHAKE_192F_WITH_SHAKE256            OBJ_sigAlgs,44L
+#define SN_SLH_DSA_SHAKE_192f_WITH_SHAKE256             "id-hash-slh-dsa-shake-192f-with-shake256"
+#define LN_SLH_DSA_SHAKE_192f_WITH_SHAKE256             "SLH-DSA-SHAKE-192f-WITH-SHAKE256"
+#define NID_SLH_DSA_SHAKE_192f_WITH_SHAKE256            1484
+#define OBJ_SLH_DSA_SHAKE_192f_WITH_SHAKE256            OBJ_sigAlgs,44L
 
-#define SN_SLH_DSA_SHAKE_256S_WITH_SHAKE256             "id-hash-slh-dsa-shake-256s-with-shake256"
-#define LN_SLH_DSA_SHAKE_256S_WITH_SHAKE256             "SLH-DSA-SHAKE-256S-WITH-SHAKE256"
-#define NID_SLH_DSA_SHAKE_256S_WITH_SHAKE256            1485
-#define OBJ_SLH_DSA_SHAKE_256S_WITH_SHAKE256            OBJ_sigAlgs,45L
+#define SN_SLH_DSA_SHAKE_256s_WITH_SHAKE256             "id-hash-slh-dsa-shake-256s-with-shake256"
+#define LN_SLH_DSA_SHAKE_256s_WITH_SHAKE256             "SLH-DSA-SHAKE-256s-WITH-SHAKE256"
+#define NID_SLH_DSA_SHAKE_256s_WITH_SHAKE256            1485
+#define OBJ_SLH_DSA_SHAKE_256s_WITH_SHAKE256            OBJ_sigAlgs,45L
 
-#define SN_SLH_DSA_SHAKE_256F_WITH_SHAKE256             "id-hash-slh-dsa-shake-256f-with-shake256"
-#define LN_SLH_DSA_SHAKE_256F_WITH_SHAKE256             "SLH-DSA-SHAKE-256F-WITH-SHAKE256"
-#define NID_SLH_DSA_SHAKE_256F_WITH_SHAKE256            1486
-#define OBJ_SLH_DSA_SHAKE_256F_WITH_SHAKE256            OBJ_sigAlgs,46L
+#define SN_SLH_DSA_SHAKE_256f_WITH_SHAKE256             "id-hash-slh-dsa-shake-256f-with-shake256"
+#define LN_SLH_DSA_SHAKE_256f_WITH_SHAKE256             "SLH-DSA-SHAKE-256f-WITH-SHAKE256"
+#define NID_SLH_DSA_SHAKE_256f_WITH_SHAKE256            1486
+#define OBJ_SLH_DSA_SHAKE_256f_WITH_SHAKE256            OBJ_sigAlgs,46L
 
 #define SN_hold_instruction_code                "holdInstructionCode"
 #define LN_hold_instruction_code                "Hold Instruction Code"

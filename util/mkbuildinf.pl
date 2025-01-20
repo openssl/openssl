@@ -9,7 +9,9 @@
 use strict;
 use warnings;
 
-my ($cflags, $platform) = @ARGV;
+my $platform = pop @ARGV;
+my $cflags = join(' ', @ARGV);
+$cflags =~ s(\\)(\\\\)g;
 $cflags = "compiler: $cflags";
 
 # Use the value of the envvar SOURCE_DATE_EPOCH, even if it's

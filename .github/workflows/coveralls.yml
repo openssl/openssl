@@ -84,6 +84,7 @@ jobs:
              --exclude "${PWD}/test/testutil/*"
              --exclude "${PWD}/fuzz/*"
              --exclude "/usr/include/*"
+             --ignore-errors mismatch
               -o ./lcov.info
     - name: Coveralls upload
       uses: coverallsapp/github-action@v2.3.2
