@@ -92,10 +92,8 @@ int ossl_lms_pubkey_decode(const unsigned char *pub, size_t publen,
     LMS_PUB_KEY *pkey = &lmskey->pub;
 
     if (pkey->encoded != NULL && pkey->encodedlen != publen) {
-        if (pkey->allocated) {
-            OPENSSL_free(pkey->encoded);
-            pkey->allocated = 0;
-        }
+        OPENSSL_free(pkey->encoded);
+        pkey->encoded = NULL;
         pkey->encodedlen = 0;
     }
     pkey->encoded = OPENSSL_memdup(pub, publen);
@@ -107,7 +105,6 @@ int ossl_lms_pubkey_decode(const unsigned char *pub, size_t publen,
             || (PACKET_remaining(&pkt) > 0))
         goto err;
     pkey->encodedlen = publen;
-    pkey->allocated = 1;
     return 1;
 err:
     OPENSSL_free(pkey->encoded);
