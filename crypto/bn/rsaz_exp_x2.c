@@ -231,7 +231,7 @@ int ossl_rsaz_mod_exp_avx512_x2(BN_ULONG *res1,
     AMM amm = NULL;
     int avx512ifma = !!ossl_rsaz_avx512ifma_eligible();
 
-    if (factor_size % 512)
+    if (factor_size != 1024 && factor_size != 1536 && factor_size != 2048)
         goto err;
 
     amm = ossl_rsaz_amm52_x1[(factor_size / 512 - 2) * 2 + avx512ifma];
@@ -382,7 +382,7 @@ int RSAZ_mod_exp_x2_ifma256(BN_ULONG *out,
  */
 # define DAMS(r,a,m,k0) damm((r),(a),(a),(m),(k0))
 
-    if (modulus_bitsize % 512)
+    if (modulus_bitsize != 1024 && modulus_bitsize != 1536 && modulus_bitsize != 2048)
         goto err;
 
     damm = ossl_rsaz_amm52_x2[(modulus_bitsize / 512 - 2) * 2 + avx512ifma];
