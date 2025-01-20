@@ -128,7 +128,6 @@ static int set_digest(KDF_SCRYPT *ctx)
     EVP_MD_free(ctx->sha256);
     ctx->sha256 = EVP_MD_fetch(ctx->libctx, "sha256", ctx->propq);
     if (ctx->sha256 == NULL) {
-        OPENSSL_free(ctx);
         ERR_raise(ERR_LIB_PROV, PROV_R_UNABLE_TO_LOAD_SHA256);
         return 0;
     }
