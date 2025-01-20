@@ -58,7 +58,8 @@ d2i_PrivateKey_decoder(int keytype, EVP_PKEY **a, const unsigned char **pp,
         if (!ASN1_INTEGER_get_int64(&v, p8info->version)
             || (v != 0 && v != 1)) {
             ERR_raise(ERR_LIB_ASN1, ASN1_R_ASN1_PARSE_ERROR);
-            goto err;
+            PKCS8_PRIV_KEY_INFO_free(p8info);
+            return NULL;
         }
         if (key_name == NULL
                 && PKCS8_pkey_get0(&algoid, NULL, NULL, NULL, p8info)
