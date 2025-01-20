@@ -475,13 +475,13 @@ sub load_sbox () {
 	my $data = shift;
 
 $code.=<<___;
-	adrp $xtmp1, _${prefix}_consts
-	ldr $MaskQ, [$xtmp1, #:lo12:.Lsbox_magic]
-	ldr $TAHMatQ, [$xtmp1, #:lo12:.Lsbox_magic+16]
-	ldr $TALMatQ, [$xtmp1, #:lo12:.Lsbox_magic+32]
-	ldr $ATAHMatQ, [$xtmp1, #:lo12:.Lsbox_magic+48]
-	ldr $ATALMatQ, [$xtmp1, #:lo12:.Lsbox_magic+64]
-	ldr $ANDMaskQ, [$xtmp1, #:lo12:.Lsbox_magic+80]
+	adrp x10, _${prefix}_consts
+	ldr $MaskQ, [x10, #:lo12:.Lsbox_magic]
+	ldr $TAHMatQ, [x10, #:lo12:.Lsbox_magic+16]
+	ldr $TALMatQ, [x10, #:lo12:.Lsbox_magic+32]
+	ldr $ATAHMatQ, [x10, #:lo12:.Lsbox_magic+48]
+	ldr $ATALMatQ, [x10, #:lo12:.Lsbox_magic+64]
+	ldr $ANDMaskQ, [x10, #:lo12:.Lsbox_magic+80]
 ___
 }
 
@@ -526,8 +526,8 @@ sub compute_tweak_vec() {
 	my $std = shift;
 	&rbit(@vtmp[2],$src,$std);
 $code.=<<___;
-	adrp $xtmp2, _${prefix}_consts
-	ldr  @qtmp[0], [$xtmp2, #:lo12:.Lxts_magic]
+	adrp x10, _${prefix}_consts
+	ldr  @qtmp[0], [x10, #:lo12:.Lxts_magic]
 	shl  $des.16b, @vtmp[2].16b, #1
 	ext  @vtmp[1].16b, @vtmp[2].16b, @vtmp[2].16b,#15
 	ushr @vtmp[1].16b, @vtmp[1].16b, #7
@@ -1221,8 +1221,6 @@ $code.=<<___;
 .align	5
 ${prefix}_xts_encrypt${std}:
 	AARCH64_SIGN_LINK_REGISTER
-	stp	x15, x16, [sp, #-0x10]!
-	stp	x17, x18, [sp, #-0x10]!
 	stp	x19, x20, [sp, #-0x10]!
 	stp	x21, x22, [sp, #-0x10]!
 	stp	x23, x24, [sp, #-0x10]!
@@ -1532,8 +1530,6 @@ $code.=<<___;
 	ldp		x23, x24, [sp], #0x10
 	ldp		x21, x22, [sp], #0x10
 	ldp		x19, x20, [sp], #0x10
-	ldp		x17, x18, [sp], #0x10
-	ldp		x15, x16, [sp], #0x10
 	AARCH64_VALIDATE_LINK_REGISTER
 	ret
 .size	${prefix}_xts_encrypt${std},.-${prefix}_xts_encrypt${std}
