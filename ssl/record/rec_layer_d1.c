@@ -727,7 +727,7 @@ int do_dtls1_write(SSL_CONNECTION *sc, uint8_t type, const unsigned char *buf,
         if (item == NULL)
             return ret;
 
-        if (!SSL_MSG_IS_IMPLICITLY_ACKED(sc->server, sc->d1->w_msg.msg_type)) {
+        if (dtls_msg_needs_ack(sc->server, sc->d1->w_msg.msg_type)) {
             dtls_sent_msg *sent_msg;
             DTLS1_RECORD_NUMBER *rec_num;
 
