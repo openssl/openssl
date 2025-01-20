@@ -789,8 +789,9 @@ static void list_tls_signatures(void)
         OPENSSL_free(builtin_sigalgs);
     }
 
-    /* As built-in providers don't have this capability, never error */
-    OSSL_PROVIDER_do_all(NULL, list_tls_sigalg_caps, &tls_sigalg_listed);
+    if (!OSSL_PROVIDER_do_all(NULL, list_tls_sigalg_caps, &tls_sigalg_listed))
+        BIO_printf(bio_err,
+                   "ERROR: could not list all provider signature algorithms\n");
     if (tls_sigalg_listed < 2)
         BIO_printf(bio_out,
                    "\nNo TLS sig algs registered by currently active providers");
