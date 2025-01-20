@@ -706,7 +706,7 @@ static int asn1_d2i_ex_primitive(ASN1_VALUE **pval,
     const unsigned char *p;
     BUF_MEM buf = { 0, NULL, 0, 0 };
     const unsigned char *cont = NULL;
-    long len;
+    size_t len;
 
     if (pval == NULL) {
         ERR_raise(ERR_LIB_ASN1, ASN1_R_ILLEGAL_NULL);
@@ -1102,7 +1102,8 @@ static int asn1_collect(BUF_MEM *buf, const unsigned char **in, long len,
 
 static int collect_data(BUF_MEM *buf, const unsigned char **p, long plen)
 {
-    int len;
+    size_t len;
+
     if (buf) {
         len = buf->length;
         if (!BUF_MEM_grow_clean(buf, len + plen)) {
