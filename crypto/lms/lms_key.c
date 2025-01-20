@@ -49,8 +49,7 @@ void ossl_lms_key_free(LMS_KEY *lmskey)
     REF_ASSERT_ISNT(i < 0);
 
     pub = &lmskey->pub;
-    if (pub->allocated)
-        OPENSSL_free(pub->encoded);
+    OPENSSL_free(pub->encoded);
     CRYPTO_FREE_REF(&lmskey->references);
     OPENSSL_free(lmskey);
 }
