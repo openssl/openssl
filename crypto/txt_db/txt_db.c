@@ -22,7 +22,8 @@ TXT_DB *TXT_DB_read(BIO *in, int num)
     TXT_DB *ret = NULL;
     int esc = 0;
     int n;
-    size_t i, add, size = BUFSIZE, offset = 0, unum = num;
+    size_t i, add, size = BUFSIZE, offset = 0;
+    size_t unum = num > 0 ? num : 0;
     char *p, *f;
     OPENSSL_STRING *pp;
     BUF_MEM *buf = NULL;
