@@ -587,24 +587,24 @@ my ($key,$keys,$enc)=("x0","x1","w2");
 my ($pointer,$schedules,$wtmp,$roundkey)=("x5","x6","w7","w8");
 my ($vkey,$vfk,$vmap)=("v5","v6","v7");
 $code.=<<___;
-.type	_vpsm4_set_key,%function
+.type	_${prefix}_set_key,%function
 .align	4
-_vpsm4_set_key:
+_${prefix}_set_key:
 	AARCH64_VALID_CALL_TARGET
 	ld1	{$vkey.4s},[$key]
 ___
 	&load_sbox();
 	&rev32($vkey,$vkey);
 $code.=<<___;
-	adrp	$pointer, _${prefix}_consts
+	adrp	$pointer,_${prefix}_consts
 	add	$pointer,$pointer,#:lo12:.Lshuffles
 	ld1	{$vmap.2d},[$pointer]
-	adrp	$pointer, _${prefix}_consts
+	adrp	$pointer,_${prefix}_consts
 	add	$pointer,$pointer,#:lo12:.Lfk
 	ld1	{$vfk.2d},[$pointer]
 	eor	$vkey.16b,$vkey.16b,$vfk.16b
 	mov	$schedules,#32
-	adrp	$pointer, _${prefix}_consts
+	adrp	$pointer,_${prefix}_consts
 	add	$pointer,$pointer,#:lo12:.Lck
 	movi	@vtmp[0].16b,#64
 	cbnz	$enc,1f
@@ -642,36 +642,36 @@ $code.=<<___;
 	subs	$schedules,$schedules,#1
 	b.ne	1b
 	ret
-.size	_vpsm4_set_key,.-_vpsm4_set_key
+.size	_${prefix}_set_key,.-_${prefix}_set_key
 ___
 }}}
 
 
 {{{
 $code.=<<___;
-.type	_vpsm4_enc_4blks,%function
+.type	_${prefix}_enc_4blks,%function
 .align	4
-_vpsm4_enc_4blks:
+_${prefix}_enc_4blks:
 	AARCH64_VALID_CALL_TARGET
 ___
 	&encrypt_4blks();
 $code.=<<___;
 	ret
-.size	_vpsm4_enc_4blks,.-_vpsm4_enc_4blks
+.size	_${prefix}_enc_4blks,.-_${prefix}_enc_4blks
 ___
 }}}
 
 {{{
 $code.=<<___;
-.type	_vpsm4_enc_8blks,%function
+.type	_${prefix}_enc_8blks,%function
 .align	4
-_vpsm4_enc_8blks:
+_${prefix}_enc_8blks:
 	AARCH64_VALID_CALL_TARGET
 ___
 	&encrypt_8blks();
 $code.=<<___;
 	ret
-.size	_vpsm4_enc_8blks,.-_vpsm4_enc_8blks
+.size	_${prefix}_enc_8blks,.-_${prefix}_enc_8blks
 ___
 }}}
 
@@ -686,7 +686,7 @@ ${prefix}_set_encrypt_key:
 	AARCH64_SIGN_LINK_REGISTER
 	stp	x29,x30,[sp,#-16]!
 	mov	w2,1
-	bl	_vpsm4_set_key
+	bl	_${prefix}_set_key
 	ldp	x29,x30,[sp],#16
 	AARCH64_VALIDATE_LINK_REGISTER
 	ret
@@ -704,7 +704,7 @@ ${prefix}_set_decrypt_key:
 	AARCH64_SIGN_LINK_REGISTER
 	stp	x29,x30,[sp,#-16]!
 	mov	w2,0
-	bl	_vpsm4_set_key
+	bl	_${prefix}_set_key
 	ldp	x29,x30,[sp],#16
 	AARCH64_VALIDATE_LINK_REGISTER
 	ret
@@ -753,11 +753,11 @@ ${prefix}_ecb_encrypt:
 	AARCH64_SIGN_LINK_REGISTER
 	// convert length into blocks
 	lsr	x2,x2,4
-	stp	d8,d9,[sp,#-80]!
-	stp	d10,d11,[sp,#16]
-	stp	d12,d13,[sp,#32]
-	stp	d14,d15,[sp,#48]
-	stp	x29,x30,[sp,#64]
+	stp	x29,x30,[sp,#-16]!
+	stp	d8,d9,[sp,#-16]!
+	stp	d10,d11,[sp,#-16]!
+	stp	d12,d13,[sp,#-16]!
+	stp	d14,d15,[sp,#-16]!
 ___
 	&load_sbox();
 $code.=<<___;
@@ -776,7 +776,7 @@ ___
 	&rev32(@datax[2],@datax[2]);
 	&rev32(@datax[3],@datax[3]);
 $code.=<<___;
-	bl	_vpsm4_enc_8blks
+	bl	_${prefix}_enc_8blks
 	st4	{@vtmp[0].4s,@vtmp[1].4s,@vtmp[2].4s,@vtmp[3].4s},[$outp],#64
 	st4	{@data[0].4s,@data[1].4s,@data[2].4s,@data[3].4s},[$outp],#64
 	subs	$blocks,$blocks,#8
@@ -792,7 +792,7 @@ ___
 	&rev32(@data[2],@data[2]);
 	&rev32(@data[3],@data[3]);
 $code.=<<___;
-	bl	_vpsm4_enc_4blks
+	bl	_${prefix}_enc_4blks
 	st4	{@vtmp[0].4s,@vtmp[1].4s,@vtmp[2].4s,@vtmp[3].4s},[$outp],#64
 	sub	$blocks,$blocks,#4
 1:
@@ -818,7 +818,7 @@ ___
 	&rev32(@data[2],@data[2]);
 	&rev32(@data[3],@data[3]);
 $code.=<<___;
-	bl	_vpsm4_enc_4blks
+	bl	_${prefix}_enc_4blks
 	st4	{@vtmp[0].s-@vtmp[3].s}[0],[$outp],#16
 	st4	{@vtmp[0].s-@vtmp[3].s}[1],[$outp]
 	b	100f
@@ -830,16 +830,16 @@ ___
 	&rev32(@data[2],@data[2]);
 	&rev32(@data[3],@data[3]);
 $code.=<<___;
-	bl	_vpsm4_enc_4blks
+	bl	_${prefix}_enc_4blks
 	st4	{@vtmp[0].s-@vtmp[3].s}[0],[$outp],#16
 	st4	{@vtmp[0].s-@vtmp[3].s}[1],[$outp],#16
 	st4	{@vtmp[0].s-@vtmp[3].s}[2],[$outp]
 100:
-	ldp	d10,d11,[sp,#16]
-	ldp	d12,d13,[sp,#32]
-	ldp	d14,d15,[sp,#48]
-	ldp	x29,x30,[sp,#64]
-	ldp	d8,d9,[sp],#80
+	ldp	d14,d15,[sp],#16
+	ldp	d12,d13,[sp],#16
+	ldp	d10,d11,[sp],#16
+	ldp	d8,d9,[sp],#16
+	ldp	x29,x30,[sp],#16
 	AARCH64_VALIDATE_LINK_REGISTER
 	ret
 .size	${prefix}_ecb_encrypt,.-${prefix}_ecb_encrypt
@@ -916,11 +916,11 @@ $code.=<<___;
 .Ldec:
 	// decryption mode starts
 	AARCH64_SIGN_LINK_REGISTER
-	stp	d8,d9,[sp,#-80]!
-	stp	d10,d11,[sp,#16]
-	stp	d12,d13,[sp,#32]
-	stp	d14,d15,[sp,#48]
-	stp	x29,x30,[sp,#64]
+	stp	x29,x30,[sp,#-16]!
+	stp	d8,d9,[sp,#-16]!
+	stp	d10,d11,[sp,#-16]!
+	stp	d12,d13,[sp,#-16]!
+	stp	d14,d15,[sp,#-16]!
 .Lcbc_8_blocks_dec:
 	cmp	$blocks,#8
 	b.lt	1f
@@ -937,7 +937,7 @@ ___
 	&rev32(@datax[2],@datax[2]);
 	&rev32(@datax[3],$datax[3]);
 $code.=<<___;
-	bl	_vpsm4_enc_8blks
+	bl	_${prefix}_enc_8blks
 ___
 	&transpose(@vtmp,@datax);
 	&transpose(@data,@datax);
@@ -974,7 +974,7 @@ ___
 	&rev32(@data[2],@data[2]);
 	&rev32(@data[3],$data[3]);
 $code.=<<___;
-	bl	_vpsm4_enc_4blks
+	bl	_${prefix}_enc_4blks
 	ld1	{@data[0].4s,@data[1].4s,@data[2].4s,@data[3].4s},[$inp],#64
 ___
 	&transpose(@vtmp,@datax);
@@ -1016,7 +1016,7 @@ ___
 	&rev32(@data[2],@data[2]);
 	&rev32(@data[3],@data[3]);
 $code.=<<___;
-	bl	_vpsm4_enc_4blks
+	bl	_${prefix}_enc_4blks
 	ld1	{@data[0].4s,@data[1].4s},[$inp],#32
 ___
 	&transpose(@vtmp,@datax);
@@ -1035,7 +1035,7 @@ ___
 	&rev32(@data[2],@data[2]);
 	&rev32(@data[3],@data[3]);
 $code.=<<___;
-	bl	_vpsm4_enc_4blks
+	bl	_${prefix}_enc_4blks
 	ld1	{@data[0].4s,@data[1].4s,@data[2].4s},[$inp],#48
 ___
 	&transpose(@vtmp,@datax);
@@ -1047,11 +1047,11 @@ $code.=<<___;
 	// save back IV
 	st1	{@data[2].4s}, [$ivp]
 100:
-	ldp	d10,d11,[sp,#16]
-	ldp	d12,d13,[sp,#32]
-	ldp	d14,d15,[sp,#48]
-	ldp	x29,x30,[sp,#64]
-	ldp	d8,d9,[sp],#80
+	ldp	d14,d15,[sp],#16
+	ldp	d12,d13,[sp],#16
+	ldp	d10,d11,[sp],#16
+	ldp	d8,d9,[sp],#16
+	ldp	x29,x30,[sp],#16
 	AARCH64_VALIDATE_LINK_REGISTER
 	ret
 .size	${prefix}_cbc_encrypt,.-${prefix}_cbc_encrypt
@@ -1087,11 +1087,11 @@ $code.=<<___;
 	ret
 1:
 	AARCH64_SIGN_LINK_REGISTER
-	stp	d8,d9,[sp,#-80]!
-	stp	d10,d11,[sp,#16]
-	stp	d12,d13,[sp,#32]
-	stp	d14,d15,[sp,#48]
-	stp	x29,x30,[sp,#64]
+	stp	x29,x30,[sp,#-16]!
+	stp	d8,d9,[sp,#-16]!
+	stp	d10,d11,[sp,#-16]!
+	stp	d12,d13,[sp,#-16]!
+	stp	d14,d15,[sp,#-16]!
 	mov	$word0,$ivec.s[0]
 	mov	$word1,$ivec.s[1]
 	mov	$word2,$ivec.s[2]
@@ -1112,7 +1112,7 @@ $code.=<<___;
 	add	$ctr,$ctr,#1
 	cmp	$blocks,#8
 	b.ge	.Lctr32_8_blocks_process
-	bl	_vpsm4_enc_4blks
+	bl	_${prefix}_enc_4blks
 	ld4	{@vtmpx[0].4s,@vtmpx[1].4s,@vtmpx[2].4s,@vtmpx[3].4s},[$inp],#64
 	eor	@vtmp[0].16b,@vtmp[0].16b,@vtmpx[0].16b
 	eor	@vtmp[1].16b,@vtmp[1].16b,@vtmpx[1].16b
@@ -1134,7 +1134,7 @@ $code.=<<___;
 	add	$ctr,$ctr,#1
 	mov	@datax[3].s[3],$ctr
 	add	$ctr,$ctr,#1
-	bl	_vpsm4_enc_8blks
+	bl	_${prefix}_enc_8blks
 	ld4	{@vtmpx[0].4s,@vtmpx[1].4s,@vtmpx[2].4s,@vtmpx[3].4s},[$inp],#64
 	ld4	{@datax[0].4s,@datax[1].4s,@datax[2].4s,@datax[3].4s},[$inp],#64
 	eor	@vtmp[0].16b,@vtmp[0].16b,@vtmpx[0].16b
@@ -1174,7 +1174,7 @@ $code.=<<___;
 	mov	@data[3].s[1],$ctr
 	subs	$blocks,$blocks,#1
 	b.ne	1f
-	bl	_vpsm4_enc_4blks
+	bl	_${prefix}_enc_4blks
 	ld4	{@vtmpx[0].s,@vtmpx[1].s,@vtmpx[2].s,@vtmpx[3].s}[0],[$inp],#16
 	ld4	{@vtmpx[0].s,@vtmpx[1].s,@vtmpx[2].s,@vtmpx[3].s}[1],[$inp],#16
 	eor	@vtmp[0].16b,@vtmp[0].16b,@vtmpx[0].16b
@@ -1187,7 +1187,7 @@ $code.=<<___;
 1:	// last 3 blocks processing
 	add	$ctr,$ctr,#1
 	mov	@data[3].s[2],$ctr
-	bl	_vpsm4_enc_4blks
+	bl	_${prefix}_enc_4blks
 	ld4	{@vtmpx[0].s,@vtmpx[1].s,@vtmpx[2].s,@vtmpx[3].s}[0],[$inp],#16
 	ld4	{@vtmpx[0].s,@vtmpx[1].s,@vtmpx[2].s,@vtmpx[3].s}[1],[$inp],#16
 	ld4	{@vtmpx[0].s,@vtmpx[1].s,@vtmpx[2].s,@vtmpx[3].s}[2],[$inp],#16
@@ -1199,11 +1199,11 @@ $code.=<<___;
 	st4	{@vtmp[0].s,@vtmp[1].s,@vtmp[2].s,@vtmp[3].s}[1],[$outp],#16
 	st4	{@vtmp[0].s,@vtmp[1].s,@vtmp[2].s,@vtmp[3].s}[2],[$outp],#16
 100:
-	ldp	d10,d11,[sp,#16]
-	ldp	d12,d13,[sp,#32]
-	ldp	d14,d15,[sp,#48]
-	ldp	x29,x30,[sp,#64]
-	ldp	d8,d9,[sp],#80
+	ldp	d14,d15,[sp],#16
+	ldp	d12,d13,[sp],#16
+	ldp	d10,d11,[sp],#16
+	ldp	d8,d9,[sp],#16
+	ldp	x29,x30,[sp],#16
 	AARCH64_VALIDATE_LINK_REGISTER
 	ret
 .size	${prefix}_ctr32_encrypt_blocks,.-${prefix}_ctr32_encrypt_blocks
@@ -1229,12 +1229,12 @@ $code.=<<___;
 .align	5
 ${prefix}_xts_encrypt${std}:
 	AARCH64_SIGN_LINK_REGISTER
+	stp	x29, x30, [sp, #-0x10]!
 	stp	x19, x20, [sp, #-0x10]!
 	stp	x21, x22, [sp, #-0x10]!
 	stp	x23, x24, [sp, #-0x10]!
 	stp	x25, x26, [sp, #-0x10]!
 	stp	x27, x28, [sp, #-0x10]!
-	stp	x29, x30, [sp, #-0x10]!
 	stp	d8, d9, [sp, #-0x10]!
 	stp	d10, d11, [sp, #-0x10]!
 	stp	d12, d13, [sp, #-0x10]!
@@ -1550,12 +1550,12 @@ $code.=<<___;
 	ldp		d12, d13, [sp], #0x10
 	ldp		d10, d11, [sp], #0x10
 	ldp		d8, d9, [sp], #0x10
-	ldp		x29, x30, [sp], #0x10
 	ldp		x27, x28, [sp], #0x10
 	ldp		x25, x26, [sp], #0x10
 	ldp		x23, x24, [sp], #0x10
 	ldp		x21, x22, [sp], #0x10
 	ldp		x19, x20, [sp], #0x10
+	ldp		x29, x30, [sp], #0x10
 	AARCH64_VALIDATE_LINK_REGISTER
 	ret
 .size	${prefix}_xts_encrypt${std},.-${prefix}_xts_encrypt${std}

@@ -743,11 +743,11 @@ ${prefix}_ecb_encrypt:
 	AARCH64_SIGN_LINK_REGISTER
 	// convert length into blocks
 	lsr	x2,x2,4
-	stp	d8,d9,[sp,#-80]!
-	stp	d10,d11,[sp,#16]
-	stp	d12,d13,[sp,#32]
-	stp	d14,d15,[sp,#48]
-	stp	x29,x30,[sp,#64]
+	stp	x29,x30,[sp,#-16]!
+	stp	d8,d9,[sp,#-16]!
+	stp	d10,d11,[sp,#-16]!
+	stp	d12,d13,[sp,#-16]!
+	stp	d14,d15,[sp,#-16]!
 ___
 	&load_sbox();
 $code.=<<___;
@@ -825,11 +825,11 @@ $code.=<<___;
 	st4	{@vtmp[0].s-@vtmp[3].s}[1],[$outp],#16
 	st4	{@vtmp[0].s-@vtmp[3].s}[2],[$outp]
 100:
-	ldp	d10,d11,[sp,#16]
-	ldp	d12,d13,[sp,#32]
-	ldp	d14,d15,[sp,#48]
-	ldp	x29,x30,[sp,#64]
-	ldp	d8,d9,[sp],#80
+	ldp	d14,d15,[sp],#16
+	ldp	d12,d13,[sp],#16
+	ldp	d10,d11,[sp],#16
+	ldp	d8,d9,[sp],#16
+	ldp	x29,x30,[sp],#16
 	AARCH64_VALIDATE_LINK_REGISTER
 	ret
 .size	${prefix}_ecb_encrypt,.-${prefix}_ecb_encrypt
@@ -906,11 +906,11 @@ $code.=<<___;
 .Ldec:
 	// decryption mode starts
 	AARCH64_SIGN_LINK_REGISTER
-	stp	d8,d9,[sp,#-80]!
-	stp	d10,d11,[sp,#16]
-	stp	d12,d13,[sp,#32]
-	stp	d14,d15,[sp,#48]
-	stp	x29,x30,[sp,#64]
+	stp	x29,x30,[sp,#-16]!
+	stp	d8,d9,[sp,#-16]!
+	stp	d10,d11,[sp,#-16]!
+	stp	d12,d13,[sp,#-16]!
+	stp	d14,d15,[sp,#-16]!
 .Lcbc_8_blocks_dec:
 	cmp	$blocks,#8
 	b.lt	1f
@@ -1037,11 +1037,11 @@ $code.=<<___;
 	// save back IV
 	st1	{@data[2].4s}, [$ivp]
 100:
-	ldp	d10,d11,[sp,#16]
-	ldp	d12,d13,[sp,#32]
-	ldp	d14,d15,[sp,#48]
-	ldp	x29,x30,[sp,#64]
-	ldp	d8,d9,[sp],#80
+	ldp	d14,d15,[sp],#16
+	ldp	d12,d13,[sp],#16
+	ldp	d10,d11,[sp],#16
+	ldp	d8,d9,[sp],#16
+	ldp	x29,x30,[sp],#16
 	AARCH64_VALIDATE_LINK_REGISTER
 	ret
 .size	${prefix}_cbc_encrypt,.-${prefix}_cbc_encrypt
@@ -1077,11 +1077,11 @@ $code.=<<___;
 	ret
 1:
 	AARCH64_SIGN_LINK_REGISTER
-	stp	d8,d9,[sp,#-80]!
-	stp	d10,d11,[sp,#16]
-	stp	d12,d13,[sp,#32]
-	stp	d14,d15,[sp,#48]
-	stp	x29,x30,[sp,#64]
+	stp	x29,x30,[sp,#-16]!
+	stp	d8,d9,[sp,#-16]!
+	stp	d10,d11,[sp,#-16]!
+	stp	d12,d13,[sp,#-16]!
+	stp	d14,d15,[sp,#-16]!
 	mov	$word0,$ivec.s[0]
 	mov	$word1,$ivec.s[1]
 	mov	$word2,$ivec.s[2]
@@ -1189,11 +1189,11 @@ $code.=<<___;
 	st4	{@vtmp[0].s,@vtmp[1].s,@vtmp[2].s,@vtmp[3].s}[1],[$outp],#16
 	st4	{@vtmp[0].s,@vtmp[1].s,@vtmp[2].s,@vtmp[3].s}[2],[$outp],#16
 100:
-	ldp	d10,d11,[sp,#16]
-	ldp	d12,d13,[sp,#32]
-	ldp	d14,d15,[sp,#48]
-	ldp	x29,x30,[sp,#64]
-	ldp	d8,d9,[sp],#80
+	ldp	d14,d15,[sp],#16
+	ldp	d12,d13,[sp],#16
+	ldp	d10,d11,[sp],#16
+	ldp	d8,d9,[sp],#16
+	ldp	x29,x30,[sp],#16
 	AARCH64_VALIDATE_LINK_REGISTER
 	ret
 .size	${prefix}_ctr32_encrypt_blocks,.-${prefix}_ctr32_encrypt_blocks
@@ -1221,12 +1221,12 @@ $code.=<<___;
 .align	5
 ${prefix}_xts_encrypt${std}:
 	AARCH64_SIGN_LINK_REGISTER
+	stp	x29, x30, [sp, #-0x10]!
 	stp	x19, x20, [sp, #-0x10]!
 	stp	x21, x22, [sp, #-0x10]!
 	stp	x23, x24, [sp, #-0x10]!
 	stp	x25, x26, [sp, #-0x10]!
 	stp	x27, x28, [sp, #-0x10]!
-	stp	x29, x30, [sp, #-0x10]!
 	stp	d8, d9, [sp, #-0x10]!
 	stp	d10, d11, [sp, #-0x10]!
 	stp	d12, d13, [sp, #-0x10]!
@@ -1524,12 +1524,12 @@ $code.=<<___;
 	ldp		d12, d13, [sp], #0x10
 	ldp		d10, d11, [sp], #0x10
 	ldp		d8, d9, [sp], #0x10
-	ldp		x29, x30, [sp], #0x10
 	ldp		x27, x28, [sp], #0x10
 	ldp		x25, x26, [sp], #0x10
 	ldp		x23, x24, [sp], #0x10
 	ldp		x21, x22, [sp], #0x10
 	ldp		x19, x20, [sp], #0x10
+	ldp		x29, x30, [sp], #0x10
 	AARCH64_VALIDATE_LINK_REGISTER
 	ret
 .size	${prefix}_xts_encrypt${std},.-${prefix}_xts_encrypt${std}
