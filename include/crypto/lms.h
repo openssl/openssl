@@ -127,7 +127,6 @@ typedef struct lms_pub_key_st {
      * It is a pointer into the encoded buffer
      */
     unsigned char *K;
-    uint32_t allocated;             /* If 1 then encoded needs to be freed */
 } LMS_PUB_KEY;
 
 struct lms_key_st {
