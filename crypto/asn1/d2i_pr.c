@@ -21,6 +21,7 @@
 #include <openssl/asn1.h>
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
+#include "crypto/x509.h"
 #include "internal/asn1.h"
 #include "internal/sizes.h"
 
@@ -51,6 +52,16 @@ d2i_PrivateKey_decoder(int keytype, EVP_PKEY **a, const unsigned char **pp,
     p8info = d2i_PKCS8_PRIV_KEY_INFO(NULL, pp, len);
     ERR_pop_to_mark();
     if (p8info != NULL) {
+        int64_t v;
+
+        /* ascertain version is 0 or 1 as per RFC5958 */
+        if (!ASN1_INTEGER_get_int64(&v, p8info->version)
+            || (v != 0 && v != 1)) {
+            *pp = p;
+            ERR_raise(ERR_LIB_ASN1, ASN1_R_ASN1_PARSE_ERROR);
+            PKCS8_PRIV_KEY_INFO_free(p8info);
+            return NULL;
+        }
         if (key_name == NULL
                 && PKCS8_pkey_get0(&algoid, NULL, NULL, NULL, p8info)
                 && OBJ_obj2txt(keytypebuf, sizeof(keytypebuf), algoid, 0))
