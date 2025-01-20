@@ -805,7 +805,13 @@ void ossl_quic_free(SSL *s)
     qc_cleanup(ctx.qc, /*have_lock=*/1);
     /* Note: SSL_free calls OPENSSL_free(qc) for us */
 
-    if (ctx.qc->listener != NULL)
+    /*
+     * Just because we have a listener doesn't mean we have a ref on it
+     * QUIC pre-creates user ssls to return to applications.
+     * Those don't hold a reference until they are accepted, so only drop
+     * the count if the application has accepted them
+     */
+    if (ctx.qc->accepted == 1 && ctx.qc->listener != NULL)
         SSL_free(&ctx.qc->listener->obj.ssl);
     if (ctx.qc->domain != NULL)
         SSL_free(&ctx.qc->domain->obj.ssl);
@@ -4189,6 +4195,32 @@ int ossl_quic_get_key_update_type(const SSL *s)
     return SSL_KEY_UPDATE_NONE;
 }
 
+/**
+ * @brief Allocates an SSL object for a user from a QUIC channel.
+ *
+ * This function creates a new QUIC_CONNECTION object based on an incoming
+ * connection associated with the provided QUIC_LISTENER. If the connection
+ * creation fails, the function returns NULL. Otherwise, it returns a pointer
+ * to the SSL object associated with the newly created connection.
+ *
+ * Note: This function is a registered port callback made from
+ * ossl_quic_new_listener and ossl_quic_new_listener_from, and allows for
+ * pre-allocation of the user_ssl object when a channel is created, rather than
+ * when it is accepted
+ *
+ * @param ch  Pointer to the QUIC_CHANNEL representing the incoming connection.
+ * @param arg Pointer to a QUIC_LISTENER used to create the connection.
+ *
+ * @return Pointer to the SSL object on success, or NULL on failure.
+ */
+static SSL *alloc_port_user_ssl(QUIC_CHANNEL *ch, void *arg)
+{
+    QUIC_LISTENER *ql = arg;
+    QUIC_CONNECTION *qc = create_qc_from_incoming_conn(ql, ch);
+
+    return (qc == NULL) ? NULL : &qc->obj.ssl;
+}
+
 /*
  * QUIC Front-End I/O API: Listeners
  * =================================
@@ -4232,6 +4264,8 @@ SSL *ossl_quic_new_listener(SSL_CTX *ctx, uint64_t flags)
 
     port_args.channel_ctx       = ctx;
     port_args.is_multi_conn     = 1;
+    port_args.get_conn_user_ssl = alloc_port_user_ssl;
+    port_args.user_ssl_arg = ql;
     if ((flags & SSL_LISTENER_FLAG_NO_VALIDATE) == 0)
         port_args.do_addr_validation = 1;
     ql->port = ossl_quic_engine_create_port(ql->engine, &port_args);
@@ -4287,6 +4321,8 @@ SSL *ossl_quic_new_listener_from(SSL *ssl, uint64_t flags)
 
     port_args.channel_ctx       = ssl->ctx;
     port_args.is_multi_conn     = 1;
+    port_args.get_conn_user_ssl = alloc_port_user_ssl;
+    port_args.user_ssl_arg = ql;
     if ((flags & SSL_LISTENER_FLAG_NO_VALIDATE) == 0)
         port_args.do_addr_validation = 1;
     ql->port = ossl_quic_engine_create_port(ctx.qd->engine, &port_args);
@@ -4425,6 +4461,7 @@ SSL *ossl_quic_new_from_listener(SSL *ssl, uint64_t flags)
 
     qctx_unlock(&ctx);
 
+    qc->accepted = 1;
     return &qc->obj.ssl;
 
 err:
@@ -4492,8 +4529,9 @@ SSL *ossl_quic_accept_connection(SSL *ssl, uint64_t flags)
 {
     int ret;
     QCTX ctx;
-    QUIC_CONNECTION *qc = NULL;
+    SSL *conn_ssl = NULL;
     QUIC_CHANNEL *new_ch = NULL;
+    QUIC_CONNECTION *qc;
     int no_block = ((flags & SSL_ACCEPT_CONNECTION_NO_BLOCK) != 0);
 
     if (!expect_quic_listener(ssl, &ctx))
@@ -4531,29 +4569,33 @@ SSL *ossl_quic_accept_connection(SSL *ssl, uint64_t flags)
             goto out;
     }
 
-    qc = create_qc_from_incoming_conn(ctx.ql, new_ch);
-    if (qc == NULL) {
-        ossl_quic_channel_free(new_ch);
-        goto out;
+    /*
+     * port_make_channel pre-allocates our user_ssl for us for each newly
+     * created channel, so once we pop the new channel from the port above
+     * we just need to extract it
+     */
+    conn_ssl = ossl_quic_channel_get0_tls(new_ch);
+    conn_ssl = SSL_CONNECTION_GET_USER_SSL(SSL_CONNECTION_FROM_SSL(conn_ssl));
+    qc = (QUIC_CONNECTION *)conn_ssl;
+    qc->accepted = 1;
+
+    if (!SSL_up_ref(&ctx.ql->obj.ssl)) {
+        SSL_free(conn_ssl);
+        SSL_free(ossl_quic_channel_get0_tls(new_ch));
+        conn_ssl = NULL;
     }
 
 out:
     qctx_unlock(&ctx);
-    return qc != NULL ? &qc->obj.ssl : NULL;
+    return conn_ssl;
 }
 
 static QUIC_CONNECTION *create_qc_from_incoming_conn(QUIC_LISTENER *ql, QUIC_CHANNEL *ch)
 {
     QUIC_CONNECTION *qc = NULL;
 
-    if (!SSL_up_ref(&ql->obj.ssl)) {
-        QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_INTERNAL_ERROR, NULL);
-        goto err;
-    }
-
     if ((qc = OPENSSL_zalloc(sizeof(*qc))) == NULL) {
         QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_CRYPTO_LIB, NULL);
-        SSL_free(&ql->obj.ssl);
         goto err;
     }
 
@@ -4561,11 +4603,11 @@ static QUIC_CONNECTION *create_qc_from_incoming_conn(QUIC_LISTENER *ql, QUIC_CHA
                             SSL_TYPE_QUIC_CONNECTION,
                             &ql->obj.ssl, NULL, NULL)) {
         QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_INTERNAL_ERROR, NULL);
-        SSL_free(&ql->obj.ssl);
         goto err;
     }
 
     ossl_quic_channel_get_peer_addr(ch, &qc->init_peer_addr); /* best effort */
+    qc->accepted = 0;
     qc->listener                = ql;
     qc->engine                  = ql->engine;
     qc->port                    = ql->port;

@@ -175,7 +175,9 @@ typedef struct quic_terminate_cause_st {
  *
  * Only QUIC_PORT should use this function.
  */
-QUIC_CHANNEL *ossl_quic_channel_new(const QUIC_CHANNEL_ARGS *args);
+QUIC_CHANNEL *ossl_quic_channel_alloc(const QUIC_CHANNEL_ARGS *args);
+int ossl_quic_channel_init(QUIC_CHANNEL *ch);
+
 
 /* No-op if ch is NULL. */
 void ossl_quic_channel_free(QUIC_CHANNEL *ch);

@@ -51,6 +51,9 @@ struct quic_port_st {
      */
     OSSL_LIST_MEMBER(port, QUIC_PORT);
 
+    SSL * (*get_conn_user_ssl)(QUIC_CHANNEL *ch, void *arg);
+    void *user_ssl_arg;
+
     /* Used to create handshake layer objects inside newly created channels. */
     SSL_CTX                         *channel_ctx;
 
