@@ -122,6 +122,10 @@ OpenSSL 3.5
 
    *Juhász Péter*
 
+ * Enabled x86-64 SHA-512 optimizations with SHA512 ISA Extension.
+
+   *Adrian Stanciu*
+
 OpenSSL 3.4
 -----------
 
