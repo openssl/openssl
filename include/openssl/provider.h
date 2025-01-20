@@ -61,7 +61,16 @@ int OSSL_PROVIDER_add_conf_parameter(OSSL_PROVIDER *prov, const char *name,
  * The |params| array elements MUST have type OSSL_PARAM_UTF8_PTR, values are
  * returned by reference, not as copies.
  */
-int OSSL_PROVIDER_get_conf_parameters(OSSL_PROVIDER *prov, OSSL_PARAM params[]);
+int OSSL_PROVIDER_get_conf_parameters(const OSSL_PROVIDER *prov,
+                                      OSSL_PARAM params[]);
+/*
+ * Parse a provider configuration parameter as a boolean value,
+ * or return a default value if unable to retrieve the parameter.
+ * Values like "1", "yes", "true", ... are true (nonzero).
+ * Values like "0", "no", "false", ... are false (zero).
+ */
+int OSSL_PROVIDER_conf_get_bool(const OSSL_PROVIDER *prov,
+                                const char *name, int defval);
 
 const OSSL_ALGORITHM *OSSL_PROVIDER_query_operation(const OSSL_PROVIDER *prov,
                                                     int operation_id,
