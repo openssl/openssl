@@ -316,10 +316,11 @@ int PEM_ASN1_write(i2d_of_void *i2d, const char *name, FILE *fp,
 }
 #endif
 
-int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
-                       const void *x, const EVP_CIPHER *enc,
-                       const unsigned char *kstr, int klen,
-                       pem_password_cb *callback, void *u)
+static int
+PEM_ASN1_write_bio_internal(
+    i2d_of_void *i2d, OSSL_i2d_of_void_ctx *i2d_ctx, void *vctx,
+    const char *name, BIO *bp, const void *x, const EVP_CIPHER *enc,
+    const unsigned char *kstr, int klen, pem_password_cb *callback, void *u)
 {
     EVP_CIPHER_CTX *ctx = NULL;
     int dsize = 0, i = 0, j = 0, ret = 0;
@@ -344,7 +345,13 @@ int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
         }
     }
 
-    if ((dsize = i2d(x, NULL)) <= 0) {
+    if (i2d == NULL && i2d_ctx == NULL) {
+        ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_INVALID_NULL_ARGUMENT);
+        dsize = 0;
+        goto err;
+    }
+    dsize = i2d != NULL ? i2d(x, NULL) : i2d_ctx(x, NULL, vctx);
+    if (dsize <= 0) {
         ERR_raise(ERR_LIB_PEM, ERR_R_ASN1_LIB);
         dsize = 0;
         goto err;
@@ -355,7 +362,7 @@ int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
     if (data == NULL)
         goto err;
     p = data;
-    i = i2d(x, &p);
+    i = i2d != NULL ? i2d(x, &p) : i2d_ctx(x, &p, vctx);
 
     if (enc != NULL) {
         if (kstr == NULL) {
@@ -416,104 +423,22 @@ int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
     return ret;
 }
 
+int
+PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp, const void *x,
+                   const EVP_CIPHER *enc, const unsigned char *kstr, int klen,
+                   pem_password_cb *callback, void *u)
+{
+    return PEM_ASN1_write_bio_internal(i2d, NULL, NULL, name, bp, x, enc,
+                                       kstr, klen, callback, u);
+}
+
 int PEM_ASN1_write_bio_ctx(OSSL_i2d_of_void_ctx *i2d, void *vctx,
                            const char *name, BIO *bp, const void *x,
                            const EVP_CIPHER *enc, const unsigned char *kstr,
                            int klen, pem_password_cb *callback, void *u)
 {
-    EVP_CIPHER_CTX *ctx = NULL;
-    int dsize = 0, i = 0, j = 0, ret = 0;
-    unsigned char *p, *data = NULL;
-    const char *objstr = NULL;
-    char buf[PEM_BUFSIZE];
-    unsigned char key[EVP_MAX_KEY_LENGTH];
-    unsigned char iv[EVP_MAX_IV_LENGTH];
-
-    if (enc != NULL) {
-        objstr = EVP_CIPHER_get0_name(enc);
-        if (objstr == NULL || EVP_CIPHER_get_iv_length(enc) == 0
-                || EVP_CIPHER_get_iv_length(enc) > (int)sizeof(iv)
-                   /*
-                    * Check "Proc-Type: 4,Encrypted\nDEK-Info: objstr,hex-iv\n"
-                    * fits into buf
-                    */
-                || strlen(objstr) + 23 + 2 * EVP_CIPHER_get_iv_length(enc) + 13
-                   > sizeof(buf)) {
-            ERR_raise(ERR_LIB_PEM, PEM_R_UNSUPPORTED_CIPHER);
-            goto err;
-        }
-    }
-
-    if ((dsize = i2d(x, NULL, vctx)) <= 0) {
-        ERR_raise(ERR_LIB_PEM, ERR_R_ASN1_LIB);
-        dsize = 0;
-        goto err;
-    }
-    /* dsize + 8 bytes are needed */
-    /* actually it needs the cipher block size extra... */
-    data = OPENSSL_malloc((unsigned int)dsize + 20);
-    if (data == NULL)
-        goto err;
-    p = data;
-    i = i2d(x, &p, vctx);
-
-    if (enc != NULL) {
-        if (kstr == NULL) {
-            if (callback == NULL)
-                klen = PEM_def_callback(buf, PEM_BUFSIZE, 1, u);
-            else
-                klen = (*callback) (buf, PEM_BUFSIZE, 1, u);
-            if (klen <= 0) {
-                ERR_raise(ERR_LIB_PEM, PEM_R_READ_KEY);
-                goto err;
-            }
-#ifdef CHARSET_EBCDIC
-            /* Convert the pass phrase from EBCDIC */
-            ebcdic2ascii(buf, buf, klen);
-#endif
-            kstr = (unsigned char *)buf;
-        }
-        /* Generate a salt */
-        if (RAND_bytes(iv, EVP_CIPHER_get_iv_length(enc)) <= 0)
-            goto err;
-        /*
-         * The 'iv' is used as the iv and as a salt.  It is NOT taken from
-         * the BytesToKey function
-         */
-        if (!EVP_BytesToKey(enc, EVP_md5(), iv, kstr, klen, 1, key, NULL))
-            goto err;
-
-        if (kstr == (unsigned char *)buf)
-            OPENSSL_cleanse(buf, PEM_BUFSIZE);
-
-        buf[0] = '\0';
-        PEM_proc_type(buf, PEM_TYPE_ENCRYPTED);
-        PEM_dek_info(buf, objstr, EVP_CIPHER_get_iv_length(enc), (char *)iv);
-        /* k=strlen(buf); */
-
-        ret = 1;
-        if ((ctx = EVP_CIPHER_CTX_new()) == NULL
-            || !EVP_EncryptInit_ex(ctx, enc, NULL, key, iv)
-            || !EVP_EncryptUpdate(ctx, data, &j, data, i)
-            || !EVP_EncryptFinal_ex(ctx, &(data[j]), &i))
-            ret = 0;
-        if (ret == 0)
-            goto err;
-        i += j;
-    } else {
-        ret = 1;
-        buf[0] = '\0';
-    }
-    i = PEM_write_bio(bp, name, buf, data, i);
-    if (i <= 0)
-        ret = 0;
- err:
-    OPENSSL_cleanse(key, sizeof(key));
-    OPENSSL_cleanse(iv, sizeof(iv));
-    EVP_CIPHER_CTX_free(ctx);
-    OPENSSL_cleanse(buf, PEM_BUFSIZE);
-    OPENSSL_clear_free(data, (unsigned int)dsize);
-    return ret;
+    return PEM_ASN1_write_bio_internal(NULL, i2d, vctx, name, bp, x, enc,
+                                       kstr, klen, callback, u);
 }
 
 int PEM_do_header(EVP_CIPHER_INFO *cipher, unsigned char *data, long *plen,
