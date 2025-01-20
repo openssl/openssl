@@ -730,7 +730,6 @@ int cms_main(int argc, char **argv)
     }
 
     /* Remaining args are files to process. */
-    argc = opt_num_rest();
     argv = opt_rest();
 
     if ((rr_allorfirst != -1 || rr_from != NULL) && rr_to == NULL) {
