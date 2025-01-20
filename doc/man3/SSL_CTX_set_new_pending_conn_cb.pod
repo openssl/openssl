@@ -34,6 +34,10 @@ on a subsequent call to SSL_accept_connection().  A nonzero return
 value is treated as success, allowing the new connection to be enqueued to the
 accept queue.
 
+=head1 SEE ALSO
+
+L<SSL_set_ex_data(3)>
+
 =head1 NOTES
 
 Callbacks in QUIC connections have some limitations to them that should be taken
