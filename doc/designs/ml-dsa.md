@@ -34,32 +34,31 @@ modified to match the ML-KEM code.
 ML-DSA keys
 ------------
 
-ML-DSA contain elements that are only required by either a public key or private
-key. To match other algorithms the public key will always be present if the
-private key is loaded (since the public key can be generated from the private key).
-In the event that the public key is also supplied, an error will occur if the
-generated public key does not match the supplied public key. For verification
-purposes the public key can be loaded.
+Once loaded an 'ML-DSA-KEY' object contains either a public key or a
+public/private key pair.
+When loading a private key, the public key is always generated. In the event
+that the public key is also supplied, an error will occur if the generated public
+key does not match the supplied public key.
 
-A ML_DSA polynomial contains 256 32 bit values which is 1K of space.
-As the keys store vectors of size k or l plus a matrix of size k * l,
+An ML_DSA polynomial contains 256 32 bit values which is 1K of space.
+Keys store vectors of size 'k' or 'l' plus a matrix of size 'k' * 'l',
 where (k, l) correspond to (4,4), (6,5) or (8,7). The key data could be large
 if buffers of the maximum size of (8,7) are used for the (4,4) use case.
 To save space rather than use fixed size buffers, allocations are used instead,
 for both the public and private elements. (i.e. The private allocations are not
 done when only a public key is loaded).
 
-Since the keys consists or Vectors and a matrix of polynomials, A single alloc
-is used to allocate all polynomials as one block, and then the poly blocks are
-assigned to the individual vectors. This approach is also used when temporary
-vectors, matricies or polynomials are required.
+Since keys consist of vectors and a matrix of polynomials, a single block
+is used to allocate all polynomials, and then the polynomial blocks are
+assigned to the individual vectors and matrix. This approach is also used when temporary
+vectors, matrices or polynomials are required
 
-Key are not allowed to mutate, so checks are done during load to check that the
+Keys are not allowed to mutate, so checks are done during load to check that the
 public and private key components are not changed once set.
 
-The encoded form of both the public and private key are calculated and stored within
-the key, as well as the hash of the encoded public key. The stored encoded bytes
-determine if the public or public key component are present.
+ossl_ml_dsa_key_get_pub() and ossl_ml_dsa_key_get_priv() return the 
+encoded forms of the key components (which are stored within the key).
+The hash of the encoded public key is also stored in the key.
 
 The key generation process uses a seed to create a private key, and the public
 key is then generated using this private key.
@@ -73,13 +72,14 @@ The normal signing process (called Pure ML-DSA Signature Generation)
 encodes the message internally as 0x00 || len(ctx) || ctx || message.
 where B<ctx> is some optional value of size 0x00..0xFF.
 
-ACVP Testing requires the ability for the message to not be encoded also. This
-will be controlled by settable parameters.
+ACVP Testing requires the ability to process raw messages without the above encoding.
+This will be controlled by settable parameters.
 
 Pre Hash ML-DSA Signature Generation encode the message as
 0x01 || len(ctx) || ctx || digest_OID || H(message).
 The scenario that is stated that this is useful for is when this encoded message
 is supplied from an external source.
+This ensures domain separation between signature variants
 
 Currently I do not support the Pre Hash variant as this does not sit well with the
 OpenSSL API's. The user could do the encoding themselves and then set the settable
@@ -88,7 +88,7 @@ to not encode the passed in message.
 Signing API
 -------------
 
-As only the one shot implementation is required and the message is not digested
+As only the one-shot implementation is required and the message is not digested
 the API's used should be
 
 EVP_PKEY_sign_message_init(), EVP_PKEY_sign(),
