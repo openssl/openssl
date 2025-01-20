@@ -216,7 +216,6 @@ crypto/evp/kdf_meth.c
 crypto/evp/kem.c
 crypto/evp/keymgmt_lib.c
 crypto/evp/keymgmt_meth.c
-crypto/evp/m_sigver.c
 crypto/evp/mac_lib.c
 crypto/evp/mac_meth.c
 crypto/evp/p_lib.c
@@ -422,6 +421,7 @@ include/internal/deterministic_nonce.h
 include/internal/dso.h
 include/internal/dsoerr.h
 include/internal/e_os.h
+include/internal/e_winsock.h
 include/internal/endian.h
 include/internal/ffc.h
 include/internal/hashtable.h
@@ -649,12 +649,12 @@ providers/implementations/macs/cmac_prov.c
 providers/implementations/macs/gmac_prov.c
 providers/implementations/macs/hmac_prov.c
 providers/implementations/macs/kmac_prov.c
-providers/implementations/rands/crngt.c
 providers/implementations/rands/drbg.c
 providers/implementations/rands/drbg_ctr.c
 providers/implementations/rands/drbg_hash.c
 providers/implementations/rands/drbg_hmac.c
 providers/implementations/rands/drbg_local.h
+providers/implementations/rands/fips_crng_test.c
 providers/implementations/rands/test_rng.c
 providers/implementations/signature/dsa_sig.c
 providers/implementations/signature/ecdsa_sig.c
