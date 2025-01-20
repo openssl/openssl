@@ -587,6 +587,8 @@ void ossl_quic_port_drop_incoming(QUIC_PORT *port)
     QUIC_CHANNEL *ch;
     SSL *tls;
     SSL *user_ssl;
+    QUIC_CONNECTION *qc;
+    int ref;
 
     for (;;) {
         ch = ossl_quic_port_pop_incoming(port);
@@ -607,7 +609,18 @@ void ossl_quic_port_drop_incoming(QUIC_PORT *port)
             ossl_quic_channel_free(ch);
             SSL_free(tls);
         } else {
+            qc = QUIC_CONNECTION_FROM_SSL(user_ssl);
+            CRYPTO_GET_REF(&user_ssl->references, &ref);
             SSL_free(user_ssl);
+            /*
+             * This is a hack, but we don't current see a better way around it
+             * if, after we free the user_ssl above, there is still an
+             * outstanding reference, we have to inform it that its listener
+             * is no longer around, and so we have to NULL its listener object
+             * pointer
+             */
+            if (ref >= 1 && qc != NULL)
+                qc->listener = NULL;
         }
     }
 }
