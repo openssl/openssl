@@ -277,6 +277,7 @@ static int eddsa_signverify_init(void *vpeddsactx, void *vedkey)
         ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
         ossl_ecx_key_free(edkey);
         peddsactx->key = NULL;
+        WPACKET_cleanup(&pkt);
         return 0;
     }
     if (ret && WPACKET_finish(&pkt)) {
