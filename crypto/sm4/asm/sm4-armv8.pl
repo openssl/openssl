@@ -118,7 +118,11 @@ ___
 
 {{{
 $code.=<<___;
+
+.rodata
+.type	_${prefix}_consts,%object
 .align	6
+_${prefix}_consts:
 .Lck:
 	.long 0x00070E15, 0x1C232A31, 0x383F464D, 0x545B6269
 	.long 0x70777E85, 0x8C939AA1, 0xA8AFB6BD, 0xC4CBD2D9
@@ -130,6 +134,9 @@ $code.=<<___;
 	.long 0x10171E25, 0x2C333A41, 0x484F565D, 0x646B7279
 .Lfk:
 	.long 0xa3b1bac6, 0x56aa3350, 0x677d9197, 0xb27022dc
+.size _${prefix}_consts,.-_${prefix}_consts
+.previous
+
 ___
 }}}
 
@@ -146,9 +153,11 @@ $code.=<<___;
 ${prefix}_set_encrypt_key:
 	AARCH64_VALID_CALL_TARGET
 	ld1	{$key0.4s},[$key]
-	adr	$tmp,.Lfk
+	adrp	$tmp,.Lfk
+	add	$tmp,$tmp,#:lo12:.Lfk
 	ld1	{$fkconst.4s},[$tmp]
-	adr	$tmp,.Lck
+	adrp	$tmp,.Lck
+	add	$tmp,$tmp,#:lo12:.Lck
 	ld1	{$const0.4s,$const1.4s,$const2.4s,$const3.4s},[$tmp],64
 ___
 	&rev32($key0, $key0);
@@ -183,9 +192,11 @@ $code.=<<___;
 ${prefix}_set_decrypt_key:
 	AARCH64_VALID_CALL_TARGET
 	ld1	{$key0.4s},[$key]
-	adr	$tmp,.Lfk
+	adrp	$tmp,.Lfk
+	add	$tmp,$tmp,#:lo12:.Lfk
 	ld1	{$fkconst.4s},[$tmp]
-	adr	$tmp, .Lck
+	adrp	$tmp,.Lck
+	add	$tmp,$tmp,#:lo12:.Lck
 	ld1	{$const0.4s,$const1.4s,$const2.4s,$const3.4s},[$tmp],64
 ___
 	&rev32($key0, $key0);
