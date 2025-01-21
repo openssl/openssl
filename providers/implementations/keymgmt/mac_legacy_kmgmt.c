@@ -399,7 +399,7 @@ static void *mac_gen_init(void *provctx, int selection,
     struct mac_gen_ctx *gctx = mac_gen_init_common(provctx, selection);
 
     if (gctx != NULL && !mac_gen_set_params(gctx, params)) {
-        OPENSSL_free(gctx);
+        mac_gen_cleanup(gctx);
         gctx = NULL;
     }
     return gctx;
@@ -411,7 +411,7 @@ static void *cmac_gen_init(void *provctx, int selection,
     struct mac_gen_ctx *gctx = mac_gen_init_common(provctx, selection);
 
     if (gctx != NULL && !cmac_gen_set_params(gctx, params)) {
-        OPENSSL_free(gctx);
+        mac_gen_cleanup(gctx);
         gctx = NULL;
     }
     return gctx;
