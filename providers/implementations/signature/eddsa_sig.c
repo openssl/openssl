@@ -216,6 +216,7 @@ static int eddsa_digest_signverify_init(void *vpeddsactx, const char *mdname,
         /* Should never happen */
         ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
         ossl_ecx_key_free(edkey);
+        WPACKET_cleanup(&pkt);
         return 0;
     }
     if (ret && WPACKET_finish(&pkt)) {
