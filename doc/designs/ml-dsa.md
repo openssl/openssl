@@ -56,7 +56,7 @@ vectors, matrices or polynomials are required
 Keys are not allowed to mutate, so checks are done during load to check that the
 public and private key components are not changed once set.
 
-ossl_ml_dsa_key_get_pub() and ossl_ml_dsa_key_get_priv() return the 
+ossl_ml_dsa_key_get_pub() and ossl_ml_dsa_key_get_priv() return the
 encoded forms of the key components (which are stored within the key).
 The hash of the encoded public key is also stored in the key.
 
