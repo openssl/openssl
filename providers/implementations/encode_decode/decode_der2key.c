@@ -647,26 +647,19 @@ ml_dsa_d2i_PKCS8(const uint8_t **der, long der_len, struct der2key_ctx_st *ctx)
     const X509_ALGOR *alg = NULL;
     int plen, ptype;
 
-    /*
-     * The private key format in PKCS8 is the 64-bytes (d, z) seed pair.
-     * Algorithm parameters must be absent.
-     */
     if ((p8inf = d2i_PKCS8_PRIV_KEY_INFO(NULL, der, der_len)) == NULL
         || !PKCS8_pkey_get0(NULL, &p, &plen, &alg, p8inf))
         goto end;
 
+    /* Algorithm parameters must be absent */
     if ((X509_ALGOR_get0(NULL, &ptype, NULL, alg), ptype != V_ASN1_UNDEF)) {
         ERR_raise_data(ERR_LIB_PROV, PROV_R_UNEXPECTED_KEY_PARAMETERS,
                        "unexpected parameters with a PKCS#8 %s private key",
                        ctx->desc->keytype_name);
         goto end;
     }
-    if (OBJ_obj2nid(alg->algorithm) != ctx->desc->evp_type) {
-        ERR_raise_data(ERR_LIB_PROV, PROV_R_UNEXPECTED_KEY_OID,
-                       "unexpected algorithm OID for a PKCS#8 %s private key",
-                       ctx->desc->keytype_name);
+    if (OBJ_obj2nid(alg->algorithm) != ctx->desc->evp_type)
         goto end;
-    }
     if ((key = ossl_ml_dsa_key_new(libctx, ctx->propq,
                                    ctx->desc->keytype_name)) == NULL)
         goto end;
