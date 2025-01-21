@@ -180,7 +180,7 @@ ___
 
 {{{
 my ($key,$keys)=("x0","x1");
-my ($tmp)=("x2");
+my ($tmp)=("x9");
 my ($key7,$key6,$key5,$key4,$key3,$key2,$key1,$key0)=map("v$_",(0..7));
 my ($const0,$const1,$const2,$const3,$const4,$const5,$const6,$const7)=map("v$_",(16..23));
 my ($fkconst) = ("v24");

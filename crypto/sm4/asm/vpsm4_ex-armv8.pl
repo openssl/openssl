@@ -664,6 +664,8 @@ $code.=<<___;
 .align	4
 _${prefix}_enc_8blks:
 	AARCH64_VALID_CALL_TARGET
+	stp d8,d9,[sp,#-16]!
+	stp d10,d11,[sp,#-16]!
 	stp d12,d13,[sp,#-16]!
 	stp d14,d15,[sp,#-16]!
 ___
@@ -671,6 +673,8 @@ ___
 $code.=<<___;
 	ldp d14,d15,[sp],#16
 	ldp d12,d13,[sp],#16
+	ldp d10,d11,[sp],#16
+	ldp d8,d9,[sp],#16
 	ret
 .size	_${prefix}_enc_8blks,.-_${prefix}_enc_8blks
 ___
