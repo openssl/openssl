@@ -597,16 +597,19 @@ static int ml_dsa_to_text(BIO *out, const void *key, int selection)
         ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
+    name = ossl_ml_dsa_key_get_name(key);
     if (ossl_ml_dsa_key_get_pub(key) == NULL) {
         /* Regardless of the |selection|, there must be a public key */
-        ERR_raise(ERR_LIB_PROV, PROV_R_NOT_A_PUBLIC_KEY);
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_MISSING_KEY,
+                       "no %s key material available", name);
         return 0;
     }
 
     name = ossl_ml_dsa_key_get_name(key);
     if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
         if (ossl_ml_dsa_key_get_priv(key) == NULL) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_NOT_A_PRIVATE_KEY);
+            ERR_raise_data(ERR_LIB_PROV, PROV_R_MISSING_KEY,
+                           "no %s key material available", name);
             return 0;
         }
         if (BIO_printf(out, "%s Private-Key:\n", name) <= 0)
