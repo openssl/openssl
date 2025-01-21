@@ -554,6 +554,140 @@ static int test_ssl_trace(void)
 }
 #endif
 
+enum {
+    INITIAL = 0,
+    GATHER_TOKEN = 1,
+    CHECK_TOKEN = 2,
+    SUCCESS = 3,
+    FAILED = 4
+};
+
+static int find_new_token_data(BIO *membio)
+{
+    char buf[1024];
+    int state = INITIAL;
+    char *tmpstring;
+    char *tokenval = NULL;
+    /*
+     * This is a state machine, in which we traverse the ssl trace
+     * looking for a sequence of items
+     * The states are:
+     * +---Current State---|----------Action-------------|---Next State---+
+     * |      INITIAL      | "Received Frame: New token" | GATHER_TOKEN   |
+     * |                   | !"Received Frame: New token"| INITIAL        |
+     * |-------------------|-----------------------------|----------------|
+     * |    GATHER_TOKEN   | "Token: <TOKENVAL>"         | CHECK_TOKEN    |
+     * |                   | !"Token: <TOKENVAL>"        | FAILED         |
+     * |-------------------|-----------------------------|----------------|
+     * |    CHECK_TOKEN    | "Token: <TOKENVAL>"         | SUCCESS        |
+     * |                   | EOF                         | FAILED         |
+     * +-------------------|-----------------------------|----------------|
+     */
+
+    while (state != SUCCESS
+           && state != FAILED
+           && BIO_gets(membio, buf, sizeof(buf)) > 0) {
+        switch (state) {
+        case INITIAL:
+            if (strstr(buf, "Received Frame: New token"))
+                state = GATHER_TOKEN;
+            break;
+        case GATHER_TOKEN:
+            TEST_info("Found New Token Marker\n");
+            tmpstring = strstr(buf, "Token: ");
+            if (tmpstring == NULL) {
+                TEST_info("Next line did not contain a new token\n");
+                state = FAILED;
+            } else {
+                tokenval = strdup(tmpstring);
+                state = CHECK_TOKEN;
+                TEST_info("Recorded Token %s\n", tokenval);
+            }
+            break;
+        case CHECK_TOKEN:
+            tmpstring = strstr(buf, "Token: ");
+            if (tmpstring != NULL
+                && !strcmp(tmpstring, tokenval)) {
+                state = SUCCESS;
+                TEST_info("Matched next connection token %s\n", tmpstring);
+            }
+        default:
+            break;
+        }
+    }
+
+    OPENSSL_free(tokenval);
+    return (state == SUCCESS);
+}
+
+static int test_new_token(void)
+{
+    SSL_CTX *cctx = NULL;
+    SSL *clientquic = NULL;
+    SSL *clientquic2 = NULL;
+    QUIC_TSERVER *qtserv = NULL;
+    QUIC_TSERVER *qtserv2 = NULL;
+    int testresult = 0;
+    BIO *bio = NULL;
+    char msg[] = "The Quic Brown Fox";
+    size_t written;
+
+    if (!TEST_ptr(cctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method()))
+        || !TEST_ptr(bio = BIO_new(BIO_s_mem()))
+        || !TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert,
+                                                privkey,
+                                                QTEST_FLAG_FAKE_TIME,
+                                                &qtserv,
+                                                &clientquic, NULL, NULL)))
+
+        goto err;
+
+    SSL_set_msg_callback(clientquic, SSL_trace);
+    SSL_set_msg_callback_arg(clientquic, bio);
+
+    if (!TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
+        goto err;
+
+    /* Send data from the client */
+    if (!SSL_write_ex(clientquic, msg, sizeof(msg), &written))
+        goto err;
+
+    if (written != sizeof(msg))
+        goto err;
+
+    /* Receive data at the server */
+    ossl_quic_tserver_tick(qtserv);
+
+    if (!TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert,
+                                             privkey,
+                                             QTEST_FLAG_FAKE_TIME,
+                                             &qtserv2,
+                                             &clientquic2, NULL, NULL)))
+        goto err;
+
+    SSL_set_msg_callback(clientquic2, SSL_trace);
+    SSL_set_msg_callback_arg(clientquic2, bio);
+
+    /* once we have our new token, create the subsequent connection */
+    if (!TEST_true(qtest_create_quic_connection(qtserv2, clientquic2)))
+        goto err;
+
+    /* Skip the comparison of the trace when the fips provider is used. */
+    if (!TEST_true(find_new_token_data(bio)))
+        goto err;
+
+    testresult = 1;
+ err:
+    ossl_quic_tserver_free(qtserv);
+    ossl_quic_tserver_free(qtserv2);
+    SSL_free(clientquic);
+    SSL_free(clientquic2);
+    SSL_CTX_free(cctx);
+    BIO_free(bio);
+
+    return testresult;
+}
+
 static int ensure_valid_ciphers(const STACK_OF(SSL_CIPHER) *ciphers)
 {
     size_t i;
@@ -2606,6 +2740,7 @@ int setup_tests(void)
     ADD_TEST(test_domain_flags);
     ADD_TEST(test_early_ticks);
     ADD_TEST(test_ssl_new_from_listener);
+    ADD_TEST(test_new_token);
     return 1;
  err:
     cleanup_tests();
