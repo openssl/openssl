@@ -16,7 +16,6 @@
 struct ml_dsa_key_st {
     OSSL_LIB_CTX *libctx;
     const ML_DSA_PARAMS *params;
-    char *propq;
 
     EVP_MD *shake128_md;
     EVP_MD *shake256_md;

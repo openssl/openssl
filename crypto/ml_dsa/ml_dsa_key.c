@@ -92,7 +92,6 @@ void ossl_ml_dsa_key_free(ML_DSA_KEY *key)
     OPENSSL_cleanse(key->K, sizeof(key->K));
     OPENSSL_free(key->pub_encoding);
     OPENSSL_free(key->priv_encoding);
-    OPENSSL_free(key->propq);
     OPENSSL_free(key);
 }
 
@@ -115,10 +114,6 @@ ML_DSA_KEY *ossl_ml_dsa_key_dup(const ML_DSA_KEY *src, int selection)
     if (ret != NULL) {
         ret->libctx = src->libctx;
         ret->params = src->params;
-        if (src->propq != NULL) {
-            if ((ret->propq = OPENSSL_strdup(src->propq)) == NULL)
-                goto err;
-        }
         if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
             if (src->pub_encoding != NULL) {
                 /* The public components are present if the private key is present */
@@ -336,7 +331,7 @@ int ossl_ml_dsa_key_fromdata(ML_DSA_KEY *key, const OSSL_PARAM params[],
             if (pub != NULL
                     && (pub_data_len != ossl_ml_dsa_key_get_pub_len(key)
                         || memcmp(ossl_ml_dsa_key_get_pub(key), pub_data,
-                                  pub_data_len) == 0))
+                                  pub_data_len) != 0))
                 return 0;
         }
     }
@@ -502,10 +497,6 @@ size_t ossl_ml_dsa_key_get_priv_len(const ML_DSA_KEY *key)
 size_t ossl_ml_dsa_key_get_sig_len(const ML_DSA_KEY *key)
 {
     return key->params->sig_len;
-}
-void ossl_ml_dsa_key_set0_libctx(ML_DSA_KEY *key, OSSL_LIB_CTX *lib_ctx)
-{
-    key->libctx = lib_ctx;
 }
 
 const char *ossl_ml_dsa_key_get_name(const ML_DSA_KEY *key)
