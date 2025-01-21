@@ -475,13 +475,12 @@ sub load_sbox () {
 	my $data = shift;
 
 $code.=<<___;
-	adrp $xtmp1, _${prefix}_consts
-	ldr $MaskQ, [$xtmp1, #:lo12:.Lsbox_magic]
-	ldr $TAHMatQ, [$xtmp1, #:lo12:.Lsbox_magic+16]
-	ldr $TALMatQ, [$xtmp1, #:lo12:.Lsbox_magic+32]
-	ldr $ATAHMatQ, [$xtmp1, #:lo12:.Lsbox_magic+48]
-	ldr $ATALMatQ, [$xtmp1, #:lo12:.Lsbox_magic+64]
-	ldr $ANDMaskQ, [$xtmp1, #:lo12:.Lsbox_magic+80]
+	ldr $MaskQ, .Lsbox_magic
+	ldr $TAHMatQ, .Lsbox_magic+16
+	ldr $TALMatQ, .Lsbox_magic+32
+	ldr $ATAHMatQ, .Lsbox_magic+48
+	ldr $ATALMatQ, .Lsbox_magic+64
+	ldr $ANDMaskQ, .Lsbox_magic+80
 ___
 }
 
@@ -526,8 +525,7 @@ sub compute_tweak_vec() {
 	my $std = shift;
 	&rbit(@vtmp[2],$src,$std);
 $code.=<<___;
-	adrp $xtmp2, _${prefix}_consts
-	ldr  @qtmp[0], [$xtmp2, #:lo12:.Lxts_magic]
+	ldr  @qtmp[0], .Lxts_magic
 	shl  $des.16b, @vtmp[2].16b, #1
 	ext  @vtmp[1].16b, @vtmp[2].16b, @vtmp[2].16b,#15
 	ushr @vtmp[1].16b, @vtmp[1].16b, #7
@@ -542,7 +540,6 @@ $code=<<___;
 .arch	armv8-a+crypto
 .text
 
-.rodata
 .type	_${prefix}_consts,%object
 .align	7
 _${prefix}_consts:
@@ -570,7 +567,6 @@ _${prefix}_consts:
 	.quad 0x0f0f0f0f0f0f0f0f,0x0f0f0f0f0f0f0f0f
 
 .size	_${prefix}_consts,.-_${prefix}_consts
-.previous
 ___
 
 {{{
@@ -587,16 +583,13 @@ ___
 	&load_sbox();
 	&rev32($vkey,$vkey);
 $code.=<<___;
-	adrp	$pointer,_${prefix}_consts
-	add	$pointer,$pointer,#:lo12:.Lshuffles
+	adr	$pointer,.Lshuffles
 	ld1	{$vmap.2d},[$pointer]
-	adrp	$pointer,_${prefix}_consts
-	add	$pointer,$pointer,#:lo12:.Lfk
+	adr	$pointer,.Lfk
 	ld1	{$vfk.2d},[$pointer]
 	eor	$vkey.16b,$vkey.16b,$vfk.16b
 	mov	$schedules,#32
-	adrp	$pointer,_${prefix}_consts
-	add	$pointer,$pointer,#:lo12:.Lck
+	adr	$pointer,.Lck
 	movi	@vtmp[0].16b,#64
 	cbnz	$enc,1f
 	add	$keys,$keys,124
