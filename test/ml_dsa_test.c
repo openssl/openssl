@@ -278,15 +278,15 @@ static int from_data_invalid_public_test(void)
                                          pub, tst->pub_len, 0)))
         goto err;
     if (!TEST_true(ml_dsa_create_keypair(&pkey, tst->name, tst->priv, tst->priv_len,
-                                         tst->pub, tst->pub_len-1, 0)))
+                                         tst->pub, tst->pub_len - 1, 0)))
         goto err;
     if (!TEST_true(ml_dsa_create_keypair(&pkey, tst->name, tst->priv, tst->priv_len,
-                                         tst->pub, tst->pub_len+1, 0)))
+                                         tst->pub, tst->pub_len + 1, 0)))
         goto err;
-    if (!TEST_true(ml_dsa_create_keypair(&pkey, tst->name, tst->priv, tst->priv_len-1,
+    if (!TEST_true(ml_dsa_create_keypair(&pkey, tst->name, tst->priv, tst->priv_len - 1,
                                          tst->pub, tst->pub_len, 0)))
         goto err;
-    if (!TEST_true(ml_dsa_create_keypair(&pkey, tst->name, tst->priv, tst->priv_len+1,
+    if (!TEST_true(ml_dsa_create_keypair(&pkey, tst->name, tst->priv, tst->priv_len + 1,
                                          tst->pub, tst->pub_len, 0)))
         goto err;
 
@@ -365,7 +365,7 @@ static int ml_dsa_keygen_drbg_test(void)
         goto err;
     /* Load just the public part into a PKEY */
     if (!TEST_true(ml_dsa_create_keypair(&pkey_pub, "ML-DSA-44", NULL, 0,
-                                           pub, len, 1)))
+                                         pub, len, 1)))
         goto err;
     /* test that the KEY's are equal */
     if (!TEST_int_eq(EVP_PKEY_eq(pkey_pub, pkey), 1))
@@ -388,7 +388,7 @@ static uint8_t msg2[2048] = {0};
 /* This ctx is larger than 255 and will fail */
 static uint8_t ctx2[256] = {0};
 
-struct sig_params_st {
+static struct sig_params_st {
     uint8_t *msg;
     size_t msg_len;
     uint8_t *ctx;
