@@ -660,7 +660,7 @@ static void qc_cleanup(QUIC_CONNECTION *qc, int have_lock)
     ossl_quic_channel_free(qc->ch);
     qc->ch = NULL;
 
-    if (qc->port != NULL && qc->listener == NULL) { /* TODO */
+    if (qc->port != NULL && qc->listener == NULL && qc->pending == 0) { /* TODO */
         quic_unref_port_bios(qc->port);
         ossl_quic_port_free(qc->port);
         qc->port = NULL;
@@ -674,7 +674,7 @@ static void qc_cleanup(QUIC_CONNECTION *qc, int have_lock)
         /* tsan doesn't like freeing locked mutexes */
         ossl_crypto_mutex_unlock(qc->mutex);
 
-    if (qc->listener == NULL)
+    if (qc->listener == NULL && qc->pending == 0)
         ossl_crypto_mutex_free(&qc->mutex);
 #endif
 }
@@ -4578,7 +4578,8 @@ SSL *ossl_quic_accept_connection(SSL *ssl, uint64_t flags)
     conn_ssl = SSL_CONNECTION_GET_USER_SSL(SSL_CONNECTION_FROM_SSL(conn_ssl));
     qc = (QUIC_CONNECTION *)conn_ssl;
     qc->accepted = 1;
-
+    qc->listener = ctx.ql;
+    qc->pending = 0;
     if (!SSL_up_ref(&ctx.ql->obj.ssl)) {
         SSL_free(conn_ssl);
         SSL_free(ossl_quic_channel_get0_tls(new_ch));
@@ -4608,7 +4609,8 @@ static QUIC_CONNECTION *create_qc_from_incoming_conn(QUIC_LISTENER *ql, QUIC_CHA
 
     ossl_quic_channel_get_peer_addr(ch, &qc->init_peer_addr); /* best effort */
     qc->accepted = 0;
-    qc->listener                = ql;
+    qc->listener                = NULL;
+    qc->pending                 = 1;
     qc->engine                  = ql->engine;
     qc->port                    = ql->port;
     qc->ch                      = ch;
