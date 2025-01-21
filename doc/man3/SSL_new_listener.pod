@@ -109,7 +109,9 @@ by a listener object, that listener object is returned. An SSL object which is
 not a listener object and which is not descended from a listener object (e.g. a
 connection obtained using SSL_accept_connection()) or indirectly from a listener
 object (e.g. a QUIC stream SSL object obtained using SSL_accept_stream() called
-on a connection obtained using SSL_accept_connection()) returns NULL.
+on a connection obtained using SSL_accept_connection()) returns NULL.  Also note
+that pending SSL connections on a QUIC listeners accept queue have some caveats,
+see NOTES below.
 
 The SSL_listen() function begins listening after a listener has been created.
 Appropriate BIOs must have been configured before calling SSL_listen(), along
@@ -211,6 +213,17 @@ called on an unsupported SSL object type.
 
 SSL_new_from_listener() returns a pointer to a new SSL object on success or NULL
 on failure. On success, the caller assumes ownership of the reference.
+
+=head1 NOTES
+
+SSL_get0_listener() behaves somewhat differently in SSL callbacks for QUIC
+connections.  As QUIC connections begin TLS handshake operations prior to them
+being accepted via SSL_accept_connection(), an application may receive callbacks
+for such pending connection prior to acceptance via SSL_accept_connection().  As
+listner association takes place during the accept process, prior to being
+returned from SSL_accept_connection(), calls to SSL_get0_listener() made from
+such SSL callbacks will return NULL.  This can be used as an indicator within
+the callback that the referenced SSL object has not yet been accepted.
 
 =head1 SEE ALSO
 
