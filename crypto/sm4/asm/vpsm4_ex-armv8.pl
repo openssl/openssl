@@ -646,9 +646,13 @@ $code.=<<___;
 .align	4
 _${prefix}_enc_4blks:
 	AARCH64_VALID_CALL_TARGET
+	stp d12,d13,[sp,#-16]!
+	stp d14,d15,[sp,#-16]!
 ___
 	&encrypt_4blks();
 $code.=<<___;
+	ldp d14,d15,[sp],#16
+	ldp d12,d13,[sp],#16
 	ret
 .size	_${prefix}_enc_4blks,.-_${prefix}_enc_4blks
 ___
@@ -660,9 +664,13 @@ $code.=<<___;
 .align	4
 _${prefix}_enc_8blks:
 	AARCH64_VALID_CALL_TARGET
+	stp d12,d13,[sp,#-16]!
+	stp d14,d15,[sp,#-16]!
 ___
 	&encrypt_8blks();
 $code.=<<___;
+	ldp d14,d15,[sp],#16
+	ldp d12,d13,[sp],#16
 	ret
 .size	_${prefix}_enc_8blks,.-_${prefix}_enc_8blks
 ___
