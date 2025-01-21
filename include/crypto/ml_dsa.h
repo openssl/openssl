@@ -40,9 +40,8 @@ __owur size_t ossl_ml_dsa_key_get_pub_len(const ML_DSA_KEY *key);
 __owur size_t ossl_ml_dsa_key_get_collision_strength_bits(const ML_DSA_KEY *key);
 __owur size_t ossl_ml_dsa_key_get_priv_len(const ML_DSA_KEY *key);
 __owur size_t ossl_ml_dsa_key_get_sig_len(const ML_DSA_KEY *key);
-__owur const char *ossl_ml_dsa_key_get_name(const ML_DSA_KEY *key);
 __owur int ossl_ml_dsa_key_matches(const ML_DSA_KEY *key, const char *alg);
-void ossl_ml_dsa_key_set0_libctx(ML_DSA_KEY *key, OSSL_LIB_CTX *lib_ctx);
+__owur const char *ossl_ml_dsa_key_get_name(const ML_DSA_KEY *key);
 
 __owur int ossl_ml_dsa_key_public_from_private(ML_DSA_KEY *key);
 __owur int ossl_ml_dsa_pk_decode(ML_DSA_KEY *key, const uint8_t *in, size_t in_len);
