@@ -805,13 +805,7 @@ void ossl_quic_free(SSL *s)
     qc_cleanup(ctx.qc, /*have_lock=*/1);
     /* Note: SSL_free calls OPENSSL_free(qc) for us */
 
-    /*
-     * Just because we have a listener doesn't mean we have a ref on it
-     * QUIC pre-creates user ssls to return to applications.
-     * Those don't hold a reference until they are accepted, so only drop
-     * the count if the application has accepted them
-     */
-    if (ctx.qc->pending == 0 && ctx.qc->listener != NULL)
+    if (ctx.qc->listener != NULL)
         SSL_free(&ctx.qc->listener->obj.ssl);
     if (ctx.qc->domain != NULL)
         SSL_free(&ctx.qc->domain->obj.ssl);
