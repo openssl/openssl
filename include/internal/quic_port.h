@@ -44,7 +44,7 @@ typedef struct quic_port_args_st {
 
     /*
      * This callback allows port_new_handshake_layer to pre-create a quic
-     * connection object for the incomming channel
+     * connection object for the incoming channel
      * user_ssl_arg is expected to point to a quic listener object
      */
     SSL *(*get_conn_user_ssl)(QUIC_CHANNEL *ch, void *arg);
