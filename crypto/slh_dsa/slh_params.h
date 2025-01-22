@@ -10,6 +10,12 @@
 #include <openssl/e_os2.h>
 
 /*
+ * PRF(), F() use this value to calculate the number of zeros
+ * H(), T() use this to calculate the number of zeros for security cat 1
+ */
+#define OSSL_SLH_DSA_SHA2_NUM_ZEROS_H_AND_T_BOUND1 64
+
+/*
  * Refer to FIPS 205 Section 11 parameter sets.
  * lgw has been omitted since it is 4 for all algorithms i.e. log(16)
  */
@@ -26,6 +32,7 @@ typedef struct slh_dsa_params_st {
     uint32_t security_category;
     uint32_t pk_len;
     uint32_t sig_len;
+    size_t sha2_h_and_t_bound;
 } SLH_DSA_PARAMS;
 
 const SLH_DSA_PARAMS *ossl_slh_dsa_params_get(const char *alg);

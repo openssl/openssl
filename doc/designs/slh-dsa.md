@@ -30,12 +30,12 @@ There are many functions required to implement the sign and verify paths, which 
 Merkle trees and WOTS+. The different functions normally call one of 2 of the
 7 hash functions, as well as calling ADRS functions to pass to the HASH functions.
 
-Rather that duplicating this code 12 times for every function, instead a
-SLH_DSA_CTX object is created.
-This contains the HASH functions, the ADRS functions, and the parameter constants.
-It also contains pre fetched algorithms.
-
-This SLH_DSA_CTX is then passed to all functions. This context is allocated in the
+Rather that duplicating this code 12 times for every function, the constants are
+stored within the SLH_DSA_KEY. This contains the HASH functions,
+the ADRS functions, and the parameter constants. It also contains pre fetched algorithms.
+A SLH_DSA_HASH_CTX object is also created, that references the key, as well as
+containing per operation hash context objects.
+This SLH_DSA_HASH_CTX is then passed to all functions. This context is allocated in the
 providers SLH_DSA signature context.
 
 SLH-DSA keys
@@ -54,6 +54,7 @@ struct slh_dsa_key_st {
     /* contains the algorithm name and constants such as |n| */
     const SLH_DSA_PARAMS *params;
     int has_priv; /* Set to 1 if there is a private key component */
+    ...
 };
 
 The fields 'key_len' and 'has_priv' are used to determine if a key has loaded
