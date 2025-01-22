@@ -716,9 +716,9 @@ EVP_PKEY *OSSL_CRMF_ENCRYPTEDKEY_get1_pkey(const OSSL_CRMF_ENCRYPTEDKEY *encrypt
     if (sd == NULL)
         goto end;
 
-    purpose_id = X509_PURPOSE_get_count() + 1;
+    purpose_id = X509_PURPOSE_get_unused_id(libctx);
 
-    if (X509_PURPOSE_get_by_sname(SN_cmKGA) < 0 /* can be removed after fixing #25873 */
+    if (X509_PURPOSE_get_by_sname(SN_cmKGA) < 0
         && !X509_PURPOSE_add(purpose_id, X509_TRUST_COMPAT, 0, check_cmKGA,
                              LN_cmKGA, SN_cmKGA, NULL)) {
         ERR_raise(ERR_LIB_CRMF, CRMF_R_ERROR_SETTING_PURPOSE);
