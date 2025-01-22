@@ -23,8 +23,6 @@
 #include "internal/packet.h"
 #include "internal/sizes.h"
 
-#define ML_DSA_ENTROPY_LEN 32
-
 #define ML_DSA_MESSAGE_ENCODE_RAW  0
 #define ML_DSA_MESSAGE_ENCODE_PURE 1
 
