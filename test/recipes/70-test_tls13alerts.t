@@ -38,8 +38,6 @@ SKIP: {
 
 SKIP: {
     skip "DTLS 1.3 is disabled", $testcount if disabled("dtls1_3");
-    skip "DTLSProxy does not support partial messages that are sent when EC is disabled",
-        $testcount if disabled("ec");
     skip "DTLSProxy does not work on Windows", $testcount if $^O =~ /^(MSWin32)$/;
     run_tests(1);
 }
