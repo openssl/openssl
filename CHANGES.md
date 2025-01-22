@@ -27,6 +27,10 @@ OpenSSL Releases
 OpenSSL 3.4
 -----------
 
+### Changes between 3.4.1 and 3.4.2 [xx XXX xxxx]
+
+ * none yet
+
 ### Changes between 3.4.0 and 3.4.1 [22 Jan 2025]
 
  * Fixed timing side-channel in ECDSA signature computation.
