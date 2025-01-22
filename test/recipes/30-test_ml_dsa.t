@@ -18,7 +18,7 @@ BEGIN {
 
 my $provconf = srctop_file("test", "fips-and-base.cnf");
 # fips will be added later
-my $no_fips = 1;
+my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
 use lib srctop_dir('Configurations');
 use lib bldtop_dir('.');
