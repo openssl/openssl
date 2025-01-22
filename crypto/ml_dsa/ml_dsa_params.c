@@ -20,9 +20,6 @@
 #define ML_DSA_44_BETA 78
 #define ML_DSA_44_OMEGA 80
 #define ML_DSA_44_SECURITY_CATEGORY 2
-#define ML_DSA_44_PRIV_LEN 2560
-#define ML_DSA_44_PUB_LEN 1312
-#define ML_DSA_44_SIG_LEN 2420
 
 /* See FIPS 204 Section 4 Table 1 & Table 2 */
 #define ML_DSA_65_TAU 49
@@ -33,9 +30,6 @@
 #define ML_DSA_65_BETA 196
 #define ML_DSA_65_OMEGA 55
 #define ML_DSA_65_SECURITY_CATEGORY 3
-#define ML_DSA_65_PRIV_LEN 4032
-#define ML_DSA_65_PUB_LEN 1952
-#define ML_DSA_65_SIG_LEN 3309
 
 /* See FIPS 204 Section 4 Table 1 & Table 2 */
 #define ML_DSA_87_TAU 60
@@ -46,9 +40,6 @@
 #define ML_DSA_87_BETA 120
 #define ML_DSA_87_OMEGA 75
 #define ML_DSA_87_SECURITY_CATEGORY 5
-#define ML_DSA_87_PRIV_LEN 4896
-#define ML_DSA_87_PUB_LEN 2592
-#define ML_DSA_87_SIG_LEN 4627
 
 static const ML_DSA_PARAMS ml_dsa_params[] = {
     { "ML-DSA-44",
