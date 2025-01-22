@@ -34,7 +34,7 @@ IF[{- !$disabled{"fuzz-afl"} || !$disabled{"fuzz-libfuzzer"} -}]
   ENDIF
 
   IF[{- !$disabled{"quic"} -}]
-    PROGRAMS{noinst}=quic-client quic-srtm quic-lcidm quic-rcidm
+    PROGRAMS{noinst}=quic-client quic-server quic-srtm quic-lcidm quic-rcidm
   ENDIF
 
   IF[{- !$disabled{"dtls"} -}]
@@ -121,6 +121,10 @@ IF[{- !$disabled{"fuzz-afl"} || !$disabled{"fuzz-libfuzzer"} -}]
   INCLUDE[quic-client]=../include {- $ex_inc -}
   DEPEND[quic-client]=../libcrypto.a ../libssl.a {- $ex_lib -}
 
+  SOURCE[quic-server]=quic-server.c driver.c fuzz_rand.c
+  INCLUDE[quic-server]=../include {- $ex_inc -}
+  DEPEND[quic-server]=../libcrypto.a ../libssl.a {- $ex_lib -}
+
   SOURCE[quic-srtm]=quic-srtm.c driver.c fuzz_rand.c
   INCLUDE[quic-srtm]=../include {- $ex_inc -}
   DEPEND[quic-srtm]=../libcrypto.a ../libssl.a {- $ex_lib -}
@@ -177,7 +181,7 @@ IF[{- !$disabled{tests} -}]
   ENDIF
 
   IF[{- !$disabled{"quic"} -}]
-    PROGRAMS{noinst}=quic-client-test quic-srtm-test quic-lcidm-test
+    PROGRAMS{noinst}=quic-client-test quic-server-test quic-srtm-test quic-lcidm-test
     PROGRAMS{noinst}=quic-rcidm-test
   ENDIF
 
@@ -270,6 +274,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[quic-client-test]=quic-client.c test-corpus.c fuzz_rand.c
   INCLUDE[quic-client-test]=../include
   DEPEND[quic-client-test]=../libcrypto.a ../libssl.a
+
+  SOURCE[quic-server-test]=quic-server.c test-corpus.c fuzz_rand.c
+  INCLUDE[quic-server-test]=../include
+  DEPEND[quic-server-test]=../libcrypto.a ../libssl.a
 
   SOURCE[quic-srtm-test]=quic-srtm.c test-corpus.c fuzz_rand.c
   INCLUDE[quic-srtm-test]=../include
