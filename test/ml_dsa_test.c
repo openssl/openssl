@@ -90,17 +90,13 @@ static int ml_dsa_keygen_test(int tst_id)
     uint8_t priv[5 * 1024], pub[3 * 1024];
     size_t priv_len, pub_len;
 
-    if (!TEST_ptr(pkey = do_gen_key(tst->name, tst->seed, tst->seed_len)))
-        goto err;
-    if (!TEST_true(EVP_PKEY_get_octet_string_param(pkey, OSSL_PKEY_PARAM_PRIV_KEY,
-                                                   priv, sizeof(priv), &priv_len)))
-        goto err;
-    if (!TEST_true(EVP_PKEY_get_octet_string_param(pkey, OSSL_PKEY_PARAM_PUB_KEY,
-                                                   pub, sizeof(pub), &pub_len)))
-        goto err;
-    if (!TEST_mem_eq(pub, pub_len, tst->pub, tst->pub_len))
-        goto err;
-    if (!TEST_mem_eq(priv, priv_len, tst->priv, tst->priv_len))
+    if (!TEST_ptr(pkey = do_gen_key(tst->name, tst->seed, tst->seed_len))
+            || !TEST_true(EVP_PKEY_get_octet_string_param(pkey, OSSL_PKEY_PARAM_PRIV_KEY,
+                                                          priv, sizeof(priv), &priv_len))
+            || !TEST_true(EVP_PKEY_get_octet_string_param(pkey, OSSL_PKEY_PARAM_PUB_KEY,
+                                                          pub, sizeof(pub), &pub_len))
+            || !TEST_mem_eq(pub, pub_len, tst->pub, tst->pub_len)
+            || !TEST_mem_eq(priv, priv_len, tst->priv, tst->priv_len))
         goto err;
     ret = 1;
 err:
@@ -135,14 +131,10 @@ static int ml_dsa_siggen_test(int tst_id)
      * The keygen path is tested via ml_dsa_keygen_test
      */
     if (!TEST_true(ml_dsa_create_keypair(&pkey, td->alg, td->priv, td->priv_len,
-                                         NULL, 0, 1)))
-        goto err;
-
-    if (!TEST_ptr(sctx = EVP_PKEY_CTX_new_from_pkey(lib_ctx, pkey, NULL)))
-        goto err;
-    if (!TEST_ptr(sig_alg = EVP_SIGNATURE_fetch(lib_ctx, td->alg, NULL)))
-        goto err;
-    if (!TEST_int_eq(EVP_PKEY_sign_message_init(sctx, sig_alg, params), 1)
+                                         NULL, 0, 1))
+            || !TEST_ptr(sctx = EVP_PKEY_CTX_new_from_pkey(lib_ctx, pkey, NULL))
+            || !TEST_ptr(sig_alg = EVP_SIGNATURE_fetch(lib_ctx, td->alg, NULL))
+            || !TEST_int_eq(EVP_PKEY_sign_message_init(sctx, sig_alg, params), 1)
             || !TEST_int_eq(EVP_PKEY_sign(sctx, NULL, &psig_len,
                                           td->msg, td->msg_len), 1)
             || !TEST_true(EVP_PKEY_get_size_t_param(pkey, OSSL_PKEY_PARAM_MAX_SIZE,
@@ -150,12 +142,10 @@ static int ml_dsa_siggen_test(int tst_id)
             || !TEST_int_eq(sig_len2, psig_len)
             || !TEST_ptr(psig = OPENSSL_zalloc(psig_len))
             || !TEST_int_eq(EVP_PKEY_sign(sctx, psig, &psig_len,
-                                          td->msg, td->msg_len), 1))
-        goto err;
-    if (!TEST_int_eq(EVP_Q_digest(lib_ctx, "SHA256", NULL, psig, psig_len,
-                                  digest, &digest_len), 1))
-        goto err;
-    if (!TEST_mem_eq(digest, digest_len, td->sig_digest, td->sig_digest_len))
+                                          td->msg, td->msg_len), 1)
+            || !TEST_int_eq(EVP_Q_digest(lib_ctx, "SHA256", NULL, psig, psig_len,
+                                         digest, &digest_len), 1)
+            || !TEST_mem_eq(digest, digest_len, td->sig_digest, td->sig_digest_len))
         goto err;
     ret = 1;
 err:
@@ -206,15 +196,11 @@ static int ml_dsa_key_dup_test(void)
     EVP_PKEY *pkey = NULL, *pkey_copy = NULL;
     EVP_PKEY_CTX *ctx = NULL;
 
-    if (!TEST_ptr(pkey = do_gen_key(tst->name, tst->seed, tst->seed_len)))
-        goto err;
-    if (!TEST_ptr(pkey_copy = EVP_PKEY_dup(pkey)))
-        goto err;
-    if (!TEST_int_eq(EVP_PKEY_eq(pkey, pkey_copy), 1))
-        goto err;
-    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(lib_ctx, pkey_copy, NULL)))
-        goto err;
-    if (!TEST_int_eq(EVP_PKEY_check(ctx), 1))
+    if (!TEST_ptr(pkey = do_gen_key(tst->name, tst->seed, tst->seed_len))
+            || !TEST_ptr(pkey_copy = EVP_PKEY_dup(pkey))
+            || !TEST_int_eq(EVP_PKEY_eq(pkey, pkey_copy), 1)
+            || !TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(lib_ctx, pkey_copy, NULL))
+            || !TEST_int_eq(EVP_PKEY_check(ctx), 1))
         goto err;
     ret = 1;
  err:
@@ -233,22 +219,16 @@ static int ml_dsa_key_internal_test(void)
     ossl_ml_dsa_key_free(NULL);
 
     /* We should fail to fetch and fail here if the libctx is not set */
-    if (!TEST_ptr_null(key = ossl_ml_dsa_key_new(NULL, NULL, "ML-DSA-44")))
-        goto err;
-    /* fail if the algorithm is invalid */
-    if (!TEST_ptr_null(key = ossl_ml_dsa_key_new(lib_ctx, "", "ML-DSA-666")))
-        goto err;
-    /* Dup should fail if the src is NULL */
-    if (!TEST_ptr_null(key1 = ossl_ml_dsa_key_dup(NULL, OSSL_KEYMGMT_SELECT_KEYPAIR)))
-        goto err;
-    if (!TEST_ptr(key = ossl_ml_dsa_key_new(lib_ctx, "?fips=yes", "ML-DSA-44")))
-        goto err;
-    if (!TEST_ptr(key1 = ossl_ml_dsa_key_dup(key, OSSL_KEYMGMT_SELECT_KEYPAIR)))
-        goto err;
-    if (!TEST_true(ossl_ml_dsa_key_pub_alloc(key1))
-            || !TEST_false(ossl_ml_dsa_key_pub_alloc(key1)))
-        goto err;
-    if (!TEST_true(ossl_ml_dsa_key_priv_alloc(key))
+    if (!TEST_ptr_null(key = ossl_ml_dsa_key_new(NULL, NULL, "ML-DSA-44"))
+            /* fail if the algorithm is invalid */
+            || !TEST_ptr_null(key = ossl_ml_dsa_key_new(lib_ctx, "", "ML-DSA-666"))
+            /* Dup should fail if the src is NULL */
+            || !TEST_ptr_null(key1 = ossl_ml_dsa_key_dup(NULL, OSSL_KEYMGMT_SELECT_KEYPAIR))
+            || !TEST_ptr(key = ossl_ml_dsa_key_new(lib_ctx, "?fips=yes", "ML-DSA-44"))
+            || !TEST_ptr(key1 = ossl_ml_dsa_key_dup(key, OSSL_KEYMGMT_SELECT_KEYPAIR))
+            || !TEST_true(ossl_ml_dsa_key_pub_alloc(key1))
+            || !TEST_false(ossl_ml_dsa_key_pub_alloc(key1))
+            || !TEST_true(ossl_ml_dsa_key_priv_alloc(key))
             || !TEST_false(ossl_ml_dsa_key_priv_alloc(key)))
         goto err;
 
@@ -272,22 +252,17 @@ static int from_data_invalid_public_test(void)
     pub[0] ^= 1;
 
     if (!TEST_true(ml_dsa_create_keypair(&pkey, tst->name, tst->priv, tst->priv_len,
-                                         tst->pub, tst->pub_len, 1)))
-        goto err;
-    if (!TEST_true(ml_dsa_create_keypair(&pkey, tst->name, tst->priv, tst->priv_len,
-                                         pub, tst->pub_len, 0)))
-        goto err;
-    if (!TEST_true(ml_dsa_create_keypair(&pkey, tst->name, tst->priv, tst->priv_len,
-                                         tst->pub, tst->pub_len - 1, 0)))
-        goto err;
-    if (!TEST_true(ml_dsa_create_keypair(&pkey, tst->name, tst->priv, tst->priv_len,
-                                         tst->pub, tst->pub_len + 1, 0)))
-        goto err;
-    if (!TEST_true(ml_dsa_create_keypair(&pkey, tst->name, tst->priv, tst->priv_len - 1,
-                                         tst->pub, tst->pub_len, 0)))
-        goto err;
-    if (!TEST_true(ml_dsa_create_keypair(&pkey, tst->name, tst->priv, tst->priv_len + 1,
-                                         tst->pub, tst->pub_len, 0)))
+                                         tst->pub, tst->pub_len, 1))
+            || !TEST_true(ml_dsa_create_keypair(&pkey, tst->name, tst->priv, tst->priv_len,
+                                                pub, tst->pub_len, 0))
+            || !TEST_true(ml_dsa_create_keypair(&pkey, tst->name, tst->priv, tst->priv_len,
+                                                tst->pub, tst->pub_len - 1, 0))
+            || !TEST_true(ml_dsa_create_keypair(&pkey, tst->name, tst->priv, tst->priv_len,
+                                                tst->pub, tst->pub_len + 1, 0))
+            || !TEST_true(ml_dsa_create_keypair(&pkey, tst->name, tst->priv, tst->priv_len - 1,
+                                                tst->pub, tst->pub_len, 0))
+            || !TEST_true(ml_dsa_create_keypair(&pkey, tst->name, tst->priv, tst->priv_len + 1,
+                                                tst->pub, tst->pub_len, 0)))
         goto err;
 
     ret = 1;
@@ -306,10 +281,8 @@ static int from_data_bad_input_test(void)
     uint32_t i = 0;
 
     if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(lib_ctx, "ML-DSA-44", NULL))
-            || !TEST_int_eq(EVP_PKEY_fromdata_init(ctx), 1))
-        goto err;
-
-    if (!TEST_ptr(EVP_PKEY_fromdata_settable(ctx, OSSL_KEYMGMT_SELECT_KEYPAIR))
+            || !TEST_int_eq(EVP_PKEY_fromdata_init(ctx), 1)
+            || !TEST_ptr(EVP_PKEY_fromdata_settable(ctx, OSSL_KEYMGMT_SELECT_KEYPAIR))
             || !TEST_ptr_null(EVP_PKEY_fromdata_settable(ctx, 0)))
         goto err;
 
@@ -337,38 +310,24 @@ static int ml_dsa_keygen_drbg_test(void)
     size_t len = 0;
     uint8_t *priv = NULL, *pub = NULL;
 
-    if (!TEST_ptr(pkey = do_gen_key("ML-DSA-44", NULL, 0)))
-        goto err;
-    if (!TEST_ptr(pkey2 = do_gen_key("ML-DSA-44", NULL, 0)))
-        goto err;
-    if (!TEST_ptr(pkey3 = do_gen_key("ML-DSA-65", NULL, 0)))
-        goto err;
-    if (!TEST_int_eq(EVP_PKEY_eq(pkey, pkey2), 0)
-            || !TEST_int_eq(EVP_PKEY_eq(pkey, pkey3), -1))
-        goto err;
-
-    if (!TEST_int_eq(EVP_PKEY_get_raw_private_key(pkey, NULL, &len), 1))
-        goto err;
-    if (!TEST_int_gt(len, 0))
-        goto err;
-    if (!TEST_ptr(priv = OPENSSL_malloc(len)))
-        goto err;
-    if (!TEST_int_eq(EVP_PKEY_get_raw_private_key(pkey, priv, &len), 1))
-        goto err;
-    if (!TEST_int_eq(EVP_PKEY_get_raw_public_key(pkey, NULL, &len), 1))
-        goto err;
-    if (!TEST_int_gt(len, 0))
-        goto err;
-    if (!TEST_ptr(pub = OPENSSL_malloc(len)))
-        goto err;
-    if (!TEST_int_eq(EVP_PKEY_get_raw_public_key(pkey, pub, &len), 1))
-        goto err;
-    /* Load just the public part into a PKEY */
-    if (!TEST_true(ml_dsa_create_keypair(&pkey_pub, "ML-DSA-44", NULL, 0,
-                                         pub, len, 1)))
-        goto err;
-    /* test that the KEY's are equal */
-    if (!TEST_int_eq(EVP_PKEY_eq(pkey_pub, pkey), 1))
+    if (!TEST_ptr(pkey = do_gen_key("ML-DSA-44", NULL, 0))
+            || !TEST_ptr(pkey2 = do_gen_key("ML-DSA-44", NULL, 0))
+            || !TEST_ptr(pkey3 = do_gen_key("ML-DSA-65", NULL, 0))
+            || !TEST_int_eq(EVP_PKEY_eq(pkey, pkey2), 0)
+            || !TEST_int_eq(EVP_PKEY_eq(pkey, pkey3), -1)
+            || !TEST_int_eq(EVP_PKEY_get_raw_private_key(pkey, NULL, &len), 1)
+            || !TEST_int_gt(len, 0)
+            || !TEST_ptr(priv = OPENSSL_malloc(len))
+            || !TEST_int_eq(EVP_PKEY_get_raw_private_key(pkey, priv, &len), 1)
+            || !TEST_int_eq(EVP_PKEY_get_raw_public_key(pkey, NULL, &len), 1)
+            || !TEST_int_gt(len, 0)
+            || !TEST_ptr(pub = OPENSSL_malloc(len))
+            || !TEST_int_eq(EVP_PKEY_get_raw_public_key(pkey, pub, &len), 1)
+            /* Load just the public part into a PKEY */
+            || !TEST_true(ml_dsa_create_keypair(&pkey_pub, "ML-DSA-44", NULL, 0,
+                                                pub, len, 1))
+            /* test that the KEY's are equal */
+            || !TEST_int_eq(EVP_PKEY_eq(pkey_pub, pkey), 1))
         goto err;
     ret = 1;
  err:
@@ -431,11 +390,9 @@ static int do_ml_dsa_sign_verify(const char *alg, int tstid)
                                                  sp->ctx, sp->ctx_len);
     *p++ = OSSL_PARAM_construct_end();
 
-    if (!TEST_ptr(sctx = EVP_PKEY_CTX_new_from_pkey(lib_ctx, key, NULL)))
-        goto err;
-    if (!TEST_ptr(sig_alg = EVP_SIGNATURE_fetch(lib_ctx, alg, NULL)))
-        goto err;
-    if (!TEST_int_eq(EVP_PKEY_sign_message_init(sctx, sig_alg, params), sp->expected))
+    if (!TEST_ptr(sctx = EVP_PKEY_CTX_new_from_pkey(lib_ctx, key, NULL))
+            || !TEST_ptr(sig_alg = EVP_SIGNATURE_fetch(lib_ctx, alg, NULL))
+            || !TEST_int_eq(EVP_PKEY_sign_message_init(sctx, sig_alg, params), sp->expected))
         goto err;
     if (sp->expected == 0) {
         ret = 1; /* return true as we expected to fail */
@@ -448,13 +405,10 @@ static int do_ml_dsa_sign_verify(const char *alg, int tstid)
     if (!TEST_int_eq(EVP_PKEY_sign(sctx, sig, &sig_len, sp->msg, sp->msg_len), 0))
         goto err;
     sig_len++;
-    if (!TEST_int_eq(EVP_PKEY_sign(sctx, sig, &sig_len, sp->msg, sp->msg_len), 1))
-        goto err;
-    if (!TEST_ptr(vctx = EVP_PKEY_CTX_new_from_pkey(lib_ctx, key, NULL)))
-        goto err;
-    if (!TEST_int_eq(EVP_PKEY_verify_message_init(vctx, sig_alg, params), 1))
-        goto err;
-    if (!TEST_int_eq(EVP_PKEY_verify(vctx, sig, sig_len, sp->msg, sp->msg_len), 1))
+    if (!TEST_int_eq(EVP_PKEY_sign(sctx, sig, &sig_len, sp->msg, sp->msg_len), 1)
+            || !TEST_ptr(vctx = EVP_PKEY_CTX_new_from_pkey(lib_ctx, key, NULL))
+            || !TEST_int_eq(EVP_PKEY_verify_message_init(vctx, sig_alg, params), 1)
+            || !TEST_int_eq(EVP_PKEY_verify(vctx, sig, sig_len, sp->msg, sp->msg_len), 1))
         goto err;
     ret = 1;
 err:
