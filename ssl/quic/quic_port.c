@@ -479,7 +479,8 @@ static SSL *port_new_handshake_layer(QUIC_PORT *port, QUIC_CHANNEL *ch)
                                                   ql->obj.ssl.ctx->new_pending_conn_arg)) {
             SSL_free(tls);
             SSL_free(user_ssl);
-            qc->tls = NULL;
+            if (qc != NULL)
+                qc->tls = NULL;
             return NULL;
         }
 
