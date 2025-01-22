@@ -11,6 +11,7 @@
 #include <string.h>
 #include <openssl/crypto.h>
 #include "slh_dsa_local.h"
+#include "slh_dsa_key.h"
 
 /* For the parameter sets defined there is only one w value */
 #define SLH_WOTS_LOGW 4
@@ -92,16 +93,17 @@ static ossl_inline void compute_checksum_nibbles(const uint8_t *in, size_t in_le
  * @params wpkt A WPACKET object to write the hash chain to (n bytes are written)
  * @returns 1 on success, or 0 on error.
  */
-static int slh_wots_chain(SLH_DSA_CTX *ctx, const uint8_t *in,
+static int slh_wots_chain(SLH_DSA_HASH_CTX *ctx, const uint8_t *in,
                           uint8_t start_index, uint8_t steps,
                           const uint8_t *pk_seed, uint8_t *adrs, WPACKET *wpkt)
 {
-    SLH_HASH_FUNC_DECLARE(ctx, hashf, hctx);
-    SLH_ADRS_FUNC_DECLARE(ctx, adrsf);
+    const SLH_DSA_KEY *key = ctx->key;
+    SLH_HASH_FUNC_DECLARE(key, hashf);
+    SLH_ADRS_FUNC_DECLARE(key, adrsf);
     SLH_HASH_FN_DECLARE(hashf, F);
     SLH_ADRS_FN_DECLARE(adrsf, set_hash_address);
     size_t j = start_index, end_index;
-    size_t n = ctx->params->n;
+    size_t n = key->params->n;
     uint8_t *tmp; /* Pointer into the |wpkt| buffer */
     size_t tmp_len = n;
 
@@ -112,13 +114,13 @@ static int slh_wots_chain(SLH_DSA_CTX *ctx, const uint8_t *in,
         return 0;
 
     set_hash_address(adrs, j++);
-    if (!F(hctx, pk_seed, adrs, in, n, tmp, tmp_len))
+    if (!F(ctx, pk_seed, adrs, in, n, tmp, tmp_len))
         return 0;
 
     end_index = start_index + steps;
     for (; j < end_index; ++j) {
         set_hash_address(adrs, j);
-        if (!F(hctx, pk_seed, adrs, tmp, n, tmp, tmp_len))
+        if (!F(ctx, pk_seed, adrs, tmp, n, tmp, tmp_len))
             return 0;
     }
     return 1;
@@ -137,20 +139,21 @@ static int slh_wots_chain(SLH_DSA_CTX *ctx, const uint8_t *in,
  * @param pk_out_len The maximum size of |pk_out|
  * @returns 1 on success, or 0 on error.
  */
-int ossl_slh_wots_pk_gen(SLH_DSA_CTX *ctx,
+int ossl_slh_wots_pk_gen(SLH_DSA_HASH_CTX *ctx,
                          const uint8_t *sk_seed, const uint8_t *pk_seed,
                          SLH_ADRS adrs, uint8_t *pk_out, size_t pk_out_len)
 {
     int ret = 0;
-    size_t n = ctx->params->n;
+    const SLH_DSA_KEY *key = ctx->key;
+    size_t n = key->params->n;
     size_t i, len = SLH_WOTS_LEN(n); /* 2 * n + 3 */
     uint8_t sk[SLH_MAX_N];
     uint8_t tmp[SLH_WOTS_LEN_MAX * SLH_MAX_N];
     WPACKET pkt, *tmp_wpkt = &pkt; /* Points to the |tmp| buffer */
     size_t tmp_len = 0;
 
-    SLH_HASH_FUNC_DECLARE(ctx, hashf, hctx);
-    SLH_ADRS_FUNC_DECLARE(ctx, adrsf);
+    SLH_HASH_FUNC_DECLARE(key, hashf);
+    SLH_ADRS_FUNC_DECLARE(key, adrsf);
     SLH_HASH_FN_DECLARE(hashf, PRF);
     SLH_ADRS_FN_DECLARE(adrsf, set_chain_address);
     SLH_ADRS_DECLARE(sk_adrs);
@@ -164,7 +167,7 @@ int ossl_slh_wots_pk_gen(SLH_DSA_CTX *ctx,
 
     for (i = 0; i < len; ++i) { /* len = 2n + 3 */
         set_chain_address(sk_adrs, i);
-        if (!PRF(hctx, pk_seed, sk_seed, sk_adrs, sk, sizeof(sk)))
+        if (!PRF(ctx, pk_seed, sk_seed, sk_adrs, sk, sizeof(sk)))
             goto end;
 
         set_chain_address(adrs, i);
@@ -177,8 +180,7 @@ int ossl_slh_wots_pk_gen(SLH_DSA_CTX *ctx,
     adrsf->copy(wots_pk_adrs, adrs);
     adrsf->set_type_and_clear(wots_pk_adrs, SLH_ADRS_TYPE_WOTS_PK);
     adrsf->copy_keypair_address(wots_pk_adrs, adrs);
-    ret = hashf->T(hctx, pk_seed, wots_pk_adrs, tmp, tmp_len,
-                   pk_out, pk_out_len);
+    ret = hashf->T(ctx, pk_seed, wots_pk_adrs, tmp, tmp_len, pk_out, pk_out_len);
 end:
     WPACKET_finish(tmp_wpkt);
     OPENSSL_cleanse(tmp, sizeof(tmp));
@@ -202,21 +204,22 @@ end:
  * @param sig_wpkt A WPACKET object to write the signature to.
  * @returns 1 on success, or 0 on error.
  */
-int ossl_slh_wots_sign(SLH_DSA_CTX *ctx, const uint8_t *msg,
+int ossl_slh_wots_sign(SLH_DSA_HASH_CTX *ctx, const uint8_t *msg,
                        const uint8_t *sk_seed, const uint8_t *pk_seed,
                        SLH_ADRS adrs, WPACKET *sig_wpkt)
 {
     int ret = 0;
+    const SLH_DSA_KEY *key = ctx->key;
     uint8_t msg_and_csum_nibbles[SLH_WOTS_LEN_MAX]; /* size is >= 2 * n + 3 */
     uint8_t sk[SLH_MAX_N];
     size_t i;
-    size_t n = ctx->params->n;
+    size_t n = key->params->n;
     size_t len1 = SLH_WOTS_LEN1(n); /* 2 * n = the msg length in nibbles */
     size_t len = len1 + SLH_WOTS_LEN2;  /* 2 * n + 3 (3 checksum nibbles) */
 
     SLH_ADRS_DECLARE(sk_adrs);
-    SLH_HASH_FUNC_DECLARE(ctx, hashf, hctx);
-    SLH_ADRS_FUNC_DECLARE(ctx, adrsf);
+    SLH_HASH_FUNC_DECLARE(key, hashf);
+    SLH_ADRS_FUNC_DECLARE(key, adrsf);
     SLH_HASH_FN_DECLARE(hashf, PRF);
     SLH_ADRS_FN_DECLARE(adrsf, set_chain_address);
 
@@ -235,7 +238,7 @@ int ossl_slh_wots_sign(SLH_DSA_CTX *ctx, const uint8_t *msg,
     for (i = 0; i < len; ++i) {
         set_chain_address(sk_adrs, i);
         /* compute chain i secret */
-        if (!PRF(hctx, pk_seed, sk_seed, sk_adrs, sk, sizeof(sk)))
+        if (!PRF(ctx, pk_seed, sk_seed, sk_adrs, sk, sizeof(sk)))
             goto err;
         set_chain_address(adrs, i);
         /* compute chain i signature */
@@ -264,15 +267,16 @@ err:
  * @param pk_out_len The maximum size of |pk_out|
  * @returns 1 on success, or 0 on error.
  */
-int ossl_slh_wots_pk_from_sig(SLH_DSA_CTX *ctx,
+int ossl_slh_wots_pk_from_sig(SLH_DSA_HASH_CTX *ctx,
                               PACKET *sig_rpkt, const uint8_t *msg,
                               const uint8_t *pk_seed, uint8_t *adrs,
                               uint8_t *pk_out, size_t pk_out_len)
 {
     int ret = 0;
+    const SLH_DSA_KEY *key = ctx->key;
     uint8_t msg_and_csum_nibbles[SLH_WOTS_LEN_MAX];
     size_t i;
-    size_t n = ctx->params->n;
+    size_t n = key->params->n;
     size_t len1 = SLH_WOTS_LEN1(n);
     size_t len = len1 + SLH_WOTS_LEN2; /* 2n + 3 */
     const uint8_t *sig_i;  /* Pointer into |sig_rpkt| buffer */
@@ -280,8 +284,8 @@ int ossl_slh_wots_pk_from_sig(SLH_DSA_CTX *ctx,
     WPACKET pkt, *tmp_pkt = &pkt;
     size_t tmp_len = 0;
 
-    SLH_HASH_FUNC_DECLARE(ctx, hashf, hctx);
-    SLH_ADRS_FUNC_DECLARE(ctx, adrsf);
+    SLH_HASH_FUNC_DECLARE(key, hashf);
+    SLH_ADRS_FUNC_DECLARE(key, adrsf);
     SLH_ADRS_FN_DECLARE(adrsf, set_chain_address);
     SLH_ADRS_DECLARE(wots_pk_adrs);
 
@@ -306,7 +310,7 @@ int ossl_slh_wots_pk_from_sig(SLH_DSA_CTX *ctx,
     adrsf->copy_keypair_address(wots_pk_adrs, adrs);
     if (!WPACKET_get_total_written(tmp_pkt, &tmp_len))
         goto err;
-    ret = hashf->T(hctx, pk_seed, wots_pk_adrs, tmp, tmp_len,
+    ret = hashf->T(ctx, pk_seed, wots_pk_adrs, tmp, tmp_len,
                    pk_out, pk_out_len);
  err:
     if (!WPACKET_finish(tmp_pkt))

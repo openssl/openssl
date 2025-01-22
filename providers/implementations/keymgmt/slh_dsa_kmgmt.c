@@ -36,7 +36,7 @@ static OSSL_FUNC_keymgmt_gen_settable_params_fn slh_dsa_gen_settable_params;
 #define SLH_DSA_POSSIBLE_SELECTIONS (OSSL_KEYMGMT_SELECT_KEYPAIR)
 
 struct slh_dsa_gen_ctx {
-    SLH_DSA_CTX *ctx;
+    SLH_DSA_HASH_CTX *ctx;
     OSSL_LIB_CTX *libctx;
     char *propq;
     uint8_t entropy[32 * 3];
@@ -48,7 +48,7 @@ static void *slh_dsa_new_key(void *provctx, const char *alg)
     if (!ossl_prov_is_running())
         return 0;
 
-    return ossl_slh_dsa_key_new(PROV_LIBCTX_OF(provctx), alg);
+    return ossl_slh_dsa_key_new(PROV_LIBCTX_OF(provctx), NULL, alg);
 }
 
 static void slh_dsa_free_key(void *keydata)
@@ -267,7 +267,8 @@ static void *slh_dsa_gen_init(void *provctx, int selection,
  * Refer to FIPS 140-3 IG 10.3.A Additional Comment 1
  * Perform a pairwise test for SLH_DSA by signing and verifying a signature.
  */
-static int slh_dsa_fips140_pairwise_test(SLH_DSA_CTX *ctx, const SLH_DSA_KEY *key,
+static int slh_dsa_fips140_pairwise_test(SLH_DSA_HASH_CTX *ctx,
+                                         const SLH_DSA_KEY *key,
                                          OSSL_LIB_CTX *lib_ctx)
 {
     int ret = 0;
@@ -292,13 +293,13 @@ static int slh_dsa_fips140_pairwise_test(SLH_DSA_CTX *ctx, const SLH_DSA_KEY *ke
     if (sig == NULL)
         goto err;
 
-    if (ossl_slh_dsa_sign(ctx, key, msg, msg_len, NULL, 0, NULL, 0,
+    if (ossl_slh_dsa_sign(ctx, msg, msg_len, NULL, 0, NULL, 0,
                           sig, &sig_len, sig_len) != 1)
         goto err;
 
     OSSL_SELF_TEST_oncorrupt_byte(st, sig);
 
-    if (ossl_slh_dsa_verify(ctx, key, msg, msg_len, NULL, 0, 0, sig, sig_len) != 1)
+    if (ossl_slh_dsa_verify(ctx, msg, msg_len, NULL, 0, 0, sig, sig_len) != 1)
         goto err;
 
     ret = 1;
@@ -314,27 +315,27 @@ static void *slh_dsa_gen(void *genctx, const char *alg)
 {
     struct slh_dsa_gen_ctx *gctx = genctx;
     SLH_DSA_KEY *key = NULL;
-    SLH_DSA_CTX *ctx = NULL;
+    SLH_DSA_HASH_CTX *ctx = NULL;
 
     if (!ossl_prov_is_running())
         return NULL;
-    ctx = ossl_slh_dsa_ctx_new(alg, gctx->libctx, gctx->propq);
-    if (ctx == NULL)
-        return NULL;
-    key = ossl_slh_dsa_key_new(gctx->libctx, alg);
+    key = ossl_slh_dsa_key_new(gctx->libctx, gctx->propq, alg);
     if (key == NULL)
         return NULL;
-    if (!ossl_slh_dsa_generate_key(ctx, gctx->libctx,
-                                   gctx->entropy, gctx->entropy_len, key))
+    ctx = ossl_slh_dsa_hash_ctx_new(key);
+    if (ctx == NULL)
+        return NULL;
+    if (!ossl_slh_dsa_generate_key(ctx, key, gctx->libctx,
+                                   gctx->entropy, gctx->entropy_len))
         goto err;
 #ifdef FIPS_MODULE
     if (!slh_dsa_fips140_pairwise_test(ctx, key, gctx->libctx))
         goto err;
 #endif /* FIPS_MODULE */
-    ossl_slh_dsa_ctx_free(ctx);
+    ossl_slh_dsa_hash_ctx_free(ctx);
     return key;
  err:
-    ossl_slh_dsa_ctx_free(ctx);
+    ossl_slh_dsa_hash_ctx_free(ctx);
     ossl_slh_dsa_key_free(key);
     return NULL;
 }

@@ -26,63 +26,67 @@
 #define SLH_WOTS_LEN(n) (2 * (n) + 3)
 
 /*
- * FIPS 205 SLH_DSA algorithms have many different parameters which includes:
+ * FIPS 205 SLH_DSA algorithms have many different parameters which includes
+ * the following constants that are stored into a |key|:
  *   - A set of constants (Section 11. contains 12 parameter sets)
  *     such as tree heights and security parameters associated with a algorithm
  *     name such as SLH-DSA-SHA2-128s.
  *   - ADRS functions (such as set_layer_address() in Section 4.3 & 11.2)
  *   - Hash Functions (such as H_MSG() & PRF()) See Sections 11.1, 11.2.1 & 11.2.2.
+ *   - prefetched EVP_MD objects used for hashing.
  *
- *   - OpenSSL also uses an SLH_HASH_CTX to pass pre-fetched EVP related objects
- *     to the Hash functions.
+ * When performing operations multiple Hash related objects are also needed
+ * such as EVP_MD_CTX and EVP_MAC_CTX (these are independent of the |key|)
  *
- * SLH_DSA_CTX is a container to hold all of these objects. This object is
- * resolved early and is then passed to most SLH_DSA related functions.
+ * SLH_DSA_HASH_CTX is a container to hold all of these objects. This object is
+ * resolved early and is then passed to most SLH_DSA related functions, since
+ * there are many nested layers of calls that require these values.
  */
-struct slh_dsa_ctx_st {
-    const SLH_DSA_PARAMS *params;
-    const SLH_ADRS_FUNC *adrs_func;
-    const SLH_HASH_FUNC *hash_func;
-    SLH_HASH_CTX hash_ctx;
+struct slh_dsa_hash_ctx_st {
+    const SLH_DSA_KEY *key; /* This key is not owned by this object */
+    EVP_MD_CTX *md_ctx;     /* Either SHAKE OR SHA-256 */
+    EVP_MD_CTX *md_big_ctx; /* Either SHA-512 or points to |md_ctx| for SHA-256*/
+    EVP_MAC_CTX *hmac_ctx;  /* required by SHA algorithms for PRFmsg() */
+    int hmac_digest_used;   /* Used for lazy init of hmac_ctx digest */
 };
 
-__owur int ossl_slh_wots_pk_gen(SLH_DSA_CTX *ctx, const uint8_t *sk_seed,
+__owur int ossl_slh_wots_pk_gen(SLH_DSA_HASH_CTX *ctx, const uint8_t *sk_seed,
                                 const uint8_t *pk_seed, SLH_ADRS adrs,
                                 uint8_t *pk_out, size_t pk_out_len);
-__owur int ossl_slh_wots_sign(SLH_DSA_CTX *ctx, const uint8_t *msg,
+__owur int ossl_slh_wots_sign(SLH_DSA_HASH_CTX *ctx, const uint8_t *msg,
                               const uint8_t *sk_seed, const uint8_t *pk_seed,
                               SLH_ADRS adrs, WPACKET *sig_wpkt);
-__owur int ossl_slh_wots_pk_from_sig(SLH_DSA_CTX *ctx,
+__owur int ossl_slh_wots_pk_from_sig(SLH_DSA_HASH_CTX *ctx,
                                      PACKET *sig_rpkt, const uint8_t *msg,
                                      const uint8_t *pk_seed, SLH_ADRS adrs,
                                      uint8_t *pk_out, size_t pk_out_len);
 
-__owur int ossl_slh_xmss_node(SLH_DSA_CTX *ctx, const uint8_t *sk_seed,
+__owur int ossl_slh_xmss_node(SLH_DSA_HASH_CTX *ctx, const uint8_t *sk_seed,
                               uint32_t node_id, uint32_t height,
                               const uint8_t *pk_seed, SLH_ADRS adrs,
                               uint8_t *pk_out, size_t pk_out_len);
-__owur int ossl_slh_xmss_sign(SLH_DSA_CTX *ctx, const uint8_t *msg,
+__owur int ossl_slh_xmss_sign(SLH_DSA_HASH_CTX *ctx, const uint8_t *msg,
                               const uint8_t *sk_seed, uint32_t node_id,
                               const uint8_t *pk_seed, SLH_ADRS adrs,
                               WPACKET *sig_wpkt);
-__owur int ossl_slh_xmss_pk_from_sig(SLH_DSA_CTX *ctx, uint32_t node_id,
+__owur int ossl_slh_xmss_pk_from_sig(SLH_DSA_HASH_CTX *ctx, uint32_t node_id,
                                      PACKET *sig_rpkt, const uint8_t *msg,
                                      const uint8_t *pk_seed, SLH_ADRS adrs,
                                      uint8_t *pk_out, size_t pk_out_len);
 
-__owur int ossl_slh_ht_sign(SLH_DSA_CTX *ctx, const uint8_t *msg,
+__owur int ossl_slh_ht_sign(SLH_DSA_HASH_CTX *ctx, const uint8_t *msg,
                             const uint8_t *sk_seed, const uint8_t *pk_seed,
                             uint64_t tree_id, uint32_t leaf_id,
                             WPACKET *sig_wpkt);
-__owur int ossl_slh_ht_verify(SLH_DSA_CTX *ctx, const uint8_t *msg,
+__owur int ossl_slh_ht_verify(SLH_DSA_HASH_CTX *ctx, const uint8_t *msg,
                               PACKET *sig_rpkt, const uint8_t *pk_seed,
                               uint64_t tree_id, uint32_t leaf_id,
                               const uint8_t *pk_root);
 
-__owur int ossl_slh_fors_sign(SLH_DSA_CTX *ctx, const uint8_t *md,
+__owur int ossl_slh_fors_sign(SLH_DSA_HASH_CTX *ctx, const uint8_t *md,
                               const uint8_t *sk_seed, const uint8_t *pk_seed,
                               SLH_ADRS adrs, WPACKET *sig_wpkt);
-__owur int ossl_slh_fors_pk_from_sig(SLH_DSA_CTX *ctx, PACKET *sig_rpkt,
+__owur int ossl_slh_fors_pk_from_sig(SLH_DSA_HASH_CTX *ctx, PACKET *sig_rpkt,
                                      const uint8_t *md, const uint8_t *pk_seed,
                                      SLH_ADRS adrs,
                                      uint8_t *pk_out, size_t pk_out_len);

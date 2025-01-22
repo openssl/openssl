@@ -10,6 +10,7 @@
 #include <assert.h>
 #include <string.h>
 #include "slh_dsa_local.h"
+#include "slh_dsa_key.h"
 
 /**
  * @brief Compute the root Public key of a XMSS tree.
@@ -32,12 +33,13 @@
  * @param pk_out_len The maximum size of |pk_out|
  * @returns 1 on success, or 0 on error.
  */
-int ossl_slh_xmss_node(SLH_DSA_CTX *ctx, const uint8_t *sk_seed,
+int ossl_slh_xmss_node(SLH_DSA_HASH_CTX *ctx, const uint8_t *sk_seed,
                        uint32_t node_id, uint32_t h,
                        const uint8_t *pk_seed, SLH_ADRS adrs,
                        uint8_t *pk_out, size_t pk_out_len)
 {
-    SLH_ADRS_FUNC_DECLARE(ctx, adrsf);
+    const SLH_DSA_KEY *key = ctx->key;
+    SLH_ADRS_FUNC_DECLARE(key, adrsf);
 
     if (h == 0) {
         /* For leaf nodes generate the public key */
@@ -57,8 +59,7 @@ int ossl_slh_xmss_node(SLH_DSA_CTX *ctx, const uint8_t *sk_seed,
         adrsf->set_type_and_clear(adrs, SLH_ADRS_TYPE_TREE);
         adrsf->set_tree_height(adrs, h);
         adrsf->set_tree_index(adrs, node_id);
-        if (!ctx->hash_func->H(&ctx->hash_ctx, pk_seed, adrs, lnode, rnode,
-                               pk_out, pk_out_len))
+        if (!key->hash_func->H(ctx, pk_seed, adrs, lnode, rnode, pk_out, pk_out_len))
             return 0;
     }
     return 1;
@@ -82,14 +83,15 @@ int ossl_slh_xmss_node(SLH_DSA_CTX *ctx, const uint8_t *sk_seed,
  * @param sig_wpkt A WPACKET object to write the generated XMSS signature to.
  * @returns 1 on success, or 0 on error.
  */
-int ossl_slh_xmss_sign(SLH_DSA_CTX *ctx, const uint8_t *msg,
+int ossl_slh_xmss_sign(SLH_DSA_HASH_CTX *ctx, const uint8_t *msg,
                        const uint8_t *sk_seed, uint32_t node_id,
                        const uint8_t *pk_seed, SLH_ADRS adrs, WPACKET *sig_wpkt)
 {
-    SLH_ADRS_FUNC_DECLARE(ctx, adrsf);
+    const SLH_DSA_KEY *key = ctx->key;
+    SLH_ADRS_FUNC_DECLARE(key, adrsf);
     SLH_ADRS_DECLARE(tmp_adrs);
-    size_t n = ctx->params->n;
-    uint32_t h, hm = ctx->params->hm;
+    size_t n = key->params->n;
+    uint32_t h, hm = key->params->hm;
     uint32_t id = node_id;
     uint8_t *auth_path; /* Pointer to a buffer offset inside |sig_wpkt| */
     size_t auth_path_len = n;
@@ -135,19 +137,20 @@ int ossl_slh_xmss_sign(SLH_DSA_CTX *ctx, const uint8_t *msg,
  * @param pk_out_len The maximum size of |pk_out|.
  * @returns 1 on success, or 0 on error.
  */
-int ossl_slh_xmss_pk_from_sig(SLH_DSA_CTX *ctx, uint32_t node_id,
+int ossl_slh_xmss_pk_from_sig(SLH_DSA_HASH_CTX *ctx, uint32_t node_id,
                               PACKET *sig_rpkt, const uint8_t *msg,
                               const uint8_t *pk_seed, SLH_ADRS adrs,
                               uint8_t *pk_out, size_t pk_out_len)
 {
-    SLH_HASH_FUNC_DECLARE(ctx, hashf, hctx);
+    const SLH_DSA_KEY *key = ctx->key;
+    SLH_HASH_FUNC_DECLARE(key, hashf);
+    SLH_ADRS_FUNC_DECLARE(key, adrsf);
     SLH_HASH_FN_DECLARE(hashf, H);
-    SLH_ADRS_FUNC_DECLARE(ctx, adrsf);
     SLH_ADRS_FN_DECLARE(adrsf, set_tree_index);
     SLH_ADRS_FN_DECLARE(adrsf, set_tree_height);
     uint32_t k;
-    size_t n = ctx->params->n;
-    uint32_t hm = ctx->params->hm;
+    size_t n = key->params->n;
+    uint32_t hm = key->params->hm;
     uint8_t *node = pk_out;
     const uint8_t *auth_path; /* Pointer to buffer offset in |pkt_sig| */
 
@@ -166,12 +169,12 @@ int ossl_slh_xmss_pk_from_sig(SLH_DSA_CTX *ctx, uint32_t node_id,
         if ((node_id & 1) == 0) { /* even */
             node_id >>= 1;
             set_tree_index(adrs, node_id);
-            if (!H(hctx, pk_seed, adrs, node, auth_path, node, pk_out_len))
+            if (!H(ctx, pk_seed, adrs, node, auth_path, node, pk_out_len))
                 return 0;
         } else { /* odd */
             node_id = (node_id - 1) >> 1;
             set_tree_index(adrs, node_id);
-            if (!H(hctx, pk_seed, adrs, auth_path, node, node, pk_out_len))
+            if (!H(ctx, pk_seed, adrs, auth_path, node, node, pk_out_len))
                 return 0;
         }
     }
