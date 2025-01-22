@@ -50,7 +50,6 @@ __owur int ossl_slh_dsa_key_to_text(BIO *out, const SLH_DSA_KEY *key, int select
 void ossl_slh_dsa_key_set0_libctx(SLH_DSA_KEY *key, OSSL_LIB_CTX *lib_ctx);
 SLH_DSA_KEY *ossl_slh_dsa_key_from_pkcs8(const PKCS8_PRIV_KEY_INFO *p8inf,
                                          OSSL_LIB_CTX *libctx, const char *propq);
-SLH_DSA_KEY *ossl_evp_pkey_get1_SLH_DSA_KEY(EVP_PKEY *pkey);
 
 __owur SLH_DSA_HASH_CTX *ossl_slh_dsa_hash_ctx_new(const SLH_DSA_KEY *key);
 void ossl_slh_dsa_hash_ctx_free(SLH_DSA_HASH_CTX *ctx);

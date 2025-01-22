@@ -1047,7 +1047,7 @@ static int slh_dsa_pki_priv_to_der(const void *vkey, unsigned char **pder)
 # define slh_dsa_shake_192f_pem_type "SLH-DSA-SHAKE-192f"
 # define slh_dsa_shake_256s_pem_type "SLH-DSA-SHAKE-256s"
 # define slh_dsa_shake_256f_pem_type "SLH-DSA-SHAKE-256f"
-#endif
+#endif /* OPENSSL_NO_SLH_DSA */
 
 /* ---------------------------------------------------------------------- */
 
