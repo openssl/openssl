@@ -500,6 +500,11 @@ size_t ossl_ml_dsa_key_get_sig_len(const ML_DSA_KEY *key)
     return key->params->sig_len;
 }
 
+OSSL_LIB_CTX *ossl_ml_dsa_key_get0_libctx(const ML_DSA_KEY *key)
+{
+    return key != NULL ? key->libctx : NULL;
+}
+
 const char *ossl_ml_dsa_key_get_name(const ML_DSA_KEY *key)
 {
     return key->params->alg;
