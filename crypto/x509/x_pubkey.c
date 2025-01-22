@@ -20,7 +20,6 @@
 #include <openssl/engine.h>
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
-#include "crypto/slh_dsa.h"
 #include "crypto/x509.h"
 #include <openssl/rsa.h>
 #include <openssl/dsa.h>
@@ -1007,79 +1006,6 @@ int ossl_i2d_X448_PUBKEY(const ECX_KEY *a, unsigned char **pp)
 
 # endif /* OPENSSL_NO_ECX */
 #endif
-
-#ifndef OPENSSL_NO_SLH_DSA
-
-static SLH_DSA_KEY *d2i_SLH_DSA_PUBKEY(SLH_DSA_KEY **a,
-                                       const unsigned char **pp,
-                                       long length, int key_type)
-{
-    EVP_PKEY *pkey;
-    SLH_DSA_KEY *key = NULL;
-    const unsigned char *q;
-
-    q = *pp;
-    pkey = ossl_d2i_PUBKEY_legacy(NULL, &q, length);
-    if (pkey == NULL)
-        return NULL;
-    if (EVP_PKEY_get_id(pkey) == key_type)
-        key = ossl_evp_pkey_get1_SLH_DSA_KEY(pkey);
-    EVP_PKEY_free(pkey);
-    if (key == NULL)
-        return NULL;
-    *pp = q;
-    if (a != NULL) {
-        ossl_slh_dsa_key_free(*a);
-        *a = key;
-    }
-    return key;
-}
-
-static int i2d_SLH_DSA_PUBKEY(const SLH_DSA_KEY *a, unsigned char **pp,
-                              int key_type)
-{
-    EVP_PKEY *pktmp;
-    int ret;
-
-    if (a == NULL)
-        return 0;
-    if ((pktmp = EVP_PKEY_new()) == NULL) {
-        ERR_raise(ERR_LIB_ASN1, ERR_R_EVP_LIB);
-        return -1;
-    }
-    (void)EVP_PKEY_assign(pktmp, key_type, (SLH_DSA_KEY *)a);
-    ret = i2d_PUBKEY(pktmp, pp);
-    pktmp->pkey.ptr = NULL;
-    EVP_PKEY_free(pktmp);
-    return ret;
-}
-
-# define IMPLEMENT_SLH_DSA_PUBKEY_D2I_I2D(alg)                                 \
-    int ossl_i2d_SLH_DSA_##alg##_PUBKEY(const SLH_DSA_KEY *a, unsigned char **pp)\
-    {                                                                          \
-        return i2d_SLH_DSA_PUBKEY(a, pp, EVP_PKEY_SLH_DSA_##alg);              \
-    }                                                                          \
-    SLH_DSA_KEY *ossl_d2i_SLH_DSA_##alg##_PUBKEY(SLH_DSA_KEY **a,              \
-                                                 const unsigned char **pp,     \
-                                                 long length)                  \
-    {                                                                          \
-        return d2i_SLH_DSA_PUBKEY(a, pp, length, EVP_PKEY_SLH_DSA_##alg);      \
-    }
-
-IMPLEMENT_SLH_DSA_PUBKEY_D2I_I2D(SHA2_128S)
-IMPLEMENT_SLH_DSA_PUBKEY_D2I_I2D(SHA2_128F)
-IMPLEMENT_SLH_DSA_PUBKEY_D2I_I2D(SHA2_192S)
-IMPLEMENT_SLH_DSA_PUBKEY_D2I_I2D(SHA2_192F)
-IMPLEMENT_SLH_DSA_PUBKEY_D2I_I2D(SHA2_256S)
-IMPLEMENT_SLH_DSA_PUBKEY_D2I_I2D(SHA2_256F)
-IMPLEMENT_SLH_DSA_PUBKEY_D2I_I2D(SHAKE_128S)
-IMPLEMENT_SLH_DSA_PUBKEY_D2I_I2D(SHAKE_128F)
-IMPLEMENT_SLH_DSA_PUBKEY_D2I_I2D(SHAKE_192S)
-IMPLEMENT_SLH_DSA_PUBKEY_D2I_I2D(SHAKE_192F)
-IMPLEMENT_SLH_DSA_PUBKEY_D2I_I2D(SHAKE_256S)
-IMPLEMENT_SLH_DSA_PUBKEY_D2I_I2D(SHAKE_256F)
-
-#endif /* OPENSSL_NO_SLH_DSA */
 
 void X509_PUBKEY_set0_public_key(X509_PUBKEY *pub,
                                  unsigned char *penc, int penclen)

@@ -40,18 +40,4 @@ static const EVP_PKEY_ASN1_METHOD *standard_methods[] = {
 #ifndef OPENSSL_NO_SM2
     &ossl_sm2_asn1_meth,
 #endif
-#ifndef OPENSSL_NO_SLH_DSA
-    &ossl_slh_dsa_sha2_128s_asn1_meth,
-    &ossl_slh_dsa_sha2_128f_asn1_meth,
-    &ossl_slh_dsa_sha2_192s_asn1_meth,
-    &ossl_slh_dsa_sha2_192f_asn1_meth,
-    &ossl_slh_dsa_sha2_256s_asn1_meth,
-    &ossl_slh_dsa_sha2_256f_asn1_meth,
-    &ossl_slh_dsa_shake_128s_asn1_meth,
-    &ossl_slh_dsa_shake_128f_asn1_meth,
-    &ossl_slh_dsa_shake_192s_asn1_meth,
-    &ossl_slh_dsa_shake_192f_asn1_meth,
-    &ossl_slh_dsa_shake_256s_asn1_meth,
-    &ossl_slh_dsa_shake_256f_asn1_meth,
-#endif
 };

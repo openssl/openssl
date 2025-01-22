@@ -15,7 +15,6 @@
 # include <openssl/core_dispatch.h>
 # include "internal/refcount.h"
 # include "crypto/ecx.h"
-# include "crypto/slh_dsa.h"
 
 /*
  * Default PKCS5 PBE KDF salt lengths
@@ -663,9 +662,6 @@ union legacy_pkey_st {
 #   ifndef OPENSSL_NO_ECX
     ECX_KEY *ecx;           /* X25519, X448, Ed25519, Ed448 */
 #   endif
-#  endif
-#  ifndef OPENSSL_NO_SLH_DSA
-    SLH_DSA_KEY *slh_dsa;  /* SLH_DSA_* */
 #  endif
 };
 

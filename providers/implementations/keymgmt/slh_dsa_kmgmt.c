@@ -206,9 +206,6 @@ static int slh_dsa_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
 
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0)
         return 0;
-    /* The public key is required for private keys */
-    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) == 0)
-        return 0;
 
     tmpl = OSSL_PARAM_BLD_new();
     if (tmpl == NULL)

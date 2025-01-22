@@ -43,7 +43,6 @@
 #include "crypto/ec.h"
 #include "crypto/ecx.h"
 #include "crypto/rsa.h"
-#include "crypto/slh_dsa.h"
 #ifndef FIPS_MODULE
 # include "crypto/asn1.h"
 # include "crypto/x509.h"
@@ -943,17 +942,6 @@ IMPLEMENT_ECX_VARIANT(ED25519)
 IMPLEMENT_ECX_VARIANT(ED448)
 
 # endif /* OPENSSL_NO_ECX */
-
-# ifndef OPENSSL_NO_SLH_DSA
-SLH_DSA_KEY *ossl_evp_pkey_get1_SLH_DSA_KEY(EVP_PKEY *pkey)
-{
-    SLH_DSA_KEY *ret = (SLH_DSA_KEY *)evp_pkey_get_legacy(pkey);
-
-    if (ret != NULL)
-        ret = NULL;
-    return ret;
-}
-# endif /* OPENSSL_NO_SLH_DSA */
 
 # if !defined(OPENSSL_NO_DH) && !defined(OPENSSL_NO_DEPRECATED_3_0)
 
