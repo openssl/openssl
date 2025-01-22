@@ -19,6 +19,23 @@
 
 # define ML_DSA_MAX_CONTEXT_STRING_LEN 255
 
+# define ML_DSA_ENTROPY_LEN 32
+
+/* See FIPS 204 Section 4 Table 1 & Table 2 */
+# define ML_DSA_44_PRIV_LEN 2560
+# define ML_DSA_44_PUB_LEN 1312
+# define ML_DSA_44_SIG_LEN 2420
+
+/* See FIPS 204 Section 4 Table 1 & Table 2 */
+# define ML_DSA_65_PRIV_LEN 4032
+# define ML_DSA_65_PUB_LEN 1952
+# define ML_DSA_65_SIG_LEN 3309
+
+/* See FIPS 204 Section 4 Table 1 & Table 2 */
+# define ML_DSA_87_PRIV_LEN 4896
+# define ML_DSA_87_PUB_LEN 2592
+# define ML_DSA_87_SIG_LEN 4627
+
 __owur ML_DSA_KEY *ossl_ml_dsa_key_new(OSSL_LIB_CTX *libctx, const char *propq,
                                        const char *alg);
 __owur int ossl_ml_dsa_key_pub_alloc(ML_DSA_KEY *key);
@@ -43,6 +60,8 @@ __owur size_t ossl_ml_dsa_key_get_priv_len(const ML_DSA_KEY *key);
 __owur size_t ossl_ml_dsa_key_get_sig_len(const ML_DSA_KEY *key);
 __owur int ossl_ml_dsa_key_matches(const ML_DSA_KEY *key, const char *alg);
 __owur const char *ossl_ml_dsa_key_get_name(const ML_DSA_KEY *key);
+__owur int ossl_ml_dsa_key_to_text(BIO *out, const ML_DSA_KEY *key, int selection);
+OSSL_LIB_CTX *ossl_ml_dsa_key_get0_libctx(const ML_DSA_KEY *key);
 
 __owur int ossl_ml_dsa_key_public_from_private(ML_DSA_KEY *key);
 __owur int ossl_ml_dsa_pk_decode(ML_DSA_KEY *key, const uint8_t *in, size_t in_len);
