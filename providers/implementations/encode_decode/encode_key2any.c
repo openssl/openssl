@@ -1048,27 +1048,19 @@ static int slh_dsa_spki_pub_to_der(const void *vkey, unsigned char **pder)
 static int slh_dsa_pki_priv_to_der(const void *vkey, unsigned char **pder)
 {
     const SLH_DSA_KEY *key = vkey;
-    const uint8_t *priv;
-    ASN1_OCTET_STRING oct;
-    size_t key_blob_len;
+    size_t len;
 
-    if (key == NULL
-            || (priv = ossl_slh_dsa_key_get_priv(key))== NULL) {
+    if (ossl_slh_dsa_key_get_priv(key) == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
+    len = ossl_slh_dsa_key_get_priv_len(key);
 
-    oct.data = (uint8_t *)priv;
-    oct.length = ossl_slh_dsa_key_get_priv_len(key);
-    oct.flags = 0;
-
-    key_blob_len = i2d_ASN1_OCTET_STRING(&oct, pder);
-    if (key_blob_len < 0) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_ASN1_LIB);
+    if (pder != NULL
+            && ((*pder = OPENSSL_memdup(ossl_slh_dsa_key_get_priv(key), len)) == NULL))
         return 0;
-    }
 
-    return key_blob_len;
+    return len;
 }
 # define slh_dsa_epki_priv_to_der slh_dsa_pki_priv_to_der
 
@@ -1111,7 +1103,7 @@ static int slh_dsa_pki_priv_to_der(const void *vkey, unsigned char **pder)
 # define slh_dsa_shake_192f_pem_type "SLH-DSA-SHAKE-192f"
 # define slh_dsa_shake_256s_pem_type "SLH-DSA-SHAKE-256s"
 # define slh_dsa_shake_256f_pem_type "SLH-DSA-SHAKE-256f"
-#endif
+#endif /* OPENSSL_NO_SLH_DSA */
 
 /* ---------------------------------------------------------------------- */
 

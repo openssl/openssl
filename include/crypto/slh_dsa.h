@@ -20,6 +20,7 @@
 # define SLH_DSA_MAX_CONTEXT_STRING_LEN 255
 
 typedef struct slh_dsa_hash_ctx_st SLH_DSA_HASH_CTX;
+typedef struct slh_dsa_key_st SLH_DSA_KEY;
 
 __owur SLH_DSA_KEY *ossl_slh_dsa_key_new(OSSL_LIB_CTX *libctx, const char *propq,
                                          const char *alg);
@@ -46,12 +47,6 @@ __owur size_t ossl_slh_dsa_key_get_n(const SLH_DSA_KEY *key);
 __owur size_t ossl_slh_dsa_key_get_sig_len(const SLH_DSA_KEY *key);
 __owur const char *ossl_slh_dsa_key_get_name(const SLH_DSA_KEY *key);
 __owur int ossl_slh_dsa_key_type_matches(const SLH_DSA_KEY *key, const char *alg);
-__owur int ossl_slh_dsa_key_to_text(BIO *out, const SLH_DSA_KEY *key, int selection);
-void ossl_slh_dsa_key_set0_libctx(SLH_DSA_KEY *key, OSSL_LIB_CTX *lib_ctx);
-SLH_DSA_KEY *ossl_slh_dsa_key_from_pkcs8(const PKCS8_PRIV_KEY_INFO *p8inf,
-                                         OSSL_LIB_CTX *libctx, const char *propq);
-SLH_DSA_KEY *ossl_evp_pkey_get1_SLH_DSA_KEY(EVP_PKEY *pkey);
-
 __owur SLH_DSA_HASH_CTX *ossl_slh_dsa_hash_ctx_new(const SLH_DSA_KEY *key);
 void ossl_slh_dsa_hash_ctx_free(SLH_DSA_HASH_CTX *ctx);
 
