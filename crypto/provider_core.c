@@ -530,26 +530,42 @@ OSSL_PROVIDER *ossl_provider_new(OSSL_LIB_CTX *libctx, const char *name,
     if (init_function == NULL) {
         const OSSL_PROVIDER_INFO *p;
         size_t i;
+        int chosen = 0;
 
         /* Check if this is a predefined builtin provider */
         for (p = ossl_predefined_providers; p->name != NULL; p++) {
-            if (strcmp(p->name, name) == 0) {
+            if (strcmp(p->name, name) != 0)
+                continue;
+            /* These compile-time templates always have NULL parameters */
+            template = *p;
+            chosen = 1;
+            break;
+        }
+        if (!CRYPTO_THREAD_read_lock(store->lock))
+            return NULL;
+        for (i = 0, p = store->provinfo; i < store->numprovinfo; p++, i++) {
+            if (strcmp(p->name, name) != 0)
+                continue;
+            /* For built-in providers, copy just implicit parameters. */
+            if (!chosen)
                 template = *p;
+            /*
+             * Explicit parameters override config-file defaults.  If an empty
+             * parameter set is desired, a non-NULL empty set must be provided.
+             */
+            if (params != NULL || p->parameters == NULL) {
+                template.parameters = NULL;
                 break;
             }
-        }
-        if (p->name == NULL) {
-            /* Check if this is a user added provider */
-            if (!CRYPTO_THREAD_read_lock(store->lock))
+            /* Always copy to avoid sharing/mutation. */
+            template.parameters = sk_INFOPAIR_deep_copy(p->parameters,
+                                                        infopair_copy,
+                                                        infopair_free);
+            if (template.parameters == NULL)
                 return NULL;
-            for (i = 0, p = store->provinfo; i < store->numprovinfo; p++, i++) {
-                if (strcmp(p->name, name) == 0) {
-                    template = *p;
-                    break;
-                }
-            }
-            CRYPTO_THREAD_unlock(store->lock);
+            break;
         }
+        CRYPTO_THREAD_unlock(store->lock);
     } else {
         template.init = init_function;
     }
@@ -557,7 +573,9 @@ OSSL_PROVIDER *ossl_provider_new(OSSL_LIB_CTX *libctx, const char *name,
     if (params != NULL) {
         int i;
 
-        template.parameters = sk_INFOPAIR_new_null();
+        /* Don't leak if already non-NULL */
+        if (template.parameters == NULL)
+            template.parameters = sk_INFOPAIR_new_null();
         if (template.parameters == NULL)
             return NULL;
 
@@ -575,7 +593,8 @@ OSSL_PROVIDER *ossl_provider_new(OSSL_LIB_CTX *libctx, const char *name,
     /* provider_new() generates an error, so no need here */
     prov = provider_new(name, template.init, template.parameters);
 
-    if (params != NULL) /* We copied the parameters, let's free them */
+    /* If we copied the parameters, free them */
+    if (template.parameters != NULL)
         sk_INFOPAIR_pop_free(template.parameters, infopair_free);
 
     if (prov == NULL)
@@ -1424,14 +1443,25 @@ static int provider_activate_fallbacks(struct provider_store_st *store)
 
     for (p = ossl_predefined_providers; p->name != NULL; p++) {
         OSSL_PROVIDER *prov = NULL;
+        OSSL_PROVIDER_INFO *info = store->provinfo;
+        STACK_OF(INFOPAIR) *params = NULL;
+        size_t i;
 
         if (!p->is_fallback)
             continue;
+
+        for (i = 0; i < store->numprovinfo; info++, i++) {
+            if (strcmp(info->name, p->name) != 0)
+                continue;
+            params = info->parameters;
+            break;
+        }
+
         /*
          * We use the internal constructor directly here,
          * otherwise we get a call loop
          */
-        prov = provider_new(p->name, p->init, NULL);
+        prov = provider_new(p->name, p->init, params);
         if (prov == NULL)
             goto err;
         prov->libctx = store->libctx;
