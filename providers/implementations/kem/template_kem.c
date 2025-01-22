@@ -143,7 +143,8 @@ static int template_encapsulate(void *vctx, unsigned char *out, size_t *outlen,
         *secretlen = 0; /* replace with real shared secret length */
 
     if (out == NULL) {
-        debug_print("encaps outlens set to %d and %d\n", *outlen, *secretlen);
+        if (outlen != NULL && secretlen != NULL)
+            debug_print("encaps outlens set to %d and %d\n", *outlen, *secretlen);
         return 1;
     }
 
@@ -164,7 +165,8 @@ static int template_decapsulate(void *vctx, unsigned char *out, size_t *outlen,
         *outlen = 0; /* replace with shared secret length */
 
     if (out == NULL) {
-        debug_print("decaps outlen set to %d \n", *outlen);
+        if (outlen != NULL)
+            debug_print("decaps outlen set to %d \n", *outlen);
         return 1;
     }
 
