@@ -97,10 +97,14 @@ poly1305_init:
 
 	tst	w17,#ARMV7_NEON
 
-	adr	$d0,.Lpoly1305_blocks
-	adr	$r0,.Lpoly1305_blocks_neon
-	adr	$d1,.Lpoly1305_emit
-	adr	$r1,.Lpoly1305_emit_neon
+	adrp	$d0,poly1305_blocks
+	add	$d0,$d0,#:lo12:.Lpoly1305_blocks
+	adrp	$r0,poly1305_blocks_neon
+	add	$r0,$r0,#:lo12:.Lpoly1305_blocks_neon
+	adrp	$d1,poly1305_emit
+	add	$d1,$d1,#:lo12:.Lpoly1305_emit
+	adrp	$r1,poly1305_emit_neon
+	add	$r1,$r1,#:lo12:.Lpoly1305_emit_neon
 
 	csel	$d0,$d0,$r0,eq
 	csel	$d1,$d1,$r1,eq
