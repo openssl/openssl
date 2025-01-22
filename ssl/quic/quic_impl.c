@@ -811,7 +811,7 @@ void ossl_quic_free(SSL *s)
      * Those don't hold a reference until they are accepted, so only drop
      * the count if the application has accepted them
      */
-    if (ctx.qc->accepted == 1 && ctx.qc->listener != NULL)
+    if (ctx.qc->pending == 0 && ctx.qc->listener != NULL)
         SSL_free(&ctx.qc->listener->obj.ssl);
     if (ctx.qc->domain != NULL)
         SSL_free(&ctx.qc->domain->obj.ssl);
@@ -4461,7 +4461,6 @@ SSL *ossl_quic_new_from_listener(SSL *ssl, uint64_t flags)
 
     qctx_unlock(&ctx);
 
-    qc->accepted = 1;
     return &qc->obj.ssl;
 
 err:
@@ -4577,7 +4576,6 @@ SSL *ossl_quic_accept_connection(SSL *ssl, uint64_t flags)
     conn_ssl = ossl_quic_channel_get0_tls(new_ch);
     conn_ssl = SSL_CONNECTION_GET_USER_SSL(SSL_CONNECTION_FROM_SSL(conn_ssl));
     qc = (QUIC_CONNECTION *)conn_ssl;
-    qc->accepted = 1;
     qc->listener = ctx.ql;
     qc->pending = 0;
     if (!SSL_up_ref(&ctx.ql->obj.ssl)) {
@@ -4608,7 +4606,6 @@ static QUIC_CONNECTION *create_qc_from_incoming_conn(QUIC_LISTENER *ql, QUIC_CHA
     }
 
     ossl_quic_channel_get_peer_addr(ch, &qc->init_peer_addr); /* best effort */
-    qc->accepted = 0;
     qc->listener                = NULL;
     qc->pending                 = 1;
     qc->engine                  = ql->engine;
