@@ -6,4 +6,5 @@ $COMMON=ml_dsa_encoders.c ml_dsa_key_compress.c ml_dsa_key.c \
 
 IF[{- !$disabled{'ml_dsa'} -}]
   SOURCE[../../libcrypto]=$COMMON
+  SOURCE[../../providers/libfips.a]=$COMMON
 ENDIF
