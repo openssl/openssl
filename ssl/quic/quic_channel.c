@@ -2775,12 +2775,22 @@ static void free_token(const unsigned char *token, size_t token_len, void *arg)
 {
     /*
      * Note: This is the callback for ossl_quic_tx_packetiser_set_initial_token
+     * AND ch_retry, which have different, but simmilar freeing requirements.
+     *
+     * For ossl_quic_packetiser_set_initial_token:
      * Normally we would free the token pointer here, but because our cache
      * stores tokens at an offset from the allocated QUIC_TOKEN struct, its not
      * appropriate for freeing.  Instead, we pass the pointer to the start of
      * the allocation as arg, and free that
+     *
+     * For ch_retry, we just pass the token as the token pointer
+     *
+     * Differentiate between the two by checking if arg is NULL
      */
-    OPENSSL_free(arg);
+    if (arg == NULL)
+        OPENSSL_free((unsigned char *)token);
+    else
+        OPENSSL_free(arg);
 }
 
 int ossl_quic_channel_start(QUIC_CHANNEL *ch)
