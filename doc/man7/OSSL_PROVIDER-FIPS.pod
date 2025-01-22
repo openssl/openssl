@@ -164,6 +164,8 @@ for signature generation, but may be used for verification for legacy use cases.
 
 =item ECDSA, see L<EVP_SIGNATURE-ECDSA(7)>
 
+=item ML-DSA, see L<EVP_SIGNATURE-ML-DSA(7)>
+
 =item HMAC, see L<EVP_SIGNATURE-HMAC(7)>
 
 =item CMAC, see L<EVP_SIGNATURE-CMAC(7)>
@@ -380,6 +382,8 @@ Digest tests used with the "KAT_Digest" type.
 =item "ECDSA" (B<OSSL_SELF_TEST_DESC_SIGN_ECDSA>)
 
 =item "EDDSA" (B<OSSL_SELF_TEST_DESC_SIGN_EDDSA>)
+
+=item "ML-DSA" (B<OSSL_SELF_TEST_DESC_SIGN_ML_DSA>)
 
 Signature tests used with the "KAT_Signature" type.
 
