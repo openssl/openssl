@@ -35,8 +35,6 @@ Header:
           ffdhe6144 (259)
           ffdhe8192 (260)
         extension_type=session_ticket(35), length=0
-        extension_type=application_layer_protocol_negotiation(16), length=11
-          ossltest
         extension_type=encrypt_then_mac(22), length=0
         extension_type=extended_master_secret(23), length=0
         extension_type=signature_algorithms(13), length=36
@@ -64,6 +62,8 @@ Header:
         extension_type=key_share(51), length=38
             NamedGroup: ecdh_x25519 (29)
             key_exchange:  (len=32): ????????????????????????????????????????????????????????????????
+        extension_type=application_layer_protocol_negotiation(16), length=11
+          ossltest
 
 Sent Frame: Crypto
     Offset: 0

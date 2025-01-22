@@ -577,6 +577,10 @@ int tls1_alert_code(int code)
         return SSL_AD_HANDSHAKE_FAILURE;
     case TLS13_AD_MISSING_EXTENSION:
         return SSL_AD_HANDSHAKE_FAILURE;
+#ifndef OPENSSL_NO_ECH
+    case SSL_AD_ECH_REQUIRED:
+        return TLS1_AD_ECH_REQUIRED;
+#endif
     default:
         return -1;
     }
