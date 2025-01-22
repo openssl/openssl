@@ -49,7 +49,7 @@ SLH_DSA_KEY *ossl_slh_dsa_key_from_pkcs8(const PKCS8_PRIV_KEY_INFO *p8_info,
     if (alg_name == NULL)
         goto err;
 
-    key = ossl_slh_dsa_key_new(lib_ctx, alg_name);
+    key = ossl_slh_dsa_key_new(lib_ctx, propq, alg_name);
     if (key == NULL
             || !ossl_slh_dsa_set_priv(key, p, p_len))
         goto err;

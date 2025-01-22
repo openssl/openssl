@@ -57,7 +57,7 @@ static SLH_DSA_KEY *ossl_slh_dsa_key_create(const X509_ALGOR *palg,
     if (id == EVP_PKEY_NONE)
         return 0;
 
-    key = ossl_slh_dsa_key_new(libctx, OBJ_nid2ln(id));
+    key = ossl_slh_dsa_key_new(libctx, propq, OBJ_nid2ln(id));
     if (key == NULL)
         return 0;
     if (public)
