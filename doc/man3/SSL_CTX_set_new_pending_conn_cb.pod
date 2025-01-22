@@ -47,9 +47,9 @@ into consideration when writing an application.
 
 QUIC connections may begin processing prior to when an application calls
 SSL_accept_connection() on them.  As such, it may occur that callbacks are
-delivered to appliations' registered TLS callbacks prior to those SSL objects
+delivered to applications' registered TLS callbacks prior to those SSL objects
 being returned in SSL_accept_connection().  Applications should expect this
-possibility
+possibility.
 
 In particular no references should be held on SSL objects passed to callbacks
 for QUIC connections until such time as they are returned through a call to
