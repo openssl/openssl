@@ -155,6 +155,9 @@ use constant {
 
 my $payload = "";
 my $messlen = -1;
+my $messseq = -1;
+my $messfraglen = -1;
+my $messfragoffs = -1;
 my $mt;
 my $startoffset = -1;
 my $server = 0;
@@ -170,6 +173,9 @@ sub clear
 {
     $payload = "";
     $messlen = -1;
+    $messseq = -1;
+    $messfraglen = -1;
+    $messfragoffs = -1;
     $startoffset = -1;
     $server = 0;
     $success = 0;
@@ -231,13 +237,8 @@ sub get_messages
                     $recoffset = $messlen - length($payload);
                     $payload .= substr($record->decrypt_data, 0, $recoffset);
                     push @message_frag_lens, $recoffset;
-                    if ($isdtls) {
-                        # We must set $msgseq, $msgfraglen, $msgfragoffs
-                        die "Internal error: cannot handle partial dtls messages\n"
-                    }
                     $message = create_message($server, $mt,
-                        #$msgseq, $msgfraglen, $msgfragoffs,
-                        0, 0, 0,
+                        $messseq, $messfraglen, $messfragoffs,
                         $payload, $startoffset, $isdtls);
                     push @messages, $message;
 
@@ -262,18 +263,15 @@ sub get_messages
                 @message_rec_list = ($record);
                 my $lenhi;
                 my $lenlo;
-                my $msgseq;
-                my $msgfraglen;
-                my $msgfragoffs;
                 if ($isdtls) {
                     my $msgfraglenhi;
                     my $msgfraglenlo;
                     my $msgfragoffshi;
                     my $msgfragoffslo;
-                    ($mt, $lenhi, $lenlo, $msgseq, $msgfragoffshi, $msgfragoffslo, $msgfraglenhi, $msgfraglenlo) =
+                    ($mt, $lenhi, $lenlo, $messseq, $msgfragoffshi, $msgfragoffslo, $msgfraglenhi, $msgfraglenlo) =
                         unpack('CnCnnCnC', substr($record->decrypt_data, $recoffset));
-                    $msgfraglen = ($msgfraglenhi << 8) | $msgfraglenlo;
-                    $msgfragoffs = ($msgfragoffshi << 8) | $msgfragoffslo;
+                    $messfraglen = ($msgfraglenhi << 8) | $msgfraglenlo;
+                    $messfragoffs = ($msgfragoffshi << 8) | $msgfragoffslo;
                 } else {
                     ($mt, $lenhi, $lenlo) =
                         unpack('CnC', substr($record->decrypt_data, $recoffset));
@@ -282,8 +280,8 @@ sub get_messages
                 print "  Message type: $message_type{$mt}($mt)\n";
                 print "  Message Length: $messlen\n";
                 if ($isdtls) {
-                    print "  Message fragment length: $msgfraglen\n";
-                    print "  Message fragment offset: $msgfragoffs\n";
+                    print "  Message fragment length: $messfraglen\n";
+                    print "  Message fragment offset: $messfragoffs\n";
                 }
                 $startoffset = $recoffset;
                 $recoffset += $msgheaderlen;
@@ -297,8 +295,8 @@ sub get_messages
                                            $messlen);
                         $recoffset += $messlen;
                         push @message_frag_lens, $messlen;
-                        $message = create_message($server, $mt, $msgseq,
-                                                  $msgfraglen, $msgfragoffs,
+                        $message = create_message($server, $mt, $messseq,
+                                                  $messfraglen, $messfragoffs,
                                                   $payload, $startoffset, $isdtls);
                         push @messages, $message;
 
