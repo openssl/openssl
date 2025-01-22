@@ -42,6 +42,54 @@ struct ml_dsa_gen_ctx {
     size_t entropy_len;
 };
 
+#ifdef FIPS_MODULE
+static int ml_dsa_pairwise_test(const ML_DSA_KEY *key)
+{
+    OSSL_SELF_TEST *st = NULL;
+    OSSL_CALLBACK *cb = NULL;
+    OSSL_LIB_CTX *ctx;
+    void *cbarg = NULL;
+    static const uint8_t msg[] = { 80, 108, 117, 103, 104 };
+    uint8_t rnd[ML_DSA_ENTROPY_LEN];
+    uint8_t sig[ML_DSA_87_SIG_LEN];
+    size_t sig_len = 0;
+    int ret = 0;
+
+    if (!ml_dsa_has(key, OSSL_KEYMGMT_SELECT_KEYPAIR))
+        return 1;
+
+    /*
+     * The functions `OSSL_SELF_TEST_*` will return directly if parameter `st`
+     * is NULL.
+     */
+    ctx = ossl_ml_dsa_key_get0_libctx(key);
+    OSSL_SELF_TEST_get_callback(ctx, &cb, &cbarg);
+
+    if ((st = OSSL_SELF_TEST_new(cb, cbarg)) == NULL)
+        return 0;
+
+    OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_PCT,
+                           OSSL_SELF_TEST_DESC_PCT_ML_DSA);
+
+    memset(rnd, 0, sizeof(rnd));
+    memset(sig, 0, sizeof(sig));
+
+    if (ossl_ml_dsa_sign(key, msg, sizeof(msg), NULL, 0, rnd, sizeof(rnd), 0,
+                         sig, &sig_len, sizeof(sig)) <= 0)
+        goto err;
+
+    if (ossl_ml_dsa_verify(key, msg, sizeof(msg), NULL, 0, 0,
+                           sig, sig_len) <= 0)
+        goto err;
+
+    ret = 1;
+ err:
+    OSSL_SELF_TEST_onend(st, ret);
+    OSSL_SELF_TEST_free(st);
+    return ret;
+}
+#endif
+
 static void *ml_dsa_new_key(void *provctx, const char *alg)
 {
     if (!ossl_prov_is_running())
@@ -102,6 +150,7 @@ static int ml_dsa_import(void *keydata, int selection, const OSSL_PARAM params[]
 {
     ML_DSA_KEY *key = keydata;
     int include_priv;
+    int res;
 
     if (!ossl_prov_is_running() || key == NULL)
         return 0;
@@ -110,7 +159,15 @@ static int ml_dsa_import(void *keydata, int selection, const OSSL_PARAM params[]
         return 0;
 
     include_priv = ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0);
-    return ossl_ml_dsa_key_fromdata(key, params, include_priv);
+    res = ossl_ml_dsa_key_fromdata(key, params, include_priv);
+#ifdef FIPS_MODULE
+    if (res > 0) {
+        res = ml_dsa_pairwise_test(key);
+        if (res <= 0)
+            ossl_set_error_state(OSSL_SELF_TEST_TYPE_PCT);
+    }
+#endif
+    return res;
 }
 
 #define ML_DSA_IMEXPORTABLE_PARAMETERS \
@@ -270,6 +327,10 @@ static void *ml_dsa_gen(void *genctx, const char *alg)
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GENERATE_KEY);
         goto err;
     }
+#ifdef FIPS_MODULE
+    if (!ml_dsa_pairwise_test(key))
+        goto err;
+#endif
     return key;
  err:
     ossl_ml_dsa_key_free(key);
