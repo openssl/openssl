@@ -205,9 +205,6 @@ struct quic_conn_st {
     unsigned int                    addressed_mode_w        : 1;
     unsigned int                    addressed_mode_r        : 1;
 
-    /* Flag to indicate if this connection has been accepted */
-    unsigned int                    accepted                : 1;
-
     /* Flag to indicate waiting on accept queue */
     unsigned int                    pending                 : 1;
 
