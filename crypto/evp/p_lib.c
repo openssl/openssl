@@ -949,7 +949,7 @@ SLH_DSA_KEY *ossl_evp_pkey_get1_SLH_DSA_KEY(EVP_PKEY *pkey)
 {
     SLH_DSA_KEY *ret = (SLH_DSA_KEY *)evp_pkey_get_legacy(pkey);
 
-    if (ret != NULL && !ossl_slh_dsa_key_up_ref(ret))
+    if (ret != NULL)
         ret = NULL;
     return ret;
 }

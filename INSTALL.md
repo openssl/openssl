@@ -987,7 +987,7 @@ See [Notes on shared libraries](#notes-on-shared-libraries) below.
 ### no-slh-dsa
 
 Disable Stateless Hash Based Digital Signature Standard support.
-(SLH-DSA is based on SPHINCS+. See NIST.FIPS.205)
+(SLH-DSA is based on SPHINCS+. See [FIPS 205])
 
 ### no-sm2-precomp
 
@@ -2061,5 +2061,5 @@ is used, as it is the version of the GNU assembler that will be checked.
 [SP 800-90B]:
     <https://csrc.nist.gov/pubs/sp/800/90/b/final>
 
-[jitterentropy-library]:
-    <https://github.com/smuellerDD/jitterentropy-library>
+[FIPS 205]:
+    <https://csrc.nist.gov/pubs/fips/205/final>

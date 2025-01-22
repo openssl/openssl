@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2024-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -250,7 +250,7 @@ static int slh_dsa_sign_verify_test(int tst_id)
     *p++ = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_DETERMINISTIC, &deterministic);
     *p++ = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_MESSAGE_ENCODING, &encode);
     if (td->add_random != NULL)
-        *p++ = OSSL_PARAM_construct_octet_string(OSSL_SIGNATURE_PARAM_ADD_RANDOM,
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_SIGNATURE_PARAM_TEST_ENTROPY,
                                                  (char *)td->add_random,
                                                  td->add_random_len);
     *p = OSSL_PARAM_construct_end();

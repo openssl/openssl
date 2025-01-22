@@ -33,8 +33,8 @@ static OSSL_FUNC_signature_set_ctx_params_fn slh_set_ctx_params;
 static OSSL_FUNC_signature_settable_ctx_params_fn slh_settable_ctx_params;
 
 typedef struct {
-    SLH_DSA_KEY *key;
-    SLH_DSA_CTX *ctx;
+    SLH_DSA_KEY *key; /* Note that the key is not owned by this object */
+    SLH_DSA_HASH_CTX *hash_ctx;
     uint8_t context_string[SLH_DSA_MAX_CONTEXT_STRING_LEN];
     size_t context_string_len;
     uint8_t add_random[SLH_DSA_MAX_ADD_RANDOM_LEN];
@@ -43,38 +43,35 @@ typedef struct {
     int deterministic;
     OSSL_LIB_CTX *libctx;
     char *propq;
-} PROV_SLH_DSA_CTX;
+    const char *alg;
+} PROV_SLH_DSA_HASH_CTX;
 
 static void slh_freectx(void *vctx)
 {
-    PROV_SLH_DSA_CTX *ctx = (PROV_SLH_DSA_CTX *)vctx;
+    PROV_SLH_DSA_HASH_CTX *ctx = (PROV_SLH_DSA_HASH_CTX *)vctx;
 
+    ossl_slh_dsa_hash_ctx_free(ctx->hash_ctx);
     OPENSSL_free(ctx->propq);
-    ossl_slh_dsa_ctx_free(ctx->ctx);
-    ossl_slh_dsa_key_free(ctx->key);
     OPENSSL_cleanse(ctx->add_random, ctx->add_random_len);
     OPENSSL_free(ctx);
 }
 
 static void *slh_newctx(void *provctx, const char *alg, const char *propq)
 {
-    PROV_SLH_DSA_CTX *ctx;
+    PROV_SLH_DSA_HASH_CTX *ctx;
 
     if (!ossl_prov_is_running())
         return NULL;
 
-    ctx = OPENSSL_zalloc(sizeof(PROV_SLH_DSA_CTX));
+    ctx = OPENSSL_zalloc(sizeof(PROV_SLH_DSA_HASH_CTX));
     if (ctx == NULL)
         return NULL;
 
     ctx->libctx = PROV_LIBCTX_OF(provctx);
     if (propq != NULL && (ctx->propq = OPENSSL_strdup(propq)) == NULL)
         goto err;
-    ctx->ctx = ossl_slh_dsa_ctx_new(alg, ctx->libctx, ctx->propq);
-    if (ctx->ctx == NULL)
-        goto err;
+    ctx->alg = alg;
     ctx->msg_encode = SLH_DSA_MESSAGE_ENCODE_PURE;
-
     return ctx;
  err:
     slh_freectx(ctx);
@@ -85,7 +82,7 @@ static int slh_signverify_msg_init(void *vctx, void *vkey,
                                    const OSSL_PARAM params[], int operation,
                                    const char *desc)
 {
-    PROV_SLH_DSA_CTX *ctx = (PROV_SLH_DSA_CTX *)vctx;
+    PROV_SLH_DSA_HASH_CTX *ctx = (PROV_SLH_DSA_HASH_CTX *)vctx;
     SLH_DSA_KEY *key = vkey;
 
     if (!ossl_prov_is_running()
@@ -98,11 +95,11 @@ static int slh_signverify_msg_init(void *vctx, void *vkey,
     }
 
     if (key != NULL) {
-        if (!ossl_slh_dsa_key_type_matches(ctx->ctx, key))
+        if (!ossl_slh_dsa_key_type_matches(key, ctx->alg))
             return 0;
-        if (!ossl_slh_dsa_key_up_ref(vkey))
+        ctx->hash_ctx = ossl_slh_dsa_hash_ctx_new(key);
+        if (ctx->hash_ctx == NULL)
             return 0;
-        ossl_slh_dsa_key_free(ctx->key);
         ctx->key = vkey;
     }
 
@@ -121,7 +118,7 @@ static int slh_sign(void *vctx, unsigned char *sig, size_t *siglen,
                     size_t sigsize, const unsigned char *msg, size_t msg_len)
 {
     int ret = 0;
-    PROV_SLH_DSA_CTX *ctx = (PROV_SLH_DSA_CTX *)vctx;
+    PROV_SLH_DSA_HASH_CTX *ctx = (PROV_SLH_DSA_HASH_CTX *)vctx;
     uint8_t add_rand[SLH_DSA_MAX_ADD_RANDOM_LEN], *opt_rand = NULL;
     size_t n = 0;
 
@@ -138,7 +135,7 @@ static int slh_sign(void *vctx, unsigned char *sig, size_t *siglen,
             opt_rand = add_rand;
         }
     }
-    ret = ossl_slh_dsa_sign(ctx->ctx, ctx->key, msg, msg_len,
+    ret = ossl_slh_dsa_sign(ctx->hash_ctx, msg, msg_len,
                             ctx->context_string, ctx->context_string_len,
                             opt_rand, ctx->msg_encode,
                             sig, siglen, sigsize);
@@ -156,11 +153,11 @@ static int slh_verify_msg_init(void *vctx, void *vkey, const OSSL_PARAM params[]
 static int slh_verify(void *vctx, const unsigned char *sig, size_t siglen,
                       const unsigned char *msg, size_t msg_len)
 {
-    PROV_SLH_DSA_CTX *ctx = (PROV_SLH_DSA_CTX *)vctx;
+    PROV_SLH_DSA_HASH_CTX *ctx = (PROV_SLH_DSA_HASH_CTX *)vctx;
 
     if (!ossl_prov_is_running())
         return 0;
-    return ossl_slh_dsa_verify(ctx->ctx, ctx->key, msg, msg_len,
+    return ossl_slh_dsa_verify(ctx->hash_ctx, msg, msg_len,
                                ctx->context_string, ctx->context_string_len,
                                ctx->msg_encode, sig, siglen);
 
@@ -169,7 +166,7 @@ static int slh_verify(void *vctx, const unsigned char *sig, size_t siglen,
 
 static int slh_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
-    PROV_SLH_DSA_CTX *pctx = (PROV_SLH_DSA_CTX *)vctx;
+    PROV_SLH_DSA_HASH_CTX *pctx = (PROV_SLH_DSA_HASH_CTX *)vctx;
     const OSSL_PARAM *p;
 
     if (pctx == NULL)
@@ -187,7 +184,7 @@ static int slh_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             return 0;
         }
     }
-    p = OSSL_PARAM_locate_const(params, OSSL_SIGNATURE_PARAM_ADD_RANDOM);
+    p = OSSL_PARAM_locate_const(params, OSSL_SIGNATURE_PARAM_TEST_ENTROPY);
     if (p != NULL) {
         void *vp = pctx->add_random;
         size_t n = ossl_slh_dsa_key_get_n(pctx->key);
@@ -214,7 +211,7 @@ static const OSSL_PARAM *slh_settable_ctx_params(void *vctx,
 {
     static const OSSL_PARAM settable_ctx_params[] = {
         OSSL_PARAM_octet_string(OSSL_SIGNATURE_PARAM_CONTEXT_STRING, NULL, 0),
-        OSSL_PARAM_octet_string(OSSL_SIGNATURE_PARAM_ADD_RANDOM, NULL, 0),
+        OSSL_PARAM_octet_string(OSSL_SIGNATURE_PARAM_TEST_ENTROPY, NULL, 0),
         OSSL_PARAM_int(OSSL_SIGNATURE_PARAM_DETERMINISTIC, 0),
         OSSL_PARAM_int(OSSL_SIGNATURE_PARAM_MESSAGE_ENCODING, 0),
         OSSL_PARAM_END

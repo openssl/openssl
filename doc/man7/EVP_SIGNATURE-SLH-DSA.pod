@@ -66,20 +66,19 @@ The default value of 1 uses 'Pure SLH-DSA Signature Generation' as described
 above. Setting it to 0 does not encode the message, which is used for testing,
 but can also be used for 'Pre Hash SLH-DSA Signature Generation'.
 
-=item "additional-random" (B<OSSL_SIGNATURE_PARAM_ADD_RANDOM <octet string>
+=item "test-entropy" (B<OSSL_SIGNATURE_PARAM_TEST_ENTROPY <octet string>
 
 Used for testing to pass a optional random value.
 
 =item "deterministic" (B<OSSL_SIGNATURE_PARAM_DETERMINISTIC>) <integer>
 
-The default value of 0 causes an randomly generated additional random value
-to be used when processing the message. Setting this to 1 causes the private key
-seed to be used instead. This value is ignored if "additional-random" is set.
+The default value of 0 generates a random value (using a DRBG) this is used when
+processing the message. Setting this to 1 causes the private key seed to be used
+instead. This value is ignored if "test-entropy" is set.
 
 =back
 
 See L<EVP_PKEY-SLH-DSA(7)> for information related to B<SLH-DSA> keys.
-
 
 =head1 EXAMPLES
 
@@ -120,7 +119,7 @@ This functionality was added in OpenSSL 3.5.
 
 =head1 COPYRIGHT
 
-Copyright 2024 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2024-2025 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

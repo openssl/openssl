@@ -28,8 +28,8 @@ static int get_tree_ids(PACKET *pkt, const SLH_DSA_PARAMS *params,
  *   [k]*[1+a][n] FORS signature bytes
  *   [h + d*len][n] Hyper tree signature bytes
  *
- * @param ctx Contains SLH_DSA algorithm functions and constants.
- * @param priv The private SLH_DSA key to use for signing.
+ * @param ctx Contains SLH_DSA algorithm functions and constants, and the
+ *            private SLH_DSA key to use for signing.
  * @param msg The message to sign. This may be encoded beforehand.
  * @param msg_len The size of |msg|
  * @param sig The returned signature
@@ -38,13 +38,14 @@ static int get_tree_ids(PACKET *pkt, const SLH_DSA_PARAMS *params,
  * @param opt_rand An optional random value to use of size |n|. It can be NULL.
  * @returns 1 if the signature generation succeeded or 0 otherwise.
  */
-static int slh_sign_internal(SLH_DSA_CTX *ctx, const SLH_DSA_KEY *priv,
+static int slh_sign_internal(SLH_DSA_HASH_CTX *hctx,
                              const uint8_t *msg, size_t msg_len,
                              uint8_t *sig, size_t *sig_len, size_t sig_size,
                              const uint8_t *opt_rand)
 {
     int ret = 0;
-    const SLH_DSA_PARAMS *params = ctx->params;
+    const SLH_DSA_KEY *priv = hctx->key;
+    const SLH_DSA_PARAMS *params = priv->params;
     size_t sig_len_expected = params->sig_len;
     uint8_t m_digest[SLH_MAX_M];
     const uint8_t *md; /* The first md_len bytes of m_digest */
@@ -59,8 +60,8 @@ static int slh_sign_internal(SLH_DSA_CTX *ctx, const SLH_DSA_KEY *priv,
     uint32_t leaf_id;
 
     SLH_ADRS_DECLARE(adrs);
-    SLH_HASH_FUNC_DECLARE(ctx, hashf, hctx);
-    SLH_ADRS_FUNC_DECLARE(ctx, adrsf);
+    SLH_HASH_FUNC_DECLARE(priv, hashf);
+    SLH_ADRS_FUNC_DECLARE(priv, adrsf);
 
     if (sig_len != NULL)
         *sig_len = sig_len_expected;
@@ -104,14 +105,14 @@ static int slh_sign_internal(SLH_DSA_CTX *ctx, const SLH_DSA_KEY *priv,
 
     sig_fors = WPACKET_get_curr(wpkt);
     /* generate the FORS signature and append it to the SLH-DSA signature */
-    ret = ossl_slh_fors_sign(ctx, md, sk_seed, pk_seed, adrs, wpkt)
+    ret = ossl_slh_fors_sign(hctx, md, sk_seed, pk_seed, adrs, wpkt)
         /* Reuse rpkt to point to the FORS signature that was just generated */
         && PACKET_buf_init(rpkt, sig_fors, WPACKET_get_curr(wpkt) - sig_fors)
         /* Calculate the FORS public key using the generated FORS signature */
-        && ossl_slh_fors_pk_from_sig(ctx, rpkt, md, pk_seed, adrs,
+        && ossl_slh_fors_pk_from_sig(hctx, rpkt, md, pk_seed, adrs,
                                      pk_fors, sizeof(pk_fors))
         /* Generate ht signature and append to the SLH-DSA signature */
-        && ossl_slh_ht_sign(ctx, pk_fors, sk_seed, pk_seed, tree_id, leaf_id,
+        && ossl_slh_ht_sign(hctx, pk_fors, sk_seed, pk_seed, tree_id, leaf_id,
                             wpkt);
     ret = 1;
  err:
@@ -129,22 +130,23 @@ static int slh_sign_internal(SLH_DSA_CTX *ctx, const SLH_DSA_KEY *priv,
  *   [k]*[1+a][n] FORS signature bytes
  *   [h + d*len][n] Hyper tree signature bytes
  *
- * @param ctx Contains SLH_DSA algorithm functions and constants.
- * @param pub The public SLH_DSA key to use for verification.
+ * @param hctx Contains SLH_DSA algorithm functions and constants and the
+ *             public SLH_DSA key to use for verification.
  * @param msg The message to verify. This may be encoded beforehand.
  * @param msg_len The size of |msg|
  * @param sig A signature to verify
  * @param sig_len The size of |sig|
  * @returns 1 if the signature verification succeeded or 0 otherwise.
  */
-static int slh_verify_internal(SLH_DSA_CTX *ctx, const SLH_DSA_KEY *pub,
+static int slh_verify_internal(SLH_DSA_HASH_CTX *hctx,
                                const uint8_t *msg, size_t msg_len,
                                const uint8_t *sig, size_t sig_len)
 {
-    SLH_HASH_FUNC_DECLARE(ctx, hashf, hctx);
-    SLH_ADRS_FUNC_DECLARE(ctx, adrsf);
+    const SLH_DSA_KEY *pub = hctx->key;
+    SLH_HASH_FUNC_DECLARE(pub, hashf);
+    SLH_ADRS_FUNC_DECLARE(pub, adrsf);
     SLH_ADRS_DECLARE(adrs);
-    const SLH_DSA_PARAMS *params = ctx->params;
+    const SLH_DSA_PARAMS *params = pub->params;
     uint32_t n = params->n;
     const uint8_t *pk_seed, *pk_root; /* Pointers to elements in |pub| */
     PACKET pkt, *sig_rpkt = &pkt; /* Points to the |sig| buffer */
@@ -162,7 +164,7 @@ static int slh_verify_internal(SLH_DSA_CTX *ctx, const SLH_DSA_KEY *pub,
         return 0;
 
     /* Exit if signature is invalid size */
-    if (sig_len != ctx->params->sig_len
+    if (sig_len != params->sig_len
             || !PACKET_buf_init(sig_rpkt, sig, sig_len))
         return 0;
     if (!PACKET_get_bytes(sig_rpkt, &r, n))
@@ -190,9 +192,9 @@ static int slh_verify_internal(SLH_DSA_CTX *ctx, const SLH_DSA_KEY *pub,
     adrsf->set_tree_address(adrs, tree_id);
     adrsf->set_type_and_clear(adrs, SLH_ADRS_TYPE_FORS_TREE);
     adrsf->set_keypair_address(adrs, leaf_id);
-    return ossl_slh_fors_pk_from_sig(ctx, sig_rpkt, md, pk_seed, adrs,
+    return ossl_slh_fors_pk_from_sig(hctx, sig_rpkt, md, pk_seed, adrs,
                                      pk_fors, sizeof(pk_fors))
-        && ossl_slh_ht_verify(ctx, pk_fors, sig_rpkt, pk_seed,
+        && ossl_slh_ht_verify(hctx, pk_fors, sig_rpkt, pk_seed,
                               tree_id, leaf_id, pk_root)
         && PACKET_remaining(sig_rpkt) == 0;
 }
@@ -254,7 +256,7 @@ static uint8_t *msg_encode(const uint8_t *msg, size_t msg_len,
  * See FIPS 205 Section 10.2.1 Algorithm 22
  * @returns 1 on success, or 0 on error.
  */
-int ossl_slh_dsa_sign(SLH_DSA_CTX *slh_ctx, const SLH_DSA_KEY *priv,
+int ossl_slh_dsa_sign(SLH_DSA_HASH_CTX *slh_ctx,
                       const uint8_t *msg, size_t msg_len,
                       const uint8_t *ctx, size_t ctx_len,
                       const uint8_t *add_rand, int encode,
@@ -270,7 +272,7 @@ int ossl_slh_dsa_sign(SLH_DSA_CTX *slh_ctx, const SLH_DSA_KEY *priv,
         if (m == NULL)
             return 0;
     }
-    ret = slh_sign_internal(slh_ctx, priv, m, m_len, sig, siglen, sigsize, add_rand);
+    ret = slh_sign_internal(slh_ctx, m, m_len, sig, siglen, sigsize, add_rand);
     if (m != msg && m != m_tmp)
         OPENSSL_free(m);
     return ret;
@@ -280,7 +282,7 @@ int ossl_slh_dsa_sign(SLH_DSA_CTX *slh_ctx, const SLH_DSA_KEY *priv,
  * See FIPS 205 Section 10.3 Algorithm 24
  * @returns 1 on success, or 0 on error.
  */
-int ossl_slh_dsa_verify(SLH_DSA_CTX *slh_ctx, const SLH_DSA_KEY *pub,
+int ossl_slh_dsa_verify(SLH_DSA_HASH_CTX *slh_ctx,
                         const uint8_t *msg, size_t msg_len,
                         const uint8_t *ctx, size_t ctx_len, int encode,
                         const uint8_t *sig, size_t sig_len)
@@ -295,7 +297,7 @@ int ossl_slh_dsa_verify(SLH_DSA_CTX *slh_ctx, const SLH_DSA_KEY *pub,
     if (m == NULL)
         return 0;
 
-    ret = slh_verify_internal(slh_ctx, pub, m, m_len, sig, sig_len);
+    ret = slh_verify_internal(slh_ctx, m, m_len, sig, sig_len);
     if (m != msg && m != m_tmp)
         OPENSSL_free(m);
     return ret;

@@ -8,7 +8,6 @@
  */
 
 #include <openssl/e_os2.h>
-#include "internal/refcount.h"
 
 #define SLH_DSA_MAX_N 32
 #define SLH_DSA_SK_SEED(key) ((key)->priv)
@@ -33,10 +32,16 @@ struct slh_dsa_key_st {
      * to &priv[n * 2]
      */
     uint8_t *pub;
-    CRYPTO_REF_COUNT references;
     OSSL_LIB_CTX *libctx;
     char *propq;
-    /* contains the algorithm name and constants such as |n| */
-    const SLH_DSA_PARAMS *params;
     int has_priv; /* Set to 1 if there is a private key component */
+
+    const SLH_DSA_PARAMS *params;
+    const SLH_ADRS_FUNC *adrs_func;
+    const SLH_HASH_FUNC *hash_func;
+    /* See FIPS 205 Section 11.1 */
+
+    EVP_MD *md; /* Used for SHAKE and SHA-256 */
+    EVP_MD *md_big; /* Used for SHA-256 or SHA-512 */
+    EVP_MAC *hmac;
 };
