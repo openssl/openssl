@@ -30,7 +30,7 @@ if (disabled("sm2")) {
     @valid = grep { !/sm2-.*\.pem/} @valid;
 }
 
-plan tests => 13;
+plan tests => 14;
 
 sub checkload {
     my $files = shift; # List of files
@@ -198,3 +198,5 @@ subtest "Check loading of fips and non-fips params" => sub {
 
     $ENV{OPENSSL_CONF} = $defaultconf;
 };
+
+ok(run(app(['openssl', 'ecparam', '-list_curves'])), "Test -list_curves");
