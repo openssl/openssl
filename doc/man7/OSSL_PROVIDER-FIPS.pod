@@ -164,6 +164,12 @@ for signature generation, but may be used for verification for legacy use cases.
 
 =item ECDSA, see L<EVP_SIGNATURE-ECDSA(7)>
 
+=item ML-DSA-44, see L<EVP_SIGNATURE-ML-DSA(7)>
+
+=item ML-DSA-65, see L<EVP_SIGNATURE-ML-DSA(7)>
+
+=item ML-DSA-87, see L<EVP_SIGNATURE-ML-DSA(7)>
+
 =item HMAC, see L<EVP_SIGNATURE-HMAC(7)>
 
 =item CMAC, see L<EVP_SIGNATURE-CMAC(7)>
@@ -225,6 +231,12 @@ This is an unapproved algorithm.
 =item HMAC, see L<EVP_KEYMGMT-HMAC(7)>
 
 =item CMAC, see L<EVP_KEYMGMT-CMAC(7)>
+
+=item ML-DSA-44, see L<EVP_KEYMGMT-ML-DSA(7)>
+
+=item ML-DSA-65, see L<EVP_KEYMGMT-ML-DSA(7)>
+
+=item ML-DSA-87, see L<EVP_KEYMGMT-ML-DSA(7)>
 
 =back
 
@@ -312,7 +324,7 @@ Known answer test for a Deterministic Random Bit Generator.
 
 =item "Conditional_PCT" (B<OSSL_SELF_TEST_TYPE_PCT>)
 
-Conditional test that is run during the generation of key pairs.
+Conditional test that is run during the generation or importing of key pairs.
 
 =item "Continuous_RNG_Test" (B<OSSL_SELF_TEST_TYPE_CRNG>)
 
@@ -349,6 +361,8 @@ The FIPS module passes the following descriptions(s) to OSSL_SELF_TEST_onbegin()
 
 =item "DSA" (B<OSSL_SELF_TEST_DESC_PCT_DSA>)
 
+=item "ML-DSA" (B<OSSL_SELF_TEST_DESC_PCT_ML_DSA>)
+
 Key generation tests used with the "Pairwise_Consistency_Test" type.
 
 =item "RSA_Encrypt" (B<OSSL_SELF_TEST_DESC_ASYM_RSA_ENC>)
@@ -380,6 +394,8 @@ Digest tests used with the "KAT_Digest" type.
 =item "ECDSA" (B<OSSL_SELF_TEST_DESC_SIGN_ECDSA>)
 
 =item "EDDSA" (B<OSSL_SELF_TEST_DESC_SIGN_EDDSA>)
+
+=item "ML-DSA" (B<OSSL_SELF_TEST_DESC_SIGN_ML_DSA>)
 
 Signature tests used with the "KAT_Signature" type.
 
