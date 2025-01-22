@@ -4600,7 +4600,6 @@ static QUIC_CONNECTION *create_qc_from_incoming_conn(QUIC_LISTENER *ql, QUIC_CHA
     }
 
     ossl_quic_channel_get_peer_addr(ch, &qc->init_peer_addr); /* best effort */
-    qc->listener                = NULL;
     qc->pending                 = 1;
     qc->engine                  = ql->engine;
     qc->port                    = ql->port;
