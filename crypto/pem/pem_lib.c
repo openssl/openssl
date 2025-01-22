@@ -356,9 +356,8 @@ PEM_ASN1_write_bio_internal(
         dsize = 0;
         goto err;
     }
-    /* dsize + 8 bytes are needed */
-    /* actually it needs the cipher block size extra... */
-    data = OPENSSL_malloc((unsigned int)dsize + 20);
+    /* Allocate enough space for one extra cipher block */
+    data = OPENSSL_malloc((unsigned int)dsize + EVP_MAX_BLOCK_LENGTH);
     if (data == NULL)
         goto err;
     p = data;
