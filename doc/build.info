@@ -280,6 +280,12 @@ DEPEND[man/man1/openssl-sess_id.1]=man1/openssl-sess_id.pod
 GENERATE[man/man1/openssl-sess_id.1]=man1/openssl-sess_id.pod
 DEPEND[man1/openssl-sess_id.pod]{pod}=man1/openssl-sess_id.pod.in
 GENERATE[man1/openssl-sess_id.pod]=man1/openssl-sess_id.pod.in
+DEPEND[html/man1/openssl-skeyutl.html]=man1/openssl-skeyutl.pod
+GENERATE[html/man1/openssl-skeyutl.html]=man1/openssl-skeyutl.pod
+DEPEND[man/man1/openssl-skeyutl.1]=man1/openssl-skeyutl.pod
+GENERATE[man/man1/openssl-skeyutl.1]=man1/openssl-skeyutl.pod
+DEPEND[man1/openssl-skeyutl.pod]{pod}=man1/openssl-skeyutl.pod.in
+GENERATE[man1/openssl-skeyutl.pod]=man1/openssl-skeyutl.pod.in
 DEPEND[html/man1/openssl-smime.html]=man1/openssl-smime.pod
 GENERATE[html/man1/openssl-smime.html]=man1/openssl-smime.pod
 DEPEND[man/man1/openssl-smime.1]=man1/openssl-smime.pod
@@ -395,6 +401,7 @@ html/man1/openssl-s_client.html \
 html/man1/openssl-s_server.html \
 html/man1/openssl-s_time.html \
 html/man1/openssl-sess_id.html \
+html/man1/openssl-skeyutl.html \
 html/man1/openssl-smime.html \
 html/man1/openssl-speed.html \
 html/man1/openssl-spkac.html \
@@ -455,6 +462,7 @@ man/man1/openssl-s_client.1 \
 man/man1/openssl-s_server.1 \
 man/man1/openssl-s_time.1 \
 man/man1/openssl-sess_id.1 \
+man/man1/openssl-skeyutl.1 \
 man/man1/openssl-smime.1 \
 man/man1/openssl-speed.1 \
 man/man1/openssl-spkac.1 \
