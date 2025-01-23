@@ -77,7 +77,8 @@ fragment offset and fragment length as is the case with previous versions of DTL
 
 #### DTLS ACK records (RFC9147 Section 7)
 
-ACKs are sent for KeyUpdates, NewSessionTicket and Finish (client).
+ACKs are sent for KeyUpdates, NewSessionTicket, Certificate (client), 
+CertificateVerify (client) and Finish (client).
 
 Notes on RFC9147 Section 7.1:
 
@@ -85,8 +86,8 @@ Notes on RFC9147 Section 7.1:
   when receiving messages which means it will not send ACKs for the example given
   in RFC9147 Figure 12.
 * ACKs are always sent immediately after receiving a full message to be ACKed.
-* If the implementation does not receive an ACK for all fragments of a message,
-  then the full message wil be retransmitted.
+* If the implementation does not receive an ACK for all fragments of a flight,
+  then the full flight wil be retransmitted.
 * Empty ACKs are never sent.
 * The implementation does not explicitly prohibit receiving unencrypted ACKs. The
   implementation will only ACK records of epoch > 0 so all ACKs sent by the
@@ -96,7 +97,7 @@ Notes on RFC9147 Section 7.1:
   alert as any other unexpected message. ACKs that are received before version
   negotiation are dropped.
 * The implementation ignores ACKs received for messages other than KeyUpdates,
-  NewSessionTicket and Finish (client).
+  NewSessionTicket, Certificate (client), CertificateVerify (client) and Finish (client).
 
 Missing functionality:
 
@@ -109,11 +110,6 @@ There's need for a lot more corner case testing:
   testing probably needs to be performed by another framework.
 * This comment also forms a great test case:
   <https://github.com/openssl/openssl/pull/25119#discussion_r1871643459>
-
-The implementation does not support the case where a client is sending a client
-certificate, then the client's final leg has three messages in it, all three of
-which must be ACKed for the client to stop retransmitting. As noted by David
-Benjamin in <https://github.com/openssl/openssl/pull/25119#discussion_r1871638449>.
 
 Implementation progress
 -----------------------
