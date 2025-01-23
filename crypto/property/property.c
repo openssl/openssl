@@ -394,6 +394,7 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
         alg->nid = nid;
         if (!ossl_method_store_insert(store, alg))
             goto err;
+        OSSL_TRACE2(QUERY, "Inserted an alg with nid %d into the store %p\n", nid, (void *)store);
     }
 
     /* Push onto stack if there isn't one there already */
@@ -639,11 +640,14 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
     if (!ossl_property_read_lock(store))
         return 0;
 
+    OSSL_TRACE2(QUERY, "Retrieving by nid %d from store %p\n", nid, (void *)store);
     alg = ossl_method_store_retrieve(store, nid);
     if (alg == NULL) {
         ossl_property_unlock(store);
+        OSSL_TRACE2(QUERY, "Failed to retrieve by nid %d from store %p\n", nid, (void *)store);
         return 0;
     }
+    OSSL_TRACE2(QUERY, "Retrieved by nid %d from store %p\n", nid, (void *)store);
 
     /*
      * If a property query string is provided, convert it to an

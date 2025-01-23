@@ -48,13 +48,18 @@ static void *get_tmp_evp_method_store(void *data)
 {
     struct evp_method_data_st *methdata = data;
 
-    if (methdata->tmp_store == NULL)
+    if (methdata->tmp_store == NULL) {
         methdata->tmp_store = ossl_method_store_new(methdata->libctx);
+        OSSL_TRACE1(QUERY, "Allocating a new tmp_store %p\n", (void *)methdata->tmp_store);
+    } else {
+        OSSL_TRACE1(QUERY, "Using the existing tmp_store %p\n", (void *)methdata->tmp_store);
+    }
     return methdata->tmp_store;
 }
 
  static void dealloc_tmp_evp_method_store(void *store)
 {
+    OSSL_TRACE1(QUERY, "Deallocating the tmp_store %p\n", store);
     if (store != NULL)
         ossl_method_store_free(store);
 }
@@ -184,10 +189,15 @@ static int put_evp_method_in_store(void *store, void *method,
         || (meth_id = evp_method_id(name_id, methdata->operation_id)) == 0)
         return 0;
 
+    OSSL_TRACE1(QUERY, "put_evp_method_in_store: original store: %p\n", store);
     if (store == NULL
         && (store = get_evp_method_store(methdata->libctx)) == NULL)
         return 0;
 
+    OSSL_TRACE5(QUERY,
+                "put_evp_method_in_store: "
+                "store: %p, names: %s, operation_id %d, method_id: %d, properties: %s\n",
+                store, names, methdata->operation_id, meth_id, propdef ? propdef : "<null>");
     return ossl_method_store_add(store, prov, meth_id, propdef, method,
                                  methdata->refcnt_up_method,
                                  methdata->destruct_method);
@@ -357,6 +367,11 @@ inner_evp_generic_fetch(struct evp_method_data_st *methdata,
                        ossl_lib_ctx_get_descriptor(methdata->libctx),
                        name == NULL ? "<null>" : name, name_id,
                        properties == NULL ? "<null>" : properties);
+    } else {
+        OSSL_TRACE4(QUERY, "%s, Algorithm (%s : %d), Properties (%s)\n",
+                    ossl_lib_ctx_get_descriptor(methdata->libctx),
+                    name == NULL ? "<null>" : name, name_id,
+                    properties == NULL ? "<null>" : properties);
     }
 
     return method;
