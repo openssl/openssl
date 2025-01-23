@@ -379,7 +379,6 @@ static OSSL_CMP_PKISI *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
     central_keygen = OSSL_CRMF_MSG_centralKeygen_requested(crm, p10cr);
     if (central_keygen < 0)
         goto err;
-
     if (central_keygen == 1
         && (ctx->keyOut == NULL
             || (keyOut = EVP_PKEY_dup(ctx->keyOut)) == NULL
@@ -390,6 +389,7 @@ static OSSL_CMP_PKISI *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
      * Note that this uses newPkey to return the private key
      * and does not check whether the 'popo' field is absent.
      */
+
     if (ctx->chainOut != NULL
             && (*chainOut = X509_chain_up_ref(ctx->chainOut)) == NULL)
         goto err;

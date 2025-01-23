@@ -719,10 +719,8 @@ EVP_PKEY *OSSL_CRMF_ENCRYPTEDKEY_get1_pkey(const OSSL_CRMF_ENCRYPTEDKEY *encrypt
     if ((purpose_id = X509_PURPOSE_get_by_sname(SN_cmKGA)) < 0) {
         purpose_id = X509_PURPOSE_get_unused_id(libctx);
         if (!X509_PURPOSE_add(purpose_id, X509_TRUST_COMPAT, 0, check_cmKGA,
-                              LN_cmKGA, SN_cmKGA, NULL)) {
-            ERR_raise(ERR_LIB_CRMF, CRMF_R_ERROR_SETTING_PURPOSE);
+                              LN_cmKGA, SN_cmKGA, NULL))
             goto end;
-        }
     }
     if ((vpm = X509_STORE_get0_param(ts)) == NULL)
         goto end;

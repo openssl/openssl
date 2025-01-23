@@ -97,14 +97,14 @@ The function returns the decrypted certificate as a copy, leaving its ownership
 with the caller, who is responsible for freeing it.
 
 OSSL_CRMF_ENCRYPTEDKEY_get1_pkey() decrypts the private key in I<encryptedKey>.
-If `encryptedKey` is not of type B<OSSL_CRMF_ENCRYPTEDKEY_ENVELOPEDDATA>, 
+If `encryptedKey` is not of type B<OSSL_CRMF_ENCRYPTEDKEY_ENVELOPEDDATA>,
 decryption uses the private key I<pkey>.
 The library context I<libctx> and property query I<propq> are taken into account as usual.
 The rest of this paragraph is relevant only if CMS support not disabled for the OpenSSL build
 and `encryptedKey` is of type case B<OSSL_CRMF_ENCRYPTEDKEY_ENVELOPEDDATA>.
-Decryption uses the I<secret> parameter if not NULL; 
+Decryption uses the I<secret> parameter if not NULL;
 otherwise uses the private key <pkey> and the certificate I<cert> 
-related to I<pkey>, where I<cert> is recommended to be given if available. 
+related to I<pkey>, where I<cert> is recommended to be given if available.
 On success, the function verifies the decrypted data as signed data,
 using the trust store I<ts> and any untrusted certificates in I<extra>.
 Doing so, it checks for the purpose "CMP Key Generation Authority" (cmKGA).
@@ -126,9 +126,9 @@ with the caller, who is responsible for freeing it.
 OSSL_CRMF_MSG_get_certReqId() retrieves the certReqId of I<crm>.
 
 OSSL_CRMF_MSG_centralKeygen_requested() returns 1 if central key generation
-is requested i.e., the public key in the certificate request (I<crm> is taken if it is non-NULL, 
+is requested i.e., the public key in the certificate request (I<crm> is taken if it is non-NULL,
 otherwise I<p10cr>) is NULL or has an empty key value (with length zero).
-In case I<crm> is non-NULL, this is checked for consistency with its B<popo> field 
+In case I<crm> is non-NULL, this is checked for consistency with its B<popo> field
 (must be NULL if and only if central key generation is requested).
 Otherwise it returns 0, and on error a negative value.
 

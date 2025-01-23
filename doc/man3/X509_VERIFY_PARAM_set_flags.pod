@@ -244,7 +244,8 @@ X509_VERIFY_PARAM_get_depth() returns the current verification depth.
 X509_VERIFY_PARAM_get_auth_level() returns the current authentication security
 level.
 
-X509_VERIFY_PARAM_get_purpose() returns the current purpose.
+X509_VERIFY_PARAM_get_purpose() returns the current purpose,
+which may be B<X509_PURPOSE_DEFAULT_ANY> if unset.
 
 =head1 VERIFICATION FLAGS
 
