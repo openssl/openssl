@@ -1313,7 +1313,7 @@ static int port_validate_token(QUIC_PKT_HDR *hdr, QUIC_PORT *port,
          * here, so there is a chance we are dealing with corrupted data. Make
          * Sure the dcid encoded in the token matches the headers dcid to
          * mitigate that.
-         * TODO(QUIC SERVER): Consider handling AEAD validation at the port
+         * TODO(QUIC FUTURE): Consider handling AEAD validation at the port
          * level rather than the QRX/channel level to eliminate the need for
          * this.
          */
