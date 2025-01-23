@@ -9,6 +9,6 @@
 
 PROGRAMS{noinst} = server
 
-INCLUDE[server]=../../include
+INCLUDE[server]=../../../include
 SOURCE[server]=server.c
-DEPEND[server]=../../libcrypto ../../libssl
+DEPEND[server]=../../../libcrypto ../../../libssl
