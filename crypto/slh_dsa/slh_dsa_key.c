@@ -65,6 +65,16 @@ static int slh_dsa_key_hash_init(SLH_DSA_KEY *key)
     return 0;
 }
 
+static void slh_dsa_key_hash_dup(SLH_DSA_KEY *dst, const SLH_DSA_KEY *src)
+{
+    if (src->md_big != NULL && src->md_big != src->md)
+        EVP_MD_up_ref(src->md_big);
+    if (src->md != NULL)
+        EVP_MD_up_ref(src->md);
+    if (src->hmac != NULL)
+        EVP_MAC_up_ref(src->hmac);
+}
+
 /**
  * @brief Create a new SLH_DSA_KEY object
  *
@@ -114,6 +124,47 @@ void ossl_slh_dsa_key_free(SLH_DSA_KEY *key)
 }
 
 /**
+ * @brief Duplicate a key
+ *
+ * @param src A SLH_DSA_KEY object to copy
+ * @param selection to select public and/or private components. Selecting the
+ *                  private key will also select the public key
+ * @returns The duplicated key, or NULL on failure.
+ */
+SLH_DSA_KEY *ossl_slh_dsa_key_dup(const SLH_DSA_KEY *src, int selection)
+{
+    SLH_DSA_KEY *ret = NULL;
+
+    if (src == NULL)
+        return NULL;
+
+    ret = OPENSSL_zalloc(sizeof(*ret));
+    if (ret != NULL) {
+        *ret = *src; /* this copies everything including the keydata in priv[] */
+        ret->propq = NULL;
+        ret->pub = NULL;
+        ret->has_priv = 0;
+        slh_dsa_key_hash_dup(ret, src);
+        if (src->propq != NULL) {
+            ret->propq = OPENSSL_strdup(src->propq);
+            if (ret->propq == NULL)
+                goto err;
+        }
+        if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
+            /* The public components are present if the private key is present */
+            if (src->pub != NULL)
+                ret->pub = SLH_DSA_PUB(ret);
+            if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
+                ret->has_priv = src->has_priv;
+        }
+    }
+    return ret;
+ err:
+    ossl_slh_dsa_key_free(ret);
+    return NULL;
+}
+
+/**
  * @brief Are 2 keys equal?
  *
  * To be equal the keys must have the same key data and algorithm name.
@@ -126,37 +177,32 @@ void ossl_slh_dsa_key_free(SLH_DSA_KEY *key)
 int ossl_slh_dsa_key_equal(const SLH_DSA_KEY *key1, const SLH_DSA_KEY *key2,
                            int selection)
 {
-    int ok = 1;
+    int key_checked = 0;
+
+    /* The parameter sets must match - i.e. The same algorithm name */
+    if (key1->params != key2->params)
+        return 0;
 
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
-        /* The parameter sets must match - i.e. The same algorithm name */
-        if (key1->params != key2->params)
-            return 0;
-        /*
-         * If both keys dont have a public key return 1
-         * If only one of the keys has a public key return 0.
-         */
-        if (key1->pub == NULL)
-            return (key2->pub == NULL);
-        else if (key2->pub == NULL)
-            return 0;
-        /*
-         * Gets here if both keys have a public key
-         * Since the public key always exists with the private key, check either
-         * that the private key matches (which includes the public key) OR
-         * check that the public key matches depending on the selection.
-         */
-        if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
-            ok = ok && (key1->has_priv == key2->has_priv);
-            if (key1->has_priv)
-                ok = ok && (memcmp(key1->priv, key2->priv,
-                                   ossl_slh_dsa_key_get_priv_len(key1)) == 0);
-        } else {
-            ok = ok && (memcmp(key1->pub, key2->pub,
-                               ossl_slh_dsa_key_get_pub_len(key1)) == 0);
+        if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
+            if (key1->pub != NULL && key2->pub != NULL) {
+                if (memcmp(key1->pub, key2->pub, key1->params->pk_len) != 0)
+                    return 0;
+                key_checked = 1;
+            }
         }
+        if (!key_checked
+                && (selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
+            if (key1->has_priv && key2->has_priv) {
+                if (memcmp(key1->priv, key2->priv,
+                           key1->params->pk_len) != 0)
+                    return 0;
+                key_checked = 1;
+            }
+        }
+        return key_checked;
     }
-    return ok;
+    return 1;
 }
 
 int ossl_slh_dsa_key_has(const SLH_DSA_KEY *key, int selection)
