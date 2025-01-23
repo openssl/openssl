@@ -620,13 +620,13 @@ static size_t build_request_set(SSL *ssl)
                 if (new_stream == NULL
                     && (error = ERR_get_error()) != 0
                     && ERR_GET_REASON(error) == SSL_R_STREAM_COUNT_LIMITED) {
-                        /*
-                         * Kick the SSL state machine in the hopes that
-                         * the server has a MAX_STREAM frame for us to process
-                         */
-                        fprintf(stderr, "Stream limit reached, retrying\n");
-                        SSL_handle_events(ssl);
-                        continue;
+                    /*
+                     * Kick the SSL state machine in the hopes that
+                     * the server has a MAX_STREAM frame for us to process
+                     */
+                    fprintf(stderr, "Stream limit reached, retrying\n");
+                    SSL_handle_events(ssl);
+                    continue;
                 }
                 break;
             }
