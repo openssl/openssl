@@ -280,7 +280,7 @@ sub run_tests
         "Both support certificate compression, but no client auth");
 
     SKIP: {
-        skip "TLSProxy does not support partial messages for dtls", 2
+        skip "TODO(DTLSv1.3): Server hangs on client certificate + finish", 2
             if $run_test_as_dtls == 1;
         #Test 4: Both send cert comp, with client auth
         $proxy->clear();
