@@ -4,6 +4,11 @@
 # Most of all, ../apps/lib/apps.c needs to be divided in smaller pieces to
 # be useful here.
 #
+
+IF[{- !$disabled{hqinterop} -}]
+  SUBDIRS=quic-openssl-docker
+ENDIF
+
 # Auxiliary program source (copied from ../apps/build.info)
 IF[{- $config{target} =~ /^(?:VC-|mingw|BC-)/ -}]
   # It's called 'init', but doesn't have much 'init' in it...
