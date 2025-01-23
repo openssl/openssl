@@ -382,11 +382,6 @@ size_t ossl_slh_dsa_key_get_sig_len(const SLH_DSA_KEY *key)
 {
     return key->params->sig_len;
 }
-void ossl_slh_dsa_key_set0_libctx(SLH_DSA_KEY *key, OSSL_LIB_CTX *lib_ctx)
-{
-    key->libctx = lib_ctx;
-}
-
 const char *ossl_slh_dsa_key_get_name(const SLH_DSA_KEY *key)
 {
     return key->params->alg;

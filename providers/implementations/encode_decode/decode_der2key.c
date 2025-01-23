@@ -604,8 +604,7 @@ slh_dsa_d2i_PKCS8(const uint8_t **der, long der_len, struct der2key_ctx_st *ctx)
                                     ctx->desc->keytype_name)) == NULL)
         goto end;
 
-    if (!ossl_slh_dsa_sk_decode(key, p, plen)
-            || !ossl_slh_dsa_key_public_from_private(key))
+    if (!ossl_slh_dsa_set_priv(key, p, plen))
         goto end;
     ret = key;
  end:
@@ -631,24 +630,24 @@ static ossl_inline void *slh_dsa_d2i_PUBKEY(const uint8_t **der, long der_len,
     len = ossl_slh_dsa_key_get_pub_len(ret);
 
     /*-
-     * The DER ASN.1 encoding of SLH-DSA public keys prepends 22 bytes to the
-     * encoded public key:
+     * The DER ASN.1 encoding of SLH-DSA public keys prepends 18 bytes to the
+     * encoded public key (since the large public key size is 64 bytes):
      *
-     * - 4 byte outer sequence tag and length
+     * - 2 byte outer sequence tag and length
      * -  2 byte algorithm sequence tag and length
      * -    2 byte algorithm OID tag and length
      * -      9 byte algorithm OID
-     * -  4 byte bit string tag and length
+     * -  2 byte bit string tag and length
      * -    1 bitstring lead byte
      *
      * Check that we have the right OID, the bit string has no "bits left" and
      * that we consume all the input exactly.
      */
-    if (der_len != 22 + (long)len) {
+    if (der_len != 18 + (long)len) {
         ERR_raise_data(ERR_LIB_PROV, PROV_R_BAD_ENCODING,
                        "unexpected %s public key length: %ld != %ld",
                        ctx->desc->keytype_name, der_len,
-                       22 + (long)len);
+                       18 + (long)len);
         goto err;
     }
 
@@ -678,7 +677,7 @@ static ossl_inline void *slh_dsa_d2i_PUBKEY(const uint8_t **der, long der_len,
         goto err;
     }
 
-    if (!ossl_ml_dsa_pk_decode(ret, spki->pubkey->data, spki->pubkey->length)) {
+    if (!ossl_slh_dsa_set_pub(ret, spki->pubkey->data, spki->pubkey->length)) {
         ERR_raise_data(ERR_LIB_PROV, PROV_R_BAD_ENCODING,
                        "failed to parse %s public key from the input data",
                        ossl_slh_dsa_key_get_name(ret));
