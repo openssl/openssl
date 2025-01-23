@@ -31,6 +31,11 @@ OpenSSL 3.6
 
 ### Changes between 3.5 and 3.6 [xx XXX xxxx]
 
+ * Added LMS signature verification support as per [SP 800-208].  This
+   support is present in both the FIPS and default providers.
+
+   *Shane Lontis and Paul Dale*
+
  * Introduces use of `<stdbool.h>` when handling JSON encoding in
    the OpenSSL codebase, replacing the previous use of `int` for
    these boolean values.
@@ -21507,3 +21512,4 @@ ndif
 [CVE-2002-0655]: https://www.openssl.org/news/vulnerabilities.html#CVE-2002-0655
 [CMVP]: https://csrc.nist.gov/projects/cryptographic-module-validation-program
 [ESV]: https://csrc.nist.gov/Projects/cryptographic-module-validation-program/entropy-validations
+[SP 800-208]: https://csrc.nist.gov/pubs/sp/800/208/final
