@@ -25,6 +25,7 @@ typedef struct slh_dsa_key_st SLH_DSA_KEY;
 __owur SLH_DSA_KEY *ossl_slh_dsa_key_new(OSSL_LIB_CTX *libctx, const char *propq,
                                          const char *alg);
 void ossl_slh_dsa_key_free(SLH_DSA_KEY *key);
+__owur SLH_DSA_KEY *ossl_slh_dsa_key_dup(const SLH_DSA_KEY *src, int selection);
 __owur int ossl_slh_dsa_key_equal(const SLH_DSA_KEY *key1, const SLH_DSA_KEY *key2,
                                   int selection);
 __owur int ossl_slh_dsa_key_has(const SLH_DSA_KEY *key, int selection);

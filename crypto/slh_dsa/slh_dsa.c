@@ -9,6 +9,8 @@
 #include <assert.h>
 #include <stddef.h>
 #include <string.h>
+#include <openssl/err.h>
+#include <openssl/proverr.h>
 #include "slh_dsa_local.h"
 #include "slh_dsa_key.h"
 
@@ -72,8 +74,10 @@ static int slh_sign_internal(SLH_DSA_HASH_CTX *hctx,
     if (sig_size < sig_len_expected)
         return 0;
     /* Exit if private key is not set */
-    if (priv->has_priv == 0)
+    if (priv->has_priv == 0) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_KEY);
         return 0;
+    }
 
     if (!WPACKET_init_static_len(wpkt, sig, sig_len_expected, 0))
         return 0;
@@ -160,8 +164,10 @@ static int slh_verify_internal(SLH_DSA_HASH_CTX *hctx,
     uint32_t leaf_id;
 
     /* Exit if public key is not set */
-    if (pub->pub == NULL)
+    if (pub->pub == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_KEY);
         return 0;
+    }
 
     /* Exit if signature is invalid size */
     if (sig_len != params->sig_len
@@ -306,6 +312,7 @@ int ossl_slh_dsa_verify(SLH_DSA_HASH_CTX *slh_ctx,
 /* See FIPS 205 Algorithm 2 toInt(X, n) */
 static uint64_t bytes_to_u64_be(const uint8_t *in, size_t in_len)
 {
+
     size_t i;
     uint64_t total = 0;
 
