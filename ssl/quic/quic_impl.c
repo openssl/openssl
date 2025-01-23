@@ -594,7 +594,7 @@ SSL *ossl_quic_new(SSL_CTX *ctx)
         = ((ctx->domain_flags & SSL_DOMAIN_FLAG_THREAD_ASSISTED) != 0);
 #endif
 
-    qc->as_server       = 0; /* TODO(QUIC SERVER): add server support */
+    qc->as_server       = 0;
     qc->as_server_state = qc->as_server;
 
     if (!create_channel(qc, ctx))
