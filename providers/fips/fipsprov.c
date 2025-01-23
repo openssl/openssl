@@ -816,6 +816,7 @@ int OSSL_provider_init_int(const OSSL_CORE_HANDLE *handle,
     }
 
     ossl_prov_ctx_set0_libctx(*provctx, libctx);
+    ossl_prov_ctx_set0_core_get_params(*provctx, c_get_params);
     ossl_prov_ctx_set0_handle(*provctx, handle);
 
     *out = fips_dispatch_table;

@@ -661,6 +661,7 @@ int ossl_default_provider_init(const OSSL_CORE_HANDLE *handle,
                                        (OSSL_LIB_CTX *)c_get_libctx(handle));
     ossl_prov_ctx_set0_handle(*provctx, handle);
     ossl_prov_ctx_set0_core_bio_method(*provctx, corebiometh);
+    ossl_prov_ctx_set0_core_get_params(*provctx, c_get_params);
 
     *out = deflt_dispatch_table;
     ossl_prov_cache_exported_algorithms(deflt_ciphers, exported_ciphers);
