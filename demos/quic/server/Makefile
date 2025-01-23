@@ -2,11 +2,9 @@
 # To run the demo when linked with a shared library (default) ensure that
 # libcrypto and libssl are on the library path. For example:
 #
-#    LD_LIBRARY_PATH=../.. ./server 4444 \
-#    	../../test/certs/servercert.pem \
-#    	../../test/certs/serverkey.pem
-#
-# TODO(QUIC SERVER): Add build.info.
+#    LD_LIBRARY_PATH=../../.. ./server 4444 \
+#    	../../../test/certs/servercert.pem \
+#    	../../../test/certs/serverkey.pem
 #
 CFLAGS  += -I../../../include -g -Wall -Wsign-compare
 LDFLAGS += -L../../..
