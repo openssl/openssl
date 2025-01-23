@@ -9,8 +9,12 @@
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 #include <openssl/quic.h>
-#include <netinet/in.h>
-#include <unistd.h>
+#ifdef _WIN32 /* Windows */
+# include <winsock2.h>
+#else /* Linux/Unix */
+# include <netinet/in.h>
+# include <unistd.h>
+#endif
 #include <assert.h>
 
 /*
