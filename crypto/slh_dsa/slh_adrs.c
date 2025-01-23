@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 #include <string.h>
+#include <openssl/byteorder.h>
 #include "slh_adrs.h"
 
 /* See FIPS 205 - Section 4.3 Table 1  Uncompressed Addresses */
@@ -60,37 +61,13 @@ static OSSL_SLH_ADRS_FUNC_set_hash_address slh_adrsc_set_hash_address;
 static OSSL_SLH_ADRS_FUNC_zero slh_adrsc_zero;
 static OSSL_SLH_ADRS_FUNC_copy slh_adrsc_copy;
 
-/* Variants of the FIPS 205 Algorithm 3 toByte(x, n) for 32 and 64 bit integers */
-
-/* Convert a 32 bit value |in| to 4 bytes |out| in big endian format */
-static ossl_inline void U32TOSTR(unsigned char *out, uint32_t in)
-{
-    out[3] = (unsigned char)((in) & 0xff);
-    out[2] = (unsigned char)((in >> 8) & 0xff);
-    out[1] = (unsigned char)((in >> 16) & 0xff);
-    out[0] = (unsigned char)((in >> 24) & 0xff);
-}
-
-/* Convert a 64 bit value |in| to 8 bytes |out| in big endian format */
-static ossl_inline void U64TOSTR(unsigned char *out, uint64_t in)
-{
-    out[7] = (unsigned char)((in) & 0xff);
-    out[6] = (unsigned char)((in >> 8) & 0xff);
-    out[5] = (unsigned char)((in >> 16) & 0xff);
-    out[4] = (unsigned char)((in >> 24) & 0xff);
-    out[3] = (unsigned char)((in >> 32) & 0xff);
-    out[2] = (unsigned char)((in >> 40) & 0xff);
-    out[1] = (unsigned char)((in >> 48) & 0xff);
-    out[0] = (unsigned char)((in >> 56) & 0xff);
-}
-
 /*
  * The non compressed versions of the ADRS functions use 32 bytes
  * This is only used by SHAKE.
  */
 static void slh_adrs_set_layer_address(SLH_ADRS adrs, uint32_t layer)
 {
-    U32TOSTR(adrs + SLH_ADRS_OFF_LAYER_ADR, layer);
+    OPENSSL_store_u32_be(adrs + SLH_ADRS_OFF_LAYER_ADR, layer);
 }
 static void slh_adrs_set_tree_address(SLH_ADRS adrs, uint64_t address)
 {
@@ -100,16 +77,16 @@ static void slh_adrs_set_tree_address(SLH_ADRS adrs, uint64_t address)
      * first 4 of the 12 bytes will be zeros. This assumes that the 4 bytes
      * are zero initially.
      */
-    U64TOSTR(adrs + SLH_ADRS_OFF_TREE_ADR + 4, address);
+    OPENSSL_store_u64_be(adrs + SLH_ADRS_OFF_TREE_ADR + 4, address);
 }
 static void slh_adrs_set_type_and_clear(SLH_ADRS adrs, uint32_t type)
 {
-    U32TOSTR(adrs + SLH_ADRS_OFF_TYPE, type);
+    OPENSSL_store_u32_be(adrs + SLH_ADRS_OFF_TYPE, type);
     memset(adrs + SLH_ADRS_OFF_TYPE + SLH_ADRS_SIZE_TYPE, 0, SLH_ADRS_SIZE_TYPECLEAR);
 }
 static void slh_adrs_set_keypair_address(SLH_ADRS adrs, uint32_t in)
 {
-    U32TOSTR(adrs + SLH_ADRS_OFF_KEYPAIR_ADDR, in);
+    OPENSSL_store_u32_be(adrs + SLH_ADRS_OFF_KEYPAIR_ADDR, in);
 }
 static void slh_adrs_copy_keypair_address(SLH_ADRS dst, const SLH_ADRS src)
 {
@@ -118,11 +95,11 @@ static void slh_adrs_copy_keypair_address(SLH_ADRS dst, const SLH_ADRS src)
 }
 static void slh_adrs_set_chain_address(SLH_ADRS adrs, uint32_t in)
 {
-    U32TOSTR(adrs + SLH_ADRS_OFF_CHAIN_ADDR, in);
+    OPENSSL_store_u32_be(adrs + SLH_ADRS_OFF_CHAIN_ADDR, in);
 }
 static void slh_adrs_set_hash_address(SLH_ADRS adrs, uint32_t in)
 {
-    U32TOSTR(adrs + SLH_ADRS_OFF_HASH_ADDR, in);
+    OPENSSL_store_u32_be(adrs + SLH_ADRS_OFF_HASH_ADDR, in);
 }
 static void slh_adrs_zero(SLH_ADRS adrs)
 {
@@ -140,7 +117,7 @@ static void slh_adrsc_set_layer_address(SLH_ADRS adrsc, uint32_t layer)
 }
 static void slh_adrsc_set_tree_address(SLH_ADRS adrsc, uint64_t in)
 {
-    U64TOSTR(adrsc + SLH_ADRSC_OFF_TREE_ADR, in);
+    OPENSSL_store_u64_be(adrsc + SLH_ADRSC_OFF_TREE_ADR, in);
 }
 static void slh_adrsc_set_type_and_clear(SLH_ADRS adrsc, uint32_t type)
 {
@@ -149,7 +126,7 @@ static void slh_adrsc_set_type_and_clear(SLH_ADRS adrsc, uint32_t type)
 }
 static void slh_adrsc_set_keypair_address(SLH_ADRS adrsc, uint32_t in)
 {
-    U32TOSTR(adrsc + SLH_ADRSC_OFF_KEYPAIR_ADDR, in);
+    OPENSSL_store_u32_be(adrsc + SLH_ADRSC_OFF_KEYPAIR_ADDR, in);
 }
 static void slh_adrsc_copy_keypair_address(SLH_ADRS dst, const SLH_ADRS src)
 {
@@ -158,11 +135,11 @@ static void slh_adrsc_copy_keypair_address(SLH_ADRS dst, const SLH_ADRS src)
 }
 static void slh_adrsc_set_chain_address(SLH_ADRS adrsc, uint32_t in)
 {
-    U32TOSTR(adrsc + SLH_ADRSC_OFF_CHAIN_ADDR, in);
+    OPENSSL_store_u32_be(adrsc + SLH_ADRSC_OFF_CHAIN_ADDR, in);
 }
 static void slh_adrsc_set_hash_address(SLH_ADRS adrsc, uint32_t in)
 {
-    U32TOSTR(adrsc + SLH_ADRSC_OFF_HASH_ADDR, in);
+    OPENSSL_store_u32_be(adrsc + SLH_ADRSC_OFF_HASH_ADDR, in);
 }
 static void slh_adrsc_zero(SLH_ADRS adrsc)
 {
