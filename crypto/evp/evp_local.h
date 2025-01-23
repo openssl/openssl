@@ -317,6 +317,9 @@ EVP_KEYEXCH *evp_keyexch_fetch_from_prov(OSSL_PROVIDER *prov,
 EVP_KEM *evp_kem_fetch_from_prov(OSSL_PROVIDER *prov,
                                  const char *name,
                                  const char *properties);
+EVP_CIPHER *evp_cipher_fetch_from_prov(OSSL_PROVIDER *prov,
+                                       const char *algorithm,
+                                       const char *properties);
 
 /* Internal structure constructors for fetched methods */
 EVP_MD *evp_md_new(void);
