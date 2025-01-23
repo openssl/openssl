@@ -91,8 +91,11 @@ elif [ "$ROLE" == "server" ]; then
     "handshake"|"transfer"|"ipv6")
         NO_ADDR_VALIDATE=yes SSLKEYLOGFILE=/logs/keys.log FILEPREFIX=/www quic-hq-interop-server 443 /certs/cert.pem /certs/priv.key
         ;;
-    "retry"|"resumption")
-     	SSLKEYLOGFILE=/logs/keys.log FILEPREFIX=/www quic-hq-interop-server 443 /certs/cert.pem /certs/priv.key
+    "retry")
+        SSLKEYLOGFILE=/logs/keys.log FILEPREFIX=/www quic-hq-interop-server 443 /certs/cert.pem /certs/priv.key
+        ;;
+    "resumption")
+        NO_ADDR_VALIDATE=yes SSLKEYLOGFILE=/logs/keys.log FILEPREFIX=/www quic-hq-interop-server 443 /certs/cert.pem /certs/priv.key
         ;;
     "http3")
         FILEPREFIX=/www/ SSLKEYLOGFILE=/logs/keys.log ossl-nghttp3-demo-server 443 /certs/cert.pem /certs/priv.key
