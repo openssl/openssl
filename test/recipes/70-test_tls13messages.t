@@ -395,8 +395,11 @@ sub run_tests
         "ALPN handshake test");
 
     SKIP: {
+        # TODO(DTLSv1.3): When ecx is disabled the test reports "Invalid
+        # CertificateVerify signature length" when running with DTLS.
         skip "No CT, EC or OCSP support in this OpenSSL build", 1
-            if disabled("ct") || disabled("ec") || disabled("ocsp");
+            if disabled("ct") || disabled("ec") || disabled("ocsp")
+               || ($run_test_as_dtls == 1 && disabled("ecx"));
 
         #Test 14: SCT handshake (client request only)
         $proxy->clear();

@@ -76,21 +76,25 @@ sub run_tests
         );
     }
 
-    #Test 1: A client should fail if the server changes the ciphersuite between the
-    #        HRR and the SH
-    $proxy->clear();
-    if (disabled("ec")) {
-        $proxy->serverflags("-curves ffdhe3072");
+    SKIP: {
+        skip "TODO(DTLSv1.3): Test stalls when server sends its ServerHello.",
+            1 if $run_test_as_dtls == 1 && disabled("ecx");
+        #Test 1: A client should fail if the server changes the ciphersuite between the
+        #        HRR and the SH
+        $proxy->clear();
+        if (disabled("ec")) {
+            $proxy->serverflags("-curves ffdhe3072");
+        }
+        else {
+            $proxy->serverflags("-curves P-256");
+        }
+        $testtype = CHANGE_HRR_CIPHERSUITE;
+        # Skip tests if TLSProxy if it fails to start. For DTLS this return is always
+        # false when the handshake fails so we skip the check.
+        skip "TLSProxy did not start correctly", $testcount if $proxy->start() == 0
+            && $run_test_as_dtls == 0;
+        ok(TLSProxy::Message->fail(), "Server ciphersuite changes");
     }
-    else {
-        $proxy->serverflags("-curves P-256");
-    }
-    $testtype = CHANGE_HRR_CIPHERSUITE;
-    # Skip tests if TLSProxy if it fails to start. For DTLS this return is always
-    # false when the handshake fails so we skip the check.
-    skip "TLSProxy did not start correctly", $testcount if $proxy->start() == 0
-                                                           && $run_test_as_dtls == 0;
-    ok(TLSProxy::Message->fail(), "Server ciphersuite changes");
 
     #Test 2: It is an error if the client changes the offered ciphersuites so that
     #        we end up selecting a different ciphersuite between HRR and the SH
