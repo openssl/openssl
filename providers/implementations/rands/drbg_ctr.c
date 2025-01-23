@@ -20,6 +20,9 @@
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
 #include "drbg_local.h"
+#include "crypto/evp.h"
+#include "crypto/evp/evp_local.h"
+#include "internal/provider.h"
 
 static OSSL_FUNC_rand_newctx_fn drbg_ctr_new_wrapper;
 static OSSL_FUNC_rand_freectx_fn drbg_ctr_free;
@@ -709,6 +712,7 @@ static int drbg_ctr_set_ctx_params_locked(void *vctx, const OSSL_PARAM params[])
     PROV_DRBG *ctx = (PROV_DRBG *)vctx;
     PROV_DRBG_CTR *ctr = (PROV_DRBG_CTR *)ctx->data;
     OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
+    OSSL_PROVIDER *prov = NULL;
     const OSSL_PARAM *p;
     char *ecb;
     const char *propquery = NULL;
@@ -728,6 +732,15 @@ static int drbg_ctr_set_ctx_params_locked(void *vctx, const OSSL_PARAM params[])
         propquery = (const char *)p->data;
     }
 
+    if ((p = OSSL_PARAM_locate_const(params,
+                                     OSSL_PROV_PARAM_CORE_PROV_NAME)) != NULL) {
+        if (p->data_type != OSSL_PARAM_UTF8_STRING)
+            return 0;
+        if ((prov = ossl_provider_find(libctx,
+                                       (const char *)p->data, 1)) == NULL)
+            return 0;
+    }
+
     if ((p = OSSL_PARAM_locate_const(params, OSSL_DRBG_PARAM_CIPHER)) != NULL) {
         const char *base = (const char *)p->data;
         size_t ctr_str_len = sizeof("CTR") - 1;
@@ -745,8 +758,16 @@ static int drbg_ctr_set_ctx_params_locked(void *vctx, const OSSL_PARAM params[])
         strcpy(ecb + p->data_size - ecb_str_len, "ECB");
         EVP_CIPHER_free(ctr->cipher_ecb);
         EVP_CIPHER_free(ctr->cipher_ctr);
-        ctr->cipher_ctr = EVP_CIPHER_fetch(libctx, base, propquery);
-        ctr->cipher_ecb = EVP_CIPHER_fetch(libctx, ecb, propquery);
+        /*
+         * Try to fetch algorithms from our own provider code, fallback
+         * to generic fetch only if that fails
+         */
+        ctr->cipher_ctr = evp_cipher_fetch_from_prov(prov, base, propquery);
+        if (ctr->cipher_ctr == NULL)
+            ctr->cipher_ctr = EVP_CIPHER_fetch(libctx, base, propquery);
+        ctr->cipher_ecb = evp_cipher_fetch_from_prov(prov, ecb, propquery);
+        if (ctr->cipher_ecb == NULL)
+            ctr->cipher_ecb = EVP_CIPHER_fetch(libctx, ecb, propquery);
         OPENSSL_free(ecb);
         if (ctr->cipher_ctr == NULL || ctr->cipher_ecb == NULL) {
             ERR_raise(ERR_LIB_PROV, PROV_R_UNABLE_TO_FIND_CIPHERS);

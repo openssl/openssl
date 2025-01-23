@@ -2065,6 +2065,17 @@ EVP_CIPHER *EVP_CIPHER_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
     return cipher;
 }
 
+EVP_CIPHER *evp_cipher_fetch_from_prov(OSSL_PROVIDER *prov,
+                                       const char *algorithm,
+                                       const char *properties)
+{
+    return evp_generic_fetch_from_prov(prov, OSSL_OP_CIPHER,
+                                       algorithm, properties,
+                                       evp_cipher_from_algorithm,
+                                       evp_cipher_up_ref,
+                                       evp_cipher_free);
+}
+
 int EVP_CIPHER_can_pipeline(const EVP_CIPHER *cipher, int enc)
 {
     if (((enc && cipher->p_einit != NULL) || (!enc && cipher->p_dinit != NULL))
