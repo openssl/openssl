@@ -10,7 +10,7 @@ name: "Make release"
 on:
   push:
     tags:
-      - "openssl-*"
+      - "openssl-**"
 
 jobs:
   release:
