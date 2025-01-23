@@ -26,7 +26,6 @@
 /*
  * @brief Convert a byte array to a byte array of (4 bit) nibbles
  * This is a Variant of the FIPS 205 Algorithm 4 base_2^b function.
- * It assumes that |in_len| is an even number and b is 4 bits.
  *
  * @param in A byte message to convert
  * @param in_len The size of |in|.
@@ -36,8 +35,6 @@ static ossl_inline void slh_bytes_to_nibbles(const uint8_t *in, size_t in_len,
                                              uint8_t *out)
 {
     size_t consumed = 0;
-
-    assert((in_len & 1) == 0);
 
     for (consumed = 0; consumed < in_len; consumed++) {
         *out++ = (*in >> NIBBLE_SHIFT);

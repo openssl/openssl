@@ -16,7 +16,7 @@
 # include "internal/packet.h"
 
 # define SLH_HASH_FUNC_DECLARE(ctx, hashf)            \
-    const SLH_HASH_FUNC *hashf = ctx->hash_func;      \
+    const SLH_HASH_FUNC *hashf = ctx->hash_func       \
 
 # define SLH_HASH_FN_DECLARE(hashf, t) OSSL_SLH_HASHFUNC_##t * t = hashf->t
 
