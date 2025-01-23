@@ -23,16 +23,6 @@
 #include "quic_port_local.h"
 #include "quic_engine_local.h"
 
-/*
- * NOTE: While this channel implementation currently has basic server support,
- * this functionality has been implemented for internal testing purposes and is
- * not suitable for network use. In particular, it does not implement address
- * validation, anti-amplification or retry logic.
- *
- * TODO(QUIC SERVER): Implement address validation and anti-amplification
- * TODO(QUIC SERVER): Implement retry logic
- */
-
 #define INIT_CRYPTO_RECV_BUF_LEN    16384
 #define INIT_CRYPTO_SEND_BUF_LEN    16384
 #define INIT_APP_BUF_LEN             8192
@@ -1539,10 +1529,8 @@ static int ch_on_transport_params(const unsigned char *params,
             }
 
             /*
-             * We must ensure a client doesn't send them because we don't have
-             * processing for them.
-             *
-             * TODO(QUIC SERVER): remove this restriction
+             * RFC 9000 s. 18.2: This transport parameter MUST NOT be sent
+             * by a client but MAY be sent by a server.
              */
             if (ch->is_server) {
                 reason = TP_REASON_SERVER_ONLY("STATELESS_RESET_TOKEN");

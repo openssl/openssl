@@ -28,7 +28,7 @@
  * represents a single QUIC connection. All QUIC_PORT instances must belong
  * to a QUIC_ENGINE.
  *
- * TODO(QUIC SERVER): Currently a QUIC_PORT belongs to a single QUIC_CHANNEL.
+ * TODO(QUIC FUTURE): Currently a QUIC_PORT belongs to a single QUIC_CHANNEL.
  * This will cease to be the case once connection migration and/or multipath is
  * implemented, so in future a channel might be associated with multiple ports.
  *
