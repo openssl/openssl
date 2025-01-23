@@ -159,12 +159,10 @@ $code.=<<___;
 	mov     $bkstate1.16b, $state1.16b
 	mov     $bkstate2.16b, $state2.16b
 
-#ifndef __AARCH64EB__
 	rev32   $s0.16b, $s0.16b
 	rev32   $s1.16b, $s1.16b
 	rev32   $s2.16b, $s2.16b
 	rev32   $s3.16b, $s3.16b
-#endif
 
 	ext     $vconst_tmp1.16b, $vconst1.16b, $vconst1.16b, #4
 ___
