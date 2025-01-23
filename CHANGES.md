@@ -37,6 +37,11 @@ OpenSSL 3.5
 
   *Viktor Dukhovni*
 
+* Added LMS signature verification support as per [SP 800-208].
+  This support is present in both the FIPS and default providers.
+
+  *Shane Lontis and Paul Dale*
+
 * All the BIO_meth_get_*() functions allowing reuse of the internal OpenSSL
   BIO method implementations were deprecated. The reuse is unsafe due to
   dependency on the code of the internal methods not changing.
@@ -21202,3 +21207,4 @@ ndif
 [CVE-2002-0655]: https://www.openssl.org/news/vulnerabilities.html#CVE-2002-0655
 [CMVP]: https://csrc.nist.gov/projects/cryptographic-module-validation-program
 [ESV]: https://csrc.nist.gov/Projects/cryptographic-module-validation-program/entropy-validations
+[SP 800-208]: https://csrc.nist.gov/pubs/sp/800/208/final
