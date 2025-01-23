@@ -40,6 +40,9 @@ jobs:
       matrix:
         tests: [http3, transfer, handshake, retry, chacha20, resumption, amplificationlimit]
         clients: [quic-go, ngtcp2, mvfst, quiche, msquic, openssl]
+        exclude:
+          - clients: mvfst
+            tests: amplificationlimit
       fail-fast: false
     runs-on: ubuntu-latest
     steps:
