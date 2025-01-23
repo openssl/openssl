@@ -140,28 +140,6 @@ static const OSSL_PARAM *ml_dsa_gettable_params(void *provctx)
     return ml_dsa_params;
 }
 
-static int key_to_params(ML_DSA_KEY *key, OSSL_PARAM_BLD *tmpl,
-                         int include_private)
-{
-    /* Error if there is no key or public key */
-    if (key == NULL || ossl_ml_dsa_key_get_pub(key) == NULL)
-        return 0;
-    /*
-     * Note that the private key always contains the public key elements so we
-     * just save the one blob and return.
-     */
-    if (include_private && ossl_ml_dsa_key_get_priv(key) != NULL)
-        return ossl_param_build_set_octet_string(tmpl, NULL,
-                                                 OSSL_PKEY_PARAM_PRIV_KEY,
-                                                 ossl_ml_dsa_key_get_priv(key),
-                                                 ossl_ml_dsa_key_get_priv_len(key));
-    /* Otherwise write out the public key element */
-    return ossl_param_build_set_octet_string(tmpl, NULL,
-                                             OSSL_PKEY_PARAM_PUB_KEY,
-                                             ossl_ml_dsa_key_get_pub(key),
-                                             ossl_ml_dsa_key_get_pub_len(key));
-}
-
 static int ml_dsa_get_params(void *keydata, OSSL_PARAM params[])
 {
     ML_DSA_KEY *key = keydata;
@@ -203,9 +181,8 @@ static int ml_dsa_export(void *keydata, int selection,
                          OSSL_CALLBACK *param_cb, void *cbarg)
 {
     ML_DSA_KEY *key = keydata;
-    OSSL_PARAM_BLD *tmpl;
-    OSSL_PARAM *params = NULL;
-    int ret = 0, include_private;
+    OSSL_PARAM params[2];
+    int include_private;
 
     if (!ossl_prov_is_running() || key == NULL)
         return 0;
@@ -213,23 +190,27 @@ static int ml_dsa_export(void *keydata, int selection,
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0)
         return 0;
 
-    tmpl = OSSL_PARAM_BLD_new();
-    if (tmpl == NULL)
+    include_private = ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0);
+
+    /* Error if there is no public key */
+    if (ossl_ml_dsa_key_get_pub(key) == NULL)
         return 0;
 
-    include_private = ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0);
-    if (!key_to_params(key, tmpl, include_private))
-        goto err;
+    /*
+     * Note that the private key always contains the public key elements so we
+     * just save the one blob and return.
+     */
+    if (include_private && ossl_ml_dsa_key_get_priv(key) != NULL)
+        params[0] = OSSL_PARAM_construct_octet_string
+            (OSSL_PKEY_PARAM_PRIV_KEY, (void *)ossl_ml_dsa_key_get_priv(key),
+             ossl_ml_dsa_key_get_priv_len(key));
+    else
+        params[0] = OSSL_PARAM_construct_octet_string
+            (OSSL_PKEY_PARAM_PUB_KEY, (void *)ossl_ml_dsa_key_get_pub(key),
+             ossl_ml_dsa_key_get_pub_len(key));
+    params[1] = OSSL_PARAM_construct_end();
 
-    params = OSSL_PARAM_BLD_to_param(tmpl);
-    if (params == NULL)
-        goto err;
-
-    ret = param_cb(params, cbarg);
-    OSSL_PARAM_free(params);
-err:
-    OSSL_PARAM_BLD_free(tmpl);
-    return ret;
+    return param_cb(params, cbarg);
 }
 
 static void *ml_dsa_load(const void *reference, size_t reference_sz)
