@@ -17,6 +17,24 @@ FIPSversion = >=3.2.0
 Cipher = aes-128-gcm-siv
 Key = 01000000000000000000000000000000
 IV = 030000000000000000000000
+Tag = dc20e2d83f25705bb49e439eca56de25
+Plaintext = 
+Ciphertext = 
+
+
+FIPSversion = >=3.2.0
+Cipher = aes-128-gcm-siv
+Key = e66021d5eb8e4f4066d4adb9c33560e4
+IV = f46e44bb3da0015c94f70887
+Tag = a4194b79071b01a87d65f706e3949578
+Plaintext = 
+Ciphertext = 
+
+
+FIPSversion = >=3.2.0
+Cipher = aes-128-gcm-siv
+Key = 01000000000000000000000000000000
+IV = 030000000000000000000000
 Tag = 578782fff6013b815b287c22493a364c
 Plaintext = 0100000000000000
 Ciphertext = b5d839330ac7b786
@@ -227,6 +245,24 @@ Ciphertext = 391cc328d484a4f46406181bcd62efd9b3ee197d05
 
 
 # AES_256_GCM_SIV
+
+
+FIPSversion = >=3.2.0
+Cipher = aes-256-gcm-siv
+Key = 0100000000000000000000000000000000000000000000000000000000000000
+IV = 030000000000000000000000
+Tag = 07f5f4169bbf55a8400cd47ea6fd400f
+Plaintext = 
+Ciphertext = 
+
+
+FIPSversion = >=3.2.0
+Cipher = aes-256-gcm-siv
+Key = e66021d5eb8e4f4066d4adb9c33560e4f46e44bb3da0015c94f7088736864200
+IV = e0eaf5284d884a0e77d31646
+Tag = 169fbb2fbf389a995f6390af22228a62
+Plaintext = 
+Ciphertext = 
 
 
 FIPSversion = >=3.2.0
