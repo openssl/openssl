@@ -9,8 +9,12 @@
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 #include <openssl/quic.h>
-#include <netinet/in.h>
-#include <unistd.h>
+#ifdef _WIN32 /* Windows */
+# include <winsock2.h>
+#else /* Linux/Unix */
+# include <netinet/in.h>
+# include <unistd.h>
+#endif
 #include <assert.h>
 
 /*
@@ -155,7 +159,8 @@ static int run_quic_server(SSL_CTX *ctx, int fd)
      * so the below call is not actually necessary. The configured behaviour is
      * inherited by child objects.
      */
-    SSL_set_blocking_mode(listener, 1);
+    if (!SSL_set_blocking_mode(listener, 1))
+        goto err;
 
     for (;;) {
         /* Blocking wait for an incoming connection, similar to accept(2). */
