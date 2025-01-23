@@ -608,20 +608,18 @@ static size_t build_request_set(SSL *ssl)
         new_stream = NULL;
 
         /*
-         * We don't strictly have to do this check, but our quic client limits
-         * our max data streams to 25, so we're just batching in groups of 100
-         * for now
-         * NOTE: WE are doing groups of 25 because thats 1/4 of the initial max
+         * NOTE: We are doing groups of 25 because thats 1/4 of the initial max
          * stream count that most servers advertise.  This gives the server an
          * opportunity to send us updated MAX_STREAM frames to extend our stream
-         * allotment, which many servers defer doing.
+         * allotment before we run out, which many servers defer doing.
          */
         if (poll_count <= 25) {
             for (retry_count = 0; retry_count < 10; retry_count++) {
                 ERR_clear_error();
                 new_stream = SSL_new_stream(ssl, 0);
-                if (new_stream == NULL && (error = ERR_get_error()) != 0) {
-                    if (ERR_GET_REASON(error) == SSL_R_STREAM_COUNT_LIMITED) {
+                if (new_stream == NULL
+                    && (error = ERR_get_error()) != 0
+                    && ERR_GET_REASON(error) == SSL_R_STREAM_COUNT_LIMITED) {
                         /*
                          * Kick the SSL state machine in the hopes that
                          * the server has a MAX_STREAM frame for us to process
@@ -629,8 +627,6 @@ static size_t build_request_set(SSL *ssl)
                         fprintf(stderr, "Stream limit reached, retrying\n");
                         SSL_handle_events(ssl);
                         continue;
-                    }
-                    break;
                 }
                 break;
             }
