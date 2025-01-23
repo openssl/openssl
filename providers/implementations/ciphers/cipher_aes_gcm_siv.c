@@ -144,13 +144,6 @@ static int ossl_aes_gcm_siv_cipher(void *vctx, unsigned char *out, size_t *outl,
     if (!ossl_prov_is_running())
         return 0;
 
-    /* The RFC has a test case for this, but we don't try to do anything */
-    if (inl == 0) {
-        if (outl != NULL)
-            *outl = 0;
-        return 1;
-    }
-
     if (outsize < inl) {
         ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
         return 0;
