@@ -450,13 +450,13 @@ static int self_test_digest_sign(const ST_KAT_SIGN *t,
                                  OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
 {
     int ret = 0;
-    OSSL_PARAM *paramskey = NULL, *paramsinit = NULL;
-    OSSL_PARAM_BLD *bldkey = NULL, *bldinit = NULL;
+    OSSL_PARAM *paramskey = NULL, *paramsinit = NULL, *paramsverify = NULL;
+    OSSL_PARAM_BLD *bldkey = NULL, *bldinit = NULL, *bldverify = NULL;
     EVP_SIGNATURE *sigalg = NULL;
     EVP_PKEY_CTX *ctx = NULL;
     EVP_PKEY_CTX *fromctx = NULL;
     EVP_PKEY *pkey = NULL;
-    unsigned char sig[256];
+    unsigned char sig[5000];
     BN_CTX *bnctx = NULL;
     size_t siglen = sizeof(sig);
     int digested = 0;
@@ -482,19 +482,23 @@ static int self_test_digest_sign(const ST_KAT_SIGN *t,
 
     bldkey = OSSL_PARAM_BLD_new();
     bldinit = OSSL_PARAM_BLD_new();
-    if (bldkey == NULL || bldinit == NULL)
+    bldverify = OSSL_PARAM_BLD_new();
+    if (bldkey == NULL || bldinit == NULL || bldverify == NULL)
         goto err;
 
     if (!add_params(bldkey, t->key, bnctx)
-            || !add_params(bldinit, t->init, bnctx))
+            || !add_params(bldinit, t->init, bnctx)
+            || !add_params(bldverify, t->verify, bnctx))
         goto err;
     paramskey = OSSL_PARAM_BLD_to_param(bldkey);
     paramsinit = OSSL_PARAM_BLD_to_param(bldinit);
+    paramsverify = OSSL_PARAM_BLD_to_param(bldverify);
 
     fromctx = EVP_PKEY_CTX_new_from_name(libctx, t->keytype, NULL);
     if (fromctx == NULL
             || paramskey == NULL
-            || paramsinit == NULL)
+            || paramsinit == NULL
+            || paramsverify == NULL)
         goto err;
     if (EVP_PKEY_fromdata_init(fromctx) <= 0
             || EVP_PKEY_fromdata(fromctx, &pkey, EVP_PKEY_KEYPAIR, paramskey) <= 0)
@@ -531,10 +535,10 @@ static int self_test_digest_sign(const ST_KAT_SIGN *t,
 
     if ((t->mode & SIGNATURE_MODE_SIGN_ONLY) == 0) {
         if (digested) {
-            if (EVP_PKEY_verify_init_ex2(ctx, sigalg, NULL) <= 0)
+            if (EVP_PKEY_verify_init_ex2(ctx, sigalg, paramsverify) <= 0)
                 goto err;
         } else {
-            if (EVP_PKEY_verify_message_init(ctx, sigalg, NULL) <= 0)
+            if (EVP_PKEY_verify_message_init(ctx, sigalg, paramsverify) <= 0)
                 goto err;
         }
         OSSL_SELF_TEST_oncorrupt_byte(st, sig);
@@ -550,8 +554,10 @@ err:
     EVP_SIGNATURE_free(sigalg);
     OSSL_PARAM_free(paramskey);
     OSSL_PARAM_free(paramsinit);
+    OSSL_PARAM_free(paramsverify);
     OSSL_PARAM_BLD_free(bldkey);
     OSSL_PARAM_BLD_free(bldinit);
+    OSSL_PARAM_BLD_free(bldverify);
     if (t->entropy != NULL) {
         if (!reset_main_drbg(libctx))
             ret = 0;
