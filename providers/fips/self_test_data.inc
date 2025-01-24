@@ -147,6 +147,13 @@ typedef struct st_kat_asym_cipher_st {
     size_t expected_len;
 } ST_KAT_ASYM_CIPHER;
 
+typedef struct st_kat_keygen_st {
+    const char *desc;
+    const char *algorithm;
+    const ST_KAT_PARAM *keygen_params;
+    const ST_KAT_PARAM *expected_params;
+} ST_KAT_ASYM_KEYGEN;
+
 /*- DIGEST SELF TEST DATA */
 static const unsigned char sha512_pt[] = "abc";
 static const unsigned char sha512_digest[] = {
@@ -2920,3 +2927,20 @@ static const ST_KAT_SIGN st_kat_sign_tests[] = {
     },
 #endif /* OPENSSL_NO_ML_DSA */
 };
+
+
+#if !defined(OPENSSL_NO_ML_DSA)
+static const ST_KAT_PARAM ml_dsa_keygen_params[] = {
+    ST_KAT_PARAM_OCTET(OSSL_PKEY_PARAM_ML_DSA_SEED, sig_kat_entropyin),
+    ST_KAT_PARAM_END()
+};
+
+static const ST_KAT_ASYM_KEYGEN st_kat_asym_keygen_tests[] = {
+    {
+        OSSL_SELF_TEST_DESC_KEYGEN_ML_DSA,
+        "ML-DSA-65",
+        ml_dsa_keygen_params,
+        ml_dsa_key
+    },
+};
+#endif /* !OPENSSL_NO_ML_DSA */
