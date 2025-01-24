@@ -5743,7 +5743,7 @@ OSSL_CRMF_ENCRYPTEDKEY_it               ?	3_5_0	EXIST::FUNCTION:CRMF
 OSSL_CRMF_ENCRYPTEDKEY_get1_encCert     ?	3_5_0	EXIST::FUNCTION:CRMF
 OSSL_CRMF_ENCRYPTEDVALUE_decrypt        ?	3_5_0	EXIST::FUNCTION:CRMF
 OSSL_CRMF_ENCRYPTEDKEY_get1_pkey        ?	3_5_0	EXIST::FUNCTION:CRMF
-OSSL_CRMF_MSG_centralKeygen_requested   ?	3_5_0	EXIST::FUNCTION:CRMF
+OSSL_CRMF_MSG_centralkeygen_requested   ?	3_5_0	EXIST::FUNCTION:CRMF
 CMS_EnvelopedData_dup                   ?	3_5_0	EXIST::FUNCTION:CMS
 OSSL_CRMF_ENCRYPTEDKEY_init_envdata     ?	3_5_0	EXIST::FUNCTION:CMS,CRMF
 EVP_get1_default_properties             ?	3_5_0	EXIST::FUNCTION:

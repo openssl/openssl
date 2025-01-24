@@ -3860,21 +3860,26 @@ int cmp_main(int argc, char **argv)
             if (opt_centralkeygen) {
                 const EVP_CIPHER *cipher = NULL;
                 char *pass_string = NULL;
+                BIO *out;
                 EVP_PKEY *new_key = OSSL_CMP_CTX_get0_newPkey(cmp_ctx, 1 /* priv */);
-                BIO *out = bio_open_owner(opt_newkeyout, FORMAT_PEM, 1);
 
-                if (new_key == NULL || out == NULL)
+                if (new_key == NULL)
+                    goto err;
+                if ((out = bio_open_owner(opt_newkeyout, FORMAT_PEM, 1)) == NULL)
                     goto err;
                 if (opt_newkeypass != NULL) {
                     pass_string = get_passwd(opt_newkeypass,
                                              "Centrally generated private key password");
-                    cipher = EVP_aes_256_cbc();
+                    cipher = EVP_CIPHER_fetch(app_get0_libctx(), SN_aes_256_cbc, app_get0_propq());
                 }
 
                 CMP_info1("saving centrally generated key to file '%s'", opt_newkeyout);
                 if (PEM_write_bio_PrivateKey(out, new_key, cipher, NULL, 0, NULL,
-                                             (void *)pass_string) <= 0)
+                                             (void *)pass_string) <= 0) {
+                    BIO_free(out);
+                    clear_free(pass_string);
                     goto err;
+                }
                 BIO_free(out);
                 clear_free(pass_string);
             }

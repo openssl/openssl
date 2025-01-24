@@ -264,7 +264,7 @@ static OSSL_CMP_MSG *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
     }
     srv_ctx->certReqId = certReqId;
 
-    central_keygen = OSSL_CRMF_MSG_centralKeygen_requested(crm, p10cr);
+    central_keygen = OSSL_CRMF_MSG_centralkeygen_requested(crm, p10cr);
     if (central_keygen < 0)
         return NULL;
     if (central_keygen == 0

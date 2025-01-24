@@ -376,15 +376,17 @@ static OSSL_CMP_PKISI *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
         /* Should return a cert produced from request template, see FR #16054 */
         goto err;
 
-    central_keygen = OSSL_CRMF_MSG_centralKeygen_requested(crm, p10cr);
+    central_keygen = OSSL_CRMF_MSG_centralkeygen_requested(crm, p10cr);
     if (central_keygen < 0)
         goto err;
     if (central_keygen == 1
         && (ctx->keyOut == NULL
             || (keyOut = EVP_PKEY_dup(ctx->keyOut)) == NULL
             || !OSSL_CMP_CTX_set0_newPkey(OSSL_CMP_SRV_CTX_get0_cmp_ctx(srv_ctx),
-                                          1 /* priv */, keyOut)))
+                                          1 /* priv */, keyOut))) {
+        EVP_PKEY_free(keyOut);
         goto err;
+    }
     /*
      * Note that this uses newPkey to return the private key
      * and does not check whether the 'popo' field is absent.

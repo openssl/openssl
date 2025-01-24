@@ -544,7 +544,7 @@ int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
     return 1;
 }
 
-int OSSL_CRMF_MSG_centralKeygen_requested(const OSSL_CRMF_MSG *crm, const X509_REQ *p10cr)
+int OSSL_CRMF_MSG_centralkeygen_requested(const OSSL_CRMF_MSG *crm, const X509_REQ *p10cr)
 {
     X509_PUBKEY *pubkey = NULL;
     const unsigned char *pk = NULL;
@@ -774,9 +774,9 @@ unsigned char
     int cikeysize = 0; /* key size from cipher */
     unsigned char *iv = NULL; /* initial vector for symmetric encryption */
     unsigned char *out = NULL; /* decryption output buffer */
-    int symmAlg = 0; /* NIDs for symmetric algorithm */
     int n, ret = 0;
     EVP_PKEY_CTX *pkctx = NULL; /* private key context */
+    char name[OSSL_MAX_NAME_SIZE];
 
     if (outlen == NULL) {
         ERR_raise(ERR_LIB_CRMF, CRMF_R_NULL_ARGUMENT);
@@ -789,16 +789,18 @@ unsigned char
         return NULL;
     }
 
-    if ((symmAlg = OBJ_obj2nid(enc->symmAlg->algorithm)) == 0) {
-        ERR_raise(ERR_LIB_CRMF, CRMF_R_UNSUPPORTED_CIPHER);
-        return NULL;
-    }
-
     /* select symmetric cipher based on algorithm given in message */
-    if ((cipher = EVP_get_cipherbynid(symmAlg)) == NULL) {
+    OBJ_obj2txt(name, sizeof(name), enc->symmAlg->algorithm, 0);
+    (void)ERR_set_mark();
+    cipher = EVP_CIPHER_fetch(libctx, name, propq);
+    if (cipher == NULL)
+        cipher = EVP_get_cipherbyobj(enc->symmAlg->algorithm);
+    if (cipher == NULL) {
+        (void)ERR_clear_last_mark();
         ERR_raise(ERR_LIB_CRMF, CRMF_R_UNSUPPORTED_CIPHER);
         goto end;
     }
+    (void)ERR_pop_to_mark();
 
     cikeysize = EVP_CIPHER_get_key_length(cipher);
     /* first the symmetric key needs to be decrypted */

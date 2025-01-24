@@ -470,8 +470,9 @@ static OSSL_CRMF_ENCRYPTEDKEY *enc_privkey(OSSL_CMP_CTX *ctx, const EVP_PKEY *pk
         goto err;
     ossl_cmp_set_own_chain(ctx);
     envData = ossl_cms_sign_encrypt(privbio, ctx->cert, ctx->chain, ctx->pkey, CMS_BINARY,
-                                    encryption_recips, EVP_aes_256_cbc(), CMS_BINARY,
-                                    ctx->libctx, ctx->propq);
+                                    encryption_recips,
+                                    EVP_CIPHER_fetch(ctx->libctx, SN_aes_256_cbc, ctx->propq),
+                                    CMS_BINARY, ctx->libctx, ctx->propq);
     if (envData == NULL)
         goto err;
     ek = OSSL_CRMF_ENCRYPTEDKEY_init_envdata(envData);
