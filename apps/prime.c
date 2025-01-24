@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2004-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -13,10 +13,13 @@
 #include "progs.h"
 #include <openssl/bn.h>
 
+#define BUFSIZE 256
+
 typedef enum OPTION_choice {
     OPT_COMMON,
     OPT_HEX, OPT_GENERATE, OPT_BITS, OPT_SAFE, OPT_CHECKS,
-    OPT_PROV_ENUM
+    OPT_PROV_ENUM,
+    OPT_IN_FILE
 } OPTION_CHOICE;
 
 static int check_num(const char *s, const int is_hex)
@@ -43,9 +46,11 @@ const OPTIONS prime_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"bits", OPT_BITS, 'p', "Size of number in bits"},
     {"checks", OPT_CHECKS, 'p', "Number of checks"},
+    {"hex", OPT_HEX, '-',
+     "Enables hex format for output from prime generation or input to primality checking"},
+    {"in", OPT_IN_FILE, '-', "Provide file names containing numbers for primality checking"},
 
     OPT_SECTION("Output"),
-    {"hex", OPT_HEX, '-', "Hex output"},
     {"generate", OPT_GENERATE, '-', "Generate a prime"},
     {"safe", OPT_SAFE, '-',
      "When used with -generate, generate a safe prime"},
@@ -60,9 +65,11 @@ const OPTIONS prime_options[] = {
 int prime_main(int argc, char **argv)
 {
     BIGNUM *bn = NULL;
-    int hex = 0, generate = 0, bits = 0, safe = 0, ret = 1;
+    int hex = 0, generate = 0, bits = 0, safe = 0, ret = 1, in_file = 0;
     char *prog;
     OPTION_CHOICE o;
+    char *file_read_buf = NULL;
+    BIO *in = NULL;
 
     prog = opt_init(argc, argv, prime_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -95,6 +102,9 @@ opthelp:
         case OPT_PROV_CASES:
             if (!opt_provider(o))
                 goto end;
+            break;
+        case OPT_IN_FILE:
+            in_file = 1;
             break;
         }
     }
@@ -134,13 +144,49 @@ opthelp:
         OPENSSL_free(s);
     } else {
         for ( ; *argv; argv++) {
-            int r = check_num(argv[0], hex);
+            char *check_val;
+            int total_read = 0;
+            int r;
+
+            if (!in_file) {
+                check_val = argv[0];
+            } else {
+                in = bio_open_default_quiet(argv[0], 'r', 0);
+                if (in == NULL) {
+                    BIO_printf(bio_err, "Error opening file %s\n", argv[0]);
+                    goto end;
+                }
+
+                int i;
+                file_read_buf = (char *)app_malloc(BUFSIZE, "File read buffer");
+                while (BIO_pending(in) || !BIO_eof(in)) {
+                    i = BIO_read(in, (char *)(file_read_buf + total_read), BUFSIZE);
+                    if (i < 0) {
+                        BIO_printf(bio_err, "Read error in %s\n", argv[0]);
+                        goto end;
+                    }
+                    if (i == 0)
+                        break;
+                    total_read += i;
+                    if (i == BUFSIZE)
+                        file_read_buf = (char *)realloc(file_read_buf, BUFSIZE + total_read);
+                }
+                
+                /* Trim trailing newline if present */
+                if (file_read_buf[total_read - 1] == '\n')
+                    file_read_buf[total_read - 1] = '\0';
+
+                check_val = file_read_buf;
+
+            }
+
+            r = check_num(check_val, hex);
 
             if (r)
-                r = hex ? BN_hex2bn(&bn, argv[0]) : BN_dec2bn(&bn, argv[0]);
+                r = hex ? BN_hex2bn(&bn, check_val) : BN_dec2bn(&bn, check_val);
 
             if (!r) {
-                BIO_printf(bio_err, "Failed to process value (%s)\n", argv[0]);
+                BIO_printf(bio_err, "Failed to process value (%s)\n", check_val);
                 goto end;
             }
 
@@ -151,13 +197,24 @@ opthelp:
                 goto end;
             }
             BIO_printf(bio_out, " (%s) %s prime\n",
-                       argv[0],
+                       check_val,
                        r == 1 ? "is" : "is not");
+
+            if (in_file) {
+                BIO_free(in);
+                OPENSSL_free(file_read_buf);
+                in = NULL;
+                file_read_buf = NULL;
+            }
         }
     }
 
     ret = 0;
  end:
     BN_free(bn);
+    if (in != NULL)
+        BIO_free(in);
+    if (file_read_buf != NULL)
+        OPENSSL_free(file_read_buf);
     return ret;
 }
