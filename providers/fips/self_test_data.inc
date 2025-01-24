@@ -147,6 +147,13 @@ typedef struct st_kat_asym_cipher_st {
     size_t expected_len;
 } ST_KAT_ASYM_CIPHER;
 
+typedef struct st_kat_keygen_st {
+    const char *desc;
+    const char *algorithm;
+    const ST_KAT_PARAM *keygen_params;
+    const ST_KAT_PARAM *expected_params;
+} ST_KAT_ASYM_KEYGEN;
+
 /*- DIGEST SELF TEST DATA */
 static const unsigned char sha512_pt[] = "abc";
 static const unsigned char sha512_digest[] = {
@@ -2804,6 +2811,8 @@ static const unsigned char ml_dsa_65_sig[] = {
  *      it fails the h_ones rejection test on iteration three
  *      it successfully generates the signature on iteration four
  * Thus, it is an optimal self test in terms of iterations and coverage.
+ *
+ * Refer to FIPS 140-3 IG 10.3.A.15 for details of the testing requirements.
  */
 static const unsigned char ml_dsa_65_msg[] = {
     0x23, 0x37, 0x34, 0x37, 0x36, 0x38, 0x23
@@ -2920,3 +2929,20 @@ static const ST_KAT_SIGN st_kat_sign_tests[] = {
     },
 #endif /* OPENSSL_NO_ML_DSA */
 };
+
+
+#if !defined(OPENSSL_NO_ML_DSA)
+static const ST_KAT_PARAM ml_dsa_keygen_params[] = {
+    ST_KAT_PARAM_OCTET(OSSL_PKEY_PARAM_ML_DSA_SEED, sig_kat_entropyin),
+    ST_KAT_PARAM_END()
+};
+
+static const ST_KAT_ASYM_KEYGEN st_kat_asym_keygen_tests[] = {
+    {
+        OSSL_SELF_TEST_DESC_KEYGEN_ML_DSA,
+        "ML-DSA-65",
+        ml_dsa_keygen_params,
+        ml_dsa_key
+    },
+};
+#endif /* !OPENSSL_NO_ML_DSA */

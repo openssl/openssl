@@ -13,6 +13,7 @@
 #include <openssl/core_names.h>
 #include <openssl/param_build.h>
 #include <openssl/rand.h>
+#include "crypto/ml_dsa.h"
 #include "crypto/rand.h"
 #include "internal/cryptlib.h"
 #include "internal/nelem.h"
@@ -456,7 +457,7 @@ static int self_test_digest_sign(const ST_KAT_SIGN *t,
     EVP_PKEY_CTX *ctx = NULL;
     EVP_PKEY_CTX *fromctx = NULL;
     EVP_PKEY *pkey = NULL;
-    unsigned char sig[5000];
+    unsigned char sig[MAX_ML_DSA_SIG_LEN];
     BN_CTX *bnctx = NULL;
     size_t siglen = sizeof(sig);
     int digested = 0;
@@ -562,6 +563,61 @@ err:
         if (!reset_main_drbg(libctx))
             ret = 0;
     }
+    OSSL_SELF_TEST_onend(st, ret);
+    return ret;
+}
+
+/*
+ * Test that a deterministic key generation produces the correct key
+ */
+static int self_test_asym_keygen(const ST_KAT_ASYM_KEYGEN *t, OSSL_SELF_TEST *st,
+                                 OSSL_LIB_CTX *libctx)
+{
+    int ret = 0;
+    const ST_KAT_PARAM *expected;
+    OSSL_PARAM *key_params = NULL;
+    OSSL_PARAM_BLD *key_bld = NULL;
+    EVP_PKEY_CTX *key_ctx = NULL;
+    EVP_PKEY *key = NULL;
+    uint8_t out[MAX_ML_DSA_PRIV_LEN];
+    size_t out_len = 0;
+
+    OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_KAT_ASYM_KEYGEN, t->desc);
+
+    key_ctx = EVP_PKEY_CTX_new_from_name(libctx, t->algorithm, NULL);
+    if (key_ctx == NULL)
+        goto err;
+    if (t->keygen_params != NULL) {
+        key_bld = OSSL_PARAM_BLD_new();
+        if (key_bld == NULL
+                || !add_params(key_bld, t->keygen_params, NULL))
+            goto err;
+        key_params = OSSL_PARAM_BLD_to_param(key_bld);
+        if (key_params == NULL)
+            goto err;
+    }
+    if (EVP_PKEY_keygen_init(key_ctx) != 1
+            || EVP_PKEY_CTX_set_params(key_ctx, key_params) != 1
+            || EVP_PKEY_generate(key_ctx, &key) != 1)
+        goto err;
+
+    for (expected = t->expected_params; expected->data != NULL; ++expected) {
+        if (expected->type != OSSL_PARAM_OCTET_STRING
+                || !EVP_PKEY_get_octet_string_param(key, expected->name,
+                                                    out, sizeof(out), &out_len))
+            goto err;
+        OSSL_SELF_TEST_oncorrupt_byte(st, out);
+        /* Check the KAT */
+        if (out_len != expected->data_len
+                || memcmp(out, expected->data, expected->data_len) != 0)
+            goto err;
+    }
+    ret = 1;
+err:
+    EVP_PKEY_free(key);
+    EVP_PKEY_CTX_free(key_ctx);
+    OSSL_PARAM_free(key_params);
+    OSSL_PARAM_BLD_free(key_bld);
     OSSL_SELF_TEST_onend(st, ret);
     return ret;
 }
@@ -781,6 +837,17 @@ static int setup_main_random(OSSL_LIB_CTX *libctx)
     return 0;
 }
 
+static int self_test_asym_keygens(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
+{
+    int i, ret = 1;
+
+    for (i = 0; i < (int)OSSL_NELEM(st_kat_asym_keygen_tests); ++i) {
+        if (!self_test_asym_keygen(&st_kat_asym_keygen_tests[i], st, libctx))
+            ret = 0;
+    }
+    return ret;
+}
+
 /*
  * Run the algorithm KAT's.
  * Return 1 is successful, otherwise return 0.
@@ -812,6 +879,8 @@ int SELF_TEST_kats(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
     if (!self_test_drbgs(st, libctx))
         ret = 0;
     if (!self_test_kas(st, libctx))
+        ret = 0;
+    if (!self_test_asym_keygens(st, libctx))
         ret = 0;
 
     RAND_set0_private(libctx, saved_rand);
