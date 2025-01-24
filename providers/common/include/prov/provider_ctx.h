@@ -42,6 +42,8 @@ OSSL_LIB_CTX *ossl_prov_ctx_get0_libctx(PROV_CTX *ctx);
 const OSSL_CORE_HANDLE *ossl_prov_ctx_get0_handle(PROV_CTX *ctx);
 BIO_METHOD *ossl_prov_ctx_get0_core_bio_method(PROV_CTX *ctx);
 OSSL_FUNC_core_get_params_fn *ossl_prov_ctx_get0_core_get_params(PROV_CTX *ctx);
+const char *
+ossl_prov_ctx_get_param(PROV_CTX *ctx, const char *name, const char *defval);
 int ossl_prov_ctx_get_bool_param(PROV_CTX *ctx, const char *name, int defval);
 
 #endif

@@ -76,7 +76,8 @@ OSSL_FUNC_core_get_params_fn *ossl_prov_ctx_get0_core_get_params(PROV_CTX *ctx)
     return ctx->core_get_params;
 }
 
-int ossl_prov_ctx_get_bool_param(PROV_CTX *ctx, const char *name, int defval)
+const char *
+ossl_prov_ctx_get_param(PROV_CTX *ctx, const char *name, const char *defval)
 {
     char *val = NULL;
     OSSL_PARAM param[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
@@ -86,7 +87,7 @@ int ossl_prov_ctx_get_bool_param(PROV_CTX *ctx, const char *name, int defval)
         || ctx->core_get_params == NULL)
         return defval;
 
-    param[0].key = (char *)name;
+    param[0].key = (char *) name;
     param[0].data_type = OSSL_PARAM_UTF8_PTR;
     param[0].data = (void *) &val;
     param[0].data_size = sizeof(val);
@@ -95,7 +96,16 @@ int ossl_prov_ctx_get_bool_param(PROV_CTX *ctx, const char *name, int defval)
     /* Errors are ignored, returning the default value */
     if (ctx->core_get_params(ctx->handle, param)
         && OSSL_PARAM_modified(param)
-        && val != NULL) {
+        && val != NULL)
+        return val;
+    return defval;
+}
+
+int ossl_prov_ctx_get_bool_param(PROV_CTX *ctx, const char *name, int defval)
+{
+    const char *val = ossl_prov_ctx_get_param(ctx, name, NULL);
+
+    if (val != NULL) {
         if ((strcmp(val, "1") == 0)
             || (OPENSSL_strcasecmp(val, "yes") == 0)
             || (OPENSSL_strcasecmp(val, "true") == 0)
