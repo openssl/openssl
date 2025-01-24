@@ -145,6 +145,8 @@ opthelp:
     } else {
         for ( ; *argv; argv++) {
             char *check_val;
+            int total_read = 0;
+            int r;
             if (!in_file) {
                 check_val = argv[0];
             } else {
@@ -154,7 +156,6 @@ opthelp:
                     goto end;
                 }
 
-                int total_read = 0;
                 int i;
                 file_read_buf = (char *)app_malloc(BUFSIZE, "File read buffer");
                 while (BIO_pending(in) || !BIO_eof(in)) {
@@ -179,7 +180,7 @@ opthelp:
                 
             }
 
-            int r = check_num(check_val, hex);
+            r = check_num(check_val, hex);
 
             if (r)
                 r = hex ? BN_hex2bn(&bn, check_val) : BN_dec2bn(&bn, check_val);
