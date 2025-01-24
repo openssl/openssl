@@ -147,6 +147,7 @@ opthelp:
             char *check_val;
             int total_read = 0;
             int r;
+
             if (!in_file) {
                 check_val = argv[0];
             } else {
@@ -167,9 +168,8 @@ opthelp:
                     if (i == 0)
                         break;
                     total_read += i;
-                    if (i == BUFSIZE) {
+                    if (i == BUFSIZE)
                         file_read_buf = (char *)realloc(file_read_buf, BUFSIZE + total_read);
-                    }
                 }
                 
                 /* Trim trailing newline if present */
@@ -177,7 +177,7 @@ opthelp:
                     file_read_buf[total_read - 1] = '\0';
 
                 check_val = file_read_buf;
-                
+
             }
 
             r = check_num(check_val, hex);
@@ -199,7 +199,7 @@ opthelp:
             BIO_printf(bio_out, " (%s) %s prime\n",
                        check_val,
                        r == 1 ? "is" : "is not");
-            
+
             if (in_file) {
                 BIO_free(in);
                 OPENSSL_free(file_read_buf);
