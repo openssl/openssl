@@ -575,13 +575,17 @@ int EVP_DigestSign(EVP_MD_CTX *ctx, unsigned char *sigret, size_t *siglen,
 {
     EVP_PKEY_CTX *pctx = ctx->pctx;
 
+    if (pctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+        return 0;
+    }
+
     if ((ctx->flags & EVP_MD_CTX_FLAG_FINALISED) != 0) {
         ERR_raise(ERR_LIB_EVP, EVP_R_FINAL_ERROR);
         return 0;
     }
 
-    if (pctx != NULL
-            && pctx->operation == EVP_PKEY_OP_SIGNCTX
+    if (pctx->operation == EVP_PKEY_OP_SIGNCTX
             && pctx->op.sig.algctx != NULL
             && pctx->op.sig.signature != NULL) {
         if (pctx->op.sig.signature->digest_sign != NULL) {
@@ -594,8 +598,8 @@ int EVP_DigestSign(EVP_MD_CTX *ctx, unsigned char *sigret, size_t *siglen,
         }
     } else {
         /* legacy */
-        if (ctx->pctx->pmeth != NULL && ctx->pctx->pmeth->digestsign != NULL)
-            return ctx->pctx->pmeth->digestsign(ctx, sigret, siglen, tbs, tbslen);
+        if (pctx->pmeth != NULL && pctx->pmeth->digestsign != NULL)
+            return pctx->pmeth->digestsign(ctx, sigret, siglen, tbs, tbslen);
     }
 
     if (sigret != NULL && EVP_DigestSignUpdate(ctx, tbs, tbslen) <= 0)
