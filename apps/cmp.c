@@ -3858,9 +3858,10 @@ int cmp_main(int argc, char **argv)
                                 opt_cacertsout, "CA") < 0)
                 goto err;
             if (opt_centralkeygen) {
-                const EVP_CIPHER *cipher = NULL;
+                EVP_CIPHER *cipher = NULL;
                 char *pass_string = NULL;
                 BIO *out;
+                int result = 1;
                 EVP_PKEY *new_key = OSSL_CMP_CTX_get0_newPkey(cmp_ctx, 1 /* priv */);
 
                 if (new_key == NULL)
@@ -3875,13 +3876,14 @@ int cmp_main(int argc, char **argv)
 
                 CMP_info1("saving centrally generated key to file '%s'", opt_newkeyout);
                 if (PEM_write_bio_PrivateKey(out, new_key, cipher, NULL, 0, NULL,
-                                             (void *)pass_string) <= 0) {
-                    BIO_free(out);
-                    clear_free(pass_string);
-                    goto err;
-                }
+                                             (void *)pass_string) <= 0)
+                    result = 0;
+
                 BIO_free(out);
                 clear_free(pass_string);
+                EVP_CIPHER_free(cipher);
+                if (!result)
+                    goto err;
             }
         }
         if (!OSSL_CMP_CTX_reinit(cmp_ctx))

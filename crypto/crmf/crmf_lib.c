@@ -770,7 +770,7 @@ unsigned char
     EVP_CIPHER_CTX *evp_ctx = NULL; /* context for symmetric encryption */
     unsigned char *ek = NULL; /* decrypted symmetric encryption key */
     size_t eksize = 0; /* size of decrypted symmetric encryption key */
-    const EVP_CIPHER *cipher = NULL; /* used cipher */
+    EVP_CIPHER *cipher = NULL; /* used cipher */
     int cikeysize = 0; /* key size from cipher */
     unsigned char *iv = NULL; /* initial vector for symmetric encryption */
     unsigned char *out = NULL; /* decryption output buffer */
@@ -794,7 +794,7 @@ unsigned char
     (void)ERR_set_mark();
     cipher = EVP_CIPHER_fetch(libctx, name, propq);
     if (cipher == NULL)
-        cipher = EVP_get_cipherbyobj(enc->symmAlg->algorithm);
+        cipher = (EVP_CIPHER *)EVP_get_cipherbyobj(enc->symmAlg->algorithm);
     if (cipher == NULL) {
         (void)ERR_clear_last_mark();
         ERR_raise(ERR_LIB_CRMF, CRMF_R_UNSUPPORTED_CIPHER);
@@ -855,6 +855,7 @@ unsigned char
  end:
     EVP_PKEY_CTX_free(pkctx);
     EVP_CIPHER_CTX_free(evp_ctx);
+    EVP_CIPHER_free(cipher);
     OPENSSL_clear_free(ek, eksize);
     OPENSSL_free(iv);
     if (ret)

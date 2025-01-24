@@ -458,6 +458,7 @@ static OSSL_CRMF_ENCRYPTEDKEY *enc_privkey(OSSL_CMP_CTX *ctx, const EVP_PKEY *pk
     OSSL_CRMF_ENCRYPTEDKEY *ek = NULL;
     CMS_EnvelopedData *envData = NULL;
     BIO *privbio = NULL;
+    EVP_CIPHER *cipher = NULL;
     X509 *recip = ctx->validatedSrvCert; /* this is the client cert */
     STACK_OF(X509) *encryption_recips = sk_X509_new_reserve(NULL, 1);
 
@@ -469,10 +470,11 @@ static OSSL_CRMF_ENCRYPTEDKEY *enc_privkey(OSSL_CMP_CTX *ctx, const EVP_PKEY *pk
     if (privbio == NULL || i2d_PrivateKey_bio(privbio, pkey) <= 0)
         goto err;
     ossl_cmp_set_own_chain(ctx);
+    cipher = EVP_CIPHER_fetch(ctx->libctx, SN_aes_256_cbc, ctx->propq);
     envData = ossl_cms_sign_encrypt(privbio, ctx->cert, ctx->chain, ctx->pkey, CMS_BINARY,
-                                    encryption_recips,
-                                    EVP_CIPHER_fetch(ctx->libctx, SN_aes_256_cbc, ctx->propq),
-                                    CMS_BINARY, ctx->libctx, ctx->propq);
+                                    encryption_recips, cipher, CMS_BINARY,
+                                    ctx->libctx, ctx->propq);
+    EVP_CIPHER_free(cipher);
     if (envData == NULL)
         goto err;
     ek = OSSL_CRMF_ENCRYPTEDKEY_init_envdata(envData);
