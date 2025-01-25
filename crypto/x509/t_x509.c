@@ -506,13 +506,13 @@ int X509_STORE_CTX_print_verify_cb(int ok, X509_STORE_CTX *ctx)
 
 /*
  * Prints serial numbers in decimal and hexadecimal. The indent argument is only
- * used if the serial number is too large to fit in a long int.
+ * used if the serial number is too large to fit in an int64_t.
  */
 int ossl_serial_number_print(BIO *out, const ASN1_INTEGER *bs, int indent)
 {
-    int i;
-    long l;
-    unsigned long ul;
+    int i, ok;
+    int64_t l;
+    uint64_t ul;
     const char *neg;
 
     if (bs->length == 0) {
@@ -521,24 +521,21 @@ int ossl_serial_number_print(BIO *out, const ASN1_INTEGER *bs, int indent)
         return 0;
     }
 
-    if (bs->length <= (int)sizeof(long)) {
-        ERR_set_mark();
-        l = ASN1_INTEGER_get(bs);
-        ERR_pop_to_mark();
-    } else {
-        l = -1;
-    }
-    if (l != -1) { /* Reading a long int succeeded: print decimal and hex. */
+    ERR_set_mark();
+    ok = ASN1_INTEGER_get_int64(&l, bs);
+    ERR_pop_to_mark();
+
+    if (ok) { /* Reading an int64_t succeeded: print decimal and hex. */
         if (bs->type == V_ASN1_NEG_INTEGER) {
-            ul = 0 - (unsigned long)l;
+            ul = 0 - (uint64_t)l;
             neg = "-";
         } else {
             ul = l;
             neg = "";
         }
-        if (BIO_printf(out, " %s%lu (%s0x%lx)", neg, ul, neg, ul) <= 0)
+        if (BIO_printf(out, " %s%ju (%s0x%jx)", neg, ul, neg, ul) <= 0)
             return -1;
-    } else { /* Reading a long int failed: just print hex. */
+    } else { /* Reading an int64_t failed: just print hex. */
         neg = (bs->type == V_ASN1_NEG_INTEGER) ? " (Negative)" : "";
         if (BIO_printf(out, "\n%*s%s", indent, "", neg) <= 0)
             return -1;
