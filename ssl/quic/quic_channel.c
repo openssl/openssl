@@ -405,6 +405,7 @@ static void ch_cleanup(QUIC_CHANNEL *ch)
     OPENSSL_free((char *)ch->terminate_cause.reason);
     OSSL_ERR_STATE_free(ch->err_state);
     OPENSSL_free(ch->ack_range_scratch);
+    OPENSSL_free(ch->pending_new_token);
 
     if (ch->on_port_list) {
         ossl_list_ch_remove(&ch->port->channel_list, ch);
@@ -1125,6 +1126,15 @@ static int ch_on_handshake_complete(void *arg)
     ossl_quic_tx_packetiser_notify_handshake_complete(ch->txp);
 
     ch->handshake_complete = 1;
+
+    if (ch->pending_new_token != NULL) {
+        ossl_quic_channel_schedule_new_token(ch,
+                                             ch->pending_new_token,
+                                             ch->pending_new_token_len);
+        OPENSSL_free(ch->pending_new_token);
+        ch->pending_new_token = NULL;
+        ch->pending_new_token_len = 0;
+    }
 
     if (ch->is_server) {
         /*
