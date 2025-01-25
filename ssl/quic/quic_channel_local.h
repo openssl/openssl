@@ -60,6 +60,12 @@ struct quic_channel_st {
      */
     unsigned char                   *local_transport_params;
 
+    /*
+     * Pending new token to send once handshake is complete
+     */
+    uint8_t                         *pending_new_token;
+    size_t                          pending_new_token_len;
+
     /* Our current L4 peer address, if any. */
     BIO_ADDR                        cur_peer_addr;
 

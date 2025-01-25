@@ -4815,7 +4815,6 @@ static QUIC_TOKEN *ossl_quic_build_new_token(BIO_ADDR *peer, uint8_t *token,
     BIO_ADDR_rawaddress(peer, addrptr, NULL);
     if (token != NULL)
         memcpy(new_token->token, token, token_len);
-
     return new_token;
 }
 
@@ -4836,12 +4835,13 @@ int ossl_quic_update_peer_token(SSL_CTX *ctx, BIO_ADDR *peer,
     ossl_crypto_mutex_lock(c->mutex);
 
     old = lh_QUIC_TOKEN_retrieve(c->cache, tok);
-    if (old != NULL)
-        lh_QUIC_TOKEN_delete(c->cache, tok);
+    if (old != NULL) {
+        lh_QUIC_TOKEN_delete(c->cache, old);
+        free_quic_token(old);
+    }
     lh_QUIC_TOKEN_insert(c->cache, tok);
 
     ossl_crypto_mutex_unlock(c->mutex);
-    free_quic_token(old);
     return 1;
 }
 
@@ -4861,11 +4861,6 @@ int ossl_quic_get_peer_token(SSL_CTX *ctx, BIO_ADDR *peer,
     ossl_crypto_mutex_lock(c->mutex);
     tok = lh_QUIC_TOKEN_retrieve(c->cache, key);
     if (tok != NULL) {
-        if (tok->token_len > *token_len) {
-            /* allow reuse here */
-            tok = NULL;
-            goto out;
-        }
         *token = tok->token;
         *token_len = tok->token_len;
         *token_free_ptr = tok;
@@ -4873,7 +4868,6 @@ int ossl_quic_get_peer_token(SSL_CTX *ctx, BIO_ADDR *peer,
         rc = 1;
     }
 
-out:
     ossl_crypto_mutex_unlock(c->mutex);
     free_quic_token(key);
     return rc;
