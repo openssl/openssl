@@ -515,6 +515,12 @@ int ossl_serial_number_print(BIO *out, const ASN1_INTEGER *bs, int indent)
     unsigned long ul;
     const char *neg;
 
+    if (bs->length == 0) {
+        if (BIO_puts(out, " (Empty)") <= 0)
+            return -1;
+        return 0;
+    }
+
     if (bs->length <= (int)sizeof(long)) {
         ERR_set_mark();
         l = ASN1_INTEGER_get(bs);
