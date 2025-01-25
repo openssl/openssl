@@ -2377,7 +2377,7 @@ int ossl_ml_kem_i2d_prvkey(const ML_KEM_KEY *key, uint8_t **out,
     if (vp8->seed_offset != 0) {
         /*
          * Either the tag/len were already included in |magic| or they require
-         * is to write two bytes now.
+         * us to write two bytes now.
          */
         if (pos == buf + vp8->seed_offset - 2)
             pos = OPENSSL_store_u16_be(pos, vp8->seed_magic);
