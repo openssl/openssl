@@ -1348,12 +1348,16 @@ static void generate_new_token(QUIC_CHANNEL *ch, BIO_ADDR *peer)
     QUIC_CONN_ID rscid = { 0 };
     QUIC_VALIDATION_TOKEN token;
     unsigned char buffer[ENCRYPTED_TOKEN_MAX_LEN];
-    unsigned char ct_buf[ENCRYPTED_TOKEN_MAX_LEN];
+    unsigned char *ct_buf;
     size_t ct_len;
     size_t token_buf_len = 0;
 
     /* Clients never send a NEW_TOKEN */
     if (!ch->is_server)
+        return;
+
+    ct_buf = OPENSSL_zalloc(ENCRYPTED_TOKEN_MAX_LEN);
+    if (ct_buf == NULL)
         return;
 
     if (!ossl_quic_lcidm_get_unused_cid(ch->port->lcidm, &rscid))
@@ -1366,10 +1370,14 @@ static void generate_new_token(QUIC_CHANNEL *ch, BIO_ADDR *peer)
         || ct_len > ENCRYPTED_TOKEN_MAX_LEN
         || !encrypt_validation_token(ch->port, buffer, token_buf_len, ct_buf,
                                      &ct_len)
-        || !ossl_assert(ct_len >= QUIC_RETRY_INTEGRITY_TAG_LEN))
+        || !ossl_assert(ct_len >= QUIC_RETRY_INTEGRITY_TAG_LEN)) {
+        OPENSSL_free(ct_buf);
         return;
+    }
 
-    ossl_quic_channel_schedule_new_token(ch, ct_buf, ct_len);
+    ch->pending_new_token = ct_buf;
+    ch->pending_new_token_len = ct_len;
+
     cleanup_validation_token(&token);
 }
 
