@@ -371,7 +371,7 @@ int EVP_CIPHER_get_block_size(const EVP_CIPHER *cipher)
 
 int EVP_CIPHER_CTX_get_block_size(const EVP_CIPHER_CTX *ctx)
 {
-    return EVP_CIPHER_get_block_size(ctx->cipher);
+    return (ctx == NULL) ? 0 : EVP_CIPHER_get_block_size(ctx->cipher);
 }
 
 int EVP_CIPHER_impl_ctx_size(const EVP_CIPHER *e)
