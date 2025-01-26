@@ -449,7 +449,7 @@ Returned by the verify callback to indicate OCSP responses are invalid.
 Returned by the verify callback to indicate OCSP response signature
 verification failed.
 
-=item B<X509_V_ERR_OCSP_NOT_YET_VALID:
+=item B<X509_V_ERR_OCSP_NOT_YET_VALID: OCSP response not yet valid>
 OCSP response not yet valid (contains a date in the future)>
 
 Returned by the verify callback to indicate that OCSP response has a

@@ -4324,6 +4324,10 @@ int tls_construct_cert_status_body(SSL_CONNECTION *s, size_t chainidx, WPACKET *
     OCSP_RESPONSE *resp = NULL;
     OCSP_BASICRESP *bs = NULL;
     OCSP_CERTID *cert_id = NULL;
+    OCSP_SINGLERESP *sr = NULL;
+    OCSP_CERTID *cid = NULL;
+    ASN1_OBJECT *cert_id_md_oid;
+    const EVP_MD *cert_id_md;
 #endif
 
     if (!WPACKET_put_bytes_u8(pkt, s->ext.status_type)) {
@@ -4351,31 +4355,49 @@ int tls_construct_cert_status_body(SSL_CONNECTION *s, size_t chainidx, WPACKET *
          * if chainidx = 0 the server certificate is requested
          * if chainidx > 0 an intermediate certificate is requested
          */
-        if ((int)chainidx < sk_X509_num(chain_certs) + 1 && chainidx > 0)
+        if ((int)chainidx <= sk_X509_num(chain_certs) && chainidx > 0)
             x = sk_X509_value(chain_certs, chainidx - 1);
+
+        if (x == NULL)
+            return 0;
+
+        /* for a selfsigned certificate there will be no OCSP response */
+        if (X509_self_signed(x, 0))
+            return 1;
 
         issuer = X509_find_by_subject(chain_certs, X509_get_issuer_name(x));
 
         if (issuer == NULL)
             return 0;
 
-        /* search the stack for the requested OCSP response */
-        cert_id = OCSP_cert_to_id(NULL, x, issuer);
+        if ((resp = sk_OCSP_RESPONSE_value(s->ext.ocsp.resp_ex, chainidx)) != NULL) {
+            bs = OCSP_response_get1_basic(resp);
+            sr = OCSP_resp_get0(bs, 0);
+            cid = (OCSP_CERTID *)OCSP_SINGLERESP_get0_id(sr);
 
-        if (cert_id == NULL)
-            return 0;
+            OCSP_id_get0_info(NULL, &cert_id_md_oid, NULL, NULL, cid);
 
-        resp = sk_OCSP_RESPONSE_value(s->ext.ocsp.resp_ex, chainidx);
+            if (cert_id_md_oid != NULL)
+                cert_id_md = EVP_get_digestbyobj(cert_id_md_oid);
 
-        if (resp != NULL && (bs = OCSP_response_get1_basic(resp)) != NULL) {
+            OCSP_BASICRESP_free(bs);
 
-            if (OCSP_resp_find(bs, cert_id, -1) < 0)
+            /* search the stack for the requested OCSP response */
+            cert_id = OCSP_cert_to_id(cert_id_md, x, issuer);
+
+            if (cert_id == NULL)
+                return 0;
+
+            if ((bs = OCSP_response_get1_basic(resp)) != NULL) {
+                if (OCSP_resp_find(bs, cert_id, -1) < 0)
+                    resp = NULL;
+                OCSP_BASICRESP_free(bs);
+            } else {
                 resp = NULL;
-        } else {
-            resp = NULL;
-        }
+            }
 
-        OCSP_CERTID_free(cert_id);
+            OCSP_CERTID_free(cert_id);
+        }
     } else if (chainidx == 0) {
         /*
          * if certificate chain was not built and only the response for the server

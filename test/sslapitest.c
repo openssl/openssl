@@ -83,7 +83,8 @@ static int end_of_early_data = 0;
 #endif
 
 #ifndef OPENSSL_NO_OCSP
-static int test_tlsext_status_type(int multi_stapling);
+static int test_tlsext_status_type(void);
+static int test_tlsext_status_type_multi(void);
 #endif
 
 static char *certsdir = NULL;
@@ -1897,7 +1898,7 @@ static int ocsp_client_cb_single(SSL *s, void *arg)
     int *argi = (int *)arg;
     const unsigned char *resp, *p;
     OCSP_RESPONSE *rsp;
-    int len, i;
+    int len, resp_status;
 
     if (*argi != 1 && *argi != 2)
         return 0;
@@ -1907,11 +1908,11 @@ static int ocsp_client_cb_single(SSL *s, void *arg)
     p = resp;
     rsp = d2i_OCSP_RESPONSE(NULL, &p, len);
 
-    i = OCSP_response_status(rsp);
+    resp_status = OCSP_response_status(rsp);
 
     OCSP_RESPONSE_free(rsp);
 
-    if (i != OCSP_RESPONSE_STATUS_SUCCESSFUL)
+    if (resp_status != OCSP_RESPONSE_STATUS_SUCCESSFUL)
         return 0;
 
     ocsp_client_called = 1;
@@ -1920,36 +1921,90 @@ static int ocsp_client_cb_single(SSL *s, void *arg)
 
 static int ocsp_server_cb_multi(SSL *s, void *arg)
 {
-    STACK_OF(OCSP_RESPONSE) *sk_resp = NULL;
     int *argi = (int *)arg;
-    STACK_OF(OCSP_RESPID) *ids = NULL;
-    OCSP_RESPID *id = NULL;
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+    ASN1_TIME *thisupd = NULL, *nextupd = NULL;
+    X509 *ssl_cert = NULL;
+    X509 *issuer = NULL;
+    int i, num = 0;
+    STACK_OF(X509) *server_certs = NULL;
+    STACK_OF(OCSP_RESPONSE) *sk_resp = NULL;
+    OCSP_CERTID *cert_id = NULL;
+    OCSP_BASICRESP *bs = NULL;
+    char *signer_key_file = test_mk_file_path(certsdir, "subinterCA.key");
+    char *signer_cert_file = test_mk_file_path(certsdir, "subinterCA.pem");
+    BIO *bio_signer_key = NULL;
+    EVP_PKEY *signer_key = NULL;
+    X509 *signer_cert = NULL;
+    const EVP_MD *md = EVP_MD_fetch(libctx, "SHA-256", NULL);
 
-    if (*argi == 2) {
-        /* In this test we are expecting exactly 1 OCSP_RESPID */
-        SSL_get_tlsext_status_ids(s, &ids);
-        if (!TEST_ptr(ids) || !TEST_int_eq(sk_OCSP_RESPID_num(ids), 1))
-            return SSL_TLSEXT_ERR_ALERT_FATAL;
+    if (*argi != 1 && *argi != 2)
+        return 0;
 
-        id = sk_OCSP_RESPID_value(ids, 0);
-        if (id == NULL || !OCSP_RESPID_match_ex(id, ocspcert, libctx, NULL))
-            return SSL_TLSEXT_ERR_ALERT_FATAL;
-    } else if (*argi != 1) {
-        return SSL_TLSEXT_ERR_ALERT_FATAL;
+    SSL_get0_chain_certs(s, &server_certs);
+
+    if (server_certs != NULL && sc != NULL) {
+        /* certificate chain is available */
+        num = sk_X509_num(server_certs);
+    } else if (sc != NULL) {
+        /*
+         * certificate chain is not available,
+         * set num to 1 for server certificate
+         */
+        num = 1;
     }
 
-    dummy_ocsp_resp = OCSP_response_create(OCSP_RESPONSE_STATUS_SUCCESSFUL, NULL);
-
-    if (!TEST_ptr(dummy_ocsp_resp))
-        return SSL_TLSEXT_ERR_ALERT_FATAL;
+    if (*argi == 2)
+        num = 1;
 
     sk_resp = sk_OCSP_RESPONSE_new_null();
-    sk_OCSP_RESPONSE_push(sk_resp, dummy_ocsp_resp);
 
-    if (!TEST_true(SSL_set0_tlsext_status_ocsp_resp_ex(s, sk_resp))) {
-        sk_OCSP_RESPONSE_pop_free(sk_resp, OCSP_RESPONSE_free);
-        return SSL_TLSEXT_ERR_ALERT_FATAL;
+    thisupd = X509_gmtime_adj(NULL, 0);
+    nextupd = X509_time_adj_ex(NULL, 1, 0, NULL);
+
+    for (i = 0; i < num; i++) {
+        bs = OCSP_BASICRESP_new();
+
+        if (i == 0) {
+            /* get OCSP response for server certificate first */
+            ssl_cert = SSL_get_certificate(s);
+        } else {
+            /*
+             * for each certificate in chain (except root) get
+             * the OCSP response
+             */
+            ssl_cert = sk_X509_value(server_certs, i - 1);
+        }
+
+        issuer = sk_X509_value(server_certs, i);
+
+        cert_id = OCSP_cert_to_id(md, ssl_cert, issuer);
+
+        OCSP_basic_add1_status(bs, cert_id, V_OCSP_CERTSTATUS_GOOD,
+                               0, NULL, thisupd, nextupd);
+
+        if (!TEST_ptr(bio_signer_key = BIO_new_file(signer_key_file, "r"))
+            || !TEST_ptr(signer_key = PEM_read_bio_PrivateKey_ex(bio_signer_key, NULL,
+                                                                 NULL, NULL, libctx, NULL)))
+            return SSL_TLSEXT_ERR_ALERT_FATAL;
+
+        if (!TEST_ptr(signer_cert = load_cert_pem(signer_cert_file, libctx))
+            || !TEST_true(OCSP_basic_sign(bs, signer_cert, signer_key, EVP_sha256(),
+                                          NULL, OCSP_NOCERTS)))
+            return SSL_TLSEXT_ERR_ALERT_FATAL;
+
+        if (!TEST_ptr(dummy_ocsp_resp = OCSP_response_create(OCSP_RESPONSE_STATUS_SUCCESSFUL, bs)))
+            return SSL_TLSEXT_ERR_ALERT_FATAL;
+
+        sk_OCSP_RESPONSE_push(sk_resp, dummy_ocsp_resp);
+
+        OCSP_BASICRESP_free(bs);
+        OCSP_CERTID_free(cert_id);
     }
+
+    num = sk_OCSP_RESPONSE_num(sk_resp);
+
+    (void)SSL_set0_tlsext_status_ocsp_resp_ex(s, sk_resp);
 
     ocsp_server_called = 1;
     return SSL_TLSEXT_ERR_OK;
@@ -1958,38 +2013,97 @@ static int ocsp_server_cb_multi(SSL *s, void *arg)
 static int ocsp_client_cb_multi(SSL *s, void *arg)
 {
     int *argi = (int *)arg;
-    int num, i;
     STACK_OF(OCSP_RESPONSE) *sk_resp = NULL;
-    OCSP_RESPONSE *rsp;
+    OCSP_RESPONSE *resp;
+    STACK_OF(X509) *server_certs = NULL;
+    X509 *ssl_cert = NULL, *issuer_cert = NULL;
+    OCSP_BASICRESP *bs = NULL;
+    OCSP_CERTID *cert_id = NULL;
+    OCSP_SINGLERESP *sr = NULL;
+    OCSP_CERTID *cid = NULL;
+    ASN1_OBJECT *cert_id_md_oid;
+    const EVP_MD *cert_id_md;
+    int i, num;
+    int testresult = 1;
 
-    if (*argi != 1 && *argi != 2)
+    num = SSL_get0_tlsext_status_ocsp_resp_ex(s, &sk_resp);
+
+    /* check if we get as many OCSP responses as expected */
+    if ((*argi == 1 && num != 3) || (*argi == 2 && num != 1))
         return 0;
 
-    SSL_get0_tlsext_status_ocsp_resp_ex(s, &sk_resp);
+    server_certs = SSL_get_peer_cert_chain(s);
 
-    num = sk_OCSP_RESPONSE_num(sk_resp);
+    num = sk_X509_num(server_certs);
 
-    if (num != 1)
-        return 0;
+    if (*argi == 2)
+        num = 1;
 
-    rsp = sk_OCSP_RESPONSE_value(sk_resp, 0);
+    /*
+     * check if OCSP responses for all certificates in the chain are received
+     * and they are in the correct order
+     */
+    for (i = 0; i < num; i++) {
+        if ((ssl_cert = sk_X509_value(server_certs, i)) == NULL) {
+            testresult = 0;
+            break;
+        }
+        /* for a selfsigned certificate we expect no OCSP response */
+        if (X509_self_signed(ssl_cert, 0))
+            continue;
 
-    i = OCSP_response_status(rsp);
+        if (((resp = sk_OCSP_RESPONSE_value(sk_resp, i)) == NULL)
+            || (OCSP_response_status(resp) != OCSP_RESPONSE_STATUS_SUCCESSFUL)) {
+            testresult = 0;
+            break;
+        }
 
-    SSL_set0_tlsext_status_ocsp_resp_ex(s, NULL);
+        issuer_cert = X509_find_by_subject(server_certs, X509_get_issuer_name(ssl_cert));
 
-    if (i != OCSP_RESPONSE_STATUS_SUCCESSFUL)
-        return 0;
+        if (issuer_cert == NULL) {
+            testresult = 0;
+            break;
+        }
+
+        bs = OCSP_response_get1_basic(resp);
+        sr = OCSP_resp_get0(bs, 0);
+        cid = (OCSP_CERTID *)OCSP_SINGLERESP_get0_id(sr);
+
+        OCSP_id_get0_info(NULL, &cert_id_md_oid, NULL, NULL, cid);
+
+        if (cert_id_md_oid != NULL)
+            cert_id_md = EVP_get_digestbyobj(cert_id_md_oid);
+
+        OCSP_BASICRESP_free(bs);
+
+        /* search the stack for the requested OCSP response */
+        cert_id = OCSP_cert_to_id(cert_id_md, ssl_cert, issuer_cert);
+
+        if (cert_id == NULL) {
+            testresult = 0;
+            break;
+        }
+
+        if ((bs = OCSP_response_get1_basic(resp)) != NULL) {
+            if (OCSP_resp_find(bs, cert_id, -1) < 0)
+                resp = NULL;
+            OCSP_BASICRESP_free(bs);
+        } else {
+            resp = NULL;
+        }
+        OCSP_CERTID_free(cert_id);
+
+        if (resp == NULL) {
+            testresult = 0;
+            break;
+        }
+    }
 
     ocsp_client_called = 1;
-    return 1;
+    return testresult;
 }
 
-/*
- * multi_stapling == 0: test for single OCSP response stapling test
- * multi_stapling == 1: test function for OCSP multi-stapling tests
- */
-static int test_tlsext_status_type(int multi_stapling)
+static int test_tlsext_status_type(void)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
@@ -2037,19 +2151,13 @@ static int test_tlsext_status_type(int multi_stapling)
      * Now actually do a handshake and check OCSP information is exchanged and
      * the callbacks get called
      */
-    if (multi_stapling) {
-        cdummyarg = 1;
-        SSL_CTX_set_tlsext_status_cb(cctx, ocsp_client_cb_multi);
-        SSL_CTX_set_tlsext_status_arg(cctx, &cdummyarg);
-        SSL_CTX_set_tlsext_status_cb(sctx, ocsp_server_cb_multi);
-        SSL_CTX_set_tlsext_status_arg(sctx, &cdummyarg);
-    } else {
-        cdummyarg = 1;
-        SSL_CTX_set_tlsext_status_cb(cctx, ocsp_client_cb_single);
-        SSL_CTX_set_tlsext_status_arg(cctx, &cdummyarg);
-        SSL_CTX_set_tlsext_status_cb(sctx, ocsp_server_cb_single);
-        SSL_CTX_set_tlsext_status_arg(sctx, &cdummyarg);
-    }
+    SSL_CTX_set_tlsext_status_cb(cctx, ocsp_client_cb_single);
+    SSL_CTX_set_tlsext_status_arg(cctx, &cdummyarg);
+    SSL_CTX_set_tlsext_status_cb(sctx, ocsp_server_cb_single);
+    SSL_CTX_set_tlsext_status_arg(sctx, &cdummyarg);
+    ocsp_client_called = 0;
+    ocsp_server_called = 0;
+    cdummyarg = 1;
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
                                       &clientssl, NULL, NULL))
             || !TEST_true(create_ssl_connection(serverssl, clientssl,
@@ -2128,6 +2236,97 @@ end:
     BIO_free(certbio);
     X509_free(ocspcert);
     ocspcert = NULL;
+
+    return testresult;
+}
+
+static int test_tlsext_status_type_multi(void)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    char *leaf_chain = test_mk_file_path(certsdir, "leaf-chain.pem");
+    char *skey = test_mk_file_path(certsdir, "leaf.key");
+    char *leaf = test_mk_file_path(certsdir, "leaf.pem");
+    OSSL_LIB_CTX *tmpctx;
+
+    tmpctx = OSSL_LIB_CTX_set0_default(libctx);
+
+    if (!create_ssl_ctx_pair(libctx, TLS_server_method(), TLS_client_method(),
+                             TLS1_VERSION, 0,
+                             &sctx, &cctx, leaf, skey))
+        return 0;
+
+    if (SSL_CTX_use_certificate_chain_file(sctx, leaf_chain) <= 0)
+        return 0;
+
+    if (SSL_CTX_get_tlsext_status_type(cctx) != -1)
+        goto end;
+
+    /* First just do various checks getting and setting tlsext_status_type */
+
+    clientssl = SSL_new(cctx);
+    if (!TEST_ptr(clientssl))
+        goto end;
+    if (!TEST_int_eq(SSL_get_tlsext_status_type(clientssl), -1)
+            || !TEST_true(SSL_set_tlsext_status_type(clientssl,
+                                                     TLSEXT_STATUSTYPE_ocsp))
+            || !TEST_int_eq(SSL_get_tlsext_status_type(clientssl),
+                            TLSEXT_STATUSTYPE_ocsp))
+        goto end;
+
+    SSL_free(clientssl);
+    clientssl = NULL;
+
+    if (!SSL_CTX_set_tlsext_status_type(cctx, TLSEXT_STATUSTYPE_ocsp)
+        || SSL_CTX_get_tlsext_status_type(cctx) != TLSEXT_STATUSTYPE_ocsp)
+        goto end;
+
+    /*
+     * Now actually do a handshake and check OCSP information is exchanged and
+     * the callbacks get called
+     */
+    SSL_CTX_set_tlsext_status_cb(cctx, ocsp_client_cb_multi);
+    SSL_CTX_set_tlsext_status_arg(cctx, &cdummyarg);
+    SSL_CTX_set_tlsext_status_cb(sctx, ocsp_server_cb_multi);
+    SSL_CTX_set_tlsext_status_arg(sctx, &cdummyarg);
+    ocsp_client_called = 0;
+    ocsp_server_called = 0;
+    cdummyarg = 1;
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl, NULL, NULL))
+            || !TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE))
+            || !TEST_true(ocsp_client_called) || !TEST_true(ocsp_server_called))
+        goto end;
+
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    serverssl = NULL;
+    clientssl = NULL;
+
+    /*
+     * This time we only transfer the OCSP information for the server certificate
+     */
+    ocsp_client_called = 0;
+    ocsp_server_called = 0;
+    cdummyarg = 2;
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl, NULL, NULL))
+            || !TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE))
+            || !TEST_true(ocsp_client_called) || !TEST_true(ocsp_server_called))
+        goto end;
+
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    serverssl = NULL;
+    clientssl = NULL;
+
+    testresult = 1;
+
+end:
+    OSSL_LIB_CTX_set0_default(tmpctx);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
 
     return testresult;
 }
@@ -13201,7 +13400,8 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_large_app_data, 28);
     ADD_TEST(test_cleanse_plaintext);
 #ifndef OPENSSL_NO_OCSP
-    ADD_ALL_TESTS(test_tlsext_status_type, 2);
+    ADD_TEST(test_tlsext_status_type);
+    ADD_TEST(test_tlsext_status_type_multi);
 #endif
     ADD_TEST(test_session_with_only_int_cache);
     ADD_TEST(test_session_with_only_ext_cache);

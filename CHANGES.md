@@ -224,8 +224,8 @@ OpenSSL 3.5
    the status of the leaf (server) certificate or of all certificates in the chain.
    New `s_server` option `-status_all` to provide OCSP status information
    for the whole server certificate chain (multi-stapling) for TLS 1.3 and beyond.
-   Multiple response files can now be provided via the `-status_file` option
-   to the app `s_server`.
+   The `-status_file` server option can now be given multiple times to provide
+   multiple files containing OCSP responses.
 
    *Michael Krueger, Martin Rauch*
 
