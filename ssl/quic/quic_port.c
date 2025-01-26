@@ -132,7 +132,6 @@ static int port_init(QUIC_PORT *port)
 {
     size_t rx_short_dcid_len = (port->is_multi_conn ? INIT_DCID_LEN : 0);
     int key_len;
-    EVP_CIPHER *cipher = NULL;
     unsigned char *token_key = NULL;
     int ret = 0;
 
@@ -167,11 +166,24 @@ static int port_init(QUIC_PORT *port)
     port->on_engine_list    = 1;
     port->bio_changed       = 1;
 
+    port->evp_aes128ecb = EVP_CIPHER_fetch(port->engine->libctx, "AES-128-ECB",
+                                    port->engine->propq);
+    if (port->evp_aes128ecb == NULL)
+        goto err;
+
+    port->evp_aes128gcm = EVP_CIPHER_fetch(port->engine->libctx, "AES-128-GCM",
+                                    port->engine->propq);
+    if (port->evp_aes128gcm == NULL)
+        goto err;
+
+    port->evp_sha256 = EVP_MD_fetch(port->engine->libctx, "SHA256",
+                                    port->engine->propq);
+    if (port->evp_sha256 == NULL)
+        goto err;
+
     /* Generate random key for token encryption */
     if ((port->token_ctx = EVP_CIPHER_CTX_new()) == NULL
-        || (cipher = EVP_CIPHER_fetch(port->engine->libctx,
-                                      "AES-256-GCM", NULL)) == NULL
-        || !EVP_EncryptInit_ex(port->token_ctx, cipher, NULL, NULL, NULL)
+        || !EVP_EncryptInit_ex(port->token_ctx, port->evp_aes128gcm, NULL, NULL, NULL)
         || (key_len = EVP_CIPHER_CTX_get_key_length(port->token_ctx)) <= 0
         || (token_key = OPENSSL_malloc(key_len)) == NULL
         || !RAND_bytes_ex(port->engine->libctx, token_key, key_len, 0)
@@ -180,7 +192,6 @@ static int port_init(QUIC_PORT *port)
 
     ret = 1;
 err:
-    EVP_CIPHER_free(cipher);
     OPENSSL_free(token_key);
     if (!ret)
         port_cleanup(port);
@@ -210,6 +221,10 @@ static void port_cleanup(QUIC_PORT *port)
 
     EVP_CIPHER_CTX_free(port->token_ctx);
     port->token_ctx = NULL;
+
+    EVP_CIPHER_free(port->evp_aes128ecb);
+    EVP_CIPHER_free(port->evp_aes128gcm);
+    EVP_MD_free(port->evp_sha256);
 }
 
 static void port_transition_failed(QUIC_PORT *port)
@@ -493,12 +508,14 @@ static SSL *port_new_handshake_layer(QUIC_PORT *port, QUIC_CHANNEL *ch)
     return tls;
 }
 
-static QUIC_CHANNEL *port_make_channel(QUIC_PORT *port, SSL *tls, int is_server)
+static QUIC_CHANNEL *port_make_channel(QUIC_PORT *port, SSL *tls, int is_server,
+                                       QUIC_PORT_SECRETS *qps)
 {
     QUIC_CHANNEL_ARGS args = {0};
     QUIC_CHANNEL *ch;
 
     args.port       = port;
+    args.qps        = qps;
     args.is_server  = is_server;
     args.lcidm      = port->lcidm;
     args.srtm       = port->srtm;
@@ -551,7 +568,7 @@ static QUIC_CHANNEL *port_make_channel(QUIC_PORT *port, SSL *tls, int is_server)
 
 QUIC_CHANNEL *ossl_quic_port_create_outgoing(QUIC_PORT *port, SSL *tls)
 {
-    return port_make_channel(port, tls, /*is_server=*/0);
+    return port_make_channel(port, tls, /*is_server=*/0, NULL);
 }
 
 QUIC_CHANNEL *ossl_quic_port_create_incoming(QUIC_PORT *port, SSL *tls)
@@ -560,7 +577,7 @@ QUIC_CHANNEL *ossl_quic_port_create_incoming(QUIC_PORT *port, SSL *tls)
 
     assert(port->tserver_ch == NULL);
 
-    ch = port_make_channel(port, tls, /*is_server=*/1);
+    ch = port_make_channel(port, tls, /*is_server=*/1, /* port secrets */NULL);
     port->tserver_ch = ch;
     port->allow_incoming = 1;
     return ch;
@@ -696,9 +713,10 @@ static void port_rx_pre(QUIC_PORT *port)
  * connection from it. If a new connection is made, the new channel is written
  * to *new_ch.
  */
-static void port_bind_channel(QUIC_PORT *port, const BIO_ADDR *peer,
-                              const QUIC_CONN_ID *scid, const QUIC_CONN_ID *dcid,
-                              const QUIC_CONN_ID *odcid, QUIC_CHANNEL **new_ch)
+static void port_bind_channel(QUIC_PORT *port, QUIC_PORT_SECRETS *qps,
+                              const BIO_ADDR *peer, const QUIC_CONN_ID *scid,
+                              const QUIC_CONN_ID *dcid, const QUIC_CONN_ID *odcid,
+                              QUIC_CHANNEL **new_ch)
 {
     QUIC_CHANNEL *ch;
 
@@ -709,12 +727,15 @@ static void port_bind_channel(QUIC_PORT *port, const BIO_ADDR *peer,
     if (port->tserver_ch != NULL) {
         ch = port->tserver_ch;
         port->tserver_ch = NULL;
+        ossl_quic_destroy_port_secrets(qps);
     } else {
-        ch = port_make_channel(port, NULL, /* is_server= */1);
+        ch = port_make_channel(port, NULL, /* is_server= */1, qps);
     }
 
-    if (ch == NULL)
+    if (ch == NULL) {
+        ossl_quic_destroy_port_secrets(qps);
         return;
+    }
 
     if (odcid->id_len != 0) {
         /*
@@ -1074,7 +1095,7 @@ static void port_send_retry(QUIC_PORT *port,
     hdr.dst_conn_id = client_hdr->src_conn_id;
     /*
      * this is the random connection ID, we expect client is
-     * going to send the ID with next INITIAL packet which
+     p going to send the ID with next INITIAL packet which
      * will also come with token we generate here.
      */
     ok = ossl_quic_lcidm_get_unused_cid(port->lcidm, &hdr.src_conn_id);
@@ -1337,6 +1358,182 @@ err:
 }
 
 /*
+ * removes the mask from packet number field in QUIC packet header.
+ * the address to packet header is kept in ptrs structure.
+ */
+static int port_chk_remove_hdr_protection(QUIC_PORT_SECRETS *qps,
+                                          QUIC_PKT_HDR_PTRS *ptrs)
+{
+    int l = 0;
+    int ok;
+    unsigned char pn_len, i;
+    unsigned char dst[16] = { 0 };
+    unsigned char mask[5] = { 0 };
+    unsigned char *first_byte;
+    unsigned char *pn_bytes;
+
+    l = 0;
+    ok = EVP_CipherUpdate(qps->qps_hpr_ctx, dst, &l, ptrs->raw_sample, 16);
+    if (ok == 0)
+        return 0;
+    /*
+     * We are going to drop header protection here. We decode packet number
+     * using the mask we got from raw_sample deciphered by header protector
+     * key.
+     */
+    for (i = 0; i < 5; ++i)
+         mask[i] = dst[i];
+    first_byte = ptrs->raw_start;
+    pn_bytes = ptrs->raw_pn;
+
+    *first_byte ^= mask[0] & ((*first_byte & 0x80) != 0 ? 0xf : 0x1f);
+    pn_len = (*first_byte & 0x3) + 1;
+    for (i = 0; i < pn_len; ++i)
+        pn_bytes[i] ^= mask[i + 1];
+
+    return 1;
+}
+
+static int port_chk_derive_nonce(QUIC_PORT_SECRETS *qps, QUIC_PN pn,
+                                 unsigned char *nonce, int nonce_sz)
+{
+    int nonce_len, i;
+
+    nonce_len = EVP_CIPHER_CTX_get_iv_length(qps->qps_pkt_ctx);
+    if (nonce_len > nonce_sz)
+        return 0;
+
+    memcpy(nonce, qps->qps_rx_cipher_iv, nonce_len);
+    for (i = 0; i < sizeof(QUIC_PN); ++i)
+        nonce[nonce_len - i - 1] ^= (unsigned char)(pn >> (i * 8));
+
+    return 1;
+}
+
+/*
+ * Function verifies integrity of INITIAL QUIC packet.
+ */
+static int port_chk_initial_pkt(QUIC_PORT *port, QUIC_URXE *e,
+                                QUIC_PKT_HDR *hdr, QUIC_PORT_SECRETS **pqps)
+{
+    PACKET pkt;
+    QUIC_PKT_HDR  hdr_local = { 0 };
+    QUIC_PKT_HDR_PTRS ptrs = { 0 };
+    unsigned char *work_buf = NULL;
+    size_t work_buf_sz = 0;
+    unsigned char scratch_dst[65535];
+    unsigned char nonce[EVP_MAX_IV_LENGTH];
+    const unsigned char *sop;
+    QUIC_PN pn;
+    size_t aad_len;
+    int l = 0, l2 = 0;
+    int ok;
+    QUIC_PORT_SECRETS *qps = NULL;
+
+    if (hdr->type != QUIC_PKT_TYPE_INITIAL)
+        return 0;
+
+    if (!PACKET_buf_init(&pkt, ossl_quic_urxe_data(e), e->data_len))
+        return 0;
+
+    if (pqps == NULL)
+        return 0;
+
+    /*
+     * create packet copy so qrx will obtain raw packet to do its own
+     * processing. This is sub-optimal. Ideally we want port to create qrx
+     * instance here to process packet.  if port will accept packet and create
+     * a channel later, then the qrx instance will be passed to channel
+     * constructor.
+     */
+    if (PACKET_memdup(&pkt, &work_buf, &work_buf_sz) == 0)
+        return 0;
+
+    if (!PACKET_buf_init(&pkt, work_buf, work_buf_sz))
+        goto fail;
+
+    hdr = &hdr_local;
+    if (ossl_quic_wire_decode_pkt_hdr(&pkt, SIZE_MAX, 1, 0, hdr, &ptrs,
+                                      NULL) == 0)
+        goto fail;
+
+    if (ptrs.raw_sample_len < 16)
+        goto fail;
+
+    /*
+     * code here got copied and modified from
+     * ossl_quic_hdr_protector_decrypt_fields()
+     */
+    qps = ossl_quic_provide_initial_rx_secret_for_dcid(port, &hdr->dst_conn_id);
+    if (qps == NULL)
+        goto fail;
+
+    if (port_chk_remove_hdr_protection(qps, &ptrs) == 0)
+        goto fail;
+
+    /* decode header with protection removed  */
+    if (!PACKET_buf_init(&pkt, work_buf, work_buf_sz)) {
+        ossl_quic_destroy_port_secrets(qps);
+        goto fail;
+    }
+    sop = PACKET_data(&pkt);
+    ok = ossl_quic_wire_decode_pkt_hdr(&pkt, SIZE_MAX, 0, 0, hdr, NULL, NULL);
+    if (ok == 0)
+        goto fail;
+
+    ok = ossl_quic_wire_decode_pkt_hdr_pn(hdr->pn, hdr->pn_len, 0, &pn);
+    if (ok == 0)
+        goto fail;
+
+    /*
+     * code here got copied and modified from qrx_decrypt_pkt_body()
+     * and el_setup_keyslot(). it supports initial level encryption only
+     * for rx only packets.
+     */
+
+    if (port_chk_derive_nonce(qps, pn, nonce, EVP_MAX_IV_LENGTH) == 0)
+        goto fail;
+
+    /* type and key  got up in ossl_quic_provide_initial_rx_secret_for_dcid. */
+    ok = EVP_CipherInit_ex(qps->qps_pkt_ctx, NULL,
+                           NULL, NULL, nonce, /*enc=*/0);
+    if (ok == 0)
+        goto fail;
+
+    /* Feed the AEAD tag we got so the cipher can validate it. */
+    ok = EVP_CIPHER_CTX_ctrl(qps->qps_pkt_ctx, EVP_CTRL_AEAD_SET_TAG, 16,
+                             (unsigned char *)hdr->data + hdr->len - 16);
+    if (ok == 0)
+        goto fail;
+
+    /* Feed AAD data. */
+    aad_len = hdr->data - work_buf;
+    ok = EVP_CipherUpdate(qps->qps_pkt_ctx, NULL, &l, sop, aad_len);
+    if (ok == 0)
+        goto fail;
+
+    /* Feed encrypted packet body. */
+    ok = EVP_CipherUpdate(qps->qps_pkt_ctx, scratch_dst, &l, hdr->data,
+                          hdr->len - 16);
+    if (ok == 0)
+        goto fail;
+
+    /* Ensure authentication succeeded. */
+    ok = EVP_CipherFinal_ex(qps->qps_pkt_ctx, NULL, &l2);
+    if (ok == 0)
+        goto fail;
+
+    OPENSSL_free(work_buf);
+    *pqps = qps;
+
+    return 1;
+fail:
+    OPENSSL_free(work_buf);
+    ossl_quic_destroy_port_secrets(qps);
+    return 0;
+}
+
+/*
  * This is called by the demux when we get a packet not destined for any known
  * DCID.
  */
@@ -1348,6 +1545,8 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
     QUIC_PKT_HDR hdr;
     QUIC_CHANNEL *ch = NULL, *new_ch = NULL;
     QUIC_CONN_ID odcid, scid;
+    QUIC_PKT_HDR_PTRS ptrs;
+    QUIC_PORT_SECRETS *qps;
     uint64_t cause_flags = 0;
 
     /* Don't handle anything if we are no longer running. */
@@ -1387,7 +1586,7 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
      * operation to fail if we get a 1-RTT packet. This is fine since we only
      * care about Initial packets.
      */
-    if (!ossl_quic_wire_decode_pkt_hdr(&pkt, SIZE_MAX, 1, 0, &hdr, NULL,
+    if (!ossl_quic_wire_decode_pkt_hdr(&pkt, SIZE_MAX, 1, 0, &hdr, &ptrs,
                                        &cause_flags)) {
         /*
          * If we fail due to a bad version, we know the packet up to the version
@@ -1454,7 +1653,19 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
             goto undesirable;
     }
 
-    port_bind_channel(port, &e->peer, &scid, &hdr.dst_conn_id,
+    /*
+     * Time to do integrity check of initial packet. To verify packet integrity
+     * we need to derive secrets. This costs us CPU, it is worth to keep them
+     * and pass them to channel constructor so they can be plugged to qrx.
+     */
+    qps = NULL;
+    if ((port_chk_initial_pkt(port, e, &hdr, &qps)) == 0)
+        goto undesirable;
+
+    /*
+     * channel becomes owner of port secrets
+     */
+    port_bind_channel(port, qps, &e->peer, &scid, &hdr.dst_conn_id,
                       &odcid, &new_ch);
 
     /*
@@ -1502,4 +1713,44 @@ void ossl_quic_port_restore_err_state(const QUIC_PORT *port)
 {
     ERR_clear_error();
     OSSL_ERR_STATE_restore(port->err_state);
+}
+
+OSSL_LIB_CTX *ossl_quic_port_get_libctx(QUIC_PORT *port)
+{
+    if ((port == NULL) || (port->engine == NULL))
+        return NULL;
+
+    return port->engine->libctx;
+}
+
+const char *ossl_quic_port_get_propq(QUIC_PORT *port)
+{
+    if ((port == NULL) || (port->engine == NULL))
+        return NULL;
+
+    return port->engine->propq;
+}
+
+EVP_CIPHER *ossl_quic_port_get_hpr_cipher(QUIC_PORT *port)
+{
+    if (port == NULL)
+        return NULL;
+
+    return port->evp_aes128ecb;
+}
+
+EVP_CIPHER *ossl_quic_port_get_pkt_cipher(QUIC_PORT *port)
+{
+    if (port == NULL)
+        return NULL;
+
+    return port->evp_aes128gcm;
+}
+
+EVP_MD *ossl_quic_port_get_digest_alg(QUIC_PORT *port)
+{
+    if (port == NULL)
+        return NULL;
+
+    return port->evp_sha256;
 }

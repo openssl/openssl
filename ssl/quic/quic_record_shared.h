@@ -115,7 +115,8 @@ int ossl_qrl_enc_level_set_provide_secret(OSSL_QRL_ENC_LEVEL_SET *els,
                                           const unsigned char *secret,
                                           size_t secret_len,
                                           unsigned char init_key_phase_bit,
-                                          int is_tx);
+                                          int is_tx,
+                                          QUIC_PORT_SECRETS *qps);
 
 /*
  * Returns 1 if the given keyslot index is currently valid for a given EL and EL

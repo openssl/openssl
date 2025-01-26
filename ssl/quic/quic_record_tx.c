@@ -196,7 +196,8 @@ int ossl_qtx_provide_secret(OSSL_QTX              *qtx,
                                                  secret,
                                                  secret_len,
                                                  0,
-                                                 /*is_tx=*/1);
+                                                 /*is_tx=*/1,
+                                                 /* port secrets */NULL);
 }
 
 int ossl_qtx_discard_enc_level(OSSL_QTX *qtx, uint32_t enc_level)

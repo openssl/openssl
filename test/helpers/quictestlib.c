@@ -271,7 +271,9 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
          *    client. This needs to be removed once we have proper server side
          *    handling.
          */
+#if 0
         (void)BIO_ctrl(sbio, BIO_CTRL_NOISE_BACK_OFF, 0, NULL);
+#endif
 
         (*fault)->noiseargs.cbio = cbio;
         (*fault)->noiseargs.sbio = sbio;

@@ -98,6 +98,40 @@ static void el_teardown_keyslot(OSSL_QRL_ENC_LEVEL_SET *els,
     OPENSSL_cleanse(el->iv[keyslot], sizeof(el->iv[keyslot]));
 }
 
+static int el_setup_keyslot_from_qps(OSSL_QRL_ENC_LEVEL_SET *els,
+                                     uint32_t enc_level,
+                                     unsigned char tgt_state,
+                                     size_t keyslot,
+                                     QUIC_PORT_SECRETS *qps)
+{
+    OSSL_QRL_ENC_LEVEL *el = ossl_qrl_enc_level_set_get(els, enc_level, 0);
+    int iv_len = ossl_qrl_get_suite_secret_len(el->suite_id);
+
+    if (enc_level != QUIC_ENC_LEVEL_INITIAL)
+        return 0;
+
+    if (!ossl_assert(el != NULL
+                     && ossl_qrl_enc_level_set_has_keyslot(els, enc_level,
+                                                           tgt_state, keyslot))) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
+
+    if (iv_len != QPS_RX_SECRET_SZ
+        || QPS_RX_SECRET_SZ > EVP_MAX_KEY_LENGTH) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    assert(el->cctx[keyslot] == NULL);
+
+    el->cctx[keyslot] = qps->qps_pkt_ctx;;
+    qps->qps_pkt_ctx = NULL;
+    memcpy(el->iv[keyslot], qps->qps_rx_cipher_iv, iv_len);
+
+    return 1;
+}
+
 static int el_setup_keyslot(OSSL_QRL_ENC_LEVEL_SET *els,
                             uint32_t enc_level,
                             unsigned char tgt_state,
@@ -202,13 +236,15 @@ int ossl_qrl_enc_level_set_provide_secret(OSSL_QRL_ENC_LEVEL_SET *els,
                                           const unsigned char *secret,
                                           size_t secret_len,
                                           unsigned char init_key_phase_bit,
-                                          int is_tx)
+                                          int is_tx,
+                                          QUIC_PORT_SECRETS *qps)
 {
     OSSL_QRL_ENC_LEVEL *el = ossl_qrl_enc_level_set_get(els, enc_level, 0);
     unsigned char ku_key[EVP_MAX_KEY_LENGTH], hpr_key[EVP_MAX_KEY_LENGTH];
     int have_ks0 = 0, have_ks1 = 0, own_md = 0;
     const char *md_name = ossl_qrl_get_suite_md_name(suite_id);
     size_t hpr_key_len, init_keyslot;
+    int ok;
 
     if (el == NULL
         || md_name == NULL
@@ -261,19 +297,32 @@ int ossl_qrl_enc_level_set_provide_secret(OSSL_QRL_ENC_LEVEL_SET *els,
     el->key_epoch   = (uint64_t)init_key_phase_bit;
     el->is_tx       = (unsigned char)is_tx;
 
-    /* Derive "quic hp" key. */
-    if (!tls13_hkdf_expand_ex(libctx, propq,
-                              md,
-                              secret,
-                              quic_v1_hp_label,
-                              sizeof(quic_v1_hp_label),
-                              NULL, 0,
-                              hpr_key, hpr_key_len, 1))
-        goto err;
+    /* Derive "quic hp" key. unless we got header protection key from port */
+    if (enc_level == QUIC_ENC_LEVEL_INITIAL && is_tx == 0 && qps != NULL) {
+        ok = el_setup_keyslot_from_qps(els, enc_level, QRL_EL_STATE_PROV_NORMAL,
+                                       init_key_phase_bit, qps);
+        if (ok != 0) {
+            ok = ossl_quic_hdr_protector_init_from_qps(&el->hpr, libctx, propq,
+                                                       ossl_qrl_get_suite_hdr_prot_cipher_id(suite_id),
+                                                       qps);
+            el->state = QRL_EL_STATE_PROV_NORMAL;
+        }
+        return ok;
+    } else {
+        if (!tls13_hkdf_expand_ex(libctx, propq,
+                                  md,
+                                  secret,
+                                  quic_v1_hp_label,
+                                  sizeof(quic_v1_hp_label),
+                                  NULL, 0,
+                                  hpr_key, hpr_key_len, 1))
+            goto err;
+        ok = el_setup_keyslot(els, enc_level, QRL_EL_STATE_PROV_NORMAL,
+                              init_keyslot, secret, secret_len);
+    }
 
     /* Setup KS0 (or KS1 if init_key_phase_bit), our initial keyslot. */
-    if (!el_setup_keyslot(els, enc_level, QRL_EL_STATE_PROV_NORMAL,
-                          init_keyslot, secret, secret_len))
+    if (ok == 0)
         goto err;
 
     have_ks0 = 1;

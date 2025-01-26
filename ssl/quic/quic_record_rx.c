@@ -171,6 +171,8 @@ struct ossl_qrx_st {
     ossl_msg_cb msg_callback;
     void *msg_callback_arg;
     SSL *msg_callback_ssl;
+
+    QUIC_PORT_SECRETS   *qps;
 };
 
 OSSL_QRX *ossl_qrx_new(const OSSL_QRX_ARGS *args)
@@ -194,6 +196,7 @@ OSSL_QRX *ossl_qrx_new(const OSSL_QRX_ARGS *args)
     qrx->short_conn_id_len      = args->short_conn_id_len;
     qrx->init_key_phase_bit     = args->init_key_phase_bit;
     qrx->max_deferred           = args->max_deferred;
+    qrx->qps                    = args->qps;
     return qrx;
 }
 
@@ -236,6 +239,8 @@ void ossl_qrx_free(OSSL_QRX *qrx)
     for (i = 0; i < QUIC_ENC_LEVEL_NUM; ++i)
         ossl_qrl_enc_level_set_discard(&qrx->el_set, i);
 
+    ossl_quic_destroy_port_secrets(qrx->qps);
+
     OPENSSL_free(qrx);
 }
 
@@ -267,27 +272,46 @@ int ossl_qrx_provide_secret(OSSL_QRX *qrx, uint32_t enc_level,
                             uint32_t suite_id, EVP_MD *md,
                             const unsigned char *secret, size_t secret_len)
 {
+    int ok = 0;
     if (enc_level >= QUIC_ENC_LEVEL_NUM)
         return 0;
 
-    if (!ossl_qrl_enc_level_set_provide_secret(&qrx->el_set,
-                                               qrx->libctx,
-                                               qrx->propq,
-                                               enc_level,
-                                               suite_id,
-                                               md,
-                                               secret,
-                                               secret_len,
-                                               qrx->init_key_phase_bit,
-                                               /*is_tx=*/0))
-        return 0;
+    if (enc_level == QUIC_ENC_LEVEL_INITIAL) {
+        ok = ossl_qrl_enc_level_set_provide_secret(&qrx->el_set,
+                                                   qrx->libctx,
+                                                   qrx->propq,
+                                                   enc_level,
+                                                   suite_id,
+                                                   md,
+                                                   secret,
+                                                   secret_len,
+                                                   qrx->init_key_phase_bit,
+                                                   /*is_tx=*/0,
+                                                   qrx->qps);
+        /* always destroy secrets, regardless the failure */
+        ossl_quic_destroy_port_secrets(qrx->qps);
+        qrx->qps = NULL;
+    } else {
+        ok = ossl_qrl_enc_level_set_provide_secret(&qrx->el_set,
+                                                   qrx->libctx,
+                                                   qrx->propq,
+                                                   enc_level,
+                                                   suite_id,
+                                                   md,
+                                                   secret,
+                                                   secret_len,
+                                                   qrx->init_key_phase_bit,
+                                                   /*is_tx=*/0,
+                                                   qrx->qps);
+    }
 
     /*
      * Any packets we previously could not decrypt, we may now be able to
      * decrypt, so move any datagrams containing deferred packets from the
      * deferred to the pending queue.
      */
-    qrx_requeue_deferred(qrx);
+    if (ok != 0)
+        qrx_requeue_deferred(qrx);
     return 1;
 }
 

@@ -13,6 +13,7 @@
 # include <openssl/ssl.h>
 # include "internal/packet_quic.h"
 # include "internal/quic_types.h"
+# include "internal/quic_record_util.h"
 
 # ifndef OPENSSL_NO_QUIC
 
@@ -192,6 +193,11 @@ int ossl_quic_hdr_protector_init(QUIC_HDR_PROTECTOR *hpr,
                                  const unsigned char *quic_hp_key,
                                  size_t quic_hp_key_len);
 
+int ossl_quic_hdr_protector_init_from_qps(QUIC_HDR_PROTECTOR *hpr,
+                                          OSSL_LIB_CTX *libctx,
+                                          const char *propq,
+                                          uint32_t cipher_id,
+                                          QUIC_PORT_SECRETS *qps);
 /*
  * Destroys a header protector. This is also safe to call on a zero-initialized
  * OSSL_QUIC_HDR_PROTECTOR structure which has not been initialized, or which

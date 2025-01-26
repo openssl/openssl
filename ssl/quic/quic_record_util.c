@@ -11,6 +11,7 @@
 #include "internal/quic_record_rx.h"
 #include "internal/quic_record_tx.h"
 #include "internal/quic_wire_pkt.h"
+#include "internal/quic_port.h"
 #include "../ssl_local.h"
 #include <openssl/kdf.h>
 #include <openssl/core_names.h>
@@ -90,6 +91,7 @@ int ossl_quic_provide_initial_secret(OSSL_LIB_CTX *libctx,
     unsigned char client_initial_secret[32], server_initial_secret[32];
     unsigned char *rx_secret, *tx_secret;
     EVP_MD *sha256;
+    int i;
 
     if (qrx == NULL && qtx == NULL)
         return 1;
@@ -178,6 +180,110 @@ err:
     return 0;
 }
 
+void ossl_print_array(FILE *f, const unsigned char *array, size_t array_sz)
+{
+    int i;
+
+    for (i = 0; i < array_sz; i++)
+        fprintf(f, "%x", array[i]);
+}
+
+void ossl_quic_destroy_port_secrets(QUIC_PORT_SECRETS *qps)
+{
+    if (qps != NULL) {
+        EVP_CIPHER_CTX_free(qps->qps_hpr_ctx);
+        EVP_CIPHER_CTX_free(qps->qps_pkt_ctx);
+        OPENSSL_free(qps);
+    }
+}
+
+QUIC_PORT_SECRETS *ossl_quic_provide_initial_rx_secret_for_dcid(QUIC_PORT *port,
+                                                 const QUIC_CONN_ID *dst_conn_id)
+{
+    static const unsigned char quic_v1_hp_label[] = {
+        0x71, 0x75, 0x69, 0x63, 0x20, 0x68, 0x70 /* "quic hp" */
+    };
+    static const unsigned char quic_v1_iv_label[] = {
+        0x71, 0x75, 0x69, 0x63, 0x20, 0x69, 0x76 /* "quic iv" */
+    };
+    static const unsigned char quic_v1_key_label[] = {
+        0x71, 0x75, 0x69, 0x63, 0x20, 0x6b, 0x65, 0x79 /* "quic key" */
+    };
+    unsigned char initial_secret[32];
+    OSSL_LIB_CTX *libctx = ossl_quic_port_get_libctx(port);
+    const char *propq = ossl_quic_port_get_propq(port);
+    EVP_MD *sha256 = ossl_quic_port_get_digest_alg(port);
+    QUIC_PORT_SECRETS *qps;
+    int ok;
+    unsigned char tmp_key[EVP_MAX_KEY_LENGTH];
+
+    if (sha256 == NULL)
+        return NULL;
+
+    qps = OPENSSL_zalloc(sizeof(QUIC_PORT_SECRETS));
+    if (qps == NULL)
+        return NULL;
+
+    /* Derive initial secret from destination connection ID. */
+    if (!ossl_quic_hkdf_extract(libctx, propq, sha256, quic_v1_initial_salt,
+                                sizeof(quic_v1_initial_salt),
+                                dst_conn_id->id, dst_conn_id->id_len,
+                                initial_secret, sizeof(initial_secret)))
+        goto err;
+
+    if (!tls13_hkdf_expand_ex(libctx, propq, sha256, initial_secret,
+                              quic_client_in_label,
+                              sizeof(quic_client_in_label),
+                              NULL, 0, qps->qps_rx_secret, QPS_RX_SECRET_SZ, 1))
+        goto err;
+
+    if (!tls13_hkdf_expand_ex(libctx, propq, sha256, qps->qps_rx_secret,
+                              quic_v1_iv_label, sizeof(quic_v1_iv_label),
+                              NULL, 0, qps->qps_rx_cipher_iv,
+                              QPS_RX_CIPHER_IV_SZ, 1))
+        goto err;
+
+    qps->qps_hpr_ctx = EVP_CIPHER_CTX_new();
+    if (qps->qps_hpr_ctx == NULL)
+        goto err;
+
+    qps->qps_pkt_ctx = EVP_CIPHER_CTX_new();
+    if (qps->qps_pkt_ctx == NULL)
+        goto err;
+
+    /* header protection key */
+    if (!tls13_hkdf_expand_ex(libctx, propq, sha256, qps->qps_rx_secret,
+                              quic_v1_hp_label, sizeof(quic_v1_hp_label),
+                              NULL, 0, tmp_key, QPS_RX_HPR_KEY_SZ, 1))
+        goto err;
+    ok = EVP_CipherInit_ex(qps->qps_hpr_ctx,
+                           ossl_quic_port_get_hpr_cipher(port), NULL, tmp_key,
+                           NULL, 1);
+    memset(tmp_key, 0, sizeof(tmp_key));
+    if (ok == 0)
+        goto err;
+
+    /* packet integrity key */
+    if (!tls13_hkdf_expand_ex(libctx, propq, sha256, qps->qps_rx_secret,
+                              quic_v1_key_label, sizeof(quic_v1_key_label),
+                              NULL, 0, tmp_key, QPS_RX_CIPHER_KEY_SZ, 1))
+        goto err;
+
+    ok = EVP_CipherInit_ex(qps->qps_pkt_ctx,
+                           ossl_quic_port_get_pkt_cipher(port), NULL, tmp_key,
+                           qps->qps_rx_cipher_iv, 0);
+    memset(tmp_key, 0, sizeof(tmp_key));
+    if (ok == 0)
+        goto err;
+
+    return qps;
+err:
+    ossl_quic_destroy_port_secrets(qps);
+    ERR_raise(ERR_LIB_SSL, ERR_R_EVP_LIB);
+    return NULL;
+}
+
+
 /*
  * QUIC Record Layer Ciphersuite Info
  * ==================================
@@ -191,8 +297,8 @@ struct suite_info {
 };
 
 static const struct suite_info suite_aes128gcm = {
-    "AES-128-GCM", "SHA256", 32, 16, 12, 16, 16,
-    QUIC_HDR_PROT_CIPHER_AES_128,
+    "AES-128-GCM", "SHA256", 32, QPS_RX_CIPHER_KEY_SZ, QPS_RX_CIPHER_IV_SZ,
+    QPS_RX_CIPHER_TAG_SZ, QPS_RX_HPR_KEY_SZ, QUIC_HDR_PROT_CIPHER_AES_128,
     ((uint64_t)1) << 23, /* Limits as prescribed by RFC 9001 */
     ((uint64_t)1) << 52,
 };

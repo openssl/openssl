@@ -73,6 +73,24 @@ void ossl_quic_hdr_protector_cleanup(QUIC_HDR_PROTECTOR *hpr)
     hpr->cipher = NULL;
 }
 
+int ossl_quic_hdr_protector_init_from_qps(QUIC_HDR_PROTECTOR *hpr,
+                                          OSSL_LIB_CTX *libctx,
+                                          const char *propq,
+                                          uint32_t cipher_id,
+                                          QUIC_PORT_SECRETS *qps)
+{
+    hpr->libctx     = libctx;
+    hpr->propq      = propq;
+    hpr->cipher_id  = cipher_id;
+    hpr->cipher_ctx = qps->qps_hpr_ctx;
+    qps->qps_hpr_ctx = NULL;
+
+    return 1;
+}
+
+
+
+extern void ossl_print_array(FILE *, const unsigned char *, size_t);
 static int hdr_generate_mask(QUIC_HDR_PROTECTOR *hpr,
                              const unsigned char *sample, size_t sample_len,
                              unsigned char *mask)
@@ -97,6 +115,7 @@ static int hdr_generate_mask(QUIC_HDR_PROTECTOR *hpr,
 
         for (i = 0; i < 5; ++i)
             mask[i] = dst[i];
+
     } else if (hpr->cipher_id == QUIC_HDR_PROT_CIPHER_CHACHA) {
         if (sample_len < 16) {
             ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
@@ -133,6 +152,7 @@ int ossl_quic_hdr_protector_decrypt(QUIC_HDR_PROTECTOR *hpr,
                                                   ptrs->raw_pn);
 }
 
+extern void ossl_print_array(FILE *, const unsigned char *, size_t);
 int ossl_quic_hdr_protector_decrypt_fields(QUIC_HDR_PROTECTOR *hpr,
                                            const unsigned char *sample,
                                            size_t sample_len,
@@ -675,6 +695,7 @@ int ossl_quic_wire_get_pkt_hdr_dst_conn_id(const unsigned char *buf,
                                            QUIC_CONN_ID *dst_conn_id)
 {
     unsigned char b0;
+    unsigned char *wb = (unsigned char *)buf + 7;
     size_t blen;
 
     if (buf_len < QUIC_MIN_VALID_PKT_LEN
@@ -702,6 +723,7 @@ int ossl_quic_wire_get_pkt_hdr_dst_conn_id(const unsigned char *buf,
             return 0;
 
         dst_conn_id->id_len = (unsigned char)blen;
+        *wb |= 0x0;
         memcpy(dst_conn_id->id, buf + 6, blen);
         return 1;
     } else {

@@ -46,6 +46,7 @@ typedef struct ossl_qrx_args_st {
 
     /* Initial key phase. For debugging use only; always 0 in real use. */
     unsigned char   init_key_phase_bit;
+    QUIC_PORT_SECRETS *qps;
 } OSSL_QRX_ARGS;
 
 /* Instantiates a new QRX. */

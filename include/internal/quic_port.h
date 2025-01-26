@@ -186,6 +186,12 @@ uint64_t ossl_quic_port_get_net_bio_epoch(const QUIC_PORT *port);
 void ossl_quic_port_raise_net_error(QUIC_PORT *port,
                                     QUIC_CHANNEL *triggering_ch);
 
+OSSL_LIB_CTX *ossl_quic_port_get_libctx(QUIC_PORT *port);
+const char *ossl_quic_port_get_propq(QUIC_PORT *port);
+EVP_MD *ossl_quic_port_get_digest_alg(QUIC_PORT *port); /* SHA 256 */
+EVP_CIPHER *ossl_quic_port_get_hpr_cipher(QUIC_PORT *port); /* AES-128-ECB */
+EVP_CIPHER *ossl_quic_port_get_pkt_cipher(QUIC_PORT *port); /* AES-128-GCM */
+
 # endif
 
 #endif

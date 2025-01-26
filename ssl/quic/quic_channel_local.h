@@ -454,6 +454,7 @@ struct quic_channel_st {
 
     /* Title for qlog purposes. We own this copy. */
     char                            *qlog_title;
+    QUIC_PORT_SECRETS               *qps;
 };
 
 # endif

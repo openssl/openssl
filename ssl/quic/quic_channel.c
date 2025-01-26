@@ -298,9 +298,12 @@ static int ch_init(QUIC_CHANNEL *ch)
     qrx_args.demux              = ch->port->demux;
     qrx_args.short_conn_id_len  = rx_short_dcid_len;
     qrx_args.max_deferred       = 32;
+    qrx_args.qps                = ch->qps;
 
     if ((ch->qrx = ossl_qrx_new(&qrx_args)) == NULL)
         goto err;
+    /* ownership of secrets got transfered to qrx */
+    ch->qps = NULL;
 
     if (!ossl_qrx_set_late_validation_cb(ch->qrx,
                                          rx_late_validate,
@@ -416,6 +419,7 @@ static void ch_cleanup(QUIC_CHANNEL *ch)
     OPENSSL_free(ch->qlog_title);
     ossl_qlog_free(ch->qlog);
 #endif
+    ossl_quic_destroy_port_secrets(ch->qps);
 }
 
 int ossl_quic_channel_init(QUIC_CHANNEL *ch)
@@ -437,6 +441,7 @@ QUIC_CHANNEL *ossl_quic_channel_alloc(const QUIC_CHANNEL_ARGS *args)
     ch->srtm        = args->srtm;
 #ifndef OPENSSL_NO_QLOG
     ch->use_qlog    = args->use_qlog;
+    ch->qps         = args->qps;
 
     if (ch->use_qlog && args->qlog_title != NULL) {
         if ((ch->qlog_title = OPENSSL_strdup(args->qlog_title)) == NULL) {

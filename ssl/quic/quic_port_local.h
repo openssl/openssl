@@ -116,6 +116,10 @@ struct quic_port_st {
 
     /* AES-256 GCM context for token encryption */
     EVP_CIPHER_CTX *token_ctx;
+
+    EVP_CIPHER *evp_aes128gcm;
+    EVP_CIPHER *evp_aes128ecb;
+    EVP_MD *evp_sha256;
 };
 
 # endif

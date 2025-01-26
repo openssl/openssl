@@ -12,6 +12,7 @@
 
 # include <openssl/ssl.h>
 # include "internal/quic_types.h"
+# include "internal/quic_predef.h"
 
 # ifndef OPENSSL_NO_QUIC
 
@@ -65,6 +66,30 @@ int ossl_quic_provide_initial_secret(OSSL_LIB_CTX *libctx,
                                      struct ossl_qrx_st *qrx,
                                      struct ossl_qtx_st *qtx);
 
+/*
+ * sizes come from suite_aes128cgm. which is used by QRX for
+ * protection of initial packets (initial level envryption)
+ */
+#define QPS_RX_SECRET_SZ	32
+#define QPS_RX_CIPHER_KEY_SZ	16
+#define QPS_RX_CIPHER_IV_SZ	12
+#define	QPS_RX_CIPHER_TAG_SZ	16
+#define QPS_RX_HPR_KEY_SZ	16
+/*
+ * we might add evp contxts here and initialize them,
+ * the ownership of context would be transfered to
+ * channel/qrx.
+ */
+typedef struct quic_port_secrets_st {
+    unsigned char qps_rx_secret[32];
+    unsigned char qps_rx_cipher_iv[EVP_MAX_IV_LENGTH];
+    EVP_CIPHER_CTX *qps_hpr_ctx;
+    EVP_CIPHER_CTX *qps_pkt_ctx;
+} QUIC_PORT_SECRETS;
+
+QUIC_PORT_SECRETS *ossl_quic_provide_initial_rx_secret_for_dcid(QUIC_PORT *port,
+                                                 const QUIC_CONN_ID *dst_conn_id);
+void ossl_quic_destroy_port_secrets(QUIC_PORT_SECRETS *qps);
 /*
  * QUIC Record Layer Ciphersuite Info
  * ==================================
