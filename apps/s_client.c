@@ -3645,7 +3645,7 @@ static int ocsp_resp_cb(SSL *s, void *arg)
     OCSP_RESPONSE *rsp;
 
     if (SSL_version(s) >= TLS1_3_VERSION) {
-        SSL_get0_tlsext_status_ocsp_resp_ex(s, &sk_resp);
+        (void)SSL_get0_tlsext_status_ocsp_resp_ex(s, &sk_resp);
 
         BIO_puts(arg, "OCSP responses: ");
 
