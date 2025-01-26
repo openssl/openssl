@@ -520,7 +520,7 @@ Only the status response for the leaf (server) certificate is provided
 
 Like before, but for TLSv1.3 any beyond, status responses for all
 certificates in the chain (except the trust anchor) are provided
-(multiple stapling).
+(multi-stapling).
 
 =item B<-status_verbose>
 
