@@ -1091,6 +1091,9 @@ static int check_revocation(X509_STORE_CTX *ctx)
             if (ctx->current_cert->ex_flags & EXFLAG_SS)
                 continue;
 
+            /* the issuer certificate is the next in the chain */
+            ctx->current_issuer = sk_X509_value(ctx->chain, i+1);
+
             ok = check_cert_ocsp_resp(ctx);
 
             /*
@@ -1172,9 +1175,6 @@ static int check_cert_ocsp_resp(X509_STORE_CTX *ctx)
     OCSP_CERTID *cert_id = NULL;
     ASN1_GENERALIZEDTIME *rev, *thisupd, *nextupd;
     int ret = V_OCSP_CERTSTATUS_UNKNOWN;
-
-    ctx->current_issuer = X509_find_by_subject(ctx->chain,
-                                               X509_get_issuer_name(ctx->current_cert));
 
     if (sk_OCSP_RESPONSE_num(ctx->ocsp_resp) <= 0)
         return X509_V_ERR_OCSP_NO_RESPONSE;
@@ -2562,6 +2562,10 @@ void X509_STORE_CTX_set0_crls(X509_STORE_CTX *ctx, STACK_OF(X509_CRL) *sk)
 #ifndef OPENSSL_NO_OCSP
 void X509_STORE_CTX_set0_ocsp_resp(X509_STORE_CTX *ctx, STACK_OF(OCSP_RESPONSE) *sk)
 {
+    if (ctx->ocsp_resp != NULL) {
+        sk_OCSP_RESPONSE_pop_free(ctx->ocsp_resp, OCSP_RESPONSE_free);
+        ctx->ocsp_resp = NULL;
+    }
     ctx->ocsp_resp = sk;
 }
 #endif
@@ -2854,6 +2858,10 @@ void X509_STORE_CTX_cleanup(X509_STORE_CTX *ctx)
         if (ctx->parent == NULL)
             X509_VERIFY_PARAM_free(ctx->param);
         ctx->param = NULL;
+    }
+    if (ctx->ocsp_resp != NULL) {
+        sk_OCSP_RESPONSE_pop_free(ctx->ocsp_resp, OCSP_RESPONSE_free);
+        ctx->ocsp_resp = NULL;
     }
     X509_policy_tree_free(ctx->tree);
     ctx->tree = NULL;
