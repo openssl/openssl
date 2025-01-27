@@ -22,3 +22,7 @@ DEPEND[encode_key2any.o]=../../common/include/prov/der_rsa.h
 IF[{- !$disabled{'ml-dsa'} -}]
   SOURCE[$DECODER_GOAL]=ml_dsa_codecs.c
 ENDIF
+
+IF[{- !$disabled{'ml-kem'} -}]
+  SOURCE[$DECODER_GOAL]=ml_kem_codecs.c
+ENDIF

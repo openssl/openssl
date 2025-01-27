@@ -31,6 +31,7 @@
 #include "internal/encoder.h"
 #include "endecoder_local.h"
 #include "ml_dsa_codecs.h"
+#include "ml_kem_codecs.h"
 
 DEFINE_SPECIAL_STACK_OF_CONST(BIGNUM_const, BIGNUM)
 

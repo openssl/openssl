@@ -39,6 +39,7 @@
 #include "prov/der_rsa.h"
 #include "endecoder_local.h"
 #include "ml_dsa_codecs.h"
+#include "ml_kem_codecs.h"
 
 #if defined(OPENSSL_NO_DH) && defined(OPENSSL_NO_DSA) && defined(OPENSSL_NO_EC)
 # define OPENSSL_NO_KEYPARAMS
@@ -891,10 +892,8 @@ static int ml_kem_pki_priv_to_der(const void *vkey, unsigned char **pder,
                                   void *vctx)
 {
     KEY2ANY_CTX *ctx = vctx;
-    const char *fmtkey = OSSL_PKEY_PARAM_ML_KEM_OUTPUT_FORMATS;
-    const char *formats = ossl_prov_ctx_get_param(ctx->provctx, fmtkey, NULL);
 
-    return ossl_ml_kem_i2d_prvkey(vkey, pder, formats);
+    return ossl_ml_kem_i2d_prvkey(vkey, pder, ctx->provctx);
 }
 
 # define ml_kem_epki_priv_to_der ml_kem_pki_priv_to_der
