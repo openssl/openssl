@@ -41,17 +41,19 @@ int ossl_lm_ots_compute_pubkey(EVP_MD_CTX *ctx, EVP_MD_CTX *ctxIq,
 {
     int ret = 0;
     unsigned char qbuf[LMS_SIZE_q];
+    unsigned char d_mesg[sizeof(uint16_t)];
 
     if (sig->params != pub)
         return 0;
 
     U32STR(qbuf, q);
+    U16STR(d_mesg, OSSL_LMS_D_MESG);
 
     if (!EVP_DigestUpdate(ctxIq, Id, LMS_SIZE_I)
             || !EVP_DigestUpdate(ctxIq, qbuf, sizeof(qbuf))
             || !EVP_MD_CTX_copy_ex(ctx, ctxIq)
             /* Q = H(I || u32str(q) || u16str(D_MESG) || C || msg) */
-            || !EVP_DigestUpdate(ctx, &OSSL_LMS_D_MESG, sizeof(OSSL_LMS_D_MESG))
+            || !EVP_DigestUpdate(ctx, d_mesg, sizeof(d_mesg))
             || !EVP_DigestUpdate(ctx, sig->C, sig->params->n)
             || !EVP_DigestUpdate(ctx, msg, msglen)
             || !lm_ots_compute_pubkey_final(ctx, ctxIq, sig, Kc))
@@ -93,6 +95,7 @@ static int lm_ots_compute_pubkey_final(EVP_MD_CTX *ctx, EVP_MD_CTX *ctxIq,
     unsigned char tag[2 + 1], *tag2 = &tag[2];
     unsigned char Q[LMS_MAX_DIGEST_SIZE + LMS_SIZE_QSUM], *Qsum;
     unsigned char z[LMS_MAX_DIGEST_SIZE];
+    unsigned char d_pblc[sizeof(uint16_t)];
     uint16_t sum;
     const LM_OTS_PARAMS *params = sig->params;
     int n = params->n;
@@ -111,9 +114,10 @@ static int lm_ots_compute_pubkey_final(EVP_MD_CTX *ctx, EVP_MD_CTX *ctxIq,
     Qsum = Q + n;
     /* Q || Cksm(Q) */
     U16STR(Qsum, sum);
+    U16STR(d_pblc, OSSL_LMS_D_PBLC);
 
     if (!(EVP_MD_CTX_copy_ex(ctxKc, ctxIq))
-            || !EVP_DigestUpdate(ctxKc, &OSSL_LMS_D_PBLC, sizeof(OSSL_LMS_D_PBLC)))
+            || !EVP_DigestUpdate(ctxKc, d_pblc, sizeof(d_pblc)))
         goto err;
 
     y = sig->y;

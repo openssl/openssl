@@ -43,7 +43,10 @@ int lms_sig_compute_tc_from_path(const unsigned char *paths, uint32_t n,
 {
     int ret = 0;
     unsigned char qbuf[4];
+    unsigned char d_intr[sizeof(uint16_t)];
     const unsigned char *path = paths;
+
+    U16STR(d_intr, OSSL_LMS_D_INTR);
 
     /*
      * Calculate the public key Tc using the path
@@ -66,8 +69,7 @@ int lms_sig_compute_tc_from_path(const unsigned char *paths, uint32_t n,
          */
         if (!EVP_MD_CTX_copy_ex(ctx, ctxI)
                 || !EVP_DigestUpdate(ctx, qbuf, sizeof(qbuf))
-                || !EVP_DigestUpdate(ctx,
-                                     &OSSL_LMS_D_INTR, sizeof(OSSL_LMS_D_INTR)))
+                || !EVP_DigestUpdate(ctx, d_intr, sizeof(d_intr)))
             goto err;
 
         if (odd) {
@@ -96,10 +98,6 @@ err:
  * @brief LMS signature verification.
  * See RFC 8554 Section 5.4.2. Algorithm 6: Steps 3 & 4
  *
- * The passed in |lms_sig| and |pub| need to exist until
- * ossl_lms_sig_verify_final() is called, since the final may be delayed until
- * some later time,
- *
  * @param lms_sig Is a valid decoded LMS_SIG signature object.
  * @param pub Is a valid LMS public key object.
  * @param md Contains the fetched digest to be used for Hash operations
@@ -117,6 +115,7 @@ int ossl_lms_sig_verify(const LMS_SIG *lms_sig, const LMS_KEY *pub,
     unsigned char Kc[LMS_MAX_DIGEST_SIZE];
     unsigned char Tc[LMS_MAX_DIGEST_SIZE];
     unsigned char qbuf[4];
+    unsigned char d_leaf[sizeof(uint16_t)];
     const LMS_PARAMS *lms_params = pub->lms_params;
     uint32_t n = lms_params->n;
     uint32_t node_num;
@@ -147,13 +146,14 @@ int ossl_lms_sig_verify(const LMS_SIG *lms_sig, const LMS_KEY *pub,
     node_num = (1 << lms_params->h) + lms_sig->q;
 
     U32STR(qbuf, node_num);
+    U16STR(d_leaf, OSSL_LMS_D_LEAF);
     ctxI = ctxIq;
     /* Tc = H(I || u32str(node_num) || u16str(D_LEAF) || Kc) */
     if (!EVP_DigestInit_ex2(ctx, NULL, NULL)
             || !EVP_DigestUpdate(ctx, pub->Id, LMS_SIZE_I)
             || !EVP_MD_CTX_copy_ex(ctxI, ctx)
             || !EVP_DigestUpdate(ctx, qbuf, sizeof(qbuf))
-            || !EVP_DigestUpdate(ctx, &OSSL_LMS_D_LEAF, sizeof(OSSL_LMS_D_LEAF))
+            || !EVP_DigestUpdate(ctx, d_leaf, sizeof(d_leaf))
             || !EVP_DigestUpdate(ctx, Kc, n)
             || !EVP_DigestFinal_ex(ctx, Tc, NULL)
             || !lms_sig_compute_tc_from_path(lms_sig->paths, n, node_num,
