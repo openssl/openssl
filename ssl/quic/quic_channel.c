@@ -2799,7 +2799,7 @@ int ossl_quic_channel_start(QUIC_CHANNEL *ch)
 {
     uint8_t *token;
     size_t token_len;
-    void *token_ptr;
+    QTOK *token_ptr;
 
     if (ch->is_server)
         /*
@@ -2824,9 +2824,10 @@ int ossl_quic_channel_start(QUIC_CHANNEL *ch)
                                                    &token, &token_len,
                                                    &token_ptr)) {
         if (!ossl_quic_tx_packetiser_set_initial_token(ch->txp, token,
-                                                       token_len, free_token,
+                                                       token_len,
+                                                       free_peer_token,
                                                        token_ptr))
-            free_token(NULL, 0, token_ptr);
+            free_peer_token(NULL, 0, token_ptr);
     }
     /* Plug in secrets for the Initial EL. */
     if (!ossl_quic_provide_initial_secret(ch->port->engine->libctx,
