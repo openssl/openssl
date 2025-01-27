@@ -1683,14 +1683,6 @@ const char *ossl_provider_module_path(const OSSL_PROVIDER *prov)
 #endif
 }
 
-void *ossl_provider_prov_ctx(const OSSL_PROVIDER *prov)
-{
-    if (prov != NULL)
-        return prov->provctx;
-
-    return NULL;
-}
-
 const OSSL_DISPATCH *ossl_provider_get0_dispatch(const OSSL_PROVIDER *prov)
 {
     if (prov != NULL)
