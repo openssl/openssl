@@ -25,7 +25,7 @@ my @formats = qw(seed-priv priv-only seed-only priv-oqs pair-oqs);
 plan skip_all => "ML-KEM isn't supported in this build"
     if disabled("ml-kem");
 
-plan tests => @algs * (16 + 10 * @formats);
+plan tests => @algs * (18 + 10 * @formats);
 my $seed = join ("", map {sprintf "%02x", $_} (0..63));
 my $ikme = join ("", map {sprintf "%02x", $_} (0..31));
 
@@ -139,6 +139,15 @@ foreach my $alg (@algs) {
             sprintf("seedfull via cli vs. conf key match: %s", $alg));
     }
 
+    # 2 tests
+    # Test decoder seed non-preference via the command-line.
+    my $privpref = sprintf("privpref-%s.dec.cli.pem", $alg);
+    ok(run(app(['openssl', 'pkey', '-provparam', 'ml-kem.prefer_seed=no',
+                '-in', data_file($formats{'seed-priv'}), '-out', $privpref])));
+    ok(!compare(data_file($formats{'priv-only'}), $privpref),
+        sprintf("seed non-preference via provparam key match: %s", $alg));
+
+    # 10(5 * 2) tests
     # Check text encoding
     while (my ($f, $k) = each %formats) {
         my $txt =  sprintf("prv-%s-%s.txt", $alg,
