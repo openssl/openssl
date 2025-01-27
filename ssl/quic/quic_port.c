@@ -1360,8 +1360,17 @@ static void generate_new_token(QUIC_CHANNEL *ch, BIO_ADDR *peer)
     if (ct_buf == NULL)
         return;
 
-    if (!ossl_quic_lcidm_get_unused_cid(ch->port->lcidm, &rscid))
+    /*
+     * NEW_TOKEN tokens may be used for multiple subsequent connections
+     * within their timeout period, so don't reserve an rscid here
+     * like we do for retry tokens, instead, just fill it with random
+     * data, as we won't use it anyway
+     */
+    rscid.id_len = 8;
+    if (!RAND_bytes_ex(ch->port->engine->libctx, rscid.id, 8, 0)) {
+        OPENSSL_free(ct_buf);
         return;
+    }
 
     if (!generate_token(peer, ch->init_dcid, rscid, &token, 0)
         || !marshal_validation_token(&token, buffer, &token_buf_len)
