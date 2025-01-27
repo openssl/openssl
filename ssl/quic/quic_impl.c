@@ -4636,6 +4636,7 @@ err:
  * Token store management
  */
 typedef struct quic_token_st {
+    CRYPTO_REF_COUNT references;
     uint8_t *hashkey;
     size_t hashkey_len;
     uint8_t *token;
@@ -4703,9 +4704,9 @@ out:
     return (SSL_TOKEN_STORE_HANDLE *)newcache;
 }
 
-static void free_quic_token(QUIC_TOKEN *token)
+static void free_this_token(QUIC_TOKEN *tok)
 {
-    OPENSSL_free(token);
+    ossl_quic_free_peer_token((QTOK *)tok);
 }
 
 void ossl_quic_free_token_store(SSL_TOKEN_STORE_HANDLE *hdl)
@@ -4724,7 +4725,7 @@ void ossl_quic_free_token_store(SSL_TOKEN_STORE_HANDLE *hdl)
 
     /* last reference, we can clean up */
     ossl_crypto_mutex_free(&c->mutex);
-    lh_QUIC_TOKEN_doall(c->cache, free_quic_token);
+    lh_QUIC_TOKEN_doall(c->cache, free_this_token);
     lh_QUIC_TOKEN_free(c->cache);
     OPENSSL_free(c);
     return;
@@ -4801,6 +4802,12 @@ static QUIC_TOKEN *ossl_quic_build_new_token(BIO_ADDR *peer, uint8_t *token,
     new_token = OPENSSL_zalloc(sizeof(QUIC_TOKEN) + hashkey_len + token_len);
     if (new_token == NULL)
         return NULL;
+
+    if (!CRYPTO_NEW_REF(&new_token->references, 1)) {
+        OPENSSL_free(new_token);
+        return NULL;
+    }
+
     new_token->hashkey_len = hashkey_len;
     /* hashkey is allocated inline, immediately after the QUIC_TOKEN struct */
     new_token->hashkey = (uint8_t *)(new_token + 1);
@@ -4837,7 +4844,7 @@ int ossl_quic_update_peer_token(SSL_CTX *ctx, BIO_ADDR *peer,
     old = lh_QUIC_TOKEN_retrieve(c->cache, tok);
     if (old != NULL) {
         lh_QUIC_TOKEN_delete(c->cache, old);
-        free_quic_token(old);
+        ossl_quic_free_peer_token((QTOK *)old);
     }
     lh_QUIC_TOKEN_insert(c->cache, tok);
 
@@ -4852,6 +4859,7 @@ int ossl_quic_get_peer_token(SSL_CTX *ctx, BIO_ADDR *peer,
     SSL_TOKEN_STORE *c = ctx->tokencache;
     QUIC_TOKEN *key = NULL;
     QUIC_TOKEN *tok = NULL;
+    int ret;
     int rc = 0;
 
     if (c == NULL)
@@ -4864,18 +4872,27 @@ int ossl_quic_get_peer_token(SSL_CTX *ctx, BIO_ADDR *peer,
         *token = tok->token;
         *token_len = tok->token_len;
         *token_free_ptr = (QTOK *)tok;
-        lh_QUIC_TOKEN_delete(c->cache, key);
+        CRYPTO_UP_REF(&tok->references, &ret);
         rc = 1;
     }
 
     ossl_crypto_mutex_unlock(c->mutex);
-    free_quic_token(key);
+    ossl_quic_free_peer_token((QTOK *)key);
     return rc;
 }
 
 void ossl_quic_free_peer_token(QTOK *token)
 {
-    OPENSSL_free(token);
+    QUIC_TOKEN *tok = (QUIC_TOKEN *)token;
+    int refs = 0;
+
+    if (!CRYPTO_DOWN_REF(&tok->references, &refs))
+        return;
+
+    if (refs > 0)
+        return;
+
+    OPENSSL_free(tok);
 }
 
 /*
