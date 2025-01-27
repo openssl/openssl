@@ -25,6 +25,7 @@ __owur SSL *ossl_quic_new_listener_from(SSL *ssl, uint64_t flags);
 __owur SSL *ossl_quic_new_from_listener(SSL *ssl, uint64_t flags);
 __owur SSL *ossl_quic_new_domain(SSL_CTX *ctx, uint64_t flags);
 
+typedef void* QTOK;
 SSL_TOKEN_STORE_HANDLE *ossl_quic_new_token_store(void);
 void ossl_quic_free_token_store(SSL_TOKEN_STORE_HANDLE *hdl);
 SSL_TOKEN_STORE_HANDLE *ossl_quic_get_token_store(SSL_CTX *ctx);
@@ -33,7 +34,8 @@ int ossl_quic_update_peer_token(SSL_CTX *ctx, BIO_ADDR *peer,
                                 const uint8_t *token, size_t token_len);
 int ossl_quic_get_peer_token(SSL_CTX *ctx, BIO_ADDR *peer,
                              uint8_t **token, size_t *token_len,
-                             void **token_free_ptr);
+                             QTOK **token_free_ptr);
+void ossl_quic_free_peer_token(QTOK *token);
 
 __owur int ossl_quic_init(SSL *s);
 void ossl_quic_deinit(SSL *s);
