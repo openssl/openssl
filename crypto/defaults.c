@@ -19,7 +19,7 @@
 # define MAKESTR(x) TOSTR(x)
 # define NOQUOTE(x) x
 # if defined(OSSL_WINCTX)
-# define REGISTRY_KEY "SOFTWARE\\WOW6432Node\\OpenSSL" ##"-"## MAKESTR(OPENSSL_VERSION_MAJOR) ##"."## MAKESTR(OPENSSL_VERSION_MINOR) ##"-"## MAKESTR(OSSL_WINCTX)
+#  define REGISTRY_KEY "SOFTWARE\\WOW6432Node\\OpenSSL" "-" MAKESTR(OPENSSL_VERSION_MAJOR) "." MAKESTR(OPENSSL_VERSION_MINOR) "-" MAKESTR(OSSL_WINCTX)
 # endif
 
 /**
@@ -70,7 +70,7 @@ static char *get_windows_regdirs(char *dst, LPCTSTR valuename)
     LSTATUS ret;
     DWORD index = 0;
     LPCTCH tempstr = NULL;
-   
+
     ret = RegOpenKeyEx(HKEY_LOCAL_MACHINE,
                        TEXT(REGISTRY_KEY), KEY_WOW64_32KEY,
                        KEY_QUERY_VALUE, &hkey);
@@ -97,7 +97,7 @@ static char *get_windows_regdirs(char *dst, LPCTSTR valuename)
         goto out;
 
     if (!WideCharToMultiByte(CP_UTF8, 0, tempstr, -1, dst, keysize,
-                             NULL, NULL)) 
+                             NULL, NULL))
         goto out;
 
     retval = dst;
