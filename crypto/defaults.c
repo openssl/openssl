@@ -69,7 +69,7 @@ static char *get_windows_regdirs(char *dst, LPCTSTR valuename)
     HKEY hkey;
     LSTATUS ret;
     DWORD index = 0;
-    LPCTCH tempstr = NULL;
+    LPCTSTR tempstr = NULL;
 
     ret = RegOpenKeyEx(HKEY_LOCAL_MACHINE,
                        TEXT(REGISTRY_KEY), KEY_WOW64_32KEY,
@@ -93,7 +93,7 @@ static char *get_windows_regdirs(char *dst, LPCTSTR valuename)
         goto out;
 
     if (RegQueryValueEx(hkey, valuename,
-                        NULL, &ktype, tempstr, &keysize) != ERROR_SUCCESS)
+                        NULL, &ktype, (LPBYTE)tempstr, &keysize) != ERROR_SUCCESS)
         goto out;
 
     if (!WideCharToMultiByte(CP_UTF8, 0, tempstr, -1, dst, keysize,
