@@ -577,7 +577,7 @@ int EVP_DigestSign(EVP_MD_CTX *ctx, unsigned char *sigret, size_t *siglen,
 
     if (pctx == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
-        return -1;
+        return 0;
     }
 
     if ((ctx->flags & EVP_MD_CTX_FLAG_FINALISED) != 0) {
