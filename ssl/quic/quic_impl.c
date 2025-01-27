@@ -4847,7 +4847,7 @@ int ossl_quic_update_peer_token(SSL_CTX *ctx, BIO_ADDR *peer,
 
 int ossl_quic_get_peer_token(SSL_CTX *ctx, BIO_ADDR *peer,
                              uint8_t **token, size_t *token_len,
-                             void **token_free_ptr)
+                             QTOK **token_free_ptr)
 {
     SSL_TOKEN_STORE *c = ctx->tokencache;
     QUIC_TOKEN *key = NULL;
@@ -4863,7 +4863,7 @@ int ossl_quic_get_peer_token(SSL_CTX *ctx, BIO_ADDR *peer,
     if (tok != NULL) {
         *token = tok->token;
         *token_len = tok->token_len;
-        *token_free_ptr = tok;
+        *token_free_ptr = (QTOK *)tok;
         lh_QUIC_TOKEN_delete(c->cache, key);
         rc = 1;
     }
@@ -4871,6 +4871,11 @@ int ossl_quic_get_peer_token(SSL_CTX *ctx, BIO_ADDR *peer,
     ossl_crypto_mutex_unlock(c->mutex);
     free_quic_token(key);
     return rc;
+}
+
+void ossl_quic_free_peer_token(QTOK *token)
+{
+    OPENSSL_free(token);
 }
 
 /*
