@@ -114,7 +114,7 @@ Can be administratively set, and openssl will take the paths found there as the
 values for OPENSSLDIR, ENGINESDIR and MODULESDIR respectively.
 
 To enable the reading of registry keys from windows builds, add
-`-DOPENSSL_WINCTX=<string>`to the Configure command line.  This define is used
+`-DOSSL_WINCTX=<string>`to the Configure command line.  This define is used
 at build-time to construct library build specific registry key paths of the
 format:
 `\\HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432node\OpenSSL-<version>-<ctx>`
