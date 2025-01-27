@@ -419,6 +419,7 @@ my %params = (
 
 # ML-KEM parameters
     'PKEY_PARAM_ML_KEM_SEED' => "seed",
+    'PKEY_PARAM_ML_KEM_PREFER_SEED' => "ml-kem.prefer_seed",
     'PKEY_PARAM_ML_KEM_RETAIN_SEED' => "ml-kem.retain_seed",
     'PKEY_PARAM_ML_KEM_INPUT_FORMATS' => "ml-kem.input_formats",
     'PKEY_PARAM_ML_KEM_OUTPUT_FORMATS' => "ml-kem.output_formats",

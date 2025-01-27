@@ -39,6 +39,7 @@
 #include "prov/implementations.h"
 #include "endecoder_local.h"
 #include "internal/nelem.h"
+#include "ml_kem_codecs.h"
 
 struct der2key_ctx_st;           /* Forward declaration */
 typedef int check_key_fn(void *, struct der2key_ctx_st *ctx);
@@ -564,14 +565,9 @@ static void *
 ml_kem_d2i_PKCS8(const uint8_t **der, long der_len, struct der2key_ctx_st *ctx)
 {
     ML_KEM_KEY *key;
-    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
-    int retain_seed = ossl_prov_ctx_get_bool_param(
-            ctx->provctx, OSSL_PKEY_PARAM_ML_KEM_RETAIN_SEED, 1);
-    const char *formats = ossl_prov_ctx_get_param(
-            ctx->provctx, OSSL_PKEY_PARAM_ML_KEM_INPUT_FORMATS, NULL);
 
-    key = ossl_ml_kem_d2i_PKCS8(*der, der_len, retain_seed, formats,
-                                ctx->desc->evp_type, libctx, ctx->propq);
+    key = ossl_ml_kem_d2i_PKCS8(*der, der_len, ctx->desc->evp_type,
+                                ctx->provctx, ctx->propq);
     if (key != NULL)
         *der += der_len;
     return key;
@@ -584,7 +580,7 @@ ml_kem_d2i_PUBKEY(const uint8_t **der, long der_len,
     ML_KEM_KEY *key;
 
     key = ossl_ml_kem_d2i_PUBKEY(*der, der_len, ctx->desc->evp_type,
-                                 PROV_LIBCTX_OF(ctx->provctx), ctx->propq);
+                                 ctx->provctx, ctx->propq);
     if (key != NULL)
         *der += der_len;
     return key;
