@@ -72,7 +72,7 @@ DEFINE_RUN_ONCE_STATIC(version_strings_setup)
 }
 
 # define TOSTR(x) #x
-# define OSSL_WINCTX_STRING "OSSL_WINCTX: \"" ## TOSTR(OSSL_WINCTX) ## "\""
+# define OSSL_WINCTX_STRING "OSSL_WINCTX: \"" TOSTR(OSSL_WINCTX) "\""
 
 #endif
 
