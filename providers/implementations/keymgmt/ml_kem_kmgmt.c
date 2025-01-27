@@ -52,10 +52,9 @@ static const int minimal_selection = OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS
     | OSSL_KEYMGMT_SELECT_PRIVATE_KEY;
 
 typedef struct ml_kem_gen_ctx_st {
-    OSSL_LIB_CTX *libctx;
+    PROV_CTX *provctx;
     char *propq;
     int selection;
-    int retain_seed;
     int evp_type;
     uint8_t seedbuf[ML_KEM_SEED_BYTES];
     uint8_t *seed;
@@ -127,19 +126,19 @@ err:
 }
 #endif  /* FIPS_MODULE */
 
-static void *ml_kem_new(PROV_CTX *ctx, int evp_type)
+static void *ml_kem_new(PROV_CTX *ctx, const char *propq, int evp_type)
 {
-    OSSL_LIB_CTX *libctx = NULL;
-    int retain_seed = 1;
+    ML_KEM_KEY *key;
 
     if (!ossl_prov_is_running())
         return NULL;
-    if (ctx != NULL) {
-        libctx = PROV_LIBCTX_OF(ctx);
-        retain_seed = ossl_prov_ctx_get_bool_param(
+    if ((key = ossl_ml_kem_key_new(PROV_LIBCTX_OF(ctx), propq, evp_type)) != NULL) {
+        key->retain_seed = ossl_prov_ctx_get_bool_param(
             ctx, OSSL_PKEY_PARAM_ML_KEM_RETAIN_SEED, 1);
+        key->prefer_seed = ossl_prov_ctx_get_bool_param(
+            ctx, OSSL_PKEY_PARAM_ML_KEM_PREFER_SEED, 1);
     }
-    return ossl_ml_kem_key_new(libctx, NULL, retain_seed, evp_type);
+    return key;
 }
 
 static int ml_kem_has(const void *vkey, int selection)
@@ -196,7 +195,7 @@ static int ml_kem_export(void *vkey, int selection, OSSL_CALLBACK *param_cb,
     if (!ossl_ml_kem_have_pubkey(key)) {
         /* Fail when no key material can be returned */
         if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) == 0
-            || !ossl_ml_kem_have_seed(key)) {
+            || !ossl_ml_kem_decoded_key(key)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_KEY);
             return 0;
         }
@@ -224,6 +223,11 @@ static int ml_kem_export(void *vkey, int selection, OSSL_CALLBACK *param_cb,
             if ((prvenc = OPENSSL_secure_zalloc(prvlen)) == NULL
                 || !ossl_ml_kem_encode_private_key(prvenc, prvlen, key))
                 goto err;
+        } else if (ossl_ml_kem_have_dkenc(key)) {
+            prvlen = v->prvkey_bytes;
+            if ((prvenc = OPENSSL_secure_zalloc(prvlen)) == NULL)
+                goto err;
+            memcpy(prvenc, key->encoded_dk, prvlen);
         }
     }
 
@@ -233,10 +237,8 @@ static int ml_kem_export(void *vkey, int selection, OSSL_CALLBACK *param_cb,
 
     /* The (d, z) seed, when available and private keys are requested. */
     if (seedenc != NULL
-        && (!ossl_param_build_set_octet_string(
-                tmpl, params, OSSL_PKEY_PARAM_ML_KEM_SEED, seedenc, seedlen)
-            || (!key->retain_seed && !ossl_param_build_set_int(
-                    tmpl, params, OSSL_PKEY_PARAM_ML_KEM_RETAIN_SEED, 0))))
+        && !ossl_param_build_set_octet_string(
+                tmpl, params, OSSL_PKEY_PARAM_ML_KEM_SEED, seedenc, seedlen))
         goto err;
 
     /* The private key in the FIPS 203 |dk| format, when requested. */
@@ -269,7 +271,6 @@ err:
 static const OSSL_PARAM *ml_kem_imexport_types(int selection)
 {
     static const OSSL_PARAM key_types[] = {
-        OSSL_PARAM_int(OSSL_PKEY_PARAM_ML_KEM_RETAIN_SEED, NULL),
         OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_ML_KEM_SEED, NULL, 0),
         OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PRIV_KEY, NULL, 0),
         OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PUB_KEY, NULL, 0),
@@ -295,32 +296,24 @@ static int ml_kem_key_fromdata(ML_KEM_KEY *key,
         return 0;
     v = ossl_ml_kem_key_vinfo(key);
 
-    p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_ML_KEM_RETAIN_SEED);
-    if (p != NULL
-        && !(OSSL_PARAM_get_int(p, &key->retain_seed)))
-        return 0;
-
-    /*
-     * When a seed is provided, the private and public keys will be ignored,
-     * after validating just their lengths.  Comparing encodings or hashes
-     * when applicable is possible, but not currently implemented.
-     */
-    p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_ML_KEM_SEED);
-    if (p != NULL
-        && OSSL_PARAM_get_octet_string_ptr(p, &seedenc, &seedlen) != 1)
-        return 0;
-    if (seedlen == ML_KEM_SEED_BYTES) {
-        ossl_ml_kem_set_seed((uint8_t *)seedenc, seedlen, key);
-    } else if (seedlen != 0) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_SEED_LENGTH);
-        return 0;
-    }
-
     /*
      * When a private key is provided, without a seed, any public key also
      * provided will be ignored (apart from length), just as with the seed.
      */
     if (include_private) {
+        /*
+         * When a seed is provided, the private and public keys may be ignored,
+         * after validating just their lengths.  Comparing encodings or hashes
+         * when applicable is possible, but not currently implemented.
+         */
+        p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_ML_KEM_SEED);
+        if (p != NULL
+            && OSSL_PARAM_get_octet_string_ptr(p, &seedenc, &seedlen) != 1)
+            return 0;
+        if (seedlen != 0 && seedlen != ML_KEM_SEED_BYTES) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_SEED_LENGTH);
+            return 0;
+        }
         p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PRIV_KEY);
         if (p != NULL
             && OSSL_PARAM_get_octet_string_ptr(p, &prvenc, &prvlen) != 1)
@@ -347,8 +340,9 @@ static int ml_kem_key_fromdata(ML_KEM_KEY *key,
         return 0;
     }
 
-    if (seedlen != 0)
-        return ossl_ml_kem_genkey(NULL, 0, key);
+    if (seedlen != 0 && (prvlen == 0 || key->prefer_seed))
+        return ossl_ml_kem_set_seed(seedenc, seedlen, key)
+            && ossl_ml_kem_genkey(NULL, 0, key);
     else if (prvlen != 0)
         return ossl_ml_kem_parse_private_key(prvenc, prvlen, key);
     return ossl_ml_kem_parse_public_key(pubenc, publen, key);
@@ -401,23 +395,31 @@ static const OSSL_PARAM *ml_kem_gettable_params(void *provctx)
 void *ml_kem_load(const void *reference, size_t reference_sz)
 {
     ML_KEM_KEY *key = NULL;
+    uint8_t *encoded_dk;
 
     if (ossl_prov_is_running() && reference_sz == sizeof(key)) {
         /* The contents of the reference is the address to our object */
         key = *(ML_KEM_KEY **)reference;
+        encoded_dk = key->encoded_dk;
+        key->encoded_dk = NULL;
         /* We grabbed, so we detach it */
         *(ML_KEM_KEY **)reference = NULL;
-        if (ossl_ml_kem_have_pubkey(key))
-            return key;
         /* Generate the key now, if it holds only a stashed seed. */
-        if (ossl_ml_kem_have_seed(key)) {
-            if (!ossl_ml_kem_genkey(NULL, 0, key)) {
-                ossl_ml_kem_key_free(key);
-                return NULL;
-            }
+        if (ossl_ml_kem_have_seed(key) &&
+            (encoded_dk == NULL || key->prefer_seed)) {
+            if (!ossl_ml_kem_genkey(NULL, 0, key))
+                goto err;
+        } else if (encoded_dk != NULL) {
+            if (!ossl_ml_kem_parse_private_key(encoded_dk,
+                                               key->vinfo->prvkey_bytes, key))
+                goto err;
         }
+        OPENSSL_free(encoded_dk);
         return key;
     }
+
+  err:
+    ossl_ml_kem_key_free(key);
     return NULL;
 }
 #endif
@@ -581,11 +583,6 @@ static int ml_kem_gen_set_params(void *vgctx, const OSSL_PARAM params[])
         return 0;
     }
 
-    p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_ML_KEM_RETAIN_SEED);
-    if (p != NULL
-        && !(OSSL_PARAM_get_int(p, &gctx->retain_seed)))
-        return 0;
-
     return 1;
 }
 
@@ -605,10 +602,7 @@ static void *ml_kem_gen_init(void *provctx, int selection,
 
     gctx->selection = selection;
     gctx->evp_type = evp_type;
-    gctx->retain_seed = ossl_prov_ctx_get_bool_param(
-        provctx, OSSL_PKEY_PARAM_ML_KEM_RETAIN_SEED, 1);
-    if (provctx != NULL)
-        gctx->libctx = PROV_LIBCTX_OF(provctx);
+    gctx->provctx = provctx;
     if (ml_kem_gen_set_params(gctx, params))
         return gctx;
 
@@ -638,8 +632,7 @@ static void *ml_kem_gen(void *vgctx, OSSL_CALLBACK *osslcb, void *cbarg)
         || (gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) ==
             OSSL_KEYMGMT_SELECT_PUBLIC_KEY)
         return NULL;
-    key = ossl_ml_kem_key_new(gctx->libctx, gctx->propq,
-                              gctx->retain_seed, gctx->evp_type);
+    key = ml_kem_new(gctx->provctx, gctx->propq, gctx->evp_type);
     if (key == NULL)
         return NULL;
 
@@ -700,7 +693,7 @@ static void *ml_kem_dup(const void *vkey, int selection)
 #define DECLARE_VARIANT(bits) \
     static void *ml_kem_##bits##_new(void *provctx) \
     { \
-        return ml_kem_new(provctx, EVP_PKEY_ML_KEM_##bits); \
+        return ml_kem_new(provctx, NULL, EVP_PKEY_ML_KEM_##bits); \
     } \
     static void *ml_kem_##bits##_gen_init(void *provctx, int selection, \
                                           const OSSL_PARAM params[]) \
