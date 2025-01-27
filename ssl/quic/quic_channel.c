@@ -2783,31 +2783,20 @@ static void ch_record_state_transition(QUIC_CHANNEL *ch, uint32_t new_state)
 
 static void free_token(const unsigned char *token, size_t token_len, void *arg)
 {
-    /*
-     * Note: This is the callback for ossl_quic_tx_packetiser_set_initial_token
-     * AND ch_retry, which have different, but simmilar freeing requirements.
-     *
-     * For ossl_quic_packetiser_set_initial_token:
-     * Normally we would free the token pointer here, but because our cache
-     * stores tokens at an offset from the allocated QUIC_TOKEN struct, its not
-     * appropriate for freeing.  Instead, we pass the pointer to the start of
-     * the allocation as arg, and free that
-     *
-     * For ch_retry, we just pass the token as the token pointer
-     *
-     * Differentiate between the two by checking if arg is NULL
-     */
-    if (arg == NULL)
-        OPENSSL_free((unsigned char *)token);
-    else
-        OPENSSL_free(arg);
+    OPENSSL_free((char *)token);
+}
+
+static void free_peer_token(const unsigned char *token,
+                            size_t token_len, void *arg)
+{
+    ossl_quic_free_peer_token((QTOK *)arg);
 }
 
 int ossl_quic_channel_start(QUIC_CHANNEL *ch)
 {
     uint8_t *token;
     size_t token_len;
-    void *token_ptr;
+    QTOK *token_ptr;
 
     if (ch->is_server)
         /*
@@ -2832,9 +2821,10 @@ int ossl_quic_channel_start(QUIC_CHANNEL *ch)
                                                    &token, &token_len,
                                                    &token_ptr)) {
         if (!ossl_quic_tx_packetiser_set_initial_token(ch->txp, token,
-                                                       token_len, free_token,
+                                                       token_len,
+                                                       free_peer_token,
                                                        token_ptr))
-            free_token(NULL, 0, token_ptr);
+            free_peer_token(NULL, 0, token_ptr);
     }
     /* Plug in secrets for the Initial EL. */
     if (!ossl_quic_provide_initial_secret(ch->port->engine->libctx,
