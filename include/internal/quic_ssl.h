@@ -30,8 +30,8 @@ SSL_TOKEN_STORE_HANDLE *ossl_quic_new_token_store(void);
 void ossl_quic_free_token_store(SSL_TOKEN_STORE_HANDLE *hdl);
 SSL_TOKEN_STORE_HANDLE *ossl_quic_get_token_store(SSL_CTX *ctx);
 int ossl_quic_set_token_store(SSL_CTX *ctx, SSL_TOKEN_STORE_HANDLE *hdl);
-int ossl_quic_update_peer_token(SSL_CTX *ctx, BIO_ADDR *peer,
-                                const uint8_t *token, size_t token_len);
+int ossl_quic_set_peer_token(SSL_CTX *ctx, BIO_ADDR *peer,
+                             const uint8_t *token, size_t token_len);
 int ossl_quic_get_peer_token(SSL_CTX *ctx, BIO_ADDR *peer,
                              uint8_t **token, size_t *token_len,
                              QTOK **token_free_ptr);
