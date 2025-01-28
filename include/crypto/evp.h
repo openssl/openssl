@@ -873,6 +873,10 @@ void *evp_skeymgmt_import(const EVP_SKEYMGMT *skeymgmt, int selection, const OSS
 int evp_skeymgmt_export(const EVP_SKEYMGMT *skeymgmt, void *keydata,
                         int selection, OSSL_CALLBACK *param_cb, void *cbarg);
 void *evp_skeymgmt_generate(const EVP_SKEYMGMT *skeymgmt, const OSSL_PARAM params[]);
+EVP_SKEYMGMT *evp_skeymgmt_fetch_from_prov(OSSL_PROVIDER *prov,
+                                           const char *name,
+                                           const char *properties);
+
 /* Pulling defines out of C source files */
 
 # define EVP_RC4_KEY_SIZE 16
