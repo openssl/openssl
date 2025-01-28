@@ -497,8 +497,13 @@ static int ssl_verify_internal(SSL_CONNECTION *s, STACK_OF(X509) *sk, EVP_PKEY *
     } else {
         i = X509_verify_cert(ctx);
         /* We treat an error in the same way as a failure to verify */
-        if (i < 0)
-            i = 0;
+        if (i <= 0){
+            i = X509_STORE_CTX_get_error(ctx);
+            ERR_raise_data(ERR_LIB_SSL, ERR_R_X509_LIB,
+                           "Internal Verify error: %s", X509_verify_cert_errorstring(i));
+
+            goto end;
+        }
     }
 
     s->verify_result = X509_STORE_CTX_get_error(ctx);

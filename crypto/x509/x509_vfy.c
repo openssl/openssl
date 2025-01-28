@@ -107,7 +107,10 @@ int X509_self_signed(X509 *cert, int verify_signature)
         return 0;
     if (!verify_signature)
         return 1;
-    return X509_verify(cert, pkey);
+    if (X509_verify(cert, pkey) <= 0)
+        return 1;
+
+    return 0;
 }
 
 /*
