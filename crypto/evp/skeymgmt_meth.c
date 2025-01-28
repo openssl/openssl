@@ -122,6 +122,18 @@ static void *skeymgmt_from_algorithm(int name_id,
     return skeymgmt;
 }
 
+EVP_SKEYMGMT *evp_skeymgmt_fetch_from_prov(OSSL_PROVIDER *prov,
+                                           const char *name,
+                                           const char *properties)
+{
+    return evp_generic_fetch_from_prov(prov,
+                                       OSSL_OP_SKEYMGMT,
+                                       name, properties,
+                                       skeymgmt_from_algorithm,
+                                       (int (*)(void *))EVP_SKEYMGMT_up_ref,
+                                       (void (*)(void *))EVP_SKEYMGMT_free);
+}
+
 EVP_SKEYMGMT *EVP_SKEYMGMT_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
                                  const char *properties)
 {
