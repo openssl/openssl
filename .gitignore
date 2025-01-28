@@ -74,6 +74,7 @@ providers/common/der/der_ecx_gen.c
 providers/common/der/der_rsa_gen.c
 providers/common/der/der_wrap_gen.c
 providers/common/der/der_sm2_gen.c
+providers/common/der/der_ml_dsa_gen.c
 providers/common/include/prov/der_dsa.h
 providers/common/include/prov/der_ec.h
 providers/common/include/prov/der_ecx.h
@@ -81,6 +82,7 @@ providers/common/include/prov/der_rsa.h
 providers/common/include/prov/der_digests.h
 providers/common/include/prov/der_wrap.h
 providers/common/include/prov/der_sm2.h
+providers/common/include/prov/der_ml_dsa.h
 
 # error code files
 /crypto/err/openssl.txt.old
