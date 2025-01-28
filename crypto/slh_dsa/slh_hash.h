@@ -29,7 +29,7 @@ typedef int (OSSL_SLH_HASHFUNC_H_MSG)(SLH_DSA_HASH_CTX *ctx, const uint8_t *r,
                                       uint8_t *out, size_t out_len);
 
 typedef int (OSSL_SLH_HASHFUNC_PRF)(SLH_DSA_HASH_CTX *ctx, const uint8_t *pk_seed,
-                                    const uint8_t *sk_seed, const SLH_ADRS adrs,
+                                    const uint8_t *sk_seed, const uint8_t *adrs,
                                     uint8_t *out, size_t out_len);
 
 typedef int (OSSL_SLH_HASHFUNC_PRF_MSG)(SLH_DSA_HASH_CTX *ctx, const uint8_t *sk_prf,
@@ -38,17 +38,17 @@ typedef int (OSSL_SLH_HASHFUNC_PRF_MSG)(SLH_DSA_HASH_CTX *ctx, const uint8_t *sk
                                         WPACKET *pkt);
 
 typedef int (OSSL_SLH_HASHFUNC_F)(SLH_DSA_HASH_CTX *ctx, const uint8_t *pk_seed,
-                                  const SLH_ADRS adrs,
+                                  const uint8_t *adrs,
                                   const uint8_t *m1, size_t m1_len,
                                   uint8_t *out, size_t out_len);
 
 typedef int (OSSL_SLH_HASHFUNC_H)(SLH_DSA_HASH_CTX *ctx, const uint8_t *pk_seed,
-                                  const SLH_ADRS adrs,
+                                  const uint8_t *adrs,
                                   const uint8_t *m1, const uint8_t *m2,
                                   uint8_t *out, size_t out_len);
 
 typedef int (OSSL_SLH_HASHFUNC_T)(SLH_DSA_HASH_CTX *ctx, const uint8_t *pk_seed,
-                                  const SLH_ADRS adrs,
+                                  const uint8_t *adrs,
                                   const uint8_t *m1, size_t m1_len,
                                   uint8_t *out, size_t out_len);
 
