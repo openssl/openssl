@@ -593,6 +593,7 @@ static int ml_dsa_to_text(BIO *out, const void *key, int selection)
 {
     return ossl_ml_dsa_to_text(out, (ML_DSA_KEY *)key, selection);
 }
+#endif /* OPENSSL_NO_ML_DSA */
 /* ---------------------------------------------------------------------- */
 
 static void *key2text_newctx(void *provctx)
