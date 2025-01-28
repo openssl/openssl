@@ -1361,7 +1361,7 @@ static int port_validate_token(QUIC_PKT_HDR *hdr, QUIC_PORT *port,
     if (token.is_retry) {
         *gen_new_token = 1;
     } else {
-        if (time_diff < NEW_TOKEN_LIFETIME/10)
+        if (time_diff < NEW_TOKEN_LIFETIME / 10)
             *gen_new_token = 1;
     }
 
