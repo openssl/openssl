@@ -619,7 +619,7 @@ static int find_new_token_data(BIO *membio)
         state = FAILED;
 
     OPENSSL_free(tokenval);
-    return (state == SUCCESS) ? 1 : 0;
+    return (state == SUCCESS);
 }
 
 static int test_new_token(void)
