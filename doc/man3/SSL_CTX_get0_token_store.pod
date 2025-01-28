@@ -15,7 +15,7 @@ The QUIC protocol supports the exchange of opaque tokens which a client can use
 to reduce the time for a server to validate a client address.  These tokens are
 stored on receipt from a server, and automatically reused in the establishment
 of a new future connection to the same server.  A token store is automatically
-created on the creation of an B<SSL_CTX> and freed on their release.  The
+created on the creation of an B<SSL_CTX> and freed on its release.  The
 functions above can be used to fetch and set the token cache between independent
 B<SSL_CTX> objects to share those tokens between B<SSL> connections allocated from
 disparate B<SSL_CTX> objects.
@@ -24,7 +24,7 @@ SSL_CTX_get0_token_store() returns an opaque handle to the token store for use
 in a subsequent call to SSL_CTX_set_token_store() on another B<SSL_CTX> object.
 
 SSL_CTX_set_token_store() assigns a token store fetched fom SSL_CTX_get0_token_store
-to an alter B<SSL_CTX> object.
+to a second B<SSL_CTX> object.
 
 =head1 NOTES
 
