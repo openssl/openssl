@@ -17,6 +17,7 @@
 #include <openssl/proverr.h>
 #include <openssl/rand.h>
 #include "internal/e_os.h"
+#include "internal/fips.h"
 #include "internal/tsan_assist.h"
 #include "prov/providercommon.h"
 #include "crypto/rand.h"
@@ -299,6 +300,12 @@ err:
 static void set_fips_state(int state)
 {
     tsan_store(&FIPS_state, state);
+}
+
+/* Return 1 if the FIPS self tests are running and 0 otherwise */
+int ossl_fips_self_testing(void)
+{
+    return tsan_load(&FIPS_state) == FIPS_STATE_SELFTEST;
 }
 
 /* This API is triggered either on loading of the FIPS module or on demand */
