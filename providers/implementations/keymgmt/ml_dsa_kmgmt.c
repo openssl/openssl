@@ -132,6 +132,7 @@ static const OSSL_PARAM ml_dsa_params[] = {
     OSSL_PARAM_int(OSSL_PKEY_PARAM_BITS, NULL),
     OSSL_PARAM_int(OSSL_PKEY_PARAM_SECURITY_BITS, NULL),
     OSSL_PARAM_int(OSSL_PKEY_PARAM_MAX_SIZE, NULL),
+    OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_MANDATORY_DIGEST, NULL, 0),
     ML_DSA_IMEXPORTABLE_PARAMETERS,
     OSSL_PARAM_END
 };
@@ -174,6 +175,14 @@ static int ml_dsa_get_params(void *keydata, OSSL_PARAM params[])
                                                 ossl_ml_dsa_key_get_pub_len(key)))
             return 0;
     }
+    /*
+     * This allows apps to use an empty digest, so that the old API
+     * for digest signing can be used.
+     */
+    p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_MANDATORY_DIGEST);
+    if (p != NULL && !OSSL_PARAM_set_utf8_string(p, ""))
+        return 0;
+
     return 1;
 }
 
