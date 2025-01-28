@@ -71,6 +71,21 @@ IF[{- !$disabled{ecx} -}]
   DEPEND[$DER_ECX_H]=oids_to_c.pm ECX.asn1
 ENDIF
 
+#----- ML-DSA
+IF[{- !$disabled{'ml-dsa'} -}]
+  $DER_ML_DSA_H=$INCDIR/der_ml_dsa.h
+  $DER_ML_DSA_GEN=der_ml_dsa_gen.c
+  $DER_ML_DSA_AUX=der_ml_dsa_key.c
+
+  GENERATE[$DER_ML_DSA_GEN]=der_ml_dsa_gen.c.in
+  DEPEND[$DER_ML_DSA_GEN]=oids_to_c.pm ML_DSA.asn1
+
+  DEPEND[${DER_ML_DSA_GEN/.c/.o}]=$DER_ML_DSA_H
+  DEPEND[${DER_ML_DSA_AUX/.c/.o}]=$DER_ML_DSA_H
+  GENERATE[$DER_ML_DSA_H]=$INCDIR/der_ml_dsa.h.in
+  DEPEND[$DER_ML_DSA_H]=oids_to_c.pm ML_DSA.asn1
+ENDIF
+
 #----- KEY WRAP
 $DER_WRAP_H=$INCDIR/der_wrap.h
 $DER_WRAP_GEN=der_wrap_gen.c
@@ -110,6 +125,10 @@ IF[{- !$disabled{ec} -}]
   IF[{- !$disabled{ecx} -}]
     $COMMON = $COMMON $DER_ECX_GEN $DER_ECX_AUX
   ENDIF
+ENDIF
+
+IF[{- !$disabled{'ml-dsa'} -}]
+  $COMMON = $COMMON $DER_ML_DSA_GEN $DER_ML_DSA_AUX
 ENDIF
 
 IF[{- !$disabled{sm2} -}]
