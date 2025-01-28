@@ -7,7 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <assert.h>
 #include <string.h>
 #include "slh_dsa_local.h"
 #include "slh_dsa_key.h"
@@ -35,7 +34,7 @@
  */
 int ossl_slh_xmss_node(SLH_DSA_HASH_CTX *ctx, const uint8_t *sk_seed,
                        uint32_t node_id, uint32_t h,
-                       const uint8_t *pk_seed, SLH_ADRS adrs,
+                       const uint8_t *pk_seed, uint8_t *adrs,
                        uint8_t *pk_out, size_t pk_out_len)
 {
     const SLH_DSA_KEY *key = ctx->key;
@@ -85,7 +84,7 @@ int ossl_slh_xmss_node(SLH_DSA_HASH_CTX *ctx, const uint8_t *sk_seed,
  */
 int ossl_slh_xmss_sign(SLH_DSA_HASH_CTX *ctx, const uint8_t *msg,
                        const uint8_t *sk_seed, uint32_t node_id,
-                       const uint8_t *pk_seed, SLH_ADRS adrs, WPACKET *sig_wpkt)
+                       const uint8_t *pk_seed, uint8_t *adrs, WPACKET *sig_wpkt)
 {
     const SLH_DSA_KEY *key = ctx->key;
     SLH_ADRS_FUNC_DECLARE(key, adrsf);
@@ -139,7 +138,7 @@ int ossl_slh_xmss_sign(SLH_DSA_HASH_CTX *ctx, const uint8_t *msg,
  */
 int ossl_slh_xmss_pk_from_sig(SLH_DSA_HASH_CTX *ctx, uint32_t node_id,
                               PACKET *sig_rpkt, const uint8_t *msg,
-                              const uint8_t *pk_seed, SLH_ADRS adrs,
+                              const uint8_t *pk_seed, uint8_t *adrs,
                               uint8_t *pk_out, size_t pk_out_len)
 {
     const SLH_DSA_KEY *key = ctx->key;

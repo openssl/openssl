@@ -65,11 +65,11 @@ static OSSL_SLH_ADRS_FUNC_copy slh_adrsc_copy;
  * The non compressed versions of the ADRS functions use 32 bytes
  * This is only used by SHAKE.
  */
-static void slh_adrs_set_layer_address(SLH_ADRS adrs, uint32_t layer)
+static void slh_adrs_set_layer_address(uint8_t *adrs, uint32_t layer)
 {
     OPENSSL_store_u32_be(adrs + SLH_ADRS_OFF_LAYER_ADR, layer);
 }
-static void slh_adrs_set_tree_address(SLH_ADRS adrs, uint64_t address)
+static void slh_adrs_set_tree_address(uint8_t *adrs, uint64_t address)
 {
     /*
      * There are 12 bytes reserved for this - but the largest number
@@ -79,73 +79,73 @@ static void slh_adrs_set_tree_address(SLH_ADRS adrs, uint64_t address)
      */
     OPENSSL_store_u64_be(adrs + SLH_ADRS_OFF_TREE_ADR + 4, address);
 }
-static void slh_adrs_set_type_and_clear(SLH_ADRS adrs, uint32_t type)
+static void slh_adrs_set_type_and_clear(uint8_t *adrs, uint32_t type)
 {
     OPENSSL_store_u32_be(adrs + SLH_ADRS_OFF_TYPE, type);
     memset(adrs + SLH_ADRS_OFF_TYPE + SLH_ADRS_SIZE_TYPE, 0, SLH_ADRS_SIZE_TYPECLEAR);
 }
-static void slh_adrs_set_keypair_address(SLH_ADRS adrs, uint32_t in)
+static void slh_adrs_set_keypair_address(uint8_t *adrs, uint32_t in)
 {
     OPENSSL_store_u32_be(adrs + SLH_ADRS_OFF_KEYPAIR_ADDR, in);
 }
-static void slh_adrs_copy_keypair_address(SLH_ADRS dst, const SLH_ADRS src)
+static void slh_adrs_copy_keypair_address(uint8_t *dst, const uint8_t *src)
 {
     memcpy(dst + SLH_ADRS_OFF_KEYPAIR_ADDR, src + SLH_ADRS_OFF_KEYPAIR_ADDR,
            SLH_ADRS_SIZE_KEYPAIR_ADDR);
 }
-static void slh_adrs_set_chain_address(SLH_ADRS adrs, uint32_t in)
+static void slh_adrs_set_chain_address(uint8_t *adrs, uint32_t in)
 {
     OPENSSL_store_u32_be(adrs + SLH_ADRS_OFF_CHAIN_ADDR, in);
 }
-static void slh_adrs_set_hash_address(SLH_ADRS adrs, uint32_t in)
+static void slh_adrs_set_hash_address(uint8_t *adrs, uint32_t in)
 {
     OPENSSL_store_u32_be(adrs + SLH_ADRS_OFF_HASH_ADDR, in);
 }
-static void slh_adrs_zero(SLH_ADRS adrs)
+static void slh_adrs_zero(uint8_t *adrs)
 {
     memset(adrs, 0, SLH_ADRS_SIZE);
 }
-static void slh_adrs_copy(SLH_ADRS dst, const SLH_ADRS src)
+static void slh_adrs_copy(uint8_t *dst, const uint8_t *src)
 {
     memcpy(dst, src, SLH_ADRS_SIZE);
 }
 
 /* Compressed versions of ADRS functions See Table 3 */
-static void slh_adrsc_set_layer_address(SLH_ADRS adrsc, uint32_t layer)
+static void slh_adrsc_set_layer_address(uint8_t *adrsc, uint32_t layer)
 {
     adrsc[SLH_ADRSC_OFF_LAYER_ADR] = (uint8_t)layer;
 }
-static void slh_adrsc_set_tree_address(SLH_ADRS adrsc, uint64_t in)
+static void slh_adrsc_set_tree_address(uint8_t *adrsc, uint64_t in)
 {
     OPENSSL_store_u64_be(adrsc + SLH_ADRSC_OFF_TREE_ADR, in);
 }
-static void slh_adrsc_set_type_and_clear(SLH_ADRS adrsc, uint32_t type)
+static void slh_adrsc_set_type_and_clear(uint8_t *adrsc, uint32_t type)
 {
     adrsc[SLH_ADRSC_OFF_TYPE] = (uint8_t)type;
     memset(adrsc + SLH_ADRSC_OFF_TYPE + SLH_ADRSC_SIZE_TYPE, 0, SLH_ADRSC_SIZE_TYPECLEAR);
 }
-static void slh_adrsc_set_keypair_address(SLH_ADRS adrsc, uint32_t in)
+static void slh_adrsc_set_keypair_address(uint8_t *adrsc, uint32_t in)
 {
     OPENSSL_store_u32_be(adrsc + SLH_ADRSC_OFF_KEYPAIR_ADDR, in);
 }
-static void slh_adrsc_copy_keypair_address(SLH_ADRS dst, const SLH_ADRS src)
+static void slh_adrsc_copy_keypair_address(uint8_t *dst, const uint8_t *src)
 {
     memcpy(dst + SLH_ADRSC_OFF_KEYPAIR_ADDR, src + SLH_ADRSC_OFF_KEYPAIR_ADDR,
            SLH_ADRSC_SIZE_KEYPAIR_ADDR);
 }
-static void slh_adrsc_set_chain_address(SLH_ADRS adrsc, uint32_t in)
+static void slh_adrsc_set_chain_address(uint8_t *adrsc, uint32_t in)
 {
     OPENSSL_store_u32_be(adrsc + SLH_ADRSC_OFF_CHAIN_ADDR, in);
 }
-static void slh_adrsc_set_hash_address(SLH_ADRS adrsc, uint32_t in)
+static void slh_adrsc_set_hash_address(uint8_t *adrsc, uint32_t in)
 {
     OPENSSL_store_u32_be(adrsc + SLH_ADRSC_OFF_HASH_ADDR, in);
 }
-static void slh_adrsc_zero(SLH_ADRS adrsc)
+static void slh_adrsc_zero(uint8_t *adrsc)
 {
     memset(adrsc, 0, SLH_ADRSC_SIZE);
 }
-static void slh_adrsc_copy(SLH_ADRS dst, const SLH_ADRS src)
+static void slh_adrsc_copy(uint8_t *dst, const uint8_t *src)
 {
     memcpy(dst, src, SLH_ADRSC_SIZE);
 }

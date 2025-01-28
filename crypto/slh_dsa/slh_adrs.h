@@ -33,28 +33,26 @@
 #define SLH_ADRS_TYPE_WOTS_PRF   5
 #define SLH_ADRS_TYPE_FORS_PRF   6
 
-typedef uint8_t *SLH_ADRS;
-
 #define SLH_ADRS_DECLARE(a) uint8_t a[SLH_ADRS_SIZE_MAX]
 #define SLH_ADRS_FUNC_DECLARE(ctx, adrsf) \
     const SLH_ADRS_FUNC *adrsf = ctx->adrs_func
 #define SLH_ADRS_FN_DECLARE(adrsf, t) OSSL_SLH_ADRS_FUNC_##t *t = adrsf->t
 
-typedef void (OSSL_SLH_ADRS_FUNC_zero)(SLH_ADRS adrs);
-typedef void (OSSL_SLH_ADRS_FUNC_copy)(SLH_ADRS dst, const SLH_ADRS src);
-typedef void (OSSL_SLH_ADRS_FUNC_copy_keypair_address)(SLH_ADRS dst, const SLH_ADRS src);
+typedef void (OSSL_SLH_ADRS_FUNC_zero)(uint8_t *adrs);
+typedef void (OSSL_SLH_ADRS_FUNC_copy)(uint8_t *dst, const uint8_t *src);
+typedef void (OSSL_SLH_ADRS_FUNC_copy_keypair_address)(uint8_t *dst, const uint8_t *src);
 /*
  * Note that the tree address is actually 12 bytes in uncompressed format,
  * but we only use 8 bytes
  */
-typedef void (OSSL_SLH_ADRS_FUNC_set_tree_address)(SLH_ADRS adrs, uint64_t in);
-typedef void (OSSL_SLH_ADRS_FUNC_set_layer_address)(SLH_ADRS adrs, uint32_t layer);
-typedef void (OSSL_SLH_ADRS_FUNC_set_type_and_clear)(SLH_ADRS adrs, uint32_t type);
-typedef void (OSSL_SLH_ADRS_FUNC_set_keypair_address)(SLH_ADRS adrs, uint32_t in);
-typedef void (OSSL_SLH_ADRS_FUNC_set_chain_address)(SLH_ADRS adrs, uint32_t in);
-typedef void (OSSL_SLH_ADRS_FUNC_set_tree_height)(SLH_ADRS adrs, uint32_t in);
-typedef void (OSSL_SLH_ADRS_FUNC_set_hash_address)(SLH_ADRS adrs, uint32_t in);
-typedef void (OSSL_SLH_ADRS_FUNC_set_tree_index)(SLH_ADRS adrs, uint32_t in);
+typedef void (OSSL_SLH_ADRS_FUNC_set_tree_address)(uint8_t *adrs, uint64_t in);
+typedef void (OSSL_SLH_ADRS_FUNC_set_layer_address)(uint8_t *adrs, uint32_t layer);
+typedef void (OSSL_SLH_ADRS_FUNC_set_type_and_clear)(uint8_t *adrs, uint32_t type);
+typedef void (OSSL_SLH_ADRS_FUNC_set_keypair_address)(uint8_t *adrs, uint32_t in);
+typedef void (OSSL_SLH_ADRS_FUNC_set_chain_address)(uint8_t *adrs, uint32_t in);
+typedef void (OSSL_SLH_ADRS_FUNC_set_tree_height)(uint8_t *adrs, uint32_t in);
+typedef void (OSSL_SLH_ADRS_FUNC_set_hash_address)(uint8_t *adrs, uint32_t in);
+typedef void (OSSL_SLH_ADRS_FUNC_set_tree_index)(uint8_t *adrs, uint32_t in);
 
 typedef struct slh_adrs_func_st {
     OSSL_SLH_ADRS_FUNC_set_layer_address *set_layer_address;

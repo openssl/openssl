@@ -364,45 +364,6 @@ ECX_KEY *ossl_d2i_X448_PUBKEY(ECX_KEY **a,
 int ossl_i2d_X448_PUBKEY(const ECX_KEY *a, unsigned char **pp);
 # endif /* OPENSSL_NO_EC */
 
-# ifndef OPENSSL_NO_SLH_DSA
-SLH_DSA_KEY *ossl_d2i_SLH_DSA_SHA2_128S_PUBKEY(SLH_DSA_KEY **a,
-                                               const uint8_t **pp, long length);
-SLH_DSA_KEY *ossl_d2i_SLH_DSA_SHA2_128F_PUBKEY(SLH_DSA_KEY **a,
-                                               const uint8_t **pp, long length);
-SLH_DSA_KEY *ossl_d2i_SLH_DSA_SHA2_192S_PUBKEY(SLH_DSA_KEY **a,
-                                               const uint8_t **pp, long length);
-SLH_DSA_KEY *ossl_d2i_SLH_DSA_SHA2_192F_PUBKEY(SLH_DSA_KEY **a,
-                                               const uint8_t **pp, long length);
-SLH_DSA_KEY *ossl_d2i_SLH_DSA_SHA2_256S_PUBKEY(SLH_DSA_KEY **a,
-                                               const uint8_t **pp, long length);
-SLH_DSA_KEY *ossl_d2i_SLH_DSA_SHA2_256F_PUBKEY(SLH_DSA_KEY **a,
-                                               const uint8_t **pp, long length);
-SLH_DSA_KEY *ossl_d2i_SLH_DSA_SHAKE_128S_PUBKEY(SLH_DSA_KEY **a,
-                                                const uint8_t **pp, long length);
-SLH_DSA_KEY *ossl_d2i_SLH_DSA_SHAKE_128F_PUBKEY(SLH_DSA_KEY **a,
-                                                const uint8_t **pp, long length);
-SLH_DSA_KEY *ossl_d2i_SLH_DSA_SHAKE_192S_PUBKEY(SLH_DSA_KEY **a,
-                                                const uint8_t **pp, long length);
-SLH_DSA_KEY *ossl_d2i_SLH_DSA_SHAKE_192F_PUBKEY(SLH_DSA_KEY **a,
-                                                const uint8_t **pp, long length);
-SLH_DSA_KEY *ossl_d2i_SLH_DSA_SHAKE_256S_PUBKEY(SLH_DSA_KEY **a,
-                                                const uint8_t **pp, long length);
-SLH_DSA_KEY *ossl_d2i_SLH_DSA_SHAKE_256F_PUBKEY(SLH_DSA_KEY **a,
-                                                const uint8_t **pp, long length);
-int ossl_i2d_SLH_DSA_SHA2_128S_PUBKEY(const SLH_DSA_KEY *a, uint8_t **pp);
-int ossl_i2d_SLH_DSA_SHA2_128F_PUBKEY(const SLH_DSA_KEY *a, uint8_t **pp);
-int ossl_i2d_SLH_DSA_SHA2_192S_PUBKEY(const SLH_DSA_KEY *a, uint8_t **pp);
-int ossl_i2d_SLH_DSA_SHA2_192F_PUBKEY(const SLH_DSA_KEY *a, uint8_t **pp);
-int ossl_i2d_SLH_DSA_SHA2_256S_PUBKEY(const SLH_DSA_KEY *a, uint8_t **pp);
-int ossl_i2d_SLH_DSA_SHA2_256F_PUBKEY(const SLH_DSA_KEY *a, uint8_t **pp);
-int ossl_i2d_SLH_DSA_SHAKE_128S_PUBKEY(const SLH_DSA_KEY *a, uint8_t **pp);
-int ossl_i2d_SLH_DSA_SHAKE_128F_PUBKEY(const SLH_DSA_KEY *a, uint8_t **pp);
-int ossl_i2d_SLH_DSA_SHAKE_192S_PUBKEY(const SLH_DSA_KEY *a, uint8_t **pp);
-int ossl_i2d_SLH_DSA_SHAKE_192F_PUBKEY(const SLH_DSA_KEY *a, uint8_t **pp);
-int ossl_i2d_SLH_DSA_SHAKE_256S_PUBKEY(const SLH_DSA_KEY *a, uint8_t **pp);
-int ossl_i2d_SLH_DSA_SHAKE_256F_PUBKEY(const SLH_DSA_KEY *a, uint8_t **pp);
-# endif /* OPENSSL_NO_SLH_DSA */
-
 EVP_PKEY *ossl_d2i_PUBKEY_legacy(EVP_PKEY **a, const unsigned char **pp,
                                  long length);
 int ossl_x509_check_private_key(const EVP_PKEY *k, const EVP_PKEY *pkey);

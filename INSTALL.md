@@ -2061,5 +2061,8 @@ is used, as it is the version of the GNU assembler that will be checked.
 [SP 800-90B]:
     <https://csrc.nist.gov/pubs/sp/800/90/b/final>
 
+[jitterentropy-library]:
+    <https://github.com/smuellerDD/jitterentropy-library>
+
 [FIPS 205]:
     <https://csrc.nist.gov/pubs/fips/205/final>

@@ -7,7 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <assert.h>
 #include <string.h>
 #include <openssl/crypto.h>
 #include "slh_dsa_local.h"
@@ -138,7 +137,7 @@ static int slh_wots_chain(SLH_DSA_HASH_CTX *ctx, const uint8_t *in,
  */
 int ossl_slh_wots_pk_gen(SLH_DSA_HASH_CTX *ctx,
                          const uint8_t *sk_seed, const uint8_t *pk_seed,
-                         SLH_ADRS adrs, uint8_t *pk_out, size_t pk_out_len)
+                         uint8_t *adrs, uint8_t *pk_out, size_t pk_out_len)
 {
     int ret = 0;
     const SLH_DSA_KEY *key = ctx->key;
@@ -203,7 +202,7 @@ end:
  */
 int ossl_slh_wots_sign(SLH_DSA_HASH_CTX *ctx, const uint8_t *msg,
                        const uint8_t *sk_seed, const uint8_t *pk_seed,
-                       SLH_ADRS adrs, WPACKET *sig_wpkt)
+                       uint8_t *adrs, WPACKET *sig_wpkt)
 {
     int ret = 0;
     const SLH_DSA_KEY *key = ctx->key;

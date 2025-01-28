@@ -19,7 +19,7 @@ The names used are of the form "SLH-DSA-SHA2-128s" and "SLH-DSA-SHAKE-128f".
 
 There are 7 hash functions used. The algorithms using SHAKE have a much simpler
 set of 7 functions as they just use SHAKE-256 XOF (Even for the SHAKE-128 names).
-The SHA2 algorithms are much more complex and require HMAC, MGF1, and well as digests.
+The SHA2 algorithms are much more complex and require HMAC, MGF1, as well as digests.
 There are 2 sets of functions for the SHA2 case.
 
 Some of the hash functions use an ADRS object. This is 32 bytes for SHAKE algorithms
@@ -36,12 +36,12 @@ the ADRS functions, and the parameter constants. It also contains pre fetched al
 A SLH_DSA_HASH_CTX object is also created, that references the key, as well as
 containing per operation hash context objects.
 This SLH_DSA_HASH_CTX is then passed to all functions. This context is allocated in the
-providers SLH_DSA signature context.
+provider's SLH_DSA signature context.
 
 SLH-DSA keys
 ------------
 
-SLH-DSA keys have 2 elements of size n for both the public and private keys.
+SLH-DSA keys have 2 elements of size `n` for both the public and private keys.
 Since different algorithms have different key sizes, buffers of the maximum size
 will be used to hold the keys (since the keys are only a maximum of 64 bytes each)
 
@@ -57,9 +57,9 @@ struct slh_dsa_key_st {
     ...
 };
 
-The fields 'key_len' and 'has_priv' are used to determine if a key has loaded
+The fields `key_len` and `has_priv` are used to determine if a key has loaded
 the public and private key elements.
-The 'params' field is the parameter set which is resolved via the algorithm name.
+The `params` field is the parameter set which is resolved via the algorithm name.
 
 In FIPS 205 the SLH_DSA private key contains the public key.
 In OpenSSL these components are stored separately, so there must always be a
@@ -76,24 +76,27 @@ Pure vs Pre Hashed Signature Generation
 
 The normal signing process (called Pure SLH-DSA Signature Generation)
 encodes the message internally as 0x00 || len(ctx) || ctx || message.
-where B<ctx> is some optional value of size 0x00..0xFF.
+where `ctx` is some optional value of size 0x00..0xFF.
 
 ACVP Testing requires the ability for the message to not be encoded also. This
 will be controlled by settable parameters.
 
 Pre Hash SLH-DSA Signature Generation encode the message as
+
+```c
 0x01 || len(ctx) || ctx || digest_OID || H(message).
+```
+
 The scenario that is stated that this is useful for is when this encoded message
 is supplied from an external source.
 
-Currently I do not support the Pre Hash variant as this does not sit well with the
-OpenSSL API's. The user could do the encoding themselves and then set the settable
-to not encode the passed in message.
+Currently we do not support the Pre Hash variant as this does not sit well with the
+OpenSSL API's.
 
 Signing API
 -------------
 
-As only the one shot implementation is required and the message is not digested
+As only the one-shot implementation is required and the message is not digested
 the API's used should be
 
 EVP_PKEY_sign_message_init(), EVP_PKEY_sign(),
@@ -102,7 +105,7 @@ EVP_PKEY_verify_message_init(), EVP_PKEY_verify().
 Buffers
 -------
 
-There are many functions pass buffers of size |n| Where n is one of 16,24,32
+There are many functions pass buffers of size `n` Where n is one of 16,24,32
 depending on the algorithm name. These are used for key elements and hashes, so
 PACKETS are not used for these.
 
@@ -112,7 +115,7 @@ and PACKET for reading signature data.
 Constant Time Considerations
 ----------------------------
 
-As the security of SLH-DSA depends only on hash functions, I do not foresee
+As the security of SLH-DSA depends only on hash functions, we do not foresee
 there being any constant time issues. Some if statements have been added to
 detect failures in hash operations, and these errors are propagated all the way
 up the function call stack. These errors should not happen in general so should
