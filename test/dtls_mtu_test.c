@@ -217,13 +217,6 @@ static int test_server_mtu_larger_than_max_fragment_length(void)
                                       NULL, NULL)))
         goto end;
 
-    /**
-     * TODO(DTLSv1.3): Test fails with
-     * SSL routines:tls_parse_ctos_maxfragmentlen:ssl3 ext invalid max fragment length:
-     *      ssl/statem/extensions_srvr.c:202:
-     */
-    OPENSSL_assert(SSL_set_max_proto_version(clnt_ssl, DTLS1_2_VERSION) == 1);
-
     SSL_set_options(srvr_ssl, SSL_OP_NO_QUERY_MTU);
     if (!TEST_true(DTLS_set_link_mtu(srvr_ssl, 1500)))
         goto end;
