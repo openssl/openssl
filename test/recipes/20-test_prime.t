@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2020-2023 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2020-2025 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -14,7 +14,7 @@ use OpenSSL::Test;
 
 setup("test_prime");
 
-plan tests => 7;
+plan tests => 8;
 
 my $prime_file      = data_file("prime.txt");
 my $composite_file  = data_file("composite.txt");
@@ -43,3 +43,6 @@ ok(!run(app(["openssl", "prime", "-in", $bad_format_file])),
 
 ok(run(app(["openssl", "prime", "-in", $prime_file, $composite_file, $long_number_file])),
    "Run openssl prime with multiple -in files");
+
+ok(!run(app(["openssl", "prime", "-in", "does_not_exist.txt"])),
+   "Run openssl prime with -in file that does not exist");
