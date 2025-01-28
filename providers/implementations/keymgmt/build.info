@@ -46,6 +46,6 @@ SOURCE[$MAC_GOAL]=mac_legacy_kmgmt.c
 
 SOURCE[$TEMPLATE_GOAL]=template_kmgmt.c
 
-IF[{- !$disabled{ml-dsa} -}]
+IF[{- !$disabled{'ml-dsa'} -}]
   SOURCE[$ML_DSA_GOAL]=ml_dsa_kmgmt.c
 ENDIF

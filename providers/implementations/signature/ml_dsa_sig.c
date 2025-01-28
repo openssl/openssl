@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2024-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -18,7 +18,10 @@
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
+#include "prov/der_ml_dsa.h"
 #include "crypto/ml_dsa.h"
+#include "internal/packet.h"
+#include "internal/sizes.h"
 
 #define ML_DSA_ENTROPY_LEN 32
 
@@ -29,9 +32,15 @@ static OSSL_FUNC_signature_sign_message_init_fn ml_dsa_sign_msg_init;
 static OSSL_FUNC_signature_sign_fn ml_dsa_sign;
 static OSSL_FUNC_signature_verify_message_init_fn ml_dsa_verify_msg_init;
 static OSSL_FUNC_signature_verify_fn ml_dsa_verify;
+static OSSL_FUNC_signature_digest_sign_init_fn ml_dsa_digest_signverify_init;
+static OSSL_FUNC_signature_digest_sign_fn ml_dsa_digest_sign;
+static OSSL_FUNC_signature_digest_verify_fn ml_dsa_digest_verify;
+
 static OSSL_FUNC_signature_freectx_fn ml_dsa_freectx;
 static OSSL_FUNC_signature_set_ctx_params_fn ml_dsa_set_ctx_params;
 static OSSL_FUNC_signature_settable_ctx_params_fn ml_dsa_settable_ctx_params;
+static OSSL_FUNC_signature_get_ctx_params_fn ml_dsa_get_ctx_params;
+static OSSL_FUNC_signature_gettable_ctx_params_fn ml_dsa_gettable_ctx_params;
 static OSSL_FUNC_signature_dupctx_fn ml_dsa_dupctx;
 
 typedef struct {
@@ -44,6 +53,9 @@ typedef struct {
     int msg_encode;
     int deterministic;
     const char *alg;
+    /* The Algorithm Identifier of the signature algorithm */
+    uint8_t aid_buf[OSSL_MAX_ALGORITHM_ID_SIZE];
+    size_t  aid_len;
 } PROV_ML_DSA_CTX;
 
 static void ml_dsa_freectx(void *vctx)
@@ -86,6 +98,32 @@ static void *ml_dsa_dupctx(void *vctx)
     return OPENSSL_memdup(srcctx, sizeof(*srcctx));
 }
 
+static int set_alg_id_buffer(PROV_ML_DSA_CTX *ctx)
+{
+    int ret;
+    WPACKET pkt;
+    uint8_t *aid = NULL;
+
+    /*
+     * We do not care about DER writing errors.
+     * All it really means is that for some reason, there's no
+     * AlgorithmIdentifier to be had, but the operation itself is
+     * still valid, just as long as it's not used to construct
+     * anything that needs an AlgorithmIdentifier.
+     */
+    ctx->aid_len = 0;
+    ret = WPACKET_init_der(&pkt, ctx->aid_buf, sizeof(ctx->aid_buf));
+    ret = ret && ossl_DER_w_algorithmIdentifier_ML_DSA(&pkt, -1, ctx->key);
+    if (ret && WPACKET_finish(&pkt)) {
+        WPACKET_get_total_written(&pkt, &ctx->aid_len);
+        aid = WPACKET_get_curr(&pkt);
+    }
+    WPACKET_cleanup(&pkt);
+    if (aid != NULL && ctx->aid_len != 0)
+        memmove(ctx->aid_buf, aid, ctx->aid_len);
+    return 1;
+}
+
 static int ml_dsa_signverify_msg_init(void *vctx, void *vkey,
                                       const OSSL_PARAM params[], int operation,
                                       const char *desc)
@@ -107,6 +145,8 @@ static int ml_dsa_signverify_msg_init(void *vctx, void *vkey,
     if (!ossl_ml_dsa_key_matches(ctx->key, ctx->alg))
         return 0;
 
+    set_alg_id_buffer(ctx);
+
     return ml_dsa_set_ctx_params(ctx, params);
 }
 
@@ -116,8 +156,26 @@ static int ml_dsa_sign_msg_init(void *vctx, void *vkey, const OSSL_PARAM params[
                                       EVP_PKEY_OP_SIGN, "ML_DSA Sign Init");
 }
 
-static int ml_dsa_sign(void *vctx, unsigned char *sig, size_t *siglen,
-                       size_t sigsize, const unsigned char *msg, size_t msg_len)
+static int ml_dsa_digest_signverify_init(void *vctx, const char *mdname,
+                                         void *vkey, const OSSL_PARAM params[])
+{
+    PROV_ML_DSA_CTX *ctx = (PROV_ML_DSA_CTX *)vctx;
+
+    if (mdname != NULL && mdname[0] != '\0') {
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_DIGEST,
+                       "Explicit digest not supported for ML-DSA operations");
+        return 0;
+    }
+
+    if (vkey == NULL && ctx->key != NULL)
+        return ml_dsa_set_ctx_params(ctx, params);
+
+    return ml_dsa_signverify_msg_init(vctx, vkey, params,
+                                      EVP_PKEY_OP_SIGN, "ML_DSA Sign Init");
+}
+
+static int ml_dsa_sign(void *vctx, uint8_t *sig, size_t *siglen, size_t sigsize,
+                       const uint8_t *msg, size_t msg_len)
 {
     int ret = 0;
     PROV_ML_DSA_CTX *ctx = (PROV_ML_DSA_CTX *)vctx;
@@ -147,14 +205,20 @@ static int ml_dsa_sign(void *vctx, unsigned char *sig, size_t *siglen,
     return ret;
 }
 
+static int ml_dsa_digest_sign(void *vctx, uint8_t *sig, size_t *siglen, size_t sigsize,
+                              const uint8_t *tbs, size_t tbslen)
+{
+    return ml_dsa_sign(vctx, sig, siglen, sigsize, tbs, tbslen);
+}
+
 static int ml_dsa_verify_msg_init(void *vctx, void *vkey, const OSSL_PARAM params[])
 {
     return ml_dsa_signverify_msg_init(vctx, vkey, params, EVP_PKEY_OP_VERIFY,
                                       "ML_DSA Verify Init");
 }
 
-static int ml_dsa_verify(void *vctx, const unsigned char *sig, size_t siglen,
-                         const unsigned char *msg, size_t msg_len)
+static int ml_dsa_verify(void *vctx, const uint8_t *sig, size_t siglen,
+                         const uint8_t *msg, size_t msg_len)
 {
     PROV_ML_DSA_CTX *ctx = (PROV_ML_DSA_CTX *)vctx;
 
@@ -163,6 +227,12 @@ static int ml_dsa_verify(void *vctx, const unsigned char *sig, size_t siglen,
     return ossl_ml_dsa_verify(ctx->key, msg, msg_len,
                               ctx->context_string, ctx->context_string_len,
                               ctx->msg_encode, sig, siglen);
+}
+static int ml_dsa_digest_verify(void *vctx,
+                                const uint8_t *sig, size_t siglen,
+                                const uint8_t *tbs, size_t tbslen)
+{
+    return ml_dsa_verify(vctx, sig, siglen, tbs, tbslen);
 }
 
 static int ml_dsa_set_ctx_params(void *vctx, const OSSL_PARAM params[])
@@ -223,6 +293,35 @@ static const OSSL_PARAM *ml_dsa_settable_ctx_params(void *vctx,
     return settable_ctx_params;
 }
 
+static const OSSL_PARAM known_gettable_ctx_params[] = {
+    OSSL_PARAM_octet_string(OSSL_SIGNATURE_PARAM_ALGORITHM_ID, NULL, 0),
+    OSSL_PARAM_END
+};
+
+static const OSSL_PARAM *ml_dsa_gettable_ctx_params(ossl_unused void *vctx,
+                                                    ossl_unused void *provctx)
+{
+    return known_gettable_ctx_params;
+}
+
+static int ml_dsa_get_ctx_params(void *vctx, OSSL_PARAM *params)
+{
+    PROV_ML_DSA_CTX *ctx = (PROV_ML_DSA_CTX *)vctx;
+    OSSL_PARAM *p;
+
+    if (ctx == NULL)
+        return 0;
+
+    p = OSSL_PARAM_locate(params, OSSL_SIGNATURE_PARAM_ALGORITHM_ID);
+    if (p != NULL
+        && !OSSL_PARAM_set_octet_string(p,
+                                        ctx->aid_len == 0 ? NULL : ctx->aid_buf,
+                                        ctx->aid_len))
+        return 0;
+
+    return 1;
+}
+
 #define MAKE_SIGNATURE_FUNCTIONS(alg, fn)                                      \
     static OSSL_FUNC_signature_newctx_fn ml_dsa_##fn##_newctx;                 \
     static void *ml_dsa_##fn##_newctx(void *provctx, const char *propq)        \
@@ -237,11 +336,23 @@ static const OSSL_PARAM *ml_dsa_settable_ctx_params(void *vctx,
         { OSSL_FUNC_SIGNATURE_VERIFY_MESSAGE_INIT,                             \
           (void (*)(void))ml_dsa_verify_msg_init },                            \
         { OSSL_FUNC_SIGNATURE_VERIFY, (void (*)(void))ml_dsa_verify },         \
+        { OSSL_FUNC_SIGNATURE_DIGEST_SIGN_INIT,                                \
+          (void (*)(void))ml_dsa_digest_signverify_init },                     \
+        { OSSL_FUNC_SIGNATURE_DIGEST_SIGN,                                     \
+          (void (*)(void))ml_dsa_digest_sign },                                \
+        { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_INIT,                              \
+          (void (*)(void))ml_dsa_digest_signverify_init },                     \
+        { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY,                                   \
+          (void (*)(void))ml_dsa_digest_verify },                              \
         { OSSL_FUNC_SIGNATURE_FREECTX, (void (*)(void))ml_dsa_freectx },       \
         { OSSL_FUNC_SIGNATURE_SET_CTX_PARAMS,                                  \
           (void (*)(void))ml_dsa_set_ctx_params },                             \
         { OSSL_FUNC_SIGNATURE_SETTABLE_CTX_PARAMS,                             \
           (void (*)(void))ml_dsa_settable_ctx_params },                        \
+        { OSSL_FUNC_SIGNATURE_GET_CTX_PARAMS,                                  \
+          (void (*)(void))ml_dsa_get_ctx_params },                             \
+        { OSSL_FUNC_SIGNATURE_GETTABLE_CTX_PARAMS,                             \
+          (void (*)(void))ml_dsa_gettable_ctx_params },                        \
         { OSSL_FUNC_SIGNATURE_DUPCTX, (void (*)(void))ml_dsa_dupctx },         \
         OSSL_DISPATCH_END                                                      \
     }
