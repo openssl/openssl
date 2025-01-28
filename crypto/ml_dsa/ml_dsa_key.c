@@ -17,6 +17,7 @@
 #include "ml_dsa_params.h"
 #include "ml_dsa_matrix.h"
 #include "ml_dsa_hash.h"
+#include "internal/encoder.h"
 
 /**
  * @brief Create a new ML_DSA_KEY object
