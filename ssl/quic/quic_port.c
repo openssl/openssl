@@ -1354,7 +1354,7 @@ static int port_validate_token(QUIC_PKT_HDR *hdr, QUIC_PORT *port,
      *
      * If however, we validated a NEW_TOKEN, which may be
      * reused multiple times, only send a NEW_TOKEN frame
-     * if the existing received token has 10% of its lifetime
+     * if the existing received token has less than 10% of its lifetime
      * remaining.  This prevents us from constantly sending
      * NEW_TOKEN frames on every connection when not needed
      */
@@ -1410,6 +1410,7 @@ static void generate_new_token(QUIC_CHANNEL *ch, BIO_ADDR *peer)
                                      &ct_len)
         || !ossl_assert(ct_len >= QUIC_RETRY_INTEGRITY_TAG_LEN)) {
         OPENSSL_free(ct_buf);
+        cleanup_validation_token(&token);
         return;
     }
 
@@ -1532,24 +1533,24 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
      * a NEW_TOKEN frame during a prior connection, which we should still
      * validate here
      */
-    if (hdr.token != NULL) {
-        if (port_validate_token(&hdr, port, &e->peer,
-                                &odcid, &scid, &gen_new_token) == 0) {
-            /*
-             * RFC 9000 s 8.1.3
-             * When a server receives an Initial packet with an address
-             * validation token, it MUST attempt to validate the token,
-             * unless it has already completed address validation.
-             * If the token is invalid, then the server SHOULD proceed as
-             * if the client did not have a validated address,
-             * including potentially sending a Retry packet
-             * Note: If address validation is disabled, just act like
-             * The request is valid
-             */
-            if (port->validate_addr == 1) {
-                port_send_retry(port, &e->peer, &hdr);
-                goto undesirable;
-            }
+    if (hdr.token != NULL
+        && port_validate_token(&hdr, port, &e->peer,
+                               &odcid, &scid,
+                               &gen_new_token) == 0) {
+        /*
+         * RFC 9000 s 8.1.3
+         * When a server receives an Initial packet with an address
+         * validation token, it MUST attempt to validate the token,
+         * unless it has already completed address validation.
+         * If the token is invalid, then the server SHOULD proceed as
+         * if the client did not have a validated address,
+         * including potentially sending a Retry packet
+         * Note: If address validation is disabled, just act like
+         * the request is valid
+         */
+        if (port->validate_addr == 1) {
+            port_send_retry(port, &e->peer, &hdr);
+            goto undesirable;
         }
     }
 

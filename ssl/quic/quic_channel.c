@@ -2819,16 +2819,17 @@ int ossl_quic_channel_start(QUIC_CHANNEL *ch)
     /*
      * Look to see if we have a token, and if so, set it on the packetiser
      */
-    if (!ch->is_server && ossl_quic_get_peer_token(ch->port->channel_ctx,
-                                                   &ch->cur_peer_addr,
-                                                   &token, &token_len,
-                                                   &token_ptr)) {
-        if (!ossl_quic_tx_packetiser_set_initial_token(ch->txp, token,
-                                                       token_len,
-                                                       free_peer_token,
-                                                       token_ptr))
-            free_peer_token(NULL, 0, token_ptr);
-    }
+    if (!ch->is_server
+        && ossl_quic_get_peer_token(ch->port->channel_ctx,
+                                    &ch->cur_peer_addr,
+                                    &token, &token_len,
+                                    &token_ptr)
+        && !ossl_quic_tx_packetiser_set_initial_token(ch->txp, token,
+                                                      token_len,
+                                                      free_peer_token,
+                                                      token_ptr))
+        free_peer_token(NULL, 0, token_ptr);
+
     /* Plug in secrets for the Initial EL. */
     if (!ossl_quic_provide_initial_secret(ch->port->engine->libctx,
                                           ch->port->engine->propq,
