@@ -16,7 +16,7 @@ to reduce the time for a server to validate a client address.  These tokens are
 stored on receipt from a server, and automatically reused in the establishment
 of a new future connection to the same server.  A token store is automatically
 created on the creation of an B<SSL_CTX> and freed on its release.  The
-functions above can be used to fetch and set the token cache between independent
+functions above can be used to fetch and set the token store between independent
 B<SSL_CTX> objects to share those tokens between B<SSL> connections allocated from
 disparate B<SSL_CTX> objects.
 
@@ -34,7 +34,7 @@ is needed.
 
 When SSL_CTX_set_token_store() is called, the passed store has its reference count
 incremented.  It will be decremented when that B<SSL_CTX> is freed via a call to
-SSL_CTX_free()
+SSL_CTX_free().
 
 These functions are only applicable to QUIC B<SSL_CTX> objects.  Using them on
 non-QUIC objects will result in error returns.
@@ -42,9 +42,9 @@ non-QUIC objects will result in error returns.
 =head1 RETURN VALUES
 
 SSL_CTX_get0_token_store() returns an opaque handle to a token store, or NULL in
-the event that an error occured, or if the B<SSL_CTX> object has no store
+the event that an error occured, or if the B<SSL_CTX> object has no store.
 
-SSL_CTX_set_token_store returns 1 on success or 0 on error
+SSL_CTX_set_token_store returns 1 on success or 0 on error.
 
 =head1 SEE ALSO
 
@@ -52,7 +52,7 @@ L<ssl(7)>
 
 =head1 HISTORY
 
-The NEW_TOKEN store manipulation functions were added in OpenSSL 3.5.0
+The NEW_TOKEN store manipulation functions were added in OpenSSL 3.5.0.
 
 =head1 COPYRIGHT
 
