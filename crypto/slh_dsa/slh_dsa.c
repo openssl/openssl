@@ -6,7 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-#include <assert.h>
 #include <stddef.h>
 #include <string.h>
 #include <openssl/err.h>
@@ -65,14 +64,16 @@ static int slh_sign_internal(SLH_DSA_HASH_CTX *hctx,
     SLH_HASH_FUNC_DECLARE(priv, hashf);
     SLH_ADRS_FUNC_DECLARE(priv, adrsf);
 
-    if (sig_len != NULL)
+    if (sig == NULL) {
         *sig_len = sig_len_expected;
+        return 1;
+    }
 
-    if (sig == NULL)
-        return (sig_len != NULL);
-
-    if (sig_size < sig_len_expected)
+    if (sig_size < sig_len_expected) {
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_SIGNATURE_SIZE,
+                       "is %zu, should be at least %zu", sig_size, sig_len_expected);
         return 0;
+    }
     /* Exit if private key is not set */
     if (priv->has_priv == 0) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_KEY);
@@ -118,6 +119,7 @@ static int slh_sign_internal(SLH_DSA_HASH_CTX *hctx,
         /* Generate ht signature and append to the SLH-DSA signature */
         && ossl_slh_ht_sign(hctx, pk_fors, sk_seed, pk_seed, tree_id, leaf_id,
                             wpkt);
+    *sig_len = sig_len_expected;
     ret = 1;
  err:
     if (!WPACKET_finish(wpkt))
@@ -309,7 +311,10 @@ int ossl_slh_dsa_verify(SLH_DSA_HASH_CTX *slh_ctx,
     return ret;
 }
 
-/* See FIPS 205 Algorithm 2 toInt(X, n) */
+/*
+ * See FIPS 205 Algorithm 2 toInt(X, n)
+ * OPENSSL_load_u64_be() cant be used here as the |in_len| may be < 8
+ */
 static uint64_t bytes_to_u64_be(const uint8_t *in, size_t in_len)
 {
 
@@ -348,7 +353,7 @@ static int get_tree_ids(PACKET *rpkt, const SLH_DSA_PARAMS *params,
      *     when X = 54 it would be A & (0x3F_FFFF_FFFF_FFFF)
      * i.e. A & (0xFFFF_FFFF_FFFF_FFFF >> (64 - X))
      */
-    tree_id_mask = ((uint64_t)-1) >> (64 - (params->h - params->hm));
+    tree_id_mask = (~(uint64_t)0) >> (64 - (params->h - params->hm));
     leaf_id_mask = (1 << params->hm) - 1; /* max value is 0x1FF when hm = 9 */
     *tree_id = bytes_to_u64_be(tree_id_bytes, tree_id_len) & tree_id_mask;
     *leaf_id = (uint32_t)(bytes_to_u64_be(leaf_id_bytes, leaf_id_len) & leaf_id_mask);

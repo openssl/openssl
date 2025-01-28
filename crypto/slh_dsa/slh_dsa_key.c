@@ -7,12 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <assert.h>
 #include <string.h>
+#include <openssl/err.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/params.h>
 #include <openssl/rand.h>
+#include <openssl/proverr.h>
 #include "slh_dsa_local.h"
 #include "slh_dsa_key.h"
 #include "internal/encoder.h"
@@ -453,6 +454,7 @@ int ossl_slh_dsa_set_pub(SLH_DSA_KEY *key, const uint8_t *pub, size_t pub_len)
     return 1;
 }
 
+#ifndef FIPS_MODULE
 int ossl_slh_dsa_key_to_text(BIO *out, const SLH_DSA_KEY *key, int selection)
 {
     const char *name;
@@ -491,3 +493,4 @@ int ossl_slh_dsa_key_to_text(BIO *out, const SLH_DSA_KEY *key, int selection)
 
     return 1;
 }
+#endif /* FIPS_MODULE */
