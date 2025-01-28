@@ -1241,6 +1241,15 @@ static void port_send_version_negotiation(QUIC_PORT *port, BIO_ADDR *peer,
 }
 
 /**
+ * @brief defintions of token lifetimes
+ *
+ * RETRY tokens are only valid for 10 seconds
+ * NEW_TOKEN tokens have a lifetime of 3600 sec (1 hour)
+ */
+
+#define RETRY_LIFETIME 10
+#define NEW_TOKEN_LIFETIME 3600
+/**
  * @brief Validates a received token in a QUIC packet header.
  *
  * This function checks the validity of a token contained in the provided
@@ -1272,14 +1281,16 @@ static void port_send_version_negotiation(QUIC_PORT *port, BIO_ADDR *peer,
  */
 static int port_validate_token(QUIC_PKT_HDR *hdr, QUIC_PORT *port,
                                BIO_ADDR *peer, QUIC_CONN_ID *odcid,
-                               QUIC_CONN_ID *scid)
+                               QUIC_CONN_ID *scid, uint8_t *gen_new_token)
 {
     int ret = 0;
     QUIC_VALIDATION_TOKEN token = { 0 };
-    unsigned long long time_diff;
+    uint64_t time_diff;
     size_t remote_addr_len, dec_token_len;
     unsigned char *remote_addr = NULL, dec_token[MARSHALLED_TOKEN_MAX_LEN];
     OSSL_TIME now = ossl_time_now();
+
+    *gen_new_token = 0;
 
     if (!decrypt_validation_token(port, hdr->token, hdr->token_len, NULL,
                                   &dec_token_len)
@@ -1297,8 +1308,8 @@ static int port_validate_token(QUIC_PKT_HDR *hdr, QUIC_PORT *port,
         goto err;
     time_diff = ossl_time2seconds(ossl_time_abs_difference(token.timestamp,
                                                            now));
-    if ((token.is_retry && time_diff > 10)
-        || (!token.is_retry && time_diff > 3600))
+    if ((token.is_retry && time_diff > RETRY_LIFETIME)
+        || (!token.is_retry && time_diff > NEW_TOKEN_LIFETIME))
         goto err;
 
     /* Validate remote address */
@@ -1334,6 +1345,24 @@ static int port_validate_token(QUIC_PKT_HDR *hdr, QUIC_PORT *port,
         if (!ossl_quic_lcidm_get_unused_cid(port->lcidm, odcid))
             goto err;
         *scid = hdr->src_conn_id;
+    }
+
+    /*
+     * Determine if we need to send a NEW_TOKEN frame
+     * If we validated a retry token, we should always
+     * send a NEW_TOKEN frame to the client
+     *
+     * If however, we validated a NEW_TOKEN, which may be
+     * reused multiple times, only send a NEW_TOKEN frame
+     * if the existing received token has 10% of its lifetime
+     * remaining.  This prevents us from constantly sending
+     * NEW_TOKEN frames on every connection when not needed
+     */
+    if (token.is_retry) {
+        *gen_new_token = 1;
+    } else {
+        if (time_diff > ((NEW_TOKEN_LIFETIME * 9) / 10))
+            *gen_new_token = 1;
     }
 
     ret = 1;
@@ -1402,6 +1431,7 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
     QUIC_PKT_HDR hdr;
     QUIC_CHANNEL *ch = NULL, *new_ch = NULL;
     QUIC_CONN_ID odcid, scid;
+    uint8_t gen_new_token = 0;
     uint64_t cause_flags = 0;
 
     /* Don't handle anything if we are no longer running. */
@@ -1504,7 +1534,7 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
      */
     if (hdr.token != NULL) {
         if (port_validate_token(&hdr, port, &e->peer,
-                                &odcid, &scid) == 0) {
+                                &odcid, &scid, &gen_new_token) == 0) {
             /*
              * RFC 9000 s 8.1.3
              * When a server receives an Initial packet with an address
@@ -1529,7 +1559,8 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
     /*
      * Generate a token for sending in a later NEW_TOKEN frame
      */
-    generate_new_token(new_ch, &e->peer);
+    if (gen_new_token == 1)
+        generate_new_token(new_ch, &e->peer);
 
     /*
      * The channel will do all the LCID registration needed, but as an
