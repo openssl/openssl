@@ -9,6 +9,7 @@
 
 #include <openssl/provider.h>
 #include <openssl/params.h>
+#include <openssl/param_build.h>
 #include <openssl/core_names.h>
 #include <openssl/evp.h>
 #include "testutil.h"
@@ -70,7 +71,7 @@ static int test_skey_cipher(void)
         goto end;
 
     /* Export params */
-    if (!TEST_int_gt(EVP_SKEY_export(key, OSSL_SKEYMGMT_SELECT_ALL,
+    if (!TEST_int_gt(EVP_SKEY_export(key, OSSL_SKEYMGMT_SELECT_SECRET_KEY,
                                      ossl_pkey_todata_cb, &export_params), 0))
         goto end;
 
