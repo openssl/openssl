@@ -4790,6 +4790,9 @@ static QUIC_TOKEN *ossl_quic_build_new_token(BIO_ADDR *peer, uint8_t *token,
     unsigned short *portptr;
     uint8_t *addrptr;
 
+    if ((token != NULL && token_len == 0) || (token == NULL && token_len != 0))
+        return NULL;
+
     if (!BIO_ADDR_rawaddress(peer, NULL, &addr_len))
         return NULL;
     family = BIO_ADDR_family(peer);
@@ -4828,8 +4831,8 @@ static QUIC_TOKEN *ossl_quic_build_new_token(BIO_ADDR *peer, uint8_t *token,
     return new_token;
 }
 
-int ossl_quic_update_peer_token(SSL_CTX *ctx, BIO_ADDR *peer,
-                                const uint8_t *token, size_t token_len)
+int ossl_quic_set_peer_token(SSL_CTX *ctx, BIO_ADDR *peer,
+                             const uint8_t *token, size_t token_len)
 {
     SSL_TOKEN_STORE *c = ctx->tokencache;
     QUIC_TOKEN *tok, *old = NULL;

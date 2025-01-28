@@ -351,8 +351,8 @@ static int depack_do_frame_new_token(PACKET *pkt, QUIC_CHANNEL *ch,
     }
 
     /* store the new token in our token cache */
-    if (!ossl_quic_update_peer_token(ossl_quic_port_get_channel_ctx(ch->port),
-                                     &ch->cur_peer_addr, token, token_len))
+    if (!ossl_quic_set_peer_token(ossl_quic_port_get_channel_ctx(ch->port),
+                                  &ch->cur_peer_addr, token, token_len))
         return 0;
 
     return 1;
