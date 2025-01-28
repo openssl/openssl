@@ -70,6 +70,11 @@ to be set to 32 bytes of zeros. This value is ignored if "test-entropy" is set.
 
 See L<EVP_PKEY-ML-DSA(7)> for information related to B<ML-DSA> keys.
 
+=head1 NOTES
+
+For backwards compatability reasons EVP_DigestSignInit_ex(), EVP_DigestSign(),
+EVP_DigestVerifyInit_ex() and EVP_DigestVerify() may also be used, but the digest
+passed in |mdname| must be NULL.
 
 =head1 EXAMPLES
 

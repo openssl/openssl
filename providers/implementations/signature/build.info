@@ -25,6 +25,7 @@ ENDIF
 
 SOURCE[$RSA_GOAL]=rsa_sig.c
 
+DEPEND[ml_dsa_sig.o]=../../common/include/prov/der_ml_dsa.h
 DEPEND[rsa_sig.o]=../../common/include/prov/der_rsa.h
 DEPEND[dsa_sig.o]=../../common/include/prov/der_dsa.h
 DEPEND[ecdsa_sig.o]=../../common/include/prov/der_ec.h
@@ -33,6 +34,6 @@ DEPEND[sm2_sig.o]=../../common/include/prov/der_sm2.h
 
 SOURCE[$MAC_GOAL]=mac_legacy_sig.c
 
-IF[{- !$disabled{ml-dsa} -}]
+IF[{- !$disabled{'ml-dsa'} -}]
   SOURCE[$DSA_GOAL]=ml_dsa_sig.c
 ENDIF
