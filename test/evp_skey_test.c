@@ -9,6 +9,7 @@
 
 #include <openssl/provider.h>
 #include <openssl/params.h>
+#include <openssl/param_build.h>
 #include <openssl/core_names.h>
 #include <openssl/evp.h>
 #include "testutil.h"
@@ -70,7 +71,7 @@ static int test_skey_cipher(void)
         goto end;
 
     /* Export params */
-    if (!TEST_int_gt(EVP_SKEY_export(key, OSSL_SKEYMGMT_SELECT_ALL,
+    if (!TEST_int_gt(EVP_SKEY_export(key, OSSL_SKEYMGMT_SELECT_SECRET_KEY,
                                      ossl_pkey_todata_cb, &export_params), 0))
         goto end;
 
@@ -91,6 +92,159 @@ end:
     return ret;
 }
 
+#define IV_SIZE 16
+#define DATA_SIZE 32
+static int test_aes_raw_skey(void)
+{
+    const unsigned char data[DATA_SIZE] = {
+        0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2,
+        0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2,
+        0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2,
+        0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2
+    };
+    unsigned char aes_key[KEY_SIZE], aes_iv[IV_SIZE];
+    unsigned char encrypted_skey[DATA_SIZE + IV_SIZE];
+    unsigned char encrypted_raw[DATA_SIZE + IV_SIZE];
+    int enc_len, fin_len;
+    const unsigned char *export_key = NULL;
+    size_t export_length;
+    EVP_CIPHER *aes_cbc = NULL;
+    EVP_CIPHER_CTX *ctx = NULL;
+    EVP_SKEY *skey = NULL;
+    OSSL_PARAM_BLD *tmpl = NULL;
+    OSSL_PARAM *params = NULL;
+    int ret = 0;
+
+    deflprov = OSSL_PROVIDER_load(libctx, "default");
+    if (!TEST_ptr(deflprov))
+        return 0;
+
+    memset(encrypted_skey, 0, sizeof(encrypted_skey));
+    memset(encrypted_raw,  0, sizeof(encrypted_raw));
+    memset(aes_key, 1, KEY_SIZE);
+    memset(aes_iv, 2, IV_SIZE);
+
+    /* Do a direct fetch to see it works */
+    aes_cbc = EVP_CIPHER_fetch(libctx, "AES-128-CBC", "provider=default");
+    if (!TEST_ptr(aes_cbc))
+        goto end;
+
+    /* Create EVP_SKEY */
+    skey = EVP_SKEY_import_raw_key(libctx, "AES-128", aes_key, KEY_SIZE, NULL);
+    if (!TEST_ptr(skey))
+        goto end;
+
+    if (!TEST_int_gt(EVP_SKEY_get_raw_key(skey, &export_key, &export_length), 0)
+        || !TEST_mem_eq(aes_key, KEY_SIZE, export_key, export_length))
+        goto end;
+
+    enc_len = sizeof(encrypted_skey);
+    fin_len = 0;
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+        || !TEST_int_gt(EVP_CipherInit_SKEY(ctx, aes_cbc, skey, aes_iv, IV_SIZE, 1, NULL), 0)
+        || !TEST_int_gt(EVP_CipherUpdate(ctx, encrypted_skey, &enc_len, data, DATA_SIZE), 0)
+        || !TEST_int_gt(EVP_CipherFinal(ctx, encrypted_skey + enc_len, &fin_len), 0))
+        goto end;
+
+    EVP_CIPHER_CTX_free(ctx);
+    ctx = EVP_CIPHER_CTX_new();
+
+    enc_len = sizeof(encrypted_raw);
+    fin_len = 0;
+    if (!TEST_int_gt(EVP_CipherInit_ex2(ctx, aes_cbc, aes_key, aes_iv, 1, NULL), 0)
+        || !TEST_int_gt(EVP_CipherUpdate(ctx, encrypted_raw, &enc_len, data, DATA_SIZE), 0)
+        || !TEST_int_gt(EVP_CipherFinal(ctx, encrypted_raw + enc_len, &fin_len), 0)
+        || !TEST_mem_eq(encrypted_skey, DATA_SIZE + IV_SIZE, encrypted_raw, DATA_SIZE + IV_SIZE))
+        goto end;
+
+    ret = 1;
+end:
+    OSSL_PARAM_free(params);
+    OSSL_PARAM_BLD_free(tmpl);
+    EVP_SKEY_free(skey);
+    EVP_CIPHER_free(aes_cbc);
+    EVP_CIPHER_CTX_free(ctx);
+    OSSL_PROVIDER_unload(deflprov);
+    return ret;
+}
+
+#ifndef OPENSSL_NO_DES
+/* DES is used to test a "skey-unware" cipher provider */
+# define DES_KEY_SIZE 24
+# define DES_IV_SIZE 8
+static int test_des_raw_skey(void)
+{
+    const unsigned char data[DATA_SIZE] = {
+        0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2,
+        0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2,
+        0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2,
+        0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2
+    };
+    unsigned char des_key[DES_KEY_SIZE], des_iv[DES_IV_SIZE];
+    unsigned char encrypted_skey[DATA_SIZE + DES_IV_SIZE];
+    unsigned char encrypted_raw[DATA_SIZE + DES_IV_SIZE];
+    int enc_len, fin_len;
+    const unsigned char *export_key = NULL;
+    size_t export_length;
+    EVP_CIPHER *des_cbc = NULL;
+    EVP_CIPHER_CTX *ctx = NULL;
+    EVP_SKEY *skey = NULL;
+    int ret = 0;
+
+    deflprov = OSSL_PROVIDER_load(libctx, "default");
+    if (!TEST_ptr(deflprov))
+        return 0;
+
+    memset(encrypted_skey, 0, sizeof(encrypted_skey));
+    memset(encrypted_raw,  0, sizeof(encrypted_raw));
+    memset(des_key, 1, DES_KEY_SIZE);
+    memset(des_iv, 2, DES_IV_SIZE);
+
+    /* Do a direct fetch to see it works */
+    des_cbc = EVP_CIPHER_fetch(libctx, "DES-EDE3-CBC", "provider=default");
+    if (!TEST_ptr(des_cbc))
+        goto end;
+
+    /* Create EVP_SKEY */
+    skey = EVP_SKEY_import_raw_key(libctx, "GENERIC-SECRET", des_key,
+                                   sizeof(des_key), NULL);
+    if (!TEST_ptr(skey))
+        goto end;
+
+    if (!TEST_int_gt(EVP_SKEY_get_raw_key(skey, &export_key, &export_length), 0)
+        || !TEST_mem_eq(des_key, DES_KEY_SIZE, export_key, export_length))
+        goto end;
+
+    enc_len = sizeof(encrypted_skey);
+    fin_len = 0;
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+        || !TEST_int_gt(EVP_CipherInit_SKEY(ctx, des_cbc, skey, des_iv, DES_IV_SIZE, 1, NULL), 0)
+        || !TEST_int_gt(EVP_CipherUpdate(ctx, encrypted_skey, &enc_len, data, DATA_SIZE), 0)
+        || !TEST_int_gt(EVP_CipherFinal(ctx, encrypted_skey + enc_len, &fin_len), 0))
+        goto end;
+
+    EVP_CIPHER_CTX_free(ctx);
+    ctx = EVP_CIPHER_CTX_new();
+
+    enc_len = sizeof(encrypted_raw);
+    fin_len = 0;
+    if (!TEST_int_gt(EVP_CipherInit_ex2(ctx, des_cbc, des_key, des_iv, 1, NULL), 0)
+        || !TEST_int_gt(EVP_CipherUpdate(ctx, encrypted_raw, &enc_len, data, DATA_SIZE), 0)
+        || !TEST_int_gt(EVP_CipherFinal(ctx, encrypted_raw + enc_len, &fin_len), 0)
+        || !TEST_mem_eq(encrypted_skey, DATA_SIZE + DES_IV_SIZE, encrypted_raw,
+                        DATA_SIZE + DES_IV_SIZE))
+        goto end;
+
+    ret = 1;
+end:
+    EVP_SKEY_free(skey);
+    EVP_CIPHER_free(des_cbc);
+    EVP_CIPHER_CTX_free(ctx);
+    OSSL_PROVIDER_unload(deflprov);
+    return ret;
+}
+#endif
+
 int setup_tests(void)
 {
     libctx = OSSL_LIB_CTX_new();
@@ -98,6 +252,11 @@ int setup_tests(void)
         return 0;
 
     ADD_TEST(test_skey_cipher);
+
+    ADD_TEST(test_aes_raw_skey);
+#ifndef OPENSSL_NO_DES
+    ADD_TEST(test_des_raw_skey);
+#endif
 
     return 1;
 }
