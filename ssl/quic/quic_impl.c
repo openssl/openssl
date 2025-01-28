@@ -4820,7 +4820,10 @@ static QUIC_TOKEN *ossl_quic_build_new_token(BIO_ADDR *peer, uint8_t *token,
     addrptr = (uint8_t *)(portptr + 1);
     *famptr = family;
     *portptr = port;
-    BIO_ADDR_rawaddress(peer, addrptr, NULL);
+    if (!BIO_ADDR_rawaddress(peer, addrptr, NULL)) {
+        ossl_quic_free_peer_token((QTOK *)new_token);
+        return NULL;
+    }
     if (token != NULL)
         memcpy(new_token->token, token, token_len);
     return new_token;
@@ -4893,6 +4896,7 @@ void ossl_quic_free_peer_token(QTOK *token)
     if (refs > 0)
         return;
 
+    CRYPTO_FREE_REF(&tok->references);
     OPENSSL_free(tok);
 }
 
