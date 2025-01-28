@@ -7,7 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <assert.h>
 #include <string.h>
 #include "slh_dsa_local.h"
 #include "slh_dsa_key.h"

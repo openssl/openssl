@@ -697,7 +697,7 @@ static ossl_inline void *slh_dsa_d2i_PUBKEY(const uint8_t **der, long der_len,
 
     /*-
      * The DER ASN.1 encoding of SLH-DSA public keys prepends 18 bytes to the
-     * encoded public key (since the large public key size is 64 bytes):
+     * encoded public key (since the largest public key size is 64 bytes):
      *
      * - 2 byte outer sequence tag and length
      * -  2 byte algorithm sequence tag and length

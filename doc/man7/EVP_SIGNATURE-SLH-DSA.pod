@@ -24,14 +24,14 @@ signature schemes described in FIPS 205.
 
 The different algorithms names correspond to the parameter sets defined in
 FIPS 205 Section 11 Table 2.
-'s' types have smaller signature sizes, and the 'f' variants are faster,
+C<s> types have smaller signature sizes, and the C<f> variants are faster,
 (The signatures range from ~8K to ~50K depending on the type chosen). There are
 3 different security categories also depending on the type.
 
 L<EVP_SIGNATURE_fetch(3)> can be used to explicitely fetch one of the 12
 algorithms which can then be used with L<EVP_PKEY_sign_message_init(3)>,
 L<EVP_PKEY_sign(3)>, L<EVP_PKEY_verify_message_init(3)>, and
-L<EVP_PKEY_verify(3)> to sign or verify one-shot messages.
+L<EVP_PKEY_verify(3)> to perform one-shot message signing or verification.
 
 The normal signing process (called Pure SLH-DSA Signature Generation)
 encodes the message internally as 0x00 || len(ctx) || ctx || message.
@@ -43,8 +43,9 @@ the option to not encode the message.
 
 =head2 SLH-DSA Signature Parameters
 
-The following parameter can be used for both signing and verification.
-it may be set by passing an OSSL_PARAM array to L<EVP_PKEY_sign_init_ex2(3)> or
+The C<context-string> parameter, described below, can be used for both signing
+and verification.
+It may be set by passing an OSSL_PARAM array to L<EVP_PKEY_sign_init_ex2(3)> or
 L<EVP_PKEY_verify_init_ex2(3)>
 
 =over 4

@@ -7,7 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <assert.h>
 #include <string.h>
 #include <openssl/crypto.h>
 #include "slh_dsa_local.h"
@@ -40,7 +39,7 @@ static void slh_base_2b(const uint8_t *in, uint32_t b, uint32_t *out, size_t out
  * @returns 1 on success, or 0 on error.
  */
 static int slh_fors_sk_gen(SLH_DSA_HASH_CTX *ctx, const uint8_t *sk_seed,
-                           const uint8_t *pk_seed, SLH_ADRS adrs, uint32_t id,
+                           const uint8_t *pk_seed, uint8_t *adrs, uint32_t id,
                            uint8_t *pk_out, size_t pk_out_len)
 {
     const SLH_DSA_KEY *key = ctx->key;
@@ -76,7 +75,7 @@ static int slh_fors_sk_gen(SLH_DSA_HASH_CTX *ctx, const uint8_t *sk_seed,
  * @returns 1 on success, or 0 on error.
  */
 static int slh_fors_node(SLH_DSA_HASH_CTX *ctx, const uint8_t *sk_seed,
-                         const uint8_t *pk_seed, SLH_ADRS adrs, uint32_t node_id,
+                         const uint8_t *pk_seed, uint8_t *adrs, uint32_t node_id,
                          uint32_t height, uint8_t *node, size_t node_len)
 {
     int ret = 0;
@@ -131,7 +130,7 @@ static int slh_fors_node(SLH_DSA_HASH_CTX *ctx, const uint8_t *sk_seed,
  */
 int ossl_slh_fors_sign(SLH_DSA_HASH_CTX *ctx, const uint8_t *md,
                        const uint8_t *sk_seed, const uint8_t *pk_seed,
-                       SLH_ADRS adrs, WPACKET *sig_wpkt)
+                       uint8_t *adrs, WPACKET *sig_wpkt)
 {
     const SLH_DSA_KEY *key = ctx->key;
     uint32_t tree_id, layer, s, tree_offset;
@@ -171,7 +170,7 @@ int ossl_slh_fors_sign(SLH_DSA_HASH_CTX *ctx, const uint8_t *md,
         /*
          * Traverse from the bottom of the tree (layer = 0)
          * up to the root (layer = a - 1).
-         * TODO - This is a really inefficient way of doing this, since at
+         * NOTE: This is a really inefficient way of doing this, since at
          * layer a - 1 it calculates most of the hashes of the entire tree as
          * well as all the leaf nodes. So it is calculating nodes multiple times.
          */
@@ -209,7 +208,7 @@ int ossl_slh_fors_sign(SLH_DSA_HASH_CTX *ctx, const uint8_t *md,
  */
 int ossl_slh_fors_pk_from_sig(SLH_DSA_HASH_CTX *ctx, PACKET *fors_sig_rpkt,
                               const uint8_t *md, const uint8_t *pk_seed,
-                              SLH_ADRS adrs, uint8_t *pk_out, size_t pk_out_len)
+                              uint8_t *adrs, uint8_t *pk_out, size_t pk_out_len)
 {
     const SLH_DSA_KEY *key = ctx->key;
     int ret = 0;

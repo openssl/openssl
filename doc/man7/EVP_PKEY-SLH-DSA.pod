@@ -25,7 +25,7 @@ private key I<priv>.
 
 Each of the different key types has an associated security parameter B<n>.
 This value is one of 16, 24 or 32 for key types B<SLH-DSA*128*>, B<SLH-DSA*192*>
-and B<SLH-DSA*256*> respectively.
+and B<SLH-DSA*256*>, respectively.
 
 Both the public and private key contain 2 elements of size B<n>.
 Key generation generates the private key elements and one of the public key
@@ -53,8 +53,8 @@ Use EVP_PKEY_CTX_set_params() after calling EVP_PKEY_keygen_init().
 =head2 Common SLH-DSA parameters
 
 In addition to the common parameters that all keytypes should support (see
-L<provider-keymgmt(7)/Common parameters>), the implementation of these key types
-support the following.
+L<provider-keymgmt(7)/Common Information Parameters>), the implementation of
+these key types support the following.
 
 The following parameters are gettable using EVP_PKEY_get_octet_string_param(),
 and settable when using EVP_PKEY_fromdata().

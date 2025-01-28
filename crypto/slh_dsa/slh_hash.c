@@ -9,7 +9,6 @@
 
 #include "internal/deprecated.h" /* PKCS1_MGF1() */
 
-#include <assert.h>
 #include <string.h>
 #include <openssl/evp.h>
 #include <openssl/core_names.h>
@@ -79,7 +78,7 @@ slh_hmsg_shake(SLH_DSA_HASH_CTX *ctx, const uint8_t *r,
 static int
 slh_prf_shake(SLH_DSA_HASH_CTX *ctx,
               const uint8_t *pk_seed, const uint8_t *sk_seed,
-              const SLH_ADRS adrs, uint8_t *out, size_t out_len)
+              const uint8_t *adrs, uint8_t *out, size_t out_len)
 {
     const SLH_DSA_PARAMS *params = ctx->key->params;
     size_t n = params->n;
@@ -102,7 +101,7 @@ slh_prf_msg_shake(SLH_DSA_HASH_CTX *ctx, const uint8_t *sk_prf,
 }
 
 static int
-slh_f_shake(SLH_DSA_HASH_CTX *ctx, const uint8_t *pk_seed, const SLH_ADRS adrs,
+slh_f_shake(SLH_DSA_HASH_CTX *ctx, const uint8_t *pk_seed, const uint8_t *adrs,
             const uint8_t *m1, size_t m1_len, uint8_t *out, size_t out_len)
 {
     const SLH_DSA_PARAMS *params = ctx->key->params;
@@ -112,7 +111,7 @@ slh_f_shake(SLH_DSA_HASH_CTX *ctx, const uint8_t *pk_seed, const SLH_ADRS adrs,
 }
 
 static int
-slh_h_shake(SLH_DSA_HASH_CTX *ctx, const uint8_t *pk_seed, const SLH_ADRS adrs,
+slh_h_shake(SLH_DSA_HASH_CTX *ctx, const uint8_t *pk_seed, const uint8_t *adrs,
             const uint8_t *m1, const uint8_t *m2, uint8_t *out, size_t out_len)
 {
     const SLH_DSA_PARAMS *params = ctx->key->params;
@@ -122,7 +121,7 @@ slh_h_shake(SLH_DSA_HASH_CTX *ctx, const uint8_t *pk_seed, const SLH_ADRS adrs,
 }
 
 static int
-slh_t_shake(SLH_DSA_HASH_CTX *ctx, const uint8_t *pk_seed, const SLH_ADRS adrs,
+slh_t_shake(SLH_DSA_HASH_CTX *ctx, const uint8_t *pk_seed, const uint8_t *adrs,
             const uint8_t *ml, size_t ml_len, uint8_t *out, size_t out_len)
 {
     const SLH_DSA_PARAMS *params = ctx->key->params;
@@ -158,10 +157,6 @@ slh_hmsg_sha2(SLH_DSA_HASH_CTX *hctx, const uint8_t *r, const uint8_t *pk_seed,
     uint8_t seed[2 * SLH_MAX_N + MAX_DIGEST_SIZE];
     int sz = EVP_MD_get_size(hctx->key->md_big);
     size_t seed_len = (size_t)sz + 2 * n;
-
-    assert(m <= out_len);
-    assert(sz > 0);
-    assert(seed_len <= sizeof(seed));
 
     memcpy(seed, r, n);
     memcpy(seed + n, pk_seed, n);
@@ -211,15 +206,12 @@ slh_prf_msg_sha2(SLH_DSA_HASH_CTX *hctx,
 }
 
 static ossl_inline int
-do_hash(EVP_MD_CTX *ctx, size_t n, const uint8_t *pk_seed, const SLH_ADRS adrs,
+do_hash(EVP_MD_CTX *ctx, size_t n, const uint8_t *pk_seed, const uint8_t *adrs,
         const uint8_t *m, size_t m_len, size_t b, uint8_t *out, size_t out_len)
 {
     int ret;
     uint8_t zeros[128] = { 0 };
     uint8_t digest[MAX_DIGEST_SIZE];
-
-    assert(n <= out_len);
-    assert(b - n < sizeof(zeros));
 
     ret = digest_4(ctx, pk_seed, n, zeros, b - n, adrs, SLH_ADRSC_SIZE,
                    m, m_len, digest);
@@ -230,7 +222,7 @@ do_hash(EVP_MD_CTX *ctx, size_t n, const uint8_t *pk_seed, const SLH_ADRS adrs,
 
 static int
 slh_prf_sha2(SLH_DSA_HASH_CTX *hctx, const uint8_t *pk_seed,
-             const uint8_t *sk_seed, const SLH_ADRS adrs,
+             const uint8_t *sk_seed, const uint8_t *adrs,
              uint8_t *out, size_t out_len)
 {
     size_t n = hctx->key->params->n;
@@ -240,7 +232,7 @@ slh_prf_sha2(SLH_DSA_HASH_CTX *hctx, const uint8_t *pk_seed,
 }
 
 static int
-slh_f_sha2(SLH_DSA_HASH_CTX *hctx, const uint8_t *pk_seed, const SLH_ADRS adrs,
+slh_f_sha2(SLH_DSA_HASH_CTX *hctx, const uint8_t *pk_seed, const uint8_t *adrs,
            const uint8_t *m1, size_t m1_len, uint8_t *out, size_t out_len)
 {
     return do_hash(hctx->md_ctx, hctx->key->params->n, pk_seed, adrs, m1, m1_len,
@@ -248,7 +240,7 @@ slh_f_sha2(SLH_DSA_HASH_CTX *hctx, const uint8_t *pk_seed, const SLH_ADRS adrs,
 }
 
 static int
-slh_h_sha2(SLH_DSA_HASH_CTX *hctx, const uint8_t *pk_seed, const SLH_ADRS adrs,
+slh_h_sha2(SLH_DSA_HASH_CTX *hctx, const uint8_t *pk_seed, const uint8_t *adrs,
            const uint8_t *m1, const uint8_t *m2, uint8_t *out, size_t out_len)
 {
     uint8_t m[SLH_MAX_N * 2];
@@ -262,7 +254,7 @@ slh_h_sha2(SLH_DSA_HASH_CTX *hctx, const uint8_t *pk_seed, const SLH_ADRS adrs,
 }
 
 static int
-slh_t_sha2(SLH_DSA_HASH_CTX *hctx, const uint8_t *pk_seed, const SLH_ADRS adrs,
+slh_t_sha2(SLH_DSA_HASH_CTX *hctx, const uint8_t *pk_seed, const uint8_t *adrs,
            const uint8_t *ml, size_t ml_len, uint8_t *out, size_t out_len)
 {
     const SLH_DSA_PARAMS *prms = hctx->key->params;
