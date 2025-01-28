@@ -145,6 +145,7 @@ opthelp:
     } else {
         for ( ; *argv; argv++) {
             char *check_val;
+            int bytes_read = 0;
             int total_read = 0;
             int r;
 
@@ -157,21 +158,20 @@ opthelp:
                     goto end;
                 }
 
-                int i;
                 file_read_buf = (char *)app_malloc(BUFSIZE, "File read buffer");
                 while (BIO_pending(in) || !BIO_eof(in)) {
-                    i = BIO_read(in, (char *)(file_read_buf + total_read), BUFSIZE);
-                    if (i < 0) {
+                    bytes_read = BIO_read(in, (char *)(file_read_buf + total_read), BUFSIZE);
+                    if (bytes_read < 0) {
                         BIO_printf(bio_err, "Read error in %s\n", argv[0]);
                         goto end;
                     }
-                    if (i == 0)
+                    if (bytes_read == 0)
                         break;
-                    total_read += i;
-                    if (i == BUFSIZE)
+                    total_read += bytes_read;
+                    if (bytes_read == BUFSIZE)
                         file_read_buf = (char *)realloc(file_read_buf, BUFSIZE + total_read);
                 }
-                
+
                 /* Trim trailing newline if present */
                 if (file_read_buf[total_read - 1] == '\n')
                     file_read_buf[total_read - 1] = '\0';
