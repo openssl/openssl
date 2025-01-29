@@ -264,13 +264,7 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
                                       0, &now_cb), 1))
                 goto err;
         }
-        /*
-         * TODO(QUIC SERVER):
-         *    Currently the simplistic handler of the quic tserver cannot cope
-         *    with noise introduced in the first packet received from the
-         *    client. This needs to be removed once we have proper server side
-         *    handling.
-         */
+
         (void)BIO_ctrl(sbio, BIO_CTRL_NOISE_BACK_OFF, 0, NULL);
 
         (*fault)->noiseargs.cbio = cbio;
