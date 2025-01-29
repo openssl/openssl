@@ -15,7 +15,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_req");
 
-plan tests => 111;
+plan tests => 112;
 
 require_ok(srctop_file('test', 'recipes', 'tconversion.pl'));
 
@@ -352,6 +352,43 @@ subtest "generating SM2 certificate requests" => sub {
                     "-verify", "-in", "testreq-sm2.pem", "-noout",
                     "-vfyopt", "hexdistid:DEADBEEF", "-sm3"])),
            "Verifying signature on SM2 certificate request");
+    }
+};
+
+subtest "generating certificate requests with ML-DSA" => sub {
+    plan tests => 3;
+
+    SKIP: {
+        skip "ML-DSA is not supported by this OpenSSL build", 3
+            if disabled("ml-dsa");
+
+        ok(run(app(["openssl", "req",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-x509", "-sha256", "-nodes", "-days", "365",
+                    "-newkey", "ML-DSA-44",
+                    "-keyout",  "privatekey_ml_dsa_44.pem",
+                    "-out",  "cert_ml_dsa_44.pem",
+                    "-subj", "/CN=test-self-signed",
+                    "-addext","keyUsage=digitalSignature"])),
+                    "Generating self signed ML-DSA-44 cert and private key");
+        ok(run(app(["openssl", "req",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-x509", "-sha256", "-nodes", "-days", "365",
+                    "-newkey", "ML-DSA-65",
+                    "-keyout",  "privatekey_ml_dsa_65.pem",
+                    "-out",  "cert_ml_dsa_65.pem",
+                    "-subj", "/CN=test-self-signed",
+                    "-addext","keyUsage=digitalSignature"])),
+                    "Generating self signed ML-DSA-65 cert and private key");
+        ok(run(app(["openssl", "req",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-x509", "-sha256", "-nodes", "-days", "365",
+                    "-newkey", "ML-DSA-44",
+                    "-keyout",  "privatekey_ml_dsa_87.pem",
+                    "-out",  "cert_ml_dsa_87.pem",
+                    "-subj", "/CN=test-self-signed",
+                    "-addext","keyUsage=digitalSignature"])),
+                    "Generating self signed ML-DSA-87 cert and private key");
     }
 };
 
