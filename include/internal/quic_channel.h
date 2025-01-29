@@ -313,6 +313,9 @@ OSSL_STATM *ossl_quic_channel_get_statm(QUIC_CHANNEL *ch);
 /* Gets the TLS handshake layer used with the channel. */
 SSL *ossl_quic_channel_get0_tls(QUIC_CHANNEL *ch);
 
+/* Gets the channels short header connection id length */
+size_t ossl_quic_channel_get_short_header_conn_id_len(QUIC_CHANNEL *ch);
+
 /*
  * Gets/sets the current peer address. Generally this should be used before
  * starting a channel in client mode.

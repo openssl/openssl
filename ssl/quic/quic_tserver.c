@@ -239,6 +239,11 @@ int ossl_quic_tserver_is_terminated(const QUIC_TSERVER *srv)
     return ossl_quic_channel_is_terminated(srv->ch);
 }
 
+size_t ossl_quic_tserver_get_short_header_conn_id_len(const QUIC_TSERVER *srv)
+{
+    return ossl_quic_channel_get_short_header_conn_id_len(srv->ch);
+}
+
 int ossl_quic_tserver_is_handshake_confirmed(const QUIC_TSERVER *srv)
 {
     return ossl_quic_channel_is_handshake_confirmed(srv->ch);
