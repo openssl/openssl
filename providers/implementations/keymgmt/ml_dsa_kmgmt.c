@@ -161,8 +161,11 @@ static int ml_dsa_import(void *keydata, int selection, const OSSL_PARAM params[]
     include_priv = ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0);
     res = ossl_ml_dsa_key_fromdata(key, params, include_priv);
 #ifdef FIPS_MODULE
-    if (res > 0)
+    if (res > 0) {
         res = ml_dsa_pairwise_test(key);
+        if (res <= 0)
+            ossl_set_error_state(OSSL_SELF_TEST_TYPE_PCT);
+    }
 #endif
     return res;
 }
