@@ -10,6 +10,8 @@
 #include <openssl/bio.h>
 #include "../ssl_local.h"
 #include "internal/quic_trace.h"
+#include "internal/quic_ssl.h"
+#include "internal/quic_channel.h"
 #include "internal/quic_wire_pkt.h"
 #include "internal/quic_wire.h"
 #include "internal/ssl_unwrap.h"
@@ -564,6 +566,8 @@ int ossl_quic_trace(int write_p, int version, int content_type,
 {
     BIO *bio = arg;
     PACKET pkt;
+    size_t id_len = 0;
+    QUIC_CHANNEL *ch;
 
     switch (content_type) {
     case SSL3_RT_QUIC_DATAGRAM:
@@ -584,11 +588,9 @@ int ossl_quic_trace(int write_p, int version, int content_type,
             if (!PACKET_buf_init(&pkt, buf, msglen))
                 return 0;
             /* Decode the packet header */
-            /*
-             * TODO(QUIC SERVER): We need to query the short connection id len
-             * here, e.g. via some API SSL_get_short_conn_id_len()
-             */
-            if (ossl_quic_wire_decode_pkt_hdr(&pkt, 0, 0, 1, &hdr, NULL,
+            ch = ossl_quic_conn_get_channel(ssl);
+            id_len = ossl_quic_channel_get_short_header_conn_id_len(ch);
+            if (ossl_quic_wire_decode_pkt_hdr(&pkt, id_len, 0, 1, &hdr, NULL,
                                               NULL) != 1)
                 return 0;
 
