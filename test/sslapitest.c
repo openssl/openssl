@@ -2073,6 +2073,8 @@ static int ocsp_client_cb_multi(SSL *s, void *arg)
 
         if (cert_id_md_oid != NULL)
             cert_id_md = EVP_get_digestbyobj(cert_id_md_oid);
+        else
+            cert_id_md = NULL;
 
         OCSP_BASICRESP_free(bs);
 
