@@ -37,9 +37,9 @@
 # define ML_DSA_87_SIG_LEN 4627
 
 /* Key and signature size maximums taken from values above */
-#define MAX_ML_DSA_PRIV_LEN ML_DSA_87_PRIV_LEN
-#define MAX_ML_DSA_PUB_LEN ML_DSA_87_PUB_LEN
-#define MAX_ML_DSA_SIG_LEN ML_DSA_87_SIG_LEN
+# define MAX_ML_DSA_PRIV_LEN ML_DSA_87_PRIV_LEN
+# define MAX_ML_DSA_PUB_LEN ML_DSA_87_PUB_LEN
+# define MAX_ML_DSA_SIG_LEN ML_DSA_87_SIG_LEN
 
 __owur ML_DSA_KEY *ossl_ml_dsa_key_new(OSSL_LIB_CTX *libctx, const char *propq,
                                        const char *alg);
