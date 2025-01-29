@@ -729,3 +729,14 @@ err:
 
     return ret;
 }
+
+#ifdef FIPS_MODULE
+int ossl_rsa_key_pairwise_test(RSA *rsa)
+{
+    OSSL_CALLBACK *stcb;
+    void *stcbarg;
+
+    OSSL_SELF_TEST_get_callback(rsa->libctx, &stcb, &stcbarg);
+    return rsa_keygen_pairwise_test(rsa, stcb, stcbarg);
+}
+#endif  /* FIPS_MODULE */
