@@ -516,6 +516,11 @@ SSL *ossl_quic_channel_get0_tls(QUIC_CHANNEL *ch)
     return ch->tls;
 }
 
+size_t ossl_quic_channel_get_short_header_conn_id_len(QUIC_CHANNEL *ch)
+{
+    return ossl_qrx_get_short_hdr_conn_id_len(ch->qrx);
+}
+
 QUIC_STREAM *ossl_quic_channel_get_stream_by_id(QUIC_CHANNEL *ch,
                                                 uint64_t stream_id)
 {
