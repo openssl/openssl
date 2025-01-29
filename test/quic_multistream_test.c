@@ -681,6 +681,7 @@ static int helper_init(struct helper *h, const char *script_name,
     QUIC_TSERVER_ARGS s_args = {0};
     union BIO_sock_info_u info;
     char title[128];
+    QTEST_DATA *bdata = NULL;
 
     memset(h, 0, sizeof(*h));
     h->c_fd = -1;
@@ -689,6 +690,10 @@ static int helper_init(struct helper *h, const char *script_name,
     h->blocking = blocking;
     h->need_injector = need_injector;
     h->time_slip = ossl_time_zero();
+
+    bdata = OPENSSL_zalloc(sizeof(QTEST_DATA));
+    if (bdata == NULL)
+        goto err;
 
     if (!TEST_ptr(h->time_lock = CRYPTO_THREAD_lock_new()))
         goto err;
@@ -763,8 +768,8 @@ static int helper_init(struct helper *h, const char *script_name,
         h->qtf = qtest_create_injector(h->s_priv);
         if (!TEST_ptr(h->qtf))
             goto err;
-
-        BIO_set_data(h->s_qtf_wbio, h->qtf);
+        bdata->fault = h->qtf;
+        BIO_set_data(h->s_qtf_wbio, bdata);
     }
 
     h->s_net_bio_own = NULL;
