@@ -472,7 +472,7 @@ static int ml_dsa_digest_sign_verify_test(void)
         goto err;
     sig_len++;
     if (!TEST_int_eq(EVP_DigestSignInit_ex(mctx, NULL, NULL, lib_ctx, "?fips=true",
-                                          key, params), 1)
+                                           key, params), 1)
             || !TEST_int_eq(EVP_DigestSign(mctx, sig, &sig_len,
                                            sp->msg, sp->msg_len), 1)
             || !TEST_int_eq(EVP_DigestVerifyInit_ex(mctx, NULL, "SHA256",
