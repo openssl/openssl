@@ -917,7 +917,7 @@ static int depack_do_frame_retire_conn_id(PACKET *pkt,
      * currently non-conformant and for internal testing use; simply handle it
      * as a no-op in this case.
      *
-     * TODO(QUIC SERVER): Revise and implement correctly for server support.
+     * TODO(QUIC FUTURE): Revise and implement correctly for server support.
      */
     if (!ch->is_server) {
         ossl_quic_channel_raise_protocol_error(ch,
