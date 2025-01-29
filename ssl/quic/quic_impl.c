@@ -4268,7 +4268,7 @@ SSL *ossl_quic_new_listener(SSL_CTX *ctx, uint64_t flags)
         goto err;
     }
 
-    /* TODO(QUIC SERVER): Implement SSL_LISTENER_FLAG_NO_ACCEPT */
+    /* TODO(QUIC FUTURE): Implement SSL_LISTENER_FLAG_NO_ACCEPT */
 
     ossl_quic_port_set_allow_incoming(ql->port, 1);
 
@@ -4331,7 +4331,7 @@ SSL *ossl_quic_new_listener_from(SSL *ssl, uint64_t flags)
     ql->mutex   = ctx.qd->mutex;
 #endif
 
-    /* TODO(QUIC SERVER): Implement SSL_LISTENER_FLAG_NO_ACCEPT */
+    /* TODO(QUIC FUTURE): Implement SSL_LISTENER_FLAG_NO_ACCEPT */
 
     ossl_quic_port_set_allow_incoming(ql->port, 1);
 
