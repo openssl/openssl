@@ -13,6 +13,11 @@
 /* Type to represent the Fault Injector */
 typedef struct qtest_fault QTEST_FAULT;
 
+typedef struct bio_qtest_data {
+    size_t short_conn_id_len;
+    struct qtest_fault *fault;
+} QTEST_DATA;
+
 /*
  * Structure representing a parsed EncryptedExtension message. Listeners can
  * make changes to the contents of structure objects as required and the fault
