@@ -43,6 +43,11 @@ OpenSSL 3.5
 
   *Tomáš Mráz*
 
+* The FIPS provider now performs a PCT on key import for RSA, EC and ECX.
+  This is mandated by FIPS 140-3 IG 10.3.A additional comment 1.
+
+  *Dr Paul Dale*
+
 * Support DEFAULT keyword and '-' prefix in SSL_CTX_set1_groups_list().
   SSL_CTX_set1_groups_list() now supports the DEFAULT keyword which sets the
   available groups to the default selection. The '-' prefix allows the calling
