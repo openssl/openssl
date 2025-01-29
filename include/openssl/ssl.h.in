@@ -2303,7 +2303,6 @@ __owur int SSL_is_connection(SSL *s);
 
 __owur int SSL_is_listener(SSL *ssl);
 __owur SSL *SSL_get0_listener(SSL *s);
-#define SSL_LISTENER_FLAG_NO_ACCEPT     (1UL << 0)
 #define SSL_LISTENER_FLAG_NO_VALIDATE   (1UL << 1)
 __owur SSL *SSL_new_listener(SSL_CTX *ctx, uint64_t flags);
 __owur SSL *SSL_new_listener_from(SSL *ssl, uint64_t flags);

@@ -5,7 +5,7 @@
 SSL_new_listener, SSL_new_listener_from, SSL_is_listener, SSL_get0_listener,
 SSL_listen,
 SSL_accept_connection, SSL_get_accept_connection_queue_len,
-SSL_new_from_listener, SSL_LISTENER_FLAG_NO_ACCEPT,
+SSL_new_from_listener,
 SSL_ACCEPT_CONNECTION_NO_BLOCK - SSL object interface for abstracted connection
 acceptance
 
@@ -13,7 +13,6 @@ acceptance
 
  #include <openssl/ssl.h>
 
- #define SSL_LISTENER_FLAG_NO_ACCEPT
  SSL *SSL_new_listener(SSL_CTX *ctx, uint64_t flags);
  SSL *SSL_new_listener_from(SSL *ssl, uint64_t flags);
 
@@ -158,13 +157,6 @@ circumstances where it is desirable for multiple connections to share the same
 underlying network resources. For example, multiple outgoing QUIC client
 connections could be made to use the same underlying UDP socket.
 
-To use client-only mode, pass the flag B<SSL_LISTENER_FLAG_NO_ACCEPT> when
-calling SSL_new_listener(). In this mode, SSL_listen() still begins the process
-of handling network resources, but incoming connections are never accepted.
-Calling SSL_accept_connection() is an error and will return NULL. One or more
-outgoing connections under a listener can then be created using the call
-SSL_new_from_listener().
-
 To disable client address validation on a listener SSL object, the flag
 B<SSL_LISTENER_FLAG_NO_VALIDATE> may be passed in the flags field of both
 SSL_new_listener() and SSL_new_listener_from().  Note that this flag only
@@ -177,20 +169,12 @@ numbers of connections and never transact data on them (roughly equivalent to
 a TCP syn flood attack), which address validation mitigates.
 
 The SSL_new_from_listener() creates a client connection under a given listener
-SSL object. For QUIC, it is also possible to use SSL_new_from_listener() in
-conjunction with a listener which does accept incoming connections (i.e., which
-was not created using B<SSL_LISTENER_FLAG_NO_ACCEPT>), leading to a UDP network
-endpoint which has both incoming and outgoing connections.
+SSL object. For QUIC, it is also possible to use SSL_new_from_listener(),
+leading to a UDP network endpoint which has both incoming and outgoing'
+connections.
 
 The I<flags> argument of SSL_new_from_listener() is reserved and must be set to
 0.
-
-Creating a listener using a B<SSL_CTX> which uses a client-oriented
-B<SSL_METHOD> such as L<OSSL_QUIC_client_method(3)> or
-L<OSSL_QUIC_client_thread_method(3)> automatically implies the
-B<SSL_LISTENER_FLAG_NO_ACCEPT> flag. The B<SSL_LISTENER_FLAG_NO_ACCEPT> flag may
-optionally also be specified in this case but is ignored. This is an alternative
-way of using the listener functionality in client-only mode.
 
 =head1 RETURN VALUES
 
