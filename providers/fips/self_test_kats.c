@@ -457,7 +457,7 @@ static int self_test_digest_sign(const ST_KAT_SIGN *t,
     EVP_PKEY_CTX *ctx = NULL;
     EVP_PKEY_CTX *fromctx = NULL;
     EVP_PKEY *pkey = NULL;
-    unsigned char sig[ML_DSA_87_SIG_LEN];
+    unsigned char sig[MAX_ML_DSA_SIG_LEN];
     BN_CTX *bnctx = NULL;
     size_t siglen = sizeof(sig);
     int digested = 0;
@@ -579,7 +579,7 @@ static int self_test_asym_keygen(const ST_KAT_ASYM_KEYGEN *t, OSSL_SELF_TEST *st
     OSSL_PARAM_BLD *key_bld = NULL;
     EVP_PKEY_CTX *key_ctx = NULL;
     EVP_PKEY *key = NULL;
-    uint8_t out[10000];
+    uint8_t out[MAX_ML_DSA_PRIV_LEN];
     size_t out_len = 0;
 
     OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_KAT_ASYM_KEYGEN, t->desc);

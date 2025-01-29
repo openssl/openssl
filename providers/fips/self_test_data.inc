@@ -2811,6 +2811,8 @@ static const unsigned char ml_dsa_65_sig[] = {
  *      it fails the h_ones rejection test on iteration three
  *      it successfully generates the signature on iteration four
  * Thus, it is an optimal self test in terms of iterations and coverage.
+ *
+ * Refer to FIPS 140-3 IG 10.3.A.15 for details of the testing requirements.
  */
 static const unsigned char ml_dsa_65_msg[] = {
     0x23, 0x37, 0x34, 0x37, 0x36, 0x38, 0x23
