@@ -957,7 +957,9 @@ my %globals;
                         $current_segment = ".text";
                         push(@segment_stack, $current_segment);
                     }
-		    $self->{value} = $current_segment if ($flavour eq "mingw64");
+                    if ($flavour eq "mingw64" || $flavour eq "macosx") {
+		        $self->{value} = $current_segment;
+                    }
 		}
 		$$line = "";
 		return $self;
