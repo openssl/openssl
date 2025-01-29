@@ -1,7 +1,7 @@
 [default]
 batch = 1 # do not use stdin
-total_timeout = 20  # is used to prevent, e.g., infinite polling due to error;
-# should hopefully be enough to cover delays caused by the underlying system
+total_timeout = 120 # is used to prevent, e.g., infinite polling due to error;
+# should now really be enough to cover delays caused by the underlying system
 trusted = trusted.crt
 newkey = new.key
 newkeypass =
