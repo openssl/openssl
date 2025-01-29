@@ -1079,15 +1079,14 @@ static int check_revocation(X509_STORE_CTX *ctx)
          */
         if (ocsp_check_all_enabled)
             last = sk_X509_num(ctx->chain) - 1;
+        else if (!crl_check_all_enabled && ctx->parent != NULL)
+            return 1; /* If checking CRL paths this isn't the EE certificate */
 
         for (i = 0; i <= last; i++) {
             ctx->error_depth = i;
             ctx->current_cert = sk_X509_value(ctx->chain, i);
 
-            /*
-             * skip if cert is apparently self-signed
-             * ctx->parent == NULL does not work here
-             */
+            /* skip if cert is apparently self-signed */
             if (ctx->current_cert->ex_flags & EXFLAG_SS)
                 continue;
 
@@ -2555,10 +2554,6 @@ void X509_STORE_CTX_set0_crls(X509_STORE_CTX *ctx, STACK_OF(X509_CRL) *sk)
 #ifndef OPENSSL_NO_OCSP
 void X509_STORE_CTX_set0_ocsp_resp(X509_STORE_CTX *ctx, STACK_OF(OCSP_RESPONSE) *sk)
 {
-    if (ctx->ocsp_resp != NULL) {
-        sk_OCSP_RESPONSE_pop_free(ctx->ocsp_resp, OCSP_RESPONSE_free);
-        ctx->ocsp_resp = NULL;
-    }
     ctx->ocsp_resp = sk;
 }
 #endif
@@ -2851,10 +2846,6 @@ void X509_STORE_CTX_cleanup(X509_STORE_CTX *ctx)
         if (ctx->parent == NULL)
             X509_VERIFY_PARAM_free(ctx->param);
         ctx->param = NULL;
-    }
-    if (ctx->ocsp_resp != NULL) {
-        sk_OCSP_RESPONSE_pop_free(ctx->ocsp_resp, OCSP_RESPONSE_free);
-        ctx->ocsp_resp = NULL;
     }
     X509_policy_tree_free(ctx->tree);
     ctx->tree = NULL;

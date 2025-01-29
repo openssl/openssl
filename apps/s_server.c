@@ -606,7 +606,7 @@ static int bring_ocsp_resp_in_correct_order(SSL *s, tlsextstatusctx *srctx,
     OCSP_BASICRESP *bs = NULL;
     OCSP_CERTID *cert_id = NULL;
     int found = -1;
-    int i, j, num = 0;
+    int i, j, num = 1;
 
     if (*sk_resp != NULL)
         sk_OCSP_RESPONSE_pop_free(*sk_resp, OCSP_RESPONSE_free);
@@ -619,19 +619,13 @@ static int bring_ocsp_resp_in_correct_order(SSL *s, tlsextstatusctx *srctx,
         !SSL_is_dtls(s) && SSL_version(s) >= TLS1_3_VERSION) {
         /* certificate chain is available */
         num = sk_X509_num(server_certs) + 1;
-    } else {
-        /*
-         * certificate chain is not available,
-         * set num to 1 for server certificate
-         */
-        num = 1;
     }
 
     /* get OCSP response for server certificate first */
     ssl_cert = SSL_get_certificate(s);
 
     /*
-     * OpenSSL servers with TLS 1.0-1.2 can be configured with no certificate
+     * OpenSSL servers with TLS < 1.3 can be configured with no certificate
      */
     if (ssl_cert == NULL)
         return SSL_TLSEXT_ERR_OK;
@@ -780,7 +774,7 @@ static int get_ocsp_resp_from_responder(SSL *s, tlsextstatusctx *srctx,
     ssl_cert = SSL_get_certificate(s);
 
     /*
-     * OpenSSL servers with TLS 1.0-1.2 can be configured with no certificate
+     * OpenSSL servers with TLS < 1.3 can be configured with no certificate
      */
     if (ssl_cert == NULL)
         return SSL_TLSEXT_ERR_OK;
