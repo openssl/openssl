@@ -31,6 +31,11 @@ OpenSSL 3.6
 
 ### Changes between 3.5 and 3.6 [xx XXX xxxx]
 
+ * The FIPS provider now performs a PCT on key import for RSA, EC and ECX.
+   This is mandated by FIPS 140-3 IG 10.3.A additional comment 1.
+
+   *Dr Paul Dale*
+
  * Introduce SSL_OP_SERVER_PREFERENCE superceding misleadingly
    named SSL_OP_CIPHER_SERVER_PREFERENCE.
 
