@@ -1142,7 +1142,7 @@ static void port_send_retry(QUIC_PORT *port,
         goto err;
 
     /*
-     * TODO(QUIC SERVER) need to retry this in the event it return EAGAIN
+     * TODO(QUIC FUTURE) need to retry this in the event it return EAGAIN
      * on a non-blocking BIO
      */
     if (!BIO_sendmmsg(port->net_wbio, msg, sizeof(BIO_MSG), 1, 0, &written))
@@ -1234,7 +1234,7 @@ static void port_send_version_negotiation(QUIC_PORT *port, BIO_ADDR *peer,
 
     /*
      * Send it back to the client attempting to connect
-     * TODO(QUIC SERVER): Need to handle the EAGAIN case here, if the
+     * TODO(QUIC FUTURE): Need to handle the EAGAIN case here, if the
      * BIO_sendmmsg call falls in a retryable manner
      */
     if (!BIO_sendmmsg(port->net_wbio, msg, sizeof(BIO_MSG), 1, 0, &written))
@@ -1506,7 +1506,7 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
         /*
          * If we don't get a supported version, respond with a ver
          * negotiation packet, and discard
-         * TODO(QUIC SERVER): Rate limit the reception of these
+         * TODO(QUIC FUTURE): Rate limit the reception of these
          */
         port_send_version_negotiation(port, &e->peer, &hdr);
         goto undesirable;
@@ -1522,7 +1522,7 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
     odcid.id_len = 0;
 
     /*
-     * TODO(QUIC SERVER): there should be some logic similar to accounting half-open
+     * TODO(QUIC FUTURE): there should be some logic similar to accounting half-open
      * states in TCP. If we reach certain threshold, then we want to
      * validate clients.
      */
