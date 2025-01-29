@@ -162,6 +162,11 @@ OpenSSL 3.5
 
    *Tomas Mraz*
 
+* The FIPS provider now performs a PCT on key import for RSA, EC and ECX.
+  This is mandated by FIPS 140-3 IG 10.3.A additional comment 1.
+
+  *Dr Paul Dale*
+
  * Aligned the behaviour of TLS and DTLS in the event of a no_renegotiation
    alert being received. Older versions of OpenSSL failed with DTLS if a
    no_renegotiation alert was received. All versions of OpenSSL do this for TLS.
