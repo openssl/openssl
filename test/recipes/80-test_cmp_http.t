@@ -132,6 +132,7 @@ my @all_aspects = ("connection", "verification", "credentials", "commands", "enr
 @all_aspects = split /\s+/, $ENV{OPENSSL_CMP_ASPECTS} if $ENV{OPENSSL_CMP_ASPECTS};
 # set env variable, e.g., OPENSSL_CMP_ASPECTS="commands enrollment" to select specific aspects
 
+my $Mock_serverlog;
 my $faillog;
 my $file = $ENV{HARNESS_FAILLOG}; # pathname relative to result_dir
 if ($file) {
@@ -217,8 +218,24 @@ indir data_dir() => sub {
                     test_cmp_http_aspect($server_name, $aspect, $tests);
                 };
             };
-            stop_server($server_name, $pid) if $pid;
-            ok(1, "$server_name server has terminated");
+
+            if ($server_name eq "Mock") {
+                stop_server($server_name, $pid) if $pid;
+                ok(1, "$server_name server has terminated");
+
+                if (-s $faillog) {
+                    indir "Mock" => sub {
+                        print STDERR "$server_name STDERR output is:\n";
+                        if (open F, $Mock_serverlog) {
+                            while (<F>) {
+                                print STDERR $_;
+                            }
+                            close F;
+                        }
+                        print STDERR "$server_name STDERR output end.\n";
+                    }
+                }
+            }
           }
         }
     };
@@ -295,7 +312,8 @@ sub start_server {
                           $args ? $args : ()]), display => 1);
     print "Current directory is ".getcwd()."\n";
     print "Launching $server_name server: $cmd\n";
-    my $pid = open($server_fh, "$cmd 2>".result_dir()."/error.txt |");
+    $Mock_serverlog = result_dir()."/Mock_server_STDERR.txt";
+    my $pid = open($server_fh, "$cmd 2>$Mock_serverlog |");
     unless ($pid) {
         print "Error launching $cmd, cannot obtain $server_name server PID";
         return 0;
