@@ -337,13 +337,13 @@ static int ml_dsa_get_ctx_params(void *vctx, OSSL_PARAM *params)
           (void (*)(void))ml_dsa_verify_msg_init },                            \
         { OSSL_FUNC_SIGNATURE_VERIFY, (void (*)(void))ml_dsa_verify },         \
         { OSSL_FUNC_SIGNATURE_DIGEST_SIGN_INIT,                                \
-            (void (*)(void))ml_dsa_digest_signverify_init },                   \
+          (void (*)(void))ml_dsa_digest_signverify_init },                     \
         { OSSL_FUNC_SIGNATURE_DIGEST_SIGN,                                     \
-            (void (*)(void))ml_dsa_digest_sign },                              \
+          (void (*)(void))ml_dsa_digest_sign },                                \
         { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_INIT,                              \
-            (void (*)(void))ml_dsa_digest_signverify_init },                   \
+          (void (*)(void))ml_dsa_digest_signverify_init },                     \
         { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY,                                   \
-            (void (*)(void))ml_dsa_digest_verify },                            \
+          (void (*)(void))ml_dsa_digest_verify },                              \
         { OSSL_FUNC_SIGNATURE_FREECTX, (void (*)(void))ml_dsa_freectx },       \
         { OSSL_FUNC_SIGNATURE_SET_CTX_PARAMS,                                  \
           (void (*)(void))ml_dsa_set_ctx_params },                             \

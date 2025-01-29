@@ -72,7 +72,7 @@ IF[{- !$disabled{ecx} -}]
 ENDIF
 
 #----- ML-DSA
-IF[{- !$disabled{ml-dsa} -}]
+IF[{- !$disabled{'ml-dsa'} -}]
   $DER_ML_DSA_H=$INCDIR/der_ml_dsa.h
   $DER_ML_DSA_GEN=der_ml_dsa_gen.c
   $DER_ML_DSA_AUX=der_ml_dsa_key.c
@@ -127,7 +127,7 @@ IF[{- !$disabled{ec} -}]
   ENDIF
 ENDIF
 
-IF[{- !$disabled{ml-dsa} -}]
+IF[{- !$disabled{'ml-dsa'} -}]
   $COMMON = $COMMON $DER_ML_DSA_GEN $DER_ML_DSA_AUX
 ENDIF
 
