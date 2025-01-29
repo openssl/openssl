@@ -20,6 +20,7 @@
 #include <openssl/err.h>
 #include <openssl/objects.h>
 #include <openssl/proverr.h>
+#include <openssl/self_test.h>
 #include "crypto/bn.h"
 #include "crypto/ec.h"
 #include "prov/implementations.h"
@@ -440,6 +441,8 @@ int common_import(void *keydata, int selection, const OSSL_PARAM params[],
 
         ok = bnctx != NULL && ossl_ec_key_pairwise_check(ec, bnctx);
         BN_CTX_free(bnctx);
+        if (ok <= 0)
+            ossl_set_error_state(OSSL_SELF_TEST_TYPE_PCT);
     }
 #endif  /* FIPS_MODULE */
 
