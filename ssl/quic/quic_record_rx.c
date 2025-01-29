@@ -1356,3 +1356,8 @@ void ossl_qrx_set_msg_callback_arg(OSSL_QRX *qrx, void *msg_callback_arg)
 {
     qrx->msg_callback_arg = msg_callback_arg;
 }
+
+size_t ossl_qrx_get_short_hdr_conn_id_len(OSSL_QRX *qrx)
+{
+    return qrx->short_conn_id_len;
+}

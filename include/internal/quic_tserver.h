@@ -81,6 +81,9 @@ ossl_quic_tserver_get_terminate_cause(const QUIC_TSERVER *srv);
 /* Returns 1 if the server is in a terminated state */
 int ossl_quic_tserver_is_terminated(const QUIC_TSERVER *srv);
 
+/* Get out short header conn id length */
+size_t ossl_quic_tserver_get_short_header_conn_id_len(const QUIC_TSERVER *srv);
+
 /*
  * Attempts to read from stream 0. Writes the number of bytes read to
  * *bytes_read and returns 1 on success. If no bytes are available, 0 is written
