@@ -910,9 +910,8 @@ static int IPAddressOrRanges_canonize(IPAddressOrRanges *aors,
  */
 int X509v3_addr_canonize(IPAddrBlocks *addr)
 {
-    if (addr == NULL) {
+    if (addr == NULL)
         return 0;
-    }
 
     int i;
 
