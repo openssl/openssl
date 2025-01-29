@@ -3692,11 +3692,15 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
     case SSL_CTRL_SET_TLSEXT_STATUS_REQ_OCSP_RESP:
         ret = 1;
 #ifndef OPENSSL_NO_OCSP
-        if (sc->ext.ocsp.resp != NULL)
+        /*
+         * cleanup single values, which might be set somewhere else
+         * we only use the extended values
+         */
+        if (sc->ext.ocsp.resp != NULL) {
             OPENSSL_free(sc->ext.ocsp.resp);
-
-        sc->ext.ocsp.resp = parg;
-        sc->ext.ocsp.resp_len = larg;
+            sc->ext.ocsp.resp = NULL;
+            sc->ext.ocsp.resp_len = 0;
+        }
 
         sk_OCSP_RESPONSE_pop_free(sc->ext.ocsp.resp_ex, OCSP_RESPONSE_free);
         sc->ext.ocsp.resp_ex = NULL;
@@ -3726,11 +3730,15 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 
     case SSL_CTRL_SET_TLSEXT_STATUS_REQ_OCSP_RESP_EX:
 #ifndef OPENSSL_NO_OCSP
-        if (sc->ext.ocsp.resp != NULL)
+        /*
+         * cleanup single values, which might be set somewhere else
+         * we only use the extended values
+         */
+        if (sc->ext.ocsp.resp != NULL) {
             OPENSSL_free(sc->ext.ocsp.resp);
-
-        sc->ext.ocsp.resp = NULL;
-        sc->ext.ocsp.resp_len = 0;
+            sc->ext.ocsp.resp = NULL;
+            sc->ext.ocsp.resp_len = 0;
+        }
 
         sk_OCSP_RESPONSE_pop_free(sc->ext.ocsp.resp_ex, OCSP_RESPONSE_free);
         sc->ext.ocsp.resp_ex = (STACK_OF(OCSP_RESPONSE) *)parg;
