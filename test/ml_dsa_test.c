@@ -419,7 +419,6 @@ err:
     EVP_PKEY_CTX_free(vctx);
     return ret;
 }
-
 static int ml_dsa_44_sign_verify_test(int tstid)
 {
     return do_ml_dsa_sign_verify("ML-DSA-44", tstid);
@@ -431,6 +430,66 @@ static int ml_dsa_65_sign_verify_test(int tstid)
 static int ml_dsa_87_sign_verify_test(int tstid)
 {
     return do_ml_dsa_sign_verify("ML-DSA-87", tstid);
+}
+
+static int ml_dsa_digest_sign_verify_test(void)
+{
+    int ret = 0;
+    const struct sig_params_st *sp = &sig_params[0];
+    EVP_PKEY *key = NULL;
+    uint8_t *sig = NULL;
+    size_t sig_len = 0;
+    OSSL_PARAM params[3], *p = params;
+    const char *alg = "ML-DSA-44";
+    EVP_MD_CTX *mctx = NULL;
+
+    if (!TEST_ptr(key = do_gen_key(alg, NULL, 0)))
+        goto err;
+
+    *p++ = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_MESSAGE_ENCODING,
+                                    (int *)&sp->encoded);
+    if (sp->ctx != NULL)
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_SIGNATURE_PARAM_CONTEXT_STRING,
+                                                 sp->ctx, sp->ctx_len);
+    *p++ = OSSL_PARAM_construct_end();
+
+    if (!TEST_ptr(mctx = EVP_MD_CTX_new())
+            || !TEST_int_eq(EVP_DigestSignInit_ex(mctx, NULL, "SHA256",
+                                                  lib_ctx, "?fips=true",
+                                                  key, params), 0)
+            || !TEST_int_eq(EVP_DigestSignInit_ex(mctx, NULL, NULL, lib_ctx,
+                                                  "?fips=true", key, params), 1))
+        goto err;
+    if (sp->expected == 0) {
+        ret = 1; /* return true as we expected to fail */
+        goto err;
+    }
+    if (!TEST_int_eq(EVP_DigestSign(mctx, NULL, &sig_len, sp->msg, sp->msg_len), 1)
+            || !TEST_ptr(sig = OPENSSL_zalloc(sig_len)))
+        goto err;
+    sig_len--;
+    if (!TEST_int_eq(EVP_DigestSign(mctx, sig, &sig_len, sp->msg, sp->msg_len), 0))
+        goto err;
+    sig_len++;
+    if (!TEST_int_eq(EVP_DigestSignInit_ex(mctx, NULL, NULL, lib_ctx, "?fips=true",
+                                           key, params), 1)
+            || !TEST_int_eq(EVP_DigestSign(mctx, sig, &sig_len,
+                                           sp->msg, sp->msg_len), 1)
+            || !TEST_int_eq(EVP_DigestVerifyInit_ex(mctx, NULL, "SHA256",
+                                                    lib_ctx, "?fips=true",
+                                                    key, params), 0)
+            || !TEST_int_eq(EVP_DigestVerifyInit_ex(mctx, NULL, NULL,
+                                                    lib_ctx, "?fips=true",
+                                                    key, params), 1)
+            || !TEST_int_eq(EVP_DigestVerify(mctx, sig, sig_len,
+                                             sp->msg, sp->msg_len), 1))
+        goto err;
+    ret = 1;
+err:
+    EVP_PKEY_free(key);
+    EVP_MD_CTX_free(mctx);
+    OPENSSL_free(sig);
+    return ret;
 }
 
 const OPTIONS *test_get_options(void)
@@ -475,6 +534,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(ml_dsa_87_sign_verify_test, OSSL_NELEM(sig_params));
     ADD_TEST(from_data_invalid_public_test);
     ADD_TEST(from_data_bad_input_test);
+    ADD_TEST(ml_dsa_digest_sign_verify_test);
     return 1;
 }
 
