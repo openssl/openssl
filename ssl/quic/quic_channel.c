@@ -1128,6 +1128,14 @@ static int ch_on_handshake_complete(void *arg)
     ch->handshake_complete = 1;
 
     if (ch->pending_new_token != NULL) {
+        /*
+         * Note this is a best effort operation here
+         * If scheduling a new token fails, the worst outcome is that
+         * a client, not having received it, will just have to go through
+         * an extra roundtrip on a subsequent connection via the retry frame
+         * path, at which point we get another opportunity to schedule another
+         * new token.  As a result, we don't need to handle any errors here
+         */
         ossl_quic_channel_schedule_new_token(ch,
                                              ch->pending_new_token,
                                              ch->pending_new_token_len);
@@ -2792,14 +2800,12 @@ static void ch_record_state_transition(QUIC_CHANNEL *ch, uint32_t new_state)
 static void free_peer_token(const unsigned char *token,
                             size_t token_len, void *arg)
 {
-    ossl_quic_free_peer_token((QTOK *)arg);
+    ossl_quic_free_peer_token((QUIC_TOKEN *)arg);
 }
 
 int ossl_quic_channel_start(QUIC_CHANNEL *ch)
 {
-    uint8_t *token;
-    size_t token_len;
-    QTOK *token_ptr;
+    QUIC_TOKEN *token;
 
     if (ch->is_server)
         /*
@@ -2822,13 +2828,12 @@ int ossl_quic_channel_start(QUIC_CHANNEL *ch)
     if (!ch->is_server
         && ossl_quic_get_peer_token(ch->port->channel_ctx,
                                     &ch->cur_peer_addr,
-                                    &token, &token_len,
-                                    &token_ptr)
-        && !ossl_quic_tx_packetiser_set_initial_token(ch->txp, token,
-                                                      token_len,
+                                    &token)
+        && !ossl_quic_tx_packetiser_set_initial_token(ch->txp, token->token,
+                                                      token->token_len,
                                                       free_peer_token,
-                                                      token_ptr))
-        free_peer_token(NULL, 0, token_ptr);
+                                                      token))
+        free_peer_token(NULL, 0, token);
 
     /* Plug in secrets for the Initial EL. */
     if (!ossl_quic_provide_initial_secret(ch->port->engine->libctx,
