@@ -561,6 +561,7 @@ err:
     return ret;
 }
 
+#ifndef OPENSSL_NO_ML_KEM
 /*
  * FIPS 140-3 IG 10.3.A resolution 14 mandates a CAST for ML-KEM
  * encapsulation.
@@ -756,6 +757,7 @@ err:
     EVP_PKEY_free(pkey);
     return ret;
 }
+#endif
 
 /*
  * Test a data driven list of KAT's for digest algorithms.
@@ -786,12 +788,15 @@ static int self_test_ciphers(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
 
 static int self_test_kems(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
 {
-    int i, ret = 1;
+    int ret = 1;
+#ifndef OPENSSL_NO_ML_KEM
+    int i;
 
     for (i = 0; i < (int)OSSL_NELEM(st_kat_kem_tests); ++i) {
         if (!self_test_kem(&st_kat_kem_tests[i], st, libctx))
             ret = 0;
     }
+#endif
     return ret;
 }
 
