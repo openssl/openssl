@@ -134,8 +134,8 @@ my @all_aspects = ("connection", "verification", "credentials", "commands", "enr
 
 my $Mock_serverlog;
 my $faillog;
-my $file = $ENV{HARNESS_FAILLOG} // "failed_client_invocations.txt"; # pathname relative to result_dir
-open($faillog, ">", $file) or die "Cannot open '$file' for writing: $!";
+my $faillog_file = $ENV{HARNESS_FAILLOG} // "failed_client_invocations.txt"; # pathname relative to result_dir
+open($faillog, ">", $faillog_file) or die "Cannot open '$faillog_file' for writing: $!";
 
 sub test_cmp_http {
     my $server_name = shift;
@@ -176,6 +176,17 @@ sub test_cmp_http_aspect {
         }
     };
     # not unlinking test.cert.pem, test.cacerts.pem, and test.extracerts.pem
+}
+
+sub print_file_prefixed {
+    my ($file, $desc) = @_;
+    print "$desc (each line prefixed by \"# \"):\n";
+    if (open F, $file) {
+        while (<F>) {
+            print "# $_";
+        }
+        close F;
+    }
 }
 
 # The input files for the tests done here dynamically depend on the test server
@@ -223,13 +234,7 @@ indir data_dir() => sub {
 
                 if (-s $faillog) {
                     indir "Mock" => sub {
-                        print "$server_name server STDERR output is (each line prefixed by \"# \"):\n";
-                        if (open F, $Mock_serverlog) {
-                            while (<F>) {
-                                print "# $_";
-                            }
-                            close F;
-                        }
+                        print_file_prefixed($Mock_serverlog, "$server_name server STDERR output is");
                     }
                 }
             }
@@ -239,6 +244,11 @@ indir data_dir() => sub {
 };
 
 close($faillog) if $faillog;
+if (-s $faillog_file) {
+    print "# ------------------------------------------------------------------------------\n";
+    print_file_prefixed($faillog_file, "Failed client invocations are");
+    print "# ------------------------------------------------------------------------------\n";
+}
 
 sub load_tests {
     my $server_name = shift;
