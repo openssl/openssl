@@ -1285,7 +1285,7 @@ static int port_validate_token(QUIC_PKT_HDR *hdr, QUIC_PORT *port,
 {
     int ret = 0;
     QUIC_VALIDATION_TOKEN token = { 0 };
-    unsigned long long time_diff;
+    uint64_t time_diff;
     size_t remote_addr_len, dec_token_len;
     unsigned char *remote_addr = NULL, dec_token[MARSHALLED_TOKEN_MAX_LEN];
     OSSL_TIME now = ossl_time_now();
@@ -1361,7 +1361,7 @@ static int port_validate_token(QUIC_PKT_HDR *hdr, QUIC_PORT *port,
     if (token.is_retry) {
         *gen_new_token = 1;
     } else {
-        if (time_diff > ((NEW_TOKEN_LIFETIME * 9) / 10)
+        if (time_diff > ((NEW_TOKEN_LIFETIME * 9) / 10))
             *gen_new_token = 1;
     }
 
