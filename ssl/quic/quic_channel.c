@@ -2781,11 +2781,6 @@ static void ch_record_state_transition(QUIC_CHANNEL *ch, uint32_t new_state)
                                                           ch->handshake_confirmed);
 }
 
-static void free_token(const unsigned char *token, size_t token_len, void *arg)
-{
-    OPENSSL_free((char *)token);
-}
-
 static void free_peer_token(const unsigned char *token,
                             size_t token_len, void *arg)
 {
@@ -2857,6 +2852,11 @@ int ossl_quic_channel_start(QUIC_CHANNEL *ch)
 
     ossl_quic_reactor_tick(ossl_quic_port_get0_reactor(ch->port), 0); /* best effort */
     return 1;
+}
+
+static void free_token(const unsigned char *token, size_t token_len, void *arg)
+{
+    OPENSSL_free((char *)token);
 }
 
 /* Start a locally initiated connection shutdown. */
