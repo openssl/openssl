@@ -2987,6 +2987,7 @@ static const ST_KAT_ASYM_KEYGEN st_kat_asym_keygen_tests[] = {
  *      openssl dgst -shake256 -xoflen 32 -binary > expected.dat
  */
 
+#ifndef OPENSSL_NO_ML_KEM
 static const unsigned char ml_kem_512_cipher_text[] = {
     0x6b, 0xc5, 0x04, 0x00, 0x27, 0x7a, 0xbb, 0x7e,
     0x6b, 0xf9, 0xfb, 0x56, 0x82, 0x01, 0x75, 0xeb,
@@ -3431,3 +3432,4 @@ static const ST_KAT_KEM st_kat_kem_tests[] = {
         ml_kem_512_reject_secret    /* No length because same as _secret's */
     },
 };
+#endif
