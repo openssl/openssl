@@ -223,14 +223,13 @@ indir data_dir() => sub {
 
                 if (-s $faillog) {
                     indir "Mock" => sub {
-                        print STDERR "$server_name STDERR output is:\n";
+                        print "$server_name server STDERR output is (each line prefixed by \"# \"):\n";
                         if (open F, $Mock_serverlog) {
                             while (<F>) {
-                                print STDERR $_;
+                                print "# $_";
                             }
                             close F;
                         }
-                        print STDERR "$server_name STDERR output end.\n";
                     }
                 }
             }
