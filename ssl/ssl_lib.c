@@ -4216,7 +4216,8 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
 # ifndef OPENSSL_NO_QUIC
     /* only create a cache for client CTX-es */
     if (meth == OSSL_QUIC_client_method())
-        ret->tokencache = ossl_quic_new_token_store();
+        if ((ret->tokencache = ossl_quic_new_token_store()) == NULL)
+            goto err;
     ret->domain_flags = 0;
     if (IS_QUIC_METHOD(meth)) {
 #  if defined(OPENSSL_THREADS)

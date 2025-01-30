@@ -12,6 +12,7 @@
 
 # include <openssl/ssl.h>
 # include <openssl/bio.h>
+# include "internal/refcount.h"
 # include "internal/quic_record_rx.h" /* OSSL_QRX */
 # include "internal/quic_ackm.h"      /* OSSL_ACKM */
 # include "internal/quic_channel.h"   /* QUIC_CHANNEL */
@@ -25,7 +26,17 @@ __owur SSL *ossl_quic_new_listener_from(SSL *ssl, uint64_t flags);
 __owur SSL *ossl_quic_new_from_listener(SSL *ssl, uint64_t flags);
 __owur SSL *ossl_quic_new_domain(SSL_CTX *ctx, uint64_t flags);
 
-typedef void QTOK;
+/*
+ * Datatype returned from ossl_quic_get_peer_token
+ */
+typedef struct quic_token_st {
+    CRYPTO_REF_COUNT references;
+    uint8_t *hashkey;
+    size_t hashkey_len;
+    uint8_t *token;
+    size_t token_len;
+} QUIC_TOKEN;
+
 SSL_TOKEN_STORE_HANDLE *ossl_quic_new_token_store(void);
 void ossl_quic_free_token_store(SSL_TOKEN_STORE_HANDLE *hdl);
 SSL_TOKEN_STORE_HANDLE *ossl_quic_get0_token_store(SSL_CTX *ctx);
@@ -33,9 +44,8 @@ int ossl_quic_set1_token_store(SSL_CTX *ctx, SSL_TOKEN_STORE_HANDLE *hdl);
 int ossl_quic_set_peer_token(SSL_CTX *ctx, BIO_ADDR *peer,
                              const uint8_t *token, size_t token_len);
 int ossl_quic_get_peer_token(SSL_CTX *ctx, BIO_ADDR *peer,
-                             uint8_t **token, size_t *token_len,
-                             QTOK **token_free_ptr);
-void ossl_quic_free_peer_token(QTOK *token);
+                             QUIC_TOKEN **token);
+void ossl_quic_free_peer_token(QUIC_TOKEN *token);
 
 __owur int ossl_quic_init(SSL *s);
 void ossl_quic_deinit(SSL *s);
