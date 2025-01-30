@@ -4687,9 +4687,8 @@ SSL_TOKEN_STORE_HANDLE *ossl_quic_new_token_store(void)
     if (newcache->cache == NULL)
         goto out;
 
-    newcache->mutex = ossl_crypto_mutex_new();
 #if defined(OPENSSL_THREADS)
-    if (newcache->mutex == NULL)
+    if ((newcache->mutex = ossl_crypto_mutex_new()) == NULL)
         goto out;
 #endif
 
