@@ -912,8 +912,10 @@ int X509v3_addr_canonize(IPAddrBlocks *addr)
 {
     int i;
 
-    if (addr == NULL)
+    if (addr == NULL) {
+        ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_NULL_ARGUMENT);
         return 0;
+    }
 
     for (i = 0; i < sk_IPAddressFamily_num(addr); i++) {
         IPAddressFamily *f = sk_IPAddressFamily_value(addr, i);
