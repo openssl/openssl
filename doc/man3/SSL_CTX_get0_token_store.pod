@@ -46,6 +46,43 @@ the event that an error occured, or if the B<SSL_CTX> object has no store.
 
 SSL_CTX_set1_token_store returns 1 on success or 0 on error.
 
+=head1 EXAMPLES
+
+The following code snippet shows how to share a token store between separate 
+B<SSL_CTX> objects
+
+    SSL_CTX *ctx1, *ctx2;
+    SSL_TOKEN_CACHE_HANDLE *tc;
+
+    /*
+     * token stores are generally only used for quic client contexts
+     */
+    ctx1 = SSL_CTX_new(libctx, NULL, OSSL_QUIC_client_method());
+    ctx2 = SSL_CTX_new(libctx, NULL, OSSL_QUIC_client_method());
+
+    if (ctx1 == NULL || ctx2 == NULL)
+        goto err;
+    /*
+     * Fetch the token store for ctx1
+     * Note: no reference is taken on the store
+     */
+    tc = SSL_CTX_get0_token_store(ctx1);
+    if (tc == NULL)
+        goto err;
+
+    /*
+     * Assign the token store from ctx1 to ctx2
+     * ctx2 take a reference on the passed store
+     * and begins using it
+     * At this point any NEW_TOKEN frames received
+     * by SSL objects allocated from either CTX are
+     * visible and usable by SSL objects allocated
+     * from the other CTX
+     */
+    if (!SSL_CTX_set1_token_store(ctx2, tc))
+        goto err;
+
+
 =head1 SEE ALSO
 
 L<ssl(7)>
