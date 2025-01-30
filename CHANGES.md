@@ -31,6 +31,11 @@ OpenSSL 3.6
 
 ### Changes between 3.5 and 3.6 [xx XXX xxxx]
 
+* The VxWorks platforms have been removed. These platforms were unadopted, unmaintained and reported
+  to be non-functional. 
+
+  *Anthony Ioppolo*
+
  * Support setting a free function thunk to OPENSSL_sk stack types. Using a thunk
    allows the type specific free function to be called with the correct type
    information from generic functions like OPENSSL_sk_pop_free().
