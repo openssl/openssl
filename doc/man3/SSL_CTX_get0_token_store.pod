@@ -2,13 +2,13 @@
 
 =head1 NAME
 
-SSL_CTX_get0_token_store, SSL_CTX_set_token_store
+SSL_CTX_get0_token_store, SSL_CTX_set1_token_store
 - QUIC NEW_TOKEN store manipulation 
 
 =head1 SYNOPSIS
 
  SSL_TOKEN_STORE_HANDLE *SSL_CTX_get0_token_store(SSL_CTX *ctx);
- int SSL_CTX_set_token_store(SSL_CTX *ctx, SSL_TOKEN_STORE_HANDLE *hdl);
+ int SSL_CTX_set1_token_store(SSL_CTX *ctx, SSL_TOKEN_STORE_HANDLE *hdl);
 
 =head1 DESCRIPTION
 The QUIC protocol supports the exchange of opaque tokens which a client can use
@@ -21,9 +21,9 @@ B<SSL_CTX> objects to share those tokens between B<SSL> connections allocated fr
 disparate B<SSL_CTX> objects.
 
 SSL_CTX_get0_token_store() returns an opaque handle to the token store for use
-in a subsequent call to SSL_CTX_set_token_store() on another B<SSL_CTX> object.
+in a subsequent call to SSL_CTX_set1_token_store() on another B<SSL_CTX> object.
 
-SSL_CTX_set_token_store() assigns a token store fetched fom SSL_CTX_get0_token_store
+SSL_CTX_set1_token_store() assigns a token store fetched fom SSL_CTX_get0_token_store
 to a second B<SSL_CTX> object.
 
 =head1 NOTES
@@ -32,7 +32,7 @@ Token stores are internally reference counted.  Note that a call to SSL_CTX_get0
 does not increment the internal reference count.  As such, no freeing of the object
 is needed.
 
-When SSL_CTX_set_token_store() is called, the passed store has its reference count
+When SSL_CTX_set1_token_store() is called, the passed store has its reference count
 incremented.  It will be decremented when that B<SSL_CTX> is freed via a call to
 SSL_CTX_free().
 
@@ -44,7 +44,7 @@ non-QUIC objects will result in error returns.
 SSL_CTX_get0_token_store() returns an opaque handle to a token store, or NULL in
 the event that an error occured, or if the B<SSL_CTX> object has no store.
 
-SSL_CTX_set_token_store returns 1 on success or 0 on error.
+SSL_CTX_set1_token_store returns 1 on success or 0 on error.
 
 =head1 SEE ALSO
 
