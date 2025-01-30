@@ -31,6 +31,11 @@ OpenSSL 3.6
 
 ### Changes between 3.5 and 3.6 [xx XXX xxxx]
 
+ * The VxWorks platforms have been removed. These platforms were unadopted,
+   unmaintained and reported to be non-functional.
+
+   *Anthony Ioppolo*
+
  * Relax the path check in OpenSSL's 'file:' scheme implementation for
    OSSL_STORE.  Previously, when the 'file:' scheme is an explicit part
    of the URI, our implementation required an absolute path, such as
