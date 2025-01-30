@@ -1354,7 +1354,7 @@ static int port_validate_token(QUIC_PKT_HDR *hdr, QUIC_PORT *port,
      *
      * If however, we validated a NEW_TOKEN, which may be
      * reused multiple times, only send a NEW_TOKEN frame
-     * if the existing received token has 10% of its lifetime
+     * if the existing received token has less than 10% of its lifetime
      * remaining.  This prevents us from constantly sending
      * NEW_TOKEN frames on every connection when not needed
      */
@@ -1546,7 +1546,7 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
          * if the client did not have a validated address,
          * including potentially sending a Retry packet
          * Note: If address validation is disabled, just act like
-         * The request is valid
+         * the request is valid
          */
         if (port->validate_addr == 1) {
             port_send_retry(port, &e->peer, &hdr);
