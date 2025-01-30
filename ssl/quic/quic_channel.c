@@ -2784,14 +2784,12 @@ static void ch_record_state_transition(QUIC_CHANNEL *ch, uint32_t new_state)
 static void free_peer_token(const unsigned char *token,
                             size_t token_len, void *arg)
 {
-    ossl_quic_free_peer_token((QTOK *)arg);
+    ossl_quic_free_peer_token((QUIC_TOKEN *)arg);
 }
 
 int ossl_quic_channel_start(QUIC_CHANNEL *ch)
 {
-    uint8_t *token;
-    size_t token_len;
-    QTOK *token_ptr;
+    QUIC_TOKEN *token;
 
     if (ch->is_server)
         /*
@@ -2814,13 +2812,12 @@ int ossl_quic_channel_start(QUIC_CHANNEL *ch)
     if (!ch->is_server
         && ossl_quic_get_peer_token(ch->port->channel_ctx,
                                     &ch->cur_peer_addr,
-                                    &token, &token_len,
-                                    &token_ptr)
-        && !ossl_quic_tx_packetiser_set_initial_token(ch->txp, token,
-                                                      token_len,
+                                    &token)
+        && !ossl_quic_tx_packetiser_set_initial_token(ch->txp, token->token,
+                                                      token->token_len,
                                                       free_peer_token,
-                                                      token_ptr))
-        free_peer_token(NULL, 0, token_ptr);
+                                                      token))
+        free_peer_token(NULL, 0, token);
 
     /* Plug in secrets for the Initial EL. */
     if (!ossl_quic_provide_initial_secret(ch->port->engine->libctx,
