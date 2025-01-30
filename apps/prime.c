@@ -172,8 +172,10 @@ opthelp:
                         file_read_buf = (char *)realloc(file_read_buf, BUFSIZE + total_read);
                 }
 
-                /* Trim trailing newline if present */
-                if (file_read_buf[total_read - 1] == '\n')
+                /* Deal with Unix and Windows line endings */
+                if (file_read_buf[total_read - 2] == '\r')
+                    file_read_buf[total_read - 2] = '\0';
+                else if (file_read_buf[total_read - 1] == '\n')
                     file_read_buf[total_read - 1] = '\0';
 
                 check_val = file_read_buf;
