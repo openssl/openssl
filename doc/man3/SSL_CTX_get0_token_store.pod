@@ -2,13 +2,13 @@
 
 =head1 NAME
 
-SSL_CTX_get0_token_store, SSL_CTX_set_token_store
+SSL_CTX_get0_token_store, SSL_CTX_set1_token_store
 - QUIC NEW_TOKEN store manipulation 
 
 =head1 SYNOPSIS
 
  SSL_TOKEN_STORE_HANDLE *SSL_CTX_get0_token_store(SSL_CTX *ctx);
- int SSL_CTX_set_token_store(SSL_CTX *ctx, SSL_TOKEN_STORE_HANDLE *hdl);
+ int SSL_CTX_set1_token_store(SSL_CTX *ctx, SSL_TOKEN_STORE_HANDLE *hdl);
 
 =head1 DESCRIPTION
 The QUIC protocol supports the exchange of opaque tokens which a client can use
@@ -21,9 +21,9 @@ B<SSL_CTX> objects to share those tokens between B<SSL> connections allocated fr
 disparate B<SSL_CTX> objects.
 
 SSL_CTX_get0_token_store() returns an opaque handle to the token store for use
-in a subsequent call to SSL_CTX_set_token_store() on another B<SSL_CTX> object.
+in a subsequent call to SSL_CTX_set1_token_store() on another B<SSL_CTX> object.
 
-SSL_CTX_set_token_store() assigns a token store fetched fom SSL_CTX_get0_token_store
+SSL_CTX_set1_token_store() assigns a token store fetched fom SSL_CTX_get0_token_store
 to a second B<SSL_CTX> object.
 
 =head1 NOTES
@@ -32,7 +32,7 @@ Token stores are internally reference counted.  Note that a call to SSL_CTX_get0
 does not increment the internal reference count.  As such, no freeing of the object
 is needed.
 
-When SSL_CTX_set_token_store() is called, the passed store has its reference count
+When SSL_CTX_set1_token_store() is called, the passed store has its reference count
 incremented.  It will be decremented when that B<SSL_CTX> is freed via a call to
 SSL_CTX_free().
 
@@ -44,7 +44,44 @@ non-QUIC objects will result in error returns.
 SSL_CTX_get0_token_store() returns an opaque handle to a token store, or NULL in
 the event that an error occured, or if the B<SSL_CTX> object has no store.
 
-SSL_CTX_set_token_store returns 1 on success or 0 on error.
+SSL_CTX_set1_token_store returns 1 on success or 0 on error.
+
+=head1 EXAMPLES
+
+The following code snippet shows how to share a token store between separate 
+B<SSL_CTX> objects
+
+    SSL_CTX *ctx1, *ctx2;
+    SSL_TOKEN_CACHE_HANDLE *tc;
+
+    /*
+     * token stores are generally only used for quic client contexts
+     */
+    ctx1 = SSL_CTX_new(libctx, NULL, OSSL_QUIC_client_method());
+    ctx2 = SSL_CTX_new(libctx, NULL, OSSL_QUIC_client_method());
+
+    if (ctx1 == NULL || ctx2 == NULL)
+        goto err;
+    /*
+     * Fetch the token store for ctx1
+     * Note: no reference is taken on the store
+     */
+    tc = SSL_CTX_get0_token_store(ctx1);
+    if (tc == NULL)
+        goto err;
+
+    /*
+     * Assign the token store from ctx1 to ctx2
+     * ctx2 take a reference on the passed store
+     * and begins using it
+     * At this point any NEW_TOKEN frames received
+     * by SSL objects allocated from either CTX are
+     * visible and usable by SSL objects allocated
+     * from the other CTX
+     */
+    if (!SSL_CTX_set1_token_store(ctx2, tc))
+        goto err;
+
 
 =head1 SEE ALSO
 

@@ -4731,12 +4731,12 @@ void ossl_quic_free_token_store(SSL_TOKEN_STORE_HANDLE *hdl)
     return;
 }
 
-SSL_TOKEN_STORE_HANDLE *ossl_quic_get_token_store(SSL_CTX *ctx)
+SSL_TOKEN_STORE_HANDLE *ossl_quic_get0_token_store(SSL_CTX *ctx)
 {
     return ctx->tokencache;
 }
 
-int ossl_quic_set_token_store(SSL_CTX *ctx, SSL_TOKEN_STORE_HANDLE *hdl)
+int ossl_quic_set1_token_store(SSL_CTX *ctx, SSL_TOKEN_STORE_HANDLE *hdl)
 {
     SSL_TOKEN_STORE *new = hdl;
     SSL_TOKEN_STORE_HANDLE *old = ctx->tokencache;
