@@ -42,7 +42,7 @@ int ossl_dh_compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh);
 
 int ossl_dh_check_pub_key_partial(const DH *dh, const BIGNUM *pub_key, int *ret);
 int ossl_dh_check_priv_key(const DH *dh, const BIGNUM *priv_key, int *ret);
-int ossl_dh_check_pairwise(const DH *dh);
+int ossl_dh_check_pairwise(const DH *dh, int return_on_null_numbers);
 
 const DH_METHOD *ossl_dh_get_method(const DH *dh);
 
