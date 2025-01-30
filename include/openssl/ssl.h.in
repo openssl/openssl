@@ -2303,7 +2303,7 @@ __owur int SSL_is_connection(SSL *s);
 
 typedef void SSL_TOKEN_STORE_HANDLE;
 __owur SSL_TOKEN_STORE_HANDLE *SSL_CTX_get0_token_store(SSL_CTX *ctx);
-__owur int SSL_CTX_set_token_store(SSL_CTX *ctx, SSL_TOKEN_STORE_HANDLE *hdl);
+__owur int SSL_CTX_set1_token_store(SSL_CTX *ctx, SSL_TOKEN_STORE_HANDLE *hdl);
 
 __owur int SSL_is_listener(SSL *ssl);
 __owur SSL *SSL_get0_listener(SSL *s);
