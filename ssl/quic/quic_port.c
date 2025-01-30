@@ -1361,7 +1361,7 @@ static int port_validate_token(QUIC_PKT_HDR *hdr, QUIC_PORT *port,
     if (token.is_retry) {
         *gen_new_token = 1;
     } else {
-        if (time_diff < NEW_TOKEN_LIFETIME / 10)
+        if (time_diff > ((NEW_TOKEN_LIFETIME * 9) / 10)
             *gen_new_token = 1;
     }
 
@@ -1410,6 +1410,7 @@ static void generate_new_token(QUIC_CHANNEL *ch, BIO_ADDR *peer)
                                      &ct_len)
         || !ossl_assert(ct_len >= QUIC_RETRY_INTEGRITY_TAG_LEN)) {
         OPENSSL_free(ct_buf);
+        cleanup_validation_token(&token);
         return;
     }
 
