@@ -134,10 +134,8 @@ my @all_aspects = ("connection", "verification", "credentials", "commands", "enr
 
 my $Mock_serverlog;
 my $faillog;
-my $file = $ENV{HARNESS_FAILLOG}; # pathname relative to result_dir
-if ($file) {
-    open($faillog, ">", $file) or die "Cannot open '$file' for writing: $!";
-}
+my $file = $ENV{HARNESS_FAILLOG} // "failed_client_invocations.txt"; # pathname relative to result_dir
+open($faillog, ">", $file) or die "Cannot open '$file' for writing: $!";
 
 sub test_cmp_http {
     my $server_name = shift;
