@@ -635,12 +635,12 @@ static int test_new_token(void)
     size_t written;
 
     if (!TEST_ptr(cctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method()))
-            || !TEST_ptr(bio = BIO_new(BIO_s_mem()))
-            || !TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert,
-                                                    privkey,
-                                                    QTEST_FLAG_FAKE_TIME,
-                                                    &qtserv,
-                                                    &clientquic, NULL, NULL)))
+        || !TEST_ptr(bio = BIO_new(BIO_s_mem()))
+        || !TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert,
+                                                privkey,
+                                                QTEST_FLAG_FAKE_TIME,
+                                                &qtserv,
+                                                &clientquic, NULL, NULL)))
 
         goto err;
 
