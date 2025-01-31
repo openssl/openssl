@@ -172,10 +172,16 @@ opthelp:
                         file_read_buf = (char *)realloc(file_read_buf, BUFSIZE + total_read);
                 }
 
+                /* Deal with the case of an empty file */
+                if (total_read == 0) {
+                    BIO_printf(bio_err, "Cannot process empty file\n");
+                    goto end;
+                }
+
                 /* Deal with Unix and Windows line endings */
-                if (file_read_buf[total_read - 2] == '\r')
+                if (total_read >= 2 && file_read_buf[total_read - 2] == '\r')
                     file_read_buf[total_read - 2] = '\0';
-                else if (file_read_buf[total_read - 1] == '\n')
+                else if (total_read >= 1 && file_read_buf[total_read - 1] == '\n')
                     file_read_buf[total_read - 1] = '\0';
 
                 check_val = file_read_buf;
