@@ -37,10 +37,10 @@ typedef struct quic_token_st {
     size_t token_len;
 } QUIC_TOKEN;
 
-SSL_TOKEN_STORE_HANDLE *ossl_quic_new_token_store(void);
-void ossl_quic_free_token_store(SSL_TOKEN_STORE_HANDLE *hdl);
-SSL_TOKEN_STORE_HANDLE *ossl_quic_get0_token_store(SSL_CTX *ctx);
-int ossl_quic_set1_token_store(SSL_CTX *ctx, SSL_TOKEN_STORE_HANDLE *hdl);
+SSL_TOKEN_STORE *ossl_quic_new_token_store(void);
+void ossl_quic_free_token_store(SSL_TOKEN_STORE *hdl);
+SSL_TOKEN_STORE *ossl_quic_get0_token_store(SSL_CTX *ctx);
+int ossl_quic_set1_token_store(SSL_CTX *ctx, SSL_TOKEN_STORE *hdl);
 int ossl_quic_set_peer_token(SSL_CTX *ctx, BIO_ADDR *peer,
                              const uint8_t *token, size_t token_len);
 int ossl_quic_get_peer_token(SSL_CTX *ctx, BIO_ADDR *peer,
