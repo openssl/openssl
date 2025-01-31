@@ -91,7 +91,6 @@ int ossl_quic_provide_initial_secret(OSSL_LIB_CTX *libctx,
     unsigned char client_initial_secret[32], server_initial_secret[32];
     unsigned char *rx_secret, *tx_secret;
     EVP_MD *sha256;
-    int i;
 
     if (qrx == NULL && qtx == NULL)
         return 1;
@@ -178,14 +177,6 @@ int ossl_quic_provide_initial_secret(OSSL_LIB_CTX *libctx,
 err:
     EVP_MD_free(sha256);
     return 0;
-}
-
-void ossl_print_array(FILE *f, const unsigned char *array, size_t array_sz)
-{
-    int i;
-
-    for (i = 0; i < array_sz; i++)
-        fprintf(f, "%x", array[i]);
 }
 
 void ossl_quic_destroy_port_secrets(QUIC_PORT_SECRETS *qps)
