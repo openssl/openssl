@@ -1088,6 +1088,8 @@ static void port_send_retry(QUIC_PORT *port,
     if (ok == 0)
         goto err;
 
+    memset(&token, 0, sizeof(QUIC_VALIDATION_TOKEN));
+
     /* Generate retry validation token */
     if (!generate_token(peer, client_hdr->dst_conn_id,
                         hdr.src_conn_id, &token, 1)
@@ -1400,6 +1402,8 @@ static void generate_new_token(QUIC_CHANNEL *ch, BIO_ADDR *peer)
         OPENSSL_free(ct_buf);
         return;
     }
+
+    memset(&token, 0, sizeof(QUIC_VALIDATION_TOKEN));
 
     if (!generate_token(peer, ch->init_dcid, rscid, &token, 0)
         || !marshal_validation_token(&token, buffer, &token_buf_len)
