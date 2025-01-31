@@ -4370,7 +4370,7 @@ err:
 SSL *ossl_quic_new_from_listener(SSL *ssl, uint64_t flags)
 {
     QCTX ctx;
-    QUIC_CONNECTION *qc;
+    QUIC_CONNECTION *qc = NULL;
     QUIC_LISTENER *ql;
     SSL_CONNECTION *sc = NULL;
 
@@ -4394,7 +4394,8 @@ SSL *ossl_quic_new_from_listener(SSL *ssl, uint64_t flags)
      * ctx as a client, so we should allocate one now
      */
     if (ssl->ctx->tokencache == NULL)
-        ssl->ctx->tokencache = ossl_quic_new_token_store();
+        if ((ssl->ctx->tokencache = ossl_quic_new_token_store()) == NULL)
+            goto err;
 
     if ((qc = OPENSSL_zalloc(sizeof(*qc))) == NULL) {
         QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_CRYPTO_LIB, NULL);
@@ -4634,11 +4635,11 @@ err:
 
 DEFINE_LHASH_OF_EX(QUIC_TOKEN);
 
-typedef struct ssl_token_store_st {
+struct ssl_token_store_st {
     LHASH_OF(QUIC_TOKEN) *cache;
     CRYPTO_REF_COUNT references;
     CRYPTO_MUTEX *mutex;
-} SSL_TOKEN_STORE;
+};
 
 static uint64_t fnv1a_hash_token(uint8_t *key, size_t len)
 {
@@ -4664,7 +4665,7 @@ static int quic_token_cmp(const QUIC_TOKEN *a, const QUIC_TOKEN *b)
     return memcmp(a->hashkey, b->hashkey, a->hashkey_len);
 }
 
-SSL_TOKEN_STORE_HANDLE *ossl_quic_new_token_store(void)
+SSL_TOKEN_STORE *ossl_quic_new_token_store(void)
 {
     int ok = 0;
     SSL_TOKEN_STORE *newcache = OPENSSL_zalloc(sizeof(SSL_TOKEN_STORE));
@@ -4690,7 +4691,7 @@ out:
         ossl_quic_free_token_store(newcache);
         newcache = NULL;
     }
-    return (SSL_TOKEN_STORE_HANDLE *)newcache;
+    return newcache;
 }
 
 static void free_this_token(QUIC_TOKEN *tok)
@@ -4698,37 +4699,36 @@ static void free_this_token(QUIC_TOKEN *tok)
     ossl_quic_free_peer_token(tok);
 }
 
-void ossl_quic_free_token_store(SSL_TOKEN_STORE_HANDLE *hdl)
+void ossl_quic_free_token_store(SSL_TOKEN_STORE *hdl)
 {
     int refs;
-    SSL_TOKEN_STORE *c = (SSL_TOKEN_STORE *)hdl;
 
-    if (c == NULL)
+    if (hdl == NULL)
         return;
 
-    if (!CRYPTO_DOWN_REF(&c->references, &refs))
+    if (!CRYPTO_DOWN_REF(&hdl->references, &refs))
         return;
 
     if (refs > 0)
         return;
 
     /* last reference, we can clean up */
-    ossl_crypto_mutex_free(&c->mutex);
-    lh_QUIC_TOKEN_doall(c->cache, free_this_token);
-    lh_QUIC_TOKEN_free(c->cache);
-    OPENSSL_free(c);
+    ossl_crypto_mutex_free(&hdl->mutex);
+    lh_QUIC_TOKEN_doall(hdl->cache, free_this_token);
+    lh_QUIC_TOKEN_free(hdl->cache);
+    OPENSSL_free(hdl);
     return;
 }
 
-SSL_TOKEN_STORE_HANDLE *ossl_quic_get0_token_store(SSL_CTX *ctx)
+SSL_TOKEN_STORE *ossl_quic_get0_token_store(SSL_CTX *ctx)
 {
     return ctx->tokencache;
 }
 
-int ossl_quic_set1_token_store(SSL_CTX *ctx, SSL_TOKEN_STORE_HANDLE *hdl)
+int ossl_quic_set1_token_store(SSL_CTX *ctx, SSL_TOKEN_STORE *hdl)
 {
     SSL_TOKEN_STORE *new = hdl;
-    SSL_TOKEN_STORE_HANDLE *old = ctx->tokencache;
+    SSL_TOKEN_STORE *old = ctx->tokencache;
     int ref;
 
     if (!CRYPTO_UP_REF(&new->references, &ref))
