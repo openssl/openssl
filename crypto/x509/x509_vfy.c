@@ -399,13 +399,13 @@ static X509 *get0_best_issuer_sk(X509_STORE_CTX *ctx, int check_signing_allowed,
         candidate = sk_X509_value(sk, i);
         if (no_dup
             && !((x->ex_flags & EXFLAG_SI) != 0 && sk_X509_num(ctx->chain) == 1)
-                 && sk_X509_contains(ctx->chain, candidate))
+            && sk_X509_contains(ctx->chain, candidate))
             continue;
         if (ctx->check_issued(ctx, x, candidate)) {
             if (check_signing_allowed
                 /* yet better not check key usage for trust anchors */
                 && ossl_x509_signing_allowed(candidate, x) != X509_V_OK)
-                    continue;
+                continue;
             if (ossl_x509_check_cert_time(ctx, candidate, -1))
                 return candidate;
             /*
