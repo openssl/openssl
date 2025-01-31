@@ -2301,9 +2301,9 @@ __owur int SSL_set1_initial_peer_addr(SSL *s, const BIO_ADDR *peer_addr);
 __owur SSL *SSL_get0_connection(SSL *s);
 __owur int SSL_is_connection(SSL *s);
 
-typedef void SSL_TOKEN_STORE_HANDLE;
-__owur SSL_TOKEN_STORE_HANDLE *SSL_CTX_get0_token_store(SSL_CTX *ctx);
-__owur int SSL_CTX_set1_token_store(SSL_CTX *ctx, SSL_TOKEN_STORE_HANDLE *hdl);
+typedef struct ssl_token_store_st SSL_TOKEN_STORE;
+__owur SSL_TOKEN_STORE *SSL_CTX_get0_token_store(SSL_CTX *ctx);
+__owur int SSL_CTX_set1_token_store(SSL_CTX *ctx, SSL_TOKEN_STORE *hdl);
 
 __owur int SSL_is_listener(SSL *ssl);
 __owur SSL *SSL_get0_listener(SSL *s);
