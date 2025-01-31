@@ -7,8 +7,8 @@ SSL_CTX_get0_token_store, SSL_CTX_set1_token_store
 
 =head1 SYNOPSIS
 
- SSL_TOKEN_STORE_HANDLE *SSL_CTX_get0_token_store(SSL_CTX *ctx);
- int SSL_CTX_set1_token_store(SSL_CTX *ctx, SSL_TOKEN_STORE_HANDLE *hdl);
+ SSL_TOKEN_STORE *SSL_CTX_get0_token_store(SSL_CTX *ctx);
+ int SSL_CTX_set1_token_store(SSL_CTX *ctx, SSL_TOKEN_STORE *hdl);
 
 =head1 DESCRIPTION
 The QUIC protocol supports the exchange of opaque tokens which a client can use
@@ -52,7 +52,7 @@ The following code snippet shows how to share a token store between separate
 B<SSL_CTX> objects
 
     SSL_CTX *ctx1, *ctx2;
-    SSL_TOKEN_CACHE_HANDLE *tc;
+    SSL_TOKEN_CACHE *tc;
 
     /*
      * token stores are generally only used for quic client contexts
