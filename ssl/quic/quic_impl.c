@@ -4635,11 +4635,11 @@ err:
 
 DEFINE_LHASH_OF_EX(QUIC_TOKEN);
 
-typedef struct ssl_token_store_st {
+struct ssl_token_store_st {
     LHASH_OF(QUIC_TOKEN) *cache;
     CRYPTO_REF_COUNT references;
     CRYPTO_MUTEX *mutex;
-} SSL_TOKEN_STORE;
+};
 
 static uint64_t fnv1a_hash_token(uint8_t *key, size_t len)
 {
