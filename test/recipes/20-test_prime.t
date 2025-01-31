@@ -14,14 +14,17 @@ use OpenSSL::Test;
 
 setup("test_prime");
 
-plan tests => 8;
+plan tests => 10;
 
 my $prime_file      = data_file("prime.txt");
 my $composite_file  = data_file("composite.txt");
 my $long_number_file = data_file("long_number.txt");
+my $short_number_file = data_file("short_number.txt");
 my $non_number_file  = data_file("non_number.txt");
 my $hex_number_file  = data_file("hex_number.txt");
 my $bad_format_file  = data_file("bad_format.txt");
+my $empty_file  = data_file("empty.txt");
+
 
 ok(run(app(["openssl", "prime", "-in", $prime_file])),
    "Run openssl prime with prime number -in file");
@@ -32,6 +35,9 @@ ok(run(app(["openssl", "prime", "-in", $composite_file])),
 ok(run(app(["openssl", "prime", "-in", $long_number_file])),
    "Run openssl prime with long number -in file");
 
+ok(run(app(["openssl", "prime", "-in", $short_number_file])),
+   "Run openssl prime with a short number -in file");
+
 ok(!run(app(["openssl", "prime", "-in", $non_number_file])),
    "Run openssl prime with non number -in file");
 
@@ -40,6 +46,9 @@ ok(run(app(["openssl", "prime", "-in", "-hex", $hex_number_file])),
 
 ok(!run(app(["openssl", "prime", "-in", $bad_format_file])),
    "Run openssl prime with bad format -in file");
+
+ok(!run(app(["openssl", "prime", "-in", $empty_file])),
+   "Run openssl prime with an empty -in file");
 
 ok(run(app(["openssl", "prime", "-in", $prime_file, $composite_file, $long_number_file])),
    "Run openssl prime with multiple -in files");
