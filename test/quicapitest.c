@@ -615,9 +615,6 @@ static int find_new_token_data(BIO *membio)
         }
     }
 
-    if (state != SUCCESS)
-        state = FAILED;
-
     OPENSSL_free(tokenval);
     return (state == SUCCESS);
 }
