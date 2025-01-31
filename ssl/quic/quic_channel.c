@@ -1118,6 +1118,14 @@ static int ch_on_handshake_complete(void *arg)
     ch->handshake_complete = 1;
 
     if (ch->pending_new_token != NULL) {
+        /*
+         * Note this is a best effort operation here
+         * If scheduling a new token fails, the worst outcome is that
+         * a client, not having received it, will just have to go through
+         * an extra roundtrip on a subsequent connection via the retry frame
+         * path, at which point we get another opportunity to schedule another
+         * new token.  As a result, we don't need to handle any errors here
+         */
         ossl_quic_channel_schedule_new_token(ch,
                                              ch->pending_new_token,
                                              ch->pending_new_token_len);
