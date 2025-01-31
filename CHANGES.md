@@ -144,6 +144,10 @@ OpenSSL 3.5
 
    *Zhiguo Zhou, Wangyang Guo (Intel Corp)*
 
+ * Enabled x86-64 SHA-512 optimizations with SHA512 ISA Extension.
+
+   *Adrian Stanciu*
+
 OpenSSL 3.4
 -----------
 
