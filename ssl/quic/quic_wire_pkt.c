@@ -90,7 +90,6 @@ int ossl_quic_hdr_protector_init_from_qps(QUIC_HDR_PROTECTOR *hpr,
 
 
 
-extern void ossl_print_array(FILE *, const unsigned char *, size_t);
 static int hdr_generate_mask(QUIC_HDR_PROTECTOR *hpr,
                              const unsigned char *sample, size_t sample_len,
                              unsigned char *mask)
@@ -152,7 +151,6 @@ int ossl_quic_hdr_protector_decrypt(QUIC_HDR_PROTECTOR *hpr,
                                                   ptrs->raw_pn);
 }
 
-extern void ossl_print_array(FILE *, const unsigned char *, size_t);
 int ossl_quic_hdr_protector_decrypt_fields(QUIC_HDR_PROTECTOR *hpr,
                                            const unsigned char *sample,
                                            size_t sample_len,
