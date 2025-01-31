@@ -1398,6 +1398,7 @@ static int port_chk_derive_nonce(QUIC_PORT_SECRETS *qps, QUIC_PN pn,
                                  unsigned char *nonce, int nonce_sz)
 {
     int nonce_len, i;
+    size_t i;
 
     nonce_len = EVP_CIPHER_CTX_get_iv_length(qps->qps_pkt_ctx);
     if (nonce_len > nonce_sz)
