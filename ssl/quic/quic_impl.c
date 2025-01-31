@@ -4331,7 +4331,14 @@ SSL *ossl_quic_new_listener_from(SSL *ssl, uint64_t flags)
     ql->mutex   = ctx.qd->mutex;
 #endif
 
-    /* TODO(QUIC FUTURE): Implement SSL_LISTENER_FLAG_NO_ACCEPT */
+    /*
+     * TODO(QUIC FUTURE): Implement SSL_LISTENER_FLAG_NO_ACCEPT
+     * Given that we have apis to create client SSL objects from
+     * server SSL objects (see SSL_new_from_listener), we have aspirations
+     * to enable a flag that allows for the creation of the latter, but not
+     * be used to do accept any connections.  This is a placeholder for the
+     * implementation of that flag
+     */
 
     ossl_quic_port_set_allow_incoming(ql->port, 1);
 
