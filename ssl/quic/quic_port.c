@@ -1397,7 +1397,7 @@ static int port_chk_remove_hdr_protection(QUIC_PORT_SECRETS *qps,
 static int port_chk_derive_nonce(QUIC_PORT_SECRETS *qps, QUIC_PN pn,
                                  unsigned char *nonce, int nonce_sz)
 {
-    int nonce_len, i;
+    int nonce_len;
     size_t i;
 
     nonce_len = EVP_CIPHER_CTX_get_iv_length(qps->qps_pkt_ctx);
