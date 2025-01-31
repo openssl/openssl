@@ -317,10 +317,8 @@ X509_OBJECT *X509_STORE_CTX_get_obj_by_subject(X509_STORE_CTX *ctx,
  * 0 if not found or X509_LOOKUP_by_subject_ex() returns an error,
  * -1 on failure
  */
-static int ossl_x509_store_ctx_get_by_subject(const X509_STORE_CTX *ctx,
-                                              X509_LOOKUP_TYPE type,
-                                              const X509_NAME *name,
-                                              X509_OBJECT *ret)
+int ossl_x509_store_ctx_get_by_subject(const X509_STORE_CTX *ctx, X509_LOOKUP_TYPE type,
+                                       const X509_NAME *name, X509_OBJECT *ret)
 {
     X509_STORE *store = ctx->store;
     X509_LOOKUP *lu;
