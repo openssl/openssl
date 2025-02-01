@@ -12,6 +12,7 @@
 #include <openssl/sslerr.h>
 #include <crypto/rand.h>
 #include "quic_local.h"
+#include "internal/hashfunc.h"
 #include "internal/ssl_unwrap.h"
 #include "internal/quic_tls.h"
 #include "internal/quic_rx_depack.h"
@@ -4641,21 +4642,9 @@ struct ssl_token_store_st {
     CRYPTO_MUTEX *mutex;
 };
 
-static uint64_t fnv1a_hash_token(uint8_t *key, size_t len)
-{
-    uint64_t hash = 0xcbf29ce484222325ULL;
-    size_t i;
-
-    for (i = 0; i < len; i++) {
-        hash ^= key[i];
-        hash *= 0x00000100000001B3ULL;
-    }
-    return hash;
-}
-
 static unsigned long quic_token_hash(const QUIC_TOKEN *item)
 {
-    return (unsigned long)fnv1a_hash_token(item->hashkey, item->hashkey_len);
+    return (unsigned long)fnv1a_hash(item->hashkey, item->hashkey_len);
 }
 
 static int quic_token_cmp(const QUIC_TOKEN *a, const QUIC_TOKEN *b)
