@@ -2243,10 +2243,6 @@ DEPEND[html/man3/SSL_CTX_get0_param.html]=man3/SSL_CTX_get0_param.pod
 GENERATE[html/man3/SSL_CTX_get0_param.html]=man3/SSL_CTX_get0_param.pod
 DEPEND[man/man3/SSL_CTX_get0_param.3]=man3/SSL_CTX_get0_param.pod
 GENERATE[man/man3/SSL_CTX_get0_param.3]=man3/SSL_CTX_get0_param.pod
-DEPEND[html/man3/SSL_CTX_get0_token_store.html]=man3/SSL_CTX_get0_token_store.pod
-GENERATE[html/man3/SSL_CTX_get0_token_store.html]=man3/SSL_CTX_get0_token_store.pod
-DEPEND[man/man3/SSL_CTX_get0_token_store.3]=man3/SSL_CTX_get0_token_store.pod
-GENERATE[man/man3/SSL_CTX_get0_token_store.3]=man3/SSL_CTX_get0_token_store.pod
 DEPEND[html/man3/SSL_CTX_get_verify_mode.html]=man3/SSL_CTX_get_verify_mode.pod
 GENERATE[html/man3/SSL_CTX_get_verify_mode.html]=man3/SSL_CTX_get_verify_mode.pod
 DEPEND[man/man3/SSL_CTX_get_verify_mode.3]=man3/SSL_CTX_get_verify_mode.pod
@@ -3596,7 +3592,6 @@ html/man3/SSL_CTX_dane_enable.html \
 html/man3/SSL_CTX_flush_sessions.html \
 html/man3/SSL_CTX_free.html \
 html/man3/SSL_CTX_get0_param.html \
-html/man3/SSL_CTX_get0_token_store.html \
 html/man3/SSL_CTX_get_verify_mode.html \
 html/man3/SSL_CTX_has_client_custom_ext.html \
 html/man3/SSL_CTX_load_verify_locations.html \
@@ -4267,7 +4262,6 @@ man/man3/SSL_CTX_dane_enable.3 \
 man/man3/SSL_CTX_flush_sessions.3 \
 man/man3/SSL_CTX_free.3 \
 man/man3/SSL_CTX_get0_param.3 \
-man/man3/SSL_CTX_get0_token_store.3 \
 man/man3/SSL_CTX_get_verify_mode.3 \
 man/man3/SSL_CTX_has_client_custom_ext.3 \
 man/man3/SSL_CTX_load_verify_locations.3 \
