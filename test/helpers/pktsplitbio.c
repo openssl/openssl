@@ -55,7 +55,7 @@ static int pkt_split_dgram_recvmmsg(BIO *bio, BIO_MSG *msg, size_t stride,
     BIO_MSG *thismsg;
     QTEST_DATA *bdata = BIO_get_data(bio);
 
-    if (!TEST_ptr(next))
+    if (!TEST_ptr(next) || !TEST_ptr(bdata))
         return 0;
 
     /*
