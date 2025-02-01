@@ -7987,24 +7987,6 @@ SSL *SSL_new_from_listener(SSL *ssl, uint64_t flags)
 #endif
 }
 
-SSL_TOKEN_STORE *SSL_CTX_get0_token_store(SSL_CTX *ctx)
-{
-#ifndef OPENSSL_NO_QUIC
-    return ossl_quic_get0_token_store(ctx);
-#else
-    return NULL;
-#endif
-}
-
-int SSL_CTX_set1_token_store(SSL_CTX *ctx, SSL_TOKEN_STORE *hdl)
-{
-#ifndef OPENSSL_NO_QUIC
-    return ossl_quic_set1_token_store(ctx, hdl);
-#else
-    return 0;
-#endif
-}
-
 SSL *SSL_accept_connection(SSL *ssl, uint64_t flags)
 {
 #ifndef OPENSSL_NO_QUIC
