@@ -31,6 +31,7 @@ typedef struct quic_reactor_st QUIC_REACTOR;
 typedef struct quic_reactor_wait_ctx_st QUIC_REACTOR_WAIT_CTX;
 typedef struct ossl_statm_st OSSL_STATM;
 typedef struct quic_demux_st QUIC_DEMUX;
+typedef struct ossl_qrx_st OSSL_QRX;
 typedef struct ossl_qrx_pkt_st OSSL_QRX_PKT;
 typedef struct ossl_qtx_pkt_st OSSL_QTX_PKT;
 typedef struct quic_tick_result_st QUIC_TICK_RESULT;
