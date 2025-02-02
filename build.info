@@ -36,6 +36,7 @@ DEPEND[]=include/openssl/asn1.h \
          include/openssl/ocsp.h \
          include/openssl/pkcs12.h \
          include/openssl/pkcs7.h \
+         include/openssl/platcert.h \
          include/openssl/safestack.h \
          include/openssl/srp.h \
          include/openssl/ssl.h \
@@ -158,6 +159,7 @@ GENERATE[include/openssl/ocsp.h]=include/openssl/ocsp.h.in
 GENERATE[include/openssl/opensslv.h]=include/openssl/opensslv.h.in
 GENERATE[include/openssl/pkcs12.h]=include/openssl/pkcs12.h.in
 GENERATE[include/openssl/pkcs7.h]=include/openssl/pkcs7.h.in
+GENERATE[include/openssl/platcert.h]=include/openssl/platcert.h.in
 GENERATE[include/openssl/safestack.h]=include/openssl/safestack.h.in
 GENERATE[include/openssl/srp.h]=include/openssl/srp.h.in
 GENERATE[include/openssl/ssl.h]=include/openssl/ssl.h.in
