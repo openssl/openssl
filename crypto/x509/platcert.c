@@ -18,7 +18,6 @@
 #include <openssl/platcert.h>
 #include <crypto/platcert.h>
 #include <crypto/x509/x509_acert.h>
-#include <openssl/ts.h>
 
 ASN1_SEQUENCE(URI_REFERENCE) = {
     ASN1_SIMPLE(URI_REFERENCE, uniformResourceIdentifier, ASN1_IA5STRING),
@@ -206,6 +205,14 @@ ASN1_SEQUENCE(PLATFORM_CONFIG_V3) = {
 
 IMPLEMENT_ASN1_FUNCTIONS(PLATFORM_CONFIG_V3)
 
+static int X509_ALGOR_print_bio(BIO *bio, const X509_ALGOR *alg)
+{
+    int i = OBJ_obj2nid(alg->algorithm);
+    return BIO_printf(bio, "Hash Algorithm: %s\n",
+                      (i == NID_undef) ? "UNKNOWN" : OBJ_nid2ln(i));
+}
+
+
 int URI_REFERENCE_print(BIO *out, URI_REFERENCE *value, int indent)
 {
     int rc;
@@ -219,7 +226,7 @@ int URI_REFERENCE_print(BIO *out, URI_REFERENCE *value, int indent)
         rc = BIO_printf(out, "%*sHash Algorithm:\n%*s", indent, "", indent + 4, "");
         if (rc <= 0)
             return rc;
-        rc = TS_X509_ALGOR_print_bio(out, value->hashAlgorithm);
+        rc = X509_ALGOR_print_bio(out, value->hashAlgorithm);
         if (rc <= 0)
             return rc;
     }
@@ -648,7 +655,7 @@ int ATTRIBUTE_CERTIFICATE_IDENTIFIER_print(BIO *out,
     rc = BIO_printf(out, "%*sHash Algorithm:\n%*s", indent, "", indent + 4, "");
     if (rc <= 0)
         return rc;
-    rc = TS_X509_ALGOR_print_bio(out, value->hashAlgorithm);
+    rc = X509_ALGOR_print_bio(out, value->hashAlgorithm);
     if (rc <= 0)
         return rc;
     rc = BIO_printf(out, "%*sHash Over Signature Value: ", indent, "");
