@@ -125,6 +125,8 @@ int ossl_print_attribute_value(BIO *out,
     X509_NAME *xn = NULL;
     int64_t int_val;
     int ret = 1;
+    /* XXX: Should these just be a single void pointer? We'd lose type safety,
+    but gain a smaller stack frame and a slight performance increase. */
     OSSL_PLATFORM_CONFIG *pc = NULL;
     OSSL_TCG_PLATFORM_SPEC *ps = NULL;
     OSSL_TCG_CRED_TYPE *ct = NULL;
@@ -241,26 +243,17 @@ int ossl_print_attribute_value(BIO *out,
             return ret;
 
         case NID_tcg_at_platformConfiguration_v2:
-            value = av->value.sequence->data;
-            if ((pc = d2i_OSSL_PLATFORM_CONFIG(NULL,
-                                               (const unsigned char**)&value,
-                                               av->value.sequence->length)) == NULL) {
-                BIO_puts(out, "(COULD NOT DECODE PLATFORM CONFIG)\n");
-                return 0;
-            }
-            if (OSSL_PLATFORM_CONFIG_print(out, pc, indent) <= 0)
-                return 0;
-            OSSL_PLATFORM_CONFIG_free(pc);
-            return 1;
-
+            TRY_PRINT_SEQ(pc, OSSL_PLATFORM_CONFIG, "TCG Platform Configuration-v2")
         case NID_tcg_at_tcgPlatformSpecification:
+            /* This one is only handled differently because it does not print
+            on a newline. */
             if (indent && BIO_printf(out, "%*s", indent, "") <= 0)
                 return 0;
             value = av->value.sequence->data;
             if ((ps = d2i_OSSL_TCG_PLATFORM_SPEC(NULL,
                                                  (const unsigned char**)&value,
                                                  av->value.sequence->length)) == NULL) {
-                BIO_puts(out, "(COULD NOT DECODE PLATFORM SPECIFICATION)\n");
+                BIO_puts(out, "(COULD NOT DECODE TCG Platform Specification)\n");
                 return 0;
             }
             if (OSSL_TCG_PLATFORM_SPEC_print(out, ps) <= 0)
@@ -269,101 +262,23 @@ int ossl_print_attribute_value(BIO *out,
             return 1;
 
         case NID_tcg_at_tcgCredentialType:
-            value = av->value.sequence->data;
-            if ((ct = d2i_OSSL_TCG_CRED_TYPE(NULL,
-                                             (const unsigned char**)&value,
-                                             av->value.sequence->length)) == NULL) {
-                BIO_puts(out, "(COULD NOT DECODE PLATFORM CERT CREDENTIAL TYPE)\n");
-                return 0;
-            }
-            if (OSSL_TCG_CRED_TYPE_print(out, ct, indent) <= 0)
-                return 0;
-            OSSL_TCG_CRED_TYPE_free(ct);
-            return 1;
-
+            TRY_PRINT_SEQ(ct, OSSL_TCG_CRED_TYPE, "TCG Platform Certificate Credential Type")
         case NID_tcg_at_platformManufacturerId:
-            value = av->value.sequence->data;
-            if ((mid = d2i_OSSL_MANUFACTURER_ID(NULL,
-                                                (const unsigned char**)&value,
-                                                av->value.sequence->length)) == NULL) {
-                BIO_puts(out, "(COULD NOT DECODE PLATFORM MANUFACTURER ID)\n");
-                return 0;
-            }
-            if (OSSL_MANUFACTURER_ID_print(out, mid, indent) <= 0)
-                return 0;
-            OSSL_MANUFACTURER_ID_free(mid);
-            return 1;
-
+            TRY_PRINT_SEQ(mid, OSSL_MANUFACTURER_ID, "TCG Manufacturer ID")
         case NID_tcg_at_tbbSecurityAssertions:
-            value = av->value.sequence->data;
-            if ((tbb = d2i_OSSL_TBB_SECURITY_ASSERTIONS(NULL,
-                                                        (const unsigned char**)&value,
-                                                        av->value.sequence->length)) == NULL) {
-                BIO_puts(out, "(COULD NOT DECODE TBB SECURITY ASSERTIONS)\n");
-                return 0;
-            }
-            if (OSSL_TBB_SECURITY_ASSERTIONS_print(out, tbb, indent) <= 0)
-                return 0;
-            OSSL_TBB_SECURITY_ASSERTIONS_free(tbb);
-            return 1;
-
+            TRY_PRINT_SEQ(tbb, OSSL_TBB_SECURITY_ASSERTIONS, "Trusted Building Block (TBB) Assertions")
         case NID_tcg_at_platformConfigUri:
-            value = av->value.sequence->data;
-            if ((uri = d2i_OSSL_URI_REFERENCE(NULL,
-                                              (const unsigned char**)&value,
-                                              av->value.sequence->length)) == NULL) {
-                BIO_puts(out, "(COULD NOT DECODE URI REFERENCE)\n");
-                return 0;
-            }
-            if (OSSL_URI_REFERENCE_print(out, uri, indent) <= 0)
-                return 0;
-            OSSL_URI_REFERENCE_free(uri);
-            return 1;
-
+            TRY_PRINT_SEQ(uri, OSSL_URI_REFERENCE, "TCG URI Reference")
         case NID_tcg_at_tcgCredentialSpecification:
-            value = av->value.sequence->data;
-            if ((sv = d2i_OSSL_TCG_SPEC_VERSION(NULL,
-                                                (const unsigned char**)&value,
-                                                av->value.sequence->length)) == NULL) {
-                BIO_puts(out, "(COULD NOT DECODE TCG CREDENTIAL SPECIFICATION)\n");
-                return 0;
-            }
-            // FIXME: Free structures on failure.
-            if (OSSL_TCG_SPEC_VERSION_print(out, sv, indent) <= 0)
-                return 0;
-            OSSL_TCG_SPEC_VERSION_free(sv);
-            return 1;
-
+            TRY_PRINT_SEQ(sv, OSSL_TCG_SPEC_VERSION, "TCG PlatformConfiguration-v3")
         case NID_tcg_at_platformIdentifier:
         case NID_tcg_at_platformConfigUri_v3:
         case NID_tcg_at_previousPlatformCertificates:
         case NID_tcg_at_tbbSecurityAssertions_v3:
         case NID_tcg_at_cryptographicAnchors:
-            value = av->value.sequence->data;
-            if ((traits = d2i_OSSL_PCV2_TRAITS(NULL,
-                                               (const unsigned char**)&value,
-                                               av->value.sequence->length)) == NULL) {
-                BIO_puts(out, "(COULD NOT DECODE TCG TRAITS)\n");
-                return 0;
-            }
-            if (print_traits(out, traits, indent) <= 0)
-                return 0;
-            OSSL_PCV2_TRAITS_free(traits);
-            return 1;
-
+            TRY_PRINT_SEQ_FUNC(traits, OSSL_PCV2_TRAITS, "TCG Traits", print_traits)
         case NID_tcg_at_platformConfiguration_v3:
-            value = av->value.sequence->data;
-            if ((platconf3 = d2i_OSSL_PLATFORM_CONFIG_V3(NULL,
-                                                         (const unsigned char**)&value,
-                                                         av->value.sequence->length)) == NULL) {
-                BIO_puts(out, "(COULD NOT DECODE PLATFORM CONFIG V3)\n");
-                return 0;
-            }
-            if (OSSL_PLATFORM_CONFIG_V3_print(out, platconf3, indent) <= 0)
-                return 0;
-            OSSL_PLATFORM_CONFIG_V3_free(platconf3);
-            return 1;
-
+            TRY_PRINT_SEQ(platconf3, OSSL_PLATFORM_CONFIG_V3, "TCG PlatformConfiguration-v3")
         case NID_tcg_tr_ID_FIPSLevel:
             TRY_PRINT_SEQ(fips, OSSL_FIPS_LEVEL, "FIPSLevel")
         case NID_tcg_tr_ID_CertificateIdentifier:
@@ -376,7 +291,6 @@ int ossl_print_attribute_value(BIO *out,
             TRY_PRINT_SEQ(iso9000, OSSL_ISO9000_CERTIFICATION, "TCG Platform Certificate ISO 9000 Certification")
         case NID_tcg_tr_ID_PublicKey:
             TRY_PRINT_SEQ_FUNC(pubkey, X509_PUBKEY, "TCG Public Key Trait", print_pubkey)
-
         default:
             break;
         }
