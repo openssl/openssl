@@ -23,7 +23,6 @@
  * QUIC Record Layer - RX
  * ======================
  */
-typedef struct ossl_qrx_st OSSL_QRX;
 
 typedef struct ossl_qrx_args_st {
     OSSL_LIB_CTX   *libctx;
@@ -321,6 +320,8 @@ int ossl_qrx_set_late_validation_cb(OSSL_QRX *qrx,
  * establish a new connection.
  */
 void ossl_qrx_inject_urxe(OSSL_QRX *qrx, QUIC_URXE *e);
+int ossl_qrx_validate_initial_packet(OSSL_QRX *qrx, QUIC_URXE *urxe,
+                                     const QUIC_CONN_ID *dcid);
 
 /*
  * Decryption of 1-RTT packets must be explicitly enabled by calling this
