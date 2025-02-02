@@ -155,6 +155,12 @@ ASN1_SEQUENCE(OSSL_PCV2_TRAIT) = {
 
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_PCV2_TRAIT)
 
+ASN1_ITEM_TEMPLATE(OSSL_PCV2_TRAITS) =
+    ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, OSSL_PCV2_TRAITS, OSSL_PCV2_TRAIT)
+ASN1_ITEM_TEMPLATE_END(OSSL_PCV2_TRAITS)
+
+IMPLEMENT_ASN1_FUNCTIONS(OSSL_PCV2_TRAITS)
+
 ASN1_SEQUENCE(OSSL_HASHED_CERTIFICATE_IDENTIFIER) = {
     ASN1_SIMPLE(OSSL_HASHED_CERTIFICATE_IDENTIFIER, hashValue, X509_ALGOR),
     ASN1_SIMPLE(OSSL_HASHED_CERTIFICATE_IDENTIFIER, hashOverSignatureValue, ASN1_OCTET_STRING)
@@ -885,4 +891,123 @@ int PLATFORM_CONFIG_print(BIO *out, OSSL_PLATFORM_CONFIG *value, int indent)
             return rc;
     }
     return 1;
+}
+
+static int print_trait(BIO *out, OSSL_PCV2_TRAIT *trait, int indent)
+{
+    ASN1_TYPE *value;
+    unsigned char *bytes;
+    int nid;
+
+    if (BIO_printf(out, "%*sTrait ID: ", indent, "") <= 0)
+        return -1;
+    if (print_oid(out, trait->traitId) <= 0)
+        return -1;
+    if (BIO_puts(out, "\n") <= 0)
+        return -1;
+
+    if (BIO_printf(out, "%*sTrait Category: ", indent, "") <= 0)
+        return -1;
+    if (print_oid(out, trait->traitCategory) <= 0)
+        return -1;
+    if (BIO_puts(out, "\n") <= 0)
+        return -1;
+
+    if (BIO_printf(out, "%*sTrait Registry: ", indent, "") <= 0)
+        return -1;
+    if (print_oid(out, trait->traitRegistry) <= 0)
+        return -1;
+    if (BIO_puts(out, "\n") <= 0)
+        return -1;
+
+    if (trait->description != NULL) {
+        if (BIO_printf(out, "%*sTrait Description: ", indent, "") <= 0)
+            return -1;
+        if (BIO_printf(out, "%.*s",
+                       trait->description->length,
+                       trait->description->data) <= 0)
+            return -1;
+        if (BIO_puts(out, "\n") <= 0)
+            return -1;
+    }
+
+    if (trait->descriptionURI != NULL) {
+        if (BIO_printf(out, "%*sTrait Description URI: ", indent, "") <= 0)
+            return -1;
+        if (BIO_printf(out, "%.*s",
+                       trait->descriptionURI->length,
+                       trait->descriptionURI->data) <= 0)
+            return -1;
+        if (BIO_puts(out, "\n") <= 0)
+            return -1;
+    }
+
+    bytes = trait->traitValue->data;
+    if (d2i_ASN1_TYPE(&value, (const unsigned char **)&bytes, trait->traitValue->length) == NULL)
+        return -1;
+    nid = OBJ_obj2nid(trait->traitId);
+    if (ossl_print_attribute_value(out, nid, value, indent + 4) <= 0)
+        return -1;
+    return 0;
+}
+
+int print_traits(BIO *out, STACK_OF(OSSL_PCV2_TRAIT) *traits, int indent)
+{
+    int rc = 0;
+    OSSL_PCV2_TRAIT *trait = NULL;
+
+    for (int i = 0; i < sk_OSSL_PCV2_TRAIT_num(traits); i++) {
+        trait = sk_OSSL_PCV2_TRAIT_value(traits, i);
+        rc = print_trait(out, trait, indent + 8);
+        if (rc <= 0)
+            return rc;
+        rc = BIO_puts(out, "\n");
+        if (rc <= 0)
+            return rc;
+    }
+    return rc;
+}
+
+int PLATFORM_CONFIG_V3_print(BIO *out, OSSL_PLATFORM_CONFIG_V3 *value, int indent)
+{
+    int pcs, pps, numtraits;
+    OSSL_COMPONENT_IDENTIFIER_V2 *pc;
+    OSSL_PLATFORM_PROPERTY *pp;
+    OSSL_PCV2_TRAIT *trait;
+
+    if (value->platformComponents != NULL) {
+        pcs = sk_OSSL_COMPONENT_IDENTIFIER_V2_num(value->platformComponents);
+        if (BIO_printf(out, "%*sPlatform Components:\n", indent, "") <= 0)
+            return -1;
+        for (int i = 0; i < pcs; i++) {
+            if (BIO_printf(out, "%*sPlatform Component (Traits):\n", indent + 4, "") <= 0)
+                return -1;
+            pc = sk_OSSL_COMPONENT_IDENTIFIER_V2_value(value->platformComponents, i);
+            numtraits = sk_OSSL_PCV2_TRAIT_num(pc);
+            for (int j = 0; j < numtraits; j++) {
+                trait = sk_OSSL_PCV2_TRAIT_value(pc, j);
+                if (print_trait(out, trait, indent + 8) <= 0)
+                    return -1;
+                if (BIO_puts(out, "\n") <= 0)
+                    return -1;
+            }
+        }
+    }
+
+    if (value->platformProperties != NULL) {
+        pps = sk_OSSL_PLATFORM_PROPERTY_num(value->platformProperties);
+        if (BIO_printf(out, "%*sPlatform Properties:\n", indent, "") <= 0)
+            return -1;
+        for (int i = 0; i < pps; i++) {
+            if (BIO_printf(out, "%*sPlatform Property:\n", indent + 4, "") <= 0)
+                return -1;
+            pp = sk_OSSL_PLATFORM_PROPERTY_value(value->platformProperties, i);
+            if (PLATFORM_PROPERTY_print(out, pp, indent + 8) <= 0)
+                return -1;
+            if (BIO_puts(out, "\n") <= 0)
+                return -1;
+        }
+    }
+
+    return 0;
 }

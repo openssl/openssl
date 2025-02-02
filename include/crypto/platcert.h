@@ -20,3 +20,5 @@ int ATTRIBUTE_CERTIFICATE_IDENTIFIER_print(BIO *out,
 int CERTIFICATE_IDENTIFIER_print(BIO *out, OSSL_CERTIFICATE_IDENTIFIER *value, int indent);
 int COMPONENT_IDENTIFIER_print(BIO *out, OSSL_COMPONENT_IDENTIFIER *value, int indent);
 int PLATFORM_CONFIG_print(BIO *out, OSSL_PLATFORM_CONFIG *value, int indent);
+int print_traits(BIO *out, STACK_OF(OSSL_PCV2_TRAIT) *traits, int indent);
+int PLATFORM_CONFIG_V3_print(BIO *out, OSSL_PLATFORM_CONFIG_V3 *value, int indent);
