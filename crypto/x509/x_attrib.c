@@ -279,6 +279,7 @@ int ossl_print_attribute_value(BIO *out,
             TRY_PRINT_SEQ_FUNC(traits, OSSL_PCV2_TRAITS, "TCG Traits", print_traits)
         case NID_tcg_at_platformConfiguration_v3:
             TRY_PRINT_SEQ(platconf3, OSSL_PLATFORM_CONFIG_V3, "TCG PlatformConfiguration-v3")
+        /* Below here are not attributes per se, but it's the same idea. */
         case NID_tcg_tr_ID_FIPSLevel:
             TRY_PRINT_SEQ(fips, OSSL_FIPS_LEVEL, "FIPSLevel")
         case NID_tcg_tr_ID_CertificateIdentifier:
