@@ -17,6 +17,8 @@
 #include <crypto/x509_acert.h>
 #include <openssl/platcert.h>
 #include <crypto/platcert.h>
+#include <crypto/x509/x509_acert.h>
+#include <openssl/ts.h>
 
 ASN1_SEQUENCE(URI_REFERENCE) = {
     ASN1_SIMPLE(URI_REFERENCE, uniformResourceIdentifier, ASN1_IA5STRING),
@@ -209,8 +211,8 @@ int URI_REFERENCE_print(BIO *out, URI_REFERENCE *value, int indent)
     int rc;
 
     rc = BIO_printf(out, "%*sURI: %.*s\n", indent, "",
-        value->uniformResourceIdentifier->length,
-        value->uniformResourceIdentifier->data);
+                    value->uniformResourceIdentifier->length,
+                    value->uniformResourceIdentifier->data);
     if (rc <= 0)
         return rc;
     if (value->hashAlgorithm != NULL) {
@@ -292,8 +294,8 @@ static int print_oid(BIO *out, const ASN1_OBJECT *oid)
         return 0;
     ln = OBJ_nid2ln(OBJ_obj2nid(oid));
     rc = (ln != NULL)
-           ? BIO_printf(out, "%s (%s)", objbuf, ln)
-           : BIO_printf(out, "%s", objbuf);
+        ? BIO_printf(out, "%s (%s)", objbuf, ln)
+        : BIO_printf(out, "%s", objbuf);
     return (rc >= 0);
 }
 

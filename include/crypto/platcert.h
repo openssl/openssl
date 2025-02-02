@@ -14,7 +14,9 @@ int TCG_PLATFORM_SPEC_print(BIO *out, TCG_PLATFORM_SPEC *value);
 int TCG_CRED_TYPE_print(BIO *out, TCG_CRED_TYPE *value, int indent);
 int COMPONENT_ADDRESS_print(BIO *out, COMPONENT_ADDRESS *value, int indent);
 int PLATFORM_PROPERTY_print(BIO *out, PLATFORM_PROPERTY *value, int indent);
-int ATTRIBUTE_CERTIFICATE_IDENTIFIER_print(BIO *out, ATTRIBUTE_CERTIFICATE_IDENTIFIER *value, int indent);
+int ATTRIBUTE_CERTIFICATE_IDENTIFIER_print(BIO *out,
+                                           ATTRIBUTE_CERTIFICATE_IDENTIFIER *value,
+                                           int indent);
 int CERTIFICATE_IDENTIFIER_print(BIO *out, CERTIFICATE_IDENTIFIER *value, int indent);
 int COMPONENT_IDENTIFIER_print(BIO *out, COMPONENT_IDENTIFIER *value, int indent);
 int PLATFORM_CONFIG_print(BIO *out, PLATFORM_CONFIG *value, int indent);
