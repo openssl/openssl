@@ -16,6 +16,7 @@
 #include <crypto/x509.h>
 #include <openssl/platcert.h>
 #include <crypto/platcert.h>
+#include <openssl/x509v3.h>
 
 #include <crypto/asn1.h>
 
@@ -94,6 +95,8 @@ int ossl_print_attribute_value(BIO *out,
     OSSL_MANUFACTURER_ID *mid = NULL;
     OSSL_TBB_SECURITY_ASSERTIONS *tbb = NULL;
     OSSL_URI_REFERENCE *uri = NULL;
+    STACK_OF(OSSL_PCV2_TRAIT) *traits = NULL;
+    OSSL_PLATFORM_CONFIG_V3 *platconf3 = NULL;
 
     switch (av->type) {
     case V_ASN1_BOOLEAN:
@@ -282,9 +285,40 @@ int ossl_print_attribute_value(BIO *out,
                 BIO_puts(out, "(COULD NOT DECODE TCG CREDENTIAL SPECIFICATION)\n");
                 return 0;
             }
+            // FIXME: Free structures on failure.
             if (TCG_SPEC_VERSION_print(out, sv, indent) <= 0)
                 return 0;
             OSSL_TCG_SPEC_VERSION_free(sv);
+            return 1;
+
+        case NID_tcg_at_platformIdentifier:
+        case NID_tcg_at_platformConfigUri_v3:
+        case NID_tcg_at_previousPlatformCertificates:
+        case NID_tcg_at_tbbSecurityAssertions_v3:
+        case NID_tcg_at_cryptographicAnchors:
+            value = av->value.sequence->data;
+            if ((traits = d2i_OSSL_PCV2_TRAITS(NULL,
+                                               (const unsigned char**)&value,
+                                               av->value.sequence->length)) == NULL) {
+                BIO_puts(out, "(COULD NOT DECODE TCG TRAITS)\n");
+                return 0;
+            }
+            if (print_traits(out, traits, indent) <= 0)
+                return 0;
+            OSSL_PCV2_TRAITS_free(traits);
+            return 1;
+
+        case NID_tcg_at_platformConfiguration_v3:
+            value = av->value.sequence->data;
+            if ((platconf3 = d2i_OSSL_PLATFORM_CONFIG_V3(NULL,
+                                                         (const unsigned char**)&value,
+                                                         av->value.sequence->length)) == NULL) {
+                BIO_puts(out, "(COULD NOT DECODE PLATFORM CONFIG V3)\n");
+                return 0;
+            }
+            if (PLATFORM_CONFIG_V3_print(out, platconf3, indent) <= 0)
+                return 0;
+            OSSL_PLATFORM_CONFIG_V3_free(platconf3);
             return 1;
 
         default:
