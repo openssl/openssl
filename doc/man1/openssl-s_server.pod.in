@@ -512,15 +512,13 @@ Disable Extended master secret negotiation.
 
 =item B<-status>
 
-Enables certificate status request support (aka OCSP stapling).
-Only the status response for the leaf (server) certificate is provided
-(regardless of the TLS version).
+Enables certificate status request support (aka OCSP stapling):
+an OCSP response is provided for the leaf (server) certificate.
 
 =item B<-status_all>
 
-Like before, but for TLSv1.3 any beyond, status responses for all
-certificates in the chain (except the trust anchor) are provided
-(multi-stapling).
+Like before, but for TLS v1.3 and beyond, status responses for all
+certificates in the chain (except the trust anchor) are provided.
 
 =item B<-status_verbose>
 
@@ -563,7 +561,7 @@ Any given query component is handled as part of the path component.
 
 Overrides any OCSP responder URLs from the certificate and always provides the
 OCSP Response stored in the file. The file must be in DER format.
-This option may be used multiple times to specify OCSP Responses for all
+This option may be used multiple times to specify OCSP responses for all
 certificates in the server certificate chain.
 
 =item B<-ssl_config> I<val>
