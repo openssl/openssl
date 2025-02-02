@@ -78,13 +78,14 @@ static int print_oid(BIO *out, const ASN1_OBJECT *oid)
     return (rc >= 0);
 }
 
-static int print_pubkey(BIO *out, X509_PUBKEY *pubkey, int indent) {
+static int print_pubkey(BIO *out, X509_PUBKEY *pubkey, int indent)
+{
     ASN1_OBJECT *xpoid;
     EVP_PKEY *pkey;
 
     X509_PUBKEY_get0_param(&xpoid, NULL, NULL, NULL, pubkey);
     if (BIO_printf(out, "%*sPublic Key Algorithm: ", indent, "") <= 0)
-         return -1;
+        return -1;
     if (i2a_ASN1_OBJECT(out, xpoid) <= 0)
         return -1;
     if (BIO_puts(out, "\n") <= 0)
@@ -125,8 +126,10 @@ int ossl_print_attribute_value(BIO *out,
     X509_NAME *xn = NULL;
     int64_t int_val;
     int ret = 1;
-    /* XXX: Should these just be a single void pointer? We'd lose type safety,
-    but gain a smaller stack frame and a slight performance increase. */
+    /*
+     * XXX: Should these just be a single void pointer? We'd lose type safety,
+     * but gain a smaller stack frame and a slight performance increase.
+     */
     OSSL_PLATFORM_CONFIG *pc = NULL;
     OSSL_TCG_PLATFORM_SPEC *ps = NULL;
     OSSL_TCG_CRED_TYPE *ct = NULL;
@@ -245,8 +248,10 @@ int ossl_print_attribute_value(BIO *out,
         case NID_tcg_at_platformConfiguration_v2:
             TRY_PRINT_SEQ(pc, OSSL_PLATFORM_CONFIG, "TCG Platform Configuration-v2")
         case NID_tcg_at_tcgPlatformSpecification:
-            /* This one is only handled differently because it does not print
-            on a newline. */
+            /*
+             * This one is only handled differently because it does not print
+             * on a newline.
+             */
             if (indent && BIO_printf(out, "%*s", indent, "") <= 0)
                 return 0;
             value = av->value.sequence->data;

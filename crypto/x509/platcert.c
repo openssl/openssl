@@ -204,6 +204,7 @@ IMPLEMENT_ASN1_FUNCTIONS(OSSL_PLATFORM_CONFIG_V3)
 static int X509_ALGOR_print_bio(BIO *bio, const X509_ALGOR *alg)
 {
     int i = OBJ_obj2nid(alg->algorithm);
+
     return BIO_printf(bio, "Hash Algorithm: %s\n",
                       (i == NID_undef) ? "UNKNOWN" : OBJ_nid2ln(i));
 }
@@ -326,8 +327,8 @@ int OSSL_COMPONENT_CLASS_print(BIO *out, OSSL_COMPONENT_CLASS *value, int indent
 }
 
 int OSSL_COMMON_CRITERIA_MEASURES_print(BIO *out,
-                                   OSSL_COMMON_CRITERIA_MEASURES *value,
-                                   int indent)
+                                        OSSL_COMMON_CRITERIA_MEASURES *value,
+                                        int indent)
 {
     int rc;
     int64_t int_val;
@@ -582,10 +583,8 @@ int OSSL_TCG_PLATFORM_SPEC_print(BIO *out, OSSL_TCG_PLATFORM_SPEC *value)
 
 int OSSL_TCG_CRED_TYPE_print(BIO *out, OSSL_TCG_CRED_TYPE *value, int indent)
 {
-    int rc;
-    rc = BIO_printf(out, "%*sCredential Type: ", indent, "");
-    if (rc <= 0)
-        return rc;
+    if (BIO_printf(out, "%*sCredential Type: ", indent, "") <= 0)
+        return -1;
     return print_oid(out, value->certificateType);
 }
 
@@ -664,7 +663,9 @@ int OSSL_HASHED_CERTIFICATE_IDENTIFIER_print(BIO *out,
     return BIO_puts(out, "\n");
 }
 
-int OSSL_PCV2_CERTIFICATE_IDENTIFIER_print(BIO *out, OSSL_PCV2_CERTIFICATE_IDENTIFIER *value, int indent)
+int OSSL_PCV2_CERTIFICATE_IDENTIFIER_print(BIO *out,
+                                           OSSL_PCV2_CERTIFICATE_IDENTIFIER *value,
+                                           int indent)
 {
     int rc;
     OSSL_ISSUER_SERIAL *iss;
@@ -674,8 +675,8 @@ int OSSL_PCV2_CERTIFICATE_IDENTIFIER_print(BIO *out, OSSL_PCV2_CERTIFICATE_IDENT
         if (rc <= 0)
             return rc;
         rc = OSSL_HASHED_CERTIFICATE_IDENTIFIER_print(out,
-                                                         value->hashedCertIdentifier,
-                                                         indent + 4);
+                                                      value->hashedCertIdentifier,
+                                                      indent + 4);
         if (rc <= 0)
             return rc;
         rc = BIO_puts(out, "\n");
@@ -1004,7 +1005,8 @@ int OSSL_PLATFORM_CONFIG_V3_print(BIO *out, OSSL_PLATFORM_CONFIG_V3 *value, int 
 
 int OSSL_ISO9000_CERTIFICATION_print(BIO *out, OSSL_ISO9000_CERTIFICATION *value, int indent)
 {
-    if (BIO_printf(out, "ISO 9000 Certified: %s\n", value->iso9000Certified ? "TRUE" : "FALSE") <= 0)
+    if (BIO_printf(out, "ISO 9000 Certified: %s\n",
+                   value->iso9000Certified ? "TRUE" : "FALSE") <= 0)
         return -1;
     if (value->iso9000Uri == NULL)
         return 1;
