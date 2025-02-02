@@ -1,7 +1,7 @@
 /*
- * Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License"). You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -16,6 +16,7 @@
 #include <crypto/x509.h>
 #include <crypto/x509_acert.h>
 #include <openssl/platcert.h>
+#include <crypto/platcert.h>
 
 ASN1_SEQUENCE(URI_REFERENCE) = {
     ASN1_SIMPLE(URI_REFERENCE, uniformResourceIdentifier, ASN1_IA5STRING),
@@ -203,24 +204,30 @@ ASN1_SEQUENCE(PLATFORM_CONFIG_V3) = {
 
 IMPLEMENT_ASN1_FUNCTIONS(PLATFORM_CONFIG_V3)
 
-int URI_REFERENCE_print (BIO *out, URI_REFERENCE *value, int indent) {
+int URI_REFERENCE_print(BIO *out, URI_REFERENCE *value, int indent)
+{
     int rc;
     
     rc = BIO_printf(out, "%*sURI: %.*s\n", indent, "",
         value->uniformResourceIdentifier->length,
         value->uniformResourceIdentifier->data);
-    if (rc <= 0) return rc;
+    if (rc <= 0)
+        return rc;
     if (value->hashAlgorithm != NULL) {
         rc = BIO_printf(out, "%*sHash Algorithm:\n%*s", indent, "", indent + 4, "");
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
         rc = TS_X509_ALGOR_print_bio(out, value->hashAlgorithm);
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
     }
     if (value->hashValue != NULL) {
         rc = BIO_printf(out, "%*sHash Value: ", indent, "");
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
         rc = ossl_bio_print_hex(out, value->hashValue->data, value->hashValue->length);
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
     }
     return rc;
 }
@@ -275,7 +282,8 @@ static ENUMERATED_NAMES attribute_statuses[] = {
     {-1, NULL, NULL},
 };
 
-static int print_oid(BIO *out, const ASN1_OBJECT *oid) {
+static int print_oid(BIO *out, const ASN1_OBJECT *oid)
+{
     const char *ln;
     char objbuf[80];
     int rc;
@@ -289,44 +297,54 @@ static int print_oid(BIO *out, const ASN1_OBJECT *oid) {
     return (rc >= 0);
 }
 
-int COMPONENT_CLASS_print (BIO *out, COMPONENT_CLASS *value, int indent) {
+int COMPONENT_CLASS_print(BIO *out, COMPONENT_CLASS *value, int indent)
+{
     int rc;
     
     rc = BIO_printf(out, "%*sComponent Class Registry: ", indent, "");
-    if (rc <= 0) return rc;
+    if (rc <= 0)
+        return rc;
     rc = print_oid(out, value->componentClassRegistry);
-    if (rc <= 0) return rc;
+    if (rc <= 0)
+        return rc;
     rc = BIO_puts(out, "\n");
-    if (rc <= 0) return rc;
+    if (rc <= 0)
+        return rc;
     rc = BIO_printf(out, "%*sComponent Class Registry: ", indent, "");
-    if (rc <= 0) return rc;
+    if (rc <= 0)
+        return rc;
     rc = ossl_bio_print_hex(out, value->componentClassValue->data, value->componentClassValue->length);
-    if (rc <= 0) return rc;
+    if (rc <= 0)
+        return rc;
     return BIO_puts(out, "\n");
 }
 
-int COMMON_CRITERIA_MEASURES_print (BIO *out,
-                                    COMMON_CRITERIA_MEASURES *value,
-                                    int indent) {
+int COMMON_CRITERIA_MEASURES_print(BIO *out,
+                                   COMMON_CRITERIA_MEASURES *value,
+                                   int indent)
+{
     int rc;
     int64_t int_val;
 
     rc = BIO_printf(out, "%*sVersion: %.*s\n", indent, "",
                     value->version->length,
                     value->version->data);
-    if (rc <= 0) return rc;
+    if (rc <= 0)
+        return rc;
     rc = BIO_printf(out, "%*sAssurance Level: ", indent, "");
-    if (rc <= 0) return rc;
+    if (rc <= 0)
+        return rc;
     if (!ASN1_ENUMERATED_get_int64(&int_val, value->assurancelevel)
         || int_val <= 0
         || int_val > INT_MAX)
         return -1;
     if (int_val > 7) {
-        rc = BIO_printf(out, "%ld\n", int_val);
+        rc = BIO_printf(out, "%lld\n", (long long int)int_val);
     } else {
         rc = BIO_printf(out, "%s\n", evaluation_assurance_levels[int_val - 1].lname);
     }
-    if (rc <= 0) return rc;
+    if (rc <= 0)
+        return rc;
     if (!ASN1_ENUMERATED_get_int64(&int_val, value->evaluationStatus)
         || int_val < 0
         || int_val > INT_MAX)
@@ -336,84 +354,104 @@ int COMMON_CRITERIA_MEASURES_print (BIO *out,
     } else {
         rc = BIO_printf(out, "%*sEvaluation Status: %s\n", indent, "", evaluation_statuses[int_val].lname);
     }
-    if (rc <= 0) return rc;
+    if (rc <= 0)
+        return rc;
     rc = BIO_printf(out, "%*sPlus: ", indent, "");
-    if (rc <= 0) return rc;
+    if (rc <= 0)
+        return rc;
     if (value->plus) {
         rc = BIO_puts(out, "TRUE\n");
     } else {
         rc = BIO_puts(out, "FALSE\n");
     }
-    if (rc <= 0) return rc;
+    if (rc <= 0)
+        return rc;
     if (value->strengthOfFunction != NULL) {
         rc = BIO_printf(out, "%*sStrength Of Function: ", indent, "");
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
         if (!ASN1_ENUMERATED_get_int64(&int_val, value->strengthOfFunction)
             || int_val < 0
             || int_val > INT_MAX)
             return -1;
         if (int_val > 2) {
-            rc = BIO_printf(out, "%ld\n", int_val);
+            rc = BIO_printf(out, "%lld\n", (long long int)int_val);
         } else {
             rc = BIO_printf(out, "%s\n", strengths_of_function[int_val].lname);
         }
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
     }
     if (value->profileOid != NULL) {
         rc = BIO_printf(out, "%*sProfile OID: ", indent, "");
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
         rc = print_oid(out, value->profileOid);
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
         rc = BIO_puts(out, "\n");
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
     }
     if (value->profileUri != NULL) {
         rc = BIO_printf(out, "%*sProfile URI:\n", indent, "");
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
         rc = URI_REFERENCE_print(out, value->profileUri, indent + 4);
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
         rc = BIO_puts(out, "\n");
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
     }
     if (value->targetOid != NULL) {
         rc = BIO_printf(out, "%*sTarget OID: ", indent, "");
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
         rc = print_oid(out, value->targetOid);
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
         rc = BIO_puts(out, "\n");
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
     }
     if (value->targetUri != NULL) {
         rc = BIO_printf(out, "%*sTarget URI:\n", indent, "");
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
         rc = URI_REFERENCE_print(out, value->targetUri, indent + 4);
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
     }
     rc = BIO_puts(out, "\n");
     return rc;
 }
 
-int FIPS_LEVEL_print (BIO *out, FIPS_LEVEL *value, int indent) {
+int FIPS_LEVEL_print(BIO *out, FIPS_LEVEL *value, int indent)
+{
     int rc;
     int64_t int_val;
 
     rc = BIO_printf(out, "%*sVersion: %.*s\n", indent, "",
                     value->version->length,
                     value->version->data);
-    if (rc <= 0) return rc;
+    if (rc <= 0)
+        return rc;
     if (value->level != NULL) {
         rc = BIO_printf(out, "%*sLevel: ", indent, "");
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
         if (!ASN1_ENUMERATED_get_int64(&int_val, value->level)
             || int_val <= 0
             || int_val > INT_MAX)
             return -1;
         if (int_val > 4) {
-            rc = BIO_printf(out, "%ld\n", int_val);
+            rc = BIO_printf(out, "%lld\n", (long long int)int_val);
         } else {
             rc = BIO_printf(out, "%s\n", security_levels[int_val - 1].lname);
         }
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
     }
     if (value->plus) {
         rc = BIO_printf(out, "%*sPlus: TRUE\n", indent, "");
@@ -423,7 +461,8 @@ int FIPS_LEVEL_print (BIO *out, FIPS_LEVEL *value, int indent) {
     return rc;
 }
 
-int TBB_SECURITY_ASSERTIONS_print (BIO *out, TBB_SECURITY_ASSERTIONS *value, int indent) {
+int TBB_SECURITY_ASSERTIONS_print(BIO *out, TBB_SECURITY_ASSERTIONS *value, int indent)
+{
     int rc = 1; /* All fields are OPTIONAL, so we start off at 1 in case all are omitted. */
     int64_t int_val;
 
@@ -436,39 +475,47 @@ int TBB_SECURITY_ASSERTIONS_print (BIO *out, TBB_SECURITY_ASSERTIONS *value, int
     } else {
         rc = BIO_printf(out, "%*sVersion: 1\n", indent, "");
     }
-    if (rc <= 0) return rc;
+    if (rc <= 0)
+        return rc;
     if (value->ccInfo != NULL) {
         rc = BIO_printf(out, "%*sCommon Criteria Measures:\n", indent, "");
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
         rc = COMMON_CRITERIA_MEASURES_print(out, value->ccInfo, indent + 4);
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
     }
     if (value->fipsLevel != NULL) {
         rc = BIO_printf(out, "%*sFIPS Level:\n", indent, "");
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
         rc = FIPS_LEVEL_print(out, value->fipsLevel, indent + 4);
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
     }
     if (value->rtmType != NULL) {
         rc = BIO_printf(out, "%*sRoot Measurement Type: ", indent, "");
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
         if (!ASN1_ENUMERATED_get_int64(&int_val, value->rtmType)
             || int_val < 0
             || int_val > INT_MAX)
             return -1;
         if (int_val > 5) {
-            rc = BIO_printf(out, "%ld\n", int_val);
+            rc = BIO_printf(out, "%lld\n", (long long int)int_val);
         } else {
             rc = BIO_printf(out, "%s\n", measurement_root_types[int_val].lname);
         }
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
     }
     if (value->iso9000Certified) {
         rc = BIO_printf(out, "%*sPlus: TRUE\n", indent, "");
     } else {
         rc = BIO_printf(out, "%*sPlus: FALSE\n", indent, "");
     }
-    if (rc <= 0) return rc;
+    if (rc <= 0)
+        return rc;
     if (value->iso9000Uri) {
         rc = BIO_printf(out, "%*sISO 9001 URI: %.*s",
                         indent,
@@ -479,15 +526,18 @@ int TBB_SECURITY_ASSERTIONS_print (BIO *out, TBB_SECURITY_ASSERTIONS *value, int
     return rc;
 }
 
-int MANUFACTURER_ID_print (BIO *out, MANUFACTURER_ID *value, int indent) {
+int MANUFACTURER_ID_print(BIO *out, MANUFACTURER_ID *value, int indent)
+{
     int rc;
 
     rc = BIO_printf(out, "%*sManufacturer Identifier: ", indent, "");
-    if (rc <= 0) return rc;
+    if (rc <= 0)
+        return rc;
     return print_oid(out, value->manufacturerIdentifier);
 }
 
-int TCG_SPEC_VERSION_print (BIO *out, TCG_SPEC_VERSION *value, int indent) {
+int TCG_SPEC_VERSION_print(BIO *out, TCG_SPEC_VERSION *value, int indent)
+{
     int64_t major, minor, rev;
 
     if (!ASN1_INTEGER_get_int64(&major, value->majorVersion)
@@ -505,204 +555,257 @@ int TCG_SPEC_VERSION_print (BIO *out, TCG_SPEC_VERSION *value, int indent) {
     return BIO_printf(out, "%*s%ld.%ld.%ld", indent, "", major, minor, rev);
 }
 
-int TCG_PLATFORM_SPEC_print (BIO *out, TCG_PLATFORM_SPEC *value) {
+int TCG_PLATFORM_SPEC_print(BIO *out, TCG_PLATFORM_SPEC *value)
+{
     int rc;
 
     rc = TCG_SPEC_VERSION_print(out, value->version, 0);
-    if (rc <= 0) return rc;
+    if (rc <= 0)
+        return rc;
     rc = BIO_puts(out, " : ");
-    if (rc <= 0) return rc;
+    if (rc <= 0)
+        return rc;
     return ossl_bio_print_hex(out, value->platformClass->data, value->platformClass->length);
 }
 
-int TCG_CRED_TYPE_print (BIO *out, TCG_CRED_TYPE *value, int indent) {
+int TCG_CRED_TYPE_print(BIO *out, TCG_CRED_TYPE *value, int indent)
+{
     int rc;
     rc = BIO_printf(out, "%*sCredential Type: ", indent, "");
-    if (rc <= 0) return rc;
+    if (rc <= 0)
+        return rc;
     return print_oid(out, value->certificateType);
 }
 
-int COMPONENT_ADDRESS_print (BIO *out, COMPONENT_ADDRESS *value, int indent) {
+int COMPONENT_ADDRESS_print(BIO *out, COMPONENT_ADDRESS *value, int indent)
+{
     int rc;
 
     rc = BIO_printf(out, "%*sAddress Type: ", indent, "");
-    if (rc <= 0) return rc;
+    if (rc <= 0)
+        return rc;
     rc = print_oid(out, value->addressType);
-    if (rc <= 0) return rc;
+    if (rc <= 0)
+        return rc;
     rc = BIO_puts(out, "\n");
-    if (rc <= 0) return rc;
+    if (rc <= 0)
+        return rc;
     rc = BIO_printf(out, "%*sAddress Value: %.*s", indent, "", value->addressValue->length, value->addressValue->data);
-    if (rc <= 0) return rc;
+    if (rc <= 0)
+        return rc;
     return BIO_puts(out, "\n");
 }
 
-int PLATFORM_PROPERTY_print (BIO *out, PLATFORM_PROPERTY *value, int indent) {
+int PLATFORM_PROPERTY_print(BIO *out, PLATFORM_PROPERTY *value, int indent)
+{
     int rc;
     int64_t int_val;
 
     rc = BIO_printf(out, "%*sProperty Name: %.*s\n", indent, "", value->propertyName->length, value->propertyName->data);
-    if (rc <= 0) return rc;
+    if (rc <= 0)
+        return rc;
     rc = BIO_printf(out, "%*sProperty Value: %.*s\n", indent, "", value->propertyValue->length, value->propertyValue->data);
-    if (rc <= 0) return rc;
+    if (rc <= 0)
+        return rc;
     if (value->status != NULL) {
         rc = BIO_printf(out, "%*sStatus: ", indent, "");
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
         if (!ASN1_ENUMERATED_get_int64(&int_val, value->status)
             || int_val < 0
             || int_val > INT_MAX)
             return -1;
         if (int_val > 2) {
-            rc = BIO_printf(out, "%ld\n", int_val);
+            rc = BIO_printf(out, "%lld\n", (long long int)int_val);
         } else {
             rc = BIO_printf(out, "%s\n", attribute_statuses[int_val].lname);
         }
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
     }
     return 1;
 }
 
-int ATTRIBUTE_CERTIFICATE_IDENTIFIER_print (BIO *out, ATTRIBUTE_CERTIFICATE_IDENTIFIER *value, int indent) {
+int ATTRIBUTE_CERTIFICATE_IDENTIFIER_print(BIO *out, ATTRIBUTE_CERTIFICATE_IDENTIFIER *value, int indent)
+{
     int rc;
 
     rc = BIO_printf(out, "%*sHash Algorithm:\n%*s", indent, "", indent + 4, "");
-    if (rc <= 0) return rc;
+    if (rc <= 0)
+        return rc;
     rc = TS_X509_ALGOR_print_bio(out, value->hashAlgorithm);
-    if (rc <= 0) return rc;
+    if (rc <= 0)
+        return rc;
     rc = BIO_printf(out, "%*sHash Over Signature Value: ", indent, "");
-    if (rc <= 0) return rc;
+    if (rc <= 0)
+        return rc;
     rc = ossl_bio_print_hex(out, value->hashOverSignatureValue->data, value->hashOverSignatureValue->length);
-    if (rc <= 0) return rc;
+    if (rc <= 0)
+        return rc;
     return BIO_puts(out, "\n");
 }
 
-int CERTIFICATE_IDENTIFIER_print (BIO *out, CERTIFICATE_IDENTIFIER *value, int indent) {
+int CERTIFICATE_IDENTIFIER_print(BIO *out, CERTIFICATE_IDENTIFIER *value, int indent)
+{
     int rc;
     OSSL_ISSUER_SERIAL *iss;
 
     if (value->attributeCertIdentifier != NULL) {
         rc = BIO_printf(out, "%*sAttribute Certificate Identifier:\n", indent, "");
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
         rc = ATTRIBUTE_CERTIFICATE_IDENTIFIER_print(out, value->attributeCertIdentifier, indent + 4);
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
         rc = BIO_puts(out, "\n");
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
     }
     if (value->genericCertIdentifier != NULL) {
         rc = BIO_printf(out, "%*sGeneric Certificate Identifier:\n", indent, "");
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
         iss = value->genericCertIdentifier;
         if (iss->issuer != NULL) {
             rc = BIO_printf(out, "%*sIssuer Names:\n", indent + 4, "");
-            if (rc <= 0) return rc;
+            if (rc <= 0)
+                return rc;
             rc = OSSL_GENERAL_NAMES_print(out, iss->issuer, indent + 4);
-            if (rc <= 0) return rc;
+            if (rc <= 0)
+                return rc;
             rc = BIO_puts(out, "\n");
-            if (rc <= 0) return rc;
+            if (rc <= 0)
+                return rc;
         }
         rc = BIO_printf(out, "%*sIssuer Serial: 0x", indent + 4, "");
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
         if (i2a_ASN1_INTEGER(out, &iss->serial) <= 0)
             return 0;
         rc = BIO_puts(out, "\n");
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
         if (iss->issuerUID != NULL) {
             BIO_printf(out, "%*sIssuer UID: ", indent + 4, "");
             if (i2a_ASN1_STRING(out, iss->issuerUID, V_ASN1_BIT_STRING) <= 0)
                 return 0;
             rc = BIO_puts(out, "\n");
-            if (rc <= 0) return rc;
+            if (rc <= 0)
+                return rc;
         }
     }
     return 1;
 }
 
-int COMPONENT_IDENTIFIER_print (BIO *out, COMPONENT_IDENTIFIER *value, int indent) {
+int COMPONENT_IDENTIFIER_print(BIO *out, COMPONENT_IDENTIFIER *value, int indent)
+{
     int rc, i;
     int64_t int_val;
     COMPONENT_ADDRESS *caddr;
 
     rc = BIO_printf(out, "%*sComponent Class:\n", indent, "");
-    if (rc <= 0) return rc;
+    if (rc <= 0)
+        return rc;
     rc = COMPONENT_CLASS_print(out, value->componentClass, indent + 4);
-    if (rc <= 0) return rc;
+    if (rc <= 0)
+        return rc;
     rc = BIO_printf(out, "%*sComponent Manufacturer: %.*s\n", indent, "",
                     value->componentManufacturer->length,
                     value->componentManufacturer->data);
-    if (rc <= 0) return rc;
+    if (rc <= 0)
+        return rc;
     rc = BIO_printf(out, "%*sComponent Model: %.*s\n", indent, "",
                     value->componentModel->length,
                     value->componentModel->data);
-    if (rc <= 0) return rc;
+    if (rc <= 0)
+        return rc;
     if (value->componentSerial != NULL) {
         rc = BIO_printf(out, "%*sComponent Serial: %.*s\n", indent, "",
                         value->componentSerial->length,
                         value->componentSerial->data);
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
     }
     if (value->componentRevision != NULL) {
         rc = BIO_printf(out, "%*sComponent Revision: %.*s\n", indent, "",
                         value->componentRevision->length,
                         value->componentRevision->data);
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
     }
     if (value->componentManufacturerId != NULL) {
         rc = BIO_printf(out, "%*sComponent Manufacturer ID: ", indent, "");
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
         rc = print_oid(out, value->componentManufacturerId);
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
         rc = BIO_puts(out, "\n");
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
     }
     if (value->fieldReplaceable) {
         rc = BIO_printf(out, "%*sField Replaceable: TRUE\n", indent, "");
     } else {
         rc = BIO_printf(out, "%*sField Replaceable: TRUE\n", indent, "");
     }
-    if (rc <= 0) return rc;
+    if (rc <= 0)
+        return rc;
     if (value->componentAddresses != NULL) {
         rc = BIO_printf(out, "%*sComponent Addresses:\n", indent, "");
         for (i = 0; i < sk_COMPONENT_ADDRESS_num(value->componentAddresses); i++) {
             rc = BIO_printf(out, "%*sComponent Address:\n", indent + 4, "");
-            if (rc <= 0) return rc;
+            if (rc <= 0)
+                return rc;
             caddr = sk_COMPONENT_ADDRESS_value(value->componentAddresses, i);
             rc = COMPONENT_ADDRESS_print(out, caddr, indent + 8);
-            if (rc <= 0) return rc;
+            if (rc <= 0)
+                return rc;
             rc = BIO_puts(out, "\n");
-            if (rc <= 0) return rc;
+            if (rc <= 0)
+                return rc;
         }
     }
     if (value->componentPlatformCert != NULL) {
         rc = BIO_printf(out, "%*sComponent Platform Certificate:\n", indent, "");
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
         rc = CERTIFICATE_IDENTIFIER_print(out, value->componentPlatformCert, indent + 4);
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
     }
     if (value->componentPlatformCertUri != NULL) {
         rc = BIO_printf(out, "%*sComponent Platform Certificate URI:\n", indent, "");
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
         rc = URI_REFERENCE_print(out, value->componentPlatformCertUri, indent + 4);
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
         rc = BIO_puts(out, "\n");
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
     }
     if (value->status != NULL) {
         rc = BIO_printf(out, "%*sStatus: ", indent, "");
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
         if (!ASN1_ENUMERATED_get_int64(&int_val, value->status)
             || int_val < 0
             || int_val > INT_MAX)
             return -1;
         if (int_val > 2) {
-            rc = BIO_printf(out, "%ld\n", int_val);
+            rc = BIO_printf(out, "%lld\n", (long long int)int_val);
         } else {
             rc = BIO_printf(out, "%s\n", attribute_statuses[int_val].lname);
         }
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
     }
     return 1;
 }
 
-int PLATFORM_CONFIG_print (BIO *out, PLATFORM_CONFIG *value, int indent) {
+int PLATFORM_CONFIG_print(BIO *out, PLATFORM_CONFIG *value, int indent)
+{
     int rc = 1, i; /* All fields are OPTIONAL, so we start off rc at 1 in case all are omitted. */
     COMPONENT_IDENTIFIER *cid;
     PLATFORM_PROPERTY *p;
@@ -711,39 +814,50 @@ int PLATFORM_CONFIG_print (BIO *out, PLATFORM_CONFIG *value, int indent) {
         rc = BIO_printf(out, "%*sComponent Identifiers:\n", indent, "");
         for (i = 0; i < sk_COMPONENT_IDENTIFIER_num(value->componentIdentifiers); i++) {
             rc = BIO_printf(out, "%*sComponent Identifier:\n", indent + 4, "");
-            if (rc <= 0) return rc;
+            if (rc <= 0)
+                return rc;
             cid = sk_COMPONENT_IDENTIFIER_value(value->componentIdentifiers, i);
             rc = COMPONENT_IDENTIFIER_print(out, cid, indent + 8);
-            if (rc <= 0) return rc;
+            if (rc <= 0)
+                return rc;
             rc = BIO_puts(out, "\n");
-            if (rc <= 0) return rc;
+            if (rc <= 0)
+                return rc;
         }
     }
     if (value->componentIdentifiersUri) {
         rc = BIO_printf(out, "%*sComponent Identifier URI:\n", indent, "");
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
         rc = URI_REFERENCE_print(out, value->componentIdentifiersUri, indent + 4);
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
         rc = BIO_puts(out, "\n");
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
     }
     if (value->platformProperties) {
         rc = BIO_printf(out, "%*sProperties:\n", indent, "");
         for (i = 0; i < sk_PLATFORM_PROPERTY_num(value->platformProperties); i++) {
             rc = BIO_printf(out, "%*sProperty:\n", indent + 4, "");
-            if (rc <= 0) return rc;
+            if (rc <= 0)
+                return rc;
             p = sk_PLATFORM_PROPERTY_value(value->platformProperties, i);
             rc = PLATFORM_PROPERTY_print(out, p, indent + 8);
-            if (rc <= 0) return rc;
+            if (rc <= 0)
+                return rc;
         }
     }
     if (value->platformPropertiesUri) {
         rc = BIO_printf(out, "%*sPlatform Properties URI:\n", indent, "");
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
         rc = URI_REFERENCE_print(out, value->platformPropertiesUri, indent + 4);
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
         rc = BIO_puts(out, "\n");
-        if (rc <= 0) return rc;
+        if (rc <= 0)
+            return rc;
     }
     return 1;
 }
