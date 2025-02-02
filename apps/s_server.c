@@ -642,7 +642,7 @@ static int bring_ocsp_resp_in_correct_order(SSL *s, tlsextstatusctx *srctx,
             ssl_cert = sk_X509_value(server_certs, i - 1);
 
         /* issuer certificate is next in chain */
-        issuer =  sk_X509_value(server_certs, i);
+        issuer = sk_X509_value(server_certs, i);
 
         if (issuer == NULL
             || (cert_id = OCSP_cert_to_id(NULL, ssl_cert, issuer)) == NULL) {
