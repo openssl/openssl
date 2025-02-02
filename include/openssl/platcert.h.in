@@ -23,10 +23,6 @@ use OpenSSL::stackhash qw(generate_stack_macros);
 extern "C" {
 # endif
 
-typedef struct ossl_issuer_serial_st OSSL_ISSUER_SERIAL;
-
-DECLARE_ASN1_ITEM(OSSL_ISSUER_SERIAL)
-
 typedef struct URI_REFERENCE_st {
     ASN1_IA5STRING *uniformResourceIdentifier;
     X509_ALGOR *hashAlgorithm;
@@ -43,7 +39,7 @@ typedef struct COMMON_CRITERIA_MEASURES_st {
     URI_REFERENCE *profileUri;
     ASN1_OBJECT *targetOid;
     URI_REFERENCE *targetUri;
-} COMMON_CRITERIA_MEASURES; 
+} COMMON_CRITERIA_MEASURES;
 DECLARE_ASN1_FUNCTIONS(COMMON_CRITERIA_MEASURES)
 
 typedef struct FIPS_LEVEL_st {
