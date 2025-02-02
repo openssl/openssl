@@ -1168,47 +1168,69 @@ static int check_revocation(X509_STORE_CTX *ctx)
 static int check_cert_ocsp_resp(X509_STORE_CTX *ctx)
 {
     int cert_status, crl_reason;
-    int i, found = -1;
-    OCSP_BASICRESP *bs = NULL;
+    int i, found = 0;
     OCSP_RESPONSE *resp = NULL;
-    OCSP_CERTID *cert_id = NULL;
+    OCSP_BASICRESP *bs = NULL;
+    OCSP_SINGLERESP *sr = NULL;
+    OCSP_CERTID *sr_cert_id = NULL;
     ASN1_GENERALIZEDTIME *rev, *thisupd, *nextupd;
+    ASN1_OBJECT *cert_id_md_oid;
+    EVP_MD *cert_id_md;
+    OCSP_CERTID *cert_id = NULL;
     int ret = V_OCSP_CERTSTATUS_UNKNOWN;
+    int num;
 
-    if (sk_OCSP_RESPONSE_num(ctx->ocsp_resp) <= 0)
+    num = sk_OCSP_RESPONSE_num(ctx->ocsp_resp);
+
+    if (num < 0 || num <= ctx->error_depth)
         return X509_V_ERR_OCSP_NO_RESPONSE;
 
-    cert_id = OCSP_cert_to_id(NULL, ctx->current_cert, ctx->current_issuer);
-
-    for (i = 0; i < sk_OCSP_RESPONSE_num(ctx->ocsp_resp); i++) {
-        if ((resp = sk_OCSP_RESPONSE_value(ctx->ocsp_resp, i)) == NULL)
-            continue;
-
-        if ((bs = OCSP_response_get1_basic(resp)) == NULL)
-            continue;
-
-        found = OCSP_resp_find(bs, cert_id, -1);
-        if (found >= 0)
-            break;
-
-        OCSP_BASICRESP_free(bs);
-        bs = NULL;
-    }
-    if (found < 0)
-        resp = NULL;
-
-    if (resp == NULL || bs == NULL) {
-        ret = X509_V_ERR_OCSP_NO_RESPONSE;
-        goto end;
-    }
+    if (((resp = sk_OCSP_RESPONSE_value(ctx->ocsp_resp, ctx->error_depth)) == NULL)
+        || ((bs = OCSP_response_get1_basic(resp)) == NULL)
+        || ((num = OCSP_resp_count(bs)) < 1))
+        return X509_V_ERR_OCSP_NO_RESPONSE;
 
     if (OCSP_response_status(resp) != OCSP_RESPONSE_STATUS_SUCCESSFUL) {
+        OCSP_BASICRESP_free(bs);
         ret = X509_V_ERR_OCSP_RESP_INVALID;
         goto end;
     }
 
-    if (OCSP_basic_verify(bs, ctx->chain, ctx->store, 0) <= 0) {
+    if (OCSP_basic_verify(bs, ctx->chain, ctx->store, OCSP_TRUSTOTHER) <= 0) {
         ret = X509_V_ERR_OCSP_SIGNATURE_FAILURE;
+        goto end;
+    }
+
+    /* find the right single response in the OCSP response */
+    for (i = 0; i < num; i++) {
+        sr = OCSP_resp_get0(bs, i);
+
+        /* determine the md algorithm which was used to create cert id */
+        sr_cert_id = (OCSP_CERTID *)OCSP_SINGLERESP_get0_id(sr);
+        OCSP_id_get0_info(NULL, &cert_id_md_oid, NULL, NULL, sr_cert_id);
+        if (cert_id_md_oid != NULL)
+            cert_id_md = (EVP_MD *)EVP_get_digestbyobj(cert_id_md_oid);
+        else
+            cert_id_md = NULL;
+
+        /* search the stack for the requested OCSP response */
+        cert_id = OCSP_cert_to_id(cert_id_md, ctx->current_cert, ctx->current_issuer);
+        if (cert_id == NULL) {
+            ret = X509_V_ERR_OCSP_RESP_INVALID;
+            goto end;
+        }
+
+        if (!OCSP_id_cmp(cert_id, sr_cert_id)) {
+            found = 1;
+            break;
+        }
+
+        OCSP_CERTID_free(cert_id);
+        cert_id = NULL;
+    }
+
+    if (!found) {
+        ret = X509_V_ERR_OCSP_NO_RESPONSE;
         goto end;
     }
 
@@ -1233,10 +1255,8 @@ static int check_cert_ocsp_resp(X509_STORE_CTX *ctx)
     }
 
 end:
-
     OCSP_CERTID_free(cert_id);
     OCSP_BASICRESP_free(bs);
-
     return ret;
 }
 #endif
