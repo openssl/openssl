@@ -221,9 +221,9 @@ custom "purpose" (see below) or supply a nondefault verification callback
 
 X509_STORE_CTX_set0_ocsp_resp() sets the OCSP response(s) for the verification
 of a certificate chain or for including in the TLS handshake, when the client
-requests OCSP stapling. The stack of OCSP responses are not copied, it is just
-stored to the context.
-Ownership of the stack `sk` is transferred to I<ctx>, and so it should not be
+requests OCSP stapling. The stack of OCSP responses I<sk> is not copied but
+just stored to the context.
+Ownership of the stack is transferred to I<ctx>, and so it should not be
 free'd by the caller.
 
 X509_STORE_CTX_set_purpose() sets the purpose for the target certificate being
