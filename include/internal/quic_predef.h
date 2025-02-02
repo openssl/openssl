@@ -12,6 +12,7 @@
 
 # ifndef OPENSSL_NO_QUIC
 
+typedef struct ssl_token_store_st SSL_TOKEN_STORE;
 typedef struct quic_port_st QUIC_PORT;
 typedef struct quic_channel_st QUIC_CHANNEL;
 typedef struct quic_txpim_st QUIC_TXPIM;

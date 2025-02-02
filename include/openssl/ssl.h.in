@@ -2289,7 +2289,6 @@ int SSL_CTX_set_num_tickets(SSL_CTX *ctx, size_t num_tickets);
 size_t SSL_CTX_get_num_tickets(const SSL_CTX *ctx);
 
 /* QUIC support */
-typedef struct ssl_token_store_st SSL_TOKEN_STORE;
 int SSL_handle_events(SSL *s);
 __owur int SSL_get_event_timeout(SSL *s, struct timeval *tv, int *is_infinite);
 __owur int SSL_get_rpoll_descriptor(SSL *s, BIO_POLL_DESCRIPTOR *desc);
