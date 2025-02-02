@@ -15,6 +15,7 @@
 #include "x509_local.h"
 #include <crypto/x509.h>
 #include <openssl/platcert.h>
+#include <crypto/platcert.h>
 
 /*-
  * X509_ATTRIBUTE: this has the following form:
@@ -190,7 +191,9 @@ int ossl_print_attribute_value(BIO *out,
 
         case NID_tcg_at_platformConfiguration_v2:
             value = av->value.sequence->data;
-            if ((pc = d2i_PLATFORM_CONFIG(NULL, (const unsigned char**)&value, av->value.sequence->length)) == NULL) {
+            if ((pc = d2i_PLATFORM_CONFIG(NULL,
+                                          (const unsigned char**)&value,
+                                          av->value.sequence->length)) == NULL) {
                 BIO_puts(out, "(COULD NOT DECODE PLATFORM CONFIG)\n");
                 return 0;
             }
@@ -203,7 +206,9 @@ int ossl_print_attribute_value(BIO *out,
             if (indent && BIO_printf(out, "%*s", indent, "") <= 0)
                 return 0;
             value = av->value.sequence->data;
-            if ((ps = d2i_TCG_PLATFORM_SPEC(NULL, (const unsigned char**)&value, av->value.sequence->length)) == NULL) {
+            if ((ps = d2i_TCG_PLATFORM_SPEC(NULL,
+                                            (const unsigned char**)&value,
+                                            av->value.sequence->length)) == NULL) {
                 BIO_puts(out, "(COULD NOT DECODE PLATFORM SPECIFICATION)\n");
                 return 0;
             }
@@ -214,7 +219,9 @@ int ossl_print_attribute_value(BIO *out,
 
         case NID_tcg_at_tcgCredentialType:
             value = av->value.sequence->data;
-            if ((ct = d2i_TCG_CRED_TYPE(NULL, (const unsigned char**)&value, av->value.sequence->length)) == NULL) {
+            if ((ct = d2i_TCG_CRED_TYPE(NULL,
+                                        (const unsigned char**)&value,
+                                        av->value.sequence->length)) == NULL) {
                 BIO_puts(out, "(COULD NOT DECODE PLATFORM CERT CREDENTIAL TYPE)\n");
                 return 0;
             }
@@ -225,7 +232,9 @@ int ossl_print_attribute_value(BIO *out,
 
         case NID_tcg_at_platformManufacturerId:
             value = av->value.sequence->data;
-            if ((mid = d2i_MANUFACTURER_ID(NULL, (const unsigned char**)&value, av->value.sequence->length)) == NULL) {
+            if ((mid = d2i_MANUFACTURER_ID(NULL,
+                                           (const unsigned char**)&value,
+                                           av->value.sequence->length)) == NULL) {
                 BIO_puts(out, "(COULD NOT DECODE PLATFORM MANUFACTURER ID)\n");
                 return 0;
             }
@@ -236,7 +245,9 @@ int ossl_print_attribute_value(BIO *out,
 
         case NID_tcg_at_tbbSecurityAssertions:
             value = av->value.sequence->data;
-            if ((tbb = d2i_TBB_SECURITY_ASSERTIONS(NULL, (const unsigned char**)&value, av->value.sequence->length)) == NULL) {
+            if ((tbb = d2i_TBB_SECURITY_ASSERTIONS(NULL,
+                                                   (const unsigned char**)&value,
+                                                   av->value.sequence->length)) == NULL) {
                 BIO_puts(out, "(COULD NOT DECODE TBB SECURITY ASSERTIONS)\n");
                 return 0;
             }
@@ -247,7 +258,9 @@ int ossl_print_attribute_value(BIO *out,
 
         case NID_tcg_at_platformConfigUri:
             value = av->value.sequence->data;
-            if ((uri = d2i_URI_REFERENCE(NULL, (const unsigned char**)&value, av->value.sequence->length)) == NULL) {
+            if ((uri = d2i_URI_REFERENCE(NULL,
+                                         (const unsigned char**)&value,
+                                         av->value.sequence->length)) == NULL) {
                 BIO_puts(out, "(COULD NOT DECODE URI REFERENCE)\n");
                 return 0;
             }
@@ -258,7 +271,9 @@ int ossl_print_attribute_value(BIO *out,
 
         case NID_tcg_at_tcgCredentialSpecification:
             value = av->value.sequence->data;
-            if ((sv = d2i_TCG_SPEC_VERSION(NULL, (const unsigned char**)&value, av->value.sequence->length)) == NULL) {
+            if ((sv = d2i_TCG_SPEC_VERSION(NULL,
+                                           (const unsigned char**)&value,
+                                           av->value.sequence->length)) == NULL) {
                 BIO_puts(out, "(COULD NOT DECODE TCG CREDENTIAL SPECIFICATION)\n");
                 return 0;
             }
