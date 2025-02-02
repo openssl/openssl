@@ -4345,7 +4345,6 @@ int tls_construct_cert_status_body(SSL_CONNECTION *s, size_t chainidx, WPACKET *
     x = SSL_get_certificate(ssl);
 
     SSL_get0_chain_certs(ssl, &chain_certs);
-
     if (chain_certs != NULL) {
         /*
          * if the certificate chain was built, get the status message for the
@@ -4357,7 +4356,6 @@ int tls_construct_cert_status_body(SSL_CONNECTION *s, size_t chainidx, WPACKET *
          */
         if ((int)chainidx <= sk_X509_num(chain_certs) && chainidx > 0)
             x = sk_X509_value(chain_certs, chainidx - 1);
-
         if (x == NULL)
             return 0;
 
@@ -4366,7 +4364,6 @@ int tls_construct_cert_status_body(SSL_CONNECTION *s, size_t chainidx, WPACKET *
             return 1;
 
         issuer = X509_find_by_subject(chain_certs, X509_get_issuer_name(x));
-
         if (issuer == NULL)
             return 0;
 
@@ -4376,7 +4373,6 @@ int tls_construct_cert_status_body(SSL_CONNECTION *s, size_t chainidx, WPACKET *
             cid = (OCSP_CERTID *)OCSP_SINGLERESP_get0_id(sr);
 
             OCSP_id_get0_info(NULL, &cert_id_md_oid, NULL, NULL, cid);
-
             if (cert_id_md_oid != NULL)
                 cert_id_md = EVP_get_digestbyobj(cert_id_md_oid);
             else
@@ -4386,7 +4382,6 @@ int tls_construct_cert_status_body(SSL_CONNECTION *s, size_t chainidx, WPACKET *
 
             /* search the stack for the requested OCSP response */
             cert_id = OCSP_cert_to_id(cert_id_md, x, issuer);
-
             if (cert_id == NULL)
                 return 0;
 
