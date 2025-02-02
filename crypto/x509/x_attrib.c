@@ -78,6 +78,43 @@ static int print_oid(BIO *out, const ASN1_OBJECT *oid)
     return (rc >= 0);
 }
 
+static int print_pubkey(BIO *out, X509_PUBKEY *pubkey, int indent) {
+    ASN1_OBJECT *xpoid;
+    EVP_PKEY *pkey;
+
+    X509_PUBKEY_get0_param(&xpoid, NULL, NULL, NULL, pubkey);
+    if (BIO_printf(out, "%*sPublic Key Algorithm: ", indent, "") <= 0)
+         return -1;
+    if (i2a_ASN1_OBJECT(out, xpoid) <= 0)
+        return -1;
+    if (BIO_puts(out, "\n") <= 0)
+        return -1;
+
+    pkey = X509_PUBKEY_get0(pubkey);
+    if (pkey == NULL) {
+        BIO_printf(out, "%*sUnable to load Public Key\n", indent, "");
+        ERR_print_errors(out);
+    } else {
+        EVP_PKEY_print_public(out, pkey, indent, NULL);
+    }
+    return 1;
+}
+
+#define TRY_PRINT_SEQ_FUNC(local, type, name, printer) value = av->value.sequence->data; \
+    if ((local = d2i_##type(NULL, (const unsigned char**)&value,\
+                            av->value.sequence->length)) == NULL) {\
+        BIO_printf(out, "(COULD NOT DECODE %s)\n", name);\
+        return 0;\
+    }\
+    if (printer(out, local, indent) <= 0) {\
+        type##_free(local);\
+        return 0;\
+    }\
+    type##_free(local);\
+    return 1;
+
+#define TRY_PRINT_SEQ(local, type, name) TRY_PRINT_SEQ_FUNC(local, type, name, type##_print)
+
 int ossl_print_attribute_value(BIO *out,
     int obj_nid,
     const ASN1_TYPE *av,
@@ -97,6 +134,12 @@ int ossl_print_attribute_value(BIO *out,
     OSSL_URI_REFERENCE *uri = NULL;
     STACK_OF(OSSL_PCV2_TRAIT) *traits = NULL;
     OSSL_PLATFORM_CONFIG_V3 *platconf3 = NULL;
+    OSSL_FIPS_LEVEL *fips = NULL;
+    OSSL_PCV2_CERTIFICATE_IDENTIFIER *certid = NULL;
+    OSSL_COMPONENT_IDENTIFIER *compid = NULL;
+    OSSL_COMPONENT_ADDRESS *compaddr = NULL;
+    OSSL_ISO9000_CERTIFICATION *iso9000 = NULL;
+    X509_PUBKEY *pubkey = NULL;
 
     switch (av->type) {
     case V_ASN1_BOOLEAN:
@@ -205,7 +248,7 @@ int ossl_print_attribute_value(BIO *out,
                 BIO_puts(out, "(COULD NOT DECODE PLATFORM CONFIG)\n");
                 return 0;
             }
-            if (PLATFORM_CONFIG_print(out, pc, indent) <= 0)
+            if (OSSL_PLATFORM_CONFIG_print(out, pc, indent) <= 0)
                 return 0;
             OSSL_PLATFORM_CONFIG_free(pc);
             return 1;
@@ -220,7 +263,7 @@ int ossl_print_attribute_value(BIO *out,
                 BIO_puts(out, "(COULD NOT DECODE PLATFORM SPECIFICATION)\n");
                 return 0;
             }
-            if (TCG_PLATFORM_SPEC_print(out, ps) <= 0)
+            if (OSSL_TCG_PLATFORM_SPEC_print(out, ps) <= 0)
                 return 0;
             OSSL_TCG_PLATFORM_SPEC_free(ps);
             return 1;
@@ -233,7 +276,7 @@ int ossl_print_attribute_value(BIO *out,
                 BIO_puts(out, "(COULD NOT DECODE PLATFORM CERT CREDENTIAL TYPE)\n");
                 return 0;
             }
-            if (TCG_CRED_TYPE_print(out, ct, indent) <= 0)
+            if (OSSL_TCG_CRED_TYPE_print(out, ct, indent) <= 0)
                 return 0;
             OSSL_TCG_CRED_TYPE_free(ct);
             return 1;
@@ -246,7 +289,7 @@ int ossl_print_attribute_value(BIO *out,
                 BIO_puts(out, "(COULD NOT DECODE PLATFORM MANUFACTURER ID)\n");
                 return 0;
             }
-            if (MANUFACTURER_ID_print(out, mid, indent) <= 0)
+            if (OSSL_MANUFACTURER_ID_print(out, mid, indent) <= 0)
                 return 0;
             OSSL_MANUFACTURER_ID_free(mid);
             return 1;
@@ -259,7 +302,7 @@ int ossl_print_attribute_value(BIO *out,
                 BIO_puts(out, "(COULD NOT DECODE TBB SECURITY ASSERTIONS)\n");
                 return 0;
             }
-            if (TBB_SECURITY_ASSERTIONS_print(out, tbb, indent) <= 0)
+            if (OSSL_TBB_SECURITY_ASSERTIONS_print(out, tbb, indent) <= 0)
                 return 0;
             OSSL_TBB_SECURITY_ASSERTIONS_free(tbb);
             return 1;
@@ -272,7 +315,7 @@ int ossl_print_attribute_value(BIO *out,
                 BIO_puts(out, "(COULD NOT DECODE URI REFERENCE)\n");
                 return 0;
             }
-            if (URI_REFERENCE_print(out, uri, indent) <= 0)
+            if (OSSL_URI_REFERENCE_print(out, uri, indent) <= 0)
                 return 0;
             OSSL_URI_REFERENCE_free(uri);
             return 1;
@@ -286,7 +329,7 @@ int ossl_print_attribute_value(BIO *out,
                 return 0;
             }
             // FIXME: Free structures on failure.
-            if (TCG_SPEC_VERSION_print(out, sv, indent) <= 0)
+            if (OSSL_TCG_SPEC_VERSION_print(out, sv, indent) <= 0)
                 return 0;
             OSSL_TCG_SPEC_VERSION_free(sv);
             return 1;
@@ -316,10 +359,23 @@ int ossl_print_attribute_value(BIO *out,
                 BIO_puts(out, "(COULD NOT DECODE PLATFORM CONFIG V3)\n");
                 return 0;
             }
-            if (PLATFORM_CONFIG_V3_print(out, platconf3, indent) <= 0)
+            if (OSSL_PLATFORM_CONFIG_V3_print(out, platconf3, indent) <= 0)
                 return 0;
             OSSL_PLATFORM_CONFIG_V3_free(platconf3);
             return 1;
+
+        case NID_tcg_tr_ID_FIPSLevel:
+            TRY_PRINT_SEQ(fips, OSSL_FIPS_LEVEL, "FIPSLevel")
+        case NID_tcg_tr_ID_CertificateIdentifier:
+            TRY_PRINT_SEQ(certid, OSSL_PCV2_CERTIFICATE_IDENTIFIER, "TCG Certificate Identifier")
+        case NID_tcg_tr_ID_componentIdentifierV11:
+            TRY_PRINT_SEQ(compid, OSSL_COMPONENT_IDENTIFIER, "TCG Platform Certificate Component Identifier")
+        case NID_tcg_tr_ID_networkMAC:
+            TRY_PRINT_SEQ(compaddr, OSSL_COMPONENT_ADDRESS, "TCG Platform Certificate Component Address")
+        case NID_tcg_tr_ID_ISO9000Level:
+            TRY_PRINT_SEQ(iso9000, OSSL_ISO9000_CERTIFICATION, "TCG Platform Certificate ISO 9000 Certification")
+        case NID_tcg_tr_ID_PublicKey:
+            TRY_PRINT_SEQ_FUNC(pubkey, X509_PUBKEY, "TCG Public Key Trait", print_pubkey)
 
         default:
             break;

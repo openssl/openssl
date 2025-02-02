@@ -102,16 +102,6 @@ ASN1_SEQUENCE(OSSL_PLATFORM_PROPERTY) = {
 
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_PLATFORM_PROPERTY)
 
-ASN1_SEQUENCE(OSSL_ATTRIBUTE_CERTIFICATE_IDENTIFIER) = {
-    ASN1_SIMPLE(OSSL_ATTRIBUTE_CERTIFICATE_IDENTIFIER, hashAlgorithm, X509_ALGOR),
-    ASN1_SIMPLE(OSSL_ATTRIBUTE_CERTIFICATE_IDENTIFIER, hashOverSignatureValue, ASN1_OCTET_STRING)
-} ASN1_SEQUENCE_END(OSSL_ATTRIBUTE_CERTIFICATE_IDENTIFIER)
-
-ASN1_SEQUENCE(OSSL_CERTIFICATE_IDENTIFIER) = {
-    ASN1_IMP_OPT(OSSL_CERTIFICATE_IDENTIFIER, attributeCertIdentifier, OSSL_ATTRIBUTE_CERTIFICATE_IDENTIFIER, 0),
-    ASN1_IMP_OPT(OSSL_CERTIFICATE_IDENTIFIER, genericCertIdentifier, OSSL_ISSUER_SERIAL, 1)
-} ASN1_SEQUENCE_END(OSSL_CERTIFICATE_IDENTIFIER)
-
 ASN1_SEQUENCE(OSSL_COMPONENT_CLASS) = {
     ASN1_SIMPLE(OSSL_COMPONENT_CLASS, componentClassRegistry, ASN1_OBJECT),
     ASN1_SIMPLE(OSSL_COMPONENT_CLASS, componentClassValue, ASN1_OCTET_STRING)
@@ -128,7 +118,7 @@ ASN1_SEQUENCE(OSSL_COMPONENT_IDENTIFIER) = {
     ASN1_IMP_OPT(OSSL_COMPONENT_IDENTIFIER, componentManufacturerId, ASN1_OBJECT, 2),
     ASN1_IMP_OPT(OSSL_COMPONENT_IDENTIFIER, fieldReplaceable, ASN1_BOOLEAN, 3),
     ASN1_IMP_SEQUENCE_OF_OPT(OSSL_COMPONENT_IDENTIFIER, componentAddresses, OSSL_COMPONENT_ADDRESS, 4),
-    ASN1_IMP_OPT(OSSL_COMPONENT_IDENTIFIER, componentPlatformCert, OSSL_CERTIFICATE_IDENTIFIER, 5),
+    ASN1_IMP_OPT(OSSL_COMPONENT_IDENTIFIER, componentPlatformCert, OSSL_PCV2_CERTIFICATE_IDENTIFIER, 5),
     ASN1_IMP_OPT(OSSL_COMPONENT_IDENTIFIER, componentPlatformCertUri, OSSL_URI_REFERENCE, 6),
     ASN1_IMP_OPT(OSSL_COMPONENT_IDENTIFIER, status, ASN1_ENUMERATED, 7)
 } ASN1_SEQUENCE_END(OSSL_COMPONENT_IDENTIFIER)
@@ -188,7 +178,7 @@ IMPLEMENT_ASN1_FUNCTIONS(OSSL_COMMON_CRITERIA_EVALUATION)
 
 ASN1_SEQUENCE(OSSL_ISO9000_CERTIFICATION) = {
     ASN1_OPT(OSSL_ISO9000_CERTIFICATION, iso9000Certified, ASN1_FBOOLEAN),
-    ASN1_SIMPLE(OSSL_ISO9000_CERTIFICATION, iso9000Uri, ASN1_IA5STRING),
+    ASN1_OPT(OSSL_ISO9000_CERTIFICATION, iso9000Uri, ASN1_IA5STRING),
 } ASN1_SEQUENCE_END(OSSL_ISO9000_CERTIFICATION)
 
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_ISO9000_CERTIFICATION)
@@ -218,7 +208,7 @@ static int X509_ALGOR_print_bio(BIO *bio, const X509_ALGOR *alg)
                       (i == NID_undef) ? "UNKNOWN" : OBJ_nid2ln(i));
 }
 
-int URI_REFERENCE_print(BIO *out, OSSL_URI_REFERENCE *value, int indent)
+int OSSL_URI_REFERENCE_print(BIO *out, OSSL_URI_REFERENCE *value, int indent)
 {
     int rc;
 
@@ -311,7 +301,7 @@ static int print_oid(BIO *out, const ASN1_OBJECT *oid)
     return (rc >= 0);
 }
 
-int COMPONENT_CLASS_print(BIO *out, OSSL_COMPONENT_CLASS *value, int indent)
+int OSSL_COMPONENT_CLASS_print(BIO *out, OSSL_COMPONENT_CLASS *value, int indent)
 {
     int rc;
 
@@ -335,7 +325,7 @@ int COMPONENT_CLASS_print(BIO *out, OSSL_COMPONENT_CLASS *value, int indent)
     return BIO_puts(out, "\n");
 }
 
-int COMMON_CRITERIA_MEASURES_print(BIO *out,
+int OSSL_COMMON_CRITERIA_MEASURES_print(BIO *out,
                                    OSSL_COMMON_CRITERIA_MEASURES *value,
                                    int indent)
 {
@@ -414,7 +404,7 @@ int COMMON_CRITERIA_MEASURES_print(BIO *out,
         rc = BIO_printf(out, "%*sProfile URI:\n", indent, "");
         if (rc <= 0)
             return rc;
-        rc = URI_REFERENCE_print(out, value->profileUri, indent + 4);
+        rc = OSSL_URI_REFERENCE_print(out, value->profileUri, indent + 4);
         if (rc <= 0)
             return rc;
         rc = BIO_puts(out, "\n");
@@ -436,7 +426,7 @@ int COMMON_CRITERIA_MEASURES_print(BIO *out,
         rc = BIO_printf(out, "%*sTarget URI:\n", indent, "");
         if (rc <= 0)
             return rc;
-        rc = URI_REFERENCE_print(out, value->targetUri, indent + 4);
+        rc = OSSL_URI_REFERENCE_print(out, value->targetUri, indent + 4);
         if (rc <= 0)
             return rc;
     }
@@ -444,7 +434,7 @@ int COMMON_CRITERIA_MEASURES_print(BIO *out,
     return rc;
 }
 
-int FIPS_LEVEL_print(BIO *out, OSSL_FIPS_LEVEL *value, int indent)
+int OSSL_FIPS_LEVEL_print(BIO *out, OSSL_FIPS_LEVEL *value, int indent)
 {
     int rc;
     int64_t int_val;
@@ -478,7 +468,7 @@ int FIPS_LEVEL_print(BIO *out, OSSL_FIPS_LEVEL *value, int indent)
     return rc;
 }
 
-int TBB_SECURITY_ASSERTIONS_print(BIO *out, OSSL_TBB_SECURITY_ASSERTIONS *value, int indent)
+int OSSL_TBB_SECURITY_ASSERTIONS_print(BIO *out, OSSL_TBB_SECURITY_ASSERTIONS *value, int indent)
 {
     int rc = 1; /* All fields are OPTIONAL, so we start off at 1 in case all are omitted. */
     int64_t int_val;
@@ -498,7 +488,7 @@ int TBB_SECURITY_ASSERTIONS_print(BIO *out, OSSL_TBB_SECURITY_ASSERTIONS *value,
         rc = BIO_printf(out, "%*sCommon Criteria Measures:\n", indent, "");
         if (rc <= 0)
             return rc;
-        rc = COMMON_CRITERIA_MEASURES_print(out, value->ccInfo, indent + 4);
+        rc = OSSL_COMMON_CRITERIA_MEASURES_print(out, value->ccInfo, indent + 4);
         if (rc <= 0)
             return rc;
     }
@@ -506,7 +496,7 @@ int TBB_SECURITY_ASSERTIONS_print(BIO *out, OSSL_TBB_SECURITY_ASSERTIONS *value,
         rc = BIO_printf(out, "%*sFIPS Level:\n", indent, "");
         if (rc <= 0)
             return rc;
-        rc = FIPS_LEVEL_print(out, value->fipsLevel, indent + 4);
+        rc = OSSL_FIPS_LEVEL_print(out, value->fipsLevel, indent + 4);
         if (rc <= 0)
             return rc;
     }
@@ -543,7 +533,7 @@ int TBB_SECURITY_ASSERTIONS_print(BIO *out, OSSL_TBB_SECURITY_ASSERTIONS *value,
     return rc;
 }
 
-int MANUFACTURER_ID_print(BIO *out, OSSL_MANUFACTURER_ID *value, int indent)
+int OSSL_MANUFACTURER_ID_print(BIO *out, OSSL_MANUFACTURER_ID *value, int indent)
 {
     int rc;
 
@@ -553,7 +543,7 @@ int MANUFACTURER_ID_print(BIO *out, OSSL_MANUFACTURER_ID *value, int indent)
     return print_oid(out, value->manufacturerIdentifier);
 }
 
-int TCG_SPEC_VERSION_print(BIO *out, OSSL_TCG_SPEC_VERSION *value, int indent)
+int OSSL_TCG_SPEC_VERSION_print(BIO *out, OSSL_TCG_SPEC_VERSION *value, int indent)
 {
     int64_t major, minor, rev;
 
@@ -575,11 +565,11 @@ int TCG_SPEC_VERSION_print(BIO *out, OSSL_TCG_SPEC_VERSION *value, int indent)
                       (long long int)rev);
 }
 
-int TCG_PLATFORM_SPEC_print(BIO *out, OSSL_TCG_PLATFORM_SPEC *value)
+int OSSL_TCG_PLATFORM_SPEC_print(BIO *out, OSSL_TCG_PLATFORM_SPEC *value)
 {
     int rc;
 
-    rc = TCG_SPEC_VERSION_print(out, value->version, 0);
+    rc = OSSL_TCG_SPEC_VERSION_print(out, value->version, 0);
     if (rc <= 0)
         return rc;
     rc = BIO_puts(out, " : ");
@@ -590,7 +580,7 @@ int TCG_PLATFORM_SPEC_print(BIO *out, OSSL_TCG_PLATFORM_SPEC *value)
                               value->platformClass->length);
 }
 
-int TCG_CRED_TYPE_print(BIO *out, OSSL_TCG_CRED_TYPE *value, int indent)
+int OSSL_TCG_CRED_TYPE_print(BIO *out, OSSL_TCG_CRED_TYPE *value, int indent)
 {
     int rc;
     rc = BIO_printf(out, "%*sCredential Type: ", indent, "");
@@ -599,7 +589,7 @@ int TCG_CRED_TYPE_print(BIO *out, OSSL_TCG_CRED_TYPE *value, int indent)
     return print_oid(out, value->certificateType);
 }
 
-int COMPONENT_ADDRESS_print(BIO *out, OSSL_COMPONENT_ADDRESS *value, int indent)
+int OSSL_COMPONENT_ADDRESS_print(BIO *out, OSSL_COMPONENT_ADDRESS *value, int indent)
 {
     int rc;
 
@@ -619,7 +609,7 @@ int COMPONENT_ADDRESS_print(BIO *out, OSSL_COMPONENT_ADDRESS *value, int indent)
     return BIO_puts(out, "\n");
 }
 
-int PLATFORM_PROPERTY_print(BIO *out, OSSL_PLATFORM_PROPERTY *value, int indent)
+int OSSL_PLATFORM_PROPERTY_print(BIO *out, OSSL_PLATFORM_PROPERTY *value, int indent)
 {
     int rc;
     int64_t int_val;
@@ -651,16 +641,16 @@ int PLATFORM_PROPERTY_print(BIO *out, OSSL_PLATFORM_PROPERTY *value, int indent)
     return 1;
 }
 
-int ATTRIBUTE_CERTIFICATE_IDENTIFIER_print(BIO *out,
-                                           OSSL_ATTRIBUTE_CERTIFICATE_IDENTIFIER *value,
-                                           int indent)
+int OSSL_HASHED_CERTIFICATE_IDENTIFIER_print(BIO *out,
+                                             OSSL_HASHED_CERTIFICATE_IDENTIFIER *value,
+                                             int indent)
 {
     int rc;
 
     rc = BIO_printf(out, "%*sHash Algorithm:\n%*s", indent, "", indent + 4, "");
     if (rc <= 0)
         return rc;
-    rc = X509_ALGOR_print_bio(out, value->hashAlgorithm);
+    rc = X509_ALGOR_print_bio(out, value->hashValue);
     if (rc <= 0)
         return rc;
     rc = BIO_printf(out, "%*sHash Over Signature Value: ", indent, "");
@@ -674,18 +664,18 @@ int ATTRIBUTE_CERTIFICATE_IDENTIFIER_print(BIO *out,
     return BIO_puts(out, "\n");
 }
 
-int CERTIFICATE_IDENTIFIER_print(BIO *out, OSSL_CERTIFICATE_IDENTIFIER *value, int indent)
+int OSSL_PCV2_CERTIFICATE_IDENTIFIER_print(BIO *out, OSSL_PCV2_CERTIFICATE_IDENTIFIER *value, int indent)
 {
     int rc;
     OSSL_ISSUER_SERIAL *iss;
 
-    if (value->attributeCertIdentifier != NULL) {
-        rc = BIO_printf(out, "%*sAttribute Certificate Identifier:\n", indent, "");
+    if (value->hashedCertIdentifier != NULL) {
+        rc = BIO_printf(out, "%*sHashed Certificate Identifier:\n", indent, "");
         if (rc <= 0)
             return rc;
-        rc = ATTRIBUTE_CERTIFICATE_IDENTIFIER_print(out,
-                                                    value->attributeCertIdentifier,
-                                                    indent + 4);
+        rc = OSSL_HASHED_CERTIFICATE_IDENTIFIER_print(out,
+                                                         value->hashedCertIdentifier,
+                                                         indent + 4);
         if (rc <= 0)
             return rc;
         rc = BIO_puts(out, "\n");
@@ -728,7 +718,7 @@ int CERTIFICATE_IDENTIFIER_print(BIO *out, OSSL_CERTIFICATE_IDENTIFIER *value, i
     return 1;
 }
 
-int COMPONENT_IDENTIFIER_print(BIO *out, OSSL_COMPONENT_IDENTIFIER *value, int indent)
+int OSSL_COMPONENT_IDENTIFIER_print(BIO *out, OSSL_COMPONENT_IDENTIFIER *value, int indent)
 {
     int rc, i;
     int64_t int_val;
@@ -737,7 +727,7 @@ int COMPONENT_IDENTIFIER_print(BIO *out, OSSL_COMPONENT_IDENTIFIER *value, int i
     rc = BIO_printf(out, "%*sComponent Class:\n", indent, "");
     if (rc <= 0)
         return rc;
-    rc = COMPONENT_CLASS_print(out, value->componentClass, indent + 4);
+    rc = OSSL_COMPONENT_CLASS_print(out, value->componentClass, indent + 4);
     if (rc <= 0)
         return rc;
     rc = BIO_printf(out, "%*sComponent Manufacturer: %.*s\n", indent, "",
@@ -789,7 +779,7 @@ int COMPONENT_IDENTIFIER_print(BIO *out, OSSL_COMPONENT_IDENTIFIER *value, int i
             if (rc <= 0)
                 return rc;
             caddr = sk_OSSL_COMPONENT_ADDRESS_value(value->componentAddresses, i);
-            rc = COMPONENT_ADDRESS_print(out, caddr, indent + 8);
+            rc = OSSL_COMPONENT_ADDRESS_print(out, caddr, indent + 8);
             if (rc <= 0)
                 return rc;
             rc = BIO_puts(out, "\n");
@@ -801,7 +791,7 @@ int COMPONENT_IDENTIFIER_print(BIO *out, OSSL_COMPONENT_IDENTIFIER *value, int i
         rc = BIO_printf(out, "%*sComponent Platform Certificate:\n", indent, "");
         if (rc <= 0)
             return rc;
-        rc = CERTIFICATE_IDENTIFIER_print(out, value->componentPlatformCert, indent + 4);
+        rc = OSSL_PCV2_CERTIFICATE_IDENTIFIER_print(out, value->componentPlatformCert, indent + 4);
         if (rc <= 0)
             return rc;
     }
@@ -809,7 +799,7 @@ int COMPONENT_IDENTIFIER_print(BIO *out, OSSL_COMPONENT_IDENTIFIER *value, int i
         rc = BIO_printf(out, "%*sComponent Platform Certificate URI:\n", indent, "");
         if (rc <= 0)
             return rc;
-        rc = URI_REFERENCE_print(out, value->componentPlatformCertUri, indent + 4);
+        rc = OSSL_URI_REFERENCE_print(out, value->componentPlatformCertUri, indent + 4);
         if (rc <= 0)
             return rc;
         rc = BIO_puts(out, "\n");
@@ -835,7 +825,7 @@ int COMPONENT_IDENTIFIER_print(BIO *out, OSSL_COMPONENT_IDENTIFIER *value, int i
     return 1;
 }
 
-int PLATFORM_CONFIG_print(BIO *out, OSSL_PLATFORM_CONFIG *value, int indent)
+int OSSL_PLATFORM_CONFIG_print(BIO *out, OSSL_PLATFORM_CONFIG *value, int indent)
 {
     int rc = 1, i; /* All fields are OPTIONAL, so we start off rc at 1 in case all are omitted. */
     OSSL_COMPONENT_IDENTIFIER *cid;
@@ -848,7 +838,7 @@ int PLATFORM_CONFIG_print(BIO *out, OSSL_PLATFORM_CONFIG *value, int indent)
             if (rc <= 0)
                 return rc;
             cid = sk_OSSL_COMPONENT_IDENTIFIER_value(value->componentIdentifiers, i);
-            rc = COMPONENT_IDENTIFIER_print(out, cid, indent + 8);
+            rc = OSSL_COMPONENT_IDENTIFIER_print(out, cid, indent + 8);
             if (rc <= 0)
                 return rc;
             rc = BIO_puts(out, "\n");
@@ -860,7 +850,7 @@ int PLATFORM_CONFIG_print(BIO *out, OSSL_PLATFORM_CONFIG *value, int indent)
         rc = BIO_printf(out, "%*sComponent Identifier URI:\n", indent, "");
         if (rc <= 0)
             return rc;
-        rc = URI_REFERENCE_print(out, value->componentIdentifiersUri, indent + 4);
+        rc = OSSL_URI_REFERENCE_print(out, value->componentIdentifiersUri, indent + 4);
         if (rc <= 0)
             return rc;
         rc = BIO_puts(out, "\n");
@@ -874,7 +864,7 @@ int PLATFORM_CONFIG_print(BIO *out, OSSL_PLATFORM_CONFIG *value, int indent)
             if (rc <= 0)
                 return rc;
             p = sk_OSSL_PLATFORM_PROPERTY_value(value->platformProperties, i);
-            rc = PLATFORM_PROPERTY_print(out, p, indent + 8);
+            rc = OSSL_PLATFORM_PROPERTY_print(out, p, indent + 8);
             if (rc <= 0)
                 return rc;
         }
@@ -883,7 +873,7 @@ int PLATFORM_CONFIG_print(BIO *out, OSSL_PLATFORM_CONFIG *value, int indent)
         rc = BIO_printf(out, "%*sPlatform Properties URI:\n", indent, "");
         if (rc <= 0)
             return rc;
-        rc = URI_REFERENCE_print(out, value->platformPropertiesUri, indent + 4);
+        rc = OSSL_URI_REFERENCE_print(out, value->platformPropertiesUri, indent + 4);
         if (rc <= 0)
             return rc;
         rc = BIO_puts(out, "\n");
@@ -968,7 +958,7 @@ int print_traits(BIO *out, STACK_OF(OSSL_PCV2_TRAIT) *traits, int indent)
     return rc;
 }
 
-int PLATFORM_CONFIG_V3_print(BIO *out, OSSL_PLATFORM_CONFIG_V3 *value, int indent)
+int OSSL_PLATFORM_CONFIG_V3_print(BIO *out, OSSL_PLATFORM_CONFIG_V3 *value, int indent)
 {
     int pcs, pps, numtraits;
     OSSL_COMPONENT_IDENTIFIER_V2 *pc;
@@ -1002,7 +992,7 @@ int PLATFORM_CONFIG_V3_print(BIO *out, OSSL_PLATFORM_CONFIG_V3 *value, int inden
             if (BIO_printf(out, "%*sPlatform Property:\n", indent + 4, "") <= 0)
                 return -1;
             pp = sk_OSSL_PLATFORM_PROPERTY_value(value->platformProperties, i);
-            if (PLATFORM_PROPERTY_print(out, pp, indent + 8) <= 0)
+            if (OSSL_PLATFORM_PROPERTY_print(out, pp, indent + 8) <= 0)
                 return -1;
             if (BIO_puts(out, "\n") <= 0)
                 return -1;
@@ -1010,4 +1000,15 @@ int PLATFORM_CONFIG_V3_print(BIO *out, OSSL_PLATFORM_CONFIG_V3 *value, int inden
     }
 
     return 0;
+}
+
+int OSSL_ISO9000_CERTIFICATION_print(BIO *out, OSSL_ISO9000_CERTIFICATION *value, int indent)
+{
+    if (BIO_printf(out, "ISO 9000 Certified: %s\n", value->iso9000Certified ? "TRUE" : "FALSE") <= 0)
+        return -1;
+    if (value->iso9000Uri == NULL)
+        return 1;
+    return BIO_printf(out, "%*sISO 9000 Certification URI: %.*s\n", indent, "",
+                      value->iso9000Uri->length,
+                      value->iso9000Uri->data) > 0;
 }
