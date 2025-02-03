@@ -173,7 +173,7 @@ int init_client(int *sock, const char *host, const char *port,
         }
 
         /* Save the address */
-        if (tfo || !doconn)
+        if ((tfo || !doconn) && ba_ret != NULL) {
             *ba_ret = BIO_ADDR_dup(BIO_ADDRINFO_address(ai));
 
         /* Success, don't try any more addresses */
