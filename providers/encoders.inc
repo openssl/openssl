@@ -69,9 +69,9 @@ ENCODER_TEXT("SM2", sm2, no),
 #endif
 
 # ifndef OPENSSL_NO_ML_DSA
-ENCODER_TEXT("ML-DSA-44", ml_dsa_44, no),
-ENCODER_TEXT("ML-DSA-65", ml_dsa_65, no),
-ENCODER_TEXT("ML-DSA-87", ml_dsa_87, no),
+ENCODER_TEXT("ML-DSA-44", ml_dsa_44, yes),
+ENCODER_TEXT("ML-DSA-65", ml_dsa_65, yes),
+ENCODER_TEXT("ML-DSA-87", ml_dsa_87, yes),
 # endif
 
 /*
@@ -230,26 +230,26 @@ ENCODER_w_structure("SM2", sm2, no, pem, SubjectPublicKeyInfo),
 #endif
 
 # ifndef OPENSSL_NO_ML_DSA
-ENCODER_w_structure("ML-DSA-44", ml_dsa_44, no, der, EncryptedPrivateKeyInfo),
-ENCODER_w_structure("ML-DSA-44", ml_dsa_44, no, pem, EncryptedPrivateKeyInfo),
-ENCODER_w_structure("ML-DSA-44", ml_dsa_44, no, der, PrivateKeyInfo),
-ENCODER_w_structure("ML-DSA-44", ml_dsa_44, no, pem, PrivateKeyInfo),
-ENCODER_w_structure("ML-DSA-44", ml_dsa_44, no, der, SubjectPublicKeyInfo),
-ENCODER_w_structure("ML-DSA-44", ml_dsa_44, no, pem, SubjectPublicKeyInfo),
+ENCODER_w_structure("ML-DSA-44", ml_dsa_44, yes, der, EncryptedPrivateKeyInfo),
+ENCODER_w_structure("ML-DSA-44", ml_dsa_44, yes, pem, EncryptedPrivateKeyInfo),
+ENCODER_w_structure("ML-DSA-44", ml_dsa_44, yes, der, PrivateKeyInfo),
+ENCODER_w_structure("ML-DSA-44", ml_dsa_44, yes, pem, PrivateKeyInfo),
+ENCODER_w_structure("ML-DSA-44", ml_dsa_44, yes, der, SubjectPublicKeyInfo),
+ENCODER_w_structure("ML-DSA-44", ml_dsa_44, yes, pem, SubjectPublicKeyInfo),
 
-ENCODER_w_structure("ML-DSA-65", ml_dsa_65, no, der, EncryptedPrivateKeyInfo),
-ENCODER_w_structure("ML-DSA-65", ml_dsa_65, no, pem, EncryptedPrivateKeyInfo),
-ENCODER_w_structure("ML-DSA-65", ml_dsa_65, no, der, PrivateKeyInfo),
-ENCODER_w_structure("ML-DSA-65", ml_dsa_65, no, pem, PrivateKeyInfo),
-ENCODER_w_structure("ML-DSA-65", ml_dsa_65, no, der, SubjectPublicKeyInfo),
-ENCODER_w_structure("ML-DSA-65", ml_dsa_65, no, pem, SubjectPublicKeyInfo),
+ENCODER_w_structure("ML-DSA-65", ml_dsa_65, yes, der, EncryptedPrivateKeyInfo),
+ENCODER_w_structure("ML-DSA-65", ml_dsa_65, yes, pem, EncryptedPrivateKeyInfo),
+ENCODER_w_structure("ML-DSA-65", ml_dsa_65, yes, der, PrivateKeyInfo),
+ENCODER_w_structure("ML-DSA-65", ml_dsa_65, yes, pem, PrivateKeyInfo),
+ENCODER_w_structure("ML-DSA-65", ml_dsa_65, yes, der, SubjectPublicKeyInfo),
+ENCODER_w_structure("ML-DSA-65", ml_dsa_65, yes, pem, SubjectPublicKeyInfo),
 
-ENCODER_w_structure("ML-DSA-87", ml_dsa_87, no, der, EncryptedPrivateKeyInfo),
-ENCODER_w_structure("ML-DSA-87", ml_dsa_87, no, pem, EncryptedPrivateKeyInfo),
-ENCODER_w_structure("ML-DSA-87", ml_dsa_87, no, der, PrivateKeyInfo),
-ENCODER_w_structure("ML-DSA-87", ml_dsa_87, no, pem, PrivateKeyInfo),
-ENCODER_w_structure("ML-DSA-87", ml_dsa_87, no, der, SubjectPublicKeyInfo),
-ENCODER_w_structure("ML-DSA-87", ml_dsa_87, no, pem, SubjectPublicKeyInfo),
+ENCODER_w_structure("ML-DSA-87", ml_dsa_87, yes, der, EncryptedPrivateKeyInfo),
+ENCODER_w_structure("ML-DSA-87", ml_dsa_87, yes, pem, EncryptedPrivateKeyInfo),
+ENCODER_w_structure("ML-DSA-87", ml_dsa_87, yes, der, PrivateKeyInfo),
+ENCODER_w_structure("ML-DSA-87", ml_dsa_87, yes, pem, PrivateKeyInfo),
+ENCODER_w_structure("ML-DSA-87", ml_dsa_87, yes, der, SubjectPublicKeyInfo),
+ENCODER_w_structure("ML-DSA-87", ml_dsa_87, yes, pem, SubjectPublicKeyInfo),
 # endif /* OPENSSL_NO_ML_DSA */
 
 /*

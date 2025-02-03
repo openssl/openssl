@@ -48,6 +48,7 @@ OSSL_provider_init_fn ossl_legacy_provider_init;
 static int default_libctx = 1;
 static int is_fips = 0;
 static int is_fips_3_0_0 = 0;
+static int is_fips_lt_3_5 = 0;
 
 static OSSL_LIB_CTX *testctx = NULL;
 static OSSL_LIB_CTX *keyctx = NULL;
@@ -1352,6 +1353,8 @@ int setup_tests(void)
 
     /* FIPS(3.0.0): provider imports explicit params but they won't work #17998 */
     is_fips_3_0_0 = is_fips && fips_provider_version_eq(testctx, 3, 0, 0);
+    /* FIPS(3.5.0) is the first to support ML-KEM and ML-DSA */
+    is_fips_lt_3_5 = is_fips && fips_provider_version_lt(testctx, 3, 5, 0);
 
 #ifdef STATIC_LEGACY
     /*
@@ -1418,9 +1421,11 @@ int setup_tests(void)
     MAKE_KEYS(X448, "X448", NULL);
 #endif
 #ifndef OPENSSL_ML_DSA
-    MAKE_KEYS(ML_DSA_44, "ML-DSA-44", NULL);
-    MAKE_KEYS(ML_DSA_65, "ML-DSA-65", NULL);
-    MAKE_KEYS(ML_DSA_87, "ML-DSA-87", NULL);
+    if (!is_fips_lt_3_5) {
+        MAKE_KEYS(ML_DSA_44, "ML-DSA-44", NULL);
+        MAKE_KEYS(ML_DSA_65, "ML-DSA-65", NULL);
+        MAKE_KEYS(ML_DSA_87, "ML-DSA-87", NULL);
+    }
 #endif /* OPENSSL_ML_DSA */
 
     TEST_info("Loading RSA key...");
@@ -1493,9 +1498,11 @@ int setup_tests(void)
 # endif
 
 #ifndef OPENSSL_ML_DSA
-        ADD_TEST_SUITE(ML_DSA_44);
-        ADD_TEST_SUITE(ML_DSA_65);
-        ADD_TEST_SUITE(ML_DSA_87);
+        if (!is_fips_lt_3_5) {
+            ADD_TEST_SUITE(ML_DSA_44);
+            ADD_TEST_SUITE(ML_DSA_65);
+            ADD_TEST_SUITE(ML_DSA_87);
+        }
 #endif /* OPENSSL_ML_DSA */
     }
 
@@ -1545,9 +1552,11 @@ void cleanup_tests(void)
     FREE_KEYS(RSA_PSS);
 
 #ifndef OPENSSL_ML_DSA
-    FREE_KEYS(ML_DSA_44);
-    FREE_KEYS(ML_DSA_65);
-    FREE_KEYS(ML_DSA_87);
+    if (!is_fips_lt_3_5) {
+        FREE_KEYS(ML_DSA_44);
+        FREE_KEYS(ML_DSA_65);
+        FREE_KEYS(ML_DSA_87);
+    }
 #endif /* OPENSSL_ML_DSA */
 
     OSSL_PROVIDER_unload(nullprov);
