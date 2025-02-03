@@ -10,7 +10,7 @@ EVP_PKEY-ML-DSA-44, EVP_PKEY-ML-DSA-65, EVP_PKEY-ML-DSA-87
 
 ML-DSA implements the algorithms B<ML-DSA-44>, B<ML-DSA-65> and B<ML-DSA-87>. 
 The key types B<EVP_PKEY_ML_DSA_44>, B<EVP_PKEY_ML_DSA_65> and
-B<EVP_PKEY_ML_DSA_87> are implemented in OpenSSL's default provider.
+B<EVP_PKEY_ML_DSA_87> are implemented in OpenSSL's default and FIPS providers.
 These implementations support the associated key, containing the public key I<pub>
 and the private key I<priv>.
 
