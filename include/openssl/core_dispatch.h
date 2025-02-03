@@ -19,6 +19,13 @@
 extern "C" {
 # endif
 
+/*
+ * Generic function pointer for provider method arrays, or other contexts where
+ * functions of various signatures must occupy a common slot in an array of
+ * structures.
+ */
+typedef void (*OSSL_FUNC)(void);
+
 /*-
  * Identities
  * ----------

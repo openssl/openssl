@@ -153,6 +153,7 @@ static const ERR_STRING_DATA PROV_str_reasons[] = {
      "missing session id"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_MISSING_TYPE), "missing type"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_MISSING_XCGHASH), "missing xcghash"},
+    {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_ML_DSA_NO_FORMAT), "ml dsa no format"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_MODULE_INTEGRITY_FAILURE),
      "module integrity failure"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_NOT_A_PRIVATE_KEY), "not a private key"},

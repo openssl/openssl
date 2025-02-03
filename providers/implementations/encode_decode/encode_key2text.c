@@ -29,6 +29,7 @@
 #include "prov/implementations.h"
 #include "internal/encoder.h"
 #include "endecoder_local.h"
+#include "ml_dsa_codecs.h"
 
 DEFINE_SPECIAL_STACK_OF_CONST(BIGNUM_const, BIGNUM)
 
@@ -591,7 +592,7 @@ static int rsa_to_text(BIO *out, const void *key, int selection)
 #ifndef OPENSSL_NO_ML_DSA
 static int ml_dsa_to_text(BIO *out, const void *key, int selection)
 {
-    return ossl_ml_dsa_to_text(out, (ML_DSA_KEY *)key, selection);
+    return ossl_ml_dsa_key_to_text(out, (ML_DSA_KEY *)key, selection);
 }
 #endif /* OPENSSL_NO_ML_DSA */
 /* ---------------------------------------------------------------------- */

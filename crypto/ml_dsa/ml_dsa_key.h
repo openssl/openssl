@@ -8,8 +8,7 @@
  */
 
 #include <openssl/e_os2.h>
-#include "crypto/types.h"
-#include "internal/refcount.h"
+#include "ml_dsa_local.h"
 #include "ml_dsa_vector.h"
 
 /* NOTE - any changes to this struct may require updates to ossl_ml_dsa_dup() */
@@ -27,9 +26,16 @@ struct ml_dsa_key_st {
     /*
      * The encoded public and private keys, these are non NULL if the key
      * components are generated or loaded.
+     *
+     * For keys that are decoded, but not yet loaded or imported into the
+     * provider, the pub_encoding is NULL, while the seed or priv_encoding
+     * is not NULL.
      */
     uint8_t *pub_encoding;
     uint8_t *priv_encoding;
+    uint8_t *seed;
+    int retain_seed;
+    int prefer_seed;
 
     /*
      * t1 is the Polynomial encoding of the 10 MSB of each coefficient of the

@@ -8,8 +8,8 @@
  */
 #include <stddef.h>
 #include <string.h>
+#include <openssl/evp.h>
 #include "ml_dsa_local.h"
-#include "ml_dsa_params.h"
 
 /* See FIPS 204 Section 4 Table 1 & Table 2 */
 #define ML_DSA_44_TAU 39
@@ -43,6 +43,7 @@
 
 static const ML_DSA_PARAMS ml_dsa_params[] = {
     { "ML-DSA-44",
+      EVP_PKEY_ML_DSA_44,
       ML_DSA_44_TAU,
       ML_DSA_44_LAMBDA,
       ML_DSA_GAMMA1_TWO_POWER_17,
@@ -58,6 +59,7 @@ static const ML_DSA_PARAMS ml_dsa_params[] = {
       ML_DSA_44_SIG_LEN
     },
     { "ML-DSA-65",
+      EVP_PKEY_ML_DSA_65,
       ML_DSA_65_TAU,
       ML_DSA_65_LAMBDA,
       ML_DSA_GAMMA1_TWO_POWER_19,
@@ -73,6 +75,7 @@ static const ML_DSA_PARAMS ml_dsa_params[] = {
       ML_DSA_65_SIG_LEN
     },
     { "ML-DSA-87",
+      EVP_PKEY_ML_DSA_87,
       ML_DSA_87_TAU,
       ML_DSA_87_LAMBDA,
       ML_DSA_GAMMA1_TWO_POWER_19,
@@ -93,14 +96,12 @@ static const ML_DSA_PARAMS ml_dsa_params[] = {
 /**
  * @brief A getter to convert an algorithm name into a ML_DSA_PARAMS object
  */
-const ML_DSA_PARAMS *ossl_ml_dsa_params_get(const char *alg)
+const ML_DSA_PARAMS *ossl_ml_dsa_params_get(int evp_type)
 {
     const ML_DSA_PARAMS *p;
 
-    if (alg == NULL)
-        return NULL;
     for (p = ml_dsa_params; p->alg != NULL; ++p) {
-        if (strcmp(p->alg, alg) == 0)
+        if (p->evp_type == evp_type)
             return p;
     }
     return NULL;
