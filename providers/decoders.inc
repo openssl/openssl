@@ -83,12 +83,12 @@ DECODER_w_structure("RSA-PSS", der, SubjectPublicKeyInfo, rsapss, yes),
 DECODER("RSA", msblob, rsa, yes),
 DECODER("RSA", pvk, rsa, yes),
 #ifndef OPENSSL_NO_ML_DSA
-DECODER_w_structure("ML-DSA-44", der, PrivateKeyInfo, ml_dsa_44, no),
-DECODER_w_structure("ML-DSA-65", der, PrivateKeyInfo, ml_dsa_65, no),
-DECODER_w_structure("ML-DSA-87", der, PrivateKeyInfo, ml_dsa_87, no),
-DECODER_w_structure("ML-DSA-44", der, SubjectPublicKeyInfo, ml_dsa_44, no),
-DECODER_w_structure("ML-DSA-65", der, SubjectPublicKeyInfo, ml_dsa_65, no),
-DECODER_w_structure("ML-DSA-87", der, SubjectPublicKeyInfo, ml_dsa_87, no),
+DECODER_w_structure("ML-DSA-44", der, PrivateKeyInfo, ml_dsa_44, yes),
+DECODER_w_structure("ML-DSA-65", der, PrivateKeyInfo, ml_dsa_65, yes),
+DECODER_w_structure("ML-DSA-87", der, PrivateKeyInfo, ml_dsa_87, yes),
+DECODER_w_structure("ML-DSA-44", der, SubjectPublicKeyInfo, ml_dsa_44, yes),
+DECODER_w_structure("ML-DSA-65", der, SubjectPublicKeyInfo, ml_dsa_65, yes),
+DECODER_w_structure("ML-DSA-87", der, SubjectPublicKeyInfo, ml_dsa_87, yes),
 #endif /* OPENSSL_NO_ML_DSA */
 
 /*
