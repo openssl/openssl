@@ -1448,9 +1448,11 @@ int setup_tests(void)
     }
 #endif /* OPENSSL_NO_ML_DSA */
 #ifndef OPENSSL_NO_ML_KEM
-    MAKE_KEYS(ML_KEM_512, "ML-KEM-512", NULL);
-    MAKE_KEYS(ML_KEM_768, "ML-KEM-768", NULL);
-    MAKE_KEYS(ML_KEM_1024, "ML-KEM-1024", NULL);
+    if (!is_fips_lt_3_5) {
+        MAKE_KEYS(ML_KEM_512, "ML-KEM-512", NULL);
+        MAKE_KEYS(ML_KEM_768, "ML-KEM-768", NULL);
+        MAKE_KEYS(ML_KEM_1024, "ML-KEM-1024", NULL);
+    }
 #endif
 
     TEST_info("Loading RSA key...");
@@ -1508,9 +1510,11 @@ int setup_tests(void)
         ADD_TEST_SUITE(X448);
 #endif
 #ifndef OPENSSL_NO_ML_KEM
-        ADD_TEST_SUITE(ML_KEM_512);
-        ADD_TEST_SUITE(ML_KEM_768);
-        ADD_TEST_SUITE(ML_KEM_1024);
+        if (!is_fips_lt_3_5) {
+            ADD_TEST_SUITE(ML_KEM_512);
+            ADD_TEST_SUITE(ML_KEM_768);
+            ADD_TEST_SUITE(ML_KEM_1024);
+        }
 #endif
         /*
          * ED25519, ED448, X25519 and X448 have no support for
@@ -1583,9 +1587,11 @@ void cleanup_tests(void)
     FREE_KEYS(X448);
 #endif
 #ifndef OPENSSL_NO_ML_KEM
-    FREE_KEYS(ML_KEM_512);
-    FREE_KEYS(ML_KEM_768);
-    FREE_KEYS(ML_KEM_1024);
+    if (!is_fips_lt_3_5) {
+        FREE_KEYS(ML_KEM_512);
+        FREE_KEYS(ML_KEM_768);
+        FREE_KEYS(ML_KEM_1024);
+    }
 #endif
     FREE_KEYS(RSA);
     FREE_KEYS(RSA_PSS);
