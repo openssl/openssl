@@ -19,6 +19,11 @@ BEGIN {
 my $provconf = srctop_file("test", "fips-and-base.cnf");
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
+run(test(["fips_version_test", "-config", $provconf, ">=3.6.0"]),
+         capture => 1, statusvar => \my $exit);
+
+plan skip_all => "FIPS provider does not support LMS" if !$exit;
+
 use lib srctop_dir('Configurations');
 use lib bldtop_dir('.');
 
