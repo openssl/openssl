@@ -2,13 +2,14 @@
 
 =head1 NAME
 
+EVP_PKEY-ML-KEM,
+EVP_KEYMGMT-ML-KEM,
 EVP_PKEY-ML-KEM-512,
 EVP_PKEY-ML-KEM-768,
 EVP_PKEY-ML-KEM-1024,
 EVP_KEYMGMT-ML-KEM-512,
 EVP_KEYMGMT-ML-KEM-768,
-EVP_KEYMGMT-ML-KEM-1024,
-EVP_PKEY-ML-KEM
+EVP_KEYMGMT-ML-KEM-1024
 - ML-KEM keytype and algorithm support
 
 =head1 DESCRIPTION
@@ -39,10 +40,16 @@ with keys (by default) regenerated from the seed even when also provided on impo
 See L</Provider configuration parameters> below for related controls.
 
 When the seed is retained, it is also available as a B<gettable> parameter,
-and private key output to B<PKCS#8> files will default to seed format.
-When the seed is not available, because not included in the B<PKCS#8> file, not
-available on import, or not retained, B<PKCS#8> private key files will have the
-private key in FIPS 203 C<dk> format.
+and private key output to B<PKCS#8> files will by default include the seed.
+When the seed was not initially known, or was not retained, B<PKCS#8> private
+key files will contain only the private key in FIPS 203 C<dk> format.
+
+=item "properties" (B<OSSL_PKEY_PARAM_PROPERTIES>) <UTF8 string>
+
+Sets properties to be used when fetching algorithm implementations used for
+ML-KEM hashing operations.
+
+Use L<EVP_PKEY_CTX_set_params(3)> after calling L<EVP_PKEY_keygen_init(3)>.
 
 =back
 
@@ -50,7 +57,13 @@ private key in FIPS 203 C<dk> format.
 
 In addition to the common parameters that all keytypes should support (see
 L<provider-keymgmt(7)/Common Information Parameters>), B<ML-KEM> keys
-keys support the following.
+keys support the parameters listed below.
+These are gettable using
+L<EVP_PKEY_get_octet_string_param(3)> or L<EVP_PKEY_get_params(3)>.
+They can be initialised via L<EVP_PKEY_fromdata(3)>, and are returned by
+L<EVP_PKEY_todata(3)> given a suitable I<selection>.
+Once a public or private key is configured, it can no longer be modified,
+nor can another key component be added.
 
 =over 4
 
@@ -129,8 +142,8 @@ The supported formats are:
 
 =item C<seed-priv>:
 
-This format represents keys in which both the 64-byte B<(d, z)> seed and the
-FIPS 203 decapsulation private key B<dk> are present in the PKCS#8 private key
+This format represents B<PKCS#8> objects in which both the FIPS 203 64-byte
+B<(d, z)> seed and the decapsulation key B<dk> are present in the private key
 as part of the DER encoding of the ASN.1 sequence:
 
  PrivateKey ::= SEQUENCE {
@@ -144,49 +157,55 @@ recognised on input.
 
 =item C<seed-only>:
 
-This format represents keys in which only the 64-byte B<(d, z)> seed is present
-in the above sequence.
+This format represents B<PKCS#8> objects in which only the 64-byte B<(d, z)>
+seed is present in the above sequence.
 If the C<seed-only> format is not included in the list, this format will not be
 recognised on input.
 
 =item C<priv-only>:
 
-This format represents keys in which only the FIPS 203 decapsulation key B<dk>
-is present in the above sequence.
+This format represents B<PKCS#8> objects in which only the FIPS 203
+decapsulation key B<dk> is present in the above sequence.
 If the C<priv-only> format is not included in the list, this format will not be
 recognised on input.
 
 =item C<priv-oqs>:
 
-This format represents keys in which the private key value is a DER encoding of an
-octet string containing the FIPS 203 decapsulation key B<dk>.
-This format is used in some builds of the C<oqsprovider>, with a non-NIST value of
-the algorithm OID by default.
-For interoperability with OpenSSL, environment variable settings, such as
-C<OQS_OID_MLKEM768=2.16.840.1.101.3.4.4.2>, need to be used to configure
-C<oqsprovider> to use the expected NIST OIDs for B<ML-kEM>.
+This format represents B<PKCS#8> objects in which the private key is a DER
+encoding of an octet string containing the FIPS 203 decapsulation key B<dk>.
+This format is used in some builds of the C<oqsprovider>.
 If the C<priv-oqs> format is not included in the list, this format will not be
 recognised on input.
 
 =item C<pair-oqs>:
 
-This format represents keys in which the private keys a DER encoding of an
-octet string containing the concatenaton of the FIPS 203 decapsulation key B<dk> and
-the encapsulation key B<ek>.
-This encoding is used in some builds of the C<oqsprovider>, with a non-NIST
-value of the OID by default.
-For interoperability with OpenSSL, environment variable settings, such as
-C<OQS_OID_MLKEM512=2.16.840.1.101.3.4.4.1>, need to be used to configure
-C<oqsprovider> to use the expected NIST OIDs for B<ML-kEM>.
+This format represents B<PKCS#8> objects in which the private key is a DER
+encoding of an octet string containing the concatenaton of the FIPS 203
+decapsulation key B<dk> and the encapsulation key B<ek>.
+This encoding is used in some builds of the C<oqsprovider>.
 If the C<pair-oqs> format is not included in the list, this format will not be
+recognised on input.
+
+=item C<bare-seed>:
+
+This format represents B<PKCS#8> objects in which the private key contains
+the 64-byte FIPS 204 seed B<(d, z)> without any ASN.1 encapsulation.
+If the C<bare-seed> format is not included in the list, this format will not be
+recognised on input.
+
+=item C<bare-priv>:
+
+This format represents B<PKCS#8> objects in which the private key contains
+the FIPS 204 decapsulation key B<dk> without any ASN.1 encapsulation.
+If the C<bare-priv> format is not included in the list, this format will not be
 recognised on input.
 
 =back
 
 =item C<ml-kem.output_formats> (B<OSSL_PKEY_PARAM_ML_KEM_OUTPUT_FORMATS>) <UTF8 string>
 
-Ordered list of enabled private key output formats when writing PKCS#8 files.
-List elements are separated by commas and/or spaces or tabs.
+Ordered list of enabled private key output formats when writing B<PKCS#8> files.
+List elements are separated by commas, spaces or tabs.
 The list of enabled formats can be specified in the configuration file, as seen
 in the L</EXAMPLES> section below, or the via the B<-provparam> command-line
 option.
@@ -197,14 +216,15 @@ The order in which elements are listed is important, the selected format will be
 the first one that is possible to output.
 If the key seed is known, the first listed format will be selected.
 If the key seed is not known, the first format that omits the seed will be selected.
-The default order is equivalent to C<seed-priv> and C<priv-only> second, with
-both seed and key output when the seed is available, and otherwise just the
-key is output.
+The default order is equivalent to C<seed-priv> first and C<priv-only> second, with
+both seed and key output when the seed is available, and just the
+key otherwise.
 If C<seed-only> is listed first, then the seed will be output without the key
 when available, otherwise the output will have just the key.
 If C<priv-only> is listed first, then just the key is output regardless of
 whether the seed is present.
-The legacy C<oqs> formats can also be output, by listing either of those first.
+The legacy C<oqs> and C<bare> formats can also be output, by listing those
+first.
 
 =back
 
@@ -227,8 +247,6 @@ An B<ML-KEM-768> key can be generated like this:
 
     pkey = EVP_PKEY_Q_keygen(NULL, NULL, "ML-KEM-768");
 
-Equivalent calls are available for B<ML-KEM-512> and B<ML-KEM-1024>.
-
 An B<ML-KEM> private key in seed format can be converted to a key in the FIPS
 203 B<dk> format by running:
 
@@ -238,9 +256,9 @@ An B<ML-KEM> private key in seed format can be converted to a key in the FIPS
 To generate an, e.g., B<ML-KEM-768> key, in FIPS 203 B<dk> format, you can run:
 
     $ openssl genpkey -provparam ml-kem.retain_seed=no \
-        -algorithm ml-kem-768 -out long.pem
+        -algorithm ml-kem-768 -out priv-only.pem
 
-If you have B<PKCS#8> file with both a seed and a key, and prefer to import the
+If you have a B<PKCS#8> file with both a seed and a key, and prefer to import the
 companion key rather than the seed, you can run:
 
     $ openssl pkey -provparam ml-kem.prefer_seed=no \
@@ -283,9 +301,9 @@ L<EVP_PKEY(3)>,
 L<EVP_PKEY_get_raw_private_key(3)>,
 L<EVP_PKEY_get_raw_public_key(3)>,
 L<EVP_PKEY_get1_encoded_public_key(3)>,
+LOSSL_PROVIDER_add_conf_parameter(3)>,
 L<provider-keymgmt(7)>,
-L<EVP_KEM-ML-KEM(7)>,
-LOSSL_PROVIDER_add_conf_parameter(3)>
+L<EVP_KEM-ML-KEM(7)>
 
 =head1 HISTORY
 

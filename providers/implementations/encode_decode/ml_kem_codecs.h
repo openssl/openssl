@@ -55,15 +55,18 @@ typedef struct {
     uint32_t p8_magic;
     uint16_t seed_magic;
     size_t seed_offset;
+    size_t seed_length;
     uint32_t priv_magic;
     size_t priv_offset;
+    size_t priv_length;
     size_t pub_offset;
+    size_t pub_length;
 } ML_KEM_PKCS8_INFO;
 
 typedef struct {
     const ML_KEM_SPKI_INFO *spki_info;
     const ML_KEM_PKCS8_INFO *pkcs8_info;
-} ML_KEM_CINFO;
+} ML_KEM_CODEC;
 
 typedef struct {
     const ML_KEM_PKCS8_INFO *vp8_entry;
