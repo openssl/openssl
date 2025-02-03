@@ -122,7 +122,7 @@ static const char random_provider_fips_name[] = "fips";
 static int set_random_provider_name(RAND_GLOBAL *dgbl, const char *name)
 {
     if (dgbl->random_provider_name != NULL
-            && strcmp(dgbl->random_provider_name, name) == 0)
+            && OPENSSL_strcasecmp(dgbl->random_provider_name, name) == 0)
         return 1;
 
     OPENSSL_free(dgbl->random_provider_name);
