@@ -366,7 +366,7 @@ int ossl_dh_check_pairwise(const DH *dh, int return_on_null_numbers)
 #ifdef FIPS_MODULE
     {
         int len;
-        unsigned char bytes[1024] = {0};
+        unsigned char bytes[1024] = {0};    /* Max key size of 8192 bits */
 
         if (BN_num_bytes(pub_key) > (int)sizeof(bytes))
             goto err;
