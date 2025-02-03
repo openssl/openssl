@@ -48,6 +48,7 @@ OSSL_provider_init_fn ossl_legacy_provider_init;
 static int default_libctx = 1;
 static int is_fips = 0;
 static int is_fips_3_0_0 = 0;
+static int is_fips_lt_3_5 = 0;
 
 static OSSL_LIB_CTX *testctx = NULL;
 static OSSL_LIB_CTX *keyctx = NULL;
@@ -1360,6 +1361,8 @@ int setup_tests(void)
 
     /* FIPS(3.0.0): provider imports explicit params but they won't work #17998 */
     is_fips_3_0_0 = is_fips && fips_provider_version_eq(testctx, 3, 0, 0);
+    /* FIPS(3.5.0) is the first to support ML-KEM and ML-DSA */
+    is_fips_lt_3_5 = is_fips && fips_provider_version_lt(testctx, 3, 5, 0);
 
 #ifdef STATIC_LEGACY
     /*
@@ -1428,9 +1431,11 @@ int setup_tests(void)
     MAKE_KEYS(X448, "X448", NULL);
 #endif
 #ifndef OPENSSL_NO_ML_KEM
-    MAKE_KEYS(ML_KEM_512, "ML-KEM-512", NULL);
-    MAKE_KEYS(ML_KEM_768, "ML-KEM-768", NULL);
-    MAKE_KEYS(ML_KEM_1024, "ML-KEM-1024", NULL);
+    if (!is_fips_lt_3_5) {
+        MAKE_KEYS(ML_KEM_512, "ML-KEM-512", NULL);
+        MAKE_KEYS(ML_KEM_768, "ML-KEM-768", NULL);
+        MAKE_KEYS(ML_KEM_1024, "ML-KEM-1024", NULL);
+    }
 #endif
     TEST_info("Loading RSA key...");
     ok = ok && TEST_ptr(key_RSA = load_pkey_pem(rsa_file, keyctx));
@@ -1487,9 +1492,11 @@ int setup_tests(void)
         ADD_TEST_SUITE(X448);
 #endif
 #ifndef OPENSSL_NO_ML_KEM
-        ADD_TEST_SUITE(ML_KEM_512);
-        ADD_TEST_SUITE(ML_KEM_768);
-        ADD_TEST_SUITE(ML_KEM_1024);
+        if (!is_fips_lt_3_5) {
+            ADD_TEST_SUITE(ML_KEM_512);
+            ADD_TEST_SUITE(ML_KEM_768);
+            ADD_TEST_SUITE(ML_KEM_1024);
+        }
 #endif
         /*
          * ED25519, ED448, X25519 and X448 have no support for
@@ -1554,9 +1561,11 @@ void cleanup_tests(void)
     FREE_KEYS(X448);
 #endif
 #ifndef OPENSSL_NO_ML_KEM
-    FREE_KEYS(ML_KEM_512);
-    FREE_KEYS(ML_KEM_768);
-    FREE_KEYS(ML_KEM_1024);
+    if (!is_fips_lt_3_5) {
+        FREE_KEYS(ML_KEM_512);
+        FREE_KEYS(ML_KEM_768);
+        FREE_KEYS(ML_KEM_1024);
+    }
 #endif
     FREE_KEYS(RSA);
     FREE_KEYS(RSA_PSS);
