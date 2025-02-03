@@ -30,6 +30,13 @@ OpenSSL 3.5
 
 ### Changes between 3.4 and 3.5 [xx XXX xxxx]
 
+* A new random generation API has been introduced which modifies all
+  of the L<RAND_bytes(3)> family of calls so they are routed through a
+  specific named provider instead of being resolved via the normal DRBG
+  chaining.  In a future OpenSSL release, this will obsolete RAND_METHOD.
+
+  *Dr Paul Dale*
+
 * New inline functions were added to support loads and stores of unsigned
   16-bit, 32-bit and 64-bit integers in either little-endian or big-endian
   form, regardless of the host byte-order.  See the `OPENSSL_load_u16_le(3)`
