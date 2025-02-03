@@ -13,7 +13,6 @@
 #include <openssl/rand.h>
 #include "ml_dsa_local.h"
 #include "ml_dsa_key.h"
-#include "ml_dsa_params.h"
 #include "ml_dsa_matrix.h"
 #include "ml_dsa_sign.h"
 #include "ml_dsa_hash.h"

@@ -23,9 +23,7 @@
 #include <openssl/pkcs12.h>
 #include <openssl/x509.h>
 #include <openssl/proverr.h>
-#include <openssl/asn1t.h>
 #include "internal/cryptlib.h"   /* ossl_assert() */
-#include "internal/asn1.h"
 #include "crypto/dh.h"
 #include "crypto/dsa.h"
 #include "crypto/ec.h"
@@ -34,31 +32,11 @@
 #include "crypto/rsa.h"
 #include "crypto/ml_dsa.h"
 #include "crypto/x509.h"
-#include "openssl/obj_mac.h"
 #include "prov/bio.h"
 #include "prov/implementations.h"
 #include "endecoder_local.h"
 #include "internal/nelem.h"
-
-#ifndef OPENSSL_NO_ML_DSA
-typedef struct {
-    ASN1_OBJECT *oid;
-} BARE_ALGOR;
-
-typedef struct {
-    BARE_ALGOR algor;
-    ASN1_BIT_STRING *pubkey;
-} BARE_PUBKEY;
-
-ASN1_SEQUENCE(BARE_ALGOR) = {
-    ASN1_SIMPLE(BARE_ALGOR, oid, ASN1_OBJECT),
-} static_ASN1_SEQUENCE_END(BARE_ALGOR)
-
-ASN1_SEQUENCE(BARE_PUBKEY) = {
-    ASN1_EMBED(BARE_PUBKEY, algor, BARE_ALGOR),
-    ASN1_SIMPLE(BARE_PUBKEY, pubkey, ASN1_BIT_STRING)
-} static_ASN1_SEQUENCE_END(BARE_PUBKEY)
-#endif /* OPENSSL_NO_ML_DSA */
+#include "ml_dsa_codecs.h"
 
 struct der2key_ctx_st;           /* Forward declaration */
 typedef int check_key_fn(void *, struct der2key_ctx_st *ctx);
@@ -640,118 +618,25 @@ static void rsa_adjust(void *key, struct der2key_ctx_st *ctx)
 static void *
 ml_dsa_d2i_PKCS8(const uint8_t **der, long der_len, struct der2key_ctx_st *ctx)
 {
-    ML_DSA_KEY *key = NULL, *ret = NULL;
-    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
-    PKCS8_PRIV_KEY_INFO *p8inf = NULL;
-    const unsigned char *p;
-    const X509_ALGOR *alg = NULL;
-    int plen, ptype;
+    ML_DSA_KEY *key;
 
-    if ((p8inf = d2i_PKCS8_PRIV_KEY_INFO(NULL, der, der_len)) == NULL
-        || !PKCS8_pkey_get0(NULL, &p, &plen, &alg, p8inf))
-        goto end;
-
-    /* Algorithm parameters must be absent */
-    if ((X509_ALGOR_get0(NULL, &ptype, NULL, alg), ptype != V_ASN1_UNDEF))
-        goto end;
-    if (OBJ_obj2nid(alg->algorithm) != ctx->desc->evp_type)
-        goto end;
-    if ((key = ossl_ml_dsa_key_new(libctx, ctx->propq,
-                                   ctx->desc->keytype_name)) == NULL)
-        goto end;
-
-    if (!ossl_ml_dsa_sk_decode(key, p, plen)
-            || !ossl_ml_dsa_key_public_from_private(key))
-        goto end;
-    ret = key;
- end:
-    PKCS8_PRIV_KEY_INFO_free(p8inf);
-    if (ret == NULL)
-        ossl_ml_dsa_key_free(key);
-    return ret;
+    key = ossl_ml_dsa_d2i_PKCS8(*der, der_len, ctx->desc->evp_type,
+                                ctx->provctx, ctx->propq);
+    if (key != NULL)
+        *der += der_len;
+    return key;
 }
 
 static ossl_inline void * ml_dsa_d2i_PUBKEY(const uint8_t **der, long der_len,
                                             struct der2key_ctx_st *ctx)
 {
-    int ok = 0;
-    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
-    ML_DSA_KEY *ret = NULL;
-    BARE_PUBKEY *spki = NULL;
-    const uint8_t *end = *der;
-    size_t len;
+    ML_DSA_KEY *key;
 
-    ret = ossl_ml_dsa_key_new(libctx, ctx->propq, ctx->desc->keytype_name);
-    if (ret == NULL)
-        return NULL;
-    len = ossl_ml_dsa_key_get_pub_len(ret);
-
-    /*-
-     * The DER ASN.1 encoding of ML-DSA public keys prepends 22 bytes to the
-     * encoded public key:
-     *
-     * - 4 byte outer sequence tag and length
-     * -  2 byte algorithm sequence tag and length
-     * -    2 byte algorithm OID tag and length
-     * -      9 byte algorithm OID
-     * -  4 byte bit string tag and length
-     * -    1 bitstring lead byte
-     *
-     * Check that we have the right OID, the bit string has no "bits left" and
-     * that we consume all the input exactly.
-     */
-    if (der_len != 22 + (long)len) {
-        ERR_raise_data(ERR_LIB_PROV, PROV_R_BAD_ENCODING,
-                       "unexpected %s public key length: %ld != %ld",
-                       ctx->desc->keytype_name, der_len,
-                       22 + (long)len);
-        goto err;
-    }
-
-    if ((spki = OPENSSL_zalloc(sizeof(*spki))) == NULL)
-        goto err;
-
-    /* The spki storage is freed on error */
-    if (ASN1_item_d2i_ex((ASN1_VALUE **)&spki, &end, der_len,
-                         ASN1_ITEM_rptr(BARE_PUBKEY), NULL, NULL) == NULL) {
-        ERR_raise_data(ERR_LIB_PROV, PROV_R_BAD_ENCODING,
-                       "malformed %s public key ASN.1 encoding",
-                       ossl_ml_dsa_key_get_name(ret));
-        goto err;
-    }
-
-    /* The spki structure now owns some memory */
-    if ((spki->pubkey->flags & 0x7) != 0 || end != *der + der_len) {
-        ERR_raise_data(ERR_LIB_PROV, PROV_R_BAD_ENCODING,
-                       "malformed %s public key ASN.1 encoding",
-                       ossl_ml_dsa_key_get_name(ret));
-        goto err;
-    }
-    if (OBJ_cmp(OBJ_nid2obj(ctx->desc->evp_type), spki->algor.oid) != 0) {
-        ERR_raise_data(ERR_LIB_PROV, PROV_R_BAD_ENCODING,
-                       "unexpected algorithm OID for an %s public key",
-                       ossl_ml_dsa_key_get_name(ret));
-        goto err;
-    }
-
-    if (!ossl_ml_dsa_pk_decode(ret, spki->pubkey->data, spki->pubkey->length)) {
-        ERR_raise_data(ERR_LIB_PROV, PROV_R_BAD_ENCODING,
-                       "failed to parse %s public key from the input data",
-                       ossl_ml_dsa_key_get_name(ret));
-        goto err;
-    }
-    ok = 1;
- err:
-    if (spki != NULL) {
-        ASN1_OBJECT_free(spki->algor.oid);
-        ASN1_BIT_STRING_free(spki->pubkey);
-        OPENSSL_free(spki);
-    }
-    if (!ok) {
-        ossl_ml_dsa_key_free(ret);
-        ret = NULL;
-    }
-    return ret;
+    key = ossl_ml_dsa_d2i_PUBKEY(*der, der_len, ctx->desc->evp_type,
+                                 ctx->provctx, ctx->propq);
+    if (key != NULL)
+        *der += der_len;
+    return key;
 }
 
 # define ml_dsa_44_evp_type                EVP_PKEY_ML_DSA_44
