@@ -15,7 +15,6 @@
 # include "internal/packet.h"
 
 /* The following constants are shared by ML-DSA-44, ML-DSA-65 & ML-DSA-87 */
-# define ML_DSA_SEED_BYTES 32
 # define ML_DSA_Q 8380417   /* The modulus is 23 bits (2^23 - 2^13 + 1) */
 # define ML_DSA_Q_MINUS1_DIV2 ((ML_DSA_Q - 1) / 2)
 
@@ -56,11 +55,9 @@
 # define ML_DSA_GAMMA2_Q_MINUS1_DIV32 ((ML_DSA_Q - 1) / 32)
 # define ML_DSA_GAMMA2_Q_MINUS1_DIV88 ((ML_DSA_Q - 1) / 88)
 
-typedef struct ml_dsa_params_st ML_DSA_PARAMS;
 typedef struct poly_st POLY;
 typedef struct vector_st VECTOR;
 typedef struct matrix_st MATRIX;
-
 typedef struct ml_dsa_sig_st ML_DSA_SIG;
 
 int ossl_ml_dsa_matrix_expand_A(EVP_MD_CTX *g_ctx, const EVP_MD *md,

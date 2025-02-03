@@ -49,7 +49,7 @@ typedef struct {
     size_t test_entropy_len;
     int msg_encode;
     int deterministic;
-    const char *alg;
+    int evp_type;
     /* The Algorithm Identifier of the signature algorithm */
     uint8_t aid_buf[OSSL_MAX_ALGORITHM_ID_SIZE];
     size_t  aid_len;
@@ -63,7 +63,7 @@ static void ml_dsa_freectx(void *vctx)
     OPENSSL_free(ctx);
 }
 
-static void *ml_dsa_newctx(void *provctx, const char *alg, const char *propq)
+static void *ml_dsa_newctx(void *provctx, int evp_type, const char *propq)
 {
     PROV_ML_DSA_CTX *ctx;
 
@@ -76,7 +76,7 @@ static void *ml_dsa_newctx(void *provctx, const char *alg, const char *propq)
 
     ctx->libctx = PROV_LIBCTX_OF(provctx);
     ctx->msg_encode = ML_DSA_MESSAGE_ENCODE_PURE;
-    ctx->alg = alg;
+    ctx->evp_type = evp_type;
 
     return ctx;
 }
@@ -139,7 +139,7 @@ static int ml_dsa_signverify_msg_init(void *vctx, void *vkey,
 
     if (key != NULL)
         ctx->key = vkey;
-    if (!ossl_ml_dsa_key_matches(ctx->key, ctx->alg))
+    if (!ossl_ml_dsa_key_matches(ctx->key, ctx->evp_type))
         return 0;
 
     set_alg_id_buffer(ctx);
@@ -319,14 +319,14 @@ static int ml_dsa_get_ctx_params(void *vctx, OSSL_PARAM *params)
     return 1;
 }
 
-#define MAKE_SIGNATURE_FUNCTIONS(alg, fn)                                      \
-    static OSSL_FUNC_signature_newctx_fn ml_dsa_##fn##_newctx;                 \
-    static void *ml_dsa_##fn##_newctx(void *provctx, const char *propq)        \
+#define MAKE_SIGNATURE_FUNCTIONS(alg)                                          \
+    static OSSL_FUNC_signature_newctx_fn ml_dsa_##alg##_newctx;                \
+    static void *ml_dsa_##alg##_newctx(void *provctx, const char *propq)       \
     {                                                                          \
-        return ml_dsa_newctx(provctx, alg, propq);                             \
+        return ml_dsa_newctx(provctx, EVP_PKEY_ML_DSA_##alg, propq);           \
     }                                                                          \
-    const OSSL_DISPATCH ossl_ml_dsa_##fn##_signature_functions[] = {           \
-        { OSSL_FUNC_SIGNATURE_NEWCTX, (void (*)(void))ml_dsa_##fn##_newctx },  \
+    const OSSL_DISPATCH ossl_ml_dsa_##alg##_signature_functions[] = {          \
+        { OSSL_FUNC_SIGNATURE_NEWCTX, (void (*)(void))ml_dsa_##alg##_newctx }, \
         { OSSL_FUNC_SIGNATURE_SIGN_MESSAGE_INIT,                               \
           (void (*)(void))ml_dsa_sign_msg_init },                              \
         { OSSL_FUNC_SIGNATURE_SIGN, (void (*)(void))ml_dsa_sign },             \
@@ -354,6 +354,6 @@ static int ml_dsa_get_ctx_params(void *vctx, OSSL_PARAM *params)
         OSSL_DISPATCH_END                                                      \
     }
 
-MAKE_SIGNATURE_FUNCTIONS("ML-DSA-44", 44);
-MAKE_SIGNATURE_FUNCTIONS("ML-DSA-65", 65);
-MAKE_SIGNATURE_FUNCTIONS("ML-DSA-87", 87);
+MAKE_SIGNATURE_FUNCTIONS(44);
+MAKE_SIGNATURE_FUNCTIONS(65);
+MAKE_SIGNATURE_FUNCTIONS(87);

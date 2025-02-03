@@ -43,17 +43,15 @@ static int do_raw_keyop(int pkey_op, EVP_MD_CTX *mctx,
                         int filesize, unsigned char *sig, int siglen,
                         unsigned char **out, size_t *poutlen);
 
-static int is_EdDSA(const EVP_PKEY *pkey)
+static int only_nomd(EVP_PKEY *pkey)
 {
-    if (pkey == NULL)
-        return 0;
-    return EVP_PKEY_is_a(pkey, "ED25519")
-        || EVP_PKEY_is_a(pkey, "ED448");
-}
+#define MADE_UP_MAX_MD_NAME_LEN 100
+    char defname[MADE_UP_MAX_MD_NAME_LEN];
+    int deftype;
 
-static int only_rawin(const EVP_PKEY *pkey)
-{
-    return is_EdDSA(pkey);
+    deftype = EVP_PKEY_get_default_digest_name(pkey, defname, sizeof(defname));
+    return deftype == 2 /* Mandatory */
+        && strcmp(defname, "UNDEF") == 0;
 }
 
 typedef enum OPTION_choice {
@@ -326,13 +324,16 @@ int pkeyutl_main(int argc, char **argv)
     }
 
     if (pkey_op == EVP_PKEY_OP_SIGN || pkey_op == EVP_PKEY_OP_VERIFY) {
-        if (only_rawin(pkey)) {
-            if (is_EdDSA(pkey) && digestname != NULL) {
+        if (only_nomd(pkey)) {
+            if (digestname != NULL) {
+                const char *alg = EVP_PKEY_get0_type_name(pkey);
+
                 BIO_printf(bio_err,
-                           "%s: -digest (prehash) is not supported with EdDSA\n", prog);
+                           "%s: -digest (prehash) is not supported with %s\n",
+                           prog, alg != NULL ? alg : "(unknown key type)");
                 goto end;
             }
-            rawin = 1; /* implied for Ed25519(ph) and Ed448(ph) and maybe others in the future */
+            rawin = 1;
         }
     } else if (digestname != NULL || rawin) {
         BIO_printf(bio_err,
@@ -821,7 +822,7 @@ static int do_raw_keyop(int pkey_op, EVP_MD_CTX *mctx,
     int buf_len = 0;
 
     /* Some algorithms only support oneshot digests */
-    if (only_rawin(pkey)) {
+    if (only_nomd(pkey)) {
         if (filesize < 0) {
             BIO_printf(bio_err,
                        "Error: unable to determine file size for oneshot operation\n");

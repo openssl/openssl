@@ -36,6 +36,7 @@
 #include "prov/provider_ctx.h"
 #include "prov/der_rsa.h"
 #include "endecoder_local.h"
+#include "ml_dsa_codecs.h"
 
 #if defined(OPENSSL_NO_DH) && defined(OPENSSL_NO_DSA) && defined(OPENSSL_NO_EC)
 # define OPENSSL_NO_KEYPARAMS
@@ -851,40 +852,15 @@ static int ecx_pki_priv_to_der(const void *vecxkey, unsigned char **pder,
 static int ml_dsa_spki_pub_to_der(const void *vkey, unsigned char **pder,
                                   ossl_unused void *ctx)
 {
-    const ML_DSA_KEY *key = vkey;
-    size_t publen;
-
-    if (ossl_ml_dsa_key_get_pub(key) == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_NULL_PARAMETER);
-        return 0;
-    }
-    publen = ossl_ml_dsa_key_get_pub_len(key);
-
-    if (pder != NULL
-            && ((*pder = OPENSSL_memdup(ossl_ml_dsa_key_get_pub(key),
-                                        publen)) == NULL))
-        return 0;
-
-    return publen;
+    return ossl_ml_dsa_i2d_pubkey(vkey, pder);
 }
 
 static int ml_dsa_pki_priv_to_der(const void *vkey, unsigned char **pder,
-                                  ossl_unused void *ctx)
+                                  void *vctx)
 {
-    const ML_DSA_KEY *key = vkey;
-    size_t len;
+    KEY2ANY_CTX *ctx = vctx;
 
-    if (ossl_ml_dsa_key_get_priv(key) == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_NULL_PARAMETER);
-        return 0;
-    }
-    len = ossl_ml_dsa_key_get_priv_len(key);
-
-    if (pder != NULL
-            && ((*pder = OPENSSL_memdup(ossl_ml_dsa_key_get_priv(key), len)) == NULL))
-        return 0;
-
-    return len;
+    return ossl_ml_dsa_i2d_prvkey(vkey, pder, ctx->provctx);
 }
 
 # define ml_dsa_epki_priv_to_der ml_dsa_pki_priv_to_der

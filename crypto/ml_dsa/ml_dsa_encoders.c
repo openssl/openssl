@@ -9,10 +9,8 @@
 
 #include <openssl/byteorder.h>
 #include <openssl/evp.h>
-#include "ml_dsa_local.h"
 #include "ml_dsa_hash.h"
 #include "ml_dsa_key.h"
-#include "ml_dsa_params.h"
 #include "ml_dsa_sign.h"
 #include "internal/packet.h"
 
@@ -768,7 +766,13 @@ int ossl_ml_dsa_sk_decode(ML_DSA_KEY *key, const uint8_t *in, size_t in_len)
     size_t i, k = params->k, l = params->l;
     PACKET pkt;
 
-    if (key->priv_encoding != NULL || key->pub_encoding != NULL)
+    /* When loading from an explicit key, drop the seed. */
+    OPENSSL_free(key->seed);
+    key->seed = NULL;
+
+    /* Allow the key encoding to be already set to the provided pointer */
+    if ((key->priv_encoding != NULL && key->priv_encoding != in)
+        || key->pub_encoding != NULL)
         return 0; /* Do not allow key mutation */
     if (in_len != key->params->sk_len)
         return 0;
@@ -785,23 +789,23 @@ int ossl_ml_dsa_sk_decode(ML_DSA_KEY *key, const uint8_t *in, size_t in_len)
             || !PACKET_copy_bytes(&pkt, key->rho, sizeof(key->rho))
             || !PACKET_copy_bytes(&pkt, key->K, sizeof(key->K))
             || !PACKET_copy_bytes(&pkt, key->tr, sizeof(key->tr)))
-        goto err;
+        return 0;
 
     for (i = 0; i < l; ++i)
         if (!decode_fn(key->s1.poly + i, &pkt))
-            goto err;
+            return 0;
     for (i = 0; i < k; ++i)
         if (!decode_fn(key->s2.poly + i, &pkt))
-            goto err;
+            return 0;
     for (i = 0; i < k; ++i)
         if (!poly_decode_signed_two_to_power_12(key->t0.poly + i, &pkt))
-            goto err;
+            return 0;
     if (PACKET_remaining(&pkt) != 0)
-        goto err;
-    key->priv_encoding = OPENSSL_memdup(in, in_len);
-    return key->priv_encoding != NULL;
-err:
-    return 0;
+        return 0;
+    if (key->priv_encoding == NULL
+        && (key->priv_encoding = OPENSSL_memdup(in, in_len)) == NULL)
+        return 0;
+    return ossl_ml_dsa_key_public_from_private(key);
 }
 
 /*
