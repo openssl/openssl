@@ -225,7 +225,7 @@ static int test_rand_random_provider(void)
             || !TEST_mem_eq(privbuf, sizeof(privbuf), data, sizeof(data)))
         goto err;
 
-    /* Test we can revert to not using the provided randomness */
+    /* Test we can revert to not using the provider based randomness */
     if (!TEST_true(RAND_set1_random_provider(ctx, NULL))
             || !RAND_bytes_ex(ctx, buf, sizeof(buf), 256)
             || !TEST_mem_ne(buf, sizeof(buf), data, sizeof(data)))
