@@ -219,12 +219,13 @@ static int ml_dsa_key_internal_test(void)
     ossl_ml_dsa_key_free(NULL);
 
     /* We should fail to fetch and fail here if the libctx is not set */
-    if (!TEST_ptr_null(key = ossl_ml_dsa_key_new(NULL, NULL, "ML-DSA-44"))
+    if (!TEST_ptr_null(key = ossl_ml_dsa_key_new(NULL, NULL, EVP_PKEY_ML_DSA_44))
             /* fail if the algorithm is invalid */
-            || !TEST_ptr_null(key = ossl_ml_dsa_key_new(lib_ctx, "", "ML-DSA-666"))
+            || !TEST_ptr_null(key = ossl_ml_dsa_key_new(lib_ctx, "", NID_undef))
             /* Dup should fail if the src is NULL */
             || !TEST_ptr_null(key1 = ossl_ml_dsa_key_dup(NULL, OSSL_KEYMGMT_SELECT_KEYPAIR))
-            || !TEST_ptr(key = ossl_ml_dsa_key_new(lib_ctx, "?fips=yes", "ML-DSA-44"))
+            || !TEST_ptr(key = ossl_ml_dsa_key_new(lib_ctx, "?fips=yes",
+                                                   EVP_PKEY_ML_DSA_44))
             || !TEST_ptr(key1 = ossl_ml_dsa_key_dup(key, OSSL_KEYMGMT_SELECT_KEYPAIR))
             || !TEST_true(ossl_ml_dsa_key_pub_alloc(key1))
             || !TEST_false(ossl_ml_dsa_key_pub_alloc(key1))

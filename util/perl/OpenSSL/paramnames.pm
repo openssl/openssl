@@ -433,6 +433,10 @@ my %params = (
 
 # ML_DSA Key generation parameter
     'PKEY_PARAM_ML_DSA_SEED' =>             "seed",
+    'PKEY_PARAM_ML_DSA_RETAIN_SEED' =>      "ml-dsa.retain_seed",
+    'PKEY_PARAM_ML_DSA_PREFER_SEED' =>      "ml-dsa.prefer_seed",
+    'PKEY_PARAM_ML_DSA_INPUT_FORMATS' =>    "ml-dsa.input_formats",
+    'PKEY_PARAM_ML_DSA_OUTPUT_FORMATS' =>   "ml-dsa.output_formats",
 
 # Key Exchange parameters
     'EXCHANGE_PARAM_PAD' =>                   "pad",# uint

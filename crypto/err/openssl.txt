@@ -1131,6 +1131,7 @@ PROV_R_MISSING_SEED:140:missing seed
 PROV_R_MISSING_SESSION_ID:133:missing session id
 PROV_R_MISSING_TYPE:134:missing type
 PROV_R_MISSING_XCGHASH:135:missing xcghash
+PROV_R_ML_DSA_NO_FORMAT:247:ml dsa no format
 PROV_R_MODULE_INTEGRITY_FAILURE:214:module integrity failure
 PROV_R_NOT_A_PRIVATE_KEY:221:not a private key
 PROV_R_NOT_A_PUBLIC_KEY:220:not a public key
