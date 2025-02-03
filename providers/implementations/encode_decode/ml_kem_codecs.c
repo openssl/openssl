@@ -32,6 +32,11 @@
  * - OQS private + public key: OCTET STRING
  *   (The public key is ignored, just as with PKCS#8 v2.)
  *
+ * and two more that are "inspired" by the IETF non-ASN.1 seed encoding.
+ *
+ * - Bare seed (just the 64 bytes)
+ * - Bare priv (just the key bytes)
+ *
  * An offset of zero means that particular field is absent.
  *
  * On output the PKCS8 info table order is important:
@@ -47,7 +52,7 @@
  * into the tables.  Had they been zeroed, one table could cover all three
  * ML-KEM parameter sets.
  */
-#define NUM_PKCS8_FORMATS   5
+#define NUM_PKCS8_FORMATS   7
 
 /*-
  * ML-KEM-512:
@@ -58,12 +63,14 @@ static const ML_KEM_SPKI_INFO ml_kem_512_spki_info = {
     { 0x30, 0x82, 0x03, 0x32, 0x30, 0x0b, 0x06, 0x09, 0x60, 0x86, 0x48,
       0x01, 0x65, 0x03, 0x04, 0x04, 0x01, 0x03, 0x82, 0x03, 0x21, 0x00, }
 };
-static const ML_KEM_PKCS8_INFO ml_kem_512_pkcs8_info[NUM_PKCS8_FORMATS] = {
-    { "seed-priv", 1706, 0x308206a6, 0x0440, 6, 0x81820660, 74, 0, },
-    { "priv-only", 1640, 0x30820664, 0,      0, 0x81820660, 8,  0, },
-    { "seed-only", 68,   0x30420440, 0x0440, 4, 0,          0,  0, },
-    { "priv-oqs",  1636, 0x04820660, 0,      0, 0x04820660, 4,  0, },
-    { "pair-oqs",  2436, 0x04820980, 0,      0, 0x04820980, 4,  1636, },
+static const ML_KEM_PKCS8_INFO ml_kem_512_pkcs8_info[] = {
+    { "seed-priv", 0x06aa, 0x308206a6, 0x0440, 6, 0x40, 0x81820660, 0x4a, 0x0660, 0x0000, 0x0000 },
+    { "priv-only", 0x0668, 0x30820664, 0,      0, 0x00, 0x81820660, 0x08, 0x0660, 0x0000, 0x0000 },
+    { "seed-only", 0x0044, 0x30420440, 0,      4, 0x40, 0,          0x00, 0x0000, 0x0000, 0x0000 },
+    { "priv-oqs",  0x0664, 0x04820660, 0,      0, 0x00, 0x04820660, 0x04, 0x0660, 0x0000, 0x0000 },
+    { "pair-oqs",  0x0984, 0x04820980, 0,      0, 0x00, 0x04820980, 0x04, 0x0660, 0x0664, 0x0320 },
+    { "bare-seed", 0x0040, 0,          0,      0, 0x40, 0,          0x00, 0x0000, 0x0000, 0x0000 },
+    { "bare-priv", 0x0660, 0,          0,      0, 0x00, 0,          0x00, 0x0660, 0x0000, 0x0000 },
 };
 
 /*-
@@ -75,12 +82,14 @@ static const ML_KEM_SPKI_INFO ml_kem_768_spki_info = {
     { 0x30, 0x82, 0x04, 0xb2, 0x30, 0x0b, 0x06, 0x09, 0x60, 0x86, 0x48,
       0x01, 0x65, 0x03, 0x04, 0x04, 0x02, 0x03, 0x82, 0x04, 0xa1, 0x00, }
 };
-static const ML_KEM_PKCS8_INFO ml_kem_768_pkcs8_info[NUM_PKCS8_FORMATS] = {
-    { "seed-priv", 2474, 0x308209a6, 0x0440, 6, 0x81820960, 74, 0, },
-    { "priv-only", 2408, 0x30820964, 0,      0, 0x81820960, 8,  0, },
-    { "seed-only", 68,   0x30420440, 0x0440, 4, 0,          0,  0, },
-    { "priv-oqs",  2404, 0x04820960, 0,      0, 0x04820960, 4,  0, },
-    { "pair-oqs",  3588, 0x04820e00, 0,      0, 0x04820e00, 4,  2404, },
+static const ML_KEM_PKCS8_INFO ml_kem_768_pkcs8_info[] = {
+    { "seed-priv", 0x09aa, 0x308209a6, 0x0440, 6, 0x40, 0x81820960, 0x4a, 0x0960, 0x0000, 0x0000 },
+    { "priv-only", 0x0968, 0x30820964, 0,      0, 0x00, 0x81820960, 0x08, 0x0960, 0x0000, 0x0000 },
+    { "seed-only", 0x0044, 0x30420440, 0,      4, 0x40, 0,          0x00, 0x0000, 0x0000, 0x0000 },
+    { "priv-oqs",  0x0964, 0x04820960, 0,      0, 0x00, 0x04820960, 0x04, 0x0960, 0x0000, 0x0000 },
+    { "pair-oqs",  0x0e04, 0x04820e00, 0,      0, 0x00, 0x04820e00, 0x04, 0x0960, 0x0964, 0x04a0 },
+    { "bare-seed", 0x0040, 0,          0,      0, 0x40, 0,          0x00, 0x0000, 0x0000, 0x0000 },
+    { "bare-priv", 0x0960, 0,          0,      0, 0x00, 0,          0x00, 0x0960, 0x0000, 0x0000 },
 };
 
 /*-
@@ -92,38 +101,40 @@ static const ML_KEM_SPKI_INFO ml_kem_1024_spki_info = {
     { 0x30, 0x82, 0x06, 0x32, 0x30, 0x0b, 0x06, 0x09, 0x60, 0x86, 0x48,
       0x01, 0x65, 0x03, 0x04, 0x04, 0x03, 0x03, 0x82, 0x06, 0x21, 0x00, }
 };
-static const ML_KEM_PKCS8_INFO ml_kem_1024_pkcs8_info[NUM_PKCS8_FORMATS] = {
-    { "seed-priv", 3242, 0x30820ca6, 0x0440, 6, 0x81820c60, 74, 0, },
-    { "priv-only", 3176, 0x30820c64, 0,      0, 0x81820c60, 8,  0, },
-    { "seed-only", 68,   0x30420440, 0x0440, 4, 0,          0,  0, },
-    { "priv-oqs",  3172, 0x04820c60, 0,      0, 0x04820c60, 4,  0, },
-    { "pair-oqs",  4740, 0x04821280, 0,      0, 0x04821280, 4,  3172, },
+static const ML_KEM_PKCS8_INFO ml_kem_1024_pkcs8_info[] = {
+    { "seed-priv", 0x0caa, 0x30820ca6, 0x0440, 6, 0x40, 0x81820c60, 0x4a, 0x0c60, 0x0000, 0x0000 },
+    { "priv-only", 0x0c68, 0x30820c64, 0,      0, 0x00, 0x81820c60, 0x08, 0x0c60, 0x0000, 0x0000 },
+    { "seed-only", 0x0044, 0x30420440, 0,      4, 0x40, 0,          0x00, 0x0000, 0x0000, 0x0000 },
+    { "priv-oqs",  0x0c64, 0x04820c60, 0,      0, 0x00, 0x04820c60, 0x04, 0x0c60, 0x0000, 0x0000 },
+    { "pair-oqs",  0x1284, 0x04821280, 0,      0, 0x00, 0x04821280, 0x04, 0x0c60, 0x0c64, 0x0620 },
+    { "bare-seed", 0x0040, 0,          0,      0, 0x40, 0,          0x00, 0x0000, 0x0000, 0x0000 },
+    { "bare-priv", 0x0c60, 0,          0,      0, 0x00, 0,          0x00, 0x0c60, 0x0000, 0x0000 },
 };
 
-/* Indices of slots in the `cinfo_map` table below */
-#define ML_KEM_512_CINFO    0
-#define ML_KEM_768_CINFO    1
-#define ML_KEM_1024_CINFO   2
+/* Indices of slots in the `codecs` table below */
+#define ML_KEM_512_CODEC    0
+#define ML_KEM_768_CODEC    1
+#define ML_KEM_1024_CODEC   2
 
 /*
  * Per-variant fixed parameters
  */
-static const ML_KEM_CINFO cinfo_map[3] = {
+static const ML_KEM_CODEC codecs[3] = {
     { &ml_kem_512_spki_info,  ml_kem_512_pkcs8_info },
     { &ml_kem_768_spki_info,  ml_kem_768_pkcs8_info },
     { &ml_kem_1024_spki_info, ml_kem_1024_pkcs8_info }
 };
 
 /* Retrieve the parameters of one of the ML-KEM variants */
-static const ML_KEM_CINFO *ml_kem_get_cinfo(int evp_type)
+static const ML_KEM_CODEC *ml_kem_get_codec(int evp_type)
 {
     switch (evp_type) {
     case EVP_PKEY_ML_KEM_512:
-        return &cinfo_map[ML_KEM_512_CINFO];
+        return &codecs[ML_KEM_512_CODEC];
     case EVP_PKEY_ML_KEM_768:
-        return &cinfo_map[ML_KEM_768_CINFO];
+        return &codecs[ML_KEM_768_CODEC];
     case EVP_PKEY_ML_KEM_1024:
-        return &cinfo_map[ML_KEM_1024_CINFO];
+        return &codecs[ML_KEM_1024_CODEC];
     }
     return NULL;
 }
@@ -136,15 +147,14 @@ static int vp8_pref_cmp(const void *va, const void *vb)
     /*
      * Zeros sort last, otherwise the sort is in increasing order.
      *
-     * The preferences are small enough to ensure the comparison is monotone as
-     * required.  Some versions of qsort(3) have been known to crash when the
-     * comparison is not monotone.
+     * The preferences are small enough to ensure the comparison is transitive
+     * as required by qsort(3).  When overflow or underflow is possible, the
+     * correct transitive comparison would be: (b < a) - (a < b).
      */
     if (a->vp8_pref > 0 && b->vp8_pref > 0)
         return a->vp8_pref - b->vp8_pref;
-    if (a->vp8_pref == 0)
-        return b->vp8_pref;
-    return -a->vp8_pref;
+    /* A preference of 0 is "larger" than (sorts after) any nonzero value. */
+    return b->vp8_pref - a->vp8_pref;
 }
 
 static ML_KEM_PKCS8_PREF *vp8_order(const char *algorithm_name,
@@ -156,33 +166,42 @@ static ML_KEM_PKCS8_PREF *vp8_order(const char *algorithm_name,
     const char *fmt = formats, *end;
     const char *sep = "\t ,";
 
+    /* Reserve an extra terminal slot with vp8_entry == NULL */
     if ((ret = OPENSSL_zalloc((NUM_PKCS8_FORMATS + 1) * sizeof(*ret))) == NULL)
         return NULL;
+
+    /* Entries that match a format will get a non-zero preference. */
     for (i = 0; i < NUM_PKCS8_FORMATS; ++i) {
         ret[i].vp8_entry = &pkcs8_info[i];
         ret[i].vp8_pref = 0;
     }
 
-    /* Default to compile-time table order. */
+    /* Default to compile-time table order when none specified. */
     if (formats == NULL)
         return ret;
 
-    /* Formats are case-insensitive, separated by spaces, tabs and/or commas */
+    /*
+     * Formats are case-insensitive, separated by spaces, tabs or commas.
+     * Duplicate formats are allowed, the first occurence determines the order.
+     */
     do {
         if (*(fmt += strspn(fmt, sep)) == '\0')
             break;
         end = fmt + strcspn(fmt, sep);
         for (i = 0; i < NUM_PKCS8_FORMATS; ++i) {
+            /* Skip slots already selected or with a different name. */
             if (ret[i].vp8_pref > 0
                 || OPENSSL_strncasecmp(ret[i].vp8_entry->p8_name,
                                        fmt, (end - fmt)) != 0)
                 continue;
+            /* First time match */
             ret[i].vp8_pref = ++count;
             break;
         }
         fmt = end;
     } while (count < NUM_PKCS8_FORMATS);
 
+    /* No formats matched, raise an error */
     if (count == 0) {
         OPENSSL_free(ret);
         ERR_raise_data(ERR_LIB_PROV, PROV_R_ML_KEM_NO_FORMAT,
@@ -190,7 +209,9 @@ static ML_KEM_PKCS8_PREF *vp8_order(const char *algorithm_name,
                        algorithm_name, direction);
         return NULL;
     }
+    /* Sort by preference, with 0's last */
     qsort(ret, NUM_PKCS8_FORMATS, sizeof(*ret), vp8_pref_cmp);
+    /* Terminate the list at first unselected entry, perhaps reserved slot. */
     ret[count].vp8_entry = NULL;
     return ret;
 }
@@ -201,14 +222,14 @@ ossl_ml_kem_d2i_PUBKEY(const uint8_t *pubenc, int publen, int evp_type,
 {
     OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(provctx);
     const ML_KEM_VINFO *v;
-    const ML_KEM_CINFO *c;
+    const ML_KEM_CODEC *codec;
     const ML_KEM_SPKI_INFO *vspki;
     ML_KEM_KEY *ret;
 
     if ((v = ossl_ml_kem_get_vinfo(evp_type)) == NULL
-        || (c = ml_kem_get_cinfo(evp_type)) == NULL)
+        || (codec = ml_kem_get_codec(evp_type)) == NULL)
         return NULL;
-    vspki = c->spki_info;
+    vspki = codec->spki_info;
     if (publen != ML_KEM_SPKI_OVERHEAD + (ossl_ssize_t) v->pubkey_bytes
         || memcmp(pubenc, vspki->asn1_prefix, ML_KEM_SPKI_OVERHEAD) != 0)
         return NULL;
@@ -236,7 +257,7 @@ ossl_ml_kem_d2i_PKCS8(const uint8_t *prvenc, int prvlen,
 {
     OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(provctx);
     const ML_KEM_VINFO *v;
-    const ML_KEM_CINFO *c;
+    const ML_KEM_CODEC *codec;
     ML_KEM_PKCS8_PREF *vp8_alloc = NULL, *vp8_slot;
     const ML_KEM_PKCS8_INFO *vp8;
     ML_KEM_KEY *key = NULL, *ret = NULL;
@@ -245,12 +266,12 @@ ossl_ml_kem_d2i_PKCS8(const uint8_t *prvenc, int prvlen,
     const X509_ALGOR *alg = NULL;
     const char *formats;
     int len, ptype;
-    uint32_t magic;
+    uint32_t magic, p8_magic;
     uint16_t seed_magic;
 
     /* Which ML-KEM variant? */
     if ((v = ossl_ml_kem_get_vinfo(evp_type)) == NULL
-        || (c = ml_kem_get_cinfo(evp_type)) == NULL)
+        || (codec = ml_kem_get_codec(evp_type)) == NULL)
         return 0;
 
     /* Extract the key OID and any parameters. */
@@ -266,7 +287,7 @@ ossl_ml_kem_d2i_PKCS8(const uint8_t *prvenc, int prvlen,
     /* Get the list of enabled decoders. Their order is not important here. */
     formats = ossl_prov_ctx_get_param(
         provctx, OSSL_PKEY_PARAM_ML_KEM_INPUT_FORMATS, NULL);
-    vp8_slot = vp8_alloc = vp8_order(v->algorithm_name, c->pkcs8_info,
+    vp8_slot = vp8_alloc = vp8_order(v->algorithm_name, codec->pkcs8_info,
                                      "input", formats);
     if (vp8_alloc == NULL)
         goto end;
@@ -285,14 +306,27 @@ ossl_ml_kem_d2i_PKCS8(const uint8_t *prvenc, int prvlen,
     /* Find the matching p8 info slot, that also has the expected length. */
     pos = OPENSSL_load_u32_be(&magic, buf);
     for (vp8_slot = vp8_alloc; vp8_slot->vp8_entry != NULL; ++vp8_slot) {
-        if (magic == vp8_slot->vp8_entry->p8_magic
-            && len == (ossl_ssize_t)vp8_slot->vp8_entry->p8_bytes)
+        if (len != (ossl_ssize_t)vp8_slot->vp8_entry->p8_bytes)
+            continue;
+        /* p8_magic == 0, signals a non-ASN.1 length-based encoding */
+        if ((p8_magic = vp8_slot->vp8_entry->p8_magic) == 0) {
+            pos = buf;
+            break;
+        }
+        if (magic == p8_magic)
             break;
     }
-    if ((vp8 = vp8_slot->vp8_entry) == NULL)
+    if ((vp8 = vp8_slot->vp8_entry) == NULL
+        || (vp8->seed_length > 0 && vp8->seed_length != ML_KEM_SEED_BYTES)
+        || (vp8->priv_length > 0 && vp8->priv_length != v->prvkey_bytes)
+        || (vp8->pub_length > 0 && vp8->pub_length != v->pubkey_bytes)) {
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_ML_KEM_NO_FORMAT,
+                       "no matching enabled %s private key input formats",
+                       v->algorithm_name);
         goto end;
+    }
 
-    if (vp8->seed_offset > 0) {
+    if (vp8->seed_length > 0) {
         /* Check |seed| tag/len, if not subsumed by |magic|. */
         if (pos + sizeof(uint16_t) == buf + vp8->seed_offset) {
             pos = OPENSSL_load_u16_be(&seed_magic, pos);
@@ -303,7 +337,7 @@ ossl_ml_kem_d2i_PKCS8(const uint8_t *prvenc, int prvlen,
         }
         pos += ML_KEM_SEED_BYTES;
     }
-    if (vp8->priv_offset > 0) {
+    if (vp8->priv_length > 0) {
         /* Check |priv| tag/len */
         if (pos + sizeof(uint32_t) == buf + vp8->priv_offset) {
             pos = OPENSSL_load_u32_be(&magic, pos);
@@ -314,7 +348,7 @@ ossl_ml_kem_d2i_PKCS8(const uint8_t *prvenc, int prvlen,
         }
         pos += v->prvkey_bytes;
     }
-    if (vp8->pub_offset > 0) {
+    if (vp8->pub_length > 0) {
         if (pos != buf + vp8->pub_offset)
             goto end;
         pos += v->pubkey_bytes;
@@ -332,7 +366,7 @@ ossl_ml_kem_d2i_PKCS8(const uint8_t *prvenc, int prvlen,
         provctx, OSSL_PKEY_PARAM_ML_KEM_RETAIN_SEED, 1);
     key->prefer_seed = ossl_prov_ctx_get_bool_param(
         provctx, OSSL_PKEY_PARAM_ML_KEM_PREFER_SEED, 1);
-    if (vp8->seed_offset > 0) {
+    if (vp8->seed_length > 0) {
         if (!ossl_ml_kem_set_seed(buf + vp8->seed_offset,
                                   ML_KEM_SEED_BYTES, key)) {
             ERR_raise_data(ERR_LIB_OSSL_DECODER, ERR_R_INTERNAL_ERROR,
@@ -341,14 +375,14 @@ ossl_ml_kem_d2i_PKCS8(const uint8_t *prvenc, int prvlen,
             goto end;
         }
     }
-    if (vp8->priv_offset > 0) {
-        if ((key->encoded_dk = OPENSSL_malloc(v->prvkey_bytes)) == NULL) {
+    if (vp8->priv_length > 0) {
+        if ((key->encoded_dk = OPENSSL_malloc(vp8->priv_length)) == NULL) {
             ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY,
                            "error parsing %s private key",
                            v->algorithm_name);
             goto end;
         }
-        memcpy(key->encoded_dk, buf + vp8->priv_offset, v->prvkey_bytes);
+        memcpy(key->encoded_dk, buf + vp8->priv_offset, vp8->priv_length);
     }
     /* Any OQS public key content is ignored */
     ret = key;
@@ -393,7 +427,7 @@ int ossl_ml_kem_i2d_prvkey(const ML_KEM_KEY *key, uint8_t **out,
                            PROV_CTX *provctx)
 {
     const ML_KEM_VINFO *v = key->vinfo;
-    const ML_KEM_CINFO *c;
+    const ML_KEM_CODEC *codec;
     ML_KEM_PKCS8_PREF *vp8_alloc, *vp8_slot;
     const ML_KEM_PKCS8_INFO *vp8;
     uint8_t *buf = NULL, *pos;
@@ -402,7 +436,7 @@ int ossl_ml_kem_i2d_prvkey(const ML_KEM_KEY *key, uint8_t **out,
     int ret = 0;
 
     /* Not ours to handle */
-    if ((c = ml_kem_get_cinfo(v->evp_type)) == NULL)
+    if ((codec = ml_kem_get_codec(v->evp_type)) == NULL)
         return 0;
 
     if (!ossl_ml_kem_have_prvkey(key)) {
@@ -414,7 +448,7 @@ int ossl_ml_kem_i2d_prvkey(const ML_KEM_KEY *key, uint8_t **out,
 
     formats = ossl_prov_ctx_get_param(
         provctx, OSSL_PKEY_PARAM_ML_KEM_OUTPUT_FORMATS, NULL);
-    vp8_slot = vp8_alloc = vp8_order(v->algorithm_name, c->pkcs8_info,
+    vp8_slot = vp8_alloc = vp8_order(v->algorithm_name, codec->pkcs8_info,
                                      "output", formats);
     if (vp8_alloc == NULL)
         return 0;
@@ -422,10 +456,13 @@ int ossl_ml_kem_i2d_prvkey(const ML_KEM_KEY *key, uint8_t **out,
     /* If we don't have a seed, skip seedful entries */
     if (!ossl_ml_kem_have_seed(key))
         while (vp8_slot->vp8_entry != NULL
-               && vp8_slot->vp8_entry->seed_offset != 0)
+               && vp8_slot->vp8_entry->seed_length != 0)
             ++vp8_slot;
     /* No matching table entries, give up */
-    if ((vp8 = vp8_slot->vp8_entry) == NULL) {
+    if ((vp8 = vp8_slot->vp8_entry) == NULL
+        || (vp8->seed_length > 0 && vp8->seed_length != ML_KEM_SEED_BYTES)
+        || (vp8->priv_length > 0 && vp8->priv_length != v->prvkey_bytes)
+        || (vp8->pub_length > 0 && vp8->pub_length != v->pubkey_bytes)) {
         ERR_raise_data(ERR_LIB_PROV, PROV_R_ML_KEM_NO_FORMAT,
                        "no matching enabled %s private key output formats",
                        v->algorithm_name);
@@ -441,8 +478,9 @@ int ossl_ml_kem_i2d_prvkey(const ML_KEM_KEY *key, uint8_t **out,
     if ((pos = buf = OPENSSL_malloc((size_t) len)) == NULL)
         goto end;
 
-    pos = OPENSSL_store_u32_be(pos, vp8->p8_magic);
-    if (vp8->seed_offset != 0) {
+    if (vp8->p8_magic != 0)
+        pos = OPENSSL_store_u32_be(pos, vp8->p8_magic);
+    if (vp8->seed_length != 0) {
         /*
          * Either the tag/len were already included in |magic| or they require
          * us to write two bytes now.
@@ -458,7 +496,7 @@ int ossl_ml_kem_i2d_prvkey(const ML_KEM_KEY *key, uint8_t **out,
         }
         pos += ML_KEM_SEED_BYTES;
     }
-    if (vp8->priv_offset != 0) {
+    if (vp8->priv_length != 0) {
         if (pos + sizeof(uint32_t) == buf + vp8->priv_offset)
             pos = OPENSSL_store_u32_be(pos, vp8->priv_magic);
         if (pos != buf + vp8->priv_offset
@@ -471,7 +509,7 @@ int ossl_ml_kem_i2d_prvkey(const ML_KEM_KEY *key, uint8_t **out,
         pos += v->prvkey_bytes;
     }
     /* OQS form output with tacked-on public key */
-    if (vp8->pub_offset != 0) {
+    if (vp8->pub_length != 0) {
         /* The OQS pubkey is never separately DER-wrapped */
         if (pos != buf + vp8->pub_offset
             || !ossl_ml_kem_encode_public_key(pos, v->pubkey_bytes, key)) {
