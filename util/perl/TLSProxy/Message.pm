@@ -9,6 +9,7 @@ use strict;
 
 package TLSProxy::Message;
 
+use TLSProxy::RecordNumber;
 use TLSProxy::Alert;
 
 use constant DTLS_MESSAGE_HEADER_LENGTH => 12;
@@ -21,6 +22,7 @@ use constant {
     MT_SERVER_HELLO => 2,
     MT_HELLO_VERIFY_REQUEST => 3,
     MT_NEW_SESSION_TICKET => 4,
+    MT_END_OF_EARLY_DATA => 5,
     MT_ENCRYPTED_EXTENSIONS => 8,
     MT_CERTIFICATE => 11,
     MT_SERVER_KEY_EXCHANGE => 12,
@@ -29,7 +31,10 @@ use constant {
     MT_CERTIFICATE_VERIFY => 15,
     MT_CLIENT_KEY_EXCHANGE => 16,
     MT_FINISHED => 20,
+    MT_CERTIFICATE_URL => 21,
     MT_CERTIFICATE_STATUS => 22,
+    MT_SUPPLEMENTAL_DATA => 23,
+    MT_KEY_UPDATE => 24,
     MT_COMPRESSED_CERTIFICATE => 25,
     MT_NEXT_PROTO => 67
 };
@@ -149,6 +154,9 @@ use constant {
 
 my $payload = "";
 my $messlen = -1;
+my $messseq = -1;
+my $messfraglen = -1;
+my $messfragoffs = -1;
 my $mt;
 my $startoffset = -1;
 my $server = 0;
@@ -164,6 +172,9 @@ sub clear
 {
     $payload = "";
     $messlen = -1;
+    $messseq = -1;
+    $messfraglen = -1;
+    $messfragoffs = -1;
     $startoffset = -1;
     $server = 0;
     $success = 0;
@@ -178,9 +189,9 @@ sub clear
 sub get_messages
 {
     my $class = shift;
-    my $serverin = shift;
     my $record = shift;
-    my $isdtls = shift;
+    my $serverin = $record->serverissender;
+    my $isdtls = $record->isdtls;
     my @messages = ();
     my $message;
 
@@ -225,13 +236,8 @@ sub get_messages
                     $recoffset = $messlen - length($payload);
                     $payload .= substr($record->decrypt_data, 0, $recoffset);
                     push @message_frag_lens, $recoffset;
-                    if ($isdtls) {
-                        # We must set $msgseq, $msgfraglen, $msgfragoffs
-                        die "Internal error: cannot handle partial dtls messages\n"
-                    }
                     $message = create_message($server, $mt,
-                        #$msgseq, $msgfraglen, $msgfragoffs,
-                        0, 0, 0,
+                        $messseq, $messfraglen, $messfragoffs,
                         $payload, $startoffset, $isdtls);
                     push @messages, $message;
 
@@ -256,18 +262,15 @@ sub get_messages
                 @message_rec_list = ($record);
                 my $lenhi;
                 my $lenlo;
-                my $msgseq;
-                my $msgfraglen;
-                my $msgfragoffs;
                 if ($isdtls) {
                     my $msgfraglenhi;
                     my $msgfraglenlo;
                     my $msgfragoffshi;
                     my $msgfragoffslo;
-                    ($mt, $lenhi, $lenlo, $msgseq, $msgfragoffshi, $msgfragoffslo, $msgfraglenhi, $msgfraglenlo) =
+                    ($mt, $lenhi, $lenlo, $messseq, $msgfragoffshi, $msgfragoffslo, $msgfraglenhi, $msgfraglenlo) =
                         unpack('CnCnnCnC', substr($record->decrypt_data, $recoffset));
-                    $msgfraglen = ($msgfraglenhi << 8) | $msgfraglenlo;
-                    $msgfragoffs = ($msgfragoffshi << 8) | $msgfragoffslo;
+                    $messfraglen = ($msgfraglenhi << 8) | $msgfraglenlo;
+                    $messfragoffs = ($msgfragoffshi << 8) | $msgfragoffslo;
                 } else {
                     ($mt, $lenhi, $lenlo) =
                         unpack('CnC', substr($record->decrypt_data, $recoffset));
@@ -276,8 +279,8 @@ sub get_messages
                 print "  Message type: $message_type{$mt}($mt)\n";
                 print "  Message Length: $messlen\n";
                 if ($isdtls) {
-                    print "  Message fragment length: $msgfraglen\n";
-                    print "  Message fragment offset: $msgfragoffs\n";
+                    print "  Message fragment length: $messfraglen\n";
+                    print "  Message fragment offset: $messfragoffs\n";
                 }
                 $startoffset = $recoffset;
                 $recoffset += $msgheaderlen;
@@ -291,8 +294,8 @@ sub get_messages
                                            $messlen);
                         $recoffset += $messlen;
                         push @message_frag_lens, $messlen;
-                        $message = create_message($server, $mt, $msgseq,
-                                                  $msgfraglen, $msgfragoffs,
+                        $message = create_message($server, $mt, $messseq,
+                                                  $messfraglen, $messfragoffs,
                                                   $payload, $startoffset, $isdtls);
                         push @messages, $message;
 
