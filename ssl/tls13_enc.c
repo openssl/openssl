@@ -804,10 +804,8 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
         }
 
         /* We have moved to the next flight lets clear out old messages */
-        if (direction == OSSL_RECORD_DIRECTION_READ) {
+        if (direction == OSSL_RECORD_DIRECTION_READ)
             dtls1_clear_received_buffer(s);
-            dtls1_acknowledge_sent_buffer(s, dtls1_get_epoch(s, which));
-        }
 
         dtls1_clear_sent_buffer(s, 1);
     }
