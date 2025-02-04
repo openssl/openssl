@@ -195,7 +195,9 @@ void dtls1_clear_sent_buffer(SSL_CONNECTION *s, int keep_unacked_msgs)
 
         if (((!SSL_CONNECTION_IS_DTLS13(s) && record_type == SSL3_RT_CHANGE_CIPHER_SPEC)
              || (SSL_CONNECTION_IS_DTLS13(s)
-                 && (msg_type == SSL3_MT_FINISHED || msg_type == SSL3_MT_KEY_UPDATE)))
+                 && (msg_type == SSL3_MT_FINISHED
+                     || msg_type == SSL3_MT_SERVER_HELLO
+                     || msg_type == SSL3_MT_KEY_UPDATE)))
             && sent_msg->saved_retransmit_state.wrlmethod != NULL
             && s->rlayer.wrl != sent_msg->saved_retransmit_state.wrl) {
             /*

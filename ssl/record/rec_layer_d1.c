@@ -720,6 +720,8 @@ int do_dtls1_write(SSL_CONNECTION *sc, uint8_t type, const unsigned char *buf,
     if (type == SSL3_RT_HANDSHAKE && ret > 0 && SSL_CONNECTION_IS_DTLS13(sc)) {
         pitem *item;
         unsigned char prio[8];
+        dtls_sent_msg *sent_msg;
+        DTLS1_RECORD_NUMBER *rec_num;
 
         dtls1_get_queue_priority(prio, sc->d1->w_msg.msg_seq, 0);
         item = pqueue_find(&sc->d1->sent_messages, prio);
@@ -727,18 +729,13 @@ int do_dtls1_write(SSL_CONNECTION *sc, uint8_t type, const unsigned char *buf,
         if (item == NULL)
             return ret;
 
-        if (dtls_msg_needs_ack(sc->server, sc->d1->w_msg.msg_type)) {
-            dtls_sent_msg *sent_msg;
-            DTLS1_RECORD_NUMBER *rec_num;
+        sent_msg = (dtls_sent_msg *) item->data;
+        rec_num = dtls1_record_number_new(tmpl.epoch, tmpl.sequence_number);
 
-            sent_msg = (dtls_sent_msg *) item->data;
-            rec_num = dtls1_record_number_new(tmpl.epoch, tmpl.sequence_number);
+        if (rec_num == NULL)
+            return -1;
 
-            if (rec_num == NULL)
-                return -1;
-
-            ossl_list_record_number_insert_tail(&sent_msg->rec_nums, rec_num);
-        }
+        ossl_list_record_number_insert_tail(&sent_msg->rec_nums, rec_num);
     }
 
     return ret;
