@@ -4363,7 +4363,8 @@ int tls_construct_cert_status_body(SSL_CONNECTION *s, size_t chainidx, WPACKET *
         if (X509_self_signed(x, 0))
             return 1;
 
-        issuer = X509_find_by_subject(chain_certs, X509_get_issuer_name(x));
+        /* the issuer certificate should be next in the chain */
+        issuer = sk_X509_value(chain_certs, chainidx);
         if (issuer == NULL)
             return 0;
 
