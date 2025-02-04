@@ -198,7 +198,7 @@ static int slh_dsa_sign(void *vctx, unsigned char *sig, size_t *siglen,
 }
 
 static int slh_dsa_digest_sign(void *vctx, uint8_t *sig, size_t *siglen, size_t sigsize,
-                              const uint8_t *tbs, size_t tbslen)
+                               const uint8_t *tbs, size_t tbslen)
 {
     return slh_dsa_sign(vctx, sig, siglen, sigsize, tbs, tbslen);
 }
