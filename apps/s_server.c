@@ -816,7 +816,6 @@ static int cert_status_cb(SSL *s, void *arg)
     if (srctx->verbose)
         BIO_puts(bio_err, "cert_status: callback called\n");
 
-
     SSL_get0_tlsext_status_ocsp_resp_ex(s, &sk_resp);
 
     if (sk_resp == NULL || sk_OCSP_RESPONSE_num(sk_resp) <= 0) {
