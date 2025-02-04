@@ -21,6 +21,7 @@
  */
 typedef struct slh_dsa_params_st {
     const char *alg;
+    int type;
     int is_shake;
     uint32_t n;  /* Security parameter (Hash output size in bytes) (16, 24, 32) */
     uint32_t h;  /* The total height of the tree (63, 64, 66, 68). #keypairs = 2^h */

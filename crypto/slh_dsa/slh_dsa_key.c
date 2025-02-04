@@ -433,6 +433,10 @@ const char *ossl_slh_dsa_key_get_name(const SLH_DSA_KEY *key)
 {
     return key->params->alg;
 }
+int ossl_slh_dsa_key_get_type(const SLH_DSA_KEY *key)
+{
+    return key->params->type;
+}
 
 int ossl_slh_dsa_set_priv(SLH_DSA_KEY *key, const uint8_t *priv, size_t priv_len)
 {

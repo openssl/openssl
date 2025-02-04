@@ -500,6 +500,59 @@ err:
     return ret;
 }
 
+static int slh_dsa_digest_sign_verify_test(void)
+{
+    int ret = 0;
+    EVP_PKEY *key = NULL;
+    uint8_t *sig = NULL;
+    size_t sig_len = 0;
+    OSSL_PARAM params[3], *p = params;
+    const char *alg = "SLH-DSA-SHA2-128s";
+    EVP_MD_CTX *mctx = NULL;
+    static uint8_t context[] = "A context String";
+    static uint8_t msg[] = "Hello World";
+    size_t msg_len = sizeof(msg);
+
+    if (!TEST_ptr(key = do_gen_key(alg, NULL, 0)))
+        goto err;
+
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_SIGNATURE_PARAM_CONTEXT_STRING,
+                                             context, sizeof(context));
+    *p++ = OSSL_PARAM_construct_end();
+
+    if (!TEST_ptr(mctx = EVP_MD_CTX_new())
+            || !TEST_int_eq(EVP_DigestSignInit_ex(mctx, NULL, "SHA256",
+                                                  lib_ctx, "?fips=true",
+                                                  key, params), 0)
+            || !TEST_int_eq(EVP_DigestSignInit_ex(mctx, NULL, NULL, lib_ctx,
+                                                  "?fips=true", key, params), 1))
+        goto err;
+    if (!TEST_int_eq(EVP_DigestSign(mctx, NULL, &sig_len, msg, msg_len), 1)
+            || !TEST_ptr(sig = OPENSSL_zalloc(sig_len)))
+        goto err;
+    sig_len--;
+    if (!TEST_int_eq(EVP_DigestSign(mctx, sig, &sig_len, msg, msg_len), 0))
+        goto err;
+    sig_len++;
+    if (!TEST_int_eq(EVP_DigestSignInit_ex(mctx, NULL, NULL, lib_ctx, "?fips=true",
+                                           key, params), 1)
+            || !TEST_int_eq(EVP_DigestSign(mctx, sig, &sig_len, msg, msg_len), 1)
+            || !TEST_int_eq(EVP_DigestVerifyInit_ex(mctx, NULL, "SHA256",
+                                                    lib_ctx, "?fips=true",
+                                                    key, params), 0)
+            || !TEST_int_eq(EVP_DigestVerifyInit_ex(mctx, NULL, NULL,
+                                                    lib_ctx, "?fips=true",
+                                                    key, params), 1)
+            || !TEST_int_eq(EVP_DigestVerify(mctx, sig, sig_len, msg, msg_len), 1))
+        goto err;
+    ret = 1;
+err:
+    EVP_PKEY_free(key);
+    EVP_MD_CTX_free(mctx);
+    OPENSSL_free(sig);
+    return ret;
+}
+
 const OPTIONS *test_get_options(void)
 {
     static const OPTIONS options[] = {
@@ -539,6 +592,7 @@ int setup_tests(void)
     ADD_TEST(slh_dsa_deterministic_usage_test);
     ADD_ALL_TESTS(slh_dsa_sign_verify_test, OSSL_NELEM(slh_dsa_sig_testdata));
     ADD_ALL_TESTS(slh_dsa_keygen_test, OSSL_NELEM(slh_dsa_keygen_testdata));
+    ADD_TEST(slh_dsa_digest_sign_verify_test);
     return 1;
 }
 

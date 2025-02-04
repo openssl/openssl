@@ -27,6 +27,7 @@ ENDIF
 SOURCE[$RSA_GOAL]=rsa_sig.c
 
 DEPEND[ml_dsa_sig.o]=../../common/include/prov/der_ml_dsa.h
+DEPEND[slh_dsa_sig.o]=../../common/include/prov/der_slh_dsa.h
 DEPEND[rsa_sig.o]=../../common/include/prov/der_rsa.h
 DEPEND[dsa_sig.o]=../../common/include/prov/der_dsa.h
 DEPEND[ecdsa_sig.o]=../../common/include/prov/der_ec.h
