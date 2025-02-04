@@ -1091,7 +1091,7 @@ static int check_revocation(X509_STORE_CTX *ctx)
                 continue;
 
             /* the issuer certificate is the next in the chain */
-            ctx->current_issuer = sk_X509_value(ctx->chain, i+1);
+            ctx->current_issuer = sk_X509_value(ctx->chain, i + 1);
 
             ok = check_cert_ocsp_resp(ctx);
 
@@ -1168,7 +1168,7 @@ static int check_revocation(X509_STORE_CTX *ctx)
 static int check_cert_ocsp_resp(X509_STORE_CTX *ctx)
 {
     int cert_status, crl_reason;
-    int i, found = 0;
+    int i;
     OCSP_RESPONSE *resp = NULL;
     OCSP_BASICRESP *bs = NULL;
     OCSP_SINGLERESP *sr = NULL;
@@ -1220,16 +1220,14 @@ static int check_cert_ocsp_resp(X509_STORE_CTX *ctx)
             goto end;
         }
 
-        if (!OCSP_id_cmp(cert_id, sr_cert_id)) {
-            found = 1;
+        if (!OCSP_id_cmp(cert_id, sr_cert_id))
             break;
-        }
 
         OCSP_CERTID_free(cert_id);
         cert_id = NULL;
     }
 
-    if (!found) {
+    if (cert_id == NULL) {
         ret = X509_V_ERR_OCSP_NO_RESPONSE;
         goto end;
     }
