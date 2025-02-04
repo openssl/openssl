@@ -66,6 +66,12 @@ The default value of 0 causes the per message randomness to be randomly
 generated using a DRBG. Setting this to 1 causes the per message randomness
 to be set to 32 bytes of zeros. This value is ignored if "test-entropy" is set.
 
+=item "mu" (B<OSSL_SIGNATURE_PARAM_MU>) <integer>
+
+The default value of 0 causes sign and verify operations to process a raw message.
+Setting this to 1 causes those operations to assume the input is the mu value
+as defined in L<FIPS 204|https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.204.pdf>.
+
 =back
 
 See L<EVP_PKEY-ML-DSA(7)> for information related to B<ML-DSA> keys.
