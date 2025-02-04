@@ -67,6 +67,7 @@
 doc/man1/openssl-*.pod
 
 # Auto generated der files
+providers/common/der/der_slh_dsa_gen.c
 providers/common/der/der_digests_gen.c
 providers/common/der/der_dsa_gen.c
 providers/common/der/der_ec_gen.c
@@ -75,6 +76,7 @@ providers/common/der/der_rsa_gen.c
 providers/common/der/der_wrap_gen.c
 providers/common/der/der_sm2_gen.c
 providers/common/der/der_ml_dsa_gen.c
+providers/common/include/prov/der_slh_dsa.h
 providers/common/include/prov/der_dsa.h
 providers/common/include/prov/der_ec.h
 providers/common/include/prov/der_ecx.h
