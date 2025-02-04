@@ -10,10 +10,10 @@ EVP_SIGNATURE-ML-DSA-44, EVP_SIGNATURE-ML-DSA-65, EVP_SIGNATURE-ML-DSA-87,
 
 The B<ML-DSA-44>, B<ML-DSA-65> and B<ML-DSA-87> EVP_PKEY implementations
 support key generation, and one-shot sign and verify using the ML-DSA
-signature schemes described in FIPS 204.
+signature schemes described in L<FIPS 204|https://csrc.nist.gov/pubs/fips/204/final>.
 
 The different algorithms names correspond to the parameter sets defined in
-FIPS 204 Section 4 Table 1.
+L<FIPS 204|https://csrc.nist.gov/pubs/fips/204/final> Section 4 Table 1.
 (The signatures range in size from ~2.5K to ~4.5K depending on the type chosen).
 There are 3 different security categories also depending on the type.
 
@@ -24,10 +24,12 @@ L<EVP_PKEY_verify(3)> to perform one-shot message signing or signature verificat
 
 The normal signing process (called Pure ML-DSA Signature Generation)
 encodes the message internally as 0x00 || len(ctx) || ctx || message.
-where B<ctx> is some optional value of size 0x00..0xFF.
+where B<ctx> is some optional value of size 0x00..0xFF.  This process is
+defined in L<FIPS 204|https://csrc.nist.gov/pubs/fips/204/final> Algorithm 2
+step 10 and Algorithm 3 step 5.
 OpenSSL also allows the message to not be encoded which is required for
 testing. OpenSSL does not support Pre Hash ML-DSA Signature Generation, but this
-may be done by the user by doing Pre hash encoding externally and then chosing
+may be done by the user by doing Pre hash encoding externally and then choosing
 the option to not encode the message.
 
 =head2 ML-DSA Signature Parameters
@@ -52,8 +54,10 @@ They can be set by passing an OSSL_PARAM array to L<EVP_PKEY_sign_init_ex2(3)>.
 =item "message-encoding" (B<OSSL_SIGNATURE_PARAM_MESSAGE_ENCODING>) <integer>
 
 The default value of 1 uses 'Pure ML-DSA Signature Generation' as described
-above. Setting it to 0 does not encode the message, which is used for testing,
-but can also be used for 'Pre Hash ML-DSA Signature Generation'.
+above. Setting it to 0 does not encode the message, which is used for testing.
+The message encoding steps are defined in
+L<FIPS 204|https://csrc.nist.gov/pubs/fips/204/final> Algorithm 2 step 10 and
+Algorithm 3 step 5.
 
 =item "test-entropy" (B<OSSL_SIGNATURE_PARAM_TEST_ENTROPY <octet string>
 
@@ -65,6 +69,17 @@ If set the size must be 32 bytes.
 The default value of 0 causes the per message randomness to be randomly
 generated using a DRBG. Setting this to 1 causes the per message randomness
 to be set to 32 bytes of zeros. This value is ignored if "test-entropy" is set.
+
+=item "mu" (B<OSSL_SIGNATURE_PARAM_MU>) <integer>
+
+The default value of 0 causes sign and verify operations to process a raw message.
+Setting this to 1 causes those operations to assume the input is the C<mu> value
+from L<FIPS 204|https://csrc.nist.gov/pubs/fips/204/final> Algorithm 7 step 6 and
+Algorithm 8 step 7.
+
+Note that the message encoding steps from
+L<FIPS 204|https://csrc.nist.gov/pubs/fips/204/final> Algorithm 2 step 10 and
+Algorithm 3 step 5 are omitted when this setting is 1.
 
 =back
 
@@ -108,6 +123,7 @@ L<EVP_PKEY-ML-DSA(7)>
 L<provider-signature(7)>,
 L<EVP_PKEY_sign(3)>,
 L<EVP_PKEY_verify(3)>,
+L<FIPS 204|https://csrc.nist.gov/pubs/fips/204/final>
 
 =head1 HISTORY
 
