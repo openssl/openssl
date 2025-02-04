@@ -1136,21 +1136,6 @@ sigAlgs 28      : id-slh-dsa-shake-192s	: SLH-DSA-SHAKE-192s
 sigAlgs 29      : id-slh-dsa-shake-192f	: SLH-DSA-SHAKE-192f
 sigAlgs 30      : id-slh-dsa-shake-256s	: SLH-DSA-SHAKE-256s
 sigAlgs 31      : id-slh-dsa-shake-256f	: SLH-DSA-SHAKE-256f
-sigAlgs 32      : id-hash-ml-dsa-44-with-sha512 : HASH-ML-DSA-44-WITH-SHA512
-sigAlgs 33      : id-hash-ml-dsa-65-with-sha512 : HASH-ML-DSA-65-WITH-SHA512
-sigAlgs 34      : id-hash-ml-dsa-87-with-sha512 : HASH-ML-DSA-87-WITH-SHA512
-sigAlgs 35      : id-hash-slh-dsa-sha2-128s-with-sha256    : SLH-DSA-SHA2-128s-WITH-SHA256
-sigAlgs 36      : id-hash-slh-dsa-sha2-128f-with-sha256    : SLH-DSA-SHA2-128f-WITH-SHA256
-sigAlgs 37      : id-hash-slh-dsa-sha2-192s-with-sha512    : SLH-DSA-SHA2-192s-WITH-SHA512
-sigAlgs 38      : id-hash-slh-dsa-sha2-192f-with-sha512    : SLH-DSA-SHA2-192f-WITH-SHA512
-sigAlgs 39      : id-hash-slh-dsa-sha2-256s-with-sha512    : SLH-DSA-SHA2-256s-WITH-SHA512
-sigAlgs 40      : id-hash-slh-dsa-sha2-256f-with-sha512    : SLH-DSA-SHA2-256f-WITH-SHA512
-sigAlgs 41      : id-hash-slh-dsa-shake-128s-with-shake128 : SLH-DSA-SHAKE-128s-WITH-SHAKE128
-sigAlgs 42      : id-hash-slh-dsa-shake-128f-with-shake128 : SLH-DSA-SHAKE-128f-WITH-SHAKE128
-sigAlgs 43      : id-hash-slh-dsa-shake-192s-with-shake256 : SLH-DSA-SHAKE-192s-WITH-SHAKE256
-sigAlgs 44      : id-hash-slh-dsa-shake-192f-with-shake256 : SLH-DSA-SHAKE-192f-WITH-SHAKE256
-sigAlgs 45      : id-hash-slh-dsa-shake-256s-with-shake256 : SLH-DSA-SHAKE-256s-WITH-SHAKE256
-sigAlgs 46      : id-hash-slh-dsa-shake-256f-with-shake256 : SLH-DSA-SHAKE-256f-WITH-SHAKE256
 
 # Hold instruction CRL entry extension
 !Cname hold-instruction-code
