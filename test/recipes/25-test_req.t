@@ -406,10 +406,10 @@ subtest "generating certificate requests with -cipher flag" => sub {
 };
 
 subtest "generating certificate requests with SLH-DSA" => sub {
-    plan tests => 3;
+    plan tests => 5;
 
     SKIP: {
-        skip "SLH-DSA is not supported by this OpenSSL build", 3
+        skip "SLH-DSA is not supported by this OpenSSL build", 5
             if disabled("slh-dsa");
 
         ok(run(app(["openssl", "req",
@@ -439,6 +439,18 @@ subtest "generating certificate requests with SLH-DSA" => sub {
                     "-subj", "/CN=test-self-signed",
                     "-addext","keyUsage=digitalSignature"])),
                     "Generating self signed SLH-DSA-SHAKE-256f cert and private key");
+        ok(run(app(["openssl", "req",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-new",
+                    "-sigopt","hextest-entropy:000102030405060708090a0b0c0d0e0f",
+                    "-out", "csr_slh_dsa_shake128.pem",
+                    "-newkey", "SLH-DSA-SHAKE-128s",
+                    "-passout", "pass:x"])),
+                    "Generating SLH-DSA-SHAKE-128s csr");
+        ok(run(app(["openssl", "req",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-in", "csr_slh_dsa_shake128.pem"])),
+                    "verifying SLH-DSA-SHAKE-128s csr");
     }
 };
 
