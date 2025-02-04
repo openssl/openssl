@@ -87,6 +87,18 @@ static const nid_triple sigoid_srt[] = {
     {NID_ML_DSA_44, NID_undef, NID_ML_DSA_44},
     {NID_ML_DSA_65, NID_undef, NID_ML_DSA_65},
     {NID_ML_DSA_87, NID_undef, NID_ML_DSA_87},
+    {NID_SLH_DSA_SHA2_128s, NID_undef, NID_SLH_DSA_SHA2_128s},
+    {NID_SLH_DSA_SHA2_128f, NID_undef, NID_SLH_DSA_SHA2_128f},
+    {NID_SLH_DSA_SHA2_192s, NID_undef, NID_SLH_DSA_SHA2_192s},
+    {NID_SLH_DSA_SHA2_192f, NID_undef, NID_SLH_DSA_SHA2_192f},
+    {NID_SLH_DSA_SHA2_256s, NID_undef, NID_SLH_DSA_SHA2_256s},
+    {NID_SLH_DSA_SHA2_256f, NID_undef, NID_SLH_DSA_SHA2_256f},
+    {NID_SLH_DSA_SHAKE_128s, NID_undef, NID_SLH_DSA_SHAKE_128s},
+    {NID_SLH_DSA_SHAKE_128f, NID_undef, NID_SLH_DSA_SHAKE_128f},
+    {NID_SLH_DSA_SHAKE_192s, NID_undef, NID_SLH_DSA_SHAKE_192s},
+    {NID_SLH_DSA_SHAKE_192f, NID_undef, NID_SLH_DSA_SHAKE_192f},
+    {NID_SLH_DSA_SHAKE_256s, NID_undef, NID_SLH_DSA_SHAKE_256s},
+    {NID_SLH_DSA_SHAKE_256f, NID_undef, NID_SLH_DSA_SHAKE_256f},
 };
 
 static const nid_triple *const sigoid_srt_xref[] = {

@@ -173,22 +173,24 @@ static int slh_dsa_get_params(void *keydata, OSSL_PARAM params[])
             && !OSSL_PARAM_set_int(p, ossl_slh_dsa_key_get_sig_len(key)))
         return 0;
 
-    pub = ossl_slh_dsa_key_get_pub(key);
     priv = ossl_slh_dsa_key_get_priv(key);
-
-    /* This just gets the private elements */
-    p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_PRIV_KEY);
-    if (p != NULL) {
-        if (priv == NULL
-                || !OSSL_PARAM_set_octet_string(p, priv,
-                                                ossl_slh_dsa_key_get_priv_len(key) / 2))
+    if (priv != NULL) {
+        p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_PRIV_KEY);
+        /*
+         * ossl_slh_dsa_key_get_priv_len() includes the public key also
+         * so dividing by 2 returns only the private component.
+         */
+        if (p != NULL
+            && !OSSL_PARAM_set_octet_string(p, priv,
+                                            ossl_slh_dsa_key_get_priv_len(key) / 2))
             return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_PUB_KEY);
-    if (p != NULL) {
-        if (pub == NULL
-                || !OSSL_PARAM_set_octet_string(p, pub,
-                                                ossl_slh_dsa_key_get_pub_len(key)))
+    pub = ossl_slh_dsa_key_get_pub(key);
+    if (pub != NULL) {
+        p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_PUB_KEY);
+        if (p != NULL
+            && !OSSL_PARAM_set_octet_string(p, pub,
+                                            ossl_slh_dsa_key_get_pub_len(key)))
             return 0;
     }
     /*
