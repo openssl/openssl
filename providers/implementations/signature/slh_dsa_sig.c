@@ -17,20 +17,25 @@
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
+#include "prov/der_slh_dsa.h"
 #include "crypto/slh_dsa.h"
+#include "internal/sizes.h"
 
 #define SLH_DSA_MAX_ADD_RANDOM_LEN 32
 
 #define SLH_DSA_MESSAGE_ENCODE_RAW  0
 #define SLH_DSA_MESSAGE_ENCODE_PURE 1
 
-static OSSL_FUNC_signature_sign_message_init_fn slh_sign_msg_init;
-static OSSL_FUNC_signature_sign_fn slh_sign;
-static OSSL_FUNC_signature_verify_message_init_fn slh_verify_msg_init;
-static OSSL_FUNC_signature_verify_fn slh_verify;
-static OSSL_FUNC_signature_freectx_fn slh_freectx;
-static OSSL_FUNC_signature_set_ctx_params_fn slh_set_ctx_params;
-static OSSL_FUNC_signature_settable_ctx_params_fn slh_settable_ctx_params;
+static OSSL_FUNC_signature_sign_message_init_fn slh_dsa_sign_msg_init;
+static OSSL_FUNC_signature_sign_fn slh_dsa_sign;
+static OSSL_FUNC_signature_verify_message_init_fn slh_dsa_verify_msg_init;
+static OSSL_FUNC_signature_verify_fn slh_dsa_verify;
+static OSSL_FUNC_signature_digest_sign_init_fn slh_dsa_digest_signverify_init;
+static OSSL_FUNC_signature_digest_sign_fn slh_dsa_digest_sign;
+static OSSL_FUNC_signature_digest_verify_fn slh_dsa_digest_verify;
+static OSSL_FUNC_signature_freectx_fn slh_dsa_freectx;
+static OSSL_FUNC_signature_set_ctx_params_fn slh_dsa_set_ctx_params;
+static OSSL_FUNC_signature_settable_ctx_params_fn slh_dsa_settable_ctx_params;
 
 typedef struct {
     SLH_DSA_KEY *key; /* Note that the key is not owned by this object */
@@ -44,11 +49,14 @@ typedef struct {
     OSSL_LIB_CTX *libctx;
     char *propq;
     const char *alg;
-} PROV_SLH_DSA_HASH_CTX;
+    /* The Algorithm Identifier of the signature algorithm */
+    uint8_t aid_buf[OSSL_MAX_ALGORITHM_ID_SIZE];
+    size_t  aid_len;
+} PROV_SLH_DSA_CTX;
 
-static void slh_freectx(void *vctx)
+static void slh_dsa_freectx(void *vctx)
 {
-    PROV_SLH_DSA_HASH_CTX *ctx = (PROV_SLH_DSA_HASH_CTX *)vctx;
+    PROV_SLH_DSA_CTX *ctx = (PROV_SLH_DSA_CTX *)vctx;
 
     ossl_slh_dsa_hash_ctx_free(ctx->hash_ctx);
     OPENSSL_free(ctx->propq);
@@ -56,14 +64,14 @@ static void slh_freectx(void *vctx)
     OPENSSL_free(ctx);
 }
 
-static void *slh_newctx(void *provctx, const char *alg, const char *propq)
+static void *slh_dsa_newctx(void *provctx, const char *alg, const char *propq)
 {
-    PROV_SLH_DSA_HASH_CTX *ctx;
+    PROV_SLH_DSA_CTX *ctx;
 
     if (!ossl_prov_is_running())
         return NULL;
 
-    ctx = OPENSSL_zalloc(sizeof(PROV_SLH_DSA_HASH_CTX));
+    ctx = OPENSSL_zalloc(sizeof(PROV_SLH_DSA_CTX));
     if (ctx == NULL)
         return NULL;
 
@@ -74,15 +82,41 @@ static void *slh_newctx(void *provctx, const char *alg, const char *propq)
     ctx->msg_encode = SLH_DSA_MESSAGE_ENCODE_PURE;
     return ctx;
  err:
-    slh_freectx(ctx);
+    slh_dsa_freectx(ctx);
     return NULL;
 }
 
-static int slh_signverify_msg_init(void *vctx, void *vkey,
-                                   const OSSL_PARAM params[], int operation,
-                                   const char *desc)
+static int slh_dsa_set_alg_id_buffer(PROV_SLH_DSA_CTX *ctx)
 {
-    PROV_SLH_DSA_HASH_CTX *ctx = (PROV_SLH_DSA_HASH_CTX *)vctx;
+    int ret;
+    WPACKET pkt;
+    uint8_t *aid = NULL;
+
+    /*
+     * We do not care about DER writing errors.
+     * All it really means is that for some reason, there's no
+     * AlgorithmIdentifier to be had, but the operation itself is
+     * still valid, just as long as it's not used to construct
+     * anything that needs an AlgorithmIdentifier.
+     */
+    ctx->aid_len = 0;
+    ret = WPACKET_init_der(&pkt, ctx->aid_buf, sizeof(ctx->aid_buf));
+    ret = ret && ossl_DER_w_algorithmIdentifier_SLH_DSA(&pkt, -1, ctx->key);
+    if (ret && WPACKET_finish(&pkt)) {
+        WPACKET_get_total_written(&pkt, &ctx->aid_len);
+        aid = WPACKET_get_curr(&pkt);
+    }
+    WPACKET_cleanup(&pkt);
+    if (aid != NULL && ctx->aid_len != 0)
+        memmove(ctx->aid_buf, aid, ctx->aid_len);
+    return 1;
+}
+
+static int slh_dsa_signverify_msg_init(void *vctx, void *vkey,
+                                       const OSSL_PARAM params[], int operation,
+                                       const char *desc)
+{
+    PROV_SLH_DSA_CTX *ctx = (PROV_SLH_DSA_CTX *)vctx;
     SLH_DSA_KEY *key = vkey;
 
     if (!ossl_prov_is_running()
@@ -103,22 +137,41 @@ static int slh_signverify_msg_init(void *vctx, void *vkey,
         ctx->key = vkey;
     }
 
-    if (!slh_set_ctx_params(ctx, params))
+    slh_dsa_set_alg_id_buffer(ctx);
+    if (!slh_dsa_set_ctx_params(ctx, params))
         return 0;
     return 1;
 }
 
-static int slh_sign_msg_init(void *vctx, void *vkey, const OSSL_PARAM params[])
+static int slh_dsa_sign_msg_init(void *vctx, void *vkey, const OSSL_PARAM params[])
 {
-    return slh_signverify_msg_init(vctx, vkey, params,
-                                   EVP_PKEY_OP_SIGN, "SLH_DSA Sign Init");
+    return slh_dsa_signverify_msg_init(vctx, vkey, params,
+                                       EVP_PKEY_OP_SIGN, "SLH_DSA Sign Init");
 }
 
-static int slh_sign(void *vctx, unsigned char *sig, size_t *siglen,
-                    size_t sigsize, const unsigned char *msg, size_t msg_len)
+static int slh_dsa_digest_signverify_init(void *vctx, const char *mdname,
+                                          void *vkey, const OSSL_PARAM params[])
+{
+    PROV_SLH_DSA_CTX *ctx = (PROV_SLH_DSA_CTX *)vctx;
+
+    if (mdname != NULL && mdname[0] != '\0') {
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_DIGEST,
+                       "Explicit digest not supported for SLH-DSA operations");
+        return 0;
+    }
+
+    if (vkey == NULL && ctx->key != NULL)
+        return slh_dsa_set_ctx_params(ctx, params);
+
+    return slh_dsa_signverify_msg_init(vctx, vkey, params,
+                                       EVP_PKEY_OP_SIGN, "SLH_DSA Sign Init");
+}
+
+static int slh_dsa_sign(void *vctx, unsigned char *sig, size_t *siglen,
+                        size_t sigsize, const unsigned char *msg, size_t msg_len)
 {
     int ret = 0;
-    PROV_SLH_DSA_HASH_CTX *ctx = (PROV_SLH_DSA_HASH_CTX *)vctx;
+    PROV_SLH_DSA_CTX *ctx = (PROV_SLH_DSA_CTX *)vctx;
     uint8_t add_rand[SLH_DSA_MAX_ADD_RANDOM_LEN], *opt_rand = NULL;
     size_t n = 0;
 
@@ -144,29 +197,38 @@ static int slh_sign(void *vctx, unsigned char *sig, size_t *siglen,
     return ret;
 }
 
-static int slh_verify_msg_init(void *vctx, void *vkey, const OSSL_PARAM params[])
+static int slh_dsa_digest_sign(void *vctx, uint8_t *sig, size_t *siglen, size_t sigsize,
+                              const uint8_t *tbs, size_t tbslen)
 {
-    return slh_signverify_msg_init(vctx, vkey, params, EVP_PKEY_OP_VERIFY,
-                                   "SLH_DSA Verify Init");
+    return slh_dsa_sign(vctx, sig, siglen, sigsize, tbs, tbslen);
 }
 
-static int slh_verify(void *vctx, const unsigned char *sig, size_t siglen,
-                      const unsigned char *msg, size_t msg_len)
+static int slh_dsa_verify_msg_init(void *vctx, void *vkey, const OSSL_PARAM params[])
 {
-    PROV_SLH_DSA_HASH_CTX *ctx = (PROV_SLH_DSA_HASH_CTX *)vctx;
+    return slh_dsa_signverify_msg_init(vctx, vkey, params, EVP_PKEY_OP_VERIFY,
+                                       "SLH_DSA Verify Init");
+}
+
+static int slh_dsa_verify(void *vctx, const uint8_t *sig, size_t siglen,
+                          const uint8_t *msg, size_t msg_len)
+{
+    PROV_SLH_DSA_CTX *ctx = (PROV_SLH_DSA_CTX *)vctx;
 
     if (!ossl_prov_is_running())
         return 0;
     return ossl_slh_dsa_verify(ctx->hash_ctx, msg, msg_len,
                                ctx->context_string, ctx->context_string_len,
                                ctx->msg_encode, sig, siglen);
-
-    return 0;
+}
+static int slh_dsa_digest_verify(void *vctx, const uint8_t *sig, size_t siglen,
+                                 const uint8_t *tbs, size_t tbslen)
+{
+    return slh_dsa_verify(vctx, sig, siglen, tbs, tbslen);
 }
 
-static int slh_set_ctx_params(void *vctx, const OSSL_PARAM params[])
+static int slh_dsa_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
-    PROV_SLH_DSA_HASH_CTX *pctx = (PROV_SLH_DSA_HASH_CTX *)vctx;
+    PROV_SLH_DSA_CTX *pctx = (PROV_SLH_DSA_CTX *)vctx;
     const OSSL_PARAM *p;
 
     if (pctx == NULL)
@@ -206,8 +268,8 @@ static int slh_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     return 1;
 }
 
-static const OSSL_PARAM *slh_settable_ctx_params(void *vctx,
-                                                 ossl_unused void *provctx)
+static const OSSL_PARAM *slh_dsa_settable_ctx_params(void *vctx,
+                                                     ossl_unused void *provctx)
 {
     static const OSSL_PARAM settable_ctx_params[] = {
         OSSL_PARAM_octet_string(OSSL_SIGNATURE_PARAM_CONTEXT_STRING, NULL, 0),
@@ -220,24 +282,65 @@ static const OSSL_PARAM *slh_settable_ctx_params(void *vctx,
     return settable_ctx_params;
 }
 
+static const OSSL_PARAM known_gettable_ctx_params[] = {
+    OSSL_PARAM_octet_string(OSSL_SIGNATURE_PARAM_ALGORITHM_ID, NULL, 0),
+    OSSL_PARAM_END
+};
+
+static const OSSL_PARAM *slh_dsa_gettable_ctx_params(ossl_unused void *vctx,
+                                                     ossl_unused void *provctx)
+{
+    return known_gettable_ctx_params;
+}
+
+static int slh_dsa_get_ctx_params(void *vctx, OSSL_PARAM *params)
+{
+    PROV_SLH_DSA_CTX *ctx = (PROV_SLH_DSA_CTX *)vctx;
+    OSSL_PARAM *p;
+
+    if (ctx == NULL)
+        return 0;
+
+    p = OSSL_PARAM_locate(params, OSSL_SIGNATURE_PARAM_ALGORITHM_ID);
+    if (p != NULL
+        && !OSSL_PARAM_set_octet_string(p,
+                                        ctx->aid_len == 0 ? NULL : ctx->aid_buf,
+                                        ctx->aid_len))
+        return 0;
+
+    return 1;
+}
+
 #define MAKE_SIGNATURE_FUNCTIONS(alg, fn)                                      \
-    static OSSL_FUNC_signature_newctx_fn slh_##fn##_newctx;                    \
-    static void *slh_##fn##_newctx(void *provctx, const char *propq)           \
+    static OSSL_FUNC_signature_newctx_fn slh_dsa_##fn##_newctx;                \
+    static void *slh_dsa_##fn##_newctx(void *provctx, const char *propq)       \
     {                                                                          \
-        return slh_newctx(provctx, alg, propq);                                \
+        return slh_dsa_newctx(provctx, alg, propq);                            \
     }                                                                          \
     const OSSL_DISPATCH ossl_slh_dsa_##fn##_signature_functions[] = {          \
-        { OSSL_FUNC_SIGNATURE_NEWCTX, (void (*)(void))slh_##fn##_newctx },     \
+        { OSSL_FUNC_SIGNATURE_NEWCTX, (void (*)(void))slh_dsa_##fn##_newctx }, \
         { OSSL_FUNC_SIGNATURE_SIGN_MESSAGE_INIT,                               \
-          (void (*)(void))slh_sign_msg_init },                                 \
-        { OSSL_FUNC_SIGNATURE_SIGN, (void (*)(void))slh_sign },                \
+          (void (*)(void))slh_dsa_sign_msg_init },                             \
+        { OSSL_FUNC_SIGNATURE_SIGN, (void (*)(void))slh_dsa_sign },            \
         { OSSL_FUNC_SIGNATURE_VERIFY_MESSAGE_INIT,                             \
-          (void (*)(void))slh_verify_msg_init },                               \
-        { OSSL_FUNC_SIGNATURE_VERIFY, (void (*)(void))slh_verify },            \
-        { OSSL_FUNC_SIGNATURE_FREECTX, (void (*)(void))slh_freectx },          \
-        { OSSL_FUNC_SIGNATURE_SET_CTX_PARAMS, (void (*)(void))slh_set_ctx_params },\
+          (void (*)(void))slh_dsa_verify_msg_init },                           \
+        { OSSL_FUNC_SIGNATURE_VERIFY, (void (*)(void))slh_dsa_verify },        \
+        { OSSL_FUNC_SIGNATURE_DIGEST_SIGN_INIT,                                \
+          (void (*)(void))slh_dsa_digest_signverify_init },                    \
+        { OSSL_FUNC_SIGNATURE_DIGEST_SIGN,                                     \
+          (void (*)(void))slh_dsa_digest_sign },                               \
+        { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_INIT,                              \
+          (void (*)(void))slh_dsa_digest_signverify_init },                    \
+        { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY,                                   \
+          (void (*)(void))slh_dsa_digest_verify },                             \
+        { OSSL_FUNC_SIGNATURE_FREECTX, (void (*)(void))slh_dsa_freectx },      \
+        { OSSL_FUNC_SIGNATURE_SET_CTX_PARAMS, (void (*)(void))slh_dsa_set_ctx_params },\
         { OSSL_FUNC_SIGNATURE_SETTABLE_CTX_PARAMS,                             \
-          (void (*)(void))slh_settable_ctx_params },                           \
+          (void (*)(void))slh_dsa_settable_ctx_params },                       \
+        { OSSL_FUNC_SIGNATURE_GET_CTX_PARAMS,                                  \
+          (void (*)(void))slh_dsa_get_ctx_params },                            \
+        { OSSL_FUNC_SIGNATURE_GETTABLE_CTX_PARAMS,                             \
+          (void (*)(void))slh_dsa_gettable_ctx_params },                       \
         OSSL_DISPATCH_END                                                      \
     }
 
