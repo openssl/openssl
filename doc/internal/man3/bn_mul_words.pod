@@ -205,7 +205,7 @@ call bn_expand2(), which allocates a new B<d> array and copies the
 data.  They return B<NULL> on error, B<b> otherwise.
 
 The bn_fix_top() macro reduces B<a-E<gt>top> to point to the most
-significant non-zero word plus one when B<a> has shrunk.
+significant nonzero word plus one when B<a> has shrunk.
 
 =head2 Debugging
 
@@ -215,9 +215,9 @@ E<lt>= (a)-E<gt>dmax)>.  A violation will cause the program to abort.
 If B<BN_DEBUG> is not defined, bn_check_top() is
 defined as an empty macro.
 
-=head1 SEE ALSO
+=head1 RETURN VALUES
 
-L<bn(3)>
+Described above.
 
 =head1 COPYRIGHT
 
