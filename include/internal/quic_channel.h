@@ -124,6 +124,8 @@ typedef struct quic_channel_args_st {
     /* Whether to use qlog. */
     int             use_qlog;
 
+    int             is_tserver_ch;
+
     /* Title to use for the qlog session, or NULL. */
     const char      *qlog_title;
 } QUIC_CHANNEL_ARGS;

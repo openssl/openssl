@@ -244,10 +244,6 @@ void ossl_qrx_free(OSSL_QRX *qrx)
     if (qrx == NULL)
         return;
 
-    /* this is a tserver hack */
-    if (qrx == (OSSL_QRX *)-1)
-        return;
-
     /* Free RXE queue data. */
     qrx_cleanup_rxl(&qrx->rx_free);
     qrx_cleanup_rxl(&qrx->rx_pending);

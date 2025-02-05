@@ -295,7 +295,18 @@ static int ch_init(QUIC_CHANNEL *ch)
 
     ossl_quic_tx_packetiser_set_ack_tx_cb(ch->txp, ch_on_txp_ack_tx, ch);
 
-    if (ch->qrx == NULL) {
+    /*
+     * qrx does not exist yet, then we must be dealing with client channel
+     * (QUIC connection initiator).
+     * If qrx exists already, then we are dealing with server channel which
+     * qrx gets created by port_default_packet_handler() before
+     * port_default_packet_handler() accepts connection and creates channel
+     * for it.
+     * The exception here is tserver which always creates channel,
+     * before the first packet is ever seen.
+     */
+    if ((ch->qrx == NULL) && (ch->is_tserver_ch == 0)) {
+        /* we are regular client, create channel */
         qrx_args.libctx             = ch->port->engine->libctx;
         qrx_args.demux              = ch->port->demux;
         qrx_args.short_conn_id_len  = rx_short_dcid_len;
@@ -305,7 +316,7 @@ static int ch_init(QUIC_CHANNEL *ch)
             goto err;
     }
 
-    if (ch->qrx != (OSSL_QRX *)-1) {
+    if (ch->qrx != NULL) {
         /*
          * callbacks for channels associated with tserver's port
          * are set up later when we call ossl_quic_channel_bind_qrx()
@@ -437,7 +448,7 @@ int ossl_quic_channel_init(QUIC_CHANNEL *ch)
 
 void ossl_quic_channel_bind_qrx(QUIC_CHANNEL *tserver_ch, OSSL_QRX *qrx)
 {
-    if (tserver_ch->qrx == (OSSL_QRX *)-1) {
+    if (tserver_ch->qrx == NULL && tserver_ch->is_tserver_ch == 1) {
         tserver_ch->qrx = qrx;
         ossl_qrx_set_late_validation_cb(tserver_ch->qrx, rx_late_validate,
                                         tserver_ch);
@@ -453,12 +464,13 @@ QUIC_CHANNEL *ossl_quic_channel_alloc(const QUIC_CHANNEL_ARGS *args)
     if ((ch = OPENSSL_zalloc(sizeof(*ch))) == NULL)
         return NULL;
 
-    ch->port        = args->port;
-    ch->is_server   = args->is_server;
-    ch->tls         = args->tls;
-    ch->lcidm       = args->lcidm;
-    ch->srtm        = args->srtm;
-    ch->qrx         = args->qrx;
+    ch->port           = args->port;
+    ch->is_server      = args->is_server;
+    ch->tls            = args->tls;
+    ch->lcidm          = args->lcidm;
+    ch->srtm           = args->srtm;
+    ch->qrx            = args->qrx;
+    ch->is_tserver_ch  = args->is_tserver_ch;
 #ifndef OPENSSL_NO_QLOG
     ch->use_qlog    = args->use_qlog;
 
@@ -3991,7 +4003,7 @@ void ossl_quic_channel_set_msg_callback(QUIC_CHANNEL *ch,
      * postpone msg callback setting for tserver until port calls
      * port_bind_channel().
      */
-    if (ch->qrx != (OSSL_QRX *)-1)
+    if (ch->is_tserver_ch == 0)
         ossl_qrx_set_msg_callback(ch->qrx, msg_callback, msg_callback_ssl);
 }
 
@@ -4006,7 +4018,7 @@ void ossl_quic_channel_set_msg_callback_arg(QUIC_CHANNEL *ch,
      * postpone msg callback setting for tserver until port calls
      * port_bind_channel().
      */
-    if (ch->qrx != (OSSL_QRX *)-1)
+    if (ch->is_tserver_ch == 0)
         ossl_qrx_set_msg_callback_arg(ch->qrx, msg_callback_arg);
 }
 

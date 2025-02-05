@@ -499,16 +499,17 @@ static SSL *port_new_handshake_layer(QUIC_PORT *port, QUIC_CHANNEL *ch)
 }
 
 static QUIC_CHANNEL *port_make_channel(QUIC_PORT *port, SSL *tls, OSSL_QRX *qrx,
-                                       int is_server)
+                                       int is_server, int is_tserver)
 {
     QUIC_CHANNEL_ARGS args = {0};
     QUIC_CHANNEL *ch;
 
-    args.port       = port;
-    args.is_server  = is_server;
-    args.lcidm      = port->lcidm;
-    args.srtm       = port->srtm;
-    args.qrx        = qrx;
+    args.port          = port;
+    args.is_server     = is_server;
+    args.lcidm         = port->lcidm;
+    args.srtm          = port->srtm;
+    args.qrx           = qrx;
+    args.is_tserver_ch = is_tserver;
 
     /*
      * Creating a a new channel is made a bit tricky here as there is a
@@ -558,7 +559,8 @@ static QUIC_CHANNEL *port_make_channel(QUIC_PORT *port, SSL *tls, OSSL_QRX *qrx,
 
 QUIC_CHANNEL *ossl_quic_port_create_outgoing(QUIC_PORT *port, SSL *tls)
 {
-    return port_make_channel(port, tls, NULL, /* is_server= */ 0);
+    return port_make_channel(port, tls, NULL, /* is_server= */ 0,
+                             /* is_tserver= */ 0);
 }
 
 QUIC_CHANNEL *ossl_quic_port_create_incoming(QUIC_PORT *port, SSL *tls)
@@ -571,7 +573,8 @@ QUIC_CHANNEL *ossl_quic_port_create_incoming(QUIC_PORT *port, SSL *tls)
      * pass -1 for qrx to indicate port will create qrx
      * later in port_default_packet_handler() when calling port_bind_channel().
      */
-    ch = port_make_channel(port, tls, (OSSL_QRX *)-1, /* is_server= */ 1);
+    ch = port_make_channel(port, tls, NULL, /* is_server= */ 1,
+                           /* is_tserver_ch */ 1);
     port->tserver_ch = ch;
     port->allow_incoming = 1;
     return ch;
@@ -726,7 +729,8 @@ static void port_bind_channel(QUIC_PORT *port, const BIO_ADDR *peer,
                                   ch->msg_callback_ssl);
         ossl_qrx_set_msg_callback_arg(ch->qrx, ch->msg_callback_arg);
     } else {
-        ch = port_make_channel(port, NULL, qrx, /* is_server= */ 1);
+        ch = port_make_channel(port, NULL, qrx, /* is_server= */ 1,
+                               /* is_tserver */ 0);
     }
 
     if (ch == NULL)
