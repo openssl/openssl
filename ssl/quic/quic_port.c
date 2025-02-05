@@ -1569,7 +1569,7 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
         /*
          * This is a kind of bummer because we forget secrets for initial
          * level encryption. The secrets costs us CPU to compute. What we can
-         * do here is to store  them to retry token. Then we can retreive them
+         * do here is to store them within retry token. Then we can retrieve them
          * from initial packet which will carry our retry token to validate
          * client's address.
          */
