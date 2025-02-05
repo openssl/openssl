@@ -535,7 +535,7 @@ IF[{- !$disabled{tests} -}]
   DEPEND[param_build_test]=../libcrypto.a libtestutil.a
 
   SOURCE[sslapitest]=sslapitest.c helpers/ssltestlib.c filterprov.c tls-provider.c
-  INCLUDE[sslapitest]=../include ../apps/include ..
+  INCLUDE[sslapitest]=../include ../apps/include ../providers/common/include ..
   DEPEND[sslapitest]=../libcrypto.a ../libssl.a libtestutil.a
 
   SOURCE[ssl_handshake_rtt_test]=ssl_handshake_rtt_test.c helpers/ssltestlib.c
@@ -1113,6 +1113,11 @@ IF[{- !$disabled{tests} -}]
   SOURCE[provider_pkey_test]=provider_pkey_test.c fake_rsaprov.c
   INCLUDE[provider_pkey_test]=../include ../apps/include
   DEPEND[provider_pkey_test]=../libcrypto libtestutil.a
+
+  PROGRAMS{noinst}=evp_skey_test
+  SOURCE[evp_skey_test]=evp_skey_test.c fake_cipherprov.c
+  INCLUDE[evp_skey_test]=../include ../apps/include
+  DEPEND[evp_skey_test]=../libcrypto libtestutil.a
 
   PROGRAMS{noinst}=provider_default_search_path_test
   SOURCE[provider_default_search_path_test]=provider_default_search_path_test.c
