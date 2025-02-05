@@ -20,7 +20,7 @@ use OpenSSL::Test::Utils;
 setup("test_ml_kem_codecs");
 
 my @algs = qw(512 768 1024);
-my @formats = qw(seed-priv priv-only seed-only priv-oqs pair-oqs bare-seed bare-priv);
+my @formats = qw(seed-priv priv-only seed-only oqskeypair bare-seed bare-priv);
 
 plan skip_all => "ML-KEM isn't supported in this build"
     if disabled("ml-kem");
@@ -33,7 +33,7 @@ foreach my $alg (@algs) {
     my $pub = sprintf("pub-%s.pem", $alg);
     my %formats = map { ($_, sprintf("prv-%s-%s.pem", $alg, $_)) } @formats;
 
-    # 31(1 + 5 * 6) tests
+    # (1 + 6 * @formats) tests
     my $i = 0;
     my $in0 = data_file($pub);
     my $der0 = sprintf("pub-%s.%d.der", $alg, $i++);
@@ -67,7 +67,7 @@ foreach my $alg (@algs) {
                      '-provparam', "ml-kem.input_formats=$rest"])));
     }
 
-    # 13(3 + 5 * 2) tests
+    # (3 + 2 * @formats) tests
     # Check encap/decap ciphertext and shared secrets
     $i = 0;
     my $refct = sprintf("ct-%s.dat", $alg);
@@ -147,7 +147,7 @@ foreach my $alg (@algs) {
     ok(!compare(data_file($formats{'priv-only'}), $privpref),
         sprintf("seed non-preference via provparam key match: %s", $alg));
 
-    # 10(5 * 2) tests
+    # (2 * @formats) tests
     # Check text encoding
     while (my ($f, $k) = each %formats) {
         my $txt =  sprintf("prv-%s-%s.txt", $alg,
