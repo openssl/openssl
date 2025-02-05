@@ -112,16 +112,16 @@ void ossl_crypto_mutex_lock(CRYPTO_MUTEX *mutex)
     EnterCriticalSection(mutex_p);
 }
 
-int ossl_crypto_mutex_try_lock(CRYPTO_MUTEX *mutex)
-{
-    CRITICAL_SECTION *mutex_p;
-
-    mutex_p = (CRITICAL_SECTION *)mutex;
-    if (TryEnterCriticalSection(mutex_p))
-        return 1;
-
-    return 0;
-}
+//int ossl_crypto_mutex_try_lock(CRYPTO_MUTEX *mutex)
+//{
+//    CRITICAL_SECTION *mutex_p;
+//
+//    mutex_p = (CRITICAL_SECTION *)mutex;
+//    if (TryEnterCriticalSection(mutex_p))
+//        return 1;
+//
+//    return 0;
+//}
 
 void ossl_crypto_mutex_unlock(CRYPTO_MUTEX *mutex)
 {

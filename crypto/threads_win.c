@@ -442,12 +442,9 @@ CRYPTO_RWLOCK *CRYPTO_THREAD_lock_new(void)
         /* Don't set error, to avoid recursion blowup. */
         return NULL;
 
-    /* 0x400 is the spin count value suggested in the documentation */
-    if (!InitializeCriticalSectionAndSpinCount(lock, 0x400)) {
-        OPENSSL_free(lock);
-        return NULL;
-    }
-#endif
+	// IPROGRAMINCPP HACK: Remove WinCE check.
+    InitializeCriticalSection(lock);
+# endif
 
     return lock;
 }
