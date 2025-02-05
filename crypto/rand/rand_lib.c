@@ -528,7 +528,7 @@ void *ossl_rand_ctx_new(OSSL_LIB_CTX *libctx)
     OPENSSL_init_crypto(OPENSSL_INIT_BASE_ONLY, NULL);
 
     /* Prepopulate the random provider name */
-    dgbl->random_provider_name = strdup(random_provider_fips_name);
+    dgbl->random_provider_name = OPENSSL_strdup(random_provider_fips_name);
     if (dgbl->random_provider_name == NULL)
         goto err0;
 #endif
