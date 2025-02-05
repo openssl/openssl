@@ -54,8 +54,10 @@ They can be set by passing an OSSL_PARAM array to L<EVP_PKEY_sign_init_ex2(3)>.
 =item "message-encoding" (B<OSSL_SIGNATURE_PARAM_MESSAGE_ENCODING>) <integer>
 
 The default value of 1 uses 'Pure ML-DSA Signature Generation' as described
-above. Setting it to 0 does not encode the message, which is used for testing,
-but can also be used for 'Pre Hash ML-DSA Signature Generation'.
+above. Setting it to 0 does not encode the message, which is used for testing.
+The message encoding steps are defined in
+L<FIPS 204|https://csrc.nist.gov/pubs/fips/204/final> Algorithm 2 step 10 and
+Algorithm 3 step 5.
 
 =item "test-entropy" (B<OSSL_SIGNATURE_PARAM_TEST_ENTROPY <octet string>
 
