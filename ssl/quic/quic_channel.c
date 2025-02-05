@@ -603,13 +603,7 @@ err:
 
 size_t ossl_quic_channel_get_short_header_conn_id_len(QUIC_CHANNEL *ch)
 {
-    /*
-     * tserver's channel might not have qrx yet.
-     */
-    if (ch->port->tserver_ch != NULL)
-        return ossl_quic_port_get_rx_short_dcid_len(ch->port);
-
-    return ossl_qrx_get_short_hdr_conn_id_len(ch->qrx);
+    return ossl_quic_port_get_rx_short_dcid_len(ch->port);
 }
 
 QUIC_STREAM *ossl_quic_channel_get_stream_by_id(QUIC_CHANNEL *ch,
