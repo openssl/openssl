@@ -77,11 +77,11 @@ static int ml_dsa_pairwise_test(const ML_DSA_KEY *key)
     memset(rnd, 0, sizeof(rnd));
     memset(sig, 0, sizeof(sig));
 
-    if (ossl_ml_dsa_sign(key, msg, sizeof(msg), NULL, 0, rnd, sizeof(rnd), 0,
+    if (ossl_ml_dsa_sign(key, 0, msg, sizeof(msg), NULL, 0, rnd, sizeof(rnd), 0,
                          sig, &sig_len, sizeof(sig)) <= 0)
         goto err;
 
-    if (ossl_ml_dsa_verify(key, msg, sizeof(msg), NULL, 0, 0,
+    if (ossl_ml_dsa_verify(key, 0, msg, sizeof(msg), NULL, 0, 0,
                            sig, sig_len) <= 0)
         goto err;
 

@@ -53,6 +53,7 @@ typedef struct {
     /* The Algorithm Identifier of the signature algorithm */
     uint8_t aid_buf[OSSL_MAX_ALGORITHM_ID_SIZE];
     size_t  aid_len;
+    int mu;     /* Flag indicating we should begin from \mu, not the message */
 } PROV_ML_DSA_CTX;
 
 static void ml_dsa_freectx(void *vctx)
@@ -143,6 +144,7 @@ static int ml_dsa_signverify_msg_init(void *vctx, void *vkey,
         return 0;
 
     set_alg_id_buffer(ctx);
+    ctx->mu = 0;
 
     return ml_dsa_set_ctx_params(ctx, params);
 }
@@ -163,6 +165,8 @@ static int ml_dsa_digest_signverify_init(void *vctx, const char *mdname,
                        "Explicit digest not supported for ML-DSA operations");
         return 0;
     }
+
+    ctx->mu = 0;
 
     if (vkey == NULL && ctx->key != NULL)
         return ml_dsa_set_ctx_params(ctx, params);
@@ -193,7 +197,7 @@ static int ml_dsa_sign(void *vctx, uint8_t *sig, size_t *siglen, size_t sigsize,
                 return 0;
         }
     }
-    ret = ossl_ml_dsa_sign(ctx->key, msg, msg_len,
+    ret = ossl_ml_dsa_sign(ctx->key, ctx->mu, msg, msg_len,
                            ctx->context_string, ctx->context_string_len,
                            rnd, sizeof(rand_tmp), ctx->msg_encode,
                            sig, siglen, sigsize);
@@ -221,7 +225,7 @@ static int ml_dsa_verify(void *vctx, const uint8_t *sig, size_t siglen,
 
     if (!ossl_prov_is_running())
         return 0;
-    return ossl_ml_dsa_verify(ctx->key, msg, msg_len,
+    return ossl_ml_dsa_verify(ctx->key, ctx->mu, msg, msg_len,
                               ctx->context_string, ctx->context_string_len,
                               ctx->msg_encode, sig, siglen);
 }
@@ -273,6 +277,11 @@ static int ml_dsa_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     p = OSSL_PARAM_locate_const(params, OSSL_SIGNATURE_PARAM_MESSAGE_ENCODING);
     if (p != NULL && !OSSL_PARAM_get_int(p, &pctx->msg_encode))
         return 0;
+
+    p = OSSL_PARAM_locate_const(params, OSSL_SIGNATURE_PARAM_MU);
+    if (p != NULL && !OSSL_PARAM_get_int(p, &pctx->mu))
+        return 0;
+
     return 1;
 }
 
@@ -283,6 +292,7 @@ static const OSSL_PARAM *ml_dsa_settable_ctx_params(void *vctx,
         OSSL_PARAM_octet_string(OSSL_SIGNATURE_PARAM_CONTEXT_STRING, NULL, 0),
         OSSL_PARAM_octet_string(OSSL_SIGNATURE_PARAM_TEST_ENTROPY, NULL, 0),
         OSSL_PARAM_int(OSSL_SIGNATURE_PARAM_DETERMINISTIC, 0),
+        OSSL_PARAM_int(OSSL_SIGNATURE_PARAM_MU, 0),
         OSSL_PARAM_int(OSSL_SIGNATURE_PARAM_MESSAGE_ENCODING, 0),
         OSSL_PARAM_END
     };
