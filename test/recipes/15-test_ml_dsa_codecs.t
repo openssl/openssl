@@ -72,14 +72,14 @@ foreach my $alg (@algs) {
     $i = 0;
     my $refsig = data_file(sprintf("sig-%s.dat", $alg));
     my $sig = sprintf("sig-%s.%d.dat", $alg, $i);
-    ok(run(app(['openssl', 'pkeyutl', '-verify', '-rawin', '-pubin',
-                '-inkey', $in0, '-in', $in0, '-sigfile', $refsig],
+    ok(run(app([qw(openssl pkeyutl -verify -rawin -pubin -inkey),
+                $in0, '-in', $der0, '-sigfile', $refsig],
                sprintf("Signature verify with pubkey: %s", $alg))));
     while (my ($f, $k) = each %formats) {
         my $sk = data_file($k);
         my $s = sprintf("sig-%s.%d.dat", $alg, $i++);
-        ok(run(app(['openssl', 'pkeyutl', '-sign', '-rawin', '-inkey', $sk,
-                    '-in', $in0, '-pkeyopt', 'deterministic:1', '-out', $s])));
+        ok(run(app([qw(openssl pkeyutl -sign -rawin -inkey), $sk, '-in', $der0,
+                    qw(-pkeyopt deterministic:1 -out), $s])));
         ok(!compare($s, $refsig),
             sprintf("Signature blob match %s with %s", $alg, $f));
     }
@@ -87,7 +87,7 @@ foreach my $alg (@algs) {
     # 6 tests
     # Test keygen seed suppression via the command-line and config file.
     my $seedless = sprintf("seedless-%s.gen.cli.pem", $alg);
-    ok(run(app(['openssl', 'genpkey', '-provparam', 'ml-dsa.retain_seed=no',
+    ok(run(app([qw(openssl genpkey -provparam ml-dsa.retain_seed=no),
                 '-algorithm', "ml-dsa-$alg", '-pkeyopt', "hexseed:$seed",
                 '-out', $seedless])));
     ok(!compare(data_file($formats{'priv-only'}), $seedless),
