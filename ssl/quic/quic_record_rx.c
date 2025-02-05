@@ -289,7 +289,7 @@ static int qrx_validate_initial_pkt(OSSL_QRX *qrx, QUIC_URXE *urxe,
 {
     PACKET pkt, orig_pkt;
     RXE *rxe;
-    size_t i, aad_len = 0, dec_len = 0;
+    size_t i = 0, aad_len = 0, dec_len = 0;
     const unsigned char *sop;
     unsigned char *dst;
     QUIC_PKT_HDR_PTRS ptrs;
@@ -331,8 +331,6 @@ static int qrx_validate_initial_pkt(OSSL_QRX *qrx, QUIC_URXE *urxe,
 
     if (ossl_qrl_enc_level_set_have_el(&qrx->el_set, QUIC_ENC_LEVEL_INITIAL) != 1)
         goto malformed;
-
-    i = 0;
 
     if (rxe->hdr.type == QUIC_PKT_TYPE_INITIAL) {
         const unsigned char *token = rxe->hdr.token;
@@ -439,8 +437,9 @@ static int qrx_validate_initial_pkt(OSSL_QRX *qrx, QUIC_URXE *urxe,
     rxe->datagram_id    = urxe->datagram_id;
 
     /*
-     * Move RXE to pending. this effectively injects packet to ch_rx().
-     * The ch_rx() will be invoked with next tick on channel.
+     * The packet is decrypted, we are going to move it from
+     * rx_pending queue where it waits to be further processed
+     * by ch_rx().
      */
     ossl_list_rxe_remove(&qrx->rx_free, rxe);
     ossl_list_rxe_insert_tail(&qrx->rx_pending, rxe);

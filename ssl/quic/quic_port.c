@@ -1624,11 +1624,22 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
         generate_new_token(new_ch, &e->peer);
 
     /*
-     * ossl_qrx_validate_initial_packet() relocates valid packet from
-     * urxe to rxe. It is time to release urxe.
-     * The qrx now belongs to channel now, so don't free it.
+     * The qrx belongs to channel now, so don't free it.
      */
     qrx = NULL;
+
+    /*
+     * If function reaches this place, then packet got validated in
+     * ossl_qrx_validate_initial_packet(). Keep in mind the packet
+     * ossl_qrx_validate_initial_packet() decrypts the packet to validate it.
+     * If packet validation was successful (and it was because we are here),
+     * then the function puts the packet to qrx->rx_pending. We must not call
+     * call ossl_qrx_inject_urxe() here, because we don't want to insert
+     * the packet to qrx->urx_pending which keeps packet waiting for decryption.
+     *
+     * We are going to call ossl_quic_demux_release_urxe() to dispose buffer
+     * which still holds encrypted data.
+     */
 
 undesirable:
     ossl_qrx_free(qrx);
