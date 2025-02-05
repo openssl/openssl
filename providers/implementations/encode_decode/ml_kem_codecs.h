@@ -29,49 +29,58 @@
 # define ML_KEM_SPKI_OVERHEAD   22
 typedef struct {
     const uint8_t asn1_prefix[ML_KEM_SPKI_OVERHEAD];
-} ML_KEM_SPKI_INFO;
+} ML_KEM_SPKI_FMT;
 
 /*-
  * For each parameter set we support a few PKCS#8 input formats, three
  * corresponding to the "either or both" variants of:
  *
- *  ML-KEM-PrivateKey ::= SEQUENCE {
- *    seed OCTET STRING SIZE (64) OPTIONAL,
- *    expandedKey [1] IMPLICIT OCTET STRING SIZE (1632 | 2400 | 3172) OPTIONAL }
- *   (WITH COMPONENTS {..., seed  PRESENT } |
- *    WITH COMPONENTS {..., expandedKey  PRESENT })
+ *  ML-KEM-PrivateKey ::= CHOICE {
+ *    seed [0] IMPLICIT OCTET STRING SIZE (64),
+ *    expandedKey OCTET STRING SIZE (1632 | 2400 | 3168)
+ *    both SEQUENCE {
+ *      seed OCTET STRING SIZE (64),
+ *      expandedKey OCTET STRING SIZE (1632 | 2400 | 3168) } }
  *
- * and two more for historical OQS encodings.
+ * one more for a historical OQS encoding:
  *
- * - OQS private key: OCTET STRING
  * - OQS private + public key: OCTET STRING
  *   (The public key is ignored, just as with PKCS#8 v2.)
  *
- * An offset of zero means that particular field is absent.
+ * and two more that are the minimal IETF non-ASN.1 seed encoding:
+ *
+ * - Bare seed (just the 32 bytes)
+ * - Bare priv (just the key bytes)
+ *
+ * A length of zero means that particular field is absent.
+ *
+ * The p8_shift is 0 when the top-level tag+length occupy four bytes, 2 when
+ * they occupy two by†es, and 4 when no tag is used at all.
  */
 typedef struct {
-    const char *p8_name;
-    size_t p8_bytes;
-    uint32_t p8_magic;
-    uint16_t seed_magic;
-    size_t seed_offset;
-    size_t seed_length;
-    uint32_t priv_magic;
-    size_t priv_offset;
-    size_t priv_length;
-    size_t pub_offset;
-    size_t pub_length;
-} ML_KEM_PKCS8_INFO;
+    const char *p8_name;    /* Format name */
+    size_t p8_bytes;        /* Total P8 encoding length */
+    int    p8_shift;        /* 4 - (top-level tag + len) */
+    uint32_t p8_magic;      /* The tag + len value */
+    uint16_t seed_magic;    /* Interior tag + len for the seed */
+    size_t seed_offset;     /* Seed offset from start */
+    size_t seed_length;     /* Seed bytes */
+    uint32_t priv_magic;    /* Interior tag + len for the key */
+    size_t priv_offset;     /* Key offset from start */
+    size_t priv_length;     /* Key bytes */
+    size_t pub_offset;      /* Pubkey offset */
+    size_t pub_length;      /* Pubkey bytes */
+} ML_KEM_PKCS8_FMT;
 
 typedef struct {
-    const ML_KEM_SPKI_INFO *spki_info;
-    const ML_KEM_PKCS8_INFO *pkcs8_info;
+    const ML_KEM_SPKI_FMT *spkifmt;
+    const ML_KEM_PKCS8_FMT *p8fmt;
 } ML_KEM_CODEC;
 
 typedef struct {
-    const ML_KEM_PKCS8_INFO *vp8_entry;
-    int vp8_pref;
-} ML_KEM_PKCS8_PREF;
+    const ML_KEM_PKCS8_FMT *fmt;
+    int pref;
+} ML_KEM_PKCS8_FMT_PREF;
 
 __owur
 ML_KEM_KEY *ossl_ml_kem_d2i_PUBKEY(const uint8_t *pubenc, int publen,
