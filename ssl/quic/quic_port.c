@@ -1567,7 +1567,7 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
     if (port->validate_addr == 1 && hdr.token == NULL) {
         port_send_retry(port, &e->peer, &hdr);
         /*
-         * This is a kind of bummer because we forgetting secrets for initial
+         * This is a kind of bummer because we forget secrets for initial
          * level encryption. The secrets costs us CPU to compute. What we can
          * do here is to store  them to retry token. Then we can retreive them
          * from initial packet which will carry our retry token to validate
