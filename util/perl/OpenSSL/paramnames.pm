@@ -471,6 +471,7 @@ my %params = (
     'SIGNATURE_PARAM_SIGNATURE' =>          "signature",
     'SIGNATURE_PARAM_MESSAGE_ENCODING' =>   "message-encoding",
     'SIGNATURE_PARAM_DETERMINISTIC' =>      "deterministic",
+    'SIGNATURE_PARAM_MU' =>                 "mu", # int
     'SIGNATURE_PARAM_TEST_ENTROPY' =>       "test-entropy",
 
 # Asym cipher parameters
