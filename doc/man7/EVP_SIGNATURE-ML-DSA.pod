@@ -55,7 +55,7 @@ The default value of 1 uses 'Pure ML-DSA Signature Generation' as described
 above. Setting it to 0 does not encode the message, which is used for testing,
 but can also be used for 'Pre Hash ML-DSA Signature Generation'.
 
-=item "test-entropy" (B<OSSL_SIGNATURE_PARAM_TEST_ENTROPY <octet string>
+=item "test-entropy" (B<OSSL_SIGNATURE_PARAM_TEST_ENTROPY>) <octet string>
 
 Used for testing to pass an optional deterministic per message random value.
 If set the size must be 32 bytes.
