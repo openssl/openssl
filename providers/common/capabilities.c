@@ -237,7 +237,7 @@ static const TLS_SIGALG_CONSTANTS sigalg_constants_list[3] = {
     { 0x0906, 256, TLS1_3_VERSION, 0 },
 };
 
-#define TLS_SIGALG_ENTRY(tlsname, algorithm, oid, idx)                          \
+# define TLS_SIGALG_ENTRY(tlsname, algorithm, oid, idx)                         \
     {                                                                           \
         OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_SIGALG_IANA_NAME,            \
                                tlsname, sizeof(tlsname)),                       \
@@ -250,9 +250,9 @@ static const TLS_SIGALG_CONSTANTS sigalg_constants_list[3] = {
         OSSL_PARAM_uint(OSSL_CAPABILITY_TLS_SIGALG_SECURITY_BITS,               \
                         (unsigned int *)&sigalg_constants_list[idx].sec_bits),  \
         OSSL_PARAM_int(OSSL_CAPABILITY_TLS_SIGALG_MIN_TLS,                      \
-                        (unsigned int *)&sigalg_constants_list[idx].min_tls),   \
+                       (unsigned int *)&sigalg_constants_list[idx].min_tls),    \
         OSSL_PARAM_int(OSSL_CAPABILITY_TLS_SIGALG_MAX_TLS,                      \
-                        (unsigned int *)&sigalg_constants_list[idx].max_tls),   \
+                       (unsigned int *)&sigalg_constants_list[idx].max_tls),    \
         OSSL_PARAM_END                                                          \
     }
 
