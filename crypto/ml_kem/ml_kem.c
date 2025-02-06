@@ -1536,8 +1536,8 @@ int add_storage(scalar *p, int private, ML_KEM_KEY *key)
  * After freeing the storage associated with a key that failed to be
  * constructed, reset the internal pointers back to NULL.
  */
-static void
-free_storage(ML_KEM_KEY *key)
+void
+ossl_ml_kem_key_reset(ML_KEM_KEY *key)
 {
     if (key->t == NULL)
         return;
@@ -1684,7 +1684,7 @@ void ossl_ml_kem_key_free(ML_KEM_KEY *key)
             OPENSSL_free(key->encoded_dk);
         }
     }
-    free_storage(key);
+    ossl_ml_kem_key_reset(key);
     OPENSSL_free(key);
 }
 
@@ -1771,7 +1771,7 @@ int ossl_ml_kem_parse_public_key(const uint8_t *in, size_t len, ML_KEM_KEY *key)
         ret = parse_pubkey(in, mdctx, key);
 
     if (!ret)
-        free_storage(key);
+        ossl_ml_kem_key_reset(key);
     EVP_MD_CTX_free(mdctx);
     return ret;
 }
@@ -1799,7 +1799,7 @@ int ossl_ml_kem_parse_private_key(const uint8_t *in, size_t len,
         ret = parse_prvkey(in, mdctx, key);
 
     if (!ret)
-        free_storage(key);
+        ossl_ml_kem_key_reset(key);
     EVP_MD_CTX_free(mdctx);
     return ret;
 }
@@ -1849,7 +1849,7 @@ int ossl_ml_kem_genkey(uint8_t *pubenc, size_t publen, ML_KEM_KEY *key)
 
     EVP_MD_CTX_free(mdctx);
     if (!ret) {
-        free_storage(key);
+        ossl_ml_kem_key_reset(key);
         return 0;
     }
 

@@ -12,6 +12,7 @@
 #include <openssl/safestack.h>
 #include <openssl/encoder.h>
 #include <openssl/decoder.h>
+#include "crypto/decoder.h"
 #include "internal/cryptlib.h"
 #include "internal/passphrase.h"
 #include "internal/property.h"
@@ -156,6 +157,9 @@ struct ossl_decoder_ctx_st {
 
     /* For any function that needs a passphrase reader */
     struct ossl_passphrase_data_st pwdata;
+
+    /* Signal that further processing should not continue. */
+    int harderr;
 };
 
 const OSSL_PROPERTY_LIST *
