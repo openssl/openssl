@@ -34,7 +34,7 @@
  *
  * and two more that are the minimal IETF non-ASN.1 seed encoding:
  *
- * - Bare seed (just the 32 bytes)
+ * - Bare seed (just the 64 bytes)
  * - Bare priv (just the key bytes)
  *
  * A length of zero means that particular field is absent.
@@ -67,12 +67,12 @@ static const ML_KEM_SPKI_FMT ml_kem_512_spkifmt = {
       0x01, 0x65, 0x03, 0x04, 0x04, 0x01, 0x03, 0x82, 0x03, 0x21, 0x00, }
 };
 static const ML_KEM_PKCS8_FMT ml_kem_512_p8fmt[NUM_PKCS8_FORMATS] = {
-    { "seed-priv", 0x06aa, 0, 0x308206a6, 0x8040, 6, 0x40, 0x04820660, 0x4a, 0x0660, 0,      0      },
-    { "priv-only", 0x0664, 0, 0x04820660, 0,      0, 0,    0,          0x04, 0x0660, 0,      0      },
-    { "oqs-kpair", 0x0984, 0, 0x04820980, 0,      0, 0,    0,          0x04, 0x0660, 0x0664, 0x0320 },
-    { "seed-only", 0x0042, 2, 0x8040,     0,      2, 0x40, 0,          0,    0,      0,      0      },
-    { "bare-priv", 0x0660, 4, 0,          0,      0, 0,    0,          0,    0x0660, 0,      0      },
-    { "bare-seed", 0x0040, 4, 0,          0,      0, 0x40, 0,          0,    0,      0,      0      },
+    { "seed-priv",  0x06aa, 0, 0x308206a6, 0x0440, 6, 0x40, 0x04820660, 0x4a, 0x0660, 0,      0      },
+    { "priv-only",  0x0664, 0, 0x04820660, 0,      0, 0,    0,          0x04, 0x0660, 0,      0      },
+    { "oqskeypair", 0x0984, 0, 0x04820980, 0,      0, 0,    0,          0x04, 0x0660, 0x0664, 0x0320 },
+    { "seed-only",  0x0042, 2, 0x8040,     0,      2, 0x40, 0,          0,    0,      0,      0      },
+    { "bare-priv",  0x0660, 4, 0,          0,      0, 0,    0,          0,    0x0660, 0,      0      },
+    { "bare-seed",  0x0040, 4, 0,          0,      0, 0x40, 0,          0,    0,      0,      0      },
 };
 
 /*-
@@ -85,12 +85,12 @@ static const ML_KEM_SPKI_FMT ml_kem_768_spkifmt = {
       0x01, 0x65, 0x03, 0x04, 0x04, 0x02, 0x03, 0x82, 0x04, 0xa1, 0x00, }
 };
 static const ML_KEM_PKCS8_FMT ml_kem_768_p8fmt[NUM_PKCS8_FORMATS] = {
-    { "seed-priv", 0x09aa, 0, 0x308209a6, 0x8040, 6, 0x40, 0x04820960, 0x4a, 0x0960, 0,      0,     },
-    { "priv-only", 0x0964, 0, 0x04820960, 0,      0, 0,    0,          0x04, 0x0960, 0,      0,     },
-    { "oqs-kpair", 0x0e04, 0, 0x04820e00, 0,      0, 0,    0,          0x04, 0x0960, 0x0964, 0x04a0 },
-    { "seed-only", 0x0042, 2, 0x8040,     0,      2, 0x40, 0,          0,    0,      0,      0,     },
-    { "bare-priv", 0x0960, 4, 0,          0,      0, 0,    0,          0,    0x0960, 0,      0,     },
-    { "bare-seed", 0x0040, 4, 0,          0,      0, 0x40, 0,          0,    0,      0,      0,     },
+    { "seed-priv",  0x09aa, 0, 0x308209a6, 0x0440, 6, 0x40, 0x04820960, 0x4a, 0x0960, 0,      0,     },
+    { "priv-only",  0x0964, 0, 0x04820960, 0,      0, 0,    0,          0x04, 0x0960, 0,      0,     },
+    { "oqskeypair", 0x0e04, 0, 0x04820e00, 0,      0, 0,    0,          0x04, 0x0960, 0x0964, 0x04a0 },
+    { "seed-only",  0x0042, 2, 0x8040,     0,      2, 0x40, 0,          0,    0,      0,      0,     },
+    { "bare-priv",  0x0960, 4, 0,          0,      0, 0,    0,          0,    0x0960, 0,      0,     },
+    { "bare-seed",  0x0040, 4, 0,          0,      0, 0x40, 0,          0,    0,      0,      0,     },
 };
 
 /*-
@@ -103,12 +103,12 @@ static const ML_KEM_SPKI_FMT ml_kem_1024_spkifmt = {
       0x01, 0x65, 0x03, 0x04, 0x04, 0x03, 0x03, 0x82, 0x06, 0x21, 0x00, }
 };
 static const ML_KEM_PKCS8_FMT ml_kem_1024_p8fmt[NUM_PKCS8_FORMATS] = {
-    { "seed-priv", 0x0caa, 0, 0x30820ca6, 0x8040, 6, 0x40, 0x04820c60, 0x4a, 0x0c60, 0,      0      },
-    { "priv-only", 0x0c64, 0, 0x04820c60, 0,      0, 0,    0,          0x04, 0x0c60, 0,      0      },
-    { "oqs-kpair", 0x1284, 0, 0x04821280, 0,      0, 0,    0,          0x04, 0x0c60, 0x0c64, 0x0620 },
-    { "seed-only", 0x0042, 2, 0x8040,     0,      2, 0x40, 0,          0,    0,      0,      0      },
-    { "bare-priv", 0x0c60, 4, 0,          0,      0, 0,    0,          0,    0x0c60, 0,      0      },
-    { "bare-seed", 0x0040, 4, 0,          0,      0, 0x40, 0,          0,    0,      0,      0      },
+    { "seed-priv",  0x0caa, 0, 0x30820ca6, 0x0440, 6, 0x40, 0x04820c60, 0x4a, 0x0c60, 0,      0      },
+    { "priv-only",  0x0c64, 0, 0x04820c60, 0,      0, 0,    0,          0x04, 0x0c60, 0,      0      },
+    { "oqskeypair", 0x1284, 0, 0x04821280, 0,      0, 0,    0,          0x04, 0x0c60, 0x0c64, 0x0620 },
+    { "seed-only",  0x0042, 2, 0x8040,     0,      2, 0x40, 0,          0,    0,      0,      0      },
+    { "bare-priv",  0x0c60, 4, 0,          0,      0, 0,    0,          0,    0x0c60, 0,      0      },
+    { "bare-seed",  0x0040, 4, 0,          0,      0, 0x40, 0,          0,    0,      0,      0      },
 };
 
 /* Indices of slots in the `codecs` table below */
