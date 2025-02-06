@@ -21,5 +21,5 @@ plan skip_all => "No EC with TLSv1.3 is not supported by this test"
 
 plan tests => 1;
 
-ok(run(test(["clienthellotest", srctop_file("test", "session.pem")])),
+ok(run(test(["clienthellotest"])),
    "running clienthellotest");
