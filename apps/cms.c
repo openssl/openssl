@@ -84,7 +84,7 @@ typedef enum OPTION_choice {
     OPT_R_ENUM,
     OPT_PROV_ENUM, OPT_CONFIG,
     OPT_V_ENUM,
-    OPT_CIPHER,
+    OPT_CIPHER, OPT_KEKCIPHER,
     OPT_ORIGINATOR
 } OPTION_CHOICE;
 
@@ -164,6 +164,8 @@ const OPTIONS cms_options[] = {
      "Recipient certs (optional; used only when encrypting)"},
     {"", OPT_CIPHER, '-',
      "The encryption algorithm to use (any supported cipher)"},
+    {"kekcipher", OPT_KEKCIPHER, 's',
+     "The key encryption algorithm to use"},
     {"wrap", OPT_WRAP, 's',
      "Key wrap algorithm to use when encrypting with key agreement"},
     {"aes128-wrap", OPT_AES128_WRAP, '-', "Use AES128 to wrap key"},
@@ -288,7 +290,7 @@ int cms_main(int argc, char **argv)
     CMS_ReceiptRequest *rr = NULL;
     ENGINE *e = NULL;
     EVP_PKEY *key = NULL;
-    EVP_CIPHER *cipher = NULL, *wrap_cipher = NULL;
+    EVP_CIPHER *cipher = NULL, *wrap_cipher = NULL, *kekcipher = NULL;
     EVP_MD *sign_md = NULL;
     STACK_OF(OPENSSL_STRING) *rr_to = NULL, *rr_from = NULL;
     STACK_OF(OPENSSL_STRING) *sksigners = NULL, *skkeys = NULL;
@@ -305,7 +307,8 @@ int cms_main(int argc, char **argv)
     long digestlen = 0;
     char *infile = NULL, *outfile = NULL, *rctfile = NULL;
     char *passinarg = NULL, *passin = NULL, *signerfile = NULL;
-    char *originatorfile = NULL, *recipfile = NULL, *ciphername = NULL;
+    char *originatorfile = NULL, *recipfile = NULL;
+    char *ciphername = NULL, *kekciphername = NULL;
     char *to = NULL, *from = NULL, *subject = NULL, *prog;
     cms_key_param *key_first = NULL, *key_param = NULL;
     int flags = CMS_DETACHED, binary_files = 0;
@@ -653,6 +656,9 @@ int cms_main(int argc, char **argv)
         case OPT_CIPHER:
             ciphername = opt_unknown();
             break;
+        case OPT_KEKCIPHER:
+            kekciphername = opt_arg();
+            break;
         case OPT_KEYOPT:
             keyidx = -1;
             if (operation == SMIME_ENCRYPT) {
@@ -723,6 +729,8 @@ int cms_main(int argc, char **argv)
             goto end;
     }
     if (!opt_cipher_any(ciphername, &cipher))
+        goto end;
+    if (kekciphername != NULL && !opt_cipher_any(kekciphername, &kekcipher))
         goto end;
     if (wrapname != NULL) {
         if (!opt_cipher_any(wrapname, &wrap_cipher))
@@ -1033,9 +1041,8 @@ int cms_main(int argc, char **argv)
             pwri_tmp = (unsigned char *)OPENSSL_strdup((char *)pwri_pass);
             if (pwri_tmp == NULL)
                 goto end;
-            if (CMS_add0_recipient_password(cms,
-                                            -1, NID_undef, NID_undef,
-                                            pwri_tmp, -1, NULL) == NULL)
+            if (CMS_add0_recipient_password(cms, -1, NID_undef, NID_undef,
+                                            pwri_tmp, -1, kekcipher) == NULL)
                 goto end;
             pwri_tmp = NULL;
         }
@@ -1315,6 +1322,7 @@ int cms_main(int argc, char **argv)
     X509_free(originator);
     EVP_PKEY_free(key);
     EVP_CIPHER_free(cipher);
+    EVP_CIPHER_free(kekcipher);
     EVP_CIPHER_free(wrap_cipher);
     EVP_MD_free(sign_md);
     CMS_ContentInfo_free(cms);
