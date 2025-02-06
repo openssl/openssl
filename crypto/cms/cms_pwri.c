@@ -71,6 +71,10 @@ CMS_RecipientInfo *CMS_add0_recipient_password(CMS_ContentInfo *cms,
         ERR_raise(ERR_LIB_CMS, CMS_R_NO_CIPHER);
         return NULL;
     }
+    if ((EVP_CIPHER_get_flags(kekciph) & EVP_CIPH_FLAG_AEAD_CIPHER) != 0) {
+        ERR_raise(ERR_LIB_CMS, CMS_R_UNSUPPORTED_KEK_ALGORITHM);
+        return NULL;
+    }
     if (wrap_nid != NID_id_alg_PWRI_KEK) {
         ERR_raise(ERR_LIB_CMS, CMS_R_UNSUPPORTED_KEY_ENCRYPTION_ALGORITHM);
         return NULL;
