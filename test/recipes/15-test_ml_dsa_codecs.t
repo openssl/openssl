@@ -20,7 +20,7 @@ use OpenSSL::Test::Utils;
 setup("test_ml_dsa_codecs");
 
 my @algs = qw(44 65 87);
-my @formats = qw(seed-priv priv-only seed-only oqs-kpair bare-seed bare-priv);
+my @formats = qw(seed-priv priv-only seed-only oqskeypair bare-seed bare-priv);
 
 plan skip_all => "ML-DSA isn't supported in this build"
     if disabled("ml-dsa");

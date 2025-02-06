@@ -148,14 +148,10 @@ void ossl_ml_dsa_key_free(ML_DSA_KEY *key)
     vector_free(&key->t1);
     OPENSSL_cleanse(key->K, sizeof(key->K));
     OPENSSL_free(key->pub_encoding);
-    if (key->priv_encoding != NULL) {
-        OPENSSL_cleanse(key->priv_encoding, key->params->sk_len);
-        OPENSSL_free(key->priv_encoding);
-    }
-    if (key->seed != NULL) {
-        OPENSSL_cleanse(key->seed, ML_DSA_SEED_BYTES);
-        OPENSSL_free(key->seed);
-    }
+    if (key->priv_encoding != NULL)
+        OPENSSL_clear_free(key->priv_encoding, key->params->sk_len);
+    if (key->seed != NULL)
+        OPENSSL_clear_free(key->seed, ML_DSA_SEED_BYTES);
     OPENSSL_free(key);
 }
 
@@ -215,7 +211,7 @@ ML_DSA_KEY *ossl_ml_dsa_key_dup(const ML_DSA_KEY *src, int selection)
                         goto err;
                 }
                 if (src->seed != NULL
-                    && (ret->seed = OPENSSL_memdup(src->priv_encoding,
+                    && (ret->seed = OPENSSL_memdup(src->seed,
                                                    ML_DSA_SEED_BYTES)) == NULL)
                     goto err;
             }
@@ -442,8 +438,7 @@ static int keygen_internal(ML_DSA_KEY *out)
 
 err:
     if (out->seed != NULL && !out->retain_seed) {
-        OPENSSL_cleanse(out->seed, ML_DSA_SEED_BYTES);
-        OPENSSL_free(out->seed);
+        OPENSSL_clear_free(out->seed, ML_DSA_SEED_BYTES);
         out->seed = NULL;
     }
     EVP_MD_CTX_free(md_ctx);

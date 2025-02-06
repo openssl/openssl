@@ -68,12 +68,12 @@ static const ML_DSA_SPKI_FMT ml_dsa_44_spkifmt = {
       0x01, 0x65, 0x03, 0x04, 0x03, 0x11, 0x03, 0x82, 0x05, 0x21, 0x00, }
 };
 static const ML_DSA_PKCS8_FMT ml_dsa_44_p8fmt[NUM_PKCS8_FORMATS] = {
-    { "seed-priv", 0x0a2a, 0, 0x30820a26, 0x8020, 6, 0x20, 0x04820a00, 0x2a, 0x0a00, 0,      0,     },
-    { "priv-only", 0x0a04, 0, 0x04820a00, 0,      0, 0,    0,          0x04, 0x0a00, 0,      0,     },
-    { "oqs-kpair", 0x0f24, 0, 0x04820f20, 0,      0, 0,    0,          0x04, 0x0a00, 0x0a04, 0x0520 },
-    { "seed-only", 0x0022, 2, 0x8020,     0,      2, 0x20, 0,          0,    0,      0,      0,     },
-    { "bare-priv", 0x0a00, 4, 0,          0,      0, 0,    0,          0,    0x0a00, 0,      0,     },
-    { "bare-seed", 0x0020, 4, 0,          0,      0, 0x20, 0,          0,    0,      0,      0,     },
+    { "seed-priv",  0x0a2a, 0, 0x30820a26, 0x0420, 6, 0x20, 0x04820a00, 0x2a, 0x0a00, 0,      0,     },
+    { "priv-only",  0x0a04, 0, 0x04820a00, 0,      0, 0,    0,          0x04, 0x0a00, 0,      0,     },
+    { "oqskeypair", 0x0f24, 0, 0x04820f20, 0,      0, 0,    0,          0x04, 0x0a00, 0x0a04, 0x0520 },
+    { "seed-only",  0x0022, 2, 0x8020,     0,      2, 0x20, 0,          0,    0,      0,      0,     },
+    { "bare-priv",  0x0a00, 4, 0,          0,      0, 0,    0,          0,    0x0a00, 0,      0,     },
+    { "bare-seed",  0x0020, 4, 0,          0,      0, 0x20, 0,          0,    0,      0,      0,     },
 };
 
 /*
@@ -86,12 +86,12 @@ static const ML_DSA_SPKI_FMT ml_dsa_65_spkifmt = {
       0x01, 0x65, 0x03, 0x04, 0x03, 0x12, 0x03, 0x82, 0x07, 0xa1, 0x00, }
 };
 static const ML_DSA_PKCS8_FMT ml_dsa_65_p8fmt[NUM_PKCS8_FORMATS] = {
-    { "seed-priv", 0x0fea, 0, 0x30820fe6, 0x8020, 6, 0x20, 0x04820fc0, 0x2a, 0x0fc0, 0,      0,     },
-    { "priv-only", 0x0fc4, 0, 0x04820fc0, 0,      0, 0,    0,          0x04, 0x0fc0, 0,      0,     },
-    { "oqs-kpair", 0x1764, 0, 0x04821760, 0,      0, 0,    0,          0x04, 0x0fc0, 0x0fc4, 0x07a0 },
-    { "seed-only", 0x0022, 2, 0x8020,     0,      2, 0x20, 0,          0,    0,      0,      0,     },
-    { "bare-priv", 0x0fc0, 4, 0,          0,      0, 0,    0,          0,    0x0fc0, 0,      0,     },
-    { "bare-seed", 0x0020, 4, 0,          0,      0, 0x20, 0,          0,    0,      0,      0,     },
+    { "seed-priv",  0x0fea, 0, 0x30820fe6, 0x0420, 6, 0x20, 0x04820fc0, 0x2a, 0x0fc0, 0,      0,     },
+    { "priv-only",  0x0fc4, 0, 0x04820fc0, 0,      0, 0,    0,          0x04, 0x0fc0, 0,      0,     },
+    { "oqskeypair", 0x1764, 0, 0x04821760, 0,      0, 0,    0,          0x04, 0x0fc0, 0x0fc4, 0x07a0 },
+    { "seed-only",  0x0022, 2, 0x8020,     0,      2, 0x20, 0,          0,    0,      0,      0,     },
+    { "bare-priv",  0x0fc0, 4, 0,          0,      0, 0,    0,          0,    0x0fc0, 0,      0,     },
+    { "bare-seed",  0x0020, 4, 0,          0,      0, 0x20, 0,          0,    0,      0,      0,     },
 };
 
 /*-
@@ -104,12 +104,12 @@ static const ML_DSA_SPKI_FMT ml_dsa_87_spkifmt = {
       0x01, 0x65, 0x03, 0x04, 0x03, 0x13, 0x03, 0x82, 0x0a, 0x21, 0x00, }
 };
 static const ML_DSA_PKCS8_FMT ml_dsa_87_p8fmt[NUM_PKCS8_FORMATS] = {
-    { "seed-priv", 0x134a, 0, 0x30821346, 0x8020, 6, 0x20, 0x04821320, 0x2a, 0x1320, 0,      0,     },
-    { "priv-only", 0x1324, 0, 0x04821320, 0,      0, 0,    0,          0x04, 0x1320, 0,      0,     },
-    { "oqs-kpair", 0x1d44, 0, 0x04821d40, 0,      0, 0,    0,          0x04, 0x1320, 0x1324, 0x0a20 },
-    { "seed-only", 0x0022, 2, 0x8020,     0,      2, 0x20, 0,          0,    0,      0,      0,     },
-    { "bare-priv", 0x1320, 4, 0,          0,      0, 0,    0,          0,    0x1320, 0,      0,     },
-    { "bare-seed", 0x0020, 4, 0,          0,      0, 0x20, 0,          0,    0,      0,      0,     },
+    { "seed-priv",  0x134a, 0, 0x30821346, 0x0420, 6, 0x20, 0x04821320, 0x2a, 0x1320, 0,      0,     },
+    { "priv-only",  0x1324, 0, 0x04821320, 0,      0, 0,    0,          0x04, 0x1320, 0,      0,     },
+    { "oqskeypair", 0x1d44, 0, 0x04821d40, 0,      0, 0,    0,          0x04, 0x1320, 0x1324, 0x0a20 },
+    { "seed-only",  0x0022, 2, 0x8020,     0,      2, 0x20, 0,          0,    0,      0,      0,     },
+    { "bare-priv",  0x1320, 4, 0,          0,      0, 0,    0,          0,    0x1320, 0,      0,     },
+    { "bare-seed",  0x0020, 4, 0,          0,      0, 0x20, 0,          0,    0,      0,      0,     },
 };
 
 /* Indices of slots in the codec table below */
