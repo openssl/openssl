@@ -21,40 +21,6 @@
 #include "fuzzer.h"
 
 /**
- * @brief Consumes a 16-bit unsigned integer from a buffer.
- *
- * This function extracts a 16-bit unsigned integer from the given buffer
- * while ensuring proper alignment. It adjusts the buffer pointer to the
- * next 16-bit boundary, extracts the value, advances the pointer, and
- * updates the remaining buffer length.
- *
- * @param buf  Pointer to the input buffer.
- * @param len  Pointer to the size of the remaining buffer; updated after consumption.
- * @param val  Pointer to store the extracted 16-bit value.
- *
- * @return Pointer to the updated buffer position after reading the value,
- *         or NULL if the buffer does not contain enough data.
- */
-static uint8_t *consume_uint16t(const uint8_t *buf, size_t *len, uint16_t *val)
-{
-    uint8_t *buf_idx = (uint8_t *)buf;
-
-    if (*len < (sizeof(uint16_t) * 2))
-        return NULL;
-    /*
-     * Align the buffer to the next 16 bit boundary
-     */
-    buf_idx = (buf_idx + (sizeof(uint16_t) - 1));
-    buf_idx = (uint8_t *)((uintptr_t)buf_idx & (uintptr_t)(~(sizeof(uint16_t) - 1)));
-    *val = (uint16_t)*buf_idx;
-    /* advance the buffer pointer */
-    buf_idx += sizeof(uint16_t);
-    /* compute our remaining length */
-    *len -= (buf_idx - buf);
-    return buf_idx;
-}
-
-/**
  * @brief Consumes an 8-bit unsigned integer from a buffer.
  *
  * This function extracts an 8-bit unsigned integer from the provided buffer,
@@ -99,7 +65,13 @@ static int select_keytype_and_size(uint8_t **buf, size_t *len,
     uint16_t keysize;
     uint16_t modulus = 6;
 
-    *buf = consume_uint16t(*buf, len, &keysize);
+    /*
+     * Note: We don't really care about endianess here, we just
+     * want a random 16 bit value
+     */
+    *buf = (uint8_t *)OPENSSL_load_u16_le(&keysize, *buf);
+    *len -= sizeof(uint16_t);
+
     if (*buf == NULL)
         return 0;
 
@@ -137,9 +109,10 @@ static int select_keytype_and_size(uint8_t **buf, size_t *len,
     case 4:
         /* Select valid alg, but bogus size */
         *keytype = "ML-KEM-1024";
-        *buf = consume_uint16t(*buf, len, &keysize);
+        *buf = (uint8_t *)OPENSSL_load_u16_le(&keysize, *buf);
+        *len -= sizeof(uint16_t);
         *keylen = (size_t)keysize;
-        *keylen %= 2048; /* size to our key buffer */
+        *keylen %= 1024; /* size to our key buffer */
         break;
     default:
         *keytype = NULL;
@@ -170,7 +143,7 @@ static void create_mlkem_raw_key(uint8_t **buf, size_t *len,
     EVP_PKEY *pubkey;
     char *keytype = NULL;
     size_t keylen = 0;
-    uint8_t key[2048];
+    uint8_t key[4096];
     int pub = 0;
 
     if (!select_keytype_and_size(buf, len, &keytype, &keylen, 0))
@@ -179,9 +152,14 @@ static void create_mlkem_raw_key(uint8_t **buf, size_t *len,
     /*
      * Select public or private key creation based on the low order
      * bit of the next buffer value
+     * Note that keylen as returned from select_keytype_and_size is
+     * a public key length, private keys for ML-KEM are always double
+     * the size plus 32, so make that adjustment here
      */
     if ((*buf)[0] & 0x1)
         pub = 1;
+    else
+        keylen = (keylen * 2) + 32;
 
     /*
      * libfuzzer provides by default up to 4096 bit input
@@ -236,6 +214,9 @@ static void keygen_mlkem_real_key(uint8_t **buf, size_t *len,
 again:
     /*
      * Only generate valid key types and lengths
+     * Note, no adjustment is made to keylen here, as
+     * the provider is responsible for selecting the keys and sizes
+     * for us during the EVP_PKEY_keygen call
      */
     if (!select_keytype_and_size(buf, len, &keytype, &keylen, 1))
         return;
