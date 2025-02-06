@@ -322,7 +322,7 @@ $config{perlargv} = [ @argvcopy ];
 # 'unshift' adds at the front of the list (i.e. in reverse input order).
 foreach ( reverse sort( 'aes', 'aria', 'bf', 'camellia', 'cast', 'des', 'dh',
                         'dsa', 'ec', 'hmac', 'idea', 'md2', 'md5', 'mdc2',
-                        'rc2', 'rc4', 'rc5', 'ripemd', 'seed', 'sha',
+                        'ml-dsa', 'rc2', 'rc4', 'rc5', 'ripemd', 'seed', 'sha',
                         'sm2', 'sm3', 'sm4') ) {
     unshift @argvcopy, "no-$_" if ! -d catdir($srcdir, 'crypto', $_);
 }
@@ -623,7 +623,7 @@ my @disable_cascades = (
                              "ec", "engine",
                              "filenames",
                              "idea", "ktls",
-                             "md4", "multiblock", "nextprotoneg",
+                             "md4", "ml-dsa", "multiblock", "nextprotoneg",
                              "ocsp", "ocb", "poly1305", "psk",
                              "rc2", "rc4", "rmd160",
                              "seed", "siphash", "siv",

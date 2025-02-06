@@ -567,6 +567,7 @@ err:
     return ret;
 }
 
+#ifndef OPENSSL_NO_ML_DSA
 /*
  * Test that a deterministic key generation produces the correct key
  */
@@ -621,6 +622,7 @@ err:
     OSSL_SELF_TEST_onend(st, ret);
     return ret;
 }
+#endif /* OPENSSL_NO_ML_DSA */
 
 /*
  * Test a data driven list of KAT's for digest algorithms.
@@ -839,6 +841,7 @@ static int setup_main_random(OSSL_LIB_CTX *libctx)
 
 static int self_test_asym_keygens(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
 {
+#ifndef OPENSSL_NO_ML_DSA
     int i, ret = 1;
 
     for (i = 0; i < (int)OSSL_NELEM(st_kat_asym_keygen_tests); ++i) {
@@ -846,6 +849,9 @@ static int self_test_asym_keygens(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
             ret = 0;
     }
     return ret;
+#else
+    return 1;
+#endif /* OPENSSL_NO_ML_DSA */
 }
 
 /*
