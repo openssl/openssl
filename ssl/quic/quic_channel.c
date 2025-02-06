@@ -454,7 +454,7 @@ void ossl_quic_channel_bind_qrx(QUIC_CHANNEL *tserver_ch, OSSL_QRX *qrx)
                                         tserver_ch);
         ossl_qrx_set_key_update_cb(tserver_ch->qrx, rxku_detected,
                                    tserver_ch);
-    } 
+    }
 }
 
 QUIC_CHANNEL *ossl_quic_channel_alloc(const QUIC_CHANNEL_ARGS *args)
