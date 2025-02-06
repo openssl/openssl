@@ -623,7 +623,7 @@ my @disable_cascades = (
                              "ec", "engine",
                              "filenames",
                              "idea", "ktls",
-                             "md4", "multiblock", "nextprotoneg",
+                             "md4", "ml-dsa", "multiblock", "nextprotoneg",
                              "ocsp", "ocb", "poly1305", "psk",
                              "rc2", "rc4", "rmd160",
                              "seed", "siphash", "siv",
