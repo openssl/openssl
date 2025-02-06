@@ -78,7 +78,6 @@ static void *ml_dsa_newctx(void *provctx, int evp_type, const char *propq)
     ctx->libctx = PROV_LIBCTX_OF(provctx);
     ctx->msg_encode = ML_DSA_MESSAGE_ENCODE_PURE;
     ctx->evp_type = evp_type;
-
     return ctx;
 }
 
