@@ -305,7 +305,7 @@ static int ch_init(QUIC_CHANNEL *ch)
      * The exception here is tserver which always creates channel,
      * before the first packet is ever seen.
      */
-    if ((ch->qrx == NULL) && (ch->is_tserver_ch == 0)) {
+    if (ch->qrx == NULL && ch->is_tserver_ch == 0) {
         /* we are regular client, create channel */
         qrx_args.libctx             = ch->port->engine->libctx;
         qrx_args.demux              = ch->port->demux;
@@ -454,6 +454,8 @@ void ossl_quic_channel_bind_qrx(QUIC_CHANNEL *tserver_ch, OSSL_QRX *qrx)
                                         tserver_ch);
         ossl_qrx_set_key_update_cb(tserver_ch->qrx, rxku_detected,
                                    tserver_ch);
+    } else {
+        (void)ossl_assert(1);
     }
 }
 
