@@ -474,7 +474,8 @@ sub load_sbox () {
 	my $data = shift;
 
 $code.=<<___;
-	adr	$ptr,.Lsbox
+	adrp	$ptr,.Lsbox
+	add	$ptr,$ptr,#:lo12:.Lsbox
 	ld1	{@sbox[0].16b,@sbox[1].16b,@sbox[2].16b,@sbox[3].16b},[$ptr],#64
 	ld1	{@sbox[4].16b,@sbox[5].16b,@sbox[6].16b,@sbox[7].16b},[$ptr],#64
 	ld1	{@sbox[8].16b,@sbox[9].16b,@sbox[10].16b,@sbox[11].16b},[$ptr],#64
@@ -524,7 +525,8 @@ sub compute_tweak_vec() {
 	my $std = shift;
 	&rbit(@vtmp[2],$src,$std);
 $code.=<<___;
-	ldr  @qtmp[0], .Lxts_magic
+	adrp $ptr,.Lxts_magic
+	ldr  @qtmp[0], [$ptr, #:lo12:.Lxts_magic]
 	shl  $des.16b, @vtmp[2].16b, #1
 	ext  @vtmp[1].16b, @vtmp[2].16b, @vtmp[2].16b,#15
 	ushr @vtmp[1].16b, @vtmp[1].16b, #7
@@ -539,9 +541,10 @@ $code=<<___;
 .arch	armv8-a
 .text
 
-.type	_vpsm4_consts,%object
+.rodata
+.type	_${prefix}_consts,%object
 .align	7
-_vpsm4_consts:
+_${prefix}_consts:
 .Lsbox:
 	.byte 0xD6,0x90,0xE9,0xFE,0xCC,0xE1,0x3D,0xB7,0x16,0xB6,0x14,0xC2,0x28,0xFB,0x2C,0x05
 	.byte 0x2B,0x67,0x9A,0x76,0x2A,0xBE,0x04,0xC3,0xAA,0x44,0x13,0x26,0x49,0x86,0x06,0x99
@@ -575,7 +578,10 @@ _vpsm4_consts:
 .Lxts_magic:
 	.quad 0x0101010101010187,0x0101010101010101
 
-.size	_vpsm4_consts,.-_vpsm4_consts
+.size	_${prefix}_consts,.-_${prefix}_consts
+
+.previous
+
 ___
 
 {{{
@@ -592,13 +598,16 @@ ___
 	&load_sbox();
 	&rev32($vkey,$vkey);
 $code.=<<___;
-	adr	$pointer,.Lshuffles
+	adrp	$pointer,.Lshuffles
+	add	$pointer,$pointer,#:lo12:.Lshuffles
 	ld1	{$vmap.2d},[$pointer]
-	adr	$pointer,.Lfk
+	adrp	$pointer,.Lfk
+	add	$pointer,$pointer,#:lo12:.Lfk
 	ld1	{$vfk.2d},[$pointer]
 	eor	$vkey.16b,$vkey.16b,$vfk.16b
 	mov	$schedules,#32
-	adr	$pointer,.Lck
+	adrp	$pointer,.Lck
+	add	$pointer,$pointer,#:lo12:.Lck
 	movi	@vtmp[0].16b,#64
 	cbnz	$enc,1f
 	add	$keys,$keys,124
