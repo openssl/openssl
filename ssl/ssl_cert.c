@@ -1323,7 +1323,7 @@ const SSL_CERT_LOOKUP *ssl_cert_lookup_by_pkey(const EVP_PKEY *pk, size_t *pidx,
         }
     }
     /* check provider-loaded pk types */
-    for (i = 0; ctx->sigalg_list_len; i++) {
+    for (i = 0; i < ctx->sigalg_list_len; i++) {
         SSL_CERT_LOOKUP *tmp_lu = &(ctx->ssl_cert_info[i]);
 
         if (EVP_PKEY_is_a(pk, OBJ_nid2sn(tmp_lu->nid))
