@@ -67,7 +67,6 @@ unless ($no_fips) {
     $old_fips = 1 if $dsaallow != '0';
 }
 
-$ENV{OPENSSL_TEST_LIBCTX} = "1";
 my @prov = ("-provider-path", $provpath,
             @config,
             "-provider", $provname);
@@ -340,6 +339,27 @@ my @smime_cms_tests = (
         "-inform", "PEM",
         "-secretkey", "000102030405060708090A0B0C0D0E0F",
         "-secretkeyid", "C0FEE0" ],
+      \&final_compare
+    ],
+
+    [ "enveloped content test streaming PEM format, AES-128-CBC cipher, password",
+      [ "{cmd1}", @prov, "-encrypt", "-in", $smcont, "-outform", "PEM", "-aes128",
+        "-stream", "-out", "{output}.cms",
+        "-pwri_password", "test" ],
+      [ "{cmd2}", @prov, "-decrypt", "-in", "{output}.cms", "-out", "{output}.txt",
+        "-inform", "PEM",
+        "-pwri_password", "test" ],
+      \&final_compare
+    ],
+
+    [ "enveloped content test streaming PEM format, AES-128-GCM cipher and AES-128-CBC KEK cipher, password",
+      [ "{cmd1}", @prov, "-encrypt", "-in", $smcont, "-outform", "PEM", "-aes-128-gcm",
+        "-kekcipher", "aes-128-cbc",
+        "-stream", "-out", "{output}.cms",
+        "-pwri_password", "test" ],
+      [ "{cmd2}", "-decrypt", "-in", "{output}.cms", "-out", "{output}.txt",
+        "-inform", "PEM",
+        "-pwri_password", "test" ],
       \&final_compare
     ],
 
