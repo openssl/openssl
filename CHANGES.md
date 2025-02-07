@@ -35,6 +35,14 @@ OpenSSL 3.5
 
    *Matt Caswell*
 
+ * The default DRBG implementations have been changed to prefer to fetch
+   algorithm implementations from the default provider (the provider the
+   DRBG implementation is built in) regardless of the default properties
+   set in the configuration file. The code will still fallback to find
+   an implementation, as done previously, if needed.
+
+   *Simo Sorce*
+
  * For TLSv1.3: Add capability for a client to send multiple key shares. Extend the scope of
    `SSL_OP_CIPHER_SERVER_PREFERENCE` to cover server-side key exchange group selection.
    Extend the server-side key exchange group selection algorithm and related group list syntax

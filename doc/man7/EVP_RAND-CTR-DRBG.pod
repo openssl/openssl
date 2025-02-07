@@ -65,6 +65,12 @@ A context for CTR DRBG can be obtained by calling:
  EVP_RAND *rand = EVP_RAND_fetch(NULL, "CTR-DRBG", NULL);
  EVP_RAND_CTX *rctx = EVP_RAND_CTX_new(rand, NULL);
 
+The default CTR-DRBG implementation attempts to fetch the required internal
+algorithms from the provider they are built into (eg the default provider)
+regardless of the properties provided. Should the provider not implement
+the required algorithms then properties will be used to find a different
+implementation.
+
 =head1 EXAMPLES
 
  EVP_RAND *rand;
