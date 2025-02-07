@@ -46,18 +46,7 @@ OCSP_ONEREQ *OCSP_request_add0_id(OCSP_REQUEST *req, OCSP_CERTID *cid)
 /* Set requestorName from an X509_NAME structure */
 int OCSP_request_set1_name(OCSP_REQUEST *req, const X509_NAME *nm)
 {
-    GENERAL_NAME *gen = GENERAL_NAME_new();
-
-    if (gen == NULL)
-        return 0;
-    if (!X509_NAME_set(&gen->d.directoryName, nm)) {
-        GENERAL_NAME_free(gen);
-        return 0;
-    }
-    gen->type = GEN_DIRNAME;
-    GENERAL_NAME_free(req->tbsRequest.requestorName);
-    req->tbsRequest.requestorName = gen;
-    return 1;
+    return GENERAL_NAME_set1_X509_NAME(&req->tbsRequest.requestorName, nm);
 }
 
 /* Add a certificate to an OCSP request */
