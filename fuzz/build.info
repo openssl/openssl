@@ -22,6 +22,10 @@ IF[{- !$disabled{"fuzz-afl"} || !$disabled{"fuzz-libfuzzer"} -}]
     PROGRAMS{noinst}=ml-dsa
   ENDIF
 
+  IF[{- !$disabled{"slh-dsa"} -}]
+    PROGRAMS{noinst}=slh-dsa
+  ENDIF
+
   IF[{- !$disabled{"cmp"} -}]
     PROGRAMS{noinst}=cmp
   ENDIF
@@ -69,6 +73,10 @@ IF[{- !$disabled{"fuzz-afl"} || !$disabled{"fuzz-libfuzzer"} -}]
   SOURCE[cmp]=cmp.c driver.c fuzz_rand.c
   INCLUDE[cmp]=../include {- $ex_inc -}
   DEPEND[cmp]=../libcrypto {- $ex_lib -}
+
+  SOURCE[slh-dsa]=slh-dsa.c driver.c fuzz_rand.c
+  INCLUDE[slh-dsa]=../include {- $ex_inc -}
+  DEPEND[slh-dsa]=../libcrypto {- $ex_lib -}
 
   SOURCE[cms]=cms.c driver.c
   INCLUDE[cms]=../include {- $ex_inc -}
@@ -177,6 +185,10 @@ IF[{- !$disabled{tests} -}]
     PROGRAMS{noinst}=ml-dsa-test
   ENDIF
 
+  IF[{- !$disabled{"slh-dsa"} -}]
+    PROGRAMS{noinst}=slh-dsa-test
+  ENDIF
+
   IF[{- !$disabled{"cmp"} -}]
     PROGRAMS{noinst}=cmp-test
   ENDIF
@@ -225,15 +237,21 @@ IF[{- !$disabled{tests} -}]
   SOURCE[cmp-test]=cmp.c test-corpus.c fuzz_rand.c
   INCLUDE[cmp-test]=../include
   DEPEND[cmp-test]=../libcrypto.a
+  # referring to static lib allows using non-exported functions
 
   SOURCE[ml-kem-test]=ml-kem.c test-corpus.c fuzz_rand.c
   INCLUDE[ml-kem-test]=../include
   DEPEND[ml-kem-test]=../libcrypto.a
+  # referring to static lib allows using non-exported functions
 
   SOURCE[ml-dsa-test]=ml-dsa.c test-corpus.c fuzz_rand.c
   INCLUDE[ml-dsa-test]=../include
   DEPEND[ml-dsa-test]=../libcrypto.a
+  # referring to static lib allows using non-exported functions
 
+  SOURCE[slh-dsa-test]=slh-dsa.c test-corpus.c fuzz_rand.c
+  INCLUDE[slh-dsa-test]=../include
+  DEPEND[slh-dsa-test]=../libcrypto.a
   # referring to static lib allows using non-exported functions
 
   SOURCE[cms-test]=cms.c test-corpus.c
