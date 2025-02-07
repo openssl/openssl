@@ -1061,6 +1061,7 @@ int SSL_CONF_CTX_finish(SSL_CONF_CTX *cctx)
     if (c != NULL && cctx->flags & SSL_CONF_FLAG_REQUIRE_PRIVATE) {
         for (i = 0; i < cctx->num_cert_filename; i++) {
             const char *p = cctx->cert_filename[i];
+
             /*
              * If missing private key try to load one from certificate file
              */
@@ -1136,6 +1137,7 @@ void SSL_CONF_CTX_set_ssl(SSL_CONF_CTX *cctx, SSL *ssl)
 {
     cctx->ssl = ssl;
     cctx->ctx = NULL;
+    free_cert_filename(cctx);
     if (ssl != NULL) {
         SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
 
@@ -1156,7 +1158,6 @@ void SSL_CONF_CTX_set_ssl(SSL_CONF_CTX *cctx, SSL *ssl)
         cctx->max_version = NULL;
         cctx->pcert_flags = NULL;
         cctx->pvfy_flags = NULL;
-        free_cert_filename(cctx);
     }
 }
 
@@ -1164,6 +1165,7 @@ void SSL_CONF_CTX_set_ssl_ctx(SSL_CONF_CTX *cctx, SSL_CTX *ctx)
 {
     cctx->ctx = ctx;
     cctx->ssl = NULL;
+    free_cert_filename(cctx);
     if (ctx) {
         cctx->poptions = &ctx->options;
         cctx->min_version = &ctx->min_proto_version;
@@ -1180,6 +1182,5 @@ void SSL_CONF_CTX_set_ssl_ctx(SSL_CONF_CTX *cctx, SSL_CTX *ctx)
         cctx->max_version = NULL;
         cctx->pcert_flags = NULL;
         cctx->pvfy_flags = NULL;
-        free_cert_filename(cctx);
     }
 }
