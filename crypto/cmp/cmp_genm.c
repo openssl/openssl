@@ -336,11 +336,14 @@ int OSSL_CMP_get1_rootCaKeyUpdate(OSSL_CMP_CTX *ctx,
         ERR_raise(ERR_LIB_CMP, CMP_R_INVALID_ROOTCAKEYUPDATE);
         goto end;
     }
-    if (oldWithOld != NULL && my_oldWithNew != NULL
-        && !verify_ss_cert_trans(ctx, *newWithNew, my_oldWithNew,
-            oldWithOld_copy, "oldWithOld")) {
-        ERR_raise(ERR_LIB_CMP, CMP_R_INVALID_ROOTCAKEYUPDATE);
-        goto end;
+    if (my_oldWithNew != NULL) {
+        if (oldWithOld == NULL) {
+            ossl_cmp_log(WARN, ctx, "oldWithNew certificate received in genp for verifying oldWithOld, but oldWithOld was not provided");
+        } else if (!verify_ss_cert_trans(ctx, *newWithNew, my_oldWithNew,
+                       oldWithOld_copy, "oldWithOld")) {
+            ERR_raise(ERR_LIB_CMP, CMP_R_INVALID_ROOTCAKEYUPDATE);
+            goto end;
+        }
     }
 
     if (!X509_up_ref(*newWithNew))
