@@ -1198,6 +1198,17 @@ void EVP_MD_do_all_provided(OSSL_LIB_CTX *libctx,
                        evp_md_from_algorithm, evp_md_up_ref, evp_md_free);
 }
 
+EVP_MD *evp_digest_fetch_from_prov(OSSL_PROVIDER *prov,
+                                   const char *algorithm,
+                                   const char *properties)
+{
+    return evp_generic_fetch_from_prov(prov, OSSL_OP_DIGEST,
+                                       algorithm, properties,
+                                       evp_md_from_algorithm,
+                                       evp_md_up_ref,
+                                       evp_md_free);
+}
+
 typedef struct {
     int md_nid;
     int hmac_nid;

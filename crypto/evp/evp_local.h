@@ -320,6 +320,12 @@ EVP_KEM *evp_kem_fetch_from_prov(OSSL_PROVIDER *prov,
 EVP_CIPHER *evp_cipher_fetch_from_prov(OSSL_PROVIDER *prov,
                                        const char *algorithm,
                                        const char *properties);
+EVP_MD *evp_digest_fetch_from_prov(OSSL_PROVIDER *prov,
+                                   const char *algorithm,
+                                   const char *properties);
+EVP_MAC *evp_mac_fetch_from_prov(OSSL_PROVIDER *prov,
+                                 const char *algorithm,
+                                 const char *properties);
 
 /* Internal structure constructors for fetched methods */
 EVP_MD *evp_md_new(void);

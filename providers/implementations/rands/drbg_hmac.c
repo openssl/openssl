@@ -19,6 +19,9 @@
 #include "prov/provider_ctx.h"
 #include "prov/hmac_drbg.h"
 #include "drbg_local.h"
+#include "crypto/evp.h"
+#include "crypto/evp/evp_local.h"
+#include "internal/provider.h"
 
 static OSSL_FUNC_rand_newctx_fn drbg_hmac_new_wrapper;
 static OSSL_FUNC_rand_freectx_fn drbg_hmac_free;
@@ -407,11 +410,73 @@ static const OSSL_PARAM *drbg_hmac_gettable_ctx_params(ossl_unused void *vctx,
     return known_gettable_ctx_params;
 }
 
+static int drbg_fetch_algs_from_prov(const OSSL_PARAM params[],
+                                     OSSL_LIB_CTX *libctx,
+                                     EVP_MAC_CTX **macctx,
+                                     EVP_MD **digest)
+{
+    OSSL_PROVIDER *prov = NULL;
+    const OSSL_PARAM *p;
+    EVP_MD *md = NULL;
+    EVP_MAC *mac = NULL;
+    int ret = 0;
+
+    if (macctx == NULL || digest == NULL)
+        return 0;
+
+    if ((p = OSSL_PARAM_locate_const(params,
+                                     OSSL_PROV_PARAM_CORE_PROV_NAME)) == NULL)
+        return 0;
+    if (p->data_type != OSSL_PARAM_UTF8_STRING)
+        return 0;
+    if ((prov = ossl_provider_find(libctx, (const char *)p->data, 1)) == NULL)
+        return 0;
+
+    p = OSSL_PARAM_locate_const(params, OSSL_ALG_PARAM_DIGEST);
+    if (p) {
+        if (p->data_type != OSSL_PARAM_UTF8_STRING)
+            goto done;
+
+        md = evp_digest_fetch_from_prov(prov, (const char *)p->data, NULL);
+        if (md) {
+            EVP_MD_free(*digest);
+            *digest = md;
+        } else {
+            goto done;
+        }
+    }
+
+    p = OSSL_PARAM_locate_const(params, OSSL_ALG_PARAM_MAC);
+    if (p == NULL) {
+        ret = 1;
+        goto done;
+    }
+
+    if (p->data_type != OSSL_PARAM_UTF8_STRING)
+        goto done;
+
+    EVP_MAC_CTX_free(*macctx);
+    *macctx = NULL;
+
+    mac = evp_mac_fetch_from_prov(prov, (const char *)p->data, NULL);
+    if (mac) {
+        *macctx = EVP_MAC_CTX_new(mac);
+        /* The context holds on to the MAC */
+        EVP_MAC_free(mac);
+        ret = 1;
+    }
+
+done:
+    ossl_provider_free(prov);
+    return ret;
+}
+
 static int drbg_hmac_set_ctx_params_locked(void *vctx, const OSSL_PARAM params[])
 {
     PROV_DRBG *ctx = (PROV_DRBG *)vctx;
     PROV_DRBG_HMAC *hmac = (PROV_DRBG_HMAC *)ctx->data;
     OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
+    EVP_MD *prov_md = NULL;
     const EVP_MD *md;
     int md_size;
 
@@ -419,16 +484,26 @@ static int drbg_hmac_set_ctx_params_locked(void *vctx, const OSSL_PARAM params[]
                                      OSSL_DRBG_PARAM_FIPS_DIGEST_CHECK))
         return 0;
 
-    if (!ossl_prov_digest_load_from_params(&hmac->digest, params, libctx))
-        return 0;
+    /* try to fetch mac and digest from provider */
+    (void)ERR_set_mark();
+    if (!drbg_fetch_algs_from_prov(params, libctx, &hmac->ctx, &prov_md)) {
+        (void)ERR_pop_to_mark();
+        /* fall back to full implementation search */
+        if (!ossl_prov_digest_load_from_params(&hmac->digest, params, libctx))
+            return 0;
+
+        if (!ossl_prov_macctx_load_from_params(&hmac->ctx, params,
+                                               NULL, NULL, NULL, libctx))
+            return 0;
+    } else {
+        (void)ERR_clear_last_mark();
+        if (prov_md)
+            ossl_prov_digest_set_md(&hmac->digest, prov_md);
+    }
 
     md = ossl_prov_digest_md(&hmac->digest);
     if (md != NULL && !ossl_drbg_verify_digest(ctx, libctx, md))
         return 0;   /* Error already raised for us */
-
-    if (!ossl_prov_macctx_load_from_params(&hmac->ctx, params,
-                                           NULL, NULL, NULL, libctx))
-        return 0;
 
     if (md != NULL && hmac->ctx != NULL) {
         /* These are taken from SP 800-90 10.1 Table 2 */

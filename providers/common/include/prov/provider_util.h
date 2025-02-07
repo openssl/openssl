@@ -86,6 +86,8 @@ int ossl_prov_digest_copy(PROV_DIGEST *dst, const PROV_DIGEST *src);
 const EVP_MD *ossl_prov_digest_md(const PROV_DIGEST *pd);
 ENGINE *ossl_prov_digest_engine(const PROV_DIGEST *pd);
 
+/* Set a specific md, resets current digests first */
+void ossl_prov_digest_set_md(PROV_DIGEST *pd, EVP_MD *md);
 
 /*
  * Set the various parameters on an EVP_MAC_CTX from the supplied arguments.
