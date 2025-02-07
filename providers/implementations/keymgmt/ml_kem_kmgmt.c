@@ -318,7 +318,7 @@ static int ml_kem_key_fromdata(ML_KEM_KEY *key,
 {
     const OSSL_PARAM *p = NULL;
     const void *pubenc = NULL, *prvenc = NULL, *seedenc = NULL;
-    size_t publen = 0, prvlen = 0, seedlen = 0;
+    size_t publen = 0, prvlen = 0, seedlen = 0, puboff;
     const ML_KEM_VINFO *v;
 
     /* Invalid attempt to mutate a key, what is the right error to report? */
@@ -368,6 +368,18 @@ static int ml_kem_key_fromdata(ML_KEM_KEY *key,
     if (seedlen == 0 && publen == 0 && prvlen == 0) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_KEY);
         return 0;
+    }
+
+    /* Check any explicit public key against embedded value in private key */
+    if (publen > 0 && prvlen > 0) {
+        /* point to the ek offset in the DKpke||ek||H(ek)||z */
+        puboff = prvlen - ML_KEM_RANDOM_BYTES - ML_KEM_PKHASH_BYTES - publen;
+        if (memcmp(pubenc, (unsigned char *)prvenc + puboff, publen) != 0) {
+            ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY,
+                           "explicit %s public key does not match private",
+                           v->algorithm_name);
+            return 0;
+        }
     }
 
     if (seedlen != 0 && (prvlen == 0 || key->prefer_seed))
@@ -427,6 +439,8 @@ void *ml_kem_load(const void *reference, size_t reference_sz)
 {
     ML_KEM_KEY *key = NULL;
     uint8_t *encoded_dk;
+    uint8_t seed[ML_KEM_SEED_BYTES];
+    size_t zlen = ML_KEM_RANDOM_BYTES;
 
     if (ossl_prov_is_running() && reference_sz == sizeof(key)) {
         /* The contents of the reference is the address to our object */
@@ -435,6 +449,20 @@ void *ml_kem_load(const void *reference, size_t reference_sz)
         key->encoded_dk = NULL;
         /* We grabbed, so we detach it */
         *(ML_KEM_KEY **)reference = NULL;
+        /*
+         * Reject |z| mismatch between seed and key, the seed buffer holds |z|
+         * followed by |d|.
+         */
+        if (encoded_dk != NULL
+            && ossl_ml_kem_encode_seed(seed, sizeof(seed), key)
+            && memcmp(seed + sizeof(seed) - zlen,
+                      encoded_dk + key->vinfo->prvkey_bytes - zlen,
+                      zlen) != 0) {
+            ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY,
+                           "private %s key implicit rejection secret does"
+                           " not match seed", key->vinfo->algorithm_name);
+            goto err;
+        }
         /* Generate the key now, if it holds only a stashed seed. */
         if (ossl_ml_kem_have_seed(key) &&
             (encoded_dk == NULL || key->prefer_seed)) {
