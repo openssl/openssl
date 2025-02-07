@@ -67,7 +67,7 @@ struct ossl_http_req_ctx_st {
     time_t max_time;            /* Maximum end time of current transfer, or 0 */
     time_t max_total_time;      /* Maximum end time of total transfer, or 0 */
     char *redirection_url;      /* Location obtained from HTTP status 301/302 */
-    size_t max_hdr_lines;       /* Max. number of http hdr lines, or 0 */
+    size_t max_hdr_lines;       /* Max. number of response header lines, or 0 */
 };
 
 /* HTTP states */
@@ -80,14 +80,15 @@ struct ossl_http_req_ctx_st {
 #define OHS_WRITE_HDR      (4 | OHS_NOREAD) /* Request header being sent */
 #define OHS_WRITE_REQ      (5 | OHS_NOREAD) /* Request content being sent */
 #define OHS_FLUSH          (6 | OHS_NOREAD) /* Request being flushed */
+#define OHS_ASN1_DONE      (7 | OHS_NOREAD) /* ASN1 content read completed */
+#define OHS_STREAM         (8 | OHS_NOREAD) /* HTTP content stream to be read */
 #define OHS_FIRSTLINE       1 /* First line of response being read */
 #define OHS_HEADERS         2 /* MIME headers of response being read */
 #define OHS_HEADERS_ERROR   3 /* MIME headers of resp. being read after error */
 #define OHS_REDIRECT        4 /* MIME headers being read, expecting Location */
 #define OHS_ASN1_HEADER     5 /* ASN1 sequence header (tag+length) being read */
 #define OHS_ASN1_CONTENT    6 /* ASN1 content octets being read */
-#define OHS_ASN1_DONE      (7 | OHS_NOREAD) /* ASN1 content read completed */
-#define OHS_STREAM         (8 | OHS_NOREAD) /* HTTP content stream to be read */
+#define OHS_BODY_ERROR      7 /* response body being read after error */
 
 /* Low-level HTTP API implementation */
 
@@ -577,6 +578,8 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
             }
         }
         if (n <= 0) {
+            if (rctx->state == OHS_BODY_ERROR)
+                OSSL_TRACE(HTTP, "]\n"); /* end of error response body */
             if (BIO_should_retry(rctx->rbio))
                 return -1;
             ERR_raise(ERR_LIB_HTTP, HTTP_R_FAILED_READING_DATA);
@@ -618,7 +621,7 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
                 rctx->state = OHS_ERROR;
                 return 0;
             }
-            if (OSSL_TRACE_ENABLED(HTTP) && rctx->state == OHS_WRITE_HDR1)
+            if (rctx->state == OHS_WRITE_HDR1)
                 OSSL_TRACE(HTTP, "Sending request: [\n");
             OSSL_TRACE_STRING(HTTP, rctx->state != OHS_WRITE_REQ || rctx->text,
                               rctx->state != OHS_WRITE_REQ, rctx->pos, sz);
@@ -644,8 +647,7 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
             rctx->len_to_send = n;
             goto next_io;
         }
-        if (OSSL_TRACE_ENABLED(HTTP))
-            OSSL_TRACE(HTTP, "]\n");
+        OSSL_TRACE(HTTP, "]\n");
         rctx->state = OHS_FLUSH;
 
         /* fall through */
@@ -695,10 +697,15 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
             return 0;
         }
 
+        if (rctx->state == OHS_BODY_ERROR) {
+            /* dump response body line */
+            OSSL_TRACE_STRING(HTTP, got_text, 1, (unsigned char *)buf, n);
+            goto next_line;
+        }
+
         resp_hdr_lines++;
         if (rctx->max_hdr_lines != 0 && rctx->max_hdr_lines < resp_hdr_lines) {
             ERR_raise(ERR_LIB_HTTP, HTTP_R_RESPONSE_TOO_MANY_HDRLINES);
-            OSSL_TRACE(HTTP, "Received too many headers\n");
             rctx->state = OHS_ERROR;
             return 0;
         }
@@ -711,11 +718,9 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
         }
 
         /* dump all response header lines */
-        if (OSSL_TRACE_ENABLED(HTTP)) {
-            if (rctx->state == OHS_FIRSTLINE)
-                OSSL_TRACE(HTTP, "Received response header: [\n");
-            OSSL_TRACE1(HTTP, "%s", buf);
-        }
+        if (rctx->state == OHS_FIRSTLINE)
+            OSSL_TRACE(HTTP, "Received response header: [\n");
+        OSSL_TRACE1(HTTP, "%s", buf);
 
         /* First line */
         if (rctx->state == OHS_FIRSTLINE) {
@@ -804,10 +809,7 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
         }
         if (*p != '\0') /* not end of headers */
             goto next_line;
-        if (OSSL_TRACE_ENABLED(HTTP))
-            OSSL_TRACE(HTTP, "]\n");
-
-        resp_hdr_lines = 0;
+        OSSL_TRACE(HTTP, "]\n");
 
         if (rctx->keep_alive != 0 /* do not let server initiate keep_alive */
                 && !found_keep_alive /* otherwise there is no change */) {
@@ -820,19 +822,10 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
         }
 
         if (rctx->state == OHS_HEADERS_ERROR) {
-            if (OSSL_TRACE_ENABLED(HTTP)) {
-                int printed_final_nl = 0;
-
-                OSSL_TRACE(HTTP, "Received error response body: [\n");
-                while ((n = BIO_read(rctx->rbio, rctx->buf, rctx->buf_size)) > 0
-                       || (OSSL_sleep(100), BIO_should_retry(rctx->rbio))) {
-                    OSSL_TRACE_STRING(HTTP, got_text, 1, rctx->buf, n);
-                    if (n > 0)
-                        printed_final_nl = rctx->buf[n - 1] == '\n';
-                }
-                OSSL_TRACE1(HTTP, "%s]\n", printed_final_nl ? "" : "\n");
-                (void)printed_final_nl; /* avoid warning unless enable-trace */
-            }
+            rctx->state = OHS_BODY_ERROR;
+            OSSL_TRACE(HTTP, "Received error response body: [\n");
+            if (OSSL_TRACE_ENABLED(HTTP))
+                goto next_line;
             return 0;
         }
 
