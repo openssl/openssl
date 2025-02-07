@@ -120,7 +120,7 @@ const STACK_OF(X509_EXTENSION) *X509_CRL_get0_extensions(const X509_CRL *crl)
     return crl->crl.extensions;
 }
 
-STACK_OF(X509_REVOKED) *X509_CRL_get_REVOKED(X509_CRL *crl)
+STACK_OF(X509_REVOKED) *X509_CRL_get_REVOKED(OSSL_FUTURE_CONST X509_CRL *crl)
 {
     return crl->crl.revoked;
 }
