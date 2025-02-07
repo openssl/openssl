@@ -11,9 +11,10 @@
 # define PROV_ML_DSA_CODECS_H
 # pragma once
 
-# include <openssl/e_os2.h>
-# include "crypto/ml_dsa.h"
-# include "prov/provider_ctx.h"
+# ifndef OPENSSL_NO_ML_DSA
+#  include <openssl/e_os2.h>
+#  include "crypto/ml_dsa.h"
+#  include "prov/provider_ctx.h"
 
  /*-
   * The DER ASN.1 encoding of ML-KEM (and ML-DSA) public keys prepends 22 bytes
@@ -26,7 +27,7 @@
   * -  4 byte bit string tag and length
   * -    1 bitstring lead byte
   */
-# define ML_DSA_SPKI_OVERHEAD   22
+#  define ML_DSA_SPKI_OVERHEAD   22
 typedef struct {
     const uint8_t asn1_prefix[ML_DSA_SPKI_OVERHEAD];
 } ML_DSA_SPKI_FMT;
@@ -100,4 +101,5 @@ __owur
 int ossl_ml_dsa_i2d_prvkey(const ML_DSA_KEY *key, unsigned char **out,
                            PROV_CTX *provctx);
 
+# endif /* OPENSSL_NO_ML_DSA */
 #endif  /* PROV_ML_DSA_CODECS_H */

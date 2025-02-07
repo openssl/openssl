@@ -1,12 +1,3 @@
-/*
- * Copyright 2024 The OpenSSL Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
- * this file except in compliance with the License.  You can obtain a copy
- * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
- */
-
 /* Internal ML_DSA functions for other submodules, not for application use */
 
 #ifndef OSSL_CRYPTO_ML_DSA_H
@@ -42,7 +33,32 @@
 # define MAX_ML_DSA_PUB_LEN ML_DSA_87_PUB_LEN
 # define MAX_ML_DSA_SIG_LEN ML_DSA_87_SIG_LEN
 
-# ifndef OPENSSL_NO_ML_DSA
+/*
+ * Refer to FIPS 204 Section 4 Parameter sets.
+ * Fields that are shared between all algorithms (such as q & d) have been omitted.
+ */
+typedef struct ml_dsa_params_st {
+    const char *alg;
+    int evp_type;
+    int tau;    /* Number of +/-1's in polynomial c */
+    int bit_strength; /* The collision strength (lambda) */
+    int gamma1; /* coefficient range of y */
+    int gamma2; /* low-order rounding range */
+    size_t k, l; /* matrix dimensions of 'A' */
+    int eta;    /* Private key range */
+    int beta;   /* tau * eta */
+    int omega;  /* Number of 1's in the hint 'h' */
+    int security_category; /* Category is related to Security strength */
+    size_t sk_len; /* private key size */
+    size_t pk_len; /* public key size */
+    size_t sig_len; /* signature size */
+} ML_DSA_PARAMS;
+
+/* NOTE - any changes to this struct may require updates to ossl_ml_dsa_dup() */
+typedef struct ml_dsa_key_st ML_DSA_KEY;
+
+const ML_DSA_PARAMS *ossl_ml_dsa_params_get(int evp_type);
+const ML_DSA_PARAMS *ossl_ml_dsa_key_params(const ML_DSA_KEY *key);
 __owur ML_DSA_KEY *ossl_ml_dsa_key_new(OSSL_LIB_CTX *libctx, const char *propq,
                                        int evp_type);
 /* Factory reset for keys that fail initialisation */
@@ -89,6 +105,5 @@ __owur int ossl_ml_dsa_verify(const ML_DSA_KEY *pub,
                               const uint8_t *msg, size_t msg_len,
                               const uint8_t *context, size_t context_len,
                               int encode, const uint8_t *sig, size_t sig_len);
-# endif /* OPENSSL_NO_ML_DSA */
 
 #endif /* OSSL_CRYPTO_SLH_DSA_H */
