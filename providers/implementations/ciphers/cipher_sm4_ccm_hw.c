@@ -61,6 +61,8 @@ static const PROV_CCM_HW ccm_sm4 = {
 
 #if defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 64
 # include "cipher_sm4_ccm_hw_rv64i.inc"
+#elif defined(OPENSSL_CPUID_OBJ) && (defined(__x86_64) || defined(__x86_64__))
+# include "cipher_sm4_ccm_hw_x86_64.inc"
 #else
 const PROV_CCM_HW *ossl_prov_sm4_hw_ccm(size_t keybits)
 {
