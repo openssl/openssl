@@ -670,7 +670,6 @@ int X509_set1_notBefore(X509 *x, const ASN1_TIME *tm);
 const ASN1_TIME *X509_get0_notAfter(const X509 *x);
 ASN1_TIME *X509_getm_notAfter(const X509 *x);
 int X509_set1_notAfter(X509 *x, const ASN1_TIME *tm);
-int X509_set_pubkey(X509 *x, EVP_PKEY *pkey);
 int X509_up_ref(X509 *x);
 int X509_get_signature_type(const X509 *x);
 
@@ -681,7 +680,9 @@ int X509_get_signature_type(const X509 *x);
 #  define X509_set_notAfter X509_set1_notAfter
 #endif
 
-
+int X509_set_pubkey(X509 *x, EVP_PKEY *pkey);
+EVP_PKEY *X509_get_pubkey(X509 *x); /* deprecated */
+EVP_PKEY *X509_get0_pubkey(const X509 *x);
 /*
  * This one is only used so that a binary form can output, as in
  * i2d_X509_PUBKEY(X509_get_X509_PUBKEY(x), &buf)
@@ -692,8 +693,6 @@ void X509_get0_uids(const X509 *x, const ASN1_BIT_STRING **piuid,
                     const ASN1_BIT_STRING **psuid);
 const X509_ALGOR *X509_get0_tbs_sigalg(const X509 *x);
 
-EVP_PKEY *X509_get0_pubkey(const X509 *x);
-EVP_PKEY *X509_get_pubkey(X509 *x);
 ASN1_BIT_STRING *X509_get0_pubkey_bitstr(const X509 *x);
 
 #define X509_REQ_VERSION_1 0
@@ -709,9 +708,9 @@ int X509_REQ_set1_signature_algo(X509_REQ *req, X509_ALGOR *palg);
 int X509_REQ_get_signature_nid(const X509_REQ *req);
 int i2d_re_X509_REQ_tbs(X509_REQ *req, unsigned char **pp);
 int X509_REQ_set_pubkey(X509_REQ *x, EVP_PKEY *pkey);
-EVP_PKEY *X509_REQ_get_pubkey(X509_REQ *req);
+EVP_PKEY *X509_REQ_get_pubkey(X509_REQ *req); /* deprecated */
 EVP_PKEY *X509_REQ_get0_pubkey(const X509_REQ *req);
-X509_PUBKEY *X509_REQ_get_X509_PUBKEY(X509_REQ *req);
+X509_PUBKEY *X509_REQ_get_X509_PUBKEY(OSSL_FUTURE_CONST X509_REQ *req);
 int X509_REQ_extension_nid(int nid);
 int *X509_REQ_get_extension_nids(void);
 void X509_REQ_set_extension_nids(int *nids);
