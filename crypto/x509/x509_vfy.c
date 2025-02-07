@@ -381,7 +381,15 @@ static int sk_X509_contains(STACK_OF(X509) *sk, X509 *cert)
  *     exception that |x| is self-issued and |ctx->chain| has just one element.
  * Prefer the first match with suitable validity period or latest expiration.
  */
-static X509 *get0_best_issuer_sk(X509_STORE_CTX *ctx, int trusted,
+/*
+ * Note: so far, we do not check during chain building
+ * whether any key usage extension stands against a candidate issuer cert.
+ * Likely it would be good if build_chain() sets |check_signing_allowed|.
+ * Yet if |sk| is a list of trusted certs, as with X509_STORE_CTX_set0_trusted_stack(),
+ * better not set |check_signing_allowed|.
+ * Maybe not touch X509_STORE_CTX_get1_issuer(), for API backward compatiblity.
+ */
+static X509 *get0_best_issuer_sk(X509_STORE_CTX *ctx, int check_signing_allowed,
                                  int no_dup, STACK_OF(X509) *sk, X509 *x)
 {
     int i;
@@ -391,13 +399,13 @@ static X509 *get0_best_issuer_sk(X509_STORE_CTX *ctx, int trusted,
         candidate = sk_X509_value(sk, i);
         if (no_dup
             && !((x->ex_flags & EXFLAG_SI) != 0 && sk_X509_num(ctx->chain) == 1)
-                && sk_X509_contains(ctx->chain, candidate))
+            && sk_X509_contains(ctx->chain, candidate))
             continue;
         if (ctx->check_issued(ctx, x, candidate)) {
-            if (!trusted) { /* do not check key usage for trust anchors */
-                if (ossl_x509_signing_allowed(candidate, x) != X509_V_OK)
-                    continue;
-            }
+            if (check_signing_allowed
+                /* yet better not check key usage for trust anchors */
+                && ossl_x509_signing_allowed(candidate, x) != X509_V_OK)
+                continue;
             if (ossl_x509_check_cert_time(ctx, candidate, -1))
                 return candidate;
             /*
@@ -415,6 +423,7 @@ static X509 *get0_best_issuer_sk(X509_STORE_CTX *ctx, int trusted,
 
 /*-
  * Try to get issuer cert from |ctx->store| accepted by |ctx->check_issued|.
+ * Prefer the first match with suitable validity period or latest expiration.
  *
  * Return values are:
  *  1 lookup successful.
@@ -423,15 +432,38 @@ static X509 *get0_best_issuer_sk(X509_STORE_CTX *ctx, int trusted,
  */
 int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
 {
-    STACK_OF(X509) *certs = X509_STORE_CTX_get1_certs(ctx, X509_get_issuer_name(x));
-    int ret = 0;
+    const X509_NAME *xn = X509_get_issuer_name(x);
+    X509_OBJECT *obj = X509_OBJECT_new();
+    STACK_OF(X509) *certs;
+    int ret;
 
-    if (certs == NULL)
+    *issuer = NULL;
+    if (obj == NULL)
         return -1;
-    *issuer = get0_best_issuer_sk(ctx, 1 /* trusted */, 0, certs, x);
+    ret = ossl_x509_store_ctx_get_by_subject(ctx, X509_LU_X509, xn, obj);
+    if (ret != 1)
+        goto end;
+
+    /* quick happy path: certificate matches and is currently valid */
+    if (ctx->check_issued(ctx, x, obj->data.x509)) {
+        if (ossl_x509_check_cert_time(ctx, obj->data.x509, -1)) {
+            *issuer = obj->data.x509;
+            /* |*issuer| has taken over the cert reference from |obj| */
+            obj->type = X509_LU_NONE;
+            goto end;
+        }
+    }
+
+    ret = -1;
+    if ((certs = X509_STORE_CTX_get1_certs(ctx, xn)) == NULL)
+        goto end;
+    *issuer = get0_best_issuer_sk(ctx, 0, 0 /* allow duplicates */, certs, x);
+    ret = 0;
     if (*issuer != NULL)
         ret = X509_up_ref(*issuer) ? 1 : -1;
     OSSL_STACK_OF_X509_free(certs);
+ end:
+    X509_OBJECT_free(obj);
     return ret;
 }
 
@@ -455,8 +487,7 @@ static int check_issued(ossl_unused X509_STORE_CTX *ctx, X509 *x, X509 *issuer)
  */
 static int get1_best_issuer_other_sk(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
 {
-    *issuer = get0_best_issuer_sk(ctx, 1 /* trusted */, 1 /* no_dup */,
-                                  ctx->other_ctx, x);
+    *issuer = get0_best_issuer_sk(ctx, 0, 1 /* no_dup */, ctx->other_ctx, x);
     if (*issuer == NULL)
         return 0;
     return X509_up_ref(*issuer) ? 1 : -1;
@@ -3491,7 +3522,7 @@ static int build_chain(X509_STORE_CTX *ctx)
                 goto int_err;
             curr = sk_X509_value(ctx->chain, num - 1);
             issuer = (X509_self_signed(curr, 0) > 0 || num > max_depth) ?
-                NULL : get0_best_issuer_sk(ctx, 0, 1, sk_untrusted, curr);
+                NULL : get0_best_issuer_sk(ctx, 0, 1 /* no_dup */, sk_untrusted, curr);
             if (issuer == NULL) {
                 /*
                  * Once we have reached a self-signed cert or num > max_depth
