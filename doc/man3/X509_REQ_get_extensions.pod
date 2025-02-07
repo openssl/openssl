@@ -40,6 +40,10 @@ or NULL on error.
 X509_REQ_add_extensions() and X509_REQ_add_extensions_nid()
 return 1 on success, 0 on error.
 
+=head1 HISTORY
+
+X509_REQ_get_extensions() was constified in OpenSSL 4.0.
+
 =head1 COPYRIGHT
 
 Copyright 2022-2024 The OpenSSL Project Authors. All Rights Reserved.
