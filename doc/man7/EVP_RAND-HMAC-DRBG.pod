@@ -65,6 +65,12 @@ These parameters work as described in L<provider-rand(7)/PARAMETERS>.
 When using the FIPS provider, only these digests are permitted (as per
 L<FIPS 140-3 IG D.R|https://csrc.nist.gov/CSRC/media/Projects/cryptographic-module-validation-program/documents/fips%20140-3/FIPS%20140-3%20IG.pdf>):
 
+The default HMAC-DRBG implementation attempts to fetch the required internal
+algorithms from the provider they are built into (eg the default provider)
+regardless of the properties provided. Should the provider not implement
+the required algorithms then properties will be used to find a different
+implementation.
+
 =over 4
 
 =item SHA-1

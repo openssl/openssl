@@ -30,6 +30,14 @@ OpenSSL 3.5
 
 ### Changes between 3.4 and 3.5 [xx XXX xxxx]
 
+* The default DRBG implementations have been changed to prefer to fetch
+  algorithm implementations from the default provider (the provider the
+  DRBG implementation is built in) regardless of the default properties
+  set in the configuration file. The code will still fallback to find
+  an implementation, as done previously, if needed.
+
+  *Simo Sorce*
+
 * A new random generation API has been introduced which modifies all
   of the L<RAND_bytes(3)> family of calls so they are routed through a
   specific named provider instead of being resolved via the normal DRBG
