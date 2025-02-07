@@ -687,10 +687,7 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
         rctx->state = OHS_ERROR;
         return 0;
 
-        /*
-         * TODO break up the state machine at this point (between write and read).
-         * Also factor out bulky code sections in aux functions. See issue #26665
-         */
+        /* State machine could be broken up at this point and bulky code sections factorized out. */
 
     case OHS_FIRSTLINE:
     case OHS_HEADERS:
