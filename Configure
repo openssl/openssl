@@ -322,7 +322,7 @@ $config{perlargv} = [ @argvcopy ];
 # 'unshift' adds at the front of the list (i.e. in reverse input order).
 foreach ( reverse sort( 'aes', 'aria', 'bf', 'camellia', 'cast', 'des', 'dh',
                         'dsa', 'ec', 'hmac', 'idea', 'md2', 'md5', 'mdc2',
-                        'ml-dsa', 'rc2', 'rc4', 'rc5', 'ripemd', 'seed', 'sha',
+                        'rc2', 'rc4', 'rc5', 'ripemd', 'seed', 'sha',
                         'sm2', 'sm3', 'sm4') ) {
     unshift @argvcopy, "no-$_" if ! -d catdir($srcdir, 'crypto', $_);
 }
