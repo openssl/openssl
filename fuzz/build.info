@@ -14,6 +14,10 @@ IF[{- !$disabled{"fuzz-afl"} || !$disabled{"fuzz-libfuzzer"} -}]
   PROGRAMS{noinst}=v3name
   PROGRAMS{noinst}=provider
 
+  IF[{- !$disabled{"slh-dsa"} -}]
+    PROGRAMS{noinst}=slh-dsa
+  ENDIF
+
   IF[{- !$disabled{"cmp"} -}]
     PROGRAMS{noinst}=cmp
   ENDIF
@@ -61,6 +65,10 @@ IF[{- !$disabled{"fuzz-afl"} || !$disabled{"fuzz-libfuzzer"} -}]
   SOURCE[cmp]=cmp.c driver.c fuzz_rand.c
   INCLUDE[cmp]=../include {- $ex_inc -}
   DEPEND[cmp]=../libcrypto {- $ex_lib -}
+
+  SOURCE[slh-dsa]=slh-dsa.c driver.c fuzz_rand.c
+  INCLUDE[slh-dsa]=../include {- $ex_inc -}
+  DEPEND[slh-dsa]=../libcrypto {- $ex_lib -}
 
   SOURCE[cms]=cms.c driver.c
   INCLUDE[cms]=../include {- $ex_inc -}
@@ -149,6 +157,10 @@ IF[{- !$disabled{tests} -}]
   PROGRAMS{noinst}=v3name-test
   PROGRAMS{noinst}=provider-test
 
+  IF[{- !$disabled{"slh-dsa"} -}]
+    PROGRAMS{noinst}=slh-dsa-test
+  ENDIF
+
   IF[{- !$disabled{"cmp"} -}]
     PROGRAMS{noinst}=cmp-test
   ENDIF
@@ -197,6 +209,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[cmp-test]=cmp.c test-corpus.c fuzz_rand.c
   INCLUDE[cmp-test]=../include
   DEPEND[cmp-test]=../libcrypto.a
+
+  SOURCE[slh-dsa-test]=slh-dsa.c test-corpus.c fuzz_rand.c
+  INCLUDE[slh-dsa-test]=../include
+  DEPEND[slh-dsa-test]=../libcrypto.a
   # referring to static lib allows using non-exported functions
 
   SOURCE[cms-test]=cms.c test-corpus.c
