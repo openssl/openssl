@@ -94,6 +94,8 @@ B<openssl> B<s_client>
 [B<-sess_in> I<filename>]
 [B<-serverinfo> I<types>]
 [B<-status>]
+[B<-ocsp_check_leaf>]
+[B<-ocsp_check_all>]
 [B<-alpn> I<protocols>]
 [B<-nextprotoneg> I<protocols>]
 [B<-ct>]
@@ -671,6 +673,24 @@ file.
 Sends a certificate status request to the server (OCSP stapling). The server
 response (if any) is printed out.
 
+=item B<-ocsp_check_leaf>
+
+Require performing server (end-entity) certificate status checking, where any
+OCSP response provided in the TLS handshake (by so-called "OCSP stapling") is tried
+first.
+If no valid and conclusive OCSP response can be found, CRL-based checking
+is attempted as fallback if enabled, otherwise the status check fails.
+
+This implies B<-status>.
+
+=item B<-ocsp_check_all>
+
+As the option before, but require performing certificate status checking also
+for the issuer chain of the server certificate (i.e., intermediate CA certificates,
+excluding the trust anchor).
+
+This implies the B<-status> and B<-ocsp_check_leaf>.
+
 =item B<-alpn> I<protocols>, B<-nextprotoneg> I<protocols>
 
 These flags enable the Enable the Application-Layer Protocol Negotiation
@@ -1022,6 +1042,11 @@ B<-no_rx_cert_comp>,
 B<-no_tx_cert_comp>,
 and B<-tfo>
 options were added in OpenSSL 3.2.
+
+The
+<-ocsp_check_leaf>
+and B<-ocsp_check_all>
+options were added in OpenSSL 3.6.
 
 =head1 COPYRIGHT
 

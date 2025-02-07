@@ -51,6 +51,38 @@ our @tests_standard = (
             "Method" => "DTLS",
             "ExpectedResult" => "ClientFail"
         }
+    },
+    {
+        name => "certstatus-good-ext",
+        server => {
+            "CipherString" => "DEFAULT:\@SECLEVEL=0",
+            extra => {
+                "CertStatus" => "GoodResponseExt"
+            },
+        },
+        client => {
+            "CipherString" => "DEFAULT:\@SECLEVEL=0",
+        },
+        test => {
+            "Method" => "DTLS",
+            "ExpectedResult" => "Success"
+        }
+    },
+    {
+        name => "certstatus-bad-ext",
+        server => {
+            "CipherString" => "DEFAULT:\@SECLEVEL=0",
+            extra => {
+                "CertStatus" => "BadResponseExt",
+            },
+        },
+        client => {
+            "CipherString" => "DEFAULT:\@SECLEVEL=0",
+        },
+        test => {
+            "Method" => "DTLS",
+            "ExpectedResult" => "ClientFail"
+        }
     }
 );
 
@@ -78,6 +110,40 @@ our @tests_sctp = (
             "CipherString" => "DEFAULT:\@SECLEVEL=0",
             extra => {
                 "CertStatus" => "BadResponse",
+            },
+        },
+        client => {
+            "CipherString" => "DEFAULT:\@SECLEVEL=0",
+        },
+        test => {
+            "Method" => "DTLS",
+            "UseSCTP" => "Yes",
+            "ExpectedResult" => "ClientFail"
+        }
+    },
+    {
+        name => "certstatus-good-ext",
+        server => {
+            "CipherString" => "DEFAULT:\@SECLEVEL=0",
+            extra => {
+                "CertStatus" => "GoodResponseExt",
+            },
+        },
+        client => {
+            "CipherString" => "DEFAULT:\@SECLEVEL=0",
+        },
+        test => {
+            "Method" => "DTLS",
+            "UseSCTP" => "Yes",
+            "ExpectedResult" => "Success"
+        }
+    },
+    {
+        name => "certstatus-bad-ext",
+        server => {
+            "CipherString" => "DEFAULT:\@SECLEVEL=0",
+            extra => {
+                "CertStatus" => "BadResponseExt",
             },
         },
         client => {
