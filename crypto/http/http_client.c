@@ -82,8 +82,6 @@ struct ossl_http_req_ctx_st {
 #define OHS_WRITE_REQ      (5 | OHS_NOREAD) /* Request content (body) being sent */
 #define OHS_FLUSH          (6 | OHS_NOREAD) /* Request being flushed */
 
-/* TODO break up the ugly OSSL_HTTP_REQ_CTX_nbio() state machine at this point */
-
 #define OHS_FIRSTLINE       1 /* First line of response being read */
 #define OHS_HEADERS         2 /* MIME headers of response being read */
 #define OHS_HEADERS_ERROR   3 /* MIME headers of response being read after fatal error */
@@ -688,6 +686,11 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
 
         rctx->state = OHS_ERROR;
         return 0;
+
+        /*
+         * TODO break up the state machine at this point (between write and read).
+         * Also factor out bulky code sections in aux functions. See issue #26665
+         */
 
     case OHS_FIRSTLINE:
     case OHS_HEADERS:
