@@ -241,3 +241,14 @@ void EVP_MAC_do_all_provided(OSSL_LIB_CTX *libctx,
                        (void (*)(void *, void *))fn, arg,
                        evp_mac_from_algorithm, evp_mac_up_ref, evp_mac_free);
 }
+
+EVP_MAC *evp_mac_fetch_from_prov(OSSL_PROVIDER *prov,
+                                 const char *algorithm,
+                                 const char *properties)
+{
+    return evp_generic_fetch_from_prov(prov, OSSL_OP_MAC,
+                                       algorithm, properties,
+                                       evp_mac_from_algorithm,
+                                       evp_mac_up_ref,
+                                       evp_mac_free);
+}
