@@ -994,3 +994,30 @@ if (!disabled("dsa")) {
     push @tests, @tests_dsa_tls_1_2 unless disabled("dh");
     push @tests, @tests_dsa_tls_1_3 unless disabled("tls1_3");
 }
+
+my @tests_mldsa_tls_1_3 = (
+    {
+        name => "TLS 1.3 ML-DSA Certificate Test",
+        server => {
+            "Certificate" => test_pem("server-ml-dsa-44-cert.pem"),
+            "PrivateKey" => test_pem("server-ml-dsa-44-key.pem"),
+            "MinProtocol" => "TLSv1.3",
+            "MaxProtocol" => "TLSv1.3",
+            "SignatureAlgorithms" => "mldsa44",
+        },
+        client => {
+            "MinProtocol" => "TLSv1.3",
+            "MaxProtocol" => "TLSv1.3",
+            "SignatureAlgorithms" => "mldsa44",
+            "VerifyCAFile" => test_pem("root-ml-dsa-44-cert.pem"),
+            "VerifyMode" => "Peer",
+        },
+        test   => {
+            "ExpectedResult" => "Success"
+        },
+    },
+);
+
+if (!disabled("ml-dsa")) {
+    push @tests, @tests_mldsa_tls_1_3 unless disabled("tls1_3");
+}
