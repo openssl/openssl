@@ -1001,13 +1001,16 @@ my @tests_mldsa_tls_1_3 = (
         server => {
             "Certificate" => test_pem("server-ml-dsa-44-cert.pem"),
             "PrivateKey" => test_pem("server-ml-dsa-44-key.pem"),
-            "VerifyCAFile" => test_pem("root-ml-dsa-44-cert.pem"),
-            "VerifyMode" => "Request",
             "MinProtocol" => "TLSv1.3",
             "MaxProtocol" => "TLSv1.3",
+            "SignatureAlgorithms" => "mldsa44",
         },
         client => {
-                "VerifyCAFile" => undef
+            "MinProtocol" => "TLSv1.3",
+            "MaxProtocol" => "TLSv1.3",
+            "SignatureAlgorithms" => "mldsa44",
+            "VerifyCAFile" => test_pem("root-ml-dsa-44-cert.pem"),
+            "VerifyMode" => "Peer",
         },
         test   => {
             "ExpectedResult" => "Success"
