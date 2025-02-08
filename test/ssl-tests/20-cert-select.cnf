@@ -1,6 +1,6 @@
 # Generated with generate_ssl_tests.pl
 
-num_tests = 57
+num_tests = 58
 
 test-0 = 0-ECDSA CipherString Selection
 test-1 = 1-ECDSA CipherString Selection
@@ -59,6 +59,7 @@ test-53 = 53-TLS 1.3 ECDSA with brainpool
 test-54 = 54-TLS 1.2 DSA Certificate Test
 test-55 = 55-TLS 1.3 Client Auth No TLS 1.3 Signature Algorithms
 test-56 = 56-TLS 1.3 DSA Certificate Test
+test-57 = 57-TLS 1.3 ML-DSA Certificate Test
 # ===========================================================
 
 [0-ECDSA CipherString Selection]
@@ -1838,5 +1839,34 @@ VerifyMode = Peer
 
 [test-56]
 ExpectedResult = ServerFail
+
+
+# ===========================================================
+
+[57-TLS 1.3 ML-DSA Certificate Test]
+ssl_conf = 57-TLS 1.3 ML-DSA Certificate Test-ssl
+
+[57-TLS 1.3 ML-DSA Certificate Test-ssl]
+server = 57-TLS 1.3 ML-DSA Certificate Test-server
+client = 57-TLS 1.3 ML-DSA Certificate Test-client
+
+[57-TLS 1.3 ML-DSA Certificate Test-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/server-ml-dsa-44-cert.pem
+CipherString = DEFAULT
+MaxProtocol = TLSv1.3
+MinProtocol = TLSv1.3
+PrivateKey = ${ENV::TEST_CERTS_DIR}/server-ml-dsa-44-key.pem
+SignatureAlgorithms = mldsa44
+
+[57-TLS 1.3 ML-DSA Certificate Test-client]
+CipherString = DEFAULT
+MaxProtocol = TLSv1.3
+MinProtocol = TLSv1.3
+SignatureAlgorithms = mldsa44
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/root-ml-dsa-44-cert.pem
+VerifyMode = Peer
+
+[test-57]
+ExpectedResult = Success
 
 

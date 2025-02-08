@@ -3056,8 +3056,10 @@ static int sig_cb(const char *elem, int len, void *arg)
             /* Check if a provider supports the sigalg */
             for (i = 0; i < sarg->ctx->sigalg_list_len; i++) {
                 if (sarg->ctx->sigalg_list[i].sigalg_name != NULL
-                    && strcmp(etmp,
-                              sarg->ctx->sigalg_list[i].sigalg_name) == 0) {
+                    && (strcmp(etmp,
+                               sarg->ctx->sigalg_list[i].sigalg_name) == 0
+                        || strcmp(etmp,
+                                  sarg->ctx->sigalg_list[i].name) == 0)) {
                     sarg->sigalgs[sarg->sigalgcnt++] =
                         sarg->ctx->sigalg_list[i].code_point;
                     break;
