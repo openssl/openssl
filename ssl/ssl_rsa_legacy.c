@@ -28,7 +28,11 @@ int SSL_use_RSAPrivateKey(SSL *ssl, RSA *rsa)
         return 0;
     }
 
-    RSA_up_ref(rsa);
+    if (!RSA_up_ref(rsa)) {
+        EVP_PKEY_free(pkey);
+        return 0;
+    }
+
     if (EVP_PKEY_assign_RSA(pkey, rsa) <= 0) {
         RSA_free(rsa);
         EVP_PKEY_free(pkey);
@@ -115,7 +119,11 @@ int SSL_CTX_use_RSAPrivateKey(SSL_CTX *ctx, RSA *rsa)
         return 0;
     }
 
-    RSA_up_ref(rsa);
+    if (!RSA_up_ref(rsa)) {
+        EVP_PKEY_free(pkey);
+        return 0;
+    }
+
     if (EVP_PKEY_assign_RSA(pkey, rsa) <= 0) {
         RSA_free(rsa);
         EVP_PKEY_free(pkey);

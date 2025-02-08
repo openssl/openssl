@@ -37,13 +37,14 @@ static EVP_SIGNATURE *evp_signature_new(OSSL_PROVIDER *prov)
     if (signature == NULL)
         return NULL;
 
-    if (!CRYPTO_NEW_REF(&signature->refcnt, 1)) {
+    if (!CRYPTO_NEW_REF(&signature->refcnt, 1)
+        || !ossl_provider_up_ref(prov)) {
+        CRYPTO_FREE_REF(&signature->refcnt);
         OPENSSL_free(signature);
         return NULL;
     }
 
     signature->prov = prov;
-    ossl_provider_up_ref(prov);
 
     return signature;
 }
