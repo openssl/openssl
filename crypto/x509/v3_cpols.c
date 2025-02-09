@@ -195,6 +195,7 @@ static POLICYINFO *policy_section(X509V3_CTX *ctx,
                 goto err;
             }
             if (!sk_POLICYQUALINFO_push(pol->qualifiers, qual)) {
+                POLICYQUALINFO_free(qual);
                 ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
                 goto err;
             }
@@ -232,6 +233,7 @@ static POLICYINFO *policy_section(X509V3_CTX *ctx,
             if (pol->qualifiers == NULL)
                 pol->qualifiers = sk_POLICYQUALINFO_new_null();
             if (!sk_POLICYQUALINFO_push(pol->qualifiers, qual)) {
+                POLICYQUALINFO_free(qual);
                 ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
                 goto err;
             }
