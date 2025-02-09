@@ -159,7 +159,6 @@ int EVP_CIPHER_meth_set_ctrl(EVP_CIPHER *cipher,
     return 1;
 }
 
-
 int (*EVP_CIPHER_meth_get_init(const EVP_CIPHER *cipher))(EVP_CIPHER_CTX *ctx,
                                                           const unsigned char *key,
                                                           const unsigned char *iv,
@@ -167,6 +166,7 @@ int (*EVP_CIPHER_meth_get_init(const EVP_CIPHER *cipher))(EVP_CIPHER_CTX *ctx,
 {
     return cipher->init;
 }
+
 int (*EVP_CIPHER_meth_get_do_cipher(const EVP_CIPHER *cipher))(EVP_CIPHER_CTX *ctx,
                                                                unsigned char *out,
                                                                const unsigned char *in,
@@ -198,4 +198,3 @@ int (*EVP_CIPHER_meth_get_ctrl(const EVP_CIPHER *cipher))(EVP_CIPHER_CTX *,
 {
     return cipher->ctrl;
 }
-

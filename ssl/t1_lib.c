@@ -1188,7 +1188,7 @@ int tls1_set_groups_list(SSL_CTX *ctx, uint16_t **pext, size_t *pextlen,
 /* Check a group id matches preferences */
 int tls1_check_group_id(SSL_CONNECTION *s, uint16_t group_id,
                         int check_own_groups)
-    {
+{
     const uint16_t *groups;
     size_t groups_len;
 
@@ -1235,7 +1235,7 @@ int tls1_check_group_id(SSL_CONNECTION *s, uint16_t group_id,
      * extension, so groups_len == 0 always means no extension.
      */
     if (groups_len == 0)
-            return 1;
+        return 1;
     return tls1_in_list(group_id, groups, groups_len);
 }
 
@@ -1543,6 +1543,7 @@ static const SIGALG_LOOKUP sigalg_lookup_tbl[] = {
      NID_undef, NID_undef, 1}
 #endif
 };
+
 /* Legacy sigalgs for TLS < 1.2 RSA TLS signatures */
 static const SIGALG_LOOKUP legacy_rsa_sigalg = {
     "rsa_pkcs1_md5_sha1", 0,
@@ -1748,6 +1749,7 @@ static const SIGALG_LOOKUP *tls1_lookup_sigalg(const SSL_CONNECTION *s,
     }
     return NULL;
 }
+
 /* Lookup hash: return 0 if invalid or not enabled */
 int tls1_lookup_md(SSL_CTX *ctx, const SIGALG_LOOKUP *lu, const EVP_MD **pmd)
 {
@@ -1870,6 +1872,7 @@ static const SIGALG_LOOKUP *tls1_get_legacy_sigalg(const SSL_CONNECTION *s,
         return NULL;
     return &legacy_rsa_sigalg;
 }
+
 /* Set peer sigalg based key type */
 int tls1_set_peer_legacy_sigalg(SSL_CONNECTION *s, const EVP_PKEY *pkey)
 {
@@ -1963,8 +1966,7 @@ static int sigalg_security_bits(SSL_CTX *ctx, const SIGALG_LOOKUP *lu)
 
     if (!tls1_lookup_md(ctx, lu, &md))
         return 0;
-    if (md != NULL)
-    {
+    if (md != NULL) {
         int md_type = EVP_MD_get_type(md);
 
         /* Security bits: half digest bits */
@@ -2734,7 +2736,7 @@ void ssl_set_sig_mask(uint32_t *pmask_a, SSL_CONNECTION *s, int op)
         clu = ssl_cert_lookup_by_idx(lu->sig_idx,
                                      SSL_CONNECTION_GET_CTX(s));
         if (clu == NULL)
-                continue;
+            continue;
 
         /* If algorithm is disabled see if we can enable it */
         if ((clu->amask & disabled_mask) != 0
@@ -3015,6 +3017,7 @@ static void get_sigorhash(int *psig, int *phash, const char *str)
             *phash = OBJ_ln2nid(str);
     }
 }
+
 /* Maximum length of a signature algorithm string component */
 #define TLS_MAX_SIGSTRING_LEN   40
 
@@ -3968,16 +3971,16 @@ int tls_choose_sigalg(SSL_CONNECTION *s, int fatalerrs)
                 if (i == s->shared_sigalgslen
                     && (s->s3.tmp.new_cipher->algorithm_auth
                         & (SSL_aGOST01 | SSL_aGOST12)) != 0) {
-                  if ((lu = tls1_get_legacy_sigalg(s, -1)) == NULL) {
-                    if (!fatalerrs)
-                      return 1;
-                    SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE,
-                             SSL_R_NO_SUITABLE_SIGNATURE_ALGORITHM);
-                    return 0;
-                  } else {
-                    i = 0;
-                    sig_idx = lu->sig_idx;
-                  }
+                    if ((lu = tls1_get_legacy_sigalg(s, -1)) == NULL) {
+                        if (!fatalerrs)
+                            return 1;
+                        SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE,
+                                 SSL_R_NO_SUITABLE_SIGNATURE_ALGORITHM);
+                        return 0;
+                    } else {
+                        i = 0;
+                        sig_idx = lu->sig_idx;
+                    }
                 }
 #endif
                 if (i == s->shared_sigalgslen) {

@@ -121,7 +121,6 @@ X509_LOOKUP_get_by_subject_fn X509_LOOKUP_meth_get_get_by_subject(
     return method->get_by_subject;
 }
 
-
 int X509_LOOKUP_meth_set_get_by_issuer_serial(X509_LOOKUP_METHOD *method,
     X509_LOOKUP_get_by_issuer_serial_fn get_by_issuer_serial)
 {
@@ -134,7 +133,6 @@ X509_LOOKUP_get_by_issuer_serial_fn
 {
     return method->get_by_issuer_serial;
 }
-
 
 int X509_LOOKUP_meth_set_get_by_fingerprint(X509_LOOKUP_METHOD *method,
     X509_LOOKUP_get_by_fingerprint_fn get_by_fingerprint)
@@ -161,4 +159,3 @@ X509_LOOKUP_get_by_alias_fn X509_LOOKUP_meth_get_get_by_alias(
 {
     return method->get_by_alias;
 }
-

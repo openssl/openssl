@@ -380,9 +380,9 @@ extern "C" {
 # define ASN1_ADB_INTEGER(tblname) { ASN1_TFLG_ADB_INT, -1, 0, #tblname, tblname##_adb }
 
 /* Plain simple type */
-# define ASN1_SIMPLE(stname, field, type) ASN1_EX_TYPE(0,0, stname, field, type)
+# define ASN1_SIMPLE(stname, field, type) ASN1_EX_TYPE(0, 0, stname, field, type)
 /* Embedded simple type */
-# define ASN1_EMBED(stname, field, type) ASN1_EX_TYPE(ASN1_TFLG_EMBED,0, stname, field, type)
+# define ASN1_EMBED(stname, field, type) ASN1_EX_TYPE(ASN1_TFLG_EMBED, 0, stname, field, type)
 
 /* OPTIONAL simple type */
 # define ASN1_OPT(stname, field, type) ASN1_EX_TYPE(ASN1_TFLG_OPTIONAL, 0, stname, field, type)
@@ -565,15 +565,15 @@ struct ASN1_ADB_TABLE_st {
  */
 
 /* Universal tag */
-# define ASN1_TFLG_UNIVERSAL     (0x0<<6)
+# define ASN1_TFLG_UNIVERSAL     (0x0 << 6)
 /* Application tag */
-# define ASN1_TFLG_APPLICATION   (0x1<<6)
+# define ASN1_TFLG_APPLICATION   (0x1 << 6)
 /* Context specific tag */
-# define ASN1_TFLG_CONTEXT       (0x2<<6)
+# define ASN1_TFLG_CONTEXT       (0x2 << 6)
 /* Private tag */
-# define ASN1_TFLG_PRIVATE       (0x3<<6)
+# define ASN1_TFLG_PRIVATE       (0x3 << 6)
 
-# define ASN1_TFLG_TAG_CLASS     (0x3<<6)
+# define ASN1_TFLG_TAG_CLASS     (0x3 << 6)
 
 /*
  * These are for ANY DEFINED BY type. In this case the 'item' field points to
@@ -581,18 +581,18 @@ struct ASN1_ADB_TABLE_st {
  * relevant type
  */
 
-# define ASN1_TFLG_ADB_MASK      (0x3<<8)
+# define ASN1_TFLG_ADB_MASK      (0x3 << 8)
 
-# define ASN1_TFLG_ADB_OID       (0x1<<8)
+# define ASN1_TFLG_ADB_OID       (0x1 << 8)
 
-# define ASN1_TFLG_ADB_INT       (0x1<<9)
+# define ASN1_TFLG_ADB_INT       (0x1 << 9)
 
 /*
  * This flag when present in a SEQUENCE OF, SET OF or EXPLICIT causes
  * indefinite length constructed encoding to be used if required.
  */
 
-# define ASN1_TFLG_NDEF          (0x1<<11)
+# define ASN1_TFLG_NDEF          (0x1 << 11)
 
 /* Field is embedded and not a pointer */
 # define ASN1_TFLG_EMBED         (0x1 << 12)
