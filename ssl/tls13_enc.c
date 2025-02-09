@@ -24,7 +24,7 @@ static const unsigned char label_prefix[] = "\x74\x6C\x73\x31\x33\x20";
 /*
  * Given a |secret|; a |label| of length |labellen|; and |data| of length
  * |datalen| (e.g. typically a hash of the handshake messages), derive a new
- * secret |outlen| bytes long and store it in the location pointed to be |out|.
+ * secret |outlen| bytes long and store it in the location pointed to by |out|.
  * The |data| value may be zero length. Any errors will be treated as fatal if
  * |fatal| is set. Returns 1 on success  0 on failure.
  * If |raise_error| is set, ERR_raise is called on failure.

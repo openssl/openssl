@@ -3703,7 +3703,7 @@ WORK_STATE tls_prepare_client_certificate(SSL_CONNECTION *s, WORK_STATE wst)
     if (wst == WORK_MORE_B) {
         /*
          * If we get an error, we need to ssl->rwstate=SSL_X509_LOOKUP;
-         * return(-1); We then get retied later
+         * return(-1); We then get retried later
          */
         i = ssl_do_client_cert_cb(s, &x509, &pkey);
         if (i < 0) {

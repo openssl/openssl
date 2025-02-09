@@ -62,7 +62,7 @@
 /*
  * Define the Bitmasks for SSL_CIPHER.algorithms.
  * This bits are used packed as dense as possible. If new methods/ciphers
- * etc will be added, the bits a likely to change, so this information
+ * etc will be added, the bits are likely to change, so this information
  * is for internal library use only, even though SSL_CIPHER.algorithms
  * can be publicly accessed.
  * Use the according functions for cipher management instead.
