@@ -43,18 +43,6 @@ typedef struct {
 } CRYPTO_win_rwlock;
 # endif
 
-# define READER_SHIFT 0
-# define ID_SHIFT 32 
-# define READER_SIZE 32 
-# define ID_SIZE 32 
-
-# define READER_MASK     (((LONG64)1 << READER_SIZE)-1)
-# define ID_MASK         (((LONG64)1 << ID_SIZE)-1)
-# define READER_COUNT(x) (((LONG64)(x) >> READER_SHIFT) & READER_MASK)
-# define ID_VAL(x)       (((LONG64)(x) >> ID_SHIFT) & ID_MASK)
-# define VAL_READER      ((LONG64)1 << READER_SHIFT)
-# define VAL_ID(x)       ((LONG64)x << ID_SHIFT)
-
 /*
  * This defines a quescent point (qp)
  * This is the barrier beyond which a writer
@@ -181,10 +169,10 @@ static ossl_inline struct rcu_qp *get_hold_current_qp(CRYPTO_RCU_LOCK *lock)
     /* get the current qp index */
     for (;;) {
         qp_idx = InterlockedOr(&lock->reader_idx, 0);
-        InterlockedAdd64(&lock->qp_group[qp_idx].users, VAL_READER);
+        InterlockedAdd64(&lock->qp_group[qp_idx].users, (LONG64)1);
         if (qp_idx == InterlockedOr(&lock->reader_idx, 0))
             break;
-        InterlockedAdd64(&lock->qp_group[qp_idx].users, -VAL_READER);
+        InterlockedAdd64(&lock->qp_group[qp_idx].users, (LONG64)-1);
     }
 
     return &lock->qp_group[qp_idx];
@@ -260,7 +248,7 @@ void ossl_rcu_read_unlock(CRYPTO_RCU_LOCK *lock)
         if (data->thread_qps[i].lock == lock) {
             data->thread_qps[i].depth--;
             if (data->thread_qps[i].depth == 0) {
-                ret = InterlockedAdd64(&data->thread_qps[i].qp->users, -VAL_READER);
+                ret = InterlockedAdd64(&data->thread_qps[i].qp->users, (LONG64)-1);
                 OPENSSL_assert(ret >= 0);
                 data->thread_qps[i].qp = NULL;
                 data->thread_qps[i].lock = NULL;
@@ -270,9 +258,8 @@ void ossl_rcu_read_unlock(CRYPTO_RCU_LOCK *lock)
     }
 }
 
-static struct rcu_qp *update_qp(CRYPTO_RCU_LOCK *lock)
+static struct rcu_qp *update_qp(CRYPTO_RCU_LOCK *lock, uint32_t *curr_id)
 {
-    uint64_t new_id;
     uint32_t current_idx;
     uint32_t tmp;
 
@@ -294,12 +281,8 @@ static struct rcu_qp *update_qp(CRYPTO_RCU_LOCK *lock)
         (lock->current_alloc_idx + 1) % lock->group_count;
 
     /* get and insert a new id */
-    new_id = lock->id_ctr;
+    *curr_id = lock->id_ctr;
     lock->id_ctr++;
-
-    new_id = VAL_ID(new_id);
-    InterlockedAnd64(&lock->qp_group[current_idx].users, ID_MASK);
-    InterlockedAdd64(&lock->qp_group[current_idx].users, new_id);
 
     /* update the reader index to be the prior qp */
     tmp = lock->current_alloc_idx;
@@ -325,26 +308,27 @@ void ossl_synchronize_rcu(CRYPTO_RCU_LOCK *lock)
 {
     struct rcu_qp *qp;
     uint64_t count;
+    uint32_t curr_id;
     struct rcu_cb_item *cb_items, *tmpcb;
 
     /* before we do anything else, lets grab the cb list */
     cb_items = InterlockedExchangePointer((void * volatile *)&lock->cb_items, NULL);
 
-    qp = update_qp(lock);
-
-    /* wait for the reader count to reach zero */
-    do {
-        count = InterlockedOr64(&qp->users, 0);
-    } while (READER_COUNT(count) != 0);
+    qp = update_qp(lock, &curr_id);
 
     /* retire in order */
     ossl_crypto_mutex_lock(lock->prior_lock);
-    while (lock->next_to_retire != ID_VAL(count))
+    while (lock->next_to_retire != curr_id)
         ossl_crypto_condvar_wait(lock->prior_signal, lock->prior_lock);
 
     lock->next_to_retire++;
     ossl_crypto_condvar_broadcast(lock->prior_signal);
     ossl_crypto_mutex_unlock(lock->prior_lock);
+
+    /* wait for the reader count to reach zero */
+    do {
+        count = InterlockedOr64(&qp->users, 0);
+    } while (count != (uint64_t)0);
 
     retire_qp(lock, qp);
 
