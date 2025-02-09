@@ -3215,6 +3215,9 @@ static int encode_test_run(EVP_TEST *t)
     if (!TEST_ptr(decode_out =
                 OPENSSL_malloc(EVP_DECODE_LENGTH(expected->output_len))))
         goto err;
+    // Fill memory with non-zeros
+    // to check that decoding does not place redundant zeros.
+    memset(decode_out, 0xff, EVP_DECODE_LENGTH(expected->output_len));
 
     output_len = 0;
     EVP_DecodeInit(decode_ctx);
@@ -3248,6 +3251,13 @@ static int encode_test_run(EVP_TEST *t)
                                    decode_out, output_len)) {
         t->err = "BAD_DECODING";
         goto err;
+    }
+
+    for (; output_len < EVP_DECODE_LENGTH(expected->output_len); output_len++) {
+        if (decode_out[output_len] != 0xff) {
+            t->err = "BAD_DECODING";
+            goto err;
+        }
     }
 
     t->err = NULL;
