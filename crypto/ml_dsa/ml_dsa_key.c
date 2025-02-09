@@ -132,7 +132,7 @@ int ossl_ml_dsa_key_priv_alloc(ML_DSA_KEY *key)
 }
 
 /**
- * @brief Destroy a ML_DSA_KEY object
+ * @brief Destroy an ML_DSA_KEY object
  */
 void ossl_ml_dsa_key_free(ML_DSA_KEY *key)
 {
@@ -141,6 +141,15 @@ void ossl_ml_dsa_key_free(ML_DSA_KEY *key)
 
     EVP_MD_free(key->shake128_md);
     EVP_MD_free(key->shake256_md);
+    ossl_ml_dsa_key_reset(key);
+    OPENSSL_free(key);
+}
+
+/**
+ * @brief Factory reset an ML_DSA_KEY object
+ */
+void ossl_ml_dsa_key_reset(ML_DSA_KEY *key)
+{
     vector_zero(&key->s2);
     vector_zero(&key->s1);
     vector_zero(&key->t0);
@@ -148,11 +157,13 @@ void ossl_ml_dsa_key_free(ML_DSA_KEY *key)
     vector_free(&key->t1);
     OPENSSL_cleanse(key->K, sizeof(key->K));
     OPENSSL_free(key->pub_encoding);
+    key->pub_encoding = NULL;
     if (key->priv_encoding != NULL)
         OPENSSL_clear_free(key->priv_encoding, key->params->sk_len);
+    key->priv_encoding = NULL;
     if (key->seed != NULL)
         OPENSSL_clear_free(key->seed, ML_DSA_SEED_BYTES);
-    OPENSSL_free(key);
+    key->seed = NULL;
 }
 
 /**
