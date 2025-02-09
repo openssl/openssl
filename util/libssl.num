@@ -587,3 +587,12 @@ SSL_CTX_flush_sessions_ex               587	3_4_0	EXIST::FUNCTION:
 SSL_CTX_set_block_padding_ex            588	3_4_0	EXIST::FUNCTION:
 SSL_set_block_padding_ex                589	3_4_0	EXIST::FUNCTION:
 SSL_get1_builtin_sigalgs                590	3_4_0	EXIST::FUNCTION:
+SSL_CTX_get0_session_id_context         ?	3_5_0	EXIST::FUNCTION:
+SSL_get0_session_id_context             ?	3_5_0	EXIST::FUNCTION:
+SSL_SESSION_get_verify_result           ?	3_5_0	EXIST::FUNCTION:
+SSL_get1_previous_client_session        ?	3_5_0	EXIST::FUNCTION:
+SSL_SESSION_set_timeout_update_cache    ?	3_5_0	EXIST::FUNCTION:
+SSL_set1_cache_id                       ?	3_5_0	EXIST::FUNCTION:
+SSL_get0_cache_id                       ?	3_5_0	EXIST::FUNCTION:
+SSL_SESSION_set1_cache_id               ?	3_5_0	EXIST::FUNCTION:
+SSL_SESSION_get0_cache_id               ?	3_5_0	EXIST::FUNCTION:

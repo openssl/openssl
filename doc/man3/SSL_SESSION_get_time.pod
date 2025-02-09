@@ -4,7 +4,8 @@
 
 SSL_SESSION_get_time, SSL_SESSION_set_time, SSL_SESSION_get_timeout,
 SSL_SESSION_set_timeout, SSL_SESSION_get_time_ex, SSL_SESSION_set_time_ex,
-SSL_get_time, SSL_set_time, SSL_get_timeout, SSL_set_timeout
+SSL_get_time, SSL_set_time, SSL_get_timeout, SSL_set_timeout,
+SSL_SESSION_set_timeout_update_cache
 - retrieve and manipulate session time and timeout settings
 
 =head1 SYNOPSIS
@@ -19,6 +20,8 @@ SSL_get_time, SSL_set_time, SSL_get_timeout, SSL_set_timeout
 
  time_t SSL_SESSION_get_time_ex(const SSL_SESSION *s);
  time_t SSL_SESSION_set_time_ex(SSL_SESSION *s, time_t tm);
+
+ long SSL_SESSION_set_timeout_update_cache(const SSL *ssl, time_t tm);
 
 The following functions have been deprecated since OpenSSL 3.4, and can be
 hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
@@ -49,6 +52,10 @@ the long datatype instead of time_t and are therefore deprecated due to not
 being Y2038-safe on 32 bit systems. Note that such systems still need
 to be configured to use 64 bit time_t to be able to avoid overflow in system time.
 
+SSL_SESSION_set_timeout_update_cache() sets the timeout value for session
+referenced by B<ssl> in seconds to B<tm>, and ensures that any
+cached session that matches the SSL's session is updated as well.
+
 The SSL_get_time(), SSL_set_time(), SSL_get_timeout(), and SSL_set_timeout()
 functions are synonyms for the SSL_SESSION_*() counterparts.
 
@@ -72,6 +79,9 @@ SSL_SESSION_set_timeout() returns 1 on success.
 
 If any of the function is passed the NULL pointer for the session B<s>,
 0 is returned.
+
+SSL_SESSION_set_timeout_update_cache() returns 1 on success and 0 on
+failure.
 
 =head1 BUGS
 
