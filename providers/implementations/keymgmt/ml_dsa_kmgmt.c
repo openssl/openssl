@@ -263,6 +263,7 @@ static int ml_dsa_import(void *keydata, int selection, const OSSL_PARAM params[]
 }
 
 #define ML_DSA_IMEXPORTABLE_PARAMETERS \
+    OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_ML_DSA_SEED, NULL, 0), \
     OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PUB_KEY, NULL, 0), \
     OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PRIV_KEY, NULL, 0)
 
@@ -294,7 +295,7 @@ static int ml_dsa_get_params(void *keydata, OSSL_PARAM params[])
 {
     ML_DSA_KEY *key = keydata;
     OSSL_PARAM *p;
-    const uint8_t *pub, *priv;
+    const uint8_t *pub, *priv, *seed;
 
     if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_BITS)) != NULL
             && !OSSL_PARAM_set_int(p, 8 * ossl_ml_dsa_key_get_pub_len(key)))
@@ -308,22 +309,22 @@ static int ml_dsa_get_params(void *keydata, OSSL_PARAM params[])
 
     pub = ossl_ml_dsa_key_get_pub(key);
     priv = ossl_ml_dsa_key_get_priv(key);
+    seed = ossl_ml_dsa_key_get_seed(key);
 
-    /* This just gets the private elements */
-    p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_PRIV_KEY);
-    if (p != NULL) {
-        if (priv == NULL
-                || !OSSL_PARAM_set_octet_string(p, priv,
-                                                ossl_ml_dsa_key_get_priv_len(key)))
-            return 0;
-    }
-    p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_PUB_KEY);
-    if (p != NULL) {
-        if (pub == NULL
-                || !OSSL_PARAM_set_octet_string(p, pub,
-                                                ossl_ml_dsa_key_get_pub_len(key)))
-            return 0;
-    }
+    if (seed != NULL
+        && (p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_ML_DSA_SEED)) != NULL
+        && !OSSL_PARAM_set_octet_string(p, seed, ML_DSA_SEED_BYTES))
+        return 0;
+    if (priv != NULL
+        && (p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_PRIV_KEY)) != NULL
+        && !OSSL_PARAM_set_octet_string(p, priv,
+                                        ossl_ml_dsa_key_get_priv_len(key)))
+        return 0;
+    if (pub != NULL
+        && (p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_PUB_KEY)) != NULL
+        && !OSSL_PARAM_set_octet_string(p, pub,
+                                        ossl_ml_dsa_key_get_pub_len(key)))
+        return 0;
     /*
      * This allows apps to use an empty digest, so that the old API
      * for digest signing can be used.
