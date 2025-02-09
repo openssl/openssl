@@ -112,6 +112,7 @@ static int by_store_ctrl_ex(X509_LOOKUP *ctx, int cmd, const char *argp,
     switch (cmd) {
     case X509_L_ADD_STORE:
         if (argp != NULL) {
+            CHECK_AND_SKIP_CASE_PREFIX(argp, "file:");
             STACK_OF(OPENSSL_STRING) *uris = X509_LOOKUP_get_method_data(ctx);
             char *data = OPENSSL_strdup(argp);
 

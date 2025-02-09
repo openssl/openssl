@@ -576,9 +576,9 @@ const OPTIONS s_client_options[] = {
     {"pass", OPT_PASS, 's', "Private key and cert file pass phrase source"},
     {"verify", OPT_VERIFY, 'p', "Turn on peer certificate verification"},
     {"nameopt", OPT_NAMEOPT, 's', "Certificate subject/issuer name printing options"},
-    {"CApath", OPT_CAPATH, '/', "PEM format directory of CA's"},
-    {"CAfile", OPT_CAFILE, '<', "PEM format file of CA's"},
-    {"CAstore", OPT_CASTORE, ':', "URI to store of CA's"},
+    {"CApath", OPT_CAPATH, '/', "dir with trusted CA cert files in PEM format"},
+    {"CAfile", OPT_CAFILE, '<', "file in PEM format with trusted CA certs"},
+    {"CAstore", OPT_CASTORE, ':', "URI of store of trusted CA certs in PEM format"},
     {"no-CAfile", OPT_NOCAFILE, '-',
      "Do not load the default certificates file"},
     {"no-CApath", OPT_NOCAPATH, '-',
@@ -736,17 +736,21 @@ const OPTIONS s_client_options[] = {
      "Close connection on verification error"},
     {"verify_quiet", OPT_VERIFY_QUIET, '-', "Restrict verify output to errors"},
     {"chainCAfile", OPT_CHAINCAFILE, '<',
-     "CA file for certificate chain (PEM format)"},
+     "file in PEM format with trusted CA certs to build client cert chain"},
     {"chainCApath", OPT_CHAINCAPATH, '/',
-     "Use dir as certificate store path to build CA certificate chain"},
+     "dir with trusted CA cert files in PEM format to build client cert chain"},
     {"chainCAstore", OPT_CHAINCASTORE, ':',
-     "CA store URI for certificate chain"},
+     "URI of trusted CA cert store in PEM format to build client cert chain"},
+    {OPT_MORE_STR, 0, 0,
+     "NOTE: these override -CApath, -CAfile, and -CAstore for client chain building"},
     {"verifyCAfile", OPT_VERIFYCAFILE, '<',
-     "CA file for certificate verification (PEM format)"},
+     "file in PEM format with trusted CA certs for server cert verification"},
     {"verifyCApath", OPT_VERIFYCAPATH, '/',
-     "Use dir as certificate store path to verify CA certificate"},
+     "dir with trusted CA cert file in PEM format for server cert verification"},
     {"verifyCAstore", OPT_VERIFYCASTORE, ':',
-     "CA store URI for certificate verification"},
+     "URI of trusted CA cert store in PEM format for server cert verification"},
+    {OPT_MORE_STR, 0, 0,
+     "NOTE: these override -CApath, -CAfile, and -CAstore for server cert verification"},
     OPT_X_OPTIONS,
     OPT_PROV_OPTIONS,
 
@@ -1895,7 +1899,7 @@ int s_client_main(int argc, char **argv)
                          vfyCApath, vfyCAfile, vfyCAstore,
                          chCApath, chCAfile, chCAstore,
                          crls, crl_download)) {
-        BIO_printf(bio_err, "Error loading store locations\n");
+        BIO_printf(bio_err, "Error loading locations for server cert verification and client cert chain building\n");
         ERR_print_errors(bio_err);
         goto end;
     }
@@ -2024,6 +2028,7 @@ int s_client_main(int argc, char **argv)
 
     if (!ctx_set_verify_locations(ctx, CAfile, noCAfile, CApath, noCApath,
                                   CAstore, noCAstore)) {
+        BIO_printf(bio_err, "Error setting default locations for trusted certificates\n");
         ERR_print_errors(bio_err);
         goto end;
     }
