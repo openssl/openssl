@@ -272,7 +272,7 @@ typedef struct PBE2PARAM_st {
 } PBE2PARAM;
 
 typedef struct PBKDF2PARAM_st {
-/* Usually OCTET STRING but could be anything */
+    /* Usually OCTET STRING but could be anything */
     ASN1_TYPE *salt;
     ASN1_INTEGER *iter;
     ASN1_INTEGER *keylength;

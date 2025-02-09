@@ -39,11 +39,11 @@ extern "C" {
 
 
 /*
-Encryption_ID           DES-CBC
-Digest_ID               MD5
-Digest_Encryption_ID    rsaEncryption
-Key_Encryption_ID       rsaEncryption
-*/
+ * Encryption_ID           DES-CBC
+ * Digest_ID               MD5
+ * Digest_Encryption_ID    rsaEncryption
+ * Key_Encryption_ID       rsaEncryption
+ */
 
 typedef struct PKCS7_CTX_st {
     OSSL_LIB_CTX *libctx;

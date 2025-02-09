@@ -219,10 +219,10 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
                             ERR_raise(ERR_LIB_ASN1, ASN1_R_NOT_ENOUGH_DATA);
                             goto err;
                         }
-                    /*
-                     * This can't overflow because |len+want| didn't
-                     * overflow.
-                     */
+                        /*
+                         * This can't overflow because |len+want| didn't
+                         * overflow.
+                         */
                         len += i;
                         chunk -= i;
                     }

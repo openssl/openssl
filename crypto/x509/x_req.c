@@ -29,7 +29,6 @@
  * 1. If it is NULL then it's the invalid omission.
  * 2. If it is empty it is the correct encoding.
  * 3. If it is not empty then some attributes are present.
- *
  */
 
 static int rinf_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
@@ -110,7 +109,8 @@ ASN1_SEQUENCE_enc(X509_REQ_INFO, enc, rinf_cb) = {
         ASN1_SIMPLE(X509_REQ_INFO, version, ASN1_INTEGER),
         ASN1_SIMPLE(X509_REQ_INFO, subject, X509_NAME),
         ASN1_SIMPLE(X509_REQ_INFO, pubkey, X509_PUBKEY),
-        /* This isn't really OPTIONAL but it gets round invalid
+        /*
+         * This isn't really OPTIONAL but it gets round invalid
          * encodings
          */
         ASN1_IMP_SET_OF_OPT(X509_REQ_INFO, attributes, X509_ATTRIBUTE, 0)
