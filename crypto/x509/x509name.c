@@ -122,7 +122,7 @@ X509_NAME_ENTRY *X509_NAME_delete_entry(X509_NAME *name, int loc)
         set_prev = ret->set - 1;
     set_next = sk_X509_NAME_ENTRY_value(sk, loc)->set;
 
-    /*-
+    /*
      * set_prev is the previous set
      * set is the current set
      * set_next is the following

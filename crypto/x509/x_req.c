@@ -13,7 +13,7 @@
 #include <openssl/x509.h>
 #include "crypto/x509.h"
 
-/*-
+/*
  * X509_REQ_INFO is handled in an unusual way to get round
  * invalid encodings. Some broken certificate requests don't
  * encode the attributes field if it is empty. This is in

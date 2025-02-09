@@ -86,7 +86,7 @@ static int null_callback(int ok, X509_STORE_CTX *e)
     return ok;
 }
 
-/*-
+/*
  * Return 1 if given cert is considered self-signed, 0 if not, or -1 on error.
  * This actually verifies self-signedness only if requested.
  * It calls ossl_x509v3_cache_extensions()
@@ -146,7 +146,7 @@ static int lookup_cert_match(X509 **result, X509_STORE_CTX *ctx, X509 *x)
     return ret;
 }
 
-/*-
+/*
  * Inform the verify callback of an error.
  * The error code is set to |err| if |err| is not X509_V_OK, else
  * |ctx->error| is left unchanged (under the assumption it is set elsewhere).
@@ -171,7 +171,7 @@ static int verify_cb_cert(X509_STORE_CTX *ctx, X509 *x, int depth, int err)
     if ((cond) && verify_cb_cert(ctx, cert, depth, err) == 0) \
         return 0
 
-/*-
+/*
  * Inform the verify callback of an error, CRL-specific variant.  Here, the
  * error depth and certificate are already set, we just specify the error
  * number.
@@ -212,7 +212,7 @@ static int check_auth_level(X509_STORE_CTX *ctx)
     return 1;
 }
 
-/*-
+/*
  * Returns -1 on internal error.
  * Sadly, returns 0 also on internal error in ctx->verify_cb().
  */
@@ -226,7 +226,7 @@ static int verify_rpk(X509_STORE_CTX *ctx)
 }
 
 
-/*-
+/*
  * Returns -1 on internal error.
  * Sadly, returns 0 also on internal error in ctx->verify_cb().
  */
@@ -291,7 +291,7 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
     return (ctx->rpk != NULL) ? x509_verify_rpk(ctx) : x509_verify_x509(ctx);
 }
 
-/*-
+/*
  * Returns -1 on internal error.
  * Sadly, returns 0 also on internal error in ctx->verify_cb().
  */
@@ -319,7 +319,7 @@ static int x509_verify_rpk(X509_STORE_CTX *ctx)
     return ret;
 }
 
-/*-
+/*
  * Returns -1 on internal error.
  * Sadly, returns 0 also on internal error in ctx->verify_cb().
  */
@@ -375,7 +375,7 @@ static int sk_X509_contains(STACK_OF(X509) *sk, X509 *cert)
     return 0;
 }
 
-/*-
+/*
  * Find in |sk| an issuer cert of cert |x| accepted by |ctx->check_issued|.
  * If no_dup, the issuer must not yet be in |ctx->chain|, yet allowing the
  *     exception that |x| is self-issued and |ctx->chain| has just one element.
@@ -413,7 +413,7 @@ static X509 *get0_best_issuer_sk(X509_STORE_CTX *ctx, int trusted,
     return issuer;
 }
 
-/*-
+/*
  * Try to get issuer cert from |ctx->store| accepted by |ctx->check_issued|.
  *
  * Return values are:
@@ -449,7 +449,7 @@ static int check_issued(ossl_unused X509_STORE_CTX *ctx, X509 *x, X509 *issuer)
     return 0;
 }
 
-/*-
+/*
  * Alternative get_issuer method: look up from a STACK_OF(X509) in other_ctx.
  * Returns -1 on internal error.
  */
@@ -462,7 +462,7 @@ static int get1_best_issuer_other_sk(X509 **issuer, X509_STORE_CTX *ctx, X509 *x
     return X509_up_ref(*issuer) ? 1 : -1;
 }
 
-/*-
+/*
  * Alternative lookup method: look from a STACK stored in other_ctx.
  * Returns NULL on internal/fatal error, empty stack if not found.
  */
@@ -539,7 +539,7 @@ static int check_purpose(X509_STORE_CTX *ctx, X509 *x, int purpose, int depth,
     return verify_cb_cert(ctx, x, depth, X509_V_ERR_INVALID_PURPOSE);
 }
 
-/*-
+/*
  * Check extensions of a cert chain for consistency with the supplied purpose.
  * Sadly, returns 0 also on internal error in ctx->verify_cb().
  */
@@ -550,7 +550,7 @@ static int check_extensions(X509_STORE_CTX *ctx)
     int ret, proxy_path_length = 0;
     int purpose, allow_proxy_certs, num = sk_X509_num(ctx->chain);
 
-    /*-
+    /*
      *  must_be_ca can have 1 of 3 values:
      * -1: we accept both CA and non-CA certificates, to allow direct
      *     use of self-signed certificates (which are marked as CA).
@@ -737,7 +737,7 @@ static int has_san_id(X509 *x, int gtype)
     return ret;
 }
 
-/*-
+/*
  * Returns -1 on internal error.
  * Sadly, returns 0 also on internal error in ctx->verify_cb().
  */
@@ -1462,7 +1462,7 @@ static int check_crl_chain(X509_STORE_CTX *ctx,
     return X509_cmp(cert_ta, crl_ta) == 0;
 }
 
-/*-
+/*
  * Check for match between two dist point names: three separate cases.
  * 1. Both are relative names and compare X509_NAME types.
  * 2. One full, one relative. Compare X509_NAME to GENERAL_NAMES.
@@ -1807,7 +1807,7 @@ static int check_policy(X509_STORE_CTX *ctx)
     return -1;
 }
 
-/*-
+/*
  * Check certificate validity times.
  * If depth >= 0, invoke verification callbacks on error, otherwise just return
  * the validation status.
@@ -1891,7 +1891,7 @@ static int internal_verify(X509_STORE_CTX *ctx)
      * only the user's callback is allowed to reset errors (at its own peril).
      */
     while (n >= 0) {
-        /*-
+        /*
          * For each iteration of this loop:
          * n is the subject depth
          * xs is the subject cert, for which the signature is to be checked
@@ -1981,7 +1981,7 @@ int X509_cmp_time(const ASN1_TIME *ctm, time_t *cmp_time)
     const char upper_z = 'Z';
 #endif
 
-    /*-
+    /*
      * Note that ASN.1 allows much more slack in the time format than RFC5280.
      * In RFC5280, the representation is fixed:
      * UTCTime: YYMMDDHHMMSSZ
@@ -2875,7 +2875,7 @@ static int dane_match_cert(X509_STORE_CTX *ctx, X509 *cert, int depth)
     if (dane->mdpth >= 0)
         mask &= ~DANETLS_PKIX_MASK;
 
-    /*-
+    /*
      * https://tools.ietf.org/html/rfc7671#section-5.1
      * https://tools.ietf.org/html/rfc7671#section-5.2
      * https://tools.ietf.org/html/rfc7671#section-5.3
@@ -2928,7 +2928,7 @@ static int dane_match_cert(X509_STORE_CTX *ctx, X509 *cert, int depth)
             mtype = DANETLS_NONE;
             ordinal = dane->dctx->mdord[t->mtype];
         } else if (t->mtype != DANETLS_MATCHING_FULL) {
-            /*-
+            /*
              * Digest agility:
              *
              *     <https://tools.ietf.org/html/rfc7671#section-9>
@@ -3163,7 +3163,7 @@ static int dane_verify(X509_STORE_CTX *ctx)
 
     dane_reset(dane);
 
-    /*-
+    /*
      * When testing the leaf certificate, if we match a DANE-EE(3) record,
      * dane_match() returns 1 and we're done.  If however we match a PKIX-EE(1)
      * record, the match depth and matching TLSA record are recorded, but the
@@ -3232,7 +3232,7 @@ static int get1_trusted_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *cert)
     return ok;
 }
 
-/*-
+/*
  * Returns -1 on internal error.
  * Sadly, returns 0 also on internal error in ctx->verify_cb().
  */
@@ -3632,7 +3632,7 @@ STACK_OF(X509) *X509_build_chain(X509 *target, STACK_OF(X509) *certs,
 static const int minbits_table[] = { 80, 112, 128, 192, 256 };
 static const int NUM_AUTH_LEVELS = OSSL_NELEM(minbits_table);
 
-/*-
+/*
  * Check whether the given public key meets the security level of `ctx`.
  * Returns 1 on success, 0 otherwise.
  */
@@ -3659,7 +3659,7 @@ static int check_key_level(X509_STORE_CTX *ctx, EVP_PKEY *pkey)
     return EVP_PKEY_get_security_bits(pkey) >= minbits_table[level - 1];
 }
 
-/*-
+/*
  * Check whether the public key of `cert` meets the security level of `ctx`.
  * Returns 1 on success, 0 otherwise.
  */
@@ -3668,7 +3668,7 @@ static int check_cert_key_level(X509_STORE_CTX *ctx, X509 *cert)
     return check_key_level(ctx, X509_get0_pubkey(cert));
 }
 
-/*-
+/*
  * Check whether the public key of ``cert`` does not use explicit params
  * for an elliptic curve.
  *
@@ -3692,7 +3692,7 @@ static int check_curve(X509 *cert)
     return ret == 1 ? !val : -1;
 }
 
-/*-
+/*
  * Check whether the signature digest algorithm of ``cert`` meets the security
  * level of ``ctx``.  Should not be checked for trust anchors (whether
  * self-signed or otherwise).

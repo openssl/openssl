@@ -755,7 +755,7 @@ static const unsigned char *valid_star(const unsigned char *p, size_t len,
         if (p[i] == '*') {
             int atstart = (state & LABEL_START);
             int atend = (i == len - 1 || p[i + 1] == '.');
-            /*-
+            /*
              * At most one wildcard per pattern.
              * No wildcards in IDNA labels.
              * No wildcards after the first label.
@@ -924,7 +924,7 @@ static int do_x509_check(X509 *x, const char *chk, size_t chklen,
                 default:
                     continue;
                 case NID_id_on_SmtpUTF8Mailbox:
-                    /*-
+                    /*
                      * https://datatracker.ietf.org/doc/html/rfc8398#section-3
                      *
                      *   Due to name constraint compatibility reasons described

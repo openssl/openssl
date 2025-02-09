@@ -39,7 +39,7 @@ use OpenSSL::stackhash qw(generate_stack_macros);
 extern "C" {
 #endif
 
-/*-
+/*
 SSL_CTX -> X509_STORE
                 -> X509_LOOKUP
                         ->X509_LOOKUP_METHOD

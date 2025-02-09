@@ -909,7 +909,7 @@ static int tls1_in_list(uint16_t id, const uint16_t *list, size_t listlen)
     return 0;
 }
 
-/*-
+/*
  * For nmatch >= 0, return the id of the |nmatch|th shared group or 0
  * if there is no match.
  * For nmatch == -1, return number of matches
@@ -2306,7 +2306,7 @@ int tls1_set_server_sigalgs(SSL_CONNECTION *s)
     return 0;
 }
 
-/*-
+/*
  * Gets the ticket information supplied by the client if any.
  *
  *   hello: The parsed ClientHello data
@@ -2341,7 +2341,7 @@ SSL_TICKET_STATUS tls_get_ticket_from_client(SSL_CONNECTION *s,
                               hello->session_id, hello->session_id_len, ret);
 }
 
-/*-
+/*
  * tls_decrypt_ticket attempts to decrypt a session ticket.
  *
  * If s->tls_session_secret_cb is set and we're not doing TLSv1.3 then we are
