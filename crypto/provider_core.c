@@ -2421,6 +2421,7 @@ static void core_self_test_get_callback(OPENSSL_CORE_CTX *libctx,
     OSSL_SELF_TEST_get_callback((OSSL_LIB_CTX *)libctx, cb, cbarg);
 }
 
+# ifdef OPENSSL_NO_FIPS_JITTER
 static size_t rand_get_entropy(const OSSL_CORE_HANDLE *handle,
                                unsigned char **pout, int entropy,
                                size_t min_len, size_t max_len)
@@ -2428,6 +2429,31 @@ static size_t rand_get_entropy(const OSSL_CORE_HANDLE *handle,
     return ossl_rand_get_entropy((OSSL_LIB_CTX *)core_get_libctx(handle),
                                  pout, entropy, min_len, max_len);
 }
+# else
+/*
+ * OpenSSL FIPS providers prior to 3.2 call rand_get_entropy API from
+ * core, instead of the newer get_user_entropy. Newer API call honors
+ * runtime configuration of random seed source and can be configured
+ * to use os getranom() or another seed source, such as
+ * JITTER. However, 3.0.9 only calls this API. Note that no other
+ * providers known to use this, and it is core <-> provider only
+ * API. Public facing EVP and getrandom bytes already correctly honor
+ * runtime configuration for seed source. There are no other providers
+ * packaged in Wolfi, or even known to exist that use this api. Thus
+ * it is safe to say any caller of this API is in fact 3.0.9 FIPS
+ * provider. Also note that the passed in handle is invalid and cannot
+ * be safely dereferences in such cases. Due to a bug in FIPS
+ * providers 3.0.0, 3.0.8 and 3.0.9. See
+ * https://github.com/openssl/openssl/blob/master/doc/internal/man3/ossl_rand_get_entropy.pod#notes
+ */
+size_t ossl_rand_jitter_get_seed(unsigned char **, int, size_t, size_t);
+static size_t rand_get_entropy(const OSSL_CORE_HANDLE *handle,
+                               unsigned char **pout, int entropy,
+                               size_t min_len, size_t max_len)
+{
+    return ossl_rand_jitter_get_seed(pout, entropy, min_len, max_len);
+}
+# endif
 
 static size_t rand_get_user_entropy(const OSSL_CORE_HANDLE *handle,
                                     unsigned char **pout, int entropy,
