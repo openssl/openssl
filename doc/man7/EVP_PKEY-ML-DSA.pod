@@ -127,11 +127,11 @@ B<ξ> seed and the secret key B<sk> are present in the private key as part of
 the DER encoding of the ASN.1 sequence:
 
     ML-DSA-PrivateKey ::= CHOICE {
-      seed [0] IMPLICIT OCTET STRING SIZE (32),
-      expandedKey OCTET STRING SIZE (2560 | 4032 | 4896)
+      seed [0] IMPLICIT OCTET STRING (SIZE (32)),
+      expandedKey OCTET STRING (SIZE (2560 | 4032 | 4896)),
       both SEQUENCE {
-        seed OCTET STRING SIZE (32),
-        expandedKey OCTET STRING SIZE (2560 | 4032 | 4896) } }
+        seed OCTET STRING (SIZE (32)),
+        expandedKey OCTET STRING (SIZE (2560 | 4032 | 4896)) } }
 
 If the C<seed-priv> format is not included in the list, this format will not be
 recognised on input.

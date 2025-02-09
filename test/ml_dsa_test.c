@@ -87,16 +87,19 @@ static int ml_dsa_keygen_test(int tst_id)
     int ret = 0;
     const ML_DSA_KEYGEN_TEST_DATA *tst = &ml_dsa_keygen_testdata[tst_id];
     EVP_PKEY *pkey = NULL;
-    uint8_t priv[5 * 1024], pub[3 * 1024];
-    size_t priv_len, pub_len;
+    uint8_t priv[5 * 1024], pub[3 * 1024], seed[ML_DSA_SEED_BYTES];
+    size_t priv_len, pub_len, seed_len;
 
     if (!TEST_ptr(pkey = do_gen_key(tst->name, tst->seed, tst->seed_len))
+            || !TEST_true(EVP_PKEY_get_octet_string_param(pkey, OSSL_PKEY_PARAM_ML_DSA_SEED,
+                                                          seed, sizeof(seed), &seed_len))
             || !TEST_true(EVP_PKEY_get_octet_string_param(pkey, OSSL_PKEY_PARAM_PRIV_KEY,
                                                           priv, sizeof(priv), &priv_len))
             || !TEST_true(EVP_PKEY_get_octet_string_param(pkey, OSSL_PKEY_PARAM_PUB_KEY,
                                                           pub, sizeof(pub), &pub_len))
             || !TEST_mem_eq(pub, pub_len, tst->pub, tst->pub_len)
-            || !TEST_mem_eq(priv, priv_len, tst->priv, tst->priv_len))
+            || !TEST_mem_eq(priv, priv_len, tst->priv, tst->priv_len)
+            || !TEST_mem_eq(seed, seed_len, tst->seed, tst->seed_len))
         goto err;
     ret = 1;
 err:
