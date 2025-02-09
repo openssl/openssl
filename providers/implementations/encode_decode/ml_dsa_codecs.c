@@ -22,11 +22,11 @@
  * corresponding to the "either or both" variants of:
  *
  *  ML-DSA-PrivateKey ::= CHOICE {
- *    seed [0] IMPLICIT OCTET STRING SIZE (32),
- *    expandedKey OCTET STRING SIZE (2560 | 4032 | 4896)
+ *    seed [0] IMPLICIT OCTET STRING (SIZE (32)),
+ *    expandedKey OCTET STRING (SIZE (2560 | 4032 | 4896)),
  *    both SEQUENCE {
- *      seed OCTET STRING SIZE (32),
- *      expandedKey OCTET STRING SIZE (2560 | 4032 | 4896) } }
+ *      seed OCTET STRING (SIZE (32)),
+ *      expandedKey OCTET STRING (SIZE (2560 | 4032 | 4896)) } }
  *
  * one more for a historical OQS encoding:
  *
