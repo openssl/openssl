@@ -129,7 +129,6 @@ static inline void *apple_atomic_load_n_pvoid(void **p,
 #  define ATOMIC_STORE_N(t, p, v, o) __atomic_store_n(p, v, o)
 #  define ATOMIC_STORE(t, p, v, o) __atomic_store(p, v, o)
 #  define ATOMIC_EXCHANGE_N(t, p, v, o) __atomic_exchange_n(p, v, o)
-#  define ATOMIC_COMPARE_EXCHANGE_N(t, p, e, d, s, f) __atomic_compare_exchange_n(p, e, d, 0, s, f)
 #  define ATOMIC_ADD_FETCH(p, v, o) __atomic_add_fetch(p, v, o)
 #  define ATOMIC_FETCH_ADD(p, v, o) __atomic_fetch_add(p, v, o)
 #  define ATOMIC_SUB_FETCH(p, v, o) __atomic_sub_fetch(p, v, o)
@@ -197,23 +196,6 @@ IMPL_fallback_atomic_exchange_n(uint64_t)
 IMPL_fallback_atomic_exchange_n(prcu_cb_item)
 
 #  define ATOMIC_EXCHANGE_N(t, p, v, o) fallback_atomic_exchange_n_##t(p, v)
-
-#  define IMPL_fallback_atomic_compare_exchange_n(t)                                  \
-    static ossl_inline int fallback_atomic_compare_exchange_n_##t(t *p, t *e, t d, s, f) \
-    {                                                                                 \
-        int ret = 1;                                                                 \
-        pthread_mutex_lock(&atomic_sim_lock);                                         \
-        if (*p == *e)                                                                 \
-            *p = d;                                                                    \
-        else                                                                          \
-            ret = 0;                                                                   \
-        pthread_mutex_unlock(&atomic_sim_lock);                                       \
-        return ret;                                                                   \
-    }
-
-IMPL_fallback_atomic_exchange_n(uint64_t)
-
-#  define ATOMIC_COMPARE_EXCHANGE_N(t, p, e, d, s, f) fallback_atomic_compare_exchange_n_##t(p, e, d, s, f)
 
 /*
  * The fallbacks that follow don't need any per type implementation, as
@@ -524,8 +506,6 @@ void ossl_rcu_read_unlock(CRYPTO_RCU_LOCK *lock)
 static struct rcu_qp *update_qp(CRYPTO_RCU_LOCK *lock)
 {
     uint64_t new_id;
-    uint64_t update;
-    uint64_t ret;
     uint32_t current_idx;
 
     pthread_mutex_lock(&lock->alloc_lock);
@@ -558,13 +538,10 @@ static struct rcu_qp *update_qp(CRYPTO_RCU_LOCK *lock)
      * of this update are published to the read side prior to updating the
      * reader idx below
      */
-try_again:
-    ret = ATOMIC_LOAD_N(uint64_t, &lock->qp_group[current_idx].users, __ATOMIC_ACQUIRE);
-    update = ret & ID_MASK;
-    update |= new_id;
-    if (!ATOMIC_COMPARE_EXCHANGE_N(uint64_t, &lock->qp_group[current_idx].users, &ret, update,
-                                   __ATOMIC_ACQ_REL, __ATOMIC_RELAXED))
-        goto try_again;
+    ATOMIC_AND_FETCH(&lock->qp_group[current_idx].users, ID_MASK,
+                     __ATOMIC_RELEASE);
+    ATOMIC_OR_FETCH(&lock->qp_group[current_idx].users, new_id,
+                    __ATOMIC_RELEASE);
 
     /*
      * Update the reader index to be the prior qp.
