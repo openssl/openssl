@@ -144,7 +144,7 @@ void *X509V3_EXT_d2i(X509_EXTENSION *ext)
     return method->d2i(NULL, &p, extlen);
 }
 
-/*-
+/*
  * Get critical flag and decoded version of extension from a NID.
  * The "idx" variable returns the last found extension and can
  * be used to retrieve multiple extensions of the same NID.
@@ -236,7 +236,7 @@ int X509V3_add1_i2d(STACK_OF(X509_EXTENSION) **x, int nid, void *value,
         /* If keep existing, nothing to do */
         if (ext_op == X509V3_ADD_KEEP_EXISTING)
             return 1;
-        /* If default then its an error */
+        /* If default then it's an error */
         if (ext_op == X509V3_ADD_DEFAULT) {
             errcode = X509V3_R_EXTENSION_EXISTS;
             goto err;

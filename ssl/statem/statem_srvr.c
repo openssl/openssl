@@ -1400,7 +1400,7 @@ CON_FUNC_RETURN dtls_construct_hello_verify_request(SSL_CONNECTION *s,
     return CON_FUNC_SUCCESS;
 }
 
-/*-
+/*
  * ssl_check_for_safari attempts to fingerprint Safari using OS X
  * SecureTransport using the TLS extension block in |hello|.
  * Safari, since 10.6, sends exactly these extensions, in this order:
@@ -1513,7 +1513,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL_CONNECTION *s, PACKET *pkt)
             goto err;
         }
 
-        /*-
+        /*
          * An SSLv3/TLSv1 backwards-compatible CLIENT-HELLO in an SSLv2
          * header is sent directly on the wire, not wrapped as a TLS
          * record. Our record layer just processes the message length and passes
@@ -2337,7 +2337,7 @@ WORK_STATE tls_post_process_client_hello(SSL_CONNECTION *s, WORK_STATE wst)
             s->s3.tmp.new_cipher = s->session->cipher;
         }
 
-        /*-
+        /*
          * we now have the following setup.
          * client_random
          * cipher_list          - our preferred list of ciphers
@@ -2415,7 +2415,7 @@ CON_FUNC_RETURN tls_construct_server_hello(SSL_CONNECTION *s, WPACKET *pkt)
         return CON_FUNC_ERROR;
     }
 
-    /*-
+    /*
      * There are several cases for the session ID to send
      * back in the server hello:
      * - For session reuse from the session cache,
@@ -2709,7 +2709,7 @@ CON_FUNC_RETURN tls_construct_server_key_exchange(SSL_CONNECTION *s,
             goto err;
         }
 
-        /*-
+        /*
          * for interoperability with some versions of the Microsoft TLS
          * stack, we need to zero pad the DHE pub key to the same length
          * as the prime
@@ -4337,7 +4337,7 @@ MSG_PROCESS_RETURN tls_process_next_proto(SSL_CONNECTION *s, PACKET *pkt)
     PACKET next_proto, padding;
     size_t next_proto_len;
 
-    /*-
+    /*
      * The payload looks like:
      *   uint8 proto_len;
      *   uint8 proto[proto_len];

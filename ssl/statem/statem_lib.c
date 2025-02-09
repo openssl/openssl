@@ -629,7 +629,7 @@ CON_FUNC_RETURN tls_construct_finished(SSL_CONNECTION *s, WPACKET *pkt)
                 || (s->options & SSL_OP_ENABLE_MIDDLEBOX_COMPAT) != 0)
             && s->s3.tmp.cert_req == 0
             && (!ssl->method->ssl3_enc->change_cipher_state(s,
-                    SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_CLIENT_WRITE))) {;
+                    SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_CLIENT_WRITE))) {
         /* SSLfatal() already called */
         return CON_FUNC_ERROR;
     }

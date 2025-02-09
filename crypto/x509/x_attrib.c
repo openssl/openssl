@@ -15,7 +15,7 @@
 #include "x509_local.h"
 #include <crypto/x509.h>
 
-/*-
+/*
  * X509_ATTRIBUTE: this has the following form:
  *
  * typedef struct x509_attributes_st

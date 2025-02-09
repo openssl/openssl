@@ -649,7 +649,7 @@ STACK_OF(X509) *X509_STORE_get1_all_certs(X509_STORE *store)
     return NULL;
 }
 
-/*-
+/*
  * Collect from |ctx->store| all certs with subject matching |nm|.
  * Returns NULL on internal/fatal error, empty stack if not found.
  */

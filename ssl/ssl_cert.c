@@ -707,8 +707,9 @@ static int xname_cmp(const X509_NAME *a, const X509_NAME *b)
     unsigned char *abuf = NULL, *bbuf = NULL;
     int alen, blen, ret;
 
-    /* X509_NAME_cmp() itself casts away constness in this way, so
-     * assume it's safe:
+    /*
+     * X509_NAME_cmp() itself casts away constness in this way, so
+     * assume it's safe
      */
     alen = i2d_X509_NAME((X509_NAME *)a, &abuf);
     blen = i2d_X509_NAME((X509_NAME *)b, &bbuf);
