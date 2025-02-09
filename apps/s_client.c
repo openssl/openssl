@@ -1584,7 +1584,6 @@ int s_client_main(int argc, char **argv)
                        prog);
             goto opthelp;
         }
-        connect_type = use_inet;
         freeandcopy(&connectstr, *opt_rest());
     } else if (!opt_check_rest_arg(NULL)) {
         goto opthelp;
@@ -2326,7 +2325,6 @@ int s_client_main(int argc, char **argv)
 
     read_tty = 1;
     write_tty = 0;
-    tty_on = 0;
     read_ssl = 1;
     write_ssl = 1;
     first_loop = 1;

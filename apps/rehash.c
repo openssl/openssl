@@ -548,7 +548,6 @@ int rehash_main(int argc, char **argv)
     }
 
     /* Optional arguments are directories to scan. */
-    argc = opt_num_rest();
     argv = opt_rest();
 
     evpmd = EVP_sha1();
