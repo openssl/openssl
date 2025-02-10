@@ -678,9 +678,9 @@ static int raise_error(QUIC_TLS *qtls, uint64_t error_code,
         OSSL_ERR_STATE_save_to_mark(qtls->error_state);
 
         /*
-        * We record the error information reported via the QUIC protocol
-        * separately.
-        */
+         * We record the error information reported via the QUIC protocol
+         * separately.
+         */
         qtls->error_code        = error_code;
         qtls->error_msg         = error_msg;
         qtls->inerror           = 1;
@@ -714,7 +714,7 @@ int ossl_quic_tls_configure(QUIC_TLS *qtls)
 
     if (!ossl_tls_add_custom_ext_intern(NULL, &sc->cert->custext,
                                         qtls->args.is_server ? ENDPOINT_SERVER
-                                                                : ENDPOINT_CLIENT,
+                                                             : ENDPOINT_CLIENT,
                                         TLSEXT_TYPE_quic_transport_parameters,
                                         SSL_EXT_TLS1_3_ONLY
                                         | SSL_EXT_CLIENT_HELLO

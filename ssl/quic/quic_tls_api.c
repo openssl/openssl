@@ -139,7 +139,7 @@ int SSL_set_quic_tls_cbs(SSL *s, const OSSL_DISPATCH *qtdis, void *arg)
     }
 
     if (!tls_callbacks_from_dispatch(&sc->qtcb, qtdis))
-        /* ERR_raise already called*/
+        /* ERR_raise already called */
         return 0;
 
     sc->qtarg = arg;

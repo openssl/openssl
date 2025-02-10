@@ -42,7 +42,6 @@ typedef struct quic_tls_args_st {
     int (*crypto_release_rcd_cb)(size_t bytes_read, void *arg);
     void *crypto_release_rcd_cb_arg;
 
-
     /*
      * Called when a traffic secret is available for a given TLS protection
      * level.
