@@ -203,6 +203,8 @@ typedef struct ossl_ml_kem_key_st {
  */
 ML_KEM_KEY *ossl_ml_kem_key_new(OSSL_LIB_CTX *libctx, const char *properties,
                                 int evp_type);
+/* Reset a key clearing all public and private key material */
+void ossl_ml_kem_key_reset(ML_KEM_KEY *key);
 /* Deallocate the key */
 void ossl_ml_kem_key_free(ML_KEM_KEY *key);
 /*

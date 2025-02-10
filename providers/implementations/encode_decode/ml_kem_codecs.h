@@ -36,11 +36,11 @@ typedef struct {
  * corresponding to the "either or both" variants of:
  *
  *  ML-KEM-PrivateKey ::= CHOICE {
- *    seed [0] IMPLICIT OCTET STRING SIZE (64),
- *    expandedKey OCTET STRING SIZE (1632 | 2400 | 3168)
+ *    seed [0] IMPLICIT OCTET STRING (SIZE (64)),
+ *    expandedKey OCTET STRING (SIZE (1632 | 2400 | 3168)),
  *    both SEQUENCE {
- *      seed OCTET STRING SIZE (64),
- *      expandedKey OCTET STRING SIZE (1632 | 2400 | 3168) } }
+ *      seed OCTET STRING (SIZE (64)),
+ *      expandedKey OCTET STRING SIZE ((1632 | 2400 | 3168)) } }
  *
  * one more for a historical OQS encoding:
  *

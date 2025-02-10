@@ -312,6 +312,16 @@ OSSL_DECODER_INSTANCE *ossl_decoder_instance_dup(const OSSL_DECODER_INSTANCE *sr
     return NULL;
 }
 
+void ossl_decoder_ctx_set_harderr(OSSL_DECODER_CTX *ctx)
+{
+    ctx->harderr = 1;
+}
+
+int ossl_decoder_ctx_get_harderr(const OSSL_DECODER_CTX *ctx)
+{
+    return ctx->harderr;
+}
+
 int ossl_decoder_ctx_add_decoder_inst(OSSL_DECODER_CTX *ctx,
                                       OSSL_DECODER_INSTANCE *di)
 {

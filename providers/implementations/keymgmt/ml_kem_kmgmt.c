@@ -42,6 +42,7 @@ static OSSL_FUNC_keymgmt_set_params_fn ml_kem_set_params;
 static OSSL_FUNC_keymgmt_settable_params_fn ml_kem_settable_params;
 static OSSL_FUNC_keymgmt_has_fn ml_kem_has;
 static OSSL_FUNC_keymgmt_match_fn ml_kem_match;
+static OSSL_FUNC_keymgmt_validate_fn ml_kem_validate;
 static OSSL_FUNC_keymgmt_import_fn ml_kem_import;
 static OSSL_FUNC_keymgmt_export_fn ml_kem_export;
 static OSSL_FUNC_keymgmt_import_types_fn ml_kem_imexport_types;
@@ -60,24 +61,26 @@ typedef struct ml_kem_gen_ctx_st {
     uint8_t *seed;
 } PROV_ML_KEM_GEN_CTX;
 
-#ifdef FIPS_MODULE
 static int ml_kem_pairwise_test(const ML_KEM_KEY *key)
 {
-    int ret = 0;
+#ifdef FIPS_MODULE
     OSSL_SELF_TEST *st = NULL;
     OSSL_CALLBACK *cb = NULL;
     void *cbarg = NULL;
+    unsigned char entropy[ML_KEM_RANDOM_BYTES];
+#endif
     unsigned char secret[ML_KEM_SHARED_SECRET_BYTES];
     unsigned char out[ML_KEM_SHARED_SECRET_BYTES];
-    unsigned char entropy[ML_KEM_RANDOM_BYTES];
     unsigned char *ctext = NULL;
     const ML_KEM_VINFO *v = ossl_ml_kem_key_vinfo(key);
     int operation_result = 0;
+    int ret = 0;
 
     /* Unless we have both a public and private key, we can't do the test */
-    if (!ossl_ml_kem_have_prvkey(key))
+    if (!ossl_ml_kem_have_prvkey(key) || !ossl_ml_kem_have_pubkey(key))
         return 1;
 
+#ifdef FIPS_MODULE
     /*
      * The functions `OSSL_SELF_TEST_*` will return directly if parameter `st`
      * is NULL.
@@ -90,41 +93,56 @@ static int ml_kem_pairwise_test(const ML_KEM_KEY *key)
 
     OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_PCT,
                            OSSL_SELF_TEST_DESC_PCT_ML_KEM);
-
-    /*
-     * Initialise output buffers to avoid collecting random stack memory.
-     * The `entropy' buffer is filled with an arbitrary non-zero value.
-     */
-    memset(out, 0, sizeof(out));
-    memset(entropy, 0125, sizeof(entropy));
+#endif  /* FIPS_MODULE */
 
     ctext = OPENSSL_malloc(v->ctext_bytes);
     if (ctext == NULL)
         goto err;
 
+    memset(out, 0, sizeof(out));
+#ifdef FIPS_MODULE
+    /*
+     * The FIPS module does a PCT on power-on, and would leak the RNG
+     * handle if use random entropy here.  So we use fixed entropy in
+     * the FIPS case.  Ideally, the leak will be fixed, and the test
+     * will also use random entropy in FIPS mode.
+     */
+    memset(entropy, 0125, sizeof(entropy));
     operation_result = ossl_ml_kem_encap_seed(ctext, v->ctext_bytes,
                                               secret, sizeof(secret),
                                               entropy, sizeof(entropy),
                                               key);
+#else
+    operation_result = ossl_ml_kem_encap_rand(ctext, v->ctext_bytes,
+                                              secret, sizeof(secret), key);
+#endif
     if (operation_result != 1)
         goto err;
 
+#ifdef FIPS_MODULE
     OSSL_SELF_TEST_oncorrupt_byte(st, ctext);
+#endif
 
     operation_result = ossl_ml_kem_decap(out, sizeof(out), ctext, v->ctext_bytes,
                                          key);
-    if (operation_result != 1
-            || memcmp(out, secret, sizeof(out)) != 0)
+    if (operation_result != 1 || memcmp(out, secret, sizeof(out)) != 0)
         goto err;
 
     ret = 1;
 err:
-    OPENSSL_free(ctext);
+#ifdef FIPS_MODULE
     OSSL_SELF_TEST_onend(st, ret);
     OSSL_SELF_TEST_free(st);
+#else
+    if (ret == 0) {
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY,
+                       "public part of %s private key fails to match private",
+                       v->algorithm_name);
+    }
+#endif
+    OPENSSL_free(ctext);
     return ret;
 }
-#endif  /* FIPS_MODULE */
 
 static void *ml_kem_new(PROV_CTX *ctx, const char *propq, int evp_type)
 {
@@ -172,6 +190,18 @@ static int ml_kem_match(const void *vkey1, const void *vkey2, int selection)
         return 1;
 
     return ossl_ml_kem_pubkey_cmp(key1, key2);
+}
+
+static int ml_kem_validate(const void *vkey, int selection, int check_type)
+{
+    const ML_KEM_KEY *key = vkey;
+
+    if (!ml_kem_has(key, selection))
+        return 0;
+
+    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == OSSL_KEYMGMT_SELECT_KEYPAIR)
+        return ml_kem_pairwise_test(key);
+    return 1;
 }
 
 static int ml_kem_export(void *vkey, int selection, OSSL_CALLBACK *param_cb,
@@ -288,7 +318,7 @@ static int ml_kem_key_fromdata(ML_KEM_KEY *key,
 {
     const OSSL_PARAM *p = NULL;
     const void *pubenc = NULL, *prvenc = NULL, *seedenc = NULL;
-    size_t publen = 0, prvlen = 0, seedlen = 0;
+    size_t publen = 0, prvlen = 0, seedlen = 0, puboff;
     const ML_KEM_VINFO *v;
 
     /* Invalid attempt to mutate a key, what is the right error to report? */
@@ -340,6 +370,18 @@ static int ml_kem_key_fromdata(ML_KEM_KEY *key,
         return 0;
     }
 
+    /* Check any explicit public key against embedded value in private key */
+    if (publen > 0 && prvlen > 0) {
+        /* point to the ek offset in the DKpke||ek||H(ek)||z */
+        puboff = prvlen - ML_KEM_RANDOM_BYTES - ML_KEM_PKHASH_BYTES - publen;
+        if (memcmp(pubenc, (unsigned char *)prvenc + puboff, publen) != 0) {
+            ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY,
+                           "explicit %s public key does not match private",
+                           v->algorithm_name);
+            return 0;
+        }
+    }
+
     if (seedlen != 0 && (prvlen == 0 || key->prefer_seed))
         return ossl_ml_kem_set_seed(seedenc, seedlen, key)
             && ossl_ml_kem_genkey(NULL, 0, key);
@@ -362,12 +404,13 @@ static int ml_kem_import(void *vkey, int selection, const OSSL_PARAM params[])
 
     include_private = selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY ? 1 : 0;
     res = ml_kem_key_fromdata(key, params, include_private);
-#ifdef FIPS_MODULE
     if (res > 0 && include_private && !ml_kem_pairwise_test(key)) {
+#ifdef FIPS_MODULE
         ossl_set_error_state(OSSL_SELF_TEST_TYPE_PCT);
+#endif
+        ossl_ml_kem_key_reset(key);
         res = 0;
     }
-#endif  /* FIPS_MODULE */
     return res;
 }
 
@@ -396,6 +439,8 @@ void *ml_kem_load(const void *reference, size_t reference_sz)
 {
     ML_KEM_KEY *key = NULL;
     uint8_t *encoded_dk;
+    uint8_t seed[ML_KEM_SEED_BYTES];
+    size_t zlen = ML_KEM_RANDOM_BYTES;
 
     if (ossl_prov_is_running() && reference_sz == sizeof(key)) {
         /* The contents of the reference is the address to our object */
@@ -404,6 +449,20 @@ void *ml_kem_load(const void *reference, size_t reference_sz)
         key->encoded_dk = NULL;
         /* We grabbed, so we detach it */
         *(ML_KEM_KEY **)reference = NULL;
+        /*
+         * Reject |z| mismatch between seed and key, the seed buffer holds |z|
+         * followed by |d|.
+         */
+        if (encoded_dk != NULL
+            && ossl_ml_kem_encode_seed(seed, sizeof(seed), key)
+            && memcmp(seed + sizeof(seed) - zlen,
+                      encoded_dk + key->vinfo->prvkey_bytes - zlen,
+                      zlen) != 0) {
+            ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY,
+                           "private %s key implicit rejection secret does"
+                           " not match seed", key->vinfo->algorithm_name);
+            goto err;
+        }
         /* Generate the key now, if it holds only a stashed seed. */
         if (ossl_ml_kem_have_seed(key) &&
             (encoded_dk == NULL || key->prefer_seed)) {
@@ -411,7 +470,13 @@ void *ml_kem_load(const void *reference, size_t reference_sz)
                 goto err;
         } else if (encoded_dk != NULL) {
             if (!ossl_ml_kem_parse_private_key(encoded_dk,
-                                               key->vinfo->prvkey_bytes, key))
+                                               key->vinfo->prvkey_bytes, key)) {
+                ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY,
+                               "error parsing %s private key",
+                               key->vinfo->algorithm_name);
+                goto err;
+            }
+            if (!ml_kem_pairwise_test(key))
                 goto err;
         }
         OPENSSL_free(encoded_dk);
@@ -710,6 +775,7 @@ static void *ml_kem_dup(const void *vkey, int selection)
         { OSSL_FUNC_KEYMGMT_SETTABLE_PARAMS, (OSSL_FUNC) ml_kem_settable_params }, \
         { OSSL_FUNC_KEYMGMT_HAS, (OSSL_FUNC) ml_kem_has }, \
         { OSSL_FUNC_KEYMGMT_MATCH, (OSSL_FUNC) ml_kem_match }, \
+        { OSSL_FUNC_KEYMGMT_VALIDATE, (OSSL_FUNC) ml_kem_validate }, \
         { OSSL_FUNC_KEYMGMT_GEN_INIT, (OSSL_FUNC) ml_kem_##bits##_gen_init }, \
         { OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS, (OSSL_FUNC) ml_kem_gen_set_params }, \
         { OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS, (OSSL_FUNC) ml_kem_gen_settable_params }, \

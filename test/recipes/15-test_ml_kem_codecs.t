@@ -25,8 +25,9 @@ my @formats = qw(seed-priv priv-only seed-only oqskeypair bare-seed bare-priv);
 plan skip_all => "ML-KEM isn't supported in this build"
     if disabled("ml-kem");
 
-plan tests => @algs * (18 + 10 * @formats);
+plan tests => @algs * (23 + 10 * @formats);
 my $seed = join ("", map {sprintf "%02x", $_} (0..63));
+my $weed = join ("", map {sprintf "%02x", $_} (1..64));
 my $ikme = join ("", map {sprintf "%02x", $_} (0..31));
 
 foreach my $alg (@algs) {
@@ -158,4 +159,36 @@ foreach my $alg (@algs) {
         ok(!compare(data_file($txt), $out),
             sprintf("text form private key: %s with %s", $alg, $f));
     }
+
+    # (5 tests): Test import/load PCT failure
+    my $real = sprintf('real-%s.der', $alg);
+    my $fake = sprintf('fake-%s.der', $alg);
+    my $mixt = sprintf('mixt-%s.der', $alg);
+    my $slen = $alg * 3 / 2; # Secret vector |s|
+    my $plen = $slen + 64;   # Public |t|, |rho| and hash
+    my $zlen = 32;           # FO implicit reject seed
+    ok(run(app([qw(openssl genpkey -algorithm), "ml-kem-$alg",
+                qw(-provparam ml-kem.output_formats=bare-priv -pkeyopt),
+                "hexseed:$seed", qw(-outform DER -out), $real],
+                sprintf("create real private key: %s", $alg))));
+    ok(run(app([qw(openssl genpkey -algorithm), "ml-kem-$alg",
+                qw(-provparam ml-kem.output_formats=bare-priv -pkeyopt),
+                "hexseed:$weed", qw(-outform DER -out), $fake],
+                sprintf("create fake private key: %s", $alg))));
+    my $realfh = IO::File->new($real, "r");
+    my $fakefh = IO::File->new($fake, "r");
+    local $/ = undef;
+    my $realder = <$realfh>;
+    my $fakeder = <$fakefh>;
+    ok (length($realder) == 24 + $slen + $plen + $zlen
+        && length($fakeder) == 24 + $slen + $plen + $zlen);
+    my $mixtder = substr($realder, 0, 24 + $slen)
+        . substr($fakeder, 24 + $slen, $plen)
+        . substr($realder, 24 + $slen + $plen, $zlen);
+    my $mixtfh = IO::File->new($mixt, "w");
+    print $mixtfh $mixtder;
+    ok(run(app([qw(openssl pkey -inform DER -noout -in), $real],
+               sprintf("accept valid keypair: %s", $alg))));
+    ok(!run(app([qw(openssl pkey -inform DER -noout -in), $mixt],
+                sprintf("reject real private and fake public: %s", $alg))));
 }

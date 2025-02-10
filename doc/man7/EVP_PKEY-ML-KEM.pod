@@ -146,11 +146,12 @@ This format represents B<PKCS#8> objects in which both the FIPS 203 64-byte
 B<(d, z)> seed and the decapsulation key B<dk> are present in the private key
 as part of the DER encoding of the ASN.1 sequence:
 
- PrivateKey ::= SEQUENCE {
-    seed OCTET STRING OPTIONAL,
-    expandedKey [1] IMPLICIT OCTET STRING OPTIONAL }
-   (WITH COMPONENTS {..., seed  PRESENT } |
-    WITH COMPONENTS {..., expandedKey  PRESENT })
+    ML-KEM-PrivateKey ::= CHOICE {
+      seed [0] IMPLICIT OCTET STRING (SIZE (64)),
+      expandedKey OCTET STRING (SIZE (1632 | 2400 | 3168)),
+      both SEQUENCE {
+        seed OCTET STRING (SIZE (64)),
+        expandedKey OCTET STRING (SIZE (1632 | 2400 | 3168)) } }
 
 If the C<seed-priv> format is not included in the list, this format will not be
 recognised on input.

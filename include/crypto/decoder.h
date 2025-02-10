@@ -25,6 +25,8 @@ void *ossl_decoder_from_algorithm(int id, const OSSL_ALGORITHM *algodef,
 OSSL_DECODER_INSTANCE *
 ossl_decoder_instance_new(OSSL_DECODER *decoder, void *decoderctx);
 void ossl_decoder_instance_free(OSSL_DECODER_INSTANCE *decoder_inst);
+int ossl_decoder_ctx_get_harderr(const OSSL_DECODER_CTX *ctx);
+void ossl_decoder_ctx_set_harderr(OSSL_DECODER_CTX *ctx);
 OSSL_DECODER_INSTANCE *ossl_decoder_instance_dup(const OSSL_DECODER_INSTANCE *src);
 int ossl_decoder_ctx_add_decoder_inst(OSSL_DECODER_CTX *ctx,
                                       OSSL_DECODER_INSTANCE *di);
