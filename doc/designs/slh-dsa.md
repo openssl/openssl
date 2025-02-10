@@ -81,7 +81,7 @@ where `ctx` is some optional value of size 0x00..0xFF.
 ACVP Testing requires the ability for the message to not be encoded also. This
 will be controlled by settable parameters.
 
-Pre Hash SLH-DSA Signature Generation encode the message as
+Pre Hash SLH-DSA Signature Generation encodes the message as
 
 ```c
 0x01 || len(ctx) || ctx || digest_OID || H(message).
@@ -101,6 +101,17 @@ the API's used should be
 
 EVP_PKEY_sign_message_init(), EVP_PKEY_sign(),
 EVP_PKEY_verify_message_init(), EVP_PKEY_verify().
+
+OpenSSL command line support
+----------------------------
+
+For backwards compatibility reasons EVP_DigestSignInit_ex(), EVP_DigestSign(),
+EVP_DigestVerifyInit_ex() and EVP_DigestVerify() may also be used, but the digest
+passed in `mdname` must be NULL (i.e. it effectively behaves the same as above).
+Passing a non NULL digest results in an error.
+
+OSSL_PKEY_PARAM_MANDATORY_DIGEST must return "" in the key manager getter and
+OSSL_SIGNATURE_PARAM_ALGORITHM_ID in the signature context getter.
 
 Buffers
 -------
