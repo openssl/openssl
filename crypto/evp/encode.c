@@ -470,16 +470,15 @@ static int evp_decodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
     if (eof == -1)
         eof = (f[2] == '=') + (f[3] == '=');
 
-    switch (eof)
-    {
-      case 2:
+    switch (eof) {
+    case 2:
         *(t++) = (unsigned char)(l >> 16L) & 0xff;
         break;
-      case 1:
+    case 1:
         *(t++) = (unsigned char)(l >> 16L) & 0xff;
         *(t++) = (unsigned char)(l >> 8L) & 0xff;
         break;
-      case 0:
+    case 0:
         *(t++) = (unsigned char)(l >> 16L) & 0xff;
         *(t++) = (unsigned char)(l >> 8L) & 0xff;
         *(t++) = (unsigned char)(l) & 0xff;
