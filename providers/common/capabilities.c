@@ -215,7 +215,7 @@ static const OSSL_PARAM param_group_list[][11] = {
     TLS_GROUP_ENTRY("ffdhe6144", "ffdhe6144", "DH", 36),
     TLS_GROUP_ENTRY("ffdhe8192", "ffdhe8192", "DH", 37),
 # endif
-# if !defined(OPENSSL_NO_ML_KEM) && !defined(FIPS_MODULE)
+# if !defined(OPENSSL_NO_ML_KEM)
     /* https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-8 */
     TLS_GROUP_ENTRY("MLKEM512", "", "ML-KEM-512", 38),
     TLS_GROUP_ENTRY("MLKEM768", "", "ML-KEM-768", 39),

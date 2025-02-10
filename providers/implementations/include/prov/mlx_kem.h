@@ -13,13 +13,15 @@ typedef struct ecdh_vinfo_st {
     size_t      pubkey_bytes;
     size_t      prvkey_bytes;
     size_t      shsec_bytes;
+    int         fips;
     int         ml_kem_slot;
     int         ml_kem_variant;
 } ECDH_VINFO;
 
 typedef struct mlx_key_st {
     OSSL_LIB_CTX *libctx;
-    char *propq;
+    char *mpropq;
+    char *xpropq;
     const ML_KEM_VINFO *minfo;
     const ECDH_VINFO *xinfo;
     EVP_PKEY *mkey;

@@ -17,6 +17,7 @@
 #include <openssl/self_test.h>
 #include "internal/nelem.h"
 #include "internal/param_build_set.h"
+#include "internal/property.h"
 #include "prov/implementations.h"
 #include "prov/mlx_kem.h"
 #include "prov/provider_ctx.h"
@@ -44,11 +45,11 @@ static const int minimal_selection = OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS
 
 /* Must match DECLARE_DISPATCH invocations at the end of the file */
 static const ECDH_VINFO hybrid_vtable[] = {
-    { "EC",  "P-256", 65, 32, 32, 1, EVP_PKEY_ML_KEM_768 },
-    { "EC",  "P-384", 97, 48, 48, 1, EVP_PKEY_ML_KEM_1024 },
+    { "EC",  "P-256", 65, 32, 32, 1, 1, EVP_PKEY_ML_KEM_768 },
+    { "EC",  "P-384", 97, 48, 48, 1, 1, EVP_PKEY_ML_KEM_1024 },
 #if !defined(OPENSSL_NO_ECX)
-    { "X25519", NULL, 32, 32, 32, 0, EVP_PKEY_ML_KEM_768 },
-    { "X448",   NULL, 56, 56, 56, 0, EVP_PKEY_ML_KEM_1024 },
+    { "X25519", NULL, 32, 32, 32, 0, 0, EVP_PKEY_ML_KEM_768 },
+    { "X448",   NULL, 56, 56, 56, 0, 0, EVP_PKEY_ML_KEM_1024 },
 #endif
 };
 
@@ -65,7 +66,9 @@ static void mlx_kem_key_free(void *vkey)
 
     if (key == NULL)
         return;
-    OPENSSL_free(key->propq);
+    if (key->xpropq != key->mpropq)
+        OPENSSL_free(key->xpropq);
+    OPENSSL_free(key->mpropq);
     EVP_PKEY_free(key->mkey);
     EVP_PKEY_free(key->xkey);
     OPENSSL_free(key);
@@ -89,7 +92,13 @@ mlx_kem_key_new(unsigned int v, OSSL_LIB_CTX *libctx, char *propq)
     key->xinfo = &hybrid_vtable[v];
     key->xkey = key->mkey = NULL;
     key->state = MLX_HAVE_NOKEYS;
-    key->propq = propq;
+    key->mpropq = propq;
+    if (key->xinfo->fips) {
+        key->xpropq = propq;
+    } else {
+        if ((key->xpropq = ossl_merge_queries(libctx, propq, "-fips")) == NULL)
+            goto err;
+    }
     return key;
 
   err:
@@ -331,14 +340,15 @@ static const OSSL_PARAM *mlx_kem_imexport_types(int selection)
 }
 
 static int
-load_slot(OSSL_LIB_CTX *libctx, const char *propq, const char *pname,
-          int selection, MLX_KEY *key, int slot, const uint8_t *in,
+load_slot(MLX_KEY *key, const char *pname,
+          int selection, int slot, const uint8_t *in,
           int mbytes, int xbytes)
 {
     EVP_PKEY_CTX *ctx;
     EVP_PKEY **ppkey;
     OSSL_PARAM parr[] = { OSSL_PARAM_END, OSSL_PARAM_END, OSSL_PARAM_END };
     const char *alg;
+    const char *propq;
     char *group = NULL;
     size_t off, len;
     void *val;
@@ -347,11 +357,13 @@ load_slot(OSSL_LIB_CTX *libctx, const char *propq, const char *pname,
 
     if (slot == ml_kem_slot) {
         alg = key->minfo->algorithm_name;
+        propq = key->mpropq;
         ppkey = &key->mkey;
         off = slot * xbytes;
         len = mbytes;
     } else {
         alg = key->xinfo->algorithm_name;
+        propq = key->xpropq;
         group = (char *) key->xinfo->group_name;
         ppkey = &key->xkey;
         off = (1 - ml_kem_slot) * mbytes;
@@ -359,7 +371,7 @@ load_slot(OSSL_LIB_CTX *libctx, const char *propq, const char *pname,
     }
     val = (void *)(in + off);
 
-    if ((ctx = EVP_PKEY_CTX_new_from_name(libctx, alg, propq)) == NULL
+    if ((ctx = EVP_PKEY_CTX_new_from_name(key->libctx, alg, propq)) == NULL
         || EVP_PKEY_fromdata_init(ctx) <= 0)
         goto err;
     parr[0] = OSSL_PARAM_construct_octet_string(pname, val, len);
@@ -384,14 +396,14 @@ load_keys(MLX_KEY *key,
     for (slot = 0; slot < 2; ++slot) {
         if (prvlen) {
             /* Ignore public keys when private provided */
-            if (!load_slot(key->libctx, key->propq, OSSL_PKEY_PARAM_PRIV_KEY,
-                           minimal_selection, key, slot, prvenc,
+            if (!load_slot(key, OSSL_PKEY_PARAM_PRIV_KEY,
+                           minimal_selection, slot, prvenc,
                            key->minfo->prvkey_bytes, key->xinfo->prvkey_bytes))
                 goto err;
         } else if (publen) {
             /* Absent private key data, import public keys */
-            if (!load_slot(key->libctx, key->propq, OSSL_PKEY_PARAM_PUB_KEY,
-                           minimal_selection, key, slot, pubenc,
+            if (!load_slot(key, OSSL_PKEY_PARAM_PUB_KEY,
+                           minimal_selection, slot, pubenc,
                            key->minfo->pubkey_bytes, key->xinfo->pubkey_bytes))
                 goto err;
         }
@@ -613,10 +625,15 @@ static int mlx_kem_set_params(void *vkey, const OSSL_PARAM params[])
 
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PROPERTIES);
     if (p != NULL) {
-        OPENSSL_free(key->propq);
-        key->propq = NULL;
-        if (!OSSL_PARAM_get_utf8_string(p, &key->propq, 0))
+        /* With explicitly set properties do not apply -fips on top */
+        if (key->xpropq != key->mpropq)
+            OPENSSL_free(key->xpropq);
+        OPENSSL_free(key->mpropq);
+        key->mpropq = NULL;
+        key->xpropq = NULL;
+        if (!OSSL_PARAM_get_utf8_string(p, &key->mpropq, 0))
             return 0;
+        key->xpropq = key->mpropq;
     }
 
     if (publen != key->minfo->pubkey_bytes + key->xinfo->pubkey_bytes) {
@@ -702,10 +719,9 @@ static void *mlx_kem_gen(void *vgctx, OSSL_CALLBACK *osslcb, void *cbarg)
     if ((gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0)
         return key;
 
-    /* For now, using the same "propq" for all components */
-    key->mkey = EVP_PKEY_Q_keygen(key->libctx, key->propq,
+    key->mkey = EVP_PKEY_Q_keygen(key->libctx, key->mpropq,
                                   key->minfo->algorithm_name);
-    key->xkey = EVP_PKEY_Q_keygen(key->libctx, key->propq,
+    key->xkey = EVP_PKEY_Q_keygen(key->libctx, key->xpropq,
                                   key->xinfo->algorithm_name,
                                   key->xinfo->group_name);
     if (key->mkey != NULL && key->xkey != NULL) {
