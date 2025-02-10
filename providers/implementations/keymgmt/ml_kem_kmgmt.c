@@ -352,7 +352,6 @@ static int ml_kem_import(void *vkey, int selection, const OSSL_PARAM params[])
 {
     ML_KEM_KEY *key = vkey;
     int include_private;
-    int res;
 
     if (!ossl_prov_is_running() || key == NULL)
         return 0;
@@ -361,14 +360,7 @@ static int ml_kem_import(void *vkey, int selection, const OSSL_PARAM params[])
         return 0;
 
     include_private = selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY ? 1 : 0;
-    res = ml_kem_key_fromdata(key, params, include_private);
-#ifdef FIPS_MODULE
-    if (res > 0 && include_private && !ml_kem_pairwise_test(key)) {
-        ossl_set_error_state(OSSL_SELF_TEST_TYPE_PCT);
-        res = 0;
-    }
-#endif  /* FIPS_MODULE */
-    return res;
+    return ml_kem_key_fromdata(key, params, include_private);
 }
 
 static const OSSL_PARAM *ml_kem_gettable_params(void *provctx)
