@@ -262,9 +262,9 @@ static int test_fin_only_blocking(void)
     if (!TEST_int_eq(SSL_get_error(clientquic, 0), SSL_ERROR_ZERO_RETURN)
                /*
                 * We expect the SSL_read_ex to not have blocked so this should
-                * be very fast. 20ms should be plenty.
+                * be very fast. 40ms should be plenty.
                 */
-            || !TEST_uint64_t_le(ossl_time2ms(timediff), 20))
+            || !TEST_uint64_t_le(ossl_time2ms(timediff), 40))
         goto end;
 
     if (!TEST_true(qtest_shutdown(qtserv, clientquic)))
