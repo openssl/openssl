@@ -274,6 +274,30 @@ OSSL_CORE_MAKE_FUNC(int, provider_random_bytes, (void *provctx, int which,
                                                  void *buf, size_t n,
                                                  unsigned int strength))
 
+/* Libssl related functions */
+#define OSSL_FUNC_SSL_QUIC_TLS_CRYPTO_SEND          2001
+OSSL_CORE_MAKE_FUNC(int, SSL_QUIC_TLS_crypto_send,
+                    (SSL *s, const unsigned char *buf, size_t buf_len,
+                     size_t *consumed, void *arg))
+#define OSSL_FUNC_SSL_QUIC_TLS_CRYPTO_RECV_RCD      2002
+OSSL_CORE_MAKE_FUNC(int, SSL_QUIC_TLS_crypto_recv_rcd,
+                    (SSL *s, const unsigned char **buf, size_t *bytes_read,
+                     void *arg))
+#define OSSL_FUNC_SSL_QUIC_TLS_CRYPTO_RELEASE_RCD   2003
+OSSL_CORE_MAKE_FUNC(int, SSL_QUIC_TLS_crypto_release_rcd,
+                    (SSL *s, size_t bytes_read, void *arg))
+#define OSSL_FUNC_SSL_QUIC_TLS_YIELD_SECRET         2004
+OSSL_CORE_MAKE_FUNC(int, SSL_QUIC_TLS_yield_secret,
+                    (SSL *s, uint32_t prot_level, int direction,
+                     const unsigned char *secret, size_t secret_len, void *arg))
+#define OSSL_FUNC_SSL_QUIC_TLS_GOT_TRANSPORT_PARAMS 2005
+OSSL_CORE_MAKE_FUNC(int, SSL_QUIC_TLS_got_transport_params,
+                    (SSL *s, const unsigned char *params, size_t params_len,
+                     void *arg))
+#define OSSL_FUNC_SSL_QUIC_TLS_ALERT                2006
+OSSL_CORE_MAKE_FUNC(int, SSL_QUIC_TLS_alert,
+                    (SSL *s, unsigned char alert_code, void *arg))
+
 /* Operations */
 
 # define OSSL_OP_DIGEST                              1

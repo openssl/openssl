@@ -68,7 +68,7 @@ static int ch_on_transport_params(const unsigned char *params,
                                   void *arg);
 static int ch_on_handshake_alert(void *arg, unsigned char alert_code);
 static int ch_on_handshake_complete(void *arg);
-static int ch_on_handshake_yield_secret(uint32_t enc_level, int direction,
+static int ch_on_handshake_yield_secret(uint32_t prot_level, int direction,
                                         uint32_t suite_id, EVP_MD *md,
                                         const unsigned char *secret,
                                         size_t secret_len,
@@ -333,6 +333,7 @@ static int ch_init(QUIC_CHANNEL *ch)
     tls_args.alert_cb                   = ch_on_handshake_alert;
     tls_args.alert_cb_arg               = ch;
     tls_args.is_server                  = ch->is_server;
+    tls_args.ossl_quic                  = 1;
 
     if ((ch->qtls = ossl_quic_tls_new(&tls_args)) == NULL)
         goto err;
@@ -946,7 +947,7 @@ static int ch_on_crypto_release_record(size_t bytes_read, void *arg)
     return ossl_quic_rstream_release_record(rstream, bytes_read);
 }
 
-static int ch_on_handshake_yield_secret(uint32_t enc_level, int direction,
+static int ch_on_handshake_yield_secret(uint32_t prot_level, int direction,
                                         uint32_t suite_id, EVP_MD *md,
                                         const unsigned char *secret,
                                         size_t secret_len,
@@ -954,6 +955,25 @@ static int ch_on_handshake_yield_secret(uint32_t enc_level, int direction,
 {
     QUIC_CHANNEL *ch = arg;
     uint32_t i;
+    uint32_t enc_level;
+
+    /* Convert TLS protection level to QUIC encryption level */
+    switch (prot_level) {
+    case OSSL_RECORD_PROTECTION_LEVEL_EARLY:
+        enc_level = QUIC_ENC_LEVEL_0RTT;
+        break;
+
+    case OSSL_RECORD_PROTECTION_LEVEL_HANDSHAKE:
+        enc_level = QUIC_ENC_LEVEL_HANDSHAKE;
+        break;
+
+    case OSSL_RECORD_PROTECTION_LEVEL_APPLICATION:
+        enc_level = QUIC_ENC_LEVEL_1RTT;
+        break;
+
+    default:
+        return 0;
+    }
 
     if (enc_level < QUIC_ENC_LEVEL_HANDSHAKE || enc_level >= QUIC_ENC_LEVEL_NUM)
         /* Invalid EL. */

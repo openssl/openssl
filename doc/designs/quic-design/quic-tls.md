@@ -74,8 +74,8 @@ typedef struct quic_tls_args_st {
                           size_t *bytes_read, void *arg);
     void *crypto_recv_cb_arg;
 
-    /* Called when a traffic secret is available for a given encryption level. */
-    int (*yield_secret_cb)(uint32_t enc_level, int direction /* 0=RX, 1=TX */,
+    /* Called when a traffic secret is available for a given TLS protection level. */
+    int (*yield_secret_cb)(uint32_t prot_level, int direction /* 0=RX, 1=TX */,
                            uint32_t suite_id, EVP_MD *md,
                            const unsigned char *secret, size_t secret_len,
                            void *arg);

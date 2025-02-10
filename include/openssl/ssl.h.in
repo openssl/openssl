@@ -2825,6 +2825,19 @@ __owur int SSL_get0_server_cert_type(const SSL *s, unsigned char **t, size_t *le
 __owur int SSL_CTX_get0_client_cert_type(const SSL_CTX *ctx, unsigned char **t, size_t *len);
 __owur int SSL_CTX_get0_server_cert_type(const SSL_CTX *s, unsigned char **t, size_t *len);
 
+/*
+ * Protection level. For <= TLSv1.2 only "NONE" and "APPLICATION" are used.
+ */
+# define OSSL_RECORD_PROTECTION_LEVEL_NONE        0
+# define OSSL_RECORD_PROTECTION_LEVEL_EARLY       1
+# define OSSL_RECORD_PROTECTION_LEVEL_HANDSHAKE   2
+# define OSSL_RECORD_PROTECTION_LEVEL_APPLICATION 3
+
+int SSL_set_quic_tls_cbs(SSL *s, const OSSL_DISPATCH *qtdis, void *arg);
+int SSL_set_quic_tls_transport_params(SSL *s,
+                                      const unsigned char *params,
+                                      size_t params_len);
+
 # ifdef  __cplusplus
 }
 # endif

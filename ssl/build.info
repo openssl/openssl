@@ -1,10 +1,6 @@
-SUBDIRS=record rio
+SUBDIRS=record rio quic
 
 LIBS=../libssl
-
-IF[{- !$disabled{quic} -}]
-  SUBDIRS=quic
-ENDIF
 
 SOURCE[../libssl]=\
         pqueue.c \
