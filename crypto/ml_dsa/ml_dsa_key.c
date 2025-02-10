@@ -353,9 +353,9 @@ int ossl_ml_dsa_key_public_from_private(ML_DSA_KEY *key)
     VECTOR t0;
     EVP_MD_CTX *md_ctx = NULL;
 
-    md_ctx = EVP_MD_CTX_new();
-    ret = (md_ctx != NULL)
-        && vector_alloc(&t0, key->params->k) /* t0 is already in the private key */
+    if (!vector_alloc(&t0, key->params->k)) /* t0 is already in the private key */
+        return 0;
+    ret = ((md_ctx = EVP_MD_CTX_new())!= NULL)
         && ossl_ml_dsa_key_pub_alloc(key)  /* allocate space for t1 */
         && public_from_private(key, md_ctx, &key->t1, &t0)
         && vector_equal(&t0, &key->t0) /* compare the generated t0 to the expected */
