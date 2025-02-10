@@ -24,7 +24,61 @@ use lib srctop_dir('Configurations');
 use lib bldtop_dir('.');
 
 plan skip_all => 'ML-DSA is not supported in this build' if disabled('ml-dsa');
-plan tests => 2;
+plan tests => 12;
+
+require_ok(srctop_file('test','recipes','tconversion.pl'));
+
+subtest "ml-dsa-44 conversions using 'openssl pkey' -- private key" => sub {
+    tconversion( -type => "pkey",
+                 -in => srctop_file("test","testmldsa44.pem"),
+                 -prefix => "mldsa44-pkey-priv" );
+};
+subtest "ml-dsa-44 conversions using 'openssl pkey' -- pkcs8 key" => sub {
+    tconversion( -type => "pkey",
+                 -in => srctop_file("test","testmldsa44.pem"),
+                 -args => ["pkey"],
+                 -prefix => "mldsa44-pkey-pkcs8" );
+};
+subtest "ml-dsa-44 conversions using 'openssl pkey' -- pub key" => sub {
+    tconversion( -type => "pkey",
+                 -in => srctop_file("test","testmldsa44pub.pem"),
+                 -args => ["pkey", "-pubin", "-pubout"],
+                 -prefix => "mldsa44-pkey-pub" );
+};
+
+subtest "ml-dsa-65 conversions using 'openssl pkey' -- private key" => sub {
+    tconversion( -type => "pkey",
+                 -in => srctop_file("test","testmldsa65.pem"),
+                 -prefix => "mldsa65-pkey-priv");
+};
+subtest "ml-dsa-65 conversions using 'openssl pkey' -- pkcs8 key" => sub {
+    tconversion( -type => "pkey", -in => srctop_file("test","testmldsa65.pem"),
+                 -args => ["pkey"], -prefix => "mldsa65-pkey-pkcs8");
+};
+subtest "ml-dsa-65 conversions using 'openssl pkey' -- pub key" => sub {
+    tconversion( -type => "pkey",
+                 -in => srctop_file("test","testmldsa65pub.pem"),
+                 -args => ["pkey", "-pubin", "-pubout"],
+                 -prefix => "mldsa65-pkey-pub" );
+};
+
+subtest "ml-dsa-87 conversions using 'openssl pkey' -- private key" => sub {
+    tconversion( -type => "pkey",
+                 -in => srctop_file("test","testmldsa87.pem"),
+                 -prefix => "mldsa87-pkey-priv" );
+};
+subtest "ml-dsa-87 conversions using 'openssl pkey' -- pkcs8 key" => sub {
+    tconversion( -type => "pkey",
+                 -in => srctop_file("test","testmldsa87.pem"),
+                 -args => ["pkey"],
+                 -prefix => "mldsa87-pkey-pkcs8" );
+};
+subtest "ml-dsa-87 conversions using 'openssl pkey' -- pub key" => sub {
+    tconversion( -type => "pkey",
+                 -in => srctop_file("test","testmldsa87pub.pem"),
+                 -args => ["pkey", "-pubin", "-pubout"],
+                 -prefix => "mldsa87-pkey-pub" );
+};
 
 ok(run(test(["ml_dsa_test"])), "running ml_dsa_test");
 
