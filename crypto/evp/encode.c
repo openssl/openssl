@@ -418,6 +418,9 @@ static int evp_decodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
     unsigned long l;
     const unsigned char *table;
 
+    if (eof < -1 || eof > 2)
+        return -1;
+
     if (ctx != NULL && (ctx->flags & EVP_ENCODE_CTX_USE_SRP_ALPHABET) != 0)
         table = srpdata_ascii2bin;
     else
