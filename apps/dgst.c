@@ -349,7 +349,7 @@ int dgst_main(int argc, char **argv)
 
         if (oneshot_sign) {
             mctx = signctx;
-        } else  if (BIO_get_md_ctx(bmd, &mctx) <= 0) {
+        } else if (BIO_get_md_ctx(bmd, &mctx) <= 0) {
             BIO_printf(bio_err, "Error getting context\n");
             goto end;
         }
@@ -703,7 +703,6 @@ static int do_fp_oneshot_sign(BIO *out, EVP_MD_CTX *ctx, BIO *in, int sep, int b
                               const char *sig_name, const char *file)
 {
     int res, ret = EXIT_FAILURE;
-
     size_t len = 0;
     int buflen = 0;
     int maxlen = 16 * 1024 * 1024;
