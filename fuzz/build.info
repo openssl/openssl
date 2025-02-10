@@ -38,6 +38,10 @@ IF[{- !$disabled{"fuzz-afl"} || !$disabled{"fuzz-libfuzzer"} -}]
     PROGRAMS{noinst}=dtlsclient dtlsserver
   ENDIF
 
+  IF[{- !$disabled{"ml-dsa"} -}]
+    PROGRAMS{noinst}=ml-dsa
+  ENDIF
+
   SOURCE[asn1]=asn1.c driver.c fuzz_rand.c
   INCLUDE[asn1]=../include {- $ex_inc -}
   DEPEND[asn1]=../libcrypto ../libssl {- $ex_lib -}
@@ -141,6 +145,10 @@ IF[{- !$disabled{"fuzz-afl"} || !$disabled{"fuzz-libfuzzer"} -}]
   SOURCE[provider]=provider.c driver.c
   INCLUDE[provider]=../include {- $ex_inc -}
   DEPEND[provider]=../libcrypto {- $ex_lib -}
+
+  SOURCE[ml-dsa]=ml-dsa.c driver.c
+  INCLUDE[ml-dsa]=../include {- $ex_inc -}
+  DEPEND[ml-dsa]=../libcrypto {- $ex_lib -}
 ENDIF
 
 IF[{- !$disabled{tests} -}]
@@ -172,6 +180,10 @@ IF[{- !$disabled{tests} -}]
 
   IF[{- !$disabled{"dtls"} -}]
     PROGRAMS{noinst}=dtlsclient-test dtlsserver-test
+  ENDIF
+
+  IF[{- !$disabled{"ml-dsa"} -}]
+    PROGRAMS{noinst}=ml-dsa-test
   ENDIF
 
   SOURCE[asn1-test]=asn1.c test-corpus.c fuzz_rand.c
@@ -278,4 +290,8 @@ IF[{- !$disabled{tests} -}]
   SOURCE[provider-test]=provider.c test-corpus.c
   INCLUDE[provider-test]=../include
   DEPEND[provider-test]=../libcrypto
+
+  SOURCE[ml-dsa-test]=ml-dsa.c test-corpus.c fuzz_rand.c
+  INCLUDE[ml-dsa-test]=../include
+  DEPEND[ml-dsa-test]=../libcrypto.a
 ENDIF
