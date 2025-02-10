@@ -71,11 +71,11 @@ my ($in,$out,$ks) = @_3args;
 $code.=<<___;
 .section .rodata align=64
 .align 16
-.SM4_FK:
+SM4_FK:
 .long 0xa3b1bac6, 0x56aa3350, 0x677d9197, 0xb27022dc
 
 .align 16
-.SM4_CK:
+SM4_CK:
 .long 0x00070E15, 0x1C232A31, 0x383F464D, 0x545B6269
 .long 0x70777E85, 0x8C939AA1, 0xA8AFB6BD, 0xC4CBD2D9
 .long 0xE0E7EEF5, 0xFC030A11, 0x181F262D, 0x343B4249
@@ -85,13 +85,13 @@ $code.=<<___;
 .long 0xA0A7AEB5, 0xBCC3CAD1, 0xD8DFE6ED, 0xF4FB0209
 .long 0x10171E25, 0x2C333A41, 0x484F565D, 0x646B7279
 
-.IN_SHUFB:
+IN_SHUFB:
 .byte 0x03, 0x02, 0x01, 0x00, 0x07, 0x06, 0x05, 0x04
 .byte 0x0b, 0x0a, 0x09, 0x08, 0x0f, 0x0e, 0x0d, 0x0c
 .byte 0x03, 0x02, 0x01, 0x00, 0x07, 0x06, 0x05, 0x04
 .byte 0x0b, 0x0a, 0x09, 0x08, 0x0f, 0x0e, 0x0d, 0x0c
 
-.OUT_SHUFB:
+OUT_SHUFB:
 .byte 0x0f, 0x0e, 0x0d, 0x0c, 0x0b, 0x0a, 0x09, 0x08
 .byte 0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00
 .byte 0x0f, 0x0e, 0x0d, 0x0c, 0x0b, 0x0a, 0x09, 0x08
@@ -118,31 +118,31 @@ ${prefix}_set_key:
 .Lossl_${prefix}_set_key_seh_prolog_end:
 
     vmovdqu         ($userKey), %xmm0
-    vpshufb         .IN_SHUFB(%rip), %xmm0, %xmm0
-    vpxor           .SM4_FK(%rip), %xmm0, %xmm0
+    vpshufb         IN_SHUFB(%rip), %xmm0, %xmm0
+    vpxor           SM4_FK(%rip), %xmm0, %xmm0
 
-    movdqu          .SM4_CK(%rip), %xmm1
+    movdqu          SM4_CK(%rip), %xmm1
     vsm4key4        %xmm1, %xmm0, %xmm0
     vmovdqu         %xmm0, ($key)
-    movdqu          .SM4_CK + 16(%rip), %xmm1
+    movdqu          SM4_CK + 16(%rip), %xmm1
     vsm4key4        %xmm1, %xmm0, %xmm0
     vmovdqu         %xmm0, 16($key)
-    movdqu          .SM4_CK + 32(%rip), %xmm1
+    movdqu          SM4_CK + 32(%rip), %xmm1
     vsm4key4        %xmm1, %xmm0, %xmm0
     vmovdqu         %xmm0, 32($key)
-    movdqu          .SM4_CK + 48(%rip), %xmm1
+    movdqu          SM4_CK + 48(%rip), %xmm1
     vsm4key4        %xmm1, %xmm0, %xmm0
     vmovdqu         %xmm0, 48($key)
-    movdqu          .SM4_CK + 64(%rip), %xmm1
+    movdqu          SM4_CK + 64(%rip), %xmm1
     vsm4key4        %xmm1, %xmm0, %xmm0
     vmovdqu         %xmm0, 64($key)
-    movdqu          .SM4_CK + 80(%rip), %xmm1
+    movdqu          SM4_CK + 80(%rip), %xmm1
     vsm4key4        %xmm1, %xmm0, %xmm0
     vmovdqu         %xmm0, 80($key)
-    movdqu          .SM4_CK + 96(%rip), %xmm1
+    movdqu          SM4_CK + 96(%rip), %xmm1
     vsm4key4        %xmm1, %xmm0, %xmm0
     vmovdqu         %xmm0, 96($key)
-    movdqu          .SM4_CK + 112(%rip), %xmm1
+    movdqu          SM4_CK + 112(%rip), %xmm1
     vsm4key4        %xmm1, %xmm0, %xmm0
     vmovdqu         %xmm0, 112($key)
 
@@ -168,7 +168,7 @@ ${prefix}_encrypt:
 .Lossl_${prefix}_encrypt_seh_prolog_end:
 
     vmovdqu         ($in), %xmm0
-    vpshufb         .IN_SHUFB(%rip), %xmm0, %xmm0
+    vpshufb         IN_SHUFB(%rip), %xmm0, %xmm0
 
     # note: to simplify binary instructions translation
     movq            $ks, %r10
@@ -182,7 +182,7 @@ ${prefix}_encrypt:
     vsm4rnds4       96(%r10), %xmm0, %xmm0
     vsm4rnds4       112(%r10), %xmm0, %xmm0
 
-    vpshufb         .OUT_SHUFB(%rip), %xmm0, %xmm0
+    vpshufb         OUT_SHUFB(%rip), %xmm0, %xmm0
     vmovdqu         %xmm0, ($out)
     vpxor           %xmm0, %xmm0, %xmm0 # clear register
     pop             %rbp
@@ -205,7 +205,7 @@ ${prefix}_decrypt:
 .Lossl_${prefix}_decrypt_seh_prolog_end:
 
     vmovdqu         ($in), %xmm0
-    vpshufb         .IN_SHUFB(%rip), %xmm0, %xmm0
+    vpshufb         IN_SHUFB(%rip), %xmm0, %xmm0
 
     vmovdqu         112($ks), %xmm1
     vpshufd         \$27, %xmm1, %xmm1
@@ -232,7 +232,7 @@ ${prefix}_decrypt:
     vpshufd         \$27, %xmm1, %xmm1
     vsm4rnds4       %xmm1, %xmm0, %xmm0
 
-    vpshufb         .OUT_SHUFB(%rip), %xmm0, %xmm0
+    vpshufb         OUT_SHUFB(%rip), %xmm0, %xmm0
     vmovdqu         %xmm0, ($out)
     vpxor           %xmm0, %xmm0, %xmm0 # clear registers
     vpxor           %xmm1, %xmm1, %xmm1
