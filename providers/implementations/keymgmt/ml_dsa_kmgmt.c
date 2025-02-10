@@ -255,8 +255,10 @@ static int ml_dsa_import(void *keydata, int selection, const OSSL_PARAM params[]
 #ifdef FIPS_MODULE
     if (res > 0) {
         res = ml_dsa_pairwise_test(key);
-        if (res <= 0)
+        if (res <= 0) {
+            ossl_ml_dsa_key_reset(key);
             ossl_set_error_state(OSSL_SELF_TEST_TYPE_PCT);
+        }
     }
 #endif
     return res;

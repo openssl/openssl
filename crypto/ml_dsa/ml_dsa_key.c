@@ -132,7 +132,7 @@ int ossl_ml_dsa_key_priv_alloc(ML_DSA_KEY *key)
 }
 
 /**
- * @brief Destroy a ML_DSA_KEY object
+ * @brief Destroy an ML_DSA_KEY object
  */
 void ossl_ml_dsa_key_free(ML_DSA_KEY *key)
 {
@@ -141,6 +141,15 @@ void ossl_ml_dsa_key_free(ML_DSA_KEY *key)
 
     EVP_MD_free(key->shake128_md);
     EVP_MD_free(key->shake256_md);
+    ossl_ml_dsa_key_reset(key);
+    OPENSSL_free(key);
+}
+
+/**
+ * @brief Factory reset an ML_DSA_KEY object
+ */
+void ossl_ml_dsa_key_reset(ML_DSA_KEY *key)
+{
     vector_zero(&key->s2);
     vector_zero(&key->s1);
     vector_zero(&key->t0);
@@ -148,11 +157,13 @@ void ossl_ml_dsa_key_free(ML_DSA_KEY *key)
     vector_free(&key->t1);
     OPENSSL_cleanse(key->K, sizeof(key->K));
     OPENSSL_free(key->pub_encoding);
+    key->pub_encoding = NULL;
     if (key->priv_encoding != NULL)
         OPENSSL_clear_free(key->priv_encoding, key->params->sk_len);
+    key->priv_encoding = NULL;
     if (key->seed != NULL)
         OPENSSL_clear_free(key->seed, ML_DSA_SEED_BYTES);
-    OPENSSL_free(key);
+    key->seed = NULL;
 }
 
 /**
@@ -344,19 +355,14 @@ int ossl_ml_dsa_key_public_from_private(ML_DSA_KEY *key)
 
     if (!vector_alloc(&t0, key->params->k)) /* t0 is already in the private key */
         return 0;
-    if (!ossl_ml_dsa_key_pub_alloc(key)) /* allocate space for t1 */
-        return 0;
-
-    md_ctx = EVP_MD_CTX_new();
-    if (md_ctx == NULL)
-        goto err;
-
-    ret = public_from_private(key, md_ctx, &key->t1, &t0)
+    ret = ((md_ctx = EVP_MD_CTX_new())!= NULL)
+        && ossl_ml_dsa_key_pub_alloc(key)  /* allocate space for t1 */
+        && public_from_private(key, md_ctx, &key->t1, &t0)
+        && vector_equal(&t0, &key->t0) /* compare the generated t0 to the expected */
         && ossl_ml_dsa_pk_encode(key)
         && shake_xof(md_ctx, key->shake256_md,
                      key->pub_encoding, key->params->pk_len,
                      key->tr, sizeof(key->tr));
-err:
     vector_free(&t0);
     EVP_MD_CTX_free(md_ctx);
     return ret;
