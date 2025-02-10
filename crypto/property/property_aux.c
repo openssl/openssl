@@ -18,7 +18,7 @@ char *ossl_merge_queries(OSSL_LIB_CTX *libctx, const char *propq1,
                          const char *propq2)
 {
     OSSL_PROPERTY_LIST *pl1, *pl2, *mergedpl;
-    char *props;
+    char *props = NULL;
     size_t props_len;
 
     if (propq1 == NULL) {
