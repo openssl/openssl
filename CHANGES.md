@@ -135,6 +135,15 @@ OpenSSL 3.5
 
    *Juhász Péter*
 
+ * Parallel dual-prime 1024/1536/2048-bit modular exponentiation for
+   AVX_IFMA capable processors (Intel Sierra Forest and its successor).
+
+   This optimization brings performance enhancement, ranging from 1.8 to 2.2
+   times, for the sign/decryption operations of rsaz-2k/3k/4k (`openssl speed rsa`)
+   on the Intel Sierra Forest.
+
+   *Zhiguo Zhou, Wangyang Guo (Intel Corp)*
+   
  * Fix EVP_DecodeUpdate(): do not write padding zeros to the decoded output.
 
    According to the documentation,
