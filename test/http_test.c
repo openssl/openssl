@@ -15,9 +15,13 @@
 
 #include "testutil.h"
 
+#define HTTP_STATUS_CODE_OK                200
+#define HTTP_STATUS_CODES_FATAL_ERROR      399
+#define HTTP_STATUS_CODES_NONFATAL_ERROR   400
+
 static const ASN1_ITEM *x509_it = NULL;
 static X509 *x509 = NULL;
-#define RPATH "/path/result.crt"
+#define RPATH "/path"
 
 typedef struct {
     BIO *out;
@@ -32,6 +36,8 @@ typedef struct {
  * For POST, copy request headers+body from mem BIO |in| as response to |out|.
  * For GET, redirect to RPATH unless already there, else use |content_type| and
  * respond with |txt| if not NULL, else with |rsp| of ASN1 type |it|.
+ * Take the status code suggsted by the client via special prefix of the path.
+ * On fatal status, respond with empty content.
  * Response hdr has HTTP version 1.|version| and |keep_alive| (unless implicit).
  */
 static int mock_http_server(BIO *in, BIO *out, char version, int keep_alive,
@@ -40,14 +46,26 @@ static int mock_http_server(BIO *in, BIO *out, char version, int keep_alive,
 {
     const char *req, *path;
     long count = BIO_get_mem_data(in, (unsigned char **)&req);
-    const char *hdr = (char *)req;
+    const char *hdr = (char *)req, *suggested_status;
+    char status[4] = "200";
     int len;
     int is_get = count >= 4 && CHECK_AND_SKIP_PREFIX(hdr, "GET ");
 
-    /* first line should contain "(GET|POST) <path> HTTP/1.x" */
+    /* first line should contain "(GET|POST) (/<suggested status>)?/<path> HTTP/1.x" */
     if (!is_get
             && !(TEST_true(count >= 5 && CHECK_AND_SKIP_PREFIX(hdr, "POST "))))
         return 0;
+
+    /* get any status code string to be returned suggested by test client */
+    if (*hdr == '/') {
+        suggested_status = ++hdr;
+        while (*hdr >= '0' && *hdr <= '9')
+            hdr++;
+        if (hdr == suggested_status + sizeof(status) - 1)
+            strncpy(status, suggested_status, sizeof(status) - 1);
+        else
+            hdr = suggested_status - 1;
+    }
 
     path = hdr;
     hdr = strchr(hdr, ' ');
@@ -62,6 +80,7 @@ static int mock_http_server(BIO *in, BIO *out, char version, int keep_alive,
         return 0;
     if (!TEST_char_eq(*hdr++, '\r') || !TEST_char_eq(*hdr++, '\n'))
         return 0;
+
     count -= (hdr - req);
     if (count < 0 || out == NULL)
         return 0;
@@ -73,12 +92,19 @@ static int mock_http_server(BIO *in, BIO *out, char version, int keep_alive,
                           "Location: %s\r\n\r\n",
                           version, RPATH) > 0; /* same server */
     }
-    if (BIO_printf(out, "HTTP/1.%c 200 OK\r\n", version) <= 0)
+    if (BIO_printf(out, "HTTP/1.%c %s %s\r\n", version, status,
+                   /* mock some reason string: */
+                   strcmp(status, "200") == 0 ? "OK" :
+                   strcmp(status, "400") >= 0 ? "error" : "fatal") <= 0)
         return 0;
     if ((version == '0') == keep_alive) /* otherwise, default */
         if (BIO_printf(out, "Connection: %s\r\n",
                        version == '0' ? "keep-alive" : "close") <= 0)
             return 0;
+
+    if (strcmp(status, "399") == 0) /* HTTP_STATUS_CODES_FATAL_ERROR */
+        return BIO_puts(out, "\r\n") == 2; /* empty content */
+
     if (is_get) { /* construct new header and body */
         if (txt != NULL)
             len = strlen(txt);
@@ -90,7 +116,7 @@ static int mock_http_server(BIO *in, BIO *out, char version, int keep_alive,
         if (txt != NULL)
             return BIO_puts(out, txt);
         return ASN1_item_i2d_bio(it, out, rsp);
-    } else {
+    } else { /* respond on POST request */
         if (CHECK_AND_SKIP_PREFIX(hdr, "Connection: ")) {
             /* skip req Connection header */
             hdr = strstr(hdr, "\r\n");
@@ -120,17 +146,21 @@ static long http_bio_cb_ex(BIO *bio, int oper, const char *argp, size_t len,
 #define REAL_SERVER_URL "http://httpbin.org/"
 #define DOCTYPE_HTML "<!DOCTYPE html>\n"
 
-static int test_http_method(int do_get, int do_txt)
+/* do_get > 1 used for testing redirection */
+static int test_http_method(int do_get, int do_txt, int suggested_status)
 {
     BIO *wbio = BIO_new(BIO_s_mem());
     BIO *rbio = BIO_new(BIO_s_mem());
     server_args mock_args = { NULL, NULL, NULL, '0', 0 };
     BIO *req, *rsp;
+    char path[80];
     STACK_OF(CONF_VALUE) *headers = NULL;
     const char *content_type;
     int res = 0;
     int real_server = do_txt && 0; /* remove "&& 0" for using real server */
 
+    snprintf(path, sizeof(path), "/%d%s", suggested_status,
+             do_get > 1 ? "/will-be-redirected" : RPATH);
     if (do_txt) {
         content_type = "text/plain";
         req = BIO_new(BIO_s_mem());
@@ -155,8 +185,7 @@ static int test_http_method(int do_get, int do_txt)
     BIO_set_callback_arg(wbio, (char *)&mock_args);
 
     rsp = do_get ?
-        OSSL_HTTP_get(real_server ? REAL_SERVER_URL :
-                      do_txt ? RPATH : "/will-be-redirected",
+        OSSL_HTTP_get(real_server ? REAL_SERVER_URL : path,
                       NULL /* proxy */, NULL /* no_proxy */,
                       real_server ? NULL : wbio,
                       real_server ? NULL : rbio,
@@ -165,13 +194,17 @@ static int test_http_method(int do_get, int do_txt)
                       real_server ? "text/html; charset=utf-8":  content_type,
                       !do_txt /* expect_asn1 */,
                       OSSL_HTTP_DEFAULT_MAX_RESP_LEN, 0 /* timeout */)
-        : OSSL_HTTP_transfer(NULL, NULL /* host */, NULL /* port */, RPATH,
-                             0 /* use_ssl */,NULL /* proxy */, NULL /* no_pr */,
+        : OSSL_HTTP_transfer(NULL, NULL /* host */, NULL /* port */, path,
+                             0 /* use_ssl */, NULL /* proxy */, NULL /* no_pr */,
                              wbio, rbio, NULL /* bio_fn */, NULL /* arg */,
                              0 /* buf_size */, headers, content_type,
                              req, content_type, !do_txt /* expect_asn1 */,
                              OSSL_HTTP_DEFAULT_MAX_RESP_LEN, 0 /* timeout */,
                              0 /* keep_alive */);
+    if (!TEST_int_eq(suggested_status == HTTP_STATUS_CODES_FATAL_ERROR, rsp == NULL))
+        goto err;
+    if (suggested_status == HTTP_STATUS_CODES_FATAL_ERROR)
+        res = 1;
     if (rsp != NULL) {
         if (do_get && real_server) {
             char rtext[sizeof(DOCTYPE_HTML)];
@@ -358,22 +391,52 @@ static int test_http_url_invalid_path(void)
 
 static int test_http_get_txt(void)
 {
-    return test_http_method(1 /* GET */, 1);
+    return test_http_method(1 /* GET */, 1, HTTP_STATUS_CODE_OK);
+}
+
+static int test_http_get_txt_redirected(void)
+{
+    return test_http_method(2 /* GET with redirection */, 1, HTTP_STATUS_CODE_OK);
+}
+
+static int test_http_get_txt_fatal_status(void)
+{
+    return test_http_method(1 /* GET */, 1, HTTP_STATUS_CODES_FATAL_ERROR);
+}
+
+static int test_http_get_txt_error_status(void)
+{
+    return test_http_method(1 /* GET */, 1, HTTP_STATUS_CODES_NONFATAL_ERROR);
 }
 
 static int test_http_post_txt(void)
 {
-    return test_http_method(0 /* POST */, 1);
+    return test_http_method(0 /* POST */, 1, HTTP_STATUS_CODE_OK);
 }
 
 static int test_http_get_x509(void)
 {
-    return test_http_method(1 /* GET */, 0); /* includes redirection */
+    return test_http_method(1 /* GET */, 0, HTTP_STATUS_CODE_OK);
+}
+
+static int test_http_get_x509_redirected(void)
+{
+    return test_http_method(2 /* GET with redirection */, 0, HTTP_STATUS_CODE_OK);
 }
 
 static int test_http_post_x509(void)
 {
-    return test_http_method(0 /* POST */, 0);
+    return test_http_method(0 /* POST */, 0, HTTP_STATUS_CODE_OK);
+}
+
+static int test_http_post_x509_fatal_status(void)
+{
+    return test_http_method(0 /* POST */, 0, HTTP_STATUS_CODES_FATAL_ERROR);
+}
+
+static int test_http_post_x509_error_status(void)
+{
+    return test_http_method(0 /* POST */, 0, HTTP_STATUS_CODES_NONFATAL_ERROR);
 }
 
 static int test_http_keep_alive_0_no_no(void)
@@ -503,10 +566,18 @@ int setup_tests(void)
     ADD_TEST(test_http_url_invalid_prefix);
     ADD_TEST(test_http_url_invalid_port);
     ADD_TEST(test_http_url_invalid_path);
+
     ADD_TEST(test_http_get_txt);
+    ADD_TEST(test_http_get_txt_redirected);
+    ADD_TEST(test_http_get_txt_fatal_status);
+    ADD_TEST(test_http_get_txt_error_status);
     ADD_TEST(test_http_post_txt);
     ADD_TEST(test_http_get_x509);
+    ADD_TEST(test_http_get_x509_redirected);
     ADD_TEST(test_http_post_x509);
+    ADD_TEST(test_http_post_x509_fatal_status);
+    ADD_TEST(test_http_post_x509_error_status);
+
     ADD_TEST(test_http_keep_alive_0_no_no);
     ADD_TEST(test_http_keep_alive_1_no_no);
     ADD_TEST(test_http_keep_alive_0_prefer_yes);
@@ -515,6 +586,7 @@ int setup_tests(void)
     ADD_TEST(test_http_keep_alive_1_require_yes);
     ADD_TEST(test_http_keep_alive_0_require_no);
     ADD_TEST(test_http_keep_alive_1_require_no);
+
     ADD_TEST(test_hdr_resp_hdr_limit_none);
     ADD_TEST(test_hdr_resp_hdr_limit_short);
     ADD_TEST(test_hdr_resp_hdr_limit_256);

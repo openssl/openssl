@@ -62,6 +62,8 @@ BIO *OSSL_HTTP_REQ_CTX_get0_mem_bio(const OSSL_HTTP_REQ_CTX *rctx);
 size_t OSSL_HTTP_REQ_CTX_get_resp_len(const OSSL_HTTP_REQ_CTX *rctx);
 void OSSL_HTTP_REQ_CTX_set_max_response_length(OSSL_HTTP_REQ_CTX *rctx,
                                                unsigned long len);
+void OSSL_HTTP_REQ_CTX_set_max_response_hdr_lines(OSSL_HTTP_REQ_CTX *rctx,
+                                                  size_t count);
 int OSSL_HTTP_is_alive(const OSSL_HTTP_REQ_CTX *rctx);
 
 /* High-level HTTP API */
@@ -107,9 +109,6 @@ int OSSL_HTTP_parse_url(const char *url, int *pssl, char **puser, char **phost,
                         char **ppath, char **pquery, char **pfrag);
 const char *OSSL_HTTP_adapt_proxy(const char *proxy, const char *no_proxy,
                                   const char *server, int use_ssl);
-
-void OSSL_HTTP_REQ_CTX_set_max_response_hdr_lines(OSSL_HTTP_REQ_CTX *rctx,
-                                                  size_t count);
 
 # endif /* !defined(OPENSSL_NO_HTTP) */
 # ifdef  __cplusplus

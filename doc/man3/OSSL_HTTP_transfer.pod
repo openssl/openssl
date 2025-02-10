@@ -176,32 +176,10 @@ else HTTP POST with the contents of I<req> and optional I<content_type>, where
 the length of the data in I<req> does not need to be determined in advance: the
 BIO will be read on-the-fly while sending the request, which supports streaming.
 The optional list I<headers> may contain additional custom HTTP header lines.
-
-If the I<expected_content_type> argument is not NULL,
-the client will check that the specified content-type string
-is included in the HTTP header of the response and return an error if not.
-In the content-type header line the specified string should be present either
-as a whole, or in case the specified string does not include a C<;> character,
-it is sufficient that the specified string appears as a prefix
-in the header line, followed by a C<;> character and any further text.
-For instance, if I<expected_content_type> specifies C<text/html>,
-this is matched by C<text/html>, C<text/html; charset=UTF-8>, etc.
-
-If the I<expect_asn1> parameter is nonzero,
-a structure in ASN.1 encoding will be expected as response content.
 The I<max_resp_len> parameter specifies the maximum allowed
 response content length, where the value 0 indicates no limit.
-If the I<timeout> parameter is > 0 this indicates the maximum number of seconds
-the subsequent HTTP transfer (sending the request and receiving a response)
-is allowed to take.
-A value of 0 enables waiting indefinitely, i.e., no timeout.
-A value < 0 indicates that the I<overall_timeout> parameter value given
-when opening the HTTP transfer will be used instead.
-If I<keep_alive> is 0 the connection is not kept open
-after receiving a response, which is the default behavior for HTTP 1.0.
-If the value is 1 or 2 then a persistent connection is requested.
-If the value is 2 then a persistent connection is required,
-i.e., an error occurs in case the server does not grant it.
+For the meaning of the I<expected_content_type>, I<expect_asn1>, I<timeout>,
+and I<keep_alive> parameters, see L<OSSL_HTTP_REQ_CTX_set_expected(3)>.
 
 OSSL_HTTP_exchange() exchanges any form of HTTP request and response
 as specified by I<rctx>, which must include both connection and request data,
@@ -212,7 +190,7 @@ is not NULL the latter pointer is used to provide any new location that
 the server may return with HTTP code 301 (MOVED_PERMANENTLY) or 302 (FOUND).
 In this case the function returns NULL and the caller is
 responsible for deallocating the URL with L<OPENSSL_free(3)>.
-If the response header contains one or more "Content-Length" header lines and/or
+If the response header contains one or more C<Content-Length> lines and/or
 an ASN.1-encoded response is expected, which should include a total length,
 the length indications received are checked for consistency
 and for not exceeding any given maximum response length.
@@ -285,6 +263,7 @@ OSSL_HTTP_close() returns 0 if anything went wrong while disconnecting, else 1.
 
 L<OSSL_HTTP_parse_url(3)>, L<BIO_new_connect(3)>,
 L<ASN1_item_i2d_mem_bio(3)>, L<ASN1_item_d2i_bio(3)>,
+L<OSSL_HTTP_REQ_CTX_set_expected(3)>,
 L<OSSL_HTTP_is_alive(3)>,
 L<OSSL_trace_enabled(3)>, and L<openssl-env(7)>.
 
