@@ -121,28 +121,28 @@ ${prefix}_set_key:
     vpshufb         IN_SHUFB(%rip), %xmm0, %xmm0
     vpxor           SM4_FK(%rip), %xmm0, %xmm0
 
-    movdqu          SM4_CK(%rip), %xmm1
+    vmovdqu         SM4_CK(%rip), %xmm1
     vsm4key4        %xmm1, %xmm0, %xmm0
     vmovdqu         %xmm0, ($key)
-    movdqu          SM4_CK + 16(%rip), %xmm1
+    vmovdqu         SM4_CK + 16(%rip), %xmm1
     vsm4key4        %xmm1, %xmm0, %xmm0
     vmovdqu         %xmm0, 16($key)
-    movdqu          SM4_CK + 32(%rip), %xmm1
+    vmovdqu         SM4_CK + 32(%rip), %xmm1
     vsm4key4        %xmm1, %xmm0, %xmm0
     vmovdqu         %xmm0, 32($key)
-    movdqu          SM4_CK + 48(%rip), %xmm1
+    vmovdqu         SM4_CK + 48(%rip), %xmm1
     vsm4key4        %xmm1, %xmm0, %xmm0
     vmovdqu         %xmm0, 48($key)
-    movdqu          SM4_CK + 64(%rip), %xmm1
+    vmovdqu         SM4_CK + 64(%rip), %xmm1
     vsm4key4        %xmm1, %xmm0, %xmm0
     vmovdqu         %xmm0, 64($key)
-    movdqu          SM4_CK + 80(%rip), %xmm1
+    vmovdqu         SM4_CK + 80(%rip), %xmm1
     vsm4key4        %xmm1, %xmm0, %xmm0
     vmovdqu         %xmm0, 80($key)
-    movdqu          SM4_CK + 96(%rip), %xmm1
+    vmovdqu         SM4_CK + 96(%rip), %xmm1
     vsm4key4        %xmm1, %xmm0, %xmm0
     vmovdqu         %xmm0, 96($key)
-    movdqu          SM4_CK + 112(%rip), %xmm1
+    vmovdqu         SM4_CK + 112(%rip), %xmm1
     vsm4key4        %xmm1, %xmm0, %xmm0
     vmovdqu         %xmm0, 112($key)
 
