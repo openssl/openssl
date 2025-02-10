@@ -806,7 +806,7 @@ int ossl_ml_dsa_sk_decode(ML_DSA_KEY *key, const uint8_t *in, size_t in_len)
     if (key->priv_encoding == NULL
         && (key->priv_encoding = OPENSSL_memdup(in, in_len)) == NULL)
         goto err;
-    /*x
+    /*
      * Computing the public key also computes its hash, which must be equal to
      * the |tr| value in the private key, else the key was corrupted.
      */
