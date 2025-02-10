@@ -143,7 +143,7 @@ OpenSSL 3.5
    on the Intel Sierra Forest.
 
    *Zhiguo Zhou, Wangyang Guo (Intel Corp)*
-   
+
  * Fix EVP_DecodeUpdate(): do not write padding zeros to the decoded output.
 
    According to the documentation,
