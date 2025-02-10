@@ -5103,9 +5103,9 @@ static int test_key_exchange(int idx)
             return 1;
     }
 
-    if (is_fips && fips_provider_version_lt(libctx, 3, 5, 0) && idx >= 12 && idx <= 19) {
+    if (is_fips && fips_provider_version_lt(libctx, 3, 5, 0)
+        && idx >= 12 && idx <= 19)
         TEST_skip("ML-KEM not supported in this version of fips provider");
-    };
 
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
                                        TLS_client_method(), TLS1_VERSION,
