@@ -511,9 +511,13 @@ static int ml_dsa_priv_pub_bad_t0_test(void)
      * This offset is the start of t0 (which is the last 416 * k bytes))
      */
     priv[td->priv_len - 6 * 416] ^= 1;
-
     if (!TEST_true(ml_dsa_create_keypair(&key, td->alg,
                                          priv, td->priv_len, NULL, 0, 0)))
+        goto err;
+
+    priv[td->priv_len - 6 * 416] ^= 1;
+    if (!TEST_true(ml_dsa_create_keypair(&key, td->alg,
+                                         priv, td->priv_len, NULL, 0, 1)))
         goto err;
     ret = 1;
  err:
