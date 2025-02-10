@@ -60,7 +60,7 @@ static void *evp_mac_from_algorithm(int name_id,
 {
     const OSSL_DISPATCH *fns = algodef->implementation;
     EVP_MAC *mac = NULL;
-    int fnmaccnt = 0, fnctxcnt = 0;
+    int fnmaccnt = 0, fnctxcnt = 0, mac_init_found = 0;
 
     if ((mac = evp_mac_new()) == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_EVP_LIB);
@@ -96,7 +96,7 @@ static void *evp_mac_from_algorithm(int name_id,
             if (mac->init != NULL)
                 break;
             mac->init = OSSL_FUNC_mac_init(fns);
-            fnmaccnt++;
+            mac_init_found = 1;
             break;
         case OSSL_FUNC_MAC_UPDATE:
             if (mac->update != NULL)
@@ -143,8 +143,15 @@ static void *evp_mac_from_algorithm(int name_id,
                 break;
             mac->set_ctx_params = OSSL_FUNC_mac_set_ctx_params(fns);
             break;
+        case OSSL_FUNC_MAC_INIT_SKEY:
+            if (mac->init_skey != NULL)
+                break;
+            mac->init_skey = OSSL_FUNC_mac_init_skey(fns);
+            mac_init_found = 1;
+            break;
         }
     }
+    fnmaccnt += mac_init_found;
     if (fnmaccnt != 3
         || fnctxcnt != 2) {
         /*

@@ -115,7 +115,22 @@ size_t EVP_MAC_CTX_get_block_size(EVP_MAC_CTX *ctx)
 int EVP_MAC_init(EVP_MAC_CTX *ctx, const unsigned char *key, size_t keylen,
                  const OSSL_PARAM params[])
 {
+    if (ctx->meth->init == NULL) {
+        ERR_raise(ERR_R_EVP_LIB, ERR_R_UNSUPPORTED);
+        return 0;
+    }
     return ctx->meth->init(ctx->algctx, key, keylen, params);
+}
+
+int EVP_MAC_init_SKEY(EVP_MAC_CTX *ctx, EVP_SKEY *skey, const OSSL_PARAM params[])
+{
+    if (ctx->meth->init_skey == NULL
+        || skey->skeymgmt->prov != ctx->meth->prov
+        || ctx->meth->init_skey == NULL) {
+        ERR_raise(ERR_R_EVP_LIB, ERR_R_UNSUPPORTED);
+        return 0;
+    }
+    return ctx->meth->init_skey(ctx->algctx, skey->keydata, params);
 }
 
 int EVP_MAC_update(EVP_MAC_CTX *ctx, const unsigned char *data, size_t datalen)
