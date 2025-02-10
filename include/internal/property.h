@@ -88,6 +88,9 @@ __owur int ossl_method_store_cache_flush_all(OSSL_METHOD_STORE *store);
 /* Merge two property queries together */
 OSSL_PROPERTY_LIST *ossl_property_merge(const OSSL_PROPERTY_LIST *a,
                                         const OSSL_PROPERTY_LIST *b);
+/* Merge two property query strings producing a new allocated propq */
+char *ossl_merge_queries(OSSL_LIB_CTX *libctx, const char *propq1,
+                         const char *propq2);
 
 size_t ossl_property_list_to_string(OSSL_LIB_CTX *ctx,
                                     const OSSL_PROPERTY_LIST *list, char *buf,
