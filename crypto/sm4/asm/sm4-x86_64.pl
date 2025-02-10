@@ -51,15 +51,14 @@ open OUT,"| \"$^X\" \"$xlate\" $flavour \"$output\""
 *STDOUT=*OUT;
 
 @_2args=$win64?	("%rcx","%rdx") :	# Win64 order
-        ("%rdi","%rsi");	# Unix order
+                ("%rdi","%rsi");	# Unix order
 
 @_3args=$win64?	("%rcx","%rdx","%r8") :	# Win64 order
-        ("%rdi","%rsi","%rdx");	# Unix order
+                ("%rdi","%rsi","%rdx");	# Unix order
 
 $prefix="hw_x86_64_sm4";
 
-# TODO: add binary translation for SM4 instructions
-if ($avx2_sm4_ni_native>0) {
+if ($avx2_sm4_ni>0) {
 
 $code.= ".text\n";
 {
@@ -122,22 +121,31 @@ ${prefix}_set_key:
     vpshufb         .IN_SHUFB(%rip), %xmm0, %xmm0
     vpxor           .SM4_FK(%rip), %xmm0, %xmm0
 
-    vsm4key4 .SM4_CK(%rip), %xmm0, %xmm0
+    movdqu          .SM4_CK(%rip), %xmm1
+    vsm4key4        %xmm1, %xmm0, %xmm0
     vmovdqu         %xmm0, ($key)
-    vsm4key4 .SM4_CK + 16(%rip), %xmm0, %xmm0
+    movdqu          .SM4_CK + 16(%rip), %xmm1
+    vsm4key4        %xmm1, %xmm0, %xmm0
     vmovdqu         %xmm0, 16($key)
-    vsm4key4 .SM4_CK + 32(%rip), %xmm0, %xmm0
+    movdqu          .SM4_CK + 32(%rip), %xmm1
+    vsm4key4        %xmm1, %xmm0, %xmm0
     vmovdqu         %xmm0, 32($key)
-    vsm4key4 .SM4_CK + 48(%rip), %xmm0, %xmm0
+    movdqu          .SM4_CK + 48(%rip), %xmm1
+    vsm4key4        %xmm1, %xmm0, %xmm0
     vmovdqu         %xmm0, 48($key)
-    vsm4key4 .SM4_CK + 64(%rip), %xmm0, %xmm0
+    movdqu          .SM4_CK + 64(%rip), %xmm1
+    vsm4key4        %xmm1, %xmm0, %xmm0
     vmovdqu         %xmm0, 64($key)
-    vsm4key4 .SM4_CK + 80(%rip), %xmm0, %xmm0
+    movdqu          .SM4_CK + 80(%rip), %xmm1
+    vsm4key4        %xmm1, %xmm0, %xmm0
     vmovdqu         %xmm0, 80($key)
-    vsm4key4 .SM4_CK + 96(%rip), %xmm0, %xmm0
+    movdqu          .SM4_CK + 96(%rip), %xmm1
+    vsm4key4        %xmm1, %xmm0, %xmm0
     vmovdqu         %xmm0, 96($key)
-    vsm4key4 .SM4_CK + 112(%rip), %xmm0, %xmm0
+    movdqu          .SM4_CK + 112(%rip), %xmm1
+    vsm4key4        %xmm1, %xmm0, %xmm0
     vmovdqu         %xmm0, 112($key)
+
     vpxor           %xmm0, %xmm0, %xmm0 # clear register
     mov     \$1, %eax
     pop     %rbp
@@ -162,20 +170,23 @@ ${prefix}_encrypt:
     vmovdqu         ($in), %xmm0
     vpshufb         .IN_SHUFB(%rip), %xmm0, %xmm0
 
-    vsm4rnds4 ($ks), %xmm0, %xmm0
-    vsm4rnds4 16($ks), %xmm0, %xmm0
-    vsm4rnds4 32($ks), %xmm0, %xmm0
-    vsm4rnds4 48($ks), %xmm0, %xmm0
-    vsm4rnds4 64($ks), %xmm0, %xmm0
-    vsm4rnds4 80($ks), %xmm0, %xmm0
-    vsm4rnds4 96($ks), %xmm0, %xmm0
-    vsm4rnds4 112($ks), %xmm0, %xmm0
+    # note: to simplify binary instructions translation
+    movq            $ks, %r10
 
-    vpshufb .OUT_SHUFB(%rip), %xmm0, %xmm0
-    vmovdqu %xmm0, ($out)
+    vsm4rnds4       (%r10), %xmm0, %xmm0
+    vsm4rnds4       16(%r10), %xmm0, %xmm0
+    vsm4rnds4       32(%r10), %xmm0, %xmm0
+    vsm4rnds4       48(%r10), %xmm0, %xmm0
+    vsm4rnds4       64(%r10), %xmm0, %xmm0
+    vsm4rnds4       80(%r10), %xmm0, %xmm0
+    vsm4rnds4       96(%r10), %xmm0, %xmm0
+    vsm4rnds4       112(%r10), %xmm0, %xmm0
+
+    vpshufb         .OUT_SHUFB(%rip), %xmm0, %xmm0
+    vmovdqu         %xmm0, ($out)
     vpxor           %xmm0, %xmm0, %xmm0 # clear register
-    pop     %rbp
-.cfi_pop     %rbp
+    pop             %rbp
+.cfi_pop            %rbp
     ret
 .cfi_endproc
 
@@ -197,36 +208,36 @@ ${prefix}_decrypt:
     vpshufb         .IN_SHUFB(%rip), %xmm0, %xmm0
 
     vmovdqu         112($ks), %xmm1
-    pshufd          \$27, %xmm1, %xmm1
-    vsm4rnds4 %xmm1, %xmm0, %xmm0
+    vpshufd         \$27, %xmm1, %xmm1
+    vsm4rnds4       %xmm1, %xmm0, %xmm0
     vmovdqu         96($ks), %xmm1
-    pshufd          \$27, %xmm1, %xmm1
-    vsm4rnds4 %xmm1, %xmm0, %xmm0
+    vpshufd         \$27, %xmm1, %xmm1
+    vsm4rnds4       %xmm1, %xmm0, %xmm0
     vmovdqu         80($ks), %xmm1
-    pshufd          \$27, %xmm1, %xmm1
-    vsm4rnds4 %xmm1, %xmm0, %xmm0
+    vpshufd          \$27, %xmm1, %xmm1
+    vsm4rnds4       %xmm1, %xmm0, %xmm0
     vmovdqu         64($ks), %xmm1
-    pshufd          \$27, %xmm1, %xmm1
-    vsm4rnds4 %xmm1, %xmm0, %xmm0
+    vpshufd         \$27, %xmm1, %xmm1
+    vsm4rnds4       %xmm1, %xmm0, %xmm0
     vmovdqu         48($ks), %xmm1
-    pshufd          \$27, %xmm1, %xmm1
-    vsm4rnds4 %xmm1, %xmm0, %xmm0
+    vpshufd         \$27, %xmm1, %xmm1
+    vsm4rnds4       %xmm1, %xmm0, %xmm0
     vmovdqu         32($ks), %xmm1
-    pshufd          \$27, %xmm1, %xmm1
-    vsm4rnds4 %xmm1, %xmm0, %xmm0
+    vpshufd         \$27, %xmm1, %xmm1
+    vsm4rnds4       %xmm1, %xmm0, %xmm0
     vmovdqu         16($ks), %xmm1
-    pshufd          \$27, %xmm1, %xmm1
-    vsm4rnds4 %xmm1, %xmm0, %xmm0
+    vpshufd         \$27, %xmm1, %xmm1
+    vsm4rnds4       %xmm1, %xmm0, %xmm0
     vmovdqu         ($ks), %xmm1
-    pshufd          \$27, %xmm1, %xmm1
-    vsm4rnds4 %xmm1, %xmm0, %xmm0
+    vpshufd         \$27, %xmm1, %xmm1
+    vsm4rnds4       %xmm1, %xmm0, %xmm0
 
-    vpshufb .OUT_SHUFB(%rip), %xmm0, %xmm0
-    vmovdqu %xmm0, ($out)
+    vpshufb         .OUT_SHUFB(%rip), %xmm0, %xmm0
+    vmovdqu         %xmm0, ($out)
     vpxor           %xmm0, %xmm0, %xmm0 # clear registers
     vpxor           %xmm1, %xmm1, %xmm1
-    pop     %rbp
-.cfi_pop     %rbp
+    pop             %rbp
+.cfi_pop            %rbp
     ret
 .cfi_endproc
 ___
@@ -260,8 +271,48 @@ ${prefix}_decrypt:
 ___
 } # avx2_sm4_ni
 
+if ($avx2_sm4_ni_native > 0) { # SM4 instructions are supported in asm
+  $code =~ s/\`([^\`]*)\`/eval $1/gem;
+  print $code;
+} else { # binary translation for SM4 instructions
+  sub sm4op {
+    my $instr = shift;
+    my $args = shift;
+    if ($args =~ /^(.+)\s*#/) {
+      $args = $1; # drop comment and its leading whitespace
+    }
+    if (($instr eq "vsm4key4") && ($args =~ /%xmm(\d{1,2})\s*,\s*%xmm(\d{1,2})\s*,\s*%xmm(\d{1,2})/)) {
+      my $b1 = sprintf("0x%02x", 0x62 | ((1-int($1/8))<<5) | ((1-int($3/8))<<7) );
+      my $b2 = sprintf("0x%02x", 0x02 | (15 - $2 & 15)<<3                       );
+      my $b3 = sprintf("0x%02x", 0xc0 | ($1 & 7) | (($3 & 7)<<3)                );
+      return ".byte 0xc4,".$b1.",".$b2.",0xda,".$b3;
+    }
+    elsif (($instr eq "vsm4rnds4") && ($args =~ /(\d*)\(([^)]+)\)\s*,\s*%xmm(\d{1,2})\s*,\s*%xmm(\d{1,2})/)) {
+      my $shift = $1;
+      my $b3_offset = 0x00;
+      if ($shift) {
+        $shift = ",0x".sprintf("%02x", $shift);
+        $b3_offset = 0x40;
+      }
+      my $b1 = sprintf("0x%02x", 0x42 | ((1-int($4/8))<<7) );
+      my $b2 = sprintf("0x%02x", 0x03 | (15 - $3 & 15)<<3                       );
+      my $b3 = sprintf("0x%02x", 0x02 | ($4 & 7)<<3 | $b3_offset                );
+      return ".byte 0xc4,".$b1.",".$b2.",0xda,".$b3.$shift;
+    }
+    elsif (($instr eq "vsm4rnds4") && ($args =~ /%xmm(\d{1,2})\s*,\s*%xmm(\d{1,2})\s*,\s*%xmm(\d{1,2})/)) {
+      my $b1 = sprintf("0x%02x", 0x62 | ((1-int($1/8))<<5) | ((1-int($3/8))<<7) );
+      my $b2 = sprintf("0x%02x", 0x03 | (15 - $2 & 15)<<3                       );
+      my $b3 = sprintf("0x%02x", 0xc0 | ($1 & 7) | (($3 & 7)<<3)                );
+      return ".byte 0xc4,".$b1.",".$b2.",0xda,".$b3;
+    }
+    return $instr."\t".$args;
+  }
 
-$code =~ s/\`([^\`]*)\`/eval $1/gem;
-print $code;
+  foreach (split("\n",$code)) {
+    s/\`([^\`]*)\`/eval $1/geo;
+    s/\b(vsm4[^\s]*)\s+(.*)/sm4op($1,$2)/geo;
+    print $_,"\n";
+  }
+} # avx2_sm4_ni_native > 0
 
 close STDOUT or die "error closing STDOUT: $!";
