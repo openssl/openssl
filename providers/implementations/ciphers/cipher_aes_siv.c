@@ -120,11 +120,6 @@ static int siv_cipher(void *vctx, unsigned char *out, size_t *outl,
 
     /* Ignore just empty encryption/decryption call and not AAD. */
     if (out != NULL) {
-        if (inl == 0) {
-            if (outl != NULL)
-                *outl = 0;
-            return 1;
-        }
 
         if (outsize < inl) {
             ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
