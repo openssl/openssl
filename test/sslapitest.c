@@ -12477,7 +12477,7 @@ static int yield_secret_cb(SSL *s, uint32_t prot_level, int direction,
             || prot_level > OSSL_RECORD_PROTECTION_LEVEL_APPLICATION)
         goto err;
 
-    switch(direction) {
+    switch (direction) {
     case 0: /* read */
         if (!TEST_size_t_le(secret_len, sizeof(data->rsecret)))
             goto err;
@@ -12581,8 +12581,7 @@ static int test_quic_tls(void)
                                                             sizeof(sparams))))
         goto end;
 
-    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
-                                            SSL_ERROR_NONE)))
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
         goto end;
 
     /* Check no problems during the handshake */
