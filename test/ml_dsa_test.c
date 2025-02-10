@@ -496,6 +496,32 @@ err:
     return ret;
 }
 
+static int ml_dsa_priv_pub_bad_t0_test(void)
+{
+    int ret = 0;
+    EVP_PKEY *key = NULL;
+    ML_DSA_SIG_GEN_TEST_DATA *td = &ml_dsa_siggen_testdata[0];
+    uint8_t *priv = OPENSSL_memdup(td->priv, td->priv_len);
+
+    if (!TEST_ptr(priv))
+        goto err;
+    memcpy(priv, td->priv, td->priv_len);
+    /*
+     * t0 is at the end of the encoding so corrupt it.
+     * This offset is the start of t0 (which is the last 416 * k bytes))
+     */
+    priv[td->priv_len - 6 * 416] ^= 1;
+
+    if (!TEST_true(ml_dsa_create_keypair(&key, td->alg,
+                                         priv, td->priv_len, NULL, 0, 0)))
+        goto err;
+    ret = 1;
+ err:
+    OPENSSL_free(priv);
+    EVP_PKEY_free(key);
+    return ret;
+}
+
 const OPTIONS *test_get_options(void)
 {
     static const OPTIONS options[] = {
@@ -539,6 +565,7 @@ int setup_tests(void)
     ADD_TEST(from_data_invalid_public_test);
     ADD_TEST(from_data_bad_input_test);
     ADD_TEST(ml_dsa_digest_sign_verify_test);
+    ADD_TEST(ml_dsa_priv_pub_bad_t0_test);
     return 1;
 }
 
