@@ -609,8 +609,6 @@ static EVP_RAND_CTX *rand_new_seed(OSSL_LIB_CTX *libctx)
 # ifdef OPENSSL_NO_FIPS_JITTER
     RAND_GLOBAL *dgbl = rand_get_global(libctx);
     char *props = NULL;
-    size_t props_len;
-    OSSL_PROPERTY_LIST *pl1, *pl2, *pl3 = NULL;
 
     if (dgbl == NULL)
         return NULL;
@@ -625,44 +623,12 @@ static EVP_RAND_CTX *rand_new_seed(OSSL_LIB_CTX *libctx)
         if (propq == NULL || *propq == '\0') {
             propq = "-fips";
         } else {
-            pl1 = ossl_parse_query(libctx, propq, 1);
-            if (pl1 == NULL) {
-                ERR_raise(ERR_LIB_RAND, RAND_R_INVALID_PROPERTY_QUERY);
-                return NULL;
-            }
-            pl2 = ossl_parse_query(libctx, "-fips", 1);
-            if (pl2 == NULL) {
-                ossl_property_free(pl1);
+            if ((props = ossl_merge_queries(libctx, propq, "-fips")) == NULL)
+            {
                 ERR_raise(ERR_LIB_RAND, ERR_R_INTERNAL_ERROR);
                 return NULL;
             }
-            pl3 = ossl_property_merge(pl2, pl1);
-            ossl_property_free(pl1);
-            ossl_property_free(pl2);
-            if (pl3 == NULL) {
-                ERR_raise(ERR_LIB_RAND, ERR_R_INTERNAL_ERROR);
-                return NULL;
-            }
-            props_len = ossl_property_list_to_string(libctx, pl3, NULL, 0);
-            if (props_len == 0) {
-                /* Shouldn't happen since we added a query element */
-                ERR_raise(ERR_LIB_RAND, ERR_R_INTERNAL_ERROR);
-                goto err;
-            } else {
-                props = OPENSSL_malloc(props_len);
-                if (props == NULL) {
-                    ERR_raise(ERR_LIB_RAND, ERR_R_MALLOC_FAILURE);
-                    goto err;
-                }
-                if (ossl_property_list_to_string(libctx, pl3,
-                                                 props, props_len) == 0) {
-                    ERR_raise(ERR_LIB_RAND, ERR_R_INTERNAL_ERROR);
-                    goto err;
-                }
-                ossl_property_free(pl3);
-                pl3 = NULL;
-                propq = props;
-            }
+            propq = props;
         }
         name = OPENSSL_MSTR(OPENSSL_DEFAULT_SEED_SRC);
     }
@@ -693,7 +659,6 @@ static EVP_RAND_CTX *rand_new_seed(OSSL_LIB_CTX *libctx)
  err:
     EVP_RAND_CTX_free(ctx);
 # ifdef OPENSSL_NO_FIPS_JITTER
-    ossl_property_free(pl3);
     OPENSSL_free(props);
 # endif /* OPENSSL_NO_FIPS_JITTER */
     return NULL;

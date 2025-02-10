@@ -68,6 +68,38 @@ static int base_get_params(void *provctx, OSSL_PARAM params[])
     return 1;
 }
 
+static const OSSL_ALGORITHM base_asym_kem[] = {
+#ifndef OPENSSL_NO_ML_KEM
+# if !defined(OPENSSL_NO_ECX)
+    { "X25519MLKEM768", "provider=base,fips=yes", ossl_mlx_kem_asym_kem_functions },
+    { "X448MLKEM1024", "provider=base,fips=yes", ossl_mlx_kem_asym_kem_functions },
+# endif
+# if !defined(OPENSSL_NO_EC)
+    { "SecP256r1MLKEM768", "provider=base,fips=yes", ossl_mlx_kem_asym_kem_functions },
+    { "SecP384r1MLKEM1024", "provider=base,fips=yes", ossl_mlx_kem_asym_kem_functions },
+# endif
+#endif
+    { NULL, NULL, NULL }
+};
+
+static const OSSL_ALGORITHM base_keymgmt[] = {
+#ifndef OPENSSL_NO_ML_KEM
+# if !defined(OPENSSL_NO_ECX)
+    { PROV_NAMES_X25519MLKEM768, "provider=base,fips=yes", ossl_mlx_x25519_kem_kmgmt_functions,
+      PROV_DESCS_X25519MLKEM768 },
+    { PROV_NAMES_X448MLKEM1024, "provider=base,fips=yes", ossl_mlx_x448_kem_kmgmt_functions,
+      PROV_DESCS_X448MLKEM1024 },
+# endif
+# if !defined(OPENSSL_NO_EC)
+    { PROV_NAMES_SecP256r1MLKEM768, "provider=base,fips=yes", ossl_mlx_p256_kem_kmgmt_functions,
+      PROV_DESCS_SecP256r1MLKEM768 },
+    { PROV_NAMES_SecP384r1MLKEM1024, "provider=base,fips=yes", ossl_mlx_p384_kem_kmgmt_functions,
+      PROV_DESCS_SecP384r1MLKEM1024 },
+# endif
+#endif
+    { NULL, NULL, NULL }
+};
+
 static const OSSL_ALGORITHM base_encoder[] = {
 #define ENCODER_PROVIDER "base"
 #include "encoders.inc"
@@ -104,6 +136,10 @@ static const OSSL_ALGORITHM *base_query(void *provctx, int operation_id,
 {
     *no_cache = 0;
     switch (operation_id) {
+    case OSSL_OP_KEYMGMT:
+        return base_keymgmt;
+    case OSSL_OP_KEM:
+        return base_asym_kem;
     case OSSL_OP_ENCODER:
         return base_encoder;
     case OSSL_OP_DECODER:

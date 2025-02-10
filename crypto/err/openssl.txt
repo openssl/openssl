@@ -1029,6 +1029,7 @@ PKCS7_R_UNSUPPORTED_CIPHER_TYPE:111:unsupported cipher type
 PKCS7_R_UNSUPPORTED_CONTENT_TYPE:112:unsupported content type
 PKCS7_R_WRONG_CONTENT_TYPE:113:wrong content type
 PKCS7_R_WRONG_PKCS7_TYPE:114:wrong pkcs7 type
+PROP_R_INVALID_PROPERTY_QUERY:111:invalid property query
 PROP_R_NAME_TOO_LONG:100:name too long
 PROP_R_NOT_AN_ASCII_CHARACTER:101:not an ascii character
 PROP_R_NOT_AN_HEXADECIMAL_DIGIT:102:not an hexadecimal digit
