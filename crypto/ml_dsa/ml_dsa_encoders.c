@@ -768,7 +768,7 @@ int ossl_ml_dsa_sk_decode(ML_DSA_KEY *key, const uint8_t *in, size_t in_len)
     PACKET pkt;
 
     /* When loading from an explicit key, drop the seed. */
-    OPENSSL_free(key->seed);
+    OPENSSL_clear_free(key->seed, ML_DSA_SEED_BYTES);
     key->seed = NULL;
 
     /* Allow the key encoding to be already set to the provided pointer */
@@ -794,28 +794,28 @@ int ossl_ml_dsa_sk_decode(ML_DSA_KEY *key, const uint8_t *in, size_t in_len)
 
     for (i = 0; i < l; ++i)
         if (!decode_fn(key->s1.poly + i, &pkt))
-            return 0;
+            goto err;
     for (i = 0; i < k; ++i)
         if (!decode_fn(key->s2.poly + i, &pkt))
-            return 0;
+            goto err;
     for (i = 0; i < k; ++i)
         if (!poly_decode_signed_two_to_power_12(key->t0.poly + i, &pkt))
-            return 0;
+            goto err;
     if (PACKET_remaining(&pkt) != 0)
-        return 0;
+        goto err;
     if (key->priv_encoding == NULL
         && (key->priv_encoding = OPENSSL_memdup(in, in_len)) == NULL)
-        return 0;
+        goto err;
     /*
      * Computing the public key also computes its hash, which must be equal to
      * the |tr| value in the private key, else the key was corrupted.
      */
-    if (ossl_ml_dsa_key_public_from_private(key) != 0
-        && memcmp(input_tr, key->tr, sizeof(input_tr)) == 0)
-        return 1;
+    if (!ossl_ml_dsa_key_public_from_private(key)
+            || memcmp(input_tr, key->tr, sizeof(input_tr)) != 0)
+        goto err;
 
-    /* On error, reset the key back to uninitialised. */
-    ossl_ml_dsa_key_reset(key);
+    return 1;
+ err:
     return 0;
 }
 
