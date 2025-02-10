@@ -171,7 +171,7 @@ ${prefix}_encrypt:
     vpshufb         IN_SHUFB(%rip), %xmm0, %xmm0
 
     # note: to simplify binary instructions translation
-    movq            $ks, %r10
+    mov            $ks, %r10
 
     vsm4rnds4       (%r10), %xmm0, %xmm0
     vsm4rnds4       16(%r10), %xmm0, %xmm0
