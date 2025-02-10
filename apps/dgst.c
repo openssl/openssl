@@ -96,7 +96,7 @@ const OPTIONS dgst_options[] = {
 
 int dgst_main(int argc, char **argv)
 {
-    BIO *in = NULL, *inp, *bmd = NULL, *out = NULL;
+    BIO *in = NULL, *inp = NULL, *bmd = NULL, *out = NULL;
     ENGINE *e = NULL, *impl = NULL;
     EVP_PKEY *sigkey = NULL;
     STACK_OF(OPENSSL_STRING) *sigopts = NULL, *macopts = NULL;
