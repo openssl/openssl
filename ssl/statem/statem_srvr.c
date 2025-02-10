@@ -84,7 +84,8 @@ static int ossl_statem_server13_read_transition(SSL_CONNECTION *s, int mt)
                 return 1;
             }
             break;
-        } else if (s->ext.early_data == SSL_EARLY_DATA_ACCEPTED) {
+        } else if (s->ext.early_data == SSL_EARLY_DATA_ACCEPTED
+                   && !(s->options & SSL_OP_NO_END_OF_EARLY_DATA)) {
             if (mt == SSL3_MT_END_OF_EARLY_DATA) {
                 st->hand_state = TLS_ST_SR_END_OF_EARLY_DATA;
                 return 1;
@@ -554,6 +555,14 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_EARLY_DATA:
+        if ((s->options & SSL_OP_NO_END_OF_EARLY_DATA)
+            && s->ext.early_data == SSL_EARLY_DATA_ACCEPTED) {
+            s->early_data_state = SSL_EARLY_DATA_FINISHED_READING;
+            if (!SSL_CONNECTION_GET_USER_SSL(s)->method->ssl3_enc->
+                change_cipher_state(s, SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_SERVER_READ))
+                /* SSLfatal() already called */
+                return WRITE_TRAN_ERROR;
+        }
         return WRITE_TRAN_FINISHED;
 
     case TLS_ST_SR_FINISHED:

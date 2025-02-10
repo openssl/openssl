@@ -78,6 +78,8 @@ static int find_session_cb(SSL *ssl, const unsigned char *identity,
 
 static int use_session_cb_cnt = 0;
 static int find_session_cb_cnt = 0;
+
+static int end_of_early_data = 0;
 #endif
 
 static char *certsdir = NULL;
@@ -116,7 +118,7 @@ static int cdummyarg = 1;
 static X509 *ocspcert = NULL;
 #endif
 
-#define CLIENT_VERSION_LEN      2
+#define CLIENT_VERSION_LEN 2
 
 /*
  * This structure is used to validate that the correct number of log messages
@@ -4160,6 +4162,69 @@ static int test_early_data_skip_abort(int idx)
     return early_data_skip_helper(3,
                                   idx % OSSL_NELEM(ciphersuites),
                                   idx / OSSL_NELEM(ciphersuites));
+}
+
+static void assert_no_end_of_early_data(int write_p, int version, int content_type,
+                                        const void *buf, size_t msglen, SSL *ssl, void *arg)
+{
+    const unsigned char *msg = buf;
+
+    if (content_type == SSL3_RT_HANDSHAKE && msg[0] == SSL3_MT_END_OF_EARLY_DATA)
+        end_of_early_data = 1;
+}
+
+static int test_no_end_of_early_data(int idx)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    SSL_SESSION *sess = NULL;
+    unsigned char buf[20];
+    size_t readbytes, written;
+
+    if (!TEST_true(setupearly_data_test(&cctx, &sctx, &clientssl,
+                                        &serverssl, &sess, idx,
+                                        SHA384_DIGEST_LENGTH)))
+        goto end;
+    SSL_set_msg_callback(serverssl, assert_no_end_of_early_data);
+    SSL_set_msg_callback(clientssl, assert_no_end_of_early_data);
+    end_of_early_data = 0;
+    SSL_set_options(serverssl, SSL_OP_NO_END_OF_EARLY_DATA);
+    SSL_set_options(clientssl, SSL_OP_NO_END_OF_EARLY_DATA);
+
+    if (!TEST_true(SSL_write_early_data(clientssl, MSG1, strlen(MSG1),
+                                        &written)))
+        goto end;
+
+    if (!TEST_int_eq(SSL_read_early_data(serverssl, buf, sizeof(buf),
+                                         &readbytes),
+                     SSL_READ_EARLY_DATA_SUCCESS))
+        goto end;
+
+    if (!TEST_mem_eq(MSG1, strlen(MSG1), buf, readbytes)
+        || !TEST_int_gt(SSL_connect(clientssl), 0)
+        || !TEST_int_eq(SSL_get_early_data_status(serverssl),
+                        SSL_EARLY_DATA_ACCEPTED))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    if (!TEST_int_eq(end_of_early_data, 0))
+        goto end;
+
+    testresult = 1;
+
+ end:
+    SSL_SESSION_free(sess);
+    SSL_SESSION_free(clientpsk);
+    SSL_SESSION_free(serverpsk);
+    clientpsk = serverpsk = NULL;
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
 }
 
 /*
@@ -12604,6 +12669,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_early_data_skip_hrr_fail, OSSL_NELEM(ciphersuites) * 3);
     ADD_ALL_TESTS(test_early_data_skip_abort, OSSL_NELEM(ciphersuites) * 3);
     ADD_ALL_TESTS(test_early_data_not_sent, 3);
+    ADD_ALL_TESTS(test_no_end_of_early_data, 3);
     ADD_ALL_TESTS(test_early_data_psk, 8);
     ADD_ALL_TESTS(test_early_data_psk_with_all_ciphers, 7);
     ADD_ALL_TESTS(test_early_data_not_expected, 3);

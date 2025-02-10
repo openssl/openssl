@@ -959,6 +959,11 @@ int ossl_statem_client_construct_message(SSL_CONNECTION *s,
         break;
 
     case TLS_ST_CW_END_OF_EARLY_DATA:
+        if (s->options & SSL_OP_NO_END_OF_EARLY_DATA) {
+            *confunc = NULL;
+            *mt = SSL3_MT_DUMMY;
+            break;
+        }
         *confunc = tls_construct_end_of_early_data;
         *mt = SSL3_MT_END_OF_EARLY_DATA;
         break;
