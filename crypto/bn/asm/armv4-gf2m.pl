@@ -178,12 +178,20 @@ $code.=<<___;
 bn_GF2m_mul_2x2:
 #if __ARM_MAX_ARCH__>=7
 	stmdb	sp!,{r10,lr}
+# ifdef __APPLE__
+	movw r12, :lower16:(.LOPENSSL_armcap-(LPC0_0+4))
+	movt r12, :upper16:(.LOPENSSL_armcap-(LPC0_0+4))
+LPC0_0:
+	add	r12, pc
+	ldr r12, [r12]
+# else 
 	ldr	r12,.LOPENSSL_armcap
-# if !defined(_WIN32)
+# endif
+
+# if !defined(_WIN32) && !defined(__APPLE__)
 	adr	r10,.LOPENSSL_armcap
 	ldr	r12,[r12,r10]
-# endif
-# if defined(__APPLE__) || defined(_WIN32)
+# else
 	ldr	r12,[r12]
 # endif
 	tst	r12,#ARMV7_NEON
@@ -314,10 +322,20 @@ $code.=<<___;
 .size	bn_GF2m_mul_2x2,.-bn_GF2m_mul_2x2
 #if __ARM_MAX_ARCH__>=7
 .align	5
+
+#ifdef __APPLE__ 
+.section	__DATA,__nl_symbol_ptr,non_lazy_symbol_pointers @ if its apple then it needs to be in a special section
+.p2align	2
+#endif
+
 .LOPENSSL_armcap:
 # ifdef	_WIN32
 .word	OPENSSL_armcap_P
-# else
+# elif defined(__APPLE__)
+.indirect_symbol	_OPENSSL_armcap_P
+.long	0
+.text @ The rest of the content should be in the text section
+# else 
 .word	OPENSSL_armcap_P-.
 # endif
 #endif

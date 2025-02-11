@@ -194,9 +194,19 @@ $code.=<<___;
 .Lone:
 .long	1,0,0,0
 #if __ARM_MAX_ARCH__>=7
+
+# ifdef __APPLE__ 
+.section	__DATA,__nl_symbol_ptr,non_lazy_symbol_pointers @ if its apple then it needs to be in a special section
+.p2align	2
+# endif
+
 .LOPENSSL_armcap:
-# ifdef	_WIN32
+# if defined(_WIN32)
 .word	OPENSSL_armcap_P
+# elif defined(__APPLE__)
+.indirect_symbol	_OPENSSL_armcap_P
+.long	0
+.text @ The rest of the content should be in the text section
 # else
 .word   OPENSSL_armcap_P-.LChaCha20_ctr32
 # endif
@@ -225,11 +235,18 @@ ChaCha20_ctr32:
 #if __ARM_MAX_ARCH__>=7
 	cmp	r2,#192			@ test len
 	bls	.Lshort
-	ldr	r4,[r14,#-32]
-# if !defined(_WIN32)
-	ldr	r4,[r14,r4]
+# ifdef __APPLE__
+	movw r4, :lower16:(.LOPENSSL_armcap-(LPC0_0+4))
+	movt r4, :upper16:(.LOPENSSL_armcap-(LPC0_0+4))
+LPC0_0:
+	add	r4, pc
+	ldr r4, [r4]
+# else 
+	ldr	r4, .LOPENSSL_armcap
 # endif
-# if defined(__APPLE__) || defined(_WIN32)
+# if !defined(_WIN32) && !defined(__APPLE__)
+	ldr	r4,[r14,r4]
+# else
 	ldr	r4,[r4]
 # endif
 	tst	r4,#ARMV7_NEON

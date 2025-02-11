@@ -108,11 +108,20 @@ $code=<<___;
 
 .text
 
+#ifdef __APPLE__ 
+.section	__DATA,__nl_symbol_ptr,non_lazy_symbol_pointers @ if its apple then it needs to be in a special section
+.p2align	2
+#endif
+
 #if __ARM_MAX_ARCH__>=7
 .align	5
 .LOPENSSL_armcap:
-# ifdef	_WIN32
+# if	defined(_WIN32)
 .word	OPENSSL_armcap_P
+# elif	defined(__APPLE__)
+.indirect_symbol	_OPENSSL_armcap_P
+.long	0
+.text @ The rest of the content should be in the text section
 # else
 .word	OPENSSL_armcap_P-.Lbn_mul_mont
 # endif
@@ -129,12 +138,21 @@ bn_mul_mont:
 #if __ARM_MAX_ARCH__>=7
 	tst	ip,#7
 	bne	.Lialu
+
+# ifdef __APPLE__
+	movw r0, :lower16:(.LOPENSSL_armcap-(LPC0_0+4))
+	movt r0, :upper16:(.LOPENSSL_armcap-(LPC0_0+4))
+LPC0_0:
+	add	r0, pc
+	ldr r0, [r0]
+# else
 	ldr	r0,.LOPENSSL_armcap
-#if !defined(_WIN32)
+# endif
+
+# if !defined(_WIN32) && !defined(__APPLE__)
 	adr	r2,.Lbn_mul_mont
 	ldr	r0,[r0,r2]
-# endif
-# if defined(__APPLE__) || defined(_WIN32)
+# else
 	ldr	r0,[r0]
 # endif
 	tst	r0,#ARMV7_NEON		@ NEON available?

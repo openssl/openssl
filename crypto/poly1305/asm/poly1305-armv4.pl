@@ -85,8 +85,17 @@ poly1305_init:
 	beq	.Lno_key
 
 #if	__ARM_MAX_ARCH__>=7
-	adr	r11,.Lpoly1305_init
+
+
+# ifdef __APPLE__ 
+	movw r12, :lower16:(.LOPENSSL_armcap-(LPC0_0+4))
+	movt r12, :upper16:(.LOPENSSL_armcap-(LPC0_0+4))
+LPC0_0:
+	add	r12, pc
+	ldr r12, [r12]
+# else
 	ldr	r12,.LOPENSSL_armcap
+# endif
 #endif
 	ldrb	r4,[$inp,#0]
 	mov	r10,#0x0fffffff
@@ -103,10 +112,10 @@ poly1305_init:
 	and	r4,r4,r10
 
 #if	__ARM_MAX_ARCH__>=7
-# if !defined(_WIN32)
+# if !defined(_WIN32) && !defined(__APPLE__)
+	adr	r11,.Lpoly1305_init
 	ldr	r12,[r11,r12]		@ OPENSSL_armcap_P
-# endif
-# if defined(__APPLE__) || defined(_WIN32)
+# else
 	ldr	r12,[r12]
 # endif
 #endif
@@ -1226,9 +1235,19 @@ poly1305_emit_neon:
 .align	5
 .Lzeros:
 .long	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+
+# ifdef __APPLE__ 
+.section	__DATA,__nl_symbol_ptr,non_lazy_symbol_pointers @ if its apple then it needs to be in a special section
+.p2align	2
+# endif
+
 .LOPENSSL_armcap:
-# ifdef	_WIN32
+# if	defined(_WIN32)
 .word	OPENSSL_armcap_P
+# elif	defined(__APPLE__)
+.indirect_symbol	_OPENSSL_armcap_P
+.long	0
+.text @ The rest of the content should be in the text section
 # else
 .word	OPENSSL_armcap_P-.Lpoly1305_init
 # endif

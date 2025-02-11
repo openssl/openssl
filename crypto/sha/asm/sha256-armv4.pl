@@ -213,10 +213,21 @@ K256:
 .word	0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2
 .size	K256,.-K256
 .word	0				@ terminator
+
 #if __ARM_MAX_ARCH__>=7 && !defined(__KERNEL__)
+
+# ifdef __APPLE__ 
+.section	__DATA,__nl_symbol_ptr,non_lazy_symbol_pointers @ if its apple then it needs to be in a special section
+.p2align	2
+# endif
+
 .LOPENSSL_armcap:
-# ifdef	_WIN32
+# if	defined(_WIN32)
 .word	OPENSSL_armcap_P
+# elif	defined(__APPLE__)
+.indirect_symbol	_OPENSSL_armcap_P
+.long	0
+.text @ The rest of the content should be in the text section
 # else
 .word	OPENSSL_armcap_P-.Lsha256_block_data_order
 # endif
@@ -233,11 +244,19 @@ sha256_block_data_order:
 	adr	r3,.Lsha256_block_data_order
 #endif
 #if __ARM_MAX_ARCH__>=7 && !defined(__KERNEL__)
+
+# ifdef __APPLE__
+	movw r12, :lower16:(.LOPENSSL_armcap-(LPC0_0+4))
+	movt r12, :upper16:(.LOPENSSL_armcap-(LPC0_0+4))
+LPC0_0:
+	add	r12, pc
+	ldr r12, [r12]
+# else 
 	ldr	r12,.LOPENSSL_armcap
-# if !defined(_WIN32)
-	ldr	r12,[r3,r12]		@ OPENSSL_armcap_P
 # endif
-# if defined(__APPLE__) || defined(_WIN32)
+# if !defined(_WIN32) && !defined(__APPLE__)
+	ldr	r12,[r3,r12]		@ OPENSSL_armcap_P
+# else
 	ldr	r12,[r12]
 # endif
 	tst	r12,#ARMV8_SHA256
