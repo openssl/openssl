@@ -23,9 +23,12 @@ OpenSSL 3.2
 ### Major changes between OpenSSL 3.2.3 and OpenSSL 3.2.4 [under development]
 
 OpenSSL 3.2.4 is a security patch release. The most severe CVE fixed in this
-release is Low.
+release is High.
 
 This release incorporates the following bug fixes and mitigations:
+
+  * Fixed RFC7250 handshakes with unauthenticated servers don't abort as expected.
+    ([CVE-2024-12797])
 
   * Fixed timing side-channel in ECDSA signature computation.
     ([CVE-2024-13176])
