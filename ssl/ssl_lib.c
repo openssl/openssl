@@ -2327,7 +2327,8 @@ int ssl_read_internal(SSL *s, void *buf, size_t num, size_t *readbytes)
      * If we are a client and haven't received the ServerHello etc then we
      * better do that
      */
-    ossl_statem_check_finish_init(sc, 0);
+    if (!ossl_statem_check_finish_init(sc, 0))
+        return -1;
 
     if ((sc->mode & SSL_MODE_ASYNC) && ASYNC_get_current_job() == NULL) {
         struct ssl_async_args args;
@@ -2551,7 +2552,8 @@ int ssl_write_internal(SSL *s, const void *buf, size_t num,
         return 0;
     }
     /* If we are a client and haven't sent the Finished we better do that */
-    ossl_statem_check_finish_init(sc, 1);
+    if (!ossl_statem_check_finish_init(sc, 1))
+        return -1;
 
     if ((sc->mode & SSL_MODE_ASYNC) && ASYNC_get_current_job() == NULL) {
         int ret;
@@ -4927,7 +4929,8 @@ int SSL_do_handshake(SSL *s)
         return -1;
     }
 
-    ossl_statem_check_finish_init(sc, -1);
+    if (!ossl_statem_check_finish_init(sc, -1))
+        return -1;
 
     s->method->ssl_renegotiate_check(s, 0);
 
