@@ -367,8 +367,9 @@ static int test_invalidsyntax(const struct tls13groupselection_test_st *current_
     SSL_CTX *client_ctx = NULL, *server_ctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
 
-    TEST_ptr(current_test_vector->client_groups);
-    TEST_size_t_ne(strlen(current_test_vector->client_groups), 0);
+    if (!TEST_ptr(current_test_vector->client_groups)
+        || !TEST_size_t_ne(strlen(current_test_vector->client_groups), 0))
+        goto end;
 
     /* Creation of the contexts */
     TEST_true_or_end(create_ssl_ctx_pair(NULL, TLS_server_method(),
@@ -378,10 +379,9 @@ static int test_invalidsyntax(const struct tls13groupselection_test_st *current_
                                          cert, privkey));
 
     /* Customization of the contexts */
-    if (ssl_or_ctx == WORK_ON_CONTEXT) {
+    if (ssl_or_ctx == WORK_ON_CONTEXT)
         TEST_false_or_end(SSL_CTX_set1_groups_list(client_ctx,
                                                    current_test_vector->client_groups));
-    }
     /* Creation of the SSL objects */
     TEST_true_or_end(create_ssl_objects(server_ctx, client_ctx,
                                         &serverssl, &clientssl,
