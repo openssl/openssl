@@ -51,9 +51,13 @@ OpenSSL 3.4
 
 ### Major changes between OpenSSL 3.4.0 and OpenSSL 3.4.1 [under development]
 
-This release is in development.
+OpenSSL 3.4.1 is a security patch release. The most severe CVE fixed in this
+release is High.
 
 This release incorporates the following bug fixes and mitigations:
+
+  * Fixed RFC7250 handshakes with unauthenticated servers don't abort as expected.
+    ([CVE-2024-12797])
 
   * Fixed timing side-channel in ECDSA signature computation.
     ([CVE-2024-13176])
