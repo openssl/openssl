@@ -257,9 +257,9 @@ void p384_felem_diff64(felem out, const felem in);
 void p384_felem_diff128(widefelem out, const widefelem in);
 void p384_felem_diff_128_64(widefelem out, const felem in);
 
-#define felem_diff64           p384_felem_diff64
-#define felem_diff128          p384_felem_diff128
-#define felem_diff_128_64      p384_felem_diff_128_64
+# define felem_diff64           p384_felem_diff64
+# define felem_diff128          p384_felem_diff128
+# define felem_diff_128_64      p384_felem_diff_128_64
 
 #else
 /*-
@@ -379,7 +379,7 @@ static void felem_diff128(widefelem out, const widefelem in)
     for (i = 0; i < 2*NLIMBS-1; i++)
         out[i] -= in[i];
 }
-#endif // ECP_NISTP384_ASM
+#endif /* ECP_NISTP384_ASM */
 
 static void felem_square_ref(widefelem out, const felem in)
 {
@@ -709,7 +709,7 @@ static void felem_select(void)
     if ((OPENSSL_ppccap_P & PPC_MADD300) && (OPENSSL_ppccap_P & PPC_ALTIVEC)) {
         felem_square_p = p384_felem_square;
         felem_mul_p = p384_felem_mul;
-	felem_reduce_p = p384_felem_reduce;
+        felem_reduce_p = p384_felem_reduce;
 
         return;
     }
