@@ -168,7 +168,7 @@ static const char *select_keytype(uint8_t selector, uint32_t *keysize)
 static void slh_dsa_gen_keys(uint8_t **buf, size_t *len,
                              void **out1, void **out2)
 {
-    uint8_t selector;
+    uint8_t selector = 0;
     const char *keytype = NULL;
     uint32_t keysize;
 
@@ -205,7 +205,7 @@ static void slh_dsa_gen_keys(uint8_t **buf, size_t *len,
 static void slh_dsa_gen_key_with_params(uint8_t **buf, size_t *len,
                                         void **out1, void **out2)
 {
-    uint8_t selector;
+    uint8_t selector = 0;
     const char *keytype = NULL;
     uint32_t keysize;
     uint8_t pubbuf[PARAM_BUF_SZ]; /* expressly bigger than max key size * 3 */
