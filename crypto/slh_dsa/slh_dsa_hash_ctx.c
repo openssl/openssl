@@ -61,6 +61,42 @@ SLH_DSA_HASH_CTX *ossl_slh_dsa_hash_ctx_new(const SLH_DSA_KEY *key)
 }
 
 /**
+ * @brief Duplicate a SLH_DSA_HASH_CTX
+ *
+ * @param ctx The SLH_DSA_HASH_CTX object to duplicate.
+ */
+SLH_DSA_HASH_CTX *ossl_slh_dsa_hash_ctx_dup(const SLH_DSA_HASH_CTX *src)
+{
+    SLH_DSA_HASH_CTX *ret = OPENSSL_zalloc(sizeof(*ret));
+
+    if (ret == NULL)
+        return NULL;
+
+    ret->hmac_digest_used = src->hmac_digest_used;
+    /* Note that the key is not ref counted, since it does not own the key */
+    ret->key = src->key;
+
+    if (src->md_ctx != NULL
+            && (ret->md_ctx = EVP_MD_CTX_dup(src->md_ctx)) == NULL)
+        goto err;
+    if (src->md_big_ctx != NULL) {
+        if (src->md_big_ctx != src->md_ctx) {
+            if ((ret->md_big_ctx = EVP_MD_CTX_dup(src->md_big_ctx)) == NULL)
+                goto err;
+        } else {
+            ret->md_big_ctx = ret->md_ctx;
+        }
+    }
+    if (src->hmac_ctx != NULL
+            && (ret->hmac_ctx = EVP_MAC_CTX_dup(src->hmac_ctx)) == NULL)
+        goto err;
+    return ret;
+ err:
+    ossl_slh_dsa_hash_ctx_free(ret);
+    return NULL;
+}
+
+/**
  * @brief Destroy a SLH_DSA_HASH_CTX
  *
  * @param ctx The SLH_DSA_HASH_CTX object to destroy.

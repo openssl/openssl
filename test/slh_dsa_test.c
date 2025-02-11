@@ -116,7 +116,8 @@ end:
 static int slh_dsa_key_eq_test(void)
 {
     int ret = 0;
-    EVP_PKEY *key[3] = { NULL, NULL, NULL };
+    size_t i;
+    EVP_PKEY *key[4] = { NULL, NULL, NULL, NULL };
     SLH_DSA_SIG_TEST_DATA *td1 = &slh_dsa_sig_testdata[0];
     SLH_DSA_SIG_TEST_DATA *td2 = &slh_dsa_sig_testdata[1];
 #ifndef OPENSSL_NO_EC
@@ -125,11 +126,13 @@ static int slh_dsa_key_eq_test(void)
 
     if (!TEST_ptr(key[0] = slh_dsa_key_from_data(td1->alg, td1->pub, td1->pub_len, 1))
             || !TEST_ptr(key[1] = slh_dsa_key_from_data(td1->alg, td1->pub, td1->pub_len, 1))
-            || !TEST_ptr(key[2] = slh_dsa_key_from_data(td2->alg, td2->pub, td2->pub_len, 1)))
+            || !TEST_ptr(key[2] = slh_dsa_key_from_data(td2->alg, td2->pub, td2->pub_len, 1))
+            || !TEST_ptr(key[3] = EVP_PKEY_dup(key[0])))
         goto end;
 
     if (!TEST_int_eq(EVP_PKEY_eq(key[0], key[1]), 1)
-            || !TEST_int_ne(EVP_PKEY_eq(key[0], key[2]), 1))
+            || !TEST_int_ne(EVP_PKEY_eq(key[0], key[2]), 1)
+            || !TEST_int_eq(EVP_PKEY_eq(key[0], key[3]), 1))
         goto end;
 
 #ifndef OPENSSL_NO_EC
@@ -140,10 +143,9 @@ static int slh_dsa_key_eq_test(void)
 #else
     ret = 1;
 #endif
-end:
-    EVP_PKEY_free(key[2]);
-    EVP_PKEY_free(key[1]);
-    EVP_PKEY_free(key[0]);
+ end:
+    for (i = 0; i < OSSL_NELEM(key); ++i)
+        EVP_PKEY_free(key[i]);
     return ret;
 }
 
@@ -433,11 +435,11 @@ static int slh_dsa_deterministic_usage_test(void)
     EVP_CIPHER *cipher = NULL; /* Used to encrypt the private key */
     char *pass = "Password";
     BIO *pub_bio = NULL, *priv_bio = NULL;
-    EVP_PKEY_CTX *gctx = NULL, *sctx = NULL, *vctx = NULL;
+    EVP_PKEY_CTX *gctx = NULL, *sctx = NULL, *vctx = NULL, *dupctx = NULL;
     EVP_PKEY *gkey = NULL, *pub = NULL, *priv = NULL;
     EVP_SIGNATURE *sig_alg = NULL;
     uint8_t *sig  = NULL;
-    size_t sig_len = 0;
+    size_t sig_len = 0, len = 0;
     uint8_t msg[] = { 0x01, 0x02, 0x03, 0x04 };
     size_t msg_len = sizeof(msg);
     const SLH_DSA_KEYGEN_TEST_DATA *tst = &slh_dsa_keygen_testdata[0];
@@ -471,18 +473,32 @@ static int slh_dsa_deterministic_usage_test(void)
             || !TEST_int_eq(EVP_PKEY_sign_message_init(sctx, sig_alg, params), 1))
         goto err;
 
+    if (!TEST_ptr(dupctx = EVP_PKEY_CTX_dup(sctx)))
+        goto err;
+
     /* Determine the size of the signature & allocate space */
-    if (!TEST_int_eq(EVP_PKEY_sign(sctx, NULL, &sig_len, msg, msg_len), 1)
-            || !TEST_ptr(sig = OPENSSL_malloc(sig_len))
-            || !TEST_int_eq(EVP_PKEY_sign(sctx, sig, &sig_len, msg, msg_len), 1))
+    if (!TEST_int_eq(EVP_PKEY_sign(sctx, NULL, &sig_len, msg, msg_len), 1))
+        goto err;
+    len = sig_len;
+    if (!TEST_ptr(sig = OPENSSL_zalloc(sig_len * 2))
+            || !TEST_int_eq(EVP_PKEY_sign(sctx, sig, &len, msg, msg_len), 1)
+            || !TEST_size_t_eq(sig_len, len)
+            || !TEST_int_eq(EVP_PKEY_sign(dupctx, sig + sig_len, &len,
+                                          msg, msg_len), 1)
+            || !TEST_size_t_eq(sig_len, len))
         goto err;
     /* Read the public key and add to a verify ctx */
     if (!TEST_ptr(PEM_read_bio_PUBKEY_ex(pub_bio, &pub, NULL, NULL, lib_ctx, NULL))
             || !TEST_ptr(vctx = EVP_PKEY_CTX_new_from_pkey(lib_ctx, pub, NULL)))
         goto err;
+    EVP_PKEY_CTX_free(dupctx);
+
     /* verify the signature */
     if (!TEST_int_eq(EVP_PKEY_verify_message_init(vctx, sig_alg, NULL), 1)
-            || !TEST_int_eq(EVP_PKEY_verify(vctx, sig, sig_len, msg, msg_len), 1))
+            || !TEST_ptr(dupctx = EVP_PKEY_CTX_dup(vctx))
+            || !TEST_int_eq(EVP_PKEY_verify(vctx, sig, sig_len, msg, msg_len), 1)
+            || !TEST_int_eq(EVP_PKEY_verify(dupctx, sig + sig_len, sig_len,
+                                            msg, msg_len), 1))
         goto err;
     ret = 1;
 err:
@@ -494,6 +510,7 @@ err:
     EVP_PKEY_CTX_free(gctx);
     EVP_PKEY_CTX_free(sctx);
     EVP_PKEY_CTX_free(vctx);
+    EVP_PKEY_CTX_free(dupctx);
     BIO_free(pub_bio);
     BIO_free(priv_bio);
     OPENSSL_free(sig);

@@ -41,6 +41,9 @@
  * SLH_DSA_HASH_CTX is a container to hold all of these objects. This object is
  * resolved early and is then passed to most SLH_DSA related functions, since
  * there are many nested layers of calls that require these values.
+ *
+ * NOTE: Any changes to this structure will need updating in
+ * ossl_slh_dsa_hash_ctx_dup().
  */
 struct slh_dsa_hash_ctx_st {
     const SLH_DSA_KEY *key; /* This key is not owned by this object */
