@@ -5064,19 +5064,11 @@ static int test_key_exchange(int idx)
             kexch_name0 = "MLKEM512";
             break;
         case 13:
-            if (is_fips) {
-                testresult = 1;
-                goto end;
-            };
             kexch_groups = NULL;
             kexch_name0 = "MLKEM512";
             kexch_names = kexch_name0;
             break;
         case 14:
-            if (is_fips) {
-                testresult = 1;
-                goto end;
-            };
             kexch_groups = NULL;
             kexch_name0 = "MLKEM768";
             kexch_names = kexch_name0;
@@ -5111,11 +5103,9 @@ static int test_key_exchange(int idx)
             return 1;
     }
 
-    /* ML-KEM not yet supported in the FIPS module */
-    if (is_fips && idx >= 12 && idx <= 19) {
-        testresult = 1;
-        goto end;
-    };
+    if (is_fips && fips_provider_version_lt(libctx, 3, 5, 0)
+            && idx >= 12 && idx <= 19)
+        return TEST_skip("ML-KEM not supported in this version of fips provider");
 
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
                                        TLS_client_method(), TLS1_VERSION,
