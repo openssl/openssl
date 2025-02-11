@@ -50,6 +50,13 @@ OpenSSL 3.6
 
    *Alina Elizarova*
 
+ * Enabled x86-64 SHA-512 optimizations with SHA512 ISA Extension.
+   Optimized digests: `sha384`, `sha512`, `sha512-224`, `sha512-256`.
+   `openssl speed` shows speedups ranging from 1.6x to 4.5x on
+   the P-cores of Intel Core Ultra 5 238V.
+
+   *Adrian Stanciu*
+
 OpenSSL 3.5
 -----------
 
