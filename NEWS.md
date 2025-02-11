@@ -19,6 +19,10 @@ OpenSSL Releases
 OpenSSL 3.1
 -----------
 
+### Major changes between OpenSSL 3.1.8 and OpenSSL 3.1.9 [under development]
+
+  * none
+
 ### Major changes between OpenSSL 3.1.7 and OpenSSL 3.1.8 [11 Feb 2025]
 
 OpenSSL 3.1.8 is a security patch release. The most severe CVE fixed in this

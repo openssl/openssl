@@ -22,6 +22,10 @@ OpenSSL Releases
 OpenSSL 3.1
 -----------
 
+### Changes between 3.1.8 and 3.1.9 [xx XXX xxxx]
+
+ * none yet
+
 ### Changes between 3.1.7 and 3.1.8 [11 Feb 2025]
 
  * Fixed timing side-channel in ECDSA signature computation.
