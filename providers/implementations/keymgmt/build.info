@@ -11,7 +11,7 @@ $RSA_GOAL=../../libdefault.a ../../libfips.a
 $TEMPLATE_GOAL=../../libtemplate.a
 $ML_DSA_GOAL=../../libdefault.a ../../libfips.a
 $ML_KEM_GOAL=../../libdefault.a ../../libfips.a
-$TLS_ML_KEM_HYBRID_GOAL=../../libdefault.a
+$TLS_ML_KEM_HYBRID_GOAL=../../libdefault.a ../../libfips.a
 
 IF[{- !$disabled{dh} -}]
   SOURCE[$DH_GOAL]=dh_kmgmt.c
