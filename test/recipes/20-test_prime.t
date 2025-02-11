@@ -41,7 +41,7 @@ ok(run(app(["openssl", "prime", "-in", $short_number_file])),
 ok(!run(app(["openssl", "prime", "-in", $non_number_file])),
    "Run openssl prime with non number -in file");
 
-ok(run(app(["openssl", "prime", "-in", "-hex", $hex_number_file])),
+ok(run(app(["openssl", "prime", "-in", "-inhex", $hex_number_file])),
    "Run openssl prime with hex number -in file");
 
 ok(!run(app(["openssl", "prime", "-in", $bad_format_file])),
