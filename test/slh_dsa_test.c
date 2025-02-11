@@ -439,7 +439,7 @@ static int slh_dsa_deterministic_usage_test(void)
     EVP_PKEY *gkey = NULL, *pub = NULL, *priv = NULL;
     EVP_SIGNATURE *sig_alg = NULL;
     uint8_t *sig  = NULL;
-    size_t sig_len = 0;
+    size_t sig_len = 0, len = 0;
     uint8_t msg[] = { 0x01, 0x02, 0x03, 0x04 };
     size_t msg_len = sizeof(msg);
     const SLH_DSA_KEYGEN_TEST_DATA *tst = &slh_dsa_keygen_testdata[0];
@@ -477,10 +477,15 @@ static int slh_dsa_deterministic_usage_test(void)
         goto err;
 
     /* Determine the size of the signature & allocate space */
-    if (!TEST_int_eq(EVP_PKEY_sign(sctx, NULL, &sig_len, msg, msg_len), 1)
-            || !TEST_ptr(sig = OPENSSL_malloc(sig_len))
-            || !TEST_int_eq(EVP_PKEY_sign(sctx, sig, &sig_len, msg, msg_len), 1)
-            || !TEST_int_eq(EVP_PKEY_sign(dupctx, sig, &sig_len, msg, msg_len), 1))
+    if (!TEST_int_eq(EVP_PKEY_sign(sctx, NULL, &sig_len, msg, msg_len), 1))
+        goto err;
+    len = sig_len;
+    if (!TEST_ptr(sig = OPENSSL_zalloc(sig_len * 2))
+            || !TEST_int_eq(EVP_PKEY_sign(sctx, sig, &len, msg, msg_len), 1)
+            || !TEST_size_t_eq(sig_len, len)
+            || !TEST_int_eq(EVP_PKEY_sign(dupctx, sig + sig_len, &len,
+                                          msg, msg_len), 1)
+            || !TEST_size_t_eq(sig_len, len))
         goto err;
     /* Read the public key and add to a verify ctx */
     if (!TEST_ptr(PEM_read_bio_PUBKEY_ex(pub_bio, &pub, NULL, NULL, lib_ctx, NULL))
@@ -492,7 +497,8 @@ static int slh_dsa_deterministic_usage_test(void)
     if (!TEST_int_eq(EVP_PKEY_verify_message_init(vctx, sig_alg, NULL), 1)
             || !TEST_ptr(dupctx = EVP_PKEY_CTX_dup(vctx))
             || !TEST_int_eq(EVP_PKEY_verify(vctx, sig, sig_len, msg, msg_len), 1)
-            || !TEST_int_eq(EVP_PKEY_verify(dupctx, sig, sig_len, msg, msg_len), 1))
+            || !TEST_int_eq(EVP_PKEY_verify(dupctx, sig + sig_len, sig_len,
+                                            msg, msg_len), 1))
         goto err;
     ret = 1;
 err:
