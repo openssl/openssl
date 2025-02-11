@@ -50,6 +50,7 @@ __owur int ossl_slh_dsa_key_get_type(const SLH_DSA_KEY *key);
 __owur int ossl_slh_dsa_key_type_matches(const SLH_DSA_KEY *key, const char *alg);
 __owur SLH_DSA_HASH_CTX *ossl_slh_dsa_hash_ctx_new(const SLH_DSA_KEY *key);
 void ossl_slh_dsa_hash_ctx_free(SLH_DSA_HASH_CTX *ctx);
+__owur SLH_DSA_HASH_CTX *ossl_slh_dsa_hash_ctx_dup(const SLH_DSA_HASH_CTX *src);
 
 __owur int ossl_slh_dsa_sign(SLH_DSA_HASH_CTX *slh_ctx,
                              const uint8_t *msg, size_t msg_len,

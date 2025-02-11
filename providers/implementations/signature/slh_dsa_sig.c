@@ -34,9 +34,13 @@ static OSSL_FUNC_signature_digest_sign_init_fn slh_dsa_digest_signverify_init;
 static OSSL_FUNC_signature_digest_sign_fn slh_dsa_digest_sign;
 static OSSL_FUNC_signature_digest_verify_fn slh_dsa_digest_verify;
 static OSSL_FUNC_signature_freectx_fn slh_dsa_freectx;
+static OSSL_FUNC_signature_dupctx_fn slh_dsa_dupctx;
 static OSSL_FUNC_signature_set_ctx_params_fn slh_dsa_set_ctx_params;
 static OSSL_FUNC_signature_settable_ctx_params_fn slh_dsa_settable_ctx_params;
 
+/*
+ * NOTE: Any changes to this structure may require updating slh_dsa_dupctx().
+ */
 typedef struct {
     SLH_DSA_KEY *key; /* Note that the key is not owned by this object */
     SLH_DSA_HASH_CTX *hash_ctx;
@@ -83,6 +87,35 @@ static void *slh_dsa_newctx(void *provctx, const char *alg, const char *propq)
     return ctx;
  err:
     slh_dsa_freectx(ctx);
+    return NULL;
+}
+
+static void *slh_dsa_dupctx(void *vctx)
+{
+    PROV_SLH_DSA_CTX *src = (PROV_SLH_DSA_CTX *)vctx;
+    PROV_SLH_DSA_CTX *ret;
+
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    /*
+     * Note that the SLH_DSA_KEY is ref counted via EVP_PKEY so we can just copy
+     * the key here.
+     */
+    ret = OPENSSL_memdup(src, sizeof(*src));
+    if (ret == NULL)
+        return NULL;
+    ret->propq = NULL;
+    ret->hash_ctx = NULL;
+    if (src->propq != NULL && (ret->propq = OPENSSL_strdup(src->propq)) == NULL)
+        goto err;
+    ret->hash_ctx = ossl_slh_dsa_hash_ctx_dup(src->hash_ctx);
+    if (ret->hash_ctx == NULL)
+        goto err;
+
+    return ret;
+ err:
+    slh_dsa_freectx(ret);
     return NULL;
 }
 
@@ -334,6 +367,7 @@ static int slh_dsa_get_ctx_params(void *vctx, OSSL_PARAM *params)
         { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY,                                   \
           (void (*)(void))slh_dsa_digest_verify },                             \
         { OSSL_FUNC_SIGNATURE_FREECTX, (void (*)(void))slh_dsa_freectx },      \
+        { OSSL_FUNC_SIGNATURE_DUPCTX, (void (*)(void))slh_dsa_dupctx },        \
         { OSSL_FUNC_SIGNATURE_SET_CTX_PARAMS, (void (*)(void))slh_dsa_set_ctx_params },\
         { OSSL_FUNC_SIGNATURE_SETTABLE_CTX_PARAMS,                             \
           (void (*)(void))slh_dsa_settable_ctx_params },                       \

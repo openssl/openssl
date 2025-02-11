@@ -17,6 +17,9 @@
 #define SLH_DSA_PUB(key) SLH_DSA_PK_SEED(key)
 #define SLH_DSA_PRIV(key) SLH_DSA_SK_SEED(key)
 
+/*
+ * NOTE: Any changes to this structure may require updating ossl_slh_dsa_key_dup().
+ */
 struct slh_dsa_key_st {
     /*
      * A private key consists of
