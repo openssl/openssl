@@ -25,6 +25,10 @@ OpenSSL Releases
 OpenSSL 3.2
 -----------
 
+### Changes between 3.2.4 and 3.2.5 [xx XXX xxxx]
+
+ * none yet
+
 ### Changes between 3.2.3 and 3.2.4 [11 Feb 2025]
 
  * Fixed RFC7250 handshakes with unauthenticated servers don't abort as expected.
