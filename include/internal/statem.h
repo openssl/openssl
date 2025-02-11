@@ -154,7 +154,7 @@ void ossl_statem_set_in_init(SSL_CONNECTION *s, int init);
 int ossl_statem_get_in_handshake(SSL_CONNECTION *s);
 void ossl_statem_set_in_handshake(SSL_CONNECTION *s, int inhand);
 __owur int ossl_statem_skip_early_data(SSL_CONNECTION *s);
-void ossl_statem_check_finish_init(SSL_CONNECTION *s, int send);
+int ossl_statem_check_finish_init(SSL_CONNECTION *s, int send);
 void ossl_statem_set_hello_verify_done(SSL_CONNECTION *s);
 __owur int ossl_statem_app_data_allowed(SSL_CONNECTION *s);
 __owur int ossl_statem_export_allowed(SSL_CONNECTION *s);
