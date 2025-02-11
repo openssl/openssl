@@ -9,8 +9,9 @@ openssl-prime - compute prime numbers
 
 B<openssl prime>
 [B<-help>]
-[B<-hex>]
+[B<-inhex>]
 [B<-in>]
+[B<-outhex>]
 [B<-generate>]
 [B<-bits> I<num>]
 [B<-safe>]
@@ -34,13 +35,17 @@ rest of the flags.
 
 Display an option summary.
 
-=item B<-hex>
+=item B<-inhex>
 
-Enable hex format for output from prime generation or input to primality checking.
+Enables hex format for input to primality checking
 
 =item B<-in>
 
 Provide file names containing numbers for primality checking.
+
+=item B<-outhex>
+
+Enables hex output
 
 =item B<-generate>
 

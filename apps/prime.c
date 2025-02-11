@@ -17,7 +17,7 @@
 
 typedef enum OPTION_choice {
     OPT_COMMON,
-    OPT_HEX, OPT_GENERATE, OPT_BITS, OPT_SAFE, OPT_CHECKS,
+    OPT_INHEX, OPT_OUTHEX, OPT_GENERATE, OPT_BITS, OPT_SAFE, OPT_CHECKS,
     OPT_PROV_ENUM,
     OPT_IN_FILE
 } OPTION_CHOICE;
@@ -46,11 +46,13 @@ const OPTIONS prime_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"bits", OPT_BITS, 'p', "Size of number in bits"},
     {"checks", OPT_CHECKS, 'p', "Number of checks"},
-    {"hex", OPT_HEX, '-',
-     "Enables hex format for output from prime generation or input to primality checking"},
+    {"inhex", OPT_INHEX, '-',
+    "Enables hex format for input to primality checking"},
     {"in", OPT_IN_FILE, '-', "Provide file names containing numbers for primality checking"},
 
     OPT_SECTION("Output"),
+    {"outhex", OPT_OUTHEX, '-',
+    "Enables hex output"},
     {"generate", OPT_GENERATE, '-', "Generate a prime"},
     {"safe", OPT_SAFE, '-',
      "When used with -generate, generate a safe prime"},
@@ -65,7 +67,7 @@ const OPTIONS prime_options[] = {
 int prime_main(int argc, char **argv)
 {
     BIGNUM *bn = NULL;
-    int hex = 0, generate = 0, bits = 0, safe = 0, ret = 1, in_file = 0;
+    int in_hex = 0, out_hex = 0, generate = 0, bits = 0, safe = 0, ret = 1, in_file = 0;
     char *prog;
     OPTION_CHOICE o;
     char *file_read_buf = NULL;
@@ -83,8 +85,11 @@ opthelp:
             opt_help(prime_options);
             ret = 0;
             goto end;
-        case OPT_HEX:
-            hex = 1;
+        case OPT_INHEX:
+            in_hex = 1;
+            break;
+        case OPT_OUTHEX:
+            out_hex = 1;
             break;
         case OPT_GENERATE:
             generate = 1;
@@ -135,7 +140,7 @@ opthelp:
             BIO_printf(bio_err, "Failed to generate prime.\n");
             goto end;
         }
-        s = hex ? BN_bn2hex(bn) : BN_bn2dec(bn);
+        s = out_hex ? BN_bn2hex(bn) : BN_bn2dec(bn);
         if (s == NULL) {
             BIO_printf(bio_err, "Out of memory.\n");
             goto end;
@@ -188,10 +193,10 @@ opthelp:
 
             }
 
-            r = check_num(check_val, hex);
+            r = check_num(check_val, in_hex);
 
             if (r)
-                r = hex ? BN_hex2bn(&bn, check_val) : BN_dec2bn(&bn, check_val);
+                r = in_hex ? BN_hex2bn(&bn, check_val) : BN_dec2bn(&bn, check_val);
 
             if (!r) {
                 BIO_printf(bio_err, "Failed to process value (%s)\n", check_val);
