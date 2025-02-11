@@ -44,6 +44,12 @@ OpenSSL 3.6
 
    *Alina Elizarova*
 
+ * Enabled x86-64 SM3 optimizations with SM3 ISA Extension available starting
+   Lunar Lake and Arrow Lake S CPUs. The expected performance improvement is
+   ~ 2.2-4.7x (depends on the data size) on Arrow Lake S.
+
+   *Alina Elizarova*
+
 OpenSSL 3.5
 -----------
 
