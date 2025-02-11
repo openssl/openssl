@@ -29,6 +29,17 @@ OpenSSL 3.4
 
 ### Changes between 3.4.0 and 3.4.1 [xx XXX xxxx]
 
+ * Fixed RFC7250 handshakes with unauthenticated servers don't abort as expected.
+
+   Clients using RFC7250 Raw Public Keys (RPKs) to authenticate a
+   server may fail to notice that the server was not authenticated, because
+   handshakes don't abort as expected when the SSL_VERIFY_PEER verification mode
+   is set.
+
+   ([CVE-2024-12797])
+
+   *Viktor Dukhovni*
+
  * Fixed timing side-channel in ECDSA signature computation.
 
    There is a timing signal of around 300 nanoseconds when the top word of
