@@ -18,7 +18,7 @@ OpenSSL Releases
 OpenSSL 3.0
 -----------
 
-### Major changes between OpenSSL 3.0.15 and OpenSSL 3.0.16 [under development]
+### Major changes between OpenSSL 3.0.15 and OpenSSL 3.0.16 [11 Feb 2025]
 
 OpenSSL 3.0.16 is a security patch release. The most severe CVE fixed in this
 release is Low.

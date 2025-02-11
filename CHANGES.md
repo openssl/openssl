@@ -28,7 +28,7 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 [Migration guide]: https://github.com/openssl/openssl/tree/master/doc/man7/migration_guide.pod
 
-### Changes between 3.0.15 and 3.0.16 [xx XXX xxxx]
+### Changes between 3.0.15 and 3.0.16 [11 Feb 2025]
 
  * Fixed timing side-channel in ECDSA signature computation.
 
