@@ -32,6 +32,7 @@ static OSSL_FUNC_keymgmt_gen_init_fn slh_dsa_gen_init;
 static OSSL_FUNC_keymgmt_gen_cleanup_fn slh_dsa_gen_cleanup;
 static OSSL_FUNC_keymgmt_gen_set_params_fn slh_dsa_gen_set_params;
 static OSSL_FUNC_keymgmt_gen_settable_params_fn slh_dsa_gen_settable_params;
+static OSSL_FUNC_keymgmt_dup_fn slh_dsa_dup_key;
 
 #define SLH_DSA_POSSIBLE_SELECTIONS (OSSL_KEYMGMT_SELECT_KEYPAIR)
 
@@ -54,6 +55,13 @@ static void *slh_dsa_new_key(void *provctx, const char *alg)
 static void slh_dsa_free_key(void *keydata)
 {
     ossl_slh_dsa_key_free((SLH_DSA_KEY *)keydata);
+}
+
+static void *slh_dsa_dup_key(const void *keydata_from, int selection)
+{
+    if (ossl_prov_is_running())
+        return ossl_slh_dsa_key_dup(keydata_from, selection);
+    return NULL;
 }
 
 static int slh_dsa_has(const void *keydata, int selection)
@@ -412,6 +420,7 @@ static void slh_dsa_gen_cleanup(void *genctx)
     const OSSL_DISPATCH ossl_slh_dsa_##fn##_keymgmt_functions[] = {            \
         { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))slh_dsa_##fn##_new_key },     \
         { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))slh_dsa_free_key },          \
+        { OSSL_FUNC_KEYMGMT_DUP, (void (*)(void))slh_dsa_dup_key },            \
         { OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))slh_dsa_has },                \
         { OSSL_FUNC_KEYMGMT_MATCH, (void (*)(void))slh_dsa_match },            \
         { OSSL_FUNC_KEYMGMT_IMPORT, (void (*)(void))slh_dsa_import },          \
