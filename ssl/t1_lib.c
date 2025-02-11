@@ -1580,11 +1580,9 @@ int tls1_set_groups_list(SSL_CTX *ctx,
         return 0;
     }
 
+    memset(&gcb, 0, sizeof(gcb));
     gcb.tuple_mode = 1; /* We prepare to collect the first tuple */
     gcb.ignore_unknown_default = 0;
-    gcb.gidcnt = 0;
-    gcb.ksidcnt = 0;
-    gcb.tplcnt = 0;
     gcb.gidmax = GROUPLIST_INCREMENT;
     gcb.tplmax = GROUPLIST_INCREMENT;
     gcb.ksidmax = GROUPLIST_INCREMENT;
