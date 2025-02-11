@@ -92,7 +92,7 @@ static int rpk_verify_server_cb(int ok, X509_STORE_CTX *ctx)
  * idx = 16 - like 7, but with SSL_VERIFY_PEER connection should fail
  * idx = 17 - like 8, but with SSL_VERIFY_PEER connection should fail
  *
- * 18 * 2 * 4 * 2 * 2 * 2 * 2 = 2048 tests
+ * 18 * 2 * 4 * 2 * 2 * 2 * 2 = 2304 tests
  */
 static int test_rpk(int idx)
 {
