@@ -1131,7 +1131,6 @@ PROV_R_MISSING_SEED:140:missing seed
 PROV_R_MISSING_SESSION_ID:133:missing session id
 PROV_R_MISSING_TYPE:134:missing type
 PROV_R_MISSING_XCGHASH:135:missing xcghash
-PROV_R_ML_DSA_NO_FORMAT:247:ml dsa no format
 PROV_R_MODULE_INTEGRITY_FAILURE:214:module integrity failure
 PROV_R_NOT_A_PRIVATE_KEY:221:not a private key
 PROV_R_NOT_A_PUBLIC_KEY:220:not a public key
@@ -1173,8 +1172,6 @@ PROV_R_UNABLE_TO_INITIALISE_CIPHERS:208:unable to initialise ciphers
 PROV_R_UNABLE_TO_LOAD_SHA256:147:unable to load sha256
 PROV_R_UNABLE_TO_LOCK_PARENT:201:unable to lock parent
 PROV_R_UNABLE_TO_RESEED:204:unable to reseed
-PROV_R_UNEXPECTED_KEY_OID:245:unexpected key oid
-PROV_R_UNEXPECTED_KEY_PARAMETERS:246:unexpected key parameters
 PROV_R_UNSUPPORTED_CEK_ALG:145:unsupported cek alg
 PROV_R_UNSUPPORTED_KEY_SIZE:153:unsupported key size
 PROV_R_UNSUPPORTED_MAC_TYPE:137:unsupported mac type
