@@ -553,6 +553,14 @@ void ossl_synchronize_rcu(CRYPTO_RCU_LOCK *lock)
 
     qp = update_qp(lock, &curr_id);
 
+    /* retire in order */
+    pthread_mutex_lock(&lock->prior_lock);
+    while (lock->next_to_retire != curr_id)
+        pthread_cond_wait(&lock->prior_signal, &lock->prior_lock);
+    lock->next_to_retire++;
+    pthread_cond_broadcast(&lock->prior_signal);
+    pthread_mutex_unlock(&lock->prior_lock);
+
     /*
      * wait for the reader count to reach zero
      * Note the use of __ATOMIC_ACQUIRE here to ensure that any
@@ -563,14 +571,6 @@ void ossl_synchronize_rcu(CRYPTO_RCU_LOCK *lock)
     do {
         count = ATOMIC_LOAD_N(uint64_t, &qp->users, __ATOMIC_ACQUIRE);
     } while (count != (uint64_t)0);
-
-    /* retire in order */
-    pthread_mutex_lock(&lock->prior_lock);
-    while (lock->next_to_retire != curr_id)
-        pthread_cond_wait(&lock->prior_signal, &lock->prior_lock);
-    lock->next_to_retire++;
-    pthread_cond_broadcast(&lock->prior_signal);
-    pthread_mutex_unlock(&lock->prior_lock);
 
     retire_qp(lock, qp);
 
