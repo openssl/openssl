@@ -44,8 +44,9 @@ L<B<EVP_PKEY-ED448>(7)|EVP_PKEY-ED448(7)/Common X25519, X448, ED25519 and ED448 
 L<B<EVP_PKEY-X25519>(7)|EVP_PKEY-X25519(7)/Common X25519, X448, ED25519 and ED448 parameters>,
 L<B<EVP_PKEY-X448>(7)|EVP_PKEY-X448(7)/Common X25519, X448, ED25519 and ED448 parameters>,
 L<B<EVP_PKEY-ED25519>(7)|EVP_PKEY-ED25519(7)/Common X25519, X448, ED25519 and ED448 parameters>,
+L<B<EVP_PKEY-ML-DSA(7)>|EVP_PKEY-ML-DSA(7)/Common parameters>
 and
-L<EVP_PKEY-ML-KEM-512(7)|EVP_PKEY-ML-KEM-768(7)|EVP_PKEY-ML-KEM-1024(7)/Common parameters>
+L<B<EVP_PKEY-ML-KEM(7)>|EVP_PKEY-ML-KEM(7)/Common parameters>
 pages.
 
 =for comment the awful list of links above is made this way so we get nice
@@ -280,7 +281,7 @@ L<EVP_PKEY-ML-KEM(7)>.
 
 These functions were added in OpenSSL 3.0.
 
-Support for B<ML-KEM> was added in OpenSSL 3.5.
+Support for B<ML-DSA> and B<ML-KEM> was added in OpenSSL 3.5.
 
 =head1 COPYRIGHT
 

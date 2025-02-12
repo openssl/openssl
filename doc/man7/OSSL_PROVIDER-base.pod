@@ -102,7 +102,11 @@ are also available in the default provider.
 
 =item ML-DSA-87
 
-=for comment TODO(ML-KEM): We don't yet have encoders for ML-KEM.
+=item ML-KEM-512
+
+=item ML-KEM-768
+
+=item ML-KEM-1024
 
 =back
 
@@ -144,7 +148,11 @@ combination with the FIPS provider.
 
 =item ML-DSA-87
 
-=for comment We don't yet have decoders for MLKEM...
+=item ML-KEM-512
+
+=item ML-KEM-768
+
+=item ML-KEM-1024
 
 =back
 
@@ -173,6 +181,8 @@ L<openssl-core_dispatch.h(7)>, L<provider(7)>
 =head1 HISTORY
 
 This functionality was added in OpenSSL 3.0.
+
+Support for B<ML-DSA> and <ML-KEM> was added in OpenSSL 3.5.
 
 =head1 COPYRIGHT
 

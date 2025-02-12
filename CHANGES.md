@@ -30,6 +30,14 @@ OpenSSL 3.5
 
 ### Changes between 3.4 and 3.5 [xx XXX xxxx]
 
+* ML-KEM as specified in FIPS 203.
+
+  Based on the original implementation in BoringSSL, ported from C++ to C,
+  refactored, and integrated into the OpenSSL default and FIPS providers.
+  Including also the X25519MLKEM768, SecP256r1MLKEM768, SecP384r1MLKEM1024
+  TLS hybrid key post-quantum/classical key agreement schemes.
+  *Michael Baentsch, Viktor Dukhovni, Shane Lontis and Paul Dale*
+
 * Add ML-DSA as specified in FIPS 204.
 
   The base code was derived from BoringSSL C++ code.

@@ -99,6 +99,9 @@ C<ED25519>,
 C<ED448>,
 C<X25519>,
 C<X448>,
+C<ML-DSA-44>,
+C<ML-DSA-65>,
+C<ML-DSA-87>,
 C<ML-KEM-512>,
 C<ML-KEM-768>,
 or
@@ -131,23 +134,19 @@ B<ED25519>,
 B<ED448>,
 B<X25519>,
 B<X448>,
+C<ML-DSA-44>,
+C<ML-DSA-65>,
+C<ML-DSA-87>,
 B<ML-KEM-512>,
 B<ML-KEM-768>,
 and
 B<ML-KEM-1024>.
 
 EVP_PKEY_new_raw_public_key() works in the same way as
-EVP_PKEY_new_raw_private_key() except that I<key> points to the raw public key
-data. The B<EVP_PKEY> structure will be initialised without any private key
-information. Algorithm types that support raw public keys are
-B<ED448>.
-B<ED25519>,
-B<X25519>,
-B<X448>
-B<ML-KEM-512>,
-B<ML-KEM-768>,
-and
-B<ML-KEM-1024>.
+EVP_PKEY_new_raw_private_key_ex() except that I<key> points to the raw public
+key data.
+The B<EVP_PKEY> structure will be initialised without any private key
+information.
 
 EVP_PKEY_new_mac_key() works in the same way as EVP_PKEY_new_raw_private_key().
 New applications should use EVP_PKEY_new_raw_private_key() instead.
@@ -168,9 +167,15 @@ B<HMAC>,
 B<POLY1305>,
 and
 B<SIPHASH>.
-EVP_PKEY_get_raw_private_key() also works with B<ML-KEM-512>, B<ML-KEM-768> and
-B<ML-KEM-1024> keys, which don't have legacy numeric I<NID> assigments, but
-their raw form is nevertheless available.
+EVP_PKEY_get_raw_private_key() also works with
+C<ML-DSA-44>,
+C<ML-DSA-65>,
+C<ML-DSA-87>,
+B<ML-KEM-512>,
+B<ML-KEM-768> and
+B<ML-KEM-1024>
+keys, which don't have legacy numeric I<NID> assigments, but their raw form is
+nevertheless available.
 
 
 EVP_PKEY_get_raw_public_key() fills the buffer provided by I<pub> with raw
@@ -186,9 +191,15 @@ B<ED448>,
 B<X25519>,
 and
 B<X448>
-EVP_PKEY_get_raw_public_key() also works with B<ML-KEM-512>, B<ML-KEM-768> and
-B<ML-KEM-1024> keys, which don't have legacy numeric I<NID> assigments, but
-their raw form is nevertheless available.
+EVP_PKEY_get_raw_public_key() also works with
+C<ML-DSA-44>,
+C<ML-DSA-65>,
+C<ML-DSA-87>,
+B<ML-KEM-512>,
+B<ML-KEM-768> and
+B<ML-KEM-1024>
+keys, which don't have legacy numeric I<NID> assigments, but their raw form is
+nevertheless available.
 
 EVP_PKEY_new_CMAC_key() works in the same way as EVP_PKEY_new_raw_private_key()
 except it is only for the B<EVP_PKEY_CMAC> algorithm type. In addition to the
@@ -234,9 +245,8 @@ L<EVP_PKEY-Poly1305(7)>,
 L<EVP_PKEY-Siphash(7)>,
 L<EVP_PKEY-X25519(7)>,
 L<EVP_PKEY-X448(7)>,
-L<EVP_PKEY-ML-KEM-512(7)>,
-L<EVP_PKEY-ML-KEM-768(7)>,
-L<EVP_PKEY-ML-KEM-1024(7)>.
+L<EVP_PKEY-ML-DSA(7)>,
+L<EVP_PKEY-ML-KEM(7)>.
 
 =head1 HISTORY
 
@@ -260,7 +270,7 @@ The documentation of B<EVP_PKEY> was amended in OpenSSL 3.0 to allow there to
 be the private part of the keypair without the public part, where this was
 previously implied to be disallowed.
 
-Support for B<ML-KEM> was added in OpenSSL 3.5.
+Support for B<ML-DSA> and B<ML-KEM> was added in OpenSSL 3.5.
 
 =head1 COPYRIGHT
 

@@ -1060,7 +1060,6 @@ IMPLEMENT_TEST_SUITE(X448, "X448", 1)
 /*
  * ML-KEM has no support for PEM_write_bio_PrivateKey_traditional(), so no
  * legacy tests.
- * TODO(ML-KEM): FIPS
  */
 KEYS(ML_KEM_512);
 IMPLEMENT_TEST_SUITE(ML_KEM_512, "ML-KEM-512", 1)
