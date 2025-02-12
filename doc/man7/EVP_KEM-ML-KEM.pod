@@ -22,7 +22,6 @@ setting randomness during encapsulation, this enables testing, as per
 FIPS 203, section 6.2, algorithm 17.
 
 This parameter should not be used for purposes other than testing.
-This parameter is disabled for use in the FIPS provider (TODO(ML-KEM)).
 
 When this parameter is not set, encapsulation proceeds as per FIPS 203,
 section 7.2
