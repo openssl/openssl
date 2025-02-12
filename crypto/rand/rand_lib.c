@@ -609,67 +609,15 @@ static EVP_RAND_CTX *rand_new_seed(OSSL_LIB_CTX *libctx)
     EVP_RAND_CTX *ctx = NULL;
 # ifdef OPENSSL_NO_FIPS_JITTER
     RAND_GLOBAL *dgbl = rand_get_global(libctx);
-    char *props = NULL;
-    size_t props_len;
-    OSSL_PROPERTY_LIST *pl1, *pl2, *pl3 = NULL;
 
     if (dgbl == NULL)
         return NULL;
     propq = dgbl->seed_propq;
-    if (dgbl->seed_name != NULL) {
-        name = dgbl->seed_name;
-    } else {
-        /*
-         * Default to our internal seed source.  This isn't part of the FIPS
-         * provider so we need to override any FIPS properties.
-         */
-        if (propq == NULL || *propq == '\0') {
-            propq = "-fips";
-        } else {
-            pl1 = ossl_parse_query(libctx, propq, 1);
-            if (pl1 == NULL) {
-                ERR_raise(ERR_LIB_RAND, RAND_R_INVALID_PROPERTY_QUERY);
-                return NULL;
-            }
-            pl2 = ossl_parse_query(libctx, "-fips", 1);
-            if (pl2 == NULL) {
-                ossl_property_free(pl1);
-                ERR_raise(ERR_LIB_RAND, ERR_R_INTERNAL_ERROR);
-                return NULL;
-            }
-            pl3 = ossl_property_merge(pl2, pl1);
-            ossl_property_free(pl1);
-            ossl_property_free(pl2);
-            if (pl3 == NULL) {
-                ERR_raise(ERR_LIB_RAND, ERR_R_INTERNAL_ERROR);
-                return NULL;
-            }
-            props_len = ossl_property_list_to_string(libctx, pl3, NULL, 0);
-            if (props_len == 0) {
-                /* Shouldn't happen since we added a query element */
-                ERR_raise(ERR_LIB_RAND, ERR_R_INTERNAL_ERROR);
-                goto err;
-            } else {
-                props = OPENSSL_malloc(props_len);
-                if (props == NULL) {
-                    ERR_raise(ERR_LIB_RAND, ERR_R_MALLOC_FAILURE);
-                    goto err;
-                }
-                if (ossl_property_list_to_string(libctx, pl3,
-                                                 props, props_len) == 0) {
-                    ERR_raise(ERR_LIB_RAND, ERR_R_INTERNAL_ERROR);
-                    goto err;
-                }
-                ossl_property_free(pl3);
-                pl3 = NULL;
-                propq = props;
-            }
-        }
-        name = OPENSSL_MSTR(OPENSSL_DEFAULT_SEED_SRC);
-    }
+    name = dgbl->seed_name != NULL ? dgbl->seed_name
+                                   : OPENSSL_MSTR(OPENSSL_DEFAULT_SEED_SRC);
 # else /* !OPENSSL_NO_FIPS_JITTER */
     name = "JITTER";
-    propq = "-fips";  /* precautionary: shouldn't matter since it's internal */
+    propq = "";
 # endif /* OPENSSL_NO_FIPS_JITTER */
 
     rand = EVP_RAND_fetch(libctx, name, propq);
@@ -687,16 +635,9 @@ static EVP_RAND_CTX *rand_new_seed(OSSL_LIB_CTX *libctx)
         ERR_raise(ERR_LIB_RAND, RAND_R_ERROR_INSTANTIATING_DRBG);
         goto err;
     }
-# ifdef OPENSSL_NO_FIPS_JITTER
-    OPENSSL_free(props);
-# endif /* OPENSSL_NO_FIPS_JITTER */
     return ctx;
  err:
     EVP_RAND_CTX_free(ctx);
-# ifdef OPENSSL_NO_FIPS_JITTER
-    ossl_property_free(pl3);
-    OPENSSL_free(props);
-# endif /* OPENSSL_NO_FIPS_JITTER */
     return NULL;
 }
 #endif  /* !FIPS_MODULE || !OPENSSL_NO_FIPS_JITTER */
