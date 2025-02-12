@@ -97,7 +97,9 @@ typedef size_t socklen_t;        /* Currently appears to be missing on VMS */
 #   include <in.h>
 #   include <inet.h>
 #  else
-#   include <poll.h>
+#   if !defined(OPENSSL_SYS_TANDEM)
+#    include <poll.h>
+#   endif
 #   include <sys/socket.h>
 #   if !defined(NO_SYS_UN_H) && defined(AF_UNIX) && !defined(OPENSSL_NO_UNIX_SOCK)
 #    include <sys/un.h>
