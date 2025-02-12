@@ -1112,10 +1112,10 @@ while (@argvcopy)
                         if (/^--(no|with|without|enable|disable)-(\S+)/)
                                 {
                                 # Ideally this would also cover cascades, but I lack Perl-fu.
-                                if (grep (/$2/, @disablables) or exists $deprecated_disablables{$2})
+                                if (grep ($_ eq $2, @disablables) or exists $deprecated_disablables{$2})
                                         {
-                                        print STDERR "NOTE: Flag --$1-$2 will be passed to compiler.  It looks similar to a Configure\n";
-                                        print STDERR "      option, though.  If that is what you meant to do, drop the leading '--'.\n";
+                                        print STDERR "NOTE: Flag --$1-$2 will be passed to the compiler.  It looks similar to a Configure\n";
+                                        print STDERR "      option, though.  If the latter is what you meant to do, drop the leading '--'.\n";
                                         }
                                 }
                         }
