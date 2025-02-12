@@ -1131,7 +1131,8 @@ PROV_R_MISSING_SEED:140:missing seed
 PROV_R_MISSING_SESSION_ID:133:missing session id
 PROV_R_MISSING_TYPE:134:missing type
 PROV_R_MISSING_XCGHASH:135:missing xcghash
-PROV_R_ML_KEM_NO_FORMAT:251:ml kem no format
+PROV_R_ML_DSA_NO_FORMAT:245:ml dsa no format
+PROV_R_ML_KEM_NO_FORMAT:246:ml kem no format
 PROV_R_MODULE_INTEGRITY_FAILURE:214:module integrity failure
 PROV_R_NOT_A_PRIVATE_KEY:221:not a private key
 PROV_R_NOT_A_PUBLIC_KEY:220:not a public key
@@ -1143,7 +1144,7 @@ PROV_R_NO_INSTANCE_ALLOWED:242:no instance allowed
 PROV_R_NO_KEY_SET:114:no key set
 PROV_R_NO_PARAMETERS_SET:177:no parameters set
 PROV_R_NULL_LENGTH_POINTER:247:null length pointer
-PROV_R_NULL_OUTPUT_BUFFER:245:null output buffer
+PROV_R_NULL_OUTPUT_BUFFER:248:null output buffer
 PROV_R_ONESHOT_CALL_OUT_OF_ORDER:239:oneshot call out of order
 PROV_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE:178:\
 	operation not supported for this keytype
@@ -1175,17 +1176,16 @@ PROV_R_UNABLE_TO_INITIALISE_CIPHERS:208:unable to initialise ciphers
 PROV_R_UNABLE_TO_LOAD_SHA256:147:unable to load sha256
 PROV_R_UNABLE_TO_LOCK_PARENT:201:unable to lock parent
 PROV_R_UNABLE_TO_RESEED:204:unable to reseed
-PROV_R_UNEXPECTED_KEY_OID:249:unexpected key oid
-PROV_R_UNEXPECTED_KEY_PARAMETERS:250:unexpected key parameters
+PROV_R_UNEXPECTED_KEY_PARAMETERS:249:unexpected key parameters
 PROV_R_UNSUPPORTED_CEK_ALG:145:unsupported cek alg
 PROV_R_UNSUPPORTED_KEY_SIZE:153:unsupported key size
 PROV_R_UNSUPPORTED_MAC_TYPE:137:unsupported mac type
 PROV_R_UNSUPPORTED_NUMBER_OF_ROUNDS:152:unsupported number of rounds
-PROV_R_UNSUPPORTED_SELECTION:248:unsupported selection
+PROV_R_UNSUPPORTED_SELECTION:250:unsupported selection
 PROV_R_UPDATE_CALL_OUT_OF_ORDER:240:update call out of order
 PROV_R_URI_AUTHORITY_UNSUPPORTED:223:uri authority unsupported
 PROV_R_VALUE_ERROR:138:value error
-PROV_R_WRONG_CIPHERTEXT_SIZE:246:wrong ciphertext size
+PROV_R_WRONG_CIPHERTEXT_SIZE:251:wrong ciphertext size
 PROV_R_WRONG_FINAL_BLOCK_LENGTH:107:wrong final block length
 PROV_R_WRONG_OUTPUT_BUFFER_SIZE:139:wrong output buffer size
 PROV_R_XOF_DIGESTS_NOT_ALLOWED:183:xof digests not allowed
