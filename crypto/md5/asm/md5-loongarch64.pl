@@ -18,8 +18,9 @@ my ($zero,$ra,$tp,$sp,$fp)=map("\$r$_",(0..3,22));
 my ($a0,$a1,$a2,$a3,$a4,$a5,$a6,$a7)=map("\$r$_",(4..11));
 my ($t0,$t1,$t2,$t3,$t4,$t5,$t6,$t7,$t8,$x)=map("\$r$_",(12..21));
 
+# $output is the last argument if it looks like a file (it has an extension)
 my $output;
-for (@ARGV) {	$output=$_ if (/\w[\w\-]*\.\w+$/);	}
+$output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
 open STDOUT,">$output";
 
 # round1_step() does:
