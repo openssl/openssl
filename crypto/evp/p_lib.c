@@ -236,14 +236,14 @@ int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
 int EVP_PKEY_missing_parameters(const EVP_PKEY *pkey)
 {
     if (pkey != NULL) {
-#ifndef FIPS_MODULE
+#ifdef FIPS_MODULE
+        return !evp_keymgmt_util_has((EVP_PKEY *)pkey, SELECT_PARAMETERS);
+#else
         if (pkey->keymgmt != NULL)
-#endif  /* !FIPS_MODULE */
             return !evp_keymgmt_util_has((EVP_PKEY *)pkey, SELECT_PARAMETERS);
-#ifndef FIPS_MODULE
         if (pkey->ameth != NULL && pkey->ameth->param_missing != NULL)
             return pkey->ameth->param_missing(pkey);
-#endif  /* !FIPS_MODULE */
+#endif  /* FIPS_MODULE */
     }
     return 0;
 }
