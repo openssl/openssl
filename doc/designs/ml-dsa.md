@@ -78,7 +78,7 @@ This will be controlled by settable parameters.
 
 Pre Hash ML-DSA Signature Generation encode the message as
 
-```
+```text
 0x01 || len(ctx) || ctx || digest_OID || H(message).
 ```
 
