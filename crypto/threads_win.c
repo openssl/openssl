@@ -370,11 +370,6 @@ void ossl_synchronize_rcu(CRYPTO_RCU_LOCK *lock)
 
     qp = update_qp(lock, &curr_id);
 
-    /* wait for the reader count to reach zero */
-    do {
-        CRYPTO_atomic_load(&qp->users, &count, lock->rw_lock);
-    } while (count != (uint64_t)0);
-
     /* retire in order */
     ossl_crypto_mutex_lock(lock->prior_lock);
     while (lock->next_to_retire != curr_id)
@@ -383,6 +378,11 @@ void ossl_synchronize_rcu(CRYPTO_RCU_LOCK *lock)
     lock->next_to_retire++;
     ossl_crypto_condvar_broadcast(lock->prior_signal);
     ossl_crypto_mutex_unlock(lock->prior_lock);
+
+    /* wait for the reader count to reach zero */
+    do {
+        CRYPTO_atomic_load(&qp->users, &count, lock->rw_lock);
+    } while (count != (uint64_t)0);
 
     retire_qp(lock, qp);
 
