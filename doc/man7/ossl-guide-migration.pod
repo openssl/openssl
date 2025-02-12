@@ -1073,6 +1073,7 @@ L<EVP_PKEY-DSA(7)/DSA parameters>,
 L<EVP_PKEY-DH(7)/DH parameters>,
 L<EVP_PKEY-FFC(7)/FFC parameters>,
 L<EVP_PKEY-X25519(7)/Common X25519, X448, ED25519 and ED448 parameters>,
+L<EVP_PKEY-ML-DSA(7)/Common parameters>,
 and
 L<EVP_PKEY-ML-KEM(7)/Common parameters>.
 Applications may also use L<EVP_PKEY_todata(3)> to return all fields.

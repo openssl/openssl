@@ -350,7 +350,11 @@ are also available in the base provider.
 
 =item ML-DSA-87
 
-=for comment Some day encoders for MLKEM...
+=item ML-KEM-512
+
+=item ML-KEM-768
+
+=item ML-KEM-1024
 
 =back
 
@@ -390,9 +394,11 @@ combination with the FIPS provider.
 
 =item ML-DSA-87
 
-=item DER
+=item ML-KEM-512
 
-=for comment Some day decoders for MLKEM...
+=item ML-KEM-768
+
+=item ML-KEM-1024
 
 =back
 

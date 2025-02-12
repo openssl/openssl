@@ -1210,9 +1210,9 @@ Build with support for the specified algorithm.
 ### no-{algorithm}
 
     no-{aria|bf|blake2|camellia|cast|chacha|cmac|
-        des|dh|dsa|ecdh|ecdsa|idea|md4|mdc2|ml-kem|
-        ocb|poly1305|rc2|rc4|rmd160|scrypt|seed|
-        siphash|siv|sm2|sm3|sm4|whirlpool}
+        des|dh|dsa|ecdh|ecdsa|idea|md4|mdc2|ml-dsa|
+        ml-kem|ocb|poly1305|rc2|rc4|rmd160|scrypt|
+        seed|siphash|siv|sm2|sm3|sm4|whirlpool}
 
 Build without support for the specified algorithm.
 

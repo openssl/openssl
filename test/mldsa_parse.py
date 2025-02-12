@@ -1,4 +1,10 @@
 #!/usr/bin/env python
+# Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
 
 # A python program written to parse (version 42) of the ACVP test vectors for
 # ML_DSA. The 3 files that can be processed by this utility can be downloaded
