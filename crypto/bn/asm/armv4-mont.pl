@@ -108,12 +108,11 @@ $code=<<___;
 
 .text
 
-#ifdef __APPLE__ 
+#if __ARM_MAX_ARCH__>=7
+# ifdef __APPLE__ 
 .section	__DATA,__nl_symbol_ptr,non_lazy_symbol_pointers @ if its apple then it needs to be in a special section
 .p2align	2
-#endif
-
-#if __ARM_MAX_ARCH__>=7
+# endif
 .align	5
 .LOPENSSL_armcap:
 # if	defined(_WIN32)
@@ -148,7 +147,6 @@ LPC0_0:
 # else
 	ldr	r0,.LOPENSSL_armcap
 # endif
-
 # if !defined(_WIN32) && !defined(__APPLE__)
 	adr	r2,.Lbn_mul_mont
 	ldr	r0,[r0,r2]

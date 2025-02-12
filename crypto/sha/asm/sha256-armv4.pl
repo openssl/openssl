@@ -215,12 +215,10 @@ K256:
 .word	0				@ terminator
 
 #if __ARM_MAX_ARCH__>=7 && !defined(__KERNEL__)
-
 # ifdef __APPLE__ 
 .section	__DATA,__nl_symbol_ptr,non_lazy_symbol_pointers @ if its apple then it needs to be in a special section
 .p2align	2
 # endif
-
 .LOPENSSL_armcap:
 # if	defined(_WIN32)
 .word	OPENSSL_armcap_P

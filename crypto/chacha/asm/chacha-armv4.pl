@@ -194,12 +194,10 @@ $code.=<<___;
 .Lone:
 .long	1,0,0,0
 #if __ARM_MAX_ARCH__>=7
-
 # ifdef __APPLE__ 
 .section	__DATA,__nl_symbol_ptr,non_lazy_symbol_pointers @ if its apple then it needs to be in a special section
 .p2align	2
 # endif
-
 .LOPENSSL_armcap:
 # if defined(_WIN32)
 .word	OPENSSL_armcap_P

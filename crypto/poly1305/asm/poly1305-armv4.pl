@@ -77,16 +77,12 @@ poly1305_init:
 	str	r3,[$ctx,#16]
 	str	r3,[$ctx,#36]		@ is_base2_26
 	add	$ctx,$ctx,#20
-
 #ifdef	__thumb2__
 	it	eq
 #endif
 	moveq	r0,#0
 	beq	.Lno_key
-
 #if	__ARM_MAX_ARCH__>=7
-
-
 # ifdef __APPLE__ 
 	movw r12, :lower16:(.LOPENSSL_armcap-(LPC0_0+4))
 	movt r12, :upper16:(.LOPENSSL_armcap-(LPC0_0+4))

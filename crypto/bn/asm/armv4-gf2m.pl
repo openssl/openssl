@@ -187,7 +187,6 @@ LPC0_0:
 # else 
 	ldr	r12,.LOPENSSL_armcap
 # endif
-
 # if !defined(_WIN32) && !defined(__APPLE__)
 	adr	r10,.LOPENSSL_armcap
 	ldr	r12,[r12,r10]
@@ -322,12 +321,10 @@ $code.=<<___;
 .size	bn_GF2m_mul_2x2,.-bn_GF2m_mul_2x2
 #if __ARM_MAX_ARCH__>=7
 .align	5
-
-#ifdef __APPLE__ 
+# ifdef __APPLE__ 
 .section	__DATA,__nl_symbol_ptr,non_lazy_symbol_pointers @ if its apple then it needs to be in a special section
 .p2align	2
-#endif
-
+# endif
 .LOPENSSL_armcap:
 # ifdef	_WIN32
 .word	OPENSSL_armcap_P

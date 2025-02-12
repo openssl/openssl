@@ -211,7 +211,6 @@ _armv8_pmull_probe:
 .type	OPENSSL_wipe_cpu,%function
 OPENSSL_wipe_cpu:
 #if __ARM_MAX_ARCH__>=7
-
 # ifdef __APPLE__ 
 	movw r0, :lower16:(.LOPENSSL_armcap-(LPC0_0+4))
 	movt r0, :upper16:(.LOPENSSL_armcap-(LPC0_0+4))
@@ -221,7 +220,6 @@ LPC0_0:
 # else
 	ldr	r0,.LOPENSSL_armcap
 # endif
-
 # ifndef	__APPLE__
 	adr	r1,.LOPENSSL_armcap
 	ldr	r0,[r1,r0]
@@ -285,13 +283,10 @@ OPENSSL_instrument_bus2:
 #endif
 .size	OPENSSL_instrument_bus2,.-OPENSSL_instrument_bus2
 
-
-
 # ifdef __APPLE__ 
 .section	__DATA,__nl_symbol_ptr,non_lazy_symbol_pointers @ if its apple then it needs to be in a special section
 .p2align	2
 # endif
-
 .align	5
 #if __ARM_MAX_ARCH__>=7
 .LOPENSSL_armcap:

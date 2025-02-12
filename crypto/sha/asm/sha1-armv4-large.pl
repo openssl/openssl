@@ -205,7 +205,6 @@ $code=<<___;
 sha1_block_data_order:
 #if __ARM_MAX_ARCH__>=7
 .Lsha1_block:
-
 # ifdef __APPLE__
 	movw r12, :lower16:(.LOPENSSL_armcap-(LPC0_0+4))
 	movt r12, :upper16:(.LOPENSSL_armcap-(LPC0_0+4))
@@ -323,15 +322,11 @@ $code.=<<___;
 .LK_40_59:	.word	0x8f1bbcdc
 .LK_60_79:	.word	0xca62c1d6
 
-
-
 #if __ARM_MAX_ARCH__>=7
-
 # ifdef __APPLE__ 
 .section	__DATA,__nl_symbol_ptr,non_lazy_symbol_pointers @ if its apple then it needs to be in a special section
 .p2align	2
 # endif
-
 .LOPENSSL_armcap:
 # if	defined(_WIN32)
 .word	OPENSSL_armcap_P
