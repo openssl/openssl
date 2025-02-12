@@ -14,6 +14,10 @@ package ssltests;
 use OpenSSL::Test::Utils;
 
 our $fips_mode;
+our $fips_3_4;
+
+# Nothing to test with newer fips providers
+return if $fips_3_4;
 
 our @tests = (
     {

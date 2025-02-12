@@ -10,6 +10,8 @@ package ssltests;
 use OpenSSL::Test::Utils;
 
 our $fips_mode;
+our $fips_3_4;
+our $fips_3_5;
 our $no_deflt_libctx;
 
 my $server = {
@@ -252,7 +254,7 @@ our @tests = (
         },
         test   => {
             "ExpectedServerCertType" =>, "RSA",
-            "ExpectedResult" => "Success"
+            "ExpectedResult" => $fips_3_4 ? "ClientFail" : "Success"
         },
     },
     {
@@ -991,7 +993,7 @@ my @tests_dsa_tls_1_3 = (
 );
 
 if (!disabled("dsa")) {
-    push @tests, @tests_dsa_tls_1_2 unless disabled("dh");
+    push @tests, @tests_dsa_tls_1_2 unless disabled("dh") || $fips_3_4;
     push @tests, @tests_dsa_tls_1_3 unless disabled("tls1_3");
 }
 
@@ -1018,6 +1020,6 @@ my @tests_mldsa_tls_1_3 = (
     },
 );
 
-if (!disabled("ml-dsa")) {
+if (!disabled("ml-dsa") && (!$fips_mode || $fips_3_5)) {
     push @tests, @tests_mldsa_tls_1_3 unless disabled("tls1_3");
 }
