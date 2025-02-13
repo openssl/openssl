@@ -4062,7 +4062,7 @@ static int early_data_skip_helper(int testtype, int cipher, int idx)
                                         sizeof(bad_early_data), &written)))
                 goto end;
         }
-        /* fallthrough */
+        /* FALLTHROUGH */
 
     case 3:
         /*
@@ -9928,7 +9928,8 @@ static int test_sigalgs_available(int idx)
     OSSL_LIB_CTX *tmpctx = OSSL_LIB_CTX_new();
     OSSL_LIB_CTX *clientctx = libctx, *serverctx = libctx;
     OSSL_PROVIDER *filterprov = NULL;
-    int sig, hash;
+    int sig, hash, numshared, numshared_expected, hash_expected, sig_expected;
+    const char *sigalg_name, *signame_expected;
 
     if (!TEST_ptr(tmpctx))
         goto end;
@@ -9977,6 +9978,7 @@ static int test_sigalgs_available(int idx)
         goto end;
 
     if (idx != 5) {
+        /* RSA first server key */
         if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
                                            TLS_client_method(),
                                            TLS1_VERSION,
@@ -9984,6 +9986,7 @@ static int test_sigalgs_available(int idx)
                                            &sctx, &cctx, cert, privkey)))
             goto end;
     } else {
+        /* ECDSA P-256 first server key */
         if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
                                            TLS_client_method(),
                                            TLS1_VERSION,
@@ -10018,6 +10021,7 @@ static int test_sigalgs_available(int idx)
             goto end;
     }
 
+    /* ECDSA P-256 second server key, unless already first */
     if (idx != 5
         && (!TEST_int_eq(SSL_CTX_use_certificate_file(sctx, cert2,
                                                       SSL_FILETYPE_PEM), 1)
@@ -10035,16 +10039,32 @@ static int test_sigalgs_available(int idx)
         goto end;
 
     /* For tests 0 and 3 we expect 2 shared sigalgs, otherwise exactly 1 */
-    if (!TEST_int_eq(SSL_get_shared_sigalgs(serverssl, 0, &sig, &hash, NULL,
-                                            NULL, NULL),
-                     (idx == 0 || idx == 3) ? 2 : 1))
-        goto end;
-
-    if (!TEST_int_eq(hash, idx == 0 ? NID_sha384 : NID_sha256))
-        goto end;
-
-    if (!TEST_int_eq(sig, (idx == 4 || idx == 5) ? EVP_PKEY_EC
-                                                 : NID_rsassaPss))
+    numshared = SSL_get_shared_sigalgs(serverssl, 0, &sig, &hash,
+                                        NULL, NULL, NULL);
+    numshared_expected = 1;
+    hash_expected = NID_sha256;
+    sig_expected = NID_rsassaPss;
+    signame_expected = "rsa_pss_rsae_sha256";
+    switch (idx) {
+    case 0:
+        hash_expected = NID_sha384;
+        signame_expected = "rsa_pss_rsae_sha384";
+        /* FALLTHROUGH */
+    case 3:
+        numshared_expected = 2;
+        break;
+    case 4:
+    case 5:
+        sig_expected = EVP_PKEY_EC;
+        signame_expected = "ecdsa_secp256r1_sha256";
+        break;
+    }
+    if (!TEST_int_eq(numshared, numshared_expected)
+        || !TEST_int_eq(hash, hash_expected)
+        || !TEST_int_eq(sig, sig_expected)
+        || !TEST_true(SSL_get0_peer_signature_name(clientssl, &sigalg_name))
+        || !TEST_ptr(sigalg_name)
+        || !TEST_str_eq(sigalg_name, signame_expected))
         goto end;
 
     testresult = filter_provider_check_clean_finish();
@@ -10185,6 +10205,7 @@ static int test_pluggable_signature(int idx)
     OSSL_PROVIDER *defaultprov = OSSL_PROVIDER_load(libctx, "default");
     char *certfilename = "tls-prov-cert.pem";
     char *privkeyfilename = "tls-prov-key.pem";
+    const char *sigalg_name = NULL, *expected_sigalg_name;
     int sigidx = idx % 3;
     int rpkidx = idx / 3;
     int do_conf_cmd = 0;
@@ -10193,6 +10214,9 @@ static int test_pluggable_signature(int idx)
         sigidx = 0;
         do_conf_cmd = 1;
     }
+
+    /* See create_cert_key() above */
+    expected_sigalg_name = (sigidx == 0) ? "xorhmacsig" : "xorhmacsha2sig";
 
     /* create key and certificate for the different algorithm types */
     if (!TEST_ptr(tlsprov)
@@ -10261,6 +10285,11 @@ static int test_pluggable_signature(int idx)
 
     /* If using RPK, make sure we got one */
     if (rpkidx && !TEST_long_eq(SSL_get_verify_result(clientssl), X509_V_ERR_RPK_UNTRUSTED))
+        goto end;
+
+    if (!TEST_true(SSL_get0_peer_signature_name(clientssl, &sigalg_name))
+        || !TEST_str_eq(sigalg_name, expected_sigalg_name)
+        || !TEST_ptr(sigalg_name))
         goto end;
 
     testresult = 1;

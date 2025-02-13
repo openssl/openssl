@@ -3825,10 +3825,22 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
     case SSL_CTRL_GET_CHAIN_CERT_STORE:
         return ssl_cert_get_cert_store(sc->cert, parg, 1);
 
+    case SSL_CTRL_GET_PEER_SIGNATURE_NAME:
+        if (parg == NULL && sc->s3.tmp.peer_sigalg == NULL)
+            return 0;
+        *(const char **)parg = sc->s3.tmp.peer_sigalg->name;
+        return 1;
+
     case SSL_CTRL_GET_PEER_SIGNATURE_NID:
         if (sc->s3.tmp.peer_sigalg == NULL)
             return 0;
         *(int *)parg = sc->s3.tmp.peer_sigalg->hash;
+        return 1;
+
+    case SSL_CTRL_GET_SIGNATURE_NAME:
+        if (parg == NULL || sc->s3.tmp.sigalg == NULL)
+            return 0;
+        *(const char **)parg = sc->s3.tmp.sigalg->name;
         return 1;
 
     case SSL_CTRL_GET_SIGNATURE_NID:
