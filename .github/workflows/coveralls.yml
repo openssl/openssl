@@ -106,7 +106,7 @@ jobs:
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
     - name: make test
-      run: make test TESTS='-test_external_krb5'
+      run: make test TESTS='-test_external_krb5' EVP_TEST_EXTENDED=1
     - name: generate coverage info
       run: lcov -d . -c
              --exclude "${PWD}/test/*"
