@@ -1337,6 +1337,8 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 # define SSL_CTRL_GET_VERIFY_CERT_STORE          137
 # define SSL_CTRL_GET_CHAIN_CERT_STORE           138
 # define SSL_CTRL_GET0_IMPLEMENTED_GROUPS        139
+# define SSL_CTRL_GET_SIGNATURE_NAME             140
+# define SSL_CTRL_GET_PEER_SIGNATURE_NAME        141
 # define SSL_CERT_SET_FIRST                      1
 # define SSL_CERT_SET_NEXT                       2
 # define SSL_CERT_SET_SERVER                     3
@@ -1479,8 +1481,12 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
                      (char *)(clist))
 # define SSL_set1_client_certificate_types(s, clist, clistlen) \
         SSL_ctrl(s,SSL_CTRL_SET_CLIENT_CERT_TYPES,clistlen,(char *)(clist))
+# define SSL_get0_signature_name(s, str) \
+        SSL_ctrl(s,SSL_CTRL_GET_SIGNATURE_NAME,0,(1?(str):(const char **)NULL))
 # define SSL_get_signature_nid(s, pn) \
         SSL_ctrl(s,SSL_CTRL_GET_SIGNATURE_NID,0,pn)
+# define SSL_get0_peer_signature_name(s, str) \
+        SSL_ctrl(s,SSL_CTRL_GET_PEER_SIGNATURE_NAME,0,(1?(str):(const char **)NULL))
 # define SSL_get_peer_signature_nid(s, pn) \
         SSL_ctrl(s,SSL_CTRL_GET_PEER_SIGNATURE_NID,0,pn)
 # define SSL_get_peer_tmp_key(s, pk) \
