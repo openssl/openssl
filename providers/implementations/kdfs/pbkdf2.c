@@ -36,6 +36,30 @@
 #define KDF_PBKDF2_MAX_KEY_LEN_DIGEST_RATIO 0xFFFFFFFF
 #define KDF_PBKDF2_MIN_ITERATIONS 1000
 #define KDF_PBKDF2_MIN_SALT_LEN   (128 / 8)
+/*
+ * The Implementation Guidance for FIPS 140-3 says in section D.N
+ * "Password-Based Key Derivation for Storage Applications" that "the vendor
+ * shall document in the module's Security Policy the length of
+ * a password/passphrase used in key derivation and establish an upper bound
+ * for the probability of having this parameter guessed at random. This
+ * probability shall take into account not only the length of the
+ * password/passphrase, but also the difficulty of guessing it. The decision on
+ * the minimum length of a password used for key derivation is the vendor's,
+ * but the vendor shall at a minimum informally justify the decision."
+ *
+ * ACVP may assume 8, most FIPS modules choose 8, BC-FJA chose 14.
+ *
+ * Allow setting this for default provider too, in case consistency is
+ * desired for FIPS and Default providers. Because password being
+ * accepted on one system, but not the other, is very confusing.
+ */
+#ifndef KDF_PBKDF2_MIN_PASSWORD_LEN
+# ifdef FIPS_MODULE
+#  define KDF_PBKDF2_MIN_PASSWORD_LEN (8)
+# else
+#  define KDF_PBKDF2_MIN_PASSWORD_LEN (0)
+# endif
+#endif
 
 static OSSL_FUNC_kdf_newctx_fn kdf_pbkdf2_new;
 static OSSL_FUNC_kdf_dupctx_fn kdf_pbkdf2_dup;
@@ -179,9 +203,15 @@ static int pbkdf2_set_membuf(unsigned char **buffer, size_t *buflen,
 }
 
 static int pbkdf2_lower_bound_check_passed(int saltlen, uint64_t iter,
-                                           size_t keylen, int *error,
-                                           const char **desc)
+                                           size_t keylen, size_t passlen,
+                                           int *error, const char **desc)
 {
+    if (passlen < KDF_PBKDF2_MIN_PASSWORD_LEN) {
+        *error = PROV_R_PASSWORD_STRENGTH_TOO_WEAK;
+        if (desc != NULL)
+            *desc = "Weak password";
+        return 0;
+    }
     if ((keylen * 8) < KDF_PBKDF2_MIN_KEY_LEN_BITS) {
         *error = PROV_R_KEY_SIZE_TOO_SMALL;
         if (desc != NULL)
@@ -210,8 +240,8 @@ static int fips_lower_bound_check_passed(KDF_PBKDF2 *ctx, size_t keylen)
     OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
     int error = 0;
     const char *desc = NULL;
-    int approved = pbkdf2_lower_bound_check_passed(ctx->salt_len, ctx->iter,
-                                                   keylen, &error, &desc);
+    int approved = pbkdf2_lower_bound_check_passed(ctx->salt_len, ctx->iter, keylen,
+                                                   ctx->pass_len, &error, &desc);
 
     if (!approved) {
         if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE0, libctx,
@@ -283,9 +313,15 @@ static int kdf_pbkdf2_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 #endif
     }
 
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_PASSWORD)) != NULL)
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_PASSWORD)) != NULL) {
+        if (ctx->lower_bound_checks != 0
+            && p->data_size < KDF_PBKDF2_MIN_PASSWORD_LEN) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
+            return 0;
+        }
         if (!pbkdf2_set_membuf(&ctx->pass, &ctx->pass_len, p))
             return 0;
+    }
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_SALT)) != NULL) {
         if (ctx->lower_bound_checks != 0
@@ -406,7 +442,7 @@ static int pbkdf2_derive(KDF_PBKDF2 *ctx, const char *pass, size_t passlen,
     if (lower_bound_checks) {
         int error = 0;
         int passed = pbkdf2_lower_bound_check_passed(saltlen, iter, keylen,
-                                                     &error, NULL);
+                                                     passlen, &error, NULL);
 
         if (!passed) {
             ERR_raise(ERR_LIB_PROV, error);
