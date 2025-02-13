@@ -405,7 +405,7 @@ static double ffdh_results[FFDH_NUM][1];  /* 1 op: derivation */
 #endif /* OPENSSL_NO_DH */
 
 enum ec_curves_t {
-    R_EC_P160, R_EC_P192, R_EC_P224, R_EC_P256, R_EC_P384, R_EC_P521,
+    R_EC_P160, R_EC_P192, R_EC_P224, R_EC_P256, R_EC_K256, R_EC_P384, R_EC_P521,
 #ifndef OPENSSL_NO_EC2M
     R_EC_K163, R_EC_K233, R_EC_K283, R_EC_K409, R_EC_K571,
     R_EC_B163, R_EC_B233, R_EC_B283, R_EC_B409, R_EC_B571,
@@ -419,6 +419,7 @@ static const OPT_PAIR ecdsa_choices[ECDSA_NUM] = {
     {"ecdsap192", R_EC_P192},
     {"ecdsap224", R_EC_P224},
     {"ecdsap256", R_EC_P256},
+    {"ecdsak256", R_EC_K256},
     {"ecdsap384", R_EC_P384},
     {"ecdsap521", R_EC_P521},
 #ifndef OPENSSL_NO_EC2M
@@ -453,6 +454,7 @@ static const OPT_PAIR ecdh_choices[EC_NUM] = {
     {"ecdhp192", R_EC_P192},
     {"ecdhp224", R_EC_P224},
     {"ecdhp256", R_EC_P256},
+    {"ecdhk256", R_EC_K256},
     {"ecdhp384", R_EC_P384},
     {"ecdhp521", R_EC_P521},
 #ifndef OPENSSL_NO_EC2M
@@ -1969,6 +1971,7 @@ int speed_main(int argc, char **argv)
         {"nistp192", NID_X9_62_prime192v1, 192},
         {"nistp224", NID_secp224r1, 224},
         {"nistp256", NID_X9_62_prime256v1, 256},
+        {"secp256k1", NID_secp256k1, 256},
         {"nistp384", NID_secp384r1, 384},
         {"nistp521", NID_secp521r1, 521},
 #ifndef OPENSSL_NO_EC2M
