@@ -409,6 +409,7 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
     if (i == sk_IMPLEMENTATION_num(alg->impls)
         && sk_IMPLEMENTATION_push(alg->impls, impl)) {
         ret = 1;
+#ifndef FIPS_MODULE
         OSSL_TRACE_BEGIN(QUERY) {
             BIO_printf(trc_out, "Adding to method store "
                        "nid: %d\nproperties: %s\nprovider: %s\n",
@@ -416,6 +417,7 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
                        ossl_provider_name(prov) == NULL ? "none" :
                        ossl_provider_name(prov));
         } OSSL_TRACE_END(QUERY);
+#endif
     }
     ossl_property_unlock(store);
     if (ret == 0)
@@ -500,7 +502,7 @@ alg_cleanup_by_provider(ossl_uintmax_t idx, ALGORITHM *alg, void *arg)
         IMPLEMENTATION *impl = sk_IMPLEMENTATION_value(alg->impls, i);
 
         if (impl->provider == data->prov) {
-
+#ifndef FIPS_MODULE
             OSSL_TRACE_BEGIN(QUERY) {
                 char buf[512];
                 size_t size;
@@ -513,6 +515,7 @@ alg_cleanup_by_provider(ossl_uintmax_t idx, ALGORITHM *alg, void *arg)
                            ossl_provider_name(impl->provider) == NULL ? "none" :
                            ossl_provider_name(impl->provider));
             } OSSL_TRACE_END(QUERY);
+#endif
 
             (void)sk_IMPLEMENTATION_delete(alg->impls, i);
             count++;
@@ -720,6 +723,7 @@ fin:
         ret = 0;
     }
 
+#ifndef FIPS_MODULE
     OSSL_TRACE_BEGIN(QUERY) {
         char buf[512];
         int size;
@@ -731,6 +735,7 @@ fin:
                    best_impl == NULL ? "none" :
                    ossl_provider_name(best_impl->provider));
     } OSSL_TRACE_END(QUERY);
+#endif
 
     ossl_property_unlock(store);
     ossl_property_free(p2);
