@@ -29,7 +29,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 193;
+plan tests => 194;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -466,6 +466,9 @@ ok(!verify("badalt10-cert", "", ["root-cert"], ["ncca1-cert", "ncca3-cert"], ),
 
 ok(!verify("bad-othername-cert", "", ["root-cert"], ["nccaothername-cert"], ),
    "CVE-2022-4203 type confusion test");
+
+ok(verify("nc-uri-cert", "", ["root-cert"], ["ncca4-cert"], ),
+   "Name constraints URI with userinfo");
 
 #Check that we get the expected failure return code
 with({ exit_checker => sub { return shift == 2; } },
