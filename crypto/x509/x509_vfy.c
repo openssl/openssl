@@ -1185,9 +1185,9 @@ static int check_cert_ocsp_resp(X509_STORE_CTX *ctx)
     if (num < 0 || num <= ctx->error_depth)
         return X509_V_ERR_OCSP_NO_RESPONSE;
 
-    if (((resp = sk_OCSP_RESPONSE_value(ctx->ocsp_resp, ctx->error_depth)) == NULL)
-        || ((bs = OCSP_response_get1_basic(resp)) == NULL)
-        || ((num = OCSP_resp_count(bs)) < 1))
+    if ((resp = sk_OCSP_RESPONSE_value(ctx->ocsp_resp, ctx->error_depth)) == NULL
+        || (bs = OCSP_response_get1_basic(resp)) == NULL
+        || (num = OCSP_resp_count(bs)) < 1)
         return X509_V_ERR_OCSP_NO_RESPONSE;
 
     if (OCSP_response_status(resp) != OCSP_RESPONSE_STATUS_SUCCESSFUL) {
