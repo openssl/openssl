@@ -86,6 +86,7 @@ static OSSL_PROVIDER *prov_null = NULL;
 static OSSL_PROVIDER *libprov = NULL;
 static OSSL_LIB_CTX *libctx = NULL;
 static int fips_indicator_callback_unapproved_count = 0;
+static int extended_tests = 0;
 
 /* List of public and private keys */
 static KEY_LIST *private_keys;
@@ -5251,6 +5252,12 @@ start:
             }
         } else if (strcmp(pp->key, "Unapproved") == 0) {
             t->expect_unapproved = 1;
+        } else if (strcmp(pp->key, "Extended-Test") == 0) {
+            if (!extended_tests) {
+                TEST_info("skipping extended test: %s:%d",
+                          t->s.test_file, t->s.start);
+                t->skip = 1;
+            }
         } else {
             /* Must be test specific line: try to parse it */
             int rv = t->meth->parse(t, pp->key, pp->value);
@@ -5332,8 +5339,11 @@ int setup_tests(void)
     size_t n;
     char *config_file = NULL;
     char *provider_name = NULL;
+    const char *et = getenv("EVP_TEST_EXTENDED");
 
     OPTION_CHOICE o;
+
+    extended_tests = et != NULL && atoi(et) != 0;
 
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
