@@ -13,7 +13,7 @@
 
 # include <openssl/safestack.h>
 
-/*-
+/*
  * Certificate usages:
  * https://tools.ietf.org/html/rfc6698#section-2.1.1
  */
@@ -23,7 +23,7 @@
 #define DANETLS_USAGE_DANE_EE   3
 #define DANETLS_USAGE_LAST      DANETLS_USAGE_DANE_EE
 
-/*-
+/*
  * Selectors:
  * https://tools.ietf.org/html/rfc6698#section-2.1.2
  */
@@ -31,7 +31,7 @@
 #define DANETLS_SELECTOR_SPKI   1
 #define DANETLS_SELECTOR_LAST   DANETLS_SELECTOR_SPKI
 
-/*-
+/*
  * Matching types:
  * https://tools.ietf.org/html/rfc6698#section-2.1.3
  */

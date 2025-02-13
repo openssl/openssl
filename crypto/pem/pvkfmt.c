@@ -782,9 +782,8 @@ int ossl_do_PVK_header(const unsigned char **in, unsigned int length,
     }
     /* Skip reserved */
     p += 4;
-    /*
-     * keytype =
-     */ read_ledword(&p);
+    /* read to skip keytype */
+    read_ledword(&p);
     is_encrypted = read_ledword(&p);
     *psaltlen = read_ledword(&p);
     *pkeylen = read_ledword(&p);

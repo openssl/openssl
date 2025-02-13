@@ -33,7 +33,7 @@ static int evp_decodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
 # define conv_bin2ascii(a, table)       ((table)[(a)&0x3f])
 #endif
 
-/*-
+/*
  * 64 char lines
  * pad input with 0
  * left over chars are set to =
@@ -53,7 +53,7 @@ static const unsigned char srpdata_bin2ascii[65] =
     "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz./";
 
 
-/*-
+/*
  * 0xF0 is a EOLN
  * 0xF1 is ignore but next needs to be 0xF0 (for \r\n processing).
  * 0xF2 is EOF
@@ -280,7 +280,7 @@ void EVP_DecodeInit(EVP_ENCODE_CTX *ctx)
     ctx->flags = 0;
 }
 
-/*-
+/*
  * -1 for error
  *  0 for last line
  *  1 for full line
