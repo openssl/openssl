@@ -1615,18 +1615,19 @@ int tls1_set_groups_list(SSL_CTX *ctx,
     }
 
     /*
-     * We check whether a tuple was completly emptied by using "-" prefix excessively,
-     * in which case we remove the tuple
+     * We check whether a tuple was completly emptied by using "-" prefix
+     * excessively, in which case we remove the tuple
      */
-    for (i = 0; i < gcb.tplcnt; i++) {
-        if (gcb.tuplcnt_arr[i] == 0) {
-            for (j = i; j < (gcb.tplcnt - 1); j++) /* Move tuples to the left */
-                gcb.tuplcnt_arr[j] = gcb.tuplcnt_arr[j + 1];
-
-            gcb.tplcnt--; /* We just deleted a tuple, update book keeping */
-            i--; /* Acount for the fact that the list is shorter now */
-        }
+    for (i = j = 0; j < gcb.tplcnt; j++) {
+        if (gcb.tuplcnt_arr[j] == 0)
+            continue;
+        /* If there's a gap, move to first unfilled slot */
+        if (j == i)
+            ++i;
+        else
+            gcb.tuplcnt_arr[i++] = gcb.tuplcnt_arr[j];
     }
+    gcb.tplcnt = i;
 
     /* Some more checks (at least one remaining group, not more that nominally 4 key shares */
     if (gcb.gidcnt == 0) {
