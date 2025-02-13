@@ -292,7 +292,7 @@ static void felem_diff64(felem out, const felem in)
  * in[i] < 2^63
  * out[i] < out_orig[i] + 2^64 + 2^48
  */
-static void felem_diff_128_64(widefelem out, const felem in)
+static void felem_diff_128_64_ref(widefelem out, const felem in)
 {
     /*
      * In order to prevent underflow, we add a multiple of p before subtracting.
@@ -329,7 +329,7 @@ static void felem_diff_128_64(widefelem out, const felem in)
  * in[i] < 2^127 - 2^119 - 2^71
  * out[i] < out_orig[i] + 2^127 + 2^111
  */
-static void felem_diff128(widefelem out, const widefelem in)
+static void felem_diff128_ref(widefelem out, const widefelem in)
 {
     /*
      * In order to prevent underflow, we add a multiple of p before subtracting.
@@ -503,7 +503,7 @@ static void felem_mul_ref(widefelem out, const felem in1, const felem in2)
  * [3]: Y = 2^48 (acc[6] >> 48)
  * (Where a | b | c | d = (2^56)^3 a + (2^56)^2 b + (2^56) c + d)
  */
-static void felem_reduce(felem out, const widefelem in)
+static void felem_reduce_ref(felem out, const widefelem in)
 {
     /*
      * In order to prevent underflow, we add a multiple of p before subtracting.
@@ -673,17 +673,22 @@ static void felem_reduce(felem out, const widefelem in)
         out[i] = acc[i];
 }
 
+static ossl_inline void felem_square_reduce_ref(felem out, const felem in);
+static ossl_inline void felem_mul_reduce_ref(felem out, const felem in1, const felem in2);
+
 #if defined(ECP_NISTP384_ASM)
-static void felem_square_wrapper(widefelem out, const felem in);
-static void felem_mul_wrapper(widefelem out, const felem in1, const felem in2);
+# define LINK_ENTRY(name, ...)                              \
+    static void name##_wrapper(__VA_ARGS__);                \
+    static void (*name##_p)(__VA_ARGS__) = name##_wrapper;  \
+    void p384_##name(__VA_ARGS__);
 
-static void (*felem_square_p)(widefelem out, const felem in) =
-    felem_square_wrapper;
-static void (*felem_mul_p)(widefelem out, const felem in1, const felem in2) =
-    felem_mul_wrapper;
-
-void p384_felem_square(widefelem out, const felem in);
-void p384_felem_mul(widefelem out, const felem in1, const felem in2);
+LINK_ENTRY(felem_square, widefelem out, const felem in);
+LINK_ENTRY(felem_mul, widefelem out, const felem in1, const felem in2);
+LINK_ENTRY(felem_square_reduce, felem out, const felem in);
+LINK_ENTRY(felem_mul_reduce, felem out, const felem in1, const felem in2);
+LINK_ENTRY(felem_reduce, felem out, const widefelem in);
+LINK_ENTRY(felem_diff_128_64, widefelem out, const felem in);
+LINK_ENTRY(felem_diff128, widefelem out, const widefelem in);
 
 # if defined(_ARCH_PPC64)
 #  include "crypto/ppc_arch.h"
@@ -695,6 +700,11 @@ static void felem_select(void)
     if ((OPENSSL_ppccap_P & PPC_MADD300) && (OPENSSL_ppccap_P & PPC_ALTIVEC)) {
         felem_square_p = p384_felem_square;
         felem_mul_p = p384_felem_mul;
+        felem_square_reduce_p = p384_felem_square_reduce;
+        felem_mul_reduce_p = p384_felem_mul_reduce;
+        felem_reduce_p = p384_felem_reduce;
+        felem_diff_128_64_p = p384_felem_diff_128_64;
+        felem_diff128_p = p384_felem_diff128;
 
         return;
     }
@@ -703,6 +713,11 @@ static void felem_select(void)
     /* Default */
     felem_square_p = felem_square_ref;
     felem_mul_p = felem_mul_ref;
+    felem_square_reduce_p = felem_square_reduce_ref;
+    felem_mul_reduce_p = felem_mul_reduce_ref;
+    felem_reduce_p = felem_reduce_ref;
+    felem_diff_128_64_p = felem_diff_128_64_ref;
+    felem_diff128_p = felem_diff128_ref;
 }
 
 static void felem_square_wrapper(widefelem out, const felem in)
@@ -717,27 +732,67 @@ static void felem_mul_wrapper(widefelem out, const felem in1, const felem in2)
     felem_mul_p(out, in1, in2);
 }
 
+static void felem_square_reduce_wrapper(felem out, const felem in)
+{
+    felem_select();
+    felem_square_reduce_p(out, in);
+}
+
+static void felem_mul_reduce_wrapper(felem out, const felem in1, const felem in2)
+{
+    felem_select();
+    felem_mul_reduce_p(out, in1, in2);
+}
+
+static void felem_reduce_wrapper(felem out, const widefelem in)
+{
+    felem_select();
+    felem_reduce_p(out, in);
+}
+
+static void felem_diff_128_64_wrapper(widefelem out, const felem in)
+{
+    felem_select();
+    felem_diff_128_64_p(out, in);
+}
+
+static void felem_diff128_wrapper(widefelem out, const widefelem in)
+{
+    felem_select();
+    felem_diff128_p(out, in);
+}
+
 # define felem_square felem_square_p
 # define felem_mul felem_mul_p
+# define felem_square_reduce felem_square_reduce_p
+# define felem_mul_reduce felem_mul_reduce_p
+# define felem_reduce felem_reduce_p
+# define felem_diff_128_64 felem_diff_128_64_p
+# define felem_diff128 felem_diff128_p
 #else
 # define felem_square felem_square_ref
 # define felem_mul felem_mul_ref
+# define felem_square_reduce felem_square_reduce_ref
+# define felem_mul_reduce felem_mul_reduce_ref
+# define felem_reduce felem_reduce_ref
+# define felem_diff_128_64 felem_diff_128_64_ref
+# define felem_diff128 felem_diff128_ref
 #endif
 
-static ossl_inline void felem_square_reduce(felem out, const felem in)
+static ossl_inline void felem_square_reduce_ref(felem out, const felem in)
 {
     widefelem tmp;
 
-    felem_square(tmp, in);
-    felem_reduce(out, tmp);
+    felem_square_ref(tmp, in);
+    felem_reduce_ref(out, tmp);
 }
 
-static ossl_inline void felem_mul_reduce(felem out, const felem in1, const felem in2)
+static ossl_inline void felem_mul_reduce_ref(felem out, const felem in1, const felem in2)
 {
     widefelem tmp;
 
-    felem_mul(tmp, in1, in2);
-    felem_reduce(out, tmp);
+    felem_mul_ref(tmp, in1, in2);
+    felem_reduce_ref(out, tmp);
 }
 
 /*-
@@ -1631,7 +1686,6 @@ int ossl_ec_GFp_nistp384_point_get_affine_coordinates(const EC_GROUP *group,
                                                       BN_CTX *ctx)
 {
     felem z1, z2, x_in, y_in, x_out, y_out;
-    widefelem tmp;
 
     if (EC_POINT_is_at_infinity(group, point)) {
         ERR_raise(ERR_LIB_EC, EC_R_POINT_AT_INFINITY);
@@ -1641,10 +1695,8 @@ int ossl_ec_GFp_nistp384_point_get_affine_coordinates(const EC_GROUP *group,
         (!BN_to_felem(z1, point->Z)))
         return 0;
     felem_inv(z2, z1);
-    felem_square(tmp, z2);
-    felem_reduce(z1, tmp);
-    felem_mul(tmp, x_in, z1);
-    felem_reduce(x_in, tmp);
+    felem_square_reduce(z1, z2);
+    felem_mul_reduce(x_in, x_in, z1);
     felem_contract(x_out, x_in);
     if (x != NULL) {
         if (!felem_to_BN(x, x_out)) {
@@ -1652,10 +1704,8 @@ int ossl_ec_GFp_nistp384_point_get_affine_coordinates(const EC_GROUP *group,
             return 0;
         }
     }
-    felem_mul(tmp, z1, z2);
-    felem_reduce(z1, tmp);
-    felem_mul(tmp, y_in, z1);
-    felem_reduce(y_in, tmp);
+    felem_mul_reduce(z1, z1, z2);
+    felem_mul_reduce(y_in, y_in, z1);
     felem_contract(y_out, y_in);
     if (y != NULL) {
         if (!felem_to_BN(y, y_out)) {
