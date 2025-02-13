@@ -177,7 +177,7 @@ const char *X509_verify_cert_error_string(long n)
     case X509_V_ERR_OCSP_RESP_INVALID:
         return "OCSP response(s) invalid";
     case X509_V_ERR_OCSP_SIGNATURE_FAILURE:
-        return "OCSP response signature failure";
+        return "OCSP response signature verification failure";
     case X509_V_ERR_OCSP_NOT_YET_VALID:
         return "OCSP response not yet valid (contains a date in the future)";
     case X509_V_ERR_OCSP_HAS_EXPIRED:
