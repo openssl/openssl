@@ -41,6 +41,22 @@ static ossl_inline int pkt_is_marked(const uint64_t *bitf, size_t pkt_idx)
  */
 typedef struct rxe_st RXE;
 
+static RXE *qrx_ensure_free_rxe(OSSL_QRX *qrx, size_t alloc_len);
+static int qrx_validate_hdr_early(OSSL_QRX *qrx, RXE *rxe,
+                                  const QUIC_CONN_ID *first_dcid);
+static int qrx_relocate_buffer(OSSL_QRX *qrx, RXE **prxe, size_t *pi,
+                               const unsigned char **pptr, size_t buf_len);
+static int qrx_validate_hdr(OSSL_QRX *qrx, RXE *rxe);
+static int qrx_decrypt_pkt_body(OSSL_QRX *qrx, unsigned char *dst,
+                                const unsigned char *src,
+                                size_t src_len, size_t *dec_len,
+                                const unsigned char *aad, size_t aad_len,
+                                QUIC_PN pn, uint32_t enc_level,
+                                unsigned char key_phase_bit,
+                                uint64_t *rx_key_epoch);
+static int qrx_validate_hdr_late(OSSL_QRX *qrx, RXE *rxe);
+static uint32_t rxe_determine_pn_space(RXE *rxe);
+
 struct rxe_st {
     OSSL_QRX_PKT        pkt;
     OSSL_LIST_MEMBER(rxe, RXE);
@@ -81,6 +97,9 @@ struct rxe_st {
 
 DEFINE_LIST_OF(rxe, RXE);
 typedef OSSL_LIST(rxe) RXE_LIST;
+
+static RXE *qrx_reserve_rxe(RXE_LIST *rxl,
+                            RXE *rxe, size_t n);
 
 static ossl_inline unsigned char *rxe_data(const RXE *e)
 {
@@ -172,24 +191,6 @@ struct ossl_qrx_st {
     void *msg_callback_arg;
     SSL *msg_callback_ssl;
 };
-
-static RXE *qrx_ensure_free_rxe(OSSL_QRX *qrx, size_t alloc_len);
-static int qrx_validate_hdr_early(OSSL_QRX *qrx, RXE *rxe,
-                                  const QUIC_CONN_ID *first_dcid);
-static int qrx_relocate_buffer(OSSL_QRX *qrx, RXE **prxe, size_t *pi,
-                               const unsigned char **pptr, size_t buf_len);
-static int qrx_validate_hdr(OSSL_QRX *qrx, RXE *rxe);
-static RXE *qrx_reserve_rxe(RXE_LIST *rxl, RXE *rxe, size_t n);
-static int qrx_decrypt_pkt_body(OSSL_QRX *qrx, unsigned char *dst,
-                                const unsigned char *src,
-                                size_t src_len, size_t *dec_len,
-                                const unsigned char *aad, size_t aad_len,
-                                QUIC_PN pn, uint32_t enc_level,
-                                unsigned char key_phase_bit,
-                                uint64_t *rx_key_epoch);
-static int qrx_validate_hdr_late(OSSL_QRX *qrx, RXE *rxe);
-static uint32_t rxe_determine_pn_space(RXE *rxe);
-static void ignore_res(int x);
 
 OSSL_QRX *ossl_qrx_new(const OSSL_QRX_ARGS *args)
 {
@@ -292,8 +293,13 @@ static int qrx_validate_initial_pkt(OSSL_QRX *qrx, QUIC_URXE *urxe,
     uint32_t pn_space;
     OSSL_QRL_ENC_LEVEL *el = NULL;
     uint64_t rx_key_epoch = UINT64_MAX;
+    int rc = 0;
+    unsigned char *dup_data = OPENSSL_memdup(ossl_quic_urxe_data(urxe), urxe->data_len);
 
-    if (!PACKET_buf_init(&pkt, ossl_quic_urxe_data(urxe), urxe->data_len))
+    if (dup_data == NULL)
+        return 0;
+
+    if (!PACKET_buf_init(&pkt, dup_data, urxe->data_len))
         return 0;
 
     orig_pkt = pkt;
@@ -304,8 +310,10 @@ static int qrx_validate_initial_pkt(OSSL_QRX *qrx, QUIC_URXE *urxe,
      * as a good ballpark figure.
      */
     rxe = qrx_ensure_free_rxe(qrx, PACKET_remaining(&pkt));
-    if (rxe == NULL)
+    if (rxe == NULL) {
+        OPENSSL_free(dup_data);
         return 0;
+    }
 
     /*
      * we expect INITIAL packet only, therefore it is OK to pass
@@ -364,7 +372,6 @@ static int qrx_validate_initial_pkt(OSSL_QRX *qrx, QUIC_URXE *urxe,
     /* Validate header and decode PN. */
     if (!qrx_validate_hdr(qrx, rxe))
         goto malformed;
-
     /*
      * The AAD data is the entire (unprotected) packet header including the PN.
      * The packet header has been unprotected in place, so we can just reuse the
@@ -394,7 +401,6 @@ static int qrx_validate_initial_pkt(OSSL_QRX *qrx, QUIC_URXE *urxe,
                               &dec_len, sop, aad_len, rxe->pn, QUIC_ENC_LEVEL_INITIAL,
                               rxe->hdr.key_phase, &rx_key_epoch))
         goto malformed;
-
     /*
      * -----------------------------------------------------
      *   IMPORTANT: ANYTHING ABOVE THIS LINE IS UNVERIFIED
@@ -432,19 +438,12 @@ static int qrx_validate_initial_pkt(OSSL_QRX *qrx, QUIC_URXE *urxe,
     rxe->time           = urxe->time;
     rxe->datagram_id    = urxe->datagram_id;
 
-    /*
-     * The packet is decrypted, we are going to move it from
-     * rx_pending queue where it waits to be further processed
-     * by ch_rx().
-     */
-    ossl_list_rxe_remove(&qrx->rx_free, rxe);
-    ossl_list_rxe_insert_tail(&qrx->rx_pending, rxe);
-
-    return 1;
+    rc = 1;
 
 malformed:
+    OPENSSL_free(dup_data);
     /* caller (port_default_packet_handler()) should discard urxe */
-    return 0;
+    return rc;
 }
 
 int ossl_qrx_validate_initial_packet(OSSL_QRX *qrx, QUIC_URXE *urxe,
