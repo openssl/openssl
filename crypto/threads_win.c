@@ -365,8 +365,10 @@ void ossl_synchronize_rcu(CRYPTO_RCU_LOCK *lock)
     struct rcu_cb_item *cb_items, *tmpcb;
 
     /* before we do anything else, lets grab the cb list */
-    cb_items = InterlockedExchangePointer((void * volatile *)&lock->cb_items,
-                                          NULL);
+    ossl_crypto_mutex_lock(lock->write_lock);
+    cb_items = lock->cb_items;
+    lock->cb_items = NULL;
+    ossl_crypto_mutex_unlock(lock->write_lock);
 
     qp = update_qp(lock, &curr_id);
 
@@ -399,6 +401,9 @@ void ossl_synchronize_rcu(CRYPTO_RCU_LOCK *lock)
 
 }
 
+/*
+ * Note, must be called under the protection of ossl_rcu_write_lock
+ */
 int ossl_rcu_call(CRYPTO_RCU_LOCK *lock, rcu_cb_fn cb, void *data)
 {
     struct rcu_cb_item *new;
@@ -409,8 +414,9 @@ int ossl_rcu_call(CRYPTO_RCU_LOCK *lock, rcu_cb_fn cb, void *data)
     new->data = data;
     new->fn = cb;
 
-    new->next = InterlockedExchangePointer((void * volatile *)&lock->cb_items,
-                                           new);
+    new->next = lock->cb_items;
+    lock->cb_items = new;
+
     return 1;
 }
 
