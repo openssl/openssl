@@ -416,6 +416,7 @@ int ssl_print_groups(BIO *out, SSL *s, int noshared)
 
 int ssl_print_tmp_key(BIO *out, SSL *s)
 {
+    const char *keyname;
     EVP_PKEY *key;
 
     if (!SSL_get_peer_tmp_key(s, &key)) {
@@ -425,10 +426,16 @@ int ssl_print_tmp_key(BIO *out, SSL *s)
         return 1;
     }
 
-    BIO_puts(out, "Server Temp Key: ");
+    BIO_puts(out, "Peer Temp Key: ");
     switch (EVP_PKEY_get_id(key)) {
     case EVP_PKEY_RSA:
         BIO_printf(out, "RSA, %d bits\n", EVP_PKEY_get_bits(key));
+        break;
+
+    case EVP_PKEY_KEYMGMT:
+        if ((keyname = EVP_PKEY_get0_type_name(key)) == NULL)
+            keyname = "?";
+        BIO_printf(out, "%s\n", keyname);
         break;
 
     case EVP_PKEY_DH:
@@ -1332,8 +1339,7 @@ void print_ssl_summary(SSL *s)
     if (SSL_is_server(s))
         ssl_print_groups(bio_err, s, 1);
 #endif
-    if (!SSL_is_server(s))
-        ssl_print_tmp_key(bio_err, s);
+    ssl_print_tmp_key(bio_err, s);
 }
 
 int config_ctx(SSL_CONF_CTX *cctx, STACK_OF(OPENSSL_STRING) *str,
