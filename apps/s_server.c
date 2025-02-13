@@ -691,10 +691,10 @@ static int get_ocsp_resp_from_files(SSL *s, tlsextstatusctx *srctx,
     OCSP_RESPONSE *resp = NULL;
     BIO *derbio;
     int i;
+    int num = sk_OPENSSL_STRING_num(srctx->sk_resp_in);
     int ret = SSL_TLSEXT_ERR_OK;
 
-    sk_resp_unordered = sk_OCSP_RESPONSE_new_reserve(NULL,
-                                                     sk_OPENSSL_STRING_num(srctx->sk_resp_in));
+    sk_resp_unordered = sk_OCSP_RESPONSE_new_reserve(NULL, num);
 
     if (sk_resp_unordered == NULL) {
         BIO_puts(bio_err, "cert_status: Cannot reserve memory for OCSP responses\n");
@@ -702,7 +702,7 @@ static int get_ocsp_resp_from_files(SSL *s, tlsextstatusctx *srctx,
     }
 
     /* reading as many responses as files given */
-    for (i = 0; i < sk_OPENSSL_STRING_num(srctx->sk_resp_in); i++) {
+    for (i = 0; i < num; i++) {
         respfile = sk_OPENSSL_STRING_value(srctx->sk_resp_in, i);
 
         derbio = bio_open_default(respfile, 'r', FORMAT_ASN1);

@@ -276,14 +276,16 @@ OpenSSL 3.5
    The new `-no_signing_time` option of the `cms` command enables this flag.
 
    *Juhász Péter*
- *
-   Added support for TLS 1.3 OCSP multi-stapling for server certs.
-   New `s_client` options `-ocsp_check_leaf` and `-ocsp_check_all` require checking
-   the status of the leaf (server) certificate or of all certificates in the chain.
-   New `s_server` option `-status_all` to provide OCSP status information
-   for the whole server certificate chain (multi-stapling) for TLS 1.3 and beyond.
-   The `-status_file` server option can now be given multiple times to provide
-   multiple files containing OCSP responses.
+
+ * Added support for TLS 1.3 OCSP multi-stapling for server certs.
+     * new `s_client` options:
+       * `-ocsp_check_leaf`: Checks the status of the leaf (server) certificate.
+       * `-ocsp_check_all`: Verifies the status of all certificates in the server chain.
+     * new `s_server` option:
+       * `-status_all` Provides OCSP status information for the entire server certificate chain (multi-stapling) for TLS 1.3 and later.
+
+     * Improved `-status_file` can now be given multiple times to provide
+       multiple files containing OCSP responses.
 
    *Michael Krueger, Martin Rauch*
 
