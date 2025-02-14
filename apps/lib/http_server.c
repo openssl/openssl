@@ -200,7 +200,7 @@ BIO *http_server_init(const char *prog, const char *port, int verb)
     int port_num;
     char name[40];
 
-    snprintf(name, sizeof(name), "*:%s", port); /* port may be "0" */
+    BIO_snprintf(name, sizeof(name), "*:%s", port); /* port may be "0" */
     if (verb >= 0 && !log_set_verbosity(prog, verb))
         return NULL;
     bufbio = BIO_new(BIO_f_buffer());
