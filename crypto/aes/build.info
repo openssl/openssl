@@ -9,7 +9,8 @@ IF[{- !$disabled{asm} -}]
 
   $AESASM_x86_64=\
         aes-x86_64.s vpaes-x86_64.s bsaes-x86_64.s aesni-x86_64.s \
-        aesni-sha1-x86_64.s aesni-sha256-x86_64.s aesni-mb-x86_64.s
+        aesni-sha1-x86_64.s aesni-sha256-x86_64.s aesni-mb-x86_64.s \
+        aesni-xts-avx512.s
   $AESDEF_x86_64=AES_ASM VPAES_ASM BSAES_ASM
 
   $AESASM_ia64=aes_core.c aes_cbc.c aes-ia64.s
@@ -144,6 +145,8 @@ INCLUDE[bsaes-armv7.o]=..
 
 GENERATE[aes-s390x.S]=asm/aes-s390x.pl
 INCLUDE[aes-s390x.o]=..
+
+GENERATE[aesni-xts-avx512.s]=asm/aesni-xts-avx512.pl
 
 GENERATE[aes-c64xplus.S]=asm/aes-c64xplus.pl
 
