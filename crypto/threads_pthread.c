@@ -90,7 +90,6 @@ __tsan_mutex_post_lock((x), 0, 0)
  * fallback function names.
  */
 typedef void *pvoid;
-typedef struct rcu_cb_item *prcu_cb_item;
 
 # if defined(__GNUC__) && defined(__ATOMIC_ACQUIRE) && !defined(BROKEN_CLANG_ATOMICS) \
     && !defined(USE_ATOMIC_FALLBACKS)
@@ -193,7 +192,6 @@ IMPL_fallback_atomic_store(pvoid)
         return ret;                                                     \
     }
 IMPL_fallback_atomic_exchange_n(uint64_t)
-IMPL_fallback_atomic_exchange_n(prcu_cb_item)
 
 #  define ATOMIC_EXCHANGE_N(t, p, v, o) fallback_atomic_exchange_n_##t(p, v)
 
@@ -583,6 +581,10 @@ void ossl_synchronize_rcu(CRYPTO_RCU_LOCK *lock)
     }
 }
 
+/*
+ * Note: This call assumes its made under the protection of
+ * ossl_rcu_write_lock
+ */
 int ossl_rcu_call(CRYPTO_RCU_LOCK *lock, rcu_cb_fn cb, void *data)
 {
     struct rcu_cb_item *new =
