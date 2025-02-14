@@ -24,6 +24,7 @@ my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 my $no_legacy = disabled('legacy') || ($ENV{NO_LEGACY} // 0);
 my $no_des = disabled("des");
 my $no_dh = disabled("dh");
+my $no_slh_dsa = disabled("slh-dsa");
 my $no_dsa = disabled("dsa");
 my $no_ec = disabled("ec");
 my $no_ecx = disabled("ecx");
@@ -76,6 +77,10 @@ push @files, qw(
                 evpkdf_x942_des.txt
                 evpmac_cmac_des.txt
                ) unless $no_des;
+push @files, qw(
+                evppkey_slh_dsa_siggen.txt
+                evppkey_slh_dsa_sigver.txt
+               ) unless $no_slh_dsa;
 push @files, qw(
                 evppkey_dsa.txt
                 evppkey_dsa_sigalg.txt
