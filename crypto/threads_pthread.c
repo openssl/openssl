@@ -593,21 +593,9 @@ int ossl_rcu_call(CRYPTO_RCU_LOCK *lock, rcu_cb_fn cb, void *data)
 
     new->data = data;
     new->fn = cb;
-    /*
-     * Use __ATOMIC_ACQ_REL here to indicate that any prior writes to this
-     * list are visible to us prior to reading, and publish the new value
-     * immediately
-     */
-# ifdef __ATOMIC_ACQ_REL
-    new->next = ATOMIC_EXCHANGE_N(prcu_cb_item, &lock->cb_items, new,
-                                  __ATOMIC_ACQ_REL);
-# else
-    pthread_mutex_lock(&lock->write_lock);
+
     new->next = lock->cb_items;
     lock->cb_items = new;
-    pthread_mutex_unlock(&lock->write_lock);
-# endif
-
 
     return 1;
 }
