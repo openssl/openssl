@@ -3665,7 +3665,6 @@ int speed_main(int argc, char **argv)
         if (st == 0) {
             BIO_printf(bio_err, "EdDSA failure.\n");
             dofail();
-            op_count = 1;
         } else {
             for (i = 0; i < loopargs_len; i++) {
                 /* Perform EdDSA signature test */

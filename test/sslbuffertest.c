@@ -101,7 +101,7 @@ static int test_func(int test)
          * Write some test data. It should never take more than 2 attempts
          * (the first one might be a retryable fail).
          */
-        for (ret = -1, i = 0, len = 0; len != sizeof(testdata) && i < 2;
+        for (i = 0, len = 0; len != sizeof(testdata) && i < 2;
              i++) {
             /* test == 0 mean to free/allocate = control */
             if (test >= 1 && (!TEST_true(SSL_free_buffers(clientssl))
@@ -139,7 +139,7 @@ static int test_func(int test)
          * it could fail once for each byte read, including all overhead
          * bytes from the record header/padding etc.
          */
-        for (ret = -1, i = 0, len = 0; len != sizeof(testdata) &&
+        for (i = 0, len = 0; len != sizeof(testdata) &&
                                        i < MAX_ATTEMPTS; i++) {
             if (test >= 5 && (!TEST_true(SSL_free_buffers(serverssl))
                               || !TEST_true(checkbuffers(serverssl, 0))))
