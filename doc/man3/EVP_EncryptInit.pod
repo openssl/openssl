@@ -20,6 +20,7 @@ EVP_DecryptUpdate,
 EVP_DecryptFinal_ex,
 EVP_CipherInit_ex,
 EVP_CipherInit_ex2,
+EVP_CipherInit_SKEY,
 EVP_CipherUpdate,
 EVP_CipherFinal_ex,
 EVP_CIPHER_CTX_set_key_length,
@@ -142,6 +143,9 @@ EVP_CIPHER_CTX_mode
  int EVP_CipherInit_ex2(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
                         const unsigned char *key, const unsigned char *iv,
                         int enc, const OSSL_PARAM params[]);
+ int EVP_CipherInit_SKEY(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
+                         EVP_SKEY *skey, const unsigned char *iv, size_t iv_len,
+                         int enc, const OSSL_PARAM params[]);
  int EVP_CipherUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
                       int *outl, const unsigned char *in, int inl);
  int EVP_CipherFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *outm, int *outl);
@@ -449,6 +453,11 @@ performed depends on the value of the I<enc> parameter. It should be set to 1
 for encryption, 0 for decryption and -1 to leave the value unchanged
 (the actual value of 'enc' being supplied in a previous call).
 
+=item EVP_CipherInit_SKEY()
+
+This function is similar to EVP_CipherInit_ex2() but accepts a
+symmetric key object of type I<EVP_SKEY> as a key.
+
 =item EVP_CIPHER_CTX_reset()
 
 Clears all information from a cipher context and free up any allocated memory
@@ -575,11 +584,12 @@ L</PARAMETERS> instead.
 
 Enables or disables padding. This function should be called after the context
 is set up for encryption or decryption with EVP_EncryptInit_ex2(),
-EVP_DecryptInit_ex2() or EVP_CipherInit_ex2(). By default encryption operations
-are padded using standard block padding and the padding is checked and removed
-when decrypting. If the I<pad> parameter is zero then no padding is
-performed, the total amount of data encrypted or decrypted must then
-be a multiple of the block size or an error will occur. I<x> B<MUST NOT> be NULL.
+EVP_DecryptInit_ex2(), EVP_CipherInit_ex2(), or EVP_CipherInit_SKEY(). By
+default encryption operations are padded using standard block padding and the
+padding is checked and removed when decrypting. If the I<pad> parameter is zero
+then no padding is performed, the total amount of data encrypted or decrypted
+must then be a multiple of the block size or an error will occur. I<x> B<MUST
+NOT> be NULL.
 
 =item EVP_CIPHER_get_key_length() and EVP_CIPHER_CTX_get_key_length()
 
@@ -1380,8 +1390,8 @@ return 1 for success and 0 for failure.
 EVP_DecryptInit_ex2() and EVP_DecryptUpdate() return 1 for success and 0 for failure.
 EVP_DecryptFinal_ex() returns 0 if the decrypt failed or 1 for success.
 
-EVP_CipherInit_ex2() and EVP_CipherUpdate() return 1 for success and 0 for
-failure.
+EVP_CipherInit_ex2(), EVP_CipherInit_SKEY() and EVP_CipherUpdate() return 1 for
+success and 0 for failure.
 EVP_CipherFinal_ex() returns 0 for an encryption/decryption failure or 1 for
 success.
 
@@ -1941,6 +1951,8 @@ non-deprecated alias macro.
 The EVP_CIPHER_CTX_flags() macro was deprecated in OpenSSL 1.1.0.
 
 EVP_CIPHER_CTX_dup() was added in OpenSSL 3.2.
+
+EVP_CipherInit_SKEY() was added in OpenSSL 3.5.
 
 Prior to OpenSSL 3.5, passing a NULL I<ctx> to
 B<EVP_CIPHER_CTX_get_block_size()> would result in a NULL pointer dereference,

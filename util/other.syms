@@ -53,6 +53,8 @@ EVP_PKEY_ASN1_METHOD                    datatype
 EVP_RAND                                datatype
 EVP_RAND_CTX                            datatype
 EVP_SIGNATURE                           datatype
+EVP_SKEYMGMT                            datatype
+EVP_SKEY                                datatype
 GEN_SESSION_CB                          datatype
 GENERAL_NAME                            datatype
 NAMING_AUTHORITY                        datatype

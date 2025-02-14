@@ -56,6 +56,11 @@ OpenSSL 3.5
 
    *Simo Sorce*
 
+ * Initial support for opaque symmetric keys objects.  These replace the ad-hoc byte
+   arrays that are pervasive throughout the library.
+
+   *Dmitry Belyavskiy and Simo Sorce*
+
  * For TLSv1.3: Add capability for a client to send multiple key shares. Extend the scope of
    `SSL_OP_CIPHER_SERVER_PREFERENCE` to cover server-side key exchange group selection.
    Extend the server-side key exchange group selection algorithm and related group list syntax

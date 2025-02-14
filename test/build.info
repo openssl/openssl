@@ -1144,6 +1144,11 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[provider_pkey_test]=../include ../apps/include
   DEPEND[provider_pkey_test]=../libcrypto libtestutil.a
 
+  PROGRAMS{noinst}=evp_skey_test
+  SOURCE[evp_skey_test]=evp_skey_test.c fake_cipherprov.c
+  INCLUDE[evp_skey_test]=../include ../apps/include
+  DEPEND[evp_skey_test]=../libcrypto libtestutil.a
+
   PROGRAMS{noinst}=provider_default_search_path_test
   SOURCE[provider_default_search_path_test]=provider_default_search_path_test.c
   INCLUDE[provider_default_search_path_test]=../include ../apps/include

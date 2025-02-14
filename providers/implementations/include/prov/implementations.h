@@ -690,3 +690,6 @@ extern const OSSL_DISPATCH ossl_SubjectPublicKeyInfo_der_to_ml_dsa_65_decoder_fu
 
 extern const OSSL_DISPATCH ossl_PrivateKeyInfo_der_to_ml_dsa_87_decoder_functions[];
 extern const OSSL_DISPATCH ossl_SubjectPublicKeyInfo_der_to_ml_dsa_87_decoder_functions[];
+
+extern const OSSL_DISPATCH ossl_generic_skeymgmt_functions[];
+extern const OSSL_DISPATCH ossl_aes_skeymgmt_functions[];
