@@ -42,6 +42,12 @@
 # define MAX_ML_DSA_PUB_LEN ML_DSA_87_PUB_LEN
 # define MAX_ML_DSA_SIG_LEN ML_DSA_87_SIG_LEN
 
+# define ML_DSA_KEY_PREFER_SEED (1 << 0)
+# define ML_DSA_KEY_RETAIN_SEED (1 << 1)
+/* Default provider flags */
+# define ML_DSA_KEY_PROV_FLAGS_DEFAULT \
+    (ML_DSA_KEY_PREFER_SEED | ML_DSA_KEY_RETAIN_SEED)
+
 /*
  * Refer to FIPS 204 Section 4 Parameter sets.
  * Fields that are shared between all algorithms (such as q & d) have been omitted.
@@ -86,9 +92,8 @@ __owur size_t ossl_ml_dsa_key_get_pub_len(const ML_DSA_KEY *key);
 __owur const uint8_t *ossl_ml_dsa_key_get_priv(const ML_DSA_KEY *key);
 __owur size_t ossl_ml_dsa_key_get_priv_len(const ML_DSA_KEY *key);
 __owur const uint8_t *ossl_ml_dsa_key_get_seed(const ML_DSA_KEY *key);
-__owur int ossl_ml_dsa_key_prefer_seed(const ML_DSA_KEY *key);
-__owur int ossl_ml_dsa_key_retain_seed(const ML_DSA_KEY *key);
-int ossl_ml_dsa_set_prekey(ML_DSA_KEY *key, int prefer_seed, int retain_seed,
+__owur int ossl_ml_dsa_key_get_prov_flags(const ML_DSA_KEY *key);
+int ossl_ml_dsa_set_prekey(ML_DSA_KEY *key, int flags_set, int flags_clr,
                            const uint8_t *seed, size_t seed_len,
                            const uint8_t *sk, size_t sk_len);
 __owur size_t ossl_ml_dsa_key_get_collision_strength_bits(const ML_DSA_KEY *key);

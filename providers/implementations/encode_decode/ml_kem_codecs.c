@@ -13,6 +13,7 @@
 #include <openssl/x509.h>
 #include <openssl/core_names.h>
 #include "internal/encoder.h"
+#include "prov/ml_kem.h"
 #include "ml_kem_codecs.h"
 
 /* Tables describing supported ASN.1 input/output formats. */
@@ -138,7 +139,6 @@ ossl_ml_kem_d2i_PKCS8(const uint8_t *prvenc, int prvlen,
                       int evp_type, PROV_CTX *provctx,
                       const char *propq)
 {
-    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(provctx);
     const ML_KEM_VINFO *v;
     const ML_COMMON_CODEC *codec;
     ML_COMMON_PKCS8_FMT_PREF *fmt_slots = NULL, *slot;
@@ -241,12 +241,9 @@ ossl_ml_kem_d2i_PKCS8(const uint8_t *prvenc, int prvlen,
      * Collect the seed and/or key into a "decoded" private key object,
      * to be turned into a real key on provider "load" or "import".
      */
-    if ((key = ossl_ml_kem_key_new(libctx, propq, evp_type)) == NULL)
+    if ((key = ossl_prov_ml_kem_new(provctx, propq, evp_type)) == NULL)
         goto end;
-    key->retain_seed = ossl_prov_ctx_get_bool_param(
-        provctx, OSSL_PKEY_PARAM_ML_KEM_RETAIN_SEED, 1);
-    key->prefer_seed = ossl_prov_ctx_get_bool_param(
-        provctx, OSSL_PKEY_PARAM_ML_KEM_PREFER_SEED, 1);
+
     if (p8fmt->seed_length > 0) {
         if (!ossl_ml_kem_set_seed(buf + p8fmt->seed_offset,
                                   ML_KEM_SEED_BYTES, key)) {

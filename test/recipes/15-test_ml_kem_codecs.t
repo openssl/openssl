@@ -25,7 +25,7 @@ my @formats = qw(seed-priv priv-only seed-only oqskeypair bare-seed bare-priv);
 plan skip_all => "ML-KEM isn't supported in this build"
     if disabled("ml-kem");
 
-plan tests => @algs * (24 + 10 * @formats);
+plan tests => @algs * (25 + 10 * @formats);
 my $seed = join ("", map {sprintf "%02x", $_} (0..63));
 my $weed = join ("", map {sprintf "%02x", $_} (1..64));
 my $ikme = join ("", map {sprintf "%02x", $_} (0..31));
@@ -160,7 +160,7 @@ foreach my $alg (@algs) {
             sprintf("text form private key: %s with %s", $alg, $f));
     }
 
-    # (5 tests): Test import/load PCT failure
+    # (6 tests): Test import/load PCT failure
     my $real = sprintf('real-%s.der', $alg);
     my $fake = sprintf('fake-%s.der', $alg);
     my $mixt = sprintf('mixt-%s.der', $alg);
@@ -171,35 +171,50 @@ foreach my $alg (@algs) {
     ok(run(app([qw(openssl genpkey -algorithm), "ml-kem-$alg",
                 qw(-provparam ml-kem.output_formats=seed-priv -pkeyopt),
                 "hexseed:$seed", qw(-outform DER -out), $real])),
-                sprintf("create real private key: %s", $alg));
+        sprintf("create real private key: %s", $alg));
     ok(run(app([qw(openssl genpkey -algorithm), "ml-kem-$alg",
                 qw(-provparam ml-kem.output_formats=seed-priv -pkeyopt),
                 "hexseed:$weed", qw(-outform DER -out), $fake])),
-                sprintf("create fake private key: %s", $alg));
+        sprintf("create fake private key: %s", $alg));
     my $realfh = IO::File->new($real, "r");
     my $fakefh = IO::File->new($fake, "r");
     local $/ = undef;
     my $realder = <$realfh>;
     my $fakeder = <$fakefh>;
-    ok (length($realder) == 28 + (2 + 64) + (4 + $slen + $plen + $zlen)
+    #
+    # - 20 bytes PKCS8 fixed overhead,
+    # - 4 byte private key octet string tag + length
+    # - 4 byte seed + key sequence tag + length
+    #   - 2 byte seed tag + length
+    #     - 64 byte seed
+    #   - 4 byte key tag + length
+    #     - |dk| 's' vector
+    #     - |ek| public key ('t' vector || 'rho')
+    #     - implicit rejection 'z' seed component
+    #
+    ok(length($realder) == 28 + (2 + 64) + (4 + $slen + $plen + $zlen)
         && length($fakeder) == 28 + (2 + 64) + (4 + $slen + $plen + $zlen));
     my $mixtder = substr($realder, 0, 28 + 66 + 4 + $slen)
         . substr($fakeder, 28 + 66 + 4 + $slen, $plen)
         . substr($realder, 28 + 66 + 4 + $slen + $plen, $zlen);
-    my $mixtfh = IO::File->new($mixt, "w");
+    my $mixtfh = IO::File->new($mixt, ">:raw");
     print $mixtfh $mixtder;
     $mixtfh->close();
-    ok(run(app([qw(openssl pkey -inform DER -noout -in), $real],
-               sprintf("accept valid keypair: %s", $alg))));
+    ok(run(app([qw(openssl pkey -inform DER -noout -in), $real])),
+        sprintf("accept valid keypair: %s", $alg));
     ok(!run(app([qw(openssl pkey -provparam ml-kem.prefer_seed=no),
                  qw(-inform DER -noout -in), $mixt])),
-                sprintf("reject real private and fake public: %s", $alg));
+        sprintf("reject real private and fake public: %s", $alg));
+    ok(run(app([qw(openssl pkey -provparam ml-kem.prefer_seed=no),
+                 qw(-provparam ml-kem.import_pct_type=none),
+                 qw(-inform DER -noout -in), $mixt])),
+        sprintf("Absent PCT accept fake public: %s", $alg));
     # Mutate the public key hash
     my $mashder = $realder;
     substr($mashder, -64, 1) =~ s{(.)}{chr(ord($1)^1)}es;
-    my $mashfh = IO::File->new($mash, "w");
+    my $mashfh = IO::File->new($mash, ">:raw");
     print $mashfh $mashder;
     $mashfh->close();
     ok(!run(app([qw(openssl pkey -inform DER -noout -in), $mash])),
-                sprintf("reject real private and mutated public: %s", $alg));
+        sprintf("reject real private and mutated public: %s", $alg));
 }
