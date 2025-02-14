@@ -3826,7 +3826,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
         return ssl_cert_get_cert_store(sc->cert, parg, 1);
 
     case SSL_CTRL_GET_PEER_SIGNATURE_NAME:
-        if (sc->s3.tmp.peer_sigalg == NULL)
+        if (parg == NULL && sc->s3.tmp.peer_sigalg == NULL)
             return 0;
         *(const char **)parg = sc->s3.tmp.peer_sigalg->name;
         return 1;
@@ -3838,7 +3838,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
         return 1;
 
     case SSL_CTRL_GET_SIGNATURE_NAME:
-        if (sc->s3.tmp.sigalg == NULL)
+        if (parg == NULL || sc->s3.tmp.sigalg == NULL)
             return 0;
         *(const char **)parg = sc->s3.tmp.sigalg->name;
         return 1;
