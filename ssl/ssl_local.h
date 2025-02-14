@@ -311,6 +311,9 @@
 
 # define SSL_IS_QUIC_HANDSHAKE(s) (((s)->s3.flags & TLS1_FLAGS_QUIC) != 0)
 
+/* no end of early data */
+# define SSL_NO_EOED(s) SSL_IS_QUIC_HANDSHAKE(s)
+
 /* alert_dispatch values */
 
 /* No alert pending */
