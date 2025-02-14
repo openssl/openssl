@@ -1219,12 +1219,13 @@ static int get_crl_sk(X509_STORE_CTX *ctx, X509_CRL **pcrl, X509_CRL **pdcrl,
     }
 
     if (best_crl != NULL) {
+        if (!X509_CRL_up_ref(best_crl))
+            return 0;
         X509_CRL_free(*pcrl);
         *pcrl = best_crl;
         *pissuer = best_crl_issuer;
         *pscore = best_score;
         *preasons = best_reasons;
-        X509_CRL_up_ref(best_crl);
         X509_CRL_free(*pdcrl);
         *pdcrl = NULL;
         get_delta_sk(ctx, pdcrl, pscore, best_crl, crls);
@@ -1310,10 +1311,16 @@ static void get_delta_sk(X509_STORE_CTX *ctx, X509_CRL **dcrl, int *pscore,
     for (i = 0; i < sk_X509_CRL_num(crls); i++) {
         delta = sk_X509_CRL_value(crls, i);
         if (check_delta_base(delta, base)) {
+            if (!X509_CRL_up_ref(delta)) {
+                *dcrl = NULL;
+                return;
+            }
+
+            *dcrl = delta;
+
             if (check_crl_time(ctx, delta, 0))
                 *pscore |= CRL_SCORE_TIME_DELTA;
-            X509_CRL_up_ref(delta);
-            *dcrl = delta;
+
             return;
         }
     }
@@ -3001,11 +3008,15 @@ static int dane_match_cert(X509_STORE_CTX *ctx, X509 *cert, int depth)
             if (DANETLS_USAGE_BIT(usage) & DANETLS_DANE_MASK)
                 matched = 1;
             if (matched || dane->mdpth < 0) {
-                dane->mdpth = depth;
-                dane->mtlsa = t;
+                if (!X509_up_ref(cert)) {
+                    matched = -1;
+                    break;
+                }
+
                 OPENSSL_free(dane->mcert);
                 dane->mcert = cert;
-                X509_up_ref(cert);
+                dane->mdpth = depth;
+                dane->mtlsa = t;
             }
             break;
         }

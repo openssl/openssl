@@ -209,7 +209,9 @@ static int psk_find_session_cb(SSL *ssl, const unsigned char *identity,
     }
 
     if (psksess != NULL) {
-        SSL_SESSION_up_ref(psksess);
+        if (!SSL_SESSION_up_ref(psksess))
+            return 0;
+
         *sess = psksess;
         return 1;
     }
