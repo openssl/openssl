@@ -10,6 +10,7 @@
 #include "internal/recordmethod.h"
 #include "internal/quic_tls.h"
 #include "../ssl_local.h"
+#include "quic_local.h"
 #include "internal/quic_error.h"
 #include "internal/quic_types.h"
 #include "internal/ssl_unwrap.h"
