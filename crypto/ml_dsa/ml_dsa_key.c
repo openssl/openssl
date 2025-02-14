@@ -28,17 +28,12 @@ const uint8_t *ossl_ml_dsa_key_get_seed(const ML_DSA_KEY *key)
     return key->seed;
 }
 
-int ossl_ml_dsa_key_prefer_seed(const ML_DSA_KEY *key)
+int ossl_ml_dsa_key_get_prov_flags(const ML_DSA_KEY *key)
 {
-    return key->prefer_seed;
+    return key->prov_flags;
 }
 
-int ossl_ml_dsa_key_retain_seed(const ML_DSA_KEY *key)
-{
-    return key->retain_seed;
-}
-
-int ossl_ml_dsa_set_prekey(ML_DSA_KEY *key, int prefer_seed, int retain_seed,
+int ossl_ml_dsa_set_prekey(ML_DSA_KEY *key, int flags_set, int flags_clr,
                            const uint8_t *seed, size_t seed_len,
                            const uint8_t *sk, size_t sk_len)
 {
@@ -58,10 +53,8 @@ int ossl_ml_dsa_set_prekey(ML_DSA_KEY *key, int prefer_seed, int retain_seed,
     if (seed != NULL
         && (key->seed = OPENSSL_memdup(seed, seed_len)) == NULL)
         goto end;
-    if (prefer_seed >= 0)
-        key->prefer_seed = prefer_seed;
-    if (retain_seed >= 0)
-        key->retain_seed = retain_seed;
+    key->prov_flags |= flags_set;
+    key->prov_flags &= ~flags_clr;
     ret = 1;
 
   end:
@@ -94,8 +87,7 @@ ML_DSA_KEY *ossl_ml_dsa_key_new(OSSL_LIB_CTX *libctx, const char *propq,
     if (ret != NULL) {
         ret->libctx = libctx;
         ret->params = params;
-        ret->prefer_seed = 1;
-        ret->retain_seed = 1;
+        ret->prov_flags = ML_DSA_KEY_PROV_FLAGS_DEFAULT;
         ret->shake128_md = EVP_MD_fetch(libctx, "SHAKE-128", propq);
         ret->shake256_md = EVP_MD_fetch(libctx, "SHAKE-256", propq);
         if (ret->shake128_md == NULL || ret->shake256_md == NULL)
@@ -190,8 +182,7 @@ ML_DSA_KEY *ossl_ml_dsa_key_dup(const ML_DSA_KEY *src, int selection)
     if (ret != NULL) {
         ret->libctx = src->libctx;
         ret->params = src->params;
-        ret->retain_seed = src->retain_seed;
-        ret->prefer_seed = src->prefer_seed;
+        ret->prov_flags = src->prov_flags;
         if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
             if (src->pub_encoding != NULL) {
                 /* The public components are present if the private key is present */
@@ -443,7 +434,7 @@ static int keygen_internal(ML_DSA_KEY *out)
         && ossl_ml_dsa_sk_encode(out);
 
 err:
-    if (out->seed != NULL && !out->retain_seed) {
+    if (out->seed != NULL && (out->prov_flags & ML_DSA_KEY_RETAIN_SEED) == 0) {
         OPENSSL_clear_free(out->seed, ML_DSA_SEED_BYTES);
         out->seed = NULL;
     }

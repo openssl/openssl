@@ -117,6 +117,17 @@
 # define ML_KEM_1024_DV         5
 # define ML_KEM_1024_SECBITS    256
 
+# define ML_KEM_KEY_RANDOM_PCT  (1 << 0)
+# define ML_KEM_KEY_FIXED_PCT   (1 << 1)
+# define ML_KEM_KEY_PREFER_SEED (1 << 2)
+# define ML_KEM_KEY_RETAIN_SEED (1 << 3)
+/* Mask to check whether PCT on import is enabled */
+# define ML_KEM_KEY_PCT_TYPE \
+    (ML_KEM_KEY_RANDOM_PCT | ML_KEM_KEY_FIXED_PCT)
+/* Default provider flags */
+# define ML_KEM_KEY_PROV_FLAGS_DEFAULT \
+    (ML_KEM_KEY_RANDOM_PCT | ML_KEM_KEY_PREFER_SEED | ML_KEM_KEY_RETAIN_SEED)
+
 /*
  * External variant-specific API
  * -----------------------------
@@ -171,8 +182,7 @@ typedef struct ossl_ml_kem_key_st {
     struct ossl_ml_kem_scalar_st *s;        /* Private key secret vector */
     uint8_t *z;                             /* Private key FO failure secret */
     uint8_t *d;                             /* Private key seed */
-    int prefer_seed;                        /* Given seed and key use seed? */
-    int retain_seed;                        /* Retain the seed after keygen? */
+    int prov_flags;                         /* prefer/retain seed and PCT flags */
 
     /*
      * Fixed-size built-in buffer, which holds the |rho| and the public key
