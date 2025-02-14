@@ -86,7 +86,7 @@ Received Datagram
   Length: 91
 Sent Frame: Crypto
     Offset: 0
-    Len: 256
+    Len: 262
 Sent Frame: Padding
 Sent Packet
   Packet Type: Initial
