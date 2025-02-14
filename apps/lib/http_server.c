@@ -222,7 +222,7 @@ BIO *http_server_init_bio(const char *prog, const char *port)
     int asock;
     char name[40];
 
-    snprintf(name, sizeof(name), "[::]:%s", port); /* port may be "0" */
+    BIO_snprintf(name, sizeof(name), "[::]:%s", port); /* port may be "0" */
     bufbio = BIO_new(BIO_f_buffer());
     if (bufbio == NULL)
         goto err;
