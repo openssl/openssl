@@ -866,7 +866,7 @@ while (@argvcopy)
         s /^zlib-dynamic$/enable-zlib-dynamic/;
         s /^fips$/enable-fips/;
 
-        if (/^(no|disable|enable)-(.+)$/)
+        if (/^-?(no|disable|enable)-(.+)$/)
                 {
                 my $word = $2;
                 if ($word !~ m|hw(?:-.+)| # special treatment for hw regexp opt
@@ -877,7 +877,7 @@ while (@argvcopy)
                         next;
                         }
                 }
-        if (/^no-(.+)$/ || /^disable-(.+)$/)
+        if (/^-?no-(.+)$/ || /^-?disable-(.+)$/)
                 {
                 foreach my $proto ((@tls, @dtls))
                         {
@@ -936,7 +936,7 @@ while (@argvcopy)
                 # No longer an automatic choice
                 $auto_threads = 0 if ($1 eq "threads");
                 }
-        elsif (/^enable-(.+)$/)
+        elsif (/^-?enable-(.+)$/)
                 {
                 if ($1 eq "static-engine")
                         {
