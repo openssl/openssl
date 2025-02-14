@@ -2880,6 +2880,11 @@ static const EVP_TEST_METHOD pverify_message_test_method = {
     verify_test_run
 };
 
+/*
+ * "Verify-Message-Public" is like "Verify-Message", but uses a public key
+ * instead of a private key.
+ * The argument must be a colon separated pair, {algorithm}:{key}
+ */
 static int verify_message_public_test_init(EVP_TEST *t, const char *name)
 {
     return pkey_test_init_ex2(t, name, 1,
