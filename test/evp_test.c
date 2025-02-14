@@ -2776,6 +2776,26 @@ static const EVP_TEST_METHOD pverify_message_test_method = {
     verify_test_run
 };
 
+/*
+ * "Verify-Message-Public" is like "Verify-Message", but uses a public key
+ * instead of a private key.
+ * The argument must be a colon separated pair, {algorithm}:{key}
+ */
+static int verify_message_public_test_init(EVP_TEST *t, const char *name)
+{
+    return pkey_test_init_ex2(t, name, 1,
+                              EVP_PKEY_verify_message_init, NULL);
+}
+
+static const EVP_TEST_METHOD pverify_message_public_test_method = {
+    "Verify-Message-Public",
+    verify_message_public_test_init,
+    pkey_test_cleanup,
+    pkey_test_parse,
+    verify_test_run
+};
+
+
 static int pderive_test_init(EVP_TEST *t, const char *name)
 {
     return pkey_test_init(t, name, 0, EVP_PKEY_derive_init_ex, 0);
@@ -4577,6 +4597,7 @@ static const EVP_TEST_METHOD *evp_test_list[] = {
     &pverify_recover_test_method,
     &pverify_test_method,
     &pverify_message_test_method,
+    &pverify_message_public_test_method,
     &pkey_kem_test_method,
     NULL
 };
