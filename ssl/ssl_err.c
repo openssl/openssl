@@ -250,7 +250,7 @@ static const ERR_STRING_DATA SSL_str_reasons[] = {
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_LENGTH_TOO_SHORT), "length too short"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_LIBRARY_BUG), "library bug"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_LIBRARY_HAS_NO_CIPHERS),
-    "library has no ciphers"},
+     "library has no ciphers"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_LISTENER_USE_ONLY), "listener use only"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_MAXIMUM_ENCRYPTED_PKTS_REACHED),
      "maximum encrypted pkts reached"},
