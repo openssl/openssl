@@ -423,6 +423,7 @@ my %params = (
     'PKEY_PARAM_ML_KEM_RETAIN_SEED' => "ml-kem.retain_seed",
     'PKEY_PARAM_ML_KEM_INPUT_FORMATS' => "ml-kem.input_formats",
     'PKEY_PARAM_ML_KEM_OUTPUT_FORMATS' => "ml-kem.output_formats",
+    'PKEY_PARAM_ML_KEM_IMPORT_PCT_TYPE' => "ml-kem.import_pct_type",
 
 # Key generation parameters
     'PKEY_PARAM_FFC_TYPE' =>         "type",

@@ -14,6 +14,7 @@
 #include <openssl/x509.h>
 #include <openssl/core_names.h>
 #include "internal/encoder.h"
+#include "prov/ml_dsa.h"
 #include "ml_dsa_codecs.h"
 
 /*-
@@ -139,7 +140,6 @@ ossl_ml_dsa_d2i_PKCS8(const uint8_t *prvenc, int prvlen,
                       int evp_type, PROV_CTX *provctx,
                       const char *propq)
 {
-    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(provctx);
     const ML_DSA_PARAMS *v;
     const ML_COMMON_CODEC *codec;
     ML_COMMON_PKCS8_FMT_PREF *fmt_slots = NULL, *slot;
@@ -149,7 +149,7 @@ ossl_ml_dsa_d2i_PKCS8(const uint8_t *prvenc, int prvlen,
     const uint8_t *buf, *pos;
     const X509_ALGOR *alg = NULL;
     const char *formats;
-    int len, ptype, retain, prefer;
+    int len, ptype;
     uint32_t magic;
     uint16_t seed_magic;
     const uint8_t *seed = NULL;
@@ -244,7 +244,7 @@ ossl_ml_dsa_d2i_PKCS8(const uint8_t *prvenc, int prvlen,
      * Collect the seed and/or key into a "decoded" private key object,
      * to be turned into a real key on provider "load" or "import".
      */
-    if ((key = ossl_ml_dsa_key_new(libctx, propq, evp_type)) == NULL)
+    if ((key = ossl_prov_ml_dsa_new(provctx, propq, evp_type)) == NULL)
         goto end;
     if (p8fmt->seed_length > 0)
         seed = buf + p8fmt->seed_offset;
@@ -252,19 +252,7 @@ ossl_ml_dsa_d2i_PKCS8(const uint8_t *prvenc, int prvlen,
         priv = buf + p8fmt->priv_offset;
     /* Any OQS public key content is ignored */
 
-    /*
-     * If the key ends up "loaded" into the same provider, these are the
-     * correct config settings, otherwise, new values will be assigned on
-     * import into a different provider.  The "load" API does not pass along
-     * the provider context.
-     */
-    retain =
-        ossl_prov_ctx_get_bool_param(
-            provctx, OSSL_PKEY_PARAM_ML_DSA_RETAIN_SEED, 1);
-    prefer =
-        ossl_prov_ctx_get_bool_param(
-            provctx, OSSL_PKEY_PARAM_ML_DSA_PREFER_SEED, 1);
-    if (ossl_ml_dsa_set_prekey(key, prefer, retain,
+    if (ossl_ml_dsa_set_prekey(key, 0, 0,
                                seed, ML_DSA_SEED_BYTES, priv, v->sk_len))
         ret = key;
 
