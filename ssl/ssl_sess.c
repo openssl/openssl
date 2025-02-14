@@ -91,6 +91,19 @@ void ssl_session_calculate_timeout(SSL_SESSION *ss)
      */
 }
 
+void ssl_session_get_calc_timeout(SSL_SESSION *ss, time_t *calc_time, int *ovf)
+{
+    *calc_time = ss->calc_timeout;
+    *ovf = ss->timeout_ovf;
+}
+
+void ssl_session_set_times(SSL_SESSION *ss, time_t time, time_t timeout)
+{
+    ss->time = time;
+    ss->timeout = timeout;
+    ss->timeout_ovf = 0;
+}
+
 /*
  * SSL_get_session() and SSL_get1_session() are problematic in TLS1.3 because,
  * unlike in earlier protocol versions, the session ticket may not have been
