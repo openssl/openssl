@@ -121,11 +121,13 @@ algorithms in order of decreasing preference of the form B<algorithm+hash>
 or B<signature_scheme>. For the default providers shipped with OpenSSL,
 B<algorithm> is one of B<RSA>, B<DSA> or B<ECDSA> and
 B<hash> is a supported algorithm OID short name such as B<SHA1>, B<SHA224>,
-B<SHA256>, B<SHA384> or B<SHA512>.  Note: algorithm and hash names are case
-sensitive.  B<signature_scheme> is one of the signature schemes defined in
-TLSv1.3, specified using the IETF name, e.g., B<ecdsa_secp256r1_sha256>,
+B<SHA256>, B<SHA384> or B<SHA512>.
+Note: the algorithm names (but not the hash names) are case-insensitive.
+B<signature_scheme> is one of the signature schemes defined
+in TLSv1.3, specified using the IETF name, e.g., B<ecdsa_secp256r1_sha256>,
 B<ed25519>, or B<rsa_pss_pss_sha256>. Additional providers may make available
 further algorithms via the TLS-SIGALG capability.
+Signature scheme names are case-insensitive.
 See L<provider-base(7)>.
 
 If this option is not set then all signature algorithms supported by all
@@ -415,12 +417,13 @@ B<signature_scheme>. For the default providers shipped with OpenSSL,
 B<algorithm> is one of B<RSA>, B<DSA> or B<ECDSA> and B<hash> is a supported
 algorithm OID short name such as B<SHA1>, B<SHA224>, B<SHA256>, B<SHA384>
 or B<SHA512>.
-Note: algorithm and hash names are case sensitive.
+Note: the algorithm names (but not the hash names) are case-insensitive.
 B<signature_scheme> is one of the signature schemes defined in TLSv1.3,
-specified using the IETF name, e.g., B<ecdsa_secp256r1_sha256>, B<ed25519>,
+specified using the IANA name, e.g., B<ecdsa_secp256r1_sha256>, B<ed25519>,
 or B<rsa_pss_pss_sha256>.
-Additional providers may make available further algorithms via the TLS_SIGALG
-capability. See L<provider-base(7)/CAPABILITIES>.
+Signature scheme names are case-insensitive.
+Additional providers may make available further signature schemes via the
+TLS_SIGALG capability. See L<provider-base(7)/CAPABILITIES>.
 
 If this option is not set then all signature algorithms supported by all
 activated providers are permissible.
