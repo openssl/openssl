@@ -999,10 +999,9 @@ int tls1_get0_implemented_groups(int min_proto_version, int max_proto_version,
     int ret = 0;
     size_t ix;
 
-    if ((collect = sk_TLS_GROUP_IX_new(tls_group_ix_cmp)) == NULL)
-        return 0;
-
     if (grps == NULL || out == NULL)
+        return 0;
+    if ((collect = sk_TLS_GROUP_IX_new(tls_group_ix_cmp)) == NULL)
         return 0;
     for (ix = 0; ix < num; ++ix, ++grps) {
         if (grps->mintls > 0 && max_proto_version > 0
@@ -1030,7 +1029,7 @@ int tls1_get0_implemented_groups(int min_proto_version, int max_proto_version,
         if (sk_OPENSSL_CSTRING_push(out, gix->grp->tlsname) <= 0)
             goto end;
     }
-    return 1;
+    ret = 1;
 
   end:
     sk_TLS_GROUP_IX_pop_free(collect, free_wrapper);

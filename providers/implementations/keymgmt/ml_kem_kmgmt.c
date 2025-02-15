@@ -690,13 +690,14 @@ static void *ml_kem_gen(void *vgctx, OSSL_CALLBACK *osslcb, void *cbarg)
     PROV_ML_KEM_GEN_CTX *gctx = vgctx;
     ML_KEM_KEY *key;
     uint8_t *nopub = NULL;
-    uint8_t *seed = gctx->seed;
+    uint8_t *seed;
     int genok = 0;
 
     if (gctx == NULL
         || (gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) ==
             OSSL_KEYMGMT_SELECT_PUBLIC_KEY)
         return NULL;
+    seed = gctx->seed;
     key = ml_kem_new(gctx->provctx, gctx->propq, gctx->evp_type);
     if (key == NULL)
         return NULL;

@@ -1821,8 +1821,7 @@ int ossl_ml_kem_genkey(uint8_t *pubenc, size_t publen, ML_KEM_KEY *key)
         return 0;
     vinfo = key->vinfo;
 
-    if ((pubenc != NULL && publen != vinfo->pubkey_bytes)
-        || (mdctx = EVP_MD_CTX_new()) == NULL)
+    if (pubenc != NULL && publen != vinfo->pubkey_bytes)
         return 0;
 
     if (ossl_ml_kem_have_seed(key)) {
@@ -1833,6 +1832,9 @@ int ossl_ml_kem_genkey(uint8_t *pubenc, size_t publen, ML_KEM_KEY *key)
                                   key->vinfo->secbits) <= 0) {
         return 0;
     }
+
+    if ((mdctx = EVP_MD_CTX_new()) == NULL)
+        return 0;
 
     /*
      * Data derived from (d, z) defaults secret, and to avoid side-channel
@@ -1872,14 +1874,14 @@ int ossl_ml_kem_encap_seed(uint8_t *ctext, size_t clen,
     EVP_MD_CTX *mdctx;
     int ret = 0;
 
-    if (!ossl_ml_kem_have_pubkey(key))
+    if (key == NULL || !ossl_ml_kem_have_pubkey(key))
         return 0;
     vinfo = key->vinfo;
 
     if (ctext == NULL || clen != vinfo->ctext_bytes
         || shared_secret == NULL || slen != ML_KEM_SHARED_SECRET_BYTES
         || entropy == NULL || elen != ML_KEM_RANDOM_BYTES
-        || key == NULL || (mdctx = EVP_MD_CTX_new()) == NULL)
+        || (mdctx = EVP_MD_CTX_new()) == NULL)
         return 0;
     /*
      * Data derived from the encap entropy defaults secret, and to avoid
@@ -1953,8 +1955,8 @@ int ossl_ml_kem_decap(uint8_t *shared_secret, size_t slen,
     if (shared_secret == NULL || slen != ML_KEM_SHARED_SECRET_BYTES
         || ctext == NULL || clen != vinfo->ctext_bytes
         || (mdctx = EVP_MD_CTX_new()) == NULL) {
-        RAND_bytes_ex(key->libctx, shared_secret,
-                      ML_KEM_SHARED_SECRET_BYTES, vinfo->secbits);
+        (void)RAND_bytes_ex(key->libctx, shared_secret,
+                            ML_KEM_SHARED_SECRET_BYTES, vinfo->secbits);
         return 0;
     }
 #if defined(OPENSSL_CONSTANT_TIME_VALIDATION)
