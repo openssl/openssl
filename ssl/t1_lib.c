@@ -3564,13 +3564,14 @@ typedef struct {
 
 static void get_sigorhash(int *psig, int *phash, const char *str)
 {
-    if (strcmp(str, "RSA") == 0) {
+    if (OPENSSL_strcasecmp(str, "RSA") == 0) {
         *psig = EVP_PKEY_RSA;
-    } else if (strcmp(str, "RSA-PSS") == 0 || strcmp(str, "PSS") == 0) {
+    } else if (OPENSSL_strcasecmp(str, "RSA-PSS") == 0
+               || OPENSSL_strcasecmp(str, "PSS") == 0) {
         *psig = EVP_PKEY_RSA_PSS;
-    } else if (strcmp(str, "DSA") == 0) {
+    } else if (OPENSSL_strcasecmp(str, "DSA") == 0) {
         *psig = EVP_PKEY_DSA;
-    } else if (strcmp(str, "ECDSA") == 0) {
+    } else if (OPENSSL_strcasecmp(str, "ECDSA") == 0) {
         *psig = EVP_PKEY_EC;
     } else {
         *phash = OBJ_sn2nid(str);
@@ -3587,6 +3588,7 @@ static int sig_cb(const char *elem, int len, void *arg)
     size_t i = 0;
     const SIGALG_LOOKUP *s;
     char etmp[TLS_MAX_SIGSTRING_LEN], *p;
+    const char *iana, *alias;
     int sig_alg = NID_undef, hash_alg = NID_undef;
     int ignore_unknown = 0;
 
@@ -3614,15 +3616,13 @@ static int sig_cb(const char *elem, int len, void *arg)
      * in the table.
      */
     if (p == NULL) {
-        /* Load provider sigalgs */
         if (sarg->ctx != NULL) {
             /* Check if a provider supports the sigalg */
             for (i = 0; i < sarg->ctx->sigalg_list_len; i++) {
-                if (sarg->ctx->sigalg_list[i].sigalg_name != NULL
-                    && (strcmp(etmp,
-                               sarg->ctx->sigalg_list[i].sigalg_name) == 0
-                        || strcmp(etmp,
-                                  sarg->ctx->sigalg_list[i].name) == 0)) {
+                iana = sarg->ctx->sigalg_list[i].name;
+                alias = sarg->ctx->sigalg_list[i].sigalg_name;
+                if ((alias != NULL && OPENSSL_strcasecmp(etmp, alias) == 0)
+                    || OPENSSL_strcasecmp(etmp, iana) == 0) {
                     sarg->sigalgs[sarg->sigalgcnt++] =
                         sarg->ctx->sigalg_list[i].code_point;
                     break;
@@ -3633,7 +3633,8 @@ static int sig_cb(const char *elem, int len, void *arg)
         if (sarg->ctx == NULL || i == sarg->ctx->sigalg_list_len) {
             for (i = 0, s = sigalg_lookup_tbl;
                  i < OSSL_NELEM(sigalg_lookup_tbl); i++, s++) {
-                if (s->name != NULL && strcmp(etmp, s->name) == 0) {
+                if (s->name != NULL
+                    && OPENSSL_strcasecmp(etmp, s->name) == 0) {
                     sarg->sigalgs[sarg->sigalgcnt++] = s->sigalg;
                     break;
                 }
