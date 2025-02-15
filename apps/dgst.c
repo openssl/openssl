@@ -711,7 +711,7 @@ static int do_fp_oneshot_sign(BIO *out, EVP_MD_CTX *ctx, BIO *in, int sep, int b
     buflen = bio_to_mem(&buf, maxlen, in);
     if (buflen <= 0) {
         BIO_printf(bio_err, "Read error in %s\n", file);
-        goto end;
+        return ret;
     }
     if (sigin != NULL) {
         res = EVP_DigestVerify(ctx, sigin, siglen, buf, buflen);

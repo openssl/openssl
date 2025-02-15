@@ -687,7 +687,7 @@ static void *mlx_kem_gen(void *vgctx, OSSL_CALLBACK *osslcb, void *cbarg)
 {
     PROV_ML_KEM_GEN_CTX *gctx = vgctx;
     MLX_KEY *key;
-    char *propq = gctx->propq;
+    char *propq;
 
     if (gctx == NULL
         || (gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) ==
@@ -695,6 +695,7 @@ static void *mlx_kem_gen(void *vgctx, OSSL_CALLBACK *osslcb, void *cbarg)
         return NULL;
 
     /* Lose ownership of propq */
+    propq = gctx->propq;
     gctx->propq = NULL;
     if ((key = mlx_kem_key_new(gctx->evp_type, gctx->libctx, propq)) == NULL)
         return NULL;
