@@ -446,7 +446,7 @@ my %params = (
     'PKEY_PARAM_ML_DSA_OUTPUT_FORMATS' =>   "ml-dsa.output_formats",
 
 # SLH_DSA Key generation parameters
-    'PKEY_PARAM_SLH_DSA_ENTROPY' =>         "entropy",
+    'PKEY_PARAM_SLH_DSA_SEED' =>              "seed",
 
 # Key Exchange parameters
     'EXCHANGE_PARAM_PAD' =>                   "pad",# uint
