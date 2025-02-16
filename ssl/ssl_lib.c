@@ -6989,7 +6989,7 @@ int ssl_cache_cipherlist(SSL_CONNECTION *s, PACKET *cipher_suites, int sslv2form
     n = sslv2format ? SSLV2_CIPHER_LEN : TLS_CIPHER_LEN;
 
     if (PACKET_remaining(cipher_suites) == 0) {
-        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_NO_CIPHERS_SPECIFIED);
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_NO_CIPHERS_SPECIFIED);
         return 0;
     }
 
