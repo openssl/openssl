@@ -19,6 +19,9 @@
  * use.
  */
 #include "internal/deprecated.h"
+#include <stdint.h>  
+
+typedef uint32_t DES_LONG;
 
 #include "des_local.h"
 
@@ -65,10 +68,9 @@ DES_LONG DES_quad_cksum(const unsigned char *input, DES_cblock output[],
             t0 &= 0xffffffffL;
             t1 = z1;
             /* square, well sort of square */
-            z0 = ((((t0 * t0) & 0xffffffffL) + ((t1 * t1) & 0xffffffffL))
-                  & 0xffffffffL) % 0x7fffffffL;
-            z1 = ((t0 * ((t1 + NOISE) & 0xffffffffL)) & 0xffffffffL) %
-                0x7fffffffL;
+            z0 = ((((uint64_t)t0 * t0) & 0xffffffffL) +  
+                  (((uint64_t)t1 * t1) & 0xffffffffL)) % 0x7fffffffL;
+            z1 = (((uint64_t)t0 * ((t1 + NOISE) & 0xffffffffL)) & 0xffffffffL) %
         }
         if (lp != NULL) {
             /*
