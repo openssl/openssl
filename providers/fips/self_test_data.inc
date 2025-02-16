@@ -2872,7 +2872,7 @@ static const uint8_t slh_dsa_sha2_128s_keygen_pub[] = {
     0xca, 0xe3, 0xd1, 0x86, 0x52, 0x15, 0xe3, 0xd3, 0x85, 0x0e, 0x8c, 0x1b, 0x82, 0x92, 0xbf, 0x42,
 };
 static const ST_KAT_PARAM slh_dsa_sha2_128s_keygen_init_params[] = {
-    ST_KAT_PARAM_OCTET(OSSL_PKEY_PARAM_SLH_DSA_ENTROPY,
+    ST_KAT_PARAM_OCTET(OSSL_PKEY_PARAM_SLH_DSA_SEED,
                        slh_dsa_sha2_128s_keygen_entropy),
     ST_KAT_PARAM_END()
 };

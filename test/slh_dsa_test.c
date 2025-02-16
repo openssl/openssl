@@ -296,15 +296,15 @@ err:
 }
 
 static EVP_PKEY *do_gen_key(const char *alg,
-                            const uint8_t *entropy, size_t entropy_len)
+                            const uint8_t *seed, size_t seed_len)
 {
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
     OSSL_PARAM params[2], *p = params;
 
-    if (entropy_len != 0)
-        *p++ = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_SLH_DSA_ENTROPY,
-                                                 (char *)entropy, entropy_len);
+    if (seed_len != 0)
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_SLH_DSA_SEED,
+                                                 (char *)seed, seed_len);
     *p = OSSL_PARAM_construct_end();
 
     if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(lib_ctx, alg, NULL))
