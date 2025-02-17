@@ -4383,7 +4383,6 @@ void SSL_CTX_free(SSL_CTX *a)
     OPENSSL_free(a->ext.supportedgroups);
     OPENSSL_free(a->ext.keyshares);
     OPENSSL_free(a->ext.tuples);
-    OPENSSL_free(a->ext.supported_groups_default);
     OPENSSL_free(a->ext.alpn);
     OPENSSL_secure_free(a->ext.secure);
 
