@@ -580,11 +580,14 @@ static int evp_cipher_init_skey_internal(EVP_CIPHER_CTX *ctx,
     /* We have a data managed via key management, using the new callbacks */
     if (enc) {
         if (ctx->cipher->einit_skey == NULL) {
-            /* Attempt fallback for providers that do not support SKEYs */
-            const unsigned char *keydata;
-            size_t keylen;
+            /*
+             *  When skey is NULL, it's a multiple-step init as the current API does.
+             *  Otherwise we try to fallback for providers that do not support SKEYs.
+             */
+            const unsigned char *keydata = NULL;
+            size_t keylen = 0;
 
-            if (!EVP_SKEY_get_raw_key(skey, &keydata, &keylen)) {
+            if (skey != NULL && !EVP_SKEY_get_raw_key(skey, &keydata, &keylen)) {
                 ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
                 return 0;
             }
@@ -592,16 +595,20 @@ static int evp_cipher_init_skey_internal(EVP_CIPHER_CTX *ctx,
             ret = ctx->cipher->einit(ctx->algctx, keydata, keylen,
                                      iv, iv_len, params);
         } else {
-            ret = ctx->cipher->einit_skey(ctx->algctx, skey->keydata,
+            ret = ctx->cipher->einit_skey(ctx->algctx,
+                                          skey == NULL ? NULL : skey->keydata,
                                           iv, iv_len, params);
         }
     } else {
         if (ctx->cipher->dinit_skey == NULL) {
-            /* Attempt fallback for providers that do not support SKEYs */
-            const unsigned char *keydata;
-            size_t keylen;
+            /*
+             *  When skey is NULL, it's a multiple-step init as the current API does.
+             *  Otherwise we try to fallback for providers that do not support SKEYs.
+             */
+            const unsigned char *keydata = NULL;
+            size_t keylen = 0;
 
-            if (!EVP_SKEY_get_raw_key(skey, &keydata, &keylen)) {
+            if (skey != NULL && !EVP_SKEY_get_raw_key(skey, &keydata, &keylen)) {
                 ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
                 return 0;
             }
@@ -609,7 +616,8 @@ static int evp_cipher_init_skey_internal(EVP_CIPHER_CTX *ctx,
             ret = ctx->cipher->dinit(ctx->algctx, keydata, keylen,
                                      iv, iv_len, params);
         } else {
-            ret = ctx->cipher->dinit_skey(ctx->algctx, skey->keydata,
+            ret = ctx->cipher->dinit_skey(ctx->algctx,
+                                          skey == NULL ? NULL : skey->keydata,
                                           iv, iv_len, params);
         }
     }

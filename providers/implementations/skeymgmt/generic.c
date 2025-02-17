@@ -45,6 +45,9 @@ void *generic_import(void *provctx, int selection, const OSSL_PARAM params[])
         return NULL;
 
     generic = OPENSSL_zalloc(sizeof(PROV_SKEY));
+    if (generic == NULL)
+        return NULL;
+
     generic->libctx = libctx;
 
     generic->type = SKEY_TYPE_GENERIC;
