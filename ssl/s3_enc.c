@@ -293,11 +293,21 @@ int ssl3_finish_mac(SSL_CONNECTION *s, const unsigned char *buf, size_t len)
                     return 0;
                 }
 
+                /*
+                 * SSL3_MT_MESSAGE_HASH is a dummy message type only used when
+                 * calculating the transcript hash of the synthetic message in
+                 * (D)TLS 1.3.
+                 */
                 if (msgtype == SSL3_MT_MESSAGE_HASH)
                     hmhdrlen = SSL3_HM_HEADER_LENGTH;
                 else
                     hmhdrlen = DTLS1_HM_HEADER_LENGTH;
 
+                /*
+                 * In DTLS 1.3 the transcript hash is calculated excluding the
+                 * message_sequence, fragment_size and fragment_offset header
+                 * fields.
+                 */
                 if (!ossl_assert(hmhdrlen + hmbodylen <= len)
                     || !EVP_DigestUpdate(s->s3.handshake_dgst, buf, SSL3_HM_HEADER_LENGTH)
                     || !EVP_DigestUpdate(s->s3.handshake_dgst, buf + hmhdrlen, hmbodylen)) {
