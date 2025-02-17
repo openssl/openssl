@@ -262,11 +262,11 @@ static int ecdsa_keygen_knownanswer_test(EC_KEY *eckey, BN_CTX *ctx,
     if (st == NULL)
         return 0;
 
-    if ((pub_key2 = EC_POINT_new(eckey->group)) == NULL)
-        return 0;
-
     OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_PCT_KAT,
                                OSSL_SELF_TEST_DESC_PCT_ECDSA);
+
+    if ((pub_key2 = EC_POINT_new(eckey->group)) == NULL)
+        goto err;
 
     /* pub_key = priv_key * G (where G is a point on the curve) */
     if (!EC_POINT_mul(eckey->group, pub_key2, eckey->priv_key, NULL, NULL, ctx))
