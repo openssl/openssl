@@ -44,7 +44,8 @@ my $testtype;
 #Test 1: Inserting a cookie into an HRR should see it echoed in the ClientHello
 $testtype = COOKIE_ONLY;
 $proxy->filter(\&cookie_filter);
-$proxy->serverflags("-curves X25519") if !disabled("ecx");
+$proxy->serverflags("-curves X25519");
+$proxy->clientflags("-curves X25519:secp256r1");
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
 plan tests => 2;
 SKIP: {
