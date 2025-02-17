@@ -591,7 +591,6 @@ typedef struct stanza_st {
     int numpairs;
     PAIR pairs[TESTMAXPAIRS];
     BIO *key;                   /* temp memory BIO for reading in keys */
-    char buff[4096];            /* Input buffer for a single key/value */
 } STANZA;
 
 /*
