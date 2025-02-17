@@ -1891,16 +1891,14 @@ static void *evp_cipher_from_algorithm(const int name_id,
     if (!evp_names_do_all(prov, name_id, set_legacy_nid, &cipher->nid)
             || cipher->nid == -1) {
         ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
-        EVP_CIPHER_free(cipher);
-        return NULL;
+        goto err;
     }
 #endif
 
     cipher->name_id = name_id;
-    if ((cipher->type_name = ossl_algorithm_get1_first_name(algodef)) == NULL) {
-        EVP_CIPHER_free(cipher);
-        return NULL;
-    }
+    if ((cipher->type_name = ossl_algorithm_get1_first_name(algodef)) == NULL)
+        goto err;
+
     cipher->description = algodef->algorithm_description;
 
     for (; fns->function_id != 0; fns++) {
@@ -2033,21 +2031,24 @@ static void *evp_cipher_from_algorithm(const int name_id,
          * functions, or a single "cipher" function. In all cases we need both
          * the "newctx" and "freectx" functions.
          */
-        EVP_CIPHER_free(cipher);
         ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_PROVIDER_FUNCTIONS);
-        return NULL;
+        goto err;
     }
+    if (prov != NULL && !ossl_provider_up_ref(prov))
+        goto err;
+
     cipher->prov = prov;
-    if (prov != NULL)
-        ossl_provider_up_ref(prov);
 
     if (!evp_cipher_cache_constants(cipher)) {
-        EVP_CIPHER_free(cipher);
         ERR_raise(ERR_LIB_EVP, EVP_R_CACHE_CONSTANTS_FAILED);
-        cipher = NULL;
+        goto err;
     }
 
     return cipher;
+
+err:
+    EVP_CIPHER_free(cipher);
+    return NULL;
 }
 
 static int evp_cipher_up_ref(void *cipher)

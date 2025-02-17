@@ -299,7 +299,8 @@ int PKCS7_add_crl(PKCS7 *p7, X509_CRL *crl)
         return 0;
     }
 
-    X509_CRL_up_ref(crl);
+    if (!X509_CRL_up_ref(crl))
+        return 0;
     if (!sk_X509_CRL_push(*sk, crl)) {
         X509_CRL_free(crl);
         return 0;
@@ -363,7 +364,9 @@ int PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
         return 0;
 
     /* lets keep the pkey around for a while */
-    EVP_PKEY_up_ref(pkey);
+    if (!EVP_PKEY_up_ref(pkey))
+        return 0;
+
     p7i->pkey = pkey;
 
     /* Set the algorithms */
@@ -663,7 +666,9 @@ int PKCS7_RECIP_INFO_set(PKCS7_RECIP_INFO *p7i, X509 *x509)
         goto err;
     }
 finished:
-    X509_up_ref(x509);
+    if (!X509_up_ref(x509))
+        goto err;
+
     p7i->cert = x509;
 
     return 1;

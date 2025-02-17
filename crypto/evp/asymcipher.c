@@ -334,12 +334,13 @@ static EVP_ASYM_CIPHER *evp_asym_cipher_new(OSSL_PROVIDER *prov)
     if (cipher == NULL)
         return NULL;
 
-    if (!CRYPTO_NEW_REF(&cipher->refcnt, 1)) {
+    if (!CRYPTO_NEW_REF(&cipher->refcnt, 1)
+            || !ossl_provider_up_ref(prov)) {
+        CRYPTO_FREE_REF(&cipher->refcnt);
         OPENSSL_free(cipher);
         return NULL;
     }
     cipher->prov = prov;
-    ossl_provider_up_ref(prov);
 
     return cipher;
 }

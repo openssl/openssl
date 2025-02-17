@@ -753,7 +753,8 @@ int CMS_decrypt_set1_pkey_and_peer(CMS_ContentInfo *cms, EVP_PKEY *pk,
         }
         /* If we have a cert, try matching RecipientInfo, else try them all */
         else if (cert == NULL || !CMS_RecipientInfo_ktri_cert_cmp(ri, cert)) {
-            EVP_PKEY_up_ref(pk);
+            if (!EVP_PKEY_up_ref(pk))
+                return 0;
             CMS_RecipientInfo_set0_pkey(ri, pk);
             r = CMS_RecipientInfo_decrypt(cms, ri);
             CMS_RecipientInfo_set0_pkey(ri, NULL);

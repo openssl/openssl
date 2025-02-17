@@ -64,13 +64,13 @@ static void *evp_mac_from_algorithm(int name_id,
 
     if ((mac = evp_mac_new()) == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_EVP_LIB);
-        return NULL;
+        goto err;
     }
     mac->name_id = name_id;
-    if ((mac->type_name = ossl_algorithm_get1_first_name(algodef)) == NULL) {
-        evp_mac_free(mac);
-        return NULL;
-    }
+
+    if ((mac->type_name = ossl_algorithm_get1_first_name(algodef)) == NULL)
+        goto err;
+
     mac->description = algodef->algorithm_description;
 
     for (; fns->function_id != 0; fns++) {
@@ -159,15 +159,20 @@ static void *evp_mac_from_algorithm(int name_id,
          * a complete set of "mac" functions, and a complete set of context
          * management functions, as well as the size function.
          */
-        evp_mac_free(mac);
         ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_PROVIDER_FUNCTIONS);
-        return NULL;
+        goto err;
     }
+
+    if (prov != NULL && !ossl_provider_up_ref(prov))
+        goto err;
+
     mac->prov = prov;
-    if (prov != NULL)
-        ossl_provider_up_ref(prov);
 
     return mac;
+
+err:
+    evp_mac_free(mac);
+    return NULL;
 }
 
 EVP_MAC *EVP_MAC_fetch(OSSL_LIB_CTX *libctx, const char *algorithm,
