@@ -710,9 +710,9 @@ shutdown:
 
 end_free:
     shutting_down = 1;
+    ossl_ht_free(m_ht);
     CRYPTO_THREAD_lock_free(worker_lock);
     CRYPTO_THREAD_lock_free(testrand_lock);
-    ossl_ht_free(m_ht);
 end:
     return ret;
 }
