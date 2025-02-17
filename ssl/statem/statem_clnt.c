@@ -1432,7 +1432,7 @@ static int set_client_ciphersuite(SSL_CONNECTION *s,
              * In TLSv1.3 it is valid for the server to select a different
              * ciphersuite as long as the hash is the same.
              */
-            if (md == NULL
+            if (s->session->cipher == NULL || md == NULL
                     || md != ssl_md(sctx, s->session->cipher->algorithm2)) {
                 SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
                          SSL_R_CIPHERSUITE_DIGEST_HAS_CHANGED);
