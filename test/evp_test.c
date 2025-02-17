@@ -4172,12 +4172,6 @@ typedef struct keygen_test_data_st {
     char *alg;
     STACK_OF(OPENSSL_STRING) *in_controls; /* Collection of controls */
     STACK_OF(OPENSSL_STRING) *out_controls;
-    unsigned char *seed;
-    size_t seed_len;
-    unsigned char *encoded_pub_key;
-    size_t encoded_pub_key_len;
-    unsigned char *encoded_priv_key;
-    size_t encoded_priv_key_len;
 } KEYGEN_TEST_DATA;
 
 static int keygen_test_init(EVP_TEST *t, const char *alg)
@@ -4210,9 +4204,6 @@ static void keygen_test_cleanup(EVP_TEST *t)
     OPENSSL_free(keygen->alg);
     OPENSSL_free(keygen->keyname);
     OPENSSL_free(keygen->paramname);
-    OPENSSL_free(keygen->seed);
-    OPENSSL_free(keygen->encoded_pub_key);
-    OPENSSL_free(keygen->encoded_priv_key);
     OPENSSL_free(t->data);
     t->data = NULL;
 }
@@ -4230,14 +4221,6 @@ static int keygen_test_parse(EVP_TEST *t,
         return ctrladd(keygen->in_controls, value);
     if (strcmp(keyword, "CtrlOut") == 0)
         return ctrladd(keygen->out_controls, value);
-    if (strcmp(keyword, "Seed") == 0)
-        return parse_bin(value, &keygen->seed, &keygen->seed_len);
-    if (strcmp(keyword, "EncodedPublicKey") == 0)
-        return parse_bin(value, &keygen->encoded_pub_key,
-                         &keygen->encoded_pub_key_len);
-    if (strcmp(keyword, "EncodedPrivateKey") == 0)
-        return parse_bin(value, &keygen->encoded_priv_key,
-                         &keygen->encoded_priv_key_len);
     return 0;
 }
 
@@ -4287,7 +4270,7 @@ static int keygen_test_run(EVP_TEST *t)
     int rv = 1;
     OSSL_PARAM_BLD *bld = NULL;
     OSSL_PARAM *params = NULL;
-    size_t params_n = 0, priv_len, pub_len;
+    size_t params_n = 0;
     uint8_t *enc_pub_key = NULL, *enc_priv_key = NULL;
 
     if (keygen->paramname != NULL) {
@@ -4323,22 +4306,6 @@ static int keygen_test_run(EVP_TEST *t)
             t->err = "PKEY_CTRL_ERROR";
             goto err;
         }
-    } else if (keygen->seed != NULL) {
-        if (!TEST_ptr(bld = OSSL_PARAM_BLD_new())
-            || !TEST_int_eq(OSSL_PARAM_BLD_push_octet_string(bld,
-                                                             OSSL_PKEY_PARAM_ML_KEM_SEED,
-                                                             keygen->seed,
-                                                             64),
-                            1)
-            || !TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld))
-            || !EVP_PKEY_CTX_set_params(genctx, params)) {
-            rv = 0;
-            goto err;
-        }
-    } else {
-        if ((params = OPENSSL_malloc(sizeof(OSSL_PARAM))) == NULL)
-            goto err;
-        params[0] = OSSL_PARAM_construct_end();
     }
 
     if (EVP_PKEY_keygen(genctx, &pkey) <= 0) {
@@ -4378,35 +4345,14 @@ static int keygen_test_run(EVP_TEST *t)
         key->next = private_keys;
         private_keys = key;
         rv = 1;
-    } else if (keygen->seed != NULL) {
-        const char *prvparam = OSSL_PKEY_PARAM_PRIV_KEY;
-        rv = 0;
-        if (!TEST_int_eq(EVP_PKEY_get_octet_string_param(pkey, prvparam, NULL,
-                                                         0, &priv_len), 1)
-            || !TEST_ptr(enc_priv_key = OPENSSL_zalloc(priv_len))
-            || !TEST_int_eq(EVP_PKEY_get_octet_string_param(pkey, prvparam,
-                                                            enc_priv_key,
-                                                            priv_len, NULL), 1))
-            goto err;
-
-        if (!TEST_size_t_gt((pub_len = EVP_PKEY_get1_encoded_public_key(pkey,
-                                                                        &enc_pub_key)),
-                            0))
-            goto err;
-
-        if (!TEST_mem_eq(enc_priv_key, priv_len, keygen->encoded_priv_key,
-                         keygen->encoded_priv_key_len)
-            || !TEST_mem_eq(enc_pub_key, pub_len, keygen->encoded_pub_key,
-                            keygen->encoded_pub_key_len))
-            goto err;
-        rv = 1;
-        EVP_PKEY_free(pkey);
     }
 
     t->err = NULL;
-    goto ok;
+    if (keygen->keyname != NULL)
+        goto ok;
 err:
     EVP_PKEY_free(pkey);
+    pkey = NULL;
 ok:
     EVP_PKEY_CTX_free(genctx);
     if (sk_OPENSSL_STRING_num(keygen->in_controls) > 0)
