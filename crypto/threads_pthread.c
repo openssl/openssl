@@ -514,12 +514,10 @@ void ossl_synchronize_rcu(CRYPTO_RCU_LOCK *lock)
     uint32_t curr_id;
     struct rcu_cb_item *cb_items, *tmpcb;
 
-    /*
-     * __ATOMIC_ACQ_REL is used here to ensure that we get any prior published
-     * writes before we read, and publish our write immediately
-     */
-    cb_items = ATOMIC_EXCHANGE_N(prcu_cb_item, &lock->cb_items, NULL,
-                                 __ATOMIC_ACQ_REL);
+    pthread_mutex_lock(&lock->write_lock);
+    cb_items = lock->cb_items;
+    lock->cb_items = NULL;
+    pthread_mutex_unlock(&lock->write_lock);
 
     qp = update_qp(lock, &curr_id);
 
