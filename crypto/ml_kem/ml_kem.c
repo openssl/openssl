@@ -1394,7 +1394,7 @@ int genkey(const uint8_t seed[ML_KEM_SEED_BYTES],
 
     /* Optionally save the |d| portion of the seed */
     key->d = key->z + ML_KEM_RANDOM_BYTES;
-    if (key->retain_seed) {
+    if (key->prov_flags & ML_KEM_KEY_RETAIN_SEED) {
         memcpy(key->d, seed, ML_KEM_RANDOM_BYTES);
     } else {
         OPENSSL_cleanse(key->d, ML_KEM_RANDOM_BYTES);
@@ -1576,10 +1576,6 @@ const ML_KEM_VINFO *ossl_ml_kem_get_vinfo(int evp_type)
     return NULL;
 }
 
-/*
- * The |retain_seed| parameter indicates whether the seed should be retained
- * once the key is generated.
- */
 ML_KEM_KEY *ossl_ml_kem_key_new(OSSL_LIB_CTX *libctx, const char *properties,
                                 int evp_type)
 {
@@ -1594,8 +1590,7 @@ ML_KEM_KEY *ossl_ml_kem_key_new(OSSL_LIB_CTX *libctx, const char *properties,
 
     key->vinfo = vinfo;
     key->libctx = libctx;
-    key->prefer_seed = 1;
-    key->retain_seed = 1;
+    key->prov_flags = ML_KEM_KEY_PROV_FLAGS_DEFAULT;
     key->shake128_md = EVP_MD_fetch(libctx, "SHAKE128", properties);
     key->shake256_md = EVP_MD_fetch(libctx, "SHAKE256", properties);
     key->sha3_256_md = EVP_MD_fetch(libctx, "SHA3-256", properties);

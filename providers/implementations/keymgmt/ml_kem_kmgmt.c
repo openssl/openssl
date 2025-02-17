@@ -17,11 +17,12 @@
 #include <openssl/self_test.h>
 #include <openssl/param_build.h>
 #include "crypto/ml_kem.h"
+#include "internal/param_build_set.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
 #include "prov/securitycheck.h"
-#include "internal/param_build_set.h"
+#include "prov/ml_kem.h"
 
 static OSSL_FUNC_keymgmt_new_fn ml_kem_512_new;
 static OSSL_FUNC_keymgmt_new_fn ml_kem_768_new;
@@ -67,8 +68,8 @@ static int ml_kem_pairwise_test(const ML_KEM_KEY *key)
     OSSL_SELF_TEST *st = NULL;
     OSSL_CALLBACK *cb = NULL;
     void *cbarg = NULL;
-    unsigned char entropy[ML_KEM_RANDOM_BYTES];
 #endif
+    unsigned char entropy[ML_KEM_RANDOM_BYTES];
     unsigned char secret[ML_KEM_SHARED_SECRET_BYTES];
     unsigned char out[ML_KEM_SHARED_SECRET_BYTES];
     unsigned char *ctext = NULL;
@@ -100,22 +101,17 @@ static int ml_kem_pairwise_test(const ML_KEM_KEY *key)
         goto err;
 
     memset(out, 0, sizeof(out));
-#ifdef FIPS_MODULE
-    /*
-     * The FIPS module does a PCT on power-on, and would leak the RNG
-     * handle if use random entropy here.  So we use fixed entropy in
-     * the FIPS case.  Ideally, the leak will be fixed, and the test
-     * will also use random entropy in FIPS mode.
-     */
-    memset(entropy, 0125, sizeof(entropy));
-    operation_result = ossl_ml_kem_encap_seed(ctext, v->ctext_bytes,
-                                              secret, sizeof(secret),
-                                              entropy, sizeof(entropy),
-                                              key);
-#else
-    operation_result = ossl_ml_kem_encap_rand(ctext, v->ctext_bytes,
-                                              secret, sizeof(secret), key);
-#endif
+
+    if (key->prov_flags & ML_KEM_KEY_RANDOM_PCT) {
+        operation_result = ossl_ml_kem_encap_rand(ctext, v->ctext_bytes,
+                                                  secret, sizeof(secret), key);
+    } else {
+        memset(entropy, 0125, sizeof(entropy));
+        operation_result = ossl_ml_kem_encap_seed(ctext, v->ctext_bytes,
+                                                  secret, sizeof(secret),
+                                                  entropy, sizeof(entropy),
+                                                  key);
+    }
     if (operation_result != 1)
         goto err;
 
@@ -144,17 +140,38 @@ err:
     return ret;
 }
 
-static void *ml_kem_new(PROV_CTX *ctx, const char *propq, int evp_type)
+ML_KEM_KEY *ossl_prov_ml_kem_new(PROV_CTX *ctx, const char *propq, int evp_type)
 {
     ML_KEM_KEY *key;
 
     if (!ossl_prov_is_running())
         return NULL;
+    /*
+     * When decoding, if the key ends up "loaded" into the same provider, these
+     * are the correct config settings, otherwise, new values will be assigned
+     * on import into a different provider.  The "load" API does not pass along
+     * the provider context.
+     */
     if ((key = ossl_ml_kem_key_new(PROV_LIBCTX_OF(ctx), propq, evp_type)) != NULL) {
-        key->retain_seed = ossl_prov_ctx_get_bool_param(
-            ctx, OSSL_PKEY_PARAM_ML_KEM_RETAIN_SEED, 1);
-        key->prefer_seed = ossl_prov_ctx_get_bool_param(
-            ctx, OSSL_PKEY_PARAM_ML_KEM_PREFER_SEED, 1);
+        const char *pct_type = ossl_prov_ctx_get_param(
+            ctx, OSSL_PKEY_PARAM_ML_KEM_IMPORT_PCT_TYPE, "random");
+
+        if (ossl_prov_ctx_get_bool_param(
+            ctx, OSSL_PKEY_PARAM_ML_KEM_RETAIN_SEED, 1))
+            key->prov_flags |= ML_KEM_KEY_RETAIN_SEED;
+        else
+            key->prov_flags &= ~ML_KEM_KEY_RETAIN_SEED;
+        if (ossl_prov_ctx_get_bool_param(
+            ctx, OSSL_PKEY_PARAM_ML_KEM_PREFER_SEED, 1))
+            key->prov_flags |= ML_KEM_KEY_PREFER_SEED;
+        else
+            key->prov_flags &= ~ML_KEM_KEY_PREFER_SEED;
+        if (OPENSSL_strcasecmp(pct_type, "random") == 0)
+            key->prov_flags |= ML_KEM_KEY_RANDOM_PCT;
+        else if (OPENSSL_strcasecmp(pct_type, "fixed") == 0)
+            key->prov_flags |= ML_KEM_KEY_FIXED_PCT;
+        else
+            key->prov_flags &= ~ML_KEM_KEY_IMPORT_PCT;
     }
     return key;
 }
@@ -382,7 +399,8 @@ static int ml_kem_key_fromdata(ML_KEM_KEY *key,
         }
     }
 
-    if (seedlen != 0 && (prvlen == 0 || key->prefer_seed))
+    if (seedlen != 0
+        && (prvlen == 0 || (key->prov_flags & ML_KEM_KEY_PREFER_SEED)))
         return ossl_ml_kem_set_seed(seedenc, seedlen, key)
             && ossl_ml_kem_genkey(NULL, 0, key);
     else if (prvlen != 0)
@@ -404,7 +422,8 @@ static int ml_kem_import(void *vkey, int selection, const OSSL_PARAM params[])
 
     include_private = selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY ? 1 : 0;
     res = ml_kem_key_fromdata(key, params, include_private);
-    if (res > 0 && include_private && !ml_kem_pairwise_test(key)) {
+    if (res > 0 && include_private && (key->prov_flags & ML_KEM_KEY_IMPORT_PCT)
+        && !ml_kem_pairwise_test(key)) {
 #ifdef FIPS_MODULE
         ossl_set_error_state(OSSL_SELF_TEST_TYPE_PCT);
 #endif
@@ -464,8 +483,9 @@ void *ml_kem_load(const void *reference, size_t reference_sz)
             goto err;
         }
         /* Generate the key now, if it holds only a stashed seed. */
-        if (ossl_ml_kem_have_seed(key) &&
-            (encoded_dk == NULL || key->prefer_seed)) {
+        if (ossl_ml_kem_have_seed(key)
+            && (encoded_dk == NULL
+                || (key->prov_flags & ML_KEM_KEY_PREFER_SEED))) {
             if (!ossl_ml_kem_genkey(NULL, 0, key))
                 goto err;
         } else if (encoded_dk != NULL) {
@@ -476,7 +496,8 @@ void *ml_kem_load(const void *reference, size_t reference_sz)
                                key->vinfo->algorithm_name);
                 goto err;
             }
-            if (!ml_kem_pairwise_test(key))
+            if ((key->prov_flags & ML_KEM_KEY_IMPORT_PCT)
+                && !ml_kem_pairwise_test(key))
                 goto err;
         }
         OPENSSL_free(encoded_dk);
@@ -698,7 +719,7 @@ static void *ml_kem_gen(void *vgctx, OSSL_CALLBACK *osslcb, void *cbarg)
             OSSL_KEYMGMT_SELECT_PUBLIC_KEY)
         return NULL;
     seed = gctx->seed;
-    key = ml_kem_new(gctx->provctx, gctx->propq, gctx->evp_type);
+    key = ossl_prov_ml_kem_new(gctx->provctx, gctx->propq, gctx->evp_type);
     if (key == NULL)
         return NULL;
 
@@ -759,7 +780,7 @@ static void *ml_kem_dup(const void *vkey, int selection)
 #define DECLARE_VARIANT(bits) \
     static void *ml_kem_##bits##_new(void *provctx) \
     { \
-        return ml_kem_new(provctx, NULL, EVP_PKEY_ML_KEM_##bits); \
+        return ossl_prov_ml_kem_new(provctx, NULL, EVP_PKEY_ML_KEM_##bits); \
     } \
     static void *ml_kem_##bits##_gen_init(void *provctx, int selection, \
                                           const OSSL_PARAM params[]) \

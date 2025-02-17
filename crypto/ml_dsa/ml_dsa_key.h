@@ -34,8 +34,7 @@ struct ml_dsa_key_st {
     uint8_t *pub_encoding;
     uint8_t *priv_encoding;
     uint8_t *seed;
-    int retain_seed;
-    int prefer_seed;
+    int prov_flags;
 
     /*
      * t1 is the Polynomial encoding of the 10 MSB of each coefficient of the
