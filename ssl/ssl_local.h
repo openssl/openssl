@@ -1276,6 +1276,13 @@ struct ssl_connection_st {
      * DTLS1_3_VERSION)
      */
     int version;
+
+    /*
+     * The negotiated version for the connection. Initially PROTO_VERSION_UNSET.
+     * Set by ssl_set_negotiated_protocol_version().
+     */
+    int negotiated_version;
+
     /*
      * There are 2 BIO's even though they are normally both the same.  This
      * is so data can be read and written to different handlers
@@ -2710,7 +2717,7 @@ __owur int ssl3_dispatch_alert(SSL *s);
 __owur size_t ssl3_final_finish_mac(SSL_CONNECTION *s, const char *sender,
                                     size_t slen, unsigned char *p);
 __owur int ssl3_finish_mac(SSL_CONNECTION *s, const unsigned char *buf,
-                           size_t len, int hmhdr_incl);
+                           size_t len);
 void ssl3_free_digest_list(SSL_CONNECTION *s);
 __owur unsigned long ssl3_output_cert_chain(SSL_CONNECTION *s, WPACKET *pkt,
                                             CERT_PKEY *cpk, int for_comp);
