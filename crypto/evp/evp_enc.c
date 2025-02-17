@@ -559,8 +559,7 @@ static int evp_cipher_init_skey_internal(EVP_CIPHER_CTX *ctx,
         }
     }
 
-    if (skey != NULL && skey->skeymgmt != NULL
-        && ctx->cipher->prov != skey->skeymgmt->prov) {
+    if (skey != NULL && ctx->cipher->prov != skey->skeymgmt->prov) {
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         return 0;
     }
