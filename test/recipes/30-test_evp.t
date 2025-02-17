@@ -108,6 +108,8 @@ push @files, qw(
                 evppkey_ml_kem_1024_keygen.txt
                 evppkey_ml_kem_1024_encap.txt
                 evppkey_ml_kem_1024_decap.txt
+                evppkey_ml_kem_keygen.txt
+                evppkey_ml_kem_encap_decap.txt
                ) unless $no_ml_kem;
 
 # A list of tests that only run with the default provider
