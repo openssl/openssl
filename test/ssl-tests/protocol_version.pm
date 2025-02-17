@@ -283,9 +283,6 @@ sub generate_resumption_tests {
         $max_enabled = $dtls ? $max_dtls_enabled : $max_tls_enabled;
     }
 
-    # TODO(DTLSv1.3): Resumption tests fails
-    return if($dtls == 1);
-
     if (no_tests($dtls)) {
         return;
     }
@@ -382,24 +379,26 @@ sub generate_resumption_tests {
         };
     }
 
-    if (!disabled("dtls1_3") && (!disabled("ec") || !disabled("dh")) && $dtls) {
-        push @client_tests, {
-            "name" => "dtls13-resumption-with-hrr",
-            "client" => {
-            },
-            "server" => {
-                "Curves" => disabled("ec") ? "ffdhe3072" : "P-256"
-            },
-            "resume_client" => {
-            },
-            "test" => {
-                "ExpectedProtocol" => "DTLSv1.3",
-                "Method" => "DTLS",
-                "HandshakeMode" => "Resume",
-                "ResumptionExpected" => "Yes",
-            }
-        };
-    }
+    # TODO(DTLSv1.3): Test fails with a server failure and then crashes because
+    #                 of a double free.
+    #if (!disabled("dtls1_3") && (!disabled("ec") || !disabled("dh")) && $dtls) {
+    #    push @client_tests, {
+    #        "name" => "dtls13-resumption-with-hrr",
+    #        "client" => {
+    #        },
+    #        "server" => {
+    #            "Curves" => disabled("ec") ? "ffdhe3072" : "P-256"
+    #        },
+    #        "resume_client" => {
+    #        },
+    #        "test" => {
+    #            "ExpectedProtocol" => "DTLSv1.3",
+    #            "Method" => "DTLS",
+    #            "HandshakeMode" => "Resume",
+    #            "ResumptionExpected" => "Yes",
+    #        }
+    #    };
+    #}
 
     return (@server_tests, @client_tests);
 }

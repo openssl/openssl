@@ -81,9 +81,20 @@ int ssl3_dispatch_alert(SSL *s)
     void (*cb) (const SSL *ssl, int type, int val) = NULL;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
     OSSL_RECORD_TEMPLATE templ;
+    int version1_3, version1_2, version1;
 
     if (sc == NULL)
         return -1;
+
+    if (SSL_CONNECTION_IS_DTLS(sc)) {
+        version1 = DTLS1_VERSION;
+        version1_2 = DTLS1_2_VERSION;
+        version1_3 = DTLS1_3_VERSION;
+    } else {
+        version1 = TLS1_VERSION;
+        version1_2 = TLS1_2_VERSION;
+        version1_3 = TLS1_3_VERSION;
+    }
 
     if (sc->rlayer.wrlmethod == NULL) {
         /* No write record layer so we can't sent and alert. We just ignore it */
@@ -92,16 +103,17 @@ int ssl3_dispatch_alert(SSL *s)
     }
 
     templ.type = SSL3_RT_ALERT;
-    templ.version = (sc->version == TLS1_3_VERSION) ? TLS1_2_VERSION
-                                                    : sc->version;
+    templ.version = (sc->version == version1_3) ? version1_2 : sc->version;
+
     if (SSL_get_state(s) == TLS_ST_CW_CLNT_HELLO
             && !sc->renegotiate
-            && TLS1_get_version(s) > TLS1_VERSION
-            && sc->hello_retry_request == SSL_HRR_NONE) {
-        templ.version = TLS1_VERSION;
-    }
+            && (SSL_CONNECTION_IS_DTLS(sc) || TLS1_get_version(s) != 0)
+            && sc->hello_retry_request == SSL_HRR_NONE
+            && ssl_version_cmp(sc, SSL_version(s), version1) > 0)
+        templ.version = version1;
+
     templ.buf = &sc->s3.send_alert[0];
-    templ.buflen = 2;
+    templ.buflen = sizeof(sc->s3.send_alert);
 
     if (RECORD_LAYER_write_pending(&sc->rlayer)) {
         if (sc->s3.alert_dispatch != SSL_ALERT_DISPATCH_RETRY) {

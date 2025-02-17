@@ -1154,7 +1154,7 @@ CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s, WPACKET *pkt)
 {
     unsigned char *p;
     size_t sess_id_len;
-    int i, protverr;
+    int do_fill_random, protverr;
     const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
 #ifndef OPENSSL_NO_COMP
     SSL_COMP *comp;
@@ -1187,22 +1187,23 @@ CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s, WPACKET *pkt)
      * for DTLS if client_random is initialized, reuse it, we are
      * required to use same upon reply to HelloVerify
      */
-    if (SSL_CONNECTION_IS_DTLS(s)) {
-        /* TODO(DTLS-1.3): Check this bit for HRR */
+    if (SSL_CONNECTION_IS_DTLS(s) && s->hello_retry_request == SSL_HRR_NONE) {
         size_t idx;
-        i = 1;
+
+        do_fill_random = 1;
+
         for (idx = 0; idx < sizeof(s->s3.client_random); idx++) {
             if (p[idx]) {
-                i = 0;
+                do_fill_random = 0;
                 break;
             }
         }
     } else {
-        i = (s->hello_retry_request == SSL_HRR_NONE);
+        do_fill_random = (s->hello_retry_request == SSL_HRR_NONE);
     }
 
-    if (i && ssl_fill_hello_random(s, 0, p, sizeof(s->s3.client_random),
-                                   DOWNGRADE_NONE) <= 0) {
+    if (do_fill_random && ssl_fill_hello_random(s, 0, p, sizeof(s->s3.client_random),
+                                                DOWNGRADE_NONE) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return CON_FUNC_ERROR;
     }
@@ -1314,7 +1315,9 @@ CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s, WPACKET *pkt)
     if (ssl_allow_compression(s)
             && sctx->comp_methods
             && ssl_version_cmp(s, s->s3.tmp.max_ver, version1_3) < 0) {
+        int i;
         int compnum = sk_SSL_COMP_num(sctx->comp_methods);
+
         for (i = 0; i < compnum; i++) {
             comp = sk_SSL_COMP_value(sctx->comp_methods, i);
             if (!WPACKET_put_bytes_u8(pkt, comp->id)) {
@@ -1567,11 +1570,18 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
             goto err;
         }
 
-        if (session_id_len != s->tmp_session_id_len
-                || memcmp(PACKET_data(&session_id), s->tmp_session_id,
-                          session_id_len) != 0) {
-            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_INVALID_SESSION_ID);
-            goto err;
+        if (SSL_CONNECTION_IS_DTLS(s)) {
+            if (session_id_len != 0) {
+                SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_INVALID_SESSION_ID);
+                goto err;
+            }
+        } else {
+            if (session_id_len != s->tmp_session_id_len
+                    || memcmp(PACKET_data(&session_id), s->tmp_session_id,
+                              session_id_len) != 0) {
+                SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_INVALID_SESSION_ID);
+                goto err;
+            }
         }
     }
 

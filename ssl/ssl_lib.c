@@ -2585,7 +2585,7 @@ ossl_ssize_t SSL_sendfile(SSL *s, int fd, off_t offset, size_t size, int flags)
     }
 
     /* If we have an alert to send, lets send it */
-    if (sc->s3.alert_dispatch > 0) {
+    if (sc->s3.alert_dispatch != SSL_ALERT_DISPATCH_NONE) {
         ret = (ossl_ssize_t)s->method->ssl_dispatch_alert(s);
         if (ret <= 0) {
             /* SSLfatal() already called if appropriate */
