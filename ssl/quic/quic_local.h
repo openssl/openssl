@@ -23,6 +23,7 @@
 # include "internal/quic_reactor.h"
 # include "internal/quic_thread_assist.h"
 # include "../ssl_local.h"
+# include "quic_obj_local.h"
 
 # ifndef OPENSSL_NO_QUIC
 
@@ -32,27 +33,14 @@
  * state required by the libssl API personality.
  */
 struct quic_xso_st {
-    /* SSL object common header. */
-    struct ssl_st                   ssl;
+    /* QUIC_OBJ common header, including SSL object common header. */
+    QUIC_OBJ                        obj;
 
     /* The connection this stream is associated with. Always non-NULL. */
     QUIC_CONNECTION                 *conn;
 
     /* The stream object. Always non-NULL for as long as the XSO exists. */
     QUIC_STREAM                     *stream;
-
-    /*
-     * Has this stream been logically configured into blocking mode? Only
-     * meaningful if desires_blocking_set is 1. Ignored if blocking is not
-     * currently possible given QUIC_CONNECTION configuration.
-     */
-    unsigned int                    desires_blocking        : 1;
-
-    /*
-     * Has SSL_set_blocking_mode been called on this stream? If not set, we
-     * inherit from the QUIC_CONNECTION blocking state.
-     */
-    unsigned int                    desires_blocking_set    : 1;
 
     /* The application has retired a FIN (i.e. SSL_ERROR_ZERO_RETURN). */
     unsigned int                    retired_fin             : 1;
@@ -83,9 +71,6 @@ struct quic_xso_st {
      */
     /* Is an AON write in progress? */
     unsigned int                    aon_write_in_progress   : 1;
-
-    /* Event handling mode. One of SSL_QUIC_VALUE_EVENT_HANDLING. */
-    unsigned int                    event_handling_mode     : 2;
 
     /*
      * The base buffer pointer the caller passed us for the initial AON write
@@ -119,17 +104,27 @@ struct quic_xso_st {
     int                             last_error;
 };
 
+/*
+ * QUIC connection SSL object (QCSO) type. This implements the API personality
+ * layer for QCSO objects, wrapping the QUIC-native QUIC_CHANNEL object.
+ */
 struct quic_conn_st {
     /*
-     * ssl_st is a common header for ordinary SSL objects, QUIC connection
-     * objects and QUIC stream objects, allowing objects of these different
-     * types to be disambiguated at runtime and providing some common fields.
+     * QUIC_OBJ is a common header for QUIC APL objects, allowing objects of
+     * these different types to be disambiguated at runtime and providing some
+     * common fields.
      *
      * Note: This must come first in the QUIC_CONNECTION structure.
      */
-    struct ssl_st                   ssl;
+    QUIC_OBJ                        obj;
 
     SSL                             *tls;
+
+    /* The QLSO this connection belongs to, if any. */
+    QUIC_LISTENER                   *listener;
+
+    /* The QDSO this connection belongs to, if any. */
+    QUIC_DOMAIN                     *domain;
 
     /* The QUIC engine representing the QUIC event domain. */
     QUIC_ENGINE                     *engine;
@@ -154,16 +149,15 @@ struct quic_conn_st {
      * The mutex used to synchronise access to the QUIC_CHANNEL. We own this but
      * provide it to the channel.
      */
+#if defined(OPENSSL_THREADS)
     CRYPTO_MUTEX                    *mutex;
+#endif
 
     /*
      * If we have a default stream attached, this is the internal XSO
      * object. If there is no default stream, this is NULL.
      */
     QUIC_XSO                        *default_xso;
-
-    /* The network read and write BIOs. */
-    BIO                             *net_rbio, *net_wbio;
 
     /* Initial peer L4 address. */
     BIO_ADDR                        init_peer_addr;
@@ -172,10 +166,6 @@ struct quic_conn_st {
     /* Manages thread for QUIC thread assisted mode. */
     QUIC_THREAD_ASSIST              thread_assist;
 #  endif
-
-    /* If non-NULL, used instead of ossl_time_now(). Used for testing. */
-    OSSL_TIME                       (*override_now_cb)(void *arg);
-    void                            *override_now_cb_arg;
 
     /* Number of XSOs allocated. Includes the default XSO, if any. */
     size_t                          num_xso;
@@ -198,12 +188,6 @@ struct quic_conn_st {
     /* Are we using thread assisted mode? Never changes after init. */
     unsigned int                    is_thread_assisted      : 1;
 
-    /* Do connection-level operations (e.g. handshakes) run in blocking mode? */
-    unsigned int                    blocking                : 1;
-
-    /* Does the application want blocking mode? */
-    unsigned int                    desires_blocking        : 1;
-
     /* Have we created a default XSO yet? */
     unsigned int                    default_xso_created     : 1;
 
@@ -221,8 +205,8 @@ struct quic_conn_st {
     unsigned int                    addressed_mode_w        : 1;
     unsigned int                    addressed_mode_r        : 1;
 
-    /* Event handling mode. One of SSL_QUIC_VALUE_EVENT_HANDLING. */
-    unsigned int                    event_handling_mode     : 2;
+    /* Flag to indicate waiting on accept queue */
+    unsigned int                    pending                 : 1;
 
     /* Default stream type. Defaults to SSL_DEFAULT_STREAM_MODE_AUTO_BIDI. */
     uint32_t                        default_stream_mode;
@@ -245,6 +229,55 @@ struct quic_conn_st {
     int                             last_error;
 };
 
+/*
+ * QUIC listener SSL object (QLSO) type. This implements the API personality
+ * layer for QLSO objects, wrapping the QUIC-native QUIC_PORT object.
+ */
+struct quic_listener_st {
+    /* QUIC_OBJ common header, including SSL object common header. */
+    QUIC_OBJ                        obj;
+
+    /* The QDSO this connection belongs to, if any. */
+    QUIC_DOMAIN                     *domain;
+
+    /* The QUIC engine representing the QUIC event domain. */
+    QUIC_ENGINE                     *engine;
+
+    /* The QUIC port representing the QUIC listener and socket. */
+    QUIC_PORT                       *port;
+
+#if defined(OPENSSL_THREADS)
+    /*
+     * The mutex used to synchronise access to the QUIC_ENGINE. We own this but
+     * provide it to the engine.
+     */
+    CRYPTO_MUTEX                    *mutex;
+#endif
+
+    /* Have we started listening yet? */
+    unsigned int                    listening               : 1;
+};
+
+/*
+ * QUIC domain SSL object (QDSO) type. This implements the API personality layer
+ * for QDSO objects, wrapping the QUIC-native QUIC_ENGINE object.
+ */
+struct quic_domain_st {
+     /* QUIC_OBJ common header, including SSL object common header. */
+    QUIC_OBJ                        obj;
+
+    /* The QUIC engine representing the QUIC event domain. */
+    QUIC_ENGINE                     *engine;
+
+#if defined(OPENSSL_THREADS)
+    /*
+     * The mutex used to synchronise access to the QUIC_ENGINE. We own this but
+     * provide it to the engine.
+     */
+    CRYPTO_MUTEX                    *mutex;
+#endif
+};
+
 /* Internal calls to the QUIC CSM which come from various places. */
 int ossl_quic_conn_on_handshake_confirmed(QUIC_CONNECTION *qc);
 
@@ -262,60 +295,8 @@ void ossl_quic_conn_raise_protocol_error(QUIC_CONNECTION *qc,
 void ossl_quic_conn_on_remote_conn_close(QUIC_CONNECTION *qc,
                                          OSSL_QUIC_FRAME_CONN_CLOSE *f);
 
-int ossl_quic_trace(int write_p, int version, int content_type,
-                    const void *buf, size_t msglen, SSL *ssl, void *arg);
-
 #  define OSSL_QUIC_ANY_VERSION 0xFFFFF
-#  define IS_QUIC_METHOD(m) \
-    ((m) == OSSL_QUIC_client_method() || \
-     (m) == OSSL_QUIC_client_thread_method())
-#  define IS_QUIC_CTX(ctx)          IS_QUIC_METHOD((ctx)->method)
-
-#  define QUIC_CONNECTION_FROM_SSL_int(ssl, c)   \
-     ((ssl) == NULL ? NULL                       \
-      : ((ssl)->type == SSL_TYPE_QUIC_CONNECTION \
-         ? (c QUIC_CONNECTION *)(ssl)            \
-         : NULL))
-
-#  define QUIC_XSO_FROM_SSL_int(ssl, c)                             \
-    ((ssl) == NULL                                                  \
-     ? NULL                                                         \
-     : (((ssl)->type == SSL_TYPE_QUIC_XSO                           \
-        ? (c QUIC_XSO *)(ssl)                                       \
-        : ((ssl)->type == SSL_TYPE_QUIC_CONNECTION                  \
-           ? (c QUIC_XSO *)((QUIC_CONNECTION *)(ssl))->default_xso  \
-           : NULL))))
-
-#  define SSL_CONNECTION_FROM_QUIC_SSL_int(ssl, c)               \
-     ((ssl) == NULL ? NULL                                       \
-      : ((ssl)->type == SSL_TYPE_QUIC_CONNECTION                 \
-         ? (c SSL_CONNECTION *)((c QUIC_CONNECTION *)(ssl))->tls \
-         : NULL))
-
-#  define IS_QUIC(ssl) ((ssl) != NULL                                   \
-                        && ((ssl)->type == SSL_TYPE_QUIC_CONNECTION     \
-                            || (ssl)->type == SSL_TYPE_QUIC_XSO))
-# else
-#  define QUIC_CONNECTION_FROM_SSL_int(ssl, c) NULL
-#  define QUIC_XSO_FROM_SSL_int(ssl, c) NULL
-#  define SSL_CONNECTION_FROM_QUIC_SSL_int(ssl, c) NULL
-#  define IS_QUIC(ssl) 0
-#  define IS_QUIC_CTX(ctx) 0
-#  define IS_QUIC_METHOD(m) 0
 # endif
-
-# define QUIC_CONNECTION_FROM_SSL(ssl) \
-    QUIC_CONNECTION_FROM_SSL_int(ssl, SSL_CONNECTION_NO_CONST)
-# define QUIC_CONNECTION_FROM_CONST_SSL(ssl) \
-    QUIC_CONNECTION_FROM_SSL_int(ssl, const)
-# define QUIC_XSO_FROM_SSL(ssl) \
-    QUIC_XSO_FROM_SSL_int(ssl, SSL_CONNECTION_NO_CONST)
-# define QUIC_XSO_FROM_CONST_SSL(ssl) \
-    QUIC_XSO_FROM_SSL_int(ssl, const)
-# define SSL_CONNECTION_FROM_QUIC_SSL(ssl) \
-    SSL_CONNECTION_FROM_QUIC_SSL_int(ssl, SSL_CONNECTION_NO_CONST)
-# define SSL_CONNECTION_FROM_CONST_QUIC_SSL(ssl) \
-    SSL_CONNECTION_FROM_CONST_QUIC_SSL_int(ssl, const)
 
 # define IMPLEMENT_quic_meth_func(version, func_name, q_accept, \
                                  q_connect, enc_data) \

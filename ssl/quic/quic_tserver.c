@@ -43,9 +43,6 @@ struct quic_tserver_st {
     /* SSL for the underlying TLS connection */
     SSL *tls;
 
-    /* The current peer L4 address. AF_UNSPEC if we do not have a peer yet. */
-    BIO_ADDR        cur_peer_addr;
-
     /* Are we connected to a peer? */
     unsigned int    connected       : 1;
 };
@@ -122,15 +119,16 @@ QUIC_TSERVER *ossl_quic_tserver_new(const QUIC_TSERVER_ARGS *args,
     engine_args.libctx          = srv->args.libctx;
     engine_args.propq           = srv->args.propq;
     engine_args.mutex           = srv->mutex;
-    engine_args.now_cb          = srv->args.now_cb;
-    engine_args.now_cb_arg      = srv->args.now_cb_arg;
 
     if ((srv->engine = ossl_quic_engine_new(&engine_args)) == NULL)
         goto err;
 
+    ossl_quic_engine_set_time_cb(srv->engine, srv->args.now_cb,
+                                 srv->args.now_cb_arg);
+
     port_args.channel_ctx       = srv->ctx;
     port_args.is_multi_conn     = 1;
-
+    port_args.do_addr_validation = 1;
     if ((srv->port = ossl_quic_engine_create_port(srv->engine, &port_args)) == NULL)
         goto err;
 
@@ -239,6 +237,11 @@ ossl_quic_tserver_get_terminate_cause(const QUIC_TSERVER *srv)
 int ossl_quic_tserver_is_terminated(const QUIC_TSERVER *srv)
 {
     return ossl_quic_channel_is_terminated(srv->ch);
+}
+
+size_t ossl_quic_tserver_get_short_header_conn_id_len(const QUIC_TSERVER *srv)
+{
+    return ossl_quic_channel_get_short_header_conn_id_len(srv->ch);
 }
 
 int ossl_quic_tserver_is_handshake_confirmed(const QUIC_TSERVER *srv)
@@ -524,8 +527,6 @@ OSSL_TIME ossl_quic_tserver_get_deadline(QUIC_TSERVER *srv)
 int ossl_quic_tserver_shutdown(QUIC_TSERVER *srv, uint64_t app_error_code)
 {
     ossl_quic_channel_local_close(srv->ch, app_error_code, NULL);
-
-    /* TODO(QUIC SERVER): !SSL_SHUTDOWN_FLAG_NO_STREAM_FLUSH */
 
     if (ossl_quic_channel_is_terminated(srv->ch))
         return 1;

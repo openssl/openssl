@@ -68,6 +68,11 @@ void ossl_qrx_set_msg_callback_arg(OSSL_QRX *qrx,
                                    void *msg_callback_arg);
 
 /*
+ * Get the short header connection id len from this qrx
+ */
+size_t ossl_qrx_get_short_hdr_conn_id_len(OSSL_QRX *qrx);
+
+/*
  * Secret Management
  * =================
  *

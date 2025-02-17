@@ -30,6 +30,7 @@
 #include "internal/ktls.h"
 #include "../ssl/ssl_local.h"
 #include "../ssl/statem/statem_local.h"
+#include "internal/ssl_unwrap.h"
 
 static OSSL_LIB_CTX *libctx = NULL;
 static char *cert = NULL;

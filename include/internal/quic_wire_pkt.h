@@ -465,14 +465,23 @@ struct quic_pkt_hdr_ptrs_st {
  * QUIC_MAX_CONN_ID_LEN), this function fails when trying to decode a short
  * packet, but succeeds for long packets.
  *
+ * fail_cause is a bitmask of the reasons decode might have failed
+ * as defined below, useful when you need to interrogate parts of
+ * a header even if its otherwise undecodeable.  May be NULL.
+ *
  * Returns 1 on success and 0 on failure.
  */
+
+#  define QUIC_PKT_HDR_DECODE_DECODE_ERR  (1 << 0)
+#  define QUIC_PKT_HDR_DECODE_BAD_VERSION (1 << 1)
+
 int ossl_quic_wire_decode_pkt_hdr(PACKET *pkt,
                                   size_t short_conn_id_len,
                                   int partial,
                                   int nodata,
                                   QUIC_PKT_HDR *hdr,
-                                  QUIC_PKT_HDR_PTRS *ptrs);
+                                  QUIC_PKT_HDR_PTRS *ptrs,
+                                  uint64_t *fail_cause);
 
 /*
  * Encodes a packet header. The packet is written to pkt.

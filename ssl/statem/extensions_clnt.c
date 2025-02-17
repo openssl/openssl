@@ -10,6 +10,7 @@
 #include <openssl/ocsp.h>
 #include "../ssl_local.h"
 #include "internal/cryptlib.h"
+#include "internal/ssl_unwrap.h"
 #include "statem_local.h"
 
 EXT_RETURN tls_construct_ctos_renegotiate(SSL_CONNECTION *s, WPACKET *pkt,

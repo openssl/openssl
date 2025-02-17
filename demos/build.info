@@ -7,6 +7,10 @@ IF[{- !$disabled{"h3demo"} -}]
  ENDIF
 ENDIF
 
+IF[{- !$disabled{"quic"} -}]
+     SUBDIRS=quic
+ENDIF
+
 IF[{- !$disabled{"cms"} -}]
  IF[{- !$disabled{"deprecated"} -}]
     SUBDIRS=cms

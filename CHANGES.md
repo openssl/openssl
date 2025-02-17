@@ -30,6 +30,15 @@ OpenSSL 3.5
 
 ### Changes between 3.4 and 3.5 [xx XXX xxxx]
 
+* Added support for a new callback registration SSL_CTX_set_new_pending_conn_cb,
+  which allows for application notification of new connection SSL object
+  creation, which occurs independently of calls to SSL_accept_connection().
+  Note: QUIC objects passed through SSL callbacks should not have their state
+  mutated via calls back into the SSL api until such time as they have been
+  received via a call to SSL_accept_connection().
+
+  *Neil Horman*
+
 * ML-KEM as specified in FIPS 203.
 
   Based on the original implementation in BoringSSL, ported from C++ to C,

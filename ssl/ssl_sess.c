@@ -17,6 +17,7 @@
 #include <openssl/engine.h>
 #include "internal/refcount.h"
 #include "internal/cryptlib.h"
+#include "internal/ssl_unwrap.h"
 #include "ssl_local.h"
 #include "statem/statem_local.h"
 

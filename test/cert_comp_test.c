@@ -17,6 +17,7 @@
 
 #include <openssl/ssl.h>
 #include "internal/nelem.h"
+#include "internal/ssl_unwrap.h"
 #include "helpers/ssltestlib.h"
 #include "testutil.h"
 #include "../ssl/ssl_local.h"

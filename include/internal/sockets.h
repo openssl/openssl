@@ -12,6 +12,7 @@
 # pragma once
 
 # include <openssl/opensslconf.h>
+# include "internal/common.h"
 
 # if defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_UEFI)
 #  define NO_SYS_PARAM_H

@@ -28,6 +28,7 @@
 #include <openssl/param_build.h>
 #include "internal/cryptlib.h"
 #include "internal/comp.h"
+#include "internal/ssl_unwrap.h"
 
 static MSG_PROCESS_RETURN tls_process_as_hello_retry_request(SSL_CONNECTION *s,
                                                              PACKET *pkt);

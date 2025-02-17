@@ -8,6 +8,7 @@
  */
 
 #include "ssl_local.h"
+#include "internal/ssl_unwrap.h"
 
 int dtls1_write_app_data_bytes(SSL *s, uint8_t type, const void *buf_,
                                size_t len, size_t *written)

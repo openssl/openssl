@@ -187,11 +187,15 @@ int ossl_quic_wire_decode_pkt_hdr(PACKET *pkt,
                                   int partial,
                                   int nodata,
                                   QUIC_PKT_HDR *hdr,
-                                  QUIC_PKT_HDR_PTRS *ptrs)
+                                  QUIC_PKT_HDR_PTRS *ptrs,
+                                  uint64_t *fail_cause)
 {
     unsigned int b0;
     unsigned char *pn = NULL;
     size_t l = PACKET_remaining(pkt);
+
+    if (fail_cause != NULL)
+        *fail_cause = QUIC_PKT_HDR_DECODE_DECODE_ERR;
 
     if (ptrs != NULL) {
         ptrs->raw_start         = (unsigned char *)PACKET_data(pkt);
@@ -332,6 +336,8 @@ int ossl_quic_wire_decode_pkt_hdr(PACKET *pkt,
             if (!PACKET_forward(pkt, hdr->len))
                 return 0;
         } else if (version != QUIC_VERSION_1) {
+            if (fail_cause != NULL)
+                *fail_cause |= QUIC_PKT_HDR_DECODE_BAD_VERSION;
             /* Unknown version, do not decode. */
             return 0;
         } else {
@@ -451,6 +457,12 @@ int ossl_quic_wire_decode_pkt_hdr(PACKET *pkt,
         }
     }
 
+    /*
+     * Good decode, clear the generic DECODE_ERR flag
+     */
+    if (fail_cause != NULL)
+        *fail_cause &= ~QUIC_PKT_HDR_DECODE_DECODE_ERR;
+
     return 1;
 }
 
@@ -554,8 +566,7 @@ int ossl_quic_wire_encode_pkt_hdr(WPACKET *pkt,
                                hdr->src_conn_id.id_len))
             return 0;
 
-        if (hdr->type == QUIC_PKT_TYPE_VERSION_NEG
-            || hdr->type == QUIC_PKT_TYPE_RETRY) {
+        if (hdr->type == QUIC_PKT_TYPE_VERSION_NEG) {
             if (hdr->len > 0 && !WPACKET_reserve_bytes(pkt, hdr->len, NULL))
                 return 0;
 
@@ -566,6 +577,12 @@ int ossl_quic_wire_encode_pkt_hdr(WPACKET *pkt,
             if (!WPACKET_quic_write_vlint(pkt, hdr->token_len)
                 || !WPACKET_memcpy(pkt, hdr->token, hdr->token_len))
                 return 0;
+        }
+
+        if (hdr->type == QUIC_PKT_TYPE_RETRY) {
+            if (!WPACKET_memcpy(pkt, hdr->token, hdr->token_len))
+                return 0;
+            return 1;
         }
 
         if (!WPACKET_quic_write_vlint(pkt, hdr->len + hdr->pn_len)

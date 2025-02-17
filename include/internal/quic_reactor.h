@@ -13,6 +13,7 @@
 # include "internal/sockets.h"
 # include "internal/quic_predef.h"
 # include "internal/thread_arch.h"
+# include "internal/rio_notifier.h"
 # include <openssl/bio.h>
 
 # ifndef OPENSSL_NO_QUIC
@@ -70,18 +71,20 @@
  * the reactor interface.
  */
 struct quic_tick_result_st {
+    OSSL_TIME   tick_deadline;
     char        net_read_desired;
     char        net_write_desired;
-    OSSL_TIME   tick_deadline;
+    char        notify_other_threads;
 };
 
 static ossl_inline ossl_unused void
 ossl_quic_tick_result_merge_into(QUIC_TICK_RESULT *r,
                                  const QUIC_TICK_RESULT *src)
 {
-    r->net_read_desired  = r->net_read_desired  || src->net_read_desired;
-    r->net_write_desired = r->net_write_desired || src->net_write_desired;
-    r->tick_deadline     = ossl_time_min(r->tick_deadline, src->tick_deadline);
+    r->net_read_desired     = r->net_read_desired  || src->net_read_desired;
+    r->net_write_desired    = r->net_write_desired || src->net_write_desired;
+    r->notify_other_threads = r->notify_other_threads || src->notify_other_threads;
+    r->tick_deadline        = ossl_time_min(r->tick_deadline, src->tick_deadline);
 }
 
 struct quic_reactor_st {
@@ -99,6 +102,24 @@ struct quic_reactor_st {
     void (*tick_cb)(QUIC_TICK_RESULT *res, void *arg, uint32_t flags);
     void *tick_cb_arg;
 
+    /* The mutex used for ticking. Not owned by the reactor. */
+    CRYPTO_MUTEX *mutex;
+
+    /* Used to notify other threads. Valid only if have_notifier is set. */
+    RIO_NOTIFIER notifier;
+
+    /*
+     * Condvar to assist synchronising use of the notifier. Valid only if
+     * have_notifier is set.
+     */
+    CRYPTO_CONDVAR *notifier_cv;
+
+    /*
+     * Count of the current number of blocking waiters. Like everything else,
+     * this is protected by the caller's mutex (i.e., the engine mutex).
+     */
+    size_t cur_blocking_waiters;
+
     /*
      * These are true if we would like to know when we can read or write from
      * the network respectively.
@@ -112,13 +133,26 @@ struct quic_reactor_st {
      */
     unsigned int can_poll_r : 1;
     unsigned int can_poll_w : 1;
+
+    /* 1 if notifier is present and initialised. */
+    unsigned int have_notifier : 1;
+
+    /* 1 if a block_until_pred call has put the notifier in the signalled state. */
+    unsigned int signalled_notifier : 1;
 };
 
-void ossl_quic_reactor_init(QUIC_REACTOR *rtor,
-                            void (*tick_cb)(QUIC_TICK_RESULT *res, void *arg,
-                                            uint32_t flags),
-                            void *tick_cb_arg,
-                            OSSL_TIME initial_tick_deadline);
+/* Create an OS notifier? */
+#define QUIC_REACTOR_FLAG_USE_NOTIFIER      (1U << 0)
+
+int ossl_quic_reactor_init(QUIC_REACTOR *rtor,
+                           void (*tick_cb)(QUIC_TICK_RESULT *res, void *arg,
+                                           uint32_t flags),
+                           void *tick_cb_arg,
+                           CRYPTO_MUTEX *mutex,
+                           OSSL_TIME initial_tick_deadline,
+                           uint64_t flags);
+
+void ossl_quic_reactor_cleanup(QUIC_REACTOR *rtor);
 
 void ossl_quic_reactor_set_poll_r(QUIC_REACTOR *rtor,
                                   const BIO_POLL_DESCRIPTOR *r);
@@ -152,18 +186,25 @@ OSSL_TIME ossl_quic_reactor_get_tick_deadline(QUIC_REACTOR *rtor);
 
 int ossl_quic_reactor_tick(QUIC_REACTOR *rtor, uint32_t flags);
 
+RIO_NOTIFIER *ossl_quic_reactor_get0_notifier(QUIC_REACTOR *rtor);
+
 /*
  * Blocking I/O Adaptation Layer
  * =============================
  *
  * The blocking I/O adaptation layer implements blocking I/O on top of our
  * asynchronous core.
+ */
+
+/*
+ * ossl_quic_reactor_block_until_pred
+ * ----------------------------------
  *
- * The core mechanism is block_until_pred(), which does not return until pred()
- * returns a value other than 0. The blocker uses OS I/O synchronisation
- * primitives (e.g. poll(2)) and ticks the reactor until the predicate is
- * satisfied. The blocker is not required to call pred() more than once between
- * tick calls.
+ * The core mechanism of the Blocking I/O Adaption Layer is block_until_pred(),
+ * which does not return until pred() returns a value other than 0. The blocker
+ * uses OS I/O synchronisation primitives (e.g. poll(2)) and ticks the reactor
+ * until the predicate is satisfied. The blocker is not required to call pred()
+ * more than once between tick calls.
  *
  * When pred returns a non-zero value, that value is returned by this function.
  * This can be used to allow pred() to indicate error conditions and short
@@ -183,16 +224,60 @@ int ossl_quic_reactor_tick(QUIC_REACTOR *rtor, uint32_t flags);
  * mutex is non-NULL, it must be a lock currently held for write; it will be
  * unlocked during any sleep, and then relocked for write afterwards.
  *
- * Precondition:   mutex is NULL or is held for write (unchecked)
- * Postcondition:  mutex is NULL or is held for write (unless
- *                   CRYPTO_THREAD_write_lock fails)
+ * This function must not be called by a thread currently using
+ * ossl_quic_reactor_(enter/leave)_blocking_section() as this function also uses
+ * those functions (see below); it is assumed if a caller is using those
+ * functions it is implementing blocking semantics itself. There is no need to
+ * use those functions if using this function.
+ *
+ * Precondition:   If a reactor mutex is being used, it must be held (unchecked)
+ * Postcondition:  If a reactor mutex is being used, it is held
+ * Invariant:      The current thread does not have an outstanding
+ *                   ossl_quic_reactor_enter_blocking_section() call (unchecked)
  */
 #define SKIP_FIRST_TICK     (1U << 0)
 
 int ossl_quic_reactor_block_until_pred(QUIC_REACTOR *rtor,
                                        int (*pred)(void *arg), void *pred_arg,
-                                       uint32_t flags,
-                                       CRYPTO_MUTEX *mutex);
+                                       uint32_t flags);
+
+/*
+ * ossl_quic_reactor_(enter/leave)_blocking_section
+ * ------------------------------------------------
+ *
+ * This is used by blocking code outside of the reactor itself to inform the
+ * reactor of when a thread begins or ends a blocking call. This is used by the
+ * reactor so it knows if a tick means other threads might need to be woken up
+ * via the notifier. The reactor mutex must be held while calling these
+ * functions.
+ *
+ * The number of 'active' calls to these functions (i.e., the number of enter
+ * calls which have yet to be matched with a subsequent leave call) must *at all
+ * times* equal the number of threads blocking on the reactor. In other words, a
+ * single thread is not permitted to use these functions "recursively". Failing
+ * to adhere to this rule will result in deadlock.
+ *
+ * This means that if a caller has the concept of multiple concurrent blocking
+ * calls on the same thread on the same reactor (which may occur in some
+ * SSL_poll-related circumstances) it must do its own housekeeping to ensure it
+ * only calls enter() once. See quic_reactor_wait_ctx.h for a utility which can
+ * be used to accomplish this.
+ *
+ * ossl_quic_reactor_enter_blocking_section:
+ *   Precondition:   The current thread does not have an outstanding
+ *                     ossl_quic_reactor_enter_blocking_section() call (unchecked)
+ *   Postcondition:  The current thread has an outstanding
+ *                     ossl_quic_reactor_enter_blocking_section() call
+ *
+ * ossl_quic_reactor_leave_blocking_section:
+ *   Precondition:   The current thread has an outstanding
+ *                     ossl_quic_reactor_enter_blocking_section() call (unchecked)
+ *   Postcondition:  The current thread does not have an outstanding
+ *                     ossl_quic_reactor_enter_blocking_section() call
+ *
+ */
+void ossl_quic_reactor_enter_blocking_section(QUIC_REACTOR *rtor);
+void ossl_quic_reactor_leave_blocking_section(QUIC_REACTOR *rtor);
 
 # endif
 

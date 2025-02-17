@@ -13,6 +13,8 @@
 
 /* Packet trace support for OpenSSL */
 #include "internal/nelem.h"
+#include "internal/ssl_unwrap.h"
+#include "internal/quic_trace.h"
 
 typedef struct {
     int num;

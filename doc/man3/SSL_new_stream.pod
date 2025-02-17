@@ -69,6 +69,18 @@ SSL_new_stream() returns a new stream object, or NULL on error.
 This function fails if called on a QUIC stream SSL object or on a non-QUIC SSL
 object.
 
+SSL_new_stream() may also fail if the connection that the stream is being
+allocated in relation to has reached the maximum number of streams allowed by
+the connection (as dictated by the B<max_streams_bidi> or B<max_streams_uni>
+transport parameter values negotiated by the connection with the server).  In
+this event the NULL return will be accompanied by an error on the error stack
+(obtainable via ERR_get_error()), which will contain a reason code of
+B<SSL_R_STREAM_COUNT_LIMITED>.  When this error is encountered, the operation
+may be retried.  It is recommended that, prior to retry, the error stack be
+cleared via a call to ERR_clear_error(), and that the TLS state machine be
+triggered via a call to SSL_handle_events() to process any potential updates
+from the server allowing additional streams to be created.
+
 =head1 SEE ALSO
 
 L<SSL_accept_stream(3)>, L<SSL_free(3)>

@@ -28,8 +28,10 @@ RUN git clone --depth 1 https://github.com/ngtcp2/nghttp3.git && \
 # download and build openssl 
 RUN git clone --depth 1 -b $OPENSSL_BRANCH $OPENSSL_URL && \
     cd openssl && \
-    ./Configure enable-fips enable-demos disable-docs --prefix=/usr --openssldir=/etc/pki/tls && \
-    make -j 4 && make install && cp demos/guide/quic-hq-interop /usr/local/bin && \
+    ./Configure enable-sslkeylog enable-fips enable-demos enable-h3demo enable-hqinterop disable-docs --prefix=/usr --openssldir=/etc/pki/tls && \
+    make -j 4 && make install && cp test/quic-openssl-docker/hq-interop/quic-hq-interop /usr/local/bin && \
+    cp test/quic-openssl-docker/hq-interop/quic-hq-interop-server /usr/local/bin && \
+    cp demos/http3/ossl-nghttp3-demo-server /usr/local/bin && \
     rm -rf /openssl
 
 # Build curl

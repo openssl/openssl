@@ -171,15 +171,21 @@ L<SSL_set_blocking_mode(3)>.
 See L<ossl-guide-quic-client-block(7)> to see an example of applying these
 concepts in order to write a simple blocking QUIC client.
 
+See L<ossl-guide-quic-server-block(7)> to see an example of applying these
+concepts in order to write a simple blocking QUIC server.
+
 =head1 SEE ALSO
 
 L<ossl-guide-introduction(7)>, L<ossl-guide-libraries-introduction(7)>,
 L<ossl-guide-libssl-introduction(7)>, L<ossl-guide-tls-introduction(7)>,
-L<ossl-guide-tls-client-block(7)>, L<ossl-guide-quic-client-block(7)>, L<bio(7)>
+L<ossl-guide-tls-client-block(7)>, L<ossl-guide-quic-client-block(7)>,
+L<ossl-guide-quic-client-non-block(7)>, L<ossl-guide-quic-multi-stream(7)>,
+L<ossl-guide-quic-server-block(7)>, L<ossl-guide-quic-server-non-block(7)>,
+L<bio(7)>,
 
 =head1 COPYRIGHT
 
-Copyright 2023 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2023-2024 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

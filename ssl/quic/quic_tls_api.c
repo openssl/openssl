@@ -8,6 +8,7 @@
  */
 
 #include <openssl/ssl.h>
+#include "internal/ssl_unwrap.h"
 #include "internal/quic_tls.h"
 #include "../ssl_local.h"
 

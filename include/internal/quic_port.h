@@ -43,6 +43,14 @@ typedef struct quic_port_args_st {
     QUIC_ENGINE     *engine;
 
     /*
+     * This callback allows port_new_handshake_layer to pre-create a quic
+     * connection object for the incoming channel
+     * user_ssl_arg is expected to point to a quic listener object
+     */
+    SSL *(*get_conn_user_ssl)(QUIC_CHANNEL *ch, void *arg);
+    void *user_ssl_arg;
+
+    /*
      * This SSL_CTX will be used when constructing the handshake layer object
      * inside newly created channels.
      */
@@ -54,6 +62,11 @@ typedef struct quic_port_args_st {
      * for a single connection, so a zero-length local CID can be used.
      */
     int             is_multi_conn;
+
+    /*
+     * if 1, this port should do server address validation
+     */
+    int             do_addr_validation;
 } QUIC_PORT_ARGS;
 
 /* Only QUIC_ENGINE should use this function. */
@@ -72,9 +85,23 @@ QUIC_CHANNEL *ossl_quic_port_create_outgoing(QUIC_PORT *port, SSL *tls);
 /*
  * Create an incoming channel using this port.
  *
- * TODO(QUIC SERVER): temporary TSERVER use only - will be removed.
+ * TODO(QUIC FUTURE): temporary TSERVER use only - will be removed.
  */
 QUIC_CHANNEL *ossl_quic_port_create_incoming(QUIC_PORT *port, SSL *tls);
+
+/*
+ * Pop an incoming channel from the incoming channel queue. Returns NULL if
+ * there are no pending incoming channels.
+ */
+QUIC_CHANNEL *ossl_quic_port_pop_incoming(QUIC_PORT *port);
+
+/* Returns 1 if there is at least one connection incoming. */
+int ossl_quic_port_have_incoming(QUIC_PORT *port);
+
+/*
+ * Delete any channels which are pending acceptance.
+ */
+void ossl_quic_port_drop_incoming(QUIC_PORT *port);
 
 /*
  * Queries and Accessors
@@ -86,12 +113,14 @@ BIO *ossl_quic_port_get_net_rbio(QUIC_PORT *port);
 BIO *ossl_quic_port_get_net_wbio(QUIC_PORT *port);
 int ossl_quic_port_set_net_rbio(QUIC_PORT *port, BIO *net_rbio);
 int ossl_quic_port_set_net_wbio(QUIC_PORT *port, BIO *net_wbio);
+SSL_CTX *ossl_quic_port_get_channel_ctx(QUIC_PORT *port);
 
 /*
- * Re-poll the network BIOs already set to determine if their support
- * for polling has changed.
+ * Re-poll the network BIOs already set to determine if their support for
+ * polling has changed. If force is 0, only check again if the BIOs have been
+ * changed.
  */
-int ossl_quic_port_update_poll_descriptors(QUIC_PORT *port);
+int ossl_quic_port_update_poll_descriptors(QUIC_PORT *port, int force);
 
 /* Gets the engine which this port is a child of. */
 QUIC_ENGINE *ossl_quic_port_get0_engine(QUIC_PORT *port);
@@ -123,6 +152,27 @@ void ossl_quic_port_restore_err_state(const QUIC_PORT *port);
 /* For use by QUIC_ENGINE. You should not need to call this directly. */
 void ossl_quic_port_subtick(QUIC_PORT *port, QUIC_TICK_RESULT *r,
                             uint32_t flags);
+
+/* Returns the number of queued incoming channels. */
+size_t ossl_quic_port_get_num_incoming_channels(const QUIC_PORT *port);
+
+/* Sets if incoming connections should currently be allowed. */
+void ossl_quic_port_set_allow_incoming(QUIC_PORT *port, int allow_incoming);
+
+/* Returns 1 if we are using addressed mode on the read side. */
+int ossl_quic_port_is_addressed_r(const QUIC_PORT *port);
+
+/* Returns 1 if we are using addressed mode on the write side. */
+int ossl_quic_port_is_addressed_w(const QUIC_PORT *port);
+
+/* Returns 1 if we are using addressed mode. */
+int ossl_quic_port_is_addressed(const QUIC_PORT *port);
+
+/*
+ * Returns the current network BIO epoch. This increments whenever the network
+ * BIO configuration changes.
+ */
+uint64_t ossl_quic_port_get_net_bio_epoch(const QUIC_PORT *port);
 
 /*
  * Events

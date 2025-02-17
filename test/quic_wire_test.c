@@ -1542,7 +1542,7 @@ static int test_wire_retry_integrity_tag(void)
     if (!TEST_true(PACKET_buf_init(&pkt, retry_encoded, sizeof(retry_encoded))))
         goto err;
 
-    if (!TEST_true(ossl_quic_wire_decode_pkt_hdr(&pkt, 0, 0, 0, &hdr, NULL)))
+    if (!TEST_true(ossl_quic_wire_decode_pkt_hdr(&pkt, 0, 0, 0, &hdr, NULL, NULL)))
         goto err;
 
     if (!TEST_int_eq(hdr.type, QUIC_PKT_TYPE_RETRY))

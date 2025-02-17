@@ -78,7 +78,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
         goto end;
 
     fake_now = ossl_ms2time(1);
-    if (!ossl_quic_conn_set_override_now_cb(client, fake_now_cb, NULL))
+    if (!ossl_quic_set_override_now_cb(client, fake_now_cb, NULL))
         goto end;
 
     peer_addr = BIO_ADDR_new();

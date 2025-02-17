@@ -23,6 +23,7 @@
 #include "internal/nelem.h"
 #include "internal/sizes.h"
 #include "internal/tlsgroups.h"
+#include "internal/ssl_unwrap.h"
 #include "ssl_local.h"
 #include "quic/quic_local.h"
 #include <openssl/ct.h>

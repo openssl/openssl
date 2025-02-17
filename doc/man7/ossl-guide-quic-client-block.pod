@@ -250,6 +250,29 @@ slightly differently. With QUIC the stream can be reset by the peer (which is
 fatal for that stream), but the underlying connection itself may still be
 healthy.
 
+First, we write the entire request to the stream. We also must make sure to
+signal to the server that we have finished writing. This can be done by passing
+the SSL_WRITE_FLAG_CONCLUDE flag to L<SSL_write_ex2(3)> or by calling
+L<SSL_stream_conclude(3)>. Since the first way is more efficient, we choose to
+do that.
+
+    /* Write an HTTP GET request to the peer */
+    if (!SSL_write_ex(ssl, request_start, strlen(request_start), &written)) {
+        printf("Failed to write start of HTTP request\n");
+        goto end;
+    }
+    if (!SSL_write_ex(ssl, hostname, strlen(hostname), &written)) {
+        printf("Failed to write hostname in HTTP request\n");
+        goto end;
+    }
+    if (!SSL_write_ex2(ssl, request_end, strlen(request_end),
+        SSL_WRITE_FLAG_CONCLUDE, &written)) {
+        printf("Failed to write end of HTTP request\n");
+        goto end;
+    }
+
+Then, we read the response from the server.
+
     /*
      * Get up to sizeof(buf) bytes of the response. We keep reading until the
      * server closes the connection.

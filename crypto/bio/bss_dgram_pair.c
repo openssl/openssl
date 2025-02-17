@@ -256,6 +256,8 @@ struct bio_dgram_pair_st {
     size_t mtu;
     /* Capability flags. */
     uint32_t cap;
+    /* The local address to use (if set) */
+    BIO_ADDR *local_addr;
     /*
      * This lock protects updates to our rbuf. Since writes are directed to our
      * own rbuf, this means we use this lock for writes and our peer's lock for
@@ -404,6 +406,8 @@ static int dgram_pair_ctrl_destroy_bio_pair(BIO *bio1)
 
     ring_buf_destroy(&b1->rbuf);
     bio1->init = 0;
+
+    BIO_ADDR_free(b1->local_addr);
 
     /* Early return if we don't have a peer. */
     if (b1->peer == NULL)
@@ -634,6 +638,16 @@ static int dgram_pair_ctrl_set_mtu(BIO *bio, size_t mtu)
     return 1;
 }
 
+/* BIO_dgram_set0_local_addr (BIO_CTRL_DGRAM_SET0_LOCAL_ADDR) */
+static int dgram_pair_ctrl_set0_local_addr(BIO *bio, BIO_ADDR *addr)
+{
+    struct bio_dgram_pair_st *b = bio->ptr;
+
+    BIO_ADDR_free(b->local_addr);
+    b->local_addr = addr;
+    return 1;
+}
+
 /* Partially threadsafe (some commands) */
 static long dgram_mem_ctrl(BIO *bio, int cmd, long num, void *ptr)
 {
@@ -729,6 +743,10 @@ static long dgram_mem_ctrl(BIO *bio, int cmd, long num, void *ptr)
     /* BIO_dgram_set_mtu */
     case BIO_CTRL_DGRAM_SET_MTU: /* Non-threadsafe */
         ret = (long)dgram_pair_ctrl_set_mtu(bio, (uint32_t)num);
+        break;
+
+    case BIO_CTRL_DGRAM_SET0_LOCAL_ADDR:
+        ret = (long)dgram_pair_ctrl_set0_local_addr(bio, (BIO_ADDR *)ptr);
         break;
 
     /*
@@ -1230,6 +1248,8 @@ static ossl_ssize_t dgram_pair_write_actual(BIO *bio, const char *buf, size_t sz
 
     hdr.len = sz;
     hdr.dst_addr = (peer != NULL ? *peer : zero_addr);
+    if (local == NULL)
+        local = b->local_addr;
     hdr.src_addr = (local != NULL ? *local : zero_addr);
 
     saved_idx   = b->rbuf.idx[0];

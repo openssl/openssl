@@ -16,6 +16,7 @@
 #include <openssl/decoder.h>
 #include <openssl/core_dispatch.h>
 #include "internal/nelem.h"
+#include "internal/ssl_unwrap.h"
 
 /*
  * structure holding name tables. This is used for permitted elements in lists
