@@ -94,6 +94,11 @@ push @files, qw(
                 evppkey_mismatch.txt
                ) unless $no_ec;
 push @files, qw(
+                evppkey_ml_dsa_keygen.txt
+                evppkey_ml_dsa_siggen.txt
+                evppkey_ml_dsa_sigver.txt
+               ) unless $no_ml_dsa;
+push @files, qw(
                 evppkey_ml_kem_512_keygen.txt
                 evppkey_ml_kem_512_encap.txt
                 evppkey_ml_kem_512_decap.txt
@@ -151,11 +156,6 @@ push @defltfiles, qw(evppkey_sm2.txt) unless $no_sm2;
 push @defltfiles, qw(evpciph_aes_gcm_siv.txt) unless $no_siv;
 push @defltfiles, qw(evpciph_aes_siv.txt) unless $no_siv;
 push @defltfiles, qw(evpkdf_argon2.txt) unless $no_argon2;
-push @defltfiles, qw(
-                     evppkey_ml_dsa_keygen.txt
-                     evppkey_ml_dsa_siggen.txt
-                     evppkey_ml_dsa_sigver.txt
-                    ) unless $no_ml_dsa;
 
 plan tests =>
     + (scalar(@configs) * scalar(@files))
