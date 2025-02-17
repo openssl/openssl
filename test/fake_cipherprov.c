@@ -168,9 +168,9 @@ static int fake_cipher(void *vctx, unsigned char *out, size_t *outl,
     PROV_CIPHER_FAKE_CTX *ctx = (PROV_CIPHER_FAKE_CTX *)vctx;
     size_t i;
 
-    if (outsize < inl)
+    if (out == NULL || outsize < inl)
         return 0;
-    if (out != NULL && in != out)
+    if (in != out)
         memcpy(out, in, inl);
     for (i = 0; i < inl; i++)
         out[i] ^= ctx->key[i % FAKE_KEY_LEN];
