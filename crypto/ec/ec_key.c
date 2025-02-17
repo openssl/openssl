@@ -263,7 +263,7 @@ static int ecdsa_keygen_knownanswer_test(EC_KEY *eckey, BN_CTX *ctx,
 
     st = OSSL_SELF_TEST_new(cb, cbarg);
     if (st == NULL)
-        return 0;
+        goto err_point;
 
     OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_PCT_KAT,
                                OSSL_SELF_TEST_DESC_PCT_ECDSA);
@@ -283,6 +283,7 @@ static int ecdsa_keygen_knownanswer_test(EC_KEY *eckey, BN_CTX *ctx,
 err:
     OSSL_SELF_TEST_onend(st, ret);
     OSSL_SELF_TEST_free(st);
+err_point:
     EC_POINT_free(pub_key2);
     return ret;
 }
