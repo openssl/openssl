@@ -41,7 +41,7 @@ OpenSSL 3.5
 
 * Add SLH-DSA as specified in FIPS 205.
 
-  *Shane Lontis*
+  *Shane Lontis and Dr Paul Dale*
 
 * ML-KEM as specified in FIPS 203.
 
