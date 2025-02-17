@@ -363,7 +363,7 @@ static int slh_dsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
     if (gctx == NULL)
         return 0;
 
-    p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_SLH_DSA_ENTROPY);
+    p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_SLH_DSA_SEED);
     if (p != NULL) {
         void *vp = gctx->entropy;
         size_t len = sizeof(gctx->entropy);
@@ -391,7 +391,7 @@ static const OSSL_PARAM *slh_dsa_gen_settable_params(ossl_unused void *genctx,
 {
     static OSSL_PARAM settable[] = {
         OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_PROPERTIES, NULL, 0),
-        OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_SLH_DSA_ENTROPY, NULL, 0),
+        OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_SLH_DSA_SEED, NULL, 0),
         OSSL_PARAM_END
     };
     return settable;

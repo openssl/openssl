@@ -32,7 +32,7 @@ OpenSSL 3.5
 
 * Add SLH-DSA as specified in FIPS 205.
 
-  *Shane Lontis*
+  *Shane Lontis and Dr Paul Dale*
 
 * New inline functions were added to support loads and stores of unsigned
   16-bit, 32-bit and 64-bit integers in either little-endian or big-endian

@@ -85,6 +85,7 @@ static OSSL_PROVIDER *prov_null = NULL;
 static OSSL_PROVIDER *libprov = NULL;
 static OSSL_LIB_CTX *libctx = NULL;
 static int fips_indicator_callback_unapproved_count = 0;
+static int extended_tests = 0;
 
 /* List of public and private keys */
 static KEY_LIST *private_keys;
@@ -2775,6 +2776,26 @@ static const EVP_TEST_METHOD pverify_message_test_method = {
     verify_test_run
 };
 
+/*
+ * "Verify-Message-Public" is like "Verify-Message", but uses a public key
+ * instead of a private key.
+ * The argument must be a colon separated pair, {algorithm}:{key}
+ */
+static int verify_message_public_test_init(EVP_TEST *t, const char *name)
+{
+    return pkey_test_init_ex2(t, name, 1,
+                              EVP_PKEY_verify_message_init, NULL);
+}
+
+static const EVP_TEST_METHOD pverify_message_public_test_method = {
+    "Verify-Message-Public",
+    verify_message_public_test_init,
+    pkey_test_cleanup,
+    pkey_test_parse,
+    verify_test_run
+};
+
+
 static int pderive_test_init(EVP_TEST *t, const char *name)
 {
     return pkey_test_init(t, name, 0, EVP_PKEY_derive_init_ex, 0);
@@ -4576,6 +4597,7 @@ static const EVP_TEST_METHOD *evp_test_list[] = {
     &pverify_recover_test_method,
     &pverify_test_method,
     &pverify_message_test_method,
+    &pverify_message_public_test_method,
     &pkey_kem_test_method,
     NULL
 };
@@ -5018,6 +5040,12 @@ start:
             }
         } else if (strcmp(pp->key, "Unapproved") == 0) {
             t->expect_unapproved = 1;
+        } else if (strcmp(pp->key, "Extended-Test") == 0) {
+            if (!extended_tests) {
+                TEST_info("skipping extended test: %s:%d",
+                          t->s.test_file, t->s.start);
+                t->skip = 1;
+            }
         } else {
             /* Must be test specific line: try to parse it */
             int rv = t->meth->parse(t, pp->key, pp->value);
@@ -5099,8 +5127,11 @@ int setup_tests(void)
     size_t n;
     char *config_file = NULL;
     char *provider_name = NULL;
+    const char *et = getenv("EVP_TEST_EXTENDED");
 
     OPTION_CHOICE o;
+
+    extended_tests = et != NULL && atoi(et) != 0;
 
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {

@@ -432,7 +432,7 @@ my %params = (
     'PKEY_PARAM_FIPS_APPROVED_INDICATOR' => '*ALG_PARAM_FIPS_APPROVED_INDICATOR',
 
 # SLH_DSA Key generation parameters
-    'PKEY_PARAM_SLH_DSA_ENTROPY' =>         "entropy",
+    'PKEY_PARAM_SLH_DSA_SEED' =>              "seed",
 
 # Key Exchange parameters
     'EXCHANGE_PARAM_PAD' =>                   "pad",# uint
