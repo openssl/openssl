@@ -7,21 +7,23 @@
 # https://www.openssl.org/source/license.html
 
 # A python program written to parse (version 42) of the ACVP test vectors for
-# ML_DSA. The 3 files that can be processed by this utility can be downloaded
+# ML_KEM. The 2 files that can be processed by this utility can be downloaded
 # from
-#  https://github.com/usnistgov/ACVP-Server/blob/master/gen-val/json-files/ML-DSA-keyGen-FIPS204/internalProjection.json
-#  https://github.com/usnistgov/ACVP-Server/blob/master/gen-val/json-files/ML-DSA-sigGen-FIPS204/internalProjection.json
-#  https://github.com/usnistgov/ACVP-Server/blob/master/gen-val/json-files/ML-DSA-sigVer-FIPS204/internalProjection.json
+#  https://github.com/usnistgov/ACVP-Server/blob/master/gen-val/json-files/ML-KEM-keyGen-FIPS203/internalProjection.json
+#  https://github.com/usnistgov/ACVP-Server/blob/master/gen-val/json-files/ML-KEM-encapDecap-FIPS203/internalProjection.json
 # and output from this utility to
-#  test/recipes/30-test_evp_data/evppkey_ml_dsa_keygen.txt
-#  test/recipes/30-test_evp_data/evppkey_ml_dsa_siggen.txt
-#  test/recipes/30-test_evp_data/evppkey_ml_dsa_sigver.txt
+#  test/recipes/30-test_evp_data/evppkey_ml_kem_keygen.txt
+#  test/recipes/30-test_evp_data/evppkey_ml_kem_encapdecap.txt
 #
-# e.g. python3 mldsa_parse.py ~/Downloads/keygen.json > ./test/recipes/30-test_evp_data/evppkey_ml_dsa_keygen.txt
+# e.g. python3 mlkem_parse.py ~/Downloads/keygen.json > ./test/recipes/30-test_evp_data/evppkey_ml_kem_keygen.txt
 #
 import json
 import argparse
 import datetime
+import sys
+
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
 
 def print_label(label, value):
     print(label + " = " + value)
@@ -29,84 +31,44 @@ def print_label(label, value):
 def print_hexlabel(label, tag, value):
     print(label + " = hex" + tag + ":" + value)
 
-def parse_ml_dsa_key_gen(groups):
+def parse_ml_kem_key_gen(groups):
     for grp in groups:
         for tst in grp['tests']:
             print("");
             print_label("FIPSversion", ">=3.5.0")
             print_label("KeyGen", grp['parameterSet'])
             print_label("KeyName", "tcId" + str(tst['tcId']))
-            print_hexlabel("Ctrl", "seed", tst['seed'])
-            print_hexlabel("CtrlOut", "pub", tst['pk'])
-            print_hexlabel("CtrlOut", "priv", tst['sk'])
+            print_hexlabel("Ctrl", "seed", tst['d'] + tst['z'])
+            print_hexlabel("CtrlOut", "pub", tst['ek'])
+            print_hexlabel("CtrlOut", "priv", tst['dk'])
 
-def parse_ml_dsa_sig_gen(groups):
+def parse_ml_kem_encap_decap(groups):
     for grp in groups:
-        deter = grp['deterministic'] # Boolean
-        externalMu = grp['externalMu'] # Boolean
-        signInterfaceExternal = (grp['signatureInterface'] == "External")
-        signPreHash = (grp['preHash'] == "preHash")
-        signPure = (grp['preHash'] == "pure")
-        includeMu = True # Flag flips to only include the Ctrl mu:0 half the time
-
-        if signPreHash:
-            continue
-        if not externalMu and not signPure:
-            continue
-
         name = grp['parameterSet'].replace('-', '_')
-        for tst in grp['tests']:
-            testname = name + "_" + str(tst['tcId'])
-            print("");
-            print_label("PrivateKeyRaw", testname + ":" + grp['parameterSet'] + ":" + tst['sk'])
-            print("");
-            print_label("FIPSversion", ">=3.5.0")
-            print_label("Sign-Message", grp['parameterSet'] + ":" + testname)
-            print_label("Input", tst['mu' if externalMu else 'message'])
-            print_label("Output", tst['signature'])
-            print_label("Ctrl", "message-encoding:1")
-            if not externalMu:
-                print_label("Ctrl", "hexcontext-string:" + tst["context"])
-                includeMu = not includeMu
-            if externalMu or includeMu:
-                print_label("Ctrl", "mu:" + ("1" if externalMu else "0"))
-            print_label("Ctrl", "deterministic:" + ("1" if deter else "0"))
-            if not deter:
-                print_label("Ctrl", "hextest-entropy:" + tst["rnd"])
-
-def parse_ml_dsa_sig_ver(groups):
-    for grp in groups:
-        externalMu = grp["externalMu"] # Boolean
-        signInterfaceExternal = (grp['signatureInterface'] == "External")
-        signPreHash = (grp['preHash'] == "preHash")
-        signPure = (grp['preHash'] == "pure")
-        includeMu = True # Flag flips to only include the Ctrl mu:0 half the time
-
-        if signPreHash:
-            continue
-        if not externalMu and not signPure:
-            continue
-
-        name = grp['parameterSet'].replace('-', '_')
-        for tst in grp['tests']:
-            testname = name + "_" + str(tst['tcId'])
-            print("");
-            print_label("PublicKeyRaw", testname + ":" + grp['parameterSet'] + ":" + tst['pk'])
-            print("");
-            if "reason" in tst:
-                print("# " + tst['reason'])
-            print_label("FIPSversion", ">=3.5.0")
-            print_label("Verify-Message-Public", grp['parameterSet'] + ":" + testname)
-            print_label("Input", tst['mu' if externalMu else 'message'])
-            print_label("Output", tst['signature'])
-            print_label("Ctrl", "message-encoding:1")
-            if not externalMu:
-                print_label("Ctrl", "hexcontext-string:" + tst["context"])
-                includeMu = not includeMu
-            if externalMu or includeMu:
-                print_label("Ctrl", "mu:" + ("1" if externalMu else "0"))
-            if not tst['testPassed']:
-                print_label("Result", "VERIFY_ERROR")
+        function = grp['function']        
+        if function == "encapsulation":
+            for tst in grp['tests']:
+                print("");
+                print('# tcId = ' + str(tst['tcId']));
+                print_label("FIPSversion", ">=3.5.0")
+                print_label("Kem", grp['parameterSet'])
+                print_label("Entropy", tst['m'])
+                print_label("EncodedPublicKey", tst['ek'])
+                print_label("Ciphertext", tst['c'])
+                print_label("Output", tst['k'])
+        elif function == "decapsulation":
+            dk = grp['dk']            
+            for tst in grp['tests']:
+                print("");
+                print('# tcId = ' + str(tst['tcId']));
+                print_label("FIPSversion", ">=3.5.0")
+                print_label("Kem", grp['parameterSet'])
+                print_label("EncodedPrivateKey", dk)
+                print("# " +  tst['reason'])
+                print_label("Input", tst['c'])
+                print_label("Output", tst['k'])                   
+        else:
+            eprint("Unsupported function " + function)
 
 parser = argparse.ArgumentParser(description="")
 parser.add_argument('filename', type=str)
@@ -120,6 +82,7 @@ year = datetime.date.today().year
 version = data['vsId']
 algorithm = data['algorithm']
 mode = data['mode']
+revision = data['revision']
 
 print("# Copyright " + str(year) + " The OpenSSL Project Authors. All Rights Reserved.")
 print("#")
@@ -129,17 +92,18 @@ print("# in the file LICENSE in the source distribution or at")
 print("# https://www.openssl.org/source/license.html\n")
 print("# ACVP test data for " + algorithm + " " + mode + " generated from")
 print("# https://github.com/usnistgov/ACVP-Server/blob/master/gen-val/json-files/"
-      "ML-DSA-" + mode + "-FIPS204/internalProjection.json")
+      + algorithm + "-" + mode + "-" + revision + "/internalProjection.json")
 print("# [version " + str(version) + "]")
 
-if algorithm == "ML-DSA":
-    if mode == 'sigVer':
-        parse_ml_dsa_sig_ver(data['testGroups'])
-    elif mode == 'sigGen':
-        parse_ml_dsa_sig_gen(data['testGroups'])
-    elif mode == 'keyGen':
-        parse_ml_dsa_key_gen(data['testGroups'])
+print("")
+print_label("Title", algorithm + " " + mode + " ACVP Tests")
+
+if algorithm == "ML-KEM":
+    if mode == "keyGen":
+        parse_ml_kem_key_gen(data['testGroups'])
+    elif mode == "encapDecap":
+        parse_ml_kem_encap_decap(data['testGroups'])
     else:
-        print("Unsupported mode " + mode)
+        eprint("Unsupported mode " + mode)
 else:
-    print("Unsupported algorithm " + algorithm)
+    eprint("Unsupported algorithm " + algorithm)
