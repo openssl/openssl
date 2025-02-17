@@ -256,13 +256,13 @@ static int ecdsa_keygen_knownanswer_test(EC_KEY *eckey, BN_CTX *ctx,
     int len, ret = 0;
     OSSL_SELF_TEST *st = NULL;
     unsigned char bytes[512] = {0};
-    EC_POINT *pub_key2 = EC_POINT_new(eckey->group);
-
-    if (pub_key2 == NULL)
-        return 0;
+    EC_POINT *pub_key2 = NULL;
 
     st = OSSL_SELF_TEST_new(cb, cbarg);
     if (st == NULL)
+        return 0;
+
+    if ((pub_key2 = EC_POINT_new(eckey->group)) == NULL)
         return 0;
 
     OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_PCT_KAT,
