@@ -13,6 +13,7 @@
 #include <openssl/evp.h>
 #include <openssl/core_names.h>
 
+#include "internal/common.h"
 #include "internal/provider.h"
 #include "crypto/evp.h"
 #include "evp_local.h"
@@ -25,17 +26,18 @@ int EVP_SKEY_export(const EVP_SKEY *skey, int selection,
         return 0;
     }
 
-    if (skey->skeymgmt == NULL) {
-        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_INVALID_ARGUMENT);
-        return 0;
-    }
-
     return evp_skeymgmt_export(skey->skeymgmt, skey->keydata, selection, export_cb, export_cbarg);
 }
 
-EVP_SKEY *evp_skey_alloc(void)
+static EVP_SKEY *evp_skey_alloc(EVP_SKEYMGMT *skeymgmt)
 {
-    EVP_SKEY *skey = OPENSSL_zalloc(sizeof(EVP_SKEY));
+    EVP_SKEY *skey;
+
+    if (!ossl_assert(skeymgmt != NULL))
+        return NULL;
+
+    if ((skey = OPENSSL_zalloc(sizeof(*skey))) == NULL)
+        return NULL;
 
     if (!CRYPTO_NEW_REF(&skey->references, 1))
         goto err;
@@ -45,6 +47,7 @@ EVP_SKEY *evp_skey_alloc(void)
         ERR_raise(ERR_LIB_EVP, ERR_R_CRYPTO_LIB);
         goto err;
     }
+    skey->skeymgmt = skeymgmt;
     return skey;
 
  err:
@@ -54,14 +57,12 @@ EVP_SKEY *evp_skey_alloc(void)
     return NULL;
 }
 
-EVP_SKEY *EVP_SKEY_import(OSSL_LIB_CTX *libctx, const char *skeymgmtname, const char *propquery,
-                          int selection, const OSSL_PARAM *params)
+static EVP_SKEY *evp_skey_alloc_fetch(OSSL_LIB_CTX *libctx,
+                                      const char *skeymgmtname,
+                                      const char *propquery)
 {
-    EVP_SKEYMGMT *skeymgmt = NULL;
-    EVP_SKEY *skey = evp_skey_alloc();
-
-    if (skey == NULL)
-        return NULL;
+    EVP_SKEYMGMT *skeymgmt;
+    EVP_SKEY *skey;
 
     skeymgmt = EVP_SKEYMGMT_fetch(libctx, skeymgmtname, propquery);
     if (skeymgmt == NULL) {
@@ -72,10 +73,24 @@ EVP_SKEY *EVP_SKEY_import(OSSL_LIB_CTX *libctx, const char *skeymgmtname, const 
         skeymgmt = EVP_SKEYMGMT_fetch(libctx, OSSL_SKEY_TYPE_GENERIC, propquery);
         if (skeymgmt == NULL) {
             ERR_raise(ERR_LIB_EVP, ERR_R_FETCH_FAILED);
-            goto err;
+            return NULL;
         }
     }
-    skey->skeymgmt = skeymgmt;
+
+    skey = evp_skey_alloc(skeymgmt);
+    if (skey == NULL)
+        EVP_SKEYMGMT_free(skeymgmt);
+
+    return skey;
+}
+
+EVP_SKEY *EVP_SKEY_import(OSSL_LIB_CTX *libctx, const char *skeymgmtname, const char *propquery,
+                          int selection, const OSSL_PARAM *params)
+{
+    EVP_SKEY *skey = evp_skey_alloc_fetch(libctx, skeymgmtname, propquery);
+
+    if (skey == NULL)
+        return NULL;
 
     skey->keydata = evp_skeymgmt_import(skey->skeymgmt, selection, params);
     if (skey->keydata == NULL)
@@ -84,7 +99,6 @@ EVP_SKEY *EVP_SKEY_import(OSSL_LIB_CTX *libctx, const char *skeymgmtname, const 
     return skey;
 
  err:
-    EVP_SKEYMGMT_free(skeymgmt);
     EVP_SKEY_free(skey);
     return NULL;
 }
@@ -92,25 +106,10 @@ EVP_SKEY *EVP_SKEY_import(OSSL_LIB_CTX *libctx, const char *skeymgmtname, const 
 EVP_SKEY *EVP_SKEY_generate(OSSL_LIB_CTX *libctx, const char *skeymgmtname,
                             const char *propquery, const OSSL_PARAM *params)
 {
-    EVP_SKEYMGMT *skeymgmt = NULL;
-    EVP_SKEY *skey = evp_skey_alloc();
+    EVP_SKEY *skey = evp_skey_alloc_fetch(libctx, skeymgmtname, propquery);
 
     if (skey == NULL)
         return NULL;
-
-    skeymgmt = EVP_SKEYMGMT_fetch(libctx, skeymgmtname, propquery);
-    if (skeymgmt == NULL) {
-        /*
-         * if the specific key_type is unkown, attempt to use the generic
-         * key management
-         */
-        skeymgmt = EVP_SKEYMGMT_fetch(libctx, OSSL_SKEY_TYPE_GENERIC, propquery);
-        if (skeymgmt == NULL) {
-            ERR_raise(ERR_LIB_EVP, ERR_R_FETCH_FAILED);
-            goto err;
-        }
-    }
-    skey->skeymgmt = skeymgmt;
 
     skey->keydata = evp_skeymgmt_generate(skey->skeymgmt, params);
     if (skey->keydata == NULL)
@@ -119,7 +118,6 @@ EVP_SKEY *EVP_SKEY_generate(OSSL_LIB_CTX *libctx, const char *skeymgmtname,
     return skey;
 
  err:
-    EVP_SKEYMGMT_free(skeymgmt);
     EVP_SKEY_free(skey);
     return NULL;
 }
@@ -196,8 +194,7 @@ void EVP_SKEY_free(EVP_SKEY *skey)
     if (i > 0)
         return;
     REF_ASSERT_ISNT(i < 0);
-    if (skey->keydata && skey->skeymgmt)
-        evp_skeymgmt_freedata(skey->skeymgmt, skey->keydata);
+    evp_skeymgmt_freedata(skey->skeymgmt, skey->keydata);
 
     EVP_SKEYMGMT_free(skey->skeymgmt);
 
@@ -239,9 +236,6 @@ int EVP_SKEY_is_a(const EVP_SKEY *skey, const char *name)
     if (skey == NULL)
         return 0;
 
-    if (skey->skeymgmt == NULL)
-        return 0;
-
     return EVP_SKEYMGMT_is_a(skey->skeymgmt, name);
 }
 
@@ -266,14 +260,25 @@ EVP_SKEY *EVP_SKEY_to_provider(EVP_SKEY *skey, OSSL_LIB_CTX *libctx,
     EVP_SKEYMGMT *skeymgmt = NULL;
     EVP_SKEY *ret = NULL;
 
-    if (prov != NULL) {
-        skeymgmt = evp_skeymgmt_fetch_from_prov(prov, skey->skeymgmt->type_name,
-                                                propquery);
+    if (skey == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return NULL;
+    }
 
+    if (prov != NULL) {
+        if (skey->skeymgmt->prov == prov)
+            skeymgmt = skey->skeymgmt;
+        else
+            skeymgmt = evp_skeymgmt_fetch_from_prov(prov, skey->skeymgmt->type_name,
+                                                    propquery);
     } else {
         /* If no provider, get the default skeymgmt */
         skeymgmt = EVP_SKEYMGMT_fetch(libctx, skey->skeymgmt->type_name,
                                       propquery);
+    }
+    if (skeymgmt == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_FETCH_FAILED);
+        return NULL;
     }
 
     /* Short-circuit if destination provider is the same as origin */
@@ -294,12 +299,11 @@ EVP_SKEY *EVP_SKEY_to_provider(EVP_SKEY *skey, OSSL_LIB_CTX *libctx,
     if (ctx.keydata == NULL)
         goto err;
 
-    ret = evp_skey_alloc();
+    ret = evp_skey_alloc(skeymgmt);
     if (ret == NULL)
         goto err;
 
     ret->keydata = ctx.keydata;
-    ret->skeymgmt = skeymgmt;
 
     return ret;
 
