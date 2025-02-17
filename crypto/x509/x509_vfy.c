@@ -1400,6 +1400,9 @@ static void crl_akid_check(X509_STORE_CTX *ctx, X509_CRL *crl,
 
     crl_issuer = sk_X509_value(ctx->chain, cidx);
 
+    if (crl_issuer == NULL) 
+        return -1;
+
     if (X509_check_akid(crl_issuer, crl->akid) == X509_V_OK) {
         if (*pcrl_score & CRL_SCORE_ISSUER_NAME) {
             *pcrl_score |= CRL_SCORE_AKID | CRL_SCORE_ISSUER_CERT;
