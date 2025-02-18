@@ -24,6 +24,10 @@ import json
 import argparse
 import datetime
 import re
+import sys
+
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
 
 def print_label(label, value):
     print(label + " = " + value)
@@ -140,6 +144,6 @@ if algorithm == "SLH-DSA":
     elif mode == 'keyGen':
         parse_slh_dsa_key_gen(data['testGroups'])
     else:
-        print("Unsupported mode " + mode)
+        eprint("Unsupported mode " + mode)
 else:
-    print("Unsupported algorithm " + algorithm)
+    eprint("Unsupported algorithm " + algorithm)
