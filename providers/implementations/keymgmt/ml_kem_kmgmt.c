@@ -312,6 +312,36 @@ static const OSSL_PARAM *ml_kem_imexport_types(int selection)
     return NULL;
 }
 
+static int check_seed(const uint8_t *seed, const uint8_t *prvenc,
+                      ML_KEM_KEY *key)
+{
+    size_t zlen = ML_KEM_RANDOM_BYTES;
+
+    if (memcmp(seed + ML_KEM_SEED_BYTES - zlen,
+               prvenc + key->vinfo->prvkey_bytes - zlen, zlen) == 0)
+        return 1;
+    ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY,
+                   "private %s key implicit rejection secret does"
+                   " not match seed", key->vinfo->algorithm_name);
+    return 0;
+}
+
+static int check_pkhash(const uint8_t *prvenc, ML_KEM_KEY *key)
+{
+    size_t off;
+
+    /* point to the H(ek) offset in dk = DKpke||ek||H(ek)||z */
+    off = key->vinfo->prvkey_bytes - ML_KEM_RANDOM_BYTES - ML_KEM_PKHASH_BYTES;
+    if (memcmp(key->pkhash, prvenc + off, ML_KEM_PKHASH_BYTES) == 0)
+        return 1;
+
+    ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY,
+                   "explicit %s private key does not match seed",
+                   key->vinfo->algorithm_name);
+    ossl_ml_kem_key_reset(key);
+    return 0;
+}
+
 static int ml_kem_key_fromdata(ML_KEM_KEY *key,
                                const OSSL_PARAM params[],
                                int include_private)
@@ -372,7 +402,7 @@ static int ml_kem_key_fromdata(ML_KEM_KEY *key,
 
     /* Check any explicit public key against embedded value in private key */
     if (publen > 0 && prvlen > 0) {
-        /* point to the ek offset in the DKpke||ek||H(ek)||z */
+        /* point to the ek offset in dk = DKpke||ek||H(ek)||z */
         puboff = prvlen - ML_KEM_RANDOM_BYTES - ML_KEM_PKHASH_BYTES - publen;
         if (memcmp(pubenc, (unsigned char *)prvenc + puboff, publen) != 0) {
             ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY,
@@ -382,11 +412,16 @@ static int ml_kem_key_fromdata(ML_KEM_KEY *key,
         }
     }
 
-    if (seedlen != 0 && (prvlen == 0 || key->prefer_seed))
-        return ossl_ml_kem_set_seed(seedenc, seedlen, key)
-            && ossl_ml_kem_genkey(NULL, 0, key);
-    else if (prvlen != 0)
+    if (seedlen != 0 && (prvlen == 0 || key->prefer_seed)) {
+        if (prvlen != 0 && !check_seed(seedenc, prvenc, key))
+            return 0;
+        if (!ossl_ml_kem_set_seed(seedenc, seedlen, key)
+            || !ossl_ml_kem_genkey(NULL, 0, key))
+            return 0;
+        return prvlen == 0 || check_pkhash(prvenc, key);
+    } else if (prvlen != 0) {
         return ossl_ml_kem_parse_private_key(prvenc, prvlen, key);
+    }
     return ossl_ml_kem_parse_public_key(pubenc, publen, key);
 }
 
@@ -438,9 +473,8 @@ static const OSSL_PARAM *ml_kem_gettable_params(void *provctx)
 void *ml_kem_load(const void *reference, size_t reference_sz)
 {
     ML_KEM_KEY *key = NULL;
-    uint8_t *encoded_dk;
+    uint8_t *encoded_dk = NULL;
     uint8_t seed[ML_KEM_SEED_BYTES];
-    size_t zlen = ML_KEM_RANDOM_BYTES;
 
     if (ossl_prov_is_running() && reference_sz == sizeof(key)) {
         /* The contents of the reference is the address to our object */
@@ -449,24 +483,15 @@ void *ml_kem_load(const void *reference, size_t reference_sz)
         key->encoded_dk = NULL;
         /* We grabbed, so we detach it */
         *(ML_KEM_KEY **)reference = NULL;
-        /*
-         * Reject |z| mismatch between seed and key, the seed buffer holds |z|
-         * followed by |d|.
-         */
         if (encoded_dk != NULL
             && ossl_ml_kem_encode_seed(seed, sizeof(seed), key)
-            && memcmp(seed + sizeof(seed) - zlen,
-                      encoded_dk + key->vinfo->prvkey_bytes - zlen,
-                      zlen) != 0) {
-            ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY,
-                           "private %s key implicit rejection secret does"
-                           " not match seed", key->vinfo->algorithm_name);
+            && !check_seed(seed, encoded_dk, key))
             goto err;
-        }
         /* Generate the key now, if it holds only a stashed seed. */
         if (ossl_ml_kem_have_seed(key) &&
             (encoded_dk == NULL || key->prefer_seed)) {
-            if (!ossl_ml_kem_genkey(NULL, 0, key))
+            if (!ossl_ml_kem_genkey(NULL, 0, key)
+                || (encoded_dk != NULL && !check_pkhash(encoded_dk, key)))
                 goto err;
         } else if (encoded_dk != NULL) {
             if (!ossl_ml_kem_parse_private_key(encoded_dk,
@@ -484,6 +509,7 @@ void *ml_kem_load(const void *reference, size_t reference_sz)
     }
 
   err:
+    OPENSSL_free(encoded_dk);
     ossl_ml_kem_key_free(key);
     return NULL;
 }
