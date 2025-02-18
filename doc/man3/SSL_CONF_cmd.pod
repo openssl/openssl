@@ -127,7 +127,7 @@ in TLSv1.3, specified using the IETF name, e.g., B<ecdsa_secp256r1_sha256>,
 B<ed25519>, or B<rsa_pss_pss_sha256>. Additional providers may make available
 further algorithms via the TLS-SIGALG capability.
 Signature scheme names and public key algorithm names (but not the hash names)
-in the B<algoirithm+hash> form are case-insensitive.
+in the B<algorithm+hash> form are case-insensitive.
 See L<provider-base(7)>.
 
 If this option is not set then all signature algorithms supported by all
@@ -421,7 +421,7 @@ B<signature_scheme> is one of the signature schemes defined in TLSv1.3,
 specified using the IANA name, e.g., B<ecdsa_secp256r1_sha256>, B<ed25519>,
 or B<rsa_pss_pss_sha256>.
 Signature scheme names and public key algorithm names (but not the hash names)
-in the B<algoirithm+hash> form are case-insensitive.
+in the B<algorithm+hash> form are case-insensitive.
 Additional providers may make available further signature schemes via the
 TLS_SIGALG capability. See L<provider-base(7)/CAPABILITIES>.
 
