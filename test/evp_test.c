@@ -4271,7 +4271,7 @@ static int keygen_test_run(EVP_TEST *t)
     OSSL_PARAM_BLD *bld = NULL;
     OSSL_PARAM *params = NULL;
     size_t params_n = 0;
-    uint8_t *enc_pub_key = NULL, *enc_priv_key = NULL;
+    int key_free = 1;
 
     if (keygen->paramname != NULL) {
         rv = find_key(&keyparams, keygen->paramname, public_keys);
@@ -4345,22 +4345,20 @@ static int keygen_test_run(EVP_TEST *t)
         key->next = private_keys;
         private_keys = key;
         rv = 1;
+        key_free = 0;
     }
 
     t->err = NULL;
-    if (keygen->keyname != NULL)
-        goto ok;
 err:
-    EVP_PKEY_free(pkey);
-    pkey = NULL;
-ok:
+    if (key_free) {
+        EVP_PKEY_free(pkey);
+        pkey = NULL;
+    }
     EVP_PKEY_CTX_free(genctx);
     if (sk_OPENSSL_STRING_num(keygen->in_controls) > 0)
         ctrl2params_free(params, params_n, 0);
     OSSL_PARAM_free(params);
     OSSL_PARAM_BLD_free(bld);
-    OPENSSL_free(enc_pub_key);
-    OPENSSL_free(enc_priv_key);
     return rv;
 }
 
