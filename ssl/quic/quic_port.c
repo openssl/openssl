@@ -1648,7 +1648,6 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
          */
         qrx = NULL;
     } else {
-        ossl_assert(qrx_src != NULL);
         /*
 	 * We still need to salvage packets from almost forgotten qrx
          * and pass them to channel.
