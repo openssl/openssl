@@ -1453,8 +1453,10 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
     QUIC_CONN_ID odcid, scid;
     uint8_t gen_new_token = 0;
     OSSL_QRX *qrx = NULL;
+    OSSL_QRX *qrx_src = NULL;
     OSSL_QRX_ARGS qrx_args = {0};
     uint64_t cause_flags = 0;
+    OSSL_QRX_PKT *qrx_pkt = NULL;
 
     /* Don't handle anything if we are no longer running. */
     if (!ossl_quic_port_is_running(port))
@@ -1563,6 +1565,23 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
     if (ossl_qrx_validate_initial_packet(qrx, e, (const QUIC_CONN_ID *)dcid) == 0)
         goto undesirable;
 
+    if (port->validate_addr == 0) {
+        /*
+	 * Forget qrx, because it becomes (almost) useless here. We must let
+	 * channel to create a new QRX for connection ID server chooses. The
+	 * validation keys for new DCID will be derived by
+	 * ossl_quic_channel_on_new_conn() when we will be creating channel.
+	 * See RFC 9000 section 7.2 negotiating connection id to better
+	 * understand what's going on here.
+         *
+         * Did we say qrx is almost useless? Why? Because qrx remembers packets
+         * we just validated. Those packets must be injected to channel we are
+         * going to create. We use qrx_src alias so we can read packets from
+         * qrx and inject them to channel.
+         */
+         qrx_src = qrx;
+         qrx = NULL;
+    }
     /*
      * TODO(QUIC FUTURE): there should be some logic similar to accounting half-open
      * states in TCP. If we reach certain threshold, then we want to
@@ -1570,13 +1589,6 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
      */
     if (port->validate_addr == 1 && hdr.token == NULL) {
         port_send_retry(port, &e->peer, &hdr);
-        /*
-         * This is a kind of bummer because we forget secrets for initial
-         * level encryption. The secrets costs us CPU to compute. What we can
-         * do here is to store them within retry token. Then we can retrieve them
-         * from initial packet which will carry our retry token to validate
-         * client's address.
-         */
         goto undesirable;
     }
 
@@ -1585,6 +1597,9 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
      * server address validation, we may still get a token if we sent
      * a NEW_TOKEN frame during a prior connection, which we should still
      * validate here
+     *
+     * TODO: is it OK to keep qrx in this case? Are not we running into
+     * similar problem like we did in case when validate_addr == 0?
      */
     if (hdr.token != NULL
         && port_validate_token(&hdr, port, &e->peer,
@@ -1627,10 +1642,20 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
     if (gen_new_token == 1)
         generate_new_token(new_ch, &e->peer);
 
-    /*
-     * The qrx belongs to channel now, so don't free it.
-     */
-    qrx = NULL;
+    if (qrx != NULL) {
+        /*
+         * The qrx belongs to channel now, so don't free it.
+         */
+        qrx = NULL;
+    } else {
+        ossl_assert(qrx_src != NULL);
+        /*
+	 * We still need to salvage packets from almost forgotten qrx
+         * and pass them to channel.
+         */
+        while (ossl_qrx_read_pkt(qrx_src, &qrx_pkt) == 1)
+            ossl_quic_channel_inject_pkt(new_ch, qrx_pkt);
+    }
 
     /*
      * If function reaches this place, then packet got validated in
@@ -1647,6 +1672,7 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
 
 undesirable:
     ossl_qrx_free(qrx);
+    ossl_qrx_free(qrx_src);
     ossl_quic_demux_release_urxe(port->demux, e);
 }
 

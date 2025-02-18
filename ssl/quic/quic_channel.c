@@ -3443,6 +3443,11 @@ void ossl_quic_channel_inject(QUIC_CHANNEL *ch, QUIC_URXE *e)
     ossl_qrx_inject_urxe(ch->qrx, e);
 }
 
+void ossl_quic_channel_inject_pkt(QUIC_CHANNEL *ch, OSSL_QRX_PKT *qpkt)
+{
+    ossl_qrx_inject_pkt(ch->qrx, qpkt);
+}
+
 void ossl_quic_channel_on_stateless_reset(QUIC_CHANNEL *ch)
 {
     QUIC_TERMINATE_CAUSE tcause = {0};
