@@ -35,7 +35,7 @@ elements randomly, the final public key element is computed from these values.
 
 =over 4
 
-=item "seed" (B<OOSSL_PKEY_PARAM_SLH_DSA_SEED>) <octet string>
+=item "seed" (B<OSSL_PKEY_PARAM_SLH_DSA_SEED>) <octet string>
 
 Supplies values to use for the private seed, private prf and
 public seed instead of generating random values. This is used for testing
