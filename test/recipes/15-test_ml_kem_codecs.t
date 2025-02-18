@@ -191,7 +191,8 @@ foreach my $alg (@algs) {
     $mixtfh->close();
     ok(run(app([qw(openssl pkey -inform DER -noout -in), $real],
                sprintf("accept valid keypair: %s", $alg))));
-    ok(!run(app([qw(openssl pkey -inform DER -noout -in), $mixt])),
+    ok(!run(app([qw(openssl pkey -provparam ml-kem.prefer_seed=no),
+                 qw(-inform DER -noout -in), $mixt])),
                 sprintf("reject real private and fake public: %s", $alg));
     # Mutate the public key hash
     my $mashder = $realder;
