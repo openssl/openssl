@@ -930,9 +930,10 @@ static void *xor_gen_init(void *provctx, int selection,
                       | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS)) == 0)
         return NULL;
 
-    if ((gctx = OPENSSL_zalloc(sizeof(*gctx))) != NULL)
-        gctx->selection = selection;
+    if ((gctx = OPENSSL_zalloc(sizeof(*gctx))) == NULL)
+        return NULL;
 
+    gctx->selection = selection;
     gctx->libctx = PROV_XOR_LIBCTX_OF(provctx);
 
     if (!xor_gen_set_params(gctx, params)) {
