@@ -320,6 +320,7 @@ int ossl_qrx_set_late_validation_cb(OSSL_QRX *qrx,
  * establish a new connection.
  */
 void ossl_qrx_inject_urxe(OSSL_QRX *qrx, QUIC_URXE *e);
+void ossl_qrx_inject_pkt(OSSL_QRX *qrx, OSSL_QRX_PKT *pkt);
 int ossl_qrx_validate_initial_packet(OSSL_QRX *qrx, QUIC_URXE *urxe,
                                      const QUIC_CONN_ID *dcid);
 

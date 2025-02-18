@@ -300,6 +300,8 @@ void ossl_quic_channel_on_stateless_reset(QUIC_CHANNEL *ch);
 
 void ossl_quic_channel_inject(QUIC_CHANNEL *ch, QUIC_URXE *e);
 
+void ossl_quic_channel_inject_pkt(QUIC_CHANNEL *ch, OSSL_QRX_PKT *qpkt);
+
 /*
  * Queries and Accessors
  * =====================

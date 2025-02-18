@@ -271,6 +271,19 @@ void ossl_qrx_inject_urxe(OSSL_QRX *qrx, QUIC_URXE *urxe)
                           qrx->msg_callback_arg);
 }
 
+void ossl_qrx_inject_pkt(OSSL_QRX *qrx, OSSL_QRX_PKT *pkt)
+{
+    RXE *rxe = (RXE *)pkt;
+
+    /*
+     * port_default_packet_handler() uses ossl_qrx_read_pkt()
+     * to get pkt. Such packet has refcount 1.
+     */
+    ossl_qrx_pkt_release(pkt);
+    if (ossl_assert(rxe->refcount == 0))
+        ossl_list_rxe_insert_tail(&qrx->rx_pending, rxe);
+}
+
 /*
  * qrx_validate_initial_pkt() is derived from qrx_process_pkt(). Unlike
  * qrx_process_pkt() the qrx_validate_initial_pkt() function can process
