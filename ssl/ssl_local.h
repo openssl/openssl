@@ -2484,7 +2484,7 @@ const SSL_METHOD *func_name(void)  \
                 ssl3_renegotiate_check, \
                 dtls1_read_bytes, \
                 dtls1_write_app_data_bytes, \
-                ssl3_dispatch_alert, \
+                dtls1_dispatch_alert, \
                 dtls1_ctrl, \
                 ssl3_ctx_ctrl, \
                 ssl3_get_cipher_by_char, \
