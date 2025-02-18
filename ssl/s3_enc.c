@@ -274,11 +274,11 @@ int ssl3_finish_mac(SSL_CONNECTION *s, const unsigned char *buf, size_t len)
          * point we know what the protocol version is.
          */
         if (s->negotiated_version == DTLS1_3_VERSION) {
-           /*
-            * In DTLS 1.3 we need to parse the messages that are buffered to
-            * be able to remove message_sequence, fragment_size and fragment_offset
-            * from the Transcript Hash calculation.
-            */
+            /*
+             * In DTLS 1.3 we need to parse the messages that are buffered to
+             * be able to remove message_sequence, fragment_size and fragment_offset
+             * from the Transcript Hash calculation.
+             */
             while (len > 0) {
                 PACKET hmhdr;
                 unsigned long hmbodylen;
@@ -306,7 +306,9 @@ int ssl3_finish_mac(SSL_CONNECTION *s, const unsigned char *buf, size_t len)
                 /*
                  * In DTLS 1.3 the transcript hash is calculated excluding the
                  * message_sequence, fragment_size and fragment_offset header
-                 * fields.
+                 * fields which are carried in the last
+                 * DTLS1_HM_HEADER_LENGTH - SSL3_HM_HEADER_LENGTH header bytes
+                 * of the DTLS handshake message header.
                  */
                 if (!ossl_assert(hmhdrlen + hmbodylen <= len)
                     || !EVP_DigestUpdate(s->s3.handshake_dgst, buf, SSL3_HM_HEADER_LENGTH)
