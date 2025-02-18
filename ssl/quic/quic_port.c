@@ -1567,12 +1567,12 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
 
     if (port->validate_addr == 0) {
         /*
-	 * Forget qrx, because it becomes (almost) useless here. We must let
-	 * channel to create a new QRX for connection ID server chooses. The
-	 * validation keys for new DCID will be derived by
-	 * ossl_quic_channel_on_new_conn() when we will be creating channel.
-	 * See RFC 9000 section 7.2 negotiating connection id to better
-	 * understand what's going on here.
+         * Forget qrx, because it becomes (almost) useless here. We must let
+         * channel to create a new QRX for connection ID server chooses. The
+         * validation keys for new DCID will be derived by
+         * ossl_quic_channel_on_new_conn() when we will be creating channel.
+         * See RFC 9000 section 7.2 negotiating connection id to better
+         * understand what's going on here.
          *
          * Did we say qrx is almost useless? Why? Because qrx remembers packets
          * we just validated. Those packets must be injected to channel we are
