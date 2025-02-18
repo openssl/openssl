@@ -554,6 +554,7 @@ static int test_ssl_trace(void)
 }
 #endif
 
+#ifndef OPENSSL_NO_SSL_TRACE
 enum {
     INITIAL = 0,
     GATHER_TOKEN = 1,
@@ -687,6 +688,7 @@ static int test_new_token(void)
 
     return testresult;
 }
+#endif
 
 static int ensure_valid_ciphers(const STACK_OF(SSL_CIPHER) *ciphers)
 {
@@ -2738,7 +2740,9 @@ int setup_tests(void)
     ADD_TEST(test_domain_flags);
     ADD_TEST(test_early_ticks);
     ADD_TEST(test_ssl_new_from_listener);
+#ifndef OPENSSL_NO_SSL_TRACE
     ADD_TEST(test_new_token);
+#endif
     return 1;
  err:
     cleanup_tests();
