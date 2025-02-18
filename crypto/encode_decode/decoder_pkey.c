@@ -149,15 +149,7 @@ static int decoder_construct_pkey(OSSL_DECODER_INSTANCE *decoder_inst,
          * result in the keymgmt.
          */
         if (keymgmt_prov == decoder_prov) {
-            /*
-             * When load returns NULL, because, though the provided key material
-             * is syntactically valid (parsed OK), it is not an acceptable key,
-             * the reason why the key is rejected would be lost, unless we
-             * signal a hard error, and suppress resetting for another try.
-             */
             keydata = evp_keymgmt_load(keymgmt, object_ref, object_ref_sz);
-            if (keydata == NULL)
-                ossl_decoder_ctx_set_harderr(data->ctx);
         } else {
             struct evp_keymgmt_util_try_import_data_st import_data;
 
@@ -180,6 +172,14 @@ static int decoder_construct_pkey(OSSL_DECODER_INSTANCE *decoder_inst,
             keydata = import_data.keydata;
             import_data.keydata = NULL;
         }
+        /*
+         * When load or import fails, because this is not an acceptable key
+         * (despite the provided key material being syntactically valid), the
+         * reason why the key is rejected would be lost, unless we signal a
+         * hard error, and suppress resetting for another try.
+         */
+        if (keydata == NULL)
+            ossl_decoder_ctx_set_harderr(data->ctx);
 
         if (keydata != NULL
             && (pkey = evp_keymgmt_util_make_pkey(keymgmt, keydata)) == NULL)
