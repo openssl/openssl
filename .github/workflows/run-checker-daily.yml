@@ -115,7 +115,6 @@ jobs:
           no-ssl,
           no-ssl3,
           no-ssl3-method,
-          no-ssl-trace,
           no-static-engine no-shared,
           no-tests,
           enable-tfo,
