@@ -1007,7 +1007,8 @@ static uint64_t quic_mask_or_options(SSL *ssl, uint64_t mask_value, uint64_t or_
         xso_update_options(ctx.xso);
     }
 
-    ret = ctx.is_stream ? ctx.xso->ssl_options : ctx.qc->default_ssl_options;
+    ret = ctx.is_stream && ctx.xso != NULL ? ctx.xso->ssl_options
+                                           : ctx.qc->default_ssl_options;
 
     qctx_unlock(&ctx);
     return ret;
