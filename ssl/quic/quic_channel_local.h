@@ -452,6 +452,9 @@ struct quic_channel_st {
     /* Has qlog been requested? */
     unsigned int                    use_qlog                            : 1;
 
+    /* Has qlog been requested? */
+    unsigned int                    is_tserver_ch                       : 1;
+
     /* Saved error stack in case permanent error was encountered */
     ERR_STATE                       *err_state;
 
