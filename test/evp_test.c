@@ -5344,11 +5344,10 @@ int setup_tests(void)
     size_t n;
     char *config_file = NULL;
     char *provider_name = NULL;
-    const char *et = getenv("EVP_TEST_EXTENDED");
 
     OPTION_CHOICE o;
 
-    extended_tests = et != NULL && atoi(et) != 0;
+    extended_tests = getenv("EVP_TEST_EXTENDED") != NULL;
 
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
