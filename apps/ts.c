@@ -1017,7 +1017,7 @@ static X509_STORE *create_cert_store(const char *CApath, const char *CAfile,
             BIO_printf(bio_err, "memory allocation failure\n");
             goto err;
         }
-        if (X509_LOOKUP_load_store_ex(lookup, CAstore, libctx, propq) <= 0) {
+        if (X509_LOOKUP_add_store_ex(lookup, CAstore, libctx, propq) <= 0) {
             BIO_printf(bio_err, "Error loading store URI %s\n", CAstore);
             goto err;
         }
