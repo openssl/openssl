@@ -31,9 +31,12 @@ int EVP_SKEY_export(const EVP_SKEY *skey, int selection,
 
 static EVP_SKEY *evp_skey_alloc(EVP_SKEYMGMT *skeymgmt)
 {
-    EVP_SKEY *skey = OPENSSL_zalloc(sizeof(EVP_SKEY));
+    EVP_SKEY *skey;
 
-    if (skey == NULL || !ossl_assert(skeymgmt != NULL))
+    if (!ossl_assert(skeymgmt != NULL))
+        return NULL;
+
+    if ((skey = OPENSSL_zalloc(sizeof(*skey))) == NULL)
         return NULL;
 
     if (!CRYPTO_NEW_REF(&skey->references, 1))
@@ -257,14 +260,25 @@ EVP_SKEY *EVP_SKEY_to_provider(EVP_SKEY *skey, OSSL_LIB_CTX *libctx,
     EVP_SKEYMGMT *skeymgmt = NULL;
     EVP_SKEY *ret = NULL;
 
-    if (prov != NULL) {
-        skeymgmt = evp_skeymgmt_fetch_from_prov(prov, skey->skeymgmt->type_name,
-                                                propquery);
+    if (skey == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return NULL;
+    }
 
+    if (prov != NULL) {
+        if (skey->skeymgmt->prov == prov)
+            skeymgmt = skey->skeymgmt;
+        else
+            skeymgmt = evp_skeymgmt_fetch_from_prov(prov, skey->skeymgmt->type_name,
+                                                    propquery);
     } else {
         /* If no provider, get the default skeymgmt */
         skeymgmt = EVP_SKEYMGMT_fetch(libctx, skey->skeymgmt->type_name,
                                       propquery);
+    }
+    if (skeymgmt == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_FETCH_FAILED);
+        return NULL;
     }
 
     /* Short-circuit if destination provider is the same as origin */
