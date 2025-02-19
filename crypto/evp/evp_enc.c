@@ -587,7 +587,7 @@ static int evp_cipher_init_skey_internal(EVP_CIPHER_CTX *ctx,
             const unsigned char *keydata = NULL;
             size_t keylen = 0;
 
-            if (skey != NULL && !EVP_SKEY_get_raw_key(skey, &keydata, &keylen)) {
+            if (skey != NULL && !EVP_SKEY_get0_raw_key(skey, &keydata, &keylen)) {
                 ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
                 return 0;
             }
@@ -608,7 +608,7 @@ static int evp_cipher_init_skey_internal(EVP_CIPHER_CTX *ctx,
             const unsigned char *keydata = NULL;
             size_t keylen = 0;
 
-            if (skey != NULL && !EVP_SKEY_get_raw_key(skey, &keydata, &keylen)) {
+            if (skey != NULL && !EVP_SKEY_get0_raw_key(skey, &keydata, &keylen)) {
                 ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
                 return 0;
             }
