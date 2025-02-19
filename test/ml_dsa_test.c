@@ -42,9 +42,11 @@ static EVP_PKEY *do_gen_key(const char *alg,
     if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(lib_ctx, alg, NULL))
             || !TEST_int_eq(EVP_PKEY_keygen_init(ctx), 1)
             || !TEST_int_eq(EVP_PKEY_CTX_set_params(ctx, params), 1)
-            || !TEST_int_eq(EVP_PKEY_generate(ctx, &pkey), 1))
+            || !TEST_int_eq(EVP_PKEY_generate(ctx, &pkey), 1)) {
         pkey = NULL;
-
+        goto err;
+    }
+err:
     EVP_PKEY_CTX_free(ctx);
     return pkey;
 }
