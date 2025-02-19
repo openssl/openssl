@@ -1597,9 +1597,6 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
      * server address validation, we may still get a token if we sent
      * a NEW_TOKEN frame during a prior connection, which we should still
      * validate here
-     *
-     * TODO: is it OK to keep qrx in this case? Are not we running into
-     * similar problem like we did in case when validate_addr == 0?
      */
     if (hdr.token != NULL
         && port_validate_token(&hdr, port, &e->peer,
@@ -1624,6 +1621,16 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
             port_send_retry(port, &e->peer, &hdr);
             goto undesirable;
         }
+
+        /*
+         * client is under amplification limit, until it completes
+         * handshake.
+         *
+         * forget qrx so channel can create a new one
+         * with valid initial encryption level keys.
+         */
+        qrx_src = qrx;
+        qrx = NULL;
     }
 
     port_bind_channel(port, &e->peer, &scid, &hdr.dst_conn_id,
@@ -1649,7 +1656,7 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
         qrx = NULL;
     } else {
         /*
-	     * We still need to salvage packets from almost forgotten qrx
+         * We still need to salvage packets from almost forgotten qrx
          * and pass them to channel.
          */
         while (ossl_qrx_read_pkt(qrx_src, &qrx_pkt) == 1)
