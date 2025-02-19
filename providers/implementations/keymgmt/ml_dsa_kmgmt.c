@@ -14,6 +14,7 @@
 #include <openssl/proverr.h>
 #include <openssl/self_test.h>
 #include "crypto/ml_dsa.h"
+#include "internal/fips.h"
 #include "internal/param_build_set.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
@@ -59,7 +60,8 @@ static int ml_dsa_pairwise_test(const ML_DSA_KEY *key)
     size_t sig_len = 0;
     int ret = 0;
 
-    if (!ml_dsa_has(key, OSSL_KEYMGMT_SELECT_KEYPAIR))
+    if (!ml_dsa_has(key, OSSL_KEYMGMT_SELECT_KEYPAIR)
+            || ossl_fips_self_testing())
         return 1;
 
     /*
