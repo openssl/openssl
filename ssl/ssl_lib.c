@@ -8226,6 +8226,9 @@ int SSL_set1_client_cert_type(SSL *s, const unsigned char *val, size_t len)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
 
+    if (sc == NULL)
+        return 0;
+
     return set_cert_type(&sc->client_cert_type, &sc->client_cert_type_len,
                          val, len);
 }
@@ -8233,6 +8236,9 @@ int SSL_set1_client_cert_type(SSL *s, const unsigned char *val, size_t len)
 int SSL_set1_server_cert_type(SSL *s, const unsigned char *val, size_t len)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+
+    if (sc == NULL)
+        return 0;
 
     return set_cert_type(&sc->server_cert_type, &sc->server_cert_type_len,
                          val, len);
