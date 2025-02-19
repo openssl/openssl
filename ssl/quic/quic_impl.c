@@ -4586,7 +4586,11 @@ SSL *ossl_quic_accept_connection(SSL *ssl, uint64_t flags)
      * we just need to extract it
      */
     conn_ssl = ossl_quic_channel_get0_tls(new_ch);
+    if (conn_ssl == NULL)
+        goto out;
     conn_ssl = SSL_CONNECTION_GET_USER_SSL(SSL_CONNECTION_FROM_SSL(conn_ssl));
+    if (conn_ssl == NULL)
+        goto out;
     qc = (QUIC_CONNECTION *)conn_ssl;
     qc->listener = ctx.ql;
     qc->pending = 0;
