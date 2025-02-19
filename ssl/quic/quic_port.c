@@ -1649,7 +1649,7 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
         qrx = NULL;
     } else {
         /*
-	 * We still need to salvage packets from almost forgotten qrx
+	     * We still need to salvage packets from almost forgotten qrx
          * and pass them to channel.
          */
         while (ossl_qrx_read_pkt(qrx_src, &qrx_pkt) == 1)
