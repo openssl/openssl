@@ -770,8 +770,12 @@ int ossl_quic_tls_tick(QUIC_TLS *qtls)
 
     if (!qtls->configured) {
         SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(qtls->args.s);
-        SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(sc);
+        SSL_CTX *sctx;
         BIO *nullbio;
+
+        if (sc == NULL)
+            return RAISE_INTERNAL_ERROR(qtls);
+        sctx = SSL_CONNECTION_GET_CTX(sc);
 
         /*
          * No matter how the user has configured us, there are certain
@@ -886,6 +890,9 @@ int ossl_quic_tls_get_error(QUIC_TLS *qtls,
 int ossl_quic_tls_is_cert_request(QUIC_TLS *qtls)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(qtls->args.s);
+
+    if (sc == NULL)
+        return 0;
 
     return sc->s3.tmp.message_type == SSL3_MT_CERTIFICATE_REQUEST;
 }
