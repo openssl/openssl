@@ -86,6 +86,7 @@ typedef struct ossl_ex_data_global_st {
     EX_CALLBACKS ex_data[CRYPTO_EX_INDEX__COUNT];
 } OSSL_EX_DATA_GLOBAL;
 
+
 /* OSSL_LIB_CTX */
 
 # define OSSL_LIB_CTX_PROVIDER_STORE_RUN_ONCE_INDEX          0
@@ -116,7 +117,6 @@ typedef struct ossl_ex_data_global_st {
 # define OSSL_LIB_CTX_CHILD_PROVIDER_INDEX          18
 # define OSSL_LIB_CTX_THREAD_INDEX                  19
 # define OSSL_LIB_CTX_DECODER_CACHE_INDEX           20
-# define OSSL_LIB_CTX_COMP_METHODS                  21
 # define OSSL_LIB_CTX_INDICATOR_CB_INDEX            22
 # define OSSL_LIB_CTX_MAX_INDEXES                   22
 

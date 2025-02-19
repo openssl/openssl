@@ -37,7 +37,6 @@
 # include "internal/ktls.h"
 # include "internal/time.h"
 # include "internal/ssl.h"
-# include "internal/cryptlib.h"
 # include "record/record.h"
 
 # ifdef OPENSSL_BUILD_SHLIBSSL
@@ -639,6 +638,11 @@ typedef enum {
 
 #define MAX_COMPRESSIONS_SIZE   255
 
+struct ssl_comp_st {
+    int id;
+    const char *name;
+    COMP_METHOD *method;
+};
 
 typedef struct raw_extension_st {
     /* Raw packet data for the extension */

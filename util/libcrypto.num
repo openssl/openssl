@@ -5674,7 +5674,6 @@ PBMAC1PARAM_it                          5801	3_4_0	EXIST::FUNCTION:
 X509_ACERT_add_attr_nconf               5802	3_4_0	EXIST::FUNCTION:
 OSSL_LIB_CTX_get_conf_diagnostics       5803	3_4_0	EXIST::FUNCTION:
 OSSL_LIB_CTX_set_conf_diagnostics       5804	3_4_0	EXIST::FUNCTION:
-OSSL_LIB_CTX_get_data                   5805	3_4_0	EXIST::FUNCTION:
 d2i_OSSL_TARGET                         5806	3_4_0	EXIST::FUNCTION:
 i2d_OSSL_TARGET                         5807	3_4_0	EXIST::FUNCTION:
 OSSL_TARGET_free                        5808	3_4_0	EXIST::FUNCTION:
