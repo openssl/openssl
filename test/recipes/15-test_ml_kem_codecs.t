@@ -197,7 +197,7 @@ foreach my $alg (@algs) {
     my $mixtder = substr($realder, 0, 28 + 66 + 4 + $slen)
         . substr($fakeder, 28 + 66 + 4 + $slen, $plen)
         . substr($realder, 28 + 66 + 4 + $slen + $plen, $zlen);
-    my $mixtfh = IO::File->new($mixt, "w");
+    my $mixtfh = IO::File->new($mixt, ">:raw");
     print $mixtfh $mixtder;
     $mixtfh->close();
     ok(run(app([qw(openssl pkey -inform DER -noout -in), $real])),
@@ -212,7 +212,7 @@ foreach my $alg (@algs) {
     # Mutate the public key hash
     my $mashder = $realder;
     substr($mashder, -64, 1) =~ s{(.)}{chr(ord($1)^1)}es;
-    my $mashfh = IO::File->new($mash, "w");
+    my $mashfh = IO::File->new($mash, ">:raw");
     print $mashfh $mashder;
     $mashfh->close();
     ok(!run(app([qw(openssl pkey -inform DER -noout -in), $mash])),
