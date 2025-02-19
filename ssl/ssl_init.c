@@ -70,7 +70,7 @@ static void pin_library(void)
 {
 #if !defined(OPENSSL_USE_NODELETE) \
     && !defined(OPENSSL_NO_PINSHARED)
-# if defined(DSO_WIN32) && !defined(_WIN32_WCE)
+# if defined(WIN32) && !defined(_WIN32_WCE)
     {
         HMODULE handle = NULL;
 
