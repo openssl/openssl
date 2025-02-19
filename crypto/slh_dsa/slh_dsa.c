@@ -354,7 +354,7 @@ static int get_tree_ids(PACKET *rpkt, const SLH_DSA_PARAMS *params,
      * i.e. A & (0xFFFF_FFFF_FFFF_FFFF >> (64 - X))
      */
     tree_id_mask = (~(uint64_t)0) >> (64 - (params->h - params->hm));
-    leaf_id_mask = (1 << params->hm) - 1; /* max value is 0x1FF when hm = 9 */
+    leaf_id_mask = ((uint64_t)1 << params->hm) - 1; /* max value is 0x1FF when hm = 9 */
     *tree_id = bytes_to_u64_be(tree_id_bytes, tree_id_len) & tree_id_mask;
     *leaf_id = (uint32_t)(bytes_to_u64_be(leaf_id_bytes, leaf_id_len) & leaf_id_mask);
     return 1;
