@@ -4,7 +4,7 @@
 
 EVP_SKEY, EVP_SKEY_generate,
 EVP_SKEY_import, EVP_SKEY_import_raw_key, EVP_SKEY_up_ref,
-EVP_SKEY_export, EVP_SKEY_get_raw_key, EVP_SKEY_get0_key_id,
+EVP_SKEY_export, EVP_SKEY_get0_raw_key, EVP_SKEY_get0_key_id,
 EVP_SKEY_get0_skeymgmt_name, EVP_SKEY_get0_provider_name,
 EVP_SKEY_free, EVP_SKEY_is_a, EVP_SKEY_to_provider
 - opaque symmetric key allocation and handling functions
@@ -25,7 +25,7 @@ EVP_SKEY_free, EVP_SKEY_is_a, EVP_SKEY_to_provider
                                    const char *propquery);
  int EVP_SKEY_export(const EVP_SKEY *skey, int selection,
                      OSSL_CALLBACK *export_cb, void *export_cbarg);
- int EVP_SKEY_get_raw_key(const EVP_SKEY *skey, const unsigned char **key,
+ int EVP_SKEY_get0_raw_key(const EVP_SKEY *skey, const unsigned char **key,
                           size_t *len);
  const char *EVP_SKEY_get0_key_id(const EVP_SKEY *skey);
 
@@ -65,9 +65,10 @@ that gets passed the value of I<export_cbarg>.  See L<openssl-core.h(7)> for
 more information about the callback. Note that the L<OSSL_PARAM(3)> array that
 is passed to the callback is not persistent after the callback returns.
 
-The EVP_SKEY_get_raw_key() function copies raw key bytes to the passed buffer
-and sets the key len. The operation can fail when the underlying key
-management doesn't support export of the secret key.
+The EVP_SKEY_get0_raw_key() returns a pointer to a raw key bytes to the passed
+address and sets the key len. The returned address is managed by the internal
+key management and shouldn't be freed explicitly.  The operation can fail when
+the underlying key management doesn't support export of the secret key.
 
 The EVP_SKEY_get0_key_id() returns a NUL-terminated string providing some
 human-readable identifier of the key if provided by the underlying key
@@ -125,7 +126,7 @@ EVP_SKEY_get0_key_id() returns either a valid pointer or NULL.
 
 EVP_SKEY_up_ref() returns 1 for success and 0 on failure.
 
-EVP_SKEY_export() and EVP_SKEY_get_raw_key() return 1 for success and 0 on failure.
+EVP_SKEY_export() and EVP_SKEY_get0_raw_key() return 1 for success and 0 on failure.
 
 EVP_SKEY_get0_skeymgmt_name() and EVP_SKEY_get0_provider_name() return the
 names of the associated EVP_SKEYMGMT object and its provider correspondigly.
@@ -143,7 +144,7 @@ L<EVP_SKEYMGMT(3)>, L<provider(7)>, L<OSSL_PARAM(3)>
 =head1 HISTORY
 
 The B<EVP_SKEY> API and functions EVP_SKEY_export(),
-EVP_SKEY_free(), EVP_SKEY_get_raw_key(), EVP_SKEY_import(),
+EVP_SKEY_free(), EVP_SKEY_get0_raw_key(), EVP_SKEY_import(),
 EVP_SKEY_import_raw_key(), EVP_SKEY_up_ref(), EVP_SKEY_generate(),
 EVP_SKEY_get0_key_id(), EVP_SKEY_get0_provider_name(),
 EVP_SKEY_get0_skeymgmt_name(), EVP_SKEY_is_a(), EVP_SKEY_to_provider()
