@@ -494,18 +494,14 @@ int EVP_PKEY_derive_set_peer_ex(EVP_PKEY_CTX *ctx, EVP_PKEY *peer,
         return -1;
     }
 
+    ret = ctx->pmeth->ctrl(ctx, EVP_PKEY_CTRL_PEER_KEY, 1, peer);
+    if (ret <= 0)
+        return ret;
     if (!EVP_PKEY_up_ref(peer))
         return -1;
 
     EVP_PKEY_free(ctx->peerkey);
     ctx->peerkey = peer;
-
-    ret = ctx->pmeth->ctrl(ctx, EVP_PKEY_CTRL_PEER_KEY, 1, peer);
-
-    if (ret <= 0) {
-        ctx->peerkey = NULL;
-        return ret;
-    }
 
     return 1;
 #endif
