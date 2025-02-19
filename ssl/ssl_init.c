@@ -20,7 +20,10 @@
 #include "internal/dso.h"
 
 static int stopped;
+#if !defined(OPENSSL_USE_NODELETE) \
+    && !defined(OPENSSL_NO_PINSHARED)
 static int ssl_pinned = 0;
+#endif
 
 static CRYPTO_ONCE ssl_base = CRYPTO_ONCE_STATIC_INIT;
 static int ssl_base_inited = 0;
