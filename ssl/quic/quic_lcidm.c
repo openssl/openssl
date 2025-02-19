@@ -176,6 +176,7 @@ static QUIC_LCID *lcidm_get0_lcid(const QUIC_LCIDM *lcidm, const QUIC_CONN_ID *l
     QUIC_LCID key;
 
     key.cid = *lcid;
+    key.hash_key = (uint64_t *)lcidm->hash_key;
 
     if (key.cid.id_len > QUIC_MAX_CONN_ID_LEN)
         return NULL;
@@ -260,6 +261,7 @@ static QUIC_LCID *lcidm_conn_new_lcid(QUIC_LCIDM *lcidm, QUIC_LCIDM_CONN *conn,
 
     lcid_obj->cid = *lcid;
     lcid_obj->conn = conn;
+    lcid_obj->hash_key = lcidm->hash_key;
 
     lh_QUIC_LCID_insert(conn->lcids, lcid_obj);
     if (lh_QUIC_LCID_error(conn->lcids))
@@ -346,6 +348,8 @@ static int lcidm_generate(QUIC_LCIDM *lcidm,
             return 0;
 
         key.cid = *lcid_out;
+        key.hash_key = lcidm->hash_key;
+
         /* If a collision occurs, retry. */
     } while (lh_QUIC_LCID_retrieve(lcidm->lcids, &key) != NULL);
 
@@ -380,6 +384,7 @@ int ossl_quic_lcidm_enrol_odcid(QUIC_LCIDM *lcidm,
         return 0;
 
     key.cid = *initial_odcid;
+    key.hash_key = lcidm->hash_key;
     if (lh_QUIC_LCID_retrieve(lcidm->lcids, &key) != NULL)
         return 0;
 
@@ -562,6 +567,7 @@ int ossl_quic_lcidm_debug_remove(QUIC_LCIDM *lcidm,
     QUIC_LCID key, *lcid_obj;
 
     key.cid = *lcid;
+    key.hash_key = lcidm->hash_key;
     if ((lcid_obj = lh_QUIC_LCID_retrieve(lcidm->lcids, &key)) == NULL)
         return 0;
 
@@ -583,6 +589,7 @@ int ossl_quic_lcidm_debug_add(QUIC_LCIDM *lcidm, void *opaque,
         return 0;
 
     key.cid = *lcid;
+    key.hash_key = lcidm->hash_key;
     if (lh_QUIC_LCID_retrieve(lcidm->lcids, &key) != NULL)
         return 0;
 
