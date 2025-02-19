@@ -667,7 +667,7 @@ static int TERP_execute(TERP *terp)
 {
     int ok = 0;
     uint64_t opc;
-    size_t op_num = SIZE_MAX;
+    size_t op_num = 0;
     int in_debug_output = 0;
     size_t spin_count = 0;
     BIO *debug_bio = terp->cfg.debug_bio;
