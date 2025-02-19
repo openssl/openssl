@@ -12,6 +12,7 @@
 #include <openssl/param_build.h>
 #include <openssl/self_test.h>
 #include "crypto/slh_dsa.h"
+#include "internal/fips.h"
 #include "internal/param_build_set.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
@@ -294,6 +295,10 @@ static int slh_dsa_fips140_pairwise_test(SLH_DSA_HASH_CTX *ctx,
     size_t msg_len = sizeof(msg);
     uint8_t *sig = NULL;
     size_t sig_len;
+
+    /* During self test, it is a waste to do this test */
+    if (ossl_fips_self_testing())
+        return 1;
 
     OSSL_SELF_TEST_get_callback(lib_ctx, &cb, &cb_arg);
     st = OSSL_SELF_TEST_new(cb, cb_arg);
