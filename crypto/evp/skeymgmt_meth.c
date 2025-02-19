@@ -116,8 +116,13 @@ static void *skeymgmt_from_algorithm(int name_id,
         ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_PROVIDER_FUNCTIONS);
         return NULL;
     }
+
+    if (!ossl_provider_up_ref(prov)) {
+        EVP_SKEYMGMT_free(skeymgmt);
+        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+        return NULL;
+    }
     skeymgmt->prov = prov;
-    ossl_provider_up_ref(prov);
 
     return skeymgmt;
 }
