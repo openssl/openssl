@@ -17,6 +17,7 @@
 #include <openssl/self_test.h>
 #include <openssl/param_build.h>
 #include "crypto/ml_kem.h"
+#include "internal/fips.h"
 #include "internal/param_build_set.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
@@ -83,6 +84,10 @@ static int ml_kem_pairwise_test(const ML_KEM_KEY *key, int key_flags)
         || (key_flags & ML_KEM_KEY_PCT_TYPE) == 0)
         return 1;
 #ifdef FIPS_MODULE
+    /* During self test, it is a waste to do this test */
+    if (ossl_fips_self_testing())
+        return 1;
+
     /*
      * The functions `OSSL_SELF_TEST_*` will return directly if parameter `st`
      * is NULL.
