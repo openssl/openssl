@@ -78,9 +78,13 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     resp = d2i_OCSP_RESPONSE(NULL, &p, len);
 
     store = X509_STORE_new();
+    if (store == NULL)
+        goto err;
     X509_STORE_add_cert(store, x509_2);
 
     param = X509_VERIFY_PARAM_new();
+    if (param == NULL)
+        goto err;
     X509_VERIFY_PARAM_set_flags(param, X509_V_FLAG_NO_CHECK_TIME);
     X509_VERIFY_PARAM_set_flags(param, X509_V_FLAG_X509_STRICT);
     X509_VERIFY_PARAM_set_flags(param, X509_V_FLAG_PARTIAL_CHAIN);
