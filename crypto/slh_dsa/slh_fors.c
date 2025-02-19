@@ -181,7 +181,8 @@ int ossl_slh_fors_sign(SLH_DSA_HASH_CTX *ctx, const uint8_t *md,
                 return 0;
             node_id >>= 1; /* Get the parent node id */
             tree_offset >>= 1; /* Each layer up has half as many nodes */
-            WPACKET_memcpy(sig_wpkt, out, n);
+            if (!WPACKET_memcpy(sig_wpkt, out, n))
+                return 0;
         }
         tree_id_times_two_power_a += two_power_a;
     }
