@@ -32,6 +32,9 @@ typedef struct quic_lcid_st {
     QUIC_CONN_ID                cid;
     uint64_t                    seq_num;
 
+    /* copy of the hash key from lcidm */
+    uint64_t                    *hash_key;
+
     /* Back-pointer to the owning QUIC_LCIDM_CONN structure. */
     QUIC_LCIDM_CONN             *conn;
 
@@ -55,6 +58,7 @@ struct quic_lcidm_conn_st {
 
 struct quic_lcidm_st {
     OSSL_LIB_CTX                *libctx;
+    uint64_t                    hash_key[2]; /* random key for siphash */
     LHASH_OF(QUIC_LCID)         *lcids; /* (QUIC_CONN_ID) -> (QUIC_LCID *)  */
     LHASH_OF(QUIC_LCIDM_CONN)   *conns; /* (void *opaque) -> (QUIC_LCIDM_CONN *) */
     size_t                      lcid_len; /* Length in bytes for all LCIDs */
@@ -102,6 +106,11 @@ QUIC_LCIDM *ossl_quic_lcidm_new(OSSL_LIB_CTX *libctx, size_t lcid_len)
         goto err;
 
     if ((lcidm = OPENSSL_zalloc(sizeof(*lcidm))) == NULL)
+        goto err;
+
+    /* generate a random key for the hash tables hash function */
+    if (!RAND_bytes_ex(libctx, (unsigned char *)&lcidm->hash_key,
+                       sizeof(uint64_t) * 2, 0))
         goto err;
 
     if ((lcidm->lcids = lh_QUIC_LCID_new(lcid_hash, lcid_comp)) == NULL)
