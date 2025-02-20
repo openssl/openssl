@@ -88,13 +88,13 @@ and settable when using EVP_PKEY_fromdata().
 
 =item "pub" (B<OSSL_PKEY_PARAM_PUB_KEY>) <octet string>
 
-The public key value of size 2 * B<n>.
+The public key has a size of 2 * B<n> bytes.
 i.e. It consists of the concatenation of PK.seed and PK.root
 as defined by FIPS 205 Figure 16.
 
 =item "priv" (B<OSSL_PKEY_PARAM_PRIV_KEY>) <octet string>
 
-The private key value of size 4 * B<n>, which includes the public key components.
+The private key has a size of 4 * B<n> bytes, which includes the public key components.
 i.e. It consists of the concatenation of SK.seed, SK.prf, PK.seed and PF.root
 as defined by FIPS 205 Figure 15.
 
