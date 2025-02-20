@@ -34,20 +34,20 @@ and B<SLH-DSA*256*>, respectively.
 
 Both the public and private key components contain 2 elements of size B<n>.
 Key generation generates the private key elements and one of the public key
-elements randomly, the final public key element is computed from these values.
+elements randomly, and the final public key element is computed from these values.
 
-The public key sizes are relatively small values of 32, 48 or 64 bytes that
-correspond to the algorithm names of 128, 192 and 256 respectively.
+The public key has relatively small sizes of 32, 48 or 64 bytes,
+corresponding to the algorithm names of 128, 192 and 256 respectively.
 
 The algorithms ending with B<s> produce smaller signatures, but are much slower
-that the faster B<f> variants.
+than the faster B<f> variants.
 
 The signature sizes for the B<s> algorithm variants are 7856, 16224 and 29792
-which correspond to the algorithm names of 128s, 192s and 256s.
+which correspond to the algorithm names of 128s, 192s and 256s respectively.
 The signature sizes for the B<f> algorithm variants are 17088, 35664 and 49856
 which correspond to the algorithm names containing 128f, 192f and 256f respectively.
 
-Internally there are 7 functions that are used for each algorithms.or the
+Internally there are 7 hash related functions that are used for each algorithm.
 For algorithms containing B<SHAKE> in their name B<SHAKE-256> is used for all
 functions.
 For the <SHA2-128> algorithms the functions use <MGF1-SHA-256>, <HMAC-SHA-256>
