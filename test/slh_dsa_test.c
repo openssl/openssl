@@ -322,13 +322,13 @@ static int slh_dsa_keygen_test(int tst_id)
     int ret = 0;
     const SLH_DSA_KEYGEN_TEST_DATA *tst = &slh_dsa_keygen_testdata[tst_id];
     EVP_PKEY *pkey = NULL;
-    uint8_t priv[32 * 2], pub[32 * 2];
+    uint8_t priv[64 * 2], pub[32 * 2];
     size_t priv_len, pub_len;
-    size_t key_len = tst->priv_len / 2;
-    size_t n = key_len / 2;
+    size_t key_len = tst->priv_len;
+    size_t n = key_len / 4;
     int bits = 0, sec_bits = 0, sig_len = 0;
 
-    if (!TEST_ptr(pkey = do_gen_key(tst->name, tst->priv, key_len + n)))
+    if (!TEST_ptr(pkey = do_gen_key(tst->name, tst->priv, key_len - n)))
         goto err;
 
     if (!TEST_true(EVP_PKEY_get_octet_string_param(pkey, OSSL_PKEY_PARAM_PRIV_KEY,
@@ -338,7 +338,7 @@ static int slh_dsa_keygen_test(int tst_id)
                                                    pub, sizeof(pub), &pub_len)))
         goto err;
     if (!TEST_true(EVP_PKEY_get_int_param(pkey, OSSL_PKEY_PARAM_BITS, &bits))
-            || !TEST_int_eq(bits, 8 * key_len)
+            || !TEST_int_eq(bits, 8 * 2 * n)
             || !TEST_true(EVP_PKEY_get_int_param(pkey, OSSL_PKEY_PARAM_SECURITY_BITS,
                                                  &sec_bits))
             || !TEST_int_eq(sec_bits, 8 * n)
@@ -349,9 +349,9 @@ static int slh_dsa_keygen_test(int tst_id)
         goto err;
 
     if (!TEST_size_t_eq(priv_len, key_len)
-            || !TEST_size_t_eq(pub_len, key_len))
+            || !TEST_size_t_eq(pub_len, key_len / 2))
         goto err;
-    if (!TEST_mem_eq(pub, pub_len, tst->priv + key_len, key_len))
+    if (!TEST_mem_eq(pub, pub_len, tst->priv + 2 * n, 2 * n))
         goto err;
     ret = 1;
 err:
