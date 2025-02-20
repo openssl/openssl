@@ -185,13 +185,10 @@ static int slh_dsa_get_params(void *keydata, OSSL_PARAM params[])
     priv = ossl_slh_dsa_key_get_priv(key);
     if (priv != NULL) {
         p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_PRIV_KEY);
-        /*
-         * ossl_slh_dsa_key_get_priv_len() includes the public key also
-         * so dividing by 2 returns only the private component.
-         */
+        /* Note: ossl_slh_dsa_key_get_priv_len() includes the public key */
         if (p != NULL
             && !OSSL_PARAM_set_octet_string(p, priv,
-                                            ossl_slh_dsa_key_get_priv_len(key) / 2))
+                                            ossl_slh_dsa_key_get_priv_len(key)))
             return 0;
     }
     pub = ossl_slh_dsa_key_get_pub(key);

@@ -23,13 +23,38 @@ implemented in OpenSSL's default and FIPS providers.  These implementations
 support the associated key, containing the public key I<pub> and the
 private key I<priv>.
 
+SLH-DSA (Stateless Hash-based Digital Signature Standard) uses small keys,
+but has relatively large signatures and is relatively slow performing all
+operations compared to B<ML-DSA>. It does however have proven security proofs,
+since it relies only on hash functions.
+
 Each of the different key types has an associated security parameter B<n>.
 This value is one of 16, 24 or 32 for key types B<SLH-DSA*128*>, B<SLH-DSA*192*>
 and B<SLH-DSA*256*>, respectively.
 
-Both the public and private key contain 2 elements of size B<n>.
+Both the public and private key components contain 2 elements of size B<n>.
 Key generation generates the private key elements and one of the public key
-elements randomly, the final public key element is computed from these values.
+elements randomly, and the final public key element is computed from these values.
+
+The public key has relatively small sizes of 32, 48 or 64 bytes,
+corresponding to the algorithm names of 128, 192 and 256 respectively.
+
+The algorithms ending with B<s> produce smaller signatures, but are much slower
+than the faster B<f> variants.
+
+The signature sizes for the B<s> algorithm variants are 7856, 16224 and 29792
+which correspond to the algorithm names of 128s, 192s and 256s respectively.
+The signature sizes for the B<f> algorithm variants are 17088, 35664 and 49856
+which correspond to the algorithm names containing 128f, 192f and 256f respectively.
+
+Internally there are 7 hash related functions that are used for each algorithm.
+For algorithms containing B<SHAKE> in their name B<SHAKE-256> is used for all
+functions.
+For the <SHA2-128> algorithms the functions use <MGF1-SHA-256>, <HMAC-SHA-256>
+and <SHA-256>.
+The remaining <SHA2> algorithms use <MGF1-SHA-512>, <HMAC-SHA-512>, <SHA-256> and
+<SHA-512>.
+See FIPS 205 Section 11.1 and 11.2 for more information.
 
 =head2 Keygen Parameters
 
@@ -63,11 +88,19 @@ and settable when using EVP_PKEY_fromdata().
 
 =item "pub" (B<OSSL_PKEY_PARAM_PUB_KEY>) <octet string>
 
-The public key value of size 2 * B<n>
+The public key has a size of 2 * B<n> bytes.
+i.e. It consists of the concatenation of PK.seed and PK.root
+as defined by FIPS 205 Figure 16.
 
 =item "priv" (B<OSSL_PKEY_PARAM_PRIV_KEY>) <octet string>
 
-The private key value of size 2 * B<n>.
+The private key has a size of 4 * B<n> bytes, which includes the public key components.
+i.e. It consists of the concatenation of SK.seed, SK.prf, PK.seed and PF.root
+as defined by FIPS 205 Figure 15.
+
+=item "mandatory-digest" (B<OSSL_PKEY_PARAM_MANDATORY_DIGEST>) <UTF8 string>
+
+The empty string, signifying that no digest may be specified.
 
 =back
 
@@ -84,15 +117,15 @@ The private key value of size 2 * B<n>.
 An B<EVP_PKEY> context can be obtained by calling:
 
     EVP_PKEY_CTX *pctx =
-        EVP_PKEY_CTX_new_from_name(NULL, "SLH-DSA-SHA2-128s", NULL);
+        EVP_PKEY_CTX_new_from_name(NULL, "SLH-DSA-SHA2-128f", NULL);
 
 An B<SLH-DSA> key can be generated like this:
 
-    pkey = EVP_PKEY_Q_keygen(NULL, NULL, "SLH-DSA-SHA2-128s");
+    pkey = EVP_PKEY_Q_keygen(NULL, NULL, "SLH-DSA-SHA2-128f");
 
 The key pair components can be extracted from a key by calling:
 
-    uint8_t priv[64], pub[64];
+    uint8_t priv[64], pub[32];
     size_t priv_len, pub_len;
 
     EVP_PKEY_get_octet_string_param(pkey, OSSL_PKEY_PARAM_PRIV_KEY,
