@@ -677,8 +677,10 @@ static int test_new_token(void)
         goto err;
 
     /* Skip the comparison of the trace when the fips provider is used. */
+#ifndef OPENSSL_NO_TRACE
     if (!TEST_true(find_new_token_data(bio)))
         goto err;
+#endif
 
     testresult = 1;
  err:
