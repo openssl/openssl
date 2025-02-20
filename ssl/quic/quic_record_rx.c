@@ -371,7 +371,7 @@ static int qrx_validate_initial_pkt(OSSL_QRX *qrx, QUIC_URXE *urxe,
     pkt_mark(&urxe->hpr_removed, 0);
 
     /* Decode the now unprotected header. */
-    if (!ossl_quic_wire_decode_pkt_hdr(&pkt, 0,
+    if (ossl_quic_wire_decode_pkt_hdr(&pkt, 0,
                                       0, 0, &rxe->hdr, NULL, NULL) != 1)
         goto malformed;
 
