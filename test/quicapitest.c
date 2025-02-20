@@ -562,6 +562,7 @@ enum {
     FAILED = 4
 };
 
+#ifndef OPENSSL_NO_TRACE
 static int find_new_token_data(BIO *membio)
 {
     char buf[1024];
@@ -619,6 +620,7 @@ static int find_new_token_data(BIO *membio)
     OPENSSL_free(tokenval);
     return (state == SUCCESS);
 }
+#endif
 
 static int test_new_token(void)
 {
