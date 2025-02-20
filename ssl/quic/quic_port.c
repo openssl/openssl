@@ -848,8 +848,10 @@ static int marshal_validation_token(QUIC_VALIDATION_TOKEN *token,
     BUF_MEM *buf_mem = BUF_MEM_new();
 
     if (buffer == NULL || buf_mem == NULL
-        || (token->is_retry != 0 && token->is_retry != 1))
+        || (token->is_retry != 0 && token->is_retry != 1)) {
+        BUF_MEM_free(buf_mem);
         return 0;
+    }
 
     if (!WPACKET_init(&wpkt, buf_mem)
         || !WPACKET_memset(&wpkt, token->is_retry, 1)

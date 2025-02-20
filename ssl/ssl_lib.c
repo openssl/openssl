@@ -1583,8 +1583,10 @@ void SSL_set_bio(SSL *s, BIO *rbio, BIO *wbio)
      * If the two arguments are equal then one fewer reference is granted by the
      * caller than we want to take
      */
-    if (rbio != NULL && rbio == wbio)
-        BIO_up_ref(rbio);
+    if (rbio != NULL && rbio == wbio) {
+        if (!BIO_up_ref(rbio))
+            return;
+    }
 
     /*
      * If only the wbio is changed only adopt one reference.
@@ -1747,7 +1749,8 @@ int SSL_set_wfd(SSL *s, int fd)
         ktls_enable(fd);
 #endif /* OPENSSL_NO_KTLS */
     } else {
-        BIO_up_ref(rbio);
+        if (!BIO_up_ref(rbio))
+            return 0;
         SSL_set0_wbio(s, rbio);
     }
     return 1;
@@ -1774,7 +1777,8 @@ int SSL_set_rfd(SSL *s, int fd)
         BIO_set_fd(bio, fd, BIO_NOCLOSE);
         SSL_set0_rbio(s, bio);
     } else {
-        BIO_up_ref(wbio);
+        if (!BIO_up_ref(wbio))
+            return 0;
         SSL_set0_rbio(s, wbio);
     }
 
