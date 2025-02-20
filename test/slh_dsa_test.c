@@ -570,6 +570,51 @@ err:
     return ret;
 }
 
+static int slh_dsa_keygen_invalid_test(void)
+{
+    int ret = 0;
+    const SLH_DSA_KEYGEN_TEST_DATA *tst = &slh_dsa_keygen_testdata[0];
+    EVP_PKEY *pkey = NULL;
+    EVP_PKEY_CTX *ctx = NULL;
+    OSSL_PARAM params[2], *p = params;
+    size_t key_len = tst->priv_len;
+    size_t n = key_len / 4;
+    uint8_t seed[128] = {0};
+
+    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(lib_ctx, tst->name, NULL))
+            || !TEST_int_eq(EVP_PKEY_keygen_init(ctx), 1))
+        goto err;
+
+    /* Test the set fails if the seed is larger than the internal buffer */
+    p[0] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_SLH_DSA_SEED,
+                                             seed, 97);
+    p[1] = OSSL_PARAM_construct_end();
+    if (!TEST_int_eq(EVP_PKEY_CTX_set_params(ctx, params), 0))
+        goto err;
+
+    /* Test the generate fails if the seed is not the correct size */
+    p[0] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_SLH_DSA_SEED,
+                                             seed, n * 3 - 1);
+    p[1] = OSSL_PARAM_construct_end();
+
+    if (!TEST_int_eq(EVP_PKEY_CTX_set_params(ctx, params), 1)
+            || !TEST_int_eq(EVP_PKEY_generate(ctx, &pkey), 0))
+        goto err;
+
+    /* Test the generate fails if the seed is not the correct size */
+    p[0] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_SLH_DSA_SEED,
+                                             seed, n * 3 + 1);
+    p[1] = OSSL_PARAM_construct_end();
+    if (!TEST_int_eq(EVP_PKEY_CTX_set_params(ctx, params), 1)
+            || !TEST_int_eq(EVP_PKEY_generate(ctx, &pkey), 0))
+        goto err;
+    ret = 1;
+err:
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_CTX_free(ctx);
+    return ret;
+}
+
 const OPTIONS *test_get_options(void)
 {
     static const OPTIONS options[] = {
@@ -610,6 +655,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(slh_dsa_sign_verify_test, OSSL_NELEM(slh_dsa_sig_testdata));
     ADD_ALL_TESTS(slh_dsa_keygen_test, OSSL_NELEM(slh_dsa_keygen_testdata));
     ADD_TEST(slh_dsa_digest_sign_verify_test);
+    ADD_TEST(slh_dsa_keygen_invalid_test);
     return 1;
 }
 
