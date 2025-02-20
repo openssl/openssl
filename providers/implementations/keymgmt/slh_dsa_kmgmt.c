@@ -41,7 +41,7 @@ struct slh_dsa_gen_ctx {
     SLH_DSA_HASH_CTX *ctx;
     OSSL_LIB_CTX *libctx;
     char *propq;
-    uint8_t entropy[32 * 3];
+    uint8_t entropy[SLH_DSA_MAX_N * 3];
     size_t entropy_len;
 };
 
