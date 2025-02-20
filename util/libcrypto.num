@@ -4882,7 +4882,7 @@ ASN1_item_verify_ex                     5009	3_0_0	EXIST::FUNCTION:
 BIO_socket_wait                         5010	3_0_0	EXIST::FUNCTION:SOCK
 BIO_wait                                5011	3_0_0	EXIST::FUNCTION:
 BIO_do_connect_retry                    5012	3_0_0	EXIST::FUNCTION:
-OSSL_parse_url                          5013	3_0_0	EXIST::FUNCTION:HTTP
+OSSL_parse_url                          5013	3_0_0	EXIST::FUNCTION:
 OSSL_HTTP_adapt_proxy                   5014	3_0_0	EXIST::FUNCTION:HTTP
 OSSL_HTTP_REQ_CTX_get_resp_len          5015	3_0_0	EXIST::FUNCTION:HTTP
 OSSL_HTTP_REQ_CTX_set_expected          5016	3_0_0	EXIST::FUNCTION:HTTP

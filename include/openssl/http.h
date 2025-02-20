@@ -33,6 +33,11 @@ extern "C" {
 # define OPENSSL_HTTP_PROXY "HTTP_PROXY"
 # define OPENSSL_HTTPS_PROXY "HTTPS_PROXY"
 
+/* We want to have this even in case of OPENSSL_NO_HTTP */
+int OSSL_parse_url(const char *url, char **pscheme, char **puser, char **phost,
+                   char **pport, int *pport_num,
+                   char **ppath, char **pquery, char **pfrag);
+
 # ifndef OPENSSL_NO_HTTP
 
 #  define OSSL_HTTP_DEFAULT_MAX_LINE_LEN (4 * 1024)
@@ -101,9 +106,6 @@ BIO *OSSL_HTTP_transfer(OSSL_HTTP_REQ_CTX **prctx,
 int OSSL_HTTP_close(OSSL_HTTP_REQ_CTX *rctx, int ok);
 
 /* Auxiliary functions */
-int OSSL_parse_url(const char *url, char **pscheme, char **puser, char **phost,
-                   char **pport, int *pport_num,
-                   char **ppath, char **pquery, char **pfrag);
 int OSSL_HTTP_parse_url(const char *url, int *pssl, char **puser, char **phost,
                         char **pport, int *pport_num,
                         char **ppath, char **pquery, char **pfrag);
