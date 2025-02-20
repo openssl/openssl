@@ -127,7 +127,7 @@ jobs:
         path: artifacts.tar.gz
 
   linux-arm64:
-    runs-on: linux-arm64
+    runs-on: ${{ github.repository == 'openssl/openssl' && 'linux-arm64' || 'ubuntu-24.04-arm' }}
     steps:
     - uses: actions/checkout@v4
     - name: config
