@@ -11,6 +11,7 @@
 #include "internal/quic_types.h"
 #include "internal/quic_vlint.h"
 #include "internal/common.h"
+#include "crypto/siphash.h"
 #include <openssl/lhash.h>
 #include <openssl/rand.h>
 #include <openssl/err.h>
@@ -67,20 +68,21 @@ struct quic_lcidm_st {
 #endif
 };
 
-static unsigned long bin_hash(const unsigned char *buf, size_t buf_len)
-{
-    unsigned long hash = 0;
-    size_t i;
-
-    for (i = 0; i < buf_len; ++i)
-        hash ^= ((unsigned long)buf[i]) << (8 * (i % sizeof(unsigned long)));
-
-    return hash;
-}
-
 static unsigned long lcid_hash(const QUIC_LCID *lcid_obj)
 {
-    return bin_hash(lcid_obj->cid.id, lcid_obj->cid.id_len);
+    SIPHASH siphash = {0, };
+    unsigned long hashval = 0;
+
+    if (!SipHash_set_hash_size(&siphash, sizeof(unsigned long)))
+        goto out;
+    if (!SipHash_Init(&siphash, (uint8_t *)lcid_obj->hash_key, 0, 0))
+        goto out;
+    SipHash_Update(&siphash, lcid_obj->cid.id, lcid_obj->cid.id_len);
+    if (!SipHash_Final(&siphash, (unsigned char *)&hashval,
+                       sizeof(unsigned long)))
+        goto out;
+out:
+    return hashval;
 }
 
 static int lcid_comp(const QUIC_LCID *a, const QUIC_LCID *b)
