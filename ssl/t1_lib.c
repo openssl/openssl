@@ -202,8 +202,6 @@ static const unsigned char ecformats_default[] = {
 #define DEFAULT_GROUP_NAME "DEFAULT"
 #define TLS_DEFAULT_GROUP_LIST \
     "?*X25519MLKEM768 / ?*X25519:?secp256r1 / ?X448:?secp384r1:?secp521r1 / ?ffdhe2048:?ffdhe3072"
-#define QUIC_DEFAULT_GROUP_LIST \
-    "X25519:secp256r1:X448:secp521r1:secp384r1:ffdhe2048:ffdhe3072:ffdhe4096:ffdhe6144:ffdhe8192"
 
 static const uint16_t suiteb_curves[] = {
     OSSL_TLS_GROUP_ID_secp256r1,
@@ -365,9 +363,7 @@ int ssl_load_groups(SSL_CTX *ctx)
     if (!OSSL_PROVIDER_do_all(ctx->libctx, discover_provider_groups, ctx))
         return 0;
 
-    if (!IS_QUIC_CTX(ctx))
-        return SSL_CTX_set1_groups_list(ctx, TLS_DEFAULT_GROUP_LIST);
-    return SSL_CTX_set1_groups_list(ctx, QUIC_DEFAULT_GROUP_LIST);
+    return SSL_CTX_set1_groups_list(ctx, TLS_DEFAULT_GROUP_LIST);
 }
 
 #define TLS_SIGALG_LIST_MALLOC_BLOCK_SIZE        10
