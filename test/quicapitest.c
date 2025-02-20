@@ -599,7 +599,7 @@ static int find_new_token_data(BIO *membio)
                 TEST_info("Next line did not contain a new token\n");
                 state = FAILED;
             } else {
-                tokenval = strdup(tmpstring);
+                tokenval = OPENSSL_strdup(tmpstring);
                 state = CHECK_TOKEN;
                 TEST_info("Recorded Token %s\n", tokenval);
             }
