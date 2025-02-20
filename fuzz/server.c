@@ -540,7 +540,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
 
     /* This only fuzzes the initial flow from the client so far. */
     ctx = SSL_CTX_new(SSLv23_method());
-
+    OPENSSL_assert(ctx != NULL);
     ret = SSL_CTX_set_min_proto_version(ctx, 0);
     OPENSSL_assert(ret == 1);
     ret = SSL_CTX_set_cipher_list(ctx, "ALL:eNULL:@SECLEVEL=0");
