@@ -9845,7 +9845,7 @@ static int test_unknown_sigalgs_groups(void)
                                               0))
         goto end;
 
-    if (!TEST_int_le(SSL_CTX_set1_groups_list(ctx,
+    if (!TEST_int_gt(SSL_CTX_set1_groups_list(ctx,
                                               "?nonexistent1:?nonexistent2:?nonexistent3"),
                                               0))
         goto end;

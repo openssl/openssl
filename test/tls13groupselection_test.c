@@ -278,33 +278,27 @@ static const struct tls13groupselection_test_st tls13groupselection_tests[] =
           CLIENT_PREFERENCE,
           SYNTAX_FAILURE
         },
-        /* test 33 remove all groups */
-        { "X25519:secp256r1:X448:secp521r1:-X448:-secp256r1:-X25519:-secp521r1",
+        { "X25519:??secp256r1:X448", /* test 33 */
           "",
           CLIENT_PREFERENCE,
           SYNTAX_FAILURE
         },
-        { "X25519:??secp256r1:X448", /* test 34 */
+        { "X25519:secp256r1:**X448", /* test 34 */
           "",
           CLIENT_PREFERENCE,
           SYNTAX_FAILURE
         },
-        { "X25519:secp256r1:**X448", /* test 35 */
+        { "--X25519:secp256r1:X448", /* test 35 */
           "",
           CLIENT_PREFERENCE,
           SYNTAX_FAILURE
         },
-        { "--X25519:secp256r1:X448", /* test 36 */
+        { "-DEFAULT",  /* test 36 */
           "",
           CLIENT_PREFERENCE,
           SYNTAX_FAILURE
         },
-        { "-DEFAULT",  /* test 37 */
-          "",
-          CLIENT_PREFERENCE,
-          SYNTAX_FAILURE
-        },
-        { "?DEFAULT",  /* test 38 */
+        { "?DEFAULT",  /* test 37 */
           "",
           CLIENT_PREFERENCE,
           SYNTAX_FAILURE
@@ -313,6 +307,12 @@ static const struct tls13groupselection_test_st tls13groupselection_tests[] =
          * Negotiation Failures
          * No overlapping groups between client and server
          */
+        /* test 38 remove all groups */
+        { "X25519:secp256r1:X448:secp521r1:-X448:-secp256r1:-X25519:-secp521r1",
+          "",
+          CLIENT_PREFERENCE,
+          NEGOTIATION_FAILURE
+        },
         { "secp384r1:secp521r1:X25519", /* test 39 */
           "prime256v1:X448",
           CLIENT_PREFERENCE,
