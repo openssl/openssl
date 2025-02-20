@@ -502,12 +502,12 @@ static const OPT_PAIR sm2_choices[SM2_NUM] = {
 static double sm2_results[SM2_NUM][2];    /* 2 ops: sign then verify */
 #endif /* OPENSSL_NO_SM2 */
 
-#define MAX_KEM_NUM 111
+#define MAX_KEM_NUM 63
 static size_t kems_algs_len = 0;
 static char *kems_algname[MAX_KEM_NUM] = { NULL };
 static double kems_results[MAX_KEM_NUM][3];  /* keygen, encaps, decaps */
 
-#define MAX_SIG_NUM 111
+#define MAX_SIG_NUM 63
 static size_t sigs_algs_len = 0;
 static char *sigs_algname[MAX_SIG_NUM] = { NULL };
 static double sigs_results[MAX_SIG_NUM][3];  /* keygen, sign, verify */
