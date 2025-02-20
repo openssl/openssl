@@ -414,6 +414,9 @@ size_t SSL_get1_compressed_cert(SSL *ssl, int alg, unsigned char **data, size_t 
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
     CERT_PKEY *cpk = NULL;
 
+    if (sc == NULL)
+        return 0;
+
     if (sc->cert != NULL)
         cpk = sc->cert->key;
     else
