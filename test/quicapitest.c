@@ -37,7 +37,7 @@ static int is_fips = 0;
 #if !defined(OPENSSL_NO_SSL_TRACE) \
     && defined(OPENSSL_NO_BROTLI) && defined(OPENSSL_NO_ZSTD) \
     && !defined(OPENSSL_NO_ECX) && !defined(OPENSSL_NO_DH) \
-    && !defined(OPENSSL_NO_ML_DSA)
+    && !defined(OPENSSL_NO_ML_DSA) && !defined(OPENSSL_NO_ML_KEM)
 # define DO_SSL_TRACE_TEST
 #endif
 
@@ -442,7 +442,7 @@ static void strip_line_ends(char *str)
 static int compare_with_file(BIO *membio)
 {
     BIO *file = NULL, *newfile = NULL;
-    char buf1[512], buf2[512];
+    char buf1[8192], buf2[8192];
     char *reffile;
     int ret = 0;
     size_t i;
@@ -473,19 +473,27 @@ static int compare_with_file(BIO *membio)
         goto err;
 
     while (BIO_gets(file, buf1, sizeof(buf1)) > 0) {
+        size_t line_len;
+
         if (BIO_gets(membio, buf2, sizeof(buf2)) <= 0) {
             TEST_error("Failed reading mem data");
             goto err;
         }
         strip_line_ends(buf1);
         strip_line_ends(buf2);
-        if (strlen(buf1) != strlen(buf2)) {
+        line_len = strlen(buf1);
+        if (line_len > 0 && buf1[line_len - 1] == '?') {
+            /* Wildcard at the EOL means ignore anything after it */
+            if (strlen(buf2) > line_len)
+                buf2[line_len] = '\0';
+        }
+        if (line_len != strlen(buf2)) {
             TEST_error("Actual and ref line data length mismatch");
             TEST_info("%s", buf1);
             TEST_info("%s", buf2);
            goto err;
         }
-        for (i = 0; i < strlen(buf1); i++) {
+        for (i = 0; i < line_len; i++) {
             /* '?' is a wild card character in the reference text */
             if (buf1[i] == '?')
                 buf2[i] = '?';
