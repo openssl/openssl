@@ -6472,6 +6472,12 @@ OpenSSL 1.1.0
 
    *Rob Percival <robpercival@google.com>*
 
+ * Disable SSLv3 default build, default negotiation and weak ciphers. SSLv3
+   is by default disabled at build-time. Builds that are not configured with
+   "enable-ssl3" will not support SSLv3.
+
+   *Kurt Roeckx*
+
 OpenSSL 1.0.2
 -------------
 
