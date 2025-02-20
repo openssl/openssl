@@ -642,8 +642,10 @@ static int test_new_token(void)
 
         goto err;
 
+#ifndef OPENSSL_NO_TRACE
     SSL_set_msg_callback(clientquic, SSL_trace);
     SSL_set_msg_callback_arg(clientquic, bio);
+#endif
 
     if (!TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
         goto err;
@@ -665,8 +667,10 @@ static int test_new_token(void)
                                              &clientquic2, NULL, NULL)))
         goto err;
 
+#ifndef OPENSSL_NO_TRACE
     SSL_set_msg_callback(clientquic2, SSL_trace);
     SSL_set_msg_callback_arg(clientquic2, bio);
+#endif
 
     /* once we have our new token, create the subsequent connection */
     if (!TEST_true(qtest_create_quic_connection(qtserv2, clientquic2)))
