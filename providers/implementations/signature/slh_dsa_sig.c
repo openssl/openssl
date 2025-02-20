@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2024-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,9 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/deprecated.h"
-
-#include <assert.h>
 #include <openssl/core_names.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
@@ -284,7 +281,6 @@ static int slh_dsa_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         void *vp = pctx->add_random;
         size_t n = ossl_slh_dsa_key_get_n(pctx->key);
 
-        assert(n <= sizeof(pctx->add_random));
         if (!OSSL_PARAM_get_octet_string(p, &vp, n, &(pctx->add_random_len))
                 || pctx->add_random_len != n) {
             pctx->add_random_len = 0;
