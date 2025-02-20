@@ -30,6 +30,10 @@ OpenSSL 3.5
 
 ### Changes between 3.4 and 3.5 [xx XXX xxxx]
 
+* Added new API to enable 0-RTT for 3rd party QUIC stacks.
+
+  *Cheng Zhang*
+
 * Added support for a new callback registration SSL_CTX_set_new_pending_conn_cb,
   which allows for application notification of new connection SSL object
   creation, which occurs independently of calls to SSL_accept_connection().
