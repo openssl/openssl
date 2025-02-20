@@ -33,16 +33,6 @@ export PATH="$O_EXE:$PATH"
 export LD_LIBRARY_PATH="$O_LIB:$LD_LIBRARY_PATH"
 export OPENSSL_ROOT_DIR="$O_LIB"
 
-# Temporarily override IANA ML-KEM TLS group codepoints
-export OQS_CODEPOINT_FRODO640AES=65024
-export OQS_CODEPOINT_FRODO640SHAKE=65025
-export OQS_CODEPOINT_FRODO976AES=65026
-
-# These ensure oqsprovider uses ML-KEM at the right code points
-export OQS_CODEPOINT_MLKEM512=512
-export OQS_CODEPOINT_MLKEM768=513
-export OQS_CODEPOINT_MLKEM1024=514
-
 # Check/Set openssl version
 OPENSSL_VERSION=`openssl version | cut -f 2 -d ' '`
 
@@ -81,8 +71,4 @@ export OPENSSL_MODULES=$PWD/_build/lib
 export OQS_PROVIDER_TESTSCRIPTS=$SRCTOP/oqs-provider/scripts
 export OPENSSL_CONF=$OQS_PROVIDER_TESTSCRIPTS/openssl-ca.cnf
 # Be verbose if harness is verbose:
-# Fixup for oqsprovider release snafu:
-cp $SRCTOP/test/recipes/95-test_external_oqsprovider_data/oqsprovider-pkcs12gen.sh $SRCTOP/oqs-provider/scripts/
-
-echo oqsprovider is currently not compatible with our ML-KEM implementation
-# $SRCTOP/oqs-provider/scripts/runtests.sh -V
+$SRCTOP/oqs-provider/scripts/runtests.sh -V
