@@ -318,7 +318,7 @@ static void slh_dsa_sign_verify(uint8_t **buf, size_t *len, void *key1,
     unsigned char *sig = NULL;
     OSSL_PARAM params[4];
     int paramidx = 0;
-    int intval;
+    int intval1, intval2;
     int expect_init_rc = 1;
 
     *buf = consume_uint8t(*buf, len, &selector);
@@ -351,15 +351,15 @@ static void slh_dsa_sign_verify(uint8_t **buf, size_t *len, void *key1,
                                                                msg, msg_len);
 
     if (selector & 0x2) {
-        intval = selector & 0x4;
+        intval1 = selector & 0x4;
         params[paramidx++] = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_MESSAGE_ENCODING,
-                                                      &intval);
+                                                      &intval1);
     }
 
     if (selector & 0x8) {
-        intval = selector & 0x10;
+        intval2 = selector & 0x10;
         params[paramidx++] = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_DETERMINISTIC,
-                                                      &intval);
+                                                      &intval2);
     }
 
     params[paramidx] = OSSL_PARAM_construct_end();
