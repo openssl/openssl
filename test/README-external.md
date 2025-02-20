@@ -115,7 +115,7 @@ The names of all supported quantum-safe algorithms are available at
 
 Please note specific limitations of oqsprovider operations dependent on specific
 openssl versions as documented at
-https://github.com/open-quantum-safe/oqs-provider#note-on-openssl-versions.
+<https://github.com/open-quantum-safe/oqs-provider#note-on-openssl-versions>.
 
 pkcs11-provider test suite
 ==========================
