@@ -657,8 +657,6 @@ jobs:
       run: |
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
-    - name: test external oqs-provider
-      run: make test TESTS="test_external_oqsprovider"
     - name: test external pkcs11-provider
       run: make test TESTS="test_external_pkcs11_provider" VERBOSE=1
 
