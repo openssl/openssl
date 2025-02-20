@@ -4946,6 +4946,13 @@ int SSL_do_handshake(SSL *s)
             ret = sc->handshake_func(s);
         }
     }
+
+    if (ret == 1 && SSL_IS_QUIC_HANDSHAKE(sc) && !SSL_is_init_finished(s)) {
+        sc->rwstate = SSL_READING;
+        BIO_clear_retry_flags(SSL_get_rbio(s));
+        BIO_set_retry_read(SSL_get_rbio(s));
+        ret = 0;
+    }
     return ret;
 }
 

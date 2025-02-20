@@ -589,6 +589,7 @@ SSL_set_block_padding_ex                589	3_4_0	EXIST::FUNCTION:
 SSL_get1_builtin_sigalgs                590	3_4_0	EXIST::FUNCTION:
 SSL_set_quic_tls_cbs                    ?	3_5_0	EXIST::FUNCTION:
 SSL_set_quic_tls_transport_params       ?	3_5_0	EXIST::FUNCTION:
+SSL_set_quic_tls_early_data_enabled     ?	3_5_0	EXIST::FUNCTION:
 OSSL_QUIC_server_method                 ?	3_5_0	EXIST::FUNCTION:QUIC
 SSL_is_listener                         ?	3_5_0	EXIST::FUNCTION:
 SSL_get0_listener                       ?	3_5_0	EXIST::FUNCTION:
