@@ -8267,7 +8267,7 @@ int SSL_get0_client_cert_type(const SSL *s, unsigned char **t, size_t *len)
 {
     const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
 
-    if (t == NULL || len == NULL)
+    if (t == NULL || len == NULL || sc == NULL)
         return 0;
 
     *t = sc->client_cert_type;
@@ -8279,7 +8279,7 @@ int SSL_get0_server_cert_type(const SSL *s, unsigned char **t, size_t *len)
 {
     const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
 
-    if (t == NULL || len == NULL)
+    if (t == NULL || len == NULL || sc == NULL)
         return 0;
 
     *t = sc->server_cert_type;

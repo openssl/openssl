@@ -712,7 +712,7 @@ int ossl_quic_tls_configure(QUIC_TLS *qtls)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(qtls->args.s);
 
-    if (!SSL_set_min_proto_version(qtls->args.s, TLS1_3_VERSION))
+    if (sc == NULL || !SSL_set_min_proto_version(qtls->args.s, TLS1_3_VERSION))
         return RAISE_INTERNAL_ERROR(qtls);
 
     SSL_clear_options(qtls->args.s, SSL_OP_ENABLE_MIDDLEBOX_COMPAT);
