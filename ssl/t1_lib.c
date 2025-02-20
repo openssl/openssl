@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
@@ -1565,13 +1566,13 @@ int tls1_set_groups_list(SSL_CTX *ctx,
                          size_t **tplext, size_t *tplextlen,
                          const char *str)
 {
-    size_t i, j;
+    size_t i = 0, j;
     int ret = 0, parse_ret = 0;
     gid_cb_st gcb;
 
     /* Sanity check */
     if (ctx == NULL) {
-        ERR_raise(ERR_LIB_CONF, CONF_R_VARIABLE_HAS_NO_VALUE);
+        ERR_raise(ERR_LIB_CONF, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
@@ -1594,6 +1595,11 @@ int tls1_set_groups_list(SSL_CTX *ctx,
     gcb.ksid_arr = OPENSSL_malloc(gcb.ksidmax * sizeof(*gcb.ksid_arr));
     if (gcb.ksid_arr == NULL)
         goto end;
+
+    while (str[0] != '\0' && isspace((unsigned char)*str))
+        str++;
+    if (str[0] == '\0')
+        goto empty_list;
 
     /*
      * Start the (potentially recursive) tuple processing by calling CONF_parse_list
@@ -1624,12 +1630,6 @@ int tls1_set_groups_list(SSL_CTX *ctx,
     }
     gcb.tplcnt = i;
 
-    /* Some more checks (at least one remaining group, not more that nominally 4 key shares */
-    if (gcb.gidcnt == 0) {
-        ERR_raise_data(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT,
-                       "No valid groups in '%s'", str);
-        goto end;
-    }
     if (gcb.ksidcnt > OPENSSL_CLIENT_MAX_KEY_SHARES) {
         ERR_raise_data(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT,
                        "To many keyshares requested in '%s' (max = %d)",
@@ -1641,7 +1641,7 @@ int tls1_set_groups_list(SSL_CTX *ctx,
      * For backward compatibility we let the rest of the code know that a key share
      * for the first valid group should be added if no "*" prefix was used anywhere
      */
-    if (gcb.ksidcnt == 0) {
+    if (gcb.gidcnt > 0 && gcb.ksidcnt == 0) {
         /*
          * No key share group prefix character was used, hence we indicate that a single
          * key share should be sent and flag that it should come from the supported_groups list
@@ -1650,6 +1650,7 @@ int tls1_set_groups_list(SSL_CTX *ctx,
         gcb.ksid_arr[0] = 0;
     }
 
+ empty_list:
     /*
      * A call to tls1_set_groups_list with any of the args (other than ctx) set
      * to NULL only does a syntax check, hence we're done here and report success

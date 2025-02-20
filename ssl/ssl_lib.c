@@ -829,32 +829,43 @@ SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, SSL *user_ssl,
         goto err;
 
     s->session_ctx = ctx;
-    if (ctx->ext.ecpointformats) {
+    if (ctx->ext.ecpointformats != NULL) {
         s->ext.ecpointformats =
             OPENSSL_memdup(ctx->ext.ecpointformats,
                            ctx->ext.ecpointformats_len);
-        if (!s->ext.ecpointformats) {
+        if (s->ext.ecpointformats == NULL) {
             s->ext.ecpointformats_len = 0;
             goto err;
         }
         s->ext.ecpointformats_len =
             ctx->ext.ecpointformats_len;
     }
-    if (ctx->ext.supportedgroups) {
+    if (ctx->ext.supportedgroups != NULL) {
+        size_t add = 0;
+
+        if (ctx->ext.supportedgroups_len == 0)
+            /* Add 1 so allocation won't fail */
+            add = 1;
         s->ext.supportedgroups =
             OPENSSL_memdup(ctx->ext.supportedgroups,
-                           ctx->ext.supportedgroups_len
-                                * sizeof(*ctx->ext.supportedgroups));
-        if (!s->ext.supportedgroups) {
+                           (ctx->ext.supportedgroups_len + add)
+                           * sizeof(*ctx->ext.supportedgroups));
+        if (s->ext.supportedgroups == NULL) {
             s->ext.supportedgroups_len = 0;
             goto err;
         }
         s->ext.supportedgroups_len = ctx->ext.supportedgroups_len;
     }
     if (ctx->ext.keyshares != NULL) {
+        size_t add = 0;
+
+        if (ctx->ext.keyshares_len == 0)
+            /* Add 1 so allocation won't fail */
+            add = 1;
         s->ext.keyshares =
             OPENSSL_memdup(ctx->ext.keyshares,
-                           ctx->ext.keyshares_len * sizeof(*ctx->ext.keyshares));
+                           (ctx->ext.keyshares_len + add)
+                           * sizeof(*ctx->ext.keyshares));
         if (s->ext.keyshares == NULL) {
             s->ext.keyshares_len = 0;
             goto err;
@@ -862,9 +873,15 @@ SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, SSL *user_ssl,
         s->ext.keyshares_len = ctx->ext.keyshares_len;
     }
     if (ctx->ext.tuples != NULL) {
+        size_t add = 0;
+
+        if (ctx->ext.tuples_len == 0)
+            /* Add 1 so allocation won't fail */
+            add = 1;
         s->ext.tuples =
             OPENSSL_memdup(ctx->ext.tuples,
-                           ctx->ext.tuples_len * sizeof(*ctx->ext.tuples));
+                           (ctx->ext.tuples_len + add)
+                           * sizeof(*ctx->ext.tuples));
         if (s->ext.tuples == NULL) {
             s->ext.tuples_len = 0;
             goto err;
