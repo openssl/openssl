@@ -561,6 +561,7 @@ typedef struct loopargs_st {
     size_t outlen[EC_NUM];
 #ifndef OPENSSL_NO_DH
     EVP_PKEY_CTX *ffdh_ctx[FFDH_NUM];
+    EVP_PKEY *ffdh_keys[FFDH_NUM*2];
     unsigned char *secret_ff_a;
     unsigned char *secret_ff_b;
 #endif
@@ -4020,10 +4021,10 @@ int speed_main(int argc, char **argv)
             }
 
             loopargs[i].ffdh_ctx[testnum] = ffdh_ctx;
+            loopargs[i].ffdh_keys[testnum] = pkey_A;
+            loopargs[i].ffdh_keys[testnum + 1] = pkey_B;
 
-            EVP_PKEY_free(pkey_A);
             pkey_A = NULL;
-            EVP_PKEY_free(pkey_B);
             pkey_B = NULL;
             EVP_PKEY_CTX_free(test_ctx);
             test_ctx = NULL;
@@ -4670,8 +4671,12 @@ int speed_main(int argc, char **argv)
 #ifndef OPENSSL_NO_DH
         OPENSSL_free(loopargs[i].secret_ff_a);
         OPENSSL_free(loopargs[i].secret_ff_b);
-        for (k = 0; k < FFDH_NUM; k++)
+        for (k = 0; k < FFDH_NUM; k++) {
             EVP_PKEY_CTX_free(loopargs[i].ffdh_ctx[k]);
+            EVP_PKEY_free(loopargs[i].ffdh_keys[k*2]);
+            EVP_PKEY_free(loopargs[i].ffdh_keys[k*2+1]);
+        }
+
 #endif
 #ifndef OPENSSL_NO_DSA
         for (k = 0; k < DSA_NUM; k++) {
