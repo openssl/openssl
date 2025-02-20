@@ -91,10 +91,10 @@ static int poll_translate_ssl_quic(SSL *ssl,
 
     if (fd2 == fd1) {
         fd2 = -1;
-        fd1_w = fd1_w || fd2_w;
+        fd1_w = fd2_w;
     }
 
-    if (fd1 != -1 && (fd1_r || fd1_w))
+    if (fd1 != -1)
         if (!ossl_rio_poll_builder_add_fd(rpb, fd1, fd1_r, fd1_w))
             return 0;
 
