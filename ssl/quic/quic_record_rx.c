@@ -279,13 +279,10 @@ void ossl_qrx_inject_pkt(OSSL_QRX *qrx, OSSL_QRX_PKT *pkt)
      * port_default_packet_handler() uses ossl_qrx_read_pkt()
      * to get pkt. Such packet has refcount 1.
      */
-    assert(rxe->refcount == 1);
-    if (rxe->refcount != 1) {
-        ossl_qrx_pkt_release(pkt);
-    } else {
-        rxe->refcount = 0;
+    ossl_qrx_pkt_release(pkt);
+    assert(rxe->refcount == 0);
+    if (rxe->refcount == 0)
         ossl_list_rxe_insert_tail(&qrx->rx_pending, rxe);
-    }
 }
 
 /*
