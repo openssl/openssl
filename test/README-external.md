@@ -87,37 +87,6 @@ explicitly run (with more debugging):
 
     $ make test VERBOSE=1 TESTS=test_external_gost_engine
 
-OQSprovider test suite
-======================
-
-Much like the PYCA/Cryptography test suite, this builds and runs the OQS
-(OpenQuantumSafe -- www.openquantumsafe.org) provider tests against the
-local OpenSSL build.
-
-You will need a git checkout of oqsprovider at the top level:
-
-    $ git submodule update --init
-
-Then configure/build OpenSSL enabling external tests:
-
-    $ ./config enable-external-tests
-    $ make
-
-oqsprovider requires CMake for the build process.
-
-OQSprovider tests will then be run as part of the rest of the suite, or can be
-explicitly run (with more debugging):
-
-    $ make test VERBOSE=1 TESTS=test_external_oqsprovider
-
-The environment variable `OQS_SKIP_TESTS` can be set to select tests and
-algorithms to be skipped, e.g. as follows:
-
-    OQS_SKIP_TESTS=kyber make test TESTS=test_external_oqsprovider
-
-The names of all supported quantum-safe algorithms are available at
-<https://github.com/open-quantum-safe/oqs-provider#algorithms>
-
 pkcs11-provider test suite
 ==========================
 
