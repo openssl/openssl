@@ -546,6 +546,7 @@ typedef struct loopargs_st {
     EVP_PKEY_CTX *ecdsa_sign_ctx[ECDSA_NUM];
     EVP_PKEY_CTX *ecdsa_verify_ctx[ECDSA_NUM];
     EVP_PKEY_CTX *ecdh_ctx[EC_NUM];
+    EVP_PKEY *ecdh_keys[EC_NUM*2];
 #ifndef OPENSSL_NO_ECX
     EVP_MD_CTX *eddsa_ctx[EdDSA_NUM];
     EVP_MD_CTX *eddsa_ctx2[EdDSA_NUM];
@@ -3589,10 +3590,10 @@ int speed_main(int argc, char **argv)
             }
 
             loopargs[i].ecdh_ctx[testnum] = ctx;
+            loopargs[i].ecdh_keys[testnum*2] = key_A;
+            loopargs[i].ecdh_keys[testnum*2+1] = key_B;
             loopargs[i].outlen[testnum] = outlen;
 
-            EVP_PKEY_free(key_A);
-            EVP_PKEY_free(key_B);
             EVP_PKEY_CTX_free(test_ctx);
             test_ctx = NULL;
         }
@@ -4682,8 +4683,11 @@ int speed_main(int argc, char **argv)
             EVP_PKEY_CTX_free(loopargs[i].ecdsa_sign_ctx[k]);
             EVP_PKEY_CTX_free(loopargs[i].ecdsa_verify_ctx[k]);
         }
-        for (k = 0; k < EC_NUM; k++)
+        for (k = 0; k < EC_NUM; k++) {
             EVP_PKEY_CTX_free(loopargs[i].ecdh_ctx[k]);
+            EVP_PKEY_free(loopargs[i].ecdh_keys[k*2]);
+            EVP_PKEY_free(loopargs[i].ecdh_keys[k*2+1]);
+        }
 #ifndef OPENSSL_NO_ECX
         for (k = 0; k < EdDSA_NUM; k++) {
             EVP_MD_CTX_free(loopargs[i].eddsa_ctx[k]);
