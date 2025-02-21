@@ -280,8 +280,7 @@ void ossl_qrx_inject_pkt(OSSL_QRX *qrx, OSSL_QRX_PKT *pkt)
      * to get pkt. Such packet has refcount 1.
      */
     ossl_qrx_pkt_release(pkt);
-    assert(rxe->refcount == 0);
-    if (rxe->refcount == 0)
+    if (ossl_assert(rxe->refcount == 0))
         ossl_list_rxe_insert_tail(&qrx->rx_pending, rxe);
 }
 
