@@ -1005,8 +1005,8 @@ static int test_bio_ssl(void)
         goto err;
 
     if (!TEST_true(qtest_create_quic_objects(libctx, NULL, NULL, cert, privkey,
-                                             0, &qtserv, &clientquic, NULL,
-                                             NULL)))
+                                             QTEST_FLAG_FAKE_TIME, &qtserv,
+                                             &clientquic, NULL, NULL)))
         goto err;
 
     msglen = strlen(msg);
@@ -1031,6 +1031,7 @@ static int test_bio_ssl(void)
 
         if (!servererr && rets <= 0) {
             ossl_quic_tserver_tick(qtserv);
+            qtest_add_time(100);
             servererr = ossl_quic_tserver_is_term_any(qtserv);
             if (!servererr)
                 rets = ossl_quic_tserver_is_handshake_confirmed(qtserv);
