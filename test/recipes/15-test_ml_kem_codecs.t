@@ -176,11 +176,13 @@ foreach my $alg (@algs) {
                 qw(-provparam ml-kem.output_formats=seed-priv -pkeyopt),
                 "hexseed:$weed", qw(-outform DER -out), $fake])),
         sprintf("create fake private key: %s", $alg));
-    my $realfh = IO::File->new($real, "r");
-    my $fakefh = IO::File->new($fake, "r");
+    my $realfh = IO::File->new($real, "<:raw");
+    my $fakefh = IO::File->new($fake, "<:raw");
     local $/ = undef;
     my $realder = <$realfh>;
     my $fakeder = <$fakefh>;
+    $realfh->close();
+    $fakefh->close();
     #
     # - 20 bytes PKCS8 fixed overhead,
     # - 4 byte private key octet string tag + length
@@ -192,8 +194,9 @@ foreach my $alg (@algs) {
     #     - |ek| public key ('t' vector || 'rho')
     #     - implicit rejection 'z' seed component
     #
-    ok(length($realder) == 28 + (2 + 64) + (4 + $slen + $plen + $zlen)
-        && length($fakeder) == 28 + (2 + 64) + (4 + $slen + $plen + $zlen));
+    my $p8_len = 28 + (2 + 64) + (4 + $slen + $plen + $zlen);
+    ok((length($realder) == $p8_len && length($fakeder) == $p8_len),
+        sprintf("Got expected DER lengths of %s seed-priv key", $alg));
     my $mixtder = substr($realder, 0, 28 + 66 + 4 + $slen)
         . substr($fakeder, 28 + 66 + 4 + $slen, $plen)
         . substr($realder, 28 + 66 + 4 + $slen + $plen, $zlen);

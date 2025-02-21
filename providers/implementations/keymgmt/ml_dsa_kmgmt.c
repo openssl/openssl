@@ -236,7 +236,7 @@ static int ml_dsa_key_fromdata(ML_DSA_KEY *key, const OSSL_PARAM params[],
     if (seed_len != 0
         && (sk_len == 0
             || (ossl_ml_dsa_key_get_prov_flags(key) & ML_DSA_KEY_PREFER_SEED))) {
-        if (!ossl_ml_dsa_set_prekey(key, 0, 0, seed, seed_len, NULL, 0))
+        if (!ossl_ml_dsa_set_prekey(key, 0, 0, seed, seed_len, sk, sk_len))
             return 0;
         if (!ossl_ml_dsa_generate_key(key)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GENERATE_KEY);
@@ -251,9 +251,15 @@ static int ml_dsa_key_fromdata(ML_DSA_KEY *key, const OSSL_PARAM params[],
     }
 
     /* Error if the supplied public key does not match the generated key */
-    return pk_len == 0
+    if (pk_len == 0
         || seed_len + sk_len == 0
-        || memcmp(ossl_ml_dsa_key_get_pub(key), pk, pk_len) == 0;
+        || memcmp(ossl_ml_dsa_key_get_pub(key), pk, pk_len) == 0)
+        return 1;
+    ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY,
+                   "explicit %s public key does not match private",
+                   key_params->alg);
+    ossl_ml_dsa_key_reset(key);
+    return 0;
 }
 
 static int ml_dsa_import(void *keydata, int selection, const OSSL_PARAM params[])
