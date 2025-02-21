@@ -9,6 +9,7 @@
 
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
+#include <openssl/err.h>
 #include <openssl/params.h>
 #include <openssl/proverr.h>
 #include <openssl/rand.h>
@@ -142,10 +143,19 @@ void ossl_ml_dsa_key_free(ML_DSA_KEY *key)
  */
 void ossl_ml_dsa_key_reset(ML_DSA_KEY *key)
 {
-    vector_zero(&key->s2);
-    vector_zero(&key->s1);
-    vector_zero(&key->t0);
-    vector_free(&key->s1);
+    /*
+     * The allocation for |s1.poly| subsumes those for |s2| and |t0|, which we
+     * must not access after |s1|'s poly is freed.
+     */
+    if (key->s1.poly != NULL) {
+        vector_zero(&key->s1);
+        vector_zero(&key->s2);
+        vector_zero(&key->t0);
+        vector_free(&key->s1);
+        key->s2.poly = NULL;
+        key->t0.poly = NULL;
+    }
+    /* The |t1| vector is public and allocated separately */
     vector_free(&key->t1);
     OPENSSL_cleanse(key->K, sizeof(key->K));
     OPENSSL_free(key->pub_encoding);
@@ -447,6 +457,8 @@ err:
 int ossl_ml_dsa_generate_key(ML_DSA_KEY *out)
 {
     size_t seed_len = ML_DSA_SEED_BYTES;
+    uint8_t *sk;
+    int ret;
 
     if (out->seed == NULL) {
         if ((out->seed = OPENSSL_malloc(seed_len)) == NULL)
@@ -458,9 +470,22 @@ int ossl_ml_dsa_generate_key(ML_DSA_KEY *out)
         }
     }
     /* We're generating from a seed, drop private prekey encoding */
-    OPENSSL_free(out->priv_encoding);
+    sk = out->priv_encoding;
     out->priv_encoding = NULL;
-    return keygen_internal(out);
+    if (sk == NULL) {
+        ret = keygen_internal(out);
+    } else {
+        if ((ret = keygen_internal(out)) != 0
+            && memcmp(out->priv_encoding, sk, out->params->sk_len) != 0) {
+            ret = 0;
+            ossl_ml_dsa_key_reset(out);
+            ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY,
+                           "explicit %s private key does not match seed",
+                           out->params->alg);
+        }
+        OPENSSL_free(sk);
+    }
+    return ret;
 }
 
 /**
