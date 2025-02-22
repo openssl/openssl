@@ -219,7 +219,7 @@ int OSSL_URI_REFERENCE_print(BIO *out, OSSL_URI_REFERENCE *value, int indent)
     if (rc <= 0)
         return rc;
     if (value->hashAlgorithm != NULL) {
-        rc = BIO_printf(out, "%*sHash Algorithm:\n%*s", indent, "", indent + 4, "");
+        rc = BIO_printf(out, "%*s", indent, "");
         if (rc <= 0)
             return rc;
         rc = X509_ALGOR_print_bio(out, value->hashAlgorithm);
@@ -886,7 +886,7 @@ int OSSL_PLATFORM_CONFIG_print(BIO *out, OSSL_PLATFORM_CONFIG *value, int indent
 
 static int print_trait(BIO *out, OSSL_PCV2_TRAIT *trait, int indent)
 {
-    ASN1_TYPE *value;
+    ASN1_TYPE *value = ASN1_TYPE_new();
     unsigned char *bytes;
     int nid;
 
@@ -933,13 +933,15 @@ static int print_trait(BIO *out, OSSL_PCV2_TRAIT *trait, int indent)
             return -1;
     }
 
+    if (BIO_printf(out, "%*sTrait Value:\n", indent, "") <= 0)
+        return -1;
     bytes = trait->traitValue->data;
     if (d2i_ASN1_TYPE(&value, (const unsigned char **)&bytes, trait->traitValue->length) == NULL)
         return -1;
     nid = OBJ_obj2nid(trait->traitId);
     if (ossl_print_attribute_value(out, nid, value, indent + 4) <= 0)
         return -1;
-    return 0;
+    return 1;
 }
 
 int print_traits(BIO *out, STACK_OF(OSSL_PCV2_TRAIT) *traits, int indent)
@@ -949,7 +951,7 @@ int print_traits(BIO *out, STACK_OF(OSSL_PCV2_TRAIT) *traits, int indent)
 
     for (int i = 0; i < sk_OSSL_PCV2_TRAIT_num(traits); i++) {
         trait = sk_OSSL_PCV2_TRAIT_value(traits, i);
-        rc = print_trait(out, trait, indent + 8);
+        rc = print_trait(out, trait, indent);
         if (rc <= 0)
             return rc;
         rc = BIO_puts(out, "\n");
@@ -995,17 +997,15 @@ int OSSL_PLATFORM_CONFIG_V3_print(BIO *out, OSSL_PLATFORM_CONFIG_V3 *value, int 
             pp = sk_OSSL_PLATFORM_PROPERTY_value(value->platformProperties, i);
             if (OSSL_PLATFORM_PROPERTY_print(out, pp, indent + 8) <= 0)
                 return -1;
-            if (BIO_puts(out, "\n") <= 0)
-                return -1;
         }
     }
 
-    return 0;
+    return 1;
 }
 
 int OSSL_ISO9000_CERTIFICATION_print(BIO *out, OSSL_ISO9000_CERTIFICATION *value, int indent)
 {
-    if (BIO_printf(out, "ISO 9000 Certified: %s\n",
+    if (BIO_printf(out, "%*sISO 9000 Certified: %s\n", indent, "",
                    value->iso9000Certified ? "TRUE" : "FALSE") <= 0)
         return -1;
     if (value->iso9000Uri == NULL)
@@ -1013,4 +1013,54 @@ int OSSL_ISO9000_CERTIFICATION_print(BIO *out, OSSL_ISO9000_CERTIFICATION *value
     return BIO_printf(out, "%*sISO 9000 Certification URI: %.*s\n", indent, "",
                       value->iso9000Uri->length,
                       value->iso9000Uri->data) > 0;
+}
+
+int OSSL_COMMON_CRITERIA_EVALUATION_print(BIO *out,
+                                          OSSL_COMMON_CRITERIA_EVALUATION *value,
+                                          int indent)
+{
+    int rc;
+
+    if (BIO_printf(out, "%*sCommon Criteria Measures:\n", indent, "") <= 0)
+        return -1;
+    if (OSSL_COMMON_CRITERIA_MEASURES_print(out, value->cCMeasures, indent + 4) <= 0)
+        return -1;
+    rc = BIO_printf(out, "%*sCommon Criteria Cert. No.: %.*s\n", indent, "",
+                    value->cCCertificateNumber->length,
+                    value->cCCertificateNumber->data);
+    if (rc <= 0)
+        return rc;
+    rc = BIO_printf(out, "%*sCommon Criteria Cert. Authority: %.*s\n", indent, "",
+                    value->cCCertificateAuthority->length,
+                    value->cCCertificateAuthority->data);
+    if (rc <= 0)
+        return rc;
+
+    if (value->evaluationScheme != NULL) {
+        rc = BIO_printf(out, "%*sEvaluation Scheme: %.*s\n", indent, "",
+            value->evaluationScheme->length,
+            value->evaluationScheme->data);
+        if (rc <= 0)
+            return rc;
+    }
+
+    if (value->cCCertificateIssuanceDate != NULL) {
+        if (BIO_printf(out, "%*sCommon Criteria Cert. Issue Date: ", indent, "") <= 0)
+            return -1;
+        if (ASN1_GENERALIZEDTIME_print(out, value->cCCertificateIssuanceDate) != 1)
+            return -1;
+        if (BIO_puts(out, "\n") <= 0)
+            return -1;
+    }
+
+    if (value->cCCertificateExpiryDate != NULL) {
+        if (BIO_printf(out, "%*sCommon Criteria Cert. Expiry Date: ", indent, "") <= 0)
+            return -1;
+        if (ASN1_GENERALIZEDTIME_print(out, value->cCCertificateExpiryDate) != 1)
+            return -1;
+        if (BIO_puts(out, "\n") <= 0)
+            return -1;
+    }
+
+    return 1;
 }
