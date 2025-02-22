@@ -284,3 +284,6 @@ my @pkc2_expectations = (
 
 cert_contains_all(srctop_file(@certs, "platcertv1.cert.pem"), @pkc1_expectations);
 cert_contains_all(srctop_file(@certs, "platcertv2.cert.pem"), @pkc2_expectations);
+
+# TODO: Test attribute certificate-based platform certificates once printing
+# attribute certificates is supported.
