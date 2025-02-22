@@ -102,7 +102,7 @@ static int print_pubkey(BIO *out, X509_PUBKEY *pubkey, int indent)
 }
 
 #define TRY_PRINT_SEQ_FUNC(local, type, name, printer) value = av->value.sequence->data; \
-    if ((local = d2i_##type(NULL, (const unsigned char**)&value,\
+    if ((local = d2i_##type(NULL, (const unsigned char **)&value,\
                             av->value.sequence->length)) == NULL) {\
         BIO_printf(out, "(COULD NOT DECODE %s)\n", name);\
         return 0;\
