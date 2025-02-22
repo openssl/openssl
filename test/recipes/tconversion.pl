@@ -136,6 +136,20 @@ sub cert_contains {
     # not unlinking $out
 }
 
+sub cert_contains_all {
+    my ($cert, @patterns) = @_;
+    my $out = "cert_contains.out";
+    my $pattern;
+    run(app(["openssl", "x509", "-noout", "-text", "-in", $cert, "-out", $out]));
+    foreach $pattern (@patterns) {
+        if(!test_file_contains(("").$cert, $out, $pattern, 1)) {
+            return 0;
+        }
+    }
+    # not unlinking $out
+    return 1;
+}
+
 sub has_version {
     my ($cert, $expect) = @_;
     cert_contains($cert, "Version: $expect", 1);
