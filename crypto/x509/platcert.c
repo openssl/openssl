@@ -356,7 +356,7 @@ int OSSL_COMMON_CRITERIA_MEASURES_print(BIO *out,
         || i64val <= 0
         || i64val > INT_MAX)
         return -1;
-    if (i64val >= ARRAY_LEN(evaluation_assurance_levels)) {
+    if (i64val >= (int64_t)ARRAY_LEN(evaluation_assurance_levels)) {
         rc = BIO_printf(out, "%lld\n", (long long int)i64val);
     } else {
         rc = BIO_printf(out, "%s\n", evaluation_assurance_levels[i64val - 1].lname);
@@ -367,7 +367,7 @@ int OSSL_COMMON_CRITERIA_MEASURES_print(BIO *out,
         || i64val < 0
         || i64val > INT_MAX)
         return -1;
-    if (i64val >= ARRAY_LEN(evaluation_statuses)) {
+    if (i64val >= (int64_t)ARRAY_LEN(evaluation_statuses)) {
         rc = BIO_printf(out, "%*sEvaluation Status: %lld\n", indent, "", (long long int)i64val);
     } else {
         rc = BIO_printf(out, "%*sEvaluation Status: %s\n", indent, "",
@@ -389,7 +389,7 @@ int OSSL_COMMON_CRITERIA_MEASURES_print(BIO *out,
             || i64val < 0
             || i64val > INT_MAX)
             return -1;
-        if (i64val >= ARRAY_LEN(strengths_of_function)) {
+        if (i64val >= (int64_t)ARRAY_LEN(strengths_of_function)) {
             rc = BIO_printf(out, "%lld\n", (long long int)i64val);
         } else {
             rc = BIO_printf(out, "%s\n", strengths_of_function[i64val].lname);
@@ -460,7 +460,7 @@ int OSSL_FIPS_LEVEL_print(BIO *out, OSSL_FIPS_LEVEL *value, int indent)
             || i64val <= 0
             || i64val > INT_MAX)
             return -1;
-        if (i64val >= ARRAY_LEN(security_levels)) {
+        if (i64val >= (int64_t)ARRAY_LEN(security_levels)) {
             rc = BIO_printf(out, "%lld\n", (long long int)i64val);
         } else {
             rc = BIO_printf(out, "%s\n", security_levels[i64val - 1].lname);
@@ -631,7 +631,7 @@ int OSSL_PLATFORM_PROPERTY_print(BIO *out, OSSL_PLATFORM_PROPERTY *value, int in
             || i64val < 0
             || i64val > INT_MAX)
             return -1;
-        if (i64val >= ARRAY_LEN(attribute_statuses)) {
+        if (i64val >= (int64_t)ARRAY_LEN(attribute_statuses)) {
             rc = BIO_printf(out, "%lld\n", (long long int)i64val);
         } else {
             rc = BIO_printf(out, "%s\n", attribute_statuses[i64val].lname);
@@ -817,7 +817,7 @@ int OSSL_COMPONENT_IDENTIFIER_print(BIO *out, OSSL_COMPONENT_IDENTIFIER *value, 
             || i64val < 0
             || i64val > INT_MAX)
             return -1;
-        if (i64val >= ARRAY_LEN(attribute_statuses)) {
+        if (i64val >= (int64_t)ARRAY_LEN(attribute_statuses)) {
             rc = BIO_printf(out, "%lld\n", (long long int)i64val);
         } else {
             rc = BIO_printf(out, "%s\n", attribute_statuses[i64val].lname);
