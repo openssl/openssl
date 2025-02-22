@@ -511,7 +511,7 @@ int OSSL_TBB_SECURITY_ASSERTIONS_print(BIO *out, OSSL_TBB_SECURITY_ASSERTIONS *v
             || i64val < 0
             || i64val > INT_MAX)
             return -1;
-        if (i64val > ARRAY_LEN(measurement_root_types)) {
+        if (i64val >= (int64_t)ARRAY_LEN(measurement_root_types)) {
             rc = BIO_printf(out, "%lld\n", (long long int)i64val);
         } else {
             rc = BIO_printf(out, "%s\n", measurement_root_types[i64val].lname);
