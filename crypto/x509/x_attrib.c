@@ -145,6 +145,7 @@ int ossl_print_attribute_value(BIO *out,
     OSSL_COMPONENT_ADDRESS *compaddr = NULL;
     OSSL_ISO9000_CERTIFICATION *iso9000 = NULL;
     X509_PUBKEY *pubkey = NULL;
+    OSSL_COMMON_CRITERIA_EVALUATION *cce = NULL;
 
     switch (av->type) {
     case V_ASN1_BOOLEAN:
@@ -273,6 +274,7 @@ int ossl_print_attribute_value(BIO *out,
         case NID_tcg_at_tbbSecurityAssertions:
             TRY_PRINT_SEQ(tbb, OSSL_TBB_SECURITY_ASSERTIONS, "Trusted Building Block (TBB) Assertions")
         case NID_tcg_at_platformConfigUri:
+        case NID_tcg_tr_ID_URI:
             TRY_PRINT_SEQ(uri, OSSL_URI_REFERENCE, "TCG URI Reference")
         case NID_tcg_at_tcgCredentialSpecification:
             TRY_PRINT_SEQ(sv, OSSL_TCG_SPEC_VERSION, "TCG PlatformConfiguration-v3")
@@ -297,6 +299,8 @@ int ossl_print_attribute_value(BIO *out,
             TRY_PRINT_SEQ(iso9000, OSSL_ISO9000_CERTIFICATION, "TCG Platform Certificate ISO 9000 Certification")
         case NID_tcg_tr_ID_PublicKey:
             TRY_PRINT_SEQ_FUNC(pubkey, X509_PUBKEY, "TCG Public Key Trait", print_pubkey)
+        case NID_tcg_tr_ID_CommonCriteria:
+            TRY_PRINT_SEQ(cce, OSSL_COMMON_CRITERIA_EVALUATION, "Common Criteria Evaluation")
         default:
             break;
         }

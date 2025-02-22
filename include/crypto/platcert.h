@@ -26,4 +26,6 @@ int OSSL_COMPONENT_IDENTIFIER_print(BIO *out, OSSL_COMPONENT_IDENTIFIER *value, 
 int OSSL_PLATFORM_CONFIG_print(BIO *out, OSSL_PLATFORM_CONFIG *value, int indent);
 int OSSL_PLATFORM_CONFIG_V3_print(BIO *out, OSSL_PLATFORM_CONFIG_V3 *value, int indent);
 int OSSL_ISO9000_CERTIFICATION_print(BIO *out, OSSL_ISO9000_CERTIFICATION *value, int indent);
+int OSSL_COMMON_CRITERIA_EVALUATION_print(BIO *out, OSSL_COMMON_CRITERIA_EVALUATION *value,
+                                          int indent);
 int print_traits(BIO *out, STACK_OF(OSSL_PCV2_TRAIT) *traits, int indent);
