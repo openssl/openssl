@@ -16,13 +16,101 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_platcert");
 
-plan tests => 170;
+plan tests => 255;
 
 require_ok(srctop_file("test", "recipes", "tconversion.pl"));
 
 my @certs = qw(test certs);
 
-my @pkc_expectations = (
+my @pkc1_expectations = (
+"\QTCG Credential Type:\E",
+"\QCredential Type: 2.23.133.8.2 (Platform Attribute Certificate)\E",
+"\QTCG Platform Manufacturer ID:\E",
+"\QManufacturer Identifier: 1.3.6.1.4.1.56490 (undefined)\E",
+"\QTCG Credential Specification:\E",
+"\Q2.0.0\E",
+"\QTPM Platform Specification:\E",
+"\Q2.0.0 : 7D:D0:EE:8D\E",
+"\QTCG Platform Configuration URI:\E",
+"\QURI: https://example.com/uri-reference\E",
+"\QHash Algorithm: sha256\E",
+"\QHash Value: 49:28:77:9C:4E:8F:80:37:85:90:73:A5:0E:CC:FC:88:01:5C:4A:14:76:13:9B:B4:6A:B4:2C:73:DF:77:50:16\E",
+"\QTBB Security Assertions:\E",
+"\QVersion: 2\E",
+"\QCommon Criteria Measures:\E",
+"\QVersion: 3.1\E",
+"\QAssurance Level: Level 2\E",
+"\QEvaluation Status: Designed To Meet (0)\E",
+"\QPlus: TRUE\E",
+"\QStrength Of Function: Basic (0)\E",
+"\QProfile OID: 1.3.4.1.6.1.56940 (undefined)\E",
+"\QProfile URI:\E",
+"\QURI: https://example2.com/profile-uri\E",
+"\QHash Algorithm: sha256\E",
+"\QHash Value: D5:A0:7D:88:E3:06:F0:5E:A4:4B:75:99:AF:21:AF:D5:7F:11:B4:41:48:7D:08:E2:5C:E7:14:48:0E:86:C6:5D\E",
+"\QTarget OID: 1.3.4.1.6.1.56940 (undefined)\E",
+"\QTarget URI:\E",
+"\QURI: https://example2.com/target-uri\E",
+"\QHash Algorithm: sha256\E",
+"\QHash Value: 9A:9B:6D:23:E9:4E:5B:F2:72:B7:90:1E:69:8D:9D:4A:06:AB:3C:48:ED:2A:EB:67:E0:77:27:3D:7B:5D:4F:E7\E",
+"\QFIPS Level:\E",
+"\QVersion: 140-2\E",
+"\QLevel: Level 2\E",
+"\QPlus: TRUE\E",
+"\QRoot Measurement Type: Physical (4)\E",
+"\QISO 9001 URI: https://mycompany.com/iso-certification\E",
+"\QPlatform Configuration Version 2:\E",
+"\QComponent Identifiers:\E",
+"\QComponent Identifier:\E",
+"\QComponent Class:\E",
+"\QComponent Class Registry: 2.23.133.18.3.2 (Internet Engineering Task Force Registry)\E",
+"\QComponent Class Registry: 03:07:05:01\E",
+"\QComponent Manufacturer: ASUS\E",
+"\QComponent Model: QX-80\E",
+"\QComponent Serial: A205250-026820\E",
+"\QComponent Revision: 25\E",
+"\QComponent Manufacturer ID: 1.3.4.1.6.1.56940 (undefined)\E",
+"\QField Replaceable: TRUE\E",
+"\QComponent Addresses:\E",
+"\QComponent Address:\E",
+"\QAddress Type: 2.23.133.17.3 (Bluetooth MAC Address)\E",
+"\QAddress Value: 08:42:64:08:24:10\E",
+"\QComponent Address:\E",
+"\QAddress Type: 2.23.133.17.3 (Bluetooth MAC Address)\E",
+"\QAddress Value: 08:42:64:08:24:11\E",
+"\QComponent Platform Certificate:\E",
+"\QHashed Certificate Identifier:\E",
+"\QHash Algorithm:\E",
+"\QHash Algorithm: sha256\E",
+"\QHash Over Signature Value: 9A:99:72:7A:4C:A6:9B:1D:A7:55:6D:54:B9:3E:CD:80:62:45:CC:3D:A0:49:ED:81:A7:62:DD:D4:11:E8:63:3C\E",
+"\QGeneric Certificate Identifier:\E",
+"\QIssuer Names:\E",
+"\QDirName:CN = skeletor\E",
+"\QIssuer Serial: 0x1FFE8F65127985EE\E",
+"\QIssuer UID: F395\E",
+"\QComponent Platform Certificate URI:\E",
+"\QURI: https://example4.com/component-platform-cert-uri\E",
+"\QHash Algorithm: sha256\E",
+"\QHash Value: EA:BC:8A:3A:68:45:6A:71:FA:A2:9F:4C:58:2E:F5:02:6A:96:3B:2F:7C:38:F5:F0:B6:6A:7F:67:6D:6A:FC:2A\E",
+"\QStatus: Added (0)\E",
+"\QComponent Identifier URI:\E",
+"\QURI: https://example3.com/component-identifiers-uri\E",
+"\QHash Algorithm: sha256\E",
+"\QHash Value: 4F:71:4F:C7:E2:4D:F3:D7:C9:B8:78:40:C2:8E:53:8D:3F:8E:0E:E3:78:CB:F9:D6:65:C1:2F:55:1D:8D:6D:65\E",
+"\QProperties:\E",
+"\QProperty Name: flavor\E",
+"\QProperty Value: strawberry\E",
+"\QStatus: Removed (2)\E",
+"\QProperty Name: flavor\E",
+"\QProperty Value: chocolate\E",
+"\QStatus: Added (0)\E",
+"\QPlatform Properties URI:\E",
+"\QURI: https://example3.com/platform-properties-uri\E",
+"\QHash Algorithm: sha256\E",
+"\QHash Value: 36:AF:24:52:C1:7F:68:91:9F:BA:BC:22:D5:10:87:92:A5:06:58:16:9B:35:0F:88:B1:AF:02:47:19:45:21:07\E"
+);
+
+my @pkc2_expectations = (
 "\QX509v3 Subject Directory Attributes: critical\E",
 "\QTCG Credential Type:\E",
 "\Q2.23.133.8.2 (Platform Attribute Certificate)\E",
@@ -194,4 +282,5 @@ my @pkc_expectations = (
 "\QHash Value: 28:26:EE:A5:20:88:E4:26:D0:AF:C2:EA:8C:8B:7F:76:40:1B:EC:6E:BB:42:FF:C2:42:FA:D1:37:47:D0:F3:47\E"
 );
 
-cert_contains_all(srctop_file(@certs, "platcertv2.cert.pem"), @pkc_expectations);
+cert_contains_all(srctop_file(@certs, "platcertv1.cert.pem"), @pkc1_expectations);
+cert_contains_all(srctop_file(@certs, "platcertv2.cert.pem"), @pkc2_expectations);
