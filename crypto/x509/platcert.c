@@ -19,6 +19,8 @@
 #include <crypto/platcert.h>
 #include <crypto/x509/x509_acert.h>
 
+#define ARRAY_LEN(x) (sizeof(x)/sizeof((x)[0]))
+
 ASN1_SEQUENCE(OSSL_URI_REFERENCE) = {
     ASN1_SIMPLE(OSSL_URI_REFERENCE, uniformResourceIdentifier, ASN1_IA5STRING),
     ASN1_OPT(OSSL_URI_REFERENCE, hashAlgorithm, X509_ALGOR),
@@ -246,7 +248,7 @@ int OSSL_URI_REFERENCE_print(BIO *out, OSSL_URI_REFERENCE *value, int indent)
     return rc;
 }
 
-static ENUMERATED_NAMES measurement_root_types[] = {
+static const ENUMERATED_NAMES measurement_root_types[] = {
     {OSSL_MEASUREMENT_ROOT_TYPE_STATIC, "Static (0)", "static"},
     {OSSL_MEASUREMENT_ROOT_TYPE_DYNAMIC, "Dynamic (1)", "dynamic"},
     {OSSL_MEASUREMENT_ROOT_TYPE_NONHOST, "Non-Host (2)", "nonHost"},
@@ -256,7 +258,7 @@ static ENUMERATED_NAMES measurement_root_types[] = {
     {-1, NULL, NULL},
 };
 
-static ENUMERATED_NAMES evaluation_assurance_levels[] = {
+static const ENUMERATED_NAMES evaluation_assurance_levels[] = {
     {OSSL_EVALUATION_ASSURANCE_LEVEL_1, "Level 1", "level1"},
     {OSSL_EVALUATION_ASSURANCE_LEVEL_2, "Level 2", "level2"},
     {OSSL_EVALUATION_ASSURANCE_LEVEL_3, "Level 3", "level3"},
@@ -267,21 +269,21 @@ static ENUMERATED_NAMES evaluation_assurance_levels[] = {
     {-1, NULL, NULL},
 };
 
-static ENUMERATED_NAMES evaluation_statuses[] = {
+static const ENUMERATED_NAMES evaluation_statuses[] = {
     {OSSL_EVALUATION_STATUS_DESIGNED_TO_MEET, "Designed To Meet (0)", "designedToMeet"},
     {OSSL_EVALUATION_STATUS_EVAL_IN_PROGRESS, "Evaluation In Progress (1)", "evaluationInProgress"},
     {OSSL_EVALUATION_STATUS_EVAL_COMPLETED, "Evaluation Completed (2)", "evaluationCompleted"},
     {-1, NULL, NULL},
 };
 
-static ENUMERATED_NAMES strengths_of_function[] = {
+static const ENUMERATED_NAMES strengths_of_function[] = {
     {OSSL_STRENGTH_OF_FUNCTION_BASIC, "Basic (0)", "basic"},
     {OSSL_STRENGTH_OF_FUNCTION_MEDIUM, "Medium (1)", "medium"},
     {OSSL_STRENGTH_OF_FUNCTION_HIGH, "High (2)", "high"},
     {-1, NULL, NULL},
 };
 
-static ENUMERATED_NAMES security_levels[] = {
+static const ENUMERATED_NAMES security_levels[] = {
     {OSSL_SECURITY_LEVEL_1, "Level 1", "level1"},
     {OSSL_SECURITY_LEVEL_2, "Level 2", "level2"},
     {OSSL_SECURITY_LEVEL_3, "Level 3", "level3"},
@@ -289,7 +291,7 @@ static ENUMERATED_NAMES security_levels[] = {
     {-1, NULL, NULL},
 };
 
-static ENUMERATED_NAMES attribute_statuses[] = {
+static const ENUMERATED_NAMES attribute_statuses[] = {
     {OSSL_ATTRIBUTE_STATUS_ADDED, "Added (0)", "added"},
     {OSSL_ATTRIBUTE_STATUS_MODIFIED, "Modified (1)", "modified"},
     {OSSL_ATTRIBUTE_STATUS_REMOVED, "Removed (2)", "removed"},
@@ -340,7 +342,7 @@ int OSSL_COMMON_CRITERIA_MEASURES_print(BIO *out,
                                         int indent)
 {
     int rc;
-    int64_t int_val;
+    int64_t i64val;
 
     rc = BIO_printf(out, "%*sVersion: %.*s\n", indent, "",
                     value->version->length,
@@ -350,51 +352,47 @@ int OSSL_COMMON_CRITERIA_MEASURES_print(BIO *out,
     rc = BIO_printf(out, "%*sAssurance Level: ", indent, "");
     if (rc <= 0)
         return rc;
-    if (!ASN1_ENUMERATED_get_int64(&int_val, value->assurancelevel)
-        || int_val <= 0
-        || int_val > INT_MAX)
+    if (!ASN1_ENUMERATED_get_int64(&i64val, value->assurancelevel)
+        || i64val <= 0
+        || i64val > INT_MAX)
         return -1;
-    if (int_val > 7) {
-        rc = BIO_printf(out, "%lld\n", (long long int)int_val);
+    if (i64val >= ARRAY_LEN(evaluation_assurance_levels)) {
+        rc = BIO_printf(out, "%lld\n", (long long int)i64val);
     } else {
-        rc = BIO_printf(out, "%s\n", evaluation_assurance_levels[int_val - 1].lname);
+        rc = BIO_printf(out, "%s\n", evaluation_assurance_levels[i64val - 1].lname);
     }
     if (rc <= 0)
         return rc;
-    if (!ASN1_ENUMERATED_get_int64(&int_val, value->evaluationStatus)
-        || int_val < 0
-        || int_val > INT_MAX)
+    if (!ASN1_ENUMERATED_get_int64(&i64val, value->evaluationStatus)
+        || i64val < 0
+        || i64val > INT_MAX)
         return -1;
-    if (int_val > 2) {
-        rc = BIO_printf(out, "%*sEvaluation Status: %lld\n", indent, "", (long long int)int_val);
+    if (i64val >= ARRAY_LEN(evaluation_statuses)) {
+        rc = BIO_printf(out, "%*sEvaluation Status: %lld\n", indent, "", (long long int)i64val);
     } else {
         rc = BIO_printf(out, "%*sEvaluation Status: %s\n", indent, "",
-                        evaluation_statuses[int_val].lname);
+                        evaluation_statuses[i64val].lname);
     }
     if (rc <= 0)
         return rc;
     rc = BIO_printf(out, "%*sPlus: ", indent, "");
     if (rc <= 0)
         return rc;
-    if (value->plus) {
-        rc = BIO_puts(out, "TRUE\n");
-    } else {
-        rc = BIO_puts(out, "FALSE\n");
-    }
+    rc = BIO_puts(out, value->plus ? "TRUE\n" : "FALSE\n");
     if (rc <= 0)
         return rc;
     if (value->strengthOfFunction != NULL) {
         rc = BIO_printf(out, "%*sStrength Of Function: ", indent, "");
         if (rc <= 0)
             return rc;
-        if (!ASN1_ENUMERATED_get_int64(&int_val, value->strengthOfFunction)
-            || int_val < 0
-            || int_val > INT_MAX)
+        if (!ASN1_ENUMERATED_get_int64(&i64val, value->strengthOfFunction)
+            || i64val < 0
+            || i64val > INT_MAX)
             return -1;
-        if (int_val > 2) {
-            rc = BIO_printf(out, "%lld\n", (long long int)int_val);
+        if (i64val >= ARRAY_LEN(strengths_of_function)) {
+            rc = BIO_printf(out, "%lld\n", (long long int)i64val);
         } else {
-            rc = BIO_printf(out, "%s\n", strengths_of_function[int_val].lname);
+            rc = BIO_printf(out, "%s\n", strengths_of_function[i64val].lname);
         }
         if (rc <= 0)
             return rc;
@@ -447,7 +445,7 @@ int OSSL_COMMON_CRITERIA_MEASURES_print(BIO *out,
 int OSSL_FIPS_LEVEL_print(BIO *out, OSSL_FIPS_LEVEL *value, int indent)
 {
     int rc;
-    int64_t int_val;
+    int64_t i64val;
 
     rc = BIO_printf(out, "%*sVersion: %.*s\n", indent, "",
                     value->version->length,
@@ -458,37 +456,32 @@ int OSSL_FIPS_LEVEL_print(BIO *out, OSSL_FIPS_LEVEL *value, int indent)
         rc = BIO_printf(out, "%*sLevel: ", indent, "");
         if (rc <= 0)
             return rc;
-        if (!ASN1_ENUMERATED_get_int64(&int_val, value->level)
-            || int_val <= 0
-            || int_val > INT_MAX)
+        if (!ASN1_ENUMERATED_get_int64(&i64val, value->level)
+            || i64val <= 0
+            || i64val > INT_MAX)
             return -1;
-        if (int_val > 4) {
-            rc = BIO_printf(out, "%lld\n", (long long int)int_val);
+        if (i64val >= ARRAY_LEN(security_levels)) {
+            rc = BIO_printf(out, "%lld\n", (long long int)i64val);
         } else {
-            rc = BIO_printf(out, "%s\n", security_levels[int_val - 1].lname);
+            rc = BIO_printf(out, "%s\n", security_levels[i64val - 1].lname);
         }
         if (rc <= 0)
             return rc;
     }
-    if (value->plus) {
-        rc = BIO_printf(out, "%*sPlus: TRUE\n", indent, "");
-    } else {
-        rc = BIO_printf(out, "%*sPlus: FALSE\n", indent, "");
-    }
-    return rc;
+    return BIO_printf(out, "%*sPlus: %s\n", indent, "", value->plus ? "TRUE" : "FALSE");
 }
 
 int OSSL_TBB_SECURITY_ASSERTIONS_print(BIO *out, OSSL_TBB_SECURITY_ASSERTIONS *value, int indent)
 {
     int rc = 1; /* All fields are OPTIONAL, so we start off at 1 in case all are omitted. */
-    int64_t int_val;
+    int64_t i64val;
 
     if (value->version != NULL) {
-        if (!ASN1_INTEGER_get_int64(&int_val, value->version)
-            || int_val < 0
-            || int_val > INT_MAX)
+        if (!ASN1_INTEGER_get_int64(&i64val, value->version)
+            || i64val < 0
+            || i64val > INT_MAX)
             return -1;
-        rc = BIO_printf(out, "%*sVersion: %lld\n", indent, "", (long long int)int_val);
+        rc = BIO_printf(out, "%*sVersion: %lld\n", indent, "", (long long int)i64val);
     } else {
         rc = BIO_printf(out, "%*sVersion: 1\n", indent, "");
     }
@@ -514,14 +507,14 @@ int OSSL_TBB_SECURITY_ASSERTIONS_print(BIO *out, OSSL_TBB_SECURITY_ASSERTIONS *v
         rc = BIO_printf(out, "%*sRoot Measurement Type: ", indent, "");
         if (rc <= 0)
             return rc;
-        if (!ASN1_ENUMERATED_get_int64(&int_val, value->rtmType)
-            || int_val < 0
-            || int_val > INT_MAX)
+        if (!ASN1_ENUMERATED_get_int64(&i64val, value->rtmType)
+            || i64val < 0
+            || i64val > INT_MAX)
             return -1;
-        if (int_val > 5) {
-            rc = BIO_printf(out, "%lld\n", (long long int)int_val);
+        if (i64val > ARRAY_LEN(measurement_root_types)) {
+            rc = BIO_printf(out, "%lld\n", (long long int)i64val);
         } else {
-            rc = BIO_printf(out, "%s\n", measurement_root_types[int_val].lname);
+            rc = BIO_printf(out, "%s\n", measurement_root_types[i64val].lname);
         }
         if (rc <= 0)
             return rc;
@@ -620,7 +613,7 @@ int OSSL_COMPONENT_ADDRESS_print(BIO *out, OSSL_COMPONENT_ADDRESS *value, int in
 int OSSL_PLATFORM_PROPERTY_print(BIO *out, OSSL_PLATFORM_PROPERTY *value, int indent)
 {
     int rc;
-    int64_t int_val;
+    int64_t i64val;
 
     rc = BIO_printf(out, "%*sProperty Name: %.*s\n", indent, "",
                     value->propertyName->length, value->propertyName->data);
@@ -634,14 +627,14 @@ int OSSL_PLATFORM_PROPERTY_print(BIO *out, OSSL_PLATFORM_PROPERTY *value, int in
         rc = BIO_printf(out, "%*sStatus: ", indent, "");
         if (rc <= 0)
             return rc;
-        if (!ASN1_ENUMERATED_get_int64(&int_val, value->status)
-            || int_val < 0
-            || int_val > INT_MAX)
+        if (!ASN1_ENUMERATED_get_int64(&i64val, value->status)
+            || i64val < 0
+            || i64val > INT_MAX)
             return -1;
-        if (int_val > 2) {
-            rc = BIO_printf(out, "%lld\n", (long long int)int_val);
+        if (i64val >= ARRAY_LEN(attribute_statuses)) {
+            rc = BIO_printf(out, "%lld\n", (long long int)i64val);
         } else {
-            rc = BIO_printf(out, "%s\n", attribute_statuses[int_val].lname);
+            rc = BIO_printf(out, "%s\n", attribute_statuses[i64val].lname);
         }
         if (rc <= 0)
             return rc;
@@ -731,7 +724,7 @@ int OSSL_PCV2_CERTIFICATE_IDENTIFIER_print(BIO *out,
 int OSSL_COMPONENT_IDENTIFIER_print(BIO *out, OSSL_COMPONENT_IDENTIFIER *value, int indent)
 {
     int rc, i;
-    int64_t int_val;
+    int64_t i64val;
     OSSL_COMPONENT_ADDRESS *caddr;
 
     rc = BIO_printf(out, "%*sComponent Class:\n", indent, "");
@@ -820,14 +813,14 @@ int OSSL_COMPONENT_IDENTIFIER_print(BIO *out, OSSL_COMPONENT_IDENTIFIER *value, 
         rc = BIO_printf(out, "%*sStatus: ", indent, "");
         if (rc <= 0)
             return rc;
-        if (!ASN1_ENUMERATED_get_int64(&int_val, value->status)
-            || int_val < 0
-            || int_val > INT_MAX)
+        if (!ASN1_ENUMERATED_get_int64(&i64val, value->status)
+            || i64val < 0
+            || i64val > INT_MAX)
             return -1;
-        if (int_val > 2) {
-            rc = BIO_printf(out, "%lld\n", (long long int)int_val);
+        if (i64val >= ARRAY_LEN(attribute_statuses)) {
+            rc = BIO_printf(out, "%lld\n", (long long int)i64val);
         } else {
-            rc = BIO_printf(out, "%s\n", attribute_statuses[int_val].lname);
+            rc = BIO_printf(out, "%s\n", attribute_statuses[i64val].lname);
         }
         if (rc <= 0)
             return rc;
@@ -956,9 +949,10 @@ static int print_trait(BIO *out, OSSL_PCV2_TRAIT *trait, int indent)
 int print_traits(BIO *out, STACK_OF(OSSL_PCV2_TRAIT) *traits, int indent)
 {
     int rc = 0;
+    int i;
     OSSL_PCV2_TRAIT *trait = NULL;
 
-    for (int i = 0; i < sk_OSSL_PCV2_TRAIT_num(traits); i++) {
+    for (i = 0; i < sk_OSSL_PCV2_TRAIT_num(traits); i++) {
         trait = sk_OSSL_PCV2_TRAIT_value(traits, i);
         rc = print_trait(out, trait, indent);
         if (rc <= 0)
@@ -972,7 +966,7 @@ int print_traits(BIO *out, STACK_OF(OSSL_PCV2_TRAIT) *traits, int indent)
 
 int OSSL_PLATFORM_CONFIG_V3_print(BIO *out, OSSL_PLATFORM_CONFIG_V3 *value, int indent)
 {
-    int pcs, pps, numtraits;
+    int pcs, pps, numtraits, i, j;
     OSSL_COMPONENT_IDENTIFIER_V2 *pc;
     OSSL_PLATFORM_PROPERTY *pp;
     OSSL_PCV2_TRAIT *trait;
@@ -981,12 +975,12 @@ int OSSL_PLATFORM_CONFIG_V3_print(BIO *out, OSSL_PLATFORM_CONFIG_V3 *value, int 
         pcs = sk_OSSL_COMPONENT_IDENTIFIER_V2_num(value->platformComponents);
         if (BIO_printf(out, "%*sPlatform Components:\n", indent, "") <= 0)
             return -1;
-        for (int i = 0; i < pcs; i++) {
+        for (i = 0; i < pcs; i++) {
             if (BIO_printf(out, "%*sPlatform Component (Traits):\n", indent + 4, "") <= 0)
                 return -1;
             pc = sk_OSSL_COMPONENT_IDENTIFIER_V2_value(value->platformComponents, i);
             numtraits = sk_OSSL_PCV2_TRAIT_num(pc);
-            for (int j = 0; j < numtraits; j++) {
+            for (j = 0; j < numtraits; j++) {
                 trait = sk_OSSL_PCV2_TRAIT_value(pc, j);
                 if (print_trait(out, trait, indent + 8) <= 0)
                     return -1;
@@ -1000,7 +994,7 @@ int OSSL_PLATFORM_CONFIG_V3_print(BIO *out, OSSL_PLATFORM_CONFIG_V3 *value, int 
         pps = sk_OSSL_PLATFORM_PROPERTY_num(value->platformProperties);
         if (BIO_printf(out, "%*sPlatform Properties:\n", indent, "") <= 0)
             return -1;
-        for (int i = 0; i < pps; i++) {
+        for (i = 0; i < pps; i++) {
             if (BIO_printf(out, "%*sPlatform Property:\n", indent + 4, "") <= 0)
                 return -1;
             pp = sk_OSSL_PLATFORM_PROPERTY_value(value->platformProperties, i);
