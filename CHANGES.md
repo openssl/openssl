@@ -30,16 +30,30 @@ OpenSSL 3.5
 
 ### Changes between 3.4 and 3.5 [xx XXX xxxx]
 
+* Added a `no-tls-deprecated-ec-groups` configuration option.
+
+  The `no-tls-deprecated-ec-groups` option disables support for TLS elliptic
+  curve groups deprecated in RFC8422 at compile time.  This does not affect use
+  of the associated curves outside TLS.  By default support for these groups is
+  compiled in, but, as before, they are not included in the default run-time
+  list of supported groups.
+
+  With the `enable-tls-deprecated-ec` option these TLS groups remain enabled at
+  compile time even if the default configuration is changed, provided the
+  underlying EC curves remain implemented.
+
+  *Viktor Dukhovni*
+
 * Added new API to enable 0-RTT for 3rd party QUIC stacks.
 
   *Cheng Zhang*
 
-* Added support for a new callback registration SSL_CTX_set_new_pending_conn_cb,
+* Added support for a new callback registration `SSL_CTX_set_new_pending_conn_cb`,
   which allows for application notification of new connection SSL object
-  creation, which occurs independently of calls to SSL_accept_connection().
+  creation, which occurs independently of calls to `SSL_accept_connection()`.
   Note: QUIC objects passed through SSL callbacks should not have their state
   mutated via calls back into the SSL api until such time as they have been
-  received via a call to SSL_accept_connection().
+  received via a call to `SSL_accept_connection()`.
 
   *Neil Horman*
 

@@ -84,6 +84,7 @@ my %conf_dependent_tests = (
   "07-dtls-protocol-version.cnf" => !$is_default_dtls || !disabled("sctp"),
   "10-resumption.cnf" => !$is_default_tls || $no_ec,
   "11-dtls_resumption.cnf" => !$is_default_dtls || !disabled("sctp"),
+  "14-curves.cnf" => disabled("tls-deprecated-ec"),
   "16-dtls-certstatus.cnf" => !$is_default_dtls || !disabled("sctp"),
   "17-renegotiate.cnf" => disabled("tls1_2"),
   "18-dtls-renegotiate.cnf" => disabled("dtls1_2") || !disabled("sctp"),
