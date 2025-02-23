@@ -39,6 +39,11 @@ OpenSSL 4.0
 
    *David von Oheimb*
 
+ * Standardized the width of hexadecimal dumps to 24 bytes for signatures (to
+   stay within the 80 characters limit) and 16 bytes for everything else.
+
+   *Beat Bolli*
+
  * The deprecated function ASN1_STRING_data has been removed.
 
    *Bob Beck*

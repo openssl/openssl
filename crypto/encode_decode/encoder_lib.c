@@ -24,7 +24,8 @@
 #include "encoder_local.h"
 
 /* Number of octets per line */
-#define LABELED_BUF_PRINT_WIDTH    15
+#define LABELED_BUF_PRINT_WIDTH    16
+#define LABELED_BN_PRINT_WIDTH     16
 
 # ifdef SIXTY_FOUR_BIT_LONG
 #  define BN_FMTu "%lu"
@@ -815,8 +816,8 @@ int ossl_bio_print_labeled_bignum(BIO *out, const char *label, const BIGNUM *bn)
         goto err;
 
     while (*p != '\0') {
-        /* Do a newline after every 15 hex bytes + add the space indent */
-        if ((bytes % 15) == 0 && bytes > 0) {
+        /* Do a newline after every n hex bytes + add the space indent */
+        if ((bytes % LABELED_BN_PRINT_WIDTH) == 0 && bytes > 0) {
             if (BIO_printf(out, ":\n%s", spaces) <= 0)
                 goto err;
             use_sep = 0; /* The first byte on the next line doesn't have a : */

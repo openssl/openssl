@@ -31,10 +31,9 @@ Certificate:
                 Policy: X509v3 Any Policy
     Signature Algorithm: GOST R 34.11-94 with GOST R 34.10-2001
     Signature Value:
-        bd:95:dd:5f:3a:2b:74:a5:29:62:20:c2:24:a8:8b:a0:13:1a:
-        21:f5:4a:d6:2e:b1:3f:f5:50:e9:96:a0:a2:c9:79:09:15:a2:
-        41:c0:60:e1:1d:3f:25:8d:88:f4:4c:60:f3:0f:4e:e3:29:6e:
-        b8:6e:01:b4:03:2c:07:8f:27:37
+        bd:95:dd:5f:3a:2b:74:a5:29:62:20:c2:24:a8:8b:a0:13:1a:21:f5:4a:d6:2e:b1:
+        3f:f5:50:e9:96:a0:a2:c9:79:09:15:a2:41:c0:60:e1:1d:3f:25:8d:88:f4:4c:60:
+        f3:0f:4e:e3:29:6e:b8:6e:01:b4:03:2c:07:8f:27:37
 -----BEGIN CERTIFICATE-----
 MIIFGDCCBMegAwIBAgIQDIxAk7vmk71DC/UYJgMdBTAIBgYqhQMCAgMwggEWMRgw
 FgYFKoUDZAESDTEwMjc3MzkzMzQ0NzkxGjAYBggqhQMDgQMBARIMMDA3NzA2MjI4

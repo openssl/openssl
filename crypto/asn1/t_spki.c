@@ -46,7 +46,7 @@ int NETSCAPE_SPKI_print(BIO *out, const NETSCAPE_SPKI *spki)
     n = spki->signature->length;
     s = (char *)spki->signature->data;
     for (i = 0; i < n; i++) {
-        if ((i % 18) == 0)
+        if ((i % 24) == 0)
             BIO_write(out, "\n      ", 7);
         BIO_printf(out, "%02x%s", (unsigned char)s[i],
                    ((i + 1) == n) ? "" : ":");
