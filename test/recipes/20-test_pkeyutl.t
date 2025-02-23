@@ -241,17 +241,17 @@ SKIP: {
         if disabled("rsa"); # Note "rsa" isn't (yet?) disablable.
 
     # Self-compat
-    ok(run(app(([ 'openssl', 'pkeyutl', '-encap', '-kemop', 'RSASVE',
+    ok(run(app(([ 'openssl', 'pkeyutl', '-encap',
                   '-inkey', srctop_file('test', 'testrsa2048pub.pem'),
                   '-out', 'encap_out.bin', '-secret', 'secret.bin']))),
                   "RSA pubkey encapsulation");
-    ok(run(app(([ 'openssl', 'pkeyutl', '-decap', '-kemop', 'RSASVE',
+    ok(run(app(([ 'openssl', 'pkeyutl', '-decap',
                   '-inkey', srctop_file('test', 'testrsa2048.pem'),
                   '-in', 'encap_out.bin', '-secret', 'decap_secret.bin']))),
                   "RSA pubkey decapsulation");
     is(compare("secret.bin", "decap_secret.bin"), 0, "Secret is correctly decapsulated");
 
-    # Legacy CLI with decap output written to '-out'
+    # Legacy CLI with decap output written to '-out' and with '-kemop` specified
     ok(run(app(([ 'openssl', 'pkeyutl', '-decap', '-kemop', 'RSASVE',
                   '-inkey', srctop_file('test', 'testrsa2048.pem'),
                   '-in', 'encap_out.bin', '-out', 'decap_out.bin']))),

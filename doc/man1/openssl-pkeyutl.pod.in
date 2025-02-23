@@ -33,7 +33,7 @@ B<openssl> B<pkeyutl>
 [B<-decap>]
 [B<-kdf> I<algorithm>]
 [B<-kdflen> I<length>]
-[B<-kemop> I<operation>]
+[B<-kemop> I<mode>]
 [B<-pkeyopt> I<opt>:I<value>]
 [B<-pkeyopt_passin> I<opt>[:I<passarg>]]
 [B<-hexdump>]
@@ -212,8 +212,8 @@ and
 L<EC|EVP_KEM-EC(7)>.
 The ECX and EC algorithms use the
 L<RFC9180|https://www.rfc-editor.org/rfc/rfc9180> DHKEM construction.
-Encapsulation is also supported with L<RSA|EVP_KEM-RSA(7)> keys with the use of
-an additional B<-kemop> option.
+Encapsulation is also supported with L<RSA|EVP_KEM-RSA(7)> keys via the
+B<RSASVE> construction.
 
 At the API level, encapsulation and decapsulation are also supported for a few
 hybrid ECDHE (no DHKEM) plus B<ML-KEM> algorithms, but these are intended
@@ -238,17 +238,16 @@ and
 L<EC|EVP_KEM-EC(7)>.
 The ECX and EC algorithms use the
 L<RFC9180|https://www.rfc-editor.org/rfc/rfc9180> DHKEM construction.
-Encapsulation is also supported with L<RSA|EVP_KEM-RSA(7)> keys with the use of
-an additional B<-kemop> option.
+Decapsulation is also supported with L<RSA|EVP_KEM-RSA(7)> keys via the
+B<RSASVE> construction.
 
-=item B<-kemop> I<operation>
+=item B<-kemop> I<mode>
 
 This option is used with the I<-encap>/I<-decap> commands and specifies the KEM
-operation (mode) specific for the key algorithm when there is no default way
-to encapsulate and decapsulate shared secrets with the chosen key type.
-This is needed only for RSA, where B<RSASVE>, is not the default mode, even
-though it is presently the only RSA KEM supported.
-See L<EVP_PKEY_CTX_set_kem_op(3)>, L<EVP_KEM-RSA(7)> and L<EVP_KEM-ML-KEM(7)>.
+I<mode> specific for the key algorithm when there is no default way to
+encapsulate and decapsulate shared secrets with the chosen key type.
+All the supported algorithms presently support only their default I<mode>, and
+this option, though available, is not required.
 
 =item B<-kdf> I<algorithm>
 
@@ -568,6 +567,9 @@ L<EVP_PKEY_CTX_set_tls1_prf_md(3)>,
 Since OpenSSL 3.5,
 the B<-digest> option implies B<-rawin>, and these two options are
 no longer required when signing or verifying with an Ed25519 or Ed448 key.
+
+Also since OpenSSL 3.5, the B<-kemop> option is no longer required for any of
+the supported algorithms, the only supported B<mode> is now the default.
 
 The B<-engine> option was deprecated in OpenSSL 3.0.
 
