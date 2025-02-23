@@ -15,6 +15,8 @@
 #include "internal/bio.h"
 #include <openssl/err.h>
 #include "ssl_local.h"
+#include "internal/ssl_unwrap.h"
+#include "internal/sockets.h"
 
 static int ssl_write(BIO *h, const char *buf, size_t size, size_t *written);
 static int ssl_read(BIO *b, char *buf, size_t size, size_t *readbytes);
@@ -297,10 +299,13 @@ static long ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
         bs->ssl = ssl;
         bio = SSL_get_rbio(ssl);
         if (bio != NULL) {
+            if (!BIO_up_ref(bio)) {
+                ret = 0;
+                break;
+            }
             if (next != NULL)
                 BIO_push(bio, next);
             BIO_set_next(b, bio);
-            BIO_up_ref(bio);
         }
         BIO_set_init(b, 1);
         break;
@@ -336,8 +341,10 @@ static long ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
              * We are going to pass ownership of next to the SSL object...but
              * we don't own a reference to pass yet - so up ref
              */
-            BIO_up_ref(next);
-            SSL_set_bio(ssl, next, next);
+            if (!BIO_up_ref(next))
+                ret = 0;
+            else
+                SSL_set_bio(ssl, next, next);
         }
         break;
     case BIO_CTRL_POP:

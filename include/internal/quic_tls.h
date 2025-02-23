@@ -11,10 +11,8 @@
 # define OSSL_QUIC_TLS_H
 
 # include <openssl/ssl.h>
-# include "internal/quic_stream.h"
-# include "internal/quic_predef.h"
 
-# ifndef OPENSSL_NO_QUIC
+typedef struct quic_tls_st QUIC_TLS;
 
 typedef struct quic_tls_args_st {
     /*
@@ -44,9 +42,11 @@ typedef struct quic_tls_args_st {
     int (*crypto_release_rcd_cb)(size_t bytes_read, void *arg);
     void *crypto_release_rcd_cb_arg;
 
-
-    /* Called when a traffic secret is available for a given encryption level. */
-    int (*yield_secret_cb)(uint32_t enc_level, int direction /* 0=RX, 1=TX */,
+    /*
+     * Called when a traffic secret is available for a given TLS protection
+     * level.
+     */
+    int (*yield_secret_cb)(uint32_t prot_level, int direction /* 0=RX, 1=TX */,
                            uint32_t suite_id, EVP_MD *md,
                            const unsigned char *secret, size_t secret_len,
                            void *arg);
@@ -82,11 +82,16 @@ typedef struct quic_tls_args_st {
 
     /* Set to 1 if we are running in the server role. */
     int is_server;
+
+    /* Set to 1 if this is an internal use of the QUIC TLS */
+    int ossl_quic;
 } QUIC_TLS_ARGS;
 
 QUIC_TLS *ossl_quic_tls_new(const QUIC_TLS_ARGS *args);
 
 void ossl_quic_tls_free(QUIC_TLS *qtls);
+
+int ossl_quic_tls_configure(QUIC_TLS *qtls);
 
 /* Advance the state machine */
 int ossl_quic_tls_tick(QUIC_TLS *qtls);
@@ -103,6 +108,5 @@ int ossl_quic_tls_get_error(QUIC_TLS *qtls,
 int ossl_quic_tls_is_cert_request(QUIC_TLS *qtls);
 int ossl_quic_tls_has_bad_max_early_data(QUIC_TLS *qtls);
 
-# endif
-
+int ossl_quic_tls_set_early_data_enabled(QUIC_TLS *qtls, int enabled);
 #endif

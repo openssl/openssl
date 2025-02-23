@@ -1,4 +1,4 @@
-# Copyright 1999-2024 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 1999-2025 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -1131,6 +1131,8 @@ PROV_R_MISSING_SEED:140:missing seed
 PROV_R_MISSING_SESSION_ID:133:missing session id
 PROV_R_MISSING_TYPE:134:missing type
 PROV_R_MISSING_XCGHASH:135:missing xcghash
+PROV_R_ML_DSA_NO_FORMAT:245:ml dsa no format
+PROV_R_ML_KEM_NO_FORMAT:246:ml kem no format
 PROV_R_MODULE_INTEGRITY_FAILURE:214:module integrity failure
 PROV_R_NOT_A_PRIVATE_KEY:221:not a private key
 PROV_R_NOT_A_PUBLIC_KEY:220:not a public key
@@ -1141,6 +1143,8 @@ PROV_R_NOT_XOF_OR_INVALID_LENGTH:113:not xof or invalid length
 PROV_R_NO_INSTANCE_ALLOWED:242:no instance allowed
 PROV_R_NO_KEY_SET:114:no key set
 PROV_R_NO_PARAMETERS_SET:177:no parameters set
+PROV_R_NULL_LENGTH_POINTER:247:null length pointer
+PROV_R_NULL_OUTPUT_BUFFER:248:null output buffer
 PROV_R_ONESHOT_CALL_OUT_OF_ORDER:239:oneshot call out of order
 PROV_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE:178:\
 	operation not supported for this keytype
@@ -1172,13 +1176,16 @@ PROV_R_UNABLE_TO_INITIALISE_CIPHERS:208:unable to initialise ciphers
 PROV_R_UNABLE_TO_LOAD_SHA256:147:unable to load sha256
 PROV_R_UNABLE_TO_LOCK_PARENT:201:unable to lock parent
 PROV_R_UNABLE_TO_RESEED:204:unable to reseed
+PROV_R_UNEXPECTED_KEY_PARAMETERS:249:unexpected key parameters
 PROV_R_UNSUPPORTED_CEK_ALG:145:unsupported cek alg
 PROV_R_UNSUPPORTED_KEY_SIZE:153:unsupported key size
 PROV_R_UNSUPPORTED_MAC_TYPE:137:unsupported mac type
 PROV_R_UNSUPPORTED_NUMBER_OF_ROUNDS:152:unsupported number of rounds
+PROV_R_UNSUPPORTED_SELECTION:250:unsupported selection
 PROV_R_UPDATE_CALL_OUT_OF_ORDER:240:update call out of order
 PROV_R_URI_AUTHORITY_UNSUPPORTED:223:uri authority unsupported
 PROV_R_VALUE_ERROR:138:value error
+PROV_R_WRONG_CIPHERTEXT_SIZE:251:wrong ciphertext size
 PROV_R_WRONG_FINAL_BLOCK_LENGTH:107:wrong final block length
 PROV_R_WRONG_OUTPUT_BUFFER_SIZE:139:wrong output buffer size
 PROV_R_XOF_DIGESTS_NOT_ALLOWED:183:xof digests not allowed
@@ -1424,6 +1431,7 @@ SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC:281:\
 SSL_R_DH_KEY_TOO_SMALL:394:dh key too small
 SSL_R_DH_PUBLIC_VALUE_LENGTH_IS_WRONG:148:dh public value length is wrong
 SSL_R_DIGEST_CHECK_FAILED:149:digest check failed
+SSL_R_DOMAIN_USE_ONLY:422:domain use only
 SSL_R_DTLS_MESSAGE_TOO_BIG:334:dtls message too big
 SSL_R_DUPLICATE_COMPRESSION_ID:309:duplicate compression id
 SSL_R_ECC_CERT_NOT_FOR_SIGNING:318:ecc cert not for signing
@@ -1483,12 +1491,14 @@ SSL_R_LENGTH_TOO_LONG:404:length too long
 SSL_R_LENGTH_TOO_SHORT:160:length too short
 SSL_R_LIBRARY_BUG:274:library bug
 SSL_R_LIBRARY_HAS_NO_CIPHERS:161:library has no ciphers
+SSL_R_LISTENER_USE_ONLY:421:listener use only
 SSL_R_MAXIMUM_ENCRYPTED_PKTS_REACHED:395:maximum encrypted pkts reached
 SSL_R_MISSING_DSA_SIGNING_CERT:165:missing dsa signing cert
 SSL_R_MISSING_ECDSA_SIGNING_CERT:381:missing ecdsa signing cert
 SSL_R_MISSING_FATAL:256:missing fatal
 SSL_R_MISSING_PARAMETERS:290:missing parameters
 SSL_R_MISSING_PSK_KEX_MODES_EXTENSION:310:missing psk kex modes extension
+SSL_R_MISSING_QUIC_TLS_FUNCTIONS:423:missing quic tls functions
 SSL_R_MISSING_RSA_CERTIFICATE:168:missing rsa certificate
 SSL_R_MISSING_RSA_ENCRYPTING_CERT:169:missing rsa encrypting cert
 SSL_R_MISSING_RSA_SIGNING_CERT:170:missing rsa signing cert

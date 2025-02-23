@@ -11,6 +11,7 @@
 #include "ssl_local.h"
 #include "internal/e_os.h"
 #include "internal/refcount.h"
+#include "internal/ssl_unwrap.h"
 
 size_t ossl_calculate_comp_expansion(int alg, size_t length)
 {
@@ -412,6 +413,9 @@ size_t SSL_get1_compressed_cert(SSL *ssl, int alg, unsigned char **data, size_t 
 #ifndef OPENSSL_NO_COMP_ALG
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
     CERT_PKEY *cpk = NULL;
+
+    if (sc == NULL)
+        return 0;
 
     if (sc->cert != NULL)
         cpk = sc->cert->key;

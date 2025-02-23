@@ -134,6 +134,11 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
     BIO_ADDR *peeraddr = NULL;
     struct in_addr ina = {0};
     BIO *tmpbio = NULL;
+    QTEST_DATA *bdata = NULL;
+
+    bdata = OPENSSL_zalloc(sizeof(QTEST_DATA));
+    if (bdata == NULL)
+        return 0;
 
     *qtserv = NULL;
     if (*cssl == NULL) {
@@ -146,6 +151,7 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
         *fault = OPENSSL_zalloc(sizeof(**fault));
         if (*fault == NULL)
             goto err;
+        bdata->fault = *fault;
     }
 
 #ifndef OPENSSL_NO_SSL_TRACE
@@ -193,6 +199,8 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
         goto err;
 #endif
     } else {
+        BIO_ADDR *localaddr = NULL;
+
         if (!TEST_true(BIO_new_bio_dgram_pair(&cbio, 0, &sbio, 0)))
             goto err;
 
@@ -200,6 +208,18 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
                 || !TEST_true(BIO_dgram_set_caps(sbio, BIO_DGRAM_CAP_HANDLES_DST_ADDR)))
             goto err;
 
+        if (!TEST_ptr(localaddr = BIO_ADDR_new()))
+            goto err;
+        /* Dummy client local addresses */
+        if (!TEST_true(BIO_ADDR_rawmake(localaddr, AF_INET, &ina, sizeof(ina),
+                                        htons(0)))) {
+            BIO_ADDR_free(localaddr);
+            goto err;
+        }
+        if (!TEST_int_eq(BIO_dgram_set0_local_addr(cbio, localaddr), 1)) {
+            BIO_ADDR_free(localaddr);
+            goto err;
+        }
         /* Dummy server address */
         if (!TEST_true(BIO_ADDR_rawmake(peeraddr, AF_INET, &ina, sizeof(ina),
                                         htons(0))))
@@ -212,11 +232,13 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
         if (!TEST_ptr(pktsplitbio))
             goto err;
         cbio = BIO_push(pktsplitbio, cbio);
+        BIO_set_data(pktsplitbio, bdata);
 
         pktsplitbio = BIO_new(bio_f_pkt_split_dgram_filter());
         if (!TEST_ptr(pktsplitbio))
             goto err;
         sbio = BIO_push(pktsplitbio, sbio);
+        BIO_set_data(pktsplitbio, bdata);
     }
 
     if ((flags & QTEST_FLAG_NOISE) != 0) {
@@ -250,13 +272,7 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
                                       0, &now_cb), 1))
                 goto err;
         }
-        /*
-         * TODO(QUIC SERVER):
-         *    Currently the simplistic handler of the quic tserver cannot cope
-         *    with noise introduced in the first packet received from the
-         *    client. This needs to be removed once we have proper server side
-         *    handling.
-         */
+
         (void)BIO_ctrl(sbio, BIO_CTRL_NOISE_BACK_OFF, 0, NULL);
 
         (*fault)->noiseargs.cbio = cbio;
@@ -281,7 +297,7 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
     if (!TEST_ptr(fisbio))
         goto err;
 
-    BIO_set_data(fisbio, fault == NULL ? NULL : *fault);
+    BIO_set_data(fisbio, bdata);
 
     if (!BIO_up_ref(sbio))
         goto err;
@@ -306,7 +322,7 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
         using_fake_time = 1;
         qtest_reset_time();
         tserver_args.now_cb = fake_now_cb;
-        (void)ossl_quic_conn_set_override_now_cb(*cssl, fake_now_cb, NULL);
+        (void)ossl_quic_set_override_now_cb(*cssl, fake_now_cb, NULL);
     } else {
         using_fake_time = 0;
     }
@@ -315,6 +331,7 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
                                                   keyfile)))
         goto err;
 
+    bdata->short_conn_id_len = ossl_quic_tserver_get_short_header_conn_id_len(*qtserv);
     /* Ownership of fisbio and sbio is now held by *qtserv */
     sbio = NULL;
     fisbio = NULL;
@@ -340,6 +357,7 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
     ossl_quic_tserver_free(*qtserv);
     if (fault != NULL)
         OPENSSL_free(*fault);
+    OPENSSL_free(bdata);
     BIO_free(tmpbio);
     if (tracebio != NULL)
         *tracebio = NULL;
@@ -1072,20 +1090,20 @@ static int pcipher_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
                             size_t num_msg, uint64_t flags,
                             size_t *num_processed)
 {
-    QTEST_FAULT *fault;
     BIO *next = BIO_next(b);
     ossl_ssize_t ret = 0;
     size_t i = 0, tmpnump;
     QUIC_PKT_HDR hdr;
     PACKET pkt;
     unsigned char *tmpdata;
+    QTEST_DATA *bdata = NULL;
 
     if (next == NULL)
         return 0;
 
-    fault = BIO_get_data(b);
-    if (fault == NULL
-            || (fault->pciphercb == NULL && fault->datagramcb == NULL))
+    bdata = BIO_get_data(b);
+    if (bdata == NULL || bdata->fault == NULL
+            || (bdata->fault->pciphercb == NULL && bdata->fault->datagramcb == NULL))
         return BIO_sendmmsg(next, msg, stride, num_msg, flags, num_processed);
 
     if (num_msg == 0) {
@@ -1094,38 +1112,33 @@ static int pcipher_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
     }
 
     for (i = 0; i < num_msg; ++i) {
-        fault->msg = BIO_MSG_N(msg, stride, i);
+        bdata->fault->msg = BIO_MSG_N(msg, stride, i);
 
         /* Take a copy of the data so that callbacks can modify it */
-        tmpdata = OPENSSL_malloc(fault->msg.data_len + GROWTH_ALLOWANCE);
+        tmpdata = OPENSSL_malloc(bdata->fault->msg.data_len + GROWTH_ALLOWANCE);
         if (tmpdata == NULL)
             return 0;
-        memcpy(tmpdata, fault->msg.data, fault->msg.data_len);
-        fault->msg.data = tmpdata;
-        fault->msgalloc = fault->msg.data_len + GROWTH_ALLOWANCE;
+        memcpy(tmpdata, bdata->fault->msg.data, bdata->fault->msg.data_len);
+        bdata->fault->msg.data = tmpdata;
+        bdata->fault->msgalloc = bdata->fault->msg.data_len + GROWTH_ALLOWANCE;
 
-        if (fault->pciphercb != NULL) {
-            if (!PACKET_buf_init(&pkt, fault->msg.data, fault->msg.data_len))
+        if (bdata->fault->pciphercb != NULL) {
+            if (!PACKET_buf_init(&pkt, bdata->fault->msg.data, bdata->fault->msg.data_len))
                 return 0;
 
             do {
                 if (!ossl_quic_wire_decode_pkt_hdr(&pkt,
-                        /*
-                         * TODO(QUIC SERVER):
-                         * Needs to be set to the actual short header CID length
-                         * when testing the server implementation.
-                         */
-                        0,
-                        1,
-                        0, &hdr, NULL))
+                                                   bdata->short_conn_id_len,
+                                                   1, 0, &hdr, NULL, NULL))
                     goto out;
 
                 /*
                  * hdr.data is const - but its our buffer so casting away the
                  * const is safe
                  */
-                if (!fault->pciphercb(fault, &hdr, (unsigned char *)hdr.data,
-                                    hdr.len, fault->pciphercbarg))
+                if (!bdata->fault->pciphercb(bdata->fault, &hdr,
+                                             (unsigned char *)hdr.data, hdr.len,
+                                             bdata->fault->pciphercbarg))
                     goto out;
 
                 /*
@@ -1138,26 +1151,26 @@ static int pcipher_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
             } while (PACKET_remaining(&pkt) > 0);
         }
 
-        if (fault->datagramcb != NULL
-                && !fault->datagramcb(fault, &fault->msg, stride,
-                                      fault->datagramcbarg))
+        if (bdata->fault->datagramcb != NULL
+                && !bdata->fault->datagramcb(bdata->fault, &bdata->fault->msg, stride,
+                                             bdata->fault->datagramcbarg))
             goto out;
 
-        if (!BIO_sendmmsg(next, &fault->msg, stride, 1, flags, &tmpnump)) {
+        if (!BIO_sendmmsg(next, &bdata->fault->msg, stride, 1, flags, &tmpnump)) {
             *num_processed = i;
             goto out;
         }
 
-        OPENSSL_free(fault->msg.data);
-        fault->msg.data = NULL;
-        fault->msgalloc = 0;
+        OPENSSL_free(bdata->fault->msg.data);
+        bdata->fault->msg.data = NULL;
+        bdata->fault->msgalloc = 0;
     }
 
     *num_processed = i;
 out:
     ret = i > 0;
-    OPENSSL_free(fault->msg.data);
-    fault->msg.data = NULL;
+    OPENSSL_free(bdata->fault->msg.data);
+    bdata->fault->msg.data = NULL;
     return ret;
 }
 
@@ -1169,6 +1182,12 @@ static long pcipher_ctrl(BIO *b, int cmd, long larg, void *parg)
         return -1;
 
     return BIO_ctrl(next, cmd, larg, parg);
+}
+
+static int pcipher_destroy(BIO *b)
+{
+    OPENSSL_free(BIO_get_data(b));
+    return 1;
 }
 
 BIO_METHOD *qtest_get_bio_method(void)
@@ -1184,7 +1203,8 @@ BIO_METHOD *qtest_get_bio_method(void)
         return NULL;
 
     if (!TEST_true(BIO_meth_set_sendmmsg(tmp, pcipher_sendmmsg))
-            || !TEST_true(BIO_meth_set_ctrl(tmp, pcipher_ctrl)))
+            || !TEST_true(BIO_meth_set_ctrl(tmp, pcipher_ctrl))
+            || !TEST_true(BIO_meth_set_destroy(tmp, pcipher_destroy)))
         goto err;
 
     pcipherbiometh = tmp;

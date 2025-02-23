@@ -350,7 +350,10 @@ static int depack_do_frame_new_token(PACKET *pkt, QUIC_CHANNEL *ch,
         return 0;
     }
 
-    /* TODO(QUIC FUTURE): ADD CODE to send |token| to the session manager */
+    /* store the new token in our token cache */
+    if (!ossl_quic_set_peer_token(ossl_quic_port_get_channel_ctx(ch->port),
+                                  &ch->cur_peer_addr, token, token_len))
+        return 0;
 
     return 1;
 }
@@ -914,7 +917,7 @@ static int depack_do_frame_retire_conn_id(PACKET *pkt,
      * currently non-conformant and for internal testing use; simply handle it
      * as a no-op in this case.
      *
-     * TODO(QUIC SERVER): Revise and implement correctly for server support.
+     * TODO(QUIC FUTURE): Revise and implement correctly for server support.
      */
     if (!ch->is_server) {
         ossl_quic_channel_raise_protocol_error(ch,
@@ -1181,6 +1184,19 @@ static int depack_process_frames(QUIC_CHANNEL *ch, PACKET *pkt,
                                                        "NEW_TOKEN valid only in 1-RTT");
                 return 0;
             }
+
+            /*
+             * RFC 9000 s. 19.7: "A server MUST treat receipt of a NEW_TOKEN
+             * frame as a connection error of type PROTOCOL_VIOLATION."
+             */
+            if (ch->is_server) {
+                ossl_quic_channel_raise_protocol_error(ch,
+                                                       OSSL_QUIC_ERR_PROTOCOL_VIOLATION,
+                                                       frame_type,
+                                                       "NEW_TOKEN can only be sent by a server");
+                return 0;
+            }
+
             if (!depack_do_frame_new_token(pkt, ch, ackm_data))
                 return 0;
             break;
@@ -1411,6 +1427,7 @@ int ossl_quic_handle_frames(QUIC_CHANNEL *ch, OSSL_QRX_PKT *qpacket)
     PACKET pkt;
     OSSL_ACKM_RX_PKT ackm_data;
     uint32_t enc_level;
+    size_t dgram_len = qpacket->datagram_len;
 
     /*
      * ok has three states:
@@ -1443,6 +1460,19 @@ int ossl_quic_handle_frames(QUIC_CHANNEL *ch, OSSL_QRX_PKT *qpacket)
 
     ok = 0; /* Still assume the worst */
     ackm_data.pkt_space = ossl_quic_enc_level_to_pn_space(enc_level);
+
+    /*
+     * RFC 9000 s. 8.1
+     * We can consider the connection to be validated, if we receive a packet
+     * from the client protected via handshake keys, meaning that the
+     * amplification limit no longer applies (i.e. we can set it as validated.
+     * Otherwise, add the size of this packet to the unvalidated credit for
+     * the connection.
+     */
+    if (enc_level == QUIC_ENC_LEVEL_HANDSHAKE)
+        ossl_quic_tx_packetiser_set_validated(ch->txp);
+    else
+        ossl_quic_tx_packetiser_add_unvalidated_credit(ch->txp, dgram_len);
 
     /* Now that special cases are out of the way, parse frames */
     if (!PACKET_buf_init(&pkt, qpacket->hdr->data, qpacket->hdr->len)

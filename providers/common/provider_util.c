@@ -211,6 +211,12 @@ int ossl_prov_digest_load_from_params(PROV_DIGEST *pd,
     return pd->md != NULL;
 }
 
+void ossl_prov_digest_set_md(PROV_DIGEST *pd, EVP_MD *md)
+{
+    ossl_prov_digest_reset(pd);
+    pd->md = pd->alloc_md = md;
+}
+
 const EVP_MD *ossl_prov_digest_md(const PROV_DIGEST *pd)
 {
     return pd->md;

@@ -17,7 +17,7 @@ use OpenSSL::Test::Utils;
 
 setup("test_dgst");
 
-plan tests => 14;
+plan tests => 17;
 
 sub tsignverify {
     my $testtext = shift;
@@ -131,8 +131,6 @@ SKIP: {
     skip "EdDSA is not supported by this OpenSSL build", 2
         if disabled("ecx");
 
-    skip "EdDSA is not supported with `dgst` CLI", 2;
-
     subtest "Ed25519 signature generation and verification with `dgst` CLI" => sub {
         tsignverify("Ed25519",
                     srctop_file("test","tested25519.pem"),
@@ -143,6 +141,27 @@ SKIP: {
         tsignverify("Ed448",
                     srctop_file("test","tested448.pem"),
                     srctop_file("test","tested448pub.pem"));
+    };
+}
+
+SKIP: {
+    skip "ML-DSA is not supported by this OpenSSL build", 3
+        if disabled("ml-dsa");
+
+    subtest "ML-DSA-44 signature generation and verification with `dgst` CLI" => sub {
+        tsignverify("Ml-DSA-44",
+                    srctop_file("test","testmldsa44.pem"),
+                    srctop_file("test","testmldsa44pub.pem"));
+    };
+    subtest "ML-DSA-65 signature generation and verification with `dgst` CLI" => sub {
+        tsignverify("Ml-DSA-65",
+                    srctop_file("test","testmldsa65.pem"),
+                    srctop_file("test","testmldsa65pub.pem"));
+    };
+    subtest "ML-DSA-87 signature generation and verification with `dgst` CLI" => sub {
+        tsignverify("Ml-DSA-87",
+                    srctop_file("test","testmldsa87.pem"),
+                    srctop_file("test","testmldsa87pub.pem"));
     };
 }
 

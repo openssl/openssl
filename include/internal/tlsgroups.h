@@ -56,5 +56,11 @@
 # define OSSL_TLS_GROUP_ID_ffdhe4096        0x0102
 # define OSSL_TLS_GROUP_ID_ffdhe6144        0x0103
 # define OSSL_TLS_GROUP_ID_ffdhe8192        0x0104
+# define OSSL_TLS_GROUP_ID_mlkem512         0x0200
+# define OSSL_TLS_GROUP_ID_mlkem768         0x0201
+# define OSSL_TLS_GROUP_ID_mlkem1024        0x0202
+# define OSSL_TLS_GROUP_ID_SecP256r1MLKEM768  0x11EB
+# define OSSL_TLS_GROUP_ID_X25519MLKEM768     0x11EC
+# define OSSL_TLS_GROUP_ID_SecP384r1MLKEM1024 0x11ED
 
 #endif

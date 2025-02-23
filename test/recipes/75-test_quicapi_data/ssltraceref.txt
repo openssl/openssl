@@ -2,8 +2,8 @@ Sent TLS Record
 Header:
   Version = TLS 1.0 (0x301)
   Content Type = Handshake (22)
-  Length = 256
-    ClientHello, Length=252
+  Length = 262
+    ClientHello, Length=258
       client_version=0x303 (TLS 1.2)
       Random:
         gmt_unix_time=0x????????
@@ -13,7 +13,7 @@ Header:
         {0x13, 0x01} TLS_AES_128_GCM_SHA256
       compression_methods (len=1)
         No Compression (0x00)
-      extensions, length = 209
+      extensions, length = 215
         extension_type=UNKNOWN(57), length=49
           0000 - 0c 00 0f 00 01 04 80 00-75 30 03 02 44 b0 0e   ........u0..D..
           000f - 01 02 04 04 80 0c 00 00-05 04 80 08 00 00 06   ...............
@@ -39,7 +39,7 @@ Header:
           ossltest
         extension_type=encrypt_then_mac(22), length=0
         extension_type=extended_master_secret(23), length=0
-        extension_type=signature_algorithms(13), length=36
+        extension_type=signature_algorithms(13), length=42
           ecdsa_secp256r1_sha256 (0x0403)
           ecdsa_secp384r1_sha384 (0x0503)
           ecdsa_secp521r1_sha512 (0x0603)
@@ -57,6 +57,9 @@ Header:
           rsa_pkcs1_sha256 (0x0401)
           rsa_pkcs1_sha384 (0x0501)
           rsa_pkcs1_sha512 (0x0601)
+          mldsa44 (0x0904)
+          mldsa65 (0x0905)
+          mldsa87 (0x0906)
         extension_type=supported_versions(43), length=3
           TLS 1.3 (772)
         extension_type=psk_key_exchange_modes(45), length=2
@@ -67,7 +70,7 @@ Header:
 
 Sent Frame: Crypto
     Offset: 0
-    Len: 256
+    Len: 262
 Sent Frame: Padding
 Sent Packet
   Packet Type: Initial
@@ -80,9 +83,25 @@ Sent Packet
 Sent Datagram
   Length: 1200
 Received Datagram
+  Length: 91
+Sent Frame: Crypto
+    Offset: 0
+    Len: 262
+Sent Frame: Padding
+Sent Packet
+  Packet Type: Initial
+  Version: 0x00000001
+  Destination Conn Id: 0x????????????????
+  Source Conn Id: <zero length id>
+  Payload length: 1118
+  Token: ????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????
+  Packet Number: 0x00000001
+Sent Datagram
   Length: 1200
 Received Datagram
-  Length: 234
+  Length: 1200
+Received Datagram
+  Length: 244
 Received Packet
   Packet Type: Initial
   Version: 0x00000001
@@ -92,7 +111,7 @@ Received Packet
   Token: <zero length token>
   Packet Number: 0x00000000
 Received Frame: Ack  (without ECN)
-    Largest acked: 0
+    Largest acked: 1
     Ack delay (raw) 0
     Ack range count: 0
     First ack range: 0
@@ -132,7 +151,7 @@ Received Packet
   Version: 0x00000001
   Destination Conn Id: <zero length id>
   Source Conn Id: 0x????????????????
-  Payload length: 213
+  Payload length: 223
   Packet Number: 0x00000001
 Received Frame: Crypto
     Offset: 0
@@ -143,14 +162,15 @@ Header:
   Content Type = ApplicationData (23)
   Length = 1022
   Inner Content Type = Handshake (22)
-    EncryptedExtensions, Length=88
-      extensions, length = 86
-        extension_type=UNKNOWN(57), length=67
+    EncryptedExtensions, Length=98
+      extensions, length = 96
+        extension_type=UNKNOWN(57), length=77
           0000 - 0c 00 00 08 ?? ?? ?? ??-?? ?? ?? ?? 0f 08 ??   ....????????..?
-          000f - ?? ?? ?? ?? ?? ?? ?? 01-04 80 00 75 30 03 02   ???????....u0..
-          001e - 44 b0 0e 01 02 04 04 80-0c 00 00 05 04 80 08   D..............
-          002d - 00 00 06 04 80 08 00 00-07 04 80 08 00 00 08   ...............
-          003c - 02 40 64 09 02 40 64                           .@d..@d
+          000f - ?? ?? ?? ?? ?? ?? ?? 10-08 ?? ?? ?? ?? ?? ??   ???????..??????
+          001e - ?? ?? 01 04 80 00 75 30-03 02 44 b0 0e 01 02   ??....??..?....
+          002d - 04 04 80 0c 00 00 05 04-80 08 00 00 06 04 80   ...............
+          003c - 08 00 00 07 04 80 08 00-00 08 02 40 64 09 02   ...........@d..
+          004b - 40 64                                          @d
         extension_type=application_layer_protocol_negotiation(16), length=11
           ossltest
 
@@ -244,12 +264,12 @@ YeeuLO02zToHhnQ6KbPXOrQAqcL1kngO4g+j/ru+4AZThFkdkGnltvk=
 
 Received Frame: Crypto
     Offset: 1022
-    Len: 192
+    Len: 202
 Received TLS Record
 Header:
   Version = TLS 1.2 (0x303)
   Content Type = ApplicationData (23)
-  Length = 192
+  Length = 202
   Inner Content Type = Handshake (22)
     CertificateVerify, Length=260
       Signature Algorithm: rsa_pss_rsae_sha256 (0x0804)
@@ -286,9 +306,9 @@ Sent Packet
   Version: 0x00000001
   Destination Conn Id: 0x????????????????
   Source Conn Id: <zero length id>
-  Payload length: 1097
-  Token: <zero length token>
-  Packet Number: 0x00000001
+  Payload length: 1037
+  Token: ????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????
+  Packet Number: 0x00000002
 Sent Packet
   Packet Type: Handshake
   Version: 0x00000001

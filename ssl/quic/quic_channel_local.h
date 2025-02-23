@@ -10,6 +10,7 @@
 #  include "internal/quic_predef.h"
 #  include "internal/quic_fc.h"
 #  include "internal/quic_stream_map.h"
+#  include "internal/quic_tls.h"
 
 /*
  * QUIC Channel Structure
@@ -34,7 +35,8 @@ struct quic_channel_st {
      * QUIC_PORT keeps the channels which belong to it on a list for bookkeeping
      * purposes.
      */
-    OSSL_LIST_MEMBER(ch, struct quic_channel_st);
+    OSSL_LIST_MEMBER(ch,            QUIC_CHANNEL);
+    OSSL_LIST_MEMBER(incoming_ch,   QUIC_CHANNEL);
 
     /*
      * The associated TLS 1.3 connection data. Used to provide the handshake
@@ -57,6 +59,12 @@ struct quic_channel_st {
      * Freed after sending or when connection is freed.
      */
     unsigned char                   *local_transport_params;
+
+    /*
+     * Pending new token to send once handshake is complete
+     */
+    uint8_t                         *pending_new_token;
+    size_t                          pending_new_token_len;
 
     /* Our current L4 peer address, if any. */
     BIO_ADDR                        cur_peer_addr;
@@ -105,6 +113,13 @@ struct quic_channel_st {
      * Randomly generated and required by RFC to be at least 8 bytes.
      */
     QUIC_CONN_ID                    init_dcid;
+
+    /*
+     * Server: If this channel is created in response to an init packet sent
+     * after the server has sent a retry packet to do address validation, this
+     * field stores the original connection id from the first init packet sent
+     */
+    QUIC_CONN_ID                    odcid;
 
     /*
      * Client: The SCID found in the first Initial packet from the server.

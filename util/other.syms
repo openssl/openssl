@@ -53,6 +53,8 @@ EVP_PKEY_ASN1_METHOD                    datatype
 EVP_RAND                                datatype
 EVP_RAND_CTX                            datatype
 EVP_SIGNATURE                           datatype
+EVP_SKEYMGMT                            datatype
+EVP_SKEY                                datatype
 GEN_SESSION_CB                          datatype
 GENERAL_NAME                            datatype
 NAMING_AUTHORITY                        datatype
@@ -70,6 +72,12 @@ OSSL_ENCODER_CTX                        datatype
 OSSL_ENCODER_CONSTRUCT                  datatype
 OSSL_ENCODER_CLEANUP                    datatype
 OSSL_ENCODER_INSTANCE                   datatype
+OSSL_FUNC_SSL_QUIC_TLS_crypto_send_fn   datatype
+OSSL_FUNC_SSL_QUIC_TLS_crypto_recv_rcd_fn   datatype
+OSSL_FUNC_SSL_QUIC_TLS_crypto_release_rcd_fn    datatype
+OSSL_FUNC_SSL_QUIC_TLS_yield_secret_fn  datatype
+OSSL_FUNC_SSL_QUIC_TLS_got_transport_params_fn  datatype
+OSSL_FUNC_SSL_QUIC_TLS_alert_fn         datatype
 OSSL_HTTP_bio_cb_t                      datatype
 OSSL_HTTP_REQ_CTX                       datatype
 OSSL_IETF_ATTR_SYNTAX                   datatype
@@ -110,6 +118,7 @@ SSL_psk_client_cb_func                  datatype
 SSL_psk_find_session_cb_func            datatype
 SSL_psk_server_cb_func                  datatype
 SSL_psk_use_session_cb_func             datatype
+SSL_set_new_pending_conn_cb_fn          datatype
 SSL_verify_cb                           datatype
 UI                                      datatype
 UI_METHOD                               datatype
@@ -175,6 +184,7 @@ BIO_ctrl_set_connected                  define
 BIO_dgram_get_mtu_overhead              define
 BIO_dgram_get_peer                      define
 BIO_dgram_set_peer                      define
+BIO_dgram_set0_local_addr               define
 BIO_dgram_recv_timedout                 define
 BIO_dgram_send_timedout                 define
 BIO_dgram_detect_peer_addr              define
@@ -536,6 +546,7 @@ SSL_CTX_disable_ct                      define
 SSL_CTX_generate_session_ticket_fn      define
 SSL_CTX_get0_chain_certs                define
 SSL_CTX_get0_chain_cert_store           define
+SSL_CTX_get0_implemented_groups         define
 SSL_CTX_get0_verify_cert_store          define
 SSL_CTX_get_default_read_ahead          define
 SSL_CTX_get_extra_chain_certs           define
@@ -600,6 +611,11 @@ SSL_CTX_set_tlsext_ticket_key_cb        define
 SSL_CTX_set_tmp_dh                      define
 SSL_CTX_set_tmp_ecdh                    define
 SSL_DEFAULT_CIPHER_LIST                 define deprecated 3.0.0
+SSL_DOMAIN_FLAG_SINGLE_THREAD           define
+SSL_DOMAIN_FLAG_MULTI_THREAD            define
+SSL_DOMAIN_FLAG_THREAD_ASSISTED         define
+SSL_DOMAIN_FLAG_BLOCKING                define
+SSL_DOMAIN_FLAG_LEGACY_BLOCKING         define
 SSL_OP_BIT                              define
 SSL_add0_chain_cert                     define
 SSL_add1_chain_cert                     define
@@ -624,6 +640,7 @@ SSL_get_max_proto_version               define
 SSL_get_min_proto_version               define
 SSL_get_mode                            define
 SSL_get_peer_certificate                define deprecated 3.0.0
+SSL_get0_peer_signature_name            define
 SSL_get_peer_signature_nid              define
 SSL_get_peer_tmp_key                    define
 SSL_get_secure_renegotiation_support    define
@@ -631,6 +648,7 @@ SSL_get_server_tmp_key                  define
 SSL_get_shared_curve                    define
 SSL_get_shared_group                    define
 SSL_get_negotiated_group                define
+SSL_get0_signature_name                 define
 SSL_get_signature_nid                   define
 SSL_get_time                            define
 SSL_get_timeout                         define
@@ -742,6 +760,7 @@ SSL_STREAM_STATE_FINISHED               define
 SSL_STREAM_STATE_RESET_LOCAL            define
 SSL_STREAM_STATE_RESET_REMOTE           define
 SSL_STREAM_STATE_CONN_CLOSED            define
+SSL_ACCEPT_CONNECTION_NO_BLOCK          define
 SSL_ACCEPT_STREAM_NO_BLOCK              define
 SSL_DEFAULT_STREAM_MODE_AUTO_BIDI       define
 SSL_DEFAULT_STREAM_MODE_AUTO_UNI        define
@@ -766,6 +785,8 @@ SSL_VALUE_EVENT_HANDLING_MODE_EXPLICIT  define
 SSL_VALUE_STREAM_WRITE_BUF_SIZE         define
 SSL_VALUE_STREAM_WRITE_BUF_USED         define
 SSL_VALUE_STREAM_WRITE_BUF_AVAIL        define
+SSL_WRITE_FLAG_CONCLUDE                 define
+SSL_LISTENER_FLAG_NO_ACCEPT             define
 TLS_DEFAULT_CIPHERSUITES                define deprecated 3.0.0
 X509_CRL_http_nbio                      define deprecated 3.0.0
 X509_http_nbio                          define deprecated 3.0.0

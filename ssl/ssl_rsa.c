@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include "ssl_local.h"
 #include "internal/packet.h"
+#include "internal/ssl_unwrap.h"
 #include <openssl/bio.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
@@ -141,9 +142,10 @@ static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey, SSL_CTX *ctx)
     if (c->pkeys[i].x509 != NULL
             && !X509_check_private_key(c->pkeys[i].x509, pkey))
         return 0;
+    if (!EVP_PKEY_up_ref(pkey))
+        return 0;
 
     EVP_PKEY_free(c->pkeys[i].privatekey);
-    EVP_PKEY_up_ref(pkey);
     c->pkeys[i].privatekey = pkey;
     c->key = &c->pkeys[i];
     return 1;
@@ -295,8 +297,10 @@ static int ssl_set_cert(CERT *c, X509 *x, SSL_CTX *ctx)
         }
     }
 
+    if (!X509_up_ref(x))
+        return 0;
+
     X509_free(c->pkeys[i].x509);
-    X509_up_ref(x);
     c->pkeys[i].x509 = x;
     c->key = &(c->pkeys[i]);
 
@@ -1046,21 +1050,27 @@ static int ssl_set_cert_and_key(SSL *ssl, SSL_CTX *ctx, X509 *x509, EVP_PKEY *pr
 
     if (chain != NULL) {
         dup_chain = X509_chain_up_ref(chain);
-        if  (dup_chain == NULL) {
+        if (dup_chain == NULL) {
             ERR_raise(ERR_LIB_SSL, ERR_R_X509_LIB);
             goto out;
         }
+    }
+
+    if (!X509_up_ref(x509))
+        goto out;
+
+    if (!EVP_PKEY_up_ref(privatekey)) {
+        X509_free(x509);
+        goto out;
     }
 
     OSSL_STACK_OF_X509_free(c->pkeys[i].chain);
     c->pkeys[i].chain = dup_chain;
 
     X509_free(c->pkeys[i].x509);
-    X509_up_ref(x509);
     c->pkeys[i].x509 = x509;
 
     EVP_PKEY_free(c->pkeys[i].privatekey);
-    EVP_PKEY_up_ref(privatekey);
     c->pkeys[i].privatekey = privatekey;
 
     c->key = &(c->pkeys[i]);

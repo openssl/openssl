@@ -211,7 +211,9 @@ static int tree_init(X509_POLICY_TREE **ptree, STACK_OF(X509) *certs,
         /* Access the cache which we now know exists */
         cache = ossl_policy_cache_set(x);
 
-        X509_up_ref(x);
+        if (!X509_up_ref(x))
+            goto bad_tree;
+
         (++level)->cert = x;
 
         if (!cache->anyPolicy)

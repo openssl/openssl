@@ -44,25 +44,6 @@ typedef struct {
 # endif
 
 /*
- * users is broken up into 2 parts
- * bits 0-31 current readers
- * bit 32-63 ID
- */
-# define READER_SHIFT 0
-# define ID_SHIFT 32
-/* TODO: READER_SIZE 16 in threads_pthread.c */
-# define READER_SIZE 32
-# define ID_SIZE 32
-
-# define READER_MASK     (((uint64_t)1 << READER_SIZE) - 1)
-# define ID_MASK         (((uint64_t)1 << ID_SIZE) - 1)
-# define READER_COUNT(x) ((uint32_t)(((uint64_t)(x) >> READER_SHIFT) & \
-                                     READER_MASK))
-# define ID_VAL(x)       ((uint32_t)(((uint64_t)(x) >> ID_SHIFT) & ID_MASK))
-# define VAL_READER      ((int64_t)1 << READER_SHIFT)
-# define VAL_ID(x)       ((uint64_t)x << ID_SHIFT)
-
-/*
  * This defines a quescent point (qp)
  * This is the barrier beyond which a writer
  * must wait before freeing data that was
@@ -229,13 +210,13 @@ static ossl_inline struct rcu_qp *get_hold_current_qp(CRYPTO_RCU_LOCK *lock)
     for (;;) {
         CRYPTO_atomic_load_int((int *)&lock->reader_idx, (int *)&qp_idx,
                                lock->rw_lock);
-        CRYPTO_atomic_add64(&lock->qp_group[qp_idx].users, VAL_READER, &tmp64,
+        CRYPTO_atomic_add64(&lock->qp_group[qp_idx].users, (uint64_t)1, &tmp64,
                             lock->rw_lock);
         CRYPTO_atomic_load_int((int *)&lock->reader_idx, (int *)&tmp,
                                lock->rw_lock);
         if (qp_idx == tmp)
             break;
-        CRYPTO_atomic_add64(&lock->qp_group[qp_idx].users, -VAL_READER, &tmp64,
+        CRYPTO_atomic_add64(&lock->qp_group[qp_idx].users, (uint64_t)-1, &tmp64,
                             lock->rw_lock);
     }
 
@@ -313,7 +294,7 @@ void ossl_rcu_read_unlock(CRYPTO_RCU_LOCK *lock)
             data->thread_qps[i].depth--;
             if (data->thread_qps[i].depth == 0) {
                 CRYPTO_atomic_add64(&data->thread_qps[i].qp->users,
-                                    -VAL_READER, (uint64_t *)&ret,
+                                    (uint64_t)-1, (uint64_t *)&ret,
                                     lock->rw_lock);
                 OPENSSL_assert(ret >= 0);
                 data->thread_qps[i].qp = NULL;
@@ -328,12 +309,10 @@ void ossl_rcu_read_unlock(CRYPTO_RCU_LOCK *lock)
  * Write side allocation routine to get the current qp
  * and replace it with a new one
  */
-static struct rcu_qp *update_qp(CRYPTO_RCU_LOCK *lock)
+static struct rcu_qp *update_qp(CRYPTO_RCU_LOCK *lock, uint32_t *curr_id)
 {
-    uint64_t new_id;
     uint32_t current_idx;
     uint32_t tmp;
-    uint64_t tmp64;
 
     ossl_crypto_mutex_lock(lock->alloc_lock);
     /*
@@ -355,19 +334,8 @@ static struct rcu_qp *update_qp(CRYPTO_RCU_LOCK *lock)
         (lock->current_alloc_idx + 1) % lock->group_count;
 
     /* get and insert a new id */
-    new_id = VAL_ID(lock->id_ctr);
+    *curr_id = lock->id_ctr;
     lock->id_ctr++;
-
-    /*
-     * Even though we are under a write side lock here
-     * We need to use atomic instructions to ensure that the results
-     * of this update are published to the read side prior to updating the
-     * reader idx below
-     */
-    CRYPTO_atomic_and(&lock->qp_group[current_idx].users, ID_MASK, &tmp64,
-                      lock->rw_lock);
-    CRYPTO_atomic_add64(&lock->qp_group[current_idx].users, new_id, &tmp64,
-                        lock->rw_lock);
 
     /* update the reader index to be the prior qp */
     tmp = lock->current_alloc_idx;
@@ -393,27 +361,30 @@ void ossl_synchronize_rcu(CRYPTO_RCU_LOCK *lock)
 {
     struct rcu_qp *qp;
     uint64_t count;
+    uint32_t curr_id;
     struct rcu_cb_item *cb_items, *tmpcb;
 
     /* before we do anything else, lets grab the cb list */
-    cb_items = InterlockedExchangePointer((void * volatile *)&lock->cb_items,
-                                          NULL);
+    ossl_crypto_mutex_lock(lock->write_lock);
+    cb_items = lock->cb_items;
+    lock->cb_items = NULL;
+    ossl_crypto_mutex_unlock(lock->write_lock);
 
-    qp = update_qp(lock);
-
-    /* wait for the reader count to reach zero */
-    do {
-        CRYPTO_atomic_load(&qp->users, &count, lock->rw_lock);
-    } while (READER_COUNT(count) != 0);
+    qp = update_qp(lock, &curr_id);
 
     /* retire in order */
     ossl_crypto_mutex_lock(lock->prior_lock);
-    while (lock->next_to_retire != ID_VAL(count))
+    while (lock->next_to_retire != curr_id)
         ossl_crypto_condvar_wait(lock->prior_signal, lock->prior_lock);
 
     lock->next_to_retire++;
     ossl_crypto_condvar_broadcast(lock->prior_signal);
     ossl_crypto_mutex_unlock(lock->prior_lock);
+
+    /* wait for the reader count to reach zero */
+    do {
+        CRYPTO_atomic_load(&qp->users, &count, lock->rw_lock);
+    } while (count != (uint64_t)0);
 
     retire_qp(lock, qp);
 
@@ -430,6 +401,9 @@ void ossl_synchronize_rcu(CRYPTO_RCU_LOCK *lock)
 
 }
 
+/*
+ * Note, must be called under the protection of ossl_rcu_write_lock
+ */
 int ossl_rcu_call(CRYPTO_RCU_LOCK *lock, rcu_cb_fn cb, void *data)
 {
     struct rcu_cb_item *new;
@@ -440,8 +414,9 @@ int ossl_rcu_call(CRYPTO_RCU_LOCK *lock, rcu_cb_fn cb, void *data)
     new->data = data;
     new->fn = cb;
 
-    new->next = InterlockedExchangePointer((void * volatile *)&lock->cb_items,
-                                           new);
+    new->next = lock->cb_items;
+    lock->cb_items = new;
+
     return 1;
 }
 

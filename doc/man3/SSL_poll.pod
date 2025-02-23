@@ -76,7 +76,8 @@ SSL_POLL_FLAG_NO_HANDLE_EVENTS
 SSL_poll() allows the readiness conditions of the resources represented by one
 or more BIO_POLL_DESCRIPTOR structures to be determined. In particular, it can
 be used to query for readiness conditions on QUIC connection SSL objects and
-QUIC stream SSL objects in a single call.
+QUIC stream SSL objects in a single call. It can also be used to block until at
+least one of the given resources is ready.
 
 A call to SSL_poll() specifies an array of B<SSL_POLL_ITEM> structures, each of
 which designates a resource which is being polled for readiness, and a set of
@@ -123,13 +124,32 @@ array need remain allocated only for the duration of the call. I<num_items> must
 be set to the number of entries in the array, and I<stride> must be set to
 C<sizeof(SSL_POLL_ITEM)>.
 
+The I<timeout> argument specifies the timeout to use, and, implicitly, whether
+to use SSL_poll() in blocking or nonblocking mode:
+
+=over 4
+
+=item *
+
+If I<timeout> is NULL, the function blocks indefinitely until at least one
+resource is ready.
+
+=item *
+
+If I<timeout> is non-NULL, and it points to a B<struct timeval> which is set to
+zero, the function operates in nonblocking mode and returns immediately with
+readiness information.
+
+=item *
+
+If I<timeout> is non-NULL, and it points to a B<struct timeval> which is set to
+a value other than zero, the function blocks for the specified interval or until
+at least one of the specified resources is ready, whichever comes first.
+
+=back
+
 The present implementation of SSL_poll() is a subset of the functionality which
-will eventually be available. Only a nonblocking mode of operation is available
-at this time, where SSL_poll() always returns immediately. As such, I<timeout>
-must point to a valid B<struct timeval> and that structure must be set to zero.
-In future, other inputs to the I<timeout> argument will result in a blocking
-mode of operation, which is not currently supported. For more information, see
-L</LIMITATIONS>.
+will eventually be available. For more information, see L</LIMITATIONS>.
 
 The following flags are currently defined for the I<flags> argument:
 
@@ -140,6 +160,12 @@ The following flags are currently defined for the I<flags> argument:
 This flag indicates that internal state machine processing should not be
 performed in an attempt to generate new readiness events. Only existing
 readiness events will be reported.
+
+If this flag is used in nonblocking mode (with a timeout of zero), no internal
+state machine processing is performed.
+
+If this flag is used in blocking mode (for example, with I<timeout> set to
+NULL), event processing does not occur unless the function blocks.
 
 =back
 
@@ -197,6 +223,15 @@ information.
 This event type may be raised even if it was not requested in I<events>;
 specifying this event type in I<events> does nothing.
 
+=item B<SSL_POLL_EVENT_EL>
+
+Error at listener level. This event is raised when a listener has failed, for
+example if a network BIO has encountered a permanent error.
+
+This event is never raised on objects which are not listeners, but its
+occurrence will cause B<SSL_POLL_EVENT_EC> to be raised on all dependent
+connections.
+
 =item B<SSL_POLL_EVENT_EC>
 
 Error at connection level. This event is raised when a connection has failed.
@@ -204,7 +239,7 @@ In particular, it is raised when a connection begins terminating.
 
 This event is never raised on objects which are not connections.
 
-=item B<SSL_POLL_EVENT_DCD>
+=item B<SSL_POLL_EVENT_ECD>
 
 Error at connection level (drained). This event is raised when a connection has
 finished terminating, and has reached the terminated state. This event will
@@ -250,6 +285,12 @@ L<SSL_stream_reset(3)>).
 This event does not guarantee that a subsequent call to L<SSL_write_ex(3)> will
 succeed.
 
+=item B<SSL_POLL_EVENT_IC>
+
+This event, which is only raised by a QUIC listener SSL object, is raised when
+one or more incoming QUIC connections are available to be accepted using
+L<SSL_accept_connection(3)>.
+
 =item B<SSL_POLL_EVENT_ISB>
 
 This event, which is only raised by a QUIC connection SSL object, is raised when
@@ -278,29 +319,19 @@ unidirectional stream to be locally created.
 
 =head1 LIMITATIONS
 
-SSL_poll() as presently implemented has the following limitations:
+SSL_poll() as presently implemented has the following limitation:
 
 =over 4
 
 =item
 
-The implementation of SSL_poll() only supports nonblocking operation and
-therefore requires the I<timeout> argument be used to specify a zero timeout.
-Calls to SSL_poll() which specify another value, or which pass I<timeout> as
-NULL, will fail. This does not allow waiting, but does allow multiple QUIC SSL
-objects to be queried for their readiness state in a single call.
-
-Future releases will remove this limitation and support blocking SSL_poll().
-
-=item
-
 Only B<BIO_POLL_DESCRIPTOR> structures with type
-B<BIO_POLL_DESCRIPTOR_TYPE_SSL>, referencing QUIC connection SSL objects or QUIC
+B<BIO_POLL_DESCRIPTOR_TYPE_SSL>, referencing QUIC listener, connection or
 stream SSL objects, are supported.
 
 =back
 
-These limitations will be revised in a future release of OpenSSL.
+This limitation may be revised in a future release of OpenSSL.
 
 =head1 RETURN VALUES
 
@@ -376,6 +407,13 @@ L<SSL_get_rpoll_descriptor(3)>, L<SSL_get_wpoll_descriptor(3)>
 =head1 HISTORY
 
 SSL_poll() was added in OpenSSL 3.3.
+
+Before @VERSION_QUIC_SERVER@, SSL_poll() did not support blocking operation and
+would fail if called with a NULL I<timeout> parameter or a I<timeout> parameter
+pointing to a B<struct timeval> which was not zero.
+
+Before @VERSION_QUIC_SERVER@, the B<SSL_POLL_EVENT_EL> and B<SSL_POLL_EVENT_IC>
+event types were not present.
 
 =head1 COPYRIGHT
 

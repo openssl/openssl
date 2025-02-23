@@ -275,8 +275,8 @@ There are a few places where we do not enforce key size that need to be addresse
 - DSA.  Keygen and Signing are no longer approved, verify is still allowed.
 - ECDSA B & K curves are deprecated, but still approved according to (IG C.K Resolution 4).\
   If we chose not to remove them , then we need to check that OSSL_PKEY_PARAM_USE_COFACTOR_ECDH is set for key agreement if the cofactor is not 1.
-- ED25519/ED448 is now approved.
-- X25519/X448 is not approved currently. keygen and keyexchange would also need an indicator if we allow it?
+- ED25519 and ED448 are now approved.
+- X25519 and X448 are not approved currently. keygen and keyexchange would also need an indicator if we allow them?
 - RSA encryption(for key agreement/key transport) using PKCSV15 is no longer allowed. (Note that this breaks TLS 1.2 using RSA for KeyAgreement),
   Padding mode updates required. Check RSA KEM also.
 - RSA signing using PKCS1 is still allowed (i.e. signature uses shaXXXWithRSAEncryption)

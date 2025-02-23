@@ -11,6 +11,7 @@
 #include "../ssl_local.h"
 #include "statem_local.h"
 #include "internal/cryptlib.h"
+#include "internal/ssl_unwrap.h"
 
 #define COOKIE_STATE_FORMAT_VERSION     1
 
@@ -599,19 +600,237 @@ int tls_parse_ctos_psk_kex_modes(SSL_CONNECTION *s, PACKET *pkt,
 }
 
 /*
- * Process a key_share extension received in the ClientHello. |pkt| contains
- * the raw PACKET data for the extension. Returns 1 on success or 0 on failure.
+ * Use function tls_parse_ctos_key_share with helper functions extract_keyshares,
+ * check_overlap and tls_accept_ksgroup to parse the key_share extension(s)
+ * received in the ClientHello and to select the group used of the key exchange
  */
+
+#ifndef OPENSSL_NO_TLS1_3
+/*
+ * Accept a key share group by setting the related variables in s->s3 and
+ * by generating a pubkey for this group
+ */
+static int tls_accept_ksgroup(SSL_CONNECTION *s, uint16_t ksgroup, PACKET *encoded_pubkey)
+{
+    /* Accept the key share group */
+    s->s3.group_id = ksgroup;
+    s->s3.group_id_candidate = ksgroup;
+    /* Cache the selected group ID in the SSL_SESSION */
+    s->session->kex_group = ksgroup;
+    if ((s->s3.peer_tmp = ssl_generate_param_group(s, ksgroup)) == NULL) {
+        SSLfatal(s,
+                 SSL_AD_INTERNAL_ERROR,
+                 SSL_R_UNABLE_TO_FIND_ECDH_PARAMETERS);
+        return 0;
+    }
+    if (tls13_set_encoded_pub_key(s->s3.peer_tmp,
+                                  PACKET_data(encoded_pubkey),
+                                  PACKET_remaining(encoded_pubkey)) <= 0) {
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_ECPOINT);
+        return 0;
+    }
+    return 1;
+}
+
+# define GROUPLIST_INCREMENT 32 /* Memory allocation chunk size (nominally 64 Bytes chunks) */
+
+typedef enum KS_EXTRACTION_RESULT {
+    EXTRACTION_FAILURE,
+    EXTRACTION_SUCCESS,
+    EXTRACTION_SUCCESS_HRR
+} KS_EXTRACTION_RESULT;
+
+static KS_EXTRACTION_RESULT extract_keyshares(SSL_CONNECTION *s, PACKET *key_share_list,
+                                              const uint16_t *clntgroups, size_t clnt_num_groups,
+                                              const uint16_t *srvrgroups, size_t srvr_num_groups,
+                                              uint16_t **keyshares_arr, PACKET **encoded_pubkey_arr,
+                                              size_t *keyshares_cnt, size_t *keyshares_max)
+{
+    PACKET encoded_pubkey;
+    size_t key_share_pos = 0;
+    size_t previous_key_share_pos = 0;
+    unsigned int group_id = 0;
+
+    /* Prepare memory to hold the extracted key share groups and related pubkeys */
+    *keyshares_arr = OPENSSL_malloc(*keyshares_max * sizeof(**keyshares_arr));
+    if (*keyshares_arr == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        goto failure;
+    }
+    *encoded_pubkey_arr = OPENSSL_malloc(*keyshares_max * sizeof(**encoded_pubkey_arr));
+    if (*encoded_pubkey_arr == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        goto failure;
+    }
+
+    while (PACKET_remaining(key_share_list) > 0) {
+        /* Get the group_id for the current share and its encoded_pubkey */
+        if (!PACKET_get_net_2(key_share_list, &group_id)
+                || !PACKET_get_length_prefixed_2(key_share_list, &encoded_pubkey)
+                || PACKET_remaining(&encoded_pubkey) == 0) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
+            goto failure;
+        }
+
+        /*
+         * If we sent an HRR then the key_share sent back MUST be for the group
+         * we requested, and must be the only key_share sent.
+         */
+        if (s->s3.group_id != 0
+                && (group_id != s->s3.group_id
+                    || PACKET_remaining(key_share_list) != 0)) {
+            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_KEY_SHARE);
+            goto failure;
+        }
+
+        /*
+         * Check if this share is in supported_groups sent from client
+         * RFC 8446 also mandates that clients send keyshares in the same
+         * order as listed in the supported groups extension, but its not
+         * required that the server check that, and some clients violate this
+         * so instead of failing the connection when that occurs, log a trace
+         * message indicating the client discrepancy.
+         */
+        if (!check_in_list(s, group_id, clntgroups, clnt_num_groups, 0, &key_share_pos)) {
+            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_KEY_SHARE);
+            goto failure;
+        }
+
+        if (key_share_pos < previous_key_share_pos)
+            OSSL_TRACE1(TLS, "key share group id %d is out of RFC 8446 order\n", group_id);
+
+        previous_key_share_pos = key_share_pos;
+
+        if (s->s3.group_id != 0) {
+            /*
+             * We have sent a HRR, and the key share we got back is
+             * the one we expected and is the only key share and is
+             * in the list of supported_groups (checked
+             * above already), hence we accept this key share group
+             */
+            if (!tls_accept_ksgroup(s, s->s3.group_id, &encoded_pubkey))
+                goto failure; /* SSLfatal already called */
+            /* We have selected a key share group via HRR, hence we're done here */
+            return EXTRACTION_SUCCESS_HRR;
+        }
+
+        /*
+         * We tolerate but ignore a group id that we don't think is
+         * suitable for TLSv1.3 or which is not supported by the server
+         */
+        if (!check_in_list(s, group_id, srvrgroups, srvr_num_groups, 1, NULL)
+                || !tls_group_allowed(s, group_id, SSL_SECOP_CURVE_SUPPORTED)
+                || !tls_valid_group(s, group_id, TLS1_3_VERSION, TLS1_3_VERSION,
+                                    0, NULL)) {
+            /* Share not suitable or not supported, check next share */
+            continue;
+        }
+
+        /* Memorize this key share group ID and its encoded point */
+        (*keyshares_arr)[*keyshares_cnt] = group_id;
+        (*encoded_pubkey_arr)[(*keyshares_cnt)++] = encoded_pubkey;
+
+        /*
+         * Memory management (remark: While limiting the client to only allow
+         * a maximum of OPENSSL_CLIENT_MAX_KEY_SHARES to be sent, the server can
+         * handle any number of key shares)
+         */
+        if (*keyshares_cnt == *keyshares_max) {
+            PACKET *tmp_pkt;
+            uint16_t *tmp =
+                OPENSSL_realloc(*keyshares_arr,
+                                (*keyshares_max + GROUPLIST_INCREMENT) * sizeof(**keyshares_arr));
+
+            if (tmp == NULL)
+                goto failure;
+            *keyshares_arr = tmp;
+            tmp_pkt =
+                OPENSSL_realloc(*encoded_pubkey_arr,
+                                (*keyshares_max + GROUPLIST_INCREMENT) *
+                                sizeof(**encoded_pubkey_arr));
+            if (tmp_pkt == NULL)
+                goto failure;
+            *encoded_pubkey_arr = tmp_pkt;
+            *keyshares_max += GROUPLIST_INCREMENT;
+        }
+
+    }
+
+    return EXTRACTION_SUCCESS;
+
+failure:
+    /* Fatal error -> free any allocated memory and return 0 */
+    OPENSSL_free(*keyshares_arr);
+    OPENSSL_free(*encoded_pubkey_arr);
+    return EXTRACTION_FAILURE;
+}
+#endif
+
+/*
+ * For each group in the priority list of groups, check if that group is
+ * also present in the secondary list; if so, select the first overlap and
+ * assign to selected_group and also set the related index in the candidate group list,
+ * or set selected_group to 0 if no overlap
+ */
+#ifndef OPENSSL_NO_TLS1_3
+static void check_overlap(SSL_CONNECTION *s,
+                          const uint16_t *prio_groups, size_t prio_num_groups,
+                          const uint16_t *candidate_groups, size_t candidate_num_groups,
+                          int *prio_group_idx, int *candidate_group_idx,
+                          uint16_t *selected_group)
+{
+    uint16_t current_group;
+    size_t group_idx = prio_num_groups;
+    size_t new_group_idx = 0;
+
+    *candidate_group_idx = 0;
+    *prio_group_idx = 0;
+    *selected_group = 0;
+
+    for (current_group = 0; current_group < candidate_num_groups; current_group++) {
+        if (!check_in_list(s, candidate_groups[current_group], prio_groups,
+                           prio_num_groups, 1, &new_group_idx)
+            || !tls_group_allowed(s, candidate_groups[current_group],
+                                  SSL_SECOP_CURVE_SUPPORTED)
+            || !tls_valid_group(s, candidate_groups[current_group], TLS1_3_VERSION,
+                                TLS1_3_VERSION, 0, NULL))
+            /* No overlap or group not suitable, check next group */
+            continue;
+
+        /*
+         * is the found new_group_idx earlier in the priority list than
+         * initial or last group_idx?
+         */
+        if (new_group_idx < group_idx) {
+            group_idx = new_group_idx;
+            *candidate_group_idx = current_group;
+            *prio_group_idx = group_idx;
+            *selected_group = prio_groups[group_idx];
+        }
+    }
+}
+#endif
+
 int tls_parse_ctos_key_share(SSL_CONNECTION *s, PACKET *pkt,
                              unsigned int context, X509 *x, size_t chainidx)
 {
 #ifndef OPENSSL_NO_TLS1_3
-    unsigned int group_id;
-    PACKET key_share_list, encoded_pt;
+    PACKET key_share_list;
     const uint16_t *clntgroups, *srvrgroups;
-    size_t clnt_num_groups, srvr_num_groups;
-    int found = 0;
+    const size_t *srvrtuples;
+    uint16_t *first_group_in_tuple;
+    size_t clnt_num_groups, srvr_num_groups, srvr_num_tuples;
+    PACKET *encoded_pubkey_arr = NULL;
+    uint16_t *keyshares_arr = NULL;
+    size_t keyshares_cnt = 0;
+    size_t keyshares_max = GROUPLIST_INCREMENT;
+    /* We conservatively assume that we did not find a suitable group */
+    uint16_t group_id_candidate = 0;
+    KS_EXTRACTION_RESULT ks_extraction_result;
+    size_t current_tuple;
+    int ret = 0;
 
+    s->s3.group_id_candidate = 0;
     if (s->hit && (s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE_DHE) == 0)
         return 1;
 
@@ -626,10 +845,12 @@ int tls_parse_ctos_key_share(SSL_CONNECTION *s, PACKET *pkt,
         return 0;
     }
 
-    /* Get our list of supported groups */
+    /* Get list of server supported groups and the group tuples */
     tls1_get_supported_groups(s, &srvrgroups, &srvr_num_groups);
+    tls1_get_group_tuples(s, &srvrtuples, &srvr_num_tuples);
     /* Get the clients list of supported groups. */
     tls1_get_peer_groups(s, &clntgroups, &clnt_num_groups);
+
     if (clnt_num_groups == 0) {
         /*
          * This can only happen if the supported_groups extension was not sent,
@@ -651,70 +872,119 @@ int tls_parse_ctos_key_share(SSL_CONNECTION *s, PACKET *pkt,
         return 0;
     }
 
-    while (PACKET_remaining(&key_share_list) > 0) {
-        if (!PACKET_get_net_2(&key_share_list, &group_id)
-                || !PACKET_get_length_prefixed_2(&key_share_list, &encoded_pt)
-                || PACKET_remaining(&encoded_pt) == 0) {
-            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
-            return 0;
+    /* We parse the key share extension and memorize the entries (after some checks) */
+    ks_extraction_result = extract_keyshares(s,
+                                             &key_share_list,
+                                             clntgroups, clnt_num_groups,
+                                             srvrgroups, srvr_num_groups,
+                                             &keyshares_arr, &encoded_pubkey_arr,
+                                             &keyshares_cnt, &keyshares_max);
+
+    if (ks_extraction_result == EXTRACTION_FAILURE) /* Fatal error during tests */
+        return 0; /* Memory already freed and SSLfatal already called */
+    if (ks_extraction_result == EXTRACTION_SUCCESS_HRR) /* Successful HRR */
+        goto end;
+
+    /*
+     * We now have the folowing lists available to make a decision for
+     * which group the server should use for key exchange :
+     * From client: clntgroups[clnt_num_groups],
+     *              keyshares_arr[keyshares_cnt], encoded_pubkey_arr[keyshares_cnt]
+     * From server: srvrgroups[srvr_num_groups], srvrtuples[srvr_num_tuples]
+     *
+     * Group selection algorithm:
+     *    For all tuples do:
+     *      key share group(s) overlapping with current tuple?
+     *         --> Yes: accept group_id for SH
+     *        --> No: is any of the client supported_groups overlapping with current tuple?
+     *            --> Yes: memorize group_id for HRR, break
+     *             --> No: continue to check next tuple
+     *
+     * Remark: Selection priority different for client- or server-preference
+     */
+    first_group_in_tuple = (uint16_t *)srvrgroups;
+    for (current_tuple = 0; current_tuple < srvr_num_tuples; current_tuple++) {
+        size_t number_of_groups_in_tuple = srvrtuples[current_tuple];
+        int prio_group_idx = 0, candidate_group_idx = 0;
+
+        /* Server or client preference ? */
+        if (s->options & SSL_OP_CIPHER_SERVER_PREFERENCE) {
+            /* Server preference */
+            /* Is there overlap with a key share group?  */
+            check_overlap(s,
+                          first_group_in_tuple, number_of_groups_in_tuple,
+                          keyshares_arr, keyshares_cnt,
+                          &prio_group_idx, &candidate_group_idx,
+                          &group_id_candidate);
+            if (group_id_candidate > 0) { /* Overlap found -> accept the key share group */
+                if (!tls_accept_ksgroup(s, group_id_candidate,
+                                        &encoded_pubkey_arr[candidate_group_idx]))
+                    goto err; /* SSLfatal already called */
+                /* We have all info for a SH, hence we're done here */
+                goto end;
+            } else {
+                /*
+                 * There's no overlap with a key share, but is there at least a client
+                 * supported_group overlapping with the current tuple?
+                 */
+                check_overlap(s,
+                              first_group_in_tuple, number_of_groups_in_tuple,
+                              clntgroups, clnt_num_groups,
+                              &prio_group_idx, &candidate_group_idx,
+                              &group_id_candidate);
+                if (group_id_candidate > 0) {
+                    /*
+                     * We did not have a key share overlap, but at least the supported
+                     * groups overlap hence we can stop searching
+                     * (and report group_id_candidate 'upward' for HRR)
+                     */
+                    s->s3.group_id_candidate = group_id_candidate;
+                    goto end;
+                } else {
+                    /*
+                     * Neither key share nor supported_groups overlap current
+                     * tuple, hence we try the next tuple
+                     */
+                    first_group_in_tuple = &first_group_in_tuple[number_of_groups_in_tuple];
+                    continue;
+                }
+            }
+
+        } else { /* We have client preference */
+            check_overlap(s,
+                          keyshares_arr, keyshares_cnt,
+                          first_group_in_tuple, number_of_groups_in_tuple,
+                          &prio_group_idx, &candidate_group_idx,
+                          &group_id_candidate);
+            if (group_id_candidate > 0) {
+                if (!tls_accept_ksgroup(s, group_id_candidate, &encoded_pubkey_arr[prio_group_idx]))
+                    goto err;
+                goto end;
+            } else {
+                check_overlap(s,
+                              clntgroups, clnt_num_groups,
+                              first_group_in_tuple, number_of_groups_in_tuple,
+                              &prio_group_idx, &candidate_group_idx,
+                              &group_id_candidate);
+                if (group_id_candidate > 0) {
+                    s->s3.group_id_candidate = group_id_candidate;
+                    goto end;
+                } else {
+                    first_group_in_tuple = &first_group_in_tuple[number_of_groups_in_tuple];
+                    continue;
+                }
+            }
         }
-
-        /*
-         * If we already found a suitable key_share we loop through the
-         * rest to verify the structure, but don't process them.
-         */
-        if (found)
-            continue;
-
-        /*
-         * If we sent an HRR then the key_share sent back MUST be for the group
-         * we requested, and must be the only key_share sent.
-         */
-        if (s->s3.group_id != 0
-                && (group_id != s->s3.group_id
-                    || PACKET_remaining(&key_share_list) != 0)) {
-            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_KEY_SHARE);
-            return 0;
-        }
-
-        /* Check if this share is in supported_groups sent from client */
-        if (!check_in_list(s, group_id, clntgroups, clnt_num_groups, 0)) {
-            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_KEY_SHARE);
-            return 0;
-        }
-
-        /* Check if this share is for a group we can use */
-        if (!check_in_list(s, group_id, srvrgroups, srvr_num_groups, 1)
-                || !tls_group_allowed(s, group_id, SSL_SECOP_CURVE_SUPPORTED)
-                   /*
-                    * We tolerate but ignore a group id that we don't think is
-                    * suitable for TLSv1.3
-                    */
-                || !tls_valid_group(s, group_id, TLS1_3_VERSION, TLS1_3_VERSION,
-                                    0, NULL)) {
-            /* Share not suitable */
-            continue;
-        }
-
-        s->s3.group_id = group_id;
-        /* Cache the selected group ID in the SSL_SESSION */
-        s->session->kex_group = group_id;
-
-        if ((s->s3.peer_tmp = ssl_generate_param_group(s, group_id)) == NULL) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR,
-                   SSL_R_UNABLE_TO_FIND_ECDH_PARAMETERS);
-            return 0;
-        }
-
-        if (tls13_set_encoded_pub_key(s->s3.peer_tmp,
-                                      PACKET_data(&encoded_pt),
-                                      PACKET_remaining(&encoded_pt)) <= 0) {
-            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_ECPOINT);
-            return 0;
-        }
-
-        found = 1;
     }
+
+end:
+    ret = 1;
+
+err:
+    OPENSSL_free(keyshares_arr);
+    OPENSSL_free(encoded_pubkey_arr);
+    return ret;
+
 #endif
 
     return 1;
@@ -1641,8 +1911,8 @@ EXT_RETURN tls_construct_stoc_key_share(SSL_CONNECTION *s, WPACKET *pkt,
                                         size_t chainidx)
 {
 #ifndef OPENSSL_NO_TLS1_3
-    unsigned char *encodedPoint;
-    size_t encoded_pt_len = 0;
+    unsigned char *encoded_pubkey;
+    size_t encoded_pubkey_len = 0;
     EVP_PKEY *ckey = s->s3.peer_tmp, *skey = NULL;
     const TLS_GROUP_INFO *ginf = NULL;
 
@@ -1703,21 +1973,21 @@ EXT_RETURN tls_construct_stoc_key_share(SSL_CONNECTION *s, WPACKET *pkt,
         }
 
         /* Generate encoding of server key */
-        encoded_pt_len = EVP_PKEY_get1_encoded_public_key(skey, &encodedPoint);
-        if (encoded_pt_len == 0) {
+        encoded_pubkey_len = EVP_PKEY_get1_encoded_public_key(skey, &encoded_pubkey);
+        if (encoded_pubkey_len == 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EC_LIB);
             EVP_PKEY_free(skey);
             return EXT_RETURN_FAIL;
         }
 
-        if (!WPACKET_sub_memcpy_u16(pkt, encodedPoint, encoded_pt_len)
+        if (!WPACKET_sub_memcpy_u16(pkt, encoded_pubkey, encoded_pubkey_len)
                 || !WPACKET_close(pkt)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             EVP_PKEY_free(skey);
-            OPENSSL_free(encodedPoint);
+            OPENSSL_free(encoded_pubkey);
             return EXT_RETURN_FAIL;
         }
-        OPENSSL_free(encodedPoint);
+        OPENSSL_free(encoded_pubkey);
 
         /*
          * This causes the crypto state to be updated based on the derived keys

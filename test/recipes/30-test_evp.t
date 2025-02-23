@@ -24,6 +24,7 @@ my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 my $no_legacy = disabled('legacy') || ($ENV{NO_LEGACY} // 0);
 my $no_des = disabled("des");
 my $no_dh = disabled("dh");
+my $no_slh_dsa = disabled("slh-dsa");
 my $no_dsa = disabled("dsa");
 my $no_ec = disabled("ec");
 my $no_ecx = disabled("ecx");
@@ -31,6 +32,8 @@ my $no_ec2m = disabled("ec2m");
 my $no_sm2 = disabled("sm2");
 my $no_siv = disabled("siv");
 my $no_argon2 = disabled("argon2");
+my $no_ml_dsa = disabled("ml-dsa");
+my $no_ml_kem = disabled("ml-kem");
 
 # Default config depends on if the legacy module is built or not
 my $defaultcnf = $no_legacy ? 'default.cnf' : 'default-and-legacy.cnf';
@@ -75,6 +78,10 @@ push @files, qw(
                 evpmac_cmac_des.txt
                ) unless $no_des;
 push @files, qw(
+                evppkey_slh_dsa_siggen.txt
+                evppkey_slh_dsa_sigver.txt
+               ) unless $no_slh_dsa;
+push @files, qw(
                 evppkey_dsa.txt
                 evppkey_dsa_sigalg.txt
                ) unless $no_dsa;
@@ -91,6 +98,24 @@ push @files, qw(
                 evppkey_kas.txt
                 evppkey_mismatch.txt
                ) unless $no_ec;
+push @files, qw(
+                evppkey_ml_dsa_keygen.txt
+                evppkey_ml_dsa_siggen.txt
+                evppkey_ml_dsa_sigver.txt
+               ) unless $no_ml_dsa;
+push @files, qw(
+                evppkey_ml_kem_512_keygen.txt
+                evppkey_ml_kem_512_encap.txt
+                evppkey_ml_kem_512_decap.txt
+                evppkey_ml_kem_768_keygen.txt
+                evppkey_ml_kem_768_encap.txt
+                evppkey_ml_kem_768_decap.txt
+                evppkey_ml_kem_1024_keygen.txt
+                evppkey_ml_kem_1024_encap.txt
+                evppkey_ml_kem_1024_decap.txt
+                evppkey_ml_kem_keygen.txt
+                evppkey_ml_kem_encap_decap.txt
+               ) unless $no_ml_kem;
 
 # A list of tests that only run with the default provider
 # (i.e. The algorithms are not present in the fips provider)

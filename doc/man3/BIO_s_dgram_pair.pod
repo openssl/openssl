@@ -4,7 +4,8 @@
 
 BIO_s_dgram_pair, BIO_new_bio_dgram_pair, BIO_dgram_set_no_trunc,
 BIO_dgram_get_no_trunc, BIO_dgram_get_effective_caps, BIO_dgram_get_caps,
-BIO_dgram_set_caps, BIO_dgram_set_mtu, BIO_dgram_get_mtu - datagram pair BIO
+BIO_dgram_set_caps, BIO_dgram_set_mtu, BIO_dgram_get_mtu,
+BIO_dgram_set0_local_addr - datagram pair BIO
 
 =head1 SYNOPSIS
 
@@ -21,6 +22,7 @@ BIO_dgram_set_caps, BIO_dgram_set_mtu, BIO_dgram_get_mtu - datagram pair BIO
  int BIO_dgram_set_caps(BIO *bio, uint32_t caps);
  int BIO_dgram_set_mtu(BIO *bio, unsigned int mtu);
  unsigned int BIO_dgram_get_mtu(BIO *bio);
+ int BIO_dgram_set0_local_addr(BIO *bio, BIO_ADDR *addr);
 
 =head1 DESCRIPTION
 
@@ -101,6 +103,14 @@ halves of the pair. The value does not affect the operation of the BIO datagram
 pair (except for BIO_get_write_guarantee(); see above) but may be used by other
 code to determine a requested MTU. When a BIO datagram pair BIO is created, the
 MTU is set to an unspecified but valid value.
+
+BIO_dgram_set0_local_addr() can be used to set the local BIO_ADDR to be used
+when sending a datagram via a BIO datagram pair. This becomes the peer address
+when receiving on the other half of the pair. If the BIO is used in a call to
+L<BIO_sendmmsg(3)> and a local address is explicitly specified, then the
+explicitly specified local address takes precedence. The reference to the
+BIO_ADDR is passed to the BIO by this call and will be freed automatically when
+the BIO is freed.
 
 L<BIO_flush(3)> is a no-op.
 
@@ -205,6 +215,8 @@ capabilities are supported.
 
 BIO_dgram_get_mtu() returns the MTU value configured on the BIO, or zero if the
 operation is not supported.
+
+BIO_dgram_set0_local_addr() returns 1 on success and <= 0 otherwise.
 
 =head1 SEE ALSO
 

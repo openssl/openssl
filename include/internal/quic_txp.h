@@ -52,6 +52,7 @@ typedef struct ossl_quic_tx_packetiser_args_st {
     void            *now_arg;
     QLOG            *(*get_qlog_cb)(void *arg); /* Optional QLOG retrieval func */
     void            *get_qlog_cb_arg;
+    uint32_t        protocol_version; /* The protocol version to try negotiating */
 
     /*
      * Injected dependencies - crypto streams.
@@ -64,6 +65,14 @@ typedef struct ossl_quic_tx_packetiser_args_st {
  } OSSL_QUIC_TX_PACKETISER_ARGS;
 
 OSSL_QUIC_TX_PACKETISER *ossl_quic_tx_packetiser_new(const OSSL_QUIC_TX_PACKETISER_ARGS *args);
+
+void ossl_quic_tx_packetiser_set_validated(OSSL_QUIC_TX_PACKETISER *txp);
+void ossl_quic_tx_packetiser_add_unvalidated_credit(OSSL_QUIC_TX_PACKETISER *txp,
+                                                    size_t credit);
+void ossl_quic_tx_packetiser_consume_unvalidated_credit(OSSL_QUIC_TX_PACKETISER *txp,
+                                                        size_t credit);
+int ossl_quic_tx_packetiser_check_unvalidated_credit(OSSL_QUIC_TX_PACKETISER *txp,
+                                                     size_t req_credit);
 
 typedef void (ossl_quic_initial_token_free_fn)(const unsigned char *buf,
                                                size_t buf_len, void *arg);
@@ -123,6 +132,13 @@ int ossl_quic_tx_packetiser_set_initial_token(OSSL_QUIC_TX_PACKETISER *txp,
                                               size_t token_len,
                                               ossl_quic_initial_token_free_fn *free_cb,
                                               void *free_cb_arg);
+
+/*
+ * Set the protocol version used when generating packets.  Currently should
+ * only ever be set to QUIC_VERSION_1
+ */
+int ossl_quic_tx_packetiser_set_protocol_version(OSSL_QUIC_TX_PACKETISER *txp,
+                                                 uint32_t protocol_version);
 
 /* Change the DCID the TXP uses to send outgoing packets. */
 int ossl_quic_tx_packetiser_set_cur_dcid(OSSL_QUIC_TX_PACKETISER *txp,

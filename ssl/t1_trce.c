@@ -13,6 +13,8 @@
 
 /* Packet trace support for OpenSSL */
 #include "internal/nelem.h"
+#include "internal/ssl_unwrap.h"
+#include "internal/quic_trace.h"
 
 typedef struct {
     int num;
@@ -600,7 +602,15 @@ static const ssl_trace_tbl ssl_sigalg_tbl[] = {
     {TLSEXT_SIGALG_gostr34102001_gostr3411, TLSEXT_SIGALG_gostr34102001_gostr3411_name},
     {TLSEXT_SIGALG_ecdsa_brainpoolP256r1_sha256, TLSEXT_SIGALG_ecdsa_brainpoolP256r1_sha256_name},
     {TLSEXT_SIGALG_ecdsa_brainpoolP384r1_sha384, TLSEXT_SIGALG_ecdsa_brainpoolP384r1_sha384_name},
-    {TLSEXT_SIGALG_ecdsa_brainpoolP512r1_sha512, TLSEXT_SIGALG_ecdsa_brainpoolP512r1_sha512_name}
+    {TLSEXT_SIGALG_ecdsa_brainpoolP512r1_sha512, TLSEXT_SIGALG_ecdsa_brainpoolP512r1_sha512_name},
+    /*
+     * Well known groups that we happen to know about, but only come from
+     * provider capability declarations (hence no macros for the
+     * codepoints/names)
+     */
+    {0x0904, "mldsa44"},
+    {0x0905, "mldsa65"},
+    {0x0906, "mldsa87"}
 };
 
 static const ssl_trace_tbl ssl_ctype_tbl[] = {

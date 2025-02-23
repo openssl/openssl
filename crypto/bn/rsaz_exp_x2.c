@@ -62,6 +62,7 @@ static ossl_inline int number_of_digits(int bitsize, int digit_size)
  *  52xZZ - data represented as array of ZZ digits in 52-bit radix
  *  _x1_/_x2_ - 1 or 2 independent inputs/outputs
  *  _ifma256 - uses 256-bit wide IFMA ISA (AVX512_IFMA256)
+ *  _avxifma256 - uses 256-bit wide AVXIFMA ISA (AVX_IFMA256)
  */
 
 void ossl_rsaz_amm52x20_x1_ifma256(BN_ULONG *res, const BN_ULONG *a,
@@ -94,6 +95,66 @@ void ossl_extract_multiplier_2x40_win5(BN_ULONG *red_Y,
                                        const BN_ULONG *red_table,
                                        int red_table_idx1, int red_table_idx2);
 
+void ossl_rsaz_amm52x20_x1_avxifma256(BN_ULONG *res, const BN_ULONG *a,
+                                      const BN_ULONG *b, const BN_ULONG *m,
+                                      BN_ULONG k0);
+void ossl_rsaz_amm52x20_x2_avxifma256(BN_ULONG *out, const BN_ULONG *a,
+                                      const BN_ULONG *b, const BN_ULONG *m,
+                                      const BN_ULONG k0[2]);
+void ossl_extract_multiplier_2x20_win5_avx(BN_ULONG *red_Y,
+                                           const BN_ULONG *red_table,
+                                           int red_table_idx1,
+                                           int red_table_idx2);
+
+void ossl_rsaz_amm52x30_x1_avxifma256(BN_ULONG *res, const BN_ULONG *a,
+                                      const BN_ULONG *b, const BN_ULONG *m,
+                                      BN_ULONG k0);
+void ossl_rsaz_amm52x30_x2_avxifma256(BN_ULONG *out, const BN_ULONG *a,
+                                      const BN_ULONG *b, const BN_ULONG *m,
+                                      const BN_ULONG k0[2]);
+void ossl_extract_multiplier_2x30_win5_avx(BN_ULONG *red_Y,
+                                           const BN_ULONG *red_table,
+                                           int red_table_idx1,
+                                           int red_table_idx2);
+
+void ossl_rsaz_amm52x40_x1_avxifma256(BN_ULONG *res, const BN_ULONG *a,
+                                      const BN_ULONG *b, const BN_ULONG *m,
+                                      BN_ULONG k0);
+void ossl_rsaz_amm52x40_x2_avxifma256(BN_ULONG *out, const BN_ULONG *a,
+                                      const BN_ULONG *b, const BN_ULONG *m,
+                                      const BN_ULONG k0[2]);
+void ossl_extract_multiplier_2x40_win5_avx(BN_ULONG *red_Y,
+                                           const BN_ULONG *red_table,
+                                           int red_table_idx1,
+                                           int red_table_idx2);
+
+typedef void (*AMM)(BN_ULONG *res, const BN_ULONG *a, const BN_ULONG *b,
+                    const BN_ULONG *m, BN_ULONG k0);
+
+static AMM ossl_rsaz_amm52_x1[] = {
+    ossl_rsaz_amm52x20_x1_avxifma256, ossl_rsaz_amm52x20_x1_ifma256,
+    ossl_rsaz_amm52x30_x1_avxifma256, ossl_rsaz_amm52x30_x1_ifma256,
+    ossl_rsaz_amm52x40_x1_avxifma256, ossl_rsaz_amm52x40_x1_ifma256,
+};
+
+typedef void (*DAMM)(BN_ULONG *res, const BN_ULONG *a, const BN_ULONG *b,
+                     const BN_ULONG *m, const BN_ULONG k0[2]);
+
+static DAMM ossl_rsaz_amm52_x2[] = {
+    ossl_rsaz_amm52x20_x2_avxifma256, ossl_rsaz_amm52x20_x2_ifma256,
+    ossl_rsaz_amm52x30_x2_avxifma256, ossl_rsaz_amm52x30_x2_ifma256,
+    ossl_rsaz_amm52x40_x2_avxifma256, ossl_rsaz_amm52x40_x2_ifma256,
+};
+
+typedef void (*DEXTRACT)(BN_ULONG *res, const BN_ULONG *red_table,
+                         int red_table_idx, int tbl_idx);
+
+static DEXTRACT ossl_extract_multiplier_win5[] = {
+    ossl_extract_multiplier_2x20_win5_avx, ossl_extract_multiplier_2x20_win5,
+    ossl_extract_multiplier_2x30_win5_avx, ossl_extract_multiplier_2x30_win5,
+    ossl_extract_multiplier_2x40_win5_avx, ossl_extract_multiplier_2x40_win5,
+};
+
 static int RSAZ_mod_exp_x2_ifma256(BN_ULONG *res, const BN_ULONG *base,
                                    const BN_ULONG *exp[2], const BN_ULONG *m,
                                    const BN_ULONG *rr, const BN_ULONG k0[2],
@@ -101,7 +162,7 @@ static int RSAZ_mod_exp_x2_ifma256(BN_ULONG *res, const BN_ULONG *base,
 
 /*
  * Dual Montgomery modular exponentiation using prime moduli of the
- * same bit size, optimized with AVX512 ISA.
+ * same bit size, optimized with AVX512 ISA or AVXIFMA ISA.
  *
  * Input and output parameters for each exponentiation are independent and
  * denoted here by index |i|, i = 1..2.
@@ -142,8 +203,6 @@ int ossl_rsaz_mod_exp_avx512_x2(BN_ULONG *res1,
                                 BN_ULONG k0_2,
                                 int factor_size)
 {
-    typedef void (*AMM)(BN_ULONG *res, const BN_ULONG *a,
-                        const BN_ULONG *b, const BN_ULONG *m, BN_ULONG k0);
     int ret = 0;
 
     /*
@@ -170,20 +229,12 @@ int ossl_rsaz_mod_exp_avx512_x2(BN_ULONG *res1,
     BN_ULONG k0[2] = {0};
     /* AMM = Almost Montgomery Multiplication */
     AMM amm = NULL;
+    int avx512ifma = !!ossl_rsaz_avx512ifma_eligible();
 
-    switch (factor_size) {
-    case 1024:
-        amm = ossl_rsaz_amm52x20_x1_ifma256;
-        break;
-    case 1536:
-        amm = ossl_rsaz_amm52x30_x1_ifma256;
-        break;
-    case 2048:
-        amm = ossl_rsaz_amm52x40_x1_ifma256;
-        break;
-    default:
+    if (factor_size != 1024 && factor_size != 1536 && factor_size != 2048)
         goto err;
-    }
+
+    amm = ossl_rsaz_amm52_x1[(factor_size / 512 - 2) * 2 + avx512ifma];
 
     storage = (BN_ULONG *)OPENSSL_malloc(storage_len_bytes);
     if (storage == NULL)
@@ -293,12 +344,6 @@ int RSAZ_mod_exp_x2_ifma256(BN_ULONG *out,
                             const BN_ULONG k0[2],
                             int modulus_bitsize)
 {
-    typedef void (*DAMM)(BN_ULONG *res, const BN_ULONG *a,
-                         const BN_ULONG *b, const BN_ULONG *m,
-                         const BN_ULONG k0[2]);
-    typedef void (*DEXTRACT)(BN_ULONG *res, const BN_ULONG *red_table,
-                             int red_table_idx, int tbl_idx);
-
     int ret = 0;
     int idx;
 
@@ -329,6 +374,7 @@ int RSAZ_mod_exp_x2_ifma256(BN_ULONG *out,
     DAMM damm = NULL;
     /* Extractor from red_table */
     DEXTRACT extract = NULL;
+    int avx512ifma = !!ossl_rsaz_avx512ifma_eligible();
 
 /*
  * Squaring is done using multiplication now. That can be a subject of
@@ -336,25 +382,25 @@ int RSAZ_mod_exp_x2_ifma256(BN_ULONG *out,
  */
 # define DAMS(r,a,m,k0) damm((r),(a),(a),(m),(k0))
 
+    if (modulus_bitsize != 1024 && modulus_bitsize != 1536 && modulus_bitsize != 2048)
+        goto err;
+
+    damm = ossl_rsaz_amm52_x2[(modulus_bitsize / 512 - 2) * 2 + avx512ifma];
+    extract = ossl_extract_multiplier_win5[(modulus_bitsize / 512 - 2) * 2 + avx512ifma];
+
     switch (modulus_bitsize) {
     case 1024:
         red_digits = 20;
         exp_digits = 16;
-        damm = ossl_rsaz_amm52x20_x2_ifma256;
-        extract = ossl_extract_multiplier_2x20_win5;
         break;
     case 1536:
         /* Extended with 2 digits padding to avoid mask ops in high YMM register */
         red_digits = 30 + 2;
         exp_digits = 24;
-        damm = ossl_rsaz_amm52x30_x2_ifma256;
-        extract = ossl_extract_multiplier_2x30_win5;
         break;
     case 2048:
         red_digits = 40;
         exp_digits = 32;
-        damm = ossl_rsaz_amm52x40_x2_ifma256;
-        extract = ossl_extract_multiplier_2x40_win5;
         break;
     default:
         goto err;

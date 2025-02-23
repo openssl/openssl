@@ -226,6 +226,7 @@ struct evp_mac_st {
     OSSL_FUNC_mac_get_params_fn *get_params;
     OSSL_FUNC_mac_get_ctx_params_fn *get_ctx_params;
     OSSL_FUNC_mac_set_ctx_params_fn *set_ctx_params;
+    OSSL_FUNC_mac_init_skey_fn *init_skey;
 };
 
 struct evp_kdf_st {
@@ -353,7 +354,9 @@ struct evp_cipher_st {
     OSSL_FUNC_cipher_gettable_params_fn *gettable_params;
     OSSL_FUNC_cipher_gettable_ctx_params_fn *gettable_ctx_params;
     OSSL_FUNC_cipher_settable_ctx_params_fn *settable_ctx_params;
-} /* EVP_CIPHER */ ;
+    OSSL_FUNC_cipher_encrypt_skey_init_fn *einit_skey;
+    OSSL_FUNC_cipher_decrypt_skey_init_fn *dinit_skey;
+} /* EVP_CIPHER */;
 
 /* Macros to code block cipher wrappers */
 
@@ -751,6 +754,15 @@ struct evp_pkey_st {
 # define EVP_PKEY_CTX_IS_KEM_OP(ctx) \
     (((ctx)->operation & EVP_PKEY_OP_TYPE_KEM) != 0)
 
+struct evp_skey_st {
+    /* == Common attributes == */
+    CRYPTO_REF_COUNT references;
+    CRYPTO_RWLOCK *lock;
+
+    void *keydata; /* Alg-specific key data */
+    EVP_SKEYMGMT *skeymgmt; /* Import, export, manage */
+}; /* EVP_SKEY */
+
 void openssl_add_all_ciphers_int(void);
 void openssl_add_all_digests_int(void);
 void evp_cleanup_int(void);
@@ -853,6 +865,18 @@ void *evp_keymgmt_dup(const EVP_KEYMGMT *keymgmt,
 EVP_KEYMGMT *evp_keymgmt_fetch_from_prov(OSSL_PROVIDER *prov,
                                          const char *name,
                                          const char *properties);
+
+/*
+ * SKEYMGMT provider interface functions
+ */
+void evp_skeymgmt_freedata(const EVP_SKEYMGMT *keymgmt, void *keyddata);
+void *evp_skeymgmt_import(const EVP_SKEYMGMT *skeymgmt, int selection, const OSSL_PARAM params[]);
+int evp_skeymgmt_export(const EVP_SKEYMGMT *skeymgmt, void *keydata,
+                        int selection, OSSL_CALLBACK *param_cb, void *cbarg);
+void *evp_skeymgmt_generate(const EVP_SKEYMGMT *skeymgmt, const OSSL_PARAM params[]);
+EVP_SKEYMGMT *evp_skeymgmt_fetch_from_prov(OSSL_PROVIDER *prov,
+                                           const char *name,
+                                           const char *properties);
 
 /* Pulling defines out of C source files */
 

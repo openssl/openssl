@@ -19,6 +19,8 @@ sub test_pem
 
 our $fips_mode = 0;
 our $no_deflt_libctx = 0;
+our $fips_3_4 = 0;
+our $fips_3_5 = 0;
 
 our %base_server = (
     "Certificate" => test_pem("servercert.pem"),

@@ -45,13 +45,12 @@ jobs:
           no-cmac,
           no-comp,
           enable-crypto-mdebug,
-          no-crypto-mdebug,
           enable-crypto-mdebug-backtrace,
-          no-crypto-mdebug-backtrace,
           no-ct,
+          enable-demos,
           no-deprecated,
           no-des,
-          no-devcryptoeng,
+#          enable-devcryptoeng,  # Cannot work on Linux
           no-docs,
           no-dsa,
           no-dtls1,
@@ -61,26 +60,24 @@ jobs:
           no-ecdh,
           no-ecdsa,
           enable-ec_nistp_64_gcc_128,
-          no-ec_nistp_64_gcc_128,
           enable-egd,
-          no-egd,
           no-engine,
-          no-external-tests,
+#          enable-external-tests,  # Requires extra setup
           enable-fips,
           enable-fips enable-acvp-tests,
           enable-fips no-tls1_3,
           enable-fips no-des no-dsa no-ec2m,
-          no-fuzz-afl,
-          no-fuzz-libfuzzer,
+#          enable-fuzz-afl,        # Requires extra setup
+#          enable-fuzz-libfuzzer,  # Requires extra setup
           no-gost,
+          enable-h3demo,
           enable-heartbeats,
-          no-heartbeats,
+          enable-hqinterop,
           no-hw,
           no-hw-padlock,
           no-idea,
           no-makedepend,
           enable-md2,
-          no-md2,
           no-md4,
           no-mdc2,
           no-msan,
@@ -93,9 +90,7 @@ jobs:
           no-posix-io,
           no-psk,
           no-rc2,
-          no-rc4,
           enable-rc5,
-          no-rc5,
           no-rdrand,
           no-rfc3779,
           no-ripemd,
@@ -113,9 +108,9 @@ jobs:
           no-sock,
           no-sse2,
           no-ssl,
-          no-ssl3,
-          no-ssl3-method,
-          no-ssl-trace,
+          enable-ssl3,
+          enable-ssl3-method,
+          enable-sslkeylog,
           no-static-engine no-shared,
           no-tests,
           enable-tfo,
@@ -124,17 +119,14 @@ jobs:
           no-tls1_1-method,
           no-tls1_2-method,
           no-tls1-method,
-          no-trace,
+          enable-trace,
           no-ubsan,
           no-ui-console,
-          no-unit-test,
           enable-unit-test,
           no-uplink,
           no-weak-ssl-ciphers,
           no-whirlpool,
-          no-zlib,
           enable-zlib-dynamic,
-          no-zlib-dynamic,
           -DOPENSSL_PEDANTIC_ZEROIZATION,
           -DOPENSSL_PEDANTIC_ZEROIZATION enable-fips,
           -DOPENSSL_NO_BUILTIN_OVERFLOW_CHECKING,
@@ -351,3 +343,25 @@ jobs:
         ./util/opensslwrap.sh version -c
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+
+  memory_sanitizer_slh_dsa:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: checkout fuzz/corpora submodule
+      run: git submodule update --init --depth 1 fuzz/corpora
+    - name: Adjust ASLR for sanitizer
+      run: |
+        sudo cat /proc/sys/vm/mmap_rnd_bits
+        sudo sysctl -w vm.mmap_rnd_bits=28
+    - name: config
+      # --debug -O1 is to produce a debug build that runs in a reasonable amount of time
+      run: CC=clang ./config --banner=Configured --debug no-shared -O1 -fsanitize=memory -DOSSL_SANITIZE_MEMORY -fno-optimize-sibling-calls enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-fips && perl configdata.pm --dump
+    - name: make
+      run: make -s -j4
+    - name: get cpu info
+      run: |
+        cat /proc/cpuinfo
+        ./util/opensslwrap.sh version -c
+    - name: make test
+      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} OPENSSL_TEST_RAND_ORDER=0

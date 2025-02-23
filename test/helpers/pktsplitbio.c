@@ -53,8 +53,9 @@ static int pkt_split_dgram_recvmmsg(BIO *bio, BIO_MSG *msg, size_t stride,
     BIO *next = BIO_next(bio);
     size_t i, j, data_len = 0, msg_cnt = 0;
     BIO_MSG *thismsg;
+    QTEST_DATA *bdata = BIO_get_data(bio);
 
-    if (!TEST_ptr(next))
+    if (!TEST_ptr(next) || !TEST_ptr(bdata))
         return 0;
 
     /*
@@ -88,11 +89,8 @@ static int pkt_split_dgram_recvmmsg(BIO *bio, BIO_MSG *msg, size_t stride,
             return 0;
 
         /* Decode the packet header */
-        /*
-         * TODO(QUIC SERVER): We need to query the short connection id len
-         * here, e.g. via some API SSL_get_short_conn_id_len()
-         */
-        if (ossl_quic_wire_decode_pkt_hdr(&pkt, 0, 0, 0, &hdr, NULL) != 1)
+        if (ossl_quic_wire_decode_pkt_hdr(&pkt, bdata->short_conn_id_len,
+                                          0, 0, &hdr, NULL, NULL) != 1)
             return 0;
         remain = PACKET_remaining(&pkt);
         if (remain > 0) {

@@ -9,26 +9,20 @@
 
 #include <openssl/rand.h>
 #include <openssl/err.h>
+#include "internal/ssl_unwrap.h"
 #include "internal/quic_channel.h"
 #include "internal/quic_error.h"
 #include "internal/quic_rx_depack.h"
 #include "internal/quic_lcidm.h"
 #include "internal/quic_srtm.h"
 #include "internal/qlog_event_helpers.h"
+#include "internal/quic_txp.h"
+#include "internal/quic_tls.h"
+#include "internal/quic_ssl.h"
 #include "../ssl_local.h"
 #include "quic_channel_local.h"
 #include "quic_port_local.h"
 #include "quic_engine_local.h"
-
-/*
- * NOTE: While this channel implementation currently has basic server support,
- * this functionality has been implemented for internal testing purposes and is
- * not suitable for network use. In particular, it does not implement address
- * validation, anti-amplification or retry logic.
- *
- * TODO(QUIC SERVER): Implement address validation and anti-amplification
- * TODO(QUIC SERVER): Implement retry logic
- */
 
 #define INIT_CRYPTO_RECV_BUF_LEN    16384
 #define INIT_CRYPTO_SEND_BUF_LEN    16384
@@ -52,15 +46,18 @@
 DEFINE_LIST_OF_IMPL(ch, QUIC_CHANNEL);
 
 static void ch_save_err_state(QUIC_CHANNEL *ch);
-static int ch_rx(QUIC_CHANNEL *ch, int channel_only);
-static int ch_tx(QUIC_CHANNEL *ch);
-static int ch_tick_tls(QUIC_CHANNEL *ch, int channel_only);
+static int ch_rx(QUIC_CHANNEL *ch, int channel_only, int *notify_other_threads);
+static int ch_tx(QUIC_CHANNEL *ch, int *notify_other_threads);
+static int ch_tick_tls(QUIC_CHANNEL *ch, int channel_only, int *notify_other_threads);
 static void ch_rx_handle_packet(QUIC_CHANNEL *ch, int channel_only);
 static OSSL_TIME ch_determine_next_tick_deadline(QUIC_CHANNEL *ch);
 static int ch_retry(QUIC_CHANNEL *ch,
                     const unsigned char *retry_token,
                     size_t retry_token_len,
-                    const QUIC_CONN_ID *retry_scid);
+                    const QUIC_CONN_ID *retry_scid,
+                    int drop_later_pn);
+static int ch_restart(QUIC_CHANNEL *ch);
+
 static void ch_cleanup(QUIC_CHANNEL *ch);
 static int ch_generate_transport_params(QUIC_CHANNEL *ch);
 static int ch_on_transport_params(const unsigned char *params,
@@ -68,7 +65,7 @@ static int ch_on_transport_params(const unsigned char *params,
                                   void *arg);
 static int ch_on_handshake_alert(void *arg, unsigned char alert_code);
 static int ch_on_handshake_complete(void *arg);
-static int ch_on_handshake_yield_secret(uint32_t enc_level, int direction,
+static int ch_on_handshake_yield_secret(uint32_t prot_level, int direction,
                                         uint32_t suite_id, EVP_MD *md,
                                         const unsigned char *secret,
                                         size_t secret_len,
@@ -86,7 +83,8 @@ static void rxku_detected(QUIC_PN pn, void *arg);
 static int ch_retry(QUIC_CHANNEL *ch,
                     const unsigned char *retry_token,
                     size_t retry_token_len,
-                    const QUIC_CONN_ID *retry_scid);
+                    const QUIC_CONN_ID *retry_scid,
+                    int drop_later_pn);
 static void ch_update_idle(QUIC_CHANNEL *ch);
 static int ch_discard_el(QUIC_CHANNEL *ch,
                          uint32_t enc_level);
@@ -256,10 +254,10 @@ static int ch_init(QUIC_CHANNEL *ch)
     ch->have_qsm = 1;
 
     if (!ch->is_server
-        && !ossl_quic_lcidm_generate_initial(ch->lcidm, ch, &txp_args.cur_scid))
+        && !ossl_quic_lcidm_generate_initial(ch->lcidm, ch, &ch->init_scid))
         goto err;
 
-    /* We use a zero-length SCID. */
+    txp_args.cur_scid               = ch->init_scid;
     txp_args.cur_dcid               = ch->init_dcid;
     txp_args.ack_delay_exponent     = 3;
     txp_args.qtx                    = ch->qtx;
@@ -277,6 +275,7 @@ static int ch_init(QUIC_CHANNEL *ch)
     txp_args.now_arg                = ch;
     txp_args.get_qlog_cb            = ch_get_qlog_cb;
     txp_args.get_qlog_cb_arg        = ch;
+    txp_args.protocol_version       = QUIC_VERSION_1;
 
     for (pn_space = QUIC_PN_SPACE_INITIAL; pn_space < QUIC_PN_SPACE_NUM; ++pn_space) {
         ch->crypto_send[pn_space] = ossl_quic_sstream_new(INIT_CRYPTO_SEND_BUF_LEN);
@@ -289,6 +288,10 @@ static int ch_init(QUIC_CHANNEL *ch)
     ch->txp = ossl_quic_tx_packetiser_new(&txp_args);
     if (ch->txp == NULL)
         goto err;
+
+    /* clients have no amplification limit, so are considered always valid */
+    if (!ch->is_server)
+        ossl_quic_tx_packetiser_set_validated(ch->txp);
 
     ossl_quic_tx_packetiser_set_ack_tx_cb(ch->txp, ch_on_txp_ack_tx, ch);
 
@@ -333,6 +336,7 @@ static int ch_init(QUIC_CHANNEL *ch)
     tls_args.alert_cb                   = ch_on_handshake_alert;
     tls_args.alert_cb_arg               = ch;
     tls_args.is_server                  = ch->is_server;
+    tls_args.ossl_quic                  = 1;
 
     if ((ch->qtls = ossl_quic_tls_new(&tls_args)) == NULL)
         goto err;
@@ -401,6 +405,7 @@ static void ch_cleanup(QUIC_CHANNEL *ch)
     OPENSSL_free((char *)ch->terminate_cause.reason);
     OSSL_ERR_STATE_free(ch->err_state);
     OPENSSL_free(ch->ack_range_scratch);
+    OPENSSL_free(ch->pending_new_token);
 
     if (ch->on_port_list) {
         ossl_list_ch_remove(&ch->port->channel_list, ch);
@@ -416,7 +421,12 @@ static void ch_cleanup(QUIC_CHANNEL *ch)
 #endif
 }
 
-QUIC_CHANNEL *ossl_quic_channel_new(const QUIC_CHANNEL_ARGS *args)
+int ossl_quic_channel_init(QUIC_CHANNEL *ch)
+{
+    return ch_init(ch);
+}
+
+QUIC_CHANNEL *ossl_quic_channel_alloc(const QUIC_CHANNEL_ARGS *args)
 {
     QUIC_CHANNEL *ch = NULL;
 
@@ -438,11 +448,6 @@ QUIC_CHANNEL *ossl_quic_channel_new(const QUIC_CHANNEL_ARGS *args)
         }
     }
 #endif
-
-    if (!ch_init(ch)) {
-        OPENSSL_free(ch);
-        return NULL;
-    }
 
     return ch;
 }
@@ -507,6 +512,65 @@ QUIC_STREAM_MAP *ossl_quic_channel_get_qsm(QUIC_CHANNEL *ch)
 OSSL_STATM *ossl_quic_channel_get_statm(QUIC_CHANNEL *ch)
 {
     return &ch->statm;
+}
+
+SSL *ossl_quic_channel_get0_tls(QUIC_CHANNEL *ch)
+{
+    return ch->tls;
+}
+
+static void free_buf_mem(unsigned char *buf, size_t buf_len, void *arg)
+{
+    BUF_MEM_free((BUF_MEM *)arg);
+}
+
+int ossl_quic_channel_schedule_new_token(QUIC_CHANNEL *ch,
+                                         const unsigned char *token,
+                                         size_t token_len)
+{
+    int rc = 0;
+    QUIC_CFQ_ITEM *cfq_item;
+    WPACKET wpkt;
+    BUF_MEM *buf_mem = NULL;
+    size_t l = 0;
+
+    buf_mem = BUF_MEM_new();
+    if (buf_mem == NULL)
+        goto err;
+
+    if (!WPACKET_init(&wpkt, buf_mem))
+        goto err;
+
+    if (!ossl_quic_wire_encode_frame_new_token(&wpkt, token,
+                                               token_len)) {
+        WPACKET_cleanup(&wpkt);
+        goto err;
+    }
+
+    WPACKET_finish(&wpkt);
+
+    if (!WPACKET_get_total_written(&wpkt, &l))
+        goto err;
+
+    cfq_item = ossl_quic_cfq_add_frame(ch->cfq, 1,
+                                       QUIC_PN_SPACE_APP,
+                                       OSSL_QUIC_FRAME_TYPE_NEW_TOKEN, 0,
+                                       (unsigned char *)buf_mem->data, l,
+                                       free_buf_mem,
+                                       buf_mem);
+    if (cfq_item == NULL)
+        goto err;
+
+    rc = 1;
+err:
+    if (!rc)
+        BUF_MEM_free(buf_mem);
+    return rc;
+}
+
+size_t ossl_quic_channel_get_short_header_conn_id_len(QUIC_CHANNEL *ch)
+{
+    return ossl_qrx_get_short_hdr_conn_id_len(ch->qrx);
 }
 
 QUIC_STREAM *ossl_quic_channel_get_stream_by_id(QUIC_CHANNEL *ch,
@@ -946,7 +1010,7 @@ static int ch_on_crypto_release_record(size_t bytes_read, void *arg)
     return ossl_quic_rstream_release_record(rstream, bytes_read);
 }
 
-static int ch_on_handshake_yield_secret(uint32_t enc_level, int direction,
+static int ch_on_handshake_yield_secret(uint32_t prot_level, int direction,
                                         uint32_t suite_id, EVP_MD *md,
                                         const unsigned char *secret,
                                         size_t secret_len,
@@ -954,6 +1018,25 @@ static int ch_on_handshake_yield_secret(uint32_t enc_level, int direction,
 {
     QUIC_CHANNEL *ch = arg;
     uint32_t i;
+    uint32_t enc_level;
+
+    /* Convert TLS protection level to QUIC encryption level */
+    switch (prot_level) {
+    case OSSL_RECORD_PROTECTION_LEVEL_EARLY:
+        enc_level = QUIC_ENC_LEVEL_0RTT;
+        break;
+
+    case OSSL_RECORD_PROTECTION_LEVEL_HANDSHAKE:
+        enc_level = QUIC_ENC_LEVEL_HANDSHAKE;
+        break;
+
+    case OSSL_RECORD_PROTECTION_LEVEL_APPLICATION:
+        enc_level = QUIC_ENC_LEVEL_1RTT;
+        break;
+
+    default:
+        return 0;
+    }
 
     if (enc_level < QUIC_ENC_LEVEL_HANDSHAKE || enc_level >= QUIC_ENC_LEVEL_NUM)
         /* Invalid EL. */
@@ -1019,6 +1102,13 @@ static int ch_on_handshake_complete(void *arg)
     if (!ossl_assert(ch->tx_enc_level == QUIC_ENC_LEVEL_1RTT))
         return 0;
 
+    /*
+     * When handshake is complete, we no longer need to abide by the
+     * 3x amplification limit, though we should be validated as soon
+     * as we see a handshake key encrypted packet (see ossl_quic_handle_packet)
+     */
+    ossl_quic_tx_packetiser_set_validated(ch->txp);
+
     if (!ch->got_remote_transport_params) {
         /*
          * Was not a valid QUIC handshake if we did not get valid transport
@@ -1041,6 +1131,23 @@ static int ch_on_handshake_complete(void *arg)
     ossl_quic_tx_packetiser_notify_handshake_complete(ch->txp);
 
     ch->handshake_complete = 1;
+
+    if (ch->pending_new_token != NULL) {
+        /*
+         * Note this is a best effort operation here
+         * If scheduling a new token fails, the worst outcome is that
+         * a client, not having received it, will just have to go through
+         * an extra roundtrip on a subsequent connection via the retry frame
+         * path, at which point we get another opportunity to schedule another
+         * new token.  As a result, we don't need to handle any errors here
+         */
+        ossl_quic_channel_schedule_new_token(ch,
+                                             ch->pending_new_token,
+                                             ch->pending_new_token_len);
+        OPENSSL_free(ch->pending_new_token);
+        ch->pending_new_token = NULL;
+        ch->pending_new_token_len = 0;
+    }
 
     if (ch->is_server) {
         /*
@@ -1272,7 +1379,6 @@ static int ch_on_transport_params(const unsigned char *params,
                 goto malformed;
             }
 
-            /* Must match SCID of first Initial packet from server. */
             if (!ossl_quic_conn_id_eq(&ch->init_scid, &cid)) {
                 reason = TP_REASON_EXPECTED_VALUE("INITIAL_SCID");
                 goto malformed;
@@ -1496,10 +1602,8 @@ static int ch_on_transport_params(const unsigned char *params,
             }
 
             /*
-             * We must ensure a client doesn't send them because we don't have
-             * processing for them.
-             *
-             * TODO(QUIC SERVER): remove this restriction
+             * RFC 9000 s. 18.2: This transport parameter MUST NOT be sent
+             * by a client but MAY be sent by a server.
              */
             if (ch->is_server) {
                 reason = TP_REASON_SERVER_ONLY("STATELESS_RESET_TOKEN");
@@ -1708,6 +1812,21 @@ static int ch_generate_transport_params(QUIC_CHANNEL *ch)
     WPACKET wpkt;
     int wpkt_valid = 0;
     size_t buf_len = 0;
+    QUIC_CONN_ID *id_to_use = NULL;
+
+    /*
+     * We need to select which connection id to encode in the
+     * QUIC_TPARAM_ORIG_DCID transport parameter
+     * If we have an odcid, then this connection was established
+     * in response to a retry request, and we need to use the connection
+     * id sent in the first initial packet.
+     * If we don't have an odcid, then this connection was established
+     * without a retry and the init_dcid is the connection we should use
+     */
+    if (ch->odcid.id_len == 0)
+        id_to_use = &ch->init_dcid;
+    else
+        id_to_use = &ch->odcid;
 
     if (ch->local_transport_params != NULL || ch->got_local_transport_params)
         goto err;
@@ -1726,16 +1845,20 @@ static int ch_generate_transport_params(QUIC_CHANNEL *ch)
 
     if (ch->is_server) {
         if (!ossl_quic_wire_encode_transport_param_cid(&wpkt, QUIC_TPARAM_ORIG_DCID,
-                                                       &ch->init_dcid))
+                                                       id_to_use))
             goto err;
 
         if (!ossl_quic_wire_encode_transport_param_cid(&wpkt, QUIC_TPARAM_INITIAL_SCID,
                                                        &ch->cur_local_cid))
             goto err;
+        if (ch->odcid.id_len != 0)
+            if (!ossl_quic_wire_encode_transport_param_cid(&wpkt,
+                                                           QUIC_TPARAM_RETRY_SCID,
+                                                           &ch->init_dcid))
+                goto err;
     } else {
-        /* Client always uses an empty SCID. */
-        if (ossl_quic_wire_encode_transport_param_bytes(&wpkt, QUIC_TPARAM_INITIAL_SCID,
-                                                        NULL, 0) == NULL)
+        if (!ossl_quic_wire_encode_transport_param_cid(&wpkt, QUIC_TPARAM_INITIAL_SCID,
+                                                       &ch->init_scid))
             goto err;
     }
 
@@ -1791,7 +1914,6 @@ static int ch_generate_transport_params(QUIC_CHANNEL *ch)
 
     ch->local_transport_params = (unsigned char *)buf_mem->data;
     buf_mem->data = NULL;
-
 
     if (!ossl_quic_tls_set_transport_params(ch->qtls, ch->local_transport_params,
                                             buf_len))
@@ -1850,6 +1972,7 @@ void ossl_quic_channel_subtick(QUIC_CHANNEL *ch, QUIC_TICK_RESULT *res,
 {
     OSSL_TIME now, deadline;
     int channel_only = (flags & QUIC_REACTOR_TICK_FLAG_CHANNEL_ONLY) != 0;
+    int notify_other_threads = 0;
 
     /*
      * When we tick the QUIC connection, we do everything we need to do
@@ -1862,11 +1985,16 @@ void ossl_quic_channel_subtick(QUIC_CHANNEL *ch, QUIC_TICK_RESULT *res,
      *   - determine the time at which we should next be ticked.
      */
 
-    /* If we are in the TERMINATED state, there is nothing to do. */
-    if (ossl_quic_channel_is_terminated(ch)) {
-        res->net_read_desired   = 0;
-        res->net_write_desired  = 0;
-        res->tick_deadline      = ossl_time_infinite();
+    /*
+     * If the connection has not yet started, or we are in the TERMINATED state,
+     * there is nothing to do.
+     */
+    if (ch->state == QUIC_CHANNEL_STATE_IDLE
+            || ossl_quic_channel_is_terminated(ch)) {
+        res->net_read_desired       = 0;
+        res->net_write_desired      = 0;
+        res->notify_other_threads   = 0;
+        res->tick_deadline          = ossl_time_infinite();
         return;
     }
 
@@ -1879,9 +2007,10 @@ void ossl_quic_channel_subtick(QUIC_CHANNEL *ch, QUIC_TICK_RESULT *res,
 
         if (ossl_time_compare(now, ch->terminate_deadline) >= 0) {
             ch_on_terminating_timeout(ch);
-            res->net_read_desired   = 0;
-            res->net_write_desired  = 0;
-            res->tick_deadline      = ossl_time_infinite();
+            res->net_read_desired       = 0;
+            res->net_write_desired      = 0;
+            res->notify_other_threads   = 1;
+            res->tick_deadline          = ossl_time_infinite();
             return; /* abort normal processing, nothing to do */
         }
     }
@@ -1894,14 +2023,14 @@ void ossl_quic_channel_subtick(QUIC_CHANNEL *ch, QUIC_TICK_RESULT *res,
             /* Process queued incoming packets. */
             ch->did_tls_tick        = 0;
             ch->have_new_rx_secret  = 0;
-            ch_rx(ch, channel_only);
+            ch_rx(ch, channel_only, &notify_other_threads);
 
             /*
              * Allow the handshake layer to check for any new incoming data and
              * generate new outgoing data.
              */
             if (!ch->did_tls_tick)
-                ch_tick_tls(ch, channel_only);
+                ch_tick_tls(ch, channel_only, &notify_other_threads);
 
             /*
              * If the handshake layer gave us a new secret, we need to do RX
@@ -1929,9 +2058,10 @@ void ossl_quic_channel_subtick(QUIC_CHANNEL *ch, QUIC_TICK_RESULT *res,
         if (!ch->port->engine->inhibit_tick)
             ch_on_idle_timeout(ch);
 
-        res->net_read_desired   = 0;
-        res->net_write_desired  = 0;
-        res->tick_deadline      = ossl_time_infinite();
+        res->net_read_desired       = 0;
+        res->net_write_desired      = 0;
+        res->notify_other_threads   = 1;
+        res->tick_deadline          = ossl_time_infinite();
         return;
     }
 
@@ -1958,7 +2088,7 @@ void ossl_quic_channel_subtick(QUIC_CHANNEL *ch, QUIC_TICK_RESULT *res,
         }
 
         /* Queue any data to be sent for transmission. */
-        ch_tx(ch);
+        ch_tx(ch, &notify_other_threads);
 
         /* Do stream GC. */
         ossl_quic_stream_map_gc(&ch->qsm);
@@ -1978,9 +2108,11 @@ void ossl_quic_channel_subtick(QUIC_CHANNEL *ch, QUIC_TICK_RESULT *res,
     res->net_write_desired
         = (!ossl_quic_channel_is_terminated(ch)
            && ossl_qtx_get_queue_len_datagrams(ch->qtx) > 0);
+
+    res->notify_other_threads = notify_other_threads;
 }
 
-static int ch_tick_tls(QUIC_CHANNEL *ch, int channel_only)
+static int ch_tick_tls(QUIC_CHANNEL *ch, int channel_only, int *notify_other_threads)
 {
     uint64_t error_code;
     const char *error_msg;
@@ -1996,6 +2128,9 @@ static int ch_tick_tls(QUIC_CHANNEL *ch, int channel_only)
                                 &error_state)) {
         ossl_quic_channel_raise_protocol_error_state(ch, error_code, 0,
                                                      error_msg, error_state);
+        if (notify_other_threads != NULL)
+            *notify_other_threads = 1;
+
         return 0;
     }
 
@@ -2035,7 +2170,7 @@ static void ch_rx_check_forged_pkt_limit(QUIC_CHANNEL *ch)
 }
 
 /* Process queued incoming packets and handle frames, if any. */
-static int ch_rx(QUIC_CHANNEL *ch, int channel_only)
+static int ch_rx(QUIC_CHANNEL *ch, int channel_only, int *notify_other_threads)
 {
     int handled_any = 0;
     const int closing = ossl_quic_channel_is_closing(ch);
@@ -2079,6 +2214,9 @@ static int ch_rx(QUIC_CHANNEL *ch, int channel_only)
 
     ch_rx_check_forged_pkt_limit(ch);
 
+    if (handled_any && notify_other_threads != NULL)
+        *notify_other_threads = 1;
+
     /*
      * When in TERMINATING - CLOSING, generate a CONN_CLOSE frame whenever we
      * process one or more incoming packets.
@@ -2120,6 +2258,8 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch, int channel_only)
     uint32_t enc_level;
     int old_have_processed_any_pkt = ch->have_processed_any_pkt;
     OSSL_QTX_IOVEC iovec;
+    PACKET vpkt;
+    unsigned long supported_ver;
 
     assert(ch->qrx_pkt != NULL);
 
@@ -2192,6 +2332,87 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch, int channel_only)
          */
         return;
 
+    if (ch->qrx_pkt->hdr->type == QUIC_PKT_TYPE_VERSION_NEG) {
+
+        /*
+         * Sanity check.  Version negotiation packet MUST have a version
+         * value of 0 according to the RFC.  We must discard such packets
+         */
+        if (ch->qrx_pkt->hdr->version != 0)
+            return;
+
+        /*
+         * RFC 9000 s. 6.2: If a client receives a version negotiation
+         * packet, we need to do the following:
+         * a) If the negotiation packet lists the version we initially sent
+         *    then we must abandon this connection attempt
+         * b) We have to select a version from the list provided in the
+         *    version negotiation packet, and retry the connection attempt
+         *    in much the same way that ch_retry does, but we can reuse the
+         *    connection id values
+         */
+
+        if (old_have_processed_any_pkt == 1) {
+            /*
+             * We've gotten previous packets, need to discard this.
+             */
+            return;
+        }
+
+        /*
+         * Indicate that we have processed a packet, as any subsequently
+         * received version negotiation packet must be discarded above
+         */
+        ch->have_processed_any_pkt = 1;
+
+        /*
+         * Following the header, version negotiation packets
+         * contain an array of 32 bit integers representing
+         * the supported versions that the server honors
+         * this array, bounded by the hdr->len field
+         * needs to be traversed so that we can find a matching
+         * version
+         */
+        if (!PACKET_buf_init(&vpkt, ch->qrx_pkt->hdr->data,
+                             ch->qrx_pkt->hdr->len))
+            return;
+
+        while (PACKET_remaining(&vpkt) > 0) {
+            /*
+             * We only support quic version 1 at the moment, so
+             * look to see if thats offered
+             */
+            if (!PACKET_get_net_4(&vpkt, &supported_ver))
+                return;
+
+            supported_ver = ntohl(supported_ver);
+            if (supported_ver == QUIC_VERSION_1) {
+                /*
+                 * If the server supports version 1, set it as
+                 * the packetisers version
+                 */
+                ossl_quic_tx_packetiser_set_protocol_version(ch->txp, QUIC_VERSION_1);
+
+                /*
+                 * And then request a restart of the QUIC connection 
+                 */
+                if (!ch_restart(ch))
+                    ossl_quic_channel_raise_protocol_error(ch,
+                                                           OSSL_QUIC_ERR_INTERNAL_ERROR,
+                                                           0, "handling ver negotiation packet");
+                return;
+            }
+        }
+
+        /*
+         * If we get here, then the server doesn't support a version of the
+         * protocol that we can handle, abandon the connection
+         */
+        ossl_quic_channel_raise_protocol_error(ch, OSSL_QUIC_ERR_CONNECTION_REFUSED,
+                                               0, "unsupported protocol version");
+        return;
+    }
+
     ch->have_processed_any_pkt = 1;
 
     /*
@@ -2252,7 +2473,7 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch, int channel_only)
 
         if (!ch_retry(ch, ch->qrx_pkt->hdr->data,
                       ch->qrx_pkt->hdr->len - QUIC_RETRY_INTEGRITY_TAG_LEN,
-                      &ch->qrx_pkt->hdr->src_conn_id))
+                      &ch->qrx_pkt->hdr->src_conn_id, old_have_processed_any_pkt))
             ossl_quic_channel_raise_protocol_error(ch, OSSL_QUIC_ERR_INTERNAL_ERROR,
                                                    0, "handling retry packet");
         break;
@@ -2325,7 +2546,7 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch, int channel_only)
         ossl_quic_handle_frames(ch, ch->qrx_pkt); /* best effort */
 
         if (ch->did_crypto_frame)
-            ch_tick_tls(ch, channel_only);
+            ch_tick_tls(ch, channel_only, NULL);
 
         break;
 
@@ -2343,6 +2564,7 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch, int channel_only)
         assert(0);
         break;
     }
+
 }
 
 static void ch_rx_handle_version_neg(QUIC_CHANNEL *ch, OSSL_QRX_PKT *pkt)
@@ -2387,7 +2609,7 @@ static void ch_raise_version_neg_failure(QUIC_CHANNEL *ch)
 }
 
 /* Try to generate packets and if possible, flush them to the network. */
-static int ch_tx(QUIC_CHANNEL *ch)
+static int ch_tx(QUIC_CHANNEL *ch, int *notify_other_threads)
 {
     QUIC_TXP_STATUS status;
     int res;
@@ -2496,6 +2718,14 @@ static int ch_tx(QUIC_CHANNEL *ch)
         break;
     }
 
+    /*
+     * If we have datagrams we have yet to successfully transmit, we need to
+     * notify other threads so that they can switch to polling on POLLOUT as
+     * well as POLLIN.
+     */
+    if (ossl_qtx_get_queue_len_datagrams(ch->qtx) > 0)
+        *notify_other_threads = 1;
+
     return 1;
 }
 
@@ -2572,8 +2802,16 @@ static void ch_record_state_transition(QUIC_CHANNEL *ch, uint32_t new_state)
                                                           ch->handshake_confirmed);
 }
 
+static void free_peer_token(const unsigned char *token,
+                            size_t token_len, void *arg)
+{
+    ossl_quic_free_peer_token((QUIC_TOKEN *)arg);
+}
+
 int ossl_quic_channel_start(QUIC_CHANNEL *ch)
 {
+    QUIC_TOKEN *token;
+
     if (ch->is_server)
         /*
          * This is not used by the server. The server moves to active
@@ -2588,6 +2826,19 @@ int ossl_quic_channel_start(QUIC_CHANNEL *ch)
     /* Inform QTX of peer address. */
     if (!ossl_quic_tx_packetiser_set_peer(ch->txp, &ch->cur_peer_addr))
         return 0;
+
+    /*
+     * Look to see if we have a token, and if so, set it on the packetiser
+     */
+    if (!ch->is_server
+        && ossl_quic_get_peer_token(ch->port->channel_ctx,
+                                    &ch->cur_peer_addr,
+                                    &token)
+        && !ossl_quic_tx_packetiser_set_initial_token(ch->txp, token->token,
+                                                      token->token_len,
+                                                      free_peer_token,
+                                                      token))
+        free_peer_token(NULL, 0, token);
 
     /* Plug in secrets for the Initial EL. */
     if (!ossl_quic_provide_initial_secret(ch->port->engine->libctx,
@@ -2614,11 +2865,16 @@ int ossl_quic_channel_start(QUIC_CHANNEL *ch)
                                                     &ch->init_dcid);
 
     /* Handshake layer: start (e.g. send CH). */
-    if (!ch_tick_tls(ch, /*channel_only=*/0))
+    if (!ch_tick_tls(ch, /*channel_only=*/0, NULL))
         return 0;
 
     ossl_quic_reactor_tick(ossl_quic_port_get0_reactor(ch->port), 0); /* best effort */
     return 1;
+}
+
+static void free_token(const unsigned char *token, size_t token_len, void *arg)
+{
+    OPENSSL_free((char *)token);
 }
 
 /* Start a locally initiated connection shutdown. */
@@ -2637,18 +2893,34 @@ void ossl_quic_channel_local_close(QUIC_CHANNEL *ch, uint64_t app_error_code,
     ch_start_terminating(ch, &tcause, 0);
 }
 
-static void free_token(const unsigned char *buf, size_t buf_len, void *arg)
+/**
+ * ch_restart - Restarts the QUIC channel by simulating loss of the initial
+ * packet. This forces the packet to be regenerated with the updated protocol
+ * version number.
+ *
+ * @ch: Pointer to the QUIC_CHANNEL structure.
+ *
+ * Returns 1 on success, 0 on failure.
+ */
+static int ch_restart(QUIC_CHANNEL *ch)
 {
-    OPENSSL_free((unsigned char *)buf);
+    /*
+     * Just pretend we lost our initial packet, so it gets
+     * regenerated, with our updated protocol version number
+     */
+   return ossl_ackm_mark_packet_pseudo_lost(ch->ackm, QUIC_PN_SPACE_INITIAL,
+                                            /* PN= */ 0);
 }
 
 /* Called when a server asks us to do a retry. */
 static int ch_retry(QUIC_CHANNEL *ch,
                     const unsigned char *retry_token,
                     size_t retry_token_len,
-                    const QUIC_CONN_ID *retry_scid)
+                    const QUIC_CONN_ID *retry_scid,
+                    int drop_later_pn)
 {
     void *buf;
+    QUIC_PN pn = 0;
 
     /*
      * RFC 9000 s. 17.2.5.1: "A client MUST discard a Retry packet that contains
@@ -2685,6 +2957,13 @@ static int ch_retry(QUIC_CHANNEL *ch,
     ch->doing_retry = 1;
 
     /*
+     * If a retry isn't our first response, we need to drop packet number
+     * one instead (i.e. the case where we did version negotiation first
+     */
+    if (drop_later_pn == 1)
+        pn = 1;
+
+    /*
      * We need to stimulate the Initial EL to generate the first CRYPTO frame
      * again. We can do this most cleanly by simply forcing the ACKM to consider
      * the first Initial packet as lost, which it effectively was as the server
@@ -2695,7 +2974,7 @@ static int ch_retry(QUIC_CHANNEL *ch,
      * repeated retries.
      */
     if (!ossl_ackm_mark_packet_pseudo_lost(ch->ackm, QUIC_PN_SPACE_INITIAL,
-                                           /*PN=*/0))
+                                           pn))
         return 0;
 
     /*
@@ -3331,22 +3610,35 @@ static void ch_on_idle_timeout(QUIC_CHANNEL *ch)
     ch_record_state_transition(ch, QUIC_CHANNEL_STATE_TERMINATED);
 }
 
-/* Called when we, as a server, get a new incoming connection. */
-int ossl_quic_channel_on_new_conn(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
-                                  const QUIC_CONN_ID *peer_scid,
-                                  const QUIC_CONN_ID *peer_dcid)
+/**
+ * @brief Common handler for initializing a new QUIC connection.
+ *
+ * This function configures a QUIC channel (`QUIC_CHANNEL *ch`) for a new
+ * connection by setting the peer address, connection IDs, and necessary
+ * callbacks. It establishes initial secrets, sets up logging, and performs
+ * required transitions for the channel state.
+ *
+ * @param ch       Pointer to the QUIC channel being initialized.
+ * @param peer     Address of the peer to which the channel connects.
+ * @param peer_scid Peer-specified source connection ID.
+ * @param peer_dcid Peer-specified destination connection ID.
+ * @param peer_odcid Peer-specified original destination connection ID
+ *                   may be NULL if retry frame not sent to client
+ * @return         1 on success, 0 on failure to set required elements.
+ */
+static int ch_on_new_conn_common(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
+                                 const QUIC_CONN_ID *peer_scid,
+                                 const QUIC_CONN_ID *peer_dcid,
+                                 const QUIC_CONN_ID *peer_odcid)
 {
-    if (!ossl_assert(ch->state == QUIC_CHANNEL_STATE_IDLE && ch->is_server))
-        return 0;
-
-    /* Generate an Initial LCID we will use for the connection. */
-    if (!ossl_quic_lcidm_generate_initial(ch->lcidm, ch, &ch->cur_local_cid))
-        return 0;
-
     /* Note our newly learnt peer address and CIDs. */
     ch->cur_peer_addr   = *peer;
     ch->init_dcid       = *peer_dcid;
     ch->cur_remote_dcid = *peer_scid;
+    ch->odcid.id_len = 0;
+
+    if (peer_odcid != NULL)
+        ch->odcid = *peer_odcid;
 
     /* Inform QTX of peer address. */
     if (!ossl_quic_tx_packetiser_set_peer(ch->txp, &ch->cur_peer_addr))
@@ -3372,13 +3664,75 @@ int ossl_quic_channel_on_new_conn(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
         return 0;
 
     /* Register the peer ODCID in the LCIDM. */
-    if (!ossl_quic_lcidm_enrol_odcid(ch->lcidm, ch, &ch->init_dcid))
+    if (!ossl_quic_lcidm_enrol_odcid(ch->lcidm, ch, peer_odcid == NULL ?
+                                     &ch->init_dcid :
+                                     peer_odcid))
         return 0;
 
     /* Change state. */
     ch_record_state_transition(ch, QUIC_CHANNEL_STATE_ACTIVE);
     ch->doing_proactive_ver_neg = 0; /* not currently supported */
     return 1;
+}
+
+/* Called when we, as a server, get a new incoming connection. */
+int ossl_quic_channel_on_new_conn(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
+                                  const QUIC_CONN_ID *peer_scid,
+                                  const QUIC_CONN_ID *peer_dcid)
+{
+    if (!ossl_assert(ch->state == QUIC_CHANNEL_STATE_IDLE && ch->is_server))
+        return 0;
+
+    /* Generate an Initial LCID we will use for the connection. */
+    if (!ossl_quic_lcidm_generate_initial(ch->lcidm, ch, &ch->cur_local_cid))
+        return 0;
+
+    return ch_on_new_conn_common(ch, peer, peer_scid, peer_dcid, NULL);
+}
+
+/**
+ * Binds a QUIC channel to a specific peer's address and connection IDs.
+ *
+ * This function is used to establish a binding between a QUIC channel and a
+ * peer's address and connection IDs. The binding is performed only if the
+ * channel is idle and is on the server side. The peer's destination connection
+ * ID (`peer_dcid`) is mandatory, and the channel's current local connection ID
+ * is set to this value.
+ *
+ * @param ch          Pointer to the QUIC_CHANNEL structure representing the
+ *                    channel to be bound.
+ * @param peer        Pointer to a BIO_ADDR structure representing the peer's
+ *                    address.
+ * @param peer_scid   Pointer to the peer's source connection ID (QUIC_CONN_ID).
+ * @param peer_dcid   Pointer to the peer's destination connection ID
+ *                    (QUIC_CONN_ID). This must not be NULL.
+ * @param peer_odcid  Pointer to the original destination connection ID
+ *                    (QUIC_CONN_ID) chosen by the peer in its first initial
+ *                    packet received without a token.
+ *
+ * @return 1 on success, or 0 on failure if the conditions for binding are not
+ *         met (e.g., channel is not idle or not a server, or binding fails).
+ */
+int ossl_quic_bind_channel(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
+                           const QUIC_CONN_ID *peer_scid,
+                           const QUIC_CONN_ID *peer_dcid,
+                           const QUIC_CONN_ID *peer_odcid)
+{
+    if (peer_dcid == NULL)
+        return 0;
+
+    if (!ossl_assert(ch->state == QUIC_CHANNEL_STATE_IDLE && ch->is_server))
+        return 0;
+
+    ch->cur_local_cid = *peer_dcid;
+    if (!ossl_quic_lcidm_bind_channel(ch->lcidm, ch, peer_dcid))
+        return 0;
+
+    /*
+     * peer_odcid <=> is initial dst conn id chosen by peer in its
+     * first initial packet we received without token.
+     */
+    return ch_on_new_conn_common(ch, peer, peer_scid, peer_dcid, peer_odcid);
 }
 
 SSL *ossl_quic_channel_get0_ssl(QUIC_CHANNEL *ch)

@@ -509,14 +509,18 @@ static int test_handshake(int idx)
         goto err;
 
     if (!SSL_CTX_config(server_ctx, "server")
+        || !SSL_CTX_set_dh_auto(server_ctx, 1)
         || !SSL_CTX_config(client_ctx, "client")) {
         goto err;
     }
 
-    if (server2_ctx != NULL && !SSL_CTX_config(server2_ctx, "server2"))
+    if (server2_ctx != NULL
+        && (!SSL_CTX_config(server2_ctx, "server2")
+            || !SSL_CTX_set_dh_auto(server2_ctx, 1)))
         goto err;
     if (resume_server_ctx != NULL
-        && !SSL_CTX_config(resume_server_ctx, "resume-server"))
+        && (!SSL_CTX_config(resume_server_ctx, "resume-server")
+            || !SSL_CTX_set_dh_auto(resume_server_ctx, 1)))
         goto err;
     if (resume_client_ctx != NULL
         && !SSL_CTX_config(resume_client_ctx, "resume-client"))

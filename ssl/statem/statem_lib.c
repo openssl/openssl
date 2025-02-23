@@ -14,6 +14,7 @@
 #include "../ssl_local.h"
 #include "statem_local.h"
 #include "internal/cryptlib.h"
+#include "internal/ssl_unwrap.h"
 #include <openssl/buffer.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
@@ -2575,10 +2576,11 @@ int ssl_set_client_hello_version(SSL_CONNECTION *s)
  * Checks a list of |groups| to determine if the |group_id| is in it. If it is
  * and |checkallow| is 1 then additionally check if the group is allowed to be
  * used. Returns 1 if the group is in the list (and allowed if |checkallow| is
- * 1) or 0 otherwise.
+ * 1) or 0 otherwise. If provided a pointer it will also return the position
+ * where the group was found.
  */
 int check_in_list(SSL_CONNECTION *s, uint16_t group_id, const uint16_t *groups,
-                  size_t num_groups, int checkallow)
+                  size_t num_groups, int checkallow, size_t *pos)
 {
     size_t i;
 
@@ -2591,6 +2593,8 @@ int check_in_list(SSL_CONNECTION *s, uint16_t group_id, const uint16_t *groups,
         if (group_id == group
                 && (!checkallow
                     || tls_group_allowed(s, group, SSL_SECOP_CURVE_CHECK))) {
+            if (pos != NULL)
+                *pos = i;
             return 1;
         }
     }

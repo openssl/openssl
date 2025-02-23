@@ -140,6 +140,8 @@ This is an unapproved algorithm.
 
 =item X448, see L<EVP_KEYEXCH-X448(7)>
 
+=item ML-KEM, see L<EVP_KEM-ML-KEM(7)>
+
 =item TLS1-PRF
 
 =item HKDF
@@ -163,6 +165,14 @@ for signature generation, but may be used for verification for legacy use cases.
 =item ED448, see L<EVP_SIGNATURE-ED448(7)>
 
 =item ECDSA, see L<EVP_SIGNATURE-ECDSA(7)>
+
+=item ML-DSA-44, see L<EVP_SIGNATURE-ML-DSA(7)>
+
+=item ML-DSA-65, see L<EVP_SIGNATURE-ML-DSA(7)>
+
+=item ML-DSA-87, see L<EVP_SIGNATURE-ML-DSA(7)>
+
+=item SLH-DSA, see L<EVP_SIGNATURE-SLH-DSA(7)>
 
 =item HMAC, see L<EVP_SIGNATURE-HMAC(7)>
 
@@ -225,6 +235,36 @@ This is an unapproved algorithm.
 =item HMAC, see L<EVP_KEYMGMT-HMAC(7)>
 
 =item CMAC, see L<EVP_KEYMGMT-CMAC(7)>
+
+=item ML-DSA-44, see L<EVP_KEYMGMT-ML-DSA(7)>
+
+=item ML-DSA-65, see L<EVP_KEYMGMT-ML-DSA(7)>
+
+=item ML-DSA-87, see L<EVP_KEYMGMT-ML-DSA(7)>
+
+=item SLH-DSA-SHA2-128s, see L<EVP_KEYMGMT-SLH-DSA(7)>
+
+=item SLH-DSA-SHA2-128f, see L<EVP_KEYMGMT-SLH-DSA(7)>
+
+=item SLH-DSA-SHA2-192s, see L<EVP_KEYMGMT-SLH-DSA(7)>
+
+=item SLH-DSA-SHA2-192f, see L<EVP_KEYMGMT-SLH-DSA(7)>
+
+=item SLH-DSA-SHA2-256s, see L<EVP_KEYMGMT-SLH-DSA(7)>
+
+=item SLH-DSA-SHA2-256f, see L<EVP_KEYMGMT-SLH-DSA(7)>
+
+=item SLH-DSA-SHAKE-128s, see L<EVP_KEYMGMT-SLH-DSA(7)>
+
+=item SLH-DSA-SHAKE-128f, see L<EVP_KEYMGMT-SLH-DSA(7)>
+
+=item SLH-DSA-SHAKE-192s, see L<EVP_KEYMGMT-SLH-DSA(7)>
+
+=item SLH-DSA-SHAKE-192f, see L<EVP_KEYMGMT-SLH-DSA(7)>
+
+=item SLH-DSA-SHAKE-256s, see L<EVP_KEYMGMT-SLH-DSA(7)>
+
+=item SLH-DSA-SHAKE-256f, see L<EVP_KEYMGMT-SLH-DSA(7)>
 
 =back
 
@@ -290,6 +330,10 @@ Known answer test for a asymmetric cipher.
 
 Known answer test for a digest.
 
+=item "KAT_AsymmetricKeyGeneration" (B<OSSL_SELF_TEST_TYPE_KAT_ASYM_KEYGEN>)
+
+Known answer test for asymmetric key generation.
+
 =item "KAT_Signature" (B<OSSL_SELF_TEST_TYPE_KAT_SIGNATURE>)
 
 Known answer test for a signature.
@@ -306,13 +350,17 @@ Known answer test for a key derivation function.
 
 Known answer test for key agreement.
 
+=item "KAT_KEM" (B<OSSL_SELF_TEST_TYPE_KAT_KEM>)
+
+Known answer test for key encapsulation.
+
 =item "DRBG" (B<OSSL_SELF_TEST_TYPE_DRBG>)
 
 Known answer test for a Deterministic Random Bit Generator.
 
 =item "Conditional_PCT" (B<OSSL_SELF_TEST_TYPE_PCT>)
 
-Conditional test that is run during the generation of key pairs.
+Conditional test that is run during the generation or importing of key pairs.
 
 =item "Continuous_RNG_Test" (B<OSSL_SELF_TEST_TYPE_CRNG>)
 
@@ -349,6 +397,12 @@ The FIPS module passes the following descriptions(s) to OSSL_SELF_TEST_onbegin()
 
 =item "DSA" (B<OSSL_SELF_TEST_DESC_PCT_DSA>)
 
+=item "ML-DSA" (B<OSSL_SELF_TEST_DESC_PCT_ML_DSA>)
+
+=item "ML-KEM" (B<OSSL_SELF_TEST_DESC_PCT_ML_KEM>)
+
+=item "SLH-DSA" (B<OSSL_SELF_TEST_DESC_PCT_SLH_DSA>)
+
 Key generation tests used with the "Pairwise_Consistency_Test" type.
 
 =item "RSA_Encrypt" (B<OSSL_SELF_TEST_DESC_ASYM_RSA_ENC>)
@@ -356,6 +410,14 @@ Key generation tests used with the "Pairwise_Consistency_Test" type.
 =item "RSA_Decrypt" (B<OSSL_SELF_TEST_DESC_ASYM_RSA_DEC>)
 
 "KAT_AsymmetricCipher" uses this to indicate an encrypt or decrypt KAT.
+
+=item "ML-DSA" (B<OSSL_SELF_TEST_DESC_KEYGEN_ML_DSA>)
+
+=item "ML-KEM" (B<OSSL_SELF_TEST_DESC_KEYGEN_ML_KEM>)
+
+=item "SLH-DSA" (B<OSSL_SELF_TEST_DESC_KEYGEN_SLH_DSA>)
+
+"KAT_AsymmetricKeyGeneration" uses this to indicate a key generation KAT.
 
 =item "AES_GCM" (B<OSSL_SELF_TEST_DESC_CIPHER_AES_GCM>)
 
@@ -380,6 +442,10 @@ Digest tests used with the "KAT_Digest" type.
 =item "ECDSA" (B<OSSL_SELF_TEST_DESC_SIGN_ECDSA>)
 
 =item "EDDSA" (B<OSSL_SELF_TEST_DESC_SIGN_EDDSA>)
+
+=item "ML-DSA" (B<OSSL_SELF_TEST_DESC_SIGN_ML_DSA>)
+
+=item "SLH-DSA" (B<OSSL_SELF_TEST_DESC_SIGN_SLH_DSA>)
 
 Signature tests used with the "KAT_Signature" type.
 
@@ -408,6 +474,14 @@ Key agreement tests used with the "KAT_KA" type.
 =item "TLS12_PRF" (B<OSSL_SELF_TEST_DESC_KDF_TLS12_PRF>)
 
 =item "KBKDF" (B<OSSL_SELF_TEST_DESC_KDF_KBKDF>)
+
+Key Encapsulation Function tests used with the "KAT_KEM" type.
+
+=item "KEM_Encap" (B<OSSL_SELF_TEST_DESC_ENCAP_KEM>)
+
+=item "KEM_Decap" (B<OSSL_SELF_TEST_DESC_DECAP_KEM>)
+
+=item "KEM_Decap_Reject" (B<OSSL_SELF_TEST_DESC_DECAP_REJ_KEM>)
 
 Key Derivation Function tests used with the "KAT_KDF" type.
 

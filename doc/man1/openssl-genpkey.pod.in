@@ -85,7 +85,7 @@ are mutually exclusive. Engines or providers may add algorithms in addition to
 the standard built-in ones.
 
 Valid built-in algorithm names for private key generation are RSA, RSA-PSS, EC,
-X25519, X448, ED25519 and ED448.
+X25519, X448, ED25519, ED448, ML-DSA and ML-KEM.
 
 Valid built-in algorithm names for parameter generation (see the B<-genparam>
 option) are DH, DSA and EC.
@@ -197,6 +197,40 @@ The EC curve to use. OpenSSL supports NIST curve names such as "P-256".
 
 The encoding to use for parameters. The I<encoding> parameter must be either
 B<named_curve> or B<explicit>. The default value is B<named_curve>.
+
+=back
+
+=head2 ML-DSA Key Generation Options
+
+=over 4
+
+=item B<hexseed>:I<seed>
+
+This specifies the optional ML-DSA I<seed> in hexadecimal form.  The seed is 32
+bytes, giving 64 hexadecimal digits.
+When generated from an explicit seed the key is completely determined by the
+seed value.
+If other users can see the command-line arguments of the running process, this
+option may compromise the secret key, it is best avoided, tests-aside.
+
+See L<EVP_PKEY-ML-DSA(7)> for more detail.
+
+=back
+
+=head2 ML-KEM Key Generation Options
+
+=over 4
+
+=item B<hexseed>:I<seed>
+
+This specifies the optional ML-KEM I<seed> in hexadecimal form.  The seed is 64
+bytes, giving 128 hexadecimal digits.
+When generated from an explicit seed the key is completely determined by the
+seed value.
+If other users can see the command-line arguments of the running process, this
+option may compromise the secret key, it is best avoided, tests-aside.
+
+See L<EVP_PKEY-ML-KEM(7)> for more detail.
 
 =back
 
@@ -501,6 +535,14 @@ Generate an ED448 private key:
 
  openssl genpkey -algorithm ED448 -out xkey.pem
 
+Generate an ML-DSA-65 private key:
+
+ openssl genpkey -algorithm ML-DSA-65 -out ml-dsa-key.pem
+
+Generate an ML-KEM-768 private key:
+
+ openssl genpkey -algorithm ML-KEM-768 -out ml-kem-key.pem
+
 =head1 HISTORY
 
 The ability to use NIST curve names, and to generate an EC key directly,
@@ -509,6 +551,8 @@ The ability to generate X25519 keys was added in OpenSSL 1.1.0.
 The ability to generate X448, ED25519 and ED448 keys was added in OpenSSL 1.1.1.
 
 The B<-engine> option was deprecated in OpenSSL 3.0.
+
+Support for B<ML-DSA> and B<ML-KEM> was added in OpenSSL 3.5.
 
 =head1 COPYRIGHT
 

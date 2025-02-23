@@ -283,6 +283,17 @@ nonlegacy:
 
     if (enc) {
         if (ctx->cipher->einit == NULL) {
+            /*
+             * We still should be able to set the IV using the new API
+             * if the key is not specified and old API is not available
+             */
+            if (key == NULL && ctx->cipher->einit_skey != NULL) {
+                return ctx->cipher->einit_skey(ctx->algctx, NULL,
+                                               iv,
+                                               iv == NULL ? 0
+                                                          : EVP_CIPHER_CTX_get_iv_length(ctx),
+                                               params);
+            }
             ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
             return 0;
         }
@@ -298,6 +309,17 @@ nonlegacy:
     }
 
     if (ctx->cipher->dinit == NULL) {
+        /*
+         * We still should be able to set the IV using the new API
+         * if the key is not specified and old API is not available
+         */
+        if (key == NULL && ctx->cipher->dinit_skey != NULL) {
+            return ctx->cipher->dinit_skey(ctx->algctx, NULL,
+                                           iv,
+                                           iv == NULL ? 0
+                                                      : EVP_CIPHER_CTX_get_iv_length(ctx),
+                                           params);
+        }
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         return 0;
     }
@@ -450,6 +472,163 @@ nonlegacy:
     ctx->final_used = 0;
     ctx->block_mask = ctx->cipher->block_size - 1;
     return 1;
+}
+
+/*
+ * This function is basically evp_cipher_init_internal without ENGINE support.
+ * They should be combined when engines are not supported any longer.
+ */
+static int evp_cipher_init_skey_internal(EVP_CIPHER_CTX *ctx,
+                                         const EVP_CIPHER *cipher,
+                                         const EVP_SKEY *skey,
+                                         const unsigned char *iv, size_t iv_len,
+                                         int enc, const OSSL_PARAM params[])
+{
+    int ret;
+
+    /*
+     * enc == 1 means we are encrypting.
+     * enc == 0 means we are decrypting.
+     * enc == -1 means, use the previously initialised value for encrypt/decrypt
+     */
+    if (enc == -1)
+        enc = ctx->encrypt;
+    else
+        ctx->encrypt = enc != 0;
+
+    if (cipher == NULL && ctx->cipher == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_NO_CIPHER_SET);
+        return 0;
+    }
+
+    /*
+     * If there are engines involved then we throw an error
+     */
+    if (ctx->engine != NULL
+            || (cipher != NULL && cipher->origin == EVP_ORIG_METH)
+            || (cipher == NULL && ctx->cipher != NULL
+                && ctx->cipher->origin == EVP_ORIG_METH)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+        return 0;
+    }
+    /*
+     * Ensure a context left lying around from last time is cleared
+     * (legacy code)
+     */
+    if (cipher != NULL && ctx->cipher != NULL) {
+        if (ctx->cipher->cleanup != NULL && !ctx->cipher->cleanup(ctx))
+            return 0;
+        OPENSSL_clear_free(ctx->cipher_data, ctx->cipher->ctx_size);
+        ctx->cipher_data = NULL;
+    }
+
+    /* Ensure a context left lying around from last time is cleared */
+    if (cipher != NULL && ctx->cipher != NULL) {
+        unsigned long flags = ctx->flags;
+
+        EVP_CIPHER_CTX_reset(ctx);
+        /* Restore encrypt and flags */
+        ctx->encrypt = enc;
+        ctx->flags = flags;
+    }
+
+    if (cipher == NULL)
+        cipher = ctx->cipher;
+
+    if (cipher->prov == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+        return 0;
+    }
+
+    if (cipher != ctx->fetched_cipher) {
+        if (!EVP_CIPHER_up_ref((EVP_CIPHER *)cipher)) {
+            ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+            return 0;
+        }
+        EVP_CIPHER_free(ctx->fetched_cipher);
+        /* Coverity false positive, the reference counting is confusing it */
+        /* coverity[use_after_free] */
+        ctx->fetched_cipher = (EVP_CIPHER *)cipher;
+    }
+    ctx->cipher = cipher;
+    if (ctx->algctx == NULL) {
+        ctx->algctx = ctx->cipher->newctx(ossl_provider_ctx(cipher->prov));
+        if (ctx->algctx == NULL) {
+            ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+            return 0;
+        }
+    }
+
+    if (skey != NULL && ctx->cipher->prov != skey->skeymgmt->prov) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+        return 0;
+    }
+
+    if ((ctx->flags & EVP_CIPH_NO_PADDING) != 0) {
+        /*
+         * If this ctx was already set up for no padding then we need to tell
+         * the new cipher about it.
+         */
+        if (!EVP_CIPHER_CTX_set_padding(ctx, 0))
+            return 0;
+    }
+
+    if (iv == NULL)
+        iv_len = 0;
+
+    /* We have a data managed via key management, using the new callbacks */
+    if (enc) {
+        if (ctx->cipher->einit_skey == NULL) {
+            /*
+             *  When skey is NULL, it's a multiple-step init as the current API does.
+             *  Otherwise we try to fallback for providers that do not support SKEYs.
+             */
+            const unsigned char *keydata = NULL;
+            size_t keylen = 0;
+
+            if (skey != NULL && !EVP_SKEY_get0_raw_key(skey, &keydata, &keylen)) {
+                ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+                return 0;
+            }
+
+            ret = ctx->cipher->einit(ctx->algctx, keydata, keylen,
+                                     iv, iv_len, params);
+        } else {
+            ret = ctx->cipher->einit_skey(ctx->algctx,
+                                          skey == NULL ? NULL : skey->keydata,
+                                          iv, iv_len, params);
+        }
+    } else {
+        if (ctx->cipher->dinit_skey == NULL) {
+            /*
+             *  When skey is NULL, it's a multiple-step init as the current API does.
+             *  Otherwise we try to fallback for providers that do not support SKEYs.
+             */
+            const unsigned char *keydata = NULL;
+            size_t keylen = 0;
+
+            if (skey != NULL && !EVP_SKEY_get0_raw_key(skey, &keydata, &keylen)) {
+                ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+                return 0;
+            }
+
+            ret = ctx->cipher->dinit(ctx->algctx, keydata, keylen,
+                                     iv, iv_len, params);
+        } else {
+            ret = ctx->cipher->dinit_skey(ctx->algctx,
+                                          skey == NULL ? NULL : skey->keydata,
+                                          iv, iv_len, params);
+        }
+    }
+
+    return ret;
+}
+
+int EVP_CipherInit_SKEY(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
+                        EVP_SKEY *skey, const unsigned char *iv, size_t iv_len,
+                        int enc, const OSSL_PARAM params[])
+{
+    return evp_cipher_init_skey_internal(ctx, cipher, skey, iv, iv_len, enc, params);
 }
 
 int EVP_CipherInit_ex2(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
@@ -1707,7 +1886,7 @@ static void *evp_cipher_from_algorithm(const int name_id,
 {
     const OSSL_DISPATCH *fns = algodef->implementation;
     EVP_CIPHER *cipher = NULL;
-    int fnciphcnt = 0, fnpipecnt = 0, fnctxcnt = 0;
+    int fnciphcnt = 0, encinit = 0, decinit = 0, fnpipecnt = 0, fnctxcnt = 0;
 
     if ((cipher = evp_cipher_new()) == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_EVP_LIB);
@@ -1719,16 +1898,14 @@ static void *evp_cipher_from_algorithm(const int name_id,
     if (!evp_names_do_all(prov, name_id, set_legacy_nid, &cipher->nid)
             || cipher->nid == -1) {
         ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
-        EVP_CIPHER_free(cipher);
-        return NULL;
+        goto err;
     }
 #endif
 
     cipher->name_id = name_id;
-    if ((cipher->type_name = ossl_algorithm_get1_first_name(algodef)) == NULL) {
-        EVP_CIPHER_free(cipher);
-        return NULL;
-    }
+    if ((cipher->type_name = ossl_algorithm_get1_first_name(algodef)) == NULL)
+        goto err;
+
     cipher->description = algodef->algorithm_description;
 
     for (; fns->function_id != 0; fns++) {
@@ -1743,13 +1920,25 @@ static void *evp_cipher_from_algorithm(const int name_id,
             if (cipher->einit != NULL)
                 break;
             cipher->einit = OSSL_FUNC_cipher_encrypt_init(fns);
-            fnciphcnt++;
+            encinit = 1;
             break;
         case OSSL_FUNC_CIPHER_DECRYPT_INIT:
             if (cipher->dinit != NULL)
                 break;
             cipher->dinit = OSSL_FUNC_cipher_decrypt_init(fns);
-            fnciphcnt++;
+            decinit = 1;
+            break;
+        case OSSL_FUNC_CIPHER_ENCRYPT_SKEY_INIT:
+            if (cipher->einit_skey != NULL)
+                break;
+            cipher->einit_skey = OSSL_FUNC_cipher_encrypt_skey_init(fns);
+            encinit = 1;
+            break;
+        case OSSL_FUNC_CIPHER_DECRYPT_SKEY_INIT:
+            if (cipher->dinit_skey != NULL)
+                break;
+            cipher->dinit_skey = OSSL_FUNC_cipher_decrypt_skey_init(fns);
+            decinit = 1;
             break;
         case OSSL_FUNC_CIPHER_UPDATE:
             if (cipher->cupdate != NULL)
@@ -1837,6 +2026,7 @@ static void *evp_cipher_from_algorithm(const int name_id,
             break;
         }
     }
+    fnciphcnt += encinit + decinit;
     if ((fnciphcnt != 0 && fnciphcnt != 3 && fnciphcnt != 4)
             || (fnciphcnt == 0 && cipher->ccipher == NULL && fnpipecnt == 0)
             || (fnpipecnt != 0 && (fnpipecnt < 3 || cipher->p_cupdate == NULL
@@ -1848,21 +2038,24 @@ static void *evp_cipher_from_algorithm(const int name_id,
          * functions, or a single "cipher" function. In all cases we need both
          * the "newctx" and "freectx" functions.
          */
-        EVP_CIPHER_free(cipher);
         ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_PROVIDER_FUNCTIONS);
-        return NULL;
+        goto err;
     }
+    if (prov != NULL && !ossl_provider_up_ref(prov))
+        goto err;
+
     cipher->prov = prov;
-    if (prov != NULL)
-        ossl_provider_up_ref(prov);
 
     if (!evp_cipher_cache_constants(cipher)) {
-        EVP_CIPHER_free(cipher);
         ERR_raise(ERR_LIB_EVP, EVP_R_CACHE_CONSTANTS_FAILED);
-        cipher = NULL;
+        goto err;
     }
 
     return cipher;
+
+err:
+    EVP_CIPHER_free(cipher);
+    return NULL;
 }
 
 static int evp_cipher_up_ref(void *cipher)
@@ -1884,6 +2077,17 @@ EVP_CIPHER *EVP_CIPHER_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
                           evp_cipher_free);
 
     return cipher;
+}
+
+EVP_CIPHER *evp_cipher_fetch_from_prov(OSSL_PROVIDER *prov,
+                                       const char *algorithm,
+                                       const char *properties)
+{
+    return evp_generic_fetch_from_prov(prov, OSSL_OP_CIPHER,
+                                       algorithm, properties,
+                                       evp_cipher_from_algorithm,
+                                       evp_cipher_up_ref,
+                                       evp_cipher_free);
 }
 
 int EVP_CIPHER_can_pipeline(const EVP_CIPHER *cipher, int enc)

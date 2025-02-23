@@ -19,6 +19,13 @@
 extern "C" {
 # endif
 
+/*
+ * Generic function pointer for provider method arrays, or other contexts where
+ * functions of various signatures must occupy a common slot in an array of
+ * structures.
+ */
+typedef void (*OSSL_FUNC)(void);
+
 /*-
  * Identities
  * ----------
@@ -274,6 +281,30 @@ OSSL_CORE_MAKE_FUNC(int, provider_random_bytes, (void *provctx, int which,
                                                  void *buf, size_t n,
                                                  unsigned int strength))
 
+/* Libssl related functions */
+#define OSSL_FUNC_SSL_QUIC_TLS_CRYPTO_SEND          2001
+OSSL_CORE_MAKE_FUNC(int, SSL_QUIC_TLS_crypto_send,
+                    (SSL *s, const unsigned char *buf, size_t buf_len,
+                     size_t *consumed, void *arg))
+#define OSSL_FUNC_SSL_QUIC_TLS_CRYPTO_RECV_RCD      2002
+OSSL_CORE_MAKE_FUNC(int, SSL_QUIC_TLS_crypto_recv_rcd,
+                    (SSL *s, const unsigned char **buf, size_t *bytes_read,
+                     void *arg))
+#define OSSL_FUNC_SSL_QUIC_TLS_CRYPTO_RELEASE_RCD   2003
+OSSL_CORE_MAKE_FUNC(int, SSL_QUIC_TLS_crypto_release_rcd,
+                    (SSL *s, size_t bytes_read, void *arg))
+#define OSSL_FUNC_SSL_QUIC_TLS_YIELD_SECRET         2004
+OSSL_CORE_MAKE_FUNC(int, SSL_QUIC_TLS_yield_secret,
+                    (SSL *s, uint32_t prot_level, int direction,
+                     const unsigned char *secret, size_t secret_len, void *arg))
+#define OSSL_FUNC_SSL_QUIC_TLS_GOT_TRANSPORT_PARAMS 2005
+OSSL_CORE_MAKE_FUNC(int, SSL_QUIC_TLS_got_transport_params,
+                    (SSL *s, const unsigned char *params, size_t params_len,
+                     void *arg))
+#define OSSL_FUNC_SSL_QUIC_TLS_ALERT                2006
+OSSL_CORE_MAKE_FUNC(int, SSL_QUIC_TLS_alert,
+                    (SSL *s, unsigned char alert_code, void *arg))
+
 /* Operations */
 
 # define OSSL_OP_DIGEST                              1
@@ -286,6 +317,7 @@ OSSL_CORE_MAKE_FUNC(int, provider_random_bytes, (void *provctx, int which,
 # define OSSL_OP_SIGNATURE                          12
 # define OSSL_OP_ASYM_CIPHER                        13
 # define OSSL_OP_KEM                                14
+# define OSSL_OP_SKEYMGMT                           15
 /* New section for non-EVP operations */
 # define OSSL_OP_ENCODER                            20
 # define OSSL_OP_DECODER                            21
@@ -361,6 +393,8 @@ OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, digest_gettable_ctx_params,
 # define OSSL_FUNC_CIPHER_PIPELINE_DECRYPT_INIT     16
 # define OSSL_FUNC_CIPHER_PIPELINE_UPDATE           17
 # define OSSL_FUNC_CIPHER_PIPELINE_FINAL            18
+# define OSSL_FUNC_CIPHER_ENCRYPT_SKEY_INIT         19
+# define OSSL_FUNC_CIPHER_DECRYPT_SKEY_INIT         20
 
 OSSL_CORE_MAKE_FUNC(void *, cipher_newctx, (void *provctx))
 OSSL_CORE_MAKE_FUNC(int, cipher_encrypt_init, (void *cctx,
@@ -416,6 +450,16 @@ OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, cipher_settable_ctx_params,
                     (void *cctx, void *provctx))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, cipher_gettable_ctx_params,
                     (void *cctx, void *provctx))
+OSSL_CORE_MAKE_FUNC(int, cipher_encrypt_skey_init, (void *cctx,
+                                                    void *skeydata,
+                                                    const unsigned char *iv,
+                                                    size_t ivlen,
+                                                    const OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(int, cipher_decrypt_skey_init, (void *cctx,
+                                                    void *skeydata,
+                                                    const unsigned char *iv,
+                                                    size_t ivlen,
+                                                    const OSSL_PARAM params[]))
 
 /* MACs */
 
@@ -431,6 +475,7 @@ OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, cipher_gettable_ctx_params,
 # define OSSL_FUNC_MAC_GETTABLE_PARAMS              10
 # define OSSL_FUNC_MAC_GETTABLE_CTX_PARAMS          11
 # define OSSL_FUNC_MAC_SETTABLE_CTX_PARAMS          12
+# define OSSL_FUNC_MAC_INIT_SKEY                    13
 
 OSSL_CORE_MAKE_FUNC(void *, mac_newctx, (void *provctx))
 OSSL_CORE_MAKE_FUNC(void *, mac_dupctx, (void *src))
@@ -452,6 +497,7 @@ OSSL_CORE_MAKE_FUNC(int, mac_get_ctx_params,
                     (void *mctx, OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(int, mac_set_ctx_params,
                     (void *mctx, const OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(int, mac_init_skey, (void *mctx, void *key, const OSSL_PARAM params[]))
 
 /* KDFs and PRFs */
 
@@ -852,6 +898,52 @@ OSSL_CORE_MAKE_FUNC(int, signature_set_ctx_md_params,
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, signature_settable_ctx_md_params,
                     (void *ctx))
 OSSL_CORE_MAKE_FUNC(const char **, signature_query_key_types, (void))
+
+/*-
+ * Symmetric key management
+ *
+ * The Key Management takes care of provider side of symmetric key objects, and
+ * includes essentially everything that manipulates the keys  themselves and
+ * their parameters.
+ *
+ * The key objects are commonly referred to as |keydata|, and it MUST be able
+ * to contain parameters if the key has any, and the secret key.
+ *
+ * Key objects are created with OSSL_FUNC_skeymgmt_import() (there is no
+ * dedicated memory allocation function), exported with
+ * OSSL_FUNC_skeymgmt_export() and destroyed with OSSL_FUNC_keymgmt_free().
+ *
+ */
+
+/* Key data subset selection - individual bits */
+# define OSSL_SKEYMGMT_SELECT_PARAMETERS      0x01
+# define OSSL_SKEYMGMT_SELECT_SECRET_KEY      0x02
+
+/* Key data subset selection - combinations */
+# define OSSL_SKEYMGMT_SELECT_ALL                \
+    (OSSL_SKEYMGMT_SELECT_PARAMETERS | OSSL_SKEYMGMT_SELECT_SECRET_KEY)
+
+# define OSSL_FUNC_SKEYMGMT_FREE                1
+# define OSSL_FUNC_SKEYMGMT_IMPORT              2
+# define OSSL_FUNC_SKEYMGMT_EXPORT              3
+# define OSSL_FUNC_SKEYMGMT_GENERATE            4
+# define OSSL_FUNC_SKEYMGMT_GET_KEY_ID          5
+# define OSSL_FUNC_SKEYMGMT_IMP_SETTABLE_PARAMS 6
+# define OSSL_FUNC_SKEYMGMT_GEN_SETTABLE_PARAMS 7
+
+OSSL_CORE_MAKE_FUNC(void, skeymgmt_free, (void *keydata))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *,
+                    skeymgmt_imp_settable_params, (void *provctx))
+OSSL_CORE_MAKE_FUNC(void *, skeymgmt_import, (void *provctx, int selection,
+                                              const OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(int, skeymgmt_export,
+                    (void *keydata, int selection,
+                     OSSL_CALLBACK *param_cb, void *cbarg))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *,
+                    skeymgmt_gen_settable_params, (void *provctx))
+OSSL_CORE_MAKE_FUNC(void *, skeymgmt_generate, (void *provctx,
+                                                const OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(const char *, skeymgmt_get_key_id, (void *keydata))
 
 /* Asymmetric Ciphers */
 

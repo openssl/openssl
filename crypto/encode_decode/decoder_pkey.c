@@ -65,6 +65,7 @@ struct decoder_pkey_data_st {
     STACK_OF(EVP_KEYMGMT) *keymgmts;
     char *object_type;           /* recorded object data type, may be NULL */
     void **object;               /* Where the result should end up */
+    OSSL_DECODER_CTX *ctx;       /* The parent decoder context */
 };
 
 static int decoder_construct_pkey(OSSL_DECODER_INSTANCE *decoder_inst,
@@ -171,6 +172,14 @@ static int decoder_construct_pkey(OSSL_DECODER_INSTANCE *decoder_inst,
             keydata = import_data.keydata;
             import_data.keydata = NULL;
         }
+        /*
+         * When load or import fails, because this is not an acceptable key
+         * (despite the provided key material being syntactically valid), the
+         * reason why the key is rejected would be lost, unless we signal a
+         * hard error, and suppress resetting for another try.
+         */
+        if (keydata == NULL)
+            ossl_decoder_ctx_set_harderr(data->ctx);
 
         if (keydata != NULL
             && (pkey = evp_keymgmt_util_make_pkey(keymgmt, keydata)) == NULL)
@@ -561,6 +570,7 @@ ossl_decoder_ctx_for_pkey_dup(OSSL_DECODER_CTX *src,
         process_data_dest->object    = (void **)pkey;
         process_data_dest->libctx    = process_data_src->libctx;
         process_data_dest->selection = process_data_src->selection;
+        process_data_dest->ctx       = dest;
         if (!OSSL_DECODER_CTX_set_construct_data(dest, process_data_dest)) {
             ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_OSSL_DECODER_LIB);
             goto err;
@@ -576,11 +586,7 @@ ossl_decoder_ctx_for_pkey_dup(OSSL_DECODER_CTX *src,
 
     return dest;
  err:
-    if (process_data_dest != NULL) {
-        OPENSSL_free(process_data_dest->propq);
-        sk_EVP_KEYMGMT_pop_free(process_data_dest->keymgmts, EVP_KEYMGMT_free);
-        OPENSSL_free(process_data_dest);
-    }
+    decoder_clean_pkey_construct_arg(process_data_dest);
     OSSL_DECODER_CTX_free(dest);
     return NULL;
 }

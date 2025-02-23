@@ -12,6 +12,7 @@
 
 #include <openssl/engine.h>
 #include "ssl_local.h"
+#include "internal/ssl_unwrap.h"
 
 /*
  * Engine APIs are only used to support applications that still use ENGINEs.
@@ -170,9 +171,11 @@ EVP_PKEY *ssl_dh_to_pkey(DH *dh)
 
 /* Some deprecated public APIs pass EC_KEY objects */
 int ssl_set_tmp_ecdh_groups(uint16_t **pext, size_t *pextlen,
+                            uint16_t **ksext, size_t *ksextlen,
+                            size_t **tplext, size_t *tplextlen,
                             void *key)
 {
-#  ifndef OPENSSL_NO_EC
+# ifndef OPENSSL_NO_EC
     const EC_GROUP *group = EC_KEY_get0_group((const EC_KEY *)key);
     int nid;
 
@@ -183,10 +186,13 @@ int ssl_set_tmp_ecdh_groups(uint16_t **pext, size_t *pextlen,
     nid = EC_GROUP_get_curve_name(group);
     if (nid == NID_undef)
         return 0;
-    return tls1_set_groups(pext, pextlen, &nid, 1);
-#  else
+    return tls1_set_groups(pext, pextlen,
+                           ksext, ksextlen,
+                           tplext, tplextlen,
+                           &nid, 1);
+# else
     return 0;
-#  endif
+# endif
 }
 
 /*

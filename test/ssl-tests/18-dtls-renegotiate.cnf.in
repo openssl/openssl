@@ -16,6 +16,7 @@ package ssltests;
 use OpenSSL::Test::Utils;
 
 our $fips_mode;
+our $fips_3_4;
 
 our @tests = ();
 
@@ -132,7 +133,7 @@ foreach my $sctp ("No", "Yes")
     );
     push @tests, @tests_basic;
 
-    next if disabled("dtls1_2");
+    next if disabled("dtls1_2") || $fips_3_4;
     our @tests_dtls1_2 = (
         {
             name => "renegotiate-aead-to-non-aead".$suffix,

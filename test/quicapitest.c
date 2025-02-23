@@ -36,7 +36,8 @@ static int is_fips = 0;
 /* The ssltrace test assumes some options are switched on/off */
 #if !defined(OPENSSL_NO_SSL_TRACE) \
     && defined(OPENSSL_NO_BROTLI) && defined(OPENSSL_NO_ZSTD) \
-    && !defined(OPENSSL_NO_ECX) && !defined(OPENSSL_NO_DH)
+    && !defined(OPENSSL_NO_ECX) && !defined(OPENSSL_NO_DH) \
+    && !defined(OPENSSL_NO_ML_DSA)
 # define DO_SSL_TRACE_TEST
 #endif
 
@@ -262,9 +263,9 @@ static int test_fin_only_blocking(void)
     if (!TEST_int_eq(SSL_get_error(clientquic, 0), SSL_ERROR_ZERO_RETURN)
                /*
                 * We expect the SSL_read_ex to not have blocked so this should
-                * be very fast. 20ms should be plenty.
+                * be very fast. 40ms should be plenty.
                 */
-            || !TEST_uint64_t_le(ossl_time2ms(timediff), 20))
+            || !TEST_uint64_t_le(ossl_time2ms(timediff), 40))
         goto end;
 
     if (!TEST_true(qtest_shutdown(qtserv, clientquic)))
@@ -546,6 +547,143 @@ static int test_ssl_trace(void)
  err:
     ossl_quic_tserver_free(qtserv);
     SSL_free(clientquic);
+    SSL_CTX_free(cctx);
+    BIO_free(bio);
+
+    return testresult;
+}
+#endif
+
+#ifndef OPENSSL_NO_SSL_TRACE
+enum {
+    INITIAL = 0,
+    GATHER_TOKEN = 1,
+    CHECK_TOKEN = 2,
+    SUCCESS = 3,
+    FAILED = 4
+};
+
+static int find_new_token_data(BIO *membio)
+{
+    char buf[1024];
+    int state = INITIAL;
+    char *tmpstring;
+    char *tokenval = NULL;
+    /*
+     * This is a state machine, in which we traverse the ssl trace
+     * looking for a sequence of items
+     * The states are:
+     * +---Current State---|----------Action-------------|---Next State---+
+     * |      INITIAL      | "Received Frame: New token" | GATHER_TOKEN   |
+     * |                   | !"Received Frame: New token"| INITIAL        |
+     * |-------------------|-----------------------------|----------------|
+     * |    GATHER_TOKEN   | "Token: <TOKENVAL>"         | CHECK_TOKEN    |
+     * |                   | !"Token: <TOKENVAL>"        | FAILED         |
+     * |-------------------|-----------------------------|----------------|
+     * |    CHECK_TOKEN    | "Token: <TOKENVAL>"         | SUCCESS        |
+     * |                   | EOF                         | FAILED         |
+     * +-------------------|-----------------------------|----------------|
+     */
+
+    while (state != SUCCESS
+           && state != FAILED
+           && BIO_gets(membio, buf, sizeof(buf)) > 0) {
+        switch (state) {
+        case INITIAL:
+            if (strstr(buf, "Received Frame: New token"))
+                state = GATHER_TOKEN;
+            break;
+        case GATHER_TOKEN:
+            TEST_info("Found New Token Marker\n");
+            tmpstring = strstr(buf, "Token: ");
+            if (tmpstring == NULL) {
+                TEST_info("Next line did not contain a new token\n");
+                state = FAILED;
+            } else {
+                if (!TEST_ptr(tokenval = OPENSSL_strdup(tmpstring)))
+                    return 0;
+                state = CHECK_TOKEN;
+                TEST_info("Recorded Token %s\n", tokenval);
+            }
+            break;
+        case CHECK_TOKEN:
+            tmpstring = strstr(buf, "Token: ");
+            if (tmpstring != NULL
+                && !strcmp(tmpstring, tokenval)) {
+                state = SUCCESS;
+                TEST_info("Matched next connection token %s\n", tmpstring);
+            }
+        default:
+            break;
+        }
+    }
+
+    OPENSSL_free(tokenval);
+    return (state == SUCCESS);
+}
+
+static int test_new_token(void)
+{
+    SSL_CTX *cctx = NULL;
+    SSL *clientquic = NULL;
+    SSL *clientquic2 = NULL;
+    QUIC_TSERVER *qtserv = NULL;
+    QUIC_TSERVER *qtserv2 = NULL;
+    int testresult = 0;
+    BIO *bio = NULL;
+    char msg[] = "The Quic Brown Fox";
+    size_t written;
+
+    if (!TEST_ptr(cctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method()))
+        || !TEST_ptr(bio = BIO_new(BIO_s_mem()))
+        || !TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert,
+                                                privkey,
+                                                QTEST_FLAG_FAKE_TIME,
+                                                &qtserv,
+                                                &clientquic, NULL, NULL)))
+
+        goto err;
+
+    SSL_set_msg_callback(clientquic, SSL_trace);
+    SSL_set_msg_callback_arg(clientquic, bio);
+
+    if (!TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
+        goto err;
+
+    /* Send data from the client */
+    if (!SSL_write_ex(clientquic, msg, sizeof(msg), &written))
+        goto err;
+
+    if (written != sizeof(msg))
+        goto err;
+
+    /* Receive data at the server */
+    ossl_quic_tserver_tick(qtserv);
+
+    if (!TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert,
+                                             privkey,
+                                             QTEST_FLAG_FAKE_TIME,
+                                             &qtserv2,
+                                             &clientquic2, NULL, NULL)))
+        goto err;
+
+    SSL_set_msg_callback(clientquic2, SSL_trace);
+    SSL_set_msg_callback_arg(clientquic2, bio);
+
+    /* once we have our new token, create the subsequent connection */
+    if (!TEST_true(qtest_create_quic_connection(qtserv2, clientquic2)))
+        goto err;
+
+    /* Skip the comparison of the trace when the fips provider is used. */
+    if (!TEST_true(find_new_token_data(bio)))
+        goto err;
+
+    testresult = 1;
+ err:
+    ossl_quic_tserver_free(qtserv);
+    ossl_quic_tserver_free(qtserv2);
+    SSL_free(clientquic);
+    SSL_free(clientquic2);
     SSL_CTX_free(cctx);
     BIO_free(bio);
 
@@ -1155,10 +1293,8 @@ static int use_session_cb(SSL *ssl, const EVP_MD *md, const unsigned char **id,
 {
     use_session_cb_cnt++;
 
-    if (clientpsk == NULL)
+    if (clientpsk == NULL || !SSL_SESSION_up_ref(clientpsk))
         return 0;
-
-    SSL_SESSION_up_ref(clientpsk);
 
     *sess = clientpsk;
     *id = (const unsigned char *)pskid;
@@ -1172,15 +1308,16 @@ static int find_session_cb(SSL *ssl, const unsigned char *identity,
 {
     find_session_cb_cnt++;
 
-    if (serverpsk == NULL)
+    if (serverpsk == NULL || !SSL_SESSION_up_ref(serverpsk))
         return 0;
 
     /* Identity should match that set by the client */
     if (strlen(pskid) != identity_len
-            || strncmp(pskid, (const char *)identity, identity_len) != 0)
+            || strncmp(pskid, (const char *)identity, identity_len) != 0) {
+        SSL_SESSION_free(serverpsk);
         return 0;
+    }
 
-    SSL_SESSION_up_ref(serverpsk);
     *sess = serverpsk;
 
     return 1;
@@ -1206,10 +1343,9 @@ static int test_quic_psk(void)
     find_session_cb_cnt = 0;
 
     clientpsk = serverpsk = create_a_psk(clientquic, SHA384_DIGEST_LENGTH);
-    if (!TEST_ptr(clientpsk))
-        goto end;
     /* We already had one ref. Add another one */
-    SSL_SESSION_up_ref(clientpsk);
+    if (!TEST_ptr(clientpsk) || !TEST_true(SSL_SESSION_up_ref(clientpsk)))
+        goto end;
 
     if (!TEST_true(qtest_create_quic_connection(qtserv, clientquic))
             || !TEST_int_eq(1, find_session_cb_cnt)
@@ -1724,7 +1860,6 @@ struct tparam_test {
     size_t      buf_len;
 };
 
-static const unsigned char retry_scid_1[8] = { 0 };
 
 static const unsigned char disable_active_migration_1[] = {
     0x00
@@ -1852,8 +1987,6 @@ static const struct tparam_test tparam_tests[] = {
     TPARAM_CHECK_DROP(ORIG_DCID,
                       "ORIG_DCID was not sent but is required")
 
-    TPARAM_CHECK_INJECT_A(RETRY_SCID, retry_scid_1,
-                          "RETRY_SCID sent when not performing a retry")
     TPARAM_CHECK_DROP_INJECT_A(DISABLE_ACTIVE_MIGRATION, disable_active_migration_1,
                                "DISABLE_ACTIVE_MIGRATION is malformed")
     TPARAM_CHECK_INJECT(UNKNOWN_1, NULL, 0,
@@ -2256,6 +2389,262 @@ static int test_session_cb(void)
     return testresult;
 }
 
+static int test_domain_flags(void)
+{
+    int testresult = 0;
+    SSL_CTX *ctx = NULL;
+    SSL *domain = NULL, *listener = NULL, *other_conn = NULL;
+    uint64_t domain_flags = 0;
+
+    if (!TEST_ptr(ctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method()))
+        || !TEST_true(SSL_CTX_get_domain_flags(ctx, &domain_flags))
+        || !TEST_uint64_t_ne(domain_flags, 0)
+        || !TEST_uint64_t_ne(domain_flags & (SSL_DOMAIN_FLAG_SINGLE_THREAD
+                                             | SSL_DOMAIN_FLAG_MULTI_THREAD), 0)
+        || !TEST_uint64_t_ne(domain_flags & SSL_DOMAIN_FLAG_LEGACY_BLOCKING, 0)
+        || !TEST_true(SSL_CTX_set_domain_flags(ctx, SSL_DOMAIN_FLAG_SINGLE_THREAD))
+        || !TEST_true(SSL_CTX_get_domain_flags(ctx, &domain_flags))
+        || !TEST_uint64_t_eq(domain_flags, SSL_DOMAIN_FLAG_SINGLE_THREAD)
+        || !TEST_ptr(domain = SSL_new_domain(ctx, 0))
+        || !TEST_true(SSL_get_domain_flags(domain, &domain_flags))
+        || !TEST_uint64_t_eq(domain_flags, SSL_DOMAIN_FLAG_SINGLE_THREAD)
+        || !TEST_true(other_conn = SSL_new(ctx))
+        || !TEST_true(SSL_get_domain_flags(other_conn, &domain_flags))
+        || !TEST_uint64_t_eq(domain_flags, SSL_DOMAIN_FLAG_SINGLE_THREAD)
+        || !TEST_true(SSL_is_domain(domain))
+        || !TEST_false(SSL_is_domain(other_conn))
+        || !TEST_ptr_eq(SSL_get0_domain(domain), domain)
+        || !TEST_ptr_null(SSL_get0_domain(other_conn))
+        || !TEST_ptr(listener = SSL_new_listener_from(domain, 0))
+        || !TEST_true(SSL_is_listener(listener))
+        || !TEST_false(SSL_is_domain(listener))
+        || !TEST_ptr_eq(SSL_get0_domain(listener), domain)
+        || !TEST_ptr_eq(SSL_get0_listener(listener), listener))
+        goto err;
+
+    testresult = 1;
+err:
+    SSL_free(domain);
+    SSL_free(listener);
+    SSL_free(other_conn);
+    SSL_CTX_free(ctx);
+    return testresult;
+}
+
+/*
+ * Test that calling SSL_handle_events() early behaves as expected
+ */
+static int test_early_ticks(void)
+{
+    SSL_CTX *cctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method());
+    SSL *clientquic = NULL;
+    QUIC_TSERVER *qtserv = NULL;
+    int testresult = 0;
+    struct timeval tv;
+    int inf = 0;
+
+    if (!TEST_ptr(cctx)
+            || !TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert,
+                                                    privkey, QTEST_FLAG_FAKE_TIME,
+                                                    &qtserv,
+                                                    &clientquic, NULL, NULL)))
+        goto err;
+
+    if (!TEST_true(SSL_in_before(clientquic)))
+        goto err;
+
+    if (!TEST_true(SSL_handle_events(clientquic)))
+        goto err;
+
+    if (!TEST_true(SSL_get_event_timeout(clientquic, &tv, &inf))
+            || !TEST_true(inf))
+        goto err;
+
+    if (!TEST_false(SSL_has_pending(clientquic))
+            || !TEST_int_eq(SSL_pending(clientquic), 0))
+        goto err;
+
+    if (!TEST_true(SSL_in_before(clientquic)))
+        goto err;
+
+    if (!TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
+        goto err;
+
+    if (!TEST_false(SSL_in_before(clientquic)))
+        goto err;
+
+    testresult = 1;
+ err:
+    SSL_free(clientquic);
+    SSL_CTX_free(cctx);
+    ossl_quic_tserver_free(qtserv);
+    return testresult;
+}
+
+static int select_alpn(SSL *ssl, const unsigned char **out,
+                       unsigned char *out_len, const unsigned char *in,
+                       unsigned int in_len, void *arg)
+{
+    static unsigned char alpn[] = { 8, 'o', 's', 's', 'l', 't', 'e', 's', 't' };
+
+    if (SSL_select_next_proto((unsigned char **)out, out_len, alpn, sizeof(alpn),
+                              in, in_len) == OPENSSL_NPN_NEGOTIATED)
+        return SSL_TLSEXT_ERR_OK;
+    return SSL_TLSEXT_ERR_ALERT_FATAL;
+}
+
+static SSL_CTX *create_server_ctx(void)
+{
+    SSL_CTX *ssl_ctx;
+
+    if (!TEST_ptr(ssl_ctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_server_method()))
+        || !TEST_true(SSL_CTX_use_certificate_file(ssl_ctx, cert, SSL_FILETYPE_PEM))
+        || !TEST_true(SSL_CTX_use_PrivateKey_file(ssl_ctx, privkey, SSL_FILETYPE_PEM))) {
+        SSL_CTX_free(ssl_ctx);
+        ssl_ctx = NULL;
+    } else {
+        SSL_CTX_set_alpn_select_cb(ssl_ctx, select_alpn, NULL);
+        SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_NONE, NULL);
+    }
+
+    return ssl_ctx;
+}
+
+static BIO_ADDR *create_addr(struct in_addr *ina, short int port)
+{
+    BIO_ADDR *addr = NULL;
+
+    if (!TEST_ptr(addr = BIO_ADDR_new()))
+        return NULL;
+
+    if (!TEST_true(BIO_ADDR_rawmake(addr, AF_INET, ina, sizeof(struct in_addr),
+                                    htons(port)))) {
+        BIO_ADDR_free(addr);
+        return NULL;
+    }
+
+    return addr;
+}
+
+static int bio_addr_bind(BIO *bio, BIO_ADDR *addr)
+{
+    int bio_caps = BIO_DGRAM_CAP_HANDLES_DST_ADDR | BIO_DGRAM_CAP_HANDLES_SRC_ADDR;
+
+    if (!TEST_true(BIO_dgram_set_caps(bio, bio_caps)))
+        return 0;
+
+    if (!TEST_int_eq(BIO_dgram_set0_local_addr(bio, addr), 1))
+        return 0;
+
+    return 1;
+}
+
+static SSL *ql_create(SSL_CTX *ssl_ctx, BIO *bio)
+{
+    SSL *qserver;
+
+    if (!TEST_ptr(qserver = SSL_new_listener(ssl_ctx, 0))) {
+        BIO_free(bio);
+        return NULL;
+    }
+
+    SSL_set_bio(qserver, bio, bio);
+
+    if (!TEST_true(SSL_listen(qserver))) {
+        SSL_free(qserver);
+        return NULL;
+    }
+
+    return qserver;
+}
+
+static int qc_init(SSL *qconn, BIO_ADDR *dst_addr)
+{
+    static unsigned char alpn[] = { 8, 'o', 's', 's', 'l', 't', 'e', 's', 't' };
+
+    if (!TEST_true(SSL_set1_initial_peer_addr(qconn, dst_addr)))
+        return 0;
+
+    if (!TEST_false(SSL_set_alpn_protos(qconn, alpn, sizeof(alpn))))
+        return 0;
+
+    return 1;
+}
+
+static int test_ssl_new_from_listener(void)
+{
+    SSL_CTX *lctx = NULL, *sctx = NULL;
+    SSL *qlistener = NULL, *qserver = NULL, *qconn = 0;
+    int testresult = 0;
+    int chk;
+    BIO *lbio = NULL, *sbio = NULL;
+    BIO_ADDR *addr = NULL;
+    struct in_addr ina;
+
+    ina.s_addr = htonl(0x1f000001);
+    if (!TEST_ptr(lctx = create_server_ctx())
+        || !TEST_ptr(sctx = create_server_ctx())
+        || !TEST_true(BIO_new_bio_dgram_pair(&lbio, 0, &sbio, 0)))
+        goto err;
+
+    if (!TEST_ptr(addr = create_addr(&ina, 8040)))
+        goto err;
+
+    if (!TEST_true(bio_addr_bind(lbio, addr)))
+        goto err;
+    addr = NULL;
+
+    if (!TEST_ptr(addr = create_addr(&ina, 4080)))
+        goto err;
+
+    if (!TEST_true(bio_addr_bind(sbio, addr)))
+        goto err;
+    addr = NULL;
+
+    qlistener = ql_create(lctx, lbio);
+    lbio = NULL;
+    if (!TEST_ptr(qlistener))
+        goto err;
+
+    qserver = ql_create(sctx, sbio);
+    sbio = NULL;
+    if (!TEST_ptr(qserver))
+        goto err;
+
+    if (!TEST_ptr(qconn = SSL_new_from_listener(qlistener, 0)))
+        goto err;
+
+    if (!TEST_ptr(addr = create_addr(&ina, 4080)))
+        goto err;
+
+    chk = qc_init(qconn, addr);
+    if (!TEST_true(chk))
+        goto err;
+
+    while ((chk = SSL_do_handshake(qconn)) == -1) {
+        SSL_handle_events(qserver);
+        SSL_handle_events(qlistener);
+    }
+
+    if (!TEST_int_gt(chk, 0)) {
+        TEST_info("SSL_do_handshake() failed\n");
+        goto err;
+    }
+
+    testresult = 1;
+ err:
+    SSL_free(qconn);
+    SSL_free(qlistener);
+    SSL_free(qserver);
+    BIO_free(lbio);
+    BIO_free(sbio);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(lctx);
+    BIO_ADDR_free(addr);
+
+    return testresult;
+}
+
 /***********************************************************************************/
 
 OPT_TEST_DECLARE_USAGE("provider config certsdir datadir\n")
@@ -2349,7 +2738,12 @@ int setup_tests(void)
     ADD_TEST(test_get_shutdown);
     ADD_ALL_TESTS(test_tparam, OSSL_NELEM(tparam_tests));
     ADD_TEST(test_session_cb);
-
+    ADD_TEST(test_domain_flags);
+    ADD_TEST(test_early_ticks);
+    ADD_TEST(test_ssl_new_from_listener);
+#ifndef OPENSSL_NO_SSL_TRACE
+    ADD_TEST(test_new_token);
+#endif
     return 1;
  err:
     cleanup_tests();

@@ -489,12 +489,43 @@ static const OSSL_ALGORITHM fips_signature[] = {
     { PROV_NAMES_ECDSA_SHA3_384, FIPS_DEFAULT_PROPERTIES, ossl_ecdsa_sha3_384_signature_functions },
     { PROV_NAMES_ECDSA_SHA3_512, FIPS_DEFAULT_PROPERTIES, ossl_ecdsa_sha3_512_signature_functions },
 #endif
+#ifndef OPENSSL_NO_ML_DSA
+    { PROV_NAMES_ML_DSA_44, FIPS_DEFAULT_PROPERTIES, ossl_ml_dsa_44_signature_functions },
+    { PROV_NAMES_ML_DSA_65, FIPS_DEFAULT_PROPERTIES, ossl_ml_dsa_65_signature_functions },
+    { PROV_NAMES_ML_DSA_87, FIPS_DEFAULT_PROPERTIES, ossl_ml_dsa_87_signature_functions },
+#endif
     { PROV_NAMES_HMAC, FIPS_DEFAULT_PROPERTIES,
       ossl_mac_legacy_hmac_signature_functions },
 #ifndef OPENSSL_NO_CMAC
     { PROV_NAMES_CMAC, FIPS_DEFAULT_PROPERTIES,
       ossl_mac_legacy_cmac_signature_functions },
 #endif
+#ifndef OPENSSL_NO_SLH_DSA
+    { PROV_NAMES_SLH_DSA_SHA2_128S, FIPS_DEFAULT_PROPERTIES,
+      ossl_slh_dsa_sha2_128s_signature_functions, PROV_DESCS_SLH_DSA_SHA2_128S },
+    { PROV_NAMES_SLH_DSA_SHA2_128F, FIPS_DEFAULT_PROPERTIES,
+      ossl_slh_dsa_sha2_128f_signature_functions, PROV_DESCS_SLH_DSA_SHA2_128F },
+    { PROV_NAMES_SLH_DSA_SHA2_192S, FIPS_DEFAULT_PROPERTIES,
+      ossl_slh_dsa_sha2_192s_signature_functions, PROV_DESCS_SLH_DSA_SHA2_192S },
+    { PROV_NAMES_SLH_DSA_SHA2_192F, FIPS_DEFAULT_PROPERTIES,
+      ossl_slh_dsa_sha2_192f_signature_functions, PROV_DESCS_SLH_DSA_SHA2_192F },
+    { PROV_NAMES_SLH_DSA_SHA2_256S, FIPS_DEFAULT_PROPERTIES,
+      ossl_slh_dsa_sha2_256s_signature_functions, PROV_DESCS_SLH_DSA_SHA2_256S },
+    { PROV_NAMES_SLH_DSA_SHA2_256F, FIPS_DEFAULT_PROPERTIES,
+      ossl_slh_dsa_sha2_256f_signature_functions, PROV_DESCS_SLH_DSA_SHA2_256F },
+    { PROV_NAMES_SLH_DSA_SHAKE_128S, FIPS_DEFAULT_PROPERTIES,
+      ossl_slh_dsa_shake_128s_signature_functions, PROV_DESCS_SLH_DSA_SHAKE_128S },
+    { PROV_NAMES_SLH_DSA_SHAKE_128F, FIPS_DEFAULT_PROPERTIES,
+      ossl_slh_dsa_shake_128f_signature_functions, PROV_DESCS_SLH_DSA_SHAKE_128F },
+    { PROV_NAMES_SLH_DSA_SHAKE_192S, FIPS_DEFAULT_PROPERTIES,
+      ossl_slh_dsa_shake_192s_signature_functions, PROV_DESCS_SLH_DSA_SHAKE_192S },
+    { PROV_NAMES_SLH_DSA_SHAKE_192F, FIPS_DEFAULT_PROPERTIES,
+      ossl_slh_dsa_shake_192f_signature_functions, PROV_DESCS_SLH_DSA_SHAKE_192F },
+    { PROV_NAMES_SLH_DSA_SHAKE_256S, FIPS_DEFAULT_PROPERTIES,
+      ossl_slh_dsa_shake_256s_signature_functions, PROV_DESCS_SLH_DSA_SHAKE_256S },
+    { PROV_NAMES_SLH_DSA_SHAKE_256F, FIPS_DEFAULT_PROPERTIES,
+      ossl_slh_dsa_shake_256f_signature_functions, PROV_DESCS_SLH_DSA_SHAKE_256F },
+#endif /* OPENSSL_NO_SLH_DSA */
     { NULL, NULL, NULL }
 };
 
@@ -505,6 +536,19 @@ static const OSSL_ALGORITHM fips_asym_cipher[] = {
 
 static const OSSL_ALGORITHM fips_asym_kem[] = {
     { PROV_NAMES_RSA, FIPS_DEFAULT_PROPERTIES, ossl_rsa_asym_kem_functions },
+#ifndef OPENSSL_NO_ML_KEM
+    { PROV_NAMES_ML_KEM_512, FIPS_DEFAULT_PROPERTIES, ossl_ml_kem_asym_kem_functions },
+    { PROV_NAMES_ML_KEM_768, FIPS_DEFAULT_PROPERTIES, ossl_ml_kem_asym_kem_functions },
+    { PROV_NAMES_ML_KEM_1024, FIPS_DEFAULT_PROPERTIES, ossl_ml_kem_asym_kem_functions },
+# if !defined(OPENSSL_NO_ECX)
+    { "X25519MLKEM768", FIPS_DEFAULT_PROPERTIES, ossl_mlx_kem_asym_kem_functions },
+    { "X448MLKEM1024", FIPS_DEFAULT_PROPERTIES, ossl_mlx_kem_asym_kem_functions },
+# endif
+# if !defined(OPENSSL_NO_EC)
+    { "SecP256r1MLKEM768", FIPS_DEFAULT_PROPERTIES, ossl_mlx_kem_asym_kem_functions },
+    { "SecP384r1MLKEM1024", FIPS_DEFAULT_PROPERTIES, ossl_mlx_kem_asym_kem_functions },
+# endif
+#endif
     { NULL, NULL, NULL }
 };
 
@@ -537,6 +581,14 @@ static const OSSL_ALGORITHM fips_keymgmt[] = {
       PROV_DESCS_ED448 },
 # endif
 #endif
+#ifndef OPENSSL_NO_ML_DSA
+    { PROV_NAMES_ML_DSA_44, FIPS_DEFAULT_PROPERTIES, ossl_ml_dsa_44_keymgmt_functions,
+      PROV_DESCS_ML_DSA_44 },
+    { PROV_NAMES_ML_DSA_65, FIPS_DEFAULT_PROPERTIES, ossl_ml_dsa_65_keymgmt_functions,
+      PROV_DESCS_ML_DSA_65 },
+    { PROV_NAMES_ML_DSA_87, FIPS_DEFAULT_PROPERTIES, ossl_ml_dsa_87_keymgmt_functions,
+      PROV_DESCS_ML_DSA_87 },
+#endif /* OPENSSL_NO_ML_DSA */
     { PROV_NAMES_TLS1_PRF, FIPS_DEFAULT_PROPERTIES, ossl_kdf_keymgmt_functions,
       PROV_DESCS_TLS1_PRF_SIGN },
     { PROV_NAMES_HKDF, FIPS_DEFAULT_PROPERTIES, ossl_kdf_keymgmt_functions,
@@ -547,6 +599,52 @@ static const OSSL_ALGORITHM fips_keymgmt[] = {
     { PROV_NAMES_CMAC, FIPS_DEFAULT_PROPERTIES,
       ossl_cmac_legacy_keymgmt_functions, PROV_DESCS_CMAC_SIGN },
 #endif
+#ifndef OPENSSL_NO_ML_KEM
+    { PROV_NAMES_ML_KEM_512, FIPS_DEFAULT_PROPERTIES, ossl_ml_kem_512_keymgmt_functions,
+      PROV_DESCS_ML_KEM_512 },
+    { PROV_NAMES_ML_KEM_768, FIPS_DEFAULT_PROPERTIES, ossl_ml_kem_768_keymgmt_functions,
+      PROV_DESCS_ML_KEM_768 },
+    { PROV_NAMES_ML_KEM_1024, FIPS_DEFAULT_PROPERTIES, ossl_ml_kem_1024_keymgmt_functions,
+      PROV_DESCS_ML_KEM_1024 },
+# if !defined(OPENSSL_NO_ECX)
+    { PROV_NAMES_X25519MLKEM768, FIPS_DEFAULT_PROPERTIES, ossl_mlx_x25519_kem_kmgmt_functions,
+      PROV_DESCS_X25519MLKEM768 },
+    { PROV_NAMES_X448MLKEM1024, FIPS_DEFAULT_PROPERTIES, ossl_mlx_x448_kem_kmgmt_functions,
+      PROV_DESCS_X448MLKEM1024 },
+# endif
+# if !defined(OPENSSL_NO_EC)
+    { PROV_NAMES_SecP256r1MLKEM768, FIPS_DEFAULT_PROPERTIES, ossl_mlx_p256_kem_kmgmt_functions,
+      PROV_DESCS_SecP256r1MLKEM768 },
+    { PROV_NAMES_SecP384r1MLKEM1024, FIPS_DEFAULT_PROPERTIES, ossl_mlx_p384_kem_kmgmt_functions,
+      PROV_DESCS_SecP384r1MLKEM1024 },
+# endif
+#endif
+#ifndef OPENSSL_NO_SLH_DSA
+    { PROV_NAMES_SLH_DSA_SHA2_128S, FIPS_DEFAULT_PROPERTIES,
+      ossl_slh_dsa_sha2_128s_keymgmt_functions, PROV_DESCS_SLH_DSA_SHA2_128S },
+    { PROV_NAMES_SLH_DSA_SHA2_128F, FIPS_DEFAULT_PROPERTIES,
+      ossl_slh_dsa_sha2_128f_keymgmt_functions, PROV_DESCS_SLH_DSA_SHA2_128F },
+    { PROV_NAMES_SLH_DSA_SHA2_192S, FIPS_DEFAULT_PROPERTIES,
+      ossl_slh_dsa_sha2_192s_keymgmt_functions, PROV_DESCS_SLH_DSA_SHA2_192S },
+    { PROV_NAMES_SLH_DSA_SHA2_192F, FIPS_DEFAULT_PROPERTIES,
+      ossl_slh_dsa_sha2_192f_keymgmt_functions, PROV_DESCS_SLH_DSA_SHA2_192F },
+    { PROV_NAMES_SLH_DSA_SHA2_256S, FIPS_DEFAULT_PROPERTIES,
+      ossl_slh_dsa_sha2_256s_keymgmt_functions, PROV_DESCS_SLH_DSA_SHA2_256S },
+    { PROV_NAMES_SLH_DSA_SHA2_256F, FIPS_DEFAULT_PROPERTIES,
+      ossl_slh_dsa_sha2_256f_keymgmt_functions, PROV_DESCS_SLH_DSA_SHA2_256F },
+    { PROV_NAMES_SLH_DSA_SHAKE_128S, FIPS_DEFAULT_PROPERTIES,
+      ossl_slh_dsa_shake_128s_keymgmt_functions, PROV_DESCS_SLH_DSA_SHAKE_128S },
+    { PROV_NAMES_SLH_DSA_SHAKE_128F, FIPS_DEFAULT_PROPERTIES,
+      ossl_slh_dsa_shake_128f_keymgmt_functions, PROV_DESCS_SLH_DSA_SHAKE_128F },
+    { PROV_NAMES_SLH_DSA_SHAKE_192S, FIPS_DEFAULT_PROPERTIES,
+      ossl_slh_dsa_shake_192s_keymgmt_functions, PROV_DESCS_SLH_DSA_SHAKE_192S },
+    { PROV_NAMES_SLH_DSA_SHAKE_192F, FIPS_DEFAULT_PROPERTIES,
+      ossl_slh_dsa_shake_192f_keymgmt_functions, PROV_DESCS_SLH_DSA_SHAKE_192F },
+    { PROV_NAMES_SLH_DSA_SHAKE_256S, FIPS_DEFAULT_PROPERTIES,
+      ossl_slh_dsa_shake_256s_keymgmt_functions, PROV_DESCS_SLH_DSA_SHAKE_256S },
+    { PROV_NAMES_SLH_DSA_SHAKE_256F, FIPS_DEFAULT_PROPERTIES,
+      ossl_slh_dsa_shake_256f_keymgmt_functions, PROV_DESCS_SLH_DSA_SHAKE_256F },
+#endif /* OPENSSL_NO_SLH_DSA */
     { NULL, NULL, NULL }
 };
 

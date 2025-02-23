@@ -167,6 +167,12 @@ The OpenSSL default provider supports these operations and algorithms:
 
 =item X448, see L<EVP_KEYEXCH-X448(7)>
 
+=item ML-KEM-512, see L<EVP_KEM-ML-KEM-512(7)>
+
+=item ML-KEM-768, see L<EVP_KEM-ML-KEM-768(7)>
+
+=item ML-KEM-1024, see L<EVP_KEM-ML-KEM-1024(7)>
+
 =item TLS1-PRF
 
 =item HKDF
@@ -191,6 +197,12 @@ The OpenSSL default provider supports these operations and algorithms:
 
 =item SM2
 
+=item ML-DSA-44, see L<EVP_SIGNATURE-ML-DSA(7)>
+
+=item ML-DSA-65, see L<EVP_SIGNATURE-ML-DSA(7)>
+
+=item ML-DSA-87, see L<EVP_SIGNATURE-ML-DSA(7)>
+
 =item HMAC, see L<EVP_SIGNATURE-HMAC(7)>
 
 =item SIPHASH, see L<EVP_SIGNATURE-Siphash(7)>
@@ -198,6 +210,30 @@ The OpenSSL default provider supports these operations and algorithms:
 =item POLY1305, see L<EVP_SIGNATURE-Poly1305(7)>
 
 =item CMAC, see L<EVP_SIGNATURE-CMAC(7)>
+
+=item SLH-DSA-SHA2-128s, see L<EVP_SIGNATURE-SLH-DSA(7)>
+
+=item SLH-DSA-SHA2-128f, see L<EVP_SIGNATURE-SLH-DSA(7)>
+
+=item SLH-DSA-SHA2-192s, see L<EVP_SIGNATURE-SLH-DSA(7)>
+
+=item SLH-DSA-SHA2-192f, see L<EVP_SIGNATURE-SLH-DSA(7)>
+
+=item SLH-DSA-SHA2-256s, see L<EVP_SIGNATURE-SLH-DSA(7)>
+
+=item SLH-DSA-SHA2-256f, see L<EVP_SIGNATURE-SLH-DSA(7)>
+
+=item SLH-DSA-SHAKE-128s, see L<EVP_SIGNATURE-SLH-DSA(7)>
+
+=item SLH-DSA-SHAKE-128f, see L<EVP_SIGNATURE-SLH-DSA(7)>
+
+=item SLH-DSA-SHAKE-192s, see L<EVP_SIGNATURE-SLH-DSA(7)>
+
+=item SLH-DSA-SHAKE-192f, see L<EVP_SIGNATURE-SLH-DSA(7)>
+
+=item SLH-DSA-SHAKE-256s, see L<EVP_SIGNATURE-SLH-DSA(7)>
+
+=item SLH-DSA-SHAKE-256f, see L<EVP_SIGNATURE-SLH-DSA(7)>
 
 =back
 
@@ -223,15 +259,17 @@ The OpenSSL default provider supports these operations and algorithms:
 
 =item EC, see L<EVP_KEM-EC(7)>
 
+=item ML-KEM-512, see L<EVP_KEM-ML-KEM-512(7)>
+
+=item ML-KEM-768, see L<EVP_KEM-ML-KEM-768(7)>
+
+=item ML-KEM-1024, see L<EVP_KEM-ML-KEM-1024(7)>
+
 =back
 
 =head2 Asymmetric Key Management
 
 =over 4
-
-=item DH, see L<EVP_KEYMGMT-DH(7)>
-
-=item DHX, see L<EVP_KEYMGMT-DHX(7)>
 
 =item DSA, see L<EVP_KEYMGMT-DSA(7)>
 
@@ -241,13 +279,55 @@ The OpenSSL default provider supports these operations and algorithms:
 
 =item EC, see L<EVP_KEYMGMT-EC(7)>
 
+=item ED25519, see L<EVP_KEYMGMT-ED25519(7)>
+
+=item ED448, see L<EVP_KEYMGMT-ED448(7)>
+
+=item SM2, see L<EVP_KEYMGMT-SM2(7)>
+
+=item DH, see L<EVP_KEYMGMT-DH(7)>
+
+=item DHX, see L<EVP_KEYMGMT-DHX(7)>
+
 =item X25519, see L<EVP_KEYMGMT-X25519(7)>
 
 =item X448, see L<EVP_KEYMGMT-X448(7)>
 
-=item ED25519, see L<EVP_KEYMGMT-ED25519(7)>
+=item ML-DSA-44, see L<EVP_KEYMGMT-ML-DSA(7)>
 
-=item ED448, see L<EVP_KEYMGMT-ED448(7)>
+=item ML-DSA-65, see L<EVP_KEYMGMT-ML-DSA(7)>
+
+=item ML-DSA-87, see L<EVP_KEYMGMT-ML-DSA(7)>
+
+=item MK-KEM-512, see L<EVP_KEYMGMT-ML-KEM-512(7)>
+
+=item MK-KEM-768, see L<EVP_KEYMGMT-ML-KEM-768(7)>
+
+=item MK-KEM-1024, see L<EVP_KEYMGMT-ML-KEM-1024(7)>
+
+=item SLH-DSA-SHA2-128s, see L<EVP_KEYMGMT-SLH-DSA(7)>
+
+=item SLH-DSA-SHA2-128f, see L<EVP_KEYMGMT-SLH-DSA(7)>
+
+=item SLH-DSA-SHA2-192s, see L<EVP_KEYMGMT-SLH-DSA(7)>
+
+=item SLH-DSA-SHA2-192f, see L<EVP_KEYMGMT-SLH-DSA(7)>
+
+=item SLH-DSA-SHA2-256s, see L<EVP_KEYMGMT-SLH-DSA(7)>
+
+=item SLH-DSA-SHA2-256f, see L<EVP_KEYMGMT-SLH-DSA(7)>
+
+=item SLH-DSA-SHAKE-128s, see L<EVP_KEYMGMT-SLH-DSA(7)>
+
+=item SLH-DSA-SHAKE-128f, see L<EVP_KEYMGMT-SLH-DSA(7)>
+
+=item SLH-DSA-SHAKE-192s, see L<EVP_KEYMGMT-SLH-DSA(7)>
+
+=item SLH-DSA-SHAKE-192f, see L<EVP_KEYMGMT-SLH-DSA(7)>
+
+=item SLH-DSA-SHAKE-256s, see L<EVP_KEYMGMT-SLH-DSA(7)>
+
+=item SLH-DSA-SHAKE-256f, see L<EVP_KEYMGMT-SLH-DSA(7)>
 
 =item TLS1-PRF
 
@@ -262,8 +342,6 @@ The OpenSSL default provider supports these operations and algorithms:
 =item POLY1305, see L<EVP_KEYMGMT-Poly1305(7)>
 
 =item CMAC, see L<EVP_KEYMGMT-CMAC(7)>
-
-=item SM2, see L<EVP_KEYMGMT-SM2(7)>
 
 =back
 
@@ -314,6 +392,42 @@ are also available in the base provider.
 
 =item SM2
 
+=item ML-DSA-44
+
+=item ML-DSA-65
+
+=item ML-DSA-87
+
+=item ML-KEM-512
+
+=item ML-KEM-768
+
+=item ML-KEM-1024
+
+=item SLH-DSA-SHA2-128s
+
+=item SLH-DSA-SHA2-128f
+
+=item SLH-DSA-SHA2-192s
+
+=item SLH-DSA-SHA2-192f
+
+=item SLH-DSA-SHA2-256s
+
+=item SLH-DSA-SHA2-256f
+
+=item SLH-DSA-SHAKE-128s
+
+=item SLH-DSA-SHAKE-128f
+
+=item SLH-DSA-SHAKE-192s
+
+=item SLH-DSA-SHAKE-192f
+
+=item SLH-DSA-SHAKE-256s
+
+=item SLH-DSA-SHAKE-256f
+
 =back
 
 In addition to this provider, all of these encoding algorithms are also
@@ -346,7 +460,41 @@ combination with the FIPS provider.
 
 =item SM2
 
-=item DER
+=item ML-DSA-44
+
+=item ML-DSA-65
+
+=item ML-DSA-87
+
+=item ML-KEM-512
+
+=item ML-KEM-768
+
+=item ML-KEM-1024
+
+=item SLH-DSA-SHA2-128s
+
+=item SLH-DSA-SHA2-128f
+
+=item SLH-DSA-SHA2-192s
+
+=item SLH-DSA-SHA2-192f
+
+=item SLH-DSA-SHA2-256s
+
+=item SLH-DSA-SHA2-256f
+
+=item SLH-DSA-SHAKE-128s
+
+=item SLH-DSA-SHAKE-128f
+
+=item SLH-DSA-SHAKE-192s
+
+=item SLH-DSA-SHAKE-192f
+
+=item SLH-DSA-SHAKE-256s
+
+=item SLH-DSA-SHAKE-256f
 
 =back
 

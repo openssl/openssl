@@ -23,6 +23,8 @@
 #include <openssl/store.h>
 #include <openssl/core_names.h>
 #include <openssl/rand.h>
+#include <openssl/safestack.h>
+#include <openssl/ssl.h>
 #include <openssl/tls1.h>
 #include "apps.h"
 #include "app_params.h"
@@ -56,6 +58,7 @@ IS_FETCHABLE(mac, EVP_MAC)
 IS_FETCHABLE(kdf, EVP_KDF)
 IS_FETCHABLE(rand, EVP_RAND)
 IS_FETCHABLE(keymgmt, EVP_KEYMGMT)
+IS_FETCHABLE(skeymgmt, EVP_SKEYMGMT)
 IS_FETCHABLE(signature, EVP_SIGNATURE)
 IS_FETCHABLE(kem, EVP_KEM)
 IS_FETCHABLE(asym_cipher, EVP_ASYM_CIPHER)
@@ -101,8 +104,9 @@ static void collect_ciphers(EVP_CIPHER *cipher, void *stack)
     STACK_OF(EVP_CIPHER) *cipher_stack = stack;
 
     if (is_cipher_fetchable(cipher)
-            && sk_EVP_CIPHER_push(cipher_stack, cipher) > 0)
-        EVP_CIPHER_up_ref(cipher);
+            && EVP_CIPHER_up_ref(cipher)
+            && sk_EVP_CIPHER_push(cipher_stack, cipher) <= 0)
+        EVP_CIPHER_free(cipher); /* up-ref successful but push to stack failed */
 }
 
 static void list_ciphers(const char *prefix)
@@ -185,8 +189,9 @@ static void collect_digests(EVP_MD *digest, void *stack)
     STACK_OF(EVP_MD) *digest_stack = stack;
 
     if (is_digest_fetchable(digest)
-            && sk_EVP_MD_push(digest_stack, digest) > 0)
-        EVP_MD_up_ref(digest);
+            && EVP_MD_up_ref(digest)
+            && sk_EVP_MD_push(digest_stack, digest) <= 0)
+        EVP_MD_free(digest); /* up-ref successful but push to stack failed */
 }
 
 static void list_digests(const char *prefix)
@@ -317,8 +322,9 @@ static void collect_kdfs(EVP_KDF *kdf, void *stack)
     STACK_OF(EVP_KDF) *kdf_stack = stack;
 
     if (is_kdf_fetchable(kdf)
-            && sk_EVP_KDF_push(kdf_stack, kdf) > 0)
-        EVP_KDF_up_ref(kdf);
+            && EVP_KDF_up_ref(kdf)
+            && sk_EVP_KDF_push(kdf_stack, kdf) <= 0)
+        EVP_KDF_free(kdf); /* up-ref successful but push to stack failed */
 }
 
 static void list_kdfs(void)
@@ -387,8 +393,9 @@ static void collect_rands(EVP_RAND *rand, void *stack)
     STACK_OF(EVP_RAND) *rand_stack = stack;
 
     if (is_rand_fetchable(rand)
-            && sk_EVP_RAND_push(rand_stack, rand) > 0)
-        EVP_RAND_up_ref(rand);
+            && EVP_RAND_up_ref(rand)
+            && sk_EVP_RAND_push(rand_stack, rand) <= 0)
+        EVP_RAND_free(rand); /* up-ref successful but push to stack failed */
 }
 
 static void list_random_generators(void)
@@ -513,8 +520,9 @@ static void collect_encoders(OSSL_ENCODER *encoder, void *stack)
     STACK_OF(OSSL_ENCODER) *encoder_stack = stack;
 
     if (is_encoder_fetchable(encoder)
-            && sk_OSSL_ENCODER_push(encoder_stack, encoder) > 0)
-        OSSL_ENCODER_up_ref(encoder);
+            && OSSL_ENCODER_up_ref(encoder)
+            && sk_OSSL_ENCODER_push(encoder_stack, encoder) <= 0)
+        OSSL_ENCODER_free(encoder); /* up-ref successful but push to stack failed */
 }
 
 static void list_encoders(void)
@@ -578,8 +586,9 @@ static void collect_decoders(OSSL_DECODER *decoder, void *stack)
     STACK_OF(OSSL_DECODER) *decoder_stack = stack;
 
     if (is_decoder_fetchable(decoder)
-            && sk_OSSL_DECODER_push(decoder_stack, decoder) > 0)
-        OSSL_DECODER_up_ref(decoder);
+            && OSSL_DECODER_up_ref(decoder)
+            && sk_OSSL_DECODER_push(decoder_stack, decoder) <= 0)
+        OSSL_DECODER_free(decoder); /* up-ref successful but push to stack failed */
 }
 
 static void list_decoders(void)
@@ -640,8 +649,9 @@ static void collect_keymanagers(EVP_KEYMGMT *km, void *stack)
     STACK_OF(EVP_KEYMGMT) *km_stack = stack;
 
     if (is_keymgmt_fetchable(km)
-            && sk_EVP_KEYMGMT_push(km_stack, km) > 0)
-        EVP_KEYMGMT_up_ref(km);
+            && EVP_KEYMGMT_up_ref(km)
+            && sk_EVP_KEYMGMT_push(km_stack, km) <= 0)
+        EVP_KEYMGMT_free(km); /* up-ref successful but push to stack failed */
 }
 
 static void list_keymanagers(void)
@@ -690,6 +700,61 @@ static void list_keymanagers(void)
     sk_EVP_KEYMGMT_pop_free(km_stack, EVP_KEYMGMT_free);
 }
 
+DEFINE_STACK_OF(EVP_SKEYMGMT)
+static int skeymanager_cmp(const EVP_SKEYMGMT * const *a,
+                           const EVP_SKEYMGMT * const *b)
+{
+    return strcmp(OSSL_PROVIDER_get0_name(EVP_SKEYMGMT_get0_provider(*a)),
+                  OSSL_PROVIDER_get0_name(EVP_SKEYMGMT_get0_provider(*b)));
+}
+
+static void collect_skeymanagers(EVP_SKEYMGMT *km, void *stack)
+{
+    STACK_OF(EVP_SKEYMGMT) *km_stack = stack;
+
+    if (is_skeymgmt_fetchable(km)
+            && sk_EVP_SKEYMGMT_push(km_stack, km) > 0)
+        EVP_SKEYMGMT_up_ref(km);
+}
+
+static void list_skeymanagers(void)
+{
+    int i;
+    STACK_OF(EVP_SKEYMGMT) *km_stack = sk_EVP_SKEYMGMT_new(skeymanager_cmp);
+
+    EVP_SKEYMGMT_do_all_provided(app_get0_libctx(), collect_skeymanagers,
+                                 km_stack);
+    sk_EVP_SKEYMGMT_sort(km_stack);
+
+    for (i = 0; i < sk_EVP_SKEYMGMT_num(km_stack); i++) {
+        EVP_SKEYMGMT *k = sk_EVP_SKEYMGMT_value(km_stack, i);
+        STACK_OF(OPENSSL_CSTRING) *names = NULL;
+
+        if (select_name != NULL && !EVP_SKEYMGMT_is_a(k, select_name))
+            continue;
+
+        names = sk_OPENSSL_CSTRING_new(name_cmp);
+        if (names != NULL && EVP_SKEYMGMT_names_do_all(k, collect_names, names)) {
+            const char *desc = EVP_SKEYMGMT_get0_description(k);
+
+            BIO_printf(bio_out, "  Name: ");
+            if (desc != NULL)
+                BIO_printf(bio_out, "%s", desc);
+            else
+                BIO_printf(bio_out, "%s", sk_OPENSSL_CSTRING_value(names, 0));
+            BIO_printf(bio_out, "\n");
+            BIO_printf(bio_out, "    Type: Provider Algorithm\n");
+            BIO_printf(bio_out, "    IDs: ");
+            print_names(bio_out, names);
+            BIO_printf(bio_out, " @ %s\n",
+                       OSSL_PROVIDER_get0_name(EVP_SKEYMGMT_get0_provider(k)));
+
+        }
+        sk_OPENSSL_CSTRING_free(names);
+    }
+    sk_EVP_SKEYMGMT_pop_free(km_stack, EVP_SKEYMGMT_free);
+}
+
 DEFINE_STACK_OF(EVP_SIGNATURE)
 static int signature_cmp(const EVP_SIGNATURE * const *a,
                          const EVP_SIGNATURE * const *b)
@@ -703,8 +768,9 @@ static void collect_signatures(EVP_SIGNATURE *sig, void *stack)
     STACK_OF(EVP_SIGNATURE) *sig_stack = stack;
 
     if (is_signature_fetchable(sig)
-            && sk_EVP_SIGNATURE_push(sig_stack, sig) > 0)
-        EVP_SIGNATURE_up_ref(sig);
+            && EVP_SIGNATURE_up_ref(sig)
+            && sk_EVP_SIGNATURE_push(sig_stack, sig) <= 0)
+        EVP_SIGNATURE_free(sig); /* up-ref successful but push to stack failed */
 }
 
 static void list_signatures(void)
@@ -776,6 +842,42 @@ static int list_tls_sigalg_caps(OSSL_PROVIDER *provider, void *cbdata)
     return 1;
 }
 
+#if !defined(OPENSSL_NO_TLS1_3) || !defined(OPENSSL_NO_TLS1_2)
+static void list_tls_groups(int version, int all)
+{
+    SSL_CTX *ctx = NULL;
+    STACK_OF(OPENSSL_CSTRING) *groups;
+    size_t i, num;
+
+    if ((groups = sk_OPENSSL_CSTRING_new_null()) == NULL) {
+        BIO_printf(bio_err, "ERROR: Memory allocation\n");
+        return;
+    }
+    if ((ctx = SSL_CTX_new(TLS_method())) == NULL) {
+        BIO_printf(bio_err, "ERROR: Memory allocation\n");
+        goto err;
+    }
+    if (!SSL_CTX_set_min_proto_version(ctx, version)
+        || !SSL_CTX_set_max_proto_version(ctx, version)) {
+        BIO_printf(bio_err, "ERROR: setting TLS protocol version\n");
+        goto err;
+    }
+    if (!SSL_CTX_get0_implemented_groups(ctx, all, groups)) {
+        BIO_printf(bio_err, "ERROR: getting implemented TLS group list\n");
+        goto err;
+    }
+    num = sk_OPENSSL_CSTRING_num(groups);
+    for (i = 0; i < num; ++i) {
+        BIO_printf(bio_out, "%s%c", sk_OPENSSL_CSTRING_value(groups, i),
+                   (i < num - 1) ? ':' : '\n');
+    }
+  err:
+    SSL_CTX_free(ctx);
+    sk_OPENSSL_CSTRING_free(groups);
+    return;
+}
+#endif
+
 static void list_tls_signatures(void)
 {
     int tls_sigalg_listed = 0;
@@ -811,8 +913,9 @@ static void collect_kem(EVP_KEM *kem, void *stack)
     STACK_OF(EVP_KEM) *kem_stack = stack;
 
     if (is_kem_fetchable(kem)
-            && sk_EVP_KEM_push(kem_stack, kem) > 0)
-        EVP_KEM_up_ref(kem);
+            && EVP_KEM_up_ref(kem)
+            && sk_EVP_KEM_push(kem_stack, kem) <= 0)
+        EVP_KEM_free(kem); /* up-ref successful but push to stack failed */
 }
 
 static void list_kems(void)
@@ -870,8 +973,9 @@ static void collect_asymciph(EVP_ASYM_CIPHER *asym_cipher, void *stack)
     STACK_OF(EVP_ASYM_CIPHER) *asym_cipher_stack = stack;
 
     if (is_asym_cipher_fetchable(asym_cipher)
-            && sk_EVP_ASYM_CIPHER_push(asym_cipher_stack, asym_cipher) > 0)
-        EVP_ASYM_CIPHER_up_ref(asym_cipher);
+            && EVP_ASYM_CIPHER_up_ref(asym_cipher)
+            && sk_EVP_ASYM_CIPHER_push(asym_cipher_stack, asym_cipher) <= 0)
+        EVP_ASYM_CIPHER_free(asym_cipher); /* up-ref successful but push to stack failed */
 }
 
 static void list_asymciphers(void)
@@ -932,8 +1036,9 @@ static void collect_kex(EVP_KEYEXCH *kex, void *stack)
     STACK_OF(EVP_KEYEXCH) *kex_stack = stack;
 
     if (is_keyexch_fetchable(kex)
-            && sk_EVP_KEYEXCH_push(kex_stack, kex) > 0)
-        EVP_KEYEXCH_up_ref(kex);
+            && EVP_KEYEXCH_up_ref(kex)
+            && sk_EVP_KEYEXCH_push(kex_stack, kex) <= 0)
+        EVP_KEYEXCH_free(kex); /* up-ref successful but push to stack failed */
 }
 
 static void list_keyexchanges(void)
@@ -1212,8 +1317,9 @@ static void collect_store_loaders(OSSL_STORE_LOADER *store, void *stack)
 {
     STACK_OF(OSSL_STORE_LOADER) *store_stack = stack;
 
-    if (sk_OSSL_STORE_LOADER_push(store_stack, store) > 0)
-        OSSL_STORE_LOADER_up_ref(store);
+    if (OSSL_STORE_LOADER_up_ref(store)
+            && sk_OSSL_STORE_LOADER_push(store_stack, store) <= 0)
+        OSSL_STORE_LOADER_free(store); /* up-ref successful but push to stack failed */
 }
 
 static void list_store_loaders(void)
@@ -1511,10 +1617,20 @@ typedef enum HELPLIST_CHOICE {
     OPT_PK_ALGORITHMS, OPT_PK_METHOD, OPT_DISABLED,
     OPT_KDF_ALGORITHMS, OPT_RANDOM_INSTANCES, OPT_RANDOM_GENERATORS,
     OPT_ENCODERS, OPT_DECODERS, OPT_KEYMANAGERS, OPT_KEYEXCHANGE_ALGORITHMS,
+    OPT_SKEYMANAGERS,
     OPT_KEM_ALGORITHMS, OPT_SIGNATURE_ALGORITHMS,
     OPT_TLS_SIGNATURE_ALGORITHMS, OPT_ASYM_CIPHER_ALGORITHMS,
     OPT_STORE_LOADERS, OPT_PROVIDER_INFO, OPT_OBJECTS,
     OPT_SELECT_NAME,
+#if !defined(OPENSSL_NO_TLS1_3) || !defined(OPENSSL_NO_TLS1_2)
+    OPT_ALL_TLS_GROUPS, OPT_TLS_GROUPS,
+# if !defined(OPENSSL_NO_TLS1_2)
+    OPT_TLS1_2,
+# endif
+# if !defined(OPENSSL_NO_TLS1_3)
+    OPT_TLS1_3,
+# endif
+#endif
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     OPT_ENGINES,
 #endif
@@ -1556,6 +1672,7 @@ const OPTIONS list_options[] = {
     {"encoders", OPT_ENCODERS, '-', "List of encoding methods" },
     {"decoders", OPT_DECODERS, '-', "List of decoding methods" },
     {"key-managers", OPT_KEYMANAGERS, '-', "List of key managers" },
+    {"skey-managers", OPT_SKEYMANAGERS, '-', "List of symmetric key managers" },
     {"key-exchange-algorithms", OPT_KEYEXCHANGE_ALGORITHMS, '-',
      "List of key exchange algorithms" },
     {"kem-algorithms", OPT_KEM_ALGORITHMS, '-',
@@ -1572,6 +1689,20 @@ const OPTIONS list_options[] = {
      "List of public key methods"},
     {"store-loaders", OPT_STORE_LOADERS, '-',
      "List of store loaders"},
+#if !defined(OPENSSL_NO_TLS1_2) || !defined(OPENSSL_NO_TLS1_3)
+    {"tls-groups", OPT_TLS_GROUPS, '-',
+     "List implemented TLS key exchange 'groups'" },
+    {"all-tls-groups", OPT_ALL_TLS_GROUPS, '-',
+     "List implemented TLS key exchange 'groups' and all aliases" },
+# ifndef OPENSSL_NO_TLS1_2
+    {"tls1_2", OPT_TLS1_2, '-',
+     "When listing 'groups', list those compatible with TLS1.2"},
+# endif
+# ifndef OPENSSL_NO_TLS1_3
+    {"tls1_3", OPT_TLS1_3, '-',
+     "When listing 'groups', list those compatible with TLS1.3"},
+# endif
+#endif
     {"providers", OPT_PROVIDER_INFO, '-',
      "List of provider information"},
 #ifndef OPENSSL_NO_DEPRECATED_3_0
@@ -1594,6 +1725,14 @@ int list_main(int argc, char **argv)
     HELPLIST_CHOICE o;
     int one = 0, done = 0;
     int print_newline = 0;
+#if !defined(OPENSSL_NO_TLS1_3) || !defined(OPENSSL_NO_TLS1_2)
+    int all_tls_groups = 0;
+# if !defined(OPENSSL_NO_TLS1_3)
+    unsigned int tls_version = TLS1_3_VERSION;
+# else
+    unsigned int tls_version = TLS1_2_VERSION;
+# endif
+#endif
     struct {
         unsigned int commands:1;
         unsigned int all_algorithms:1;
@@ -1608,10 +1747,12 @@ int list_main(int argc, char **argv)
         unsigned int encoder_algorithms:1;
         unsigned int decoder_algorithms:1;
         unsigned int keymanager_algorithms:1;
+        unsigned int skeymanager_algorithms:1;
         unsigned int signature_algorithms:1;
         unsigned int tls_signature_algorithms:1;
         unsigned int keyexchange_algorithms:1;
         unsigned int kem_algorithms:1;
+        unsigned int tls_groups:1;
         unsigned int asym_cipher_algorithms:1;
         unsigned int pk_algorithms:1;
         unsigned int pk_method:1;
@@ -1680,6 +1821,9 @@ opthelp:
         case OPT_KEYMANAGERS:
             todo.keymanager_algorithms = 1;
             break;
+        case OPT_SKEYMANAGERS:
+            todo.skeymanager_algorithms = 1;
+            break;
         case OPT_SIGNATURE_ALGORITHMS:
             todo.signature_algorithms = 1;
             break;
@@ -1692,6 +1836,25 @@ opthelp:
         case OPT_KEM_ALGORITHMS:
             todo.kem_algorithms = 1;
             break;
+#if !defined(OPENSSL_NO_TLS1_3) || !defined(OPENSSL_NO_TLS1_2)
+        case OPT_TLS_GROUPS:
+            todo.tls_groups = 1;
+            break;
+        case OPT_ALL_TLS_GROUPS:
+            all_tls_groups = 1;
+            todo.tls_groups = 1;
+            break;
+# if !defined(OPENSSL_NO_TLS1_2)
+        case OPT_TLS1_2:
+            tls_version = TLS1_2_VERSION;
+            break;
+# endif
+# if !defined(OPENSSL_NO_TLS1_3)
+        case OPT_TLS1_3:
+            tls_version = TLS1_3_VERSION;
+            break;
+# endif
+#endif
         case OPT_ASYM_CIPHER_ALGORITHMS:
             todo.asym_cipher_algorithms = 1;
             break;
@@ -1801,6 +1964,8 @@ opthelp:
         MAYBE_ADD_NL(list_decoders());
     if (todo.keymanager_algorithms)
         MAYBE_ADD_NL(list_keymanagers());
+    if (todo.skeymanager_algorithms)
+        MAYBE_ADD_NL(list_skeymanagers());
     if (todo.signature_algorithms)
         MAYBE_ADD_NL(list_signatures());
     if (todo.tls_signature_algorithms)
@@ -1811,6 +1976,10 @@ opthelp:
         MAYBE_ADD_NL(list_keyexchanges());
     if (todo.kem_algorithms)
         MAYBE_ADD_NL(list_kems());
+#if !defined(OPENSSL_NO_TLS1_3) || !defined(OPENSSL_NO_TLS1_2)
+    if (todo.tls_groups)
+        MAYBE_ADD_NL(list_tls_groups(tls_version, all_tls_groups));
+#endif
     if (todo.pk_algorithms)
         MAYBE_ADD_NL(list_pkey());
     if (todo.pk_method)

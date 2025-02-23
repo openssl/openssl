@@ -15,7 +15,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_req");
 
-plan tests => 111;
+plan tests => 113;
 
 require_ok(srctop_file('test', 'recipes', 'tconversion.pl'));
 
@@ -355,6 +355,55 @@ subtest "generating SM2 certificate requests" => sub {
     }
 };
 
+subtest "generating certificate requests with ML-DSA" => sub {
+    plan tests => 5;
+
+    SKIP: {
+        skip "ML-DSA is not supported by this OpenSSL build", 5
+            if disabled("ml-dsa");
+
+        ok(run(app(["openssl", "req",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-x509", "-sha256", "-nodes", "-days", "365",
+                    "-newkey", "ML-DSA-44",
+                    "-keyout",  "privatekey_ml_dsa_44.pem",
+                    "-out",  "cert_ml_dsa_44.pem",
+                    "-subj", "/CN=test-self-signed",
+                    "-addext","keyUsage=digitalSignature"])),
+                    "Generating self signed ML-DSA-44 cert and private key");
+        ok(run(app(["openssl", "req",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-x509", "-sha256", "-nodes", "-days", "365",
+                    "-newkey", "ML-DSA-65",
+                    "-keyout",  "privatekey_ml_dsa_65.pem",
+                    "-out",  "cert_ml_dsa_65.pem",
+                    "-subj", "/CN=test-self-signed",
+                    "-addext","keyUsage=digitalSignature"])),
+                    "Generating self signed ML-DSA-65 cert and private key");
+        ok(run(app(["openssl", "req",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-x509", "-sha256", "-nodes", "-days", "365",
+                    "-newkey", "ML-DSA-44",
+                    "-keyout",  "privatekey_ml_dsa_87.pem",
+                    "-out",  "cert_ml_dsa_87.pem",
+                    "-subj", "/CN=test-self-signed",
+                    "-addext","keyUsage=digitalSignature"])),
+                    "Generating self signed ML-DSA-87 cert and private key");
+        ok(run(app(["openssl", "req",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-new",
+                    "-sigopt","hextest-entropy:000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+                    "-out", "csr_ml_dsa_87.pem",
+                    "-newkey", "ML-DSA-87",
+                    "-passout", "pass:x"])),
+                    "Generating ML-DSA-87 csr");
+        ok(run(app(["openssl", "req",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-in", "csr_ml_dsa_87.pem"])),
+                    "verifying ML-DSA-87 csr");
+    }
+};
+
 subtest "generating certificate requests with -cipher flag" => sub {
     plan tests => 6;
 
@@ -403,6 +452,55 @@ subtest "generating certificate requests with -cipher flag" => sub {
     close $fh_aes128;
     ok($first_line_aes128 =~ /^-----BEGIN ENCRYPTED PRIVATE KEY-----/,
        "Check that the key file is encrypted (AES-128-CBC)");
+};
+
+subtest "generating certificate requests with SLH-DSA" => sub {
+    plan tests => 5;
+
+    SKIP: {
+        skip "SLH-DSA is not supported by this OpenSSL build", 5
+            if disabled("slh-dsa");
+
+        ok(run(app(["openssl", "req",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-x509", "-sha256", "-nodes", "-days", "365",
+                    "-newkey", "SLH-DSA-SHA2-128f",
+                    "-keyout",  "privatekey_slh_dsa_sha2_128f.pem",
+                    "-out",  "cert_slh_dsa_sha2_128f.pem",
+                    "-subj", "/CN=test-self-signed",
+                    "-addext","keyUsage=digitalSignature"])),
+                    "Generating self signed SLH-DSA-SHA2-128f cert and private key");
+        ok(run(app(["openssl", "req",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-x509", "-sha256", "-nodes", "-days", "365",
+                    "-newkey", "SLH-DSA-SHA2-256s",
+                    "-keyout",  "privatekey_slh_dsa_sha2_256s.pem",
+                    "-out",  "cert_slh_dsa_sha2_256s.pem",
+                    "-subj", "/CN=test-self-signed",
+                    "-addext","keyUsage=digitalSignature"])),
+                    "Generating self signed SLH-DSA-SHA2-256s cert and private key");
+        ok(run(app(["openssl", "req",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-x509", "-sha256", "-nodes", "-days", "365",
+                    "-newkey", "SLH-DSA-SHAKE-256f",
+                    "-keyout",  "privatekey_slh_dsa_shake_256f.pem",
+                    "-out",  "cert_slh_dsa_shake_256f.pem",
+                    "-subj", "/CN=test-self-signed",
+                    "-addext","keyUsage=digitalSignature"])),
+                    "Generating self signed SLH-DSA-SHAKE-256f cert and private key");
+        ok(run(app(["openssl", "req",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-new",
+                    "-sigopt","hextest-entropy:000102030405060708090a0b0c0d0e0f",
+                    "-out", "csr_slh_dsa_shake128.pem",
+                    "-newkey", "SLH-DSA-SHAKE-128s",
+                    "-passout", "pass:x"])),
+                    "Generating SLH-DSA-SHAKE-128s csr");
+        ok(run(app(["openssl", "req",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-in", "csr_slh_dsa_shake128.pem"])),
+                    "verifying SLH-DSA-SHAKE-128s csr");
+    }
 };
 
 my @openssl_args = ("req", "-config", srctop_file("apps", "openssl.cnf"));

@@ -16,6 +16,7 @@
 #include <openssl/decoder.h>
 #include <openssl/core_dispatch.h>
 #include "internal/nelem.h"
+#include "internal/ssl_unwrap.h"
 
 /*
  * structure holding name tables. This is used for permitted elements in lists
@@ -88,7 +89,9 @@ struct ssl_conf_ctx_st {
     /* Pointer to SSL or SSL_CTX options field or NULL if none */
     uint64_t *poptions;
     /* Certificate filenames for each type */
-    char *cert_filename[SSL_PKEY_NUM];
+    char **cert_filename;
+    /* Number of elements in the cert_filename array */
+    size_t num_cert_filename;
     /* Pointer to SSL or SSL_CTX cert_flags or NULL if none */
     uint32_t *pcert_flags;
     /* Pointer to SSL or SSL_CTX verify_mode or NULL if none */
@@ -453,12 +456,18 @@ static int cmd_Certificate(SSL_CONF_CTX *cctx, const char *value)
         }
     }
     if (rv > 0 && c != NULL && cctx->flags & SSL_CONF_FLAG_REQUIRE_PRIVATE) {
-        char **pfilename = &cctx->cert_filename[c->key - c->pkeys];
+        size_t fileidx = c->key - c->pkeys;
 
-        OPENSSL_free(*pfilename);
-        *pfilename = OPENSSL_strdup(value);
-        if (*pfilename == NULL)
+        if (fileidx >= cctx->num_cert_filename) {
             rv = 0;
+        } else {
+            char **pfilename = &cctx->cert_filename[c->key - c->pkeys];
+
+            OPENSSL_free(*pfilename);
+            *pfilename = OPENSSL_strdup(value);
+            if (*pfilename == NULL)
+                rv = 0;
+        }
     }
 
     return rv > 0;
@@ -1051,12 +1060,13 @@ int SSL_CONF_CTX_finish(SSL_CONF_CTX *cctx)
             c = sc->cert;
     }
     if (c != NULL && cctx->flags & SSL_CONF_FLAG_REQUIRE_PRIVATE) {
-        for (i = 0; i < SSL_PKEY_NUM; i++) {
+        for (i = 0; i < cctx->num_cert_filename; i++) {
             const char *p = cctx->cert_filename[i];
+
             /*
              * If missing private key try to load one from certificate file
              */
-            if (p && !c->pkeys[i].privatekey) {
+            if (p != NULL && c->pkeys[i].privatekey == NULL) {
                 if (!cmd_PrivateKey(cctx, p))
                     return 0;
             }
@@ -1074,12 +1084,21 @@ int SSL_CONF_CTX_finish(SSL_CONF_CTX *cctx)
     return 1;
 }
 
+static void free_cert_filename(SSL_CONF_CTX *cctx)
+{
+    size_t i;
+
+    for (i = 0; i < cctx->num_cert_filename; i++)
+        OPENSSL_free(cctx->cert_filename[i]);
+    OPENSSL_free(cctx->cert_filename);
+    cctx->cert_filename = NULL;
+    cctx->num_cert_filename = 0;
+}
+
 void SSL_CONF_CTX_free(SSL_CONF_CTX *cctx)
 {
     if (cctx) {
-        size_t i;
-        for (i = 0; i < SSL_PKEY_NUM; i++)
-            OPENSSL_free(cctx->cert_filename[i]);
+        free_cert_filename(cctx);
         OPENSSL_free(cctx->prefix);
         sk_X509_NAME_pop_free(cctx->canames, X509_NAME_free);
         OPENSSL_free(cctx);
@@ -1119,6 +1138,7 @@ void SSL_CONF_CTX_set_ssl(SSL_CONF_CTX *cctx, SSL *ssl)
 {
     cctx->ssl = ssl;
     cctx->ctx = NULL;
+    free_cert_filename(cctx);
     if (ssl != NULL) {
         SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
 
@@ -1129,6 +1149,10 @@ void SSL_CONF_CTX_set_ssl(SSL_CONF_CTX *cctx, SSL *ssl)
         cctx->max_version = &sc->max_proto_version;
         cctx->pcert_flags = &sc->cert->cert_flags;
         cctx->pvfy_flags = &sc->verify_mode;
+        cctx->cert_filename = OPENSSL_zalloc(sc->ssl_pkey_num
+                                             * sizeof(*cctx->cert_filename));
+        if (cctx->cert_filename != NULL)
+            cctx->num_cert_filename = sc->ssl_pkey_num;
     } else {
         cctx->poptions = NULL;
         cctx->min_version = NULL;
@@ -1142,12 +1166,17 @@ void SSL_CONF_CTX_set_ssl_ctx(SSL_CONF_CTX *cctx, SSL_CTX *ctx)
 {
     cctx->ctx = ctx;
     cctx->ssl = NULL;
+    free_cert_filename(cctx);
     if (ctx) {
         cctx->poptions = &ctx->options;
         cctx->min_version = &ctx->min_proto_version;
         cctx->max_version = &ctx->max_proto_version;
         cctx->pcert_flags = &ctx->cert->cert_flags;
         cctx->pvfy_flags = &ctx->verify_mode;
+        cctx->cert_filename = OPENSSL_zalloc((SSL_PKEY_NUM + ctx->sigalg_list_len)
+                                             * sizeof(*cctx->cert_filename));
+        if (cctx->cert_filename != NULL)
+            cctx->num_cert_filename = SSL_PKEY_NUM + ctx->sigalg_list_len;
     } else {
         cctx->poptions = NULL;
         cctx->min_version = NULL;

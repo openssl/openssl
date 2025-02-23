@@ -2808,7 +2808,7 @@ static int test_wire_pkt_hdr_actual(int tidx, int repeat, int cipher,
         goto err;
 
     if (!TEST_int_eq(ossl_quic_wire_decode_pkt_hdr(&pkt, t->short_conn_id_len,
-                                                   0, 0, &hdr, &ptrs),
+                                                   0, 0, &hdr, &ptrs, NULL),
                      !expect_fail))
         goto err;
 

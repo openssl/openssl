@@ -77,9 +77,9 @@ OpenSSL providers allow it for the following:
 
 =over 4
 
-=item DH, EC, X25519, X448:
+=item DH, EC, X25519, X448, ML-KEM (512, 768 and 1024):
 
-It's possible to set the encoded public key.  This is supported in
+It is possible to set the encoded public key.  This is supported in
 particular through L<EVP_PKEY_set1_encoded_public_key(3)>.
 
 =item EC:
@@ -198,7 +198,12 @@ reflected back in the provider key.
 
 =head1 SEE ALSO
 
-L<provider-keymgmt(7)>
+L<provider-keymgmt(7)>,
+L<EVP_PKEY-DH(7)>,
+L<EVP_PKEY-EC(7)>,
+L<EVP_PKEY-X25519(7)>,
+L<EVP_PKEY-ML-DSA(7)>,
+L<EVP_PKEY-ML-KEM(7)>.
 
 =head1 COPYRIGHT
 

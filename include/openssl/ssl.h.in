@@ -1336,6 +1336,9 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 # define SSL_CTRL_SET_RETRY_VERIFY               136
 # define SSL_CTRL_GET_VERIFY_CERT_STORE          137
 # define SSL_CTRL_GET_CHAIN_CERT_STORE           138
+# define SSL_CTRL_GET0_IMPLEMENTED_GROUPS        139
+# define SSL_CTRL_GET_SIGNATURE_NAME             140
+# define SSL_CTRL_GET_PEER_SIGNATURE_NAME        141
 # define SSL_CERT_SET_FIRST                      1
 # define SSL_CERT_SET_NEXT                       2
 # define SSL_CERT_SET_SERVER                     3
@@ -1444,6 +1447,9 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
         SSL_CTX_ctrl(ctx,SSL_CTRL_SET_GROUPS,glistlen,(int *)(glist))
 # define SSL_CTX_set1_groups_list(ctx, s) \
         SSL_CTX_ctrl(ctx,SSL_CTRL_SET_GROUPS_LIST,0,(char *)(s))
+# define SSL_CTX_get0_implemented_groups(ctx, all, out) \
+        SSL_CTX_ctrl(ctx,SSL_CTRL_GET0_IMPLEMENTED_GROUPS, all, \
+        (STACK_OF(OPENSSL_CSTRING) *)(out))
 # define SSL_set1_groups(s, glist, glistlen) \
         SSL_ctrl(s,SSL_CTRL_SET_GROUPS,glistlen,(char *)(glist))
 # define SSL_set1_groups_list(s, str) \
@@ -1475,8 +1481,12 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
                      (char *)(clist))
 # define SSL_set1_client_certificate_types(s, clist, clistlen) \
         SSL_ctrl(s,SSL_CTRL_SET_CLIENT_CERT_TYPES,clistlen,(char *)(clist))
+# define SSL_get0_signature_name(s, str) \
+        SSL_ctrl(s,SSL_CTRL_GET_SIGNATURE_NAME,0,(1?(str):(const char **)NULL))
 # define SSL_get_signature_nid(s, pn) \
         SSL_ctrl(s,SSL_CTRL_GET_SIGNATURE_NID,0,pn)
+# define SSL_get0_peer_signature_name(s, str) \
+        SSL_ctrl(s,SSL_CTRL_GET_PEER_SIGNATURE_NAME,0,(1?(str):(const char **)NULL))
 # define SSL_get_peer_signature_nid(s, pn) \
         SSL_ctrl(s,SSL_CTRL_GET_PEER_SIGNATURE_NID,0,pn)
 # define SSL_get_peer_tmp_key(s, pk) \
@@ -1897,6 +1907,11 @@ OSSL_DEPRECATEDIN_3_0 __owur char *SSL_get_srp_userinfo(SSL *s);
 typedef int (*SSL_client_hello_cb_fn) (SSL *s, int *al, void *arg);
 void SSL_CTX_set_client_hello_cb(SSL_CTX *c, SSL_client_hello_cb_fn cb,
                                  void *arg);
+typedef int (*SSL_new_pending_conn_cb_fn) (SSL_CTX *ctx, SSL *new_ssl,
+                                           void *arg);
+void SSL_CTX_set_new_pending_conn_cb(SSL_CTX *c, SSL_new_pending_conn_cb_fn cb,
+                                     void *arg);
+
 int SSL_client_hello_isv2(SSL *s);
 unsigned int SSL_client_hello_get0_legacy_version(SSL *s);
 size_t SSL_client_hello_get0_random(SSL *s, const unsigned char **out);
@@ -2291,6 +2306,31 @@ __owur int SSL_get_blocking_mode(SSL *s);
 __owur int SSL_set1_initial_peer_addr(SSL *s, const BIO_ADDR *peer_addr);
 __owur SSL *SSL_get0_connection(SSL *s);
 __owur int SSL_is_connection(SSL *s);
+
+__owur int SSL_is_listener(SSL *ssl);
+__owur SSL *SSL_get0_listener(SSL *s);
+#define SSL_LISTENER_FLAG_NO_VALIDATE   (1UL << 1)
+__owur SSL *SSL_new_listener(SSL_CTX *ctx, uint64_t flags);
+__owur SSL *SSL_new_listener_from(SSL *ssl, uint64_t flags);
+__owur SSL *SSL_new_from_listener(SSL *ssl, uint64_t flags);
+#define SSL_ACCEPT_CONNECTION_NO_BLOCK  (1UL << 0)
+__owur SSL *SSL_accept_connection(SSL *ssl, uint64_t flags);
+__owur size_t SSL_get_accept_connection_queue_len(SSL *ssl);
+__owur int SSL_listen(SSL *ssl);
+
+__owur int SSL_is_domain(SSL *s);
+__owur SSL *SSL_get0_domain(SSL *s);
+__owur SSL *SSL_new_domain(SSL_CTX *ctx, uint64_t flags);
+
+#define SSL_DOMAIN_FLAG_SINGLE_THREAD       (1U << 0)
+#define SSL_DOMAIN_FLAG_MULTI_THREAD        (1U << 1)
+#define SSL_DOMAIN_FLAG_THREAD_ASSISTED     (1U << 2)
+#define SSL_DOMAIN_FLAG_BLOCKING            (1U << 3)
+#define SSL_DOMAIN_FLAG_LEGACY_BLOCKING     (1U << 4)
+
+__owur int SSL_CTX_set_domain_flags(SSL_CTX *ctx, uint64_t domain_flags);
+__owur int SSL_CTX_get_domain_flags(const SSL_CTX *ctx, uint64_t *domain_flags);
+__owur int SSL_get_domain_flags(const SSL *ssl, uint64_t *domain_flags);
 
 #define SSL_STREAM_TYPE_NONE        0
 #define SSL_STREAM_TYPE_READ        (1U << 0)
@@ -2824,6 +2864,21 @@ __owur int SSL_get0_client_cert_type(const SSL *s, unsigned char **t, size_t *le
 __owur int SSL_get0_server_cert_type(const SSL *s, unsigned char **t, size_t *len);
 __owur int SSL_CTX_get0_client_cert_type(const SSL_CTX *ctx, unsigned char **t, size_t *len);
 __owur int SSL_CTX_get0_server_cert_type(const SSL_CTX *s, unsigned char **t, size_t *len);
+
+/*
+ * Protection level. For <= TLSv1.2 only "NONE" and "APPLICATION" are used.
+ */
+# define OSSL_RECORD_PROTECTION_LEVEL_NONE        0
+# define OSSL_RECORD_PROTECTION_LEVEL_EARLY       1
+# define OSSL_RECORD_PROTECTION_LEVEL_HANDSHAKE   2
+# define OSSL_RECORD_PROTECTION_LEVEL_APPLICATION 3
+
+int SSL_set_quic_tls_cbs(SSL *s, const OSSL_DISPATCH *qtdis, void *arg);
+int SSL_set_quic_tls_transport_params(SSL *s,
+                                      const unsigned char *params,
+                                      size_t params_len);
+
+int SSL_set_quic_tls_early_data_enabled(SSL *s, int enabled);
 
 # ifdef  __cplusplus
 }

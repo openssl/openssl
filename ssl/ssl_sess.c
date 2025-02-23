@@ -17,6 +17,7 @@
 #include <openssl/engine.h>
 #include "internal/refcount.h"
 #include "internal/cryptlib.h"
+#include "internal/ssl_unwrap.h"
 #include "ssl_local.h"
 #include "statem/statem_local.h"
 
@@ -82,8 +83,8 @@ SSL_SESSION *SSL_get1_session(SSL *ssl)
     if (!CRYPTO_THREAD_read_lock(ssl->lock))
         return NULL;
     sess = SSL_get_session(ssl);
-    if (sess != NULL)
-        SSL_SESSION_up_ref(sess);
+    if (sess != NULL && !SSL_SESSION_up_ref(sess))
+        sess = NULL;
     CRYPTO_THREAD_unlock(ssl->lock);
     return sess;
 }
@@ -512,7 +513,10 @@ SSL_SESSION *lookup_sess_in_cache(SSL_CONNECTION *s,
         ret = lh_SSL_SESSION_retrieve(s->session_ctx->sessions, &data);
         if (ret != NULL) {
             /* don't allow other threads to steal it: */
-            SSL_SESSION_up_ref(ret);
+            if (!SSL_SESSION_up_ref(ret)) {
+                CRYPTO_THREAD_unlock(s->session_ctx->lock);
+                return NULL;
+            }
         }
         CRYPTO_THREAD_unlock(s->session_ctx->lock);
         if (ret == NULL)
@@ -542,8 +546,8 @@ SSL_SESSION *lookup_sess_in_cache(SSL_CONNECTION *s,
              * reference count itself [i.e. copy == 0], or things won't be
              * thread-safe).
              */
-            if (copy)
-                SSL_SESSION_up_ref(ret);
+            if (copy && !SSL_SESSION_up_ref(ret))
+                return NULL;
 
             /*
              * Add the externally cached session to the internal cache as
@@ -726,7 +730,8 @@ int SSL_CTX_add_session(SSL_CTX *ctx, SSL_SESSION *c)
      * it has two ways of access: each session is in a doubly linked list and
      * an lhash
      */
-    SSL_SESSION_up_ref(c);
+    if (!SSL_SESSION_up_ref(c))
+        return 0;
     /*
      * if session c is in already in cache, we take back the increment later
      */
@@ -890,16 +895,20 @@ int SSL_set_session(SSL *s, SSL_SESSION *session)
     if (sc == NULL)
         return 0;
 
+    if (session != NULL && !SSL_SESSION_up_ref(session))
+        return 0;
+
     ssl_clear_bad_session(sc);
     if (s->defltmeth != s->method) {
-        if (!SSL_set_ssl_method(s, s->defltmeth))
+        if (!SSL_set_ssl_method(s, s->defltmeth)) {
+            SSL_SESSION_free(session);
             return 0;
+        }
     }
 
-    if (session != NULL) {
-        SSL_SESSION_up_ref(session);
+    if (session != NULL)
         sc->verify_result = session->verify_result;
-    }
+
     SSL_SESSION_free(sc->session);
     sc->session = session;
 

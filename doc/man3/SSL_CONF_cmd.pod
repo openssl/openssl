@@ -121,11 +121,13 @@ algorithms in order of decreasing preference of the form B<algorithm+hash>
 or B<signature_scheme>. For the default providers shipped with OpenSSL,
 B<algorithm> is one of B<RSA>, B<DSA> or B<ECDSA> and
 B<hash> is a supported algorithm OID short name such as B<SHA1>, B<SHA224>,
-B<SHA256>, B<SHA384> or B<SHA512>.  Note: algorithm and hash names are case
-sensitive.  B<signature_scheme> is one of the signature schemes defined in
-TLSv1.3, specified using the IETF name, e.g., B<ecdsa_secp256r1_sha256>,
+B<SHA256>, B<SHA384> or B<SHA512>.
+B<signature_scheme> is one of the signature schemes defined
+in TLSv1.3, specified using the IETF name, e.g., B<ecdsa_secp256r1_sha256>,
 B<ed25519>, or B<rsa_pss_pss_sha256>. Additional providers may make available
 further algorithms via the TLS-SIGALG capability.
+Signature scheme names and public key algorithm names (but not the hash names)
+in the B<algorithm+hash> form are case-insensitive.
 See L<provider-base(7)>.
 
 If this option is not set then all signature algorithms supported by all
@@ -152,21 +154,45 @@ value set for B<-sigalgs> will be used instead.
 This sets the supported groups. For clients, the groups are sent using
 the supported groups extension. For servers, it is used to determine which
 group to use. This setting affects groups used for signatures (in TLSv1.2
-and earlier) and key exchange. The first group listed will also be used
-for the B<key_share> sent by a client in a TLSv1.3 B<ClientHello>.
+and earlier) and key exchange.
 
-The B<groups> argument is a colon separated list of groups. The group can
-be either the B<NIST> name (e.g. B<P-256>), some other commonly used name
-where applicable (e.g. B<X25519>, B<ffdhe2048>) or an OpenSSL OID name
-(e.g. B<prime256v1>). Group names are case sensitive. The list should be
-in order of preference with the most preferred group first.
+In its simplest form the I<groups> argument is a colon separated list of
+groups.  The preferred names are those listed in the IANA
+L<TLS Supported Groups|https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-8>
+registry.
 
-Groups for B<TLSv1.3> in the default provider are B<P-256>, B<P-384>,
-B<P-521>, B<X25519>, B<X448>, B<ffdhe2048>, B<ffdhe3072>, B<ffdhe4096>,
-B<ffdhe6144>, B<ffdhe8192>, B<brainpoolP256r1tls13>,
-B<brainpoolP384r1tls13> and B<brainpoolP512r1tls13>.
-Additional providers may make available further algorithms via the
-TLS-GROUP capability. See L<provider-base(7)>.
+For some groups, OpenSSL supports additional aliases.
+Such an alias could be a B<NIST> name (e.g. B<P-256>), an OpenSSL OID name
+(e.g. B<prime256v1>), or some other commonly used name.
+Group names are case sensitive.
+The list should be in order of preference with the most preferred group first.
+
+The first group listed will also be used for the B<key_share> sent by a client
+in a TLSv1.3 B<ClientHello>.
+
+The commands below list the IANA names for TLS 1.2 and TLS 1.3,
+respectively:
+
+    $ openssl list -tls1_2 -tls-groups
+    $ openssl list -tls1_3 -tls-groups
+
+The recommended groups (in order of decreasing performance) for TLS 1.3 are presently:
+
+B<x25519>,
+B<secp256r1>,
+B<x448>,
+and
+B<secp384r1>.
+
+The stronger security margins of the last two, come at a significant
+performance penalty.
+
+An enriched alternative syntax, that enables clients to send multiple keyshares
+and allows servers to prioritise some groups over others, is described in
+L<SSL_CTX_set1_groups_list(3)>.
+Since TLS 1.2 has neither keyshares nor a hello retry mechanism, with TLS 1.2
+the enriched syntax is ultimately equivalent to just a simple ordered list of
+groups, as with the simple form above.
 
 =item B<-curves> I<groups>
 
@@ -391,12 +417,13 @@ B<signature_scheme>. For the default providers shipped with OpenSSL,
 B<algorithm> is one of B<RSA>, B<DSA> or B<ECDSA> and B<hash> is a supported
 algorithm OID short name such as B<SHA1>, B<SHA224>, B<SHA256>, B<SHA384>
 or B<SHA512>.
-Note: algorithm and hash names are case sensitive.
 B<signature_scheme> is one of the signature schemes defined in TLSv1.3,
-specified using the IETF name, e.g., B<ecdsa_secp256r1_sha256>, B<ed25519>,
+specified using the IANA name, e.g., B<ecdsa_secp256r1_sha256>, B<ed25519>,
 or B<rsa_pss_pss_sha256>.
-Additional providers may make available further algorithms via the TLS_SIGALG
-capability. See L<provider-base(7)/CAPABILITIES>.
+Signature scheme names and public key algorithm names (but not the hash names)
+in the B<algorithm+hash> form are case-insensitive.
+Additional providers may make available further signature schemes via the
+TLS_SIGALG capability. See L<provider-base(7)/CAPABILITIES>.
 
 If this option is not set then all signature algorithms supported by all
 activated providers are permissible.
@@ -427,15 +454,28 @@ signatures (in TLSv1.2 and earlier) and key exchange. The first group listed
 will also be used for the B<key_share> sent by a client in a TLSv1.3
 B<ClientHello>.
 
-The B<value> argument is a colon separated list of groups. The group can be
-either the B<NIST> name (e.g. B<P-256>), some other commonly used name where
-applicable (e.g. B<X25519>, B<ffdhe2048>) or an OpenSSL OID name
-(e.g. B<prime256v1>). Group names are case sensitive. The list should be in
-order of preference with the most preferred group first.
+The B<groups> argument is a colon separated list of groups.  The preferred
+names are those listed in the IANA
+L<TLS Supported Groups|https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-8>
+registry.
+For some groups, OpenSSL supports additional aliases.
+Such an alias could be a B<NIST> name (e.g. B<P-256>), an OpenSSL OID name
+(e.g. B<prime256v1>), or some other commonly used name.
+Group names are case sensitive.
+The list should be in order of preference with the most preferred group first.
 
-Currently supported groups for B<TLSv1.3> are B<P-256>, B<P-384>, B<P-521>,
-B<X25519>, B<X448>, B<ffdhe2048>, B<ffdhe3072>, B<ffdhe4096>, B<ffdhe6144>,
-B<ffdhe8192>.
+The commands below list the available groups for TLS 1.2 and TLS 1.3,
+respectively:
+
+    $ openssl list -tls1_2 -tls-groups
+    $ openssl list -tls1_3 -tls-groups
+
+An enriched alternative syntax, that enables clients to send multiple keyshares
+and allows servers to prioritise some groups over others, is described in
+L<SSL_CTX_set1_groups_list(3)>.
+Since TLS 1.2 has neither keyshares nor a hello retry mechanism, with TLS 1.2
+the enriched syntax is ultimately equivalent to just a simple ordered list of
+groups, as with the simple form above.
 
 =item B<Curves>
 
@@ -814,6 +854,22 @@ The B<TxCertificateCompression> and B<RxCertificateCompression> options were
 added in OpenSSL 3.2.
 
 B<PreferNoDHEKEX> was added in OpenSSL 3.3.
+
+OpenSSL 3.5 introduces support for post-quantum (PQ) TLS key exchange via the
+B<MLKEM512>, B<MLKEM768> and B<MLKEM1024> TLS groups.
+These are based on the underlying B<ML-KEM-512>, B<ML-KEM-768> and
+B<ML-KEM-1024> algorithms from FIPS 203.
+
+OpenSSL 3.5 also introduces support for three I<hybrid> ECDH PQ key exchange
+TLS I<groups>: B<X25519MLKEM768>, B<SecP256r1MLKEM768> and
+B<SecP384r1MLKEM1024>.
+They offer CPU performance comparable to the associated ECDH group, though at
+the cost of significantly larger key exchange messages.
+The third group, B<SecP384r1MLKEM1024> is substantially more CPU-intensive,
+largely as a result of the high CPU cost of ECDH for the underlying B<P-384>
+group.
+Also its key exchange messages at close to 1700 bytes are larger than the
+roughly 1200 bytes for the first two groups.
 
 =head1 COPYRIGHT
 

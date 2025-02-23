@@ -71,6 +71,4 @@ export OPENSSL_MODULES=$PWD/_build/lib
 export OQS_PROVIDER_TESTSCRIPTS=$SRCTOP/oqs-provider/scripts
 export OPENSSL_CONF=$OQS_PROVIDER_TESTSCRIPTS/openssl-ca.cnf
 # Be verbose if harness is verbose:
-# Fixup for oqsprovider release snafu:
-cp $SRCTOP/test/recipes/95-test_external_oqsprovider_data/oqsprovider-pkcs12gen.sh $SRCTOP/oqs-provider/scripts/
 $SRCTOP/oqs-provider/scripts/runtests.sh -V

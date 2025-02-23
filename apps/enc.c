@@ -49,7 +49,8 @@ typedef enum OPTION_choice {
     OPT_NOPAD, OPT_SALT, OPT_NOSALT, OPT_DEBUG, OPT_UPPER_P, OPT_UPPER_A,
     OPT_A, OPT_Z, OPT_BUFSIZE, OPT_K, OPT_KFILE, OPT_UPPER_K, OPT_NONE,
     OPT_UPPER_S, OPT_IV, OPT_MD, OPT_ITER, OPT_PBKDF2, OPT_CIPHER,
-    OPT_SALTLEN, OPT_R_ENUM, OPT_PROV_ENUM
+    OPT_SALTLEN, OPT_R_ENUM, OPT_PROV_ENUM,
+    OPT_SKEYOPT, OPT_SKEYMGMT
 } OPTION_CHOICE;
 
 const OPTIONS enc_options[] = {
@@ -105,6 +106,8 @@ const OPTIONS enc_options[] = {
 #ifndef OPENSSL_NO_ZLIB
     {"z", OPT_Z, '-', "Compress or decompress encrypted data using zlib"},
 #endif
+    {"skeyopt", OPT_SKEYOPT, 's', "Key options as opt:value for opaque symmetric key handling"},
+    {"skeymgmt", OPT_SKEYMGMT, 's', "Symmetric key management name for opaque symmetric key handling"},
     {"", OPT_CIPHER, '-', "Any supported cipher"},
 
     OPT_R_OPTIONS,
@@ -134,6 +137,7 @@ int enc_main(int argc, char **argv)
     int base64 = 0, informat = FORMAT_BINARY, outformat = FORMAT_BINARY;
     int ret = 1, inl, nopad = 0;
     unsigned char key[EVP_MAX_KEY_LENGTH], iv[EVP_MAX_IV_LENGTH];
+    int rawkey_set = 0;
     unsigned char *buff = NULL, salt[EVP_MAX_IV_LENGTH];
     int saltlen = 0;
     int pbkdf2 = 0;
@@ -150,6 +154,10 @@ int enc_main(int argc, char **argv)
     BIO *bbrot = NULL;
     int do_zstd = 0;
     BIO *bzstd = NULL;
+    STACK_OF(OPENSSL_STRING) *skeyopts = NULL;
+    const char *skeymgmt = NULL;
+    EVP_SKEY *skey = NULL;
+    EVP_SKEYMGMT *mgmt = NULL;
 
     /* first check the command name */
     if (strcmp(argv[0], "base64") == 0)
@@ -310,6 +318,17 @@ int enc_main(int argc, char **argv)
         case OPT_NONE:
             cipher = NULL;
             break;
+        case OPT_SKEYOPT:
+            if ((skeyopts == NULL &&
+                 (skeyopts = sk_OPENSSL_STRING_new_null()) == NULL) ||
+                sk_OPENSSL_STRING_push(skeyopts, opt_arg()) == 0) {
+                BIO_printf(bio_err, "%s: out of memory\n", prog);
+                goto end;
+            }
+            break;
+        case OPT_SKEYMGMT:
+            skeymgmt = opt_arg();
+            break;
         case OPT_R_CASES:
             if (!opt_rand(o))
                 goto end;
@@ -391,7 +410,7 @@ int enc_main(int argc, char **argv)
         str = pass;
     }
 
-    if ((str == NULL) && (cipher != NULL) && (hkey == NULL)) {
+    if ((str == NULL) && (cipher != NULL) && (hkey == NULL) && (skeyopts == NULL)) {
         if (1) {
 #ifndef OPENSSL_NO_UI_CONSOLE
             for (;;) {
@@ -571,6 +590,7 @@ int enc_main(int argc, char **argv)
                 /* split and move data back to global buffer */
                 memcpy(key, tmpkeyiv, iklen);
                 memcpy(iv, tmpkeyiv+iklen, ivlen);
+                rawkey_set = 1;
             } else {
                 BIO_printf(bio_err, "*** WARNING : "
                                     "deprecated key derivation used.\n"
@@ -581,6 +601,7 @@ int enc_main(int argc, char **argv)
                     BIO_printf(bio_err, "EVP_BytesToKey failed\n");
                     goto end;
                 }
+                rawkey_set = 1;
             }
             /*
              * zero the complete buffer or the string passed from the command
@@ -618,6 +639,16 @@ int enc_main(int argc, char **argv)
             }
             /* wiping secret data as we no longer need it */
             cleanse(hkey);
+            rawkey_set = 1;
+        }
+
+        /*
+         * At this moment we know whether we trying to use raw bytes as the key
+         * or an opaque symmetric key. We do not allow both options simultaneously.
+         */
+        if (rawkey_set > 0 && skeyopts != NULL) {
+            BIO_printf(bio_err, "Either a raw key or the 'skeyopt' args must be used.\n");
+            goto end;
         }
 
         if ((benc = BIO_new(BIO_f_cipher())) == NULL)
@@ -633,23 +664,50 @@ int enc_main(int argc, char **argv)
         if (wrap == 1)
             EVP_CIPHER_CTX_set_flags(ctx, EVP_CIPHER_CTX_FLAG_WRAP_ALLOW);
 
-        if (!EVP_CipherInit_ex(ctx, cipher, e, NULL, NULL, enc)) {
-            BIO_printf(bio_err, "Error setting cipher %s\n",
-                       EVP_CIPHER_get0_name(cipher));
-            ERR_print_errors(bio_err);
-            goto end;
+        if (rawkey_set) {
+            if (!EVP_CipherInit_ex(ctx, cipher, e, key,
+                                   (hiv == NULL && wrap == 1 ? NULL : iv), enc)) {
+                BIO_printf(bio_err, "Error setting cipher %s\n",
+                           EVP_CIPHER_get0_name(cipher));
+                ERR_print_errors(bio_err);
+                goto end;
+            }
+        } else {
+            OSSL_PARAM *params = NULL;
+
+            mgmt = EVP_SKEYMGMT_fetch(app_get0_libctx(),
+                                      skeymgmt != NULL ? skeymgmt : EVP_CIPHER_name(cipher),
+                                      app_get0_propq());
+            if (mgmt == NULL)
+                goto end;
+
+            params = app_params_new_from_opts(skeyopts,
+                                              EVP_SKEYMGMT_get0_imp_settable_params(mgmt));
+            if (params == NULL)
+                goto end;
+
+            skey = EVP_SKEY_import(app_get0_libctx(), EVP_SKEYMGMT_get0_name(mgmt),
+                                   app_get0_propq(), OSSL_SKEYMGMT_SELECT_ALL, params);
+            OSSL_PARAM_free(params);
+            if (skey == NULL) {
+                BIO_printf(bio_err, "Error creating opaque key object for skeymgmt %s\n",
+                           skeymgmt ? skeymgmt : EVP_CIPHER_name(cipher));
+                ERR_print_errors(bio_err);
+                goto end;
+            }
+
+            if (!EVP_CipherInit_SKEY(ctx, cipher, skey,
+                                     (hiv == NULL && wrap == 1 ? NULL : iv),
+                                     EVP_CIPHER_get_iv_length(cipher), enc, NULL)) {
+                BIO_printf(bio_err, "Error setting an opaque key for cipher %s\n",
+                           EVP_CIPHER_get0_name(cipher));
+                ERR_print_errors(bio_err);
+                goto end;
+            }
         }
 
         if (nopad)
             EVP_CIPHER_CTX_set_padding(ctx, 0);
-
-        if (!EVP_CipherInit_ex(ctx, NULL, NULL, key,
-                               (hiv == NULL && wrap == 1 ? NULL : iv), enc)) {
-            BIO_printf(bio_err, "Error setting cipher %s\n",
-                       EVP_CIPHER_get0_name(cipher));
-            ERR_print_errors(bio_err);
-            goto end;
-        }
 
         if (debug) {
             BIO_set_callback_ex(benc, BIO_debug_callback_ex);
@@ -716,6 +774,9 @@ int enc_main(int argc, char **argv)
     }
  end:
     ERR_print_errors(bio_err);
+    sk_OPENSSL_STRING_free(skeyopts);
+    EVP_SKEYMGMT_free(mgmt);
+    EVP_SKEY_free(skey);
     OPENSSL_free(strbuf);
     OPENSSL_free(buff);
     BIO_free(in);

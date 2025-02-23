@@ -12,6 +12,7 @@
  */
 #include "internal/deprecated.h"
 
+#include <openssl/byteorder.h>
 #include <openssl/core.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
@@ -29,12 +30,17 @@
 #include "internal/passphrase.h"
 #include "internal/cryptlib.h"
 #include "crypto/ecx.h"
+#include "crypto/ml_kem.h"
 #include "crypto/rsa.h"
+#include "crypto/ml_dsa.h"
+#include "crypto/slh_dsa.h"
 #include "prov/implementations.h"
 #include "prov/bio.h"
 #include "prov/provider_ctx.h"
 #include "prov/der_rsa.h"
 #include "endecoder_local.h"
+#include "ml_dsa_codecs.h"
+#include "ml_kem_codecs.h"
 
 #if defined(OPENSSL_NO_DH) && defined(OPENSSL_NO_DSA) && defined(OPENSSL_NO_EC)
 # define OPENSSL_NO_KEYPARAMS
@@ -846,6 +852,65 @@ static int ecx_pki_priv_to_der(const void *vecxkey, unsigned char **pder,
 
 /* ---------------------------------------------------------------------- */
 
+#ifndef OPENSSL_NO_ML_DSA
+static int ml_dsa_spki_pub_to_der(const void *vkey, unsigned char **pder,
+                                  ossl_unused void *ctx)
+{
+    return ossl_ml_dsa_i2d_pubkey(vkey, pder);
+}
+
+static int ml_dsa_pki_priv_to_der(const void *vkey, unsigned char **pder,
+                                  void *vctx)
+{
+    KEY2ANY_CTX *ctx = vctx;
+
+    return ossl_ml_dsa_i2d_prvkey(vkey, pder, ctx->provctx);
+}
+
+# define ml_dsa_epki_priv_to_der ml_dsa_pki_priv_to_der
+# define prepare_ml_dsa_params   NULL
+# define ml_dsa_check_key_type   NULL
+
+# define ml_dsa_44_evp_type        EVP_PKEY_ML_DSA_44
+# define ml_dsa_44_pem_type        "ML-DSA-44"
+# define ml_dsa_65_evp_type        EVP_PKEY_ML_DSA_65
+# define ml_dsa_65_pem_type        "ML-DSA-65"
+# define ml_dsa_87_evp_type        EVP_PKEY_ML_DSA_87
+# define ml_dsa_87_pem_type        "ML-DSA-87"
+#endif /* OPENSSL_NO_ML_DSA */
+
+/* ---------------------------------------------------------------------- */
+
+#ifndef OPENSSL_NO_ML_KEM
+
+static int ml_kem_spki_pub_to_der(const void *vkey, unsigned char **pder,
+                                  ossl_unused void *ctx)
+{
+    return ossl_ml_kem_i2d_pubkey(vkey, pder);
+}
+
+static int ml_kem_pki_priv_to_der(const void *vkey, unsigned char **pder,
+                                  void *vctx)
+{
+    KEY2ANY_CTX *ctx = vctx;
+
+    return ossl_ml_kem_i2d_prvkey(vkey, pder, ctx->provctx);
+}
+
+# define ml_kem_epki_priv_to_der ml_kem_pki_priv_to_der
+# define prepare_ml_kem_params   NULL
+# define ml_kem_check_key_type   NULL
+
+# define ml_kem_512_evp_type        EVP_PKEY_ML_KEM_512
+# define ml_kem_512_pem_type        "ML-KEM-512"
+# define ml_kem_768_evp_type        EVP_PKEY_ML_KEM_768
+# define ml_kem_768_pem_type        "ML-KEM-768"
+# define ml_kem_1024_evp_type       EVP_PKEY_ML_KEM_1024
+# define ml_kem_1024_pem_type       "ML-KEM-1024"
+#endif
+
+/* ---------------------------------------------------------------------- */
+
 /*
  * Helper functions to prepare RSA-PSS params for encoding.  We would
  * have simply written the whole AlgorithmIdentifier, but existing libcrypto
@@ -955,6 +1020,92 @@ static int rsa_check_key_type(const void *rsa, int expected_type)
 #define rsapss_evp_type         EVP_PKEY_RSA_PSS
 #define rsa_pem_type            "RSA"
 #define rsapss_pem_type         "RSA-PSS"
+
+/* ---------------------------------------------------------------------- */
+
+#ifndef OPENSSL_NO_SLH_DSA
+# define prepare_slh_dsa_params NULL
+
+static int slh_dsa_spki_pub_to_der(const void *vkey, unsigned char **pder,
+                                   ossl_unused void *ctx)
+{
+    const SLH_DSA_KEY *key = vkey;
+    uint8_t *key_blob;
+    size_t key_len;
+
+    if (key == NULL) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    key_len = ossl_slh_dsa_key_get_pub_len(key);
+    key_blob = OPENSSL_memdup(ossl_slh_dsa_key_get_pub(key), key_len);
+    if (key_blob == NULL)
+        return 0;
+
+    *pder = key_blob;
+    return key_len;
+}
+
+static int slh_dsa_pki_priv_to_der(const void *vkey, unsigned char **pder,
+                                   ossl_unused void *ctx)
+{
+    const SLH_DSA_KEY *key = vkey;
+    size_t len;
+
+    if (ossl_slh_dsa_key_get_priv(key) == NULL) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    len = ossl_slh_dsa_key_get_priv_len(key);
+
+    if (pder != NULL
+            && ((*pder = OPENSSL_memdup(ossl_slh_dsa_key_get_priv(key), len)) == NULL))
+        return 0;
+
+    return len;
+}
+# define slh_dsa_epki_priv_to_der slh_dsa_pki_priv_to_der
+
+/* SLH_DSA only has PKCS#8 / SubjectPublicKeyInfo representations. */
+
+# define slh_dsa_check_key_type NULL
+# define slh_dsa_sha2_128s_evp_type EVP_PKEY_SLH_DSA_SHA2_128S
+# define slh_dsa_sha2_128f_evp_type EVP_PKEY_SLH_DSA_SHA2_128F
+# define slh_dsa_sha2_192s_evp_type EVP_PKEY_SLH_DSA_SHA2_192S
+# define slh_dsa_sha2_192f_evp_type EVP_PKEY_SLH_DSA_SHA2_192F
+# define slh_dsa_sha2_256s_evp_type EVP_PKEY_SLH_DSA_SHA2_256S
+# define slh_dsa_sha2_256f_evp_type EVP_PKEY_SLH_DSA_SHA2_256F
+# define slh_dsa_shake_128s_evp_type EVP_PKEY_SLH_DSA_SHAKE_128S
+# define slh_dsa_shake_128f_evp_type EVP_PKEY_SLH_DSA_SHAKE_128F
+# define slh_dsa_shake_192s_evp_type EVP_PKEY_SLH_DSA_SHAKE_192S
+# define slh_dsa_shake_192f_evp_type EVP_PKEY_SLH_DSA_SHAKE_192F
+# define slh_dsa_shake_256s_evp_type EVP_PKEY_SLH_DSA_SHAKE_256S
+# define slh_dsa_shake_256f_evp_type EVP_PKEY_SLH_DSA_SHAKE_256F
+# define slh_dsa_sha2_128s_input_type "SLH-DSA-SHA2-128s"
+# define slh_dsa_sha2_128f_input_type "SLH-DSA-SHA2-128f"
+# define slh_dsa_sha2_192s_input_type "SLH-DSA-SHA2-192s"
+# define slh_dsa_sha2_192f_input_type "SLH-DSA-SHA2-192f"
+# define slh_dsa_sha2_256s_input_type "SLH-DSA-SHA2-256s"
+# define slh_dsa_sha2_256f_input_type "SLH-DSA-SHA2-256f"
+# define slh_dsa_shake_128s_input_type "SLH-DSA-SHAKE-128s"
+# define slh_dsa_shake_128f_input_type "SLH-DSA-SHAKE-128f"
+# define slh_dsa_shake_192s_input_type "SLH-DSA-SHAKE-192s"
+# define slh_dsa_shake_192f_input_type "SLH-DSA-SHAKE-192f"
+# define slh_dsa_shake_256s_input_type "SLH-DSA-SHAKE-256s"
+# define slh_dsa_shake_256f_input_type "SLH-DSA-SHAKE-256f"
+# define slh_dsa_sha2_128s_pem_type "SLH-DSA-SHA2-128s"
+# define slh_dsa_sha2_128f_pem_type "SLH-DSA-SHA2-128f"
+# define slh_dsa_sha2_192s_pem_type "SLH-DSA-SHA2-192s"
+# define slh_dsa_sha2_192f_pem_type "SLH-DSA-SHA2-192f"
+# define slh_dsa_sha2_256s_pem_type "SLH-DSA-SHA2-256s"
+# define slh_dsa_sha2_256f_pem_type "SLH-DSA-SHA2-256f"
+# define slh_dsa_shake_128s_pem_type "SLH-DSA-SHAKE-128s"
+# define slh_dsa_shake_128f_pem_type "SLH-DSA-SHAKE-128f"
+# define slh_dsa_shake_192s_pem_type "SLH-DSA-SHAKE-192s"
+# define slh_dsa_shake_192f_pem_type "SLH-DSA-SHAKE-192f"
+# define slh_dsa_shake_256s_pem_type "SLH-DSA-SHAKE-256s"
+# define slh_dsa_shake_256f_pem_type "SLH-DSA-SHAKE-256f"
+#endif /* OPENSSL_NO_SLH_DSA */
 
 /* ---------------------------------------------------------------------- */
 
@@ -1446,6 +1597,103 @@ MAKE_ENCODER(x448, ecx, SubjectPublicKeyInfo, der);
 MAKE_ENCODER(x448, ecx, SubjectPublicKeyInfo, pem);
 # endif
 #endif
+#ifndef OPENSSL_NO_SLH_DSA
+MAKE_ENCODER(slh_dsa_sha2_128s, slh_dsa, EncryptedPrivateKeyInfo, der);
+MAKE_ENCODER(slh_dsa_sha2_128f, slh_dsa, EncryptedPrivateKeyInfo, der);
+MAKE_ENCODER(slh_dsa_sha2_192s, slh_dsa, EncryptedPrivateKeyInfo, der);
+MAKE_ENCODER(slh_dsa_sha2_192f, slh_dsa, EncryptedPrivateKeyInfo, der);
+MAKE_ENCODER(slh_dsa_sha2_256s, slh_dsa, EncryptedPrivateKeyInfo, der);
+MAKE_ENCODER(slh_dsa_sha2_256f, slh_dsa, EncryptedPrivateKeyInfo, der);
+MAKE_ENCODER(slh_dsa_sha2_128s, slh_dsa, EncryptedPrivateKeyInfo, pem);
+MAKE_ENCODER(slh_dsa_sha2_128f, slh_dsa, EncryptedPrivateKeyInfo, pem);
+MAKE_ENCODER(slh_dsa_sha2_192s, slh_dsa, EncryptedPrivateKeyInfo, pem);
+MAKE_ENCODER(slh_dsa_sha2_192f, slh_dsa, EncryptedPrivateKeyInfo, pem);
+MAKE_ENCODER(slh_dsa_sha2_256s, slh_dsa, EncryptedPrivateKeyInfo, pem);
+MAKE_ENCODER(slh_dsa_sha2_256f, slh_dsa, EncryptedPrivateKeyInfo, pem);
+MAKE_ENCODER(slh_dsa_shake_128s, slh_dsa, EncryptedPrivateKeyInfo, der);
+MAKE_ENCODER(slh_dsa_shake_128f, slh_dsa, EncryptedPrivateKeyInfo, der);
+MAKE_ENCODER(slh_dsa_shake_192s, slh_dsa, EncryptedPrivateKeyInfo, der);
+MAKE_ENCODER(slh_dsa_shake_192f, slh_dsa, EncryptedPrivateKeyInfo, der);
+MAKE_ENCODER(slh_dsa_shake_256s, slh_dsa, EncryptedPrivateKeyInfo, der);
+MAKE_ENCODER(slh_dsa_shake_256f, slh_dsa, EncryptedPrivateKeyInfo, der);
+MAKE_ENCODER(slh_dsa_shake_128s, slh_dsa, EncryptedPrivateKeyInfo, pem);
+MAKE_ENCODER(slh_dsa_shake_128f, slh_dsa, EncryptedPrivateKeyInfo, pem);
+MAKE_ENCODER(slh_dsa_shake_192s, slh_dsa, EncryptedPrivateKeyInfo, pem);
+MAKE_ENCODER(slh_dsa_shake_192f, slh_dsa, EncryptedPrivateKeyInfo, pem);
+MAKE_ENCODER(slh_dsa_shake_256s, slh_dsa, EncryptedPrivateKeyInfo, pem);
+MAKE_ENCODER(slh_dsa_shake_256f, slh_dsa, EncryptedPrivateKeyInfo, pem);
+MAKE_ENCODER(slh_dsa_sha2_128s, slh_dsa, PrivateKeyInfo, der);
+MAKE_ENCODER(slh_dsa_sha2_128f, slh_dsa, PrivateKeyInfo, der);
+MAKE_ENCODER(slh_dsa_sha2_192s, slh_dsa, PrivateKeyInfo, der);
+MAKE_ENCODER(slh_dsa_sha2_192f, slh_dsa, PrivateKeyInfo, der);
+MAKE_ENCODER(slh_dsa_sha2_256s, slh_dsa, PrivateKeyInfo, der);
+MAKE_ENCODER(slh_dsa_sha2_256f, slh_dsa, PrivateKeyInfo, der);
+MAKE_ENCODER(slh_dsa_sha2_128s, slh_dsa, PrivateKeyInfo, pem);
+MAKE_ENCODER(slh_dsa_sha2_128f, slh_dsa, PrivateKeyInfo, pem);
+MAKE_ENCODER(slh_dsa_sha2_192s, slh_dsa, PrivateKeyInfo, pem);
+MAKE_ENCODER(slh_dsa_sha2_192f, slh_dsa, PrivateKeyInfo, pem);
+MAKE_ENCODER(slh_dsa_sha2_256s, slh_dsa, PrivateKeyInfo, pem);
+MAKE_ENCODER(slh_dsa_sha2_256f, slh_dsa, PrivateKeyInfo, pem);
+MAKE_ENCODER(slh_dsa_shake_128s, slh_dsa, PrivateKeyInfo, der);
+MAKE_ENCODER(slh_dsa_shake_128f, slh_dsa, PrivateKeyInfo, der);
+MAKE_ENCODER(slh_dsa_shake_192s, slh_dsa, PrivateKeyInfo, der);
+MAKE_ENCODER(slh_dsa_shake_192f, slh_dsa, PrivateKeyInfo, der);
+MAKE_ENCODER(slh_dsa_shake_256s, slh_dsa, PrivateKeyInfo, der);
+MAKE_ENCODER(slh_dsa_shake_256f, slh_dsa, PrivateKeyInfo, der);
+MAKE_ENCODER(slh_dsa_shake_128s, slh_dsa, PrivateKeyInfo, pem);
+MAKE_ENCODER(slh_dsa_shake_128f, slh_dsa, PrivateKeyInfo, pem);
+MAKE_ENCODER(slh_dsa_shake_192s, slh_dsa, PrivateKeyInfo, pem);
+MAKE_ENCODER(slh_dsa_shake_192f, slh_dsa, PrivateKeyInfo, pem);
+MAKE_ENCODER(slh_dsa_shake_256s, slh_dsa, PrivateKeyInfo, pem);
+MAKE_ENCODER(slh_dsa_shake_256f, slh_dsa, PrivateKeyInfo, pem);
+MAKE_ENCODER(slh_dsa_sha2_128s, slh_dsa, SubjectPublicKeyInfo, der);
+MAKE_ENCODER(slh_dsa_sha2_128f, slh_dsa, SubjectPublicKeyInfo, der);
+MAKE_ENCODER(slh_dsa_sha2_192s, slh_dsa, SubjectPublicKeyInfo, der);
+MAKE_ENCODER(slh_dsa_sha2_192f, slh_dsa, SubjectPublicKeyInfo, der);
+MAKE_ENCODER(slh_dsa_sha2_256s, slh_dsa, SubjectPublicKeyInfo, der);
+MAKE_ENCODER(slh_dsa_sha2_256f, slh_dsa, SubjectPublicKeyInfo, der);
+MAKE_ENCODER(slh_dsa_sha2_128s, slh_dsa, SubjectPublicKeyInfo, pem);
+MAKE_ENCODER(slh_dsa_sha2_128f, slh_dsa, SubjectPublicKeyInfo, pem);
+MAKE_ENCODER(slh_dsa_sha2_192s, slh_dsa, SubjectPublicKeyInfo, pem);
+MAKE_ENCODER(slh_dsa_sha2_192f, slh_dsa, SubjectPublicKeyInfo, pem);
+MAKE_ENCODER(slh_dsa_sha2_256s, slh_dsa, SubjectPublicKeyInfo, pem);
+MAKE_ENCODER(slh_dsa_sha2_256f, slh_dsa, SubjectPublicKeyInfo, pem);
+MAKE_ENCODER(slh_dsa_shake_128s, slh_dsa, SubjectPublicKeyInfo, der);
+MAKE_ENCODER(slh_dsa_shake_128f, slh_dsa, SubjectPublicKeyInfo, der);
+MAKE_ENCODER(slh_dsa_shake_192s, slh_dsa, SubjectPublicKeyInfo, der);
+MAKE_ENCODER(slh_dsa_shake_192f, slh_dsa, SubjectPublicKeyInfo, der);
+MAKE_ENCODER(slh_dsa_shake_256s, slh_dsa, SubjectPublicKeyInfo, der);
+MAKE_ENCODER(slh_dsa_shake_256f, slh_dsa, SubjectPublicKeyInfo, der);
+MAKE_ENCODER(slh_dsa_shake_128s, slh_dsa, SubjectPublicKeyInfo, pem);
+MAKE_ENCODER(slh_dsa_shake_128f, slh_dsa, SubjectPublicKeyInfo, pem);
+MAKE_ENCODER(slh_dsa_shake_192s, slh_dsa, SubjectPublicKeyInfo, pem);
+MAKE_ENCODER(slh_dsa_shake_192f, slh_dsa, SubjectPublicKeyInfo, pem);
+MAKE_ENCODER(slh_dsa_shake_256s, slh_dsa, SubjectPublicKeyInfo, pem);
+MAKE_ENCODER(slh_dsa_shake_256f, slh_dsa, SubjectPublicKeyInfo, pem);
+#endif /* OPENSSL_NO_SLH_DSA */
+
+#ifndef OPENSSL_NO_ML_KEM
+MAKE_ENCODER(ml_kem_512, ml_kem, EncryptedPrivateKeyInfo, der);
+MAKE_ENCODER(ml_kem_512, ml_kem, EncryptedPrivateKeyInfo, pem);
+MAKE_ENCODER(ml_kem_512, ml_kem, PrivateKeyInfo, der);
+MAKE_ENCODER(ml_kem_512, ml_kem, PrivateKeyInfo, pem);
+MAKE_ENCODER(ml_kem_512, ml_kem, SubjectPublicKeyInfo, der);
+MAKE_ENCODER(ml_kem_512, ml_kem, SubjectPublicKeyInfo, pem);
+
+MAKE_ENCODER(ml_kem_768, ml_kem, EncryptedPrivateKeyInfo, der);
+MAKE_ENCODER(ml_kem_768, ml_kem, EncryptedPrivateKeyInfo, pem);
+MAKE_ENCODER(ml_kem_768, ml_kem, PrivateKeyInfo, der);
+MAKE_ENCODER(ml_kem_768, ml_kem, PrivateKeyInfo, pem);
+MAKE_ENCODER(ml_kem_768, ml_kem, SubjectPublicKeyInfo, der);
+MAKE_ENCODER(ml_kem_768, ml_kem, SubjectPublicKeyInfo, pem);
+
+MAKE_ENCODER(ml_kem_1024, ml_kem, EncryptedPrivateKeyInfo, der);
+MAKE_ENCODER(ml_kem_1024, ml_kem, EncryptedPrivateKeyInfo, pem);
+MAKE_ENCODER(ml_kem_1024, ml_kem, PrivateKeyInfo, der);
+MAKE_ENCODER(ml_kem_1024, ml_kem, PrivateKeyInfo, pem);
+MAKE_ENCODER(ml_kem_1024, ml_kem, SubjectPublicKeyInfo, der);
+MAKE_ENCODER(ml_kem_1024, ml_kem, SubjectPublicKeyInfo, pem);
+#endif
 
 /*
  * Support for key type specific output formats.  Not all key types have
@@ -1491,3 +1739,26 @@ MAKE_ENCODER(dhx, dh, X9_42, pem); /* parameters only */
 MAKE_ENCODER(ec, ec, X9_62, der);
 MAKE_ENCODER(ec, ec, X9_62, pem);
 #endif
+
+#ifndef OPENSSL_NO_ML_DSA
+MAKE_ENCODER(ml_dsa_44, ml_dsa, EncryptedPrivateKeyInfo, der);
+MAKE_ENCODER(ml_dsa_44, ml_dsa, EncryptedPrivateKeyInfo, pem);
+MAKE_ENCODER(ml_dsa_44, ml_dsa, PrivateKeyInfo, der);
+MAKE_ENCODER(ml_dsa_44, ml_dsa, PrivateKeyInfo, pem);
+MAKE_ENCODER(ml_dsa_44, ml_dsa, SubjectPublicKeyInfo, der);
+MAKE_ENCODER(ml_dsa_44, ml_dsa, SubjectPublicKeyInfo, pem);
+
+MAKE_ENCODER(ml_dsa_65, ml_dsa, EncryptedPrivateKeyInfo, der);
+MAKE_ENCODER(ml_dsa_65, ml_dsa, EncryptedPrivateKeyInfo, pem);
+MAKE_ENCODER(ml_dsa_65, ml_dsa, PrivateKeyInfo, der);
+MAKE_ENCODER(ml_dsa_65, ml_dsa, PrivateKeyInfo, pem);
+MAKE_ENCODER(ml_dsa_65, ml_dsa, SubjectPublicKeyInfo, der);
+MAKE_ENCODER(ml_dsa_65, ml_dsa, SubjectPublicKeyInfo, pem);
+
+MAKE_ENCODER(ml_dsa_87, ml_dsa, EncryptedPrivateKeyInfo, der);
+MAKE_ENCODER(ml_dsa_87, ml_dsa, EncryptedPrivateKeyInfo, pem);
+MAKE_ENCODER(ml_dsa_87, ml_dsa, PrivateKeyInfo, der);
+MAKE_ENCODER(ml_dsa_87, ml_dsa, PrivateKeyInfo, pem);
+MAKE_ENCODER(ml_dsa_87, ml_dsa, SubjectPublicKeyInfo, der);
+MAKE_ENCODER(ml_dsa_87, ml_dsa, SubjectPublicKeyInfo, pem);
+#endif /* OPENSSL_NO_ML_DSA */

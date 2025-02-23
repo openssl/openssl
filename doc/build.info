@@ -280,6 +280,12 @@ DEPEND[man/man1/openssl-sess_id.1]=man1/openssl-sess_id.pod
 GENERATE[man/man1/openssl-sess_id.1]=man1/openssl-sess_id.pod
 DEPEND[man1/openssl-sess_id.pod]{pod}=man1/openssl-sess_id.pod.in
 GENERATE[man1/openssl-sess_id.pod]=man1/openssl-sess_id.pod.in
+DEPEND[html/man1/openssl-skeyutl.html]=man1/openssl-skeyutl.pod
+GENERATE[html/man1/openssl-skeyutl.html]=man1/openssl-skeyutl.pod
+DEPEND[man/man1/openssl-skeyutl.1]=man1/openssl-skeyutl.pod
+GENERATE[man/man1/openssl-skeyutl.1]=man1/openssl-skeyutl.pod
+DEPEND[man1/openssl-skeyutl.pod]{pod}=man1/openssl-skeyutl.pod.in
+GENERATE[man1/openssl-skeyutl.pod]=man1/openssl-skeyutl.pod.in
 DEPEND[html/man1/openssl-smime.html]=man1/openssl-smime.pod
 GENERATE[html/man1/openssl-smime.html]=man1/openssl-smime.pod
 DEPEND[man/man1/openssl-smime.1]=man1/openssl-smime.pod
@@ -395,6 +401,7 @@ html/man1/openssl-s_client.html \
 html/man1/openssl-s_server.html \
 html/man1/openssl-s_time.html \
 html/man1/openssl-sess_id.html \
+html/man1/openssl-skeyutl.html \
 html/man1/openssl-smime.html \
 html/man1/openssl-speed.html \
 html/man1/openssl-spkac.html \
@@ -455,6 +462,7 @@ man/man1/openssl-s_client.1 \
 man/man1/openssl-s_server.1 \
 man/man1/openssl-s_time.1 \
 man/man1/openssl-sess_id.1 \
+man/man1/openssl-skeyutl.1 \
 man/man1/openssl-smime.1 \
 man/man1/openssl-speed.1 \
 man/man1/openssl-spkac.1 \
@@ -1363,6 +1371,14 @@ DEPEND[html/man3/EVP_SIGNATURE.html]=man3/EVP_SIGNATURE.pod
 GENERATE[html/man3/EVP_SIGNATURE.html]=man3/EVP_SIGNATURE.pod
 DEPEND[man/man3/EVP_SIGNATURE.3]=man3/EVP_SIGNATURE.pod
 GENERATE[man/man3/EVP_SIGNATURE.3]=man3/EVP_SIGNATURE.pod
+DEPEND[html/man3/EVP_SKEY.html]=man3/EVP_SKEY.pod
+GENERATE[html/man3/EVP_SKEY.html]=man3/EVP_SKEY.pod
+DEPEND[man/man3/EVP_SKEY.3]=man3/EVP_SKEY.pod
+GENERATE[man/man3/EVP_SKEY.3]=man3/EVP_SKEY.pod
+DEPEND[html/man3/EVP_SKEYMGMT.html]=man3/EVP_SKEYMGMT.pod
+GENERATE[html/man3/EVP_SKEYMGMT.html]=man3/EVP_SKEYMGMT.pod
+DEPEND[man/man3/EVP_SKEYMGMT.3]=man3/EVP_SKEYMGMT.pod
+GENERATE[man/man3/EVP_SKEYMGMT.3]=man3/EVP_SKEYMGMT.pod
 DEPEND[html/man3/EVP_SealInit.html]=man3/EVP_SealInit.pod
 GENERATE[html/man3/EVP_SealInit.html]=man3/EVP_SealInit.pod
 DEPEND[man/man3/EVP_SealInit.3]=man3/EVP_SealInit.pod
@@ -2335,6 +2351,10 @@ DEPEND[html/man3/SSL_CTX_set_default_passwd_cb.html]=man3/SSL_CTX_set_default_pa
 GENERATE[html/man3/SSL_CTX_set_default_passwd_cb.html]=man3/SSL_CTX_set_default_passwd_cb.pod
 DEPEND[man/man3/SSL_CTX_set_default_passwd_cb.3]=man3/SSL_CTX_set_default_passwd_cb.pod
 GENERATE[man/man3/SSL_CTX_set_default_passwd_cb.3]=man3/SSL_CTX_set_default_passwd_cb.pod
+DEPEND[html/man3/SSL_CTX_set_domain_flags.html]=man3/SSL_CTX_set_domain_flags.pod
+GENERATE[html/man3/SSL_CTX_set_domain_flags.html]=man3/SSL_CTX_set_domain_flags.pod
+DEPEND[man/man3/SSL_CTX_set_domain_flags.3]=man3/SSL_CTX_set_domain_flags.pod
+GENERATE[man/man3/SSL_CTX_set_domain_flags.3]=man3/SSL_CTX_set_domain_flags.pod
 DEPEND[html/man3/SSL_CTX_set_generate_session_id.html]=man3/SSL_CTX_set_generate_session_id.pod
 GENERATE[html/man3/SSL_CTX_set_generate_session_id.html]=man3/SSL_CTX_set_generate_session_id.pod
 DEPEND[man/man3/SSL_CTX_set_generate_session_id.3]=man3/SSL_CTX_set_generate_session_id.pod
@@ -2363,6 +2383,10 @@ DEPEND[html/man3/SSL_CTX_set_msg_callback.html]=man3/SSL_CTX_set_msg_callback.po
 GENERATE[html/man3/SSL_CTX_set_msg_callback.html]=man3/SSL_CTX_set_msg_callback.pod
 DEPEND[man/man3/SSL_CTX_set_msg_callback.3]=man3/SSL_CTX_set_msg_callback.pod
 GENERATE[man/man3/SSL_CTX_set_msg_callback.3]=man3/SSL_CTX_set_msg_callback.pod
+DEPEND[html/man3/SSL_CTX_set_new_pending_conn_cb.html]=man3/SSL_CTX_set_new_pending_conn_cb.pod
+GENERATE[html/man3/SSL_CTX_set_new_pending_conn_cb.html]=man3/SSL_CTX_set_new_pending_conn_cb.pod
+DEPEND[man/man3/SSL_CTX_set_new_pending_conn_cb.3]=man3/SSL_CTX_set_new_pending_conn_cb.pod
+GENERATE[man/man3/SSL_CTX_set_new_pending_conn_cb.3]=man3/SSL_CTX_set_new_pending_conn_cb.pod
 DEPEND[html/man3/SSL_CTX_set_num_tickets.html]=man3/SSL_CTX_set_num_tickets.pod
 GENERATE[html/man3/SSL_CTX_set_num_tickets.html]=man3/SSL_CTX_set_num_tickets.pod
 DEPEND[man/man3/SSL_CTX_set_num_tickets.3]=man3/SSL_CTX_set_num_tickets.pod
@@ -2715,6 +2739,14 @@ DEPEND[html/man3/SSL_new.html]=man3/SSL_new.pod
 GENERATE[html/man3/SSL_new.html]=man3/SSL_new.pod
 DEPEND[man/man3/SSL_new.3]=man3/SSL_new.pod
 GENERATE[man/man3/SSL_new.3]=man3/SSL_new.pod
+DEPEND[html/man3/SSL_new_domain.html]=man3/SSL_new_domain.pod
+GENERATE[html/man3/SSL_new_domain.html]=man3/SSL_new_domain.pod
+DEPEND[man/man3/SSL_new_domain.3]=man3/SSL_new_domain.pod
+GENERATE[man/man3/SSL_new_domain.3]=man3/SSL_new_domain.pod
+DEPEND[html/man3/SSL_new_listener.html]=man3/SSL_new_listener.pod
+GENERATE[html/man3/SSL_new_listener.html]=man3/SSL_new_listener.pod
+DEPEND[man/man3/SSL_new_listener.3]=man3/SSL_new_listener.pod
+GENERATE[man/man3/SSL_new_listener.3]=man3/SSL_new_listener.pod
 DEPEND[html/man3/SSL_new_stream.html]=man3/SSL_new_stream.pod
 GENERATE[html/man3/SSL_new_stream.html]=man3/SSL_new_stream.pod
 DEPEND[man/man3/SSL_new_stream.3]=man3/SSL_new_stream.pod
@@ -2783,6 +2815,10 @@ DEPEND[html/man3/SSL_set_incoming_stream_policy.html]=man3/SSL_set_incoming_stre
 GENERATE[html/man3/SSL_set_incoming_stream_policy.html]=man3/SSL_set_incoming_stream_policy.pod
 DEPEND[man/man3/SSL_set_incoming_stream_policy.3]=man3/SSL_set_incoming_stream_policy.pod
 GENERATE[man/man3/SSL_set_incoming_stream_policy.3]=man3/SSL_set_incoming_stream_policy.pod
+DEPEND[html/man3/SSL_set_quic_tls_cbs.html]=man3/SSL_set_quic_tls_cbs.pod
+GENERATE[html/man3/SSL_set_quic_tls_cbs.html]=man3/SSL_set_quic_tls_cbs.pod
+DEPEND[man/man3/SSL_set_quic_tls_cbs.3]=man3/SSL_set_quic_tls_cbs.pod
+GENERATE[man/man3/SSL_set_quic_tls_cbs.3]=man3/SSL_set_quic_tls_cbs.pod
 DEPEND[html/man3/SSL_set_retry_verify.html]=man3/SSL_set_retry_verify.pod
 GENERATE[html/man3/SSL_set_retry_verify.html]=man3/SSL_set_retry_verify.pod
 DEPEND[man/man3/SSL_set_retry_verify.3]=man3/SSL_set_retry_verify.pod
@@ -3352,6 +3388,8 @@ html/man3/EVP_PKEY_verify.html \
 html/man3/EVP_PKEY_verify_recover.html \
 html/man3/EVP_RAND.html \
 html/man3/EVP_SIGNATURE.html \
+html/man3/EVP_SKEY.html \
+html/man3/EVP_SKEYMGMT.html \
 html/man3/EVP_SealInit.html \
 html/man3/EVP_SignInit.html \
 html/man3/EVP_VerifyInit.html \
@@ -3595,6 +3633,7 @@ html/man3/SSL_CTX_set_client_hello_cb.html \
 html/man3/SSL_CTX_set_ct_validation_callback.html \
 html/man3/SSL_CTX_set_ctlog_list_file.html \
 html/man3/SSL_CTX_set_default_passwd_cb.html \
+html/man3/SSL_CTX_set_domain_flags.html \
 html/man3/SSL_CTX_set_generate_session_id.html \
 html/man3/SSL_CTX_set_info_callback.html \
 html/man3/SSL_CTX_set_keylog_callback.html \
@@ -3602,6 +3641,7 @@ html/man3/SSL_CTX_set_max_cert_list.html \
 html/man3/SSL_CTX_set_min_proto_version.html \
 html/man3/SSL_CTX_set_mode.html \
 html/man3/SSL_CTX_set_msg_callback.html \
+html/man3/SSL_CTX_set_new_pending_conn_cb.html \
 html/man3/SSL_CTX_set_num_tickets.html \
 html/man3/SSL_CTX_set_options.html \
 html/man3/SSL_CTX_set_psk_client_callback.html \
@@ -3690,6 +3730,8 @@ html/man3/SSL_key_update.html \
 html/man3/SSL_library_init.html \
 html/man3/SSL_load_client_CA_file.html \
 html/man3/SSL_new.html \
+html/man3/SSL_new_domain.html \
+html/man3/SSL_new_listener.html \
 html/man3/SSL_new_stream.html \
 html/man3/SSL_pending.html \
 html/man3/SSL_poll.html \
@@ -3707,6 +3749,7 @@ html/man3/SSL_set_connect_state.html \
 html/man3/SSL_set_default_stream_mode.html \
 html/man3/SSL_set_fd.html \
 html/man3/SSL_set_incoming_stream_policy.html \
+html/man3/SSL_set_quic_tls_cbs.html \
 html/man3/SSL_set_retry_verify.html \
 html/man3/SSL_set_session.html \
 html/man3/SSL_set_session_secret_cb.html \
@@ -4017,6 +4060,8 @@ man/man3/EVP_PKEY_verify.3 \
 man/man3/EVP_PKEY_verify_recover.3 \
 man/man3/EVP_RAND.3 \
 man/man3/EVP_SIGNATURE.3 \
+man/man3/EVP_SKEY.3 \
+man/man3/EVP_SKEYMGMT.3 \
 man/man3/EVP_SealInit.3 \
 man/man3/EVP_SignInit.3 \
 man/man3/EVP_VerifyInit.3 \
@@ -4260,6 +4305,7 @@ man/man3/SSL_CTX_set_client_hello_cb.3 \
 man/man3/SSL_CTX_set_ct_validation_callback.3 \
 man/man3/SSL_CTX_set_ctlog_list_file.3 \
 man/man3/SSL_CTX_set_default_passwd_cb.3 \
+man/man3/SSL_CTX_set_domain_flags.3 \
 man/man3/SSL_CTX_set_generate_session_id.3 \
 man/man3/SSL_CTX_set_info_callback.3 \
 man/man3/SSL_CTX_set_keylog_callback.3 \
@@ -4267,6 +4313,7 @@ man/man3/SSL_CTX_set_max_cert_list.3 \
 man/man3/SSL_CTX_set_min_proto_version.3 \
 man/man3/SSL_CTX_set_mode.3 \
 man/man3/SSL_CTX_set_msg_callback.3 \
+man/man3/SSL_CTX_set_new_pending_conn_cb.3 \
 man/man3/SSL_CTX_set_num_tickets.3 \
 man/man3/SSL_CTX_set_options.3 \
 man/man3/SSL_CTX_set_psk_client_callback.3 \
@@ -4355,6 +4402,8 @@ man/man3/SSL_key_update.3 \
 man/man3/SSL_library_init.3 \
 man/man3/SSL_load_client_CA_file.3 \
 man/man3/SSL_new.3 \
+man/man3/SSL_new_domain.3 \
+man/man3/SSL_new_listener.3 \
 man/man3/SSL_new_stream.3 \
 man/man3/SSL_pending.3 \
 man/man3/SSL_poll.3 \
@@ -4372,6 +4421,7 @@ man/man3/SSL_set_connect_state.3 \
 man/man3/SSL_set_default_stream_mode.3 \
 man/man3/SSL_set_fd.3 \
 man/man3/SSL_set_incoming_stream_policy.3 \
+man/man3/SSL_set_quic_tls_cbs.3 \
 man/man3/SSL_set_retry_verify.3 \
 man/man3/SSL_set_session.3 \
 man/man3/SSL_set_session_secret_cb.3 \
@@ -4613,6 +4663,10 @@ DEPEND[html/man7/EVP_KEM-EC.html]=man7/EVP_KEM-EC.pod
 GENERATE[html/man7/EVP_KEM-EC.html]=man7/EVP_KEM-EC.pod
 DEPEND[man/man7/EVP_KEM-EC.7]=man7/EVP_KEM-EC.pod
 GENERATE[man/man7/EVP_KEM-EC.7]=man7/EVP_KEM-EC.pod
+DEPEND[html/man7/EVP_KEM-ML-KEM.html]=man7/EVP_KEM-ML-KEM.pod
+GENERATE[html/man7/EVP_KEM-ML-KEM.html]=man7/EVP_KEM-ML-KEM.pod
+DEPEND[man/man7/EVP_KEM-ML-KEM.7]=man7/EVP_KEM-ML-KEM.pod
+GENERATE[man/man7/EVP_KEM-ML-KEM.7]=man7/EVP_KEM-ML-KEM.pod
 DEPEND[html/man7/EVP_KEM-RSA.html]=man7/EVP_KEM-RSA.pod
 GENERATE[html/man7/EVP_KEM-RSA.html]=man7/EVP_KEM-RSA.pod
 DEPEND[man/man7/EVP_KEM-RSA.7]=man7/EVP_KEM-RSA.pod
@@ -4745,10 +4799,22 @@ DEPEND[html/man7/EVP_PKEY-HMAC.html]=man7/EVP_PKEY-HMAC.pod
 GENERATE[html/man7/EVP_PKEY-HMAC.html]=man7/EVP_PKEY-HMAC.pod
 DEPEND[man/man7/EVP_PKEY-HMAC.7]=man7/EVP_PKEY-HMAC.pod
 GENERATE[man/man7/EVP_PKEY-HMAC.7]=man7/EVP_PKEY-HMAC.pod
+DEPEND[html/man7/EVP_PKEY-ML-DSA.html]=man7/EVP_PKEY-ML-DSA.pod
+GENERATE[html/man7/EVP_PKEY-ML-DSA.html]=man7/EVP_PKEY-ML-DSA.pod
+DEPEND[man/man7/EVP_PKEY-ML-DSA.7]=man7/EVP_PKEY-ML-DSA.pod
+GENERATE[man/man7/EVP_PKEY-ML-DSA.7]=man7/EVP_PKEY-ML-DSA.pod
+DEPEND[html/man7/EVP_PKEY-ML-KEM.html]=man7/EVP_PKEY-ML-KEM.pod
+GENERATE[html/man7/EVP_PKEY-ML-KEM.html]=man7/EVP_PKEY-ML-KEM.pod
+DEPEND[man/man7/EVP_PKEY-ML-KEM.7]=man7/EVP_PKEY-ML-KEM.pod
+GENERATE[man/man7/EVP_PKEY-ML-KEM.7]=man7/EVP_PKEY-ML-KEM.pod
 DEPEND[html/man7/EVP_PKEY-RSA.html]=man7/EVP_PKEY-RSA.pod
 GENERATE[html/man7/EVP_PKEY-RSA.html]=man7/EVP_PKEY-RSA.pod
 DEPEND[man/man7/EVP_PKEY-RSA.7]=man7/EVP_PKEY-RSA.pod
 GENERATE[man/man7/EVP_PKEY-RSA.7]=man7/EVP_PKEY-RSA.pod
+DEPEND[html/man7/EVP_PKEY-SLH-DSA.html]=man7/EVP_PKEY-SLH-DSA.pod
+GENERATE[html/man7/EVP_PKEY-SLH-DSA.html]=man7/EVP_PKEY-SLH-DSA.pod
+DEPEND[man/man7/EVP_PKEY-SLH-DSA.7]=man7/EVP_PKEY-SLH-DSA.pod
+GENERATE[man/man7/EVP_PKEY-SLH-DSA.7]=man7/EVP_PKEY-SLH-DSA.pod
 DEPEND[html/man7/EVP_PKEY-SM2.html]=man7/EVP_PKEY-SM2.pod
 GENERATE[html/man7/EVP_PKEY-SM2.html]=man7/EVP_PKEY-SM2.pod
 DEPEND[man/man7/EVP_PKEY-SM2.7]=man7/EVP_PKEY-SM2.pod
@@ -4805,10 +4871,18 @@ DEPEND[html/man7/EVP_SIGNATURE-HMAC.html]=man7/EVP_SIGNATURE-HMAC.pod
 GENERATE[html/man7/EVP_SIGNATURE-HMAC.html]=man7/EVP_SIGNATURE-HMAC.pod
 DEPEND[man/man7/EVP_SIGNATURE-HMAC.7]=man7/EVP_SIGNATURE-HMAC.pod
 GENERATE[man/man7/EVP_SIGNATURE-HMAC.7]=man7/EVP_SIGNATURE-HMAC.pod
+DEPEND[html/man7/EVP_SIGNATURE-ML-DSA.html]=man7/EVP_SIGNATURE-ML-DSA.pod
+GENERATE[html/man7/EVP_SIGNATURE-ML-DSA.html]=man7/EVP_SIGNATURE-ML-DSA.pod
+DEPEND[man/man7/EVP_SIGNATURE-ML-DSA.7]=man7/EVP_SIGNATURE-ML-DSA.pod
+GENERATE[man/man7/EVP_SIGNATURE-ML-DSA.7]=man7/EVP_SIGNATURE-ML-DSA.pod
 DEPEND[html/man7/EVP_SIGNATURE-RSA.html]=man7/EVP_SIGNATURE-RSA.pod
 GENERATE[html/man7/EVP_SIGNATURE-RSA.html]=man7/EVP_SIGNATURE-RSA.pod
 DEPEND[man/man7/EVP_SIGNATURE-RSA.7]=man7/EVP_SIGNATURE-RSA.pod
 GENERATE[man/man7/EVP_SIGNATURE-RSA.7]=man7/EVP_SIGNATURE-RSA.pod
+DEPEND[html/man7/EVP_SIGNATURE-SLH-DSA.html]=man7/EVP_SIGNATURE-SLH-DSA.pod
+GENERATE[html/man7/EVP_SIGNATURE-SLH-DSA.html]=man7/EVP_SIGNATURE-SLH-DSA.pod
+DEPEND[man/man7/EVP_SIGNATURE-SLH-DSA.7]=man7/EVP_SIGNATURE-SLH-DSA.pod
+GENERATE[man/man7/EVP_SIGNATURE-SLH-DSA.7]=man7/EVP_SIGNATURE-SLH-DSA.pod
 DEPEND[html/man7/OSSL_PROVIDER-FIPS.html]=man7/OSSL_PROVIDER-FIPS.pod
 GENERATE[html/man7/OSSL_PROVIDER-FIPS.html]=man7/OSSL_PROVIDER-FIPS.pod
 DEPEND[man/man7/OSSL_PROVIDER-FIPS.7]=man7/OSSL_PROVIDER-FIPS.pod
@@ -4913,6 +4987,10 @@ DEPEND[html/man7/openssl-qlog.html]=man7/openssl-qlog.pod
 GENERATE[html/man7/openssl-qlog.html]=man7/openssl-qlog.pod
 DEPEND[man/man7/openssl-qlog.7]=man7/openssl-qlog.pod
 GENERATE[man/man7/openssl-qlog.7]=man7/openssl-qlog.pod
+DEPEND[html/man7/openssl-quic-concurrency.html]=man7/openssl-quic-concurrency.pod
+GENERATE[html/man7/openssl-quic-concurrency.html]=man7/openssl-quic-concurrency.pod
+DEPEND[man/man7/openssl-quic-concurrency.7]=man7/openssl-quic-concurrency.pod
+GENERATE[man/man7/openssl-quic-concurrency.7]=man7/openssl-quic-concurrency.pod
 DEPEND[html/man7/openssl-quic.html]=man7/openssl-quic.pod
 GENERATE[html/man7/openssl-quic.html]=man7/openssl-quic.pod
 DEPEND[man/man7/openssl-quic.7]=man7/openssl-quic.pod
@@ -4963,6 +5041,14 @@ DEPEND[html/man7/ossl-guide-quic-multi-stream.html]=man7/ossl-guide-quic-multi-s
 GENERATE[html/man7/ossl-guide-quic-multi-stream.html]=man7/ossl-guide-quic-multi-stream.pod
 DEPEND[man/man7/ossl-guide-quic-multi-stream.7]=man7/ossl-guide-quic-multi-stream.pod
 GENERATE[man/man7/ossl-guide-quic-multi-stream.7]=man7/ossl-guide-quic-multi-stream.pod
+DEPEND[html/man7/ossl-guide-quic-server-block.html]=man7/ossl-guide-quic-server-block.pod
+GENERATE[html/man7/ossl-guide-quic-server-block.html]=man7/ossl-guide-quic-server-block.pod
+DEPEND[man/man7/ossl-guide-quic-server-block.7]=man7/ossl-guide-quic-server-block.pod
+GENERATE[man/man7/ossl-guide-quic-server-block.7]=man7/ossl-guide-quic-server-block.pod
+DEPEND[html/man7/ossl-guide-quic-server-non-block.html]=man7/ossl-guide-quic-server-non-block.pod
+GENERATE[html/man7/ossl-guide-quic-server-non-block.html]=man7/ossl-guide-quic-server-non-block.pod
+DEPEND[man/man7/ossl-guide-quic-server-non-block.7]=man7/ossl-guide-quic-server-non-block.pod
+GENERATE[man/man7/ossl-guide-quic-server-non-block.7]=man7/ossl-guide-quic-server-non-block.pod
 DEPEND[html/man7/ossl-guide-tls-client-block.html]=man7/ossl-guide-tls-client-block.pod
 GENERATE[html/man7/ossl-guide-tls-client-block.html]=man7/ossl-guide-tls-client-block.pod
 DEPEND[man/man7/ossl-guide-tls-client-block.7]=man7/ossl-guide-tls-client-block.pod
@@ -5051,6 +5137,10 @@ DEPEND[html/man7/provider-signature.html]=man7/provider-signature.pod
 GENERATE[html/man7/provider-signature.html]=man7/provider-signature.pod
 DEPEND[man/man7/provider-signature.7]=man7/provider-signature.pod
 GENERATE[man/man7/provider-signature.7]=man7/provider-signature.pod
+DEPEND[html/man7/provider-skeymgmt.html]=man7/provider-skeymgmt.pod
+GENERATE[html/man7/provider-skeymgmt.html]=man7/provider-skeymgmt.pod
+DEPEND[man/man7/provider-skeymgmt.7]=man7/provider-skeymgmt.pod
+GENERATE[man/man7/provider-skeymgmt.7]=man7/provider-skeymgmt.pod
 DEPEND[html/man7/provider-storemgmt.html]=man7/provider-storemgmt.pod
 GENERATE[html/man7/provider-storemgmt.html]=man7/provider-storemgmt.pod
 DEPEND[man/man7/provider-storemgmt.7]=man7/provider-storemgmt.pod
@@ -5107,6 +5197,7 @@ html/man7/EVP_KDF-X942-ASN1.html \
 html/man7/EVP_KDF-X942-CONCAT.html \
 html/man7/EVP_KDF-X963.html \
 html/man7/EVP_KEM-EC.html \
+html/man7/EVP_KEM-ML-KEM.html \
 html/man7/EVP_KEM-RSA.html \
 html/man7/EVP_KEM-X25519.html \
 html/man7/EVP_KEYEXCH-DH.html \
@@ -5140,7 +5231,10 @@ html/man7/EVP_PKEY-DSA.html \
 html/man7/EVP_PKEY-EC.html \
 html/man7/EVP_PKEY-FFC.html \
 html/man7/EVP_PKEY-HMAC.html \
+html/man7/EVP_PKEY-ML-DSA.html \
+html/man7/EVP_PKEY-ML-KEM.html \
 html/man7/EVP_PKEY-RSA.html \
+html/man7/EVP_PKEY-SLH-DSA.html \
 html/man7/EVP_PKEY-SM2.html \
 html/man7/EVP_PKEY-X25519.html \
 html/man7/EVP_RAND-CRNG-TEST.html \
@@ -5155,7 +5249,9 @@ html/man7/EVP_SIGNATURE-DSA.html \
 html/man7/EVP_SIGNATURE-ECDSA.html \
 html/man7/EVP_SIGNATURE-ED25519.html \
 html/man7/EVP_SIGNATURE-HMAC.html \
+html/man7/EVP_SIGNATURE-ML-DSA.html \
 html/man7/EVP_SIGNATURE-RSA.html \
+html/man7/EVP_SIGNATURE-SLH-DSA.html \
 html/man7/OSSL_PROVIDER-FIPS.html \
 html/man7/OSSL_PROVIDER-base.html \
 html/man7/OSSL_PROVIDER-default.html \
@@ -5182,6 +5278,7 @@ html/man7/openssl-core_names.h.html \
 html/man7/openssl-env.html \
 html/man7/openssl-glossary.html \
 html/man7/openssl-qlog.html \
+html/man7/openssl-quic-concurrency.html \
 html/man7/openssl-quic.html \
 html/man7/openssl-threads.html \
 html/man7/openssl_user_macros.html \
@@ -5194,6 +5291,8 @@ html/man7/ossl-guide-quic-client-block.html \
 html/man7/ossl-guide-quic-client-non-block.html \
 html/man7/ossl-guide-quic-introduction.html \
 html/man7/ossl-guide-quic-multi-stream.html \
+html/man7/ossl-guide-quic-server-block.html \
+html/man7/ossl-guide-quic-server-non-block.html \
 html/man7/ossl-guide-tls-client-block.html \
 html/man7/ossl-guide-tls-client-non-block.html \
 html/man7/ossl-guide-tls-introduction.html \
@@ -5216,6 +5315,7 @@ html/man7/provider-mac.html \
 html/man7/provider-object.html \
 html/man7/provider-rand.html \
 html/man7/provider-signature.html \
+html/man7/provider-skeymgmt.html \
 html/man7/provider-storemgmt.html \
 html/man7/provider.html \
 html/man7/proxy-certificates.html \
@@ -5254,6 +5354,7 @@ man/man7/EVP_KDF-X942-ASN1.7 \
 man/man7/EVP_KDF-X942-CONCAT.7 \
 man/man7/EVP_KDF-X963.7 \
 man/man7/EVP_KEM-EC.7 \
+man/man7/EVP_KEM-ML-KEM.7 \
 man/man7/EVP_KEM-RSA.7 \
 man/man7/EVP_KEM-X25519.7 \
 man/man7/EVP_KEYEXCH-DH.7 \
@@ -5287,7 +5388,10 @@ man/man7/EVP_PKEY-DSA.7 \
 man/man7/EVP_PKEY-EC.7 \
 man/man7/EVP_PKEY-FFC.7 \
 man/man7/EVP_PKEY-HMAC.7 \
+man/man7/EVP_PKEY-ML-DSA.7 \
+man/man7/EVP_PKEY-ML-KEM.7 \
 man/man7/EVP_PKEY-RSA.7 \
+man/man7/EVP_PKEY-SLH-DSA.7 \
 man/man7/EVP_PKEY-SM2.7 \
 man/man7/EVP_PKEY-X25519.7 \
 man/man7/EVP_RAND-CRNG-TEST.7 \
@@ -5302,7 +5406,9 @@ man/man7/EVP_SIGNATURE-DSA.7 \
 man/man7/EVP_SIGNATURE-ECDSA.7 \
 man/man7/EVP_SIGNATURE-ED25519.7 \
 man/man7/EVP_SIGNATURE-HMAC.7 \
+man/man7/EVP_SIGNATURE-ML-DSA.7 \
 man/man7/EVP_SIGNATURE-RSA.7 \
+man/man7/EVP_SIGNATURE-SLH-DSA.7 \
 man/man7/OSSL_PROVIDER-FIPS.7 \
 man/man7/OSSL_PROVIDER-base.7 \
 man/man7/OSSL_PROVIDER-default.7 \
@@ -5329,6 +5435,7 @@ man/man7/openssl-core_names.h.7 \
 man/man7/openssl-env.7 \
 man/man7/openssl-glossary.7 \
 man/man7/openssl-qlog.7 \
+man/man7/openssl-quic-concurrency.7 \
 man/man7/openssl-quic.7 \
 man/man7/openssl-threads.7 \
 man/man7/openssl_user_macros.7 \
@@ -5341,6 +5448,8 @@ man/man7/ossl-guide-quic-client-block.7 \
 man/man7/ossl-guide-quic-client-non-block.7 \
 man/man7/ossl-guide-quic-introduction.7 \
 man/man7/ossl-guide-quic-multi-stream.7 \
+man/man7/ossl-guide-quic-server-block.7 \
+man/man7/ossl-guide-quic-server-non-block.7 \
 man/man7/ossl-guide-tls-client-block.7 \
 man/man7/ossl-guide-tls-client-non-block.7 \
 man/man7/ossl-guide-tls-introduction.7 \
@@ -5363,6 +5472,7 @@ man/man7/provider-mac.7 \
 man/man7/provider-object.7 \
 man/man7/provider-rand.7 \
 man/man7/provider-signature.7 \
+man/man7/provider-skeymgmt.7 \
 man/man7/provider-storemgmt.7 \
 man/man7/provider.7 \
 man/man7/proxy-certificates.7 \

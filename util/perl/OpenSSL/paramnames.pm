@@ -417,6 +417,14 @@ my %params = (
 # EC, X25519 and X448 Key generation parameters
     'PKEY_PARAM_DHKEM_IKM' =>        "dhkem-ikm",
 
+# ML-KEM parameters
+    'PKEY_PARAM_ML_KEM_SEED' => "seed",
+    'PKEY_PARAM_ML_KEM_PREFER_SEED' => "ml-kem.prefer_seed",
+    'PKEY_PARAM_ML_KEM_RETAIN_SEED' => "ml-kem.retain_seed",
+    'PKEY_PARAM_ML_KEM_INPUT_FORMATS' => "ml-kem.input_formats",
+    'PKEY_PARAM_ML_KEM_OUTPUT_FORMATS' => "ml-kem.output_formats",
+    'PKEY_PARAM_ML_KEM_IMPORT_PCT_TYPE' => "ml-kem.import_pct_type",
+
 # Key generation parameters
     'PKEY_PARAM_FFC_TYPE' =>         "type",
     'PKEY_PARAM_FFC_PBITS' =>        "pbits",
@@ -430,6 +438,16 @@ my %params = (
     'PKEY_PARAM_EC_INCLUDE_PUBLIC' =>          "include-public",
     'PKEY_PARAM_FIPS_SIGN_CHECK' =>            "sign-check",
     'PKEY_PARAM_FIPS_APPROVED_INDICATOR' => '*ALG_PARAM_FIPS_APPROVED_INDICATOR',
+
+# ML_DSA Key generation parameter
+    'PKEY_PARAM_ML_DSA_SEED' =>             "seed",
+    'PKEY_PARAM_ML_DSA_RETAIN_SEED' =>      "ml-dsa.retain_seed",
+    'PKEY_PARAM_ML_DSA_PREFER_SEED' =>      "ml-dsa.prefer_seed",
+    'PKEY_PARAM_ML_DSA_INPUT_FORMATS' =>    "ml-dsa.input_formats",
+    'PKEY_PARAM_ML_DSA_OUTPUT_FORMATS' =>   "ml-dsa.output_formats",
+
+# SLH_DSA Key generation parameters
+    'PKEY_PARAM_SLH_DSA_SEED' =>              "seed",
 
 # Key Exchange parameters
     'EXCHANGE_PARAM_PAD' =>                   "pad",# uint
@@ -466,6 +484,11 @@ my %params = (
     'SIGNATURE_PARAM_FIPS_SIGN_X931_PAD_CHECK' => "sign-x931-pad-check",
     'SIGNATURE_PARAM_FIPS_APPROVED_INDICATOR' => '*ALG_PARAM_FIPS_APPROVED_INDICATOR',
     'SIGNATURE_PARAM_SIGNATURE' =>          "signature",
+    'SIGNATURE_PARAM_MESSAGE_ENCODING' =>   "message-encoding",
+    'SIGNATURE_PARAM_DETERMINISTIC' =>      "deterministic",
+    'SIGNATURE_PARAM_MU' =>                 "mu", # int
+    'SIGNATURE_PARAM_TEST_ENTROPY' =>       "test-entropy",
+    'SIGNATURE_PARAM_ADD_RANDOM' =>         "additional-random",
 
 # Asym cipher parameters
     'ASYM_CIPHER_PARAM_DIGEST' =>                   '*PKEY_PARAM_DIGEST',
@@ -591,6 +614,10 @@ my %params = (
     'LIBSSL_RECORD_LAYER_PARAM_MAX_EARLY_DATA' => "max_early_data",
     'LIBSSL_RECORD_LAYER_PARAM_BLOCK_PADDING' =>  "block_padding",
     'LIBSSL_RECORD_LAYER_PARAM_HS_PADDING' =>     "hs_padding",
+
+# Symmetric Key parametes
+    'SKEY_PARAM_RAW_BYTES' => "raw-bytes",
+    'SKEY_PARAM_KEY_LENGTH' => "key-length",
 );
 
 # Generate string based macros for public consumption

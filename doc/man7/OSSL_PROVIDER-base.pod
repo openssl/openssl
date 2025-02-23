@@ -96,6 +96,42 @@ are also available in the default provider.
 
 =item SM2
 
+=item ML-DSA-44
+
+=item ML-DSA-65
+
+=item ML-DSA-87
+
+=item ML-KEM-512
+
+=item ML-KEM-768
+
+=item ML-KEM-1024
+
+=item SLH-DSA-SHA2-128s
+
+=item SLH-DSA-SHA2-128f
+
+=item SLH-DSA-SHA2-192s
+
+=item SLH-DSA-SHA2-192f
+
+=item SLH-DSA-SHA2-256s
+
+=item SLH-DSA-SHA2-256f
+
+=item SLH-DSA-SHAKE-128s
+
+=item SLH-DSA-SHAKE-128f
+
+=item SLH-DSA-SHAKE-192s
+
+=item SLH-DSA-SHAKE-192f
+
+=item SLH-DSA-SHAKE-256s
+
+=item SLH-DSA-SHAKE-256f
+
 =back
 
 In addition to this provider, all of these encoding algorithms are also
@@ -130,6 +166,42 @@ combination with the FIPS provider.
 
 =item DER
 
+=item ML-DSA-44
+
+=item ML-DSA-65
+
+=item ML-DSA-87
+
+=item ML-KEM-512
+
+=item ML-KEM-768
+
+=item ML-KEM-1024
+
+=item SLH-DSA-SHA2-128s
+
+=item SLH-DSA-SHA2-128f
+
+=item SLH-DSA-SHA2-192s
+
+=item SLH-DSA-SHA2-192f
+
+=item SLH-DSA-SHA2-256s
+
+=item SLH-DSA-SHA2-256f
+
+=item SLH-DSA-SHAKE-128s
+
+=item SLH-DSA-SHAKE-128f
+
+=item SLH-DSA-SHAKE-192s
+
+=item SLH-DSA-SHAKE-192f
+
+=item SLH-DSA-SHAKE-256s
+
+=item SLH-DSA-SHAKE-256f
+
 =back
 
 In addition to this provider, all of these decoding algorithms are also
@@ -157,6 +229,8 @@ L<openssl-core_dispatch.h(7)>, L<provider(7)>
 =head1 HISTORY
 
 This functionality was added in OpenSSL 3.0.
+
+Support for B<ML-DSA> and <ML-KEM> was added in OpenSSL 3.5.
 
 =head1 COPYRIGHT
 

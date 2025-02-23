@@ -23,11 +23,16 @@
 #include "crypto/dsa.h"          /* ossl_dsa_get0_params() */
 #include "crypto/ec.h"           /* ossl_ec_key_get_libctx */
 #include "crypto/ecx.h"          /* ECX_KEY, etc... */
+#include "crypto/ml_kem.h"       /* ML_KEM_KEY, etc... */
 #include "crypto/rsa.h"          /* RSA_PSS_PARAMS_30, etc... */
+#include "crypto/ml_dsa.h"
+#include "crypto/slh_dsa.h"
 #include "prov/bio.h"
 #include "prov/implementations.h"
 #include "internal/encoder.h"
 #include "endecoder_local.h"
+#include "ml_dsa_codecs.h"
+#include "ml_kem_codecs.h"
 
 DEFINE_SPECIAL_STACK_OF_CONST(BIGNUM_const, BIGNUM)
 
@@ -428,10 +433,25 @@ static int ecx_to_text(BIO *out, const void *key, int selection)
 
     return 1;
 }
-
 #endif
 
 /* ---------------------------------------------------------------------- */
+
+#ifndef OPENSSL_NO_ML_KEM
+static int ml_kem_to_text(BIO *out, const void *vkey, int selection)
+{
+    return ossl_ml_kem_key_to_text(out, (ML_KEM_KEY *)vkey, selection);
+}
+#endif
+
+/* ---------------------------------------------------------------------- */
+
+#ifndef OPENSSL_NO_SLH_DSA
+static int slh_dsa_to_text(BIO *out, const void *key, int selection)
+{
+    return ossl_slh_dsa_key_to_text(out, (SLH_DSA_KEY *)key, selection);
+}
+#endif /* OPENSSL_NO_SLH_DSA */
 
 static int rsa_to_text(BIO *out, const void *key, int selection)
 {
@@ -587,6 +607,14 @@ static int rsa_to_text(BIO *out, const void *key, int selection)
 
 /* ---------------------------------------------------------------------- */
 
+#ifndef OPENSSL_NO_ML_DSA
+static int ml_dsa_to_text(BIO *out, const void *key, int selection)
+{
+    return ossl_ml_dsa_key_to_text(out, (ML_DSA_KEY *)key, selection);
+}
+#endif /* OPENSSL_NO_ML_DSA */
+/* ---------------------------------------------------------------------- */
+
 static void *key2text_newctx(void *provctx)
 {
     return provctx;
@@ -679,5 +707,31 @@ MAKE_TEXT_ENCODER(x25519, ecx);
 MAKE_TEXT_ENCODER(x448, ecx);
 # endif
 #endif
+#ifndef OPENSSL_NO_ML_KEM
+MAKE_TEXT_ENCODER(ml_kem_512, ml_kem);
+MAKE_TEXT_ENCODER(ml_kem_768, ml_kem);
+MAKE_TEXT_ENCODER(ml_kem_1024, ml_kem);
+#endif
 MAKE_TEXT_ENCODER(rsa, rsa);
 MAKE_TEXT_ENCODER(rsapss, rsa);
+
+#ifndef OPENSSL_NO_ML_DSA
+MAKE_TEXT_ENCODER(ml_dsa_44, ml_dsa);
+MAKE_TEXT_ENCODER(ml_dsa_65, ml_dsa);
+MAKE_TEXT_ENCODER(ml_dsa_87, ml_dsa);
+#endif
+
+#ifndef OPENSSL_NO_SLH_DSA
+MAKE_TEXT_ENCODER(slh_dsa_sha2_128s, slh_dsa);
+MAKE_TEXT_ENCODER(slh_dsa_sha2_128f, slh_dsa);
+MAKE_TEXT_ENCODER(slh_dsa_sha2_192s, slh_dsa);
+MAKE_TEXT_ENCODER(slh_dsa_sha2_192f, slh_dsa);
+MAKE_TEXT_ENCODER(slh_dsa_sha2_256s, slh_dsa);
+MAKE_TEXT_ENCODER(slh_dsa_sha2_256f, slh_dsa);
+MAKE_TEXT_ENCODER(slh_dsa_shake_128s, slh_dsa);
+MAKE_TEXT_ENCODER(slh_dsa_shake_128f, slh_dsa);
+MAKE_TEXT_ENCODER(slh_dsa_shake_192s, slh_dsa);
+MAKE_TEXT_ENCODER(slh_dsa_shake_192f, slh_dsa);
+MAKE_TEXT_ENCODER(slh_dsa_shake_256s, slh_dsa);
+MAKE_TEXT_ENCODER(slh_dsa_shake_256f, slh_dsa);
+#endif

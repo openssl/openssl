@@ -30,6 +30,7 @@ sub AUTOLOAD()		# thunk [simplified] x86-style perlasm
     $code .= "\t$opcode\t".join(',',@_,$arg)."\n";
 }
 
+$prefix="chacha_sve";
 my ($outp,$inp,$len,$key,$ctr) = map("x$_",(0..4));
 my ($veclen) = ("x5");
 my ($counter) = ("x6");
@@ -721,11 +722,19 @@ $code.=<<___;
 .hidden	OPENSSL_armcap_P
 
 .text
+
+.rodata
 .align	5
+.type _${prefix}_consts,%object
+_${prefix}_consts:
 .Lchacha20_consts:
 .quad	0x3320646e61707865,0x6b20657479622d32		// endian-neutral
 .Lrot8:
 	.word 0x02010003,0x04040404,0x02010003,0x04040404
+.size _${prefix}_consts,.-_${prefix}_consts
+
+.previous
+
 .globl	ChaCha20_ctr32_sve
 .type	ChaCha20_ctr32_sve,%function
 .align	5
@@ -744,7 +753,8 @@ ChaCha20_ctr32_sve:
 1:
 	cmp	$veclen,4
 	b.le	.Lreturn
-	adr	$tmp,.Lrot8
+	adrp	$tmp,.Lrot8
+	add	$tmp,$tmp,#:lo12:.Lrot8
 	ldp	$tmpw0,$tmpw1,[$tmp]
 	index	$rot8.s,$tmpw0,$tmpw1
 2:
@@ -762,7 +772,8 @@ ChaCha20_ctr32_sve:
 	stp	x28,x29,[sp,160]
 	str	x30,[sp,176]
 
-	adr	$tmp,.Lchacha20_consts
+	adrp	$tmp,.Lchacha20_consts
+	add	$tmp,$tmp,#:lo12:.Lchacha20_consts
 	ldp	@K[0],@K[1],[$tmp]
 	ldp	@K[2],@K[3],[$key]
 	ldp	@K[4],@K[5],[$key, 16]

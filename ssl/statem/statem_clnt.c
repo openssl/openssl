@@ -28,6 +28,7 @@
 #include <openssl/param_build.h>
 #include "internal/cryptlib.h"
 #include "internal/comp.h"
+#include "internal/ssl_unwrap.h"
 
 static MSG_PROCESS_RETURN tls_process_as_hello_retry_request(SSL_CONNECTION *s,
                                                              PACKET *pkt);
@@ -490,7 +491,7 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL_CONNECTION *s)
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_PENDING_EARLY_DATA_END:
-        if (s->ext.early_data == SSL_EARLY_DATA_ACCEPTED) {
+        if (s->ext.early_data == SSL_EARLY_DATA_ACCEPTED && !SSL_NO_EOED(s)) {
             st->hand_state = TLS_ST_CW_END_OF_EARLY_DATA;
             return WRITE_TRAN_CONTINUE;
         }
@@ -1910,6 +1911,7 @@ static WORK_STATE tls_post_process_server_rpk(SSL_CONNECTION *sc,
 {
     size_t certidx;
     const SSL_CERT_LOOKUP *clu;
+    int v_ok;
 
     if (sc->session->peer_rpk == NULL) {
         SSLfatal(sc, SSL_AD_ILLEGAL_PARAMETER,
@@ -1919,9 +1921,19 @@ static WORK_STATE tls_post_process_server_rpk(SSL_CONNECTION *sc,
 
     if (sc->rwstate == SSL_RETRY_VERIFY)
         sc->rwstate = SSL_NOTHING;
-    if (ssl_verify_rpk(sc, sc->session->peer_rpk) > 0
-            && sc->rwstate == SSL_RETRY_VERIFY)
+
+    ERR_set_mark();
+    v_ok = ssl_verify_rpk(sc, sc->session->peer_rpk);
+    if (v_ok <= 0 && sc->verify_mode != SSL_VERIFY_NONE) {
+        ERR_clear_last_mark();
+        SSLfatal(sc, ssl_x509err2alert(sc->verify_result),
+                 SSL_R_CERTIFICATE_VERIFY_FAILED);
+        return WORK_ERROR;
+    }
+    ERR_pop_to_mark();      /* but we keep s->verify_result */
+    if (v_ok > 0 && sc->rwstate == SSL_RETRY_VERIFY) {
         return WORK_MORE_A;
+    }
 
     if ((clu = ssl_cert_lookup_by_pkey(sc->session->peer_rpk, &certidx,
                                        SSL_CONNECTION_GET_CTX(sc))) == NULL) {
@@ -2071,10 +2083,7 @@ WORK_STATE tls_post_process_server_certificate(SSL_CONNECTION *s,
 
     if (s->rwstate == SSL_RETRY_VERIFY)
         s->rwstate = SSL_NOTHING;
-    i = ssl_verify_cert_chain(s, s->session->peer_chain);
-    if (i > 0 && s->rwstate == SSL_RETRY_VERIFY) {
-        return WORK_MORE_A;
-    }
+
     /*
      * The documented interface is that SSL_VERIFY_PEER should be set in order
      * for client side verification of the server certificate to take place.
@@ -2089,12 +2098,17 @@ WORK_STATE tls_post_process_server_certificate(SSL_CONNECTION *s,
      * (less clean) historic behaviour of performing validation if any flag is
      * set. The *documented* interface remains the same.
      */
-    if (s->verify_mode != SSL_VERIFY_NONE && i <= 0) {
+    ERR_set_mark();
+    i = ssl_verify_cert_chain(s, s->session->peer_chain);
+    if (i <= 0 && s->verify_mode != SSL_VERIFY_NONE) {
+        ERR_clear_last_mark();
         SSLfatal(s, ssl_x509err2alert(s->verify_result),
                  SSL_R_CERTIFICATE_VERIFY_FAILED);
         return WORK_ERROR;
     }
-    ERR_clear_error();          /* but we keep s->verify_result */
+    ERR_pop_to_mark();      /* but we keep s->verify_result */
+    if (i > 0 && s->rwstate == SSL_RETRY_VERIFY)
+        return WORK_MORE_A;
 
     /*
      * Inconsistency alert: cert_chain does include the peer's certificate,
@@ -2127,8 +2141,12 @@ WORK_STATE tls_post_process_server_certificate(SSL_CONNECTION *s,
         }
     }
 
+    if (!X509_up_ref(x)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return WORK_ERROR;
+    }
+
     X509_free(s->session->peer);
-    X509_up_ref(x);
     s->session->peer = x;
     s->session->verify_result = s->verify_result;
     /* Ensure there is no RPK */

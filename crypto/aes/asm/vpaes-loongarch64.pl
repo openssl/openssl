@@ -29,9 +29,9 @@
 ($vr0,$vr1,$vr2,$vr3,$vr4,$vr5,$vr6,$vr7,$vr8,$vr9,$vr10,$vr11,$vr12,$vr13,$vr14,$vr15,$vr16,$vr17,$vr18,$vr19)=map("\$vr$_",(0..19));
 ($fp)=map("\$r$_",(22));
 
-for (@ARGV) {   $output=$_ if (/\w[\w\-]*\.\w+$/);      }
-open STDOUT,">$output";
-while (($output=shift) && ($output!~/\w[\w\-]*\.\w+$/)) {}
+# $output is the last argument if it looks like a file (it has an extension)
+my $output;
+$output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
 open STDOUT,">$output";
 
 $PREFIX="vpaes";

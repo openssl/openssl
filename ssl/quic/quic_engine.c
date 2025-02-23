@@ -17,7 +17,7 @@
  * QUIC Engine
  * ===========
  */
-static int qeng_init(QUIC_ENGINE *qeng);
+static int qeng_init(QUIC_ENGINE *qeng, uint64_t reactor_flags);
 static void qeng_cleanup(QUIC_ENGINE *qeng);
 static void qeng_tick(QUIC_TICK_RESULT *res, void *arg, uint32_t flags);
 
@@ -33,10 +33,8 @@ QUIC_ENGINE *ossl_quic_engine_new(const QUIC_ENGINE_ARGS *args)
     qeng->libctx            = args->libctx;
     qeng->propq             = args->propq;
     qeng->mutex             = args->mutex;
-    qeng->now_cb            = args->now_cb;
-    qeng->now_cb_arg        = args->now_cb_arg;
 
-    if (!qeng_init(qeng)) {
+    if (!qeng_init(qeng, args->reactor_flags)) {
         OPENSSL_free(qeng);
         return NULL;
     }
@@ -53,15 +51,17 @@ void ossl_quic_engine_free(QUIC_ENGINE *qeng)
     OPENSSL_free(qeng);
 }
 
-static int qeng_init(QUIC_ENGINE *qeng)
+static int qeng_init(QUIC_ENGINE *qeng, uint64_t reactor_flags)
 {
-    ossl_quic_reactor_init(&qeng->rtor, qeng_tick, qeng, ossl_time_zero());
-    return 1;
+    return ossl_quic_reactor_init(&qeng->rtor, qeng_tick, qeng,
+                                  qeng->mutex,
+                                  ossl_time_zero(), reactor_flags);
 }
 
 static void qeng_cleanup(QUIC_ENGINE *qeng)
 {
     assert(ossl_list_port_num(&qeng->port_list) == 0);
+    ossl_quic_reactor_cleanup(&qeng->rtor);
 }
 
 QUIC_REACTOR *ossl_quic_engine_get0_reactor(QUIC_ENGINE *qeng)
@@ -82,9 +82,62 @@ OSSL_TIME ossl_quic_engine_get_time(QUIC_ENGINE *qeng)
     return qeng->now_cb(qeng->now_cb_arg);
 }
 
+OSSL_TIME ossl_quic_engine_make_real_time(QUIC_ENGINE *qeng, OSSL_TIME tm)
+{
+    OSSL_TIME offset;
+
+    if (qeng->now_cb != NULL
+            && !ossl_time_is_zero(tm)
+            && !ossl_time_is_infinite(tm)) {
+
+        offset = qeng->now_cb(qeng->now_cb_arg);
+
+        /* If tm is earlier than offset then tm will end up as "now" */
+        tm = ossl_time_add(ossl_time_subtract(tm, offset), ossl_time_now());
+    }
+
+    return tm;
+}
+
+void ossl_quic_engine_set_time_cb(QUIC_ENGINE *qeng,
+                                  OSSL_TIME (*now_cb)(void *arg),
+                                  void *now_cb_arg)
+{
+    qeng->now_cb = now_cb;
+    qeng->now_cb_arg = now_cb_arg;
+}
+
 void ossl_quic_engine_set_inhibit_tick(QUIC_ENGINE *qeng, int inhibit)
 {
     qeng->inhibit_tick = (inhibit != 0);
+}
+
+OSSL_LIB_CTX *ossl_quic_engine_get0_libctx(QUIC_ENGINE *qeng)
+{
+    return qeng->libctx;
+}
+
+const char *ossl_quic_engine_get0_propq(QUIC_ENGINE *qeng)
+{
+    return qeng->propq;
+}
+
+void ossl_quic_engine_update_poll_descriptors(QUIC_ENGINE *qeng, int force)
+{
+    QUIC_PORT *port;
+
+    /*
+     * TODO(QUIC MULTIPORT): The implementation of
+     * ossl_quic_port_update_poll_descriptors assumes an engine only ever has a
+     * single port for now due to reactor limitations. This limitation will be
+     * removed in future.
+     *
+     * TODO(QUIC MULTIPORT): Consider only iterating the port list when dirty at
+     * the engine level in future when we can have multiple ports. This is not
+     * important currently as the port list has a single entry.
+     */
+    OSSL_LIST_FOREACH(port, port, &qeng->port_list)
+        ossl_quic_port_update_poll_descriptors(port, force);
 }
 
 /*
@@ -110,7 +163,7 @@ QUIC_PORT *ossl_quic_engine_create_port(QUIC_ENGINE *qeng,
 
 /*
  * QUIC Engine: Ticker-Mutator
- * ==========================
+ * ===========================
  */
 
 /*
@@ -123,9 +176,10 @@ static void qeng_tick(QUIC_TICK_RESULT *res, void *arg, uint32_t flags)
     QUIC_ENGINE *qeng = arg;
     QUIC_PORT *port;
 
-    res->net_read_desired   = 0;
-    res->net_write_desired  = 0;
-    res->tick_deadline      = ossl_time_infinite();
+    res->net_read_desired     = 0;
+    res->net_write_desired    = 0;
+    res->notify_other_threads = 0;
+    res->tick_deadline        = ossl_time_infinite();
 
     if (qeng->inhibit_tick)
         return;

@@ -207,9 +207,16 @@ static int helper_init(struct helper *h)
     h->args.cc_method               = h->cc_method;
     h->args.cc_data                 = h->cc_data;
     h->args.now                     = fake_now;
+    h->args.protocol_version        = QUIC_VERSION_1;
 
     if (!TEST_ptr(h->txp = ossl_quic_tx_packetiser_new(&h->args)))
         goto err;
+
+    /*
+     * Our helper should always skip validation
+     * as the tests are not written to expect delayed connections
+     */
+    ossl_quic_tx_packetiser_set_validated(h->txp);
 
     if (!TEST_ptr(h->demux = ossl_quic_demux_new(h->bio2, 8,
                                                  fake_now, NULL)))

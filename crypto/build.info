@@ -2,11 +2,11 @@
 # there for further explanations.
 SUBDIRS=objects buffer bio stack lhash hashtable rand evp asn1 pem x509 conf \
         txt_db pkcs7 pkcs12 ui kdf store property \
-        md2 md4 md5 sha mdc2 hmac ripemd whrlpool poly1305 \
+        md2 md4 md5 sha mdc2 ml_kem hmac ripemd whrlpool poly1305 \
         siphash sm3 des aes rc2 rc4 rc5 idea aria bf cast camellia \
         seed sm4 chacha modes bn ec rsa dsa dh sm2 dso engine \
         err comp http ocsp cms ts srp cmac ct async ess crmf cmp encode_decode \
-        ffc hpke thread
+        ffc hpke thread ml_dsa slh_dsa
 
 LIBS=../libcrypto
 

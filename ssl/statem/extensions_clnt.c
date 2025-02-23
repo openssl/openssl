@@ -10,6 +10,7 @@
 #include <openssl/ocsp.h>
 #include "../ssl_local.h"
 #include "internal/cryptlib.h"
+#include "internal/ssl_unwrap.h"
 #include "statem_local.h"
 
 EXT_RETURN tls_construct_ctos_renegotiate(SSL_CONNECTION *s, WPACKET *pkt,
@@ -626,13 +627,13 @@ EXT_RETURN tls_construct_ctos_psk_kex_modes(SSL_CONNECTION *s, WPACKET *pkt,
 }
 
 #ifndef OPENSSL_NO_TLS1_3
-static int add_key_share(SSL_CONNECTION *s, WPACKET *pkt, unsigned int curve_id)
+static int add_key_share(SSL_CONNECTION *s, WPACKET *pkt, unsigned int group_id, size_t loop_num)
 {
-    unsigned char *encoded_point = NULL;
+    unsigned char *encoded_pubkey = NULL;
     EVP_PKEY *key_share_key = NULL;
     size_t encodedlen;
 
-    if (s->s3.tmp.pkey != NULL) {
+    if (s->s3.tmp.pkey != NULL && loop_num == 0) {
         if (!ossl_assert(s->hello_retry_request == SSL_HRR_PENDING)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return 0;
@@ -642,7 +643,7 @@ static int add_key_share(SSL_CONNECTION *s, WPACKET *pkt, unsigned int curve_id)
          */
         key_share_key = s->s3.tmp.pkey;
     } else {
-        key_share_key = ssl_generate_pkey_group(s, curve_id);
+        key_share_key = ssl_generate_pkey_group(s, group_id);
         if (key_share_key == NULL) {
             /* SSLfatal() already called */
             return 0;
@@ -651,33 +652,36 @@ static int add_key_share(SSL_CONNECTION *s, WPACKET *pkt, unsigned int curve_id)
 
     /* Encode the public key. */
     encodedlen = EVP_PKEY_get1_encoded_public_key(key_share_key,
-                                                  &encoded_point);
+                                                  &encoded_pubkey);
     if (encodedlen == 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EC_LIB);
         goto err;
     }
 
     /* Create KeyShareEntry */
-    if (!WPACKET_put_bytes_u16(pkt, curve_id)
-            || !WPACKET_sub_memcpy_u16(pkt, encoded_point, encodedlen)) {
+    if (!WPACKET_put_bytes_u16(pkt, group_id)
+            || !WPACKET_sub_memcpy_u16(pkt, encoded_pubkey, encodedlen)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     }
 
-    /*
-     * When changing to send more than one key_share we're
-     * going to need to be able to save more than one EVP_PKEY. For now
-     * we reuse the existing tmp.pkey
-     */
-    s->s3.tmp.pkey = key_share_key;
-    s->s3.group_id = curve_id;
-    OPENSSL_free(encoded_point);
+    /* For backward compatibility, we use the first valid group to add a key share */
+    if (loop_num == 0) {
+        s->s3.tmp.pkey = key_share_key;
+        s->s3.group_id = group_id;
+    }
+    /* We ensure in t1_lib.c that the loop number does not exceed OPENSSL_CLIENT_MAX_KEY_SHARES */
+    s->s3.tmp.ks_pkey[loop_num] = key_share_key;
+    s->s3.tmp.ks_group_id[loop_num] = group_id;
+    s->s3.tmp.num_ks_pkey++;
+
+    OPENSSL_free(encoded_pubkey);
 
     return 1;
  err:
     if (s->s3.tmp.pkey == NULL)
         EVP_PKEY_free(key_share_key);
-    OPENSSL_free(encoded_point);
+    OPENSSL_free(encoded_pubkey);
     return 0;
 }
 #endif
@@ -689,48 +693,68 @@ EXT_RETURN tls_construct_ctos_key_share(SSL_CONNECTION *s, WPACKET *pkt,
 #ifndef OPENSSL_NO_TLS1_3
     size_t i, num_groups = 0;
     const uint16_t *pgroups = NULL;
-    uint16_t curve_id = 0;
+    uint16_t group_id = 0;
+    int add_only_one = 0;
+    size_t valid_keyshare = 0;
 
     /* key_share extension */
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_key_share)
-               /* Extension data sub-packet */
+            /* Extension data sub-packet */
             || !WPACKET_start_sub_packet_u16(pkt)
-               /* KeyShare list sub-packet */
+            /* KeyShare list sub-packet */
             || !WPACKET_start_sub_packet_u16(pkt)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return EXT_RETURN_FAIL;
     }
 
-    tls1_get_supported_groups(s, &pgroups, &num_groups);
-
-    /*
-     * Make the number of key_shares sent configurable. For
-     * now, we just send one
-     */
-    if (s->s3.group_id != 0) {
-        curve_id = s->s3.group_id;
-    } else {
-        for (i = 0; i < num_groups; i++) {
-            if (!tls_group_allowed(s, pgroups[i], SSL_SECOP_CURVE_SUPPORTED))
-                continue;
-
-            if (!tls_valid_group(s, pgroups[i], TLS1_3_VERSION, TLS1_3_VERSION,
-                                 0, NULL))
-                continue;
-
-            curve_id = pgroups[i];
-            break;
-        }
+    tls1_get_requested_keyshare_groups(s, &pgroups, &num_groups);
+    if (num_groups == 1 && pgroups[0] == 0) { /* Indication that no * prefix was used */
+        tls1_get_supported_groups(s, &pgroups, &num_groups);
+        add_only_one = 1;
     }
 
-    if (curve_id == 0) {
+    /* If neither the default nor the keyshares have any entry --> fatal */
+    if (num_groups == 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_NO_SUITABLE_KEY_SHARE);
         return EXT_RETURN_FAIL;
     }
 
-    if (!add_key_share(s, pkt, curve_id)) {
-        /* SSLfatal() already called */
-        return EXT_RETURN_FAIL;
+    /* Add key shares */
+
+    s->s3.tmp.num_ks_pkey = 0;
+
+    if (s->s3.group_id != 0) {
+        group_id = s->s3.group_id;
+        if (!add_key_share(s, pkt, group_id, 0)) {
+            /* SSLfatal() already called */
+            return EXT_RETURN_FAIL;
+        }
+    } else {
+        if (s->ext.supportedgroups == NULL) /* use default */
+            add_only_one = 1;
+
+        for (i = 0; i < num_groups; i++) {
+            if (!tls_group_allowed(s, pgroups[i], SSL_SECOP_CURVE_SUPPORTED))
+                continue;
+            if (!tls_valid_group(s, pgroups[i], TLS1_3_VERSION, TLS1_3_VERSION,
+                                 0, NULL))
+                continue;
+
+            group_id = pgroups[i];
+
+            if (group_id == 0) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_NO_SUITABLE_KEY_SHARE);
+                return EXT_RETURN_FAIL;
+            }
+            if (!add_key_share(s, pkt, group_id, valid_keyshare)) {
+                /* SSLfatal() already called */
+                return EXT_RETURN_FAIL;
+            }
+            if (add_only_one)
+                break;
+
+            valid_keyshare++;
+        }
     }
 
     if (!WPACKET_close(pkt) || !WPACKET_close(pkt)) {
@@ -1836,6 +1860,8 @@ int tls_parse_stoc_key_share(SSL_CONNECTION *s, PACKET *pkt,
     PACKET encoded_pt;
     EVP_PKEY *ckey = s->s3.tmp.pkey, *skey = NULL;
     const TLS_GROUP_INFO *ginf = NULL;
+    uint16_t valid_ks_id = 0;
+    size_t i;
 
     /* Sanity check */
     if (ckey == NULL || s->s3.peer_tmp != NULL) {
@@ -1843,6 +1869,7 @@ int tls_parse_stoc_key_share(SSL_CONNECTION *s, PACKET *pkt,
         return 0;
     }
 
+    /* Which group ID does the server want -> group_id */
     if (!PACKET_get_net_2(pkt, &group_id)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
         return 0;
@@ -1850,7 +1877,7 @@ int tls_parse_stoc_key_share(SSL_CONNECTION *s, PACKET *pkt,
 
     if ((context & SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST) != 0) {
         const uint16_t *pgroups = NULL;
-        size_t i, num_groups;
+        size_t num_groups;
 
         if (PACKET_remaining(pkt) != 0) {
             SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
@@ -1861,9 +1888,11 @@ int tls_parse_stoc_key_share(SSL_CONNECTION *s, PACKET *pkt,
          * It is an error if the HelloRetryRequest wants a key_share that we
          * already sent in the first ClientHello
          */
-        if (group_id == s->s3.group_id) {
-            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_KEY_SHARE);
-            return 0;
+        for (i = 0; i < s->s3.tmp.num_ks_pkey; i++) {
+            if (s->s3.tmp.ks_group_id[i] == group_id) {
+                SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_KEY_SHARE);
+                return 0;
+            }
         }
 
         /* Validate the selected group is one we support */
@@ -1880,13 +1909,36 @@ int tls_parse_stoc_key_share(SSL_CONNECTION *s, PACKET *pkt,
             return 0;
         }
 
+        /* Memorize which groupID the server wants */
         s->s3.group_id = group_id;
-        EVP_PKEY_free(s->s3.tmp.pkey);
+
+        /* The initial keyshares are obsolete now, hence free memory */
+        for (i = 0; i < s->s3.tmp.num_ks_pkey; i++) {
+            if (s->s3.tmp.ks_pkey[i] != NULL) {
+                EVP_PKEY_free(s->s3.tmp.ks_pkey[i]);
+                s->s3.tmp.ks_pkey[i] = NULL;
+            }
+        }
+        s->s3.tmp.num_ks_pkey = 0;
         s->s3.tmp.pkey = NULL;
+
         return 1;
     }
 
-    if (group_id != s->s3.group_id) {
+    /*
+     * check that the group requested by the server is one we've
+     * sent a key share for, and if so: memorize which one
+     */
+    for (i = 0; i < s->s3.tmp.num_ks_pkey; i++) {
+        if (s->s3.tmp.ks_group_id[i] == group_id) {
+            valid_ks_id = group_id;
+            ckey = s->s3.tmp.ks_pkey[i];
+            s->s3.group_id = group_id;
+            s->s3.tmp.pkey = ckey;
+            break;
+        }
+    }
+    if (valid_ks_id == 0) {
         /*
          * This isn't for the group that we sent in the original
          * key_share!

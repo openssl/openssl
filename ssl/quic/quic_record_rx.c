@@ -815,7 +815,8 @@ static int qrx_process_pkt(OSSL_QRX *qrx, QUIC_URXE *urxe,
     need_second_decode = !pkt_is_marked(&urxe->hpr_removed, pkt_idx);
     if (!ossl_quic_wire_decode_pkt_hdr(pkt,
                                        qrx->short_conn_id_len,
-                                       need_second_decode, 0, &rxe->hdr, &ptrs))
+                                       need_second_decode, 0, &rxe->hdr, &ptrs,
+                                       NULL))
         goto malformed;
 
     /*
@@ -951,7 +952,7 @@ static int qrx_process_pkt(OSSL_QRX *qrx, QUIC_URXE *urxe,
 
         /* Decode the now unprotected header. */
         if (ossl_quic_wire_decode_pkt_hdr(pkt, qrx->short_conn_id_len,
-                                          0, 0, &rxe->hdr, NULL) != 1)
+                                          0, 0, &rxe->hdr, NULL, NULL) != 1)
             goto malformed;
     }
 
@@ -1354,4 +1355,9 @@ void ossl_qrx_set_msg_callback(OSSL_QRX *qrx, ossl_msg_cb msg_callback,
 void ossl_qrx_set_msg_callback_arg(OSSL_QRX *qrx, void *msg_callback_arg)
 {
     qrx->msg_callback_arg = msg_callback_arg;
+}
+
+size_t ossl_qrx_get_short_hdr_conn_id_len(OSSL_QRX *qrx)
+{
+    return qrx->short_conn_id_len;
 }

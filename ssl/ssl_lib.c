@@ -30,6 +30,7 @@
 #include "internal/thread_once.h"
 #include "internal/ktls.h"
 #include "internal/to_hex.h"
+#include "internal/ssl_unwrap.h"
 #include "quic/quic_local.h"
 
 static int ssl_undefined_function_3(SSL_CONNECTION *sc, unsigned char *r,
@@ -702,30 +703,30 @@ SSL *SSL_new(SSL_CTX *ctx)
 
 int ossl_ssl_init(SSL *ssl, SSL_CTX *ctx, const SSL_METHOD *method, int type)
 {
-    ssl->type = type;
+    if (!SSL_CTX_up_ref(ctx))
+        return 0;
 
     ssl->lock = CRYPTO_THREAD_lock_new();
-    if (ssl->lock == NULL)
-        return 0;
 
-    if (!CRYPTO_NEW_REF(&ssl->references, 1)) {
-        CRYPTO_THREAD_lock_free(ssl->lock);
-        return 0;
-    }
+    if (ssl->lock == NULL || !CRYPTO_NEW_REF(&ssl->references, 1))
+        goto err;
 
     if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL, ssl, &ssl->ex_data)) {
-        CRYPTO_THREAD_lock_free(ssl->lock);
         CRYPTO_FREE_REF(&ssl->references);
-        ssl->lock = NULL;
-        return 0;
+        goto err;
     }
 
-    SSL_CTX_up_ref(ctx);
     ssl->ctx = ctx;
-
+    ssl->type = type;
     ssl->defltmeth = ssl->method = method;
 
     return 1;
+
+err:
+    CRYPTO_THREAD_lock_free(ssl->lock);
+    ssl->lock = NULL;
+    SSL_CTX_free(ctx);
+    return 0;
 }
 
 SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, SSL *user_ssl,
@@ -823,7 +824,10 @@ SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, SSL *user_ssl,
     s->ext.ocsp.exts = NULL;
     s->ext.ocsp.resp = NULL;
     s->ext.ocsp.resp_len = 0;
-    SSL_CTX_up_ref(ctx);
+
+    if (!SSL_CTX_up_ref(ctx))
+        goto err;
+
     s->session_ctx = ctx;
     if (ctx->ext.ecpointformats) {
         s->ext.ecpointformats =
@@ -846,6 +850,26 @@ SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, SSL *user_ssl,
             goto err;
         }
         s->ext.supportedgroups_len = ctx->ext.supportedgroups_len;
+    }
+    if (ctx->ext.keyshares != NULL) {
+        s->ext.keyshares =
+            OPENSSL_memdup(ctx->ext.keyshares,
+                           ctx->ext.keyshares_len * sizeof(*ctx->ext.keyshares));
+        if (s->ext.keyshares == NULL) {
+            s->ext.keyshares_len = 0;
+            goto err;
+        }
+        s->ext.keyshares_len = ctx->ext.keyshares_len;
+    }
+    if (ctx->ext.tuples != NULL) {
+        s->ext.tuples =
+            OPENSSL_memdup(ctx->ext.tuples,
+                           ctx->ext.tuples_len * sizeof(*ctx->ext.tuples));
+        if (s->ext.tuples == NULL) {
+            s->ext.tuples_len = 0;
+            goto err;
+        }
+        s->ext.tuples_len = ctx->ext.tuples_len;
     }
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
@@ -971,11 +995,7 @@ int SSL_is_tls(const SSL *s)
 
 int SSL_is_quic(const SSL *s)
 {
-#ifndef OPENSSL_NO_QUIC
-    if (s->type == SSL_TYPE_QUIC_CONNECTION || s->type == SSL_TYPE_QUIC_XSO)
-        return 1;
-#endif
-    return 0;
+    return IS_QUIC(s);
 }
 
 int SSL_up_ref(SSL *s)
@@ -1445,6 +1465,8 @@ void ossl_ssl_connection_free(SSL *ssl)
     OPENSSL_free(s->ext.ecpointformats);
     OPENSSL_free(s->ext.peer_ecpointformats);
     OPENSSL_free(s->ext.supportedgroups);
+    OPENSSL_free(s->ext.keyshares);
+    OPENSSL_free(s->ext.tuples);
     OPENSSL_free(s->ext.peer_supportedgroups);
     sk_X509_EXTENSION_pop_free(s->ext.ocsp.exts, X509_EXTENSION_free);
 #ifndef OPENSSL_NO_OCSP
@@ -1945,8 +1967,8 @@ X509 *SSL_get1_peer_certificate(const SSL *s)
 {
     X509 *r = SSL_get0_peer_certificate(s);
 
-    if (r != NULL)
-        X509_up_ref(r);
+    if (r != NULL && !X509_up_ref(r))
+        return NULL;
 
     return r;
 }
@@ -2305,7 +2327,8 @@ int ssl_read_internal(SSL *s, void *buf, size_t num, size_t *readbytes)
      * If we are a client and haven't received the ServerHello etc then we
      * better do that
      */
-    ossl_statem_check_finish_init(sc, 0);
+    if (!ossl_statem_check_finish_init(sc, 0))
+        return -1;
 
     if ((sc->mode & SSL_MODE_ASYNC) && ASYNC_get_current_job() == NULL) {
         struct ssl_async_args args;
@@ -2529,7 +2552,8 @@ int ssl_write_internal(SSL *s, const void *buf, size_t num,
         return 0;
     }
     /* If we are a client and haven't sent the Finished we better do that */
-    ossl_statem_check_finish_init(sc, 1);
+    if (!ossl_statem_check_finish_init(sc, 1))
+        return -1;
 
     if ((sc->mode & SSL_MODE_ASYNC) && ASYNC_get_current_job() == NULL) {
         int ret;
@@ -3065,11 +3089,12 @@ static int ssl_tsan_load(SSL_CTX *ctx, TSAN_QUALIFIER int *stat)
 long SSL_CTX_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 {
     long l;
-    /* For some cases with ctx == NULL perform syntax checks */
+
+    /* For some cases with ctx == NULL or larg == 1 perform syntax checks */
+    if (cmd == SSL_CTRL_SET_GROUPS_LIST && larg == 1)
+        return tls1_set_groups_list(ctx, NULL, NULL, NULL, NULL, NULL, NULL, parg);
     if (ctx == NULL) {
         switch (cmd) {
-        case SSL_CTRL_SET_GROUPS_LIST:
-            return tls1_set_groups_list(ctx, NULL, NULL, parg);
         case SSL_CTRL_SET_SIGALGS_LIST:
         case SSL_CTRL_SET_CLIENT_SIGALGS_LIST:
             return tls1_set_sigalgs_list(ctx, NULL, parg, 0);
@@ -4193,6 +4218,31 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
     /* By default we send two session tickets automatically in TLSv1.3 */
     ret->num_tickets = 2;
 
+# ifndef OPENSSL_NO_QUIC
+    /* only create a cache for client CTX-es */
+    if (meth == OSSL_QUIC_client_method())
+        if ((ret->tokencache = ossl_quic_new_token_store()) == NULL)
+            goto err;
+    ret->domain_flags = 0;
+    if (IS_QUIC_METHOD(meth)) {
+#  if defined(OPENSSL_THREADS)
+        if (meth == OSSL_QUIC_client_thread_method())
+            ret->domain_flags
+                = SSL_DOMAIN_FLAG_MULTI_THREAD
+                | SSL_DOMAIN_FLAG_THREAD_ASSISTED
+                | SSL_DOMAIN_FLAG_BLOCKING;
+        else
+            ret->domain_flags
+                = SSL_DOMAIN_FLAG_MULTI_THREAD
+                | SSL_DOMAIN_FLAG_LEGACY_BLOCKING;
+#  else
+        ret->domain_flags
+            = SSL_DOMAIN_FLAG_SINGLE_THREAD
+            | SSL_DOMAIN_FLAG_LEGACY_BLOCKING;
+#  endif
+    }
+# endif
+
     if (!ssl_ctx_system_config(ret)) {
         ERR_raise(ERR_LIB_SSL, SSL_R_ERROR_IN_SYSTEM_DEFAULT_CONFIG);
         goto err;
@@ -4327,6 +4377,8 @@ void SSL_CTX_free(SSL_CTX *a)
 
     OPENSSL_free(a->ext.ecpointformats);
     OPENSSL_free(a->ext.supportedgroups);
+    OPENSSL_free(a->ext.keyshares);
+    OPENSSL_free(a->ext.tuples);
     OPENSSL_free(a->ext.supported_groups_default);
     OPENSSL_free(a->ext.alpn);
     OPENSSL_secure_free(a->ext.secure);
@@ -4373,6 +4425,10 @@ void SSL_CTX_free(SSL_CTX *a)
     OPENSSL_free(a->propq);
 #ifndef OPENSSL_NO_QLOG
     OPENSSL_free(a->qlog_title);
+#endif
+
+#ifndef OPENSSL_NO_QUIC
+    ossl_quic_free_token_store(a->tokencache);
 #endif
 
     OPENSSL_free(a);
@@ -4675,8 +4731,7 @@ void ssl_update_cache(SSL_CONNECTION *s, int mode)
          * TLSv1.3 without early data because some applications just want to
          * know about the creation of a session and aren't doing a full cache.
          */
-        if (s->session_ctx->new_session_cb != NULL) {
-            SSL_SESSION_up_ref(s->session);
+        if (s->session_ctx->new_session_cb != NULL && SSL_SESSION_up_ref(s->session)) {
             if (!s->session_ctx->new_session_cb(SSL_CONNECTION_GET_USER_SSL(s),
                                                 s->session))
                 SSL_SESSION_free(s->session);
@@ -4874,7 +4929,8 @@ int SSL_do_handshake(SSL *s)
         return -1;
     }
 
-    ossl_statem_check_finish_init(sc, -1);
+    if (!ossl_statem_check_finish_init(sc, -1))
+        return -1;
 
     s->method->ssl_renegotiate_check(s, 0);
 
@@ -4889,6 +4945,13 @@ int SSL_do_handshake(SSL *s)
         } else {
             ret = sc->handshake_func(s);
         }
+    }
+
+    if (ret == 1 && SSL_IS_QUIC_HANDSHAKE(sc) && !SSL_is_init_finished(s)) {
+        sc->rwstate = SSL_READING;
+        BIO_clear_retry_flags(SSL_get_rbio(s));
+        BIO_set_retry_read(SSL_get_rbio(s));
+        ret = 0;
     }
     return ret;
 }
@@ -5386,24 +5449,19 @@ SSL_CTX *SSL_set_SSL_CTX(SSL *ssl, SSL_CTX *ctx)
     if (ctx == NULL)
         ctx = sc->session_ctx;
     new_cert = ssl_cert_dup(ctx->cert);
-    if (new_cert == NULL) {
-        return NULL;
-    }
-
-    if (!custom_exts_copy_flags(&new_cert->custext, &sc->cert->custext)) {
-        ssl_cert_free(new_cert);
-        return NULL;
-    }
-
-    ssl_cert_free(sc->cert);
-    sc->cert = new_cert;
+    if (new_cert == NULL)
+        goto err;
+    if (!custom_exts_copy_flags(&new_cert->custext, &sc->cert->custext))
+        goto err;
 
     /*
      * Program invariant: |sid_ctx| has fixed size (SSL_MAX_SID_CTX_LENGTH),
      * so setter APIs must prevent invalid lengths from entering the system.
      */
     if (!ossl_assert(sc->sid_ctx_length <= sizeof(sc->sid_ctx)))
-        return NULL;
+        goto err;
+    if (!SSL_CTX_up_ref(ctx))
+        goto err;
 
     /*
      * If the session ID context matches that of the parent SSL_CTX,
@@ -5418,11 +5476,16 @@ SSL_CTX *SSL_set_SSL_CTX(SSL *ssl, SSL_CTX *ctx)
         memcpy(&sc->sid_ctx, &ctx->sid_ctx, sizeof(sc->sid_ctx));
     }
 
-    SSL_CTX_up_ref(ctx);
+    ssl_cert_free(sc->cert);
+    sc->cert = new_cert;
     SSL_CTX_free(ssl->ctx);     /* decrement reference count */
     ssl->ctx = ctx;
 
     return ssl->ctx;
+
+err:
+    ssl_cert_free(new_cert);
+    return NULL;
 }
 
 int SSL_CTX_set_default_verify_paths(SSL_CTX *ctx)
@@ -5647,8 +5710,9 @@ void SSL_CTX_set_cert_store(SSL_CTX *ctx, X509_STORE *store)
 
 void SSL_CTX_set1_cert_store(SSL_CTX *ctx, X509_STORE *store)
 {
-    if (store != NULL)
-        X509_STORE_up_ref(store);
+    if (store != NULL && !X509_STORE_up_ref(store))
+        return;
+
     SSL_CTX_set_cert_store(ctx, store);
 }
 
@@ -6640,6 +6704,13 @@ void SSL_CTX_set_client_hello_cb(SSL_CTX *c, SSL_client_hello_cb_fn cb,
 {
     c->client_hello_cb = cb;
     c->client_hello_cb_arg = arg;
+}
+
+void SSL_CTX_set_new_pending_conn_cb(SSL_CTX *c, SSL_new_pending_conn_cb_fn cb,
+                                     void *arg)
+{
+    c->new_pending_conn_cb = cb;
+    c->new_pending_conn_arg = arg;
 }
 
 int SSL_client_hello_isv2(SSL *s)
@@ -7676,6 +7747,40 @@ int SSL_is_connection(SSL *s)
     return SSL_get0_connection(s) == s;
 }
 
+SSL *SSL_get0_listener(SSL *s)
+{
+#ifndef OPENSSL_NO_QUIC
+    if (!IS_QUIC(s))
+        return NULL;
+
+    return ossl_quic_get0_listener(s);
+#else
+    return NULL;
+#endif
+}
+
+SSL *SSL_get0_domain(SSL *s)
+{
+#ifndef OPENSSL_NO_QUIC
+    if (!IS_QUIC(s))
+        return NULL;
+
+    return ossl_quic_get0_domain(s);
+#else
+    return NULL;
+#endif
+}
+
+int SSL_is_listener(SSL *s)
+{
+    return SSL_get0_listener(s) == s;
+}
+
+int SSL_is_domain(SSL *s)
+{
+    return SSL_get0_domain(s) == s;
+}
+
 int SSL_get_stream_type(SSL *s)
 {
 #ifndef OPENSSL_NO_QUIC
@@ -7859,6 +7964,171 @@ int SSL_set_value_uint(SSL *s, uint32_t class_, uint32_t id,
     return 0;
 }
 
+SSL *SSL_new_listener(SSL_CTX *ctx, uint64_t flags)
+{
+#ifndef OPENSSL_NO_QUIC
+    if (!IS_QUIC_CTX(ctx))
+        return NULL;
+
+    return ossl_quic_new_listener(ctx, flags);
+#else
+    return NULL;
+#endif
+}
+
+SSL *SSL_new_listener_from(SSL *ssl, uint64_t flags)
+{
+#ifndef OPENSSL_NO_QUIC
+    if (!IS_QUIC(ssl))
+        return NULL;
+
+    return ossl_quic_new_listener_from(ssl, flags);
+#else
+    return NULL;
+#endif
+}
+
+SSL *SSL_new_from_listener(SSL *ssl, uint64_t flags)
+{
+#ifndef OPENSSL_NO_QUIC
+    if (!IS_QUIC(ssl))
+        return NULL;
+
+    return ossl_quic_new_from_listener(ssl, flags);
+#else
+    return NULL;
+#endif
+}
+
+SSL *SSL_accept_connection(SSL *ssl, uint64_t flags)
+{
+#ifndef OPENSSL_NO_QUIC
+    if (!IS_QUIC(ssl))
+        return NULL;
+
+    return ossl_quic_accept_connection(ssl, flags);
+#else
+    return NULL;
+#endif
+}
+
+size_t SSL_get_accept_connection_queue_len(SSL *ssl)
+{
+#ifndef OPENSSL_NO_QUIC
+    if (!IS_QUIC(ssl))
+        return 0;
+
+    return ossl_quic_get_accept_connection_queue_len(ssl);
+#else
+    return 0;
+#endif
+}
+
+int SSL_listen(SSL *ssl)
+{
+#ifndef OPENSSL_NO_QUIC
+    if (!IS_QUIC(ssl))
+        return 0;
+
+    return ossl_quic_listen(ssl);
+#else
+    return 0;
+#endif
+}
+
+SSL *SSL_new_domain(SSL_CTX *ctx, uint64_t flags)
+{
+#ifndef OPENSSL_NO_QUIC
+    if (!IS_QUIC_CTX(ctx))
+        return NULL;
+
+    return ossl_quic_new_domain(ctx, flags);
+#else
+    return NULL;
+#endif
+}
+
+int ossl_adjust_domain_flags(uint64_t domain_flags, uint64_t *p_domain_flags)
+{
+    if ((domain_flags & ~OSSL_QUIC_SUPPORTED_DOMAIN_FLAGS) != 0) {
+        ERR_raise_data(ERR_LIB_SSL, ERR_R_UNSUPPORTED,
+                       "unsupported domain flag requested");
+        return 0;
+    }
+
+    if ((domain_flags & SSL_DOMAIN_FLAG_THREAD_ASSISTED) != 0)
+        domain_flags |= SSL_DOMAIN_FLAG_MULTI_THREAD;
+
+    if ((domain_flags & (SSL_DOMAIN_FLAG_MULTI_THREAD
+                         | SSL_DOMAIN_FLAG_SINGLE_THREAD)) == 0)
+        domain_flags |= SSL_DOMAIN_FLAG_MULTI_THREAD;
+
+    if ((domain_flags & SSL_DOMAIN_FLAG_SINGLE_THREAD) != 0
+        && (domain_flags & SSL_DOMAIN_FLAG_MULTI_THREAD) != 0) {
+        ERR_raise_data(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT,
+                       "mutually exclusive domain flags specified");
+        return 0;
+    }
+
+    /*
+     * Note: We treat MULTI_THREAD as a no-op in non-threaded builds, but
+     * not THREAD_ASSISTED.
+     */
+# ifndef OPENSSL_THREADS
+    if ((domain_flags & SSL_DOMAIN_FLAG_THREAD_ASSISTED) != 0) {
+        ERR_raise_data(ERR_LIB_SSL, ERR_R_UNSUPPORTED,
+                       "thread assisted mode not available in this build");
+        return 0;
+    }
+# endif
+
+    *p_domain_flags = domain_flags;
+    return 1;
+}
+
+int SSL_CTX_set_domain_flags(SSL_CTX *ctx, uint64_t domain_flags)
+{
+#ifndef OPENSSL_NO_QUIC
+    if (IS_QUIC_CTX(ctx)) {
+        if (!ossl_adjust_domain_flags(domain_flags, &domain_flags))
+            return 0;
+
+        ctx->domain_flags = domain_flags;
+        return 1;
+    }
+#endif
+
+    ERR_raise_data(ERR_LIB_SSL, ERR_R_UNSUPPORTED,
+                   "domain flags unsupported on this kind of SSL_CTX");
+    return 0;
+}
+
+int SSL_CTX_get_domain_flags(const SSL_CTX *ctx, uint64_t *domain_flags)
+{
+#ifndef OPENSSL_NO_QUIC
+    if (IS_QUIC_CTX(ctx)) {
+        if (domain_flags != NULL)
+            *domain_flags = ctx->domain_flags;
+
+        return 1;
+    }
+#endif
+
+    ERR_raise_data(ERR_LIB_SSL, ERR_R_UNSUPPORTED,
+                   "domain flags unsupported on this kind of SSL_CTX");
+    return 0;
+}
+
+int SSL_get_domain_flags(const SSL *ssl, uint64_t *domain_flags)
+{
+#ifndef OPENSSL_NO_QUIC
+    if (IS_QUIC(ssl))
+        return ossl_quic_get_domain_flags(ssl, domain_flags);
+#endif
+
+    return 0;
+}
+
 int SSL_add_expected_rpk(SSL *s, EVP_PKEY *rpk)
 {
     unsigned char *data = NULL;
@@ -7963,6 +8233,9 @@ int SSL_set1_client_cert_type(SSL *s, const unsigned char *val, size_t len)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
 
+    if (sc == NULL)
+        return 0;
+
     return set_cert_type(&sc->client_cert_type, &sc->client_cert_type_len,
                          val, len);
 }
@@ -7970,6 +8243,9 @@ int SSL_set1_client_cert_type(SSL *s, const unsigned char *val, size_t len)
 int SSL_set1_server_cert_type(SSL *s, const unsigned char *val, size_t len)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+
+    if (sc == NULL)
+        return 0;
 
     return set_cert_type(&sc->server_cert_type, &sc->server_cert_type_len,
                          val, len);
@@ -7991,7 +8267,7 @@ int SSL_get0_client_cert_type(const SSL *s, unsigned char **t, size_t *len)
 {
     const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
 
-    if (t == NULL || len == NULL)
+    if (t == NULL || len == NULL || sc == NULL)
         return 0;
 
     *t = sc->client_cert_type;
@@ -8003,7 +8279,7 @@ int SSL_get0_server_cert_type(const SSL *s, unsigned char **t, size_t *len)
 {
     const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
 
-    if (t == NULL || len == NULL)
+    if (t == NULL || len == NULL || sc == NULL)
         return 0;
 
     *t = sc->server_cert_type;

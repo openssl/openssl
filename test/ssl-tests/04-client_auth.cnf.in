@@ -27,6 +27,18 @@ if ($fips_mode) {
 
 our @tests = ();
 
+srand(4);
+sub randcase {
+    my ($names) = @_;
+    my @ret;
+    foreach my $name (split(/:/, $names)) {
+        my ($alg, $rest) = split(/(?=[+])/, $name, 2);
+        $alg =~ s{([a-zA-Z])}{chr(ord($1)^(int(rand(2.0)) * 32))}eg;
+        push @ret, $alg . ($rest // "");
+    }
+    return join(":", @ret);
+}
+
 sub generate_tests() {
     foreach (0..$#protocols) {
         my $protocol = $protocols[$_];
@@ -51,7 +63,7 @@ sub generate_tests() {
             if ($protocol_name eq "TLSv1.2") {
                 $clihash = "SHA256";
                 $clisigtype = "RSA";
-                $clisigalgs = "SHA256+RSA";
+                $clisigalgs = "SHA256+".randcase("RSA");
             }
             for (my $sctp = 0; $sctp <= $sctpenabled; $sctp++) {
                 # Sanity-check simple handshake.

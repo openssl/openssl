@@ -175,7 +175,9 @@ typedef struct quic_terminate_cause_st {
  *
  * Only QUIC_PORT should use this function.
  */
-QUIC_CHANNEL *ossl_quic_channel_new(const QUIC_CHANNEL_ARGS *args);
+QUIC_CHANNEL *ossl_quic_channel_alloc(const QUIC_CHANNEL_ARGS *args);
+int ossl_quic_channel_init(QUIC_CHANNEL *ch);
+
 
 /* No-op if ch is NULL. */
 void ossl_quic_channel_free(QUIC_CHANNEL *ch);
@@ -207,6 +209,13 @@ int ossl_quic_channel_start(QUIC_CHANNEL *ch);
 /* Start a locally initiated connection shutdown. */
 void ossl_quic_channel_local_close(QUIC_CHANNEL *ch, uint64_t app_error_code,
                                    const char *app_reason);
+
+/**
+ * @brief schedules a NEW_TOKEN frame for sending on the channel
+ */
+int ossl_quic_channel_schedule_new_token(QUIC_CHANNEL *ch,
+                                         const unsigned char *token,
+                                         size_t token_len);
 
 /*
  * Called when the handshake is confirmed.
@@ -300,6 +309,12 @@ QUIC_STREAM_MAP *ossl_quic_channel_get_qsm(QUIC_CHANNEL *ch);
 
 /* Gets the statistics manager used with the channel. */
 OSSL_STATM *ossl_quic_channel_get_statm(QUIC_CHANNEL *ch);
+
+/* Gets the TLS handshake layer used with the channel. */
+SSL *ossl_quic_channel_get0_tls(QUIC_CHANNEL *ch);
+
+/* Gets the channels short header connection id length */
+size_t ossl_quic_channel_get_short_header_conn_id_len(QUIC_CHANNEL *ch);
 
 /*
  * Gets/sets the current peer address. Generally this should be used before
@@ -444,6 +459,10 @@ uint64_t ossl_quic_channel_get_max_idle_timeout_request(const QUIC_CHANNEL *ch);
 uint64_t ossl_quic_channel_get_max_idle_timeout_peer_request(const QUIC_CHANNEL *ch);
 /* Get the idle timeout actually negotiated. */
 uint64_t ossl_quic_channel_get_max_idle_timeout_actual(const QUIC_CHANNEL *ch);
+
+int ossl_quic_bind_channel(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
+                           const QUIC_CONN_ID *scid, const QUIC_CONN_ID *dcid,
+                           const QUIC_CONN_ID *odcid);
 
 # endif
 

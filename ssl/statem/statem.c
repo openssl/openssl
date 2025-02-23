@@ -15,6 +15,7 @@
 #endif
 
 #include "internal/cryptlib.h"
+#include "internal/ssl_unwrap.h"
 #include <openssl/rand.h>
 #include "../ssl_local.h"
 #include "statem_local.h"
@@ -241,8 +242,17 @@ int ossl_statem_skip_early_data(SSL_CONNECTION *s)
  * attempting to read data (SSL_read*()), or -1 if we are in SSL_do_handshake()
  * or similar.
  */
-void ossl_statem_check_finish_init(SSL_CONNECTION *s, int sending)
+int ossl_statem_check_finish_init(SSL_CONNECTION *s, int sending)
 {
+    int i = SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_SERVER_READ;
+
+    if (s->server && SSL_NO_EOED(s) && s->ext.early_data == SSL_EARLY_DATA_ACCEPTED
+        && s->early_data_state != SSL_EARLY_DATA_FINISHED_READING
+            && s->statem.hand_state == TLS_ST_EARLY_DATA) {
+        s->early_data_state = SSL_EARLY_DATA_FINISHED_READING;
+        if (!SSL_CONNECTION_GET_SSL(s)->method->ssl3_enc->change_cipher_state(s, i))
+            return 0;
+    }
     if (sending == -1) {
         if (s->statem.hand_state == TLS_ST_PENDING_EARLY_DATA_END
                 || s->statem.hand_state == TLS_ST_EARLY_DATA) {
@@ -273,6 +283,7 @@ void ossl_statem_check_finish_init(SSL_CONNECTION *s, int sending)
                 && s->statem.hand_state == TLS_ST_EARLY_DATA)
             ossl_statem_set_in_init(s, 1);
     }
+    return 1;
 }
 
 void ossl_statem_set_hello_verify_done(SSL_CONNECTION *s)

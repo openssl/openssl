@@ -85,7 +85,11 @@ The pages in the guide are as follows:
 
 =item L<ossl-guide-quic-client-block(7)>: Writing a simple blocking QUIC client
 
+=item L<ossl-guide-quic-server-block(7)>: Writing a simple blocking QUIC server
+
 =item L<ossl-guide-quic-multi-stream(7)>: Writing a simple multi-stream QUIC client
+
+=item L<ossl-guide-quic-server-non-block(7)>: Writing a simple nonblocking QUIC server
 
 =item L<ossl-guide-quic-client-non-block(7)>: Writing a simple nonblocking QUIC client
 

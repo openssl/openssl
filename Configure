@@ -81,6 +81,11 @@ EOF
 # enable-demos  Enable the building of the example code in the demos directory
 # enable-h3demo Enable the http3 demo, which currently only links to the
 #               external nghttp3 library on unix platforms
+#
+# enable-hqinterop
+#               Enable the building of the hq-interop code for construction
+#               of the interop container
+#
 # no-hw         do not compile support for any crypto hardware.
 # [no-]threads  [don't] try to create a library that is suitable for
 #               multithreaded applications (default is "threads" if we
@@ -448,6 +453,7 @@ my @disablables = (
     "default-thread-pool",
     "demos",
     "h3demo",
+    "hqinterop",
     "deprecated",
     "des",
     "devcryptoeng",
@@ -486,6 +492,8 @@ my @disablables = (
     "md2",
     "md4",
     "mdc2",
+    "ml-dsa",
+    "ml-kem",
     "module",
     "msan",
     "multiblock",
@@ -514,6 +522,7 @@ my @disablables = (
     "shared",
     "siphash",
     "siv",
+    "slh-dsa",
     "sm2",
     "sm2-precomp",
     "sm3",
@@ -584,6 +593,7 @@ our %disabled = ( # "what"         => "comment"
                   "crypto-mdebug-backtrace" => "default",
                   "demos"               => "default",
                   "h3demo"              => "default",
+                  "hqinterop"           => "default",
                   "devcryptoeng"        => "default",
                   "ec_nistp_64_gcc_128" => "default",
                   "egd"                 => "default",
@@ -622,8 +632,8 @@ my @disable_cascades = (
                              "ec", "engine",
                              "filenames",
                              "idea", "ktls",
-                             "md4", "multiblock", "nextprotoneg",
-                             "ocsp", "ocb", "poly1305", "psk",
+                             "md4", "ml-dsa", "ml-kem", "multiblock",
+                             "nextprotoneg", "ocsp", "ocb", "poly1305", "psk",
                              "rc2", "rc4", "rmd160",
                              "seed", "siphash", "siv",
                              "sm3", "sm4", "srp",

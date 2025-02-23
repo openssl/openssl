@@ -37,7 +37,10 @@
 # include "internal/time.h"
 # include "internal/ssl.h"
 # include "internal/cryptlib.h"
+# include "internal/quic_predef.h"
 # include "record/record.h"
+# include "internal/quic_predef.h"
+# include "internal/quic_tls.h"
 
 # ifdef OPENSSL_BUILD_SHLIBSSL
 #  undef OPENSSL_EXTERN
@@ -308,6 +311,9 @@
 # define SSL_WRITE_ETM(s) (s->s3.flags & TLS1_FLAGS_ENCRYPT_THEN_MAC_WRITE)
 
 # define SSL_IS_QUIC_HANDSHAKE(s) (((s)->s3.flags & TLS1_FLAGS_QUIC) != 0)
+
+/* no end of early data */
+# define SSL_NO_EOED(s) SSL_IS_QUIC_HANDSHAKE(s)
 
 /* alert_dispatch values */
 
@@ -787,6 +793,11 @@ typedef struct {
 
 # define TLS_GROUP_FFDHE_FOR_TLS1_3 (TLS_GROUP_FFDHE|TLS_GROUP_ONLY_FOR_TLS1_3)
 
+/* We limit the number of key shares sent */
+# ifndef OPENSSL_CLIENT_MAX_KEY_SHARES
+#  define OPENSSL_CLIENT_MAX_KEY_SHARES 4
+# endif
+
 struct ssl_ctx_st {
     OSSL_LIB_CTX *libctx;
 
@@ -981,6 +992,10 @@ struct ssl_ctx_st {
     SSL_client_hello_cb_fn client_hello_cb;
     void *client_hello_cb_arg;
 
+    /* Callback to announce new pending ssl objects in the accept queue */
+    SSL_new_pending_conn_cb_fn new_pending_conn_cb;
+    void *new_pending_conn_arg;
+
     /* TLS extensions. */
     struct {
         /* TLS extensions servername callback */
@@ -1015,6 +1030,12 @@ struct ssl_ctx_st {
 
         size_t supportedgroups_len;
         uint16_t *supportedgroups;
+
+        size_t keyshares_len;
+        uint16_t *keyshares;
+
+        size_t tuples_len; /* Number of group tuples */
+        size_t *tuples; /* Number of groups in each group tuple */
 
         uint16_t *supported_groups_default;
         size_t supported_groups_default_len;
@@ -1181,16 +1202,40 @@ struct ssl_ctx_st {
     unsigned char *server_cert_type;
     size_t server_cert_type_len;
 
+# ifndef OPENSSL_NO_QUIC
+    uint64_t domain_flags;
+    SSL_TOKEN_STORE *tokencache;
+# endif
+
 # ifndef OPENSSL_NO_QLOG
     char *qlog_title; /* Session title for qlog */
 # endif
 };
 
+typedef struct ossl_quic_tls_callbacks_st {
+    int (*crypto_send_cb)(SSL *s, const unsigned char *buf, size_t buf_len,
+                          size_t *consumed, void *arg);
+    int (*crypto_recv_rcd_cb)(SSL *s, const unsigned char **buf,
+                              size_t *bytes_read, void *arg);
+    int (*crypto_release_rcd_cb)(SSL *s, size_t bytes_read, void *arg);
+    int (*yield_secret_cb)(SSL *s, uint32_t prot_level, int direction,
+                           const unsigned char *secret, size_t secret_len,
+                           void *arg);
+    int (*got_transport_params_cb)(SSL *s, const unsigned char *params,
+                                   size_t params_len,
+                                   void *arg);
+    int (*alert_cb)(SSL *s, unsigned char alert_code, void *arg);
+} OSSL_QUIC_TLS_CALLBACKS;
+
 typedef struct cert_pkey_st CERT_PKEY;
 
-#define SSL_TYPE_SSL_CONNECTION  0
-#define SSL_TYPE_QUIC_CONNECTION 1
-#define SSL_TYPE_QUIC_XSO        2
+#define SSL_TYPE_SSL_CONNECTION     0
+#define SSL_TYPE_QUIC_CONNECTION    0x80
+#define SSL_TYPE_QUIC_XSO           0x81
+#define SSL_TYPE_QUIC_LISTENER      0x82
+#define SSL_TYPE_QUIC_DOMAIN        0x83
+
+#define SSL_TYPE_IS_QUIC(x)         (((x) & 0x80) != 0)
 
 struct ssl_st {
     int type;
@@ -1269,6 +1314,11 @@ struct ssl_connection_st {
 
     size_t ssl_pkey_num;
 
+    /* QUIC TLS fields */
+    OSSL_QUIC_TLS_CALLBACKS qtcb;
+    void *qtarg;
+    QUIC_TLS *qtls;
+
     struct {
         long flags;
         unsigned char server_random[SSL3_RANDOM_SIZE];
@@ -1315,6 +1365,10 @@ struct ssl_connection_st {
             /* used to hold the new cipher we are going to use */
             const SSL_CIPHER *new_cipher;
             EVP_PKEY *pkey;         /* holds short lived key exchange key */
+            /* holds the array of short lived key exchange key (pointers) */
+            EVP_PKEY *ks_pkey[OPENSSL_CLIENT_MAX_KEY_SHARES];
+            uint16_t ks_group_id[OPENSSL_CLIENT_MAX_KEY_SHARES]; /* The IDs of the keyshare keys */
+            size_t num_ks_pkey; /* how many keyshares are there */
             /* used for certificate requests */
             int cert_req;
             /* Certificate types in certificate request message. */
@@ -1433,7 +1487,8 @@ struct ssl_connection_st {
         /* The group_id for the key exchange key */
         uint16_t group_id;
         EVP_PKEY *peer_tmp;
-
+        /* The cached group_id candidate for the key exchange key */
+        uint16_t group_id_candidate;
     } s3;
 
     struct dtls1_state_st *d1;  /* DTLSv1 variables */
@@ -1597,20 +1652,27 @@ struct ssl_connection_st {
         int ticket_expected;
         /* TLS 1.3 tickets requested by the application. */
         int extra_tickets_expected;
+
+        /* our list */
         size_t ecpointformats_len;
-        /* our list */
         unsigned char *ecpointformats;
-
-        size_t peer_ecpointformats_len;
         /* peer's list */
+        size_t peer_ecpointformats_len;
         unsigned char *peer_ecpointformats;
-        size_t supportedgroups_len;
-        /* our list */
-        uint16_t *supportedgroups;
 
+        /* our list */
+        size_t supportedgroups_len;
+        uint16_t *supportedgroups;
+        /* peer's list */
         size_t peer_supportedgroups_len;
-         /* peer's list */
         uint16_t *peer_supportedgroups;
+
+        /* key shares */
+        size_t keyshares_len;
+        uint16_t *keyshares;
+        /* supported groups tuples */
+        size_t tuples_len;
+        size_t *tuples;
 
         /* TLS Session Ticket extension override */
         TLS_SESSION_TICKET_EXT *session_ticket;
@@ -1807,39 +1869,6 @@ struct ssl_connection_st {
     unsigned char *server_cert_type;
     size_t server_cert_type_len;
 };
-
-# define SSL_CONNECTION_FROM_SSL_ONLY_int(ssl, c) \
-    ((ssl) == NULL ? NULL                         \
-     : ((ssl)->type == SSL_TYPE_SSL_CONNECTION    \
-       ? (c SSL_CONNECTION *)(ssl)                \
-       : NULL))
-# define SSL_CONNECTION_NO_CONST
-# define SSL_CONNECTION_FROM_SSL_ONLY(ssl) \
-    SSL_CONNECTION_FROM_SSL_ONLY_int(ssl, SSL_CONNECTION_NO_CONST)
-# define SSL_CONNECTION_FROM_CONST_SSL_ONLY(ssl) \
-    SSL_CONNECTION_FROM_SSL_ONLY_int(ssl, const)
-# define SSL_CONNECTION_GET_CTX(sc) ((sc)->ssl.ctx)
-# define SSL_CONNECTION_GET_SSL(sc) (&(sc)->ssl)
-# define SSL_CONNECTION_GET_USER_SSL(sc) ((sc)->user_ssl)
-# ifndef OPENSSL_NO_QUIC
-#  include "quic/quic_local.h"
-#  define SSL_CONNECTION_FROM_SSL_int(ssl, c)                      \
-    ((ssl) == NULL ? NULL                                          \
-     : ((ssl)->type == SSL_TYPE_SSL_CONNECTION                     \
-        ? (c SSL_CONNECTION *)(ssl)                                \
-        : ((ssl)->type == SSL_TYPE_QUIC_CONNECTION                 \
-           ? (c SSL_CONNECTION *)((c QUIC_CONNECTION *)(ssl))->tls \
-           : NULL)))
-#  define SSL_CONNECTION_FROM_SSL(ssl) \
-    SSL_CONNECTION_FROM_SSL_int(ssl, SSL_CONNECTION_NO_CONST)
-#  define SSL_CONNECTION_FROM_CONST_SSL(ssl) \
-    SSL_CONNECTION_FROM_SSL_int(ssl, const)
-# else
-#  define SSL_CONNECTION_FROM_SSL(ssl) \
-    SSL_CONNECTION_FROM_SSL_ONLY_int(ssl, SSL_CONNECTION_NO_CONST)
-#  define SSL_CONNECTION_FROM_CONST_SSL(ssl) \
-    SSL_CONNECTION_FROM_SSL_ONLY_int(ssl, const)
-# endif
 
 /*
  * Structure containing table entry of values associated with the signature
@@ -2594,6 +2623,8 @@ __owur int ssl_encapsulate(SSL_CONNECTION *s, EVP_PKEY *pubkey,
                            int gensecret);
 __owur EVP_PKEY *ssl_dh_to_pkey(DH *dh);
 __owur int ssl_set_tmp_ecdh_groups(uint16_t **pext, size_t *pextlen,
+                                   uint16_t **ksext, size_t *ksextlen,
+                                   size_t **tplext, size_t *tplextlen,
                                    void *key);
 __owur unsigned int ssl_get_max_send_fragment(const SSL_CONNECTION *sc);
 __owur unsigned int ssl_get_split_send_fragment(const SSL_CONNECTION *sc);
@@ -2792,10 +2823,20 @@ __owur int tls1_group_id2nid(uint16_t group_id, int include_unknown);
 __owur uint16_t tls1_nid2group_id(int nid);
 __owur int tls1_check_group_id(SSL_CONNECTION *s, uint16_t group_id,
                                int check_own_curves);
+__owur int tls1_get0_implemented_groups(int min_proto_version,
+                                        int max_proto_version,
+                                        TLS_GROUP_INFO *grps,
+                                        size_t num, long all,
+                                        STACK_OF(OPENSSL_CSTRING) *out);
 __owur uint16_t tls1_shared_group(SSL_CONNECTION *s, int nmatch);
-__owur int tls1_set_groups(uint16_t **pext, size_t *pextlen,
+__owur int tls1_set_groups(uint16_t **grpext, size_t *grpextlen,
+                           uint16_t **ksext, size_t *ksextlen,
+                           size_t **tplext, size_t *tplextlen,
                            int *curves, size_t ncurves);
-__owur int tls1_set_groups_list(SSL_CTX *ctx, uint16_t **pext, size_t *pextlen,
+__owur int tls1_set_groups_list(SSL_CTX *ctx,
+                                uint16_t **grpext, size_t *grpextlen,
+                                uint16_t **ksext, size_t *ksextlen,
+                                size_t **tplext, size_t *tplextlen,
                                 const char *str);
 __owur EVP_PKEY *ssl_generate_pkey_group(SSL_CONNECTION *s, uint16_t id);
 __owur int tls_valid_group(SSL_CONNECTION *s, uint16_t group_id, int minversion,
@@ -2808,6 +2849,10 @@ __owur int tls1_check_ec_tmp_key(SSL_CONNECTION *s, unsigned long id);
 __owur int tls_group_allowed(SSL_CONNECTION *s, uint16_t curve, int op);
 void tls1_get_supported_groups(SSL_CONNECTION *s, const uint16_t **pgroups,
                                size_t *pgroupslen);
+void tls1_get_requested_keyshare_groups(SSL_CONNECTION *s, const uint16_t **pgroups,
+                                        size_t *pgroupslen);
+void tls1_get_group_tuples(SSL_CONNECTION *s, const size_t **ptuples,
+                           size_t *ptupleslen);
 
 __owur int tls1_set_server_sigalgs(SSL_CONNECTION *s);
 
@@ -2870,6 +2915,9 @@ __owur const EVP_MD *ssl_md(SSL_CTX *ctx, int idx);
 int ssl_get_md_idx(int md_nid);
 __owur const EVP_MD *ssl_handshake_md(SSL_CONNECTION *s);
 __owur const EVP_MD *ssl_prf_md(SSL_CONNECTION *s);
+
+__owur int ossl_adjust_domain_flags(uint64_t domain_flags,
+                                    uint64_t *p_domain_flags);
 
 /*
  * ssl_log_rsa_client_key_exchange logs |premaster| to the SSL_CTX associated
@@ -3088,5 +3136,13 @@ long ossl_ctrl_internal(SSL *s, int cmd, long larg, void *parg, int no_quic);
 #define OSSL_QUIC_PERMITTED_OPTIONS             \
     (OSSL_QUIC_PERMITTED_OPTIONS_CONN |         \
      OSSL_QUIC_PERMITTED_OPTIONS_STREAM)
+
+/* Total mask of domain flags supported on a QUIC SSL_CTX. */
+#define OSSL_QUIC_SUPPORTED_DOMAIN_FLAGS        \
+    (SSL_DOMAIN_FLAG_SINGLE_THREAD |            \
+     SSL_DOMAIN_FLAG_MULTI_THREAD |             \
+     SSL_DOMAIN_FLAG_THREAD_ASSISTED |          \
+     SSL_DOMAIN_FLAG_BLOCKING |                 \
+     SSL_DOMAIN_FLAG_LEGACY_BLOCKING)
 
 #endif
