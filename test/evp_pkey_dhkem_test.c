@@ -164,7 +164,7 @@ err:
     return ret;
 }
 
-/* Fail if the operation parameter is not set */
+/* Succeed even if the operation parameter is not set */
 static int test_no_operation_set(int tstid)
 {
     EVP_PKEY_CTX *ctx = rctx[tstid];
@@ -172,11 +172,11 @@ static int test_no_operation_set(int tstid)
     size_t len = 0;
 
     return TEST_int_eq(EVP_PKEY_encapsulate_init(ctx, NULL), 1)
-           && TEST_int_eq(EVP_PKEY_encapsulate(ctx, NULL, &len, NULL, NULL), -2)
+           && TEST_int_eq(EVP_PKEY_encapsulate(ctx, NULL, &len, NULL, NULL), 1)
            && TEST_int_eq(EVP_PKEY_decapsulate_init(ctx, NULL), 1)
            && TEST_int_eq(EVP_PKEY_decapsulate(ctx, NULL, &len,
                                                t->expected_enc,
-                                               t->expected_enclen), -2);
+                                               t->expected_enclen), 1);
 }
 
 /* Fail if the ikm is too small */
