@@ -684,9 +684,12 @@ static int kem_rsa_params(void)
         && TEST_int_eq(EVP_PKEY_decapsulate(pubctx, secret, &secretlen, ct,
                                             sizeof(ct)), 0)
         && TEST_uchar_eq(secret[0], 0)
-        /* Test encapsulate fails if the mode is not set */
+        /* Test encapsulate succeeds even if the mode is not set */
         && TEST_int_eq(EVP_PKEY_encapsulate_init(pubctx, NULL), 1)
-        && TEST_int_eq(EVP_PKEY_encapsulate(pubctx, ct, &ctlen, secret, &secretlen), -2)
+        && TEST_int_eq(EVP_PKEY_encapsulate(pubctx, NULL, &ctlen, NULL, &secretlen), 1)
+        && TEST_true(ctlen <= sizeof(ct))
+        && TEST_true(secretlen <= sizeof(secret))
+        && TEST_int_eq(EVP_PKEY_encapsulate(pubctx, ct, &ctlen, secret, &secretlen), 1)
         /* Test setting a bad kem ops fail */
         && TEST_int_eq(EVP_PKEY_CTX_set_kem_op(pubctx, "RSA"), 0)
         && TEST_int_eq(EVP_PKEY_CTX_set_kem_op(pubctx, NULL), 0)
