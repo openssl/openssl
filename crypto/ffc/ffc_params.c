@@ -303,7 +303,7 @@ int ossl_ffc_params_print(BIO *bp, const FFC_PARAMS *ffc, int indent)
             || BIO_puts(bp, "seed:") <= 0)
             goto err;
         for (i = 0; i < ffc->seedlen; i++) {
-            if ((i % 15) == 0) {
+            if ((i % 16) == 0) {
                 if (BIO_puts(bp, "\n") <= 0
                     || !BIO_indent(bp, indent + 4, 128))
                     goto err;

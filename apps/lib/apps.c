@@ -1376,7 +1376,7 @@ void print_bignum_var(BIO *out, const BIGNUM *in, const char *var,
 
         l = BN_bn2bin(in, buffer);
         for (i = 0; i < l; i++) {
-            BIO_printf(out, (i % 10) == 0 ? "\n        " : " ");
+            BIO_printf(out, (i % 16) == 0 ? "\n        " : " ");
             if (i < l - 1)
                 BIO_printf(out, "0x%02X,", buffer[i]);
             else
