@@ -14,7 +14,7 @@
 #include "crypto/bn.h"
 
 /* Number of octets per line */
-#define ASN1_BUF_PRINT_WIDTH    15
+#define ASN1_BUF_PRINT_WIDTH 16
 /* Maximum indent */
 #define ASN1_PRINT_MAX_INDENT 128
 
