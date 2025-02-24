@@ -341,7 +341,7 @@ static void slh_dsa_sign_verify(uint8_t **buf, size_t *len, void *key1,
     msg_len = *len;
 
     /* if msg_len > 255, sign_message_init will fail */
-    if (msg_len > 255 && (selector & 0x1))
+    if (msg_len > 255 && (selector & 0x1) != 0)
         expect_init_rc = 0;
 
     *len = 0;
