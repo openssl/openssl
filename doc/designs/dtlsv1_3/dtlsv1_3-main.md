@@ -77,8 +77,8 @@ fragment offset and fragment length as is the case with previous versions of DTL
 
 #### DTLS ACK records (RFC9147 Section 7)
 
-ACKs are sent for KeyUpdates, NewSessionTicket, Certificate (client), 
-CertificateVerify (client) and Finish (client).
+ACKs are sent for KeyUpdates, NewSessionTicket, Certificate (client),
+CompressedCertificate (Client), CertificateVerify (client) and Finish (client).
 
 Notes on RFC9147 Section 7.1:
 
@@ -110,6 +110,20 @@ There's need for a lot more corner case testing:
   testing probably needs to be performed by another framework.
 * This comment also forms a great test case:
   <https://github.com/openssl/openssl/pull/25119#discussion_r1871643459>
+
+### Known issues
+
+#### Dropped records handling
+
+The implementation is only partially able to handle dropped records. For example
+`test_dtls13ack` has a disabled test case that fails when compressed certificates
+are sent. It seems like the implementation is not able to properly handle the
+case were the last flight of the client is dropped if it contains a client cert.
+In that case it should retransmit the CompressedCertificate and CertificateVerify
+messages in epoch 2, but it chooses to do it in epoch 3.
+
+There's a need to setup a test that checks dropped records in several scenarios
+and configurations in order to properly fix and verify.
 
 Implementation progress
 -----------------------

@@ -2039,6 +2039,7 @@ static ossl_inline int dtls_msg_needs_ack(int sentbyserver, unsigned char msgtyp
         return 1;
 
     case SSL3_MT_CERTIFICATE:
+    case SSL3_MT_COMPRESSED_CERTIFICATE:
     case SSL3_MT_CERTIFICATE_VERIFY:
     case SSL3_MT_FINISHED:
         if (!sentbyserver)
