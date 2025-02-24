@@ -335,7 +335,7 @@ extern "C" {
 # define DTLS1_MT_HELLO_VERIFY_REQUEST           3
 
 /* Dummy message type for handling ACK like a normal handshake message */
-#define DTLS13_MT_ACK                           0x0126
+# define DTLS13_MT_ACK                           0x0126
 
 /* Dummy message type for handling CCS like a normal handshake message */
 # define SSL3_MT_CHANGE_CIPHER_SPEC              0x0101
