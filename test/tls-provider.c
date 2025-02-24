@@ -216,8 +216,8 @@ static struct tls_group_st xor_group = {
     128, /* secbits */
     TLS1_3_VERSION, /* mintls */
     0, /* maxtls */
-    -1, /* mindtls */
-    -1, /* maxdtls */
+    DTLS1_3_VERSION, /* mindtls */
+    0, /* maxdtls */
     0 /* is_kem */
 };
 
@@ -228,8 +228,8 @@ static struct tls_group_st xor_kemgroup = {
     128, /* secbits */
     TLS1_3_VERSION, /* mintls */
     0, /* maxtls */
-    -1, /* mindtls */
-    -1, /* maxdtls */
+    DTLS1_3_VERSION, /* mindtls */
+    0, /* maxdtls */
     1 /* is_kem */
 };
 
