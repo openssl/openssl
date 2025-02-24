@@ -102,6 +102,12 @@ push @files, qw(
                 evppkey_ml_dsa_keygen.txt
                 evppkey_ml_dsa_siggen.txt
                 evppkey_ml_dsa_sigver.txt
+                evppkey_ml_dsa_44_wycheproof_sign.txt
+                evppkey_ml_dsa_44_wycheproof_verify.txt
+                evppkey_ml_dsa_65_wycheproof_sign.txt
+                evppkey_ml_dsa_65_wycheproof_verify.txt
+                evppkey_ml_dsa_87_wycheproof_sign.txt
+                evppkey_ml_dsa_87_wycheproof_verify.txt
                ) unless $no_ml_dsa;
 push @files, qw(
                 evppkey_ml_kem_512_keygen.txt

@@ -2748,6 +2748,100 @@ static int pkey_test_run(EVP_TEST *t)
     return 1;
 }
 
+static int pkey_fromdata_test_init(EVP_TEST *t, const char *name)
+{
+    PKEY_DATA *kdata = NULL;
+
+    if (is_pkey_disabled(name)) {
+        TEST_info("skipping, '%s' is disabled", name);
+        t->skip = 1;
+        return 1;
+    }
+
+    if (!TEST_ptr(kdata = OPENSSL_zalloc(sizeof(*kdata))))
+        return 0;
+    kdata->ctx = EVP_PKEY_CTX_new_from_name(libctx, name, "");
+    if (kdata->ctx == NULL)
+        goto err;
+    kdata->controls = sk_OPENSSL_STRING_new_null();
+    if (kdata->controls == NULL)
+        goto err;
+    t->data = kdata;
+    return 1;
+ err:
+    EVP_PKEY_CTX_free(kdata->ctx);
+    OPENSSL_free(kdata);
+    return 0;
+}
+
+static void pkey_fromdata_test_cleanup(EVP_TEST *t)
+{
+    PKEY_DATA *kdata = t->data;
+
+    ctrlfree(kdata->controls);
+    EVP_PKEY_CTX_free(kdata->ctx);
+}
+
+static int pkey_fromdata_test_parse(EVP_TEST *t,
+                                    const char *keyword, const char *value)
+{
+    PKEY_DATA *kdata = t->data;
+
+    if (strcmp(keyword, "Ctrl") == 0)
+        return pkey_add_control(t, kdata->controls, value);
+    return 0;
+}
+
+static int pkey_fromdata_test_run(EVP_TEST *t)
+{
+    EVP_PKEY *key = NULL;
+    PKEY_DATA *kdata = t->data;
+    int ret = 0;
+    static const OSSL_PARAM key_settable_ctx_params[] = {
+        OSSL_PARAM_octet_string("priv", NULL, 0),
+        OSSL_PARAM_octet_string("pub", NULL, 0),
+        OSSL_PARAM_END
+    };
+    OSSL_PARAM params[5] = {
+        OSSL_PARAM_END, OSSL_PARAM_END, OSSL_PARAM_END,
+        OSSL_PARAM_END, OSSL_PARAM_END
+    };
+    OSSL_PARAM *p = NULL;
+    size_t params_n = 0, params_n_allocstart = 0;
+
+    if (EVP_PKEY_fromdata_init(kdata->ctx) <= 0) {
+        t->err = "KEY_FROMDATA_INIT_ERROR";
+        ret = 1;
+        goto err;
+    }
+
+    if (sk_OPENSSL_STRING_num(kdata->controls) > 0) {
+        if (!ctrl2params(t, kdata->controls, key_settable_ctx_params,
+                         params, OSSL_NELEM(params), &params_n))
+            goto err;
+        p = params;
+    }
+
+    if (EVP_PKEY_fromdata(kdata->ctx, &key, EVP_PKEY_KEYPAIR, p) <= 0) {
+        t->err = "KEY_FROMDATA_ERROR";
+        ret = 1;
+        goto err;
+    }
+    ret = 1;
+err:
+    ctrl2params_free(params, params_n, params_n_allocstart);
+    EVP_PKEY_free(key);
+    return ret;
+}
+
+static const EVP_TEST_METHOD pkey_fromdata_test_method = {
+    "KeyFromData",
+    pkey_fromdata_test_init,
+    pkey_fromdata_test_cleanup,
+    pkey_fromdata_test_parse,
+    pkey_fromdata_test_run
+};
+
 /*
  * "Sign" implies EVP_PKEY_sign_init_ex2() if the argument is a colon-separated
  * pair, {algorithm}:{key}.  If not, it implies EVP_PKEY_sign_init_ex()
@@ -4760,6 +4854,7 @@ static const EVP_TEST_METHOD *evp_test_list[] = {
     &pverify_message_test_method,
     &pverify_message_public_test_method,
     &pkey_kem_test_method,
+    &pkey_fromdata_test_method,
     NULL
 };
 
@@ -5406,6 +5501,10 @@ static int is_pkey_disabled(const char *name)
 #endif
 #ifdef OPENSSL_NO_SM3
     if (HAS_CASE_SUFFIX(name, "-SM3"))
+        return 1;
+#endif
+#ifdef OPENSSL_NO_ML_DSA
+    if (HAS_CASE_PREFIX(name, "ML-DSA"))
         return 1;
 #endif
     return 0;
