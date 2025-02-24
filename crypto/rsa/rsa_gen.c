@@ -145,10 +145,9 @@ int ossl_rsa_multiprime_derive(RSA *rsa, int bits, int primes,
             tmp = BN_dup(r1);
             if (tmp == NULL)
                 goto err;
-            if (!sk_BIGNUM_insert(pplist, tmp, sk_BIGNUM_num(pplist))) {
-                BN_free(tmp);
+            if (!sk_BIGNUM_insert(pplist, tmp, sk_BIGNUM_num(pplist)))
                 goto err;
-            }
+            tmp = NULL;
             break;
         default:
             factor = sk_BIGNUM_value(factors, i);
@@ -158,10 +157,9 @@ int ossl_rsa_multiprime_derive(RSA *rsa, int bits, int primes,
             tmp = BN_dup(r1);
             if (tmp == NULL)
                 goto err;
-            if (!sk_BIGNUM_insert(pplist, tmp, sk_BIGNUM_num(pplist))) {
-                BN_free(tmp);
+            if (!sk_BIGNUM_insert(pplist, tmp, sk_BIGNUM_num(pplist)))
                 goto err;
-            }
+            tmp = NULL;
             break;
         }
     }
@@ -251,6 +249,7 @@ int ossl_rsa_multiprime_derive(RSA *rsa, int bits, int primes,
     BN_free(newcoeff);
     BN_free(newexp);
     BN_free(dval);
+    BN_free(tmp);
     sk_BIGNUM_pop_free(pplist, BN_free);
     sk_BIGNUM_pop_free(pdlist, BN_free);
     BN_CTX_end(ctx);
