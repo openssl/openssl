@@ -48,20 +48,11 @@
         "arguments" : ["-p", "@PORT@"]},
        {"name" : "test-conversation.py",
         "arguments" : ["-p", "@PORT@",
-                       "-d"]}
-     ]
-    },
-    {"server_command": ["@SERVER@", "s_server", "-www",
-                 "-key", "tests/serverX509Key.pem",
-                 "-cert", "tests/serverX509Cert.pem"],
-     "environment": {"PYTHONPATH" : "."},
-     "server_hostname": "localhost",
-     "server_port": @PORT@,
-     "tests" : [
-        {"name" : "test-invalid-client-hello-w-record-overflow.py",
-         "arguments" : ["-n", "0", "-C",
-                        "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256", "-d",
-                        "--ems", "session ID len fuzz to 5 w/ext"]}
+                       "-d"]},
+       {"name" : "test-invalid-client-hello-w-record-overflow.py",
+        "arguments" : ["-n", "0", "-C",
+                       "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256", "-d",
+                       "--ems", "session ID len fuzz to 5 w/ext"]}
      ]
     }
 ]
