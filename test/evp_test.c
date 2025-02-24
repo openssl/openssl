@@ -2763,6 +2763,8 @@ static int pkey_fromdata_test_init(EVP_TEST *t, const char *name)
     kdata->ctx = EVP_PKEY_CTX_new_from_name(libctx, name, "");
     if (kdata->ctx == NULL)
         goto err;
+    if (EVP_PKEY_fromdata_init(kdata->ctx) <= 0)
+        goto err;
     kdata->controls = sk_OPENSSL_STRING_new_null();
     if (kdata->controls == NULL)
         goto err;
@@ -2809,12 +2811,6 @@ static int pkey_fromdata_test_run(EVP_TEST *t)
     OSSL_PARAM *p = NULL;
     size_t params_n = 0, params_n_allocstart = 0;
 
-    if (EVP_PKEY_fromdata_init(kdata->ctx) <= 0) {
-        t->err = "KEY_FROMDATA_INIT_ERROR";
-        ret = 1;
-        goto err;
-    }
-
     if (sk_OPENSSL_STRING_num(kdata->controls) > 0) {
         if (!ctrl2params(t, kdata->controls, key_settable_ctx_params,
                          params, OSSL_NELEM(params), &params_n))
@@ -2822,12 +2818,11 @@ static int pkey_fromdata_test_run(EVP_TEST *t)
         p = params;
     }
 
+    ret = 1;
     if (EVP_PKEY_fromdata(kdata->ctx, &key, EVP_PKEY_KEYPAIR, p) <= 0) {
         t->err = "KEY_FROMDATA_ERROR";
-        ret = 1;
         goto err;
     }
-    ret = 1;
 err:
     ctrl2params_free(params, params_n, params_n_allocstart);
     EVP_PKEY_free(key);
