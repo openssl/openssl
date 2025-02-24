@@ -1245,7 +1245,7 @@ static int gid_cb(const char *elem, int len, void *arg)
 
     /* Sanity checks */
     if (garg == NULL || elem == NULL || len <= 0) {
-        ERR_raise(ERR_LIB_CONF, CONF_R_VARIABLE_HAS_NO_VALUE);
+        ERR_raise(ERR_LIB_SSL, SSL_R_UNSUPPORTED_CONFIG_VALUE);
         return 0;
     }
 
@@ -1509,7 +1509,7 @@ static int tuple_cb(const char *tuple, int len, void *arg)
 
     /* Sanity checks */
     if (garg == NULL || tuple == NULL || len <= 0) {
-        ERR_raise(ERR_LIB_CONF, CONF_R_VARIABLE_HAS_NO_VALUE);
+        ERR_raise(ERR_LIB_SSL, SSL_R_UNSUPPORTED_CONFIG_VALUE);
         return 0;
     }
 
@@ -1572,7 +1572,7 @@ int tls1_set_groups_list(SSL_CTX *ctx,
 
     /* Sanity check */
     if (ctx == NULL) {
-        ERR_raise(ERR_LIB_CONF, ERR_R_INTERNAL_ERROR);
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
 
