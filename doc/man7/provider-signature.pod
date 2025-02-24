@@ -485,6 +485,8 @@ Section 4 "Security Considerations".  The default value for
 nonce B<k> as defined in FIPS 186-4 Section 6.3 "Secret Number
 Generation".
 
+The FIPS provider does not support deterministic digital signature generation.
+
 =item "kat" (B<OSSL_SIGNATURE_PARAM_KAT>) <unsigned integer>
 
 Sets a flag to modify the sign operation to return an error if the initial
