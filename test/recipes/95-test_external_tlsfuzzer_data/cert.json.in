@@ -31,8 +31,11 @@
           "arguments" : ["-p", "@PORT@"]},
 	 {"name" : "test-conversation.py",
           "arguments" : ["-p", "@PORT@",
-		  "-d"]}
+		  "-d"]},
+	 {"name" : "test-invalid-client-hello-w-record-overflow.py",
+          "arguments" : ["-n", "0", "-C",
+                       "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256", "-d",
+                       "--ems", "session ID len fuzz to 5 w/ext"]}
      ]
     }
-
 ]
