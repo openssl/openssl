@@ -14,6 +14,6 @@
 /**
  * Generalized fnv1a 64 bit hash function
  */
-ossl_unused uint64_t fnv1a_hash(uint8_t *key, size_t len);
+ossl_unused uint64_t ossl_fnv1a_hash(uint8_t *key, size_t len);
 
 #endif

@@ -4657,7 +4657,7 @@ struct ssl_token_store_st {
 
 static unsigned long quic_token_hash(const QUIC_TOKEN *item)
 {
-    return (unsigned long)fnv1a_hash(item->hashkey, item->hashkey_len);
+    return (unsigned long)ossl_fnv1a_hash(item->hashkey, item->hashkey_len);
 }
 
 static int quic_token_cmp(const QUIC_TOKEN *a, const QUIC_TOKEN *b)
