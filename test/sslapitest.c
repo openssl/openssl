@@ -55,6 +55,16 @@
 # define OSSL_NO_USABLE_TLS1_3
 #endif
 
+#undef OSSL_NO_USABLE_DTLS1_3
+#if defined(OPENSSL_NO_DTLS1_3) \
+    || (defined(OPENSSL_NO_EC) && defined(OPENSSL_NO_DH))
+/*
+ * If we don't have ec or dh then there are no built-in groups that are usable
+ * with DTLSv1.3
+ */
+# define OSSL_NO_USABLE_DTLS1_3
+#endif
+
 /* Defined in tls-provider.c */
 int tls_provider_init(const OSSL_CORE_HANDLE *handle,
                       const OSSL_DISPATCH *in,
@@ -64,7 +74,7 @@ int tls_provider_init(const OSSL_CORE_HANDLE *handle,
 static OSSL_LIB_CTX *libctx = NULL;
 static OSSL_PROVIDER *defctxnull = NULL;
 
-#ifndef OSSL_NO_USABLE_TLS1_3
+#if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OSSL_NO_USABLE_DTLS1_3)
 
 static SSL_SESSION *clientpsk = NULL;
 static SSL_SESSION *serverpsk = NULL;
@@ -425,12 +435,14 @@ end:
 }
 #endif
 
-#ifndef OSSL_NO_USABLE_TLS1_3
-static int test_keylog_no_master_key(void)
+#if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OSSL_NO_USABLE_DTLS1_3)
+static int test_keylog_no_master_key(int idx)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
     SSL_SESSION *sess = NULL;
+    const SSL_METHOD *smeth, *cmeth;
+    int vermin;
     int testresult = 0;
     struct sslapitest_log_counts expected;
     unsigned char buf[1];
@@ -444,8 +456,33 @@ static int test_keylog_no_master_key(void)
     server_log_buffer_index = 0;
     error_writing_log = 0;
 
-    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
-                                       TLS_client_method(), TLS1_VERSION, 0,
+    if (idx == 0) {
+        /* Testing TLS */
+        smeth = TLS_server_method();
+        cmeth = TLS_client_method();
+        vermin = TLS1_VERSION;
+# if defined(OSSL_NO_USABLE_TLS1_3)
+        testresult = TEST_skip("No usable TLSv1.3");
+        goto end;
+# endif
+    } else {
+        /* Testing DTLS */
+        smeth = DTLS_server_method();
+        cmeth = DTLS_client_method();
+        vermin = DTLS1_VERSION;
+        /*
+         * TODO(DTLSv1.3): Test fails in
+         * TEST_int_eq(SSL_read_early_data(), SSL_READ_EARLY_DATA_ERROR)
+         */
+        testresult = TEST_skip("Test fails with DTLSv1.3");
+        goto end;
+# if defined(OSSL_NO_USABLE_DTLS13)
+        testresult = TEST_skip("No usable DTLSv1.3");
+        goto end;
+# endif
+    }
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, smeth, cmeth, vermin, 0,
                                        &sctx, &cctx, cert, privkey))
         || !TEST_true(SSL_CTX_set_max_early_data(sctx,
                                                  SSL3_RT_MAX_PLAIN_LENGTH)))
@@ -2029,8 +2066,9 @@ static int test_tlsext_status_type(void)
 }
 #endif
 
-#if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OPENSSL_NO_TLS1_2)
-static int new_called, remove_called, get_called;
+#if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OPENSSL_NO_TLS1_2) \
+    || !defined(OSSL_NO_USABLE_DTLS1_3)
+static int new_called, get_called;
 
 static int new_session_cb(SSL *ssl, SSL_SESSION *sess)
 {
@@ -2043,11 +2081,6 @@ static int new_session_cb(SSL *ssl, SSL_SESSION *sess)
     return 1;
 }
 
-static void remove_session_cb(SSL_CTX *ctx, SSL_SESSION *sess)
-{
-    remove_called++;
-}
-
 static SSL_SESSION *get_sess_val = NULL;
 
 static SSL_SESSION *get_session_cb(SSL *ssl, const unsigned char *id, int len,
@@ -2056,6 +2089,15 @@ static SSL_SESSION *get_session_cb(SSL *ssl, const unsigned char *id, int len,
     get_called++;
     *copy = 1;
     return get_sess_val;
+}
+#endif
+
+#if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OPENSSL_NO_TLS1_2)
+static int remove_called;
+
+static void remove_session_cb(SSL_CTX *ctx, SSL_SESSION *sess)
+{
+    remove_called++;
 }
 
 static int execute_test_session(int maxprot, int use_int_cache,
@@ -2431,7 +2473,7 @@ static int test_session_wo_ca_names(void)
 #endif
 }
 
-#ifndef OSSL_NO_USABLE_TLS1_3
+#if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OSSL_NO_USABLE_DTLS1_3)
 static SSL_SESSION *sesscache[6];
 static int do_cache;
 
@@ -2465,13 +2507,24 @@ static int post_handshake_verify(SSL *sssl, SSL *cssl)
     return 1;
 }
 
-static int setup_ticket_test(int stateful, int idx, SSL_CTX **sctx,
+static int setup_ticket_test(int testdtls, int stateful, int idx, SSL_CTX **sctx,
                              SSL_CTX **cctx)
 {
     int sess_id_ctx = 1;
+    const SSL_METHOD *smeth, *cmeth;
+    int vermin;
 
-    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
-                                       TLS_client_method(), TLS1_VERSION, 0,
+    if (testdtls) {
+        smeth = DTLS_server_method();
+        cmeth = DTLS_client_method();
+        vermin = DTLS1_VERSION;
+    } else {
+        smeth = TLS_server_method();
+        cmeth = TLS_client_method();
+        vermin = TLS1_VERSION;
+    }
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, smeth, cmeth, vermin, 0,
                                        sctx, cctx, cert, privkey))
             || !TEST_true(SSL_CTX_set_num_tickets(*sctx, idx))
             || !TEST_true(SSL_CTX_set_session_id_context(*sctx,
@@ -2552,17 +2605,33 @@ static int test_tickets(int stateful, int idx)
     SSL *serverssl = NULL, *clientssl = NULL;
     int testresult = 0;
     size_t j;
+    int testdtls = idx >= 3;
+
+# if defined(OSSL_NO_USABLE_TLS1_3)
+    if (!testdtls) {
+        testresult = TEST_skip("TLSv1.3 is not usable");
+        goto end;
+    }
+# endif
+# if defined(OSSL_NO_USABLE_DTLS1_3)
+    if (testdtls) {
+        testresult = TEST_skip("DTLSv1.3 is not usable");
+        goto end;
+    }
+# endif
 
     /* idx is the test number, but also the number of tickets we want */
+    if (testdtls)
+        idx -= 3;
 
     new_called = 0;
     do_cache = 1;
 
-    if (!setup_ticket_test(stateful, idx, &sctx, &cctx))
+    if (!setup_ticket_test(testdtls, stateful, idx, &sctx, &cctx))
         goto end;
 
-    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
-                                          &clientssl, NULL, NULL)))
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                      NULL, NULL)))
         goto end;
 
     if (!TEST_true(create_ssl_connection(serverssl, clientssl,
@@ -2589,7 +2658,7 @@ static int test_tickets(int stateful, int idx)
     /* Stop caching sessions - just count them */
     do_cache = 0;
 
-    if (!setup_ticket_test(stateful, idx, &sctx, &cctx))
+    if (!setup_ticket_test(testdtls, stateful, idx, &sctx, &cctx))
         goto end;
 
     if (!check_resumption(idx, sctx, cctx, 0))
@@ -2602,7 +2671,7 @@ static int test_tickets(int stateful, int idx)
     SSL_CTX_free(cctx);
     sctx = cctx = NULL;
 
-    if (!setup_ticket_test(stateful, idx, &sctx, &cctx))
+    if (!setup_ticket_test(testdtls, stateful, idx, &sctx, &cctx))
         goto end;
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
@@ -2663,15 +2732,38 @@ static int test_stateful_tickets(int idx)
     return test_tickets(1, idx);
 }
 
-static int test_psk_tickets(void)
+static int test_psk_tickets(int idx)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *serverssl = NULL, *clientssl = NULL;
     int testresult = 0;
     int sess_id_ctx = 1;
+    const SSL_METHOD *smeth, *cmeth;
+    int vermin, vermax = 0;
+    int testdtls = idx > 0;
 
-    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
-                                       TLS_client_method(), TLS1_VERSION, 0,
+    if (testdtls) {
+        smeth = DTLS_server_method();
+        cmeth = DTLS_client_method();
+        vermin = DTLS1_VERSION;
+# if defined(OSSL_NO_USABLE_DTLS1_3)
+        testresult = TEST_skip("DTLSv1.3 is not usable");
+        goto end;
+# endif
+        /* TODO(DTLSv1.3): Test fails with DTLS */
+        testresult = TEST_skip("Test fails with DTLS");
+        goto end;
+    } else {
+        smeth = TLS_server_method();
+        cmeth = TLS_client_method();
+        vermin = TLS1_VERSION;
+# if defined(OSSL_NO_USABLE_TLS1_3)
+        testresult = TEST_skip("TLSv1.3 is not usable");
+        goto end;
+# endif
+    }
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, smeth, cmeth, vermin, vermax,
                                        &sctx, &cctx, NULL, NULL))
             || !TEST_true(SSL_CTX_set_session_id_context(sctx,
                                                          (void *)&sess_id_ctx,
@@ -2728,16 +2820,38 @@ static int test_extra_tickets(int idx)
     int stateful = 0;
     size_t nbytes;
     unsigned char c, buf[1];
+    int testdtls = (idx >= 6);
 
     new_called = 0;
     do_cache = 1;
+
+    if (testdtls) {
+        idx -= 6;
+# if defined(OSSL_NO_USABLE_DTLS1_3)
+        testresult = TEST_skip("DTLSv1.3 is not usable");
+        goto end;
+# endif
+        /*
+         * TODO(DTLSv1.3): Tests fails when enabling DTLS:
+         * # ERROR: (bool) 'SSL_write_ex(serverssl, &c, 0, &nbytes) == true' failed
+         *                                                  @ test/sslapitest.c:2799
+         */
+        testresult = TEST_skip("Test fails with DTLS");
+        goto end;
+    } else {
+# if defined(OSSL_NO_USABLE_TLS1_3)
+        testresult = TEST_skip("TLSv1.3 is not usable");
+        goto end;
+# endif
+    }
 
     if (idx >= 3) {
         idx -= 3;
         stateful = 1;
     }
 
-    if (!TEST_ptr(bretry) || !setup_ticket_test(stateful, idx, &sctx, &cctx))
+    if (!TEST_ptr(bretry)
+            || !setup_ticket_test(testdtls, stateful, idx, &sctx, &cctx))
         goto end;
     SSL_CTX_sess_set_new_cb(sctx, new_session_cb);
     /* setup_ticket_test() uses new_cachesession_cb which we don't need. */
@@ -3251,7 +3365,7 @@ static int test_set_sigalgs(int idx)
 }
 #endif
 
-#ifndef OSSL_NO_USABLE_TLS1_3
+#if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OSSL_NO_USABLE_DTLS1_3)
 static int psk_client_cb_cnt = 0;
 static int psk_server_cb_cnt = 0;
 
@@ -3415,14 +3529,24 @@ static int ed_gen_cb(SSL *s, void *arg)
  */
 static int setupearly_data_test(SSL_CTX **cctx, SSL_CTX **sctx, SSL **clientssl,
                                 SSL **serverssl, SSL_SESSION **sess, int idx,
-                                size_t mdsize)
+                                size_t mdsize, int testdtls)
 {
     int artificial = (artificial_ticket_time > 0);
+    const SSL_METHOD *cmeth, *smeth;
+    int vermin, vermax = 0;
+
+    if (testdtls) {
+        smeth = DTLS_server_method();
+        cmeth = DTLS_client_method();
+        vermin = DTLS1_VERSION;
+    } else {
+        smeth = TLS_server_method();
+        cmeth = TLS_client_method();
+        vermin = TLS1_VERSION;
+    }
 
     if (*sctx == NULL
-            && !TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
-                                              TLS_client_method(),
-                                              TLS1_VERSION, 0,
+            && !TEST_true(create_ssl_ctx_pair(libctx, smeth, cmeth, vermin, vermax,
                                               sctx, cctx, cert, privkey)))
         return 0;
 
@@ -3546,13 +3670,27 @@ static int test_early_data_read_write(int idx)
     size_t readbytes, written, eoedlen, rawread, rawwritten;
     BIO *rbio;
     OSSL_TIME timer;
+    int testdtls = idx >= 6;
+
+    if (testdtls) {
+        idx -= 6;
+        /* TODO(DTLSv1.3): Tests fails for various reasons */
+        testresult = TEST_skip("Tests fails with DTLS");
+        goto end;
+    }
+# if defined(OSSL_NO_USABLE_TLS1_3)
+    if (!testdtls) {
+        testresult = TEST_skip("TLSv1.3 is not usable");
+        goto end;
+    }
+# endif
 
     /* Artificially give the next 2 tickets some age for non PSK sessions */
     if (idx != 2)
         artificial_ticket_time = 2;
     if (!TEST_true(setupearly_data_test(&cctx, &sctx, &clientssl,
                                         &serverssl, &sess, idx,
-                                        SHA384_DIGEST_LENGTH))) {
+                                        SHA384_DIGEST_LENGTH, testdtls))) {
         artificial_ticket_time = 0;
         goto end;
     }
@@ -3790,11 +3928,35 @@ static int test_early_data_replay_int(int idx, int usecb, int confopt)
     size_t readbytes, written;
     unsigned char buf[20];
     OSSL_TIME timer;
+    const SSL_METHOD *smeth, *cmeth;
+    int vermin, vermax = 0;
+    int testdtls = idx >= 2;
+
+    if (testdtls) {
+        smeth = DTLS_server_method();
+        cmeth = DTLS_client_method();
+        vermin = DTLS1_VERSION;
+        idx -= 2;
+# if defined(OSSL_NO_USABLE_DTLS1_3)
+        testresult = TEST_skip("DTLSv1.3 is not usable");
+        goto end;
+# endif
+        /* TODO(DTLSv1.3): Tests fails with dtls. */
+        testresult = TEST_skip("Tests fails with dtls");
+        goto end;
+    } else {
+        smeth = TLS_server_method();
+        cmeth = TLS_client_method();
+        vermin = TLS1_VERSION;
+# if defined(OSSL_NO_USABLE_TLS1_3)
+        testresult = TEST_skip("TLSv1.3 is not usable");
+        goto end;
+# endif
+    }
 
     allow_ed_cb_called = 0;
 
-    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
-                                       TLS_client_method(), TLS1_VERSION, 0,
+    if (!TEST_true(create_ssl_ctx_pair(libctx, smeth, cmeth, vermin, vermax,
                                        &sctx, &cctx, cert, privkey)))
         return 0;
 
@@ -3821,7 +3983,7 @@ static int test_early_data_replay_int(int idx, int usecb, int confopt)
 
     if (!TEST_true(setupearly_data_test(&cctx, &sctx, &clientssl,
                                         &serverssl, &sess, idx,
-                                        SHA384_DIGEST_LENGTH)))
+                                        SHA384_DIGEST_LENGTH, testdtls)))
         goto end;
 
     /*
@@ -3939,7 +4101,7 @@ static const char *ciphersuites[] = {
  * testtype: 2 == HRR, invalid early_data sent after HRR
  * testtype: 3 == recv_max_early_data set to 0
  */
-static int early_data_skip_helper(int testtype, int cipher, int idx)
+static int early_data_skip_helper(int testdtls, int testtype, int cipher, int idx)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
@@ -3947,6 +4109,18 @@ static int early_data_skip_helper(int testtype, int cipher, int idx)
     SSL_SESSION *sess = NULL;
     unsigned char buf[20];
     size_t readbytes, written;
+    const SSL_METHOD *smeth, *cmeth;
+    int vermin, vermax = 0;
+
+    if (testdtls) {
+        smeth = DTLS_server_method();
+        cmeth = DTLS_client_method();
+        vermin = DTLS1_VERSION;
+    } else {
+        smeth = TLS_server_method();
+        cmeth = TLS_client_method();
+        vermin = TLS1_VERSION;
+    }
 
     if (is_fips && cipher >= 4)
         return 1;
@@ -3954,10 +4128,8 @@ static int early_data_skip_helper(int testtype, int cipher, int idx)
     if (ciphersuites[cipher] == NULL)
         return TEST_skip("Cipher not supported");
 
-    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
-                                              TLS_client_method(),
-                                              TLS1_VERSION, 0,
-                                              &sctx, &cctx, cert, privkey)))
+    if (!TEST_true(create_ssl_ctx_pair(libctx, smeth, cmeth, vermin, vermax,
+                                       &sctx, &cctx, cert, privkey)))
         goto end;
 
     if (cipher == 0 || cipher == 5 || cipher == 6) {
@@ -3973,7 +4145,7 @@ static int early_data_skip_helper(int testtype, int cipher, int idx)
                                         &serverssl, &sess, idx,
                                         (cipher == 2 || cipher == 6)
                                             ? SHA384_DIGEST_LENGTH
-                                            : SHA256_DIGEST_LENGTH)))
+                                            : SHA256_DIGEST_LENGTH, testdtls)))
         goto end;
 
     if (testtype == 1 || testtype == 2) {
@@ -4123,7 +4295,23 @@ static int early_data_skip_helper(int testtype, int cipher, int idx)
  */
 static int test_early_data_skip(int idx)
 {
-    return early_data_skip_helper(0,
+    int testdtls = ((size_t)idx) >= OSSL_NELEM(ciphersuites) * 3;
+
+    if (testdtls) {
+        idx -= OSSL_NELEM(ciphersuites) * 3;
+
+        /* TODO(DTLSv1.3): testing with DTLS fails for various reasons */
+        return TEST_skip("Tests fails with DTLS");
+# if defined(OSSL_NO_USABLE_DTLS1_3)
+        return TEST_skip("No usable DTLSv1.3");
+# endif
+    } else {
+# if defined(OSSL_NO_USABLE_TLS1_3)
+        return TEST_skip("No usable TLSv1.3");
+# endif
+    }
+
+    return early_data_skip_helper(testdtls, 0,
                                   idx % OSSL_NELEM(ciphersuites),
                                   idx / OSSL_NELEM(ciphersuites));
 }
@@ -4134,7 +4322,23 @@ static int test_early_data_skip(int idx)
  */
 static int test_early_data_skip_hrr(int idx)
 {
-    return early_data_skip_helper(1,
+    int testdtls = ((size_t)idx) >= OSSL_NELEM(ciphersuites) * 3;
+
+    if (testdtls) {
+        idx -= OSSL_NELEM(ciphersuites) * 3;
+
+        /* TODO(DTLSv1.3): testing with DTLS fails for various reasons */
+        return TEST_skip("Tests fails with DTLS");
+# if defined(OSSL_NO_USABLE_DTLS1_3)
+        return TEST_skip("No usable DTLSv1.3");
+# endif
+    } else {
+# if defined(OSSL_NO_USABLE_TLS1_3)
+        return TEST_skip("No usable TLSv1.3");
+# endif
+    }
+
+    return early_data_skip_helper(testdtls, 1,
                                   idx % OSSL_NELEM(ciphersuites),
                                   idx / OSSL_NELEM(ciphersuites));
 }
@@ -4146,7 +4350,23 @@ static int test_early_data_skip_hrr(int idx)
  */
 static int test_early_data_skip_hrr_fail(int idx)
 {
-    return early_data_skip_helper(2,
+    int testdtls = ((size_t)idx) >= OSSL_NELEM(ciphersuites) * 3;
+
+    if (testdtls) {
+        idx -= OSSL_NELEM(ciphersuites) * 3;
+
+        /* TODO(DTLSv1.3): testing with DTLS fails for various reasons */
+        return TEST_skip("Tests fails with DTLS");
+# if defined(OSSL_NO_USABLE_DTLS1_3)
+        return TEST_skip("No usable DTLSv1.3");
+# endif
+    } else {
+# if defined(OSSL_NO_USABLE_TLS1_3)
+        return TEST_skip("No usable TLSv1.3");
+# endif
+    }
+
+    return early_data_skip_helper(testdtls, 2,
                                   idx % OSSL_NELEM(ciphersuites),
                                   idx / OSSL_NELEM(ciphersuites));
 }
@@ -4157,7 +4377,23 @@ static int test_early_data_skip_hrr_fail(int idx)
  */
 static int test_early_data_skip_abort(int idx)
 {
-    return early_data_skip_helper(3,
+    int testdtls = ((size_t)idx) >= OSSL_NELEM(ciphersuites) * 3;
+
+    if (testdtls) {
+        idx -= OSSL_NELEM(ciphersuites) * 3;
+
+        /* TODO(DTLSv1.3): testing with DTLS fails for various reasons */
+        return TEST_skip("Tests fails with DTLS");
+# if defined(OSSL_NO_USABLE_DTLS1_3)
+        return TEST_skip("No usable DTLSv1.3");
+# endif
+    } else {
+# if defined(OSSL_NO_USABLE_TLS1_3)
+        return TEST_skip("No usable TLSv1.3");
+# endif
+    }
+
+    return early_data_skip_helper(testdtls, 3,
                                   idx % OSSL_NELEM(ciphersuites),
                                   idx / OSSL_NELEM(ciphersuites));
 }
@@ -4174,10 +4410,28 @@ static int test_early_data_not_sent(int idx)
     SSL_SESSION *sess = NULL;
     unsigned char buf[20];
     size_t readbytes, written;
+    int testdtls = idx >= 3;
+
+    if (testdtls) {
+        idx -= 3;
+
+        /* TODO(DTLSv1.3): Tests fails for DTLS. */
+        testresult = TEST_skip("Tests fails for DTLS");
+        goto end;
+# if defined(OSSL_NO_USABLE_DTLS1_3)
+        testresult = TEST_skip("No usable DTLSv1.3");
+        goto end;
+# endif
+    } else {
+# if defined(OSSL_NO_USABLE_TLS1_3)
+        testresult = TEST_skip("No usable TLSv1.3");
+        goto end;
+# endif
+    }
 
     if (!TEST_true(setupearly_data_test(&cctx, &sctx, &clientssl,
                                         &serverssl, &sess, idx,
-                                        SHA384_DIGEST_LENGTH)))
+                                        SHA384_DIGEST_LENGTH, testdtls)))
         goto end;
 
     /* Write some data - should block due to handshake with server */
@@ -4268,11 +4522,32 @@ static int test_early_data_psk(int idx)
     size_t readbytes, written;
     int readearlyres = SSL_READ_EARLY_DATA_SUCCESS, connectres = 1;
     int edstatus = SSL_EARLY_DATA_ACCEPTED;
+    int testdtls = idx >= 8;
+    int version1_2 = testdtls ? DTLS1_2_VERSION : TLS1_2_VERSION;
+
+    if (testdtls) {
+        idx -= 8;
+        version1_2 = DTLS1_2_VERSION;
+
+        /* TODO(DTLSv1.3) tests fails */
+        testresult = TEST_skip("Tests fails with DTLS");
+
+        goto end;
+# if defined(OSSL_NO_USABLE_DTLS1_3)
+        testresult = TEST_skip("No usable DTLSv1.3");
+        goto end;
+# endif
+    } else {
+# if defined(OSSL_NO_USABLE_TLS1_3)
+        testresult = TEST_skip("No usable TLSv1.3");
+        goto end;
+# endif
+    }
 
     /* We always set this up with a final parameter of "2" for PSK */
     if (!TEST_true(setupearly_data_test(&cctx, &sctx, &clientssl,
                                         &serverssl, &sess, 2,
-                                        SHA384_DIGEST_LENGTH)))
+                                        SHA384_DIGEST_LENGTH, testdtls)))
         goto end;
 
     servalpn = "goodalpn";
@@ -4310,7 +4585,7 @@ static int test_early_data_psk(int idx)
          * SNI/ALPN consistency tests.
          */
         err = SSL_R_BAD_PSK;
-        if (!TEST_true(SSL_SESSION_set_protocol_version(sess, TLS1_2_VERSION)))
+        if (!TEST_true(SSL_SESSION_set_protocol_version(sess, version1_2)))
             goto end;
         break;
 
@@ -4438,6 +4713,8 @@ static int test_early_data_psk(int idx)
  * idx == 4: Test with TLS1_3_RFC_AES_128_CCM_8_SHA256
  * idx == 5: Test with TLS1_3_RFC_SHA256_SHA256
  * idx == 6: Test with TLS1_3_RFC_SHA384_SHA384
+ *
+ * idx > 6: Tests are repeated with DTLS.
  */
 static int test_early_data_psk_with_all_ciphers(int idx)
 {
@@ -4485,6 +4762,25 @@ static int test_early_data_psk_with_all_ciphers(int idx)
         NULL
 #endif
     };
+    int testdtls = idx >= 7;
+
+    if (testdtls) {
+        idx -= 7;
+
+        /* TODO(DTLSv1.3): Tests fails */
+        testresult = TEST_skip("Tests fails with DTLS");
+
+        goto end;
+# if defined(OSSL_NO_USABLE_DTLS1_3)
+        testresult = TEST_skip("No usable DTLSv1.3");
+        goto end;
+# endif
+    } else {
+# if defined(OSSL_NO_USABLE_TLS1_3)
+        testresult = TEST_skip("No usable TLSv1.3");
+        goto end;
+# endif
+    }
 
     if (cipher_str[idx] == NULL)
         return 1;
@@ -4498,7 +4794,7 @@ static int test_early_data_psk_with_all_ciphers(int idx)
     /* We always set this up with a final parameter of "2" for PSK */
     if (!TEST_true(setupearly_data_test(&cctx, &sctx, &clientssl,
                                         &serverssl, &sess, 2,
-                                        SHA384_DIGEST_LENGTH)))
+                                        SHA384_DIGEST_LENGTH, testdtls)))
         goto end;
 
     if (idx == 4 || idx == 5 || idx == 6) {
@@ -4583,10 +4879,29 @@ static int test_early_data_not_expected(int idx)
     SSL_SESSION *sess = NULL;
     unsigned char buf[20];
     size_t readbytes, written;
+    int testdtls = idx >= 3;
+
+    if (testdtls) {
+        idx -= 3;
+
+        /* TODO(DTLSv1.3): Tests fails */
+        testresult = TEST_skip("Tests fails with DTLS");
+
+        goto end;
+# if defined(OSSL_NO_USABLE_DTLS1_3)
+        testresult = TEST_skip("No usable DTLSv1.3");
+        goto end;
+# endif
+    } else {
+# if defined(OSSL_NO_USABLE_TLS1_3)
+        testresult = TEST_skip("No usable TLSv1.3");
+        goto end;
+# endif
+    }
 
     if (!TEST_true(setupearly_data_test(&cctx, &sctx, &clientssl,
                                         &serverssl, &sess, idx,
-                                        SHA384_DIGEST_LENGTH)))
+                                        SHA384_DIGEST_LENGTH, testdtls)))
         goto end;
 
     /* Write some early data */
@@ -4629,9 +4944,9 @@ static int test_early_data_not_expected(int idx)
     SSL_CTX_free(cctx);
     return testresult;
 }
+#endif
 
-
-# ifndef OPENSSL_NO_TLS1_2
+#if !defined(OSSL_NO_USABLE_TLS1_3) && !defined(OPENSSL_NO_TLS1_2)
 /*
  * Test that a server attempting to read early data can handle a connection
  * from a TLSv1.2 client.
@@ -4646,7 +4961,7 @@ static int test_early_data_tls1_2(int idx)
 
     if (!TEST_true(setupearly_data_test(&cctx, &sctx, &clientssl,
                                         &serverssl, NULL, idx,
-                                        SHA384_DIGEST_LENGTH)))
+                                        SHA384_DIGEST_LENGTH, 0)))
         goto end;
 
     /* Write some data - should block due to handshake with server */
@@ -4704,8 +5019,9 @@ static int test_early_data_tls1_2(int idx)
 
     return testresult;
 }
-# endif /* OPENSSL_NO_TLS1_2 */
+#endif /* OSSL_NO_USABLE_TLS1_3 || OPENSSL_NO_TLS1_2 */
 
+#if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OSSL_NO_USABLE_DTLS1_3)
 /*
  * Test configuring the TLSv1.3 ciphersuites
  *
@@ -4719,15 +5035,38 @@ static int test_early_data_tls1_2(int idx)
  * Test 7: Set a non-default ciphersuite in the SSL (SSL_CTX cipher_list)
  * Test 8: Set a default ciphersuite in the SSL (SSL cipher_list)
  * Test 9: Set a non-default ciphersuite in the SSL (SSL cipher_list)
+ *
+ * Test >9: Test are repeated for DTLS.
  */
 static int test_set_ciphersuite(int idx)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
     int testresult = 0;
+    const SSL_METHOD *smeth, *cmeth;
+    int vermin, vermax = 0;
+    int testdtls = idx >= 10;
 
-    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
-                                       TLS_client_method(), TLS1_VERSION, 0,
+    if (testdtls) {
+        smeth = DTLS_server_method();
+        cmeth = DTLS_client_method();
+        vermin = DTLS1_VERSION;
+        idx -= 10;
+# if defined(OSSL_NO_USABLE_DTLS1_3)
+        testresult = TEST_skip("DTLSv1.3 is disabled");
+        goto end;
+# endif
+    } else {
+        smeth = TLS_server_method();
+        cmeth = TLS_client_method();
+        vermin = TLS1_VERSION;
+# if defined(OSSL_NO_USABLE_TLS1_3)
+        testresult = TEST_skip("TLSv1.3 is disabled");
+        goto end;
+# endif
+    }
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, smeth, cmeth, vermin, vermax,
                                        &sctx, &cctx, cert, privkey))
             || !TEST_true(SSL_CTX_set_ciphersuites(sctx,
                            "TLS_AES_128_GCM_SHA256:TLS_AES_128_CCM_SHA256")))
@@ -4787,17 +5126,37 @@ static int test_set_ciphersuite(int idx)
     return testresult;
 }
 
-static int test_ciphersuite_change(void)
+static int test_ciphersuite_change(int idx)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
     SSL_SESSION *clntsess = NULL;
     int testresult = 0;
     const SSL_CIPHER *aes_128_gcm_sha256 = NULL;
+    const SSL_METHOD *smeth, *cmeth;
+    int vermin, vermax = 0;
+    int testdtls = idx >= 1;
+
+    if (testdtls) {
+        smeth = DTLS_server_method();
+        cmeth = DTLS_client_method();
+        vermin = DTLS1_VERSION;
+# if defined(OSSL_NO_USABLE_DTLS1_3)
+        testresult = TEST_skip("DTLSv1.3 is not usable");
+        goto end;
+# endif
+    } else {
+        smeth = TLS_server_method();
+        cmeth = TLS_client_method();
+        vermin = TLS1_VERSION;
+# if defined(OSSL_NO_USABLE_TLS1_3)
+        testresult = TEST_skip("TLSv1.3 is not usable");
+        goto end;
+# endif
+    }
 
     /* Create a session based on SHA-256 */
-    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
-                                       TLS_client_method(), TLS1_VERSION, 0,
+    if (!TEST_true(create_ssl_ctx_pair(libctx, smeth, cmeth, vermin, vermax,
                                        &sctx, &cctx, cert, privkey))
             || !TEST_true(SSL_CTX_set_ciphersuites(sctx,
                                                    "TLS_AES_128_GCM_SHA256:"
@@ -4920,6 +5279,7 @@ static int test_ciphersuite_change(void)
     return testresult;
 }
 
+# if !defined(OSSL_NO_USABLE_TLS1_3)
 /*
  * Test TLSv1.3 Key exchange
  * Test 0 = Test all ECDHE Key exchange with TLSv1.3 client and server
@@ -5335,14 +5695,20 @@ static int test_negotiated_group(int idx)
     SSL_SESSION_free(origsess);
     return testresult;
 }
-# endif /* !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_DH) */
+#  endif /* !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_DH) */
+# endif
 
+# if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OSSL_NO_USABLE_DTLS1_3)
 /*
- * Test TLSv1.3 Cipher Suite
+ * Test (D)TLSv1.3 Cipher Suite
  * Test 0 = Set TLS1.3 cipher on context
  * Test 1 = Set TLS1.3 cipher on SSL
  * Test 2 = Set TLS1.3 and TLS1.2 cipher on context
  * Test 3 = Set TLS1.3 and TLS1.2 cipher on SSL
+ * Test 4 = Set DTLS1.3 cipher on context
+ * Test 5 = Set DTLS1.3 cipher on SSL
+ * Test 6 = Set DTLS1.3 and DTLS1.2 cipher on context
+ * Test 7 = Set DTLS1.3 and DTLS1.2 cipher on SSL
  */
 static int test_tls13_ciphersuite(int idx)
 {
@@ -5379,6 +5745,33 @@ static int test_tls13_ciphersuite(int idx)
     int testresult = 0;
     int max_ver;
     size_t i;
+    const SSL_METHOD *smeth, *cmeth;
+    int vermin;
+    int version1_3, version1_2;
+    int testdtls = idx >= 4;
+
+    if (testdtls) {
+        smeth = DTLS_server_method();
+        cmeth = DTLS_client_method();
+        vermin = DTLS1_VERSION;
+        version1_2 = DTLS1_2_VERSION;
+        version1_3 = DTLS1_3_VERSION;
+        idx -= 4;
+#  if defined(OSSL_NO_USABLE_DTLS1_3)
+        testresult = TEST_skip("DTLSv1.3 is not usable");
+        goto end;
+#  endif
+    } else {
+        smeth = TLS_server_method();
+        cmeth = TLS_client_method();
+        vermin = TLS1_VERSION;
+        version1_2 = TLS1_2_VERSION;
+        version1_3 = TLS1_3_VERSION;
+#  if defined(OSSL_NO_USABLE_TLS1_3)
+        testresult = TEST_skip("TLSv1.3 is not usable");
+        goto end;
+#  endif
+    }
 
     switch (idx) {
         case 0:
@@ -5397,18 +5790,29 @@ static int test_tls13_ciphersuite(int idx)
             break;
     }
 
-    for (max_ver = TLS1_2_VERSION; max_ver <= TLS1_3_VERSION; max_ver++) {
-# ifdef OPENSSL_NO_TLS1_2
+    for (max_ver = version1_2; max_ver <= version1_3
+         ; testdtls ? max_ver-- : max_ver++) {
+#  ifdef OPENSSL_NO_TLS1_2
         if (max_ver == TLS1_2_VERSION)
             continue;
-# endif
+#  endif
+#  ifdef OPENSSL_NO_USABLE_TLS1_3
+        if (max_ver == TLS1_3_VERSION)
+            continue;
+#  endif
+#  ifdef OPENSSL_NO_DTLS1_2
+        if (max_ver == DTLS1_2_VERSION)
+            continue;
+#  endif
+#  ifdef OPENSSL_NO_USABLE_DTLS1_3
+        if (max_ver == DTLS1_3_VERSION)
+            continue;
+#  endif
         for (i = 0; i < OSSL_NELEM(t13_ciphers); i++) {
             if (is_fips && !t13_ciphers[i].fipscapable)
                 continue;
             t13_cipher = t13_ciphers[i].ciphername;
-            if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
-                                               TLS_client_method(),
-                                               TLS1_VERSION, max_ver,
+            if (!TEST_true(create_ssl_ctx_pair(libctx, smeth, cmeth, vermin, max_ver,
                                                &sctx, &cctx, cert, privkey)))
                 goto end;
 
@@ -5460,17 +5864,23 @@ static int test_tls13_ciphersuite(int idx)
              * TEST_strn_eq is used below because t13_cipher can contain
              * multiple ciphersuites
              */
-            if (max_ver == TLS1_3_VERSION
+            if (max_ver == version1_3
                 && !TEST_strn_eq(t13_cipher, negotiated_scipher,
                                  strlen(negotiated_scipher)))
                 goto end;
 
-# ifndef OPENSSL_NO_TLS1_2
+#  ifndef OPENSSL_NO_TLS1_2
             /* Below validation is not done when t12_cipher is NULL */
             if (max_ver == TLS1_2_VERSION && t12_cipher != NULL
                 && !TEST_str_eq(t12_cipher, negotiated_scipher))
                 goto end;
-# endif
+#  endif
+#  ifndef OPENSSL_NO_DTLS1_2
+            /* Below validation is not done when t12_cipher is NULL */
+            if (max_ver == DTLS1_2_VERSION && t12_cipher != NULL
+                && !TEST_str_eq(t12_cipher, negotiated_scipher))
+                goto end;
+#  endif
 
             SSL_free(serverssl);
             serverssl = NULL;
@@ -5498,6 +5908,8 @@ static int test_tls13_ciphersuite(int idx)
  * Test 1 = Test both new and old style callbacks
  * Test 2 = Test old style callbacks
  * Test 3 = Test old style callbacks with no certificate
+ *
+ * Test >3: Test are repeated for DTLS.
  */
 static int test_tls13_psk(int idx)
 {
@@ -5511,9 +5923,35 @@ static int test_tls13_psk(int idx)
         0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f
     };
     int testresult = 0;
+    const SSL_METHOD *smeth, *cmeth;
+    int vermin, vermax = 0;
+    int testdtls = idx >= 4;
 
-    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
-                                       TLS_client_method(), TLS1_VERSION, 0,
+    if (testdtls) {
+        smeth = DTLS_server_method();
+        cmeth = DTLS_client_method();
+        vermin = DTLS1_VERSION;
+        idx -= 4;
+        /* TODO(DTLSv1.3): Tests fails */
+        testresult = TEST_skip("Tests skip with DTLS");
+
+        goto end;
+
+#  if defined(OSSL_NO_USABLE_DTLS1_3)
+        testresult = TEST_skip("No usable DTLSv1.3");
+        goto end;
+#  endif
+    } else {
+        smeth = TLS_server_method();
+        cmeth = TLS_client_method();
+        vermin = TLS1_VERSION;
+#  if defined(OSSL_NO_USABLE_TLS1_3)
+        testresult = TEST_skip("No usable TLSv1.3");
+        goto end;
+#  endif
+    }
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, smeth, cmeth, vermin, vermax,
                                        &sctx, &cctx, idx == 3 ? NULL : cert,
                                        idx == 3 ? NULL : privkey)))
         goto end;
@@ -5729,41 +6167,67 @@ static int test_tls13_psk(int idx)
     return testresult;
 }
 
-#ifndef OSSL_NO_USABLE_TLS1_3
 /*
- * Test TLS1.3 connection establishment succeeds with various configurations of
- * the options `SSL_OP_ALLOW_NO_DHE_KEX` and `SSL_OP_PREFER_NO_DHE_KEX`.
+ * Test (D)TLS1.3 connection establishment succeeds with various configurations
+ * of the options `SSL_OP_ALLOW_NO_DHE_KEX` and `SSL_OP_PREFER_NO_DHE_KEX`.
  * The verification of whether the right KEX mode is chosen is not covered by
  * this test but by `test_tls13kexmodes`.
  *
  * Tests (idx & 1): Server has `SSL_OP_ALLOW_NO_DHE_KEX` set.
  * Tests (idx & 2): Server has `SSL_OP_PREFER_NO_DHE_KEX` set.
  * Tests (idx & 4): Client has `SSL_OP_ALLOW_NO_DHE_KEX` set.
+ * Tests (idx < 8): Tests are run with TLS.
+ * Tests (idx >= 8): Tests are run with DTLS.
  */
-static int test_tls13_no_dhe_kex(const int idx)
+static int test_tls13_no_dhe_kex(int idx)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
+    const SSL_METHOD *smeth, *cmeth;
     SSL *serverssl = NULL, *clientssl = NULL;
     int testresult = 0;
+    int vermin;
     size_t j;
     SSL_SESSION *saved_session;
+    int testdtls = idx >= 8;
+    int server_allow_no_dhe, server_prefer_no_dhe, client_allow_no_dhe;
+    uint64_t server_options, client_options;
 
-    int server_allow_no_dhe = (idx & 1) != 0;
-    int server_prefer_no_dhe = (idx & 2) != 0;
-    int client_allow_no_dhe = (idx & 4) != 0;
+    if (testdtls) {
+        smeth = DTLS_server_method();
+        cmeth = DTLS_client_method();
+        vermin = DTLS1_3_VERSION;
+        idx -= 8;
 
-    uint64_t server_options = 0
-            | (server_allow_no_dhe ? SSL_OP_ALLOW_NO_DHE_KEX : 0)
-            | (server_prefer_no_dhe ? SSL_OP_PREFER_NO_DHE_KEX : 0);
+#  if defined(OSSL_NO_USABLE_DTLS1_3)
+        testresult = TEST_skip("No usable DTLSv1.3");
+        goto end;
+#  endif
+    } else {
+        smeth = TLS_server_method();
+        cmeth = TLS_client_method();
+        vermin = TLS1_3_VERSION;
 
-    uint64_t client_options = 0
-            | (client_allow_no_dhe ? SSL_OP_ALLOW_NO_DHE_KEX : 0);
+#  if defined(OSSL_NO_USABLE_TLS1_3)
+        testresult = TEST_skip("No usable TLSv1.3");
+        goto end;
+#  endif
+    }
+
+    server_allow_no_dhe = (idx & 1) != 0;
+    server_prefer_no_dhe = (idx & 2) != 0;
+    client_allow_no_dhe = (idx & 4) != 0;
+
+    server_options = 0
+        | (server_allow_no_dhe ? SSL_OP_ALLOW_NO_DHE_KEX : 0)
+        | (server_prefer_no_dhe ? SSL_OP_PREFER_NO_DHE_KEX : 0);
+
+    client_options = 0
+        | (client_allow_no_dhe ? SSL_OP_ALLOW_NO_DHE_KEX : 0);
 
     new_called = 0;
     do_cache = 1;
 
-    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
-                                       TLS_client_method(), TLS1_3_VERSION, 0,
+    if (!TEST_true(create_ssl_ctx_pair(libctx, smeth, cmeth, vermin, 0,
                                        &sctx, &cctx, cert, privkey)))
         goto end;
 
@@ -5801,8 +6265,7 @@ static int test_tls13_no_dhe_kex(const int idx)
      */
 
     /* The server context already exists, so we only create the client. */
-    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
-                                       TLS_client_method(), TLS1_3_VERSION, 0,
+    if (!TEST_true(create_ssl_ctx_pair(libctx, smeth, cmeth, vermin, 0,
                                        NULL, &cctx, cert, privkey)))
         goto end;
 
@@ -5840,7 +6303,7 @@ static int test_tls13_no_dhe_kex(const int idx)
 
     return testresult;
 }
-#endif /* OSSL_NO_USABLE_TLS1_3 */
+# endif /* !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OSSL_NO_USABLE_DTLS1_3) */
 
 static unsigned char cookie_magic_value[] = "cookie magic";
 
@@ -5882,14 +6345,37 @@ static int verify_stateless_cookie_callback(SSL *ssl, const unsigned char *cooki
     return verify_cookie_callback(ssl, cookie, cookie_len);
 }
 
-static int test_stateless(void)
+static int test_stateless(int idx)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *serverssl = NULL, *clientssl = NULL;
     int testresult = 0;
+    const SSL_METHOD *smeth, *cmeth;
+    int vermin, vermax = 0;
+    int testdtls = idx >= 1;
 
-    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
-                                       TLS_client_method(), TLS1_VERSION, 0,
+    if (testdtls) {
+        smeth = DTLS_server_method();
+        cmeth = DTLS_client_method();
+        vermin = DTLS1_VERSION;
+# if defined(OSSL_NO_USABLE_DTLS1_3) || defined(OPENSSL_NO_DTLS1_2)
+        testresult = TEST_skip("DTLSv1.3 not usable or no DTLSv1.2");
+        goto end;
+# endif
+        /* TODO(DTLSv1.3): Fails with DTLS */
+        testresult = TEST_skip("Test fails with DTLS");
+        goto end;
+    } else {
+        smeth = TLS_server_method();
+        cmeth = TLS_client_method();
+        vermin = TLS1_VERSION;
+# if defined(OSSL_NO_USABLE_TLS1_3) || defined(OPENSSL_NO_TLS1_2)
+        testresult = TEST_skip("TLSv1.3 not usable or no TLSv1.2");
+        goto end;
+# endif
+    }
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, smeth, cmeth, vermin, vermax,
                                        &sctx, &cctx, cert, privkey)))
         goto end;
 
@@ -5966,7 +6452,7 @@ static int test_stateless(void)
     return testresult;
 
 }
-#endif /* OSSL_NO_USABLE_TLS1_3 */
+#endif /* !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OSSL_NO_USABLE_DTLS1_3) */
 
 static int clntaddoldcb = 0;
 static int clntparseoldcb = 0;
@@ -6322,7 +6808,8 @@ end:
     return testresult;
 }
 
-#if !defined(OPENSSL_NO_TLS1_2) && !defined(OSSL_NO_USABLE_TLS1_3)
+#if (!defined(OPENSSL_NO_TLS1_2) && !defined(OSSL_NO_USABLE_TLS1_3)) \
+    || (!defined(OPENSSL_NO_DTLS1_2) && !defined(OSSL_NO_USABLE_DTLS1_3))
 
 #define  SYNTHV1CONTEXT     (SSL_EXT_TLS1_2_AND_BELOW_ONLY \
                              | SSL_EXT_CLIENT_HELLO \
@@ -6367,7 +6854,7 @@ static int serverinfo_custom_parse_cb(SSL *s, unsigned int ext_type,
     return 1;
 }
 
-static int test_serverinfo_custom(const int idx)
+static int test_serverinfo_custom(int idx)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
@@ -6386,34 +6873,54 @@ static int test_serverinfo_custom(const int idx)
     size_t si_len = 0;
 
     const int call_use_serverinfo_ex = idx > 0;
+    const SSL_METHOD *smeth, *cmeth;
+    int testdtls = idx >= 4;
+
+    if (testdtls) {
+        smeth = DTLS_server_method();
+        cmeth = DTLS_client_method();
+        idx -= 4;
+
+# if defined(OPENSSL_NO_DTLS1_2) || defined(OSSL_NO_USABLE_DTLS1_3)
+        testresult = TEST_skip("DTLSv1.2 or DTLSv1.3 are disabled");
+        goto end;
+# endif
+    } else {
+        smeth = TLS_server_method();
+        cmeth = TLS_client_method();
+
+# if defined(OPENSSL_NO_TLS1_2) || defined(OSSL_NO_USABLE_TLS1_3)
+        testresult = TEST_skip("TLSv1.2 or TLSv1.3 are disabled");
+        goto end;
+# endif
+    }
+
     switch (idx) {
     case 0: /* FALLTHROUGH */
     case 1:
         serverinfo_version = SSL_SERVERINFOV1;
-        protocol_version = TLS1_2_VERSION;
+        protocol_version = testdtls ? DTLS1_2_VERSION : TLS1_2_VERSION;
         extension_context = SYNTHV1CONTEXT;
         si = serverinfo_custom_v1;
         si_len = serverinfo_custom_v1_len;
         break;
     case 2:
         serverinfo_version = SSL_SERVERINFOV2;
-        protocol_version = TLS1_2_VERSION;
+        protocol_version = testdtls ? DTLS1_2_VERSION : TLS1_2_VERSION;
         extension_context = SYNTHV1CONTEXT;
         si = serverinfo_custom_v2;
         si_len = serverinfo_custom_v2_len;
         break;
     case 3:
         serverinfo_version = SSL_SERVERINFOV2;
-        protocol_version = TLS1_3_VERSION;
+        protocol_version = testdtls ? DTLS1_3_VERSION : TLS1_3_VERSION;
         extension_context = TLS13CONTEXT;
         si = serverinfo_custom_tls13;
         si_len = serverinfo_custom_tls13_len;
         break;
     }
 
-    if (!TEST_true(create_ssl_ctx_pair(libctx,
-                                       TLS_method(),
-                                       TLS_method(),
+    if (!TEST_true(create_ssl_ctx_pair(libctx, smeth, cmeth,
                                        protocol_version,
                                        protocol_version,
                                        &sctx, &cctx, cert, privkey)))
@@ -6648,7 +7155,7 @@ static int test_export_key_mat(int tst)
     return testresult;
 }
 
-#ifndef OSSL_NO_USABLE_TLS1_3
+#if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OSSL_NO_USABLE_DTLS1_3)
 /*
  * Test that SSL_export_keying_material_early() produces expected
  * results. There are no test vectors so all we do is test that both
@@ -6668,9 +7175,27 @@ static int test_export_key_mat_early(int idx)
     unsigned char skeymat1[80], skeymat2[80];
     unsigned char buf[1];
     size_t readbytes, written;
+    int testdtls = idx >= 3;
+
+    if (testdtls) {
+        idx -= 3;
+
+        /* TODO(DTLSv1.3): Tests fails. */
+        testresult = TEST_skip("Tests fails with DTLS");
+        goto end;
+# if defined(OSSL_NO_USABLE_DTLS1_3)
+        testresult = TEST_skip("No usable DTLSv1.3");
+        goto end;
+# endif
+    } else {
+# if defined(OSSL_NO_USABLE_TLS1_3)
+        testresult = TEST_skip("No usable TLSv1.3");
+        goto end;
+# endif
+    }
 
     if (!TEST_true(setupearly_data_test(&cctx, &sctx, &clientssl, &serverssl,
-                                        &sess, idx, SHA384_DIGEST_LENGTH)))
+                                        &sess, idx, SHA384_DIGEST_LENGTH, testdtls)))
         goto end;
 
     /* Here writing 0 length early data is enough. */
@@ -6730,18 +7255,47 @@ static int test_export_key_mat_early(int idx)
 /*
  * Test KeyUpdate.
  */
-static int test_key_update(void)
+static int test_key_update(int idx)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
     int testresult = 0, i, j;
     char buf[20];
     static char *mess = "A test message";
+    const SSL_METHOD *smeth, *cmeth;
+    int vermin, vermax = 0;
+    int testdtls = idx >= 1;
 
-    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
-                                       TLS_client_method(),
-                                       TLS1_3_VERSION,
-                                       0,
+    if (testdtls) {
+        smeth = DTLS_server_method();
+        cmeth = DTLS_client_method();
+        vermin = DTLS1_3_VERSION;
+        /*
+         * TODO(DTLSv1.3): Test fails with DTLS
+         * # ERROR: (bool) 'SSL_key_update(..) == true' failed
+         *                                              @ test/sslapitest.c:7033
+         * # false
+         * # 00BBFC4AF87F0000:error:0A000079:SSL routines
+         *                   :SSL_key_update:still in init:ssl/ssl_lib.c:2811:
+         */
+        testresult = TEST_skip("Test fails with DTLS");
+
+        goto end;
+# if defined(OSSL_NO_USABLE_DTLS1_3)
+        testresult = TEST_skip("No usable DTLSv1.3");
+        goto end;
+# endif
+    } else {
+# if defined(OSSL_NO_USABLE_TLS1_3)
+        testresult = TEST_skip("No usable TLSv1.3");
+        goto end;
+# endif
+        smeth = TLS_server_method();
+        cmeth = TLS_client_method();
+        vermin = TLS1_3_VERSION;
+    }
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, smeth, cmeth, vermin, vermax,
                                        &sctx, &cctx, cert, privkey))
             || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
                                              NULL, NULL))
@@ -6789,7 +7343,7 @@ static int test_key_update(void)
  * Test 0: Client sends KeyUpdate while Server is writing
  * Test 1: Server sends KeyUpdate while Client is writing
  */
-static int test_key_update_peer_in_write(int tst)
+static int test_key_update_peer_in_write(int idx)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
@@ -6799,12 +7353,42 @@ static int test_key_update_peer_in_write(int tst)
     BIO *bretry = BIO_new(bio_s_always_retry());
     BIO *tmp = NULL;
     SSL *peerupdate = NULL, *peerwrite = NULL;
+    const SSL_METHOD *smeth, *cmeth;
+    int vermin, vermax = 0;
+    int testdtls = idx >= 2;
+
+    if (testdtls) {
+        smeth = DTLS_server_method();
+        cmeth = DTLS_client_method();
+        vermin = DTLS1_3_VERSION;
+        idx -= 2;
+
+        if (idx == 0) {
+            /*
+             * TODO(DTLSv1.3): Test fails with
+             * ERROR: (int) 'SSL_do_handshake(peerupdate) == 1' failed
+             *                                         @ test/sslapitest.c:7116
+             */
+            testresult = TEST_skip("Test fails");
+
+            goto end;
+        }
+# if defined(OSSL_NO_USABLE_DTLS1_3)
+        testresult = TEST_skip("No usable DTLSv1.3");
+        goto end;
+# endif
+    } else {
+# if defined(OSSL_NO_USABLE_TLS1_3)
+        testresult = TEST_skip("No usable TLSv1.3");
+        goto end;
+# endif
+        smeth = TLS_server_method();
+        cmeth = TLS_client_method();
+        vermin = TLS1_3_VERSION;
+    }
 
     if (!TEST_ptr(bretry)
-            || !TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
-                                              TLS_client_method(),
-                                              TLS1_3_VERSION,
-                                              0,
+            || !TEST_true(create_ssl_ctx_pair(libctx, smeth, cmeth, vermin, vermax,
                                               &sctx, &cctx, cert, privkey))
             || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
                                              NULL, NULL))
@@ -6812,8 +7396,8 @@ static int test_key_update_peer_in_write(int tst)
                                                 SSL_ERROR_NONE)))
         goto end;
 
-    peerupdate = tst == 0 ? clientssl : serverssl;
-    peerwrite = tst == 0 ? serverssl : clientssl;
+    peerupdate = idx == 0 ? clientssl : serverssl;
+    peerwrite = idx == 0 ? serverssl : clientssl;
 
     if (!TEST_true(SSL_key_update(peerupdate, SSL_KEY_UPDATE_REQUESTED))
             || !TEST_int_eq(SSL_do_handshake(peerupdate), 1))
@@ -6884,7 +7468,7 @@ static int test_key_update_peer_in_write(int tst)
  * Test 0: Client sends KeyUpdate while Server is reading
  * Test 1: Server sends KeyUpdate while Client is reading
  */
-static int test_key_update_peer_in_read(int tst)
+static int test_key_update_peer_in_read(int idx)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
@@ -6893,20 +7477,43 @@ static int test_key_update_peer_in_read(int tst)
     static char *mess = "A test message";
     BIO *lbio = NULL, *pbio = NULL;
     SSL *local = NULL, *peer = NULL;
+    const SSL_METHOD *smeth, *cmeth;
+    int vermin, vermax = 0;
+    int testdtls = idx >= 2;
 
-    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
-                                              TLS_client_method(),
-                                              TLS1_3_VERSION,
-                                              0,
-                                              &sctx, &cctx, cert, privkey))
+    if (testdtls) {
+        smeth = DTLS_server_method();
+        cmeth = DTLS_client_method();
+        vermin = DTLS1_3_VERSION;
+        idx -= 2;
+        /* TODO(DTLSv1.3): Test fails */
+        testresult = TEST_skip("Test fails with DTLS");
+
+        goto end;
+# if defined(OSSL_NO_USABLE_DTLS1_3)
+        testresult = TEST_skip("No usable DTLSv1.3");
+        goto end;
+# endif
+    } else {
+# if defined(OSSL_NO_USABLE_TLS1_3)
+        testresult = TEST_skip("No usable TLSv1.3");
+        goto end;
+# endif
+        smeth = TLS_server_method();
+        cmeth = TLS_client_method();
+        vermin = TLS1_3_VERSION;
+    }
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, smeth, cmeth, vermin, vermax,
+                                       &sctx, &cctx, cert, privkey))
             || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
                                              NULL, NULL))
             || !TEST_true(create_ssl_connection(serverssl, clientssl,
                                                 SSL_ERROR_NONE)))
         goto end;
 
-    local = tst == 0 ? clientssl : serverssl;
-    peer = tst == 0 ? serverssl : clientssl;
+    local = idx == 0 ? clientssl : serverssl;
+    peer = idx == 0 ? serverssl : clientssl;
 
     if (!TEST_int_eq(BIO_new_bio_pair(&lbio, 512, &pbio, 512), 1))
         goto end;
@@ -6967,7 +7574,7 @@ static int test_key_update_peer_in_read(int tst)
  * Test 0: Client sends KeyUpdate while Client is writing
  * Test 1: Server sends KeyUpdate while Server is writing
  */
-static int test_key_update_local_in_write(int tst)
+static int test_key_update_local_in_write(int idx)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
@@ -6977,12 +7584,35 @@ static int test_key_update_local_in_write(int tst)
     BIO *bretry = BIO_new(bio_s_always_retry());
     BIO *tmp = NULL;
     SSL *local = NULL, *peer = NULL;
+    const SSL_METHOD *smeth, *cmeth;
+    int vermin, vermax = 0;
+    int testdtls = idx >= 2;
+
+    if (testdtls) {
+        smeth = DTLS_server_method();
+        cmeth = DTLS_client_method();
+        vermin = TLS1_3_VERSION;
+        idx -= 2;
+        /* TODO(DTLSv1.3): Test fails */
+        testresult = TEST_skip("Test fails with DTLS");
+
+        goto end;
+# if defined(OSSL_NO_USABLE_DTLS1_3)
+        testresult = TEST_skip("No usable DTLSv1.3");
+        goto end;
+# endif
+    } else {
+# if defined(OSSL_NO_USABLE_TLS1_3)
+        testresult = TEST_skip("No usable TLSv1.3");
+        goto end;
+# endif
+        smeth = TLS_server_method();
+        cmeth = TLS_client_method();
+        vermin = TLS1_3_VERSION;
+    }
 
     if (!TEST_ptr(bretry)
-            || !TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
-                                              TLS_client_method(),
-                                              TLS1_3_VERSION,
-                                              0,
+            || !TEST_true(create_ssl_ctx_pair(libctx, smeth, cmeth, vermin, vermax,
                                               &sctx, &cctx, cert, privkey))
             || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
                                              NULL, NULL))
@@ -6990,8 +7620,8 @@ static int test_key_update_local_in_write(int tst)
                                                 SSL_ERROR_NONE)))
         goto end;
 
-    local = tst == 0 ? clientssl : serverssl;
-    peer = tst == 0 ? serverssl : clientssl;
+    local = idx == 0 ? clientssl : serverssl;
+    peer = idx == 0 ? serverssl : clientssl;
 
     /* Swap the writing endpoint's write BIO to force a retry */
     tmp = SSL_get_wbio(local);
@@ -7058,7 +7688,7 @@ static int test_key_update_local_in_write(int tst)
  * Test 0: Client sends KeyUpdate while Client is reading
  * Test 1: Server sends KeyUpdate while Server is reading
  */
-static int test_key_update_local_in_read(int tst)
+static int test_key_update_local_in_read(int idx)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
@@ -7067,20 +7697,43 @@ static int test_key_update_local_in_read(int tst)
     static char *mess = "A test message";
     BIO *lbio = NULL, *pbio = NULL;
     SSL *local = NULL, *peer = NULL;
+    const SSL_METHOD *smeth, *cmeth;
+    int vermin, vermax = 0;
+    int testdtls = idx >= 2;
 
-    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
-                                              TLS_client_method(),
-                                              TLS1_3_VERSION,
-                                              0,
-                                              &sctx, &cctx, cert, privkey))
+    if (testdtls) {
+        smeth = DTLS_server_method();
+        cmeth = DTLS_client_method();
+        vermin = DTLS1_3_VERSION;
+        idx -= 2;
+        /* TODO(DTLSv1.3): Test fails */
+        testresult = TEST_skip("Test fails with DTLS");
+
+        goto end;
+# if defined(OSSL_NO_USABLE_DTLS1_3)
+        testresult = TEST_skip("No usable DTLSv1.3");
+        goto end;
+# endif
+    } else {
+# if defined(OSSL_NO_USABLE_TLS1_3)
+        testresult = TEST_skip("No usable TLSv1.3");
+        goto end;
+# endif
+        smeth = TLS_server_method();
+        cmeth = TLS_client_method();
+        vermin = TLS1_3_VERSION;
+    }
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, smeth, cmeth, vermin, vermax,
+                                       &sctx, &cctx, cert, privkey))
             || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
                                              NULL, NULL))
             || !TEST_true(create_ssl_connection(serverssl, clientssl,
                                                 SSL_ERROR_NONE)))
         goto end;
 
-    local = tst == 0 ? clientssl : serverssl;
-    peer = tst == 0 ? serverssl : clientssl;
+    local = idx == 0 ? clientssl : serverssl;
+    peer = idx == 0 ? serverssl : clientssl;
 
     if (!TEST_int_eq(BIO_new_bio_pair(&lbio, 512, &pbio, 512), 1))
         goto end;
@@ -7871,7 +8524,7 @@ static int test_info_callback(int tst)
         /* early_data tests */
         if (!TEST_true(setupearly_data_test(&cctx, &sctx, &clientssl,
                                             &serverssl, &sess, 0,
-                                            SHA384_DIGEST_LENGTH)))
+                                            SHA384_DIGEST_LENGTH, 0)))
             goto end;
 
         /* We don't actually need this reference */
@@ -9447,30 +10100,76 @@ static int test_session_timeout(int test)
  * Test 1: TLSv1.2, timeout on new session later than old session
  * Test 2: TLSv1.3, timeout on new session earlier than old session
  * Test 3: TLSv1.2, timeout on new session earlier than old session
+ * Test 4: DTLSv1.3, timeout on new session later than old session
+ * Test 5: DTLSv1.2, timeout on new session later than old session
+ * Test 6: DTLSv1.3, timeout on new session earlier than old session
+ * Test 7: DTLSv1.2, timeout on new session earlier than old session
  */
-#if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OPENSSL_NO_TLS1_2)
+#if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OPENSSL_NO_TLS1_2) \
+    || !defined(OSSL_NO_USABLE_DTLS1_3) || !defined(OPENSSL_NO_DTLS1_2)
 static int test_session_cache_overflow(int idx)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *serverssl = NULL, *clientssl = NULL;
     int testresult = 0;
     SSL_SESSION *sess = NULL;
+    const SSL_METHOD *smeth, *cmeth;
+    int vermin, vermax = 0;
+    int testdtls = idx >= 4;
 
-#ifdef OSSL_NO_USABLE_TLS1_3
+    if (testdtls) {
+        smeth = DTLS_server_method();
+        cmeth = DTLS_client_method();
+        vermin = DTLS1_VERSION;
+        idx -= 4;
+        vermax = (idx % 2 == 0) ? DTLS1_3_VERSION : DTLS1_2_VERSION;
+
+# if defined(OSSL_NO_USABLE_DTLS1_3) && defined(OPENSSL_NO_DTLS1_2)
+        testresult = TEST_skip("DTLSv1.3 and DTLSv1.2 are disabled");
+        goto end;
+# endif
+    } else {
+        smeth = TLS_server_method();
+        cmeth = TLS_client_method();
+        vermin = TLS1_VERSION;
+        vermax = (idx % 2 == 0) ? TLS1_3_VERSION : TLS1_2_VERSION;
+
+# if defined(OSSL_NO_USABLE_TLS1_3) && defined(OPENSSL_NO_TLS1_2)
+        testresult = TEST_skip("TLSv1.3 and TLSv1.2 are disabled");
+        goto end;
+# endif
+    }
+
+# ifdef OSSL_NO_USABLE_TLS1_3
     /* If no TLSv1.3 available then do nothing in this case */
-    if (idx % 2 == 0)
-        return TEST_skip("No TLSv1.3 available");
-#endif
-#ifdef OPENSSL_NO_TLS1_2
+    if (idx % 2 == 0 && !testdtls) {
+        testresult = TEST_skip("No TLSv1.3 available");
+        goto end;
+    }
+# endif
+# ifdef OPENSSL_NO_TLS1_2
     /* If no TLSv1.2 available then do nothing in this case */
-    if (idx % 2 == 1)
-        return TEST_skip("No TLSv1.2 available");
-#endif
+    if (idx % 2 == 1 && !testdtls) {
+        testresult = TEST_skip("No TLSv1.2 available");
+        goto end;
+    }
+# endif
+# ifdef OSSL_NO_USABLE_DTLS1_3
+    /* If no DTLSv1.3 available then do nothing in this case */
+    if (idx % 2 == 0 && testdtls) {
+        testresult = TEST_skip("No DTLSv1.3 available");
+        goto end;
+    }
+# endif
+# ifdef OPENSSL_NO_DTLS1_2
+    /* If no DTLSv1.2 available then do nothing in this case */
+    if (idx % 2 == 1 && testdtls) {
+        testresult = TEST_skip("No DTLSv1.2 available");
+        goto end;
+    }
+# endif
 
-    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
-                                       TLS_client_method(), TLS1_VERSION,
-                                       (idx % 2 == 0) ? TLS1_3_VERSION
-                                                      : TLS1_2_VERSION,
+    if (!TEST_true(create_ssl_ctx_pair(libctx, smeth, cmeth, vermin, vermax,
                                        &sctx, &cctx, cert, privkey))
             || !TEST_true(SSL_CTX_set_options(sctx, SSL_OP_NO_TICKET)))
         goto end;
@@ -9559,7 +10258,10 @@ static int test_session_cache_overflow(int idx)
 
     return testresult;
 }
-#endif /* !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OPENSSL_NO_TLS1_2) */
+#endif /*
+        * !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OPENSSL_NO_TLS1_2)
+        * || !defined(OSSL_NO_USABLE_DTLS1_3) || !defined(OPENSSL_NO_DTLS1_2)
+        */
 
 /*
  * Test 0: Client sets servername and server acknowledges it (TLSv1.2)
@@ -9820,7 +10522,8 @@ end:
 }
 
 #if !defined(OPENSSL_NO_EC) \
-    && (!defined(OSSL_NO_USABLE_TLS1_3) || !defined(OPENSSL_NO_TLS1_2))
+    && (!defined(OSSL_NO_USABLE_TLS1_3) || !defined(OPENSSL_NO_TLS1_2) \
+        || !defined(OSSL_NO_USABLE_DTLS1_3) || !defined(OPENSSL_NO_DTLS1_2))
 /*
  * Test that if signature algorithms are not available, then we do not offer or
  * accept them.
@@ -9830,6 +10533,7 @@ end:
  * Test 3: An RSA and an ECDSA sig alg available: both sig algs shared
  * Test 4: The client only has an ECDSA sig alg: only ECDSA algorithms shared
  * Test 5: The server only has an ECDSA sig alg: only ECDSA algorithms shared
+ * Test >5: Tests are repeated for DTLS
  */
 static int test_sigalgs_available(int idx)
 {
@@ -9840,6 +10544,30 @@ static int test_sigalgs_available(int idx)
     OSSL_LIB_CTX *clientctx = libctx, *serverctx = libctx;
     OSSL_PROVIDER *filterprov = NULL;
     int sig, hash;
+    const SSL_METHOD *smeth, *cmeth;
+    int vermin, vermax = 0;
+    int testdtls = idx >= 6;
+
+    if (testdtls) {
+        smeth = DTLS_server_method();
+        cmeth = DTLS_client_method();
+        vermin = DTLS1_VERSION;
+        idx -= 6;
+
+# if defined(OSSL_NO_USABLE_DTLS1_3) && defined(OPENSSL_NO_DTLS1_2)
+        testresult = TEST_skip("EC or DTLSv1.3 and DTLSv1.2 are disabled");
+        goto end;
+# endif
+    } else {
+        smeth = TLS_server_method();
+        cmeth = TLS_client_method();
+        vermin = TLS1_VERSION;
+
+# if defined(OSSL_NO_USABLE_TLS1_3) && defined(OPENSSL_NO_TLS1_2)
+        testresult = TEST_skip("EC or TLSv1.3 and TLSv1.2 are disabled");
+        goto end;
+# endif
+    }
 
     if (!TEST_ptr(tmpctx))
         goto end;
@@ -9882,28 +10610,22 @@ static int test_sigalgs_available(int idx)
             serverctx = tmpctx;
     }
 
-    cctx = SSL_CTX_new_ex(clientctx, NULL, TLS_client_method());
-    sctx = SSL_CTX_new_ex(serverctx, NULL, TLS_server_method());
+    cctx = SSL_CTX_new_ex(clientctx, NULL, cmeth);
+    sctx = SSL_CTX_new_ex(serverctx, NULL, smeth);
     if (!TEST_ptr(cctx) || !TEST_ptr(sctx))
         goto end;
 
     if (idx != 5) {
-        if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
-                                           TLS_client_method(),
-                                           TLS1_VERSION,
-                                           0,
+        if (!TEST_true(create_ssl_ctx_pair(libctx, smeth, cmeth, vermin, vermax,
                                            &sctx, &cctx, cert, privkey)))
             goto end;
     } else {
-        if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
-                                           TLS_client_method(),
-                                           TLS1_VERSION,
-                                           0,
+        if (!TEST_true(create_ssl_ctx_pair(libctx, smeth, cmeth, vermin, vermax,
                                            &sctx, &cctx, cert2, privkey2)))
             goto end;
     }
 
-    /* Ensure we only use TLSv1.2 ciphersuites based on SHA256 */
+    /* Ensure we only use (D)TLSv1.2 ciphersuites based on SHA256 */
     if (idx < 4) {
         if (!TEST_true(SSL_CTX_set_cipher_list(cctx,
                                                "ECDHE-RSA-AES128-GCM-SHA256")))
@@ -9970,38 +10692,71 @@ static int test_sigalgs_available(int idx)
 
     return testresult;
 }
-#endif /*
-        * !defined(OPENSSL_NO_EC) \
-        * && (!defined(OSSL_NO_USABLE_TLS1_3) || !defined(OPENSSL_NO_TLS1_2))
-        */
+#endif
 
-#ifndef OPENSSL_NO_TLS1_3
-/* This test can run in TLSv1.3 even if ec and dh are disabled */
+#if !defined(OPENSSL_NO_TLS1_3) || !defined(OPENSSL_NO_DTLS1_3)
 static int test_pluggable_group(int idx)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
+    const SSL_METHOD *smeth, *cmeth;
     int testresult = 0;
     OSSL_PROVIDER *tlsprov = OSSL_PROVIDER_load(libctx, "tls-provider");
     /* Check that we are not impacted by a provider without any groups */
     OSSL_PROVIDER *legacyprov = OSSL_PROVIDER_load(libctx, "legacy");
-    const char *group_name = idx == 0 ? "xorkemgroup" : "xorgroup";
+    char *group_name;
+    int vermin, vermax;
+    int testdtls = idx >= 2;
+
+    if (testdtls) {
+        smeth = DTLS_server_method();
+        cmeth = DTLS_client_method();
+        vermin = vermax = DTLS1_3_VERSION;
+        idx -= 2;
+
+/* This test can run in DTLSv1.3 even if ec and dh are disabled */
+# if defined(OPENSSL_NO_DTLS1_3)
+        testresult = TEST_skip("DTLSv1.3 is disabled");
+        goto end;
+# endif
+    } else {
+        smeth = TLS_server_method();
+        cmeth = TLS_client_method();
+        vermin = vermax = TLS1_3_VERSION;
+
+/* This test can run in TLSv1.3 even if ec and dh are disabled */
+# if defined(OPENSSL_NO_TLS1_3)
+        testresult = TEST_skip("TLSv1.3 is disabled");
+        goto end;
+# endif
+    }
+
+    if (idx == 0)
+        group_name = "xorkemgroup";
+    else
+        group_name = "xorgroup";
 
     if (!TEST_ptr(tlsprov))
         goto end;
 
-    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
-                                       TLS_client_method(),
-                                       TLS1_3_VERSION,
-                                       TLS1_3_VERSION,
+    if (!TEST_true(create_ssl_ctx_pair(libctx, smeth, cmeth, vermin, vermax,
                                        &sctx, &cctx, cert, privkey))
-            || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
-                                             NULL, NULL)))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                         NULL, NULL)))
         goto end;
 
     /* ensure GROUPLIST_INCREMENT (=40) logic triggers: */
-    if (!TEST_true(SSL_set1_groups_list(serverssl, "xorgroup:xorkemgroup:dummy1:dummy2:dummy3:dummy4:dummy5:dummy6:dummy7:dummy8:dummy9:dummy10:dummy11:dummy12:dummy13:dummy14:dummy15:dummy16:dummy17:dummy18:dummy19:dummy20:dummy21:dummy22:dummy23:dummy24:dummy25:dummy26:dummy27:dummy28:dummy29:dummy30:dummy31:dummy32:dummy33:dummy34:dummy35:dummy36:dummy37:dummy38:dummy39:dummy40:dummy41:dummy42:dummy43"))
-    /* removing a single algorithm from the list makes the test pass */
+    if (!TEST_true(SSL_set1_groups_list(serverssl,
+                                        "xorgroup:xorkemgroup:dummy1:dummy2:dummy3"
+                                        ":dummy4:dummy5:dummy6:dummy7:dummy8:dummy9"
+                                        ":dummy10:dummy11:dummy12:dummy13:dummy14"
+                                        ":dummy15:dummy16:dummy17:dummy18:dummy19"
+                                        ":dummy20:dummy21:dummy22:dummy23:dummy24"
+                                        ":dummy25:dummy26:dummy27:dummy28:dummy29"
+                                        ":dummy30:dummy31:dummy32:dummy33:dummy34"
+                                        ":dummy35:dummy36:dummy37:dummy38:dummy39"
+                                        ":dummy40:dummy41:dummy42:dummy43"))
+            /* removing a single algorithm from the list makes the test pass */
             || !TEST_true(SSL_set1_groups_list(clientssl, group_name)))
         goto end;
 
@@ -10078,17 +10833,19 @@ static int create_cert_key(int idx, char *certfilename, char *privkeyfilename)
 
 /*
  * Test that signature algorithms loaded via the provider interface can
- * correctly establish a TLS (1.3) connection.
+ * correctly establish a (D)TLSv1.3 connection.
  * Test 0: Signature algorithm with built-in hashing functionality: "xorhmacsig"
  * Test 1: Signature algorithm using external SHA2 hashing: "xorhmacsha2sig"
  * Test 2: Test 0 using RPK
  * Test 3: Test 1 using RPK
+ * Test >3: Tests repeated for DTLS
  */
 static int test_pluggable_signature(int idx)
 {
     static const unsigned char cert_type_rpk[] = { TLSEXT_cert_type_rpk, TLSEXT_cert_type_x509 };
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
+    const SSL_METHOD *smeth, *cmeth;
     int testresult = 0;
     OSSL_PROVIDER *tlsprov = OSSL_PROVIDER_load(libctx, "tls-provider");
     OSSL_PROVIDER *defaultprov = OSSL_PROVIDER_load(libctx, "default");
@@ -10096,16 +10853,34 @@ static int test_pluggable_signature(int idx)
     char *privkeyfilename = "tls-prov-key.pem";
     int sigidx = idx % 2;
     int rpkidx = idx / 2;
+    int vermin, vermax;
+
+    if (idx < 4) {
+        smeth = TLS_server_method();
+        cmeth = TLS_client_method();
+        vermin = vermax = TLS1_3_VERSION;
+
+# ifdef OSSL_NO_USABLE_TLS1_3
+        testresult = TEST_skip("TLS1.3 is disabled");
+        goto end;
+# endif
+    } else {
+        smeth = DTLS_server_method();
+        cmeth = DTLS_client_method();
+        vermin = vermax = DTLS1_3_VERSION;
+
+# ifdef OSSL_NO_USABLE_DTLS1_3
+        testresult = TEST_skip("DTLS1.3 is disabled");
+        goto end;
+# endif
+    }
 
     /* create key and certificate for the different algorithm types */
     if (!TEST_ptr(tlsprov)
         || !TEST_true(create_cert_key(sigidx, certfilename, privkeyfilename)))
         goto end;
 
-    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
-                                       TLS_client_method(),
-                                       TLS1_3_VERSION,
-                                       TLS1_3_VERSION,
+    if (!TEST_true(create_ssl_ctx_pair(libctx, smeth, cmeth, vermin, vermax,
                                        &sctx, &cctx, certfilename, privkeyfilename))
             || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
                                              NULL, NULL)))
@@ -10626,28 +11401,50 @@ static int test_dh_auto(int idx)
 # endif /* OPENSSL_NO_DH */
 #endif /* OPENSSL_NO_TLS1_2 */
 
-#ifndef OSSL_NO_USABLE_TLS1_3
+#if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OSSL_NO_USABLE_DTLS1_3)
 /*
- * Test that setting an SNI callback works with TLSv1.3. Specifically we check
+ * Test that setting an SNI callback works with (D)TLSv1.3. Specifically we check
  * that it works even without a certificate configured for the original
  * SSL_CTX
+ * Test 0: Test with TLS
+ * Test 1: Test with DTLS
  */
-static int test_sni_tls13(void)
+static int test_sni_tls13(int idx)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL, *sctx2 = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
     int testresult = 0;
+    const SSL_METHOD *smeth, *cmeth;
+    int vermin, vermax = 0;
+    int testdtls = idx >= 1;
+
+    if (testdtls) {
+        smeth = DTLS_server_method();
+        cmeth = DTLS_client_method();
+        vermin = DTLS1_3_VERSION;
+# if defined(OSSL_NO_USABLE_DTLS1_3)
+        testresult = TEST_skip("DTLS 1.3 is disabled.");
+        goto end;
+# endif
+    } else {
+        smeth = TLS_server_method();
+        cmeth = TLS_client_method();
+        vermin = TLS1_3_VERSION;
+# if defined(OSSL_NO_USABLE_TLS1_3)
+        testresult = TEST_skip("TLS 1.3 is disabled.");
+        goto end;
+# endif
+    }
 
     /* Reset callback counter */
     snicb = 0;
 
     /* Create an initial SSL_CTX with no certificate configured */
-    sctx = SSL_CTX_new_ex(libctx, NULL, TLS_server_method());
+    sctx = SSL_CTX_new_ex(libctx, NULL, smeth);
     if (!TEST_ptr(sctx))
         goto end;
     /* Require TLSv1.3 as a minimum */
-    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
-                                       TLS_client_method(), TLS1_3_VERSION, 0,
+    if (!TEST_true(create_ssl_ctx_pair(libctx, smeth, cmeth, vermin, vermax,
                                        &sctx2, &cctx, cert, privkey)))
         goto end;
 
@@ -10685,27 +11482,61 @@ end:
  * Test that the lifetime hint of a TLSv1.3 ticket is no more than 1 week
  * 0 = TLSv1.2
  * 1 = TLSv1.3
+ * 2 = DTLSv1.2
+ * 3 = DTLSv1.3
  */
 static int test_ticket_lifetime(int idx)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
     int testresult = 0;
-    int version = TLS1_3_VERSION;
+    int version;
+    const SSL_METHOD *smeth, *cmeth;
+    int testdtls = idx >= 2;
+
+    if (testdtls) {
+        smeth = DTLS_server_method();
+        cmeth = DTLS_client_method();
+        idx -= 2;
+    } else {
+        smeth = TLS_server_method();
+        cmeth = TLS_client_method();
+    }
 
 #define ONE_WEEK_SEC (7 * 24 * 60 * 60)
 #define TWO_WEEK_SEC (2 * ONE_WEEK_SEC)
 
     if (idx == 0) {
-#ifdef OPENSSL_NO_TLS1_2
-        return TEST_skip("TLS 1.2 is disabled.");
-#else
-        version = TLS1_2_VERSION;
-#endif
+# ifdef OPENSSL_NO_TLS1_2
+        if (!testdtls) {
+            testresult = TEST_skip("TLS 1.2 is disabled.");
+            goto end;
+        }
+# endif
+# ifdef OPENSSL_NO_DTLS1_2
+        if (testdtls) {
+            testresult = TEST_skip("DTLS 1.2 is disabled.");
+            goto end;
+        }
+# endif
+        version = testdtls ? DTLS1_2_VERSION : TLS1_2_VERSION;
+    } else {
+# ifdef OSSL_NO_USABLE_TLS1_3
+        if (!testdtls) {
+            testresult = TEST_skip("TLS 1.3 is disabled.");
+            goto end;
+        }
+# endif
+# ifdef OSSL_NO_USABLE_DTLS1_3
+        if (testdtls) {
+            testresult = TEST_skip("DTLS 1.3 is disabled.");
+            goto end;
+        }
+# endif
+        version = testdtls ? DTLS1_3_VERSION : TLS1_3_VERSION;
     }
 
-    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
-                                       TLS_client_method(), version, version,
+    if (!TEST_true(create_ssl_ctx_pair(libctx, smeth, cmeth, version, version,
                                        &sctx, &cctx, cert, privkey)))
         goto end;
 
@@ -11057,9 +11888,13 @@ end:
 #endif
 }
 
-#ifndef OSSL_NO_USABLE_TLS1_3
-/* Test that read_ahead works across a key change */
-static int test_read_ahead_key_change(void)
+#if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OSSL_NO_USABLE_DTLS1_3)
+/*
+ * Test that read_ahead works across a key change
+ * Test 0: Test with TLS
+ * Test 1: Test with DTLS
+ */
+static int test_read_ahead_key_change(int idx)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
@@ -11068,9 +11903,34 @@ static int test_read_ahead_key_change(void)
     size_t written, readbytes;
     char buf[80];
     int i;
+    const SSL_METHOD *smeth, *cmeth;
+    int vermin, vermax = 0;
+    int testdtls = idx >= 1;
 
-    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
-                                       TLS_client_method(), TLS1_3_VERSION, 0,
+    if (testdtls) {
+        smeth = DTLS_server_method();
+        cmeth = DTLS_client_method();
+        vermin = DTLS1_3_VERSION;
+        /* TODO(DTLSv1.3): Test fails with DTLS */
+        testresult = TEST_skip("Test fails with DTLS");
+        goto end;
+
+# if defined(OSSL_NO_USABLE_DTLS1_3)
+        testresult = TEST_skip("No usable DTLS 1.3");
+        goto end;
+# endif
+    } else {
+        smeth = TLS_server_method();
+        cmeth = TLS_client_method();
+        vermin = TLS1_3_VERSION;
+
+# if defined(OSSL_NO_USABLE_TLS1_3)
+        testresult = TEST_skip("No usable TLS 1.3");
+        goto end;
+# endif
+    }
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, smeth, cmeth, vermin, vermax,
                                        &sctx, &cctx, cert, privkey)))
         goto end;
 
@@ -11158,6 +12018,7 @@ static size_t record_pad_cb(SSL *s, int type, size_t len, void *arg)
  * Test 3: Record block padding on the SSL
  * Test 4: Extended record block padding on the SSL_CTX
  * Test 5: Extended record block padding on the SSL
+ * Test >5: Tests are repeated for DTLS
  */
 static int test_tls13_record_padding(int idx)
 {
@@ -11169,9 +12030,34 @@ static int test_tls13_record_padding(int idx)
     char buf[80];
     int i;
     int called = 0;
+    const SSL_METHOD *smeth, *cmeth;
+    int vermin, vermax = 0;
+    int testdtls = idx >= 6;
 
-    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
-                                       TLS_client_method(), TLS1_3_VERSION, 0,
+    if (testdtls) {
+        smeth = DTLS_server_method();
+        cmeth = DTLS_client_method();
+        vermin = DTLS1_3_VERSION;
+        idx -= 6;
+        /* TODO(DTLSv1.3): Test fails with DTLS */
+        testresult = TEST_skip("Test fails with DTLS");
+
+        goto end;
+# if defined(OSSL_NO_USABLE_DTLS1_3)
+        testresult = TEST_skip("No usable DTLS 1.3");
+        goto end;
+# endif
+    } else {
+        smeth = TLS_server_method();
+        cmeth = TLS_client_method();
+        vermin = TLS1_3_VERSION;
+# if defined(OSSL_NO_USABLE_TLS1_3)
+        testresult = TEST_skip("No usable TLS 1.3");
+        goto end;
+# endif
+    }
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, smeth, cmeth, vermin, vermax,
                                        &sctx, &cctx, cert, privkey)))
         goto end;
 
@@ -11258,7 +12144,7 @@ end:
     SSL_CTX_free(cctx);
     return testresult;
 }
-#endif /* OSSL_NO_USABLE_TLS1_3 */
+#endif /* defined(OSSL_NO_USABLE_TLS1_3) && defined(OSSL_NO_USABLE_TLS1_3) */
 
 #if !defined(OPENSSL_NO_TLS1_2) && !defined(OPENSSL_NO_DYNAMIC_ENGINE)
 /*
@@ -12569,11 +13455,11 @@ int setup_tests(void)
     ADD_TEST(test_session_with_only_ext_cache);
     ADD_TEST(test_session_with_both_cache);
     ADD_TEST(test_session_wo_ca_names);
-#ifndef OSSL_NO_USABLE_TLS1_3
-    ADD_ALL_TESTS(test_stateful_tickets, 3);
-    ADD_ALL_TESTS(test_stateless_tickets, 3);
-    ADD_TEST(test_psk_tickets);
-    ADD_ALL_TESTS(test_extra_tickets, 6);
+#if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OSSL_NO_USABLE_DTLS1_3)
+    ADD_ALL_TESTS(test_stateful_tickets, 6);
+    ADD_ALL_TESTS(test_stateless_tickets, 6);
+    ADD_ALL_TESTS(test_psk_tickets, 2);
+    ADD_ALL_TESTS(test_extra_tickets, 12);
 #endif
     ADD_ALL_TESTS(test_ssl_set_bio, TOTAL_SSL_SET_BIO_TESTS);
     ADD_TEST(test_ssl_bio_pop_next_bio);
@@ -12584,8 +13470,8 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_set_sigalgs, OSSL_NELEM(testsigalgs) * 2);
     ADD_TEST(test_keylog);
 #endif
-#ifndef OSSL_NO_USABLE_TLS1_3
-    ADD_TEST(test_keylog_no_master_key);
+#if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OSSL_NO_USABLE_DTLS1_3)
+    ADD_ALL_TESTS(test_keylog_no_master_key, 2);
 #endif
     ADD_TEST(test_client_cert_verify_cb);
     ADD_TEST(test_ssl_build_cert_chain);
@@ -12595,37 +13481,37 @@ int setup_tests(void)
     ADD_TEST(test_no_ems);
     ADD_TEST(test_ccs_change_cipher);
 #endif
-#ifndef OSSL_NO_USABLE_TLS1_3
-    ADD_ALL_TESTS(test_early_data_read_write, 6);
+#if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OSSL_NO_USABLE_DTLS1_3)
+    ADD_ALL_TESTS(test_early_data_read_write, 12);
     /*
      * We don't do replay tests for external PSK. Replay protection isn't used
      * in that scenario.
      */
-    ADD_ALL_TESTS(test_early_data_replay, 2);
-    ADD_ALL_TESTS(test_early_data_skip, OSSL_NELEM(ciphersuites) * 3);
-    ADD_ALL_TESTS(test_early_data_skip_hrr, OSSL_NELEM(ciphersuites) * 3);
-    ADD_ALL_TESTS(test_early_data_skip_hrr_fail, OSSL_NELEM(ciphersuites) * 3);
-    ADD_ALL_TESTS(test_early_data_skip_abort, OSSL_NELEM(ciphersuites) * 3);
-    ADD_ALL_TESTS(test_early_data_not_sent, 3);
-    ADD_ALL_TESTS(test_early_data_psk, 8);
-    ADD_ALL_TESTS(test_early_data_psk_with_all_ciphers, 7);
-    ADD_ALL_TESTS(test_early_data_not_expected, 3);
-# ifndef OPENSSL_NO_TLS1_2
-    ADD_ALL_TESTS(test_early_data_tls1_2, 3);
-# endif
+    ADD_ALL_TESTS(test_early_data_replay, 4);
+    ADD_ALL_TESTS(test_early_data_skip, 2 * OSSL_NELEM(ciphersuites) * 3);
+    ADD_ALL_TESTS(test_early_data_skip_hrr, 2 * OSSL_NELEM(ciphersuites) * 3);
+    ADD_ALL_TESTS(test_early_data_skip_hrr_fail, 2 * OSSL_NELEM(ciphersuites) * 3);
+    ADD_ALL_TESTS(test_early_data_skip_abort, 2 * OSSL_NELEM(ciphersuites) * 3);
+    ADD_ALL_TESTS(test_early_data_not_sent, 6);
+    ADD_ALL_TESTS(test_early_data_psk, 16);
+    ADD_ALL_TESTS(test_early_data_psk_with_all_ciphers, 14);
+    ADD_ALL_TESTS(test_early_data_not_expected, 6);
 #endif
-#ifndef OSSL_NO_USABLE_TLS1_3
-    ADD_ALL_TESTS(test_set_ciphersuite, 10);
-    ADD_TEST(test_ciphersuite_change);
-    ADD_ALL_TESTS(test_tls13_ciphersuite, 4);
+#if !defined(OSSL_NO_USABLE_TLS1_3) && !defined(OPENSSL_NO_TLS1_2)
+    ADD_ALL_TESTS(test_early_data_tls1_2, 3);
+#endif
+#if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OSSL_NO_USABLE_DTLS1_3)
+    ADD_ALL_TESTS(test_set_ciphersuite, 20);
+    ADD_ALL_TESTS(test_ciphersuite_change, 2);
+    ADD_ALL_TESTS(test_tls13_ciphersuite, 8);
 # ifdef OPENSSL_NO_PSK
     ADD_ALL_TESTS(test_tls13_psk, 1);
 # else
-    ADD_ALL_TESTS(test_tls13_psk, 4);
+    ADD_ALL_TESTS(test_tls13_psk, 8);
 # endif  /* OPENSSL_NO_PSK */
-#ifndef OSSL_NO_USABLE_TLS1_3
-    ADD_ALL_TESTS(test_tls13_no_dhe_kex, 8);
-#endif /* OSSL_NO_USABLE_TLS1_3 */
+    ADD_ALL_TESTS(test_tls13_no_dhe_kex, 16);
+#endif /* !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OSSL_NO_USABLE_DTLS1_3) */
+#if !defined(OSSL_NO_USABLE_TLS1_3)
 # ifndef OPENSSL_NO_TLS1_2
     /* Test with both TLSv1.3 and 1.2 versions */
     ADD_ALL_TESTS(test_key_exchange, 14);
@@ -12639,19 +13525,21 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_key_exchange, 12);
 # endif
     ADD_ALL_TESTS(test_custom_exts, 6);
-    ADD_TEST(test_stateless);
     ADD_TEST(test_pha_key_update);
 #else
     ADD_ALL_TESTS(test_custom_exts, 3);
 #endif
+#if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OSSL_NO_USABLE_DTLS1_3)
+    ADD_ALL_TESTS(test_stateless, 2);
+#endif
     ADD_ALL_TESTS(test_export_key_mat, 6);
-#ifndef OSSL_NO_USABLE_TLS1_3
-    ADD_ALL_TESTS(test_export_key_mat_early, 3);
-    ADD_TEST(test_key_update);
-    ADD_ALL_TESTS(test_key_update_peer_in_write, 2);
-    ADD_ALL_TESTS(test_key_update_peer_in_read, 2);
-    ADD_ALL_TESTS(test_key_update_local_in_write, 2);
-    ADD_ALL_TESTS(test_key_update_local_in_read, 2);
+#if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OSSL_NO_USABLE_DTLS1_3)
+    ADD_ALL_TESTS(test_export_key_mat_early, 6);
+    ADD_ALL_TESTS(test_key_update, 2);
+    ADD_ALL_TESTS(test_key_update_peer_in_write, 4);
+    ADD_ALL_TESTS(test_key_update_peer_in_read, 4);
+    ADD_ALL_TESTS(test_key_update_local_in_write, 4);
+    ADD_ALL_TESTS(test_key_update_local_in_read, 4);
 #endif
     ADD_ALL_TESTS(test_ssl_clear, 8);
     ADD_ALL_TESTS(test_max_fragment_len_ext, OSSL_NELEM(max_fragment_len_test));
@@ -12680,12 +13568,13 @@ int setup_tests(void)
     ADD_TEST(test_unknown_sigalgs_groups);
     ADD_TEST(test_configuration_of_groups);
 #if !defined(OPENSSL_NO_EC) \
-    && (!defined(OSSL_NO_USABLE_TLS1_3) || !defined(OPENSSL_NO_TLS1_2))
-    ADD_ALL_TESTS(test_sigalgs_available, 6);
+    && (!defined(OSSL_NO_USABLE_TLS1_3) || !defined(OPENSSL_NO_TLS1_2) \
+        || !defined(OSSL_NO_USABLE_DTLS1_3) || !defined(OPENSSL_NO_DTLS1_2))
+    ADD_ALL_TESTS(test_sigalgs_available, 12);
 #endif
-#ifndef OPENSSL_NO_TLS1_3
-    ADD_ALL_TESTS(test_pluggable_group, 2);
-    ADD_ALL_TESTS(test_pluggable_signature, 4);
+#if !defined(OPENSSL_NO_TLS1_3) || !defined(OPENSSL_NO_DTLS1_3)
+    ADD_ALL_TESTS(test_pluggable_group, 4);
+    ADD_ALL_TESTS(test_pluggable_signature, 8);
 #endif
 #ifndef OPENSSL_NO_TLS1_2
     ADD_TEST(test_ssl_dup);
@@ -12695,25 +13584,27 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_dh_auto, 7);
 # endif
 #endif
-#ifndef OSSL_NO_USABLE_TLS1_3
-    ADD_TEST(test_sni_tls13);
-    ADD_ALL_TESTS(test_ticket_lifetime, 2);
+#if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OSSL_NO_USABLE_DTLS1_3)
+    ADD_ALL_TESTS(test_sni_tls13, 2);
+    ADD_ALL_TESTS(test_ticket_lifetime, 4);
 #endif
     ADD_TEST(test_inherit_verify_param);
     ADD_TEST(test_set_alpn);
     ADD_TEST(test_set_verify_cert_store_ssl_ctx);
     ADD_TEST(test_set_verify_cert_store_ssl);
     ADD_ALL_TESTS(test_session_timeout, 1);
-#if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OPENSSL_NO_TLS1_2)
-    ADD_ALL_TESTS(test_session_cache_overflow, 4);
+#if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OPENSSL_NO_TLS1_2) \
+        || !defined(OSSL_NO_USABLE_DTLS1_3) || !defined(OPENSSL_NO_DTLS1_2)
+    ADD_ALL_TESTS(test_session_cache_overflow, 8);
 #endif
     ADD_TEST(test_load_dhfile);
-#ifndef OSSL_NO_USABLE_TLS1_3
-    ADD_TEST(test_read_ahead_key_change);
-    ADD_ALL_TESTS(test_tls13_record_padding, 6);
+#if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OSSL_NO_USABLE_DTLS1_3)
+    ADD_ALL_TESTS(test_read_ahead_key_change, 2);
+    ADD_ALL_TESTS(test_tls13_record_padding, 12);
 #endif
-#if !defined(OPENSSL_NO_TLS1_2) && !defined(OSSL_NO_USABLE_TLS1_3)
-    ADD_ALL_TESTS(test_serverinfo_custom, 4);
+#if (!defined(OPENSSL_NO_TLS1_2) && !defined(OSSL_NO_USABLE_TLS1_3)) \
+        || (!defined(OPENSSL_NO_DTLS1_2) && !defined(OSSL_NO_USABLE_DTLS1_3))
+    ADD_ALL_TESTS(test_serverinfo_custom, 8);
 #endif
 #if !defined(OPENSSL_NO_TLS1_2) && !defined(OPENSSL_NO_DYNAMIC_ENGINE)
     ADD_ALL_TESTS(test_pipelining, 7);
