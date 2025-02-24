@@ -138,8 +138,8 @@ static int get_secret_key(const OSSL_PARAM params[], void *arg)
     return 0;
 }
 
-int EVP_SKEY_get_raw_key(const EVP_SKEY *skey, const unsigned char **key,
-                         size_t *len)
+int EVP_SKEY_get0_raw_key(const EVP_SKEY *skey, const unsigned char **key,
+                          size_t *len)
 {
     struct raw_key_details_st raw_key;
 

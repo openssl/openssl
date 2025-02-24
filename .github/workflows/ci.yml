@@ -127,7 +127,7 @@ jobs:
         path: artifacts.tar.gz
 
   linux-arm64:
-    runs-on: linux-arm64
+    runs-on: ${{ github.repository == 'openssl/openssl' && 'linux-arm64' || 'ubuntu-24.04-arm' }}
     steps:
     - uses: actions/checkout@v4
     - name: config
@@ -372,7 +372,7 @@ jobs:
         sudo sysctl -w vm.mmap_rnd_bits=28
     - name: config
       # --debug -O1 is to produce a debug build that runs in a reasonable amount of time
-      run: CC=clang ./config --banner=Configured --debug no-shared -O1 -fsanitize=memory -DOSSL_SANITIZE_MEMORY -fno-optimize-sibling-calls enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-fips && perl configdata.pm --dump
+      run: CC=clang ./config --banner=Configured --debug no-shared -O1 -fsanitize=memory -DOSSL_SANITIZE_MEMORY -fno-optimize-sibling-calls enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-fips no-slh-dsa && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: get cpu info
@@ -398,7 +398,7 @@ jobs:
         sudo cat /proc/sys/vm/mmap_rnd_bits
         sudo sysctl -w vm.mmap_rnd_bits=28
     - name: config
-      run: CC=clang ./config --banner=Configured no-fips --strict-warnings -fsanitize=thread && perl configdata.pm --dump
+      run: CC=clang ./config --banner=Configured no-shared no-fips --strict-warnings -g -fsanitize=thread && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: get cpu info
@@ -406,7 +406,7 @@ jobs:
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
     - name: make test
-      run: .github/workflows/make-test V=1 TESTS="test_threads test_internal_provider test_provfetch test_provider test_pbe test_evp_kdf test_pkcs12 test_store test_evp test_quic*"
+      run: .github/workflows/make-test V=1 TESTS="test_lhash test_threads test_internal_provider test_provfetch test_provider test_pbe test_evp_kdf test_pkcs12 test_store test_evp test_quic*"
     - name: save artifacts
       uses: actions/upload-artifact@v4
       with:

@@ -11,6 +11,7 @@
 #include "internal/quic_types.h"
 #include "internal/quic_vlint.h"
 #include "internal/common.h"
+#include "crypto/siphash.h"
 #include <openssl/lhash.h>
 #include <openssl/rand.h>
 #include <openssl/err.h>
@@ -31,6 +32,9 @@ enum {
 typedef struct quic_lcid_st {
     QUIC_CONN_ID                cid;
     uint64_t                    seq_num;
+
+    /* copy of the hash key from lcidm */
+    uint64_t                    *hash_key;
 
     /* Back-pointer to the owning QUIC_LCIDM_CONN structure. */
     QUIC_LCIDM_CONN             *conn;
@@ -55,6 +59,7 @@ struct quic_lcidm_conn_st {
 
 struct quic_lcidm_st {
     OSSL_LIB_CTX                *libctx;
+    uint64_t                    hash_key[2]; /* random key for siphash */
     LHASH_OF(QUIC_LCID)         *lcids; /* (QUIC_CONN_ID) -> (QUIC_LCID *)  */
     LHASH_OF(QUIC_LCIDM_CONN)   *conns; /* (void *opaque) -> (QUIC_LCIDM_CONN *) */
     size_t                      lcid_len; /* Length in bytes for all LCIDs */
@@ -63,20 +68,21 @@ struct quic_lcidm_st {
 #endif
 };
 
-static unsigned long bin_hash(const unsigned char *buf, size_t buf_len)
-{
-    unsigned long hash = 0;
-    size_t i;
-
-    for (i = 0; i < buf_len; ++i)
-        hash ^= ((unsigned long)buf[i]) << (8 * (i % sizeof(unsigned long)));
-
-    return hash;
-}
-
 static unsigned long lcid_hash(const QUIC_LCID *lcid_obj)
 {
-    return bin_hash(lcid_obj->cid.id, lcid_obj->cid.id_len);
+    SIPHASH siphash = {0, };
+    unsigned long hashval = 0;
+
+    if (!SipHash_set_hash_size(&siphash, sizeof(unsigned long)))
+        goto out;
+    if (!SipHash_Init(&siphash, (uint8_t *)lcid_obj->hash_key, 0, 0))
+        goto out;
+    SipHash_Update(&siphash, lcid_obj->cid.id, lcid_obj->cid.id_len);
+    if (!SipHash_Final(&siphash, (unsigned char *)&hashval,
+                       sizeof(unsigned long)))
+        goto out;
+out:
+    return hashval;
 }
 
 static int lcid_comp(const QUIC_LCID *a, const QUIC_LCID *b)
@@ -102,6 +108,11 @@ QUIC_LCIDM *ossl_quic_lcidm_new(OSSL_LIB_CTX *libctx, size_t lcid_len)
         goto err;
 
     if ((lcidm = OPENSSL_zalloc(sizeof(*lcidm))) == NULL)
+        goto err;
+
+    /* generate a random key for the hash tables hash function */
+    if (!RAND_bytes_ex(libctx, (unsigned char *)&lcidm->hash_key,
+                       sizeof(uint64_t) * 2, 0))
         goto err;
 
     if ((lcidm->lcids = lh_QUIC_LCID_new(lcid_hash, lcid_comp)) == NULL)
@@ -167,6 +178,7 @@ static QUIC_LCID *lcidm_get0_lcid(const QUIC_LCIDM *lcidm, const QUIC_CONN_ID *l
     QUIC_LCID key;
 
     key.cid = *lcid;
+    key.hash_key = (uint64_t *)lcidm->hash_key;
 
     if (key.cid.id_len > QUIC_MAX_CONN_ID_LEN)
         return NULL;
@@ -251,6 +263,7 @@ static QUIC_LCID *lcidm_conn_new_lcid(QUIC_LCIDM *lcidm, QUIC_LCIDM_CONN *conn,
 
     lcid_obj->cid = *lcid;
     lcid_obj->conn = conn;
+    lcid_obj->hash_key = lcidm->hash_key;
 
     lh_QUIC_LCID_insert(conn->lcids, lcid_obj);
     if (lh_QUIC_LCID_error(conn->lcids))
@@ -337,6 +350,8 @@ static int lcidm_generate(QUIC_LCIDM *lcidm,
             return 0;
 
         key.cid = *lcid_out;
+        key.hash_key = lcidm->hash_key;
+
         /* If a collision occurs, retry. */
     } while (lh_QUIC_LCID_retrieve(lcidm->lcids, &key) != NULL);
 
@@ -371,6 +386,7 @@ int ossl_quic_lcidm_enrol_odcid(QUIC_LCIDM *lcidm,
         return 0;
 
     key.cid = *initial_odcid;
+    key.hash_key = lcidm->hash_key;
     if (lh_QUIC_LCID_retrieve(lcidm->lcids, &key) != NULL)
         return 0;
 
@@ -553,6 +569,7 @@ int ossl_quic_lcidm_debug_remove(QUIC_LCIDM *lcidm,
     QUIC_LCID key, *lcid_obj;
 
     key.cid = *lcid;
+    key.hash_key = lcidm->hash_key;
     if ((lcid_obj = lh_QUIC_LCID_retrieve(lcidm->lcids, &key)) == NULL)
         return 0;
 
@@ -574,6 +591,7 @@ int ossl_quic_lcidm_debug_add(QUIC_LCIDM *lcidm, void *opaque,
         return 0;
 
     key.cid = *lcid;
+    key.hash_key = lcidm->hash_key;
     if (lh_QUIC_LCID_retrieve(lcidm->lcids, &key) != NULL)
         return 0;
 

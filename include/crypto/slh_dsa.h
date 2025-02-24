@@ -18,6 +18,7 @@
 # include "crypto/types.h"
 
 # define SLH_DSA_MAX_CONTEXT_STRING_LEN 255
+# define SLH_DSA_MAX_N                  32
 
 typedef struct slh_dsa_hash_ctx_st SLH_DSA_HASH_CTX;
 typedef struct slh_dsa_key_st SLH_DSA_KEY;

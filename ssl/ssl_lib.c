@@ -4946,6 +4946,13 @@ int SSL_do_handshake(SSL *s)
             ret = sc->handshake_func(s);
         }
     }
+
+    if (ret == 1 && SSL_IS_QUIC_HANDSHAKE(sc) && !SSL_is_init_finished(s)) {
+        sc->rwstate = SSL_READING;
+        BIO_clear_retry_flags(SSL_get_rbio(s));
+        BIO_set_retry_read(SSL_get_rbio(s));
+        ret = 0;
+    }
     return ret;
 }
 
@@ -8260,7 +8267,7 @@ int SSL_get0_client_cert_type(const SSL *s, unsigned char **t, size_t *len)
 {
     const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
 
-    if (t == NULL || len == NULL)
+    if (t == NULL || len == NULL || sc == NULL)
         return 0;
 
     *t = sc->client_cert_type;
@@ -8272,7 +8279,7 @@ int SSL_get0_server_cert_type(const SSL *s, unsigned char **t, size_t *len)
 {
     const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
 
-    if (t == NULL || len == NULL)
+    if (t == NULL || len == NULL || sc == NULL)
         return 0;
 
     *t = sc->server_cert_type;

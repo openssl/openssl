@@ -357,7 +357,7 @@ int ossl_slh_dsa_generate_key(SLH_DSA_HASH_CTX *ctx, SLH_DSA_KEY *out,
     uint8_t *pub = SLH_DSA_PUB(out);
 
     if (entropy != NULL && entropy_len != 0) {
-        if (entropy_len < entropy_len_expected)
+        if (entropy_len != entropy_len_expected)
             goto err;
         memcpy(priv, entropy, entropy_len_expected);
     } else {

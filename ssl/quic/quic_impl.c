@@ -999,15 +999,17 @@ static uint64_t quic_mask_or_options(SSL *ssl, uint64_t mask_value, uint64_t or_
               & OSSL_QUIC_PERMITTED_OPTIONS;
     }
 
+    ret = ctx.qc->default_ssl_options;
     if (ctx.xso != NULL) {
         ctx.xso->ssl_options
             = ((ctx.xso->ssl_options & ~mask_value) | or_value)
             & OSSL_QUIC_PERMITTED_OPTIONS_STREAM;
 
         xso_update_options(ctx.xso);
-    }
 
-    ret = ctx.is_stream ? ctx.xso->ssl_options : ctx.qc->default_ssl_options;
+        if (ctx.is_stream)
+            ret = ctx.xso->ssl_options;
+    }
 
     qctx_unlock(&ctx);
     return ret;

@@ -189,3 +189,20 @@ int SSL_set_quic_tls_transport_params(SSL *s,
 
     return ossl_quic_tls_set_transport_params(sc->qtls, params, params_len);
 }
+
+int SSL_set_quic_tls_early_data_enabled(SSL *s, int enabled)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+
+    if (!SSL_is_tls(s)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return 0;
+    }
+
+    if (sc->qtls == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return 0;
+    }
+
+    return ossl_quic_tls_set_early_data_enabled(sc->qtls, enabled);
+}

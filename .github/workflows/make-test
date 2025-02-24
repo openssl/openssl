@@ -38,6 +38,6 @@ echo "Test suite exited with $RESULT, artifacts path is $OSSL_CI_ARTIFACTS_PATH"
 echo "::endgroup::"
 
 echo "Archive artifacts"
-tar -czvf artifacts.tar.gz $OSSL_CI_ARTIFACTS_PATH
+tar -czf artifacts.tar.gz $OSSL_CI_ARTIFACTS_PATH
 
 exit $RESULT

@@ -50,20 +50,24 @@ jobs:
           }, {
             arch: aarch64-linux-gnu,
             libs: libc6-dev-arm64-cross,
-            target: linux-aarch64
+            target: linux-aarch64,
+            fips: no
           }, {
             arch: alpha-linux-gnu,
             libs: libc6.1-dev-alpha-cross,
-            target: linux-alpha-gcc
+            target: linux-alpha-gcc,
+            fips: no
           }, {
             arch: arm-linux-gnueabi,
             libs: libc6-dev-armel-cross,
             target: linux-armv4,
+            fips: no,
             tests: -test_includes -test_store -test_x509_store
           }, {
             arch: arm-linux-gnueabihf,
             libs: libc6-dev-armhf-cross,
             target: linux-armv4,
+            fips: no,
             tests: -test_includes -test_store -test_x509_store
           }, {
             # gcc hppa seems to have some potential compiler issues
@@ -94,6 +98,7 @@ jobs:
             arch: mipsel-linux-gnu,
             libs: libc6-dev-mipsel-cross,
             target: linux-mips32,
+            fips: no,
             tests: -test_includes -test_store -test_x509_store
           }, {
             arch: powerpc64le-linux-gnu,
@@ -101,19 +106,23 @@ jobs:
             # The default compiler for this platform on Ubuntu 20.04 seems
             # buggy and causes test failures. Dropping the optimisation level
             # resolves it.
-            target: -O2 linux-ppc64le
+            target: -O2 linux-ppc64le,
+            fips: no
           }, {
             arch: riscv64-linux-gnu,
             libs: libc6-dev-riscv64-cross,
-            target: linux64-riscv64
+            target: linux64-riscv64,
+            fips: no
           }, {
             arch: s390x-linux-gnu,
             libs: libc6-dev-s390x-cross,
-            target: linux64-s390x -Wno-stringop-overflow
+            target: linux64-s390x -Wno-stringop-overflow,
+            fips: no
           }, {
             arch: sh4-linux-gnu,
             libs: libc6-dev-sh4-cross,
             target: no-async linux-latomic,
+            fips: no,
             tests: -test_includes -test_store -test_x509_store
           },
 

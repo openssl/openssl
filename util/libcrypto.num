@@ -5894,7 +5894,7 @@ EVP_CipherInit_SKEY                     ?	3_5_0	EXIST::FUNCTION:
 EVP_SKEY_import                         ?	3_5_0	EXIST::FUNCTION:
 EVP_SKEY_generate                       ?	3_5_0	EXIST::FUNCTION:
 EVP_SKEY_import_raw_key                 ?	3_5_0	EXIST::FUNCTION:
-EVP_SKEY_get_raw_key                    ?	3_5_0	EXIST::FUNCTION:
+EVP_SKEY_get0_raw_key                   ?	3_5_0	EXIST::FUNCTION:
 EVP_SKEY_export                         ?	3_5_0	EXIST::FUNCTION:
 EVP_SKEY_up_ref                         ?	3_5_0	EXIST::FUNCTION:
 EVP_SKEY_free                           ?	3_5_0	EXIST::FUNCTION:

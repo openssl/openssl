@@ -12800,7 +12800,7 @@ static void assert_no_end_of_early_data(int write_p, int version, int content_ty
         end_of_early_data = 1;
 }
 
-static int test_no_end_of_early_data(void)
+static int test_quic_tls_early_data(void)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *serverssl = NULL, *clientssl = NULL;
@@ -12869,15 +12869,17 @@ static int test_no_end_of_early_data(void)
                                                             sizeof(sparams))))
         goto end;
 
-    SSL_CONNECTION_FROM_SSL(clientssl)->early_data_state = SSL_EARLY_DATA_CONNECTING;
-    SSL_CONNECTION_FROM_SSL(serverssl)->early_data_state = SSL_EARLY_DATA_ACCEPTING;
+    SSL_set_quic_tls_early_data_enabled(serverssl, 1);
+    SSL_set_quic_tls_early_data_enabled(clientssl, 1);
 
     SSL_set_msg_callback(serverssl, assert_no_end_of_early_data);
     SSL_set_msg_callback(clientssl, assert_no_end_of_early_data);
 
-    if (!TEST_int_eq(SSL_connect(clientssl), 1)
-            || !TEST_int_eq(SSL_accept(serverssl), 1)
-            || !TEST_int_eq(SSL_get_early_data_status(serverssl), SSL_EARLY_DATA_ACCEPTED))
+    if (!TEST_int_eq(SSL_connect(clientssl), 0)
+            || !TEST_int_eq(SSL_accept(serverssl), 0)
+            || !TEST_int_eq(SSL_get_early_data_status(serverssl), SSL_EARLY_DATA_ACCEPTED)
+            || !TEST_int_eq(SSL_get_error(clientssl, 0), SSL_ERROR_WANT_READ)
+            || !TEST_int_eq(SSL_get_error(serverssl, 0), SSL_ERROR_WANT_READ))
         goto end;
 
     /* Check the encryption levels are what we expect them to be */
@@ -13262,7 +13264,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_alpn, 4);
 #if !defined(OSSL_NO_USABLE_TLS1_3)
     ADD_TEST(test_quic_tls);
-    ADD_TEST(test_no_end_of_early_data);
+    ADD_TEST(test_quic_tls_early_data);
 #endif
     return 1;
 

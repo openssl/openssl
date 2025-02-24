@@ -318,7 +318,8 @@ static void slh_dsa_sign_verify(uint8_t **buf, size_t *len, void *key1,
     unsigned char *sig = NULL;
     OSSL_PARAM params[4];
     int paramidx = 0;
-    int intval;
+    int intval1, intval2;
+    int expect_init_rc = 1;
 
     *buf = consume_uint8t(*buf, len, &selector);
     if (*buf == NULL)
@@ -338,6 +339,11 @@ static void slh_dsa_sign_verify(uint8_t **buf, size_t *len, void *key1,
      */
     msg = (unsigned char *)*buf;
     msg_len = *len;
+
+    /* if msg_len > 255, sign_message_init will fail */
+    if (msg_len > 255)
+        expect_init_rc = 0;
+
     *len = 0;
 
     if (selector & 0x1)
@@ -345,15 +351,15 @@ static void slh_dsa_sign_verify(uint8_t **buf, size_t *len, void *key1,
                                                                msg, msg_len);
 
     if (selector & 0x2) {
-        intval = selector & 0x4;
+        intval1 = selector & 0x4;
         params[paramidx++] = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_MESSAGE_ENCODING,
-                                                      &intval);
+                                                      &intval1);
     }
 
     if (selector & 0x8) {
-        intval = selector & 0x10;
+        intval2 = selector & 0x10;
         params[paramidx++] = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_DETERMINISTIC,
-                                                      &intval);
+                                                      &intval2);
     }
 
     params[paramidx] = OSSL_PARAM_construct_end();
@@ -368,7 +374,15 @@ static void slh_dsa_sign_verify(uint8_t **buf, size_t *len, void *key1,
     sig_alg = EVP_SIGNATURE_fetch(NULL, keytype, NULL);
     OPENSSL_assert(sig_alg != NULL);
 
-    OPENSSL_assert(EVP_PKEY_sign_message_init(ctx, sig_alg, params));
+    OPENSSL_assert(EVP_PKEY_sign_message_init(ctx, sig_alg, params) == expect_init_rc);
+    /*
+     * the context_string parameter can be no more than 255 bytes, so if
+     * our random input buffer is greater than that, we expect failure above,
+     * which we check for.  In that event, theres nothing more we can do here
+     * so bail out
+     */
+    if (expect_init_rc == 0)
+        goto out;
 
     OPENSSL_assert(EVP_PKEY_sign(ctx, NULL, &sig_len, msg, msg_len));
     sig = OPENSSL_zalloc(sig_len);
@@ -379,6 +393,7 @@ static void slh_dsa_sign_verify(uint8_t **buf, size_t *len, void *key1,
     OPENSSL_assert(EVP_PKEY_verify_message_init(ctx, sig_alg, params));
     OPENSSL_assert(EVP_PKEY_verify(ctx, sig, sig_len, msg, msg_len));
 
+out:
     OPENSSL_free(sig);
     EVP_SIGNATURE_free(sig_alg);
     EVP_PKEY_CTX_free(ctx);

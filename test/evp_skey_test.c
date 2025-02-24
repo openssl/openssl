@@ -76,7 +76,7 @@ static int test_skey_cipher(void)
         goto end;
 
     /* Export raw key */
-    if (!TEST_int_gt(EVP_SKEY_get_raw_key(key, &export, &export_len), 0)
+    if (!TEST_int_gt(EVP_SKEY_get0_raw_key(key, &export, &export_len), 0)
         || !TEST_mem_eq(export, export_len, import_key, sizeof(import_key)))
         goto end;
 
@@ -134,7 +134,7 @@ static int test_aes_raw_skey(void)
     if (!TEST_ptr(skey))
         goto end;
 
-    if (!TEST_int_gt(EVP_SKEY_get_raw_key(skey, &export_key, &export_length), 0)
+    if (!TEST_int_gt(EVP_SKEY_get0_raw_key(skey, &export_key, &export_length), 0)
         || !TEST_mem_eq(aes_key, KEY_SIZE, export_key, export_length))
         goto end;
 
@@ -211,7 +211,7 @@ static int test_des_raw_skey(void)
     if (!TEST_ptr(skey))
         goto end;
 
-    if (!TEST_int_gt(EVP_SKEY_get_raw_key(skey, &export_key, &export_length), 0)
+    if (!TEST_int_gt(EVP_SKEY_get0_raw_key(skey, &export_key, &export_length), 0)
         || !TEST_mem_eq(des_key, DES_KEY_SIZE, export_key, export_length))
         goto end;
 

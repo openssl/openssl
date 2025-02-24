@@ -2292,8 +2292,8 @@ EVP_SKEY *EVP_SKEY_generate(OSSL_LIB_CTX *libctx, const char *skeymgmtname,
 EVP_SKEY *EVP_SKEY_import_raw_key(OSSL_LIB_CTX *libctx, const char *skeymgmtname,
                                   unsigned char *key, size_t keylen,
                                   const char *propquery);
-int EVP_SKEY_get_raw_key(const EVP_SKEY *skey, const unsigned char **key,
-                         size_t *len);
+int EVP_SKEY_get0_raw_key(const EVP_SKEY *skey, const unsigned char **key,
+                          size_t *len);
 const char *EVP_SKEY_get0_key_id(const EVP_SKEY *skey);
 int EVP_SKEY_export(const EVP_SKEY *skey, int selection,
                     OSSL_CALLBACK *export_cb, void *export_cbarg);

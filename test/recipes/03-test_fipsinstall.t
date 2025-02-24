@@ -363,8 +363,8 @@ SKIP: {
                 '-provider_name', 'fips', '-mac_name', 'HMAC',
                 '-macopt', 'digest:SHA256', '-macopt', "hexkey:$fipskey",
                 '-section_name', 'fips_sect',
-                '-corrupt_desc', 'KEM_Keygen',
-                '-corrupt_type', 'KAT_KEM'])),
+                '-corrupt_desc', 'ML-KEM',
+                '-corrupt_type', 'KAT_AsymmetricKeyGeneration'])),
        "fipsinstall fails when the ML-KEM key generation result is corrupted");
 
     ok(!run(app(['openssl', 'fipsinstall', '-out', 'fips.cnf', '-module', $infile,
