@@ -87,6 +87,15 @@ OpenSSL 3.5
 
    *David Kelsey*, *Martin Schmatz*
 
+ * The default TLS group list setting is now set to:
+   `?*X25519MLKEM768 / ?*X25519:?secp256r1 / ?X448:?secp384r1:?secp521r1 / ?ffdhe2048:?ffdhe3072`
+
+   This means two key shares (X25519MLKEM768 and X25519) will be sent by
+   default by the TLS client. GOST groups and FFDHE groups larger than 3072
+   bits are no longer enabled by default.
+
+   *Viktor Dukhovni*
+
  * A new random generation API has been introduced which modifies all
    of the L<RAND_bytes(3)> family of calls so they are routed through a
    specific named provider instead of being resolved via the normal DRBG
