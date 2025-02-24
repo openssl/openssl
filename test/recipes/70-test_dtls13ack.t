@@ -87,7 +87,7 @@ SKIP: {
     $found_first_client_finish_msg = 0;
     $proxy->serverflags("-min_protocol DTLSv1.3 -max_protocol DTLSv1.3 -Verify 1");
     $proxy->clientflags("-mtu 2000 -min_protocol DTLSv1.3 -max_protocol DTLSv1.3"
-                        ."-cert ". srctop_file("apps", "server.pem"));
+                        ." -cert ".srctop_file("apps", "server.pem"));
     TLSProxy::Message->successondata(1);
     $proxy->start();
 
