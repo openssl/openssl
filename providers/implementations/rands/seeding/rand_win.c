@@ -46,6 +46,8 @@
 # endif
 
 // *** iProgram's Compatibility Stuff ***
+#define IPROGRAMS_COMPAT_STUFF
+#ifdef IPROGRAMS_COMPAT_STUFF
 
 // TODO: Does this stuff run in multiple threads?
 static int s_bIsStuffInitted = 0;
@@ -84,6 +86,7 @@ BOOL TEST_CryptAcquireContextA(
 	DWORD dwFlags
 )
 {
+	OutputDebugStringA("TEST_CryptAcquireContextA\n");
 	InitCryptContextStuffIfNeeded();
 	
 	if (s_pCryptAcquireContextA)
@@ -98,6 +101,7 @@ BOOL TEST_CryptGenRandom(
 	BYTE *pbBuffer
 )
 {
+	OutputDebugStringA("TEST_CryptGenRandom\n");
 	InitCryptContextStuffIfNeeded();
 	
 	if (s_pCryptGenRandom)
@@ -111,6 +115,7 @@ BOOL TEST_CryptReleaseContext(
 	DWORD dwFlags
 )
 {
+	OutputDebugStringA("TEST_CryptReleaseContext\n");
 	InitCryptContextStuffIfNeeded();
 	
 	if (s_pCryptReleaseContext)
@@ -119,7 +124,13 @@ BOOL TEST_CryptReleaseContext(
 	return FALSE;
 }
 
+#else
 
+#define TEST_CryptAcquireContextA CryptAcquireContextA
+#define TEST_CryptGenRandom CryptGenRandom
+#define TEST_CryptReleaseContext CryptReleaseContext
+
+#endif
 
 size_t ossl_pool_acquire_entropy(RAND_POOL *pool)
 {
