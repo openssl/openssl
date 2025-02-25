@@ -1547,8 +1547,7 @@ int setup_tests(void)
 # endif
 #endif
 #ifndef OPENSSL_NO_EC
-        if (!is_fips_lt_3_5)
-            ADD_TEST(ec_encode_to_data_multi);
+        ADD_TEST(ec_encode_to_data_multi);
         ADD_TEST_SUITE(EC);
         ADD_TEST_SUITE_PARAMS(EC);
         ADD_TEST_SUITE_LEGACY(EC);
