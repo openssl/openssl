@@ -753,19 +753,26 @@ OSSL_DECODER_CTX_new_for_pkey(EVP_PKEY **pkey,
     OSSL_DECODER_CTX *ctx = NULL;
     OSSL_PARAM decoder_params[] = {
         OSSL_PARAM_END,
+        OSSL_PARAM_END,
         OSSL_PARAM_END
     };
     DECODER_CACHE *cache
         = ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_DECODER_CACHE_INDEX);
     DECODER_CACHE_ENTRY cacheent, *res, *newcache = NULL;
+    int i = 0;
 
     if (cache == NULL) {
         ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_OSSL_DECODER_LIB);
         return NULL;
     }
+    if (input_structure != NULL)
+        decoder_params[i++] =
+            OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_STRUCTURE,
+                                             (char *)input_structure, 0);
     if (propquery != NULL)
-        decoder_params[0] = OSSL_PARAM_construct_utf8_string(OSSL_DECODER_PARAM_PROPERTIES,
-                                                             (char *)propquery, 0);
+        decoder_params[i++] =
+            OSSL_PARAM_construct_utf8_string(OSSL_DECODER_PARAM_PROPERTIES,
+                                             (char *)propquery, 0);
 
     /* It is safe to cast away the const here */
     cacheent.input_type = (char *)input_type;

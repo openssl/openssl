@@ -439,6 +439,29 @@ static int file_setup_decoders(struct file_ctx_st *ctx)
          * for this load.
          */
         switch (ctx->expected_type) {
+        case OSSL_STORE_INFO_PUBKEY:
+            if (!OSSL_DECODER_CTX_set_input_structure(ctx->_.file.decoderctx,
+                                                      "SubjectPublicKeyInfo")) {
+                ERR_raise(ERR_LIB_PROV, ERR_R_OSSL_DECODER_LIB);
+                goto err;
+            }
+            break;
+        case OSSL_STORE_INFO_PKEY:
+            /*
+             * The user's OSSL_STORE_INFO_PKEY covers PKCS#8, whether encrypted
+             * or not.  The decoder will figure out whether decryption is
+             * applicable and fall back as necessary.  We just need to indicate
+             * that it is OK to try and encrypt, which may involve a password
+             * prompt, so not done unless the data type is explicit, as we
+             * might then get a password prompt for a key when reading only
+             * certs from a file.
+             */
+            if (!OSSL_DECODER_CTX_set_input_structure(ctx->_.file.decoderctx,
+                                                      "EncryptedPrivateKeyInfo")) {
+                ERR_raise(ERR_LIB_PROV, ERR_R_OSSL_DECODER_LIB);
+                goto err;
+            }
+            break;
         case OSSL_STORE_INFO_CERT:
             if (!OSSL_DECODER_CTX_set_input_structure(ctx->_.file.decoderctx,
                                                       "Certificate")) {
