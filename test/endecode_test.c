@@ -1300,6 +1300,29 @@ static int create_ec_explicit_trinomial_params(OSSL_PARAM_BLD *bld)
     return do_create_ec_explicit_trinomial_params(bld, gen2, sizeof(gen2));
 }
 # endif /* OPENSSL_NO_EC2M */
+
+/*
+ * Test that multiple calls to OSSL_ENCODER_to_data() do not cause side effects
+ */
+static int ec_encode_to_data_multi(void)
+{
+    int ret;
+    OSSL_ENCODER_CTX *ectx = NULL;
+    EVP_PKEY *key = NULL;
+    uint8_t *enc = NULL;
+    size_t enc_len = 0;
+    const char* curve_name = "P-256";
+
+    ret = TEST_ptr(key = EVP_PKEY_Q_keygen(testctx, "", "EC", curve_name))
+          && TEST_ptr(ectx = OSSL_ENCODER_CTX_new_for_pkey(key, EVP_PKEY_KEYPAIR,
+                                                           "DER", NULL, NULL))
+          && TEST_int_eq(OSSL_ENCODER_to_data(ectx, NULL, &enc_len), 1)
+          && TEST_int_eq(OSSL_ENCODER_to_data(ectx, &enc, &enc_len), 1);
+    OPENSSL_free(enc);
+    EVP_PKEY_free(key);
+    OSSL_ENCODER_CTX_free(ectx);
+    return ret;
+}
 #endif /* OPENSSL_NO_EC */
 
 typedef enum OPTION_choice {
@@ -1525,6 +1548,8 @@ int setup_tests(void)
 # endif
 #endif
 #ifndef OPENSSL_NO_EC
+        if (!is_fips_lt_3_5)
+            ADD_TEST(ec_encode_to_data_multi);
         ADD_TEST_SUITE(EC);
         ADD_TEST_SUITE_PARAMS(EC);
         ADD_TEST_SUITE_LEGACY(EC);
