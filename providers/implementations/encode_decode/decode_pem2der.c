@@ -54,7 +54,7 @@ static OSSL_FUNC_decoder_decode_fn pem2der_decode;
  */
 struct pem2der_ctx_st {
     PROV_CTX *provctx;
-    char data_structure[OSSL_MAX_CODEC_STUCT_SIZE];
+    char data_structure[OSSL_MAX_CODEC_STRUCT_SIZE];
     char propq[OSSL_MAX_PROPQUERY_SIZE];
 };
 

@@ -747,6 +747,7 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
     struct decoder_process_data_st new_data;
     const char *data_type = NULL;
     const char *data_structure = NULL;
+    /* Saved to restore on return, mutated in PEM->DER transition. */
     const char *start_input_type = ctx->start_input_type;
 
     /*
