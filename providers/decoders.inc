@@ -145,9 +145,3 @@ DECODER("DER", pem, der, yes),
  * unencrypted PrivateKeyInfo in DER form to the identified algorithm.
  */
 DECODER_w_structure("DER", der, EncryptedPrivateKeyInfo, der, yes),
-/*
- * A decoder that recognises PKCS#8 PrivateKeyInfo structure, extracts the
- * algorithm name or raw OID if not recognised, and delegates the original
- * PrivateKeyInfo to the identified algorithm.
- */
-DECODER_w_structure("DER", der, PrivateKeyInfo, der, yes),

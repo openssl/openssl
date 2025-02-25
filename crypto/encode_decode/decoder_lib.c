@@ -449,17 +449,17 @@ static void collect_extra_decoder(OSSL_DECODER *decoder, void *arg)
             return;
 
         if (data->ctx->input_structure != NULL) {
-            OSSL_PARAM params[] = {
-                OSSL_PARAM_END,
-                OSSL_PARAM_END
-            };
+            OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END };
             const char *str = data->ctx->input_structure;
 
             params[0] =
                 OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_STRUCTURE,
                                                  (char *)str, 0);
-            if (!decoder->set_ctx_params(decoderctx, params))
+            if (decoder->set_ctx_params != NULL
+                && !decoder->set_ctx_params(decoderctx, params)) {
+                decoder->freectx(decoderctx);
                 return;
+            }
         }
 
         if ((di = ossl_decoder_instance_new(decoder, decoderctx)) == NULL) {

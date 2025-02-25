@@ -90,7 +90,7 @@ static int epki2pki_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     unsigned char *der = NULL;
     long der_len = 0;
     BIO *in = ossl_bio_new_from_core_bio(ctx->provctx, cin);
-    int ok;
+    int ok = 0;
 
     if (in == NULL)
         return 0;
@@ -191,17 +191,6 @@ int ossl_epki2pki_der_decode(unsigned char *der, long der_len, int selection,
 }
 
 const OSSL_DISPATCH ossl_EncryptedPrivateKeyInfo_der_to_der_decoder_functions[] = {
-    { OSSL_FUNC_DECODER_NEWCTX, (void (*)(void))epki2pki_newctx },
-    { OSSL_FUNC_DECODER_FREECTX, (void (*)(void))epki2pki_freectx },
-    { OSSL_FUNC_DECODER_DECODE, (void (*)(void))epki2pki_decode },
-    { OSSL_FUNC_DECODER_SETTABLE_CTX_PARAMS,
-      (void (*)(void))epki2pki_settable_ctx_params },
-    { OSSL_FUNC_DECODER_SET_CTX_PARAMS,
-      (void (*)(void))epki2pki_set_ctx_params },
-    OSSL_DISPATCH_END
-};
-
-const OSSL_DISPATCH ossl_PrivateKeyInfo_der_to_der_decoder_functions[] = {
     { OSSL_FUNC_DECODER_NEWCTX, (void (*)(void))epki2pki_newctx },
     { OSSL_FUNC_DECODER_FREECTX, (void (*)(void))epki2pki_freectx },
     { OSSL_FUNC_DECODER_DECODE, (void (*)(void))epki2pki_decode },

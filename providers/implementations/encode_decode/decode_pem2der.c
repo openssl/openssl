@@ -221,8 +221,8 @@ static int pem2der_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
          */
         if (i <= PKCS8_LAST_IDX
             && ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY)
-                || OPENSSL_strcasecmp(ctx->data_structure, "encryptedprivatekeyinfo") == 0
-                || OPENSSL_strcasecmp(ctx->data_structure, "privatekeyinfo") == 0)) {
+                || OPENSSL_strcasecmp(ctx->data_structure, "EncryptedPrivateKeyInfo") == 0
+                || OPENSSL_strcasecmp(ctx->data_structure, "PrivateKeyInfo") == 0)) {
             ok = ossl_epki2pki_der_decode(der, der_len, selection, data_cb,
                                           data_cbarg, pw_cb, pw_cbarg,
                                           PROV_LIBCTX_OF(ctx->provctx),
@@ -232,7 +232,7 @@ static int pem2der_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
 
         if (i <= SPKI_LAST_IDX
             && ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY)
-                || OPENSSL_strcasecmp(ctx->data_structure, "subjectpublickeyinfo") == 0)) {
+                || OPENSSL_strcasecmp(ctx->data_structure, "SubjectPublicKeyInfo") == 0)) {
             ok = ossl_spki2typespki_der_decode(der, der_len, selection, data_cb,
                                                data_cbarg, pw_cb, pw_cbarg,
                                                PROV_LIBCTX_OF(ctx->provctx),
