@@ -32,12 +32,15 @@ OpenSSL 3.5
 
 * Added a `no-tls-deprecated-ec-groups` configuration option.
 
-  With `no-tls-deprecated-ec-groups` the TLS 1.2 and earlier EC groups that
-  were deprecated in RFC8422 are disabled at compile time.  This does not
-  affect use of the associated curves outside TLS.  These groups are not
-  currently disabled by default.  With the `enable-tls-deprecated-ec` option
-  these TLS groups will remain available even if the default changes, provided
-  the underlying EC curves remain implemented.
+  The `no-tls-deprecated-ec-groups` option disables support for TLS elliptic
+  curve groups deprecated in RFC8422 at compile time.  This does not affect use
+  of the associated curves outside TLS.  By default support for these groups is
+  compiled in, but, as before, they are not included in the default run-time
+  list of supported groups.
+
+  With the `enable-tls-deprecated-ec` option these TLS groups remain enabled at
+  compile time even if the default configuration is changed, provided the
+  underlying EC curves remain implemented.
 
   *Viktor Dukhovni*
 
