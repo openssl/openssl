@@ -41,9 +41,85 @@
  * Intel hardware RNG CSP -- available from
  * http://developer.intel.com/design/security/rng/redist_license.htm
  */
-#define PROV_INTEL_SEC 22
-#define INTEL_DEF_PROV L"Intel Hardware Cryptographic Service Provider"
-#endif
+#  define PROV_INTEL_SEC 22
+#  define INTEL_DEF_PROV TEXT("Intel Hardware Cryptographic Service Provider")
+# endif
+
+// *** iProgram's Compatibility Stuff ***
+
+// TODO: Does this stuff run in multiple threads?
+static int s_bIsStuffInitted = 0;
+typedef BOOL(WINAPI* PFNCRYPTACQUIRECONTEXTA)(HCRYPTPROV*, LPCSTR, LPCSTR, DWORD, DWORD);
+typedef BOOL(WINAPI* PFNCRYPTGENRANDOM)      (HCRYPTPROV, DWORD, BYTE*);
+typedef BOOL(WINAPI* PFNCRYPTRELEASECONTEXT) (HCRYPTPROV, DWORD);
+
+static PFNCRYPTACQUIRECONTEXTA s_pCryptAcquireContextA;
+static PFNCRYPTGENRANDOM       s_pCryptGenRandom;
+static PFNCRYPTRELEASECONTEXT  s_pCryptReleaseContext;
+
+void InitCryptContextStuffIfNeeded()
+{
+	if (s_bIsStuffInitted)
+		return;
+	
+	s_pCryptAcquireContextA = NULL;
+	s_pCryptGenRandom       = NULL;
+	s_pCryptReleaseContext  = NULL;
+	s_bIsStuffInitted = 1;
+	
+	HMODULE hmod = (HMODULE) GetModuleHandle("AdvApi32.dll");
+	if (!hmod)
+		return;
+	
+	s_pCryptAcquireContextA = (PFNCRYPTACQUIRECONTEXTA) GetProcAddress(hmod, "CryptAcquireContextA");
+	s_pCryptGenRandom       = (PFNCRYPTGENRANDOM)       GetProcAddress(hmod, "CryptGenRandom");
+	s_pCryptReleaseContext  = (PFNCRYPTRELEASECONTEXT)  GetProcAddress(hmod, "CryptReleaseContext");
+}
+
+BOOL TEST_CryptAcquireContextA(
+	HCRYPTPROV *phProv,
+	LPCSTR pszContainer,
+	LPCSTR pszProvider,
+	DWORD dwProvType,
+	DWORD dwFlags
+)
+{
+	InitCryptContextStuffIfNeeded();
+	
+	if (s_pCryptAcquireContextA)
+		return s_pCryptAcquireContextA(phProv, pszContainer, pszProvider, dwProvType, dwFlags);
+	
+	return FALSE;
+}
+
+BOOL TEST_CryptGenRandom(
+	HCRYPTPROV hProv,
+	DWORD dwLen,
+	BYTE *pbBuffer
+)
+{
+	InitCryptContextStuffIfNeeded();
+	
+	if (s_pCryptGenRandom)
+		return s_pCryptGenRandom(hProv, dwLen, pbBuffer);
+	
+	return FALSE;
+}
+
+BOOL TEST_CryptReleaseContext(
+	HCRYPTPROV hProv,
+	DWORD dwFlags
+)
+{
+	InitCryptContextStuffIfNeeded();
+	
+	if (s_pCryptReleaseContext)
+		return s_pCryptReleaseContext(hProv, dwFlags);
+	
+	return FALSE;
+}
+
+
 
 size_t ossl_pool_acquire_entropy(RAND_POOL *pool)
 {
@@ -87,12 +163,12 @@ size_t ossl_pool_acquire_entropy(RAND_POOL *pool)
     if (buffer != NULL) {
         size_t bytes = 0;
         /* poll the CryptoAPI PRNG */
-        if (CryptAcquireContextA(&hProvider, NULL, NULL, PROV_RSA_FULL,
-                                 CRYPT_VERIFYCONTEXT) != 0) {
-            if (CryptGenRandom(hProvider, bytes_needed, buffer) != 0)
+        if (TEST_CryptAcquireContextA(&hProvider, NULL, NULL, PROV_RSA_FULL,
+                                      CRYPT_VERIFYCONTEXT) != 0) {
+            if (TEST_CryptGenRandom(hProvider, bytes_needed, buffer) != 0)
                 bytes = bytes_needed;
 
-            CryptReleaseContext(hProvider, 0);
+            TEST_CryptReleaseContext(hProvider, 0);
         }
 
         ossl_rand_pool_add_end(pool, bytes, 8 * bytes);
@@ -106,13 +182,13 @@ size_t ossl_pool_acquire_entropy(RAND_POOL *pool)
     if (buffer != NULL) {
         size_t bytes = 0;
         /* poll the Pentium PRG with CryptoAPI */
-        if (CryptAcquireContextA(&hProvider, NULL,
-                                 INTEL_DEF_PROV, PROV_INTEL_SEC,
-                                 CRYPT_VERIFYCONTEXT) != 0) {
-            if (CryptGenRandom(hProvider, bytes_needed, buffer) != 0)
+        if (TEST_CryptAcquireContextA(&hProvider, NULL,
+                                      INTEL_DEF_PROV, PROV_INTEL_SEC,
+                                      CRYPT_VERIFYCONTEXT) != 0) {
+            if (TEST_CryptGenRandom(hProvider, bytes_needed, buffer) != 0)
                 bytes = bytes_needed;
 
-            CryptReleaseContext(hProvider, 0);
+            TEST_CryptReleaseContext(hProvider, 0);
         }
         ossl_rand_pool_add_end(pool, bytes, 8 * bytes);
         entropy_available = ossl_rand_pool_entropy_available(pool);

@@ -31,6 +31,81 @@
 #include <wincrypt.h>
 #include "providers/implementations/storemgmt/winstore_store.inc"
 
+// *** iProgram's Compatibility Stuff ***
+
+// TODO: Does this stuff run in multiple threads?
+static int s_bIsStuffInitted = 0;
+typedef HCERTSTORE    (WINAPI* PFNCERTOPENSYSTEMSTOREA)      (HCRYPTPROV_LEGACY, LPCSTR);
+typedef BOOL          (WINAPI* PFNCERTCLOSESTORE)            (HCERTSTORE, DWORD);
+typedef PCCERT_CONTEXT(WINAPI* PFNCERTFINDCERTIFICATEINSTORE)(HCERTSTORE, DWORD, DWORD, DWORD, const void*, PCCERT_CONTEXT);
+typedef BOOL          (WINAPI* PFNCERTFREECERTIFICATECONTEXT)(PCCERT_CONTEXT);
+
+static PFNCERTOPENSYSTEMSTOREA       s_pCertOpenSystemStoreA;
+static PFNCERTCLOSESTORE             s_pCertCloseStore;
+static PFNCERTFINDCERTIFICATEINSTORE s_pCertFindCertificateInStore;
+static PFNCERTFREECERTIFICATECONTEXT s_pCertFreeCertificateContext;
+
+void InitCertContextStuffIfNeeded()
+{
+	if (s_bIsStuffInitted)
+		return;
+	
+	s_pCertOpenSystemStoreA       = NULL;
+	s_pCertCloseStore             = NULL;
+	s_pCertFindCertificateInStore = NULL;
+	s_pCertFreeCertificateContext = NULL;
+	s_bIsStuffInitted = 1;
+	
+	HMODULE hmod = (HMODULE) GetModuleHandle("Crypt32.dll");
+	if (!hmod)
+		return;
+	
+	s_pCertOpenSystemStoreA       = (PFNCERTOPENSYSTEMSTOREA)       GetProcAddress(hmod, "CertOpenSystemStoreA");
+	s_pCertCloseStore             = (PFNCERTCLOSESTORE)             GetProcAddress(hmod, "CertCloseStore");
+	s_pCertFindCertificateInStore = (PFNCERTFINDCERTIFICATEINSTORE) GetProcAddress(hmod, "CertFreeCertificateContext");
+	s_pCertFreeCertificateContext = (PFNCERTFREECERTIFICATECONTEXT) GetProcAddress(hmod, "CertFindCertificateInStore");
+}
+
+HCERTSTORE TEST_CertOpenSystemStoreA(HCRYPTPROV_LEGACY hProv, LPCSTR szSubSystemProtocol)
+{
+	InitCertContextStuffIfNeeded();
+	
+	if (!s_pCertOpenSystemStoreA)
+		return NULL;
+	
+	return s_pCertOpenSystemStoreA(hProv, szSubSystemProtocol);
+}
+
+BOOL TEST_CertCloseStore(HCERTSTORE hStore, DWORD dwFlags)
+{
+	InitCertContextStuffIfNeeded();
+	
+	if (!s_pCertCloseStore)
+		return FALSE;
+	
+	return s_pCertCloseStore(hStore, dwFlags);
+}
+
+PCCERT_CONTEXT TEST_CertFindCertificateInStore(HCERTSTORE hs, DWORD dw1, DWORD dw2, DWORD dw3, const void* p1, PCCERT_CONTEXT pccc1)
+{
+	InitCertContextStuffIfNeeded();
+	
+	if (!s_pCertFindCertificateInStore)
+		return NULL;
+	
+	return s_pCertFindCertificateInStore(hs, dw1, dw2, dw3, p1, pccc1);
+}
+
+BOOL TEST_CertFreeCertificateContext(PCCERT_CONTEXT pcc)
+{
+	InitCertContextStuffIfNeeded();
+	
+	if (!s_pCertFreeCertificateContext)
+		return FALSE;
+	
+	return s_pCertFreeCertificateContext(pcc);
+}
+
 enum {
     STATE_IDLE,
     STATE_READ,
@@ -53,7 +128,7 @@ struct winstore_ctx_st {
 static void winstore_win_reset(struct winstore_ctx_st *ctx)
 {
     if (ctx->win_ctx != NULL) {
-        CertFreeCertificateContext(ctx->win_ctx);
+        TEST_CertFreeCertificateContext(ctx->win_ctx);
         ctx->win_ctx = NULL;
     }
 
@@ -70,7 +145,11 @@ static void winstore_win_advance(struct winstore_ctx_st *ctx)
     name.cbData = (DWORD)ctx->subject_len;
     name.pbData = ctx->subject;
 
-    ctx->win_ctx = (name.cbData == 0 ? NULL : CertFindCertificateInStore(ctx->win_store, X509_ASN_ENCODING | PKCS_7_ASN_ENCODING, 0, CERT_FIND_SUBJECT_NAME, &name, ctx->win_ctx));
+    ctx->win_ctx = (name.cbData == 0 ? NULL :
+        TEST_CertFindCertificateInStore(ctx->win_store,
+                                        X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
+                                        0, CERT_FIND_SUBJECT_NAME,
+                                        &name, ctx->win_ctx));
 
     ctx->state = (ctx->win_ctx == NULL) ? STATE_EOF : STATE_READ;
 }
@@ -86,8 +165,13 @@ static void *winstore_open(void *provctx, const char *uri)
     if (ctx == NULL)
         return NULL;
 
+<<<<<<< HEAD
     ctx->provctx = provctx;
     ctx->win_store = CertOpenSystemStoreW(0, L"ROOT");
+=======
+    ctx->provctx    = provctx;
+    ctx->win_store  = TEST_CertOpenSystemStoreA(0, "ROOT");
+>>>>>>> 7c9564ec37 (* Don't import advapi32/crypt32 functions directly. Instead, import them with GetModuleHandle/GetProcAddress.)
     if (ctx->win_store == NULL) {
         OPENSSL_free(ctx);
         return NULL;
@@ -317,7 +401,7 @@ static int winstore_close(void *loaderctx)
     struct winstore_ctx_st *ctx = loaderctx;
 
     winstore_win_reset(ctx);
-    CertCloseStore(ctx->win_store, 0);
+    TEST_CertCloseStore(ctx->win_store, 0);
     OSSL_DECODER_CTX_free(ctx->dctx);
     OPENSSL_free(ctx->propq);
     OPENSSL_free(ctx->subject);
