@@ -20,10 +20,30 @@
 #include "internal/dso.h"
 
 static int stopped;
+
+static void pin_library(void)
+{
 #if !defined(OPENSSL_USE_NODELETE) \
     && !defined(OPENSSL_NO_PINSHARED)
-static int ssl_pinned = 0;
+# if defined(WIN32) && !defined(_WIN32_WCE)
+    {
+        HMODULE handle = NULL;
+
+        /* We don't use the DSO route for WIN32 because there is a better way */
+        GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS
+                          | GET_MODULE_HANDLE_EX_FLAG_PIN,
+                          (void *)&stopped, &handle);
+
+    }
+# elif !defined(DSO_NONE)
+    /*
+     * Deliberately leak a reference to ourselves. This will force the library
+     * to remain loaded until the atexit() handler is run at process exit.
+     */
+    (void) DSO_dsobyaddr(&stopped, DSO_FLAG_NO_UNLOAD_ON_FREE);
+# endif
 #endif
+}
 
 static CRYPTO_ONCE ssl_base = CRYPTO_ONCE_STATIC_INIT;
 static int ssl_base_inited = 0;
@@ -39,6 +59,7 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_ssl_base)
     SSL_COMP_get_compression_methods();
 #endif
     ssl_sort_cipher_list();
+    pin_library();
     OSSL_TRACE(INIT, "ossl_init_ssl_base: SSL_add_ssl_module()\n");
     ssl_base_inited = 1;
     return 1;
@@ -64,30 +85,6 @@ DEFINE_RUN_ONCE_STATIC_ALT(ossl_init_no_load_ssl_strings,
 {
     /* Do nothing in this case */
     return 1;
-}
-
-static void pin_library(void)
-{
-#if !defined(OPENSSL_USE_NODELETE) \
-    && !defined(OPENSSL_NO_PINSHARED)
-# if defined(WIN32) && !defined(_WIN32_WCE)
-    {
-        HMODULE handle = NULL;
-
-        /* We don't use the DSO route for WIN32 because there is a better way */
-        GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS
-                          | GET_MODULE_HANDLE_EX_FLAG_PIN,
-                          (void *)&ssl_pinned, &handle);
-
-    }
-# elif !defined(DSO_NONE)
-    /*
-     * Deliberately leak a reference to ourselves. This will force the library
-     * to remain loaded until the atexit() handler is run at process exit.
-     */
-    (void) DSO_dsobyaddr(&ssl_pinned, DSO_FLAG_NO_UNLOAD_ON_FREE);
-# endif
-#endif
 }
 
 /*
@@ -133,8 +130,6 @@ int OPENSSL_init_ssl(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
     if ((opts & OPENSSL_INIT_LOAD_SSL_STRINGS)
         && !RUN_ONCE(&ssl_strings, ossl_init_load_ssl_strings))
         return 0;
-
-    pin_library();
 
     return 1;
 }
