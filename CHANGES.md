@@ -232,6 +232,22 @@ OpenSSL 3.5
 
    *Pablo De Lara Guarch, Dan Pittman*
 
+ * Fix EVP_DecodeUpdate(): do not write padding zeros to the decoded output.
+
+   According to the documentation,
+   for every 4 valid base64 bytes processed (ignoring whitespace, carriage returns and line feeds),
+   EVP_DecodeUpdate() produces 3 bytes of binary output data
+   (except at the end of data terminated with one or two padding characters).
+   However, the function behaved like an EVP_DecodeBlock():
+   produces exactly 3 output bytes for every 4 input bytes.
+   Such behaviour could cause writes to a non-allocated output buffer
+   if a user allocates its size based on the documentation and knowing the padding size.
+
+   The fix makes EVP_DecodeUpdate() produce
+   exactly as many output bytes as in the initial non-encoded message.
+
+   *Valerii Krygin*
+
 OpenSSL 3.4
 -----------
 
