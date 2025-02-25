@@ -14,6 +14,8 @@
 #include <internal/thread.h>
 #include <internal/thread_arch.h>
 
+#define OPENSSL_NO_DEFAULT_THREAD_POOL
+
 #if !defined(OPENSSL_NO_DEFAULT_THREAD_POOL)
 
 static ossl_inline uint64_t _ossl_get_avail_threads(OSSL_LIB_CTX_THREADS *tdata)
