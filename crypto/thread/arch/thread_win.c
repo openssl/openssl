@@ -11,7 +11,8 @@
 #include "internal/e_os.h"
 
 #if defined(OPENSSL_THREADS_WINNT)
-#include <process.h>
+# include <process.h>
+# include <windows.h>
 
 static unsigned __stdcall thread_start_thunk(LPVOID vthread)
 {

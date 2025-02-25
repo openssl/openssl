@@ -180,13 +180,8 @@ static void *winstore_open(void *provctx, const char *uri)
     if (ctx == NULL)
         return NULL;
 
-<<<<<<< HEAD
-    ctx->provctx = provctx;
-    ctx->win_store = CertOpenSystemStoreW(0, L"ROOT");
-=======
     ctx->provctx    = provctx;
     ctx->win_store  = TEST_CertOpenSystemStoreA(0, "ROOT");
->>>>>>> 7c9564ec37 (* Don't import advapi32/crypt32 functions directly. Instead, import them with GetModuleHandle/GetProcAddress.)
     if (ctx->win_store == NULL) {
         OPENSSL_free(ctx);
         return NULL;

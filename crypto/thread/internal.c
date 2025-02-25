@@ -14,6 +14,7 @@
 #include <internal/thread.h>
 #include <internal/thread_arch.h>
 
+#define OPENSSL_NO_THREAD_POOL
 #define OPENSSL_NO_DEFAULT_THREAD_POOL
 
 #if !defined(OPENSSL_NO_DEFAULT_THREAD_POOL)
