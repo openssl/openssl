@@ -66,7 +66,7 @@ open OUT,"| \"$^X\" \"$xlate\" $flavour \"$output\""
 if ($avx512vaes) {
 
   my $GP_STORAGE  = $win64 ? (16 * 18)  : (16 * 8);    # store rbx
-  my $XMM_STORAGE = $win64 ? (16 * 23) : 0;     # store xmm6:xmm15
+  my $XMM_STORAGE = $win64 ? (16 * 8) : 0;     # store xmm6:xmm15
   my $VARIABLE_OFFSET = $win64 ? (16*8 + 16*10 + 8*3) :
                                  (16*8 + 8*1);
 
@@ -83,33 +83,19 @@ if ($avx512vaes) {
   # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   my ($key2, $key1, $tweak, $length, $input, $output);
 
-  if ($win64) {
-    $input    = "%rcx";
-    $output   = "%rdx";
-    $length   = "%r8";
-    $key1     = "%r9";
-    $key2     = "%r10";
-    $tweak    = "%r11";
-  } else {
-    $input    = "%rdi";
-    $output   = "%rsi";
-    $length   = "%rdx";
-    $key1     = "%rcx";
-    $key2     = "%r8";
-    $tweak    = "%r9";
-  }
+ 
+$input    = "%rdi";
+$output   = "%rsi";
+$length   = "%rdx";
+$key1     = "%rcx";
+$key2     = "%r8";
+$tweak    = "%r9";
 
   # arguments for temp parameters
   my ($tmp1, $gf_poly_8b, $gf_poly_8b_temp);
-  if ($win64) {
-    $tmp1                = "%r10";
-    $gf_poly_8b       = "%rdi";
-    $gf_poly_8b_temp  = "%rsi";
-  } else {
     $tmp1                = "%r8";
     $gf_poly_8b       = "%r10";
     $gf_poly_8b_temp  = "%r11";
-  }
 
   # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   # ;;; Helper functions
@@ -1153,7 +1139,7 @@ ___
       $code.=<<___;
       .globl	aesni_xts_128_encrypt_avx512
       .hidden	aesni_xts_128_encrypt_avx512
-      .type	aesni_xts_128_encrypt_avx512,\@abi-omnipotent
+      .type	aesni_xts_128_encrypt_avx512,\@function,6
       .align	32
       aesni_xts_128_encrypt_avx512:
       .cfi_startproc
@@ -1163,7 +1149,7 @@ ___
       $code.=<<___;
       .globl	aesni_xts_256_encrypt_avx512
       .hidden	aesni_xts_256_encrypt_avx512
-      .type	aesni_xts_256_encrypt_avx512,\@abi-omnipotent
+      .type	aesni_xts_256_encrypt_avx512,\@function,6
       .align	32
       aesni_xts_256_encrypt_avx512:
       .cfi_startproc
@@ -1836,7 +1822,7 @@ ___
       $code.=<<___;
       .globl	aesni_xts_128_decrypt_avx512
       .hidden	aesni_xts_128_decrypt_avx512
-      .type	aesni_xts_128_decrypt_avx512,\@abi-omnipotent
+      .type	aesni_xts_128_decrypt_avx512,\@function,6
       .align	32
       aesni_xts_128_decrypt_avx512:
       .cfi_startproc
@@ -1846,7 +1832,7 @@ ___
       $code.=<<___;
       .globl	aesni_xts_256_decrypt_avx512
       .hidden	aesni_xts_256_decrypt_avx512
-      .type	aesni_xts_256_decrypt_avx512,\@abi-omnipotent
+      .type	aesni_xts_256_decrypt_avx512,\@function,6
       .align	32
       aesni_xts_256_decrypt_avx512:
       .cfi_startproc
