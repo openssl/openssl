@@ -98,7 +98,7 @@ void InitCryptContextStuffIfNeeded()
 			"Discord Messenger. Ensure that your network isn't compromised or attacked "
 			"via a man-in-the-middle.\n\n"
 			"IMPORTANT: This warning should not show up if you are running anything "
-			"older than Windows 95 OSR2 (C revision)!  If it does, report it to "
+			"newer than Windows 95 OSR2 (C revision)!  If it does, report it to "
 			"iProgramInCpp at https://github.com/DiscordMessenger/openssl/issues.",
 			"OpenSSL Security Warning",
 			0
