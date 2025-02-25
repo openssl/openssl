@@ -3383,7 +3383,7 @@ static int encode_test_run(EVP_TEST *t)
     unsigned char *encode_out = NULL, *decode_out = NULL;
     int output_len, chunk_len;
     EVP_ENCODE_CTX *decode_ctx = NULL, *encode_ctx = NULL;
-    size_t input_len, donelen;
+    size_t input_len, donelen, decode_length;
 
     if (!TEST_ptr(decode_ctx = EVP_ENCODE_CTX_new())) {
         t->err = "INTERNAL_ERROR";
@@ -3425,9 +3425,14 @@ static int encode_test_run(EVP_TEST *t)
             goto err;
     }
 
-    if (!TEST_ptr(decode_out =
-                OPENSSL_malloc(EVP_DECODE_LENGTH(expected->output_len))))
+    decode_length = EVP_DECODE_LENGTH(expected->output_len);
+    if (!TEST_ptr(decode_out = OPENSSL_malloc(decode_length)))
         goto err;
+    /*
+     * Fill memory with non-zeros
+     * to check that decoding does not place redundant zeros.
+     */
+    memset(decode_out, 0xff, decode_length);
 
     output_len = 0;
     EVP_DecodeInit(decode_ctx);
@@ -3461,6 +3466,13 @@ static int encode_test_run(EVP_TEST *t)
                                    decode_out, output_len)) {
         t->err = "BAD_DECODING";
         goto err;
+    }
+
+    for (; output_len < (int)decode_length; output_len++) {
+        if (decode_out[output_len] != 0xff) {
+            t->err = "BAD_DECODING";
+            goto err;
+        }
     }
 
     t->err = NULL;
