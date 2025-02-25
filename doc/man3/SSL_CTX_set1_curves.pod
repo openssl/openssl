@@ -112,8 +112,8 @@ group listed will also be used for the B<key_share> sent by a client in a
 TLSv1.3 B<ClientHello>. For servers note the discussion above. The list should
 be in order of preference with the most preferred group first.
 
-Group tuples of comparable security are defined by replacing any group separator
-C<:> with a tuple separator C</>. Keyshares to be sent by a client are specified
+Group tuples of comparable security are defined by separating them from each
+other by a tuple separator C</>. Keyshares to be sent by a client are specified
 by prepending a C<*> to the group name, while any C<*> will be ignored by a
 server. The following string I<list> for example defines three tuples when
 used on the server-side, and triggers the generation of three key shares
@@ -173,6 +173,33 @@ the client supports C<P-521> but does not send a key share for this group to the
 and the client supports C<P-384> including key share for this group, a HRR will be
 triggered for C<P-521> despite the availability of a key share for P-384, which
 overlaps with a lower priority server-side tuple.
+
+For example, consider the same server but different client with I<list>
+"P-521:P-384:*ffdhe2048". When the client attempts connecting to the server,
+only a keyshare for ffdhe2048 will be sent. But because P-521 and P-384 are
+supported by the client, an HRR will be triggered for P-521 (preferred by the
+server).
+
+As another example, consider a server I<list> "A:B/C:D/E:F". Listed in order of
+highest preference to least, 3 group tuples are created: "A:B", "C:D", and "E:F".
+Some example scenarios for the client I<list>:
+
+- "A:D:*F": The server prefers "A" but did not receive a key share for "A", so
+  an HRR is triggered for "A".
+
+- "B:*C": The server prefers "B" from the first group tuple "A:B", so an HRR is
+  triggered for "B".
+
+- "C:*F": The server prefers "C" from the second group tuple "C:D", so an HRR is
+  triggered for "C".
+
+- "C:*D": Even though the server prefers "C" over "D", the server will accept
+  the key share for "D". Within a tuple, existing keyshares trump preference
+  order.
+
+- "*C:*D": The server accepts the "C" key share.
+
+- "F": The server accepts "F" key share.
 
 A group name can optionally be preceded by any of C<*>, C<?> or C<->, in any order, with
 the exception that only C<*> is allowed to precede C<DEFAULT>. Separator characters
