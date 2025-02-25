@@ -137,3 +137,8 @@ DECODER("DER", pem, der, yes),
  * form to the next decoder.
  */
 DECODER_w_structure("DER", der, EncryptedPrivateKeyInfo, der, yes),
+/*
+ * A decoder that recognises PKCS#8 PrivateKeyInfo structure extrats
+ * passing on the PrivateKeyInfo in DER to the algorithm's decoder.
+ */
+DECODER_w_structure("DER", der, PrivateKeyInfo, der, yes),

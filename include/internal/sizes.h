@@ -18,5 +18,6 @@
 # define OSSL_MAX_NAME_SIZE           50 /* Algorithm name */
 # define OSSL_MAX_PROPQUERY_SIZE     256 /* Property query strings */
 # define OSSL_MAX_ALGORITHM_ID_SIZE  256 /* AlgorithmIdentifier DER */
+# define OSSL_MAX_CODEC_STUCT_SIZE    32 /* DATA_STRUCTURE name */
 
 #endif

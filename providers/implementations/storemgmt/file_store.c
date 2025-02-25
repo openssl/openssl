@@ -439,6 +439,20 @@ static int file_setup_decoders(struct file_ctx_st *ctx)
          * for this load.
          */
         switch (ctx->expected_type) {
+        case OSSL_STORE_INFO_PUBKEY:
+            if (!OSSL_DECODER_CTX_set_input_structure(ctx->_.file.decoderctx,
+                                                      "SubjectPublicKeyInfo")) {
+                ERR_raise(ERR_LIB_PROV, ERR_R_OSSL_DECODER_LIB);
+                goto err;
+            }
+            break;
+        case OSSL_STORE_INFO_PKEY:
+            if (!OSSL_DECODER_CTX_set_input_structure(ctx->_.file.decoderctx,
+                                                      "EncryptedPrivateKeyInfo")) {
+                ERR_raise(ERR_LIB_PROV, ERR_R_OSSL_DECODER_LIB);
+                goto err;
+            }
+            break;
         case OSSL_STORE_INFO_CERT:
             if (!OSSL_DECODER_CTX_set_input_structure(ctx->_.file.decoderctx,
                                                       "Certificate")) {

@@ -448,6 +448,20 @@ static void collect_extra_decoder(OSSL_DECODER *decoder, void *arg)
         if ((decoderctx = decoder->newctx(provctx)) == NULL)
             return;
 
+        if (data->ctx->input_structure != NULL) {
+            OSSL_PARAM params[] = {
+                OSSL_PARAM_END,
+                OSSL_PARAM_END
+            };
+            const char *str = data->ctx->input_structure;
+
+            params[0] =
+                OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_STRUCTURE,
+                                                 (char *)str, 0);
+            if (!decoder->set_ctx_params(decoderctx, params))
+                return;
+        }
+
         if ((di = ossl_decoder_instance_new(decoder, decoderctx)) == NULL) {
             decoder->freectx(decoderctx);
             return;
@@ -733,6 +747,7 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
     struct decoder_process_data_st new_data;
     const char *data_type = NULL;
     const char *data_structure = NULL;
+    const char *start_input_type = ctx->start_input_type;
 
     /*
      * This is an indicator up the call stack that something was indeed
@@ -822,6 +837,23 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
         p = OSSL_PARAM_locate_const(params, OSSL_OBJECT_PARAM_DATA_STRUCTURE);
         if (p != NULL && !OSSL_PARAM_get_utf8_string_ptr(p, &data_structure))
             goto end;
+
+        /* Get the new input type if there is one */
+        p = OSSL_PARAM_locate_const(params, OSSL_OBJECT_PARAM_INPUT_TYPE);
+        if (p != NULL) {
+            if (!OSSL_PARAM_get_utf8_string_ptr(p, &ctx->start_input_type))
+                goto end;
+            /*
+             * When switching PKCS8 from PEM to DER we decrypt the data if needed
+             * and then determine the algorithm OID.  Likewise, with SPKI, only
+             * this time sans decryption.
+             */
+            if (ctx->input_structure != NULL
+                && (OPENSSL_strcasecmp(ctx->input_structure, "SubjectPublicKeyInfo") == 0
+                    || OPENSSL_strcasecmp(data_structure, "PrivateKeyInfo") == 0
+                    || OPENSSL_strcasecmp(ctx->input_structure, "PrivateKeyInfo") == 0))
+                data->flag_input_structure_checked = 1;
+        }
 
         /*
          * If the data structure is "type-specific" and the data type is
@@ -1043,5 +1075,6 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
  end:
     ossl_core_bio_free(cbio);
     BIO_free(new_data.bio);
+    ctx->start_input_type = start_input_type;
     return ok;
 }
