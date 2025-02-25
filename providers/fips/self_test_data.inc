@@ -441,6 +441,7 @@ static const char pbkdf2_digest[] = "SHA256";
  * expected output is taken from
  *   https://github.com/brycx/Test-Vector-Generation/blob/master/PBKDF2/pbkdf2-hmac-sha2-test-vectors.md,
  * which ran these test vectors with SHA-256.
+ * Note that the output only uses 2 iterations.
  */
 static const unsigned char pbkdf2_password[] = {
     0x70, 0x61, 0x73, 0x73, 0x77, 0x6f, 0x72, 0x64, 0x50, 0x41, 0x53, 0x53,
@@ -452,12 +453,17 @@ static const unsigned char pbkdf2_salt[] = {
     0x73, 0x61, 0x6c, 0x74, 0x53, 0x41, 0x4c, 0x54, 0x73, 0x61, 0x6c, 0x74
 };
 static const unsigned char pbkdf2_expected[] = {
-    0x34, 0x8c, 0x89, 0xdb, 0xcb, 0xd3, 0x2b, 0x2f, 0x32, 0xd8, 0x14, 0xb8,
-    0x11, 0x6e, 0x84, 0xcf, 0x2b, 0x17, 0x34, 0x7e, 0xbc, 0x18, 0x00, 0x18,
-    0x1c
+    0x13, 0xdc, 0x8a, 0x7c, 0x13, 0xd3, 0x72, 0xc9,
+    0x03, 0x82, 0x82, 0x2d, 0x2d, 0xc4, 0x92, 0xf2,
+    0xed, 0x52, 0x46, 0x7f, 0xb7, 0x82, 0x8e, 0xa8,
+    0x64
 };
-static int pbkdf2_iterations = 4096;
-static int pbkdf2_pkcs5 = 0; /* Enable compliance checks */
+/*
+ * FIPS 140-3 IG 10.3.A.8 allows the iteration count to be smaller
+ * so we use the minimum of 2 here.
+ */
+static int pbkdf2_iterations = 2;
+static int pbkdf2_pkcs5 = 1; /* Disable compliance checks so a smaller iteration count can be used */
 static const ST_KAT_PARAM pbkdf2_params[] = {
     ST_KAT_PARAM_UTF8STRING(OSSL_KDF_PARAM_DIGEST, pbkdf2_digest),
     ST_KAT_PARAM_OCTET(OSSL_KDF_PARAM_PASSWORD, pbkdf2_password),
