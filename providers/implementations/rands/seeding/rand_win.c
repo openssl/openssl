@@ -58,6 +58,7 @@ typedef BOOL(WINAPI* PFNCRYPTRELEASECONTEXT) (HCRYPTPROV, DWORD);
 static PFNCRYPTACQUIRECONTEXTA s_pCryptAcquireContextA;
 static PFNCRYPTGENRANDOM       s_pCryptGenRandom;
 static PFNCRYPTRELEASECONTEXT  s_pCryptReleaseContext;
+static int s_bShownWarningBoxOnMissingDependendies = 0;
 
 void InitCryptContextStuffIfNeeded()
 {
@@ -70,12 +71,39 @@ void InitCryptContextStuffIfNeeded()
 	s_bIsStuffInitted = 1;
 	
 	HMODULE hmod = (HMODULE) GetModuleHandle("AdvApi32.dll");
-	if (!hmod)
-		return;
+	if (hmod)
+	{
+		s_pCryptAcquireContextA = (PFNCRYPTACQUIRECONTEXTA) GetProcAddress(hmod, "CryptAcquireContextA");
+		s_pCryptGenRandom       = (PFNCRYPTGENRANDOM)       GetProcAddress(hmod, "CryptGenRandom");
+		s_pCryptReleaseContext  = (PFNCRYPTRELEASECONTEXT)  GetProcAddress(hmod, "CryptReleaseContext");
+	}
 	
-	s_pCryptAcquireContextA = (PFNCRYPTACQUIRECONTEXTA) GetProcAddress(hmod, "CryptAcquireContextA");
-	s_pCryptGenRandom       = (PFNCRYPTGENRANDOM)       GetProcAddress(hmod, "CryptGenRandom");
-	s_pCryptReleaseContext  = (PFNCRYPTRELEASECONTEXT)  GetProcAddress(hmod, "CryptReleaseContext");
+	if (!s_bShownWarningBoxOnMissingDependendies)
+	{
+		s_bShownWarningBoxOnMissingDependendies = 1;
+		
+		if (s_pCryptAcquireContextA &&
+			s_pCryptGenRandom &&
+			s_pCryptReleaseContext)
+			return;
+		
+		MessageBoxA(
+			NULL,
+			"The OpenSSL library could not find some or all of the following APIs "
+			"normally implemented by ADVAPI32 in your operating system:\n\n"
+			"CryptAcquireContextA\n"
+			"CryptGenRandom\n"
+			"CryptReleaseContext\n\n"
+			"It will be significantly easier to compromise your connection(s) using "
+			"Discord Messenger. Ensure that your network isn't compromised or attacked "
+			"via a man-in-the-middle.\n\n"
+			"IMPORTANT: This warning should not show up if you are running anything "
+			"older than Windows 95 OSR2 (C revision)!  If it does, report it to "
+			"iProgramInCpp at https://github.com/DiscordMessenger/openssl/issues.",
+			"OpenSSL Security Warning",
+			0
+		);
+	}
 }
 
 BOOL TEST_CryptAcquireContextA(
@@ -92,7 +120,10 @@ BOOL TEST_CryptAcquireContextA(
 	if (s_pCryptAcquireContextA)
 		return s_pCryptAcquireContextA(phProv, pszContainer, pszProvider, dwProvType, dwFlags);
 	
-	return FALSE;
+	// Just return true for now. It does nothing, and we'll give it some random data.
+	// Perhaps seed the MSVCRT random for good measure.
+	srand(GetTickCount());
+	return TRUE;
 }
 
 BOOL TEST_CryptGenRandom(
@@ -107,7 +138,11 @@ BOOL TEST_CryptGenRandom(
 	if (s_pCryptGenRandom)
 		return s_pCryptGenRandom(hProv, dwLen, pbBuffer);
 	
-	return FALSE;
+	// Well we do need to fill it in with some random bytes, so here goes
+	for (DWORD i = 0; i < dwLen; i++)
+		pbBuffer[i] = (rand() & 0xFF);
+	
+	return TRUE;
 }
 
 BOOL TEST_CryptReleaseContext(
@@ -121,7 +156,8 @@ BOOL TEST_CryptReleaseContext(
 	if (s_pCryptReleaseContext)
 		return s_pCryptReleaseContext(hProv, dwFlags);
 	
-	return FALSE;
+	// This does nothing, since the state of the hcryptprov didn't change
+	return TRUE;
 }
 
 #else
