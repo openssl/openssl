@@ -1311,13 +1311,12 @@ static int ec_encode_to_data_multi(void)
     EVP_PKEY *key = NULL;
     uint8_t *enc = NULL;
     size_t enc_len = 0;
-    const char* curve_name = "P-256";
 
-    ret = TEST_ptr(key = EVP_PKEY_Q_keygen(testctx, "", "EC", curve_name))
-          && TEST_ptr(ectx = OSSL_ENCODER_CTX_new_for_pkey(key, EVP_PKEY_KEYPAIR,
-                                                           "DER", NULL, NULL))
-          && TEST_int_eq(OSSL_ENCODER_to_data(ectx, NULL, &enc_len), 1)
-          && TEST_int_eq(OSSL_ENCODER_to_data(ectx, &enc, &enc_len), 1);
+    ret = TEST_ptr(key = EVP_PKEY_Q_keygen(testctx, "", "EC", "P-256"))
+        && TEST_ptr(ectx = OSSL_ENCODER_CTX_new_for_pkey(key, EVP_PKEY_KEYPAIR,
+                                                         "DER", NULL, NULL))
+        && TEST_int_eq(OSSL_ENCODER_to_data(ectx, NULL, &enc_len), 1)
+        && TEST_int_eq(OSSL_ENCODER_to_data(ectx, &enc, &enc_len), 1);
     OPENSSL_free(enc);
     EVP_PKEY_free(key);
     OSSL_ENCODER_CTX_free(ectx);
