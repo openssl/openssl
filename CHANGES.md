@@ -224,6 +224,14 @@ OpenSSL 3.5
 
    *Zhiguo Zhou, Wangyang Guo (Intel Corp)*
 
+ * VAES/AVX-512 support for AES-XTS.
+
+   For capable processors (>= Intel Icelake), this provides a
+   vectorized implementation of AES-XTS with a throughput improvement
+   between 1.3x to 2x, depending on the block size.
+
+   *Pablo De Lara Guarch, Dan Pittman*
+
 OpenSSL 3.4
 -----------
 
