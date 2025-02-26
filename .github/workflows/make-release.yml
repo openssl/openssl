@@ -30,8 +30,8 @@ jobs:
         cd ${{ github.ref_name }}
         ./util/mktar.sh
         mkdir assets && mv ${{ github.ref_name }}.tar.gz assets/ && cd assets
-        openssl sha1 < ${{ github.ref_name }}.tar.gz | cut -d " " -f 2 > ${{ github.ref_name }}.tar.gz.sha1
-        openssl sha256 < ${{ github.ref_name }}.tar.gz | cut -d " " -f 2 > ${{ github.ref_name }}.tar.gz.sha256
+        openssl sha1 -r ${{ github.ref_name }}.tar.gz > ${{ github.ref_name }}.tar.gz.sha1
+        openssl sha256 -r ${{ github.ref_name }}.tar.gz > ${{ github.ref_name }}.tar.gz.sha256
         gpg -u ${{ vars.signing_key_uid }} -o ${{ github.ref_name }}.tar.gz.asc -sba ${{ github.ref_name }}.tar.gz
     - name: "Create release"
       env:
