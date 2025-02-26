@@ -40,7 +40,7 @@ OSSL_CMP_SRV_CTX_set_grant_implicit_confirm
                                                  const OSSL_CMP_MSG *req,
                                                  int certReqId,
                                                  const OSSL_CRMF_MSG *crm,
-                                                 const X509_REQ *p10cr,
+                                                 const X509_REQ *p10,
                                                  X509 **certOut,
                                                  STACK_OF(X509) **chainOut,
                                                  STACK_OF(X509) **caPubs);
