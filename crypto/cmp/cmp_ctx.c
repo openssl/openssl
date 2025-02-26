@@ -966,7 +966,7 @@ int OSSL_CMP_CTX_set_option(OSSL_CMP_CTX *ctx, int opt, int val)
         ctx->revocationReason = val;
         break;
     default:
-        ERR_raise(ERR_LIB_CMP, CMP_R_INVALID_OPTION);
+        ERR_raise_data(ERR_LIB_CMP, CMP_R_INVALID_OPTION, "%d", opt);
         return 0;
     }
 
@@ -1028,7 +1028,7 @@ int OSSL_CMP_CTX_get_option(const OSSL_CMP_CTX *ctx, int opt)
     case OSSL_CMP_OPT_REVOCATION_REASON:
         return ctx->revocationReason;
     default:
-        ERR_raise(ERR_LIB_CMP, CMP_R_INVALID_OPTION);
+        ERR_raise_data(ERR_LIB_CMP, CMP_R_INVALID_OPTION, "%d", opt);
         return -1;
     }
 }
