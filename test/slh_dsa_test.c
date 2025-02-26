@@ -312,7 +312,7 @@ static EVP_PKEY *do_gen_key(const char *alg,
             || !TEST_int_eq(EVP_PKEY_CTX_set_params(ctx, params), 1)
             || !TEST_int_eq(EVP_PKEY_generate(ctx, &pkey), 1))
         pkey = NULL;
-err:
+
     EVP_PKEY_CTX_free(ctx);
     return pkey;
 }
