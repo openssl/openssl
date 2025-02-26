@@ -458,9 +458,9 @@ const OPTIONS cmp_options[] = {
     { "oldwithnew", OPT_OLDWITHNEW, 's',
       "File to save OldWithNew cert received in genp of type rootCaKeyUpdate"},
     { "crlcert", OPT_CRLCERT, 's',
-      "certificate to request a CRL for in genm of type crlStatusList"},
+      "certificate to take CRL source data from in genm of type crlStatusList"},
     { "oldcrl", OPT_OLDCRL, 's',
-      "CRL to request update for in genm of type crlStatusList"},
+      "CRL to obtain an update for in genm of type crlStatusList"},
     { "crlout", OPT_CRLOUT, 's',
       "File to save new CRL received in genp of type 'crls'"},
 
@@ -1647,8 +1647,7 @@ static int set_fallback_pubkey(OSSL_CMP_CTX *ctx)
     char *file = opt_reqin, *end = file, bak;
     OSSL_CMP_MSG *req;
     const X509_PUBKEY *pubkey;
-    EVP_PKEY *pkey;
-    EVP_PKEY *pkey1;
+    EVP_PKEY *pkey, *pkey1;
     int res = 0;
 
     /* temporarily separate first file name in opt_reqin */
@@ -1671,9 +1670,9 @@ static int set_fallback_pubkey(OSSL_CMP_CTX *ctx)
         goto err;
     }
     pkey1 = EVP_PKEY_dup(pkey);
-    if (pkey == NULL || !OSSL_CMP_CTX_set0_newPkey(ctx, 0 /* priv */, pkey1)) {
+    if (pkey1 == NULL || !OSSL_CMP_CTX_set0_newPkey(ctx, 0 /* priv */, pkey1)) {
         EVP_PKEY_free(pkey1);
-        CMP_err1("Failed to get fallback public key obtained from ir/cr/kur file '%s'",
+        CMP_err1("Failed to set fallback public key obtained from ir/cr/kur file '%s'",
                  file);
         goto err;
     }
@@ -2339,7 +2338,9 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
         goto err;
 
     /* not printing earlier, to minimize confusion in case setup fails before */
-    if (opt_reqout_only == NULL)
+    if (opt_reqout_only != NULL)
+        CMP_info("Will not contact any server");
+    else
         CMP_info3("Will contact %s%s%s ", server_buf, proxy_buf,
                   opt_rspin == NULL ? "" :
                   " only if -rspin argument does not give enough filenames");
@@ -3769,7 +3770,6 @@ int cmp_main(int argc, char **argv)
         }
 #endif
     }
-#endif
 
     /* act as CMP client, possibly using internal mock server */
 
@@ -3784,18 +3784,6 @@ int cmp_main(int argc, char **argv)
         if (opt_server != NULL) {
             CMP_warn1("-server %s", msg);
             opt_server = NULL;
-        }
-        if (opt_proxy != NULL) {
-            CMP_warn1("-proxy %s", msg);
-            opt_proxy = NULL;
-        }
-        if (opt_no_proxy != NULL) {
-            CMP_warn1("-no_proxy %s", msg);
-            opt_no_proxy = NULL;
-        }
-        if (opt_tls_used) {
-            CMP_warn1("-tls_used %s", msg);
-            opt_tls_used = 0;
         }
 #endif
         if (opt_path != NULL) {
