@@ -13,6 +13,7 @@
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
 #include <openssl/trace.h>
+#include <openssl/err.h>
 #include "ssl_local.h"
 #include "sslerr.h"
 #include "internal/thread_once.h"
@@ -41,6 +42,12 @@ static void pin_library(void)
      * to remain loaded until the atexit() handler is run at process exit.
      */
     (void) DSO_dsobyaddr(&stopped, DSO_FLAG_NO_UNLOAD_ON_FREE);
+    /*
+     * clear errors eventually left behind runtime linker.
+     * those errors are meant to be ignored anyway. Library
+     * pinning is just best effort.
+     */
+    ERR_clear_error();
 # endif
 #endif
 }
