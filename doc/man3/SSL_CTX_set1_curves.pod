@@ -112,8 +112,8 @@ group listed will also be used for the B<key_share> sent by a client in a
 TLSv1.3 B<ClientHello>. For servers note the discussion above. The list should
 be in order of preference with the most preferred group first.
 
-Group tuples of comparable security are defined by replacing any group separator
-C<:> with a tuple separator C</>. Keyshares to be sent by a client are specified
+Group tuples of comparable security are defined by separating them from each
+other by a tuple separator C</>. Keyshares to be sent by a client are specified
 by prepending a C<*> to the group name, while any C<*> will be ignored by a
 server. The following string I<list> for example defines three tuples when
 used on the server-side, and triggers the generation of three key shares
