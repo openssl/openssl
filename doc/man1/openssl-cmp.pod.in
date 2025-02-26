@@ -1517,9 +1517,15 @@ The B<cmp> application was added in OpenSSL 3.0.
 
 The B<-engine> option was deprecated in OpenSSL 3.0.
 
-The B<-profile> option was added in OpenSSL 3.3.
+The B<-oldwithold>, B<-newwithnew>, B<-newwithold>, B<-oldwithnew>,
+The B<-srvcertout>, and B<-serial> option were added in OpenSSL 3.2, as well
+as an extension of B<-cacertsout> to use when getting CA certificates.
+Since then, the B<-issuer> may be used also for certificates to be revoked.
 
-B<-crlcert>, B<-oldcrl>, B<-crlout>, B<-crlform>
+The B<-profile> and B<-no_cache_extracerts> options were added in OpenSSL 3.3,
+as well as support for delayed delivery of all types of response messages.
+
+The B<-template>, B<-crlcert>, B<-oldcrl>, B<-crlout>, B<-crlform>
 and B<-rsp_crl> options were added in OpenSSL 3.4.
 
 B<-centralkeygen>, b<-newkeyout>, B<-rsp_key> and

@@ -46,6 +46,8 @@ This release adds the following new features:
     FIPS compliance can be claimed.  Enable this using the configuration
     option `enable-fips-jitter`.
 
+  * Support for central key generation in CMP
+
 OpenSSL 3.4
 -----------
 
@@ -115,7 +117,7 @@ This release adds the following new features:
   * Support for integrity-only cipher suites TLS_SHA256_SHA256 and
     TLS_SHA384_SHA384 in TLS 1.3, as defined in RFC 9150
 
-  * Support for requesting CRL in CMP
+  * Support for retrieving certificate request templates and CRLs in CMP
 
   * Support for additional X.509v3 extensions related to Attribute Certificates
 
@@ -226,6 +228,8 @@ This release adds the following new features:
 
   * Added X509_STORE_get1_objects to avoid issues with the existing
     X509_STORE_get0_objects API in multi-threaded applications.
+
+  * Support for using certificate profiles and extened delayed delivery in CMP
 
 This release incorporates the following potentially significant or incompatible
 changes:
