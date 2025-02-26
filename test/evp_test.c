@@ -660,6 +660,12 @@ typedef struct digest_data_st {
     int xof;
     /* Size for variable output length but non-XOF */
     size_t digest_size;
+
+    int has_security_category_collision;
+    int expected_security_category_collision;
+
+    int has_security_category_preimage;
+    int expected_security_category_preimage;
 } DIGEST_DATA;
 
 static int digest_test_init(EVP_TEST *t, const char *alg)
@@ -722,6 +728,16 @@ static int digest_test_parse(EVP_TEST *t,
         if (sz < 0)
             return -1;
         mdata->digest_size = sz;
+        return 1;
+    }
+    if (strcmp(keyword, "SecurityCategoryCollision") == 0) {
+        mdata->expected_security_category_collision = atoi(value);
+        mdata->has_security_category_collision = 1;
+        return 1;
+    }
+    if (strcmp(keyword, "SecurityCategoryPreimage") == 0) {
+        mdata->expected_security_category_preimage = atoi(value);
+        mdata->has_security_category_preimage = 1;
         return 1;
     }
     return 0;
@@ -795,6 +811,39 @@ static int digest_test_run(EVP_TEST *t)
         t->err = "DIGESTUPDATE_ERROR";
         goto err;
     }
+
+    if (expected->has_security_category_collision || expected->has_security_category_preimage) {
+        int actual_collision = -1;
+        int actual_preimage = -1;
+        OSSL_PARAM query_params[3];
+        OSSL_PARAM *q = query_params;
+
+        if (expected->has_security_category_collision) {
+            *q++ = OSSL_PARAM_construct_int(OSSL_DIGEST_PARAM_SECURITY_CATEGORY_COLLISION, &actual_collision);
+        }
+        if (expected->has_security_category_preimage) {
+            *q++ = OSSL_PARAM_construct_int(OSSL_DIGEST_PARAM_SECURITY_CATEGORY_PREIMAGE, &actual_preimage);
+        }
+        *q = OSSL_PARAM_construct_end();
+
+        if (!EVP_MD_get_params(expected->digest, query_params)) {
+            t->err = "DIGEST_SECURITY_CATEGORY_QUERY_FAILURE";
+            goto err;
+        }
+
+        if (expected->has_security_category_collision &&
+            !TEST_int_eq(actual_collision, expected->expected_security_category_collision)) {
+            t->err = "SECURITY_CATEGORY_COLLISION_MISMATCH";
+            goto err;
+        }
+
+        if (expected->has_security_category_preimage &&
+            !TEST_int_eq(actual_preimage, expected->expected_security_category_preimage)) {
+            t->err = "SECURITY_CATEGORY_PREIMAGE_MISMATCH";
+            goto err;
+        }
+    }
+
 
     xof |= EVP_MD_xof(expected->digest);
     if (xof) {
@@ -900,6 +949,8 @@ typedef struct cipher_data_st {
     unsigned char *mac_key;
     size_t mac_key_len;
     const char *xts_standard;
+    int has_security_category;
+    int expected_security_category;
     STACK_OF(OPENSSL_STRING) *init_controls; /* collection of controls */
 } CIPHER_DATA;
 
@@ -1078,6 +1129,13 @@ static int cipher_test_parse(EVP_TEST *t, const char *keyword,
     }
     if (strcmp(keyword, "CtrlInit") == 0)
         return ctrladd(cdat->init_controls, value);
+
+    if (strcmp(keyword, "SecurityCategory") == 0) {
+        cdat->expected_security_category = atoi(value);
+        cdat->has_security_category = 1;
+        return 1;
+    }
+    
     return 0;
 }
 
@@ -1562,6 +1620,29 @@ static int cipher_test_run(EVP_TEST *t)
         if (!ctrl2params(t, cdat->init_controls, NULL,
                          initparams, OSSL_NELEM(initparams), &params_n))
             return 0;
+    }
+
+    if (cdat->has_security_category) {
+        int actual_security_category = -1;
+        OSSL_PARAM query_params[2];
+    
+        query_params[0] = OSSL_PARAM_construct_int(OSSL_CIPHER_PARAM_SECURITY_CATEGORY, &actual_security_category);
+        query_params[1] = OSSL_PARAM_construct_end();
+    
+        if (!EVP_CIPHER_get_params(cdat->cipher, query_params)) {
+            t->err = "CIPHER_SECURITY_CATEGORY_QUERY_FAILURE";
+            goto err;
+        }
+    
+        if (!TEST_int_eq(actual_security_category, cdat->expected_security_category)) {
+            t->err = "SECURITY_CATEGORY_MISMATCH";
+            goto err;
+        }
+    
+        return 1;
+    
+    err:
+        return 0;
     }
 
     fragmax = (cipher_test_valid_fragmentation(cdat) == 0) ? 0 : 1;

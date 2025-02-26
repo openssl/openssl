@@ -70,6 +70,7 @@ my @files = qw(
                 evppkey_rsa_kem.txt
                 evppkey_rsa_sigalg.txt
                 evprand.txt
+                evp_test_security_categories.txt
               );
 push @files, qw(
                 evppkey_ffdhe.txt

@@ -137,6 +137,7 @@ my %params = (
     'CIPHER_PARAM_AEAD_MAC_KEY' =>         "mackey",      # octet_string
     'CIPHER_PARAM_RANDOM_KEY' =>           "randkey",     # octet_string
     'CIPHER_PARAM_RC2_KEYBITS' =>          "keybits",     # size_t
+    'CIPHER_PARAM_SECURITY_CATEGORY' =>            "security-category",  #Added Security Category
     'CIPHER_PARAM_SPEED' =>                "speed",       # uint
     'CIPHER_PARAM_CTS_MODE' =>             "cts_mode",    # utf8_string
     'CIPHER_PARAM_DECRYPT_ONLY' =>         "decrypt-only",  # int, 0 or 1
@@ -171,6 +172,8 @@ my %params = (
     'DIGEST_PARAM_SIZE' =>         "size",         # size_t
     'DIGEST_PARAM_XOF' =>          "xof",          # int, 0 or 1
     'DIGEST_PARAM_ALGID_ABSENT' => "algid-absent", # int, 0 or 1
+    'DIGEST_PARAM_SECURITY_CATEGORY_PREIMAGE' =>            "preimage-security-category",  #Added Security Category
+    'DIGEST_PARAM_SECURITY_CATEGORY_COLLISION' =>            "collision-security-category",  #Added Security Category
 
 # MAC parameters
     'MAC_PARAM_KEY' =>            "key",           # octet string

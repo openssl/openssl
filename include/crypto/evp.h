@@ -331,6 +331,8 @@ struct evp_cipher_st {
 
     /* New structure members */
     /* Above comment to be removed when legacy has gone */
+    int security_category;
+
     int name_id;
     char *type_name;
     const char *description;
