@@ -62,6 +62,7 @@ for connecting to the given server and the optionally given I<port>,
 defaulting to 80 for HTTP or 443 for HTTPS.
 Then this internal BIO is used for setting up a connection
 and for exchanging one or more request and response.
+
 If I<bio> is given and I<rbio> is NULL then this I<bio> is used instead.
 If both I<bio> and I<rbio> are given (which may be memory BIOs for instance)
 then no explicit connection is set up, but
@@ -69,7 +70,8 @@ I<bio> is used for writing requests and I<rbio> for reading responses.
 As soon as the client has flushed I<bio> the server must be ready to provide
 a response or indicate a waiting condition via I<rbio>.
 
-If I<bio> is given, it is an error to provide I<proxy> or I<no_proxy> arguments,
+If I<bio> is given,
+it is an error to provide non-NULL I<proxy> or I<no_proxy> arguments,
 while I<server> and I<port> arguments may be given to support diagnostic output.
 If I<bio> is NULL the optional I<proxy> parameter can be used to set an
 HTTP(S) proxy to use (unless overridden by "no_proxy" settings).
