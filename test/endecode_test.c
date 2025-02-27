@@ -702,9 +702,9 @@ static int check_PVK(const char *file, const int line,
 {
     const unsigned char *in = data;
     unsigned int saltlen = 0, keylen = 0;
-    int ok = ossl_do_PVK_header(&in, data_len, 0, &saltlen, &keylen);
+    int isdss = -1;
 
-    return ok;
+    return ossl_do_PVK_header(&in, data_len, 0, &isdss, &saltlen, &keylen);
 }
 
 static int test_unprotected_via_PVK(const char *type, EVP_PKEY *key)

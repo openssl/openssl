@@ -1368,12 +1368,13 @@ static OSSL_STORE_INFO *file_try_read_PVK(BIO *bp, const UI_METHOD *ui_method,
 
     {
         unsigned int saltlen = 0, keylen = 0;
+        int isdss = -1;
         unsigned char peekbuf[24] = { 0, };
         const unsigned char *p = peekbuf;
 
         if (BIO_buffer_peek(bp, peekbuf, sizeof(peekbuf)) <= 0)
             return 0;
-        if (!ossl_do_PVK_header(&p, sizeof(peekbuf), 0, &saltlen, &keylen))
+        if (!ossl_do_PVK_header(&p, sizeof(peekbuf), 0, &isdss, &saltlen, &keylen))
             return 0;
     }
 

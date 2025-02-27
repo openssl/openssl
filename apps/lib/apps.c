@@ -898,6 +898,10 @@ static const char *format2string(int format)
         return "PEM";
     case FORMAT_ASN1:
         return "DER";
+    case FORMAT_PVK:
+        return "PVK";
+    case FORMAT_MSBLOB:
+        return "MSBLOB";
     }
     return NULL;
 }
