@@ -23,6 +23,9 @@ void *ossl_decoder_from_algorithm(int id, const OSSL_ALGORITHM *algodef,
                                   OSSL_PROVIDER *prov);
 
 OSSL_DECODER_INSTANCE *
+ossl_decoder_instance_new_forprov(OSSL_DECODER *decoder, void *provctx,
+                                  const char *input_structure);
+OSSL_DECODER_INSTANCE *
 ossl_decoder_instance_new(OSSL_DECODER *decoder, void *decoderctx);
 void ossl_decoder_instance_free(OSSL_DECODER_INSTANCE *decoder_inst);
 int ossl_decoder_ctx_get_harderr(const OSSL_DECODER_CTX *ctx);

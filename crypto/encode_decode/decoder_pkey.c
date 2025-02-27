@@ -252,6 +252,20 @@ static void collect_decoder_keymgmt(EVP_KEYMGMT *keymgmt, OSSL_DECODER *decoder,
         return;
     }
 
+    /*
+     * Input types must be compatible, but we must accept DER encoders when the
+     * start input type is "PEM".
+     */
+    if (data->ctx->start_input_type != NULL
+        && di->input_type != NULL
+        && OPENSSL_strcasecmp(di->input_type, data->ctx->start_input_type) != 0
+        && (OPENSSL_strcasecmp(di->input_type, "DER") != 0
+            || OPENSSL_strcasecmp(data->ctx->start_input_type, "PEM") != 0)) {
+        /* Mismatch is not an error, continue. */
+        ossl_decoder_instance_free(di);
+        return;
+    }
+
     OSSL_TRACE_BEGIN(DECODER) {
         BIO_printf(trc_out,
                    "(ctx %p) Checking out decoder %p:\n"
