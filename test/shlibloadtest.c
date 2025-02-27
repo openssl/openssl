@@ -97,7 +97,7 @@ static int test_apache_like(void)
         mySSL_CTX_free = (SSL_CTX_free_t)symbols[2].func;
         myOPENSSL_init_ssl = (OPENSSL_init_ssl_t)symbols[3].func;
 
-        myOPENSSL_init_ssl(0, NULL);
+        myOPENSSL_init_ssl(OPENSSL_INIT_ENGINE_ALL_BUILTIN, NULL);
         ctx = mySSL_CTX_new(myTLS_method());
         if (ctx == NULL) {
             fprintf(stderr, "Failed to create SSL_CTX after %s\n", action[i]);
