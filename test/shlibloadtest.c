@@ -69,48 +69,59 @@ static int test_apache_like(void)
         void (*func)(void);
         SD_SYM sym;
     } symbols[5];
-    const char *action[] = {
-        "load",
-        "reload"
-    };
     TLS_method_t myTLS_method;
     SSL_CTX_new_t mySSL_CTX_new;
     SSL_CTX_free_t mySSL_CTX_free;
     SSL_CTX *ctx;
     OPENSSL_init_ssl_t myOPENSSL_init_ssl;
 
-    for (i = 0; i < 2; i++) {
-        if (!sd_load(path_ssl, &ssllib, SD_SHLIB)) {
-            fprintf(stderr, "Failed to load libssl\n");
-            goto end;
-        }
-
-        if (!sd_sym(ssllib, "TLS_method", &symbols[0].sym)
-                || !sd_sym(ssllib, "SSL_CTX_new", &symbols[1].sym)
-                || !sd_sym(ssllib, "SSL_CTX_free", &symbols[2].sym)
-                || !sd_sym(ssllib, "OPENSSL_init_ssl", &symbols[3].sym)) {
-            fprintf(stderr, "Failed to %s libssl symbols\n", action[i]);
-            goto end;
-        }
-        myTLS_method = (TLS_method_t)symbols[0].func;
-        mySSL_CTX_new = (SSL_CTX_new_t)symbols[1].func;
-        mySSL_CTX_free = (SSL_CTX_free_t)symbols[2].func;
-        myOPENSSL_init_ssl = (OPENSSL_init_ssl_t)symbols[3].func;
-
-        myOPENSSL_init_ssl(OPENSSL_INIT_ENGINE_ALL_BUILTIN | OPENSSL_INIT_LOAD_SSL_STRINGS, NULL);
-        ctx = mySSL_CTX_new(myTLS_method());
-        if (ctx == NULL) {
-            fprintf(stderr, "Failed to create SSL_CTX after %s\n", action[i]);
-            goto end;
-        }
-        mySSL_CTX_free(ctx);
-
-        if (!sd_close(ssllib)) {
-            fprintf(stderr, "Failed to close libssl after %s\n", action[i]);
-            goto end;
-        }
-        ssllib = SD_INIT;
+    if (!sd_load(path_ssl, &ssllib, SD_SHLIB)) {
+        fprintf(stderr, "Failed to load libssl\n");
+        goto end;
     }
+
+    if (!sd_sym(ssllib, "OPENSSL_init_ssl", &symbols[3].sym)) {
+        fprintf(stderr, "Failed to load libssl symbols\n");
+        goto end;
+    }
+    myOPENSSL_init_ssl = (OPENSSL_init_ssl_t)symbols[3].func;
+    myOPENSSL_init_ssl(OPENSSL_INIT_ENGINE_ALL_BUILTIN, NULL);
+
+    if (!sd_close(ssllib)) {
+        fprintf(stderr, "Failed to close libssl\n");
+        goto end;
+    }
+    ssllib = SD_INIT;
+
+    if (!sd_load(path_ssl, &ssllib, SD_SHLIB)) {
+        fprintf(stderr, "Failed to load libssl\n");
+        goto end;
+    }
+
+    if (!sd_sym(ssllib, "TLS_method", &symbols[0].sym)
+            || !sd_sym(ssllib, "SSL_CTX_new", &symbols[1].sym)
+            || !sd_sym(ssllib, "SSL_CTX_free", &symbols[2].sym)
+            || !sd_sym(ssllib, "OPENSSL_init_ssl", &symbols[3].sym)) {
+        fprintf(stderr, "Failed to load libssl symbols\n");
+        goto end;
+    }
+    myTLS_method = (TLS_method_t)symbols[0].func;
+    mySSL_CTX_new = (SSL_CTX_new_t)symbols[1].func;
+    mySSL_CTX_free = (SSL_CTX_free_t)symbols[2].func;
+    myOPENSSL_init_ssl = (OPENSSL_init_ssl_t)symbols[3].func;
+
+    ctx = mySSL_CTX_new(myTLS_method());
+    if (ctx == NULL) {
+        fprintf(stderr, "Failed to create SSL_CTX\n");
+        goto end;
+    }
+    mySSL_CTX_free(ctx);
+
+    if (!sd_close(ssllib)) {
+        fprintf(stderr, "Failed to close libssl after ctx\n");
+        goto end;
+    }
+    ssllib = SD_INIT;
 
     ok = 1;
 end:
