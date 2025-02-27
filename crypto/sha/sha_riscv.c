@@ -16,6 +16,7 @@
 
 void sha256_block_data_order_zvkb_zvknha_or_zvknhb(void *ctx, const void *in,
                                                    size_t num);
+void sha256_block_data_order_zbb(void *ctx, const void *in, size_t num);
 void sha256_block_data_order_c(void *ctx, const void *in, size_t num);
 void sha256_block_data_order(SHA256_CTX *ctx, const void *in, size_t num);
 
@@ -24,6 +25,8 @@ void sha256_block_data_order(SHA256_CTX *ctx, const void *in, size_t num)
     if (RISCV_HAS_ZVKB() && (RISCV_HAS_ZVKNHA() || RISCV_HAS_ZVKNHB()) &&
         riscv_vlen() >= 128) {
         sha256_block_data_order_zvkb_zvknha_or_zvknhb(ctx, in, num);
+    } else if (RISCV_HAS_ZBB()) {
+        sha256_block_data_order_zbb(ctx, in, num);
     } else {
         sha256_block_data_order_c(ctx, in, num);
     }
