@@ -25,7 +25,7 @@ plan skip_all => "Test only supported in a dso build" if disabled("dso");
 plan skip_all => "Test is disabled in an address sanitizer build" unless disabled("asan");
 plan skip_all => "Test is disabled in no-atexit build" if disabled("atexit");
 
-plan tests => 10;
+plan tests => 12;
 
 my $libcrypto = platform->sharedlib('libcrypto');
 my $libssl = platform->sharedlib('libssl');
@@ -59,6 +59,10 @@ $atexit_outfile = 'atexit-noatexit.txt';
 1 while unlink $atexit_outfile;
 ok(run(test(["shlibloadtest", "-no_atexit", $libcrypto, $libssl, $atexit_outfile])),
    "running shlibloadtest -no_atexit $atexit_outfile");
+ok(!check_atexit($atexit_outfile));
+
+ok(run(test(["shlibloadtest", "-apache_like", $libcrypto, $libssl, $atexit_outfile])),
+    "running shlibloadtest -apache_like $atexit_outfile");
 ok(!check_atexit($atexit_outfile));
 
 sub check_atexit {
