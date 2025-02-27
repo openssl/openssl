@@ -442,8 +442,8 @@ recognized by the OCSP responder.
 
 =item B<X509_V_ERR_OCSP_RESP_INVALID: OCSP response(s) invalid>
 
-Returned by the verify callback to indicate one (or many)
-OCSP response(s) are invalid.
+Returned by the verify callback to indicate that one more more OCSP
+responses are invalid.
 
 =item B<X509_V_ERR_OCSP_SIGNATURE_FAILURE: OCSP response signature failure>
 
@@ -454,7 +454,7 @@ verification failed.
 OCSP response not yet valid (contains a date in the future)>
 
 Returned by the verify callback to indicate that OCSP response has a
-I<This Update> date in the future.
+I<thisUpdate> date in the future.
 
 =item B<X509_V_ERR_OCSP_HAS_EXPIRED: OCSP response has expired>
 
