@@ -412,19 +412,20 @@ static struct rcu_qp *update_qp(CRYPTO_RCU_LOCK *lock, uint32_t *curr_id, uint64
     *curr_id = lock->id_ctr;
     lock->id_ctr++;
 
-    OPENSSL_assert(ATOMIC_LOAD_N(uint32_t,
+    OPENSSL_assert(ATOMIC_LOAD_N(uint64_t,
                                  &lock->qp_group[(current_idx + 2) % 3].users,
                                  __ATOMIC_RELAXED) < 0x1000);
-    OPENSSL_assert(ATOMIC_LOAD_N(uint32_t,
+    OPENSSL_assert(ATOMIC_LOAD_N(uint64_t,
                                  &lock->qp_group[lock->current_alloc_idx].users,
                                  __ATOMIC_ACQUIRE) < 0x1000);
     ATOMIC_STORE_N(uint32_t, &lock->reader_idx, lock->current_alloc_idx,
                    __ATOMIC_RELAXED);
-    *count0 = ATOMIC_ADD_FETCH(&lock->qp_group[current_idx].users, (uint64_t)0, __ATOMIC_RELEASE);
 
     /* wake up any waiters */
     pthread_cond_signal(&lock->alloc_signal);
     pthread_mutex_unlock(&lock->alloc_lock);
+    *count0 = ATOMIC_LOAD_N(uint64_t, &lock->qp_group[current_idx].users,
+                            __ATOMIC_ACQUIRE);
     return &lock->qp_group[current_idx];
 }
 
