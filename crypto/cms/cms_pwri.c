@@ -168,7 +168,8 @@ CMS_RecipientInfo *CMS_add0_recipient_password(CMS_ContentInfo *cms,
 
     /* Setup PBE algorithm */
 
-    pwri->keyDerivationAlgorithm = PKCS5_pbkdf2_set(iter, NULL, 0, -1, -1);
+    pwri->keyDerivationAlgorithm = PKCS5_pbkdf2_set_ex(iter, NULL, 0, -1, -1,
+                                                       cms_ctx->libctx);
 
     if (pwri->keyDerivationAlgorithm == NULL)
         goto err;
@@ -360,9 +361,10 @@ int ossl_cms_RecipientInfo_pwri_crypt(const CMS_ContentInfo *cms,
 
     /* Finish password based key derivation to setup key in "ctx" */
 
-    if (EVP_PBE_CipherInit(algtmp->algorithm,
-                           (char *)pwri->pass, pwri->passlen,
-                           algtmp->parameter, kekctx, en_de) < 0) {
+    if (EVP_PBE_CipherInit_ex(algtmp->algorithm,
+                              (char *)pwri->pass, pwri->passlen,
+                              algtmp->parameter, kekctx, en_de,
+                              cms_ctx->libctx, cms_ctx->propq) < 0) {
         ERR_raise(ERR_LIB_CMS, ERR_R_EVP_LIB);
         goto err;
     }
