@@ -15,7 +15,7 @@
 
 int do_test_just_init(void)
 {
-    return OPENSSL_init_ssl(OPENSSL_INIT_ENGINE_ALL_BUILTIN, NULL);
+    return OPENSSL_init_ssl(OPENSSL_INIT_ENGINE_ALL_BUILTIN | OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
 }
 
 int do_test_create_ssl_ctx(void)
