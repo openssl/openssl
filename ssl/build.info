@@ -17,7 +17,7 @@ SOURCE[../libssl]=\
         ssl_lib.c ssl_cert.c ssl_sess.c \
         ssl_ciph.c ssl_stat.c ssl_rsa.c \
         ssl_asn1.c ssl_txt.c ssl_init.c ssl_conf.c  ssl_mcnf.c \
-        bio_ssl.c ssl_err.c ssl_err_legacy.c tls_srp.c t1_trce.c ssl_utst.c \
+        bio_ssl.c ssl_err_legacy.c tls_srp.c t1_trce.c ssl_utst.c \
         statem/statem.c \
         ssl_cert_comp.c \
         tls_depr.c
