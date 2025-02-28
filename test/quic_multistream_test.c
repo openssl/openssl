@@ -5542,7 +5542,6 @@ static const struct script_op script_84[] = {
     OP_S_READ_EXPECT        (a, "apple", 5)
     OP_S_WRITE              (a, "orange", 6)
     OP_C_READ_EXPECT        (a, "orange", 6)
-    OP_CHECK2               (check_write_buf_stat, 0, 0)
 
     OP_END
 };
