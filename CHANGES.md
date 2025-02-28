@@ -253,7 +253,10 @@ OpenSSL 3.4
 
 ### Changes between 3.4.1 and 3.4.2 [xx XXX xxxx]
 
- * none yet
+ * When displaying distinguished names in the openssl application escape control
+   characters by default.
+
+   *Tomáš Mráz*
 
 ### Changes between 3.4.0 and 3.4.1 [11 Feb 2025]
 
