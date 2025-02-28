@@ -87,16 +87,16 @@ static int test_apache_like(void)
         goto end;
     }
 
-#if _WIN32
-    asprintf(&mod_path, "%s\\%s", mod_dir, MODULE_NAME);
-#else
-    asprintf(&mod_path, "%s/%s", mod_dir, MODULE_NAME);
-#endif
+    mod_path = malloc(strlen(mod_dir) + 1 + sizeof(MODULE_NAME));
     if (mod_path == NULL) {
         fprintf(stderr, "no memery\n");
         goto end;
     }
-
+#if _WIN32
+    sprintf(mod_path, "%s\\%s", mod_dir, MODULE_NAME);
+#else
+    sprintf(mod_path, "%s/%s", mod_dir, MODULE_NAME);
+#endif
     if (!sd_load(mod_path, &testlib, SD_SHLIB)) {
         fprintf(stderr, "Failed to load %s\n", mod_path);
         goto end;
