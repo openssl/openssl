@@ -720,7 +720,8 @@ IF[{- !$disabled{tests} -}]
     INCLUDE[moduleloadtest]=../include ../apps/include
 
     MODULES{noinst}=mod_shlibtest
-    SOURCE[mod_shlibtest]=mod_shlibtest.c
+    SOURCE[mod_shlibtest]=mod_shlibtest.c mod_shlibtest.ld
+    GENERATE[mod_shlibtest.ld]=mod_shlibtest.num
     INCLUDE[mod_shlibtest]=../include ..
     DEPEND[mod_shlibtest]=../libcrypto ../libssl
 
