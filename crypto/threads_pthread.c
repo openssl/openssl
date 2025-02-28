@@ -278,6 +278,8 @@ static struct rcu_qp *get_hold_current_qp(struct rcu_lock_st *lock)
 
         ATOMIC_ADD_FETCH(&lock->qp_group[qp_idx].users, (uint64_t)1,
                          __ATOMIC_ACQUIRE);
+        ATOMIC_LOAD_N(uint64_t, &lock->qp_group[qp_idx].users,
+                      __ATOMIC_ACQUIRE);
 
         /* if the idx hasn't changed, we're good, else try again */
         if (qp_idx == ATOMIC_LOAD_N(uint32_t, &lock->reader_idx,
