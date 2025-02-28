@@ -32,9 +32,9 @@
 #include "crypto/store.h"
 #include <openssl/cmp_util.h> /* for OSSL_CMP_log_close() */
 #include <openssl/trace.h>
+#include <openssl/ssl.h> /* for OPENSSL_INIT_(NO_)?LOAD_SSL_STRINGS */
 #include "crypto/ctype.h"
 #include "sslerr.h"
-#include "openssl/ssl.h" /* for OPENSSL_INIT_(NO_)?LOAD_SSL_STRINGS */
 
 static int stopped = 0;
 static uint64_t optsdone = 0;
