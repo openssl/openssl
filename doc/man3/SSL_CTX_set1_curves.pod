@@ -267,19 +267,14 @@ With both server and client preference, an HRR will be triggered for C<P-521>
 despite the availability of a key share for P-384, which overlaps with a lower
 priority server-side tuple.
 
-Consider the same server and server preference but different client with I<list>
-"P-521:P-384:*ffdhe2048". When the client attempts connecting to the server,
-only a keyshare for ffdhe2048 will be sent. But because P-521 and P-384 are
-supported by the client, an HRR will be triggered for P-521 (preferred by the
-server).
-
 As a separate example, consider a server I<list> "A:B/C:D/E:F". Listed in order
 of highest preference to least, 3 group tuples are created: "A:B", "C:D", and
 "E:F". Here are some examples of a client I<list> where setting server/client
 preference will not change the outcome:
 
-- "A:D:*F": Both prefer "A", but the server did not receive a key share for "A",
-so an HRR is triggered for "A".
+- "A:D:*F": Both prefer "A", but the server didn't receive a keyshare for the
+most-preferred tuple in which there's at least one group supported by both.
+Therefore, an HRR is triggered for "A".
 
 - "B:*C": Both prefer "B" from the first group tuple "A:B", so an HRR is
 triggered for "B".
@@ -296,8 +291,8 @@ order.
 - "F": Even though it is not prepended with a "*", the client will send a key
 share for "F". The server will then accept the key share for "F".
 
-- "*E:C:A": The server prefers "A" but did not receive a key share
-for "A", so an HRR is triggered for "A".
+- "*E:C:A": The server prefers "A" from the "A:B" group tuple, so an HRR is
+triggered for "A".
 
 - "*E:B:*A": The server uses the key share for "A".
 
@@ -310,8 +305,8 @@ result:
 
 - "B:A:*C"
   - Client preference: The server triggers an HRR for "B". For the server,
-"A" and "B" are considered comparable in security to each other. But because the
-client prefers "B", the server will trigger an HRR for "B".
+"A" and "B" are considered comparable in security. But because the client
+prefers "B", the server will trigger an HRR for "B".
   - Server preference: The server triggers an HRR for "A".
 
 =head1 SEE ALSO
