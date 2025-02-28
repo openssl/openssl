@@ -346,7 +346,7 @@ int ssl3_get_record(SSL *s)
                             strncmp((char *)p, "DELET", 5) == 0 ||
                             strncmp((char *)p, "TRACE", 5) == 0 ||
                             strncmp((char *)p, "PUT ", 4) == 0) {
-                            SSLfatal(s, SSL_AD_UNEXCPECTED_MESSAGE,
+                            SSLfatal(s, SSL_AD_UNEXPECTED_MESSAGE,
                                      SSL_R_HTTP_REQUEST);
                             return -1;
                         } else if (strncmp((char *)p, "CONNE", 5) == 0) {
