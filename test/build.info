@@ -720,8 +720,11 @@ IF[{- !$disabled{tests} -}]
     INCLUDE[moduleloadtest]=../include ../apps/include
 
     MODULES{noinst}=mod_shlibtest
-    SOURCE[mod_shlibtest]=mod_shlibtest.c mod_shlibtest.ld
-    GENERATE[mod_shlibtest.ld]=mod_shlibtest.num
+    SOURCE[mod_shlibtest]=mod_shlibtest.c
+    IF[{- defined $target{shared_defflag} -}]
+       SOURCE[mod_shlibtest]=mod_shlibtest.ld
+       GENERATE[mod_shlibtest.ld]=mod_shlibtest.num
+    ENDIF
     INCLUDE[mod_shlibtest]=../include ..
     DEPEND[mod_shlibtest]=../libcrypto ../libssl
 
