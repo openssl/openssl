@@ -15,6 +15,20 @@
 #include "../ssl_local.h"
 #include "poll_builder.h"
 
+#if defined(_AIX)
+/*
+ * Some versions of AIX define macros for events and revents for use when
+ * accessing pollfd structures (see Github issue #24236). That interferes
+ * with our use of these names here. We simply undef them.
+ */
+# ifdef revents
+#  undef revents
+# endif
+# ifdef events
+#  undef events
+# endif
+#endif
+
 #define ITEM_N(items, stride, n) \
     (*(SSL_POLL_ITEM *)((char *)(items) + (n)*(stride)))
 
