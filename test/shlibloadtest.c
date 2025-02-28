@@ -28,7 +28,6 @@ typedef unsigned long (*OPENSSL_version_minor_t)(void);
 typedef unsigned long (*OPENSSL_version_patch_t)(void);
 typedef DSO * (*DSO_dsobyaddr_t)(void (*addr)(void), int flags);
 typedef int (*DSO_free_t)(DSO *dso);
-typedef int (*do_test_just_init_t)(void);
 typedef int (*do_test_create_ssl_ctx_t)(void);
 
 typedef enum test_types_en {
@@ -79,7 +78,6 @@ static int test_apache_like(void)
         void (*func)(void);
         SD_SYM sym;
     } symbols[1];
-    do_test_just_init_t my_do_test_just_init;
     do_test_create_ssl_ctx_t my_do_test_create_ssl_ctx;
 
     if (mod_dir == NULL) {
@@ -102,12 +100,12 @@ static int test_apache_like(void)
         goto end;
     }
 
-    if (!sd_sym(testlib, "do_test_just_init", &symbols[0].sym)) {
+    if (!sd_sym(testlib, "do_test_create_ssl_ctx", &symbols[0].sym)) {
         fprintf(stderr, "Failed to resolve do_test_just_init\n");
         goto end;
     }
-    my_do_test_just_init = (do_test_just_init_t)symbols[0].func;
-    if (!my_do_test_just_init()) {
+    my_do_test_create_ssl_ctx = (do_test_create_ssl_ctx_t)symbols[0].func;
+    if (!my_do_test_create_ssl_ctx()) {
         fprintf(stderr, "call to do_test_just_init() failed\n");
         goto end;
     }
