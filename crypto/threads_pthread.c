@@ -258,6 +258,7 @@ struct rcu_lock_st {
 /* Read side acquisition of the current qp */
 static struct rcu_qp *get_hold_current_qp(struct rcu_lock_st *lock)
 {
+    uint32_t reader_idx;
     uint32_t qp_idx;
 
     /* get the current qp index */
@@ -274,14 +275,14 @@ static struct rcu_qp *get_hold_current_qp(struct rcu_lock_st *lock)
          * systems like x86, but is relevant on other arches
          * Note: This applies to the reload below as well
          */
-        qp_idx = ATOMIC_LOAD_N(uint32_t, &lock->reader_idx, __ATOMIC_ACQUIRE);
-
+        reader_idx = ATOMIC_LOAD_N(uint32_t, &lock->reader_idx, __ATOMIC_ACQUIRE);
+        qp_idx = reader_idx % lock->group_count;
         ATOMIC_ADD_FETCH(&lock->qp_group[qp_idx].users, (uint64_t)1,
                          __ATOMIC_ACQUIRE);
 
         /* if the idx hasn't changed, we're good, else try again */
-        if (qp_idx == ATOMIC_LOAD_N(uint32_t, &lock->reader_idx,
-                                    __ATOMIC_RELAXED))
+        if (reader_idx == ATOMIC_LOAD_N(uint32_t, &lock->reader_idx,
+                                        __ATOMIC_ACQUIRE))
             break;
 
         ATOMIC_SUB_FETCH(&lock->qp_group[qp_idx].users, (uint64_t)1,
@@ -393,20 +394,19 @@ static struct rcu_qp *update_qp(CRYPTO_RCU_LOCK *lock, uint32_t *curr_id)
         /* we have to wait for one to be free */
         pthread_cond_wait(&lock->alloc_signal, &lock->alloc_lock);
 
-    current_idx = lock->current_alloc_idx;
+    current_idx = lock->current_alloc_idx % lock->group_count;
 
     /* Allocate the qp */
     lock->writers_alloced++;
 
     /* increment the allocation index */
-    lock->current_alloc_idx =
-        (lock->current_alloc_idx + 1) % lock->group_count;
+    lock->current_alloc_idx++;
 
     *curr_id = lock->id_ctr;
     lock->id_ctr++;
 
     ATOMIC_STORE_N(uint32_t, &lock->reader_idx, lock->current_alloc_idx,
-                   __ATOMIC_RELAXED);
+                   __ATOMIC_RELEASE);
 
     /* wake up any waiters */
     pthread_cond_signal(&lock->alloc_signal);
@@ -414,12 +414,35 @@ static struct rcu_qp *update_qp(CRYPTO_RCU_LOCK *lock, uint32_t *curr_id)
     return &lock->qp_group[current_idx];
 }
 
-static void retire_qp(CRYPTO_RCU_LOCK *lock, struct rcu_qp *qp)
+static void retire_qp(CRYPTO_RCU_LOCK *lock, struct rcu_qp *qp, uint32_t curr_id)
 {
+    uint64_t count;
+
+    /* retire in order */
+    pthread_mutex_lock(&lock->prior_lock);
+    while (lock->next_to_retire != curr_id)
+        pthread_cond_wait(&lock->prior_signal, &lock->prior_lock);
+    lock->next_to_retire++;
+
+    /*
+     * wait for the reader count to reach zero
+     * Note the use of __ATOMIC_ACQUIRE here to ensure that any
+     * prior __ATOMIC_RELEASE write operation in ossl_rcu_read_unlock
+     * is visible prior to our read
+     * however this is likely just necessary to silence a tsan warning
+     */
+    do {
+        count = ATOMIC_LOAD_N(uint64_t, &qp->users, __ATOMIC_ACQUIRE);
+    } while (count != (uint64_t)0);
+
+    pthread_cond_broadcast(&lock->prior_signal);
+    pthread_mutex_unlock(&lock->prior_lock);
+
     pthread_mutex_lock(&lock->alloc_lock);
     lock->writers_alloced--;
     pthread_cond_signal(&lock->alloc_signal);
     pthread_mutex_unlock(&lock->alloc_lock);
+
 }
 
 /* TODO: count should be unsigned, e.g uint32_t */
@@ -449,7 +472,6 @@ void ossl_rcu_write_unlock(CRYPTO_RCU_LOCK *lock)
 void ossl_synchronize_rcu(CRYPTO_RCU_LOCK *lock)
 {
     struct rcu_qp *qp;
-    uint64_t count;
     uint32_t curr_id;
     struct rcu_cb_item *cb_items, *tmpcb;
 
@@ -460,26 +482,7 @@ void ossl_synchronize_rcu(CRYPTO_RCU_LOCK *lock)
 
     qp = update_qp(lock, &curr_id);
 
-    /* retire in order */
-    pthread_mutex_lock(&lock->prior_lock);
-    while (lock->next_to_retire != curr_id)
-        pthread_cond_wait(&lock->prior_signal, &lock->prior_lock);
-    lock->next_to_retire++;
-    pthread_cond_broadcast(&lock->prior_signal);
-    pthread_mutex_unlock(&lock->prior_lock);
-
-    /*
-     * wait for the reader count to reach zero
-     * Note the use of __ATOMIC_ACQUIRE here to ensure that any
-     * prior __ATOMIC_RELEASE write operation in ossl_rcu_read_unlock
-     * is visible prior to our read
-     * however this is likely just necessary to silence a tsan warning
-     */
-    do {
-        count = ATOMIC_LOAD_N(uint64_t, &qp->users, __ATOMIC_ACQUIRE);
-    } while (count != (uint64_t)0);
-
-    retire_qp(lock, qp);
+    retire_qp(lock, qp, curr_id);
 
     /* handle any callbacks that we have */
     while (cb_items != NULL) {
