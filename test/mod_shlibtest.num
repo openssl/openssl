@@ -1,2 +1,2 @@
-do_test_just_init	1	*	EXISTS::FUNCTION:
-do_test_create_ssl_ctx	1	*	EXISTS::FUNCTION:
+do_test_just_init                     1	*	EXIST::FUNCTION:
+do_test_create_ssl_ctx                     1	*	EXIST::FUNCTION:
