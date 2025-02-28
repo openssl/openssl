@@ -13,7 +13,7 @@
 #include "ech_local.h"
 #include <openssl/rand.h>
 #include "../statem/statem_local.h"
-#include <internal/ech_helpers.h>
+#include "internal/ech_helpers.h"
 #include <openssl/kdf.h>
 
 #ifndef OPENSSL_NO_ECH
@@ -47,7 +47,7 @@ void ossl_ech_pbuf(const char *msg, const unsigned char *buf, const size_t blen)
 }
 
 /* trace out transcript */
-void ossl_ech_ptranscript(SSL_CONNECTION *s, const char *msg)
+static void ossl_ech_ptranscript(SSL_CONNECTION *s, const char *msg)
 {
     size_t hdatalen = 0;
     unsigned char *hdata = NULL;

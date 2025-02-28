@@ -113,7 +113,7 @@ int ossl_ech_get_sh_offsets(const unsigned char *sh, size_t sh_len,
 /*
  * make up HPKE "info" input as per spec
  * encoding is the ECHconfig being used
- * encodinglen is the length of ECHconfig being used
+ * encoding_length is the length of ECHconfig being used
  * info is a caller-allocated buffer for results
  * info_len is the buffer size on input, used-length on output
  * return 1 for success, zero otherwise
@@ -122,14 +122,10 @@ int ossl_ech_make_enc_info(unsigned char *encoding, size_t encoding_length,
                            unsigned char *info, size_t *info_len)
 {
     WPACKET ipkt = { 0 };
-    BUF_MEM *ipkt_mem = NULL;
 
     if (encoding == NULL || info == NULL || info_len == NULL)
         return 0;
-    if (*info_len < (sizeof(OSSL_ECH_CONTEXT_STRING) + encoding_length))
-        return 0;
-    if ((ipkt_mem = BUF_MEM_new()) == NULL
-        || !WPACKET_init(&ipkt, ipkt_mem)
+    if (!WPACKET_init_static_len(&ipkt, info, *info_len, 0)
         || !WPACKET_memcpy(&ipkt, OSSL_ECH_CONTEXT_STRING,
                            sizeof(OSSL_ECH_CONTEXT_STRING) - 1)
         /*
@@ -138,14 +134,11 @@ int ossl_ech_make_enc_info(unsigned char *encoding, size_t encoding_length,
          * the context string being NUL terminated
          */
         || !WPACKET_put_bytes_u8(&ipkt, 0)
-        || !WPACKET_memcpy(&ipkt, encoding, encoding_length)) {
+        || !WPACKET_memcpy(&ipkt, encoding, encoding_length)
+        || !WPACKET_get_total_written(&ipkt, info_len)) {
         WPACKET_cleanup(&ipkt);
-        BUF_MEM_free(ipkt_mem);
         return 0;
     }
-    *info_len = sizeof(OSSL_ECH_CONTEXT_STRING) + encoding_length;
-    memcpy(info, WPACKET_get_curr(&ipkt) - *info_len, *info_len);
     WPACKET_cleanup(&ipkt);
-    BUF_MEM_free(ipkt_mem);
     return 1;
 }
