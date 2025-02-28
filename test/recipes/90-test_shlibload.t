@@ -61,6 +61,7 @@ ok(run(test(["shlibloadtest", "-no_atexit", $libcrypto, $libssl, $atexit_outfile
    "running shlibloadtest -no_atexit $atexit_outfile");
 ok(!check_atexit($atexit_outfile));
 
+$ENV{"MODULES_PATH"} = bldtop_dir("test");
 ok(run(test(["shlibloadtest", "-apache_like", $libcrypto, $libssl, $atexit_outfile])),
     "running shlibloadtest -apache_like $atexit_outfile");
 ok(!check_atexit($atexit_outfile));

@@ -28,7 +28,8 @@ typedef unsigned long (*OPENSSL_version_minor_t)(void);
 typedef unsigned long (*OPENSSL_version_patch_t)(void);
 typedef DSO * (*DSO_dsobyaddr_t)(void (*addr)(void), int flags);
 typedef int (*DSO_free_t)(DSO *dso);
-typedef int (*OPENSSL_init_ssl_t)(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings);
+typedef int (*do_test_just_init_t)(void);
+typedef int (*do_test_create_ssl_ctx_t)(void);
 
 typedef enum test_types_en {
     CRYPTO_FIRST,
@@ -60,71 +61,86 @@ static void atexit_handler(void)
     atexit_handler_done++;
 }
 
+#ifdef _WIN32
+# define MODULE_NAME	"mod_shlibtest.dll"
+#elif _MACOS
+# define MODULE_NAME	"mod_shlibtest.dyn
+#else
+# define MODULE_NAME	"mod_shlibtest.so"
+#endif
+
 static int test_apache_like(void)
 {
-    SD ssllib = SD_INIT;
-    int i;
-    int ok = 0;
+    SD testlib = SD_INIT;
+	int ok = 0;
+    char *mod_dir = getenv("MODULES_PATH");
+    char *mod_path = NULL;
     union {
         void (*func)(void);
         SD_SYM sym;
-    } symbols[5];
-    TLS_method_t myTLS_method;
-    SSL_CTX_new_t mySSL_CTX_new;
-    SSL_CTX_free_t mySSL_CTX_free;
-    SSL_CTX *ctx;
-    OPENSSL_init_ssl_t myOPENSSL_init_ssl;
+    } symbols[1];
+    do_test_just_init_t my_do_test_just_init;
+    do_test_create_ssl_ctx_t my_do_test_create_ssl_ctx;
 
-    if (!sd_load(path_ssl, &ssllib, SD_SHLIB)) {
-        fprintf(stderr, "Failed to load libssl\n");
+    if (mod_dir == NULL) {
+        fprintf(stderr, "MODULES_PATH not set\n");
         goto end;
     }
 
-    if (!sd_sym(ssllib, "OPENSSL_init_ssl", &symbols[3].sym)) {
-        fprintf(stderr, "Failed to load libssl symbols\n");
-        goto end;
-    }
-    myOPENSSL_init_ssl = (OPENSSL_init_ssl_t)symbols[3].func;
-    myOPENSSL_init_ssl(OPENSSL_INIT_ENGINE_ALL_BUILTIN, NULL);
-
-    if (!sd_close(ssllib)) {
-        fprintf(stderr, "Failed to close libssl\n");
-        goto end;
-    }
-    ssllib = SD_INIT;
-
-    if (!sd_load(path_ssl, &ssllib, SD_SHLIB)) {
-        fprintf(stderr, "Failed to load libssl\n");
+#if _WIN32
+    asprintf(&mod_path, "%s\\%s", mod_dir, MODULE_NAME);
+#else
+    asprintf(&mod_path, "%s/%s", mod_dir, MODULE_NAME);
+#endif
+    if (mod_path == NULL) {
+        fprintf(stderr, "no memery\n");
         goto end;
     }
 
-    if (!sd_sym(ssllib, "TLS_method", &symbols[0].sym)
-            || !sd_sym(ssllib, "SSL_CTX_new", &symbols[1].sym)
-            || !sd_sym(ssllib, "SSL_CTX_free", &symbols[2].sym)
-            || !sd_sym(ssllib, "OPENSSL_init_ssl", &symbols[3].sym)) {
-        fprintf(stderr, "Failed to load libssl symbols\n");
+    if (!sd_load(mod_path, &testlib, SD_SHLIB)) {
+        fprintf(stderr, "Failed to load %s\n", mod_path);
         goto end;
     }
-    myTLS_method = (TLS_method_t)symbols[0].func;
-    mySSL_CTX_new = (SSL_CTX_new_t)symbols[1].func;
-    mySSL_CTX_free = (SSL_CTX_free_t)symbols[2].func;
-    myOPENSSL_init_ssl = (OPENSSL_init_ssl_t)symbols[3].func;
 
-    ctx = mySSL_CTX_new(myTLS_method());
-    if (ctx == NULL) {
-        fprintf(stderr, "Failed to create SSL_CTX\n");
+    if (!sd_sym(testlib, "do_test_just_init", &symbols[0].sym)) {
+        fprintf(stderr, "Failed to resolve do_test_just_init\n");
         goto end;
     }
-    mySSL_CTX_free(ctx);
+    my_do_test_just_init = (do_test_just_init_t)symbols[0].func;
+    if (!my_do_test_just_init()) {
+        fprintf(stderr, "call to do_test_just_init() failed\n");
+        goto end;
+    }
 
-    if (!sd_close(ssllib)) {
+    if (!sd_close(testlib)) {
+        fprintf(stderr, "Failed to close %s\n", mod_path);
+        goto end;
+    }
+    testlib = SD_INIT;
+
+    if (!sd_load(mod_path, &testlib, SD_SHLIB)) {
+        fprintf(stderr, "Failed to reload %s\n", mod_path);
+        goto end;
+    }
+
+    if (!sd_sym(testlib, "do_test_create_ssl_ctx", &symbols[0].sym)) {
+        fprintf(stderr, "Failed to resolve do_test_create_ssl_ctx symbol\n");
+        goto end;
+    }
+    my_do_test_create_ssl_ctx = (do_test_create_ssl_ctx_t)symbols[0].func;
+    if (!my_do_test_create_ssl_ctx()) {
+        fprintf(stderr, "call to do_test_create_ssl_ctx() failed\n");
+        goto end;
+    }
+
+    if (!sd_close(testlib)) {
         fprintf(stderr, "Failed to close libssl after ctx\n");
         goto end;
     }
-    ssllib = SD_INIT;
 
     ok = 1;
 end:
+    free(mod_path);
     return ok;
 }
 
