@@ -424,6 +424,8 @@ static struct rcu_qp *update_qp(CRYPTO_RCU_LOCK *lock, uint32_t *curr_id, uint64
     /* wake up any waiters */
     pthread_cond_signal(&lock->alloc_signal);
     pthread_mutex_unlock(&lock->alloc_lock);
+    pthread_mutex_lock(&lock->prior_lock);
+    pthread_mutex_unlock(&lock->prior_lock);
     *count0 = ATOMIC_LOAD_N(uint64_t, &lock->qp_group[current_idx].users,
                             __ATOMIC_ACQUIRE);
     return &lock->qp_group[current_idx];
