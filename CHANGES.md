@@ -251,7 +251,11 @@ OpenSSL 3.5
 OpenSSL 3.4
 -----------
 
-### Changes between 3.4.0 and 3.4.1 [xx XXX xxxx]
+### Changes between 3.4.1 and 3.4.2 [xx XXX xxxx]
+
+ * none yet
+
+### Changes between 3.4.0 and 3.4.1 [11 Feb 2025]
 
  * Fixed RFC7250 handshakes with unauthenticated servers don't abort as expected.
 
