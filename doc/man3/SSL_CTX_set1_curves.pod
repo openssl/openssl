@@ -263,9 +263,9 @@ Assume the server I<list> is "P-521:P-256/P-384/X25519:ffdhe2048" and client
 I<list> is "P-521:*P-384" when connecting to such a server, meaning that the
 client supports C<P-521> but does not send a key share for this group to the
 server, and the client supports C<P-384> including key share for this group.
-With server preference a HRR will be triggered for C<P-521> despite the
-availability of a key share for P-384, which overlaps with a lower priority
-server-side tuple.
+With both server and client preference, an HRR will be triggered for C<P-521>
+despite the availability of a key share for P-384, which overlaps with a lower
+priority server-side tuple.
 
 Consider the same server and server preference but different client with I<list>
 "P-521:P-384:*ffdhe2048". When the client attempts connecting to the server,
@@ -293,8 +293,13 @@ order.
 
 - "*C:*D": The server accepts the "C" key share.
 
-- "F": The server will trigger an HRR for "F" because it did not receive a key
-share for "F".
+- "F": Even though it is not prepended with a "*", the client will send a key
+share for "F". The server will then accept the key share for "F".
+
+- "*E:C:A": The server prefers "A" but did not receive a key share
+for "A", so an HRR is triggered for "A".
+
+- "*E:B:*A": The server uses the key share for "A".
 
 Here are some examples where setting server/client preference will change the
 result:
@@ -303,20 +308,11 @@ result:
   - Client preference: The server uses the key share for "D".
   - Server preference: The server uses the key share for "C".
 
-- "*E:C:A"
-  - Client preference: The server uses the key share for "E".
-  - Server preference: The server prefers "A" but did not receive a key share
-for "A", so an HRR is triggered for "A".
-
-- "E:*C:A"
-  - Client preference: The server uses the key share for "C". Within a tuple,
-existing keyshares trump preference order.
-  - Server preference: The server prefers "A" but did not receive a key share
-for "A", so an HRR is triggered for "A".
-
-- "*E:B:*A"
-  - Client preference: The server uses the key share for "E".
-  - Server preference: The server uses the key share for "A".
+- "B:A:*C"
+  - Client preference: The server triggers an HRR for "B". For the server,
+"A" and "B" are considered comparable in security to each other. But because the
+client prefers "B", the server will trigger an HRR for "B".
+  - Server preference: The server triggers an HRR for "A".
 
 =head1 SEE ALSO
 
