@@ -189,7 +189,11 @@ int set_nameopt(const char *arg)
 unsigned long get_nameopt(void)
 {
     return
-        nmflag_set ? nmflag : XN_FLAG_SEP_CPLUS_SPC | ASN1_STRFLGS_UTF8_CONVERT;
+        nmflag_set ? nmflag : XN_FLAG_SEP_CPLUS_SPC | XN_FLAG_FN_SN
+                              | ASN1_STRFLGS_ESC_CTRL
+                              | ASN1_STRFLGS_UTF8_CONVERT
+                              | ASN1_STRFLGS_DUMP_UNKNOWN
+                              | ASN1_STRFLGS_DUMP_DER;
 }
 
 void dump_cert_text(BIO *out, X509 *x)

@@ -16,7 +16,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_x509");
 
-plan tests => 46;
+plan tests => 48;
 
 # Prevent MSys2 filename munging for arguments that look like file paths but
 # aren't
@@ -41,6 +41,18 @@ ok(run(app(["openssl", "x509", "-text", "-in", $pem, "-out", $out_utf8,
             "-nameopt", "utf8"])));
 is(cmp_text($out_utf8, $utf),
    0, 'Comparing utf8 output with cyrillic.utf8');
+
+SKIP: {
+    skip "EdDSA disabled", 2 if disabled("ecx");
+
+    $pem = srctop_file(@certs, "tab-in-dn.pem");
+    my $out_text = "out-tab-in-dn.text";
+    my $text = srctop_file(@certs, "tab-in-dn.text");
+    ok(run(app(["openssl", "x509", "-text", "-noout",
+            "-in", $pem, "-out", $out_text])));
+    is(cmp_text($out_text, $text),
+       0, 'Comparing default output with tab-in-dn.text');
+}
 
 SKIP: {
     skip "DES disabled", 1 if disabled("des");
