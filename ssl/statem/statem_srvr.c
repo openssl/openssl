@@ -27,7 +27,6 @@
 #include <openssl/core_names.h>
 #include <openssl/asn1t.h>
 #include <openssl/comp.h>
-#include "internal/comp.h"
 
 #define TICKET_NONCE_SIZE       8
 
