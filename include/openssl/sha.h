@@ -26,7 +26,7 @@ extern "C" {
 # define SHA_DIGEST_LENGTH 20
 
 # ifndef OPENSSL_NO_DEPRECATED_3_0
-/*
+/*-
  * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  * ! SHA_LONG has to be at least 32 bits wide.                    !
  * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

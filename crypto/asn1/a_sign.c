@@ -211,7 +211,7 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
         rv = pkey->ameth->item_sign(ctx, it, data, algor1, algor2, signature);
         if (rv == 1)
             outl = signature->length;
-        /*
+        /*-
          * Return value meanings:
          * <=0: error.
          *   1: method does everything.

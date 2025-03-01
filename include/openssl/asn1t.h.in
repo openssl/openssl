@@ -37,7 +37,7 @@ use OpenSSL::stackhash qw(generate_stack_macros);
 extern "C" {
 #endif
 
-/*
+/*-
  * These are the possible values for the itype field of the
  * ASN1_ITEM structure and determine how it is interpreted.
  *
@@ -134,7 +134,7 @@ extern "C" {
 
 /* This is a ASN1 type which just embeds a template */
 
-/*
+/*-
  * This pair helps declare a SEQUENCE. We can do:
  *
  *      ASN1_SEQUENCE(stname) = {
@@ -278,7 +278,7 @@ extern "C" {
                 #stname \
         ASN1_ITEM_end(tname)
 
-/*
+/*-
  * This pair helps declare a CHOICE type. We can do:
  *
  *      ASN1_CHOICE(chname) = {

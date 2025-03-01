@@ -264,7 +264,7 @@ static int add_lengths(int *out, int a, int b)
     return !err;
 }
 
-/*
+/*-
  * Check a certificate conforms to a specified set of constraints.
  * Return values:
  *  X509_V_OK: All constraints obeyed.
@@ -350,7 +350,7 @@ static int cn2dnsid(ASN1_STRING *cn, unsigned char **dnsid, size_t *idlen)
     *dnsid = NULL;
     *idlen = 0;
 
-    /*
+    /*-
      * Per RFC 6125, DNS-IDs representing internationalized domain names appear
      * in certificates in A-label encoded form:
      *

@@ -677,7 +677,7 @@ int ossl_x509v3_cache_extensions(X509 *x)
     return 0;
 }
 
-/*
+/*-
  * CA checks common to all purposes
  * return codes:
  * 0 not a CA
@@ -976,7 +976,7 @@ static int no_check_purpose(const X509_PURPOSE *xp, const X509 *x,
     return 1;
 }
 
-/*
+/*-
  * Various checks to see if one certificate potentially issued the second.
  * This can be used to prune a set of possible issuer certificates which
  * have been looked up using some simple method such as by subject name.
@@ -1020,7 +1020,7 @@ int ossl_x509_likely_issued(X509 *issuer, X509 *subject)
     return check_sig_alg_match(X509_get0_pubkey(issuer), subject);
 }
 
-/*
+/*-
  * Check if certificate I<issuer> is allowed to issue certificate I<subject>
  * according to the B<keyUsage> field of I<issuer> if present
  * depending on any proxyCertInfo extension of I<subject>.

@@ -549,7 +549,7 @@ int PEM_get_EVP_CIPHER_INFO(char *header, EVP_CIPHER_INFO *cipher)
         return 0;
     }
 
-    /*
+    /*-
      * https://tools.ietf.org/html/rfc1421#section-4.6.1.3
      * We expect "DEK-Info: algo[,hex-parameters]"
      */

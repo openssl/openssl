@@ -362,7 +362,7 @@
 # define SSL_ENC_KUZNYECHIK_IDX  23
 # define SSL_ENC_NUM_IDX         24
 
-/*
+/*-
  * SSL_kRSA <- RSA_ENC
  * SSL_kDH  <- DH_ENC & (RSA_ENC | RSA_SIGN | DSA_SIGN)
  * SSL_kDHE <- RSA_ENC | RSA_SIGN | DSA_SIGN
@@ -456,7 +456,7 @@ struct ssl_method_st {
  */
 # define TLS13_MAX_RESUMPTION_PSK_LENGTH      512
 
-/*
+/*-
  * Lets make this into an ASN.1 type structure as follows
  * SSL_SESSION_ID ::= SEQUENCE {
  *      version                 INTEGER,        -- structure version number
@@ -1044,7 +1044,7 @@ struct ssl_ctx_st {
          * ALPN.)
          */
 
-        /*
+        /*-
          * For a server, this contains a callback function that allows the
          * server to select the protocol for the connection.
          *   out: on successful return, this must point to the raw protocol
@@ -1750,7 +1750,7 @@ struct ssl_connection_st {
      */
     CLIENTHELLO_MSG *clienthello;
 
-    /*
+    /*-
      * no further mod of servername
      * 0 : call the servername extension callback.
      * 1 : prepare 2, allow last ack just after in server callback.
@@ -1780,7 +1780,7 @@ struct ssl_connection_st {
     /* What's been chosen */
     SRTP_PROTECTION_PROFILE *srtp_profile;
 # endif
-    /*
+    /*-
      * 1 if we are renegotiating.
      * 2 if we are a server and are inside a handshake
      * (i.e. not just sending a HelloRequest)
@@ -2008,7 +2008,7 @@ struct cert_pkey_st {
     EVP_PKEY *privatekey;
     /* Chain for this certificate */
     STACK_OF(X509) *chain;
-    /*
+    /*-
      * serverinfo data for this certificate.  The data is in TLS Extension
      * wire format, specifically it's a series of records like:
      *   uint16_t extension_type; // (RFC 5246, 7.4.1.4, Extension)
