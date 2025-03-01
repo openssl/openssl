@@ -408,16 +408,16 @@ L<SSL_get_rpoll_descriptor(3)>, L<SSL_get_wpoll_descriptor(3)>
 
 SSL_poll() was added in OpenSSL 3.3.
 
-Before @VERSION_QUIC_SERVER@, SSL_poll() did not support blocking operation and
+Before 3.5, SSL_poll() did not support blocking operation and
 would fail if called with a NULL I<timeout> parameter or a I<timeout> parameter
 pointing to a B<struct timeval> which was not zero.
 
-Before @VERSION_QUIC_SERVER@, the B<SSL_POLL_EVENT_EL> and B<SSL_POLL_EVENT_IC>
+Before 3.5, the B<SSL_POLL_EVENT_EL> and B<SSL_POLL_EVENT_IC>
 event types were not present.
 
 =head1 COPYRIGHT
 
-Copyright 2024 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2024-2025 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

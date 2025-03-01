@@ -36,6 +36,8 @@ changes:
   * Default encryption cipher for the `req`, `cms`, and `smime` applications
     changed from `des-ede3-cbc` to `aes-256-cbc`.
 
+  * Support for server side QUIC (RFC 9000)
+
 This release adds the following new features:
 
   * Allow the FIPS provider to optionally use the `JITTER` seed source.

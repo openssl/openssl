@@ -22,7 +22,7 @@ The SSL_new_domain() function creates a new QUIC event domain, represented as an
 SSL object. This is known as a QUIC domain SSL object (QDSO). The concept of a
 QUIC event domain is discussed in detail in L<openssl-quic-concurrency(7)>.
 
-The I<flags> argument to SSL_new_domain() accepts a set of domain flags. If the
+The I<flags> argument to SSL_new_domain() specifies a set of domain flags. If the
 I<flags> argument to SSL_new_domain() does not specify one of the flags
 B<SSL_DOMAIN_FLAG_SINGLE_THREAD>, B<SSL_DOMAIN_FLAG_MULTI_THREAD> or
 B<SSL_DOMAIN_FLAG_THREAD_ASSISTED>, the domain flags configured on the
@@ -105,7 +105,7 @@ L<SSL_CTX_set_domain_flags(3)>, L<openssl-quic-concurrency(7)>
 
 =head1 HISTORY
 
-These functions were added in OpenSSL @VERSION_QUIC_SERVER@.
+These functions were added in OpenSSL 3.5.
 
 =head1 COPYRIGHT
 
