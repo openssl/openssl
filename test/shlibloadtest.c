@@ -71,7 +71,8 @@ static void atexit_handler(void)
 static int test_apache_like(void)
 {
     SD testlib = SD_INIT;
-	int ok = 0;
+    int ok = 0;
+    int i;
     char *mod_dir = getenv("MODULES_PATH");
     char *mod_path = NULL;
     union {
@@ -95,45 +96,47 @@ static int test_apache_like(void)
 #else
     sprintf(mod_path, "%s/%s", mod_dir, MODULE_NAME);
 #endif
-    if (!sd_load(mod_path, &testlib, SD_SHLIB)) {
-        fprintf(stderr, "Failed to load %s\n", mod_path);
-        goto end;
-    }
+    for (i = 0; i < 1000000; i++) {
+        if (!sd_load(mod_path, &testlib, SD_SHLIB)) {
+            fprintf(stderr, "Failed to load %s\n", mod_path);
+            goto end;
+        }
 
-    if (!sd_sym(testlib, "do_test_create_ssl_ctx", &symbols[0].sym)) {
-        fprintf(stderr, "Failed to resolve do_test_just_init\n");
-        goto end;
-    }
-    my_do_test_create_ssl_ctx = (do_test_create_ssl_ctx_t)symbols[0].func;
-    if (!my_do_test_create_ssl_ctx()) {
-        fprintf(stderr, "call to do_test_just_init() failed\n");
-        goto end;
-    }
+        if (!sd_sym(testlib, "do_test_create_ssl_ctx", &symbols[0].sym)) {
+            fprintf(stderr, "Failed to resolve do_test_just_init\n");
+            goto end;
+        }
+        my_do_test_create_ssl_ctx = (do_test_create_ssl_ctx_t)symbols[0].func;
+        if (!my_do_test_create_ssl_ctx()) {
+            fprintf(stderr, "call to do_test_just_init() failed\n");
+            goto end;
+        }
 
-    if (!sd_close(testlib)) {
-        fprintf(stderr, "Failed to close %s\n", mod_path);
-        goto end;
-    }
-    testlib = SD_INIT;
+        if (!sd_close(testlib)) {
+            fprintf(stderr, "Failed to close %s\n", mod_path);
+            goto end;
+        }
+        testlib = SD_INIT;
 
-    if (!sd_load(mod_path, &testlib, SD_SHLIB)) {
-        fprintf(stderr, "Failed to reload %s\n", mod_path);
-        goto end;
-    }
+        if (!sd_load(mod_path, &testlib, SD_SHLIB)) {
+            fprintf(stderr, "Failed to reload %s\n", mod_path);
+            goto end;
+        }
 
-    if (!sd_sym(testlib, "do_test_create_ssl_ctx", &symbols[0].sym)) {
-        fprintf(stderr, "Failed to resolve do_test_create_ssl_ctx symbol\n");
-        goto end;
-    }
-    my_do_test_create_ssl_ctx = (do_test_create_ssl_ctx_t)symbols[0].func;
-    if (!my_do_test_create_ssl_ctx()) {
-        fprintf(stderr, "call to do_test_create_ssl_ctx() failed\n");
-        goto end;
-    }
+        if (!sd_sym(testlib, "do_test_create_ssl_ctx", &symbols[0].sym)) {
+            fprintf(stderr, "Failed to resolve do_test_create_ssl_ctx symbol\n");
+            goto end;
+        }
+        my_do_test_create_ssl_ctx = (do_test_create_ssl_ctx_t)symbols[0].func;
+        if (!my_do_test_create_ssl_ctx()) {
+            fprintf(stderr, "call to do_test_create_ssl_ctx() failed\n");
+            goto end;
+        }
 
-    if (!sd_close(testlib)) {
-        fprintf(stderr, "Failed to close libssl after ctx\n");
-        goto end;
+        if (!sd_close(testlib)) {
+            fprintf(stderr, "Failed to close libssl after ctx\n");
+            goto end;
+        }
     }
 
     ok = 1;
