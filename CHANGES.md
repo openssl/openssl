@@ -30,6 +30,10 @@ OpenSSL 3.5
 
 ### Changes between 3.4 and 3.5 [xx XXX xxxx]
 
+* Added server side support for QUIC
+
+   *Hugo Landau, Matt Caswell, Tomáš Mráz, Neil Horman, Sasha Nedvedicky, Andrew Dinh*
+
  * Added a `no-tls-deprecated-ec` configuration option.
 
    The `no-tls-deprecated-ec` option disables support for TLS elliptic curve
