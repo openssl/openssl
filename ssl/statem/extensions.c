@@ -92,7 +92,7 @@ typedef struct extensions_definition_st {
     /* Parse extension sent from client to server */
     int (*parse_ctos)(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
                       X509 *x, size_t chainidx);
-    /* Parse extension send from server to client */
+    /* Parse extension sent from server to client */
     int (*parse_stoc)(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
                       X509 *x, size_t chainidx);
     /* Construct extension sent from server to client */
