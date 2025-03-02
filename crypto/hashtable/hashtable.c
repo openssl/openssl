@@ -218,7 +218,7 @@ HT *ossl_ht_new(const HT_CONFIG *conf)
         goto err;
 
     if (new->config.ht_hash_fn == NULL)
-        new->config.ht_hash_fn = fnv1a_hash;
+        new->config.ht_hash_fn = ossl_fnv1a_hash;
 
     return new;
 

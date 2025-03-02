@@ -133,9 +133,73 @@ static const TLS_GROUP_CONSTANTS group_list[] = {
  *
  * - The 1st field is the TLS group name used in SSL_CTX_set_group_list(),
  *   aliases repeat everything but the first field.
+ *
+ * Curves 1..22 were deprecated in:
+ *
+ *   https://www.rfc-editor.org/rfc/rfc8422.html
+ *
+ * leaving just:
+ *
+ *   enum {
+ *       deprecated(1..22),
+ *       secp256r1 (23), secp384r1 (24), secp521r1 (25),
+ *       x25519(29), x448(30),
+ *       reserved (0xFE00..0xFEFF),
+ *       deprecated(0xFF01..0xFF02),
+ *       (0xFFFF)
+ *   } NamedCurve;
+ *
+ * and those added later (FFDHE, brainpool, ML-KEM)
  */
 static const OSSL_PARAM param_group_list[][11] = {
 # ifndef OPENSSL_NO_EC
+#  if !defined(OPENSSL_NO_ML_KEM)
+#   if !defined(OPENSSL_NO_ECX)
+    TLS_GROUP_ENTRY("X25519MLKEM768", "", "X25519MLKEM768", 41),
+#   endif
+#  endif
+#  ifndef FIPS_MODULE
+    TLS_GROUP_ENTRY("x25519", "X25519", "X25519", 28),
+    TLS_GROUP_ENTRY("x448", "X448", "X448", 29),
+#  endif
+    TLS_GROUP_ENTRY("secp256r1", "prime256v1", "EC", 22),
+    TLS_GROUP_ENTRY("P-256", "prime256v1", "EC", 22), /* Alias of above */
+    TLS_GROUP_ENTRY("secp384r1", "secp384r1", "EC", 23),
+    TLS_GROUP_ENTRY("P-384", "secp384r1", "EC", 23), /* Alias of above */
+    TLS_GROUP_ENTRY("secp521r1", "secp521r1", "EC", 24),
+    TLS_GROUP_ENTRY("P-521", "secp521r1", "EC", 24), /* Alias of above */
+# endif /* OPENSSL_NO_EC */
+# ifndef OPENSSL_NO_DH
+    /* Security bit values for FFDHE groups are as per RFC 7919 */
+    TLS_GROUP_ENTRY("ffdhe2048", "ffdhe2048", "DH", 33),
+    TLS_GROUP_ENTRY("ffdhe3072", "ffdhe3072", "DH", 34),
+# endif
+# if !defined(OPENSSL_NO_ML_KEM)
+    /* https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-8 */
+    TLS_GROUP_ENTRY("MLKEM512", "", "ML-KEM-512", 38),
+    TLS_GROUP_ENTRY("MLKEM768", "", "ML-KEM-768", 39),
+    TLS_GROUP_ENTRY("MLKEM1024", "", "ML-KEM-1024", 40),
+# endif
+# ifndef OPENSSL_NO_EC
+#  ifndef FIPS_MODULE
+    TLS_GROUP_ENTRY("brainpoolP256r1", "brainpoolP256r1", "EC", 25),
+    TLS_GROUP_ENTRY("brainpoolP384r1", "brainpoolP384r1", "EC", 26),
+    TLS_GROUP_ENTRY("brainpoolP512r1", "brainpoolP512r1", "EC", 27),
+    TLS_GROUP_ENTRY("brainpoolP256r1tls13", "brainpoolP256r1", "EC", 30),
+    TLS_GROUP_ENTRY("brainpoolP384r1tls13", "brainpoolP384r1", "EC", 31),
+    TLS_GROUP_ENTRY("brainpoolP512r1tls13", "brainpoolP512r1", "EC", 32),
+#  endif
+#  ifndef OPENSSL_NO_ML_KEM
+    TLS_GROUP_ENTRY("SecP256r1MLKEM768", "", "SecP256r1MLKEM768", 42),
+    TLS_GROUP_ENTRY("SecP384r1MLKEM1024", "", "SecP384r1MLKEM1024", 43),
+#  endif
+# endif
+# ifndef OPENSSL_NO_DH
+    TLS_GROUP_ENTRY("ffdhe4096", "ffdhe4096", "DH", 35),
+    TLS_GROUP_ENTRY("ffdhe6144", "ffdhe6144", "DH", 36),
+    TLS_GROUP_ENTRY("ffdhe8192", "ffdhe8192", "DH", 37),
+# endif
+# ifndef OPENSSL_NO_TLS_DEPRECATED_EC
 #  ifndef OPENSSL_NO_EC2M
     TLS_GROUP_ENTRY("sect163k1", "sect163k1", "EC", 0),
     TLS_GROUP_ENTRY("K-163", "sect163k1", "EC", 0), /* Alias of above */
@@ -190,44 +254,7 @@ static const OSSL_PARAM param_group_list[][11] = {
 #  ifndef FIPS_MODULE
     TLS_GROUP_ENTRY("secp256k1", "secp256k1", "EC", 21),
 #  endif
-    TLS_GROUP_ENTRY("secp256r1", "prime256v1", "EC", 22),
-    TLS_GROUP_ENTRY("P-256", "prime256v1", "EC", 22), /* Alias of above */
-    TLS_GROUP_ENTRY("secp384r1", "secp384r1", "EC", 23),
-    TLS_GROUP_ENTRY("P-384", "secp384r1", "EC", 23), /* Alias of above */
-    TLS_GROUP_ENTRY("secp521r1", "secp521r1", "EC", 24),
-    TLS_GROUP_ENTRY("P-521", "secp521r1", "EC", 24), /* Alias of above */
-#  ifndef FIPS_MODULE
-    TLS_GROUP_ENTRY("brainpoolP256r1", "brainpoolP256r1", "EC", 25),
-    TLS_GROUP_ENTRY("brainpoolP384r1", "brainpoolP384r1", "EC", 26),
-    TLS_GROUP_ENTRY("brainpoolP512r1", "brainpoolP512r1", "EC", 27),
-    TLS_GROUP_ENTRY("x25519", "X25519", "X25519", 28),
-    TLS_GROUP_ENTRY("x448", "X448", "X448", 29),
-    TLS_GROUP_ENTRY("brainpoolP256r1tls13", "brainpoolP256r1", "EC", 30),
-    TLS_GROUP_ENTRY("brainpoolP384r1tls13", "brainpoolP384r1", "EC", 31),
-    TLS_GROUP_ENTRY("brainpoolP512r1tls13", "brainpoolP512r1", "EC", 32),
-#  endif
-# endif /* OPENSSL_NO_EC */
-# ifndef OPENSSL_NO_DH
-    /* Security bit values for FFDHE groups are as per RFC 7919 */
-    TLS_GROUP_ENTRY("ffdhe2048", "ffdhe2048", "DH", 33),
-    TLS_GROUP_ENTRY("ffdhe3072", "ffdhe3072", "DH", 34),
-    TLS_GROUP_ENTRY("ffdhe4096", "ffdhe4096", "DH", 35),
-    TLS_GROUP_ENTRY("ffdhe6144", "ffdhe6144", "DH", 36),
-    TLS_GROUP_ENTRY("ffdhe8192", "ffdhe8192", "DH", 37),
-# endif
-# if !defined(OPENSSL_NO_ML_KEM)
-    /* https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-8 */
-    TLS_GROUP_ENTRY("MLKEM512", "", "ML-KEM-512", 38),
-    TLS_GROUP_ENTRY("MLKEM768", "", "ML-KEM-768", 39),
-    TLS_GROUP_ENTRY("MLKEM1024", "", "ML-KEM-1024", 40),
-# endif
-# if !defined(OPENSSL_NO_ML_KEM) && !defined(OPENSSL_NO_EC)
-#  if !defined(OPENSSL_NO_ECX)
-    TLS_GROUP_ENTRY("X25519MLKEM768", "", "X25519MLKEM768", 41),
-#  endif
-    TLS_GROUP_ENTRY("SecP256r1MLKEM768", "", "SecP256r1MLKEM768", 42),
-    TLS_GROUP_ENTRY("SecP384r1MLKEM1024", "", "SecP384r1MLKEM1024", 43),
-# endif
+# endif /* !defined(OPENSSL_NO_TLS_DEPRECATED_EC) */
 };
 #endif /* !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_ML_KEM) */
 

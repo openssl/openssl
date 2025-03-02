@@ -210,6 +210,34 @@ int OSSL_DECODER_CTX_set_input_structure(OSSL_DECODER_CTX *ctx,
     return 1;
 }
 
+OSSL_DECODER_INSTANCE *
+ossl_decoder_instance_new_forprov(OSSL_DECODER *decoder, void *provctx,
+                                  const char *input_structure)
+{
+    void *decoderctx;
+
+    if (!ossl_assert(decoder != NULL)) {
+        ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    decoderctx = decoder->newctx(provctx);
+    if (decoderctx == NULL)
+        return 0;
+    if (input_structure != NULL && decoder->set_ctx_params != NULL) {
+        OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END };
+
+        params[0] =
+            OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_STRUCTURE,
+                                             (char *)input_structure, 0);
+        if (!decoder->set_ctx_params(decoderctx, params)) {
+            decoder->freectx(decoderctx);
+            return 0;
+        }
+    }
+    return ossl_decoder_instance_new(decoder, decoderctx);
+}
+
 OSSL_DECODER_INSTANCE *ossl_decoder_instance_new(OSSL_DECODER *decoder,
                                                  void *decoderctx)
 {
@@ -447,6 +475,20 @@ static void collect_extra_decoder(OSSL_DECODER *decoder, void *arg)
 
         if ((decoderctx = decoder->newctx(provctx)) == NULL)
             return;
+
+        if (decoder->set_ctx_params != NULL
+            && data->ctx->input_structure != NULL) {
+            OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END };
+            const char *str = data->ctx->input_structure;
+
+            params[0] =
+                OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_STRUCTURE,
+                                                 (char *)str, 0);
+            if (!decoder->set_ctx_params(decoderctx, params)) {
+                decoder->freectx(decoderctx);
+                return;
+            }
+        }
 
         if ((di = ossl_decoder_instance_new(decoder, decoderctx)) == NULL) {
             decoder->freectx(decoderctx);
@@ -733,6 +775,8 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
     struct decoder_process_data_st new_data;
     const char *data_type = NULL;
     const char *data_structure = NULL;
+    /* Saved to restore on return, mutated in PEM->DER transition. */
+    const char *start_input_type = ctx->start_input_type;
 
     /*
      * This is an indicator up the call stack that something was indeed
@@ -823,6 +867,23 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
         if (p != NULL && !OSSL_PARAM_get_utf8_string_ptr(p, &data_structure))
             goto end;
 
+        /* Get the new input type if there is one */
+        p = OSSL_PARAM_locate_const(params, OSSL_OBJECT_PARAM_INPUT_TYPE);
+        if (p != NULL) {
+            if (!OSSL_PARAM_get_utf8_string_ptr(p, &ctx->start_input_type))
+                goto end;
+            /*
+             * When switching PKCS8 from PEM to DER we decrypt the data if needed
+             * and then determine the algorithm OID.  Likewise, with SPKI, only
+             * this time sans decryption.
+             */
+            if (ctx->input_structure != NULL
+                && (OPENSSL_strcasecmp(ctx->input_structure, "SubjectPublicKeyInfo") == 0
+                    || OPENSSL_strcasecmp(data_structure, "PrivateKeyInfo") == 0
+                    || OPENSSL_strcasecmp(ctx->input_structure, "PrivateKeyInfo") == 0))
+                data->flag_input_structure_checked = 1;
+        }
+
         /*
          * If the data structure is "type-specific" and the data type is
          * given, we drop the data structure.  The reasoning is that the
@@ -873,6 +934,7 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
             sk_OSSL_DECODER_INSTANCE_value(ctx->decoder_insts, i);
         OSSL_DECODER *new_decoder =
             OSSL_DECODER_INSTANCE_get_decoder(new_decoder_inst);
+        const char *new_decoder_name = NULL;
         void *new_decoderctx =
             OSSL_DECODER_INSTANCE_get_decoder_ctx(new_decoder_inst);
         const char *new_input_type =
@@ -883,12 +945,13 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
                                                       &n_i_s_was_set);
 
         OSSL_TRACE_BEGIN(DECODER) {
+            new_decoder_name = OSSL_DECODER_get0_name(new_decoder);
             BIO_printf(trc_out,
                        "(ctx %p) %s [%u] Considering decoder instance %p (decoder %p):\n"
                        "    %s with %s\n",
                        (void *)new_data.ctx, LEVEL, (unsigned int)i,
                        (void *)new_decoder_inst, (void *)new_decoder,
-                       OSSL_DECODER_get0_name(new_decoder),
+                       new_decoder_name,
                        OSSL_DECODER_get0_properties(new_decoder));
         } OSSL_TRACE_END(DECODER);
 
@@ -993,9 +1056,9 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
         /* Recurse */
         OSSL_TRACE_BEGIN(DECODER) {
             BIO_printf(trc_out,
-                       "(ctx %p) %s [%u] Running decoder instance %p\n",
+                       "(ctx %p) %s [%u] Running decoder instance %s (%p)\n",
                        (void *)new_data.ctx, LEVEL, (unsigned int)i,
-                       (void *)new_decoder_inst);
+                       new_decoder_name, (void *)new_decoder_inst);
         } OSSL_TRACE_END(DECODER);
 
         /*
@@ -1015,10 +1078,10 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
 
         OSSL_TRACE_BEGIN(DECODER) {
             BIO_printf(trc_out,
-                       "(ctx %p) %s [%u] Running decoder instance %p => %d"
+                       "(ctx %p) %s [%u] Running decoder instance %s (%p) => %d"
                        " (recursed further: %s, construct called: %s)\n",
                        (void *)new_data.ctx, LEVEL, (unsigned int)i,
-                       (void *)new_decoder_inst, ok,
+                       new_decoder_name, (void *)new_decoder_inst, ok,
                        new_data.flag_next_level_called ? "yes" : "no",
                        new_data.flag_construct_called ? "yes" : "no");
         } OSSL_TRACE_END(DECODER);
@@ -1043,5 +1106,6 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
  end:
     ossl_core_bio_free(cbio);
     BIO_free(new_data.bio);
+    ctx->start_input_type = start_input_type;
     return ok;
 }

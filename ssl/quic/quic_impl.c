@@ -4543,6 +4543,7 @@ SSL *ossl_quic_accept_connection(SSL *ssl, uint64_t flags)
     int ret;
     QCTX ctx;
     SSL *conn_ssl = NULL;
+    SSL_CONNECTION *conn = NULL;
     QUIC_CHANNEL *new_ch = NULL;
     QUIC_CONNECTION *qc;
     int no_block = ((flags & SSL_ACCEPT_CONNECTION_NO_BLOCK) != 0);
@@ -4578,8 +4579,6 @@ SSL *ossl_quic_accept_connection(SSL *ssl, uint64_t flags)
         ossl_quic_reactor_tick(ossl_quic_engine_get0_reactor(ctx.ql->engine), 0);
 
         new_ch = ossl_quic_port_pop_incoming(ctx.ql->port);
-        if (new_ch == NULL)
-            goto out;
     }
 
     /*
@@ -4587,11 +4586,10 @@ SSL *ossl_quic_accept_connection(SSL *ssl, uint64_t flags)
      * created channel, so once we pop the new channel from the port above
      * we just need to extract it
      */
-    conn_ssl = ossl_quic_channel_get0_tls(new_ch);
-    if (conn_ssl == NULL)
-        goto out;
-    conn_ssl = SSL_CONNECTION_GET_USER_SSL(SSL_CONNECTION_FROM_SSL(conn_ssl));
-    if (conn_ssl == NULL)
+    if (new_ch == NULL
+        || (conn_ssl = ossl_quic_channel_get0_tls(new_ch)) == NULL
+        || (conn = SSL_CONNECTION_FROM_SSL(conn_ssl)) == NULL
+        || (conn_ssl = SSL_CONNECTION_GET_USER_SSL(conn)) == NULL)
         goto out;
     qc = (QUIC_CONNECTION *)conn_ssl;
     qc->listener = ctx.ql;
@@ -4657,7 +4655,7 @@ struct ssl_token_store_st {
 
 static unsigned long quic_token_hash(const QUIC_TOKEN *item)
 {
-    return (unsigned long)fnv1a_hash(item->hashkey, item->hashkey_len);
+    return (unsigned long)ossl_fnv1a_hash(item->hashkey, item->hashkey_len);
 }
 
 static int quic_token_cmp(const QUIC_TOKEN *a, const QUIC_TOKEN *b)

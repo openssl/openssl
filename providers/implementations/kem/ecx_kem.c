@@ -162,6 +162,7 @@ static void *ecxkem_newctx(void *provctx)
     if (ctx == NULL)
         return NULL;
     ctx->libctx = PROV_LIBCTX_OF(provctx);
+    ctx->mode = KEM_MODE_DHKEM;
 
     return ctx;
 }

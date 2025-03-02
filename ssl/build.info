@@ -13,7 +13,7 @@ SOURCE[../libssl]=\
         ssl_lib.c ssl_cert.c ssl_sess.c \
         ssl_ciph.c ssl_stat.c ssl_rsa.c \
         ssl_asn1.c ssl_txt.c ssl_init.c ssl_conf.c  ssl_mcnf.c \
-        bio_ssl.c ssl_err.c ssl_err_legacy.c tls_srp.c t1_trce.c ssl_utst.c \
+        bio_ssl.c ssl_err_legacy.c tls_srp.c t1_trce.c ssl_utst.c \
         statem/statem.c \
         ssl_cert_comp.c \
         tls_depr.c
@@ -21,8 +21,7 @@ SOURCE[../libssl]=\
 # For shared builds we need to include the libcrypto packet.c and quic_vlint.c
 # in libssl as well.
 SHARED_SOURCE[../libssl]=\
-        ../crypto/packet.c ../crypto/quic_vlint.c ../crypto/time.c \
-        ../crypto/hashtable/hashfunc.c ../crypto/siphash/siphash.c
+        ../crypto/packet.c ../crypto/quic_vlint.c ../crypto/time.c
 
 IF[{- !$disabled{'deprecated-3.0'} -}]
   SOURCE[../libssl]=ssl_rsa_legacy.c
@@ -30,4 +29,10 @@ ENDIF
 
 IF[{- !$disabled{quic} -}]
   SOURCE[../libssl]=priority_queue.c
+  SHARED_SOURCE[../libssl] = ../crypto/hashtable/hashfunc.c
+  IF[{- $disabled{siphash} -}]
+    SOURCE[../libssl]=../crypto/siphash/siphash.c
+  ELSE
+    SHARED_SOURCE[../libssl]=../crypto/siphash/siphash.c
+  ENDIF
 ENDIF

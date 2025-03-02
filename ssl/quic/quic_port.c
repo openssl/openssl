@@ -498,15 +498,18 @@ static SSL *port_new_handshake_layer(QUIC_PORT *port, QUIC_CHANNEL *ch)
     return tls;
 }
 
-static QUIC_CHANNEL *port_make_channel(QUIC_PORT *port, SSL *tls, int is_server)
+static QUIC_CHANNEL *port_make_channel(QUIC_PORT *port, SSL *tls, OSSL_QRX *qrx,
+                                       int is_server, int is_tserver)
 {
     QUIC_CHANNEL_ARGS args = {0};
     QUIC_CHANNEL *ch;
 
-    args.port       = port;
-    args.is_server  = is_server;
-    args.lcidm      = port->lcidm;
-    args.srtm       = port->srtm;
+    args.port          = port;
+    args.is_server     = is_server;
+    args.lcidm         = port->lcidm;
+    args.srtm          = port->srtm;
+    args.qrx           = qrx;
+    args.is_tserver_ch = is_tserver;
 
     /*
      * Creating a a new channel is made a bit tricky here as there is a
@@ -556,7 +559,8 @@ static QUIC_CHANNEL *port_make_channel(QUIC_PORT *port, SSL *tls, int is_server)
 
 QUIC_CHANNEL *ossl_quic_port_create_outgoing(QUIC_PORT *port, SSL *tls)
 {
-    return port_make_channel(port, tls, /*is_server=*/0);
+    return port_make_channel(port, tls, NULL, /* is_server= */ 0,
+                             /* is_tserver= */ 0);
 }
 
 QUIC_CHANNEL *ossl_quic_port_create_incoming(QUIC_PORT *port, SSL *tls)
@@ -565,7 +569,12 @@ QUIC_CHANNEL *ossl_quic_port_create_incoming(QUIC_PORT *port, SSL *tls)
 
     assert(port->tserver_ch == NULL);
 
-    ch = port_make_channel(port, tls, /*is_server=*/1);
+    /*
+     * pass -1 for qrx to indicate port will create qrx
+     * later in port_default_packet_handler() when calling port_bind_channel().
+     */
+    ch = port_make_channel(port, tls, NULL, /* is_server= */ 1,
+                           /* is_tserver_ch */ 1);
     port->tserver_ch = ch;
     port->allow_incoming = 1;
     return ch;
@@ -708,7 +717,8 @@ static void port_rx_pre(QUIC_PORT *port)
  */
 static void port_bind_channel(QUIC_PORT *port, const BIO_ADDR *peer,
                               const QUIC_CONN_ID *scid, const QUIC_CONN_ID *dcid,
-                              const QUIC_CONN_ID *odcid, QUIC_CHANNEL **new_ch)
+                              const QUIC_CONN_ID *odcid, OSSL_QRX *qrx,
+                              QUIC_CHANNEL **new_ch)
 {
     QUIC_CHANNEL *ch;
 
@@ -719,8 +729,13 @@ static void port_bind_channel(QUIC_PORT *port, const BIO_ADDR *peer,
     if (port->tserver_ch != NULL) {
         ch = port->tserver_ch;
         port->tserver_ch = NULL;
+        ossl_quic_channel_bind_qrx(ch, qrx);
+        ossl_qrx_set_msg_callback(ch->qrx, ch->msg_callback,
+                                  ch->msg_callback_ssl);
+        ossl_qrx_set_msg_callback_arg(ch->qrx, ch->msg_callback_arg);
     } else {
-        ch = port_make_channel(port, NULL, /* is_server= */1);
+        ch = port_make_channel(port, NULL, qrx, /* is_server= */ 1,
+                               /* is_tserver */ 0);
     }
 
     if (ch == NULL)
@@ -853,8 +868,10 @@ static int marshal_validation_token(QUIC_VALIDATION_TOKEN *token,
     BUF_MEM *buf_mem = BUF_MEM_new();
 
     if (buffer == NULL || buf_mem == NULL
-        || (token->is_retry != 0 && token->is_retry != 1))
+        || (token->is_retry != 0 && token->is_retry != 1)) {
+        BUF_MEM_free(buf_mem);
         return 0;
+    }
 
     if (!WPACKET_init(&wpkt, buf_mem)
         || !WPACKET_memset(&wpkt, token->is_retry, 1)
@@ -1442,7 +1459,11 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
     QUIC_CHANNEL *ch = NULL, *new_ch = NULL;
     QUIC_CONN_ID odcid, scid;
     uint8_t gen_new_token = 0;
+    OSSL_QRX *qrx = NULL;
+    OSSL_QRX *qrx_src = NULL;
+    OSSL_QRX_ARGS qrx_args = {0};
     uint64_t cause_flags = 0;
+    OSSL_QRX_PKT *qrx_pkt = NULL;
 
     /* Don't handle anything if we are no longer running. */
     if (!ossl_quic_port_is_running(port))
@@ -1527,6 +1548,48 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
     odcid.id_len = 0;
 
     /*
+     * Create qrx now so we can check integrity of packet
+     * which does not belong to any channel.
+     */
+    qrx_args.libctx             = port->engine->libctx;
+    qrx_args.demux              = port->demux;
+    qrx_args.short_conn_id_len  = dcid->id_len;
+    qrx_args.max_deferred       = 32;
+    qrx = ossl_qrx_new(&qrx_args);
+    if (qrx == NULL)
+        goto undesirable;
+
+    /*
+     * Derive secrets for qrx only.
+     */
+    if (!ossl_quic_provide_initial_secret(port->engine->libctx,
+                                          port->engine->propq,
+                                          &hdr.dst_conn_id,
+                                          /* is_server */ 1,
+                                          qrx, NULL))
+        goto undesirable;
+
+    if (ossl_qrx_validate_initial_packet(qrx, e, (const QUIC_CONN_ID *)dcid) == 0)
+        goto undesirable;
+
+    if (port->validate_addr == 0) {
+        /*
+         * Forget qrx, because it becomes (almost) useless here. We must let
+         * channel to create a new QRX for connection ID server chooses. The
+         * validation keys for new DCID will be derived by
+         * ossl_quic_channel_on_new_conn() when we will be creating channel.
+         * See RFC 9000 section 7.2 negotiating connection id to better
+         * understand what's going on here.
+         *
+         * Did we say qrx is almost useless? Why? Because qrx remembers packets
+         * we just validated. Those packets must be injected to channel we are
+         * going to create. We use qrx_src alias so we can read packets from
+         * qrx and inject them to channel.
+         */
+         qrx_src = qrx;
+         qrx = NULL;
+    }
+    /*
      * TODO(QUIC FUTURE): there should be some logic similar to accounting half-open
      * states in TCP. If we reach certain threshold, then we want to
      * validate clients.
@@ -1558,13 +1621,34 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
          * the request is valid
          */
         if (port->validate_addr == 1) {
+            /*
+             * Again: we should consider saving initial encryption level
+             * secrets to token here to save some CPU cycles.
+             */
             port_send_retry(port, &e->peer, &hdr);
             goto undesirable;
         }
+
+        /*
+         * client is under amplification limit, until it completes
+         * handshake.
+         *
+         * forget qrx so channel can create a new one
+         * with valid initial encryption level keys.
+         */
+        qrx_src = qrx;
+        qrx = NULL;
     }
 
     port_bind_channel(port, &e->peer, &scid, &hdr.dst_conn_id,
-                      &odcid, &new_ch);
+                      &odcid, qrx, &new_ch);
+
+    /*
+     * if packet validates it gets moved to channel, we've just bound
+     * to port.
+     */
+    if (new_ch == NULL)
+        goto undesirable;
 
     /*
      * Generate a token for sending in a later NEW_TOKEN frame
@@ -1572,17 +1656,36 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
     if (gen_new_token == 1)
         generate_new_token(new_ch, &e->peer);
 
-    /*
-     * The channel will do all the LCID registration needed, but as an
-     * optimization inject this packet directly into the channel's QRX for
-     * processing without going through the DEMUX again.
-     */
-    if (new_ch != NULL) {
-        ossl_qrx_inject_urxe(new_ch->qrx, e);
-        return;
+    if (qrx != NULL) {
+        /*
+         * The qrx belongs to channel now, so don't free it.
+         */
+        qrx = NULL;
+    } else {
+        /*
+         * We still need to salvage packets from almost forgotten qrx
+         * and pass them to channel.
+         */
+        while (ossl_qrx_read_pkt(qrx_src, &qrx_pkt) == 1)
+            ossl_quic_channel_inject_pkt(new_ch, qrx_pkt);
     }
 
+    /*
+     * If function reaches this place, then packet got validated in
+     * ossl_qrx_validate_initial_packet(). Keep in mind the function
+     * ossl_qrx_validate_initial_packet() decrypts the packet to validate it.
+     * If packet validation was successful (and it was because we are here),
+     * then the function puts the packet to qrx->rx_pending. We must not call
+     * ossl_qrx_inject_urxe() here now, because we don't want to insert
+     * the packet to qrx->urx_pending which keeps packet waiting for decryption.
+     *
+     * We are going to call ossl_quic_demux_release_urxe() to dispose buffer
+     * which still holds encrypted data.
+     */
+
 undesirable:
+    ossl_qrx_free(qrx);
+    ossl_qrx_free(qrx_src);
     ossl_quic_demux_release_urxe(port->demux, e);
 }
 

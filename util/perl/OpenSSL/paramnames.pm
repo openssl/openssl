@@ -80,6 +80,7 @@ my %params = (
     'OBJECT_PARAM_REFERENCE' =>         "reference",# OCTET_STRING
     'OBJECT_PARAM_DATA' =>              "data",# OCTET_STRING or UTF8_STRING
     'OBJECT_PARAM_DESC' =>              "desc",     # UTF8_STRING
+    'OBJECT_PARAM_INPUT_TYPE' =>        "input-type", # UTF8_STRING
 
 # Algorithm parameters
 # If "engine",or "properties",are specified, they should always be paired

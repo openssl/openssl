@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
@@ -198,30 +199,10 @@ static const unsigned char ecformats_default[] = {
     TLSEXT_ECPOINTFORMAT_ansiX962_compressed_char2
 };
 
-/* The default curves */
-static const uint16_t supported_groups_default[] = {
-    OSSL_TLS_GROUP_ID_x25519,        /* X25519 (29) */
-    OSSL_TLS_GROUP_ID_secp256r1,     /* secp256r1 (23) */
-    OSSL_TLS_GROUP_ID_x448,          /* X448 (30) */
-    OSSL_TLS_GROUP_ID_secp521r1,     /* secp521r1 (25) */
-    OSSL_TLS_GROUP_ID_secp384r1,     /* secp384r1 (24) */
-    OSSL_TLS_GROUP_ID_gc256A,        /* GC256A (34) */
-    OSSL_TLS_GROUP_ID_gc256B,        /* GC256B (35) */
-    OSSL_TLS_GROUP_ID_gc256C,        /* GC256C (36) */
-    OSSL_TLS_GROUP_ID_gc256D,        /* GC256D (37) */
-    OSSL_TLS_GROUP_ID_gc512A,        /* GC512A (38) */
-    OSSL_TLS_GROUP_ID_gc512B,        /* GC512B (39) */
-    OSSL_TLS_GROUP_ID_gc512C,        /* GC512C (40) */
-    OSSL_TLS_GROUP_ID_ffdhe2048,     /* ffdhe2048 (0x100) */
-    OSSL_TLS_GROUP_ID_ffdhe3072,     /* ffdhe3072 (0x101) */
-    OSSL_TLS_GROUP_ID_ffdhe4096,     /* ffdhe4096 (0x102) */
-    OSSL_TLS_GROUP_ID_ffdhe6144,     /* ffdhe6144 (0x103) */
-    OSSL_TLS_GROUP_ID_ffdhe8192,     /* ffdhe8192 (0x104) */
-};
-
 /* Group list string of the built-in pseudo group DEFAULT */
 #define DEFAULT_GROUP_NAME "DEFAULT"
-#define DEFAULT_GROUP_LIST "X25519:secp256r1:X448:secp521r1:secp384r1:GC256A:GC256B:GC256C:GC256D:GC512A:GC512B:GC512C:ffdhe2048:ffdhe3072:ffdhe4096:ffdhe6144:ffdhe8192",
+#define TLS_DEFAULT_GROUP_LIST \
+    "?*X25519MLKEM768 / ?*X25519:?secp256r1 / ?X448:?secp384r1:?secp521r1 / ?ffdhe2048:?ffdhe3072"
 
 static const uint16_t suiteb_curves[] = {
     OSSL_TLS_GROUP_ID_secp256r1,
@@ -380,55 +361,10 @@ static int discover_provider_groups(OSSL_PROVIDER *provider, void *vctx)
 
 int ssl_load_groups(SSL_CTX *ctx)
 {
-    size_t i, j, num_deflt_grps = 0;
-    uint16_t tmp_supp_groups[OSSL_NELEM(supported_groups_default)];
-
     if (!OSSL_PROVIDER_do_all(ctx->libctx, discover_provider_groups, ctx))
         return 0;
 
-    for (i = 0; i < OSSL_NELEM(supported_groups_default); i++) {
-        for (j = 0; j < ctx->group_list_len; j++) {
-            if (ctx->group_list[j].group_id == supported_groups_default[i]) {
-                tmp_supp_groups[num_deflt_grps++] = ctx->group_list[j].group_id;
-                break;
-            }
-        }
-    }
-
-    if (num_deflt_grps == 0)
-        return 1;
-
-    ctx->ext.supported_groups_default
-        = OPENSSL_malloc(sizeof(uint16_t) * num_deflt_grps);
-
-    if (ctx->ext.supported_groups_default == NULL)
-        return 0;
-
-    memcpy(ctx->ext.supported_groups_default,
-           tmp_supp_groups,
-           num_deflt_grps * sizeof(tmp_supp_groups[0]));
-    ctx->ext.supported_groups_default_len = num_deflt_grps;
-
-    /*
-     * Default groups have no explicit key share nor a tuple,
-     * hence we'll generate a key share for the first group and
-     * define one big tuple consisting of all default groups
-     */
-    if (ctx->ext.keyshares == NULL)
-        ctx->ext.keyshares = OPENSSL_malloc(sizeof(*ctx->ext.keyshares));
-    if (ctx->ext.keyshares == NULL)
-        return 0;
-    ctx->ext.keyshares_len = 1;
-    ctx->ext.keyshares[0] = 0;
-
-    if (ctx->ext.tuples == NULL)
-        ctx->ext.tuples = OPENSSL_malloc(sizeof(*ctx->ext.tuples));
-    if (ctx->ext.tuples == NULL)
-        return 0;
-    ctx->ext.tuples_len = 1;
-    ctx->ext.tuples[0] = ctx->ext.supported_groups_default_len;
-
-    return 1;
+    return SSL_CTX_set1_groups_list(ctx, TLS_DEFAULT_GROUP_LIST);
 }
 
 #define TLS_SIGALG_LIST_MALLOC_BLOCK_SIZE        10
@@ -846,8 +782,8 @@ void tls1_get_supported_groups(SSL_CONNECTION *s, const uint16_t **pgroups,
 
     default:
         if (s->ext.supportedgroups == NULL) {
-            *pgroups = sctx->ext.supported_groups_default;
-            *pgroupslen = sctx->ext.supported_groups_default_len;
+            *pgroups = sctx->ext.supportedgroups;
+            *pgroupslen = sctx->ext.supportedgroups_len;
         } else {
             *pgroups = s->ext.supportedgroups;
             *pgroupslen = s->ext.supportedgroups_len;
@@ -875,8 +811,8 @@ void tls1_get_requested_keyshare_groups(SSL_CONNECTION *s, const uint16_t **pgro
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
     if (s->ext.supportedgroups == NULL) {
-        *pgroups = sctx->ext.supported_groups_default;
-        *pgroupslen = sctx->ext.supported_groups_default_len;
+        *pgroups = sctx->ext.supportedgroups;
+        *pgroupslen = sctx->ext.supportedgroups_len;
     } else {
         *pgroups = s->ext.keyshares;
         *pgroupslen = s->ext.keyshares_len;
@@ -1192,7 +1128,7 @@ static const char *DEFAULT_GROUPNAME_FIRST_CHARACTER = "D";
 
 /* The list of all built-in pseudo-group-name structures */
 static const default_group_string_st default_group_strings[] = {
-    {DEFAULT_GROUP_NAME, DEFAULT_GROUP_LIST},
+    {DEFAULT_GROUP_NAME, TLS_DEFAULT_GROUP_LIST},
     {SUITE_B_GROUP_NAME, SUITE_B_GROUP_LIST}
 };
 
@@ -1309,7 +1245,7 @@ static int gid_cb(const char *elem, int len, void *arg)
 
     /* Sanity checks */
     if (garg == NULL || elem == NULL || len <= 0) {
-        ERR_raise(ERR_LIB_CONF, CONF_R_VARIABLE_HAS_NO_VALUE);
+        ERR_raise(ERR_LIB_SSL, SSL_R_UNSUPPORTED_CONFIG_VALUE);
         return 0;
     }
 
@@ -1573,7 +1509,7 @@ static int tuple_cb(const char *tuple, int len, void *arg)
 
     /* Sanity checks */
     if (garg == NULL || tuple == NULL || len <= 0) {
-        ERR_raise(ERR_LIB_CONF, CONF_R_VARIABLE_HAS_NO_VALUE);
+        ERR_raise(ERR_LIB_SSL, SSL_R_UNSUPPORTED_CONFIG_VALUE);
         return 0;
     }
 
@@ -1630,13 +1566,13 @@ int tls1_set_groups_list(SSL_CTX *ctx,
                          size_t **tplext, size_t *tplextlen,
                          const char *str)
 {
-    size_t i, j;
+    size_t i = 0, j;
     int ret = 0, parse_ret = 0;
     gid_cb_st gcb;
 
     /* Sanity check */
     if (ctx == NULL) {
-        ERR_raise(ERR_LIB_CONF, CONF_R_VARIABLE_HAS_NO_VALUE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
 
@@ -1659,6 +1595,11 @@ int tls1_set_groups_list(SSL_CTX *ctx,
     gcb.ksid_arr = OPENSSL_malloc(gcb.ksidmax * sizeof(*gcb.ksid_arr));
     if (gcb.ksid_arr == NULL)
         goto end;
+
+    while (str[0] != '\0' && isspace((unsigned char)*str))
+        str++;
+    if (str[0] == '\0')
+        goto empty_list;
 
     /*
      * Start the (potentially recursive) tuple processing by calling CONF_parse_list
@@ -1689,12 +1630,6 @@ int tls1_set_groups_list(SSL_CTX *ctx,
     }
     gcb.tplcnt = i;
 
-    /* Some more checks (at least one remaining group, not more that nominally 4 key shares */
-    if (gcb.gidcnt == 0) {
-        ERR_raise_data(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT,
-                       "No valid groups in '%s'", str);
-        goto end;
-    }
     if (gcb.ksidcnt > OPENSSL_CLIENT_MAX_KEY_SHARES) {
         ERR_raise_data(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT,
                        "To many keyshares requested in '%s' (max = %d)",
@@ -1706,7 +1641,7 @@ int tls1_set_groups_list(SSL_CTX *ctx,
      * For backward compatibility we let the rest of the code know that a key share
      * for the first valid group should be added if no "*" prefix was used anywhere
      */
-    if (gcb.ksidcnt == 0) {
+    if (gcb.gidcnt > 0 && gcb.ksidcnt == 0) {
         /*
          * No key share group prefix character was used, hence we indicate that a single
          * key share should be sent and flag that it should come from the supported_groups list
@@ -1715,6 +1650,7 @@ int tls1_set_groups_list(SSL_CTX *ctx,
         gcb.ksid_arr[0] = 0;
     }
 
+ empty_list:
     /*
      * A call to tls1_set_groups_list with any of the args (other than ctx) set
      * to NULL only does a syntax check, hence we're done here and report success

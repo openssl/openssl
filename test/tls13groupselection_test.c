@@ -81,7 +81,7 @@ static const struct tls13groupselection_test_st tls13groupselection_tests[] =
         { "secp521r1:secp384r1:X25519:prime256v1:X448", /* test 3 */
           "X25519:secp384r1:prime256v1",
           SERVER_PREFERENCE,
-          "X25519", HRR
+          "x25519", HRR
         },
 
         /*
@@ -94,12 +94,12 @@ static const struct tls13groupselection_test_st tls13groupselection_tests[] =
         { "secp521r1:secp384r1:*X25519/*prime256v1:X448", /* test 4 */
           "secp521r1:*prime256v1:X25519:X448",
           CLIENT_PREFERENCE,
-          "X25519", SH
+          "x25519", SH
         },
         { "secp521r1:secp384r1:*X25519/*prime256v1:X448", /* test 5 */
           "secp521r1:*prime256v1:X25519:X448",
           SERVER_PREFERENCE,
-          "prime256v1", SH
+          "secp256r1", SH
         },
 
         /*
@@ -126,24 +126,24 @@ static const struct tls13groupselection_test_st tls13groupselection_tests[] =
         { "*X25519:prime256v1:*X448", /* test 8 */
           "secp521r1:secp384r1/X448:X25519",
           CLIENT_PREFERENCE,
-          "X25519", SH
+          "x25519", SH
         },
         { "*X25519:prime256v1:*X448", /* test 9 */
           "secp521r1:secp384r1/X448:X25519",
           SERVER_PREFERENCE,
-          "X448", SH
+          "x448", SH
         },
 
         /* (F) Check that '?' will ignore unknown group but use known group */
         { "*X25519:?unknown_group_123:prime256v1:*X448", /* test 10 */
           "secp521r1:secp384r1/X448:?unknown_group_456:?X25519",
           CLIENT_PREFERENCE,
-          "X25519", SH
+          "x25519", SH
         },
         { "*X25519:prime256v1:*X448:?*unknown_group_789", /* test 11 */
           "secp521r1:secp384r1/?X448:?unknown_group_456:X25519",
           SERVER_PREFERENCE,
-          "X448", SH
+          "x448", SH
         },
 
         /*
@@ -152,12 +152,20 @@ static const struct tls13groupselection_test_st tls13groupselection_tests[] =
         { NULL, /* test 12 */
           NULL,
           CLIENT_PREFERENCE,
-          "X25519", SH
+#ifndef OPENSSL_NO_ML_KEM
+          "X25519MLKEM768", SH
+#else
+          "x25519", SH
+#endif
         },
         { NULL, /* test 13 */
           NULL,
           SERVER_PREFERENCE,
-          "X25519", SH
+#ifndef OPENSSL_NO_ML_KEM
+          "X25519MLKEM768", SH
+#else
+          "x25519", SH
+#endif
         },
 
         /*
@@ -166,35 +174,35 @@ static const struct tls13groupselection_test_st tls13groupselection_tests[] =
         { "*X25519:*X448", /* test 14 */
           "secp521r1:X25519:prime256v1:-X25519:secp384r1/X448",
           CLIENT_PREFERENCE,
-          "X448", SH
+          "x448", SH
         },
         { "*X25519:*X448", /* test 15 */
           "secp521r1:X25519:prime256v1:-X25519:secp384r1/X448",
           SERVER_PREFERENCE,
-          "X448", SH
+          "x448", SH
         },
         { "*X25519:prime256v1:*X448", /* test 16 */
           "X25519:prime256v1/X448:-X25519",
           CLIENT_PREFERENCE,
-          "prime256v1", HRR
+          "secp256r1", HRR
         },
         { "*X25519:prime256v1:*X448", /* test 17 */
           "X25519:prime256v1/X448:-X25519",
           SERVER_PREFERENCE,
-          "prime256v1", HRR
+          "secp256r1", HRR
         },
         /*
          * (I) Check handling of the "DEFAULT" 'pseudo group name'
          */
         { "*X25519:DEFAULT:-prime256v1:-X448", /* test 18 */
-          "DEFAULT:-X25519",
+          "DEFAULT:-X25519:-?X25519MLKEM768",
           CLIENT_PREFERENCE,
-          "secp521r1", HRR
+          "secp384r1", HRR
         },
         { "*X25519:DEFAULT:-prime256v1:-X448", /* test 19 */
-          "DEFAULT:-X25519",
+          "DEFAULT:-X25519:-?X25519MLKEM768",
           SERVER_PREFERENCE,
-          "secp521r1", HRR
+          "secp384r1", HRR
         },
         /*
          * (J) Deduplication check
@@ -215,7 +223,7 @@ static const struct tls13groupselection_test_st tls13groupselection_tests[] =
         { "*X25519:*prime256v1:-X25519", /* test 22 */
           "X25519:prime256v1",
           CLIENT_PREFERENCE,
-          "prime256v1", SH
+          "secp256r1", SH
         },
         /*
          * (L) Syntax errors
@@ -270,33 +278,27 @@ static const struct tls13groupselection_test_st tls13groupselection_tests[] =
           CLIENT_PREFERENCE,
           SYNTAX_FAILURE
         },
-        /* test 33 remove all groups */
-        { "X25519:secp256r1:X448:secp521r1:-X448:-secp256r1:-X25519:-secp521r1",
+        { "X25519:??secp256r1:X448", /* test 33 */
           "",
           CLIENT_PREFERENCE,
           SYNTAX_FAILURE
         },
-        { "X25519:??secp256r1:X448", /* test 34 */
+        { "X25519:secp256r1:**X448", /* test 34 */
           "",
           CLIENT_PREFERENCE,
           SYNTAX_FAILURE
         },
-        { "X25519:secp256r1:**X448", /* test 35 */
+        { "--X25519:secp256r1:X448", /* test 35 */
           "",
           CLIENT_PREFERENCE,
           SYNTAX_FAILURE
         },
-        { "--X25519:secp256r1:X448", /* test 36 */
+        { "-DEFAULT",  /* test 36 */
           "",
           CLIENT_PREFERENCE,
           SYNTAX_FAILURE
         },
-        { "-DEFAULT",  /* test 37 */
-          "",
-          CLIENT_PREFERENCE,
-          SYNTAX_FAILURE
-        },
-        { "?DEFAULT",  /* test 38 */
+        { "?DEFAULT",  /* test 37 */
           "",
           CLIENT_PREFERENCE,
           SYNTAX_FAILURE
@@ -305,6 +307,12 @@ static const struct tls13groupselection_test_st tls13groupselection_tests[] =
          * Negotiation Failures
          * No overlapping groups between client and server
          */
+        /* test 38 remove all groups */
+        { "X25519:secp256r1:X448:secp521r1:-X448:-secp256r1:-X25519:-secp521r1",
+          "",
+          CLIENT_PREFERENCE,
+          NEGOTIATION_FAILURE
+        },
         { "secp384r1:secp521r1:X25519", /* test 39 */
           "prime256v1:X448",
           CLIENT_PREFERENCE,
@@ -408,6 +416,7 @@ static int test_groupnegotiation(const struct tls13groupselection_test_st *curre
     int ok = 0;
     int negotiated_group_client = 0;
     int negotiated_group_server = 0;
+    const char *group_name_client;
     SSL_CTX *client_ctx = NULL, *server_ctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
     enum SERVER_RESPONSE server_response;
@@ -471,11 +480,12 @@ static int test_groupnegotiation(const struct tls13groupselection_test_st *curre
          */
         negotiated_group_client = SSL_get_negotiated_group(clientssl);
         negotiated_group_server = SSL_get_negotiated_group(serverssl);
+        group_name_client = SSL_group_to_name(clientssl, negotiated_group_client);
         if (!TEST_int_eq(negotiated_group_client, negotiated_group_server))
             goto end;
         if (!TEST_int_eq((int)current_test_vector->expected_server_response, (int)server_response))
             goto end;
-        if (TEST_int_eq(negotiated_group_client, OBJ_sn2nid(current_test_vector->expected_group)))
+        if (TEST_str_eq(group_name_client, current_test_vector->expected_group))
             ok = 1;
     } else {
         TEST_false_or_end(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE));

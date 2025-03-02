@@ -353,18 +353,23 @@ static int check_seed(const uint8_t *seed, const uint8_t *prvenc,
     return 0;
 }
 
-static int check_pkhash(const uint8_t *prvenc, ML_KEM_KEY *key)
+static int check_prvenc(const uint8_t *prvenc, ML_KEM_KEY *key)
 {
-    size_t off;
+    size_t len = key->vinfo->prvkey_bytes;
+    uint8_t *buf = OPENSSL_malloc(len);
+    int ret = 0;
 
-    /* point to the H(ek) offset in dk = DKpke||ek||H(ek)||z */
-    off = key->vinfo->prvkey_bytes - ML_KEM_RANDOM_BYTES - ML_KEM_PKHASH_BYTES;
-    if (memcmp(key->pkhash, prvenc + off, ML_KEM_PKHASH_BYTES) == 0)
+    if (buf != NULL
+        && ossl_ml_kem_encode_private_key(buf, len, key))
+        ret = memcmp(buf, prvenc, len) == 0;
+    OPENSSL_clear_free(buf, len);
+    if (ret)
         return 1;
 
-    ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY,
-                   "explicit %s private key does not match seed",
-                   key->vinfo->algorithm_name);
+    if (buf != NULL)
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY,
+                       "explicit %s private key does not match seed",
+                       key->vinfo->algorithm_name);
     ossl_ml_kem_key_reset(key);
     return 0;
 }
@@ -446,7 +451,7 @@ static int ml_kem_key_fromdata(ML_KEM_KEY *key,
         if (!ossl_ml_kem_set_seed(seedenc, seedlen, key)
             || !ossl_ml_kem_genkey(NULL, 0, key))
             return 0;
-        return prvlen == 0 || check_pkhash(prvenc, key);
+        return prvlen == 0 || check_prvenc(prvenc, key);
     } else if (prvlen != 0) {
         return ossl_ml_kem_parse_private_key(prvenc, prvlen, key);
     }
@@ -521,7 +526,7 @@ void *ml_kem_load(const void *reference, size_t reference_sz)
             && (encoded_dk == NULL
                 || (key->prov_flags & ML_KEM_KEY_PREFER_SEED))) {
             if (!ossl_ml_kem_genkey(NULL, 0, key)
-                || (encoded_dk != NULL && !check_pkhash(encoded_dk, key)))
+                || (encoded_dk != NULL && !check_prvenc(encoded_dk, key)))
                 goto err;
         } else if (encoded_dk != NULL) {
             if (!ossl_ml_kem_parse_private_key(encoded_dk,

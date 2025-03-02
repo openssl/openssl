@@ -295,23 +295,44 @@ static int ch_init(QUIC_CHANNEL *ch)
 
     ossl_quic_tx_packetiser_set_ack_tx_cb(ch->txp, ch_on_txp_ack_tx, ch);
 
-    qrx_args.libctx             = ch->port->engine->libctx;
-    qrx_args.demux              = ch->port->demux;
-    qrx_args.short_conn_id_len  = rx_short_dcid_len;
-    qrx_args.max_deferred       = 32;
+    /*
+     * qrx does not exist yet, then we must be dealing with client channel
+     * (QUIC connection initiator).
+     * If qrx exists already, then we are dealing with server channel which
+     * qrx gets created by port_default_packet_handler() before
+     * port_default_packet_handler() accepts connection and creates channel
+     * for it.
+     * The exception here is tserver which always creates channel,
+     * before the first packet is ever seen.
+     */
+    if (ch->qrx == NULL && ch->is_tserver_ch == 0) {
+        /* we are regular client, create channel */
+        qrx_args.libctx             = ch->port->engine->libctx;
+        qrx_args.demux              = ch->port->demux;
+        qrx_args.short_conn_id_len  = rx_short_dcid_len;
+        qrx_args.max_deferred       = 32;
 
-    if ((ch->qrx = ossl_qrx_new(&qrx_args)) == NULL)
-        goto err;
+        if ((ch->qrx = ossl_qrx_new(&qrx_args)) == NULL)
+            goto err;
+    }
 
-    if (!ossl_qrx_set_late_validation_cb(ch->qrx,
-                                         rx_late_validate,
-                                         ch))
-        goto err;
+    if (ch->qrx != NULL) {
+        /*
+         * callbacks for channels associated with tserver's port
+         * are set up later when we call ossl_quic_channel_bind_qrx()
+         * in port_default_packet_handler()
+         */
+        if (!ossl_qrx_set_late_validation_cb(ch->qrx,
+                                             rx_late_validate,
+                                             ch))
+            goto err;
 
-    if (!ossl_qrx_set_key_update_cb(ch->qrx,
-                                    rxku_detected,
-                                    ch))
-        goto err;
+        if (!ossl_qrx_set_key_update_cb(ch->qrx,
+                                        rxku_detected,
+                                        ch))
+            goto err;
+    }
+
 
     for (pn_space = QUIC_PN_SPACE_INITIAL; pn_space < QUIC_PN_SPACE_NUM; ++pn_space) {
         ch->crypto_recv[pn_space] = ossl_quic_rstream_new(NULL, NULL, 0);
@@ -426,6 +447,17 @@ int ossl_quic_channel_init(QUIC_CHANNEL *ch)
     return ch_init(ch);
 }
 
+void ossl_quic_channel_bind_qrx(QUIC_CHANNEL *tserver_ch, OSSL_QRX *qrx)
+{
+    if (tserver_ch->qrx == NULL && tserver_ch->is_tserver_ch == 1) {
+        tserver_ch->qrx = qrx;
+        ossl_qrx_set_late_validation_cb(tserver_ch->qrx, rx_late_validate,
+                                        tserver_ch);
+        ossl_qrx_set_key_update_cb(tserver_ch->qrx, rxku_detected,
+                                   tserver_ch);
+    }
+}
+
 QUIC_CHANNEL *ossl_quic_channel_alloc(const QUIC_CHANNEL_ARGS *args)
 {
     QUIC_CHANNEL *ch = NULL;
@@ -433,11 +465,13 @@ QUIC_CHANNEL *ossl_quic_channel_alloc(const QUIC_CHANNEL_ARGS *args)
     if ((ch = OPENSSL_zalloc(sizeof(*ch))) == NULL)
         return NULL;
 
-    ch->port        = args->port;
-    ch->is_server   = args->is_server;
-    ch->tls         = args->tls;
-    ch->lcidm       = args->lcidm;
-    ch->srtm        = args->srtm;
+    ch->port           = args->port;
+    ch->is_server      = args->is_server;
+    ch->tls            = args->tls;
+    ch->lcidm          = args->lcidm;
+    ch->srtm           = args->srtm;
+    ch->qrx            = args->qrx;
+    ch->is_tserver_ch  = args->is_tserver_ch;
 #ifndef OPENSSL_NO_QLOG
     ch->use_qlog    = args->use_qlog;
 
@@ -479,8 +513,7 @@ int ossl_quic_channel_get_peer_addr(QUIC_CHANNEL *ch, BIO_ADDR *peer_addr)
     if (!ch->addressed_mode)
         return 0;
 
-    *peer_addr = ch->cur_peer_addr;
-    return 1;
+    return BIO_ADDR_copy(peer_addr, &ch->cur_peer_addr);
 }
 
 int ossl_quic_channel_set_peer_addr(QUIC_CHANNEL *ch, const BIO_ADDR *peer_addr)
@@ -494,8 +527,12 @@ int ossl_quic_channel_set_peer_addr(QUIC_CHANNEL *ch, const BIO_ADDR *peer_addr)
         return 1;
     }
 
-    ch->cur_peer_addr   = *peer_addr;
-    ch->addressed_mode  = 1;
+    if (!BIO_ADDR_copy(&ch->cur_peer_addr, peer_addr)) {
+        ch->addressed_mode = 0;
+        return 0;
+    }
+    ch->addressed_mode = 1;
+
     return 1;
 }
 
@@ -570,7 +607,7 @@ err:
 
 size_t ossl_quic_channel_get_short_header_conn_id_len(QUIC_CHANNEL *ch)
 {
-    return ossl_qrx_get_short_hdr_conn_id_len(ch->qrx);
+    return ossl_quic_port_get_rx_short_dcid_len(ch->port);
 }
 
 QUIC_STREAM *ossl_quic_channel_get_stream_by_id(QUIC_CHANNEL *ch,
@@ -3409,6 +3446,11 @@ void ossl_quic_channel_inject(QUIC_CHANNEL *ch, QUIC_URXE *e)
     ossl_qrx_inject_urxe(ch->qrx, e);
 }
 
+void ossl_quic_channel_inject_pkt(QUIC_CHANNEL *ch, OSSL_QRX_PKT *qpkt)
+{
+    ossl_qrx_inject_pkt(ch->qrx, qpkt);
+}
+
 void ossl_quic_channel_on_stateless_reset(QUIC_CHANNEL *ch)
 {
     QUIC_TERMINATE_CAUSE tcause = {0};
@@ -3632,7 +3674,9 @@ static int ch_on_new_conn_common(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
                                  const QUIC_CONN_ID *peer_odcid)
 {
     /* Note our newly learnt peer address and CIDs. */
-    ch->cur_peer_addr   = *peer;
+    if (!BIO_ADDR_copy(&ch->cur_peer_addr, peer))
+        return 0;
+
     ch->init_dcid       = *peer_dcid;
     ch->cur_remote_dcid = *peer_scid;
     ch->odcid.id_len = 0;
@@ -3655,12 +3699,15 @@ static int ch_on_new_conn_common(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
     ossl_qtx_set_qlog_cb(ch->qtx, ch_get_qlog_cb, ch);
     ossl_quic_tx_packetiser_set_qlog_cb(ch->txp, ch_get_qlog_cb, ch);
 
-    /* Plug in secrets for the Initial EL. */
+    /*
+     * Plug in secrets for the Initial EL. secrets for QRX were created in
+     * port_default_packet_handler() already.
+     */
     if (!ossl_quic_provide_initial_secret(ch->port->engine->libctx,
                                           ch->port->engine->propq,
                                           &ch->init_dcid,
                                           /*is_server=*/1,
-                                          ch->qrx, ch->qtx))
+                                          NULL, ch->qtx))
         return 0;
 
     /* Register the peer ODCID in the LCIDM. */
@@ -3976,7 +4023,12 @@ void ossl_quic_channel_set_msg_callback(QUIC_CHANNEL *ch,
     ossl_qtx_set_msg_callback(ch->qtx, msg_callback, msg_callback_ssl);
     ossl_quic_tx_packetiser_set_msg_callback(ch->txp, msg_callback,
                                              msg_callback_ssl);
-    ossl_qrx_set_msg_callback(ch->qrx, msg_callback, msg_callback_ssl);
+    /*
+     * postpone msg callback setting for tserver until port calls
+     * port_bind_channel().
+     */
+    if (ch->is_tserver_ch == 0)
+        ossl_qrx_set_msg_callback(ch->qrx, msg_callback, msg_callback_ssl);
 }
 
 void ossl_quic_channel_set_msg_callback_arg(QUIC_CHANNEL *ch,
@@ -3985,7 +4037,13 @@ void ossl_quic_channel_set_msg_callback_arg(QUIC_CHANNEL *ch,
     ch->msg_callback_arg = msg_callback_arg;
     ossl_qtx_set_msg_callback_arg(ch->qtx, msg_callback_arg);
     ossl_quic_tx_packetiser_set_msg_callback_arg(ch->txp, msg_callback_arg);
-    ossl_qrx_set_msg_callback_arg(ch->qrx, msg_callback_arg);
+
+    /*
+     * postpone msg callback setting for tserver until port calls
+     * port_bind_channel().
+     */
+    if (ch->is_tserver_ch == 0)
+        ossl_qrx_set_msg_callback_arg(ch->qrx, msg_callback_arg);
 }
 
 void ossl_quic_channel_set_txku_threshold_override(QUIC_CHANNEL *ch,

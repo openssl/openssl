@@ -9846,7 +9846,7 @@ static int test_unknown_sigalgs_groups(void)
                                               0))
         goto end;
 
-    if (!TEST_int_le(SSL_CTX_set1_groups_list(ctx,
+    if (!TEST_int_gt(SSL_CTX_set1_groups_list(ctx,
                                               "?nonexistent1:?nonexistent2:?nonexistent3"),
                                               0))
         goto end;
@@ -9873,44 +9873,38 @@ static int test_unknown_sigalgs_groups(void)
     return ret;
 }
 
+#if (!defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)) || !defined(OPENSSL_NO_ML_KEM)
 static int test_configuration_of_groups(void)
 {
     int ret = 0;
     SSL_CTX *ctx = NULL;
-#if (!defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH))
-    size_t default_groups_len;
-#endif
+    size_t groups_len;
 
     if (!TEST_ptr(ctx = SSL_CTX_new_ex(libctx, NULL, TLS_server_method())))
         goto end;
+    groups_len = ctx->ext.supportedgroups_len;
 
-#if (!defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH))
-    default_groups_len = ctx->ext.supported_groups_default_len;
-
-    if (!TEST_size_t_gt(default_groups_len, 0)
+    if (!TEST_size_t_gt(groups_len, 0)
         || !TEST_int_gt(SSL_CTX_set1_groups_list(ctx, "DEFAULT"), 0)
-        || !TEST_size_t_eq(ctx->ext.supportedgroups_len, default_groups_len))
+        || !TEST_size_t_eq(ctx->ext.supportedgroups_len, groups_len))
         goto end;
-#endif
 
-#if (!defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH))
     if (!TEST_int_gt(SSL_CTX_set1_groups_list(ctx, "DEFAULT:-?P-256"), 0)
 # if !defined(OPENSSL_NO_EC)
-        || !TEST_size_t_eq(ctx->ext.supportedgroups_len, default_groups_len - 1)
+        || !TEST_size_t_eq(ctx->ext.supportedgroups_len, groups_len - 1)
 # else
-        || !TEST_size_t_eq(ctx->ext.supportedgroups_len, default_groups_len)
+        || !TEST_size_t_eq(ctx->ext.supportedgroups_len, groups_len)
 # endif
         )
         goto end;
-#endif
 
-#if !defined(OPENSSL_NO_EC)
+# if !defined(OPENSSL_NO_EC)
     if (!TEST_int_gt(SSL_CTX_set1_groups_list(ctx, "?P-256:?P-521:-?P-256"), 0)
         || !TEST_size_t_eq(ctx->ext.supportedgroups_len, 1)
         || !TEST_int_eq(ctx->ext.supportedgroups[0], OSSL_TLS_GROUP_ID_secp521r1)
         )
         goto end;
-#endif
+# endif
 
     ret = 1;
 
@@ -9918,6 +9912,7 @@ end:
     SSL_CTX_free(ctx);
     return ret;
 }
+#endif
 
 #if !defined(OPENSSL_NO_EC) \
     && (!defined(OSSL_NO_USABLE_TLS1_3) || !defined(OPENSSL_NO_TLS1_2))
@@ -9986,6 +9981,13 @@ static int test_sigalgs_available(int idx)
     cctx = SSL_CTX_new_ex(clientctx, NULL, TLS_client_method());
     sctx = SSL_CTX_new_ex(serverctx, NULL, TLS_server_method());
     if (!TEST_ptr(cctx) || !TEST_ptr(sctx))
+        goto end;
+
+    /* Avoid MLKEM groups that depend on possibly filtered-out digests */
+    if (!TEST_true(SSL_CTX_set1_groups_list(cctx,
+                        "?X25519:?secp256r1:?ffdhe2048:?ffdhe3072"))
+        || !TEST_true(SSL_CTX_set1_groups_list(sctx,
+                        "?X25519:?secp256r1:?ffdhe2048:?ffdhe3072")))
         goto end;
 
     if (idx != 5) {
@@ -13212,7 +13214,9 @@ int setup_tests(void)
 #endif
     ADD_ALL_TESTS(test_servername, 10);
     ADD_TEST(test_unknown_sigalgs_groups);
+#if (!defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)) || !defined(OPENSSL_NO_ML_KEM)
     ADD_TEST(test_configuration_of_groups);
+#endif
 #if !defined(OPENSSL_NO_EC) \
     && (!defined(OSSL_NO_USABLE_TLS1_3) || !defined(OPENSSL_NO_TLS1_2))
     ADD_ALL_TESTS(test_sigalgs_available, 6);

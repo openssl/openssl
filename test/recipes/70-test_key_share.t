@@ -295,9 +295,9 @@ SKIP: {
     $proxy->clear();
     $direction = CLIENT_TO_SERVER;
     if (disabled("ecx")) {
-        $proxy->clientflags("-groups secp192r1:P-256:P-384");
+        $proxy->clientflags("-groups brainpoolP256r1:P-256:P-384");
     } else {
-        $proxy->clientflags("-groups secp192r1:P-256:X25519");
+        $proxy->clientflags("-groups brainpoolP256r1:P-256:X25519");
     }
     $proxy->ciphers("AES128-SHA:\@SECLEVEL=0");
     $testtype = NON_TLS1_3_KEY_SHARE;

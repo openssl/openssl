@@ -49,4 +49,5 @@ Individuals
  * Tim Hudson
  * Tomáš Mráz
  * Ulf Möller
+ * Valerii Krygin
  * Viktor Dukhovni

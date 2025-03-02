@@ -116,12 +116,15 @@ typedef struct quic_channel_args_st {
     QUIC_LCIDM      *lcidm;
     /* SRTM to register SRTs with. */
     QUIC_SRTM       *srtm;
+    OSSL_QRX        *qrx;
 
     int             is_server;
     SSL             *tls;
 
     /* Whether to use qlog. */
     int             use_qlog;
+
+    int             is_tserver_ch;
 
     /* Title to use for the qlog session, or NULL. */
     const char      *qlog_title;
@@ -177,6 +180,7 @@ typedef struct quic_terminate_cause_st {
  */
 QUIC_CHANNEL *ossl_quic_channel_alloc(const QUIC_CHANNEL_ARGS *args);
 int ossl_quic_channel_init(QUIC_CHANNEL *ch);
+void ossl_quic_channel_bind_qrx(QUIC_CHANNEL *tserver_ch, OSSL_QRX *qrx);
 
 
 /* No-op if ch is NULL. */
@@ -295,6 +299,8 @@ void ossl_quic_channel_raise_net_error(QUIC_CHANNEL *ch);
 void ossl_quic_channel_on_stateless_reset(QUIC_CHANNEL *ch);
 
 void ossl_quic_channel_inject(QUIC_CHANNEL *ch, QUIC_URXE *e);
+
+void ossl_quic_channel_inject_pkt(QUIC_CHANNEL *ch, OSSL_QRX_PKT *qpkt);
 
 /*
  * Queries and Accessors

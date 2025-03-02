@@ -829,32 +829,43 @@ SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, SSL *user_ssl,
         goto err;
 
     s->session_ctx = ctx;
-    if (ctx->ext.ecpointformats) {
+    if (ctx->ext.ecpointformats != NULL) {
         s->ext.ecpointformats =
             OPENSSL_memdup(ctx->ext.ecpointformats,
                            ctx->ext.ecpointformats_len);
-        if (!s->ext.ecpointformats) {
+        if (s->ext.ecpointformats == NULL) {
             s->ext.ecpointformats_len = 0;
             goto err;
         }
         s->ext.ecpointformats_len =
             ctx->ext.ecpointformats_len;
     }
-    if (ctx->ext.supportedgroups) {
+    if (ctx->ext.supportedgroups != NULL) {
+        size_t add = 0;
+
+        if (ctx->ext.supportedgroups_len == 0)
+            /* Add 1 so allocation won't fail */
+            add = 1;
         s->ext.supportedgroups =
             OPENSSL_memdup(ctx->ext.supportedgroups,
-                           ctx->ext.supportedgroups_len
-                                * sizeof(*ctx->ext.supportedgroups));
-        if (!s->ext.supportedgroups) {
+                           (ctx->ext.supportedgroups_len + add)
+                           * sizeof(*ctx->ext.supportedgroups));
+        if (s->ext.supportedgroups == NULL) {
             s->ext.supportedgroups_len = 0;
             goto err;
         }
         s->ext.supportedgroups_len = ctx->ext.supportedgroups_len;
     }
     if (ctx->ext.keyshares != NULL) {
+        size_t add = 0;
+
+        if (ctx->ext.keyshares_len == 0)
+            /* Add 1 so allocation won't fail */
+            add = 1;
         s->ext.keyshares =
             OPENSSL_memdup(ctx->ext.keyshares,
-                           ctx->ext.keyshares_len * sizeof(*ctx->ext.keyshares));
+                           (ctx->ext.keyshares_len + add)
+                           * sizeof(*ctx->ext.keyshares));
         if (s->ext.keyshares == NULL) {
             s->ext.keyshares_len = 0;
             goto err;
@@ -862,9 +873,15 @@ SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, SSL *user_ssl,
         s->ext.keyshares_len = ctx->ext.keyshares_len;
     }
     if (ctx->ext.tuples != NULL) {
+        size_t add = 0;
+
+        if (ctx->ext.tuples_len == 0)
+            /* Add 1 so allocation won't fail */
+            add = 1;
         s->ext.tuples =
             OPENSSL_memdup(ctx->ext.tuples,
-                           ctx->ext.tuples_len * sizeof(*ctx->ext.tuples));
+                           (ctx->ext.tuples_len + add)
+                           * sizeof(*ctx->ext.tuples));
         if (s->ext.tuples == NULL) {
             s->ext.tuples_len = 0;
             goto err;
@@ -1583,8 +1600,10 @@ void SSL_set_bio(SSL *s, BIO *rbio, BIO *wbio)
      * If the two arguments are equal then one fewer reference is granted by the
      * caller than we want to take
      */
-    if (rbio != NULL && rbio == wbio)
-        BIO_up_ref(rbio);
+    if (rbio != NULL && rbio == wbio) {
+        if (!BIO_up_ref(rbio))
+            return;
+    }
 
     /*
      * If only the wbio is changed only adopt one reference.
@@ -1747,7 +1766,8 @@ int SSL_set_wfd(SSL *s, int fd)
         ktls_enable(fd);
 #endif /* OPENSSL_NO_KTLS */
     } else {
-        BIO_up_ref(rbio);
+        if (!BIO_up_ref(rbio))
+            return 0;
         SSL_set0_wbio(s, rbio);
     }
     return 1;
@@ -1774,7 +1794,8 @@ int SSL_set_rfd(SSL *s, int fd)
         BIO_set_fd(bio, fd, BIO_NOCLOSE);
         SSL_set0_rbio(s, bio);
     } else {
-        BIO_up_ref(wbio);
+        if (!BIO_up_ref(wbio))
+            return 0;
         SSL_set0_rbio(s, wbio);
     }
 
@@ -4379,7 +4400,6 @@ void SSL_CTX_free(SSL_CTX *a)
     OPENSSL_free(a->ext.supportedgroups);
     OPENSSL_free(a->ext.keyshares);
     OPENSSL_free(a->ext.tuples);
-    OPENSSL_free(a->ext.supported_groups_default);
     OPENSSL_free(a->ext.alpn);
     OPENSSL_secure_free(a->ext.secure);
 
@@ -7035,7 +7055,7 @@ int ssl_cache_cipherlist(SSL_CONNECTION *s, PACKET *cipher_suites, int sslv2form
     n = sslv2format ? SSLV2_CIPHER_LEN : TLS_CIPHER_LEN;
 
     if (PACKET_remaining(cipher_suites) == 0) {
-        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_NO_CIPHERS_SPECIFIED);
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_NO_CIPHERS_SPECIFIED);
         return 0;
     }
 

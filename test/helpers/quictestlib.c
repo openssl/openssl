@@ -732,6 +732,7 @@ static int packet_plain_mutate(const QUIC_PKT_HDR *hdrin,
     QTEST_FAULT *fault = arg;
     size_t i, bufsz = 0;
     unsigned char *cur;
+    int grow_allowance;
 
     /* Coalesce our data into a single buffer */
 
@@ -741,8 +742,18 @@ static int packet_plain_mutate(const QUIC_PKT_HDR *hdrin,
 
     fault->pplainio.buf_len = bufsz;
 
-    /* Add an allowance for possible growth */
-    bufsz += GROWTH_ALLOWANCE;
+    /*
+     * 1200 is QUIC payload length we use
+     * bufsz is what we got from txp
+     * 16 is the length of tag added by encryption
+     * 14 long header (we assume token length is 0,
+     * which is fine for server not so fine for client)
+     */
+    grow_allowance = 1200 - bufsz - 16 - 14;
+    grow_allowance -= hdrin->dst_conn_id.id_len;
+    grow_allowance -= hdrin->src_conn_id.id_len;
+    assert(grow_allowance >= 0);
+    bufsz += grow_allowance;
 
     fault->pplainio.buf = cur = OPENSSL_malloc(bufsz);
     if (cur == NULL) {
@@ -760,12 +771,16 @@ static int packet_plain_mutate(const QUIC_PKT_HDR *hdrin,
 
     fault->pplainhdr = *hdrin;
 
-    /* Cast below is safe because we allocated the buffer */
-    if (fault->pplaincb != NULL
-            && !fault->pplaincb(fault, &fault->pplainhdr,
-                                (unsigned char *)fault->pplainio.buf,
-                                fault->pplainio.buf_len, fault->pplaincbarg))
-        return 0;
+    /*
+     * Cast below is safe because we allocated the buffer
+     * mutation is best effort. we can inject frame if
+     * there is enough space. If there is not enough space
+     * we must give up.
+     */
+    if (fault->pplaincb != NULL)
+        fault->pplaincb(fault, &fault->pplainhdr,
+                        (unsigned char *)fault->pplainio.buf,
+                        fault->pplainio.buf_len, fault->pplaincbarg);
 
     *hdrout = &fault->pplainhdr;
     *iovecout = &fault->pplainio;

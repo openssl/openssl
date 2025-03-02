@@ -127,13 +127,21 @@ DECODER_w_structure("ML-DSA-87", der, SubjectPublicKeyInfo, ml_dsa_87, yes),
 
 /*
  * A decoder that takes a SubjectPublicKeyInfo and figures out the types of key
- * that it contains. The output is the same SubjectPublicKeyInfo
+ * that it contains. The output is the same SubjectPublicKeyInfo.
  */
 DECODER_w_structure("DER", der, SubjectPublicKeyInfo, der, yes),
+/*
+ * General-purpose PEM to DER decoder.  When the user-specified data structure
+ * is a possibly encrypted PKCS#8 PrivateKeyInfo or a SubjectPublicKeyInfo
+ * public key, or interest in such a key is indicated via the "selection", and
+ * the current object is of that type, decodes the PKCS#8 or SPKI identifying
+ * algorithm name or OID, and delegates further decoding in DER form to the
+ * identified algorithm.
+ */
 DECODER("DER", pem, der, yes),
 /*
- * A decoder that recognises PKCS#8 EncryptedPrivateKeyInfo structure
- * and decrypts it, passing on the unencrypted PrivateKeyInfo in DER
- * form to the next decoder.
+ * A decoder that recognises PKCS#8 EncryptedPrivateKeyInfo structure and
+ * decrypts it, obtaining the algorithm name or OID, and delegates the
+ * unencrypted PrivateKeyInfo in DER form to the identified algorithm.
  */
 DECODER_w_structure("DER", der, EncryptedPrivateKeyInfo, der, yes),

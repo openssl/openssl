@@ -633,15 +633,16 @@ static int add_key_share(SSL_CONNECTION *s, WPACKET *pkt, unsigned int group_id,
     EVP_PKEY *key_share_key = NULL;
     size_t encodedlen;
 
-    if (s->s3.tmp.pkey != NULL && loop_num == 0) {
-        if (!ossl_assert(s->hello_retry_request == SSL_HRR_PENDING)) {
+    if (loop_num < s->s3.tmp.num_ks_pkey) {
+        if (!ossl_assert(s->hello_retry_request == SSL_HRR_PENDING)
+            || !ossl_assert(s->s3.tmp.ks_pkey[loop_num] != NULL)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return 0;
         }
         /*
          * Could happen if we got an HRR that wasn't requesting a new key_share
          */
-        key_share_key = s->s3.tmp.pkey;
+        key_share_key = s->s3.tmp.ks_pkey[loop_num];
     } else {
         key_share_key = ssl_generate_pkey_group(s, group_id);
         if (key_share_key == NULL) {
@@ -673,13 +674,14 @@ static int add_key_share(SSL_CONNECTION *s, WPACKET *pkt, unsigned int group_id,
     /* We ensure in t1_lib.c that the loop number does not exceed OPENSSL_CLIENT_MAX_KEY_SHARES */
     s->s3.tmp.ks_pkey[loop_num] = key_share_key;
     s->s3.tmp.ks_group_id[loop_num] = group_id;
-    s->s3.tmp.num_ks_pkey++;
+    if (loop_num >= s->s3.tmp.num_ks_pkey)
+        s->s3.tmp.num_ks_pkey++;
 
     OPENSSL_free(encoded_pubkey);
 
     return 1;
  err:
-    if (s->s3.tmp.pkey == NULL)
+    if (key_share_key != s->s3.tmp.ks_pkey[loop_num])
         EVP_PKEY_free(key_share_key);
     OPENSSL_free(encoded_pubkey);
     return 0;
@@ -721,10 +723,10 @@ EXT_RETURN tls_construct_ctos_key_share(SSL_CONNECTION *s, WPACKET *pkt,
 
     /* Add key shares */
 
-    s->s3.tmp.num_ks_pkey = 0;
-
-    if (s->s3.group_id != 0) {
+    if (s->s3.group_id != 0 && s->s3.tmp.pkey == NULL) {
+        /* new, single key share */
         group_id = s->s3.group_id;
+        s->s3.tmp.num_ks_pkey = 0;
         if (!add_key_share(s, pkt, group_id, 0)) {
             /* SSLfatal() already called */
             return EXT_RETURN_FAIL;
