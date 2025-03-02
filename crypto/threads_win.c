@@ -202,19 +202,21 @@ void ossl_rcu_lock_free(CRYPTO_RCU_LOCK *lock)
 /* Read side acquisition of the current qp */
 static ossl_inline struct rcu_qp *get_hold_current_qp(CRYPTO_RCU_LOCK *lock)
 {
+    uint32_t reader_idx;
     uint32_t qp_idx;
     uint32_t tmp;
     uint64_t tmp64;
 
     /* get the current qp index */
     for (;;) {
-        CRYPTO_atomic_load_int((int *)&lock->reader_idx, (int *)&qp_idx,
+        CRYPTO_atomic_load_int((int *)&lock->reader_idx, (int *)&reader_idx,
                                lock->rw_lock);
+        qp_idx = reader_idx % lock->group_count;
         CRYPTO_atomic_add64(&lock->qp_group[qp_idx].users, (uint64_t)1, &tmp64,
                             lock->rw_lock);
         CRYPTO_atomic_load_int((int *)&lock->reader_idx, (int *)&tmp,
                                lock->rw_lock);
-        if (qp_idx == tmp)
+        if (reader_idx == tmp)
             break;
         CRYPTO_atomic_add64(&lock->qp_group[qp_idx].users, (uint64_t)-1, &tmp64,
                             lock->rw_lock);
@@ -312,7 +314,7 @@ void ossl_rcu_read_unlock(CRYPTO_RCU_LOCK *lock)
 static struct rcu_qp *update_qp(CRYPTO_RCU_LOCK *lock, uint32_t *curr_id)
 {
     uint32_t current_idx;
-    uint32_t tmp;
+    uint32_t next_idx;
 
     ossl_crypto_mutex_lock(lock->alloc_lock);
     /*
@@ -324,22 +326,21 @@ static struct rcu_qp *update_qp(CRYPTO_RCU_LOCK *lock, uint32_t *curr_id)
         /* we have to wait for one to be free */
         ossl_crypto_condvar_wait(lock->alloc_signal, lock->alloc_lock);
 
-    current_idx = lock->current_alloc_idx;
+    current_idx = lock->current_alloc_idx % lock->group_count;
 
     /* Allocate the qp */
     lock->writers_alloced++;
 
     /* increment the allocation index */
-    lock->current_alloc_idx =
-        (lock->current_alloc_idx + 1) % lock->group_count;
+    lock->current_alloc_idx++;
 
     /* get and insert a new id */
     *curr_id = lock->id_ctr;
     lock->id_ctr++;
 
     /* update the reader index to be the prior qp */
-    tmp = lock->current_alloc_idx;
-    InterlockedExchange((LONG volatile *)&lock->reader_idx, tmp);
+    next_idx = lock->current_alloc_idx;
+    InterlockedExchange((LONG volatile *)&lock->reader_idx, next_idx);
 
     /* wake up any waiters */
     ossl_crypto_condvar_broadcast(lock->alloc_signal);
@@ -348,8 +349,25 @@ static struct rcu_qp *update_qp(CRYPTO_RCU_LOCK *lock, uint32_t *curr_id)
 }
 
 static void retire_qp(CRYPTO_RCU_LOCK *lock,
-                      struct rcu_qp *qp)
+                      struct rcu_qp *qp,
+                      uint32_t curr_id)
 {
+    uint64_t count;
+
+    /* retire in order */
+    ossl_crypto_mutex_lock(lock->prior_lock);
+    while (lock->next_to_retire != curr_id)
+        ossl_crypto_condvar_wait(lock->prior_signal, lock->prior_lock);
+
+    lock->next_to_retire++;
+    /* wait for the reader count to reach zero */
+    do {
+        CRYPTO_atomic_load(&qp->users, &count, lock->rw_lock);
+    } while (count != (uint64_t)0);
+
+    ossl_crypto_condvar_broadcast(lock->prior_signal);
+    ossl_crypto_mutex_unlock(lock->prior_lock);
+
     ossl_crypto_mutex_lock(lock->alloc_lock);
     lock->writers_alloced--;
     ossl_crypto_condvar_broadcast(lock->alloc_signal);
@@ -360,7 +378,6 @@ static void retire_qp(CRYPTO_RCU_LOCK *lock,
 void ossl_synchronize_rcu(CRYPTO_RCU_LOCK *lock)
 {
     struct rcu_qp *qp;
-    uint64_t count;
     uint32_t curr_id;
     struct rcu_cb_item *cb_items, *tmpcb;
 
@@ -372,21 +389,7 @@ void ossl_synchronize_rcu(CRYPTO_RCU_LOCK *lock)
 
     qp = update_qp(lock, &curr_id);
 
-    /* retire in order */
-    ossl_crypto_mutex_lock(lock->prior_lock);
-    while (lock->next_to_retire != curr_id)
-        ossl_crypto_condvar_wait(lock->prior_signal, lock->prior_lock);
-
-    lock->next_to_retire++;
-    ossl_crypto_condvar_broadcast(lock->prior_signal);
-    ossl_crypto_mutex_unlock(lock->prior_lock);
-
-    /* wait for the reader count to reach zero */
-    do {
-        CRYPTO_atomic_load(&qp->users, &count, lock->rw_lock);
-    } while (count != (uint64_t)0);
-
-    retire_qp(lock, qp);
+    retire_qp(lock, qp, curr_id);
 
     /* handle any callbacks that we have */
     while (cb_items != NULL) {
