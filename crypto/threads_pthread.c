@@ -68,6 +68,13 @@ __tsan_mutex_post_lock((x), 0, 0)
 # endif
 
 /*
+ * The AARCH64 atomics seem to be broken
+ */
+# ifdef __aarch64__
+#  define USE_ATOMIC_FALLBACKS
+# endif
+
+/*
  * For all GNU/clang atomic builtins, we also need fallbacks, to cover all
  * other compilers.
 
