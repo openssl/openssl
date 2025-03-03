@@ -2227,8 +2227,8 @@ static int encapsulate(EVP_TEST *t, EVP_PKEY_CTX *ctx, const char *op,
     const size_t params_max = OSSL_NELEM(params) - 1 - (kdata->entropy != NULL);
 
     if (sk_OPENSSL_STRING_num(kdata->init_ctrls) > 0)
-        if (ctrl2params(t, kdata->init_ctrls, NULL, params, params_max,
-                        &params_n))
+        if (!ctrl2params(t, kdata->init_ctrls, NULL, params, params_max,
+                         &params_n))
             goto err;
 
     /* We don't expect very many controls here */
@@ -2245,16 +2245,16 @@ static int encapsulate(EVP_TEST *t, EVP_PKEY_CTX *ctx, const char *op,
 
     if (EVP_PKEY_encapsulate_init(ctx, params) <= 0) {
         t->err = "TEST_ENCAPSULATE_INIT_ERROR";
-        goto err;
+        goto ok;
     }
 
     if (op != NULL && EVP_PKEY_CTX_set_kem_op(ctx, op) <= 0) {
         t->err = "TEST_SET_KEM_OP_ERROR";
-        goto err;
+        goto ok;
     }
     if (EVP_PKEY_encapsulate(ctx, NULL, &wrappedlen, NULL, &secretlen) <= 0) {
         t->err = "TEST_ENCAPSULATE_LEN_ERROR";
-        goto err;
+        goto ok;
     }
     wrapped = OPENSSL_malloc(wrappedlen);
     secret = OPENSSL_malloc(secretlen);
@@ -2264,9 +2264,7 @@ static int encapsulate(EVP_TEST *t, EVP_PKEY_CTX *ctx, const char *op,
     }
     if (EVP_PKEY_encapsulate(ctx, wrapped, &wrappedlen, secret, &secretlen) <= 0) {
         t->err = "TEST_ENCAPSULATE_ERROR";
-        if (t->expected_err && strcmp(t->err, t->expected_err) == 0)
-            ret = 1;
-        goto err;
+        goto ok;
     }
     ret = pkey_check_fips_approved(ctx, t);
 
@@ -2290,12 +2288,13 @@ static int encapsulate(EVP_TEST *t, EVP_PKEY_CTX *ctx, const char *op,
     *outsecret = secret;
     *outwrappedlen = wrappedlen;
     *outsecretlen = secretlen;
+ok:
     ret = 1;
-    goto end;
 err:
-    OPENSSL_free(wrapped);
-    OPENSSL_free(secret);
-end:
+    if (ret == 0) {
+        OPENSSL_free(wrapped);
+        OPENSSL_free(secret);
+    }
     if (sk_OPENSSL_STRING_num(kdata->init_ctrls) > 0)
         ctrl2params_free(params, params_n, 0);
     return ret;
@@ -2322,16 +2321,16 @@ static int decapsulate(EVP_TEST *t, EVP_PKEY_CTX *ctx, const char *op,
 
     if (EVP_PKEY_decapsulate_init(ctx, p) <= 0) {
         t->err = "TEST_DECAPSULATE_INIT_ERROR";
-        goto err;
+        goto ok;
     }
 
     if (op != NULL && EVP_PKEY_CTX_set_kem_op(ctx, op) <= 0) {
         t->err = "TEST_SET_KEM_OP_ERROR";
-        goto err;
+        goto ok;
     }
     if (EVP_PKEY_decapsulate(ctx, NULL, &outlen, in, inlen) <= 0) {
         t->err = "TEST_DECAPSULATE_LEN_ERROR";
-        goto err;
+        goto ok;
     }
     if (!TEST_ptr(out = OPENSSL_malloc(outlen))) {
         ret = 0;
@@ -2344,9 +2343,10 @@ static int decapsulate(EVP_TEST *t, EVP_PKEY_CTX *ctx, const char *op,
     }
     if (!TEST_mem_eq(out, outlen, expected, expectedlen)) {
         t->err = "TEST_SECRET_MISMATCH";
-        goto err;
+        goto ok;
     }
     t->err = NULL;
+ok:
     ret = 1;
 err:
     OPENSSL_free(out);
