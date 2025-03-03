@@ -51,6 +51,9 @@ uYV3hp2g6nGDU/ByJ1SIaRNkh2DRIr5nbg/Eg90g/8Mb2pajGWbJqi51rQPeR+HE
 TwIDAQAB
 -----END PUBLIC KEY-----
 
+# We only keep the private key for RSA-512 since it is only used for
+# testing the FIPS provider's ability to detect short keys.  If a
+# positive test is added, the public key will be required too.
 PrivateKey = RSA-512
 -----BEGIN PRIVATE KEY-----
 MIIBVAIBADANBgkqhkiG9w0BAQEFAASCAT4wggE6AgEAAkEA0aGpl/FjkDOqV8yF
@@ -67,6 +70,11 @@ NDL6WCBbets=
 Kem = RSA
 KeyName = RSA-2048
 Op = RSASVE
+
+# Check default KEM op which was added in 3.5.0 so skip this for earlier versions
+FIPSversion = >=3.5.0
+Kem = RSA
+KeyName = RSA-2048
 
 # RSA Decapsulate
 Kem = RSA
