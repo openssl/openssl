@@ -68,6 +68,13 @@ __tsan_mutex_post_lock((x), 0, 0)
 # endif
 
 /*
+ * The AARCH64 atomics seem to be broken
+ */
+# if defined(__aarch64__) && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
+#  define USE_ATOMIC_FALLBACKS
+# endif
+
+/*
  * For all GNU/clang atomic builtins, we also need fallbacks, to cover all
  * other compilers.
 
@@ -278,6 +285,11 @@ static struct rcu_qp *get_hold_current_qp(struct rcu_lock_st *lock)
 
         ATOMIC_ADD_FETCH(&lock->qp_group[qp_idx].users, (uint64_t)1,
                          __ATOMIC_ACQUIRE);
+
+# if defined(__aarch64__) && !defined(USE_ATOMIC_FALLBACKS)
+        /* work around for broken AARCH64 atomics */
+        asm volatile("dmb sy":::"memory");
+# endif
 
         /* if the idx hasn't changed, we're good, else try again */
         if (qp_idx == ATOMIC_LOAD_N(uint32_t, &lock->reader_idx,
