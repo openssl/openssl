@@ -21,12 +21,8 @@
  * accessing pollfd structures (see Github issue #24236). That interferes
  * with our use of these names here. We simply undef them.
  */
-# ifdef revents
-#  undef revents
-# endif
-# ifdef events
-#  undef events
-# endif
+# undef revents
+# undef events
 #endif
 
 #define ITEM_N(items, stride, n) \
