@@ -434,7 +434,7 @@ static int _torture_rcu(void)
     writer2_done = 0;
     rcu_torture_result = 1;
 
-    rcu_lock = ossl_rcu_lock_new(1, NULL);
+    rcu_lock = ossl_rcu_lock_new(contention == 2 ? 4 : 1, NULL);
     if (rcu_lock == NULL)
         goto out;
 
@@ -489,6 +489,12 @@ static int torture_rcu_low(void)
 static int torture_rcu_high(void)
 {
     contention = 1;
+    return _torture_rcu();
+}
+
+static int torture_rcu_high2(void)
+{
+    contention = 2;
     return _torture_rcu();
 }
 #endif
@@ -1296,6 +1302,7 @@ int setup_tests(void)
     ADD_TEST(torture_rw_high);
     ADD_TEST(torture_rcu_low);
     ADD_TEST(torture_rcu_high);
+    ADD_TEST(torture_rcu_high2);
 #endif
     ADD_TEST(test_once);
     ADD_TEST(test_thread_local);

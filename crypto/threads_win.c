@@ -324,14 +324,14 @@ void ossl_synchronize_rcu(CRYPTO_RCU_LOCK *lock)
     while (lock->next_to_retire != curr_id)
         ossl_crypto_condvar_wait(lock->prior_signal, lock->prior_lock);
 
-    lock->next_to_retire++;
-    ossl_crypto_condvar_broadcast(lock->prior_signal);
-    ossl_crypto_mutex_unlock(lock->prior_lock);
-
     /* wait for the reader count to reach zero */
     do {
         count = InterlockedOr64(&qp->users, 0);
     } while (count != (uint64_t)0);
+
+    lock->next_to_retire++;
+    ossl_crypto_condvar_broadcast(lock->prior_signal);
+    ossl_crypto_mutex_unlock(lock->prior_lock);
 
     retire_qp(lock, qp);
 
