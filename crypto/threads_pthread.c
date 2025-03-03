@@ -89,6 +89,7 @@ static pthread_mutex_t atomic_sim_lock = PTHREAD_MUTEX_INITIALIZER;
         pthread_mutex_unlock(&atomic_sim_lock);                 \
         return ret;                                             \
     }
+IMPL_fallback_atomic_load_n(uint32_t)
 IMPL_fallback_atomic_load_n(uint64_t)
 IMPL_fallback_atomic_load_n(pvoid)
 
@@ -105,7 +106,7 @@ IMPL_fallback_atomic_load_n(pvoid)
         pthread_mutex_unlock(&atomic_sim_lock);                 \
         return ret;                                             \
     }
-IMPL_fallback_atomic_store_n(uint64_t)
+IMPL_fallback_atomic_store_n(uint32_t)
 
 #  define ATOMIC_STORE_N(t, p, v, o) fallback_atomic_store_n_##t(p, v)
 
@@ -201,16 +202,16 @@ struct rcu_lock_st {
     struct rcu_qp *qp_group;
 
     /* Number of elements in qp_group array */
-    size_t group_count;
+    uint32_t group_count;
 
     /* Index of the current qp in the qp_group array */
-    uint64_t reader_idx;
+    uint32_t reader_idx;
 
     /* value of the next id_ctr value to be retired */
     uint32_t next_to_retire;
 
     /* index of the next free rcu_qp in the qp_group */
-    uint64_t current_alloc_idx;
+    uint32_t current_alloc_idx;
 
     /* number of qp's in qp_group array currently being retired */
     uint32_t writers_alloced;
@@ -234,7 +235,7 @@ struct rcu_lock_st {
 /* Read side acquisition of the current qp */
 static struct rcu_qp *get_hold_current_qp(struct rcu_lock_st *lock)
 {
-    uint64_t qp_idx;
+    uint32_t qp_idx;
 
     /* get the current qp index */
     for (;;) {
@@ -250,13 +251,13 @@ static struct rcu_qp *get_hold_current_qp(struct rcu_lock_st *lock)
          * systems like x86, but is relevant on other arches
          * Note: This applies to the reload below as well
          */
-        qp_idx = ATOMIC_LOAD_N(uint64_t, &lock->reader_idx, __ATOMIC_ACQUIRE);
+        qp_idx = ATOMIC_LOAD_N(uint32_t, &lock->reader_idx, __ATOMIC_ACQUIRE);
 
         ATOMIC_ADD_FETCH(&lock->qp_group[qp_idx].users, (uint64_t)1,
                          __ATOMIC_ACQUIRE);
 
         /* if the idx hasn't changed, we're good, else try again */
-        if (qp_idx == ATOMIC_LOAD_N(uint64_t, &lock->reader_idx,
+        if (qp_idx == ATOMIC_LOAD_N(uint32_t, &lock->reader_idx,
                                     __ATOMIC_RELAXED))
             break;
 
@@ -356,7 +357,7 @@ void ossl_rcu_read_unlock(CRYPTO_RCU_LOCK *lock)
  */
 static struct rcu_qp *update_qp(CRYPTO_RCU_LOCK *lock, uint32_t *curr_id)
 {
-    uint64_t current_idx;
+    uint32_t current_idx;
 
     pthread_mutex_lock(&lock->alloc_lock);
 
@@ -381,7 +382,7 @@ static struct rcu_qp *update_qp(CRYPTO_RCU_LOCK *lock, uint32_t *curr_id)
     *curr_id = lock->id_ctr;
     lock->id_ctr++;
 
-    ATOMIC_STORE_N(uint64_t, &lock->reader_idx, lock->current_alloc_idx,
+    ATOMIC_STORE_N(uint32_t, &lock->reader_idx, lock->current_alloc_idx,
                    __ATOMIC_RELAXED);
 
     /* wake up any waiters */
@@ -781,7 +782,7 @@ int CRYPTO_atomic_load_int(int *val, int *ret, CRYPTO_RWLOCK *lock)
 # elif defined(__sun) && (defined(__SunOS_5_10) || defined(__SunOS_5_11))
     /* This will work for all future Solaris versions. */
     if (ret != NULL) {
-        *ret = (int *)atomic_or_uint_nv((unsigned int *)val, 0);
+        *ret = (int)atomic_or_uint_nv((unsigned int *)val, 0);
         return 1;
     }
 # endif

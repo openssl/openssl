@@ -81,7 +81,7 @@ struct rcu_lock_st {
     OSSL_LIB_CTX *ctx;
     uint32_t id_ctr;
     struct rcu_qp *qp_group;
-    size_t group_count;
+    uint32_t group_count;
     uint32_t next_to_retire;
     volatile long int reader_idx;
     uint32_t current_alloc_idx;
@@ -354,12 +354,10 @@ void ossl_synchronize_rcu(CRYPTO_RCU_LOCK *lock)
 int ossl_rcu_call(CRYPTO_RCU_LOCK *lock, rcu_cb_fn cb, void *data)
 {
     struct rcu_cb_item *new;
-    struct rcu_cb_item *prev;
 
     new = OPENSSL_zalloc(sizeof(struct rcu_cb_item));
     if (new == NULL)
         return 0;
-    prev = new;
     new->data = data;
     new->fn = cb;
 
