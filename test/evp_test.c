@@ -2290,11 +2290,11 @@ static int encapsulate(EVP_TEST *t, EVP_PKEY_CTX *ctx, const char *op,
     *outsecretlen = secretlen;
 ok:
     ret = 1;
-    goto end;
 err:
-    OPENSSL_free(wrapped);
-    OPENSSL_free(secret);
-end:
+    if (ret == 0) {
+        OPENSSL_free(wrapped);
+        OPENSSL_free(secret);
+    }
     if (sk_OPENSSL_STRING_num(kdata->init_ctrls) > 0)
         ctrl2params_free(params, params_n, 0);
     return ret;
