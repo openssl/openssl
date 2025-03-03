@@ -32,7 +32,7 @@ OpenSSL 3.5
 
 * Added server side support for QUIC
 
-   *Matt Caswell, Tomáš Mráz, Neil Horman, Sasha Nedvedicky, Andrew Dinh*
+   *Hugo Landau, Matt Caswell, Tomáš Mráz, Neil Horman, Sasha Nedvedicky, Andrew Dinh*
 
  * Added a `no-tls-deprecated-ec` configuration option.
 
