@@ -278,6 +278,8 @@ static struct rcu_qp *get_hold_current_qp(struct rcu_lock_st *lock)
 
         ATOMIC_ADD_FETCH(&lock->qp_group[qp_idx].users, (uint64_t)1,
                          __ATOMIC_ACQUIRE);
+        ATOMIC_LOAD_N(uint64_t, &lock->qp_group[qp_idx].users,
+                      __ATOMIC_ACQUIRE);
 
         /* if the idx hasn't changed, we're good, else try again */
         if (qp_idx == ATOMIC_LOAD_N(uint32_t, &lock->reader_idx,
@@ -288,6 +290,8 @@ static struct rcu_qp *get_hold_current_qp(struct rcu_lock_st *lock)
                          __ATOMIC_RELAXED);
     }
 
+    ATOMIC_ADD_FETCH(&lock->qp_group[qp_idx].users, (uint64_t)0xFFF,
+                     __ATOMIC_RELAXED);
     return &lock->qp_group[qp_idx];
 }
 
@@ -346,6 +350,7 @@ void ossl_rcu_read_unlock(CRYPTO_RCU_LOCK *lock)
     CRYPTO_THREAD_LOCAL *lkey = ossl_lib_ctx_get_rcukey(lock->ctx);
     struct rcu_thr_data *data = CRYPTO_THREAD_get_local(lkey);
     uint64_t ret;
+    uint32_t qp_idx;
 
     assert(data != NULL);
 
@@ -358,9 +363,13 @@ void ossl_rcu_read_unlock(CRYPTO_RCU_LOCK *lock)
              */
             data->thread_qps[i].depth--;
             if (data->thread_qps[i].depth == 0) {
+                qp_idx = ATOMIC_LOAD_N(uint32_t, &lock->reader_idx,
+                                       __ATOMIC_RELAXED);
                 ret = ATOMIC_SUB_FETCH(&data->thread_qps[i].qp->users,
-                                       (uint64_t)1, __ATOMIC_RELEASE);
+                                       (uint64_t)0x1000, __ATOMIC_RELEASE);
                 OPENSSL_assert(ret != UINT64_MAX);
+                OPENSSL_assert((uint32_t)(data->thread_qps[i].qp - lock->qp_group)
+                               != (qp_idx + 1) % 3);
                 data->thread_qps[i].qp = NULL;
                 data->thread_qps[i].lock = NULL;
             }
@@ -378,7 +387,7 @@ void ossl_rcu_read_unlock(CRYPTO_RCU_LOCK *lock)
  * Write side allocation routine to get the current qp
  * and replace it with a new one
  */
-static struct rcu_qp *update_qp(CRYPTO_RCU_LOCK *lock, uint32_t *curr_id)
+static struct rcu_qp *update_qp(CRYPTO_RCU_LOCK *lock, uint32_t *curr_id, uint64_t *count0)
 {
     uint32_t current_idx;
 
@@ -405,12 +414,22 @@ static struct rcu_qp *update_qp(CRYPTO_RCU_LOCK *lock, uint32_t *curr_id)
     *curr_id = lock->id_ctr;
     lock->id_ctr++;
 
+    OPENSSL_assert(ATOMIC_LOAD_N(uint64_t,
+                                 &lock->qp_group[(current_idx + 2) % 3].users,
+                                 __ATOMIC_RELAXED) < 0x1000);
+    OPENSSL_assert(ATOMIC_LOAD_N(uint64_t,
+                                 &lock->qp_group[lock->current_alloc_idx].users,
+                                 __ATOMIC_ACQUIRE) < 0x1000);
     ATOMIC_STORE_N(uint32_t, &lock->reader_idx, lock->current_alloc_idx,
                    __ATOMIC_RELAXED);
 
     /* wake up any waiters */
     pthread_cond_signal(&lock->alloc_signal);
     pthread_mutex_unlock(&lock->alloc_lock);
+    pthread_mutex_lock(&lock->prior_lock);
+    *count0 = ATOMIC_LOAD_N(uint64_t, &lock->qp_group[current_idx].users,
+                            __ATOMIC_RELAXED);
+    pthread_mutex_unlock(&lock->prior_lock);
     return &lock->qp_group[current_idx];
 }
 
@@ -452,13 +471,14 @@ void ossl_synchronize_rcu(CRYPTO_RCU_LOCK *lock)
     uint64_t count;
     uint32_t curr_id;
     struct rcu_cb_item *cb_items, *tmpcb;
+    uint64_t count0;
 
     pthread_mutex_lock(&lock->write_lock);
     cb_items = lock->cb_items;
     lock->cb_items = NULL;
     pthread_mutex_unlock(&lock->write_lock);
 
-    qp = update_qp(lock, &curr_id);
+    qp = update_qp(lock, &curr_id, &count0);
 
     /* retire in order */
     pthread_mutex_lock(&lock->prior_lock);
@@ -477,8 +497,13 @@ void ossl_synchronize_rcu(CRYPTO_RCU_LOCK *lock)
      */
     do {
         count = ATOMIC_LOAD_N(uint64_t, &qp->users, __ATOMIC_ACQUIRE);
+        OPENSSL_assert(count <= (count0 | 0xFFF) + (count0 & 0xFFF) * (uint64_t)0xFFF);
     } while (count != (uint64_t)0);
 
+    for (count = 0; count < 99; count++)
+        OPENSSL_assert(ATOMIC_LOAD_N(uint64_t, &qp->users, __ATOMIC_ACQUIRE) <= (uint64_t)0xFFF);
+    OPENSSL_assert(lock->id_ctr == curr_id + 1);
+    OPENSSL_assert(lock->next_to_retire == curr_id + 1);
     retire_qp(lock, qp);
 
     /* handle any callbacks that we have */
