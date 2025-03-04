@@ -40,7 +40,7 @@ const char *X509_verify_cert_error_string(long n)
     case X509_V_ERR_CRL_SIGNATURE_FAILURE:
         return "CRL signature failure";
     case X509_V_ERR_CERT_NOT_YET_VALID:
-        return "certificate is not yet valid";
+        return "certificate is not yet valid or the system clock is incorrect";
     case X509_V_ERR_CERT_HAS_EXPIRED:
         return "certificate has expired";
     case X509_V_ERR_CRL_NOT_YET_VALID:
