@@ -19,17 +19,11 @@ jobs:
       matrix:
         zoo: [
           {
-            cc: gcc-7,
-            distro: ubuntu-20.04
-          }, {
-            cc: gcc-8,
-            distro: ubuntu-20.04
-          }, {
             cc: gcc-9,
-            distro: ubuntu-20.04
+            distro: ubuntu-22.04
           }, {
             cc: gcc-10,
-            distro: ubuntu-20.04
+            distro: ubuntu-22.04
           }, {
             cc: gcc-11,
             distro: ubuntu-22.04
@@ -37,26 +31,11 @@ jobs:
             cc: gcc-12,
             distro: ubuntu-22.04
           }, {
-            cc: clang-6.0,
-            distro: ubuntu-20.04
-          }, {
-            cc: clang-7,
-            distro: ubuntu-20.04
-          }, {
-            cc: clang-8,
-            distro: ubuntu-20.04
-          }, {
-            cc: clang-9,
-            distro: ubuntu-20.04
-          }, {
-            cc: clang-10,
-            distro: ubuntu-20.04
-          }, {
             cc: clang-11,
-            distro: ubuntu-20.04
+            distro: ubuntu-22.04
           }, {
             cc: clang-12,
-            distro: ubuntu-20.04
+            distro: ubuntu-22.04
           }, {
             cc: clang-13,
             distro: ubuntu-22.04
