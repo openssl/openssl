@@ -75,7 +75,8 @@ static int create_socket(int domain, int socktype, int protocol)
      * but preventing inheritance isn't mandatory, just a safety precaution
      * so we can get away with not including it for older platforms
      */
-#  if _WIN32_WINNT > 0x501
+
+#  ifdef WSA_FLAG_NO_HANDLE_INHERIT
     fd = (int)WSASocketA(domain, socktype, protocol, NULL, 0,
                          WSA_FLAG_NO_HANDLE_INHERIT);
 
