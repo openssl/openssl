@@ -78,6 +78,16 @@ static int create_socket(int domain, int socktype, int protocol)
 #  if _WIN32_WINNT > 0x501
     fd = (int)WSASocketA(domain, socktype, protocol, NULL, 0,
                          WSA_FLAG_NO_HANDLE_INHERIT);
+
+    /*
+     * Its also possible that someone is building a binary on a newer windows
+     * SDK, but running it on a runtime that doesn't support inheritance
+     * supression.  In that case the above will return INVALID_SOCKET, and
+     * our response for those older platforms is to try the call again
+     * without the flag
+     */
+    if (fd == INVALID_SOCKET)
+        fd = (int)WSASocketA(domain, socktype, protocol, NULL, 0, 0);
 #  else
     fd = (int)WSASocketA(domain, socktype, protocol, NULL, 0, 0);
 #  endif
