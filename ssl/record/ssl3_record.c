@@ -341,6 +341,10 @@ int ssl3_get_record(SSL *s)
                         if (strncmp((char *)p, "GET ", 4) == 0 ||
                             strncmp((char *)p, "POST ", 5) == 0 ||
                             strncmp((char *)p, "HEAD ", 5) == 0 ||
+                            strncmp((char *)p, "PATCH", 5) == 0 ||
+                            strncmp((char *)p, "OPTIO", 5) == 0 ||
+                            strncmp((char *)p, "DELET", 5) == 0 ||
+                            strncmp((char *)p, "TRACE", 5) == 0 ||
                             strncmp((char *)p, "PUT ", 4) == 0) {
                             SSLfatal(s, SSL_AD_NO_ALERT, SSL_R_HTTP_REQUEST);
                             return -1;
