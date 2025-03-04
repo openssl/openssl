@@ -431,7 +431,13 @@ int EVP_PKEY_derive_set_peer_ex(EVP_PKEY_CTX *ctx, EVP_PKEY *peer,
      */
     if (provkey == NULL)
         goto legacy;
-    return ctx->op.kex.exchange->set_peer(ctx->op.kex.algctx, provkey);
+    ret = ctx->op.kex.exchange->set_peer(ctx->op.kex.algctx, provkey);
+    if (ret <= 0)
+        return ret;
+    EVP_PKEY_free(ctx->peerkey);
+    ctx->peerkey = peer;
+    EVP_PKEY_up_ref(peer);
+    return 1;
 
  legacy:
 #ifdef FIPS_MODULE
