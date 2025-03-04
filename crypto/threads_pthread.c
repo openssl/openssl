@@ -195,11 +195,11 @@ struct rcu_lock_st {
     /* The context we are being created against */
     OSSL_LIB_CTX *ctx;
 
-    /* rcu generation counter for in-order retirement */
-    uint32_t id_ctr;
-
     /* Array of quiescent points for synchronization */
     struct rcu_qp *qp_group;
+
+    /* rcu generation counter for in-order retirement */
+    uint32_t id_ctr;
 
     /* Number of elements in qp_group array */
     uint32_t group_count;
@@ -400,7 +400,7 @@ static void retire_qp(CRYPTO_RCU_LOCK *lock, struct rcu_qp *qp)
 }
 
 static struct rcu_qp *allocate_new_qp_group(CRYPTO_RCU_LOCK *lock,
-                                            int count)
+                                            uint32_t count)
 {
     struct rcu_qp *new =
         OPENSSL_zalloc(sizeof(*new) * count);

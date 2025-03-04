@@ -79,8 +79,14 @@ struct rcu_thr_data {
 struct rcu_lock_st {
     struct rcu_cb_item *cb_items;
     OSSL_LIB_CTX *ctx;
-    uint32_t id_ctr;
+
+    /* Array of quiescent points for synchronization */
     struct rcu_qp *qp_group;
+
+    /* rcu generation counter for in-order retirement */
+    uint32_t id_ctr;
+
+    /* Number of elements in qp_group array */
     uint32_t group_count;
     uint32_t next_to_retire;
     volatile long int reader_idx;
@@ -94,7 +100,7 @@ struct rcu_lock_st {
 };
 
 static struct rcu_qp *allocate_new_qp_group(struct rcu_lock_st *lock,
-                                            int count)
+                                            uint32_t count)
 {
     struct rcu_qp *new =
         OPENSSL_zalloc(sizeof(*new) * count);
