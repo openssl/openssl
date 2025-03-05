@@ -6,6 +6,8 @@ CA.pl - friendlier interface for OpenSSL certificate programs
 
 =head1 SYNOPSIS
 
+=for openssl duplicate options
+
 B<CA.pl>
 B<-?> |
 B<-h> |
