@@ -198,13 +198,11 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
 
             if (dgst != NULL) {
                 if (nonce_type == 1) {
-#ifndef FIPS_MODULE
                     res = ossl_gen_deterministic_nonce_rfc6979(k, order,
                                                                priv_key,
                                                                dgst, dlen,
                                                                digestname,
                                                                libctx, propq);
-#endif
                 } else {
                     res = ossl_bn_gen_dsa_nonce_fixed_top(k, order, priv_key,
                                                           dgst, dlen, ctx);
