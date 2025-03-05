@@ -7,6 +7,8 @@ openssl-pkcs12 - PKCS#12 file command
 
 =head1 SYNOPSIS
 
+=for openssl duplicate options
+
 B<openssl> B<pkcs12>
 [B<-help>]
 [B<-passin> I<arg>]
@@ -174,7 +176,7 @@ see the L</PKCS#12 output (export) options> section.
 =item B<-out> I<filename>
 
 The filename to write certificates and private keys to, standard output by
-default.  They are all written in PEM format.
+default. They are all written in PEM format.
 
 =item B<-info>
 
