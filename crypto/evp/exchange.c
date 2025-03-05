@@ -442,7 +442,10 @@ int EVP_PKEY_derive_set_peer_ex(EVP_PKEY_CTX *ctx, EVP_PKEY *peer,
      */
     if (provkey == NULL)
         goto legacy;
-    return ctx->op.kex.exchange->set_peer(ctx->op.kex.algctx, provkey);
+    ret = ctx->op.kex.exchange->set_peer(ctx->op.kex.algctx, provkey);
+    if (ret <= 0)
+        return ret;
+    goto common;
 
  legacy:
 #ifdef FIPS_MODULE
@@ -497,6 +500,9 @@ int EVP_PKEY_derive_set_peer_ex(EVP_PKEY_CTX *ctx, EVP_PKEY *peer,
     ret = ctx->pmeth->ctrl(ctx, EVP_PKEY_CTRL_PEER_KEY, 1, peer);
     if (ret <= 0)
         return ret;
+#endif
+
+ common:
     if (!EVP_PKEY_up_ref(peer))
         return -1;
 
@@ -504,7 +510,6 @@ int EVP_PKEY_derive_set_peer_ex(EVP_PKEY_CTX *ctx, EVP_PKEY *peer,
     ctx->peerkey = peer;
 
     return 1;
-#endif
 }
 
 int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer)
