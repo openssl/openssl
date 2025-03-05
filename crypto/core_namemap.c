@@ -163,19 +163,31 @@ int ossl_namemap_name2num(const OSSL_NAMEMAP *namemap, const char *name)
     return number;
 }
 
-/* TODO: Optimize to avoid strndup() */
 int ossl_namemap_name2num_n(const OSSL_NAMEMAP *namemap,
                             const char *name, size_t name_len)
 {
-    char *tmp;
-    int ret;
+    int number = 0;
+    HT_VALUE *val;
+    NAMENUM_KEY key;
 
-    if (name == NULL || (tmp = OPENSSL_strndup(name, name_len)) == NULL)
+#ifndef FIPS_MODULE
+    if (namemap == NULL)
+        namemap = ossl_namemap_stored(NULL);
+#endif
+
+    if (namemap == NULL)
         return 0;
 
-    ret = ossl_namemap_name2num(namemap, tmp);
-    OPENSSL_free(tmp);
-    return ret;
+    HT_INIT_KEY(&key);
+    HT_SET_KEY_STRING_CASE_N(&key, name, name, name_len);
+
+    val = ossl_ht_get(namemap->namenum_ht, TO_HT_KEY(&key));
+
+    if (val != NULL)
+        /* We store a (small) int directly instead of a pointer to it. */
+        number = (int)(intptr_t)val->value;
+
+    return number;
 }
 
 const char *ossl_namemap_num2name(const OSSL_NAMEMAP *namemap, int number,

@@ -71,9 +71,27 @@ static int create_socket(int domain, int socktype, int protocol)
      * Use WSASocketA to create a socket which is immediately marked as
      * non-inheritable, avoiding race conditions if another thread is about to
      * call CreateProcess.
+     * NOTE: windows xp (0x501) doesn't support the non-inheritance flag here
+     * but preventing inheritance isn't mandatory, just a safety precaution
+     * so we can get away with not including it for older platforms
      */
+
+#  ifdef WSA_FLAG_NO_HANDLE_INHERIT
     fd = (int)WSASocketA(domain, socktype, protocol, NULL, 0,
                          WSA_FLAG_NO_HANDLE_INHERIT);
+
+    /*
+     * Its also possible that someone is building a binary on a newer windows
+     * SDK, but running it on a runtime that doesn't support inheritance
+     * supression.  In that case the above will return INVALID_SOCKET, and
+     * our response for those older platforms is to try the call again
+     * without the flag
+     */
+    if (fd == INVALID_SOCKET)
+        fd = (int)WSASocketA(domain, socktype, protocol, NULL, 0, 0);
+#  else
+    fd = (int)WSASocketA(domain, socktype, protocol, NULL, 0, 0);
+#  endif
     if (fd == INVALID_SOCKET) {
         int err = get_last_socket_error();
 

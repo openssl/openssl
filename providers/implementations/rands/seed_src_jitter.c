@@ -295,6 +295,24 @@ static size_t jitter_get_seed(void *vseed, unsigned char **pout,
     return ret;
 }
 
+# ifndef OPENSSL_NO_FIPS_JITTER
+size_t ossl_rand_jitter_get_seed(unsigned char **pout, int entropy, size_t min_len, size_t max_len)
+{
+    size_t ret = 0;
+    OSSL_PARAM params[1] = { OSSL_PARAM_END };
+    PROV_JITTER *s = jitter_new(NULL, NULL, NULL);
+
+    if (s == NULL)
+        return ret;
+    if (!jitter_instantiate(s, 0, 0, NULL, 0, params))
+        goto end;
+    ret = jitter_get_seed(s, pout, entropy, min_len, max_len, 0, NULL, 0);
+ end:
+    jitter_free(s);
+    return ret;
+}
+# endif
+
 static void jitter_clear_seed(ossl_unused void *vdrbg,
                               unsigned char *out, size_t outlen)
 {

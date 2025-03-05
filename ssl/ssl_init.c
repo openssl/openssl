@@ -14,7 +14,6 @@
 #include <openssl/evp.h>
 #include <openssl/trace.h>
 #include "ssl_local.h"
-#include "sslerr.h"
 #include "internal/thread_once.h"
 #include "internal/rio_notifier.h"    /* for ossl_wsa_cleanup() */
 
@@ -36,28 +35,6 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_ssl_base)
     ssl_sort_cipher_list();
     OSSL_TRACE(INIT, "ossl_init_ssl_base: SSL_add_ssl_module()\n");
     ssl_base_inited = 1;
-    return 1;
-}
-
-static CRYPTO_ONCE ssl_strings = CRYPTO_ONCE_STATIC_INIT;
-
-DEFINE_RUN_ONCE_STATIC(ossl_init_load_ssl_strings)
-{
-    /*
-     * OPENSSL_NO_AUTOERRINIT is provided here to prevent at compile time
-     * pulling in all the error strings during static linking
-     */
-#if !defined(OPENSSL_NO_ERR) && !defined(OPENSSL_NO_AUTOERRINIT)
-    OSSL_TRACE(INIT, "ossl_init_load_ssl_strings: ossl_err_load_SSL_strings()\n");
-    ossl_err_load_SSL_strings();
-#endif
-    return 1;
-}
-
-DEFINE_RUN_ONCE_STATIC_ALT(ossl_init_no_load_ssl_strings,
-                           ossl_init_load_ssl_strings)
-{
-    /* Do nothing in this case */
     return 1;
 }
 
@@ -94,15 +71,6 @@ int OPENSSL_init_ssl(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
         return 0;
 
     if (!RUN_ONCE(&ssl_base, ossl_init_ssl_base))
-        return 0;
-
-    if ((opts & OPENSSL_INIT_NO_LOAD_SSL_STRINGS)
-        && !RUN_ONCE_ALT(&ssl_strings, ossl_init_no_load_ssl_strings,
-                         ossl_init_load_ssl_strings))
-        return 0;
-
-    if ((opts & OPENSSL_INIT_LOAD_SSL_STRINGS)
-        && !RUN_ONCE(&ssl_strings, ossl_init_load_ssl_strings))
         return 0;
 
     return 1;

@@ -239,7 +239,6 @@ providers/common/include/prov/der_ml_dsa.h
 
 # Files created on other branches that are not held in git, and are not
 # needed on this branch
-/include/openssl/asn1_mac.h
 /include/openssl/des_old.h
 /include/openssl/fips.h
 /include/openssl/fips_rand.h

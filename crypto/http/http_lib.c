@@ -196,6 +196,8 @@ int OSSL_parse_url(const char *url, char **pscheme, char **puser, char **phost,
     return 0;
 }
 
+#ifndef OPENSSL_NO_HTTP
+
 int OSSL_HTTP_parse_url(const char *url, int *pssl, char **puser, char **phost,
                         char **pport, int *pport_num,
                         char **ppath, char **pquery, char **pfrag)
@@ -305,3 +307,5 @@ const char *OSSL_HTTP_adapt_proxy(const char *proxy, const char *no_proxy,
         return NULL;
     return proxy;
 }
+
+#endif /* !defined(OPENSSL_NO_HTTP) */

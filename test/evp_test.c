@@ -2227,8 +2227,8 @@ static int encapsulate(EVP_TEST *t, EVP_PKEY_CTX *ctx, const char *op,
     const size_t params_max = OSSL_NELEM(params) - 1 - (kdata->entropy != NULL);
 
     if (sk_OPENSSL_STRING_num(kdata->init_ctrls) > 0)
-        if (ctrl2params(t, kdata->init_ctrls, NULL, params, params_max,
-                        &params_n))
+        if (!ctrl2params(t, kdata->init_ctrls, NULL, params, params_max,
+                         &params_n))
             goto err;
 
     /* We don't expect very many controls here */
@@ -2245,16 +2245,16 @@ static int encapsulate(EVP_TEST *t, EVP_PKEY_CTX *ctx, const char *op,
 
     if (EVP_PKEY_encapsulate_init(ctx, params) <= 0) {
         t->err = "TEST_ENCAPSULATE_INIT_ERROR";
-        goto err;
+        goto ok;
     }
 
     if (op != NULL && EVP_PKEY_CTX_set_kem_op(ctx, op) <= 0) {
         t->err = "TEST_SET_KEM_OP_ERROR";
-        goto err;
+        goto ok;
     }
     if (EVP_PKEY_encapsulate(ctx, NULL, &wrappedlen, NULL, &secretlen) <= 0) {
         t->err = "TEST_ENCAPSULATE_LEN_ERROR";
-        goto err;
+        goto ok;
     }
     wrapped = OPENSSL_malloc(wrappedlen);
     secret = OPENSSL_malloc(secretlen);
@@ -2264,9 +2264,7 @@ static int encapsulate(EVP_TEST *t, EVP_PKEY_CTX *ctx, const char *op,
     }
     if (EVP_PKEY_encapsulate(ctx, wrapped, &wrappedlen, secret, &secretlen) <= 0) {
         t->err = "TEST_ENCAPSULATE_ERROR";
-        if (t->expected_err && strcmp(t->err, t->expected_err) == 0)
-            ret = 1;
-        goto err;
+        goto ok;
     }
     ret = pkey_check_fips_approved(ctx, t);
 
@@ -2290,12 +2288,13 @@ static int encapsulate(EVP_TEST *t, EVP_PKEY_CTX *ctx, const char *op,
     *outsecret = secret;
     *outwrappedlen = wrappedlen;
     *outsecretlen = secretlen;
+ok:
     ret = 1;
-    goto end;
 err:
-    OPENSSL_free(wrapped);
-    OPENSSL_free(secret);
-end:
+    if (ret == 0) {
+        OPENSSL_free(wrapped);
+        OPENSSL_free(secret);
+    }
     if (sk_OPENSSL_STRING_num(kdata->init_ctrls) > 0)
         ctrl2params_free(params, params_n, 0);
     return ret;
@@ -2322,16 +2321,16 @@ static int decapsulate(EVP_TEST *t, EVP_PKEY_CTX *ctx, const char *op,
 
     if (EVP_PKEY_decapsulate_init(ctx, p) <= 0) {
         t->err = "TEST_DECAPSULATE_INIT_ERROR";
-        goto err;
+        goto ok;
     }
 
     if (op != NULL && EVP_PKEY_CTX_set_kem_op(ctx, op) <= 0) {
         t->err = "TEST_SET_KEM_OP_ERROR";
-        goto err;
+        goto ok;
     }
     if (EVP_PKEY_decapsulate(ctx, NULL, &outlen, in, inlen) <= 0) {
         t->err = "TEST_DECAPSULATE_LEN_ERROR";
-        goto err;
+        goto ok;
     }
     if (!TEST_ptr(out = OPENSSL_malloc(outlen))) {
         ret = 0;
@@ -2344,9 +2343,10 @@ static int decapsulate(EVP_TEST *t, EVP_PKEY_CTX *ctx, const char *op,
     }
     if (!TEST_mem_eq(out, outlen, expected, expectedlen)) {
         t->err = "TEST_SECRET_MISMATCH";
-        goto err;
+        goto ok;
     }
     t->err = NULL;
+ok:
     ret = 1;
 err:
     OPENSSL_free(out);
@@ -2747,6 +2747,95 @@ static int pkey_test_run(EVP_TEST *t)
     EVP_PKEY_CTX_free(copy);
     return 1;
 }
+
+static int pkey_fromdata_test_init(EVP_TEST *t, const char *name)
+{
+    PKEY_DATA *kdata = NULL;
+
+    if (is_pkey_disabled(name)) {
+        TEST_info("skipping, '%s' is disabled", name);
+        t->skip = 1;
+        return 1;
+    }
+
+    if (!TEST_ptr(kdata = OPENSSL_zalloc(sizeof(*kdata))))
+        return 0;
+    kdata->ctx = EVP_PKEY_CTX_new_from_name(libctx, name, "");
+    if (kdata->ctx == NULL)
+        goto err;
+    if (EVP_PKEY_fromdata_init(kdata->ctx) <= 0)
+        goto err;
+    kdata->controls = sk_OPENSSL_STRING_new_null();
+    if (kdata->controls == NULL)
+        goto err;
+    t->data = kdata;
+    return 1;
+ err:
+    EVP_PKEY_CTX_free(kdata->ctx);
+    OPENSSL_free(kdata);
+    return 0;
+}
+
+static void pkey_fromdata_test_cleanup(EVP_TEST *t)
+{
+    PKEY_DATA *kdata = t->data;
+
+    ctrlfree(kdata->controls);
+    EVP_PKEY_CTX_free(kdata->ctx);
+}
+
+static int pkey_fromdata_test_parse(EVP_TEST *t,
+                                    const char *keyword, const char *value)
+{
+    PKEY_DATA *kdata = t->data;
+
+    if (strcmp(keyword, "Ctrl") == 0)
+        return pkey_add_control(t, kdata->controls, value);
+    return 0;
+}
+
+static int pkey_fromdata_test_run(EVP_TEST *t)
+{
+    EVP_PKEY *key = NULL;
+    PKEY_DATA *kdata = t->data;
+    int ret = 0;
+    static const OSSL_PARAM key_settable_ctx_params[] = {
+        OSSL_PARAM_octet_string("priv", NULL, 0),
+        OSSL_PARAM_octet_string("pub", NULL, 0),
+        OSSL_PARAM_END
+    };
+    OSSL_PARAM params[5] = {
+        OSSL_PARAM_END, OSSL_PARAM_END, OSSL_PARAM_END,
+        OSSL_PARAM_END, OSSL_PARAM_END
+    };
+    OSSL_PARAM *p = NULL;
+    size_t params_n = 0, params_n_allocstart = 0;
+
+    if (sk_OPENSSL_STRING_num(kdata->controls) > 0) {
+        if (!ctrl2params(t, kdata->controls, key_settable_ctx_params,
+                         params, OSSL_NELEM(params), &params_n))
+            goto err;
+        p = params;
+    }
+
+    ret = 1;
+    if (EVP_PKEY_fromdata(kdata->ctx, &key, EVP_PKEY_KEYPAIR, p) <= 0) {
+        t->err = "KEY_FROMDATA_ERROR";
+        goto err;
+    }
+err:
+    ctrl2params_free(params, params_n, params_n_allocstart);
+    EVP_PKEY_free(key);
+    return ret;
+}
+
+static const EVP_TEST_METHOD pkey_fromdata_test_method = {
+    "KeyFromData",
+    pkey_fromdata_test_init,
+    pkey_fromdata_test_cleanup,
+    pkey_fromdata_test_parse,
+    pkey_fromdata_test_run
+};
 
 /*
  * "Sign" implies EVP_PKEY_sign_init_ex2() if the argument is a colon-separated
@@ -3294,7 +3383,7 @@ static int encode_test_run(EVP_TEST *t)
     unsigned char *encode_out = NULL, *decode_out = NULL;
     int output_len, chunk_len;
     EVP_ENCODE_CTX *decode_ctx = NULL, *encode_ctx = NULL;
-    size_t input_len, donelen;
+    size_t input_len, donelen, decode_length;
 
     if (!TEST_ptr(decode_ctx = EVP_ENCODE_CTX_new())) {
         t->err = "INTERNAL_ERROR";
@@ -3336,9 +3425,14 @@ static int encode_test_run(EVP_TEST *t)
             goto err;
     }
 
-    if (!TEST_ptr(decode_out =
-                OPENSSL_malloc(EVP_DECODE_LENGTH(expected->output_len))))
+    decode_length = EVP_DECODE_LENGTH(expected->output_len);
+    if (!TEST_ptr(decode_out = OPENSSL_malloc(decode_length)))
         goto err;
+    /*
+     * Fill memory with non-zeros
+     * to check that decoding does not place redundant zeros.
+     */
+    memset(decode_out, 0xff, decode_length);
 
     output_len = 0;
     EVP_DecodeInit(decode_ctx);
@@ -3372,6 +3466,13 @@ static int encode_test_run(EVP_TEST *t)
                                    decode_out, output_len)) {
         t->err = "BAD_DECODING";
         goto err;
+    }
+
+    for (; output_len < (int)decode_length; output_len++) {
+        if (decode_out[output_len] != 0xff) {
+            t->err = "BAD_DECODING";
+            goto err;
+        }
     }
 
     t->err = NULL;
@@ -4760,6 +4861,7 @@ static const EVP_TEST_METHOD *evp_test_list[] = {
     &pverify_message_test_method,
     &pverify_message_public_test_method,
     &pkey_kem_test_method,
+    &pkey_fromdata_test_method,
     NULL
 };
 
@@ -5406,6 +5508,10 @@ static int is_pkey_disabled(const char *name)
 #endif
 #ifdef OPENSSL_NO_SM3
     if (HAS_CASE_SUFFIX(name, "-SM3"))
+        return 1;
+#endif
+#ifdef OPENSSL_NO_ML_DSA
+    if (HAS_CASE_PREFIX(name, "ML-DSA"))
         return 1;
 #endif
     return 0;

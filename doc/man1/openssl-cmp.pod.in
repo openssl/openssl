@@ -258,7 +258,7 @@ ITAV B<infoType>s is printed to stdout.
 
 Set InfoType name to use for requesting specific info in B<genm>,
 e.g., C<signKeyPairTypes>.
-There is specific support for C<caCerts>, C<rootCaCert>,  
+There is specific support for C<caCerts>, C<rootCaCert>,
 C<certReqTemplate>, and C<crlStatusList> (CRL update retrieval).
 
 =item B<-profile> I<name>
@@ -480,7 +480,7 @@ if neither B<-recipient>, B<-srvcert>, nor B<-issuer> is given.
 
 =item B<-issuer> I<name>
 
-X.509 Distinguished Name (DN) use as issuer field
+X.509 Distinguished Name (DN) to place as the issuer field
 in the requested certificate template in IR/CR/KUR/RR messages.
 If the NULL-DN (C</>) is given then no issuer is placed in the template.
 
@@ -777,20 +777,21 @@ If on success no such cert was received, this is indicated by deleting the file.
 
 =item B<-crlcert> I<filename>
 
-Certificate used for specifying a CRL issuer when requesting a CRL 
-in a genm message with infoType C<crlStatusList>.
+Certificate to derive CRL issuer data for the source field
+when obtaining a CRL in a genm request with infoType C<crlStatusList>.
 Any available distribution point name is preferred over issuer names.
 
 =item B<-oldcrl> I<filename>
 
-CRL used for specifying a CRL issuer when requesting a CRL 
-in a genm message with infoType C<crlStatusList>.
+The CRL to obtain an update for in a genm request with infoType C<crlStatusList>.
+Unless the B<-crlcert> option is provided as well,
+the given CRL is used for deriving CRL issuer data for the source field.
 Any available distribution point name is preferred over issuer names.
-If also B<-crlcrt> is given, its data is preferred over data from B<-oldcrl>.
+If the CRL contains a thisUpdate field, its value is copied to the request.
 
 =item B<-crlout> I<filename>
 
-The file to save CRL received in a genp message of infoType C<crls>.
+The file to save any CRL received in a genp message of infoType C<crls>.
 If on success no such CRL was received, this is indicated by deleting the file.
 
 =back
@@ -1395,13 +1396,10 @@ or by referencing in addition the B<[cr]> section of the example configuration:
 
 In order to update the enrolled certificate one may call
 
-  openssl cmp -section insta,kur
-
-using MAC-based protection with PBM or
-
   openssl cmp -section insta,kur,signature
 
-using signature-based protection.
+using signature-based protection with the certificate that is to be updated.
+For certificate updates, MAC-based protection should generally not be used.
 
 In a similar way any previously enrolled certificate may be revoked by
 
@@ -1517,9 +1515,15 @@ The B<cmp> application was added in OpenSSL 3.0.
 
 The B<-engine> option was deprecated in OpenSSL 3.0.
 
-The B<-profile> option was added in OpenSSL 3.3.
+The B<-oldwithold>, B<-newwithnew>, B<-newwithold>, B<-oldwithnew>,
+The B<-srvcertout>, and B<-serial> option were added in OpenSSL 3.2, as well
+as an extension of B<-cacertsout> to use when getting CA certificates.
+Since then, the B<-issuer> may be used also for certificates to be revoked.
 
-B<-crlcert>, B<-oldcrl>, B<-crlout>, B<-crlform>
+The B<-profile> and B<-no_cache_extracerts> options were added in OpenSSL 3.3,
+as well as support for delayed delivery of all types of response messages.
+
+The B<-template>, B<-crlcert>, B<-oldcrl>, B<-crlout>, B<-crlform>
 and B<-rsp_crl> options were added in OpenSSL 3.4.
 
 B<-centralkeygen>, b<-newkeyout>, B<-rsp_key> and

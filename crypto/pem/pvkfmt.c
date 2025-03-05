@@ -758,7 +758,7 @@ int i2b_PublicKey_bio(BIO *out, const EVP_PKEY *pk)
 }
 
 int ossl_do_PVK_header(const unsigned char **in, unsigned int length,
-                       int skip_magic,
+                       int skip_magic, int *isdss,
                        unsigned int *psaltlen, unsigned int *pkeylen)
 {
     const unsigned char *p = *in;
@@ -782,9 +782,26 @@ int ossl_do_PVK_header(const unsigned char **in, unsigned int length,
     }
     /* Skip reserved */
     p += 4;
-    /*
-     * keytype =
-     */ read_ledword(&p);
+    /* Check the key type */
+    switch (read_ledword(&p)) {
+    case MS_KEYTYPE_KEYX:
+        if (*isdss == 1) {
+            ERR_raise(ERR_LIB_PEM, PEM_R_EXPECTING_RSA_KEY_BLOB);
+            return 0;
+        }
+        *isdss = 0;
+        break;
+    case MS_KEYTYPE_SIGN:
+        if (*isdss == 0) {
+            ERR_raise(ERR_LIB_PEM, PEM_R_EXPECTING_DSS_KEY_BLOB);
+            return 0;
+        }
+        *isdss = 1;
+        break;
+    default:
+        ERR_raise(ERR_LIB_PEM, PEM_R_UNSUPPORTED_PVK_KEY_TYPE);
+        return 0;
+    }
     is_encrypted = read_ledword(&p);
     *psaltlen = read_ledword(&p);
     *pkeylen = read_ledword(&p);
@@ -945,7 +962,7 @@ static void *do_PVK_key_bio(BIO *in, pem_password_cb *cb, void *u,
     }
     p = pvk_hdr;
 
-    if (!ossl_do_PVK_header(&p, 24, 0, &saltlen, &keylen))
+    if (!ossl_do_PVK_header(&p, 24, 0, isdss, &saltlen, &keylen))
         return 0;
     buflen = (int)keylen + saltlen;
     buf = OPENSSL_malloc(buflen);

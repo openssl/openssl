@@ -354,6 +354,16 @@ my @smime_cms_tests = (
       \&final_compare
     ],
 
+    [ "enveloped content test streaming PEM format, AES-128-CBC cipher, password",
+      [ "{cmd1}", @prov, "-encrypt", "-in", $smcont, "-outform", "PEM", "-aes128",
+        "-stream", "-out", "{output}.cms",
+        "-pwri_password", "test" ],
+      [ "{cmd2}", @prov, "-decrypt", "-in", "{output}.cms", "-out", "{output}.txt",
+        "-inform", "PEM",
+        "-pwri_password", "test" ],
+      \&final_compare
+    ],
+
     [ "data content test streaming PEM format",
       [ "{cmd1}", @prov, "-data_create", "-in", $smcont, "-outform", "PEM",
         "-nodetach", "-stream", "-out", "{output}.cms" ],

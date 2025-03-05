@@ -194,12 +194,13 @@ foreach my $alg (@algs) {
     #     - |ek| public key ('t' vector || 'rho')
     #     - implicit rejection 'z' seed component
     #
-    my $p8_len = 28 + (2 + 64) + (4 + $slen + $plen + $zlen);
+    my $svec_off = 28 + (2 + 64) + 4;
+    my $p8_len = $svec_off + $slen + $plen + $zlen;
     ok((length($realder) == $p8_len && length($fakeder) == $p8_len),
         sprintf("Got expected DER lengths of %s seed-priv key", $alg));
-    my $mixtder = substr($realder, 0, 28 + 66 + 4 + $slen)
-        . substr($fakeder, 28 + 66 + 4 + $slen, $plen)
-        . substr($realder, 28 + 66 + 4 + $slen + $plen, $zlen);
+    my $mixtder = substr($realder, 0, $svec_off + $slen)
+        . substr($fakeder, $svec_off + $slen, $plen)
+        . substr($realder, $svec_off + $slen + $plen, $zlen);
     my $mixtfh = IO::File->new($mixt, ">:raw");
     print $mixtfh $mixtder;
     $mixtfh->close();
@@ -212,9 +213,9 @@ foreach my $alg (@algs) {
                  qw(-provparam ml-kem.import_pct_type=none),
                  qw(-inform DER -noout -in), $mixt])),
         sprintf("Absent PCT accept fake public: %s", $alg));
-    # Mutate the public key hash
+    # Mutate the first byte of the |s| vector
     my $mashder = $realder;
-    substr($mashder, -64, 1) =~ s{(.)}{chr(ord($1)^1)}es;
+    substr($mashder, $svec_off, 1) =~ s{(.)}{chr(ord($1)^1)}es;
     my $mashfh = IO::File->new($mash, ">:raw");
     print $mashfh $mashder;
     $mashfh->close();

@@ -15,7 +15,7 @@ about basic KEM operations.
 
 =over 4
 
-=item "ikme" (B<OSSL_KEM_PARAM_IKME>)<UTF8 string>
+=item "ikme" (B<OSSL_KEM_PARAM_IKME>) <octet string>
 
 The OpenSSL ML-KEM encapsulation mechanism can only be modified by
 setting randomness during encapsulation, this enables testing, as per

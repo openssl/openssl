@@ -917,7 +917,7 @@ int ossl_quic_tls_set_early_data_enabled(QUIC_TLS *qtls, int enabled)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(qtls->args.s);
 
-    if (!SSL_IS_QUIC_HANDSHAKE(sc) || !SSL_in_before(qtls->args.s))
+    if (sc == NULL || !SSL_IS_QUIC_HANDSHAKE(sc) || !SSL_in_before(qtls->args.s))
         return 0;
 
     if (!enabled) {

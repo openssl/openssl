@@ -339,7 +339,13 @@ static struct rcu_qp *update_qp(CRYPTO_RCU_LOCK *lock, uint32_t *curr_id)
 
     /* update the reader index to be the prior qp */
     tmp = lock->current_alloc_idx;
+# if (defined(NO_INTERLOCKEDOR64))
+    CRYPTO_THREAD_write_lock(lock->rw_lock);
+    lock->reader_idx = tmp;
+    CRYPTO_THREAD_unlock(lock->rw_lock);
+# else
     InterlockedExchange((LONG volatile *)&lock->reader_idx, tmp);
+# endif
 
     /* wake up any waiters */
     ossl_crypto_condvar_broadcast(lock->alloc_signal);
@@ -377,14 +383,14 @@ void ossl_synchronize_rcu(CRYPTO_RCU_LOCK *lock)
     while (lock->next_to_retire != curr_id)
         ossl_crypto_condvar_wait(lock->prior_signal, lock->prior_lock);
 
-    lock->next_to_retire++;
-    ossl_crypto_condvar_broadcast(lock->prior_signal);
-    ossl_crypto_mutex_unlock(lock->prior_lock);
-
     /* wait for the reader count to reach zero */
     do {
         CRYPTO_atomic_load(&qp->users, &count, lock->rw_lock);
     } while (count != (uint64_t)0);
+
+    lock->next_to_retire++;
+    ossl_crypto_condvar_broadcast(lock->prior_signal);
+    ossl_crypto_mutex_unlock(lock->prior_lock);
 
     retire_qp(lock, qp);
 
@@ -606,9 +612,21 @@ int CRYPTO_THREAD_compare_id(CRYPTO_THREAD_ID a, CRYPTO_THREAD_ID b)
 
 int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock)
 {
+# if (defined(NO_INTERLOCKEDOR64))
+    if (lock == NULL || !CRYPTO_THREAD_write_lock(lock))
+        return 0;
+    *val += amount;
+    *ret = *val;
+
+    if (!CRYPTO_THREAD_unlock(lock))
+        return 0;
+
+    return 1;
+# else
     *ret = (int)InterlockedExchangeAdd((LONG volatile *)val, (LONG)amount)
         + amount;
     return 1;
+# endif
 }
 
 int CRYPTO_atomic_add64(uint64_t *val, uint64_t op, uint64_t *ret,
