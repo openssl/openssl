@@ -1891,6 +1891,14 @@ typedef struct sigalg_lookup_st {
     int curve;
     /* Whether this signature algorithm is actually available for use */
     int enabled;
+    /* Minimum TLS version this is suitable for (0 == no min, -1 == invalid) */
+    int min_tls;
+    /* Max TLS version this is suitable for (0 == no max, -1 == invalid) */
+    int max_tls;
+    /* Minimum DTLS version this is suitable for (0 == no min, -1 == invalid) */
+    int min_dtls;
+    /* Max DTLS version this is suitable for (0 == no max, -1 == invalid) */
+    int max_dtls;
 } SIGALG_LOOKUP;
 
 /* DTLS structures */
