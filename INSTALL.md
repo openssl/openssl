@@ -1,7 +1,7 @@
 Build and Install
 =================
 
-This document describes installation on all supported operating
+This document describes installation of OpenSSL on all supported operating
 systems: the Unix/Linux family (including macOS), OpenVMS,
 and Windows.
 
@@ -48,18 +48,18 @@ Prerequisites
 
 To install OpenSSL, you will need:
 
- * A "make" implementation
- * Perl 5 with core modules (please read [NOTES-PERL.md](NOTES-PERL.md))
- * The Perl module `Text::Template` (please read [NOTES-PERL.md](NOTES-PERL.md))
- * an ANSI C compiler
- * POSIX C library (at least POSIX.1-2008), or compatible types and
-   functionality.
+ * A "make" utility implementation,
+ * Perl 5 with core modules (please read [NOTES-PERL.md](NOTES-PERL.md)),
+ * the Perl module `Text::Template` (please read [NOTES-PERL.md](NOTES-PERL.md)),
+ * an ANSI C compiler,
+ * POSIX C library (at least POSIX.1-2008) or compatible types and
+   functionality,
  * a development environment in the form of development libraries and C
-   header files
- * a supported operating system
+   header files,
+ * a supported operating system.
 
 For additional platform specific requirements, solutions to specific
-issues and other details, please read one of these:
+issues, and other details, please read one of the following:
 
  * [Notes for UNIX-like platforms](NOTES-UNIX.md)
  * [Notes for Android platforms](NOTES-ANDROID.md)
@@ -74,7 +74,7 @@ issues and other details, please read one of these:
 Notational conventions
 ======================
 
-Throughout this document, we use the following conventions.
+Throughout this document, we use the following syntax conventions.
 
 Commands
 --------
@@ -83,7 +83,7 @@ Any line starting with a dollar sign is a command line.
 
     $ command
 
-The dollar sign indicates the shell prompt and is not to be entered as
+The dollar sign indicates a shell prompt and is not to be entered as
 part of the command.
 
 Choices
@@ -91,11 +91,11 @@ Choices
 
 Several words in curly braces separated by pipe characters indicate a
 **mandatory choice**, to be replaced with one of the given words.
-For example, the line
+For example, the line:
 
     $ echo { WORD1 | WORD2 | WORD3 }
 
-represents one of the following three commands
+represents one of the following three commands:
 
     $ echo WORD1
     - or -
@@ -104,14 +104,14 @@ represents one of the following three commands
     $ echo WORD3
 
 One or several words in square brackets separated by pipe characters
-denote an **optional choice**.  It is similar to the mandatory choice,
-but it can also be omitted entirely.
+denote an **optional choice**.  This is similar to a mandatory choice,
+but it can be omitted entirely.
 
-So the line
+For example, the line:
 
     $ echo [ WORD1 | WORD2 | WORD3 ]
 
-represents one of the four commands
+represents one of the following four commands:
 
     $ echo WORD1
     - or -
@@ -128,21 +128,21 @@ Arguments
 
     [option...]
 
-A trailing ellipsis means that more than one could be specified.
+A trailing ellipsis means that more than one argument could be specified.
 
 Quick Installation Guide
 ========================
 
 If you just want to get OpenSSL installed without bothering too much
 about the details, here is the short version of how to build and install
-OpenSSL.  If any of the following steps fails, please consult the
+OpenSSL.  If any of the following steps fail, please consult the
 [Installation in Detail](#installation-steps-in-detail) section below.
 
 Building OpenSSL
 ----------------
 
-Use the following commands to configure, build and test OpenSSL.
-The testing is optional, but recommended if you intend to install
+Use the following commands to configure, build, and test OpenSSL.
+Testing is optional but recommended if you intend to install
 OpenSSL for production use.
 
 ### Unix / Linux / macOS / NonStop
@@ -162,7 +162,7 @@ Use the following commands to build OpenSSL:
 ### Windows
 
 If you are using Visual Studio, open a Developer Command Prompt and
-issue the following commands to build OpenSSL.
+issue the following commands to build OpenSSL:
 
     $ perl Configure
     $ nmake
@@ -175,7 +175,7 @@ Most likely you will be using the `VC-WIN64A`/`VC-WIN64A-HYBRIDCRT` target for
 64bit Windows binaries (AMD64) or `VC-WIN32`/`VC-WIN32-HYBRIDCRT` for 32bit
 Windows binaries (X86).
 The other two options are `VC-WIN64I` (Intel IA64, Itanium) and
-`VC-CE` (Windows CE) are rather uncommon nowadays.
+`VC-CE` (Windows CE), and these are rather uncommon nowadays.
 
 Installing OpenSSL
 ------------------
@@ -185,8 +185,8 @@ The following commands will install OpenSSL to a default system location.
 **Danger Zone:** even if you are impatient, please read the following two
 paragraphs carefully before you install OpenSSL.
 
-For security reasons the default system location is by default not writable
-for unprivileged users.  So for the final installation step administrative
+For security reasons the default system location is, by default, not writable
+for unprivileged users.  For the final installation step administrative
 privileges are required.  The default system location and the procedure to
 obtain administrative privileges depends on the operating system.
 It is recommended to compile and test OpenSSL with normal user privileges
@@ -209,11 +209,11 @@ root user or prepend `sudo` to the command:
 
     $ make install
 
-By default, OpenSSL will be installed to
+By default, OpenSSL will be installed to:
 
     /usr/local
 
-More precisely, the files will be installed into the  subdirectories
+More precisely, the files will be installed into the subdirectories:
 
     /usr/local/bin
     /usr/local/lib
@@ -224,29 +224,29 @@ depending on the file type, as it is custom on Unix-like operating systems.
 
 ### OpenVMS
 
-Use the following command to install OpenSSL.
+Use the following command to install OpenSSL:
 
     $ mms install
 
-By default, OpenSSL will be installed to
+By default, OpenSSL will be installed to:
 
     SYS$COMMON:[OPENSSL]
 
 ### Windows
 
 If you are using Visual Studio, open the Developer Command Prompt _elevated_
-and issue the following command.
+and issue the following command:
 
     $ nmake install
 
 The easiest way to elevate the Command Prompt is to press and hold down both
 the `<CTRL>` and `<SHIFT>` keys while clicking the menu item in the task menu.
 
-The default installation location is
+The default installation location is:
 
     C:\Program Files\OpenSSL
 
-for native binaries, or
+for native binaries, or:
 
     C:\Program Files (x86)\OpenSSL
 
@@ -279,7 +279,7 @@ Configuration Options
 
 There are several options to `./Configure` to customize the build (note that
 for Windows, the defaults for `--prefix` and `--openssldir` depend on what
-configuration is used and what Windows implementation OpenSSL is built on.
+configuration is used and what Windows implementation OpenSSL is built on).
 For more information, see the [Notes for Windows platforms](NOTES-WINDOWS.md).
 
 API Level
@@ -290,7 +290,7 @@ API Level
 Build the OpenSSL libraries to support the API for the specified version.
 If [no-deprecated](#no-deprecated) is also given, don't build with support
 for deprecated APIs in or below the specified version number.  For example,
-adding
+adding:
 
     --api=1.1.0 no-deprecated
 
@@ -308,19 +308,19 @@ Cross Compile Prefix
 The `<PREFIX>` to include in front of commands for your toolchain.
 
 It is likely to have to end with dash, e.g. `a-b-c-` would invoke GNU compiler
-as `a-b-c-gcc`, etc.  Unfortunately cross-compiling is too case-specific to put
+as `a-b-c-gcc`, etc.  Unfortunately, cross-compiling is too case-specific to put
 together one-size-fits-all instructions.  You might have to pass more flags or
 set up environment variables to actually make it work.  Android and iOS cases
-are discussed in corresponding `Configurations/15-*.conf` files.  But there are
-cases when this option alone is sufficient.  For example to build the mingw64
-target on Linux `--cross-compile-prefix=x86_64-w64-mingw32-` works.  Naturally
-provided that mingw packages are installed.  Today Debian and Ubuntu users
-have option to install a number of prepackaged cross-compilers along with
+are discussed in corresponding `Configurations/15-*.conf` files, but there are
+cases when this option alone is sufficient.  For example, to build the mingw64
+target on Linux `--cross-compile-prefix=x86_64-w64-mingw32-` works,
+provided that mingw packages are installed.  Today, Debian and Ubuntu users
+have the option to install a number of prepackaged cross-compilers along with
 corresponding run-time and development packages for "alien" hardware.  To give
-another example `--cross-compile-prefix=mipsel-linux-gnu-` suffices in such
+another example, `--cross-compile-prefix=mipsel-linux-gnu-` suffices in such
 case.
 
-For cross compilation, you must [configure manually](#manual-configuration).
+For cross compilation you must [configure manually](#manual-configuration).
 Also, note that `--openssldir` refers to target's file system, not one you are
 building on.
 
