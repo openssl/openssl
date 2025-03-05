@@ -8,14 +8,45 @@
  */
 
 /*-
- * AES-NI support for AES mode cfb.
+ * AES-NI and VAES support for AES mode cfb.
  * This file is included by cipher_aes_cfb_hw.c
  */
+
+#include <assert.h>
+
+#define cipher_hw_vaes_cfb128  aes_cfb128_vaes_encdec_wrapper
+#define cipher_hw_vaes_cfb8    ossl_cipher_hw_generic_cfb8
+#define cipher_hw_vaes_cfb1    ossl_cipher_hw_generic_cfb1
 
 #define cipher_hw_aesni_cfb128 ossl_cipher_hw_generic_cfb128
 #define cipher_hw_aesni_cfb8   ossl_cipher_hw_generic_cfb8
 #define cipher_hw_aesni_cfb1   ossl_cipher_hw_generic_cfb1
 
+// active when AES-NI, AVX512F, and VAES are detected
+static int aes_cfb128_vaes_encdec_wrapper(
+    PROV_CIPHER_CTX* dat,
+    unsigned char *out,
+    const unsigned char *in,
+    size_t len)
+{
+    assert(dat != NULL);
+    assert(out != NULL);
+    assert(in  != NULL);
+
+    assert(dat->mode == EVP_CIPH_CFB_MODE);
+
+    assert(dat->keylen == 16 || dat->keylen == 24 || dat->keylen == 32);
+    assert(dat->ks != NULL);
+
+    assert(dat->ivlen == 16);
+    assert(dat->iv != NULL);
+
+    assert(dat->enc == 0 || dat->enc == 1);
+
+    return ossl_cipher_hw_generic_cfb128(dat, out, in, len);
+}
+
+// generates AES round keys for AES-NI and VAES implementations
 static int cipher_hw_aesni_initkey(PROV_CIPHER_CTX *dat,
                                    const unsigned char *key, size_t keylen)
 {
@@ -38,12 +69,29 @@ static int cipher_hw_aesni_initkey(PROV_CIPHER_CTX *dat,
     return 1;
 }
 
+#define VAES_BIT    (1<<(41-32))
+#define AVX512F_BIT (1<<16)
+
+#define AVX512F_VAES_CAPABLE (                                                 \
+    (OPENSSL_ia32cap_P[3] & VAES_BIT)                                          \
+    &&                                                                         \
+    (OPENSSL_ia32cap_P[2] & AVX512F_BIT)                                       \
+)
+
 #define PROV_CIPHER_HW_declare(mode)                                           \
 static const PROV_CIPHER_HW aesni_##mode = {                                   \
     cipher_hw_aesni_initkey,                                                   \
     cipher_hw_aesni_##mode,                                                    \
     cipher_hw_aes_copyctx                                                      \
+};                                                                             \
+static const PROV_CIPHER_HW vaes_##mode = {                                    \
+    cipher_hw_aesni_initkey,                                                   \
+    cipher_hw_vaes_##mode,                                                     \
+    cipher_hw_aes_copyctx                                                      \
 };
 #define PROV_CIPHER_HW_select(mode)                                            \
-if (AESNI_CAPABLE)                                                             \
-    return &aesni_##mode;
+if (AESNI_CAPABLE) {                                                           \
+    if (AVX512F_VAES_CAPABLE)                                                  \
+        return &vaes_##mode;                                                   \
+    return &aesni_##mode;                                                      \
+}
