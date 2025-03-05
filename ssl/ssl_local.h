@@ -257,6 +257,10 @@
 # define SSL_CONNECTION_IS_DTLS(s) \
     (SSL_CONNECTION_GET_SSL(s)->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_DTLS)
 
+/* Check if an SSL_CTX structure is using DTLS */
+# define SSL_CTX_IS_DTLS(ctx) \
+    (ctx->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_DTLS)
+
 /* Check if we are using TLSv1.3 */
 # define SSL_CONNECTION_IS_TLS13(s) (!SSL_CONNECTION_IS_DTLS(s) \
     && SSL_CONNECTION_GET_SSL(s)->method->version >= TLS1_3_VERSION \
@@ -772,6 +776,8 @@ typedef struct tls_sigalg_info_st {
     unsigned int secbits;    /* Bits of security (from SP800-57) */
     int mintls;              /* Minimum TLS version, -1 unsupported */
     int maxtls;              /* Maximum TLS version (or 0 for undefined) */
+    int mindtls;             /* Minimum DTLS version, -1 unsupported */
+    int maxdtls;             /* Maximum DTLS version (or 0 for undefined) */
 } TLS_SIGALG_INFO;
 
 /*
@@ -1169,6 +1175,7 @@ struct ssl_ctx_st {
     const EVP_MD *ssl_digest_methods[SSL_MD_NUM_IDX];
     size_t ssl_mac_secret_size[SSL_MD_NUM_IDX];
 
+    size_t sigalg_lookup_cache_len;
     size_t tls12_sigalgs_len;
     /* Cache of all sigalgs we know and whether they are available or not */
     struct sigalg_lookup_st *sigalg_lookup_cache;
@@ -1875,6 +1882,8 @@ struct ssl_connection_st {
 typedef struct sigalg_lookup_st {
     /* TLS 1.3 signature scheme name */
     const char *name;
+    /* TLS 1.2 signature scheme name */
+    const char *name12;
     /* Raw value used in extension */
     uint16_t sigalg;
     /* NID of hash algorithm or NID_undef if no hash */
@@ -1890,7 +1899,14 @@ typedef struct sigalg_lookup_st {
     /* Required public key curve (ECDSA only) */
     int curve;
     /* Whether this signature algorithm is actually available for use */
-    int enabled;
+    int available;
+    /* Whether this signature algorithm is by default advertised */
+    int advertise;
+    /* Supported protocol ranges */
+    int mintls;
+    int maxtls;
+    int mindtls;
+    int maxdtls;
 } SIGALG_LOOKUP;
 
 /* DTLS structures */
@@ -2231,6 +2247,9 @@ typedef enum downgrade_en {
 #define TLSEXT_SIGALG_ecdsa_brainpoolP256r1_sha256              0x081a
 #define TLSEXT_SIGALG_ecdsa_brainpoolP384r1_sha384              0x081b
 #define TLSEXT_SIGALG_ecdsa_brainpoolP512r1_sha512              0x081c
+#define TLSEXT_SIGALG_mldsa44                                   0x0904
+#define TLSEXT_SIGALG_mldsa65                                   0x0905
+#define TLSEXT_SIGALG_mldsa87                                   0x0906
 
 /* Sigalgs names */
 #define TLSEXT_SIGALG_ecdsa_secp256r1_sha256_name                    "ecdsa_secp256r1_sha256"
@@ -2254,17 +2273,25 @@ typedef enum downgrade_en {
 #define TLSEXT_SIGALG_dsa_sha512_name                                "dsa_sha512"
 #define TLSEXT_SIGALG_dsa_sha224_name                                "dsa_sha224"
 #define TLSEXT_SIGALG_dsa_sha1_name                                  "dsa_sha1"
-#define TLSEXT_SIGALG_gostr34102012_256_intrinsic_name               "gost2012_256"
-#define TLSEXT_SIGALG_gostr34102012_512_intrinsic_name               "gost2012_512"
+#define TLSEXT_SIGALG_gostr34102012_256_intrinsic_name               "gostr34102012_256"
+#define TLSEXT_SIGALG_gostr34102012_512_intrinsic_name               "gostr34102012_512"
+#define TLSEXT_SIGALG_gostr34102012_256_intrinsic_alias              "gost2012_256"
+#define TLSEXT_SIGALG_gostr34102012_512_intrinsic_alias              "gost2012_512"
 #define TLSEXT_SIGALG_gostr34102012_256_gostr34112012_256_name       "gost2012_256"
 #define TLSEXT_SIGALG_gostr34102012_512_gostr34112012_512_name       "gost2012_512"
 #define TLSEXT_SIGALG_gostr34102001_gostr3411_name                   "gost2001_gost94"
 
 #define TLSEXT_SIGALG_ed25519_name                                   "ed25519"
 #define TLSEXT_SIGALG_ed448_name                                     "ed448"
-#define TLSEXT_SIGALG_ecdsa_brainpoolP256r1_sha256_name              "ecdsa_brainpoolP256r1_sha256"
-#define TLSEXT_SIGALG_ecdsa_brainpoolP384r1_sha384_name              "ecdsa_brainpoolP384r1_sha384"
-#define TLSEXT_SIGALG_ecdsa_brainpoolP512r1_sha512_name              "ecdsa_brainpoolP512r1_sha512"
+#define TLSEXT_SIGALG_ecdsa_brainpoolP256r1_sha256_name              "ecdsa_brainpoolP256r1tls13_sha256"
+#define TLSEXT_SIGALG_ecdsa_brainpoolP384r1_sha384_name              "ecdsa_brainpoolP384r1tls13_sha384"
+#define TLSEXT_SIGALG_ecdsa_brainpoolP512r1_sha512_name              "ecdsa_brainpoolP512r1tls13_sha512"
+#define TLSEXT_SIGALG_ecdsa_brainpoolP256r1_sha256_alias             "ecdsa_brainpoolP256r1_sha256"
+#define TLSEXT_SIGALG_ecdsa_brainpoolP384r1_sha384_alias             "ecdsa_brainpoolP384r1_sha384"
+#define TLSEXT_SIGALG_ecdsa_brainpoolP512r1_sha512_alias             "ecdsa_brainpoolP512r1_sha512"
+#define TLSEXT_SIGALG_mldsa44_name                                   "mldsa44"
+#define TLSEXT_SIGALG_mldsa65_name                                   "mldsa65"
+#define TLSEXT_SIGALG_mldsa87_name                                   "mldsa87"
 
 /* Known PSK key exchange modes */
 #define TLSEXT_KEX_MODE_KE                                      0x00

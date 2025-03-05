@@ -759,14 +759,18 @@ This value must be supplied.
 
 =item "tls-max-tls" (B<OSSL_CAPABILITY_TLS_SIGALG_MAX_TLS>) <integer>
 
-These parameters can be used to describe the minimum and maximum TLS
+=item "tls-min-dtls" (B<OSSL_CAPABILITY_TLS_SIGALG_MIN_DTLS>) <integer>
+
+=item "tls-max-dtls" (B<OSSL_CAPABILITY_TLS_SIGALG_MAX_DTLS>) <integer>
+
+These parameters can be used to describe the minimum and maximum TLS and DTLS
 versions supported by the signature algorithm. The values equate to the
 on-the-wire encoding of the various TLS versions. For example TLSv1.3 is
 0x0304 (772 decimal), and TLSv1.2 is 0x0303 (771 decimal). A 0 indicates that
-there is no defined minimum or maximum. A -1 indicates that the signature
-algorithm should not be used in that protocol.
-Presently values representing anything other than TLS1.3 mean that the
-complete algorithm is ignored.
+there is no defined minimum or maximum. A -1 in either the min or max field
+indicates that the signature algorithm should not be used in that protocol.
+Presently, provider signature algorithms are used only with TLS 1.3, if
+that's enclosed in the specified range.
 
 =back
 

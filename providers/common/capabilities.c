@@ -280,12 +280,14 @@ typedef struct tls_sigalg_constants_st {
     unsigned int sec_bits;    /* Bits of security */
     int min_tls;              /* Minimum TLS version, -1 unsupported */
     int max_tls;              /* Maximum TLS version (or 0 for undefined) */
+    int min_dtls;             /* Minimum DTLS version, -1 unsupported */
+    int max_dtls;             /* Maximum DTLS version (or 0 for undefined) */
 } TLS_SIGALG_CONSTANTS;
 
 static const TLS_SIGALG_CONSTANTS sigalg_constants_list[3] = {
-    { 0x0904, 128, TLS1_3_VERSION, 0 },
-    { 0x0905, 192, TLS1_3_VERSION, 0 },
-    { 0x0906, 256, TLS1_3_VERSION, 0 },
+    { 0x0904, 128, TLS1_3_VERSION, 0, -1, -1 },
+    { 0x0905, 192, TLS1_3_VERSION, 0, -1, -1 },
+    { 0x0906, 256, TLS1_3_VERSION, 0, -1, -1 },
 };
 
 # define TLS_SIGALG_ENTRY(tlsname, algorithm, oid, idx)                         \
@@ -304,10 +306,14 @@ static const TLS_SIGALG_CONSTANTS sigalg_constants_list[3] = {
                        (unsigned int *)&sigalg_constants_list[idx].min_tls),    \
         OSSL_PARAM_int(OSSL_CAPABILITY_TLS_SIGALG_MAX_TLS,                      \
                        (unsigned int *)&sigalg_constants_list[idx].max_tls),    \
+        OSSL_PARAM_int(OSSL_CAPABILITY_TLS_SIGALG_MIN_DTLS,                     \
+                       (unsigned int *)&sigalg_constants_list[idx].min_dtls),   \
+        OSSL_PARAM_int(OSSL_CAPABILITY_TLS_SIGALG_MAX_DTLS,                     \
+                       (unsigned int *)&sigalg_constants_list[idx].max_dtls),   \
         OSSL_PARAM_END                                                          \
     }
 
-static const OSSL_PARAM param_sigalg_list[][8] = {
+static const OSSL_PARAM param_sigalg_list[][10] = {
     TLS_SIGALG_ENTRY("mldsa44", "ML-DSA-44", "2.16.840.1.101.3.4.3.17", 0),
     TLS_SIGALG_ENTRY("mldsa65", "ML-DSA-65", "2.16.840.1.101.3.4.3.18", 1),
     TLS_SIGALG_ENTRY("mldsa87", "ML-DSA-87", "2.16.840.1.101.3.4.3.19", 2),
