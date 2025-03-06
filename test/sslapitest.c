@@ -10985,6 +10985,60 @@ end:
     return testresult;
 }
 
+static int test_ec_point_formats(void)
+{
+    SSL_CTX *ctx = NULL;
+    SSL *ssl = NULL;
+    int testresult = 0;
+    unsigned char valid_formats[] = {
+        TLSEXT_ECPOINTFORMAT_uncompressed,
+        TLSEXT_ECPOINTFORMAT_ansiX962_compressed_prime,
+        TLSEXT_ECPOINTFORMAT_ansiX962_compressed_char2
+    };
+    unsigned char invalid_format[] = { TLSEXT_ECPOINTFORMAT_uncompressed, 0x99 };
+
+    ctx = SSL_CTX_new_ex(libctx, NULL, TLS_server_method());
+    if (!TEST_ptr(ctx))
+        goto end;
+
+    /* Test setting valid formats: */
+    if (!TEST_true(SSL_CTX_set_ec_point_formats(ctx, valid_formats, sizeof(valid_formats))))
+        goto end;
+
+    ssl = SSL_new(ctx);
+    if (!TEST_ptr(ssl))
+        goto end;
+
+    if (!TEST_true(SSL_set_ec_point_formats(ssl, valid_formats, sizeof(valid_formats))))
+        goto end;
+
+    /* Test setting invalid & empty formats: */
+    if (!TEST_false(SSL_CTX_set_ec_point_formats(ctx, invalid_format, sizeof(invalid_format))))
+        goto end;
+
+    if (!TEST_false(SSL_set_ec_point_formats(ssl, invalid_format, sizeof(invalid_format))))
+        goto end;
+
+    if (!TEST_false(SSL_CTX_set_ec_point_formats(ctx, NULL, 0)))
+        goto end;
+
+    if (!TEST_false(SSL_set_ec_point_formats(ssl, NULL, 0)))
+        goto end;
+
+    if (!TEST_false(SSL_CTX_set_ec_point_formats(ctx, valid_formats, 0)))
+        goto end;
+
+    if (!TEST_false(SSL_set_ec_point_formats(ssl, valid_formats, 0)))
+        goto end;
+
+    testresult = 1;
+
+end:
+    SSL_free(ssl);
+    SSL_CTX_free(ctx);
+    return testresult;
+}
+
 /*
  * Test SSL_CTX_set1_verify/chain_cert_store and SSL_CTX_get_verify/chain_cert_store.
  */
@@ -13239,6 +13293,7 @@ int setup_tests(void)
 #endif
     ADD_TEST(test_inherit_verify_param);
     ADD_TEST(test_set_alpn);
+    ADD_TEST(test_ec_point_formats);
     ADD_TEST(test_set_verify_cert_store_ssl_ctx);
     ADD_TEST(test_set_verify_cert_store_ssl);
     ADD_ALL_TESTS(test_session_timeout, 1);
