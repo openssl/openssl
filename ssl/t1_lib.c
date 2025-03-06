@@ -2230,7 +2230,7 @@ int ssl_setup_sigalgs(SSL_CTX *ctx)
     for (i = 0; i < ctx->sigalg_list_len; i++) {
         TLS_SIGALG_INFO si = ctx->sigalg_list[i];
         cache[cache_idx].name = si.name;
-        cache[cache_idx].name12 = NULL;
+        cache[cache_idx].name12 = si.sigalg_name;
         cache[cache_idx].sigalg = si.code_point;
         tls12_sigalgs_list[cache_idx] = si.code_point;
         cache[cache_idx].hash = si.hash_name?OBJ_txt2nid(si.hash_name):NID_undef;
@@ -2656,6 +2656,7 @@ int tls12_check_peer_sigalg(SSL_CONNECTION *s, uint16_t sig, EVP_PKEY *pkey)
     int pkeyid = -1;
     const SIGALG_LOOKUP *lu;
     int secbits = 0;
+    int minversion, maxversion;
 
     pkeyid = EVP_PKEY_get_id(pkey);
 
@@ -2669,7 +2670,21 @@ int tls12_check_peer_sigalg(SSL_CONNECTION *s, uint16_t sig, EVP_PKEY *pkey)
         if (pkeyid == EVP_PKEY_RSA)
             pkeyid = EVP_PKEY_RSA_PSS;
     }
+
+    /* Is this code point available and compatible with the protocol */
     lu = tls1_lookup_sigalg(SSL_CONNECTION_GET_CTX(s), sig);
+    if (lu == NULL)
+        return 0;
+    minversion = SSL_CONNECTION_IS_DTLS(s) ? lu->mindtls : lu->mintls;
+    maxversion = SSL_CONNECTION_IS_DTLS(s) ? lu->maxdtls : lu->maxtls;
+    if (minversion == -1 || maxversion == -1 || !lu->available
+        || (minversion != 0 && s->max_proto_version != 0
+            && ssl_version_cmp(s, minversion, s->max_proto_version) > 0)
+        || (maxversion != 0 && s->min_proto_version != 0
+            && ssl_version_cmp(s, maxversion, s->min_proto_version) < 0)
+        || !tls12_sigalg_allowed(s, SSL_SECOP_SIGALG_SUPPORTED, lu))
+        return 0;
+
     /* if this sigalg is loaded, set so far unknown pkeyid to its sig NID */
     if ((pkeyid == EVP_PKEY_KEYMGMT) && (lu != NULL))
         pkeyid = lu->sig;
@@ -4509,14 +4524,28 @@ static const SIGALG_LOOKUP *find_sig_alg(SSL_CONNECTION *s, X509 *x,
 
     /* Look for a shared sigalgs matching possible certificates */
     for (i = 0; i < s->shared_sigalgslen; i++) {
-        lu = s->shared_sigalgs[i];
+        int dtls, minversion, maxversion;
 
         /* Skip SHA1, SHA224, DSA and RSA if not PSS */
+        lu = s->shared_sigalgs[i];
         if (lu->hash == NID_sha1
             || lu->hash == NID_sha224
             || lu->sig == EVP_PKEY_DSA
             || lu->sig == EVP_PKEY_RSA)
             continue;
+
+        /*
+         * By this point the protocol version should already be chosen.  Check
+         * the sigalg version bounds.
+         */
+        dtls = SSL_CONNECTION_IS_DTLS(s);
+        minversion = dtls ? lu->mindtls : lu->mintls;
+        maxversion = dtls ? lu->maxdtls : lu->maxtls;
+        if (minversion != 0 && ssl_version_cmp(s, minversion, s->version) > 0)
+            continue;
+        if (maxversion != 0 && ssl_version_cmp(s, maxversion, s->version) < 0)
+            continue;
+
         /* Check that we have a cert, and signature_algorithms_cert */
         if (!tls1_lookup_md(sctx, lu, NULL))
             continue;
@@ -4597,7 +4626,19 @@ int tls_choose_sigalg(SSL_CONNECTION *s, int fatalerrs)
                  * cert type
                  */
                 for (i = 0; i < s->shared_sigalgslen; i++) {
+                    int dtls, minversion, maxversion;
+
+                    /* Check the sigalg version bounds */
                     lu = s->shared_sigalgs[i];
+                    dtls = SSL_CONNECTION_IS_DTLS(s);
+                    minversion = dtls ? lu->mindtls : lu->mintls;
+                    maxversion = dtls ? lu->maxdtls : lu->maxtls;
+                    if (minversion != 0
+                        && ssl_version_cmp(s, minversion, s->version) > 0)
+                        continue;
+                    if (maxversion != 0
+                        && ssl_version_cmp(s, maxversion, s->version) < 0)
+                        continue;
 
                     if (s->server) {
                         if ((sig_idx = tls12_get_cert_sigalg_idx(s, lu)) == -1)
