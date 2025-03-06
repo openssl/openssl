@@ -39,12 +39,6 @@ static void TLS_RL_RECORD_release(TLS_RL_RECORD *r, size_t num_recs)
     }
 }
 
-void ossl_tls_rl_record_set_seq_num(TLS_RL_RECORD *r,
-                                    const unsigned char *seq_num)
-{
-    memcpy(r->seq_num, seq_num, SEQ_NUM_SIZE);
-}
-
 void ossl_rlayer_fatal(OSSL_RECORD_LAYER *rl, int al, int reason,
                        const char *fmt, ...)
 {
@@ -862,7 +856,7 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
             rl->curr_rec = 0;
             rl->num_released = 0;
             /* Reset the read sequence */
-            memset(rl->sequence, 0, sizeof(rl->sequence));
+            rl->sequence = 0;
             ret = 1;
             goto end;
         }
@@ -1089,7 +1083,8 @@ int tls13_common_post_process_record(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec)
 {
     if (rec->type != SSL3_RT_APPLICATION_DATA
             && rec->type != SSL3_RT_ALERT
-            && rec->type != SSL3_RT_HANDSHAKE) {
+            && rec->type != SSL3_RT_HANDSHAKE
+            && (!rl->isdtls || rec->type != SSL3_RT_ACK)) {
         RLAYERfatal(rl, SSL_AD_UNEXPECTED_MESSAGE, SSL_R_BAD_RECORD_TYPE);
         return 0;
     }
@@ -1113,7 +1108,7 @@ int tls13_common_post_process_record(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec)
 
 int tls_read_record(OSSL_RECORD_LAYER *rl, void **rechandle, int *rversion,
                     uint8_t *type, const unsigned char **data, size_t *datalen,
-                    uint16_t *epoch, unsigned char *seq_num)
+                    uint16_t *epoch, uint64_t *seq_num)
 {
     TLS_RL_RECORD *rec;
 
@@ -1150,7 +1145,7 @@ int tls_read_record(OSSL_RECORD_LAYER *rl, void **rechandle, int *rversion,
     *datalen = rec->length;
     if (rl->isdtls) {
         *epoch = rec->epoch;
-        memcpy(seq_num, rec->seq_num, sizeof(rec->seq_num));
+        *seq_num = rec->seq_num;
     }
 
     return OSSL_RECORD_RETURN_SUCCESS;
@@ -1729,7 +1724,7 @@ int tls_post_encryption_processing_default(OSSL_RECORD_LAYER *rl,
 
         recordstart = WPACKET_get_curr(thispkt) - len - headerlen;
 
-        if (!dtls_crypt_sequence_number(rl->sn_enc_ctx, recordstart + DTLS1_RT_HEADER_SEQ_OFFS,
+        if (!dtls_crypt_sequence_number(rl->sn_enc_ctx, recordstart + DTLS1_RT_HEADER_SEQ_OFFS, 6,
                                         recordstart + DTLS1_RT_HEADER_LENGTH,
                                         rl->sn_enc_offs)) {
             RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -2026,9 +2021,19 @@ int tls_default_set_protocol_version(OSSL_RECORD_LAYER *rl, int version)
     return 1;
 }
 
+int tls_default_get_protocol_version(OSSL_RECORD_LAYER *rl)
+{
+    return rl->version;
+}
+
 int tls_set_protocol_version(OSSL_RECORD_LAYER *rl, int version)
 {
     return rl->funcs->set_protocol_version(rl, version);
+}
+
+int tls_get_protocol_version(OSSL_RECORD_LAYER *rl)
+{
+    return rl->funcs->get_protocol_version(rl);
 }
 
 void tls_set_plain_alerts(OSSL_RECORD_LAYER *rl, int allow)
@@ -2095,15 +2100,8 @@ void tls_set_max_frag_len(OSSL_RECORD_LAYER *rl, size_t max_frag_len)
 
 int tls_increment_sequence_ctr(OSSL_RECORD_LAYER *rl)
 {
-    int i;
-
     /* Increment the sequence counter */
-    for (i = SEQ_NUM_SIZE; i > 0; i--) {
-        ++(rl->sequence[i - 1]);
-        if (rl->sequence[i - 1] != 0)
-            break;
-    }
-    if (i == 0) {
+    if (++rl->sequence == 0) {
         /* Sequence has wrapped */
         RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_SEQUENCE_CTR_WRAPPED);
         return 0;
@@ -2188,6 +2186,7 @@ const OSSL_RECORD_METHOD ossl_tls_record_method = {
     tls_get_alert_code,
     tls_set1_bio,
     tls_set_protocol_version,
+    tls_get_protocol_version,
     tls_set_plain_alerts,
     tls_set_first_handshake,
     tls_set_max_pipelines,

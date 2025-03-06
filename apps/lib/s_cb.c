@@ -666,7 +666,8 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
         switch (content_type) {
         case SSL3_RT_CHANGE_CIPHER_SPEC:
             /* type 20 */
-            str_content_type = ", ChangeCipherSpec";
+            if (version != DTLS1_3_VERSION)
+                str_content_type = ", ChangeCipherSpec";
             break;
         case SSL3_RT_ALERT:
             /* type 21 */
@@ -695,6 +696,11 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
             /* type 23 */
             str_content_type = ", ApplicationData";
             break;
+        case SSL3_RT_ACK:
+            /* type 26 */
+            if (version == DTLS1_3_VERSION)
+                str_content_type = ", ACK";
+            break;
         case SSL3_RT_HEADER:
             /* type 256 */
             str_content_type = ", RecordHeader";
@@ -704,6 +710,10 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
             str_content_type = ", InnerContent";
             break;
         default:
+            break;
+        }
+
+        if (str_content_type[0] == '\0') {
             BIO_snprintf(tmpbuf, sizeof(tmpbuf)-1, ", Unknown (content_type=%d)", content_type);
             str_content_type = tmpbuf;
         }
