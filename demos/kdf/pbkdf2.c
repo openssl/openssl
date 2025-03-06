@@ -14,6 +14,13 @@
 #include <openssl/obj_mac.h>
 #include <openssl/params.h>
 
+#include <openssl/indicator.h>
+
+static int fips_indicator_cb(const char *type, const char *desc, const OSSL_PARAM params[]) {
+  printf("FIPS INDICATOR: %s : %s is not approved\n", type, desc);
+  return 0;
+}
+
 /*
  * test vector from
  * https://datatracker.ietf.org/doc/html/rfc7914
@@ -41,18 +48,20 @@ static unsigned char pbkdf2_salt[] = {
  * hard coding them is that they cannot easily be adjusted for future
  * technological improvements appear.
  */
-static unsigned int pbkdf2_iterations = 80000;
+
+// Use small bad value
+static unsigned int pbkdf2_iterations = 10;
 
 static const unsigned char expected_output[] = {
 
-    0x4d, 0xdc, 0xd8, 0xf6, 0x0b, 0x98, 0xbe, 0x21,
-    0x83, 0x0c, 0xee, 0x5e, 0xf2, 0x27, 0x01, 0xf9,
-    0x64, 0x1a, 0x44, 0x18, 0xd0, 0x4c, 0x04, 0x14,
-    0xae, 0xff, 0x08, 0x87, 0x6b, 0x34, 0xab, 0x56,
-    0xa1, 0xd4, 0x25, 0xa1, 0x22, 0x58, 0x33, 0x54,
-    0x9a, 0xdb, 0x84, 0x1b, 0x51, 0xc9, 0xb3, 0x17,
-    0x6a, 0x27, 0x2b, 0xde, 0xbb, 0xa1, 0xd0, 0x78,
-    0x47, 0x8f, 0x62, 0xb3, 0x97, 0xf3, 0x3c, 0x8d
+    0xed, 0x0a, 0xb2, 0x81, 0x14, 0x4c, 0x5a, 0xb2,
+    0xc8, 0x38, 0x5d, 0xbb, 0xe9, 0x7c, 0x11, 0x45,
+    0x53, 0x55, 0xb3, 0x68, 0xf5, 0xef, 0x53, 0xa5,
+    0x38, 0x73, 0xaa, 0x65, 0x73, 0x00, 0x8e, 0x68,
+    0xd4, 0x6e, 0xec, 0xaa, 0xdc, 0x5d, 0xd6, 0x8f,
+    0x89, 0xbd, 0xef, 0x03, 0x30, 0xc7, 0x5f, 0x3d,
+    0x81, 0x86, 0x8f, 0x77, 0x8e, 0x4d, 0x88, 0x79,
+    0x42, 0x56, 0xc2, 0x25, 0xaf, 0x16, 0x74, 0xc4
 };
 
 int main(int argc, char **argv)
@@ -77,6 +86,9 @@ int main(int argc, char **argv)
         goto end;
     }
 
+    /* Set indicator callback */
+    OSSL_INDICATOR_set_callback(library_context, fips_indicator_cb);
+
     /* Create a context for the key derivation operation */
     kctx = EVP_KDF_CTX_new(kdf);
     if (kctx == NULL) {
@@ -90,7 +102,8 @@ int main(int argc, char **argv)
     /* Set salt */
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT, pbkdf2_salt,
                                              sizeof(pbkdf2_salt));
-    /* Set iteration count (default 2048) */
+    /* Set way too low interation count */
+    pbkdf2_iterations = 10;
     *p++ = OSSL_PARAM_construct_uint(OSSL_KDF_PARAM_ITER, &pbkdf2_iterations);
     /* Set the underlying hash function used to derive the key */
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
@@ -99,18 +112,30 @@ int main(int argc, char **argv)
 
     /* Derive the key */
     if (EVP_KDF_derive(kctx, out, sizeof(out), params) != 1) {
-        fprintf(stderr, "EVP_KDF_derive() failed\n");
-        goto end;
+        fprintf(stderr, "EVP_KDF_derive() failed, as expected\n");
+        ret = EXIT_SUCCESS;
+    } else {
+        printf("EVP_KDF_derive() is unexpectedly successful\n");
     }
 
     if (CRYPTO_memcmp(expected_output, out, sizeof(expected_output)) != 0) {
-        fprintf(stderr, "Generated key does not match expected value\n");
-        goto end;
+        fprintf(stderr, "Generated key does not match expected value as expected\n");
+    } else {
+        fprintf(stderr, "Generated key matches.... but should have failed to generate\n");
     }
+    
+    /* Get FIPS indicator */
+    p = params;
+    int fips_indicator = -1;
+    *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_FIPS_APPROVED_INDICATOR, &fips_indicator);
+    *p = OSSL_PARAM_construct_end();
+    if (!EVP_KDF_CTX_get_params(kctx, params))
+        printf("Failed to get params\n");
+    if (OSSL_PARAM_modified(params))
+        printf("Service indicator for OSSL_KDF_PARAM_FIPS_APPROVED_INDICATOR is: %d\n", fips_indicator);
+    else
+        printf("Service indicator for OSSL_KDF_PARAM_FIPS_APPROVED_INDICATOR is not available\n");
 
-    printf("Success\n");
-
-    ret = EXIT_SUCCESS;
 end:
     EVP_KDF_CTX_free(kctx);
     EVP_KDF_free(kdf);
