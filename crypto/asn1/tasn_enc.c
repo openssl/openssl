@@ -141,10 +141,12 @@ int ASN1_item_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
     case ASN1_ITYPE_EXTERN:
         /* If new style i2d it does all the work */
         ef = it->funcs;
-        if(ef)
-            return ef->asn1_ex_i2d(pval, out, it, tag, aclass);
-        else
-            return 0;
+        if(!ef)
+        {
+            ERR_raise(ERR_LIB_ASN1, ASN1_R_BAD_TEMPLATE);
+            return -1;
+        }
+        return ef->asn1_ex_i2d(pval, out, it, tag, aclass);
 
     case ASN1_ITYPE_NDEF_SEQUENCE:
         /* Use indefinite length constructed if requested */
