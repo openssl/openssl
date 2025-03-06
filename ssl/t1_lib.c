@@ -2267,7 +2267,7 @@ int ssl_setup_sigalgs(SSL_CTX *ctx)
         }
     }
 
-    /* Append any provider signals not yet handled */
+    /* Append any provider sigalgs not yet handled */
     for (i = OSSL_NELEM(sigalg_lookup_tbl); i < sigalgs_len; ++i) {
         SIGALG_LOOKUP *ent = &cache[i];
 
