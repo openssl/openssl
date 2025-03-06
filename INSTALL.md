@@ -311,11 +311,7 @@ It is likely to have to end with dash, e.g. `a-b-c-` would invoke GNU compiler
 as `a-b-c-gcc`, etc.  Unfortunately, cross-compiling is too case-specific to put
 together one-size-fits-all instructions.  You might have to pass more flags or
 set up environment variables to actually make it work.  Android and iOS cases
-<<<<<<< HEAD
-are discussed in corresponding `Configurations/15-*.conf` files, but there are
-=======
 are discussed in corresponding `Configurations/15-*.conf` files. There are
->>>>>>> dev
 cases when this option alone is sufficient.  For example, to build the mingw64
 target on Linux `--cross-compile-prefix=x86_64-w64-mingw32-` works,
 provided that mingw packages are installed.  Today, Debian and Ubuntu users
