@@ -35,6 +35,10 @@ static int ipv6_from_asc(unsigned char *v6, const char *in);
 static int ipv6_cb(const char *elem, int len, void *usr);
 static int ipv6_hex(unsigned char *out, const char *in, int inlen);
 
+static int starts_with(const char *str, const char* prefix);
+static int is_valid_uri_char(char c);
+static int is_valid_uri(char *uri);
+
 /* Add a CONF_VALUE name value pair to stack */
 
 static int x509v3_add_len_value(const char *name, const char *value,
