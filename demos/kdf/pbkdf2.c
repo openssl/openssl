@@ -8,6 +8,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 #include <openssl/core_names.h>
 #include <openssl/crypto.h>
 #include <openssl/kdf.h>
@@ -71,7 +72,7 @@ int main(int argc, char **argv)
     EVP_KDF *kdf = NULL;
     EVP_KDF_CTX *kctx = NULL;
     unsigned char out[64];
-    OSSL_PARAM params[5], *p = params;
+    OSSL_PARAM params[6], *p = params;
 
     /* Check if we are in FIPS mode */
     if (EVP_default_properties_is_fips_enabled(NULL)) {
@@ -109,6 +110,12 @@ int main(int argc, char **argv)
     /* Set the underlying hash function used to derive the key */
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
                                             "SHA256", 0);
+
+    int pkcs5 = 0;
+    if (argc>1 && strcmp(argv[1],"1")==0)
+        pkcs5 = 1;
+    printf("Testing with pkcs5 set to %i\n", pkcs5);
+    *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_PKCS5, &pkcs5);
     *p = OSSL_PARAM_construct_end();
 
     /* Derive the key */
@@ -122,7 +129,7 @@ int main(int argc, char **argv)
     if (CRYPTO_memcmp(expected_output, out, sizeof(expected_output)) != 0) {
         fprintf(stderr, "Generated key does not match expected value as expected\n");
     } else {
-        fprintf(stderr, "Generated key matches.... but should have failed to generate\n");
+        fprintf(stderr, "Generated key matches.... but should have failed to generate, unless unapproved\n");
     }
     
     /* Get FIPS indicator */
