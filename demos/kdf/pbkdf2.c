@@ -14,6 +14,7 @@
 #include <openssl/obj_mac.h>
 #include <openssl/params.h>
 
+#include <openssl/evp.h>
 #include <openssl/indicator.h>
 
 static int fips_indicator_cb(const char *type, const char *desc, const OSSL_PARAM params[]) {
@@ -71,23 +72,23 @@ int main(int argc, char **argv)
     EVP_KDF_CTX *kctx = NULL;
     unsigned char out[64];
     OSSL_PARAM params[5], *p = params;
-    OSSL_LIB_CTX *library_context = NULL;
 
-    library_context = OSSL_LIB_CTX_new();
-    if (library_context == NULL) {
-        fprintf(stderr, "OSSL_LIB_CTX_new() returned NULL\n");
-        goto end;
+    /* Check if we are in FIPS mode */
+    if (EVP_default_properties_is_fips_enabled(NULL)) {
+        fprintf(stderr, "FIPS is on\n");
+    } else {
+        fprintf(stderr, "FIPS is off\n");
     }
 
     /* Fetch the key derivation function implementation */
-    kdf = EVP_KDF_fetch(library_context, "PBKDF2", NULL);
+    kdf = EVP_KDF_fetch(NULL, "PBKDF2", NULL);
     if (kdf == NULL) {
         fprintf(stderr, "EVP_KDF_fetch() returned NULL\n");
         goto end;
     }
 
     /* Set indicator callback */
-    OSSL_INDICATOR_set_callback(library_context, fips_indicator_cb);
+    OSSL_INDICATOR_set_callback(NULL, fips_indicator_cb);
 
     /* Create a context for the key derivation operation */
     kctx = EVP_KDF_CTX_new(kdf);
@@ -139,6 +140,5 @@ int main(int argc, char **argv)
 end:
     EVP_KDF_CTX_free(kctx);
     EVP_KDF_free(kdf);
-    OSSL_LIB_CTX_free(library_context);
     return ret;
 }
