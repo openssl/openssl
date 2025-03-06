@@ -291,6 +291,8 @@ int SSL_ech_get1_retry_config(SSL *ssl, unsigned char **ec, size_t *eclen)
     OSSL_ECHSTORE *ve = NULL;
     BIO *in = NULL;
     int rv = 0;
+    OSSL_LIB_CTX *libctx = NULL;
+    const char *propq = NULL;
 
     s = SSL_CONNECTION_FROM_SSL(ssl);
     if (s == NULL || ec == NULL || eclen == NULL)
@@ -308,10 +310,13 @@ int SSL_ech_get1_retry_config(SSL *ssl, unsigned char **ec, size_t *eclen)
      * and letting the application see that might cause someone to do an
      * upgrade.
      */
+    if (s->ext.ech.es != NULL) {
+        libctx = s->ext.ech.es->libctx;
+        propq = s->ext.ech.es->propq;
+    }
     if ((in = BIO_new(BIO_s_mem())) == NULL
         || BIO_write(in, s->ext.ech.returned, s->ext.ech.returned_len) <= 0
-        || (ve = OSSL_ECHSTORE_new(s->ext.ech.es->libctx,
-                                   s->ext.ech.es->propq)) == NULL) {
+        || (ve = OSSL_ECHSTORE_new(libctx, propq)) == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         goto err;
     }

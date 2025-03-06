@@ -289,7 +289,6 @@ int ossl_ech_send_grease(SSL_CONNECTION *s, WPACKET *pkt)
     size_t cipher_len = 0, cipher_len_jitter = 0;
     unsigned char cid, senderpub[OSSL_ECH_MAX_GREASE_PUB];
     unsigned char cipher[OSSL_ECH_MAX_GREASE_CT];
-    unsigned char *pp = WPACKET_get_curr(pkt);
 
     if (s == NULL)
         return 0;
@@ -352,7 +351,8 @@ int ossl_ech_send_grease(SSL_CONNECTION *s, WPACKET *pkt)
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
     }
-    memcpy(s->ext.ech.sent, pp, s->ext.ech.sent_len);
+    memcpy(s->ext.ech.sent, WPACKET_get_curr(pkt) - s->ext.ech.sent_len,
+           s->ext.ech.sent_len);
     s->ext.ech.grease = OSSL_ECH_IS_GREASE;
     OSSL_TRACE_BEGIN(TLS) {
         BIO_printf(trc_out, "ECH - sending GREASE\n");
