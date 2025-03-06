@@ -96,8 +96,10 @@ respectively:
 
 Each group can be either the B<NIST> name (e.g. B<P-256>), some other commonly
 used name where applicable (e.g. B<X25519>, B<ffdhe2048>) or an OpenSSL OID name
-(e.g. B<prime256v1>). Group names are case sensitive. The preferred group names
-are those defined by IANA for TLS parameters.
+(e.g. B<prime256v1>).
+Group names are case-insensitive in OpenSSL 3.5 and later.
+The preferred group names are those defined by
+L<IANA|https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-8>.
 
 The I<list> can be used to define several group tuples of comparable security
 levels, and can specify which key shares should be sent by a client.
@@ -324,6 +326,19 @@ Support for ignoring unknown groups in SSL_CTX_set1_groups_list() and
 SSL_set1_groups_list() was added in OpenSSL 3.3.
 
 Support for B<ML-KEM> was added in OpenSSL 3.5.
+
+OpenSSL 3.5 also introduces support for three I<hybrid> ECDH PQ key exchange
+TLS groups: B<X25519MLKEM768>, B<SecP256r1MLKEM768> and
+B<SecP384r1MLKEM1024>.
+They offer CPU performance comparable to the associated ECDH group, though at
+the cost of significantly larger key exchange messages.
+The third group, B<SecP384r1MLKEM1024> is substantially more CPU-intensive,
+largely as a result of the high CPU cost of ECDH for the underlying B<P-384>
+group.
+Also its key exchange messages at close to 1700 bytes are larger than the
+roughly 1200 bytes for the first two groups.
+
+As of OpenSSL 3.5 key exchange group names are case-insensitive.
 
 B<SSL_CTX_get0_implemented_groups> was first implemented in OpenSSL 3.5.
 
