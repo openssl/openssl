@@ -423,7 +423,24 @@ int tls_default_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
                        int clearold, size_t *readbytes);
 int tls_get_more_records(OSSL_RECORD_LAYER *rl);
 
-int dtls_crypt_sequence_number(EVP_CIPHER_CTX *ctx, unsigned char *seq,
+/* Returns true if the unified header fixed bits are set (rfc9147 section 4) */
+#define DTLS13_UNI_HDR_FIX_BITS_IS_SET(byte) \
+    (((byte) & DTLS13_UNI_HDR_FIX_BITS_MASK) == DTLS13_UNI_HDR_FIX_BITS)
+
+/* Returns true if the unified header connection id bit is set (rfc9147 section 4) */
+#define DTLS13_UNI_HDR_CID_BIT_IS_SET(byte) \
+    (((byte) & DTLS13_UNI_HDR_CID_BIT) == DTLS13_UNI_HDR_CID_BIT)
+
+/* Returns true if the unified header sequence number bit is set (rfc9147 section 4) */
+#define DTLS13_UNI_HDR_SEQ_BIT_IS_SET(byte) \
+    (((byte) & DTLS13_UNI_HDR_SEQ_BIT) == DTLS13_UNI_HDR_SEQ_BIT)
+
+/* Returns true if the unified header length bit is set (rfc9147 section 4) */
+#define DTLS13_UNI_HDR_LEN_BIT_IS_SET(byte) \
+    (((byte) & DTLS13_UNI_HDR_LEN_BIT) == DTLS13_UNI_HDR_LEN_BIT)
+
+size_t dtls_get_rec_header_size(uint8_t hdr_first_byte);
+int dtls_crypt_sequence_number(EVP_CIPHER_CTX *ctx, unsigned char *seq, size_t seqlen,
                                unsigned char *rec_data, size_t rec_data_offs);
 int dtls_get_more_records(OSSL_RECORD_LAYER *rl);
 
@@ -440,6 +457,7 @@ int dtls_post_encryption_processing(OSSL_RECORD_LAYER *rl,
 
 int tls_default_set_protocol_version(OSSL_RECORD_LAYER *rl, int version);
 int tls_default_validate_record_header(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *re);
+size_t tls_get_record_header_len(OSSL_RECORD_LAYER *rl);
 int tls_do_compress(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *wr);
 int tls_do_uncompress(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec);
 int tls_default_post_process_record(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec);
@@ -469,7 +487,6 @@ int tls_read_record(OSSL_RECORD_LAYER *rl, void **rechandle, int *rversion,
                     uint8_t *type, const unsigned char **data, size_t *datalen,
                     uint16_t *epoch, unsigned char *seq_num);
 int tls_release_record(OSSL_RECORD_LAYER *rl, void *rechandle, size_t length);
-int tls_default_set_protocol_version(OSSL_RECORD_LAYER *rl, int version);
 int tls_set_protocol_version(OSSL_RECORD_LAYER *rl, int version);
 void tls_set_plain_alerts(OSSL_RECORD_LAYER *rl, int allow);
 void tls_set_first_handshake(OSSL_RECORD_LAYER *rl, int first);
@@ -493,6 +510,8 @@ size_t tls_get_max_records_default(OSSL_RECORD_LAYER *rl, uint8_t type,
 size_t tls_get_max_records_multiblock(OSSL_RECORD_LAYER *rl, uint8_t type,
                                       size_t len, size_t maxfrag,
                                       size_t *preffrag);
+size_t tls_get_record_body_alignment_offset(OSSL_RECORD_LAYER *rl,
+                                            const unsigned char *rec);
 int tls_allocate_write_buffers_default(OSSL_RECORD_LAYER *rl,
                                        OSSL_RECORD_TEMPLATE *templates,
                                        size_t numtempl, size_t *prefix);
