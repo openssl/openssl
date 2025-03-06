@@ -18,6 +18,9 @@ static void copy_flags(BIO *bio)
     int flags;
     BIO *next = BIO_next(bio);
 
+    if (next == NULL)
+        return;
+
     flags = BIO_test_flags(next, BIO_FLAGS_SHOULD_RETRY | BIO_FLAGS_RWS);
     BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY | BIO_FLAGS_RWS);
     BIO_set_flags(bio, flags);
