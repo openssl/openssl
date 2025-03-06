@@ -953,6 +953,13 @@ uint32_t SSL_CTX_get_recv_max_early_data(const SSL_CTX *ctx);
 int SSL_set_recv_max_early_data(SSL *s, uint32_t recv_max_early_data);
 uint32_t SSL_get_recv_max_early_data(const SSL *s);
 
+__owur int SSL_CTX_set_ec_point_formats(SSL_CTX *ctx,
+                                        const unsigned char *formats,
+                                        size_t formats_len);
+__owur int SSL_set_ec_point_formats(SSL *ssl,
+                                    const unsigned char *formats,
+                                    size_t formats_len);
+
 #ifdef __cplusplus
 }
 #endif
