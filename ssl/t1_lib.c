@@ -686,8 +686,8 @@ static uint16_t tls1_group_name2id(SSL_CTX *ctx, const char *name)
     size_t i;
 
     for (i = 0; i < ctx->group_list_len; i++) {
-        if (strcmp(ctx->group_list[i].tlsname, name) == 0
-                || strcmp(ctx->group_list[i].realname, name) == 0)
+        if (OPENSSL_strcasecmp(ctx->group_list[i].tlsname, name) == 0
+                || OPENSSL_strcasecmp(ctx->group_list[i].realname, name) == 0)
             return ctx->group_list[i].group_id;
     }
 
