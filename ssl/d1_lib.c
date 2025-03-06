@@ -157,7 +157,7 @@ DTLS1_RECORD_NUMBER *dtls1_record_number_new(uint64_t epoch, uint64_t seqnum)
 void dtls1_acknowledge_sent_buffer(SSL_CONNECTION *s, uint16_t before_epoch)
 {
     pitem *item = NULL;
-    piterator iter = pqueue_iterator(s->d1->sent_messages);
+    piterator iter = pqueue_iterator(&s->d1->sent_messages);
 
     while ((item = pqueue_next(&iter)) != NULL) {
         dtls_sent_msg *sent_msg = (dtls_sent_msg *)item->data;
@@ -213,7 +213,7 @@ void dtls1_clear_sent_buffer(SSL_CONNECTION *s, int keep_unacked_msgs)
 
     if (SSL_CONNECTION_IS_DTLS13(s))
         while ((item = pqueue_pop(remaining_sent_messages)) != NULL)
-            pqueue_insert(s->d1->sent_messages, item);
+            pqueue_insert(&s->d1->sent_messages, item);
 
     pqueue_free(remaining_sent_messages);
 }
@@ -221,7 +221,7 @@ void dtls1_clear_sent_buffer(SSL_CONNECTION *s, int keep_unacked_msgs)
 int dtls_any_sent_messages_are_missing_acknowledge(SSL_CONNECTION *s)
 {
     pitem *item;
-    piterator iter = pqueue_iterator(s->d1->sent_messages);
+    piterator iter = pqueue_iterator(&s->d1->sent_messages);
 
     while ((item = pqueue_next(&iter)) != NULL) {
         dtls_sent_msg *msg = (dtls_sent_msg *)item->data;

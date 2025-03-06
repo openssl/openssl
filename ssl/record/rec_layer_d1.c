@@ -724,7 +724,7 @@ int do_dtls1_write(SSL_CONNECTION *sc, uint8_t type, const unsigned char *buf,
         DTLS1_RECORD_NUMBER *rec_num;
 
         dtls1_get_queue_priority(prio, sc->d1->w_msg.msg_seq, 0);
-        item = pqueue_find(sc->d1->sent_messages, prio);
+        item = pqueue_find(&sc->d1->sent_messages, prio);
 
         if (item == NULL)
             return ret;

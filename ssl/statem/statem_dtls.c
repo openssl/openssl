@@ -1169,7 +1169,7 @@ MSG_PROCESS_RETURN dtls_process_ack(SSL_CONNECTION *s, PACKET *pkt)
             return MSG_PROCESS_ERROR;
         }
 
-        iter = pqueue_iterator(s->d1->sent_messages);
+        iter = pqueue_iterator(&s->d1->sent_messages);
 
         while ((item = pqueue_next(&iter)) != NULL) {
             dtls_sent_msg *msg = (dtls_sent_msg *)item->data;
