@@ -423,8 +423,8 @@ typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
 # define SSL_OP_NO_RX_CERTIFICATE_COMPRESSION            SSL_OP_BIT(33)
     /* Enable KTLS TX zerocopy on Linux */
 # define SSL_OP_ENABLE_KTLS_TX_ZEROCOPY_SENDFILE         SSL_OP_BIT(34)
-
-#define SSL_OP_PREFER_NO_DHE_KEX                         SSL_OP_BIT(35)
+# define SSL_OP_PREFER_NO_DHE_KEX                        SSL_OP_BIT(35)
+# define SSL_OP_LEGACY_EC_POINT_FORMATS                  SSL_OP_BIT(36)
 
 /*
  * Option "collections."
