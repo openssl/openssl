@@ -1455,3 +1455,8 @@ int ossl_bio_print_hex(BIO *out, unsigned char *buf, int len)
     OPENSSL_free(hexbuf);
     return result;
 }
+
+static int starts_with(const char *str, const char *prefix)
+{
+    return strncmp(str, prefix, strlen(prefix)) == 0;
+}
