@@ -960,9 +960,9 @@ __owur int SSL_set_ec_point_formats(SSL *ssl,
                                     const unsigned char *formats,
                                     size_t formats_len);
 
-#ifdef __cplusplus
+# ifdef __cplusplus
 }
-#endif
+# endif
 
 # include <openssl/ssl2.h>
 # include <openssl/ssl3.h>
@@ -971,9 +971,9 @@ __owur int SSL_set_ec_point_formats(SSL *ssl,
 # include <openssl/srtp.h>      /* Support for the use_srtp extension */
 # include <openssl/quic.h>
 
-#ifdef  __cplusplus
+# ifdef  __cplusplus
 extern "C" {
-#endif
+# endif
 
 /*
  * These need to be after the above set of includes due to a compiler bug
