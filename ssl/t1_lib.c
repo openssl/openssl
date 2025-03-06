@@ -2673,8 +2673,10 @@ int tls12_check_peer_sigalg(SSL_CONNECTION *s, uint16_t sig, EVP_PKEY *pkey)
 
     /* Is this code point available and compatible with the protocol */
     lu = tls1_lookup_sigalg(SSL_CONNECTION_GET_CTX(s), sig);
-    if (lu == NULL)
+    if (lu == NULL) {
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_WRONG_SIGNATURE_TYPE);
         return 0;
+    }
     minversion = SSL_CONNECTION_IS_DTLS(s) ? lu->mindtls : lu->mintls;
     maxversion = SSL_CONNECTION_IS_DTLS(s) ? lu->maxdtls : lu->maxtls;
     if (minversion == -1 || maxversion == -1 || !lu->available
@@ -2682,23 +2684,26 @@ int tls12_check_peer_sigalg(SSL_CONNECTION *s, uint16_t sig, EVP_PKEY *pkey)
             && ssl_version_cmp(s, minversion, s->max_proto_version) > 0)
         || (maxversion != 0 && s->min_proto_version != 0
             && ssl_version_cmp(s, maxversion, s->min_proto_version) < 0)
-        || !tls12_sigalg_allowed(s, SSL_SECOP_SIGALG_SUPPORTED, lu))
+        || !tls12_sigalg_allowed(s, SSL_SECOP_SIGALG_SUPPORTED, lu)) {
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_WRONG_SIGNATURE_TYPE);
         return 0;
+    }
 
     /* if this sigalg is loaded, set so far unknown pkeyid to its sig NID */
-    if ((pkeyid == EVP_PKEY_KEYMGMT) && (lu != NULL))
+    if (pkeyid == EVP_PKEY_KEYMGMT)
         pkeyid = lu->sig;
 
     /* Should never happen */
-    if (pkeyid == -1)
+    if (pkeyid == -1) {
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_WRONG_SIGNATURE_TYPE);
         return -1;
+    }
 
     /*
      * Check sigalgs is known. Disallow SHA1/SHA224 with TLS 1.3. Check key type
      * is consistent with signature: RSA keys can be used for RSA-PSS
      */
-    if (lu == NULL
-        || (SSL_CONNECTION_IS_TLS13(s)
+    if ((SSL_CONNECTION_IS_TLS13(s)
             && (lu->hash == NID_sha1 || lu->hash == NID_sha224))
         || (pkeyid != lu->sig
         && (lu->sig != EVP_PKEY_RSA_PSS || pkeyid != EVP_PKEY_RSA))) {
