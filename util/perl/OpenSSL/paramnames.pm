@@ -573,6 +573,8 @@ my %params = (
     'CAPABILITY_TLS_SIGALG_SECURITY_BITS' =>     "tls-sigalg-sec-bits",
     'CAPABILITY_TLS_SIGALG_MIN_TLS' =>           "tls-min-tls",
     'CAPABILITY_TLS_SIGALG_MAX_TLS' =>           "tls-max-tls",
+    'CAPABILITY_TLS_SIGALG_MIN_DTLS' =>          "tls-min-dtls",
+    'CAPABILITY_TLS_SIGALG_MAX_DTLS' =>          "tls-max-dtls",
 
 # storemgmt parameters
 

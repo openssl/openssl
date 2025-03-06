@@ -659,8 +659,9 @@ jobs:
         ./util/opensslwrap.sh version -c
     - name: test external oqs-provider
       run: make test TESTS="test_external_oqsprovider"
-    - name: test external pkcs11-provider
-      run: make test TESTS="test_external_pkcs11_provider" VERBOSE=1
+    # Disabled temporarily: https://github.com/latchset/pkcs11-provider/pull/525#discussion_r1982805969
+    # - name: test external pkcs11-provider
+    #   run: make test TESTS="test_external_pkcs11_provider" VERBOSE=1
 
   external-tests-pyca:
     runs-on: ubuntu-latest
