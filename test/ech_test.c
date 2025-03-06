@@ -24,6 +24,8 @@ static char *cert = NULL;
 static char *privkey = NULL;
 static char *rootcert = NULL;
 
+/* TODO(ECH): add some testing of SSL_OP_ECH_IGNORE_CID */
+
 /* callback */
 static unsigned int test_cb(SSL *s, const char *str)
 {

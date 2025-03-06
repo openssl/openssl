@@ -26,6 +26,12 @@ static const char OSSL_ECH_ACCEPT_CONFIRM_STRING[] = "\x65\x63\x68\x20\x61\x63\x
 /* "hrr ech accept confirmation" */
 static const char OSSL_ECH_HRR_CONFIRM_STRING[] = "\x68\x72\x72\x20\x65\x63\x68\x20\x61\x63\x63\x65\x70\x74\x20\x63\x6f\x6e\x66\x69\x72\x6d\x61\x74\x69\x6f\x6e";
 
+/*
+ * the max HPKE 'info' we'll process is the max ECHConfig size
+ * (OSSL_ECH_MAX_ECHCONFIG_LEN) plus OSSL_ECH_CONTEXT_STRING(len=7) + 1
+ */
+#define OSSL_ECH_MAX_INFO_LEN (OSSL_ECH_MAX_ECHCONFIG_LEN + 8)
+
 /* ECH internal API functions */
 
 # ifdef OSSL_ECH_SUPERVERBOSE
@@ -371,6 +377,7 @@ int ossl_ech_pick_matching_cfg(SSL_CONNECTION *s, OSSL_ECHSTORE_ENTRY **ee,
 
     if (s == NULL || s->ext.ech.es == NULL || ee == NULL || suite == NULL)
         return 0;
+    *ee = NULL;
     es = s->ext.ech.es;
     if (es->entries == NULL)
         return 0;
@@ -416,7 +423,8 @@ int ossl_ech_pick_matching_cfg(SSL_CONNECTION *s, OSSL_ECHSTORE_ENTRY **ee,
             }
         }
     }
-    if (nameoverride == 1 && (namematch == 0 || suitematch == 0)) {
+    if (tee != NULL && nameoverride == 1
+        && (namematch == 0 || suitematch == 0)) {
         *suite = tee->suites[tsuite];
         *ee = tee;
     } else if (namematch == 0 || suitematch == 0) {
@@ -429,12 +437,11 @@ int ossl_ech_pick_matching_cfg(SSL_CONNECTION *s, OSSL_ECHSTORE_ENTRY **ee,
 }
 
 /* Make up the ClientHelloInner and EncodedClientHelloInner buffers */
-int ossl_ech_encode_inner(SSL_CONNECTION *s, unsigned char **encoded, 
+int ossl_ech_encode_inner(SSL_CONNECTION *s, unsigned char **encoded,
                           size_t *encoded_len)
 {
     int rv = 0;
     size_t nraws = 0, ind = 0, innerlen = 0;
-    unsigned char *innerch_full = NULL;
     WPACKET inner = { 0 }; /* "fake" pkt for inner */
     BUF_MEM *inner_mem = NULL;
     RAW_EXTENSION *raws = NULL;
@@ -516,13 +523,8 @@ int ossl_ech_encode_inner(SSL_CONNECTION *s, unsigned char **encoded,
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    innerch_full = OPENSSL_malloc(innerlen);
-    if (innerch_full == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-    memcpy(innerch_full, inner_mem->data, innerlen);
-    *encoded = innerch_full;
+    *encoded = (unsigned char *)inner_mem->data;
+    inner_mem->data = NULL; /* keep BUF_MEM_free happy */
     *encoded_len = innerlen;
     /* and clean up */
     rv = 1;
@@ -643,7 +645,7 @@ static size_t ech_calc_padding(SSL_CONNECTION *s, OSSL_ECHSTORE_ENTRY *ee,
 {
     int length_of_padding = 0, length_with_snipadding = 0;
     int innersnipadding = 0, length_with_padding = 0;
-    size_t mnl = 0, clear_len = 0, isnilen = 0;
+    size_t mnl = 0, isnilen = 0;
 
     if (s == NULL || ee == NULL)
         return 0;
@@ -668,20 +670,18 @@ static size_t ech_calc_padding(SSL_CONNECTION *s, OSSL_ECHSTORE_ENTRY *ee,
      * it makes us stick out; or if we take out the above more (uselessly:-)
      * complicated scheme, we may only need this in the end.
      */
-    if (length_with_padding % OSSL_ECH_PADDING_INCREMENT)
+    if ((length_with_padding % OSSL_ECH_PADDING_INCREMENT) != 0)
         length_with_padding += OSSL_ECH_PADDING_INCREMENT
             - (length_with_padding % OSSL_ECH_PADDING_INCREMENT);
     while (length_with_padding < OSSL_ECH_PADDING_TARGET)
         length_with_padding += OSSL_ECH_PADDING_INCREMENT;
-    clear_len = length_with_padding;
     OSSL_TRACE_BEGIN(TLS) {
         BIO_printf(trc_out, "EAAE: padding: mnl: %zu, lws: %d "
-                   "lop: %d, lwp: %d, clear_len: %zu, orig: %zu\n",
+                   "lop: %d, clear_len (len with padding): %d, orig: %zu\n",
                    mnl, length_with_snipadding, length_of_padding,
-                   length_with_padding, clear_len,
-                   encoded_len);
+                   length_with_padding, encoded_len);
     } OSSL_TRACE_END(TLS);
-    return clear_len;
+    return (size_t)length_with_padding;
 }
 
 /*
@@ -701,10 +701,10 @@ int ossl_ech_aad_and_encrypt(SSL_CONNECTION *s, WPACKET *pkt,
     int rv = 0, hpke_mode = OSSL_HPKE_MODE_BASE;
     OSSL_ECHSTORE_ENTRY *ee = NULL;
     OSSL_HPKE_SUITE hpke_suite = OSSL_HPKE_SUITE_DEFAULT;
-    unsigned char config_id_to_use = 0x00, info[SSL3_RT_MAX_PLAIN_LENGTH];
+    unsigned char config_id_to_use = 0x00, info[OSSL_ECH_MAX_INFO_LEN];
     unsigned char *clear = NULL, *cipher = NULL, *aad = NULL, *mypub = NULL;
     size_t cipherlen = 0, aad_len = 0, lenclen = 0, mypub_len = 0;
-    size_t info_len = SSL3_RT_MAX_PLAIN_LENGTH, clear_len = 0;
+    size_t info_len = OSSL_ECH_MAX_INFO_LEN, clear_len = 0;
 
     if (s == NULL)
         return 0;
@@ -724,8 +724,7 @@ int ossl_ech_aad_and_encrypt(SSL_CONNECTION *s, WPACKET *pkt,
                    ee->version, ee->config_id);
     } OSSL_TRACE_END(TLS);
     config_id_to_use = ee->config_id; /* if requested, use a random config_id instead */
-    if ((s->ssl.ctx->options & SSL_OP_ECH_IGNORE_CID) != 0
-        || (s->options & SSL_OP_ECH_IGNORE_CID) != 0) {
+    if ((s->options & SSL_OP_ECH_IGNORE_CID) != 0) {
         if (RAND_bytes_ex(s->ssl.ctx->libctx, &config_id_to_use, 1,
                           RAND_DRBG_STRENGTH) <= 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -1189,14 +1188,6 @@ int ossl_ech_calc_confirm(SSL_CONNECTION *s, int for_hrr,
 # ifdef OSSL_ECH_SUPERVERBOSE
     ossl_ech_pbuf("cx: tbuf b4-b4", tbuf, tlen);
 # endif
-#if 0
-    if (ossl_ech_make_transcript_buffer(s, for_hrr, shbuf, shlen, &tbuf, &tlen,
-                                        &chend, &fixedshbuf_len) != 1)
-        goto err; /* SSLfatal called already */
-# ifdef OSSL_ECH_SUPERVERBOSE
-    ossl_ech_pbuf("cx: tbuf b4", tbuf, tlen);
-# endif 
-#endif 
     /* put zeros in correct place */
     if (for_hrr == 0) { /* zap magic octets at fixed place for SH */
         conf_loc = tbuf + chend + shoffset;
