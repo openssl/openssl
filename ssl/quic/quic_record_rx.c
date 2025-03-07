@@ -279,7 +279,7 @@ void ossl_qrx_inject_pkt(OSSL_QRX *qrx, OSSL_QRX_PKT *pkt)
      * port_default_packet_handler() uses ossl_qrx_read_pkt()
      * to get pkt. Such packet has refcount 1.
      */
-    ossl_qrx_pkt_release(pkt);
+    ossl_qrx_pkt_orphan(pkt);
     if (ossl_assert(rxe->refcount == 0))
         ossl_list_rxe_insert_tail(&qrx->rx_pending, rxe);
 }
@@ -1471,6 +1471,19 @@ void ossl_qrx_pkt_release(OSSL_QRX_PKT *pkt)
     assert(rxe->refcount > 0);
     if (--rxe->refcount == 0)
         qrx_recycle_rxe(pkt->qrx, rxe);
+}
+
+void ossl_qrx_pkt_orphan(OSSL_QRX_PKT *pkt)
+{
+    RXE *rxe;
+
+    if (pkt == NULL)
+        return;
+    rxe = (RXE *)pkt;
+    assert(rxe->refcount > 0);
+    rxe->refcount--;
+    assert(ossl_list_rxe_prev(rxe) == NULL && ossl_list_rxe_next(rxe) == NULL);
+    return;
 }
 
 void ossl_qrx_pkt_up_ref(OSSL_QRX_PKT *pkt)
