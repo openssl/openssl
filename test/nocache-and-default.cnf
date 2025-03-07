@@ -7,11 +7,10 @@ config_diagnostics = 1
 providers = provider_sect
 
 [provider_sect]
-test    = test_sect
+p_test    = test_sect
 default = default_sect
 
 [test_sect]
-module = ../test/p_test.so
 activate = true
 
 [default_sect]
