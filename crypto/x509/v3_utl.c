@@ -37,7 +37,7 @@ static int ipv6_hex(unsigned char *out, const char *in, int inlen);
 
 static int starts_with(const char *str, const char* prefix);
 static int is_valid_uri_char(char c);
-static int is_valid_uri(char *uri);
+static int is_valid_uri(const char *uri);
 
 /* Add a CONF_VALUE name value pair to stack */
 
@@ -1468,5 +1468,23 @@ static int is_valid_uri_char(char c)
            c == '!'|| c == '$' || c == '&' || c == '\'' || c == '(' ||
            c == ')' || c == '*' || c == '+' || c == ',' || c == ';' ||
            c == '=' || c == ':' || c == '@' || c == '/' || c == '#' ||
-           c == '[' || c == ']';
+           c == '[' || c == ']' || c == '?';
+}
+
+static int is_valid_uri(const char *uri)
+{
+    /* Check if URI begins with a valid scheme */
+    if (!(starts_with(uri, "http://") || starts_with(uri, "https://") ||
+        starts_with(uri, "ftp://"))) {
+        return 0;
+    }
+    
+    /* Check the validity of each character in the URI */
+    for (const char *p = uri; *p != '\0'; ++p) {
+        if (!is_valid_uri_char(*p)) {
+            return 0;
+        }
+    }
+    
+    return 1; /* URI is valid */
 }
