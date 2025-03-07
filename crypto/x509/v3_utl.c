@@ -64,8 +64,12 @@ static int x509v3_add_len_value(const char *name, const char *value,
         ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
         goto err;
     }
+    int err_raised = 0;
     if (!is_valid_uri(value) && strncmp(name, "URI", 3) == 0) {
-        /* Figure out proper error to raise here */
+        ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_URI);
+        err_raised = 1;
+    }
+    if (err_raised) {
         goto err;
     }
     vtmp->section = NULL;
