@@ -1460,3 +1460,13 @@ static int starts_with(const char *str, const char *prefix)
 {
     return strncmp(str, prefix, strlen(prefix)) == 0;
 }
+
+static int is_valid_uri_char(char c)
+{
+    /* Valid characters include alphanumeric, '-', '_', '.', '~', and reserved characters */
+    return isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~' ||
+           c == '!'|| c == '$' || c == '&' || c == '\'' || c == '(' ||
+           c == ')' || c == '*' || c == '+' || c == ',' || c == ';' ||
+           c == '=' || c == ':' || c == '@' || c == '/' || c == '#' ||
+           c == '[' || c == ']';
+}
