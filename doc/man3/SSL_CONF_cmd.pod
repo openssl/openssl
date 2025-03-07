@@ -164,7 +164,7 @@ registry.
 For some groups, OpenSSL supports additional aliases.
 Such an alias could be a B<NIST> name (e.g. B<P-256>), an OpenSSL OID name
 (e.g. B<prime256v1>), or some other commonly used name.
-Group names are case sensitive.
+Group names are case-insensitive in OpenSSL 3.5 and later.
 The list should be in order of preference with the most preferred group first.
 
 The first group listed will also be used for the B<key_share> sent by a client
@@ -200,8 +200,17 @@ This is a synonym for the B<-groups> command.
 
 =item B<-named_curve> I<curve>
 
-This sets the temporary curve used for ephemeral ECDH modes. Only used
-by servers.
+This sets the temporary curve used for ephemeral ECDH modes.
+This is only applicable in TLS 1.0 and 1.1, and should not be used with later
+protocol versions.
+
+The I<curve> argument is a curve name or the special value B<auto> which
+picks an appropriate curve based on client and server preferences. The
+curve can be either the B<NIST> name (e.g. B<P-256>) or an OpenSSL OID name
+(e.g. B<prime256v1>).
+Even with TLS 1.0 and 1.1, the default value of C<auto> is strongly recommended
+over choosing a specific curve.
+Curve names are case-insensitive in OpenSSL 3.5 and later.
 
 =item B<-tx_cert_comp>
 
@@ -220,11 +229,6 @@ Enables support for receiving TLSv1.3 compressed certificates.
 Disables support for receiving TLSv1.3 compressed certificates.
 
 =item B<-comp>
-
-The B<groups> argument is a curve name or the special value B<auto> which
-picks an appropriate curve based on client and server preferences. The
-curve can be either the B<NIST> name (e.g. B<P-256>) or an OpenSSL OID name
-(e.g. B<prime256v1>). Curve names are case sensitive.
 
 =item B<-cipher> I<ciphers>
 
@@ -461,7 +465,7 @@ registry.
 For some groups, OpenSSL supports additional aliases.
 Such an alias could be a B<NIST> name (e.g. B<P-256>), an OpenSSL OID name
 (e.g. B<prime256v1>), or some other commonly used name.
-Group names are case sensitive.
+Group names are case-insensitive in OpenSSL 3.5 and later.
 The list should be in order of preference with the most preferred group first.
 
 The commands below list the available groups for TLS 1.2 and TLS 1.3,
@@ -860,8 +864,8 @@ B<MLKEM512>, B<MLKEM768> and B<MLKEM1024> TLS groups.
 These are based on the underlying B<ML-KEM-512>, B<ML-KEM-768> and
 B<ML-KEM-1024> algorithms from FIPS 203.
 
-OpenSSL 3.5 also introduces support for three I<hybrid> ECDH PQ key exchange
-TLS I<groups>: B<X25519MLKEM768>, B<SecP256r1MLKEM768> and
+OpenSSL 3.5 also introduces support for three B<hybrid> ECDH PQ key exchange
+TLS groups: B<X25519MLKEM768>, B<SecP256r1MLKEM768> and
 B<SecP384r1MLKEM1024>.
 They offer CPU performance comparable to the associated ECDH group, though at
 the cost of significantly larger key exchange messages.
@@ -870,6 +874,8 @@ largely as a result of the high CPU cost of ECDH for the underlying B<P-384>
 group.
 Also its key exchange messages at close to 1700 bytes are larger than the
 roughly 1200 bytes for the first two groups.
+
+As of OpenSSL 3.5 key exchange group names are case-insensitive.
 
 =head1 COPYRIGHT
 
