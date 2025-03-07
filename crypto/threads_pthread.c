@@ -420,6 +420,11 @@ static struct rcu_qp *update_qp(CRYPTO_RCU_LOCK *lock, uint32_t *curr_id)
     ATOMIC_STORE_N(uint32_t, &lock->reader_idx, lock->current_alloc_idx,
                    __ATOMIC_RELAXED);
 
+# if defined(__aarch64__) && !defined(USE_ATOMIC_FALLBACKS)
+    /* work around for broken AARCH64 atomics */
+    asm volatile("dmb sy":::"memory");
+# endif
+
     /* wake up any waiters */
     pthread_cond_signal(&lock->alloc_signal);
     pthread_mutex_unlock(&lock->alloc_lock);
