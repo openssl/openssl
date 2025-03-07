@@ -259,6 +259,12 @@ int ossl_qrx_read_pkt(OSSL_QRX *qrx, OSSL_QRX_PKT **pkt);
  */
 void ossl_qrx_pkt_release(OSSL_QRX_PKT *pkt);
 
+/*
+ * Like ossl_qrx_pkt_release, but just ensures that the refcount is dropped
+ * on this qrx_pkt, and ensure its not on any list
+ */
+void ossl_qrx_pkt_orphan(OSSL_QRX_PKT *pkt);
+
 /* Increments the reference count for the given packet. */
 void ossl_qrx_pkt_up_ref(OSSL_QRX_PKT *pkt);
 
