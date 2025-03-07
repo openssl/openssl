@@ -1572,7 +1572,7 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
     if (ossl_qrx_validate_initial_packet(qrx, e, (const QUIC_CONN_ID *)dcid) == 0)
         goto undesirable;
 
-    if (port->validate_addr == 0) {
+    if (port->validate_addr == 1) {
         /*
          * Forget qrx, because it becomes (almost) useless here. We must let
          * channel to create a new QRX for connection ID server chooses. The
