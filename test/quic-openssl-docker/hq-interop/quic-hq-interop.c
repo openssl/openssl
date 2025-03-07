@@ -825,6 +825,9 @@ end:
     SSL_CTX_free(*ctx);
     SSL_free(*ssl);
     BIO_ADDR_free(peer_addr);
+    *ctx = NULL;
+    *ssl = NULL;
+    peer_addr = NULL;
     return 0;
 }
 
