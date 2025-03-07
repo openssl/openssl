@@ -1401,7 +1401,7 @@ static int gid_cb(const char *elem, int len, void *arg)
     if (gid == 0) {
         /* Is it one of the GOST groups ? */
         for (i = 0; i < OSSL_NELEM(name2id_arr); i++) {
-            if (strcmp(etmp, name2id_arr[i].group_name) == 0) {
+            if (OPENSSL_strcasecmp(etmp, name2id_arr[i].group_name) == 0) {
                 gid = name2id_arr[i].groupID;
                 break;
             }
