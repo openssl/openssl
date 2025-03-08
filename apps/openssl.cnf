@@ -368,9 +368,11 @@ secret = $insta::secret # pass:insta
 # Server authentication
 trusted = $insta::out_trusted # apps/insta.ca.crt
 
+
 # Client authentication
 secret = # disable PBM
 key = $insta::newkey # insta.priv.pem
+key2 = $insta::newkey2
 cert = $insta::certout # insta.cert.pem
 
 [ir]
