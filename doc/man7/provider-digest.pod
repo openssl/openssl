@@ -94,7 +94,8 @@ macros in L<openssl-core_dispatch.h(7)>, as follows:
 
 A digest algorithm implementation may not implement all of these functions.
 In order to be usable all or none of OSSL_FUNC_digest_newctx, OSSL_FUNC_digest_freectx,
-OSSL_FUNC_digest_init, OSSL_FUNC_digest_update and OSSL_FUNC_digest_final should be implemented.
+OSSL_FUNC_digest_init, OSSL_FUNC_digest_update, OSSL_FUNC_digest_final
+and OSSL_FUNC_digest_get_params should be implemented.
 All other functions are optional.
 
 =head2 Context Management Functions
