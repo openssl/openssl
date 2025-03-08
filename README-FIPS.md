@@ -196,3 +196,151 @@ build information via changes to strings in `VERSION.dat`.
 Setting "PRE_RELEASE_TAG" (dashed suffix), "BUILD_METADATA" (plus
 suffix), and "FIPS_VENDOR" allow to control reported FIPS provider
 name and build version as required for CMVP submission.
+
+# FIPS Indicator Parameters
+
+This section defines various FIPS (Federal Information Processing Standards) indicator parameters used in the OpenSSL library. Each parameter is defined using the `OSSL_FIPS_PARAM` macro, which takes three arguments: the parameter name, the corresponding macro name, and the default value.
+
+## Parameters
+
+1. **security_checks**
+   - **Macro:** `SECURITY_CHECKS`
+   - **Default Value:** `1`
+   - **Description:** Enables or disables security checks.
+
+2. **tls1_prf_ems_check**
+   - **Macro:** `TLS1_PRF_EMS_CHECK`
+   - **Default Value:** `0`
+   - **Description:** Checks for the use of the TLS 1.0 PRF with EMS.
+
+3. **no_short_mac**
+   - **Macro:** `NO_SHORT_MAC`
+   - **Default Value:** `1`
+   - **Description:** Disallows the use of short MACs.
+
+4. **hmac_key_check**
+   - **Macro:** `HMAC_KEY_CHECK`
+   - **Default Value:** `0`
+   - **Description:** Checks the HMAC key.
+
+5. **kmac_key_check**
+   - **Macro:** `KMAC_KEY_CHECK`
+   - **Default Value:** `0`
+   - **Description:** Checks the KMAC key.
+
+6. **restricted_drbg_digests**
+   - **Macro:** `DRBG_TRUNC_DIGEST`
+   - **Default Value:** `0`
+   - **Description:** Restricts the use of truncated DRBG digests.
+
+7. **signature_digest_check**
+   - **Macro:** `SIGNATURE_DIGEST_CHECK`
+   - **Default Value:** `0`
+   - **Description:** Checks the digest used in signatures.
+
+8. **hkdf_digest_check**
+   - **Macro:** `HKDF_DIGEST_CHECK`
+   - **Default Value:** `0`
+   - **Description:** Checks the digest used in HKDF.
+
+9. **tls13_kdf_digest_check**
+   - **Macro:** `TLS13_KDF_DIGEST_CHECK`
+   - **Default Value:** `0`
+   - **Description:** Checks the digest used in TLS 1.3 KDF.
+
+10. **tls1_prf_digest_check**
+    - **Macro:** `TLS1_PRF_DIGEST_CHECK`
+    - **Default Value:** `0`
+    - **Description:** Checks the digest used in TLS 1.0 PRF.
+
+11. **sshkdf_digest_check**
+    - **Macro:** `SSHKDF_DIGEST_CHECK`
+    - **Default Value:** `0`
+    - **Description:** Checks the digest used in SSH KDF.
+
+12. **sskdf_digest_check**
+    - **Macro:** `SSKDF_DIGEST_CHECK`
+    - **Default Value:** `0`
+    - **Description:** Checks the digest used in SSKDF.
+
+13. **x963kdf_digest_check**
+    - **Macro:** `X963KDF_DIGEST_CHECK`
+    - **Default Value:** `0`
+    - **Description:** Checks the digest used in X9.63 KDF.
+
+14. **dsa_sign_disallowed**
+    - **Macro:** `DSA_SIGN_DISABLED`
+    - **Default Value:** `0`
+    - **Description:** Disallows DSA signing.
+
+15. **tdes_encrypt_disallowed**
+    - **Macro:** `TDES_ENCRYPT_DISABLED`
+    - **Default Value:** `0`
+    - **Description:** Disallows TDES encryption.
+
+16. **rsa_pkcs15_padding_disabled**
+    - **Macro:** `RSA_PKCS15_PAD_DISABLED`
+    - **Default Value:** `0`
+    - **Description:** Disables RSA PKCS#15 padding.
+
+17. **rsa_pss_saltlen_check**
+    - **Macro:** `RSA_PSS_SALTLEN_CHECK`
+    - **Default Value:** `0`
+    - **Description:** Checks the salt length in RSA PSS.
+
+18. **rsa_sign_x931_disallowed**
+    - **Macro:** `RSA_SIGN_X931_PAD_DISABLED`
+    - **Default Value:** `0`
+    - **Description:** Disallows RSA signing with X9.31 padding.
+
+19. **hkdf_key_check**
+    - **Macro:** `HKDF_KEY_CHECK`
+    - **Default Value:** `0`
+    - **Description:** Checks the HKDF key.
+
+20. **kbkdf_key_check**
+    - **Macro:** `KBKDF_KEY_CHECK`
+    - **Default Value:** `0`
+    - **Description:** Checks the KBKDF key.
+
+21. **tls13_kdf_key_check**
+    - **Macro:** `TLS13_KDF_KEY_CHECK`
+    - **Default Value:** `0`
+    - **Description:** Checks the TLS 1.3 KDF key.
+
+22. **tls1_prf_key_check**
+    - **Macro:** `TLS1_PRF_KEY_CHECK`
+    - **Default Value:** `0`
+    - **Description:** Checks the TLS 1.0 PRF key.
+
+23. **sshkdf_key_check**
+    - **Macro:** `SSHKDF_KEY_CHECK`
+    - **Default Value:** `0`
+    - **Description:** Checks the SSH KDF key.
+
+24. **sskdf_key_check**
+    - **Macro:** `SSKDF_KEY_CHECK`
+    - **Default Value:** `0`
+    - **Description:** Checks the SSKDF key.
+
+25. **x963kdf_key_check**
+    - **Macro:** `X963KDF_KEY_CHECK`
+    - **Default Value:** `0`
+    - **Description:** Checks the X9.63 KDF key.
+
+26. **x942kdf_key_check**
+    - **Macro:** `X942KDF_KEY_CHECK`
+    - **Default Value:** `0`
+    - **Description:** Checks the X9.42 KDF key.
+
+27. **pbkdf2_lower_bound_check**
+    - **Macro:** `PBKDF2_LOWER_BOUND_CHECK`
+    - **Default Value:** `1`
+    - **Description:** Checks the lower bound for PBKDF2.
+
+28. **ecdh_cofactor_check**
+    - **Macro:** `ECDH_COFACTOR_CHECK`
+    - **Default Value:** `0`
+    - **Description:** Checks the ECDH cofactor.
+
+These parameters are used to enforce various security policies and checks within the OpenSSL library, ensuring compliance with FIPS standards.
