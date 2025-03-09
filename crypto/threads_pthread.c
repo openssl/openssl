@@ -239,6 +239,8 @@ static struct rcu_qp *get_hold_current_qp(struct rcu_lock_st *lock)
 
     /* get the current qp index */
     for (;;) {
+        qp_idx = ATOMIC_LOAD_N(uint32_t, &lock->reader_idx, __ATOMIC_RELAXED);
+
         /*
          * Notes on use of __ATOMIC_ACQUIRE
          * We need to ensure the following:
@@ -249,10 +251,7 @@ static struct rcu_qp *get_hold_current_qp(struct rcu_lock_st *lock)
          * of the lock is flushed from a local cpu cache so that we see any
          * updates prior to the load.  This is a non-issue on cache coherent
          * systems like x86, but is relevant on other arches
-         * Note: This applies to the reload below as well
          */
-        qp_idx = ATOMIC_LOAD_N(uint32_t, &lock->reader_idx, __ATOMIC_ACQUIRE);
-
         ATOMIC_ADD_FETCH(&lock->qp_group[qp_idx].users, (uint64_t)1,
                          __ATOMIC_ACQUIRE);
 
@@ -451,6 +450,8 @@ void ossl_synchronize_rcu(CRYPTO_RCU_LOCK *lock)
      * prior __ATOMIC_RELEASE write operation in ossl_rcu_read_unlock
      * is visible prior to our read
      * however this is likely just necessary to silence a tsan warning
+     * because the read side should not do any write operation
+     * outside the atomic itself
      */
     do {
         count = ATOMIC_LOAD_N(uint64_t, &qp->users, __ATOMIC_ACQUIRE);
@@ -507,10 +508,10 @@ CRYPTO_RCU_LOCK *ossl_rcu_lock_new(int num_writers, OSSL_LIB_CTX *ctx)
     struct rcu_lock_st *new;
 
     /*
-     * We need a minimum of 3 qp's
+     * We need a minimum of 2 qp's
      */
-    if (num_writers < 3)
-        num_writers = 3;
+    if (num_writers < 2)
+        num_writers = 2;
 
     ctx = ossl_lib_ctx_get_concrete(ctx);
     if (ctx == NULL)
@@ -526,8 +527,6 @@ CRYPTO_RCU_LOCK *ossl_rcu_lock_new(int num_writers, OSSL_LIB_CTX *ctx)
     pthread_mutex_init(&new->alloc_lock, NULL);
     pthread_cond_init(&new->prior_signal, NULL);
     pthread_cond_init(&new->alloc_signal, NULL);
-    /* By default our first writer is already alloced */
-    new->writers_alloced = 1;
 
     new->qp_group = allocate_new_qp_group(new, num_writers);
     if (new->qp_group == NULL) {
