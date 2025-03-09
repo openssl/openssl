@@ -73,8 +73,8 @@ EXT_RETURN tls_construct_ctos_server_name(SSL_CONNECTION *s, WPACKET *pkt,
                                           unsigned int context, X509 *x,
                                           size_t chainidx)
 {
-#ifndef OPENSSL_NO_ECH
     char *chosen = s->ext.hostname;
+#ifndef OPENSSL_NO_ECH
     OSSL_HPKE_SUITE suite;
     OSSL_ECHSTORE_ENTRY *ee = NULL;
 
@@ -95,6 +95,7 @@ EXT_RETURN tls_construct_ctos_server_name(SSL_CONNECTION *s, WPACKET *pkt,
                 chosen = ee->public_name;
         }
     }
+#endif
     if (chosen == NULL)
         return EXT_RETURN_NOT_SENT;
     /* Add TLS extension servername to the Client Hello message */
@@ -109,27 +110,6 @@ EXT_RETURN tls_construct_ctos_server_name(SSL_CONNECTION *s, WPACKET *pkt,
         return EXT_RETURN_FAIL;
     }
     return EXT_RETURN_SENT;
-#else
-    if (s->ext.hostname == NULL)
-        return EXT_RETURN_NOT_SENT;
-
-    /* Add TLS extension servername to the Client Hello message */
-    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_server_name)
-               /* Sub-packet for server_name extension */
-            || !WPACKET_start_sub_packet_u16(pkt)
-               /* Sub-packet for servername list (always 1 hostname)*/
-            || !WPACKET_start_sub_packet_u16(pkt)
-            || !WPACKET_put_bytes_u8(pkt, TLSEXT_NAMETYPE_host_name)
-            || !WPACKET_sub_memcpy_u16(pkt, s->ext.hostname,
-                                       strlen(s->ext.hostname))
-            || !WPACKET_close(pkt)
-            || !WPACKET_close(pkt)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return EXT_RETURN_FAIL;
-    }
-
-    return EXT_RETURN_SENT;
-#endif
 }
 
 /* Push a Max Fragment Len extension into ClientHello */
@@ -511,12 +491,12 @@ EXT_RETURN tls_construct_ctos_alpn(SSL_CONNECTION *s, WPACKET *pkt,
                                    unsigned int context,
                                    X509 *x, size_t chainidx)
 {
-#ifndef OPENSSL_NO_ECH
-    unsigned char *aval = NULL;
-    size_t alen = 0;
-#endif
+    unsigned char *aval = s->ext.alpn;
+    size_t alen = s->ext.alpn_len;
 
     s->s3.alpn_sent = 0;
+    if (!SSL_IS_FIRST_HANDSHAKE(s))
+        return EXT_RETURN_NOT_SENT;
 #ifndef OPENSSL_NO_ECH
     /*
      * If we have different alpn and alpn_outer values, then we set
@@ -529,10 +509,6 @@ EXT_RETURN tls_construct_ctos_alpn(SSL_CONNECTION *s, WPACKET *pkt,
      * If you don't want the inner value in the outer, you have to
      * pick what to send in the outer and send that.
      */
-    if (!SSL_IS_FIRST_HANDSHAKE(s))
-        return EXT_RETURN_NOT_SENT;
-    aval = s->ext.alpn;
-    alen = s->ext.alpn_len;
     if (s->ext.ech.ch_depth == 1 && s->ext.alpn == NULL)  /* inner */
         return EXT_RETURN_NOT_SENT;
     if (s->ext.ech.ch_depth == 0 && s->ext.alpn == NULL
@@ -542,6 +518,9 @@ EXT_RETURN tls_construct_ctos_alpn(SSL_CONNECTION *s, WPACKET *pkt,
         aval = s->ext.ech.alpn_outer;
         alen = s->ext.ech.alpn_outer_len;
     }
+#endif
+    if (aval == NULL)
+        return EXT_RETURN_NOT_SENT;
     if (!WPACKET_put_bytes_u16(pkt,
                                TLSEXT_TYPE_application_layer_protocol_negotiation)
         || !WPACKET_start_sub_packet_u16(pkt)
@@ -550,22 +529,7 @@ EXT_RETURN tls_construct_ctos_alpn(SSL_CONNECTION *s, WPACKET *pkt,
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return EXT_RETURN_FAIL;
     }
-#else
-    if (s->ext.alpn == NULL || !SSL_IS_FIRST_HANDSHAKE(s))
-        return EXT_RETURN_NOT_SENT;
-
-    if (!WPACKET_put_bytes_u16(pkt,
-                TLSEXT_TYPE_application_layer_protocol_negotiation)
-               /* Sub-packet ALPN extension */
-            || !WPACKET_start_sub_packet_u16(pkt)
-            || !WPACKET_sub_memcpy_u16(pkt, s->ext.alpn, s->ext.alpn_len)
-            || !WPACKET_close(pkt)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return EXT_RETURN_FAIL;
-    }
-#endif
     s->s3.alpn_sent = 1;
-
     return EXT_RETURN_SENT;
 }
 

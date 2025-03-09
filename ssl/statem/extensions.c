@@ -21,7 +21,7 @@
 /*
  * values for ext_defs ech_handling field
  * exceptionally, we don't conditionally compile that field to avoid a pile of
- * fndefs all over the ext_defs values
+ * ifndefs all over the ext_defs values
  */
 #define OSSL_ECH_HANDLING_CALL_BOTH 1 /* call constructor both times */
 #define OSSL_ECH_HANDLING_COMPRESS  2 /* compress outer value into inner */
@@ -1126,12 +1126,12 @@ int tls_construct_extensions(SSL_CONNECTION *s, WPACKET *pkt,
 
 #ifndef OPENSSL_NO_ECH
     /*
-     * Two passes - we first construct the to-be-ECH-compressed
-     * extensions, and then go around again constructing those that
-     * aren't to be ECH-compressed. We need to ensure this ordering
-     * so that all the ECH-compressed extensions are contiguous
-     * in the encoding. The actual compression happens later in
-     * ech_encode_inner().
+     * Two passes if doing real ECH - we first construct the
+     * to-be-ECH-compressed extensions, and then go around again
+     * constructing those that aren't to be ECH-compressed. We
+     * need to ensure this ordering so that all the ECH-compressed
+     * extensions are contiguous in the encoding. The actual
+     * compression happens later in ech_encode_inner().
      */
     for (pass = 0; pass <= 1; pass++)
 #endif
@@ -1846,11 +1846,6 @@ int tls_psk_do_binder(SSL_CONNECTION *s, const EVP_MD *md,
     int ret = -1;
     int usepskfored = 0;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
-#ifndef OPENSSL_NO_ECH
-    EVP_MD_CTX *ctx = NULL;
-    WPACKET tpkt;
-    BUF_MEM *tpkt_mem = NULL;
-#endif
 
     /* Ensure cast to size_t is safe */
     if (!ossl_assert(hashsizei > 0)) {
@@ -2017,14 +2012,6 @@ int tls_psk_do_binder(SSL_CONNECTION *s, const EVP_MD *md,
     OPENSSL_cleanse(finishedkey, sizeof(finishedkey));
     EVP_PKEY_free(mackey);
     EVP_MD_CTX_free(mctx);
-#ifndef OPENSSL_NO_ECH
-    EVP_MD_CTX_free(ctx);
-    if (tpkt_mem != NULL) {
-        WPACKET_cleanup(&tpkt);
-        BUF_MEM_free(tpkt_mem);
-    }
-#endif
-
     return ret;
 }
 
