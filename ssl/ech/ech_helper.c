@@ -90,7 +90,7 @@ int ossl_ech_get_sh_offsets(const unsigned char *sh, size_t sh_len,
                 return 0;
             *echoffset = PACKET_data(&oneext) - shstart - 4;
             *echtype = etype;
-            *echlen = PACKET_remaining(&oneext) + 4; /* type/length included */
+            *echlen = (uint16_t)PACKET_remaining(&oneext) + 4;
             done++;
         }
     }
