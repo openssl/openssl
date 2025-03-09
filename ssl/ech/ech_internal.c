@@ -1132,7 +1132,7 @@ int ossl_ech_calc_confirm(SSL_CONNECTION *s, int for_hrr,
     unsigned char *fixedshbuf = NULL;
     size_t fixedshbuf_len = 0, tlen = 0, chend = 0;
     size_t shoffset = 6 + 24, extoffset = 0, echoffset = 0;
-    uint16_t echtype, echlen;
+    uint16_t echtype = 0, echlen = 0;
     unsigned int hashlen = 0;
     unsigned char hashval[EVP_MAX_MD_SIZE];
 

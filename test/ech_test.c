@@ -891,8 +891,15 @@ static int ech_ingest_test(int run)
     flush_time = time(0);
     if (!TEST_true(OSSL_ECHSTORE_flush_keys(es, flush_time - add_time))
         || !TEST_int_eq(OSSL_ECHSTORE_num_keys(es, &keysaftr), 1)
-        || !TEST_int_eq(keysaftr, 0))
+        || !TEST_int_eq(keysaftr, 0)) {
+        /*
+         * We fail here now and then on some platforms. Probably a wrap-around
+         * the seconds issue, but to check that...
+         */
+        TEST_info("Flush time: %lld, add_time: %lld", (long long)flush_time,
+                  (long long)add_time);
         goto end;
+    }
     rv = 1;
 end:
     OPENSSL_free(pn);
