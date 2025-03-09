@@ -35,7 +35,7 @@ static const char OSSL_ECH_CONTEXT_STRING[] = "\x74\x6c\x73\x20\x65\x63\x68";
  */
 int ossl_ech_get_sh_offsets(const unsigned char *sh, size_t sh_len,
                             size_t *exts, size_t *echoffset,
-                            uint16_t *echtype)
+                            uint16_t *echtype, uint16_t *echlen)
 {
     unsigned int etype = 0, pi_tmp = 0;
     const unsigned char *pp_tmp = NULL, *shstart = NULL;
@@ -43,12 +43,11 @@ int ossl_ech_get_sh_offsets(const unsigned char *sh, size_t sh_len,
     size_t extlens = 0;
     int done = 0;
 #ifdef OSSL_ECH_SUPERVERBOSE
-    size_t echlen = 0; /* length of ECH, including type & ECH-internal length */
     size_t sessid_offset = 0, sessid_len = 0;
 #endif
 
     if (sh == NULL || sh_len == 0 || exts == NULL || echoffset == NULL
-        || echtype == NULL)
+        || echtype == NULL || echlen == NULL)
         return 0;
     *exts = *echoffset = *echtype = 0;
     if (!PACKET_buf_init(&pkt, sh, sh_len))
@@ -87,13 +86,11 @@ int ossl_ech_get_sh_offsets(const unsigned char *sh, size_t sh_len,
             || !PACKET_get_length_prefixed_2(&extpkt, &oneext))
             return 0;
         if (etype == TLSEXT_TYPE_ech) {
-            if (PACKET_remaining(&oneext) != 8)
+            if (PACKET_remaining(&oneext) != OSSL_ECH_SIGNAL_LEN)
                 return 0;
             *echoffset = PACKET_data(&oneext) - shstart - 4;
             *echtype = etype;
-#ifdef OSSL_ECH_SUPERVERBOSE
-            echlen = PACKET_remaining(&oneext) + 4; /* type/length included */
-#endif
+            *echlen = PACKET_remaining(&oneext) + 4; /* type/length included */
             done++;
         }
     }
@@ -105,7 +102,7 @@ int ossl_ech_get_sh_offsets(const unsigned char *sh, size_t sh_len,
     ossl_ech_pbuf("orig SH session_id", (unsigned char *)sh + sessid_offset,
                   sessid_len);
     ossl_ech_pbuf("orig SH exts", (unsigned char *)sh + *exts, extlens);
-    ossl_ech_pbuf("orig SH/ECH ", (unsigned char *)sh + *echoffset, echlen);
+    ossl_ech_pbuf("orig SH/ECH ", (unsigned char *)sh + *echoffset, *echlen);
 #endif
     return 1;
 }

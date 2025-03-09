@@ -546,43 +546,21 @@ int ossl_ech_find_confirm(SSL_CONNECTION *s, int hrr,
                           unsigned char acbuf[OSSL_ECH_SIGNAL_LEN],
                           const unsigned char *shbuf, const size_t shlen)
 {
-    PACKET pkt;
-    const unsigned char *acp = NULL, *pp_tmp;
-    unsigned int pi_tmp, etype, elen;
-    int done = 0;
+    const unsigned char *acp = NULL;
+    size_t extoffset = 0, echoffset = 0;
+    uint16_t echtype = 0, echlen = 0;
 
     if (hrr == 0) {
         acp = s->s3.server_random + SSL3_RANDOM_SIZE - OSSL_ECH_SIGNAL_LEN;
-        memcpy(acbuf, acp, OSSL_ECH_SIGNAL_LEN);
-        return 1;
     } else {
-        if (!PACKET_buf_init(&pkt, shbuf, shlen)
-            || !PACKET_get_net_2(&pkt, &pi_tmp)
-            || !PACKET_get_bytes(&pkt, &pp_tmp, SSL3_RANDOM_SIZE)
-            || !PACKET_get_1(&pkt, &pi_tmp) /* sessid len */
-            || !PACKET_get_bytes(&pkt, &pp_tmp, pi_tmp) /* sessid */
-            || !PACKET_get_net_2(&pkt, &pi_tmp) /* ciphersuite */
-            || !PACKET_get_1(&pkt, &pi_tmp) /* compression */
-            || !PACKET_get_net_2(&pkt, &pi_tmp)) /* len(extensions) */
+        if (ossl_ech_get_sh_offsets(shbuf, shlen, &extoffset,
+                                    &echoffset, &echtype, &echlen) != 1
+            || echtype != TLSEXT_TYPE_ech || echlen != OSSL_ECH_SIGNAL_LEN + 4)
             return 0;
-        while (PACKET_remaining(&pkt) > 0 && done < 1) {
-            if (!PACKET_get_net_2(&pkt, &etype)
-                || !PACKET_get_net_2(&pkt, &elen))
-                return 0;
-            if (etype == TLSEXT_TYPE_ech) {
-                if (elen != OSSL_ECH_SIGNAL_LEN
-                    || !PACKET_get_bytes(&pkt, &acp, elen))
-                    return 0;
-                memcpy(acbuf, acp, elen);
-                done++;
-            } else {
-                if (!PACKET_get_bytes(&pkt, &pp_tmp, elen))
-                    return 0;
-            }
-        }
-        return done;
+        acp = shbuf + echoffset + 4;
     }
-    return 0;
+    memcpy(acbuf, acp, OSSL_ECH_SIGNAL_LEN);
+    return 1;
 }
 
 /*
@@ -1154,7 +1132,7 @@ int ossl_ech_calc_confirm(SSL_CONNECTION *s, int for_hrr,
     unsigned char *fixedshbuf = NULL;
     size_t fixedshbuf_len = 0, tlen = 0, chend = 0;
     size_t shoffset = 6 + 24, extoffset = 0, echoffset = 0;
-    uint16_t echtype;
+    uint16_t echtype, echlen;
     unsigned int hashlen = 0;
     unsigned char hashval[EVP_MAX_MD_SIZE];
 
@@ -1183,7 +1161,7 @@ int ossl_ech_calc_confirm(SSL_CONNECTION *s, int for_hrr,
             conf_loc = tbuf + tlen - OSSL_ECH_SIGNAL_LEN;
         } else {
             if (ossl_ech_get_sh_offsets(shbuf, shlen, &extoffset,
-                                        &echoffset, &echtype) != 1) {
+                                        &echoffset, &echtype, &echlen) != 1) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_ECH_REQUIRED);
                 goto end;
             }
