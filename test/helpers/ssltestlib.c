@@ -92,6 +92,9 @@ static void copy_flags(BIO *bio)
     int flags;
     BIO *next = BIO_next(bio);
 
+    if (next == NULL)
+        return;
+
     flags = BIO_test_flags(next, BIO_FLAGS_SHOULD_RETRY | BIO_FLAGS_RWS);
     BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY | BIO_FLAGS_RWS);
     BIO_set_flags(bio, flags);
@@ -531,7 +534,8 @@ int mempacket_move_packet(BIO *bio, int d, int s)
     /* Increment the packet numbers for moved packets */
     for (i = d + 1; i <= s; i++) {
         thispkt = sk_MEMPACKET_value(ctx->pkts, i);
-        thispkt->num++;
+        if (thispkt != NULL)
+            thispkt->num++;
     }
     return 1;
 }
