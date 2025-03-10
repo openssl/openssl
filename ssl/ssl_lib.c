@@ -3473,6 +3473,68 @@ char *SSL_get_shared_ciphers(const SSL *s, char *buf, int size)
     return buf;
 }
 
+/** Specify the EC point formats to be used by default by the SSL_CTX */
+__owur int SSL_CTX_set_ec_point_formats(SSL_CTX *ctx, const unsigned char *formats,
+                                        size_t formats_len)
+{
+    unsigned char *ecpointformats;
+    size_t i;
+
+    if (formats == NULL || formats_len == 0)
+        return 0;
+
+    /* Check all formats are within our recognized values: */
+    for (i = 0; i < formats_len; i++) {
+        if (formats[i] < TLSEXT_ECPOINTFORMAT_first ||
+            formats[i] > TLSEXT_ECPOINTFORMAT_last)
+            return 0;
+    }
+
+    ecpointformats = OPENSSL_memdup(formats, formats_len);
+    if (ecpointformats == NULL)
+        return 0;
+
+    OPENSSL_free(ctx->ext.ecpointformats);
+
+    ctx->ext.ecpointformats = ecpointformats;
+    ctx->ext.ecpointformats_len = formats_len;
+
+    return 1;
+}
+
+/** Specify the EC point formats to be used by the SSL */
+__owur int SSL_set_ec_point_formats(SSL *ssl, const unsigned char *formats,
+                                    size_t formats_len)
+{
+    unsigned char *ecpointformats;
+    size_t i;
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
+
+    if (sc == NULL)
+        return 0;
+
+    if (formats == NULL || formats_len == 0)
+        return 0;
+
+    /* Check all formats are within our recognized values: */
+    for (i = 0; i < formats_len; i++) {
+        if (formats[i] < TLSEXT_ECPOINTFORMAT_first ||
+            formats[i] > TLSEXT_ECPOINTFORMAT_last)
+            return 0;
+    }
+
+    ecpointformats = OPENSSL_memdup(formats, formats_len);
+    if (ecpointformats == NULL)
+        return 0;
+
+    OPENSSL_free(sc->ext.ecpointformats);
+
+    sc->ext.ecpointformats = ecpointformats;
+    sc->ext.ecpointformats_len = formats_len;
+
+    return 1;
+}
+
 /**
  * Return the requested servername (SNI) value. Note that the behaviour varies
  * depending on:
