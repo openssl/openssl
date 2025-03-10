@@ -591,11 +591,6 @@ effect if the buffer size is larger than the size that would otherwise be used
 and pipelining is in use (see L<SSL_CTX_set_default_read_buffer_len(3)> for
 further information).
 
-=item B<-bugs>
-
-There are several known bugs in SSL and TLS implementations. Adding this
-option enables various workarounds.
-
 =item B<-no_tx_cert_comp>
 
 Disables support for sending TLSv1.3 compressed certificates.
@@ -610,76 +605,15 @@ Disable negotiation of TLS compression.
 TLS compression is not recommended and is off by default as of
 OpenSSL 1.1.0.
 
-=item B<-comp>
-
-Enables support for SSL/TLS compression.
-This option was introduced in OpenSSL 1.1.0.
-TLS compression is not recommended and is off by default as of
-OpenSSL 1.1.0. TLS compression can only be used in security level 1 or
-lower. From OpenSSL 3.2.0 and above the default security level is 2, so this
-option will have no effect without also changing the security level. Use the
-B<-cipher> option to change the security level. See L<openssl-ciphers(1)> for
-more information.
-
-=item B<-no_ticket>
-
-Disable RFC4507bis session ticket support. This option has no effect if TLSv1.3
-is negotiated. See B<-num_tickets>.
-
 =item B<-num_tickets>
 
 Control the number of tickets that will be sent to the client after a full
 handshake in TLSv1.3. The default number of tickets is 2. This option does not
 affect the number of tickets sent after a resumption handshake.
 
-=item B<-serverpref>
-
-Use the server's cipher preferences, rather than the client's preferences.
-
-=item B<-prioritize_chacha>
-
-Prioritize ChaCha ciphers when preferred by clients. Requires B<-serverpref>.
-
 =item B<-no_resumption_on_reneg>
 
 Set the B<SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION> option.
-
-=item B<-client_sigalgs> I<val>
-
-Signature algorithms to support for client certificate authentication
-(colon-separated list).
-
-=item B<-named_curve> I<val>
-
-Specifies the elliptic curve to use. NOTE: this is single curve, not a list.
-
-The list of available groups includes various built-in named EC curves, as well
-as X25519 and X448, FFDHE groups, and any additional groups implemented in the
-default or 3rd-party providers.
-The commands below list the available groups for TLS 1.2 and TLS 1.3,
-respectively.
-
-    $ openssl list -tls1_2 -tls-groups
-    $ openssl list -tls1_3 -tls-groups
-
-=item B<-cipher> I<val>
-
-This allows the list of TLSv1.2 and below ciphersuites used by the server to be
-modified. This list is combined with any TLSv1.3 ciphersuites that have been
-configured. When the client sends a list of supported ciphers the first client
-cipher also included in the server list is used. Because the client specifies
-the preference order, the order of the server cipherlist is irrelevant. See
-L<openssl-ciphers(1)> for more information.
-
-=item B<-ciphersuites> I<val>
-
-This allows the list of TLSv1.3 ciphersuites used by the server to be modified.
-This list is combined with any TLSv1.2 and below ciphersuites that have been
-configured. When the client sends a list of supported ciphers the first client
-cipher also included in the server list is used. Because the client specifies
-the preference order, the order of the server cipherlist is irrelevant. See
-L<openssl-ciphers(1)> command for more information. The format for this list is
-a simple colon (":") separated list of TLSv1.3 ciphersuite names.
 
 =item B<-dhparam> I<infile>
 
