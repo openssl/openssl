@@ -65,8 +65,9 @@ static int cipher_hw_aes_xts_generic_initkey(PROV_CIPHER_CTX *ctx,
 
 #ifdef BSAES_CAPABLE
     if (BSAES_CAPABLE) {
-        stream_enc = ossl_bsaes_xts_encrypt;
-        stream_dec = ossl_bsaes_xts_decrypt;
+        XTS_SET_KEY_FN(ossl_bsaes_set_encrypt_key, ossl_bsaes_set_decrypt_key,
+                       ossl_bsaes_encrypt, ossl_bsaes_decrypt, ossl_bsaes_xts_encrypt, ossl_bsaes_xts_decrypt);
+        return 1;
     } else
 #endif /* BSAES_CAPABLE */
 #ifdef VPAES_CAPABLE
