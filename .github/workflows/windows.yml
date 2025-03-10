@@ -47,7 +47,7 @@ jobs:
         perl configdata.pm --dump
     - name: build
       working-directory: _build
-      run: nmake /S
+      run: nmake
     - name: download coreinfo
       uses: suisei-cn/actions-download-file@v1.6.0
       with:
