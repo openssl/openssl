@@ -8,7 +8,7 @@ bn_sqr_comba4, bn_sqr_comba8, bn_cmp_words, bn_mul_normal,
 bn_mul_low_normal, bn_mul_recursive, bn_mul_part_recursive,
 bn_mul_low_recursive, bn_sqr_normal, bn_sqr_recursive,
 bn_expand, bn_wexpand, bn_expand2, bn_fix_top, bn_check_top,
-bn_print, bn_dump, bn_set_max, bn_set_high, bn_set_low - BIGNUM
+mul, mul_add, sqr - BIGNUM
 library internal functions
 
 =head1 SYNOPSIS
@@ -45,21 +45,18 @@ library internal functions
  void bn_sqr_normal(BN_ULONG *r, BN_ULONG *a, int n, BN_ULONG *tmp);
  void bn_sqr_recursive(BN_ULONG *r, BN_ULONG *a, int n2, BN_ULONG *tmp);
 
- void mul(BN_ULONG r, BN_ULONG a, BN_ULONG w, BN_ULONG c);
- void mul_add(BN_ULONG r, BN_ULONG a, BN_ULONG w, BN_ULONG c);
- void sqr(BN_ULONG r0, BN_ULONG r1, BN_ULONG a);
-
  BIGNUM *bn_expand(BIGNUM *a, int bits);
  BIGNUM *bn_wexpand(BIGNUM *a, int n);
  BIGNUM *bn_expand2(BIGNUM *a, int n);
  void bn_fix_top(BIGNUM *a);
 
+The following are macros:
+
+ void mul(BN_ULONG r, BN_ULONG a, BN_ULONG w, BN_ULONG c);
+ void mul_add(BN_ULONG r, BN_ULONG a, BN_ULONG w, BN_ULONG c);
+ void sqr(BN_ULONG r0, BN_ULONG r1, BN_ULONG a);
+
  void bn_check_top(BIGNUM *a);
- void bn_print(BIGNUM *a);
- void bn_dump(BN_ULONG *d, int n);
- void bn_set_max(BIGNUM *a);
- void bn_set_high(BIGNUM *r, BIGNUM *a, int n);
- void bn_set_low(BIGNUM *r, BIGNUM *a, int n);
 
 =head1 DESCRIPTION
 
@@ -208,26 +205,19 @@ call bn_expand2(), which allocates a new B<d> array and copies the
 data.  They return B<NULL> on error, B<b> otherwise.
 
 The bn_fix_top() macro reduces B<a-E<gt>top> to point to the most
-significant non-zero word plus one when B<a> has shrunk.
+significant nonzero word plus one when B<a> has shrunk.
 
 =head2 Debugging
 
 bn_check_top() verifies that C<((a)-E<gt>top E<gt>= 0 && (a)-E<gt>top
 E<lt>= (a)-E<gt>dmax)>.  A violation will cause the program to abort.
 
-bn_print() prints B<a> to stderr. bn_dump() prints B<n> words at B<d>
-(in reverse order, i.e. most significant word first) to stderr.
+If B<BN_DEBUG> is not defined, bn_check_top() is
+defined as an empty macro.
 
-bn_set_max() makes B<a> a static number with a B<dmax> of its current size.
-This is used by bn_set_low() and bn_set_high() to make B<r> a read-only
-B<BIGNUM> that contains the B<n> low or high words of B<a>.
+=head1 RETURN VALUES
 
-If B<BN_DEBUG> is not defined, bn_check_top(), bn_print(), bn_dump()
-and bn_set_max() are defined as empty macros.
-
-=head1 SEE ALSO
-
-L<bn(3)>
+Described above.
 
 =head1 COPYRIGHT
 
