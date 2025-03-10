@@ -42,7 +42,7 @@ static int rsa_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         if (((RSA *)*pval)->version != RSA_ASN1_VERSION_DEFAULT && 
             ((RSA *)*pval)->version != RSA_ASN1_VERSION_MULTI) {
             ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_RSA_KEY_VERSION);
-            return 0; /* Validation failure */
+            return 0;
         }
         
         if (((RSA *)*pval)->version != RSA_ASN1_VERSION_MULTI) {
