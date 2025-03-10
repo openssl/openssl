@@ -79,7 +79,7 @@ static CONF_MODULE *module_add(DSO *dso, const char *name,
                                conf_finish_func *ffunc);
 static CONF_MODULE *module_find(const char *name);
 static int module_init(CONF_MODULE *pmod, const char *name, const char *value,
-                       const CONF *cnf);
+                       const CONF *cnf, int flags);
 static CONF_MODULE *module_load_dso(const CONF *cnf, const char *name,
                                     const char *value);
 
@@ -138,7 +138,6 @@ int CONF_modules_load(const CONF *cnf, const char *appname,
 
     if (conf_diagnostics(cnf))
         flags &= ~(CONF_MFLAGS_IGNORE_ERRORS
-                   | CONF_MFLAGS_IGNORE_RETURN_CODES
                    | CONF_MFLAGS_SILENT
                    | CONF_MFLAGS_IGNORE_MISSING_FILE);
 
@@ -281,7 +280,7 @@ static int module_run(const CONF *cnf, const char *name, const char *value,
         return -1;
     }
 
-    ret = module_init(md, name, value, cnf);
+    ret = module_init(md, name, value, cnf, flags);
 
     if (ret <= 0) {
         if (!(flags & CONF_MFLAGS_SILENT))
@@ -427,7 +426,7 @@ static CONF_MODULE *module_find(const char *name)
 
 /* initialize a module */
 static int module_init(CONF_MODULE *pmod, const char *name, const char *value,
-                       const CONF *cnf)
+                       const CONF *cnf, int flags)
 {
     int ret = 1;
     int init_called = 0;
@@ -444,6 +443,7 @@ static int module_init(CONF_MODULE *pmod, const char *name, const char *value,
     imod->name = OPENSSL_strdup(name);
     imod->value = OPENSSL_strdup(value);
     imod->usr_data = NULL;
+    imod->flags = flags;
 
     if (!imod->name || !imod->value)
         goto memerr;
