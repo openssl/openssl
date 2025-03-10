@@ -13,11 +13,43 @@
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
 #include <openssl/trace.h>
+#include <openssl/err.h>
 #include "ssl_local.h"
 #include "internal/thread_once.h"
 #include "internal/rio_notifier.h"    /* for ossl_wsa_cleanup() */
+#include "internal/dso.h"
 
 static int stopped;
+
+static void pin_library(void)
+{
+#if !defined(OPENSSL_USE_NODELETE) \
+    && !defined(OPENSSL_NO_PINSHARED)
+# if defined(WIN32) && !defined(_WIN32_WCE)
+    {
+        HMODULE handle = NULL;
+
+        /* We don't use the DSO route for WIN32 because there is a better way */
+        GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS
+                          | GET_MODULE_HANDLE_EX_FLAG_PIN,
+                          (void *)&stopped, &handle);
+
+    }
+# elif !defined(DSO_NONE)
+    /*
+     * Deliberately leak a reference to ourselves. This will force the library
+     * to remain loaded until the atexit() handler is run at process exit.
+     */
+    (void) DSO_dsobyaddr(&stopped, DSO_FLAG_NO_UNLOAD_ON_FREE);
+    /*
+     * clear errors eventually left behind runtime linker.
+     * those errors are meant to be ignored anyway. Library
+     * pinning is just best effort.
+     */
+    ERR_clear_error();
+# endif
+#endif
+}
 
 static CRYPTO_ONCE ssl_base = CRYPTO_ONCE_STATIC_INIT;
 static int ssl_base_inited = 0;
@@ -33,6 +65,7 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_ssl_base)
     SSL_COMP_get_compression_methods();
 #endif
     ssl_sort_cipher_list();
+    pin_library();
     OSSL_TRACE(INIT, "ossl_init_ssl_base: SSL_add_ssl_module()\n");
     ssl_base_inited = 1;
     return 1;
