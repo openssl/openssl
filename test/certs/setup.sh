@@ -223,6 +223,8 @@ OPENSSL_KEYBITS=4096 \
 OPENSSL_KEYBITS=8192 \
 ./mkcert.sh genee server.example ee-key-8192 ee-cert-8192 ca-key ca-cert
 
+# root CA cert with explicit keyUsage not including KeyCertSign
+openssl req -new -x509 -key root-key.pem -subj /CN="Root CA" -out root-no-KeyCertSign.pem -addext keyUsage=digitalSignature -days 36525
 # self-signed end-entity cert with explicit keyUsage not including KeyCertSign
 openssl req -new -x509 -key ee-key.pem -subj /CN=ee-self-signed -out ee-self-signed.pem -addext keyUsage=digitalSignature -days 36525
 
