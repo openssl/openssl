@@ -656,7 +656,8 @@ affect the number of tickets sent after a resumption handshake.
 
 =item B<-serverpref>
 
-Use the server's cipher preferences, rather than the client's preferences.
+Use the server's preferences regarding ciphers, groups and signatures, rather
+than the client's preferences.
 
 =item B<-prioritize_chacha>
 
