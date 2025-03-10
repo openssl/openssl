@@ -873,7 +873,7 @@ ecp_nistz256_point_double:
 	srdi	$poly1,$poly1,32	# 0x00000000ffffffff
 	li	$poly3,1
 	orc	$poly3,$poly3,$poly1	# 0xffffffff00000001
-.Ldouble_shortcut:
+ec_dbl_shortcut:
 	ld	$acc0,32($ap)
 	ld	$acc1,40($ap)
 	ld	$acc2,48($ap)
@@ -1211,7 +1211,7 @@ ecp_nistz256_point_add:
 	ld	r18,$FRAME-8*14($sp)
 	ld	r19,$FRAME-8*13($sp)
 	stdu	$bp,$FRAME-288($sp)	# difference in stack frame sizes
-	b	.Ldouble_shortcut
+	b       ec_dbl_shortcut
 
 .align	4
 .Ladd_proceed:
