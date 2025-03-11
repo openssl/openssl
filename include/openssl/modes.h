@@ -128,6 +128,9 @@ int CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
 int CRYPTO_gcm128_encrypt_ctr32(GCM128_CONTEXT *ctx,
                                 const unsigned char *in, unsigned char *out,
                                 size_t len, ctr128_f stream);
+int jinho_CRYPTO_gcm128_encrypt_ctr32(GCM128_CONTEXT *ctx,
+                                const unsigned char *in, unsigned char *out,
+                                size_t len, ctr128_f stream);
 int CRYPTO_gcm128_decrypt_ctr32(GCM128_CONTEXT *ctx,
                                 const unsigned char *in, unsigned char *out,
                                 size_t len, ctr128_f stream);

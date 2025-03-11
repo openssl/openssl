@@ -25,6 +25,10 @@ static int gcm_tls_cipher(PROV_GCM_CTX *ctx, unsigned char *out, size_t *padlen,
 static int gcm_cipher_internal(PROV_GCM_CTX *ctx, unsigned char *out,
                                size_t *padlen, const unsigned char *in,
                                size_t len);
+static int jinho_gcm_cipher_internal(PROV_GCM_CTX *ctx, unsigned char *out,
+                               size_t *padlen, const unsigned char *in,
+                               size_t len);
+
 
 /*
  * Called from EVP_CipherInit when there is currently no context via
@@ -342,10 +346,21 @@ int ossl_gcm_stream_update(void *vctx, unsigned char *out, size_t *outl,
         return 0;
     }
 
+    // Change
+    /*
+    fprintf(stdout, "Call gcm_cipher_internal\n");
     if (gcm_cipher_internal(ctx, out, outl, in, inl) <= 0) {
         ERR_raise(ERR_LIB_PROV, PROV_R_CIPHER_OPERATION_FAILED);
         return 0;
     }
+    */
+
+    fprintf(stdout, "Call Jinho_gcm_cipher_internal\n");
+    if (jinho_gcm_cipher_internal(ctx, out, outl, in, inl) <= 0) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_CIPHER_OPERATION_FAILED);
+        return 0;
+    }
+
     return 1;
 }
 
@@ -415,6 +430,7 @@ static int gcm_cipher_internal(PROV_GCM_CTX *ctx, unsigned char *out,
                                size_t *padlen, const unsigned char *in,
                                size_t len)
 {
+    fprintf(stdout, "gcm_cipher_internal\n");
     size_t olen = 0;
     int rv = 0;
     const PROV_GCM_HW *hw = ctx->hw;
@@ -448,6 +464,66 @@ static int gcm_cipher_internal(PROV_GCM_CTX *ctx, unsigned char *out,
             if (!hw->aadupdate(ctx, in, len))
                 goto err;
         } else {
+            /* The input is ciphertext OR plaintext */
+            if (!hw->cipherupdate(ctx, in, len, out))
+                goto err;
+        }
+    } else {
+        /* The tag must be set before actually decrypting data */
+        if (!ctx->enc && ctx->taglen == UNINITIALISED_SIZET)
+            goto err;
+        if (!hw->cipherfinal(ctx, ctx->buf))
+            goto err;
+        ctx->iv_state = IV_STATE_FINISHED; /* Don't reuse the IV */
+        goto finish;
+    }
+    olen = len;
+finish:
+    rv = 1;
+err:
+    *padlen = olen;
+    return rv;
+}
+
+static int jinho_gcm_cipher_internal(PROV_GCM_CTX *ctx, unsigned char *out,
+                               size_t *padlen, const unsigned char *in,
+                               size_t len)
+{
+    fprintf(stdout, "jinho_gcm_cipher_internal\n");
+    size_t olen = 0;
+    int rv = 0;
+    const PROV_GCM_HW *hw = ctx->hw;
+
+    if (ctx->tls_aad_len != UNINITIALISED_SIZET)
+        return gcm_tls_cipher(ctx, out, padlen, in, len);
+
+    if (!ctx->key_set || ctx->iv_state == IV_STATE_FINISHED)
+        goto err;
+
+    /*
+     * FIPS requires generation of AES-GCM IV's inside the FIPS module.
+     * The IV can still be set externally (the security policy will state that
+     * this is not FIPS compliant). There are some applications
+     * where setting the IV externally is the only option available.
+     */
+    if (ctx->iv_state == IV_STATE_UNINITIALISED) {
+        if (!ctx->enc || !gcm_iv_generate(ctx, 0))
+            goto err;
+    }
+
+    if (ctx->iv_state == IV_STATE_BUFFERED) {
+        if (!hw->setiv(ctx, ctx->iv, ctx->ivlen))
+            goto err;
+        ctx->iv_state = IV_STATE_COPIED;
+    }
+
+    if (in != NULL) {
+        /*  The input is AAD if out is NULL */
+        if (out == NULL) {
+            if (!hw->aadupdate(ctx, in, len))
+                goto err;
+        } else {
+	    // -> cipher update 바꿔야 함.
             /* The input is ciphertext OR plaintext */
             if (!hw->cipherupdate(ctx, in, len, out))
                 goto err;

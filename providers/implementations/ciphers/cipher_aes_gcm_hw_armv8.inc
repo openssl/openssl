@@ -96,7 +96,7 @@ static int armv8_aes_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
     return 1;
 }
 
-
+// ?
 static const PROV_GCM_HW armv8_aes_gcm = {
     armv8_aes_gcm_initkey,
     ossl_gcm_setiv,
@@ -106,7 +106,24 @@ static const PROV_GCM_HW armv8_aes_gcm = {
     ossl_gcm_one_shot
 };
 
+static const PROV_GCM_HW jinho_armv8_aes_gcm = {
+    armv8_aes_gcm_initkey,
+    ossl_gcm_setiv,
+    ossl_gcm_aad_update,
+    jinho_generic_aes_gcm_cipher_update,
+    ossl_gcm_cipher_final,
+    ossl_gcm_one_shot
+};
+
+
+/*
 const PROV_GCM_HW *ossl_prov_aes_hw_gcm(size_t keybits)
 {
     return AES_PMULL_CAPABLE ? &armv8_aes_gcm : &aes_gcm;
 }
+*/
+const PROV_GCM_HW *ossl_prov_aes_hw_gcm(size_t keybits)
+{
+    return AES_PMULL_CAPABLE ? &jinho_armv8_aes_gcm : &jinho_aes_gcm;
+}
+

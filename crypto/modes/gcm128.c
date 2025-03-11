@@ -1231,6 +1231,7 @@ int CRYPTO_gcm128_encrypt_ctr32(GCM128_CONTEXT *ctx,
                                 const unsigned char *in, unsigned char *out,
                                 size_t len, ctr128_f stream)
 {
+    fprintf(stdout, "CRYPTO_gcm128_encrypt\n");
 #if defined(OPENSSL_SMALL_FOOTPRINT)
     return CRYPTO_gcm128_encrypt(ctx, in, out, len);
 #else
@@ -1377,6 +1378,170 @@ int CRYPTO_gcm128_encrypt_ctr32(GCM128_CONTEXT *ctx,
     }
 
     ctx->mres = mres;
+    return 0;
+#endif
+}
+
+int jinho_CRYPTO_gcm128_encrypt_ctr32(GCM128_CONTEXT *ctx,
+                                const unsigned char *in, unsigned char *out,
+                                size_t len, ctr128_f stream)
+{
+    fprintf(stdout, "jinho_CRYPTO_gcm128_encrypt_ctr32\n");
+    
+#if defined(OPENSSL_SMALL_FOOTPRINT)
+    return CRYPTO_gcm128_encrypt(ctx, in, out, len);
+#else
+    DECLARE_IS_ENDIAN;
+    unsigned int n, ctr, mres;
+    size_t i;
+    u64 mlen = ctx->len.u[1];
+    void *key = ctx->key;
+
+    mlen += len;
+    if (mlen > ((U64(1) << 36) - 32) || (sizeof(len) == 8 && mlen < len))
+        return -1;
+    ctx->len.u[1] = mlen;
+
+    mres = ctx->mres;
+
+    if (ctx->ares) {
+        /* First call to encrypt finalizes GHASH(AAD) */
+#if defined(GHASH)
+        if (len == 0) {
+            GCM_MUL(ctx);
+            ctx->ares = 0;
+            return 0;
+        }
+        memcpy(ctx->Xn, ctx->Xi.c, sizeof(ctx->Xi));
+        ctx->Xi.u[0] = 0;
+        ctx->Xi.u[1] = 0;
+        mres = sizeof(ctx->Xi);
+#else
+        GCM_MUL(ctx);
+#endif
+        ctx->ares = 0;
+    }
+
+    if (IS_LITTLE_ENDIAN)
+# ifdef BSWAP4
+        ctr = BSWAP4(ctx->Yi.d[3]);
+# else
+        ctr = GETU32(ctx->Yi.c + 12);
+# endif
+    else
+        ctr = ctx->Yi.d[3];
+
+    /*
+    n = mres % 16;
+    if (n) {
+# if defined(GHASH)
+        while (n && len) {
+            ctx->Xn[mres++] = *(out++) = *(in++) ^ ctx->EKi.c[n];
+            --len;
+            n = (n + 1) % 16;
+        }
+        if (n == 0) {
+            GHASH(ctx, ctx->Xn, mres);
+            mres = 0;
+        } else {
+            ctx->mres = mres;
+            return 0;
+        }
+# else
+        while (n && len) {
+            ctx->Xi.c[n] ^= *(out++) = *(in++) ^ ctx->EKi.c[n];
+            --len;
+            n = (n + 1) % 16;
+        }
+        if (n == 0) {
+            GCM_MUL(ctx);
+            mres = 0;
+        } else {
+            ctx->mres = n;
+            return 0;
+        }
+# endif
+    }
+    */
+# if defined(GHASH)
+        if (len >= 16 && mres) {
+            GHASH(ctx, ctx->Xn, mres);
+            mres = 0;
+        }
+#  if defined(GHASH_CHUNK)
+    while (len >= GHASH_CHUNK) {
+        (*stream) (in, out, GHASH_CHUNK / 16, key, ctx->Yi.c);
+        ctr += GHASH_CHUNK / 16;
+        if (IS_LITTLE_ENDIAN)
+#   ifdef BSWAP4
+            ctx->Yi.d[3] = BSWAP4(ctr);
+#   else
+            PUTU32(ctx->Yi.c + 12, ctr);
+#   endif
+        else
+            ctx->Yi.d[3] = ctr;
+        GHASH(ctx, out, GHASH_CHUNK);
+        out += GHASH_CHUNK;
+        in += GHASH_CHUNK;
+        len -= GHASH_CHUNK;
+    }
+#  endif
+# endif
+    if ((i = (len & (size_t)-16))) {
+        size_t j = i / 16;
+
+        (*stream) (in, out, j, key, ctx->Yi.c);
+        ctr += (unsigned int)j;
+        if (IS_LITTLE_ENDIAN)
+# ifdef BSWAP4
+            ctx->Yi.d[3] = BSWAP4(ctr);
+# else
+            PUTU32(ctx->Yi.c + 12, ctr);
+# endif
+        else
+            ctx->Yi.d[3] = ctr;
+        in += i;
+        len -= i;
+# if defined(GHASH)
+        GHASH(ctx, out, i);
+        out += i;
+# else
+        while (j--) {
+            for (i = 0; i < 16; ++i)
+                ctx->Xi.c[i] ^= out[i];
+            GCM_MUL(ctx);
+            out += 16;
+        }
+# endif
+    }
+    if (len) {
+	// Do
+        (*ctx->block) (ctx->Yi.c, ctx->EKi.c, key);
+        ++ctr;
+        if (IS_LITTLE_ENDIAN)
+# ifdef BSWAP4
+            ctx->Yi.d[3] = BSWAP4(ctr);
+# else
+            PUTU32(ctx->Yi.c + 12, ctr);
+# endif
+        else
+            ctx->Yi.d[3] = ctr;
+
+	memcpy(out, ctx->EKi.c, sizeof(ctx->EKi.c));
+	// Except
+	/*
+        while (len--) {
+# if defined(GHASH)
+            ctx->Xn[mres++] = out[n] = in[n] ^ ctx->EKi.c[n];
+# else
+            ctx->Xi.c[mres++] ^= out[n] = in[n] ^ ctx->EKi.c[n];
+# endif
+            ++n;
+        }
+    */
+    }
+
+    // ctx->mres = mres;
     return 0;
 #endif
 }

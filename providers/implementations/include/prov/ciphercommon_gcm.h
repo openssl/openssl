@@ -16,6 +16,7 @@
 # include "ciphercommon_aead.h"
 
 typedef struct prov_gcm_hw_st PROV_GCM_HW;
+typedef struct jinho_prov_gcm_hw_st jinho_PROV_GCM_HW;
 
 # define GCM_IV_DEFAULT_SIZE 12 /* IV's for AES_GCM should normally be 12 bytes */
 # define GCM_IV_MAX_SIZE     (1024 / 8)
@@ -103,6 +104,16 @@ struct prov_gcm_hw_st {
   OSSL_GCM_cipherfinal_fn cipherfinal;
   OSSL_GCM_oneshot_fn oneshot;
 };
+
+struct jinho_prov_gcm_hw_st {
+  OSSL_GCM_setkey_fn setkey;
+  OSSL_GCM_setiv_fn setiv;
+  OSSL_GCM_aadupdate_fn aadupdate;
+  OSSL_GCM_cipherupdate_fn cipherupdate;
+  OSSL_GCM_cipherfinal_fn cipherfinal;
+  OSSL_GCM_oneshot_fn oneshot;
+};
+
 
 OSSL_FUNC_cipher_encrypt_init_fn ossl_gcm_einit;
 OSSL_FUNC_cipher_decrypt_init_fn ossl_gcm_dinit;

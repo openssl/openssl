@@ -61,6 +61,7 @@ static int aes_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
 static int generic_aes_gcm_cipher_update(PROV_GCM_CTX *ctx, const unsigned char *in,
                                          size_t len, unsigned char *out)
 {
+    fprintf(stdout, "generic_aes_gcm_cipher_update\n");
     if (ctx->enc) {
         if (ctx->ctr != NULL) {
 #if defined(AES_GCM_ASM)
@@ -123,6 +124,72 @@ static int generic_aes_gcm_cipher_update(PROV_GCM_CTX *ctx, const unsigned char 
     return 1;
 }
 
+static int jinho_generic_aes_gcm_cipher_update(PROV_GCM_CTX *ctx, const unsigned char *in,
+                                         size_t len, unsigned char *out)
+{
+    fprintf(stdout, "jinho_generic_aes_gcm_cipher_update\n");
+    if (ctx->enc) {
+        if (ctx->ctr != NULL) {
+#if defined(AES_GCM_ASM)
+            size_t bulk = 0;
+
+            if (len >= AES_GCM_ENC_BYTES && AES_GCM_ASM(ctx)) {
+                size_t res = (16 - ctx->gcm.mres) % 16;
+
+                if (CRYPTO_gcm128_encrypt(&ctx->gcm, in, out, res))
+                    return 0;
+
+                bulk = AES_gcm_encrypt(in + res, out + res, len - res,
+                                       ctx->gcm.key,
+                                       ctx->gcm.Yi.c, ctx->gcm.Xi.u);
+
+                ctx->gcm.len.u[1] += bulk;
+                bulk += res;
+            }
+            if (jinho_CRYPTO_gcm128_encrypt_ctr32(&ctx->gcm, in + bulk, out + bulk,
+                                            len - bulk, ctx->ctr))
+                return 0;
+#else
+            if (jinho_CRYPTO_gcm128_encrypt_ctr32(&ctx->gcm, in, out, len, ctx->ctr))
+                return 0;
+#endif /* AES_GCM_ASM */
+        } else {
+            if (CRYPTO_gcm128_encrypt(&ctx->gcm, in, out, len))
+                return 0;
+        }
+    } else {
+        if (ctx->ctr != NULL) {
+#if defined(AES_GCM_ASM)
+            size_t bulk = 0;
+
+            if (len >= AES_GCM_DEC_BYTES && AES_GCM_ASM(ctx)) {
+                size_t res = (16 - ctx->gcm.mres) % 16;
+
+                if (CRYPTO_gcm128_decrypt(&ctx->gcm, in, out, res))
+                    return 0;
+
+                bulk = AES_gcm_decrypt(in + res, out + res, len - res,
+                                       ctx->gcm.key,
+                                       ctx->gcm.Yi.c, ctx->gcm.Xi.u);
+
+                ctx->gcm.len.u[1] += bulk;
+                bulk += res;
+            }
+            if (CRYPTO_gcm128_decrypt_ctr32(&ctx->gcm, in + bulk, out + bulk,
+                                            len - bulk, ctx->ctr))
+                return 0;
+#else
+            if (CRYPTO_gcm128_decrypt_ctr32(&ctx->gcm, in, out, len, ctx->ctr))
+                return 0;
+#endif /* AES_GCM_ASM */
+        } else {
+            if (CRYPTO_gcm128_decrypt(&ctx->gcm, in, out, len))
+                return 0;
+        }
+    }
+    return 1;
+}
+
 static const PROV_GCM_HW aes_gcm = {
     aes_gcm_initkey,
     ossl_gcm_setiv,
@@ -131,6 +198,16 @@ static const PROV_GCM_HW aes_gcm = {
     ossl_gcm_cipher_final,
     ossl_gcm_one_shot
 };
+
+static const jinho_PROV_GCM_HW jinho_aes_gcm = {
+    aes_gcm_initkey,
+    ossl_gcm_setiv,
+    ossl_gcm_aad_update,
+    jinho_generic_aes_gcm_cipher_update,
+    ossl_gcm_cipher_final,
+    ossl_gcm_one_shot
+};
+
 
 #if defined(S390X_aes_128_CAPABLE)
 # include "cipher_aes_gcm_hw_s390x.inc"
