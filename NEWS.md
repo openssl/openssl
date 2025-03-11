@@ -28,17 +28,24 @@ OpenSSL 3.5
 OpenSSL 3.5.0 is a feature release adding significant new functionality to
 OpenSSL.
 
-This release is in development.
-
 This release incorporates the following potentially significant or incompatible
 changes:
 
   * Default encryption cipher for the `req`, `cms`, and `smime` applications
     changed from `des-ede3-cbc` to `aes-256-cbc`.
 
-  * Support for server side QUIC (RFC 9000)
+  * The TLS supported groups list has been changed in favor of PQC support.
+
+  * The default TLS keyshares have been changed to offer X25519MLKEM768 and
+    and X25519.
 
 This release adds the following new features:
+
+  * Support for server side QUIC (RFC 9000)
+
+  * Support for 3rd party QUIC stacks
+
+  * Support for PQC algorithms (ML-KEM, ML-DSA, SLH-DSA)
 
   * Allow the FIPS provider to optionally use the `JITTER` seed source.
     Because this seed source is not part of the OpenSSL FIPS validations,
@@ -50,10 +57,14 @@ This release adds the following new features:
 
   * Support for central key generation in CMP
 
+  * Support added for opaque symmetric key objects (EVP_SKEY).
+
+  * Support for multiple TLS keyshares.
+
 OpenSSL 3.4
 -----------
 
-### Major changes between OpenSSL 3.4.0 and OpenSSL 3.4.1 [under development]
+### Major changes between OpenSSL 3.4.0 and OpenSSL 3.4.1 [11 Feb 2025]
 
 OpenSSL 3.4.1 is a security patch release. The most severe CVE fixed in this
 release is High.
