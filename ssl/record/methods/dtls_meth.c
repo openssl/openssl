@@ -389,7 +389,7 @@ static int dtls_retrieve_rlayer_buffered_record(OSSL_RECORD_LAYER *rl,
 int dtls_crypt_sequence_number(EVP_CIPHER_CTX *ctx, unsigned char *seq, size_t seqlen,
                                unsigned char *rec_data, size_t rec_data_offs)
 {
-    unsigned char mask[DTLS1_3_CIPHERTEXT_MINSIZE];
+    unsigned char mask[16];
     int outlen, inlen;
     unsigned char *iv, *in;
     size_t i;
@@ -665,14 +665,13 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
     /*
      * rfc9147:
      * This procedure requires the ciphertext length to be at least
-     * DTLS1_3_CIPHERTEXT_MINSIZE (16) bytes.
+     * DTLS13_CIPHERTEXT_MINSIZE (16) bytes.
      * Receivers MUST reject shorter records as if they had failed deprotection
      */
     if (DTLS13_UNI_HDR_FIX_BITS_IS_SET(rr->type)
             && rl->version == DTLS1_3_VERSION
             && (!ossl_assert(rl->sn_enc_ctx != NULL)
-                || !ossl_assert(rl->packet_length >= rechdrlen
-                                                     + DTLS1_3_CIPHERTEXT_MINSIZE)
+                || !ossl_assert(rl->packet_length >= rechdrlen + DTLS13_CIPHERTEXT_MINSIZE)
                 || !dtls_crypt_sequence_number(rl->sn_enc_ctx,
                                                recseqnum + recseqnumoffs,
                                                recseqnumlen,
