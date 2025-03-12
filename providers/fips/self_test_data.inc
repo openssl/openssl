@@ -1469,7 +1469,6 @@ static const ST_KAT_PARAM slh_ec_det_sig_params[] = {
 
 # ifndef OPENSSL_NO_EC2M
 static const char ecd_bin_curve_name[] = "sect233r1";
-static const char ecd_det_bin_curve_name[] = "sect193r1";
 static const unsigned char ecd_bin_priv[] = {
     0x00, 0x6d, 0xd6, 0x39, 0x9d, 0x2a, 0xa2, 0xc8,
     0x8c, 0xfc, 0x7b, 0x80, 0x66, 0xaa, 0xe1, 0xaa,
