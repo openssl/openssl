@@ -360,10 +360,8 @@ static int dtls_copy_rlayer_record(OSSL_RECORD_LAYER *rl, pitem *item)
     memcpy(&rl->rbuf, &(rdata->rbuf), sizeof(TLS_BUFFER));
     memcpy(&rl->rrec[0], &(rdata->rrec), sizeof(TLS_RL_RECORD));
 
-    if (!ossl_assert(sizeof(rl->sequence) == sizeof(rdata->rrec.seq_num)))
-        return 0;
-
     /* Set proper sequence number for mac calculation */
+    assert(sizeof(rl->sequence) == sizeof(rdata->rrec.seq_num));
     memcpy(rl->sequence, rdata->rrec.seq_num, sizeof(rl->sequence));
 
     return 1;
@@ -391,7 +389,7 @@ static int dtls_retrieve_rlayer_buffered_record(OSSL_RECORD_LAYER *rl,
 int dtls_crypt_sequence_number(EVP_CIPHER_CTX *ctx, unsigned char *seq, size_t seqlen,
                                unsigned char *rec_data, size_t rec_data_offs)
 {
-    unsigned char mask[16];
+    unsigned char mask[DTLS1_3_CIPHERTEXT_MINSIZE];
     int outlen, inlen;
     unsigned char *iv, *in;
     size_t i;
@@ -540,6 +538,7 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
             epoch = rl->epoch;
             recseqnumlen = sbitisset ? 2 : 1;
             recseqnumoffs = sizeof(recseqnum) - recseqnumlen;
+            length = TLS_BUFFER_get_len(&rl->rbuf) - dtls_get_rec_header_size(rr->type);
 
             if (/* OpenSSL does not support connection IDs: silently discard */
                 cbitisset
@@ -554,8 +553,8 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
                  * that the record consumes the entire rest of the datagram in the
                  * lower level transport
                  */
-                || (lbitisset ? !PACKET_get_net_2(&dtlsrecord, &length)
-                              : (length = TLS_BUFFER_get_len(&rl->rbuf)) > 0)) {
+                || (lbitisset && !PACKET_get_net_2(&dtlsrecord, &length))
+                || length == 0) {
                 rr->length = 0;
                 rl->packet_length = 0;
                 goto again;
@@ -665,13 +664,15 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
 
     /*
      * rfc9147:
-     * This procedure requires the ciphertext length to be at least 16 bytes.
+     * This procedure requires the ciphertext length to be at least
+     * DTLS1_3_CIPHERTEXT_MINSIZE (16) bytes.
      * Receivers MUST reject shorter records as if they had failed deprotection
      */
     if (DTLS13_UNI_HDR_FIX_BITS_IS_SET(rr->type)
             && rl->version == DTLS1_3_VERSION
-            && ossl_assert(rl->sn_enc_ctx != NULL)
-            && (!ossl_assert(rl->packet_length >= rechdrlen + 16)
+            && (!ossl_assert(rl->sn_enc_ctx != NULL)
+                || !ossl_assert(rl->packet_length >= rechdrlen
+                                                     + DTLS1_3_CIPHERTEXT_MINSIZE)
                 || !dtls_crypt_sequence_number(rl->sn_enc_ctx,
                                                recseqnum + recseqnumoffs,
                                                recseqnumlen,
@@ -875,8 +876,7 @@ int dtls_prepare_record_header(OSSL_RECORD_LAYER *rl,
         uint8_t unifiedhdrbits = fixedbits | cbit | sbit | lbit | ebits;
 
         if (!WPACKET_put_bytes_u8(thispkt, unifiedhdrbits)
-            || (sbit ? !WPACKET_memcpy(thispkt, rl->sequence + 6, 2)
-                     : !WPACKET_memcpy(thispkt, rl->sequence + 7, 1))
+            || !WPACKET_memcpy(thispkt, rl->sequence + 6, 2)
             || !WPACKET_start_sub_packet_u16(thispkt)
             || (rl->eivlen > 0
                 && !WPACKET_allocate_bytes(thispkt, rl->eivlen, NULL))
