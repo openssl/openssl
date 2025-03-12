@@ -1,6 +1,6 @@
 #! /usr/bin/env perl
 # Author: Min Zhou <zhoumin@loongson.cn>
-# Copyright 2023 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2023-2025 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
