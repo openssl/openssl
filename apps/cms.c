@@ -1010,7 +1010,8 @@ int cms_main(int argc, char **argv)
             if (ri == NULL)
                 goto end;
 
-            pctx = CMS_RecipientInfo_get0_pkey_ctx(ri);
+            if ((pctx = CMS_RecipientInfo_get0_pkey_ctx(ri)) == NULL)
+                goto end;
             if (kparam != NULL) {
                 if (!cms_set_pkey_param(pctx, kparam->param))
                     goto end;
@@ -1136,7 +1137,9 @@ int cms_main(int argc, char **argv)
                 goto end;
             if (kparam != NULL) {
                 EVP_PKEY_CTX *pctx;
-                pctx = CMS_SignerInfo_get0_pkey_ctx(si);
+
+                if ((pctx = CMS_SignerInfo_get0_pkey_ctx(si)) == NULL)
+                    goto end;
                 if (!cms_set_pkey_param(pctx, kparam->param))
                     goto end;
             }
