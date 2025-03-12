@@ -20,11 +20,15 @@ use constant TLS_RECORD_HEADER_LENGTH => 5;
 
 #Record types
 use constant {
-    RT_APPLICATION_DATA => 23,
-    RT_HANDSHAKE => 22,
-    RT_ALERT => 21,
-    RT_CCS => 20,
-    RT_UNKNOWN => 100
+    RT_APPLICATION_DATA   => 23,
+    RT_HANDSHAKE          => 22,
+    RT_ALERT              => 21,
+    RT_CCS                => 20,
+    RT_UNKNOWN            => 100,
+    RT_DTLS_UNIHDR_EPOCH4 => 0x2c,
+    RT_DTLS_UNIHDR_EPOCH1 => 0x2d,
+    RT_DTLS_UNIHDR_EPOCH2 => 0x2e,
+    RT_DTLS_UNIHDR_EPOCH3 => 0x2f,
 };
 
 my %record_type = (
@@ -32,7 +36,11 @@ my %record_type = (
     RT_HANDSHAKE, "HANDSHAKE",
     RT_ALERT, "ALERT",
     RT_CCS, "CCS",
-    RT_UNKNOWN, "UNKNOWN"
+    RT_UNKNOWN, "UNKNOWN",
+    RT_DTLS_UNIHDR_EPOCH4, "DTLS UNIFIED HEADER (EPOCH 4)",
+    RT_DTLS_UNIHDR_EPOCH1, "DTLS UNIFIED HEADER (EPOCH 1)",
+    RT_DTLS_UNIHDR_EPOCH2, "DTLS UNIFIED HEADER (EPOCH 2)",
+    RT_DTLS_UNIHDR_EPOCH3, "DTLS UNIFIED HEADER (EPOCH 3)",
 );
 
 use constant {
@@ -71,14 +79,12 @@ sub get_records
     my $partial = "";
     my @record_list = ();
     my @message_list = ();
-    my $record_hdr_len = $isdtls ? DTLS_RECORD_HEADER_LENGTH
-                                 : TLS_RECORD_HEADER_LENGTH;
 
     my $recnum = 1;
     while (length ($packet) > 0) {
         print " Record $recnum ", $server ? "(server -> client)\n"
                                           : "(client -> server)\n";
-
+        my $record_hdr_len;
         my $content_type;
         my $version;
         my $len;
@@ -86,16 +92,56 @@ sub get_records
         my $seq;
 
         if ($isdtls) {
-            my $seqhi;
-            my $seqmi;
-            my $seqlo;
-            #Get the record header (unpack can't fail if $packet is too short)
-            ($content_type, $version, $epoch,
-                $seqhi, $seqmi, $seqlo, $len) = unpack('Cnnnnnn', $packet);
-            $seq = ($seqhi << 32) | ($seqmi << 16) | $seqlo
+            my $isunifiedhdr;
+
+            $content_type = unpack('B[8]', $packet);
+            $isunifiedhdr = substr($content_type, 0, 3) == "001";
+
+            if ($isunifiedhdr == 1) {
+                my $cbit = substr($content_type, 3, 1);
+                my $sbit = substr($content_type, 4, 1);
+                my $lbit = substr($content_type, 5, 1);
+                my $eebits = substr($content_type, 6, 2);
+
+                if ($cbit == "1" || $lbit == "0") {
+                    die("TLSProxy does not support variable DTLSv1.3 unified header bits");
+                }
+
+                # This is a unified header
+                if ($sbit == "1") {
+                    ($content_type, $seq, $len) = unpack('Cnn', $packet);
+                    $record_hdr_len = 5;
+                } else {
+                    ($content_type, $seq, $len) = unpack('CCn', $packet);
+                    $record_hdr_len = 4;
+                }
+                $version = VERS_DTLS_1_2; # DTLSv1.3 headers has DTLSv1.2 in its legacy_version field
+
+                if ($eebits == "00") {
+                    $epoch = 4; # must be at least 4 since 0 epoch are not sent with unified hdr
+                } elsif ($eebits == "01") {
+                    $epoch = 1;
+                } elsif ($eebits == "10") {
+                    $epoch = 2;
+                } elsif ($eebits == "11") {
+                    $epoch = 3;
+                } else {
+                    die("Epoch bits is not 0's or 1's: should not happen")
+                }
+            } else {
+                my $seqhi;
+                my $seqmi;
+                my $seqlo;
+                #Get the record header (unpack can't fail if $packet is too short)
+                ($content_type, $version, $epoch,
+                    $seqhi, $seqmi, $seqlo, $len) = unpack('Cnnnnnn', $packet);
+                $seq = ($seqhi << 32) | ($seqmi << 16) | $seqlo;
+                $record_hdr_len = DTLS_RECORD_HEADER_LENGTH;
+            }
         } else {
             #Get the record header (unpack can't fail if $packet is too short)
             ($content_type, $version, $len) = unpack('Cnn', $packet);
+            $record_hdr_len = TLS_RECORD_HEADER_LENGTH;
         }
 
         if (length($packet) < $record_hdr_len + ($len // 0)) {
@@ -295,7 +341,7 @@ sub init
         orig_decrypt_data => $decrypt_data,
         sent => 0,
         encrypted => 0,
-        outer_content_type => RT_APPLICATION_DATA
+        outer_content_type => $content_type,
     };
 
     return bless $self, $class;
@@ -397,11 +443,16 @@ sub reconstruct_record
         my $content_type = (TLSProxy::Proxy->is_tls13() && $self->encrypted)
                            ? $self->outer_content_type : $self->content_type;
         if($self->{isdtls}) {
-            my $seqhi = ($self->seq >> 32) & 0xffff;
-            my $seqmi = ($self->seq >> 16) & 0xffff;
-            my $seqlo = ($self->seq >> 0) & 0xffff;
-            $data = pack('Cnnnnnn', $content_type, $self->version,
-                         $self->epoch, $seqhi, $seqmi, $seqlo, $self->len);
+            if (TLSProxy::Proxy->is_tls13() && $self->encrypted) {
+                # Prepare a unified header
+                $data = pack('Cnn', $content_type, $self->seq, $self->len);
+            } else {
+                my $seqhi = ($self->seq >> 32) & 0xffff;
+                my $seqmi = ($self->seq >> 16) & 0xffff;
+                my $seqlo = ($self->seq >> 0) & 0xffff;
+                $data = pack('Cnnnnnn', $content_type, $self->version,
+                    $self->epoch, $seqhi, $seqmi, $seqlo, $self->len);
+            }
         } else {
             $data = pack('Cnn', $content_type, $self->version,
                          $self->len);
