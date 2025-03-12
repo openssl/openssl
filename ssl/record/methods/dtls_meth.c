@@ -538,7 +538,6 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
             epoch = rl->epoch;
             recseqnumlen = sbitisset ? 2 : 1;
             recseqnumoffs = sizeof(recseqnum) - recseqnumlen;
-            length = TLS_BUFFER_get_len(&rl->rbuf) - dtls_get_rec_header_size(rr->type);
 
             if (/* OpenSSL does not support connection IDs: silently discard */
                 cbitisset
@@ -546,14 +545,21 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
                  * Naive approach? We expect sequence number to be filled already
                  * and then override the last bytes of the sequence number.
                  */
-                || !PACKET_copy_bytes(&dtlsrecord, recseqnum + recseqnumoffs, recseqnumlen)
-                /*
-                 * rfc9147:
-                 * The length field MAY be omitted by clearing the L bit, which means
-                 * that the record consumes the entire rest of the datagram in the
-                 * lower level transport
-                 */
-                || (lbitisset && !PACKET_get_net_2(&dtlsrecord, &length))
+                || !PACKET_copy_bytes(&dtlsrecord, recseqnum + recseqnumoffs, recseqnumlen)) {
+                rr->length = 0;
+                rl->packet_length = 0;
+                goto again;
+            }
+
+            /*
+             * rfc9147:
+             * The length field MAY be omitted by clearing the L bit, which means
+             * that the record consumes the entire rest of the datagram in the
+             * lower level transport
+             */
+            length = TLS_BUFFER_get_len(&rl->rbuf) - dtls_get_rec_header_size(rr->type);
+
+            if ((lbitisset && !PACKET_get_net_2(&dtlsrecord, &length))
                 || length == 0) {
                 rr->length = 0;
                 rl->packet_length = 0;
