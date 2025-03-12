@@ -213,7 +213,6 @@ K256:
 .word	0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2
 .size	K256,.-K256
 .word	0				@ terminator
-
 #if __ARM_MAX_ARCH__>=7 && !defined(__KERNEL__)
 # ifdef __APPLE__ 
 .section	__DATA,__nl_symbol_ptr,non_lazy_symbol_pointers @ if its apple then it needs to be in a special section

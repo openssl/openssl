@@ -1231,12 +1231,10 @@ poly1305_emit_neon:
 .align	5
 .Lzeros:
 .long	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-
 # ifdef __APPLE__ 
 .section	__DATA,__nl_symbol_ptr,non_lazy_symbol_pointers @ if its apple then it needs to be in a special section
 .p2align	2
 # endif
-
 .LOPENSSL_armcap:
 # if	defined(_WIN32)
 .word	OPENSSL_armcap_P

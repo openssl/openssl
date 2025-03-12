@@ -137,7 +137,6 @@ bn_mul_mont:
 #if __ARM_MAX_ARCH__>=7
 	tst	ip,#7
 	bne	.Lialu
-
 # ifdef __APPLE__
 	movw r0, :lower16:(.LOPENSSL_armcap-(LPC0_0+4))
 	movt r0, :upper16:(.LOPENSSL_armcap-(LPC0_0+4))

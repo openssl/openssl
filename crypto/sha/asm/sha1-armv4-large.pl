@@ -321,7 +321,6 @@ $code.=<<___;
 .LK_20_39:	.word	0x6ed9eba1
 .LK_40_59:	.word	0x8f1bbcdc
 .LK_60_79:	.word	0xca62c1d6
-
 #if __ARM_MAX_ARCH__>=7
 # ifdef __APPLE__ 
 .section	__DATA,__nl_symbol_ptr,non_lazy_symbol_pointers @ if its apple then it needs to be in a special section
