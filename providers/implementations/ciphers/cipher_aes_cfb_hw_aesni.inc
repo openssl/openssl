@@ -8,7 +8,7 @@
  */
 
 /*-
- * AES-NI and VAES support for AES mode cfb.
+ * AES-NI and VAES support for AES CFB mode.
  * This file is included by cipher_aes_cfb_hw.c
  */
 
@@ -43,7 +43,25 @@ static int aes_cfb128_vaes_encdec_wrapper(
 
     assert(dat->enc == 0 || dat->enc == 1);
 
-    return ossl_cipher_hw_generic_cfb128(dat, out, in, len);
+    int num = dat->num;
+    assert(num < 16);
+    if (num < 0) {
+        // from CRYPTO_cfb128_encrypt
+        dat->num = -1;
+        return 1;
+    }
+
+    if (dat->enc) {
+        aesni_aescfb128_enc(in, out, len, dat->ks, dat->iv, &num);
+    } else {
+        CRYPTO_cfb128_encrypt(in, out, len, dat->ks, dat->iv, &num, dat->enc,
+            dat->block);
+    }
+
+    assert(num < 16);
+    dat->num = num;
+
+    return 1;
 }
 
 // generates AES round keys for AES-NI and VAES implementations
