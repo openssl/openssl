@@ -590,7 +590,7 @@ int ossl_x509v3_cache_extensions(X509 *x)
         x->ex_flags |= EXFLAG_INVALID;
     if (x->skid == NULL && i != -1)
         x->ex_flags |= EXFLAG_INVALID;
-  
+
     x->akid = X509_get_ext_d2i(x, NID_authority_key_identifier, &i, NULL);
     if (x->akid == NULL && i != -1)
         x->ex_flags |= EXFLAG_INVALID;
