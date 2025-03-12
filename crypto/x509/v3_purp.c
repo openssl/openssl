@@ -1101,7 +1101,7 @@ uint32_t X509_get_extended_key_usage(X509 *x)
 }
 
 const ASN1_OCTET_STRING *X509_get0_subject_key_id(X509 *x)
-{   
+{
     /* Call for side-effect of computing hash and caching extensions */
     if (X509_check_purpose(x, -1, 0) != 1)
         return NULL;
