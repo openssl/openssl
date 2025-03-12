@@ -276,7 +276,9 @@ sub files {
 
 # Print error message, set $status.
 sub err {
-    print join(" ", @_), "\n";
+    my $t = join(" ", @_);
+    $t =~ s/\n//g;
+    print $t, "\n";
     $status = 1
 }
 
@@ -560,8 +562,10 @@ sub option_check {
     my $id = shift;
     my $filename = shift;
     my $contents = shift;
+    my $nodups = 1;
 
     my $synopsis = ($contents =~ /=head1\s+SYNOPSIS(.*?)=head1/s, $1);
+    $nodups = 0 if $synopsis =~ /=for\s+openssl\s+duplicate\s+options/s;
 
     # Some pages have more than one OPTIONS section, let's make sure
     # to get them all
@@ -577,19 +581,26 @@ sub option_check {
     }
 
     my @synopsis;
+    my %listed;
     while ( $synopsis =~ /$markup_re/msg ) {
         my $found = $&;
         push @synopsis, $found if $found =~ /^B<-/;
         print STDERR "$id:DEBUG[option_check] SYNOPSIS: found $found\n"
             if $debug;
         my $option_uw = normalise_option($id, $filename, $found);
-        err($id, "Malformed option [2] in SYNOPSIS: $found")
-            if defined $option_uw && $option_uw eq '';
+        if ( defined $option_uw ) {
+            err($id, "Malformed option [2] in SYNOPSIS: $found")
+                if $option_uw eq '';
+            err($id, "Duplicate option in SYNOPSIS $option_uw\n")
+                if $nodups && defined $listed{$option_uw};
+            $listed{$option_uw} = 1;
+        }
     }
 
     # In OPTIONS, we look for =item paragraphs.
     # (?=^\s*$) detects an empty line.
     my @options;
+    my %described;
     while ( $options =~ /=item\s+(.*?)(?=^\s*$)/msg ) {
         my $item = $&;
 
@@ -601,8 +612,13 @@ sub option_check {
                 if ($1 // '') ne '' && $found =~ /^B<\s*-/;
 
             my $option_uw = normalise_option($id, $filename, $found);
-            err($id, "Malformed option in OPTIONS: $found")
-                if defined $option_uw && $option_uw eq '';
+            if ( defined $option_uw ) {
+                err($id, "Malformed option in OPTIONS: $found")
+                    if $option_uw eq '';
+                err($id, "Duplicate option in OPTIONS $option_uw\n")
+                    if $nodups && defined $described{$option_uw};
+                $described{$option_uw} = 1;
+            }
             if ($found =~ /^B<-/) {
                 push @options, $found;
                 err($id, "OPTIONS entry $found missing from SYNOPSIS")
