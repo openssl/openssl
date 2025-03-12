@@ -585,15 +585,11 @@ int ossl_x509v3_cache_extensions(X509 *x)
     }
 
     /* Handle subject key identifier and issuer/authority key identifier */
-  
-	
-
     x->skid = X509_get_ext_d2i(x, NID_subject_key_identifier, &i, NULL);
-
-    if (x->skid == NULL || ASN1_STRING_length(x->skid) == 0) {
-    	ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_EXTENSION_STRING);
-    	x->ex_flags |= EXFLAG_INVALID;
-    }
+    if (ASN1_STRING_length(x->skid) == 0) /* Reject "Subject Key Identifier" extension with an empty value */
+        x->ex_flags |= EXFLAG_INVALID;
+    if (x->skid == NULL && i != -1)
+        x->ex_flags |= EXFLAG_INVALID;
     x->akid = X509_get_ext_d2i(x, NID_authority_key_identifier, &i, NULL);
     if (x->akid == NULL && i != -1)
         x->ex_flags |= EXFLAG_INVALID;
@@ -1107,7 +1103,6 @@ uint32_t X509_get_extended_key_usage(X509 *x)
 const ASN1_OCTET_STRING *X509_get0_subject_key_id(X509 *x)
 {   
     /* Call for side-effect of computing hash and caching extensions */
-   
     if (X509_check_purpose(x, -1, 0) != 1)
         return NULL;
     return x->skid;
