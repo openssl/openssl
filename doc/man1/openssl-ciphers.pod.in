@@ -17,7 +17,6 @@ B<openssl> B<ciphers>
 [B<-tls1_1>]
 [B<-tls1_2>]
 [B<-tls1_3>]
-[B<-s>]
 [B<-psk>]
 [B<-srp>]
 [B<-stdname>]
