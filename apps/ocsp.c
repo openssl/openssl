@@ -1049,6 +1049,10 @@ static void make_ocsp_response(BIO *err, OCSP_RESPONSE **resp, OCSP_REQUEST *req
     }
 
     bs = OCSP_BASICRESP_new();
+    if (bs == NULL) {
+        *resp = OCSP_response_create(OCSP_RESPONSE_STATUS_INTERNALERROR, bs);
+        goto end;
+    }
     thisupd = X509_gmtime_adj(NULL, 0);
     if (ndays != -1)
         nextupd = X509_time_adj_ex(NULL, ndays, nmin * 60, NULL);
