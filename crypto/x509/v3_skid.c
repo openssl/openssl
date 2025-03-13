@@ -91,6 +91,7 @@ ASN1_OCTET_STRING *ossl_x509_pubkey_hash(X509_PUBKEY *pubkey)
 static ASN1_OCTET_STRING *s2i_skey_id(X509V3_EXT_METHOD *method,
                                       X509V3_CTX *ctx, char *str)
 {
+    ASN1_OCTET_STRING *skid = NULL;
     if (strcmp(str, "none") == 0)
         return ASN1_OCTET_STRING_new(); /* dummy */
 
@@ -104,6 +105,11 @@ static ASN1_OCTET_STRING *s2i_skey_id(X509V3_EXT_METHOD *method,
         ERR_raise(ERR_LIB_X509V3, X509V3_R_NO_SUBJECT_DETAILS);
         return NULL;
     }
+
+   skid = ossl_x509_pubkey_hash(ctx->subject_cert != NULL ?
+                                 ctx->subject_cert->cert_info.key :
+                                 ctx->subject_req->req_info.pubkey);
+
    if (skid == NULL || skid->length == 0) {
         ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_KEY_IDENTIFIER);
         ASN1_OCTET_STRING_free(skid);
