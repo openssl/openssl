@@ -10573,6 +10573,7 @@ static DH *tmp_dh_callback(SSL *s, int is_export, int keylen)
  */
 static int test_set_tmp_dh(int idx)
 {
+    OSSL_PROVIDER *tlsprov = OSSL_PROVIDER_load(libctx, "tls-provider");
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
     int testresult = 0;
@@ -10586,6 +10587,9 @@ static int test_set_tmp_dh(int idx)
     if (idx >= 7)
         return 1;
 #  endif
+
+    if (!TEST_ptr(tlsprov))
+        goto end;
 
     if (idx >= 5 && idx <= 8) {
         dhpkey = get_tmp_dh_params();
@@ -10650,7 +10654,9 @@ static int test_set_tmp_dh(int idx)
 
     if (!TEST_true(SSL_set_min_proto_version(serverssl, TLS1_2_VERSION))
             || !TEST_true(SSL_set_max_proto_version(serverssl, TLS1_2_VERSION))
-            || !TEST_true(SSL_set_cipher_list(serverssl, "DHE-RSA-AES128-SHA")))
+            || !TEST_true(SSL_set_cipher_list(serverssl, "DHE-RSA-AES128-SHA"))
+            /* Make sure RFC 7919 isn't used in this test. */
+            || !TEST_true(SSL_set1_groups_list(serverssl, "xorgroup")))
         goto end;
 
     /*
@@ -10672,6 +10678,7 @@ static int test_set_tmp_dh(int idx)
     SSL_CTX_free(sctx);
     SSL_CTX_free(cctx);
     EVP_PKEY_free(dhpkey);
+    OSSL_PROVIDER_unload(tlsprov);
 
     return testresult;
 }
@@ -10681,6 +10688,7 @@ static int test_set_tmp_dh(int idx)
  */
 static int test_dh_auto(int idx)
 {
+    OSSL_PROVIDER *tlsprov = OSSL_PROVIDER_load(libctx, "tls-provider");
     SSL_CTX *cctx = SSL_CTX_new_ex(libctx, NULL, TLS_client_method());
     SSL_CTX *sctx = SSL_CTX_new_ex(libctx, NULL, TLS_server_method());
     SSL *clientssl = NULL, *serverssl = NULL;
@@ -10691,6 +10699,9 @@ static int test_dh_auto(int idx)
     const char *ciphersuite = "DHE-RSA-AES128-SHA";
 
     if (!TEST_ptr(sctx) || !TEST_ptr(cctx))
+        goto end;
+
+    if (!TEST_ptr(tlsprov))
         goto end;
 
     switch (idx) {
@@ -10761,6 +10772,8 @@ static int test_dh_auto(int idx)
             || !TEST_true(SSL_set_min_proto_version(serverssl, TLS1_2_VERSION))
             || !TEST_true(SSL_set_max_proto_version(serverssl, TLS1_2_VERSION))
             || !TEST_true(SSL_set_cipher_list(serverssl, ciphersuite))
+            /* Make sure RFC 7919 isn't used in this test. */
+            || !TEST_true(SSL_set1_groups_list(serverssl, "xorgroup"))
             || !TEST_true(SSL_set_cipher_list(clientssl, ciphersuite)))
         goto end;
 
@@ -10789,9 +10802,9 @@ static int test_dh_auto(int idx)
     SSL_CTX_free(sctx);
     SSL_CTX_free(cctx);
     EVP_PKEY_free(tmpkey);
+    OSSL_PROVIDER_unload(tlsprov);
 
     return testresult;
-
 }
 # endif /* OPENSSL_NO_DH */
 #endif /* OPENSSL_NO_TLS1_2 */
