@@ -131,7 +131,7 @@ void ossl_quic_port_free(QUIC_PORT *port)
 static int port_init(QUIC_PORT *port)
 {
     size_t rx_short_dcid_len = (port->is_multi_conn ? INIT_DCID_LEN : 0);
-    int key_len;
+    int key_len = -1;
     EVP_CIPHER *cipher = NULL;
     unsigned char *token_key = NULL;
     int ret = 0;
@@ -181,7 +181,10 @@ static int port_init(QUIC_PORT *port)
     ret = 1;
 err:
     EVP_CIPHER_free(cipher);
-    OPENSSL_clear_free(token_key, key_len);
+    if (key_len >= 1)
+        OPENSSL_clear_free(token_key, key_len);
+    else
+        OPENSSL_free(token_key);
     if (!ret)
         port_cleanup(port);
     return ret;
