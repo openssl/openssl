@@ -272,8 +272,8 @@ static int provider_conf_activate(OSSL_LIB_CTX *libctx, const char *name,
     return ok;
 }
 
-static int provider_conf_parse_bool_setting(const char *confname,
-                                            const char *confvalue, int *val)
+int provider_conf_parse_bool_setting(const char *confname,
+                                     const char *confvalue, int *val)
 {
 
     if (confvalue == NULL) {
