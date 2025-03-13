@@ -28,13 +28,15 @@ typedef unsigned long (*OPENSSL_version_minor_t)(void);
 typedef unsigned long (*OPENSSL_version_patch_t)(void);
 typedef DSO * (*DSO_dsobyaddr_t)(void (*addr)(void), int flags);
 typedef int (*DSO_free_t)(DSO *dso);
+typedef int (*do_test_create_ssl_ctx_t)(void);
 
 typedef enum test_types_en {
     CRYPTO_FIRST,
     SSL_FIRST,
     JUST_CRYPTO,
     DSO_REFTEST,
-    NO_ATEXIT
+    NO_ATEXIT,
+    APACHE_LIKE
 } TEST_TYPE;
 
 static TEST_TYPE test_type;
@@ -56,6 +58,91 @@ static void atexit_handler(void)
     fprintf(atexit_file, "atexit() run\n");
     fclose(atexit_file);
     atexit_handler_done++;
+}
+
+#ifdef _WIN32
+# define MODULE_NAME	"mod_shlibtest.dll"
+#elif _MACOS
+# define MODULE_NAME	"mod_shlibtest.dyn
+#else
+# define MODULE_NAME	"mod_shlibtest.so"
+#endif
+
+static int test_apache_like(void)
+{
+    SD testlib = SD_INIT;
+    int ok = 0;
+    int i;
+    char *mod_dir = getenv("MODULES_PATH");
+    char *mod_path = NULL;
+    union {
+        void (*func)(void);
+        SD_SYM sym;
+    } symbols[1];
+    do_test_create_ssl_ctx_t my_do_test_create_ssl_ctx;
+
+    if (mod_dir == NULL) {
+        fprintf(stderr, "MODULES_PATH not set\n");
+        goto end;
+    }
+
+    mod_path = malloc(strlen(mod_dir) + 1 + sizeof(MODULE_NAME));
+    if (mod_path == NULL) {
+        fprintf(stderr, "no memery\n");
+        goto end;
+    }
+#if _WIN32
+    sprintf(mod_path, "%s\\%s", mod_dir, MODULE_NAME);
+#else
+    sprintf(mod_path, "%s/%s", mod_dir, MODULE_NAME);
+#endif
+    for (i = 0; i < 1000000; i++) {
+        if (!sd_load(mod_path, &testlib, SD_SHLIB)) {
+            fprintf(stderr, "Failed to load %s\n", mod_path);
+            goto end;
+        }
+
+        if (!sd_sym(testlib, "do_test_create_ssl_ctx", &symbols[0].sym)) {
+            fprintf(stderr, "Failed to resolve do_test_just_init\n");
+            goto end;
+        }
+        my_do_test_create_ssl_ctx = (do_test_create_ssl_ctx_t)symbols[0].func;
+        if (!my_do_test_create_ssl_ctx()) {
+            fprintf(stderr, "call to do_test_just_init() failed\n");
+            goto end;
+        }
+
+        if (!sd_close(testlib)) {
+            fprintf(stderr, "Failed to close %s\n", mod_path);
+            goto end;
+        }
+        testlib = SD_INIT;
+
+        if (!sd_load(mod_path, &testlib, SD_SHLIB)) {
+            fprintf(stderr, "Failed to reload %s\n", mod_path);
+            goto end;
+        }
+
+        if (!sd_sym(testlib, "do_test_create_ssl_ctx", &symbols[0].sym)) {
+            fprintf(stderr, "Failed to resolve do_test_create_ssl_ctx symbol\n");
+            goto end;
+        }
+        my_do_test_create_ssl_ctx = (do_test_create_ssl_ctx_t)symbols[0].func;
+        if (!my_do_test_create_ssl_ctx()) {
+            fprintf(stderr, "call to do_test_create_ssl_ctx() failed\n");
+            goto end;
+        }
+
+        if (!sd_close(testlib)) {
+            fprintf(stderr, "Failed to close libssl after ctx\n");
+            goto end;
+        }
+    }
+
+    ok = 1;
+end:
+    free(mod_path);
+    return ok;
 }
 
 static int test_lib(void)
@@ -102,6 +189,8 @@ static int test_lib(void)
             goto end;
         }
         break;
+    case APACHE_LIKE:
+        return test_apache_like();
     }
 
     if (test_type == NO_ATEXIT) {
@@ -272,6 +361,8 @@ int main(int argc, char *argv[])
         test_type = DSO_REFTEST;
     } else if (strcmp(p, "-no_atexit") == 0) {
         test_type = NO_ATEXIT;
+    } else if (strcmp(p, "-apache_like") == 0) {
+        test_type = APACHE_LIKE;
     } else {
         fprintf(stderr, "Unrecognised argument\n");
         return 1;
