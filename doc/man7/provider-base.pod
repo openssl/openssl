@@ -977,6 +977,12 @@ L<provider(7)>
 The concept of providers and everything surrounding them was
 introduced in OpenSSL 3.0.
 
+Definitions for
+B<OSSL_CAPABILITY_TLS_SIGALG_MIN_DTLS>
+and
+B<OSSL_CAPABILITY_TLS_SIGALG_MAX_DTLS>
+were added in OpenSSL 3.5.
+
 =head1 COPYRIGHT
 
 Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
