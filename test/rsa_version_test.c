@@ -88,12 +88,10 @@ static int test_invalid_rsa_version(void)
 
     pkey = PEM_read_bio_PrivateKey(bio, NULL, NULL, NULL);
     if (!TEST_ptr_null(pkey)) {
-        TEST_info("RSA key with invalid version 17 was incorrectly accepted");
         goto end;
     }
 
     if (!TEST_true(ERR_peek_error() != 0)) {
-        TEST_info("No error was raised");
         goto end;
     }
 
@@ -116,12 +114,10 @@ static int test_valid_rsa_version(void)
 
     pkey = PEM_read_bio_PrivateKey(bio, NULL, NULL, NULL);
     if (!TEST_ptr(pkey)) {
-        TEST_info("Valid RSA key was incorrectly rejected");
         goto end;
     }
 
     if (!TEST_true(EVP_PKEY_is_a(pkey, "RSA"))) {
-        TEST_info("Key is not recognized as RSA");
         goto end;
     }
 
