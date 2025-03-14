@@ -231,6 +231,26 @@ static int cmd_Curves(SSL_CONF_CTX *cctx, const char *value)
     return cmd_Groups(cctx, value);
 }
 
+static int cmd_ECPointFormats(SSL_CONF_CTX *cctx, const char *value)
+{
+    int rv;
+    long len;
+    unsigned char *formats = NULL;
+
+    formats = OPENSSL_hexstr2buf(value, &len);
+    if (formats == NULL)
+        return 0;
+
+    if (cctx->ssl)
+        rv = SSL_set1_ec_point_formats(cctx->ssl, formats, len);
+    /* NB: ctx == NULL performs syntax checking only */
+    else
+        rv = SSL_CTX_set1_ec_point_formats(cctx->ctx, formats, len);
+
+    OPENSSL_free(formats);
+    return rv > 0;
+}
+
 /* ECDH temporary parameters */
 static int cmd_ECDHParameters(SSL_CONF_CTX *cctx, const char *value)
 {
@@ -775,6 +795,7 @@ static const ssl_conf_cmd_tbl ssl_conf_cmds[] = {
     SSL_CONF_CMD_STRING(ClientSignatureAlgorithms, "client_sigalgs", 0),
     SSL_CONF_CMD_STRING(Curves, "curves", 0),
     SSL_CONF_CMD_STRING(Groups, "groups", 0),
+    SSL_CONF_CMD_STRING(ECPointFormats, "ec_point_formats", 0),
     SSL_CONF_CMD_STRING(ECDHParameters, "named_curve", SSL_CONF_FLAG_SERVER),
     SSL_CONF_CMD_STRING(CipherString, "cipher", 0),
     SSL_CONF_CMD_STRING(Ciphersuites, "ciphersuites", 0),
