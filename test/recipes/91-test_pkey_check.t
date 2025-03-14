@@ -64,11 +64,19 @@ push(@negative_tests, (
     "sm2_bad_1.pem", # `k` set to `n+1` (equivalent to `1 mod n`, invalid)
     )) unless disabled("sm2");
 
+push(@negative_tests, (
+    "version_17_bad_1.pem"
+    )) unless disabled("rsa");
+
 my @positive_tests = ();
 
 push(@positive_tests, (
     "dhpkey.pem"
     )) unless disabled("dh");
+
+push(@positive_tests, (
+    "version_1_valid_0.pem"
+    )) unless disabled("rsa");
 
 my @negative_pubtests = ("rsapub_17k.pem");  # Too big RSA public key
 
