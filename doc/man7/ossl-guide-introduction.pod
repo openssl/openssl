@@ -32,7 +32,7 @@ attempting to build OpenSSL from the source code.
 
 Some third parties also supply OpenSSL binaries (e.g. for Windows and some other
 platforms). The OpenSSL project maintains a list of these third parties at
-L<https://wiki.openssl.org/index.php/Binaries>.
+L<https://github.com/openssl/openssl/wiki/Binaries>.
 
 If you build and install OpenSSL from the source code then you should download
 the appropriate files for the version that you want to use from the link given
