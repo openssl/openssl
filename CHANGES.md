@@ -30,7 +30,10 @@ OpenSSL 3.5
 
 ### Changes between 3.5 and 3.6 [xx XXX xxxx]
 
- * none yet
+ * Change default EC point formats configuration to support only uncompressed
+   format, to align with modern TLS standards and other implementations.
+
+   *Tim Perry*
 
 ### Changes between 3.4 and 3.5 [xx XXX xxxx]
 
