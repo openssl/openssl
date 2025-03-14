@@ -462,7 +462,7 @@ This points to a string that is a build information associated with this provide
 OpenSSL in-built providers use OPENSSL_FULL_VERSION_STR, but this may be
 different for any third party provider.
 
-=item "status" (B<OSSL_PROV_PARAM_STATUS>) <unsigned integer>
+=item "status" (B<OSSL_PROV_PARAM_STATUS>) <signed integer>
 
 This returns 0 if the provider has entered an error state, otherwise it returns
 1.
