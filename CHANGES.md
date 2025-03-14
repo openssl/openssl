@@ -37,7 +37,7 @@ OpenSSL 3.6
 
    *Frederik Wedel-Heinen*
 
- * Add SSL_CTX_set_ec_point_formats() and SSL_set_ec_point_formats() to allow
+ * Add SSL_CTX_set1_ec_point_formats() and SSL_set1_ec_point_formats() to allow
    configuration of the EC point formats offered in TLS client hellos.
 
    *Tim Perry*

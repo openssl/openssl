@@ -3475,8 +3475,8 @@ char *SSL_get_shared_ciphers(const SSL *s, char *buf, int size)
 }
 
 /** Specify the EC point formats to be used by default by the SSL_CTX */
-__owur int SSL_CTX_set_ec_point_formats(SSL_CTX *ctx, const unsigned char *formats,
-                                        size_t formats_len)
+__owur int SSL_CTX_set1_ec_point_formats(SSL_CTX *ctx, const unsigned char *formats,
+                                         size_t formats_len)
 {
     unsigned char *ecpointformats;
     size_t i;
@@ -3487,8 +3487,12 @@ __owur int SSL_CTX_set_ec_point_formats(SSL_CTX *ctx, const unsigned char *forma
     /* Check all formats are within our recognized values: */
     for (i = 0; i < formats_len; i++) {
         if (formats[i] < TLSEXT_ECPOINTFORMAT_first ||
-            formats[i] > TLSEXT_ECPOINTFORMAT_last)
+            formats[i] > TLSEXT_ECPOINTFORMAT_last) {
+            ERR_raise_data(ERR_LIB_SSL, SSL_R_TLS_INVALID_ECPOINTFORMAT_LIST,
+                           "Unknown EC point format %d",
+                           formats[i]);
             return 0;
+        }
     }
 
     ecpointformats = OPENSSL_memdup(formats, formats_len);
@@ -3504,8 +3508,8 @@ __owur int SSL_CTX_set_ec_point_formats(SSL_CTX *ctx, const unsigned char *forma
 }
 
 /** Specify the EC point formats to be used by the SSL */
-__owur int SSL_set_ec_point_formats(SSL *ssl, const unsigned char *formats,
-                                    size_t formats_len)
+__owur int SSL_set1_ec_point_formats(SSL *ssl, const unsigned char *formats,
+                                     size_t formats_len)
 {
     unsigned char *ecpointformats;
     size_t i;
@@ -3520,8 +3524,12 @@ __owur int SSL_set_ec_point_formats(SSL *ssl, const unsigned char *formats,
     /* Check all formats are within our recognized values: */
     for (i = 0; i < formats_len; i++) {
         if (formats[i] < TLSEXT_ECPOINTFORMAT_first ||
-            formats[i] > TLSEXT_ECPOINTFORMAT_last)
+            formats[i] > TLSEXT_ECPOINTFORMAT_last) {
+            ERR_raise_data(ERR_LIB_SSL, SSL_R_TLS_INVALID_ECPOINTFORMAT_LIST,
+                           "Unknown EC point format %d",
+                           formats[i]);
             return 0;
+        }
     }
 
     ecpointformats = OPENSSL_memdup(formats, formats_len);
