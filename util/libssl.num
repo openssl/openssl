@@ -606,5 +606,5 @@ SSL_CTX_set_domain_flags                ?	3_5_0	EXIST::FUNCTION:
 SSL_CTX_get_domain_flags                ?	3_5_0	EXIST::FUNCTION:
 SSL_get_domain_flags                    ?	3_5_0	EXIST::FUNCTION:
 SSL_CTX_set_new_pending_conn_cb         ?	3_5_0	EXIST::FUNCTION:
-SSL_CTX_set_ec_point_formats            ?	3_5_0	EXIST::FUNCTION:
-SSL_set_ec_point_formats                ?	3_5_0	EXIST::FUNCTION:
+SSL_CTX_set1_ec_point_formats           ?	3_6_0	EXIST::FUNCTION:
+SSL_set1_ec_point_formats               ?	3_6_0	EXIST::FUNCTION:

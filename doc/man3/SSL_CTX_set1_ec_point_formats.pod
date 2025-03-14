@@ -2,22 +2,22 @@
 
 =head1 NAME
 
-SSL_CTX_set_ec_point_formats,
-SSL_set_ec_point_formats
+SSL_CTX_set1_ec_point_formats,
+SSL_set1_ec_point_formats
 - configure the available EC point formats
 
 =head1 SYNOPSIS
 
  #include <openssl/ssl.h>
 
- int SSL_CTX_set_ec_point_formats(SSL_CTX *ctx, const unsigned char *formats,
-                                  unsigned int formats_len);
- int SSL_set_ec_point_formats(SSL *ssl, const unsigned char *formats,
-                              unsigned int formats_len);
+ int SSL_CTX_set1_ec_point_formats(SSL_CTX *ctx, const unsigned char *formats,
+                                   size_t formats_len);
+ int SSL_set1_ec_point_formats(SSL *ssl, const unsigned char *formats,
+                               size_t formats_len);
 
 =head1 DESCRIPTION
 
-SSL_CTX_set_ec_point_formats() and SSL_set_ec_point_formats() are used by the
+SSL_CTX_set1_ec_point_formats() and SSL_set1_ec_point_formats() are used by the
 client to set the list of EC point formats offered in TLS handshakes. The
 B<formats> must be a simple array of EC point format identifiers from RFC4492.
 The length of B<formats> is specified in B<formats_len>.
@@ -31,12 +31,12 @@ recognized by OpenSSL, which currently includes:
 
 =head1 RETURN VALUES
 
-SSL_CTX_set_ec_point_formats() and SSL_set_ec_point_formats() return 1 if
+SSL_CTX_set1_ec_point_formats() and SSL_set1_ec_point_formats() return 1 if
 the EC point formats were successfully configured, or 0 if an error occurred.
 
 =head1 HISTORY
 
-SSL_CTX_set_ec_point_formats() and SSL_set_ec_point_formats() are new in 3.5.0.
+SSL_CTX_set1_ec_point_formats() and SSL_set1_ec_point_formats() are new in 3.6.0.
 
 =head1 COPYRIGHT
 

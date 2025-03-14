@@ -10995,6 +10995,10 @@ end:
     return testresult;
 }
 
+#ifndef OPENSSL_NO_EC
+/*
+ * Test that the set1_ec_point_formats methods work correctly in isolation.
+ */
 static int test_ec_point_formats(void)
 {
     SSL_CTX *ctx = NULL;
@@ -11012,33 +11016,33 @@ static int test_ec_point_formats(void)
         goto end;
 
     /* Test setting valid formats: */
-    if (!TEST_true(SSL_CTX_set_ec_point_formats(ctx, valid_formats, sizeof(valid_formats))))
+    if (!TEST_true(SSL_CTX_set1_ec_point_formats(ctx, valid_formats, sizeof(valid_formats))))
         goto end;
 
     ssl = SSL_new(ctx);
     if (!TEST_ptr(ssl))
         goto end;
 
-    if (!TEST_true(SSL_set_ec_point_formats(ssl, valid_formats, sizeof(valid_formats))))
+    if (!TEST_true(SSL_set1_ec_point_formats(ssl, valid_formats, sizeof(valid_formats))))
         goto end;
 
     /* Test setting invalid & empty formats: */
-    if (!TEST_false(SSL_CTX_set_ec_point_formats(ctx, invalid_format, sizeof(invalid_format))))
+    if (!TEST_false(SSL_CTX_set1_ec_point_formats(ctx, invalid_format, sizeof(invalid_format))))
         goto end;
 
-    if (!TEST_false(SSL_set_ec_point_formats(ssl, invalid_format, sizeof(invalid_format))))
+    if (!TEST_false(SSL_set1_ec_point_formats(ssl, invalid_format, sizeof(invalid_format))))
         goto end;
 
-    if (!TEST_false(SSL_CTX_set_ec_point_formats(ctx, NULL, 0)))
+    if (!TEST_false(SSL_CTX_set1_ec_point_formats(ctx, NULL, 0)))
         goto end;
 
-    if (!TEST_false(SSL_set_ec_point_formats(ssl, NULL, 0)))
+    if (!TEST_false(SSL_set1_ec_point_formats(ssl, NULL, 0)))
         goto end;
 
-    if (!TEST_false(SSL_CTX_set_ec_point_formats(ctx, valid_formats, 0)))
+    if (!TEST_false(SSL_CTX_set1_ec_point_formats(ctx, valid_formats, 0)))
         goto end;
 
-    if (!TEST_false(SSL_set_ec_point_formats(ssl, valid_formats, 0)))
+    if (!TEST_false(SSL_set1_ec_point_formats(ssl, valid_formats, 0)))
         goto end;
 
     testresult = 1;
@@ -11048,6 +11052,55 @@ end:
     SSL_CTX_free(ctx);
     return testresult;
 }
+
+# ifndef OPENSSL_NO_TLS1_2
+/*
+ * Complete a connection with a custom EC point format configuration
+ */
+static int test_ec_point_formats_connection(void)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    const char *pformats = NULL;
+    int nformats;
+    int testresult = 0;
+    unsigned char uncompressed_only[] = {
+        TLSEXT_ECPOINTFORMAT_uncompressed
+    };
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(), TLS_client_method(),
+                                       TLS1_2_VERSION, TLS1_2_VERSION, &sctx, &cctx, cert,
+                                       privkey)))
+        goto end;
+
+    if (!TEST_true(SSL_CTX_set1_ec_point_formats(cctx, uncompressed_only,
+                                                 sizeof(uncompressed_only))))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl, NULL, NULL)))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    /* Check server received exactly one format: uncompressed */
+    nformats = SSL_get0_ec_point_formats(serverssl, &pformats);
+    if (!TEST_int_eq(nformats, 1))
+        goto end;
+    if (!TEST_int_eq(*pformats, TLSEXT_ECPOINTFORMAT_uncompressed))
+        goto end;
+
+    testresult = 1;
+
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+# endif
+#endif
 
 /*
  * Test SSL_CTX_set1_verify/chain_cert_store and SSL_CTX_get_verify/chain_cert_store.
@@ -13395,7 +13448,12 @@ int setup_tests(void)
 #endif
     ADD_TEST(test_inherit_verify_param);
     ADD_TEST(test_set_alpn);
+#ifndef OPENSSL_NO_EC
     ADD_TEST(test_ec_point_formats);
+# ifndef OPENSSL_NO_TLS1_2
+    ADD_TEST(test_ec_point_formats_connection);
+# endif
+#endif
     ADD_TEST(test_set_verify_cert_store_ssl_ctx);
     ADD_TEST(test_set_verify_cert_store_ssl);
     ADD_ALL_TESTS(test_session_timeout, 1);
