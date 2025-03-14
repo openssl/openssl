@@ -57,8 +57,10 @@ OpenSSL 3.6
 
    *Adrian Stanciu*
 
- * Add SSL_CTX_set1_ec_point_formats() and SSL_set1_ec_point_formats() to allow
-   configuration of the EC point formats offered in TLS client hellos.
+ * Change default EC point formats configuration to support only 'uncompressed'
+   format, and add SSL_CTX_set1_ec_point_formats() and SSL_set1_ec_point_formats()
+   methods and corresponding ECPointFormats configuration option, to allow custom
+   configuration of the EC point formats.
 
    *Tim Perry*
 
