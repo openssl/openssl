@@ -4531,7 +4531,7 @@ OpenSSL 1.1.1
  * Support for TLSv1.3 added. Note that users upgrading from an earlier
    version of OpenSSL should review their configuration settings to ensure
    that they are still appropriate for TLSv1.3. For further information see:
-   <https://wiki.openssl.org/index.php/TLS1.3>
+   <https://github.com/openssl/openssl/wiki/TLS1.3>
 
    *Matt Caswell*
 
@@ -5819,7 +5819,7 @@ OpenSSL 1.1.0
 
  * The GOST engine was out of date and therefore it has been removed. An up
    to date GOST engine is now being maintained in an external repository.
-   See: <https://wiki.openssl.org/index.php/Binaries>. Libssl still retains
+   See: <https://github.com/openssl/openssl/wiki/Binaries>. Libssl still retains
    support for GOST ciphersuites (these are only activated if a GOST engine
    is present).
 
