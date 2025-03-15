@@ -30,6 +30,7 @@ struct stack_st {
     int sorted;
     int num_alloc;
     OPENSSL_sk_compfunc comp;
+    OPENSSL_sk_freefunc_thunk free_thunk;
 };
 
 OPENSSL_sk_compfunc OPENSSL_sk_set_cmp_func(OPENSSL_STACK *sk,
@@ -255,6 +256,14 @@ int OPENSSL_sk_reserve(OPENSSL_STACK *st, int n)
     return sk_reserve(st, n, 1);
 }
 
+OPENSSL_STACK *OPENSSL_sk_set_thunks(OPENSSL_STACK *st, OPENSSL_sk_freefunc_thunk f_thunk)
+{
+    if (st != NULL)
+        st->free_thunk = f_thunk;
+
+    return st;
+}
+
 int OPENSSL_sk_insert(OPENSSL_STACK *st, const void *data, int loc)
 {
     if (st == NULL) {
@@ -434,9 +443,15 @@ void OPENSSL_sk_pop_free(OPENSSL_STACK *st, OPENSSL_sk_freefunc func)
 
     if (st == NULL)
         return;
-    for (i = 0; i < st->num; i++)
-        if (st->data[i] != NULL)
-            func((char *)st->data[i]);
+
+    for (i = 0; i < st->num; i++) {
+        if (st->data[i] != NULL) {
+            if (st->free_thunk != NULL)
+                st->free_thunk(func, (void *)st->data[i]);
+            else
+                func((void *)st->data[i]);
+        }
+    }
     OPENSSL_sk_free(st);
 }
 
