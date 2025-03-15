@@ -11,6 +11,8 @@
 #include <openssl/crypto.h>
 #include "crypto/modes.h"
 
+#include <assert.h>
+
 #if defined(__GNUC__) && !defined(STRICT_ALIGNMENT)
 typedef size_t size_t_aX __attribute((__aligned__(1)));
 #else
@@ -52,6 +54,7 @@ void CRYPTO_cfb128_encrypt(const unsigned char *in, unsigned char *out,
                     break;
 # endif
                 while (len >= 16) {
+                    assert(n == 0);
                     (*block) (ivec, ivec, key);
                     for (; n < 16; n += sizeof(size_t)) {
                         *(size_t_aX *)(out + n) =
@@ -64,6 +67,7 @@ void CRYPTO_cfb128_encrypt(const unsigned char *in, unsigned char *out,
                     n = 0;
                 }
                 if (len) {
+                    assert(n == 0);
                     (*block) (ivec, ivec, key);
                     while (len--) {
                         out[n] = ivec[n] ^= in[n];
@@ -102,6 +106,7 @@ void CRYPTO_cfb128_encrypt(const unsigned char *in, unsigned char *out,
                     break;
 # endif
                 while (len >= 16) {
+                    assert(n == 0);
                     (*block) (ivec, ivec, key);
                     for (; n < 16; n += sizeof(size_t)) {
                         size_t t = *(size_t_aX *)(in + n);
@@ -115,6 +120,7 @@ void CRYPTO_cfb128_encrypt(const unsigned char *in, unsigned char *out,
                     n = 0;
                 }
                 if (len) {
+                    assert(n == 0);
                     (*block) (ivec, ivec, key);
                     while (len--) {
                         unsigned char c;
