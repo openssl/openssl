@@ -203,23 +203,6 @@ our @tests = (
         },
     },
     {
-        name => "ECDSA Signature Algorithm Selection compressed point",
-        server => {
-            "ECDSA.Certificate" => test_pem("server-cecdsa-cert.pem"),
-            "ECDSA.PrivateKey" => test_pem("server-cecdsa-key.pem"),
-            "MaxProtocol" => "TLSv1.2"
-        },
-        client => {
-            "SignatureAlgorithms" => randcase("ECDSA+SHA256"),
-        },
-        test   => {
-            "ExpectedServerCertType" => "P-256",
-            "ExpectedServerSignHash" => "SHA256",
-            "ExpectedServerSignType" => "EC",
-            "ExpectedResult" => "Success"
-        },
-    },
-    {
         name => "ECDSA Signature Algorithm Selection, no ECDSA certificate",
         server => {
              "MaxProtocol" => "TLSv1.2"
@@ -267,44 +250,6 @@ our @tests = (
         test   => {
             "ExpectedServerCertType" =>, "RSA",
             "ExpectedResult" => $fips_3_4 ? "ClientFail" : "Success"
-        },
-    },
-    {
-        name => "Suite B P-256 Hash Algorithm Selection",
-        server =>  {
-            "ECDSA.Certificate" => test_pem("p256-server-cert.pem"),
-            "ECDSA.PrivateKey" => test_pem("p256-server-key.pem"),
-            "MaxProtocol" => "TLSv1.2",
-            "CipherString" => "SUITEB128"
-        },
-        client => {
-            "VerifyCAFile" => test_pem("p384-root.pem"),
-            "SignatureAlgorithms" => randcase("ECDSA+SHA384:ECDSA+SHA256")
-        },
-        test   => {
-            "ExpectedServerCertType" => "P-256",
-            "ExpectedServerSignHash" => "SHA256",
-            "ExpectedServerSignType" => "EC",
-            "ExpectedResult" => "Success"
-        },
-    },
-    {
-        name => "Suite B P-384 Hash Algorithm Selection",
-        server =>  {
-            "ECDSA.Certificate" => test_pem("p384-server-cert.pem"),
-            "ECDSA.PrivateKey" => test_pem("p384-server-key.pem"),
-            "MaxProtocol" => "TLSv1.2",
-            "CipherString" => "SUITEB128"
-        },
-        client => {
-            "VerifyCAFile" => test_pem("p384-root.pem"),
-            "SignatureAlgorithms" => randcase("ECDSA+SHA256:ECDSA+SHA384")
-        },
-        test   => {
-            "ExpectedServerCertType" => "P-384",
-            "ExpectedServerSignHash" => "SHA384",
-            "ExpectedServerSignType" => "EC",
-            "ExpectedResult" => "Success"
         },
     },
     {

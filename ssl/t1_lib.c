@@ -194,9 +194,7 @@ static const struct {
 };
 
 static const unsigned char ecformats_default[] = {
-    TLSEXT_ECPOINTFORMAT_uncompressed,
-    TLSEXT_ECPOINTFORMAT_ansiX962_compressed_prime,
-    TLSEXT_ECPOINTFORMAT_ansiX962_compressed_char2
+    TLSEXT_ECPOINTFORMAT_uncompressed
 };
 
 /* Group list string of the built-in pseudo group DEFAULT */
