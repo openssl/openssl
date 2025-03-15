@@ -116,7 +116,5 @@ static ASN1_OCTET_STRING *s2i_skey_id(X509V3_EXT_METHOD *method,
         return NULL;  // Prevent signing if SKID is empty
     }
 
-    return ossl_x509_pubkey_hash(ctx->subject_cert != NULL ?
-                                 ctx->subject_cert->cert_info.key :
-                                 ctx->subject_req->req_info.pubkey);
+    return skid;
 }
