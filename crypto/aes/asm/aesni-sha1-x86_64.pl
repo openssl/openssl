@@ -2120,30 +2120,11 @@ sub sha1op38 {
     }
 }
 
-sub aesni {
-  my $line=shift;
-  my @opcode=(0x0f,0x38);
-
-    if ($line=~/(aes[a-z]+)\s+%xmm([0-9]+),\s*%xmm([0-9]+)/) {
-	my %opcodelet = (
-		"aesenc" => 0xdc,	"aesenclast" => 0xdd,
-		"aesdec" => 0xde,	"aesdeclast" => 0xdf
-	);
-	return undef if (!defined($opcodelet{$1}));
-	rex(\@opcode,$3,$2);
-	push @opcode,$opcodelet{$1},0xc0|($2&7)|(($3&7)<<3);	# ModR/M
-	unshift @opcode,0x66;
-	return ".byte\t".join(',',@opcode);
-    }
-    return $line;
-}
-
 foreach (split("\n",$code)) {
         s/\`([^\`]*)\`/eval $1/geo;
 
 	s/\b(sha1rnds4)\s+(.*)/sha1rnds4($2)/geo		or
-	s/\b(sha1[^\s]*)\s+(.*)/sha1op38($1,$2)/geo		or
-	s/\b(aes.*%xmm[0-9]+).*$/aesni($1)/geo;
+	s/\b(sha1[^\s]*)\s+(.*)/sha1op38($1,$2)/geo;
 
 	print $_,"\n";
 }
