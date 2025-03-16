@@ -15,9 +15,10 @@ OPENSSL_sk_deep_copy, OPENSSL_sk_delete, OPENSSL_sk_delete_ptr,
 OPENSSL_sk_dup, OPENSSL_sk_find, OPENSSL_sk_find_ex, OPENSSL_sk_find_all,
 OPENSSL_sk_free, OPENSSL_sk_insert, OPENSSL_sk_is_sorted, OPENSSL_sk_new,
 OPENSSL_sk_new_null, OPENSSL_sk_new_reserve, OPENSSL_sk_num, OPENSSL_sk_pop,
-OPENSSL_sk_pop_free, OPENSSL_sk_push, OPENSSL_sk_reserve, OPENSSL_sk_set,
-OPENSSL_sk_set_thunks, OPENSSL_sk_set_cmp_func, OPENSSL_sk_shift,
-OPENSSL_sk_sort, OPENSSL_sk_unshift, OPENSSL_sk_value, OPENSSL_sk_zero
+OPENSSL_sk_pop_free, OPENSSL_sk_pop_free_thunk, OPENSSL_sk_push,
+OPENSSL_sk_reserve, OPENSSL_sk_set, OPENSSL_sk_set_thunks,
+OPENSSL_sk_set_cmp_func, OPENSSL_sk_shift, OPENSSL_sk_sort, OPENSSL_sk_unshift,
+OPENSSL_sk_value, OPENSSL_sk_zero
 - stack container
 
 =head1 SYNOPSIS
