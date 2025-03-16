@@ -41,7 +41,16 @@ static int wsa_init_done = 0;
 #endif
 #include "internal/sockets.h" /* for openssl_fdset() */
 
-#ifndef OPENSSL_NO_DEPRECATED_1_1_0
+int GetWinsockVersion()
+{
+	HMODULE hmod = GetModuleHandle("ws2_32.dll");
+	if (!hmod)
+		return 0x101; /* Version 1.1 */
+	
+	return 0x202; /* Version 2.2 */
+}
+
+# ifndef OPENSSL_NO_DEPRECATED_1_1_0
 int BIO_get_host_ip(const char *str, unsigned char *ip)
 {
     BIO_ADDRINFO *res = NULL;
@@ -148,7 +157,7 @@ int BIO_sock_init(void)
          * among Winsock DLLs, while API availability is [expected to be]
          * probed at run-time with DSO_global_lookup.
          */
-        if (WSAStartup(0x0202, &wsa_state) != 0) {
+        if (WSAStartup(GetWinsockVersion(), &wsa_state) != 0) {
             ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
                 "calling wsastartup()");
             ERR_raise(ERR_LIB_BIO, BIO_R_WSASTARTUP);

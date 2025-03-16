@@ -12,7 +12,36 @@
 #include <openssl/err.h>
 #include "internal/rio_notifier.h"
 
-#if !defined(OPENSSL_SYS_WINDOWS) || RIO_NOTIFIER_METHOD == RIO_NOTIFIER_METHOD_SOCKETPAIR
+static int s_inittedws2321 = 0;
+
+typedef SOCKET(WSAAPI* PWSASocketA)(int,int,int,LPWSAPROTOCOL_INFOA,GROUP,DWORD);
+
+static PWSASocketA s_WSASocketA;
+
+void init_if_needed_ws2321()
+{
+	HMODULE hmod;
+	
+	if (!s_inittedws2321)
+	{
+		s_inittedws2321 = 1;
+		hmod = GetModuleHandleA("WS2_32.DLL");
+		
+		if (!hmod)
+			return;
+		
+		s_WSASocketA = (PWSASocketA) GetProcAddress(hmod, "WSASocketA");
+	}
+}
+
+SOCKET M_WSASocketA(int af, int type, int protocol, LPWSAPROTOCOL_INFOA protoinfo, GROUP g, DWORD flags)
+{
+	if (s_WSASocketA)
+		return s_WSASocketA(af, type, protocol, protoinfo, g, flags);
+	
+	return socket(af, type, protocol);
+}
+
 /*
  * Sets a socket as close-on-exec, except that this is a no-op if we are certain
  * we do not need to do this or the OS does not support the concept.
@@ -38,6 +67,12 @@ static int do_wsa_startup(void)
 {
     WORD versionreq = 0x0202; /* Version 2.2 */
     WSADATA wsadata;
+
+	/* change the version if we don't have WS2 */
+	init_if_needed_ws2321();
+	
+	if (!s_WSASocketA)
+		versionreq = 0x0101; /* Version 1.1 */
 
     if (WSAStartup(versionreq, &wsadata) != 0)
         return 0;
@@ -75,22 +110,8 @@ static int create_socket(int domain, int socktype, int protocol)
      * so we can get away with not including it for older platforms
      */
 
-#ifdef WSA_FLAG_NO_HANDLE_INHERIT
-    fd = (int)WSASocketA(domain, socktype, protocol, NULL, 0,
-        WSA_FLAG_NO_HANDLE_INHERIT);
-
-    /*
-     * Its also possible that someone is building a binary on a newer windows
-     * SDK, but running it on a runtime that doesn't support inheritance
-     * suppression.  In that case the above will return INVALID_SOCKET, and
-     * our response for those older platforms is to try the call again
-     * without the flag
-     */
-    if (fd == INVALID_SOCKET)
-        fd = (int)WSASocketA(domain, socktype, protocol, NULL, 0, 0);
-#else
-    fd = (int)WSASocketA(domain, socktype, protocol, NULL, 0, 0);
-#endif
+    fd = (int)M_WSASocketA(domain, socktype, protocol, NULL, 0,
+                         WSA_FLAG_NO_HANDLE_INHERIT);
     if (fd == INVALID_SOCKET) {
         int err = get_last_socket_error();
 

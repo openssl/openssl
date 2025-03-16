@@ -20,6 +20,8 @@
  */
 #endif
 
+extern void InitCryptContextStuffIfNeeded(); // iProgram - providers/implementations/rands/seeding/rand_win.c
+
 /*
  * All we really need to do is remove the 'error' state when a thread
  * detaches

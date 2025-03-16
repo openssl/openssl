@@ -36,6 +36,80 @@
 CRYPTO_RWLOCK *bio_lookup_lock;
 static CRYPTO_ONCE bio_lookup_init = CRYPTO_ONCE_STATIC_INIT;
 
+
+static int s_bInittedWS232Dll = 0;
+
+typedef INT(WSAAPI* Pgetnameinfo)(const SOCKADDR*, socklen_t, PCHAR, DWORD, PCHAR, DWORD, INT);
+typedef INT(WSAAPI* Pgetaddrinfo)(PCSTR, PCSTR, const ADDRINFOA*, PADDRINFOA);
+typedef VOID(WSAAPI* Pfreeaddrinfo)(PADDRINFOA);
+typedef const char*(WSAAPI* Pgai_strerror)(int);
+
+static Pgetnameinfo s_getnameinfo = NULL;
+static Pgetaddrinfo s_getaddrinfo = NULL;
+static Pfreeaddrinfo s_freeaddrinfo = NULL;
+static Pgai_strerror s_gai_strerror = NULL;
+
+static void init_if_needed_ws232()
+{
+	HMODULE hmod;
+	
+	if (!s_bInittedWS232Dll)
+	{
+		s_bInittedWS232Dll = 1;
+		hmod = GetModuleHandleA("WS2_32.DLL");
+		
+		if (!hmod)
+			return;
+		
+		s_getnameinfo  = (Pgetnameinfo)  GetProcAddress(hmod, "getnameinfo");
+		s_getaddrinfo  = (Pgetaddrinfo)  GetProcAddress(hmod, "getaddrinfo");
+		s_freeaddrinfo = (Pfreeaddrinfo) GetProcAddress(hmod, "freeaddrinfo");
+		s_gai_strerror = (Pgai_strerror) GetProcAddress(hmod, "gai_strerrorA");
+	}
+}
+
+INT Mgetnameinfo(const SOCKADDR* sockaddr, socklen_t sockaddrLength, PCHAR nodeBuffer, DWORD nodeBufferSize, PCHAR serviceBuffer, DWORD serviceBufferSize, INT flags)
+{
+	init_if_needed_ws232();
+	if (s_getnameinfo)
+		return s_getnameinfo(sockaddr, sockaddrLength, nodeBuffer, nodeBufferSize, serviceBuffer, serviceBufferSize, flags);
+	
+	// placeholder impl here
+	WSASetLastError(WSA_NOT_ENOUGH_MEMORY);
+	return WSA_NOT_ENOUGH_MEMORY;
+}
+
+INT Mgetaddrinfo(PCSTR nodeName, PCSTR serviceName, const ADDRINFOA* hints, PADDRINFOA result)
+{
+	init_if_needed_ws232();
+	if (s_getaddrinfo)
+		return s_getaddrinfo(nodeName, serviceName, hints, result);
+	
+	// placeholder impl here
+	WSASetLastError(WSA_NOT_ENOUGH_MEMORY);
+	return WSA_NOT_ENOUGH_MEMORY;
+}
+
+void Mfreeaddrinfo(PADDRINFOA result)
+{
+	init_if_needed_ws232();
+	if (s_freeaddrinfo)
+		return s_freeaddrinfo(result);
+	
+	// placeholder impl here
+}
+
+const char* Mgai_strerror(int code)
+{
+	init_if_needed_ws232();
+	if (s_gai_strerror)
+		return s_gai_strerror(code);
+	
+	static char test[64];
+	snprintf(test, sizeof test, "ws2_32 doesn't exist.  error code %d", code);
+	return test;
+}
+
 /*
  * Throughout this file and bio_local.h, the existence of the macro
  * AI_PASSIVE is used to detect the availability of struct addrinfo,
@@ -242,19 +316,18 @@ static int addr_strings(const BIO_ADDR *ap, int numeric,
         if (numeric)
             flags |= NI_NUMERICHOST | NI_NUMERICSERV;
 
-        if ((ret = getnameinfo(BIO_ADDR_sockaddr(ap),
-                 BIO_ADDR_sockaddr_size(ap),
-                 host, sizeof(host), serv, sizeof(serv),
-                 flags))
-            != 0) {
-#ifdef EAI_SYSTEM
+        if ((ret = Mgetnameinfo(BIO_ADDR_sockaddr(ap),
+                               BIO_ADDR_sockaddr_size(ap),
+                               host, sizeof(host), serv, sizeof(serv),
+                               flags)) != 0) {
+# ifdef EAI_SYSTEM
             if (ret == EAI_SYSTEM) {
                 ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
                     "calling getnameinfo()");
             } else
 #endif
             {
-                ERR_raise_data(ERR_LIB_BIO, ERR_R_SYS_LIB, gai_strerror(ret));
+                ERR_raise_data(ERR_LIB_BIO, ERR_R_SYS_LIB, Mgai_strerror(ret));
             }
             return 0;
         }
@@ -463,7 +536,7 @@ void BIO_ADDRINFO_free(BIO_ADDRINFO *bai)
 #define _cond 1
 #endif
     if (_cond) {
-        freeaddrinfo(bai);
+        Mfreeaddrinfo(bai);
         return;
     }
 #endif
@@ -736,11 +809,11 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
         /* Note that |res| SHOULD be a 'struct addrinfo **' thanks to
          * macro magic in bio_local.h
          */
-#if defined(AI_ADDRCONFIG) && defined(AI_NUMERICHOST)
-    retry:
-#endif
-        switch ((gai_ret = getaddrinfo(host, service, &hints, res))) {
-#ifdef EAI_SYSTEM
+# if defined(AI_ADDRCONFIG) && defined(AI_NUMERICHOST)
+      retry:
+# endif
+        switch ((gai_ret = Mgetaddrinfo(host, service, &hints, res))) {
+# ifdef EAI_SYSTEM
         case EAI_SYSTEM:
             ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
                 "calling getaddrinfo()");
@@ -750,7 +823,7 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
 #ifdef EAI_MEMORY
         case EAI_MEMORY:
             ERR_raise_data(ERR_LIB_BIO, ERR_R_SYS_LIB,
-                gai_strerror(old_ret ? old_ret : gai_ret));
+                           Mgai_strerror(old_ret ? old_ret : gai_ret));
             break;
 #endif
         case 0:
@@ -766,7 +839,7 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
             }
 #endif
             ERR_raise_data(ERR_LIB_BIO, ERR_R_SYS_LIB,
-                gai_strerror(old_ret ? old_ret : gai_ret));
+                           Mgai_strerror(old_ret ? old_ret : gai_ret));
             break;
         }
     } else {
