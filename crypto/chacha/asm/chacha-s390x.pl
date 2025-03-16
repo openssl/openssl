@@ -8,10 +8,10 @@
 
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
+# Written by Andy Polyakov, @dot-asm, initially for use in the OpenSSL
 # project. The module is, however, dual licensed under OpenSSL and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see https://github.com/dot-asm/cryptogams/.
 # ====================================================================
 #
 # December 2015
@@ -1050,7 +1050,7 @@ LONG	(0x3320646e,0x3320646e,0x3320646e,0x3320646e);
 LONG	(0x79622d32,0x79622d32,0x79622d32,0x79622d32);
 LONG	(0x6b206574,0x6b206574,0x6b206574,0x6b206574);
 
-ASCIZ	("\"ChaCha20 for s390x, CRYPTOGAMS by <appro\@openssl.org>\"");
+ASCIZ	("\"ChaCha20 for s390x, CRYPTOGAMS by <https://github.com/dot-asm>\"");
 ALIGN	(4);
 
 PERLASM_END();

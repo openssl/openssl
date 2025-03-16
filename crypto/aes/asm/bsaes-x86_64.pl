@@ -95,7 +95,7 @@
 # Add bsaes_xts_[en|de]crypt. Less-than-80-bytes-block performance is
 # suboptimal, but XTS is meant to be used with larger blocks...
 #
-#						<appro@openssl.org>
+#						<https://github.com/dot-asm>
 
 # $output is the last argument if it looks like a file (it has an extension)
 # $flavour is the first argument if it doesn't look like a file

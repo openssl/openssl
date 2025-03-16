@@ -8,10 +8,10 @@
 
 
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
+# Written by Andy Polyakov, @dot-asm, initially for use in the OpenSSL
 # project. The module is, however, dual licensed under OpenSSL and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see https://github.com/dot-asm/cryptogams/.
 # ====================================================================
 
 # sha1_block procedure for ARMv4.
@@ -322,7 +322,7 @@ $code.=<<___;
 .word	OPENSSL_armcap_P-.Lsha1_block
 # endif
 #endif
-.asciz	"SHA1 block transform for ARMv4/NEON/ARMv8, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"SHA1 block transform for ARMv4/NEON/ARMv8, CRYPTOGAMS by <https://github.com/dot-asm>"
 .align	5
 ___
 #####################################################################

@@ -6,7 +6,7 @@
 ;; https://www.openssl.org/source/license.html
 ;;
 ;;====================================================================
-;; Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
+;; Written by Andy Polyakov, @dot-asm, initially for use in the OpenSSL
 ;; project.
 ;;
 ;; Rights for redistribution and usage in source and binary forms are

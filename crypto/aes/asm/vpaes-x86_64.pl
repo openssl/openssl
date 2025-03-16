@@ -52,7 +52,7 @@
 #	pshufb,	yet it's respectable +36%/62% improvement on Core 2
 #	(as implied, over "hyper-threading-safe" code path).
 #
-#						<appro@openssl.org>
+#						<https://github.com/dot-asm>
 
 # $output is the last argument if it looks like a file (it has an extension)
 # $flavour is the first argument if it doesn't look like a file

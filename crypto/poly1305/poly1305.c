@@ -60,7 +60,7 @@ static unsigned int U8TOU32(const unsigned char *p)
  * implementation is not necessarily optimal choice in every situation,
  * rather contrary...
  *
- *                                              <appro@openssl.org>
+ *                                              <https://github.com/dot-asm>
  */
 
 typedef unsigned int u32;

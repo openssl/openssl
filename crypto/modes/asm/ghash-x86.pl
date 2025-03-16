@@ -8,10 +8,10 @@
 
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
+# Written by Andy Polyakov, @dot-asm, initially for use in the OpenSSL
 # project. The module is, however, dual licensed under OpenSSL and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see https://github.com/dot-asm/cryptogams/.
 # ====================================================================
 #
 # March, May, June 2010
@@ -1374,7 +1374,7 @@ my ($Xhi,$Xi)=@_;
 	&data_word(0,0x9180<<$S,0,0x8DA0<<$S,0,0xA9C0<<$S,0,0xB5E0<<$S);
 }}}	# !$x86only
 
-&asciz("GHASH for x86, CRYPTOGAMS by <appro\@openssl.org>");
+&asciz("GHASH for x86, CRYPTOGAMS by <https://github.com/dot-asm>");
 &asm_finish();
 
 close STDOUT or die "error closing STDOUT: $!";
