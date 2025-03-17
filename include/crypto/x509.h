@@ -292,6 +292,7 @@ struct pkcs8_priv_key_info_st {
     X509_ALGOR *pkeyalg;
     ASN1_OCTET_STRING *pkey;
     STACK_OF(X509_ATTRIBUTE) *attributes;
+    ASN1_OCTET_STRING *kpub;
 };
 
 struct X509_sig_st {
