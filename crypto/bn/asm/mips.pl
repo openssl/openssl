@@ -129,7 +129,7 @@ $code.=<<___;
 
 .rdata
 .asciiz	"mips3.s, Version 1.2"
-.asciiz	"MIPS II/III/IV ISA artwork by Andy Polyakov <appro\@fy.chalmers.se>"
+.asciiz	"MIPS II/III/IV ISA artwork by Andy Polyakov <https://github.com/@dot-asm>"
 
 .text
 .set	noat
@@ -1089,7 +1089,7 @@ $code.=<<___;
 				# bug)" warning. If anybody out there
 				# has a clue about how to circumvent
 				# this do send me a note.
-				#		<appro\@fy.chalmers.se>
+				#		<https://github.com/@dot-asm>
 
 	$LD	$b_0,0($a2)
 	$LD	$a_1,$BNSZ($a1)
