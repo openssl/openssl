@@ -33,8 +33,7 @@
 # key conv.	440  cycles per 128-bit key/0.18 of 8x block
 #
 # Snapdragon S4 encrypts byte in 17.6 cycles and decrypts in 19.7,
-# which is [much] worse than anticipated (for further details see
-# http://www.openssl.org/~appro/Snapdragon-S4.html).
+# which is [much] worse than anticipated
 #
 # Cortex-A15 manages in 14.2/16.1 cycles [when integer-only code
 # manages in 20.0 cycles].

@@ -14,8 +14,7 @@
 # Public License version 2 or later, the GNU Lesser General Public
 # License version 2.1 or later, the Mozilla Public License version
 # 1.1 or the BSD License. The exact terms of either license are
-# distributed along with this module. For further details see
-# http://www.openssl.org/~appro/camellia/.
+# distributed along with this module.
 # ====================================================================
 
 # Performance in cycles per processed byte (less is better) in
