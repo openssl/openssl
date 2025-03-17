@@ -98,7 +98,7 @@ for(1..37) {
 
 $code.=<<___;
 .size	ecp_nistz256_precomputed,.-ecp_nistz256_precomputed
-.asciz	"ECP_NISTZ256 for PPC64, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"ECP_NISTZ256 for PPC64, CRYPTOGAMS by <https://github.com/dot-asm>"
 
 # void	ecp_nistz256_mul_mont(BN_ULONG x0[4],const BN_ULONG x1[4],
 #					     const BN_ULONG x2[4]);

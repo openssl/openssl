@@ -1454,7 +1454,7 @@ Ldec_compact_done:
 	.byte	0,12,0x14,0,0,0,0,0
 .size	.AES_decrypt,.-.AES_decrypt
 
-.asciz	"AES for PPC, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"AES for PPC, CRYPTOGAMS by <https://github.com/dot-asm>"
 .align	7
 ___
 

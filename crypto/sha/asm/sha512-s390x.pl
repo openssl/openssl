@@ -315,7 +315,7 @@ $code.=<<___;
 	lm${g}	%r6,%r15,`$frame+6*$SIZE_T`($sp)
 	br	%r14
 .size	$Func,.-$Func
-.string	"SHA${label} block transform for s390x, CRYPTOGAMS by <appro\@openssl.org>"
+.string	"SHA${label} block transform for s390x, CRYPTOGAMS by <https://github.com/dot-asm>"
 ___
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;

@@ -427,7 +427,7 @@ $code.=<<___;
 	$PTR_ADD $sp,$FRAMESIZE*$SZREG
 .end	bn_mul_mont_internal
 .rdata
-.asciiz	"Montgomery Multiplication for MIPS, CRYPTOGAMS by <appro\@openssl.org>"
+.asciiz	"Montgomery Multiplication for MIPS, CRYPTOGAMS by <https://github.com/dot-asm>"
 ___
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;

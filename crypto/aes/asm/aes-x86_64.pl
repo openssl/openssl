@@ -2642,7 +2642,7 @@ ___
 $code.=<<___;
 	.long	0x80808080, 0x80808080, 0xfefefefe, 0xfefefefe
 	.long	0x1b1b1b1b, 0x1b1b1b1b, 0, 0
-.asciz  "AES for x86_64, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz  "AES for x86_64, CRYPTOGAMS by <https://github.com/dot-asm>"
 .align	64
 .previous
 ___

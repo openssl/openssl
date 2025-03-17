@@ -4764,7 +4764,7 @@ $code.=<<___;
 .Lkey_rcon1b:
 	.long	0x1b,0x1b,0x1b,0x1b
 
-.asciz  "AES for Intel AES-NI, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz  "AES for Intel AES-NI, CRYPTOGAMS by <https://github.com/dot-asm>"
 .align	64
 .previous
 ___

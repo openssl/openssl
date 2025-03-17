@@ -2276,7 +2276,7 @@ $code.=<<___;
 ___
 }
 $code.=<<___;
-.string	"AES for s390x, CRYPTOGAMS by <appro\@openssl.org>"
+.string	"AES for s390x, CRYPTOGAMS by <https://github.com/dot-asm>"
 ___
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;

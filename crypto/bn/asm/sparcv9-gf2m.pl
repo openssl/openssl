@@ -193,7 +193,7 @@ $code.=<<___;
 	restore
 .type	bn_GF2m_mul_2x2,#function
 .size	bn_GF2m_mul_2x2,.-bn_GF2m_mul_2x2
-.asciz	"GF(2^m) Multiplication for SPARCv9, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"GF(2^m) Multiplication for SPARCv9, CRYPTOGAMS by <https://github.com/dot-asm>"
 .align	4
 ___
 

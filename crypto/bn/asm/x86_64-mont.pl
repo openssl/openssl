@@ -1400,7 +1400,7 @@ $code.=<<___;
 ___
 }}}
 $code.=<<___;
-.asciz	"Montgomery Multiplication for x86_64, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"Montgomery Multiplication for x86_64, CRYPTOGAMS by <https://github.com/dot-asm>"
 .align	16
 ___
 

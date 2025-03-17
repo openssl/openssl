@@ -853,7 +853,7 @@ SHA3_squeeze_cext:
 ___
 }								}}}
 $code.=<<___;
-.asciz	"Keccak-1600 absorb and squeeze for ARMv8, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"Keccak-1600 absorb and squeeze for ARMv8, CRYPTOGAMS by <https://github.com/dot-asm>"
 ___
 
 {   my  %opcode = (

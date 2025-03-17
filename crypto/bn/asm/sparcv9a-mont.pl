@@ -870,7 +870,7 @@ $fname:
 	restore
 .type   $fname,#function
 .size	$fname,(.-$fname)
-.asciz	"Montgomery Multiplication for UltraSPARC, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"Montgomery Multiplication for UltraSPARC, CRYPTOGAMS by <https://github.com/dot-asm>"
 .align	32
 ___
 

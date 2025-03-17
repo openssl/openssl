@@ -692,7 +692,7 @@ $code.=<<___;
 	.EXIT
 	$POPMB	-$FRAME(%sp),%r3
 	.PROCEND
-	.STRINGZ "SHA`64*$SZ` block transform for PA-RISC, CRYPTOGAMS by <appro\@openssl.org>"
+	.STRINGZ "SHA`64*$SZ` block transform for PA-RISC, CRYPTOGAMS by <https://github.com/dot-asm>"
 ___
 
 # Explicitly encode PA-RISC 2.0 instructions used in this module, so

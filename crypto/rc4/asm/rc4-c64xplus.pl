@@ -182,7 +182,7 @@ _rc4_options:
 	.align	4
 rc4_options:
 	.cstring "rc4(sploop,char)"
-	.cstring "RC4 for C64+, CRYPTOGAMS by <appro\@openssl.org>"
+	.cstring "RC4 for C64+, CRYPTOGAMS by <https://github.com/dot-asm>"
 	.align	4
 ___
 

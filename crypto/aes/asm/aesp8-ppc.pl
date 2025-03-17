@@ -109,7 +109,7 @@ Lconsts:
 	blr
 	.long	0
 	.byte	0,12,0x14,0,0,0,0,0
-.asciz	"AES for PowerISA 2.07, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"AES for PowerISA 2.07, CRYPTOGAMS by <https://github.com/dot-asm>"
 
 .globl	.${prefix}_set_encrypt_key
 .align	5

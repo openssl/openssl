@@ -909,7 +909,7 @@ x25519_fe64_tobytes:
 ___
 }
 $code.=<<___;
-.asciz	"X25519 primitives for x86_64, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"X25519 primitives for x86_64, CRYPTOGAMS by <https://github.com/dot-asm>"
 ___
 
 # EXCEPTION_DISPOSITION handler (EXCEPTION_RECORD *rec,ULONG64 frame,

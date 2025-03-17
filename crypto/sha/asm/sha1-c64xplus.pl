@@ -328,7 +328,7 @@ $code.=<<___;
 	.endasmfunc
 
 	.sect	.const
-	.cstring "SHA1 block transform for C64x+, CRYPTOGAMS by <appro\@openssl.org>"
+	.cstring "SHA1 block transform for C64x+, CRYPTOGAMS by <https://github.com/dot-asm>"
 	.align	4
 ___
 

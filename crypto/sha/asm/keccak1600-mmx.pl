@@ -432,7 +432,7 @@ sub Rho() {				######### regular Rho step
 	&data_word(0x00008080,0x80000000);
 	&data_word(0x80000001,0x00000000);
 	&data_word(0x80008008,0x80000000);
-&asciz("Keccak-1600 absorb and squeeze for MMX, CRYPTOGAMS by <appro\@openssl.org>");
+&asciz("Keccak-1600 absorb and squeeze for MMX, CRYPTOGAMS by <https://github.com/dot-asm>");
 
 &asm_finish();
 

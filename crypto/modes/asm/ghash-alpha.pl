@@ -457,7 +457,7 @@ rem_4bit:
 	.long	0,0x7080<<16, 0,0x6CA0<<16, 0,0x48C0<<16, 0,0x54E0<<16
 	.long	0,0xE100<<16, 0,0xFD20<<16, 0,0xD940<<16, 0,0xC560<<16
 	.long	0,0x9180<<16, 0,0x8DA0<<16, 0,0xA9C0<<16, 0,0xB5E0<<16
-.ascii	"GHASH for Alpha, CRYPTOGAMS by <appro\@openssl.org>"
+.ascii	"GHASH for Alpha, CRYPTOGAMS by <https://github.com/dot-asm>"
 .align	4
 
 ___

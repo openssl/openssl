@@ -1374,7 +1374,7 @@ my ($Xhi,$Xi)=@_;
 	&data_word(0,0x9180<<$S,0,0x8DA0<<$S,0,0xA9C0<<$S,0,0xB5E0<<$S);
 }}}	# !$x86only
 
-&asciz("GHASH for x86, CRYPTOGAMS by <appro\@openssl.org>");
+&asciz("GHASH for x86, CRYPTOGAMS by <https://github.com/dot-asm>");
 &asm_finish();
 
 close STDOUT or die "error closing STDOUT: $!";

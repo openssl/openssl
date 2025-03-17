@@ -597,7 +597,7 @@ iotas:
 	.quad	0x0000000080000001
 	.quad	0x8000000080008008
 .size	iotas,.-iotas
-.asciz	"Keccak-1600 absorb and squeeze for x86_64, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"Keccak-1600 absorb and squeeze for x86_64, CRYPTOGAMS by <https://github.com/dot-asm>"
 ___
 
 foreach (split("\n",$code)) {

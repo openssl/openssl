@@ -552,7 +552,7 @@ RC4_options:
 .asciz	"rc4(8x,int)"
 .asciz	"rc4(8x,char)"
 .asciz	"rc4(16x,int)"
-.asciz	"RC4 for x86_64, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"RC4 for x86_64, CRYPTOGAMS by <https://github.com/dot-asm>"
 .align	64
 .size	RC4_options,.-RC4_options
 ___

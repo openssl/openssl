@@ -612,7 +612,7 @@ my ($mode,$opcode) = @_;
 	&ret	();
 &function_end_B("padlock_sha512_blocks");
 
-&asciz	("VIA Padlock x86 module, CRYPTOGAMS by <appro\@openssl.org>");
+&asciz	("VIA Padlock x86 module, CRYPTOGAMS by <https://github.com/dot-asm>");
 &align	(16);
 
 &dataseg();

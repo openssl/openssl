@@ -317,7 +317,7 @@ if ($sse2) {
 	&ret	();
 &function_end_B("bn_GF2m_mul_2x2");
 
-&asciz	("GF(2^m) Multiplication for x86, CRYPTOGAMS by <appro\@openssl.org>");
+&asciz	("GF(2^m) Multiplication for x86, CRYPTOGAMS by <https://github.com/dot-asm>");
 
 &asm_finish();
 

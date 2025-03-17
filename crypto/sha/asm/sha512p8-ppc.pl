@@ -414,7 +414,7 @@ $code.=<<___	if ($LENDIAN);	# word-swapped
 ___
 }
 $code.=<<___;
-.asciz	"SHA${bits} for PowerISA 2.07, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"SHA${bits} for PowerISA 2.07, CRYPTOGAMS by <https://github.com/dot-asm>"
 .align	2
 ___
 

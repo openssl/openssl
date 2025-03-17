@@ -1605,7 +1605,7 @@ SHA3_squeeze_neon:
 	ldmia	sp!, {r4-r6,pc}
 .size	SHA3_squeeze_neon,.-SHA3_squeeze_neon
 #endif
-.asciz	"Keccak-1600 absorb and squeeze for ARMv4/NEON, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"Keccak-1600 absorb and squeeze for ARMv4/NEON, CRYPTOGAMS by <https://github.com/dot-asm>"
 .align	2
 ___
 

@@ -948,7 +948,7 @@ poly1305_emit_neon:
 .align	5
 .Lzeros:
 .long	0,0,0,0,0,0,0,0
-.asciz	"Poly1305 for ARMv8, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"Poly1305 for ARMv8, CRYPTOGAMS by <https://github.com/dot-asm>"
 .align	2
 ___
 

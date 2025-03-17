@@ -746,7 +746,7 @@ $code.=<<___;
 ___
 }
 $code.=<<___;
-.asciz	"Montgomery multiplication for ARMv4/NEON, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"Montgomery multiplication for ARMv4/NEON, CRYPTOGAMS by <https://github.com/dot-asm>"
 .align	2
 #if __ARM_MAX_ARCH__>=7
 .extern	OPENSSL_armcap_P

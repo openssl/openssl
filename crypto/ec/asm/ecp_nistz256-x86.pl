@@ -104,7 +104,7 @@ for(1..37) {
 &static_label("ONE");
 &set_label("ONE");
 &data_word(1,0,0,0,0,0,0,0);
-&asciz("ECP_NISZ256 for x86/SSE2, CRYPTOGAMS by <appro\@openssl.org>");
+&asciz("ECP_NISZ256 for x86/SSE2, CRYPTOGAMS by <https://github.com/dot-asm>");
 &align(64);
 
 ########################################################################

@@ -377,7 +377,7 @@ $code.=<<___;
 .type	ossl_md5_block_asm_data_order,#function
 .size	ossl_md5_block_asm_data_order,(.-ossl_md5_block_asm_data_order)
 
-.asciz	"MD5 block transform for SPARCv9, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"MD5 block transform for SPARCv9, CRYPTOGAMS by <https://github.com/dot-asm>"
 .align	4
 ___
 

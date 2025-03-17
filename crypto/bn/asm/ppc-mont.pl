@@ -1986,7 +1986,7 @@ $code.=<<___;
 ___
 }
 $code.=<<___;
-.asciz  "Montgomery Multiplication for PPC, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz  "Montgomery Multiplication for PPC, CRYPTOGAMS by <https://github.com/dot-asm>"
 ___
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;

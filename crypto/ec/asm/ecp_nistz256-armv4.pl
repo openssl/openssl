@@ -114,7 +114,7 @@ $code.=<<___;
 .long	0xfffffffe, 0xffffffff, 0xfffffffd, 0x00000004
 .Lone:
 .long	1,0,0,0,0,0,0,0
-.asciz	"ECP_NISTZ256 for ARMv4, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"ECP_NISTZ256 for ARMv4, CRYPTOGAMS by <https://github.com/dot-asm>"
 .align	6
 ___
 

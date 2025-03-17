@@ -535,7 +535,7 @@ gcm_ghash_vis3:
 ___
 }}}
 $code.=<<___;
-.asciz	"GHASH for SPARCv9/VIS3, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"GHASH for SPARCv9/VIS3, CRYPTOGAMS by <https://github.com/dot-asm>"
 .align	4
 ___
 

@@ -321,7 +321,7 @@ $code.=<<___;
 .word	OPENSSL_armcap_P-.
 # endif
 #endif
-.asciz	"GF(2^m) Multiplication for ARMv4/NEON, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"GF(2^m) Multiplication for ARMv4/NEON, CRYPTOGAMS by <https://github.com/dot-asm>"
 .align	5
 
 #if __ARM_MAX_ARCH__>=7

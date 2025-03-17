@@ -835,7 +835,7 @@ _bsaes_const:
 	.quad	0x02060a0e03070b0f, 0x0004080c0105090d
 .LREVM0SR:
 	.quad	0x090d01050c000408, 0x03070b0f060a0e02
-.asciz	"Bit-sliced AES for NEON, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"Bit-sliced AES for NEON, CRYPTOGAMS by <https://github.com/dot-asm>"
 .align	6
 .size	_bsaes_const,.-_bsaes_const
 

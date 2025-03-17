@@ -538,7 +538,7 @@ $code.=<<___;
 ___
 }
 $code.=<<___;
-.asciz  "GHASH for ARMv4/NEON, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz  "GHASH for ARMv4/NEON, CRYPTOGAMS by <https://github.com/dot-asm>"
 .align  2
 ___
 

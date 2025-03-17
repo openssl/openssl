@@ -785,7 +785,7 @@ sub SSSE3ROUND {	# critical path is 20 "SIMD ticks" per round
 &data_word(0,-1,-1,-1);
 &align	(64);
 }
-&asciz	("ChaCha20 for x86, CRYPTOGAMS by <appro\@openssl.org>");
+&asciz	("ChaCha20 for x86, CRYPTOGAMS by <https://github.com/dot-asm>");
 
 if ($ymm) {
 my ($xa,$xa_,$xb,$xb_,$xc,$xc_,$xd,$xd_)=map("xmm$_",(0..7));

@@ -1323,7 +1323,7 @@ $code.=<<___;
 	.long	0x79622d32,0x79622d32,0x79622d32,0x79622d32
 	.long	0x6b206574,0x6b206574,0x6b206574,0x6b206574
 	.long	0,1,2,3
-.asciz  "ChaCha20 for PowerPC/AltiVec, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz  "ChaCha20 for PowerPC/AltiVec, CRYPTOGAMS by <https://github.com/dot-asm>"
 .align	2
 ___
 

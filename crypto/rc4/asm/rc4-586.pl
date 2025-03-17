@@ -416,7 +416,7 @@ $idx="edx";
 &asciz	("rc4(4x,int)");
 &asciz	("rc4(1x,char)");
 &asciz	("rc4(8x,mmx)");
-&asciz	("RC4 for x86, CRYPTOGAMS by <appro\@openssl.org>");
+&asciz	("RC4 for x86, CRYPTOGAMS by <https://github.com/dot-asm>");
 &align	(64);
 &function_end_B("RC4_options");
 

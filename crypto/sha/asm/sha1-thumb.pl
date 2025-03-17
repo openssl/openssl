@@ -258,7 +258,7 @@ $code.=<<___;
 .LK_40_59:	.word	0x8f1bbcdc
 .LK_60_79:	.word	0xca62c1d6
 .size	sha1_block_data_order,.-sha1_block_data_order
-.asciz	"SHA1 block transform for Thumb, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"SHA1 block transform for Thumb, CRYPTOGAMS by <https://github.com/dot-asm>"
 ___
 
 print $code;

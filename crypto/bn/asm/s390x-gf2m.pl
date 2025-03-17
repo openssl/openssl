@@ -222,7 +222,7 @@ $code.=<<___;
 	lm${g}	%r6,%r15,`$stdframe+128+6*$SIZE_T`($sp)
 	br	$ra
 .size	bn_GF2m_mul_2x2,.-bn_GF2m_mul_2x2
-.string	"GF(2^m) Multiplication for s390x, CRYPTOGAMS by <appro\@openssl.org>"
+.string	"GF(2^m) Multiplication for s390x, CRYPTOGAMS by <https://github.com/dot-asm>"
 ___
 
 $code =~ s/\`([^\`]*)\`/eval($1)/gem;

@@ -614,7 +614,7 @@ $code.=<<___;
 	add	$tp,8,$tp
 .type	$fname,#function
 .size	$fname,(.-$fname)
-.asciz	"Montgomery Multiplication for SPARCv9, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"Montgomery Multiplication for SPARCv9, CRYPTOGAMS by <https://github.com/dot-asm>"
 .align	32
 ___
 $code =~ s/\`([^\`]*)\`/eval($1)/gem;

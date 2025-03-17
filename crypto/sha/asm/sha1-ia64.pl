@@ -308,7 +308,7 @@ $code.=<<___;
 	mov	pr=r2,0x1ffff
 	br.ret.sptk.many	b0	};;
 .endp	sha1_block_data_order#
-stringz	"SHA1 block transform for IA64, CRYPTOGAMS by <appro\@openssl.org>"
+stringz	"SHA1 block transform for IA64, CRYPTOGAMS by <https://github.com/dot-asm>"
 ___
 
 open STDOUT,">$output" if $output;

@@ -3406,7 +3406,7 @@ my ($l_,$block,$i1,$i3,$i5) = ($rounds_,$key_,$rounds,$len,$out);
 &data_word(0x04070605,0x04070605,0x04070605,0x04070605);
 &data_word(1,1,1,1);
 &data_word(0x1b,0x1b,0x1b,0x1b);
-&asciz("AES for Intel AES-NI, CRYPTOGAMS by <appro\@openssl.org>");
+&asciz("AES for Intel AES-NI, CRYPTOGAMS by <https://github.com/dot-asm>");
 
 &asm_finish();
 

@@ -734,7 +734,7 @@ LPICmeup:
 .quad	0x4230000000000000		# 2^(52+16+64-96)
 
 .quad	0x0000000000000001		# fpscr: truncate, no exceptions
-.asciz	"Poly1305 for PPC FPU, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"Poly1305 for PPC FPU, CRYPTOGAMS by <https://github.com/dot-asm>"
 .align	4
 ___
 

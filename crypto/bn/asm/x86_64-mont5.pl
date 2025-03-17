@@ -3582,7 +3582,7 @@ $code.=<<___;
 .Linc:
 	.long	0,0, 1,1
 	.long	2,2, 2,2
-.asciz	"Montgomery Multiplication with scatter/gather for x86_64, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"Montgomery Multiplication with scatter/gather for x86_64, CRYPTOGAMS by <https://github.com/dot-asm>"
 .previous
 ___
 

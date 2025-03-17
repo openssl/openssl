@@ -314,7 +314,7 @@ L\$pic
 	.ALIGN	8
 L\$opts
 	.STRINGZ "rc4(4x,`$SZ==1?"char":"int"`)"
-	.STRINGZ "RC4 for PA-RISC, CRYPTOGAMS by <appro\@openssl.org>"
+	.STRINGZ "RC4 for PA-RISC, CRYPTOGAMS by <https://github.com/dot-asm>"
 ___
 
 if (`$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`

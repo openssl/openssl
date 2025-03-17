@@ -690,7 +690,7 @@ $code.=<<___;
 ___
 }}}
 $code.=<<___;
-.asciz  "SHA256 block transform for ARMv4/NEON/ARMv8, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz  "SHA256 block transform for ARMv4/NEON/ARMv8, CRYPTOGAMS by <https://github.com/dot-asm>"
 .align	2
 #if __ARM_MAX_ARCH__>=7 && !defined(__KERNEL__)
 .extern   OPENSSL_armcap_P

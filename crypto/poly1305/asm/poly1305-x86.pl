@@ -1806,7 +1806,7 @@ sub vlazy_reduction {
 	&data_word(0x03ffffff,0,0x03ffffff,0,	0x03ffffff,0,	0x03ffffff,0);
 	&data_word(0x0fffffff,0x0ffffffc,0x0ffffffc,0x0ffffffc);
 }
-&asciz	("Poly1305 for x86, CRYPTOGAMS by <appro\@openssl.org>");
+&asciz	("Poly1305 for x86, CRYPTOGAMS by <https://github.com/dot-asm>");
 &align	(4);
 
 &asm_finish();

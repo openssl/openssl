@@ -1127,7 +1127,7 @@ aes_fx_ctr32_encrypt_blocks:
 	.byte	0, 0, 56,  8,	0, 56,  8, -56
 .Lone:
 	.word	0, 1
-.asciz	"AES for Fujitsu SPARC64 X, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"AES for Fujitsu SPARC64 X, CRYPTOGAMS by <https://github.com/dot-asm>"
 .align	4
 ___
 }

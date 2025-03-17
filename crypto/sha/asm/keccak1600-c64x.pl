@@ -875,7 +875,7 @@ iotas:
 	.uword	0x00000001, 0x00008000
 	.uword	0x00000000, 0x80008082
 
-	.cstring "Keccak-1600 absorb and squeeze for C64x, CRYPTOGAMS by <appro\@openssl.org>"
+	.cstring "Keccak-1600 absorb and squeeze for C64x, CRYPTOGAMS by <https://github.com/dot-asm>"
 	.align	4
 ___
 

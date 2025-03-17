@@ -573,7 +573,7 @@ ___
 &generate_mode("ctr32",0xd8);	# all 64-bit CPUs have working CTR...
 
 $code.=<<___;
-.asciz	"VIA Padlock x86_64 module, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"VIA Padlock x86_64 module, CRYPTOGAMS by <https://github.com/dot-asm>"
 .align	16
 .data
 .align	8

@@ -6036,7 +6036,7 @@ ___
 
 $code.=<<___;
 .rodata
-.asciz  "GHASH for ARMv8, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz  "GHASH for ARMv8, CRYPTOGAMS by <https://github.com/dot-asm>"
 .align  2
 #endif
 ___

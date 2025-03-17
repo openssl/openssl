@@ -3820,7 +3820,7 @@ $code.=<<___;
 ___
 }
 $code.=<<___;
-.asciz	"Poly1305 for x86_64, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"Poly1305 for x86_64, CRYPTOGAMS by <https://github.com/dot-asm>"
 .align	16
 ___
 

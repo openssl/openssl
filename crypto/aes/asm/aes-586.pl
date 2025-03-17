@@ -2991,7 +2991,7 @@ sub deckey()
 
 	&xor	("eax","eax");			# return success
 &function_end("AES_set_decrypt_key");
-&asciz("AES for x86, CRYPTOGAMS by <appro\@openssl.org>");
+&asciz("AES for x86, CRYPTOGAMS by <https://github.com/dot-asm>");
 
 &asm_finish();
 

@@ -162,7 +162,7 @@ $code.=<<___;
 	lm${g}	%r6,%r11,6*$SIZE_T($sp)
 	br	$rp
 .size	RC4,.-RC4
-.string	"RC4 for s390x, CRYPTOGAMS by <appro\@openssl.org>"
+.string	"RC4 for s390x, CRYPTOGAMS by <https://github.com/dot-asm>"
 
 ___
 }

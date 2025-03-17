@@ -1043,7 +1043,7 @@ $code.=<<___;
 .word	0x3e300000,0x00000000		! 2^(52+16+0-96)
 .word	0x40300000,0x00000000		! 2^(52+16+32-96)
 .word	0x42300000,0x00000000		! 2^(52+16+64-96)
-.asciz	"Poly1305 for SPARCv9/VIS3/FMA, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"Poly1305 for SPARCv9/VIS3/FMA, CRYPTOGAMS by <https://github.com/dot-asm>"
 .align	4
 ___
 }

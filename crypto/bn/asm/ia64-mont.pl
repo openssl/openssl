@@ -853,7 +853,7 @@ bn_mul_mont_8:
 
 .type	copyright#,\@object
 copyright:
-stringz	"Montgomery multiplication for IA-64, CRYPTOGAMS by <appro\@openssl.org>"
+stringz	"Montgomery multiplication for IA-64, CRYPTOGAMS by <https://github.com/dot-asm>"
 ___
 
 open STDOUT,">$output" if $output;

@@ -238,7 +238,7 @@ $code.=<<___;
 	.endasmfunc
 
 	.sect	.const
-	.cstring "GHASH for C64x+, CRYPTOGAMS by <appro\@openssl.org>"
+	.cstring "GHASH for C64x+, CRYPTOGAMS by <https://github.com/dot-asm>"
 	.align	4
 ___
 

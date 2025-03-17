@@ -323,7 +323,7 @@ ___
 }
 $code.=<<___;
 	.sect	.const
-	.cstring "Poly1305 for C64x+, CRYPTOGAMS by <appro\@openssl.org>"
+	.cstring "Poly1305 for C64x+, CRYPTOGAMS by <https://github.com/dot-asm>"
 	.align	4
 ___
 

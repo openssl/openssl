@@ -979,6 +979,6 @@ LONG	(0xffffffff,0x00000000,0xffffffff,0xffffffff);
 LONG	(0xffffffff,0x00000000,0xffffffff,0x00000000);
 LONG	(0x00000000,0x00000000,0xffffffff,0x00000000);
 
-STRING	("\"Poly1305 for s390x, CRYPTOGAMS by <appro\@openssl.org>\"");
+STRING	("\"Poly1305 for s390x, CRYPTOGAMS by <https://github.com/dot-asm>\"");
 
 PERLASM_END();

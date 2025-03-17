@@ -797,7 +797,7 @@ $code.=<<___;
 	restore
 .type	sha${label}_block_data_order,#function
 .size	sha${label}_block_data_order,(.-sha${label}_block_data_order)
-.asciz	"SHA${label} block transform for SPARCv9, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"SHA${label} block transform for SPARCv9, CRYPTOGAMS by <https://github.com/dot-asm>"
 .align	4
 ___
 

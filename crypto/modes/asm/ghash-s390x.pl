@@ -248,7 +248,7 @@ rem_4bit:
 	.long	`0x9180<<12`,0,`0x8DA0<<12`,0,`0xA9C0<<12`,0,`0xB5E0<<12`,0
 .type	rem_4bit,\@object
 .size	rem_4bit,(.-rem_4bit)
-.string	"GHASH for s390x, CRYPTOGAMS by <appro\@openssl.org>"
+.string	"GHASH for s390x, CRYPTOGAMS by <https://github.com/dot-asm>"
 ___
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;

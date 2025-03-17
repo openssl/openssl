@@ -209,7 +209,7 @@ $TABLE:
 	.long	0x00010203,0x04050607,0x08090a0b,0x0c0d0e0f
 	.long	0,0,0,0,   0,0,0,0,   -1,-1,-1,-1
 	.long	0,0,0,0,   0,0,0,0
-	.asciz	"AESNI-CBC+SHA256 stitch for x86_64, CRYPTOGAMS by <appro\@openssl.org>"
+	.asciz	"AESNI-CBC+SHA256 stitch for x86_64, CRYPTOGAMS by <https://github.com/dot-asm>"
 .align	64
 .previous
 ___

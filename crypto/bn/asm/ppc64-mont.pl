@@ -1648,7 +1648,7 @@ $code.=<<___;
 	.long	0
 .size	.$fname,.-.$fname
 
-.asciz  "Montgomery Multiplication for PPC64, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz  "Montgomery Multiplication for PPC64, CRYPTOGAMS by <https://github.com/dot-asm>"
 ___
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;

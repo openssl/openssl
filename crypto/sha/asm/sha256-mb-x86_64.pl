@@ -1389,7 +1389,7 @@ K256_shaext:
 	.long	0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3
 	.long	0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208
 	.long	0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2
-	.asciz	"SHA256 multi-block transform for x86_64, CRYPTOGAMS by <appro\@openssl.org>"
+	.asciz	"SHA256 multi-block transform for x86_64, CRYPTOGAMS by <https://github.com/dot-asm>"
 .previous
 ___
 

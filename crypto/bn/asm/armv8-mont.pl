@@ -1901,7 +1901,7 @@ ___
 }
 $code.=<<___;
 .rodata
-.asciz	"Montgomery Multiplication for ARMv8, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"Montgomery Multiplication for ARMv8, CRYPTOGAMS by <https://github.com/dot-asm>"
 .align	4
 ___
 

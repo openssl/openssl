@@ -356,7 +356,7 @@ $code.=<<___ if ($SZ==4);
 ___
 $code.=<<___;
 .size	.LK$BITS,.-.LK$BITS
-.asciz	"SHA$BITS block transform for ARMv8, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"SHA$BITS block transform for ARMv8, CRYPTOGAMS by <https://github.com/dot-asm>"
 .align	2
 
 .text
