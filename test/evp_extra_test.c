@@ -900,7 +900,9 @@ static EVP_PKEY *make_key_fromdata(char *keytype, OSSL_PARAM *params)
 
     if (!TEST_ptr(pctx = EVP_PKEY_CTX_new_from_name(testctx, keytype, testpropq)))
         goto err;
-    if (!TEST_int_gt(EVP_PKEY_fromdata_init(pctx), 0)
+    /* Check that premature EVP_PKEY_CTX_set_params() fails gracefully */
+    if (!TEST_int_eq(EVP_PKEY_CTX_set_params(pctx, params), 0)
+        || !TEST_int_gt(EVP_PKEY_fromdata_init(pctx), 0)
         || !TEST_int_gt(EVP_PKEY_fromdata(pctx, &tmp_pkey, EVP_PKEY_KEYPAIR,
                                           params), 0))
         goto err;
