@@ -41,7 +41,7 @@
 # Performance improvement is astonishing! 'apps/openssl speed rsa dsa'
 # goes way over 3 times faster!
 #
-#					<https://github.com/@dot-asm>
+#					<https://github.com/dot-asm>
 
 # October 2010
 #
@@ -129,7 +129,7 @@ $code.=<<___;
 
 .rdata
 .asciiz	"mips3.s, Version 1.2"
-.asciiz	"MIPS II/III/IV ISA artwork by Andy Polyakov <https://github.com/@dot-asm>"
+.asciiz	"MIPS II/III/IV ISA artwork by Andy Polyakov <https://github.com/dot-asm>"
 
 .text
 .set	noat
@@ -1089,7 +1089,7 @@ $code.=<<___;
 				# bug)" warning. If anybody out there
 				# has a clue about how to circumvent
 				# this do send me a note.
-				#		<https://github.com/@dot-asm>
+				#		<https://github.com/dot-asm>
 
 	$LD	$b_0,0($a2)
 	$LD	$a_1,$BNSZ($a1)

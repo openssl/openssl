@@ -347,7 +347,7 @@ $code.=<<___;
 .size	.sha1_block_data_order,.-.sha1_block_data_order
 ___
 $code.=<<___;
-.asciz	"SHA1 block transform for PPC, CRYPTOGAMS by <https://github.com/@dot-asm>"
+.asciz	"SHA1 block transform for PPC, CRYPTOGAMS by <https://github.com/dot-asm>"
 ___
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;

@@ -84,7 +84,7 @@ if ($flavour =~ /64|n32/i) {
 }
 $pf = ($flavour =~ /nubi/i) ? $t0 : $t2;
 #
-# <https://github.com/@dot-asm>
+# <https://github.com/dot-asm>
 #
 ######################################################################
 

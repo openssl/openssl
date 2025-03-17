@@ -26,7 +26,7 @@ $output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
 
 $code=<<___;
 .ident  \"sha1-ia64.s, version 1.3\"
-.ident  \"IA-64 ISA artwork by Andy Polyakov <https://github.com/@dot-asm>\"
+.ident  \"IA-64 ISA artwork by Andy Polyakov <https://github.com/dot-asm>\"
 .explicit
 
 ___

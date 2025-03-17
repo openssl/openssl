@@ -75,7 +75,7 @@ if ($flavour =~ /64|n32/i) {
 	$SZREG=4;
 }
 #
-# <https://github.com/@dot-asm>
+# <https://github.com/dot-asm>
 #
 ######################################################################
 

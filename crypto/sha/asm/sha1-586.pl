@@ -8,7 +8,7 @@
 
 
 # ====================================================================
-# [Re]written by Andy Polyakov <https://github.com/@dot-asm> for the OpenSSL
+# [Re]written by Andy Polyakov <https://github.com/dot-asm> for the OpenSSL
 # project. The module is, however, dual licensed under OpenSSL and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
 # details see https://github.com/dot-asm/cryptogams/.
