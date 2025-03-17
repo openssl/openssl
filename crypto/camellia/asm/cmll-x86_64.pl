@@ -8,7 +8,7 @@
 
 
 # ====================================================================
-# Copyright (c) 2008 Andy Polyakov <appro@openssl.org>
+# Copyright (c) 2008 Andy Polyakov <https://github.com/@dot-asm>
 #
 # This module may be used under the terms of either the GNU General
 # Public License version 2 or later, the GNU Lesser General Public

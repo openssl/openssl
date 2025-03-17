@@ -33,7 +33,7 @@
 // 64 bytes line size and L2 - 128 bytes...
 
 .ident	"aes-ia64.S, version 1.2"
-.ident	"IA-64 ISA artwork by Andy Polyakov <appro@openssl.org>"
+.ident	"IA-64 ISA artwork by Andy Polyakov <https://github.com/@dot-asm>"
 .explicit
 .text
 

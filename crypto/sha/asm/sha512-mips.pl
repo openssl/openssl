@@ -84,7 +84,7 @@ if ($flavour =~ /64|n32/i) {
 }
 $pf = ($flavour =~ /nubi/i) ? $t0 : $t2;
 #
-# <appro@openssl.org>
+# <https://github.com/@dot-asm>
 #
 ######################################################################
 

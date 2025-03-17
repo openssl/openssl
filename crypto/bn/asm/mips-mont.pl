@@ -74,7 +74,7 @@ if ($flavour =~ /64|n32/i) {
 }
 $SAVED_REGS_MASK = ($flavour =~ /nubi/i) ? 0x00fff000 : 0x00ff0000;
 #
-# <appro@openssl.org>
+# <https://github.com/@dot-asm>
 #
 ######################################################################
 

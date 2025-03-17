@@ -45,7 +45,7 @@
 # results keep in mind key schedule conversion overhead (see
 # bsaes-x86_64.pl for further details)...
 #
-#						<appro@openssl.org>
+#						<https://github.com/@dot-asm>
 
 # April-August 2013
 # Add CBC, CTR and XTS subroutines and adapt for kernel use; courtesy of Ard.

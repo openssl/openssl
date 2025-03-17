@@ -41,7 +41,7 @@
 # Performance improvement is astonishing! 'apps/openssl speed rsa dsa'
 # goes way over 3 times faster!
 #
-#					<appro@openssl.org>
+#					<https://github.com/@dot-asm>
 
 # October 2010
 #

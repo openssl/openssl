@@ -1,7 +1,7 @@
 .explicit
 .text
 .ident	"ia64.S, Version 2.1"
-.ident	"IA-64 ISA artwork by Andy Polyakov <appro@openssl.org>"
+.ident	"IA-64 ISA artwork by Andy Polyakov <https://github.com/@dot-asm>"
 
 // Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
 //
