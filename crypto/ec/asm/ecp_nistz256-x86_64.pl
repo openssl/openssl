@@ -80,6 +80,32 @@ if (!$addx && `$ENV{CC} -v 2>&1` =~ /((?:clang|LLVM) version|.*based on LLVM) ([
 	$addx = ($ver>=3.03);
 }
 
+$use_tool_asm=0;
+#
+# clang 9 or newer
+#
+$use_tool_asm=1 if (!$use_tool_aesni && `$ENV{CC} -v 2>&1` =~ /((?:clang|LLVM) version|.*based on LLVM) ([0-9]+\.[0-9]+)/ && $2>=9.0);
+
+#
+# GNU assembler 2.30 or newer
+#
+$use_tool_asm=1 if (!$use_tool_aesni && `$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
+		=~ /GNU assembler version ([2-9]\.[0-9]+)/ &&
+	   $1>=2.30);
+#
+# masm version 14 or higher. The version is bundled with Visual Studio 2019
+#
+$use_tool_asm=1 if (!$use_tool_aesni && $win64 && ($flavour =~ /masm/ || $ENV{ASM} =~ /ml64/) &&
+	   `ml64 2>&1` =~ /Version ([0-9]+)\./ &&
+	   $1>=14);
+
+#
+# netwide assembler 2.15 or newer (2.15 is since 2020)
+#
+$use_tool_asm=1 if (!$use_tool_aesni && $win64 && ($flavour =~ /nasm/ || $ENV{ASM} =~ /nasm/) &&
+	   `nasm -v 2>&1` =~ /NASM version ([2-9]\.[0-9]+)/ &&
+	   $1>=2.15);
+
 $code.=<<___;
 .text
 .extern	OPENSSL_ia32cap_P
@@ -2601,9 +2627,26 @@ $code.=<<___	if ($avx>1);
 	test	\$`1<<5`, %eax
 	jnz	.Lavx2_gather_w5
 ___
-$code.=<<___	if ($win64);
+if ($win64) {
+$code.=<<___;
 	lea	-0x88(%rsp), %rax
 .LSEH_begin_ecp_nistz256_gather_w5:
+---
+$code.=<<___ if ($use_tool_asm);
+	lea	-0x20(%rax), %rsp
+	movaps	%xmm6, -0x20(%rax)
+	movaps	%xmm7, -0x10(%rax)
+	movaps	%xmm8, 0(%rax)
+	movaps	%xmm9, 0x10(%rax)
+	movaps	%xmm10, 0x20(%rax)
+	movaps	%xmm11, 0x30(%rax)
+	movaps	%xmm12, 0x40(%rax)
+	movaps	%xmm13, 0x50(%rax)
+	movaps	%xmm14, 0x60(%rax)
+	movaps	%xmm15, 0x70(%rax)
+___
+$code.=<<___ if (!$use_tool_asm);
+$code.=<<___;
 	.byte	0x48,0x8d,0x60,0xe0		#lea	-0x20(%rax), %rsp
 	.byte	0x0f,0x29,0x70,0xe0		#movaps	%xmm6, -0x20(%rax)
 	.byte	0x0f,0x29,0x78,0xf0		#movaps	%xmm7, -0x10(%rax)
@@ -2616,6 +2659,8 @@ $code.=<<___	if ($win64);
 	.byte	0x44,0x0f,0x29,0x70,0x60	#movaps	%xmm14, 0x60(%rax)
 	.byte	0x44,0x0f,0x29,0x78,0x70	#movaps	%xmm15, 0x70(%rax)
 ___
+}
+
 $code.=<<___;
 	movdqa	.LOne(%rip), $ONE
 	movd	$index, $INDEX
@@ -2721,9 +2766,25 @@ $code.=<<___	if ($avx>1);
 	test	\$`1<<5`, %eax
 	jnz	.Lavx2_gather_w7
 ___
-$code.=<<___	if ($win64);
+if ($win64) {
+$code.=<<___;
 	lea	-0x88(%rsp), %rax
 .LSEH_begin_ecp_nistz256_gather_w7:
+___
+$code.=<<___ if ($use_tool_asm) ;
+	lea	-0x20(%rax), %rsp
+	movaps	%xmm6, -0x20(%rax)
+	movaps	%xmm7, -0x10(%rax)
+	movaps	%xmm8, 0(%rax)
+	movaps	%xmm9, 0x10(%rax)
+	movaps	%xmm10, 0x20(%rax)
+	movaps	%xmm11, 0x30(%rax)
+	movaps	%xmm12, 0x40(%rax)
+	movaps	%xmm13, 0x50(%rax)
+	movaps	%xmm14, 0x60(%rax)
+	movaps	%xmm15, 0x70(%rax)
+___
+$code.=<<___ if (!$use_tool_asm) ;
 	.byte	0x48,0x8d,0x60,0xe0		#lea	-0x20(%rax), %rsp
 	.byte	0x0f,0x29,0x70,0xe0		#movaps	%xmm6, -0x20(%rax)
 	.byte	0x0f,0x29,0x78,0xf0		#movaps	%xmm7, -0x10(%rax)
@@ -2736,6 +2797,7 @@ $code.=<<___	if ($win64);
 	.byte	0x44,0x0f,0x29,0x70,0x60	#movaps	%xmm14, 0x60(%rax)
 	.byte	0x44,0x0f,0x29,0x78,0x70	#movaps	%xmm15, 0x70(%rax)
 ___
+}
 $code.=<<___;
 	movdqa	.LOne(%rip), $M0
 	movd	$index, $INDEX
@@ -2813,10 +2875,26 @@ ecp_nistz256_avx2_gather_w5:
 .Lavx2_gather_w5:
 	vzeroupper
 ___
-$code.=<<___	if ($win64);
+if ($win64) {
+$code.=<<___;
 	lea	-0x88(%rsp), %rax
 	mov	%rsp,%r11
 .LSEH_begin_ecp_nistz256_avx2_gather_w5:
+___
+$code.=<<___ if ($use_tool_asm);
+	lea	-0x20(%rax), %rsp
+	vmovaps %xmm6, -0x20(%rax)
+	vmovaps %xmm7, -0x10(%rax)
+	vmovaps %xmm8, 8(%rax)
+	vmovaps %xmm9, 0x10(%rax)
+	vmovaps %xmm10, 0x20(%rax)
+	vmovaps %xmm11, 0x30(%rax)
+	vmovaps %xmm12, 0x40(%rax)
+	vmovaps %xmm13, 0x50(%rax)
+	vmovaps %xmm14, 0x60(%rax)
+	vmovaps %xmm15, 0x70(%rax)
+___
+$code.=<<___ if (!$use_tool_asm);
 	.byte	0x48,0x8d,0x60,0xe0		# lea	-0x20(%rax), %rsp
 	.byte	0xc5,0xf8,0x29,0x70,0xe0	# vmovaps %xmm6, -0x20(%rax)
 	.byte	0xc5,0xf8,0x29,0x78,0xf0	# vmovaps %xmm7, -0x10(%rax)
@@ -2829,6 +2907,7 @@ $code.=<<___	if ($win64);
 	.byte	0xc5,0x78,0x29,0x70,0x60	# vmovaps %xmm14, 0x60(%rax)
 	.byte	0xc5,0x78,0x29,0x78,0x70	# vmovaps %xmm15, 0x70(%rax)
 ___
+}
 $code.=<<___;
 	vmovdqa	.LTwo(%rip), $TWO
 
@@ -2921,10 +3000,26 @@ ecp_nistz256_avx2_gather_w7:
 .Lavx2_gather_w7:
 	vzeroupper
 ___
-$code.=<<___	if ($win64);
+if ($win64) {
+$code.=<<___;
 	mov	%rsp,%r11
 	lea	-0x88(%rsp), %rax
 .LSEH_begin_ecp_nistz256_avx2_gather_w7:
+---
+$code.=<<___ if ($use_tool_asm);
+	lea	-0x20(%rax), %rsp
+	vmovaps %xmm6, -0x20(%rax)
+	vmovaps %xmm7, -0x10(%rax)
+	vmovaps %xmm8, 8(%rax)
+	vmovaps %xmm9, 0x10(%rax)
+	vmovaps %xmm10, 0x20(%rax)
+	vmovaps %xmm11, 0x30(%rax)
+	vmovaps %xmm12, 0x40(%rax)
+	vmovaps %xmm13, 0x50(%rax)
+	vmovaps %xmm14, 0x60(%rax)
+	vmovaps %xmm15, 0x70(%rax)
+___
+$code.=<<___ if (!$use_tool_asm);
 	.byte	0x48,0x8d,0x60,0xe0		# lea	-0x20(%rax), %rsp
 	.byte	0xc5,0xf8,0x29,0x70,0xe0	# vmovaps %xmm6, -0x20(%rax)
 	.byte	0xc5,0xf8,0x29,0x78,0xf0	# vmovaps %xmm7, -0x10(%rax)
@@ -2937,6 +3032,7 @@ $code.=<<___	if ($win64);
 	.byte	0xc5,0x78,0x29,0x70,0x60	# vmovaps %xmm14, 0x60(%rax)
 	.byte	0xc5,0x78,0x29,0x78,0x70	# vmovaps %xmm15, 0x70(%rax)
 ___
+}
 $code.=<<___;
 	vmovdqa	.LThree(%rip), $THREE
 

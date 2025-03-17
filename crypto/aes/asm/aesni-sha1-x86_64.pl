@@ -111,6 +111,42 @@ $avx=1 if (!$avx && $win64 && ($flavour =~ /masm/ || $ENV{ASM} =~ /ml64/) &&
 	   $1>=10);
 $avx=1 if (!$avx && `$ENV{CC} -v 2>&1` =~ /((?:clang|LLVM) version|.*based on LLVM) ([0-9]+\.[0-9]+)/ && $2>=3.0);
 
+#
+# The support for aesni CPU instruction arrived to openssl at the time when not
+# all tools were ready. Therefore perlasm produced the output using a .byte
+# keyword. These days the compilers allow us to select which instruction form
+# to use using various options (for example -march=x86-64-v3).
+#
+# the proposed versions are based on very conservative guess. Perhaps older
+# tools will be able to rely on compiler.
+#
+
+$use_tool_asm=0;
+#
+# clang 9 or newer
+#
+$use_tool_asm=1 if (!$use_tool_aesni && `$ENV{CC} -v 2>&1` =~ /((?:clang|LLVM) version|.*based on LLVM) ([0-9]+\.[0-9]+)/ && $2>=9.0);
+
+#
+# GNU assembler 2.30 or newer
+#
+$use_tool_asm=1 if (!$use_tool_aesni && `$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
+		=~ /GNU assembler version ([2-9]\.[0-9]+)/ &&
+	   $1>=2.30);
+#
+# masm version 14 or higher. The version is bundled with Visual Studio 2019
+#
+$use_tool_asm=1 if (!$use_tool_aesni && $win64 && ($flavour =~ /masm/ || $ENV{ASM} =~ /ml64/) &&
+	   `ml64 2>&1` =~ /Version ([0-9]+)\./ &&
+	   $1>=14);
+
+#
+# netwide assembler 2.15 or newer (2.15 is since 2020)
+#
+$use_tool_asm=1 if (!$use_tool_aesni && $win64 && ($flavour =~ /nasm/ || $ENV{ASM} =~ /nasm/) &&
+	   `nasm -v 2>&1` =~ /NASM version ([2-9]\.[0-9]+)/ &&
+	   $1>=2.15);
+
 $shaext=1;	### set to zero if compiling for 1.0.1
 
 $stitched_decrypt=0;
@@ -2120,11 +2156,34 @@ sub sha1op38 {
     }
 }
 
+sub aesni {
+  my $line=shift;
+  my @opcode=(0x0f,0x38);
+
+    if ($use_tool_asm) {
+        return $line;
+    }
+
+    if ($line=~/(aes[a-z]+)\s+%xmm([0-9]+),\s*%xmm([0-9]+)/) {
+	my %opcodelet = (
+		"aesenc" => 0xdc,	"aesenclast" => 0xdd,
+		"aesdec" => 0xde,	"aesdeclast" => 0xdf
+	);
+	return undef if (!defined($opcodelet{$1}));
+	rex(\@opcode,$3,$2);
+	push @opcode,$opcodelet{$1},0xc0|($2&7)|(($3&7)<<3);	# ModR/M
+	unshift @opcode,0x66;
+	return ".byte\t".join(',',@opcode);
+    }
+    return $line;
+}
+
 foreach (split("\n",$code)) {
         s/\`([^\`]*)\`/eval $1/geo;
 
 	s/\b(sha1rnds4)\s+(.*)/sha1rnds4($2)/geo		or
-	s/\b(sha1[^\s]*)\s+(.*)/sha1op38($1,$2)/geo;
+	s/\b(sha1[^\s]*)\s+(.*)/sha1op38($1,$2)/geo		or
+	s/\b(aes.*%xmm[0-9]+).*$/aesni($1)/geo;
 
 	print $_,"\n";
 }
