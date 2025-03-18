@@ -12590,6 +12590,22 @@ struct quic_tls_test_data {
     int err;
 };
 
+static int clientquicdata = 0xff, serverquicdata = 0xfe;
+
+static int check_app_data(SSL *s)
+{
+    int *data, *comparedata;
+
+    /* Check app data works */
+    data = (int *)SSL_get_app_data(s);
+    comparedata = SSL_is_server(s) ? &serverquicdata : &clientquicdata;
+
+    if (comparedata != data)
+        return 0;
+
+    return 1;
+}
+
 static int crypto_send_cb(SSL *s, const unsigned char *buf, size_t buf_len,
                           size_t *consumed, void *arg)
 {
@@ -12597,6 +12613,11 @@ static int crypto_send_cb(SSL *s, const unsigned char *buf, size_t buf_len,
     struct quic_tls_test_data *peer = data->peer;
     size_t max_len = sizeof(peer->rcd_data[data->wenc_level])
                      - peer->rcd_data_len[data->wenc_level];
+
+    if (!check_app_data(s)) {
+        data->err = 1;
+        return 0;
+    }
 
     if (buf_len > max_len)
         buf_len = max_len;
@@ -12618,6 +12639,11 @@ static int crypto_recv_rcd_cb(SSL *s, const unsigned char **buf,
 {
     struct quic_tls_test_data *data = (struct quic_tls_test_data *)arg;
 
+    if (!check_app_data(s)) {
+        data->err = 1;
+        return 0;
+    }
+
     *bytes_read = data->rcd_data_len[data->renc_level];
     *buf = data->rcd_data[data->renc_level];
     return 1;
@@ -12626,6 +12652,11 @@ static int crypto_recv_rcd_cb(SSL *s, const unsigned char **buf,
 static int crypto_release_rcd_cb(SSL *s, size_t bytes_read, void *arg)
 {
     struct quic_tls_test_data *data = (struct quic_tls_test_data *)arg;
+
+    if (!check_app_data(s)) {
+        data->err = 1;
+        return 0;
+    }
 
     if (!TEST_size_t_eq(bytes_read, data->rcd_data_len[data->renc_level])
             || !TEST_size_t_gt(bytes_read, 0)) {
@@ -12642,6 +12673,9 @@ static int yield_secret_cb(SSL *s, uint32_t prot_level, int direction,
                            void *arg)
 {
     struct quic_tls_test_data *data = (struct quic_tls_test_data *)arg;
+
+    if (!check_app_data(s))
+        goto err;
 
     if (prot_level < OSSL_RECORD_PROTECTION_LEVEL_EARLY
             || prot_level > OSSL_RECORD_PROTECTION_LEVEL_APPLICATION)
@@ -12680,6 +12714,11 @@ static int got_transport_params_cb(SSL *s, const unsigned char *params,
 {
     struct quic_tls_test_data *data = (struct quic_tls_test_data *)arg;
 
+    if (!check_app_data(s)) {
+        data->err = 1;
+        return 0;
+    }
+
     if (!TEST_size_t_le(params_len, sizeof(data->params))) {
         data->err = 1;
         return 0;
@@ -12694,6 +12733,11 @@ static int got_transport_params_cb(SSL *s, const unsigned char *params,
 static int alert_cb(SSL *s, unsigned char alert_code, void *arg)
 {
     struct quic_tls_test_data *data = (struct quic_tls_test_data *)arg;
+
+    if (!check_app_data(s)) {
+        data->err = 1;
+        return 0;
+    }
 
     data->alert = 1;
     return 1;
@@ -12741,6 +12785,10 @@ static int test_quic_tls(void)
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl, NULL,
                                       NULL)))
+        goto end;
+
+    if (!TEST_true(SSL_set_app_data(clientssl, &clientquicdata))
+            || !TEST_true(SSL_set_app_data(serverssl, &serverquicdata)))
         goto end;
 
     if (!TEST_true(SSL_set_quic_tls_cbs(clientssl, qtdis, &cdata))
@@ -12861,7 +12909,11 @@ static int test_quic_tls_early_data(void)
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
                                       &clientssl, NULL, NULL))
             || !TEST_true(SSL_set_session(clientssl, sess)))
-        return 0;
+        goto end;
+
+    if (!TEST_true(SSL_set_app_data(clientssl, &clientquicdata))
+        || !TEST_true(SSL_set_app_data(serverssl, &serverquicdata)))
+        goto end;
 
     if (!TEST_true(SSL_set_quic_tls_cbs(clientssl, qtdis, &cdata))
             || !TEST_true(SSL_set_quic_tls_cbs(serverssl, qtdis, &sdata))
