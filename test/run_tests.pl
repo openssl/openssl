@@ -182,6 +182,7 @@ $eres = eval {
         # objects down all the way to the TAP::Parser::Result object
         my @failure_output = ();
         my %callbacks = ();
+        system("df");
         if ($failure_verbosity > 0 || defined $openssl_args{tap_copy}) {
             $callbacks{ALL} = sub { # on each line of test output
                 my $self = shift;
@@ -336,7 +337,6 @@ my $harness = $package->new(\%tapargs);
 my $ret =
     $harness->runtests(map { [ abs2rel($_, rel2abs(curdir())), basename($_) ] }
                        @preps);
-
 if (ref($ret) ne "TAP::Parser::Aggregator" || !$ret->has_errors) {
     $ret =
         $harness->runtests(map { [ abs2rel($_, rel2abs(curdir())), basename($_) ] }
