@@ -802,6 +802,8 @@ int ossl_quic_tls_tick(QUIC_TLS *qtls)
         if (!ossl_quic_tls_configure(qtls))
             return RAISE_INTERNAL_ERROR(qtls);
 
+        sc->s3.flags |= TLS1_FLAGS_QUIC_INTERNAL;
+
         if (qtls->args.is_server)
             SSL_set_accept_state(qtls->args.s);
         else
