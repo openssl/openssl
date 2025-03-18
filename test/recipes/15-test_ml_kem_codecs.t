@@ -59,7 +59,7 @@ foreach my $alg (@algs) {
         ok(run(app(['openssl', 'genpkey', '-out', $pem,
                     '-pkeyopt', "hexseed:$seed", '-algorithm', "ml-kem-$alg",
                     '-provparam', "ml-kem.output_formats=$f"])));
-        ok(!compare($in, $pem),
+        ok(!compare_text($in, $pem),
             sprintf("prvkey PEM match: %s, %s", $alg, $f));
 
         ok(run(app(['openssl', 'pkey', '-in', $in, '-noout',
@@ -97,7 +97,7 @@ foreach my $alg (@algs) {
     ok(run(app(['openssl', 'genpkey', '-provparam', 'ml-kem.retain_seed=no',
                 '-algorithm', "ml-kem-$alg", '-pkeyopt', "hexseed:$seed",
                 '-out', $seedless])));
-    ok(!compare(data_file($formats{'priv-only'}), $seedless),
+    ok(!compare_text(data_file($formats{'priv-only'}), $seedless),
         sprintf("seedless via cli key match: %s", $alg));
     {
         local $ENV{'OPENSSL_CONF'} = data_file("ml-kem.cnf");
@@ -106,14 +106,14 @@ foreach my $alg (@algs) {
         ok(run(app(['openssl', 'genpkey',
                     '-algorithm', "ml-kem-$alg", '-pkeyopt', "hexseed:$seed",
                     '-out', $seedless])));
-        ok(!compare(data_file($formats{'priv-only'}), $seedless),
+        ok(!compare_text(data_file($formats{'priv-only'}), $seedless),
             sprintf("seedless via config match: %s", $alg));
 
         my $seedfull = sprintf("seedfull-%s.gen.conf+cli.pem", $alg);
         ok(run(app(['openssl', 'genpkey', '-provparam', 'ml-kem.retain_seed=yes',
                     '-algorithm', "ml-kem-$alg", '-pkeyopt', "hexseed:$seed",
                     '-out', $seedfull])));
-        ok(!compare(data_file($formats{'seed-priv'}), $seedfull),
+        ok(!compare_text(data_file($formats{'seed-priv'}), $seedfull),
             sprintf("seedfull via cli vs. conf key match: %s", $alg));
     }
 
@@ -122,7 +122,7 @@ foreach my $alg (@algs) {
     $seedless = sprintf("seedless-%s.dec.cli.pem", $alg);
     ok(run(app(['openssl', 'pkey', '-provparam', 'ml-kem.retain_seed=no',
                 '-in', data_file($formats{'seed-only'}), '-out', $seedless])));
-    ok(!compare(data_file($formats{'priv-only'}), $seedless),
+    ok(!compare_text(data_file($formats{'priv-only'}), $seedless),
         sprintf("seedless via provparam key match: %s", $alg));
     {
         local $ENV{'OPENSSL_CONF'} = data_file("ml-kem.cnf");
@@ -130,13 +130,13 @@ foreach my $alg (@algs) {
         $seedless = sprintf("seedless-%s.dec.cnf.pem", $alg);
         ok(run(app(['openssl', 'pkey',
                     '-in', data_file($formats{'seed-only'}), '-out', $seedless])));
-        ok(!compare(data_file($formats{'priv-only'}), $seedless),
+        ok(!compare_text(data_file($formats{'priv-only'}), $seedless),
             sprintf("seedless via config match: %s", $alg));
 
         my $seedfull = sprintf("seedfull-%s.dec.conf+cli.pem", $alg);
         ok(run(app(['openssl', 'pkey', '-provparam', 'ml-kem.retain_seed=yes',
                     '-in', data_file($formats{'seed-only'}), '-out', $seedfull])));
-        ok(!compare(data_file($formats{'seed-priv'}), $seedfull),
+        ok(!compare_text(data_file($formats{'seed-priv'}), $seedfull),
             sprintf("seedfull via cli vs. conf key match: %s", $alg));
     }
 
@@ -145,7 +145,7 @@ foreach my $alg (@algs) {
     my $privpref = sprintf("privpref-%s.dec.cli.pem", $alg);
     ok(run(app(['openssl', 'pkey', '-provparam', 'ml-kem.prefer_seed=no',
                 '-in', data_file($formats{'seed-priv'}), '-out', $privpref])));
-    ok(!compare(data_file($formats{'priv-only'}), $privpref),
+    ok(!compare_text(data_file($formats{'priv-only'}), $privpref),
         sprintf("seed non-preference via provparam key match: %s", $alg));
 
     # (2 * @formats) tests
@@ -156,7 +156,7 @@ foreach my $alg (@algs) {
         my $out = sprintf("prv-%s-%s.txt", $alg, $f);
         ok(run(app(['openssl', 'pkey', '-in', data_file($k),
                     '-noout', '-text', '-out', $out])));
-        ok(!compare(data_file($txt), $out),
+        ok(!compare_text(data_file($txt), $out),
             sprintf("text form private key: %s with %s", $alg, $f));
     }
 
