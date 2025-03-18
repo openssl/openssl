@@ -12615,7 +12615,7 @@ static int crypto_send_cb(SSL *s, const unsigned char *buf, size_t buf_len,
     size_t max_len = sizeof(peer->rcd_data[data->wenc_level])
                      - peer->rcd_data_len[data->wenc_level];
 
-    if (!check_app_data(s)){
+    if (!check_app_data(s)) {
         data->err = 1;
         return 0;
     }
@@ -12640,7 +12640,7 @@ static int crypto_recv_rcd_cb(SSL *s, const unsigned char **buf,
 {
     struct quic_tls_test_data *data = (struct quic_tls_test_data *)arg;
 
-    if (!check_app_data(s)){
+    if (!check_app_data(s)) {
         data->err = 1;
         return 0;
     }
@@ -12654,7 +12654,7 @@ static int crypto_release_rcd_cb(SSL *s, size_t bytes_read, void *arg)
 {
     struct quic_tls_test_data *data = (struct quic_tls_test_data *)arg;
 
-    if (!check_app_data(s)){
+    if (!check_app_data(s)) {
         data->err = 1;
         return 0;
     }
@@ -12722,7 +12722,7 @@ static int got_transport_params_cb(SSL *s, const unsigned char *params,
 {
     struct quic_tls_test_data *data = (struct quic_tls_test_data *)arg;
 
-    if (!check_app_data(s)){
+    if (!check_app_data(s)) {
         data->err = 1;
         return 0;
     }
@@ -12742,7 +12742,7 @@ static int alert_cb(SSL *s, unsigned char alert_code, void *arg)
 {
     struct quic_tls_test_data *data = (struct quic_tls_test_data *)arg;
 
-    if (!check_app_data(s)){
+    if (!check_app_data(s)) {
         data->err = 1;
         return 0;
     }
