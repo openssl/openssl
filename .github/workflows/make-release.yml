@@ -38,4 +38,5 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
       run: |
         VERSION=$(echo ${{ github.ref_name }} | cut -d "-" -f 2-)
-        gh release create ${{ github.ref_name }} -t "OpenSSL $VERSION" -d --notes " " -R ${{ github.repository }} ${{ github.ref_name }}/assets/*
+        PRE_RELEASE=$([[ ${{ github.ref_name }} =~ alpha|beta ]] && echo "-p" || echo "")
+        gh release create ${{ github.ref_name }} $PRE_RELEASE -t "OpenSSL $VERSION" -d --notes " " -R ${{ github.repository }} ${{ github.ref_name }}/assets/*
