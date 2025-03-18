@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -497,7 +497,7 @@ static void *name##_newctx(void *provctx)                                      \
     return ctx;                                                                \
 }
 
-#define SHAKE_newctx(typ, uname, name, bitlen, mdlen, pad)                     \
+#define SHAKE_newctx(typ, uname, name, bitlen, mdsize, pad)                    \
 static OSSL_FUNC_digest_newctx_fn name##_newctx;                               \
 static void *name##_newctx(void *provctx)                                      \
 {                                                                              \
@@ -506,8 +506,8 @@ static void *name##_newctx(void *provctx)                                      \
                                                                                \
     if (ctx == NULL)                                                           \
         return NULL;                                                           \
-    ossl_keccak_init(ctx, pad, bitlen, mdlen);                                 \
-    if (mdlen == 0)                                                            \
+    ossl_keccak_init(ctx, pad, bitlen, mdsize * 8);                            \
+    if (mdsize == 0)                                                           \
         ctx->md_size = SIZE_MAX;                                               \
     SHAKE_SET_MD(uname, typ)                                                   \
     return ctx;                                                                \
@@ -663,9 +663,9 @@ static int shake_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 
 #define IMPLEMENT_SHAKE_functions(bitlen)                                      \
     SHAKE_newctx(shake, SHAKE_##bitlen, shake_##bitlen, bitlen,                \
-                 0 /* no default md length */, '\x1f')                         \
+                 SHAKE_MDSIZE(bitlen), '\x1f')                                 \
     PROV_FUNC_SHAKE_DIGEST(shake_##bitlen, bitlen,                             \
-                           SHA3_BLOCKSIZE(bitlen), 0,                          \
+                           SHA3_BLOCKSIZE(bitlen), SHAKE_MDSIZE(bitlen),       \
                            SHAKE_FLAGS)
 
 #define IMPLEMENT_KMAC_functions(bitlen)                                       \

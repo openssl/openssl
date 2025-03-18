@@ -256,6 +256,17 @@ OpenSSL 3.5
 
    *Valerii Krygin*
 
+ * SHAKE-128 and SHAKE-256 implementations have default digest lengths of
+   32 and 64 bytes respectively, as specified in RFC 8702. That means these
+   algorithms can now be used with EVP_DigestFinal/_ex() even if the `xoflen`
+   param hasn't been set.
+
+   This change was necessary to support SLH-DSA-SHAKE-* signatures in CMS from
+   draft-ietf-lamps-cms-sphincs-plus-19.txt. These default lengths also provide
+   full collision resistance for these algorithms.
+
+   *Daniel Van Geest*
+
 OpenSSL 3.4
 -----------
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2023-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -206,26 +206,23 @@ static int shake_kat_digestfinal_test(void)
     EVP_MD_CTX *ctx = NULL;
     unsigned char out[sizeof(shake256_output)];
 
-    /* Test that EVP_DigestFinal without setting XOFLEN fails */
     if (!TEST_ptr(ctx = shake_setup("SHAKE256")))
         return 0;
     if (!TEST_true(EVP_DigestUpdate(ctx, shake256_input,
-                   sizeof(shake256_input))))
-        return 0;
-    ERR_set_mark();
-    if (!TEST_false(EVP_DigestFinal(ctx, out, &digest_length))) {
-        ERR_clear_last_mark();
-        return 0;
-    }
-    ERR_pop_to_mark();
+                   sizeof(shake256_input)))
+        || !TEST_true(EVP_DigestFinal(ctx, out, &digest_length))
+        || !TEST_uint_eq(digest_length, 64)
+        || !TEST_mem_eq(out, digest_length,
+                        shake256_output, digest_length)
+        || !TEST_false(EVP_DigestFinalXOF(ctx, out, sizeof(out))))
+        goto err;
     EVP_MD_CTX_free(ctx);
 
-    /* However EVP_DigestFinalXOF must work */
     if (!TEST_ptr(ctx = shake_setup("SHAKE256")))
         return 0;
     if (!TEST_true(EVP_DigestUpdate(ctx, shake256_input,
                    sizeof(shake256_input))))
-        return 0;
+        goto err;
     if (!TEST_true(EVP_DigestFinalXOF(ctx, out, sizeof(out)))
         || !TEST_mem_eq(out, sizeof(out),
                         shake256_output, sizeof(shake256_output))
@@ -259,10 +256,10 @@ static int shake_kat_digestfinal_xoflen_test(void)
     params[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_XOFLEN, &sz);
     params[1] = OSSL_PARAM_construct_end();
 
-    if (!TEST_int_eq(EVP_MD_CTX_size(ctx), -1)
+    if (!TEST_int_eq(EVP_MD_CTX_size(ctx), 64)
         || !TEST_int_eq(EVP_MD_CTX_set_params(ctx, params), 1)
         || !TEST_int_eq(EVP_MD_CTX_size(ctx), sz)
-        || !TEST_int_eq(EVP_MD_get_size(md), 0)
+        || !TEST_int_eq(EVP_MD_get_size(md), 64)
         || !TEST_true(EVP_MD_xof(md))
         || !TEST_true(EVP_DigestUpdate(ctx, shake256_input,
                                        sizeof(shake256_input)))

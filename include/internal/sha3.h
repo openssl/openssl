@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -17,6 +17,7 @@
 
 # define KECCAK1600_WIDTH 1600
 # define SHA3_MDSIZE(bitlen)    (bitlen / 8)
+# define SHAKE_MDSIZE(bitlen)   2 * (bitlen / 8)
 # define KMAC_MDSIZE(bitlen)    2 * (bitlen / 8)
 # define SHA3_BLOCKSIZE(bitlen) (KECCAK1600_WIDTH - bitlen * 2) / 8
 

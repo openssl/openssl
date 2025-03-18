@@ -43,6 +43,9 @@ changes:
   * The default TLS keyshares have been changed to offer X25519MLKEM768 and
     and X25519.
 
+  * SHAKE-128 has a default digest length of 32 bytes. SHAKE-256 has a default
+    digest length of 64 bytes. (RFC 8702)
+
 This release adds the following new features:
 
   * Support for server side QUIC (RFC 9000)

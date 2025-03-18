@@ -52,7 +52,7 @@ my ($no_des, $no_dh, $no_dsa, $no_ec, $no_ec2m, $no_rc2, $no_zlib)
 
 $no_rc2 = 1 if disabled("legacy");
 
-plan tests => 28;
+plan tests => 30;
 
 ok(run(test(["pkcs7_test"])), "test pkcs7");
 
@@ -1396,5 +1396,57 @@ subtest "EdDSA tests for CMS \n" => sub {
         ok(run(app(["openssl", "cms", @prov, "-verify", "-in", $sig1,
                     "-CAfile", $crt1, "-content", $smcont])),
            "accept CMS verify with Ed25519");
+    }
+};
+
+subtest "ML-DSA tests for CMS \n" => sub {
+    plan tests => 2;
+
+    SKIP: {
+        skip "ML-DSA is not supported in this build", 2
+            if disabled("ml-dsa");
+
+        my $sig1 = "sig1.cms";
+
+        # draft-ietf-lamps-cms-ml-dsa: use SHA512 with ML-DSA
+        ok(run(app(["openssl", "cms", @prov, "-sign", "-md", "sha512", "-in", $smcont,
+                    "-certfile", $smroot, "-signer", catfile($smdir, "sm_mldsa44.pem"),
+                    "-out", $sig1])),
+           "accept CMS signature with ML-DSA-44");
+
+        ok(run(app(["openssl", "cms", @prov, "-verify", "-in", $sig1,
+                    "-CAfile", $smroot, "-content", $smcont])),
+           "accept CMS verify with ML-DSA-44");
+    }
+};
+
+subtest "SLH-DSA tests for CMS \n" => sub {
+    plan tests => 4;
+
+    SKIP: {
+        skip "SLH-DSA is not supported in this build", 2
+            if disabled("slh-dsa");
+
+        my $sig1 = "sig1.cms";
+
+        # draft-ietf-lamps-cms-sphincs-plus: use SHA512 with SLH-DSA-SHA2
+        ok(run(app(["openssl", "cms", @prov, "-sign", "-md", "sha512", "-in", $smcont,
+                    "-certfile", $smroot, "-signer", catfile($smdir, "sm_slhdsa_sha2_128s.pem"),
+                    "-out", $sig1])),
+           "accept CMS signature with SLH-DSA-SHA2-128s");
+
+        ok(run(app(["openssl", "cms", @prov, "-verify", "-in", $sig1,
+                    "-CAfile", $smroot, "-content", $smcont])),
+           "accept CMS verify with SLH-DSA-SHA2-128s");
+
+        # draft-ietf-lamps-cms-sphincs-plus: use SHAKE with SLH-DSA-SHAKE
+        ok(run(app(["openssl", "cms", @prov, "-sign", "-md", "shake128", "-in", $smcont,
+                    "-certfile", $smroot, "-signer", catfile($smdir, "sm_slhdsa_shake_128s.pem"),
+                    "-out", $sig1])),
+           "accept CMS signature with SLH-DSA-SHAKE-128s");
+
+        ok(run(app(["openssl", "cms", @prov, "-verify", "-in", $sig1,
+                    "-CAfile", $smroot, "-content", $smcont])),
+           "accept CMS verify with SLH-DSA-SHAKE-128s");
     }
 };

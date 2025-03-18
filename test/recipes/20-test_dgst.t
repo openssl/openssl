@@ -241,12 +241,29 @@ subtest "Custom length XOF digest generation with `dgst` CLI" => sub {
        "XOF: Check second digest value is consistent with the first ($xofdata[1]) vs ($expected)");
 };
 
-subtest "SHAKE digest generation with no xoflen set `dgst` CLI" => sub {
-    plan tests => 2;
+subtest "SHAKE digest generation with default xoflen `dgst` CLI" => sub {
+    plan tests => 4;
 
     my $testdata = srctop_file('test', 'data.bin');
-    ok(!run(app(['openssl', 'dgst', '-shake128', $testdata])), "SHAKE128 must fail without xoflen");
-    ok(!run(app(['openssl', 'dgst', '-shake256', $testdata])), "SHAKE256 must fail without xoflen");
+    #Digest the data once with default xoflen and once with explicit xoflen
+    my @xofdata1 = run(app(['openssl', 'dgst', '-shake128',
+                            $testdata, $testdata]), capture => 1);
+    chomp(@xofdata1);
+    my @xofdata2 = run(app(['openssl', 'dgst', '-shake128', '-xoflen', '32',
+                            $testdata]), capture => 1);
+    chomp(@xofdata2);
+    ok($xofdata1[0] eq $xofdata2[0], "XOF: Check digest value is as expected ($xofdata1[0]) vs ($xofdata2[0])");
+    ok($xofdata1[1] eq $xofdata2[0], "XOF: Check second digest value is as expected ($xofdata1[0]) vs ($xofdata2[0])");
+
+    #Digest the data once with default xoflen and once with explicit xoflen
+    @xofdata1 = run(app(['openssl', 'dgst', '-shake256',
+                         $testdata, $testdata]), capture => 1);
+    chomp(@xofdata1);
+    @xofdata2 = run(app(['openssl', 'dgst', '-shake256', '-xoflen', '64',
+                         $testdata]), capture => 1);
+    chomp(@xofdata2);
+    ok($xofdata1[0] eq $xofdata2[0], "XOF: Check digest value is as expected ($xofdata1[0]) vs ($xofdata2[0])");
+    ok($xofdata1[1] eq $xofdata2[0], "XOF: Check second digest value is as expected ($xofdata1[1]) vs ($xofdata2[0])");
 };
 
 SKIP: {
