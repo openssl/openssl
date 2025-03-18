@@ -12871,7 +12871,7 @@ static int test_quic_tls(int idx)
     SSL_CTX_free(cctx);
 
     /* Check that we didn't suddenly hit an unexpected failure during cleanup */
-    if(!TEST_false(sdata.err) || !TEST_false(cdata.err))
+    if (!TEST_false(sdata.err) || !TEST_false(cdata.err))
         testresult = 0;
 
     return testresult;
