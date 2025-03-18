@@ -425,7 +425,7 @@ static int quic_release_record(OSSL_RECORD_LAYER *rl, void *rechandle,
 
     if (rl->recunreleased == length) {
         if (!rl->qtls->args.crypto_release_rcd_cb(rl->recread,
-                                                rl->qtls->args.crypto_release_rcd_cb_arg)) {
+                                                  rl->qtls->args.crypto_release_rcd_cb_arg)) {
             QUIC_TLS_FATAL(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return OSSL_RECORD_RETURN_FATAL;
         }
