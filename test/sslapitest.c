@@ -12755,6 +12755,7 @@ static int alert_cb(SSL *s, unsigned char alert_code, void *arg)
  * Test the QUIC TLS API
  * Test 0: Normal run
  * Test 1: Force a failure
+ * Test 3: Use a CCM based ciphersuite
  */
 static int test_quic_tls(int idx)
 {
@@ -12803,6 +12804,12 @@ static int test_quic_tls(int idx)
     SSL_set_bio(serverssl, NULL, NULL);
     SSL_set_bio(clientssl, NULL, NULL);
 
+    if (idx == 2) {
+        if (!TEST_true(SSL_set_ciphersuites(serverssl, "TLS_AES_128_CCM_SHA256"))
+                || !TEST_true(SSL_set_ciphersuites(clientssl, "TLS_AES_128_CCM_SHA256")))
+            goto end;
+    }
+
     if (!TEST_true(SSL_set_app_data(clientssl, &clientquicdata))
             || !TEST_true(SSL_set_app_data(serverssl, &serverquicdata)))
         goto end;
@@ -12815,7 +12822,7 @@ static int test_quic_tls(int idx)
                                                             sizeof(sparams))))
         goto end;
 
-    if (idx == 0) {
+    if (idx != 1) {
         if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
             goto end;
     } else {
@@ -13352,7 +13359,7 @@ int setup_tests(void)
 #endif
     ADD_ALL_TESTS(test_alpn, 4);
 #if !defined(OSSL_NO_USABLE_TLS1_3)
-    ADD_ALL_TESTS(test_quic_tls, 2);
+    ADD_ALL_TESTS(test_quic_tls, 3);
     ADD_TEST(test_quic_tls_early_data);
 #endif
     return 1;
