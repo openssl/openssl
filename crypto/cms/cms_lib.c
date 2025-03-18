@@ -433,21 +433,23 @@ BIO *ossl_cms_DigestAlgorithm_init_bio(X509_ALGOR *digestAlgorithm,
         ERR_raise(ERR_LIB_CMS, CMS_R_MD_BIO_INIT_ERROR);
         goto err;
     }
-    if (EVP_MD_is_a(digest, SN_shake128))
-        xof_len = 32;
-    else if (EVP_MD_is_a(digest, SN_shake256))
-        xof_len = 64;
-    if (xof_len > 0) {
-        EVP_MD_CTX *mdctx;
-        OSSL_PARAM params[2];
+    if (EVP_MD_xof(digest)) {
+        if (EVP_MD_is_a(digest, SN_shake128))
+            xof_len = 32;
+        else if (EVP_MD_is_a(digest, SN_shake256))
+            xof_len = 64;
+        if (xof_len > 0) {
+            EVP_MD_CTX *mdctx;
+            OSSL_PARAM params[2];
 
-        if (BIO_get_md_ctx(mdbio, &mdctx) <= 0 || mdctx == NULL)
-            goto err;
-        params[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_XOFLEN,
-                                                &xof_len);
-        params[1] = OSSL_PARAM_construct_end();
-        if (!EVP_MD_CTX_set_params(mdctx, params))
-            goto err;
+            if (BIO_get_md_ctx(mdbio, &mdctx) <= 0 || mdctx == NULL)
+                goto err;
+            params[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_XOFLEN,
+                                                    &xof_len);
+            params[1] = OSSL_PARAM_construct_end();
+            if (!EVP_MD_CTX_set_params(mdctx, params))
+                goto err;
+        }
     }
     EVP_MD_free(fetched_digest);
     return mdbio;
