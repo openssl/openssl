@@ -14,6 +14,7 @@
 #include <openssl/bio.h>
 #include <openssl/asn1.h>
 #include <openssl/cms.h>
+#include <openssl/core_names.h>
 #include "internal/sizes.h"
 #include "internal/cryptlib.h"
 #include "crypto/x509.h"
@@ -407,6 +408,7 @@ BIO *ossl_cms_DigestAlgorithm_init_bio(X509_ALGOR *digestAlgorithm,
     const EVP_MD *digest = NULL;
     EVP_MD *fetched_digest = NULL;
     char alg[OSSL_MAX_NAME_SIZE];
+    size_t xof_len = 0;
 
     X509_ALGOR_get0(&digestoid, NULL, NULL, digestAlgorithm);
     OBJ_obj2txt(alg, sizeof(alg), digestoid, 0);
@@ -430,6 +432,24 @@ BIO *ossl_cms_DigestAlgorithm_init_bio(X509_ALGOR *digestAlgorithm,
     if (mdbio == NULL || BIO_set_md(mdbio, digest) <= 0) {
         ERR_raise(ERR_LIB_CMS, CMS_R_MD_BIO_INIT_ERROR);
         goto err;
+    }
+    if (EVP_MD_xof(digest)) {
+        if (EVP_MD_is_a(digest, SN_shake128))
+            xof_len = 32;
+        else if (EVP_MD_is_a(digest, SN_shake256))
+            xof_len = 64;
+        if (xof_len > 0) {
+            EVP_MD_CTX *mdctx;
+            OSSL_PARAM params[2];
+
+            if (BIO_get_md_ctx(mdbio, &mdctx) <= 0 || mdctx == NULL)
+                goto err;
+            params[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_XOFLEN,
+                                                    &xof_len);
+            params[1] = OSSL_PARAM_construct_end();
+            if (!EVP_MD_CTX_set_params(mdctx, params))
+                goto err;
+        }
     }
     EVP_MD_free(fetched_digest);
     return mdbio;
