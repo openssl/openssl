@@ -12799,6 +12799,10 @@ static int test_quic_tls(int idx)
                                       NULL)))
         goto end;
 
+    /* Reset the BIOs we set in create_ssl_objects. We should not need them */
+    SSL_set_bio(serverssl, NULL, NULL);
+    SSL_set_bio(clientssl, NULL, NULL);
+
     if (!TEST_true(SSL_set_app_data(clientssl, &clientquicdata))
             || !TEST_true(SSL_set_app_data(serverssl, &serverquicdata)))
         goto end;
@@ -12935,6 +12939,10 @@ static int test_quic_tls_early_data(void)
                                       &clientssl, NULL, NULL))
             || !TEST_true(SSL_set_session(clientssl, sess)))
         goto end;
+
+    /* Reset the BIOs we set in create_ssl_objects. We should not need them */
+    SSL_set_bio(serverssl, NULL, NULL);
+    SSL_set_bio(clientssl, NULL, NULL);
 
     if (!TEST_true(SSL_set_app_data(clientssl, &clientquicdata))
         || !TEST_true(SSL_set_app_data(serverssl, &serverquicdata)))
