@@ -423,18 +423,15 @@ static int quic_release_record(OSSL_RECORD_LAYER *rl, void *rechandle,
         return OSSL_RECORD_RETURN_FATAL;
     }
 
-    rl->recunreleased -= length;
-
-    if (rl->recunreleased > 0)
-        return OSSL_RECORD_RETURN_SUCCESS;
-
-    if (!rl->qtls->args.crypto_release_rcd_cb(rl->recread,
-                                              rl->qtls->args.crypto_release_rcd_cb_arg)) {
-        QUIC_TLS_FATAL(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return OSSL_RECORD_RETURN_FATAL;
+    if (rl->recunreleased == length) {
+        if (!rl->qtls->args.crypto_release_rcd_cb(rl->recread,
+                                                rl->qtls->args.crypto_release_rcd_cb_arg)) {
+            QUIC_TLS_FATAL(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return OSSL_RECORD_RETURN_FATAL;
+        }
+        rl->recread = 0;
     }
-
-    rl->recread = 0;
+    rl->recunreleased -= length;
     return OSSL_RECORD_RETURN_SUCCESS;
 }
 
