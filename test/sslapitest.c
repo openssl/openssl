@@ -12588,6 +12588,7 @@ struct quic_tls_test_data {
     size_t params_len;
     int alert;
     int err;
+    int forcefail;
 };
 
 static int clientquicdata = 0xff, serverquicdata = 0xfe;
@@ -12600,7 +12601,7 @@ static int check_app_data(SSL *s)
     data = (int *)SSL_get_app_data(s);
     comparedata = SSL_is_server(s) ? &serverquicdata : &clientquicdata;
 
-    if (comparedata != data)
+    if (!TEST_true(comparedata == data))
         return 0;
 
     return 1;
@@ -12654,6 +12655,13 @@ static int crypto_release_rcd_cb(SSL *s, size_t bytes_read, void *arg)
     struct quic_tls_test_data *data = (struct quic_tls_test_data *)arg;
 
     if (!check_app_data(s)){
+        data->err = 1;
+        return 0;
+    }
+
+    /* See if we need to force a failure in this callback */
+    if (data->forcefail) {
+        data->forcefail = 0;
         data->err = 1;
         return 0;
     }
@@ -12745,8 +12753,10 @@ static int alert_cb(SSL *s, unsigned char alert_code, void *arg)
 
 /*
  * Test the QUIC TLS API
+ * Test 0: Normal run
+ * Test 1: Force a failure
  */
-static int test_quic_tls(void)
+static int test_quic_tls(int idx)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *serverssl = NULL, *clientssl = NULL;
@@ -12777,6 +12787,8 @@ static int test_quic_tls(void)
     memset(&cdata, 0, sizeof(cdata));
     sdata.peer = &cdata;
     cdata.peer = &sdata;
+    if (idx == 1)
+        sdata.forcefail = 1;
 
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
                                        TLS_client_method(), TLS1_3_VERSION, 0,
@@ -12799,8 +12811,17 @@ static int test_quic_tls(void)
                                                             sizeof(sparams))))
         goto end;
 
-    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+    if (idx == 0) {
+        if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+            goto end;
+    } else {
+        /* We expect this connection to fail */
+        if (!TEST_false(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+            goto end;
+        testresult = 1;
+        sdata.err = 0;
         goto end;
+    }
 
     /* Check no problems during the handshake */
     if (!TEST_false(sdata.alert)
@@ -12837,6 +12858,10 @@ static int test_quic_tls(void)
     SSL_free(clientssl);
     SSL_CTX_free(sctx);
     SSL_CTX_free(cctx);
+
+    /* Check that we didn't suddenly hit an unexpected failure during cleanup */
+    if(!TEST_false(sdata.err) || !TEST_false(cdata.err))
+        testresult = 0;
 
     return testresult;
 }
@@ -13319,7 +13344,7 @@ int setup_tests(void)
 #endif
     ADD_ALL_TESTS(test_alpn, 4);
 #if !defined(OSSL_NO_USABLE_TLS1_3)
-    ADD_TEST(test_quic_tls);
+    ADD_ALL_TESTS(test_quic_tls, 2);
     ADD_TEST(test_quic_tls_early_data);
 #endif
     return 1;
