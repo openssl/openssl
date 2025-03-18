@@ -708,9 +708,20 @@ static int raise_error(QUIC_TLS *qtls, uint64_t error_code,
 int ossl_quic_tls_configure(QUIC_TLS *qtls)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(qtls->args.s);
+    BIO *nullbio;
 
     if (sc == NULL || !SSL_set_min_proto_version(qtls->args.s, TLS1_3_VERSION))
         return RAISE_INTERNAL_ERROR(qtls);
+
+    nullbio = BIO_new(BIO_s_null());
+    if (nullbio == NULL)
+        return RAISE_INTERNAL_ERROR(qtls);
+
+    /*
+     * Our custom record layer doesn't use the BIO - but libssl generally
+     * expects one to be present.
+     */
+    SSL_set_bio(qtls->args.s, nullbio, nullbio);
 
     SSL_clear_options(qtls->args.s, SSL_OP_ENABLE_MIDDLEBOX_COMPAT);
     ossl_ssl_set_custom_record_layer(sc, &quic_tls_record_method, qtls);
@@ -768,7 +779,6 @@ int ossl_quic_tls_tick(QUIC_TLS *qtls)
     if (!qtls->configured) {
         SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(qtls->args.s);
         SSL_CTX *sctx;
-        BIO *nullbio;
 
         if (sc == NULL)
             return RAISE_INTERNAL_ERROR(qtls);
@@ -791,16 +801,6 @@ int ossl_quic_tls_tick(QUIC_TLS *qtls)
 
         if (!ossl_quic_tls_configure(qtls))
             return RAISE_INTERNAL_ERROR(qtls);
-
-        nullbio = BIO_new(BIO_s_null());
-        if (nullbio == NULL)
-            return RAISE_INTERNAL_ERROR(qtls);
-
-        /*
-         * Our custom record layer doesn't use the BIO - but libssl generally
-         * expects one to be present.
-         */
-        SSL_set_bio(qtls->args.s, nullbio, nullbio);
 
         if (qtls->args.is_server)
             SSL_set_accept_state(qtls->args.s);
