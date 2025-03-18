@@ -4473,7 +4473,7 @@ OpenSSL 1.1.1
  * Support for TLSv1.3 added. Note that users upgrading from an earlier
    version of OpenSSL should review their configuration settings to ensure
    that they are still appropriate for TLSv1.3. For further information see:
-   <https://wiki.openssl.org/index.php/TLS1.3>
+   <https://github.com/openssl/openssl/wiki/TLS1.3>
 
    *Matt Caswell*
 
