@@ -440,7 +440,9 @@ BIO *ossl_cms_DigestAlgorithm_init_bio(X509_ALGOR *digestAlgorithm,
     if (xof_len > 0) {
         EVP_MD_CTX *mdctx;
         OSSL_PARAM params[2];
-        BIO_get_md_ctx(mdbio, &mdctx);
+
+        if (BIO_get_md_ctx(mdbio, &mdctx) <= 0 || mdctx == NULL)
+            goto err;
         params[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_XOFLEN,
                                                 &xof_len);
         params[1] = OSSL_PARAM_construct_end();

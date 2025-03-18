@@ -1424,7 +1424,7 @@ subtest "SLH-DSA tests for CMS \n" => sub {
     plan tests => 6;
 
     SKIP: {
-        skip "SLH-DSA is not supported in this build", 2
+        skip "SLH-DSA is not supported in this build", 6
             if disabled("slh-dsa");
 
         my $sig1 = "sig1.cms";
