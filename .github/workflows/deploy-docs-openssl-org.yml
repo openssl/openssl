@@ -24,7 +24,7 @@ jobs:
             echo "GitHub CLI not found. Installing..."
             sudo apt update && sudo apt install -y gh
           else
-            echo "GitHub CLI is already installed."
+            echo "✅ GitHub CLI is already installed."
           fi
 
       - name: "Trigger deployment workflow (Attempt ${{ matrix.attempt }})"
@@ -77,11 +77,50 @@ jobs:
 
           echo "✅ Deployment workflow started (Run ID: $RUN_ID). Watching progress..."
           gh run watch "$RUN_ID" --exit-status || {
-            echo "❌ Deployment workflow failed. Check logs above for details."
-            exit 1
+            echo "❌ Deployment workflow failed. Checking if retry is needed..."
+            exit 1  # Ensure GitHub detects failure for automatic re-run
           }
 
-      - name: "Notify on Failure (Optional)"
+      - name: "Check for Retry Condition"
         if: failure()
         run: |
-          echo "🚨 Deployment failed on attempt ${{ matrix.attempt }}/3. Consider adding Slack/email notifications here."
+          echo "⚠️ Deployment failed on attempt ${{ matrix.attempt }}/3."
+          echo "🔍 Checking for transient failure reasons..."
+          LOGS=$(gh run view --json conclusion -q '.conclusion' 2>/dev/null)
+
+          if [[ "$LOGS" == "timed_out" || "$LOGS" == "cancelled" || "$LOGS" == "failure" ]]; then
+            echo "🔄 Retrying deployment..."
+            exit 1  # Triggers the next retry in matrix
+          else
+            echo "❌ Persistent failure detected. Manual intervention may be required."
+            exit 0  # Prevents unnecessary retries on permanent errors
+          fi
+
+      - name: "📌 Capture Debug Logs"
+        if: failure()
+        run: |
+          echo "📌 Gathering debugging information..."
+          echo "🔍 Fetching failed workflow details..."
+          gh run view --log-failed || echo "⚠️ Could not fetch logs. Check GitHub Actions UI."
+          gh run view --json url -q '.url' || echo "⚠️ Could not fetch workflow URL."
+          gh run list -w deploy-site.yaml --json status,conclusion,createdAt -q '.[]' || echo "⚠️ Could not fetch workflow history."
+
+          echo "🔍 Fetching last 50 lines of workflow logs..."
+          gh run view --log -q '.jobs[].steps[].logs' | tail -n 50 || echo "⚠️ Could not fetch logs."
+
+      - name: "Upload Logs as Artifacts"
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-debug-logs
+          path: |
+            /home/runner/.cache/gh-cli
+            /home/runner/work/_temp/
+          retention-days: 7
+
+      - name: "Notify on Final Failure"
+        if: failure() && matrix.attempt == 3
+        run: |
+          echo "🚨 Deployment failed after 3 attempts!"
+          echo "📌 Logs uploaded as artifact: deployment-debug-logs"
+          echo "🔍 Check logs here: https://github.com/${{ github.repository }}/actions"
