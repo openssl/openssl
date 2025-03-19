@@ -12969,15 +12969,15 @@ static int test_quic_tls_early_data(void)
     SSL_set_msg_callback(serverssl, assert_no_end_of_early_data);
     SSL_set_msg_callback(clientssl, assert_no_end_of_early_data);
 
-    if (!TEST_int_eq(SSL_connect(clientssl), 0)
-            || !TEST_int_eq(SSL_accept(serverssl), 0)
+    if (!TEST_int_eq(SSL_connect(clientssl), -1)
+            || !TEST_int_eq(SSL_accept(serverssl), -1)
             || !TEST_int_eq(SSL_get_early_data_status(serverssl), SSL_EARLY_DATA_ACCEPTED)
             || !TEST_int_eq(SSL_get_error(clientssl, 0), SSL_ERROR_WANT_READ)
             || !TEST_int_eq(SSL_get_error(serverssl, 0), SSL_ERROR_WANT_READ))
         goto end;
 
     /* Check the encryption levels are what we expect them to be */
-    if (!TEST_true(sdata.renc_level == OSSL_RECORD_PROTECTION_LEVEL_EARLY)
+    if (!TEST_true(sdata.renc_level == OSSL_RECORD_PROTECTION_LEVEL_HANDSHAKE)
             || !TEST_true(sdata.wenc_level == OSSL_RECORD_PROTECTION_LEVEL_APPLICATION)
             || !TEST_true(cdata.renc_level == OSSL_RECORD_PROTECTION_LEVEL_NONE)
             || !TEST_true(cdata.wenc_level == OSSL_RECORD_PROTECTION_LEVEL_EARLY))
