@@ -573,7 +573,8 @@ WRITE_TRAN ossl_statem_client_write_transition(SSL_CONNECTION *s)
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_CW_CLNT_HELLO:
-        if (s->early_data_state == SSL_EARLY_DATA_CONNECTING) {
+        if (s->early_data_state == SSL_EARLY_DATA_CONNECTING
+                && !SSL_IS_QUIC_HANDSHAKE(s)) {
             /*
              * We are assuming this is a TLSv1.3 connection, although we haven't
              * actually selected a version yet.
