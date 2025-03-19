@@ -796,6 +796,10 @@ static int helper_init(struct helper *h, const char *script_name,
     if (!TEST_true(ossl_quic_set_diag_title(h->c_ctx, title)))
         goto err;
 
+    /* Workaround for intermittent multistream test CI failures */
+    if (!TEST_true(SSL_CTX_set1_groups_list(h->c_ctx, "?X25519:?P-256:?ffdhe2048")))
+        goto err;
+
     if (!TEST_ptr(h->c_conn = SSL_new(h->c_ctx)))
         goto err;
 
