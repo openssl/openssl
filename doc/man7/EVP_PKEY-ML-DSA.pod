@@ -285,7 +285,7 @@ L<provider-keymgmt(7)>,
 L<EVP_PKEY_get_raw_private_key(3)>,
 L<EVP_PKEY_get_raw_public_key(3)>,
 L<EVP_PKEY_get1_encoded_public_key(3)>,
-LOSSL_PROVIDER_add_conf_parameter(3)>,
+L<OSSL_PROVIDER_add_conf_parameter(3)>,
 L<provider-keymgmt(7)>,
 L<EVP_SIGNATURE-ML-DSA(7)>
 
