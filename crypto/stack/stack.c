@@ -439,27 +439,15 @@ void OPENSSL_sk_zero(OPENSSL_STACK *st)
 
 void OPENSSL_sk_pop_free(OPENSSL_STACK *st, OPENSSL_sk_freefunc func)
 {
-    if (st == NULL)
-        return;
-
-    OPENSSL_sk_pop_free_thunk(st, st->free_thunk, func);
-}
-
-void OPENSSL_sk_pop_free_thunk(OPENSSL_STACK *st, OPENSSL_sk_freefunc_thunk free_thunk,
-                               OPENSSL_sk_freefunc func)
-{
     int i;
 
     if (st == NULL)
         return;
 
-    if (free_thunk == NULL)
-        free_thunk = st->free_thunk;
-
     for (i = 0; i < st->num; i++) {
         if (st->data[i] != NULL) {
-            if (free_thunk != NULL)
-                free_thunk(func, (void *)st->data[i]);
+            if (st->free_thunk != NULL)
+                st->free_thunk(func, (void *)st->data[i]);
             else
                 func((void *)st->data[i]);
         }

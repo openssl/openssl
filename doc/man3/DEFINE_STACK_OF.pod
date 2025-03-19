@@ -15,10 +15,9 @@ OPENSSL_sk_deep_copy, OPENSSL_sk_delete, OPENSSL_sk_delete_ptr,
 OPENSSL_sk_dup, OPENSSL_sk_find, OPENSSL_sk_find_ex, OPENSSL_sk_find_all,
 OPENSSL_sk_free, OPENSSL_sk_insert, OPENSSL_sk_is_sorted, OPENSSL_sk_new,
 OPENSSL_sk_new_null, OPENSSL_sk_new_reserve, OPENSSL_sk_num, OPENSSL_sk_pop,
-OPENSSL_sk_pop_free, OPENSSL_sk_pop_free_thunk, OPENSSL_sk_push,
-OPENSSL_sk_reserve, OPENSSL_sk_set, OPENSSL_sk_set_thunks,
-OPENSSL_sk_set_cmp_func, OPENSSL_sk_shift, OPENSSL_sk_sort, OPENSSL_sk_unshift,
-OPENSSL_sk_value, OPENSSL_sk_zero
+OPENSSL_sk_pop_free, OPENSSL_sk_push, OPENSSL_sk_reserve, OPENSSL_sk_set,
+OPENSSL_sk_set_thunks, OPENSSL_sk_set_cmp_func, OPENSSL_sk_shift,
+OPENSSL_sk_sort, OPENSSL_sk_unshift, OPENSSL_sk_value, OPENSSL_sk_zero
 - stack container
 
 =head1 SYNOPSIS
@@ -240,14 +239,13 @@ OPENSSL_sk_delete(), OPENSSL_sk_delete_ptr(), OPENSSL_sk_dup(),
 OPENSSL_sk_find(), OPENSSL_sk_find_ex(), OPENSSL_sk_find_all(),
 OPENSSL_sk_free(), OPENSSL_sk_insert(), OPENSSL_sk_is_sorted(),
 OPENSSL_sk_new(), OPENSSL_sk_new_null(), OPENSSL_sk_new_reserve(),
-OPENSSL_sk_num(), OPENSSL_sk_pop(), OPENSSL_sk_pop_free(),
-OPENSSL_sk_pop_free_thunk(), OPENSSL_sk_push(), OPENSSL_sk_reserve(),
-OPENSSL_sk_set(), OPENSSL_sk_set_cmp_func(), OPENSSL_sk_set_thunks(),
-OPENSSL_sk_shift(), OPENSSL_sk_sort(), OPENSSL_sk_unshift(), OPENSSL_sk_value(),
-OPENSSL_sk_zero().
+OPENSSL_sk_num(), OPENSSL_sk_pop(), OPENSSL_sk_pop_free(), OPENSSL_sk_push(),
+OPENSSL_sk_reserve(), OPENSSL_sk_set(), OPENSSL_sk_set_cmp_func(),
+OPENSSL_sk_set_thunks(), OPENSSL_sk_shift(), OPENSSL_sk_sort(),
+OPENSSL_sk_unshift(), OPENSSL_sk_value(), OPENSSL_sk_zero().
 
-OPENSSL_sk_set_thunks() and OPENSSL_sk_pop_free_thunk(), while public by
-necessity, are actually internal functions and should not be used.
+OPENSSL_sk_set_thunks(), while public by necessity, is actually an internal
+function and should not be used.
 
 =head1 RETURN VALUES
 
@@ -304,8 +302,7 @@ B<sk_I<TYPE>_sort>() should be called before these find operations.
 Before OpenSSL 3.3.0 B<sk_I<TYPE>_push>() returned -1 if I<sk> was NULL. It
 was changed to return 0 in this condition as for other errors.
 
-OPENSSL_sk_set_thunks() and OPENSSL_sk_pop_free_thunk() were added in
-OpenSSL 3.6.0.
+OPENSSL_sk_set_thunks() was added in OpenSSL 3.6.0.
 
 =head1 COPYRIGHT
 

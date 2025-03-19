@@ -39,8 +39,6 @@ OPENSSL_STACK *OPENSSL_sk_set_thunks(OPENSSL_STACK *st, OPENSSL_sk_freefunc_thun
 int OPENSSL_sk_reserve(OPENSSL_STACK *st, int n);
 void OPENSSL_sk_free(OPENSSL_STACK *);
 void OPENSSL_sk_pop_free(OPENSSL_STACK *st, OPENSSL_sk_freefunc func);
-void OPENSSL_sk_pop_free_thunk(OPENSSL_STACK *st, OPENSSL_sk_freefunc_thunk free_thunk,
-                               OPENSSL_sk_freefunc func);
 OPENSSL_STACK *OPENSSL_sk_deep_copy(const OPENSSL_STACK *,
                                     OPENSSL_sk_copyfunc c,
                                     OPENSSL_sk_freefunc f);
