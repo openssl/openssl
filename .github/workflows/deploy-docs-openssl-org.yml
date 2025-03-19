@@ -17,6 +17,8 @@ jobs:
           if ! command -v gh &>/dev/null; then
             echo "GitHub CLI not found. Installing..."
             sudo apt update && sudo apt install -y gh
+          else
+            echo "GitHub CLI is already installed."
           fi
 
       - name: "Trigger deployment workflow"
@@ -24,36 +26,54 @@ jobs:
           GH_REPO: "openssl/openssl-docs"
           GH_TOKEN: ${{ secrets.OPENSSL_MACHINE_TOKEN }}
         run: |
-          # Retry function
+          # Exponential backoff retry function
           retry() {
-            local retries=3
-            local count=0
-            until "$@"; do
+            local max_attempts=5
+            local attempt=1
+            local delay=5  # Start with 5s delay
+
+            while [ $attempt -le $max_attempts ]; do
+              "$@" && return 0  # If command succeeds, exit function
               exit_code=$?
-              count=$((count + 1))
-              if [ $count -lt $retries ]; then
-                echo "Retrying ($count/$retries)..."
-                sleep 5
-              else
-                echo "Command failed after $retries attempts."
-                exit $exit_code
-              fi
+              echo "Attempt $attempt/$max_attempts failed. Retrying in $delay seconds..."
+              sleep $delay
+              delay=$((delay * 2))  # Exponential backoff
+              attempt=$((attempt + 1))
             done
+
+            echo "Command failed after $max_attempts attempts: $*"
+            exit $exit_code
           }
 
-          # Trigger the deployment workflow
+          echo "Triggering deployment workflow..."
           retry gh workflow run deploy-site.yaml -f branch=${{ github.ref_name }}
 
-          # Wait for the workflow to start and get the run ID
           echo "Waiting for workflow to start..."
-          sleep 5  # Small delay to allow GitHub to process the request
+          sleep 5  # Short delay to allow GitHub to initialize the workflow
 
-          RUN_ID=$(retry gh run list -w deploy-site.yaml -L 1 --json databaseId -q ".[0].databaseId")
+          echo "Fetching latest run ID..."
+          RUN_ID=""
+          for i in {1..5}; do
+            RUN_ID=$(gh run list -w deploy-site.yaml -L 1 --json databaseId -q ".[0].databaseId" 2>/dev/null)
+            if [[ -n "$RUN_ID" ]]; then
+              break
+            fi
+            echo "Retrying to fetch RUN_ID ($i/5)..."
+            sleep $((i * 3))  # Gradual backoff to avoid API rate limits
+          done
 
           if [[ -z "$RUN_ID" ]]; then
-            echo "Failed to fetch the workflow run ID. Exiting."
+            echo "❌ ERROR: Failed to retrieve workflow run ID after multiple attempts."
             exit 1
           fi
 
-          echo "Watching deployment progress (Run ID: $RUN_ID)..."
-          gh run watch "$RUN_ID" --exit-status
+          echo "✅ Deployment workflow started successfully (Run ID: $RUN_ID). Watching progress..."
+          gh run watch "$RUN_ID" --exit-status || {
+            echo "❌ Deployment workflow failed. Check logs above for details."
+            exit 1
+          }
+
+      - name: "Notify on Failure (Optional)"
+        if: failure()
+        run: |
+          echo "🚨 Deployment failed! Consider adding Slack/email notifications here."
