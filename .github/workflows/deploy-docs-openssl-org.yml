@@ -12,12 +12,48 @@ jobs:
   trigger:
     runs-on: ubuntu-latest
     steps:
-      - name: "Trigger deployment workflow"
+      - name: "Ensure GitHub CLI is installed"
         run: |
-          gh workflow run -f branch=${{ github.ref_name }} deploy-site.yaml
-          sleep 3
-          RUN_ID=$(gh run list -w deploy-site.yaml -L 1 --json databaseId -q ".[0].databaseId")
-          gh run watch ${RUN_ID} --exit-status
+          if ! command -v gh &>/dev/null; then
+            echo "GitHub CLI not found. Installing..."
+            sudo apt update && sudo apt install -y gh
+          fi
+
+      - name: "Trigger deployment workflow"
         env:
           GH_REPO: "openssl/openssl-docs"
           GH_TOKEN: ${{ secrets.OPENSSL_MACHINE_TOKEN }}
+        run: |
+          # Retry function
+          retry() {
+            local retries=3
+            local count=0
+            until "$@"; do
+              exit_code=$?
+              count=$((count + 1))
+              if [ $count -lt $retries ]; then
+                echo "Retrying ($count/$retries)..."
+                sleep 5
+              else
+                echo "Command failed after $retries attempts."
+                exit $exit_code
+              fi
+            done
+          }
+
+          # Trigger the deployment workflow
+          retry gh workflow run deploy-site.yaml -f branch=${{ github.ref_name }}
+
+          # Wait for the workflow to start and get the run ID
+          echo "Waiting for workflow to start..."
+          sleep 5  # Small delay to allow GitHub to process the request
+
+          RUN_ID=$(retry gh run list -w deploy-site.yaml -L 1 --json databaseId -q ".[0].databaseId")
+
+          if [[ -z "$RUN_ID" ]]; then
+            echo "Failed to fetch the workflow run ID. Exiting."
+            exit 1
+          fi
+
+          echo "Watching deployment progress (Run ID: $RUN_ID)..."
+          gh run watch "$RUN_ID" --exit-status
