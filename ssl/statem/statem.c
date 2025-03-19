@@ -728,7 +728,6 @@ static SUB_STATE_RETURN read_state_machine(SSL_CONNECTION *s)
                 st->read_state = READ_STATE_HEADER;
                 break;
 
-
             case WORK_FINISHED_SWAP:
             case WORK_FINISHED_STOP:
                 if (SSL_CONNECTION_IS_DTLS(s)) {

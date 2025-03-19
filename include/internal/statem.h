@@ -26,7 +26,7 @@ typedef enum {
     WORK_FINISHED_STOP,
     /* We're done working move onto the next thing */
     WORK_FINISHED_CONTINUE,
-    /* We're done writing, start reading (or vice versa)*/
+    /* We're done writing, start reading (or vice versa) */
     WORK_FINISHED_SWAP,
     /* We're working on phase A */
     WORK_MORE_A,
