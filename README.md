@@ -164,8 +164,7 @@ There are numerous source code demos for using various OpenSSL capabilities in t
 Wiki
 ----
 
-There is a Wiki at [wiki] which is
-currently not very active.
+There is a [GitHub Wiki] which is currently not very active.
 
 License
 =======
@@ -214,7 +213,7 @@ All rights reserved.
     <https://github.com/openssl/openssl>
     "OpenSSL GitHub Mirror"
 
-[wiki]:
+[GitHub Wiki]:
     <https://github.com/openssl/openssl/wiki>
     "OpenSSL Wiki"
 
