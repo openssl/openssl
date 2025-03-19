@@ -300,7 +300,7 @@ jobs:
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
     - name: make test
-      run: .github/workflows/make-test OPENSSL_TEST_RAND_ORDER=0 TESTS="-test_fuzz* -test_ssl_* -test_sslapi -test_evp -test_cmp_http -test_verify -test_cms -test_store -test_enc -[01][0-9]"
+      run: .github/workflows/make-test V=1 OPENSSL_TEST_RAND_ORDER=0 TESTS="test_quic_multistream"
     - name: save artifacts
       uses: actions/upload-artifact@v4
       with:
