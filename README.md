@@ -164,8 +164,7 @@ There are numerous source code demos for using various OpenSSL capabilities in t
 Wiki
 ----
 
-There is a Wiki at [wiki.openssl.org] which is currently not very active.
-It contains a lot of useful information, not all of which is up-to-date.
+There is a [GitHub Wiki] which is currently not very active.
 
 License
 =======
@@ -214,8 +213,8 @@ All rights reserved.
     <https://github.com/openssl/openssl>
     "OpenSSL GitHub Mirror"
 
-[wiki.openssl.org]:
-    <https://wiki.openssl.org>
+[GitHub Wiki]:
+    <https://github.com/openssl/openssl/wiki>
     "OpenSSL Wiki"
 
 [ossl-guide-migration(7ossl)]:
@@ -232,7 +231,7 @@ All rights reserved.
      <https://tools.ietf.org/html/rfc9000>
 
 [Binaries]:
-    <https://wiki.openssl.org/index.php/Binaries>
+    <https://github.com/openssl/openssl/wiki/Binaries>
     "List of third party OpenSSL binaries"
 
 [OpenSSL Guide]:
