@@ -59,7 +59,7 @@ int OSSL_parse_url(const char *url, char **pscheme, char **puser, char **phost,
     const char *user, *user_end;
     const char *host, *host_end;
     const char *port, *port_end;
-    unsigned int portnum;
+    unsigned int portnum = 0;
     const char *path, *path_end;
     const char *query, *query_end;
     const char *frag, *frag_end;
@@ -107,13 +107,7 @@ int OSSL_parse_url(const char *url, char **pscheme, char **puser, char **phost,
         p = ++host_end;
     } else {
         /* look for start of optional port, path, query, or fragment */
-        host_end = strchr(host, ':');
-        if (host_end == NULL)
-            host_end = strchr(host, '/');
-        if (host_end == NULL)
-            host_end = strchr(host, '?');
-        if (host_end == NULL)
-            host_end = strchr(host, '#');
+        host_end = strpbrk(host, ":/?#");
         if (host_end == NULL) /* the remaining string is just the hostname */
             host_end = host + strlen(host);
         p = host_end;
