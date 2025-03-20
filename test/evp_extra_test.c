@@ -1870,6 +1870,46 @@ static int test_EVP_DigestVerifyInit(void)
     return ret;
 }
 
+#ifndef OPENSSL_NO_EC
+static int test_ecdsa_digestsign_keccak(void)
+{
+    int ret = 0;
+    EVP_PKEY *pkey = NULL;
+    EVP_MD_CTX *ctx = NULL;
+    EVP_MD *md = NULL;
+
+    if (nullprov != NULL)
+        return TEST_skip("Test does not support a non-default library context");
+
+    pkey = load_example_ec_key();
+    if (!TEST_ptr(pkey))
+        goto err;
+
+    /* This would not work with FIPS provider so just use NULL libctx */
+    md = EVP_MD_fetch(NULL, "KECCAK-256", NULL);
+    if (!TEST_ptr(md))
+        goto err;
+
+    ctx = EVP_MD_CTX_new();
+    if (!TEST_ptr(ctx))
+        goto err;
+
+    /*
+     * Just check EVP_DigestSignInit_ex() works.
+     */
+    if (!TEST_true(EVP_DigestSignInit(ctx, NULL, md, NULL, pkey)))
+            goto err;
+
+    ret = 1;
+ err:
+    EVP_MD_CTX_free(ctx);
+    EVP_PKEY_free(pkey);
+    EVP_MD_free(md);
+
+    return ret;
+}
+#endif
+
 #ifndef OPENSSL_NO_SIPHASH
 /* test SIPHASH MAC via EVP_PKEY with non-default parameters and reinit */
 static int test_siphash_digestsign(void)
@@ -5905,6 +5945,9 @@ int setup_tests(void)
     ADD_TEST(test_EVP_set_default_properties);
     ADD_ALL_TESTS(test_EVP_DigestSignInit, 30);
     ADD_TEST(test_EVP_DigestVerifyInit);
+#ifndef OPENSSL_NO_EC
+    ADD_TEST(test_ecdsa_digestsign_keccak);
+#endif
 #ifndef OPENSSL_NO_SIPHASH
     ADD_TEST(test_siphash_digestsign);
 #endif
