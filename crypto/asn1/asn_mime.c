@@ -96,7 +96,7 @@ int i2d_ASN1_bio_stream(BIO *out, ASN1_VALUE *val, BIO *in, int flags,
      * internally
      */
     else
-        ASN1_item_i2d_bio(it, out, val);
+        rv = ASN1_item_i2d_bio(it, out, val);
     return rv;
 }
 
