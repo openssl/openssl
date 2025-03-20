@@ -125,25 +125,25 @@ $use_tool_asm=0;
 #
 # clang 9 or newer
 #
-$use_tool_asm=1 if (!$use_tool_aesni && `$ENV{CC} -v 2>&1` =~ /((?:clang|LLVM) version|.*based on LLVM) ([0-9]+\.[0-9]+)/ && $2>=9.0);
+$use_tool_asm=1 if (!$use_tool_asm && `$ENV{CC} -v 2>&1` =~ /((?:clang|LLVM) version|.*based on LLVM) ([0-9]+\.[0-9]+)/ && $2>=9.0);
 
 #
 # GNU assembler 2.30 or newer
 #
-$use_tool_asm=1 if (!$use_tool_aesni && `$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
+$use_tool_asm=1 if (!$use_tool_asm && `$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
 		=~ /GNU assembler version ([2-9]\.[0-9]+)/ &&
 	   $1>=2.30);
 #
 # masm version 14 or higher. The version is bundled with Visual Studio 2019
 #
-$use_tool_asm=1 if (!$use_tool_aesni && $win64 && ($flavour =~ /masm/ || $ENV{ASM} =~ /ml64/) &&
+$use_tool_asm=1 if (!$use_tool_asm && $win64 && ($flavour =~ /masm/ || $ENV{ASM} =~ /ml64/) &&
 	   `ml64 2>&1` =~ /Version ([0-9]+)\./ &&
 	   $1>=14);
 
 #
 # netwide assembler 2.15 or newer (2.15 is since 2020)
 #
-$use_tool_asm=1 if (!$use_tool_aesni && $win64 && ($flavour =~ /nasm/ || $ENV{ASM} =~ /nasm/) &&
+$use_tool_asm=1 if (!$use_tool_asm && $win64 && ($flavour =~ /nasm/ || $ENV{ASM} =~ /nasm/) &&
 	   `nasm -v 2>&1` =~ /NASM version ([2-9]\.[0-9]+)/ &&
 	   $1>=2.15);
 
