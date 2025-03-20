@@ -213,8 +213,11 @@ static int log_frame_actual(QLOG *qlog_instance, PACKET *pkt,
     size_t i;
     PACKET orig_pkt = *pkt;
 
-    if (!ossl_quic_wire_peek_frame_header(pkt, &frame_type, NULL))
+    if (!ossl_quic_wire_peek_frame_header(pkt, &frame_type, NULL)) {
+        if (*need_skip == 0)
+            *need_skip = 1;
         return 0;
+    }
 
     /*
      * If something goes wrong decoding a frame we cannot log it as that frame
