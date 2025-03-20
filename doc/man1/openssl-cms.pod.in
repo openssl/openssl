@@ -7,6 +7,8 @@ openssl-cms - CMS command
 
 =head1 SYNOPSIS
 
+=for openssl duplicate options
+
 B<openssl> B<cms>
 [B<-help>]
 

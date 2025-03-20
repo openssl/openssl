@@ -6,6 +6,8 @@ openssl - OpenSSL command line program
 
 =head1 SYNOPSIS
 
+=for openssl duplicate options
+
 B<openssl>
 I<command>
 [ I<options> ... ]
