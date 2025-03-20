@@ -1886,7 +1886,7 @@ $code.=<<___ if ($use_tool_asm) ;
 	movaps 0x20(rsp),xmm8
 	movaps 0x10(rsp),xmm7
 	movaps 0x00(rsp),xmm6
-	sub	rsp,\$xa8
+	sub	rsp,\$168
 ___
 $code.=<<___ if (!$use_tool_asm) ;
 	.byte	0x33,0xf8,0x09,0x00	#movaps 0x90(rsp),xmm15
