@@ -13,6 +13,8 @@ use warnings;
 use Carp;
 use Test::More 0.96;
 
+use File::Spec::Functions 'catfile';
+
 use Exporter;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 $VERSION = "1.0";
@@ -1296,10 +1298,11 @@ sub __decorate_cmd {
 
     if ($ENV{DO_MPROFILE}) {
         my $libmprofile = $ENV{LIBMPROFILE};
+
 	if ($^O ne 'WIN32') {
-            $ENV{LD_PRELOAD}="$libmprofile";
-	    $ENV{MPROFILE_MODE}="1";
-	    $ENV{MPROFILE_OUTF}="";
+            $ENV{LD_PRELOAD} = "$libmprofile";
+            $ENV{MPROFILE_MODE} = "1";
+            $ENV{MPROFILE_OUTF} = catfile(result_dir(), "$test_name".".json");
         }
     }
     $cmdstr .= "$stdin$stdout$stderr";
