@@ -618,6 +618,11 @@ static int asn1_ex_i2c(const ASN1_VALUE **pval, unsigned char *cout, int *putype
     default:
         /* All based on ASN1_STRING and handled the same */
         strtmp = (ASN1_STRING *)*pval;
+        /* In case of default constructed ASN1_TYPE *pval may be NULL */
+        if (strtmp == NULL) {
+            ERR_raise(ERR_LIB_ASN1, ASN1_R_ILLEGAL_NULL_VALUE);
+            return -1;
+        }
         /* Special handling for NDEF */
         if ((it->size == ASN1_TFLG_NDEF)
             && (strtmp->flags & ASN1_STRING_FLAG_NDEF)) {
