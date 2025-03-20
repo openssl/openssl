@@ -30,7 +30,12 @@ OpenSSL 3.5
 
 ### Changes between 3.5 and 3.6 [xx XXX xxxx]
 
- * none yet
+ * Change default EC point formats configuration to support only 'uncompressed'
+   format, and add SSL_CTX_set1_ec_point_formats() and SSL_set1_ec_point_formats()
+   methods and corresponding ECPointFormats configuration option, to allow custom
+   configuration of the EC point formats.
+
+   *Tim Perry*
 
 ### Changes between 3.4 and 3.5 [xx XXX xxxx]
 
