@@ -699,13 +699,11 @@ gcm_ghash_clmul:
 	endbranch
 .L_ghash_clmul:
 ___
-if ($win64) {
-$code.=<<___;
+$code.=<<___ if ($win64);
 	lea	-0x88(%rsp),%rax
 .LSEH_begin_gcm_ghash_clmul:
 ___
-  if ($use_tool_asm) {
-$code.=<<___;
+$code.=<<___ if ($win64 && $use_tool_asm);
 	lea	-0x20(%rax),%rsp
 	movaps	%xmm6,-0x20(%rax)
 	movaps	%xmm7,-0x10(%rax)
@@ -718,8 +716,7 @@ $code.=<<___;
 	movaps	%xmm14,0x60(%rax)
 	movaps	%xmm15,0x70(%rax)
 ___
-  } else {
-$code.=<<___;
+$code.=<<___ if ($win64 && !$use_tool_asm);
 	# I can't trust assembler to use specific encoding:-(
 	.byte	0x48,0x8d,0x60,0xe0		#lea	-0x20(%rax),%rsp
 	.byte	0x0f,0x29,0x70,0xe0		#movaps	%xmm6,-0x20(%rax)
@@ -733,8 +730,6 @@ $code.=<<___;
 	.byte	0x44,0x0f,0x29,0x70,0x60	#movaps	%xmm14,0x60(%rax)
 	.byte	0x44,0x0f,0x29,0x78,0x70	#movaps	%xmm15,0x70(%rax)
 ___
-  }
-}
 $code.=<<___;
 	movdqa		.Lbswap_mask(%rip),$T3
 
@@ -1241,13 +1236,11 @@ my ($Xlo,$Xhi,$Xmi,
     $Zlo,$Zhi,$Zmi,
     $Hkey,$HK,$T1,$T2,
     $Xi,$Xo,$Tred,$bswap,$Ii,$Ij) = map("%xmm$_",(0..15));
-if ($win64) {
-$code.=<<___;
+$code.=<<___ if ($win64) ;
 	lea	-0x88(%rsp),%rax
 .LSEH_begin_gcm_ghash_avx:
 ___
-  if ($use_tool_asm) {
-$code.=<<___;
+$code.=<<___ if ($win64 && $use_tool_asm);
 	lea	-0x20(%rax),%rsp
 	movaps	%xmm6,-0x20(%rax)
 	movaps	%xmm7,-0x10(%rax)
@@ -1260,8 +1253,7 @@ $code.=<<___;
 	movaps	%xmm14,0x60(%rax)
 	movaps	%xmm15,0x70(%rax)
 ___
-  } else {
-$code.=<<___;
+$code.=<<___ if ($win64 && !$use_tool_asm);
 	# I can't trust assembler to use specific encoding:-(
 	.byte	0x48,0x8d,0x60,0xe0		#lea	-0x20(%rax),%rsp
 	.byte	0x0f,0x29,0x70,0xe0		#movaps	%xmm6,-0x20(%rax)
@@ -1275,8 +1267,6 @@ $code.=<<___;
 	.byte	0x44,0x0f,0x29,0x70,0x60	#movaps	%xmm14,0x60(%rax)
 	.byte	0x44,0x0f,0x29,0x78,0x70	#movaps	%xmm15,0x70(%rax)
 ___
-  }
-}
 $code.=<<___;
 	vzeroupper
 
@@ -1885,8 +1875,7 @@ $code.=<<___;
 .LSEH_info_gcm_ghash_clmul:
 	.byte	0x01,0x33,0x16,0x00
 ---
-if ($use_tool_asm) {
-$code.=<<___;
+$code.=<<___ if ($use_tool_asm) ;
 	movaps 0x90(rsp),xmm15
 	movaps 0x80(rsp),xmm14
 	movaps 0x70(rsp),xmm13
@@ -1898,9 +1887,8 @@ $code.=<<___;
 	movaps 0x10(rsp),xmm7
 	movaps 0x00(rsp),xmm6
 	sub	rsp,0xa8
-___
-} else {
-$code.=<<___;
+---
+$code.=<<___ if (!$use_tool_asm) ;
 	.byte	0x33,0xf8,0x09,0x00	#movaps 0x90(rsp),xmm15
 	.byte	0x2e,0xe8,0x08,0x00	#movaps 0x80(rsp),xmm14
 	.byte	0x29,0xd8,0x07,0x00	#movaps 0x70(rsp),xmm13
