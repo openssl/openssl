@@ -197,11 +197,13 @@ static int ecdsa_setup_md(PROV_ECDSA_CTX *ctx,
         goto err;
     }
     md_nid = ossl_digest_get_approved_nid(md);
+#ifdef FIPS_MODULE
     if (md_nid == NID_undef) {
         ERR_raise_data(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED,
                        "digest=%s", mdname);
         goto err;
     }
+#endif
     /* XOF digests don't work */
     if (EVP_MD_xof(md)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_XOF_DIGESTS_NOT_ALLOWED);
@@ -237,16 +239,22 @@ static int ecdsa_setup_md(PROV_ECDSA_CTX *ctx,
     EVP_MD_free(ctx->md);
 
     ctx->aid_len = 0;
-    if (WPACKET_init_der(&pkt, ctx->aid_buf, sizeof(ctx->aid_buf))
-        && ossl_DER_w_algorithmIdentifier_ECDSA_with_MD(&pkt, -1, ctx->ec,
-                                                        md_nid)
-        && WPACKET_finish(&pkt)) {
-        WPACKET_get_total_written(&pkt, &ctx->aid_len);
-        aid = WPACKET_get_curr(&pkt);
+#ifndef FIPS_MODULE
+    if (md_nid != NID_undef) {
+#else
+    {
+#endif
+        if (WPACKET_init_der(&pkt, ctx->aid_buf, sizeof(ctx->aid_buf))
+            && ossl_DER_w_algorithmIdentifier_ECDSA_with_MD(&pkt, -1, ctx->ec,
+                                                            md_nid)
+            && WPACKET_finish(&pkt)) {
+            WPACKET_get_total_written(&pkt, &ctx->aid_len);
+            aid = WPACKET_get_curr(&pkt);
+        }
+        WPACKET_cleanup(&pkt);
+        if (aid != NULL && ctx->aid_len != 0)
+            memmove(ctx->aid_buf, aid, ctx->aid_len);
     }
-    WPACKET_cleanup(&pkt);
-    if (aid != NULL && ctx->aid_len != 0)
-        memmove(ctx->aid_buf, aid, ctx->aid_len);
 
     ctx->mdctx = NULL;
     ctx->md = md;
