@@ -496,6 +496,7 @@ my @disablables = (
     "ml-dsa",
     "ml-kem",
     "module",
+    "mprofile",
     "msan",
     "multiblock",
     "nextprotoneg",
@@ -554,7 +555,7 @@ my @disablables = (
     "zlib",
     "zlib-dynamic",
     "zstd",
-    "zstd-dynamic",
+    "zstd-dynamic"
     );
 foreach my $proto ((@tls, @dtls))
         {
@@ -605,6 +606,7 @@ our %disabled = ( # "what"         => "comment"
                   "jitter"              => "default",
                   "ktls"                => "default",
                   "md2"                 => "default",
+                  "mprofile"            => "default",
                   "msan"                => "default",
                   "rc5"                 => "default",
                   "sctp"                => "default",
@@ -1948,6 +1950,10 @@ if ($disabled{"dynamic-engine"}) {
     push @{$config{openssl_feature_defines}}, "OPENSSL_NO_DYNAMIC_ENGINE";
 } else {
     push @{$config{openssl_feature_defines}}, "OPENSSL_NO_STATIC_ENGINE";
+}
+
+if (!$disabled{"mprofile"}) {
+    push @{$config{openssl_feature_defines}}, "OPENSSL_DO_MPROFILE";
 }
 
 # If we use the unified build, collect information from build.info files

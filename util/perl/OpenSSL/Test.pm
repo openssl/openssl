@@ -1297,10 +1297,8 @@ sub __decorate_cmd {
     }
 
     if ($ENV{DO_MPROFILE}) {
-        my $libmprofile = $ENV{LIBMPROFILE};
 
 	if ($^O ne 'WIN32') {
-            $ENV{LD_PRELOAD} = "$libmprofile";
             $ENV{MPROFILE_MODE} = "1";
             $ENV{MPROFILE_OUTF} = catfile(result_dir(), "$test_name".".json");
         }

@@ -11,11 +11,18 @@
 #include "output.h"
 #include "tu_local.h"
 
+#ifdef OPENSSL_DO_MPROFILE
+extern void mprofile_start(void);
+#endif
 
 int main(int argc, char *argv[])
 {
     int ret = EXIT_FAILURE;
     int setup_res;
+
+#ifdef OPENSSL_DO_MPROFILE
+    mprofile_start();
+#endif
 
     test_open_streams();
 
