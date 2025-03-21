@@ -26,7 +26,7 @@ jobs:
           {
             distro: ubuntu-latest,
             sde: sde-external-9.48.0-2024-11-25,
-            download: 843185/sde-external-9.48.0-2024-11-25-lin.tar.xz
+            download: 843185/sde-external-9.48.0-2024-11-25-lin
           }
         ]
     runs-on: ${{ matrix.zoo.distro }}
