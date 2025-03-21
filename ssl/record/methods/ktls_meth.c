@@ -431,7 +431,7 @@ ktls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                                             taglen, mactype, md, comp);
 
     if (ret != OSSL_RECORD_RETURN_SUCCESS) {
-        OPENSSL_free(*retrl);
+        tls_free(*retrl);
         *retrl = NULL;
     } else {
         /*
