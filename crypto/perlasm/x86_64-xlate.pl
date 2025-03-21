@@ -7,7 +7,7 @@
 # https://www.openssl.org/source/license.html
 
 
-# Ascetic x86_64 AT&T to MASM/NASM assembler translator by <appro>.
+# Ascetic x86_64 AT&T to MASM/NASM assembler translator by <@dot-asm>.
 #
 # Why AT&T to MASM and not vice versa? Several reasons. Because AT&T
 # format is way easier to parse. Because it's simpler to "gear" from

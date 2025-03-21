@@ -8,10 +8,10 @@
 
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
+# Written by Andy Polyakov, @dot-asm, initially for use in the OpenSSL
 # project. The module is, however, dual licensed under OpenSSL and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see https://github.com/dot-asm/cryptogams/.
 # ====================================================================
 #
 # Version 4.3.
@@ -2991,7 +2991,7 @@ sub deckey()
 
 	&xor	("eax","eax");			# return success
 &function_end("AES_set_decrypt_key");
-&asciz("AES for x86, CRYPTOGAMS by <appro\@openssl.org>");
+&asciz("AES for x86, CRYPTOGAMS by <https://github.com/dot-asm>");
 
 &asm_finish();
 

@@ -8,10 +8,10 @@
 
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
+# Written by Andy Polyakov, @dot-asm, initially for use in the OpenSSL
 # project. The module is, however, dual licensed under OpenSSL and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see https://github.com/dot-asm/cryptogams/.
 # ====================================================================
 #
 # Version 2.1.
@@ -2642,7 +2642,7 @@ ___
 $code.=<<___;
 	.long	0x80808080, 0x80808080, 0xfefefefe, 0xfefefefe
 	.long	0x1b1b1b1b, 0x1b1b1b1b, 0, 0
-.asciz  "AES for x86_64, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz  "AES for x86_64, CRYPTOGAMS by <https://github.com/dot-asm>"
 .align	64
 .previous
 ___

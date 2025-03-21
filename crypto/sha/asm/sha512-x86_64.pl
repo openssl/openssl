@@ -8,7 +8,7 @@
 
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
+# Written by Andy Polyakov, @dot-asm, initially for use in the OpenSSL
 # project. Rights for redistribution and usage in source and binary
 # forms are granted according to the License.
 # ====================================================================
@@ -461,7 +461,7 @@ $TABLE:
 	.long	0x03020100,0x0b0a0908,0xffffffff,0xffffffff
 	.long	0xffffffff,0xffffffff,0x03020100,0x0b0a0908
 	.long	0xffffffff,0xffffffff,0x03020100,0x0b0a0908
-	.asciz	"SHA256 block transform for x86_64, CRYPTOGAMS by <appro\@openssl.org>"
+	.asciz	"SHA256 block transform for x86_64, CRYPTOGAMS by <https://github.com/dot-asm>"
 .previous
 ___
 } else {
@@ -553,7 +553,7 @@ $TABLE:
 
 	.quad	0x0001020304050607,0x08090a0b0c0d0e0f
 	.quad	0x0001020304050607,0x08090a0b0c0d0e0f
-	.asciz	"SHA512 block transform for x86_64, CRYPTOGAMS by <appro\@openssl.org>"
+	.asciz	"SHA512 block transform for x86_64, CRYPTOGAMS by <https://github.com/dot-asm>"
 .previous
 ___
 }

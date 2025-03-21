@@ -6,7 +6,7 @@
 // https://www.openssl.org/source/license.html
 //
 // ====================================================================
-// Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
+// Written by Andy Polyakov, @dot-asm, initially for use in the OpenSSL
 // project. Rights for redistribution and usage in source and binary
 // forms are granted according to the License.
 // ====================================================================
@@ -33,7 +33,7 @@
 // 64 bytes line size and L2 - 128 bytes...
 
 .ident	"aes-ia64.S, version 1.2"
-.ident	"IA-64 ISA artwork by Andy Polyakov <appro@openssl.org>"
+.ident	"IA-64 ISA artwork by Andy Polyakov <https://github.com/dot-asm>"
 .explicit
 .text
 

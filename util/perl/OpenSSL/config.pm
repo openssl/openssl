@@ -750,7 +750,7 @@ EOF
                     # $GCC_ARCH denotes default ABI chosen by compiler driver
                     # (first one found on the $PATH). I assume that user
                     # expects certain consistency with the rest of his builds
-                    # and therefore switch over to 64-bit. <appro>
+                    # and therefore switch over to 64-bit. <@dot-asm>
                     print <<EOF;
 WARNING! To build 32-bit package, do this:
          $WHERE/Configure solaris-sparcv9-gcc

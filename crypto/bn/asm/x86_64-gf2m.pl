@@ -8,10 +8,10 @@
 
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
+# Written by Andy Polyakov, @dot-asm, initially for use in the OpenSSL
 # project. The module is, however, dual licensed under OpenSSL and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see https://github.com/dot-asm/cryptogams/.
 # ====================================================================
 #
 # May 2011
@@ -305,7 +305,7 @@ $code.=<<___;
 .Lend_mul_2x2:
 .cfi_endproc
 .size	bn_GF2m_mul_2x2,.-bn_GF2m_mul_2x2
-.asciz	"GF(2^m) Multiplication for x86_64, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"GF(2^m) Multiplication for x86_64, CRYPTOGAMS by <https://github.com/dot-asm>"
 .align	16
 ___
 
