@@ -14,9 +14,6 @@ on: [pull_request, push]
 permissions:
   contents: read
 
-env:
-  OPENSSL_SDE_PATH: ./downloads/sde-external-9.48.0-2024-11-25/sed64
-
 jobs:
   x64_sde:
     strategy:
@@ -32,7 +29,8 @@ jobs:
     runs-on: ${{ matrix.zoo.distro }}
     env:
       sde_name: ${{ matrix.zoo.sde }}-lin
-    steps:
+      OPENSSL_SDE_PATH: ./downloads/${{ matrix.zoo.sde }}/sde64
+    steps:  
       - name: create download directory
         run: mkdir downloads
       - name: download Intel SDE
