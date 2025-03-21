@@ -31,12 +31,12 @@ jobs:
         ]
     runs-on: ${{ matrix.zoo.distro }}
     env:
-      sde_name: sde-external-9.48.0-2024-11-25-lin
+      sde_name: ${{ matrix.zoo.sde }}-lin
     steps:
       - name: create download directory
         run: mkdir downloads
       - name: download Intel SDE
-        run: wget --no-verbose https://downloadmirror.intel.com/843185/${{ matrix.zoo.download }}.tar.xz
+        run: wget --no-verbose https://downloadmirror.intel.com/${{ matrix.zoo.download }}.tar.xz
         working-directory: downloads
       - name: unpack Intel SDE
         run: tar xf downloads/${sde_name}.tar.xz
