@@ -93,6 +93,7 @@ jobs:
     - name: make test
       run: .github/workflows/make-test
     - name: save artifacts
+      if: success() || failure()
       uses: actions/upload-artifact@v4
       with:
         name: "ci@basic-gcc"
@@ -115,6 +116,7 @@ jobs:
     - name: make test
       run: .github/workflows/make-test
     - name: save artifacts
+      if: success() || failure()
       uses: actions/upload-artifact@v4
       with:
         name: "ci@basic-clang"
@@ -137,6 +139,7 @@ jobs:
     - name: make test
       run: .github/workflows/make-test
     - name: save artifacts
+      if: success() || failure()
       uses: actions/upload-artifact@v4
       with:
         name: "ci@linux-arm64"
@@ -178,6 +181,7 @@ jobs:
           ./util/opensslwrap.sh version -c
           .github/workflows/make-test
     - name: save artifacts
+      if: success() || failure()
       uses: actions/upload-artifact@v4
       with:
         name: "ci@BSD-x86_64"
@@ -200,6 +204,7 @@ jobs:
     - name: make test
       run: .github/workflows/make-test
     - name: save artifacts
+      if: success() || failure()
       uses: actions/upload-artifact@v4
       with:
         name: "ci@minimal"
@@ -222,6 +227,7 @@ jobs:
     - name: make test
       run: .github/workflows/make-test
     - name: save artifacts
+      if: success() || failure()
       uses: actions/upload-artifact@v4
       with:
         name: "ci@no-deprecated"
@@ -244,6 +250,7 @@ jobs:
     - name: make test
       run: .github/workflows/make-test
     - name: save artifacts
+      if: success() || failure()
       uses: actions/upload-artifact@v4
       with:
         name: "ci@no-shared-ubuntu"
@@ -270,6 +277,7 @@ jobs:
     - name: make test
       run: .github/workflows/make-test
     - name: save artifacts
+      if: success() || failure()
       uses: actions/upload-artifact@v4
       with:
         name: "ci@no-shared-${{ matrix.os }}"
@@ -296,6 +304,7 @@ jobs:
     - name: make test
       run: .github/workflows/make-test OPENSSL_TEST_RAND_ORDER=0 TESTS="-test_fuzz* -test_ssl_* -test_sslapi -test_evp -test_cmp_http -test_verify -test_cms -test_store -test_enc -[01][0-9]"
     - name: save artifacts
+      if: success() || failure()
       uses: actions/upload-artifact@v4
       with:
         name: "ci@non-caching"
@@ -322,6 +331,7 @@ jobs:
     - name: make test
       run: .github/workflows/make-test OPENSSL_TEST_RAND_ORDER=0
     - name: save artifacts
+      if: success() || failure()
       uses: actions/upload-artifact@v4
       with:
         name: "ci@address_ub_sanitizer"
@@ -348,6 +358,7 @@ jobs:
     - name: make test
       run: .github/workflows/make-test OPENSSL_TEST_RAND_ORDER=0 TESTS="test_fuzz*"
     - name: save artifacts
+      if: success() || failure()
       uses: actions/upload-artifact@v4
       with:
         name: "ci@fuzz_tests"
@@ -376,6 +387,7 @@ jobs:
     - name: make test
       run: .github/workflows/make-test OPENSSL_TEST_RAND_ORDER=0
     - name: save artifacts
+      if: success() || failure()
       uses: actions/upload-artifact@v4
       with:
         name: "ci@memory_sanitizer"
@@ -402,6 +414,7 @@ jobs:
     - name: make test
       run: .github/workflows/make-test V=1 TESTS="test_lhash test_threads test_internal_provider test_provfetch test_provider test_pbe test_evp_kdf test_pkcs12 test_store test_evp test_quic*"
     - name: save artifacts
+      if: success() || failure()
       uses: actions/upload-artifact@v4
       with:
         name: "ci@threads_sanitizer"
@@ -426,6 +439,7 @@ jobs:
     - name: make test
       run: .github/workflows/make-test
     - name: save artifacts
+      if: success() || failure()
       uses: actions/upload-artifact@v4
       with:
         name: "ci@enable_non-default_options"
@@ -456,6 +470,7 @@ jobs:
     - name: make test
       run: .github/workflows/make-test
     - name: save artifacts
+      if: success() || failure()
       uses: actions/upload-artifact@v4
       with:
         name: "ci@full_featured"
@@ -478,6 +493,7 @@ jobs:
     - name: make test
       run: .github/workflows/make-test
     - name: save artifacts
+      if: success() || failure()
       uses: actions/upload-artifact@v4
       with:
         name: "ci@no-legacy"
@@ -500,6 +516,7 @@ jobs:
     - name: make test
       run: .github/workflows/make-test
     - name: save artifacts
+      if: success() || failure()
       uses: actions/upload-artifact@v4
       with:
         name: "ci@legacy"
@@ -542,6 +559,7 @@ jobs:
       run: ../source/.github/workflows/make-test
       working-directory: ./build
     - name: save artifacts
+      if: success() || failure()
       uses: actions/upload-artifact@v4
       with:
         name: "ci@out-of-readonly-source-and-install-ubuntu"
@@ -586,6 +604,7 @@ jobs:
       run: ../source/.github/workflows/make-test
       working-directory: ./build
     - name: save artifacts
+      if: success() || failure()
       uses: actions/upload-artifact@v4
       with:
         name: "ci@out-of-readonly-source-and-install-${{ matrix.os }}"
