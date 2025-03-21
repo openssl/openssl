@@ -316,7 +316,7 @@ static int ml_dsa_get_params(void *keydata, OSSL_PARAM params[])
             && !OSSL_PARAM_set_int(p, 8 * ossl_ml_dsa_key_get_pub_len(key)))
         return 0;
     if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_SECURITY_BITS)) != NULL
-            && !OSSL_PARAM_set_int(p, 8 * ossl_ml_dsa_key_get_collision_strength_bits(key)))
+            && !OSSL_PARAM_set_int(p, ossl_ml_dsa_key_get_collision_strength_bits(key)))
         return 0;
     if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_MAX_SIZE)) != NULL
             && !OSSL_PARAM_set_int(p, ossl_ml_dsa_key_get_sig_len(key)))
