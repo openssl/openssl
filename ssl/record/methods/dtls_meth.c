@@ -85,6 +85,9 @@ static DTLS_BITMAP *dtls_get_bitmap(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rr,
 {
     *is_next_epoch = 0;
 
+    if (rr->epoch < rl->epoch && rr->type == SSL3_RT_ALERT)
+        return &rl->prev_bitmap;
+
     /* In current epoch, accept HM, CCS, DATA, & ALERT */
     if (rr->epoch == rl->epoch)
         return &rl->bitmap;

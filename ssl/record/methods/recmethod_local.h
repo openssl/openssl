@@ -356,6 +356,8 @@ struct ossl_record_layer_st {
 
     /* records being received in the current epoch */
     DTLS_BITMAP bitmap;
+    /* records being received in the previous epoch */
+    DTLS_BITMAP prev_bitmap;
     /* renegotiation starts a new set of sequence numbers */
     DTLS_BITMAP next_bitmap;
 
