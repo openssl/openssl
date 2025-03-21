@@ -29,17 +29,7 @@ jobs:
     runs-on: ${{ matrix.zoo.distro }}
     env:
       OPENSSL_SDE_PATH: ${{ github.workspace }}/${{ matrix.zoo.sde }}/sde64
-    steps:  
-      - name: create download directory
-        run: mkdir downloads
-      - name: download Intel SDE
-        run: wget --no-verbose https://downloadmirror.intel.com/${{ matrix.zoo.download }}.tar.xz
-        working-directory: downloads
-      - name: unpack Intel SDE
-        run: tar xfv downloads/${{ matrix.zoo.sde }}.tar.xz
-      - name: Show directory
-        run: pwd
-
+    steps:
       - uses: actions/checkout@v4
       - name: checkout fuzz/corpora submodule
         run: git submodule update --init --depth 1 fuzz/corpora
@@ -54,6 +44,16 @@ jobs:
           cat /proc/cpuinfo
           ./util/opensslwrap.sh version -c
 
+      - name: create download directory
+        run: mkdir downloads
+      - name: download Intel SDE
+        run: wget --no-verbose https://downloadmirror.intel.com/${{ matrix.zoo.download }}.tar.xz
+        working-directory: downloads
+      - name: unpack Intel SDE
+        run: tar xfv downloads/${{ matrix.zoo.sde }}.tar.xz
+      - name: Show directory
+        run: pwd
+        
       # SDE requires this line on ubuntu
       - name: Set ptrace_scope to 0
         run: |
