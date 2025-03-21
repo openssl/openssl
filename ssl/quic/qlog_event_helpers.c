@@ -214,8 +214,7 @@ static int log_frame_actual(QLOG *qlog_instance, PACKET *pkt,
     PACKET orig_pkt = *pkt;
 
     if (!ossl_quic_wire_peek_frame_header(pkt, &frame_type, NULL)) {
-        if (*need_skip == 0)
-            *need_skip = 1;
+        *need_skip = SIZE_MAX;
         return 0;
     }
 
