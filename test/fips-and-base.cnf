@@ -9,7 +9,7 @@ config_diagnostics = 1
 providers = provider_sect
 # You MUST uncomment the following line to operate in a FIPS approved manner,
 # It is commented out here purely for testing purposes.
-#alg_section = evp_properties
+alg_section = evp_properties
 
 [evp_properties]
 default_properties = "fips=yes"
