@@ -94,7 +94,7 @@ jobs:
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
     - name: make test
-      run: .github/workflows/make-test
+      run: .github/workflows/make-test || touch .test_failure
     - name: check fipsvendor
       run: |
         util/wrap.pl -fips apps/openssl list -providers | grep 'name: CI FIPS Provider for OpenSSL$'
@@ -103,6 +103,9 @@ jobs:
       with:
         name: "ci@basic-gcc"
         path: artifacts.tar.gz
+    - name: check test result
+      run: |
+        test ! -f .test_failure
 
   basic_clang:
     runs-on: ubuntu-latest
@@ -119,12 +122,15 @@ jobs:
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
     - name: make test
-      run: .github/workflows/make-test
+      run: .github/workflows/make-test || touch .test_failure
     - name: save artifacts
       uses: actions/upload-artifact@v4
       with:
         name: "ci@basic-clang"
         path: artifacts.tar.gz
+    - name: check test result
+      run: |
+        test ! -f .test_failure
 
   linux-arm64:
     runs-on: ${{ github.repository == 'openssl/openssl' && 'linux-arm64' || 'ubuntu-24.04-arm' }}
@@ -141,12 +147,15 @@ jobs:
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
     - name: make test
-      run: .github/workflows/make-test
+      run: .github/workflows/make-test || touch .test_failure
     - name: save artifacts
       uses: actions/upload-artifact@v4
       with:
         name: "ci@linux-arm64"
         path: artifacts.tar.gz
+    - name: check test result
+      run: |
+        test ! -f .test_failure
 
   freebsd-x86_64:
     runs-on: ubuntu-latest
@@ -182,12 +191,15 @@ jobs:
         version: "13.4"
         run: |
           ./util/opensslwrap.sh version -c
-          .github/workflows/make-test
+          .github/workflows/make-test || touch .test_failure
     - name: save artifacts
       uses: actions/upload-artifact@v4
       with:
         name: "ci@BSD-x86_64"
         path: artifacts.tar.gz
+    - name: check test result
+      run: |
+        test ! -f .test_failure
 
   minimal:
     runs-on: ubuntu-latest
@@ -204,12 +216,15 @@ jobs:
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
     - name: make test
-      run: .github/workflows/make-test
+      run: .github/workflows/make-test || touch .test_failure
     - name: save artifacts
       uses: actions/upload-artifact@v4
       with:
         name: "ci@minimal"
         path: artifacts.tar.gz
+    - name: check test result
+      run: |
+        test ! -f .test_failure
 
   no-deprecated:
     runs-on: ubuntu-latest
@@ -226,12 +241,15 @@ jobs:
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
     - name: make test
-      run: .github/workflows/make-test
+      run: .github/workflows/make-test || touch .test_failure
     - name: save artifacts
       uses: actions/upload-artifact@v4
       with:
         name: "ci@no-deprecated"
         path: artifacts.tar.gz
+    - name: check test result
+      run: |
+        test ! -f .test_failure
 
   no-shared-ubuntu:
     runs-on: ubuntu-latest
@@ -248,12 +266,15 @@ jobs:
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
     - name: make test
-      run: .github/workflows/make-test
+      run: .github/workflows/make-test || touch .test_failure
     - name: save artifacts
       uses: actions/upload-artifact@v4
       with:
         name: "ci@no-shared-ubuntu"
         path: artifacts.tar.gz
+    - name: check test result
+      run: |
+        test ! -f .test_failure
 
   no-shared-macos:
     strategy:
@@ -274,12 +295,15 @@ jobs:
         sysctl machdep.cpu
         ./util/opensslwrap.sh version -c
     - name: make test
-      run: .github/workflows/make-test
+      run: .github/workflows/make-test || touch .test_failure
     - name: save artifacts
       uses: actions/upload-artifact@v4
       with:
         name: "ci@no-shared-${{ matrix.os }}"
         path: artifacts.tar.gz
+    - name: check test result
+      run: |
+        test ! -f .test_failure
 
   non-caching:
     runs-on: ubuntu-latest
@@ -300,12 +324,15 @@ jobs:
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
     - name: make test
-      run: .github/workflows/make-test OPENSSL_TEST_RAND_ORDER=0 TESTS="-test_fuzz* -test_ssl_* -test_sslapi -test_evp -test_cmp_http -test_verify -test_cms -test_store -test_enc -[01][0-9]"
+      run: .github/workflows/make-test OPENSSL_TEST_RAND_ORDER=0 TESTS="-test_fuzz* -test_ssl_* -test_sslapi -test_evp -test_cmp_http -test_verify -test_cms -test_store -test_enc -[01][0-9]" || touch .test_failure
     - name: save artifacts
       uses: actions/upload-artifact@v4
       with:
         name: "ci@non-caching"
         path: artifacts.tar.gz
+    - name: check test result
+      run: |
+        test ! -f .test_failure
 
   address_ub_sanitizer:
     runs-on: ubuntu-latest
@@ -326,12 +353,15 @@ jobs:
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
     - name: make test
-      run: .github/workflows/make-test OPENSSL_TEST_RAND_ORDER=0
+      run: .github/workflows/make-test OPENSSL_TEST_RAND_ORDER=0 || touch .test_failure
     - name: save artifacts
       uses: actions/upload-artifact@v4
       with:
         name: "ci@address_ub_sanitizer"
         path: artifacts.tar.gz
+    - name: check test result
+      run: |
+        test ! -f .test_failure
 
   fuzz_tests:
     runs-on: ubuntu-latest
@@ -352,13 +382,16 @@ jobs:
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
     - name: make test
-      run: .github/workflows/make-test OPENSSL_TEST_RAND_ORDER=0 TESTS="test_fuzz*"
+      run: .github/workflows/make-test OPENSSL_TEST_RAND_ORDER=0 TESTS="test_fuzz*" || touch .test_failure
     - name: save artifacts
       uses: actions/upload-artifact@v4
       with:
         name: "ci@fuzz_tests"
         path: artifacts.tar.gz
         if-no-files-found: ignore
+    - name: check test result
+      run: |
+        test ! -f .test_failure
 
   memory_sanitizer:
     runs-on: ubuntu-latest
@@ -380,12 +413,15 @@ jobs:
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
     - name: make test
-      run: .github/workflows/make-test OPENSSL_TEST_RAND_ORDER=0
+      run: .github/workflows/make-test OPENSSL_TEST_RAND_ORDER=0 || touch .test_failure
     - name: save artifacts
       uses: actions/upload-artifact@v4
       with:
         name: "ci@memory_sanitizer"
         path: artifacts.tar.gz
+    - name: check test result
+      run: |
+        test ! -f .test_failure
 
   threads_sanitizer:
     runs-on: ubuntu-latest
@@ -406,12 +442,15 @@ jobs:
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
     - name: make test
-      run: .github/workflows/make-test V=1 TESTS="test_lhash test_threads test_internal_provider test_provfetch test_provider test_pbe test_evp_kdf test_pkcs12 test_store test_evp test_quic*"
+      run: .github/workflows/make-test V=1 TESTS="test_lhash test_threads test_internal_provider test_provfetch test_provider test_pbe test_evp_kdf test_pkcs12 test_store test_evp test_quic*" || touch .test_failure
     - name: save artifacts
       uses: actions/upload-artifact@v4
       with:
         name: "ci@threads_sanitizer"
         path: artifacts.tar.gz
+    - name: check test result
+      run: |
+        test ! -f .test_failure
 
   enable_non-default_options:
     runs-on: ubuntu-latest
@@ -430,12 +469,15 @@ jobs:
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
     - name: make test
-      run: .github/workflows/make-test
+      run: .github/workflows/make-test || touch .test_failure
     - name: save artifacts
       uses: actions/upload-artifact@v4
       with:
         name: "ci@enable_non-default_options"
         path: artifacts.tar.gz
+    - name: check test result
+      run: |
+        test ! -f .test_failure
 
   full_featured:
     runs-on: ubuntu-latest
@@ -460,12 +502,15 @@ jobs:
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
     - name: make test
-      run: .github/workflows/make-test
+      run: .github/workflows/make-test || touch .test_failure
     - name: save artifacts
       uses: actions/upload-artifact@v4
       with:
         name: "ci@full_featured"
         path: artifacts.tar.gz
+    - name: check test result
+      run: |
+        test ! -f .test_failure
 
   no-legacy:
     runs-on: ubuntu-latest
@@ -482,12 +527,15 @@ jobs:
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
     - name: make test
-      run: .github/workflows/make-test
+      run: .github/workflows/make-test || touch .test_failure
     - name: save artifacts
       uses: actions/upload-artifact@v4
       with:
         name: "ci@no-legacy"
         path: artifacts.tar.gz
+    - name: check test result
+      run: |
+        test ! -f .test_failure
 
   legacy:
     runs-on: ubuntu-latest
@@ -504,12 +552,15 @@ jobs:
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
     - name: make test
-      run: .github/workflows/make-test
+      run: .github/workflows/make-test || touch .test_failure
     - name: save artifacts
       uses: actions/upload-artifact@v4
       with:
         name: "ci@legacy"
         path: artifacts.tar.gz
+    - name: check test result
+      run: |
+        test ! -f .test_failure
 
   # out-of-source-and-install checks multiple things at the same time:
   # - That building, testing and installing works from an out-of-source
@@ -545,13 +596,17 @@ jobs:
         ./util/opensslwrap.sh version -c
       working-directory: ./build
     - name: make test
-      run: ../source/.github/workflows/make-test
+      run: ../source/.github/workflows/make-test || touch .test_failure
       working-directory: ./build
     - name: save artifacts
       uses: actions/upload-artifact@v4
       with:
         name: "ci@out-of-readonly-source-and-install-ubuntu"
         path: build/artifacts.tar.gz
+    - name: check test result
+      run: |
+        test ! -f .test_failure
+      working-directory: ./build
     - name: make install
       run: make install
       working-directory: ./build
@@ -589,13 +644,17 @@ jobs:
         ./util/opensslwrap.sh version -c
       working-directory: ./build
     - name: make test
-      run: ../source/.github/workflows/make-test
+      run: ../source/.github/workflows/make-test || touch .test_failure
       working-directory: ./build
     - name: save artifacts
       uses: actions/upload-artifact@v4
       with:
         name: "ci@out-of-readonly-source-and-install-${{ matrix.os }}"
         path: build/artifacts.tar.gz
+    - name: check test result
+      run: |
+        test ! -f .test_failure
+      working-directory: ./build
     - name: make install
       run: make install
       working-directory: ./build
