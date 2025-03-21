@@ -1298,10 +1298,17 @@ sub __decorate_cmd {
 
     if ($ENV{DO_MPROFILE}) {
 
-	if ($^O ne 'WIN32') {
-            $ENV{MPROFILE_MODE} = "1";
-            $ENV{MPROFILE_OUTF} = catfile(result_dir(), "$test_name".".json");
-        }
+        $ENV{MPROFILE_MODE} = "1";
+        #
+	# Note the tests which are linked with libtestutil directory will
+        # override MPROFILE_OUTF
+        #
+        $ENV{MPROFILE_OUTF} = catfile(result_dir(), "$test_name".".json");
+        #
+        # MPROFILE_RESULTS is used by libtestutil where to write
+        # the profile data.
+        #
+        $ENV{MPROFILE_RESULTS} = result_dir();
     }
     $cmdstr .= "$stdin$stdout$stderr";
 

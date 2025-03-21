@@ -555,7 +555,7 @@ my @disablables = (
     "zlib",
     "zlib-dynamic",
     "zstd",
-    "zstd-dynamic"
+    "zstd-dynamic",
     );
 foreach my $proto ((@tls, @dtls))
         {
