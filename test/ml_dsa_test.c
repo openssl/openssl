@@ -89,6 +89,7 @@ static int ml_dsa_keygen_test(int tst_id)
     EVP_PKEY *pkey = NULL;
     uint8_t priv[5 * 1024], pub[3 * 1024], seed[ML_DSA_SEED_BYTES];
     size_t priv_len, pub_len, seed_len;
+    int bits = 0, sec_bits = 0, sig_len = 0;
 
     if (!TEST_ptr(pkey = do_gen_key(tst->name, tst->seed, tst->seed_len))
             || !TEST_true(EVP_PKEY_get_octet_string_param(pkey, OSSL_PKEY_PARAM_ML_DSA_SEED,
@@ -99,7 +100,16 @@ static int ml_dsa_keygen_test(int tst_id)
                                                           pub, sizeof(pub), &pub_len))
             || !TEST_mem_eq(pub, pub_len, tst->pub, tst->pub_len)
             || !TEST_mem_eq(priv, priv_len, tst->priv, tst->priv_len)
-            || !TEST_mem_eq(seed, seed_len, tst->seed, tst->seed_len))
+            || !TEST_mem_eq(seed, seed_len, tst->seed, tst->seed_len)
+            /* The following checks assume that algorithm is ML-DSA-65 */
+            || !TEST_true(EVP_PKEY_get_int_param(pkey, OSSL_PKEY_PARAM_BITS, &bits))
+            || !TEST_int_eq(bits, 1952 * 8)
+            || !TEST_true(EVP_PKEY_get_int_param(pkey, OSSL_PKEY_PARAM_SECURITY_BITS,
+                                                 &sec_bits))
+            || !TEST_int_eq(sec_bits, 192)
+            || !TEST_true(EVP_PKEY_get_int_param(pkey, OSSL_PKEY_PARAM_MAX_SIZE,
+                                                 &sig_len))
+            || !TEST_int_ge(sig_len, 3309))
         goto err;
     ret = 1;
 err:
