@@ -29,7 +29,7 @@ jobs:
     runs-on: ${{ matrix.zoo.distro }}
     env:
       sde_name: ${{ matrix.zoo.sde }}-lin
-      OPENSSL_SDE_PATH: ./downloads/${{ matrix.zoo.sde }}/sde64
+      OPENSSL_SDE_PATH: ./${{ matrix.zoo.sde }}/sde64
     steps:  
       - name: create download directory
         run: mkdir downloads
