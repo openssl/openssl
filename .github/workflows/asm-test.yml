@@ -22,13 +22,12 @@ jobs:
         zoo: [
           {
             distro: ubuntu-latest,
-            sde: sde-external-9.48.0-2024-11-25,
+            sde: sde-external-9.48.0-2024-11-25-lin,
             download: 843185/sde-external-9.48.0-2024-11-25-lin
           }
         ]
     runs-on: ${{ matrix.zoo.distro }}
     env:
-      sde_name: ${{ matrix.zoo.sde }}-lin
       OPENSSL_SDE_PATH: ${{ github.workspace }}/${{ matrix.zoo.sde }}/sde64
     steps:  
       - name: create download directory
@@ -37,7 +36,7 @@ jobs:
         run: wget --no-verbose https://downloadmirror.intel.com/${{ matrix.zoo.download }}.tar.xz
         working-directory: downloads
       - name: unpack Intel SDE
-        run: tar xf downloads/${sde_name}.tar.xz
+        run: tar xf downloads/${{ matrix.zoo.sde }}.tar.xz
 
       - uses: actions/checkout@v4
       - name: checkout fuzz/corpora submodule
