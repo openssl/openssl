@@ -36,7 +36,9 @@ jobs:
         run: wget --no-verbose https://downloadmirror.intel.com/${{ matrix.zoo.download }}.tar.xz
         working-directory: downloads
       - name: unpack Intel SDE
-        run: tar xf downloads/${{ matrix.zoo.sde }}.tar.xz
+        run: tar xfv downloads/${{ matrix.zoo.sde }}.tar.xz
+      - name: Show directory
+        run: pwd
 
       - uses: actions/checkout@v4
       - name: checkout fuzz/corpora submodule
