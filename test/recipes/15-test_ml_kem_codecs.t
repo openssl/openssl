@@ -51,7 +51,7 @@ foreach my $alg (@algs) {
         # Compare expected DER public key with DER public key of private
         ok(run(app(['openssl', 'pkey', '-in', $in, '-pubout',
                     '-outform', 'DER', '-out', $der])));
-        ok(!compare($der0, $der),
+        ok(!compare_text($der0, $der),
             sprintf("pubkey DER match: %s, %s", $alg, $f));
         #
         # Compare expected PEM private key with regenerated key
@@ -78,16 +78,16 @@ foreach my $alg (@algs) {
     ok(run(app(['openssl', 'pkeyutl', '-encap', '-inkey', $in0,
                 '-pkeyopt', "hexikme:$ikme", '-secret',
                 $ss0, '-out', $ct])));
-    ok(!compare($ct, data_file($refct)),
+    ok(!compare_text($ct, data_file($refct)),
         sprintf("reference ciphertext match: %s", $pub));
-    ok(!compare($ss0, data_file($refss)),
+    ok(!compare_text($ss0, data_file($refss)),
         sprintf("reference secret match: %s", $pub));
     while (my ($f, $k) = each %formats) {
         my $in = data_file($k);
         my $ss = sprintf("ss-%s.%d.dat", $alg, $i++);
         ok(run(app(['openssl', 'pkeyutl', '-decap', '-inkey', $in,
                     '-in', $ct, '-secret', $ss])));
-        ok(!compare($ss0, $ss),
+        ok(!compare_text($ss0, $ss),
             sprintf("shared secret match: %s with %s", $alg, $f));
     }
 

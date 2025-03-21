@@ -55,7 +55,7 @@ foreach my $alg (@algs) {
         # Compare expected DER public key with DER public key of private
         ok(run(app(['openssl', 'pkey', '-in', $in, '-pubout',
                     '-outform', 'DER', '-out', $der])));
-        ok(!compare($der0, $der),
+        ok(!compare_text($der0, $der),
             sprintf("pubkey DER match: %s, %s", $alg, $f));
         #
         # Compare expected PEM private key with regenerated key
@@ -85,7 +85,7 @@ foreach my $alg (@algs) {
         my $s = sprintf("sig-%s.%d.dat", $alg, $i++);
         ok(run(app([qw(openssl pkeyutl -sign -rawin -inkey), $sk, '-in', $der0,
                     qw(-pkeyopt deterministic:1 -out), $s])));
-        ok(!compare($s, $refsig),
+        ok(!compare_text($s, $refsig),
             sprintf("Signature blob match %s with %s", $alg, $f));
     }
 
