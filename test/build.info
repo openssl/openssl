@@ -718,6 +718,16 @@ IF[{- !$disabled{tests} -}]
     PROGRAMS{noinst}=moduleloadtest
     SOURCE[moduleloadtest]=moduleloadtest.c simpledynamic.c
     INCLUDE[moduleloadtest]=../include ../apps/include
+
+    MODULES{noinst}=mod_shlibtest
+    SOURCE[mod_shlibtest]=mod_shlibtest.c
+    IF[{- defined $target{shared_defflag} -}]
+       SOURCE[mod_shlibtest]=mod_shlibtest.ld
+       GENERATE[mod_shlibtest.ld]=mod_shlibtest.num
+    ENDIF
+    INCLUDE[mod_shlibtest]=../include ..
+    DEPEND[mod_shlibtest]=../libcrypto ../libssl
+
   ENDIF
 
   # cipher_overhead_test uses internal symbols, so it must be linked with
