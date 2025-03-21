@@ -20,8 +20,8 @@ env:
 jobs:
   x64_sde:
     strategy:
+      fail-fast: false
       matrix:
-        fail-fast: false
         zoo: [
           {
             distro: ubuntu-latest,
