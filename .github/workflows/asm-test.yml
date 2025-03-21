@@ -24,10 +24,10 @@ jobs:
         fail-fast: false
         zoo: [
           {
-            distro: ubuntu-latest
-            sde: sde-external-9.48.0-2024-11-25
+            distro: ubuntu-latest,
+            sde: sde-external-9.48.0-2024-11-25,
             download: 843185/sde-external-9.48.0-2024-11-25-lin.tar.xz
-          },
+          }
         ]
     runs-on: ${{ matrix.zoo.distro }}
     env:
