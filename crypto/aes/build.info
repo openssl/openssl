@@ -31,7 +31,9 @@ IF[{- !$disabled{asm} -}]
 
   $AESASM_armv4=aes_cbc.c aes-armv4.S bsaes-armv7.S aesv8-armx.S
   $AESDEF_armv4=AES_ASM BSAES_ASM
-  $AESASM_aarch64=aes_core.c aes_cbc.c aesv8-armx.S bsaes-armv8.S vpaes-armv8.S
+  $AESASM_aarch64=\
+        aes_core.c aes_cbc.c aesv8-armx.S bsaes-armv8.S vpaes-armv8.S \
+        aes-sha1-armv8.S aes-sha256-armv8.S aes-sha512-armv8.S
   $AESDEF_aarch64=BSAES_ASM VPAES_ASM
 
   $AESASM_parisc11=aes_core.c aes_cbc.c aes-parisc.s
@@ -137,6 +139,12 @@ GENERATE[aesv8-armx.S]=asm/aesv8-armx.pl
 INCLUDE[aesv8-armx.o]=..
 GENERATE[vpaes-armv8.S]=asm/vpaes-armv8.pl
 INCLUDE[vpaes-armv8.o]=..
+GENERATE[aes-sha1-armv8.S]=asm/aes-sha1-armv8.pl
+INCLUDE[aes-sha1-armv8.o]=..
+GENERATE[aes-sha256-armv8.S]=asm/aes-sha256-armv8.pl
+INCLUDE[aes-sha256-armv8.o]=..
+GENERATE[aes-sha512-armv8.S]=asm/aes-sha512-armv8.pl
+INCLUDE[aes-sha512-armv8.o]=..
 
 GENERATE[aes-armv4.S]=asm/aes-armv4.pl
 INCLUDE[aes-armv4.o]=..
