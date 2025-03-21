@@ -12,6 +12,7 @@ appropriate release branch.
 OpenSSL Releases
 ----------------
 
+ - [OpenSSL 3.6](#openssl-36)
  - [OpenSSL 3.5](#openssl-35)
  - [OpenSSL 3.4](#openssl-34)
  - [OpenSSL 3.3](#openssl-33)
@@ -25,12 +26,19 @@ OpenSSL Releases
  - [OpenSSL 1.0.0](#openssl-100)
  - [OpenSSL 0.9.x](#openssl-09x)
 
-OpenSSL 3.5
+OpenSSL 3.6
 -----------
 
 ### Changes between 3.5 and 3.6 [xx XXX xxxx]
 
- * none yet
+* Support setting a free function thunk to OPENSSL_sk stack types. Using a thunk
+  allows the type specific free function to be called with the correct type
+  information from generic functions like OPENSSL_sk_pop_free().
+
+  *Frederik Wedel-Heinen*
+
+OpenSSL 3.5
+-----------
 
 ### Changes between 3.4 and 3.5 [xx XXX xxxx]
 
