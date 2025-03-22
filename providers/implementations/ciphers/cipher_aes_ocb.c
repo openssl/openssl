@@ -439,24 +439,34 @@ static int aes_ocb_get_ctx_params(void *vctx, OSSL_PARAM params[])
 
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IV);
     if (p != NULL) {
+        int res = 0;
+
         if (ctx->base.ivlen > p->data_size) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
             return 0;
         }
-        if (!OSSL_PARAM_set_octet_string(p, ctx->base.oiv, ctx->base.ivlen)
-            && !OSSL_PARAM_set_octet_ptr(p, &ctx->base.oiv, ctx->base.ivlen)) {
+        if (p->data_type == OSSL_PARAM_OCTET_STRING)
+            res = OSSL_PARAM_set_octet_string(p, ctx->base.oiv, ctx->base.ivlen);
+        else if (p->data_type == OSSL_PARAM_OCTET_PTR)
+            res = OSSL_PARAM_set_octet_ptr(p, &ctx->base.oiv, ctx->base.ivlen);
+        if (res == 0) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
             return 0;
         }
     }
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_UPDATED_IV);
     if (p != NULL) {
+        int res = 0;
+
         if (ctx->base.ivlen > p->data_size) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
             return 0;
         }
-        if (!OSSL_PARAM_set_octet_string(p, ctx->base.iv, ctx->base.ivlen)
-            && !OSSL_PARAM_set_octet_ptr(p, &ctx->base.iv, ctx->base.ivlen)) {
+        if (p->data_type == OSSL_PARAM_OCTET_STRING)
+            res = OSSL_PARAM_set_octet_string(p, ctx->base.iv, ctx->base.ivlen);
+        else if (p->data_type == OSSL_PARAM_OCTET_PTR)
+            res = OSSL_PARAM_set_octet_ptr(p, &ctx->base.iv, ctx->base.ivlen);
+        if (res == 0) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
             return 0;
         }
