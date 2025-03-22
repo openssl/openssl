@@ -1453,6 +1453,13 @@ int OSSL_PARAM_set_octet_string(OSSL_PARAM *p, const void *val,
         err_null_argument;
         return 0;
     }
+    /*
+     * Avoid raising an error in set_string_internal if the invalid type
+     * is OSSL_PARAM_OCTET_PTR since those are used interchangeably
+     * for OSSL_CIPHER_PARAM_IV and OSSL_CIPHER_PARAM_UPDATED_IV.
+     */
+    if (p->data_type == OSSL_PARAM_OCTET_PTR)
+        return 0;
     p->return_size = 0;
     return set_string_internal(p, val, len, OSSL_PARAM_OCTET_STRING);
 }
@@ -1530,6 +1537,13 @@ int OSSL_PARAM_set_octet_ptr(OSSL_PARAM *p, const void *val,
         err_null_argument;
         return 0;
     }
+    /*
+     * Avoid raising an error in set_ptr_internal if the invalid type
+     * is OSSL_PARAM_OCTET_STRING since those are used interchangeably
+     * for OSSL_CIPHER_PARAM_IV and OSSL_CIPHER_PARAM_UPDATED_IV.
+     */
+    if (p->data_type == OSSL_PARAM_OCTET_STRING)
+        return 0;
     p->return_size = 0;
     return set_ptr_internal(p, val, OSSL_PARAM_OCTET_PTR, used_len);
 }
