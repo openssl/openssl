@@ -40,7 +40,7 @@ SKIP: {
     subtest "check qlog output" => sub {
         plan tests => 1;
 
-        ok(run(cmd(["python3", data_file("verify-qlog.py")])),
+        ok(run(cmd([data_file("verify-qlog.py")], exe_shell => "python3")),
                "running qlog verification script");
     };
 }
