@@ -1325,6 +1325,7 @@ RSA_R_UNSUPPORTED_MASK_PARAMETER:154:unsupported mask parameter
 RSA_R_UNSUPPORTED_SIGNATURE_TYPE:155:unsupported signature type
 RSA_R_VALUE_MISSING:147:value missing
 RSA_R_WRONG_SIGNATURE_LENGTH:119:wrong signature length
+RSA_R_INVALID_RSA_KEY_VERSION:182:invalid RSA key version
 SM2_R_ASN1_ERROR:100:asn1 error
 SM2_R_BAD_SIGNATURE:101:bad signature
 SM2_R_BUFFER_TOO_SMALL:107:buffer too small
