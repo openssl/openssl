@@ -1699,3 +1699,20 @@ int OSSL_PARAM_get_octet_string_ptr(const OSSL_PARAM *p, const void **val,
     return rv || get_string_ptr_internal(p, val, used_len,
                                          OSSL_PARAM_OCTET_STRING);
 }
+
+int OSSL_PARAM_set_octet_string_or_ptr(OSSL_PARAM *p, const void *val,
+                                       size_t len)
+{
+    if (p == NULL) {
+        err_null_argument;
+        return 0;
+    }
+
+    if (p->data_type == OSSL_PARAM_OCTET_STRING)
+        return OSSL_PARAM_set_octet_string(p, val, len);
+    else if (p->data_type == OSSL_PARAM_OCTET_PTR)
+        return OSSL_PARAM_set_octet_ptr(p, val, len);
+
+    err_bad_type;
+    return 0;
+}
