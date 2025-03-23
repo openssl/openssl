@@ -203,6 +203,7 @@ typedef struct ossl_ech_conn_st {
     EVP_PKEY *tmp_pkey; /* client's key share for inner */
     int group_id; /*  key share group */
     unsigned char client_random[SSL3_RANDOM_SIZE]; /* CH random */
+    uint32_t agems; /* for PSK processing */
 } OSSL_ECH_CONN;
 
 /* Return values from ossl_ech_same_ext */

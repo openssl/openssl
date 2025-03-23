@@ -1243,6 +1243,21 @@ EXT_RETURN tls_construct_ctos_psk(SSL_CONNECTION *s, WPACKET *pkt,
          * good enough.
          */
         agems = agesec * (uint32_t)1000;
+#ifndef OPENSSL_NO_ECH
+        /*
+         * When doing ECH, we get here twice (for inner then outer), and don't
+         * want to risk getting different values for the age in milliseconds
+         * so when doing the inner, we'll store the |agems| value and then
+         * use that the 2nd time when doing the outer CH. The actual processing
+         * for the outer CH (inserting random values) is further below.
+         */
+        if (s->ext.ech.es != NULL && s->ext.ech.ch_depth == 1)
+            /* inner processing - record agems */
+            s->ext.ech.agems = agems;
+        if (s->ext.ech.es != NULL && s->ext.ech.ch_depth == 0)
+            /* outer processing - re-use agems from inner */
+            agems = s->ext.ech.agems;
+#endif
 
         if (agesec != 0 && agems / (uint32_t)1000 != agesec) {
             /*
@@ -2449,14 +2464,15 @@ EXT_RETURN tls_construct_ctos_ech(SSL_CONNECTION *s, WPACKET *pkt,
                                   unsigned int context, X509 *x,
                                   size_t chainidx)
 {
-    if (s->ext.ech.attempted_type != TLSEXT_TYPE_ech
-        && s->ext.ech.grease != OSSL_ECH_IS_GREASE
-        && (s->options & SSL_OP_ECH_GREASE) == 0)
+    /* whether or not we've been asked to GREASE, one way or another */
+    int grease_opt_set = (s->ext.ech.grease == OSSL_ECH_IS_GREASE
+                          || ((s->options & SSL_OP_ECH_GREASE) != 0));
+
+    /* if we're not doing real ECH and not GREASEing then exit */
+    if (s->ext.ech.attempted_type != TLSEXT_TYPE_ech && grease_opt_set == 1) 
         return EXT_RETURN_NOT_SENT;
     /* send grease if not really attempting ECH */
-    if (s->ext.ech.attempted == 0
-        && (s->ext.ech.grease == OSSL_ECH_IS_GREASE
-            || (s->options & SSL_OP_ECH_GREASE))) {
+    if (s->ext.ech.attempted == 0 && grease_opt_set == 1) {
         if (s->hello_retry_request == SSL_HRR_PENDING
             && s->ext.ech.sent != NULL) {
             /* re-tx already sent GREASEy ECH */
