@@ -328,6 +328,7 @@ static int do_print_sigalgs(BIO *out, SSL *s, int shared)
 
 int ssl_print_sigalgs(BIO *out, SSL *s)
 {
+    const char *name;
     int nid;
 
     if (!SSL_is_server(s))
@@ -336,7 +337,9 @@ int ssl_print_sigalgs(BIO *out, SSL *s)
     do_print_sigalgs(out, s, 1);
     if (SSL_get_peer_signature_nid(s, &nid) && nid != NID_undef)
         BIO_printf(out, "Peer signing digest: %s\n", OBJ_nid2sn(nid));
-    if (SSL_get_peer_signature_type_nid(s, &nid))
+    if (SSL_get0_peer_signature_name(s, &name))
+        BIO_printf(out, "Peer signature type: %s\n", name);
+    else if (SSL_get_peer_signature_type_nid(s, &nid))
         BIO_printf(out, "Peer signature type: %s\n", get_sigtype(nid));
     return 1;
 }
