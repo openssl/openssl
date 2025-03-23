@@ -236,7 +236,7 @@ int custom_ext_add(SSL_CONNECTION *s, int context, WPACKET *pkt, X509 *x,
                     return 0;
                 }
                 raws = s->clienthello->pre_proc_exts;
-                for (j = 0; j != s->clienthello->pre_proc_exts_len; j++) {
+                for (j = 0; j != (int) s->clienthello->pre_proc_exts_len; j++) {
                     if (raws[j].type == meth->ext_type) {
                         tind = j;
                         break;
