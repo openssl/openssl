@@ -3386,27 +3386,29 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 
             BIO_printf(bio, "---\nCertificate chain\n");
             for (i = 0; i < sk_X509_num(sk); i++) {
+                X509 *chain_cert = sk_X509_value(sk, i);
+
                 BIO_printf(bio, "%2d s:", i);
-                X509_NAME_print_ex(bio, X509_get_subject_name(sk_X509_value(sk, i)), 0, get_nameopt());
+                X509_NAME_print_ex(bio, X509_get_subject_name(chain_cert), 0, get_nameopt());
                 BIO_puts(bio, "\n");
                 BIO_printf(bio, "   i:");
-                X509_NAME_print_ex(bio, X509_get_issuer_name(sk_X509_value(sk, i)), 0, get_nameopt());
+                X509_NAME_print_ex(bio, X509_get_issuer_name(chain_cert), 0, get_nameopt());
                 BIO_puts(bio, "\n");
                 public_key = X509_get_pubkey(sk_X509_value(sk, i));
                 if (public_key != NULL) {
                     BIO_printf(bio, "   a:PKEY: %s, %d (bit); sigalg: %s\n",
-                               OBJ_nid2sn(EVP_PKEY_get_base_id(public_key)),
+                               OBJ_nid2ln(EVP_PKEY_get_base_id(public_key)),
                                EVP_PKEY_get_bits(public_key),
-                               OBJ_nid2sn(X509_get_signature_nid(sk_X509_value(sk, i))));
+                               OBJ_nid2ln(X509_get_signature_nid(chain_cert)));
                     EVP_PKEY_free(public_key);
                 }
                 BIO_printf(bio, "   v:NotBefore: ");
-                ASN1_TIME_print(bio, X509_get0_notBefore(sk_X509_value(sk, i)));
+                ASN1_TIME_print(bio, X509_get0_notBefore(chain_cert));
                 BIO_printf(bio, "; NotAfter: ");
-                ASN1_TIME_print(bio, X509_get0_notAfter(sk_X509_value(sk, i)));
+                ASN1_TIME_print(bio, X509_get0_notAfter(chain_cert));
                 BIO_puts(bio, "\n");
                 if (c_showcerts)
-                    PEM_write_bio_X509(bio, sk_X509_value(sk, i));
+                    PEM_write_bio_X509(bio, chain_cert);
             }
         }
 
