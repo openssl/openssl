@@ -226,7 +226,7 @@ int custom_ext_add(SSL_CONNECTION *s, int context, WPACKET *pkt, X509 *x,
             if (s->ext.ech.ch_depth == 0) {
                 /* TODO(ECH): we need a better way to handle indexing exts */
                 /* copy over the extension octets (if any) to outer */
-                int i, tind = -1;
+                int j, tind = -1;
                 RAW_EXTENSION *raws = NULL;
 
                 /* we gotta find the relevant index to copy over this ext */
@@ -236,9 +236,9 @@ int custom_ext_add(SSL_CONNECTION *s, int context, WPACKET *pkt, X509 *x,
                     return 0;
                 }
                 raws = s->clienthello->pre_proc_exts;
-                for (i = 0; i != s->clienthello->pre_proc_exts_len; i++) {
-                    if (raws[i].type == meth->ext_type) {
-                        tind = i;
+                for (j = 0; j != s->clienthello->pre_proc_exts_len; j++) {
+                    if (raws[j].type == meth->ext_type) {
+                        tind = j;
                         break;
                     }
                 }
