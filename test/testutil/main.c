@@ -12,12 +12,13 @@
 #include "tu_local.h"
 
 #ifdef OPENSSL_DO_MPROFILE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <libgen.h>
 #include <string.h>
 
-#define	FNAME_BUF_SZ	512
+#define BUF_SZ  512
 extern void mprofile_start(void);
 #endif
 
@@ -26,12 +27,17 @@ int main(int argc, char *argv[])
     int ret = EXIT_FAILURE;
     int setup_res;
 #ifdef OPENSSL_DO_MPROFILE
-    char file_name_buf[2][FNAME_BUF_SZ];
+    /*
+     * We need to make mprofile part of libtestutil so we can
+     * snoop calls to CRYPTO_malloc(), CRYPTO_free() and CRYPTO_realloc()
+     * to libcrypto.a, because many tests use libcrypto.a
+     */
+    char annotation_buf[2][BUF_SZ];
     char *do_mprofile = getenv("DO_MPROFILE");
-    char *results_dir = getenv("MPROFILE_RESULTS");
+    char *file_name = getenv("MPROFILE_OUTF");
     int i, sn;
 
-    if (do_mprofile != NULL && results_dir != NULL) {
+    if (do_mprofile != NULL) {
         /*
          * Tests may execute single binary with different arguments.  The
          * memory profiler (libmprofile) expects test to set MPROFILE_OUTF
@@ -44,30 +50,31 @@ int main(int argc, char *argv[])
          * into single string. My preference is to for snprintf() and flip
          * two buffers as loop goes.
          */
-         file_name_buf[0][0] = '\0';
-         file_name_buf[1][0] = '\0';
-         for (i = 0; i < argc && sn < FNAME_BUF_SZ; i++) {
-             if (i == 0)
-                 sn = snprintf(file_name_buf[i], FNAME_BUF_SZ, "%s",
-                     basename(argv[i]));
-             else
-                 sn = snprintf(file_name_buf[i % 2], FNAME_BUF_SZ, "%s__%s",
-                 file_name_buf[(i - 1) % 2], basename(argv[i]));
-         }
+        annotation_buf[0][0] = '\0';
+        annotation_buf[1][0] = '\0';
+        for (i = 0; i < argc && sn < BUF_SZ; i++) {
+            if (i == 0)
+                sn = snprintf(annotation_buf[i], BUF_SZ, "%s",
+                              basename(argv[i]));
+            else
+                sn = snprintf(annotation_buf[i % 2], BUF_SZ, "%s %s",
+                              annotation_buf[(i - 1) % 2], argv[i]);
+        }
+        setenv("MPROFILE_ANNOTATION", annotation_buf[(i - 1) % 2], 0);
 
-         if (i == argc && results_dir != NULL) {
-             sn = snprintf(file_name_buf[i % 2], FNAME_BUF_SZ, "%s/%s.json",
-                 results_dir, file_name_buf[(i - 1) % 2]);
-             if (sn < FNAME_BUF_SZ) {
-                 setenv("MPROFILE_OUTF", file_name_buf[i % 2], 1);
-                 /*
-                  * we are all set to run mprofile. mprofile is best effort,
-                  * os if anything fails just give up. Perhaps we should
-                  * report such failure.
-                  */
-                  mprofile_start();
-             }
-         }
+        /*
+         * Almost every test gets two instances of libmprofile:
+         *     - libmprofile.so instance we get via LD_PRELOAD
+         *         - libmprofile we get via static libtestutil library
+         * Both instances are controlled via the identical env. variables
+         * including MPROFILE_OUTF. To resolve conflict between dynamic and
+         * static version of libmprofile we prepend a static_ prefix to
+         * output data which come from libtestutil/mprofile.
+         */
+        snprintf(annotation_buf[0], BUF_SZ, "%s/testutil_%s",
+                 dirname(file_name), basename(file_name));
+        setenv("MPROFILE_OUTF", annotation_buf[0], 1);
+        mprofile_start();
     }
 #endif
 
