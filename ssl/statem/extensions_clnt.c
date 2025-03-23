@@ -1088,6 +1088,9 @@ EXT_RETURN tls_construct_ctos_padding(SSL_CONNECTION *s, WPACKET *pkt,
 
     if ((s->options & SSL_OP_TLSEXT_PADDING) == 0)
         return EXT_RETURN_NOT_SENT;
+#ifndef OPENSSL_NO_ECH
+    ECH_SAME_EXT(s, pkt);
+#endif
 
     /*
      * Add padding to workaround bugs in F5 terminators. See RFC7685.
@@ -1309,7 +1312,8 @@ EXT_RETURN tls_construct_ctos_psk(SSL_CONNECTION *s, WPACKET *pkt,
      * with random values of the same length.
      */
     if (s->ext.ech.es != NULL && s->ext.ech.ch_depth == 0) {
-        unsigned char *rndbuf = NULL;
+        /* TODO(ECH): changes here need testing with server-side code PR */
+        unsigned char *rndbuf = NULL, *rndbufp = NULL;
         size_t totalrndsize = 0;
 
         if (s->session == NULL) {
@@ -1317,7 +1321,7 @@ EXT_RETURN tls_construct_ctos_psk(SSL_CONNECTION *s, WPACKET *pkt,
             return EXT_RETURN_FAIL;
         }
         totalrndsize = s->session->ext.ticklen
-            + 4 /* agems */
+            + sizeof(agems)
             + s->psksession_id_len
             + reshashsize
             + pskhashsize;
@@ -1326,7 +1330,7 @@ EXT_RETURN tls_construct_ctos_psk(SSL_CONNECTION *s, WPACKET *pkt,
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return EXT_RETURN_FAIL;
         }
-        /* outer CH allocate a similar sized random value */
+        /* for outer CH allocate a similar sized random value */
         if (RAND_bytes_ex(s->ssl.ctx->libctx, rndbuf, totalrndsize,
                           RAND_DRBG_STRENGTH) <= 0) {
             OPENSSL_free(rndbuf);
@@ -1334,48 +1338,36 @@ EXT_RETURN tls_construct_ctos_psk(SSL_CONNECTION *s, WPACKET *pkt,
             return EXT_RETURN_FAIL;
         }
         /* set agems from random buffer */
-        agems = *((uint32_t *)(rndbuf + s->session->ext.ticklen));
+        rndbufp = rndbuf;
+        agems = *((uint32_t *)(rndbufp));
+        rndbufp += sizeof(agems);
         if (dores != 0) {
-            if (!WPACKET_sub_memcpy_u16(pkt, rndbuf,
+            if (!WPACKET_sub_memcpy_u16(pkt, rndbufp,
                                         s->session->ext.ticklen)
                 || !WPACKET_put_bytes_u32(pkt, agems)) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 OPENSSL_free(rndbuf);
                 return EXT_RETURN_FAIL;
             }
+            rndbufp += s->session->ext.ticklen;
         }
         if (s->psksession != NULL) {
-            if (!WPACKET_sub_memcpy_u16(pkt,
-                                        rndbuf + s->session->ext.ticklen + 4,
-                                        s->psksession_id_len)
+            if (!WPACKET_sub_memcpy_u16(pkt, rndbufp, s->psksession_id_len)
                 || !WPACKET_put_bytes_u32(pkt, 0)) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 OPENSSL_free(rndbuf);
                 return EXT_RETURN_FAIL;
             }
+            rndbufp += s->psksession_id_len;
         }
         if (!WPACKET_close(pkt)
-            || !WPACKET_get_total_written(pkt, &binderoffset)
             || !WPACKET_start_sub_packet_u16(pkt)
             || (dores == 1
-                && !WPACKET_sub_memcpy_u8(pkt,
-                                          rndbuf + s->session->ext.ticklen
-                                          + 4 + s->psksession_id_len,
-                                          reshashsize))
+                && !WPACKET_sub_memcpy_u8(pkt, rndbufp, reshashsize))
             || (s->psksession != NULL
-                && !WPACKET_sub_memcpy_u8(pkt,
-                                          rndbuf + s->session->ext.ticklen
-                                          + 4 + s->psksession_id_len
-                                          + reshashsize,
-                                          pskhashsize))
+                && !WPACKET_sub_memcpy_u8(pkt, rndbufp, pskhashsize))
             || !WPACKET_close(pkt)
-            || !WPACKET_close(pkt)
-            || !WPACKET_get_total_written(pkt, &msglen)
-            /*
-             * We need to fill in all the sub-packet lengths now so we can
-             * calculate the HMAC of the message up to the binders
-             */
-            || !WPACKET_fill_lengths(pkt)) {
+            || !WPACKET_close(pkt)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             OPENSSL_free(rndbuf);
             return EXT_RETURN_FAIL;
@@ -2459,7 +2451,7 @@ EXT_RETURN tls_construct_ctos_ech(SSL_CONNECTION *s, WPACKET *pkt,
 {
     if (s->ext.ech.attempted_type != TLSEXT_TYPE_ech
         && s->ext.ech.grease != OSSL_ECH_IS_GREASE
-        && !(s->options & SSL_OP_ECH_GREASE))
+        && (s->options & SSL_OP_ECH_GREASE) == 0)
         return EXT_RETURN_NOT_SENT;
     /* send grease if not really attempting ECH */
     if (s->ext.ech.attempted == 0
@@ -2513,22 +2505,22 @@ int tls_parse_stoc_ech(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     unsigned int rlen = 0;
     const unsigned char *rval = NULL;
     unsigned char *srval = NULL;
+    PACKET rcfgs_pkt;
 
     /*
-     * An HRR will have an ECH extension with the
-     * 8-octet confirmation value, already handled
+     * An HRR will have an ECH extension with the 8-octet confirmation value.
+     * But if so, that was already handled in `ossl_ech_calc_confirm` and we
+     * shouldn't accept retry_configs from an HRR message.
      */
     if (context == SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST)
         return 1;
     /* othewise we expect retry-configs */
-    if (!PACKET_get_net_2(pkt, &rlen)) {
+    if (!PACKET_get_length_prefixed_2(pkt, &rcfgs_pkt)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
         return 0;
     }
-    if (!PACKET_get_bytes(pkt, &rval, rlen)) {
-        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_LENGTH_MISMATCH);
-        return 0;
-    }
+    rval = PACKET_data(&rcfgs_pkt);
+    rlen = PACKET_remaining(&rcfgs_pkt);
     OPENSSL_free(s->ext.ech.returned);
     s->ext.ech.returned = NULL;
     srval = OPENSSL_malloc(rlen + 2);

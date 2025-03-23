@@ -1161,13 +1161,13 @@ WORK_STATE ossl_statem_client_post_process_message(SSL_CONNECTION *s,
 
 #ifndef OPENSSL_NO_ECH
 /*
- * Wrap the existing ClientHello construction with ECH code.
+ * Wrap ClientHello construction with ECH code.
  *
- * As needed, we'll call the existing CH constructor twice,
- * first for inner, and then for outer.
+ * As needed, we'll call the CH constructor twice, first for
+ * inner, and then for outer.
  *
- * So the old tls_construct_client_hello is renamed to the _aux
- * variant, and the new tls_construct_client_hello just calls
+ * `tls_construct_client_hello_aux` is the pre-ECH code
+ * and the ECH-aware tls_construct_client_hello just calls
  * that if there's no ECH involved, but otherwise does ECH
  * things around calls to the _aux variant.
  *
@@ -1202,7 +1202,7 @@ static int tls_construct_client_hello_aux(SSL_CONNECTION *s, WPACKET *pkt);
 __owur CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s,
                                                   WPACKET *pkt)
 {
-    unsigned char *innerch_full = NULL, *innerch_end = NULL, *encoded = NULL;
+    unsigned char *encoded = NULL;
     size_t encoded_len;
     WPACKET inner; /* "fake" pkt for inner */
     BUF_MEM *inner_mem = NULL;
@@ -1299,18 +1299,12 @@ __owur CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s,
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, protverr);
         goto err;
     }
-    innerch_full = OPENSSL_malloc(innerlen);
-    if (innerch_full == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-    innerch_end = WPACKET_get_curr(&inner);
-    memcpy(innerch_full, innerch_end - innerlen, innerlen);
     OPENSSL_free(s->ext.ech.innerch);
-    s->ext.ech.innerch = innerch_full;
+    s->ext.ech.innerch = (unsigned char*)inner_mem->data;
+    inner_mem->data = NULL;
     s->ext.ech.innerch_len = innerlen;
     /* add inner to transcript */
-    if (ossl_ech_intbuf_add(s, innerch_full, innerlen, 0) != 1) {
+    if (ossl_ech_intbuf_add(s, s->ext.ech.innerch, innerlen, 0) != 1) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     }

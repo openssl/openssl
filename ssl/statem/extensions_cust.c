@@ -201,40 +201,60 @@ int custom_ext_add(SSL_CONNECTION *s, int context, WPACKET *pkt, X509 *x,
         }
 
 #ifndef OPENSSL_NO_ECH
-        if ((context & SSL_EXT_CLIENT_HELLO) != 0) {
-            /* mark custom CH ext for ECH compression, if doing ECH */
+        if ((context & SSL_EXT_CLIENT_HELLO) != 0
+            && s->ext.ech.attempted == 1) {
             if (s->ext.ech.ch_depth == 1) {
+                /* mark custom CH ext for ECH compression, if doing ECH */
                 if (s->ext.ech.n_outer_only >= OSSL_ECH_OUTERS_MAX) {
                     OSSL_TRACE_BEGIN(TLS) {
                         BIO_printf(trc_out,
-                                   "Too many outers to compress (max=%d)\n",
-                                   OSSL_ECH_OUTERS_MAX);
+                                "Too many outers to compress (max=%d)\n",
+                                OSSL_ECH_OUTERS_MAX);
                     } OSSL_TRACE_END(TLS);
                     SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_EXTENSION);
                     return 0;
                 }
-                s->ext.ech.outer_only[s->ext.ech.n_outer_only] =
-                    meth->ext_type;
+                s->ext.ech.outer_only[s->ext.ech.n_outer_only] = meth->ext_type;
                 s->ext.ech.n_outer_only++;
                 OSSL_TRACE_BEGIN(TLS) {
                     BIO_printf(trc_out, "ECH compressing type "
-                               "0x%04x (tot: %d)\n",
-                               (int) meth->ext_type,
-                               (int) s->ext.ech.n_outer_only);
+                            "0x%04x (tot: %d)\n",
+                            (int) meth->ext_type,
+                            (int) s->ext.ech.n_outer_only);
                 } OSSL_TRACE_END(TLS);
             }
-        } else if (s->ext.ech.attempted == 1 && s->ext.ech.ch_depth == 0) {
-            /* copy over the extension octets (if any) to outer */
-            int tind = s->ext.ech.ext_ind;
+            if (s->ext.ech.ch_depth == 0) {
+                /* TODO(ECH): we need a better way to handle indexing exts */
+                /* copy over the extension octets (if any) to outer */
+                int i, tind = -1;
+                RAW_EXTENSION *raws = NULL;
 
-            if (ossl_ech_copy_inner2outer(s, meth->ext_type, tind, pkt)
-                    != OSSL_ECH_SAME_EXT_DONE) {
-                /* for custom exts, we really should have found it */
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_EXTENSION);
-                return 0;
+                /* we gotta find the relevant index to copy over this ext */
+                if (s->clienthello == NULL
+                    || s->clienthello->pre_proc_exts == NULL) {
+                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_EXTENSION);
+                    return 0;
+                }
+                raws = s->clienthello->pre_proc_exts;
+                for (i = 0; i != s->clienthello->pre_proc_exts_len; i++) {
+                    if (raws[i].type == meth->ext_type) {
+                        tind = i;
+                        break;
+                    }
+                }
+                if (tind == -1) {
+                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_EXTENSION);
+                    return 0;
+                }
+                if (ossl_ech_copy_inner2outer(s, meth->ext_type, tind, pkt)
+                        != OSSL_ECH_SAME_EXT_DONE) {
+                    /* for custom exts, we really should have found it */
+                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_EXTENSION);
+                    return 0;
+                }
+                /* we're done with that one now */
+                continue;
             }
-            /* we're done with that one now */
-            continue;
         }
 #endif
 

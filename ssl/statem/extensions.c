@@ -628,6 +628,7 @@ int ossl_ech_same_ext(SSL_CONNECTION *s, WPACKET *pkt)
 # endif
     if (s == NULL || s->ext.ech.es == NULL)
         return OSSL_ECH_SAME_EXT_CONTINUE; /* nothing to do */
+    /* TODO(ECH): we need a better way to handle indexing exts */
     tind = s->ext.ech.ext_ind;
     /* If this index'd extension won't be compressed, we're done */
     if (tind < 0 || tind >= nexts)
