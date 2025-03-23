@@ -2840,9 +2840,18 @@ static int script_21_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
     if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, h->inject_word1)))
         goto err;
 
-    if (h->inject_word1 == OSSL_QUIC_FRAME_TYPE_PATH_CHALLENGE)
+    switch (h->inject_word1) {
+    case OSSL_QUIC_FRAME_TYPE_PATH_CHALLENGE:
         if (!TEST_true(WPACKET_put_bytes_u64(&wpkt, (uint64_t)0)))
             goto err;
+        break;
+    case OSSL_QUIC_FRAME_TYPE_STREAM_DATA_BLOCKED:
+        if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, (uint64_t)0)))
+            goto err;
+        if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, (uint64_t)0)))
+            goto err;
+        break;
+    }
 
     if (!TEST_true(WPACKET_get_total_written(&wpkt, &written)))
         goto err;
