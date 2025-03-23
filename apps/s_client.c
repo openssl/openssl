@@ -3361,12 +3361,50 @@ int s_client_main(int argc, char **argv)
     return ret;
 }
 
+static char *ec_curve_name(EVP_PKEY *pkey)
+{
+    char *curve = 0;
+    size_t namelen;
+
+    if (EVP_PKEY_get_group_name(pkey, NULL, 0, &namelen)) {
+        curve = OPENSSL_malloc(++namelen);
+        if (!EVP_PKEY_get_group_name(pkey, curve, namelen, 0)) {
+            OPENSSL_free(curve);
+            curve = NULL;
+        }
+    }
+    return (curve);
+}
+
+static void print_cert_key_info(BIO *bio, X509 *cert)
+{
+    EVP_PKEY *pkey = X509_get0_pubkey(cert);
+    char *curve = NULL;
+    const char *keyalg;
+
+    if (pkey == NULL)
+        return;
+    keyalg = EVP_PKEY_get0_type_name(pkey);
+    if (keyalg == NULL)
+        keyalg = OBJ_nid2ln(EVP_PKEY_get_base_id(pkey));
+    if (EVP_PKEY_id(pkey) == EVP_PKEY_EC)
+        curve = ec_curve_name(pkey);
+    if (curve != NULL)
+        BIO_printf(bio, "   a:PKEY: %s, (%s); sigalg: %s\n",
+                   keyalg, curve,
+                   OBJ_nid2ln(X509_get_signature_nid(cert)));
+    else
+        BIO_printf(bio, "   a:PKEY: %s, %d (bit); sigalg: %s\n",
+                   keyalg, EVP_PKEY_get_bits(pkey),
+                   OBJ_nid2ln(X509_get_signature_nid(cert)));
+    OPENSSL_free(curve);
+}
+
 static void print_stuff(BIO *bio, SSL *s, int full)
 {
     X509 *peer = NULL;
     STACK_OF(X509) *sk;
     const SSL_CIPHER *c;
-    EVP_PKEY *public_key;
     int i, istls13 = (SSL_version(s) == TLS1_3_VERSION);
     long verify_result;
 #ifndef OPENSSL_NO_COMP
@@ -3394,14 +3432,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
                 BIO_printf(bio, "   i:");
                 X509_NAME_print_ex(bio, X509_get_issuer_name(chain_cert), 0, get_nameopt());
                 BIO_puts(bio, "\n");
-                public_key = X509_get_pubkey(sk_X509_value(sk, i));
-                if (public_key != NULL) {
-                    BIO_printf(bio, "   a:PKEY: %s, %d (bit); sigalg: %s\n",
-                               OBJ_nid2ln(EVP_PKEY_get_base_id(public_key)),
-                               EVP_PKEY_get_bits(public_key),
-                               OBJ_nid2ln(X509_get_signature_nid(chain_cert)));
-                    EVP_PKEY_free(public_key);
-                }
+                print_cert_key_info(bio, chain_cert);
                 BIO_printf(bio, "   v:NotBefore: ");
                 ASN1_TIME_print(bio, X509_get0_notBefore(chain_cert));
                 BIO_printf(bio, "; NotAfter: ");
