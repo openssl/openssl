@@ -214,8 +214,8 @@ static int log_frame_actual(QLOG *qlog_instance, PACKET *pkt,
     PACKET orig_pkt = *pkt;
 
     if (!ossl_quic_wire_peek_frame_header(pkt, &frame_type, NULL)) {
-        QLOG_STR("frame_type", "error");
-        goto error;
+        *need_skip = SIZE_MAX;
+        return 0;
     }
 
     /*
@@ -503,7 +503,6 @@ unknown:
          * is unknown. We log the entire body of the rest of the packet payload
          * as the raw data of the frame.
          */
-error:
         QLOG_BEGIN("raw");
             QLOG_BIN("data", PACKET_data(&orig_pkt),
                      PACKET_remaining(&orig_pkt));
