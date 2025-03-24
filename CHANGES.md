@@ -31,18 +31,18 @@ OpenSSL 3.6
 
 ### Changes between 3.5 and 3.6 [xx XXX xxxx]
 
-* Support setting a free function thunk to OPENSSL_sk stack types. Using a thunk
-  allows the type specific free function to be called with the correct type
-  information from generic functions like OPENSSL_sk_pop_free().
+ * Support setting a free function thunk to OPENSSL_sk stack types. Using a thunk
+   allows the type specific free function to be called with the correct type
+   information from generic functions like OPENSSL_sk_pop_free().
 
-  *Frederik Wedel-Heinen*
+   *Frederik Wedel-Heinen*
 
 OpenSSL 3.5
 -----------
 
 ### Changes between 3.4 and 3.5 [xx XXX xxxx]
 
-* Added server side support for QUIC
+ * Added server side support for QUIC
 
    *Hugo Landau, Matt Caswell, Tomáš Mráz, Neil Horman, Sasha Nedvedicky, Andrew Dinh*
 
