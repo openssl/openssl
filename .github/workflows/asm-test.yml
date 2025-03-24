@@ -41,6 +41,9 @@ jobs:
         run: 7z.exe x -bsp1 downloads/${{ matrix.win_zoo.sde }}.tar.xz
       - name: run test
         run: |
+          dir ${{ github.workspace }}
+          dir ${{ github.workspace }}\${{ matrix.win_zoo.sde }}
+          dir ${{ matrix.win_zoo.sde }}\${{ matrix.win_zoo.sde }}\downloads
           ${{ github.workspace }}\${{ matrix.win_zoo.sde }}\sde.exe --help
 
   lin_sde:
