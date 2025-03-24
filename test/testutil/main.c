@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
         /*
          * Almost every test gets two instances of libmprofile:
          *     - libmprofile.so instance we get via LD_PRELOAD
-         *         - libmprofile we get via static libtestutil library
+         *     - libmprofile we get via static libtestutil library
          * Both instances are controlled via the identical env. variables
          * including MPROFILE_OUTF. To resolve conflict between dynamic and
          * static version of libmprofile we prepend a static_ prefix to
