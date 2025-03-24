@@ -15,7 +15,35 @@ permissions:
   contents: read
 
 jobs:
-  x64_sde:
+  win_sde:
+    strategy:
+      fail-fast: false
+      matrix:
+        zoo: [
+          {
+            distro: windows-latest,
+            sde: sde-external-9.48.0-2024-11-25-win,
+            download: 843185/sde-external-9.48.0-2024-11-25-win
+          }
+        ]
+    runs-on: ${{ matrix.zoo.distro }}
+    env:
+      OPENSSL_SDE_PATH: ${{ github.workspace }}/${{ matrix.zoo.sde }}/sde64
+    steps:
+      - name: create download directory
+        run: mkdir downloads
+    - name: download sde
+      uses: suisei-cn/actions-download-file@v1.6.0
+      with:
+        url: "https://downloadmirror.intel.com/${{ matrix.zoo.download }}.tar.xz"
+        target: downloads
+    - name: unpack sde
+      run: 7z.exe x -bsp1 downloads/${{ matrix.zoo.sde }}.tar.xz
+    - name: run test
+      run: |
+        ./sde.exe --help
+
+  lin_sde:
     strategy:
       fail-fast: false
       matrix:
