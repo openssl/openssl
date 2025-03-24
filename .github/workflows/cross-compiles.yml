@@ -214,13 +214,13 @@ jobs:
       run: |
         .github/workflows/make-test \
                   TESTS="-test_afalg" \
-                  QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }} || touch .test_failure
+                  QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }}
     - name: make some tests
       if: github.event_name == 'push' && matrix.platform.tests != 'none' && matrix.platform.tests != ''
       run: |
         .github/workflows/make-test \
                   TESTS="${{ matrix.platform.tests }} -test_afalg" \
-                  QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }} || touch .test_failure
+                  QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }}
     - name: make evp tests
       if: github.event_name == 'pull_request' && matrix.platform.tests != 'none'
       run: |
@@ -228,11 +228,9 @@ jobs:
                   TESTS="test_evp*" \
                   QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }}
     - name: save artifacts
+      if: success() || failure()
       uses: actions/upload-artifact@v4
       with:
         name: "cross-compiles@${{ matrix.platform.arch }}"
         path: artifacts.tar.gz
         if-no-files-found: ignore
-    - name: check test result
-      run: |
-        test ! -f .test_failure
