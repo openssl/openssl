@@ -110,7 +110,9 @@ it decodes. For example, an implementation that decodes an RSA key
 should be named "RSA". Likewise, an implementation that decodes DER data
 from PEM input should be named "DER".
 
-Properties can be used to further specify details about an implementation:
+Properties, as defined in the L<OSSL_ALGORITHM(3)> array element of each
+decoder implementation, can be used to further specify details about an
+implementation:
 
 =over 4
 
