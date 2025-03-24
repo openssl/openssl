@@ -1381,7 +1381,7 @@ subtest "encrypt to three recipients with RSA-OAEP, key only decrypt" => sub {
     is(compare($pt, $ptpt), 0, "compare original message with decrypted ciphertext");
 };
 
-subtest "EdDSA tests for CMS \n" => sub {
+subtest "EdDSA tests for CMS" => sub {
     plan tests => 2;
 
     SKIP: {
@@ -1402,7 +1402,7 @@ subtest "EdDSA tests for CMS \n" => sub {
     }
 };
 
-subtest "ML-DSA tests for CMS \n" => sub {
+subtest "ML-DSA tests for CMS" => sub {
     plan tests => 2;
 
     SKIP: {
@@ -1423,7 +1423,7 @@ subtest "ML-DSA tests for CMS \n" => sub {
     }
 };
 
-subtest "SLH-DSA tests for CMS \n" => sub {
+subtest "SLH-DSA tests for CMS" => sub {
     plan tests => 6;
 
     SKIP: {
