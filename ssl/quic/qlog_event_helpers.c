@@ -542,7 +542,7 @@ static int log_frames(QLOG *qlog_instance,
             if (need_skip > 0) {
                 size_t adv = need_skip;
 
-                if (adv < PACKET_remaining(&pkt))
+                if (adv > PACKET_remaining(&pkt))
                     adv = PACKET_remaining(&pkt);
 
                 if (!PACKET_forward(&pkt, adv))
