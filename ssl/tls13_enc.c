@@ -510,7 +510,9 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
                 }
                 handlen = s->ext.ech.innerch_len;
                 hdata = s->ext.ech.innerch;
-            } else {
+            } else
+#endif
+            {
                 handlen = BIO_get_mem_data(s->s3.handshake_buffer, &hdata);
                 if (handlen <= 0) {
                     SSLfatal(s, SSL_AD_INTERNAL_ERROR,
@@ -518,13 +520,6 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
                     goto err;
                 }
             }
-#else
-            handlen = BIO_get_mem_data(s->s3.handshake_buffer, &hdata);
-            if (handlen <= 0) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_HANDSHAKE_LENGTH);
-                goto err;
-            }
-#endif
 
             if (s->early_data_state == SSL_EARLY_DATA_CONNECTING
                     && s->max_early_data > 0

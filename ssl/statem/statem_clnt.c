@@ -1433,10 +1433,8 @@ __owur CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s, WPACKET *pk
     if (s->ext.ech.es != NULL && s->ext.ech.ch_depth == 1)
         p = s->ext.ech.client_random;
     else
-        p = s->s3.client_random;
-#else
-    p = s->s3.client_random;
 #endif
+        p = s->s3.client_random;
 
     /*
      * for DTLS if client_random is initialized, reuse it, we are
@@ -1494,19 +1492,11 @@ __owur CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s, WPACKET *pk
      * For TLS 1.3 we always set the ClientHello version to 1.2 and rely on the
      * supported_versions extension for the real supported versions.
      */
-#ifndef OPENSSL_NO_ECH
     if (!WPACKET_put_bytes_u16(pkt, s->client_version)
             || !WPACKET_memcpy(pkt, p, SSL3_RANDOM_SIZE)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return CON_FUNC_ERROR;
     }
-#else
-    if (!WPACKET_put_bytes_u16(pkt, s->client_version)
-            || !WPACKET_memcpy(pkt, s->s3.client_random, SSL3_RANDOM_SIZE)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return CON_FUNC_ERROR;
-    }
-#endif
 
     /* Session ID */
     session_id = s->session->session_id;
@@ -1739,7 +1729,7 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
      * e.g. memory fail when calculating, only really applies when
      * SUPERVERBOSE is defined and we trace these.
      */
-    unsigned char c_signal[OSSL_ECH_SIGNAL_LEN] = { 0 }; 
+    unsigned char c_signal[OSSL_ECH_SIGNAL_LEN] = { 0 };
     unsigned char s_signal[OSSL_ECH_SIGNAL_LEN] = { 0xff };
     unsigned char *abuf = NULL;
 
@@ -1828,15 +1818,18 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
             prelude[1] = (shlen >> 16) & 0xff;
             prelude[2] = (shlen >> 8) & 0xff;
             prelude[3] = shlen & 0xff;
-            if (ossl_ech_intbuf_add(s, prelude, 4, hrr) != 1 
+            if (ossl_ech_intbuf_add(s, prelude, sizeof(prelude), hrr) != 1
                 || ossl_ech_intbuf_add(s, shbuf, shlen, 0) != 1) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
         }
         /* check the ECH accept signal */
-        if (ossl_ech_calc_confirm(s, hrr, c_signal, shbuf, shlen) != 1
-            || ossl_ech_find_confirm(s, hrr, s_signal, shbuf, shlen) != 1
+        if (ossl_ech_calc_confirm(s, hrr, c_signal, shbuf, shlen) != 1) {
+            OSSL_TRACE(TLS, "ECH calc confim failed\n");
+            goto err;
+        }
+        if (ossl_ech_find_confirm(s, hrr, s_signal, shbuf, shlen) != 1
             || memcmp(s_signal, c_signal, sizeof(c_signal)) != 0) {
             OSSL_TRACE(TLS, "ECH accept check failed\n");
 # ifdef OSSL_ECH_SUPERVERBOSE
@@ -3312,8 +3305,12 @@ int tls_process_initial_server_flight(SSL_CONNECTION *s)
 
 #ifndef OPENSSL_NO_ECH
     /* check result of ech and return error if needed */
-    if (!s->server
-        && s->ext.ech.es != NULL
+    /*
+     * TODO(ECH): check that we never get here in a server
+     * during split-mode or test cases - there used be a
+     * check of !s->server added to the below.
+     */
+    if (s->ext.ech.es != NULL
         && s->ext.ech.attempted == 1
         && s->ext.ech.success != 1
         && s->ext.ech.grease != OSSL_ECH_IS_GREASE) {
