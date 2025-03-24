@@ -20,5 +20,7 @@ int ossl_ssl_get_error(const SSL *s, int i, int check_err);
 
 /* Set if this is the QUIC handshake layer */
 # define TLS1_FLAGS_QUIC                         0x2000
+/* Set if this is our QUIC handshake layer */
+# define TLS1_FLAGS_QUIC_INTERNAL                0x4000
 
 #endif

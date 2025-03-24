@@ -1428,11 +1428,10 @@ void SSL_free(SSL *s)
         return;
     REF_ASSERT_ISNT(i < 0);
 
-    CRYPTO_free_ex_data(CRYPTO_EX_INDEX_SSL, s, &s->ex_data);
-
     if (s->method != NULL)
         s->method->ssl_free(s);
 
+    CRYPTO_free_ex_data(CRYPTO_EX_INDEX_SSL, s, &s->ex_data);
     SSL_CTX_free(s->ctx);
     CRYPTO_THREAD_lock_free(s->lock);
     CRYPTO_FREE_REF(&s->references);
@@ -1448,14 +1447,16 @@ void ossl_ssl_connection_free(SSL *ssl)
     if (s == NULL)
         return;
 
+    /*
+     * Ignore return values. This could result in user callbacks being called
+     * e.g. for the QUIC TLS record layer. So we do this early before we have
+     * freed other things.
+     */
+    ssl_free_wbio_buffer(s);
+    RECORD_LAYER_clear(&s->rlayer);
+
     X509_VERIFY_PARAM_free(s->param);
     dane_final(&s->dane);
-
-    /* Ignore return value */
-    ssl_free_wbio_buffer(s);
-
-    /* Ignore return value */
-    RECORD_LAYER_clear(&s->rlayer);
 
     BUF_MEM_free(s->init_buf);
 
@@ -4967,12 +4968,6 @@ int SSL_do_handshake(SSL *s)
         }
     }
 
-    if (ret == 1 && SSL_IS_QUIC_HANDSHAKE(sc) && !SSL_is_init_finished(s)) {
-        sc->rwstate = SSL_READING;
-        BIO_clear_retry_flags(SSL_get_rbio(s));
-        BIO_set_retry_read(SSL_get_rbio(s));
-        ret = 0;
-    }
     return ret;
 }
 

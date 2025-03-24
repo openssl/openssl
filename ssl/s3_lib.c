@@ -3498,7 +3498,7 @@ int ssl3_clear(SSL *s)
      * NULL/zero-out everything in the s3 struct, but remember if we are doing
      * QUIC.
      */
-    flags = sc->s3.flags & TLS1_FLAGS_QUIC;
+    flags = sc->s3.flags & (TLS1_FLAGS_QUIC | TLS1_FLAGS_QUIC_INTERNAL);
     memset(&sc->s3, 0, sizeof(sc->s3));
     sc->s3.flags |= flags;
 

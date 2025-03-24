@@ -2895,11 +2895,15 @@ static int evp_pkey_ctx_setget_params_to_ctrl(EVP_PKEY_CTX *pctx,
 
 int evp_pkey_ctx_set_params_to_ctrl(EVP_PKEY_CTX *ctx, const OSSL_PARAM *params)
 {
+    if (ctx->keymgmt != NULL)
+        return 0;
     return evp_pkey_ctx_setget_params_to_ctrl(ctx, SET, (OSSL_PARAM *)params);
 }
 
 int evp_pkey_ctx_get_params_to_ctrl(EVP_PKEY_CTX *ctx, OSSL_PARAM *params)
 {
+    if (ctx->keymgmt != NULL)
+        return 0;
     return evp_pkey_ctx_setget_params_to_ctrl(ctx, GET, params);
 }
 

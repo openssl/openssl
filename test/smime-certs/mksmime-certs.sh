@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright 2013-2023 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2013-2025 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -67,3 +67,16 @@ gen smdh.pem "/CN=Test SMIME EE DH" dh_cert >>smdh.pem
 # EE RSA code signing end entity certificate with respective extensions
 cp ../certs/ee-key.pem csrsa1.pem
 gen csrsa1.pem "/CN=Test CodeSign EE RSA" codesign_cert >>csrsa1.pem
+
+# Create PQ certificates with respective extensions
+$OPENSSL genpkey -algorithm ML-DSA-44 -out sm_mldsa44.pem
+gen sm_mldsa44.pem "/CN=Test SMIME EE ML-DSA-44" signer_cert >>sm_mldsa44.pem
+$OPENSSL genpkey -algorithm SLH-DSA-SHA2-128s -out sm_slhdsa_sha2_128s.pem
+gen sm_slhdsa_sha2_128s.pem "/CN=Test SMIME EE SLH-DSA-SHA2-128s" \
+    signer_cert >>sm_slhdsa_sha2_128s.pem
+$OPENSSL genpkey -algorithm SLH-DSA-SHAKE-128s -out sm_slhdsa_shake_128s.pem
+gen sm_slhdsa_shake_128s.pem "/CN=Test SMIME EE SLH-DSA-SHAKE-128s" \
+    signer_cert >>sm_slhdsa_shake_128s.pem
+$OPENSSL genpkey -algorithm SLH-DSA-SHAKE-256s -out sm_slhdsa_shake_256s.pem
+gen sm_slhdsa_shake_256s.pem "/CN=Test SMIME EE SLH-DSA-SHAKE-256s" \
+    signer_cert >>sm_slhdsa_shake_256s.pem

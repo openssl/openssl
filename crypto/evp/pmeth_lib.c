@@ -701,8 +701,9 @@ int EVP_PKEY_CTX_set_params(EVP_PKEY_CTX *ctx, const OSSL_PARAM *params)
                 ctx->op.encap.kem->set_ctx_params(ctx->op.encap.algctx,
                                                   params);
         break;
-#ifndef FIPS_MODULE
     case EVP_PKEY_STATE_UNKNOWN:
+        break;
+#ifndef FIPS_MODULE
     case EVP_PKEY_STATE_LEGACY:
         return evp_pkey_ctx_set_params_to_ctrl(ctx, params);
 #endif
@@ -745,8 +746,9 @@ int EVP_PKEY_CTX_get_params(EVP_PKEY_CTX *ctx, OSSL_PARAM *params)
                 evp_keymgmt_gen_get_params(ctx->keymgmt, ctx->op.keymgmt.genctx,
                                            params);
         break;
-#ifndef FIPS_MODULE
     case EVP_PKEY_STATE_UNKNOWN:
+        break;
+#ifndef FIPS_MODULE
     case EVP_PKEY_STATE_LEGACY:
         return evp_pkey_ctx_get_params_to_ctrl(ctx, params);
 #endif

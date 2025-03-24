@@ -490,7 +490,7 @@ static SSL *port_new_handshake_layer(QUIC_PORT *port, QUIC_CHANNEL *ch)
         }
 
     /* Override the user_ssl of the inner connection. */
-    tls_conn->s3.flags      |= TLS1_FLAGS_QUIC;
+    tls_conn->s3.flags      |= TLS1_FLAGS_QUIC | TLS1_FLAGS_QUIC_INTERNAL;
 
     /* Restrict options derived from the SSL_CTX. */
     tls_conn->options       &= OSSL_QUIC_PERMITTED_OPTIONS_CONN;

@@ -12588,7 +12588,24 @@ struct quic_tls_test_data {
     size_t params_len;
     int alert;
     int err;
+    int forcefail;
 };
+
+static int clientquicdata = 0xff, serverquicdata = 0xfe;
+
+static int check_app_data(SSL *s)
+{
+    int *data, *comparedata;
+
+    /* Check app data works */
+    data = (int *)SSL_get_app_data(s);
+    comparedata = SSL_is_server(s) ? &serverquicdata : &clientquicdata;
+
+    if (!TEST_true(comparedata == data))
+        return 0;
+
+    return 1;
+}
 
 static int crypto_send_cb(SSL *s, const unsigned char *buf, size_t buf_len,
                           size_t *consumed, void *arg)
@@ -12597,6 +12614,11 @@ static int crypto_send_cb(SSL *s, const unsigned char *buf, size_t buf_len,
     struct quic_tls_test_data *peer = data->peer;
     size_t max_len = sizeof(peer->rcd_data[data->wenc_level])
                      - peer->rcd_data_len[data->wenc_level];
+
+    if (!check_app_data(s)) {
+        data->err = 1;
+        return 0;
+    }
 
     if (buf_len > max_len)
         buf_len = max_len;
@@ -12618,6 +12640,11 @@ static int crypto_recv_rcd_cb(SSL *s, const unsigned char **buf,
 {
     struct quic_tls_test_data *data = (struct quic_tls_test_data *)arg;
 
+    if (!check_app_data(s)) {
+        data->err = 1;
+        return 0;
+    }
+
     *bytes_read = data->rcd_data_len[data->renc_level];
     *buf = data->rcd_data[data->renc_level];
     return 1;
@@ -12626,6 +12653,18 @@ static int crypto_recv_rcd_cb(SSL *s, const unsigned char **buf,
 static int crypto_release_rcd_cb(SSL *s, size_t bytes_read, void *arg)
 {
     struct quic_tls_test_data *data = (struct quic_tls_test_data *)arg;
+
+    if (!check_app_data(s)) {
+        data->err = 1;
+        return 0;
+    }
+
+    /* See if we need to force a failure in this callback */
+    if (data->forcefail) {
+        data->forcefail = 0;
+        data->err = 1;
+        return 0;
+    }
 
     if (!TEST_size_t_eq(bytes_read, data->rcd_data_len[data->renc_level])
             || !TEST_size_t_gt(bytes_read, 0)) {
@@ -12642,6 +12681,9 @@ static int yield_secret_cb(SSL *s, uint32_t prot_level, int direction,
                            void *arg)
 {
     struct quic_tls_test_data *data = (struct quic_tls_test_data *)arg;
+
+    if (!check_app_data(s))
+        goto err;
 
     if (prot_level < OSSL_RECORD_PROTECTION_LEVEL_EARLY
             || prot_level > OSSL_RECORD_PROTECTION_LEVEL_APPLICATION)
@@ -12680,6 +12722,11 @@ static int got_transport_params_cb(SSL *s, const unsigned char *params,
 {
     struct quic_tls_test_data *data = (struct quic_tls_test_data *)arg;
 
+    if (!check_app_data(s)) {
+        data->err = 1;
+        return 0;
+    }
+
     if (!TEST_size_t_le(params_len, sizeof(data->params))) {
         data->err = 1;
         return 0;
@@ -12695,14 +12742,22 @@ static int alert_cb(SSL *s, unsigned char alert_code, void *arg)
 {
     struct quic_tls_test_data *data = (struct quic_tls_test_data *)arg;
 
+    if (!check_app_data(s)) {
+        data->err = 1;
+        return 0;
+    }
+
     data->alert = 1;
     return 1;
 }
 
 /*
  * Test the QUIC TLS API
+ * Test 0: Normal run
+ * Test 1: Force a failure
+ * Test 3: Use a CCM based ciphersuite
  */
-static int test_quic_tls(void)
+static int test_quic_tls(int idx)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *serverssl = NULL, *clientssl = NULL;
@@ -12733,6 +12788,8 @@ static int test_quic_tls(void)
     memset(&cdata, 0, sizeof(cdata));
     sdata.peer = &cdata;
     cdata.peer = &sdata;
+    if (idx == 1)
+        sdata.forcefail = 1;
 
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
                                        TLS_client_method(), TLS1_3_VERSION, 0,
@@ -12743,6 +12800,20 @@ static int test_quic_tls(void)
                                       NULL)))
         goto end;
 
+    /* Reset the BIOs we set in create_ssl_objects. We should not need them */
+    SSL_set_bio(serverssl, NULL, NULL);
+    SSL_set_bio(clientssl, NULL, NULL);
+
+    if (idx == 2) {
+        if (!TEST_true(SSL_set_ciphersuites(serverssl, "TLS_AES_128_CCM_SHA256"))
+                || !TEST_true(SSL_set_ciphersuites(clientssl, "TLS_AES_128_CCM_SHA256")))
+            goto end;
+    }
+
+    if (!TEST_true(SSL_set_app_data(clientssl, &clientquicdata))
+            || !TEST_true(SSL_set_app_data(serverssl, &serverquicdata)))
+        goto end;
+
     if (!TEST_true(SSL_set_quic_tls_cbs(clientssl, qtdis, &cdata))
             || !TEST_true(SSL_set_quic_tls_cbs(serverssl, qtdis, &sdata))
             || !TEST_true(SSL_set_quic_tls_transport_params(clientssl, cparams,
@@ -12751,8 +12822,17 @@ static int test_quic_tls(void)
                                                             sizeof(sparams))))
         goto end;
 
-    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+    if (idx != 1) {
+        if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+            goto end;
+    } else {
+        /* We expect this connection to fail */
+        if (!TEST_false(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+            goto end;
+        testresult = 1;
+        sdata.err = 0;
         goto end;
+    }
 
     /* Check no problems during the handshake */
     if (!TEST_false(sdata.alert)
@@ -12789,6 +12869,10 @@ static int test_quic_tls(void)
     SSL_free(clientssl);
     SSL_CTX_free(sctx);
     SSL_CTX_free(cctx);
+
+    /* Check that we didn't suddenly hit an unexpected failure during cleanup */
+    if (!TEST_false(sdata.err) || !TEST_false(cdata.err))
+        testresult = 0;
 
     return testresult;
 }
@@ -12861,7 +12945,15 @@ static int test_quic_tls_early_data(void)
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
                                       &clientssl, NULL, NULL))
             || !TEST_true(SSL_set_session(clientssl, sess)))
-        return 0;
+        goto end;
+
+    /* Reset the BIOs we set in create_ssl_objects. We should not need them */
+    SSL_set_bio(serverssl, NULL, NULL);
+    SSL_set_bio(clientssl, NULL, NULL);
+
+    if (!TEST_true(SSL_set_app_data(clientssl, &clientquicdata))
+        || !TEST_true(SSL_set_app_data(serverssl, &serverquicdata)))
+        goto end;
 
     if (!TEST_true(SSL_set_quic_tls_cbs(clientssl, qtdis, &cdata))
             || !TEST_true(SSL_set_quic_tls_cbs(serverssl, qtdis, &sdata))
@@ -12877,15 +12969,15 @@ static int test_quic_tls_early_data(void)
     SSL_set_msg_callback(serverssl, assert_no_end_of_early_data);
     SSL_set_msg_callback(clientssl, assert_no_end_of_early_data);
 
-    if (!TEST_int_eq(SSL_connect(clientssl), 0)
-            || !TEST_int_eq(SSL_accept(serverssl), 0)
+    if (!TEST_int_eq(SSL_connect(clientssl), -1)
+            || !TEST_int_eq(SSL_accept(serverssl), -1)
             || !TEST_int_eq(SSL_get_early_data_status(serverssl), SSL_EARLY_DATA_ACCEPTED)
             || !TEST_int_eq(SSL_get_error(clientssl, 0), SSL_ERROR_WANT_READ)
             || !TEST_int_eq(SSL_get_error(serverssl, 0), SSL_ERROR_WANT_READ))
         goto end;
 
     /* Check the encryption levels are what we expect them to be */
-    if (!TEST_true(sdata.renc_level == OSSL_RECORD_PROTECTION_LEVEL_EARLY)
+    if (!TEST_true(sdata.renc_level == OSSL_RECORD_PROTECTION_LEVEL_HANDSHAKE)
             || !TEST_true(sdata.wenc_level == OSSL_RECORD_PROTECTION_LEVEL_APPLICATION)
             || !TEST_true(cdata.renc_level == OSSL_RECORD_PROTECTION_LEVEL_NONE)
             || !TEST_true(cdata.wenc_level == OSSL_RECORD_PROTECTION_LEVEL_EARLY))
@@ -13267,7 +13359,7 @@ int setup_tests(void)
 #endif
     ADD_ALL_TESTS(test_alpn, 4);
 #if !defined(OSSL_NO_USABLE_TLS1_3)
-    ADD_TEST(test_quic_tls);
+    ADD_ALL_TESTS(test_quic_tls, 3);
     ADD_TEST(test_quic_tls_early_data);
 #endif
     return 1;
