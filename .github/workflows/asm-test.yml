@@ -32,16 +32,16 @@ jobs:
     steps:
       - name: create download directory
         run: mkdir downloads
-        - name: download sde
-          uses: suisei-cn/actions-download-file@v1.6.0
-          with:
-            url: "https://downloadmirror.intel.com/${{ matrix.win_zoo.download }}.tar.xz"
-            target: downloads
-        - name: unpack sde
-          run: 7z.exe x -bsp1 downloads/${{ matrix.win_zoo.sde }}.tar.xz
-        - name: run test
-          run: |
-            ./sde.exe --help
+      - name: download sde
+        uses: suisei-cn/actions-download-file@v1.6.0
+        with:
+          url: "https://downloadmirror.intel.com/${{ matrix.win_zoo.download }}.tar.xz"
+          target: downloads
+      - name: unpack sde
+        run: 7z.exe x -bsp1 downloads/${{ matrix.win_zoo.sde }}.tar.xz
+      - name: run test
+        run: |
+          ./sde.exe --help
 
   lin_sde:
     strategy:
