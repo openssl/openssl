@@ -583,7 +583,7 @@ SSL *ossl_quic_new(SSL_CTX *ctx)
     }
 
     /* override the user_ssl of the inner connection */
-    sc->s3.flags |= TLS1_FLAGS_QUIC;
+    sc->s3.flags |= TLS1_FLAGS_QUIC | TLS1_FLAGS_QUIC_INTERNAL;
 
     /* Restrict options derived from the SSL_CTX. */
     sc->options &= OSSL_QUIC_PERMITTED_OPTIONS_CONN;
@@ -4436,7 +4436,7 @@ SSL *ossl_quic_new_from_listener(SSL *ssl, uint64_t flags)
         QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_INTERNAL_ERROR, NULL);
         goto err;
     }
-    sc->s3.flags |= TLS1_FLAGS_QUIC;
+    sc->s3.flags |= TLS1_FLAGS_QUIC | TLS1_FLAGS_QUIC_INTERNAL;
 
     qc->default_ssl_options = OSSL_QUIC_PERMITTED_OPTIONS;
     qc->last_error = SSL_ERROR_NONE;
