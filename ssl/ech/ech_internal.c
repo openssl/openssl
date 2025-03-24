@@ -666,6 +666,7 @@ static size_t ech_calc_padding(SSL_CONNECTION *s, OSSL_ECHSTORE_ENTRY *ee,
 /*
  * Calculate AAD and do ECH encryption
  * pkt is the packet to send
+ * encoded_inner is the EncodedClientHelloInner
  * return 1 for success, other otherwise
  *
  * 1. Make up the AAD: the encoded outer, with ECH ciphertext octets zero'd

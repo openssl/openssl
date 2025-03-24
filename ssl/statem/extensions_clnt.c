@@ -1581,12 +1581,13 @@ int tls_parse_stoc_server_name(SSL_CONNECTION *s, PACKET *pkt,
                                unsigned int context,
                                X509 *x, size_t chainidx)
 {
-#ifndef OPENSSL_NO_ECH
     char *eff_sni = s->ext.hostname;
 
+#ifndef OPENSSL_NO_ECH
     /* if we tried ECH and failed, the outer is what's expected */
     if (s->ext.ech.es != NULL && s->ext.ech.success == 0)
         eff_sni = s->ext.ech.outer_hostname;
+#endif
     if (eff_sni == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
@@ -1606,29 +1607,6 @@ int tls_parse_stoc_server_name(SSL_CONNECTION *s, PACKET *pkt,
             return 0;
         }
     }
-#else
-    if (s->ext.hostname == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return 0;
-    }
-
-    if (PACKET_remaining(pkt) > 0) {
-        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
-        return 0;
-    }
-
-    if (!s->hit) {
-        if (s->session->ext.hostname != NULL) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            return 0;
-        }
-        s->session->ext.hostname = OPENSSL_strdup(s->ext.hostname);
-        if (s->session->ext.hostname == NULL) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            return 0;
-        }
-    }
-#endif
     return 1;
 }
 
@@ -2469,7 +2447,7 @@ EXT_RETURN tls_construct_ctos_ech(SSL_CONNECTION *s, WPACKET *pkt,
                           || ((s->options & SSL_OP_ECH_GREASE) != 0));
 
     /* if we're not doing real ECH and not GREASEing then exit */
-    if (s->ext.ech.attempted_type != TLSEXT_TYPE_ech && grease_opt_set == 1) 
+    if (s->ext.ech.attempted_type != TLSEXT_TYPE_ech && grease_opt_set == 0)
         return EXT_RETURN_NOT_SENT;
     /* send grease if not really attempting ECH */
     if (s->ext.ech.attempted == 0 && grease_opt_set == 1) {

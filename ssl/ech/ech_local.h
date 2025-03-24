@@ -196,6 +196,13 @@ typedef struct ossl_ech_conn_st {
     size_t pub_len;
     OSSL_HPKE_CTX *hpke_ctx; /* HPKE context, needed for HRR */
     /*
+     * PSK processing requires knowing the ticket age, in milliseconds.
+     * As we process things twice, we'll store that value first time,
+     * in case it would otherwise tick over to a new value between
+     * processing steps, which could cause an race-condition error.
+     */
+    uint32_t agems;
+    /*
      * Fields that differ on client between inner and outer that we need to
      * keep and swap over IFF ECH has succeeded. Same names chosen as are
      * used in SSL_CONNECTION
@@ -203,7 +210,6 @@ typedef struct ossl_ech_conn_st {
     EVP_PKEY *tmp_pkey; /* client's key share for inner */
     int group_id; /*  key share group */
     unsigned char client_random[SSL3_RANDOM_SIZE]; /* CH random */
-    uint32_t agems; /* for PSK processing */
 } OSSL_ECH_CONN;
 
 /* Return values from ossl_ech_same_ext */
@@ -212,7 +218,7 @@ typedef struct ossl_ech_conn_st {
 #  define OSSL_ECH_SAME_EXT_CONTINUE 2 /* generate a new value for outer CH */
 
 /*
- * During extension construction (in extensions_clnt.c (and surprisingly also in
+ * During extension construction (in extensions_clnt.c, and surprisingly also in
  * extensions.c), we need to handle inner/outer CH cloning - ossl_ech_same_ext
  * will (depending on compile time handling options) copy the value from
  * CH.inner to CH.outer or else processing will continue, for a 2nd call,
@@ -258,7 +264,7 @@ int ossl_ech_get_retry_configs(SSL_CONNECTION *s, unsigned char **rcfgs,
 int ossl_ech_send_grease(SSL_CONNECTION *s, WPACKET *pkt);
 int ossl_ech_pick_matching_cfg(SSL_CONNECTION *s, OSSL_ECHSTORE_ENTRY **ee,
                                OSSL_HPKE_SUITE *suite);
-int ossl_ech_encode_inner(SSL_CONNECTION *s, unsigned char **encoded, 
+int ossl_ech_encode_inner(SSL_CONNECTION *s, unsigned char **encoded,
                           size_t *encoded_len);
 int ossl_ech_find_confirm(SSL_CONNECTION *s, int hrr,
                           unsigned char acbuf[OSSL_ECH_SIGNAL_LEN],
