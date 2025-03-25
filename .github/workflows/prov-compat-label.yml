@@ -114,10 +114,6 @@ jobs:
             dir: branch-3.0,
             tgz: branch-3.0.tar.gz,
           }, {
-            name: openssl-3.1,
-            dir: branch-3.1,
-            tgz: branch-3.1.tar.gz,
-          }, {
             name: openssl-3.2,
             dir: branch-3.2,
             tgz: branch-3.2.tar.gz,
@@ -129,6 +125,10 @@ jobs:
             name: openssl-3.4,
             dir: branch-3.4,
             tgz: branch-3.4.tar.gz,
+          }, {
+            name: openssl-3.5,
+            dir: branch-3.5,
+            tgz: branch-3.5.tar.gz,
           }, {
             name: master,
             dir: branch-master,
@@ -197,20 +197,20 @@ jobs:
         # Note that releases are not used as a test environment for
         # later providers.  Problems in these situations ought to be
         # caught by cross branch testing before the release.
-        tree_a: [ branch-3.4, branch-3.3, branch-3.2, branch-3.1, branch-3.0,
+        tree_a: [ branch-3.5, branch-3.4, branch-3.3, branch-3.2, branch-3.0,
                   openssl-3.0.0, openssl-3.0.8, openssl-3.0.9, openssl-3.1.2 ]
         tree_b: [ PR ]
         include:
           - tree_a: PR
             tree_b: branch-master
           - tree_a: PR
+            tree_b: branch-3.5
+          - tree_a: PR
             tree_b: branch-3.4
           - tree_a: PR
             tree_b: branch-3.3
           - tree_a: PR
             tree_b: branch-3.2
-          - tree_a: PR
-            tree_b: branch-3.1
           - tree_a: PR
             tree_b: branch-3.0
     steps:
