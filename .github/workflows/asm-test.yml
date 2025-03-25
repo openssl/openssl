@@ -21,8 +21,8 @@ jobs:
       matrix:
         win_zoo: [
           {
-            arch: win64,
             distro: windows-latest,
+            arch: win64,
             sde: sde-external-9.48.0-2024-11-25-win,
             download: 843185/sde-external-9.48.0-2024-11-25-win
           }
@@ -36,16 +36,16 @@ jobs:
         run: git submodule update --init --depth 1 fuzz/corpora
       - uses: ilammy/msvc-dev-cmd@v1
         with:
-          arch: ${{ matrix.platform.arch }}
+          arch: ${{ matrix.win_zoo.arch }}
       - uses: ilammy/setup-nasm@v1
         with:
-          platform: ${{ matrix.platform.arch }}
+          platform: ${{ matrix.win_zoo.arch }}
       - name: prepare the build directory
         run: mkdir _build
       - name: config
         working-directory: _build
         run: |
-          perl ..\Configure --banner=Configured no-makedepend -DOSSL_WINCTX=openssl ${{ matrix.platform.config }}
+          perl ..\Configure --banner=Configured no-makedepend -DOSSL_WINCTX=openssl --strict-warnings no-fips
           perl configdata.pm --dump
       - name: build
         working-directory: _build
