@@ -42,6 +42,7 @@ my @defaultprov = ("-provider-path", $provpath,
 my @config = ( );
 my $provname = 'default';
 my $dsaallow = '1';
+my $no_pqc = 0;
 
 my $datadir = srctop_dir("test", "recipes", "80-test_cms_data");
 my $smdir    = srctop_dir("test", "smime-certs");
@@ -62,9 +63,11 @@ unless ($no_fips) {
     $provname = 'fips';
 
     run(test(["fips_version_test", "-config", $provconf, "<3.4.0"]),
-    capture => 1, statusvar => \$dsaallow);
+        capture => 1, statusvar => \$dsaallow);
     $no_dsa = 1 if $dsaallow == '0';
     $old_fips = 1 if $dsaallow != '0';
+    run(test(["fips_version_test", "-config", $provconf, "<3.5.0"]),
+        capture => 1, statusvar => \$no_pqc);
 }
 
 $ENV{OPENSSL_TEST_LIBCTX} = "1";
@@ -1404,7 +1407,7 @@ subtest "ML-DSA tests for CMS \n" => sub {
 
     SKIP: {
         skip "ML-DSA is not supported in this build", 2
-            if disabled("ml-dsa");
+            if disabled("ml-dsa") || $no_pqc;
 
         my $sig1 = "sig1.cms";
 
@@ -1425,7 +1428,7 @@ subtest "SLH-DSA tests for CMS \n" => sub {
 
     SKIP: {
         skip "SLH-DSA is not supported in this build", 6
-            if disabled("slh-dsa");
+            if disabled("slh-dsa") || $no_pqc;
 
         my $sig1 = "sig1.cms";
 
