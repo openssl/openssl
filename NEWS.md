@@ -23,7 +23,7 @@ OpenSSL Releases
 OpenSSL 3.5
 -----------
 
-### Major changes between OpenSSL 3.4 and OpenSSL 3.5 [under development]
+### Major changes between OpenSSL 3.4 and OpenSSL 3.5 beta 1 [in pre-release]
 
 OpenSSL 3.5.0 is a feature release adding significant new functionality to
 OpenSSL.
