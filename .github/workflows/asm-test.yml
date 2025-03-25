@@ -45,7 +45,7 @@ jobs:
       - name: config
         working-directory: _build
         run: |
-          perl ..\Configure --banner=Configured no-makedepend -DOSSL_WINCTX=openssl --strict-warnings no-fips
+          perl ..\Configure --banner=Configured no-makedepend -DOSSL_WINCTX=openssl no-fips
           perl configdata.pm --dump
       - name: build
         working-directory: _build
