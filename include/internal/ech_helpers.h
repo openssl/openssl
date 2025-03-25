@@ -20,7 +20,8 @@
 int ossl_ech_get_sh_offsets(const unsigned char *sh, size_t sh_len,
                             size_t *exts, size_t *echoffset,
                             uint16_t *echtype, uint16_t *echlen);
-int ossl_ech_make_enc_info(unsigned char *encoding, size_t encoding_length,
+int ossl_ech_make_enc_info(const unsigned char *encoding,
+                           size_t encoding_length,
                            unsigned char *info, size_t *info_len);
 
 # endif

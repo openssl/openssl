@@ -184,7 +184,7 @@ int SSL_ech_get1_status(SSL *ssl, char **inner_sni, char **outer_sni)
             return SSL_ECH_STATUS_GREASE_ECH;
         return SSL_ECH_STATUS_GREASE;
     }
-    if (s->options & SSL_OP_ECH_GREASE && s->ext.ech.attempted != 1)
+    if ((s->options & SSL_OP_ECH_GREASE) !=0 && s->ext.ech.attempted != 1)
         return SSL_ECH_STATUS_GREASE;
     if (s->ext.ech.backend == 1) {
         if (s->ext.hostname != NULL

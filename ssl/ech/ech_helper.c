@@ -108,14 +108,15 @@ int ossl_ech_get_sh_offsets(const unsigned char *sh, size_t sh_len,
 }
 
 /*
- * make up HPKE "info" input as per spec
+ * Construct HPKE "info" input as per spec
  * encoding is the ECHconfig being used
  * encoding_length is the length of ECHconfig being used
  * info is a caller-allocated buffer for results
  * info_len is the buffer size on input, used-length on output
  * return 1 for success, zero otherwise
  */
-int ossl_ech_make_enc_info(unsigned char *encoding, size_t encoding_length,
+int ossl_ech_make_enc_info(const unsigned char *encoding,
+                           size_t encoding_length,
                            unsigned char *info, size_t *info_len)
 {
     WPACKET ipkt = { 0 };

@@ -501,8 +501,8 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
 
 #ifndef OPENSSL_NO_ECH
             /* if ECH worked then use the innerch and not the h/s buffer here */
-            if ((which & SSL3_CC_SERVER && s->ext.ech.success == 1)
-                || (which & SSL3_CC_CLIENT && s->ext.ech.attempted == 1)) {
+            if (((which & SSL3_CC_SERVER) && s->ext.ech.success == 1)
+                || ((which & SSL3_CC_CLIENT) && s->ext.ech.attempted == 1)) {
                 if (s->ext.ech.innerch == NULL) {
                     SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                              SSL_R_BAD_HANDSHAKE_LENGTH);
