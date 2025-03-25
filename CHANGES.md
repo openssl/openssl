@@ -46,6 +46,21 @@ OpenSSL 3.5
 
    *Hugo Landau, Matt Caswell, Tomáš Mráz, Neil Horman, Sasha Nedvedicky, Andrew Dinh*
 
+ * Tolerate PKCS#8 version 2 with optional public keys. The public key data
+   is currently ignored.
+
+   *Viktor Dukhovni*
+
+ * Signature schemes without an explicit signing digest in CMS are now supported.
+   Examples of such schemes are ED25519 or ML-DSA.
+
+   *Michael Schroeder*
+
+ * The TLS Signature algorithms defaults now include all three ML-DSA variants as
+   first algorithms.
+
+   *Viktor Dukhovni*
+
  * Added a `no-tls-deprecated-ec` configuration option.
 
    The `no-tls-deprecated-ec` option disables support for TLS elliptic curve
@@ -105,17 +120,10 @@ OpenSSL 3.5
 
    *Simo Sorce*
 
- * Initial support for opaque symmetric keys objects.  These replace the ad-hoc byte
-   arrays that are pervasive throughout the library.
+ * Initial support for opaque symmetric keys objects (EVP_SKEY). These
+   replace the ad-hoc byte arrays that are pervasive throughout the library.
 
    *Dmitry Belyavskiy and Simo Sorce*
-
- * For TLSv1.3: Add capability for a client to send multiple key shares. Extend the scope of
-   `SSL_OP_CIPHER_SERVER_PREFERENCE` to cover server-side key exchange group selection.
-   Extend the server-side key exchange group selection algorithm and related group list syntax
-   to support multiple group priorities, e.g. to prioritize (hybrid-)KEMs.
-
-   *David Kelsey*, *Martin Schmatz*
 
  * The default TLS group list setting is now set to:
    `?*X25519MLKEM768 / ?*X25519:?secp256r1 / ?X448:?secp384r1:?secp521r1 / ?ffdhe2048:?ffdhe3072`
@@ -124,7 +132,19 @@ OpenSSL 3.5
    default by the TLS client. GOST groups and FFDHE groups larger than 3072
    bits are no longer enabled by default.
 
+   The group names in the group list setting are now also case insensitive.
+
    *Viktor Dukhovni*
+
+ * For TLSv1.3: Add capability for a client to send multiple key shares.
+   Extend the scope of `SSL_OP_CIPHER_SERVER_PREFERENCE` to cover
+   server-side key exchange group selection.
+
+   Extend the server-side key exchange group selection algorithm and related
+   group list syntax to support multiple group priorities, e.g. to prioritize
+   (hybrid-)KEMs.
+
+   *David Kelsey*, *Martin Schmatz*
 
  * A new random generation API has been introduced which modifies all
    of the L<RAND_bytes(3)> family of calls so they are routed through a
@@ -248,21 +268,51 @@ OpenSSL 3.5
 
    *Pablo De Lara Guarch, Dan Pittman*
 
- * Fix EVP_DecodeUpdate(): do not write padding zeros to the decoded output.
+ * Fixed EVP_DecodeUpdate() to not write padding zeros to the decoded output.
 
-   According to the documentation,
-   for every 4 valid base64 bytes processed (ignoring whitespace, carriage returns and line feeds),
-   EVP_DecodeUpdate() produces 3 bytes of binary output data
-   (except at the end of data terminated with one or two padding characters).
-   However, the function behaved like an EVP_DecodeBlock():
-   produces exactly 3 output bytes for every 4 input bytes.
-   Such behaviour could cause writes to a non-allocated output buffer
-   if a user allocates its size based on the documentation and knowing the padding size.
+   According to the documentation, for every 4 valid base64 bytes processed
+   (ignoring whitespace, carriage returns and line feeds), EVP_DecodeUpdate()
+   produces 3 bytes of binary output data (except at the end of data
+   terminated with one or two padding characters). However, the function
+   behaved like an EVP_DecodeBlock(). It produced exactly 3 output bytes for
+   every 4 input bytes. Such behaviour could cause writes to a non-allocated
+   output buffer if a user allocates its size based on the documentation and
+   knowing the padding size.
 
-   The fix makes EVP_DecodeUpdate() produce
-   exactly as many output bytes as in the initial non-encoded message.
+   The fix makes EVP_DecodeUpdate() produce exactly as many output bytes as
+   in the initial non-encoded message.
 
    *Valerii Krygin*
+
+ * Added support for aAissuingDistributionPoint, allowedAttributeAssignments,
+   timeSpecification, attributeDescriptor, roleSpecCertIdentifier,
+   authorityAttributeIdentifier and attributeMappings X.509v3 extensions.
+
+   *Jonathan M. Wilbur*
+
+ * Added a new CLI option `-provparam` and API functions for setting of
+   provider configuration parameters.
+
+   *Viktor Dukhovni*
+
+ * Added a new trace category for PROVIDER calls and added new tracing calls
+   in provider and algorithm fetching API functions.
+
+   *Neil Horman*
+
+ * Fixed benchmarking for AEAD ciphers in the `openssl speed` utility.
+
+   *Mohammed Alhabib*
+
+ * Added a build configuration option `enable-sslkeylog` for enabling support
+   for SSLKEYLOGFILE environment variable to log TLS connection secrets.
+
+   *Neil Horman*
+
+ * Added EVP_get_default_properties() function to retrieve the current default
+   property query string.
+
+   *Dmitry Belyavskiy*
 
 OpenSSL 3.4
 -----------
