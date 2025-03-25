@@ -3361,7 +3361,6 @@ int s_client_main(int argc, char **argv)
     return ret;
 }
 
-#ifndef OPENSSL_NO_EC
 static char *ec_curve_name(EVP_PKEY *pkey)
 {
     char *curve = 0;
@@ -3376,7 +3375,6 @@ static char *ec_curve_name(EVP_PKEY *pkey)
     }
     return (curve);
 }
-#endif
 
 static void print_cert_key_info(BIO *bio, X509 *cert)
 {
@@ -3389,10 +3387,8 @@ static void print_cert_key_info(BIO *bio, X509 *cert)
     keyalg = EVP_PKEY_get0_type_name(pkey);
     if (keyalg == NULL)
         keyalg = OBJ_nid2ln(EVP_PKEY_get_base_id(pkey));
-#ifndef OPENSSL_NO_EC
     if (EVP_PKEY_id(pkey) == EVP_PKEY_EC)
         curve = ec_curve_name(pkey);
-#endif
     if (curve != NULL)
         BIO_printf(bio, "   a:PKEY: %s, (%s); sigalg: %s\n",
                    keyalg, curve,
