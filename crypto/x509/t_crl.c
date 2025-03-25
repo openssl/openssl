@@ -47,10 +47,10 @@ int X509_CRL_print_ex(BIO *out, X509_CRL *x, unsigned long nmflag)
     int i;
     char mlch = ' ';
     int nmindent = 0;
-    
+
     if((nmflag & XN_FLAG_SEP_MASK) == XN_FLAG_SEP_MULTILINE) {
-    	mlch = '\n';
-    	nmindent = 8;
+        mlch = '\n';
+        nmindent = 8;
     }
 
     BIO_printf(out, "Certificate Revocation List (CRL):\n");
