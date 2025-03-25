@@ -2842,9 +2842,12 @@ static int script_21_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
 
     switch (h->inject_word1) {
     case OSSL_QUIC_FRAME_TYPE_PATH_CHALLENGE:
+    case OSSL_QUIC_FRAME_TYPE_PATH_RESPONSE:
         if (!TEST_true(WPACKET_put_bytes_u64(&wpkt, (uint64_t)0)))
             goto err;
         break;
+    case OSSL_QUIC_FRAME_TYPE_STOP_SENDING:
+    case OSSL_QUIC_FRAME_TYPE_MAX_STREAM_DATA:
     case OSSL_QUIC_FRAME_TYPE_STREAM_DATA_BLOCKED:
         if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, (uint64_t)0)))
             goto err;
