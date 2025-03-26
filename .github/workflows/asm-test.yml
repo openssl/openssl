@@ -54,7 +54,7 @@ jobs:
       - name: config
         working-directory: _build
         run: |
-          perl ..\Configure --banner=Configured no-makedepend -DOSSL_WINCTX=openssl $OPTIONS
+          perl ..\Configure --banner=Configured no-makedepend -DOSSL_WINCTX=openssl ${{ env.OPTIONS }}
           perl configdata.pm --dump
       - name: build
         working-directory: _build
@@ -71,7 +71,7 @@ jobs:
         run: 7z.exe x downloads/${{ matrix.win_zoo.sde }}.tar.xz -so | 7z.exe x -si -ttar
       - name: run test
         working-directory: _build
-        run: nmake test VERBOSE_FAILURE=yes TESTS=test_sde HARNESS_JOBS=4
+        run: nmake test VERBOSE_FAILURE=yes TESTS=test_sde HARNESS_JOBS=4 V=1
 
   lin_sde:
     strategy:
