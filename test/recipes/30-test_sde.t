@@ -32,18 +32,8 @@ my @files = qw(
 # processor features.
 # This causes errors is some older cpus, where memset() tries to use vinsertf128
 # Use the -chip_check_exe_only flag for these cases.
-my %win_chip_check_only = {
-  mrm => 1,
-  pnr => 1,
-  nhm => 1,
-  wsm => 1,
-  slt => 1,
-  slm => 1,
-  glm => 1,
-  glp => 1, 
-  tnt => 1,
-  snr => 1
-};
+my @win_chip_check_only = qw(mrm pnr nhm wsm slt slm glm glp tnt snr);
+my %win_chip_check_only_hash = map { $_ => 1 } @win_chip_check_only;
 
 # SDE chip-check and CPUID for Intel(R)
 my @cpus = qw(
@@ -96,13 +86,15 @@ plan skip_all => 'Skip unless environment variable OPENSSL_SDE_PATH is set'
 plan tests => scalar(@files) * scalar(@cpus);
 
 my $osname = $^O;
+print("OS=$osname\n");
+
 
 my $sde = $ENV{'OPENSSL_SDE_PATH'};
 foreach my $f ( @files ) {
   foreach my $cpu ( @cpus ) {
       my @sde_options = ("$sde", "-$cpu");
 
-      push(@sde_options, "-chip_check_exe_only") if ($osname eq 'MSWin32' && exists $win_chip_check_only{$cpu});
+      push(@sde_options, "-chip_check_exe_only") if ($osname eq 'MSWin32' && exists($win_chip_check_only_hash{$cpu}));
       push(@sde_options, "--");
       ok(run(sdetest(\@sde_options,
                      ["evp_test", "-config", $conf, data_file("$f")])),
