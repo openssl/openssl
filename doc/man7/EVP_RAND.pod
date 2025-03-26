@@ -153,6 +153,36 @@ EVP_RAND_generate(<public>, ...) and
 EVP_RAND_generate(<private>, ...),
 respectively.
 
+When `[random] chain=0` is set in `openssl.cnf`, the public & private
+DRBG are not chained to primary, and instead use seed source
+directly. It is also possibly to configure OpenSSL to default to no
+chaining with -DOPENSSL_RAND_CHAIN=0.
+
+FIPS provider 3.5 and later are always unchained and use the following
+configuration instead:
+
+               +-------------+
+               |             |
+               | Seed Source |
+               |             |
+               +------+------+
+                      |
+                      |
+                      v
+               +-------------+
+               |             |
+               |  CRNG Test  |
+               |             |
+               ++----------+-+
+                |          |
+                |          |
+                v          v
+    +--------------+     +--------------+
+    |              |     |              |
+    | Public DRBG  |     | Private DRBG |
+    |              |     |              |
+    +--------------+     +--------------+
+
 =head1 RESEEDING
 
 A DRBG instance seeds itself automatically, pulling random input from
