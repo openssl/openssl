@@ -3904,6 +3904,16 @@ static int tls1_check_sig_alg(SSL_CONNECTION *s, X509 *x, int default_nid)
     const SIGALG_LOOKUP *sigalg;
     size_t sigalgslen;
 
+    /*-
+     * RFC 8446, section 4.2.3:
+     *
+     * The signatures on certificates that are self-signed or certificates
+     * that are trust anchors are not validated, since they begin a
+     * certification path (see [RFC5280], Section 3.2).  A certificate that
+     * begins a certification path MAY use a signature algorithm that is not
+     * advertised as being supported in the "signature_algorithms"
+     * extension.
+     */
     if (default_nid == -1 || X509_self_signed(x, 0))
         return 1;
     sig_nid = X509_get_signature_nid(x);
@@ -3937,6 +3947,15 @@ static int tls1_check_sig_alg(SSL_CONNECTION *s, X509 *x, int default_nid)
         /*
          * Accept RSA PKCS#1 signatures in certificates when the signature
          * algorithms include RSA-PSS with a matching digest algorithm.
+         *
+         * When the client supports only TLS 1.3, or in a TLS 1.3 client
+         * certificate request, the signature algorithms are likely to omit the
+         * legacy RSA PKCS#1 code points, but if we're doing strict checking of
+         * the certificate chain (in a cert_cb via SSL_check_chain()) we may
+         * then reject RSA signed certificates in the chain, but the TLS
+         * requirement on PSS should not extend to certificates.  Though the
+         * peer can in fact list the legacy sigalgs for just this purpose, it
+         * is not likely that a better chain singed with RSA-PSS is available.
          */
         if (!OBJ_find_sigid_algs(sig_nid, &mdnid, &pknid))
             continue;
