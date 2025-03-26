@@ -8911,14 +8911,47 @@ static int test_async_shutdown(void)
 #if !defined(OPENSSL_NO_TLS1_2) || !defined(OSSL_NO_USABLE_TLS1_3)
 static int cert_cb_cnt;
 
+static int load_chain(const char *file, EVP_PKEY **pkey, X509 **x509,
+                      STACK_OF(X509) *chain)
+{
+    char *path = test_mk_file_path(certsdir, file);
+    BIO *in = NULL;
+    X509 *x = NULL;
+    int ok = 0;
+
+    if (path == NULL)
+        return 0;
+    if ((in = BIO_new(BIO_s_file())) == NULL
+        || BIO_read_filename(in, path) <= 0)
+        goto out;
+    if (pkey == NULL) {
+        if ((x = X509_new_ex(libctx, NULL)) == NULL
+            || PEM_read_bio_X509(in, &x, NULL, NULL) == NULL)
+            goto out;
+        if (chain == NULL)
+            *x509 = x;
+        else if (!sk_X509_push(chain, x))
+            goto out;
+    } else if (PEM_read_bio_PrivateKey_ex(in, pkey, NULL, NULL,
+                                          libctx, NULL) == NULL) {
+        goto out;
+    }
+
+    x = NULL;
+    ok = 1;
+ out:
+    X509_free(x);
+    BIO_free(in);
+    OPENSSL_free(path);
+    return ok;
+}
+
 static int cert_cb(SSL *s, void *arg)
 {
     SSL_CTX *ctx = (SSL_CTX *)arg;
-    BIO *in = NULL;
     EVP_PKEY *pkey = NULL;
-    X509 *x509 = NULL, *rootx = NULL;
+    X509 *x509 = NULL, *x = NULL;
     STACK_OF(X509) *chain = NULL;
-    char *rootfile = NULL, *ecdsacert = NULL, *ecdsakey = NULL;
     int ret = 0;
 
     if (cert_cb_cnt == 0) {
@@ -8943,33 +8976,14 @@ static int cert_cb(SSL *s, void *arg)
     } else if (cert_cb_cnt == 3) {
         int rv;
 
-        rootfile = test_mk_file_path(certsdir, "rootcert.pem");
-        ecdsacert = test_mk_file_path(certsdir, "server-ecdsa-cert.pem");
-        ecdsakey = test_mk_file_path(certsdir, "server-ecdsa-key.pem");
-        if (!TEST_ptr(rootfile) || !TEST_ptr(ecdsacert) || !TEST_ptr(ecdsakey))
-            goto out;
         chain = sk_X509_new_null();
-        if (!TEST_ptr(chain))
-            goto out;
-        if (!TEST_ptr(in = BIO_new(BIO_s_file()))
-                || !TEST_int_gt(BIO_read_filename(in, rootfile), 0)
-                || !TEST_ptr(rootx = X509_new_ex(libctx, NULL))
-                || !TEST_ptr(PEM_read_bio_X509(in, &rootx, NULL, NULL))
-                || !TEST_true(sk_X509_push(chain, rootx)))
-            goto out;
-        rootx = NULL;
-        BIO_free(in);
-        if (!TEST_ptr(in = BIO_new(BIO_s_file()))
-                || !TEST_int_gt(BIO_read_filename(in, ecdsacert), 0)
-                || !TEST_ptr(x509 = X509_new_ex(libctx, NULL))
-                || !TEST_ptr(PEM_read_bio_X509(in, &x509, NULL, NULL)))
-            goto out;
-        BIO_free(in);
-        if (!TEST_ptr(in = BIO_new(BIO_s_file()))
-                || !TEST_int_gt(BIO_read_filename(in, ecdsakey), 0)
-                || !TEST_ptr(pkey = PEM_read_bio_PrivateKey_ex(in, NULL,
-                                                               NULL, NULL,
-                                                               libctx, NULL)))
+        if (!TEST_ptr(chain)
+            || !TEST_true(load_chain("ca-cert.pem", NULL, NULL, chain))
+            || !TEST_true(load_chain("root-cert.pem", NULL, NULL, chain))
+            || !TEST_true(load_chain("p256-ee-rsa-ca-cert.pem", NULL,
+                                     &x509, NULL))
+            || !TEST_true(load_chain("p256-ee-rsa-ca-key.pem", &pkey,
+                                     NULL, NULL)))
             goto out;
         rv = SSL_check_chain(s, x509, pkey, chain);
         /*
@@ -8989,13 +9003,9 @@ static int cert_cb(SSL *s, void *arg)
 
     /* Abort the handshake */
  out:
-    OPENSSL_free(ecdsacert);
-    OPENSSL_free(ecdsakey);
-    OPENSSL_free(rootfile);
-    BIO_free(in);
     EVP_PKEY_free(pkey);
     X509_free(x509);
-    X509_free(rootx);
+    X509_free(x);
     OSSL_STACK_OF_X509_free(chain);
     return ret;
 }
@@ -9024,7 +9034,7 @@ static int test_cert_cb_int(int prot, int tst)
 
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
                                        TLS_client_method(),
-                                       TLS1_VERSION,
+                                       prot,
                                        prot,
                                        &sctx, &cctx, NULL, NULL)))
         goto end;
