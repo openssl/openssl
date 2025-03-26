@@ -11,6 +11,7 @@
 # would not run on a CI platforms run correctly. (The SDE emulates the CPUID).
 # See https://www.intel.com/content/www/us/en/developer/articles/tool/software-development-emulator.html
 
+use Config;
 use strict;
 use warnings;
 
@@ -81,8 +82,8 @@ my @cpus = qw(
              cwf
              future
              );
-#-p4
-#-p4p
+my $is_32bit = ($Config{ivsize} == 4);
+push(@cpus, qw(p4 p4p)) if $is_32bit;
 
 plan skip_all => 'Skip unless environment variable OPENSSL_SDE_PATH is set'
     if $no_sde;
