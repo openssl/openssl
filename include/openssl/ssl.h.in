@@ -423,8 +423,8 @@ typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
 # define SSL_OP_NO_RX_CERTIFICATE_COMPRESSION            SSL_OP_BIT(33)
     /* Enable KTLS TX zerocopy on Linux */
 # define SSL_OP_ENABLE_KTLS_TX_ZEROCOPY_SENDFILE         SSL_OP_BIT(34)
-
-#define SSL_OP_PREFER_NO_DHE_KEX                         SSL_OP_BIT(35)
+# define SSL_OP_PREFER_NO_DHE_KEX                        SSL_OP_BIT(35)
+# define SSL_OP_LEGACY_EC_POINT_FORMATS                  SSL_OP_BIT(36)
 
 /*
  * Option "collections."
@@ -953,16 +953,9 @@ uint32_t SSL_CTX_get_recv_max_early_data(const SSL_CTX *ctx);
 int SSL_set_recv_max_early_data(SSL *s, uint32_t recv_max_early_data);
 uint32_t SSL_get_recv_max_early_data(const SSL *s);
 
-__owur int SSL_CTX_set1_ec_point_formats(SSL_CTX *ctx,
-                                         const unsigned char *formats,
-                                         size_t formats_len);
-__owur int SSL_set1_ec_point_formats(SSL *ssl,
-                                     const unsigned char *formats,
-                                     size_t formats_len);
-
-# ifdef __cplusplus
+#ifdef __cplusplus
 }
-# endif
+#endif
 
 # include <openssl/ssl2.h>
 # include <openssl/ssl3.h>
@@ -971,9 +964,9 @@ __owur int SSL_set1_ec_point_formats(SSL *ssl,
 # include <openssl/srtp.h>      /* Support for the use_srtp extension */
 # include <openssl/quic.h>
 
-# ifdef  __cplusplus
+#ifdef  __cplusplus
 extern "C" {
-# endif
+#endif
 
 /*
  * These need to be after the above set of includes due to a compiler bug
