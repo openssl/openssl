@@ -329,13 +329,13 @@ sub start_server {
 
     if ($server_host eq '*' || $server_port == 0) {
         # Find out the actual server host and port and possibly different PID
-        my ($host, $port, $pid1);
-        $pid1 = 0;
+        my ($host, $port);
+        my $pid0 = $pid;
         while (<$server_fh>) {
             print "$server_name server output: $_";
             next if m/using section/;
             s/\R$//;                # Better chomp
-            ($host, $port, $pid1) = ($1, $2, $3)
+            ($host, $port, $pid) = ($1, $2, $3)
                 if /^ACCEPT\s(.*?):(\d+) PID=(\d+)$/;
             last; # Do not loop further to prevent hangs on server misbehavior
         }
@@ -344,11 +344,10 @@ sub start_server {
             $server_host = "127.0.0.1" if $host eq "0.0.0.0";
         }
         $server_port = $port if $server_port == 0 && defined $port;
-        if ($pid1 != $pid) {
+        if ($pid0 != $pid) {
             # kill the shell process
-            kill('KILL', $pid);
-            waitpid($pid, 0);
-            $pid = $pid1;
+            kill('KILL', $pid0);
+            waitpid($pid0, 0);
         }
     }
     if ($server_host eq '*' || $server_port == 0) {
