@@ -105,7 +105,7 @@ NONSTOP_KERNEL)
 	if [ "$OSTYPE" != msdosdjgpp ]; then
 		PATH="${THERE}:$PATH"; export PATH
 	fi
-	if [ "${DO_MPROFILE}" == "1" ] ; then
+	if [ "${DO_MPROFILE}" -eq 1 ] ; then
 		#
 		# if binary we are about to load is linked with shared
 		# libcrypto.so then make sure to preload libmprofile.so
@@ -113,8 +113,6 @@ NONSTOP_KERNEL)
 		ldd "$1" |grep "$LIBCRYPTOSO" > /dev/null
 		if [ $? -eq 0 ] ; then
 			export LD_PRELOAD="${LIBMPROFILE}"
-		else
-			unset LD_PRELOAD;
 		fi
 
 	fi
