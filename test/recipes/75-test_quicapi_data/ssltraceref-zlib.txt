@@ -55,6 +55,9 @@ Header:
           rsa_pss_rsae_sha256 (0x0804)
           rsa_pss_rsae_sha384 (0x0805)
           rsa_pss_rsae_sha512 (0x0806)
+          rsa_pkcs1_sha256 (0x0401)
+          rsa_pkcs1_sha384 (0x0501)
+          rsa_pkcs1_sha512 (0x0601)
         extension_type=supported_versions(43), length=3
           TLS 1.3 (772)
         extension_type=psk_key_exchange_modes(45), length=2
