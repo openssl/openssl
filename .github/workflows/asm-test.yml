@@ -25,6 +25,12 @@ jobs:
             arch: win64,
             sde: sde-external-9.48.0-2024-11-25-win,
             download: 843185/sde-external-9.48.0-2024-11-25-win
+          },
+          {
+            distro: windows-latest,
+            arch: win32,
+            sde: sde-external-9.48.0-2024-11-25-win,
+            download: 843185/sde-external-9.48.0-2024-11-25-win
           }
         ]
     runs-on: ${{ matrix.win_zoo.distro }}
