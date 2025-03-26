@@ -1771,7 +1771,7 @@ void tls1_get_formatlist(SSL_CONNECTION *s, const unsigned char **pformats,
     if (s->ext.ecpointformats) {
         *pformats = s->ext.ecpointformats;
         *num_formats = s->ext.ecpointformats_len;
-    } else if (s->options & SSL_OP_LEGACY_EC_POINT_FORMATS) {
+    } else if ((s->options & SSL_OP_LEGACY_EC_POINT_FORMATS) != 0) {
         *pformats = ecformats_all;
         /* For Suite B we don't support char2 fields */
         if (tls1_suiteb(s))
