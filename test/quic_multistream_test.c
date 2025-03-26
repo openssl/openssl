@@ -2842,6 +2842,7 @@ static int script_21_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
 
     switch (h->inject_word1) {
     case OSSL_QUIC_FRAME_TYPE_PATH_CHALLENGE:
+    case OSSL_QUIC_FRAME_TYPE_PATH_RESPONSE:
         if (!TEST_true(WPACKET_put_bytes_u64(&wpkt, (uint64_t)0)))
             goto err;
         break;
