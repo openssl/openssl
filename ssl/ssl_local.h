@@ -289,25 +289,6 @@
  */
 # define SSL_USE_TLS1_2_CIPHERS(s)       \
     (SSL_CONNECTION_GET_SSL(s)->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_TLS1_2_CIPHERS)
-/*
- * Determine if a client can use TLS 1.2 ciphersuites: can't rely on method
- * flags because it may not be set to correct version yet.
- */
-# define SSL_CLIENT_USE_TLS1_2_CIPHERS(s)        \
-    ((!SSL_CONNECTION_IS_DTLS(s) \
-      && s->client_version >= TLS1_2_VERSION \
-      && (s->ssl.method->version == TLS_ANY_VERSION || \
-          s->version >= TLS1_2_VERSION)) \
-     || (SSL_CONNECTION_IS_DTLS(s) \
-         && DTLS_VERSION_GE(s->client_version, DTLS1_2_VERSION) \
-         && (s->ssl.method->version == DTLS_ANY_VERSION \
-             || DTLS_VERSION_GE(s->version, DTLS1_2_VERSION))))
-/*
- * Determine if a client should send signature algorithms extension:
- * as with TLS1.2 cipher we can't rely on method flags.
- */
-# define SSL_CLIENT_USE_SIGALGS(s)        \
-    SSL_CLIENT_USE_TLS1_2_CIPHERS(s)
 
 # define IS_MAX_FRAGMENT_LENGTH_EXT_VALID(value) \
     (((value) >= TLSEXT_max_fragment_length_512) && \
