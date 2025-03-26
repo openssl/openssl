@@ -1758,6 +1758,9 @@ CA_DB *load_index(const char *dbfile, DB_ATTR *db_attr)
     }
 
     retdb->dbfname = OPENSSL_strdup(dbfile);
+    if (retdb->dbfname == NULL)
+        goto err;
+
 #ifndef OPENSSL_NO_POSIX_IO
     retdb->dbst = dbst;
 #endif
