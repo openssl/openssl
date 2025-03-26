@@ -127,7 +127,7 @@ static int set_random_provider_name(RAND_GLOBAL *dgbl, const char *name)
         return 1;
 
     OPENSSL_free(dgbl->random_provider_name);
-    dgbl->random_provider_name = strdup(name);
+    dgbl->random_provider_name = OPENSSL_strdup(name);
     return dgbl->random_provider_name != NULL;
 }
 
