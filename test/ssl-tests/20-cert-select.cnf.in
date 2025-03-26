@@ -208,11 +208,11 @@ our @tests = (
             "ECDSA.Certificate" => test_pem("server-cecdsa-cert.pem"),
             "ECDSA.PrivateKey" => test_pem("server-cecdsa-key.pem"),
             "MaxProtocol" => "TLSv1.2",
-            "ECPointFormats" => "00:01"
+            "Options" => "LegacyECPointFormats"
         },
         client => {
             "SignatureAlgorithms" => randcase("ECDSA+SHA256"),
-            "ECPointFormats" => "00:01"
+            "Options" => "LegacyECPointFormats"
         },
         test   => {
             "ExpectedServerCertType" => "P-256",

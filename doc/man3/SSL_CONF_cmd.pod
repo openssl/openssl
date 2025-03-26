@@ -485,13 +485,6 @@ groups, as with the simple form above.
 
 This is a synonym for the "Groups" command.
 
-=item B<ECPointFormats>
-
-This configures the supported the EC point formats. The B<value> argument is a
-colon-separated hex string like "00:01" defining a series of supported format
-ids. The supported point formats are 00 (uncompressed), 01
-(ansiX962_compressed_prime) and 02 (ansiX962_compressed_char2).
-
 =item B<MinProtocol>
 
 This sets the minimum supported SSL, TLS or DTLS version.
