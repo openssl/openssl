@@ -14,6 +14,9 @@ on: [pull_request, push]
 permissions:
   contents: read
 
+env:
+  OPTIONS: no-capieng no-cmp no-cms no-comp no-ct no-dgram no-engine no-http no-legacy no-multiblock no-nextprotoneg no-sock no-srp no-srtp no-ssl-trace no-quic no-ts no-tls no-dtls no-aria no-bf no-blake2 no-camellia no-cast no-chacha no-cmac no-des no-dh no-dsa no-ec no-gost no-idea no-md4 no-mdc2 no-ml-dsa no-ml-kem no-ocb no-poly1305 no-rc2 no-rc4 no-rmd160 no-scrypt no-seed no-siphash no-siv no-slh-dsa no-sm2 no-sm3 no-sm4 no-whirlpool
+
 jobs:
   win_sde:
     strategy:
@@ -51,7 +54,7 @@ jobs:
       - name: config
         working-directory: _build
         run: |
-          perl ..\Configure --banner=Configured no-makedepend -DOSSL_WINCTX=openssl no-fips
+          perl ..\Configure --banner=Configured no-makedepend -DOSSL_WINCTX=openssl $OPTIONS
           perl configdata.pm --dump
       - name: build
         working-directory: _build
@@ -91,7 +94,7 @@ jobs:
       - name: localegen
         run: sudo locale-gen tr_TR.UTF-8
       - name: config
-        run: CC=gcc ./config --banner=Configured --strict-warnings && perl configdata.pm --dump
+        run: CC=gcc ./config --banner=Configured --strict-warnings $OPTIONS && perl configdata.pm --dump
       - name: make
         run: make -s -j4
       - name: get cpu info
