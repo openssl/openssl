@@ -1218,6 +1218,11 @@ static int cipher_test_enc(EVP_TEST *t, int enc, size_t out_misalign,
                                 expected->iv_len))) {
             t->err = "INVALID_IV";
             goto err;
+        } else {
+            if (!TEST_false(ERR_peek_error())) {
+                t->err = "GET_UPDATED_IV_SILENT_ERROR";
+                goto err;
+            }
         }
     }
 
@@ -1509,6 +1514,11 @@ static int cipher_test_enc(EVP_TEST *t, int enc, size_t out_misalign,
                                 expected->iv_len))) {
             t->err = "INVALID_NEXT_IV";
             goto err;
+        } else {
+            if (!TEST_false(ERR_peek_error())) {
+                t->err = "GET_UPDATED_IV_SILENT_ERROR";
+                goto err;
+            }
         }
     }
 
