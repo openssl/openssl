@@ -82,7 +82,10 @@ my @cpus = qw(
              cwf
              future
              );
-print("ivsize=$Config{ivsize} ptrsize=$Config{ptrsize} $Config{arch64name}");
+
+foreach my $key (keys %Config) {
+  print("$key = $Config{$key}\n");
+}
              
 my $is_32bit = ($Config{ivsize} == 4);
 push(@cpus, qw(p4 p4p)) if $is_32bit;
