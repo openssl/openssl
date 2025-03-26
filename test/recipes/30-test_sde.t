@@ -6,6 +6,11 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
+# The Intel Software Development Emulator (SDE) allows tests to be run on
+# specific instruction set. This allows us to check that assembler that normally
+# would not run on a CI platforms run correctly. (The SDE emulates the CPUID).
+# See https://www.intel.com/content/www/us/en/developer/articles/tool/software-development-emulator.html
+
 use strict;
 use warnings;
 
@@ -26,12 +31,14 @@ my @files = qw(
                 evpciph_aes_sde.txt
               );
 
-#
-# Intel SDE emulates the CPUID instruction and therefore only supports applications that query for supported features via the CPUID instruction.
-# It does not intercept the calls to IsProcessorFeaturePresent or to the KUSER_SHARED_DATA and therefore does not provide the emulated
-# processor features.
+# Intel SDE emulates the CPUID instruction and therefore only supports
+# applications that query for supported features via the CPUID instruction.
+# On Windows It does not intercept the calls to IsProcessorFeaturePresent or
+# to KUSER_SHARED_DATA and therefore does not provide the emulated processor
+# features.
 # This causes errors is some older cpus, where memset() tries to use vinsertf128
-# Use the -chip_check_exe_only flag for these cases.
+# since CPUID is not used.
+# Use the '-chip_check_exe_only' flag for these cases.
 my @win_chip_check_only = qw(mrm pnr nhm wsm slt slm glm glp tnt snr);
 my %win_chip_check_only_hash = map { $_ => 1 } @win_chip_check_only;
 
@@ -41,19 +48,16 @@ my @cpus = qw(
              pnr
              nhm
              wsm
-             
              snb
              ivb
              hsw
              bdw
-             
              slt
              slm
              glm
              glp
              tnt
              snr
-             
              skl
              cnl
              icl
@@ -86,9 +90,6 @@ plan skip_all => 'Skip unless environment variable OPENSSL_SDE_PATH is set'
 plan tests => scalar(@files) * scalar(@cpus);
 
 my $osname = $^O;
-print("OS=$osname\n");
-
-
 my $sde = $ENV{'OPENSSL_SDE_PATH'};
 foreach my $f ( @files ) {
   foreach my $cpu ( @cpus ) {
