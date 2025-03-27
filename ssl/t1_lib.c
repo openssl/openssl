@@ -988,7 +988,7 @@ int tls1_get0_implemented_groups(int min_proto_version, int max_proto_version,
     }
     ret = 1;
 
-  end:
+ end:
     sk_TLS_GROUP_IX_pop_free(collect, free_wrapper);
     return ret;
 }

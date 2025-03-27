@@ -871,7 +871,7 @@ static void list_tls_groups(int version, int all)
         BIO_printf(bio_out, "%s%c", sk_OPENSSL_CSTRING_value(groups, i),
                    (i < num - 1) ? ':' : '\n');
     }
-  err:
+ err:
     SSL_CTX_free(ctx);
     sk_OPENSSL_CSTRING_free(groups);
     return;

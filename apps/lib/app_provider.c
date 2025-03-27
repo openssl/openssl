@@ -133,7 +133,7 @@ static int opt_provider_param(const char *arg)
         ret = 0;
     }
 
-  end:
+ end:
     OPENSSL_free(copy);
     return ret;
 }

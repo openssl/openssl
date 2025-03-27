@@ -256,7 +256,7 @@ ossl_ml_dsa_d2i_PKCS8(const uint8_t *prvenc, int prvlen,
                                seed, ML_DSA_SEED_BYTES, priv, v->sk_len))
         ret = key;
 
-  end:
+ end:
     OPENSSL_free(fmt_slots);
     PKCS8_PRIV_KEY_INFO_free(p8inf);
     if (ret == NULL)
@@ -396,7 +396,7 @@ int ossl_ml_dsa_i2d_prvkey(const ML_DSA_KEY *key, uint8_t **out,
         ret = len;
     }
 
-  end:
+ end:
     OPENSSL_free(fmt_slots);
     if (ret == 0)
         OPENSSL_free(buf);

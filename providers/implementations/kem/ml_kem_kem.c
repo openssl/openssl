@@ -206,7 +206,7 @@ static int ml_kem_encapsulate(void *vctx, unsigned char *ctext, size_t *clen,
     else
         ret = ossl_ml_kem_encap_rand(ctext, encap_clen, shsec, encap_slen, key);
 
-  end:
+ end:
     /*
      * One shot entropy, each encapsulate call must either provide a new
      * "ikmE", or else will use a random value.  If a caller sets an explicit

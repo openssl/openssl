@@ -92,7 +92,7 @@ mlx_kem_key_new(unsigned int v, OSSL_LIB_CTX *libctx, char *propq)
     key->propq = propq;
     return key;
 
-  err:
+ err:
     OPENSSL_free(propq);
     return NULL;
 }
@@ -310,7 +310,7 @@ static int mlx_kem_export(void *vkey, int selection, OSSL_CALLBACK *param_cb,
     ret = param_cb(params, cbarg);
     OSSL_PARAM_free(params);
 
-err:
+ err:
     OSSL_PARAM_BLD_free(tmpl);
     OPENSSL_secure_clear_free(sub_arg.prvenc, prvlen);
     OPENSSL_free(sub_arg.pubenc);
@@ -369,7 +369,7 @@ load_slot(OSSL_LIB_CTX *libctx, const char *propq, const char *pname,
     if (EVP_PKEY_fromdata(ctx, ppkey, selection, parr) > 0)
         ret = 1;
 
-  err:
+ err:
     EVP_PKEY_CTX_free(ctx);
     return ret;
 }
@@ -399,7 +399,7 @@ load_keys(MLX_KEY *key,
     key->state = prvlen ? MLX_HAVE_PRVKEY : MLX_HAVE_PUBKEY;
     return 1;
 
-  err:
+ err:
     EVP_PKEY_free(key->mkey);
     EVP_PKEY_free(key->xkey);
     key->xkey = key->mkey = NULL;
