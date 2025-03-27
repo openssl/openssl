@@ -13,6 +13,7 @@ use warnings;
 use File::Spec;
 use File::Copy;
 use File::Compare qw/compare_text compare/;
+use IO::File;
 use OpenSSL::Glob;
 use OpenSSL::Test qw/:DEFAULT data_file srctop_file bldtop_dir/;
 use OpenSSL::Test::Utils;
