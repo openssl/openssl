@@ -52,6 +52,7 @@ jobs:
       run: |
         tar xfv downloads/${{ env.SDE }}.tar.xz
         pwd
+        ls -la /home/runner/work/openssl/openssl/sde-external-9.48.0-2024-11-25-lin
         /home/runner/work/openssl/openssl/sde-external-9.48.0-2024-11-25-lin/sde --version
       shell: alpine.sh {0}
 
