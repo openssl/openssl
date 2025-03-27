@@ -54,7 +54,7 @@ jobs:
         pwd
         ls -la /home/runner/work/openssl/openssl/sde-external-9.48.0-2024-11-25-lin
         /home/runner/work/openssl/openssl/sde-external-9.48.0-2024-11-25-lin/sde --version
-      shell: alpine.sh {0}
+      shell: alpine.sh --root {0}
 
     # SDE requires this line on ubuntu
     - name: Set ptrace_scope to 0
