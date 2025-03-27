@@ -33,7 +33,7 @@ jobs:
     - name: Run script inside Alpine chroot as root
       run: |
         cat /etc/alpine-release
-        apk add build-base perl
+        apk add build-base perl linux-headers
       shell: alpine.sh --root {0}
     - name: Run script inside Alpine chroot with x86 emulation
       run: |
