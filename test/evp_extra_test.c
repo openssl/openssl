@@ -3158,7 +3158,7 @@ ml_kem_seed_to_priv(const char *alg, const unsigned char *seed, int seedlen,
         goto done;
     ok = 1;
 
-  done:
+ done:
     EVP_PKEY_free(pkey);
     OSSL_PARAM_free(params);
     EVP_PKEY_CTX_free(ctx);

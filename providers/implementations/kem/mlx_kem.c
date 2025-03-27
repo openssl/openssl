@@ -234,7 +234,7 @@ static int mlx_kem_encapsulate(void *vctx, unsigned char *ctext, size_t *clen,
     }
 
     ret = 1;
-  end:
+ end:
     EVP_PKEY_free(xkey);
     EVP_PKEY_CTX_free(ctx);
     return ret;
@@ -322,7 +322,7 @@ static int mlx_kem_decapsulate(void *vctx, uint8_t *shsec, size_t *slen,
     }
 
     ret = 1;
-  end:
+ end:
     EVP_PKEY_CTX_free(ctx);
     EVP_PKEY_free(xkey);
     return ret;

@@ -311,7 +311,7 @@ static int test_addr_fam_len(void)
         goto end;
 
     testresult = 1;
-  end:
+ end:
     /* Free stack and any memory owned by detached element */
     IPAddressFamily_free(f1);
     sk_IPAddressFamily_pop_free(addr, IPAddressFamily_free);
