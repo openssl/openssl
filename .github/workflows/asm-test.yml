@@ -50,14 +50,19 @@ jobs:
       working-directory: downloads
 
     - name: unpack Intel SDE
-      run: tar xfv downloads/${{ env.SDE }}.tar.xz
-        
+      run: |
+        tar xfv downloads/${{ env.SDE }}.tar.xz
+        pwd
+
     # SDE requires this line on ubuntu
     - name: Set ptrace_scope to 0
       run: sudo sysctl -w kernel.yama.ptrace_scope=0
 
     - name: run tests
-      run: make test TESTS="test_sde"
+      run: |
+        ls -la /home/runner/work/openssl/openssl
+        ls -la /home/runner/work/openssl/openssl/sde-external-9.48.0-2024-11-25-lin
+        make test TESTS="test_sde"
       shell: alpine.sh {0}
 
     - name: Restore ptrace_scope to 1
