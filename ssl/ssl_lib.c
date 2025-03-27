@@ -2218,6 +2218,8 @@ int SSL_accept(SSL *s)
 int SSL_connect(SSL *s)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+    SSL_SESSION *sess;
+    int ret;
 
 #ifndef OPENSSL_NO_QUIC
     if (IS_QUIC(s))
@@ -2230,6 +2232,24 @@ int SSL_connect(SSL *s)
     if (sc->handshake_func == NULL) {
         /* Not properly initialized yet */
         SSL_set_connect_state(s);
+    }
+
+    /*
+     * If a client session has not been set, and there's a previous session
+     * that matches the cache_id, use it.
+     * If the cache is not set to client mode, an error will be raised, so
+     * pop off as necessary.
+     */
+    if (sc->session == NULL && sc->cache_id != NULL) {
+        ERR_set_mark();
+        sess = SSL_get1_previous_client_session(s);
+        ERR_pop_to_mark();
+        if (sess != NULL) {
+            ret = SSL_set_session(s, sess);
+            SSL_SESSION_free(sess);
+            if (!ret)
+                return ret;
+        }
     }
 
     return SSL_do_handshake(s);
