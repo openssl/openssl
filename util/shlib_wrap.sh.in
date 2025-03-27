@@ -105,6 +105,9 @@ NONSTOP_KERNEL)
 	if [ "$OSTYPE" != msdosdjgpp ]; then
 		PATH="${THERE}:$PATH"; export PATH
 	fi
+	if [ "${DO_MPROFILE}" -eq 1 ] ; then
+		export LD_PRELOAD="${LIBMPROFILE}"
+	fi
 	;;
 esac
 
@@ -129,7 +132,13 @@ fi
 cmd="$1"; [ -x "$cmd" ] || cmd="$cmd${EXE_EXT}"
 shift
 if [ $# -eq 0 ]; then
+	if [ "${DO_MPROFILE}" -eq 1 ] ; then
+		echo "$cmd" > ${MPROFILE_RESULT}
+	fi
 	exec "$cmd"	# old sh, such as Tru64 4.x, fails to expand empty "$@"
 else
+	if [ "${DO_MPROFILE}" -eq 1 ] ; then
+		echo "$cmd" "$@" > ${MPROFILE_RESULT}
+	fi
 	exec "$cmd" "$@"
 fi

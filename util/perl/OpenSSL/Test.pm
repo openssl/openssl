@@ -13,6 +13,9 @@ use warnings;
 use Carp;
 use Test::More 0.96;
 
+use File::Basename;
+use File::Spec::Functions 'catfile';
+
 use Exporter;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 $VERSION = "1.0";
@@ -1294,6 +1297,45 @@ sub __decorate_cmd {
             unless $stderr || !$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE};
     }
 
+    if ($ENV{DO_MPROFILE}) {
+        my $file_name;
+        my $glob_pattern = catfile(result_dir(), "$test_name"."*.result");
+	my $index = 0;
+
+        #
+        # some tests execute more than one command, we need to capture
+        # data for each command invocation.
+        #
+        # loop here finds the next index to continue.
+        #
+        foreach $file_name ( glob($glob_pattern) ) {
+            $file_name = basename($file_name);
+            if ($file_name =~ m/.*_(\d+).result/) {
+                if ($index < $1) {
+                    $index = $1;
+                }
+            }
+        }
+        $index = $index + 1;
+	$file_name = "$test_name"."_"."$index".".result";
+	open(MARKER, ">$file_name");
+	close(MARKER);
+        # the result is collected in shlib_wrap.sh
+	$ENV{MPROFILE_RESULT}=$file_name;
+
+
+        #
+        # tcmalloc collecta at least one profile record
+        # saved to test_name-xx.yyyy.heap
+        # By default tcmalloc creates such profile for every
+        # GB of memory program allocates. More details
+        # on how to control the collection of data can
+        # be found here:
+        #    https://gperftools.github.io/gperftools/heapprofile.html
+        #
+        $file_name = "$test_name"."_"."$index";
+        $ENV{HEAPPROFILE}=$file_name;
+    }
     $cmdstr .= "$stdin$stdout$stderr";
 
     if ($debug) {
