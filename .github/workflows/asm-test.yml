@@ -37,7 +37,7 @@ jobs:
       shell: alpine.sh --root {0}
     - name: Run script inside Alpine chroot with x86 emulation
       run: |
-        perl ./Configure ${{ env.OPTIONS }}
+        perl ./Configure ${{ env.OPTIONS }} linux-x86
         perl configdata.pm --dump
         make -s -j4
       shell: alpine.sh {0}
