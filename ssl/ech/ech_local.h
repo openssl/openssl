@@ -196,13 +196,6 @@ typedef struct ossl_ech_conn_st {
     size_t pub_len;
     OSSL_HPKE_CTX *hpke_ctx; /* HPKE context, needed for HRR */
     /*
-     * PSK processing requires knowing the ticket age, in milliseconds.
-     * As we process things twice, we'll store that value first time,
-     * in case it would otherwise tick over to a new value between
-     * processing steps, which could cause an race-condition error.
-     */
-    uint32_t agems;
-    /*
      * Fields that differ on client between inner and outer that we need to
      * keep and swap over IFF ECH has succeeded. Same names chosen as are
      * used in SSL_CONNECTION

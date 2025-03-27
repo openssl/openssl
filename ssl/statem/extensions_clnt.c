@@ -100,7 +100,9 @@ EXT_RETURN tls_construct_ctos_server_name(SSL_CONNECTION *s, WPACKET *pkt,
         return EXT_RETURN_NOT_SENT;
     /* Add TLS extension servername to the Client Hello message */
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_server_name)
+               /* Sub-packet for server_name extension */
             || !WPACKET_start_sub_packet_u16(pkt)
+               /* Sub-packet for servername list (always 1 hostname)*/
             || !WPACKET_start_sub_packet_u16(pkt)
             || !WPACKET_put_bytes_u8(pkt, TLSEXT_NAMETYPE_host_name)
             || !WPACKET_sub_memcpy_u16(pkt, chosen, strlen(chosen))
@@ -522,7 +524,8 @@ EXT_RETURN tls_construct_ctos_alpn(SSL_CONNECTION *s, WPACKET *pkt,
     if (aval == NULL)
         return EXT_RETURN_NOT_SENT;
     if (!WPACKET_put_bytes_u16(pkt,
-                               TLSEXT_TYPE_application_layer_protocol_negotiation)
+                TLSEXT_TYPE_application_layer_protocol_negotiation)
+           /* Sub-packet ALPN extension */
         || !WPACKET_start_sub_packet_u16(pkt)
         || !WPACKET_sub_memcpy_u16(pkt, aval, alen)
         || !WPACKET_close(pkt)) {
@@ -1212,6 +1215,18 @@ EXT_RETURN tls_construct_ctos_psk(SSL_CONNECTION *s, WPACKET *pkt,
             goto dopsksess;
         }
 
+#ifndef OPENSSL_NO_ECH
+        /*
+         * When doing ECH, we get here twice (for inner then outer). The
+         * 2nd time (for outer) we can skip some checks as we know how
+         * those went last time.
+         */
+        if (s->ext.ech.es != NULL && s->ext.ech.ch_depth == 0) {
+            dores = (s->ext.tick_identity > 0);
+            goto dopsksess;
+        }
+#endif
+
         /*
          * Technically the C standard just says time() returns a time_t and says
          * nothing about the encoding of that type. In practice most
@@ -1222,6 +1237,7 @@ EXT_RETURN tls_construct_ctos_psk(SSL_CONNECTION *s, WPACKET *pkt,
          */
         t = ossl_time_subtract(ossl_time_now(), s->session->time);
         agesec = (uint32_t)ossl_time2seconds(t);
+
         /*
          * We calculate the age in seconds but the server may work in ms. Due to
          * rounding errors we could overestimate the age by up to 1s. It is
@@ -1243,21 +1259,6 @@ EXT_RETURN tls_construct_ctos_psk(SSL_CONNECTION *s, WPACKET *pkt,
          * good enough.
          */
         agems = agesec * (uint32_t)1000;
-#ifndef OPENSSL_NO_ECH
-        /*
-         * When doing ECH, we get here twice (for inner then outer), and don't
-         * want to risk getting different values for the age in milliseconds
-         * so when doing the inner, we'll store the |agems| value and then
-         * use that the 2nd time when doing the outer CH. The actual processing
-         * for the outer CH (inserting random values) is further below.
-         */
-        if (s->ext.ech.es != NULL && s->ext.ech.ch_depth == 1)
-            /* inner processing - record agems */
-            s->ext.ech.agems = agems;
-        if (s->ext.ech.es != NULL && s->ext.ech.ch_depth == 0)
-            /* outer processing - re-use agems from inner */
-            agems = s->ext.ech.agems;
-#endif
 
         if (agesec != 0 && agems / (uint32_t)1000 != agesec) {
             /*
