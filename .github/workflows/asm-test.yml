@@ -35,11 +35,15 @@ jobs:
         cat /etc/alpine-release
         apk add build-base perl linux-headers
       shell: alpine.sh --root {0}
-    - name: Run script inside Alpine chroot with x86 emulation
+    - name: Configure inside Alpine chroot with x86 emulation
       run: |
         perl ./Configure ${{ env.OPTIONS }} linux-x86
         perl configdata.pm --dump
         make -s -j4
+      shell: alpine.sh {0}
+
+    - name: Build inside Alpine chroot with x86 emulation
+      run: make -s -j4
       shell: alpine.sh {0}
 
     - name: create download directory
@@ -53,6 +57,7 @@ jobs:
       run: |
         tar xfv downloads/${{ env.SDE }}.tar.xz
         pwd
+        /home/runner/work/openssl/openssl/sde-external-9.48.0-2024-11-25-lin/sde --version
 
     # SDE requires this line on ubuntu
     - name: Set ptrace_scope to 0
@@ -62,6 +67,7 @@ jobs:
       run: |
         ls -la /home/runner/work/openssl/openssl
         ls -la /home/runner/work/openssl/openssl/sde-external-9.48.0-2024-11-25-lin
+        /home/runner/work/openssl/openssl/sde-external-9.48.0-2024-11-25-lin/sde --version
         make test TESTS="test_sde"
       shell: alpine.sh {0}
 
