@@ -18,6 +18,22 @@ env:
   OPTIONS: no-capieng no-cmp no-cms no-comp no-ct no-dgram no-engine no-http no-legacy no-multiblock no-nextprotoneg no-sock no-srp no-srtp no-ssl-trace no-quic no-ts no-tls no-dtls no-aria no-bf no-blake2 no-camellia no-cast no-chacha no-cmac no-des no-dh no-dsa no-ec no-gost no-idea no-md4 no-mdc2 no-ml-dsa no-ml-kem no-ocb no-poly1305 no-rc2 no-rc4 no-rmd160 no-scrypt no-seed no-siphash no-siv no-slh-dsa no-sm2 no-sm3 no-sm4 no-whirlpool
 
 jobs:
+  alpine_x86:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup latest Alpine Linux x86
+      uses: jirutka/setup-alpine@v1
+      with:
+        arch: x86
+    - name: Run script inside Alpine chroot with x86 emulation
+      run: |
+        pwd
+        perl --version
+        uname -m
+      shell: alpine.sh {0}
+
+
   win_sde:
     strategy:
       fail-fast: false
