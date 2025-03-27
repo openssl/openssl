@@ -39,10 +39,7 @@ jobs:
       run: |
         perl ./Configure ${{ env.OPTIONS }} linux-x86
         perl configdata.pm --dump
-        make -s -j4
       shell: alpine.sh {0}
-
-
 
     - name: create download directory
       run: mkdir downloads
