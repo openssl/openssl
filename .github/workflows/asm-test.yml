@@ -44,24 +44,24 @@ jobs:
 
     - name: create download directory
       run: mkdir downloads
+
     - name: download Intel SDE
       run: wget --no-verbose https://downloadmirror.intel.com/${{ env.DOWNLOAD }}.tar.xz
       working-directory: downloads
+
     - name: unpack Intel SDE
       run: tar xfv downloads/${{ env.SDE }}.tar.xz
         
-      # SDE requires this line on ubuntu
-      - name: Set ptrace_scope to 0
-        run: |
-          sudo sysctl -w kernel.yama.ptrace_scope=0
+    # SDE requires this line on ubuntu
+    - name: Set ptrace_scope to 0
+      run: sudo sysctl -w kernel.yama.ptrace_scope=0
 
-      - name: run tests
-        run: make test TESTS="test_sde"
-        shell: alpine.sh {0}
+    - name: run tests
+      run: make test TESTS="test_sde"
+      shell: alpine.sh {0}
 
-      - name: Restore ptrace_scope to 1
-        run: |
-          sudo sysctl -w kernel.yama.ptrace_scope=1
+    - name: Restore ptrace_scope to 1
+      run: sudo sysctl -w kernel.yama.ptrace_scope=1
 
   win_sde:
     strategy:
