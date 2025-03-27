@@ -58,15 +58,22 @@ jobs:
 
     # SDE requires this line on ubuntu
     - name: Set ptrace_scope to 0
-      run: sudo sysctl -w kernel.yama.ptrace_scope=0
+      run: sysctl -w kernel.yama.ptrace_scope=0
+      shell: alpine.sh --root {0}
 
+    - name: run single test
+      run: |
+        LD_LIBRARY_PATH=/home/runner/work/openssl/openssl /home/runner/work/openssl/openssl/sde-external-9.48.0-2024-11-25-lin/sde -mrm -- ./test/evp_test -config ./test/default.cnf ./test/recipes/30-test_sde_data/evpciph_aes_sde.txt
+      shell: alpine.sh {0}
+    
     - name: run tests
       run: |
         make test TESTS="test_sde" V=1
       shell: alpine.sh {0}
 
     - name: Restore ptrace_scope to 1
-      run: sudo sysctl -w kernel.yama.ptrace_scope=1
+      run: sysctl -w kernel.yama.ptrace_scope=1
+      shell: alpine.sh --root {0}
 
   win_sde:
     strategy:
