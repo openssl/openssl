@@ -1300,7 +1300,7 @@ sub __decorate_cmd {
     if ($ENV{DO_MPROFILE}) {
         my $file_name;
         my $glob_pattern = catfile(result_dir(), "$test_name"."*.result");
-	my $index = 0;
+        my $index = 0;
 
         #
         # some tests execute more than one command, we need to capture
@@ -1317,15 +1317,14 @@ sub __decorate_cmd {
             }
         }
         $index = $index + 1;
-	$file_name = "$test_name"."_"."$index".".result";
-	open(RESULT, ">$file_name");
-	close(RESULT);
+        $file_name = "$test_name"."_"."$index".".result";
+        open(RESULT, ">$file_name");
+        close(RESULT);
         # the result is collected in shlib_wrap.sh
-	$ENV{MPROFILE_RESULT}=$file_name;
-
+        $ENV{MPROFILE_RESULT}=$file_name;
 
         #
-        # tcmalloc collecta at least one profile record
+        # tcmalloc collects at least one profile record
         # saved to test_name-xx.yyyy.heap
         # By default tcmalloc creates such profile for every
         # GB of memory program allocates. More details
