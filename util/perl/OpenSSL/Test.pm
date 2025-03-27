@@ -1318,8 +1318,8 @@ sub __decorate_cmd {
         }
         $index = $index + 1;
 	$file_name = "$test_name"."_"."$index".".result";
-	open(MARKER, ">$file_name");
-	close(MARKER);
+	open(RESULT, ">$file_name");
+	close(RESULT);
         # the result is collected in shlib_wrap.sh
 	$ENV{MPROFILE_RESULT}=$file_name;
 
