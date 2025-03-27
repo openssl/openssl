@@ -543,7 +543,7 @@ void *ml_kem_load(const void *reference, size_t reference_sz)
         return key;
     }
 
-  err:
+ err:
     OPENSSL_free(encoded_dk);
     ossl_ml_kem_key_free(key);
     return NULL;

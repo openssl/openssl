@@ -1402,7 +1402,7 @@ int genkey(const uint8_t seed[ML_KEM_SEED_BYTES],
     }
 
     ret = 1;
-  end:
+ end:
     OPENSSL_cleanse((void *)augmented_seed, ML_KEM_RANDOM_BYTES);
     OPENSSL_cleanse((void *)sigma, ML_KEM_RANDOM_BYTES);
     return ret;
@@ -1618,7 +1618,7 @@ ML_KEM_KEY *ossl_ml_kem_key_dup(const ML_KEM_KEY *key, int selection)
      * duplicated.
      */
     if (ossl_ml_kem_decoded_key(key))
-        return 0;
+        return NULL;
 
     if (key == NULL
         || (ret = OPENSSL_memdup(key, sizeof(*key))) == NULL)

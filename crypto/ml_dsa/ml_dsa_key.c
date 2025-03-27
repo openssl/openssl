@@ -58,7 +58,7 @@ int ossl_ml_dsa_set_prekey(ML_DSA_KEY *key, int flags_set, int flags_clr,
     key->prov_flags &= ~flags_clr;
     ret = 1;
 
-  end:
+ end:
     if (!ret) {
         OPENSSL_free(key->priv_encoding);
         OPENSSL_free(key->seed);

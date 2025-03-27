@@ -127,7 +127,7 @@ static int test_set_min_max_version(int idx_tst)
 
     testresult = 1;
 
-  end:
+ end:
     SSL_free(ssl);
     SSL_CTX_free(ctx);
     return testresult;

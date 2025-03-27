@@ -265,7 +265,7 @@ ossl_ml_kem_d2i_PKCS8(const uint8_t *prvenc, int prvlen,
     /* Any OQS public key content is ignored */
     ret = key;
 
-  end:
+ end:
     OPENSSL_free(fmt_slots);
     PKCS8_PRIV_KEY_INFO_free(p8inf);
     if (ret == NULL)
@@ -417,7 +417,7 @@ int ossl_ml_kem_i2d_prvkey(const ML_KEM_KEY *key, uint8_t **out,
         ret = len;
     }
 
-  end:
+ end:
     OPENSSL_free(fmt_slots);
     if (ret == 0)
         OPENSSL_free(buf);
@@ -481,7 +481,7 @@ int ossl_ml_kem_key_to_text(BIO *out, const ML_KEM_KEY *key, int selection)
                        "no %s key material available",
                        type_label);
 
-  end:
+ end:
     OPENSSL_free(pubenc);
     OPENSSL_free(prvenc);
     return ret;
