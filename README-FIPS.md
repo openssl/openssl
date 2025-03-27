@@ -35,7 +35,7 @@ In order to be FIPS compliant you must only use FIPS validated source code.
 Refer to <https://www.openssl.org/source/> for information related to
 which versions are FIPS validated. The instructions given below build OpenSSL
 just using the FIPS validated source code.  Any FIPS validated version may be
-used with any other openssl library.  Please see <https://www.openssl.org/source/> 
+used with any other openssl library.  Please see <https://www.openssl.org/source/>
 To determine which FIPS validated library version may be appropriate for you.
 
 If you want to use a validated FIPS provider, but also want to use the latest
