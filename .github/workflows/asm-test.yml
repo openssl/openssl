@@ -38,6 +38,7 @@ jobs:
         uname -m
         gcc --version
         make --version
+        ls -la
       shell: alpine.sh {0}
 
 
