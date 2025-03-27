@@ -62,7 +62,7 @@ jobs:
 
     - name: run tests
       run: |
-        make test TESTS="test_evp"
+        make test TESTS="test_sde" V=1
       shell: alpine.sh {0}
 
     - name: Restore ptrace_scope to 1
