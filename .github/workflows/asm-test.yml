@@ -49,8 +49,6 @@ jobs:
       working-directory: downloads
     - name: unpack Intel SDE
       run: tar xfv downloads/${{ env.SDE }}.tar.xz
-    - name: Show directory
-      run: pwd
         
       # SDE requires this line on ubuntu
       - name: Set ptrace_scope to 0
