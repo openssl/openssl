@@ -20,6 +20,10 @@ env:
 jobs:
   alpine_x86:
     runs-on: ubuntu-latest
+    env:
+      SDE: sde-external-9.48.0-2024-11-25-lin
+      DOWNLOAD: 843185/${{ env.SDE }}
+      OPENSSL_SDE_PATH: ${{ github.workspace }}/${{ env.SDE }}/sde
     steps:
     - uses: actions/checkout@v2
     - name: Setup latest Alpine Linux x86
@@ -33,16 +37,33 @@ jobs:
       shell: alpine.sh --root {0}
     - name: Run script inside Alpine chroot with x86 emulation
       run: |
-        pwd
-        perl --version
-        uname -m
-        gcc --version
-        make --version
-        ls -la
         perl ./Configure ${{ env.OPTIONS }}
         perl configdata.pm --dump
+        make -s -j4
       shell: alpine.sh {0}
 
+    - name: create download directory
+      run: mkdir downloads
+    - name: download Intel SDE
+      run: wget --no-verbose https://downloadmirror.intel.com/${{ env.DOWNLOAD }}.tar.xz
+      working-directory: downloads
+    - name: unpack Intel SDE
+      run: tar xfv downloads/${{ env.SDE }}.tar.xz
+    - name: Show directory
+      run: pwd
+        
+      # SDE requires this line on ubuntu
+      - name: Set ptrace_scope to 0
+        run: |
+          sudo sysctl -w kernel.yama.ptrace_scope=0
+
+      - name: run tests
+        run: make test TESTS="test_sde"
+        shell: alpine.sh {0}
+
+      - name: Restore ptrace_scope to 1
+        run: |
+          sudo sysctl -w kernel.yama.ptrace_scope=1
 
   win_sde:
     strategy:
