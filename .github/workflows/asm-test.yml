@@ -42,9 +42,7 @@ jobs:
         make -s -j4
       shell: alpine.sh {0}
 
-    - name: Build inside Alpine chroot with x86 emulation
-      run: make -s -j4
-      shell: alpine.sh {0}
+
 
     - name: create download directory
       run: mkdir downloads
