@@ -39,6 +39,8 @@ jobs:
         gcc --version
         make --version
         ls -la
+        perl ..\Configure ${{ env.OPTIONS }}
+        perl configdata.pm --dump
       shell: alpine.sh {0}
 
 
