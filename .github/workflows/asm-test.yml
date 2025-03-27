@@ -22,8 +22,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       SDE: sde-external-9.48.0-2024-11-25-lin
-      DOWNLOAD: 843185/${{ env.SDE }}
-      OPENSSL_SDE_PATH: ${{ github.workspace }}/${{ env.SDE }}/sde
+      DOWNLOAD: 843185/sde-external-9.48.0-2024-11-25-lin
+      OPENSSL_SDE_PATH: ${{ github.workspace }}/sde-external-9.48.0-2024-11-25-lin/sde
     steps:
     - uses: actions/checkout@v2
     - name: Setup latest Alpine Linux x86
