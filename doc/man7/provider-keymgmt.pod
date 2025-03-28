@@ -32,7 +32,7 @@ provider-keymgmt - The KEYMGMT library E<lt>-E<gt> provider functions
  void OSSL_FUNC_keymgmt_gen_cleanup(void *genctx);
 
  /* Key loading by object reference, also a constructor */
- void *OSSL_FUNC_keymgmt_load(const void *reference, size_t *reference_sz);
+ void *OSSL_FUNC_keymgmt_load(const void *reference, size_t reference_sz);
 
  /* Key object information */
  int OSSL_FUNC_keymgmt_get_params(void *keydata, OSSL_PARAM params[]);
