@@ -1522,7 +1522,7 @@ static int ecp_nistz256group_full_init(EC_GROUP *group,
         goto err;
     }
     if ((order = BN_bin2bn(params + 5 * param_len, param_len, NULL)) == NULL
-        || !BN_set_word(x, (BN_ULONG)1)) { // cofactor is 1
+        || !BN_set_word(x, (BN_ULONG)1)) { /* cofactor is 1 */
         ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
         goto err;
     }
