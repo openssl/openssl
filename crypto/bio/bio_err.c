@@ -97,18 +97,3 @@ int ossl_err_load_BIO_strings(void)
 #endif
     return 1;
 }
-
-#ifndef OPENSSL_NO_SOCK
-
-int BIO_err_is_non_fatal(unsigned int errcode)
-{
-    if (ERR_SYSTEM_ERROR(errcode))
-        return BIO_sock_non_fatal_error(ERR_GET_REASON(errcode));
-    else if (ERR_GET_LIB(errcode) == ERR_LIB_BIO
-             && ERR_GET_REASON(errcode) == BIO_R_NON_FATAL)
-        return 1;
-    else
-        return 0;
-}
-
-#endif
