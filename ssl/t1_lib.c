@@ -2057,17 +2057,17 @@ static const SIGALG_LOOKUP sigalg_lookup_tbl[] = {
      "RSA+SHA256", TLSEXT_SIGALG_rsa_pkcs1_sha256,
      NID_sha256, SSL_MD_SHA256_IDX, EVP_PKEY_RSA, SSL_PKEY_RSA,
      NID_sha256WithRSAEncryption, NID_undef, 1, 0,
-     TLS1_2_VERSION, TLS1_2_VERSION, DTLS1_2_VERSION, DTLS1_2_VERSION},
+     TLS1_2_VERSION, 0, DTLS1_2_VERSION, 0},
     {TLSEXT_SIGALG_rsa_pkcs1_sha384_name,
      "RSA+SHA384", TLSEXT_SIGALG_rsa_pkcs1_sha384,
      NID_sha384, SSL_MD_SHA384_IDX, EVP_PKEY_RSA, SSL_PKEY_RSA,
      NID_sha384WithRSAEncryption, NID_undef, 1, 0,
-     TLS1_2_VERSION, TLS1_2_VERSION, DTLS1_2_VERSION, DTLS1_2_VERSION},
+     TLS1_2_VERSION, 0, DTLS1_2_VERSION, 0},
     {TLSEXT_SIGALG_rsa_pkcs1_sha512_name,
      "RSA+SHA512", TLSEXT_SIGALG_rsa_pkcs1_sha512,
      NID_sha512, SSL_MD_SHA512_IDX, EVP_PKEY_RSA, SSL_PKEY_RSA,
      NID_sha512WithRSAEncryption, NID_undef, 1, 0,
-     TLS1_2_VERSION, TLS1_2_VERSION, DTLS1_2_VERSION, DTLS1_2_VERSION},
+     TLS1_2_VERSION, 0, DTLS1_2_VERSION, 0},
 
     {TLSEXT_SIGALG_rsa_pkcs1_sha224_name,
      "RSA+SHA224", TLSEXT_SIGALG_rsa_pkcs1_sha224,
@@ -3948,14 +3948,13 @@ static int tls1_check_sig_alg(SSL_CONNECTION *s, X509 *x, int default_nid)
          * Accept RSA PKCS#1 signatures in certificates when the signature
          * algorithms include RSA-PSS with a matching digest algorithm.
          *
-         * When the client supports only TLS 1.3, or in a TLS 1.3 client
-         * certificate request, the signature algorithms are likely to omit the
-         * legacy RSA PKCS#1 code points, but if we're doing strict checking of
-         * the certificate chain (in a cert_cb via SSL_check_chain()) we may
-         * then reject RSA signed certificates in the chain, but the TLS
-         * requirement on PSS should not extend to certificates.  Though the
-         * peer can in fact list the legacy sigalgs for just this purpose, it
-         * is not likely that a better chain singed with RSA-PSS is available.
+         * When a TLS 1.3 peer inadvertently omits the legacy RSA PKCS#1 code
+         * points, and we're doing strict checking of the certificate chain (in
+         * a cert_cb via SSL_check_chain()) we may then reject RSA signed
+         * certificates in the chain, but the TLS requirement on PSS should not
+         * extend to certificates.  Though the peer can in fact list the legacy
+         * sigalgs for just this purpose, it is not likely that a better chain
+         * signed with RSA-PSS is available.
          */
         if (!OBJ_find_sigid_algs(sig_nid, &mdnid, &pknid))
             continue;
