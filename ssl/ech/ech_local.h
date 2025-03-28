@@ -180,6 +180,8 @@ typedef struct ossl_ech_conn_st {
     uint16_t attempted_type; /* ECH version used */
     int attempted_cid; /* ECH config id sent/rx'd */
     int backend; /* 1 if we're a server backend in split-mode, 0 otherwise */
+    /* When using a PSK stash the tick_identity from inner, for outer */
+    int tick_identity;
     /*
      * success is 1 if ECH succeeded, 0 otherwise, on the server this
      * is known early, on the client we need to wait for the ECH confirm

@@ -1222,6 +1222,7 @@ EXT_RETURN tls_construct_ctos_psk(SSL_CONNECTION *s, WPACKET *pkt,
          * those went last time.
          */
         if (s->ext.ech.es != NULL && s->ext.ech.ch_depth == 0) {
+            s->ext.tick_identity = s->ext.ech.tick_identity;
             dores = (s->ext.tick_identity > 0);
             goto dopsksess;
         }
@@ -1278,6 +1279,11 @@ EXT_RETURN tls_construct_ctos_psk(SSL_CONNECTION *s, WPACKET *pkt,
         if (reshashsize <= 0)
             goto dopsksess;
         s->ext.tick_identity++;
+#ifndef OPENSSL_NO_ECH
+        /* stash this for re-use in outer CH */
+        if (s->ext.ech.es != NULL && s->ext.ech.ch_depth == 1)
+            s->ext.ech.tick_identity = s->ext.tick_identity;
+#endif
         dores = 1;
     }
 
