@@ -19,7 +19,7 @@
 # define MAKESTR(x) TOSTR(x)
 # define NOQUOTE(x) x
 # if defined(OSSL_WINCTX)
-# define REGISTRY_KEY "SOFTWARE\\WOW6432Node\\OpenSSL" ##"-"## MAKESTR(OPENSSL_VERSION_MAJOR) ##"."## MAKESTR(OPENSSL_VERSION_MINOR) ##"-"## MAKESTR(OSSL_WINCTX)
+#  define REGISTRY_KEY "SOFTWARE\\WOW6432Node\\OpenSSL" "-" MAKESTR(OPENSSL_VERSION_MAJOR) "." MAKESTR(OPENSSL_VERSION_MINOR) "-" MAKESTR(OSSL_WINCTX)
 # endif
 
 /**
@@ -60,44 +60,48 @@ static char *modulesdirptr = NULL;
  *
  * @return A pointer to a char array containing the registry directories.
  */
-static char *get_windows_regdirs(char *dst, LPCTSTR valuename)
+static char *get_windows_regdirs(char *dst, DWORD dstsizebytes, LPCWSTR valuename)
 {
     char *retval = NULL;
 # ifdef REGISTRY_KEY
-    DWORD keysize;
+    DWORD keysizebytes;
     DWORD ktype;
     HKEY hkey;
     LSTATUS ret;
     DWORD index = 0;
-    LPCTCH tempstr = NULL;
-   
+    LPCWSTR tempstr = NULL;
+
     ret = RegOpenKeyEx(HKEY_LOCAL_MACHINE,
                        TEXT(REGISTRY_KEY), KEY_WOW64_32KEY,
                        KEY_QUERY_VALUE, &hkey);
     if (ret != ERROR_SUCCESS)
         goto out;
 
-    ret = RegQueryValueEx(hkey, valuename, NULL, &ktype, NULL,
-                          &keysize);
+    /* Always use wide call so we can avoid extra encoding conversions on the output */
+    ret = RegQueryValueExW(hkey, valuename, NULL, &ktype, NULL,
+                           &keysizebytes);
     if (ret != ERROR_SUCCESS)
         goto out;
-    if (ktype != REG_EXPAND_SZ)
+    if (ktype != REG_EXPAND_SZ && ktype != REG_SZ)
         goto out;
-    if (keysize > MAX_PATH)
+    if (keysizebytes > MAX_PATH * sizeof(WCHAR))
         goto out;
 
-    keysize++;
-    tempstr = OPENSSL_zalloc(keysize * sizeof(TCHAR));
+    /*
+     * RegQueryValueExW does not guarantee the buffer is null terminated,
+     * so we make space for one in the allocation
+     */
+    tempstr = OPENSSL_zalloc(keysizebytes + sizeof(WCHAR));
 
     if (tempstr == NULL)
         goto out;
 
-    if (RegQueryValueEx(hkey, valuename,
-                        NULL, &ktype, tempstr, &keysize) != ERROR_SUCCESS)
+    if (RegQueryValueExW(hkey, valuename,
+                         NULL, &ktype, (LPBYTE)tempstr, &keysizebytes) != ERROR_SUCCESS)
         goto out;
 
-    if (!WideCharToMultiByte(CP_UTF8, 0, tempstr, -1, dst, keysize,
-                             NULL, NULL)) 
+    if (!WideCharToMultiByte(CP_UTF8, 0, tempstr, -1, dst, dstsizebytes,
+                             NULL, NULL))
         goto out;
 
     retval = dst;
@@ -117,9 +121,9 @@ static CRYPTO_ONCE defaults_setup_init = CRYPTO_ONCE_STATIC_INIT;
  */
 DEFINE_RUN_ONCE_STATIC(do_defaults_setup)
 {
-    get_windows_regdirs(openssldir, TEXT("OPENSSLDIR"));
-    get_windows_regdirs(enginesdir, TEXT("ENGINESDIR"));
-    get_windows_regdirs(modulesdir, TEXT("MODULESDIR"));
+    get_windows_regdirs(openssldir, sizeof(openssldir), L"OPENSSLDIR");
+    get_windows_regdirs(enginesdir, sizeof(enginesdir), L"ENGINESDIR");
+    get_windows_regdirs(modulesdir, sizeof(modulesdir), L"MODULESDIR");
 
     /*
      * Set our pointers only if the directories are fetched properly
