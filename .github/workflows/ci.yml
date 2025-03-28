@@ -686,14 +686,16 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        RUST:
-          - 1.51.0
         PYTHON:
           - 3.9
     steps:
     - uses: actions/checkout@v4
       with:
         submodules: recursive
+    - name: package installs
+      run: |
+        sudo apt-get update
+        sudo apt-get -yq install pkgconf libssl-dev
     - name: Configure OpenSSL
       run: ./config --banner=Configured --strict-warnings --debug enable-external-tests && perl configdata.pm --dump
     - name: make
@@ -702,9 +704,9 @@ jobs:
       uses: actions/setup-python@v5.3.0
       with:
         python-version: ${{ matrix.PYTHON }}
-    - uses: dtolnay/rust-toolchain@master
+    - uses: dtolnay/rust-toolchain@stable
       with:
-        toolchain: ${{ matrix.RUST }}
+        toolchain: stable 
     - name: get cpu info
       run: |
         cat /proc/cpuinfo
