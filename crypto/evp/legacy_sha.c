@@ -216,7 +216,7 @@ const EVP_MD *EVP_shake##bitlen(void)                                          \
         NID_shake##bitlen,                                                     \
         0,                                                                     \
         bitlen / 8,                                                            \
-        EVP_MD_FLAG_XOF,                                                       \
+        EVP_MD_FLAG_XOF | EVP_MD_FLAG_DIGALGID_ABSENT,                         \
         EVP_ORIG_GLOBAL,                                                       \
         LEGACY_EVP_MD_METH_TABLE(shake_init, sha3_int_update, sha3_int_final,  \
                         shake_ctrl, (KECCAK1600_WIDTH - bitlen * 2) / 8),      \
