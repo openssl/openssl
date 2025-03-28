@@ -71,6 +71,12 @@ return an error.
 B<CONF_MFLAGS_DEFAULT_SECTION> if set and B<appname> is not NULL will use the
 default section pointed to by B<openssl_conf> if B<appname> does not exist.
 
+B<CONF_MFLAGS_SILENT_ACTIVATION>.
+Suppress reporting of provider activation failure as an initialisation failure,
+even when B<config_diagnostics> are enabled or B<CONF_MFLAGS_IGNORE_RETURN_CODES>
+is not set (normally sufficient to do the same unless diagnostics are enabled).
+This is not a default flag.
+
 By using CONF_modules_load_file_ex() with appropriate flags an
 application can customise application configuration to best suit its needs.
 In some cases the use of a configuration file is optional and its absence is not
