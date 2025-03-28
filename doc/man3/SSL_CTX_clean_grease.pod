@@ -1,0 +1,129 @@
+=pod
+
+=head1 NAME
+
+SSL_CTX_add_grease_to_extension,
+SSL_CTX_add_grease_to_ciphers,
+SSL_CTX_add_grease_extension,
+SSL_CTX_clean_grease - Add GREASE (RFC8701) to the TLS handshake
+
+=head1 SYNOPSIS
+
+ #include <openssl/ssl.h>
+
+ int SSL_CTX_add_grease_to_extension(SSL_CTX *ctx, unsigned int extension,
+                                     unsigned int value);
+ int SSL_CTX_add_grease_to_ciphers(SSL_CTX *ctx, unsigned int value);
+ int SSL_CTX_add_grease_extension(SSL_CTX *ctx, unsigned int extension,
+                                  unsigned char* value, size_t length);
+ void SSL_CTX_clean_grease(SSL_CTX *ctx);
+
+=head1 DESCRIPTION
+
+SSL_CTX_add_grease_to_extension() adds a GREASE value to a known extension.
+If the extension cannot support GREASE values, an error is returned.
+These GREASE values only apply to the ClientHello.
+
+SSL_CTX_add_grease_to_ciphers() adds a 16-bit GREASE value to the list of ciphers.
+These GREASE values only apply to the ClientHello.
+
+SSL_CTX_add_grease_extension() adds a new GREASE extionsion with the given
+payload. If the extension is a known, supported extension, an error is returned.
+
+SSL_CTX_clean_grease() removes GREASE values from the b<ctx>.
+
+=head1 NOTES
+
+GREASE is defined in RFC8701 "Applying Generate Random Extensions And Sustain
+Extensibility" to TLS Extensibility. It is a method of adding unsupported
+values to extensions and other fields to ensure that breakage (in terms of
+protocol or program) does not occur.
+
+These functions store these GREASE values to an SSL_CTX object, which are then
+added to the handshake of any SSL object that refereces the SSL_CTX object.
+
+A set of GREASE values are defined as reserved: two-byte values where the lower
+nibble of each byte is 0xA. These values may not be used by other RFCs.
+This API does not require that only these values are used; any value may be used
+as a GREASE value, as long as it doesn't conflict with an existing extension
+number.
+
+GREASE values are prepended to the normal extension values.
+
+The SSL_CTX_add_grease_to_extension() function supports the following extensions:
+
+=over 4
+
+=item TLSEXT_TYPE_supported_versions
+
+=item TLSEXT_TYPE_signature_algorithms
+
+=item TLSEXT_TYPE_supported_groups
+
+=item TLSEXT_TYPE_compress_certificate
+
+The above extensions support 16-bit GREASE values.
+
+=item TLSEXT_TYPE_psk_kex_modes
+
+The above extension supports 8-bit GREASE values.
+
+=item TLSEXT_TYPE_key_share
+
+The above extension adds a 16-bit GREASE encoded-point type (lower 16-bits of
+b<value>) with the whole contents of b<value> (sizeof(unsigned int)) used as
+the encoded-point value.
+
+=back
+
+The SSL_CTX_add_grease_extension() function will add all configuted GREASE
+extentions to the following handshake messages:
+
+=over 4
+
+=item Client Hello
+
+This applies only to the client.
+
+=item Server Hello
+
+This applies only to the server.
+
+=item Certificate Request
+
+This applies only to the server when doing TLSv1.3.
+
+=back
+
+GREASE values are not (supposed to be) processed by servers and clients. They
+are present to ensure TLS extensibility.
+
+=head1 RETURN VALUES
+
+The SSL_CTX_add_grease_to_extension(), SSL_CTX_add_grease_to_ciphers(),
+and SSL_CTX_add_grease_extension() functions
+return 1 on success and 0 on failure.
+
+Success means that the GREASE value was stored.
+
+=head1 SEE ALSO
+
+L<SSL_CTX_new(3)>, L<SSL_new(3)>
+
+=head1 HISTORY
+
+The SSL_CTX_add_grease_to_extension(),
+SSL_CTX_add_grease_to_ciphers(),
+SSL_CTX_add_grease_extension(), and
+SSL_CTX_clean_grease() functions were added in Openssl 3.6.
+
+=head1 COPYRIGHT
+
+Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

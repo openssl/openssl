@@ -4160,6 +4160,22 @@ int ssl_cipher_list_to_bytes(SSL_CONNECTION *s, STACK_OF(SSL_CIPHER) *sk,
     }
 
     if (totlen != 0) {
+        SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+        OSSL_GREASE *g;
+
+        /* Add any GREASE */
+        for (g = sctx->grease; g != NULL; g = g->next) {
+            if (g->extension == OSSL_GREASE_CIPHER) {
+                SSL_CIPHER grease;
+
+                memset(&grease, 0, sizeof(grease));
+                grease.id = SSL3_CK_CIPHERSUITE_FLAG | (g->value & 0xFFFF);
+                if (!ssl->method->put_cipher_by_char(&grease, pkt, &len)) {
+                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                    return 0;
+                }
+            }
+        }
         if (empty_reneg_info_scsv) {
             static const SSL_CIPHER scsv = {
                 0, NULL, NULL, SSL3_CK_SCSV, 0, 0, 0, 0, 0, 0, 0, 0, 0
