@@ -77,25 +77,27 @@ static char *get_windows_regdirs(char *dst, DWORD dstsizebytes, LPCWSTR valuenam
     if (ret != ERROR_SUCCESS)
         goto out;
 
-    // Always use wide call so we can avoid extra encoding conversions on the output
+    /* Always use wide call so we can avoid extra encoding conversions on the output */
     ret = RegQueryValueExW(hkey, valuename, NULL, &ktype, NULL,
-                          &keysizebytes);
+                           &keysizebytes);
     if (ret != ERROR_SUCCESS)
         goto out;
     if (ktype != REG_EXPAND_SZ && ktype != REG_SZ)
         goto out;
-    if (keysizebytes > MAX_PATH*sizeof(WCHAR))
+    if (keysizebytes > MAX_PATH * sizeof(WCHAR))
         goto out;
 
-    // RegQueryValueExW does not guarantee the buffer is null terminated,
-    // so we make space for one in the allocation
-    tempstr = OPENSSL_zalloc(keysizebytes+sizeof(WCHAR));
+    /*
+     * RegQueryValueExW does not guarantee the buffer is null terminated,
+     * so we make space for one in the allocation
+     */
+    tempstr = OPENSSL_zalloc(keysizebytes + sizeof(WCHAR));
 
     if (tempstr == NULL)
         goto out;
 
     if (RegQueryValueExW(hkey, valuename,
-                        NULL, &ktype, (LPBYTE)tempstr, &keysizebytes) != ERROR_SUCCESS)
+                         NULL, &ktype, (LPBYTE)tempstr, &keysizebytes) != ERROR_SUCCESS)
         goto out;
 
     if (!WideCharToMultiByte(CP_UTF8, 0, tempstr, -1, dst, dstsizebytes,
