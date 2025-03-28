@@ -5458,6 +5458,42 @@
 #define LN_chacha20             "chacha20"
 #define NID_chacha20            1019
 
+#define SN_aes_128_cbc_hmac_sha1_etm            "AES-128-CBC-HMAC-SHA1-ETM"
+#define LN_aes_128_cbc_hmac_sha1_etm            "aes-128-cbc-hmac-sha1-etm"
+#define NID_aes_128_cbc_hmac_sha1_etm           1487
+
+#define SN_aes_192_cbc_hmac_sha1_etm            "AES-192-CBC-HMAC-SHA1-ETM"
+#define LN_aes_192_cbc_hmac_sha1_etm            "aes-192-cbc-hmac-sha1-etm"
+#define NID_aes_192_cbc_hmac_sha1_etm           1488
+
+#define SN_aes_256_cbc_hmac_sha1_etm            "AES-256-CBC-HMAC-SHA1-ETM"
+#define LN_aes_256_cbc_hmac_sha1_etm            "aes-256-cbc-hmac-sha1-etm"
+#define NID_aes_256_cbc_hmac_sha1_etm           1489
+
+#define SN_aes_128_cbc_hmac_sha256_etm          "AES-128-CBC-HMAC-SHA256-ETM"
+#define LN_aes_128_cbc_hmac_sha256_etm          "aes-128-cbc-hmac-sha256-etm"
+#define NID_aes_128_cbc_hmac_sha256_etm         1490
+
+#define SN_aes_192_cbc_hmac_sha256_etm          "AES-192-CBC-HMAC-SHA256-ETM"
+#define LN_aes_192_cbc_hmac_sha256_etm          "aes-192-cbc-hmac-sha256-etm"
+#define NID_aes_192_cbc_hmac_sha256_etm         1491
+
+#define SN_aes_256_cbc_hmac_sha256_etm          "AES-256-CBC-HMAC-SHA256-ETM"
+#define LN_aes_256_cbc_hmac_sha256_etm          "aes-256-cbc-hmac-sha256-etm"
+#define NID_aes_256_cbc_hmac_sha256_etm         1492
+
+#define SN_aes_128_cbc_hmac_sha512_etm          "AES-128-CBC-HMAC-SHA512-ETM"
+#define LN_aes_128_cbc_hmac_sha512_etm          "aes-128-cbc-hmac-sha512-etm"
+#define NID_aes_128_cbc_hmac_sha512_etm         1493
+
+#define SN_aes_192_cbc_hmac_sha512_etm          "AES-192-CBC-HMAC-SHA512-ETM"
+#define LN_aes_192_cbc_hmac_sha512_etm          "aes-192-cbc-hmac-sha512-etm"
+#define NID_aes_192_cbc_hmac_sha512_etm         1494
+
+#define SN_aes_256_cbc_hmac_sha512_etm          "AES-256-CBC-HMAC-SHA512-ETM"
+#define LN_aes_256_cbc_hmac_sha512_etm          "aes-256-cbc-hmac-sha512-etm"
+#define NID_aes_256_cbc_hmac_sha512_etm         1495
+
 #define SN_dhpublicnumber               "dhpublicnumber"
 #define LN_dhpublicnumber               "X9.42 DH"
 #define NID_dhpublicnumber              920
