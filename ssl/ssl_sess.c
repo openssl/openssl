@@ -1595,18 +1595,14 @@ int SSL_set1_cache_id(SSL *s, const unsigned char *data, size_t len)
     return 1;
 }
 
-int SSL_get0_cache_id(const SSL *s, const unsigned char **data, size_t *len)
+int SSL_get1_cache_id(const SSL *s, unsigned char **data, size_t *len)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
 
-    if (sc == NULL)
+    if (sc == NULL || sc->server || sc->cache_id == NULL)
         return 0;
-    if (sc->server)
+    if ((*data = OPENSSL_memdup(sc->cache_id, sc->cache_id_len)) == NULL)
         return 0;
-
-    if (sc->cache_id == NULL)
-        return 0;
-    *data = sc->cache_id;
     *len = sc->cache_id_len;
     return 1;
 }
@@ -1633,11 +1629,12 @@ int SSL_SESSION_set1_cache_id(SSL_SESSION *ss, const unsigned char *data, size_t
     return 1;
 }
 
-int SSL_SESSION_get0_cache_id(const SSL_SESSION *ss, const unsigned char **data, size_t *len)
+int SSL_SESSION_get1_cache_id(const SSL_SESSION *ss, unsigned char **data, size_t *len)
 {
-    if (ss->cache_id == NULL)
+    if (ss == NULL || ss->cache_id == NULL)
         return 0;
-    *data = ss->cache_id;
+    if ((*data = OPENSSL_memdup(ss->cache_id, ss->cache_id_len)) == NULL)
+        return 0;
     *len = ss->cache_id_len;
     return 1;
 }

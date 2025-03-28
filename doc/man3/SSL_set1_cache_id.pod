@@ -3,9 +3,9 @@
 =head1 NAME
 
 SSL_set1_cache_id,
-SSL_get0_cache_id,
+SSL_get1_cache_id,
 SSL_SESSION_set1_cache_id,
-SSL_SESSION_get0_cache_id,
+SSL_SESSION_get1_cache_id,
 SSL_get1_previous_client_session - use application-defined cache identifier for session caching
 
 =head1 SYNOPSIS
@@ -13,10 +13,10 @@ SSL_get1_previous_client_session - use application-defined cache identifier for 
  #include <openssl/ssl.h>
 
  int SSL_set1_cache_id(SSL *s, const unsigned char *data, size_t len);
- int SSL_get0_cache_id(const SSL *s, const unsigned char **data, size_t *len);
+ int SSL_get1_cache_id(const SSL *s, const unsigned char **data, size_t *len);
 
  int SSL_SESSION_set1_cache_id(SSL_SESSION *ss, const unsigned char *data, size_t len);
- int SSL_SESSION_get0_cache_id(const SSL_SESSION *ss, const unsigned char **data, size_t *len);
+ int SSL_SESSION_get1_cache_id(const SSL_SESSION *ss, const unsigned char **data, size_t *len);
 
  int SSL_get1_previous_client_session(SSL *s, int flags);
 
@@ -26,13 +26,13 @@ SSL_set1_cache_id() sets the cache identifier specified by B<data> and B<len>
 into B<s>. This cache identifier is application-defined, and can be a domain
 name, IP address, port or other identifier.
 
-SSL_get0_cache_id() returns the cache identifier of B<s> into the B<data> and
+SSL_get1_cache_id() returns the cache identifier of B<s> into the B<data> and
 B<len> variables. The cache identifier is application-defined.
 
 SSL_SESSION_set1_cache_id() sets the cache identifier specified by B<data> and B<len>
 into B<ss>. This cache identifier is application-defined.
 
-SSL_SESSION_get0_cache_id() returns the cache identifier of B<ss> into the B<data> and
+SSL_SESSION_get1_cache_id() returns the cache identifier of B<ss> into the B<data> and
 B<len> variables. The cache identifier is application-defined.
 
 SSL_get1_previous_client_session() is used to search for and return a
@@ -68,12 +68,14 @@ function can only be used on non-cached SSL_SESSIONs.
 SSL_set1_cache_id() and SSL_SESSION_set1_cache_id() should not be used by servers,
 the functions will fail.
 
+The memory returned by SSL_get1_cache_id() and SSL_SESSION_get1_cache_id() must be freed.
+
 =head1 RETURN VALUES
 
-The SSL_set1_cache_id(), SSL_get0_cache_id(), SSL_SESSION_set1_cache_id() and
-SSL_SESSION_get0_cache_id() functions return 1 on success, 0 on failure.
+The SSL_set1_cache_id(), SSL_get1_cache_id(), SSL_SESSION_set1_cache_id() and
+SSL_SESSION_get1_cache_id() functions return 1 on success, 0 on failure.
 
-The SSL_get0_cache_id() function fills in the B<data> and B<len> parameters
+The SSL_get1_cache_id() function fills in the B<data> and B<len> parameters
 with the data from the B<s>.
 
 The SSL_get_previous_client_session() returns an SSL_SESSION on success, or NULL on
@@ -98,9 +100,9 @@ L<SSL_set_SSL_CTX(3)>,
 =head1 HISTORY
 
 The SSL_set1_cache_id(),
-SSL_get0_cache_id(),
+SSL_get1_cache_id(),
 SSL_SESSION_set1_cache_id(),
-SSL_SESSION_get0_cache_id(), and
+SSL_SESSION_get1_cache_id(), and
 SSL_get1_previous_client_session() functions were added in OpenSSL 3.5.
 
 =head1 COPYRIGHT

@@ -608,6 +608,6 @@ SSL_get_domain_flags                    ?	3_5_0	EXIST::FUNCTION:
 SSL_CTX_set_new_pending_conn_cb         ?	3_5_0	EXIST::FUNCTION:
 SSL_get1_previous_client_session        ?	3_5_0	EXIST::FUNCTION:
 SSL_set1_cache_id                       ?	3_5_0	EXIST::FUNCTION:
-SSL_get0_cache_id                       ?	3_5_0	EXIST::FUNCTION:
+SSL_get1_cache_id                       ?	3_5_0	EXIST::FUNCTION:
 SSL_SESSION_set1_cache_id               ?	3_5_0	EXIST::FUNCTION:
-SSL_SESSION_get0_cache_id               ?	3_5_0	EXIST::FUNCTION:
+SSL_SESSION_get1_cache_id               ?	3_5_0	EXIST::FUNCTION:
