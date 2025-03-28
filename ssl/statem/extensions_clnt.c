@@ -329,8 +329,22 @@ EXT_RETURN tls_construct_ctos_sig_algs(SSL_CONNECTION *s, WPACKET *pkt,
     size_t salglen;
     const uint16_t *salg;
 
-    if (!SSL_CLIENT_USE_SIGALGS(s))
+    /*
+     * This used both in the initial hello and as part of renegotiation,
+     * in the latter case, the client version may be already set and may
+     * be lower than that initially offered in `client_version`.
+     */
+    if (!SSL_CONNECTION_IS_DTLS(s)) {
+        if (s->client_version < TLS1_2_VERSION
+            || (s->ssl.method->version != TLS_ANY_VERSION
+                && s->version < TLS1_2_VERSION))
         return EXT_RETURN_NOT_SENT;
+    } else {
+        if (DTLS_VERSION_LT(s->client_version, DTLS1_2_VERSION)
+            || (s->ssl.method->version != DTLS_ANY_VERSION
+                && DTLS_VERSION_LT(s->version, DTLS1_2_VERSION)))
+        return EXT_RETURN_NOT_SENT;
+    }
 
     salglen = tls12_get_psigalgs(s, 1, &salg);
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_signature_algorithms)
