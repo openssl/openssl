@@ -1,0 +1,43 @@
+Field Type: prime-field
+Prime:
+    00:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:
+    ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:
+    ff:ff:fe:ff:ff:ff:ff:00:00:00:00:00:00:00:00:
+    ff:ff:ff:ff
+A:   
+    00:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:
+    ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:
+    ff:ff:fe:ff:ff:ff:ff:00:00:00:00:00:00:00:00:
+    ff:ff:ff:fc
+B:   
+    00:b3:31:2f:a7:e2:3e:e7:e4:98:8e:05:6b:e3:f8:
+    2d:19:18:1d:9c:6e:fe:81:41:12:03:14:08:8f:50:
+    13:87:5a:c6:56:39:8d:8a:2e:d1:9d:2a:85:c8:ed:
+    d3:ec:2a:ef
+Generator (uncompressed):
+    04:aa:87:ca:22:be:8b:05:37:8e:b1:c7:1e:f3:20:
+    ad:74:6e:1d:3b:62:8b:a7:9b:98:59:f7:41:e0:82:
+    54:2a:38:55:02:f2:5d:bf:55:29:6c:3a:54:5e:38:
+    72:76:0a:b7:36:17:de:4a:96:26:2c:6f:5d:9e:98:
+    bf:92:92:dc:29:f8:f4:1d:bd:28:9a:14:7c:e9:da:
+    31:13:b5:f0:b8:c0:0a:60:b1:ce:1d:7e:81:9d:7a:
+    43:1d:7c:90:ea:0e:5f
+Order: 
+    00:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:
+    ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:c7:63:4d:81:f4:
+    37:2d:df:58:1a:0d:b2:48:b0:a7:7a:ec:ec:19:6a:
+    cc:c5:29:73
+Cofactor:  1 (0x1)
+Seed:
+    a3:35:92:6a:a3:19:a2:7a:1d:00:89:6a:67:73:a4:
+    82:7a:cd:ac:73
+-----BEGIN EC PARAMETERS-----
+MIIBVwIBATA8BgcqhkjOPQEBAjEA////////////////////////////////////
+//////7/////AAAAAAAAAAD/////MHsEMP//////////////////////////////
+///////////+/////wAAAAAAAAAA/////AQwszEvp+I+5+SYjgVr4/gtGRgdnG7+
+gUESAxQIj1ATh1rGVjmNii7RnSqFyO3T7CrvAxUAozWSaqMZonodAIlqZ3OkgnrN
+rHMEYQSqh8oivosFN46xxx7zIK10bh07Younm5hZ90HgglQqOFUC8l2/VSlsOlRe
+OHJ2Crc2F95KliYsb12emL+Sktwp+PQdvSiaFHzp2jETtfC4wApgsc4dfoGdekMd
+fJDqDl8CMQD////////////////////////////////HY02B9Dct31gaDbJIsKd6
+7OwZaszFKXMCAQE=
+-----END EC PARAMETERS-----
