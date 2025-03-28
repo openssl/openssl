@@ -181,30 +181,44 @@ int ossl_gcm_get_ctx_params(void *vctx, OSSL_PARAM params[])
             break;
 
         case PIDX_CIPHER_PARAM_IV:
-            if (ctx->iv_state == IV_STATE_UNINITIALISED)
-                return 0;
-            if (ctx->ivlen > p->data_size) {
-                ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
-                return 0;
-            }
-            if (!OSSL_PARAM_set_octet_string(p, ctx->iv, ctx->ivlen)
-                && !OSSL_PARAM_set_octet_ptr(p, &ctx->iv, ctx->ivlen)) {
-                ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
-                return 0;
+            {
+                int res = 0;
+
+                if (ctx->iv_state == IV_STATE_UNINITIALISED)
+                    return 0;
+                if (ctx->ivlen > p->data_size) {
+                    ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
+                    return 0;
+                }
+                if (p->data_type == OSSL_PARAM_OCTET_STRING)
+                    res = OSSL_PARAM_set_octet_string(p, ctx->iv, ctx->ivlen);
+                else if (p->data_type == OSSL_PARAM_OCTET_PTR)
+                    res = OSSL_PARAM_set_octet_ptr(p, &ctx->iv, ctx->ivlen);
+                if (res == 0) {
+                    ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+                    return 0;
+                }
             }
             break;
 
         case PIDX_CIPHER_PARAM_UPDATED_IV:
-            if (ctx->iv_state == IV_STATE_UNINITIALISED)
-                return 0;
-            if (ctx->ivlen > p->data_size) {
-                ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
-                return 0;
-            }
-            if (!OSSL_PARAM_set_octet_string(p, ctx->iv, ctx->ivlen)
-                && !OSSL_PARAM_set_octet_ptr(p, &ctx->iv, ctx->ivlen)) {
-                ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
-                return 0;
+            {
+                int res = 0;
+
+                if (ctx->iv_state == IV_STATE_UNINITIALISED)
+                    return 0;
+                if (ctx->ivlen > p->data_size) {
+                    ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
+                    return 0;
+                }
+                if (p->data_type == OSSL_PARAM_OCTET_STRING)
+                    res = OSSL_PARAM_set_octet_string(p, ctx->iv, ctx->ivlen);
+                else if (p->data_type == OSSL_PARAM_OCTET_PTR)
+                    res = OSSL_PARAM_set_octet_ptr(p, &ctx->iv, ctx->ivlen);
+                if (res == 0) {
+                    ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+                    return 0;
+                }
             }
             break;
 
