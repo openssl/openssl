@@ -35,7 +35,7 @@ void OPENSSL_cpuid_setup(void)
     OPENSSL_armcap_P |= ARMV7_NEON;
     OPENSSL_armv8_rsa_neonized = 1;
     if (IsProcessorFeaturePresent(PF_ARM_V8_CRYPTO_INSTRUCTIONS_AVAILABLE)) {
-        // These are all covered by one call in Windows
+        /* These are all covered by one call in Windows */
         OPENSSL_armcap_P |= ARMV8_AES;
         OPENSSL_armcap_P |= ARMV8_PMULL;
         OPENSSL_armcap_P |= ARMV8_SHA1;
