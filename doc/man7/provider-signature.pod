@@ -177,27 +177,27 @@ set of "signature" functions, i.e. at least one of:
 
 =over 4
 
-=item OSSL_FUNC_signature_sign_init and OSSL_FUNC_signature_sign
+=item L<OSSL_FUNC_signature_sign_init|EVP_SignInit(3)> and L<OSSL_FUNC_signature_sign|EVP_SignFinal(3)>
 
-=item OSSL_FUNC_signature_sign_message_init and OSSL_FUNC_signature_sign
+=item L<OSSL_FUNC_signature_sign_message_init|EVP_PKEY_sign_init(3)> and L<OSSL_FUNC_signature_sign|EVP_PKEY_sign(3)>
 
-=item OSSL_FUNC_signature_sign_message_init, OSSL_FUNC_signature_sign_message_update and OSSL_FUNC_signature_sign_message_final
+=item L<OSSL_FUNC_signature_sign_message_init|EVP_PKEY_sign_init(3)>, L<OSSL_FUNC_signature_sign_message_update|EVP_PKEY_sign_update(3)> and L<OSSL_FUNC_signature_sign_message_final|EVP_PKEY_sign_final(3)>
 
-=item OSSL_FUNC_signature_verify_init and OSSL_FUNC_signature_verify
+=item L<OSSL_FUNC_signature_verify_init|EVP_VerifyInit(3)> and L<OSSL_FUNC_signature_verify|EVP_VerifyFinal(3)>
 
-=item OSSL_FUNC_signature_verify_message_init and OSSL_FUNC_signature_verify
+=item L<OSSL_FUNC_signature_verify_message_init|EVP_PKEY_verify_init(3)> and L<OSSL_FUNC_signature_verify|EVP_PKEY_verify(3)>
 
-=item OSSL_FUNC_signature_verify_message_init, OSSL_FUNC_signature_verify_message_update and OSSL_FUNC_signature_verify_message_final
+=item L<OSSL_FUNC_signature_verify_message_init|EVP_PKEY_verify_init(3)>, L<OSSL_FUNC_signature_verify_message_update|EVP_PKEY_verify_update(3)> and L<OSSL_FUNC_signature_verify_message_final|EVP_PKEY_verify_final(3)>
 
-=item OSSL_FUNC_signature_verify_recover_init and OSSL_FUNC_signature_verify_recover
+=item L<OSSL_FUNC_signature_verify_recover_init|EVP_PKEY_verify_recover_init(3)> and L<OSSL_FUNC_signature_verify_recover|EVP_PKEY_verify_recover(3)>
 
-=item OSSL_FUNC_signature_digest_sign_init, OSSL_FUNC_signature_digest_sign_update and OSSL_FUNC_signature_digest_sign_final
+=item L<OSSL_FUNC_signature_digest_sign_init|EVP_DigestSignInit(3)>, L<OSSL_FUNC_signature_digest_sign_update|EVP_DigestSignUpdate(3)> and L<OSSL_FUNC_signature_digest_sign_final|EVP_DigestSignFinal(3)>
 
-=item OSSL_FUNC_signature_digest_verify_init, OSSL_FUNC_signature_digest_verify_update and OSSL_FUNC_signature_digest_verify_final
+=item L<OSSL_FUNC_signature_digest_verify_init|EVP_DigestVerifyInit(3)>, L<OSSL_FUNC_signature_digest_verify_update|EVP_DigestVerifyUpdate(3)> and L<OSSL_FUNC_signature_digest_verify_final|EVP_DigestVerifyFinal(3)>
 
-=item OSSL_FUNC_signature_digest_sign_init and OSSL_FUNC_signature_digest_sign
+=item L<OSSL_FUNC_signature_digest_sign_init|EVP_DigestSignInit(3)> and L<OSSL_FUNC_signature_digest_sign|EVP_DigestSign(3)>
 
-=item OSSL_FUNC_signature_digest_verify_init and OSSL_FUNC_signature_digest_verify
+=item L<OSSL_FUNC_signature_digest_verify_init|EVP_DigestVerifyInit(3)> and L<OSSL_FUNC_signature_digest_verify|EVP_DigestVerify(3)>
 
 =back
 
