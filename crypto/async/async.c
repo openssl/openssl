@@ -91,7 +91,6 @@ static ASYNC_JOB *async_job_new(void)
 static void async_job_free(ASYNC_JOB *job)
 {
     if (job != NULL) {
-        OPENSSL_free(job->funcargs);
         async_fibre_free(&job->fibrectx);
         OPENSSL_free(job);
     }
@@ -138,7 +137,6 @@ static void async_release_job(ASYNC_JOB *job) {
         ERR_raise(ERR_LIB_ASYNC, ERR_R_INTERNAL_ERROR);
         return;
     }
-    OPENSSL_free(job->funcargs);
     job->funcargs = NULL;
     sk_ASYNC_JOB_push(pool->jobs, job);
 }
@@ -249,18 +247,7 @@ int ASYNC_start_job(ASYNC_JOB **job, ASYNC_WAIT_CTX *wctx, int *ret,
         if ((ctx->currjob = async_get_pool_job()) == NULL)
             return ASYNC_NO_JOBS;
 
-        if (args != NULL) {
-            ctx->currjob->funcargs = OPENSSL_malloc(size);
-            if (ctx->currjob->funcargs == NULL) {
-                async_release_job(ctx->currjob);
-                ctx->currjob = NULL;
-                return ASYNC_ERR;
-            }
-            memcpy(ctx->currjob->funcargs, args, size);
-        } else {
-            ctx->currjob->funcargs = NULL;
-        }
-
+        ctx->currjob->funcargs = args;
         ctx->currjob->func = func;
         ctx->currjob->waitctx = wctx;
         libctx = ossl_lib_ctx_get_concrete(NULL);
