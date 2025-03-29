@@ -2827,7 +2827,7 @@ static int script_21_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
 {
     int ok = 0;
     WPACKET wpkt;
-    unsigned char frame_buf[9];
+    unsigned char frame_buf[21];
     size_t written;
 
     if (h->inject_word0 == 0 || hdr->type != h->inject_word0)
@@ -2843,16 +2843,88 @@ static int script_21_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
     switch (h->inject_word1) {
     case OSSL_QUIC_FRAME_TYPE_PATH_CHALLENGE:
     case OSSL_QUIC_FRAME_TYPE_PATH_RESPONSE:
+    case OSSL_QUIC_FRAME_TYPE_RETIRE_CONN_ID:
+        /*
+         * These cases to be formatted properly need a single uint64_t
+         */
         if (!TEST_true(WPACKET_put_bytes_u64(&wpkt, (uint64_t)0)))
+            goto err;
+        break;
+    case OSSL_QUIC_FRAME_TYPE_MAX_DATA:
+    case OSSL_QUIC_FRAME_TYPE_STREAMS_BLOCKED_UNI:
+    case OSSL_QUIC_FRAME_TYPE_STREAMS_BLOCKED_BIDI:
+    case OSSL_QUIC_FRAME_TYPE_MAX_STREAMS_BIDI:
+    case OSSL_QUIC_FRAME_TYPE_MAX_STREAMS_UNI:
+    case OSSL_QUIC_FRAME_TYPE_DATA_BLOCKED:
+        /*
+         * These cases require a single vlint
+         */
+        if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, (uint64_t)0)))
             goto err;
         break;
     case OSSL_QUIC_FRAME_TYPE_STOP_SENDING:
     case OSSL_QUIC_FRAME_TYPE_MAX_STREAM_DATA:
     case OSSL_QUIC_FRAME_TYPE_STREAM_DATA_BLOCKED:
+        /*
+         * These cases require 2 variable integers
+         */
         if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, (uint64_t)0)))
             goto err;
         if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, (uint64_t)0)))
             goto err;
+        break;
+    case OSSL_QUIC_FRAME_TYPE_STREAM:
+    case OSSL_QUIC_FRAME_TYPE_RESET_STREAM:
+    case OSSL_QUIC_FRAME_TYPE_CONN_CLOSE_APP:
+        /*
+         * These cases require 3 variable integers
+         */
+        if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, (uint64_t)0)))
+            goto err;
+        if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, (uint64_t)0)))
+            goto err;
+        if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, (uint64_t)0)))
+            goto err;
+        break;
+    case OSSL_QUIC_FRAME_TYPE_NEW_TOKEN:
+        /*
+         * Special case for new token
+         */
+
+        /* New token length, cannot be zero */
+        if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, (uint64_t)1)))
+            goto err;
+
+        /* 1 bytes of token data, to match the above length */
+        if (!TEST_true(WPACKET_put_bytes_u8(&wpkt, (uint8_t)0)))
+            goto err;
+        break;
+    case OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID:
+        /*
+         * Special case for New Connection ids, has a combination
+         * of vlints and fixed width values
+         */
+
+        /* seq number */
+        if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, (uint64_t)0)))
+            goto err;
+
+        /* retire prior to */
+        if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, (uint64_t)0)))
+            goto err;
+
+        /* Connection id length, arbitrary at 1 bytes */
+        if (!TEST_true(WPACKET_put_bytes_u8(&wpkt, (uint8_t)1)))
+            goto err;
+
+        /* The connection id, to match the above length */
+        if (!TEST_true(WPACKET_put_bytes_u8(&wpkt, (uint8_t)0)))
+            goto err;
+
+        /* 16 bytes total for the SRT */
+        if (!TEST_true(WPACKET_memset(&wpkt, 0, 16)))
+            goto err;
+
         break;
     }
 
