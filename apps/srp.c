@@ -556,8 +556,11 @@ int srp_main(int argc, char **argv)
                         || row[DB_srpsalt] == NULL
                         || (userinfo
                             && ((row[DB_srpinfo] = OPENSSL_strdup(userinfo))
-                                == NULL)))
+                                == NULL))) {
+                        OPENSSL_free(row[DB_srpgN]);
+                        OPENSSL_free(row[DB_srpinfo]);
                         goto end;
+                    }
 
                     doupdatedb = 1;
                 }
