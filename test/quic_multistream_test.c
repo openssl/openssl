@@ -2827,7 +2827,7 @@ static int script_21_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
 {
     int ok = 0;
     WPACKET wpkt;
-    unsigned char frame_buf[128];
+    unsigned char frame_buf[28];
     size_t written;
 
     if (h->inject_word0 == 0 || hdr->type != h->inject_word0)
@@ -2892,11 +2892,11 @@ static int script_21_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
          */
 
         /* New token length, cannot be zero */
-        if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, (uint64_t)8)))
+        if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, (uint64_t)1)))
             goto err;
 
-        /* 8 bytes of token data, to match the above length */
-        if (!TEST_true(WPACKET_put_bytes_u64(&wpkt, (uint64_t)0)))
+        /* 1 bytes of token data, to match the above length */
+        if (!TEST_true(WPACKET_put_bytes_u8(&wpkt, (uint8_t)0)))
             goto err;
         break;
     case OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID:
@@ -2920,8 +2920,15 @@ static int script_21_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
         /* The connection id, to match the above length */
         if (!TEST_true(WPACKET_put_bytes_u64(&wpkt, (uint64_t)0)))
             goto err;
-        break;
 
+        /* two uint64_t's (16 bytes total) for the SRT */
+        if (!TEST_true(WPACKET_put_bytes_u64(&wpkt, (uint64_t)0)))
+            goto err;
+
+        if (!TEST_true(WPACKET_put_bytes_u64(&wpkt, (uint64_t)0)))
+            goto err;
+
+        break;
     }
 
     if (!TEST_true(WPACKET_get_total_written(&wpkt, &written)))
