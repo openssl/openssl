@@ -59,7 +59,7 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags,
     int nmindent = 0, printok = 0;
     EVP_PKEY *pkey = NULL;
     int i; /* Declare loop variable here */
-    STACK_OF(X509_EXTENSION) *exts; /* Declare extensions stack here */
+    const STACK_OF(X509_EXTENSION) *exts; /* Declare extensions stack here */
     X509_EXTENSION *ex; /* Declare extension pointer here */
 
     if ((nmflags & XN_FLAG_SEP_MASK) == XN_FLAG_SEP_MULTILINE) {
@@ -178,46 +178,48 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags,
     }
 
     if (!(cflag & X509_FLAG_NO_EXTENSIONS)) {
-        exts = X509_get0_extensions(x);
-        if (exts != NULL && sk_X509_EXTENSION_num(exts) > 0) {
-            BIO_puts(bp, "        X509v3 extensions:\n");
-            for (i = 0; i < sk_X509_EXTENSION_num(exts); i++) {
-                ASN1_OBJECT *obj;
-                int nid;
-                char oid_str[128]; /* Buffer for OID string */
-
-                ex = sk_X509_EXTENSION_value(exts, i);
-                if (ex == NULL)
-                    continue;
-                BIO_puts(bp, "            "); 
-                obj = X509_EXTENSION_get_object(ex);
-                nid = OBJ_obj2nid(obj);
-                OBJ_obj2txt(oid_str, sizeof(oid_str), obj, 1); /* Get OID as string always */
-
-                if (nid == NID_undef) {
-                    // Unknown extension: print OID
-                    BIO_puts(bp, oid_str);
-                } else {
-                    // Known extension: print name
-                    BIO_puts(bp, OBJ_nid2ln(nid));
-                    // Check if the user wants the OID too
-                    if (cflag & X509_FLAG_EXT_OID) {
-                        BIO_printf(bp, " (%s)", oid_str); // Add OID in parentheses
+        if (cflag & X509_FLAG_EXT_OID) {
+            /* Use your custom loop to print extensions with OIDs */
+            exts = X509_get0_extensions(x);
+            if (exts != NULL && sk_X509_EXTENSION_num(exts) > 0) {
+                BIO_puts(bp, "        X509v3 extensions:\n");
+                for (i = 0; i < sk_X509_EXTENSION_num(exts); i++) {
+                    ASN1_OBJECT *obj;
+                    int nid;
+                    char oid_str[128]; /* Buffer for OID string */
+    
+                    ex = sk_X509_EXTENSION_value(exts, i);
+                    if (ex == NULL)
+                        continue;
+                    BIO_puts(bp, "            ");
+                    obj = X509_EXTENSION_get_object(ex);
+                    nid = OBJ_obj2nid(obj);
+                    OBJ_obj2txt(oid_str, sizeof(oid_str), obj, 1); /* Get OID as string */
+    
+                    if (nid == NID_undef) {
+                        /* Unknown extension: print OID */
+                        BIO_puts(bp, oid_str);
+                    } else {
+                        /* Known extension: print name and OID */
+                        BIO_puts(bp, OBJ_nid2ln(nid));
+                        BIO_printf(bp, " (%s)", oid_str);
                     }
+                    if (X509_EXTENSION_get_critical(ex))
+                        BIO_puts(bp, ", critical");
+                    BIO_puts(bp, ":\n");
+    
+                    if (!X509V3_EXT_print(bp, ex, cflag, 8)) {
+                        BIO_puts(bp, "                ");
+                        ASN1_STRING_print(bp, X509_EXTENSION_get_data(ex));
+                    }
+                    BIO_puts(bp, "\n");
                 }
-
-                // Print critical status and newline
-                if (X509_EXTENSION_get_critical(ex))
-                    BIO_puts(bp, ", critical");
-                BIO_puts(bp, ":\n");
-
-                // Print extension value using X509V3_EXT_print
-                if (!X509V3_EXT_print(bp, ex, cflag, 8)) {
-                    BIO_puts(bp, "                ");
-                    ASN1_STRING_print(bp, X509_EXTENSION_get_data(ex));
-                }
-                BIO_puts(bp, "\n");
             }
+        } else {
+            /* If ext_oid is not set, use the original printing routine */
+            if (!X509V3_extensions_print(bp, "X509v3 extensions",
+                                         X509_get0_extensions(x), cflag, 8))
+                goto err;
         }
     }
 
@@ -409,7 +411,7 @@ int X509_aux_print(BIO *out, X509 *x, int indent)
     return 1;
 }
 
- /*
+/*
  * Helper functions for improving certificate verification error diagnostics
  */
 
@@ -546,9 +548,10 @@ int X509_STORE_CTX_print_verify_cb(int ok, X509_STORE_CTX *ctx)
     return ok;
 }
 
- /*
- * Prints serial numbers in decimal and hexadecimal. The indent argument is only
- * used if the serial number is too large to fit in an int64_t.
+/*
+ * Prints serial numbers in decimal and hexadecimal.
+ * The indent argument is only used if the serial number
+ * is too large to fit in an int64_t.
  */
 int ossl_serial_number_print(BIO *out, const ASN1_INTEGER *bs, int indent)
 {
