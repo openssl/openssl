@@ -547,20 +547,23 @@ subtest 'Test -certopt ext_oid for x509 -text' => sub {
     my $cert = srctop_file('test', 'certs', 'rootcert.pem');
     my @stdout;
     my @stderr;
+    my @openssl = ("openssl");  # Use symlinked openssl command
 
-    ok(run(app(['openssl', 'x509', '-text', '-noout', '-in', $cert],
-               ['>', \@stdout], ['2>', \@stderr])),
-       "Run openssl x509 default");
+    # Test default output (no OIDs)
+    @stdout = `openssl x509 -text -noout -in $cert`;
+    ok($? == 0, "Run openssl x509 default");
     ok(!grep(/\(2\.5\.29\.19\)/, @stdout),
        "Default output should not contain OID (2.5.29.19) for Basic Constraints");
 
+    # Clear arrays for next run
     @stdout = ();
     @stderr = ();
 
-    ok(run(app(['openssl', 'x509', '-text', '-noout', '-certopt', 'ext_oid', '-in', $cert],
-               ['>', \@stdout], ['2>', \@stderr])),
-       "Run openssl x509 with -certopt ext_oid");
+    # Test with -certopt ext_oid (OIDs should appear)
+    diag("Command: ", join(" ", @openssl, 'x509', '-text', '-noout', '-certopt', 'ext_oid', '-in', $cert));
+    @stdout = `openssl x509 -text -noout -certopt ext_oid -in $cert`;
     diag("ext_oid output:\n", join("\n", @stdout));
+    ok($? == 0, "Run openssl x509 with -certopt ext_oid");
     ok(grep(/X509v3 Basic Constraints \(2\.5\.29\.19\)/, @stdout),
        "ext_oid output should contain 'X509v3 Basic Constraints (2.5.29.19)'");
     ok(grep(/X509v3 Subject Key Identifier \(2\.5\.29\.14\)/, @stdout),
