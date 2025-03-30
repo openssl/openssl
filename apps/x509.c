@@ -91,7 +91,7 @@ const OPTIONS x509_options[] = {
     {"text", OPT_TEXT, '-', "Print the certificate in text form"},
     {"dateopt", OPT_DATEOPT, 's',
      "Datetime format used for printing. (rfc_822/iso_8601). Default is rfc_822."},
-    {"certopt", OPT_CERTOPT, 's', "Various certificate text printing options"},
+     {"certopt", OPT_CERTOPT, 's', "Various certificate text printing options (e.g., no_header, ext_oid)"},
     {"fingerprint", OPT_FINGERPRINT, '-', "Print the certificate fingerprint"},
     {"alias", OPT_ALIAS, '-', "Print certificate alias"},
     {"serial", OPT_SERIAL, '-', "Print serial number value"},
@@ -474,8 +474,11 @@ int x509_main(int argc, char **argv)
             trustout = 1;
             break;
         case OPT_CERTOPT:
-            if (!set_cert_ex(&certflag, opt_arg()))
+            if (strcmp(opt_arg(), "ext_oid") == 0) {
+                certflag |= X509_FLAG_EXT_OID;
+            } else if (!set_cert_ex(&certflag, opt_arg())) {
                 goto opthelp;
+            }
             break;
         case OPT_NAMEOPT:
             if (!set_nameopt(opt_arg()))
