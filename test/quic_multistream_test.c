@@ -2827,7 +2827,7 @@ static int script_21_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
 {
     int ok = 0;
     WPACKET wpkt;
-    unsigned char frame_buf[28];
+    unsigned char frame_buf[21];
     size_t written;
 
     if (h->inject_word0 == 0 || hdr->type != h->inject_word0)
@@ -2913,19 +2913,16 @@ static int script_21_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
         if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, (uint64_t)0)))
             goto err;
 
-        /* Connection id length, arbitrary at 8 bytes */
-        if (!TEST_true(WPACKET_put_bytes_u8(&wpkt, (uint8_t)8)))
+        /* Connection id length, arbitrary at 1 bytes */
+        if (!TEST_true(WPACKET_put_bytes_u8(&wpkt, (uint8_t)1)))
             goto err;
 
         /* The connection id, to match the above length */
-        if (!TEST_true(WPACKET_put_bytes_u64(&wpkt, (uint64_t)0)))
+        if (!TEST_true(WPACKET_put_bytes_u8(&wpkt, (uint8_t)0)))
             goto err;
 
-        /* two uint64_t's (16 bytes total) for the SRT */
-        if (!TEST_true(WPACKET_put_bytes_u64(&wpkt, (uint64_t)0)))
-            goto err;
-
-        if (!TEST_true(WPACKET_put_bytes_u64(&wpkt, (uint64_t)0)))
+        /* 16 bytes total for the SRT */
+        if (!TEST_true(WPACKET_memset(&wpkt, 0, 16)))
             goto err;
 
         break;
