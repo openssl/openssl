@@ -539,33 +539,120 @@ has_version($b_cert, 3);
 has_SKID($b_cert, 1);
 has_AKID($b_cert, 1);
 
+# Tests for https://github.com/openssl/openssl/issues/10442 (fixed in 1.1.1a)
+# (incorrect default `-CAcreateserial` if `-CA` path has a dot in it)
+my $folder_with_dot = "test_x509.folder";
+ok(mkdir $folder_with_dot);
+my $ca_cert_dot_in_dir = File::Spec->catfile($folder_with_dot, "ca-cert.pem");
+ok(copy($ca_cert,$ca_cert_dot_in_dir));
+my $ca_serial_dot_in_dir = File::Spec->catfile($folder_with_dot, "ca-cert.srl");
 
-# Test -certopt ext_oid for x509 -text
+ok(run(app(["openssl", "x509", "-req", "-text", "-CAcreateserial",
+            "-CA", $ca_cert_dot_in_dir, "-CAkey", $ca_key,
+            "-in", $b_csr])));
+ok(-e $ca_serial_dot_in_dir);
+
+# Tests for explicit start and end dates of certificates
+my %today = (strftime("%Y-%m-%d", gmtime) => 1);
+my $enddate;
+ok(run(app(["openssl", "x509", "-req", "-text",
+	    "-key", $b_key,
+	    "-not_before", "20231031000000Z",
+	    "-not_after", "today",
+            "-in", $b_csr, "-out", $b_cert]))
+&& get_not_before($b_cert) =~ /Oct 31 00:00:00 2023 GMT/
+&& ++$today{strftime("%Y-%m-%d", gmtime)}
+&& (grep { defined $today{$_} } get_not_after_date($b_cert)));
+# explicit start and end dates
+ok(run(app(["openssl", "x509", "-req", "-text",
+	    "-key", $b_key,
+	    "-not_before", "20231031000000Z",
+	    "-not_after", "20231231000000Z",
+	    "-days", "99",
+            "-in", $b_csr, "-out", $b_cert]))
+&& get_not_before($b_cert) =~ /Oct 31 00:00:00 2023 GMT/
+&& get_not_after($b_cert) =~ /Dec 31 00:00:00 2023 GMT/);
+# start date today and days
+%today = (strftime("%Y-%m-%d", gmtime) => 1);
+$enddate = strftime("%Y-%m-%d", gmtime(time + 99 * 24 * 60 * 60));
+ok(run(app(["openssl", "x509", "-req", "-text",
+	    "-key", $b_key,
+	    "-not_before", "today",
+	    "-days", "99",
+            "-in", $b_csr, "-out", $b_cert]))
+&& ++$today{strftime("%Y-%m-%d", gmtime)}
+&& (grep { defined $today{$_} } get_not_before_date($b_cert))
+&& get_not_after_date($b_cert) eq $enddate);
+# end date before start date
+ok(!run(app(["openssl", "x509", "-req", "-text",
+	      "-key", $b_key,
+	      "-not_before", "today",
+	      "-not_after", "20231031000000Z",
+              "-in", $b_csr, "-out", $b_cert])));
+# default days option
+%today = (strftime("%Y-%m-%d", gmtime) => 1);
+$enddate = strftime("%Y-%m-%d", gmtime(time + 30 * 24 * 60 * 60));
+ok(run(app(["openssl", "x509", "-req", "-text",
+	    "-key", $b_key,
+            "-in", $b_csr, "-out", $b_cert]))
+&& ++$today{strftime("%Y-%m-%d", gmtime)}
+&& (grep { defined $today{$_} } get_not_before_date($b_cert))
+&& get_not_after_date($b_cert) eq $enddate);
+
+SKIP: {
+    skip "EC is not supported by this OpenSSL build", 1
+        if disabled("ec");
+    my $psscert = srctop_file(@certs, "ee-self-signed-pss.pem");
+
+    ok(run(test(["x509_test", $psscert])), "running x509_test");
+}
+
+# Test case for #27182 -certopt ext_oid for x509 -text
 subtest 'Test -certopt ext_oid for x509 -text' => sub {
     plan tests => 5;
 
     my $cert = srctop_file('test', 'certs', 'rootcert.pem');
-    my @stdout;
-    my @stderr;
-    my @openssl = ("openssl");  # Use symlinked openssl command
+    my $stdout_default = "ext_oid_default.tmp";
+    my $stdout_with_oid = "ext_oid_with_oid.tmp";
 
     # Test default output (no OIDs)
-    @stdout = `openssl x509 -text -noout -in $cert`;
-    ok($? == 0, "Run openssl x509 default");
-    ok(!grep(/\(2\.5\.29\.19\)/, @stdout),
+    ok(run(app(['openssl', 'x509', '-text', '-noout', '-in', $cert], 
+               stdout => $stdout_default)),
+       "Run openssl x509 default");
+       
+    # Read the default output file
+    open my $fh_default, '<', $stdout_default or die "Cannot open $stdout_default: $!";
+    my @default_output = <$fh_default>;
+    close $fh_default;
+    
+    ok(!grep(/\(2\.5\.29\.19\)/, @default_output),
        "Default output should not contain OID (2.5.29.19) for Basic Constraints");
 
-    # Clear arrays for next run
-    @stdout = ();
-    @stderr = ();
-
     # Test with -certopt ext_oid (OIDs should appear)
-    diag("Command: ", join(" ", @openssl, 'x509', '-text', '-noout', '-certopt', 'ext_oid', '-in', $cert));
-    @stdout = `openssl x509 -text -noout -certopt ext_oid -in $cert`;
-    diag("ext_oid output:\n", join("\n", @stdout));
-    ok($? == 0, "Run openssl x509 with -certopt ext_oid");
-    ok(grep(/X509v3 Basic Constraints \(2\.5\.29\.19\)/, @stdout),
+    ok(run(app(['openssl', 'x509', '-text', '-noout', '-certopt', 'ext_oid', '-in', $cert],
+               stdout => $stdout_with_oid)),
+       "Run openssl x509 with -certopt ext_oid");
+       
+    # Read the ext_oid output file
+    open my $fh_with_oid, '<', $stdout_with_oid or die "Cannot open $stdout_with_oid: $!";
+    my @oid_output = <$fh_with_oid>;
+    close $fh_with_oid;
+    
+    # Print diagnostic output for debugging
+    diag("ext_oid output sample lines:");
+    for my $line (@oid_output) {
+        if ($line =~ /X509v3/) {
+            diag($line);
+        }
+    }
+    
+    ok(grep(/X509v3 Basic Constraints \(2\.5\.29\.19\)/, @oid_output),
        "ext_oid output should contain 'X509v3 Basic Constraints (2.5.29.19)'");
-    ok(grep(/X509v3 Subject Key Identifier \(2\.5\.29\.14\)/, @stdout),
+       
+    ok(grep(/X509v3 Subject Key Identifier \(2\.5\.29\.14\)/, @oid_output),
        "ext_oid output should contain 'X509v3 Subject Key Identifier (2.5.29.14)'");
+       
+    # Clean up temporary files
+    unlink $stdout_default;
+    unlink $stdout_with_oid;
 };

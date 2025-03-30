@@ -89,9 +89,8 @@ const OPTIONS x509_options[] = {
 
     OPT_SECTION("Certificate printing"),
     {"text", OPT_TEXT, '-', "Print the certificate in text form"},
-    {"dateopt", OPT_DATEOPT, 's',
-     "Datetime format used for printing. (rfc_822/iso_8601). Default is rfc_822."},
-     {"certopt", OPT_CERTOPT, 's', "Various certificate text printing options (e.g., no_header, ext_oid)"},
+    {"dateopt", OPT_DATEOPT, 's', "Datetime format used for printing. (rfc_822/iso_8601). Default is rfc_822."},
+    {"certopt", OPT_CERTOPT, 's', "Various certificate text printing options (e.g., no_header, ext_oid)"},
     {"fingerprint", OPT_FINGERPRINT, '-', "Print the certificate fingerprint"},
     {"alias", OPT_ALIAS, '-', "Print certificate alias"},
     {"serial", OPT_SERIAL, '-', "Print serial number value"},
@@ -100,8 +99,7 @@ const OPTIONS x509_options[] = {
     {"dates", OPT_DATES, '-', "Print both notBefore and notAfter fields"},
     {"subject", OPT_SUBJECT, '-', "Print subject DN"},
     {"issuer", OPT_ISSUER, '-', "Print issuer DN"},
-    {"nameopt", OPT_NAMEOPT, 's',
-     "Certificate subject/issuer name printing options"},
+    {"nameopt", OPT_NAMEOPT, 's', "Certificate subject/issuer name printing options"},
     {"email", OPT_EMAIL, '-', "Print email address(es)"},
     {"hash", OPT_HASH, '-', "Synonym for -subject_hash (for backward compat)"},
     {"subject_hash", OPT_HASH, '-', "Print subject hash value"},
@@ -477,6 +475,7 @@ int x509_main(int argc, char **argv)
             if (strcmp(opt_arg(), "ext_oid") == 0) {
                 certflag |= X509_FLAG_EXT_OID;
             } else if (!set_cert_ex(&certflag, opt_arg())) {
+                BIO_printf(bio_err, "Invalid certificate option: %s\n", opt_arg());
                 goto opthelp;
             }
             break;
