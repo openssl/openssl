@@ -2,7 +2,7 @@
 # Build script for OpenSSL targeting Windows 2000 (and older).
 
 # run the configure script.
-perl ./Configure mingw 386 no-sse2 no-asm no-threads no-thread-pool -DWINVER=0x0501 -D_WIN32_WINNT=0x0501 -DOPENSSL_NO_THREADS -DOPENSSL_NO_ASYNC -DOPENSSL_USE_NODELETE -mno-mmx -mno-sse -mno-sse2 -march=i386
+perl ./Configure mingw 386 no-sse2 no-asm no-thread-pool no-tests -DWINVER=0x0501 -D_WIN32_WINNT=0x0501 -DOPENSSL_THREADS -DOPENSSL_NO_ASYNC -DOPENSSL_USE_NODELETE -mno-mmx -mno-sse -mno-sse2 -march=i386
 
 # Make
 make -j$(nproc)

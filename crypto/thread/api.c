@@ -11,8 +11,8 @@
 #include <openssl/thread.h>
 #include <internal/thread.h>
 
-#define OPENSSL_NO_THREAD_POOL
-#define OPENSSL_NO_DEFAULT_THREAD_POOL
+//#define OPENSSL_NO_THREAD_POOL
+//#define OPENSSL_NO_DEFAULT_THREAD_POOL
 
 uint32_t OSSL_get_thread_support_flags(void)
 {
