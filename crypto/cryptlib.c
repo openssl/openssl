@@ -19,81 +19,82 @@
 #define alloca _alloca
 #endif
 
-#if defined(_WIN32_WINNT) && _WIN32_WINNT >= 0x0333
-#ifdef OPENSSL_SYS_WIN_CORE
-
-int OPENSSL_isservice(void)
-{
-    /* OneCore API cannot interact with GUI */
-    return 1;
-}
-#else
-int OPENSSL_isservice(void)
-{
-    HWINSTA h;
-    DWORD len;
-    WCHAR *name;
-    static union {
-        void *p;
-        FARPROC f;
-    } _OPENSSL_isservice = {
-        NULL
-    };
-
-    if (_OPENSSL_isservice.p == NULL) {
-        HANDLE mod = GetModuleHandle(NULL);
-        FARPROC f = NULL;
-
-        if (mod != NULL)
-            f = GetProcAddress(mod, "_OPENSSL_isservice");
-        if (f == NULL)
-            _OPENSSL_isservice.p = (void *)-1;
-        else
-            _OPENSSL_isservice.f = f;
-    }
-
-    if (_OPENSSL_isservice.p != (void *)-1)
-        return (int)((*_OPENSSL_isservice.f)());
-
-    h = GetProcessWindowStation();
-    if (h == NULL)
-        return -1;
-
-    if (GetUserObjectInformationW(h, UOI_NAME, NULL, 0, &len) || GetLastError() != ERROR_INSUFFICIENT_BUFFER)
-        return -1;
-
-    if (len > 512)
-        return -1; /* paranoia */
-    len++, len &= ~1; /* paranoia */
-    name = (WCHAR *)alloca(len + sizeof(WCHAR));
-    if (!GetUserObjectInformationW(h, UOI_NAME, name, len, &len))
-        return -1;
-
-    len++, len &= ~1; /* paranoia */
-    name[len / sizeof(WCHAR)] = L'\0'; /* paranoia */
-#if 1
-    /*
-     * This doesn't cover "interactive" services [working with real
-     * WinSta0's] nor programs started non-interactively by Task Scheduler
-     * [those are working with SAWinSta].
-     */
-    if (wcsstr(name, L"Service-0x"))
-        return 1;
-#else
-    /* This covers all non-interactive programs such as services. */
-    if (!wcsstr(name, L"WinSta0"))
-        return 1;
-#endif
-    else
-        return 0;
-}
-#endif
-#else
+//# if defined(_WIN32_WINNT) && _WIN32_WINNT>=0x0333
+//#  ifdef OPENSSL_SYS_WIN_CORE
+//
+//int OPENSSL_isservice(void)
+//{
+//    /* OneCore API cannot interact with GUI */
+//    return 1;
+//}
+//#  else
+//int OPENSSL_isservice(void)
+//{
+//    HWINSTA h;
+//    DWORD len;
+//    WCHAR *name;
+//    static union {
+//        void *p;
+//        FARPROC f;
+//    } _OPENSSL_isservice = {
+//        NULL
+//    };
+//
+//    if (_OPENSSL_isservice.p == NULL) {
+//        HANDLE mod = GetModuleHandle(NULL);
+//        FARPROC f = NULL;
+//
+//        if (mod != NULL)
+//            f = GetProcAddress(mod, "_OPENSSL_isservice");
+//        if (f == NULL)
+//            _OPENSSL_isservice.p = (void *)-1;
+//        else
+//            _OPENSSL_isservice.f = f;
+//    }
+//
+//    if (_OPENSSL_isservice.p != (void *)-1)
+//        return (*_OPENSSL_isservice.f) ();
+//
+//    h = GetProcessWindowStation();
+//    if (h == NULL)
+//        return -1;
+//
+//    if (LGetUserObjectInformationW(h, UOI_NAME, NULL, 0, &len) ||
+//        GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+//        return -1;
+//
+//    if (len > 512)
+//        return -1;              /* paranoia */
+//    len++, len &= ~1;           /* paranoia */
+//    name = (WCHAR *)alloca(len + sizeof(WCHAR));
+//    if (!LGetUserObjectInformationW(h, UOI_NAME, name, len, &len))
+//        return -1;
+//
+//    len++, len &= ~1;           /* paranoia */
+//    name[len / sizeof(WCHAR)] = L'\0'; /* paranoia */
+//#   if 1
+//    /*
+//     * This doesn't cover "interactive" services [working with real
+//     * WinSta0's] nor programs started non-interactively by Task Scheduler
+//     * [those are working with SAWinSta].
+//     */
+//    if (wcsstr(name, L"Service-0x"))
+//        return 1;
+//#   else
+//    /* This covers all non-interactive programs such as services. */
+//    if (!wcsstr(name, L"WinSta0"))
+//        return 1;
+//#   endif
+//    else
+//        return 0;
+//}
+//#  endif
+//# else
 int OPENSSL_isservice(void)
 {
     return 0;
 }
-#endif
+//# endif
 
 void OPENSSL_showfatal(const char *fmta, ...)
 {

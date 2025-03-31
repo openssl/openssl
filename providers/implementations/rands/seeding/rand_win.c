@@ -51,9 +51,9 @@
 
 // TODO: Does this stuff run in multiple threads?
 static int s_bIsStuffInitted = 0;
-typedef BOOL(WINAPI* PFNCRYPTACQUIRECONTEXTA)(HCRYPTPROV*, LPCSTR, LPCSTR, DWORD, DWORD);
-typedef BOOL(WINAPI* PFNCRYPTGENRANDOM)      (HCRYPTPROV, DWORD, BYTE*);
-typedef BOOL(WINAPI* PFNCRYPTRELEASECONTEXT) (HCRYPTPROV, DWORD);
+typedef BOOL(WINAPI* PFNCRYPTACQUIRECONTEXTA)   (HCRYPTPROV*, LPCSTR, LPCSTR, DWORD, DWORD);
+typedef BOOL(WINAPI* PFNCRYPTGENRANDOM)         (HCRYPTPROV, DWORD, BYTE*);
+typedef BOOL(WINAPI* PFNCRYPTRELEASECONTEXT)    (HCRYPTPROV, DWORD);
 
 static PFNCRYPTACQUIRECONTEXTA s_pCryptAcquireContextA;
 static PFNCRYPTGENRANDOM       s_pCryptGenRandom;
@@ -247,6 +247,11 @@ size_t ossl_pool_acquire_entropy(RAND_POOL *pool)
     return ossl_rand_pool_entropy_available(pool);
 }
 
+void __cdecl __security_init_cookie()
+{
+	// fuck you
+}
+
 int ossl_pool_add_nonce_data(RAND_POOL *pool)
 {
     struct {
@@ -265,7 +270,26 @@ int ossl_pool_add_nonce_data(RAND_POOL *pool)
      */
     data.pid = GetCurrentProcessId();
     data.tid = GetCurrentThreadId();
-    GetSystemTimeAsFileTime(&data.time);
+	
+    //GetSystemTimeAsFileTime(&data.time);
+	
+	HMODULE hmod = GetModuleHandleA("kernel32.dll");
+	if (hmod)
+	{
+		typedef void(WINAPI* PFNGETSYSTEMTIMEASFILETIME)(LPFILETIME);
+		PFNGETSYSTEMTIMEASFILETIME getSystemTimeAsFileTime = (PFNGETSYSTEMTIMEASFILETIME) GetProcAddress(hmod, "GetSystemTimeAsFileTime");
+		
+		if (getSystemTimeAsFileTime)
+		{
+			getSystemTimeAsFileTime(&data.time);
+		}
+		else
+		{
+			SYSTEMTIME st;
+			GetSystemTime(&st);
+			SystemTimeToFileTime(&st, &data.time);
+		}
+	}
 
     return ossl_rand_pool_add(pool, (unsigned char *)&data, sizeof(data), 0);
 }
