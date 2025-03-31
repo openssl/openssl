@@ -1,0 +1,134 @@
+# Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+# Run assembler code paths using the Intel Software Development Emulator.
+# This allows emulation of different Intel related CPU's, that may allow
+# running different code paths for the assembler related code that depend on 
+# CPUID capabilities.
+#
+# Notes:
+#    - sde.exe seg faulted when trying to get an alpine x86 build to run under qemu. 
+#    - Mac os also did not work since it requires System Integrity Protection to be
+#      disabled.
+#    - win32 runs on a 64 bit host.
+#
+name: Assembler Testing
+
+on: [pull_request, push]
+
+permissions:
+  contents: read
+
+env:
+  OPTIONS: no-capieng no-cmp no-cms no-comp no-ct no-dgram no-engine no-http no-legacy no-multiblock no-nextprotoneg no-sock no-srp no-srtp no-ssl-trace no-quic no-ts no-tls no-dtls no-aria no-bf no-blake2 no-camellia no-cast no-chacha no-cmac no-des no-dh no-dsa no-ec no-gost no-idea no-md4 no-mdc2 no-ml-dsa no-ml-kem no-ocb no-poly1305 no-rc2 no-rc4 no-rmd160 no-scrypt no-seed no-siphash no-siv no-slh-dsa no-sm2 no-sm3 no-sm4 no-whirlpool
+
+jobs:
+  windows_sde:
+    strategy:
+      fail-fast: false
+      matrix:
+        win_zoo: [
+          {
+            distro: windows-latest,
+            arch: win64,
+            sde: sde-external-9.48.0-2024-11-25-win,
+            download: 843185/sde-external-9.48.0-2024-11-25-win
+          },
+          {
+            distro: windows-latest,
+            arch: win32,
+            sde: sde-external-9.48.0-2024-11-25-win,
+            download: 843185/sde-external-9.48.0-2024-11-25-win
+          }
+        ]
+    runs-on: ${{ matrix.win_zoo.distro }}
+    env:
+      OPENSSL_SDE_PATH: ${{ github.workspace }}\${{ matrix.win_zoo.sde }}\sde.exe
+    steps:
+      - uses: actions/checkout@v4
+      - name: checkout fuzz/corpora submodule
+        run: git submodule update --init --depth 1 fuzz/corpora
+      - uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: ${{ matrix.win_zoo.arch }}
+      - uses: ilammy/setup-nasm@v1
+        with:
+          platform: ${{ matrix.win_zoo.arch }}
+      - name: prepare the build directory
+        run: mkdir _build
+      - name: config
+        working-directory: _build
+        run: |
+          perl ..\Configure --banner=Configured no-makedepend -DOSSL_WINCTX=openssl ${{ env.OPTIONS }}
+          perl configdata.pm --dump
+      - name: build
+        working-directory: _build
+        run: nmake /S
+
+      - name: create download directory
+        run: mkdir downloads
+      - name: download sde
+        uses: suisei-cn/actions-download-file@v1.6.0
+        with:
+          url: "https://downloadmirror.intel.com/${{ matrix.win_zoo.download }}.tar.xz"
+          target: downloads
+      - name: unpack sde
+        run: 7z.exe x downloads/${{ matrix.win_zoo.sde }}.tar.xz -so | 7z.exe x -si -ttar
+      - name: run test
+        working-directory: _build
+        run: nmake test VERBOSE_FAILURE=yes TESTS=test_sde HARNESS_JOBS=4 V=1
+
+  linux_sde:
+    strategy:
+      fail-fast: false
+      matrix:
+        zoo: [
+          {
+            distro: ubuntu-latest,
+            sde: sde-external-9.48.0-2024-11-25-lin,
+            download: 843185/sde-external-9.48.0-2024-11-25-lin
+          },
+        ]
+    runs-on: ${{ matrix.zoo.distro }}
+    env:
+      OPENSSL_SDE_PATH: ${{ github.workspace }}/${{ matrix.zoo.sde }}/sde64
+    steps:
+      - uses: actions/checkout@v4
+      - name: checkout fuzz/corpora submodule
+        run: git submodule update --init --depth 1 fuzz/corpora
+      - name: localegen
+        run: sudo locale-gen tr_TR.UTF-8
+      - name: config
+        run: CC=gcc ./config --banner=Configured --strict-warnings $OPTIONS && perl configdata.pm --dump
+      - name: make
+        run: make -s -j4
+      - name: get cpu info
+        run: |
+          cat /proc/cpuinfo
+          ./util/opensslwrap.sh version -c
+
+      - name: create download directory
+        run: mkdir downloads
+      - name: download Intel SDE
+        run: wget --no-verbose https://downloadmirror.intel.com/${{ matrix.zoo.download }}.tar.xz
+        working-directory: downloads
+      - name: unpack Intel SDE
+        run: tar xfv downloads/${{ matrix.zoo.sde }}.tar.xz
+      - name: Show directory
+        run: pwd
+        
+      # SDE requires this line on ubuntu
+      - name: Set ptrace_scope to 0
+        run: |
+          sudo sysctl -w kernel.yama.ptrace_scope=0
+
+      - name: run tests
+        run: make test TESTS="test_sde"
+
+      - name: Restore ptrace_scope to 1
+        run: |
+          sudo sysctl -w kernel.yama.ptrace_scope=1

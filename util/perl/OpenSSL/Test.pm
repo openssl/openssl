@@ -18,7 +18,7 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 $VERSION = "1.0";
 @ISA = qw(Exporter);
 @EXPORT = (@Test::More::EXPORT, qw(setup run indir cmd app fuzz test
-                                   perlapp perltest subtest));
+                                   perlapp perltest subtest sdetest));
 @EXPORT_OK = (@Test::More::EXPORT_OK, qw(bldtop_dir bldtop_file
                                          srctop_dir srctop_file
                                          data_file data_dir
@@ -351,6 +351,24 @@ sub test {
         my @cmdargs = ( @{$cmd} );
         my @prog = __fixup_prg(__test_file(shift @cmdargs, __exeext()));
         return cmd([ @prog, @cmdargs ],
+                   exe_shell => $ENV{EXE_SHELL}, %opts) -> (shift);
+    }
+}
+
+sub sdetest {
+    my $sde = shift;
+    my $cmd = shift;
+    my %opts = @_;
+    return sub {
+        my @sdeargs = ( @{$sde} );
+        my @cmdargs = ( @{$cmd} );        
+        my $str1 = join(', ', @sdeargs);
+        my $str2 = join(', ', @cmdargs);
+        my @sdeprog = shift @sdeargs;
+        my @prog = __fixup_prg(__test_file(shift @cmdargs, __exeext()));
+        push(@sdeargs, @prog);
+        my @merged_args = (@sdeargs, @cmdargs);
+        return cmd([ @sdeprog, @merged_args ],
                    exe_shell => $ENV{EXE_SHELL}, %opts) -> (shift);
     }
 }
