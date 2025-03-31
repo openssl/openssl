@@ -139,7 +139,7 @@ jobs:
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config
-      run: CC=clang ./config --banner=Configured --strict-warnings ${{ matrix.opt }}
+      run: CC=clang ./config --strict-warnings  --banner=Configured --strict-warnings ${{ matrix.opt }}
     - name: config dump
       run: ./configdata.pm --dump
     - name: make
@@ -171,7 +171,7 @@ jobs:
 
     - name: config
       if: steps.sctp_auth.outcome == 'success' && steps.sctp_auth.conclusion == 'success'
-      run: CC=clang ./config --banner=Configured --strict-warnings enable-sctp
+      run: CC=clang ./config --strict-warnings --banner=Configured enable-sctp
 
     - name: config dump
       if: steps.sctp_auth.outcome == 'success' && steps.sctp_auth.conclusion == 'success'
@@ -202,7 +202,7 @@ jobs:
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config
-      run: ./config enable-comp enable-brotli enable-brotli-dynamic && perl configdata.pm --dump
+      run: ./config --strict-warnings enable-comp enable-brotli enable-brotli-dynamic && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: get cpu info
@@ -224,7 +224,7 @@ jobs:
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config
-      run: ./config enable-comp enable-zstd enable-zstd-dynamic && perl configdata.pm --dump
+      run: ./config --strict-warnings enable-comp enable-zstd enable-zstd-dynamic && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: get cpu info
@@ -247,7 +247,7 @@ jobs:
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config
-      run: ./config enable-comp enable-brotli enable-brotli-dynamic enable-zstd enable-zstd-dynamic && perl configdata.pm --dump
+      run: ./config --strict-warnings enable-comp enable-brotli enable-brotli-dynamic enable-zstd enable-zstd-dynamic && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: get cpu info
@@ -273,7 +273,7 @@ jobs:
         sudo cat /proc/sys/vm/mmap_rnd_bits
         sudo sysctl -w vm.mmap_rnd_bits=28
     - name: config
-      run: ./config --banner=Configured --debug enable-asan enable-ubsan enable-comp enable-brotli -DPEDANTIC && perl configdata.pm --dump
+      run: ./config --strict-warnings --banner=Configured --debug enable-asan enable-ubsan enable-comp enable-brotli -DPEDANTIC && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: get cpu info
@@ -299,7 +299,7 @@ jobs:
         sudo cat /proc/sys/vm/mmap_rnd_bits
         sudo sysctl -w vm.mmap_rnd_bits=28
     - name: config
-      run: ./config --banner=Configured --debug enable-asan enable-ubsan enable-comp enable-zstd -DPEDANTIC && perl configdata.pm --dump
+      run: ./config --strict-warnings --banner=Configured --debug enable-asan enable-ubsan enable-comp enable-zstd -DPEDANTIC && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: get cpu info
@@ -319,7 +319,7 @@ jobs:
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config
-      run: CC=gcc ./config --banner=Configured enable-tfo --strict-warnings && perl configdata.pm --dump
+      run: CC=gcc ./config --strict-warnings --banner=Configured enable-tfo && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: get cpu info
@@ -334,7 +334,7 @@ jobs:
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config
-      run: ./config --banner=Configured no-asm no-makedepend enable-buildtest-c++ enable-fips --strict-warnings -D_DEFAULT_SOURCE && perl configdata.pm --dump
+      run: ./config --strict-warnings --banner=Configured no-asm no-makedepend enable-buildtest-c++ enable-fips -D_DEFAULT_SOURCE && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: get cpu info
@@ -356,7 +356,7 @@ jobs:
         sudo sysctl -w vm.mmap_rnd_bits=28
     - name: config
       # --debug -O1 is to produce a debug build that runs in a reasonable amount of time
-      run: CC=clang ./config --banner=Configured --debug no-shared -O1 -fsanitize=memory -DOSSL_SANITIZE_MEMORY -fno-optimize-sibling-calls enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-fips && perl configdata.pm --dump
+      run: CC=clang ./config --strict-warnings --banner=Configured --debug no-shared -O1 -fsanitize=memory -DOSSL_SANITIZE_MEMORY -fno-optimize-sibling-calls enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-fips && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: get cpu info
