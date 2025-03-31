@@ -1471,6 +1471,15 @@ OSSL_PARAM OSSL_PARAM_construct_octet_string(const char *key, void *buf,
     return ossl_param_construct(key, OSSL_PARAM_OCTET_STRING, buf, bsize);
 }
 
+static int get_ptr_internal_skip_checks(const OSSL_PARAM *p, const void **val,
+                                        size_t *used_len)
+{
+    if (used_len != NULL)
+        *used_len = p->data_size;
+    *val = *(const void **)p->data;
+    return 1;
+}
+
 static int get_ptr_internal(const OSSL_PARAM *p, const void **val,
                             size_t *used_len, unsigned int type)
 {
@@ -1482,10 +1491,7 @@ static int get_ptr_internal(const OSSL_PARAM *p, const void **val,
         err_bad_type;
         return 0;
     }
-    if (used_len != NULL)
-        *used_len = p->data_size;
-    *val = *(const void **)p->data;
-    return 1;
+    return get_ptr_internal_skip_checks(p, val, used_len);
 }
 
 int OSSL_PARAM_get_utf8_ptr(const OSSL_PARAM *p, const char **val)
@@ -1659,12 +1665,17 @@ OSSL_PARAM OSSL_PARAM_construct_end(void)
 }
 
 static int get_string_ptr_internal(const OSSL_PARAM *p, const void **val,
-                                   size_t *used_len, unsigned int type)
+                                   size_t *used_len, unsigned int ref_type,
+                                   unsigned int type)
 {
     if (val == NULL || p == NULL) {
         err_null_argument;
         return 0;
     }
+
+    if (p->data_type == ref_type)
+        return get_ptr_internal_skip_checks(p, (const void **)val, used_len);
+
     if (p->data_type != type) {
         err_bad_type;
         return 0;
@@ -1677,27 +1688,17 @@ static int get_string_ptr_internal(const OSSL_PARAM *p, const void **val,
 
 int OSSL_PARAM_get_utf8_string_ptr(const OSSL_PARAM *p, const char **val)
 {
-    int rv;
-
-    ERR_set_mark();
-    rv = OSSL_PARAM_get_utf8_ptr(p, val);
-    ERR_pop_to_mark();
-
-    return rv || get_string_ptr_internal(p, (const void **)val, NULL,
-                                         OSSL_PARAM_UTF8_STRING);
+    return get_string_ptr_internal(p, (const void **)val, NULL,
+                                   OSSL_PARAM_UTF8_PTR,
+                                   OSSL_PARAM_UTF8_STRING);
 }
 
 int OSSL_PARAM_get_octet_string_ptr(const OSSL_PARAM *p, const void **val,
                                     size_t *used_len)
 {
-    int rv;
-
-    ERR_set_mark();
-    rv = OSSL_PARAM_get_octet_ptr(p, val, used_len);
-    ERR_pop_to_mark();
-
-    return rv || get_string_ptr_internal(p, val, used_len,
-                                         OSSL_PARAM_OCTET_STRING);
+    return get_string_ptr_internal(p, (const void **)val, used_len,
+                                   OSSL_PARAM_OCTET_PTR,
+                                   OSSL_PARAM_OCTET_STRING);
 }
 
 int OSSL_PARAM_set_octet_string_or_ptr(OSSL_PARAM *p, const void *val,
