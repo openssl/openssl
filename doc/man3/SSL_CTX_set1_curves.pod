@@ -210,7 +210,9 @@ TLS versions, when a session has been resumed, it always reflects the group
 used for key exchange during the initial handshake (otherwise it is from the
 current, non-resumption, connection).  This can be called by either client or
 server. If the NID for the shared group is unknown then the value is set to the
-bitwise OR of TLSEXT_nid_unknown (0x1000000) and the id of the group.
+bitwise OR of TLSEXT_nid_unknown (0x1000000) and the id of the group. See also
+L<SSL_get0_group_name(3)> which returns the name of the negotiated group
+directly and is generally preferred over SSL_get_negotiated_group().
 
 SSL_CTX_get0_implemented_groups() populates a stack with the names of TLS
 groups that are compatible with the TLS version of the B<ctx> argument.
@@ -314,7 +316,8 @@ prefers "B", the server will trigger an HRR for "B".
 =head1 SEE ALSO
 
 L<ssl(7)>,
-L<SSL_CTX_add_extra_chain_cert(3)>
+L<SSL_CTX_add_extra_chain_cert(3)>,
+L<SSL_get0_group_name(3)>
 
 =head1 HISTORY
 
