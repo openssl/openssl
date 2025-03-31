@@ -2210,7 +2210,7 @@ ___
     vmovdqu8 	 0x40($input),%zmm2
     vmovdqu8 	 0x80($input),%zmm3
     vmovdqu8 	 0xc0($input),%zmm4
-    vmovdqu8 	 0xf0($input),%zmm5
+    vmovdqu8 	 0xf0($input),%xmm5
     add 	 \$0x100,$input
 ___
     }
