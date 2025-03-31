@@ -103,8 +103,8 @@ jobs:
 
     - name: config
       run: |
-        CC=${{ matrix.zoo.cc }} ./config --banner=Configured no-shared \
-            enable-fips --strict-warnings
+        CC=${{ matrix.zoo.cc }} ./config --strict-warnings --banner=Configured \
+            no-shared enable-fips
 
     - name: config dump
       run: ./configdata.pm --dump
