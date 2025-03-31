@@ -21,14 +21,15 @@ the key agreement of the current TLS session establishment.
 If non-NULL, SSL_get0_group_name() returns the name of the group that was used for
 the key agreement of the current TLS session establishment.
 If SSL_get0_group_name() returns NULL, an error occurred; possibly no TLS session
-has been established.
+has been established. See also L<SSL_get_negotiated_group(3)>.
 
 Note that the return value is valid only during the lifetime of the
 SSL object I<ssl>.
 
 =head1 SEE ALSO
 
-L<ssl(7)>
+L<ssl(7)>,
+L<SSL_get_negotiated_group(3)>
 
 =head1 HISTORY
 
