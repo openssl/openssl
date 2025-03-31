@@ -28,13 +28,13 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
-    - uses: ilammy/msvc-dev-cmd@v1
+    - uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 #v1.13.0
       with:
         arch: ${{ matrix.platform.arch }}
-    - uses: ilammy/setup-nasm@v1
+    - uses: ilammy/setup-nasm@72793074d3c8cdda771dba85f6deafe00623038b #v1.5.2
       with:
         platform: ${{ matrix.platform.arch }}
-    - uses: shogo82148/actions-setup-perl@v1
+    - uses: shogo82148/actions-setup-perl@49c14f24551d2de3bf56fb107a869c3760b1875e #v1.33.0
     - name: prepare the build directory
       run: mkdir _build
     - name: config
@@ -64,8 +64,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
-    - uses: ilammy/msvc-dev-cmd@v1
-    - uses: shogo82148/actions-setup-perl@v1
+    - uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 #v1.13.0
+    - uses: shogo82148/actions-setup-perl@49c14f24551d2de3bf56fb107a869c3760b1875e #v1.33.0
     - name: prepare the build directory
       run: mkdir _build
     - name: config
@@ -88,8 +88,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
-    - uses: ilammy/msvc-dev-cmd@v1
-    - uses: shogo82148/actions-setup-perl@v1
+    - uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 #v1.13.0
+    - uses: shogo82148/actions-setup-perl@49c14f24551d2de3bf56fb107a869c3760b1875e #v1.33.0
     - name: prepare the build directory
       run: mkdir _build
     - name: config
