@@ -5,8 +5,17 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
-# Run assembler code paths
-
+# Run assembler code paths using the Intel Software Development Emulator.
+# This allows emulation of different Intel related CPU's, that may allow
+# running different code paths for the assembler related code that depend on 
+# CPUID capabilities.
+#
+# Notes:
+#    - sde.exe seg faulted when trying to get an alpine x86 build to run under qemu. 
+#    - Mac os also did not work since it requires System Integrity Protection to be
+#      disabled.
+#    - win32 runs on a 64 bit host.
+#
 name: Assembler Testing
 
 on: [pull_request, push]
@@ -83,11 +92,6 @@ jobs:
             sde: sde-external-9.48.0-2024-11-25-lin,
             download: 843185/sde-external-9.48.0-2024-11-25-lin
           },
-          {
-            distro: macos-15,
-            sde: sde-external-9.48.0-2024-11-25-lin,
-            download: 843185/sde-external-9.48.0-2024-11-25-lin
-          }
         ]
     runs-on: ${{ matrix.zoo.distro }}
     env:
@@ -97,14 +101,12 @@ jobs:
       - name: checkout fuzz/corpora submodule
         run: git submodule update --init --depth 1 fuzz/corpora
       - name: localegen
-        if: ${{ startsWith(matrix.zoo.distro, 'ubuntu') }}
         run: sudo locale-gen tr_TR.UTF-8
       - name: config
         run: CC=gcc ./config --banner=Configured --strict-warnings $OPTIONS && perl configdata.pm --dump
       - name: make
         run: make -s -j4
       - name: get cpu info
-        if: ${{ startsWith(matrix.zoo.distro, 'ubuntu') }}
         run: |
           cat /proc/cpuinfo
           ./util/opensslwrap.sh version -c
@@ -121,7 +123,6 @@ jobs:
         
       # SDE requires this line on ubuntu
       - name: Set ptrace_scope to 0
-        if: ${{ startsWith(matrix.zoo.distro, 'ubuntu') }}
         run: |
           sudo sysctl -w kernel.yama.ptrace_scope=0
 
@@ -129,6 +130,5 @@ jobs:
         run: make test TESTS="test_sde"
 
       - name: Restore ptrace_scope to 1
-        if: ${{ startsWith(matrix.zoo.distro, 'ubuntu') }}
         run: |
           sudo sysctl -w kernel.yama.ptrace_scope=1
