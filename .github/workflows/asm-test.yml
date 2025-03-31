@@ -18,7 +18,7 @@ env:
   OPTIONS: no-capieng no-cmp no-cms no-comp no-ct no-dgram no-engine no-http no-legacy no-multiblock no-nextprotoneg no-sock no-srp no-srtp no-ssl-trace no-quic no-ts no-tls no-dtls no-aria no-bf no-blake2 no-camellia no-cast no-chacha no-cmac no-des no-dh no-dsa no-ec no-gost no-idea no-md4 no-mdc2 no-ml-dsa no-ml-kem no-ocb no-poly1305 no-rc2 no-rc4 no-rmd160 no-scrypt no-seed no-siphash no-siv no-slh-dsa no-sm2 no-sm3 no-sm4 no-whirlpool
 
 jobs:
-  winsows_sde:
+  windows_sde:
     strategy:
       fail-fast: false
       matrix:
@@ -97,12 +97,14 @@ jobs:
       - name: checkout fuzz/corpora submodule
         run: git submodule update --init --depth 1 fuzz/corpora
       - name: localegen
+        if: ${{ startsWith(matrix.zoo.distro, 'ubuntu') }}
         run: sudo locale-gen tr_TR.UTF-8
       - name: config
         run: CC=gcc ./config --banner=Configured --strict-warnings $OPTIONS && perl configdata.pm --dump
       - name: make
         run: make -s -j4
       - name: get cpu info
+        if: ${{ startsWith(matrix.zoo.distro, 'ubuntu') }}
         run: |
           cat /proc/cpuinfo
           ./util/opensslwrap.sh version -c
