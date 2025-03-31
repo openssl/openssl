@@ -1001,6 +1001,12 @@ static int execute_test_large_message(const SSL_METHOD *smeth,
     SSL *clientssl = NULL, *serverssl = NULL;
     int testresult = 0;
 
+#ifdef OSSL_NO_USABLE_DTLS1_3
+    if (smeth == DTLS_server_method()
+            && (max_version == 0 || max_version == DTLS1_3_VERSION))
+        max_version = DTLS1_2_VERSION;
+#endif
+
     if (!TEST_true(create_ssl_ctx_pair(libctx, smeth, cmeth, min_version,
                                        max_version, &sctx, &cctx, cert,
                                        privkey)))
@@ -1870,12 +1876,19 @@ static int test_cleanse_plaintext(void)
         return 0;
 #endif
 
-#if !defined(OPENSSL_NO_DTLS)
-
+#if !defined(OPENSSL_NO_DTLS1_2)
     if (!TEST_true(execute_cleanse_plaintext(DTLS_server_method(),
                                              DTLS_client_method(),
-                                             DTLS1_VERSION,
-                                             0)))
+                                             DTLS1_2_VERSION,
+                                             DTLS1_2_VERSION)))
+        return 0;
+#endif
+
+#if !defined(OSSL_NO_USABLE_DTLS1_3)
+    if (!TEST_true(execute_cleanse_plaintext(DTLS_server_method(),
+                                             DTLS_client_method(),
+                                             DTLS1_3_VERSION,
+                                             DTLS1_3_VERSION)))
         return 0;
 #endif
     return 1;
@@ -5695,7 +5708,7 @@ static int test_negotiated_group(int idx)
     SSL_SESSION_free(origsess);
     return testresult;
 }
-#  endif /* !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_DH) */
+#  endif /* !defined(OSSL_NO_USABLE_TLS1_3) */
 # endif
 
 # if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OSSL_NO_USABLE_DTLS1_3)
@@ -8643,9 +8656,15 @@ static int test_ssl_pending(int tst)
             goto end;
     } else {
 #ifndef OPENSSL_NO_DTLS
+        int maxversion = 0;
+
+# ifdef OSSL_NO_USABLE_DTLS1_3
+        maxversion = DTLS1_2_VERSION;
+# endif
+
         if (!TEST_true(create_ssl_ctx_pair(libctx, DTLS_server_method(),
                                            DTLS_client_method(),
-                                           DTLS1_VERSION, 0,
+                                           DTLS1_VERSION, maxversion,
                                            &sctx, &cctx, cert, privkey)))
             goto end;
 
