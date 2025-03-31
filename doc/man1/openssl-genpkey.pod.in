@@ -19,7 +19,7 @@ B<openssl> B<genpkey>
 [B<-verbose>]
 [B<-quiet>]
 [B<-pass> I<arg>]
-[B<-I<cipher>>]
+[B<-cipher> I<alg>]
 [B<-paramfile> I<file>]
 [B<-algorithm> I<alg>]
 [B<-pkeyopt> I<opt>:I<value>]
@@ -72,9 +72,13 @@ Do not output "status dots" while generating keys.
 The output file password source. For more information about the format of I<arg>
 see L<openssl-passphrase-options(1)>.
 
-=item B<-cipher> I<cipher>
+=item B<-cipher> I<alg>
 
-Encrypts the private key using the specified cipher. The cipher can be specified using a name that is accepted by the EVP_get_cipherbyname() function. For example, use the syntax B<-aes-128-cbc> to specify the AES encryption algorithm with a 128-bit key in CBC mode. Other supported ciphers include B<-des3> for 3DES encryption.
+Encrypts the private key using the specified algorithm. The algorithm can be
+specified using a name that is accepted by the EVP_get_cipherbyname() function.
+For example, use the syntax B<-aes-128-cbc> to specify the AES encryption
+algorithm with a 128-bit key in CBC mode. Other supported algorithms include
+B<-des3> for 3DES encryption.
 
 =item B<-algorithm> I<alg>
 
