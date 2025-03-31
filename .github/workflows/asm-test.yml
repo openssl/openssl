@@ -18,64 +18,7 @@ env:
   OPTIONS: no-capieng no-cmp no-cms no-comp no-ct no-dgram no-engine no-http no-legacy no-multiblock no-nextprotoneg no-sock no-srp no-srtp no-ssl-trace no-quic no-ts no-tls no-dtls no-aria no-bf no-blake2 no-camellia no-cast no-chacha no-cmac no-des no-dh no-dsa no-ec no-gost no-idea no-md4 no-mdc2 no-ml-dsa no-ml-kem no-ocb no-poly1305 no-rc2 no-rc4 no-rmd160 no-scrypt no-seed no-siphash no-siv no-slh-dsa no-sm2 no-sm3 no-sm4 no-whirlpool
 
 jobs:
-  alpine_x86:
-    runs-on: ubuntu-latest
-    env:
-      SDE: sde-external-9.48.0-2024-11-25-lin
-      DOWNLOAD: 843185/sde-external-9.48.0-2024-11-25-lin
-      OPENSSL_SDE_PATH: ${{ github.workspace }}/sde-external-9.48.0-2024-11-25-lin/sde
-    steps:
-    - uses: actions/checkout@v2
-    - name: Setup latest Alpine Linux x86
-      uses: jirutka/setup-alpine@v1
-      with:
-        arch: x86
-    - name: Run script inside Alpine chroot as root
-      run: |
-        cat /etc/alpine-release
-        apk add build-base perl linux-headers gcompat
-      shell: alpine.sh --root {0}
-    - name: Configure inside Alpine chroot with x86 emulation
-      run: |
-        perl ./Configure --debug ${{ env.OPTIONS }} linux-generic32
-        perl configdata.pm --dump
-      shell: alpine.sh {0}
-    - name: Build inside Alpine chroot with x86 emulation
-      run: make -s -j4
-      shell: alpine.sh {0}
-
-    - name: create download directory
-      run: mkdir downloads
-
-    - name: download Intel SDE
-      run: wget --no-verbose https://downloadmirror.intel.com/${{ env.DOWNLOAD }}.tar.xz
-      working-directory: downloads
-
-    - name: unpack Intel SDE
-      run: |
-        tar xfv downloads/${{ env.SDE }}.tar.xz
-      shell: alpine.sh {0}
-
-    # SDE requires this line on ubuntu
-    - name: Set ptrace_scope to 0
-      run: sysctl -w kernel.yama.ptrace_scope=0
-      shell: alpine.sh --root {0}
-
-    - name: run single test
-      run: |
-        LD_LIBRARY_PATH=/home/runner/work/openssl/openssl /home/runner/work/openssl/openssl/sde-external-9.48.0-2024-11-25-lin/sde -mrm -- ./test/evp_test -config ./test/default.cnf ./test/recipes/30-test_sde_data/evpciph_aes_sde.txt
-      shell: alpine.sh {0}
-    
-    - name: run tests
-      run: |
-        make test TESTS="test_sde" V=1
-      shell: alpine.sh {0}
-
-    - name: Restore ptrace_scope to 1
-      run: sysctl -w kernel.yama.ptrace_scope=1
-      shell: alpine.sh --root {0}
-
-  win_sde:
+  winsows_sde:
     strategy:
       fail-fast: false
       matrix:
@@ -130,13 +73,18 @@ jobs:
         working-directory: _build
         run: nmake test VERBOSE_FAILURE=yes TESTS=test_sde HARNESS_JOBS=4 V=1
 
-  lin_sde:
+  linux_sde:
     strategy:
       fail-fast: false
       matrix:
         zoo: [
           {
             distro: ubuntu-latest,
+            sde: sde-external-9.48.0-2024-11-25-lin,
+            download: 843185/sde-external-9.48.0-2024-11-25-lin
+          },
+          {
+            distro: macos-15,
             sde: sde-external-9.48.0-2024-11-25-lin,
             download: 843185/sde-external-9.48.0-2024-11-25-lin
           }
@@ -171,6 +119,7 @@ jobs:
         
       # SDE requires this line on ubuntu
       - name: Set ptrace_scope to 0
+        if: ${{ startsWith(matrix.zoo.distro, 'ubuntu') }}
         run: |
           sudo sysctl -w kernel.yama.ptrace_scope=0
 
@@ -178,5 +127,6 @@ jobs:
         run: make test TESTS="test_sde"
 
       - name: Restore ptrace_scope to 1
+        if: ${{ startsWith(matrix.zoo.distro, 'ubuntu') }}
         run: |
           sudo sysctl -w kernel.yama.ptrace_scope=1
