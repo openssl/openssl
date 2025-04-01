@@ -716,10 +716,8 @@ static void xor_freekey(void *keydata)
         return;
     assert(refcnt == 0);
 
-    if (key != NULL) {
-        OPENSSL_free(key->tls_name);
-        key->tls_name = NULL;
-    }
+    OPENSSL_free(key->tls_name);
+    key->tls_name = NULL;
     CRYPTO_FREE_REF(&key->references);
     OPENSSL_free(key);
 }
