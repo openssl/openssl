@@ -11,7 +11,7 @@ use warnings;
 
 use OpenSSL::Test::Utils;
 use File::Copy;
-use File::Compare qw(compare_text compare);
+use File::Compare qw(compare_text);
 use OpenSSL::Test qw/:DEFAULT srctop_file ok_nofips is_nofips/;
 
 setup("test_pkcs8");
