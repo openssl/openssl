@@ -98,32 +98,37 @@ int print_param_types(const char *thing, const OSSL_PARAM *pdefs, int indent)
 }
 
 /* Output the body of a UTF8 string which might not be zero terminated */
-static void print_param_utf8(const char *s, size_t len)
+static void print_param_utf8(const char **s_ptr, size_t len)
 {
-    const char *tail = "'\n";
+    const char *s;
 
-    if (s == NULL) {
-        BIO_puts(bio_out, " null\n");
+    if (s_ptr == NULL) {
+        BIO_puts(bio_out, " ptr null\n");
         return;
     }
-    if (len > MAX_STRING_OUTPUT_CHARS) {
-        len = MAX_STRING_OUTPUT_CHARS;
-        tail = "'...\n";
+    if ((s = *s_ptr) == NULL) {
+        BIO_puts(bio_out, " null\n");
+        return;
     }
     BIO_puts(bio_out, "'");
     if (len > 0)
         BIO_write(bio_out, s, len);
-    BIO_puts(bio_out, tail);
+    BIO_puts(bio_out, "'\n");
 }
 
 /* Output the body of an OCTET string */
-static void print_param_octet(const unsigned char *bytes, size_t len)
+static void print_param_octet(const unsigned char **bytes_ptr, size_t len)
 {
     size_t i;
     const char *tail = "\n";
+    const unsigned char *bytes;
 
     BIO_printf(bio_out, "<%zu bytes>", len);
-    if (bytes == NULL) {
+    if (bytes_ptr == NULL) {
+        BIO_puts(bio_out, " ptr null\n");
+        return;
+    }
+    if ((bytes = *bytes_ptr) == NULL) {
         BIO_puts(bio_out, " null\n");
         return;
     }
@@ -162,16 +167,16 @@ void print_param_value(const OSSL_PARAM *p, int indent)
             BIO_printf(bio_out, "error getting value\n");
         break;
     case OSSL_PARAM_UTF8_PTR:
-        print_param_utf8(*(const char **)p->data, p->return_size);
+        print_param_utf8((const char **)p->data, p->return_size);
         break;
     case OSSL_PARAM_UTF8_STRING:
-        print_param_utf8((const char *)p->data, p->return_size);
+        print_param_utf8((const char **)&p->data, p->return_size);
         break;
     case OSSL_PARAM_OCTET_PTR:
-        print_param_octet(*(const unsigned char **)p->data, p->return_size);
+        print_param_octet((const unsigned char **)p->data, p->return_size);
         break;
     case OSSL_PARAM_OCTET_STRING:
-        print_param_octet((const unsigned char *)p->data, p->return_size);
+        print_param_octet((const unsigned char **)&p->data, p->return_size);
         break;
     default:
         BIO_printf(bio_out, "unknown type (%u) of %zu bytes\n",
