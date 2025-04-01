@@ -2510,11 +2510,18 @@ int tls_parse_stoc_ech(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
 
     /*
      * An HRR will have an ECH extension with the 8-octet confirmation value.
-     * But if so, that was already handled in `ossl_ech_calc_confirm` and we
-     * shouldn't accept retry_configs from an HRR message.
+     * Store it away for when we check it later
      */
-    if (context == SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST)
+    if (context == SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST) {
+        if (PACKET_remaining(pkt) != OSSL_ECH_SIGNAL_LEN) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
+            return 0;
+        }
+        s->ext.ech.hrrsignal_p = PACKET_data(pkt);
+        memcpy(s->ext.ech.hrrsignal, s->ext.ech.hrrsignal_p,
+               OSSL_ECH_SIGNAL_LEN);
         return 1;
+    }
     /* othewise we expect retry-configs */
     if (!PACKET_get_length_prefixed_2(pkt, &rcfgs_pkt)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);

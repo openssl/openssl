@@ -198,6 +198,14 @@ typedef struct ossl_ech_conn_st {
     size_t pub_len;
     OSSL_HPKE_CTX *hpke_ctx; /* HPKE context, needed for HRR */
     /*
+     * A pointer to, and copy of, the hrrsignal from an HRR message.
+     * We need both, as we zero-out the octets when re-calculating and
+     * may need to put back what the server included so the transcript
+     * is correct when ECH acceptance failed.
+     */
+    unsigned char *hrrsignal_p;
+    unsigned char hrrsignal[OSSL_ECH_SIGNAL_LEN];
+    /*
      * Fields that differ on client between inner and outer that we need to
      * keep and swap over IFF ECH has succeeded. Same names chosen as are
      * used in SSL_CONNECTION
@@ -262,8 +270,7 @@ int ossl_ech_pick_matching_cfg(SSL_CONNECTION *s, OSSL_ECHSTORE_ENTRY **ee,
 int ossl_ech_encode_inner(SSL_CONNECTION *s, unsigned char **encoded,
                           size_t *encoded_len);
 int ossl_ech_find_confirm(SSL_CONNECTION *s, int hrr,
-                          unsigned char acbuf[OSSL_ECH_SIGNAL_LEN],
-                          const unsigned char *shbuf, const size_t shlen);
+                          unsigned char acbuf[OSSL_ECH_SIGNAL_LEN]);
 int ossl_ech_reset_hs_buffer(SSL_CONNECTION *s, const unsigned char *buf,
                              size_t blen);
 int ossl_ech_aad_and_encrypt(SSL_CONNECTION *s, WPACKET *pkt,
@@ -272,7 +279,7 @@ int ossl_ech_aad_and_encrypt(SSL_CONNECTION *s, WPACKET *pkt,
 int ossl_ech_swaperoo(SSL_CONNECTION *s);
 int ossl_ech_calc_confirm(SSL_CONNECTION *s, int for_hrr,
                           unsigned char acbuf[OSSL_ECH_SIGNAL_LEN],
-                          const unsigned char *shbuf, const size_t shlen);
+                          const size_t shlen);
 
 /* these are internal but located in ssl/statem/extensions.c */
 int ossl_ech_same_ext(SSL_CONNECTION *s, WPACKET *pkt);

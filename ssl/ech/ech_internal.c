@@ -543,21 +543,16 @@ err:
  * return: 1 for success, 0 otherwise
  */
 int ossl_ech_find_confirm(SSL_CONNECTION *s, int hrr,
-                          unsigned char acbuf[OSSL_ECH_SIGNAL_LEN],
-                          const unsigned char *shbuf, const size_t shlen)
+                          unsigned char acbuf[OSSL_ECH_SIGNAL_LEN])
 {
-    const unsigned char *acp = NULL;
-    size_t extoffset = 0, echoffset = 0;
-    uint16_t echtype = 0, echlen = 0;
+    unsigned char *acp = NULL;
 
     if (hrr == 0) {
         acp = s->s3.server_random + SSL3_RANDOM_SIZE - OSSL_ECH_SIGNAL_LEN;
-    } else {
-        if (ossl_ech_get_sh_offsets(shbuf, shlen, &extoffset,
-                                    &echoffset, &echtype, &echlen) != 1
-            || echtype != TLSEXT_TYPE_ech || echlen != OSSL_ECH_SIGNAL_LEN + 4)
+    } else { /* was set in extension handler */
+        if (s->ext.ech.hrrsignal_p == NULL)
             return 0;
-        acp = shbuf + echoffset + 4;
+        acp = s->ext.ech.hrrsignal;
     }
     memcpy(acbuf, acp, OSSL_ECH_SIGNAL_LEN);
     return 1;
@@ -1124,7 +1119,7 @@ err:
  */
 int ossl_ech_calc_confirm(SSL_CONNECTION *s, int for_hrr,
                           unsigned char acbuf[OSSL_ECH_SIGNAL_LEN],
-                          const unsigned char *shbuf, const size_t shlen)
+                          const size_t shlen)
 {
     int rv = 0;
     EVP_MD_CTX *ctx = NULL;
@@ -1132,8 +1127,9 @@ int ossl_ech_calc_confirm(SSL_CONNECTION *s, int for_hrr,
     unsigned char *tbuf = NULL, *conf_loc = NULL;
     unsigned char *fixedshbuf = NULL;
     size_t fixedshbuf_len = 0, tlen = 0, chend = 0;
-    size_t shoffset = 6 + 24, extoffset = 0, echoffset = 0;
-    uint16_t echtype = 0, echlen = 0;
+    /* shoffset is: 4 + 2 + 32 - 8 */
+    size_t shoffset = SSL3_HM_HEADER_LENGTH + sizeof(uint16_t)
+                      + SSL3_RANDOM_SIZE - OSSL_ECH_SIGNAL_LEN;
     unsigned int hashlen = 0;
     unsigned char hashval[EVP_MAX_MD_SIZE];
 
@@ -1161,13 +1157,7 @@ int ossl_ech_calc_confirm(SSL_CONNECTION *s, int for_hrr,
         if (s->server == 1) { /* we get to say where we put ECH:-) */
             conf_loc = tbuf + tlen - OSSL_ECH_SIGNAL_LEN;
         } else {
-            if (ossl_ech_get_sh_offsets(shbuf, shlen, &extoffset,
-                                        &echoffset, &echtype, &echlen) != 1) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_ECH_REQUIRED);
-                goto end;
-            }
-            if (echoffset == 0 || extoffset == 0 || echtype == 0
-                || tlen < (chend + 4 + echoffset + 4 + OSSL_ECH_SIGNAL_LEN)) {
+            if (s->ext.ech.hrrsignal_p == NULL) {
                 /* No ECH found so we'll exit, but set random output */
                 if (RAND_bytes_ex(s->ssl.ctx->libctx, acbuf,
                                   OSSL_ECH_SIGNAL_LEN,
@@ -1178,7 +1168,7 @@ int ossl_ech_calc_confirm(SSL_CONNECTION *s, int for_hrr,
                 rv = 1;
                 goto end;
             }
-            conf_loc = tbuf + chend + 4 + echoffset + 4;
+            conf_loc = s->ext.ech.hrrsignal_p;
         }
     }
     memset(conf_loc, 0, OSSL_ECH_SIGNAL_LEN);
@@ -1206,7 +1196,10 @@ int ossl_ech_calc_confirm(SSL_CONNECTION *s, int for_hrr,
     ossl_ech_pbuf("cx: result", acbuf, OSSL_ECH_SIGNAL_LEN);
 # endif
     /* put confirm value back into transcript */
-    memcpy(conf_loc, acbuf, OSSL_ECH_SIGNAL_LEN);
+    if (s->ext.ech.hrrsignal_p == NULL)
+        memcpy(conf_loc, acbuf, OSSL_ECH_SIGNAL_LEN);
+    else
+        memcpy(conf_loc, s->ext.ech.hrrsignal, OSSL_ECH_SIGNAL_LEN);
     /* on a server, we need to reset the hs buffer now */
     if (s->server && s->hello_retry_request == SSL_HRR_NONE)
         ossl_ech_reset_hs_buffer(s, s->ext.ech.innerch, s->ext.ech.innerch_len);
