@@ -2,7 +2,7 @@ Using OpenSSL with QUIC
 =======================
 
 From OpenSSL 3.2, OpenSSL features support for making QUIC connections as a
-client.
+client. Starting with OpenSSL 3.5, server-side QUIC support has also been added.
 
 Users interested in using the new QUIC functionality are encouraged to look at
 some of the following resources:
@@ -69,6 +69,18 @@ Data can be passed via stdin/stdout as usual. This allows test usage of QUIC
 using simple TCP/TLS-like usage. Note that OpenSSL has no direct support for
 HTTP/3 so connecting to an HTTP/3 server should be possible but sending an
 HTTP/3 request or receiving any response data is not.
+
+### How can I create a QUIC server with OpenSSL?
+
+Starting with OpenSSL 3.5, you can create a QUIC server. For basic testing, you can use:
+
+```shell
+$ openssl s_server -quic -alpn myalpn -cert server.pem -key server.key -port 4433
+```
+
+Replace `server.pem` and `server.key` with your certificate and private key files, and `myalpn` with the Application Layer Protocol to use.
+
+For production applications, see the [Demo-Driven Design (DDD)][DDD] demos under `doc/designs/ddd/` for server implementation examples.
 
 [openssl-quic(7) manual page]: https://www.openssl.org/docs/manmaster/man7/openssl-quic.html
 [OpenSSL Guide]: https://www.openssl.org/docs/manmaster/man7/ossl-guide-introduction.html
