@@ -6,7 +6,7 @@ cleanup() {
 }
 trap cleanup SIGINT SIGKILL
 
-LOG=/tmp/log_$(date +'%Y-%m-%d_%H-%M-%S').log
+LOG=/tmp/log_openssl_$(date +'%Y-%m-%d_%H-%M-%S').log
 echo $LOG
 touch $LOG
 
