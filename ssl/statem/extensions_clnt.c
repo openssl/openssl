@@ -2517,7 +2517,7 @@ int tls_parse_stoc_ech(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
             SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
             return 0;
         }
-        s->ext.ech.hrrsignal_p = PACKET_data(pkt);
+        s->ext.ech.hrrsignal_p = (unsigned char *)PACKET_data(pkt);
         memcpy(s->ext.ech.hrrsignal, s->ext.ech.hrrsignal_p,
                OSSL_ECH_SIGNAL_LEN);
         return 1;
