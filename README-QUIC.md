@@ -72,12 +72,17 @@ HTTP/3 request or receiving any response data is not.
 
 ### How can I create a QUIC server with OpenSSL?
 
-Starting with OpenSSL 3.5, you can create a QUIC server. OpenSSL provides a server
-implementation example that you can use as a reference:
+Starting with OpenSSL 3.5, you can create a QUIC server. OpenSSL provides both a command-line tool and a server implementation example:
 
-The example QUIC server implementation can be found in the source tree under
-[`demos/quic/server`](./demos/quic/server/). This demonstrates how to implement a
-basic QUIC server using the OpenSSL API.
+For basic testing, you can use the command line:
+
+```shell
+$ openssl s_server -quic -alpn myalpn -cert server.pem -key server.key -port 4433
+```
+
+Replace `server.pem` and `server.key` with your certificate and private key files, and `myalpn` with the Application Layer Protocol to use.
+
+For more complete examples, OpenSSL provides a server implementation example that you can use as a reference. The example QUIC server implementation can be found in the source tree under [`demos/quic/server`](./demos/quic/server/). This demonstrates how to implement a QUIC server using the OpenSSL API.
 
 To run the example QUIC server:
 
@@ -91,12 +96,9 @@ For example:
 $ ./demos/quic/server/server 4433 server.pem server.key
 ```
 
-Replace `server.pem` and `server.key` with your certificate and private key files.
-Note that the standard `openssl s_server` command does NOT support QUIC - you must
-use this dedicated server example instead.
+For production applications, see the [Demo-Driven Design (DDD)][DDD] demos under `doc/designs/ddd/` for additional server implementation examples.
 
-For more information about implementing QUIC servers with OpenSSL, refer to the
-[OpenSSL Guide] and the [openssl-quic(7) manual page].
+For more information about implementing QUIC servers with OpenSSL, refer to the [OpenSSL Guide] and the [openssl-quic(7) manual page].
 
 [openssl-quic(7) manual page]: https://www.openssl.org/docs/manmaster/man7/openssl-quic.html
 [OpenSSL Guide]: https://www.openssl.org/docs/manmaster/man7/ossl-guide-introduction.html
