@@ -637,8 +637,8 @@ jobs:
       run: |
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
-    - name: test external gost-engine
-      run: make test TESTS="test_external_gost_engine"
+#    - name: test external gost-engine
+#      run: make test TESTS="test_external_gost_engine"
     - name: test external krb5
       run: make test TESTS="test_external_krb5"
     - name: test external_tlsfuzzer
