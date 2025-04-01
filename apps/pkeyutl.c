@@ -318,6 +318,10 @@ int pkeyutl_main(int argc, char **argv)
     }
 
     pkey = get_pkey(kdfalg, inkey, keyform, key_type, passinarg, pkey_op, e);
+    if (key_type != KEY_NONE && pkey == NULL) {
+        BIO_printf(bio_err, "%s: Error loading key\n", prog);
+        goto end;
+    }
 
     if (pkey_op == EVP_PKEY_OP_VERIFYRECOVER && !EVP_PKEY_is_a(pkey, "RSA")) {
         BIO_printf(bio_err, "%s: -verifyrecover can be used only with RSA\n", prog);
