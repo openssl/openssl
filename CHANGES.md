@@ -37,6 +37,13 @@ OpenSSL 3.6
 
    *Frederik Wedel-Heinen*
 
+ * Enabled x86-64 SM4 optimizations with SM4 ISA Extension available starting
+   Lunar Lake and Arrow Lake S CPUs. The expected performance improvement is
+   ~3.6x for sm4-cbc, ~2.9x for sm4-gcm, ~9.2x for sm4-xts, ~5.3x for sm4-ccm
+   (on average, may vary depending on the data size) on Arrow Lake S.
+
+   *Alina Elizarova*
+
 OpenSSL 3.5
 -----------
 
