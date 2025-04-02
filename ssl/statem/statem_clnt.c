@@ -1794,7 +1794,7 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
 
     if (hrr) {
         if (!tls_collect_extensions(s, &extpkt, SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST,
-            &extensions, NULL, 1)
+                                    &extensions, NULL, 1)
             || !tls_parse_extension(s, TLSEXT_IDX_ech,
                 SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST,
                 extensions, NULL, 0)) {
@@ -1803,9 +1803,9 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
         }
     } else {
         if (!tls_collect_extensions(s, &extpkt,
-            SSL_EXT_TLS1_2_SERVER_HELLO
-            | SSL_EXT_TLS1_3_SERVER_HELLO,
-            &extensions, NULL, 1)) {
+                                    SSL_EXT_TLS1_2_SERVER_HELLO
+                                    | SSL_EXT_TLS1_3_SERVER_HELLO,
+                                    &extensions, NULL, 1)) {
             /* SSLfatal() already called */
             goto err;
         }
