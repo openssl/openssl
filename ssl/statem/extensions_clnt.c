@@ -13,6 +13,12 @@
 #include "statem_local.h"
 #ifndef OPENSSL_NO_ECH
 # include <openssl/rand.h>
+#include "internal/ech_helpers.h"
+/*
+ * the max HPKE 'info' we'll process is the max ECHConfig size
+ * (OSSL_ECH_MAX_ECHCONFIG_LEN) plus OSSL_ECH_CONTEXT_STRING(len=7) + 1
+ */
+#define OSSL_ECH_MAX_INFO_LEN (OSSL_ECH_MAX_ECHCONFIG_LEN + 8)
 #endif
 
 EXT_RETURN tls_construct_ctos_renegotiate(SSL_CONNECTION *s, WPACKET *pkt,
@@ -2449,6 +2455,14 @@ EXT_RETURN tls_construct_ctos_ech(SSL_CONNECTION *s, WPACKET *pkt,
                                   unsigned int context, X509 *x,
                                   size_t chainidx)
 {
+    int rv = 0, hpke_mode = OSSL_HPKE_MODE_BASE;
+    OSSL_ECHSTORE_ENTRY *ee = NULL;
+    OSSL_HPKE_SUITE hpke_suite = OSSL_HPKE_SUITE_DEFAULT;
+    unsigned char config_id_to_use = 0x00, info[OSSL_ECH_MAX_INFO_LEN];
+    unsigned char *encoded = NULL, *mypub = NULL;
+    size_t cipherlen = 0, aad_len = 0, lenclen = 0, mypub_len = 0;
+    size_t info_len = OSSL_ECH_MAX_INFO_LEN, clear_len = 0, encoded_len = 0;
+
     /* whether or not we've been asked to GREASE, one way or another */
     int grease_opt_set = (s->ext.ech.grease == OSSL_ECH_IS_GREASE
                           || ((s->options & SSL_OP_ECH_GREASE) != 0));
@@ -2477,14 +2491,7 @@ EXT_RETURN tls_construct_ctos_ech(SSL_CONNECTION *s, WPACKET *pkt,
         }
         return EXT_RETURN_SENT;
     }
-    /*
-     * If not GREASEing we fake sending the outer value - after the
-     * entire thing has been constructed we only then finally encode
-     * and encrypt - need to do it that way as we need the rest of
-     * the outer CH as AAD input to the encryption.
-     */
-    if (s->ext.ech.ch_depth == 0)
-        return EXT_RETURN_NOT_SENT;
+
     /* For the inner CH - we simply include one of these saying "inner" */
     if (s->ext.ech.ch_depth == 1) {
         if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_ech)
@@ -2496,6 +2503,142 @@ EXT_RETURN tls_construct_ctos_ech(SSL_CONNECTION *s, WPACKET *pkt,
         }
         return EXT_RETURN_SENT;
     }
+
+    /*
+     * If not GREASEing we prepare sending the outer value - after the
+     * entire thing has been constructed, putting in zeros for now where
+     * we'd otherwise include ECH ciphertext, we later encode and encrypt.
+     * We need to do it that way as we need the rest of the outer CH to
+     * be known and used as AAD input before we do encryption.
+     */
+    if (s->ext.ech.ch_depth != 0)
+        return EXT_RETURN_NOT_SENT;
+    /* Make ClientHelloInner and EncodedClientHelloInner as per spec. */
+    if (ossl_ech_encode_inner(s, &encoded, &encoded_len) != 1) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+    s->ext.ech.encoded_inner = encoded;
+    s->ext.ech.encoded_inner_len = encoded_len;
+# ifdef OSSL_ECH_SUPERVERBOSE
+    ossl_ech_pbuf("encoded inner CH", encoded, encoded_len);
+# endif
+    rv = ossl_ech_pick_matching_cfg(s, &ee, &hpke_suite);
+    if (rv != 1 || ee == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+    s->ext.ech.attempted_type = ee->version;
+    OSSL_TRACE_BEGIN(TLS) {
+        BIO_printf(trc_out, "EAAE: selected: version: %4x, config %2x\n",
+                   ee->version, ee->config_id);
+    } OSSL_TRACE_END(TLS);
+    config_id_to_use = ee->config_id; /* if requested, use a random config_id instead */
+    if ((s->options & SSL_OP_ECH_IGNORE_CID) != 0) {
+        if (RAND_bytes_ex(s->ssl.ctx->libctx, &config_id_to_use, 1,
+                          RAND_DRBG_STRENGTH) <= 0) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+# ifdef OSSL_ECH_SUPERVERBOSE
+        ossl_ech_pbuf("EAAE: random config_id", &config_id_to_use, 1);
+# endif
+    }
+    s->ext.ech.attempted_cid = config_id_to_use;
+# ifdef OSSL_ECH_SUPERVERBOSE
+    ossl_ech_pbuf("EAAE: peer pub", ee->pub, ee->pub_len);
+    ossl_ech_pbuf("EAAE: clear", encoded, encoded_len);
+    ossl_ech_pbuf("EAAE: ECHConfig", ee->encoded, ee->encoded_len);
+# endif
+    /*
+     * The AAD is the full outer client hello but with the correct number of
+     * zeros for where the ECH ciphertext octets will later be placed. So we
+     * add the ECH extension to the |pkt| but with zeros for ciphertext, that
+     * forms up the AAD, then after we've encrypted, we'll splice in the actual
+     * ciphertext.
+     * Watch out for the "4" offsets that remove the type and 3-octet length
+     * from the encoded CH as per the spec.
+     */
+    clear_len = ossl_ech_calc_padding(s, ee, encoded_len);
+    if (clear_len == 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+    lenclen = OSSL_HPKE_get_public_encap_size(hpke_suite);
+    if (s->ext.ech.hpke_ctx == NULL) { /* 1st CH */
+        if (ossl_ech_make_enc_info(ee->encoded, ee->encoded_len,
+                                   info, &info_len) != 1) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+# ifdef OSSL_ECH_SUPERVERBOSE
+        ossl_ech_pbuf("EAAE info", info, info_len);
+# endif
+        s->ext.ech.hpke_ctx = OSSL_HPKE_CTX_new(hpke_mode, hpke_suite,
+                                                OSSL_HPKE_ROLE_SENDER,
+                                                NULL, NULL);
+        if (s->ext.ech.hpke_ctx == NULL) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+        mypub = OPENSSL_malloc(lenclen);
+        if (mypub == NULL) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+        mypub_len = lenclen;
+        rv = OSSL_HPKE_encap(s->ext.ech.hpke_ctx, mypub, &mypub_len,
+                             ee->pub, ee->pub_len, info, info_len);
+        if (rv != 1) {
+            OPENSSL_free(mypub);
+            mypub = NULL;
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+        s->ext.ech.pub = mypub;
+        s->ext.ech.pub_len = mypub_len;
+    } else { /* HRR - retrieve public */
+        mypub = s->ext.ech.pub;
+        mypub_len = s->ext.ech.pub_len;
+        if (mypub == NULL || mypub_len == 0) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+    }
+# ifdef OSSL_ECH_SUPERVERBOSE
+    ossl_ech_pbuf("EAAE: mypub", mypub, mypub_len);
+    WPACKET_get_total_written(pkt, &aad_len); /* use aad_len for tracing */
+    ossl_ech_pbuf("EAAE pkt b4", WPACKET_get_curr(pkt) - aad_len, aad_len);
+# endif
+    cipherlen = OSSL_HPKE_get_ciphertext_size(hpke_suite, clear_len);
+    if (cipherlen <= clear_len || cipherlen > OSSL_ECH_MAX_PAYLOAD_LEN) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        goto err;
+    }
+    s->ext.ech.clearlen = clear_len;
+    s->ext.ech.cipherlen = cipherlen;
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_ech)
+        || !WPACKET_start_sub_packet_u16(pkt)
+        || !WPACKET_put_bytes_u8(pkt, OSSL_ECH_OUTER_CH_TYPE)
+        || !WPACKET_put_bytes_u16(pkt, hpke_suite.kdf_id)
+        || !WPACKET_put_bytes_u16(pkt, hpke_suite.aead_id)
+        || !WPACKET_put_bytes_u8(pkt, config_id_to_use)
+        || (s->hello_retry_request == SSL_HRR_PENDING
+            && !WPACKET_put_bytes_u16(pkt, 0x00)) /* no pub */
+        || (s->hello_retry_request != SSL_HRR_PENDING
+            && !WPACKET_sub_memcpy_u16(pkt, mypub, mypub_len))
+        || !WPACKET_start_sub_packet_u16(pkt)
+        || !WPACKET_get_total_written(pkt, &s->ext.ech.cipher_offset)
+        || !WPACKET_memset(pkt, 0, cipherlen)
+        || !WPACKET_close(pkt)
+        || !WPACKET_close(pkt)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+    /* don't count the type + 3-octet length */
+    s->ext.ech.cipher_offset -= 4;
+    return EXT_RETURN_SENT;
+err:
     return EXT_RETURN_FAIL;
 }
 

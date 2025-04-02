@@ -58,6 +58,7 @@
  * defined in a header file I could find.
  */
 #   define CLIENT_VERSION_LEN 2
+
 #  endif
 
 /*
@@ -156,6 +157,14 @@ typedef struct ossl_ech_conn_st {
     /* inner ClientHello before ECH compression */
     unsigned char *innerch;
     size_t innerch_len;
+    /* encoded inner CH */
+    unsigned char *encoded_inner;
+    size_t encoded_inner_len;
+    /* lengths calculated early, used when encrypting at end of processing */
+    size_t clearlen;
+    size_t cipherlen;
+    /* location to put ciphertext, initially filled with zeros */
+    size_t cipher_offset;
     /*
      * Extensions are "outer-only" if the value is only sent in the
      * outer CH and only the type is sent in the inner CH.
@@ -273,9 +282,7 @@ int ossl_ech_find_confirm(SSL_CONNECTION *s, int hrr,
                           unsigned char acbuf[OSSL_ECH_SIGNAL_LEN]);
 int ossl_ech_reset_hs_buffer(SSL_CONNECTION *s, const unsigned char *buf,
                              size_t blen);
-int ossl_ech_aad_and_encrypt(SSL_CONNECTION *s, WPACKET *pkt,
-                             unsigned char *encoded_inner,
-                             size_t encoded_inner_len);
+int ossl_ech_aad_and_encrypt(SSL_CONNECTION *s, WPACKET *pkt);
 int ossl_ech_swaperoo(SSL_CONNECTION *s);
 int ossl_ech_calc_confirm(SSL_CONNECTION *s, int for_hrr,
                           unsigned char acbuf[OSSL_ECH_SIGNAL_LEN],
@@ -297,6 +304,8 @@ void ossl_ech_status_print(BIO *out, SSL_CONNECTION *s, int selector);
 int ossl_ech_intbuf_add(SSL_CONNECTION *s, const unsigned char *buf,
                         size_t blen, int hash_existing);
 int ossl_ech_intbuf_fetch(SSL_CONNECTION *s, unsigned char **buf, size_t *blen);
+size_t ossl_ech_calc_padding(SSL_CONNECTION *s, OSSL_ECHSTORE_ENTRY *ee,
+                             size_t encoded_len);
 
 # endif
 #endif

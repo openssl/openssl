@@ -26,12 +26,6 @@ static const char OSSL_ECH_ACCEPT_CONFIRM_STRING[] = "\x65\x63\x68\x20\x61\x63\x
 /* "hrr ech accept confirmation" */
 static const char OSSL_ECH_HRR_CONFIRM_STRING[] = "\x68\x72\x72\x20\x65\x63\x68\x20\x61\x63\x63\x65\x70\x74\x20\x63\x6f\x6e\x66\x69\x72\x6d\x61\x74\x69\x6f\x6e";
 
-/*
- * the max HPKE 'info' we'll process is the max ECHConfig size
- * (OSSL_ECH_MAX_ECHCONFIG_LEN) plus OSSL_ECH_CONTEXT_STRING(len=7) + 1
- */
-#define OSSL_ECH_MAX_INFO_LEN (OSSL_ECH_MAX_ECHCONFIG_LEN + 8)
-
 /* ECH internal API functions */
 
 # ifdef OSSL_ECH_SUPERVERBOSE
@@ -186,6 +180,7 @@ void ossl_ech_conn_clear(OSSL_ECH_CONN *ec)
     OPENSSL_free(ec->pub);
     OSSL_HPKE_CTX_free(ec->hpke_ctx);
     EVP_PKEY_free(ec->tmp_pkey);
+    OPENSSL_free(ec->encoded_inner);
     return;
 }
 
@@ -614,8 +609,8 @@ int ossl_ech_reset_hs_buffer(SSL_CONNECTION *s, const unsigned char *buf,
  * a padded cleartext of 128 octets, the ciphertext will be 144
  * octets.
  */
-static size_t ech_calc_padding(SSL_CONNECTION *s, OSSL_ECHSTORE_ENTRY *ee,
-                               size_t encoded_len)
+size_t ossl_ech_calc_padding(SSL_CONNECTION *s, OSSL_ECHSTORE_ENTRY *ee,
+                             size_t encoded_len)
 {
     int length_of_padding = 0, length_with_snipadding = 0;
     int innersnipadding = 0, length_with_padding = 0;
@@ -661,7 +656,6 @@ static size_t ech_calc_padding(SSL_CONNECTION *s, OSSL_ECHSTORE_ENTRY *ee,
 /*
  * Calculate AAD and do ECH encryption
  * pkt is the packet to send
- * encoded_inner is the EncodedClientHelloInner
  * return 1 for success, other otherwise
  *
  * 1. Make up the AAD: the encoded outer, with ECH ciphertext octets zero'd
@@ -669,17 +663,13 @@ static size_t ech_calc_padding(SSL_CONNECTION *s, OSSL_ECHSTORE_ENTRY *ee,
  * 3. Put the ECH back into the encoding
  * 4. Encode the outer (again!)
  */
-int ossl_ech_aad_and_encrypt(SSL_CONNECTION *s, WPACKET *pkt,
-                             unsigned char *encoded_inner,
-                             size_t encoded_inner_len)
+int ossl_ech_aad_and_encrypt(SSL_CONNECTION *s, WPACKET *pkt)
 {
-    int rv = 0, hpke_mode = OSSL_HPKE_MODE_BASE;
-    OSSL_ECHSTORE_ENTRY *ee = NULL;
-    OSSL_HPKE_SUITE hpke_suite = OSSL_HPKE_SUITE_DEFAULT;
-    unsigned char config_id_to_use = 0x00, info[OSSL_ECH_MAX_INFO_LEN];
-    unsigned char *clear = NULL, *cipher = NULL, *aad = NULL, *mypub = NULL;
-    size_t cipherlen = 0, aad_len = 0, lenclen = 0, mypub_len = 0;
-    size_t info_len = OSSL_ECH_MAX_INFO_LEN, clear_len = 0;
+    int rv = 0;
+    size_t cipherlen = 0, aad_len = 0, mypub_len = 0, clear_len = 0;
+    size_t encoded_inner_len = 0;
+    unsigned char *clear = NULL, *aad = NULL, *mypub = NULL;
+    unsigned char *encoded_inner = NULL, *cipher_loc = NULL;
 
     if (s == NULL)
         return 0;
@@ -688,124 +678,19 @@ int ossl_ech_aad_and_encrypt(SSL_CONNECTION *s, WPACKET *pkt,
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    rv = ossl_ech_pick_matching_cfg(s, &ee, &hpke_suite);
-    if (rv != 1 || ee == NULL) {
+    /* values calculated in tls_construct_ctos_ech */
+    encoded_inner = s->ext.ech.encoded_inner;
+    encoded_inner_len = s->ext.ech.encoded_inner_len;
+    clear_len = s->ext.ech.clearlen;
+    cipherlen = s->ext.ech.cipherlen;
+    if (!WPACKET_get_total_written(pkt, &aad_len) || aad_len < 4) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    s->ext.ech.attempted_type = ee->version;
-    OSSL_TRACE_BEGIN(TLS) {
-        BIO_printf(trc_out, "EAAE: selected: version: %4x, config %2x\n",
-                   ee->version, ee->config_id);
-    } OSSL_TRACE_END(TLS);
-    config_id_to_use = ee->config_id; /* if requested, use a random config_id instead */
-    if ((s->options & SSL_OP_ECH_IGNORE_CID) != 0) {
-        if (RAND_bytes_ex(s->ssl.ctx->libctx, &config_id_to_use, 1,
-                          RAND_DRBG_STRENGTH) <= 0) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            return 0;
-        }
-# ifdef OSSL_ECH_SUPERVERBOSE
-        ossl_ech_pbuf("EAAE: random config_id", &config_id_to_use, 1);
-# endif
-    }
-    s->ext.ech.attempted_cid = config_id_to_use;
-# ifdef OSSL_ECH_SUPERVERBOSE
-    ossl_ech_pbuf("EAAE: peer pub", ee->pub, ee->pub_len);
-    ossl_ech_pbuf("EAAE: clear", encoded_inner, encoded_inner_len);
-    ossl_ech_pbuf("EAAE: ECHConfig", ee->encoded, ee->encoded_len);
-# endif
-    /*
-     * The AAD is the full outer client hello but with the correct number of
-     * zeros for where the ECH ciphertext octets will later be placed. So we
-     * add the ECH extension to the |pkt| but with zeros for ciphertext, that
-     * forms up the AAD, then after we've encrypted, we'll splice in the actual
-     * ciphertext.
-     * Watch out for the "4" offsets that remove the type and 3-octet length
-     * from the encoded CH as per the spec.
-     */
-    clear_len = ech_calc_padding(s, ee, encoded_inner_len);
-    if (clear_len == 0) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-    lenclen = OSSL_HPKE_get_public_encap_size(hpke_suite);
-    if (s->ext.ech.hpke_ctx == NULL) { /* 1st CH */
-        if (ossl_ech_make_enc_info(ee->encoded, ee->encoded_len,
-                                   info, &info_len) != 1) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            goto err;
-        }
-# ifdef OSSL_ECH_SUPERVERBOSE
-        ossl_ech_pbuf("EAAE info", info, info_len);
-# endif
-        s->ext.ech.hpke_ctx = OSSL_HPKE_CTX_new(hpke_mode, hpke_suite,
-                                                OSSL_HPKE_ROLE_SENDER,
-                                                NULL, NULL);
-        if (s->ext.ech.hpke_ctx == NULL) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            goto err;
-        }
-        mypub = OPENSSL_malloc(lenclen);
-        if (mypub == NULL) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            goto err;
-        }
-        mypub_len = lenclen;
-        rv = OSSL_HPKE_encap(s->ext.ech.hpke_ctx, mypub, &mypub_len,
-                             ee->pub, ee->pub_len, info, info_len);
-        if (rv != 1) {
-            OPENSSL_free(mypub);
-            mypub = NULL;
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            goto err;
-        }
-        s->ext.ech.pub = mypub;
-        s->ext.ech.pub_len = mypub_len;
-    } else { /* HRR - retrieve public */
-        mypub = s->ext.ech.pub;
-        mypub_len = s->ext.ech.pub_len;
-        if (mypub == NULL || mypub_len == 0) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            goto err;
-        }
-    }
-# ifdef OSSL_ECH_SUPERVERBOSE
-    ossl_ech_pbuf("EAAE: mypub", mypub, mypub_len);
-    WPACKET_get_total_written(pkt, &aad_len); /* use aad_len for tracing */
-    ossl_ech_pbuf("EAAE pkt b4", WPACKET_get_curr(pkt) - aad_len, aad_len);
-# endif
-    cipherlen = OSSL_HPKE_get_ciphertext_size(hpke_suite, clear_len);
-    if (cipherlen <= clear_len || cipherlen > OSSL_ECH_MAX_PAYLOAD_LEN) {
-        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
-        goto err;
-    }
-    cipher = OPENSSL_zalloc(cipherlen);
-    if (cipher == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_ech)
-        || !WPACKET_start_sub_packet_u16(pkt)
-        || !WPACKET_put_bytes_u8(pkt, OSSL_ECH_OUTER_CH_TYPE)
-        || !WPACKET_put_bytes_u16(pkt, hpke_suite.kdf_id)
-        || !WPACKET_put_bytes_u16(pkt, hpke_suite.aead_id)
-        || !WPACKET_put_bytes_u8(pkt, config_id_to_use)
-        || (s->hello_retry_request == SSL_HRR_PENDING
-            && !WPACKET_put_bytes_u16(pkt, 0x00)) /* no pub */
-        || (s->hello_retry_request != SSL_HRR_PENDING
-            && !WPACKET_sub_memcpy_u16(pkt, mypub, mypub_len))
-        || !WPACKET_start_sub_packet_u16(pkt)
-        || !WPACKET_memset(pkt, 0, cipherlen)
-        || !WPACKET_close(pkt)
-        || !WPACKET_close(pkt)
-        || !WPACKET_get_total_written(pkt, &aad_len)
-        || aad_len < 4) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-    aad_len -= 4; /* aad starts after type + 3-octet len */
+    aad_len -= 4; /* ECH/HPKE aad starts after type + 3-octet len */
     aad = WPACKET_get_curr(pkt) - aad_len;
+    /* where we'll replace zeros with ciphertext */
+    cipher_loc = aad + s->ext.ech.cipher_offset;
     /*
      * close the extensions of the CH - we skipped doing this
      * earlier when encoding extensions, to allow for adding the
@@ -828,28 +713,25 @@ int ossl_ech_aad_and_encrypt(SSL_CONNECTION *s, WPACKET *pkt,
 # ifdef OSSL_ECH_SUPERVERBOSE
     ossl_ech_pbuf("EAAE: padded clear", clear, clear_len);
 # endif
-    rv = OSSL_HPKE_seal(s->ext.ech.hpke_ctx, cipher, &cipherlen,
-                        aad, aad_len, clear, clear_len);
+    /* we're done with this now */
+    OPENSSL_free(s->ext.ech.encoded_inner);
+    s->ext.ech.encoded_inner = NULL;
+    rv = OSSL_HPKE_seal(s->ext.ech.hpke_ctx, cipher_loc,
+                        &cipherlen, aad, aad_len, clear, clear_len);
     OPENSSL_free(clear);
     if (rv != 1) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     }
 # ifdef OSSL_ECH_SUPERVERBOSE
-    ossl_ech_pbuf("EAAE: cipher", cipher, cipherlen);
+    ossl_ech_pbuf("EAAE: cipher", cipher_loc, cipherlen);
     ossl_ech_pbuf("EAAE: hpke mypub", mypub, mypub_len);
-# endif
-    /* splice real ciphertext back in now */
-    memcpy(aad + aad_len - cipherlen, cipher, cipherlen);
-# ifdef OSSL_ECH_SUPERVERBOSE
     /* re-use aad_len for tracing */
     WPACKET_get_total_written(pkt, &aad_len);
     ossl_ech_pbuf("EAAE pkt aftr", WPACKET_get_curr(pkt) - aad_len, aad_len);
 # endif
-    OPENSSL_free(cipher);
     return 1;
 err:
-    OPENSSL_free(cipher);
     return 0;
 }
 

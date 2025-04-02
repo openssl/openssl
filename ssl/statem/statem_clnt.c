@@ -1202,8 +1202,6 @@ static int tls_construct_client_hello_aux(SSL_CONNECTION *s, WPACKET *pkt);
 __owur CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s,
                                                   WPACKET *pkt)
 {
-    unsigned char *encoded = NULL;
-    size_t encoded_len;
     WPACKET inner; /* "fake" pkt for inner */
     BUF_MEM *inner_mem = NULL;
     PACKET rpkt; /* we'll decode back the inner ch to help make the outer */
@@ -1333,14 +1331,7 @@ __owur CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s,
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    /* Make ClientHelloInner and EncodedClientHelloInner as per spec. */
-    if (ossl_ech_encode_inner(s, &encoded, &encoded_len) != 1) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-# ifdef OSSL_ECH_SUPERVERBOSE
-    ossl_ech_pbuf("encoded inner CH", encoded, encoded_len);
-# endif
+
     s->ext.ech.ch_depth = 0; /* set depth for outer CH */
     /*
      * If we want different key shares for inner and outer, then
@@ -1364,11 +1355,10 @@ __owur CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s,
                   s->session->session_id_length);
 # endif
     /* Finally, calculate AAD and encrypt using HPKE */
-    if (ossl_ech_aad_and_encrypt(s, pkt, encoded, encoded_len) != 1) {
+    if (ossl_ech_aad_and_encrypt(s, pkt) != 1) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    OPENSSL_free(encoded);
     /* Free up raw exts as needed (happens like this on real server) */
     if (s->clienthello != NULL
         && s->clienthello->pre_proc_exts != NULL) {
@@ -1378,7 +1368,6 @@ __owur CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s,
     }
     return 1;
 err:
-    OPENSSL_free(encoded);
     if (inner_mem != NULL) {
         WPACKET_cleanup(&inner);
         BUF_MEM_free(inner_mem);
