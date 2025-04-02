@@ -853,14 +853,45 @@ int openssl_get_fork_id(void)
 }
 #endif
 
+static inline int crypto_isWindows9x()
+{
+	static int found = 0, initted = 0;
+	
+	if (initted)
+		return found;
+	
+	// give it a probe
+	LONG stuff = 5;
+	found = 0;
+	if (InterlockedIncrement(&stuff) != 6) {
+		found = 1;
+		OutputDebugStringA("[!] Windows 9x detected\n");
+	}
+	
+	initted = 1;
+	return found;
+}
+
 int crypto_interlockedIncrement(_Atomic int* val)
 {
-	return (int) InterlockedIncrement((volatile LONG*) val);
+	if (crypto_isWindows9x()) {
+		InterlockedIncrement((volatile LONG*) val);
+		return *val;
+	}
+	else {
+		return (int) InterlockedIncrement((volatile LONG*) val);
+	}
 }
 
 int crypto_interlockedDecrement(_Atomic int* val)
 {
-	return (int) InterlockedDecrement((volatile LONG*) val);
+	if (crypto_isWindows9x()) {
+		InterlockedDecrement((volatile LONG*) val);
+		return *val;
+	}
+	else {
+		return (int) InterlockedDecrement((volatile LONG*) val);
+	}
 }
 
 // have to do this bullcrap because Windows 95 crashes when running the *actual* __gcc_register_frame.
