@@ -35,6 +35,18 @@ echo "------------------------------------------------------------------"
 
 cd $SRCTOP
 
+# Install Rust if not present (required for pyca 44.02)
+if ! command -v cargo >/dev/null 2>&1; then
+    echo "Installing Rust..."
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+    . "$HOME/.cargo/env"
+    export PATH="$HOME/.cargo/bin:$PATH"
+fi
+
+# Verify Rust installation
+rustc --version
+cargo --version
+
 # Create a python virtual env and activate
 rm -rf venv-cryptography
 python -m venv venv-cryptography
@@ -47,7 +59,7 @@ cd pyca-cryptography
 echo "------------------------------------------------------------------"
 echo "Building cryptography and installing test requirements"
 echo "------------------------------------------------------------------"
-LDFLAGS="-L$O_LIB" CFLAGS="-I$O_BINC -I$O_SINC " pip install .[test]
+OPENSSL_DIR=$O_LIB OPENSSL_LIB_DIR=$O_LIB OPENSSL_INCLUDE_DIR=$O_SINC LDFLAGS="-L$O_LIB" CFLAGS="-I$O_BINC -I$O_SINC " pip install .[test]
 pip install -e vectors
 
 echo "------------------------------------------------------------------"
