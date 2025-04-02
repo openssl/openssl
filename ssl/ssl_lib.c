@@ -4945,6 +4945,9 @@ int SSL_do_handshake(SSL *s)
         return ossl_quic_do_handshake(s);
 #endif
 
+    if (sc == NULL)
+        return -1;
+
     if (sc->handshake_func == NULL) {
         ERR_raise(ERR_LIB_SSL, SSL_R_CONNECTION_TYPE_NOT_SET);
         return -1;
