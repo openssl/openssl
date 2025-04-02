@@ -4591,6 +4591,12 @@ SSL *ossl_quic_accept_connection(SSL *ssl, uint64_t flags)
         || (conn = SSL_CONNECTION_FROM_SSL(conn_ssl)) == NULL
         || (conn_ssl = SSL_CONNECTION_GET_USER_SSL(conn)) == NULL)
         goto out;
+
+    if (!ossl_quic_channel_is_handshake_complete(new_ch)) {
+        ossl_quic_port_push_incoming(ctx.ql->port, new_ch);
+        conn_ssl = NULL;
+        goto out;
+    }
     qc = (QUIC_CONNECTION *)conn_ssl;
     qc->listener = ctx.ql;
     qc->pending = 0;
