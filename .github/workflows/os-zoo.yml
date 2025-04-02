@@ -211,6 +211,23 @@ jobs:
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
+  linux-riscv64:
+    runs-on: linux-riscv64
+    steps:
+    - uses: actions/checkout@v4
+    - name: config
+      run: ./config enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
+    - name: config dump
+      run: ./configdata.pm --dump
+    - name: make
+      run: make -j8
+    - name: get cpu info
+      run: ./util/opensslwrap.sh version -c
+    - name: make test
+      env:
+        OPENSSL_riscvcap: ZBA_ZBB_ZBC_ZBS_ZKT
+      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+
   freebsd-x86_64:
     runs-on: ubuntu-latest
     steps:
