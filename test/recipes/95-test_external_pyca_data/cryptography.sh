@@ -42,12 +42,41 @@ python -m venv venv-cryptography
 # Upgrade pip to always have latest
 pip install -U pip
 
+# Handling Rust
+export RUSTUP_HOME="$PWD/venv-cryptography/.rustup"
+export CARGO_HOME="$PWD/venv-cryptography/.cargo"
+export PATH="$CARGO_HOME/bin:$PATH"
+RUST_VERSION="1.85.1"
+
+# Install Rust
+if [ ! -f $CARGO_HOME/bin/cargo ]; then
+     echo "Installing Rust..."
+     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y \
+         --no-modify-path \
+         --default-toolchain "$RUST_VERSION" \
+         --profile minimal
+fi
+
+# Load cargo/env
+. "$CARGO_HOME/env"
+
+# Explicitly set the default toolchain (in case installation didn't)
+rustup default "$RUST_VERSION" >/dev/null 2>&1
+
+# Verify installation
+if ! command -v cargo >/dev/null 2>&1; then
+    echo "Error: Rust installation failed!" >&2
+    exit 1
+fi
+
+echo "Rust is installed: $(rustc --version)"
+
 cd pyca-cryptography
 
 echo "------------------------------------------------------------------"
 echo "Building cryptography and installing test requirements"
 echo "------------------------------------------------------------------"
-LDFLAGS="-L$O_LIB" CFLAGS="-I$O_BINC -I$O_SINC " pip install .[test]
+OPENSSL_DIR=$O_LIB OPENSSL_LIB_DIR=$O_LIB OPENSSL_INCLUDE_DIR=$O_SINC LDFLAGS="-L$O_LIB" CFLAGS="-I$O_BINC -I$O_SINC " pip install .[test]
 pip install -e vectors
 
 echo "------------------------------------------------------------------"
