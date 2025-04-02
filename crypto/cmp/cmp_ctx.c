@@ -122,11 +122,20 @@ OSSL_CMP_CTX *OSSL_CMP_CTX_new(OSSL_LIB_CTX *libctx, const char *propq)
         goto err;
     }
 
+    /*
+     * https://www.rfc-editor.org/rfc/rfc9045.html#name-password-based-message-auth says:
+     * The salt SHOULD be at least 8 octets (64 bits) long.
+     */
     ctx->pbm_slen = 16;
     if (!cmp_ctx_set_md(ctx, &ctx->pbm_owf, NID_sha256))
         goto err;
-    ctx->pbm_itercnt = 500;
+    ctx->pbm_itercnt = 1024;
     ctx->pbm_mac = NID_hmac_sha1;
+    /*
+     * For maximal interoperability with existing deployments, by default using HMAC-SHA1
+     * as required in https://www.rfc-editor.org/rfc/rfc4211.html#section-4.4:
+     * All implementations MUST support SHA-1.
+     */
 
     if (!cmp_ctx_set_md(ctx, &ctx->digest, NID_sha256))
         goto err;
