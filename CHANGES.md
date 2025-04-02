@@ -37,6 +37,12 @@ OpenSSL 3.6
 
    *Frederik Wedel-Heinen*
 
+ * Added Intel AVX-512 and VAES optimizations for AES-*-CFB128 algorithms.
+   Speedups on large buffers range from 1.5-1.7x for encryption and 
+   20-23x for decryption.
+
+   *Adrian Stanciu*
+
 OpenSSL 3.5
 -----------
 
