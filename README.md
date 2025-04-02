@@ -138,6 +138,12 @@ containing additional information on specific topics.
  * [Information about using the OpenSSL FIPS validated module](README-FIPS.md)
  * [Information about the legacy OpenSSL Engine architecture](README-ENGINES.md)
 
+For Contributors and Developers
+------------------------------
+
+ * [Overview of the OpenSSL repository structure](doc/directory-structure.md) -
+   A guide to the organization of the codebase
+
 The OpenSSL Guide
 -----------------
 

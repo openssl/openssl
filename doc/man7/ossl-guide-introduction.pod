@@ -97,6 +97,19 @@ The pages in the guide are as follows:
 
 =back
 
+=head1 FOR CONTRIBUTORS AND DEVELOPERS
+
+For those contributing to OpenSSL or developing with it, the following resources are available:
+
+=over 4
+
+=item F<directory-structure.md>: An overview of the OpenSSL repository structure
+
+This document explains the major directories and files in the OpenSSL repository, 
+helping contributors understand the codebase organization.
+
+=back
+
 =head1 COPYRIGHT
 
 Copyright 2023-2025 The OpenSSL Project Authors. All Rights Reserved.
