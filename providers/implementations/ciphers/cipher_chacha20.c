@@ -10,6 +10,7 @@
 /* Dispatch functions for chacha20 cipher */
 
 #include <openssl/proverr.h>
+#include <openssl/params.h>
 #include "cipher_chacha20.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
@@ -94,6 +95,7 @@ static int chacha20_get_params(OSSL_PARAM params[])
 
 static int chacha20_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
+    PROV_CHACHA20_CTX *ctx = (PROV_CHACHA20_CTX *)vctx;
     OSSL_PARAM *p;
 
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IVLEN);
@@ -106,13 +108,30 @@ static int chacha20_get_ctx_params(void *vctx, OSSL_PARAM params[])
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-
+    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_UPDATED_IV);
+#define CHACHA_U32TOU8(ct, st) do { \
+    (ct)[3] = (unsigned char)((st) >> 24); \
+    (ct)[2] = (unsigned char)((st) >> 16); \
+    (ct)[1] = (unsigned char)((st) >>  8); \
+    (ct)[0] = (unsigned char)(st); } while(0)
+    unsigned char ivbuf[CHACHA20_IVLEN];
+    CHACHA_U32TOU8(ivbuf     , ctx->counter[0]);
+    CHACHA_U32TOU8(ivbuf +  4, ctx->counter[1]);
+    CHACHA_U32TOU8(ivbuf +  8, ctx->counter[2]);
+    CHACHA_U32TOU8(ivbuf + 12, ctx->counter[3]);
+    if (p != NULL) {
+        if (!OSSL_PARAM_set_octet_string(p, ivbuf, CHACHA20_IVLEN)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+            return 0;
+        }
+    }
     return 1;
 }
 
 static const OSSL_PARAM chacha20_known_gettable_ctx_params[] = {
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_IVLEN, NULL),
+    OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_UPDATED_IV, NULL, 0),
     OSSL_PARAM_END
 };
 const OSSL_PARAM *chacha20_gettable_ctx_params(ossl_unused void *cctx,

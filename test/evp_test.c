@@ -1510,9 +1510,8 @@ static int cipher_test_enc(EVP_TEST *t, int enc, size_t out_misalign,
         /* Some (e.g., GCM) tests use IVs longer than EVP_MAX_IV_LENGTH. */
         unsigned char iv[128];
         if (!TEST_true(EVP_CIPHER_CTX_get_updated_iv(ctx, iv, sizeof(iv)))
-            || ((EVP_CIPHER_get_flags(expected->cipher) & EVP_CIPH_CUSTOM_IV) == 0
-                && !TEST_mem_eq(expected->next_iv, expected->iv_len, iv,
-                                expected->iv_len))) {
+            || !TEST_mem_eq(expected->next_iv, expected->iv_len, iv,
+                            expected->iv_len)) {
             t->err = "INVALID_NEXT_IV";
             goto err;
         } else {

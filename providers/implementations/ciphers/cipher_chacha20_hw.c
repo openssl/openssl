@@ -57,9 +57,6 @@ static int chacha20_cipher(PROV_CIPHER_CTX *bctx, unsigned char *out,
 
         if (n == CHACHA_BLK_SIZE) {
             ctx->partial_len = 0;
-            ctx->counter[0]++;
-            if (ctx->counter[0] == 0)
-                ctx->counter[1]++;
         }
     }
 
@@ -102,6 +99,11 @@ static int chacha20_cipher(PROV_CIPHER_CTX *bctx, unsigned char *out,
         memset(ctx->buf, 0, sizeof(ctx->buf));
         ChaCha20_ctr32(ctx->buf, ctx->buf, CHACHA_BLK_SIZE,
                        ctx->key.d, ctx->counter);
+
+        /* propagate counter overflow */
+        if (++ctx->counter[0] == 0)
+            ctx->counter[1]++;
+
         for (n = 0; n < rem; n++)
             out[n] = in[n] ^ ctx->buf[n];
         ctx->partial_len = rem;
