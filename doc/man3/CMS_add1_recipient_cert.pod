@@ -30,7 +30,8 @@ The originator-related fields are relevant only in case when the keyAgreement
 method of providing of the shared key is in use.
 
 CMS_add1_recipient_cert() adds recipient B<recip> to CMS_ContentInfo enveloped
-data structure B<cms> as a KeyTransRecipientInfo structure.
+data structure B<cms> as a KeyTransRecipientInfo or KEMRecipientInfo structure,
+or as a KeyAgreeRecipientInfo structure with an ephemeral key.
 
 CMS_add0_recipient_key() adds symmetric key B<key> of length B<keylen> using
 wrapping algorithm B<nid>, identifier B<id> of length B<idlen> and optional
