@@ -76,6 +76,12 @@ OpenSSL Releases
 
    *Daniel Kubec*
 
+ * CMP: added `-nonmatched_error_nonces` option (also at API level).
+
+   This work was sponsored by Siemens AG.
+
+   *David von Oheimb*
+
  * Added support for RFC 8701 GREASE (Generate Random Extensions And Sustain
    Extensibility). When `SSL_OP_GREASE` is set, the TLS client injects
    reserved GREASE values into cipher suites, supported versions, supported
@@ -378,6 +384,12 @@ OpenSSL Releases
    nothing, leaving the global objects to be cleaned up by the Operating System.
 
    *Bob Beck*
+
+ * CMP: added `-ta_in_ip_extracert` option (also at API level).
+
+   This work was sponsored by Siemens AG.
+
+   *David von Oheimb*
 
  * `X509_ALGOR_set_md()` function now returns a value indicating success
     or failure.
