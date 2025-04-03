@@ -155,6 +155,13 @@ OpenSSL Releases
 
    *Daniel Kubec*
 
+ * Added `OSSL_CMP_OPT_NONMATCHED_ERROR_NONCES` option for `OSSL_CMP_CTX` and
+   a corresponding `-nonmatched_error_nonces` option for the `openssl cmp` command.
+
+   This work was sponsored by Siemens AG.
+
+   *David von Oheimb*
+
  * Added support for RFC 8701 GREASE (Generate Random Extensions And Sustain
    Extensibility). When `SSL_OP_GREASE` is set, the TLS client injects
    reserved GREASE values into cipher suites, supported versions, supported
