@@ -954,6 +954,7 @@ typedef struct cipher_data_st {
     size_t mac_key_len;
     const char *xts_standard;
     STACK_OF(OPENSSL_STRING) *init_controls; /* collection of controls */
+    int padding;
 } CIPHER_DATA;
 
 /*
@@ -1010,6 +1011,7 @@ static int cipher_test_init(EVP_TEST *t, const char *alg)
     cdat->cipher = cipher;
     cdat->fetched_cipher = fetched_cipher;
     cdat->enc = -1;
+    cdat->padding = 0;
     m = EVP_CIPHER_get_mode(cipher);
     if (EVP_CIPHER_get_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER)
         cdat->aead = m != 0 ? m : -1;
@@ -1131,12 +1133,22 @@ static int cipher_test_parse(EVP_TEST *t, const char *keyword,
     }
     if (strcmp(keyword, "CtrlInit") == 0)
         return ctrladd(cdat->init_controls, value);
+    if (strcmp(keyword, "Padding") == 0) {
+        if (strcmp(value, "ENABLE") == 0) {
+            cdat->padding = 1;
+        } else if (strcmp(value, "DISABLE") == 0) {
+            cdat->padding = 0;
+        } else {
+            return -1;
+        }
+        return 1;
+    }
     return 0;
 }
 
 static int cipher_test_enc(EVP_TEST *t, int enc, size_t out_misalign,
     size_t inp_misalign, int frag, int in_place,
-    const OSSL_PARAM initparams[])
+    const OSSL_PARAM initparams[], int padding)
 {
     CIPHER_DATA *expected = t->data;
     unsigned char *in, *expected_out, *tmp = NULL;
@@ -1430,7 +1442,7 @@ static int cipher_test_enc(EVP_TEST *t, int enc, size_t out_misalign,
             goto err;
         }
     }
-    EVP_CIPHER_CTX_set_padding(ctx, 0);
+    EVP_CIPHER_CTX_set_padding(ctx, padding);
     t->err = "CIPHERUPDATE_ERROR";
     tmplen = 0;
     if (!frag) {
@@ -1590,7 +1602,7 @@ err:
 static int cipher_test_run(EVP_TEST *t)
 {
     CIPHER_DATA *cdat = t->data;
-    int rv, frag, fragmax, in_place;
+    int rv, frag, fragmax, in_place, padding;
     size_t out_misalign, inp_misalign;
     OSSL_PARAM initparams[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
     size_t params_n = 0;
@@ -1618,6 +1630,7 @@ static int cipher_test_run(EVP_TEST *t)
             return 0;
     }
 
+    padding = cdat->padding;
     fragmax = (cipher_test_valid_fragmentation(cdat) == 0) ? 0 : 1;
     for (in_place = 1; in_place >= 0; in_place--) {
         static char aux_err[64];
@@ -1637,25 +1650,27 @@ static int cipher_test_run(EVP_TEST *t)
                         break;
                     if (in_place == 1) {
                         BIO_snprintf(aux_err, sizeof(aux_err),
-                            "%s in-place, %sfragmented",
+                            "%s in-place, %sfragmented, padding %s",
                             out_misalign ? "misaligned" : "aligned",
-                            frag ? "" : "not ");
+                            frag ? "" : "not ",
+                            padding ? "enabled" : "disabled");
                     } else {
                         BIO_snprintf(aux_err, sizeof(aux_err),
-                            "%s output and %s input, %sfragmented",
+                            "%s output and %s input, %sfragmented, padding %s",
                             out_misalign ? "misaligned" : "aligned",
                             inp_misalign ? "misaligned" : "aligned",
-                            frag ? "" : "not ");
+                            frag ? "" : "not ",
+                            padding ? "enabled" : "disabled");
                     }
                     if (cdat->enc) {
                         rv = cipher_test_enc(t, 1, out_misalign, inp_misalign,
-                            frag, in_place, initparams);
+                            frag, in_place, initparams, padding);
                         if (rv != 1)
                             goto end;
                     }
                     if (cdat->enc != 1) {
                         rv = cipher_test_enc(t, 0, out_misalign, inp_misalign,
-                            frag, in_place, initparams);
+                            frag, in_place, initparams, padding);
                         if (rv != 1)
                             goto end;
                     }
