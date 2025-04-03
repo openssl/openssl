@@ -354,6 +354,7 @@ CMS_R_NEED_ONE_SIGNER:164:need one signer
 CMS_R_NOT_A_SIGNED_RECEIPT:165:not a signed receipt
 CMS_R_NOT_ENCRYPTED_DATA:122:not encrypted data
 CMS_R_NOT_KEK:123:not kek
+CMS_R_NOT_KEM:197:not kem
 CMS_R_NOT_KEY_AGREEMENT:181:not key agreement
 CMS_R_NOT_KEY_TRANSPORT:124:not key transport
 CMS_R_NOT_PWRI:177:not pwri
@@ -394,11 +395,13 @@ CMS_R_UNABLE_TO_FINALIZE_CONTEXT:147:unable to finalize context
 CMS_R_UNKNOWN_CIPHER:148:unknown cipher
 CMS_R_UNKNOWN_DIGEST_ALGORITHM:149:unknown digest algorithm
 CMS_R_UNKNOWN_ID:150:unknown id
+CMS_R_UNKNOWN_KDF_ALGORITHM:198:unknown kdf algorithm
 CMS_R_UNSUPPORTED_COMPRESSION_ALGORITHM:151:unsupported compression algorithm
 CMS_R_UNSUPPORTED_CONTENT_ENCRYPTION_ALGORITHM:194:\
 	unsupported content encryption algorithm
 CMS_R_UNSUPPORTED_CONTENT_TYPE:152:unsupported content type
 CMS_R_UNSUPPORTED_ENCRYPTION_TYPE:192:unsupported encryption type
+CMS_R_UNSUPPORTED_KDF_ALGORITHM:199:unsupported kdf algorithm
 CMS_R_UNSUPPORTED_KEK_ALGORITHM:153:unsupported kek algorithm
 CMS_R_UNSUPPORTED_KEY_ENCRYPTION_ALGORITHM:179:\
 	unsupported key encryption algorithm

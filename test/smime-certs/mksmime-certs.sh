@@ -80,3 +80,7 @@ gen sm_slhdsa_shake_128s.pem "/CN=Test SMIME EE SLH-DSA-SHAKE-128s" \
 $OPENSSL genpkey -algorithm SLH-DSA-SHAKE-256s -out sm_slhdsa_shake_256s.pem
 gen sm_slhdsa_shake_256s.pem "/CN=Test SMIME EE SLH-DSA-SHAKE-256s" \
     signer_cert >>sm_slhdsa_shake_256s.pem
+$OPENSSL genpkey -algorithm ML-KEM-512 -out sm_mlkem512.pem
+gen sm_mlkem512.pem "/CN=Test SMIME EE ML-KEM-512" kem_cert >>sm_mlkem512.pem
+$OPENSSL genpkey -algorithm ML-KEM-768 -out sm_mlkem768.pem
+gen sm_mlkem768.pem "/CN=Test SMIME EE ML-KEM-768" kem_cert >>sm_mlkem768.pem

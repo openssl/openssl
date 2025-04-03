@@ -53,11 +53,20 @@ static int cms_set_pkey_param(EVP_PKEY_CTX *pctx,
 static int verify_err = 0;
 
 typedef struct cms_key_param_st cms_key_param;
+typedef struct cms_recip_opt_st cms_recip_opt;
 
 struct cms_key_param_st {
     int idx;
     STACK_OF(OPENSSL_STRING) *param;
     cms_key_param *next;
+};
+
+struct cms_recip_opt_st {
+    int idx;
+    const char *kdf;
+    unsigned char *ukm_data;
+    long ukm_data_length;
+    cms_recip_opt *next;
 };
 
 typedef enum OPTION_choice {
@@ -85,7 +94,8 @@ typedef enum OPTION_choice {
     OPT_PROV_ENUM, OPT_CONFIG,
     OPT_V_ENUM,
     OPT_CIPHER, OPT_KEKCIPHER,
-    OPT_ORIGINATOR
+    OPT_ORIGINATOR,
+    OPT_RECIP_UKM, OPT_RECIP_KDF
 } OPTION_CHOICE;
 
 const OPTIONS cms_options[] = {
@@ -167,13 +177,15 @@ const OPTIONS cms_options[] = {
     {"kekcipher", OPT_KEKCIPHER, 's',
      "The key encryption algorithm to use"},
     {"wrap", OPT_WRAP, 's',
-     "Key wrap algorithm to use when encrypting with key agreement"},
+     "Key wrap algorithm to use when encrypting with key agreement or key encapsulation"},
     {"aes128-wrap", OPT_AES128_WRAP, '-', "Use AES128 to wrap key"},
     {"aes192-wrap", OPT_AES192_WRAP, '-', "Use AES192 to wrap key"},
     {"aes256-wrap", OPT_AES256_WRAP, '-', "Use AES256 to wrap key"},
     {"des3-wrap", OPT_3DES_WRAP, '-', "Use 3DES-EDE to wrap key"},
     {"debug_decrypt", OPT_DEBUG_DECRYPT, '-',
      "Disable MMA protection, return error if no recipient found (see doc)"},
+    {"recip_kdf", OPT_RECIP_KDF, 's', "Set KEMRecipientInfo KDF for current recipient"},
+    {"recip_ukm", OPT_RECIP_UKM, 's', "KEMRecipientInfo user keying material for current recipient, in hex notation"},
 
     OPT_SECTION("Signing"),
     {"md", OPT_MD, 's', "Digest algorithm to use"},
@@ -281,6 +293,19 @@ static CMS_ContentInfo *load_content_info(int informat, BIO *in, int flags,
     return NULL;
 }
 
+static cms_recip_opt *alloc_recip_opt(int recipidx)
+{
+    cms_recip_opt *opt;
+
+    opt = app_malloc(sizeof(*opt), "recipient options buffer");
+    opt->idx = recipidx;
+    opt->next = NULL;
+    opt->kdf = NULL;
+    opt->ukm_data = NULL;
+    opt->ukm_data_length = 0;
+    return opt;
+}
+
 int cms_main(int argc, char **argv)
 {
     CONF *conf = NULL;
@@ -319,6 +344,8 @@ int cms_main(int argc, char **argv)
     size_t secret_keylen = 0, secret_keyidlen = 0;
     unsigned char *pwri_pass = NULL, *pwri_tmp = NULL;
     unsigned char *secret_key = NULL, *secret_keyid = NULL;
+    cms_recip_opt *recip_first = NULL, *recip_opt = NULL;
+    int recipidx = -1;
     long ltmp;
     const char *mime_eol = "\n";
     OPTION_CHOICE o;
@@ -653,6 +680,46 @@ int cms_main(int argc, char **argv)
                 recipfile = opt_arg();
             }
             break;
+        case OPT_RECIP_KDF:
+        case OPT_RECIP_UKM:
+            recipidx = -1;
+            if (operation == SMIME_ENCRYPT) {
+                if (sk_X509_num(encerts) > 0)
+                    recipidx += sk_X509_num(encerts);
+            }
+            if (recipidx < 0) {
+                BIO_printf(bio_err, "No recipient specified\n");
+                goto opthelp;
+            }
+            if (recip_opt == NULL || recip_opt->idx != recipidx) {
+                cms_recip_opt *nopt;
+
+                nopt = alloc_recip_opt(recipidx);
+                if (recip_first == NULL)
+                    recip_first = nopt;
+                else
+                    recip_opt->next = nopt;
+                recip_opt = nopt;
+            }
+            if (o == OPT_RECIP_KDF) {
+                if (recip_opt->kdf != NULL) {
+                    BIO_puts(bio_err, "Illegal multiple -recip_kdf for one -recip\n");
+                    goto end;
+                }
+                recip_opt->kdf = opt_arg();
+            } else {
+                if (recip_opt->ukm_data != NULL) {
+                    BIO_puts(bio_err, "Illegal multiple -recip_ukm for one -recip\n");
+                    goto end;
+                }
+                recip_opt->ukm_data = OPENSSL_hexstr2buf(opt_arg(),
+                                                         &recip_opt->ukm_data_length);
+                if (recip_opt->ukm_data == NULL) {
+                    BIO_printf(bio_err, "Invalid hex value after -recip_ukm\n");
+                    goto end;
+                }
+            }
+            break;
         case OPT_CIPHER:
             ciphername = opt_unknown();
             break;
@@ -831,6 +898,9 @@ int cms_main(int argc, char **argv)
     if (operation != SMIME_ENCRYPT && *argv != NULL)
         BIO_printf(bio_err,
                    "Warning: recipient certificate file parameters ignored for operation other than -encrypt\n");
+    if (operation != SMIME_ENCRYPT && recip_first != NULL)
+        BIO_printf(bio_err,
+                   "Warning: -recip_kdf and -recip_ukm parameters ignored for operation other than -encrypt\n");
 
     if ((flags & CMS_BINARY) != 0) {
         if (!(operation & SMIME_OP))
@@ -990,7 +1060,9 @@ int cms_main(int argc, char **argv)
             goto end;
         for (i = 0; i < sk_X509_num(encerts); i++) {
             CMS_RecipientInfo *ri;
+            int ri_type;
             cms_key_param *kparam;
+            cms_recip_opt *ropt;
             int tflags = flags | CMS_KEY_PARAM;
             /* This flag enforces allocating the EVP_PKEY_CTX for the recipient here */
             EVP_PKEY_CTX *pctx;
@@ -998,13 +1070,18 @@ int cms_main(int argc, char **argv)
             int res;
 
             for (kparam = key_first; kparam; kparam = kparam->next) {
-                if (kparam->idx == i) {
+                if (kparam->idx == i)
                     break;
-                }
+            }
+            for (ropt = recip_first; ropt; ropt = ropt->next) {
+                if (ropt->idx == i)
+                    break;
             }
             ri = CMS_add1_recipient(cms, x, key, originator, tflags);
             if (ri == NULL)
                 goto end;
+
+            ri_type = CMS_RecipientInfo_type(ri);
 
             pctx = CMS_RecipientInfo_get0_pkey_ctx(ri);
             if (pctx != NULL && kparam != NULL) {
@@ -1018,12 +1095,39 @@ int cms_main(int argc, char **argv)
             if (res <= 0 && res != -2)
                 goto end;
 
-            if (CMS_RecipientInfo_type(ri) == CMS_RECIPINFO_AGREE
-                    && wrap_cipher != NULL) {
-                EVP_CIPHER_CTX *wctx;
-                wctx = CMS_RecipientInfo_kari_get0_ctx(ri);
-                if (EVP_EncryptInit_ex(wctx, wrap_cipher, NULL, NULL, NULL) != 1)
-                    goto end;
+            if (wrap_cipher != NULL) {
+                EVP_CIPHER_CTX *wctx = NULL;
+
+                if (ri_type == CMS_RECIPINFO_AGREE)
+                    wctx = CMS_RecipientInfo_kari_get0_ctx(ri);
+                else if (ri_type == CMS_RECIPINFO_KEM)
+                    wctx = CMS_RecipientInfo_kemri_get0_ctx(ri);
+                if (wctx != NULL) {
+                    if (EVP_EncryptInit_ex(wctx, wrap_cipher, NULL, NULL, NULL) != 1)
+                        goto end;
+                }
+            }
+
+            if (ropt != NULL && ri_type == CMS_RECIPINFO_KEM) {
+                if (ropt->ukm_data != NULL) {
+                    if (!CMS_RecipientInfo_kemri_set_ukm(ri, ropt->ukm_data,
+                                                         (int)ropt->ukm_data_length))
+                        goto end;
+                }
+                if (ropt->kdf != NULL) {
+                    X509_ALGOR *kdf_algo;
+                    ASN1_OBJECT *kdf_obj;
+
+                    kdf_algo = CMS_RecipientInfo_kemri_get0_kdf_alg(ri);
+                    kdf_obj = OBJ_txt2obj(ropt->kdf, 0);
+                    if (kdf_obj == NULL) {
+                        BIO_printf(bio_err, "Unknown KDF %s\n", ropt->kdf);
+                        goto end;
+                    }
+                    /* Only works for OIDs without params */
+                    if (!X509_ALGOR_set0(kdf_algo, kdf_obj, V_ASN1_UNDEF, NULL))
+                        goto end;
+                }
             }
         }
 
@@ -1314,6 +1418,14 @@ int cms_main(int argc, char **argv)
         tparam = key_param->next;
         OPENSSL_free(key_param);
         key_param = tparam;
+    }
+    for (recip_opt = recip_first; recip_opt != NULL;) {
+        cms_recip_opt *topt;
+
+        OPENSSL_free(recip_opt->ukm_data);
+        topt = recip_opt->next;
+        OPENSSL_free(recip_opt);
+        recip_opt = topt;
     }
     X509_STORE_free(store);
     X509_free(cert);

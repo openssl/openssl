@@ -47,6 +47,7 @@ IF[{- !$disabled{'ml-kem'} -}]
     SOURCE[$TLS_ML_KEM_HYBRID_GOAL]=mlx_kmgmt.c
   ENDIF
   SOURCE[$ML_KEM_GOAL]=ml_kem_kmgmt.c
+  DEPEND[ml_kem_kmgmt.o]=../../common/include/prov/der_hkdf.h
 ENDIF
 
 SOURCE[$RSA_GOAL]=rsa_kmgmt.c

@@ -53,7 +53,7 @@ my ($no_des, $no_dh, $no_dsa, $no_ec, $no_ec2m, $no_rc2, $no_zlib)
 
 $no_rc2 = 1 if disabled("legacy");
 
-plan tests => 31;
+plan tests => 32;
 
 ok(run(test(["pkcs7_test"])), "test pkcs7");
 
@@ -1527,4 +1527,45 @@ subtest "sign and verify with multiple keys" => sub {
                ])),
        "verify both signature signatures with root");
     is(compare($smcont, $out2), 0, "compare original message with verified message");
+};
+
+subtest "ML-KEM KEMRecipientInfo tests for CMS" => sub {
+    plan tests => 5;
+
+    SKIP: {
+        skip "ML-KEM is not supported in this build", 5
+            if disabled("ml-kem") || $no_pqc;
+
+        ok(run(app(["openssl", "cms", @prov, "-encrypt", "-in", $smcont,
+                    "-out", "mlkem512.cms",
+                    "-recip", catfile($smdir, "sm_mlkem512.pem"),
+                    "-aes-256-gcm", "-keyid" ])),
+           "CMS encrypt with ML-KEM-512 and default KDF");
+
+        ok(run(app(["openssl", "cms", @prov, "-decrypt", "-in", "mlkem512.cms",
+                    "-out", "mlkem512.txt", "-recip", catfile($smdir, "sm_mlkem512.pem")]))
+           && compare_text($smcont, "mlkem512.txt") == 0,
+           "CMS decrypt with ML-KEM-512 and default KDF");
+
+        ok(run(app(["openssl", "cms", @prov, "-encrypt", "-in", $smcont,
+                    "-out", "mlkem512_mlkem768.cms",
+                    "-recip", catfile($smdir, "sm_mlkem512.pem"),
+                    "-recip_kdf", "HKDF-SHA512",
+                    "-recip", catfile($smdir, "sm_mlkem768.pem"),
+                    "-recip_ukm", "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+                    "-aes-256-gcm", "-keyid" ])),
+           "CMS encrypt to multiple with ML-KEM and explicit KDF and UKM");
+
+        ok(run(app(["openssl", "cms", @prov, "-decrypt", "-in", "mlkem512_mlkem768.cms",
+                    "-out", "mlkem512-2.txt",
+                    "-recip", catfile($smdir, "sm_mlkem512.pem")]))
+           && compare_text($smcont, "mlkem512-2.txt") == 0,
+           "CMS decrypt with ML-KEM-512 and explicit KDF");
+
+        ok(run(app(["openssl", "cms", @prov, "-decrypt", "-in", "mlkem512_mlkem768.cms",
+                    "-out", "mlkem768-2.txt",
+                    "-recip", catfile($smdir, "sm_mlkem768.pem")]))
+           && compare_text($smcont, "mlkem768-2.txt") == 0,
+           "CMS decrypt with ML-KEM-768 and using UKM");
+    }
 };

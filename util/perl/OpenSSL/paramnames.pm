@@ -315,6 +315,8 @@ my %params = (
     'PKEY_PARAM_FIPS_KEY_CHECK' =>      "key-check",
     'PKEY_PARAM_ALGORITHM_ID' =>        '*ALG_PARAM_ALGORITHM_ID',
     'PKEY_PARAM_ALGORITHM_ID_PARAMS' => '*ALG_PARAM_ALGORITHM_ID_PARAMS',
+    'PKEY_PARAM_CMS_RI_TYPE' =>         "ri-type", # integer
+    'PKEY_PARAM_CMS_KEMRI_KDF_ALGORITHM' => "kemri-kdf-alg",
 
 # Diffie-Hellman/DSA Parameters
     'PKEY_PARAM_FFC_P' =>               "p",

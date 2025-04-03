@@ -442,6 +442,30 @@ its argument I<mdname>.  This signifies that no digest has to be specified
 with the corresponding signature operation, but may be specified as an
 option.
 
+=item "ri-type" (B<OSSL_PKEY_PARAM_CMS_RI_TYPE>) <integer>
+
+The value should be the CMS RecipientInfo type for the given key, for example
+B<CMS_RECIPINFO_KEM> or B<CMS_RECIPINFO_AGREE>.
+The value that can be given through this parameter is found in
+F<< <openssl/cms.h> >>, with the macros having names starting with
+C<CMS_RECIPINFO_>.
+
+CMS will query this parameter first to determine the RecipientInfo type.  If
+this parameter is not filled in, CMS will check for known key types and map
+them to the appropriate RecipientInfo type. Otherwise, CMS will default to
+using B<CMS_RECIPINFO_TRANS>.
+
+=item "kemri-kdf-alg" (B<OSSL_PKEY_PARAM_CMS_KEMRI_KDF_ALGORITHM>) <UTF8 string>
+
+The value should be the DER-encoded X509_ALGOR for the default KDF for this key
+if it supports the KEMRecipientInfo (B<CMS_RECIPINFO_KEM>) type.
+
+Any KDF that takes B<OSSL_KDF_PARAM_KEY> and B<OSSL_KDF_PARAM_INFO> parameters
+and is otherwise fully defined by its OID can be used, for example B<HKDF-SHA256>.
+
+If B<OSSL_PKEY_PARAM_CMS_KEMRI_KDF_ALGORITHM> is not implemented, B<HKDF-SHA256>
+will be used as the default KDF.
+
 =back
 
 The OpenSSL FIPS provider also supports the following parameters:

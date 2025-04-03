@@ -251,6 +251,7 @@ SMIME 3			: id-smime-alg
 SMIME 4			: id-smime-cd
 SMIME 5			: id-smime-spq
 SMIME 6			: id-smime-cti
+SMIME 13		: id-smime-ori
 
 # S/MIME Modules
 id-smime-mod 1		: id-smime-mod-cms
@@ -354,6 +355,9 @@ id-smime-cti 3		: id-smime-cti-ets-proofOfDelivery
 id-smime-cti 4		: id-smime-cti-ets-proofOfSender
 id-smime-cti 5		: id-smime-cti-ets-proofOfApproval
 id-smime-cti 6		: id-smime-cti-ets-proofOfCreation
+
+# S/MIME OtherRecipientInfo Type Identifier
+id-smime-ori 3		: id-smime-ori-kem
 
 pkcs9 20		:			: friendlyName
 pkcs9 21		:			: localKeyID
