@@ -22,6 +22,7 @@ static const char *ir_protected_f;
 static const char *ir_unprotected_f;
 static const char *ir_rmprotection_f;
 static const char *ip_waiting_f;
+static const char *error_protected_f;
 static const char *instacert_f;
 static const char *instaca_f;
 static const char *ir_protected_0_extracerts;
@@ -452,9 +453,9 @@ static int execute_msg_check_test(CMP_VFY_TEST_FIXTURE *fixture)
 
     if (fixture->expected == 0) /* error expected already during above check */
         return 1;
-    return TEST_int_eq(0,
-               ASN1_OCTET_STRING_cmp(ossl_cmp_hdr_get0_senderNonce(hdr),
-                   fixture->cmp_ctx->recipNonce))
+    if (OSSL_CMP_CTX_get_option(fixture->cmp_ctx, OSSL_CMP_OPT_NONMATCHED_ERROR_NONCES))
+        return 1;
+    return TEST_int_eq(0, ASN1_OCTET_STRING_cmp(ossl_cmp_hdr_get0_senderNonce(hdr), fixture->cmp_ctx->recipNonce))
         && TEST_int_eq(0,
             ASN1_OCTET_STRING_cmp(tid,
                 fixture->cmp_ctx->transactionID));
@@ -468,6 +469,7 @@ static int allow_unprotected(const OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
 
 static void setup_check_update(CMP_VFY_TEST_FIXTURE **fixture, int expected,
     ossl_cmp_allow_unprotected_cb_t cb, int arg,
+    const OSSL_CMP_MSG *msg,
     const unsigned char *trid_data,
     const unsigned char *nonce_data)
 {
@@ -477,7 +479,7 @@ static void setup_check_update(CMP_VFY_TEST_FIXTURE **fixture, int expected,
     (*fixture)->expected = expected;
     (*fixture)->allow_unprotected_cb = cb;
     (*fixture)->additional_arg = arg;
-    (*fixture)->msg = OSSL_CMP_MSG_dup(ir_rmprotection);
+    (*fixture)->msg = msg == NULL ? load_pkimsg(error_protected_f, libctx) : OSSL_CMP_MSG_dup(msg);
     if ((*fixture)->msg == NULL
         || (nonce_data != NULL
             && !ossl_cmp_asn1_octet_string_set1_bytes(&ctx->senderNonce,
@@ -502,7 +504,7 @@ static void setup_check_update(CMP_VFY_TEST_FIXTURE **fixture, int expected,
 static int test_msg_check_no_protection_no_cb(void)
 {
     SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
-    setup_check_update(&fixture, 0, NULL, 0, NULL, NULL);
+    setup_check_update(&fixture, 0, NULL, 0, ir_rmprotection, NULL, NULL);
     EXECUTE_TEST(execute_msg_check_test, tear_down);
     return result;
 }
@@ -510,7 +512,7 @@ static int test_msg_check_no_protection_no_cb(void)
 static int test_msg_check_no_protection_restrictive_cb(void)
 {
     SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
-    setup_check_update(&fixture, 0, allow_unprotected, 0, NULL, NULL);
+    setup_check_update(&fixture, 0, allow_unprotected, 0, ir_rmprotection, NULL, NULL);
     EXECUTE_TEST(execute_msg_check_test, tear_down);
     return result;
 }
@@ -519,7 +521,7 @@ static int test_msg_check_no_protection_restrictive_cb(void)
 static int test_msg_check_no_protection_permissive_cb(void)
 {
     SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
-    setup_check_update(&fixture, 1, allow_unprotected, 1, NULL, NULL);
+    setup_check_update(&fixture, 1, allow_unprotected, 1, ir_rmprotection, NULL, NULL);
     EXECUTE_TEST(execute_msg_check_test, tear_down);
     return result;
 }
@@ -533,7 +535,7 @@ static int test_msg_check_transaction_id(void)
     };
 
     SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
-    setup_check_update(&fixture, 1, allow_unprotected, 1, trans_id, NULL);
+    setup_check_update(&fixture, 1, allow_unprotected, 1, ir_rmprotection, trans_id, NULL);
     EXECUTE_TEST(execute_msg_check_test, tear_down);
     return result;
 }
@@ -542,11 +544,20 @@ static int test_msg_check_transaction_id(void)
 static int test_msg_check_transaction_id_bad(void)
 {
     SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
-    setup_check_update(&fixture, 0, allow_unprotected, 1, rand_data, NULL);
+    setup_check_update(&fixture, 0, allow_unprotected, 1, ir_rmprotection, rand_data, NULL);
     EXECUTE_TEST(execute_msg_check_test, tear_down);
     return result;
 }
 #endif
+
+static int test_msg_check_transaction_id_error(void)
+{
+    SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
+    (void)OSSL_CMP_CTX_set_option(fixture->cmp_ctx, OSSL_CMP_OPT_NONMATCHED_ERROR_NONCES, 1);
+    setup_check_update(&fixture, 1, allow_unprotected, 1, NULL, rand_data, NULL);
+    EXECUTE_TEST(execute_msg_check_test, tear_down);
+    return result;
+}
 
 static int test_msg_check_recipient_nonce(void)
 {
@@ -557,7 +568,7 @@ static int test_msg_check_recipient_nonce(void)
     };
 
     SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
-    setup_check_update(&fixture, 1, allow_unprotected, 1, NULL, rec_nonce);
+    setup_check_update(&fixture, 1, allow_unprotected, 1, ir_rmprotection, NULL, rec_nonce);
     EXECUTE_TEST(execute_msg_check_test, tear_down);
     return result;
 }
@@ -566,11 +577,22 @@ static int test_msg_check_recipient_nonce(void)
 static int test_msg_check_recipient_nonce_bad(void)
 {
     SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
-    setup_check_update(&fixture, 0, allow_unprotected, 1, NULL, rand_data);
+    setup_check_update(&fixture, 0, allow_unprotected, 1, ir_rmprotection, NULL, rand_data);
     EXECUTE_TEST(execute_msg_check_test, tear_down);
     return result;
 }
 #endif
+
+/* Transaction id belonging to error_protected.der not needed here: */
+/* 0x5D, 0x90, 0x14, 0xB4, 0xBA, 0xAD, 0x6F, 0xCC, 0x36, 0x7B, 0xB8, 0x09, 0xB6, 0x98, 0xBF, 0x21 */
+static int test_msg_check_recipient_nonce_error(void)
+{
+    SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
+    (void)OSSL_CMP_CTX_set_option(fixture->cmp_ctx, OSSL_CMP_OPT_NONMATCHED_ERROR_NONCES, 1);
+    setup_check_update(&fixture, 1, allow_unprotected, 1, NULL, NULL, rand_data);
+    EXECUTE_TEST(execute_msg_check_test, tear_down);
+    return result;
+}
 
 void cleanup_tests(void)
 {
@@ -595,6 +617,7 @@ void cleanup_tests(void)
               "Root_CA.crt Intermediate_CA.crt "              \
               "CMP_IR_protected.der CMP_IR_unprotected.der "  \
               "IP_waitingStatus_PBM.der IR_rmprotection.der " \
+              "error_protected.der "                          \
               "insta.cert.pem insta_ca.cert.pem "             \
               "IR_protected_0_extraCerts.der "                \
               "IR_protected_2_extraCerts.der module_name [module_conf_file]\n"
@@ -628,15 +651,16 @@ int setup_tests(void)
         || !TEST_ptr(ir_unprotected_f = test_get_argument(7))
         || !TEST_ptr(ip_waiting_f = test_get_argument(8))
         || !TEST_ptr(ir_rmprotection_f = test_get_argument(9))
-        || !TEST_ptr(instacert_f = test_get_argument(10))
-        || !TEST_ptr(instaca_f = test_get_argument(11))
-        || !TEST_ptr(ir_protected_0_extracerts = test_get_argument(12))
-        || !TEST_ptr(ir_protected_2_extracerts = test_get_argument(13))) {
+        || !TEST_ptr(error_protected_f = test_get_argument(10))
+        || !TEST_ptr(instacert_f = test_get_argument(11))
+        || !TEST_ptr(instaca_f = test_get_argument(12))
+        || !TEST_ptr(ir_protected_0_extracerts = test_get_argument(13))
+        || !TEST_ptr(ir_protected_2_extracerts = test_get_argument(14))) {
         TEST_error("usage: cmp_vfy_test %s", USAGE);
         return 0;
     }
 
-    if (!test_arg_libctx(&libctx, &default_null_provider, &provider, 14, USAGE))
+    if (!test_arg_libctx(&libctx, &default_null_provider, &provider, 15, USAGE))
         return 0;
 
     /* Load certificates for cert chain */
@@ -708,10 +732,12 @@ int setup_tests(void)
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     ADD_TEST(test_msg_check_transaction_id_bad);
 #endif
+    ADD_TEST(test_msg_check_transaction_id_error);
     ADD_TEST(test_msg_check_recipient_nonce);
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     ADD_TEST(test_msg_check_recipient_nonce_bad);
 #endif
+    ADD_TEST(test_msg_check_recipient_nonce_error);
 
     return 1;
 

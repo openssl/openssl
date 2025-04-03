@@ -671,24 +671,35 @@ int OSSL_CMP_validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
     return 0;
 }
 
-static int check_transactionID_or_nonce(ASN1_OCTET_STRING *expected,
-    ASN1_OCTET_STRING *actual, int reason)
+static int check_transactionID_or_nonce(OSSL_CMP_CTX *ctx, ASN1_OCTET_STRING *expected,
+    ASN1_OCTET_STRING *actual, int bodytype, int reason)
 {
     if (expected != NULL
         && (actual == NULL || ASN1_OCTET_STRING_cmp(expected, actual) != 0)) {
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-        char *expected_str, *actual_str;
+        char *expected_str = i2s_ASN1_OCTET_STRING(NULL, expected);
+        char *actual_str = actual == NULL ? NULL : i2s_ASN1_OCTET_STRING(NULL, actual);
+        int strict = !ctx->nonmatchedErrorNonces;
+        int res = 0;
 
-        expected_str = i2s_ASN1_OCTET_STRING(NULL, expected);
-        actual_str = actual == NULL ? NULL : i2s_ASN1_OCTET_STRING(NULL, actual);
-        ERR_raise_data(ERR_LIB_CMP, reason,
-            "expected = %s, actual = %s",
-            expected_str == NULL ? "?" : expected_str,
-            actual == NULL ? "(none)" : actual_str == NULL ? "?"
-                                                           : actual_str);
+        if (reason == 0) /* just check; used for end_of_polling */
+            return res;
+        if (bodytype != OSSL_CMP_PKIBODY_ERROR)
+            strict = 1;
+        if (strict) {
+            ERR_raise_data(ERR_LIB_CMP, reason,
+                "expected = %s, actual = %s",
+                expected_str == NULL ? "?" : expected_str,
+                actual == NULL ? "(none)" : actual_str == NULL ? "?"
+                                                               : actual_str);
+        } else {
+            ossl_cmp_log1(WARN, ctx, "ignoring missing or non-matching %s of error message",
+                reason == CMP_R_TRANSACTIONID_UNMATCHED ? "transactionID" : "recipNonce");
+            res = 1;
+        }
         OPENSSL_free(expected_str);
         OPENSSL_free(actual_str);
-        return 0;
+        return res;
 #endif
     }
     return 1;
@@ -719,11 +730,13 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
 {
     OSSL_CMP_PKIHEADER *hdr;
     const X509_NAME *expected_sender;
+    int bodytype, end_of_polling;
     int num_untrusted, num_added, res;
 
     if (!ossl_assert(ctx != NULL && msg != NULL && msg->header != NULL))
         return 0;
     hdr = OSSL_CMP_MSG_get0_header(msg);
+    bodytype = OSSL_CMP_MSG_get_bodytype(msg);
 
     /* If expected_sender is given, validate sender name of received msg */
     expected_sender = ctx->expected_sender;
@@ -757,6 +770,8 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
             return 0;
         }
     }
+
+    /* Ignoring recipient */
     /* Note: if recipient was NULL-DN it could be learned here if needed */
 
     num_added = sk_X509_num(msg->extraCerts);
@@ -818,7 +833,7 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
 #endif
     }
 
-    if (OSSL_CMP_MSG_get_bodytype(msg) < 0) {
+    if (bodytype < 0) {
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
         ERR_raise(ERR_LIB_CMP, CMP_R_PKIBODY_ERROR);
         return 0;
@@ -826,30 +841,21 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
     }
 
     /* compare received transactionID with the expected one in previous msg */
-    if (!check_transactionID_or_nonce(ctx->transactionID, hdr->transactionID,
-            CMP_R_TRANSACTIONID_UNMATCHED))
+    if (!check_transactionID_or_nonce(ctx, ctx->transactionID, hdr->transactionID,
+            bodytype, CMP_R_TRANSACTIONID_UNMATCHED))
         return 0;
 
-    /*
-     * enable clearing irrelevant errors
-     * in attempts to validate recipient nonce in case of delayed delivery.
-     */
-    (void)ERR_set_mark();
     /* compare received nonce with the one we sent */
-    if (!check_transactionID_or_nonce(ctx->senderNonce, hdr->recipNonce,
-            CMP_R_RECIPNONCE_UNMATCHED)) {
-        /* check if we are polling and received final response */
-        if (ctx->first_senderNonce == NULL
-            || OSSL_CMP_MSG_get_bodytype(msg) == OSSL_CMP_PKIBODY_POLLREP
-            /* compare received nonce with our sender nonce at poll start */
-            || !check_transactionID_or_nonce(ctx->first_senderNonce,
-                hdr->recipNonce,
-                CMP_R_RECIPNONCE_UNMATCHED)) {
-            (void)ERR_clear_last_mark();
+    end_of_polling = /* check if we are polling and received final response */
+        ctx->first_senderNonce != NULL && bodytype != OSSL_CMP_PKIBODY_POLLREP;
+    if (!check_transactionID_or_nonce(ctx, ctx->senderNonce, hdr->recipNonce,
+            bodytype, end_of_polling ? 0 : CMP_R_RECIPNONCE_UNMATCHED)) {
+        if (!end_of_polling
+            /* otherwise, compare received nonce with our sender nonce at poll start: */
+            || !check_transactionID_or_nonce(ctx, ctx->first_senderNonce, hdr->recipNonce,
+                bodytype, CMP_R_RECIPNONCE_UNMATCHED))
             return 0;
-        }
     }
-    (void)ERR_pop_to_mark();
 
     /* if not yet present, learn transactionID */
     if (ctx->transactionID == NULL
@@ -871,7 +877,7 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
          * the caPubs field may be directly trusted as a root CA
          * certificate by the initiator.'
          */
-        switch (OSSL_CMP_MSG_get_bodytype(msg)) {
+        switch (bodytype) {
         case OSSL_CMP_PKIBODY_IP:
         case OSSL_CMP_PKIBODY_CP:
         case OSSL_CMP_PKIBODY_KUP:

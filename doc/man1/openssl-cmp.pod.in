@@ -70,6 +70,7 @@ Server authentication options:
 [B<-expect_sender> I<name>]
 [B<-ignore_keyusage>]
 [B<-unprotected_errors>]
+[B<-nonmatched_error_nonces>]
 [B<-ta_in_ip_extracerts>]
 [B<-no_cache_extracerts>]
 [B<-srvcertout> I<filename>]
@@ -715,6 +716,12 @@ with a signature key."
 =item * appendix D.4 shows PKIConf message having protection
 
 =back
+
+=item B<-nonmatched_error_nonces>
+
+Accept missing or non-matching transactionID or recipNonce values in error messages.
+This can be helpful in case the server cannot provide a proper error message,
+for instance if it was unable to parse the ASN.1 encoding of a request message.
 
 =item B<-ta_in_ip_extracerts>
 
@@ -1529,6 +1536,8 @@ and B<-rsp_crl> options were added in OpenSSL 3.4.
 
 B<-centralkeygen>, B<-newkeyout>, B<-rsp_key> and
 B<-rsp_keypass> were added in OpenSSL 3.5.
+
+The B<-nonmatched_error_nonces> option was added in OpenSSL 4.0.
 
 The B<-ta_in_ip_extracerts> quirk option was added in OpenSSL 4.0.
 
