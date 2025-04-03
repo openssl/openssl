@@ -240,7 +240,42 @@ static int test_kdf_hkdf(void)
     return ret;
 }
 
-static int do_kdf_hkdf_gettables(int extract_only, int has_digest)
+static int kdf_hkdf_fixed_digest(const char *kdf_name, char *digest)
+{
+    int ret;
+    EVP_KDF_CTX *kctx1 = NULL;
+    EVP_KDF_CTX *kctx2 = NULL;
+    unsigned char out1[10];
+    unsigned char out2[10];
+    OSSL_PARAM *params1;
+    OSSL_PARAM *params2;
+
+    params1 = construct_hkdf_params(digest, "secret", 6, "salt", "label");
+    params2 = construct_hkdf_params(NULL, "secret", 6, "salt", "label");
+
+    ret = TEST_ptr(params1)
+        && TEST_ptr(params2)
+        && TEST_ptr(kctx1 = get_kdfbyname(OSSL_KDF_NAME_HKDF))
+        && TEST_ptr(kctx2 = get_kdfbyname(kdf_name))
+        && TEST_int_gt(EVP_KDF_derive(kctx1, out1, sizeof(out1), params1), 0)
+        && TEST_int_gt(EVP_KDF_derive(kctx2, out2, sizeof(out2), params2), 0)
+        && TEST_mem_eq(out1, sizeof(out1), out2, sizeof(out2));
+
+    EVP_KDF_CTX_free(kctx1);
+    EVP_KDF_CTX_free(kctx2);
+    OPENSSL_free(params1);
+    OPENSSL_free(params2);
+    return ret;
+}
+
+static int test_kdf_hkdf_fixed_digest(void)
+{
+    return kdf_hkdf_fixed_digest(OSSL_KDF_NAME_HKDF_SHA256, "sha256")
+        && kdf_hkdf_fixed_digest(OSSL_KDF_NAME_HKDF_SHA384, "sha384")
+        && kdf_hkdf_fixed_digest(OSSL_KDF_NAME_HKDF_SHA512, "sha512");
+}
+
+static int do_kdf_hkdf_gettables(int expand_only, int has_digest)
 {
     int ret = 0;
     size_t sz = 0;
@@ -350,6 +385,31 @@ static int test_kdf_hkdf_invalid_digest(void)
     EVP_KDF_CTX_free(kctx);
     OPENSSL_free(params);
     return ret;
+}
+
+static int kdf_hkdf_fixed_digest_change_digest(const char *kdf_name, char *digest)
+{
+    int ret;
+    EVP_KDF_CTX *kctx = NULL;
+    OSSL_PARAM *params;
+
+    /* It is not allowed to change the digest in a fixed-digest KDF */
+    params = construct_hkdf_params(digest, "secret", 6, "salt", "label");
+
+    ret = TEST_ptr(params)
+        && TEST_ptr(kctx = get_kdfbyname(kdf_name))
+        && TEST_false(EVP_KDF_CTX_set_params(kctx, params));
+
+    EVP_KDF_CTX_free(kctx);
+    OPENSSL_free(params);
+    return ret;
+}
+
+static int test_kdf_hkdf_fixed_digest_change_digest(void)
+{
+    return kdf_hkdf_fixed_digest_change_digest(OSSL_KDF_NAME_HKDF_SHA256, "sha256")
+        && kdf_hkdf_fixed_digest_change_digest(OSSL_KDF_NAME_HKDF_SHA384, "sha384")
+        && kdf_hkdf_fixed_digest_change_digest(OSSL_KDF_NAME_HKDF_SHA512, "sha512");
 }
 
 static int test_kdf_hkdf_derive_set_params_fail(void)
@@ -2096,7 +2156,9 @@ int setup_tests(void)
     ADD_TEST(test_kdf_tls1_prf_empty_seed);
     ADD_TEST(test_kdf_tls1_prf_1byte_seed);
     ADD_TEST(test_kdf_hkdf);
+    ADD_TEST(test_kdf_hkdf_fixed_digest);
     ADD_TEST(test_kdf_hkdf_invalid_digest);
+    ADD_TEST(test_kdf_hkdf_fixed_digest_change_digest);
     ADD_TEST(test_kdf_hkdf_zero_output_size);
     ADD_TEST(test_kdf_hkdf_empty_key);
     ADD_TEST(test_kdf_hkdf_1byte_key);

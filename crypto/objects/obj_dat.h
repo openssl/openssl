@@ -10,7 +10,7 @@
  */
 
 /* Serialized OID's */
-static const unsigned char so[9517] = {
+static const unsigned char so[9550] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,                 /* [    0] OBJ_rsadsi */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,            /* [    6] OBJ_pkcs */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,       /* [   13] OBJ_md2 */
@@ -1348,9 +1348,12 @@ static const unsigned char so[9517] = {
     0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x2C,  /* [ 9489] OBJ_SLH_DSA_SHAKE_192f_WITH_SHAKE256 */
     0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x2D,  /* [ 9498] OBJ_SLH_DSA_SHAKE_256s_WITH_SHAKE256 */
     0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x2E,  /* [ 9507] OBJ_SLH_DSA_SHAKE_256f_WITH_SHAKE256 */
+    0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x03,0x1C,  /* [ 9516] OBJ_HKDF_SHA256 */
+    0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x03,0x1D,  /* [ 9527] OBJ_HKDF_SHA384 */
+    0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x03,0x1E,  /* [ 9538] OBJ_HKDF_SHA512 */
 };
 
-#define NUM_NID 1496
+#define NUM_NID 1499
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2848,9 +2851,12 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"AES-128-CBC-HMAC-SHA512-ETM", "aes-128-cbc-hmac-sha512-etm", NID_aes_128_cbc_hmac_sha512_etm},
     {"AES-192-CBC-HMAC-SHA512-ETM", "aes-192-cbc-hmac-sha512-etm", NID_aes_192_cbc_hmac_sha512_etm},
     {"AES-256-CBC-HMAC-SHA512-ETM", "aes-256-cbc-hmac-sha512-etm", NID_aes_256_cbc_hmac_sha512_etm},
+    {"id-alg-hkdf-with-sha256", "HKDF-SHA256", NID_HKDF_SHA256, 11, &so[9516]},
+    {"id-alg-hkdf-with-sha384", "HKDF-SHA384", NID_HKDF_SHA384, 11, &so[9527]},
+    {"id-alg-hkdf-with-sha512", "HKDF-SHA512", NID_HKDF_SHA512, 11, &so[9538]},
 };
 
-#define NUM_SN 1487
+#define NUM_SN 1490
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -3480,6 +3486,9 @@ static const unsigned int sn_objs[NUM_SN] = {
      323,    /* "id-alg-des40" */
      326,    /* "id-alg-dh-pop" */
      325,    /* "id-alg-dh-sig-hmac-sha1" */
+    1496,    /* "id-alg-hkdf-with-sha256" */
+    1497,    /* "id-alg-hkdf-with-sha384" */
+    1498,    /* "id-alg-hkdf-with-sha512" */
     1456,    /* "id-alg-ml-kem-1024" */
     1454,    /* "id-alg-ml-kem-512" */
     1455,    /* "id-alg-ml-kem-768" */
@@ -4341,7 +4350,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1289,    /* "zstd" */
 };
 
-#define NUM_LN 1487
+#define NUM_LN 1490
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -4468,6 +4477,9 @@ static const unsigned int ln_objs[NUM_LN] = {
     1472,    /* "HASH-ML-DSA-44-WITH-SHA512" */
     1473,    /* "HASH-ML-DSA-65-WITH-SHA512" */
     1474,    /* "HASH-ML-DSA-87-WITH-SHA512" */
+    1496,    /* "HKDF-SHA256" */
+    1497,    /* "HKDF-SHA384" */
+    1498,    /* "HKDF-SHA512" */
     1156,    /* "HMAC DSTU Gost 34311-95" */
      988,    /* "HMAC GOST 34.11-2012 256 bit" */
      989,    /* "HMAC GOST 34.11-2012 512 bit" */
@@ -5832,7 +5844,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      125,    /* "zlib compression" */
 };
 
-#define NUM_OBJ 1344
+#define NUM_OBJ 1347
 static const unsigned int obj_objs[NUM_OBJ] = {
        0,    /* OBJ_undef                        0 */
      181,    /* OBJ_iso                          1 */
@@ -7145,6 +7157,9 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      247,    /* OBJ_id_smime_alg_CMSRC2wrap      1 2 840 113549 1 9 16 3 7 */
      125,    /* OBJ_zlib_compression             1 2 840 113549 1 9 16 3 8 */
      893,    /* OBJ_id_alg_PWRI_KEK              1 2 840 113549 1 9 16 3 9 */
+    1496,    /* OBJ_HKDF_SHA256                  1 2 840 113549 1 9 16 3 28 */
+    1497,    /* OBJ_HKDF_SHA384                  1 2 840 113549 1 9 16 3 29 */
+    1498,    /* OBJ_HKDF_SHA512                  1 2 840 113549 1 9 16 3 30 */
      248,    /* OBJ_id_smime_cd_ldap             1 2 840 113549 1 9 16 4 1 */
      249,    /* OBJ_id_smime_spq_ets_sqt_uri     1 2 840 113549 1 9 16 5 1 */
      250,    /* OBJ_id_smime_spq_ets_sqt_unotice 1 2 840 113549 1 9 16 5 2 */

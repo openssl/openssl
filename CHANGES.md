@@ -112,6 +112,11 @@ OpenSSL 3.6
 
    *Dimitri John Ledkov*
 
+ * HKDF with (SHA-256,SHA-384,SHA-512) has assigned OIDs. Added ability to load
+   HKDF configured with these explicit digests by name or OID.
+
+   *Daniel Van Geest (CryptoNext Security)*
+
 OpenSSL 3.5
 -----------
 
