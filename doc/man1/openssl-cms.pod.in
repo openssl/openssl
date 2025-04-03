@@ -75,6 +75,8 @@ Encryption options:
 [B<-aes256-wrap>]
 [B<-des3-wrap>]
 [B<-debug_decrypt>]
+[B<-recip_kdf> I<kdf>]
+[B<-recip_ukm> I<ukm>]
 
 Signing options:
 
@@ -449,6 +451,19 @@ Depending on the OpenSSL build options used, B<-des3-wrap> may not be supported.
 
 This option sets the B<CMS_DEBUG_DECRYPT> flag. This option should be used
 with caution: see the notes section below.
+
+=item B<-recip_kdf>
+
+This option sets the KDF used to generate the key encryption key in the
+B<KEMRecipientInfo> type. Any KDF that takes B<OSSL_KDF_PARAM_KEY> and
+B<OSSL_KDF_PARAM_INFO> parameters and is otherwise fully defined by its name or
+OID can be used, for example B<HKDF-SHA256>.
+
+=item B<-recip_ukm>
+
+This option sets the B<KEMRecipientInfo> type's optional user keying material (UKM)
+in hexadecimal form. The UKM will be encoded, along with other information, into the
+B<OSSL_KDF_PARAM_INFO> parameter of the B<KEMRecipientInfo> type's KDF.
 
 =back
 
@@ -936,6 +951,8 @@ The B<-nameopt> option was added in OpenSSL 3.0.0.
 The B<-engine> option was deprecated in OpenSSL 3.0.
 
 The B<-digest> option was added in OpenSSL 3.2.
+
+The B<-recip_kdf> and B<-recip_ukm> options were added in OpenSSL 3.6.
 
 =head1 COPYRIGHT
 

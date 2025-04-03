@@ -750,6 +750,14 @@ int CMS_decrypt_set1_pkey_and_peer(CMS_ContentInfo *cms, EVP_PKEY *pk,
                 return 1;
             if (r < 0)
                 return 0;
+        } else if (ri_type == CMS_RECIPINFO_KEM) {
+            if (cert == NULL || !CMS_RecipientInfo_kemri_cert_cmp(ri, cert)) {
+                CMS_RecipientInfo_kemri_set0_pkey(ri, pk);
+                r = CMS_RecipientInfo_decrypt(cms, ri);
+                CMS_RecipientInfo_kemri_set0_pkey(ri, NULL);
+                if (cert != NULL || r > 0)
+                    return r;
+            }
         }
         /* If we have a cert, try matching RecipientInfo, else try them all */
         else if (cert == NULL || !CMS_RecipientInfo_ktri_cert_cmp(ri, cert)) {

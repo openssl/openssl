@@ -778,6 +778,10 @@
 #define NID_id_smime_cti                195
 #define OBJ_id_smime_cti                OBJ_SMIME,6L
 
+#define SN_id_smime_ori         "id-smime-ori"
+#define NID_id_smime_ori                1499
+#define OBJ_id_smime_ori                OBJ_SMIME,13L
+
 #define SN_id_smime_mod_cms             "id-smime-mod-cms"
 #define NID_id_smime_mod_cms            196
 #define OBJ_id_smime_mod_cms            OBJ_id_smime_mod,1L
@@ -1112,6 +1116,10 @@
 #define SN_id_smime_cti_ets_proofOfCreation             "id-smime-cti-ets-proofOfCreation"
 #define NID_id_smime_cti_ets_proofOfCreation            256
 #define OBJ_id_smime_cti_ets_proofOfCreation            OBJ_id_smime_cti,6L
+
+#define SN_id_smime_ori_kem             "id-smime-ori-kem"
+#define NID_id_smime_ori_kem            1500
+#define OBJ_id_smime_ori_kem            OBJ_id_smime_ori,3L
 
 #define LN_friendlyName         "friendlyName"
 #define NID_friendlyName                156

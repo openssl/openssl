@@ -145,6 +145,11 @@ OpenSSL 3.6
 
    *Michael Krueger, Martin Rauch*
 
+ * Added KEMRecipientInfo (RFC 9629) and ML-KEM (draft-ietf-lamps-cms-kyber)
+   support to CMS.
+
+   *Daniel Van Geest (CryptoNext Security)*
+
 OpenSSL 3.5
 -----------
 

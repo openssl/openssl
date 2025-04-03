@@ -5931,3 +5931,8 @@ i2d_PKCS8PrivateKey                     ?	3_6_0	EXIST::FUNCTION:
 OSSL_PARAM_set_octet_string_or_ptr      ?	3_6_0	EXIST::FUNCTION:
 OSSL_STORE_LOADER_settable_ctx_params   ?	3_6_0	EXIST::FUNCTION:
 X509_CRL_get0_tbs_sigalg                ?	3_6_0	EXIST::FUNCTION:
+CMS_RecipientInfo_kemri_cert_cmp        ?	3_6_0	EXIST::FUNCTION:CMS
+CMS_RecipientInfo_kemri_set0_pkey       ?	3_6_0	EXIST::FUNCTION:CMS
+CMS_RecipientInfo_kemri_get0_ctx        ?	3_6_0	EXIST::FUNCTION:CMS
+CMS_RecipientInfo_kemri_get0_kdf_alg    ?	3_6_0	EXIST::FUNCTION:CMS
+CMS_RecipientInfo_kemri_set_ukm         ?	3_6_0	EXIST::FUNCTION:CMS
