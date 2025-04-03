@@ -51,6 +51,13 @@ static OSSL_FUNC_kdf_settable_ctx_params_fn kdf_tls1_3_settable_ctx_params;
 static OSSL_FUNC_kdf_set_ctx_params_fn kdf_tls1_3_set_ctx_params;
 static OSSL_FUNC_kdf_gettable_ctx_params_fn kdf_tls1_3_gettable_ctx_params;
 static OSSL_FUNC_kdf_get_ctx_params_fn kdf_tls1_3_get_ctx_params;
+static OSSL_FUNC_kdf_newctx_fn kdf_hkdf_sha256_new;
+static OSSL_FUNC_kdf_newctx_fn kdf_hkdf_sha384_new;
+static OSSL_FUNC_kdf_newctx_fn kdf_hkdf_sha512_new;
+static OSSL_FUNC_kdf_settable_ctx_params_fn kdf_hkdf_fixed_digest_settable_ctx_params;
+static OSSL_FUNC_kdf_set_ctx_params_fn kdf_hkdf_fixed_digest_set_ctx_params;
+
+static void *kdf_hkdf_fixed_digest_new(void *provctx, const char *digest);
 
 static int HKDF(OSSL_LIB_CTX *libctx, const EVP_MD *evp_md,
                 const unsigned char *salt, size_t salt_len,
@@ -66,12 +73,14 @@ static int HKDF_Expand(const EVP_MD *evp_md,
                        const unsigned char *info, size_t info_len,
                        unsigned char *okm, size_t okm_len);
 
-/* Settable context parameters that are common across HKDF and the TLS KDF */
-#define HKDF_COMMON_SETTABLES                                       \
+/*
+ * Settable context parameters that are common across HKDF (including
+ * implementations with a default digest) and the TLS KDF
+ */
+#define HKDF_COMMON_SETTABLES_NO_DIGEST                             \
     OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_MODE, NULL, 0),           \
     OSSL_PARAM_int(OSSL_KDF_PARAM_MODE, NULL),                      \
     OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_PROPERTIES, NULL, 0),     \
-    OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_DIGEST, NULL, 0),         \
     OSSL_PARAM_octet_string(OSSL_KDF_PARAM_KEY, NULL, 0),           \
     OSSL_PARAM_octet_string(OSSL_KDF_PARAM_SALT, NULL, 0)
 
@@ -475,6 +484,83 @@ const OSSL_DISPATCH ossl_kdf_hkdf_functions[] = {
     { OSSL_FUNC_KDF_GET_CTX_PARAMS, (void(*)(void))kdf_hkdf_get_ctx_params },
     OSSL_DISPATCH_END
 };
+
+static void *kdf_hkdf_fixed_digest_new(void *provctx, const char *digest)
+{
+    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(provctx);
+    KDF_HKDF *ctx;
+    OSSL_PARAM params[2];
+
+    ctx = kdf_hkdf_new(provctx);
+    if (ctx == NULL)
+        return NULL;
+
+    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_ALG_PARAM_DIGEST,
+                                                 (char *)digest, 0);
+    params[1] = OSSL_PARAM_construct_end();
+    if (!ossl_prov_digest_load_from_params(&ctx->digest, params, libctx)) {
+        kdf_hkdf_free(ctx);
+        return NULL;
+    }
+
+    return ctx;
+}
+
+#define KDF_HKDF_FIXED_DIGEST_NEW(hashname, hashstring) \
+    static void *kdf_hkdf_##hashname##_new(void *provctx) \
+    { \
+        return kdf_hkdf_fixed_digest_new(provctx, hashstring); \
+    }
+
+KDF_HKDF_FIXED_DIGEST_NEW(sha256, "SHA256")
+KDF_HKDF_FIXED_DIGEST_NEW(sha384, "SHA384")
+KDF_HKDF_FIXED_DIGEST_NEW(sha512, "SHA512")
+
+static const OSSL_PARAM *kdf_hkdf_fixed_digest_settable_ctx_params(ossl_unused void *ctx,
+                                                                   ossl_unused void *provctx)
+{
+    static const OSSL_PARAM known_settable_ctx_params[] = {
+        HKDF_COMMON_SETTABLES_NO_DIGEST,
+        OSSL_PARAM_octet_string(OSSL_KDF_PARAM_INFO, NULL, 0),
+        OSSL_FIPS_IND_SETTABLE_CTX_PARAM(OSSL_KDF_PARAM_FIPS_KEY_CHECK)
+        OSSL_PARAM_END
+    };
+    return known_settable_ctx_params;
+}
+
+static int kdf_hkdf_fixed_digest_set_ctx_params(void *vctx, const OSSL_PARAM params[])
+{
+    if (OSSL_PARAM_locate_const(params, OSSL_ALG_PARAM_DIGEST) != NULL) {
+        /*
+         * TODO: OPENSSL MAINTAINERS: should it fail an any attempt to set the digest or
+         * should it be allowed to set the digest to the current digest?
+         */
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED,
+                       "Setting the digest is not supported for fixed-digest HKDFs");
+        return 0;
+    }
+
+    return kdf_hkdf_set_ctx_params(vctx, params);
+}
+
+#define MAKE_KDF_HKDF_FIXED_DIGEST_FUNCTIONS(hashname) \
+    const OSSL_DISPATCH ossl_kdf_hkdf_##hashname##_functions[] = { \
+        { OSSL_FUNC_KDF_NEWCTX, (void(*)(void))kdf_hkdf_##hashname##_new }, \
+        { OSSL_FUNC_KDF_DUPCTX, (void(*)(void))kdf_hkdf_dup }, \
+        { OSSL_FUNC_KDF_FREECTX, (void(*)(void))kdf_hkdf_free }, \
+        { OSSL_FUNC_KDF_RESET, (void(*)(void))kdf_hkdf_reset }, \
+        { OSSL_FUNC_KDF_DERIVE, (void(*)(void))kdf_hkdf_derive }, \
+        { OSSL_FUNC_KDF_SETTABLE_CTX_PARAMS, \
+          (void(*)(void))kdf_hkdf_fixed_digest_settable_ctx_params }, \
+        { OSSL_FUNC_KDF_SET_CTX_PARAMS, (void(*)(void))kdf_hkdf_fixed_digest_set_ctx_params }, \
+        { OSSL_FUNC_KDF_GETTABLE_CTX_PARAMS, (void(*)(void))kdf_hkdf_gettable_ctx_params }, \
+        { OSSL_FUNC_KDF_GET_CTX_PARAMS, (void(*)(void))kdf_hkdf_get_ctx_params }, \
+        OSSL_DISPATCH_END \
+    };
+
+MAKE_KDF_HKDF_FIXED_DIGEST_FUNCTIONS(sha256)
+MAKE_KDF_HKDF_FIXED_DIGEST_FUNCTIONS(sha384)
+MAKE_KDF_HKDF_FIXED_DIGEST_FUNCTIONS(sha512)
 
 /*
  * Refer to "HMAC-based Extract-and-Expand Key Derivation Function (HKDF)"

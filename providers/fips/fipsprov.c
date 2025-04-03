@@ -404,6 +404,9 @@ static const OSSL_ALGORITHM fips_macs_internal[] = {
 
 static const OSSL_ALGORITHM fips_kdfs[] = {
     { PROV_NAMES_HKDF, FIPS_DEFAULT_PROPERTIES, ossl_kdf_hkdf_functions },
+    { PROV_NAMES_HKDF_SHA256, FIPS_DEFAULT_PROPERTIES, ossl_kdf_hkdf_sha256_functions },
+    { PROV_NAMES_HKDF_SHA384, FIPS_DEFAULT_PROPERTIES, ossl_kdf_hkdf_sha384_functions },
+    { PROV_NAMES_HKDF_SHA512, FIPS_DEFAULT_PROPERTIES, ossl_kdf_hkdf_sha512_functions },
     { PROV_NAMES_TLS1_3_KDF, FIPS_DEFAULT_PROPERTIES,
       ossl_kdf_tls1_3_kdf_functions },
     { PROV_NAMES_SSKDF, FIPS_DEFAULT_PROPERTIES, ossl_kdf_sskdf_functions },
@@ -445,6 +448,9 @@ static const OSSL_ALGORITHM fips_keyexch[] = {
     { PROV_NAMES_TLS1_PRF, FIPS_DEFAULT_PROPERTIES,
       ossl_kdf_tls1_prf_keyexch_functions },
     { PROV_NAMES_HKDF, FIPS_DEFAULT_PROPERTIES, ossl_kdf_hkdf_keyexch_functions },
+    { PROV_NAMES_HKDF_SHA256, FIPS_DEFAULT_PROPERTIES, ossl_kdf_hkdf_sha256_keyexch_functions },
+    { PROV_NAMES_HKDF_SHA384, FIPS_DEFAULT_PROPERTIES, ossl_kdf_hkdf_sha384_keyexch_functions },
+    { PROV_NAMES_HKDF_SHA512, FIPS_DEFAULT_PROPERTIES, ossl_kdf_hkdf_sha512_keyexch_functions },
     { NULL, NULL, NULL }
 };
 
@@ -612,6 +618,12 @@ static const OSSL_ALGORITHM fips_keymgmt[] = {
       PROV_DESCS_TLS1_PRF_SIGN },
     { PROV_NAMES_HKDF, FIPS_DEFAULT_PROPERTIES, ossl_kdf_keymgmt_functions,
       PROV_DESCS_HKDF_SIGN },
+    { PROV_NAMES_HKDF_SHA256, FIPS_DEFAULT_PROPERTIES, ossl_kdf_keymgmt_functions,
+      PROV_DESCS_HKDF_SHA256_SIGN },
+    { PROV_NAMES_HKDF_SHA384, FIPS_DEFAULT_PROPERTIES, ossl_kdf_keymgmt_functions,
+      PROV_DESCS_HKDF_SHA384_SIGN },
+    { PROV_NAMES_HKDF_SHA512, FIPS_DEFAULT_PROPERTIES, ossl_kdf_keymgmt_functions,
+      PROV_DESCS_HKDF_SHA512_SIGN },
     { PROV_NAMES_HMAC, FIPS_DEFAULT_PROPERTIES, ossl_mac_legacy_keymgmt_functions,
       PROV_DESCS_HMAC_SIGN },
 #ifndef OPENSSL_NO_CMAC

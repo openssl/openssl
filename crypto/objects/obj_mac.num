@@ -1493,3 +1493,6 @@ aes_256_cbc_hmac_sha256_etm		1492
 aes_128_cbc_hmac_sha512_etm		1493
 aes_192_cbc_hmac_sha512_etm		1494
 aes_256_cbc_hmac_sha512_etm		1495
+HKDF_SHA256		1496
+HKDF_SHA384		1497
+HKDF_SHA512		1498

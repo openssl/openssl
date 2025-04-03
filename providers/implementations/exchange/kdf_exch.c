@@ -79,6 +79,9 @@ err:
 
 KDF_NEWCTX(tls1_prf, "TLS1-PRF")
 KDF_NEWCTX(hkdf, "HKDF")
+KDF_NEWCTX(hkdf_sha256, "HKDF-SHA256")
+KDF_NEWCTX(hkdf_sha384, "HKDF-SHA384")
+KDF_NEWCTX(hkdf_sha512, "HKDF-SHA512")
 KDF_NEWCTX(scrypt, "SCRYPT")
 
 static int kdf_init(void *vpkdfctx, void *vkdf, const OSSL_PARAM params[])
@@ -206,6 +209,9 @@ static const OSSL_PARAM *kdf_settable_ctx_params(ossl_unused void *vpkdfctx,
 
 KDF_SETTABLE_CTX_PARAMS(tls1_prf, "TLS1-PRF")
 KDF_SETTABLE_CTX_PARAMS(hkdf, "HKDF")
+KDF_SETTABLE_CTX_PARAMS(hkdf_sha256, "HKDF-SHA256")
+KDF_SETTABLE_CTX_PARAMS(hkdf_sha384, "HKDF-SHA384")
+KDF_SETTABLE_CTX_PARAMS(hkdf_sha512, "HKDF-SHA512")
 KDF_SETTABLE_CTX_PARAMS(scrypt, "SCRYPT")
 
 static const OSSL_PARAM *kdf_gettable_ctx_params(ossl_unused void *vpkdfctx,
@@ -234,6 +240,9 @@ static const OSSL_PARAM *kdf_gettable_ctx_params(ossl_unused void *vpkdfctx,
 
 KDF_GETTABLE_CTX_PARAMS(tls1_prf, "TLS1-PRF")
 KDF_GETTABLE_CTX_PARAMS(hkdf, "HKDF")
+KDF_GETTABLE_CTX_PARAMS(hkdf_sha256, "HKDF-SHA256")
+KDF_GETTABLE_CTX_PARAMS(hkdf_sha384, "HKDF-SHA384")
+KDF_GETTABLE_CTX_PARAMS(hkdf_sha512, "HKDF-SHA512")
 KDF_GETTABLE_CTX_PARAMS(scrypt, "SCRYPT")
 
 #define KDF_KEYEXCH_FUNCTIONS(funcname) \
@@ -254,4 +263,7 @@ KDF_GETTABLE_CTX_PARAMS(scrypt, "SCRYPT")
 
 KDF_KEYEXCH_FUNCTIONS(tls1_prf)
 KDF_KEYEXCH_FUNCTIONS(hkdf)
+KDF_KEYEXCH_FUNCTIONS(hkdf_sha256)
+KDF_KEYEXCH_FUNCTIONS(hkdf_sha384)
+KDF_KEYEXCH_FUNCTIONS(hkdf_sha512)
 KDF_KEYEXCH_FUNCTIONS(scrypt)

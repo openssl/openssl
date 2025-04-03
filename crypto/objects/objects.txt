@@ -336,6 +336,9 @@ id-smime-alg 5		: id-smime-alg-ESDH
 id-smime-alg 6		: id-smime-alg-CMS3DESwrap
 id-smime-alg 7		: id-smime-alg-CMSRC2wrap
 id-smime-alg 9		: id-alg-PWRI-KEK
+id-smime-alg 28		: id-alg-hkdf-with-sha256	: HKDF-SHA256
+id-smime-alg 29		: id-alg-hkdf-with-sha384	: HKDF-SHA384
+id-smime-alg 30		: id-alg-hkdf-with-sha512	: HKDF-SHA512
 
 # S/MIME Certificate Distribution
 id-smime-cd 1		: id-smime-cd-ldap
