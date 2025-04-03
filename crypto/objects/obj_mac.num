@@ -1493,3 +1493,5 @@ aes_256_cbc_hmac_sha256_etm		1492
 aes_128_cbc_hmac_sha512_etm		1493
 aes_192_cbc_hmac_sha512_etm		1494
 aes_256_cbc_hmac_sha512_etm		1495
+id_smime_ori		1496
+id_smime_ori_kem		1497
