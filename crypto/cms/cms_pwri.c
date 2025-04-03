@@ -138,7 +138,7 @@ CMS_RecipientInfo *CMS_add0_recipient_password(CMS_ContentInfo *cms,
         ERR_raise(ERR_LIB_CMS, ERR_R_ASN1_LIB);
         goto err;
     }
-    ri->type = CMS_RECIPINFO_PASS;
+    ri->encoded_type = ri->type = CMS_RECIPINFO_PASS;
 
     pwri = ri->d.pwri;
     pwri->cms_ctx = cms_ctx;
