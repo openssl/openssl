@@ -16,7 +16,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_x509");
 
-plan tests => 134;
+plan tests => 135;
 
 # Prevent MSys2 filename munging for arguments that look like file paths but
 # aren't
@@ -606,3 +606,32 @@ SKIP: {
 
     ok(run(test(["x509_test", $psscert])), "running x509_test");
 }
+
+# Test case for #27182 -certopt ext_oid for x509 -text
+subtest 'Test -certopt ext_oid for x509 -text' => sub {
+    plan tests => 5;
+
+    my $cert = srctop_file('test', 'certs', 'rootcert.pem');
+    my @stdout;
+    my @stderr;
+
+    # Test default output (no OIDs)
+    @stdout = `openssl x509 -text -noout -in $cert`;
+    ok($? == 0, "Run openssl x509 default");
+    ok(!grep(/\(2\.5\.29\.19\)/, @stdout),
+       "Default output should not contain OID (2.5.29.19) for Basic Constraints");
+
+    # Clear arrays for next run
+    @stdout = ();
+    @stderr = ();
+
+    # Test with -certopt ext_oid (OIDs should appear)
+    diag("Command: ", join(" ", 'openssl', 'x509', '-text', '-noout', '-certopt', 'ext_oid', '-in', $cert));
+    @stdout = `openssl x509 -text -noout -certopt ext_oid -in $cert`;
+    diag("ext_oid output:\n", join("\n", @stdout));
+    ok($? == 0, "Run openssl x509 with -certopt ext_oid");
+    ok(grep(/X509v3 Basic Constraints \(2\.5\.29\.19\)/, @stdout),
+       "ext_oid output should contain 'X509v3 Basic Constraints (2.5.29.19)'");
+    ok(grep(/X509v3 Subject Key Identifier \(2\.5\.29\.14\)/, @stdout),
+       "ext_oid output should contain 'X509v3 Subject Key Identifier (2.5.29.14)'");
+};
