@@ -32,7 +32,7 @@ sub rev32() {
 my $dst = shift;
 my $src = shift;
 $code.=<<___;
-#ifndef __ARMEB__
+#ifndef __AARCH64EB__
 	rev32	$dst.16b,$src.16b
 #endif
 ___
@@ -404,7 +404,7 @@ ___
 	&enc_blk($ivec);
 	&rev32($ivec,$ivec);
 $code.=<<___;
-	st1	{$ivec.16b},[$out],#16
+	st1	{$ivec.4s},[$out],#16
 	b.ne	1b
 	b	3f
 .Ldec:
@@ -485,11 +485,11 @@ ___
 $code.=<<___;
 	eor	@dat[0].16b,@dat[0].16b,$ivec.16b
 	mov	$ivec.16b,@in[0].16b
-	st1	{@dat[0].16b},[$out],#16
+	st1	{@dat[0].4s},[$out],#16
 	b.ne	1b
 3:
 	// save back IV
-	st1	{$ivec.16b},[$ivp]
+	st1	{$ivec.4s},[$ivp]
 	ldp	d8,d9,[sp],#16
 	ret
 .size	${prefix}_cbc_encrypt,.-${prefix}_cbc_encrypt
