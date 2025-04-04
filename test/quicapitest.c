@@ -2690,7 +2690,6 @@ end:
 /***********************************************************************************/
 OPT_TEST_DECLARE_USAGE("provider config certsdir datadir\n")
 
-
 int setup_tests(void)
 {
     char *modulename;
