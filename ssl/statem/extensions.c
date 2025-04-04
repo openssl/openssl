@@ -1736,11 +1736,14 @@ static int final_early_data(SSL_CONNECTION *s, unsigned int context, int sent)
 static int final_maxfragmentlen(SSL_CONNECTION *s, unsigned int context,
                                 int sent)
 {
+    if (s->session == NULL)
+        return 1;
+
     /* MaxFragmentLength defaults to disabled */
     if (s->session->ext.max_fragment_len_mode == TLSEXT_max_fragment_length_UNSPECIFIED)
         s->session->ext.max_fragment_len_mode = TLSEXT_max_fragment_length_DISABLED;
 
-    if (s->session && USE_MAX_FRAGMENT_LENGTH_EXT(s->session)) {
+    if (USE_MAX_FRAGMENT_LENGTH_EXT(s->session)) {
         s->rlayer.rrlmethod->set_max_frag_len(s->rlayer.rrl,
                                               GET_MAX_FRAGMENT_LENGTH(s->session));
         s->rlayer.wrlmethod->set_max_frag_len(s->rlayer.wrl,
