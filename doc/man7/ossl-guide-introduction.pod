@@ -99,14 +99,18 @@ The pages in the guide are as follows:
 
 =head1 FOR CONTRIBUTORS AND DEVELOPERS
 
-For those contributing to OpenSSL or developing with it, the following resources are available:
+For those contributing to OpenSSL or developing with it, the following 
+resources are available:
 
 =over 4
 
 =item F<directory-structure.md>: An overview of the OpenSSL repository structure
 
-This document explains the major directories and files in the OpenSSL repository, 
-helping contributors understand the codebase organization.
+This documentation is available in multiple locations:
+* As a man page when OpenSSL is installed on your system
+* As a web page on OpenSSL's official website (www.openssl.org)
+* In the source distribution of OpenSSL in the `doc` directory
+* In a Git checkout at `doc/directory-structure.md`
 
 =back
 
