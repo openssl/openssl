@@ -2654,9 +2654,42 @@ static int test_ssl_new_from_listener(void)
     return testresult;
 }
 
-/***********************************************************************************/
+static int test_server_method_with_ssl_new(void)
+{
+    SSL_CTX *ctx = NULL;
+    SSL *ssl = NULL;
+    int ret = 0;
+    unsigned long err;
 
+    /* Create a new SSL_CTX using the QUIC server method */
+    ctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_server_method());
+    if (!TEST_ptr(ctx))
+        goto end;
+
+    /* Try to create a new SSL object - this should fail */
+    ssl = SSL_new(ctx);
+
+    /* Check that SSL_new() returned NULL */
+    if (!TEST_ptr_null(ssl))
+        goto end;
+
+    /* Check for the expected error */
+    err = ERR_peek_error();
+    if (!TEST_true(ERR_GET_LIB(err) == ERR_LIB_SSL &&
+                   ERR_GET_REASON(err) == ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED))
+        goto end;
+
+    ret = 1;
+
+end:
+    SSL_free(ssl);
+    SSL_CTX_free(ctx);
+    return ret;
+}
+
+/***********************************************************************************/
 OPT_TEST_DECLARE_USAGE("provider config certsdir datadir\n")
+
 
 int setup_tests(void)
 {
@@ -2753,6 +2786,7 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_SSL_TRACE
     ADD_TEST(test_new_token);
 #endif
+    ADD_TEST(test_server_method_with_ssl_new);
     return 1;
  err:
     cleanup_tests();
