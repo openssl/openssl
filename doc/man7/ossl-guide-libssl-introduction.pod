@@ -67,7 +67,7 @@ that an application may need to use. They are summarised below.
 
 This structure is used to indicate the kind of connection you want to make, e.g.
 whether it is to represent the client or the server, and whether it is to use
-SSL/TLS, DTLS or QUIC (client only). It is passed as a parameter when creating
+SSL/TLS, DTLS or QUIC. It is passed as a parameter when creating
 the B<SSL_CTX>.
 
 =item B<SSL_SESSION> (SSL Session)
