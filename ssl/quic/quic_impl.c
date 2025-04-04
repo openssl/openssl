@@ -561,6 +561,15 @@ SSL *ossl_quic_new(SSL_CTX *ctx)
     QUIC_CONNECTION *qc = NULL;
     SSL_CONNECTION *sc = NULL;
 
+    /*
+     * QUIC_server_method should not be used with SSL_new.
+     * It should only be used with SSL_new_listener.
+     */
+    if (ctx->method == OSSL_QUIC_server_method()) {
+        QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED, NULL);
+        return NULL;
+    }
+
     qc = OPENSSL_zalloc(sizeof(*qc));
     if (qc == NULL) {
         QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_CRYPTO_LIB, NULL);
