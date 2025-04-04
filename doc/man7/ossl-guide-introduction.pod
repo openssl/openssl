@@ -106,19 +106,7 @@ resources are available:
 
 =item F<directory-structure.md>: An overview of the OpenSSL repository structure
 
-This documentation is available in multiple locations:
-
-=over 4
-
-=item * As a man page when OpenSSL is installed on your system
-
-=item * As a web page on OpenSSL's official website (www.openssl.org)
-
-=item * In the source distribution of OpenSSL in the `doc` directory
-
-=item * In a Git checkout at `doc/directory-structure.md`
-
-=back
+This file is available in the source distribution of OpenSSL in the `doc` directory.
 
 =back
 
