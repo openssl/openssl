@@ -10,6 +10,7 @@ on:
 
 jobs:
   trigger:
+    if: github.repository == 'openssl/openssl'
     runs-on: ubuntu-latest
     steps:
       - name: "Trigger deployment workflow"

@@ -7,6 +7,7 @@ on:
 
 jobs:
   update_quay_container:
+    if: github.repository == 'openssl/openssl'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
