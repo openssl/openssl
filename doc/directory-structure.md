@@ -6,6 +6,7 @@ structure, explaining what the major directories and files are, their purpose,
 and how they relate to each other.
 
 This documentation is available in multiple locations:
+
 * As a man page when OpenSSL is installed on your system
 * As a web page on OpenSSL's official website (www.openssl.org)
 * In the source distribution of OpenSSL in the `doc` directory
