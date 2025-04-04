@@ -13,7 +13,8 @@
 #include "progs.h"
 #include <openssl/bn.h>
 
-#define BUFSIZE 256
+/* Consistent with RSA modulus size limit and the size of plausible individual primes */
+#define BUFSIZE 4098
 
 typedef enum OPTION_choice {
     OPT_COMMON,
@@ -37,6 +38,30 @@ static int check_num(const char *s, const int is_hex)
         for (i = 0;  '0' <= s[i] && s[i] <= '9'; i++);
     }
     return s[i] == 0;
+}
+
+static void process_num(const char *s, const int is_hex, BIGNUM *bn)
+{
+    int r;
+
+    r = check_num(s, is_hex);
+
+    if (r)
+        r = is_hex ? BN_hex2bn(&bn, s) : BN_dec2bn(&bn, s);
+
+    if (!r) {
+        BIO_printf(bio_err, "Failed to process value (%s)\n", s);
+        return;
+    }
+
+    BN_print(bio_out, bn);
+    r = BN_check_prime(bn, NULL, NULL);
+    if (r < 0) {
+        BIO_printf(bio_err, "Error checking prime\n");
+        return;
+    }
+
+    BIO_printf(bio_out, " (%s) %s prime\n", s, r == 1 ? "is" : "is not");
 }
 
 const OPTIONS prime_options[] = {
@@ -68,7 +93,7 @@ int prime_main(int argc, char **argv)
     int hex = 0, generate = 0, bits = 0, safe = 0, ret = 1, in_file = 0;
     char *prog;
     OPTION_CHOICE o;
-    char *file_read_buf = NULL;
+    char file_read_buf[BUFSIZE] = { 0 };
     BIO *in = NULL;
 
     prog = opt_init(argc, argv, prime_options);
@@ -144,75 +169,39 @@ opthelp:
         OPENSSL_free(s);
     } else {
         for ( ; *argv; argv++) {
-            char *check_val;
             int bytes_read = 0;
-            int total_read = 0;
-            int r;
+            int valid_digits_length = 0;
 
             if (!in_file) {
-                check_val = argv[0];
+                process_num(argv[0], hex, bn);
             } else {
                 in = bio_open_default_quiet(argv[0], 'r', 0);
                 if (in == NULL) {
                     BIO_printf(bio_err, "Error opening file %s\n", argv[0]);
-                    goto end;
+                    continue;
                 }
 
-                file_read_buf = (char *)app_malloc(BUFSIZE, "File read buffer");
-                while (BIO_pending(in) || !BIO_eof(in)) {
-                    bytes_read = BIO_read(in, (char *)(file_read_buf + total_read), BUFSIZE);
-                    if (bytes_read < 0) {
-                        BIO_printf(bio_err, "Read error in %s\n", argv[0]);
-                        goto end;
+                while ((bytes_read = BIO_get_line(in, file_read_buf, BUFSIZE)) > 0) {
+                    /* Number is too long. Discard remainder of the line */
+                    if (bytes_read == BUFSIZE - 1 && file_read_buf[BUFSIZE - 2] != '\n') {
+                        BIO_printf(bio_err, "Value in %s is over the maximum size (%d digits)\n",
+                                   argv[0], BUFSIZE - 2);
+                        while (BIO_get_line(in, file_read_buf, BUFSIZE) == BUFSIZE - 1);
+                        continue;
                     }
-                    if (bytes_read == 0)
-                        break;
-                    total_read += bytes_read;
-                    if (bytes_read == BUFSIZE)
-                        file_read_buf = (char *)realloc(file_read_buf, BUFSIZE + total_read);
+
+                    valid_digits_length = strspn(file_read_buf, "1234567890abcdefABCDEF");
+                    file_read_buf[valid_digits_length] = '\0';
+
+                    process_num(file_read_buf, hex, bn);
                 }
 
-                /* Deal with the case of an empty file */
-                if (total_read == 0) {
-                    BIO_printf(bio_err, "Cannot process empty file\n");
-                    goto end;
-                }
+                if (bytes_read < 0)
+                    BIO_printf(bio_err, "Read error in %s\n", argv[0]);
 
-                /* Deal with Unix and Windows line endings */
-                if (total_read >= 2 && file_read_buf[total_read - 2] == '\r')
-                    file_read_buf[total_read - 2] = '\0';
-                else if (total_read >= 1 && file_read_buf[total_read - 1] == '\n')
-                    file_read_buf[total_read - 1] = '\0';
-
-                check_val = file_read_buf;
-
-            }
-
-            r = check_num(check_val, hex);
-
-            if (r)
-                r = hex ? BN_hex2bn(&bn, check_val) : BN_dec2bn(&bn, check_val);
-
-            if (!r) {
-                BIO_printf(bio_err, "Failed to process value (%s)\n", check_val);
-                goto end;
-            }
-
-            BN_print(bio_out, bn);
-            r = BN_check_prime(bn, NULL, NULL);
-            if (r < 0) {
-                BIO_printf(bio_err, "Error checking prime\n");
-                goto end;
-            }
-            BIO_printf(bio_out, " (%s) %s prime\n",
-                       check_val,
-                       r == 1 ? "is" : "is not");
-
-            if (in_file) {
-                BIO_free(in);
-                OPENSSL_free(file_read_buf);
+                if (in != NULL)
+                    BIO_free(in);
                 in = NULL;
-                file_read_buf = NULL;
             }
         }
     }
@@ -222,7 +211,5 @@ opthelp:
     BN_free(bn);
     if (in != NULL)
         BIO_free(in);
-    if (file_read_buf != NULL)
-        OPENSSL_free(file_read_buf);
     return ret;
 }
