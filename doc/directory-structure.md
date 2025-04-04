@@ -79,7 +79,6 @@ Notable components:
 * The `openssl s_client` tool supports SSL/TLS, DTLS and QUIC via the `-quic`
   flag (since version 3.2.0)
 * The `openssl s_server` tool supports SSL/TLS, DTLS but does NOT support QUIC
-  directly
 
 ### crypto/
 
