@@ -228,6 +228,12 @@ For more information on shutting down a connection, see L<SSL_shutdown(3)>.
 Allow legacy insecure renegotiation between OpenSSL and unpatched servers
 B<only>. See the B<SECURE RENEGOTIATION> section for more details.
 
+=item SSL_OP_LEGACY_EC_POINT_FORMATS
+
+Enable use of the legacy point formats for elliptic curves. This option enables
+support for the deprecated ANSI X9.62 prime and char2 compressed point formats,
+in addition to the uncompressed format that is enabled by default.
+
 =item SSL_OP_NO_ANTI_REPLAY
 
 By default, when a server is configured for early data (i.e., max_early_data > 0),
