@@ -4360,6 +4360,7 @@ void SSL_CTX_free(SSL_CTX *a)
 
     X509_VERIFY_PARAM_free(a->param);
     dane_ctx_final(&a->dane);
+    SSL_CTX_clean_grease(a);
 
     /*
      * Free internal session cache. However: the remove_cb() may reference
@@ -8320,4 +8321,109 @@ int SSL_CTX_get0_server_cert_type(const SSL_CTX *ctx, unsigned char **t, size_t 
     *t = ctx->server_cert_type;
     *len = ctx->server_cert_type_len;
     return 1;
+}
+
+static int ossl_grease_common(SSL_CTX *ctx, unsigned int extension,
+                              int new_extension,
+                              unsigned int value,
+                              unsigned char *data, size_t length)
+{
+    OSSL_GREASE *g;
+    OSSL_GREASE *newg = NULL;
+    int ret = 0;
+
+    if (!CRYPTO_THREAD_write_lock(ctx->lock))
+        return 0;
+    /* Duplicate check */
+    for (g = ctx->grease; g != NULL; g = g->next) {
+        if (g->extension == extension && g->value == value) {
+            /* don't care about the data contents */
+            goto err;
+        }
+    }
+    if ((newg = OPENSSL_zalloc(sizeof(*newg))) == NULL)
+        goto err;
+    newg->extension = extension;
+    newg->value = value;
+    newg->new_extension = new_extension;
+    if (data != NULL) {
+        if ((newg->data = OPENSSL_memdup(data, length)) == NULL)
+            goto err;
+        newg->length = length;
+    }
+    newg->next = ctx->grease;
+    ctx->grease = newg;
+    ret = 1;
+    newg = NULL;
+
+ err:
+    if (newg != NULL) {
+        OPENSSL_free(newg->data);
+        OPENSSL_free(newg);
+    }
+    CRYPTO_THREAD_unlock(ctx->lock);
+    return ret;
+}
+
+int SSL_CTX_add_grease_to_extension(SSL_CTX *ctx, unsigned int extension, unsigned int value)
+{
+    /* Add an entry for a known (supported) extension */
+    if (!SSL_extension_supported(extension))
+        return 0;
+
+    /* Not all extensions support grease though */
+    switch (extension) {
+    case TLSEXT_TYPE_supported_versions:
+    case TLSEXT_TYPE_signature_algorithms:
+    case TLSEXT_TYPE_supported_groups:
+    case TLSEXT_TYPE_psk_kex_modes:
+    case TLSEXT_TYPE_key_share:
+    case TLSEXT_TYPE_compress_certificate:
+    case TLSEXT_TYPE_server_cert_type:
+    case TLSEXT_TYPE_client_cert_type:
+        break;
+    default:
+        return 0;
+    }
+
+    /* Does not apply to servers */
+    return ossl_grease_common(ctx, extension, 0, value, NULL, 0);
+}
+
+int SSL_CTX_add_grease_to_ciphers(SSL_CTX *ctx, unsigned int cipher)
+{
+    /* Add an entry for ciphers - not an extension! */
+    /* Does not apply to servers */
+    return ossl_grease_common(ctx, OSSL_GREASE_CIPHER, 0, cipher, NULL, 0);
+}
+
+/* Could this just be done via a custom extension instead, or is this easier? */
+int SSL_CTX_add_grease_extension(SSL_CTX *ctx, unsigned int extension, unsigned char *value,
+                                 size_t length)
+{
+    /* Add an entry for a (new) extension */
+    /* Invalid extension */
+    if (extension > 0xFFFF)
+        return 0;
+    /* This is the real limit, but not really a practical one */
+    if (length > 0xFFFF)
+        return 0;
+    /* Check to make sure it's not a pre-existing/supported extension */
+    if (SSL_extension_supported(extension))
+        return 0;
+
+    return ossl_grease_common(ctx, extension, 1, 0, value, length);
+}
+
+void SSL_CTX_clean_grease(SSL_CTX *ctx)
+{
+    /* Delete all GREASE entries */
+    OSSL_GREASE *g;
+
+    while (ctx->grease) {
+        g = ctx->grease;
+        ctx->grease = g->next;
+        OPENSSL_free(g->data);
+        OPENSSL_free(g);
+    }
 }
