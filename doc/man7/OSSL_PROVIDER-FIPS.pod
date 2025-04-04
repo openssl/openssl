@@ -103,6 +103,12 @@ The OpenSSL FIPS provider supports these operations and algorithms:
 
 =item HKDF, see L<EVP_KDF-HKDF(7)>
 
+=item HKDF-SHA256, see L<EVP_KDF-HKDF(7)>
+
+=item HKDF-SHA384, see L<EVP_KDF-HKDF(7)>
+
+=item HKDF-SHA512, see L<EVP_KDF-HKDF(7)>
+
 =item TLS13-KDF, see L<EVP_KDF-TLS13_KDF(7)>
 
 =item SSKDF, see L<EVP_KDF-SS(7)>
@@ -582,7 +588,9 @@ L<https://www.openssl.org/source/>
 
 =head1 HISTORY
 
-This functionality was added in OpenSSL 3.0.
+The HKDF-SHA256, HKDF-SHA384 and HKDF-SHA512 digests were added in OpenSSL 3.6.
+
+All other functionality was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
