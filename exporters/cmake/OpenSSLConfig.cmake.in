@@ -40,7 +40,9 @@
        # according to the conventions of the platform.
        $volume =~ s|^(.*?):$|/$1| if $^O eq "vms"; # On VMS, DEV: -> /DEV
 
-       return $volume . File::Spec::Unix->catpath('', $directories, $no_file ? () : $file);
+       $path = $volume . File::Spec::Unix->catpath('', $directories, $no_file ? () : $file);
+       # Unescape VMS ODS-5 file name escapes (^) on VMS
+       $path =~ s|\^||g if $^O eq "vms";
    }
    ""
 -}
