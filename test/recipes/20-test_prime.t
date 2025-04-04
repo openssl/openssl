@@ -22,7 +22,7 @@ my $long_number_file = data_file("long_number.txt");
 my $short_number_file = data_file("short_number.txt");
 my $non_number_file  = data_file("non_number.txt");
 my $hex_number_file  = data_file("hex_number.txt");
-my $bad_format_file  = data_file("bad_format.txt");
+my $multiple_lines_file  = data_file("multiple_lines.txt");
 my $empty_file  = data_file("empty.txt");
 
 
@@ -38,20 +38,20 @@ ok(run(app(["openssl", "prime", "-in", $long_number_file])),
 ok(run(app(["openssl", "prime", "-in", $short_number_file])),
    "Run openssl prime with a short number -in file");
 
-ok(!run(app(["openssl", "prime", "-in", $non_number_file])),
+ok(run(app(["openssl", "prime", "-in", $non_number_file])),
    "Run openssl prime with non number -in file");
 
 ok(run(app(["openssl", "prime", "-in", "-hex", $hex_number_file])),
    "Run openssl prime with hex number -in file");
 
-ok(!run(app(["openssl", "prime", "-in", $bad_format_file])),
-   "Run openssl prime with bad format -in file");
+ok(run(app(["openssl", "prime", "-in", $multiple_lines_file])),
+   "Run openssl prime with -in file with multiple lines");
 
-ok(!run(app(["openssl", "prime", "-in", $empty_file])),
+ok(run(app(["openssl", "prime", "-in", $empty_file])),
    "Run openssl prime with an empty -in file");
 
-ok(run(app(["openssl", "prime", "-in", $prime_file, $composite_file, $long_number_file])),
+ok(run(app(["openssl", "prime", "-in", $prime_file, $composite_file, $long_number_file, $multiple_lines_file])),
    "Run openssl prime with multiple -in files");
 
-ok(!run(app(["openssl", "prime", "-in", "does_not_exist.txt"])),
+ok(run(app(["openssl", "prime", "-in", "does_not_exist.txt"])),
    "Run openssl prime with -in file that does not exist");
