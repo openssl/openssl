@@ -286,6 +286,34 @@ static int encode_EVP_PKEY_prov(const char *file, const int line,
     return ok;
 }
 
+static int encode_EVP_PKEY_i2d(const char *unused_file,
+                               const int unused_line,
+                               void **encoded, long *encoded_len,
+                               void *object, int unused_selection,
+                               const char *unused_output_type,
+                               const char *unused_output_structure,
+                               const char *unused_pass,
+                               const char *unused_pcipher)
+{
+    EVP_PKEY *pkey = object;
+    unsigned char *buf = NULL, *p;
+    int len, ok = 0;
+
+    if (!TEST_int_gt((len = i2d_PKCS8PrivateKey(pkey, NULL)), 0)
+        || !TEST_ptr(p = buf = OPENSSL_malloc(len))
+        || !TEST_int_eq(i2d_PKCS8PrivateKey(pkey, &p), len)
+        || !TEST_int_eq((int)(p - buf), len))
+        goto end;
+
+    *encoded = buf;
+    *encoded_len = len;
+    buf = NULL;
+    ok = 1;
+ end:
+    OPENSSL_free(buf);
+    return ok;
+}
+
 static int decode_EVP_PKEY_prov(const char *file, const int line,
                                 void **object, void *encoded, long encoded_len,
                                 const char *input_type,
@@ -563,6 +591,17 @@ static int test_unprotected_via_DER(const char *type, EVP_PKEY *key, int fips)
                               | OSSL_KEYMGMT_SELECT_ALL_PARAMETERS,
                               "DER", "PrivateKeyInfo", NULL, NULL,
                               encode_EVP_PKEY_prov, decode_EVP_PKEY_prov,
+                              test_mem, check_unprotected_PKCS8_DER,
+                              dump_der, fips ? 0 : FLAG_FAIL_IF_FIPS);
+}
+
+static int test_unprotected_via_i2d(const char *type, EVP_PKEY *key, int fips)
+{
+    return test_encode_decode(__FILE__, __LINE__, type, key,
+                              OSSL_KEYMGMT_SELECT_KEYPAIR
+                              | OSSL_KEYMGMT_SELECT_ALL_PARAMETERS,
+                              "DER", "PrivateKeyInfo", NULL, NULL,
+                              encode_EVP_PKEY_i2d, decode_EVP_PKEY_prov,
                               test_mem, check_unprotected_PKCS8_DER,
                               dump_der, fips ? 0 : FLAG_FAIL_IF_FIPS);
 }
@@ -906,6 +945,10 @@ static int test_public_via_MSBLOB(const char *type, EVP_PKEY *key)
     {                                                                   \
         return test_unprotected_via_DER(KEYTYPEstr, key_##KEYTYPE, fips); \
     }                                                                   \
+    static int test_unprotected_##KEYTYPE##_via_i2d(void)               \
+    {                                                                   \
+        return test_unprotected_via_i2d(KEYTYPEstr, key_##KEYTYPE, fips); \
+    }                                                                   \
     static int test_unprotected_##KEYTYPE##_via_PEM(void)               \
     {                                                                   \
         return test_unprotected_via_PEM(KEYTYPEstr, key_##KEYTYPE, fips); \
@@ -929,6 +972,7 @@ static int test_public_via_MSBLOB(const char *type, EVP_PKEY *key)
 
 #define ADD_TEST_SUITE(KEYTYPE)                                 \
     ADD_TEST(test_unprotected_##KEYTYPE##_via_DER);             \
+    ADD_TEST(test_unprotected_##KEYTYPE##_via_i2d);             \
     ADD_TEST(test_unprotected_##KEYTYPE##_via_PEM);             \
     ADD_TEST(test_protected_##KEYTYPE##_via_DER);               \
     ADD_TEST(test_protected_##KEYTYPE##_via_PEM);               \
