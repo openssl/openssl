@@ -807,6 +807,7 @@ static void show_ciphers(const OBJ_NAME *name, void *arg)
     cipher = EVP_get_cipherbyname(name->name);
     if (cipher == NULL
             || (EVP_CIPHER_get_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) != 0
+            || (EVP_CIPHER_get_flags(cipher) & EVP_CIPH_FLAG_ENC_THEN_MAC) != 0
             || EVP_CIPHER_get_mode(cipher) == EVP_CIPH_XTS_MODE)
         return;
 

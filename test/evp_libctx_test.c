@@ -487,7 +487,8 @@ static int test_cipher_reinit_partialupdate(int test_id)
 
     /* skip any ciphers that don't allow partial updates */
     if (((EVP_CIPHER_get_flags(cipher)
-          & (EVP_CIPH_FLAG_CTS | EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK)) != 0)
+          & (EVP_CIPH_FLAG_CTS | EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK |
+             EVP_CIPH_FLAG_ENC_THEN_MAC)) != 0)
         || EVP_CIPHER_get_mode(cipher) == EVP_CIPH_CCM_MODE
         || EVP_CIPHER_get_mode(cipher) == EVP_CIPH_XTS_MODE
         || EVP_CIPHER_get_mode(cipher) == EVP_CIPH_WRAP_MODE) {
