@@ -595,6 +595,12 @@ QUIC_CHANNEL *ossl_quic_port_pop_incoming(QUIC_PORT *port)
     return ch;
 }
 
+void ossl_quic_port_push_incoming(QUIC_PORT *port, QUIC_CHANNEL *ch)
+{
+    ossl_list_incoming_ch_insert_head(&port->incoming_channel_list, ch);
+    return;
+}
+
 int ossl_quic_port_have_incoming(QUIC_PORT *port)
 {
     return ossl_list_incoming_ch_head(&port->incoming_channel_list) != NULL;

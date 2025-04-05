@@ -95,6 +95,12 @@ QUIC_CHANNEL *ossl_quic_port_create_incoming(QUIC_PORT *port, SSL *tls);
  */
 QUIC_CHANNEL *ossl_quic_port_pop_incoming(QUIC_PORT *port);
 
+/*
+ * Push an incoming channel back to the incoming channel queue if QUIC handshake
+ * haven't finished yet
+ */
+void ossl_quic_port_push_incoming(QUIC_PORT *port, QUIC_CHANNEL *ch);
+
 /* Returns 1 if there is at least one connection incoming. */
 int ossl_quic_port_have_incoming(QUIC_PORT *port);
 
