@@ -17,6 +17,7 @@ permissions:
 
 jobs:
   coverity-analysis:
+    if: github.repository == 'openssl/openssl'
     runs-on: ubuntu-latest
     container: quay.io/openssl-ci/coverity-analysis:2024.3.1
     steps:
