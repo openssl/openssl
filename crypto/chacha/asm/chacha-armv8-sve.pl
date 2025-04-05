@@ -248,9 +248,6 @@ sub load_regs() {
 	my $next_offset = $offset + 1;
 $code.=<<___;
 	ld1w	{$reg.s},p0/z,[$inp,#$offset,MUL VL]
-#ifdef  __AARCH64EB__
-	revb    $reg.s,p0/m,$reg.s
-#endif
 ___
 	if (@_) {
 		&load_regs($next_offset, @_);
@@ -272,9 +269,6 @@ sub store_regs() {
 	my $reg = shift;
 	my $next_offset = $offset + 1;
 $code.=<<___;
-#ifdef  __AARCH64EB__
-	revb	$reg.s,p0/m,$reg.s
-#endif
 	st1w	{$reg.s},p0,[$outp,#$offset,MUL VL]
 ___
 	if (@_) {
@@ -480,13 +474,29 @@ sub SVE_TRANSFORMS() {
 $code.=<<___;
 #ifdef	__AARCH64EB__
 	rev	@sxx[0],@sxx[0]
+	revb	@mx[0].s,p0/m,@mx[0].s
+	revb	@mx[1].s,p0/m,@mx[1].s
 	rev	@sxx[2],@sxx[2]
+	revb	@mx[2].s,p0/m,@mx[2].s
+	revb	@mx[3].s,p0/m,@mx[3].s
 	rev	@sxx[4],@sxx[4]
+	revb	@mx[4].s,p0/m,@mx[4].s
+	revb	@mx[5].s,p0/m,@mx[5].s
 	rev	@sxx[6],@sxx[6]
+	revb	@mx[6].s,p0/m,@mx[6].s
+	revb	@mx[7].s,p0/m,@mx[7].s
 	rev	@sxx[8],@sxx[8]
+	revb	@mx[8].s,p0/m,@mx[8].s
+	revb	@mx[9].s,p0/m,@mx[9].s
 	rev	@sxx[10],@sxx[10]
+	revb	@mx[10].s,p0/m,@mx[10].s
+	revb	@mx[11].s,p0/m,@mx[11].s
 	rev	@sxx[12],@sxx[12]
+	revb	@mx[12].s,p0/m,@mx[12].s
+	revb	@mx[13].s,p0/m,@mx[13].s
 	rev	@sxx[14],@sxx[14]
+	revb	@mx[14].s,p0/m,@mx[14].s
+	revb	@mx[15].s,p0/m,@mx[15].s
 #endif
 	.if mixin == 1
 		add	@K[6],@K[6],#1
