@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-EVP_KDF-HKDF - The HKDF EVP_KDF implementation
+EVP_KDF-HKDF - The HKDF EVP_KDF implementations
 
 =head1 DESCRIPTION
 
@@ -17,10 +17,36 @@ of the KDF).
 
 The output is considered to be keying material.
 
+=head2 Fixed-Digest HKDF
+
+B<HKDF-SHA256>, B<HKDF-SHA384> and B<HKDF-SHA512> are fixed-digest versions
+of the B<HKDF> algorithm. Each algorithm has its own OID. These algorithms
+are instantiated with the appropriate digest already configured, thus it is
+not necessary to set the digest using the B<OSSL_KDF_PARAM_DIGEST> parameter.
+An attempt to set the digest to anything other than the pre-configured digest
+will result in an error.
+
 =head2 Identity
 
-"HKDF" is the name for this implementation; it
+The following algorithms are available for this implementation; they
 can be used with the EVP_KDF_fetch() function.
+
+In this list, names are grouped together to signify that they are the same
+algorithm having multiple names.  This also includes the OID in canonical
+decimal form (which means that they are possible to fetch if the caller has a
+mere OID which came out in this form after a call to L<OBJ_obj2txt(3)>).
+
+=over 4
+
+=item "HKDF"
+
+=item "HKDF-SHA256", "id-alg-hkdf-with-sha256", "1.2.840.113549.1.9.16.3.28"
+
+=item "HKDF-SHA384", "id-alg-hkdf-with-sha384", "1.2.840.113549.1.9.16.3.29"
+
+=item "HKDF-SHA512", "id-alg-hkdf-with-sha512", "1.2.840.113549.1.9.16.3.30"
+
+=back
 
 =head2 Supported parameters
 
@@ -151,7 +177,7 @@ salt value "salt" and info value "label":
 
 =head1 CONFORMING TO
 
-RFC 5869
+RFC 5869 and RFC 8619
 
 =head1 SEE ALSO
 
@@ -166,11 +192,13 @@ L<EVP_KDF-TLS13_KDF(7)>
 
 =head1 HISTORY
 
-This functionality was added in OpenSSL 3.0.
+HKDF-SHA256, HKDF-SHA384 and HKDF-SHA512 were added in OpenSSL 3.6.
+
+All other functionality was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2016-2024 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
