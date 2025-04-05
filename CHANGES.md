@@ -57,6 +57,12 @@ OpenSSL 3.6
 
    *Adrian Stanciu*
 
+ * Change default EC point formats configuration to support only 'uncompressed'
+   format, and add SSL_OP_LEGACY_EC_POINT_FORMATS flag and options to re-enable
+   previous default if required.
+
+   *Tim Perry*
+
 OpenSSL 3.5
 -----------
 

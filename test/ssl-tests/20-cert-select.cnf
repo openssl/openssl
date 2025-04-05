@@ -334,10 +334,12 @@ CipherString = DEFAULT
 ECDSA.Certificate = ${ENV::TEST_CERTS_DIR}/server-cecdsa-cert.pem
 ECDSA.PrivateKey = ${ENV::TEST_CERTS_DIR}/server-cecdsa-key.pem
 MaxProtocol = TLSv1.2
+Options = LegacyECPointFormats
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [8-ECDSA Signature Algorithm Selection compressed point-client]
 CipherString = DEFAULT
+Options = LegacyECPointFormats
 SignatureAlgorithms = EcDsA+SHA256
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer

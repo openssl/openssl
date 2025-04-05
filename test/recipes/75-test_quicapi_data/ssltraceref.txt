@@ -19,10 +19,8 @@ Header:
           000f - 01 02 04 04 80 0c 00 00-05 04 80 08 00 00 06   ...............
           001e - 04 80 08 00 00 07 04 80-08 00 00 08 02 40 64   .............@d
           002d - 09 02 40 64                                    ..@d
-        extension_type=ec_point_formats(11), length=4
+        extension_type=ec_point_formats(11), length=2
           uncompressed (0)
-          ansiX962_compressed_prime (1)
-          ansiX962_compressed_char2 (2)
         extension_type=supported_groups(10), length=18
           X25519MLKEM768 (4588)
           ecdh_x25519 (29)

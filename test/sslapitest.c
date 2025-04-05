@@ -10995,6 +10995,55 @@ end:
     return testresult;
 }
 
+#if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_TLS1_2)
+/*
+ * Complete a connection with legacy EC point format configuration
+ */
+static int test_legacy_ec_point_formats(void)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    const char *pformats = NULL;
+    int nformats;
+    int testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(), TLS_client_method(),
+                                       TLS1_2_VERSION, TLS1_2_VERSION, &sctx, &cctx, cert,
+                                       privkey)))
+        goto end;
+
+    if (!TEST_true(SSL_CTX_set_options(sctx, SSL_OP_LEGACY_EC_POINT_FORMATS)))
+        goto end;
+
+    if (!TEST_true(SSL_CTX_set_options(cctx, SSL_OP_LEGACY_EC_POINT_FORMATS)))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl, NULL, NULL)))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    /* Check server received all 3 point formats */
+    nformats = SSL_get0_ec_point_formats(serverssl, &pformats);
+    if (!TEST_int_eq(nformats, 3))
+        goto end;
+    if (!TEST_int_eq(pformats[0], TLSEXT_ECPOINTFORMAT_uncompressed) ||
+        !TEST_int_eq(pformats[1], TLSEXT_ECPOINTFORMAT_ansiX962_compressed_prime) ||
+        !TEST_int_eq(pformats[2], TLSEXT_ECPOINTFORMAT_ansiX962_compressed_char2))
+        goto end;
+
+    testresult = 1;
+
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+#endif
+
 /*
  * Test SSL_CTX_set1_verify/chain_cert_store and SSL_CTX_get_verify/chain_cert_store.
  */
@@ -13341,6 +13390,9 @@ int setup_tests(void)
 #endif
     ADD_TEST(test_inherit_verify_param);
     ADD_TEST(test_set_alpn);
+#if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_TLS1_2)
+    ADD_TEST(test_legacy_ec_point_formats);
+#endif
     ADD_TEST(test_set_verify_cert_store_ssl_ctx);
     ADD_TEST(test_set_verify_cert_store_ssl);
     ADD_ALL_TESTS(test_session_timeout, 1);
