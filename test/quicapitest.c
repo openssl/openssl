@@ -2502,6 +2502,18 @@ static int select_alpn(SSL *ssl, const unsigned char **out,
     return SSL_TLSEXT_ERR_ALERT_FATAL;
 }
 
+static SSL_CTX *create_client_ctx(void)
+{
+    SSL_CTX *ssl_ctx;
+
+    if (!TEST_ptr(ssl_ctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method()))) {
+        SSL_CTX_free(ssl_ctx);
+        ssl_ctx = NULL;
+    }
+
+    return ssl_ctx;
+}
+
 static SSL_CTX *create_server_ctx(void)
 {
     SSL_CTX *ssl_ctx;
@@ -2687,6 +2699,108 @@ end:
     return ret;
 }
 
+static int create_quic_ssl_objects(SSL_CTX *sctx, SSL_CTX *cctx,
+                                   SSL **lssl, SSL **cssl)
+{
+    BIO_ADDR *addr = NULL;
+    struct in_addr ina;
+    BIO *cbio = NULL, *sbio = NULL;
+    int ret = 0;
+
+    *cssl = *lssl = NULL;
+    ina.s_addr = htonl(0x1f000001);
+
+    if (!TEST_true(BIO_new_bio_dgram_pair(&cbio, 0, &sbio, 0)))
+        goto err;
+
+    if (!TEST_ptr(addr = create_addr(&ina, 8040)))
+        goto err;
+
+    if (!TEST_true(bio_addr_bind(sbio, addr)))
+        goto err;
+    addr = NULL;
+
+    *lssl = ql_create(sctx, sbio);
+    sbio = NULL;
+    if (!TEST_ptr(*lssl))
+        goto err;
+
+    if (!TEST_ptr(*cssl = SSL_new(cctx)))
+        goto err;
+
+    if (!TEST_ptr(addr = create_addr(&ina, 8040)))
+        goto err;
+    if (!TEST_true(bio_addr_bind(cbio, addr)))
+        goto err;
+
+    if (!TEST_true(qc_init(*cssl, addr))) {
+        addr = NULL;
+        goto err;
+    }
+    addr = NULL;
+    SSL_set_bio(*cssl, cbio, cbio);
+    cbio = NULL;
+
+    ret = 1;
+
+ err:
+    if (!ret) {
+        SSL_free(*cssl);
+        SSL_free(*lssl);
+        *cssl = *lssl = NULL;
+    }
+    BIO_free(cbio);
+    BIO_free(sbio);
+    BIO_ADDR_free(addr);
+
+    return ret;
+}
+
+static int test_ssl_accept_connection(void)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL, *qlistener = NULL;
+    int testresult = 0;
+    int ret, i;
+
+    if (!TEST_ptr(sctx = create_server_ctx())
+        || !TEST_ptr(cctx = create_client_ctx()))
+        goto err;
+
+    if (!create_quic_ssl_objects(sctx, cctx, &qlistener, &clientssl))
+        goto err;
+
+    /* Send ClientHello and server retry */
+    for (i = 0; i < 2; i++) {
+        ret = SSL_connect(clientssl);
+        if (!TEST_int_le(ret, 0)
+            || !TEST_int_eq(SSL_get_error(clientssl, ret), SSL_ERROR_WANT_READ))
+            goto err;
+        SSL_handle_events(qlistener);
+    }
+
+    /* We expect a server SSL object which has not yet completed its handshake */
+    serverssl = SSL_accept_connection(qlistener, 0);
+    if (!TEST_ptr(serverssl) || !TEST_false(SSL_is_init_finished(serverssl)))
+        goto err;
+
+    /* Call SSL_accept() and SSL_connect() until we are connected */
+    if (!TEST_true(create_bare_ssl_connection(serverssl, clientssl,
+                                              SSL_ERROR_NONE, 0, 0)))
+        goto err;
+
+    testresult = 1;
+
+ err:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_free(qlistener);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
 /***********************************************************************************/
 OPT_TEST_DECLARE_USAGE("provider config certsdir datadir\n")
 
@@ -2786,6 +2900,7 @@ int setup_tests(void)
     ADD_TEST(test_new_token);
 #endif
     ADD_TEST(test_server_method_with_ssl_new);
+    ADD_TEST(test_ssl_accept_connection);
     return 1;
  err:
     cleanup_tests();
