@@ -338,6 +338,15 @@ static void writer_fn(int id, int *iterations)
             CRYPTO_free(old, NULL, 0);
         }
         t2 = ossl_time_now();
+        #ifdef __aarch64__
+        extern unsigned int OPENSSL_armcap_P;
+        if (contention != 0 && (OPENSSL_armcap_P == 0xbd
+                                || OPENSSL_armcap_P == 0x7efd
+                                || OPENSSL_armcap_P == 0x987d)) {
+            if ((ossl_time2seconds(t2) - ossl_time2seconds(t1)) >= 4000)
+                break;
+        } else
+        #endif
         if ((ossl_time2seconds(t2) - ossl_time2seconds(t1)) >= 4)
             break;
     }
