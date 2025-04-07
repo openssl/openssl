@@ -41,3 +41,6 @@ INCLUDE[quic-client-non-block]=../../include
 SOURCE[quic-client-non-block]=quic-client-non-block.c
 DEPEND[quic-client-non-block]=../../libcrypto ../../libssl
 
+INCLUDE[quic-server-ssl-poll]=../../include
+SOURCE[quic-server-ssl-poll]=quic-server-ssl-poll.c
+DEPEND[quic-server-non-block]=../../libcrypto ../../libssl
