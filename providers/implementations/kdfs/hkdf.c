@@ -147,7 +147,7 @@ static void kdf_hkdf_reset_ex(void *vctx, int full_reset)
     KDF_HKDF *ctx = (KDF_HKDF *)vctx;
     void *provctx = ctx->provctx;
     int preserve_digest = full_reset ? 0 : ctx->fixed_digest;
-    PROV_DIGEST digest;
+    PROV_DIGEST digest = { 0 };
 
     /*
      * TODO: OPENSSL MAINTAINERS: should this instead use ossl_prov_digest_copy() to back up the
