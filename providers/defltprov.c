@@ -398,9 +398,6 @@ static const OSSL_ALGORITHM deflt_keyexch[] = {
 #endif
     { PROV_NAMES_TLS1_PRF, "provider=default", ossl_kdf_tls1_prf_keyexch_functions },
     { PROV_NAMES_HKDF, "provider=default", ossl_kdf_hkdf_keyexch_functions },
-    { PROV_NAMES_HKDF_SHA256, "provider=default", ossl_kdf_hkdf_sha256_keyexch_functions },
-    { PROV_NAMES_HKDF_SHA384, "provider=default", ossl_kdf_hkdf_sha384_keyexch_functions },
-    { PROV_NAMES_HKDF_SHA512, "provider=default", ossl_kdf_hkdf_sha512_keyexch_functions },
     { PROV_NAMES_SCRYPT, "provider=default",
       ossl_kdf_scrypt_keyexch_functions },
     { NULL, NULL, NULL }
@@ -589,12 +586,6 @@ static const OSSL_ALGORITHM deflt_keymgmt[] = {
       PROV_DESCS_TLS1_PRF_SIGN },
     { PROV_NAMES_HKDF, "provider=default", ossl_kdf_keymgmt_functions,
       PROV_DESCS_HKDF_SIGN },
-    { PROV_NAMES_HKDF_SHA256, "provider=default", ossl_kdf_keymgmt_functions,
-      PROV_DESCS_HKDF_SHA256_SIGN },
-    { PROV_NAMES_HKDF_SHA384, "provider=default", ossl_kdf_keymgmt_functions,
-      PROV_DESCS_HKDF_SHA384_SIGN },
-    { PROV_NAMES_HKDF_SHA512, "provider=default", ossl_kdf_keymgmt_functions,
-      PROV_DESCS_HKDF_SHA512_SIGN },
     { PROV_NAMES_SCRYPT, "provider=default", ossl_kdf_keymgmt_functions,
       PROV_DESCS_SCRYPT_SIGN },
     { PROV_NAMES_HMAC, "provider=default", ossl_mac_legacy_keymgmt_functions,
