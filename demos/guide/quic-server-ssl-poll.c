@@ -32,9 +32,71 @@
 #include <openssl/err.h>
 #include <openssl/quic.h>
 
-#define POLL_ERROR	(SSL_POLL_EVENT_F | SSL_POLL_EVENT_EC | \
-	SSL_POLL_EVENT_EL | SSL_POLL_EVENT_EC | SSL_POLL_EVENT_ECD | \
-	SSL_POLL_EVENT_ER | SSL_POLL_EVENT_EW)
+#include "internal/list.h"
+
+#define POLL_FMT	"%s%s%s%s%s%s%s%s%s%s%s%s%s"
+#define POLL_PRINTA(_revents_)	\
+                (_revents_) & SSL_POLL_EVENT_F ? "SSL_POLL_EVENT_F" : "",	\
+                (_revents_) & SSL_POLL_EVENT_EL ? "SSL_POLL_EVENT_EL" : "",	\
+                (_revents_) & SSL_POLL_EVENT_EC ? "SSL_POLL_EVENT_EC" : "",	\
+                (_revents_) & SSL_POLL_EVENT_ECD ? "SSL_POLL_EVENT_ECD" : "",	\
+                (_revents_) & SSL_POLL_EVENT_ER? "SSL_POLL_EVENT_ER" : "",	\
+                (_revents_) & SSL_POLL_EVENT_EW? "SSL_POLL_EVENT_EW" : "",	\
+                (_revents_) & SSL_POLL_EVENT_R? "SSL_POLL_EVENT_R" : "",	\
+                (_revents_) & SSL_POLL_EVENT_W? "SSL_POLL_EVENT_W" : "",	\
+                (_revents_) & SSL_POLL_EVENT_IC? "SSL_POLL_EVENT_IC" : "",	\
+                (_revents_) & SSL_POLL_EVENT_ISB? "SSL_POLL_EVENT_ISB" : "",	\
+                (_revents_) & SSL_POLL_EVENT_ISU? "SSL_POLL_EVENT_ISU" : "",	\
+                (_revents_) & SSL_POLL_EVENT_OSB? "SSL_POLL_EVENT_OSB" : "",	\
+                (_revents_) & SSL_POLL_EVENT_OSU? "SSL_POLL_EVENT_OSU" : ""
+
+struct poll_event {
+    SSL_POLL_ITEM				 pe_poll_item;
+    OSSL_LIST_MEMBER(pe, struct poll_event);
+    OSSL_LIST_MEMBER(stream, struct poll_event);
+    uint64_t					 pe_want_events;
+    struct poll_manager				*pe_my_pm;
+    const char					*pe_name;
+    int(*pe_cb_in)(struct poll_event *);
+    int(*pe_cb_out)(struct poll_event *);
+    int(*pe_cb_error)(struct poll_event *);
+};
+
+DEFINE_LIST_OF(pe, struct poll_event);
+
+#define POLL_GROW	20
+#define	POLL_DOWNSIZ	20
+
+struct poll_manager {
+    OSSL_LIST(pe)	 pm_head;
+    unsigned int	 pm_event_count;
+    struct poll_event	*pm_poll_set;
+    unsigned int	 pm_poll_set_sz;
+    int			 pm_need_rebuild;
+    int			 pm_continue;
+};
+
+
+
+#define POLL_ERROR	(SSL_POLL_EVENT_F | SSL_POLL_EVENT_EL | \
+    SSL_POLL_EVENT_EC | SSL_POLL_EVENT_ECD | SSL_POLL_EVENT_ER | \
+    SSL_POLL_EVENT_EW)
+
+#define POLL_IN		(SSL_POLL_EVENT_R | SSL_POLL_EVENT_IC | \
+    SSL_POLL_EVENT_ISB | SSL_POLL_EVENT_ISU)
+
+#define POLL_OUT	(SSL_POLL_EVENT_W | SSL_POLL_EVENT_OSB | \
+    SSL_POLL_EVENT_OSU)
+
+static int pe_return_error(struct poll_event *);
+static int pe_accept_qconn(struct poll_event *);
+static int pe_accept_qstream(struct poll_event *);
+static int pe_read_qstream(struct poll_event *);
+static int pe_write_qstream(struct poll_event *);
+static int pe_handle_listener_error(struct poll_event *);
+static int pe_handle_qconn_error(struct poll_event *);
+static int pe_handle_qstream_error(struct poll_event *);
+
 #ifdef _WIN32
 static const char *progname;
 
@@ -65,6 +127,313 @@ static void warnx(const char *fmt, ...)
     va_end(ap);
 }
 #endif
+
+static struct poll_event *new_pe(SSL *ssl_obj)
+{
+    struct poll_event *pe;
+
+    if (ssl_obj == NULL)
+        return NULL;
+
+    pe = OPENSSL_malloc(sizeof (struct poll_event));
+    if (pe != NULL) {
+        pe->pe_poll_item.desc = SSL_as_poll_descriptor(ssl_obj);
+	pe->pe_poll_item.events = 0;
+	pe->pe_poll_item.revents = 0;
+        pe->pe_my_pm = NULL;
+        pe->pe_cb_in = pe_return_error;
+        pe->pe_cb_out = pe_return_error;
+        pe->pe_cb_error = pe_return_error;
+        pe->pe_name = "any";
+    }
+
+    return pe;
+}
+
+static struct poll_event *new_listener_pe(SSL *ssl_listener)
+{
+    struct poll_event *listener_pe = new_pe(ssl_listener);
+
+    if (listener_pe != NULL) {
+        listener_pe->pe_cb_in = pe_accept_qconn;
+        listener_pe->pe_cb_out = pe_return_error;
+        listener_pe->pe_cb_error = pe_handle_listener_error;
+        listener_pe->pe_name = "listener";
+        listener_pe->pe_want_events = SSL_POLL_EVENT_IC;
+    }
+
+    return listener_pe;
+}
+
+static struct poll_event *new_qconn_pe(SSL *ssl_qconn)
+{
+    struct poll_event *qconn_pe = new_pe(ssl_qconn);
+
+    if (qconn_pe != NULL) {
+        qconn_pe->pe_cb_in = pe_accept_qstream;
+        qconn_pe->pe_cb_out = pe_return_error;
+        qconn_pe->pe_cb_error = pe_handle_qconn_error;
+        qconn_pe->pe_name = "connection";
+        qconn_pe->pe_want_events = SSL_POLL_EVENT_ISB | SSL_POLL_EVENT_ISU;
+        qconn_pe->pe_want_events |= SSL_POLL_EVENT_OSB | SSL_POLL_EVENT_OSU;
+    }
+
+    return qconn_pe;
+}
+
+static struct poll_event *new_qstream_pe(SSL *ssl_qconn, uint64_t qstream_f)
+{
+    struct poll_event *qstream_pe;
+    SSL *qstream;
+
+    qstream = SSL_new_stream(ssl_qconn, qstream_f);
+    if (qstream == NULL)
+        return NULL;
+
+    qstream_pe = new_pe(qstream);
+    if (qstream_pe == NULL) {
+        SSL_free(qstream);
+    } else {
+        qstream_pe->pe_cb_in = pe_read_qstream;
+        qstream_pe->pe_cb_out = pe_write_qstream;
+        qstream_pe->pe_cb_error = pe_handle_qstream_error;
+        qstream_pe->pe_name = "stream";
+        qstream_pe->pe_want_events = SSL_POLL_EVENT_R | SSL_POLL_EVENT_W;
+    }
+
+    return qstream_pe;
+}
+
+static SSL *get_ssl_from_pe(struct poll_event *pe)
+{
+    SSL *ssl = NULL;
+
+    if (pe != NULL)
+        ssl = pe->pe_poll_item.desc.value.ssl;
+
+    return ssl;
+}
+
+static void add_pe_to_pm(struct poll_manager *pm, struct poll_event *pe)
+{
+    if (pe->pe_my_pm == NULL) {
+        ossl_list_pe_insert_head(&pm->pm_head, pe);
+        pm->pm_need_rebuild = 1;
+        pe->pe_my_pm = pm;
+    }
+}
+ 
+static void remove_pe_from_pm(struct poll_manager *pm, struct poll_event *pe)
+{
+    if (pe->pe_my_pm == pm) {
+        ossl_list_pe_remove(&pm->pm_head, pe);
+        pm->pm_need_rebuild = 1;
+        pe->pe_my_pm = NULL;
+    }
+}
+
+static struct poll_manager *create_poll_manager(void)
+{
+    struct poll_manager *pm = NULL;
+
+    pm = OPENSSL_malloc(sizeof (struct poll_manager));
+    if (pm == NULL)
+        return NULL;
+
+    ossl_list_pe_init(&pm->pm_head);
+    pm->pm_poll_set = OPENSSL_malloc(sizeof (struct poll_event) * POLL_GROW);
+    if (pm->pm_poll_set != NULL) {
+        pm->pm_poll_set_sz = POLL_GROW;
+        pm->pm_event_count = 0;
+    } else {
+        OPENSSL_free(pm);
+    }
+
+    return pm;
+}
+
+static int rebuild_poll_set(struct poll_manager *pm)
+{
+    struct poll_event *new_poll_set;
+    struct poll_event *pe;
+    size_t new_sz;
+    size_t pe_num;
+    size_t i;
+
+    if (pm->pm_need_rebuild == 0)
+        return 0;
+
+    pe_num = ossl_list_pe_num(&pm->pm_head);
+    if (pe_num > pm->pm_poll_set_sz) {
+        /*
+         * grow poll set by POLL_GROW
+         */
+        new_sz = sizeof (struct poll_event) * (pm->pm_poll_set_sz + POLL_GROW);
+        new_poll_set = (struct poll_event *)OPENSSL_realloc(pm->pm_poll_set,
+                                                        new_sz);
+        if (new_poll_set == NULL)
+            return -1;
+        pm->pm_poll_set = new_poll_set;
+        pm->pm_poll_set_sz += POLL_GROW;
+
+    } else if ((pe_num + POLL_DOWNSIZ) < pm->pm_poll_set_sz) {
+        new_sz = sizeof (struct poll_event) * (pm->pm_poll_set_sz - POLL_DOWNSIZ);
+        new_poll_set = (struct poll_event *)OPENSSL_realloc(pm->pm_poll_set,
+                                                            new_sz);
+        if (new_poll_set == NULL)
+            return -1;
+        pm->pm_poll_set = new_poll_set;
+        pm->pm_poll_set_sz -= POLL_GROW;
+    }
+
+    i = 0;
+    OSSL_LIST_FOREACH(pe, pe, &pm->pm_head) {
+        pe->pe_poll_item.events = pe->pe_want_events;
+        pm->pm_poll_set[i++] = *pe;
+    }
+    pm->pm_event_count = i;
+
+    return 0;
+}
+
+static void destroy_poll_manager(struct poll_manager *pm)
+{
+    struct poll_event *pe, *pe_safe;
+    if (pm == NULL)
+        return;
+
+    OSSL_LIST_FOREACH_DELSAFE(pe, pe_safe, pe, &pm->pm_head) {
+        SSL_free(get_ssl_from_pe(pe));
+	/* ?todo? custom destroy callback on pe */
+        OPENSSL_free(pe);
+    }
+
+    OPENSSL_free(pm->pm_poll_set);
+    OPENSSL_free(pm);
+}
+
+static int pe_accept_qconn(struct poll_event *listener_pe)
+{
+    SSL *listener;
+    SSL *qconn;
+    struct poll_event *qc_pe;
+
+    listener = get_ssl_from_pe(listener_pe);
+    qconn = SSL_accept_connection(listener, 0);
+    if (qconn == NULL)
+        return -1;
+
+    qc_pe = new_qconn_pe(qconn);
+    if (qc_pe != NULL) {
+        add_pe_to_pm(listener_pe->pe_my_pm, qc_pe);
+    } else {
+        SSL_free(qconn);
+        return -1;
+    }
+
+    return 0;
+}
+
+static int pe_accept_qstream(struct poll_event *qconn_pe)
+{
+    SSL *qconn;
+    SSL *qs;
+    struct poll_event *qs_pe;
+
+    qconn = get_ssl_from_pe(qconn_pe);
+    qs = SSL_accept_stream(qconn, 0);
+    if (qconn == NULL)
+        return -1;
+
+    qs_pe = new_qconn_pe(qs);
+    if (qs_pe != NULL) {
+        add_pe_to_pm(qconn_pe->pe_my_pm, qs_pe);
+    } else {
+        SSL_free(qs);
+        return -1;
+    }
+
+    return 0;
+}
+
+static void destroy_pe(struct poll_event *pe)
+{
+    SSL *ssl;
+
+    if (pe == NULL)
+        return;
+
+    ssl = get_ssl_from_pe(pe);
+    if (pe->pe_my_pm) {
+        remove_pe_from_pm(pe->pe_my_pm, pe);
+    }
+    OPENSSL_free(pe);
+
+    (void) SSL_shutdown(ssl);
+    SSL_free(ssl);
+}
+
+
+static int pe_return_error(struct poll_event *pe)
+{
+    return -1;
+}
+
+static int pe_handle_listener_error(struct poll_event *pe)
+{
+    /*
+     * todo: determine the nature of error return 0 when recovery
+     * is possible, -1 otherwise
+     * see handle_io_failure() in non-blocking server for possible
+     * error codes.
+     */
+    pe->pe_my_pm->pm_continue = 0;
+    return -1;
+}
+
+static int pe_handle_qconn_error(struct poll_event *pe)
+{
+    /*
+     * todo: determine the nature of error return 0 when recovery
+     * is possible, -1 otherwise
+     * see handle_io_failure() in non-blocking server for possible
+     * error codes.
+     */
+    return -1;
+}
+
+static int pe_handle_qstream_error(struct poll_event *pe)
+{
+    /*
+     * todo: determine the nature of error return 0 when recovery
+     * is possible, -1 otherwise
+     * see handle_io_failure() in non-blocking server for possible
+     * error codes.
+     */
+    return -1;
+}
+
+static int pe_read_qstream(struct poll_event *pe)
+{
+    /*
+     * todo there should be an application callback which
+     * we will receive data from qstream.
+     * see handle_io_failure() in non-blocking server for possible
+     * error codes.
+     */
+    return -1;
+}
+
+static int pe_write_qstream(struct poll_event *pe)
+{
+    /*
+     * todo there should be an application callback which
+     * we will write data to qstream.
+     * see handle_io_failure() in non-blocking server for possible
+     * error codes.
+     */
+    return -1;
+}
 
 /*
  * ALPN strings for TLS handshake. Only 'http/1.0' and 'hq-interop'
@@ -189,77 +558,6 @@ static int create_socket(uint16_t port)
     return fd;
 }
 
-/**
- * @brief Handles I/O failures on an SSL connection based on the result code.
- *
- * This function processes the result of an SSL I/O operation and handles
- * different types of errors that may occur during the operation. It takes
- * appropriate actions such as retrying the operation, reporting errors, or
- * returning specific status codes based on the error type.
- *
- * @param ssl A pointer to the SSL object representing the connection.
- * @param res The result code from the SSL I/O operation.
- * @return An integer indicating the outcome:
- *         - 1: Temporary failure, the operation should be retried.
- *         - 0: EOF, indicating the connection has been closed.
- *         - -1: A fatal error occurred or the connection has been reset.
- *
- * @note If the failure is due to an SSL verification error, additional
- * information will be logged to stderr.
- */
-static int handle_io_failure(SSL *ssl, int res)
-{
-    switch (SSL_get_error(ssl, res)) {
-    case SSL_ERROR_WANT_READ:
-    case SSL_ERROR_WANT_WRITE:
-        return 1;
-
-    case SSL_ERROR_ZERO_RETURN:
-    case SSL_ERROR_NONE:
-        /* EOF */
-        return 0;
-
-    case SSL_ERROR_SYSCALL:
-        return -1;
-
-    case SSL_ERROR_SSL:
-        /*
-         * Some stream fatal error occurred. This could be because of a
-         * stream reset - or some failure occurred on the underlying
-         * connection.
-         */
-        switch (SSL_get_stream_read_state(ssl)) {
-        case SSL_STREAM_STATE_RESET_REMOTE:
-            printf("Stream reset occurred\n");
-            /*
-             * The stream has been reset but the connection is still
-             * healthy.
-             */
-            break;
-
-        case SSL_STREAM_STATE_CONN_CLOSED:
-            printf("Connection closed\n");
-            /* Connection is already closed. */
-            break;
-
-        default:
-            printf("Unknown stream failure\n");
-            break;
-        }
-        /*
-         * If the failure is due to a verification error we can get more
-         * information about it from SSL_get_verify_result().
-         */
-        if (SSL_get_verify_result(ssl) != X509_V_OK)
-            printf("Verify error: %s\n",
-                   X509_verify_cert_error_string(SSL_get_verify_result(ssl)));
-        return -1;
-
-    default:
-        return -1;
-    }
-}
-
 /*
  * Main loop for server to accept QUIC connections.
  * Echo every request back to the client.
@@ -267,21 +565,23 @@ static int handle_io_failure(SSL *ssl, int res)
 static int run_quic_server(SSL_CTX *ctx, int fd)
 {
     int ok = -1;
-    int ret;
-    SSL *listener, *conn = NULL, *stream = NULL;
-    unsigned char buf[8192];
-    size_t nread, total_read, total_written;
-    /* listener and connection, just two items to keep things simple */
-    SSL_POLL_ITEM poll_set[3];
+    int e;
+    unsigned int i;
+    SSL *listener;
+    struct poll_event *listener_pe;
+    struct poll_event *pe;
+    struct poll_manager *pm = NULL;
     size_t poll_items;
-    int do_accept = 1;
 
-    memset(poll_set, 0, sizeof (poll_set));
     /* Create a new QUIC listener */
     if ((listener = SSL_new_listener(ctx, 0)) == NULL)
         goto err;
 
     if (!SSL_set_fd(listener, fd))
+        goto err;
+
+    pm = create_poll_manager();
+    if (pm == NULL)
         goto err;
 
     /*
@@ -300,204 +600,46 @@ static int run_quic_server(SSL_CTX *ctx, int fd)
     if (!SSL_listen(listener))
         goto err;
 
-    poll_set[0].desc = SSL_as_poll_descriptor(listener);
-    poll_set[0].events = SSL_POLL_EVENT_IC;
+    listener_pe = new_listener_pe(listener);
+    if (listener_pe == NULL)
+        goto err;
+    add_pe_to_pm(pm, listener_pe);
 
     /*
      * Begin an infinite loop of listening for connections. We will only
      * exit this loop if we encounter an error.
      */
-    for (;;) {
-        total_read = 0;
-        total_written = 0;
+    pm->pm_continue = 1;
+    while (pm->pm_continue) {
+        rebuild_poll_set(pm);
+        ok = SSL_poll((SSL_POLL_ITEM *)pm->pm_poll_set, pm->pm_event_count,
+                      sizeof (struct poll_event), NULL, 0, &poll_items);
 
-        /* Pristine error stack for each new connection */
-        ERR_clear_error();
+        if (ok == 0 && poll_items == 0)
+            break;
 
-        /* Block while waiting for a client connection */
-        printf("Waiting for connection\n");
-        /*
-         * to keep things simple we process one connection at a time.
-         * we poll on one poll descriptor (listener) when we are need to accept
-	 * connection. We poll on two descriptors (listener, connection) when
-	 * we need to handle connection data.
-         */
-        if (listener != NULL)
-            poll_items = 1;
-        if (conn != NULL)
-            poll_items = 2;
-        if (stream != NULL)
-            poll_items = 3;
-
-        ok = SSL_poll(poll_set, poll_items, sizeof (SSL_POLL_ITEM), NULL,
-                      0, &poll_items);
-	printf("poll_items: %zu\n", poll_items);
-            fprintf(stderr, "listener (0x%llx) event %s%s%s%s%s%s%s%s%s%s%s%s%s\n", poll_set[0].revents,
-                poll_set[0].revents & SSL_POLL_EVENT_F ? "SSL_POLL_EVENT_F" : "",
-                poll_set[0].revents & SSL_POLL_EVENT_EL ? "SSL_POLL_EVENT_EL" : "",
-                poll_set[0].revents & SSL_POLL_EVENT_EC ? "SSL_POLL_EVENT_EC" : "",
-                poll_set[0].revents & SSL_POLL_EVENT_ECD ? "SSL_POLL_EVENT_ECD" : "",
-                poll_set[0].revents & SSL_POLL_EVENT_ER? "SSL_POLL_EVENT_ER" : "",
-                poll_set[0].revents & SSL_POLL_EVENT_EW? "SSL_POLL_EVENT_EW" : "",
-                poll_set[0].revents & SSL_POLL_EVENT_R? "SSL_POLL_EVENT_R" : "",
-                poll_set[0].revents & SSL_POLL_EVENT_W? "SSL_POLL_EVENT_W" : "",
-                poll_set[0].revents & SSL_POLL_EVENT_IC? "SSL_POLL_EVENT_IC" : "",
-                poll_set[0].revents & SSL_POLL_EVENT_ISB? "SSL_POLL_EVENT_ISB" : "",
-                poll_set[0].revents & SSL_POLL_EVENT_ISU? "SSL_POLL_EVENT_ISU" : "",
-                poll_set[0].revents & SSL_POLL_EVENT_OSB? "SSL_POLL_EVENT_OSB" : "",
-                poll_set[0].revents & SSL_POLL_EVENT_OSU? "SSL_POLL_EVENT_OSU" : "");
-if (conn != NULL)
-            fprintf(stderr, "conn (0x%llx) event %s%s%s%s%s%s%s%s%s%s%s%s%s\n", poll_set[1].revents,
-                poll_set[1].revents & SSL_POLL_EVENT_F ? "SSL_POLL_EVENT_F" : "",
-                poll_set[1].revents & SSL_POLL_EVENT_EL ? "SSL_POLL_EVENT_EL" : "",
-                poll_set[1].revents & SSL_POLL_EVENT_EC ? "SSL_POLL_EVENT_EC" : "",
-                poll_set[1].revents & SSL_POLL_EVENT_ECD ? "SSL_POLL_EVENT_ECD" : "",
-                poll_set[1].revents & SSL_POLL_EVENT_ER? "SSL_POLL_EVENT_ER" : "",
-                poll_set[1].revents & SSL_POLL_EVENT_EW? "SSL_POLL_EVENT_EW" : "",
-                poll_set[1].revents & SSL_POLL_EVENT_R? "SSL_POLL_EVENT_R" : "",
-                poll_set[1].revents & SSL_POLL_EVENT_W? "SSL_POLL_EVENT_W" : "",
-                poll_set[1].revents & SSL_POLL_EVENT_IC? "SSL_POLL_EVENT_IC" : "",
-                poll_set[1].revents & SSL_POLL_EVENT_ISB? "SSL_POLL_EVENT_ISB" : "",
-                poll_set[1].revents & SSL_POLL_EVENT_ISU? "SSL_POLL_EVENT_ISU" : "",
-                poll_set[1].revents & SSL_POLL_EVENT_OSB? "SSL_POLL_EVENT_OSB" : "",
-                poll_set[1].revents & SSL_POLL_EVENT_OSU? "SSL_POLL_EVENT_OSU" : "");
-if (stream != NULL)
-            fprintf(stderr, "stream (0x%llx) event %s%s%s%s%s%s%s%s%s%s%s%s%s\n", poll_set[2].revents,
-                poll_set[2].revents & SSL_POLL_EVENT_F ? "SSL_POLL_EVENT_F" : "",
-                poll_set[2].revents & SSL_POLL_EVENT_EL ? "SSL_POLL_EVENT_EL" : "",
-                poll_set[2].revents & SSL_POLL_EVENT_EC ? "SSL_POLL_EVENT_EC" : "",
-                poll_set[2].revents & SSL_POLL_EVENT_ECD ? "SSL_POLL_EVENT_ECD" : "",
-                poll_set[2].revents & SSL_POLL_EVENT_ER? "SSL_POLL_EVENT_ER" : "",
-                poll_set[2].revents & SSL_POLL_EVENT_EW? "SSL_POLL_EVENT_EW" : "",
-                poll_set[2].revents & SSL_POLL_EVENT_R? "SSL_POLL_EVENT_R" : "",
-                poll_set[2].revents & SSL_POLL_EVENT_W? "SSL_POLL_EVENT_W" : "",
-                poll_set[2].revents & SSL_POLL_EVENT_IC? "SSL_POLL_EVENT_IC" : "",
-                poll_set[2].revents & SSL_POLL_EVENT_ISB? "SSL_POLL_EVENT_ISB" : "",
-                poll_set[2].revents & SSL_POLL_EVENT_ISU? "SSL_POLL_EVENT_ISU" : "",
-                poll_set[2].revents & SSL_POLL_EVENT_OSB? "SSL_POLL_EVENT_OSB" : "",
-                poll_set[2].revents & SSL_POLL_EVENT_OSU? "SSL_POLL_EVENT_OSU" : "");
-        if (ok == 0) {
-            ok = -1;
-            goto err;
-        }
-
-        if (do_accept == 1 && poll_set[0].revents & SSL_POLL_EVENT_IC) {
-            conn = SSL_accept_connection(listener, 0);
-            if (conn == NULL)
-                goto err;
-            do_accept = 0;
-            printf("Accepted new connection\n");
-            poll_set[1].desc = SSL_as_poll_descriptor(conn);
-            poll_set[1].events = SSL_POLL_EVENT_IS;
-            continue;	/* back to the start of for() loop so poll again */
-        } else if (poll_items == 3 && poll_set[2].revents & SSL_POLL_EVENT_R) {
-            /* Read from client until the client sends a end of stream packet */
-            fprintf(stderr, "trying to read\n");
-            ret = SSL_read_ex(conn, buf + total_read, sizeof(buf) - total_read,
-                              &nread);
-            total_read += nread;
-            if (total_read >= 8192) {
-                fprintf(stderr, "Could not fit all data into buffer\n");
-                goto err;
-            }
-
-            fprintf(stderr, "got data %s\n", buf);
-            switch (handle_io_failure(conn, ret)) {
-            case 1:
-                continue; /* back to poll */
-            case 0:
-                /* Reached end of stream */
-                if (!SSL_has_pending(conn)) {
-                    poll_set[1].events = SSL_POLL_EVENT_W;
-                }
-                continue /* back to poll */;
-            default:
-                fprintf(stderr, "Failed reading remaining data\n");
-                goto err;
-            }
-        } else if (poll_items == 3 && poll_set[2].revents & SSL_POLL_EVENT_W) {
-            fprintf(stderr, "trying to write\n");
-            ret = SSL_write_ex2(conn, buf, total_read,
-                                SSL_WRITE_FLAG_CONCLUDE, &total_written);
-            if (ret == 0) {
-                if (handle_io_failure(conn, 0) == 1)
-                    continue;
-                fprintf(stderr, "Failed to write data\n");
-                goto err;
-            }
-
-            if (total_read != total_written)
-                fprintf(stderr, "Failed to echo data [read: %lu, written: %lu]\n",
-                        total_read, total_written);
-
-            switch (SSL_shutdown(conn)) {
-            case 0:
-                continue; /* back to poll */
-            case 1:
-                SSL_free(conn);
-                conn = NULL;
-                do_accept = 1; /* connection is we can accept new */
-                continue; /* back to poll */
-            }
-        } else if (poll_items > 1 && poll_set[1].revents & SSL_POLL_EVENT_ISB) {
-            printf("accepting stream\n");
-            stream = SSL_accept_stream(conn, SSL_ACCEPT_STREAM_NO_BLOCK);
-            if (stream == NULL)
+        for (i = 0; i < pm->pm_event_count; i++) {
+            pe = &pm->pm_poll_set[i];
+            if (pe->pe_poll_item.revents == 0)
                 continue;
-            poll_set[2].desc = SSL_as_poll_descriptor(stream);
-            poll_set[2].events = SSL_POLL_EVENT_R;
-        } else if (poll_set[0].revents) {
-            fprintf(stderr, "listener error %s%s%s%s%s%s%s%s%s%s\n",
-                poll_set[0].revents & SSL_POLL_EVENT_RW ? "SSL_POLL_EVENT_RW" : "",
-                poll_set[0].revents & SSL_POLL_EVENT_RE ? "SSL_POLL_EVENT_RE" : "",
-                poll_set[0].revents & SSL_POLL_EVENT_WE ? "SSL_POLL_EVENT_WE" : "",
-                poll_set[0].revents & SSL_POLL_EVENT_RWE ? "SSL_POLL_EVENT_RWE" : "",
-                poll_set[0].revents & SSL_POLL_EVENT_E ? "SSL_POLL_EVENT_E" : "",
-                poll_set[0].revents & SSL_POLL_EVENT_IS ? "SSL_POLL_EVENT_IS" : "",
-                poll_set[0].revents & SSL_POLL_EVENT_ISE ? "SSL_POLL_EVENT_ISE" : "",
-                poll_set[0].revents & SSL_POLL_EVENT_I ? "SSL_POLL_EVENT_I" : "",
-                poll_set[0].revents & SSL_POLL_EVENT_OS ? "SSL_POLL_EVENT_OS" : "",
-                poll_set[0].revents & SSL_POLL_EVENT_OSE ? "SSL_POLL_EVENT_OSE" : "");
-            SSL_free(conn);
-            goto err;
-        } else if (poll_items > 1 && poll_set[1].revents) {
-            fprintf(stderr, "listener error %s%s%s%s%s%s%s%s%s%s\n",
-                poll_set[1].revents & SSL_POLL_EVENT_RW ? "SSL_POLL_EVENT_RW" : "",
-                poll_set[1].revents & SSL_POLL_EVENT_RE ? "SSL_POLL_EVENT_RE" : "",
-                poll_set[1].revents & SSL_POLL_EVENT_WE ? "SSL_POLL_EVENT_WE" : "",
-                poll_set[1].revents & SSL_POLL_EVENT_RWE ? "SSL_POLL_EVENT_RWE" : "",
-                poll_set[1].revents & SSL_POLL_EVENT_E ? "SSL_POLL_EVENT_E" : "",
-                poll_set[1].revents & SSL_POLL_EVENT_IS ? "SSL_POLL_EVENT_IS" : "",
-                poll_set[1].revents & SSL_POLL_EVENT_ISE ? "SSL_POLL_EVENT_ISE" : "",
-                poll_set[1].revents & SSL_POLL_EVENT_I ? "SSL_POLL_EVENT_I" : "",
-                poll_set[1].revents & SSL_POLL_EVENT_OS ? "SSL_POLL_EVENT_OS" : "",
-                poll_set[1].revents & SSL_POLL_EVENT_OSE ? "SSL_POLL_EVENT_OSE" : "");
-            SSL_shutdown(conn);
-            SSL_free(conn);
-            conn = NULL;
-            do_accept = 1;
-        } else if (poll_items == 3 && poll_set[2].revents) {
-            fprintf(stderr, "listener error %s%s%s%s%s%s%s%s%s%s\n",
-                poll_set[2].revents & SSL_POLL_EVENT_RW ? "SSL_POLL_EVENT_RW" : "",
-                poll_set[2].revents & SSL_POLL_EVENT_RE ? "SSL_POLL_EVENT_RE" : "",
-                poll_set[2].revents & SSL_POLL_EVENT_WE ? "SSL_POLL_EVENT_WE" : "",
-                poll_set[2].revents & SSL_POLL_EVENT_RWE ? "SSL_POLL_EVENT_RWE" : "",
-                poll_set[2].revents & SSL_POLL_EVENT_E ? "SSL_POLL_EVENT_E" : "",
-                poll_set[2].revents & SSL_POLL_EVENT_IS ? "SSL_POLL_EVENT_IS" : "",
-                poll_set[2].revents & SSL_POLL_EVENT_ISE ? "SSL_POLL_EVENT_ISE" : "",
-                poll_set[2].revents & SSL_POLL_EVENT_I ? "SSL_POLL_EVENT_I" : "",
-                poll_set[2].revents & SSL_POLL_EVENT_OS ? "SSL_POLL_EVENT_OS" : "",
-                poll_set[2].revents & SSL_POLL_EVENT_OSE ? "SSL_POLL_EVENT_OSE" : "");
-            SSL_shutdown(conn);
-            SSL_free(conn);
-            conn = NULL;
-            do_accept = 1;
+            printf("%s %s (%p) " POLL_FMT, __func__, pe->pe_name, pe,
+                   POLL_PRINTA(pe->pe_poll_item.revents));
+            if (pe->pe_poll_item.revents & POLL_ERROR)
+                e = pe->pe_cb_error(pe);
+            else if (pe->pe_poll_item.revents & POLL_IN)
+                e = pe->pe_cb_in(pe);
+            else if (pe->pe_poll_item.revents & POLL_OUT)
+                e = pe->pe_cb_out(pe);
+
+            if (e == -1)
+                destroy_pe(pe);
         }
     }
 
     ok = EXIT_SUCCESS;
 err:
     SSL_free(listener);
+    destroy_poll_manager(pm);
     return ok;
 }
 
