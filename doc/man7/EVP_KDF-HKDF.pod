@@ -24,7 +24,8 @@ of the B<HKDF> algorithm. Each algorithm has its own OID. These algorithms
 are instantiated with the appropriate digest already configured, thus it is
 not necessary to set the digest using the B<OSSL_KDF_PARAM_DIGEST> parameter.
 An attempt to set the digest to anything other than the pre-configured digest
-will result in an error.
+will result in an error. L<EVP_KDF_CTX_reset(3)> will not reset the context's
+digest.
 
 =head2 Identity
 
