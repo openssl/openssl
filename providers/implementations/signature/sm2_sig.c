@@ -54,6 +54,7 @@ static OSSL_FUNC_signature_get_ctx_md_params_fn sm2sig_get_ctx_md_params;
 static OSSL_FUNC_signature_gettable_ctx_md_params_fn sm2sig_gettable_ctx_md_params;
 static OSSL_FUNC_signature_set_ctx_md_params_fn sm2sig_set_ctx_md_params;
 static OSSL_FUNC_signature_settable_ctx_md_params_fn sm2sig_settable_ctx_md_params;
+static OSSL_FUNC_signature_query_key_types_fn sm2_sigalg_query_key_types;
 
 /*
  * What's passed as an actual key is defined by the KEYMGMT interface.
@@ -547,6 +548,13 @@ static const OSSL_PARAM *sm2sig_settable_ctx_md_params(void *vpsm2ctx)
     return EVP_MD_settable_ctx_params(psm2ctx->md);
 }
 
+static const char **sm2_sigalg_query_key_types(void)
+{
+    static const char *sm2_keytypes[] = { "SM2", NULL };
+
+    return sm2_keytypes;
+}
+
 const OSSL_DISPATCH ossl_sm2_signature_functions[] = {
     { OSSL_FUNC_SIGNATURE_NEWCTX, (void (*)(void))sm2sig_newctx },
     { OSSL_FUNC_SIGNATURE_SIGN_INIT, (void (*)(void))sm2sig_signature_init },
@@ -581,5 +589,7 @@ const OSSL_DISPATCH ossl_sm2_signature_functions[] = {
       (void (*)(void))sm2sig_set_ctx_md_params },
     { OSSL_FUNC_SIGNATURE_SETTABLE_CTX_MD_PARAMS,
       (void (*)(void))sm2sig_settable_ctx_md_params },
+    { OSSL_FUNC_SIGNATURE_QUERY_KEY_TYPES,
+      (void (*)(void))sm2_sigalg_query_key_types },
     OSSL_DISPATCH_END
 };
