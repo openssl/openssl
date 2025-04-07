@@ -330,9 +330,18 @@ static int ml_dsa_get_ctx_params(void *vctx, OSSL_PARAM *params)
 
 #define MAKE_SIGNATURE_FUNCTIONS(alg)                                          \
     static OSSL_FUNC_signature_newctx_fn ml_dsa_##alg##_newctx;                \
+    static OSSL_FUNC_signature_query_key_types_fn ml_dsa_##alg##_sigalg_query_key_types; \
     static void *ml_dsa_##alg##_newctx(void *provctx, const char *propq)       \
     {                                                                          \
         return ml_dsa_newctx(provctx, EVP_PKEY_ML_DSA_##alg, propq);           \
+    }                                                                          \
+    static const char **ml_dsa_##alg##_sigalg_query_key_types(void)            \
+    {                                                                          \
+        static const char *ml_dsa_##alg##_keytypes[] = {                       \
+            "ML-DSA-" # alg, NULL                                              \
+         };                                                                    \
+                                                                               \
+        return ml_dsa_##alg##_keytypes;                                        \
     }                                                                          \
     const OSSL_DISPATCH ossl_ml_dsa_##alg##_signature_functions[] = {          \
         { OSSL_FUNC_SIGNATURE_NEWCTX, (void (*)(void))ml_dsa_##alg##_newctx }, \
@@ -360,6 +369,8 @@ static int ml_dsa_get_ctx_params(void *vctx, OSSL_PARAM *params)
         { OSSL_FUNC_SIGNATURE_GETTABLE_CTX_PARAMS,                             \
           (void (*)(void))ml_dsa_gettable_ctx_params },                        \
         { OSSL_FUNC_SIGNATURE_DUPCTX, (void (*)(void))ml_dsa_dupctx },         \
+        { OSSL_FUNC_SIGNATURE_QUERY_KEY_TYPES,                                 \
+          (void (*)(void))ml_dsa_##alg##_sigalg_query_key_types },             \
         OSSL_DISPATCH_END                                                      \
     }
 
