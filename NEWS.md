@@ -66,6 +66,15 @@ This release adds the following new features:
 
   * API support for pipelining in provided cipher algorithms
 
+Known issues in 3.5.0
+
+  * <https://github.com/openssl/openssl/issues/27282>
+    Calling SSL_accept on objects returned from SSL_accept_connection
+    results in error.  It is expected that making this call will advance
+    the SSL handshake for the passed connection, but currently it does not.
+    This can be handled by calling SSL_do_handshake instead.  A fix is planned
+    for OpenSSL 3.5.1
+
 OpenSSL 3.4
 -----------
 
