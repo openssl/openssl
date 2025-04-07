@@ -11,7 +11,8 @@ TESTS = tls-client-block \
         tls-client-non-block \
         quic-server-block \
         quic-server-non-block \
-        quic-client-non-block
+        quic-client-non-block \
+        quic-server-ssl-poll
 
 CFLAGS  = -I../../include -g -Wall
 LDFLAGS = -L../..
@@ -27,6 +28,7 @@ tls-client-non-block: tls-client-non-block.o
 quic-server-block: quic-server-block.o
 quic-server-non-block: quic-server-non-block.o
 quic-client-non-block: quic-client-non-block.o
+quic-server-ssl-poll: quic-server-ssl-poll.o
 
 chain: chain.pem
 pkey.pem:
