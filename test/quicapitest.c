@@ -2732,7 +2732,7 @@ static int create_quic_ssl_objects(SSL_CTX *sctx, SSL_CTX *cctx,
         goto err;
     if (!TEST_true(bio_addr_bind(cbio, addr)))
         goto err;
-    if(!TEST_ptr(addr = BIO_ADDR_dup(addr)))
+    if (!TEST_ptr(addr = BIO_ADDR_dup(addr)))
         goto err;
 
     if (!TEST_true(qc_init(*cssl, addr)))
@@ -2784,7 +2784,7 @@ static int test_ssl_accept_connection(void)
 
     /* Call SSL_accept() and SSL_connect() until we are connected */
     if (!TEST_true(create_bare_ssl_connection(serverssl, clientssl,
-                   SSL_ERROR_NONE, 0, 0)))
+                                              SSL_ERROR_NONE, 0, 0)))
         goto err;
 
     testresult = 1;
