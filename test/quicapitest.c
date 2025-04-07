@@ -2732,11 +2732,12 @@ static int create_quic_ssl_objects(SSL_CTX *sctx, SSL_CTX *cctx,
         goto err;
     if (!TEST_true(bio_addr_bind(cbio, addr)))
         goto err;
-    if (!TEST_ptr(addr = BIO_ADDR_dup(addr)))
-        goto err;
 
-    if (!TEST_true(qc_init(*cssl, addr)))
+    if (!TEST_true(qc_init(*cssl, addr))) {
+        addr = NULL;
         goto err;
+    }
+    addr = NULL;
     SSL_set_bio(*cssl, cbio, cbio);
     cbio = NULL;
 
@@ -2750,6 +2751,7 @@ static int create_quic_ssl_objects(SSL_CTX *sctx, SSL_CTX *cctx,
     }
     BIO_free(cbio);
     BIO_free(sbio);
+    BIO_ADDR_free(addr);
 
     return ret;
 }
