@@ -17,10 +17,11 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 setup("test_configutl");
 
 my @tests = qw(escapes.cnf
-includes.cnf
 leading-and-trailing-whitespace.cnf
 order.cnf
 variables.cnf);
+
+#includes.cnf is temporary excluded as it depends on #27300
 
 plan tests => 2 * (scalar(@tests)) + 1;
 
