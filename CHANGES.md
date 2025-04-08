@@ -710,6 +710,14 @@ OpenSSL 3.3
 
    *Tomáš Mráz*
 
+ * Add the SSL option of disabling DTLS record replay check. By default,
+   replay detect is built in DTLS record handling. Some applications may
+   be able to mitigate the replay risks in other ways and in such cases
+   the detection is not required. Those applications can turn this feature
+   off by setting this option. Only affects DTLS over non-SCTP connections.
+
+   *Huiyue Xu*
+
  * In `openssl speed`, changed the default hash function used with `hmac` from
    `md5` to `sha256`.
 
