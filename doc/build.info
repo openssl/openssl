@@ -40,6 +40,12 @@ DEPEND[man/man1/openssl-cms.1]=man1/openssl-cms.pod
 GENERATE[man/man1/openssl-cms.1]=man1/openssl-cms.pod
 DEPEND[man1/openssl-cms.pod]{pod}=man1/openssl-cms.pod.in
 GENERATE[man1/openssl-cms.pod]=man1/openssl-cms.pod.in
+DEPEND[html/man1/openssl-configutl.html]=man1/openssl-configutl.pod
+GENERATE[html/man1/openssl-configutl.html]=man1/openssl-configutl.pod
+DEPEND[man/man1/openssl-configutl.1]=man1/openssl-configutl.pod
+GENERATE[man/man1/openssl-configutl.1]=man1/openssl-configutl.pod
+DEPEND[man1/openssl-configutl.pod]{pod}=man1/openssl-configutl.pod.in
+GENERATE[man1/openssl-configutl.pod]=man1/openssl-configutl.pod.in
 DEPEND[html/man1/openssl-crl.html]=man1/openssl-crl.pod
 GENERATE[html/man1/openssl-crl.html]=man1/openssl-crl.pod
 DEPEND[man/man1/openssl-crl.1]=man1/openssl-crl.pod
@@ -360,6 +366,7 @@ html/man1/openssl-ciphers.html \
 html/man1/openssl-cmds.html \
 html/man1/openssl-cmp.html \
 html/man1/openssl-cms.html \
+html/man1/openssl-configutl.html \
 html/man1/openssl-crl.html \
 html/man1/openssl-crl2pkcs7.html \
 html/man1/openssl-dgst.html \
@@ -421,6 +428,7 @@ man/man1/openssl-ciphers.1 \
 man/man1/openssl-cmds.1 \
 man/man1/openssl-cmp.1 \
 man/man1/openssl-cms.1 \
+man/man1/openssl-configutl.1 \
 man/man1/openssl-crl.1 \
 man/man1/openssl-crl2pkcs7.1 \
 man/man1/openssl-dgst.1 \
