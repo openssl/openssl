@@ -28,6 +28,10 @@ OpenSSL Releases
 OpenSSL 3.5
 -----------
 
+### Changes between 3.5.0 and 3.5.1 [xx XXX xxxx]
+
+ * none yet
+
 ### Changes between 3.4 and 3.5.0 [8 Apr 2025]
 
  * Added server side support for QUIC
