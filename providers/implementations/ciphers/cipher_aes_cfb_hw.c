@@ -31,20 +31,26 @@ static int cipher_hw_aes_initkey(PROV_CIPHER_CTX *dat,
         ret = HWAES_set_encrypt_key(key, keylen * 8, ks);
         dat->block = (block128_f)HWAES_encrypt;
         dat->stream.cbc = NULL;
-    } else
+    } else {
 #endif
 #ifdef VPAES_CAPABLE
         if (VPAES_CAPABLE) {
             ret = vpaes_set_encrypt_key(key, keylen * 8, ks);
             dat->block = (block128_f)vpaes_encrypt;
             dat->stream.cbc = NULL;
-        } else
+        } else {
 #endif
-        {
-            ret = AES_set_encrypt_key(key, keylen * 8, ks);
-            dat->block = (block128_f)AES_encrypt;
-            dat->stream.cbc = NULL;
+            {
+                ret = AES_set_encrypt_key(key, keylen * 8, ks);
+                dat->block = (block128_f)AES_encrypt;
+                dat->stream.cbc = NULL;
+            }
+#ifdef VPAES_CAPABLE
         }
+#endif
+#ifdef HWAES_CAPABLE
+    }
+#endif
 
     if (ret < 0) {
         ERR_raise(ERR_LIB_PROV, PROV_R_KEY_SETUP_FAILED);
