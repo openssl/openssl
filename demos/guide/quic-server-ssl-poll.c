@@ -13,6 +13,7 @@
  */
 
 #include <string.h>
+#include <assert.h>
 
 /* Include the appropriate header file for SOCK_STREAM */
 #ifdef _WIN32 /* Windows */
@@ -36,30 +37,43 @@
 
 #define POLL_FMT	"%s%s%s%s%s%s%s%s%s%s%s%s%s"
 #define POLL_PRINTA(_revents_)	\
-                (_revents_) & SSL_POLL_EVENT_F ? "SSL_POLL_EVENT_F" : "",	\
+                (_revents_) & SSL_POLL_EVENT_F ? "SSL_POLL_EVENT_F " : "",	\
                 (_revents_) & SSL_POLL_EVENT_EL ? "SSL_POLL_EVENT_EL" : "",	\
-                (_revents_) & SSL_POLL_EVENT_EC ? "SSL_POLL_EVENT_EC" : "",	\
-                (_revents_) & SSL_POLL_EVENT_ECD ? "SSL_POLL_EVENT_ECD" : "",	\
-                (_revents_) & SSL_POLL_EVENT_ER? "SSL_POLL_EVENT_ER" : "",	\
-                (_revents_) & SSL_POLL_EVENT_EW? "SSL_POLL_EVENT_EW" : "",	\
-                (_revents_) & SSL_POLL_EVENT_R? "SSL_POLL_EVENT_R" : "",	\
-                (_revents_) & SSL_POLL_EVENT_W? "SSL_POLL_EVENT_W" : "",	\
-                (_revents_) & SSL_POLL_EVENT_IC? "SSL_POLL_EVENT_IC" : "",	\
-                (_revents_) & SSL_POLL_EVENT_ISB? "SSL_POLL_EVENT_ISB" : "",	\
-                (_revents_) & SSL_POLL_EVENT_ISU? "SSL_POLL_EVENT_ISU" : "",	\
-                (_revents_) & SSL_POLL_EVENT_OSB? "SSL_POLL_EVENT_OSB" : "",	\
-                (_revents_) & SSL_POLL_EVENT_OSU? "SSL_POLL_EVENT_OSU" : ""
+                (_revents_) & SSL_POLL_EVENT_EC ? "SSL_POLL_EVENT_EC " : "",	\
+                (_revents_) & SSL_POLL_EVENT_ECD ? "SSL_POLL_EVENT_ECD " : "",	\
+                (_revents_) & SSL_POLL_EVENT_ER? "SSL_POLL_EVENT_ER " : "",	\
+                (_revents_) & SSL_POLL_EVENT_EW? "SSL_POLL_EVENT_EW " : "",	\
+                (_revents_) & SSL_POLL_EVENT_R? "SSL_POLL_EVENT_R " : "",	\
+                (_revents_) & SSL_POLL_EVENT_W? "SSL_POLL_EVENT_W " : "",	\
+                (_revents_) & SSL_POLL_EVENT_IC? "SSL_POLL_EVENT_IC " : "",	\
+                (_revents_) & SSL_POLL_EVENT_ISB? "SSL_POLL_EVENT_ISB " : "",	\
+                (_revents_) & SSL_POLL_EVENT_ISU? "SSL_POLL_EVENT_ISU " : "",	\
+                (_revents_) & SSL_POLL_EVENT_OSB? "SSL_POLL_EVENT_OSB " : "",	\
+                (_revents_) & SSL_POLL_EVENT_OSU? "SSL_POLL_EVENT_OSU " : ""
+
+#define poll_event_base	\
+    SSL_POLL_ITEM				 pe_poll_item;   \
+    OSSL_LIST_MEMBER(pe, struct poll_event);                     \
+    uint64_t					 pe_want_events; \
+    struct poll_manager				*pe_my_pm;       \
+    unsigned char				 pe_type;        \
+    struct poll_event				*pe_self;        \
+    int(*pe_cb_in)(struct poll_event *);                         \
+    int(*pe_cb_out)(struct poll_event *);                        \
+    int(*pe_cb_error)(struct poll_event *)
 
 struct poll_event {
-    SSL_POLL_ITEM				 pe_poll_item;
-    OSSL_LIST_MEMBER(pe, struct poll_event);
-    OSSL_LIST_MEMBER(stream, struct poll_event);
-    uint64_t					 pe_want_events;
-    struct poll_manager				*pe_my_pm;
-    const char					*pe_name;
-    int(*pe_cb_in)(struct poll_event *);
-    int(*pe_cb_out)(struct poll_event *);
-    int(*pe_cb_error)(struct poll_event *);
+    poll_event_base;
+};
+
+struct poll_event_listener {
+    poll_event_base;
+};
+
+struct poll_event_connection {
+    poll_event_base;
+    uint64_t					 pec_want_stream;
+    uint64_t					 pec_want_unistream;
 };
 
 DEFINE_LIST_OF(pe, struct poll_event);
@@ -74,9 +88,13 @@ struct poll_manager {
     unsigned int	 pm_poll_set_sz;
     int			 pm_need_rebuild;
     int			 pm_continue;
+    int(*pm_qconn_in)(struct poll_event *);
+    int(*pm_qconn_out)(struct poll_event *);
+    int(*pm_qstream_in)(struct poll_event *);
+    int(*pm_qstream_out)(struct poll_event *);
+    int(*pm_rready)(struct poll_event *);
+    int(*pm_wready)(struct poll_event *);
 };
-
-
 
 #define POLL_ERROR	(SSL_POLL_EVENT_F | SSL_POLL_EVENT_EL | \
     SSL_POLL_EVENT_EC | SSL_POLL_EVENT_ECD | SSL_POLL_EVENT_ER | \
@@ -91,6 +109,7 @@ struct poll_manager {
 static int pe_return_error(struct poll_event *);
 static int pe_accept_qconn(struct poll_event *);
 static int pe_accept_qstream(struct poll_event *);
+static int pe_new_qstream(struct poll_event *);
 static int pe_read_qstream(struct poll_event *);
 static int pe_write_qstream(struct poll_event *);
 static int pe_handle_listener_error(struct poll_event *);
@@ -128,24 +147,57 @@ static void warnx(const char *fmt, ...)
 }
 #endif
 
-static struct poll_event *new_pe(SSL *ssl_obj)
+enum pe_types {
+    PE_NONE,
+    PE_LISTENER,
+    PE_CONNECTION,
+    PE_STREAM,
+    PE_STREAM_UNI_IN,
+    PE_STREAM_UNI_OUT,
+    PE_INVALID
+};
+
+static const char *pe_type_to_name(const struct poll_event *pe)
+{
+    static const char *names[] = {
+        "none",
+        "listener",
+        "connection",
+        "stream (bidi)",
+        "stream (in)",
+        "stream (out)",
+        "invalid"
+    };
+
+    if (pe->pe_type >= PE_INVALID)
+        return (names[PE_INVALID]);
+
+    return names[pe->pe_type];
+}
+
+static void init_pe(struct poll_event *pe, SSL *ssl)
+{
+    pe->pe_poll_item.desc = SSL_as_poll_descriptor(ssl);
+    pe->pe_poll_item.events = 0;
+    pe->pe_poll_item.revents = 0;
+    pe->pe_my_pm = NULL;
+    pe->pe_cb_in = pe_return_error;
+    pe->pe_cb_out = pe_return_error;
+    pe->pe_cb_error = pe_return_error;
+    pe->pe_self = pe;
+    pe->pe_type = PE_NONE;
+}
+
+static struct poll_event *new_pe(SSL *ssl)
 {
     struct poll_event *pe;
 
-    if (ssl_obj == NULL)
+    if (ssl == NULL)
         return NULL;
 
-    pe = OPENSSL_malloc(sizeof (struct poll_event));
-    if (pe != NULL) {
-        pe->pe_poll_item.desc = SSL_as_poll_descriptor(ssl_obj);
-	pe->pe_poll_item.events = 0;
-	pe->pe_poll_item.revents = 0;
-        pe->pe_my_pm = NULL;
-        pe->pe_cb_in = pe_return_error;
-        pe->pe_cb_out = pe_return_error;
-        pe->pe_cb_error = pe_return_error;
-        pe->pe_name = "any";
-    }
+    pe = OPENSSL_zalloc(sizeof (struct poll_event));
+    if (pe != NULL)
+        init_pe(pe, ssl);
 
     return pe;
 }
@@ -158,7 +210,7 @@ static struct poll_event *new_listener_pe(SSL *ssl_listener)
         listener_pe->pe_cb_in = pe_accept_qconn;
         listener_pe->pe_cb_out = pe_return_error;
         listener_pe->pe_cb_error = pe_handle_listener_error;
-        listener_pe->pe_name = "listener";
+        listener_pe->pe_type = PE_LISTENER;
         listener_pe->pe_want_events = SSL_POLL_EVENT_IC;
     }
 
@@ -167,15 +219,21 @@ static struct poll_event *new_listener_pe(SSL *ssl_listener)
 
 static struct poll_event *new_qconn_pe(SSL *ssl_qconn)
 {
-    struct poll_event *qconn_pe = new_pe(ssl_qconn);
+    struct poll_event *qconn_pe;
+
+    qconn_pe  = OPENSSL_zalloc(sizeof (struct poll_event_connection));
 
     if (qconn_pe != NULL) {
+        init_pe(qconn_pe, ssl_qconn);
         qconn_pe->pe_cb_in = pe_accept_qstream;
-        qconn_pe->pe_cb_out = pe_return_error;
+        qconn_pe->pe_cb_out = pe_new_qstream;
         qconn_pe->pe_cb_error = pe_handle_qconn_error;
-        qconn_pe->pe_name = "connection";
+        qconn_pe->pe_type = PE_CONNECTION;
         qconn_pe->pe_want_events = SSL_POLL_EVENT_ISB | SSL_POLL_EVENT_ISU;
-        qconn_pe->pe_want_events |= SSL_POLL_EVENT_OSB | SSL_POLL_EVENT_OSU;
+        /*
+         * SSL_POLL_EVENT_OSB (or SSL_POLL_EVENT_OSU) must be monitored once
+         * there is a request for outbound stream created by app.
+         */
     }
 
     return qconn_pe;
@@ -197,7 +255,7 @@ static struct poll_event *new_qstream_pe(SSL *ssl_qconn, uint64_t qstream_f)
         qstream_pe->pe_cb_in = pe_read_qstream;
         qstream_pe->pe_cb_out = pe_write_qstream;
         qstream_pe->pe_cb_error = pe_handle_qstream_error;
-        qstream_pe->pe_name = "stream";
+        qstream_pe->pe_type = PE_STREAM;
         qstream_pe->pe_want_events = SSL_POLL_EVENT_R | SSL_POLL_EVENT_W;
     }
 
@@ -232,11 +290,16 @@ static void remove_pe_from_pm(struct poll_manager *pm, struct poll_event *pe)
     }
 }
 
+static int pm_nop(struct poll_event *pe)
+{
+    return 0;
+}
+
 static struct poll_manager *create_poll_manager(void)
 {
     struct poll_manager *pm = NULL;
 
-    pm = OPENSSL_malloc(sizeof (struct poll_manager));
+    pm = OPENSSL_zalloc(sizeof (struct poll_manager));
     if (pm == NULL)
         return NULL;
 
@@ -245,11 +308,34 @@ static struct poll_manager *create_poll_manager(void)
     if (pm->pm_poll_set != NULL) {
         pm->pm_poll_set_sz = POLL_GROW;
         pm->pm_event_count = 0;
+        pm->pm_qconn_in = pm_nop;
+        pm->pm_qconn_out = pm_nop;
+        pm->pm_qstream_in = pm_nop;
+        pm->pm_qstream_out = pm_nop;
+        pm->pm_rready = pm_nop;
+        pm->pm_wready = pm_nop;
     } else {
         OPENSSL_free(pm);
     }
 
     return pm;
+}
+
+static int add_listener_to_pm(struct poll_manager *pm, SSL *listener)
+{
+    struct poll_event *pe;
+
+    if (pm == NULL || pm->pm_listner != NULL)
+        return -1;
+
+    pe = new_listener_pe(listener);
+    if (pe == NULL)
+        return -1;
+
+    add_pe_to_pm(pm, pe);
+    pm->pm_listner = listner;
+
+    return 0;
 }
 
 static int rebuild_poll_set(struct poll_manager *pm)
@@ -325,7 +411,11 @@ static int pe_accept_qconn(struct poll_event *listener_pe)
 
     qc_pe = new_qconn_pe(qconn);
     if (qc_pe != NULL) {
-        add_pe_to_pm(listener_pe->pe_my_pm, qc_pe);
+        if (pm->pm_qconn_in(qc_pe) == -1)
+            destroy_pe(qc_pe);
+        else
+            add_pe_to_pm(listener_pe->pe_my_pm, qc_pe);
+
     } else {
         SSL_free(qconn);
         return -1;
@@ -334,24 +424,106 @@ static int pe_accept_qconn(struct poll_event *listener_pe)
     return 0;
 }
 
+/*
+ * accept stream from remote peer
+ */
 static int pe_accept_qstream(struct poll_event *qconn_pe)
 {
     SSL *qconn;
     SSL *qs;
     struct poll_event *qs_pe;
 
+    assert(qconn_pe->pe_poll_item.revents & SSL_POLL_EVENT_IS);
+
     qconn = get_ssl_from_pe(qconn_pe);
     qs = SSL_accept_stream(qconn, 0);
-    if (qconn == NULL)
+    if (qs == NULL)
         return -1;
 
-    qs_pe = new_qconn_pe(qs);
+    qs_pe = new_pe(qconn);
     if (qs_pe != NULL) {
+        qs_pe->pe_my_pm = qconn_pe->pe_my_pm;
+        qs_pe->pe_cb_error = pe_handle_qstream_error;
+        qs_pe->pe_cb_in = pe_read_qstream;
+        qs_pe->pe_want_events = SSL_POLL_EVENT_R;
+
+        if (qconn_pe->pe_poll_item.revents & SSL_POLL_EVENT_ISU) {
+            qs_pe->pe_cb_out = pe_return_error;
+            qs_pe->pe_type = PE_STREAM_UNI_IN;
+        } else if (qconn_pe->pe_poll_item.revents * SSL_POLL_EVENT_ISB) {
+            qs_pe->pe_cb_out = pe_write_qstream;
+            qs_pe->pe_cb_error = pe_handle_qstream_error;
+            qs_pe->pe_type = PE_STREAM;
+            qs_pe->pe_want_events |= SSL_POLL_EVENT_W;
+        }
+
         add_pe_to_pm(qconn_pe->pe_my_pm, qs_pe);
     } else {
         SSL_free(qs);
         return -1;
     }
+
+    return 0;
+}
+
+/*
+ * Event fires when outbound stream can be created.  The number of outbound
+ * streams connection can open is determined by flow-control. Application
+ * asks for outbound stream by calling new_stream(). The new_stream() adds
+ * SSL_POLL_EVENT_OS to event wantset poll descriptor of associated connection.
+ * As soon as connection is able create stream the pe_new_qstream() callback
+ * here fires.
+ */
+static int pe_new_qstream(struct poll_event *qconn_pe)
+{
+    SSL *qconn;
+    SSL *qs;
+    struct poll_event_connection *pec;
+    struct poll_event *qs_pe;
+
+    assert(qconn_pe->pe_poll_item.revents & SSL_POLL_EVENT_OS);
+    assert(qconn_pe->pe_type == PE_CONNECTION);
+
+    qconn = get_ssl_from_pe(qconn_pe);
+    qs = SSL_accept_stream(qconn, 0);
+    if (qs == NULL)
+        return -1;
+
+    pec = (struct poll_event_connection *)qconn_pe;
+
+    qs_pe = new_pe(qconn);
+    if (qs_pe != NULL) {
+        qs_pe->pe_my_pm = qconn_pe->pe_my_pm;
+        qs_pe->pe_cb_error = pe_handle_qstream_error;
+        qs_pe->pe_cb_in = pe_read_qstream;
+        qs_pe->pe_want_events = SSL_POLL_EVENT_R;
+        if (qconn_pe->pe_poll_item.revents & SSL_POLL_EVENT_OSU) {
+            pec->pec_want_unistream--;
+            assert(pec->pec_want_unistream >= 0);
+            qs_pe->pe_cb_out = pe_return_error;
+            qs_pe->pe_type = PE_STREAM_UNI_IN;
+        } else {
+            pec->pec_want_stream--;
+            qs_pe->pe_cb_out = pe_write_qstream;
+            qs_pe->pe_cb_error = pe_handle_qstream_error;
+            qs_pe->pe_type = PE_STREAM;
+            qs_pe->pe_want_events |= SSL_POLL_EVENT_W;
+        }
+
+        add_pe_to_pm(qconn_pe->pe_my_pm, qs_pe);
+    } else {
+        SSL_free(qs);
+        return -1;
+    }
+
+    /*
+     * stop polling for outbound stream events if desired
+     * streams got created.
+     */
+    if (pec->pec_want_stream == 0)
+        qconn_pe->pe_want_events &= ~SSL_POLL_EVENT_OSB;
+    if (pec->pec_want_unistream == 0)
+        qconn_pe->pe_want_events &= ~SSL_POLL_EVENT_OSU;
 
     return 0;
 }
@@ -433,6 +605,43 @@ static int pe_write_qstream(struct poll_event *pe)
      * error codes.
      */
     return -1;
+}
+
+/*
+ * non-blocking variant for new_stream(). Creating outbound stream
+ * is two step process when using non-blocking I/O.
+ *    application starts polling for SSL_POLL_EVENT_OS* to check
+ *    if outbound streams are available.
+ *
+ *    as soon as SSL_POLL_EVENT_OS comes back from SSL_poll() application
+ *    should call SSL-new_stream() to create a stream object and
+ *    add its poll descriptor to SSL_poll() events. The stream object
+ *    should be monitored for SSL_POLL_EVENT_{W,R}
+ *
+ * new_stream() function below is supposed to be called by application
+ * which uses SSL_poll()  to manage I/O. We expect there might be more
+ * than 1 stream request.
+ */
+void new_stream(struct poll_event *qconn_pe, uint64_t qsflag)
+{
+    struct poll_event_connection *pec;
+
+    if (qconn_pe->pe_type != PE_CONNECTION)
+        return;
+
+    pec = (struct poll_event_connection *)qconn_pe;
+    if (qsflag & SSL_STREAM_FLAG_UNI) {
+        pec->pec_want_unistream++;
+        qconn_pe->pe_want_events |= SSL_POLL_EVENT_OSU;
+    } else {
+        pec->pec_want_stream++;
+        qconn_pe->pe_want_events |= SSL_POLL_EVENT_OSB;
+    }
+
+    /*
+     * We are changing poll events so SSL_poll() array needs be rebuilt.
+     */
+    qconn_pe->pe_my_pm->pm_need_rebuild = 1;
 }
 
 /*
@@ -562,7 +771,7 @@ static int create_socket(uint16_t port)
  * Main loop for server to accept QUIC connections.
  * Echo every request back to the client.
  */
-static int run_quic_server(SSL_CTX *ctx, int fd)
+static int run_quic_server(SSL_CTX *ctx, struct poll_manager *pm, int fd)
 {
     int ok = -1;
     int e;
@@ -570,7 +779,6 @@ static int run_quic_server(SSL_CTX *ctx, int fd)
     SSL *listener;
     struct poll_event *listener_pe;
     struct poll_event *pe;
-    struct poll_manager *pm = NULL;
     size_t poll_items;
 
     /* Create a new QUIC listener */
@@ -578,10 +786,6 @@ static int run_quic_server(SSL_CTX *ctx, int fd)
         goto err;
 
     if (!SSL_set_fd(listener, fd))
-        goto err;
-
-    pm = create_poll_manager();
-    if (pm == NULL)
         goto err;
 
     /*
@@ -600,10 +804,9 @@ static int run_quic_server(SSL_CTX *ctx, int fd)
     if (!SSL_listen(listener))
         goto err;
 
-    listener_pe = new_listener_pe(listener);
-    if (listener_pe == NULL)
+    if (add_listener_to_pm(pm, listener) == -1)
         goto err;
-    add_pe_to_pm(pm, listener_pe);
+    listener = NULL; /* listener is owned by pm now */
 
     /*
      * Begin an infinite loop of listening for connections. We will only
@@ -622,7 +825,8 @@ static int run_quic_server(SSL_CTX *ctx, int fd)
             pe = &pm->pm_poll_set[i];
             if (pe->pe_poll_item.revents == 0)
                 continue;
-            printf("%s %s (%p) " POLL_FMT, __func__, pe->pe_name, pe,
+            fprintf(stderr, "%s %s (%p) " POLL_FMT "\n", __func__,
+                   pe_type_to_name(pe), pe,
                    POLL_PRINTA(pe->pe_poll_item.revents));
             if (pe->pe_poll_item.revents & POLL_ERROR)
                 e = pe->pe_cb_error(pe);
@@ -631,8 +835,10 @@ static int run_quic_server(SSL_CTX *ctx, int fd)
             else if (pe->pe_poll_item.revents & POLL_OUT)
                 e = pe->pe_cb_out(pe);
 
-            if (e == -1)
+            if (e == -1) {
+                pe = pm->pm_poll_set[i].pe_self;
                 destroy_pe(pe);
+            }
         }
     }
 
@@ -650,6 +856,7 @@ int main(int argc, char *argv[])
     SSL_CTX *ctx = NULL;
     int fd;
     unsigned long port;
+    struct poll_manager *pm;
 
 #ifdef _WIN32
     progname = argv[0];
@@ -678,8 +885,15 @@ int main(int argc, char *argv[])
         errx(res, "Failed to create socket");
     }
 
+    pm = create_poll_manager();
+    if (pm == NULL) {
+        SSL_CTX_free(ctx);
+        ERR_print_errors_fp(stderr);
+        errx(res, "Failed to create socket");
+    }
+
     /* QUIC server connection acceptance loop. */
-    if (run_quic_server(ctx, fd) < 0) {
+    if (run_quic_server(ctx, pm, fd) < 0) {
         SSL_CTX_free(ctx);
         BIO_closesocket(fd);
         ERR_print_errors_fp(stderr);
@@ -688,6 +902,7 @@ int main(int argc, char *argv[])
 
     /* Free resources. */
     SSL_CTX_free(ctx);
+    destroy_poll_manager(pm);
     BIO_closesocket(fd);
     res = EXIT_SUCCESS;
     return res;
