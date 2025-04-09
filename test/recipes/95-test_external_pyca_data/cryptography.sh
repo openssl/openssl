@@ -35,34 +35,6 @@ echo "------------------------------------------------------------------"
 
 cd $SRCTOP
 
-# Handling Rust
-export RUSTUP_HOME="$PWD/.rustup"
-export CARGO_HOME="$PWD/.cargo"
-RUST_VERSION="1.85.1"
-
-# Install Rust if `cargo` is missing
-if ! command -v cargo >/dev/null 2>&1; then
-    echo "Installing Rust..."
-    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y \
-        --no-modify-path \
-        --default-toolchain "$RUST_VERSION" \
-        --profile minimal
-
-    # Load cargo/env and update PATH
-    source "$CARGO_HOME/env"
-    export PATH="$CARGO_HOME/bin:$PATH"
-
-    # Explicitly set the default toolchain (in case installation didn't)
-    rustup default "$RUST_VERSION" >/dev/null 2>&1
-fi
-
-# Verify installation
-if ! command -v cargo >/dev/null 2>&1; then
-    echo "Error: Rust installation failed!" >&2
-    exit 1
-fi
-
-echo "Rust is installed: $(rustc --version)"
 
 # Create a python virtual env and activate
 rm -rf venv-cryptography
@@ -72,6 +44,35 @@ python -m venv venv-cryptography
 pip install -U pip
 
 cd pyca-cryptography
+
+# Handling Rust
+export RUSTUP_HOME="$PWD/.cache/.rustup"
+export CARGO_HOME="$PWD/.cache/.cargo"
+export PATH="$CARGO_HOME/bin:$PATH"
+RUST_VERSION="1.85.1"
+
+# Install Rust 
+if [ ! -f $CARGO_HOME/bin/cargo ]; then
+     echo "Installing Rust..."
+     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y \
+         --no-modify-path \
+         --default-toolchain "$RUST_VERSION" \
+         --profile minimal
+fi
+
+# Load cargo/env
+. "$CARGO_HOME/env"
+
+# Explicitly set the default toolchain (in case installation didn't)
+rustup default "$RUST_VERSION" >/dev/null 2>&1
+
+# Verify installation
+if ! command -v cargo >/dev/null 2>&1; then
+    echo "Error: Rust installation failed!" >&2
+    exit 1
+fi
+
+echo "Rust is installed: $(rustc --version)"
 
 echo "------------------------------------------------------------------"
 echo "Building cryptography and installing test requirements"
