@@ -203,7 +203,7 @@ static int test_bio_base64_run(test_case *t, int llen, int wscnt)
     else
         raw = genbytes(t->bytes);
 
-    if (!TEST_true(raw == NULL && t->bytes > 0))
+    if (!TEST_true(raw != NULL || (raw == NULL && t->bytes > 0)))
         goto err;
 
     out_len = t->bytes + 1024;
