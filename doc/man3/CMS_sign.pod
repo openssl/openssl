@@ -97,7 +97,7 @@ can be performed by obtaining the streaming ASN1 B<BIO> directly using
 BIO_new_CMS().
 
 If a signer is specified it will use the default digest for the signing
-algorithm. This is B<SHA1> for both RSA and DSA keys.
+algorithm. This is B<SHA256> for both RSA and DSA keys.
 
 If B<signcert> and B<pkey> are NULL then a certificates only CMS structure is
 output.
