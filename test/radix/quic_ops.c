@@ -1147,10 +1147,10 @@ err:
      OP_PUSH_BUFP(buf, buf_len),                                \
      OP_FUNC(hf_write))
 
-#define OP_WRITE_RAND(name, buf_len)                             \
-     (OP_SELECT_SSL(0, name),                                    \
-      OP_PUSH_SIZE(buf_len),                                     \
-      OP_FUNC(hf_write_rand))
+#define OP_WRITE_RAND(name, buf_len)                            \
+    (OP_SELECT_SSL(0, name),                                    \
+     OP_PUSH_SIZE(buf_len),                                     \
+     OP_FUNC(hf_write_rand))
 
 #define OP_WRITE_B(name, buf)                                   \
     OP_WRITE(name, (buf), sizeof(buf))
