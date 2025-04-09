@@ -55,6 +55,12 @@ The checks performed are:
 
 =item - the derived key length is at least 112 bits.
 
+=item - the password length is at least minimum length.
+
+Note minimum password length is a configurable compile time constant,
+defaulting to zero for the default provider and 8 for the FIPS
+provider.
+
 =back
 
 The default provider uses a default mode of 1 for backwards compatibility,
@@ -66,10 +72,10 @@ to return 0.
 
 This option is used by the OpenSSL FIPS provider.
 
-A getter that returns 1 if the operation is FIPS approved, or 0 otherwise.
-This may be used after calling EVP_KDF_derive. It returns 0 if "pkcs5"
-is set to 1 and the derived key length, salt length or iteration count test
-fails.
+A getter that returns 1 if the operation is FIPS approved, or 0
+otherwise.  This may be used after calling EVP_KDF_derive. It returns
+0 if "pkcs5" is set to 1 and the password length, derived key length,
+salt length or iteration count test fails.
 
 =back
 
