@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 #include "internal/sockets.h"
+#include <openssl/rand.h>
 
 static const unsigned char alpn_ossltest[] = {
     /* "\x08ossltest" (hex for EBCDIC resilience) */
@@ -565,6 +566,40 @@ err:
     return ok;
 }
 
+DEF_FUNC(hf_write_rand)
+{
+    int ok = 0, r;
+    SSL *ssl;
+    void *buf = NULL;
+    size_t buf_len, bytes_written = 0;
+
+    F_POP(buf_len);
+    REQUIRE_SSL(ssl);
+
+    while (buf_len > 0) {
+        size_t thislen = buf_len > 1024 ? 1024 : buf_len;
+
+        if (buf == NULL)
+            buf = OPENSSL_malloc(thislen);
+        if (!TEST_ptr(buf))
+            goto err;
+        if (!TEST_int_eq(RAND_bytes(buf, thislen), 1))
+            goto err;
+        r = SSL_write_ex(ssl, buf, thislen, &bytes_written);
+        if (!TEST_true(r)
+            || !check_consistent_want(ssl, r)
+            || !TEST_size_t_eq(bytes_written, thislen))
+            goto err;
+
+        buf_len -= thislen;
+    }
+
+    ok = 1;
+err:
+    OPENSSL_free(buf);
+    return ok;
+}
+
 DEF_FUNC(hf_write_ex2)
 {
     int ok = 0, r;
@@ -1111,6 +1146,11 @@ err:
     (OP_SELECT_SSL(0, name),                                    \
      OP_PUSH_BUFP(buf, buf_len),                                \
      OP_FUNC(hf_write))
+
+#define OP_WRITE_RAND(name, buf_len)                            \
+    (OP_SELECT_SSL(0, name),                                    \
+     OP_PUSH_SIZE(buf_len),                                     \
+     OP_FUNC(hf_write_rand))
 
 #define OP_WRITE_B(name, buf)                                   \
     OP_WRITE(name, (buf), sizeof(buf))
