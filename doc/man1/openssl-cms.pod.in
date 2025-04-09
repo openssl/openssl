@@ -68,6 +68,7 @@ Encryption options:
 [B<-recip> I<file>]
 [I<recipient-cert> ...]
 [B<-I<cipher>>]
+[B<-kekcipher> I<cipher>]
 [B<-wrap> I<cipher>]
 [B<-aes128-wrap>]
 [B<-aes192-wrap>]
@@ -425,6 +426,13 @@ algorithms.
 
 If not specified, AES-256-CBC is used as the default. Only used with B<-encrypt> and
 B<-EncryptedData_create> commands.
+
+=item B<-kekcipher> I<cipher>
+
+Cipher algorithm to use for password key encryption. This option is relevant
+when a password for password recipient information is provided using
+B<-pwri_password>, and an AEAD encryption algorithm is selected. In such cases,
+a non-AEAD algorithm should be specified using this option.
 
 =item B<-wrap> I<cipher>
 
