@@ -339,7 +339,7 @@ static int ml_dsa_get_ctx_params(void *vctx, OSSL_PARAM *params)
     {                                                                          \
         static const char *ml_dsa_##alg##_keytypes[] = {                       \
             "ML-DSA-" # alg, NULL                                              \
-         };                                                                    \
+        };                                                                     \
                                                                                \
         return ml_dsa_##alg##_keytypes;                                        \
     }                                                                          \
