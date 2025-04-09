@@ -5106,6 +5106,8 @@ static int test_poll_event_w(QUIC_XSO *xso)
         && ossl_quic_stream_has_send_buffer(xso->stream)
         && ossl_quic_sstream_get_buffer_avail(xso->stream->sstream)
         && !ossl_quic_sstream_get_final_size(xso->stream->sstream, NULL)
+        && ossl_quic_txfc_get_cwm(&xso->stream->txfc)
+           > ossl_quic_sstream_get_cur_size(xso->stream->sstream)
         && quic_mutation_allowed(xso->conn, /*req_active=*/1);
 }
 
