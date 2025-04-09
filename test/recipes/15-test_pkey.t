@@ -97,8 +97,8 @@ subtest "=== pkey handling of DER encoding ===" => sub {
 
     my $der_out = 'key.der';
     my $pem_out = 'key.pem';
-    ok(run(app([@app, '-in', $in_key, '-outform', 'DER',
-                 '-out', $der_out])),
+    ok(run(app([@app, '-in', $in_key, qw(-traditional -outform DER -out),
+                $der_out])),
        "write DER-encoded pkey");
 
     ok(run(app(['openssl', 'asn1parse', '-in', $der_out, '-inform', 'DER',
