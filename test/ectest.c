@@ -2819,7 +2819,7 @@ static int custom_params_test(int id)
     int is_prime = 0;
     EC_KEY *eckey1 = NULL, *eckey2 = NULL;
     EVP_PKEY *pkey1 = NULL, *pkey2 = NULL;
-    EVP_PKEY_CTX *pctx1 = NULL, *pctx2 = NULL;
+    EVP_PKEY_CTX *pctx1 = NULL, *pctx2 = NULL, *dctx = NULL;
     size_t sslen, t;
     unsigned char *pub1 = NULL , *pub2 = NULL;
     OSSL_PARAM_BLD *param_bld = NULL;
@@ -3042,11 +3042,12 @@ static int custom_params_test(int id)
     EVP_PKEY_CTX_free(pctx1);
     if (!TEST_ptr(pctx1 = EVP_PKEY_CTX_new(pkey1, NULL))
             || !TEST_int_eq(EVP_PKEY_derive_init(pctx1), 1)
-            || !TEST_int_eq(EVP_PKEY_derive_set_peer(pctx1, pkey2), 1)
-            || !TEST_int_eq(EVP_PKEY_derive(pctx1, NULL, &t), 1)
+            || !TEST_ptr(dctx = EVP_PKEY_CTX_dup(pctx1))
+            || !TEST_int_eq(EVP_PKEY_derive_set_peer_ex(dctx, pkey2, 1), 1)
+            || !TEST_int_eq(EVP_PKEY_derive(dctx, NULL, &t), 1)
             || !TEST_int_gt(bsize, t)
             || !TEST_int_le(sslen, t)
-            || !TEST_int_eq(EVP_PKEY_derive(pctx1, buf1, &t), 1)
+            || !TEST_int_eq(EVP_PKEY_derive(dctx, buf1, &t), 1)
             /* compare with previous result */
             || !TEST_mem_eq(buf1, t, buf2, sslen))
         goto err;
@@ -3074,6 +3075,7 @@ static int custom_params_test(int id)
     EVP_PKEY_free(pkey2);
     EVP_PKEY_CTX_free(pctx1);
     EVP_PKEY_CTX_free(pctx2);
+    EVP_PKEY_CTX_free(dctx);
 
     return ret;
 }
