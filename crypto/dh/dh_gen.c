@@ -39,7 +39,10 @@ static int dh_builtin_genparams(DH *ret, int prime_len, int generator,
 int ossl_dh_generate_ffc_parameters(DH *dh, int type, int pbits, int qbits,
                                     BN_GENCB *cb)
 {
-    int ret, res;
+    int ret = 0;
+#if !defined(FIPS_MODULE) || !defined(OPENSSL_NO_FIPS186_4_FFC)
+    int res;
+#endif
 
 #ifndef FIPS_MODULE
     if (type == DH_PARAMGEN_TYPE_FIPS_186_2)
@@ -48,9 +51,11 @@ int ossl_dh_generate_ffc_parameters(DH *dh, int type, int pbits, int qbits,
                                                  pbits, qbits, &res, cb);
     else
 #endif
+#if !defined(FIPS_MODULE) || !defined(OPENSSL_NO_FIPS186_4_FFC)
         ret = ossl_ffc_params_FIPS186_4_generate(dh->libctx, &dh->params,
                                                  FFC_PARAM_TYPE_DH,
                                                  pbits, qbits, &res, cb);
+#endif
     if (ret > 0)
         dh->dirty_cnt++;
     return ret;

@@ -66,7 +66,7 @@ jobs:
           enable-fips,
           enable-fips enable-acvp-tests,
           enable-fips no-tls1_3,
-          enable-fips no-des no-dsa no-ec2m,
+          enable-fips no-des no-dsa no-ec2m disable-fips186-4-ffc,
 #          enable-fuzz-afl,        # Requires extra setup
 #          enable-fuzz-libfuzzer,  # Requires extra setup
           no-gost,

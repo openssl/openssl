@@ -479,6 +479,7 @@ my @disablables = (
     "fips-securitychecks",
     "fips-post",
     "fips-jitter",
+    "fips186-4-ffc",
     "fuzz-afl",
     "fuzz-libfuzzer",
     "gost",
@@ -706,7 +707,7 @@ my @disable_cascades = (
     "cmp"               => [ "crmf" ],
 
     "fips"              => [ "fips-securitychecks", "fips-post", "acvp-tests",
-                             "fips-jitter" ],
+                             "fips-jitter", "fips186-4-ffc" ],
 
     "threads"           => [ "thread-pool" ],
     "thread-pool"       => [ "default-thread-pool" ],

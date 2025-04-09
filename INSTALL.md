@@ -860,6 +860,11 @@ This option will only produce a compliant FIPS provider if you have:
 
 Failure to do all of these will produce a non-compliant FIPS provider.
 
+### disable-fips186-4-ffc
+
+Disable support for legacy-only FIPS 186-4 FFC parameters for DH keys
+in the FIPS provider.
+
 ### enable-fuzz-libfuzzer, enable-fuzz-afl
 
 Build with support for fuzzing using either libfuzzer or AFL.
