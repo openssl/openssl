@@ -433,6 +433,9 @@ static int ssl_verify_internal(SSL_CONNECTION *s, STACK_OF(X509) *sk, EVP_PKEY *
     X509_STORE_CTX *ctx = NULL;
     X509_VERIFY_PARAM *param;
     SSL_CTX *sctx;
+#ifndef OPENSSL_NO_OCSP
+    SSL *ssl;
+#endif
 
     /* Something must be passed in */
     if ((sk == NULL || sk_X509_num(sk) == 0) && rpk == NULL)
@@ -478,13 +481,29 @@ static int ssl_verify_internal(SSL_CONNECTION *s, STACK_OF(X509) *sk, EVP_PKEY *
     /* Set suite B flags if needed */
     X509_STORE_CTX_set_flags(ctx, tls1_suiteb(s));
     if (!X509_STORE_CTX_set_ex_data(ctx,
-            SSL_get_ex_data_X509_STORE_CTX_idx(), s)) {
+                                    SSL_get_ex_data_X509_STORE_CTX_idx(), s))
         goto end;
-    }
 
     /* Verify via DANE if enabled */
     if (DANETLS_ENABLED(&s->dane))
         X509_STORE_CTX_set0_dane(ctx, &s->dane);
+
+    /*
+     * Set OCSP Responses for verification:
+     * This function is called in the SERVER_CERTIFICATE message, in TLS 1.2
+     * the OCSP responses are sent in the CERT_STATUS message after that.
+     * Therefore the verification code currently only works in TLS 1.3.
+     */
+#ifndef OPENSSL_NO_OCSP
+    ssl = SSL_CONNECTION_GET_SSL(s);
+    if (SSL_version(ssl) >= TLS1_3_VERSION) {
+        /* ignore status_request_v2 if TLS version < 1.3 */
+        int status = SSL_get_tlsext_status_type(ssl);
+
+        if (status == TLSEXT_STATUSTYPE_ocsp)
+            X509_STORE_CTX_set0_ocsp_resp(ctx, s->ext.ocsp.resp_ex);
+    }
+#endif
 
     /*
      * We need to inherit the verify parameters. These can be determined by
@@ -555,7 +574,7 @@ int ssl_verify_cert_chain(SSL_CONNECTION *s, STACK_OF(X509) *sk)
 }
 
 static void set0_CA_list(STACK_OF(X509_NAME) **ca_list,
-                        STACK_OF(X509_NAME) *name_list)
+                         STACK_OF(X509_NAME) *name_list)
 {
     sk_X509_NAME_pop_free(*ca_list, X509_NAME_free);
     *ca_list = name_list;
