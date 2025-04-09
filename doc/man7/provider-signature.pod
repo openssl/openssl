@@ -518,8 +518,12 @@ A getter that returns 1 if a signature verification operation acted on
 a raw message, or 0 if it verified a predigested message.  A value of 0
 indicates likely non-approved usage of the FIPS provider.  This flag is
 set when any signature verification initialisation function is called.
-It is also set to 1 when any signing operation is performed to signify
-compliance.  See FIPS 140-3 IG 2.4.B for further information.
+For RSA signing operations it is also set to 1 when acting on a raw
+message, or 0 if acting on a predigested message. Approved usage can
+depend on the padding uses, which may be unknown, thus this indicator
+can be used to check if message was digested.
+It is also set to 1 when any non-RSA signing operation is performed to signify
+compliance. See FIPS 140-3 IG 2.4.B for further information.
 
 =item "key-check" (B<OSSL_SIGNATURE_PARAM_FIPS_KEY_CHECK>) <integer>
 
