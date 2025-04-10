@@ -55,7 +55,7 @@ typedef enum OPTION_choice {
     OPT_SUBJECT_HASH_OLD, OPT_ISSUER_HASH_OLD, OPT_COPY_EXTENSIONS,
     OPT_BADSIG, OPT_MD, OPT_ENGINE, OPT_NOCERT, OPT_PRESERVE_DATES,
     OPT_NOT_BEFORE, OPT_NOT_AFTER,
-    OPT_R_ENUM, OPT_PROV_ENUM, OPT_EXT
+    OPT_R_ENUM, OPT_PROV_ENUM, OPT_EXT, OPT_BUNDLE
 } OPTION_CHOICE;
 
 const OPTIONS x509_options[] = {
@@ -122,6 +122,7 @@ const OPTIONS x509_options[] = {
     {"purpose", OPT_PURPOSE, '-', "Print out certificate purposes"},
     {"pubkey", OPT_PUBKEY, '-', "Print the public key in PEM format"},
     {"modulus", OPT_MODULUS, '-', "Print the RSA key modulus"},
+    {"bundle", OPT_BUNDLE, '-', "Process multiple certificates"},
 
     OPT_SECTION("Certificate checking"),
     {"checkend", OPT_CHECKEND, 'M',
@@ -281,6 +282,7 @@ int x509_main(int argc, char **argv)
     X509_STORE *ctx = NULL;
     char *CAkeyfile = NULL, *CAserial = NULL, *pubkeyfile = NULL, *alias = NULL;
     char *checkhost = NULL, *checkemail = NULL, *checkip = NULL;
+    STACK_OF(X509) *certs = NULL;
     char *ext_names = NULL;
     char *extsect = NULL, *extfile = NULL, *passin = NULL, *passinarg = NULL;
     char *infile = NULL, *outfile = NULL, *privkeyfile = NULL, *CAfile = NULL;
@@ -292,9 +294,9 @@ int x509_main(int argc, char **argv)
     int fingerprint = 0, reqfile = 0, checkend = 0;
     int informat = FORMAT_UNDEF, outformat = FORMAT_PEM, keyformat = FORMAT_UNDEF;
     int next_serial = 0, subject_hash = 0, issuer_hash = 0, ocspid = 0;
-    int noout = 0, CA_createserial = 0, email = 0;
+    int noout = 0, CA_createserial = 0, email = 0, bundle = 0;
     int ocsp_uri = 0, trustout = 0, clrtrust = 0, clrreject = 0, aliasout = 0;
-    int ret = 1, i, j, num = 0, badsig = 0, clrext = 0, nocert = 0;
+    int ret = 1, i, j, k = 0, num = 0, badsig = 0, clrext = 0, nocert = 0;
     int text = 0, serial = 0, subject = 0, issuer = 0, startdate = 0, ext = 0;
     int enddate = 0;
     time_t checkoffset = 0;
@@ -584,6 +586,7 @@ int x509_main(int argc, char **argv)
             break;
         case OPT_CHECKEND:
             checkend = 1;
+            noout = 1;
             {
                 ossl_intmax_t temp = 0;
                 if (!opt_intmax(opt_arg(), &temp))
@@ -604,6 +607,10 @@ int x509_main(int argc, char **argv)
             break;
         case OPT_CHECKIP:
             checkip = opt_arg();
+            break;
+        case OPT_BUNDLE:
+            bundle = 1;
+            noout = 1;
             break;
         case OPT_PRESERVE_DATES:
             preserve_dates = 1;
@@ -732,6 +739,12 @@ int x509_main(int argc, char **argv)
         }
     }
 
+    if (bundle && (req || reqfile || newcert || x509toreq || pubkey ||
+                   privkey || clrext || subj || CAfile)) {
+        BIO_printf(bio_err, "Error: -bundle can only be used with other printing options\n");
+        goto err;
+    }
+
     if (reqfile) {
         if (infile == NULL && isatty(fileno_stdin()))
             BIO_printf(bio_err,
@@ -785,6 +798,10 @@ int x509_main(int argc, char **argv)
                 goto err;
             }
         }
+    } else if (bundle) {
+        certs = sk_X509_new_null();
+        if (!load_certs(infile, 1, &certs, passin, NULL))
+            goto end;
     } else {
         if (infile == NULL && isatty(fileno_stdin()))
             BIO_printf(bio_err,
@@ -793,6 +810,15 @@ int x509_main(int argc, char **argv)
         if (x == NULL)
             goto end;
     }
+
+    out = bio_open_default(outfile, 'w', outformat);
+    if (out == NULL)
+        goto end;
+
+ cert_loop:
+    if (bundle && sk_X509_num(certs) > 0)
+        x = sk_X509_value(certs, k);
+
     if ((fsubj != NULL || req != NULL)
         && !X509_set_subject_name(x, fsubj != NULL ? fsubj :
                                   X509_REQ_get_subject_name(req)))
@@ -808,10 +834,6 @@ int x509_main(int argc, char **argv)
         if (xca == NULL)
             goto end;
     }
-
-    out = bio_open_default(outfile, 'w', outformat);
-    if (out == NULL)
-        goto end;
 
     if (alias)
         X509_alias_set1(x, (unsigned char *)alias, -1);
@@ -1079,8 +1101,10 @@ int x509_main(int argc, char **argv)
             BIO_printf(out, "Certificate will expire\n");
         else
             BIO_printf(out, "Certificate will not expire\n");
-        goto end;
     }
+
+    if (bundle && ++k < sk_X509_num(certs))
+        goto cert_loop;
 
     if (!check_cert_attributes(out, x, checkhost, checkemail, checkip, 1))
         goto err;
@@ -1113,6 +1137,11 @@ int x509_main(int argc, char **argv)
     ERR_print_errors(bio_err);
 
  end:
+    if (bundle) {
+        sk_X509_pop_free(certs, X509_free);
+        certs = NULL;
+        x = NULL;
+    }
     NCONF_free(extconf);
     BIO_free_all(out);
     X509_STORE_free(ctx);
