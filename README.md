@@ -149,10 +149,12 @@ Manual Pages
 The manual pages for the master branch and all current stable releases are
 available online.
 
-- [OpenSSL master](https://www.openssl.org/docs/manmaster)
-- [OpenSSL 3.0](https://www.openssl.org/docs/man3.0)
-- [OpenSSL 3.1](https://www.openssl.org/docs/man3.1)
-- [OpenSSL 3.2](https://www.openssl.org/docs/man3.2)
+- [OpenSSL master](https://docs.openssl.org/master/)
+- [OpenSSL 3.5](https://docs.openssl.org/3.5/)
+- [OpenSSL 3.4](https://docs.openssl.org/3.4/)
+- [OpenSSL 3.3](https://docs.openssl.org/3.3/)
+- [OpenSSL 3.2](https://docs.openssl.org/3.2/)
+- [OpenSSL 3.0](https://docs.openssl.org/3.0/)
 
 Demos
 -----
@@ -217,7 +219,7 @@ All rights reserved.
     "OpenSSL Wiki"
 
 [ossl-guide-migration(7ossl)]:
-    <https://www.openssl.org/docs/manmaster/man7/ossl-guide-migration.html>
+    <https://docs.openssl.org/master/man7/ossl-guide-migration>
     "OpenSSL Migration Guide"
 
 [RFC 8446]:
@@ -234,7 +236,7 @@ All rights reserved.
     "List of third party OpenSSL binaries"
 
 [OpenSSL Guide]:
-    <https://www.openssl.org/docs/manmaster/man7/ossl-guide-introduction.html>
+    <https://docs.openssl.org/master/man7/ossl-guide-introduction>
     "An introduction to OpenSSL"
 
 <!-- Logos and Badges -->

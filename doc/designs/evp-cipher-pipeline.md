@@ -15,7 +15,7 @@ chunks of data in one cipher update call, thereby allowing the provided
 implementation to take advantage of parallel computing. This is very beneficial
 for hardware accelerators as pipeline amortizes the latency over multiple
 chunks. Our libssl makes use of pipeline as discussed in
-[here](https://www.openssl.org/docs/manmaster/man3/SSL_CTX_set_max_pipelines.html).
+[here](https://docs.openssl.org/master/man3/SSL_CTX_set_max_pipelines).
 
 Pipelining with ENGINE
 -----------------------
