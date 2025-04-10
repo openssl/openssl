@@ -1,6 +1,6 @@
 Useful Links:
 
-OpenSSL API Documentation: https://www.openssl.org/docs
+OpenSSL API Documentation: https://docs.openssl.org/master
 
 Github: https://github.com/openssl/openssl
 

@@ -98,11 +98,11 @@ use this dedicated server example instead.
 For more information about implementing QUIC servers with OpenSSL, refer to the
 [OpenSSL Guide] and the [openssl-quic(7) manual page].
 
-[openssl-quic(7) manual page]: https://www.openssl.org/docs/manmaster/man7/openssl-quic.html
-[OpenSSL Guide]: https://www.openssl.org/docs/manmaster/man7/ossl-guide-introduction.html
+[openssl-quic(7) manual page]: https://docs.openssl.org/master/man7/openssl-quic
+[OpenSSL Guide]: https://docs.openssl.org/master/man7/ossl-guide-introduction
 [DDD]: https://github.com/openssl/openssl/tree/master/doc/designs/ddd
 [found in the source tree under `doc/designs/ddd`]: ./doc/designs/ddd/
 [demo found in `demos/http3`]: ./demos/http3/
-[QUIC Introduction]: https://www.openssl.org/docs/manmaster/man7/ossl-guide-quic-introduction.html
+[QUIC Introduction]: https://docs.openssl.org/master/man7/ossl-guide-quic-introduction
 [RFC 9114]: https://tools.ietf.org/html/rfc9114
 [ALPN ids]: https://www.iana.org/assignments/tls-extensiontype-values/tls-extensiontype-values.xhtml#alpn-protocol-ids
