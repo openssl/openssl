@@ -1411,7 +1411,7 @@
 #define SN_bf_cbc               "BF-CBC"
 #define LN_bf_cbc               "bf-cbc"
 #define NID_bf_cbc              91
-#define OBJ_bf_cbc              1L,3L,6L,1L,4L,1L,3029L,1L,2L
+#define OBJ_bf_cbc              1L,3L,6L,1L,4L,1L,3029L,1L,1L,2L
 
 #define SN_bf_ecb               "BF-ECB"
 #define LN_bf_ecb               "bf-ecb"
