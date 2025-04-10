@@ -16,7 +16,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_x509");
 
-plan tests => 134;
+plan tests => 140;
 
 # Prevent MSys2 filename munging for arguments that look like file paths but
 # aren't
@@ -484,6 +484,28 @@ ok(run(app(["openssl", "x509", "-noout", "-dates", "-dateopt", "iso_8601",
 ok(!run(app(["openssl", "x509", "-noout", "-dates", "-dateopt", "invalid_format",
 	     "-in", srctop_file("test/certs", "ca-cert.pem")])),
    "Run with invalid -dateopt format");
+
+# same tests w/ -bundle (single cert)
+ok(run(app(["openssl", "x509", "-noout", "-bundle", "-dates", "-dateopt", "rfc_822",
+	     "-in", srctop_file("test/certs", "ca-cert.pem")])),
+   "Run with rfc_8222 -dateopt format and -bundle (single cert)");
+ok(run(app(["openssl", "x509", "-noout", "-bundle", "-dates", "-dateopt", "iso_8601",
+	     "-in", srctop_file("test/certs", "ca-cert.pem")])),
+   "Run with iso_8601 -dateopt format and -bundle (single cert)");
+ok(!run(app(["openssl", "x509", "-noout", "-bundle", "-dates", "-dateopt", "invalid_format",
+	     "-in", srctop_file("test/certs", "ca-cert.pem")])),
+   "Run with invalid -dateopt format and -bundle (single cert)");
+
+# same tests w/ -bundle (multi cert)
+ok(run(app(["openssl", "x509", "-noout", "-bundle", "-dates", "-dateopt", "rfc_822",
+	     "-in", srctop_file("test/certs", "goodcn2-chain.pem")])),
+   "Run with rfc_8222 -dateopt format and -bundle (multi cert)");
+ok(run(app(["openssl", "x509", "-noout", "-bundle", "-dates", "-dateopt", "iso_8601",
+	     "-in", srctop_file("test/certs", "goodcn2-chain.pem")])),
+   "Run with iso_8601 -dateopt format and -bundle (multi cert)");
+ok(!run(app(["openssl", "x509", "-noout", "-bundle", "-dates", "-dateopt", "invalid_format",
+	     "-in", srctop_file("test/certs", "goodcn2-chain.pem")])),
+   "Run with invalid -dateopt format and -bundle (multi cert)");
 
 # Tests for signing certs (broken in 1.1.1o)
 my $a_key = "a-key.pem";
