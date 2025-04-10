@@ -146,4 +146,9 @@ EVP_PKEY * ossl_d2i_PrivateKey_legacy(int keytype, EVP_PKEY **a,
                                       const unsigned char **pp, long length,
                                       OSSL_LIB_CTX *libctx, const char *propq);
 
+int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
+                        long len, const ASN1_ITEM *it, int tag, int aclass,
+                        char opt, ASN1_TLC *ctx, int depth,
+                        OSSL_LIB_CTX *libctx, const char *propq);
+
 #endif /* ndef OSSL_CRYPTO_ASN1_H */
