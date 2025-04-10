@@ -48,6 +48,7 @@ B<openssl> B<x509>
 [B<-purpose>]
 [B<-pubkey>]
 [B<-modulus>]
+[B<-multi>]
 [B<-checkend> I<num>]
 [B<-checkhost> I<host>]
 [B<-checkemail> I<host>]
@@ -337,6 +338,11 @@ Prints the certificate's SubjectPublicKeyInfo block in PEM format.
 
 This option prints out the value of the modulus of the public key
 contained in the certificate.
+
+=item B<-multi>
+
+This option prints selected information about all certificates
+contained in the input.
 
 =back
 
