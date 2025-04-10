@@ -383,7 +383,13 @@ typedef struct {
     const ASN1_VALUE *field;
 } DER_ENC;
 
-static int __cdecl der_cmp(const void *a, const void *b)
+static int
+#ifdef __GNUC__
+  __attribute__((cdecl))
+#elif _MSC_VER
+  __cdecl
+#endif
+  der_cmp(const void *a, const void *b)
 {
     const DER_ENC *d1 = a, *d2 = b;
     int cmplen, i;
