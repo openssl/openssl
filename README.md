@@ -154,6 +154,7 @@ available online.
 - [OpenSSL 3.4](https://docs.openssl.org/3.4/)
 - [OpenSSL 3.3](https://docs.openssl.org/3.3/)
 - [OpenSSL 3.2](https://docs.openssl.org/3.2/)
+- [OpenSSL 3.0](https://docs.openssl.org/3.0/)
 
 Demos
 -----
