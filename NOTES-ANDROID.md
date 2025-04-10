@@ -4,11 +4,11 @@ Notes for Android platforms
  Requirement details
  -------------------
 
- Beside basic tools like perl and make, you'll need to download the Android
+ Besides basic tools like Perl and Make, you'll need to download the Android
  NDK. It's available for Linux, macOS and Windows, but only Linux
- version was actually tested. There is no reason to believe that macOS
+ version has actually been tested. There is no reason to believe that macOS
  wouldn't work. And as for Windows, it's unclear which "shell" would be
- suitable, MSYS2 might have best chances. NDK version should play lesser
+ suitable, MSYS2 might have best chances. NDK version should play a lesser
  role, the goal is to support a range of most recent versions.
 
  Configuration
@@ -21,7 +21,7 @@ Notes for Android platforms
  (`*MIPS` targets are no longer supported with NDK R20+).
 
  Do not pass --cross-compile-prefix (as you might be tempted), as it
- will be "calculated" automatically based on chosen platform. However,
+ will be "calculated" automatically based on the chosen platform. However,
  you still need to know the prefix to extend your PATH, in order to
  invoke `$(CROSS_COMPILE)clang` [`*gcc` on NDK 19 and lower] and company.
  (`./Configure` will fail and give you a hint if you get it wrong.)
@@ -30,7 +30,7 @@ Notes for Android platforms
  to point at the `NDK` directory. If you're using a side-by-side NDK the path
  will look something like `/some/where/android-sdk/ndk/<ver>`, and for a
  standalone NDK the path will be something like `/some/where/android-ndk-<ver>`.
- Both variables are significant at both configuration and compilation times.
+ Both variables are significant during both configuration and compilation.
  The NDK customarily supports multiple Android API levels, e.g. `android-14`,
  `android-21`, etc. By default, latest API level is chosen. If you need to target
  an older platform pass the argument `-D__ANDROID_API__=N` to `Configure`,
@@ -43,7 +43,7 @@ Notes for Android platforms
     make
 
  Older versions of the NDK have GCC under their common prebuilt tools
- directory, so the bin path will be slightly different. EG: to compile
+ directory, so the bin path will be slightly different. E.g., to compile
  for ICS on ARM with NDK 10d:
 
     export ANDROID_NDK_ROOT=/some/where/android-ndk-10d
@@ -53,7 +53,7 @@ Notes for Android platforms
 
  Caveat lector! Earlier OpenSSL versions relied on additional `CROSS_SYSROOT`
  variable set to `$ANDROID_NDK_ROOT/platforms/android-<api>/arch-<arch>` to
- appoint headers-n-libraries' location. It's still recognized in order
+ appoint headers-n-libraries' location. It's still recognized to
  to facilitate migration from older projects. However, since API level
  appears in `CROSS_SYSROOT` value, passing `-D__ANDROID_API__=N` can be in
  conflict, and mixing the two is therefore not supported. Migration to
@@ -65,7 +65,7 @@ Notes for Android platforms
  target-specific, ar and ranlib. It's possible that you don't need to
  bother, if binutils-multiarch is installed on your Linux system.
 
- Another option is to create so called "standalone toolchain" tailored
+ Another option is to create a so-called "standalone toolchain" tailored
  for single specific platform including Android API level, and assign its
  location to `ANDROID_NDK_ROOT`. In such case, you have to pass matching
  target name to Configure and shouldn't use `-D__ANDROID_API__=N`. `PATH`
@@ -76,7 +76,7 @@ Notes for Android platforms
 
  This is not actually supported. Notes are meant rather as inspiration.
 
- Even though build output targets alien system, it's possible to execute
+ Even though the build output targets a foreign system, it's possible to execute
  test suite on Linux system by employing qemu-user. The trick is static
  linking. Pass -static to Configure, then edit generated Makefile and
  remove occurrences of -ldl and -pie flags. You would also need to pick
