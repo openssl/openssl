@@ -452,7 +452,6 @@ static const ssl_trace_tbl ssl_ciphers_tbl[] = {
     {0xC0B5, "TLS_SHA384_SHA384"},
     {0xC100, "GOST2012-KUZNYECHIK-KUZNYECHIKOMAC"},
     {0xC101, "GOST2012-MAGMA-MAGMAOMAC"},
-    {0xC102, "GOST2012-GOST8912-IANA"},
 };
 
 /* Compression methods */
