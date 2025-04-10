@@ -4628,6 +4628,31 @@ int ossl_quic_listen(SSL *ssl)
     return ret;
 }
 
+QUIC_TAKES_LOCK
+int ossl_quic_peeloff_conn(SSL *listener, SSL *new_conn)
+{
+    QCTX lctx;
+    QCTX cctx;
+    QUIC_CHANNEL *new_ch;
+    int ret = 0;
+
+    if (!expect_quic_listener(listener, &lctx))
+        return 0;
+
+    if (!expect_quic_cs(new_conn, &cctx))
+        return 0;
+
+    qctx_lock_for_io(&lctx);
+    new_ch = ossl_quic_port_pop_incoming(lctx.ql->port);
+    if (new_ch != NULL) {
+        /*
+         * Do our cloning work here
+         */
+    }
+    qctx_unlock(&lctx);
+    return ret;
+}
+
 /*
  * SSL_accept_connection
  * ---------------------

@@ -8059,6 +8059,15 @@ int SSL_get_peer_addr(SSL *ssl, BIO_ADDR *peer_addr)
     return ossl_quic_get_peer_addr(ssl, peer_addr);
 #else
     return 0;
+}
+
+int SSL_listen_ex(SSL *listener, SSL *new_conn)
+{
+#ifndef OPENSSL_NO_QUIC
+    if (!IS_QUIC(listener) || !IS_QUIC(new_conn))
+        return ossl_quic_peeloff_conn(listener, new_conn);
+#else
+    return 0;
 #endif
 }
 
