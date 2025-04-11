@@ -548,7 +548,11 @@ IF[{- !$disabled{tests} -}]
 
   SOURCE[bioprinttest]=bioprinttest.c
   INCLUDE[bioprinttest]=../include ../apps/include
-  DEPEND[bioprinttest]=../libcrypto libtestutil.a
+  IF[{- $config{target} =~ /^VC/ -}]
+    DEPEND[bioprinttest]=../libcrypto.a libtestutil.a
+  ELSE
+    DEPEND[bioprinttest]=../libcrypto libtestutil.a
+  ENDIF
 
   SOURCE[bio_core_test]=bio_core_test.c
   INCLUDE[bio_core_test]=../include ../apps/include
