@@ -2770,6 +2770,12 @@ static int test_ssl_accept_connection(void)
     if (!create_quic_ssl_objects(sctx, cctx, &qlistener, &clientssl))
         goto err;
 
+    /* Calling SSL_accept() on a listener is expected to fail */
+    ret = SSL_accept(qlistener);
+    if (!TEST_int_le(ret, 0)
+        || !TEST_int_eq(SSL_get_error(qlistener, ret), SSL_ERROR_SSL))
+        goto err;
+
     /* Send ClientHello and server retry */
     for (i = 0; i < 2; i++) {
         ret = SSL_connect(clientssl);
