@@ -561,6 +561,12 @@ SSL *ossl_quic_channel_get0_tls(QUIC_CHANNEL *ch)
     return ch->tls;
 }
 
+void ossl_quic_channel_set0_tls(QUIC_CHANNEL *ch, SSL *ssl)
+{
+    SSL_free(ch->tls);
+    ch->tls = ssl;
+}
+
 static void free_buf_mem(unsigned char *buf, size_t buf_len, void *arg)
 {
     BUF_MEM_free((BUF_MEM *)arg);
