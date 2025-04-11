@@ -4643,12 +4643,21 @@ int ossl_quic_peeloff_conn(SSL *listener, SSL *new_conn)
         return 0;
 
     qctx_lock_for_io(&lctx);
+    if (ossl_quic_port_get_using_peeloff(lctx.ql->port) == -1) {
+        QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED,
+                                    "This listener is using SSL_accept_connection");
+        ret = -1;
+        goto out;
+    }
+
+    ossl_quic_port_set_using_peeloff(lctx.ql->port, 1);
     new_ch = ossl_quic_port_pop_incoming(lctx.ql->port);
     if (new_ch != NULL) {
         /*
          * Do our cloning work here
          */
     }
+out:
     qctx_unlock(&lctx);
     return ret;
 }
@@ -4688,6 +4697,14 @@ SSL *ossl_quic_accept_connection(SSL *ssl, uint64_t flags)
 
     if (!ql_listen(ctx.ql))
         goto out;
+
+    if (ossl_quic_get_using_peeloff(ctx.ql->port) == 1) {
+        QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED,
+                                    "This listener is using SSL_accept_ex");
+        goto out; 
+    }
+    
+    ossl_quic_set_using_peeloff(ctx.ql->port, -1);
 
     /* Wait for an incoming connection if needed. */
     new_ch = ossl_quic_port_pop_incoming(ctx.ql->port);
