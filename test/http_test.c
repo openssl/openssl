@@ -283,7 +283,7 @@ static int test_http_keep_alive(char version, int keep_alive, int kept_alive)
 }
 
 static int test_http_url_ok(const char *url, int exp_ssl, const char *exp_host,
-                            const char *exp_port, const char *exp_path)
+                            const char *exp_port, const char *exp_path, const char *exp_query)
 {
     char *user, *host, *port, *path, *query, *frag;
     int exp_num, num, ssl;
@@ -302,8 +302,8 @@ static int test_http_url_ok(const char *url, int exp_ssl, const char *exp_host,
         res = TEST_str_eq(user, "user:pass");
     if (res && *frag != '\0')
         res = TEST_str_eq(frag, "fr");
-    if (res && *query != '\0')
-        res = TEST_str_eq(query, "q");
+    if (res)
+        res = TEST_str_eq(query, exp_query);
     OPENSSL_free(user);
     OPENSSL_free(host);
     OPENSSL_free(port);
@@ -329,7 +329,7 @@ static int test_http_url_path_query_ok(const char *url, const char *exp_path_qu)
 
 static int test_http_url_dns(void)
 {
-    return test_http_url_ok("host:65535/path", 0, "host", "65535", "/path");
+    return test_http_url_ok("host:65535/path", 0, "host", "65535", "/path", "");
 }
 
 static int test_http_url_path_query(void)
@@ -341,17 +341,22 @@ static int test_http_url_path_query(void)
 
 static int test_http_url_userinfo_query_fragment(void)
 {
-    return test_http_url_ok("user:pass@host/p?q#fr", 0, "host", "80", "/p");
+    return test_http_url_ok("user:pass@host/p?q#fr", 0, "host", "80", "/p", "q");
+}
+
+static int test_http_url_query_including_at(void)
+{
+    return test_http_url_ok("https://host/p?q@z#fr", 1, "host", "443", "/p", "q@z");
 }
 
 static int test_http_url_ipv4(void)
 {
-    return test_http_url_ok("https://1.2.3.4/p/q", 1, "1.2.3.4", "443", "/p/q");
+    return test_http_url_ok("https://1.2.3.4/p/q", 1, "1.2.3.4", "443", "/p/q", "");
 }
 
 static int test_http_url_ipv6(void)
 {
-    return test_http_url_ok("http://[FF01::101]:6", 0, "[FF01::101]", "6", "/");
+    return test_http_url_ok("http://[FF01::101]:6", 0, "[FF01::101]", "6", "/", "");
 }
 
 static int test_http_url_invalid(const char *url)
@@ -561,6 +566,7 @@ int setup_tests(void)
     ADD_TEST(test_http_url_dns);
     ADD_TEST(test_http_url_path_query);
     ADD_TEST(test_http_url_userinfo_query_fragment);
+    ADD_TEST(test_http_url_query_including_at);
     ADD_TEST(test_http_url_ipv4);
     ADD_TEST(test_http_url_ipv6);
     ADD_TEST(test_http_url_invalid_prefix);
