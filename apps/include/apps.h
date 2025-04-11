@@ -45,7 +45,7 @@
  */
 # define _UC(c) ((unsigned char)(c))
 
-#define IS_IP_ADDR(host) ((host) != NULL && (*(host) >= '0' && *(host) <= '9') || *(host) == '[')
+# define IS_IP_ADDR(host) ((host) != NULL && ((*(host) >= '0' && *(host) <= '9') || *(host) == '['))
 
 void app_RAND_load_conf(CONF *c, const char *section);
 int app_RAND_write(void);

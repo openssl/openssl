@@ -790,7 +790,7 @@ static X509 *load_cert_pwd(const char *uri, const char *pass, const char *desc)
 /*
  * Set expected hostname/IP address and clears any email address in the given ts.
  * If the host is NULL, host name/address verification is disabled.
- * Otherwise, it is interpreted as an IP addresss if possible, otherwise as a domain name.
+ * Otherwise, it is interpreted as an IP address if possible, otherwise as a domain name.
  */
 static int truststore_set_host_etc(X509_STORE *ts, const char *host)
 {
