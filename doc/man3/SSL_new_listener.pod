@@ -130,6 +130,14 @@ connection is created and returned on success. If no incoming connection is
 available and the listener SSL object is configured in nonblocking mode, NULL is
 returned.
 
+The new SSL object returned from SSL_accept_connection() may or may not have
+completed its handshake at the point it is returned. Optionally, you may use the
+function L<SSL_is_init_finished(3)> to determine this. You may call the
+functions L<SSL_accept(3)>, L<SSL_do_handshake(3)> or L<SSL_handle_events(3)> to
+progress the state of the SSL object towards handshake completion. Other "I/O"
+functions may also implicitly progress the state of the handshake such as
+L<SSL_poll(3)>, L<SSL_read(3)> and L<SSL_write(3)>.
+
 The B<SSL_ACCEPT_CONNECTION_NO_BLOCK> flag may be specified to
 SSL_accept_connection(). If specified, the call does not block even if the
 listener SSL object is configured in blocking mode.
