@@ -17,6 +17,7 @@ TESTS = tls-client-block \
 CFLAGS  = -I../../include -g -Wall
 LDFLAGS = -L../..
 LDLIBS  = -lcrypto -lssl
+CPPFLAGS = -DDEBUG
 
 all: $(TESTS) chain
 
@@ -37,7 +38,7 @@ chain.pem: pkey.pem
 	openssl req -x509 -new -key pkey.pem -days 36500 -subj '/CN=localhost' -out chain.pem
 
 $(TESTS):
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LDLIBS)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LDLIBS)
 
 clean:
 	$(RM) $(TESTS) *.o
