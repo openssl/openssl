@@ -86,5 +86,5 @@ most easily be seen in action in our quic interop container, buildable from
 
 <!-- Links  -->
 
-[guide]: https://www.openssl.org/docs/manmaster/man7/ossl-guide-introduction.html
-[TLS Introduction]: https://www.openssl.org/docs/manmaster/man7/ossl-guide-tls-introduction.html
+[guide]: https://docs.openssl.org/master/man7/ossl-guide-introduction
+[TLS Introduction]: https://docs.openssl.org/master/man7/ossl-guide-tls-introduction

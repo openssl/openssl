@@ -168,7 +168,7 @@ Using the FIPS Module in applications
 Documentation about using the FIPS module is available on the [fips_module(7)]
 manual page.
 
- [fips_module(7)]: https://www.openssl.org/docs/manmaster/man7/fips_module.html
+ [fips_module(7)]: https://docs.openssl.org/master/man7/fips_module
 
 Entropy Source
 ==============
