@@ -73,7 +73,7 @@ int ossl_quic_renegotiate_check(SSL *ssl, int initok);
 
 int ossl_quic_do_handshake(SSL *s);
 void ossl_quic_set_connect_state(SSL *s);
-void ossl_quic_set_accept_state(SSL *s);
+int ossl_quic_set_accept_state(SSL *s);
 
 __owur int ossl_quic_has_pending(const SSL *s);
 __owur int ossl_quic_handle_events(SSL *s);

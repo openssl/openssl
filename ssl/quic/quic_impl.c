@@ -1687,18 +1687,19 @@ void ossl_quic_set_connect_state(SSL *s)
 }
 
 /* SSL_set_accept_state */
-void ossl_quic_set_accept_state(SSL *s)
+int ossl_quic_set_accept_state(SSL *s)
 {
     QCTX ctx;
 
     if (!expect_quic_cs(s, &ctx))
-        return;
+        return 0;
 
     /* Cannot be changed after handshake started */
     if (ctx.qc->started || ctx.is_stream)
-        return;
+        return 0;
 
     ctx.qc->as_server_state = 1;
+    return 1;
 }
 
 /* SSL_do_handshake */
@@ -1993,7 +1994,8 @@ int ossl_quic_connect(SSL *s)
 int ossl_quic_accept(SSL *s)
 {
     /* Ensure we are in accept state (no-op if non-idle). */
-    ossl_quic_set_accept_state(s);
+    if (!ossl_quic_set_accept_state(s))
+        return 0;
 
     /* Begin or continue the handshake */
     return ossl_quic_do_handshake(s);
