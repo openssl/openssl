@@ -44,17 +44,131 @@ static void signature_init(ML_DSA_SIG *sig,
 
 /*
  * FIPS 204, Algorithm 7, ML-DSA.Sign_internal()
- * @returns 1 on success and 0 on failure.
+ *
+ * This algorithm is decomposed in 3 functions:
+ * - ml_dsa_sign_internal_init which returns a context with the key expansion
+ * - ml_dsa_sign_internal_update which updates the hash with the data to be
+ *   signed and can be called multiple times
+ *   This function can also be called with msg_is_mu set to true, in which case
+ *   the internal mu buffer is filled with the context of msg directly and no
+ *   hashing is performed.
+ * - ml_dsa_sign_internal_final which applies the final transformations that
+ *   constitute the actual signature on the message hash.
  */
-static int ml_dsa_sign_internal(const ML_DSA_KEY *priv, int msg_is_mu,
-                                const uint8_t *encoded_msg,
-                                size_t encoded_msg_len,
-                                const uint8_t *rnd, size_t rnd_len,
-                                uint8_t *out_sig)
+
+struct ml_dsa_internal_ctx_st {
+    int is_sign;
+    const ML_DSA_KEY *key;
+    EVP_MD_CTX *md_ctx;
+    uint8_t mu[ML_DSA_MU_BYTES];
+    int msg_is_mu;
+    int updated;
+};
+
+typedef struct ml_dsa_internal_ctx_st ML_DSA_INT_CTX;
+
+static void ML_DSA_INT_CTX_free(ML_DSA_INT_CTX *ctx)
+{
+    if (ctx == NULL)
+        return;
+    EVP_MD_CTX_free(ctx->md_ctx);
+    OPENSSL_clear_free(ctx, sizeof(*ctx));
+}
+
+/*
+ * @brief Initializes an ML-DSA signing operation
+ *
+ * @param priv: The ML-DSA private key
+ * @param msg_is_mu: Indicates that the message that will be provided is an
+ *                   externally computed mu, so no message hashing will be set
+ *                   up, enc_ctx_len must be 0 if this parmeter is set.
+ * @param enc_ctx: The encoded context buffer if needed.
+ * @param enc_ctx_len: the encoded context length, it can be 0 if the caller
+ * is going to pass in an externally computed mu, or is constructing and
+ * passing the context header as part of the message.
+ * @returns a pointer to the allocated context or NULL on failure.
+ */
+static ML_DSA_INT_CTX *ml_dsa_sign_internal_init(const ML_DSA_KEY *priv,
+                                                 int msg_is_mu,
+                                                 uint8_t *enc_ctx,
+                                                 size_t enc_ctx_len)
+{
+    ML_DSA_INT_CTX *ctx;
+
+    ctx = OPENSSL_zalloc(sizeof(ML_DSA_INT_CTX));
+    if (ctx == NULL)
+        return NULL;
+
+    ctx->is_sign = -1;
+    ctx->key = priv;
+    ctx->msg_is_mu = msg_is_mu;
+
+    ctx->md_ctx = EVP_MD_CTX_new();
+    if (ctx->md_ctx == NULL)
+        goto err;
+
+    if (msg_is_mu) {
+        if (enc_ctx_len != 0)
+            goto err;
+        return ctx;
+    }
+
+    if (!EVP_DigestInit_ex2(ctx->md_ctx, priv->shake256_md, NULL))
+        goto err;
+    if (!EVP_DigestUpdate(ctx->md_ctx, priv->tr, sizeof(priv->tr)))
+        goto err;
+    if (!EVP_DigestUpdate(ctx->md_ctx, enc_ctx, enc_ctx_len))
+        goto err;
+
+    ctx->is_sign = 1;
+    return ctx;
+
+err:
+    ML_DSA_INT_CTX_free(ctx);
+    return NULL;
+}
+
+/*
+ * @brief: updates the internal ML-DSA hash with an additional message chunk.
+ *
+ * @param ctx: The message context created by ml_dsa_sign_internal_init()
+ * @param msg: The message to be signed (or part of it).
+ * @param msg_llen: The length of the msg buffer to process
+ * @returns 1 on success, 0 on error
+ */
+static int ml_dsa_sign_internal_update(ML_DSA_INT_CTX *ctx,
+                                       const uint8_t *msg,
+                                       size_t msg_len)
+{
+    if (ctx->is_sign != 1)
+        return 0;
+
+    if (ctx->msg_is_mu) {
+        if (ctx->updated) {
+            ctx->is_sign = -1;
+            return 0;
+        }
+        if (msg_len != sizeof(ctx->mu)) {
+            ctx->is_sign = -1;
+            return 0;
+        }
+        ctx->updated = 1;
+        memcpy(ctx->mu, msg, msg_len);
+        return 1;
+    }
+
+    ctx->updated = 1;
+    return EVP_DigestUpdate(ctx->md_ctx, msg, msg_len);
+}
+
+static int ml_dsa_sign_internal_final(ML_DSA_INT_CTX *ctx,
+                                      const uint8_t *rnd, size_t rnd_len,
+                                      uint8_t *out_sig)
 {
     int ret = 0;
+    const ML_DSA_KEY *priv = ctx->key;
     const ML_DSA_PARAMS *params = priv->params;
-    EVP_MD_CTX *md_ctx = NULL;
+    EVP_MD_CTX *md_ctx = ctx->md_ctx;
     uint32_t k = params->k, l = params->l;
     uint32_t gamma1 = params->gamma1, gamma2 = params->gamma2;
     uint8_t *alloc = NULL, *w1_encoded;
@@ -63,16 +177,28 @@ static int ml_dsa_sign_internal(const ML_DSA_KEY *priv, int msg_is_mu,
     size_t num_polys_k = 5 * k;
     size_t num_polys_l = 3 * l;
     size_t num_polys_k_by_l = k * l;
-    POLY *polys = NULL, *p, *c_ntt;
+    POLY *p, *c_ntt;
     VECTOR s1_ntt, s2_ntt, t0_ntt, w, w1, cs1, cs2, y;
     MATRIX a_ntt;
     ML_DSA_SIG sig;
-    uint8_t mu[ML_DSA_MU_BYTES], *mu_ptr = mu;
-    const size_t mu_len = sizeof(mu);
     uint8_t rho_prime[ML_DSA_RHO_PRIME_BYTES];
     uint8_t c_tilde[ML_DSA_MAX_LAMBDA / 4];
     size_t c_tilde_len = params->bit_strength >> 2;
     size_t kappa;
+
+    if (ctx->is_sign != 1)
+        return 0;
+
+    if (!ctx->updated) {
+        ctx->is_sign = -1;
+        return 0;
+    }
+
+    if (!ctx->msg_is_mu) {
+        /* finalize */
+        if (!EVP_DigestSqueeze(md_ctx, ctx->mu, sizeof(ctx->mu)))
+            return 0;
+    }
 
     /*
      * Allocate a single blob for most of the variable size temporary variables.
@@ -80,14 +206,11 @@ static int ml_dsa_sign_internal(const ML_DSA_KEY *priv, int msg_is_mu,
      */
     w1_encoded_len = k * (gamma2 == ML_DSA_GAMMA2_Q_MINUS1_DIV88 ? 192 : 128);
     alloc_len = w1_encoded_len
-        + sizeof(*polys) * (1 + num_polys_k + num_polys_l
-                            + num_polys_k_by_l + num_polys_sig_k);
+        + sizeof(*p) * (1 + num_polys_k + num_polys_l
+                        + num_polys_k_by_l + num_polys_sig_k);
     alloc = OPENSSL_malloc(alloc_len);
     if (alloc == NULL)
         return 0;
-    md_ctx = EVP_MD_CTX_new();
-    if (md_ctx == NULL)
-        goto err;
 
     w1_encoded = alloc;
     /* Init the temp vectors to point to the allocated polys blob */
@@ -110,17 +233,9 @@ static int ml_dsa_sign_internal(const ML_DSA_KEY *priv, int msg_is_mu,
 
     if (!matrix_expand_A(md_ctx, priv->shake128_md, priv->rho, &a_ntt))
         goto err;
-    if (msg_is_mu) {
-        if (encoded_msg_len != mu_len)
-            goto err;
-        mu_ptr = (uint8_t *)encoded_msg;
-    } else {
-        if (!shake_xof_2(md_ctx, priv->shake256_md, priv->tr, sizeof(priv->tr),
-                         encoded_msg, encoded_msg_len, mu_ptr, mu_len))
-            goto err;
-    }
+
     if (!shake_xof_3(md_ctx, priv->shake256_md, priv->K, sizeof(priv->K),
-                     rnd, rnd_len, mu_ptr, mu_len,
+                     rnd, rnd_len, ctx->mu, sizeof(ctx->mu),
                      rho_prime, sizeof(rho_prime)))
         goto err;
 
@@ -152,7 +267,7 @@ static int ml_dsa_sign_internal(const ML_DSA_KEY *priv, int msg_is_mu,
         vector_high_bits(&w, gamma2, &w1);
         ossl_ml_dsa_w1_encode(&w1, gamma2, w1_encoded, w1_encoded_len);
 
-        if (!shake_xof_2(md_ctx, priv->shake256_md, mu_ptr, mu_len,
+        if (!shake_xof_2(md_ctx, priv->shake256_md, ctx->mu, sizeof(ctx->mu),
                          w1_encoded, w1_encoded_len, c_tilde, c_tilde_len))
             break;
 
@@ -203,17 +318,115 @@ err:
 
 /*
  * See FIPS 204, Algorithm 8, ML-DSA.Verify_internal().
+ *
+ * This algorithm is decomposed in 3 functions:
+ * - ml_dsa_verify_internal_init which returns a context with the key expansion
+ * - ml_dsa_verify_internal_update which updates the hash with the data to be
+ *   signed and can be called multiple times
+ *   This function can also be called with msg_is_mu set to true, in which case
+ *   the internal mu buffer is filled with the context of msg directly and no
+ *   hashing is performed.
+ * - ml_dsa_verify_internal_final which applies the final transformations that
+ *   constitute the actual signature on the message hash.
  */
-static int ml_dsa_verify_internal(const ML_DSA_KEY *pub, int msg_is_mu,
-                                  const uint8_t *msg_enc, size_t msg_enc_len,
-                                  const uint8_t *sig_enc, size_t sig_enc_len)
+
+/*
+ * @brief Initializes an ML-DSA verify operation
+ *
+ * @param pub: The ML-DSA public key
+ * @param msg_is_mu: Indicates that the message that will be provided is an
+ *                   externally computed mu, so no message hashing will be set
+ *                   up, enc_ctx_len must be 0 if this parmeter is set.
+ * @param enc_ctx: The encoded context buffer if needed.
+ * @param enc_ctx_len: the encoded context length, it can be 0 if the caller
+ * is going to pass in an externally computed mu, or is constructing and
+ * passing the context header as part of the message.
+ * @returns a pointer to the allocated context or NULL on failure.
+ */
+static ML_DSA_INT_CTX *ml_dsa_verify_internal_init(const ML_DSA_KEY *pub,
+                                                   int msg_is_mu,
+                                                   uint8_t *enc_ctx,
+                                                   size_t enc_ctx_len)
+{
+    ML_DSA_INT_CTX *ctx;
+
+    ctx = OPENSSL_zalloc(sizeof(ML_DSA_INT_CTX));
+    if (ctx == NULL)
+        return NULL;
+
+    ctx->is_sign = -1;
+    ctx->key = pub;
+    ctx->msg_is_mu = msg_is_mu;
+
+    ctx->md_ctx = EVP_MD_CTX_new();
+    if (ctx->md_ctx == NULL)
+        goto err;
+
+    if (msg_is_mu) {
+        if (enc_ctx_len != 0)
+            goto err;
+        return ctx;
+    }
+
+    if (!EVP_DigestInit_ex2(ctx->md_ctx, pub->shake256_md, NULL))
+        goto err;
+    if (!EVP_DigestUpdate(ctx->md_ctx, pub->tr, sizeof(pub->tr)))
+        goto err;
+    if (!EVP_DigestUpdate(ctx->md_ctx, enc_ctx, enc_ctx_len))
+        goto err;
+
+    ctx->is_sign = 0;
+    return ctx;
+
+err:
+    ML_DSA_INT_CTX_free(ctx);
+    return NULL;
+}
+
+/*
+ * @brief: updates the internal ML-DSA hash with an additional message chunk.
+ *
+ * @param ctx: The message context created by ml_dsa_verify_internal_init()
+ * @param msg: The message to be verifid (or part of it).
+ * @param msg_llen: The length of the msg buffer to process
+ * @returns 1 on success, 0 on error
+ */
+static int ml_dsa_verify_internal_update(ML_DSA_INT_CTX *ctx,
+                                         const uint8_t *msg,
+                                         size_t msg_len)
+{
+    if (ctx->is_sign != 0)
+        return 0;
+
+    if (ctx->msg_is_mu) {
+        if (ctx->updated) {
+            ctx->is_sign = -1;
+            return 0;
+        }
+        if (msg_len != sizeof(ctx->mu)) {
+            ctx->is_sign = -1;
+            return 0;
+        }
+        ctx->updated = 1;
+        memcpy(ctx->mu, msg, msg_len);
+        return 1;
+    }
+
+    ctx->updated = 1;
+    return EVP_DigestUpdate(ctx->md_ctx, msg, msg_len);
+}
+
+static int ml_dsa_verify_internal_final(ML_DSA_INT_CTX *ctx,
+                                        const uint8_t *sig_enc,
+                                        size_t sig_enc_len)
 {
     int ret = 0;
     uint8_t *alloc = NULL, *w1_encoded;
-    POLY *polys = NULL, *p, *c_ntt;
+    POLY *p, *c_ntt;
     MATRIX a_ntt;
     VECTOR az_ntt, ct1_ntt, *z_ntt, *w1, *w_approx;
     ML_DSA_SIG sig;
+    const ML_DSA_KEY *pub = ctx->key;
     const ML_DSA_PARAMS *params = pub->params;
     uint32_t k = pub->params->k;
     uint32_t l = pub->params->l;
@@ -223,26 +436,35 @@ static int ml_dsa_verify_internal(const ML_DSA_KEY *pub, int msg_is_mu,
     size_t num_polys_k = 2 * k;
     size_t num_polys_l = 1 * l;
     size_t num_polys_k_by_l = k * l;
-    uint8_t mu[ML_DSA_MU_BYTES], *mu_ptr = mu;
-    const size_t mu_len = sizeof(mu);
     uint8_t c_tilde[ML_DSA_MAX_LAMBDA / 4];
     uint8_t c_tilde_sig[ML_DSA_MAX_LAMBDA / 4];
-    EVP_MD_CTX *md_ctx = NULL;
+    EVP_MD_CTX *md_ctx = ctx->md_ctx;
     size_t c_tilde_len = params->bit_strength >> 2;
     uint32_t z_max;
+
+    if (ctx->is_sign != 0)
+        return 0;
+
+    if (!ctx->updated) {
+        ctx->is_sign = -1;
+        return 0;
+    }
+
+    if (!ctx->msg_is_mu) {
+        /* finalize */
+        if (!EVP_DigestSqueeze(md_ctx, ctx->mu, sizeof(ctx->mu)))
+            return 0;
+    }
 
     /* Allocate space for all the POLYNOMIALS used by temporary VECTORS */
     w1_encoded_len = k * (gamma2 == ML_DSA_GAMMA2_Q_MINUS1_DIV88 ? 192 : 128);
     alloc = OPENSSL_malloc(w1_encoded_len
-                           + sizeof(*polys) * (1 + num_polys_k
-                                               + num_polys_l
-                                               + num_polys_k_by_l
-                                               + num_polys_sig));
+                           + sizeof(*p) * (1 + num_polys_k
+                                           + num_polys_l
+                                           + num_polys_k_by_l
+                                           + num_polys_sig));
     if (alloc == NULL)
         return 0;
-    md_ctx = EVP_MD_CTX_new();
-    if (md_ctx == NULL)
-        goto err;
 
     w1_encoded = alloc;
     /* Init the temp vectors to point to the allocated polys blob */
@@ -258,15 +480,7 @@ static int ml_dsa_verify_internal(const ML_DSA_KEY *pub, int msg_is_mu,
     if (!ossl_ml_dsa_sig_decode(&sig, sig_enc, sig_enc_len, pub->params)
             || !matrix_expand_A(md_ctx, pub->shake128_md, pub->rho, &a_ntt))
         goto err;
-    if (msg_is_mu) {
-        if (msg_enc_len != mu_len)
-            goto err;
-        mu_ptr = (uint8_t *)msg_enc;
-    } else {
-        if (!shake_xof_2(md_ctx, pub->shake256_md, pub->tr, sizeof(pub->tr),
-                         msg_enc, msg_enc_len, mu_ptr, mu_len))
-            goto err;
-    }
+
     /* Compute verifiers challenge c_ntt = NTT(SampleInBall(c_tilde) */
     if (!poly_sample_in_ball_ntt(c_ntt, c_tilde_sig, c_tilde_len,
                                  md_ctx, pub->shake256_md, params->tau))
@@ -292,7 +506,7 @@ static int ml_dsa_verify_internal(const ML_DSA_KEY *pub, int msg_is_mu,
     vector_use_hint(&sig.hint, w_approx, gamma2, w1);
     ossl_ml_dsa_w1_encode(w1, gamma2, w1_encoded, w1_encoded_len);
 
-    if (!shake_xof_3(md_ctx, pub->shake256_md, mu_ptr, mu_len,
+    if (!shake_xof_3(md_ctx, pub->shake256_md, ctx->mu, sizeof(ctx->mu),
                      w1_encoded, w1_encoded_len, NULL, 0, c_tilde, c_tilde_len))
         goto err;
 
@@ -310,53 +524,33 @@ err:
  *
  * ML_DSA pure signatures are encoded as M' = 00 || ctx_len || ctx || msg
  * Where ctx is the empty string by default and ctx_len <= 255.
+ * The message is appended to the encoded context later so it is not needed
+ * in this function.
  *
  * Note this code could be shared with SLH_DSA
  *
- * @param msg A message to encode
- * @param msg_len The size of |msg|
  * @param ctx An optional context to add to the message encoding.
  * @param ctx_len The size of |ctx|. It must be in the range 0..255
- * @param encode Use the Pure signature encoding if this is 1, and dont encode
- *               if this value is 0.
- * @param tmp A small buffer that may be used if the message is small.
- * @param tmp_len The size of |tmp|
- * @param out_len The size of the returned encoded buffer.
- * @returns A buffer containing the encoded message. If the passed in
- * |tmp| buffer is big enough to hold the encoded message then it returns |tmp|
- * otherwise it allocates memory which must be freed by the caller. If |encode|
- * is 0 then it returns |msg|. NULL is returned if there is a failure.
+ * @param encoded A small buffer to store the encoded context.
+ * @param encoded_size The size of |encoded|
+ * @param out_len The size of the resulting encoded buffer.
+ * @returns 1 if the operation is successful.
  */
-static uint8_t *msg_encode(const uint8_t *msg, size_t msg_len,
-                           const uint8_t *ctx, size_t ctx_len, int encode,
-                           uint8_t *tmp, size_t tmp_len, size_t *out_len)
+static int msg_encode_context(const uint8_t *ctx, size_t ctx_len,
+                              uint8_t *encoded, size_t encoded_size,
+                              size_t *out_len)
 {
-    uint8_t *encoded = NULL;
-    size_t encoded_len;
-
-    if (encode == 0) {
-        /* Raw message */
-        *out_len = msg_len;
-        return (uint8_t *)msg;
-    }
     if (ctx_len > ML_DSA_MAX_CONTEXT_STRING_LEN)
-        return NULL;
+        return 0;
+    if (encoded_size < ctx_len)
+        return 0;
 
-    /* Pure encoding */
-    encoded_len = 1 + 1 + ctx_len + msg_len;
-    *out_len = encoded_len;
-    if (encoded_len <= tmp_len) {
-        encoded = tmp;
-    } else {
-        encoded = OPENSSL_malloc(encoded_len);
-        if (encoded == NULL)
-            return NULL;
-    }
+    /* Generate encoded context */
     encoded[0] = 0;
     encoded[1] = (uint8_t)ctx_len;
     memcpy(&encoded[2], ctx, ctx_len);
-    memcpy(&encoded[2 + ctx_len], msg, msg_len);
-    return encoded;
+    *out_len = 1 + 1 + ctx_len;
+    return 1;
 }
 
 /**
@@ -370,31 +564,37 @@ int ossl_ml_dsa_sign(const ML_DSA_KEY *priv, int msg_is_mu,
                      const uint8_t *rand, size_t rand_len, int encode,
                      unsigned char *sig, size_t *sig_len, size_t sig_size)
 {
-    int ret = 1;
-    uint8_t m_tmp[1024], *m = m_tmp, *alloced_m = NULL;
-    size_t m_len = 0;
+    ML_DSA_INT_CTX *ctx = NULL;
+    uint8_t c_tmp[ML_DSA_MAX_CONTEXT_STRING_LEN + 2];
+    size_t c_len = 0;
+    int ret = 0;
 
     if (ossl_ml_dsa_key_get_priv(priv) == NULL)
         return 0;
-    if (sig != NULL) {
-        if (sig_size < priv->params->sig_len)
+    if (sig == NULL) {
+        if (sig_len == NULL)
             return 0;
-        if (msg_is_mu) {
-            m = (uint8_t *)msg;
-            m_len = msg_len;
-        } else {
-            m = msg_encode(msg, msg_len, context, context_len, encode,
-                           m_tmp, sizeof(m_tmp), &m_len);
-            if (m == NULL)
-                return 0;
-            if (m != msg && m != m_tmp)
-                alloced_m = m;
-        }
-        ret = ml_dsa_sign_internal(priv, msg_is_mu, m, m_len, rand, rand_len, sig);
-        OPENSSL_free(alloced_m);
-    }
-    if (sig_len != NULL)
         *sig_len = priv->params->sig_len;
+        return 1;
+    }
+
+    if (sig_size < priv->params->sig_len)
+        return 0;
+    if (!msg_is_mu && encode) {
+        if (!msg_encode_context(context, context_len, c_tmp, sizeof(c_tmp),
+                                &c_len))
+            return 0;
+    }
+    ctx = ml_dsa_sign_internal_init(priv, msg_is_mu, c_tmp, c_len);
+    if (ctx == NULL)
+        return 0;
+
+    if (!ml_dsa_sign_internal_update(ctx, msg, msg_len))
+        goto err;
+
+    ret = ml_dsa_sign_internal_final(ctx, rand, rand_len, sig);
+err:
+    ML_DSA_INT_CTX_free(ctx);
     return ret;
 }
 
@@ -407,27 +607,29 @@ int ossl_ml_dsa_verify(const ML_DSA_KEY *pub, int msg_is_mu,
                        const uint8_t *context, size_t context_len, int encode,
                        const uint8_t *sig, size_t sig_len)
 {
-    uint8_t *m, *alloced_m = NULL;
-    size_t m_len;
-    uint8_t m_tmp[1024];
+    ML_DSA_INT_CTX *ctx = NULL;
+    uint8_t c_tmp[ML_DSA_MAX_CONTEXT_STRING_LEN + 2];
+    size_t c_len = 0;
     int ret = 0;
 
     if (ossl_ml_dsa_key_get_pub(pub) == NULL)
         return 0;
 
-    if (msg_is_mu) {
-        m = (uint8_t *)msg;
-        m_len = msg_len;
-    } else {
-        m = msg_encode(msg, msg_len, context, context_len, encode,
-                       m_tmp, sizeof(m_tmp), &m_len);
-        if (m == NULL)
+    if (!msg_is_mu && encode) {
+        if (!msg_encode_context(context, context_len, c_tmp, sizeof(c_tmp),
+                                &c_len))
             return 0;
-        if (m != msg && m != m_tmp)
-            alloced_m = m;
     }
 
-    ret = ml_dsa_verify_internal(pub, msg_is_mu, m, m_len, sig, sig_len);
-    OPENSSL_free(alloced_m);
+    ctx = ml_dsa_verify_internal_init(pub, msg_is_mu, c_tmp, c_len);
+    if (ctx == NULL)
+        return 0;
+
+    if (!ml_dsa_verify_internal_update(ctx, msg, msg_len))
+        goto err;
+
+    ret = ml_dsa_verify_internal_final(ctx, sig, sig_len);
+err:
+    ML_DSA_INT_CTX_free(ctx);
     return ret;
 }
