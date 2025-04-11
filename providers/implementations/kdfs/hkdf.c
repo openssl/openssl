@@ -32,6 +32,7 @@
 #include "prov/securitycheck.h"
 #include "internal/e_os.h"
 #include "internal/params.h"
+#include "internal/sizes.h"
 
 #define HKDF_MAXBUF 2048
 #define HKDF_MAXINFO (32*1024)
@@ -50,6 +51,12 @@ static OSSL_FUNC_kdf_settable_ctx_params_fn kdf_tls1_3_settable_ctx_params;
 static OSSL_FUNC_kdf_set_ctx_params_fn kdf_tls1_3_set_ctx_params;
 static OSSL_FUNC_kdf_gettable_ctx_params_fn kdf_tls1_3_gettable_ctx_params;
 static OSSL_FUNC_kdf_get_ctx_params_fn kdf_tls1_3_get_ctx_params;
+static OSSL_FUNC_kdf_newctx_fn kdf_hkdf_sha256_new;
+static OSSL_FUNC_kdf_newctx_fn kdf_hkdf_sha384_new;
+static OSSL_FUNC_kdf_newctx_fn kdf_hkdf_sha512_new;
+
+static void *kdf_hkdf_fixed_digest_new(void *provctx, const char *digest);
+static void kdf_hkdf_reset_ex(void *vctx, int full_reset);
 
 static int HKDF(OSSL_LIB_CTX *libctx, const EVP_MD *evp_md,
                 const unsigned char *salt, size_t salt_len,
@@ -74,9 +81,18 @@ static int HKDF_Expand(const EVP_MD *evp_md,
     OSSL_PARAM_octet_string(OSSL_KDF_PARAM_KEY, NULL, 0),           \
     OSSL_PARAM_octet_string(OSSL_KDF_PARAM_SALT, NULL, 0)
 
-/* Gettable context parameters that are common across HKDF and the TLS KDF */
+/*
+ * Gettable context parameters that are common across HKDF and the TLS KDF
+ *   OSSL_KDF_PARAM_KEY is not gettable because it is a secret value
+ *   OSSL_KDF_PARAM_PROPERTIES is not gettable because, despite being listed as settable,
+ *     it's not implemented as settable.
+ */
 #define HKDF_COMMON_GETTABLES                                       \
     OSSL_PARAM_size_t(OSSL_KDF_PARAM_SIZE, NULL),                   \
+    OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_MODE, NULL, 0),           \
+    OSSL_PARAM_int(OSSL_KDF_PARAM_MODE, NULL),                      \
+    OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_DIGEST, NULL, 0),         \
+    OSSL_PARAM_octet_string(OSSL_KDF_PARAM_SALT, NULL, 0),          \
     OSSL_PARAM_octet_string(OSSL_KDF_PARAM_INFO, NULL, 0)
 
 typedef struct {
@@ -95,6 +111,7 @@ typedef struct {
     size_t data_len;
     unsigned char *info;
     size_t info_len;
+    int fixed_digest;
     OSSL_FIPS_IND_DECLARE
 } KDF_HKDF;
 
@@ -117,17 +134,33 @@ static void kdf_hkdf_free(void *vctx)
     KDF_HKDF *ctx = (KDF_HKDF *)vctx;
 
     if (ctx != NULL) {
-        kdf_hkdf_reset(ctx);
+        kdf_hkdf_reset_ex(vctx, 1);
         OPENSSL_free(ctx);
     }
 }
 
 static void kdf_hkdf_reset(void *vctx)
 {
+    kdf_hkdf_reset_ex(vctx, 0);
+}
+
+static void kdf_hkdf_reset_ex(void *vctx, int full_reset)
+{
     KDF_HKDF *ctx = (KDF_HKDF *)vctx;
     void *provctx = ctx->provctx;
+    int preserve_digest = full_reset ? 0 : ctx->fixed_digest;
+    PROV_DIGEST digest = { 0 };
 
-    ossl_prov_digest_reset(&ctx->digest);
+    /*
+     * TODO: OPENSSL MAINTAINERS: should this instead use ossl_prov_digest_copy() to back up the
+     *   digest? And again to restore it at the end of this function? The problem with that is
+     *   ossl_prov_digest_copy can fail, but kdf_hkdf_reset can't. Or rather than the memset
+     *   below, just individually clear all members?
+     */
+    if (preserve_digest)
+        digest = ctx->digest;
+    else
+        ossl_prov_digest_reset(&ctx->digest);
 #ifdef OPENSSL_PEDANTIC_ZEROIZATION
     OPENSSL_clear_free(ctx->salt, ctx->salt_len);
 #else
@@ -139,7 +172,16 @@ static void kdf_hkdf_reset(void *vctx)
     OPENSSL_clear_free(ctx->key, ctx->key_len);
     OPENSSL_clear_free(ctx->info, ctx->info_len);
     memset(ctx, 0, sizeof(*ctx));
+    /*
+     * TODO: OPENSSL MAINTAINERS: unrelated to my change, but should there have been an
+     *   OSSL_FIPS_IND_INIT(ctx) here after the memset? This call happens in kdf_hkdf_new,
+     *   and kdf_hkdf_reset is supposed to reset the context to like-new.
+     */
     ctx->provctx = provctx;
+    if (preserve_digest) {
+        ctx->fixed_digest = preserve_digest;
+        ctx->digest = digest;
+    }
 }
 
 static void *kdf_hkdf_dup(void *vctx)
@@ -164,6 +206,7 @@ static void *kdf_hkdf_dup(void *vctx)
                 || !ossl_prov_digest_copy(&dest->digest, &src->digest))
             goto err;
         dest->mode = src->mode;
+        dest->fixed_digest = src->fixed_digest;
         OSSL_FIPS_IND_COPY(dest, src)
     }
     return dest;
@@ -259,16 +302,29 @@ static int hkdf_common_set_ctx_params(KDF_HKDF *ctx, const OSSL_PARAM params[])
     if (ossl_param_is_empty(params))
         return 1;
 
-    if (OSSL_PARAM_locate_const(params, OSSL_ALG_PARAM_DIGEST) != NULL) {
-        const EVP_MD *md = NULL;
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_ALG_PARAM_DIGEST)) != NULL) {
+        const EVP_MD *md = ossl_prov_digest_md(&ctx->digest);
 
-        if (!ossl_prov_digest_load_from_params(&ctx->digest, params, libctx))
-            return 0;
+        if (ctx->fixed_digest && md != NULL) {
+            char digest[OSSL_MAX_NAME_SIZE];
+            char *str = digest;
 
-        md = ossl_prov_digest_md(&ctx->digest);
-        if (EVP_MD_xof(md)) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_XOF_DIGESTS_NOT_ALLOWED);
-            return 0;
+            if (!OSSL_PARAM_get_utf8_string(p, &str, sizeof(digest)))
+                return 0;
+            if (!EVP_MD_is_a(md, digest)) {
+                ERR_raise_data(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED,
+                               "Changing the digest is not supported for fixed-digest HKDFs");
+                return 0;
+            }
+        } else {
+            if (!ossl_prov_digest_load_from_params(&ctx->digest, params, libctx))
+                return 0;
+
+            md = ossl_prov_digest_md(&ctx->digest);
+            if (EVP_MD_xof(md)) {
+                ERR_raise(ERR_LIB_PROV, PROV_R_XOF_DIGESTS_NOT_ALLOWED);
+                return 0;
+            }
         }
     }
 
@@ -375,6 +431,49 @@ static int hkdf_common_get_ctx_params(KDF_HKDF *ctx, OSSL_PARAM params[])
             return 0;
     }
 
+    if ((p = OSSL_PARAM_locate(params, OSSL_KDF_PARAM_DIGEST)) != NULL) {
+        const EVP_MD *md = ossl_prov_digest_md(&ctx->digest);
+
+        if (md == NULL)
+            return 0;
+        else if (!OSSL_PARAM_set_utf8_string(p, EVP_MD_get0_name(md)))
+            return 0;
+    }
+
+    /* OSSL_KDF_PARAM_MODE has multiple parameter types, so look for all instances */
+    p = params;
+    while ((p = OSSL_PARAM_locate(p, OSSL_KDF_PARAM_MODE)) != NULL) {
+        if (p->data_type == OSSL_PARAM_UTF8_STRING) {
+            switch (ctx->mode) {
+            case EVP_KDF_HKDF_MODE_EXTRACT_AND_EXPAND:
+                if (!OSSL_PARAM_set_utf8_string(p, "EXTRACT_AND_EXPAND"))
+                    return 0;
+                break;
+            case EVP_KDF_HKDF_MODE_EXTRACT_ONLY:
+                if (!OSSL_PARAM_set_utf8_string(p, "EXTRACT_ONLY"))
+                    return 0;
+                break;
+            case EVP_KDF_HKDF_MODE_EXPAND_ONLY:
+                if (!OSSL_PARAM_set_utf8_string(p, "EXPAND_ONLY"))
+                    return 0;
+                break;
+            default:
+                return 0;
+            }
+        } else if (p->data_type == OSSL_PARAM_INTEGER) {
+            if (!OSSL_PARAM_set_int(p, ctx->mode))
+                return 0;
+        }
+        p++;
+    }
+
+    if ((p = OSSL_PARAM_locate(params, OSSL_KDF_PARAM_SALT)) != NULL) {
+        if (ctx->salt == NULL || ctx->salt_len == 0)
+            p->return_size = 0;
+        if (!OSSL_PARAM_set_octet_string(p, ctx->salt, ctx->salt_len))
+            return 0;
+    }
+
     if ((p = OSSL_PARAM_locate(params, OSSL_KDF_PARAM_INFO)) != NULL) {
         if (ctx->info == NULL || ctx->info_len == 0)
             p->return_size = 0;
@@ -426,6 +525,58 @@ const OSSL_DISPATCH ossl_kdf_hkdf_functions[] = {
     { OSSL_FUNC_KDF_GET_CTX_PARAMS, (void(*)(void))kdf_hkdf_get_ctx_params },
     OSSL_DISPATCH_END
 };
+
+static void *kdf_hkdf_fixed_digest_new(void *provctx, const char *digest)
+{
+    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(provctx);
+    KDF_HKDF *ctx;
+    OSSL_PARAM params[2];
+
+    ctx = kdf_hkdf_new(provctx);
+    if (ctx == NULL)
+        return NULL;
+
+    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_ALG_PARAM_DIGEST,
+                                                 (char *)digest, 0);
+    params[1] = OSSL_PARAM_construct_end();
+    if (!ossl_prov_digest_load_from_params(&ctx->digest, params, libctx)) {
+        kdf_hkdf_free(ctx);
+        return NULL;
+    }
+
+    /* Now the digest can no longer be changed */
+    ctx->fixed_digest = 1;
+
+    return ctx;
+}
+
+#define KDF_HKDF_FIXED_DIGEST_NEW(hashname, hashstring) \
+    static void *kdf_hkdf_##hashname##_new(void *provctx) \
+    { \
+        return kdf_hkdf_fixed_digest_new(provctx, hashstring); \
+    }
+
+KDF_HKDF_FIXED_DIGEST_NEW(sha256, "SHA256")
+KDF_HKDF_FIXED_DIGEST_NEW(sha384, "SHA384")
+KDF_HKDF_FIXED_DIGEST_NEW(sha512, "SHA512")
+
+#define MAKE_KDF_HKDF_FIXED_DIGEST_FUNCTIONS(hashname) \
+    const OSSL_DISPATCH ossl_kdf_hkdf_##hashname##_functions[] = { \
+        { OSSL_FUNC_KDF_NEWCTX, (void(*)(void))kdf_hkdf_##hashname##_new }, \
+        { OSSL_FUNC_KDF_DUPCTX, (void(*)(void))kdf_hkdf_dup }, \
+        { OSSL_FUNC_KDF_FREECTX, (void(*)(void))kdf_hkdf_free }, \
+        { OSSL_FUNC_KDF_RESET, (void(*)(void))kdf_hkdf_reset }, \
+        { OSSL_FUNC_KDF_DERIVE, (void(*)(void))kdf_hkdf_derive }, \
+        { OSSL_FUNC_KDF_SETTABLE_CTX_PARAMS, (void(*)(void))kdf_hkdf_settable_ctx_params }, \
+        { OSSL_FUNC_KDF_SET_CTX_PARAMS, (void(*)(void))kdf_hkdf_set_ctx_params }, \
+        { OSSL_FUNC_KDF_GETTABLE_CTX_PARAMS, (void(*)(void))kdf_hkdf_gettable_ctx_params }, \
+        { OSSL_FUNC_KDF_GET_CTX_PARAMS, (void(*)(void))kdf_hkdf_get_ctx_params }, \
+        OSSL_DISPATCH_END \
+    };
+
+MAKE_KDF_HKDF_FIXED_DIGEST_FUNCTIONS(sha256)
+MAKE_KDF_HKDF_FIXED_DIGEST_FUNCTIONS(sha384)
+MAKE_KDF_HKDF_FIXED_DIGEST_FUNCTIONS(sha512)
 
 /*
  * Refer to "HMAC-based Extract-and-Expand Key Derivation Function (HKDF)"
