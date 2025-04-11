@@ -66,8 +66,8 @@ static void signature_init(ML_DSA_SIG *sig,
  * @returns an EVP_MD_CTX if the operation is successful, NULL otherwise.
  */
 
-static EVP_MD_CTX *ml_dsa_mu_init(const ML_DSA_KEY *key, int encode,
-                                  const uint8_t *ctx, size_t ctx_len)
+EVP_MD_CTX *ossl_ml_dsa_mu_init(const ML_DSA_KEY *key, int encode,
+                                const uint8_t *ctx, size_t ctx_len)
 {
     EVP_MD_CTX *md_ctx;
     uint8_t itb[2];
@@ -116,8 +116,7 @@ err:
  * @param msg_len: The length of the msg buffer to process
  * @returns 1 on success, 0 on error
  */
-static int ml_dsa_mu_update(EVP_MD_CTX *md_ctx,
-                            const uint8_t *msg, size_t msg_len)
+int ossl_ml_dsa_mu_update(EVP_MD_CTX *md_ctx, const uint8_t *msg, size_t msg_len)
 {
     return EVP_DigestUpdate(md_ctx, msg, msg_len);
 }
@@ -130,7 +129,7 @@ static int ml_dsa_mu_update(EVP_MD_CTX *md_ctx,
  * @param mu_len: The size of the output buffer
  * @returns 1 on success, 0 on error
  */
-static int ml_dsa_mu_finalize(EVP_MD_CTX *md_ctx, uint8_t *mu, size_t mu_len)
+int ossl_ml_dsa_mu_finalize(EVP_MD_CTX *md_ctx, uint8_t *mu, size_t mu_len)
 {
     if (!ossl_assert(mu_len == ML_DSA_MU_BYTES)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_BAD_LENGTH);
@@ -445,14 +444,14 @@ int ossl_ml_dsa_sign(const ML_DSA_KEY *priv, int msg_is_mu,
         mu_ptr = msg;
         mu_len = msg_len;
     } else {
-        md_ctx = ml_dsa_mu_init(priv, encode, context, context_len);
+        md_ctx = ossl_ml_dsa_mu_init(priv, encode, context, context_len);
         if (md_ctx == NULL)
             return 0;
 
-        if (!ml_dsa_mu_update(md_ctx, msg, msg_len))
+        if (!ossl_ml_dsa_mu_update(md_ctx, msg, msg_len))
             goto err;
 
-        if (!ml_dsa_mu_finalize(md_ctx, mu, mu_len))
+        if (!ossl_ml_dsa_mu_finalize(md_ctx, mu, mu_len))
             goto err;
     }
 
@@ -485,14 +484,14 @@ int ossl_ml_dsa_verify(const ML_DSA_KEY *pub, int msg_is_mu,
         mu_ptr = msg;
         mu_len = msg_len;
     } else {
-        md_ctx = ml_dsa_mu_init(pub, encode, context, context_len);
+        md_ctx = ossl_ml_dsa_mu_init(pub, encode, context, context_len);
         if (md_ctx == NULL)
             return 0;
 
-        if (!ml_dsa_mu_update(md_ctx, msg, msg_len))
+        if (!ossl_ml_dsa_mu_update(md_ctx, msg, msg_len))
             goto err;
 
-        if (!ml_dsa_mu_finalize(md_ctx, mu, mu_len))
+        if (!ossl_ml_dsa_mu_finalize(md_ctx, mu, mu_len))
             goto err;
     }
 
