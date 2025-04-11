@@ -22,6 +22,8 @@
 
 # define ML_DSA_ENTROPY_LEN 32
 
+# define ML_DSA_MU_BYTES 64 /* Size of the Hash for the message representative */
+
 /* See FIPS 204 Section 4 Table 1 & Table 2 */
 # define ML_DSA_44_PRIV_LEN 2560
 # define ML_DSA_44_PUB_LEN 1312
