@@ -44,11 +44,17 @@ static void signature_init(ML_DSA_SIG *sig,
 
 /*
  * FIPS 204, Algorithm 7, ML-DSA.Sign_internal()
+ * If msg_is_mu is 1 then msg contains a pre-computed mu otherwise
+ * M' is computed by concatenating enc_ctx and msg.
+ * If enc_ctx_len is 0 then the msg is assumed to already contain
+ * the necessary context header.
  * @returns 1 on success and 0 on failure.
  */
 static int ml_dsa_sign_internal(const ML_DSA_KEY *priv, int msg_is_mu,
-                                const uint8_t *encoded_msg,
-                                size_t encoded_msg_len,
+                                const uint8_t *enc_ctx,
+                                size_t enc_ctx_len,
+                                const uint8_t *msg,
+                                size_t msg_len,
                                 const uint8_t *rnd, size_t rnd_len,
                                 uint8_t *out_sig)
 {
@@ -111,12 +117,12 @@ static int ml_dsa_sign_internal(const ML_DSA_KEY *priv, int msg_is_mu,
     if (!matrix_expand_A(md_ctx, priv->shake128_md, priv->rho, &a_ntt))
         goto err;
     if (msg_is_mu) {
-        if (encoded_msg_len != mu_len)
+        if (msg_len != mu_len)
             goto err;
-        mu_ptr = (uint8_t *)encoded_msg;
+        mu_ptr = (uint8_t *)msg;
     } else {
-        if (!shake_xof_2(md_ctx, priv->shake256_md, priv->tr, sizeof(priv->tr),
-                         encoded_msg, encoded_msg_len, mu_ptr, mu_len))
+        if (!shake_xof_3(md_ctx, priv->shake256_md, priv->tr, sizeof(priv->tr),
+                         enc_ctx, enc_ctx_len, msg, msg_len, mu_ptr, mu_len))
             goto err;
     }
     if (!shake_xof_3(md_ctx, priv->shake256_md, priv->K, sizeof(priv->K),
@@ -203,9 +209,15 @@ err:
 
 /*
  * See FIPS 204, Algorithm 8, ML-DSA.Verify_internal().
+ * If msg_is_mu is 1 then msg contains a pre-computed mu otherwise
+ * M' is computed by concatenating enc_ctx and msg.
+ * If enc_ctx_len is 0 then the msg is assumed to already contain
+ * the necessary context header.
+ * @returns 1 on success and 0 on failure.
  */
 static int ml_dsa_verify_internal(const ML_DSA_KEY *pub, int msg_is_mu,
-                                  const uint8_t *msg_enc, size_t msg_enc_len,
+                                  const uint8_t *enc_ctx, size_t enc_ctx_len,
+                                  const uint8_t *msg, size_t msg_len,
                                   const uint8_t *sig_enc, size_t sig_enc_len)
 {
     int ret = 0;
@@ -259,12 +271,13 @@ static int ml_dsa_verify_internal(const ML_DSA_KEY *pub, int msg_is_mu,
             || !matrix_expand_A(md_ctx, pub->shake128_md, pub->rho, &a_ntt))
         goto err;
     if (msg_is_mu) {
-        if (msg_enc_len != mu_len)
+        if (msg_len != mu_len)
             goto err;
-        mu_ptr = (uint8_t *)msg_enc;
+        mu_ptr = (uint8_t *)msg;
     } else {
-        if (!shake_xof_2(md_ctx, pub->shake256_md, pub->tr, sizeof(pub->tr),
-                         msg_enc, msg_enc_len, mu_ptr, mu_len))
+        if (!shake_xof_3(md_ctx, pub->shake256_md, pub->tr, sizeof(pub->tr),
+                         enc_ctx, enc_ctx_len, msg, msg_len,
+                         mu_ptr, mu_len))
             goto err;
     }
     /* Compute verifiers challenge c_ntt = NTT(SampleInBall(c_tilde) */
@@ -310,53 +323,33 @@ err:
  *
  * ML_DSA pure signatures are encoded as M' = 00 || ctx_len || ctx || msg
  * Where ctx is the empty string by default and ctx_len <= 255.
+ * The message is appended to the encoded context later so it is not needed
+ * in this function.
  *
  * Note this code could be shared with SLH_DSA
  *
- * @param msg A message to encode
- * @param msg_len The size of |msg|
  * @param ctx An optional context to add to the message encoding.
  * @param ctx_len The size of |ctx|. It must be in the range 0..255
- * @param encode Use the Pure signature encoding if this is 1, and dont encode
- *               if this value is 0.
- * @param tmp A small buffer that may be used if the message is small.
- * @param tmp_len The size of |tmp|
- * @param out_len The size of the returned encoded buffer.
- * @returns A buffer containing the encoded message. If the passed in
- * |tmp| buffer is big enough to hold the encoded message then it returns |tmp|
- * otherwise it allocates memory which must be freed by the caller. If |encode|
- * is 0 then it returns |msg|. NULL is returned if there is a failure.
+ * @param encoded A small buffer to store the encoded context.
+ * @param encoded_size The size of |encoded|
+ * @param out_len The size of the resulting encoded buffer.
+ * @returns 1 if the operation is successful.
  */
-static uint8_t *msg_encode(const uint8_t *msg, size_t msg_len,
-                           const uint8_t *ctx, size_t ctx_len, int encode,
-                           uint8_t *tmp, size_t tmp_len, size_t *out_len)
+static int msg_encode_context(const uint8_t *ctx, size_t ctx_len,
+                              uint8_t *encoded, size_t encoded_size,
+                              size_t *out_len)
 {
-    uint8_t *encoded = NULL;
-    size_t encoded_len;
-
-    if (encode == 0) {
-        /* Raw message */
-        *out_len = msg_len;
-        return (uint8_t *)msg;
-    }
     if (ctx_len > ML_DSA_MAX_CONTEXT_STRING_LEN)
-        return NULL;
+        return 0;
+    if (encoded_size < ctx_len)
+        return 0;
 
-    /* Pure encoding */
-    encoded_len = 1 + 1 + ctx_len + msg_len;
-    *out_len = encoded_len;
-    if (encoded_len <= tmp_len) {
-        encoded = tmp;
-    } else {
-        encoded = OPENSSL_malloc(encoded_len);
-        if (encoded == NULL)
-            return NULL;
-    }
+    /* Generate encoded context */
     encoded[0] = 0;
     encoded[1] = (uint8_t)ctx_len;
     memcpy(&encoded[2], ctx, ctx_len);
-    memcpy(&encoded[2 + ctx_len], msg, msg_len);
-    return encoded;
+    *out_len = 1 + 1 + ctx_len;
+    return 1;
 }
 
 /**
@@ -371,27 +364,21 @@ int ossl_ml_dsa_sign(const ML_DSA_KEY *priv, int msg_is_mu,
                      unsigned char *sig, size_t *sig_len, size_t sig_size)
 {
     int ret = 1;
-    uint8_t m_tmp[1024], *m = m_tmp, *alloced_m = NULL;
-    size_t m_len = 0;
+    uint8_t c_tmp[ML_DSA_MAX_CONTEXT_STRING_LEN + 2];
+    size_t c_len = 0;
 
     if (ossl_ml_dsa_key_get_priv(priv) == NULL)
         return 0;
     if (sig != NULL) {
         if (sig_size < priv->params->sig_len)
             return 0;
-        if (msg_is_mu) {
-            m = (uint8_t *)msg;
-            m_len = msg_len;
-        } else {
-            m = msg_encode(msg, msg_len, context, context_len, encode,
-                           m_tmp, sizeof(m_tmp), &m_len);
-            if (m == NULL)
+        if (!msg_is_mu && encode) {
+            if (!msg_encode_context(context, context_len, c_tmp, sizeof(c_tmp),
+                                    &c_len))
                 return 0;
-            if (m != msg && m != m_tmp)
-                alloced_m = m;
         }
-        ret = ml_dsa_sign_internal(priv, msg_is_mu, m, m_len, rand, rand_len, sig);
-        OPENSSL_free(alloced_m);
+        ret = ml_dsa_sign_internal(priv, msg_is_mu, c_tmp, c_len, msg, msg_len,
+                                   rand, rand_len, sig);
     }
     if (sig_len != NULL)
         *sig_len = priv->params->sig_len;
@@ -407,27 +394,20 @@ int ossl_ml_dsa_verify(const ML_DSA_KEY *pub, int msg_is_mu,
                        const uint8_t *context, size_t context_len, int encode,
                        const uint8_t *sig, size_t sig_len)
 {
-    uint8_t *m, *alloced_m = NULL;
-    size_t m_len;
-    uint8_t m_tmp[1024];
+    uint8_t c_tmp[ML_DSA_MAX_CONTEXT_STRING_LEN + 2];
+    size_t c_len = 0;
     int ret = 0;
 
     if (ossl_ml_dsa_key_get_pub(pub) == NULL)
         return 0;
 
-    if (msg_is_mu) {
-        m = (uint8_t *)msg;
-        m_len = msg_len;
-    } else {
-        m = msg_encode(msg, msg_len, context, context_len, encode,
-                       m_tmp, sizeof(m_tmp), &m_len);
-        if (m == NULL)
+    if (!msg_is_mu && encode) {
+        if (!msg_encode_context(context, context_len, c_tmp, sizeof(c_tmp),
+                                &c_len))
             return 0;
-        if (m != msg && m != m_tmp)
-            alloced_m = m;
     }
 
-    ret = ml_dsa_verify_internal(pub, msg_is_mu, m, m_len, sig, sig_len);
-    OPENSSL_free(alloced_m);
+    ret = ml_dsa_verify_internal(pub, msg_is_mu, c_tmp, c_len, msg, msg_len,
+                                 sig, sig_len);
     return ret;
 }
