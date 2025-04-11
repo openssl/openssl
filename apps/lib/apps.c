@@ -2600,16 +2600,12 @@ BIO *app_http_tls_cb(BIO *bio, void *arg, int connect, int detail)
 {
     APP_HTTP_TLS_INFO *info = (APP_HTTP_TLS_INFO *)arg;
     SSL_CTX *ssl_ctx = info->ssl_ctx;
+    BIO *sbio = NULL;
 
     if (ssl_ctx == NULL) /* not using TLS */
         return bio;
     if (connect) {
         SSL *ssl;
-        BIO *sbio = NULL;
-        X509_STORE *ts = SSL_CTX_get_cert_store(ssl_ctx);
-        X509_VERIFY_PARAM *vpm = X509_STORE_get0_param(ts);
-        const char *host = vpm == NULL ? NULL :
-            X509_VERIFY_PARAM_get0_host(vpm, 0 /* first hostname */);
 
         /* adapt after fixing callback design flaw, see #17088 */
         if ((info->use_proxy
@@ -2619,27 +2615,31 @@ BIO *app_http_tls_cb(BIO *bio, void *arg, int connect, int detail)
                 || (sbio = BIO_new(BIO_f_ssl())) == NULL) {
             return NULL;
         }
-        if ((ssl = SSL_new(ssl_ctx)) == NULL) {
-            BIO_free(sbio);
-            return NULL;
-        }
-
-        if (vpm != NULL)
-            SSL_set_tlsext_host_name(ssl, host /* may be NULL */);
+        if ((ssl = SSL_new(ssl_ctx)) == NULL)
+            goto err;
 
         SSL_set_connect_state(ssl);
         BIO_set_ssl(sbio, ssl, BIO_CLOSE);
+        if (!SSL_set_tlsext_host_name(ssl, info->sni_hostname /* may be NULL */))
+            goto err;
 
         bio = BIO_push(sbio, bio);
     } else { /* disconnect from TLS */
         bio = http_tls_shutdown(bio);
     }
     return bio;
+
+ err:
+    BIO_free(sbio);
+    return NULL;
 }
 
 void APP_HTTP_TLS_INFO_free(APP_HTTP_TLS_INFO *info)
 {
     if (info != NULL) {
+        OPENSSL_free((char *)info->sni_hostname);
+        OPENSSL_free((char *)info->server);
+        OPENSSL_free((char *)info->port);
         SSL_CTX_free(info->ssl_ctx);
         OPENSSL_free(info);
     }
@@ -2677,6 +2677,7 @@ ASN1_VALUE *app_http_get_asn1(const char *url, const char *proxy,
         goto end;
     }
 
+    info.sni_hostname = server;
     info.server = server;
     info.port = port;
     info.use_proxy = /* workaround for callback design flaw, see #17088 */
@@ -2714,6 +2715,7 @@ ASN1_VALUE *app_http_post_asn1(const char *host, const char *port,
     if (req_mem == NULL)
         return NULL;
 
+    info.sni_hostname = host;
     info.server = host;
     info.port = port;
     info.use_proxy = /* workaround for callback design flaw, see #17088 */
