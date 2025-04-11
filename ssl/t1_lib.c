@@ -194,6 +194,10 @@ static const struct {
 };
 
 static const unsigned char ecformats_default[] = {
+    TLSEXT_ECPOINTFORMAT_uncompressed
+};
+
+static const unsigned char ecformats_all[] = {
     TLSEXT_ECPOINTFORMAT_uncompressed,
     TLSEXT_ECPOINTFORMAT_ansiX962_compressed_prime,
     TLSEXT_ECPOINTFORMAT_ansiX962_compressed_char2
@@ -1767,13 +1771,16 @@ void tls1_get_formatlist(SSL_CONNECTION *s, const unsigned char **pformats,
     if (s->ext.ecpointformats) {
         *pformats = s->ext.ecpointformats;
         *num_formats = s->ext.ecpointformats_len;
-    } else {
-        *pformats = ecformats_default;
+    } else if ((s->options & SSL_OP_LEGACY_EC_POINT_FORMATS) != 0) {
+        *pformats = ecformats_all;
         /* For Suite B we don't support char2 fields */
         if (tls1_suiteb(s))
-            *num_formats = sizeof(ecformats_default) - 1;
+            *num_formats = sizeof(ecformats_all) - 1;
         else
-            *num_formats = sizeof(ecformats_default);
+            *num_formats = sizeof(ecformats_all);
+    } else {
+        *pformats = ecformats_default;
+        *num_formats = sizeof(ecformats_default);
     }
 }
 
