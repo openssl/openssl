@@ -63,9 +63,6 @@ CMS_RecipientInfo *CMS_add0_recipient_password(CMS_ContentInfo *cms,
     if (wrap_nid <= 0)
         wrap_nid = NID_id_alg_PWRI_KEK;
 
-    if (pbe_nid <= 0)
-        pbe_nid = NID_id_pbkdf2;
-
     /* Get from enveloped data */
     if (kekciph == NULL)
         kekciph = ec->cipher;
