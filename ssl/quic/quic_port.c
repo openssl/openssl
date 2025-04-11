@@ -648,6 +648,16 @@ void ossl_quic_port_set_allow_incoming(QUIC_PORT *port, int allow_incoming)
     port->allow_incoming = allow_incoming;
 }
 
+void ossl_quic_port_set_using_peeloff(QUIC_PORT *port, int using_peeloff)
+{
+    port->using_peeloff = using_peeloff;
+}
+
+int ossl_quic_port_get_using_peeloff(QUIC_PORT *port)
+{
+    return port->using_peeloff;
+}
+
 /*
  * QUIC Port: Ticker-Mutator
  * =========================
