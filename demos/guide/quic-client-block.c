@@ -295,8 +295,33 @@ int main(int argc, char *argv[])
             /* Connection is already closed. Skip SSL_shutdown() */
             goto end;
 
+        case SSL_STREAM_STATE_NONE:
+            printf("Stream state none\n");
+            /* Connection is already closed. Skip SSL_shutdown() */
+            goto end;
+
+        case SSL_STREAM_STATE_OK:
+            printf("Stream state OK\n");
+            /* Connection is already closed. Skip SSL_shutdown() */
+            goto end;
+
+        case SSL_STREAM_STATE_WRONG_DIR:
+            printf("Stream wrong dir\n");
+            /* Connection is already closed. Skip SSL_shutdown() */
+            goto end;
+
+        case SSL_STREAM_STATE_FINISHED:
+            printf("Stream finished dir\n");
+            /* Connection is already closed. Skip SSL_shutdown() */
+            goto end;
+
+        case SSL_STREAM_STATE_RESET_LOCAL:
+            printf("Stream local reset\n");
+            /* Connection is already closed. Skip SSL_shutdown() */
+            goto end;
+
         default:
-            printf("Unknown stream failure\n");
+            printf("Unknown stream failure 0x%x\n", SSL_get_stream_read_state(ssl));
             break;
         }
         break;
