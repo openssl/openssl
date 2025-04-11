@@ -9,6 +9,7 @@
 
 #include <openssl/byteorder.h>
 #include <openssl/rand.h>
+#include <openssl/proverr.h>
 #include "crypto/ml_kem.h"
 #include "internal/common.h"
 #include "internal/constant_time.h"
@@ -1278,16 +1279,26 @@ static int parse_pubkey(const uint8_t *in, EVP_MD_CTX *mdctx, ML_KEM_KEY *key)
     const ML_KEM_VINFO *vinfo = key->vinfo;
 
     /* Decode and check |t| */
-    if (!vector_decode_12(key->t, in, vinfo->rank))
+    if (!vector_decode_12(key->t, in, vinfo->rank)) {
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY,
+                       "%s invalid public 't' vector",
+                       vinfo->algorithm_name);
         return 0;
+    }
     /* Save the matrix |m| recovery seed |rho| */
     memcpy(key->rho, in + vinfo->vector_bytes, ML_KEM_RANDOM_BYTES);
     /*
      * Pre-compute the public key hash, needed for both encap and decap.
      * Also pre-compute the matrix expansion, stored with the public key.
      */
-    return hash_h(key->pkhash, in, vinfo->pubkey_bytes, mdctx, key)
-        && matrix_expand(mdctx, key);
+    if (!hash_h(key->pkhash, in, vinfo->pubkey_bytes, mdctx, key)
+        || !matrix_expand(mdctx, key)) {
+        ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR,
+                       "internal error while parsing %s public key",
+                       vinfo->algorithm_name);
+        return 0;
+    }
+    return 1;
 }
 
 /*
@@ -1301,8 +1312,12 @@ static int parse_prvkey(const uint8_t *in, EVP_MD_CTX *mdctx, ML_KEM_KEY *key)
     const ML_KEM_VINFO *vinfo = key->vinfo;
 
     /* Decode and check |s|. */
-    if (!vector_decode_12(key->s, in, vinfo->rank))
+    if (!vector_decode_12(key->s, in, vinfo->rank)) {
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY,
+                       "%s invalid private 's' vector",
+                       vinfo->algorithm_name);
         return 0;
+    }
     in += vinfo->vector_bytes;
 
     if (!parse_pubkey(in, mdctx, key))
@@ -1310,8 +1325,12 @@ static int parse_prvkey(const uint8_t *in, EVP_MD_CTX *mdctx, ML_KEM_KEY *key)
     in += vinfo->pubkey_bytes;
 
     /* Check public key hash. */
-    if (memcmp(key->pkhash, in, ML_KEM_PKHASH_BYTES) != 0)
+    if (memcmp(key->pkhash, in, ML_KEM_PKHASH_BYTES) != 0) {
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY,
+                       "%s public key hash mismatch",
+                       vinfo->algorithm_name);
         return 0;
+    }
     in += ML_KEM_PKHASH_BYTES;
 
     memcpy(key->z, in, ML_KEM_RANDOM_BYTES);
@@ -1405,6 +1424,11 @@ int genkey(const uint8_t seed[ML_KEM_SEED_BYTES],
  end:
     OPENSSL_cleanse((void *)augmented_seed, ML_KEM_RANDOM_BYTES);
     OPENSSL_cleanse((void *)sigma, ML_KEM_RANDOM_BYTES);
+    if (ret == 0) {
+        ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR,
+                       "internal error while generating %s private key",
+                       vinfo->algorithm_name);
+    }
     return ret;
 }
 
@@ -1430,10 +1454,14 @@ int encap(uint8_t *ctext, uint8_t secret[ML_KEM_SHARED_SECRET_BYTES],
     memcpy(input + ML_KEM_RANDOM_BYTES, key->pkhash, ML_KEM_PKHASH_BYTES);
     ret = hash_g(Kr, input, sizeof(input), mdctx, key)
         && encrypt_cpa(ctext, entropy, r, tmp, mdctx, key);
+    OPENSSL_cleanse((void *)input, sizeof(input));
 
     if (ret)
         memcpy(secret, Kr, ML_KEM_SHARED_SECRET_BYTES);
-    OPENSSL_cleanse((void *)input, sizeof(input));
+    else
+        ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR,
+                       "internal error while performing %s encapsulation",
+                       key->vinfo->algorithm_name);
     return ret;
 }
 
@@ -1477,8 +1505,12 @@ int decap(uint8_t secret[ML_KEM_SHARED_SECRET_BYTES],
      * The same action is taken, if also |encrypt_cpa| should catastrophically
      * fail, due to failure of the |PRF| underlying the CBD functions.
      */
-    if (!kdf(failure_key, key->z, ctext, vinfo->ctext_bytes, mdctx, key))
+    if (!kdf(failure_key, key->z, ctext, vinfo->ctext_bytes, mdctx, key)) {
+        ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR,
+                       "internal error while performing %s decapsulation",
+                       vinfo->algorithm_name);
         return 0;
+    }
     decrypt_cpa(decrypted, ctext, tmp, key);
     memcpy(decrypted + ML_KEM_SHARED_SECRET_BYTES, pkhash, ML_KEM_PKHASH_BYTES);
     if (!hash_g(Kr, decrypted, sizeof(decrypted), mdctx, key)
@@ -1582,8 +1614,11 @@ ML_KEM_KEY *ossl_ml_kem_key_new(OSSL_LIB_CTX *libctx, const char *properties,
     const ML_KEM_VINFO *vinfo = ossl_ml_kem_get_vinfo(evp_type);
     ML_KEM_KEY *key;
 
-    if (vinfo == NULL)
+    if (vinfo == NULL) {
+        ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT,
+                       "unsupported ML-KEM key type: %d", evp_type);
         return NULL;
+    }
 
     if ((key = OPENSSL_malloc(sizeof(*key))) == NULL)
         return NULL;
@@ -1602,9 +1637,12 @@ ML_KEM_KEY *ossl_ml_kem_key_new(OSSL_LIB_CTX *libctx, const char *properties,
         && key->shake256_md != NULL
         && key->sha3_256_md != NULL
         && key->sha3_512_md != NULL)
-    return key;
+        return key;
 
     ossl_ml_kem_key_free(key);
+    ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR,
+                   "missing SHA3 digest algorithms while creating %s key",
+                   vinfo->algorithm_name);
     return NULL;
 }
 
