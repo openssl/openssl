@@ -342,9 +342,16 @@ static int slh_dsa_get_ctx_params(void *vctx, OSSL_PARAM *params)
 
 #define MAKE_SIGNATURE_FUNCTIONS(alg, fn)                                      \
     static OSSL_FUNC_signature_newctx_fn slh_dsa_##fn##_newctx;                \
+    static OSSL_FUNC_signature_query_key_types_fn slh_dsa_##fn##_sigalg_query_key_types; \
     static void *slh_dsa_##fn##_newctx(void *provctx, const char *propq)       \
     {                                                                          \
         return slh_dsa_newctx(provctx, alg, propq);                            \
+    }                                                                          \
+    static const char **slh_dsa_##fn##_sigalg_query_key_types(void)            \
+    {                                                                          \
+        static const char *slh_dsa_##fn##_keytypes[] = { alg, NULL };          \
+                                                                               \
+        return slh_dsa_##fn##_keytypes;                                        \
     }                                                                          \
     const OSSL_DISPATCH ossl_slh_dsa_##fn##_signature_functions[] = {          \
         { OSSL_FUNC_SIGNATURE_NEWCTX, (void (*)(void))slh_dsa_##fn##_newctx }, \
@@ -371,6 +378,8 @@ static int slh_dsa_get_ctx_params(void *vctx, OSSL_PARAM *params)
           (void (*)(void))slh_dsa_get_ctx_params },                            \
         { OSSL_FUNC_SIGNATURE_GETTABLE_CTX_PARAMS,                             \
           (void (*)(void))slh_dsa_gettable_ctx_params },                       \
+        { OSSL_FUNC_SIGNATURE_QUERY_KEY_TYPES,                                 \
+          (void (*)(void))slh_dsa_##fn##_sigalg_query_key_types },             \
         OSSL_DISPATCH_END                                                      \
     }
 
