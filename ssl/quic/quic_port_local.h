@@ -114,6 +114,9 @@ struct quic_port_st {
     /* Has the BIO been changed since we last updated reactor pollability? */
     unsigned int                    bio_changed                     : 1;
 
+    /* Are we using SSL_listen_ex to peeloff connections */
+    unsigned int                    using_peeloff;
+
     /* AES-256 GCM context for token encryption */
     EVP_CIPHER_CTX *token_ctx;
 };
