@@ -35,32 +35,54 @@
 
 #include "internal/list.h"
 
+/*
+ * This is a simple non-blocking QUIC echo server application.
+ * Server accepts QUIC connections. It then accepts bi-directional
+ * stream from client and reads data. It then echoes data back
+ * to client using the same stream.
+ */
+
+#ifdef DEBUG
+#define DPRINTF		fprintf
+#else
+#define DPRINTF(...)	(void)(0)
+#endif
+
+
+/*
+ * format string so we can print SSL_poll() events in more informative
+ * way. To print events one does this:
+ *   int events = SSL_POLL_EVENT_F | SSL_POLL_EVENT_R;
+ *   printf("%s We got events: " POLL_FMT "\n", __func__, POLL_PRINTA(events));
+ */
 #define POLL_FMT	"%s%s%s%s%s%s%s%s%s%s%s%s%s"
 #define POLL_PRINTA(_revents_)	\
                 (_revents_) & SSL_POLL_EVENT_F ? "SSL_POLL_EVENT_F " : "",	\
                 (_revents_) & SSL_POLL_EVENT_EL ? "SSL_POLL_EVENT_EL" : "",	\
                 (_revents_) & SSL_POLL_EVENT_EC ? "SSL_POLL_EVENT_EC " : "",	\
                 (_revents_) & SSL_POLL_EVENT_ECD ? "SSL_POLL_EVENT_ECD " : "",	\
-                (_revents_) & SSL_POLL_EVENT_ER? "SSL_POLL_EVENT_ER " : "",	\
-                (_revents_) & SSL_POLL_EVENT_EW? "SSL_POLL_EVENT_EW " : "",	\
-                (_revents_) & SSL_POLL_EVENT_R? "SSL_POLL_EVENT_R " : "",	\
-                (_revents_) & SSL_POLL_EVENT_W? "SSL_POLL_EVENT_W " : "",	\
-                (_revents_) & SSL_POLL_EVENT_IC? "SSL_POLL_EVENT_IC " : "",	\
-                (_revents_) & SSL_POLL_EVENT_ISB? "SSL_POLL_EVENT_ISB " : "",	\
-                (_revents_) & SSL_POLL_EVENT_ISU? "SSL_POLL_EVENT_ISU " : "",	\
-                (_revents_) & SSL_POLL_EVENT_OSB? "SSL_POLL_EVENT_OSB " : "",	\
-                (_revents_) & SSL_POLL_EVENT_OSU? "SSL_POLL_EVENT_OSU " : ""
+                (_revents_) & SSL_POLL_EVENT_ER ? "SSL_POLL_EVENT_ER " : "",	\
+                (_revents_) & SSL_POLL_EVENT_EW ? "SSL_POLL_EVENT_EW " : "",	\
+                (_revents_) & SSL_POLL_EVENT_R ? "SSL_POLL_EVENT_R " : "",	\
+                (_revents_) & SSL_POLL_EVENT_W ? "SSL_POLL_EVENT_W " : "",	\
+                (_revents_) & SSL_POLL_EVENT_IC ? "SSL_POLL_EVENT_IC " : "",	\
+                (_revents_) & SSL_POLL_EVENT_ISB ? "SSL_POLL_EVENT_ISB " : "",	\
+                (_revents_) & SSL_POLL_EVENT_ISU ? "SSL_POLL_EVENT_ISU " : "",	\
+                (_revents_) & SSL_POLL_EVENT_OSB ? "SSL_POLL_EVENT_OSB " : "",	\
+                (_revents_) & SSL_POLL_EVENT_OSU ? "SSL_POLL_EVENT_OSU " : ""
 
 #define poll_event_base	\
-    SSL_POLL_ITEM				 pe_poll_item;   \
-    OSSL_LIST_MEMBER(pe, struct poll_event);                     \
-    uint64_t					 pe_want_events; \
-    struct poll_manager				*pe_my_pm;       \
-    unsigned char				 pe_type;        \
-    struct poll_event				*pe_self;        \
-    int(*pe_cb_in)(struct poll_event *);                         \
-    int(*pe_cb_out)(struct poll_event *);                        \
-    int(*pe_cb_error)(struct poll_event *)
+    SSL_POLL_ITEM				 pe_poll_item;		\
+    OSSL_LIST_MEMBER(pe, struct poll_event);				\
+    uint64_t					 pe_want_events;	\
+    struct poll_manager				*pe_my_pm;		\
+    unsigned char				 pe_type;		\
+    struct poll_event				*pe_self;		\
+    void					*pe_appdata;		\
+    int(*pe_cb_in)(struct poll_event *);				\
+    int(*pe_cb_out)(struct poll_event *);				\
+    int(*pe_cb_error)(struct poll_event *);				\
+    void(*pe_cb_ondestroy)(void *)
 
 struct poll_event {
     poll_event_base;
@@ -83,6 +105,7 @@ DEFINE_LIST_OF(pe, struct poll_event);
 
 struct poll_manager {
     OSSL_LIST(pe)	 pm_head;
+    SSL			*pm_listner;
     unsigned int	 pm_event_count;
     struct poll_event	*pm_poll_set;
     unsigned int	 pm_poll_set_sz;
@@ -92,8 +115,10 @@ struct poll_manager {
     int(*pm_qconn_out)(struct poll_event *);
     int(*pm_qstream_in)(struct poll_event *);
     int(*pm_qstream_out)(struct poll_event *);
-    int(*pm_rready)(struct poll_event *);
-    int(*pm_wready)(struct poll_event *);
+    int(*pm_do_read)(struct poll_event *);
+    int(*pm_do_write)(struct poll_event *);
+    int(*pm_qconn_done)(struct poll_event *);
+    int(*pm_qstream_done)(struct poll_event *);
 };
 
 #define POLL_ERROR	(SSL_POLL_EVENT_F | SSL_POLL_EVENT_EL | \
@@ -106,7 +131,9 @@ struct poll_manager {
 #define POLL_OUT	(SSL_POLL_EVENT_W | SSL_POLL_EVENT_OSB | \
     SSL_POLL_EVENT_OSU)
 
+static void destroy_pe(struct poll_event *);
 static int pe_return_error(struct poll_event *);
+static void pe_return_void(void *);
 static int pe_accept_qconn(struct poll_event *);
 static int pe_accept_qstream(struct poll_event *);
 static int pe_new_qstream(struct poll_event *);
@@ -184,6 +211,7 @@ static void init_pe(struct poll_event *pe, SSL *ssl)
     pe->pe_cb_in = pe_return_error;
     pe->pe_cb_out = pe_return_error;
     pe->pe_cb_error = pe_return_error;
+    pe->pe_cb_ondestroy = pe_return_void;
     pe->pe_self = pe;
     pe->pe_type = PE_NONE;
 }
@@ -211,7 +239,7 @@ static struct poll_event *new_listener_pe(SSL *ssl_listener)
         listener_pe->pe_cb_out = pe_return_error;
         listener_pe->pe_cb_error = pe_handle_listener_error;
         listener_pe->pe_type = PE_LISTENER;
-        listener_pe->pe_want_events = SSL_POLL_EVENT_IC;
+        listener_pe->pe_want_events = SSL_POLL_EVENT_IC | SSL_POLL_EVENT_EL;
     }
 
     return listener_pe;
@@ -230,6 +258,7 @@ static struct poll_event *new_qconn_pe(SSL *ssl_qconn)
         qconn_pe->pe_cb_error = pe_handle_qconn_error;
         qconn_pe->pe_type = PE_CONNECTION;
         qconn_pe->pe_want_events = SSL_POLL_EVENT_ISB | SSL_POLL_EVENT_ISU;
+        qconn_pe->pe_want_events |= SSL_POLL_EVENT_EC | SSL_POLL_EVENT_ECD;
         /*
          * SSL_POLL_EVENT_OSB (or SSL_POLL_EVENT_OSU) must be monitored once
          * there is a request for outbound stream created by app.
@@ -237,29 +266,6 @@ static struct poll_event *new_qconn_pe(SSL *ssl_qconn)
     }
 
     return qconn_pe;
-}
-
-static struct poll_event *new_qstream_pe(SSL *ssl_qconn, uint64_t qstream_f)
-{
-    struct poll_event *qstream_pe;
-    SSL *qstream;
-
-    qstream = SSL_new_stream(ssl_qconn, qstream_f);
-    if (qstream == NULL)
-        return NULL;
-
-    qstream_pe = new_pe(qstream);
-    if (qstream_pe == NULL) {
-        SSL_free(qstream);
-    } else {
-        qstream_pe->pe_cb_in = pe_read_qstream;
-        qstream_pe->pe_cb_out = pe_write_qstream;
-        qstream_pe->pe_cb_error = pe_handle_qstream_error;
-        qstream_pe->pe_type = PE_STREAM;
-        qstream_pe->pe_want_events = SSL_POLL_EVENT_R | SSL_POLL_EVENT_W;
-    }
-
-    return qstream_pe;
 }
 
 static SSL *get_ssl_from_pe(struct poll_event *pe)
@@ -270,6 +276,62 @@ static SSL *get_ssl_from_pe(struct poll_event *pe)
         ssl = pe->pe_poll_item.desc.value.ssl;
 
     return ssl;
+}
+
+/*
+ * handle_ssl_error() diagnoses error from SSL/QUIC stack and
+ * decides if it is temporal error (in that case it returns zero)
+ * or error is permanent. In case of permanent error the
+ * poll event pe should be removed from poll manager and destroyed.
+ */
+static const char *err_str_n(unsigned long e, char *buf, size_t buf_sz)
+{
+    ERR_error_string_n(e, buf, buf_sz);
+    return buf;
+}
+
+static int handle_ssl_error(struct poll_event *pe, int rc, const char *caller)
+{
+
+    SSL *ssl = get_ssl_from_pe(pe);
+    int ssl_error, rv;
+    char err_str[120];
+
+    /* may be we should use SSL_shutdown_ex() to signal peer what's going on */
+    ssl_error = SSL_get_error(ssl, rc);
+    if (rc < 0) {
+        switch (ssl_error) {
+        case SSL_ERROR_SYSCALL:
+        case SSL_ERROR_SSL:
+        case SSL_ERROR_ZERO_RETURN:
+            DPRINTF(stderr, "%s permanent error on %p (%s) [ %s ]\n",
+                    caller, pe, pe_type_to_name(pe),
+                    err_str_n(ssl_error, err_str, sizeof (err_str)));
+            rv = -1;
+            break;
+        default:
+            DPRINTF(stderr, "%s temporal error on %p (%s) [ %s ]\n",
+                    caller, pe, pe_type_to_name(pe),
+                    err_str_n(ssl_error, err_str, sizeof (err_str)));
+            rv = 0; /* may be return -1 here too */
+        }
+    } else if (rc == 0) {
+        DPRINTF(stderr, "%s temporal error on  %p (%s) [ %s ]\n",
+                caller, pe, pe_type_to_name(pe),
+                err_str_n(ssl_error, err_str, sizeof (err_str)));
+        rv = 0;
+    } else if (rc == 1) {
+        DPRINTF(stderr, "%s no error on %p (%s) [ ??? ]\n", caller, pe,
+                pe_type_to_name(pe));
+        rv = -1; /* complete, stop polling for event */
+    } else {
+        DPRINTF(stderr, "%s ?unexpected? error on %p (%s) [ %s ]\n",
+                caller, pe, pe_type_to_name(pe),
+                err_str_n(ssl_error, err_str, sizeof (err_str)));
+        rv = -1; /* stop polling 8 */
+    }
+
+    return rv;
 }
 
 static void add_pe_to_pm(struct poll_manager *pm, struct poll_event *pe)
@@ -310,10 +372,11 @@ static struct poll_manager *create_poll_manager(void)
         pm->pm_event_count = 0;
         pm->pm_qconn_in = pm_nop;
         pm->pm_qconn_out = pm_nop;
+        pm->pm_qconn_done = pm_nop;
         pm->pm_qstream_in = pm_nop;
         pm->pm_qstream_out = pm_nop;
-        pm->pm_rready = pm_nop;
-        pm->pm_wready = pm_nop;
+        pm->pm_do_read = pe_return_error;
+        pm->pm_do_write = pe_return_error;
     } else {
         OPENSSL_free(pm);
     }
@@ -333,7 +396,7 @@ static int add_listener_to_pm(struct poll_manager *pm, SSL *listener)
         return -1;
 
     add_pe_to_pm(pm, pe);
-    pm->pm_listner = listner;
+    pm->pm_listner = listener;
 
     return 0;
 }
@@ -377,7 +440,9 @@ static int rebuild_poll_set(struct poll_manager *pm)
         pe->pe_poll_item.events = pe->pe_want_events;
         pm->pm_poll_set[i++] = *pe;
     }
+    DPRINTF(stderr, "%s event count: %zu\n", __func__, i);
     pm->pm_event_count = i;
+    pm->pm_need_rebuild = 0;
 
     return 0;
 }
@@ -411,8 +476,8 @@ static int pe_accept_qconn(struct poll_event *listener_pe)
 
     qc_pe = new_qconn_pe(qconn);
     if (qc_pe != NULL) {
-        if (pm->pm_qconn_in(qc_pe) == -1)
-            destroy_pe(qc_pe);
+        if (listener_pe->pe_my_pm->pm_qconn_in(qc_pe) == -1)
+            destroy_pe(qc_pe); /* qc_pe owns qconn */
         else
             add_pe_to_pm(listener_pe->pe_my_pm, qc_pe);
 
@@ -440,24 +505,26 @@ static int pe_accept_qstream(struct poll_event *qconn_pe)
     if (qs == NULL)
         return -1;
 
-    qs_pe = new_pe(qconn);
+    qs_pe = new_pe(qs);
     if (qs_pe != NULL) {
-        qs_pe->pe_my_pm = qconn_pe->pe_my_pm;
         qs_pe->pe_cb_error = pe_handle_qstream_error;
         qs_pe->pe_cb_in = pe_read_qstream;
-        qs_pe->pe_want_events = SSL_POLL_EVENT_R;
+        qs_pe->pe_want_events = SSL_POLL_EVENT_ER;
 
         if (qconn_pe->pe_poll_item.revents & SSL_POLL_EVENT_ISU) {
             qs_pe->pe_cb_out = pe_return_error;
             qs_pe->pe_type = PE_STREAM_UNI_IN;
         } else if (qconn_pe->pe_poll_item.revents * SSL_POLL_EVENT_ISB) {
+            qs_pe->pe_want_events |= SSL_POLL_EVENT_EW;
             qs_pe->pe_cb_out = pe_write_qstream;
-            qs_pe->pe_cb_error = pe_handle_qstream_error;
             qs_pe->pe_type = PE_STREAM;
-            qs_pe->pe_want_events |= SSL_POLL_EVENT_W;
         }
 
         add_pe_to_pm(qconn_pe->pe_my_pm, qs_pe);
+        if (qconn_pe->pe_my_pm->pm_qstream_in(qs_pe) == -1) {
+            /* application hangs up. signal stream conclude to peer */
+            SSL_stream_conclude(qs, 0);
+        }
     } else {
         SSL_free(qs);
         return -1;
@@ -485,7 +552,11 @@ static int pe_new_qstream(struct poll_event *qconn_pe)
     assert(qconn_pe->pe_type == PE_CONNECTION);
 
     qconn = get_ssl_from_pe(qconn_pe);
-    qs = SSL_accept_stream(qconn, 0);
+    if (qconn_pe->pe_poll_item.revents & SSL_POLL_EVENT_OSU)
+        qs = SSL_new_stream(qconn, SSL_STREAM_FLAG_UNI);
+    else
+        qs = SSL_new_stream(qconn, 0);
+
     if (qs == NULL)
         return -1;
 
@@ -535,76 +606,161 @@ static void destroy_pe(struct poll_event *pe)
     if (pe == NULL)
         return;
 
+    DPRINTF(stderr, "%s %p (%s)\n", __func__, pe, pe_type_to_name(pe));
     ssl = get_ssl_from_pe(pe);
     if (pe->pe_my_pm) {
         remove_pe_from_pm(pe->pe_my_pm, pe);
     }
+
+    pe->pe_cb_ondestroy(pe->pe_appdata);
+
     OPENSSL_free(pe);
 
-    (void) SSL_shutdown(ssl);
     SSL_free(ssl);
 }
-
 
 static int pe_return_error(struct poll_event *pe)
 {
     return -1;
 }
 
+static void pe_return_void(void *ctx)
+{
+    return;
+}
+
 static int pe_handle_listener_error(struct poll_event *pe)
 {
-    /*
-     * todo: determine the nature of error return 0 when recovery
-     * is possible, -1 otherwise
-     * see handle_io_failure() in non-blocking server for possible
-     * error codes.
-     */
     pe->pe_my_pm->pm_continue = 0;
+    if (pe->pe_poll_item.revents & SSL_POLL_EVENT_EL)
+        return -1;
+
+    DPRINTF(stderr, "%s unexpected error on %p (%s) " POLL_FMT "\n", __func__,
+            pe, pe_type_to_name(pe), POLL_PRINTA(pe->pe_poll_item.revents));
+
     return -1;
 }
 
 static int pe_handle_qconn_error(struct poll_event *pe)
 {
-    /*
-     * todo: determine the nature of error return 0 when recovery
-     * is possible, -1 otherwise
-     * see handle_io_failure() in non-blocking server for possible
-     * error codes.
-     */
-    return -1;
+    int rv = -2;
+
+    if (pe->pe_poll_item.revents & SSL_POLL_EVENT_EC) {
+        DPRINTF(stderr,
+                "%s connection shutdown started on %p (%s), keep polling\n",
+                __func__, pe, pe_type_to_name(pe));
+        /*
+         * shutdown has started, Not sure what we should be doing here.
+         * So the plan is to call SSL_shutdown() here and stop monitoring
+         * _EVENT_EC here. We will keep _EVENT_ECD monitored.
+         * Shall we call shutdown too?
+         */
+        SSL_shutdown(get_ssl_from_pe(pe));
+        /*
+         * adjust _want_events, don't forget to ask poll manager to rebuild
+         * poll set so _want_events can take effect in next loop iteration
+         */
+        pe->pe_want_events &= ~SSL_POLL_EVENT_EC;
+        pe->pe_my_pm->pm_need_rebuild = 1;
+        rv = 0;
+    }
+
+    if (pe->pe_poll_item.revents & SSL_POLL_EVENT_ECD) {
+        DPRINTF(stderr,
+                "%s connection shutdown done on %p (%s), stop polling\n",
+                __func__, pe, pe_type_to_name(pe));
+        rv = -1; /* shutdown is complete stop polling let pe to be destroyed */
+    }
+
+    if (rv == -2) {
+        DPRINTF(stderr, "%s unexpected event on %p (%s)" POLL_FMT "\n",
+                __func__, pe, pe_type_to_name(pe),
+                POLL_PRINTA(pe->pe_poll_item.revents));
+        rv = -1;
+    }
+
+    if (rv == -1) {
+        /* tell application connection is done */
+        (void) pe->pe_my_pm->pm_qconn_done(pe);
+    }
+
+    return rv;
 }
 
 static int pe_handle_qstream_error(struct poll_event *pe)
 {
-    /*
-     * todo: determine the nature of error return 0 when recovery
-     * is possible, -1 otherwise
-     * see handle_io_failure() in non-blocking server for possible
-     * error codes.
-     */
+    int rv;
+
+    if (pe->pe_poll_item.revents & SSL_POLL_EVENT_ER) {
+
+        if ((pe->pe_poll_item.events & SSL_POLL_EVENT_R) == 0) {
+            DPRINTF(stderr, "%s unexpected failure on reader %p (%s) "
+                    POLL_FMT "\n", __func__, pe, pe_type_to_name(pe),
+                    POLL_PRINTA(pe->pe_poll_item.revents));
+        }
+
+        if (pe->pe_type == PE_STREAM) {
+            SSL_shutdown(get_ssl_from_pe(pe));
+            rv = 0; /* attempt to shutdown the stream */
+        } else {
+            rv = -1; /* stop polling immediately */
+        }
+    } else if (pe->pe_poll_item.revents & SSL_POLL_EVENT_EW) {
+
+        if ((pe->pe_poll_item.events & SSL_POLL_EVENT_W) == 0) {
+            DPRINTF(stderr, "%s unexpected failure on writer %p (%s) "
+                    POLL_FMT "\n", __func__, pe, pe_type_to_name(pe),
+                    POLL_PRINTA(pe->pe_poll_item.revents));
+        }
+
+        rv = -1; /* stop polling immediately */
+    } else {
+        DPRINTF(stderr, "%s unexpected failure on writer/reader %p (%s) "
+                POLL_FMT "\n", __func__, pe, pe_type_to_name(pe),
+                POLL_PRINTA(pe->pe_poll_item.revents));
+        rv = -1;
+    }
+
+    if (rv == -1) {
+        /* tell application stream is done */
+        (void) pe->pe_my_pm->pm_qstream_done(pe);
+    }
+
     return -1;
 }
 
 static int pe_read_qstream(struct poll_event *pe)
 {
-    /*
-     * todo there should be an application callback which
-     * we will receive data from qstream.
-     * see handle_io_failure() in non-blocking server for possible
-     * error codes.
-     */
-    return -1;
+    return pe->pe_my_pm->pm_do_read(pe);
 }
 
 static int pe_write_qstream(struct poll_event *pe)
 {
-    /*
-     * todo there should be an application callback which
-     * we will write data to qstream.
-     * see handle_io_failure() in non-blocking server for possible
-     * error codes.
-     */
-    return -1;
+    return pe->pe_my_pm->pm_do_write(pe);
+}
+
+static void pe_pause_read(struct poll_event *pe)
+{
+    pe->pe_want_events &= ~SSL_POLL_EVENT_R;
+    pe->pe_my_pm->pm_need_rebuild = 1;
+}
+
+static void pe_resume_read(struct poll_event *pe)
+{
+    pe->pe_want_events |= SSL_POLL_EVENT_R;
+    pe->pe_my_pm->pm_need_rebuild = 1;
+}
+
+static void pe_pause_write(struct poll_event *pe)
+{
+    pe->pe_want_events &= ~SSL_POLL_EVENT_W;
+    pe->pe_my_pm->pm_need_rebuild = 1;
+}
+
+static void pe_resume_write(struct poll_event *pe)
+{
+    pe->pe_want_events |= SSL_POLL_EVENT_W;
+    pe->pe_my_pm->pm_need_rebuild = 1;
 }
 
 /*
@@ -697,7 +853,7 @@ static SSL_CTX *create_ctx(const char *cert_path, const char *key_path)
      * other directory, move or copy the files there.
      */
     if (SSL_CTX_use_certificate_chain_file(ctx, cert_path) <= 0) {
-        fprintf(stderr, "couldn't load certificate file: %s\n", cert_path);
+        DPRINTF(stderr, "couldn't load certificate file: %s\n", cert_path);
         goto err;
     }
 
@@ -708,7 +864,7 @@ static SSL_CTX *create_ctx(const char *cert_path, const char *key_path)
      * expired, or may otherwise fail to form a chain that a client can validate.
      */
     if (SSL_CTX_use_PrivateKey_file(ctx, key_path, SSL_FILETYPE_PEM) <= 0) {
-        fprintf(stderr, "couldn't load key file: %s\n", key_path);
+        DPRINTF(stderr, "couldn't load key file: %s\n", key_path);
         goto err;
     }
 
@@ -743,7 +899,7 @@ static int create_socket(uint16_t port)
 
     /* Retrieve the file descriptor for a new UDP socket */
     if ((fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
-        fprintf(stderr, "cannot create socket");
+        DPRINTF(stderr, "cannot create socket");
         return -1;
     }
 
@@ -752,14 +908,14 @@ static int create_socket(uint16_t port)
 
     /* Bind to the new UDP socket on localhost */
     if (bind(fd, (const struct sockaddr *)&sa, sizeof(sa)) < 0) {
-        fprintf(stderr, "cannot bind to %u\n", port);
+        DPRINTF(stderr, "cannot bind to %u\n", port);
         BIO_closesocket(fd);
         return -1;
     }
 
     /* Set port to nonblocking mode */
     if (BIO_socket_nbio(fd, 1) <= 0) {
-        fprintf(stderr, "Unable to set port to nonblocking mode");
+        DPRINTF(stderr, "Unable to set port to nonblocking mode");
         BIO_closesocket(fd);
         return -1;
     }
@@ -777,7 +933,6 @@ static int run_quic_server(SSL_CTX *ctx, struct poll_manager *pm, int fd)
     int e;
     unsigned int i;
     SSL *listener;
-    struct poll_event *listener_pe;
     struct poll_event *pe;
     size_t poll_items;
 
@@ -825,15 +980,16 @@ static int run_quic_server(SSL_CTX *ctx, struct poll_manager *pm, int fd)
             pe = &pm->pm_poll_set[i];
             if (pe->pe_poll_item.revents == 0)
                 continue;
-            fprintf(stderr, "%s %s (%p) " POLL_FMT "\n", __func__,
+            DPRINTF(stderr, "%s %s (%p) " POLL_FMT "\n", __func__,
                    pe_type_to_name(pe), pe,
                    POLL_PRINTA(pe->pe_poll_item.revents));
+            pe->pe_self->pe_poll_item.revents = pe->pe_poll_item.revents;
             if (pe->pe_poll_item.revents & POLL_ERROR)
-                e = pe->pe_cb_error(pe);
+                e = pe->pe_cb_error(pe->pe_self);
             else if (pe->pe_poll_item.revents & POLL_IN)
-                e = pe->pe_cb_in(pe);
+                e = pe->pe_cb_in(pe->pe_self);
             else if (pe->pe_poll_item.revents & POLL_OUT)
-                e = pe->pe_cb_out(pe);
+                e = pe->pe_cb_out(pe->pe_self);
 
             if (e == -1) {
                 pe = pm->pm_poll_set[i].pe_self;
@@ -847,6 +1003,239 @@ err:
     SSL_free(listener);
     destroy_poll_manager(pm);
     return ok;
+}
+
+/*
+ * The application read handler allocates linked_buf, reads data
+ * from SSL object and puts buffer to list of write buffers.
+ */
+struct linked_buf {
+    OSSL_LIST_MEMBER(lb, struct linked_buf);
+    char		 lb_data[1024];
+    size_t		 lb_len;
+    char		*lb_wpos;
+};
+
+DEFINE_LIST_OF(lb, struct linked_buf);
+
+/*
+ * app_ctx is our QUIC echo application context it holds list
+ * of buffers to write. This is a per-stream context.
+ */
+struct app_ctx {
+    OSSL_LIST(lb)	 ac_head;
+};
+
+/*
+ * get_write_len() returns the amount of bytes we can write
+ * from particular linked buffer instance. 
+ */
+static size_t get_write_len(struct linked_buf *lb)
+{
+    char *buf_end;
+    size_t rv;
+
+    if (lb->lb_len == 0)
+        return 0;
+
+    buf_end = &lb->lb_data[lb->lb_len - 1];
+    rv = buf_end - lb->lb_wpos;
+
+    return rv;
+}
+
+/*
+ * It's not granted we write the whole buffer in one call to
+ * SSL_write_ex(). Function ypdate_lb_wpos() allows us to
+ * remember where next write operation should start writing from.
+ */
+static void update_lb_wpos(struct linked_buf *lb, size_t written)
+{
+    if (written > lb->lb_len)
+        written = lb->lb_len;
+
+    lb->lb_wpos += written;
+    if (lb->lb_wpos > &lb->lb_data[sizeof (lb->lb_data) - 1])
+        lb->lb_wpos = &lb->lb_data[sizeof (lb->lb_data) - 1];
+}
+
+/*
+ * Whenever stream gets destroyed, the app_destroy_cb() fires,
+ * we must destroy all linked buffers including the context itself.
+ */
+static void app_destroy_cb(void *ctx)
+{
+    struct app_ctx *ac = (struct app_ctx *)ctx;
+    struct linked_buf *lb, *lb_safe;
+
+    OSSL_LIST_FOREACH_DELSAFE(lb, lb_safe, lb, &ac->ac_head) {
+        free(lb);
+    }
+    free(ac);
+}
+
+/*
+ * app_accept_stream() callback fires when there is a new stream
+ * from client. Callback initializes context. It also indicates
+ * its readiness to start receiving data.
+ */
+static int app_accept_stream_cb(struct poll_event *pe)
+{
+    struct app_ctx *ac;
+
+    /*
+     * QUIC echo server application requires bi-directional
+     * streams (PE_STREAM) to work. Dealing with uni-directional
+     * stream needs more thought.
+     */
+    if (pe->pe_type != PE_STREAM)
+        return -1;
+
+    ac = (struct app_ctx *)OPENSSL_zalloc(sizeof (struct app_ctx));
+    if (ac == NULL)
+        return -1;
+
+    ossl_list_lb_init(&ac->ac_head);
+    pe->pe_appdata = ac;
+    pe->pe_cb_ondestroy = app_destroy_cb;
+    pe_resume_read(pe);
+
+    return 0;
+}
+
+/*
+ * request_write() inserts link buffer to write queue and
+ * indicates to poll manager there are outbound data ready.
+ */
+static int request_write(struct poll_event *pe, struct linked_buf *lb)
+{
+    struct app_ctx *ac = (struct app_ctx *)pe->pe_appdata;
+    int rv, stype;
+
+    /*
+     * handling of unidirectional streams is more tricky
+     * in asynchronous I/O. We need to move/share app_ctx from
+     * from read poll event (this pe), to new poll event which
+     * is associated with outbound stream poll event (a.k.a. write side)
+     *
+     * and we already know creating stream is two stop process:
+     *     - step one: ask for stream
+     *     - step two: handle notification of newly created stream
+     * we need to pass ac from here to step two. Perhaps we need
+     * something like pipe: a pair of two streams.
+     */
+    stype = SSL_get_stream_type(get_ssl_from_pe(pe));
+    if (stype == SSL_STREAM_TYPE_BIDI) {
+        ossl_list_lb_insert_tail(&ac->ac_head, lb);
+        if (ossl_list_lb_num(&ac->ac_head) == 1) {
+            pe_resume_write(pe);
+        }
+        rv = 0;
+    } else {
+        rv = -1;
+    }
+
+    return rv;
+}
+
+/*
+ * app_read_cb() callback notifies application there are data
+ * waiting to be read from stream. The callback allocates
+ * new linked buffer and reads data from stream to newly allocated
+ * buffer. It then uses request_write() to put the buffer to write
+ * queue so data can be echoed back to client.
+ */
+static int app_read_cb(struct poll_event *pe)
+{
+    struct linked_buf *lb;
+    int rv;
+
+    lb = (struct linked_buf *)OPENSSL_zalloc(sizeof (struct linked_buf));
+    if (lb == NULL)
+        return -1;
+
+    rv = SSL_read_ex(get_ssl_from_pe(pe), lb->lb_data, sizeof (lb->lb_data),
+                     &lb->lb_len);
+    if (rv == 0) {
+        free(lb);
+        rv = handle_ssl_error(pe, rv, __func__);
+        if (rv == 0)
+            pe_pause_read(pe);
+        return rv;
+    }
+    lb->lb_wpos = lb->lb_data;
+
+    rv = request_write(pe, lb);
+
+    if (rv != 0)
+        free(lb);
+
+    return 0;
+}
+
+/*
+ * app_write_cb() callback notifies application the QUIC stack
+ * is ready to send data. The write callback attempts to process
+ * all buffers in write queue.
+ * if write queue becomes empty, stream is concluded.
+ */
+static int app_write_cb(struct poll_event *pe)
+{
+    struct app_ctx *ac = (struct app_ctx *)pe->pe_appdata;
+    struct linked_buf *lb, *lb_safe;
+    size_t written;
+    int rv;
+
+    lb = ossl_list_lb_head(&ac->ac_head);
+    if (lb == NULL) {
+        DPRINTF(stderr,
+                "%s write queue is empty pausing write, resuming read\n",
+                __func__);
+        pe_pause_write(pe);
+        pe_resume_write(pe);
+        return 0;
+    }
+
+    OSSL_LIST_FOREACH_DELSAFE(lb, lb_safe, lb, &ac->ac_head) {
+        rv = SSL_write_ex(get_ssl_from_pe(pe), lb->lb_wpos, get_write_len(lb),
+                          &written);
+        if (rv == 0) {
+            /*
+             * just return 0 to keep polling, we assume to get error notification
+             */
+            return 0;
+        } 
+
+        update_lb_wpos(lb, written);
+
+        if (get_write_len(lb) == 0) {
+            ossl_list_lb_remove(&ac->ac_head, lb);
+            free(lb);
+        } else {
+            return 0;
+        }
+    }
+
+    if (ossl_list_lb_head(&ac->ac_head) == NULL) {
+        /*
+	 * What happens now purely depends on application logic. In our case
+	 * here the client application (quic-client-*block,c sends its data
+         * and concludes stream.
+         */
+        SSL_stream_conclude(get_ssl_from_pe(pe), 0);
+        /*
+         * Notes: I still don't know what's the best course of action here.
+         * Doing pe_resume_read() is not option because it makes reader
+         * to wake up immediately, app_read_cb() attempts to read data
+         * and finds there is nothing, it bails out with -1. This makes
+         * poll manager to destroy poll event stream immediately which is
+         * too soon to deliver the STREAM_CONCLUDE to peer. The stream
+         * is torn down immediately causing client to see a RESET.
+         */
+        pe_pause_write(pe);
+    }
+
+    return 0;
 }
 
 /* Minimal QUIC HTTP/1.0 server. */
@@ -891,6 +1280,13 @@ int main(int argc, char *argv[])
         ERR_print_errors_fp(stderr);
         errx(res, "Failed to create socket");
     }
+
+    /*
+     * This works for bi-directional streams
+     */
+    pm->pm_qstream_in = app_accept_stream_cb;
+    pm->pm_do_read = app_read_cb;
+    pm->pm_do_write = app_write_cb;
 
     /* QUIC server connection acceptance loop. */
     if (run_quic_server(ctx, pm, fd) < 0) {
