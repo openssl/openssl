@@ -465,7 +465,7 @@ ms-corp 21 10	: ms-app-policies	: Microsoft Application Policies Extension
 !Cname idea-ofb64
 			: IDEA-OFB		: idea-ofb
 
-1 3 6 1 4 1 3029 1 2	: BF-CBC		: bf-cbc
+1 3 6 1 4 1 3029 1 1 2	: BF-CBC		: bf-cbc
 			: BF-ECB		: bf-ecb
 !Cname bf-cfb64
 			: BF-CFB		: bf-cfb
