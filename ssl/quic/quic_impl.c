@@ -410,6 +410,11 @@ static int expect_quic_cs(const SSL *s, QCTX *ctx)
     return expect_quic_as(s, ctx, QCTX_C | QCTX_S);
 }
 
+static int expect_quic_c(const SSL *s, QCTX *ctx)
+{
+    return expect_quic_as(s, ctx, QCTX_C);
+}
+
 static int expect_quic_csl(const SSL *s, QCTX *ctx)
 {
     return expect_quic_as(s, ctx, QCTX_C | QCTX_S | QCTX_L);
@@ -4634,13 +4639,16 @@ int ossl_quic_peeloff_conn(SSL *listener, SSL *new_conn)
     QCTX lctx;
     QCTX cctx;
     QUIC_CHANNEL *new_ch;
+    QUIC_CONNECTION *qc = NULL;
+    QUIC_LISTENER *ql = NULL;
+    SSL *tls = NULL;
     int ret = 0;
 
     if (!expect_quic_listener(listener, &lctx))
-        return 0;
+        return -1;
 
-    if (!expect_quic_cs(new_conn, &cctx))
-        return 0;
+    if (!expect_quic_c(new_conn, &cctx))
+        return -1;
 
     qctx_lock_for_io(&lctx);
     if (ossl_quic_port_get_using_peeloff(lctx.ql->port) == -1) {
@@ -4653,9 +4661,37 @@ int ossl_quic_peeloff_conn(SSL *listener, SSL *new_conn)
     ossl_quic_port_set_using_peeloff(lctx.ql->port, 1);
     new_ch = ossl_quic_port_pop_incoming(lctx.ql->port);
     if (new_ch != NULL) {
-        /*
-         * Do our cloning work here
-         */
+        qc = cctx.qc;
+        ql = lctx.ql;
+        ossl_quic_channel_free(qc->ch);
+        ossl_quic_port_free(qc->port);
+        ossl_quic_engine_free(qc->engine);
+        qc->obj.engine = ql->engine;
+        qc->engine = ql->engine;
+        qc->port = ql->port;
+        qc->pending = 1;
+#if defined(OPENSSL_THREADS)
+        ossl_crypto_mutex_free(&qc->mutex);
+        qc->mutex = ql->mutex;
+#endif
+        qc->ch = new_ch;
+        tls = ossl_ssl_connection_new_int(ossl_quic_port_get_channel_ctx(lctx.ql->port),
+                                          new_conn, TLS_method());
+        if (tls == NULL)
+            goto out;
+        SSL_free(qc->tls);
+        ossl_quic_channel_set0_tls(new_ch, tls);
+        qc->tls = tls;
+        ossl_quic_channel_get_peer_addr(new_ch, &qc->init_peer_addr); /* best effort */
+        qc->started = 1;
+        qc->as_server = 1;
+        qc->as_server_state = 1;
+        qc->default_stream_mode = SSL_DEFAULT_STREAM_MODE_AUTO_BIDI;
+        qc->default_ssl_options = ql->obj.ssl.ctx->options & OSSL_QUIC_PERMITTED_OPTIONS;
+        qc->incoming_stream_policy = SSL_INCOMING_STREAM_POLICY_AUTO;
+        qc->last_error = SSL_ERROR_NONE;
+        qc_update_reject_policy(qc);
+        ret = 1;
     }
 out:
     qctx_unlock(&lctx);
@@ -4701,9 +4737,9 @@ SSL *ossl_quic_accept_connection(SSL *ssl, uint64_t flags)
     if (ossl_quic_port_get_using_peeloff(ctx.ql->port) == 1) {
         QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED,
                                     "This listener is using SSL_accept_ex");
-        goto out; 
+        goto out;
     }
-    
+
     ossl_quic_port_set_using_peeloff(ctx.ql->port, -1);
 
     /* Wait for an incoming connection if needed. */
