@@ -9,6 +9,7 @@
 
 #include <openssl/byteorder.h>
 #include <openssl/rand.h>
+#include <openssl/proverr.h>
 #include "crypto/ml_kem.h"
 #include "internal/common.h"
 #include "internal/constant_time.h"
@@ -1310,8 +1311,12 @@ static int parse_prvkey(const uint8_t *in, EVP_MD_CTX *mdctx, ML_KEM_KEY *key)
     in += vinfo->pubkey_bytes;
 
     /* Check public key hash. */
-    if (memcmp(key->pkhash, in, ML_KEM_PKHASH_BYTES) != 0)
+    if (memcmp(key->pkhash, in, ML_KEM_PKHASH_BYTES) != 0) {
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY,
+                       "%s public key hash mismatch",
+                       vinfo->algorithm_name);
         return 0;
+    }
     in += ML_KEM_PKHASH_BYTES;
 
     memcpy(key->z, in, ML_KEM_RANDOM_BYTES);
