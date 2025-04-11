@@ -295,6 +295,10 @@ int check_cert_attributes(BIO *bio, X509 *x,
 
 void store_setup_crl_download(X509_STORE *st);
 
+#ifndef OPENSSL_NO_SOCK
+int host_is_ip_address(const char *host);
+#endif
+
 typedef struct app_http_tls_info_st {
     const char *server;
     const char *port;
