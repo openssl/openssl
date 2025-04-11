@@ -480,6 +480,12 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *pctx)
     }
     rctx->legacy_keytype = pctx->legacy_keytype;
 
+    if (pctx->keymgmt != NULL) {
+        if (!EVP_KEYMGMT_up_ref(pctx->keymgmt))
+            goto err;
+        rctx->keymgmt = pctx->keymgmt;
+    }
+
     if (EVP_PKEY_CTX_IS_DERIVE_OP(pctx)) {
         if (pctx->op.kex.exchange != NULL) {
             rctx->op.kex.exchange = pctx->op.kex.exchange;
