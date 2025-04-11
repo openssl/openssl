@@ -16,7 +16,9 @@ OSSL_SAFE_MATH_UNSIGNED(size_t, size_t)
 
 int ossl_rio_poll_builder_init(RIO_POLL_BUILDER *rpb)
 {
-#if RIO_POLL_METHOD == RIO_POLL_METHOD_SELECT
+#if RIO_POLL_METHOD == RIO_POLL_METHOD_NONE
+    return 0;
+#elif RIO_POLL_METHOD == RIO_POLL_METHOD_SELECT
     FD_ZERO(&rpb->rfd);
     FD_ZERO(&rpb->wfd);
     FD_ZERO(&rpb->efd);

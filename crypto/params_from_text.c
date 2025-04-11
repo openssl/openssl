@@ -220,9 +220,9 @@ int OSSL_PARAM_print_to_bio(const OSSL_PARAM *p, BIO *bio, int print_values)
     BIGNUM *bn;
 #ifndef OPENSSL_SYS_UEFI
     double d;
+    int dok;
 #endif
     int ok = -1;
-    int dok;
 
     /*
      * Iterate through each key in the array printing its key and value
@@ -280,16 +280,16 @@ int OSSL_PARAM_print_to_bio(const OSSL_PARAM *p, BIO *bio, int print_values)
         case OSSL_PARAM_OCTET_STRING:
             ok = BIO_dump(bio, (char *)p->data, p->data_size);
             break;
+#ifndef OPENSSL_SYS_UEFI
         case OSSL_PARAM_REAL:
             dok = 0;
-#ifndef OPENSSL_SYS_UEFI
             dok = OSSL_PARAM_get_double(p, &d);
-#endif
             if (dok == 1)
                 ok = BIO_printf(bio, "%f\n", d);
             else
                 ok = BIO_printf(bio, "error getting value\n");
             break;
+#endif
         default:
             ok = BIO_printf(bio, "unknown type (%u) of %zu bytes\n",
                             p->data_type, p->data_size);
