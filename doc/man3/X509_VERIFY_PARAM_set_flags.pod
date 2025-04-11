@@ -375,6 +375,12 @@ instead of functions which work in specific structures such as
 X509_STORE_CTX_set_flags() which are likely to be deprecated in a future
 release.
 
+TLS clients are recommended to set up validation of server hostname(s) and/or
+IP address (directly using the above functions
+or more conveniently using L<SSL_set1_host(3)> or L<SSL_add1_host(3)>)
+and to use L<SSL_set_tlsext_host_name(3)> for Server Name Indication (SNI),
+which may be crucial also for correct routing of the connection request.
+
 =head1 BUGS
 
 Delta CRL checking is currently primitive. Only a single delta can be used and
@@ -403,6 +409,7 @@ L<X509_verify_cert(3)>,
 L<X509_check_host(3)>,
 L<X509_check_email(3)>,
 L<X509_check_ip(3)>,
+L<SSL_set_tlsext_host_name(3)>,
 L<openssl-x509(1)>
 
 =head1 HISTORY
