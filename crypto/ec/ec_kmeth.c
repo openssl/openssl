@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -86,18 +86,16 @@ EC_KEY *ossl_ec_key_new_method_int(OSSL_LIB_CTX *libctx, const char *propq,
     if (ret == NULL)
         return NULL;
 
+    if (!CRYPTO_NEW_REF(&ret->references, 1)) {
+        OPENSSL_free(ret);
+        return NULL;
+    }
+
     ret->libctx = libctx;
     if (propq != NULL) {
         ret->propq = OPENSSL_strdup(propq);
         if (ret->propq == NULL)
             goto err;
-    }
-
-    ret->references = 1;
-    ret->lock = CRYPTO_THREAD_lock_new();
-    if (ret->lock == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_CRYPTO_LIB);
-        goto err;
     }
 
     ret->meth = EC_KEY_get_default_method();

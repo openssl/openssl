@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -28,6 +28,7 @@ static int cmp_pkt_hdr(const QUIC_PKT_HDR *a, const QUIC_PKT_HDR *b,
         || !TEST_int_eq(a->partial, b->partial)
         || !TEST_int_eq(a->fixed, b->fixed)
         || !TEST_int_eq(a->unused, b->unused)
+        || !TEST_int_eq(a->reserved, b->reserved)
         || !TEST_uint_eq(a->version, b->version)
         || !TEST_true(ossl_quic_conn_id_eq(&a->dst_conn_id, &b->dst_conn_id))
         || !TEST_true(ossl_quic_conn_id_eq(&a->src_conn_id, &b->src_conn_id))

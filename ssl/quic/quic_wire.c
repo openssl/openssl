@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,8 +12,21 @@
 #include "internal/quic_ssl.h"
 #include "internal/quic_vlint.h"
 #include "internal/quic_wire.h"
+#include "internal/quic_error.h"
 
 OSSL_SAFE_MATH_UNSIGNED(uint64_t, uint64_t)
+
+int ossl_quic_frame_ack_contains_pn(const OSSL_QUIC_FRAME_ACK *ack, QUIC_PN pn)
+{
+    size_t i;
+
+    for (i = 0; i < ack->num_ack_ranges; ++i)
+        if (pn >= ack->ack_ranges[i].start
+            && pn <= ack->ack_ranges[i].end)
+            return 1;
+
+    return 0;
+}
 
 /*
  * QUIC Wire Format Encoding
@@ -306,7 +319,8 @@ int ossl_quic_wire_encode_frame_streams_blocked(WPACKET *pkt,
 int ossl_quic_wire_encode_frame_new_conn_id(WPACKET *pkt,
                                             const OSSL_QUIC_FRAME_NEW_CONN_ID *f)
 {
-    if (f->conn_id.id_len > QUIC_MAX_CONN_ID_LEN)
+    if (f->conn_id.id_len < 1
+        || f->conn_id.id_len > QUIC_MAX_CONN_ID_LEN)
         return 0;
 
     if (!encode_frame_hdr(pkt, OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID)
@@ -314,8 +328,8 @@ int ossl_quic_wire_encode_frame_new_conn_id(WPACKET *pkt,
             || !WPACKET_quic_write_vlint(pkt, f->retire_prior_to)
             || !WPACKET_put_bytes_u8(pkt, f->conn_id.id_len)
             || !WPACKET_memcpy(pkt, f->conn_id.id, f->conn_id.id_len)
-            || !WPACKET_memcpy(pkt, f->stateless_reset_token,
-                               sizeof(f->stateless_reset_token)))
+            || !WPACKET_memcpy(pkt, f->stateless_reset.token,
+                               sizeof(f->stateless_reset.token)))
         return 0;
 
     return 1;
@@ -359,6 +373,10 @@ int ossl_quic_wire_encode_frame_conn_close(WPACKET *pkt,
             || !WPACKET_quic_write_vlint(pkt, f->error_code))
         return 0;
 
+    /*
+     * RFC 9000 s. 19.19: The application-specific variant of CONNECTION_CLOSE
+     * (type 0x1d) does not include this field.
+     */
     if (!f->is_app && !WPACKET_quic_write_vlint(pkt, f->frame_type))
         return 0;
 
@@ -427,9 +445,10 @@ int ossl_quic_wire_encode_transport_param_cid(WPACKET *wpkt,
  * QUIC Wire Format Decoding
  * =========================
  */
-int ossl_quic_wire_peek_frame_header(PACKET *pkt, uint64_t *type)
+int ossl_quic_wire_peek_frame_header(PACKET *pkt, uint64_t *type,
+                                     int *was_minimal)
 {
-    return PACKET_peek_quic_vlint(pkt, type);
+    return PACKET_peek_quic_vlint_ex(pkt, type, was_minimal);
 }
 
 int ossl_quic_wire_skip_frame_header(PACKET *pkt, uint64_t *type)
@@ -469,7 +488,7 @@ int ossl_quic_wire_peek_frame_ack_num_ranges(const PACKET *orig_pkt,
                                              uint64_t *total_ranges)
 {
     PACKET pkt = *orig_pkt;
-    uint64_t ack_range_count;
+    uint64_t ack_range_count, i;
 
     if (!expect_frame_header_mask(&pkt, OSSL_QUIC_FRAME_TYPE_ACK_WITHOUT_ECN,
                                   1, NULL)
@@ -477,6 +496,18 @@ int ossl_quic_wire_peek_frame_ack_num_ranges(const PACKET *orig_pkt,
             || !PACKET_skip_quic_vlint(&pkt)
             || !PACKET_get_quic_vlint(&pkt, &ack_range_count))
         return 0;
+
+    /*
+     * Ensure the specified number of ack ranges listed in the ACK frame header
+     * actually are available in the frame data. This naturally bounds the
+     * number of ACK ranges which can be requested by the MDPL, and therefore by
+     * the MTU. This ensures we do not allocate memory for an excessive number
+     * of ACK ranges.
+     */
+    for (i = 0; i < ack_range_count; ++i)
+        if (!PACKET_skip_quic_vlint(&pkt)
+            || !PACKET_skip_quic_vlint(&pkt))
+            return 0;
 
     /* (cannot overflow because QUIC vlints can only encode up to 2**62-1) */
     *total_ranges = ack_range_count + 1;
@@ -591,6 +622,7 @@ int ossl_quic_wire_decode_frame_stop_sending(PACKET *pkt,
 }
 
 int ossl_quic_wire_decode_frame_crypto(PACKET *pkt,
+                                       int nodata,
                                        OSSL_QUIC_FRAME_CRYPTO *f)
 {
     if (!expect_frame_header(pkt, OSSL_QUIC_FRAME_TYPE_CRYPTO)
@@ -599,13 +631,21 @@ int ossl_quic_wire_decode_frame_crypto(PACKET *pkt,
             || f->len > SIZE_MAX /* sizeof(uint64_t) > sizeof(size_t)? */)
         return 0;
 
-    if (PACKET_remaining(pkt) < f->len)
+    if (f->offset + f->len > (((uint64_t)1) << 62) - 1)
+        /* RFC 9000 s. 19.6 */
         return 0;
 
-    f->data = PACKET_data(pkt);
+    if (nodata) {
+        f->data = NULL;
+    } else {
+        if (PACKET_remaining(pkt) < f->len)
+            return 0;
 
-    if (!PACKET_forward(pkt, (size_t)f->len))
-        return 0;
+        f->data = PACKET_data(pkt);
+
+        if (!PACKET_forward(pkt, (size_t)f->len))
+            return 0;
+    }
 
     return 1;
 }
@@ -633,6 +673,7 @@ int ossl_quic_wire_decode_frame_new_token(PACKET               *pkt,
 }
 
 int ossl_quic_wire_decode_frame_stream(PACKET *pkt,
+                                       int nodata,
                                        OSSL_QUIC_FRAME_STREAM *f)
 {
     uint64_t frame_type;
@@ -658,14 +699,29 @@ int ossl_quic_wire_decode_frame_stream(PACKET *pkt,
         if (!PACKET_get_quic_vlint(pkt, &f->len))
             return 0;
     } else {
-        f->len = PACKET_remaining(pkt);
+        if (nodata)
+            f->len = 0;
+        else
+            f->len = PACKET_remaining(pkt);
     }
 
-    f->data = PACKET_data(pkt);
-
-    if (f->len > SIZE_MAX /* sizeof(uint64_t) > sizeof(size_t)? */
-        || !PACKET_forward(pkt, (size_t)f->len))
+    /*
+     * RFC 9000 s. 19.8: "The largest offset delivered on a stream -- the sum of
+     * the offset and data length -- cannot exceed 2**62 - 1, as it is not
+     * possible to provide flow control credit for that data."
+     */
+    if (f->offset + f->len > (((uint64_t)1) << 62) - 1)
         return 0;
+
+    if (nodata) {
+        f->data = NULL;
+    } else {
+        f->data = PACKET_data(pkt);
+
+        if (f->len > SIZE_MAX /* sizeof(uint64_t) > sizeof(size_t)? */
+            || !PACKET_forward(pkt, (size_t)f->len))
+            return 0;
+    }
 
     return 1;
 }
@@ -746,7 +802,9 @@ int ossl_quic_wire_decode_frame_new_conn_id(PACKET *pkt,
     if (!expect_frame_header(pkt, OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID)
             || !PACKET_get_quic_vlint(pkt, &f->seq_num)
             || !PACKET_get_quic_vlint(pkt, &f->retire_prior_to)
+            || f->seq_num < f->retire_prior_to
             || !PACKET_get_1(pkt, &len)
+            || len < 1
             || len > QUIC_MAX_CONN_ID_LEN)
         return 0;
 
@@ -758,8 +816,8 @@ int ossl_quic_wire_decode_frame_new_conn_id(PACKET *pkt,
     if (len < QUIC_MAX_CONN_ID_LEN)
         memset(f->conn_id.id + len, 0, QUIC_MAX_CONN_ID_LEN - len);
 
-    if (!PACKET_copy_bytes(pkt, f->stateless_reset_token,
-                           sizeof(f->stateless_reset_token)))
+    if (!PACKET_copy_bytes(pkt, f->stateless_reset.token,
+                           sizeof(f->stateless_reset.token)))
         return 0;
 
     return 1;
@@ -892,6 +950,9 @@ int ossl_quic_wire_decode_transport_param_int(PACKET *pkt,
     if (!PACKET_get_quic_vlint(&sub, value))
         return 0;
 
+    if (PACKET_remaining(&sub) > 0)
+        return 0;
+
    return 1;
 }
 
@@ -909,4 +970,109 @@ int ossl_quic_wire_decode_transport_param_cid(PACKET *pkt,
     cid->id_len = (unsigned char)len;
     memcpy(cid->id, body, cid->id_len);
     return 1;
+}
+
+int ossl_quic_wire_decode_transport_param_preferred_addr(PACKET *pkt,
+                                                         QUIC_PREFERRED_ADDR *p)
+{
+    const unsigned char *body;
+    uint64_t id;
+    size_t len = 0;
+    PACKET pkt2;
+    unsigned int ipv4_port, ipv6_port, cidl;
+
+    body = ossl_quic_wire_decode_transport_param_bytes(pkt, &id, &len);
+    if (body == NULL
+        || len < QUIC_MIN_ENCODED_PREFERRED_ADDR_LEN
+        || len > QUIC_MAX_ENCODED_PREFERRED_ADDR_LEN
+        || id != QUIC_TPARAM_PREFERRED_ADDR)
+        return 0;
+
+    if (!PACKET_buf_init(&pkt2, body, len))
+        return 0;
+
+    if (!PACKET_copy_bytes(&pkt2, p->ipv4, sizeof(p->ipv4))
+        || !PACKET_get_net_2(&pkt2, &ipv4_port)
+        || !PACKET_copy_bytes(&pkt2, p->ipv6, sizeof(p->ipv6))
+        || !PACKET_get_net_2(&pkt2, &ipv6_port)
+        || !PACKET_get_1(&pkt2, &cidl)
+        || cidl > QUIC_MAX_CONN_ID_LEN
+        || !PACKET_copy_bytes(&pkt2, p->cid.id, cidl)
+        || !PACKET_copy_bytes(&pkt2, p->stateless_reset.token,
+                              sizeof(p->stateless_reset.token)))
+        return 0;
+
+    p->ipv4_port    = (uint16_t)ipv4_port;
+    p->ipv6_port    = (uint16_t)ipv6_port;
+    p->cid.id_len   = (unsigned char)cidl;
+    return 1;
+}
+
+const char *
+ossl_quic_frame_type_to_string(uint64_t frame_type)
+{
+    switch (frame_type) {
+#define X(name) case OSSL_QUIC_FRAME_TYPE_##name: return #name;
+    X(PADDING)
+    X(PING)
+    X(ACK_WITHOUT_ECN)
+    X(ACK_WITH_ECN)
+    X(RESET_STREAM)
+    X(STOP_SENDING)
+    X(CRYPTO)
+    X(NEW_TOKEN)
+    X(MAX_DATA)
+    X(MAX_STREAM_DATA)
+    X(MAX_STREAMS_BIDI)
+    X(MAX_STREAMS_UNI)
+    X(DATA_BLOCKED)
+    X(STREAM_DATA_BLOCKED)
+    X(STREAMS_BLOCKED_BIDI)
+    X(STREAMS_BLOCKED_UNI)
+    X(NEW_CONN_ID)
+    X(RETIRE_CONN_ID)
+    X(PATH_CHALLENGE)
+    X(PATH_RESPONSE)
+    X(CONN_CLOSE_TRANSPORT)
+    X(CONN_CLOSE_APP)
+    X(HANDSHAKE_DONE)
+    X(STREAM)
+    X(STREAM_FIN)
+    X(STREAM_LEN)
+    X(STREAM_LEN_FIN)
+    X(STREAM_OFF)
+    X(STREAM_OFF_FIN)
+    X(STREAM_OFF_LEN)
+    X(STREAM_OFF_LEN_FIN)
+#undef X
+    default:
+        return NULL;
+    }
+}
+
+const char *ossl_quic_err_to_string(uint64_t error_code)
+{
+    switch (error_code) {
+#define X(name) case OSSL_QUIC_ERR_##name: return #name;
+    X(NO_ERROR)
+    X(INTERNAL_ERROR)
+    X(CONNECTION_REFUSED)
+    X(FLOW_CONTROL_ERROR)
+    X(STREAM_LIMIT_ERROR)
+    X(STREAM_STATE_ERROR)
+    X(FINAL_SIZE_ERROR)
+    X(FRAME_ENCODING_ERROR)
+    X(TRANSPORT_PARAMETER_ERROR)
+    X(CONNECTION_ID_LIMIT_ERROR)
+    X(PROTOCOL_VIOLATION)
+    X(INVALID_TOKEN)
+    X(APPLICATION_ERROR)
+    X(CRYPTO_BUFFER_EXCEEDED)
+    X(KEY_UPDATE_ERROR)
+    X(AEAD_LIMIT_REACHED)
+    X(NO_VIABLE_PATH)
+#undef X
+    default:
+        return NULL;
+    }
 }

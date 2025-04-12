@@ -2,11 +2,11 @@ Windows-related issues
 ======================
 
 Supporting Windows introduces some complications due to some "fun" peculiarities
-of Windows's socket API.
+of Windows socket API.
 
-In general, Windows does not provide a poll(2) call. WSAPoll(2) was introduced
-in Vista and supposed to bring this functionality, but it had a bug in it which
-Microsoft refused to fix, making it rather pointless. However Microsoft has now
+In general, Windows does not provide a poll(2) system call. WSAPoll(2) was introduced
+in Vista and was supposed to bring this functionality, but it had a bug in it which
+Microsoft refused to fix, making it rather pointless. However, Microsoft has now
 finally fixed this bug in a build of Windows 10. So WSAPoll(2) is a viable
 method, but only on fairly new versions of Windows.
 
@@ -23,7 +23,7 @@ Windows does not provide anything like epoll or kqueue. For high performance
 network I/O, you are expected to use a Windows API called I/O Completion Ports
 (IOCP).
 
-Supporting these is a pain for applications designed around polling. The reason
+Supporting these can be a pain for applications designed around polling. The reason
 is that IOCPs are a higher-level interface; it is easy to build an IOCP-like
 interface on top of polling, but it is not really possible to build a
 polling-like interface on top of IOCPs.
@@ -32,7 +32,7 @@ For this reason it's actually common for asynchronous I/O libraries to basically
 contain two separate implementations of their APIs internally, or at least a
 substantial chunk of their code (e.g. libuv, nanomsg). It turns out to be easier
 just to write a poll-based implementation of an I/O reactor and an IOCP-based
-implementation than try to overcome the impedence discontinuities.
+implementation than try to overcome the impedance discontinuities.
 
 The difference between polling and IOCPs is that polling reports *readiness*
 whereas IOCPs report *completion of an operation*. For example, in the IOCP
@@ -72,7 +72,7 @@ Evaluation of the existing demos and their applicability to Windows IOCP:
 
 Further, a cursory examination of code on GitHub seems to suggest that when
 people do use IOCP with libssl, they do it using memory BIOs passed to libssl.
-So ddd-05 and ddd-06 essentially demonstate this use case, especially ddd-06 as
+So ddd-05 and ddd-06 essentially demonstrate this use case, especially ddd-06 as
 it uses IOCP internally on Windows.
 
 My conclusion here is that since libssl does not support IOCP in the first

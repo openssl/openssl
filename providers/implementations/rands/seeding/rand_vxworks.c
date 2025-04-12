@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -105,8 +105,7 @@ size_t ossl_pool_acquire_entropy(RAND_POOL *pool)
     size_t bytes_needed;
 
     bytes_needed = ossl_rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
-    if (bytes_needed > 0)
-    {
+    if (bytes_needed > 0) {
         int retryCount = 0;
         STATUS result = ERROR;
         unsigned char *buffer;

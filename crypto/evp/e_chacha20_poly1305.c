@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -55,7 +55,7 @@ static int chacha_init_key(EVP_CIPHER_CTX *ctx,
     return 1;
 }
 
-static int chacha_cipher(EVP_CIPHER_CTX * ctx, unsigned char *out,
+static int chacha_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                          const unsigned char *inp, size_t len)
 {
     EVP_CHACHA_KEY *key = data(ctx);

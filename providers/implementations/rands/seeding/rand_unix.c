@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -21,24 +21,29 @@
 #include "internal/nelem.h"
 #include "prov/seeding.h"
 
-#ifdef __linux
-# include <sys/syscall.h>
-# ifdef DEVRANDOM_WAIT
-#  include <sys/shm.h>
-#  include <sys/utsname.h>
+#ifndef OPENSSL_SYS_UEFI
+# ifdef __linux
+#  include <sys/syscall.h>
+#  ifdef DEVRANDOM_WAIT
+#   include <sys/shm.h>
+#   include <sys/utsname.h>
+#  endif
 # endif
-#endif
-#if (defined(__FreeBSD__) || defined(__NetBSD__)) && !defined(OPENSSL_SYS_UEFI)
-# include <sys/types.h>
-# include <sys/sysctl.h>
-# include <sys/param.h>
-#endif
-#if defined(__OpenBSD__)
-# include <sys/param.h>
-#endif
-#if defined(__DragonFly__)
-# include <sys/param.h>
-# include <sys/random.h>
+# if defined(__FreeBSD__) || defined(__NetBSD__)
+#  include <sys/types.h>
+#  include <sys/sysctl.h>
+#  include <sys/param.h>
+# endif
+# if defined(__FreeBSD__) && __FreeBSD_version >= 1200061
+#  include <sys/random.h>
+# endif
+# if defined(__OpenBSD__)
+#  include <sys/param.h>
+# endif
+# if defined(__DragonFly__)
+#  include <sys/param.h>
+#  include <sys/random.h>
+# endif
 #endif
 
 #if (defined(OPENSSL_SYS_UNIX) && !defined(OPENSSL_SYS_VXWORKS)) \
@@ -95,7 +100,6 @@ static uint64_t get_time_stamp(void);
 /* none means none. this simplifies the following logic */
 # undef OPENSSL_RAND_SEED_OS
 # undef OPENSSL_RAND_SEED_GETRANDOM
-# undef OPENSSL_RAND_SEED_LIBRANDOM
 # undef OPENSSL_RAND_SEED_DEVRANDOM
 # undef OPENSSL_RAND_SEED_RDTSC
 # undef OPENSSL_RAND_SEED_RDCPU
@@ -207,11 +211,9 @@ void ossl_rand_pool_keep_random_devices_open(int keep)
 #   define OPENSSL_RAND_SEED_DEVRANDOM
 #  endif
 
-#  if defined(OPENSSL_RAND_SEED_LIBRANDOM)
-#   error "librandom not (yet) supported"
-#  endif
-
-#  if (defined(__FreeBSD__) || defined(__NetBSD__)) && defined(KERN_ARND)
+#  if ((defined(__FreeBSD__) && __FreeBSD_version < 1200061)        \
+       || (defined(__NetBSD__) && __NetBSD_Version < 1000000000))   \
+      && defined(KERN_ARND)
 /*
  * sysctl_random(): Use sysctl() to read a random number from the kernel
  * Returns the number of bytes returned in buf on success, -1 on failure.
@@ -348,12 +350,11 @@ static ssize_t syscall_random(void *buf, size_t buflen)
      * - Solaris since 11.3
      * - OpenBSD since 5.6
      * - Linux since 3.17 with glibc 2.25
-     * - FreeBSD since 12.0 (1200061)
      *
      * Note: Sometimes getentropy() can be provided but not implemented
      * internally. So we need to check errno for ENOSYS
      */
-#  if !defined(__DragonFly__) && !defined(__NetBSD__)
+#  if !defined(__DragonFly__) && !defined(__NetBSD__) && !defined(__FreeBSD__)
 #    if defined(__GNUC__) && __GNUC__>=2 && defined(__ELF__) && !defined(__hpux)
     extern int getentropy(void *buffer, size_t length) __attribute__((weak));
 
@@ -385,16 +386,21 @@ static ssize_t syscall_random(void *buf, size_t buflen)
     if (p_getentropy.p != NULL)
         return p_getentropy.f(buf, buflen) == 0 ? (ssize_t)buflen : -1;
 #    endif
-#  endif /* !__DragonFly__ */
+#  endif /* !__DragonFly__ && !__NetBSD__ && !__FreeBSD__ */
 
     /* Linux supports this since version 3.17 */
 #  if defined(__linux) && defined(__NR_getrandom)
     return syscall(__NR_getrandom, buf, buflen, 0);
+#  elif (defined(__DragonFly__)  && __DragonFly_version >= 500700) \
+     || (defined(__NetBSD__) && __NetBSD_Version >= 1000000000) \
+     || (defined(__FreeBSD__) && __FreeBSD_version >= 1200061)
+    return getrandom(buf, buflen, 0);
 #  elif (defined(__FreeBSD__) || defined(__NetBSD__)) && defined(KERN_ARND)
     return sysctl_random(buf, buflen);
-#  elif (defined(__DragonFly__)  && __DragonFly_version >= 500700) \
-     || (defined(__NetBSD__) && __NetBSD_Version >= 1000000000)
-    return getrandom(buf, buflen, 0);
+#  elif defined(__wasi__)
+    if (getentropy(buf, buflen) == 0)
+      return (ssize_t)buflen;
+    return -1;
 #  else
     errno = ENOSYS;
     return -1;
@@ -506,7 +512,7 @@ static int wait_random_seeded(void)
  * So the handle might have been closed or even reused for opening
  * another file.
  */
-static int check_random_device(struct random_device * rd)
+static int check_random_device(struct random_device *rd)
 {
     struct stat st;
 
@@ -524,7 +530,7 @@ static int check_random_device(struct random_device * rd)
 static int get_random_device(size_t n)
 {
     struct stat st;
-    struct random_device * rd = &random_devices[n];
+    struct random_device *rd = &random_devices[n];
 
     /* reuse existing file descriptor if it is (still) valid */
     if (check_random_device(rd))
@@ -553,7 +559,7 @@ static int get_random_device(size_t n)
  */
 static void close_random_device(size_t n)
 {
-    struct random_device * rd = &random_devices[n];
+    struct random_device *rd = &random_devices[n];
 
     if (check_random_device(rd))
         close(rd->fd);
@@ -653,12 +659,6 @@ size_t ossl_pool_acquire_entropy(RAND_POOL *pool)
     entropy_available = ossl_rand_pool_entropy_available(pool);
     if (entropy_available > 0)
         return entropy_available;
-#   endif
-
-#   if defined(OPENSSL_RAND_SEED_LIBRANDOM)
-    {
-        /* Not yet implemented. */
-    }
 #   endif
 
 #   if defined(OPENSSL_RAND_SEED_DEVRANDOM)

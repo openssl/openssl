@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -196,6 +196,8 @@ int X509_add_cert(STACK_OF(X509) *sk, X509 *cert, int flags)
         ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
+    if (cert == NULL)
+        return 0;
     if ((flags & X509_ADD_FLAG_NO_DUP) != 0) {
         /*
          * not using sk_X509_set_cmp_func() and sk_X509_find()
@@ -214,13 +216,15 @@ int X509_add_cert(STACK_OF(X509) *sk, X509 *cert, int flags)
         if (ret != 0)
             return ret > 0 ? 1 : 0;
     }
+    if ((flags & X509_ADD_FLAG_UP_REF) != 0 && !X509_up_ref(cert))
+        return 0;
     if (!sk_X509_insert(sk, cert,
                         (flags & X509_ADD_FLAG_PREPEND) != 0 ? 0 : -1)) {
+        if ((flags & X509_ADD_FLAG_UP_REF) != 0)
+            X509_free(cert);
         ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
         return 0;
     }
-    if ((flags & X509_ADD_FLAG_UP_REF) != 0)
-        (void)X509_up_ref(cert);
     return 1;
 }
 
@@ -277,11 +281,11 @@ int X509_NAME_cmp(const X509_NAME *a, const X509_NAME *b)
     if (ret == 0 && a->canon_enclen == 0)
         return 0;
 
-    if (a->canon_enc == NULL || b->canon_enc == NULL)
-        return -2;
-
-    if (ret == 0)
+    if (ret == 0) {
+        if (a->canon_enc == NULL || b->canon_enc == NULL)
+            return -2;
         ret = memcmp(a->canon_enc, b->canon_enc, a->canon_enclen);
+    }
 
     return ret < 0 ? -1 : ret > 0;
 }
@@ -292,12 +296,13 @@ unsigned long X509_NAME_hash_ex(const X509_NAME *x, OSSL_LIB_CTX *libctx,
     unsigned long ret = 0;
     unsigned char md[SHA_DIGEST_LENGTH];
     EVP_MD *sha1 = EVP_MD_fetch(libctx, "SHA1", propq);
+    int i2d_ret;
 
     /* Make sure X509_NAME structure contains valid cached encoding */
-    i2d_X509_NAME(x, NULL);
+    i2d_ret = i2d_X509_NAME(x, NULL);
     if (ok != NULL)
         *ok = 0;
-    if (sha1 != NULL
+    if (i2d_ret >= 0 && sha1 != NULL
         && EVP_Digest(x->canon_enc, x->canon_enclen, md, NULL, sha1, NULL)) {
         ret = (((unsigned long)md[0]) | ((unsigned long)md[1] << 8L) |
                ((unsigned long)md[2] << 16L) | ((unsigned long)md[3] << 24L)
@@ -325,7 +330,9 @@ unsigned long X509_NAME_hash_old(const X509_NAME *x)
         goto end;
 
     /* Make sure X509_NAME structure contains valid cached encoding */
-    i2d_X509_NAME(x, NULL);
+    if (i2d_X509_NAME(x, NULL) < 0)
+        goto end;
+
     if (EVP_DigestInit_ex(md_ctx, md5, NULL)
         && EVP_DigestUpdate(md_ctx, x->bytes->data, x->bytes->length)
         && EVP_DigestFinal_ex(md_ctx, md, NULL))

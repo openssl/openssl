@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -46,7 +46,7 @@ static void log_with_prefix(const char *prog, const char *fmt, va_list ap)
     char prefix[80];
     BIO *bio, *pre = BIO_new(BIO_f_prefix());
 
-    (void)snprintf(prefix, sizeof(prefix), "%s: ", prog);
+    (void)BIO_snprintf(prefix, sizeof(prefix), "%s: ", prog);
     (void)BIO_set_prefix(pre, prefix);
     bio = BIO_push(pre, bio_err);
     (void)BIO_vprintf(bio, fmt, ap);

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -66,7 +66,8 @@ ASN1_SEQUENCE(X509_PUBKEY_INTERNAL) = {
 } static_ASN1_SEQUENCE_END_name(X509_PUBKEY, X509_PUBKEY_INTERNAL)
 
 X509_PUBKEY *ossl_d2i_X509_PUBKEY_INTERNAL(const unsigned char **pp,
-                                           long len, OSSL_LIB_CTX *libctx)
+                                           long len, OSSL_LIB_CTX *libctx,
+                                           const char *propq)
 {
     X509_PUBKEY *xpub = OPENSSL_zalloc(sizeof(*xpub));
 
@@ -74,7 +75,7 @@ X509_PUBKEY *ossl_d2i_X509_PUBKEY_INTERNAL(const unsigned char **pp,
         return NULL;
     return (X509_PUBKEY *)ASN1_item_d2i_ex((ASN1_VALUE **)&xpub, pp, len,
                                            ASN1_ITEM_rptr(X509_PUBKEY_INTERNAL),
-                                           libctx, NULL);
+                                           libctx, propq);
 }
 
 void ossl_X509_PUBKEY_INTERNAL_free(X509_PUBKEY *xpub)
@@ -748,6 +749,30 @@ DSA *d2i_DSA_PUBKEY(DSA **a, const unsigned char **pp, long length)
     return key;
 }
 
+/* Called from decoders; disallows provided DSA keys without parameters. */
+DSA *ossl_d2i_DSA_PUBKEY(DSA **a, const unsigned char **pp, long length)
+{
+    DSA *key = NULL;
+    const unsigned char *data;
+    const BIGNUM *p, *q, *g;
+
+    data = *pp;
+    key = d2i_DSA_PUBKEY(NULL, &data, length);
+    if (key == NULL)
+        return NULL;
+    DSA_get0_pqg(key, &p, &q, &g);
+    if (p == NULL || q == NULL || g == NULL) {
+        DSA_free(key);
+        return NULL;
+    }
+    *pp = data;
+    if (a != NULL) {
+        DSA_free(*a);
+        *a = key;
+    }
+    return key;
+}
+
 int i2d_DSA_PUBKEY(const DSA *a, unsigned char **pp)
 {
     EVP_PKEY *pktmp;
@@ -811,6 +836,7 @@ int i2d_EC_PUBKEY(const EC_KEY *a, unsigned char **pp)
     return ret;
 }
 
+# ifndef OPENSSL_NO_ECX
 ECX_KEY *ossl_d2i_ED25519_PUBKEY(ECX_KEY **a,
                                  const unsigned char **pp, long length)
 {
@@ -978,6 +1004,7 @@ int ossl_i2d_X448_PUBKEY(const ECX_KEY *a, unsigned char **pp)
     return ret;
 }
 
+# endif /* OPENSSL_NO_ECX */
 #endif
 
 void X509_PUBKEY_set0_public_key(X509_PUBKEY *pub,

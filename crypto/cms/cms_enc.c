@@ -15,6 +15,7 @@
 #include <openssl/cms.h>
 #include <openssl/rand.h>
 #include "crypto/evp.h"
+#include "crypto/asn1.h"
 #include "cms_local.h"
 
 /* CMS EncryptedData Utilities */
@@ -81,7 +82,7 @@ BIO *ossl_cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
 
     if (enc) {
         calg->algorithm = OBJ_nid2obj(EVP_CIPHER_CTX_get_type(ctx));
-        if (calg->algorithm == NULL) {
+        if (calg->algorithm == NULL || calg->algorithm->nid == NID_undef) {
             ERR_raise(ERR_LIB_CMS, CMS_R_UNSUPPORTED_CONTENT_ENCRYPTION_ALGORITHM);
             goto err;
         }

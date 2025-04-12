@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -8,6 +8,7 @@
  */
 
 #include "internal/quic_cfq.h"
+#include "internal/numbers.h"
 
 typedef struct quic_cfq_item_ex_st QUIC_CFQ_ITEM_EX;
 
@@ -19,7 +20,7 @@ struct quic_cfq_item_ex_st {
     void                   *free_cb_arg;
     uint64_t                frame_type;
     size_t                  encoded_len;
-    uint32_t                priority, pn_space;
+    uint32_t                priority, pn_space, flags;
     int                     state;
 };
 
@@ -58,12 +59,19 @@ uint32_t ossl_quic_cfq_item_get_pn_space(const QUIC_CFQ_ITEM *item)
     return ex->pn_space;
 }
 
+int ossl_quic_cfq_item_is_unreliable(const QUIC_CFQ_ITEM *item)
+{
+    QUIC_CFQ_ITEM_EX *ex = (QUIC_CFQ_ITEM_EX *)item;
+
+    return (ex->flags & QUIC_CFQ_ITEM_FLAG_UNRELIABLE) != 0;
+}
+
 typedef struct quic_cfq_item_list_st {
     QUIC_CFQ_ITEM_EX *head, *tail;
 } QUIC_CFQ_ITEM_LIST;
 
 struct quic_cfq_st {
-    /* 
+    /*
      * Invariant: A CFQ item is always in exactly one of these lists, never more
      * or less than one.
      *
@@ -223,6 +231,7 @@ QUIC_CFQ_ITEM *ossl_quic_cfq_add_frame(QUIC_CFQ            *cfq,
                                        uint32_t             priority,
                                        uint32_t             pn_space,
                                        uint64_t             frame_type,
+                                       uint32_t             flags,
                                        const unsigned char *encoded,
                                        size_t               encoded_len,
                                        cfq_free_cb         *free_cb,
@@ -242,6 +251,7 @@ QUIC_CFQ_ITEM *ossl_quic_cfq_add_frame(QUIC_CFQ            *cfq,
     item->free_cb_arg   = free_cb_arg;
 
     item->state = QUIC_CFQ_STATE_NEW;
+    item->flags = flags;
     list_remove(&cfq->free_list, item);
     list_insert_sorted(&cfq->new_list, item, compare);
     return &item->public;
@@ -269,6 +279,11 @@ void ossl_quic_cfq_mark_lost(QUIC_CFQ *cfq, QUIC_CFQ_ITEM *item,
                              uint32_t priority)
 {
     QUIC_CFQ_ITEM_EX *ex = (QUIC_CFQ_ITEM_EX *)item;
+
+    if (ossl_quic_cfq_item_is_unreliable(item)) {
+        ossl_quic_cfq_release(cfq, item);
+        return;
+    }
 
     switch (ex->state) {
     case QUIC_CFQ_STATE_NEW:

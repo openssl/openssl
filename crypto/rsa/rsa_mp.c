@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2024 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2017 BaishanCloud. All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -97,7 +97,7 @@ int ossl_rsa_multip_calc_product(RSA *rsa)
 
 int ossl_rsa_multip_cap(int bits)
 {
-    int cap = 5;
+    int cap = RSA_MAX_PRIME_NUM;
 
     if (bits < 1024)
         cap = 2;

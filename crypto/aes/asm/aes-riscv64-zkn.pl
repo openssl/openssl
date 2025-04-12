@@ -1,15 +1,51 @@
 #! /usr/bin/env perl
-# Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
+# This file is dual-licensed, meaning that you can use it under your
+# choice of either of the following two licenses:
 #
-# Licensed under the Apache License 2.0 (the "License").  You may not use
-# this file except in compliance with the License.  You can obtain a copy
-# in the file LICENSE in the source distribution or at
+# Copyright 2022-2023 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License"). You can obtain
+# a copy in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
+#
+# or
+#
+# Copyright (c) 2022, Hongren (Zenithal) Zheng <i@zenithal.me>
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+use strict;
+use warnings;
+
+use FindBin qw($Bin);
+use lib "$Bin";
+use lib "$Bin/../../perlasm";
+use riscv;
 
 # $output is the last argument if it looks like a file (it has an extension)
 # $flavour is the first argument if it doesn't look like a file
-$output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
-$flavour = $#ARGV >= 0 && $ARGV[0] !~ m|\.| ? shift : undef;
+my $output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
+my $flavour = $#ARGV >= 0 && $ARGV[0] !~ m|\.| ? shift : undef;
 
 $output and open STDOUT,">$output";
 
@@ -70,103 +106,6 @@ $output and open STDOUT,">$output";
 }
 
 ################################################################################
-# util for encoding scalar crypto extension instructions
-################################################################################
-
-my @regs = map("x$_",(0..31));
-my %reglookup;
-@reglookup{@regs} = @regs;
-
-# Takes a register name, possibly an alias, and converts it to a register index
-# from 0 to 31
-sub read_reg {
-    my $reg = lc shift;
-    if (!exists($reglookup{$reg})) {
-        die("Unknown register ".$reg);
-    }
-    my $regstr = $reglookup{$reg};
-    if (!($regstr =~ /^x([0-9]+)$/)) {
-        die("Could not process register ".$reg);
-    }
-    return $1;
-}
-
-sub rv64_aes64ds {
-    # Encoding for aes64ds rd, rs1, rs2 instruction on RV64
-    #                XXXXXXX_ rs2 _ rs1 _XXX_ rd  _XXXXXXX
-    my $template = 0b0011101_00000_00000_000_00000_0110011;
-    my $rd = read_reg shift;
-    my $rs1 = read_reg shift;
-    my $rs2 = read_reg shift;
-
-    return ".word ".($template | ($rs2 << 20) | ($rs1 << 15) | ($rd << 7));
-}
-
-sub rv64_aes64dsm {
-    # Encoding for aes64dsm rd, rs1, rs2 instruction on RV64
-    #                XXXXXXX_ rs2 _ rs1 _XXX_ rd  _XXXXXXX
-    my $template = 0b0011111_00000_00000_000_00000_0110011;
-    my $rd = read_reg shift;
-    my $rs1 = read_reg shift;
-    my $rs2 = read_reg shift;
-
-    return ".word ".($template | ($rs2 << 20) | ($rs1 << 15) | ($rd << 7));
-}
-
-sub rv64_aes64es {
-    # Encoding for aes64es rd, rs1, rs2 instruction on RV64
-    #                XXXXXXX_ rs2 _ rs1 _XXX_ rd  _XXXXXXX
-    my $template = 0b0011001_00000_00000_000_00000_0110011;
-    my $rd = read_reg shift;
-    my $rs1 = read_reg shift;
-    my $rs2 = read_reg shift;
-
-    return ".word ".($template | ($rs2 << 20) | ($rs1 << 15) | ($rd << 7));
-}
-
-sub rv64_aes64esm {
-    # Encoding for aes64esm rd, rs1, rs2 instruction on RV64
-    #                XXXXXXX_ rs2 _ rs1 _XXX_ rd  _XXXXXXX
-    my $template = 0b0011011_00000_00000_000_00000_0110011;
-    my $rd = read_reg shift;
-    my $rs1 = read_reg shift;
-    my $rs2 = read_reg shift;
-
-    return ".word ".($template | ($rs2 << 20) | ($rs1 << 15) | ($rd << 7));
-}
-
-sub rv64_aes64im {
-    # Encoding for aes64im rd, rs1 instruction on RV64
-    #                XXXXXXXXXXXX_ rs1 _XXX_ rd  _XXXXXXX
-    my $template = 0b001100000000_00000_001_00000_0010011;
-    my $rd = read_reg shift;
-    my $rs1 = read_reg shift;
-
-    return ".word ".($template | ($rs1 << 15) | ($rd << 7));
-}
-
-sub rv64_aes64ks1i {
-    # Encoding for aes64ks1i rd, rs1, rnum instruction on RV64
-    #                XXXXXXXX_rnum_ rs1 _XXX_ rd  _XXXXXXX
-    my $template = 0b00110001_0000_00000_001_00000_0010011;
-    my $rd = read_reg shift;
-    my $rs1 = read_reg shift;
-    my $rnum = shift;
-
-    return ".word ".($template | ($rnum << 20) | ($rs1 << 15) | ($rd << 7));
-}
-
-sub rv64_aes64ks2 {
-    # Encoding for aes64ks2 rd, rs1, rs2 instruction on RV64
-    #                XXXXXXX_ rs2 _ rs1 _XXX_ rd  _XXXXXXX
-    my $template = 0b0111111_00000_00000_000_00000_0110011;
-    my $rd = read_reg shift;
-    my $rs1 = read_reg shift;
-    my $rs2 = read_reg shift;
-
-    return ".word ".($template | ($rs2 << 20) | ($rs1 << 15) | ($rd << 7));
-}
-################################################################################
 # Register assignment for rv64i_zkne_encrypt and rv64i_zknd_decrypt
 ################################################################################
 
@@ -219,8 +158,8 @@ $code .= <<___;
 
     # Do Nr - 1 rounds (final round is special)
 1:
-    @{[rv64_aes64esm $Q2,$Q0,$Q1]}
-    @{[rv64_aes64esm $Q3,$Q1,$Q0]}
+    @{[aes64esm $Q2,$Q0,$Q1]}
+    @{[aes64esm $Q3,$Q1,$Q0]}
 
     # Update key ptr to point to next key in schedule
     add     $KEYP,$KEYP,16
@@ -235,8 +174,8 @@ $code .= <<___;
     bgtz    $loopcntr,1b
 
     # final round
-    @{[rv64_aes64es $Q2,$Q0,$Q1]}
-    @{[rv64_aes64es $Q3,$Q1,$Q0]}
+    @{[aes64es $Q2,$Q0,$Q1]}
+    @{[aes64es $Q3,$Q1,$Q0]}
 
     # since not added 16 before
     ld      $T0,16($KEYP)
@@ -293,8 +232,8 @@ $code .= <<___;
 
     # Do Nr - 1 rounds (final round is special)
 1:
-    @{[rv64_aes64dsm $Q2,$Q0,$Q1]}
-    @{[rv64_aes64dsm $Q3,$Q1,$Q0]}
+    @{[aes64dsm $Q2,$Q0,$Q1]}
+    @{[aes64dsm $Q3,$Q1,$Q0]}
 
     # Update key ptr to point to next key in schedule
     add     $KEYP,$KEYP,-16
@@ -309,8 +248,8 @@ $code .= <<___;
     bgtz    $loopcntr,1b
 
     # final round
-    @{[rv64_aes64ds $Q2,$Q0,$Q1]}
-    @{[rv64_aes64ds $Q3,$Q1,$Q0]}
+    @{[aes64ds $Q2,$Q0,$Q1]}
+    @{[aes64ds $Q3,$Q1,$Q0]}
 
     add     $KEYP,$KEYP,-16
     ld      $T0,0($KEYP)
@@ -356,9 +295,9 @@ $ret .= <<___;
 ___
     while($rnum < 10) {
 $ret .= <<___;
-    @{[rv64_aes64ks1i   $T2,$T1,$rnum]}
-    @{[rv64_aes64ks2    $T0,$T2,$T0]}
-    @{[rv64_aes64ks2    $T1,$T0,$T1]}
+    @{[aes64ks1i   $T2,$T1,$rnum]}
+    @{[aes64ks2    $T0,$T2,$T0]}
+    @{[aes64ks2    $T1,$T0,$T1]}
     add         $KEYP,$KEYP,16
     sd          $T0,0($KEYP)
     sd          $T1,8($KEYP)
@@ -381,15 +320,15 @@ $ret .= <<___;
 ___
     while($rnum < 8) {
 $ret .= <<___;
-    @{[rv64_aes64ks1i   $T3,$T2,$rnum]}
-    @{[rv64_aes64ks2    $T0,$T3,$T0]}
-    @{[rv64_aes64ks2    $T1,$T0,$T1]}
+    @{[aes64ks1i   $T3,$T2,$rnum]}
+    @{[aes64ks2    $T0,$T3,$T0]}
+    @{[aes64ks2    $T1,$T0,$T1]}
 ___
         if ($rnum != 7) {
         # note that (8+1)*24 = 216, (12+1)*16 = 208
         # thus the last 8 bytes can be dropped
 $ret .= <<___;
-    @{[rv64_aes64ks2    $T2,$T1,$T2]}
+    @{[aes64ks2    $T2,$T1,$T2]}
 ___
         }
 $ret .= <<___;
@@ -422,9 +361,9 @@ $ret .= <<___;
 ___
     while($rnum < 7) {
 $ret .= <<___;
-    @{[rv64_aes64ks1i   $T4,$T3,$rnum]}
-    @{[rv64_aes64ks2    $T0,$T4,$T0]}
-    @{[rv64_aes64ks2    $T1,$T0,$T1]}
+    @{[aes64ks1i   $T4,$T3,$rnum]}
+    @{[aes64ks2    $T0,$T4,$T0]}
+    @{[aes64ks2    $T1,$T0,$T1]}
     add         $KEYP,$KEYP,32
     sd          $T0,0($KEYP)
     sd          $T1,8($KEYP)
@@ -433,9 +372,9 @@ ___
         # note that (7+1)*32 = 256, (14+1)*16 = 240
         # thus the last 16 bytes can be dropped
 $ret .= <<___;
-    @{[rv64_aes64ks1i   $T4,$T1,0xA]}
-    @{[rv64_aes64ks2    $T2,$T4,$T2]}
-    @{[rv64_aes64ks2    $T3,$T2,$T3]}
+    @{[aes64ks1i   $T4,$T1,0xA]}
+    @{[aes64ks2    $T2,$T4,$T2]}
+    @{[aes64ks2    $T3,$T2,$T3]}
     sd          $T2,16($KEYP)
     sd          $T3,24($KEYP)
 ___
@@ -515,9 +454,9 @@ $ret .= <<___;
 ___
     while($rnum < 10) {
 $ret .= <<___;
-    @{[rv64_aes64ks1i   $T2,$T1,$rnum]}
-    @{[rv64_aes64ks2    $T0,$T2,$T0]}
-    @{[rv64_aes64ks2    $T1,$T0,$T1]}
+    @{[aes64ks1i   $T2,$T1,$rnum]}
+    @{[aes64ks2    $T0,$T2,$T0]}
+    @{[aes64ks2    $T1,$T0,$T1]}
     add         $KEYP,$KEYP,16
 ___
     # need to aes64im for [1:N-1] round keys
@@ -528,9 +467,9 @@ ___
     # transform should then be done on the round key
         if ($rnum < 9) {
 $ret .= <<___;
-    @{[rv64_aes64im     $T2,$T0]}
+    @{[aes64im     $T2,$T0]}
     sd          $T2,0($KEYP)
-    @{[rv64_aes64im     $T2,$T1]}
+    @{[aes64im     $T2,$T1]}
     sd          $T2,8($KEYP)
 ___
         } else {
@@ -553,25 +492,25 @@ $ret .= <<___;
     ld      $T2,16($UKEY)
     sd      $T0,0($KEYP)
     sd      $T1,8($KEYP)
-    @{[rv64_aes64im $T3,$T2]}
+    @{[aes64im $T3,$T2]}
     sd      $T3,16($KEYP)
 ___
     while($rnum < 8) {
 $ret .= <<___;
-    @{[rv64_aes64ks1i   $T3,$T2,$rnum]}
-    @{[rv64_aes64ks2    $T0,$T3,$T0]}
-    @{[rv64_aes64ks2    $T1,$T0,$T1]}
+    @{[aes64ks1i   $T3,$T2,$rnum]}
+    @{[aes64ks2    $T0,$T3,$T0]}
+    @{[aes64ks2    $T1,$T0,$T1]}
     add         $KEYP,$KEYP,24
 ___
         if ($rnum < 7) {
 $ret .= <<___;
-    @{[rv64_aes64im     $T3,$T0]}
+    @{[aes64im     $T3,$T0]}
     sd          $T3,0($KEYP)
-    @{[rv64_aes64im     $T3,$T1]}
+    @{[aes64im     $T3,$T1]}
     sd          $T3,8($KEYP)
     # the reason is in ke192enc
-    @{[rv64_aes64ks2    $T2,$T1,$T2]}
-    @{[rv64_aes64im     $T3,$T2]}
+    @{[aes64ks2    $T2,$T1,$T2]}
+    @{[aes64im     $T3,$T2]}
     sd          $T3,16($KEYP)
 ___
         } else { # rnum == 7
@@ -595,30 +534,30 @@ $ret .= <<___;
     ld      $T3,24($UKEY)
     sd      $T0,0($KEYP)
     sd      $T1,8($KEYP)
-    @{[rv64_aes64im $T4,$T2]}
+    @{[aes64im $T4,$T2]}
     sd      $T4,16($KEYP)
-    @{[rv64_aes64im $T4,$T3]}
+    @{[aes64im $T4,$T3]}
     sd      $T4,24($KEYP)
 ___
     while($rnum < 7) {
 $ret .= <<___;
-    @{[rv64_aes64ks1i   $T4,$T3,$rnum]}
-    @{[rv64_aes64ks2    $T0,$T4,$T0]}
-    @{[rv64_aes64ks2    $T1,$T0,$T1]}
+    @{[aes64ks1i   $T4,$T3,$rnum]}
+    @{[aes64ks2    $T0,$T4,$T0]}
+    @{[aes64ks2    $T1,$T0,$T1]}
     add         $KEYP,$KEYP,32
 ___
         if ($rnum < 6) {
 $ret .= <<___;
-    @{[rv64_aes64ks1i   $T4,$T1,0xA]}
-    @{[rv64_aes64ks2    $T2,$T4,$T2]}
-    @{[rv64_aes64ks2    $T3,$T2,$T3]}
-    @{[rv64_aes64im     $T4,$T0]}
+    @{[aes64ks1i   $T4,$T1,0xA]}
+    @{[aes64ks2    $T2,$T4,$T2]}
+    @{[aes64ks2    $T3,$T2,$T3]}
+    @{[aes64im     $T4,$T0]}
     sd          $T4,0($KEYP)
-    @{[rv64_aes64im     $T4,$T1]}
+    @{[aes64im     $T4,$T1]}
     sd          $T4,8($KEYP)
-    @{[rv64_aes64im     $T4,$T2]}
+    @{[aes64im     $T4,$T2]}
     sd          $T4,16($KEYP)
-    @{[rv64_aes64im     $T4,$T3]}
+    @{[aes64im     $T4,$T3]}
     sd          $T4,24($KEYP)
 ___
         } else {

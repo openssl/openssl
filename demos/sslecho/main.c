@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
+ *  Copyright 2022-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  *  Licensed under the Apache License 2.0 (the "License").  You may not use
  *  this file except in compliance with the License.  You can obtain a copy
@@ -8,12 +8,18 @@
  */
 
 #include <stdio.h>
-#include <unistd.h>
 #include <string.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
+#include <signal.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#if !defined(OPENSSL_SYS_WINDOWS)
+#include <unistd.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#else
+#include <winsock.h>
+#endif
 
 static const int server_port = 4433;
 
@@ -27,7 +33,7 @@ typedef unsigned char   bool;
  */
 static volatile bool    server_running = true;
 
-int create_socket(bool isServer)
+static int create_socket(bool isServer)
 {
     int s;
     int optval = 1;
@@ -65,7 +71,7 @@ int create_socket(bool isServer)
     return s;
 }
 
-SSL_CTX* create_context(bool isServer)
+static SSL_CTX* create_context(bool isServer)
 {
     const SSL_METHOD *method;
     SSL_CTX *ctx;
@@ -85,7 +91,7 @@ SSL_CTX* create_context(bool isServer)
     return ctx;
 }
 
-void configure_server_context(SSL_CTX *ctx)
+static void configure_server_context(SSL_CTX *ctx)
 {
     /* Set the key and cert */
     if (SSL_CTX_use_certificate_chain_file(ctx, "cert.pem") <= 0) {
@@ -99,7 +105,7 @@ void configure_server_context(SSL_CTX *ctx)
     }
 }
 
-void configure_client_context(SSL_CTX *ctx)
+static void configure_client_context(SSL_CTX *ctx)
 {
     /*
      * Configure the client to abort the handshake if certificate verification
@@ -117,15 +123,16 @@ void configure_client_context(SSL_CTX *ctx)
     }
 }
 
-void usage()
+static void usage(void)
 {
     printf("Usage: sslecho s\n");
     printf("       --or--\n");
     printf("       sslecho c ip\n");
     printf("       c=client, s=server, ip=dotted ip of server\n");
-    exit(1);
+    exit(EXIT_FAILURE);
 }
 
+#define BUFFERSIZE 1024
 int main(int argc, char **argv)
 {
     bool isServer;
@@ -137,10 +144,9 @@ int main(int argc, char **argv)
     int server_skt = -1;
     int client_skt = -1;
 
-    /* used by getline relying on realloc, can't be statically allocated */
-    char *txbuf = NULL;
-    size_t txcap = 0;
-    int txlen;
+    /* used by fgets */
+    char buffer[BUFFERSIZE];
+    char *txbuf;
 
     char rxbuf[128];
     size_t rxcap = sizeof(rxbuf);
@@ -149,10 +155,19 @@ int main(int argc, char **argv)
     char *rem_server_ip = NULL;
 
     struct sockaddr_in addr;
+#if defined(OPENSSL_SYS_CYGWIN) || defined(OPENSSL_SYS_WINDOWS)
+    int addr_len = sizeof(addr);
+#else
     unsigned int addr_len = sizeof(addr);
+#endif
+
+#if !defined (OPENSSL_SYS_WINDOWS)
+    /* ignore SIGPIPE so that server can continue running when client pipe closes abruptly */
+    signal(SIGPIPE, SIG_IGN);
+#endif
 
     /* Splash */
-    printf("\nsslecho : Simple Echo Client/Server (OpenSSL 3.0.1-dev) : %s : %s\n\n", __DATE__,
+    printf("\nsslecho : Simple Echo Client/Server : %s : %s\n\n", __DATE__,
     __TIME__);
 
     /* Need to know if client or server */
@@ -202,7 +217,10 @@ int main(int argc, char **argv)
 
             /* Create server SSL structure using newly accepted client socket */
             ssl = SSL_new(ssl_ctx);
-            SSL_set_fd(ssl, client_skt);
+            if (!SSL_set_fd(ssl, client_skt)) {
+                ERR_print_errors_fp(stderr);
+                exit(EXIT_FAILURE);
+            }
 
             /* Wait for SSL connection from the client */
             if (SSL_accept(ssl) <= 0) {
@@ -218,6 +236,8 @@ int main(int argc, char **argv)
                     if ((rxlen = SSL_read(ssl, rxbuf, rxcap)) <= 0) {
                         if (rxlen == 0) {
                             printf("Client closed connection\n");
+                        } else {
+                            printf("SSL_read returned %d\n", rxlen);
                         }
                         ERR_print_errors_fp(stderr);
                         break;
@@ -272,11 +292,17 @@ int main(int argc, char **argv)
 
         /* Create client SSL structure using dedicated client socket */
         ssl = SSL_new(ssl_ctx);
-        SSL_set_fd(ssl, client_skt);
+        if (!SSL_set_fd(ssl, client_skt)) {
+            ERR_print_errors_fp(stderr);
+            goto exit;
+        }
         /* Set hostname for SNI */
         SSL_set_tlsext_host_name(ssl, rem_server_ip);
         /* Configure server hostname check */
-        SSL_set1_host(ssl, rem_server_ip);
+        if (!SSL_set1_host(ssl, rem_server_ip)) {
+            ERR_print_errors_fp(stderr);
+            goto exit;
+        }
 
         /* Now do SSL connect with server */
         if (SSL_connect(ssl) == 1) {
@@ -286,9 +312,11 @@ int main(int argc, char **argv)
             /* Loop to send input from keyboard */
             while (true) {
                 /* Get a line of input */
-                txlen = getline(&txbuf, &txcap, stdin);
+                memset(buffer, 0, BUFFERSIZE);
+                txbuf = fgets(buffer, BUFFERSIZE, stdin);
+
                 /* Exit loop on error */
-                if (txlen < 0 || txbuf == NULL) {
+                if (txbuf == NULL) {
                     break;
                 }
                 /* Exit loop if just a carriage return */
@@ -296,7 +324,7 @@ int main(int argc, char **argv)
                     break;
                 }
                 /* Send it to the server */
-                if ((result = SSL_write(ssl, txbuf, txlen)) <= 0) {
+                if ((result = SSL_write(ssl, txbuf, strlen(txbuf))) <= 0) {
                     printf("Server closed connection\n");
                     ERR_print_errors_fp(stderr);
                     break;
@@ -322,7 +350,7 @@ int main(int argc, char **argv)
             ERR_print_errors_fp(stderr);
         }
     }
-    exit:
+exit:
     /* Close up */
     if (ssl != NULL) {
         SSL_shutdown(ssl);
@@ -335,10 +363,7 @@ int main(int argc, char **argv)
     if (server_skt != -1)
         close(server_skt);
 
-    if (txbuf != NULL && txcap > 0)
-        free(txbuf);
-
     printf("sslecho exiting\n");
 
-    return 0;
+    return EXIT_SUCCESS;
 }

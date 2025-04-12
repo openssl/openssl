@@ -125,7 +125,7 @@
   my @lib_cflags_no_inst = ( $target{no_inst_lib_cflags} // @lib_cflags );
   my @lib_cflags_cont = ( $target{shared_cflag} || (),
                           @{$config{lib_cflags}}, @{$config{shared_cflag}},
-                          $cnf_cflags, '$(CFLAGS)');
+                          @cnf_cflags, '$(CFLAGS)');
   our $lib_cflags = join('', @lib_cflags, @lib_cflags_cont );
   our $lib_cflags_no_inst = join('', @lib_cflags_no_inst, @lib_cflags_cont );
   our $lib_ldflags =
@@ -161,7 +161,7 @@
   my @dso_cflags_no_inst = ( $target{no_inst_dso_cflags} // @dso_cflags );
   my @dso_cflags_cont = ( $target{module_cflag} || (),
                           @{$config{dso_cflags}}, @{$config{module_cflag}},
-                          $cnf_cflags, '$(CFLAGS)');
+                          @cnf_cflags, '$(CFLAGS)');
   our $dso_cflags = join('', @dso_cflags, @dso_cflags_cont );
   our $dso_cflags_no_inst = join('', @dso_cflags_no_inst, @dso_cflags_cont );
   our $dso_ldflags =
@@ -196,13 +196,9 @@
   my @bin_cflags = ( $target{bin_cflags} // () );
   my @bin_cflags_no_inst = ( $target{no_inst_bin_cflags} // @bin_cflags );
   my @bin_cflags_cont = ( @{$config{bin_cflags}},
-                          $cnf_cflags, '$(CFLAGS)');
+                          @cnf_cflags, '$(CFLAGS)');
   our $bin_cflags = join('', @bin_cflags, @bin_cflags_cont );
   our $bin_cflags_no_inst = join('', @bin_cflags_no_inst, @bin_cflags_cont );
-  our $bin_cflags =
-      join('', $target{bin_cflags} || (),
-               @{$config{bin_cflags}},
-               @cnf_cflags, '$(CFLAGS)');
   our $bin_ldflags =
       join('', $target{bin_lflags} || (),
                @{$config{bin_lflags}},
@@ -215,7 +211,10 @@
   # format, relative to the directory where the .c file is located.  The logic
   # is that any inclusion, merged with one of these relative directories, will
   # find the requested inclusion file.
-  foreach (grep /\[\.crypto\.async\.arch\].*\.o$/, keys %{$unified_info{sources}}) {
+  # In the regexps, it's advisable to always start the file name with .*?, as
+  # the C source to OBJ file translation adds stuff at the beginning of the,
+  # name, such as [.ssl]bio_ssl.c -> [.ssl]libssl-shlib-bio_ssl.OBJ
+  foreach (grep /\[\.crypto\.async\.arch\].*?\.o$/, keys %{$unified_info{sources}}) {
       my $obj = platform->obj($_);
       push @{$unified_info{includes_extra}->{$obj}}, qw(../);
   }
@@ -229,13 +228,18 @@
   }
   foreach (grep /\[\.ssl\].*?\.o$/, keys %{$unified_info{sources}}) {
       my $obj = platform->obj($_);
-      # Most of the files in [.ssl.record.methods] include "ssl_local.h"
-      # which includes things like "record/record.h".  Adding "./" as an
-      # inclusion directory helps making this sort of header from these
-      # directories.
+      # Most of the files in [.ssl] include "ssl_local.h" which includes things
+      # like "record/record.h".  Adding "./" as an inclusion directory helps
+      # making this sort of header from these directories.
       push @{$unified_info{includes_extra}->{$obj}}, qw(./);
+
+      # Additionally, an increasing amount of files in [.ssl] include
+      # "quic/quic_local.h", which in turn includes "../ssl_local.h".  Adding
+      # "./quic" as an inclusion directory helps making this sort of header
+      # from these directories.
+      push @{$unified_info{includes_extra}->{$obj}}, qw(./quic);
   }
-  foreach (grep /\[\.ssl\.(?:record|statem)\].*?\.o$/, keys %{$unified_info{sources}}) {
+  foreach (grep /\[\.ssl\.(?:quic|record|statem|rio)\].*?\.o$/, keys %{$unified_info{sources}}) {
       my $obj = platform->obj($_);
       # Most of the files in [.ssl.record] and [.ssl.statem] include
       # "../ssl_local.h", which includes things like "record/record.h".
@@ -249,8 +253,10 @@
       # Most of the files in [.ssl.record.methods] include "../../ssl_local.h"
       # which includes things like "record/record.h".  Adding "../../" as an
       # inclusion directory helps making this sort of header from these
-      # directories.
-      push @{$unified_info{includes_extra}->{$obj}}, qw(../../);
+      # directories.  But this gets worse; through a series of inclusions,
+      # all of them based on the relative directory of the object file, there's
+      # a need to deal with an inclusion of "../ssl_local.h" as well.
+      push @{$unified_info{includes_extra}->{$obj}}, qw(../../), qw(../);
   }
   foreach (grep /\[\.test\].*?\.o$/, keys %{$unified_info{sources}}) {
       my $obj = platform->obj($_);
@@ -262,10 +268,15 @@
       # directly, but that would end up with more whack-a-mole of this sort, so
       # nah, we do it broadly.
       push @{$unified_info{includes_extra}->{$obj}}, qw(../ssl/record/methods);
+      # Similarly, some include "../ssl/ssl_local.h", and somewhere down the
+      # line, "quic/quic_local.h" gets included, which includes "../ssl_local.h"
+      # The problem is fixed by adding ../ssl/quic too.
+      push @{$unified_info{includes_extra}->{$obj}}, qw(../ssl/quic);
   }
   foreach (grep /\[\.test\.helpers\].*?\.o$/, keys %{$unified_info{sources}}) {
       my $obj = platform->obj($_);
-      push @{$unified_info{includes_extra}->{$obj}}, qw(../../ssl);
+      push @{$unified_info{includes_extra}->{$obj}},
+          qw(../../ssl ../../ssl/quic);
   }
 
   # This makes sure things get built in the order they need
@@ -463,7 +474,7 @@ NODEBUG=@
         $(NODEBUG) ! Set up logical names for the libraries, so LINK and
         $(NODEBUG) ! running programs can use them.
         $(NODEBUG) !
-        $(NODEBUG) {- join("\n\t\$(NODEBUG) ", map { "DEFINE ".uc($_)." 'F\$ENV(\"DEFAULT\")'".uc($_)."\$(SHLIB_EXT)" } @shlibs) || "!" -}
+        $(NODEBUG) {- join("\n\t\$(NODEBUG) ", map { "DEFINE ".uc($_)." 'F\$ENV(\"DEFAULT\")'".uc($_).".EXE" } @shlibs) || "!" -}
 
 .LAST :
         $(NODEBUG) {- join("\n\t\$(NODEBUG) ", map { "DEASSIGN ".uc($_) } @shlibs) || "!" -}
@@ -505,7 +516,8 @@ build_all_generated : $(GENERATED_MANDATORY) $(GENERATED) build_docs
 all : build_sw build_docs
 
 test : tests
-{- dependmagic('tests'); -} : build_programs_nodep, build_modules_nodep run_tests
+{- dependmagic('tests'); -} : build_programs_nodep, build_modules_nodep
+	$(MMS) $(MMSQUALIFIERS) run_tests
 run_tests :
         @ ! {- output_off() if $disabled{tests}; "" -}
         DEFINE SRCTOP "$(SRCDIR)"
@@ -737,13 +749,15 @@ vmsconfig.pm : configdata.pm
         WRITE CONFIG "  shlib_version => '","{- $config{shlib_version} -}","',"
         WRITE CONFIG "  shlib_major => '","{- $config{shlib_major} -}","',"
         WRITE CONFIG "  shlib_minor => '","{- $config{shlib_minor} -}","',"
-        WRITE CONFIG "  no_shared => '","{- $disabled{shared} -}","',"
         WRITE CONFIG "  INSTALLTOP => '$(INSTALLTOP)',"
         WRITE CONFIG "  OPENSSLDIR => '$(OPENSSLDIR)',"
+        WRITE CONFIG ");"
+        WRITE CONFIG "our %target = ("
         WRITE CONFIG "  pointer_size => '","{- $target{pointer_size} -}","',"
         WRITE CONFIG ");"
-        WRITE CONFIG "our %target = ();"
-        WRITE CONFIG "our %disabled = ();"
+        WRITE CONFIG "our %disabled = ("
+        WRITE CONFIG "  shared => '","{- $disabled{shared} -}","',"
+        WRITE CONFIG ");"
         WRITE CONFIG "our %withargs = ();"
         WRITE CONFIG "our %unified_info = ();"
         WRITE CONFIG "1;"
@@ -1054,16 +1068,48 @@ EOF
           my $dofile = abs2rel(rel2abs(catfile($config{sourcedir},
                                                "util", "dofile.pl")),
                                rel2abs($config{builddir}));
-          my @perlmodules = ( 'configdata.pm',
-                              grep { $_ =~ m|\.pm$| } @{$args{deps}} );
-          my %perlmoduleincs = map { '"-I'.dirname($_).'"' => 1 } @perlmodules;
+          my @perlmodules = ();
+          my %perlmoduleincs = ();
+          my %perlmoduledeps = ();
+          foreach my $x (('configdata.pm', @{$args{deps}})) {
+              # Compute (i)nclusion directory, (m)odule name and (d)ependency
+              my $i, $m, $d;
+              if ($x =~ /\|/) {
+                  $i = $`;
+                  $d = $';
+
+                  # Massage the module part to become a real perl module spec
+                  $m = $d;
+                  $m =~ s|\.pm$||;
+                  # Directory specs are :: in perl package names
+                  $m =~ s|/|::|g;
+
+                  # Full file name of the dependency
+                  $d = catfile($i, $d) if $i;
+              } elsif ($x =~ /\.pm$/) {
+                  $i = dirname($x);
+                  $m = basename($x, '.pm');
+                  $d = $x;
+              } else {
+                  # All other dependencies are simply collected
+                  $d = $x;
+              }
+              push @perlmodules, '"-M'.$m.'"' if $m;
+              $perlmoduledeps{$d} = 1;
+              $perlmoduleincs{'"-I'.$i.'"'} = 1 if $i;
+          }
+
           my @decc_include_data
               = make_decc_include_files(dirname($args{src}), dirname($gen0));
           my $decc_include_scripture = pop @decc_include_data;
-          $deps = join(' ', $deps, @decc_include_data,
-                            compute_platform_depends(@perlmodules));
-          @perlmodules = map { '"-M'.basename($_, '.pm').'"' } @perlmodules;
-          my $perlmodules = join(' ', '', sort keys %perlmoduleincs, @perlmodules);
+          # Because of the special treatment of dependencies, we need to
+          # recompute $deps completely
+          my $deps
+              = join(" ", @decc_include_data,
+                          compute_platform_depends(@{$args{generator_deps}},
+                                                   sort keys %perlmoduledeps));
+          my $perlmodules = join(' ', '', ( sort keys %perlmoduleincs ), @perlmodules);
+
 
           return <<"EOF";
 $args{src} : $gen0 $deps

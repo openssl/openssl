@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -54,7 +54,7 @@
  * Some options are purposely NOT defined per-platform
  *
  * OSSL_TFO_SYSCTL
- *     Defined as a sysctlbyname() option to to determine if
+ *     Defined as a sysctlbyname() option to determine if
  *     TFO is enabled in the kernel (macOS, FreeBSD)
  *
  * OSSL_TFO_SERVER_SOCKOPT
@@ -78,7 +78,7 @@
  *     Linux pre-4.14)
  *
  * OSSL_TFO_DO_NOT_CONNECT
- *     Defined to skip calling conect() when creating a
+ *     Defined to skip calling connect() when creating a
  *     client socket (macOS, FreeBSD, Linux pre-4.14)
  */
 
@@ -86,7 +86,7 @@
 /*
  * NO WINDOWS SUPPORT
  *
- * But this is is what would be used on the server:
+ * But this is what would be used on the server:
  *
  * define OSSL_TFO_SERVER_SOCKOPT       TCP_FASTOPEN
  * define OSSL_TFO_SERVER_SOCKOPT_VALUE 1

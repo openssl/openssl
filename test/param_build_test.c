@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2023 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -16,7 +16,7 @@
 
 static const OSSL_PARAM params_empty[] = { OSSL_PARAM_END };
 
-static int template_public_single_zero_test(void)
+static int template_public_single_zero_test(int idx)
 {
     OSSL_PARAM_BLD *bld = NULL;
     OSSL_PARAM *params = NULL, *params_blt = NULL, *p;
@@ -25,7 +25,8 @@ static int template_public_single_zero_test(void)
 
     if (!TEST_ptr(bld = OSSL_PARAM_BLD_new())
         || !TEST_ptr(zbn = BN_new())
-        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, "zeronumber", zbn))
+        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, "zeronumber",
+                                             idx == 0 ? zbn : NULL))
         || !TEST_ptr(params_blt = OSSL_PARAM_BLD_to_param(bld)))
         goto err;
 
@@ -550,7 +551,7 @@ err:
 
 int setup_tests(void)
 {
-    ADD_TEST(template_public_single_zero_test);
+    ADD_ALL_TESTS(template_public_single_zero_test, 2);
     ADD_ALL_TESTS(template_public_test, 5);
     /* Only run the secure memory testing if we have secure memory available */
     if (CRYPTO_secure_malloc_init(1<<16, 16)) {

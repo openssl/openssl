@@ -20,6 +20,34 @@
 #  define OSSL_LIST_DBG(x) x;
 # endif
 
+# define OSSL_LIST_FOREACH_FROM(p, name, init)                              \
+    for ((p) = (init);                                                      \
+         (p) != NULL;                                                       \
+         (p) = ossl_list_##name##_next(p))
+# define OSSL_LIST_FOREACH(p, name, l)                                      \
+    OSSL_LIST_FOREACH_FROM(p, name, ossl_list_##name##_head(l))
+
+# define OSSL_LIST_FOREACH_REV_FROM(p, name, init)                          \
+    for ((p) = (init);                                                      \
+         (p) != NULL;                                                       \
+         (p) = ossl_list_##name##_prev(p))
+# define OSSL_LIST_FOREACH_REV(p, name, l)                                  \
+    OSSL_LIST_FOREACH_FROM(p, name, ossl_list_##name##_tail(l))
+
+# define OSSL_LIST_FOREACH_DELSAFE_FROM(p, pn, name, init)                  \
+    for ((p) = (init);                                                      \
+         (p) != NULL && (((pn) = ossl_list_##name##_next(p)), 1);           \
+         (p) = (pn))
+#define OSSL_LIST_FOREACH_DELSAFE(p, pn, name, l)                           \
+    OSSL_LIST_FOREACH_DELSAFE_FROM(p, pn, name, ossl_list_##name##_head(l))
+
+# define OSSL_LIST_FOREACH_REV_DELSAFE_FROM(p, pn, name, init)              \
+    for ((p) = (init);                                                      \
+         (p) != NULL && (((pn) = ossl_list_##name##_prev(p)), 1);           \
+         (p) = (pn))
+# define OSSL_LIST_FOREACH_REV_DELSAFE(p, pn, name, l)                      \
+    OSSL_LIST_FOREACH_REV_DELSAFE_FROM(p, pn, name, ossl_list_##name##_tail(l))
+
 /* Define a list structure */
 # define OSSL_LIST(name) OSSL_LIST_ ## name
 
@@ -30,12 +58,14 @@
         OSSL_LIST_DBG(struct ossl_list_st_ ## name *list)                   \
     } ossl_list_ ## name
 
-# define DEFINE_LIST_OF(name, type)                                         \
+# define DECLARE_LIST_OF(name, type)                                        \
     typedef struct ossl_list_st_ ## name OSSL_LIST(name);                   \
     struct ossl_list_st_ ## name {                                          \
         type *alpha, *omega;                                                \
         size_t num_elems;                                                   \
-    };                                                                      \
+    }                                                                       \
+
+# define DEFINE_LIST_OF_IMPL(name, type)                                    \
     static ossl_unused ossl_inline void                                     \
     ossl_list_##name##_init(OSSL_LIST(name) *list)                          \
     {                                                                       \
@@ -165,5 +195,9 @@
         list->num_elems++;                                                  \
     }                                                                       \
     struct ossl_list_st_ ## name
+
+# define DEFINE_LIST_OF(name, type)                                         \
+    DECLARE_LIST_OF(name, type);                                            \
+    DEFINE_LIST_OF_IMPL(name, type)
 
 #endif

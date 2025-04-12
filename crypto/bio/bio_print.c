@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -62,7 +62,7 @@ static int _dopr(char **sbuffer, char **buffer,
 #define DP_F_NUM        (1 << 3)
 /* print leading zeroes */
 #define DP_F_ZERO       (1 << 4)
-/* print HEX in UPPPERcase */
+/* print HEX in UPPERcase */
 #define DP_F_UP         (1 << 5)
 /* treat value as unsigned */
 #define DP_F_UNSIGNED   (1 << 6)
@@ -707,8 +707,6 @@ fmtfp(char **sbuffer,
         fracpart = (fracpart / 10);
     }
 
-    if (fplace == sizeof(fconvert))
-        fplace--;
     fconvert[fplace] = 0;
 
     /* convert exponent part */

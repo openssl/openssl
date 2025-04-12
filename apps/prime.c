@@ -145,10 +145,14 @@ opthelp:
             }
 
             BN_print(bio_out, bn);
+            r = BN_check_prime(bn, NULL, NULL);
+            if (r < 0) {
+                BIO_printf(bio_err, "Error checking prime\n");
+                goto end;
+            }
             BIO_printf(bio_out, " (%s) %s prime\n",
                        argv[0],
-                       BN_check_prime(bn, NULL, NULL)
-                           ? "is" : "is not");
+                       r == 1 ? "is" : "is not");
         }
     }
 

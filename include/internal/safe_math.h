@@ -16,8 +16,10 @@
 # ifndef OPENSSL_NO_BUILTIN_OVERFLOW_CHECKING
 #  ifdef __has_builtin
 #   define has(func) __has_builtin(func)
-#  elif __GNUC__ > 5
-#   define has(func) 1
+#  elif defined(__GNUC__)
+#   if __GNUC__ > 5
+#    define has(func) 1
+#   endif
 #  endif
 # endif /* OPENSSL_NO_BUILTIN_OVERFLOW_CHECKING */
 

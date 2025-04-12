@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2023 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2019
  * Copyright Siemens AG 2015-2019
  *
@@ -318,10 +318,12 @@ static int test_cmp_ctx_log_cb(void)
     return result;
 }
 
+#ifndef OPENSSL_NO_HTTP
 static BIO *test_http_cb(BIO *bio, void *arg, int use_ssl, int detail)
 {
     return NULL;
 }
+#endif
 
 static OSSL_CMP_MSG *test_transfer_cb(OSSL_CMP_CTX *ctx,
                                       const OSSL_CMP_MSG *req)
@@ -403,6 +405,7 @@ execute_CTX_##SETN##_##GETN##_##FIELD(OSSL_CMP_CTX_TEST_FIXTURE *fixture) \
     } else { \
         if (DUP && val1_read == val1) { \
             TEST_error("first set did not dup the value"); \
+            val1_read = 0; \
             res = 0; \
         } \
         if (DEFAULT(val1_read)) { \
@@ -431,6 +434,7 @@ execute_CTX_##SETN##_##GETN##_##FIELD(OSSL_CMP_CTX_TEST_FIXTURE *fixture) \
     } else { \
         if (DUP && val2_read == val2) { \
             TEST_error("second set did not dup the value"); \
+            val2_read = 0; \
             res = 0; \
         } \
         if (val2 == val1) { \
@@ -460,6 +464,7 @@ execute_CTX_##SETN##_##GETN##_##FIELD(OSSL_CMP_CTX_TEST_FIXTURE *fixture) \
     } else { \
         if (DUP && val3_read == val2_read) { \
             TEST_error("third get did not create a new dup"); \
+            val3_read = 0; \
             res = 0; \
         } \
     } \
@@ -560,7 +565,9 @@ static X509_STORE *X509_STORE_new_1(void)
                              STACK_OF(TYPE)*, NULL, IS_0, \
                              sk_##TYPE##_new_null(), sk_##TYPE##_free)
 
+#ifndef OPENSSL_NO_HTTP
 typedef OSSL_HTTP_bio_cb_t OSSL_CMP_http_cb_t;
+#endif
 #define DEFINE_SET_CB_TEST(FIELD) \
     static OSSL_CMP_##FIELD##_t OSSL_CMP_CTX_get_##FIELD(const CMP_CTX *ctx) \
     { \
@@ -746,8 +753,10 @@ DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, server, char)
 DEFINE_SET_INT_TEST(serverPort)
 DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, proxy, char)
 DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, no_proxy, char)
+#ifndef OPENSSL_NO_HTTP
 DEFINE_SET_CB_TEST(http_cb)
 DEFINE_SET_GET_P_VOID_TEST(http_cb_arg)
+#endif
 DEFINE_SET_CB_TEST(transfer_cb)
 DEFINE_SET_GET_P_VOID_TEST(transfer_cb_arg)
 
@@ -837,8 +846,10 @@ int setup_tests(void)
     ADD_TEST(test_CTX_set_get_serverPort);
     ADD_TEST(test_CTX_set1_get0_proxy);
     ADD_TEST(test_CTX_set1_get0_no_proxy);
+#ifndef OPENSSL_NO_HTTP
     ADD_TEST(test_CTX_set_get_http_cb);
     ADD_TEST(test_CTX_set_get_http_cb_arg);
+#endif
     ADD_TEST(test_CTX_set_get_transfer_cb);
     ADD_TEST(test_CTX_set_get_transfer_cb_arg);
     /* server authentication: */

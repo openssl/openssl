@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -18,6 +18,7 @@
 # include "internal/nelem.h"
 # include "internal/numbers.h"
 # include "prov/provider_ctx.h"
+# include "prov/securitycheck.h"
 
 /* How many times to read the TSC as a randomness source. */
 # define TSC_READ_COUNT                 4
@@ -69,7 +70,7 @@ struct prov_drbg_st {
     CRYPTO_RWLOCK *lock;
     PROV_CTX *provctx;
 
-    /* Virtual functions are cache here */
+    /* Virtual functions are cached here */
     int (*instantiate)(PROV_DRBG *drbg,
                        const unsigned char *entropy, size_t entropylen,
                        const unsigned char *nonce, size_t noncelen,
@@ -89,8 +90,6 @@ struct prov_drbg_st {
     OSSL_FUNC_rand_nonce_fn *parent_nonce;
     OSSL_FUNC_rand_get_seed_fn *parent_get_seed;
     OSSL_FUNC_rand_clear_seed_fn *parent_clear_seed;
-
-    const OSSL_DISPATCH *parent_dispatch;
 
     /*
      * Stores the return value of openssl_get_fork_id() as of when we last
@@ -171,11 +170,14 @@ struct prov_drbg_st {
     OSSL_CALLBACK *cleanup_entropy_fn;
     OSSL_INOUT_CALLBACK *get_nonce_fn;
     OSSL_CALLBACK *cleanup_nonce_fn;
+
+    OSSL_FIPS_IND_DECLARE
 };
 
 PROV_DRBG *ossl_rand_drbg_new
     (void *provctx, void *parent, const OSSL_DISPATCH *parent_dispatch,
      int (*dnew)(PROV_DRBG *ctx),
+     void (*dfree)(void *vctx),
      int (*instantiate)(PROV_DRBG *drbg,
                         const unsigned char *entropy, size_t entropylen,
                         const unsigned char *nonce, size_t noncelen,
@@ -206,13 +208,13 @@ OSSL_FUNC_rand_get_seed_fn ossl_drbg_get_seed;
 OSSL_FUNC_rand_clear_seed_fn ossl_drbg_clear_seed;
 
 /* Verify that an array of numeric values is all zero */
-#define PROV_DRBG_VERYIFY_ZEROIZATION(v)    \
+#define PROV_DRBG_VERIFY_ZEROIZATION(v)     \
     {                                       \
         size_t i;                           \
                                             \
         for (i = 0; i < OSSL_NELEM(v); i++) \
             if ((v)[i] != 0)                \
-                return 0;                   \
+                goto err;                   \
     }
 
 /* locking api */
@@ -222,6 +224,8 @@ OSSL_FUNC_rand_unlock_fn ossl_drbg_unlock;
 
 /* Common parameters for all of our DRBGs */
 int ossl_drbg_get_ctx_params(PROV_DRBG *drbg, OSSL_PARAM params[]);
+int ossl_drbg_get_ctx_params_no_lock(PROV_DRBG *drbg, OSSL_PARAM params[],
+                                     int *complete);
 int ossl_drbg_set_ctx_params(PROV_DRBG *drbg, const OSSL_PARAM params[]);
 
 #define OSSL_PARAM_DRBG_SETTABLE_CTX_COMMON                             \
@@ -250,5 +254,8 @@ size_t ossl_crngt_get_entropy(PROV_DRBG *drbg,
                               int prediction_resistance);
 void ossl_crngt_cleanup_entropy(PROV_DRBG *drbg,
                                 unsigned char *out, size_t outlen);
+
+/* Confirm digest is allowed to be used with a DRBG */
+int ossl_drbg_verify_digest(PROV_DRBG *drbg, OSSL_LIB_CTX *libctx, const EVP_MD *md);
 
 #endif

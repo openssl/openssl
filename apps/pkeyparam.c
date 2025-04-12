@@ -97,9 +97,6 @@ int pkeyparam_main(int argc, char **argv)
     in = bio_open_default(infile, 'r', FORMAT_PEM);
     if (in == NULL)
         goto end;
-    out = bio_open_default(outfile, 'w', FORMAT_PEM);
-    if (out == NULL)
-        goto end;
     pkey = PEM_read_bio_Parameters_ex(in, NULL, app_get0_libctx(),
                                       app_get0_propq());
     if (pkey == NULL) {
@@ -107,6 +104,9 @@ int pkeyparam_main(int argc, char **argv)
         ERR_print_errors(bio_err);
         goto end;
     }
+    out = bio_open_default(outfile, 'w', FORMAT_PEM);
+    if (out == NULL)
+        goto end;
 
     if (check) {
         if (e == NULL)

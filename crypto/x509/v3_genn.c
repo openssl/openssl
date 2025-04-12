@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -58,6 +58,35 @@ GENERAL_NAME *GENERAL_NAME_dup(const GENERAL_NAME *a)
                                     (char *)a);
 }
 
+int GENERAL_NAME_set1_X509_NAME(GENERAL_NAME **tgt, const X509_NAME *src)
+{
+    GENERAL_NAME *name;
+
+    if (tgt == NULL) {
+        ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_NULL_ARGUMENT);
+        return 0;
+    }
+
+    if ((name = GENERAL_NAME_new()) == NULL)
+        return 0;
+    name->type = GEN_DIRNAME;
+
+    if (src == NULL) { /* NULL-DN */
+        if ((name->d.directoryName = X509_NAME_new()) == NULL)
+            goto err;
+    } else if (!X509_NAME_set(&name->d.directoryName, src)) {
+        goto err;
+    }
+
+    GENERAL_NAME_free(*tgt);
+    *tgt = name;
+    return 1;
+
+ err:
+    GENERAL_NAME_free(name);
+    return 0;
+}
+
 static int edipartyname_cmp(const EDIPARTYNAME *a, const EDIPARTYNAME *b)
 {
     int res;
@@ -98,7 +127,7 @@ int GENERAL_NAME_cmp(GENERAL_NAME *a, GENERAL_NAME *b)
         return -1;
     switch (a->type) {
     case GEN_X400:
-        result = ASN1_TYPE_cmp(a->d.x400Address, b->d.x400Address);
+        result = ASN1_STRING_cmp(a->d.x400Address, b->d.x400Address);
         break;
 
     case GEN_EDIPARTY:

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2021-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -387,7 +387,7 @@ static int default_fixup_args(enum state state,
 {
     int ret;
 
-    if ((ret = default_check(state, translation, ctx)) < 0)
+    if ((ret = default_check(state, translation, ctx)) <= 0)
         return ret;
 
     switch (state) {
@@ -634,8 +634,8 @@ static int default_fixup_args(enum state state,
                                                       ctx->p2, ctx->sz);
                 case OSSL_PARAM_OCTET_STRING:
                     return OSSL_PARAM_get_octet_string(ctx->params,
-                                                       ctx->p2, ctx->sz,
-                                                       &ctx->sz);
+                                                       &ctx->p2, ctx->sz,
+                                                       (size_t *)&ctx->p1);
                 case OSSL_PARAM_OCTET_PTR:
                     return OSSL_PARAM_get_octet_ptr(ctx->params,
                                                     ctx->p2, &ctx->sz);
@@ -683,7 +683,7 @@ static int default_fixup_args(enum state state,
                     return OSSL_PARAM_set_octet_string(ctx->params, ctx->p2,
                                                        size);
                 case OSSL_PARAM_OCTET_PTR:
-                    return OSSL_PARAM_set_octet_ptr(ctx->params, ctx->p2,
+                    return OSSL_PARAM_set_octet_ptr(ctx->params, *(void **)ctx->p2,
                                                     size);
                 default:
                     ERR_raise_data(ERR_LIB_EVP, ERR_R_UNSUPPORTED,
@@ -693,6 +693,9 @@ static int default_fixup_args(enum state state,
                                    translation->param_data_type);
                     return 0;
                 }
+            } else if (state == PRE_PARAMS_TO_CTRL && ctx->action_type == GET) {
+                if (translation->param_data_type == OSSL_PARAM_OCTET_PTR)
+                    ctx->p2 = &ctx->bufp;
             }
         }
         /* Any other combination is simply pass-through */
@@ -779,7 +782,7 @@ static int fix_cipher_md(enum state state,
 
     if (state == POST_CTRL_TO_PARAMS && ctx->action_type == GET) {
         /*
-         * Here's how we re-use |ctx->orig_p2| that was set in the
+         * Here's how we reuse |ctx->orig_p2| that was set in the
          * PRE_CTRL_TO_PARAMS state above.
          */
         *(void **)ctx->orig_p2 =
@@ -1134,6 +1137,7 @@ static int fix_ec_paramgen_curve_nid(enum state state,
                                      const struct translation_st *translation,
                                      struct translation_ctx_st *ctx)
 {
+    char *p2 = NULL;
     int ret;
 
     if ((ret = default_check(state, translation, ctx)) <= 0)
@@ -1146,13 +1150,25 @@ static int fix_ec_paramgen_curve_nid(enum state state,
     if (state == PRE_CTRL_TO_PARAMS) {
         ctx->p2 = (char *)OBJ_nid2sn(ctx->p1);
         ctx->p1 = 0;
+    } else if (state == PRE_PARAMS_TO_CTRL) {
+        /*
+         * We're translating from params to ctrl and setting the curve name.
+         * The ctrl function needs it to be a NID, but meanwhile, we need
+         * space to get the curve name from the param.  |ctx->name_buf| is
+         * sufficient for that.
+         * The double indirection is necessary for default_fixup_args()'s
+         * call of OSSL_PARAM_get_utf8_string() to be done correctly.
+         */
+        p2 = ctx->name_buf;
+        ctx->p2 = &p2;
+        ctx->sz = sizeof(ctx->name_buf);
     }
 
     if ((ret = default_fixup_args(state, translation, ctx)) <= 0)
         return ret;
 
     if (state == PRE_PARAMS_TO_CTRL) {
-        ctx->p1 = OBJ_sn2nid(ctx->p2);
+        ctx->p1 = OBJ_sn2nid(p2);
         ctx->p2 = NULL;
     }
 
@@ -1192,6 +1208,8 @@ static int fix_ecdh_cofactor(enum state state,
         /* The initial value for |ctx->action_type| must not be zero. */
         if (!ossl_assert(ctx->action_type != NONE))
             return 0;
+    } else if (state == POST_PARAMS_TO_CTRL && ctx->action_type == NONE) {
+        ctx->action_type = GET;
     }
 
     if ((ret = default_check(state, translation, ctx)) <= 0)
@@ -1217,6 +1235,8 @@ static int fix_ecdh_cofactor(enum state state,
         }
     } else if (state == PRE_PARAMS_TO_CTRL && ctx->action_type == GET) {
         ctx->p1 = -2;
+    } else if (state == POST_PARAMS_TO_CTRL && ctx->action_type == GET) {
+        ctx->p1 = ret;
     }
 
     return ret;
@@ -1642,6 +1662,64 @@ static int get_payload_public_key(enum state state,
     return ret;
 }
 
+static int get_payload_public_key_ec(enum state state,
+                                     const struct translation_st *translation,
+                                     struct translation_ctx_st *ctx)
+{
+#ifndef OPENSSL_NO_EC
+    EVP_PKEY *pkey = ctx->p2;
+    const EC_KEY *eckey = EVP_PKEY_get0_EC_KEY(pkey);
+    BN_CTX *bnctx;
+    const EC_POINT *point;
+    const EC_GROUP *ecg;
+    BIGNUM *x = NULL;
+    BIGNUM *y = NULL;
+    int ret = 0;
+
+    ctx->p2 = NULL;
+
+    if (eckey == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_UNSUPPORTED_KEY_TYPE);
+        return 0;
+    }
+
+    bnctx = BN_CTX_new_ex(ossl_ec_key_get_libctx(eckey));
+    if (bnctx == NULL)
+        return 0;
+
+    point = EC_KEY_get0_public_key(eckey);
+    ecg = EC_KEY_get0_group(eckey);
+
+    /* Caller should have requested a BN, fail if not */
+    if (ctx->params->data_type != OSSL_PARAM_UNSIGNED_INTEGER)
+        goto out;
+
+    x = BN_CTX_get(bnctx);
+    y = BN_CTX_get(bnctx);
+    if (y == NULL)
+        goto out;
+
+    if (!EC_POINT_get_affine_coordinates(ecg, point, x, y, bnctx))
+        goto out;
+
+    if (strncmp(ctx->params->key, OSSL_PKEY_PARAM_EC_PUB_X, 2) == 0)
+        ctx->p2 = x;
+    else if (strncmp(ctx->params->key, OSSL_PKEY_PARAM_EC_PUB_Y, 2) == 0)
+        ctx->p2 = y;
+    else
+        goto out;
+
+    /* Return the payload */
+    ret = default_fixup_args(state, translation, ctx);
+out:
+    BN_CTX_free(bnctx);
+    return ret;
+#else
+    ERR_raise(ERR_LIB_EVP, EVP_R_UNSUPPORTED_KEY_TYPE);
+    return 0;
+#endif
+}
+
 static int get_payload_bn(enum state state,
                           const struct translation_st *translation,
                           struct translation_ctx_st *ctx, const BIGNUM *bn)
@@ -1768,7 +1846,8 @@ static int get_rsa_payload_n(enum state state,
 {
     const BIGNUM *bn = NULL;
 
-    if (EVP_PKEY_get_base_id(ctx->p2) != EVP_PKEY_RSA)
+    if (EVP_PKEY_get_base_id(ctx->p2) != EVP_PKEY_RSA
+        && EVP_PKEY_get_base_id(ctx->p2) != EVP_PKEY_RSA_PSS)
         return 0;
     bn = RSA_get0_n(EVP_PKEY_get0_RSA(ctx->p2));
 
@@ -1781,7 +1860,8 @@ static int get_rsa_payload_e(enum state state,
 {
     const BIGNUM *bn = NULL;
 
-    if (EVP_PKEY_get_base_id(ctx->p2) != EVP_PKEY_RSA)
+    if (EVP_PKEY_get_base_id(ctx->p2) != EVP_PKEY_RSA
+        && EVP_PKEY_get_base_id(ctx->p2) != EVP_PKEY_RSA_PSS)
         return 0;
     bn = RSA_get0_e(EVP_PKEY_get0_RSA(ctx->p2));
 
@@ -1794,7 +1874,8 @@ static int get_rsa_payload_d(enum state state,
 {
     const BIGNUM *bn = NULL;
 
-    if (EVP_PKEY_get_base_id(ctx->p2) != EVP_PKEY_RSA)
+    if (EVP_PKEY_get_base_id(ctx->p2) != EVP_PKEY_RSA
+        && EVP_PKEY_get_base_id(ctx->p2) != EVP_PKEY_RSA_PSS)
         return 0;
     bn = RSA_get0_d(EVP_PKEY_get0_RSA(ctx->p2));
 
@@ -1894,7 +1975,8 @@ static int get_rsa_payload_coefficient(enum state state,
                          const struct translation_st *translation,      \
                          struct translation_ctx_st *ctx)                \
     {                                                                   \
-        if (EVP_PKEY_get_base_id(ctx->p2) != EVP_PKEY_RSA)              \
+        if (EVP_PKEY_get_base_id(ctx->p2) != EVP_PKEY_RSA               \
+            && EVP_PKEY_get_base_id(ctx->p2) != EVP_PKEY_RSA_PSS)       \
             return 0;                                                   \
         return get_rsa_payload_factor(state, translation, ctx, n - 1);  \
     }
@@ -1905,7 +1987,8 @@ static int get_rsa_payload_coefficient(enum state state,
                          const struct translation_st *translation,      \
                          struct translation_ctx_st *ctx)                \
     {                                                                   \
-        if (EVP_PKEY_get_base_id(ctx->p2) != EVP_PKEY_RSA)              \
+        if (EVP_PKEY_get_base_id(ctx->p2) != EVP_PKEY_RSA               \
+            && EVP_PKEY_get_base_id(ctx->p2) != EVP_PKEY_RSA_PSS)       \
             return 0;                                                   \
         return get_rsa_payload_exponent(state, translation, ctx,        \
                                         n - 1);                         \
@@ -1917,7 +2000,8 @@ static int get_rsa_payload_coefficient(enum state state,
                          const struct translation_st *translation,      \
                          struct translation_ctx_st *ctx)                \
     {                                                                   \
-        if (EVP_PKEY_get_base_id(ctx->p2) != EVP_PKEY_RSA)              \
+        if (EVP_PKEY_get_base_id(ctx->p2) != EVP_PKEY_RSA               \
+            && EVP_PKEY_get_base_id(ctx->p2) != EVP_PKEY_RSA_PSS)       \
             return 0;                                                   \
         return get_rsa_payload_coefficient(state, translation, ctx,     \
                                            n - 1);                      \
@@ -2139,6 +2223,46 @@ static const struct translation_st evp_pkey_ctx_translations[] = {
       OSSL_EXCHANGE_PARAM_KDF_UKM, OSSL_PARAM_OCTET_PTR, NULL },
 
     /*-
+     * SM2
+     * ==
+     */
+    { SET, EVP_PKEY_SM2, 0, EVP_PKEY_OP_PARAMGEN | EVP_PKEY_OP_KEYGEN,
+      EVP_PKEY_CTRL_EC_PARAM_ENC, "ec_param_enc", NULL,
+      OSSL_PKEY_PARAM_EC_ENCODING, OSSL_PARAM_UTF8_STRING, fix_ec_param_enc },
+    { SET, EVP_PKEY_SM2, 0, EVP_PKEY_OP_PARAMGEN | EVP_PKEY_OP_KEYGEN,
+      EVP_PKEY_CTRL_EC_PARAMGEN_CURVE_NID, "ec_paramgen_curve", NULL,
+      OSSL_PKEY_PARAM_GROUP_NAME, OSSL_PARAM_UTF8_STRING,
+      fix_ec_paramgen_curve_nid },
+    /*
+     * EVP_PKEY_CTRL_EC_ECDH_COFACTOR and EVP_PKEY_CTRL_EC_KDF_TYPE are used
+     * both for setting and getting.  The fixup function has to handle this...
+     */
+    { NONE, EVP_PKEY_SM2, 0, EVP_PKEY_OP_DERIVE,
+      EVP_PKEY_CTRL_EC_ECDH_COFACTOR, "ecdh_cofactor_mode", NULL,
+      OSSL_EXCHANGE_PARAM_EC_ECDH_COFACTOR_MODE, OSSL_PARAM_INTEGER,
+      fix_ecdh_cofactor },
+    { NONE, EVP_PKEY_SM2, 0, EVP_PKEY_OP_DERIVE,
+      EVP_PKEY_CTRL_EC_KDF_TYPE, NULL, NULL,
+      OSSL_EXCHANGE_PARAM_KDF_TYPE, OSSL_PARAM_UTF8_STRING, fix_ec_kdf_type },
+    { SET, EVP_PKEY_SM2, 0, EVP_PKEY_OP_DERIVE,
+      EVP_PKEY_CTRL_EC_KDF_MD, "ecdh_kdf_md", NULL,
+      OSSL_EXCHANGE_PARAM_KDF_DIGEST, OSSL_PARAM_UTF8_STRING, fix_md },
+    { GET, EVP_PKEY_SM2, 0, EVP_PKEY_OP_DERIVE,
+      EVP_PKEY_CTRL_GET_EC_KDF_MD, NULL, NULL,
+      OSSL_EXCHANGE_PARAM_KDF_DIGEST, OSSL_PARAM_UTF8_STRING, fix_md },
+    { SET, EVP_PKEY_SM2, 0, EVP_PKEY_OP_DERIVE,
+      EVP_PKEY_CTRL_EC_KDF_OUTLEN, NULL, NULL,
+      OSSL_EXCHANGE_PARAM_KDF_OUTLEN, OSSL_PARAM_UNSIGNED_INTEGER, NULL },
+    { GET, EVP_PKEY_SM2, 0, EVP_PKEY_OP_DERIVE,
+      EVP_PKEY_CTRL_GET_EC_KDF_OUTLEN, NULL, NULL,
+      OSSL_EXCHANGE_PARAM_KDF_OUTLEN, OSSL_PARAM_UNSIGNED_INTEGER, NULL },
+    { SET, EVP_PKEY_SM2, 0, EVP_PKEY_OP_DERIVE,
+      EVP_PKEY_CTRL_EC_KDF_UKM, NULL, NULL,
+      OSSL_EXCHANGE_PARAM_KDF_UKM, OSSL_PARAM_OCTET_STRING, NULL },
+    { GET, EVP_PKEY_SM2, 0, EVP_PKEY_OP_DERIVE,
+      EVP_PKEY_CTRL_GET_EC_KDF_UKM, NULL, NULL,
+      OSSL_EXCHANGE_PARAM_KDF_UKM, OSSL_PARAM_OCTET_PTR, NULL },
+    /*-
      * RSA
      * ===
      */
@@ -2199,7 +2323,7 @@ static const struct translation_st evp_pkey_ctx_translations[] = {
       OSSL_ASYM_CIPHER_PARAM_OAEP_LABEL, OSSL_PARAM_OCTET_STRING, NULL },
     { GET, EVP_PKEY_RSA, 0, EVP_PKEY_OP_TYPE_CRYPT,
       EVP_PKEY_CTRL_GET_RSA_OAEP_LABEL, NULL, NULL,
-      OSSL_ASYM_CIPHER_PARAM_OAEP_LABEL, OSSL_PARAM_OCTET_STRING, NULL },
+      OSSL_ASYM_CIPHER_PARAM_OAEP_LABEL, OSSL_PARAM_OCTET_PTR, NULL },
 
     { SET, EVP_PKEY_RSA, 0, EVP_PKEY_OP_TYPE_CRYPT,
       EVP_PKEY_CTRL_RSA_IMPLICIT_REJECTION, NULL,
@@ -2219,10 +2343,10 @@ static const struct translation_st evp_pkey_ctx_translations[] = {
     { SET, EVP_PKEY_RSA, EVP_PKEY_RSA_PSS, EVP_PKEY_OP_KEYGEN,
       EVP_PKEY_CTRL_RSA_KEYGEN_BITS, "rsa_keygen_bits", NULL,
       OSSL_PKEY_PARAM_RSA_BITS, OSSL_PARAM_UNSIGNED_INTEGER, NULL },
-    { SET, EVP_PKEY_RSA, 0, EVP_PKEY_OP_KEYGEN,
+    { SET, EVP_PKEY_RSA, EVP_PKEY_RSA_PSS, EVP_PKEY_OP_KEYGEN,
       EVP_PKEY_CTRL_RSA_KEYGEN_PUBEXP, "rsa_keygen_pubexp", NULL,
       OSSL_PKEY_PARAM_RSA_E, OSSL_PARAM_UNSIGNED_INTEGER, NULL },
-    { SET, EVP_PKEY_RSA, 0, EVP_PKEY_OP_KEYGEN,
+    { SET, EVP_PKEY_RSA, EVP_PKEY_RSA_PSS, EVP_PKEY_OP_KEYGEN,
       EVP_PKEY_CTRL_RSA_KEYGEN_PRIMES, "rsa_keygen_primes", NULL,
       OSSL_PKEY_PARAM_RSA_PRIMES, OSSL_PARAM_UNSIGNED_INTEGER, NULL },
 
@@ -2311,7 +2435,11 @@ static const struct translation_st evp_pkey_ctx_translations[] = {
      */
     { SET, EVP_PKEY_X25519, EVP_PKEY_X25519, EVP_PKEY_OP_KEYGEN, -1, NULL, NULL,
       OSSL_PKEY_PARAM_GROUP_NAME, OSSL_PARAM_UTF8_STRING, fix_group_ecx },
+    { SET, EVP_PKEY_X25519, EVP_PKEY_X25519, EVP_PKEY_OP_PARAMGEN, -1, NULL, NULL,
+      OSSL_PKEY_PARAM_GROUP_NAME, OSSL_PARAM_UTF8_STRING, fix_group_ecx },
     { SET, EVP_PKEY_X448, EVP_PKEY_X448, EVP_PKEY_OP_KEYGEN, -1, NULL, NULL,
+      OSSL_PKEY_PARAM_GROUP_NAME, OSSL_PARAM_UTF8_STRING, fix_group_ecx },
+    { SET, EVP_PKEY_X448, EVP_PKEY_X448, EVP_PKEY_OP_PARAMGEN, -1, NULL, NULL,
       OSSL_PKEY_PARAM_GROUP_NAME, OSSL_PARAM_UTF8_STRING, fix_group_ecx },
 };
 
@@ -2334,6 +2462,12 @@ static const struct translation_st evp_pkey_translations[] = {
       OSSL_PKEY_PARAM_PUB_KEY,
       0 /* no data type, let get_payload_public_key() handle that */,
       get_payload_public_key },
+    { GET, -1, -1, -1, 0, NULL, NULL,
+        OSSL_PKEY_PARAM_EC_PUB_X, OSSL_PARAM_UNSIGNED_INTEGER,
+        get_payload_public_key_ec },
+    { GET, -1, -1, -1, 0, NULL, NULL,
+        OSSL_PKEY_PARAM_EC_PUB_Y, OSSL_PARAM_UNSIGNED_INTEGER,
+        get_payload_public_key_ec },
 
     /* DH and DSA */
     { GET, -1, -1, -1, 0, NULL, NULL,
@@ -2715,7 +2849,7 @@ static int evp_pkey_ctx_setget_params_to_ctrl(EVP_PKEY_CTX *pctx,
         fixup_args_fn *fixup = default_fixup_args;
         int ret;
 
-        tmpl.action_type = action_type;
+        ctx.action_type = tmpl.action_type = action_type;
         tmpl.keytype1 = tmpl.keytype2 = keytype;
         tmpl.optype = optype;
         tmpl.param_key = params->key;
@@ -2724,7 +2858,7 @@ static int evp_pkey_ctx_setget_params_to_ctrl(EVP_PKEY_CTX *pctx,
         if (translation != NULL) {
             if (translation->fixup_args != NULL)
                 fixup = translation->fixup_args;
-            ctx.action_type = translation->action_type;
+            ctx.ctrl_cmd = translation->ctrl_num;
         }
         ctx.pctx = pctx;
         ctx.params = params;
@@ -2738,8 +2872,14 @@ static int evp_pkey_ctx_setget_params_to_ctrl(EVP_PKEY_CTX *pctx,
         /*
          * In POST, we pass the return value as p1, allowing the fixup_args
          * function to put it to good use, or maybe affect it.
+         *
+         * NOTE: even though EVP_PKEY_CTX_ctrl return value is documented
+         * as return positive on Success and 0 or negative on falure. There
+         * maybe parameters (e.g. ecdh_cofactor), which actually return 0
+         * as success value. That is why we do POST_PARAMS_TO_CTRL for 0
+         * value as well
          */
-        if (ret > 0) {
+        if (ret >= 0) {
             ctx.p1 = ret;
             fixup(POST_PARAMS_TO_CTRL, translation, &ctx);
             ret = ctx.p1;
@@ -2755,11 +2895,15 @@ static int evp_pkey_ctx_setget_params_to_ctrl(EVP_PKEY_CTX *pctx,
 
 int evp_pkey_ctx_set_params_to_ctrl(EVP_PKEY_CTX *ctx, const OSSL_PARAM *params)
 {
+    if (ctx->keymgmt != NULL)
+        return 0;
     return evp_pkey_ctx_setget_params_to_ctrl(ctx, SET, (OSSL_PARAM *)params);
 }
 
 int evp_pkey_ctx_get_params_to_ctrl(EVP_PKEY_CTX *ctx, OSSL_PARAM *params)
 {
+    if (ctx->keymgmt != NULL)
+        return 0;
     return evp_pkey_ctx_setget_params_to_ctrl(ctx, GET, params);
 }
 

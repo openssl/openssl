@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,6 +12,7 @@
 #include <openssl/rand.h>
 #include "testutil.h"
 #include "internal/sockets.h"
+#include "internal/bio_addr.h"
 
 #if !defined(OPENSSL_NO_DGRAM) && !defined(OPENSSL_NO_SOCK)
 
@@ -175,11 +176,11 @@ static int test_bio_dgram_impl(int af, int use_local)
     if (!TEST_int_ge(fd2, 0))
         goto err;
 
-    if (!TEST_int_gt(BIO_bind(fd1, addr1, 0), 0))
+    if (BIO_bind(fd1, addr1, 0) <= 0
+        || BIO_bind(fd2, addr2, 0) <= 0) {
+        testresult = TEST_skip("BIO_bind() failed - assuming it's an unavailable address family");
         goto err;
-
-    if (!TEST_int_gt(BIO_bind(fd2, addr2, 0), 0))
-        goto err;
+    }
 
     info1.addr = addr1;
     if (!TEST_int_gt(BIO_sock_info(fd1, BIO_SOCK_INFO_ADDRESS, &info1), 0))
@@ -489,7 +490,7 @@ err:
     return ret;
 }
 
-static int test_bio_dgram_pair(void)
+static int test_bio_dgram_pair(int idx)
 {
     int testresult = 0, blen, mtu1, mtu2, r;
     BIO *bio1 = NULL, *bio2 = NULL;
@@ -513,12 +514,29 @@ static int test_bio_dgram_pair(void)
     for (i = 0; i < OSSL_NELEM(key); ++i)
         key[i] = test_random();
 
-    if (!TEST_int_eq(BIO_new_bio_dgram_pair(&bio1, 0, &bio2, 0), 1))
-        goto err;
+    if (idx == 0) {
+        if (!TEST_int_eq(BIO_new_bio_dgram_pair(&bio1, 0, &bio2, 0), 1))
+            goto err;
+    } else {
+        if (!TEST_ptr(bio1 = bio2 = BIO_new(BIO_s_dgram_mem())))
+            goto err;
+    }
 
     mtu1 = BIO_dgram_get_mtu(bio1);
     if (!TEST_int_ge(mtu1, 1280))
         goto err;
+
+    if (idx == 1) {
+        size_t bufsz;
+
+        /*
+         * Assume the header contains 2 BIO_ADDR structures and a length. We
+         * set a buffer big enough for 9 full sized datagrams.
+         */
+        bufsz = 9 * (mtu1 + (sizeof(BIO_ADDR) * 2) + sizeof(size_t));
+        if (!TEST_true(BIO_set_write_buf_size(bio1, bufsz)))
+            goto err;
+    }
 
     mtu2 = BIO_dgram_get_mtu(bio2);
     if (!TEST_int_ge(mtu2, 1280))
@@ -530,7 +548,7 @@ static int test_bio_dgram_pair(void)
     if (!TEST_int_le(mtu1, sizeof(scratch) - 4))
         goto err;
 
-    for (i = 0;; ++i) {
+    for (i = 0; total < 1 * 1024 * 1024; ++i) {
         if (!TEST_int_eq(random_data(key, scratch, sizeof(scratch), i), 1))
             goto err;
 
@@ -543,13 +561,20 @@ static int test_bio_dgram_pair(void)
             goto err;
 
         total += blen;
-        if (!TEST_size_t_lt(total, 1 * 1024 * 1024))
-            goto err;
     }
 
+    if (idx <= 1 && !TEST_size_t_lt(total, 1 * 1024 * 1024))
+        goto err;
+
+    if (idx == 2 && !TEST_size_t_ge(total, 1 * 1024 * 1024))
+        goto err;
+
     /*
-     * Should be able to fit at least 9 datagrams in default write buffer size
-     * in worst case
+     * The number of datagrams we can fit depends on the size of the default
+     * write buffer size, the size of the datagram header and the size of the
+     * payload data we send in each datagram. The max payload data is based on
+     * the mtu. The default write buffer size is 9 * (sizeof(header) + mtu) so
+     * we expect at least 9 maximally sized datagrams to fit in the buffer.
      */
     if (!TEST_int_ge(i, 9))
         goto err;
@@ -630,8 +655,8 @@ static int test_bio_dgram_pair(void)
     msgs[0].peer = addr1;
 
     /* fails due to lack of caps on peer */
-    if (!TEST_false(BIO_sendmmsg(bio1, msgs, sizeof(BIO_MSG), OSSL_NELEM(msgs),
-                                 0, &num_processed))
+    if (!TEST_false(BIO_sendmmsg(bio1, msgs, sizeof(BIO_MSG),
+                                 OSSL_NELEM(msgs), 0, &num_processed))
         || !TEST_size_t_eq(num_processed, 0))
         goto err;
 
@@ -644,7 +669,7 @@ static int test_bio_dgram_pair(void)
     if (!TEST_int_eq(BIO_dgram_get_effective_caps(bio1), ref_caps))
         goto err;
 
-    if (!TEST_int_eq(BIO_dgram_get_effective_caps(bio2), 0))
+    if (idx == 0 && !TEST_int_eq(BIO_dgram_get_effective_caps(bio2), 0))
         goto err;
 
     if (!TEST_int_eq(BIO_dgram_set_caps(bio1, ref_caps), 1))
@@ -739,7 +764,8 @@ static int test_bio_dgram_pair(void)
 
     testresult = 1;
 err:
-    BIO_free(bio1);
+    if (idx == 0)
+        BIO_free(bio1);
     BIO_free(bio2);
     BIO_ADDR_free(addr1);
     BIO_ADDR_free(addr2);
@@ -760,7 +786,7 @@ int setup_tests(void)
 #if !defined(OPENSSL_NO_DGRAM) && !defined(OPENSSL_NO_SOCK)
     ADD_ALL_TESTS(test_bio_dgram, OSSL_NELEM(bio_dgram_cases));
 # if !defined(OPENSSL_NO_CHACHA)
-    ADD_TEST(test_bio_dgram_pair);
+    ADD_ALL_TESTS(test_bio_dgram_pair, 3);
 # endif
 #endif
 

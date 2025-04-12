@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -92,7 +92,9 @@ static void kdf_scrypt_reset(void *vctx)
     KDF_SCRYPT *ctx = (KDF_SCRYPT *)vctx;
 
     OPENSSL_free(ctx->salt);
+    ctx->salt = NULL;
     OPENSSL_clear_free(ctx->pass, ctx->pass_len);
+    ctx->pass = NULL;
     kdf_scrypt_init(ctx);
 }
 
@@ -162,7 +164,6 @@ static int set_digest(KDF_SCRYPT *ctx)
     EVP_MD_free(ctx->sha256);
     ctx->sha256 = EVP_MD_fetch(ctx->libctx, "sha256", ctx->propq);
     if (ctx->sha256 == NULL) {
-        OPENSSL_free(ctx);
         ERR_raise(ERR_LIB_PROV, PROV_R_UNABLE_TO_LOAD_SHA256);
         return 0;
     }
@@ -219,7 +220,7 @@ static int kdf_scrypt_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     KDF_SCRYPT *ctx = vctx;
     uint64_t u64_value;
 
-    if (params == NULL)
+    if (ossl_param_is_empty(params))
         return 1;
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_PASSWORD)) != NULL)
@@ -317,7 +318,7 @@ const OSSL_DISPATCH ossl_kdf_scrypt_functions[] = {
     { OSSL_FUNC_KDF_GETTABLE_CTX_PARAMS,
       (void(*)(void))kdf_scrypt_gettable_ctx_params },
     { OSSL_FUNC_KDF_GET_CTX_PARAMS, (void(*)(void))kdf_scrypt_get_ctx_params },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };
 
 #define R(a,b) (((a) << (b)) | ((a) >> (32 - (b))))

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -59,7 +59,6 @@ int ossl_statm_init(OSSL_STATM *statm)
     statm->min_rtt                  = ossl_time_infinite();
     statm->rtt_variance             = ossl_time_divide(K_INITIAL_RTT, 2);
     statm->have_first_sample        = 0;
-    statm->max_ack_delay            = ossl_time_infinite();
     return 1;
 }
 
@@ -68,16 +67,10 @@ void ossl_statm_destroy(OSSL_STATM *statm)
     /* No-op. */
 }
 
-void ossl_statm_set_max_ack_delay(OSSL_STATM *statm, OSSL_TIME max_ack_delay)
-{
-    statm->max_ack_delay = max_ack_delay;
-}
-
 void ossl_statm_get_rtt_info(OSSL_STATM *statm, OSSL_RTT_INFO *rtt_info)
 {
     rtt_info->min_rtt           = statm->min_rtt;
     rtt_info->latest_rtt        = statm->latest_rtt;
     rtt_info->smoothed_rtt      = statm->smoothed_rtt;
     rtt_info->rtt_variance      = statm->rtt_variance;
-    rtt_info->max_ack_delay     = statm->max_ack_delay;
 }

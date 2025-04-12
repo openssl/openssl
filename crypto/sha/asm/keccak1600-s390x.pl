@@ -7,10 +7,10 @@
 # https://www.openssl.org/source/license.html
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
+# Written by Andy Polyakov, @dot-asm, initially for use in the OpenSSL
 # project. The module is, however, dual licensed under OpenSSL and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see https://github.com/dot-asm/cryptogams/.
 # ====================================================================
 #
 # Keccak-1600 for s390x.
@@ -472,7 +472,7 @@ SHA3_absorb:
 .size	SHA3_absorb,.-SHA3_absorb
 ___
 }
-{ my ($A_flat,$out,$len,$bsz) = map("%r$_",(2..5));
+{ my ($A_flat,$out,$len,$bsz,$next) = map("%r$_",(2..6));
 
 $code.=<<___;
 .globl	SHA3_squeeze
@@ -484,6 +484,7 @@ SHA3_squeeze:
 	lghi	%r14,8
 	st${g}	$bsz,5*$SIZE_T($sp)
 	la	%r1,0($A_flat)
+	cijne	$next,0,.Lnext_block
 
 	j	.Loop_squeeze
 
@@ -501,6 +502,7 @@ SHA3_squeeze:
 
 	brct	$bsz,.Loop_squeeze	# bsz--
 
+.Lnext_block:
 	stm${g}	$out,$len,3*$SIZE_T($sp)
 	bras	%r14,.LKeccakF1600
 	lm${g}	$out,$bsz,3*$SIZE_T($sp)
@@ -552,7 +554,7 @@ iotas:
 	.quad	0x0000000080000001
 	.quad	0x8000000080008008
 .size	iotas,.-iotas
-.asciz	"Keccak-1600 absorb and squeeze for s390x, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"Keccak-1600 absorb and squeeze for s390x, CRYPTOGAMS by <https://github.com/dot-asm>"
 ___
 
 # unlike 32-bit shift 64-bit one takes three arguments

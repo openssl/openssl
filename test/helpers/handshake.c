@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -15,6 +15,7 @@
 #include <openssl/core_names.h>
 
 #include "../../ssl/ssl_local.h"
+#include "internal/ssl_unwrap.h"
 #include "internal/sockets.h"
 #include "internal/nelem.h"
 #include "handshake.h"
@@ -347,6 +348,12 @@ static int parse_protos(const char *protos, unsigned char **out, size_t *outlen)
     size_t len, i, prefix;
 
     len = strlen(protos);
+
+    if (len == 0) {
+        *out = NULL;
+        *outlen = 0;
+        return 1;
+    }
 
     /* Should never have reuse. */
     if (!TEST_ptr_null(*out)

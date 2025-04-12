@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -25,10 +25,21 @@
 #include <openssl/aes.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
+#include <openssl/pem.h>
+#include <openssl/evp.h>
 #include "internal/tsan_assist.h"
 #include "internal/nelem.h"
+#include "internal/time.h"
+#include "internal/rcu.h"
 #include "testutil.h"
 #include "threadstest.h"
+
+#ifdef __SANITIZE_THREAD__
+#include <sanitizer/tsan_interface.h>
+#define TSAN_ACQUIRE(s) __tsan_acquire(s)
+#else
+#define TSAN_ACQUIRE(s)
+#endif
 
 /* Limit the maximum number of threads */
 #define MAXIMUM_THREADS     10
@@ -79,6 +90,9 @@ static int test_lock(void)
     CRYPTO_RWLOCK *lock = CRYPTO_THREAD_lock_new();
     int res;
 
+    if (!TEST_ptr(lock))
+        return 0;
+
     res = TEST_true(CRYPTO_THREAD_read_lock(lock))
           && TEST_true(CRYPTO_THREAD_unlock(lock))
           && TEST_true(CRYPTO_THREAD_write_lock(lock))
@@ -88,6 +102,402 @@ static int test_lock(void)
 
     return res;
 }
+
+#if defined(OPENSSL_THREADS)
+static int contention = 0;
+static int rwwriter1_done = 0;
+static int rwwriter2_done = 0;
+static int rwreader1_iterations = 0;
+static int rwreader2_iterations = 0;
+static int rwwriter1_iterations = 0;
+static int rwwriter2_iterations = 0;
+static int *rwwriter_ptr = NULL;
+static int rw_torture_result = 1;
+static CRYPTO_RWLOCK *rwtorturelock = NULL;
+static CRYPTO_RWLOCK *atomiclock = NULL;
+
+static void rwwriter_fn(int id, int *iterations)
+{
+    int count;
+    int *old, *new;
+    OSSL_TIME t1, t2;
+    t1 = ossl_time_now();
+
+    for (count = 0; ; count++) {
+        new = CRYPTO_zalloc(sizeof (int), NULL, 0);
+        if (contention == 0)
+            OSSL_sleep(1000);
+        if (!CRYPTO_THREAD_write_lock(rwtorturelock))
+            abort();
+        if (rwwriter_ptr != NULL) {
+            *new = *rwwriter_ptr + 1;
+        } else {
+            *new = 0;
+        }
+        old = rwwriter_ptr;
+        rwwriter_ptr = new;
+        if (!CRYPTO_THREAD_unlock(rwtorturelock))
+            abort();
+        if (old != NULL)
+            CRYPTO_free(old, __FILE__, __LINE__);
+        t2 = ossl_time_now();
+        if ((ossl_time2seconds(t2) - ossl_time2seconds(t1)) >= 4)
+            break;
+    }
+    *iterations = count;
+    return;
+}
+
+static void rwwriter1_fn(void)
+{
+    int local;
+
+    TEST_info("Starting writer1");
+    rwwriter_fn(1, &rwwriter1_iterations);
+    CRYPTO_atomic_add(&rwwriter1_done, 1, &local, atomiclock);
+}
+
+static void rwwriter2_fn(void)
+{
+    int local;
+
+    TEST_info("Starting writer 2");
+    rwwriter_fn(2, &rwwriter2_iterations);
+    CRYPTO_atomic_add(&rwwriter2_done, 1, &local, atomiclock);
+}
+
+static void rwreader_fn(int *iterations)
+{
+    unsigned int count = 0;
+
+    int old = 0;
+    int lw1 = 0;
+    int lw2 = 0;
+
+    if (CRYPTO_THREAD_read_lock(rwtorturelock) == 0)
+            abort();
+
+    while (lw1 != 1 || lw2 != 1) {
+        CRYPTO_atomic_add(&rwwriter1_done, 0, &lw1, atomiclock);
+        CRYPTO_atomic_add(&rwwriter2_done, 0, &lw2, atomiclock);
+
+        count++;
+        if (rwwriter_ptr != NULL && old > *rwwriter_ptr) {
+            TEST_info("rwwriter pointer went backwards\n");
+            rw_torture_result = 0;
+        }
+        if (CRYPTO_THREAD_unlock(rwtorturelock) == 0)
+            abort();
+        *iterations = count;
+        if (rw_torture_result == 0) {
+            *iterations = count;
+            return;
+        }
+        if (CRYPTO_THREAD_read_lock(rwtorturelock) == 0)
+            abort();
+    }
+    *iterations = count;
+    if (CRYPTO_THREAD_unlock(rwtorturelock) == 0)
+            abort();
+}
+
+static void rwreader1_fn(void)
+{
+    TEST_info("Starting reader 1");
+    rwreader_fn(&rwreader1_iterations);
+}
+
+static void rwreader2_fn(void)
+{
+    TEST_info("Starting reader 2");
+    rwreader_fn(&rwreader2_iterations);
+}
+
+static thread_t rwwriter1;
+static thread_t rwwriter2;
+static thread_t rwreader1;
+static thread_t rwreader2;
+
+static int _torture_rw(void)
+{
+    double tottime = 0;
+    int ret = 0;
+    double avr, avw;
+    OSSL_TIME t1, t2;
+    struct timeval dtime;
+
+    rwtorturelock = CRYPTO_THREAD_lock_new();
+    atomiclock = CRYPTO_THREAD_lock_new();
+    if (!TEST_ptr(rwtorturelock) || !TEST_ptr(atomiclock))
+        goto out;
+
+    rwwriter1_iterations = 0;
+    rwwriter2_iterations = 0;
+    rwreader1_iterations = 0;
+    rwreader2_iterations = 0;
+    rwwriter1_done = 0;
+    rwwriter2_done = 0;
+    rw_torture_result = 1;
+
+    memset(&rwwriter1, 0, sizeof(thread_t));
+    memset(&rwwriter2, 0, sizeof(thread_t));
+    memset(&rwreader1, 0, sizeof(thread_t));
+    memset(&rwreader2, 0, sizeof(thread_t));
+
+    TEST_info("Staring rw torture");
+    t1 = ossl_time_now();
+    if (!TEST_true(run_thread(&rwreader1, rwreader1_fn))
+        || !TEST_true(run_thread(&rwreader2, rwreader2_fn))
+        || !TEST_true(run_thread(&rwwriter1, rwwriter1_fn))
+        || !TEST_true(run_thread(&rwwriter2, rwwriter2_fn))
+        || !TEST_true(wait_for_thread(rwwriter1))
+        || !TEST_true(wait_for_thread(rwwriter2))
+        || !TEST_true(wait_for_thread(rwreader1))
+        || !TEST_true(wait_for_thread(rwreader2)))
+        goto out;
+
+    t2 = ossl_time_now();
+    dtime = ossl_time_to_timeval(ossl_time_subtract(t2, t1));
+    tottime = dtime.tv_sec + (dtime.tv_usec / 1e6);
+    TEST_info("rw_torture_result is %d\n", rw_torture_result);
+    TEST_info("performed %d reads and %d writes over 2 read and 2 write threads in %e seconds",
+              rwreader1_iterations + rwreader2_iterations,
+              rwwriter1_iterations + rwwriter2_iterations, tottime);
+    if ((rwreader1_iterations + rwreader2_iterations == 0)
+        || (rwwriter1_iterations + rwwriter2_iterations == 0)) {
+        TEST_info("Threads did not iterate\n");
+        goto out;
+    }
+    avr = tottime / (rwreader1_iterations + rwreader2_iterations);
+    avw = (tottime / (rwwriter1_iterations + rwwriter2_iterations));
+    TEST_info("Average read time %e/read", avr);
+    TEST_info("Averate write time %e/write", avw);
+
+    if (TEST_int_eq(rw_torture_result, 1))
+        ret = 1;
+out:
+    CRYPTO_THREAD_lock_free(rwtorturelock);
+    CRYPTO_THREAD_lock_free(atomiclock);
+    rwtorturelock = NULL;
+    return ret;
+}
+
+static int torture_rw_low(void)
+{
+    contention = 0;
+    return _torture_rw();
+}
+
+static int torture_rw_high(void)
+{
+    contention = 1;
+    return _torture_rw();
+}
+
+
+static CRYPTO_RCU_LOCK *rcu_lock = NULL;
+
+static int writer1_done = 0;
+static int writer2_done = 0;
+static int reader1_iterations = 0;
+static int reader2_iterations = 0;
+static int writer1_iterations = 0;
+static int writer2_iterations = 0;
+static uint64_t *writer_ptr = NULL;
+static uint64_t global_ctr = 0;
+static int rcu_torture_result = 1;
+static void free_old_rcu_data(void *data)
+{
+    CRYPTO_free(data, NULL, 0);
+}
+
+static void writer_fn(int id, int *iterations)
+{
+    int count;
+    OSSL_TIME t1, t2;
+    uint64_t *old, *new;
+
+    t1 = ossl_time_now();
+
+    for (count = 0; ; count++) {
+        new = CRYPTO_zalloc(sizeof(uint64_t), NULL, 0);
+        if (contention == 0)
+            OSSL_sleep(1000);
+        ossl_rcu_write_lock(rcu_lock);
+        old = ossl_rcu_deref(&writer_ptr);
+        TSAN_ACQUIRE(&writer_ptr);
+        *new = global_ctr++;
+        ossl_rcu_assign_ptr(&writer_ptr, &new);
+        if (contention == 0)
+            ossl_rcu_call(rcu_lock, free_old_rcu_data, old);
+        ossl_rcu_write_unlock(rcu_lock);
+        if (contention != 0) {
+            ossl_synchronize_rcu(rcu_lock);
+            CRYPTO_free(old, NULL, 0);
+        }
+        t2 = ossl_time_now();
+        if ((ossl_time2seconds(t2) - ossl_time2seconds(t1)) >= 4)
+            break;
+    }
+    *iterations = count;
+    return;
+}
+
+static void writer1_fn(void)
+{
+    int local;
+
+    TEST_info("Starting writer1");
+    writer_fn(1, &writer1_iterations);
+    CRYPTO_atomic_add(&writer1_done, 1, &local, atomiclock);
+}
+
+static void writer2_fn(void)
+{
+    int local;
+
+    TEST_info("Starting writer2");
+    writer_fn(2, &writer2_iterations);
+    CRYPTO_atomic_add(&writer2_done, 1, &local, atomiclock);
+}
+
+static void reader_fn(int *iterations)
+{
+    unsigned int count = 0;
+    uint64_t *valp;
+    uint64_t val;
+    uint64_t oldval = 0;
+    int lw1 = 0;
+    int lw2 = 0;
+
+    while (lw1 != 1 || lw2 != 1) {
+        CRYPTO_atomic_add(&writer1_done, 0, &lw1, atomiclock);
+        CRYPTO_atomic_add(&writer2_done, 0, &lw2, atomiclock);
+        count++;
+        ossl_rcu_read_lock(rcu_lock);
+        valp = ossl_rcu_deref(&writer_ptr);
+        val = (valp == NULL) ? 0 : *valp;
+
+        if (oldval > val) {
+            TEST_info("rcu torture value went backwards! %llu : %llu", (unsigned long long)oldval, (unsigned long long)val);
+            rcu_torture_result = 0;
+        }
+        oldval = val; /* just try to deref the pointer */
+        ossl_rcu_read_unlock(rcu_lock);
+        if (rcu_torture_result == 0) {
+            *iterations = count;
+            return;
+        }
+    }
+    *iterations = count;
+}
+
+static void reader1_fn(void)
+{
+    TEST_info("Starting reader 1");
+    reader_fn(&reader1_iterations);
+}
+
+static void reader2_fn(void)
+{
+    TEST_info("Starting reader 2");
+    reader_fn(&reader2_iterations);
+}
+
+static thread_t writer1;
+static thread_t writer2;
+static thread_t reader1;
+static thread_t reader2;
+
+static int _torture_rcu(void)
+{
+    OSSL_TIME t1, t2;
+    struct timeval dtime;
+    double tottime;
+    double avr, avw;
+    int rc = 0;
+
+    atomiclock = CRYPTO_THREAD_lock_new();
+    if (!TEST_ptr(atomiclock))
+        goto out;
+
+    memset(&writer1, 0, sizeof(thread_t));
+    memset(&writer2, 0, sizeof(thread_t));
+    memset(&reader1, 0, sizeof(thread_t));
+    memset(&reader2, 0, sizeof(thread_t));
+
+    writer1_iterations = 0;
+    writer2_iterations = 0;
+    reader1_iterations = 0;
+    reader2_iterations = 0;
+    writer1_done = 0;
+    writer2_done = 0;
+    rcu_torture_result = 1;
+
+    rcu_lock = ossl_rcu_lock_new(contention == 2 ? 4 : 1, NULL);
+    if (rcu_lock == NULL)
+        goto out;
+
+    TEST_info("Staring rcu torture");
+    t1 = ossl_time_now();
+    if (!TEST_true(run_thread(&reader1, reader1_fn))
+        || !TEST_true(run_thread(&reader2, reader2_fn))
+        || !TEST_true(run_thread(&writer1, writer1_fn))
+        || !TEST_true(run_thread(&writer2, writer2_fn))
+        || !TEST_true(wait_for_thread(writer1))
+        || !TEST_true(wait_for_thread(writer2))
+        || !TEST_true(wait_for_thread(reader1))
+        || !TEST_true(wait_for_thread(reader2)))
+        goto out;
+
+    t2 = ossl_time_now();
+    dtime = ossl_time_to_timeval(ossl_time_subtract(t2, t1));
+    tottime = dtime.tv_sec + (dtime.tv_usec / 1e6);
+    TEST_info("rcu_torture_result is %d\n", rcu_torture_result);
+    TEST_info("performed %d reads and %d writes over 2 read and 2 write threads in %e seconds",
+              reader1_iterations + reader2_iterations,
+              writer1_iterations + writer2_iterations, tottime);
+    if ((reader1_iterations + reader2_iterations == 0)
+        || (writer1_iterations + writer2_iterations == 0)) {
+        TEST_info("Threads did not iterate\n");
+        goto out;
+    }
+    avr = tottime / (reader1_iterations + reader2_iterations);
+    avw = tottime / (writer1_iterations + writer2_iterations);
+    TEST_info("Average read time %e/read", avr);
+    TEST_info("Average write time %e/write", avw);
+
+    if (!TEST_int_eq(rcu_torture_result, 1))
+        goto out;
+
+    rc = 1;
+out:
+    ossl_rcu_lock_free(rcu_lock);
+    CRYPTO_THREAD_lock_free(atomiclock);
+    if (!TEST_int_eq(rcu_torture_result, 1))
+        return 0;
+
+    return rc;
+}
+
+static int torture_rcu_low(void)
+{
+    contention = 0;
+    return _torture_rcu();
+}
+
+static int torture_rcu_high(void)
+{
+    contention = 1;
+    return _torture_rcu();
+}
+
+static int torture_rcu_high2(void)
+{
+    contention = 2;
+    return _torture_rcu();
+}
+#endif
 
 static CRYPTO_ONCE once_run = CRYPTO_ONCE_STATIC_INIT;
 static unsigned once_run_count = 0;
@@ -242,6 +652,52 @@ static int test_atomic(void)
 
     ret64 = 0;
     if (!TEST_true(CRYPTO_atomic_load(&val64, &ret64, lock)))
+        goto err;
+
+    if (!TEST_uint_eq((unsigned int)val64, 3)
+            || !TEST_uint_eq((unsigned int)val64, (unsigned int)ret64))
+        goto err;
+
+    ret64 = 0;
+
+    if (CRYPTO_atomic_and(&val64, 5, &ret64, NULL)) {
+        /* This succeeds therefore we're on a platform with lockless atomics */
+        if (!TEST_uint_eq((unsigned int)val64, 1)
+                || !TEST_uint_eq((unsigned int)val64, (unsigned int)ret64))
+            goto err;
+    } else {
+        /* This failed therefore we're on a platform without lockless atomics */
+        if (!TEST_uint_eq((unsigned int)val64, 3)
+                || !TEST_int_eq((unsigned int)ret64, 0))
+            goto err;
+    }
+    val64 = 3;
+    ret64 = 0;
+
+    if (!TEST_true(CRYPTO_atomic_and(&val64, 5, &ret64, lock)))
+        goto err;
+
+    if (!TEST_uint_eq((unsigned int)val64, 1)
+            || !TEST_uint_eq((unsigned int)val64, (unsigned int)ret64))
+        goto err;
+
+    ret64 = 0;
+
+    if (CRYPTO_atomic_add64(&val64, 2, &ret64, NULL)) {
+        /* This succeeds therefore we're on a platform with lockless atomics */
+        if (!TEST_uint_eq((unsigned int)val64, 3)
+                || !TEST_uint_eq((unsigned int)val64, (unsigned int)ret64))
+            goto err;
+    } else {
+        /* This failed therefore we're on a platform without lockless atomics */
+        if (!TEST_uint_eq((unsigned int)val64, 1)
+                || !TEST_int_eq((unsigned int)ret64, 0))
+            goto err;
+    }
+    val64 = 1;
+    ret64 = 0;
+
+    if (!TEST_true(CRYPTO_atomic_add64(&val64, 2, &ret64, lock)))
         goto err;
 
     if (!TEST_uint_eq((unsigned int)val64, 3)
@@ -411,7 +867,7 @@ static void thread_general_worker(void)
      * Therefore we use an insecure bit length where we can (512).
      * In the FIPS module though we must use a longer length.
      */
-    pkey = EVP_PKEY_Q_keygen(multi_libctx, NULL, "RSA", isfips ? 2048 : 512);
+    pkey = EVP_PKEY_Q_keygen(multi_libctx, NULL, "RSA", (size_t)(isfips ? 2048 : 512));
     if (!TEST_ptr(pkey))
         goto err;
 
@@ -562,6 +1018,45 @@ static int test_multi_shared_pkey(void)
     return test_multi_shared_pkey_common(&thread_shared_evp_pkey);
 }
 
+static void thread_release_shared_pkey(void)
+{
+    OSSL_sleep(0);
+    EVP_PKEY_free(shared_evp_pkey);
+}
+
+static int test_multi_shared_pkey_release(void)
+{
+    int testresult = 0;
+    size_t i = 1;
+
+    multi_intialise();
+    shared_evp_pkey = NULL;
+    if (!thread_setup_libctx(1, do_fips ? fips_and_default_providers
+                                        : default_provider)
+            || !TEST_ptr(shared_evp_pkey = load_pkey_pem(privkey, multi_libctx)))
+        goto err;
+    for (; i < 10; ++i) {
+        if (!TEST_true(EVP_PKEY_up_ref(shared_evp_pkey)))
+            goto err;
+    }
+
+    if (!start_threads(10, &thread_release_shared_pkey))
+        goto err;
+    i = 0;
+
+    if (!teardown_threads()
+            || !TEST_true(multi_success))
+        goto err;
+    testresult = 1;
+ err:
+    while (i > 0) {
+        EVP_PKEY_free(shared_evp_pkey);
+        --i;
+    }
+    thead_teardown_libctx();
+    return testresult;
+}
+
 static int test_multi_load_unload_provider(void)
 {
     EVP_MD *sha256 = NULL;
@@ -670,19 +1165,6 @@ static int test_obj_add(void)
                            1, default_provider);
 }
 
-static void test_lib_ctx_load_config_worker(void)
-{
-    if (!TEST_int_eq(OSSL_LIB_CTX_load_config(multi_libctx, config_file), 1))
-        multi_set_success(0);
-}
-
-static int test_lib_ctx_load_config(void)
-{
-    return thread_run_test(&test_lib_ctx_load_config_worker,
-                           MAXIMUM_THREADS, &test_lib_ctx_load_config_worker,
-                           1, default_provider);
-}
-
 #if !defined(OPENSSL_NO_DGRAM) && !defined(OPENSSL_NO_SOCK)
 static BIO *multi_bio1, *multi_bio2;
 
@@ -740,6 +1222,55 @@ err:
     return r;
 }
 #endif
+
+static const char *pemdataraw[] = {
+    "-----BEGIN RSA PRIVATE KEY-----\n",
+    "MIIBOgIBAAJBAMFcGsaxxdgiuuGmCkVImy4h99CqT7jwY3pexPGcnUFtR2Fh36Bp\n",
+    "oncwtkZ4cAgtvd4Qs8PkxUdp6p/DlUmObdkCAwEAAQJAUR44xX6zB3eaeyvTRzms\n",
+    "kHADrPCmPWnr8dxsNwiDGHzrMKLN+i/HAam+97HxIKVWNDH2ba9Mf1SA8xu9dcHZ\n",
+    "AQIhAOHPCLxbtQFVxlnhSyxYeb7O323c3QulPNn3bhOipElpAiEA2zZpBE8ZXVnL\n",
+    "74QjG4zINlDfH+EOEtjJJ3RtaYDugvECIBtsQDxXytChsRgDQ1TcXdStXPcDppie\n",
+    "dZhm8yhRTTBZAiAZjE/U9rsIDC0ebxIAZfn3iplWh84yGB3pgUI3J5WkoQIhAInE\n",
+    "HTUY5WRj5riZtkyGnbm3DvF+1eMtO2lYV+OuLcfE\n",
+    "-----END RSA PRIVATE KEY-----\n",
+    NULL
+};
+
+static void test_pem_read_one(void)
+{
+    EVP_PKEY *key = NULL;
+    BIO *pem = NULL;
+    char *pemdata;
+    size_t len;
+
+    pemdata = glue_strings(pemdataraw, &len);
+    if (pemdata == NULL) {
+        multi_set_success(0);
+        goto err;
+    }
+
+    pem = BIO_new_mem_buf(pemdata, len);
+    if (pem == NULL) {
+        multi_set_success(0);
+        goto err;
+    }
+
+    key = PEM_read_bio_PrivateKey(pem, NULL, NULL, NULL);
+    if (key == NULL)
+        multi_set_success(0);
+
+ err:
+    EVP_PKEY_free(key);
+    BIO_free(pem);
+    OPENSSL_free(pemdata);
+}
+
+/* Test reading PEM files in multiple threads */
+static int test_pem_read(void)
+{
+    return thread_run_test(&test_pem_read_one, MAXIMUM_THREADS,
+                           &test_pem_read_one, 1, default_provider);
+}
 
 typedef enum OPTION_choice {
     OPT_ERR = -1,
@@ -799,6 +1330,13 @@ int setup_tests(void)
     ADD_TEST(test_multi_default);
 
     ADD_TEST(test_lock);
+#if defined(OPENSSL_THREADS)
+    ADD_TEST(torture_rw_low);
+    ADD_TEST(torture_rw_high);
+    ADD_TEST(torture_rcu_low);
+    ADD_TEST(torture_rcu_high);
+    ADD_TEST(torture_rcu_high2);
+#endif
     ADD_TEST(test_once);
     ADD_TEST(test_thread_local);
     ADD_TEST(test_atomic);
@@ -810,12 +1348,13 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     ADD_TEST(test_multi_downgrade_shared_pkey);
 #endif
+    ADD_TEST(test_multi_shared_pkey_release);
     ADD_TEST(test_multi_load_unload_provider);
     ADD_TEST(test_obj_add);
-    ADD_TEST(test_lib_ctx_load_config);
 #if !defined(OPENSSL_NO_DGRAM) && !defined(OPENSSL_NO_SOCK)
     ADD_TEST(test_bio_dgram_pair);
 #endif
+    ADD_TEST(test_pem_read);
     return 1;
 }
 

@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2022 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2023 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -11,11 +11,11 @@ use strict;
 use warnings;
 
 use File::Spec;
-use OpenSSL::Test qw/:DEFAULT srctop_file/;
+use OpenSSL::Test qw/:DEFAULT srctop_file data_file/;
 
 setup("test_pkcs7");
 
-plan tests => 6;
+plan tests => 7;
 
 require_ok(srctop_file('test','recipes','tconversion.pl'));
 
@@ -38,5 +38,8 @@ ok(run(app(["openssl", "crl2pkcs7", "-nocrl",
 ok(run(app(["openssl", "pkcs7", "-print_certs", "-quiet",
             "-in", $p7file,
             "-out", $out])));
-is(cmp_text($out, srctop_file('test', 'recipes', '25-test_pkcs7_data', 'grfc.out')),
+is(cmp_text($out, data_file('grfc.out')),
     0, 'Comparing output');
+
+my $malformed = data_file('malformed.pkcs7');
+ok(run(app(["openssl", "pkcs7", "-in", $malformed])));

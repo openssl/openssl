@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -40,7 +40,8 @@ static const EVP_PBE_CTL builtin_pbe[] = {
     {EVP_PBE_TYPE_OUTER, NID_pbeWithSHA1AndRC2_CBC,
      NID_rc2_64_cbc, NID_sha1, PKCS5_PBE_keyivgen, PKCS5_PBE_keyivgen_ex},
 
-    {EVP_PBE_TYPE_OUTER, NID_id_pbkdf2, -1, -1, PKCS5_v2_PBKDF2_keyivgen},
+    {EVP_PBE_TYPE_OUTER, NID_id_pbkdf2, -1, -1, PKCS5_v2_PBKDF2_keyivgen,
+     PKCS5_v2_PBKDF2_keyivgen_ex},
 
     {EVP_PBE_TYPE_OUTER, NID_pbe_WithSHA1And128BitRC4,
      NID_rc4, NID_sha1, PKCS12_PBE_keyivgen, &PKCS12_PBE_keyivgen_ex},
@@ -143,7 +144,7 @@ int EVP_PBE_CipherInit_ex(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
         md = md_fetch = EVP_MD_fetch(libctx, OBJ_nid2sn(md_nid), propq);
         /* Fallback to legacy method */
         if (md == NULL)
-            EVP_get_digestbynid(md_nid);
+            md = EVP_get_digestbynid(md_nid);
 
         if (md == NULL) {
             (void)ERR_clear_last_mark();
@@ -259,6 +260,8 @@ int EVP_PBE_find_ex(int type, int pbe_nid, int *pcnid, int *pmnid,
     pbelu.pbe_nid = pbe_nid;
 
     if (pbe_algs != NULL) {
+        /* Ideally, this would be done under lock */
+        sk_EVP_PBE_CTL_sort(pbe_algs);
         i = sk_EVP_PBE_CTL_find(pbe_algs, &pbelu);
         pbetmp = sk_EVP_PBE_CTL_value(pbe_algs, i);
     }

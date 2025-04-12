@@ -84,6 +84,22 @@ OPENSSL_cleanse:
 ___
 }
 
+{
+my ($ret) = ('a0');
+$code .= <<___;
+################################################################################
+# size_t riscv_vlen_asm(void)
+# Return VLEN (i.e. the length of a vector register in bits).
+.p2align 3
+.globl riscv_vlen_asm
+.type riscv_vlen_asm,\@function
+riscv_vlen_asm:
+    csrr $ret, vlenb
+    slli $ret, $ret, 3
+    ret
+.size riscv_vlen_asm,.-riscv_vlen_asm
+___
+}
 
 print $code;
 close STDOUT or die "error closing STDOUT: $!";

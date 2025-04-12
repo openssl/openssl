@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 1998-2022 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 1998-2024 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -82,7 +82,7 @@ my $guess_patterns = [
     [ 'HP-UX:.*',
       sub {
           my $HPUXVER = $RELEASE;
-          $HPUXVER = s/[^.]*.[0B]*//;
+          $HPUXVER =~ s/[^.]*.[0B]*//;
           # HPUX 10 and 11 targets are unified
           return "${MACHINE}-hp-hpux1x" if $HPUXVER =~ m@1[0-9]@;
           return "${MACHINE}-hp-hpux";
@@ -92,7 +92,8 @@ my $guess_patterns = [
     [ 'IRIX64:.*',                  'mips4-sgi-irix64' ],
     [ 'Linux:[2-9]\..*',            '${MACHINE}-whatever-linux2' ],
     [ 'Linux:1\..*',                '${MACHINE}-whatever-linux1' ],
-    [ 'GNU.*',                      'hurd-x86' ],
+    [ 'GNU:.*86-AT386',             'hurd-x86' ],
+    [ 'GNU:.*86_64-AT386',          'hurd-x86_64' ],
     [ 'LynxOS:.*',                  '${MACHINE}-lynx-lynxos' ],
     # BSD/OS always says 386
     [ 'BSD\/OS:4\..*',              'i486-whatever-bsdi4' ],
@@ -321,6 +322,7 @@ sub determine_compiler_settings {
 
             # If we got a version number, process it
             if ($v) {
+                $v =~ s/[^.]*.0*// if $SYSTEM eq 'HP-UX';
                 $CCVENDOR = $k;
 
                 # The returned version is expected to be one of
@@ -354,8 +356,19 @@ sub determine_compiler_settings {
         if ( $SYSTEM eq 'OpenVMS' ) {
             my $v = `CC/VERSION NLA0:`;
             if ($? == 0) {
-                my ($vendor, $version) =
-                    ( $v =~ m/^([A-Z]+) C V([0-9\.-]+) on / );
+                # The normal releases have a version number prefixed with a V.
+                # However, other letters have been seen as well (for example X),
+                # and it's documented that HP (now VSI) reserve the letter W, X,
+                # Y and Z for their own uses.
+                my ($vendor, $arch, $version, $extra) =
+                    ( $v =~ m/^
+                              ([A-Z]+)                  # Usually VSI
+                              \s+ C
+                              (?:\s+(.*?))?             # Possible build arch
+                              \s+ [VWXYZ]([0-9\.-]+)    # Version
+                              (?:\s+\((.*?)\))?         # Possible extra data
+                              \s+ on
+                             /x );
                 my ($major, $minor, $patch) =
                     ( $version =~ m/^([0-9]+)\.([0-9]+)-0*?(0|[1-9][0-9]*)$/ );
                 $CC = 'CC';
@@ -671,6 +684,17 @@ EOF
                                     defines => [ 'B_ENDIAN' ] } ],
       [ 'sh.*-.*-linux2',         { target => "linux-generic32",
                                     defines => [ 'L_ENDIAN' ] } ],
+      [ 'loongarch64-.*-linux2',
+        sub {
+            my $disable = [ 'asm' ];
+            if ( okrun('echo xvadd.w \$xr0,\$xr0,\$xr0',
+                       "$CC -c -x assembler - -o /dev/null 2>/dev/null") ) {
+                $disable = [];
+            }
+            return { target => "linux64-loongarch64",
+                     disable => $disable, };
+        }
+      ],
       [ 'm68k.*-.*-linux2',       { target => "linux-generic32",
                                     defines => [ 'B_ENDIAN' ] } ],
       [ 's390-.*-linux2',         { target => "linux-generic32",
@@ -726,7 +750,7 @@ EOF
                     # $GCC_ARCH denotes default ABI chosen by compiler driver
                     # (first one found on the $PATH). I assume that user
                     # expects certain consistency with the rest of his builds
-                    # and therefore switch over to 64-bit. <appro>
+                    # and therefore switch over to 64-bit. <@dot-asm>
                     print <<EOF;
 WARNING! To build 32-bit package, do this:
          $WHERE/Configure solaris-sparcv9-gcc
@@ -780,8 +804,10 @@ EOF
       [ 'powerpc64le-.*-.*bsd.*', { target => "BSD-ppc64le" } ],
       [ 'riscv64-.*-.*bsd.*',     { target => "BSD-riscv64" } ],
       [ 'sparc64-.*-.*bsd.*',     { target => "BSD-sparc64" } ],
+      [ 'ia64-.*-openbsd.*',      { target => "BSD-nodef-ia64" } ],
       [ 'ia64-.*-.*bsd.*',        { target => "BSD-ia64" } ],
       [ 'x86_64-.*-dragonfly.*',  { target => "BSD-x86_64" } ],
+      [ 'amd64-.*-openbsd.*',     { target => "BSD-nodef-x86_64" } ],
       [ 'amd64-.*-.*bsd.*',       { target => "BSD-x86_64" } ],
       [ 'arm64-.*-.*bsd.*',       { target => "BSD-aarch64" } ],
       [ 'armv6-.*-.*bsd.*',       { target => "BSD-armv4" } ],
@@ -803,6 +829,7 @@ EOF
                      disable => [ 'sse2' ] };
         }
       ],
+      [ '.*-.*-openbsd.*',        { target => "BSD-nodef-generic32" } ],
       [ '.*-.*-.*bsd.*',          { target => "BSD-generic32" } ],
       [ 'x86_64-.*-haiku',        { target => "haiku-x86_64" } ],
       [ '.*-.*-haiku',            { target => "haiku-x86" } ],
@@ -832,6 +859,7 @@ EOF
                                     cflags => [ '-march=armv7-a' ],
                                     cxxflags => [ '-march=armv7-a' ] } ],
       [ 'arm.*-.*-android',       { target => "android-armeabi" } ],
+      [ 'riscv64-.*-android',     { target => "android-riscv64" } ],
       [ '.*-hpux1.*',
         sub {
             my $KERNEL_BITS = $ENV{KERNEL_BITS};

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -177,14 +177,18 @@ static unsigned char cipher_ecb2[NUM_TESTS - 1][8] = {
     {0x08, 0xD7, 0xB4, 0xFB, 0x62, 0x9D, 0x08, 0x85}
 };
 
-static unsigned char cbc_key[8] =
-    { 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef };
-static unsigned char cbc2_key[8] =
-    { 0xf1, 0xe0, 0xd3, 0xc2, 0xb5, 0xa4, 0x97, 0x86 };
-static unsigned char cbc3_key[8] =
-    { 0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10 };
-static unsigned char cbc_iv[8] =
-    { 0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10 };
+static unsigned char cbc_key[8] = {
+    0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef
+};
+static unsigned char cbc2_key[8] = {
+    0xf1, 0xe0, 0xd3, 0xc2, 0xb5, 0xa4, 0x97, 0x86
+};
+static unsigned char cbc3_key[8] = {
+    0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10
+};
+static unsigned char cbc_iv[8] = {
+    0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10
+};
 /*
  * Changed the following text constant to binary so it will work on ebcdic
  * machines :-)
@@ -208,8 +212,9 @@ static unsigned char cbc_ok[32] = {
 # ifdef SCREW_THE_PARITY
 #  error "SCREW_THE_PARITY is not meant to be defined."
 #  error "Original vectors are preserved for reference only."
-static unsigned char cbc2_key[8] =
-    { 0xf0, 0xe1, 0xd2, 0xc3, 0xb4, 0xa5, 0x96, 0x87 };
+static unsigned char cbc2_key[8] = {
+    0xf0, 0xe1, 0xd2, 0xc3, 0xb4, 0xa5, 0x96, 0x87
+};
 static unsigned char xcbc_ok[32] = {
     0x86, 0x74, 0x81, 0x0D, 0x61, 0xA4, 0xA5, 0x48,
     0xB9, 0x93, 0x03, 0xE1, 0xB8, 0xBB, 0xBD, 0xBD,
@@ -239,10 +244,12 @@ static unsigned char pcbc_ok[32] = {
     0xf7, 0x17, 0x46, 0x3b, 0x8a, 0xb3, 0xcc, 0x88
 };
 
-static unsigned char cfb_key[8] =
-    { 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef };
-static unsigned char cfb_iv[8] =
-    { 0x12, 0x34, 0x56, 0x78, 0x90, 0xab, 0xcd, 0xef };
+static unsigned char cfb_key[8] = {
+    0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef
+};
+static unsigned char cfb_iv[8] = {
+    0x12, 0x34, 0x56, 0x78, 0x90, 0xab, 0xcd, 0xef
+};
 static unsigned char cfb_buf1[40], cfb_buf2[40], cfb_tmp[8];
 static unsigned char plain[24] = {
     0x4e, 0x6f, 0x77, 0x20, 0x69, 0x73,
@@ -276,10 +283,12 @@ static unsigned char cfb_cipher64[24] = {
     0x1A, 0x92, 0xF7, 0x84, 0x03, 0x46, 0x71, 0x33, 0x89, 0x8E, 0xA6, 0x22
 };
 
-static unsigned char ofb_key[8] =
-    { 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef };
-static unsigned char ofb_iv[8] =
-    { 0x12, 0x34, 0x56, 0x78, 0x90, 0xab, 0xcd, 0xef };
+static unsigned char ofb_key[8] = {
+    0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef
+};
+static unsigned char ofb_iv[8] = {
+    0x12, 0x34, 0x56, 0x78, 0x90, 0xab, 0xcd, 0xef
+};
 static unsigned char ofb_buf1[24], ofb_buf2[24], ofb_tmp[8];
 static unsigned char ofb_cipher[24] = {
     0xf3, 0x09, 0x62, 0x49, 0xc7, 0xf4, 0x6e, 0x51,
@@ -287,8 +296,9 @@ static unsigned char ofb_cipher[24] = {
     0x3d, 0x6d, 0x5b, 0xe3, 0x25, 0x5a, 0xf8, 0xc3
 };
 static DES_LONG cbc_cksum_ret = 0xF7FE62B4L;
-static unsigned char cbc_cksum_data[8] =
-    { 0x1D, 0x26, 0x93, 0x97, 0xf7, 0xfe, 0x62, 0xb4 };
+static unsigned char cbc_cksum_data[8] = {
+    0x1D, 0x26, 0x93, 0x97, 0xf7, 0xfe, 0x62, 0xb4
+};
 
 static char *pt(const unsigned char *p, char buf[DATA_BUF_SIZE])
 {
@@ -838,6 +848,29 @@ static int test_des_check_bad_parity(int n)
 
     return TEST_int_eq(DES_check_key_parity(key), bad_parity_keys[n].expect);
 }
+
+/* Test that two key 3DES can generate a random key without error */
+static int test_des_two_key(void)
+{
+    int res = 0;
+    EVP_CIPHER *cipher = NULL;
+    EVP_CIPHER_CTX *ctx = NULL;
+    unsigned char key[16];
+
+    if (!TEST_ptr(cipher = EVP_CIPHER_fetch(NULL, "DES-EDE-ECB", NULL))
+            || !TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+            || !EVP_CipherInit_ex(ctx, cipher, NULL, NULL, NULL, 1)
+            || !EVP_CIPHER_CTX_set_key_length(ctx, sizeof(key))
+            || !EVP_CIPHER_CTX_rand_key(ctx, key))
+        goto err;
+
+    res = 1;
+ err:
+    EVP_CIPHER_free(cipher);
+    EVP_CIPHER_CTX_free(ctx);
+    return res;
+}
+
 #endif
 
 int setup_tests(void)
@@ -866,6 +899,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_des_key_wrap, OSSL_NELEM(test_des_key_wrap_sizes));
     ADD_ALL_TESTS(test_des_weak_keys, OSSL_NELEM(weak_keys));
     ADD_ALL_TESTS(test_des_check_bad_parity, OSSL_NELEM(bad_parity_keys));
+    ADD_TEST(test_des_two_key);
 #endif
     return 1;
 }

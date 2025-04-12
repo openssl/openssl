@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2023 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -31,8 +31,8 @@ extern CRYPTO_RWLOCK *global_engine_lock;
                (void *)(e), (isfunct ? "funct" : "struct"),             \
                ((isfunct)                                               \
                 ? ((e)->funct_ref - (diff))                             \
-                : ((e)->struct_ref - (diff))),                          \
-               ((isfunct) ? (e)->funct_ref : (e)->struct_ref),          \
+                : (eng_struct_ref(e) - (diff))),                        \
+               ((isfunct) ? (e)->funct_ref : eng_struct_ref(e)),        \
                (OPENSSL_FILE), (OPENSSL_LINE))
 
 /*
@@ -46,8 +46,8 @@ typedef struct st_engine_cleanup_item {
     ENGINE_CLEANUP_CB *cb;
 } ENGINE_CLEANUP_ITEM;
 DEFINE_STACK_OF(ENGINE_CLEANUP_ITEM)
-void engine_cleanup_add_first(ENGINE_CLEANUP_CB *cb);
-void engine_cleanup_add_last(ENGINE_CLEANUP_CB *cb);
+int engine_cleanup_add_first(ENGINE_CLEANUP_CB *cb);
+int engine_cleanup_add_last(ENGINE_CLEANUP_CB *cb);
 
 /* We need stacks of ENGINEs for use in eng_table.c */
 DEFINE_STACK_OF(ENGINE)
@@ -157,5 +157,13 @@ struct engine_st {
 typedef struct st_engine_pile ENGINE_PILE;
 
 DEFINE_LHASH_OF_EX(ENGINE_PILE);
+
+static ossl_unused ossl_inline int eng_struct_ref(ENGINE *e)
+{
+    int res;
+
+    CRYPTO_GET_REF(&e->struct_ref, &res);
+    return res;
+}
 
 #endif                          /* OSSL_CRYPTO_ENGINE_ENG_LOCAL_H */

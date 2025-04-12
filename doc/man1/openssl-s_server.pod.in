@@ -7,6 +7,8 @@ openssl-s_server - SSL/TLS server program
 
 =head1 SYNOPSIS
 
+=for openssl duplicate options
+
 B<openssl> B<s_server>
 [B<-help>]
 [B<-port> I<+int>]
@@ -70,12 +72,11 @@ B<openssl> B<s_server>
 [B<-verify_quiet>]
 [B<-ign_eof>]
 [B<-no_ign_eof>]
-[B<-no_etm>]
 [B<-no_ems>]
 [B<-status>]
 [B<-status_verbose>]
 [B<-status_timeout> I<int>]
-[B<-proxy> I<[http[s]://][userinfo@]host[:port][/path]>]
+[B<-proxy> I<[http[s]://][userinfo@]host[:port][/path][?query][#fragment]>]
 [B<-no_proxy> I<addresses>]
 [B<-status_url> I<val>]
 [B<-status_file> I<infile>]
@@ -91,29 +92,9 @@ B<openssl> B<s_server>
 [B<-max_pipelines> I<+int>]
 [B<-naccept> I<+int>]
 [B<-read_buf> I<+int>]
-[B<-bugs>]
 [B<-no_tx_cert_comp>]
 [B<-no_rx_cert_comp>]
-[B<-no_comp>]
-[B<-comp>]
-[B<-no_ticket>]
-[B<-serverpref>]
-[B<-legacy_renegotiation>]
-[B<-no_renegotiation>]
-[B<-no_resumption_on_reneg>]
-[B<-allow_no_dhe_kex>]
-[B<-prioritize_chacha>]
-[B<-strict>]
-[B<-sigalgs> I<val>]
-[B<-client_sigalgs> I<val>]
-[B<-groups> I<val>]
-[B<-curves> I<val>]
-[B<-named_curve> I<val>]
-[B<-cipher> I<val>]
-[B<-ciphersuites> I<val>]
 [B<-dhparam> I<infile>]
-[B<-record_padding> I<val>]
-[B<-debug_broken_protocol>]
 [B<-nbio>]
 [B<-psk_identity> I<val>]
 [B<-psk_hint> I<val>]
@@ -151,6 +132,8 @@ B<openssl> B<s_server>
 {- $OpenSSL::safe::opt_trust_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
+[B<-enable_server_rpk>]
+[B<-enable_client_rpk>]
 
 =head1 DESCRIPTION
 
@@ -209,6 +192,10 @@ must supply a certificate or an error occurs.
 If the cipher suite cannot request a client certificate (for example an
 anonymous cipher suite or PSK) this option has no effect.
 
+By default, validation of any supplied client certificate and its chain
+is done w.r.t. the (D)TLS Client (C<sslclient>) purpose.
+For details see L<openssl-verification-options(1)/Certificate Extensions>.
+
 =item B<-cert> I<infile>
 
 The certificate to use, most servers cipher suites require the use of a
@@ -229,6 +216,8 @@ See L<openssl-format-options(1)> for details.
 
 A file or URI of untrusted certificates to use when attempting to build the
 certificate chain related to the certificate specified via the B<-cert> option.
+These untrusted certificates are sent to clients and used for generating
+certificate status (aka OCSP stapling) requests.
 The input can be in PEM, DER, or PKCS#12 format.
 
 =item B<-build_chain>
@@ -407,7 +396,6 @@ information about the ciphers used and various session parameters.
 The output is in HTML format so this option can be used with a web browser.
 The special URL C</renegcert> turns on client cert validation, and C</reneg>
 tells the server to request renegotiation.
-The B<-early_data> option cannot be used with this option.
 
 =item B<-WWW>, B<-HTTP>
 
@@ -423,7 +411,6 @@ Extensions of C<html>, C<htm>, and C<php> are C<text/html> and all others are
 C<text/plain>.
 In addition, the special URL C</stats> will return status
 information like the B<-www> option.
-Neither of these options can be used in conjunction with B<-early_data>.
 
 =item B<-http_server_binmode>
 
@@ -494,10 +481,6 @@ Ignore input EOF (default: when B<-quiet>).
 
 Do not ignore input EOF.
 
-=item B<-no_etm>
-
-Disable Encrypt-then-MAC negotiation.
-
 =item B<-no_ems>
 
 Disable Extended master secret negotiation.
@@ -510,18 +493,21 @@ Enables certificate status request support (aka OCSP stapling).
 
 Enables certificate status request support (aka OCSP stapling) and gives
 a verbose printout of the OCSP response.
+Use the B<-cert_chain> option to specify the certificate of the server's
+certificate signer that is required for certificate status requests.
 
 =item B<-status_timeout> I<int>
 
 Sets the timeout for OCSP response to I<int> seconds.
 
-=item B<-proxy> I<[http[s]://][userinfo@]host[:port][/path]>
+=item B<-proxy> I<[http[s]://][userinfo@]host[:port][/path][?query][#fragment]>
 
 The HTTP(S) proxy server to use for reaching the OCSP server unless B<-no_proxy>
 applies, see below.
+If the host string is an IPv6 address, it must be enclosed in C<[> and C<]>.
 The proxy port defaults to 80 or 443 if the scheme is C<https>; apart from that
 the optional C<http://> or C<https://> prefix is ignored,
-as well as any userinfo and path components.
+as well as any userinfo, path, query, and fragment components.
 Defaults to the environment variable C<http_proxy> if set, else C<HTTP_PROXY>
 in case no TLS is used, otherwise C<https_proxy> if set, else C<HTTPS_PROXY>.
 
@@ -603,11 +589,6 @@ effect if the buffer size is larger than the size that would otherwise be used
 and pipelining is in use (see L<SSL_CTX_set_default_read_buffer_len(3)> for
 further information).
 
-=item B<-bugs>
-
-There are several known bugs in SSL and TLS implementations. Adding this
-option enables various workarounds.
-
 =item B<-no_tx_cert_comp>
 
 Disables support for sending TLSv1.3 compressed certificates.
@@ -622,66 +603,11 @@ Disable negotiation of TLS compression.
 TLS compression is not recommended and is off by default as of
 OpenSSL 1.1.0.
 
-=item B<-comp>
-
-Enable negotiation of TLS compression.
-This option was introduced in OpenSSL 1.1.0.
-TLS compression is not recommended and is off by default as of
-OpenSSL 1.1.0.
-
-=item B<-no_ticket>
-
-Disable RFC4507bis session ticket support. This option has no effect if TLSv1.3
-is negotiated. See B<-num_tickets>.
-
 =item B<-num_tickets>
 
 Control the number of tickets that will be sent to the client after a full
 handshake in TLSv1.3. The default number of tickets is 2. This option does not
 affect the number of tickets sent after a resumption handshake.
-
-=item B<-serverpref>
-
-Use the server's cipher preferences, rather than the client's preferences.
-
-=item B<-prioritize_chacha>
-
-Prioritize ChaCha ciphers when preferred by clients. Requires B<-serverpref>.
-
-=item B<-no_resumption_on_reneg>
-
-Set the B<SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION> option.
-
-=item B<-client_sigalgs> I<val>
-
-Signature algorithms to support for client certificate authentication
-(colon-separated list).
-
-=item B<-named_curve> I<val>
-
-Specifies the elliptic curve to use. NOTE: this is single curve, not a list.
-For a list of all possible curves, use:
-
-    $ openssl ecparam -list_curves
-
-=item B<-cipher> I<val>
-
-This allows the list of TLSv1.2 and below ciphersuites used by the server to be
-modified. This list is combined with any TLSv1.3 ciphersuites that have been
-configured. When the client sends a list of supported ciphers the first client
-cipher also included in the server list is used. Because the client specifies
-the preference order, the order of the server cipherlist is irrelevant. See
-L<openssl-ciphers(1)> for more information.
-
-=item B<-ciphersuites> I<val>
-
-This allows the list of TLSv1.3 ciphersuites used by the server to be modified.
-This list is combined with any TLSv1.2 and below ciphersuites that have been
-configured. When the client sends a list of supported ciphers the first client
-cipher also included in the server list is used. Because the client specifies
-the preference order, the order of the server cipherlist is irrelevant. See
-L<openssl-ciphers(1)> command for more information. The format for this list is
-a simple colon (":") separated list of TLSv1.3 ciphersuite names.
 
 =item B<-dhparam> I<infile>
 
@@ -867,6 +793,26 @@ If the server requests a client certificate, then
 verification errors are displayed, for debugging, but the command will
 proceed unless the B<-verify_return_error> option is used.
 
+=item B<-enable_server_rpk>
+
+Enable support for sending raw public keys (RFC7250) to the client.
+A raw public key will be sent by the server, if solicited by the client,
+provided a suitable key and public certificate pair is configured.
+Clients that don't support raw public keys or prefer to use X.509
+certificates can still elect to receive X.509 certificates as usual.
+
+Raw public keys are extracted from the configured certificate/private key.
+
+=item B<-enable_client_rpk>
+
+Enable support for receiving raw public keys (RFC7250) from the client.
+Use of X.509 certificates by the client becomes optional, and clients that
+support raw public keys may elect to use them.
+Clients that don't support raw public keys or prefer to use X.509
+certificates can still elect to send X.509 certificates as usual.
+
+Raw public keys are extracted from the configured certificate/private key.
+
 =back
 
 =head1 CONNECTED COMMANDS
@@ -971,12 +917,17 @@ The
 The B<-srpvfile>, B<-srpuserseed>, and B<-engine>
 option were deprecated in OpenSSL 3.0.
 
-The B<-tfo>, B<-no_tx_cert_comp>, and B<-no_rx_cert_comp> options were added
-in OpenSSL 3.2.
+The
+B<-enable_client_rpk>,
+B<-enable_server_rpk>,
+B<-no_rx_cert_comp>,
+B<-no_tx_cert_comp>,
+and B<-tfo>
+options were added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2022 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2025 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

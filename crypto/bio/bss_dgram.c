@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2005-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -50,6 +50,26 @@
 # define M_METHOD_RECVFROM   3
 # define M_METHOD_WSARECVMSG 4
 
+# if defined(__GLIBC__) && defined(__GLIBC_PREREQ)
+#  if !(__GLIBC_PREREQ(2, 14))
+#   undef NO_RECVMMSG
+    /*
+     * Some old glibc versions may have recvmmsg and MSG_WAITFORONE flag, but
+     * not sendmmsg. We need both so force this to be disabled on these old
+     * versions
+     */
+#   define NO_RECVMMSG
+#  endif
+# endif
+# if defined(__GNU__)
+   /* GNU/Hurd does not have IP_PKTINFO yet */
+   #undef NO_RECVMSG
+   #define NO_RECVMSG
+# endif
+# if (defined(__ANDROID_API__) && __ANDROID_API__ < 21) || defined(_AIX)
+#  undef NO_RECVMMSG
+#  define NO_RECVMMSG
+# endif
 # if !defined(M_METHOD)
 #  if defined(OPENSSL_SYS_WINDOWS) && defined(BIO_HAVE_WSAMSG) && !defined(NO_WSARECVMSG)
 #   define M_METHOD  M_METHOD_WSARECVMSG
@@ -87,7 +107,7 @@
     || M_METHOD == M_METHOD_WSARECVMSG
 #  if defined(__APPLE__)
     /*
-     * CMSG_SPACE is not a constant expresson on OSX even though POSIX
+     * CMSG_SPACE is not a constant expression on OSX even though POSIX
      * says it's supposed to be. This should be adequate.
      */
 #   define BIO_CMSG_ALLOC_LEN   64
@@ -205,11 +225,13 @@ typedef struct bio_dgram_sctp_save_message_st {
     int length;
 } bio_dgram_sctp_save_message;
 
+/*
+ * Note: bio_dgram_data must be first here
+ * as we use dgram_ctrl for underlying dgram operations
+ * which will cast this struct to a bio_dgram_data
+ */
 typedef struct bio_dgram_sctp_data_st {
-    BIO_ADDR peer;
-    unsigned int connected;
-    unsigned int _errno;
-    unsigned int mtu;
+    bio_dgram_data dgram;
     struct bio_dgram_sctp_sndinfo sndinfo;
     struct bio_dgram_sctp_rcvinfo rcvinfo;
     struct bio_dgram_sctp_prinfo prinfo;
@@ -538,6 +560,8 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
     socklen_t addr_len;
     BIO_ADDR addr;
 # endif
+    struct sockaddr_storage ss;
+    socklen_t ss_len = sizeof(ss);
 
     data = (bio_dgram_data *)b->ptr;
 
@@ -555,6 +579,10 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
         b->shutdown = (int)num;
         b->init = 1;
         dgram_update_local_addr(b);
+        if (getpeername(b->num, (struct sockaddr *)&ss, &ss_len) == 0) {
+            BIO_ADDR_make(&data->peer, BIO_ADDR_sockaddr((BIO_ADDR *)&ss));
+            data->connected = 1;
+        }
 # if defined(SUPPORT_LOCAL_ADDR)
         if (data->local_addr_enabled) {
             if (enable_local_addr(b, 1) < 1)
@@ -721,6 +749,32 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
         break;
     case BIO_CTRL_DGRAM_SET_PEER:
         BIO_ADDR_make(&data->peer, BIO_ADDR_sockaddr((BIO_ADDR *)ptr));
+        break;
+    case BIO_CTRL_DGRAM_DETECT_PEER_ADDR:
+        {
+            BIO_ADDR xaddr, *p = &data->peer;
+            socklen_t xaddr_len = sizeof(xaddr.sa);
+
+            if (BIO_ADDR_family(p) == AF_UNSPEC) {
+                if (getpeername(b->num, (void *)&xaddr.sa, &xaddr_len) == 0
+                    && BIO_ADDR_family(&xaddr) != AF_UNSPEC) {
+                    p = &xaddr;
+                } else {
+                    ret = 0;
+                    break;
+                }
+            }
+
+            ret = BIO_ADDR_sockaddr_size(p);
+            if (num == 0 || num > ret)
+                num = ret;
+
+            memcpy(ptr, p, (ret = num));
+        }
+        break;
+    case BIO_C_SET_NBIO:
+        if (!BIO_socket_nbio(b->num, num != 0))
+            ret = 0;
         break;
     case BIO_CTRL_DGRAM_SET_NEXT_TIMEOUT:
         data->next_timeout = ossl_time_from_timeval(*(struct timeval *)ptr);
@@ -945,6 +999,13 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
         *(int *)ptr = data->local_addr_enabled;
         break;
 
+    case BIO_CTRL_DGRAM_GET_EFFECTIVE_CAPS:
+        ret = (long)(BIO_DGRAM_CAP_HANDLES_DST_ADDR
+                     | BIO_DGRAM_CAP_HANDLES_SRC_ADDR
+                     | BIO_DGRAM_CAP_PROVIDES_DST_ADDR
+                     | BIO_DGRAM_CAP_PROVIDES_SRC_ADDR);
+        break;
+
     case BIO_CTRL_GET_RPOLL_DESCRIPTOR:
     case BIO_CTRL_GET_WPOLL_DESCRIPTOR:
         {
@@ -1012,19 +1073,27 @@ static void translate_msg_win(BIO *b, WSAMSG *mh, WSABUF *iov,
 static void translate_msg(BIO *b, struct msghdr *mh, struct iovec *iov,
                           unsigned char *control, BIO_MSG *msg)
 {
+    bio_dgram_data *data;
+
     iov->iov_base = msg->data;
     iov->iov_len  = msg->data_len;
 
-    /* macOS requires msg_namelen be 0 if msg_name is NULL */
-    mh->msg_name = msg->peer != NULL ? &msg->peer->sa : NULL;
-    if (msg->peer != NULL && dgram_get_sock_family(b) == AF_INET)
-        mh->msg_namelen = sizeof(struct sockaddr_in);
+    data = (bio_dgram_data *)b->ptr;
+    if (data->connected == 0) {
+        /* macOS requires msg_namelen be 0 if msg_name is NULL */
+        mh->msg_name = msg->peer != NULL ? &msg->peer->sa : NULL;
+        if (msg->peer != NULL && dgram_get_sock_family(b) == AF_INET)
+            mh->msg_namelen = sizeof(struct sockaddr_in);
 #  if OPENSSL_USE_IPV6
-    else if (msg->peer != NULL && dgram_get_sock_family(b) == AF_INET6)
-        mh->msg_namelen = sizeof(struct sockaddr_in6);
+        else if (msg->peer != NULL && dgram_get_sock_family(b) == AF_INET6)
+            mh->msg_namelen = sizeof(struct sockaddr_in6);
 #  endif
-    else
+        else
+            mh->msg_namelen = 0;
+    } else {
+        mh->msg_name = NULL;
         mh->msg_namelen = 0;
+    }
 
     mh->msg_iov         = iov;
     mh->msg_iovlen      = 1;
@@ -1123,7 +1192,7 @@ static int pack_local(BIO *b, MSGHDR_TYPE *mh, const BIO_ADDR *local) {
         cmsg->cmsg_type  = IP_PKTINFO;
 
         info = (struct in_pktinfo *)BIO_CMSG_DATA(cmsg);
-#   if !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_CYGWIN)
+#   if !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_CYGWIN) && !defined(__FreeBSD__) && !defined(__QNX__)
         info->ipi_spec_dst      = local->s_in.sin_addr;
 #   endif
         info->ipi_addr.s_addr   = 0;
@@ -1423,8 +1492,8 @@ static int dgram_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
                  msg[0].data_len,
 #  endif
                  sysflags,
-                 msg[0].peer != NULL ? &msg[0].peer->sa : NULL,
-                 msg[0].peer != NULL ? sizeof(*msg[0].peer) : 0);
+                 msg[0].peer != NULL ? BIO_ADDR_sockaddr(msg[0].peer) : NULL,
+                 msg[0].peer != NULL ? BIO_ADDR_sockaddr_size(msg[0].peer) : 0);
     if (ret <= 0) {
         ERR_raise(ERR_LIB_SYS, get_last_socket_error());
         *num_processed = 0;
@@ -2057,7 +2126,7 @@ static int dgram_sctp_read(BIO *b, char *out, int outl)
         if (ret < 0) {
             if (BIO_dgram_should_retry(ret)) {
                 BIO_set_retry_read(b);
-                data->_errno = get_last_socket_error();
+                data->dgram._errno = get_last_socket_error();
             }
         }
 
@@ -2209,7 +2278,7 @@ static int dgram_sctp_write(BIO *b, const char *in, int inl)
     if (ret <= 0) {
         if (BIO_dgram_should_retry(ret)) {
             BIO_set_retry_write(b);
-            data->_errno = get_last_socket_error();
+            data->dgram._errno = get_last_socket_error();
         }
     }
     return ret;
@@ -2231,16 +2300,16 @@ static long dgram_sctp_ctrl(BIO *b, int cmd, long num, void *ptr)
          * Set to maximum (2^14) and ignore user input to enable transport
          * protocol fragmentation. Returns always 2^14.
          */
-        data->mtu = 16384;
-        ret = data->mtu;
+        data->dgram.mtu = 16384;
+        ret = data->dgram.mtu;
         break;
     case BIO_CTRL_DGRAM_SET_MTU:
         /*
          * Set to maximum (2^14) and ignore input to enable transport
          * protocol fragmentation. Returns always 2^14.
          */
-        data->mtu = 16384;
-        ret = data->mtu;
+        data->dgram.mtu = 16384;
+        ret = data->dgram.mtu;
         break;
     case BIO_CTRL_DGRAM_SET_CONNECTED:
     case BIO_CTRL_DGRAM_CONNECT:

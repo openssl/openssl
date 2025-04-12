@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -27,9 +27,14 @@ static void * alg##kbits##lc##_newctx(void *provctx)                           \
 {                                                                              \
     return alg##_##lc##_newctx(provctx, kbits);                                \
 }                                                                              \
+static void * alg##kbits##lc##_dupctx(void *src)                               \
+{                                                                              \
+    return alg##_##lc##_dupctx(src);                                           \
+}                                                                              \
 const OSSL_DISPATCH ossl_##alg##kbits##lc##_functions[] = {                    \
     { OSSL_FUNC_CIPHER_NEWCTX, (void (*)(void))alg##kbits##lc##_newctx },      \
     { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void))alg##_##lc##_freectx },        \
+    { OSSL_FUNC_CIPHER_DUPCTX, (void (*)(void))alg##kbits##lc##_dupctx },      \
     { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))ossl_##lc##_einit },      \
     { OSSL_FUNC_CIPHER_DECRYPT_INIT, (void (*)(void))ossl_##lc##_dinit },      \
     { OSSL_FUNC_CIPHER_UPDATE, (void (*)(void))ossl_##lc##_stream_update },    \
@@ -47,7 +52,7 @@ const OSSL_DISPATCH ossl_##alg##kbits##lc##_functions[] = {                    \
       (void (*)(void))ossl_cipher_aead_gettable_ctx_params },                  \
     { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS,                                    \
       (void (*)(void))ossl_cipher_aead_settable_ctx_params },                  \
-    { 0, NULL }                                                                \
+    OSSL_DISPATCH_END                                                          \
 }
 
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -20,6 +20,11 @@ static const struct puny_test {
     unsigned int raw[50];
     const char *encoded;
 } puny_cases[] = {
+    { /* Test of 4 byte codepoint using smileyface emoji */
+        { 0x1F600
+        },
+        "e28h"
+    },
     /* Test cases from RFC 3492 */
     {   /* Arabic (Egyptian) */
         { 0x0644, 0x064A, 0x0647, 0x0645, 0x0627, 0x0628, 0x062A, 0x0643, 0x0644,
@@ -164,9 +169,28 @@ static int test_punycode(int n)
     return 1;
 }
 
+static const struct bad_decode_test {
+    size_t outlen;
+    const char input[20];
+} bad_decode_tests[] = {
+    { 20, "xn--e-*" },   /* bad digit '*' */
+    { 10, "xn--e-999" }, /* loop > enc_len */
+    { 20, "xn--e-999999999" }, /* Too big */
+    { 20, {'x', 'n', '-', '-', (char)0x80, '-' } }, /* Not basic */
+    { 20, "xn--e-Oy65t" }, /* codepoint > 0x10FFFF */
+};
+
+static int test_a2ulabel_bad_decode(int tst)
+{
+    char out[20];
+
+    return TEST_int_eq(ossl_a2ulabel(bad_decode_tests[tst].input, out, bad_decode_tests[tst].outlen), -1);
+}
+
 static int test_a2ulabel(void)
 {
     char out[50];
+    char in[530] = { 0 };
 
     /*
      * The punycode being passed in and parsed is malformed but we're not
@@ -180,6 +204,18 @@ static int test_a2ulabel(void)
             || !TEST_int_eq(ossl_a2ulabel("xn--a.b.c", out, 7), 1)
             || !TEST_str_eq(out,"\xc2\x80.b.c"))
         return 0;
+
+    /* Test 4 byte smiley face */
+    if (!TEST_int_eq(ossl_a2ulabel("xn--e28h.com", out, 10), 1))
+        return 0;
+
+    /* Test that we dont overflow the fixed internal buffer of 512 bytes when the starting bytes are copied */
+    strcpy(in, "xn--");
+    memset(in + 4, 'e', 513);
+    memcpy(in + 517, "-3ya", 4);
+    if (!TEST_int_eq(ossl_a2ulabel(in, out, 50), -1))
+        return 0;
+
     return 1;
 }
 
@@ -253,5 +289,6 @@ int setup_tests(void)
     ADD_TEST(test_dotted_overflow);
     ADD_TEST(test_a2ulabel);
     ADD_TEST(test_puny_overrun);
+    ADD_ALL_TESTS(test_a2ulabel_bad_decode, OSSL_NELEM(bad_decode_tests));
     return 1;
 }

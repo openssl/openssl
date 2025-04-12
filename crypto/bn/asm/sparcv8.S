@@ -1,5 +1,5 @@
 .ident	"sparcv8.s, Version 1.4"
-.ident	"SPARC v8 ISA artwork by Andy Polyakov <appro@openssl.org>"
+.ident	"SPARC v8 ISA artwork by Andy Polyakov <https://github.com/dot-asm>"
 
 /*
  * ====================================================================
@@ -16,7 +16,7 @@
  * This is my modest contribution to OpenSSL project (see
  * http://www.openssl.org/ for more information about it) and is
  * a drop-in SuperSPARC ISA replacement for crypto/bn/bn_asm.c
- * module. For updates see http://fy.chalmers.se/~appro/hpe/.
+ * module.
  *
  * See bn_asm.sparc.v8plus.S for more details.
  */

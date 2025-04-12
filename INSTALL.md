@@ -2,8 +2,8 @@ Build and Install
 =================
 
 This document describes installation on all supported operating
-systems (the Unix/Linux family, including macOS), OpenVMS,
-and Windows).
+systems: the Unix/Linux family (including macOS), OpenVMS,
+and Windows.
 
 Table of Contents
 =================
@@ -52,6 +52,8 @@ To install OpenSSL, you will need:
  * Perl 5 with core modules (please read [NOTES-PERL.md](NOTES-PERL.md))
  * The Perl module `Text::Template` (please read [NOTES-PERL.md](NOTES-PERL.md))
  * an ANSI C compiler
+ * POSIX C library (at least POSIX.1-2008), or compatible types and
+   functionality.
  * a development environment in the form of development libraries and C
    header files
  * a supported operating system
@@ -64,6 +66,8 @@ issues and other details, please read one of these:
  * [Notes for Windows platforms](NOTES-WINDOWS.md)
  * [Notes for the DOS platform with DJGPP](NOTES-DJGPP.md)
  * [Notes for the OpenVMS platform](NOTES-VMS.md)
+ * [Notes for the HPE NonStop platform](NOTES-NONSTOP.md)
+ * [Notes on POSIX](NOTES-POSIX.md)
  * [Notes on Perl](NOTES-PERL.md)
  * [Notes on Valgrind](NOTES-VALGRIND.md)
 
@@ -141,7 +145,7 @@ Use the following commands to configure, build and test OpenSSL.
 The testing is optional, but recommended if you intend to install
 OpenSSL for production use.
 
-### Unix / Linux / macOS
+### Unix / Linux / macOS / NonStop
 
     $ ./Configure
     $ make
@@ -167,8 +171,9 @@ issue the following commands to build OpenSSL.
 As mentioned in the [Choices](#choices) section, you need to pick one
 of the four Configure targets in the first command.
 
-Most likely you will be using the `VC-WIN64A` target for 64bit Windows
-binaries (AMD64) or `VC-WIN32` for 32bit Windows binaries (X86).
+Most likely you will be using the `VC-WIN64A`/`VC-WIN64A-HYBRIDCRT` target for
+64bit Windows binaries (AMD64) or `VC-WIN32`/`VC-WIN32-HYBRIDCRT` for 32bit
+Windows binaries (X86).
 The other two options are `VC-WIN64I` (Intel IA64, Itanium) and
 `VC-CE` (Windows CE) are rather uncommon nowadays.
 
@@ -197,7 +202,7 @@ the global search path for system libraries.
 Finally, if you plan on using the FIPS module, you need to read the
 [Post-installation Notes](#post-installation-notes) further down.
 
-### Unix / Linux / macOS
+### Unix / Linux / macOS / NonStop
 
 Depending on your distribution, you need to run the following command as
 root user or prepend `sudo` to the command:
@@ -505,11 +510,6 @@ This source is ignored by the FIPS provider.
 Use the `RDSEED` or `RDRAND` command on x86 or `RNDRRS` command on aarch64
 if provided by the CPU.
 
-### librandom
-
-Use librandom (not implemented yet).
-This source is ignored by the FIPS provider.
-
 ### none
 
 Disable automatic seeding.  This is the default on some operating systems where
@@ -521,6 +521,35 @@ at the end of this document.
 
 [rng]: #notes-on-random-number-generation
 
+### jitter
+
+When configured with `enable-jitter`, a "JITTER" RNG is compiled that
+can provide an alternative software seed source. It can be configured
+by setting `seed` option in `openssl.cnf`. A minimal `openssl.cnf` is
+shown below:
+
+    openssl_conf = openssl_init
+
+    [openssl_init]
+    random = random
+
+    [random]
+    seed=JITTER
+
+It uses a statically linked [jitterentropy-library] as the seed source.
+
+Additional configuration flags available:
+
+    --with-jitter-include=DIR
+
+The directory for the location of the jitterentropy.h include file, if
+it is outside the system include path.
+
+    --with-jitter-lib=DIR
+
+This is the directory containing the static libjitterentropy.a
+library, if it is outside the system library path.
+
 Setting the FIPS HMAC key
 -------------------------
 
@@ -528,7 +557,7 @@ Setting the FIPS HMAC key
 
 As part of its self-test validation, the FIPS module must verify itself
 by performing a SHA-256 HMAC computation on itself. The default key is
-the SHA256 value of "the holy handgrenade of antioch" and is sufficient
+the SHA256 value of "holy hand grenade of antioch" and is sufficient
 for meeting the FIPS requirements.
 
 To change the key to a different value, use this flag. The value should
@@ -582,6 +611,11 @@ access to algorithm internals that are not normally accessible.
 Additional information related to ACVP can be found at
 <https://github.com/usnistgov/ACVP>.
 
+### no-apps
+
+Do not build apps, e.g. the openssl program. This is handy for minimization.
+This option also disables tests.
+
 ### no-asm
 
 Do not use assembler code.
@@ -593,6 +627,14 @@ be used even with this option.
 ### no-async
 
 Do not build support for async operations.
+
+### no-atexit
+
+Do not use `atexit()` in libcrypto builds.
+
+`atexit()` has varied semantics between platforms and can cause SIGSEGV in some
+circumstances. This option disables the atexit registration of OPENSSL_cleanup.
+By default, NonStop configurations use `no-atexit`.
 
 ### no-autoalginit
 
@@ -710,6 +752,10 @@ Don't build support for datagram based BIOs.
 
 Selecting this option will also force the disabling of DTLS.
 
+### no-docs
+
+Don't build and install documentation, i.e. manual pages in various forms.
+
 ### no-dso
 
 Don't build support for loading Dynamic Shared Objects (DSO)
@@ -734,6 +780,12 @@ Don't build support for Elliptic Curves.
 ### no-ec2m
 
 Don't build support for binary Elliptic Curves
+
+### no-tls-deprecated-ec
+
+Disable legacy TLS EC groups that were deprecated in RFC8422.  These are the
+Koblitz curves, B<secp160r1>, B<secp160r2>, B<secp192r1>, B<secp224r1>, and the
+binary Elliptic curves that would also be disabled by C<no-ec2m>.
 
 ### enable-ec_nistp_64_gcc_128
 
@@ -788,6 +840,26 @@ Build (and install) the FIPS provider
 Don't perform FIPS module run-time checks related to enforcement of security
 parameters such as minimum security strength of keys.
 
+### no-fips-post
+
+Don't perform FIPS module Power On Self Tests.
+
+This option MUST be used for debugging only as it makes the FIPS provider
+non-compliant. It is useful when setting breakpoints in FIPS algorithms.
+
+### enable-fips-jitter
+
+Use the CPU Jitter library as a FIPS validated entropy source.
+
+This option will only produce a compliant FIPS provider if you have:
+
+1. independently performed the required [SP 800-90B] entropy assessments;
+2. meet the minimum required entropy as specified by [jitterentropy-library];
+3. obtain an [ESV] certificate for the [jitterentropy-library] and
+4. have had the resulting FIPS provider certified by the [CMVP].
+
+Failure to do all of these will produce a non-compliant FIPS provider.
+
 ### enable-fuzz-libfuzzer, enable-fuzz-afl
 
 Build with support for fuzzing using either libfuzzer or AFL.
@@ -805,6 +877,10 @@ Note that if this feature is enabled then GOST ciphersuites are only available
 if the GOST algorithms are also available through loading an externally supplied
 engine.
 
+### no-http
+
+Disable HTTP support.
+
 ### no-legacy
 
 Don't build the legacy provider.
@@ -814,6 +890,16 @@ Disabling this also disables the legacy algorithms: MD2 (already disabled by def
 ### no-makedepend
 
 Don't generate dependencies.
+
+### no-ml-dsa
+
+Disable Module-Lattice-Based Digital Signature Standard (ML-DSA) support.
+ML-DSA is based on CRYSTALS-DILITHIUM. See [FIPS 204].
+
+### no-ml-kem
+
+Disable Module-Lattice-Based Key-Encapsulation Mechanism Standard (ML-KEM)
+support.  ML-KEM is based on CRYSTALS-KYBER. See [FIPS 203].
 
 ### no-module
 
@@ -847,6 +933,10 @@ As synonym for `no-padlockeng`.  Deprecated and should not be used.
 
 Don't build with support for Position Independent Code.
 
+### enable-pie
+
+Build with support for Position Independent Execution.
+
 ### no-pinshared
 
 Don't pin the shared libraries.
@@ -855,14 +945,22 @@ By default OpenSSL will attempt to stay in memory until the process exits.
 This is so that libcrypto and libssl can be properly cleaned up automatically
 via an `atexit()` handler.  The handler is registered by libcrypto and cleans
 up both libraries.  On some platforms the `atexit()` handler will run on unload of
-libcrypto (if it has been dynamically loaded) rather than at process exit.  This
-option can be used to stop OpenSSL from attempting to stay in memory until the
+libcrypto (if it has been dynamically loaded) rather than at process exit.
+
+This option can be used to stop OpenSSL from attempting to stay in memory until the
 process exits.  This could lead to crashes if either libcrypto or libssl have
 already been unloaded at the point that the atexit handler is invoked, e.g.  on a
 platform which calls `atexit()` on unload of the library, and libssl is unloaded
-before libcrypto then a crash is likely to happen.  Applications can suppress
-running of the `atexit()` handler at run time by using the
-`OPENSSL_INIT_NO_ATEXIT` option to `OPENSSL_init_crypto()`.
+before libcrypto then a crash is likely to happen.
+
+Note that shared library pinning is not automatically disabled for static builds,
+i.e., `no-shared` does not imply `no-pinshared`. This may come as a surprise when
+linking libcrypto statically into a shared third-party library, because in this
+case the shared library will be pinned. To prevent this behaviour, you need to
+configure the static build using `no-shared` and `no-pinshared` together.
+
+Applications can suppress running of the `atexit()` handler at run time by
+using the `OPENSSL_INIT_NO_ATEXIT` option to `OPENSSL_init_crypto()`.
 See the man page for it for further details.
 
 ### no-posix-io
@@ -891,6 +989,15 @@ Build support for Stream Control Transmission Protocol (SCTP).
 Do not create shared libraries, only static ones.
 
 See [Notes on shared libraries](#notes-on-shared-libraries) below.
+
+### no-slh-dsa
+
+Disable Stateless Hash Based Digital Signature Standard support.
+(SLH-DSA is based on SPHINCS+. See [FIPS 205])
+
+### no-sm2-precomp
+
+Disable using the SM2 precomputed table on aarch64 to make the library smaller.
 
 ### no-sock
 
@@ -949,10 +1056,9 @@ Don't build test programs or run any tests.
 
 Build with support for TCP Fast Open (RFC7413). Supported on Linux, macOS and FreeBSD.
 
-### enable-quic
+### no-quic
 
-Build with QUIC support. This is currently just for developers as the
-implementation is by no means complete and usable.
+Don't build with QUIC support.
 
 ### no-threads
 
@@ -992,6 +1098,17 @@ application. Supported on POSIX compliant platforms and Windows.
 Build with support for the integrated tracing api.
 
 See manual pages OSSL_trace_set_channel(3) and OSSL_trace_enabled(3) for details.
+
+### enable-sslkeylog
+
+Build with support for the SSLKEYLOGFILE environment variable
+
+When enabled, setting SSLKEYLOGFILE to a file path records the keys exchanged
+during a TLS handshake for use in analysis tools like wireshark.  Note that the
+use of this mechanism allows for decryption of application payloads found in
+captured packets using keys from the key log file and therefore has significant
+security consequences.  See Section 3 of
+[the draft standard for SSLKEYLOGFILE](https://datatracker.ietf.org/doc/draft-ietf-tls-keylogfile/)
 
 ### no-ts
 
@@ -1050,6 +1167,14 @@ when needed.
 
 This is only supported on systems where loading of shared libraries is supported.
 
+### enable-unstable-qlog
+
+Enables qlog output support for the QUIC protocol. This functionality is
+unstable and implements a draft version of the qlog specification. The qlog
+output from OpenSSL will change in incompatible ways in future, and is not
+subject to any format stability or compatibility guarantees at this time. See
+the manpage openssl-qlog(7) for details.
+
 ### 386
 
 In 32-bit x86 builds, use the 80386 instruction set only in assembly modules
@@ -1070,6 +1195,10 @@ Similarly `no-dtls` will disable `dtls1` and `dtls1_2`.  The `no-ssl` option is
 synonymous with `no-ssl3`.  Note this only affects version negotiation.
 OpenSSL will still provide the methods for applications to explicitly select
 the individual protocol versions.
+
+### no-integrity-only-ciphers
+
+Don't build support for integrity only ciphers in tls.
 
 ### no-{protocol}-method
 
@@ -1092,9 +1221,9 @@ Build with support for the specified algorithm.
 ### no-{algorithm}
 
     no-{aria|bf|blake2|camellia|cast|chacha|cmac|
-        des|dh|dsa|ecdh|ecdsa|idea|md4|mdc2|ocb|
-        poly1305|rc2|rc4|rmd160|scrypt|seed|
-        siphash|siv|sm2|sm3|sm4|whirlpool}
+        des|dh|dsa|ecdh|ecdsa|idea|md4|mdc2|ml-dsa|
+        ml-kem|ocb|poly1305|rc2|rc4|rmd160|scrypt|
+        seed|siphash|siv|sm2|sm3|sm4|whirlpool}
 
 Build without support for the specified algorithm.
 
@@ -1249,7 +1378,7 @@ Configure OpenSSL
 ### Automatic Configuration
 
 In previous version, the `config` script determined the platform type and
-compiler and then called `Configure`. Starting with this release, they are
+compiler and then called `Configure`. Starting with version 3.0, they are
 the same.
 
 #### Unix / Linux / macOS
@@ -1303,6 +1432,14 @@ Unix-like systems.
 and `descrip.mms` on OpenVMS) from a suitable template in `Configurations/`,
 and defines various macros in `include/openssl/configuration.h` (generated
 from `include/openssl/configuration.h.in`.
+
+If none of the generated build files suit your purpose, it's possible to
+write your own build file template and give its name through the environment
+variable `BUILDFILE`.  For example, Ninja build files could be supported by
+writing `Configurations/build.ninja.tmpl` and then configure with `BUILDFILE`
+set like this (Unix syntax shown, you'll have to adapt for other platforms):
+
+    $ BUILDFILE=build.ninja perl Configure [options...]
 
 ### Out of Tree Builds
 
@@ -1549,7 +1686,7 @@ over the build process.  Typically these should be defined prior to running
 
     PERL
                    The name of the Perl executable to use when building OpenSSL.
-                   Only needed if builing should use a different Perl executable
+                   Only needed if building should use a different Perl executable
                    than what is used to run the Configure script.
 
     RANLIB
@@ -1583,6 +1720,12 @@ described here.  Examine the Makefiles themselves for the full list.
 
     build_docs
                    Build all documentation components.
+
+    debuginfo
+                    On unix platforms, this target can be used to create .debug
+                    libraries, which separate the DWARF information in the
+                    shared library ELF files into a separate file for use
+                    in post-mortem (core dump) debugging
 
     clean
                    Remove all build artefacts and return the directory to a "clean"
@@ -1696,7 +1839,7 @@ More about our support resources can be found in the [SUPPORT] file.
 
 ### Configuration Errors
 
-If the `./Configure` or `./Configure` command fails with an error message,
+If the `./config` or `./Configure` command fails with an error message,
 read the error message carefully and try to figure out whether you made
 a mistake (e.g., by providing a wrong option), or whether the script is
 working incorrectly. If you think you encountered a bug, please
@@ -1908,3 +2051,24 @@ is used, as it is the version of the GNU assembler that will be checked.
 
 [10-main.conf]:
     Configurations/10-main.conf
+
+[CMVP]:
+    <https://csrc.nist.gov/projects/cryptographic-module-validation-program>
+
+[ESV]:
+    <https://csrc.nist.gov/Projects/cryptographic-module-validation-program/entropy-validations>
+
+[FIPS 203]:
+    <https://csrc.nist.gov/pubs/fips/203/final>
+
+[FIPS 204]:
+    <https://csrc.nist.gov/pubs/fips/204/final>
+
+[SP 800-90B]:
+    <https://csrc.nist.gov/pubs/sp/800/90/b/final>
+
+[jitterentropy-library]:
+    <https://github.com/smuellerDD/jitterentropy-library>
+
+[FIPS 205]:
+    <https://csrc.nist.gov/pubs/fips/205/final>

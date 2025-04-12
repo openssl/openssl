@@ -12,6 +12,7 @@ CN			= "Not Defined"
 default_ca		= ca
 
 ####################################################################
+
 [ req ]
 default_bits		= 2048
 default_keyfile 	= privkey.pem
@@ -30,7 +31,7 @@ organizationName		= OpenSSL Group
 # Take CN from environment so it can come from a script.
 commonName			= $ENV::CN
 
-[ usr_cert ]
+[ usr_rsa_cert ]
 
 # These extensions are added when 'ca' signs a request for a normal end-entity
 # certificate with key usage restrictions compatible with RSA keys
@@ -43,6 +44,11 @@ keyUsage = critical, nonRepudiation, digitalSignature, keyEncipherment
 
 # subjectKeyIdentifier   = hash
 # authorityKeyIdentifier = keyid, issuer
+
+[ signer_cert ]
+
+basicConstraints = CA:FALSE
+keyUsage = critical, digitalSignature
 
 [ dh_cert ]
 

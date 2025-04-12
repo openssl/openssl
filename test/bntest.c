@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -908,6 +908,14 @@ static int test_gf2m_modinv(void)
             || !TEST_ptr(b[1] = BN_new())
             || !TEST_ptr(c = BN_new())
             || !TEST_ptr(d = BN_new()))
+        goto err;
+
+    /* Test that a non-sensical, too small value causes a failure */
+    if (!TEST_true(BN_one(b[0])))
+        goto err;
+    if (!TEST_true(BN_bntest_rand(a, 512, 0, 0)))
+        goto err;
+    if (!TEST_false(BN_GF2m_mod_inv(c, a, b[0], ctx)))
         goto err;
 
     if (!(TEST_true(BN_GF2m_arr2poly(p0, b[0]))
@@ -2219,6 +2227,74 @@ static int test_mpi(int i)
     return st;
 }
 
+static int test_bin2zero(void)
+{
+    unsigned char input[] = { 0 };
+    BIGNUM *zbn = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(zbn = BN_new()))
+        goto err;
+
+#define zerotest(fn)                           \
+    if (!TEST_ptr(fn(input, 1, zbn))    \
+        || !TEST_true(BN_is_zero(zbn))   \
+        || !TEST_ptr(fn(input, 0, zbn)) \
+        || !TEST_true(BN_is_zero(zbn))   \
+        || !TEST_ptr(fn(NULL, 0, zbn))  \
+        || !TEST_true(BN_is_zero(zbn)))  \
+        goto err
+
+    zerotest(BN_bin2bn);
+    zerotest(BN_signed_bin2bn);
+    zerotest(BN_lebin2bn);
+    zerotest(BN_signed_lebin2bn);
+#undef zerotest
+
+    ret = 1;
+ err:
+    BN_free(zbn);
+    return ret;
+}
+
+static int test_bin2bn_lengths(void)
+{
+    unsigned char input[] = { 1, 2 };
+    BIGNUM *bn_be = NULL, *bn_expected_be = NULL;
+    BIGNUM *bn_le = NULL, *bn_expected_le = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(bn_be = BN_new())
+        || !TEST_ptr(bn_expected_be = BN_new())
+        || !TEST_true(BN_set_word(bn_expected_be, 0x102))
+        || !TEST_ptr(bn_le = BN_new())
+        || !TEST_ptr(bn_expected_le = BN_new())
+        || !TEST_true(BN_set_word(bn_expected_le, 0x201)))
+        goto err;
+
+#define lengthtest(fn, e)                                       \
+    if (!TEST_ptr_null(fn(input, -1, bn_##e))                   \
+        || !TEST_ptr(fn(input, 0, bn_##e))                      \
+        || !TEST_true(BN_is_zero(bn_##e))                       \
+        || !TEST_ptr(fn(input, 2, bn_##e))                      \
+        || !TEST_int_eq(BN_cmp(bn_##e, bn_expected_##e), 0))    \
+        goto err
+
+    lengthtest(BN_bin2bn, be);
+    lengthtest(BN_signed_bin2bn, be);
+    lengthtest(BN_lebin2bn, le);
+    lengthtest(BN_signed_lebin2bn, le);
+#undef lengthtest
+
+    ret = 1;
+ err:
+    BN_free(bn_be);
+    BN_free(bn_expected_be);
+    BN_free(bn_le);
+    BN_free(bn_expected_le);
+    return ret;
+}
+
 static int test_rand(void)
 {
     BIGNUM *bn = NULL;
@@ -2627,7 +2703,7 @@ static int test_not_prime(int i)
 
     for (trial = 0; trial <= 1; ++trial) {
         if (!TEST_true(BN_set_word(r, not_primes[i]))
-                || !TEST_false(BN_check_prime(r, ctx, NULL)))
+                || !TEST_int_eq(BN_check_prime(r, ctx, NULL), 0))
             goto err;
     }
 
@@ -2771,12 +2847,11 @@ static int test_gcd_prime(void)
     return st;
 }
 
-typedef struct mod_exp_test_st
-{
-  const char *base;
-  const char *exp;
-  const char *mod;
-  const char *res;
+typedef struct mod_exp_test_st {
+    const char *base;
+    const char *exp;
+    const char *mod;
+    const char *res;
 } MOD_EXP_TEST;
 
 static const MOD_EXP_TEST ModExpTests[] = {
@@ -3097,6 +3172,108 @@ err:
     return res;
 }
 
+static int test_mod_inverse(void)
+{
+    int res = 0;
+    char *str = NULL;
+    BIGNUM *a = NULL;
+    BIGNUM *b = NULL;
+    BIGNUM *r = NULL;
+
+    if (!TEST_true(BN_dec2bn(&a, "5193817943")))
+        goto err;
+    if (!TEST_true(BN_dec2bn(&b, "3259122431")))
+        goto err;
+    if (!TEST_ptr(r = BN_new()))
+        goto err;
+    if (!TEST_ptr_eq(BN_mod_inverse(r, a, b, ctx), r))
+        goto err;
+    if (!TEST_ptr_ne(str = BN_bn2dec(r), NULL))
+        goto err;
+    if (!TEST_int_eq(strcmp(str, "2609653924"), 0))
+        goto err;
+
+    /* Note that this aliases the result with the modulus. */
+    if (!TEST_ptr_null(BN_mod_inverse(b, a, b, ctx)))
+        goto err;
+
+    res = 1;
+
+err:
+    BN_free(a);
+    BN_free(b);
+    BN_free(r);
+    OPENSSL_free(str);
+    return res;
+}
+
+static int test_mod_exp_alias(int idx)
+{
+    int res = 0;
+    char *str = NULL;
+    BIGNUM *a = NULL;
+    BIGNUM *b = NULL;
+    BIGNUM *c = NULL;
+    BIGNUM *r = NULL;
+
+    if (!TEST_true(BN_dec2bn(&a, "15")))
+        goto err;
+    if (!TEST_true(BN_dec2bn(&b, "10")))
+        goto err;
+    if (!TEST_true(BN_dec2bn(&c, "39")))
+        goto err;
+    if (!TEST_ptr(r = BN_new()))
+        goto err;
+
+    if (!TEST_int_eq((idx == 0 ? BN_mod_exp_simple
+                               : BN_mod_exp_recp)(r, a, b, c, ctx), 1))
+        goto err;
+    if (!TEST_ptr_ne(str = BN_bn2dec(r), NULL))
+        goto err;
+    if (!TEST_str_eq(str, "36"))
+        goto err;
+
+    OPENSSL_free(str);
+    str = NULL;
+
+    BN_copy(r, b);
+
+    /* Aliasing with exponent must work. */
+    if (!TEST_int_eq((idx == 0 ? BN_mod_exp_simple
+                               : BN_mod_exp_recp)(r, a, r, c, ctx), 1))
+        goto err;
+    if (!TEST_ptr_ne(str = BN_bn2dec(r), NULL))
+        goto err;
+    if (!TEST_str_eq(str, "36"))
+        goto err;
+
+    OPENSSL_free(str);
+    str = NULL;
+
+    /* Aliasing with modulus should return failure for the simple call. */
+    if (idx == 0) {
+        if (!TEST_int_eq(BN_mod_exp_simple(c, a, b, c, ctx), 0))
+            goto err;
+    } else {
+        if (!TEST_int_eq(BN_mod_exp_recp(c, a, b, c, ctx), 1))
+            goto err;
+        if (!TEST_ptr_ne(str = BN_bn2dec(c), NULL))
+            goto err;
+        if (!TEST_str_eq(str, "36"))
+            goto err;
+    }
+
+    res = 1;
+
+err:
+    BN_free(a);
+    BN_free(b);
+    BN_free(c);
+    BN_free(r);
+    OPENSSL_free(str);
+    return res;
+}
+
 static int file_test_run(STANZA *s)
 {
     static const FILETEST filetests[] = {
@@ -3206,6 +3383,8 @@ int setup_tests(void)
         ADD_ALL_TESTS(test_signed_mod_replace_ab, OSSL_NELEM(signed_mod_tests));
         ADD_ALL_TESTS(test_signed_mod_replace_ba, OSSL_NELEM(signed_mod_tests));
         ADD_TEST(test_mod);
+        ADD_TEST(test_mod_inverse);
+        ADD_ALL_TESTS(test_mod_exp_alias, 2);
         ADD_TEST(test_modexp_mont5);
         ADD_TEST(test_kronecker);
         ADD_TEST(test_rand);
@@ -3213,6 +3392,8 @@ int setup_tests(void)
         ADD_TEST(test_dec2bn);
         ADD_TEST(test_hex2bn);
         ADD_TEST(test_asc2bn);
+        ADD_TEST(test_bin2zero);
+        ADD_TEST(test_bin2bn_lengths);
         ADD_ALL_TESTS(test_mpi, (int)OSSL_NELEM(kMPITests));
         ADD_ALL_TESTS(test_bn2signed, (int)OSSL_NELEM(kSignedTests_BE));
         ADD_TEST(test_negzero);

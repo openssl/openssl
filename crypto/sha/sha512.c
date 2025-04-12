@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2004-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -18,16 +18,16 @@
 /*-
  * IMPLEMENTATION NOTES.
  *
- * As you might have noticed 32-bit hash algorithms:
+ * As you might have noticed, 32-bit hash algorithms:
  *
  * - permit SHA_LONG to be wider than 32-bit
  * - optimized versions implement two transform functions: one operating
- *   on [aligned] data in host byte order and one - on data in input
+ *   on [aligned] data in host byte order, and one operating on data in input
  *   stream byte order;
  * - share common byte-order neutral collector and padding function
  *   implementations, crypto/md32_common.h;
  *
- * Neither of the above applies to this SHA-512 implementations. Reasons
+ * Neither of the above applies to this SHA-512 implementation. Reasons
  * [in reverse order] are:
  *
  * - it's the only 64-bit hash algorithm for the moment of this writing,
@@ -149,6 +149,10 @@ int SHA512_Init(SHA512_CTX *c)
 
 #ifndef SHA512_ASM
 static
+#else
+# ifdef INCLUDE_C_SHA512
+void sha512_block_data_order_c(SHA512_CTX *ctx, const void *in, size_t num);
+# endif
 #endif
 void sha512_block_data_order(SHA512_CTX *ctx, const void *in, size_t num);
 
@@ -338,7 +342,7 @@ void SHA512_Transform(SHA512_CTX *c, const unsigned char *data)
     sha512_block_data_order(c, data, 1);
 }
 
-#ifndef SHA512_ASM
+#if !defined(SHA512_ASM) || defined(INCLUDE_C_SHA512)
 static const SHA_LONG64 K512[80] = {
     U64(0x428a2f98d728ae22), U64(0x7137449123ef65cd),
     U64(0xb5c0fbcfec4d3b2f), U64(0xe9b5dba58189dbbc),
@@ -737,8 +741,12 @@ static void sha512_block_data_order(SHA512_CTX *ctx, const void *in,
         T1 = X[(j)&0x0f] += s0 + s1 + X[(j+9)&0x0f];    \
         ROUND_00_15(i+j,a,b,c,d,e,f,g,h);               } while (0)
 
+#ifdef INCLUDE_C_SHA512
+void sha512_block_data_order_c(SHA512_CTX *ctx, const void *in, size_t num)
+#else
 static void sha512_block_data_order(SHA512_CTX *ctx, const void *in,
                                     size_t num)
+#endif
 {
     const SHA_LONG64 *W = in;
     SHA_LONG64 a, b, c, d, e, f, g, h, s0, s1, T1;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2011-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -26,12 +26,6 @@
 
 #if defined(_WIN32)
 # include <windows.h>
-#endif
-
-#if defined(__TANDEM)
-# if defined(OPENSSL_TANDEM_FLOSS)
-#  include <floss.h(floss_fork)>
-# endif
 #endif
 
 #if defined(OPENSSL_SYS_UNIX)
@@ -148,7 +142,7 @@ static int using_fips_rng(void)
     if (!TEST_ptr(prov))
         return 0;
     name = OSSL_PROVIDER_get0_name(prov);
-    return strcmp(name, "OpenSSL FIPS Provider") == 0;
+    return strstr(name, "FIPS Provider") != NULL;
 }
 
  /*
@@ -299,7 +293,7 @@ typedef struct drbg_fork_result_st {
  * This simplifies finding duplicate random output and makes
  * the printout in case of an error more readable.
  */
-static int compare_drbg_fork_result(const void * left, const void * right)
+static int compare_drbg_fork_result(const void *left, const void *right)
 {
     int result;
     const drbg_fork_result *l = left;
@@ -322,7 +316,7 @@ static int compare_drbg_fork_result(const void * left, const void * right)
  *
  * Used for finding collisions in two-byte chunks
  */
-static int compare_rand_chunk(const void * left, const void * right)
+static int compare_rand_chunk(const void *left, const void *right)
 {
     return memcmp(left, right, 2);
 }
@@ -423,7 +417,7 @@ static int test_rand_reseed_on_fork(EVP_RAND_CTX *primary,
 
         presult[0].pindex = presult[1].pindex = i;
 
-        sprintf(presult[0].name, "child %d", i);
+        BIO_snprintf(presult[0].name, sizeof(presult[0].name), "child %d", i);
         strcpy(presult[1].name, presult[0].name);
 
         /* collect the random output of the children */

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -142,17 +142,22 @@ int TS_RESP_CTX_set_signer_cert(TS_RESP_CTX *ctx, X509 *signer)
         ERR_raise(ERR_LIB_TS, TS_R_INVALID_SIGNER_CERTIFICATE_PURPOSE);
         return 0;
     }
+    if (!X509_up_ref(signer))
+        return 0;
+
     X509_free(ctx->signer_cert);
     ctx->signer_cert = signer;
-    X509_up_ref(ctx->signer_cert);
+
     return 1;
 }
 
 int TS_RESP_CTX_set_signer_key(TS_RESP_CTX *ctx, EVP_PKEY *key)
 {
+    if (!EVP_PKEY_up_ref(key))
+        return 0;
+
     EVP_PKEY_free(ctx->signer_key);
     ctx->signer_key = key;
-    EVP_PKEY_up_ref(ctx->signer_key);
 
     return 1;
 }
@@ -445,7 +450,7 @@ static int ts_RESP_check_request(TS_RESP_CTX *ctx)
     char md_alg_name[OSSL_MAX_NAME_SIZE];
     const ASN1_OCTET_STRING *digest;
     const EVP_MD *md = NULL;
-    int i;
+    int i, md_size;
 
     if (TS_REQ_get_version(request) != 1) {
         TS_RESP_CTX_set_status_info(ctx, TS_STATUS_REJECTION,
@@ -470,6 +475,10 @@ static int ts_RESP_check_request(TS_RESP_CTX *ctx)
         return 0;
     }
 
+    md_size = EVP_MD_get_size(md);
+    if (md_size <= 0)
+        return 0;
+
     if (md_alg->parameter && ASN1_TYPE_get(md_alg->parameter) != V_ASN1_NULL) {
         TS_RESP_CTX_set_status_info(ctx, TS_STATUS_REJECTION,
                                     "Superfluous message digest "
@@ -478,7 +487,7 @@ static int ts_RESP_check_request(TS_RESP_CTX *ctx)
         return 0;
     }
     digest = msg_imprint->hashed_msg;
-    if (digest->length != EVP_MD_get_size(md)) {
+    if (digest->length != md_size) {
         TS_RESP_CTX_set_status_info(ctx, TS_STATUS_REJECTION,
                                     "Bad message digest.");
         TS_RESP_CTX_add_failure_info(ctx, TS_INFO_BAD_DATA_FORMAT);

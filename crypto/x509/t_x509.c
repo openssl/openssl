@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -54,21 +54,18 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags,
                   unsigned long cflag)
 {
     long l;
-    int ret = 0, i;
+    int ret = 0;
     char mlch = ' ';
     int nmindent = 0, printok = 0;
     EVP_PKEY *pkey = NULL;
-    const char *neg;
 
     if ((nmflags & XN_FLAG_SEP_MASK) == XN_FLAG_SEP_MULTILINE) {
         mlch = '\n';
         nmindent = 12;
     }
 
-    if (nmflags == X509_FLAG_COMPAT) {
-        nmindent = 16;
+    if (nmflags == XN_FLAG_COMPAT)
         printok = 1;
-    }
 
     if (!(cflag & X509_FLAG_NO_HEADER)) {
         if (BIO_write(bp, "Certificate:\n", 13) <= 0)
@@ -91,37 +88,10 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags,
 
         if (BIO_write(bp, "        Serial Number:", 22) <= 0)
             goto err;
-
-        if (bs->length <= (int)sizeof(long)) {
-                ERR_set_mark();
-                l = ASN1_INTEGER_get(bs);
-                ERR_pop_to_mark();
-        } else {
-            l = -1;
-        }
-        if (l != -1) {
-            unsigned long ul;
-            if (bs->type == V_ASN1_NEG_INTEGER) {
-                ul = 0 - (unsigned long)l;
-                neg = "-";
-            } else {
-                ul = l;
-                neg = "";
-            }
-            if (BIO_printf(bp, " %s%lu (%s0x%lx)\n", neg, ul, neg, ul) <= 0)
-                goto err;
-        } else {
-            neg = (bs->type == V_ASN1_NEG_INTEGER) ? " (Negative)" : "";
-            if (BIO_printf(bp, "\n%12s%s", "", neg) <= 0)
-                goto err;
-
-            for (i = 0; i < bs->length; i++) {
-                if (BIO_printf(bp, "%02x%c", bs->data[i],
-                               ((i + 1 == bs->length) ? '\n' : ':')) <= 0)
-                    goto err;
-            }
-        }
-
+        if (ossl_serial_number_print(bp, bs, 12) != 0)
+            goto err;
+        if (BIO_puts(bp, "\n") <= 0)
+            goto err;
     }
 
     if (!(cflag & X509_FLAG_NO_SIGNAME)) {
@@ -532,4 +502,50 @@ int X509_STORE_CTX_print_verify_cb(int ok, X509_STORE_CTX *ctx)
     }
 
     return ok;
+}
+
+/*
+ * Prints serial numbers in decimal and hexadecimal. The indent argument is only
+ * used if the serial number is too large to fit in an int64_t.
+ */
+int ossl_serial_number_print(BIO *out, const ASN1_INTEGER *bs, int indent)
+{
+    int i, ok;
+    int64_t l;
+    uint64_t ul;
+    const char *neg;
+
+    if (bs->length == 0) {
+        if (BIO_puts(out, " (Empty)") <= 0)
+            return -1;
+        return 0;
+    }
+
+    ERR_set_mark();
+    ok = ASN1_INTEGER_get_int64(&l, bs);
+    ERR_pop_to_mark();
+
+    if (ok) { /* Reading an int64_t succeeded: print decimal and hex. */
+        if (bs->type == V_ASN1_NEG_INTEGER) {
+            ul = 0 - (uint64_t)l;
+            neg = "-";
+        } else {
+            ul = l;
+            neg = "";
+        }
+        if (BIO_printf(out, " %s%ju (%s0x%jx)", neg, ul, neg, ul) <= 0)
+            return -1;
+    } else { /* Reading an int64_t failed: just print hex. */
+        neg = (bs->type == V_ASN1_NEG_INTEGER) ? " (Negative)" : "";
+        if (BIO_printf(out, "\n%*s%s", indent, "", neg) <= 0)
+            return -1;
+
+        for (i = 0; i < bs->length - 1; i++) {
+            if (BIO_printf(out, "%02x%c", bs->data[i], ':') <= 0)
+                return -1;
+        }
+        if (BIO_printf(out, "%02x", bs->data[i]) <= 0)
+            return -1;
+    }
+    return 0;
 }

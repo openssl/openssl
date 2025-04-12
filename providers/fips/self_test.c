@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -17,7 +17,10 @@
 #include <openssl/proverr.h>
 #include <openssl/rand.h>
 #include "internal/e_os.h"
+#include "internal/fips.h"
+#include "internal/tsan_assist.h"
 #include "prov/providercommon.h"
+#include "crypto/rand.h"
 
 /*
  * We're cheating here. Normally we don't allow RUN_ONCE usage inside the FIPS
@@ -48,10 +51,12 @@
 
 static int FIPS_conditional_error_check = 1;
 static CRYPTO_RWLOCK *self_test_lock = NULL;
-static CRYPTO_RWLOCK *fips_state_lock = NULL;
-static unsigned char fixed_key[32] = { FIPS_KEY_ELEMENTS };
 
 static CRYPTO_ONCE fips_self_test_init = CRYPTO_ONCE_STATIC_INIT;
+#if !defined(OPENSSL_NO_FIPS_POST)
+static unsigned char fixed_key[32] = { FIPS_KEY_ELEMENTS };
+#endif
+
 DEFINE_RUN_ONCE_STATIC(do_fips_self_test_init)
 {
     /*
@@ -60,7 +65,6 @@ DEFINE_RUN_ONCE_STATIC(do_fips_self_test_init)
      * platform then we just leak it deliberately.
      */
     self_test_lock = CRYPTO_THREAD_lock_new();
-    fips_state_lock = CRYPTO_THREAD_lock_new();
     return self_test_lock != NULL;
 }
 
@@ -156,12 +160,12 @@ void __TERM__cleanup(void) {
 # define DEP_INITIAL_STATE  FIPS_STATE_SELFTEST
 #endif
 
-static int FIPS_state = DEP_INITIAL_STATE;
+static TSAN_QUALIFIER int FIPS_state = DEP_INITIAL_STATE;
 
 #if defined(DEP_INIT_ATTRIBUTE)
 DEP_INIT_ATTRIBUTE void init(void)
 {
-    FIPS_state = FIPS_STATE_SELFTEST;
+    tsan_store(&FIPS_state, FIPS_STATE_SELFTEST);
 }
 #endif
 
@@ -169,10 +173,10 @@ DEP_INIT_ATTRIBUTE void init(void)
 DEP_FINI_ATTRIBUTE void cleanup(void)
 {
     CRYPTO_THREAD_lock_free(self_test_lock);
-    CRYPTO_THREAD_lock_free(fips_state_lock);
 }
 #endif
 
+#if !defined(OPENSSL_NO_FIPS_POST)
 /*
  * We need an explicit HMAC-SHA-256 KAT even though it is also
  * checked as part of the KDF KATs.  Refer IG 10.3.
@@ -286,38 +290,42 @@ err:
     OSSL_SELF_TEST_onend(ev, ret);
     EVP_MAC_CTX_free(ctx);
     EVP_MAC_free(mac);
+# ifdef OPENSSL_PEDANTIC_ZEROIZATION
+    OPENSSL_cleanse(out, sizeof(out));
+# endif
     return ret;
 }
+#endif /* OPENSSL_NO_FIPS_POST */
 
 static void set_fips_state(int state)
 {
-    if (ossl_assert(CRYPTO_THREAD_write_lock(fips_state_lock) != 0)) {
-        FIPS_state = state;
-        CRYPTO_THREAD_unlock(fips_state_lock);
-    }
+    tsan_store(&FIPS_state, state);
+}
+
+/* Return 1 if the FIPS self tests are running and 0 otherwise */
+int ossl_fips_self_testing(void)
+{
+    return tsan_load(&FIPS_state) == FIPS_STATE_SELFTEST;
 }
 
 /* This API is triggered either on loading of the FIPS module or on demand */
 int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
 {
-    int ok = 0;
-    int kats_already_passed = 0;
-    long checksum_len;
-    OSSL_CORE_BIO *bio_module = NULL, *bio_indicator = NULL;
-    unsigned char *module_checksum = NULL;
-    unsigned char *indicator_checksum = NULL;
     int loclstate;
+#if !defined(OPENSSL_NO_FIPS_POST)
+    int ok = 0;
+    long checksum_len;
+    OSSL_CORE_BIO *bio_module = NULL;
+    unsigned char *module_checksum = NULL;
     OSSL_SELF_TEST *ev = NULL;
     EVP_RAND *testrand = NULL;
     EVP_RAND_CTX *rng;
+#endif
 
     if (!RUN_ONCE(&fips_self_test_init, do_fips_self_test_init))
         return 0;
 
-    if (!CRYPTO_THREAD_read_lock(fips_state_lock))
-        return 0;
-    loclstate = FIPS_state;
-    CRYPTO_THREAD_unlock(fips_state_lock);
+    loclstate = tsan_load(&FIPS_state);
 
     if (loclstate == FIPS_STATE_RUNNING) {
         if (!on_demand_test)
@@ -329,24 +337,19 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
 
     if (!CRYPTO_THREAD_write_lock(self_test_lock))
         return 0;
-    if (!CRYPTO_THREAD_read_lock(fips_state_lock)) {
-        CRYPTO_THREAD_unlock(self_test_lock);
-        return 0;
-    }
-    if (FIPS_state == FIPS_STATE_RUNNING) {
-        CRYPTO_THREAD_unlock(fips_state_lock);
+
+#if !defined(OPENSSL_NO_FIPS_POST)
+    loclstate = tsan_load(&FIPS_state);
+    if (loclstate == FIPS_STATE_RUNNING) {
         if (!on_demand_test) {
             CRYPTO_THREAD_unlock(self_test_lock);
             return 1;
         }
         set_fips_state(FIPS_STATE_SELFTEST);
-    } else if (FIPS_state != FIPS_STATE_SELFTEST) {
-        CRYPTO_THREAD_unlock(fips_state_lock);
+    } else if (loclstate != FIPS_STATE_SELFTEST) {
         CRYPTO_THREAD_unlock(self_test_lock);
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_STATE);
         return 0;
-    } else {
-        CRYPTO_THREAD_unlock(fips_state_lock);
     }
 
     if (st == NULL
@@ -376,71 +379,30 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
         goto end;
     }
 
-    /* This will be NULL during installation - so the self test KATS will run */
-    if (st->indicator_data != NULL) {
-        /*
-         * If the kats have already passed indicator is set - then check the
-         * integrity of the indicator.
-         */
-        if (st->indicator_checksum_data == NULL) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_CONFIG_DATA);
-            goto end;
-        }
-        indicator_checksum = OPENSSL_hexstr2buf(st->indicator_checksum_data,
-                                                &checksum_len);
-        if (indicator_checksum == NULL) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_CONFIG_DATA);
-            goto end;
-        }
-
-        bio_indicator =
-            (*st->bio_new_buffer_cb)(st->indicator_data,
-                                     strlen(st->indicator_data));
-        if (bio_indicator == NULL
-                || !verify_integrity(bio_indicator, st->bio_read_ex_cb,
-                                     indicator_checksum, checksum_len,
-                                     st->libctx, ev,
-                                     OSSL_SELF_TEST_TYPE_INSTALL_INTEGRITY)) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INDICATOR_INTEGRITY_FAILURE);
-            goto end;
-        } else {
-            kats_already_passed = 1;
-        }
-    }
-
-    /*
-     * Only runs the KAT's during installation OR on_demand().
-     * NOTE: If the installation option 'self_test_onload' is chosen then this
-     * path will always be run, since kats_already_passed will always be 0.
-     */
-    if (on_demand_test || kats_already_passed == 0) {
-        if (!SELF_TEST_kats(ev, st->libctx)) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_SELF_TEST_KAT_FAILURE);
-            goto end;
-        }
-    }
-
-    /* Verify that the RNG has been restored properly */
-    testrand = EVP_RAND_fetch(st->libctx, "TEST-RAND", NULL);
-    if (testrand == NULL
-            || (rng = RAND_get0_private(st->libctx)) == NULL
-            || strcmp(EVP_RAND_get0_name(EVP_RAND_CTX_get0_rand(rng)),
-                      EVP_RAND_get0_name(testrand)) == 0) {
+    if (!SELF_TEST_kats(ev, st->libctx)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_SELF_TEST_KAT_FAILURE);
         goto end;
     }
+
+    /* Verify that the RNG has been restored properly */
+    rng = ossl_rand_get0_private_noncreating(st->libctx);
+    if (rng != NULL)
+        if ((testrand = EVP_RAND_fetch(st->libctx, "TEST-RAND", NULL)) == NULL
+                || strcmp(EVP_RAND_get0_name(EVP_RAND_CTX_get0_rand(rng)),
+                          EVP_RAND_get0_name(testrand)) == 0) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_SELF_TEST_KAT_FAILURE);
+            goto end;
+        }
 
     ok = 1;
 end:
     EVP_RAND_free(testrand);
     OSSL_SELF_TEST_free(ev);
     OPENSSL_free(module_checksum);
-    OPENSSL_free(indicator_checksum);
 
-    if (st != NULL) {
-        (*st->bio_free_cb)(bio_indicator);
+    if (st != NULL)
         (*st->bio_free_cb)(bio_module);
-    }
+
     if (ok)
         set_fips_state(FIPS_STATE_RUNNING);
     else
@@ -448,6 +410,11 @@ end:
     CRYPTO_THREAD_unlock(self_test_lock);
 
     return ok;
+#else
+    set_fips_state(FIPS_STATE_RUNNING);
+    CRYPTO_THREAD_unlock(self_test_lock);
+    return 1;
+#endif /* !defined(OPENSSL_NO_FIPS_POST) */
 }
 
 void SELF_TEST_disable_conditional_error_state(void)
@@ -469,20 +436,13 @@ void ossl_set_error_state(const char *type)
 
 int ossl_prov_is_running(void)
 {
-    int res;
-    static unsigned int rate_limit = 0;
+    int res, loclstate;
+    static TSAN_QUALIFIER unsigned int rate_limit = 0;
 
-    if (!CRYPTO_THREAD_read_lock(fips_state_lock))
-        return 0;
-    res = FIPS_state == FIPS_STATE_RUNNING
-                        || FIPS_state == FIPS_STATE_SELFTEST;
-    if (FIPS_state == FIPS_STATE_ERROR) {
-        CRYPTO_THREAD_unlock(fips_state_lock);
-        if (!CRYPTO_THREAD_write_lock(fips_state_lock))
-            return 0;
-        if (rate_limit++ < FIPS_ERROR_REPORTING_RATE_LIMIT)
+    loclstate = tsan_load(&FIPS_state);
+    res = loclstate == FIPS_STATE_RUNNING || loclstate == FIPS_STATE_SELFTEST;
+    if (loclstate == FIPS_STATE_ERROR)
+        if (tsan_counter(&rate_limit) < FIPS_ERROR_REPORTING_RATE_LIMIT)
             ERR_raise(ERR_LIB_PROV, PROV_R_FIPS_MODULE_IN_ERROR_STATE);
-    }
-    CRYPTO_THREAD_unlock(fips_state_lock);
     return res;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -67,6 +67,10 @@ static int tls_validate_record_header(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec)
                     if (HAS_PREFIX((char *)p, "GET ") ||
                         HAS_PREFIX((char *)p, "POST ") ||
                         HAS_PREFIX((char *)p, "HEAD ") ||
+                        HAS_PREFIX((char *)p, "PATCH") ||
+                        HAS_PREFIX((char *)p, "OPTIO") ||
+                        HAS_PREFIX((char *)p, "DELET") ||
+                        HAS_PREFIX((char *)p, "TRACE") ||
                         HAS_PREFIX((char *)p, "PUT ")) {
                         RLAYERfatal(rl, SSL_AD_NO_ALERT, SSL_R_HTTP_REQUEST);
                         return 0;
@@ -145,7 +149,7 @@ static int tls_any_prepare_for_encryption(OSSL_RECORD_LAYER *rl,
     return 1;
 }
 
-struct record_functions_st tls_any_funcs = {
+const struct record_functions_st tls_any_funcs = {
     tls_any_set_crypto_state,
     tls_any_cipher,
     NULL,
@@ -175,7 +179,7 @@ static int dtls_any_set_protocol_version(OSSL_RECORD_LAYER *rl, int vers)
     return 1;
 }
 
-struct record_functions_st dtls_any_funcs = {
+const struct record_functions_st dtls_any_funcs = {
     tls_any_set_crypto_state,
     tls_any_cipher,
     NULL,

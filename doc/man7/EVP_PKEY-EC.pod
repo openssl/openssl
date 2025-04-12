@@ -19,7 +19,7 @@ Explicit parameters are supported for backwards compatibility reasons, but they
 are not compliant with multiple standards (including RFC5915) which only allow
 named curves.
 
-The following KeyGen/Gettable/Import/Export types are available for the
+The following Key generation/Gettable/Import/Export types are available for the
 built-in EC algorithm:
 
 =over 4
@@ -118,9 +118,9 @@ EVP_PKEY_fromdata() and EVP_PKEY_todata() functions.
 Note, in particular, that the choice of point compression format used for
 encoding the exported value via EVP_PKEY_todata() depends on the underlying
 provider implementation.
-Before OpenSSL 3.1, the implementation of providers included with OpenSSL always
+Before OpenSSL 3.0.8, the implementation of providers included with OpenSSL always
 opted for an encoding in compressed format, unconditionally.
-Since OpenSSL 3.1, the implementation has been changed to honor the
+Since OpenSSL 3.0.8, the implementation has been changed to honor the
 B<OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT> parameter, if set, or to default
 to uncompressed format.
 
@@ -142,7 +142,7 @@ Used for getting the EC public key X component.
 
 Used for getting the EC public key Y component.
 
-=item (B<OSSL_PKEY_PARAM_DEFAULT_DIGEST>) <UTF8 string>
+=item "default-digest" (B<OSSL_PKEY_PARAM_DEFAULT_DIGEST>) <UTF8 string>
 
 Getter that returns the default digest name.
 (Currently returns "SHA256" as of OpenSSL 3.0).
@@ -184,6 +184,28 @@ range m > tp > 0.
 
 I<k1>, I<k2> and I<k3> are used to get the middle bits of a pentanomial such
 that m > k3 > k2 > k1 > 0
+
+=back
+
+The following key generation settable parameter is also available for the
+OpenSSL FIPS provider's EC algorithm:
+
+=over 4
+
+=item "key-check" (B<OSSL_PKEY_PARAM_FIPS_KEY_CHECK>) <integer>
+
+See L<provider-keymgmt(7)/Common Information Parameters> for further information.
+
+=back
+
+The following key generation Gettable parameter is available for the OpenSSL
+FIPS provider's EC algorithm:
+
+=over 4
+
+=item "fips-indicator" (B<OSSL_PKEY_PARAM_FIPS_APPROVED_INDICATOR>) <integer>
+
+See L<provider-keymgmt(7)/Common Information Parameters> for further information.
 
 =back
 
@@ -280,7 +302,7 @@ L<EVP_KEYEXCH-ECDH(7)>
 
 =head1 COPYRIGHT
 
-Copyright 2020-2022 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020-2024 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

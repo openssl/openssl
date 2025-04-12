@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -983,7 +983,7 @@ static OSSL_STORE_LOADER_CTX *file_open_ex
 #ifdef _WIN32
         /* Windows "file:" URIs with a drive letter start with a '/' */
         if (p[0] == '/' && p[2] == ':' && p[3] == '/') {
-            char c = tolower(p[1]);
+            char c = tolower((unsigned char)p[1]);
 
             if (c >= 'a' && c <= 'z') {
                 p++;
@@ -1368,12 +1368,13 @@ static OSSL_STORE_INFO *file_try_read_PVK(BIO *bp, const UI_METHOD *ui_method,
 
     {
         unsigned int saltlen = 0, keylen = 0;
+        int isdss = -1;
         unsigned char peekbuf[24] = { 0, };
         const unsigned char *p = peekbuf;
 
         if (BIO_buffer_peek(bp, peekbuf, sizeof(peekbuf)) <= 0)
             return 0;
-        if (!ossl_do_PVK_header(&p, sizeof(peekbuf), 0, &saltlen, &keylen))
+        if (!ossl_do_PVK_header(&p, sizeof(peekbuf), 0, &isdss, &saltlen, &keylen))
             return 0;
     }
 
@@ -1470,9 +1471,9 @@ static int file_name_check(OSSL_STORE_LOADER_CTX *ctx, const char *name)
      * Last, check that the rest of the extension is a decimal number, at
      * least one digit long.
      */
-    if (!isdigit(*p))
+    if (!isdigit((unsigned char)*p))
         return 0;
-    while (isdigit(*p))
+    while (isdigit((unsigned char)*p))
         p++;
 
 #ifdef __VMS

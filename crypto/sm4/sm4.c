@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2024 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2017 Ribose Inc. All Rights Reserved.
  * Ported from Ribose contributions from Botan.
  *
@@ -283,8 +283,9 @@ int ossl_sm4_set_key(const uint8_t *key, SM4_KEY *ks)
     /*
      * Family Key
      */
-    static const uint32_t FK[4] =
-        { 0xa3b1bac6, 0x56aa3350, 0x677d9197, 0xb27022dc };
+    static const uint32_t FK[4] = {
+        0xa3b1bac6, 0x56aa3350, 0x677d9197, 0xb27022dc
+    };
 
     /*
      * Constant Key

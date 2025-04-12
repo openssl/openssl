@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -23,9 +23,18 @@
 #include <openssl/rsa.h>
 #include <openssl/dh.h>
 #include <openssl/core_names.h>
+#include <openssl/ui.h>
 
 #include "testutil.h"
 #include "internal/nelem.h"
+#include "crypto/evp.h"
+#include "../crypto/evp/evp_local.h"
+
+/* Defined in tls-provider.c */
+int tls_provider_init(const OSSL_CORE_HANDLE *handle,
+                      const OSSL_DISPATCH *in,
+                      const OSSL_DISPATCH **out,
+                      void **provctx);
 
 static OSSL_LIB_CTX *mainctx = NULL;
 static OSSL_PROVIDER *nullprov = NULL;
@@ -230,12 +239,14 @@ static const unsigned char kExampleECKey2DER[] = {
     0x96, 0x69, 0xE0, 0x04, 0xCB, 0x89, 0x0B, 0x42
 };
 
+# ifndef OPENSSL_NO_ECX
 static const unsigned char kExampleECXKey2DER[] = {
     0x30, 0x2E, 0x02, 0x01, 0x00, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x6e,
     0x04, 0x22, 0x04, 0x20, 0xc8, 0xa9, 0xd5, 0xa9, 0x10, 0x91, 0xad, 0x85,
     0x1c, 0x66, 0x8b, 0x07, 0x36, 0xc1, 0xc9, 0xa0, 0x29, 0x36, 0xc0, 0xd3,
     0xad, 0x62, 0x67, 0x08, 0x58, 0x08, 0x80, 0x47, 0xba, 0x05, 0x74, 0x75
 };
+# endif
 #endif
 
 typedef struct APK_DATA_st {
@@ -248,7 +259,9 @@ static APK_DATA keydata[] = {
     {kExampleRSAKeyDER, sizeof(kExampleRSAKeyDER), EVP_PKEY_RSA},
     {kExampleRSAKeyPKCS8, sizeof(kExampleRSAKeyPKCS8), EVP_PKEY_RSA},
 #ifndef OPENSSL_NO_EC
+# ifndef OPENSSL_NO_ECX
     {kExampleECXKey2DER, sizeof(kExampleECXKey2DER), EVP_PKEY_X25519},
+# endif
     {kExampleECKeyDER, sizeof(kExampleECKeyDER), EVP_PKEY_EC},
     {kExampleECKey2DER, sizeof(kExampleECKey2DER), EVP_PKEY_EC},
 #endif
@@ -387,7 +400,109 @@ static int test_dh_paramgen(void)
     EVP_PKEY_free(pkey);
     return ret;
 }
+
+static int set_fromdata_string(EVP_PKEY_CTX *ctx, const char *name, char *value)
+{
+    int ret;
+    OSSL_PARAM params[2];
+    EVP_PKEY *pkey = NULL;
+
+    if (EVP_PKEY_fromdata_init(ctx) != 1)
+        return -1;
+    params[0] = OSSL_PARAM_construct_utf8_string(name, value, 0);
+    params[1] = OSSL_PARAM_construct_end();
+    ret = EVP_PKEY_fromdata(ctx, &pkey, EVP_PKEY_KEY_PARAMETERS, params);
+    EVP_PKEY_free(pkey);
+    return ret;
+}
+
+static int set_fromdata_uint(EVP_PKEY_CTX *ctx, const char *name)
+{
+    int ret;
+    unsigned int tmp = 0;
+    OSSL_PARAM params[2];
+    EVP_PKEY *pkey = NULL;
+
+    if (EVP_PKEY_fromdata_init(ctx) != 1)
+        return -1;
+    params[0] = OSSL_PARAM_construct_uint(name, &tmp);
+    params[1] = OSSL_PARAM_construct_end();
+    ret = EVP_PKEY_fromdata(ctx, &pkey, EVP_PKEY_KEY_PARAMETERS, params);
+    EVP_PKEY_free(pkey);
+    return ret;
+}
+
+static int test_dh_paramfromdata(void)
+{
+    EVP_PKEY_CTX *ctx = NULL;
+    int ret = 0;
+
+    /* Test failure paths for FFC - mainly due to setting the wrong param type */
+    ret = TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(mainctx, "DH", NULL))
+          && TEST_int_eq(set_fromdata_uint(ctx, OSSL_PKEY_PARAM_GROUP_NAME), 0)
+          && TEST_int_eq(set_fromdata_string(ctx, OSSL_PKEY_PARAM_GROUP_NAME, "bad"), 0)
+          && TEST_int_eq(set_fromdata_string(ctx, OSSL_PKEY_PARAM_FFC_P, "bad"), 0)
+          && TEST_int_eq(set_fromdata_string(ctx, OSSL_PKEY_PARAM_FFC_GINDEX, "bad"), 0)
+          && TEST_int_eq(set_fromdata_string(ctx, OSSL_PKEY_PARAM_FFC_PCOUNTER, "bad"), 0)
+          && TEST_int_eq(set_fromdata_string(ctx, OSSL_PKEY_PARAM_FFC_COFACTOR, "bad"), 0)
+          && TEST_int_eq(set_fromdata_string(ctx, OSSL_PKEY_PARAM_FFC_H, "bad"), 0)
+          && TEST_int_eq(set_fromdata_uint(ctx, OSSL_PKEY_PARAM_FFC_SEED), 0)
+          && TEST_int_eq(set_fromdata_string(ctx, OSSL_PKEY_PARAM_FFC_VALIDATE_PQ, "bad"), 0)
+          && TEST_int_eq(set_fromdata_string(ctx, OSSL_PKEY_PARAM_FFC_VALIDATE_G, "bad"), 0)
+          && TEST_int_eq(set_fromdata_string(ctx, OSSL_PKEY_PARAM_FFC_VALIDATE_LEGACY, "bad"), 0)
+          && TEST_int_eq(set_fromdata_uint(ctx, OSSL_PKEY_PARAM_FFC_DIGEST), 0);
+
+    EVP_PKEY_CTX_free(ctx);
+    return ret;
+}
+
 #endif
+
+/* Test that calling EVP_PKEY_Q_keygen() for a non-standard keytype works as expected */
+static int test_new_keytype(void)
+{
+    int ret = 0;
+    EVP_PKEY *key = NULL;
+    OSSL_PROVIDER *tlsprov = NULL;
+    EVP_PKEY_CTX *ctx = NULL;
+    size_t outlen, secretlen, secretlen2;
+    unsigned char *out = NULL, *secret = NULL, *secret2 = NULL;
+
+    /* without tls-provider key should not be create-able */
+    if (TEST_ptr(key = EVP_PKEY_Q_keygen(mainctx, NULL, "XOR")))
+        goto err;
+    /* prepare & load tls-provider */
+    if (!TEST_true(OSSL_PROVIDER_add_builtin(mainctx, "tls-provider",
+                                             tls_provider_init))
+        || !TEST_ptr(tlsprov = OSSL_PROVIDER_load(mainctx, "tls-provider")))
+        goto err;
+    /* now try creating key again, should work this time */
+    if (!TEST_ptr(key = EVP_PKEY_Q_keygen(mainctx, NULL, "XOR")))
+        goto err;
+    /* now do encaps/decaps to validate all is good */
+    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new(key, NULL))
+        || !TEST_int_eq(EVP_PKEY_encapsulate_init(ctx, NULL), 1)
+        || !TEST_int_eq(EVP_PKEY_encapsulate(ctx, NULL, &outlen, NULL, &secretlen), 1))
+        goto err;
+    out = OPENSSL_malloc(outlen);
+    secret = OPENSSL_malloc(secretlen);
+    secret2 = OPENSSL_malloc(secretlen);
+    if (out == NULL || secret == NULL || secret2 == NULL
+        || !TEST_int_eq(EVP_PKEY_encapsulate(ctx, out, &outlen, secret, &secretlen), 1)
+        || !TEST_int_eq(EVP_PKEY_decapsulate_init(ctx, NULL), 1)
+        || !TEST_int_eq(EVP_PKEY_decapsulate(ctx, secret2, &secretlen2, out, outlen), 1)
+        || !TEST_mem_eq(secret, secretlen, secret2, secretlen2))
+        goto err;
+    ret = OSSL_PROVIDER_unload(tlsprov);
+
+err:
+    OPENSSL_free(out);
+    OPENSSL_free(secret);
+    OPENSSL_free(secret2);
+    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_free(key);
+    return ret;
+}
 
 #ifndef OPENSSL_NO_EC
 
@@ -430,6 +545,7 @@ static int test_ec_tofrom_data_select(void)
     return ret;
 }
 
+# ifndef OPENSSL_NO_ECX
 static int test_ecx_tofrom_data_select(void)
 {
     int ret;
@@ -440,6 +556,7 @@ static int test_ecx_tofrom_data_select(void)
     EVP_PKEY_free(key);
     return ret;
 }
+# endif
 #endif
 
 #ifndef OPENSSL_NO_SM2
@@ -693,6 +810,52 @@ static int test_PEM_read_bio_negative(int testid)
     EVP_PKEY_free(pkey);
     BIO_free(key_bio);
     OSSL_PROVIDER_unload(provider);
+
+    return ok;
+}
+
+static int test_PEM_read_bio_negative_wrong_password(int testid)
+{
+    int ok = 0;
+    OSSL_PROVIDER *provider = OSSL_PROVIDER_load(NULL, "default");
+    EVP_PKEY *read_pkey = NULL;
+    EVP_PKEY *write_pkey = EVP_RSA_gen(1024);
+    BIO *key_bio = BIO_new(BIO_s_mem());
+    const UI_METHOD *undo_ui_method = NULL;
+    const UI_METHOD *ui_method = NULL;
+    if (testid > 0)
+        ui_method = UI_null();
+
+    if (!TEST_ptr(provider))
+        goto err;
+    if (!TEST_ptr(key_bio))
+        goto err;
+    if (!TEST_ptr(write_pkey))
+        goto err;
+    undo_ui_method = UI_get_default_method();
+    UI_set_default_method(ui_method);
+
+    if (/* Output Encrypted private key in PEM form */
+        !TEST_true(PEM_write_bio_PrivateKey(key_bio, write_pkey, EVP_aes_256_cbc(),
+                                           NULL, 0, NULL, "pass")))
+        goto err;
+
+    ERR_clear_error();
+    read_pkey = PEM_read_bio_PrivateKey(key_bio, NULL, NULL, NULL);
+    if (!TEST_ptr_null(read_pkey))
+        goto err;
+
+    if (!TEST_int_eq(ERR_GET_REASON(ERR_get_error()), PEM_R_PROBLEMS_GETTING_PASSWORD))
+        goto err;
+    ok = 1;
+
+ err:
+    test_openssl_errors();
+    EVP_PKEY_free(read_pkey);
+    EVP_PKEY_free(write_pkey);
+    BIO_free(key_bio);
+    OSSL_PROVIDER_unload(provider);
+    UI_set_default_method(undo_ui_method);
 
     return ok;
 }
@@ -1003,6 +1166,47 @@ err:
     OSSL_PARAM_free(to_params);
     return ret;
 }
+
+/*
+ * Test that OSSL_PKEY_PARAM_FFC_DIGEST_PROPS is set properly when using fromdata
+ * This test:
+ *   checks for failure when the property query is bad (tstid == 0)
+ *   checks for success when the property query is valid (tstid == 1)
+ */
+static int test_dsa_fromdata_digest_prop(int tstid)
+{
+    EVP_PKEY_CTX *ctx = NULL, *gctx = NULL;
+    EVP_PKEY *pkey = NULL,  *pkey2 = NULL;
+    OSSL_PARAM params[4], *p = params;
+    int ret = 0;
+    int expected = (tstid == 0 ? 0 : 1);
+    unsigned int pbits = 512; /* minimum allowed for speed */
+
+    *p++ = OSSL_PARAM_construct_uint(OSSL_PKEY_PARAM_FFC_PBITS, &pbits);
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_FFC_DIGEST, "SHA512", 0);
+    /* Setting a bad prop query here should fail during paramgen - when it tries to do a fetch */
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_FFC_DIGEST_PROPS,
+                                            tstid == 0 ? "provider=unknown" : "provider=default", 0);
+    *p++ = OSSL_PARAM_construct_end();
+
+    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(mainctx, "DSA", NULL))
+        || !TEST_int_eq(EVP_PKEY_fromdata_init(ctx), 1)
+        || !TEST_int_eq(EVP_PKEY_fromdata(ctx, &pkey, EVP_PKEY_KEY_PARAMETERS, params), 1))
+        goto err;
+
+    if (!TEST_ptr(gctx = EVP_PKEY_CTX_new_from_pkey(mainctx, pkey, NULL))
+        || !TEST_int_eq(EVP_PKEY_paramgen_init(gctx), 1)
+        || !TEST_int_eq(EVP_PKEY_paramgen(gctx, &pkey2), expected))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_PKEY_free(pkey2);
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_CTX_free(gctx);
+    return ret;
+}
 #endif /* OPENSSL_NO_DSA */
 
 static int test_pkey_todata_null(void)
@@ -1148,6 +1352,46 @@ static int test_evp_md_ctx_copy(void)
     return ret;
 }
 
+static int test_evp_md_ctx_copy2(void)
+{
+    int ret = 0;
+    EVP_MD *md = NULL;
+    OSSL_LIB_CTX *ctx = NULL;
+    EVP_MD_CTX *inctx = NULL, *outctx = NULL;
+    void *origin_algctx = NULL;
+
+    if (!TEST_ptr(ctx = OSSL_LIB_CTX_new())
+            || !TEST_ptr(md = EVP_MD_fetch(ctx, "sha256", NULL)))
+        goto end;
+
+    inctx = EVP_MD_CTX_new();
+    outctx = EVP_MD_CTX_new();
+
+    if (!TEST_ptr(inctx) || !TEST_ptr(outctx))
+        goto end;
+
+    /* init inctx and outctx, now the contexts are from same providers */
+    if (!TEST_true(EVP_DigestInit_ex2(inctx, md, NULL)))
+        goto end;
+    if (!TEST_true(EVP_DigestInit_ex2(outctx, md, NULL)))
+        goto end;
+
+    /*
+     * Test the EVP_MD_CTX_copy_ex function. After copying,
+     * outctx->algctx should be the same as the original.
+     */
+    origin_algctx = outctx->algctx;
+    ret = TEST_true(EVP_MD_CTX_copy_ex(outctx, inctx))
+          && TEST_true(outctx->algctx == origin_algctx);
+
+end:
+    EVP_MD_free(md);
+    EVP_MD_CTX_free(inctx);
+    EVP_MD_CTX_free(outctx);
+    OSSL_LIB_CTX_free(ctx);
+    return ret;
+}
+
 #if !defined OPENSSL_NO_DES && !defined OPENSSL_NO_MD5
 static int test_evp_pbe_alg_add(void)
 {
@@ -1176,6 +1420,24 @@ err:
 }
 #endif
 
+/*
+ * Currently, EVP_<OBJ>_fetch doesn't support
+ * colon separated alternative names for lookup
+ * so add a test here to ensure that when one is provided
+ * libcrypto returns an error
+ */
+static int evp_test_name_parsing(void)
+{
+    EVP_MD *md;
+
+    if (!TEST_ptr_null(md = EVP_MD_fetch(mainctx, "SHA256:BogusName", NULL))) {
+        EVP_MD_free(md);
+        return 0;
+    }
+
+    return 1;
+}
+
 int setup_tests(void)
 {
     if (!test_get_libctx(&mainctx, &nullprov, NULL, NULL, NULL)) {
@@ -1184,12 +1446,16 @@ int setup_tests(void)
         return 0;
     }
 
+    ADD_TEST(evp_test_name_parsing);
     ADD_TEST(test_alternative_default);
     ADD_ALL_TESTS(test_d2i_AutoPrivateKey_ex, OSSL_NELEM(keydata));
+    ADD_TEST(test_new_keytype);
 #ifndef OPENSSL_NO_EC
     ADD_ALL_TESTS(test_d2i_PrivateKey_ex, 2);
     ADD_TEST(test_ec_tofrom_data_select);
+# ifndef OPENSSL_NO_ECX
     ADD_TEST(test_ecx_tofrom_data_select);
+# endif
     ADD_TEST(test_ec_d2i_i2d_pubkey);
 #else
     ADD_ALL_TESTS(test_d2i_PrivateKey_ex, 1);
@@ -1200,10 +1466,12 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_DSA
     ADD_TEST(test_dsa_todata);
     ADD_TEST(test_dsa_tofrom_data_select);
+    ADD_ALL_TESTS(test_dsa_fromdata_digest_prop, 2);
 #endif
 #ifndef OPENSSL_NO_DH
     ADD_TEST(test_dh_tofrom_data_select);
     ADD_TEST(test_dh_paramgen);
+    ADD_TEST(test_dh_paramfromdata);
 #endif
     ADD_TEST(test_rsa_tofrom_data_select);
 
@@ -1214,9 +1482,11 @@ int setup_tests(void)
     ADD_TEST(test_pkcs8key_nid_bio);
 #endif
     ADD_ALL_TESTS(test_PEM_read_bio_negative, OSSL_NELEM(keydata));
+    ADD_ALL_TESTS(test_PEM_read_bio_negative_wrong_password, 2);
     ADD_TEST(test_rsa_pss_sign);
     ADD_TEST(test_evp_md_ctx_dup);
     ADD_TEST(test_evp_md_ctx_copy);
+    ADD_TEST(test_evp_md_ctx_copy2);
     ADD_ALL_TESTS(test_provider_unload_effective, 2);
 #if !defined OPENSSL_NO_DES && !defined OPENSSL_NO_MD5
     ADD_TEST(test_evp_pbe_alg_add);

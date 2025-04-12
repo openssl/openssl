@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2024 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2015-2016 Cryptography Research, Inc.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -272,6 +272,17 @@ ossl_c448_ed448_sign_prehash(
                                 context, context_len, propq);
 }
 
+static c448_error_t
+c448_ed448_pubkey_verify(const uint8_t *pub, size_t pub_len)
+{
+    curve448_point_t pk_point;
+
+    if (pub_len != EDDSA_448_PUBLIC_BYTES)
+        return C448_FAILURE;
+
+    return ossl_curve448_point_decode_like_eddsa_and_mul_by_ratio(pk_point, pub);
+}
+
 c448_error_t
 ossl_c448_ed448_verify(
                     OSSL_LIB_CTX *ctx,
@@ -378,6 +389,17 @@ ossl_ed448_sign(OSSL_LIB_CTX *ctx, uint8_t *out_sig,
     return ossl_c448_ed448_sign(ctx, out_sig, private_key, public_key, message,
                                 message_len, phflag, context, context_len,
                                 propq) == C448_SUCCESS;
+}
+
+/*
+ * This function should not be necessary since ossl_ed448_verify() already
+ * does this check internally.
+ * For some reason the FIPS ACVP requires a EDDSA KeyVer test.
+ */
+int
+ossl_ed448_pubkey_verify(const uint8_t *pub, size_t pub_len)
+{
+    return c448_ed448_pubkey_verify(pub, pub_len);
 }
 
 int

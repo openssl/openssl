@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -10,7 +10,7 @@
 #include <string.h>
 #include <openssl/buffer.h>
 #include <openssl/rand.h>
-#include "internal/packet.h"
+#include "internal/packet_quic.h"
 #include "testutil.h"
 
 static const unsigned char simple1[] = { 0xff };
@@ -426,7 +426,7 @@ static int test_WPACKET_init_der(void)
         if (i == 0) {
             if (!TEST_true(WPACKET_init_null_der(&pkt)))
                 return 0;
-        } else { 
+        } else {
             if (!TEST_true(WPACKET_init_der(&pkt, sbuf, sizeof(sbuf))))
                 return 0;
         }
@@ -590,7 +590,7 @@ static int test_WPACKET_quic_vlint_random(void)
         if (!TEST_int_gt(RAND_bytes(rand_data, sizeof(rand_data)), 0))
             return cleanup(&pkt);
 
-        expected = *(uint64_t*)rand_data;
+        memcpy(&expected, rand_data, sizeof(expected));
 
         /*
          * Ensure that all size classes get tested with equal probability.

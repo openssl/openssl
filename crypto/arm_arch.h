@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2011-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -49,6 +49,8 @@
 #   else
 #    error "unsupported ARM architecture"
 #   endif
+#  elif defined(__ARM_ARCH)
+#   define __ARM_ARCH__ __ARM_ARCH
 #  endif
 # endif
 
@@ -85,6 +87,8 @@ extern unsigned int OPENSSL_armv8_rsa_neonized;
 # define ARMV8_UNROLL8_EOR3      (1<<12)
 # define ARMV8_SVE       (1<<13)
 # define ARMV8_SVE2      (1<<14)
+# define ARMV8_HAVE_SHA3_AND_WORTH_USING     (1<<15)
+# define ARMV8_UNROLL12_EOR3     (1<<16)
 
 /*
  * MIDR_EL1 system register
@@ -98,12 +102,33 @@ extern unsigned int OPENSSL_armv8_rsa_neonized;
 
 # define ARM_CPU_IMP_ARM           0x41
 # define HISI_CPU_IMP              0x48
+# define ARM_CPU_IMP_APPLE         0x61
+# define ARM_CPU_IMP_MICROSOFT     0x6D
+# define ARM_CPU_IMP_AMPERE        0xC0
 
 # define ARM_CPU_PART_CORTEX_A72   0xD08
 # define ARM_CPU_PART_N1           0xD0C
 # define ARM_CPU_PART_V1           0xD40
 # define ARM_CPU_PART_N2           0xD49
 # define HISI_CPU_PART_KP920       0xD01
+# define ARM_CPU_PART_V2           0xD4F
+# define ARM_CPU_PART_N3           0xD8E
+# define ARM_CPU_PART_V3           0xD84
+
+# define APPLE_CPU_PART_M1_ICESTORM         0x022
+# define APPLE_CPU_PART_M1_FIRESTORM        0x023
+# define APPLE_CPU_PART_M1_ICESTORM_PRO     0x024
+# define APPLE_CPU_PART_M1_FIRESTORM_PRO    0x025
+# define APPLE_CPU_PART_M1_ICESTORM_MAX     0x028
+# define APPLE_CPU_PART_M1_FIRESTORM_MAX    0x029
+# define APPLE_CPU_PART_M2_BLIZZARD         0x032
+# define APPLE_CPU_PART_M2_AVALANCHE        0x033
+# define APPLE_CPU_PART_M2_BLIZZARD_PRO     0x034
+# define APPLE_CPU_PART_M2_AVALANCHE_PRO    0x035
+# define APPLE_CPU_PART_M2_BLIZZARD_MAX     0x038
+# define APPLE_CPU_PART_M2_AVALANCHE_MAX    0x039
+
+# define MICROSOFT_CPU_PART_COBALT_100      0xD49
 
 # define MIDR_PARTNUM_SHIFT       4
 # define MIDR_PARTNUM_MASK        (0xfffU << MIDR_PARTNUM_SHIFT)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2011-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -676,8 +676,8 @@ static void felem_reduce(felem out, const largefelem in)
 }
 
 #if defined(ECP_NISTP521_ASM)
-void felem_square_wrapper(largefelem out, const felem in);
-void felem_mul_wrapper(largefelem out, const felem in1, const felem in2);
+static void felem_square_wrapper(largefelem out, const felem in);
+static void felem_mul_wrapper(largefelem out, const felem in1, const felem in2);
 
 static void (*felem_square_p)(largefelem out, const felem in) =
     felem_square_wrapper;
@@ -691,7 +691,7 @@ void p521_felem_mul(largefelem out, const felem in1, const felem in2);
 #  include "crypto/ppc_arch.h"
 # endif
 
-void felem_select(void)
+static void felem_select(void)
 {
 # if defined(_ARCH_PPC64)
     if ((OPENSSL_ppccap_P & PPC_MADD300) && (OPENSSL_ppccap_P & PPC_ALTIVEC)) {
@@ -707,13 +707,13 @@ void felem_select(void)
     felem_mul_p = felem_mul_ref;
 }
 
-void felem_square_wrapper(largefelem out, const felem in)
+static void felem_square_wrapper(largefelem out, const felem in)
 {
     felem_select();
     felem_square_p(out, in);
 }
 
-void felem_mul_wrapper(largefelem out, const felem in1, const felem in2)
+static void felem_mul_wrapper(largefelem out, const felem in1, const felem in2)
 {
     felem_select();
     felem_mul_p(out, in1, in2);
@@ -1665,7 +1665,6 @@ static void batch_mul(felem x_out, felem y_out, felem z_out,
 struct nistp521_pre_comp_st {
     felem g_pre_comp[16][3];
     CRYPTO_REF_COUNT references;
-    CRYPTO_RWLOCK *lock;
 };
 
 const EC_METHOD *EC_GFp_nistp521_method(void)
@@ -1744,11 +1743,7 @@ static NISTP521_PRE_COMP *nistp521_pre_comp_new(void)
     if (ret == NULL)
         return ret;
 
-    ret->references = 1;
-
-    ret->lock = CRYPTO_THREAD_lock_new();
-    if (ret->lock == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_CRYPTO_LIB);
+    if (!CRYPTO_NEW_REF(&ret->references, 1)) {
         OPENSSL_free(ret);
         return NULL;
     }
@@ -1759,7 +1754,7 @@ NISTP521_PRE_COMP *EC_nistp521_pre_comp_dup(NISTP521_PRE_COMP *p)
 {
     int i;
     if (p != NULL)
-        CRYPTO_UP_REF(&p->references, &i, p->lock);
+        CRYPTO_UP_REF(&p->references, &i);
     return p;
 }
 
@@ -1770,13 +1765,13 @@ void EC_nistp521_pre_comp_free(NISTP521_PRE_COMP *p)
     if (p == NULL)
         return;
 
-    CRYPTO_DOWN_REF(&p->references, &i, p->lock);
-    REF_PRINT_COUNT("EC_nistp521", p);
+    CRYPTO_DOWN_REF(&p->references, &i);
+    REF_PRINT_COUNT("EC_nistp521", i, p);
     if (i > 0)
         return;
     REF_ASSERT_ISNT(i < 0);
 
-    CRYPTO_THREAD_lock_free(p->lock);
+    CRYPTO_FREE_REF(&p->references);
     OPENSSL_free(p);
 }
 

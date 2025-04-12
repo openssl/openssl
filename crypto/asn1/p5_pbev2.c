@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include "crypto/asn1.h"
+#include "crypto/evp.h"
 #include <openssl/asn1t.h>
 #include <openssl/core.h>
 #include <openssl/core_names.h>
@@ -33,6 +34,13 @@ ASN1_SEQUENCE(PBKDF2PARAM) = {
 } ASN1_SEQUENCE_END(PBKDF2PARAM)
 
 IMPLEMENT_ASN1_FUNCTIONS(PBKDF2PARAM)
+
+ASN1_SEQUENCE(PBMAC1PARAM) = {
+    ASN1_SIMPLE(PBMAC1PARAM, keyDerivationFunc, X509_ALGOR),
+    ASN1_SIMPLE(PBMAC1PARAM, messageAuthScheme, X509_ALGOR)
+} ASN1_SEQUENCE_END(PBMAC1PARAM)
+
+IMPLEMENT_ASN1_FUNCTIONS(PBMAC1PARAM)
 
 /*
  * Return an algorithm identifier for a PKCS#5 v2.0 PBE algorithm: yes I know
@@ -196,7 +204,7 @@ X509_ALGOR *PKCS5_pbkdf2_set_ex(int iter, unsigned char *salt, int saltlen,
         goto err;
     }
     if (saltlen == 0)
-        saltlen = PKCS5_SALT_LEN;
+        saltlen = PKCS5_DEFAULT_PBE2_SALT_LEN;
     if ((osalt->data = OPENSSL_malloc(saltlen)) == NULL)
         goto err;
 

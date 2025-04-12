@@ -121,6 +121,27 @@ static void unload_providers(OSSL_LIB_CTX **libctx, OSSL_PROVIDER *prov[])
     }
 }
 
+static int test_legacy_provider_unloaded(void)
+{
+    OSSL_LIB_CTX *ctx = NULL;
+    int rc = 0;
+
+    ctx = OSSL_LIB_CTX_new();
+    if (!TEST_ptr(ctx))
+        goto err;
+
+    if (!TEST_true(OSSL_LIB_CTX_load_config(ctx, config_file)))
+        goto err;
+
+    if (!TEST_int_eq(OSSL_PROVIDER_available(ctx, "legacy"), 0))
+        goto err;
+
+    rc = 1;
+err:
+    OSSL_LIB_CTX_free(ctx);
+    return rc;
+}
+
 static X509_ALGOR *make_algor(int nid)
 {
     X509_ALGOR *algor;
@@ -379,6 +400,7 @@ int setup_tests(void)
             return 0;
         }
     }
+    ADD_TEST(test_legacy_provider_unloaded);
     if (strcmp(alg, "digest") == 0) {
         ADD_TEST(test_implicit_EVP_MD_fetch);
         ADD_TEST(test_explicit_EVP_MD_fetch_by_name);

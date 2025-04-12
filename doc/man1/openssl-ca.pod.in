@@ -30,7 +30,9 @@ B<openssl> B<ca>
 [B<-crlsec> I<seconds>]
 [B<-crlexts> I<section>]
 [B<-startdate> I<date>]
+[B<-not_before> I<date>]
 [B<-enddate> I<date>]
+[B<-not_after> I<date>]
 [B<-days> I<arg>]
 [B<-md> I<arg>]
 [B<-policy> I<arg>]
@@ -71,6 +73,11 @@ B<openssl> B<ca>
 
 This command emulates a CA application.
 See the B<WARNINGS> especially when considering to use it productively.
+
+It generates certificates bearing X.509 version 3.
+Unless specified otherwise,
+key identifier extensions are included as described in L<x509v3_config(5)>.
+
 It can be used to sign certificate requests (CSRs) in a variety of forms
 and generate certificate revocation lists (CRLs).
 It also maintains a text database of issued certificates and their status.
@@ -172,7 +179,8 @@ See L<openssl-format-options(1)> for details.
 =item B<-sigopt> I<nm>:I<v>
 
 Pass options to the signature algorithm during sign operations.
-Names and values of these options are algorithm-specific.
+Names and values of these options are algorithm-specific and
+documented in L<provider-signature(7)/Signature parameters>.
 
 =item B<-vfyopt> I<nm>:I<v>
 
@@ -221,23 +229,32 @@ Don't output the text form of a certificate to the output file.
 Specify the date output format. Values are: rfc_822 and iso_8601.
 Defaults to rfc_822.
 
-=item B<-startdate> I<date>
+=item B<-startdate> I<date>, B<-not_before> I<date>
 
 This allows the start date to be explicitly set. The format of the
 date is YYMMDDHHMMSSZ (the same as an ASN1 UTCTime structure), or
 YYYYMMDDHHMMSSZ (the same as an ASN1 GeneralizedTime structure). In
 both formats, seconds SS and timezone Z must be present.
+Alternatively, you can also use "today".
 
-=item B<-enddate> I<date>
+=item B<-enddate> I<date>, B<-not_after> I<date>
 
 This allows the expiry date to be explicitly set. The format of the
 date is YYMMDDHHMMSSZ (the same as an ASN1 UTCTime structure), or
 YYYYMMDDHHMMSSZ (the same as an ASN1 GeneralizedTime structure). In
 both formats, seconds SS and timezone Z must be present.
+Alternatively, you can also use "today".
+
+This overrides the B<-days> option.
 
 =item B<-days> I<arg>
 
-The number of days to certify the certificate for.
+The number of days from today to certify the certificate for.
+
+Regardless of the option B<-not_before>, the days are always counted from
+today.
+When used together with the option B<-not_after>/B<-startdate>, the explicit
+expiry date takes precedence.
 
 =item B<-md> I<alg>
 
@@ -287,8 +304,7 @@ and all certificates will be certified automatically.
 The section of the configuration file containing certificate extensions
 to be added when a certificate is issued (defaults to B<x509_extensions>
 unless the B<-extfile> option is used).
-If no X.509 extensions are specified then a V1 certificate is created,
-else a V3 certificate is created.
+
 See the L<x509v3_config(5)> manual page for details of the
 extension section format.
 
@@ -498,7 +514,7 @@ not necessary anymore, see the L</HISTORY> section.
 
 =item B<default_days>
 
-The same as the B<-days> option. The number of days to certify
+The same as the B<-days> option. The number of days from today to certify
 a certificate for.
 
 =item B<default_startdate>
@@ -707,7 +723,7 @@ A sample configuration file with the relevant sections for this command:
 
  default_days   = 365                   # how long to certify for
  default_crl_days= 30                   # how long before next CRL
- default_md     = md5                   # md to use
+ default_md     = sha256                # md to use
 
  policy         = policy_any            # default policy
  email_in_dn    = no                    # Don't add the email into cert DN
@@ -833,6 +849,9 @@ has no effect.
 
 The B<-engine> option was deprecated in OpenSSL 3.0.
 
+Since OpenSSL 3.2, generated certificates bear X.509 version 3,
+and key identifier extensions are included by default.
+
 =head1 SEE ALSO
 
 L<openssl(1)>,
@@ -845,7 +864,7 @@ L<x509v3_config(5)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2022 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2024 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

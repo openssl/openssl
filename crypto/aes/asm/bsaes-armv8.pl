@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright 2020-2022 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2020-2025 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -32,7 +32,7 @@ sub data
 }
 
 __END__
-// Copyright 2021-2022 The OpenSSL Project Authors. All Rights Reserved.
+// Copyright 2021-2025 The OpenSSL Project Authors. All Rights Reserved.
 //
 // Licensed under the OpenSSL license (the "License").  You may not use
 // this file except in compliance with the License.  You can obtain a copy
@@ -78,7 +78,8 @@ __END__
 //   other SIMD registers corrupted
 _bsaes_decrypt8:
         ldr     q8, [x9], #16
-        adr     x11, .LM0ISR
+        adrp    x11, .LM0ISR
+        add     x11, x11, #:lo12:.LM0ISR
         movi    v9.16b, #0x55
         ldr     q10, [x11], #16
         movi    v16.16b, #0x33
@@ -494,9 +495,10 @@ _bsaes_decrypt8:
         ret
 .size   _bsaes_decrypt8,.-_bsaes_decrypt8
 
-.type   _bsaes_const,%object
+.rodata
+.type   _bsaes_consts,%object
 .align  6
-_bsaes_const:
+_bsaes_consts:
 // InvShiftRows constants
 // Used in _bsaes_decrypt8, which assumes contiguity
 // .LM0ISR used with round 0 key
@@ -532,7 +534,9 @@ _bsaes_const:
 .quad   0x090d01050c000408, 0x03070b0f060a0e02
 
 .align  6
-.size   _bsaes_const,.-_bsaes_const
+.size   _bsaes_consts,.-_bsaes_consts
+
+.previous
 
 .type   _bsaes_encrypt8,%function
 .align  4
@@ -548,7 +552,8 @@ _bsaes_const:
 //   other SIMD registers corrupted
 _bsaes_encrypt8:
         ldr     q8, [x9], #16
-        adr     x11, .LM0SR
+        adrp    x11, .LM0SR
+        add     x11, x11, #:lo12:.LM0SR
         ldr     q9, [x11], #16
 _bsaes_encrypt8_alt:
         eor     v0.16b, v0.16b, v8.16b
@@ -952,9 +957,11 @@ _bsaes_encrypt8_alt:
 //   other SIMD registers corrupted
 _bsaes_key_convert:
 #ifdef __AARCH64EL__
-        adr     x11, .LM0_littleendian
+        adrp    x11, .LM0_littleendian
+        add     x11, x11, #:lo12:.LM0_littleendian
 #else
-        adr     x11, .LM0_bigendian
+        adrp    x11, .LM0_bigendian
+        add     x11, x11, #:lo12:.LM0_bigendian
 #endif
         ldr     q0, [x9], #16               // load round 0 key
         ldr     q1, [x11]                   // .LM0
@@ -998,7 +1005,8 @@ _bsaes_key_convert:
         // don't save last round key
 #ifdef __AARCH64EL__
         rev32   v15.16b, v15.16b
-        adr     x11, .LM0_bigendian
+        adrp    x11, .LM0_bigendian
+        add     x11, x11, #:lo12:.LM0_bigendian
 #endif
         ret
 .size   _bsaes_key_convert,.-_bsaes_key_convert
@@ -1018,6 +1026,7 @@ _bsaes_key_convert:
 //   Initialisation vector overwritten with last quadword of ciphertext
 //   No output registers, usual AAPCS64 register preservation
 ossl_bsaes_cbc_encrypt:
+        AARCH64_VALID_CALL_TARGET
         cmp     x2, #128
         bhs     .Lcbc_do_bsaes
         b       AES_cbc_encrypt
@@ -1270,7 +1279,7 @@ ossl_bsaes_cbc_encrypt:
 //   Output text filled in
 //   No output registers, usual AAPCS64 register preservation
 ossl_bsaes_ctr32_encrypt_blocks:
-
+        AARCH64_VALID_CALL_TARGET
         cmp     x2, #8                      // use plain AES for
         blo     .Lctr_enc_short             // small sizes
 
@@ -1476,6 +1485,7 @@ ossl_bsaes_ctr32_encrypt_blocks:
 //   Output ciphertext filled in
 //   No output registers, usual AAPCS64 register preservation
 ossl_bsaes_xts_encrypt:
+        AARCH64_VALID_CALL_TARGET
         // Stack layout:
         // sp ->
         //        nrounds*128-96 bytes: key schedule
@@ -1852,7 +1862,7 @@ ossl_bsaes_xts_encrypt:
         sub     x6, x21, #0x10
         // Penultimate plaintext block produces final ciphertext part-block
         // plus remaining part of final plaintext block. Move ciphertext part
-        // to final position and re-use penultimate ciphertext block buffer to
+        // to final position and reuse penultimate ciphertext block buffer to
         // construct final plaintext block
 .Lxts_enc_steal:
         ldrb    w0, [x20], #1
@@ -1921,6 +1931,7 @@ ossl_bsaes_xts_encrypt:
 //   Output plaintext filled in
 //   No output registers, usual AAPCS64 register preservation
 ossl_bsaes_xts_decrypt:
+        AARCH64_VALID_CALL_TARGET
         // Stack layout:
         // sp ->
         //        nrounds*128-96 bytes: key schedule
@@ -2329,7 +2340,7 @@ ossl_bsaes_xts_decrypt:
         mov     x6, x21
         // Penultimate ciphertext block produces final plaintext part-block
         // plus remaining part of final ciphertext block. Move plaintext part
-        // to final position and re-use penultimate plaintext block buffer to
+        // to final position and reuse penultimate plaintext block buffer to
         // construct final ciphertext block
 .Lxts_dec_steal:
         ldrb    w1, [x21]

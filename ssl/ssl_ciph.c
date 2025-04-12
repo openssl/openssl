@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -21,6 +21,8 @@
 #include "ssl_local.h"
 #include "internal/thread_once.h"
 #include "internal/cryptlib.h"
+#include "internal/comp.h"
+#include "internal/ssl_unwrap.h"
 
 /* NB: make sure indices in these tables match values above */
 
@@ -56,16 +58,6 @@ static const ssl_cipher_table ssl_cipher_table_cipher[SSL_ENC_NUM_IDX] = {
     {SSL_MAGMA, NID_magma_ctr_acpkm}, /* SSL_ENC_MAGMA_IDX */
     {SSL_KUZNYECHIK, NID_kuznyechik_ctr_acpkm}, /* SSL_ENC_KUZNYECHIK_IDX */
 };
-
-#define SSL_COMP_NULL_IDX       0
-#define SSL_COMP_ZLIB_IDX       1
-#define SSL_COMP_NUM_IDX        2
-
-static STACK_OF(SSL_COMP) *ssl_comp_methods = NULL;
-
-#ifndef OPENSSL_NO_COMP
-static CRYPTO_ONCE ssl_load_builtin_comp_once = CRYPTO_ONCE_STATIC_INIT;
-#endif
 
 /* NB: make sure indices in this table matches values above */
 static const ssl_cipher_table ssl_cipher_table_mac[SSL_MD_NUM_IDX] = {
@@ -114,7 +106,7 @@ static const ssl_cipher_table ssl_cipher_table_auth[] = {
 /* *INDENT-ON* */
 
 /* Utility function for table lookup */
-static int ssl_cipher_info_find(const ssl_cipher_table * table,
+static int ssl_cipher_info_find(const ssl_cipher_table *table,
                                 size_t table_cnt, uint32_t mask)
 {
     size_t i;
@@ -347,7 +339,8 @@ int ssl_load_ciphers(SSL_CTX *ctx)
             ctx->disabled_mac_mask |= t->mask;
         } else {
             int tmpsize = EVP_MD_get_size(md);
-            if (!ossl_assert(tmpsize >= 0))
+
+            if (!ossl_assert(tmpsize > 0))
                 return 0;
             ctx->ssl_mac_secret_size[i] = tmpsize;
         }
@@ -358,7 +351,7 @@ int ssl_load_ciphers(SSL_CTX *ctx)
 
     /*
      * We ignore any errors from the fetches below. They are expected to fail
-     * if theose algorithms are not available.
+     * if these algorithms are not available.
      */
     ERR_set_mark();
     sig = EVP_SIGNATURE_fetch(ctx->libctx, "DSA", ctx->propq);
@@ -445,43 +438,11 @@ int ssl_load_ciphers(SSL_CTX *ctx)
     return 1;
 }
 
-#ifndef OPENSSL_NO_COMP
-
-static int sk_comp_cmp(const SSL_COMP *const *a, const SSL_COMP *const *b)
-{
-    return ((*a)->id - (*b)->id);
-}
-
-DEFINE_RUN_ONCE_STATIC(do_load_builtin_compressions)
-{
-    SSL_COMP *comp = NULL;
-    COMP_METHOD *method = COMP_zlib();
-
-    ssl_comp_methods = sk_SSL_COMP_new(sk_comp_cmp);
-
-    if (COMP_get_type(method) != NID_undef && ssl_comp_methods != NULL) {
-        comp = OPENSSL_malloc(sizeof(*comp));
-        if (comp != NULL) {
-            comp->method = method;
-            comp->id = SSL_COMP_ZLIB_IDX;
-            comp->name = COMP_get_name(method);
-            sk_SSL_COMP_push(ssl_comp_methods, comp);
-            sk_SSL_COMP_sort(ssl_comp_methods);
-        }
-    }
-    return 1;
-}
-
-static int load_builtin_compressions(void)
-{
-    return RUN_ONCE(&ssl_load_builtin_comp_once, do_load_builtin_compressions);
-}
-#endif
-
 int ssl_cipher_get_evp_cipher(SSL_CTX *ctx, const SSL_CIPHER *sslc,
                               const EVP_CIPHER **enc)
 {
-    int i = ssl_cipher_info_lookup(ssl_cipher_table_cipher, sslc->algorithm_enc);
+    int i = ssl_cipher_info_lookup(ssl_cipher_table_cipher,
+                                   sslc->algorithm_enc);
 
     if (i == -1) {
         *enc = NULL;
@@ -507,6 +468,33 @@ int ssl_cipher_get_evp_cipher(SSL_CTX *ctx, const SSL_CIPHER *sslc,
     return 1;
 }
 
+int ssl_cipher_get_evp_md_mac(SSL_CTX *ctx, const SSL_CIPHER *sslc,
+                              const EVP_MD **md,
+                              int *mac_pkey_type, size_t *mac_secret_size)
+{
+    int i = ssl_cipher_info_lookup(ssl_cipher_table_mac, sslc->algorithm_mac);
+
+    if (i == -1) {
+        *md = NULL;
+        if (mac_pkey_type != NULL)
+            *mac_pkey_type = NID_undef;
+        if (mac_secret_size != NULL)
+            *mac_secret_size = 0;
+    } else {
+        const EVP_MD *digest = ctx->ssl_digest_methods[i];
+
+        if (digest == NULL || !ssl_evp_md_up_ref(digest)) 
+            return 0;
+
+        *md = digest;
+        if (mac_pkey_type != NULL)
+            *mac_pkey_type = ctx->ssl_mac_pkey_id[i];
+        if (mac_secret_size != NULL)
+            *mac_secret_size = ctx->ssl_mac_secret_size[i];
+    }
+    return 1;
+}
+
 int ssl_cipher_get_evp(SSL_CTX *ctx, const SSL_SESSION *s,
                        const EVP_CIPHER **enc, const EVP_MD **md,
                        int *mac_pkey_type, size_t *mac_secret_size,
@@ -520,20 +508,15 @@ int ssl_cipher_get_evp(SSL_CTX *ctx, const SSL_SESSION *s,
         return 0;
     if (comp != NULL) {
         SSL_COMP ctmp;
-#ifndef OPENSSL_NO_COMP
-        if (!load_builtin_compressions()) {
-            /*
-             * Currently don't care, since a failure only means that
-             * ssl_comp_methods is NULL, which is perfectly OK
-             */
-        }
-#endif
+        STACK_OF(SSL_COMP) *comp_methods;
+
         *comp = NULL;
         ctmp.id = s->compress_meth;
-        if (ssl_comp_methods != NULL) {
-            i = sk_SSL_COMP_find(ssl_comp_methods, &ctmp);
+        comp_methods = SSL_COMP_get_compression_methods();
+        if (comp_methods != NULL) {
+            i = sk_SSL_COMP_find(comp_methods, &ctmp);
             if (i >= 0)
-                *comp = sk_SSL_COMP_value(ssl_comp_methods, i);
+                *comp = sk_SSL_COMP_value(comp_methods, i);
         }
         /* If were only interested in comp then return success */
         if ((enc == NULL) && (md == NULL))
@@ -546,34 +529,17 @@ int ssl_cipher_get_evp(SSL_CTX *ctx, const SSL_SESSION *s,
     if (!ssl_cipher_get_evp_cipher(ctx, c, enc))
         return 0;
 
-    i = ssl_cipher_info_lookup(ssl_cipher_table_mac, c->algorithm_mac);
-    if (i == -1) {
-        *md = NULL;
-        if (mac_pkey_type != NULL)
-            *mac_pkey_type = NID_undef;
-        if (mac_secret_size != NULL)
-            *mac_secret_size = 0;
-        if (c->algorithm_mac == SSL_AEAD)
-            mac_pkey_type = NULL;
-    } else {
-        const EVP_MD *digest = ctx->ssl_digest_methods[i];
-
-        if (digest == NULL
-                || !ssl_evp_md_up_ref(digest)) {
-            ssl_evp_cipher_free(*enc);
-            return 0;
-        }
-        *md = digest;
-        if (mac_pkey_type != NULL)
-            *mac_pkey_type = ctx->ssl_mac_pkey_id[i];
-        if (mac_secret_size != NULL)
-            *mac_secret_size = ctx->ssl_mac_secret_size[i];
+    if (!ssl_cipher_get_evp_md_mac(ctx, c, md, mac_pkey_type,
+                                   mac_secret_size)) {
+        ssl_evp_cipher_free(*enc);
+        return 0;
     }
 
     if ((*enc != NULL)
-        && (*md != NULL 
+        && (*md != NULL
             || (EVP_CIPHER_get_flags(*enc) & EVP_CIPH_FLAG_AEAD_CIPHER))
-        && (!mac_pkey_type || *mac_pkey_type != NID_undef)) {
+        && (c->algorithm_mac == SSL_AEAD
+            || mac_pkey_type == NULL || *mac_pkey_type != NID_undef)) {
         const EVP_CIPHER *evp = NULL;
 
         if (use_etm
@@ -636,6 +602,7 @@ const EVP_MD *ssl_prf_md(SSL_CONNECTION *s)
     return ssl_md(SSL_CONNECTION_GET_CTX(s),
                   ssl_get_algorithm2(s) >> TLS1_PRF_DGST_SHIFT);
 }
+
 
 #define ITEM_SEP(a) \
         (((a) == ':') || ((a) == ' ') || ((a) == ';') || ((a) == ','))
@@ -1495,9 +1462,11 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(SSL_CTX *ctx,
      */
     num_of_ciphers = ssl_method->num_ciphers();
 
-    co_list = OPENSSL_malloc(sizeof(*co_list) * num_of_ciphers);
-    if (co_list == NULL)
-        return NULL;          /* Failure */
+    if (num_of_ciphers > 0) {
+        co_list = OPENSSL_malloc(sizeof(*co_list) * num_of_ciphers);
+        if (co_list == NULL)
+            return NULL;          /* Failure */
+    }
 
     ssl_cipher_collect_ciphers(ssl_method, num_of_ciphers,
                                disabled_mkey, disabled_auth, disabled_enc,
@@ -1705,7 +1674,7 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
     const char *ver;
     const char *kx, *au, *enc, *mac;
     uint32_t alg_mkey, alg_auth, alg_enc, alg_mac;
-    static const char *format = "%-30s %-7s Kx=%-8s Au=%-5s Enc=%-22s Mac=%-4s\n";
+    static const char *const format = "%-30s %-7s Kx=%-8s Au=%-5s Enc=%-22s Mac=%-4s\n";
 
     if (buf == NULL) {
         len = 128;
@@ -1974,17 +1943,19 @@ uint16_t SSL_CIPHER_get_protocol_id(const SSL_CIPHER *c)
 SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n)
 {
     SSL_COMP *ctmp;
-    int i, nn;
+    SSL_COMP srch_key;
+    int i;
 
     if ((n == 0) || (sk == NULL))
         return NULL;
-    nn = sk_SSL_COMP_num(sk);
-    for (i = 0; i < nn; i++) {
+    srch_key.id = n;
+    i = sk_SSL_COMP_find(sk, &srch_key);
+    if (i >= 0)
         ctmp = sk_SSL_COMP_value(sk, i);
-        if (ctmp->id == n)
-            return ctmp;
-    }
-    return NULL;
+    else
+        ctmp = NULL;
+
+    return ctmp;
 }
 
 #ifdef OPENSSL_NO_COMP
@@ -2007,33 +1978,43 @@ int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
 #else
 STACK_OF(SSL_COMP) *SSL_COMP_get_compression_methods(void)
 {
-    load_builtin_compressions();
-    return ssl_comp_methods;
+    STACK_OF(SSL_COMP) **rv;
+
+    rv = (STACK_OF(SSL_COMP) **)OSSL_LIB_CTX_get_data(NULL,
+                                     OSSL_LIB_CTX_COMP_METHODS);
+    if (rv != NULL)
+        return *rv;
+    else
+        return NULL;
 }
 
 STACK_OF(SSL_COMP) *SSL_COMP_set0_compression_methods(STACK_OF(SSL_COMP)
                                                       *meths)
 {
-    STACK_OF(SSL_COMP) *old_meths = ssl_comp_methods;
-    ssl_comp_methods = meths;
+    STACK_OF(SSL_COMP) **comp_methods;
+    STACK_OF(SSL_COMP) *old_meths;
+
+    comp_methods = (STACK_OF(SSL_COMP) **)OSSL_LIB_CTX_get_data(NULL,
+                                              OSSL_LIB_CTX_COMP_METHODS);
+    if (comp_methods == NULL) {
+        old_meths = meths;
+    } else {
+        old_meths = *comp_methods;
+        *comp_methods = meths;
+    }
+
     return old_meths;
-}
-
-static void cmeth_free(SSL_COMP *cm)
-{
-    OPENSSL_free(cm);
-}
-
-void ssl_comp_free_compression_methods_int(void)
-{
-    STACK_OF(SSL_COMP) *old_meths = ssl_comp_methods;
-    ssl_comp_methods = NULL;
-    sk_SSL_COMP_pop_free(old_meths, cmeth_free);
 }
 
 int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
 {
+    STACK_OF(SSL_COMP) *comp_methods;
     SSL_COMP *comp;
+
+    comp_methods = SSL_COMP_get_compression_methods();
+
+    if (comp_methods == NULL)
+        return 1;
 
     if (cm == NULL || COMP_get_type(cm) == NID_undef)
         return 1;
@@ -2056,18 +2037,17 @@ int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
         return 1;
 
     comp->id = id;
-    comp->method = cm;
-    load_builtin_compressions();
-    if (ssl_comp_methods && sk_SSL_COMP_find(ssl_comp_methods, comp) >= 0) {
+    if (sk_SSL_COMP_find(comp_methods, comp) >= 0) {
         OPENSSL_free(comp);
         ERR_raise(ERR_LIB_SSL, SSL_R_DUPLICATE_COMPRESSION_ID);
         return 1;
     }
-    if (ssl_comp_methods == NULL || !sk_SSL_COMP_push(ssl_comp_methods, comp)) {
+    if (!sk_SSL_COMP_push(comp_methods, comp)) {
         OPENSSL_free(comp);
         ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         return 1;
     }
+
     return 0;
 }
 #endif
@@ -2153,6 +2133,16 @@ int SSL_CIPHER_get_auth_nid(const SSL_CIPHER *c)
     return ssl_cipher_table_auth[i].nid;
 }
 
+int ssl_get_md_idx(int md_nid) {
+    int i;
+
+    for(i = 0; i < SSL_MD_NUM_IDX; i++) {
+        if (md_nid == ssl_cipher_table_mac[i].nid)
+            return i;
+    }
+    return -1;
+}
+
 const EVP_MD *SSL_CIPHER_get_handshake_digest(const SSL_CIPHER *c)
 {
     int idx = c->algorithm2 & SSL_HANDSHAKE_MAC_MASK;
@@ -2171,7 +2161,7 @@ int ssl_cipher_get_overhead(const SSL_CIPHER *c, size_t *mac_overhead,
                             size_t *int_overhead, size_t *blocksize,
                             size_t *ext_overhead)
 {
-    size_t mac = 0, in = 0, blk = 0, out = 0;
+    int mac = 0, in = 0, blk = 0, out = 0;
 
     /* Some hard-coded numbers for the CCM/Poly1305 MAC overhead
      * because there are no handy #defines for those. */
@@ -2195,6 +2185,8 @@ int ssl_cipher_get_overhead(const SSL_CIPHER *c, size_t *mac_overhead,
             return 0;
 
         mac = EVP_MD_get_size(e_md);
+        if (mac <= 0)
+            return 0;
         if (c->algorithm_enc != SSL_eNULL) {
             int cipher_nid = SSL_CIPHER_get_cipher_nid(c);
             const EVP_CIPHER *e_ciph = EVP_get_cipherbynid(cipher_nid);
@@ -2207,22 +2199,31 @@ int ssl_cipher_get_overhead(const SSL_CIPHER *c, size_t *mac_overhead,
 
             in = 1; /* padding length byte */
             out = EVP_CIPHER_get_iv_length(e_ciph);
+            if (out < 0)
+                return 0;
             blk = EVP_CIPHER_get_block_size(e_ciph);
+            if (blk <= 0)
+                return 0;
         }
     }
 
-    *mac_overhead = mac;
-    *int_overhead = in;
-    *blocksize = blk;
-    *ext_overhead = out;
+    *mac_overhead = (size_t)mac;
+    *int_overhead = (size_t)in;
+    *blocksize = (size_t)blk;
+    *ext_overhead = (size_t)out;
 
     return 1;
 }
 
 int ssl_cert_is_disabled(SSL_CTX *ctx, size_t idx)
 {
-    const SSL_CERT_LOOKUP *cl = ssl_cert_lookup_by_idx(idx);
+    const SSL_CERT_LOOKUP *cl;
 
+    /* A provider-loaded key type is always enabled */
+    if (idx >= SSL_PKEY_NUM)
+        return 0;
+
+    cl = ssl_cert_lookup_by_idx(idx, ctx);
     if (cl == NULL || (cl->amask & ctx->disabled_auth_mask) != 0)
         return 1;
     return 0;

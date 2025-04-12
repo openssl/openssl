@@ -23,15 +23,18 @@ supports the following.
 
 =item "n" (B<OSSL_PKEY_PARAM_RSA_N>) <unsigned integer>
 
-The RSA "n" value.
+The RSA modulus "n" value.
 
 =item "e" (B<OSSL_PKEY_PARAM_RSA_E>) <unsigned integer>
 
-The RSA "e" value.
+The RSA public exponent "e" value.
+This value must always be set when creating a raw key using L<EVP_PKEY_fromdata(3)>.
+Note that when a decryption operation is performed, that this value is used for
+blinding purposes to prevent timing attacks.
 
 =item "d" (B<OSSL_PKEY_PARAM_RSA_D>) <unsigned integer>
 
-The RSA "d" value.
+The RSA private exponent "d" value.
 
 =item "rsa-factor1" (B<OSSL_PKEY_PARAM_RSA_FACTOR1>) <unsigned integer>
 
@@ -77,7 +80,7 @@ Up to eight additional "r_i" prime factors are supported.
 =item "rsa-exponent10" (B<OSSL_PKEY_PARAM_RSA_EXPONENT10>) <unsigned integer>
 
 RSA CRT (Chinese Remainder Theorem) exponents. The exponents are known
-as "dP", "dQ" and "d_i in RFC8017".
+as "dP", "dQ" and "d_i" in RFC8017.
 Up to eight additional "d_i" exponents are supported.
 
 =item "rsa-coefficient1" (B<OSSL_PKEY_PARAM_RSA_COEFFICIENT1>) <unsigned integer>
@@ -128,6 +131,15 @@ Some providers may only support a value of 2.
 The RSA "e" value. The value may be any odd number greater than or equal to
 65537. The default value is 65537.
 For legacy reasons a value of 3 is currently accepted but is deprecated.
+
+=item "rsa-derive-from-pq"  (B<OSSL_PKEY_PARAM_RSA_DERIVE_FROM_PQ>) <unsigned integer>
+
+Indicate that missing parameters not passed in the parameter list should be
+derived if not provided.  Setting a nonzero value will cause all
+needed exponents and coefficients to be derived if not available.  Setting this
+option requires at least OSSL_PARAM_RSA_FACTOR1, OSSL_PARAM_RSA_FACTOR2,
+and OSSL_PARAM_RSA_N to be provided.  This option is ignored if
+OSSL_KEYMGMT_SELECT_PRIVATE_KEY is not set in the selection parameter.
 
 =back
 
@@ -186,7 +198,7 @@ both return 1 unconditionally.
 
 For RSA keys, L<EVP_PKEY_public_check(3)> conforms to the SP800-56Br1 I<public key
 check> when the OpenSSL FIPS provider is used. The OpenSSL default provider
-performs similiar tests but relaxes the keysize restrictions for backwards
+performs similar tests but relaxes the keysize restrictions for backwards
 compatibility.
 
 For RSA keys, L<EVP_PKEY_public_check_quick(3)> is the same as
@@ -261,7 +273,7 @@ L<EVP_RSA_gen(3)>, L<EVP_KEYMGMT(3)>, L<EVP_PKEY(3)>, L<provider-keymgmt(7)>
 
 =head1 COPYRIGHT
 
-Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020-2024 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -43,18 +43,21 @@ The demos also deliberately focus on aspects of libssl usage which are likely to
 be relevant to QUIC and require changes; for example, how varied applications
 have libssl perform network I/O, and how varied applications create sockets and
 connections for use with libssl. The libssl API as a whole has a much larger
-scope and includes innumerate functions and myriad features; the intention is
+scope and includes numerous functions and features; the intention is
 not to demonstrate all of these, because most of them will not be touched by
 QUIC. For example, while many users of OpenSSL may make use of APIs for client
 certificates or other TLS functionality, the use of QUIC is unlikely to have
 implications for these APIs and demos demonstrating such functionality are
 therefore out of scope.
 
+[A report is available](REPORT.md) on the results of the DDD process following
+the completion of the development of the QUIC MVP (minimum viable product).
+
 Background
 ----------
 
 These demos were developed after analysis of the following open source
-applications to determine libssl API usage patterns. The modally occurring usage
+applications to determine libssl API usage patterns. The commonly occurring usage
 patterns were determined and used to determine categories into which to classify
 the applications:
 
@@ -83,8 +86,8 @@ the applications:
 | pgbouncer        | A |      AOSF, BIOc  |
 
 * Blk: Whether the application uses blocking or non-blocking I/O.
-  * S: Blocking
-  * A: Nonblocking
+  * S: Blocking (Synchronous)
+  * A: Nonblocking (Asynchronous)
 * FD: Whether the application creates and owns its own FD.
   * AOSF: Application owns, calls SSL_set_fd.
   * AOSFx: Application owns, calls SSL_set_[rw]fd, different FDs for read/write.
@@ -110,6 +113,8 @@ The demos found in this directory are:
 | [ddd-04-fd-nonblocking](ddd-04-fd-nonblocking.c) | A-AOSF | A `SSL_set_fd`-based non-blocking example demonstrating real-world OpenSSL API usage (corresponding to A-AOSF applications above) |
 | [ddd-05-mem-nonblocking](ddd-05-mem-nonblocking.c) | A-BIOm | A non-blocking example based on use of a memory buffer to feed OpenSSL encrypted data (corresponding to A-BIOm applications above) |
 | [ddd-06-mem-uv](ddd-06-mem-uv.c) | A-BIOm | A non-blocking example based on use of a memory buffer to feed OpenSSL encrypted data; uses libuv, a real-world async I/O library |
+
+On Ubuntu, libuv can be obtained by installing the package "libuv1-dev".
 
 Availability of a default certificate store is assumed. `SSL_CERT_DIR` may be
 set when running the demos if necessary.

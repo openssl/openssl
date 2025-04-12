@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2005-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -116,7 +116,6 @@ struct bio_st {
     uint64_t num_read;
     uint64_t num_write;
     CRYPTO_EX_DATA ex_data;
-    CRYPTO_RWLOCK *lock;
 };
 
 #ifndef OPENSSL_NO_SOCK
@@ -140,7 +139,7 @@ extern LPFN_WSASENDMSG bio_WSASendMsg;
 # endif
 #endif
 
-extern CRYPTO_RWLOCK *bio_type_lock;
+extern CRYPTO_REF_COUNT bio_type_count;
 
 void bio_sock_cleanup_int(void);
 

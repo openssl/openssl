@@ -37,7 +37,8 @@ static int nm##_update(EVP_MD_CTX *ctx, const void *data, size_t count)        \
 }                                                                              \
 static int nm##_final(EVP_MD_CTX *ctx, unsigned char *md)                      \
 {                                                                              \
-    return fn##_final(md, EVP_MD_CTX_get0_md_data(ctx));                       \
+    KECCAK1600_CTX *kctx = EVP_MD_CTX_get0_md_data(ctx);                       \
+    return fn##_final(kctx, md, kctx->md_size);                                \
 }
 #define IMPLEMENT_LEGACY_EVP_MD_METH_SHAKE(nm, fn, tag)                        \
 static int nm##_init(EVP_MD_CTX *ctx)                                          \
@@ -71,7 +72,11 @@ static int sha1_int_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2)
 
 static int shake_ctrl(EVP_MD_CTX *evp_ctx, int cmd, int p1, void *p2)
 {
-    KECCAK1600_CTX *ctx = evp_ctx->md_data;
+    KECCAK1600_CTX *ctx;
+
+    if (evp_ctx == NULL)
+        return 0;
+    ctx = evp_ctx->md_data;
 
     switch (cmd) {
     case EVP_MD_CTRL_XOF_LEN:

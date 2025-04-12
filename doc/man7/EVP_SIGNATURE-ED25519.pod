@@ -12,7 +12,7 @@ Ed448
 
 The B<Ed25519> and B<Ed448> EVP_PKEY implementation supports key
 generation, one-shot digest-sign and digest-verify using the EdDSA
-signature scheme described in RFC 8032. It has associated private and
+signature schemes described in RFC 8032. It has associated private and
 public key formats compatible with RFC 8410.
 
 =head2 EdDSA Instances
@@ -35,6 +35,15 @@ The instances Ed25519ctx, Ed25519ph, Ed448, Ed448ph accept an optional
 B<context-string> as input to sign and verify operations (and for
 Ed25519ctx, the context-string must be nonempty).  For the Ed25519
 instance, a nonempty context-string is not permitted.
+
+These instances can be specified as signature parameters when using
+L<EVP_DigestSignInit(3)> and L<EVP_DigestVerifyInit(3)>, see
+L</ED25519 and ED448 Signature Parameters> below.
+
+These instances are also explicitly fetchable as algorithms using
+L<EVP_SIGNATURE_fetch(3)>, which can be used with
+L<EVP_PKEY_sign_init_ex2(3)>, L<EVP_PKEY_verify_init_ex2(3)>,
+L<EVP_PKEY_sign_message_init(3)> and L<EVP_PKEY_verify_message_init(3)>.
 
 =head2 ED25519 and ED448 Signature Parameters
 
@@ -60,14 +69,21 @@ A string of octets with length at most 255.
 
 Both of these parameters are optional.
 
-If the instance name is not specified, then the default "Ed25519" or
-"Ed448" is used.
-
-If a context-string is not specified, then an empty context-string is
-used.
+When using L<EVP_DigestSignInit(3)> or L<EVP_DigestVerifyInit(3)>, the
+signature algorithm is derived from the key type name.  The key type name
+("Ed25519" or "Ed448") is also the default for the instance, but this can be
+changed with the "instance" parameter.
 
 Note that a message digest name must B<NOT> be specified when signing
 or verifying.
+
+When using L<EVP_PKEY_sign_init_ex2(3)>, L<EVP_PKEY_verify_init_ex2(3)>,
+L<EVP_PKEY_sign_message_init(3)> or L<EVP_PKEY_verify_message_init(3)>, the
+instance is the explicit signature algorithm name, and may not be changed
+(trying to give one with the "instance" parameter is therefore an error).
+
+If a context-string is not specified, then an empty context-string is
+used.
 
 See L<EVP_PKEY-X25519(7)> for information related to B<X25519> and B<X448> keys.
 
@@ -156,7 +172,7 @@ L<EVP_DigestVerifyInit(3)>,
 
 =head1 COPYRIGHT
 
-Copyright 2017-2021 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2017-2024 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -23,8 +23,14 @@ DHKEM requires the generation of a keypair using an input key material (seed).
 Use this to specify the key material used for generation of the private key.
 This value should not be reused for other purposes.
 It should have a length of at least 32 for X25519, and 56 for X448.
-
 This is only supported by X25519 and X448.
+
+=item "fips-indicator" (B<OSSL_PKEY_PARAM_FIPS_APPROVED_INDICATOR>) <integer>
+
+This getter is only supported by X25519 and X448 for the FIPS provider.
+Since X25519 and X448 are unapproved in FIPS 140-3 this getter return 0.
+
+See L<provider-keymgmt(7)/Common Information Parameters> for further information.
 
 =back
 
@@ -110,7 +116,7 @@ L<EVP_SIGNATURE-ED25519(7)>, L<EVP_SIGNATURE-ED448(7)>
 
 =head1 COPYRIGHT
 
-Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020-2024 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

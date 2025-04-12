@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -919,6 +919,14 @@ static int asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
         }
         if (utype == V_ASN1_UNIVERSALSTRING && (len & 3)) {
             ERR_raise(ERR_LIB_ASN1, ASN1_R_UNIVERSALSTRING_IS_WRONG_LENGTH);
+            goto err;
+        }
+        if (utype == V_ASN1_GENERALIZEDTIME && (len < 15)) {
+            ERR_raise(ERR_LIB_ASN1, ASN1_R_GENERALIZEDTIME_IS_TOO_SHORT);
+            goto err;
+        }
+        if (utype == V_ASN1_UTCTIME && (len < 13)) {
+            ERR_raise(ERR_LIB_ASN1, ASN1_R_UTCTIME_IS_TOO_SHORT);
             goto err;
         }
         /* All based on ASN1_STRING and handled the same */

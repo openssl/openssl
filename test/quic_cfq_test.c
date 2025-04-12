@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -114,7 +114,7 @@ static int test_cfq(void)
     for (i = 0; i < OSSL_NELEM(ref_buf); ++i) {
         if (!TEST_ptr(item = ossl_quic_cfq_add_frame(cfq, ref_priority[i],
                                                      ref_pn_space[i],
-                                                     ref_frame_type[i],
+                                                     ref_frame_type[i], 0,
                                                      ref_buf + i,
                                                      1,
                                                      free_cb,

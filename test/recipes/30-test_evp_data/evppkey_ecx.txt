@@ -1,5 +1,5 @@
 #
-# Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2001-2024 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -57,18 +57,30 @@ PrivPubKeyPair = Bob-25519:Bob-25519-PUBLIC
 
 PrivPubKeyPair = Bob-25519-Raw:Bob-25519-PUBLIC-Raw
 
+Availablein = default
 Derive=Alice-25519
 PeerKey=Bob-25519-PUBLIC
 SharedSecret=4A5D9D5BA4CE2DE1728E3BF480350F25E07E21C947D19E3376F09B3C1E161742
 
+# Test that X25519 Key exchange is not FIPS approved
+Availablein = fips
+FIPSversion = >=3.4.0
+Derive=Alice-25519
+PeerKey=Bob-25519-PUBLIC
+SharedSecret=4A5D9D5BA4CE2DE1728E3BF480350F25E07E21C947D19E3376F09B3C1E161742
+Unapproved=1
+
+Availablein = default
 Derive=Bob-25519
 PeerKey=Alice-25519-PUBLIC
 SharedSecret=4A5D9D5BA4CE2DE1728E3BF480350F25E07E21C947D19E3376F09B3C1E161742
 
+Availablein = default
 Derive=Alice-25519-Raw
 PeerKey=Bob-25519-PUBLIC-Raw
 SharedSecret=4A5D9D5BA4CE2DE1728E3BF480350F25E07E21C947D19E3376F09B3C1E161742
 
+Availablein = default
 Derive=Bob-25519-Raw
 PeerKey=Alice-25519-PUBLIC-Raw
 SharedSecret=4A5D9D5BA4CE2DE1728E3BF480350F25E07E21C947D19E3376F09B3C1E161742
@@ -129,23 +141,36 @@ PrivPubKeyPair = Bob-448-Raw:Bob-448-PUBLIC-Raw
 
 PublicKeyRaw=Bob-448-PUBLIC-Raw-NonCanonical:X448:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 
+Availablein = default
 Derive=Alice-448
 PeerKey=Bob-448-PUBLIC
 SharedSecret=07fff4181ac6cc95ec1c16a94a0f74d12da232ce40a77552281d282bb60c0b56fd2464c335543936521c24403085d59a449a5037514a879d
 
+# Test that X448 Key exchange is not FIPS approved
+Availablein = fips
+FIPSversion = >=3.4.0
+Derive=Alice-448
+PeerKey=Bob-448-PUBLIC
+SharedSecret=07fff4181ac6cc95ec1c16a94a0f74d12da232ce40a77552281d282bb60c0b56fd2464c335543936521c24403085d59a449a5037514a879d
+Unapproved=1
+
+Availablein = default
 Derive=Bob-448
 PeerKey=Alice-448-PUBLIC
 SharedSecret=07fff4181ac6cc95ec1c16a94a0f74d12da232ce40a77552281d282bb60c0b56fd2464c335543936521c24403085d59a449a5037514a879d
 
+Availablein = default
 Derive=Alice-448-Raw
 PeerKey=Bob-448-PUBLIC-Raw
 SharedSecret=07fff4181ac6cc95ec1c16a94a0f74d12da232ce40a77552281d282bb60c0b56fd2464c335543936521c24403085d59a449a5037514a879d
 
+Availablein = default
 Derive=Bob-448-Raw
 PeerKey=Alice-448-PUBLIC-Raw
 SharedSecret=07fff4181ac6cc95ec1c16a94a0f74d12da232ce40a77552281d282bb60c0b56fd2464c335543936521c24403085d59a449a5037514a879d
 
 # Self-generated non-canonical
+Availablein = default
 Derive=Alice-448-Raw
 PeerKey=Bob-448-PUBLIC-Raw-NonCanonical
 SharedSecret=66e2e682b1f8e68c809f1bb3e406bd826921d9c1a5bfbfcbab7ae72feecee63660eabd54934f3382061d17607f581a90bdac917a064959fb
@@ -536,6 +561,7 @@ PrivateKeyRaw = WychePRIVATE0:X25519:288796bc5aff4b81a37501757bc0753a3c21964790d
 
 PublicKeyRaw = WychePUBLIC0:X25519:f0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f
 
+Availablein = default
 Derive=WychePRIVATE0
 PeerKey=WychePUBLIC0
 SharedSecret=b4e0dd76da7b071728b61f856771aa356e57eda78a5b1655cc3820fb5f854c5c
@@ -544,6 +570,7 @@ PrivateKeyRaw = WychePRIVATE1:X25519:60887b3dc72443026ebedbbbb70665f42b87add1440
 
 PublicKeyRaw = WychePUBLIC1:X25519:f0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 
+Availablein = default
 Derive=WychePRIVATE1
 PeerKey=WychePUBLIC1
 SharedSecret=38d6304c4a7e6d9f7959334fb5245bd2c754525d4c91db950206926234c1f633
@@ -552,18 +579,21 @@ PrivateKeyRaw = WychePRIVATE2:X25519:a0a4f130b98a5be4b1cedb7cb85584a3520e142d474
 
 PublicKeyRaw = WychePUBLIC2:X25519:0ab4e76380d84dde4f6833c58f2a9fb8f83bb0169b172be4b6e0592887741a36
 
+Availablein = default
 Derive=WychePRIVATE2
 PeerKey=WychePUBLIC2
 SharedSecret=0200000000000000000000000000000000000000000000000000000000000000
 
 PublicKeyRaw = WychePUBLIC3:X25519:89e10d5701b4337d2d032181538b1064bd4084401ceca1fd12663a1959388000
 
+Availablein = default
 Derive=WychePRIVATE2
 PeerKey=WychePUBLIC3
 SharedSecret=0900000000000000000000000000000000000000000000000000000000000000
 
 PublicKeyRaw = WychePUBLIC4:X25519:2b55d3aa4a8f80c8c0b2ae5f933e85af49beac36c2fa7394bab76c8933f8f81d
 
+Availablein = default
 Derive=WychePRIVATE2
 PeerKey=WychePUBLIC4
 SharedSecret=1000000000000000000000000000000000000000000000000000000000000000
@@ -919,3 +949,17 @@ Input = 616263
 Ctrl = instance:Ed448ph
 Ctrl = hexcontext-string:666f6f
 Output = c32299d46ec8ff02b54540982814dce9a05812f81962b649d528095916a2aa481065b1580423ef927ecf0af5888f90da0f6a9a85ad5dc3f280d91224ba9911a3653d00e484e2ce232521481c8658df304bb7745a73514cdb9bf3e15784ab71284f8d0704a608c54a6b62d97beb511d132100
+
+# Test that X25519 KeyGen is not FIPS approved
+Availablein = fips
+FIPSversion = >=3.4.0
+KeyGen = X25519
+KeyName = x25519_gen_key
+Unapproved = 1
+
+# Test that X448 KeyGen is not FIPS approved
+Availablein = fips
+FIPSversion = >=3.4.0
+KeyGen = X448
+KeyName = x448_gen_key
+Unapproved = 1

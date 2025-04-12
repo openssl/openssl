@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -13,7 +13,7 @@
 /*
  * SHA-1 low level APIs are deprecated for public use, but still ok for
  * internal use.  Note, that due to symbols not being exported, only the
- * #defines and strucures can be accessed, in this case SHA_CBLOCK and
+ * #defines and structures can be accessed, in this case SHA_CBLOCK and
  * sizeof(SHA_CTX).
  */
 #include "internal/deprecated.h"
@@ -519,7 +519,7 @@ static void dummy_pause_job(void) {
     ASYNC_JOB *job;
     ASYNC_WAIT_CTX *waitctx;
     ASYNC_callback_fn callback;
-    void * callback_arg;
+    void *callback_arg;
     OSSL_ASYNC_FD pipefds[2] = {0, 0};
     OSSL_ASYNC_FD *writefd;
 #if defined(ASYNC_WIN)
@@ -981,7 +981,7 @@ static int dasync_rsa_decrypt(EVP_PKEY_CTX *ctx, unsigned char *out,
                              size_t inlen);
 
     if (pdecrypt == NULL)
-        EVP_PKEY_meth_get_encrypt(dasync_rsa_orig, NULL, &pdecrypt);
+        EVP_PKEY_meth_get_decrypt(dasync_rsa_orig, NULL, &pdecrypt);
     return pdecrypt(ctx, out, outlen, in, inlen);
 }
 

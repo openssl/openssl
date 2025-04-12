@@ -1,12 +1,12 @@
 # Note that these directories are filtered in Configure.  Look for %skipdir
 # there for further explanations.
-SUBDIRS=objects buffer bio stack lhash rand evp asn1 pem x509 conf \
+SUBDIRS=objects buffer bio stack lhash hashtable rand evp asn1 pem x509 conf \
         txt_db pkcs7 pkcs12 ui kdf store property \
-        md2 md4 md5 sha mdc2 hmac ripemd whrlpool poly1305 \
+        md2 md4 md5 sha mdc2 ml_kem hmac ripemd whrlpool poly1305 \
         siphash sm3 des aes rc2 rc4 rc5 idea aria bf cast camellia \
         seed sm4 chacha modes bn ec rsa dsa dh sm2 dso engine \
         err comp http ocsp cms ts srp cmac ct async ess crmf cmp encode_decode \
-        ffc hpke thread
+        ffc hpke thread ml_dsa slh_dsa
 
 LIBS=../libcrypto
 
@@ -91,7 +91,7 @@ DEFINE[../providers/libdefault.a]=$CPUIDDEF
 $CORE_COMMON=provider_core.c provider_predefined.c \
         core_fetch.c core_algorithm.c core_namemap.c self_test_core.c
 
-SOURCE[../libcrypto]=$CORE_COMMON provider_conf.c
+SOURCE[../libcrypto]=$CORE_COMMON provider_conf.c indicator_core.c
 SOURCE[../providers/libfips.a]=$CORE_COMMON
 
 # Central utilities
@@ -100,15 +100,14 @@ $UTIL_COMMON=\
         threads_pthread.c threads_win.c threads_none.c initthread.c \
         context.c sparse_array.c asn1_dsa.c packet.c param_build.c \
         param_build_set.c der_writer.c threads_lib.c params_dup.c \
-        quic_vlint.c time.c
-
-SOURCE[../libssl]=sparse_array.c
+        time.c params_idx.c
 
 SOURCE[../libcrypto]=$UTIL_COMMON \
         mem.c mem_sec.c \
-        cversion.c info.c cpt_err.c ebcdic.c uid.c o_time.c o_dir.c \
-        o_fopen.c getenv.c o_init.c init.c trace.c provider.c provider_child.c \
-        punycode.c passphrase.c sleep.c deterministic_nonce.c
+        comp_methods.c cversion.c info.c cpt_err.c ebcdic.c uid.c o_time.c \
+        o_dir.c o_fopen.c getenv.c o_init.c init.c trace.c provider.c \
+        provider_child.c punycode.c passphrase.c sleep.c deterministic_nonce.c \
+        quic_vlint.c time.c defaults.c ssl_err.c
 SOURCE[../providers/libfips.a]=$UTIL_COMMON
 
 SOURCE[../libcrypto]=$UPLINKSRC

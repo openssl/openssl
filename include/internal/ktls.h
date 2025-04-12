@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -78,6 +78,12 @@ static ossl_inline int ktls_start(int fd, ktls_crypto_info_t *tls_en, int is_tx)
 #   else
     return 0;
 #   endif
+}
+
+/* Not supported on FreeBSD */
+static ossl_inline int ktls_enable_tx_zerocopy_sendfile(int fd)
+{
+    return 0;
 }
 
 /*

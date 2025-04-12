@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -508,6 +508,10 @@ int UI_process(UI *ui)
                 ok = 0;
                 break;
             }
+        } else {
+            ui->flags &= ~UI_FLAG_REDOABLE;
+            ok = -2;
+            goto err;
         }
     }
 

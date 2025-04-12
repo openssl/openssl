@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -100,6 +100,8 @@ struct CMS_SignerInfo_st {
     EVP_MD_CTX *mctx;
     EVP_PKEY_CTX *pctx;
     const CMS_CTX *cms_ctx;
+    /* Set to 1 if signing time attribute is to be omitted */
+    int omit_signing_time;
 };
 
 struct CMS_SignerIdentifier_st {
@@ -366,6 +368,7 @@ struct CMS_Receipt_st {
 
 DECLARE_ASN1_FUNCTIONS(CMS_ContentInfo)
 DECLARE_ASN1_ITEM(CMS_SignerInfo)
+DECLARE_ASN1_ITEM(CMS_EncryptedContentInfo)
 DECLARE_ASN1_ITEM(CMS_IssuerAndSerialNumber)
 DECLARE_ASN1_ITEM(CMS_Attributes_Sign)
 DECLARE_ASN1_ITEM(CMS_Attributes_Verify)
@@ -483,6 +486,9 @@ int ossl_cms_dh_envelope(CMS_RecipientInfo *ri, int decrypt);
 int ossl_cms_ecdh_envelope(CMS_RecipientInfo *ri, int decrypt);
 int ossl_cms_rsa_envelope(CMS_RecipientInfo *ri, int decrypt);
 int ossl_cms_rsa_sign(CMS_SignerInfo *si, int verify);
+
+int ossl_cms_get1_certs_ex(CMS_ContentInfo *cms, STACK_OF(X509) **certs);
+int ossl_cms_get1_crls_ex(CMS_ContentInfo *cms, STACK_OF(X509_CRL) **crls);
 
 DECLARE_ASN1_ITEM(CMS_CertificateChoices)
 DECLARE_ASN1_ITEM(CMS_DigestedData)

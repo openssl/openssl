@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -26,7 +26,7 @@ static void cms_env_set_version(CMS_EnvelopedData *env);
 #define CMS_ENVELOPED_STANDARD 1
 #define CMS_ENVELOPED_AUTH     2
 
-static int cms_get_enveloped_type(const CMS_ContentInfo *cms)
+static int cms_get_enveloped_type_simple(const CMS_ContentInfo *cms)
 {
     int nid = OBJ_obj2nid(cms->contentType);
 
@@ -38,9 +38,17 @@ static int cms_get_enveloped_type(const CMS_ContentInfo *cms)
         return CMS_ENVELOPED_AUTH;
 
     default:
-        ERR_raise(ERR_LIB_CMS, CMS_R_CONTENT_TYPE_NOT_ENVELOPED_DATA);
         return 0;
     }
+}
+
+static int cms_get_enveloped_type(const CMS_ContentInfo *cms)
+{
+    int ret = cms_get_enveloped_type_simple(cms);
+
+    if (ret == 0)
+        ERR_raise(ERR_LIB_CMS, CMS_R_CONTENT_TYPE_NOT_ENVELOPED_DATA);
+    return ret;
 }
 
 CMS_EnvelopedData *ossl_cms_get0_enveloped(CMS_ContentInfo *cms)
@@ -142,10 +150,12 @@ CMS_EncryptedContentInfo *ossl_cms_get0_env_enc_content(const CMS_ContentInfo *c
 {
     switch (cms_get_enveloped_type(cms)) {
     case CMS_ENVELOPED_STANDARD:
-        return cms->d.envelopedData->encryptedContentInfo;
+        return cms->d.envelopedData == NULL ? NULL
+            : cms->d.envelopedData->encryptedContentInfo;
 
     case CMS_ENVELOPED_AUTH:
-        return cms->d.authEnvelopedData->authEncryptedContentInfo;
+        return cms->d.authEnvelopedData == NULL ? NULL
+            : cms->d.authEnvelopedData->authEncryptedContentInfo;
 
     default:
         return NULL;
@@ -270,8 +280,10 @@ BIO *CMS_EnvelopedData_decrypt(CMS_EnvelopedData *env, BIO *detached_data,
                       secret == NULL ? cert : NULL, detached_data, bio, flags);
 
  end:
-    if (ci != NULL)
+    if (ci != NULL) {
         ci->d.envelopedData = NULL; /* do not indirectly free |env| */
+        ci->contentType = NULL;
+    }
     CMS_ContentInfo_free(ci);
     if (!res) {
         BIO_free(bio);
@@ -345,8 +357,12 @@ static int cms_RecipientInfo_ktri_init(CMS_RecipientInfo *ri, X509 *recip,
     if (!ossl_cms_set1_SignerIdentifier(ktri->rid, recip, idtype, ctx))
         return 0;
 
-    X509_up_ref(recip);
-    EVP_PKEY_up_ref(pk);
+    if (!X509_up_ref(recip))
+        return 0;
+    if (!EVP_PKEY_up_ref(pk)) {
+        X509_free(recip);
+        return 0;
+    }
 
     ktri->pkey = pk;
     ktri->recip = recip;
@@ -615,23 +631,10 @@ static int cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms,
          * disable implicit rejection for RSA keys */
         EVP_PKEY_CTX_ctrl_str(ktri->pctx, "rsa_pkcs1_implicit_rejection", "0");
 
-    if (EVP_PKEY_decrypt(ktri->pctx, NULL, &eklen,
-                         ktri->encryptedKey->data,
-                         ktri->encryptedKey->length) <= 0)
+    if (evp_pkey_decrypt_alloc(ktri->pctx, &ek, &eklen, fixlen,
+                               ktri->encryptedKey->data,
+                               ktri->encryptedKey->length) <= 0)
         goto err;
-
-    ek = OPENSSL_malloc(eklen);
-    if (ek == NULL)
-        goto err;
-
-    if (EVP_PKEY_decrypt(ktri->pctx, ek, &eklen,
-                         ktri->encryptedKey->data,
-                         ktri->encryptedKey->length) <= 0
-            || eklen == 0
-            || (fixlen != 0 && eklen != fixlen)) {
-        ERR_raise(ERR_LIB_CMS, CMS_R_CMS_LIB);
-        goto err;
-    }
 
     ret = 1;
 
@@ -1302,7 +1305,7 @@ int ossl_cms_AuthEnvelopedData_final(CMS_ContentInfo *cms, BIO *cmsbio)
 
     BIO_get_cipher_ctx(cmsbio, &ctx);
 
-    /* 
+    /*
      * The tag is set only for encryption. There is nothing to do for
      * decryption.
      */

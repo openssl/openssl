@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -33,6 +33,9 @@
 # endif
 # ifndef OPENSSL_NO_RMD160
 #  include <openssl/ripemd.h> /* uses RIPEMD160_DIGEST_LENGTH */
+# endif
+# ifndef OPENSSL_NO_SM3
+#  include "internal/sm3.h" /* uses SM3_DIGEST_LENGTH */
 # endif
 #endif
 #include <openssl/sha.h> /* uses SHA???_DIGEST_LENGTH */
@@ -123,6 +126,16 @@ static const unsigned char digestinfo_ripemd160_der[] = {
       ASN1_OCTET_STRING, RIPEMD160_DIGEST_LENGTH
 };
 # endif
+# ifndef OPENSSL_NO_SM3
+/* SM3 (1 2 156 10197 1 401) */
+static const unsigned char digestinfo_sm3_der[] = {
+    ASN1_SEQUENCE, 0x0f + SM3_DIGEST_LENGTH,
+      ASN1_SEQUENCE, 0x0c,
+        ASN1_OID, 0x08, 1 * 40 + 2, 0x81, 0x1c, 0xcf, 0x55, 1, 0x83, 0x78,
+        ASN1_NULL, 0x00,
+      ASN1_OCTET_STRING, SM3_DIGEST_LENGTH
+};
+# endif
 #endif /* FIPS_MODULE */
 
 /* SHA-1 (1 3 14 3 2 26) */
@@ -168,6 +181,9 @@ const unsigned char *ossl_rsa_digestinfo_encoding(int md_nid, size_t *len)
 # endif
 # ifndef OPENSSL_NO_RMD160
     MD_CASE(ripemd160)
+# endif
+# ifndef OPENSSL_NO_SM3
+    MD_CASE(sm3)
 # endif
 #endif /* FIPS_MODULE */
     MD_CASE(sha1)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2024 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -69,6 +69,49 @@ static const struct {
     { 16, { 0xee, 0x6e, 0x8b, 0xc3, 0xec, 0xcf, 0x37, 0xcc,
             0x89, 0x67, 0xf2, 0x68, 0x33, 0xa0, 0x14, 0xb0 } },
 };
+
+static int test_param_type_null(OSSL_PARAM *param)
+{
+    int rc = 0;
+    uint64_t intval;
+    double dval;
+    BIGNUM *bn;
+
+    switch(param->data_type) {
+    case OSSL_PARAM_INTEGER:
+        if (param->data_size == sizeof(int32_t))
+            rc = OSSL_PARAM_get_int32(param, (int32_t *)&intval);
+        else if (param->data_size == sizeof(uint64_t))
+            rc = OSSL_PARAM_get_int64(param, (int64_t *)&intval);
+        else
+            return 1;
+        break;
+    case OSSL_PARAM_UNSIGNED_INTEGER:
+        if (param->data_size == sizeof(uint32_t))
+            rc = OSSL_PARAM_get_uint32(param, (uint32_t *)&intval);
+        else if (param->data_size == sizeof(uint64_t))
+            rc = OSSL_PARAM_get_uint64(param, &intval);
+        else
+            rc = OSSL_PARAM_get_BN(param, &bn);
+        break;
+    case OSSL_PARAM_REAL:
+        rc = OSSL_PARAM_get_double(param, &dval);
+        break;
+    case OSSL_PARAM_UTF8_STRING:
+    case OSSL_PARAM_OCTET_STRING:
+    case OSSL_PARAM_UTF8_PTR:
+    case OSSL_PARAM_OCTET_PTR:
+        /* these are allowed to be null */
+        return 1;
+        break;
+    }
+
+    /*
+     * we expect the various OSSL_PARAM_get functions above
+     * to return failure when the data is set to NULL
+     */
+    return rc == 0;
+}
 
 static int test_param_type_extra(OSSL_PARAM *param, const unsigned char *cmp,
                                  size_t width)
@@ -157,6 +200,9 @@ static int test_param_int(int n)
                        sizeof(int) : raw_values[n].len;
     OSSL_PARAM param = OSSL_PARAM_int("a", NULL);
 
+    if (!TEST_int_eq(test_param_type_null(&param), 1))
+        return 0;
+
     memset(buf, 0, sizeof(buf));
     le_copy(buf, sizeof(in), raw_values[n].value, sizeof(in));
     memcpy(&in, buf, sizeof(in));
@@ -184,6 +230,9 @@ static int test_param_long(int n)
                        ? sizeof(long int) : raw_values[n].len;
     OSSL_PARAM param = OSSL_PARAM_long("a", NULL);
 
+    if (!TEST_int_eq(test_param_type_null(&param), 1))
+        return 0;
+
     memset(buf, 0, sizeof(buf));
     le_copy(buf, sizeof(in), raw_values[n].value, sizeof(in));
     memcpy(&in, buf, sizeof(in));
@@ -209,6 +258,9 @@ static int test_param_uint(int n)
     unsigned char buf[MAX_LEN], cmp[sizeof(unsigned int)];
     const size_t len = raw_values[n].len >= sizeof(unsigned int) ? sizeof(unsigned int) : raw_values[n].len;
     OSSL_PARAM param = OSSL_PARAM_uint("a", NULL);
+
+    if (!TEST_int_eq(test_param_type_null(&param), 1))
+        return 0;
 
     memset(buf, 0, sizeof(buf));
     le_copy(buf, sizeof(in), raw_values[n].value, sizeof(in));
@@ -237,6 +289,9 @@ static int test_param_ulong(int n)
                        ? sizeof(unsigned long int) : raw_values[n].len;
     OSSL_PARAM param = OSSL_PARAM_ulong("a", NULL);
 
+    if (!TEST_int_eq(test_param_type_null(&param), 1))
+        return 0;
+
     memset(buf, 0, sizeof(buf));
     le_copy(buf, sizeof(in), raw_values[n].value, sizeof(in));
     memcpy(&in, buf, sizeof(in));
@@ -263,6 +318,9 @@ static int test_param_int32(int n)
     const size_t len = raw_values[n].len >= sizeof(int32_t)
                        ? sizeof(int32_t) : raw_values[n].len;
     OSSL_PARAM param = OSSL_PARAM_int32("a", NULL);
+
+    if (!TEST_int_eq(test_param_type_null(&param), 1))
+        return 0;
 
     memset(buf, 0, sizeof(buf));
     le_copy(buf, sizeof(in), raw_values[n].value, sizeof(in));
@@ -291,6 +349,9 @@ static int test_param_uint32(int n)
                        ? sizeof(uint32_t) : raw_values[n].len;
     OSSL_PARAM param = OSSL_PARAM_uint32("a", NULL);
 
+    if (!TEST_int_eq(test_param_type_null(&param), 1))
+        return 0;
+
     memset(buf, 0, sizeof(buf));
     le_copy(buf, sizeof(in), raw_values[n].value, sizeof(in));
     memcpy(&in, buf, sizeof(in));
@@ -317,6 +378,9 @@ static int test_param_int64(int n)
     const size_t len = raw_values[n].len >= sizeof(int64_t)
                        ? sizeof(int64_t) : raw_values[n].len;
     OSSL_PARAM param = OSSL_PARAM_int64("a", NULL);
+
+    if (!TEST_int_eq(test_param_type_null(&param), 1))
+        return 0;
 
     memset(buf, 0, sizeof(buf));
     le_copy(buf, sizeof(in), raw_values[n].value, sizeof(in));
@@ -345,6 +409,9 @@ static int test_param_uint64(int n)
                        ? sizeof(uint64_t) : raw_values[n].len;
     OSSL_PARAM param = OSSL_PARAM_uint64("a", NULL);
 
+    if (!TEST_int_eq(test_param_type_null(&param), 1))
+        return 0;
+
     memset(buf, 0, sizeof(buf));
     le_copy(buf, sizeof(in), raw_values[n].value, sizeof(in));
     memcpy(&in, buf, sizeof(in));
@@ -371,6 +438,9 @@ static int test_param_size_t(int n)
     const size_t len = raw_values[n].len >= sizeof(size_t)
                        ? sizeof(size_t) : raw_values[n].len;
     OSSL_PARAM param = OSSL_PARAM_size_t("a", NULL);
+
+    if (!TEST_int_eq(test_param_type_null(&param), 1))
+        return 0;
 
     memset(buf, 0, sizeof(buf));
     le_copy(buf, sizeof(in), raw_values[n].value, sizeof(in));
@@ -399,6 +469,9 @@ static int test_param_time_t(int n)
                        ? sizeof(time_t) : raw_values[n].len;
     OSSL_PARAM param = OSSL_PARAM_time_t("a", NULL);
 
+    if (!TEST_int_eq(test_param_type_null(&param), 1))
+        return 0;
+
     memset(buf, 0, sizeof(buf));
     le_copy(buf, sizeof(in), raw_values[n].value, sizeof(in));
     memcpy(&in, buf, sizeof(in));
@@ -426,6 +499,9 @@ static int test_param_bignum(int n)
     OSSL_PARAM param = OSSL_PARAM_DEFN("bn", OSSL_PARAM_UNSIGNED_INTEGER,
                                        NULL, 0);
     int ret = 0;
+
+    if (!TEST_int_eq(test_param_type_null(&param), 1))
+        return 0;
 
     param.data = bnbuf;
     param.data_size = sizeof(bnbuf);
@@ -457,6 +533,9 @@ static int test_param_signed_bignum(int n)
     BIGNUM *b = NULL, *c = NULL;
     OSSL_PARAM param = OSSL_PARAM_DEFN("bn", OSSL_PARAM_INTEGER, NULL, 0);
     int ret = 0;
+
+    if (!TEST_int_eq(test_param_type_null(&param), 1))
+        return 0;
 
     param.data = bnbuf;
     param.data_size = sizeof(bnbuf);
@@ -490,6 +569,9 @@ static int test_param_real(void)
 {
     double p;
     OSSL_PARAM param = OSSL_PARAM_double("r", NULL);
+
+    if (!TEST_int_eq(test_param_type_null(&param), 1))
+        return 0;
 
     param.data = &p;
     return TEST_true(OSSL_PARAM_set_double(&param, 3.14159))

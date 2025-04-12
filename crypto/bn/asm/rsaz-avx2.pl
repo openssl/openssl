@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2013-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2013-2024 The OpenSSL Project Authors. All Rights Reserved.
 # Copyright (c) 2012, Intel Corporation. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -26,7 +26,7 @@
 #     on AVX2 capable x86_64 platforms",
 #     http://rt.openssl.org/Ticket/Display.html?id=2850&user=guest&pass=guest
 #
-# +13% improvement over original submission by <appro@openssl.org>
+# +13% improvement over original submission by <https://github.com/dot-asm>
 #
 # rsa2048 sign/sec	OpenSSL 1.0.1	scalar(*)	this
 # 2.3GHz Haswell	621		765/+23%	1113/+79%
@@ -1779,6 +1779,7 @@ $code.=<<___;
 	ret
 .size	rsaz_avx2_eligible,.-rsaz_avx2_eligible
 
+.section .rodata align=64
 .align	64
 .Land_mask:
 	.quad	0x1fffffff,0x1fffffff,0x1fffffff,0x1fffffff
@@ -1790,6 +1791,7 @@ $code.=<<___;
 	.long	0,0,0,0, 1,1,1,1
 	.long	2,2,2,2, 3,3,3,3
 	.long	4,4,4,4, 4,4,4,4
+.previous
 .align	64
 ___
 

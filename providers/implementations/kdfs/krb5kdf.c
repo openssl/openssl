@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -157,7 +157,7 @@ static int krb5kdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     KRB5KDF_CTX *ctx = vctx;
     OSSL_LIB_CTX *provctx = PROV_LIBCTX_OF(ctx->provctx);
 
-    if (params == NULL)
+    if (ossl_param_is_empty(params))
         return 1;
 
     if (!ossl_prov_cipher_load_from_params(&ctx->cipher, params, provctx))
@@ -230,7 +230,7 @@ const OSSL_DISPATCH ossl_kdf_krb5kdf_functions[] = {
       (void(*)(void))krb5kdf_gettable_ctx_params },
     { OSSL_FUNC_KDF_GET_CTX_PARAMS,
       (void(*)(void))krb5kdf_get_ctx_params },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };
 
 #ifndef OPENSSL_NO_DES
@@ -275,7 +275,7 @@ static int fixup_des3_key(unsigned char *key)
  *
  * block = 0
  * for k: 1 -> K
- *   block += s[N(k-1)..(N-1)k] (one's complement addition)
+ *   block += s[N(k-1)..(N-1)k] (ones'-complement addition)
  *
  * Optimizing for space we compute:
  * for each l in L-1 -> 0:
@@ -415,6 +415,12 @@ static int KRB5KDF(const EVP_CIPHER *cipher, ENGINE *engine,
 
     /* Initialize input block */
     blocksize = EVP_CIPHER_CTX_get_block_size(ctx);
+
+    if (blocksize == 0) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_CIPHER);
+        ret = 0;
+        goto out;
+    }
 
     if (constant_len > blocksize) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_CONSTANT_LENGTH);

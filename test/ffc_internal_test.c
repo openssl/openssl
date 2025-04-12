@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2023 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2019-2020, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -297,7 +297,7 @@ static int ffc_params_validate_pq_test(void)
                                                        &res, NULL)))
         goto err;
 
-    /* Provided seed doesnt produce a valid prime q */
+    /* Provided seed doesn't produce a valid prime q */
     ossl_ffc_params_set_validate_params(&params, dsa_2048_224_sha224_bad_seed,
                                         sizeof(dsa_2048_224_sha224_bad_seed),
                                         dsa_2048_224_sha224_counter);
@@ -455,22 +455,20 @@ static int ffc_public_validate_test(void)
     if (!TEST_true(BN_set_word(pub, 1)))
         goto err;
     BN_set_negative(pub, 1);
-    /* Fail if public key is negative */
-    if (!TEST_false(ossl_ffc_validate_public_key(params, pub, &res)))
+    /* Check must succeed but set res if public key is negative */
+    if (!TEST_true(ossl_ffc_validate_public_key(params, pub, &res)))
         goto err;
     if (!TEST_int_eq(FFC_ERROR_PUBKEY_TOO_SMALL, res))
         goto err;
     if (!TEST_true(BN_set_word(pub, 0)))
         goto err;
-    if (!TEST_int_eq(FFC_ERROR_PUBKEY_TOO_SMALL, res))
-        goto err;
-    /* Fail if public key is zero */
-    if (!TEST_false(ossl_ffc_validate_public_key(params, pub, &res)))
+    /* Check must succeed but set res if public key is zero */
+    if (!TEST_true(ossl_ffc_validate_public_key(params, pub, &res)))
         goto err;
     if (!TEST_int_eq(FFC_ERROR_PUBKEY_TOO_SMALL, res))
         goto err;
-    /* Fail if public key is 1 */
-    if (!TEST_false(ossl_ffc_validate_public_key(params, BN_value_one(), &res)))
+    /* Check must succeed but set res if public key is 1 */
+    if (!TEST_true(ossl_ffc_validate_public_key(params, BN_value_one(), &res)))
         goto err;
     if (!TEST_int_eq(FFC_ERROR_PUBKEY_TOO_SMALL, res))
         goto err;
@@ -482,24 +480,24 @@ static int ffc_public_validate_test(void)
 
     if (!TEST_ptr(BN_copy(pub, params->p)))
         goto err;
-    /* Fail if public key = p */
-    if (!TEST_false(ossl_ffc_validate_public_key(params, pub, &res)))
+    /* Check must succeed but set res if public key = p */
+    if (!TEST_true(ossl_ffc_validate_public_key(params, pub, &res)))
         goto err;
     if (!TEST_int_eq(FFC_ERROR_PUBKEY_TOO_LARGE, res))
         goto err;
 
     if (!TEST_true(BN_sub_word(pub, 1)))
         goto err;
-    /* Fail if public key = p - 1 */
-    if (!TEST_false(ossl_ffc_validate_public_key(params, pub, &res)))
+    /* Check must succeed but set res if public key = p - 1 */
+    if (!TEST_true(ossl_ffc_validate_public_key(params, pub, &res)))
         goto err;
     if (!TEST_int_eq(FFC_ERROR_PUBKEY_TOO_LARGE, res))
         goto err;
 
     if (!TEST_true(BN_sub_word(pub, 1)))
         goto err;
-    /* Fail if public key is not related to p & q */
-    if (!TEST_false(ossl_ffc_validate_public_key(params, pub, &res)))
+    /* Check must succeed but set res if public key is not related to p & q */
+    if (!TEST_true(ossl_ffc_validate_public_key(params, pub, &res)))
         goto err;
     if (!TEST_int_eq(FFC_ERROR_PUBKEY_INVALID, res))
         goto err;
@@ -508,6 +506,27 @@ static int ffc_public_validate_test(void)
         goto err;
     /* Pass if public key is valid */
     if (!TEST_true(ossl_ffc_validate_public_key(params, pub, &res)))
+        goto err;
+
+    /* Check must succeed but set res if params is NULL */
+    if (!TEST_true(ossl_ffc_validate_public_key(NULL, pub, &res)))
+        goto err;
+    if (!TEST_int_eq(FFC_ERROR_PASSED_NULL_PARAM, res))
+        goto err;
+    res = -1;
+    /* Check must succeed but set res if pubkey is NULL */
+    if (!TEST_true(ossl_ffc_validate_public_key(params, NULL, &res)))
+        goto err;
+    if (!TEST_int_eq(FFC_ERROR_PASSED_NULL_PARAM, res))
+        goto err;
+    res = -1;
+
+    BN_free(params->p);
+    params->p = NULL;
+    /* Check must succeed but set res if params->p is NULL */
+    if (!TEST_true(ossl_ffc_validate_public_key(params, pub, &res)))
+        goto err;
+    if (!TEST_int_eq(FFC_ERROR_PASSED_NULL_PARAM, res))
         goto err;
 
     ret = 1;
@@ -565,6 +584,16 @@ static int ffc_private_validate_test(void)
         goto err;
     /* Pass if priv key <= upper - 1 */
     if (!TEST_true(ossl_ffc_validate_private_key(params->q, priv, &res)))
+        goto err;
+
+    if (!TEST_false(ossl_ffc_validate_private_key(NULL, priv, &res)))
+        goto err;
+    if (!TEST_int_eq(FFC_ERROR_PASSED_NULL_PARAM, res))
+        goto err;
+    res = -1;
+    if (!TEST_false(ossl_ffc_validate_private_key(params->q, NULL, &res)))
+        goto err;
+    if (!TEST_int_eq(FFC_ERROR_PASSED_NULL_PARAM, res))
         goto err;
 
     ret = 1;

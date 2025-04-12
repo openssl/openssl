@@ -1,7 +1,7 @@
 /*
- * Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -26,6 +26,7 @@
  * Appendix A.6.1 with a 66 octet IKM so we'll allow that.
  */
 # define OSSL_HPKE_MAX_PARMLEN        66
+# define OSSL_HPKE_MIN_PSKLEN         32
 # define OSSL_HPKE_MAX_INFOLEN        1024
 
 /*
@@ -67,10 +68,14 @@
 
 /*
  * Roles for use in creating an OSSL_HPKE_CTX, most
- * important use of this is to control nonce re-use.
+ * important use of this is to control nonce reuse.
  */
 # define OSSL_HPKE_ROLE_SENDER 0
 # define OSSL_HPKE_ROLE_RECEIVER 1
+
+# ifdef  __cplusplus
+extern "C" {
+# endif
 
 typedef struct {
     uint16_t    kem_id; /* Key Encapsulation Method id */
@@ -82,12 +87,21 @@ typedef struct {
  * Suite constants, use this like:
  *          OSSL_HPKE_SUITE myvar = OSSL_HPKE_SUITE_DEFAULT;
  */
-# define OSSL_HPKE_SUITE_DEFAULT \
+# ifndef OPENSSL_NO_ECX
+#  define OSSL_HPKE_SUITE_DEFAULT \
     {\
         OSSL_HPKE_KEM_ID_X25519, \
         OSSL_HPKE_KDF_ID_HKDF_SHA256, \
         OSSL_HPKE_AEAD_ID_AES_GCM_128 \
     }
+# else
+#  define OSSL_HPKE_SUITE_DEFAULT \
+    {\
+        OSSL_HPKE_KEM_ID_P256, \
+        OSSL_HPKE_KDF_ID_HKDF_SHA256, \
+        OSSL_HPKE_AEAD_ID_AES_GCM_128 \
+    }
+#endif
 
 typedef struct ossl_hpke_ctx_st OSSL_HPKE_CTX;
 
@@ -138,14 +152,18 @@ int OSSL_HPKE_CTX_set_seq(OSSL_HPKE_CTX *ctx, uint64_t seq);
 int OSSL_HPKE_CTX_get_seq(OSSL_HPKE_CTX *ctx, uint64_t *seq);
 
 int OSSL_HPKE_suite_check(OSSL_HPKE_SUITE suite);
-int OSSL_HPKE_get_grease_value(OSSL_LIB_CTX *libctx, const char *propq,
-                               const OSSL_HPKE_SUITE *suite_in,
+int OSSL_HPKE_get_grease_value(const OSSL_HPKE_SUITE *suite_in,
                                OSSL_HPKE_SUITE *suite,
                                unsigned char *enc, size_t *enclen,
-                               unsigned char *ct, size_t ctlen);
+                               unsigned char *ct, size_t ctlen,
+                               OSSL_LIB_CTX *libctx, const char *propq);
 int OSSL_HPKE_str2suite(const char *str, OSSL_HPKE_SUITE *suite);
 size_t OSSL_HPKE_get_ciphertext_size(OSSL_HPKE_SUITE suite, size_t clearlen);
 size_t OSSL_HPKE_get_public_encap_size(OSSL_HPKE_SUITE suite);
 size_t OSSL_HPKE_get_recommended_ikmelen(OSSL_HPKE_SUITE suite);
+
+# ifdef  __cplusplus
+}
+# endif
 
 #endif

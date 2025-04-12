@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -11,6 +11,7 @@
 #include "../ssl_local.h"
 #include "statem_local.h"
 #include "internal/cryptlib.h"
+#include "internal/ssl_unwrap.h"
 
 #define COOKIE_STATE_FORMAT_VERSION     1
 
@@ -44,6 +45,7 @@ int tls_parse_ctos_renegotiate(SSL_CONNECTION *s, PACKET *pkt,
 {
     unsigned int ilen;
     const unsigned char *data;
+    int ok;
 
     /* Parse the length byte */
     if (!PACKET_get_1(pkt, &ilen)
@@ -58,8 +60,16 @@ int tls_parse_ctos_renegotiate(SSL_CONNECTION *s, PACKET *pkt,
         return 0;
     }
 
-    if (memcmp(data, s->s3.previous_client_finished,
-               s->s3.previous_client_finished_len)) {
+    ok = memcmp(data, s->s3.previous_client_finished,
+                    s->s3.previous_client_finished_len);
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    if (ok) {
+        if ((data[0] ^ s->s3.previous_client_finished[0]) != 0xFF) {
+            ok = 0;
+        }
+    }
+#endif
+    if (ok) {
         SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_R_RENEGOTIATION_MISMATCH);
         return 0;
     }
@@ -183,21 +193,26 @@ int tls_parse_ctos_maxfragmentlen(SSL_CONNECTION *s, PACKET *pkt,
     }
 
     /*
-     * RFC 6066:  The negotiated length applies for the duration of the session
+     * When doing a full handshake or a renegotiation max_fragment_len_mode will
+     * be TLSEXT_max_fragment_length_UNSPECIFIED
+     *
+     * In case of a resumption max_fragment_len_mode will be one of
+     *      TLSEXT_max_fragment_length_DISABLED, TLSEXT_max_fragment_length_512,
+     *      TLSEXT_max_fragment_length_1024, TLSEXT_max_fragment_length_2048.
+     *      TLSEXT_max_fragment_length_4096
+     *
+     * RFC 6066: The negotiated length applies for the duration of the session
      * including session resumptions.
-     * We should receive the same code as in resumed session !
+     *
+     * So we only set the value in case it is unspecified.
      */
-    if (s->hit && s->session->ext.max_fragment_len_mode != value) {
-        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
-                 SSL_R_SSL3_EXT_INVALID_MAX_FRAGMENT_LENGTH);
-        return 0;
-    }
+    if (s->session->ext.max_fragment_len_mode == TLSEXT_max_fragment_length_UNSPECIFIED)
+        /*
+         * Store it in session, so it'll become binding for us
+         * and we'll include it in a next Server Hello.
+         */
+        s->session->ext.max_fragment_len_mode = value;
 
-    /*
-     * Store it in session, so it'll become binding for us
-     * and we'll include it in a next Server Hello.
-     */
-    s->session->ext.max_fragment_len_mode = value;
     return 1;
 }
 
@@ -251,7 +266,7 @@ int tls_parse_ctos_session_ticket(SSL_CONNECTION *s, PACKET *pkt,
                                   X509 *x, size_t chainidx)
 {
     if (s->ext.session_ticket_cb &&
-            !s->ext.session_ticket_cb(SSL_CONNECTION_GET_SSL(s),
+            !s->ext.session_ticket_cb(SSL_CONNECTION_GET_USER_SSL(s),
                                       PACKET_data(pkt), PACKET_remaining(pkt),
                                       s->ext.session_ticket_cb_arg)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -274,7 +289,13 @@ int tls_parse_ctos_sig_algs_cert(SSL_CONNECTION *s, PACKET *pkt,
         return 0;
     }
 
-    if (!s->hit && !tls1_save_sigalgs(s, &supported_sig_algs, 1)) {
+    /*
+     * We use this routine on both clients and servers, and when clients
+     * get asked for PHA we need to always save the sigalgs regardless
+     * of whether it was a resumption or not.
+     */
+    if ((!s->server || (s->server && !s->hit))
+            && !tls1_save_sigalgs(s, &supported_sig_algs, 1)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         return 0;
     }
@@ -293,7 +314,13 @@ int tls_parse_ctos_sig_algs(SSL_CONNECTION *s, PACKET *pkt,
         return 0;
     }
 
-    if (!s->hit && !tls1_save_sigalgs(s, &supported_sig_algs, 0)) {
+    /*
+     * We use this routine on both clients and servers, and when clients
+     * get asked for PHA we need to always save the sigalgs regardless
+     * of whether it was a resumption or not.
+     */
+    if ((!s->server || (s->server && !s->hit))
+            && !tls1_save_sigalgs(s, &supported_sig_algs, 0)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         return 0;
     }
@@ -564,25 +591,258 @@ int tls_parse_ctos_psk_kex_modes(SSL_CONNECTION *s, PACKET *pkt,
                 && (s->options & SSL_OP_ALLOW_NO_DHE_KEX) != 0)
             s->ext.psk_kex_mode |= TLSEXT_KEX_MODE_FLAG_KE;
     }
+
+    if (((s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE) != 0)
+            && (s->options & SSL_OP_PREFER_NO_DHE_KEX) != 0) {
+
+        /*
+         * If NO_DHE is supported and preferred, then we only remember this
+         * mode. DHE PSK will not be used for sure, because in any case where
+         * it would be supported (i.e. if a key share is present), NO_DHE would
+         * be supported as well. As the latter is preferred it would be
+         * chosen. By removing DHE PSK here, we don't have to deal with the
+         * SSL_OP_PREFER_NO_DHE_KEX option in any other place.
+         */
+        s->ext.psk_kex_mode = TLSEXT_KEX_MODE_FLAG_KE;
+    }
+
 #endif
 
     return 1;
 }
 
 /*
- * Process a key_share extension received in the ClientHello. |pkt| contains
- * the raw PACKET data for the extension. Returns 1 on success or 0 on failure.
+ * Use function tls_parse_ctos_key_share with helper functions extract_keyshares,
+ * check_overlap and tls_accept_ksgroup to parse the key_share extension(s)
+ * received in the ClientHello and to select the group used of the key exchange
  */
+
+#ifndef OPENSSL_NO_TLS1_3
+/*
+ * Accept a key share group by setting the related variables in s->s3 and
+ * by generating a pubkey for this group
+ */
+static int tls_accept_ksgroup(SSL_CONNECTION *s, uint16_t ksgroup, PACKET *encoded_pubkey)
+{
+    /* Accept the key share group */
+    s->s3.group_id = ksgroup;
+    s->s3.group_id_candidate = ksgroup;
+    /* Cache the selected group ID in the SSL_SESSION */
+    s->session->kex_group = ksgroup;
+    if ((s->s3.peer_tmp = ssl_generate_param_group(s, ksgroup)) == NULL) {
+        SSLfatal(s,
+                 SSL_AD_INTERNAL_ERROR,
+                 SSL_R_UNABLE_TO_FIND_ECDH_PARAMETERS);
+        return 0;
+    }
+    if (tls13_set_encoded_pub_key(s->s3.peer_tmp,
+                                  PACKET_data(encoded_pubkey),
+                                  PACKET_remaining(encoded_pubkey)) <= 0) {
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_ECPOINT);
+        return 0;
+    }
+    return 1;
+}
+
+# define GROUPLIST_INCREMENT 32 /* Memory allocation chunk size (nominally 64 Bytes chunks) */
+
+typedef enum KS_EXTRACTION_RESULT {
+    EXTRACTION_FAILURE,
+    EXTRACTION_SUCCESS,
+    EXTRACTION_SUCCESS_HRR
+} KS_EXTRACTION_RESULT;
+
+static KS_EXTRACTION_RESULT extract_keyshares(SSL_CONNECTION *s, PACKET *key_share_list,
+                                              const uint16_t *clntgroups, size_t clnt_num_groups,
+                                              const uint16_t *srvrgroups, size_t srvr_num_groups,
+                                              uint16_t **keyshares_arr, PACKET **encoded_pubkey_arr,
+                                              size_t *keyshares_cnt, size_t *keyshares_max)
+{
+    PACKET encoded_pubkey;
+    size_t key_share_pos = 0;
+    size_t previous_key_share_pos = 0;
+    unsigned int group_id = 0;
+
+    /* Prepare memory to hold the extracted key share groups and related pubkeys */
+    *keyshares_arr = OPENSSL_malloc(*keyshares_max * sizeof(**keyshares_arr));
+    if (*keyshares_arr == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        goto failure;
+    }
+    *encoded_pubkey_arr = OPENSSL_malloc(*keyshares_max * sizeof(**encoded_pubkey_arr));
+    if (*encoded_pubkey_arr == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        goto failure;
+    }
+
+    while (PACKET_remaining(key_share_list) > 0) {
+        /* Get the group_id for the current share and its encoded_pubkey */
+        if (!PACKET_get_net_2(key_share_list, &group_id)
+                || !PACKET_get_length_prefixed_2(key_share_list, &encoded_pubkey)
+                || PACKET_remaining(&encoded_pubkey) == 0) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
+            goto failure;
+        }
+
+        /*
+         * If we sent an HRR then the key_share sent back MUST be for the group
+         * we requested, and must be the only key_share sent.
+         */
+        if (s->s3.group_id != 0
+                && (group_id != s->s3.group_id
+                    || PACKET_remaining(key_share_list) != 0)) {
+            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_KEY_SHARE);
+            goto failure;
+        }
+
+        /*
+         * Check if this share is in supported_groups sent from client
+         * RFC 8446 also mandates that clients send keyshares in the same
+         * order as listed in the supported groups extension, but its not
+         * required that the server check that, and some clients violate this
+         * so instead of failing the connection when that occurs, log a trace
+         * message indicating the client discrepancy.
+         */
+        if (!check_in_list(s, group_id, clntgroups, clnt_num_groups, 0, &key_share_pos)) {
+            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_KEY_SHARE);
+            goto failure;
+        }
+
+        if (key_share_pos < previous_key_share_pos)
+            OSSL_TRACE1(TLS, "key share group id %d is out of RFC 8446 order\n", group_id);
+
+        previous_key_share_pos = key_share_pos;
+
+        if (s->s3.group_id != 0) {
+            /*
+             * We have sent a HRR, and the key share we got back is
+             * the one we expected and is the only key share and is
+             * in the list of supported_groups (checked
+             * above already), hence we accept this key share group
+             */
+            if (!tls_accept_ksgroup(s, s->s3.group_id, &encoded_pubkey))
+                goto failure; /* SSLfatal already called */
+            /* We have selected a key share group via HRR, hence we're done here */
+            return EXTRACTION_SUCCESS_HRR;
+        }
+
+        /*
+         * We tolerate but ignore a group id that we don't think is
+         * suitable for TLSv1.3 or which is not supported by the server
+         */
+        if (!check_in_list(s, group_id, srvrgroups, srvr_num_groups, 1, NULL)
+                || !tls_group_allowed(s, group_id, SSL_SECOP_CURVE_SUPPORTED)
+                || !tls_valid_group(s, group_id, TLS1_3_VERSION, TLS1_3_VERSION,
+                                    0, NULL)) {
+            /* Share not suitable or not supported, check next share */
+            continue;
+        }
+
+        /* Memorize this key share group ID and its encoded point */
+        (*keyshares_arr)[*keyshares_cnt] = group_id;
+        (*encoded_pubkey_arr)[(*keyshares_cnt)++] = encoded_pubkey;
+
+        /*
+         * Memory management (remark: While limiting the client to only allow
+         * a maximum of OPENSSL_CLIENT_MAX_KEY_SHARES to be sent, the server can
+         * handle any number of key shares)
+         */
+        if (*keyshares_cnt == *keyshares_max) {
+            PACKET *tmp_pkt;
+            uint16_t *tmp =
+                OPENSSL_realloc(*keyshares_arr,
+                                (*keyshares_max + GROUPLIST_INCREMENT) * sizeof(**keyshares_arr));
+
+            if (tmp == NULL)
+                goto failure;
+            *keyshares_arr = tmp;
+            tmp_pkt =
+                OPENSSL_realloc(*encoded_pubkey_arr,
+                                (*keyshares_max + GROUPLIST_INCREMENT) *
+                                sizeof(**encoded_pubkey_arr));
+            if (tmp_pkt == NULL)
+                goto failure;
+            *encoded_pubkey_arr = tmp_pkt;
+            *keyshares_max += GROUPLIST_INCREMENT;
+        }
+
+    }
+
+    return EXTRACTION_SUCCESS;
+
+failure:
+    /* Fatal error -> free any allocated memory and return 0 */
+    OPENSSL_free(*keyshares_arr);
+    OPENSSL_free(*encoded_pubkey_arr);
+    return EXTRACTION_FAILURE;
+}
+#endif
+
+/*
+ * For each group in the priority list of groups, check if that group is
+ * also present in the secondary list; if so, select the first overlap and
+ * assign to selected_group and also set the related index in the candidate group list,
+ * or set selected_group to 0 if no overlap
+ */
+#ifndef OPENSSL_NO_TLS1_3
+static void check_overlap(SSL_CONNECTION *s,
+                          const uint16_t *prio_groups, size_t prio_num_groups,
+                          const uint16_t *candidate_groups, size_t candidate_num_groups,
+                          int *prio_group_idx, int *candidate_group_idx,
+                          uint16_t *selected_group)
+{
+    uint16_t current_group;
+    size_t group_idx = prio_num_groups;
+    size_t new_group_idx = 0;
+
+    *candidate_group_idx = 0;
+    *prio_group_idx = 0;
+    *selected_group = 0;
+
+    for (current_group = 0; current_group < candidate_num_groups; current_group++) {
+        if (!check_in_list(s, candidate_groups[current_group], prio_groups,
+                           prio_num_groups, 1, &new_group_idx)
+            || !tls_group_allowed(s, candidate_groups[current_group],
+                                  SSL_SECOP_CURVE_SUPPORTED)
+            || !tls_valid_group(s, candidate_groups[current_group], TLS1_3_VERSION,
+                                TLS1_3_VERSION, 0, NULL))
+            /* No overlap or group not suitable, check next group */
+            continue;
+
+        /*
+         * is the found new_group_idx earlier in the priority list than
+         * initial or last group_idx?
+         */
+        if (new_group_idx < group_idx) {
+            group_idx = new_group_idx;
+            *candidate_group_idx = current_group;
+            *prio_group_idx = group_idx;
+            *selected_group = prio_groups[group_idx];
+        }
+    }
+}
+#endif
+
 int tls_parse_ctos_key_share(SSL_CONNECTION *s, PACKET *pkt,
                              unsigned int context, X509 *x, size_t chainidx)
 {
 #ifndef OPENSSL_NO_TLS1_3
-    unsigned int group_id;
-    PACKET key_share_list, encoded_pt;
+    PACKET key_share_list;
     const uint16_t *clntgroups, *srvrgroups;
-    size_t clnt_num_groups, srvr_num_groups;
-    int found = 0;
+    const size_t *srvrtuples;
+    uint16_t *first_group_in_tuple;
+    size_t clnt_num_groups, srvr_num_groups, srvr_num_tuples;
+    PACKET *encoded_pubkey_arr = NULL;
+    uint16_t *keyshares_arr = NULL;
+    size_t keyshares_cnt = 0;
+    size_t keyshares_max = GROUPLIST_INCREMENT;
+    /* We conservatively assume that we did not find a suitable group */
+    uint16_t group_id_candidate = 0;
+    KS_EXTRACTION_RESULT ks_extraction_result;
+    size_t current_tuple;
+    int ret = 0;
 
+    s->s3.group_id_candidate = 0;
     if (s->hit && (s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE_DHE) == 0)
         return 1;
 
@@ -597,10 +857,12 @@ int tls_parse_ctos_key_share(SSL_CONNECTION *s, PACKET *pkt,
         return 0;
     }
 
-    /* Get our list of supported groups */
+    /* Get list of server supported groups and the group tuples */
     tls1_get_supported_groups(s, &srvrgroups, &srvr_num_groups);
+    tls1_get_group_tuples(s, &srvrtuples, &srvr_num_tuples);
     /* Get the clients list of supported groups. */
     tls1_get_peer_groups(s, &clntgroups, &clnt_num_groups);
+
     if (clnt_num_groups == 0) {
         /*
          * This can only happen if the supported_groups extension was not sent,
@@ -622,70 +884,119 @@ int tls_parse_ctos_key_share(SSL_CONNECTION *s, PACKET *pkt,
         return 0;
     }
 
-    while (PACKET_remaining(&key_share_list) > 0) {
-        if (!PACKET_get_net_2(&key_share_list, &group_id)
-                || !PACKET_get_length_prefixed_2(&key_share_list, &encoded_pt)
-                || PACKET_remaining(&encoded_pt) == 0) {
-            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
-            return 0;
+    /* We parse the key share extension and memorize the entries (after some checks) */
+    ks_extraction_result = extract_keyshares(s,
+                                             &key_share_list,
+                                             clntgroups, clnt_num_groups,
+                                             srvrgroups, srvr_num_groups,
+                                             &keyshares_arr, &encoded_pubkey_arr,
+                                             &keyshares_cnt, &keyshares_max);
+
+    if (ks_extraction_result == EXTRACTION_FAILURE) /* Fatal error during tests */
+        return 0; /* Memory already freed and SSLfatal already called */
+    if (ks_extraction_result == EXTRACTION_SUCCESS_HRR) /* Successful HRR */
+        goto end;
+
+    /*
+     * We now have the folowing lists available to make a decision for
+     * which group the server should use for key exchange :
+     * From client: clntgroups[clnt_num_groups],
+     *              keyshares_arr[keyshares_cnt], encoded_pubkey_arr[keyshares_cnt]
+     * From server: srvrgroups[srvr_num_groups], srvrtuples[srvr_num_tuples]
+     *
+     * Group selection algorithm:
+     *    For all tuples do:
+     *      key share group(s) overlapping with current tuple?
+     *         --> Yes: accept group_id for SH
+     *        --> No: is any of the client supported_groups overlapping with current tuple?
+     *            --> Yes: memorize group_id for HRR, break
+     *             --> No: continue to check next tuple
+     *
+     * Remark: Selection priority different for client- or server-preference
+     */
+    first_group_in_tuple = (uint16_t *)srvrgroups;
+    for (current_tuple = 0; current_tuple < srvr_num_tuples; current_tuple++) {
+        size_t number_of_groups_in_tuple = srvrtuples[current_tuple];
+        int prio_group_idx = 0, candidate_group_idx = 0;
+
+        /* Server or client preference ? */
+        if (s->options & SSL_OP_CIPHER_SERVER_PREFERENCE) {
+            /* Server preference */
+            /* Is there overlap with a key share group?  */
+            check_overlap(s,
+                          first_group_in_tuple, number_of_groups_in_tuple,
+                          keyshares_arr, keyshares_cnt,
+                          &prio_group_idx, &candidate_group_idx,
+                          &group_id_candidate);
+            if (group_id_candidate > 0) { /* Overlap found -> accept the key share group */
+                if (!tls_accept_ksgroup(s, group_id_candidate,
+                                        &encoded_pubkey_arr[candidate_group_idx]))
+                    goto err; /* SSLfatal already called */
+                /* We have all info for a SH, hence we're done here */
+                goto end;
+            } else {
+                /*
+                 * There's no overlap with a key share, but is there at least a client
+                 * supported_group overlapping with the current tuple?
+                 */
+                check_overlap(s,
+                              first_group_in_tuple, number_of_groups_in_tuple,
+                              clntgroups, clnt_num_groups,
+                              &prio_group_idx, &candidate_group_idx,
+                              &group_id_candidate);
+                if (group_id_candidate > 0) {
+                    /*
+                     * We did not have a key share overlap, but at least the supported
+                     * groups overlap hence we can stop searching
+                     * (and report group_id_candidate 'upward' for HRR)
+                     */
+                    s->s3.group_id_candidate = group_id_candidate;
+                    goto end;
+                } else {
+                    /*
+                     * Neither key share nor supported_groups overlap current
+                     * tuple, hence we try the next tuple
+                     */
+                    first_group_in_tuple = &first_group_in_tuple[number_of_groups_in_tuple];
+                    continue;
+                }
+            }
+
+        } else { /* We have client preference */
+            check_overlap(s,
+                          keyshares_arr, keyshares_cnt,
+                          first_group_in_tuple, number_of_groups_in_tuple,
+                          &prio_group_idx, &candidate_group_idx,
+                          &group_id_candidate);
+            if (group_id_candidate > 0) {
+                if (!tls_accept_ksgroup(s, group_id_candidate, &encoded_pubkey_arr[prio_group_idx]))
+                    goto err;
+                goto end;
+            } else {
+                check_overlap(s,
+                              clntgroups, clnt_num_groups,
+                              first_group_in_tuple, number_of_groups_in_tuple,
+                              &prio_group_idx, &candidate_group_idx,
+                              &group_id_candidate);
+                if (group_id_candidate > 0) {
+                    s->s3.group_id_candidate = group_id_candidate;
+                    goto end;
+                } else {
+                    first_group_in_tuple = &first_group_in_tuple[number_of_groups_in_tuple];
+                    continue;
+                }
+            }
         }
-
-        /*
-         * If we already found a suitable key_share we loop through the
-         * rest to verify the structure, but don't process them.
-         */
-        if (found)
-            continue;
-
-        /*
-         * If we sent an HRR then the key_share sent back MUST be for the group
-         * we requested, and must be the only key_share sent.
-         */
-        if (s->s3.group_id != 0
-                && (group_id != s->s3.group_id
-                    || PACKET_remaining(&key_share_list) != 0)) {
-            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_KEY_SHARE);
-            return 0;
-        }
-
-        /* Check if this share is in supported_groups sent from client */
-        if (!check_in_list(s, group_id, clntgroups, clnt_num_groups, 0)) {
-            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_KEY_SHARE);
-            return 0;
-        }
-
-        /* Check if this share is for a group we can use */
-        if (!check_in_list(s, group_id, srvrgroups, srvr_num_groups, 1)
-                || !tls_group_allowed(s, group_id, SSL_SECOP_CURVE_SUPPORTED)
-                   /*
-                    * We tolerate but ignore a group id that we don't think is
-                    * suitable for TLSv1.3
-                    */
-                || !tls_valid_group(s, group_id, TLS1_3_VERSION, TLS1_3_VERSION,
-                                    0, NULL)) {
-            /* Share not suitable */
-            continue;
-        }
-
-        s->s3.group_id = group_id;
-        /* Cache the selected group ID in the SSL_SESSION */
-        s->session->kex_group = group_id;
-
-        if ((s->s3.peer_tmp = ssl_generate_param_group(s, group_id)) == NULL) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR,
-                   SSL_R_UNABLE_TO_FIND_ECDH_PARAMETERS);
-            return 0;
-        }
-
-        if (tls13_set_encoded_pub_key(s->s3.peer_tmp,
-                                      PACKET_data(&encoded_pt),
-                                      PACKET_remaining(&encoded_pt)) <= 0) {
-            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_ECPOINT);
-            return 0;
-        }
-
-        found = 1;
     }
+
+end:
+    ret = 1;
+
+err:
+    OPENSSL_free(keyshares_arr);
+    OPENSSL_free(encoded_pubkey_arr);
+    return ret;
+
 #endif
 
     return 1;
@@ -823,7 +1134,7 @@ int tls_parse_ctos_cookie(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     }
 
     /* Verify the app cookie */
-    if (sctx->verify_stateless_cookie_cb(ssl,
+    if (sctx->verify_stateless_cookie_cb(SSL_CONNECTION_GET_USER_SSL(s),
                                          PACKET_data(&appcookie),
                                          PACKET_remaining(&appcookie)) == 0) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_COOKIE_MISMATCH);
@@ -893,7 +1204,7 @@ int tls_parse_ctos_cookie(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     }
 
     /* Act as if this ClientHello came after a HelloRetryRequest */
-    s->hello_retry_request = 1;
+    s->hello_retry_request = SSL_HRR_PENDING;
 
     s->ext.cookieok = 1;
 #endif
@@ -996,12 +1307,13 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
                        X509 *x, size_t chainidx)
 {
     PACKET identities, binders, binder;
-    size_t binderoffset, hashsize;
+    size_t binderoffset;
+    int hashsize;
     SSL_SESSION *sess = NULL;
     unsigned int id, i, ext = 0;
     const EVP_MD *md = NULL;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
-    SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+    SSL *ussl = SSL_CONNECTION_GET_USER_SSL(s);
 
     /*
      * If we have no PSK kex mode that we recognise then we can't resume so
@@ -1030,7 +1342,7 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
 
         idlen = PACKET_remaining(&identity);
         if (s->psk_find_session_cb != NULL
-                && !s->psk_find_session_cb(ssl, PACKET_data(&identity), idlen,
+                && !s->psk_find_session_cb(ussl, PACKET_data(&identity), idlen,
                                            &sess)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_EXTENSION);
             return 0;
@@ -1048,7 +1360,7 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 return 0;
             }
-            pskdatalen = s->psk_server_callback(ssl, pskid, pskdata,
+            pskdatalen = s->psk_server_callback(ussl, pskid, pskdata,
                                                 sizeof(pskdata));
             OPENSSL_free(pskid);
             if (pskdatalen > PSK_MAX_PSK_LEN) {
@@ -1062,7 +1374,8 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
                  * We found a PSK using an old style callback. We don't know
                  * the digest so we default to SHA256 as per the TLSv1.3 spec
                  */
-                cipher = SSL_CIPHER_find(ssl, tls13_aes128gcmsha256_id);
+                cipher = SSL_CIPHER_find(SSL_CONNECTION_GET_SSL(s),
+                                         tls13_aes128gcmsha256_id);
                 if (cipher == NULL) {
                     OPENSSL_cleanse(pskdata, pskdatalen);
                     SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -1091,7 +1404,7 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
 
             if (sesstmp == NULL) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                return 0;
+                goto err;
             }
             SSL_SESSION_free(sess);
             sess = sesstmp;
@@ -1146,16 +1459,18 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
                 continue;
             }
 
-            age = ossl_time_subtract(ossl_seconds2time(ticket_agel),
-                                     ossl_seconds2time(sess->ext.tick_age_add));
+            age = ossl_time_subtract(ossl_ms2time(ticket_agel),
+                                     ossl_ms2time(sess->ext.tick_age_add));
             t = ossl_time_subtract(ossl_time_now(), sess->time);
 
             /*
-             * Beause we use second granuality, it could appear that
-             * the client's ticket age is longer than ours (our ticket
-             * age calculation should always be slightly longer than the
-             * client's due to the network latency).  Therefore we add
-             * 1000ms to our age calculation to adjust for rounding errors.
+             * Although internally we use OSS_TIME which has ns granularity,
+             * when SSL_SESSION structures are serialised/deserialised we use
+             * second granularity for the sess->time field. Therefore it could
+             * appear that the client's ticket age is longer than ours (our
+             * ticket age calculation should always be slightly longer than the
+             * client's due to the network latency). Therefore we add 1000ms to
+             * our age calculation to adjust for rounding errors.
              */
             expire = ossl_time_add(t, ossl_ms2time(1000));
 
@@ -1195,6 +1510,8 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
 
     binderoffset = PACKET_data(pkt) - (const unsigned char *)s->init_buf->data;
     hashsize = EVP_MD_get_size(md);
+    if (hashsize <= 0)
+        goto err;
 
     if (!PACKET_get_length_prefixed_2(pkt, &binders)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
@@ -1208,7 +1525,7 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
         }
     }
 
-    if (PACKET_remaining(&binder) != hashsize) {
+    if (PACKET_remaining(&binder) != (size_t)hashsize) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         goto err;
     }
@@ -1476,8 +1793,8 @@ EXT_RETURN tls_construct_stoc_next_proto_neg(SSL_CONNECTION *s, WPACKET *pkt,
     if (!npn_seen || sctx->ext.npn_advertised_cb == NULL)
         return EXT_RETURN_NOT_SENT;
 
-    ret = sctx->ext.npn_advertised_cb(SSL_CONNECTION_GET_SSL(s), &npa, &npalen,
-                                      sctx->ext.npn_advertised_cb_arg);
+    ret = sctx->ext.npn_advertised_cb(SSL_CONNECTION_GET_USER_SSL(s), &npa,
+                                      &npalen, sctx->ext.npn_advertised_cb_arg);
     if (ret == SSL_TLSEXT_ERR_OK) {
         if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_next_proto_neg)
                 || !WPACKET_sub_memcpy_u16(pkt, npa, npalen)) {
@@ -1485,9 +1802,10 @@ EXT_RETURN tls_construct_stoc_next_proto_neg(SSL_CONNECTION *s, WPACKET *pkt,
             return EXT_RETURN_FAIL;
         }
         s->s3.npn_seen = 1;
+        return EXT_RETURN_SENT;
     }
 
-    return EXT_RETURN_SENT;
+    return EXT_RETURN_NOT_SENT;
 }
 #endif
 
@@ -1605,8 +1923,8 @@ EXT_RETURN tls_construct_stoc_key_share(SSL_CONNECTION *s, WPACKET *pkt,
                                         size_t chainidx)
 {
 #ifndef OPENSSL_NO_TLS1_3
-    unsigned char *encodedPoint;
-    size_t encoded_pt_len = 0;
+    unsigned char *encoded_pubkey;
+    size_t encoded_pubkey_len = 0;
     EVP_PKEY *ckey = s->s3.peer_tmp, *skey = NULL;
     const TLS_GROUP_INFO *ginf = NULL;
 
@@ -1634,10 +1952,13 @@ EXT_RETURN tls_construct_stoc_key_share(SSL_CONNECTION *s, WPACKET *pkt,
         }
         return EXT_RETURN_NOT_SENT;
     }
+
     if (s->hit && (s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE_DHE) == 0) {
         /*
-         * PSK ('hit') and explicitly not doing DHE (if the client sent the
-         * DHE option we always take it); don't send key share.
+         * PSK ('hit') and explicitly not doing DHE. If the client sent the
+         * DHE option, we take it by default, except if non-DHE would be
+         * preferred by config, but this case would have been handled in
+         * tls_parse_ctos_psk_kex_modes().
          */
         return EXT_RETURN_NOT_SENT;
     }
@@ -1664,21 +1985,21 @@ EXT_RETURN tls_construct_stoc_key_share(SSL_CONNECTION *s, WPACKET *pkt,
         }
 
         /* Generate encoding of server key */
-        encoded_pt_len = EVP_PKEY_get1_encoded_public_key(skey, &encodedPoint);
-        if (encoded_pt_len == 0) {
+        encoded_pubkey_len = EVP_PKEY_get1_encoded_public_key(skey, &encoded_pubkey);
+        if (encoded_pubkey_len == 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EC_LIB);
             EVP_PKEY_free(skey);
             return EXT_RETURN_FAIL;
         }
 
-        if (!WPACKET_sub_memcpy_u16(pkt, encodedPoint, encoded_pt_len)
+        if (!WPACKET_sub_memcpy_u16(pkt, encoded_pubkey, encoded_pubkey_len)
                 || !WPACKET_close(pkt)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             EVP_PKEY_free(skey);
-            OPENSSL_free(encodedPoint);
+            OPENSSL_free(encoded_pubkey);
             return EXT_RETURN_FAIL;
         }
-        OPENSSL_free(encodedPoint);
+        OPENSSL_free(encoded_pubkey);
 
         /*
          * This causes the crypto state to be updated based on the derived keys
@@ -1746,6 +2067,7 @@ EXT_RETURN tls_construct_stoc_cookie(SSL_CONNECTION *s, WPACKET *pkt,
     int ret = EXT_RETURN_FAIL;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+    SSL *ussl = SSL_CONNECTION_GET_USER_SSL(s);
 
     if ((s->s3.flags & TLS1_FLAGS_STATELESS) == 0)
         return EXT_RETURN_NOT_SENT;
@@ -1795,7 +2117,7 @@ EXT_RETURN tls_construct_stoc_cookie(SSL_CONNECTION *s, WPACKET *pkt,
     }
 
     /* Generate the application cookie */
-    if (sctx->gen_stateless_cookie_cb(ssl, appcookie1,
+    if (sctx->gen_stateless_cookie_cb(ussl, appcookie1,
                                       &appcookielen) == 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_COOKIE_GEN_CALLBACK_FAILURE);
         return EXT_RETURN_FAIL;
@@ -1936,4 +2258,165 @@ EXT_RETURN tls_construct_stoc_psk(SSL_CONNECTION *s, WPACKET *pkt,
     }
 
     return EXT_RETURN_SENT;
+}
+
+EXT_RETURN tls_construct_stoc_client_cert_type(SSL_CONNECTION *sc, WPACKET *pkt,
+                                               unsigned int context,
+                                               X509 *x, size_t chainidx)
+{
+    if (sc->ext.client_cert_type_ctos == OSSL_CERT_TYPE_CTOS_ERROR
+        && (send_certificate_request(sc)
+            || sc->post_handshake_auth == SSL_PHA_EXT_RECEIVED)) {
+        /* Did not receive an acceptable cert type - and doing client auth */
+        SSLfatal(sc, SSL_AD_UNSUPPORTED_CERTIFICATE, SSL_R_BAD_EXTENSION);
+        return EXT_RETURN_FAIL;
+    }
+
+    if (sc->ext.client_cert_type == TLSEXT_cert_type_x509) {
+        sc->ext.client_cert_type_ctos = OSSL_CERT_TYPE_CTOS_NONE;
+        return EXT_RETURN_NOT_SENT;
+    }
+
+    /*
+     * Note: only supposed to send this if we are going to do a cert request,
+     * but TLSv1.3 could do a PHA request if the client supports it
+     */
+    if ((!send_certificate_request(sc) && sc->post_handshake_auth != SSL_PHA_EXT_RECEIVED)
+            || sc->ext.client_cert_type_ctos != OSSL_CERT_TYPE_CTOS_GOOD
+            || sc->client_cert_type == NULL) {
+        /* if we don't send it, reset to TLSEXT_cert_type_x509 */
+        sc->ext.client_cert_type_ctos = OSSL_CERT_TYPE_CTOS_NONE;
+        sc->ext.client_cert_type = TLSEXT_cert_type_x509;
+        return EXT_RETURN_NOT_SENT;
+    }
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_client_cert_type)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_put_bytes_u8(pkt, sc->ext.client_cert_type)
+            || !WPACKET_close(pkt)) {
+        SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+    return EXT_RETURN_SENT;
+}
+
+/* One of |pref|, |other| is configured and the values are sanitized */
+static int reconcile_cert_type(const unsigned char *pref, size_t pref_len,
+                               const unsigned char *other, size_t other_len,
+                               uint8_t *chosen_cert_type)
+{
+    size_t i;
+
+    for (i = 0; i < pref_len; i++) {
+        if (memchr(other, pref[i], other_len) != NULL) {
+            *chosen_cert_type = pref[i];
+            return OSSL_CERT_TYPE_CTOS_GOOD;
+        }
+    }
+    return OSSL_CERT_TYPE_CTOS_ERROR;
+}
+
+int tls_parse_ctos_client_cert_type(SSL_CONNECTION *sc, PACKET *pkt,
+                                    unsigned int context,
+                                    X509 *x, size_t chainidx)
+{
+    PACKET supported_cert_types;
+    const unsigned char *data;
+    size_t len;
+
+    /* Ignore the extension */
+    if (sc->client_cert_type == NULL) {
+        sc->ext.client_cert_type_ctos = OSSL_CERT_TYPE_CTOS_NONE;
+        sc->ext.client_cert_type = TLSEXT_cert_type_x509;
+        return 1;
+    }
+
+    if (!PACKET_as_length_prefixed_1(pkt, &supported_cert_types)) {
+        sc->ext.client_cert_type_ctos = OSSL_CERT_TYPE_CTOS_ERROR;
+        SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+    if ((len = PACKET_remaining(&supported_cert_types)) == 0) {
+        sc->ext.client_cert_type_ctos = OSSL_CERT_TYPE_CTOS_ERROR;
+        SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+    if (!PACKET_get_bytes(&supported_cert_types, &data, len)) {
+        sc->ext.client_cert_type_ctos = OSSL_CERT_TYPE_CTOS_ERROR;
+        SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+    /* client_cert_type: client (peer) has priority */
+    sc->ext.client_cert_type_ctos = reconcile_cert_type(data, len,
+                                                        sc->client_cert_type, sc->client_cert_type_len,
+                                                        &sc->ext.client_cert_type);
+
+    /* Ignore the error until sending - so we can check cert auth*/
+    return 1;
+}
+
+EXT_RETURN tls_construct_stoc_server_cert_type(SSL_CONNECTION *sc, WPACKET *pkt,
+                                               unsigned int context,
+                                               X509 *x, size_t chainidx)
+{
+    if (sc->ext.server_cert_type == TLSEXT_cert_type_x509) {
+        sc->ext.server_cert_type_ctos = OSSL_CERT_TYPE_CTOS_NONE;
+        return EXT_RETURN_NOT_SENT;
+    }
+    if (sc->ext.server_cert_type_ctos != OSSL_CERT_TYPE_CTOS_GOOD
+            || sc->server_cert_type == NULL) {
+        /* if we don't send it, reset to TLSEXT_cert_type_x509 */
+        sc->ext.server_cert_type_ctos = OSSL_CERT_TYPE_CTOS_NONE;
+        sc->ext.server_cert_type = TLSEXT_cert_type_x509;
+        return EXT_RETURN_NOT_SENT;
+    }
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_server_cert_type)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_put_bytes_u8(pkt, sc->ext.server_cert_type)
+            || !WPACKET_close(pkt)) {
+        SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+    return EXT_RETURN_SENT;
+}
+
+int tls_parse_ctos_server_cert_type(SSL_CONNECTION *sc, PACKET *pkt,
+                                    unsigned int context,
+                                    X509 *x, size_t chainidx)
+{
+    PACKET supported_cert_types;
+    const unsigned char *data;
+    size_t len;
+
+    /* Ignore the extension */
+    if (sc->server_cert_type == NULL) {
+        sc->ext.server_cert_type_ctos = OSSL_CERT_TYPE_CTOS_NONE;
+        sc->ext.server_cert_type = TLSEXT_cert_type_x509;
+        return 1;
+    }
+
+    if (!PACKET_as_length_prefixed_1(pkt, &supported_cert_types)) {
+        SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+
+    if ((len = PACKET_remaining(&supported_cert_types)) == 0) {
+        SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+    if (!PACKET_get_bytes(&supported_cert_types, &data, len)) {
+        SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+    /* server_cert_type: server (this) has priority */
+    sc->ext.server_cert_type_ctos = reconcile_cert_type(sc->server_cert_type, sc->server_cert_type_len,
+                                                        data, len,
+                                                        &sc->ext.server_cert_type);
+    if (sc->ext.server_cert_type_ctos == OSSL_CERT_TYPE_CTOS_GOOD)
+        return 1;
+
+    /* Did not receive an acceptable cert type */
+    SSLfatal(sc, SSL_AD_UNSUPPORTED_CERTIFICATE, SSL_R_BAD_EXTENSION);
+    return 0;
 }

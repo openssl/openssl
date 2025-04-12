@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -37,6 +37,8 @@ int EVP_VerifyFinal_ex(EVP_MD_CTX *ctx, const unsigned char *sigbuf,
         rv = EVP_MD_CTX_copy_ex(tmp_ctx, ctx);
         if (rv)
             rv = EVP_DigestFinal_ex(tmp_ctx, m, &m_len);
+        else
+            rv = EVP_DigestFinal_ex(ctx, m, &m_len);
         EVP_MD_CTX_free(tmp_ctx);
         if (!rv)
             return 0;

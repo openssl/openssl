@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2022 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2025 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -15,7 +15,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_req");
 
-plan tests => 92;
+plan tests => 113;
 
 require_ok(srctop_file('test', 'recipes', 'tconversion.pl'));
 
@@ -36,18 +36,27 @@ if (disabled("rsa")) {
 $ENV{MSYS2_ARG_CONV_EXCL} = "/CN=";
 
 # Check for duplicate -addext parameters, and one "working" case.
-my @addext_args = ( "openssl", "req", "-new", "-out", "testreq.pem",
+my @addext_args = ( "openssl", "req", "-new", "-out", "testreq-addexts.pem",
                     "-key",  srctop_file(@certs, "ee-key.pem"),
     "-config", srctop_file("test", "test.cnf"), @req_new );
 my $val = "subjectAltName=DNS:example.com";
+my $val1 = "subjectAltName=otherName:1.2.3.4;UTF8:test,email:info\@example.com";
 my $val2 = " " . $val;
 my $val3 = $val;
 $val3 =~ s/=/    =/;
 ok( run(app([@addext_args, "-addext", $val])));
+ok( run(app([@addext_args, "-addext", $val1])));
+$val1 =~ s/UTF8/XXXX/; # execute the error handling in do_othername
+ok(!run(app([@addext_args, "-addext", $val1])));
 ok(!run(app([@addext_args, "-addext", $val, "-addext", $val])));
 ok(!run(app([@addext_args, "-addext", $val, "-addext", $val2])));
 ok(!run(app([@addext_args, "-addext", $val, "-addext", $val3])));
 ok(!run(app([@addext_args, "-addext", $val2, "-addext", $val3])));
+ok(run(app([@addext_args, "-addext", "SXNetID=1:one, 2:two, 3:three"])));
+ok(run(app([@addext_args, "-addext", "subjectAltName=dirName:dirname_sec"])));
+
+ok(run(app([@addext_args, "-addext", "keyUsage=digitalSignature",
+           "-reqexts", "reqexts"]))); # referring to section in test.cnf
 
 # If a CSR is provided with neither of -key or -CA/-CAkey, this should fail.
 ok(!run(app(["openssl", "req", "-x509",
@@ -264,7 +273,7 @@ subtest "generating certificate requests with Ed25519" => sub {
 
     SKIP: {
         skip "Ed25519 is not supported by this OpenSSL build", 2
-            if disabled("ec");
+            if disabled("ecx");
 
         ok(run(app(["openssl", "req",
                     "-config", srctop_file("test", "test.cnf"),
@@ -284,7 +293,7 @@ subtest "generating certificate requests with Ed448" => sub {
 
     SKIP: {
         skip "Ed448 is not supported by this OpenSSL build", 2
-            if disabled("ec");
+            if disabled("ecx");
 
         ok(run(app(["openssl", "req",
                     "-config", srctop_file("test", "test.cnf"),
@@ -346,6 +355,154 @@ subtest "generating SM2 certificate requests" => sub {
     }
 };
 
+subtest "generating certificate requests with ML-DSA" => sub {
+    plan tests => 5;
+
+    SKIP: {
+        skip "ML-DSA is not supported by this OpenSSL build", 5
+            if disabled("ml-dsa");
+
+        ok(run(app(["openssl", "req",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-x509", "-sha256", "-nodes", "-days", "365",
+                    "-newkey", "ML-DSA-44",
+                    "-keyout",  "privatekey_ml_dsa_44.pem",
+                    "-out",  "cert_ml_dsa_44.pem",
+                    "-subj", "/CN=test-self-signed",
+                    "-addext","keyUsage=digitalSignature"])),
+                    "Generating self signed ML-DSA-44 cert and private key");
+        ok(run(app(["openssl", "req",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-x509", "-sha256", "-nodes", "-days", "365",
+                    "-newkey", "ML-DSA-65",
+                    "-keyout",  "privatekey_ml_dsa_65.pem",
+                    "-out",  "cert_ml_dsa_65.pem",
+                    "-subj", "/CN=test-self-signed",
+                    "-addext","keyUsage=digitalSignature"])),
+                    "Generating self signed ML-DSA-65 cert and private key");
+        ok(run(app(["openssl", "req",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-x509", "-sha256", "-nodes", "-days", "365",
+                    "-newkey", "ML-DSA-44",
+                    "-keyout",  "privatekey_ml_dsa_87.pem",
+                    "-out",  "cert_ml_dsa_87.pem",
+                    "-subj", "/CN=test-self-signed",
+                    "-addext","keyUsage=digitalSignature"])),
+                    "Generating self signed ML-DSA-87 cert and private key");
+        ok(run(app(["openssl", "req",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-new",
+                    "-sigopt","hextest-entropy:000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+                    "-out", "csr_ml_dsa_87.pem",
+                    "-newkey", "ML-DSA-87",
+                    "-passout", "pass:x"])),
+                    "Generating ML-DSA-87 csr");
+        ok(run(app(["openssl", "req",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-in", "csr_ml_dsa_87.pem"])),
+                    "verifying ML-DSA-87 csr");
+    }
+};
+
+subtest "generating certificate requests with -cipher flag" => sub {
+    plan tests => 6;
+
+    diag("Testing -cipher flag with aes-256-cbc...");
+    ok(run(app(["openssl", "req",
+                "-config", srctop_file("test", "test.cnf"),
+                "-newkey", "rsa:2048",
+                "-keyout", "privatekey-aes256.pem",
+                "-out", "testreq-rsa-cipher.pem",
+                "-utf8",
+                "-cipher", "aes-256-cbc",
+                "-passout", "pass:password"])),
+       "Generating request with -cipher flag (AES-256-CBC)");
+
+    diag("Verifying signature for aes-256-cbc...");
+    ok(run(app(["openssl", "req",
+                "-config", srctop_file("test", "test.cnf"),
+                "-verify", "-in", "testreq-rsa-cipher.pem", "-noout"])),
+       "Verifying signature on request with -cipher (AES-256-CBC)");
+
+    open my $fh, '<', "privatekey-aes256.pem" or BAIL_OUT("Could not open key file: $!");
+    my $first_line = <$fh>;
+    close $fh;
+    ok($first_line =~ /^-----BEGIN ENCRYPTED PRIVATE KEY-----/,
+       "Check that the key file is encrypted (AES-256-CBC)");
+
+    diag("Testing -cipher flag with aes-128-cbc...");
+    ok(run(app(["openssl", "req",
+                "-config", srctop_file("test", "test.cnf"),
+                "-newkey", "rsa:2048",
+                "-keyout", "privatekey-aes128.pem",
+                "-out", "testreq-rsa-cipher-aes128.pem",
+                "-utf8",
+                "-cipher", "aes-128-cbc",
+                "-passout", "pass:password"])),
+       "Generating request with -cipher flag (AES-128-CBC)");
+
+    diag("Verifying signature for aes-128-cbc...");
+    ok(run(app(["openssl", "req",
+                "-config", srctop_file("test", "test.cnf"),
+                "-verify", "-in", "testreq-rsa-cipher-aes128.pem", "-noout"])),
+       "Verifying signature on request with -cipher (AES-128-CBC)");
+
+    open my $fh_aes128, '<', "privatekey-aes128.pem" or BAIL_OUT("Could not open key file: $!");
+    my $first_line_aes128 = <$fh_aes128>;
+    close $fh_aes128;
+    ok($first_line_aes128 =~ /^-----BEGIN ENCRYPTED PRIVATE KEY-----/,
+       "Check that the key file is encrypted (AES-128-CBC)");
+};
+
+subtest "generating certificate requests with SLH-DSA" => sub {
+    plan tests => 5;
+
+    SKIP: {
+        skip "SLH-DSA is not supported by this OpenSSL build", 5
+            if disabled("slh-dsa");
+
+        ok(run(app(["openssl", "req",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-x509", "-sha256", "-nodes", "-days", "365",
+                    "-newkey", "SLH-DSA-SHA2-128f",
+                    "-keyout",  "privatekey_slh_dsa_sha2_128f.pem",
+                    "-out",  "cert_slh_dsa_sha2_128f.pem",
+                    "-subj", "/CN=test-self-signed",
+                    "-addext","keyUsage=digitalSignature"])),
+                    "Generating self signed SLH-DSA-SHA2-128f cert and private key");
+        ok(run(app(["openssl", "req",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-x509", "-sha256", "-nodes", "-days", "365",
+                    "-newkey", "SLH-DSA-SHA2-256s",
+                    "-keyout",  "privatekey_slh_dsa_sha2_256s.pem",
+                    "-out",  "cert_slh_dsa_sha2_256s.pem",
+                    "-subj", "/CN=test-self-signed",
+                    "-addext","keyUsage=digitalSignature"])),
+                    "Generating self signed SLH-DSA-SHA2-256s cert and private key");
+        ok(run(app(["openssl", "req",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-x509", "-sha256", "-nodes", "-days", "365",
+                    "-newkey", "SLH-DSA-SHAKE-256f",
+                    "-keyout",  "privatekey_slh_dsa_shake_256f.pem",
+                    "-out",  "cert_slh_dsa_shake_256f.pem",
+                    "-subj", "/CN=test-self-signed",
+                    "-addext","keyUsage=digitalSignature"])),
+                    "Generating self signed SLH-DSA-SHAKE-256f cert and private key");
+        ok(run(app(["openssl", "req",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-new",
+                    "-sigopt","hextest-entropy:000102030405060708090a0b0c0d0e0f",
+                    "-out", "csr_slh_dsa_shake128.pem",
+                    "-newkey", "SLH-DSA-SHAKE-128s",
+                    "-passout", "pass:x"])),
+                    "Generating SLH-DSA-SHAKE-128s csr");
+        ok(run(app(["openssl", "req",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-in", "csr_slh_dsa_shake128.pem"])),
+                    "verifying SLH-DSA-SHAKE-128s csr");
+    }
+};
+
 my @openssl_args = ("req", "-config", srctop_file("apps", "openssl.cnf"));
 
 run_conversion('req conversions',
@@ -393,16 +550,7 @@ sub generate_cert {
     push(@cmd, ("-CA", $ca_cert, "-CAkey", $ca_key)) unless $ss;
     ok(run(app([@cmd])), "generate $cert");
 }
-sub has_SKID {
-    my $cert = shift @_;
-    my $expect = shift @_;
-    cert_contains($cert, "Subject Key Identifier", $expect);
-}
-sub has_AKID {
-    my $cert = shift @_;
-    my $expect = shift @_;
-    cert_contains($cert, "Authority Key Identifier", $expect);
-}
+
 sub has_keyUsage {
     my $cert = shift @_;
     my $expect = shift @_;
@@ -424,6 +572,12 @@ my $SKID_AKID = "subjectKeyIdentifier,authorityKeyIdentifier";
 
 # # SKID
 
+my $cert = "self-signed_default_SKID_no_explicit_exts.pem";
+generate_cert($cert);
+has_version($cert, 3);
+has_SKID($cert, 1); # SKID added, though no explicit extensions given
+has_AKID($cert, 0);
+
 my $cert = "self-signed_v3_CA_hash_SKID.pem";
 generate_cert($cert, @v3_ca, "-addext", "subjectKeyIdentifier = hash");
 has_SKID($cert, 1); # explicit hash SKID
@@ -441,7 +595,8 @@ strict_verify($cert, 1);
 # AKID of self-signed certs
 
 $cert = "self-signed_v1_CA_no_KIDs.pem";
-generate_cert($cert);
+generate_cert($cert, "-x509v1");
+has_version($cert, 1);
 cert_ext_has_n_different_lines($cert, 0, $SKID_AKID); # no SKID and no AKID
 #TODO strict_verify($cert, 1); # self-signed v1 root cert should be accepted as CA
 
@@ -515,6 +670,8 @@ strict_verify($cert, 1);
 $cert = "self-issued_v3_CA_no_AKID.pem";
 generate_cert($cert, "-addext", "authorityKeyIdentifier = none",
     "-in", srctop_file(@certs, "x509-check.csr"));
+has_version($cert, 3);
+has_SKID($cert, 1); # SKID added, though no explicit extensions given
 has_AKID($cert, 0);
 strict_verify($cert, 1);
 
@@ -556,6 +713,11 @@ cert_ext_has_n_different_lines($cert, 6, $SKID_AKID); # SKID != AKID, both force
 
 # AKID of not self-issued certs
 
+$cert = "regular_v3_EE_default_KIDs_no_other_exts.pem";
+generate_cert($cert, "-key", srctop_file(@certs, "ee-key.pem"));
+has_version($cert, 3);
+cert_ext_has_n_different_lines($cert, 4, $SKID_AKID); # SKID != AKID
+
 $cert = "regular_v3_EE_default_KIDs.pem";
 generate_cert($cert, "-addext", "keyUsage = dataEncipherment",
     "-key", srctop_file(@certs, "ee-key.pem"));
@@ -585,3 +747,27 @@ $cert = "self-signed_CA_with_keyUsages.pem";
 generate_cert($cert, "-in", srctop_file(@certs, "ext-check.csr"),
     "-copy_extensions", "copy");
 has_keyUsage($cert, 1);
+
+# Generate cert using req with '-modulus'
+ok(run(app(["openssl", "req", "-x509", "-new", "-days", "365",
+            "-key", srctop_file("test", "testrsa.pem"),
+            "-config", srctop_file('test', 'test.cnf'),
+            "-out", "testreq-cert.pem",
+            "-modulus"])), "cert req creation - with -modulus");
+
+# Verify cert
+ok(run(app(["openssl", "x509", "-in", "testreq-cert.pem",
+            "-noout", "-text"])), "cert verification");
+
+# Generate cert with explicit start and end dates
+my %today = (strftime("%Y-%m-%d", gmtime) => 1);
+my $cert = "self-signed_explicit_date.pem";
+ok(run(app(["openssl", "req", "-x509", "-new", "-text",
+            "-config", srctop_file('test', 'test.cnf'),
+            "-key", srctop_file("test", "testrsa.pem"),
+            "-not_before", "today",
+            "-not_after", "today",
+            "-out", $cert]))
+&& ++$today{strftime("%Y-%m-%d", gmtime)}
+&& (grep { defined $today{$_} } get_not_before_date($cert))
+&& (grep { defined $today{$_} } get_not_after_date($cert)), "explicit start and end dates");

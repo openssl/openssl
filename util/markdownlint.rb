@@ -8,11 +8,13 @@ rule 'MD003', :style => :setext_with_atx
 # Code blocks may be fenced or indented, both are OK...
 # but they must be consistent throughout each file.
 rule 'MD046', :style => :consistent
-# Not possible to line-break tables.
-rule 'MD013', :tables => false
 
 # Bug in mdl, https://github.com/markdownlint/markdownlint/issues/313
 exclude_rule 'MD007'
+
+# Not possible to line-break tables (:tables => false)
+# Not possible to line-break headers (currently cannot be selectively exempted)
+exclude_rule 'MD013'
 
 exclude_rule 'MD004' # Unordered list style TODO(fix?)
 exclude_rule 'MD005' # Inconsistent indentation for list items at the same level

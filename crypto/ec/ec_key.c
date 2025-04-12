@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2025 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -75,8 +75,8 @@ void EC_KEY_free(EC_KEY *r)
     if (r == NULL)
         return;
 
-    CRYPTO_DOWN_REF(&r->references, &i, r->lock);
-    REF_PRINT_COUNT("EC_KEY", r);
+    CRYPTO_DOWN_REF(&r->references, &i);
+    REF_PRINT_COUNT("EC_KEY", i, r);
     if (i > 0)
         return;
     REF_ASSERT_ISNT(i < 0);
@@ -94,7 +94,7 @@ void EC_KEY_free(EC_KEY *r)
 #ifndef FIPS_MODULE
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_EC_KEY, r, &r->ex_data);
 #endif
-    CRYPTO_THREAD_lock_free(r->lock);
+    CRYPTO_FREE_REF(&r->references);
     EC_GROUP_free(r->group);
     EC_POINT_free(r->pub_key);
     BN_clear_free(r->priv_key);
@@ -194,10 +194,10 @@ int EC_KEY_up_ref(EC_KEY *r)
 {
     int i;
 
-    if (CRYPTO_UP_REF(&r->references, &i, r->lock) <= 0)
+    if (CRYPTO_UP_REF(&r->references, &i) <= 0)
         return 0;
 
-    REF_PRINT_COUNT("EC_KEY", r);
+    REF_PRINT_COUNT("EC_KEY", i, r);
     REF_ASSERT_ISNT(i < 2);
     return ((i > 1) ? 1 : 0);
 }
@@ -256,10 +256,7 @@ static int ecdsa_keygen_knownanswer_test(EC_KEY *eckey, BN_CTX *ctx,
     int len, ret = 0;
     OSSL_SELF_TEST *st = NULL;
     unsigned char bytes[512] = {0};
-    EC_POINT *pub_key2 = EC_POINT_new(eckey->group);
-
-    if (pub_key2 == NULL)
-        return 0;
+    EC_POINT *pub_key2 = NULL;
 
     st = OSSL_SELF_TEST_new(cb, cbarg);
     if (st == NULL)
@@ -267,6 +264,9 @@ static int ecdsa_keygen_knownanswer_test(EC_KEY *eckey, BN_CTX *ctx,
 
     OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_PCT_KAT,
                                OSSL_SELF_TEST_DESC_PCT_ECDSA);
+
+    if ((pub_key2 = EC_POINT_new(eckey->group)) == NULL)
+        goto err;
 
     /* pub_key = priv_key * G (where G is a point on the curve) */
     if (!EC_POINT_mul(eckey->group, pub_key2, eckey->priv_key, NULL, NULL, ctx))
@@ -563,9 +563,15 @@ int ossl_ec_key_public_check(const EC_KEY *eckey, BN_CTX *ctx)
     int ret = 0;
     EC_POINT *point = NULL;
     const BIGNUM *order = NULL;
+    const BIGNUM *cofactor = EC_GROUP_get0_cofactor(eckey->group);
 
     if (!ossl_ec_key_public_check_quick(eckey, ctx))
         return 0;
+
+    if (cofactor != NULL && BN_is_one(cofactor)) {
+        /* Skip the unnecessary expensive computation for curves with cofactor of 1. */
+        return 1;
+    }
 
     point = EC_POINT_new(eckey->group);
     if (point == NULL)
@@ -577,11 +583,6 @@ int ossl_ec_key_public_check(const EC_KEY *eckey, BN_CTX *ctx)
         goto err;
     }
     /* 5.6.2.3.3 (Step 4) : pub_key * order is the point at infinity. */
-    if (!EC_POINT_mul(eckey->group, point, NULL, eckey->pub_key, order, ctx)) {
-        ERR_raise(ERR_LIB_EC, ERR_R_EC_LIB);
-        goto err;
-    }
-    /* Perform a second check on the public key */
     if (!EC_POINT_mul(eckey->group, point, NULL, eckey->pub_key, order, ctx)) {
         ERR_raise(ERR_LIB_EC, ERR_R_EC_LIB);
         goto err;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2023 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -136,6 +136,10 @@ static const struct {
     { "n=0x3", "n=3", 1 },
     { "n=0x3", "n=-3", -1 },
     { "n=0x33", "n=51", 1 },
+    { "n=0x123456789abcdef", "n=0x123456789abcdef", 1 },
+    { "n=0x7fffffffffffffff", "n=0x7fffffffffffffff", 1 },   /* INT64_MAX */
+    { "n=9223372036854775807", "n=9223372036854775807", 1 }, /* INT64_MAX */
+    { "n=0777777777777777777777", "n=0777777777777777777777", 1 }, /* INT64_MAX */
     { "n=033", "n=27", 1 },
     { "n=0", "n=00", 1 },
     { "n=0x0", "n=0", 1 },
@@ -194,9 +198,13 @@ static const struct {
     { 0, "a=abc,#@!, n=1" },    /* non-ASCII character located */
     { 1, "a='Hello" },          /* Unterminated string */
     { 0, "a=\"World" },         /* Unterminated string */
+    { 0, "a=_abd_" },           /* Unquoted string not starting with alphabetic */
     { 1, "a=2, n=012345678" },  /* Bad octal digit */
     { 0, "n=0x28FG, a=3" },     /* Bad hex digit */
     { 0, "n=145d, a=2" },       /* Bad decimal digit */
+    { 0, "n=0x8000000000000000, a=3" },     /* Hex overflow */
+    { 0, "n=922337203000000000d, a=2" },    /* Decimal overflow */
+    { 0, "a=2, n=1000000000000000000000" }, /* Octal overflow */
     { 1, "@='hello'" },         /* Invalid name */
     { 1, "n0123456789012345678901234567890123456789"
          "0123456789012345678901234567890123456789"
@@ -644,6 +652,9 @@ static struct {
     { "", "" },
     { "fips=3", "fips=3" },
     { "fips=-3", "fips=-3" },
+    { "provider='foo bar'", "provider='foo bar'" },
+    { "provider=\"foo bar'\"", "provider=\"foo bar'\"" },
+    { "provider=abc***", "provider='abc***'" },
     { NULL, "" }
 };
 

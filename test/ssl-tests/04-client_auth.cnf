@@ -725,7 +725,7 @@ client = 23-client-auth-TLSv1.2-require-client
 [23-client-auth-TLSv1.2-require-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
-ClientSignatureAlgorithms = SHA256+RSA
+ClientSignatureAlgorithms = SHA256+rsA
 MaxProtocol = TLSv1.2
 MinProtocol = TLSv1.2
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
@@ -831,7 +831,7 @@ client = 26-client-auth-TLSv1.2-require-non-empty-names-client
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
 ClientCAFile = ${ENV::TEST_CERTS_DIR}/root-cert.pem
-ClientSignatureAlgorithms = SHA256+RSA
+ClientSignatureAlgorithms = SHA256+rsA
 MaxProtocol = TLSv1.2
 MinProtocol = TLSv1.2
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem

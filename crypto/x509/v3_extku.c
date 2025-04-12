@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -35,6 +35,30 @@ const X509V3_EXT_METHOD ossl_v3_ext_ku = {
 /* NB OCSP acceptable responses also is a SEQUENCE OF OBJECT */
 const X509V3_EXT_METHOD ossl_v3_ocsp_accresp = {
     NID_id_pkix_OCSP_acceptableResponses, 0,
+    ASN1_ITEM_ref(EXTENDED_KEY_USAGE),
+    0, 0, 0, 0,
+    0, 0,
+    i2v_EXTENDED_KEY_USAGE,
+    v2i_EXTENDED_KEY_USAGE,
+    0, 0,
+    NULL
+};
+
+/* Acceptable Certificate Policies also is a SEQUENCE OF OBJECT */
+const X509V3_EXT_METHOD ossl_v3_acc_cert_policies = {
+    NID_acceptable_cert_policies, 0,
+    ASN1_ITEM_ref(EXTENDED_KEY_USAGE),
+    0, 0, 0, 0,
+    0, 0,
+    i2v_EXTENDED_KEY_USAGE,
+    v2i_EXTENDED_KEY_USAGE,
+    0, 0,
+    NULL
+};
+
+/* Acceptable Privilege Policies also is a SEQUENCE OF OBJECT */
+const X509V3_EXT_METHOD ossl_v3_acc_priv_policies = {
+    NID_acceptable_privilege_policies, 0,
     ASN1_ITEM_ref(EXTENDED_KEY_USAGE),
     0, 0, 0, 0,
     0, 0,

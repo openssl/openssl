@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -95,7 +95,7 @@ int ktls_configure_crypto(OSSL_LIB_CTX *libctx, int version, const EVP_CIPHER *c
             return 0;
         if (EVP_MD_is_a(md, "SHA1"))
             crypto_info->auth_algorithm = CRYPTO_SHA1_HMAC;
-        else if (EVP_MD_is_a(md, "SHA2-256")) {
+        else if (EVP_MD_is_a(md, "SHA2-256"))
             crypto_info->auth_algorithm = CRYPTO_SHA2_256_HMAC;
         else if (EVP_MD_is_a(md, "SHA2-384"))
             crypto_info->auth_algorithm = CRYPTO_SHA2_384_HMAC;
@@ -402,22 +402,23 @@ static int ktls_post_process_record(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec)
 static int
 ktls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                       int role, int direction, int level, uint16_t epoch,
+                      unsigned char *secret, size_t secretlen,
                       unsigned char *key, size_t keylen, unsigned char *iv,
                       size_t ivlen, unsigned char *mackey, size_t mackeylen,
                       const EVP_CIPHER *ciph, size_t taglen,
                       int mactype,
-                      const EVP_MD *md, COMP_METHOD *comp, BIO *prev,
-                      BIO *transport, BIO *next, BIO_ADDR *local, BIO_ADDR *peer,
+                      const EVP_MD *md, COMP_METHOD *comp,
+                      const EVP_MD *kdfdigest, BIO *prev, BIO *transport,
+                      BIO *next, BIO_ADDR *local, BIO_ADDR *peer,
                       const OSSL_PARAM *settings, const OSSL_PARAM *options,
-                      const OSSL_DISPATCH *fns, void *cbarg,
+                      const OSSL_DISPATCH *fns, void *cbarg, void *rlarg,
                       OSSL_RECORD_LAYER **retrl)
 {
     int ret;
 
     ret = tls_int_new_record_layer(libctx, propq, vers, role, direction, level,
-                                   key, keylen, iv, ivlen, mackey, mackeylen,
-                                   ciph, taglen, mactype, md, comp, prev,
-                                   transport, next, local, peer, settings,
+                                   ciph, taglen, md, comp, prev,
+                                   transport, next, settings,
                                    options, fns, cbarg, retrl);
 
     if (ret != OSSL_RECORD_RETURN_SUCCESS)
@@ -430,7 +431,7 @@ ktls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                                             taglen, mactype, md, comp);
 
     if (ret != OSSL_RECORD_RETURN_SUCCESS) {
-        OPENSSL_free(*retrl);
+        tls_free(*retrl);
         *retrl = NULL;
     } else {
         /*
@@ -491,7 +492,7 @@ static int ktls_initialise_write_packets(OSSL_RECORD_LAYER *rl,
 static int ktls_prepare_record_header(OSSL_RECORD_LAYER *rl,
                                       WPACKET *thispkt,
                                       OSSL_RECORD_TEMPLATE *templ,
-                                      unsigned int rectype,
+                                      uint8_t rectype,
                                       unsigned char **recdata)
 {
     /* The kernel writes the record header, so nothing to do */
@@ -583,7 +584,6 @@ static struct record_functions_st ossl_ktls_funcs = {
 const OSSL_RECORD_METHOD ossl_ktls_record_method = {
     ktls_new_record_layer,
     tls_free,
-    tls_reset,
     tls_unprocessed_read_pending,
     tls_processed_read_pending,
     tls_app_data_pending,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2009-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -168,7 +168,8 @@ CMS_RecipientInfo *CMS_add0_recipient_password(CMS_ContentInfo *cms,
 
     /* Setup PBE algorithm */
 
-    pwri->keyDerivationAlgorithm = PKCS5_pbkdf2_set(iter, NULL, 0, -1, -1);
+    pwri->keyDerivationAlgorithm = PKCS5_pbkdf2_set_ex(iter, NULL, 0, -1, -1,
+                                                       cms_ctx->libctx);
 
     if (pwri->keyDerivationAlgorithm == NULL)
         goto err;
@@ -204,6 +205,10 @@ static int kek_unwrap_key(unsigned char *out, size_t *outlen,
     size_t blocklen = EVP_CIPHER_CTX_get_block_size(ctx);
     unsigned char *tmp;
     int outl, rv = 0;
+
+    if (blocklen == 0)
+        return 0;
+
     if (inlen < 2 * blocklen) {
         /* too small */
         return 0;
@@ -257,6 +262,10 @@ static int kek_wrap_key(unsigned char *out, size_t *outlen,
     size_t blocklen = EVP_CIPHER_CTX_get_block_size(ctx);
     size_t olen;
     int dummy;
+
+    if (blocklen == 0)
+        return 0;
+
     /*
      * First decide length of output buffer: need header and round up to
      * multiple of block length.
@@ -360,9 +369,10 @@ int ossl_cms_RecipientInfo_pwri_crypt(const CMS_ContentInfo *cms,
 
     /* Finish password based key derivation to setup key in "ctx" */
 
-    if (EVP_PBE_CipherInit(algtmp->algorithm,
-                           (char *)pwri->pass, pwri->passlen,
-                           algtmp->parameter, kekctx, en_de) < 0) {
+    if (EVP_PBE_CipherInit_ex(algtmp->algorithm,
+                              (char *)pwri->pass, pwri->passlen,
+                              algtmp->parameter, kekctx, en_de,
+                              cms_ctx->libctx, cms_ctx->propq) < 0) {
         ERR_raise(ERR_LIB_CMS, ERR_R_EVP_LIB);
         goto err;
     }

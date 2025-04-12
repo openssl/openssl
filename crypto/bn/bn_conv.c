@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -10,8 +10,6 @@
 #include <openssl/err.h>
 #include "crypto/ctype.h"
 #include "bn_local.h"
-
-static const char Hex[] = "0123456789ABCDEF";
 
 /* Must 'OPENSSL_free' the returned data */
 char *BN_bn2hex(const BIGNUM *a)
@@ -33,8 +31,7 @@ char *BN_bn2hex(const BIGNUM *a)
             /* strip leading zeros */
             v = (int)((a->d[i] >> j) & 0xff);
             if (z || v != 0) {
-                *p++ = Hex[v >> 4];
-                *p++ = Hex[v & 0x0f];
+                p += ossl_to_hex(p, v);
                 z = 1;
             }
         }

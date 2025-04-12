@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2023 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -32,7 +32,7 @@ typedef struct {
     union {
         /*
          * These fields are never directly addressed, but their sizes are
-         * imporant so that all native types can be copied here without overrun.
+         * important so that all native types can be copied here without overrun.
          */
         ossl_intmax_t i;
         ossl_uintmax_t u;
@@ -49,7 +49,7 @@ struct ossl_param_bld_st {
 };
 
 static OSSL_PARAM_BLD_DEF *param_push(OSSL_PARAM_BLD *bld, const char *key,
-                                      int size, size_t alloc, int type,
+                                      size_t size, size_t alloc, int type,
                                       int secure)
 {
     OSSL_PARAM_BLD_DEF *pd = OPENSSL_zalloc(sizeof(*pd));
@@ -233,8 +233,8 @@ static int push_BN(OSSL_PARAM_BLD *bld, const char *key,
 int OSSL_PARAM_BLD_push_BN(OSSL_PARAM_BLD *bld, const char *key,
                            const BIGNUM *bn)
 {
-    if (BN_is_negative(bn))
-        return push_BN(bld, key, bn, bn == NULL ? 0 : BN_num_bytes(bn) + 1,
+    if (bn != NULL && BN_is_negative(bn))
+        return push_BN(bld, key, bn, BN_num_bytes(bn) + 1,
                        OSSL_PARAM_INTEGER);
     return push_BN(bld, key, bn, bn == NULL ? 0 : BN_num_bytes(bn),
                    OSSL_PARAM_UNSIGNED_INTEGER);
@@ -243,8 +243,8 @@ int OSSL_PARAM_BLD_push_BN(OSSL_PARAM_BLD *bld, const char *key,
 int OSSL_PARAM_BLD_push_BN_pad(OSSL_PARAM_BLD *bld, const char *key,
                                const BIGNUM *bn, size_t sz)
 {
-    if (BN_is_negative(bn))
-        return push_BN(bld, key, bn, bn == NULL ? 0 : BN_num_bytes(bn),
+    if (bn != NULL && BN_is_negative(bn))
+        return push_BN(bld, key, bn, BN_num_bytes(bn),
                        OSSL_PARAM_INTEGER);
     return push_BN(bld, key, bn, sz, OSSL_PARAM_UNSIGNED_INTEGER);
 }
@@ -255,12 +255,8 @@ int OSSL_PARAM_BLD_push_utf8_string(OSSL_PARAM_BLD *bld, const char *key,
     OSSL_PARAM_BLD_DEF *pd;
     int secure;
 
-    if (bsize == 0) {
+    if (bsize == 0)
         bsize = strlen(buf);
-    } else if (bsize > INT_MAX) {
-        ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_STRING_TOO_LONG);
-        return 0;
-    }
     secure = CRYPTO_secure_allocated(buf);
     pd = param_push(bld, key, bsize, bsize + 1, OSSL_PARAM_UTF8_STRING, secure);
     if (pd == NULL)
@@ -274,12 +270,8 @@ int OSSL_PARAM_BLD_push_utf8_ptr(OSSL_PARAM_BLD *bld, const char *key,
 {
     OSSL_PARAM_BLD_DEF *pd;
 
-    if (bsize == 0) {
+    if (bsize == 0)
         bsize = strlen(buf);
-    } else if (bsize > INT_MAX) {
-        ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_STRING_TOO_LONG);
-        return 0;
-    }
     pd = param_push(bld, key, bsize, sizeof(buf), OSSL_PARAM_UTF8_PTR, 0);
     if (pd == NULL)
         return 0;
@@ -293,10 +285,6 @@ int OSSL_PARAM_BLD_push_octet_string(OSSL_PARAM_BLD *bld, const char *key,
     OSSL_PARAM_BLD_DEF *pd;
     int secure;
 
-    if (bsize > INT_MAX) {
-        ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_STRING_TOO_LONG);
-        return 0;
-    }
     secure = CRYPTO_secure_allocated(buf);
     pd = param_push(bld, key, bsize, bsize, OSSL_PARAM_OCTET_STRING, secure);
     if (pd == NULL)
@@ -310,10 +298,6 @@ int OSSL_PARAM_BLD_push_octet_ptr(OSSL_PARAM_BLD *bld, const char *key,
 {
     OSSL_PARAM_BLD_DEF *pd;
 
-    if (bsize > INT_MAX) {
-        ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_STRING_TOO_LONG);
-        return 0;
-    }
     pd = param_push(bld, key, bsize, sizeof(buf), OSSL_PARAM_OCTET_PTR, 0);
     if (pd == NULL)
         return 0;

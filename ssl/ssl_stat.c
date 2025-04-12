@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2005 Nokia. All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -10,6 +10,7 @@
 
 #include <stdio.h>
 #include "ssl_local.h"
+#include "internal/ssl_unwrap.h"
 
 const char *SSL_state_string_long(const SSL *s)
 {
@@ -343,7 +344,7 @@ const char *SSL_alert_desc_string_long(int value)
     case SSL3_AD_CLOSE_NOTIFY:
         return "close notify";
     case SSL3_AD_UNEXPECTED_MESSAGE:
-        return "unexpected_message";
+        return "unexpected message";
     case SSL3_AD_BAD_RECORD_MAC:
         return "bad record mac";
     case SSL3_AD_DECOMPRESSION_FAILURE:

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -33,7 +33,6 @@ ERR_STATE *ERR_get_state(void);
 static int err_load_strings(const ERR_STRING_DATA *str);
 #endif
 
-static void ERR_STATE_free(ERR_STATE *s);
 #ifndef OPENSSL_NO_ERR
 static ERR_STRING_DATA ERR_str_libraries[] = {
     {ERR_PACK(ERR_LIB_NONE, 0, 0), "unknown library"},
@@ -199,7 +198,7 @@ static ERR_STRING_DATA *int_err_get_item(const ERR_STRING_DATA *d)
 }
 #endif
 
-static void ERR_STATE_free(ERR_STATE *state)
+void OSSL_ERR_STATE_free(ERR_STATE *state)
 {
     int i;
 
@@ -649,7 +648,7 @@ static void err_delete_thread_state(void *unused)
         return;
 
     CRYPTO_THREAD_set_local(&err_thread_local, NULL);
-    ERR_STATE_free(state);
+    OSSL_ERR_STATE_free(state);
 }
 
 #ifndef OPENSSL_NO_DEPRECATED_1_1_0
@@ -689,8 +688,7 @@ ERR_STATE *ossl_err_get_state_int(void)
         if (!CRYPTO_THREAD_set_local(&err_thread_local, (ERR_STATE*)-1))
             return NULL;
 
-        /* calling CRYPTO_zalloc(.., NULL, 0) prevents mem alloc error loop */
-        state = CRYPTO_zalloc(sizeof(*state), NULL, 0);
+        state = OSSL_ERR_STATE_new();
         if (state == NULL) {
             CRYPTO_THREAD_set_local(&err_thread_local, NULL);
             return NULL;
@@ -698,7 +696,7 @@ ERR_STATE *ossl_err_get_state_int(void)
 
         if (!ossl_init_thread_start(NULL, NULL, err_delete_thread_state)
                 || !CRYPTO_THREAD_set_local(&err_thread_local, state)) {
-            ERR_STATE_free(state);
+            OSSL_ERR_STATE_free(state);
             CRYPTO_THREAD_set_local(&err_thread_local, NULL);
             return NULL;
         }
@@ -833,10 +831,11 @@ void ERR_add_error_vdata(int num, va_list args)
     i = es->top;
 
     /*
-     * If err_data is allocated already, re-use the space.
+     * If err_data is allocated already, reuse the space.
      * Otherwise, allocate a small new buffer.
      */
-    if ((es->err_data_flags[i] & flags) == flags) {
+    if ((es->err_data_flags[i] & flags) == flags
+            && ossl_assert(es->err_data[i] != NULL)) {
         str = es->err_data[i];
         size = es->err_data_size[i];
 

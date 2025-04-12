@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -75,7 +75,7 @@ void *ASN1_item_dup(const ASN1_ITEM *it, const void *x)
     }
 
     i = ASN1_item_i2d(x, &b, it);
-    if (b == NULL) {
+    if (i < 0 || b == NULL) {
         ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
         return NULL;
     }

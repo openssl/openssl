@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2024 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2019
  * Copyright Siemens AG 2015-2019
  *
@@ -123,6 +123,7 @@ OSSL_CMP_CTX *OSSL_CMP_CTX_new(OSSL_LIB_CTX *libctx, const char *propq)
 
     ctx->keep_alive = 1;
     ctx->msg_timeout = -1;
+    ctx->tls_used = -1; /* default for backward compatibility */
 
     if ((ctx->untrusted = sk_X509_new_null()) == NULL) {
         ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
@@ -163,11 +164,13 @@ int OSSL_CMP_CTX_reinit(OSSL_CMP_CTX *ctx)
         return 0;
     }
 
+#ifndef OPENSSL_NO_HTTP
     if (ctx->http_ctx != NULL) {
         (void)OSSL_HTTP_close(ctx->http_ctx, 1);
         ossl_cmp_debug(ctx, "disconnected from CMP server");
         ctx->http_ctx = NULL;
     }
+#endif
     ctx->status = OSSL_CMP_PKISTATUS_unspecified;
     ctx->failInfoCode = -1;
 
@@ -180,6 +183,7 @@ int OSSL_CMP_CTX_reinit(OSSL_CMP_CTX *ctx)
         && ossl_cmp_ctx_set1_caPubs(ctx, NULL)
         && ossl_cmp_ctx_set1_extraCertsIn(ctx, NULL)
         && ossl_cmp_ctx_set1_validatedSrvCert(ctx, NULL)
+        && ossl_cmp_ctx_set1_first_senderNonce(ctx, NULL)
         && OSSL_CMP_CTX_set1_transactionID(ctx, NULL)
         && OSSL_CMP_CTX_set1_senderNonce(ctx, NULL)
         && ossl_cmp_ctx_set1_recipNonce(ctx, NULL);
@@ -191,10 +195,12 @@ void OSSL_CMP_CTX_free(OSSL_CMP_CTX *ctx)
     if (ctx == NULL)
         return;
 
+#ifndef OPENSSL_NO_HTTP
     if (ctx->http_ctx != NULL) {
         (void)OSSL_HTTP_close(ctx->http_ctx, 1);
         ossl_cmp_debug(ctx, "disconnected from CMP server");
     }
+#endif
     OPENSSL_free(ctx->propq);
     OPENSSL_free(ctx->serverPath);
     OPENSSL_free(ctx->server);
@@ -221,11 +227,13 @@ void OSSL_CMP_CTX_free(OSSL_CMP_CTX *ctx)
     ASN1_OCTET_STRING_free(ctx->transactionID);
     ASN1_OCTET_STRING_free(ctx->senderNonce);
     ASN1_OCTET_STRING_free(ctx->recipNonce);
+    ASN1_OCTET_STRING_free(ctx->first_senderNonce);
     OSSL_CMP_ITAVs_free(ctx->geninfo_ITAVs);
     OSSL_STACK_OF_X509_free(ctx->extraCertsOut);
 
     EVP_PKEY_free(ctx->newPkey);
     X509_NAME_free(ctx->issuer);
+    ASN1_INTEGER_free(ctx->serialNumber);
     X509_NAME_free(ctx->subjectName);
     sk_GENERAL_NAME_pop_free(ctx->subjectAltNames, GENERAL_NAME_free);
     X509_EXTENSIONS_free(ctx->reqExtensions);
@@ -424,8 +432,8 @@ int OSSL_CMP_CTX_set1_referenceValue(OSSL_CMP_CTX *ctx,
 }
 
 /* Set or clear the password to be used for protecting messages with PBMAC */
-int OSSL_CMP_CTX_set1_secretValue(OSSL_CMP_CTX *ctx, const unsigned char *sec,
-                                  int len)
+int OSSL_CMP_CTX_set1_secretValue(OSSL_CMP_CTX *ctx,
+                                  const unsigned char *sec, int len)
 {
     ASN1_OCTET_STRING *secretValue = NULL;
 
@@ -528,6 +536,8 @@ int OSSL_CMP_CTX_reset_geninfo_ITAVs(OSSL_CMP_CTX *ctx)
     return 1;
 }
 
+DEFINE_OSSL_CMP_CTX_get0(geninfo_ITAVs, STACK_OF(OSSL_CMP_ITAV))
+
 /* Add an itav for the body of outgoing general messages */
 int OSSL_CMP_CTX_push0_genm_ITAV(OSSL_CMP_CTX *ctx, OSSL_CMP_ITAV *itav)
 {
@@ -602,15 +612,17 @@ DEFINE_OSSL_set1_up_ref(ossl_cmp_ctx, validatedSrvCert, X509)
  */
 DEFINE_OSSL_set1_up_ref(OSSL_CMP_CTX, srvCert, X509)
 
-/* Set the X509 name of the recipient. Set in the PKIHeader */
+/* Set the X509 name of the recipient to be placed in the PKIHeader */
 DEFINE_OSSL_CMP_CTX_set1(recipient, X509_NAME)
 
 /* Store the X509 name of the expected sender in the PKIHeader of responses */
 DEFINE_OSSL_CMP_CTX_set1(expected_sender, X509_NAME)
 
-/* Set the X509 name of the issuer. Set in the PKIHeader */
+/* Set the X509 name of the issuer to be placed in the certTemplate */
 DEFINE_OSSL_CMP_CTX_set1(issuer, X509_NAME)
 
+/* Set the ASN1_INTEGER serial to be placed in the certTemplate for rr */
+DEFINE_OSSL_CMP_CTX_set1(serialNumber, ASN1_INTEGER)
 /*
  * Set the subject name that will be placed in the certificate
  * request. This will be the subject name on the received certificate.
@@ -755,6 +767,7 @@ int OSSL_CMP_CTX_set0_newPkey(OSSL_CMP_CTX *ctx, int priv, EVP_PKEY *pkey)
 }
 
 /* Get the private/public key to use for cert enrollment, or NULL on error */
+/* In case |priv| == 0, better use ossl_cmp_ctx_get0_newPubkey() below */
 EVP_PKEY *OSSL_CMP_CTX_get0_newPkey(const OSSL_CMP_CTX *ctx, int priv)
 {
     if (ctx == NULL) {
@@ -767,6 +780,21 @@ EVP_PKEY *OSSL_CMP_CTX_get0_newPkey(const OSSL_CMP_CTX *ctx, int priv)
     if (ctx->p10CSR != NULL)
         return priv ? NULL : X509_REQ_get0_pubkey(ctx->p10CSR);
     return ctx->pkey; /* may be NULL */
+}
+
+EVP_PKEY *ossl_cmp_ctx_get0_newPubkey(const OSSL_CMP_CTX *ctx)
+{
+    if (!ossl_assert(ctx != NULL))
+        return NULL;
+    if (ctx->newPkey != NULL)
+        return ctx->newPkey;
+    if (ctx->p10CSR != NULL)
+        return X509_REQ_get0_pubkey(ctx->p10CSR);
+    if (ctx->oldCert != NULL)
+        return X509_get0_pubkey(ctx->oldCert);
+    if (ctx->cert != NULL)
+        return X509_get0_pubkey(ctx->cert);
+    return ctx->pkey;
 }
 
 #define DEFINE_set1_ASN1_OCTET_STRING(PREFIX, FIELD) \
@@ -788,6 +816,9 @@ DEFINE_set1_ASN1_OCTET_STRING(ossl_cmp_ctx, recipNonce)
 /* Stores the given nonce as the last senderNonce sent out */
 DEFINE_set1_ASN1_OCTET_STRING(OSSL_CMP_CTX, senderNonce)
 
+/* store the first req sender nonce for verifying delayed delivery */
+DEFINE_set1_ASN1_OCTET_STRING(ossl_cmp_ctx, first_senderNonce)
+
 /* Set the proxy server to use for HTTP(S) connections */
 DEFINE_OSSL_CMP_CTX_set1(proxy, char)
 
@@ -797,6 +828,7 @@ DEFINE_OSSL_CMP_CTX_set1(server, char)
 /* Set the server exclusion list of the HTTP proxy server */
 DEFINE_OSSL_CMP_CTX_set1(no_proxy, char)
 
+#ifndef OPENSSL_NO_HTTP
 /* Set the http connect/disconnect callback function to be used for HTTP(S) */
 DEFINE_OSSL_set(OSSL_CMP_CTX, http_cb, OSSL_HTTP_bio_cb_t)
 
@@ -808,6 +840,7 @@ DEFINE_OSSL_set(OSSL_CMP_CTX, http_cb_arg, void *)
  * Returns callback argument set previously (NULL if not set or on error)
  */
 DEFINE_OSSL_get(OSSL_CMP_CTX, http_cb_arg, void *, NULL)
+#endif
 
 /* Set callback function for sending CMP request and receiving response */
 DEFINE_OSSL_set(OSSL_CMP_CTX, transfer_cb, OSSL_CMP_transfer_cb_t)
@@ -882,6 +915,9 @@ int OSSL_CMP_CTX_set_option(OSSL_CMP_CTX *ctx, int opt, int val)
     case OSSL_CMP_OPT_UNPROTECTED_ERRORS:
         ctx->unprotectedErrors = val;
         break;
+    case OSSL_CMP_OPT_NO_CACHE_EXTRACERTS:
+        ctx->noCacheExtraCerts = val;
+        break;
     case OSSL_CMP_OPT_VALIDITY_DAYS:
         ctx->days = val;
         break;
@@ -924,6 +960,9 @@ int OSSL_CMP_CTX_set_option(OSSL_CMP_CTX *ctx, int opt, int val)
     case OSSL_CMP_OPT_TOTAL_TIMEOUT:
         ctx->total_timeout = val;
         break;
+    case OSSL_CMP_OPT_USE_TLS:
+        ctx->tls_used = val;
+        break;
     case OSSL_CMP_OPT_PERMIT_TA_IN_EXTRACERTS_FOR_IR:
         ctx->permitTAInExtraCertsForIR = val;
         break;
@@ -964,6 +1003,8 @@ int OSSL_CMP_CTX_get_option(const OSSL_CMP_CTX *ctx, int opt)
         return ctx->unprotectedSend;
     case OSSL_CMP_OPT_UNPROTECTED_ERRORS:
         return ctx->unprotectedErrors;
+    case OSSL_CMP_OPT_NO_CACHE_EXTRACERTS:
+        return ctx->noCacheExtraCerts;
     case OSSL_CMP_OPT_VALIDITY_DAYS:
         return ctx->days;
     case OSSL_CMP_OPT_SUBJECTALTNAME_NODEFAULT:
@@ -988,6 +1029,8 @@ int OSSL_CMP_CTX_get_option(const OSSL_CMP_CTX *ctx, int opt)
         return ctx->msg_timeout;
     case OSSL_CMP_OPT_TOTAL_TIMEOUT:
         return ctx->total_timeout;
+    case OSSL_CMP_OPT_USE_TLS:
+        return ctx->tls_used;
     case OSSL_CMP_OPT_PERMIT_TA_IN_EXTRACERTS_FOR_IR:
         return ctx->permitTAInExtraCertsForIR;
     case OSSL_CMP_OPT_REVOCATION_REASON:

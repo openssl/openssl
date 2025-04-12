@@ -7,10 +7,10 @@
 # https://www.openssl.org/source/license.html
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
+# Written by Andy Polyakov, @dot-asm, initially for use in the OpenSSL
 # project. The module is, however, dual licensed under OpenSSL and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see https://github.com/dot-asm/cryptogams/.
 # ====================================================================
 #
 # Keccak-1600 for ARMv4.
@@ -932,7 +932,15 @@ SHA3_absorb:
 .size	SHA3_absorb,.-SHA3_absorb
 ___
 }
-{ my ($out,$len,$A_flat,$bsz) = map("r$_", (4,5,10,12));
+
+{ my ($out,$len,$A_flat,$bsz,$next) = map("r$_", (4,5,10,12,0));
+
+
+# void SHA3_squeeze(uint64_t A[5][5],
+#                   unsigned char *out, size_t len, size_t r, int next)
+#
+# The first 4 parameters are passed in via r0..r3,
+# next is passed on the stack [sp, #0]
 
 $code.=<<___;
 .global	SHA3_squeeze
@@ -945,6 +953,7 @@ SHA3_squeeze:
 	mov	$out,r1
 	mov	$len,r2
 	mov	$bsz,r3
+	ldr	$next, [sp, #40]  @ next is after the 10 pushed registers (10*4)
 
 #ifdef	__thumb2__
 	mov	r9,#0x00ff00ff
@@ -966,6 +975,8 @@ SHA3_squeeze:
 	stmdb	sp!,{r6-r9}
 
 	mov	r14,$A_flat
+	cmp	$next, #1
+	beq	.Lnext_block
 	b	.Loop_squeeze
 
 .align	4
@@ -1037,7 +1048,7 @@ SHA3_squeeze:
 
 	subs	$bsz,$bsz,#8		@ bsz -= 8
 	bhi	.Loop_squeeze
-
+.Lnext_block:
 	mov	r0,r14			@ original $A_flat
 
 	bl	KeccakF1600
@@ -1594,7 +1605,7 @@ SHA3_squeeze_neon:
 	ldmia	sp!, {r4-r6,pc}
 .size	SHA3_squeeze_neon,.-SHA3_squeeze_neon
 #endif
-.asciz	"Keccak-1600 absorb and squeeze for ARMv4/NEON, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"Keccak-1600 absorb and squeeze for ARMv4/NEON, CRYPTOGAMS by <https://github.com/dot-asm>"
 .align	2
 ___
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -162,7 +162,7 @@ static int aes_gcm_siv_encrypt(PROV_AES_GCM_SIV_CTX *ctx, const unsigned char *i
     if (!ctx->speed && ctx->used_enc)
         return 0;
     /* need to check the size of the input! */
-    if (len64 > ((int64_t)1 << 36) || len == 0)
+    if (len64 > ((int64_t)1 << 36))
         return 0;
 
     if (IS_LITTLE_ENDIAN) {
@@ -223,7 +223,7 @@ static int aes_gcm_siv_decrypt(PROV_AES_GCM_SIV_CTX *ctx, const unsigned char *i
     if (!ctx->speed && ctx->used_dec)
         return 0;
     /* need to check the size of the input! */
-    if (len64 > ((int64_t)1 << 36) || len == 0)
+    if (len64 > ((int64_t)1 << 36))
         return 0;
 
     memcpy(counter_block, ctx->user_tag, sizeof(counter_block));
@@ -318,8 +318,7 @@ static int aes_gcm_siv_dup_ctx(void *vdst, void *vsrc)
     return 0;
 }
 
-static const PROV_CIPHER_HW_AES_GCM_SIV aes_gcm_siv_hw =
-{
+static const PROV_CIPHER_HW_AES_GCM_SIV aes_gcm_siv_hw = {
     aes_gcm_siv_initkey,
     aes_gcm_siv_cipher,
     aes_gcm_siv_dup_ctx,

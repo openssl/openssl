@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2014-2024 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2014, Intel Corporation. All Rights Reserved.
  * Copyright (c) 2015, CloudFlare, Inc.
  *
@@ -37,14 +37,6 @@
 # define TOBN(hi,lo)    ((BN_ULONG)hi<<32|lo)
 #endif
 
-#if defined(__GNUC__)
-# define ALIGN32        __attribute((aligned(32)))
-#elif defined(_MSC_VER)
-# define ALIGN32        __declspec(align(32))
-#else
-# define ALIGN32
-#endif
-
 #define ALIGNPTR(p,N)   ((unsigned char *)p+N-(size_t)p%N)
 #define P256_LIMBS      (256/BN_BITS2)
 
@@ -75,7 +67,6 @@ struct nistz256_pre_comp_st {
     PRECOMP256_ROW *precomp;
     void *precomp_storage;
     CRYPTO_REF_COUNT references;
-    CRYPTO_RWLOCK *lock;
 };
 
 /* Functions implemented in assembly */
@@ -1223,11 +1214,8 @@ static NISTZ256_PRE_COMP *ecp_nistz256_pre_comp_new(const EC_GROUP *group)
 
     ret->group = group;
     ret->w = 6;                 /* default */
-    ret->references = 1;
 
-    ret->lock = CRYPTO_THREAD_lock_new();
-    if (ret->lock == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_CRYPTO_LIB);
+    if (!CRYPTO_NEW_REF(&ret->references, 1)) {
         OPENSSL_free(ret);
         return NULL;
     }
@@ -1238,7 +1226,7 @@ NISTZ256_PRE_COMP *EC_nistz256_pre_comp_dup(NISTZ256_PRE_COMP *p)
 {
     int i;
     if (p != NULL)
-        CRYPTO_UP_REF(&p->references, &i, p->lock);
+        CRYPTO_UP_REF(&p->references, &i);
     return p;
 }
 
@@ -1249,14 +1237,14 @@ void EC_nistz256_pre_comp_free(NISTZ256_PRE_COMP *pre)
     if (pre == NULL)
         return;
 
-    CRYPTO_DOWN_REF(&pre->references, &i, pre->lock);
-    REF_PRINT_COUNT("EC_nistz256", pre);
+    CRYPTO_DOWN_REF(&pre->references, &i);
+    REF_PRINT_COUNT("EC_nistz256", i, pre);
     if (i > 0)
         return;
     REF_ASSERT_ISNT(i < 0);
 
     OPENSSL_free(pre->precomp_storage);
-    CRYPTO_THREAD_lock_free(pre->lock);
+    CRYPTO_FREE_REF(&pre->references);
     OPENSSL_free(pre);
 }
 
@@ -1457,6 +1445,131 @@ err:
 # define ecp_nistz256_inv_mod_ord NULL
 #endif
 
+static int ecp_nistz256group_full_init(EC_GROUP *group,
+                                       const unsigned char *params) {
+    BN_CTX *ctx = NULL;
+    BN_MONT_CTX *mont = NULL, *ordmont = NULL;
+    const int param_len = 32;
+    const int seed_len = 20;
+    int ok = 0;
+    uint32_t hi_order_n = 0xccd1c8aa;
+    uint32_t lo_order_n = 0xee00bc4f;
+    BIGNUM *p = NULL, *a = NULL, *b = NULL, *x = NULL, *y = NULL, *one = NULL,
+        *order = NULL;
+    EC_POINT *P = NULL;
+
+    if ((ctx = BN_CTX_new_ex(group->libctx)) == NULL) {
+        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+
+    if (!EC_GROUP_set_seed(group, params, seed_len)) {
+        ERR_raise(ERR_LIB_EC, ERR_R_EC_LIB);
+        goto err;
+    }
+    params += seed_len;
+
+    if ((p = BN_bin2bn(params + 0 * param_len, param_len, NULL)) == NULL
+        || (a = BN_bin2bn(params + 1 * param_len, param_len, NULL)) == NULL
+        || (b = BN_bin2bn(params + 2 * param_len, param_len, NULL)) == NULL) {
+        ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
+        goto err;
+    }
+
+    /*
+     * Set up curve params and montgomery for field
+     * Start by setting up montgomery and one
+     */
+    mont = BN_MONT_CTX_new();
+    if (mont == NULL)
+        goto err;
+
+    if (!ossl_bn_mont_ctx_set(mont, p, 256, params + 6 * param_len, param_len,
+                              1, 0))
+        goto err;
+
+    one = BN_new();
+    if (one == NULL) {
+        ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
+        goto err;
+    }
+    if (!BN_to_montgomery(one, BN_value_one(), mont, ctx)){
+        ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
+        goto err;
+    }
+    group->field_data1 = mont;
+    mont = NULL;
+    group->field_data2 = one;
+    one = NULL;
+
+    if (!ossl_ec_GFp_simple_group_set_curve(group, p, a, b, ctx)) {
+         ERR_raise(ERR_LIB_EC, ERR_R_EC_LIB);
+        goto err;
+    }
+
+    if ((P = EC_POINT_new(group)) == NULL) {
+        ERR_raise(ERR_LIB_EC, ERR_R_EC_LIB);
+        goto err;
+    }
+
+    if ((x = BN_bin2bn(params + 3 * param_len, param_len, NULL)) == NULL
+        || (y = BN_bin2bn(params + 4 * param_len, param_len, NULL)) == NULL) {
+        ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
+        goto err;
+    }
+    if (!EC_POINT_set_affine_coordinates(group, P, x, y, ctx)) {
+        ERR_raise(ERR_LIB_EC, ERR_R_EC_LIB);
+        goto err;
+    }
+    if ((order = BN_bin2bn(params + 5 * param_len, param_len, NULL)) == NULL
+        || !BN_set_word(x, (BN_ULONG)1)) { /* cofactor is 1 */
+        ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
+        goto err;
+    }
+
+    /*
+     * Set up generator and order and montgomery data
+     */
+    group->generator = EC_POINT_new(group);
+    if (group->generator == NULL){
+        ERR_raise(ERR_LIB_EC, ERR_R_EC_LIB);
+        goto err;
+    }
+    if (!EC_POINT_copy(group->generator, P))
+        goto err;
+    if (!BN_copy(group->order, order))
+        goto err;
+    if (!BN_set_word(group->cofactor, 1))
+        goto err;
+
+    ordmont = BN_MONT_CTX_new();
+    if (ordmont  == NULL)
+        goto err;
+    if (!ossl_bn_mont_ctx_set(ordmont, order, 256, params + 7 * param_len,
+                              param_len, lo_order_n, hi_order_n))
+        goto err;
+
+    group->mont_data = ordmont;
+    ordmont = NULL;
+
+    ok = 1;
+
+ err:
+    EC_POINT_free(P);
+    BN_CTX_free(ctx);
+    BN_MONT_CTX_free(mont);
+    BN_MONT_CTX_free(ordmont);
+    BN_free(p);
+    BN_free(one);
+    BN_free(a);
+    BN_free(b);
+    BN_free(order);
+    BN_free(x);
+    BN_free(y);
+
+    return ok;
+}
+
 const EC_METHOD *EC_GFp_nistz256_method(void)
 {
     static const EC_METHOD ret = {
@@ -1513,7 +1626,8 @@ const EC_METHOD *EC_GFp_nistz256_method(void)
         0,                                          /* blind_coordinates */
         0,                                          /* ladder_pre */
         0,                                          /* ladder_step */
-        0                                           /* ladder_post */
+        0,                                          /* ladder_post */
+        ecp_nistz256group_full_init
     };
 
     return &ret;

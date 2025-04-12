@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -96,6 +96,64 @@ static int test_cert_key_cert(void)
     return 1;
 }
 
+static int test_empty_payload(void)
+{
+    BIO *b;
+    static char *emptypay =
+        "-----BEGIN CERTIFICATE-----\n"
+        "-\n" /* Base64 EOF character */
+        "-----END CERTIFICATE-----";
+    char *name = NULL, *header = NULL;
+    unsigned char *data = NULL;
+    long len;
+    int ret = 0;
+
+    b = BIO_new_mem_buf(emptypay, strlen(emptypay));
+    if (!TEST_ptr(b))
+        return 0;
+
+    /* Expected to fail because the payload is empty */
+    if (!TEST_false(PEM_read_bio_ex(b, &name, &header, &data, &len, 0)))
+        goto err;
+
+    ret = 1;
+ err:
+    OPENSSL_free(name);
+    OPENSSL_free(header);
+    OPENSSL_free(data);
+    BIO_free(b);
+    return ret;
+}
+
+static int test_protected_params(void)
+{
+    BIO *b;
+    static char *protectedpay =
+        "-----BEGIN RSA PRIVATE KEY-----\n"
+        "Proc-Type: 4,ENCRYPTED\n"
+        "DEK-Info: AES-256-CBC,4A44448ED28992710556549B35100CEA\n"
+        "\n"
+        "Xw3INxKeH+rUUF57mjATpvj6zknVhedwrlRmRvnwlLv5wqIy5Ae4UVLPh7SUswfC\n"
+        "-----END RSA PRIVATE KEY-----\n";
+    EVP_PKEY *pkey = NULL;
+    int ret = 0;
+
+    b = BIO_new_mem_buf(protectedpay, strlen(protectedpay));
+    if (!TEST_ptr(b))
+        return 0;
+
+    /* Expected to fail because we cannot decrypt protected PEM files */
+    pkey = PEM_read_bio_Parameters(b, NULL);
+    if (!TEST_ptr_null(pkey))
+        goto err;
+
+    ret = 1;
+ err:
+    EVP_PKEY_free(pkey);
+    BIO_free(b);
+    return ret;
+}
+
 int setup_tests(void)
 {
     if (!TEST_ptr(pemfile = test_get_argument(0)))
@@ -103,5 +161,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_b64, OSSL_NELEM(b64_pem_data));
     ADD_TEST(test_invalid);
     ADD_TEST(test_cert_key_cert);
+    ADD_TEST(test_empty_payload);
+    ADD_TEST(test_protected_params);
     return 1;
 }

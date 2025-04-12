@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2006-2024 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -8,10 +8,10 @@
 
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
+# Written by Andy Polyakov, @dot-asm, initially for use in the OpenSSL
 # project. The module is, however, dual licensed under OpenSSL and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see https://github.com/dot-asm/cryptogams/.
 # ====================================================================
 #
 # sha1_block procedure for x86_64.
@@ -1832,6 +1832,7 @@ ___
 }
 }
 $code.=<<___;
+.section .rodata align=64
 .align	64
 K_XX_XX:
 .long	0x5a827999,0x5a827999,0x5a827999,0x5a827999	# K_00_19
@@ -1845,10 +1846,11 @@ K_XX_XX:
 .long	0x00010203,0x04050607,0x08090a0b,0x0c0d0e0f	# pbswap mask
 .long	0x00010203,0x04050607,0x08090a0b,0x0c0d0e0f	# pbswap mask
 .byte	0xf,0xe,0xd,0xc,0xb,0xa,0x9,0x8,0x7,0x6,0x5,0x4,0x3,0x2,0x1,0x0
+.previous
 ___
 }}}
 $code.=<<___;
-.asciz	"SHA1 block transform for x86_64, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"SHA1 block transform for x86_64, CRYPTOGAMS by <https://github.com/dot-asm>"
 .align	64
 ___
 

@@ -3,9 +3,7 @@
 =head1 NAME
 
 X509_get_default_cert_file, X509_get_default_cert_file_env,
-X509_get_default_cert_path_env,
-X509_get_default_cert_dir, X509_get_default_cert_dir_env,
-X509_get_default_cert_uri, X509_get_default_cert_uri_env -
+X509_get_default_cert_dir, X509_get_default_cert_dir_env -
 retrieve default locations for trusted CA certificates
 
 =head1 SYNOPSIS
@@ -14,12 +12,9 @@ retrieve default locations for trusted CA certificates
 
  const char *X509_get_default_cert_file(void);
  const char *X509_get_default_cert_dir(void);
- const char *X509_get_default_cert_uri(void);
 
  const char *X509_get_default_cert_file_env(void);
- const char *X509_get_default_cert_path_env(void);
  const char *X509_get_default_cert_dir_env(void);
- const char *X509_get_default_cert_uri_env(void);
 
 =head1 DESCRIPTION
 
@@ -37,48 +32,31 @@ specified. If a given directory in the list exists, OpenSSL attempts to lookup
 CA certificates in this directory by calculating a filename based on a hash of
 the certificate's subject name.
 
-The X509_get_default_cert_uri() function returns the default URI for a
-certificate store accessed programmatically via an OpenSSL provider. If there is
-no default store applicable to the system for which OpenSSL was compiled, this
-returns an empty string.
-
-X509_get_default_cert_file_env() and X509_get_default_cert_uri_env() return
-environment variable names which are recommended to specify nondefault values to
-be used instead of the values returned by X509_get_default_cert_file() and
-X509_get_default_cert_uri() respectively. The values returned by the latter
-functions are not affected by these environment variables; you must check for
-these environment variables yourself, using these functions to retrieve the
-correct environment variable names. If an environment variable is not set, the
-value returned by the corresponding function above should be used.
-
-X509_get_default_cert_path_env() returns the environment variable name which is
+X509_get_default_cert_file_env() returns an environment variable name which is
 recommended to specify a nondefault value to be used instead of the value
-returned by X509_get_default_cert_dir(). This environment variable supercedes
-the deprecated environment variable whose name is returned by
-X509_get_default_cert_dir_env(). This environment variable was deprecated as its
-contents can be interpreted ambiguously; see NOTES.
+returned by X509_get_default_cert_file(). The value returned by the latter
+function is not affected by these environment variables; you must check for this
+environment variable yourself, using this function to retrieve the correct
+environment variable name. If an environment variable is not set, the value
+returned by the X509_get_default_cert_file() should be used.
 
-By default, OpenSSL uses the path list specified in the environment variable
-whose name is returned by X509_get_default_cert_path_env() if it is set;
-otherwise, it uses the path list specified in the environment variable whose
-name is returned by X509_get_default_cert_dir_env() if it is set; otherwise, it
-uses the value returned by X509_get_default_cert_dir()).
+X509_get_default_cert_dir_env() returns the environment variable name which is
+recommended to specify a nondefault value to be used instead of the value
+returned by X509_get_default_cert_dir(). The value specified by this environment
+variable can also be a store URI (but see BUGS below).
 
-=head1 NOTES
+=head1 BUGS
 
-X509_get_default_cert_uri(), X509_get_default_cert_uri_env() and
-X509_get_default_cert_path_env() were introduced in OpenSSL 3.2. Prior to this
-release, store URIs were expressed via the environment variable returned by
-X509_get_default_cert_dir_env(); this environment variable could be used to
-specify either a list of directories or a store URI. This creates an ambiguity
-in which the environment variable returned by X509_get_default_cert_dir_env() is
-interpreted both as a list of directories and as a store URI.
-
-This usage and the environment variable returned by
-X509_get_default_cert_dir_env() are now deprecated; to specify a store URI, use
-the environment variable returned by X509_get_default_cert_uri_env(), and to
-specify a list of directories, use the environment variable returned by
-X509_get_default_cert_path_env().
+By default (for example, when L<X509_STORE_set_default_paths(3)> is used), the
+environment variable name returned by X509_get_default_cert_dir_env() is
+interpreted both as a delimiter-separated list of paths, and as a store URI.
+This is ambiguous. For example, specifying a value of B<"file:///etc/certs">
+would cause instantiation of the "file" store provided as part of the default
+provider, but would also cause an L<X509_LOOKUP_hash_dir(3)> instance to look
+for certificates in the directory B<"file"> (relative to the current working
+directory) and the directory B<"///etc/certs">. This can be avoided by avoiding
+use of the environment variable mechanism and using other methods to construct
+X509_LOOKUP instances.
 
 =head1 RETURN VALUES
 
@@ -96,14 +74,9 @@ L<SSL_CTX_load_verify_dir(3)>,
 L<SSL_CTX_load_verify_store(3)>,
 L<SSL_CTX_load_verify_locations(3)>
 
-=head1 HISTORY
-
-X509_get_default_cert_uri(), X509_get_default_cert_path_env() and
-X509_get_default_cert_uri_env() were introduced in OpenSSL 3.2.
-
 =head1 COPYRIGHT
 
-Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2022-2023 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

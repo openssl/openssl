@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,8 +7,10 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <openssl/err.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <openssl/core_names.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include "internal/numbers.h"   /* includes SIZE_MAX */
@@ -18,6 +20,16 @@
 #include "crypto/evp.h"
 #include "evp_local.h"
 
+static void evp_signature_free(void *data)
+{
+    EVP_SIGNATURE_free(data);
+}
+
+static int evp_signature_up_ref(void *data)
+{
+    return EVP_SIGNATURE_up_ref(data);
+}
+
 static EVP_SIGNATURE *evp_signature_new(OSSL_PROVIDER *prov)
 {
     EVP_SIGNATURE *signature = OPENSSL_zalloc(sizeof(EVP_SIGNATURE));
@@ -25,15 +37,14 @@ static EVP_SIGNATURE *evp_signature_new(OSSL_PROVIDER *prov)
     if (signature == NULL)
         return NULL;
 
-    signature->lock = CRYPTO_THREAD_lock_new();
-    if (signature->lock == NULL) {
-        ERR_raise(ERR_LIB_EVP, ERR_R_CRYPTO_LIB);
+    if (!CRYPTO_NEW_REF(&signature->refcnt, 1)
+        || !ossl_provider_up_ref(prov)) {
+        CRYPTO_FREE_REF(&signature->refcnt);
         OPENSSL_free(signature);
         return NULL;
     }
+
     signature->prov = prov;
-    ossl_provider_up_ref(prov);
-    signature->refcnt = 1;
 
     return signature;
 }
@@ -44,9 +55,13 @@ static void *evp_signature_from_algorithm(int name_id,
 {
     const OSSL_DISPATCH *fns = algodef->implementation;
     EVP_SIGNATURE *signature = NULL;
-    int ctxfncnt = 0, signfncnt = 0, verifyfncnt = 0, verifyrecfncnt = 0;
-    int digsignfncnt = 0, digverifyfncnt = 0;
+    /* Counts newctx / freectx */
+    int ctxfncnt = 0;
+    /* Counts all init functions  */
+    int initfncnt = 0;
+    /* Counts all parameter functions */
     int gparamfncnt = 0, sparamfncnt = 0, gmdparamfncnt = 0, smdparamfncnt = 0;
+    int valid = 0;
 
     if ((signature = evp_signature_new(prov)) == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_EVP_LIB);
@@ -70,59 +85,93 @@ static void *evp_signature_from_algorithm(int name_id,
             if (signature->sign_init != NULL)
                 break;
             signature->sign_init = OSSL_FUNC_signature_sign_init(fns);
-            signfncnt++;
+            initfncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_SIGN:
             if (signature->sign != NULL)
                 break;
             signature->sign = OSSL_FUNC_signature_sign(fns);
-            signfncnt++;
+            break;
+        case OSSL_FUNC_SIGNATURE_SIGN_MESSAGE_INIT:
+            if (signature->sign_message_init != NULL)
+                break;
+            signature->sign_message_init
+                = OSSL_FUNC_signature_sign_message_init(fns);
+            initfncnt++;
+            break;
+        case OSSL_FUNC_SIGNATURE_SIGN_MESSAGE_UPDATE:
+            if (signature->sign_message_update != NULL)
+                break;
+            signature->sign_message_update
+                = OSSL_FUNC_signature_sign_message_update(fns);
+            break;
+        case OSSL_FUNC_SIGNATURE_SIGN_MESSAGE_FINAL:
+            if (signature->sign_message_final != NULL)
+                break;
+            signature->sign_message_final
+                = OSSL_FUNC_signature_sign_message_final(fns);
             break;
         case OSSL_FUNC_SIGNATURE_VERIFY_INIT:
             if (signature->verify_init != NULL)
                 break;
             signature->verify_init = OSSL_FUNC_signature_verify_init(fns);
-            verifyfncnt++;
+            initfncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_VERIFY:
             if (signature->verify != NULL)
                 break;
             signature->verify = OSSL_FUNC_signature_verify(fns);
-            verifyfncnt++;
+            break;
+        case OSSL_FUNC_SIGNATURE_VERIFY_MESSAGE_INIT:
+            if (signature->verify_message_init != NULL)
+                break;
+            signature->verify_message_init
+                = OSSL_FUNC_signature_verify_message_init(fns);
+            initfncnt++;
+            break;
+        case OSSL_FUNC_SIGNATURE_VERIFY_MESSAGE_UPDATE:
+            if (signature->verify_message_update != NULL)
+                break;
+            signature->verify_message_update
+                = OSSL_FUNC_signature_verify_message_update(fns);
+            break;
+        case OSSL_FUNC_SIGNATURE_VERIFY_MESSAGE_FINAL:
+            if (signature->verify_message_final != NULL)
+                break;
+            signature->verify_message_final
+                = OSSL_FUNC_signature_verify_message_final(fns);
             break;
         case OSSL_FUNC_SIGNATURE_VERIFY_RECOVER_INIT:
             if (signature->verify_recover_init != NULL)
                 break;
             signature->verify_recover_init
                 = OSSL_FUNC_signature_verify_recover_init(fns);
-            verifyrecfncnt++;
+            initfncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_VERIFY_RECOVER:
             if (signature->verify_recover != NULL)
                 break;
             signature->verify_recover
                 = OSSL_FUNC_signature_verify_recover(fns);
-            verifyrecfncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_DIGEST_SIGN_INIT:
             if (signature->digest_sign_init != NULL)
                 break;
             signature->digest_sign_init
                 = OSSL_FUNC_signature_digest_sign_init(fns);
+            initfncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_DIGEST_SIGN_UPDATE:
             if (signature->digest_sign_update != NULL)
                 break;
             signature->digest_sign_update
                 = OSSL_FUNC_signature_digest_sign_update(fns);
-            digsignfncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_DIGEST_SIGN_FINAL:
             if (signature->digest_sign_final != NULL)
                 break;
             signature->digest_sign_final
                 = OSSL_FUNC_signature_digest_sign_final(fns);
-            digsignfncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_DIGEST_SIGN:
             if (signature->digest_sign != NULL)
@@ -135,20 +184,19 @@ static void *evp_signature_from_algorithm(int name_id,
                 break;
             signature->digest_verify_init
                 = OSSL_FUNC_signature_digest_verify_init(fns);
+            initfncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_UPDATE:
             if (signature->digest_verify_update != NULL)
                 break;
             signature->digest_verify_update
                 = OSSL_FUNC_signature_digest_verify_update(fns);
-            digverifyfncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_FINAL:
             if (signature->digest_verify_final != NULL)
                 break;
             signature->digest_verify_final
                 = OSSL_FUNC_signature_digest_verify_final(fns);
-            digverifyfncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_DIGEST_VERIFY:
             if (signature->digest_verify != NULL)
@@ -223,48 +271,107 @@ static void *evp_signature_from_algorithm(int name_id,
                 = OSSL_FUNC_signature_settable_ctx_md_params(fns);
             smdparamfncnt++;
             break;
+        case OSSL_FUNC_SIGNATURE_QUERY_KEY_TYPES:
+            if (signature->query_key_types != NULL)
+                break;
+            signature->query_key_types
+                = OSSL_FUNC_signature_query_key_types(fns);
+            break;
         }
     }
-    if (ctxfncnt != 2
-        || (signfncnt == 0
-            && verifyfncnt == 0
-            && verifyrecfncnt == 0
-            && digsignfncnt == 0
-            && digverifyfncnt == 0
-            && signature->digest_sign == NULL
-            && signature->digest_verify == NULL)
-        || (signfncnt != 0 && signfncnt != 2)
-        || (verifyfncnt != 0 && verifyfncnt != 2)
-        || (verifyrecfncnt != 0 && verifyrecfncnt != 2)
-        || (digsignfncnt != 0 && digsignfncnt != 2)
-        || (digsignfncnt == 2 && signature->digest_sign_init == NULL)
-        || (digverifyfncnt != 0 && digverifyfncnt != 2)
-        || (digverifyfncnt == 2 && signature->digest_verify_init == NULL)
-        || (signature->digest_sign != NULL
-            && signature->digest_sign_init == NULL)
-        || (signature->digest_verify != NULL
-            && signature->digest_verify_init == NULL)
-        || (gparamfncnt != 0 && gparamfncnt != 2)
-        || (sparamfncnt != 0 && sparamfncnt != 2)
-        || (gmdparamfncnt != 0 && gmdparamfncnt != 2)
-        || (smdparamfncnt != 0 && smdparamfncnt != 2)) {
+    /*
+     * In order to be a consistent set of functions we must have at least
+     * a set of context functions (newctx and freectx) as well as a set of
+     * "signature" functions.  Because there's an overlap between some sets
+     * of functions, counters don't always cut it, we must test known
+     * combinations.
+     * We start by assuming the implementation is valid, and then look for
+     * reasons it's not.
+     */
+    valid = 1;
+    /* Start with the ones where counters say enough */
+    if (ctxfncnt != 2)
+        /* newctx or freectx missing */
+        valid = 0;
+    if (valid
+        && ((gparamfncnt != 0 && gparamfncnt != 2)
+            || (sparamfncnt != 0 && sparamfncnt != 2)
+            || (gmdparamfncnt != 0 && gmdparamfncnt != 2)
+            || (smdparamfncnt != 0 && smdparamfncnt != 2)))
         /*
-         * In order to be a consistent set of functions we must have at least
-         * a set of context functions (newctx and freectx) as well as a set of
-         * "signature" functions:
-         *  (sign_init, sign) or
-         *  (verify_init verify) or
-         *  (verify_recover_init, verify_recover) or
-         *  (digest_sign_init, digest_sign_update, digest_sign_final) or
-         *  (digest_verify_init, digest_verify_update, digest_verify_final) or
-         *  (digest_sign_init, digest_sign) or
-         *  (digest_verify_init, digest_verify).
-         *
-         * set_ctx_params and settable_ctx_params are optional, but if one of
-         * them is present then the other one must also be present. The same
-         * applies to get_ctx_params and gettable_ctx_params. The same rules
-         * apply to the "md_params" functions. The dupctx function is optional.
+         * Params functions are optional, but if defined, they must
+         * be pairwise complete sets, i.e. a getter must have an
+         * associated gettable, etc
          */
+        valid = 0;
+    if (valid && initfncnt == 0)
+        /* No init functions */
+        valid = 0;
+
+    /* Now we check for function combinations */
+    if (valid
+        && ((signature->sign_init != NULL
+             && signature->sign == NULL)
+            || (signature->sign_message_init != NULL
+                && signature->sign == NULL
+                && (signature->sign_message_update == NULL
+                    || signature->sign_message_final == NULL))))
+        /* sign_init functions with no signing function?  That's weird */
+        valid = 0;
+    if (valid
+        && (signature->sign != NULL
+            || signature->sign_message_update != NULL
+            || signature->sign_message_final != NULL)
+        && signature->sign_init == NULL
+        && signature->sign_message_init == NULL)
+        /* signing functions with no sign_init? That's odd */
+        valid = 0;
+
+    if (valid
+        && ((signature->verify_init != NULL
+             && signature->verify == NULL)
+            || (signature->verify_message_init != NULL
+                && signature->verify == NULL
+                && (signature->verify_message_update == NULL
+                    || signature->verify_message_final == NULL))))
+        /* verify_init functions with no verification function?  That's weird */
+        valid = 0;
+    if (valid
+        && (signature->verify != NULL
+            || signature->verify_message_update != NULL
+            || signature->verify_message_final != NULL)
+        && signature->verify_init == NULL
+        && signature->verify_message_init == NULL)
+        /* verification functions with no verify_init? That's odd */
+        valid = 0;
+
+    if (valid
+        && (signature->verify_recover_init != NULL)
+            && (signature->verify_recover == NULL))
+        /* verify_recover_init functions with no verify_recover?  How quaint */
+        valid = 0;
+
+    if (valid
+        && (signature->digest_sign_init != NULL
+            && signature->digest_sign == NULL
+            && (signature->digest_sign_update == NULL
+                || signature->digest_sign_final == NULL)))
+        /*
+         * You can't have a digest_sign_init without *some* performing functions
+         */
+        valid = 0;
+
+    if (valid
+        && ((signature->digest_verify_init != NULL
+             && signature->digest_verify == NULL
+             && (signature->digest_verify_update == NULL
+                 || signature->digest_verify_final == NULL))))
+        /*
+         * You can't have a digest_verify_init without *some* performing functions
+         */
+        valid = 0;
+
+    if (!valid) {
         ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_PROVIDER_FUNCTIONS);
         goto err;
     }
@@ -281,12 +388,12 @@ void EVP_SIGNATURE_free(EVP_SIGNATURE *signature)
 
     if (signature == NULL)
         return;
-    CRYPTO_DOWN_REF(&signature->refcnt, &i, signature->lock);
+    CRYPTO_DOWN_REF(&signature->refcnt, &i);
     if (i > 0)
         return;
     OPENSSL_free(signature->type_name);
     ossl_provider_free(signature->prov);
-    CRYPTO_THREAD_lock_free(signature->lock);
+    CRYPTO_FREE_REF(&signature->refcnt);
     OPENSSL_free(signature);
 }
 
@@ -294,7 +401,7 @@ int EVP_SIGNATURE_up_ref(EVP_SIGNATURE *signature)
 {
     int ref = 0;
 
-    CRYPTO_UP_REF(&signature->refcnt, &ref, signature->lock);
+    CRYPTO_UP_REF(&signature->refcnt, &ref);
     return 1;
 }
 
@@ -308,8 +415,8 @@ EVP_SIGNATURE *EVP_SIGNATURE_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
 {
     return evp_generic_fetch(ctx, OSSL_OP_SIGNATURE, algorithm, properties,
                              evp_signature_from_algorithm,
-                             (int (*)(void *))EVP_SIGNATURE_up_ref,
-                             (void (*)(void *))EVP_SIGNATURE_free);
+                             evp_signature_up_ref,
+                             evp_signature_free);
 }
 
 EVP_SIGNATURE *evp_signature_fetch_from_prov(OSSL_PROVIDER *prov,
@@ -319,8 +426,8 @@ EVP_SIGNATURE *evp_signature_fetch_from_prov(OSSL_PROVIDER *prov,
     return evp_generic_fetch_from_prov(prov, OSSL_OP_SIGNATURE,
                                        algorithm, properties,
                                        evp_signature_from_algorithm,
-                                       (int (*)(void *))EVP_SIGNATURE_up_ref,
-                                       (void (*)(void *))EVP_SIGNATURE_free);
+                                       evp_signature_up_ref,
+                                       evp_signature_free);
 }
 
 int EVP_SIGNATURE_is_a(const EVP_SIGNATURE *signature, const char *name)
@@ -352,8 +459,8 @@ void EVP_SIGNATURE_do_all_provided(OSSL_LIB_CTX *libctx,
     evp_generic_do_all(libctx, OSSL_OP_SIGNATURE,
                        (void (*)(void *, void *))fn, arg,
                        evp_signature_from_algorithm,
-                       (int (*)(void *))EVP_SIGNATURE_up_ref,
-                       (void (*)(void *))EVP_SIGNATURE_free);
+                       evp_signature_up_ref,
+                       evp_signature_free);
 }
 
 
@@ -389,110 +496,48 @@ const OSSL_PARAM *EVP_SIGNATURE_settable_ctx_params(const EVP_SIGNATURE *sig)
     return sig->settable_ctx_params(NULL, provctx);
 }
 
-static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation,
-                                   const OSSL_PARAM params[])
+static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature,
+                                   int operation, const OSSL_PARAM params[])
 {
     int ret = 0;
     void *provkey = NULL;
-    EVP_SIGNATURE *signature = NULL;
     EVP_KEYMGMT *tmp_keymgmt = NULL;
     const OSSL_PROVIDER *tmp_prov = NULL;
     const char *supported_sig = NULL;
     int iter;
 
     if (ctx == NULL) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return -1;
     }
 
     evp_pkey_ctx_free_old_ops(ctx);
     ctx->operation = operation;
 
-    ERR_set_mark();
+    if (signature != NULL) {
+        /*
+         * It's important to figure out what the key type should be, and if
+         * that is what we have in ctx.
+         */
 
-    if (evp_pkey_ctx_is_legacy(ctx))
-        goto legacy;
-
-    if (ctx->pkey == NULL) {
-        ERR_clear_last_mark();
-        ERR_raise(ERR_LIB_EVP, EVP_R_NO_KEY_SET);
-        goto err;
-    }
-
-    /*
-     * Try to derive the supported signature from |ctx->keymgmt|.
-     */
-    if (!ossl_assert(ctx->pkey->keymgmt == NULL
-                     || ctx->pkey->keymgmt == ctx->keymgmt)) {
-        ERR_clear_last_mark();
-        ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-    supported_sig = evp_keymgmt_util_query_operation_name(ctx->keymgmt,
-                                                          OSSL_OP_SIGNATURE);
-    if (supported_sig == NULL) {
-        ERR_clear_last_mark();
-        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
-        goto err;
-    }
-
-    /*
-     * We perform two iterations:
-     *
-     * 1.  Do the normal signature fetch, using the fetching data given by
-     *     the EVP_PKEY_CTX.
-     * 2.  Do the provider specific signature fetch, from the same provider
-     *     as |ctx->keymgmt|
-     *
-     * We then try to fetch the keymgmt from the same provider as the
-     * signature, and try to export |ctx->pkey| to that keymgmt (when
-     * this keymgmt happens to be the same as |ctx->keymgmt|, the export
-     * is a no-op, but we call it anyway to not complicate the code even
-     * more).
-     * If the export call succeeds (returns a non-NULL provider key pointer),
-     * we're done and can perform the operation itself.  If not, we perform
-     * the second iteration, or jump to legacy.
-     */
-    for (iter = 1; iter < 3 && provkey == NULL; iter++) {
         EVP_KEYMGMT *tmp_keymgmt_tofree = NULL;
 
-        /*
-         * If we're on the second iteration, free the results from the first.
-         * They are NULL on the first iteration, so no need to check what
-         * iteration we're on.
-         */
-        EVP_SIGNATURE_free(signature);
-        EVP_KEYMGMT_free(tmp_keymgmt);
-
-        switch (iter) {
-        case 1:
-            signature =
-                EVP_SIGNATURE_fetch(ctx->libctx, supported_sig, ctx->propquery);
-            if (signature != NULL)
-                tmp_prov = EVP_SIGNATURE_get0_provider(signature);
-            break;
-        case 2:
-            tmp_prov = EVP_KEYMGMT_get0_provider(ctx->keymgmt);
-            signature =
-                evp_signature_fetch_from_prov((OSSL_PROVIDER *)tmp_prov,
-                                              supported_sig, ctx->propquery);
-            if (signature == NULL)
-                goto legacy;
-            break;
+        if (ctx->pkey == NULL) {
+            ERR_raise(ERR_LIB_EVP, EVP_R_NO_KEY_SET);
+            goto err;
         }
-        if (signature == NULL)
-            continue;
 
         /*
-         * Ensure that the key is provided, either natively, or as a cached
-         * export.  We start by fetching the keymgmt with the same name as
-         * |ctx->pkey|, but from the provider of the signature method, using
-         * the same property query as when fetching the signature method.
-         * With the keymgmt we found (if we did), we try to export |ctx->pkey|
-         * to it (evp_pkey_export_to_provider() is smart enough to only actually
-
-         * export it if |tmp_keymgmt| is different from |ctx->pkey|'s keymgmt)
+         * Ensure that the key is provided, either natively, or as a
+         * cached export.  We start by fetching the keymgmt with the same
+         * name as |ctx->pkey|, but from the provider of the signature
+         * method, using the same property query as when fetching the
+         * signature method.  With the keymgmt we found (if we did), we
+         * try to export |ctx->pkey| to it (evp_pkey_export_to_provider()
+         * is smart enough to only actually export it if |tmp_keymgmt|
+         * is different from |ctx->pkey|'s keymgmt)
          */
+        tmp_prov = EVP_SIGNATURE_get0_provider(signature);
         tmp_keymgmt_tofree = tmp_keymgmt =
             evp_keymgmt_fetch_from_prov((OSSL_PROVIDER *)tmp_prov,
                                         EVP_KEYMGMT_get0_name(ctx->keymgmt),
@@ -502,14 +547,163 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation,
                                                   &tmp_keymgmt, ctx->propquery);
         if (tmp_keymgmt == NULL)
             EVP_KEYMGMT_free(tmp_keymgmt_tofree);
-    }
 
-    if (provkey == NULL) {
-        EVP_SIGNATURE_free(signature);
-        goto legacy;
-    }
+        if (provkey == NULL)
+            goto end;
 
-    ERR_pop_to_mark();
+        /*
+         * Check that the signature matches the given key.  This is not
+         * designed to work with legacy keys, so has to be done after we've
+         * ensured that the key is at least exported to a provider (above).
+         */
+        if (signature->query_key_types != NULL) {
+            /* This is expect to be a NULL terminated array */
+            const char **keytypes;
+
+            keytypes = signature->query_key_types();
+            for (; *keytypes != NULL; keytypes++)
+                if (EVP_PKEY_CTX_is_a(ctx, *keytypes))
+                    break;
+            if (*keytypes == NULL) {
+                ERR_raise(ERR_LIB_EVP, EVP_R_SIGNATURE_TYPE_AND_KEY_TYPE_INCOMPATIBLE);
+                return -2;
+            }
+        } else {
+            /*
+             * Fallback 1:
+             * check if the keytype is the same as the signature algorithm name
+             */
+            const char *keytype = EVP_KEYMGMT_get0_name(ctx->keymgmt);
+            int ok = EVP_SIGNATURE_is_a(signature, keytype);
+
+            /*
+             * Fallback 2:
+             * query the pkey for a default signature algorithm name, and check
+             * if it matches the signature implementation
+             */
+            if (!ok) {
+                const char *signame
+                    = evp_keymgmt_util_query_operation_name(ctx->keymgmt,
+                                                            OSSL_OP_SIGNATURE);
+
+                ok = EVP_SIGNATURE_is_a(signature, signame);
+            }
+
+            /* If none of the fallbacks helped, we're lost */
+            if (!ok) {
+                ERR_raise(ERR_LIB_EVP, EVP_R_SIGNATURE_TYPE_AND_KEY_TYPE_INCOMPATIBLE);
+                return -2;
+            }
+        }
+
+        if (!EVP_SIGNATURE_up_ref(signature))
+            return 0;
+    } else {
+        /* Without a pre-fetched signature, it must be figured out somehow */
+        ERR_set_mark();
+
+        if (evp_pkey_ctx_is_legacy(ctx))
+            goto legacy;
+
+        if (ctx->pkey == NULL) {
+            ERR_clear_last_mark();
+            ERR_raise(ERR_LIB_EVP, EVP_R_NO_KEY_SET);
+            goto err;
+        }
+
+        /*
+         * Try to derive the supported signature from |ctx->keymgmt|.
+         */
+        if (!ossl_assert(ctx->pkey->keymgmt == NULL
+                         || ctx->pkey->keymgmt == ctx->keymgmt)) {
+            ERR_clear_last_mark();
+            ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+        supported_sig
+            = evp_keymgmt_util_query_operation_name(ctx->keymgmt,
+                                                    OSSL_OP_SIGNATURE);
+        if (supported_sig == NULL) {
+            ERR_clear_last_mark();
+            ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+            goto err;
+        }
+
+        /*
+         * We perform two iterations:
+         *
+         * 1.  Do the normal signature fetch, using the fetching data given by
+         *     the EVP_PKEY_CTX.
+         * 2.  Do the provider specific signature fetch, from the same provider
+         *     as |ctx->keymgmt|
+         *
+         * We then try to fetch the keymgmt from the same provider as the
+         * signature, and try to export |ctx->pkey| to that keymgmt (when
+         * this keymgmt happens to be the same as |ctx->keymgmt|, the export
+         * is a no-op, but we call it anyway to not complicate the code even
+         * more).
+         * If the export call succeeds (returns a non-NULL provider key pointer),
+         * we're done and can perform the operation itself.  If not, we perform
+         * the second iteration, or jump to legacy.
+         */
+        for (iter = 1; iter < 3 && provkey == NULL; iter++) {
+            EVP_KEYMGMT *tmp_keymgmt_tofree = NULL;
+
+            /*
+             * If we're on the second iteration, free the results from the first.
+             * They are NULL on the first iteration, so no need to check what
+             * iteration we're on.
+             */
+            EVP_SIGNATURE_free(signature);
+            EVP_KEYMGMT_free(tmp_keymgmt);
+
+            switch (iter) {
+            case 1:
+                signature =
+                    EVP_SIGNATURE_fetch(ctx->libctx, supported_sig, ctx->propquery);
+                if (signature != NULL)
+                    tmp_prov = EVP_SIGNATURE_get0_provider(signature);
+                break;
+            case 2:
+                tmp_prov = EVP_KEYMGMT_get0_provider(ctx->keymgmt);
+                signature =
+                    evp_signature_fetch_from_prov((OSSL_PROVIDER *)tmp_prov,
+                                                  supported_sig, ctx->propquery);
+                if (signature == NULL)
+                    goto legacy;
+                break;
+            }
+            if (signature == NULL)
+                continue;
+
+            /*
+             * Ensure that the key is provided, either natively, or as a
+             * cached export.  We start by fetching the keymgmt with the same
+             * name as |ctx->pkey|, but from the provider of the signature
+             * method, using the same property query as when fetching the
+             * signature method.  With the keymgmt we found (if we did), we
+             * try to export |ctx->pkey| to it (evp_pkey_export_to_provider()
+             * is smart enough to only actually export it if |tmp_keymgmt|
+             * is different from |ctx->pkey|'s keymgmt)
+             */
+            tmp_keymgmt_tofree = tmp_keymgmt =
+                evp_keymgmt_fetch_from_prov((OSSL_PROVIDER *)tmp_prov,
+                                            EVP_KEYMGMT_get0_name(ctx->keymgmt),
+                                            ctx->propquery);
+            if (tmp_keymgmt != NULL)
+                provkey = evp_pkey_export_to_provider(ctx->pkey, ctx->libctx,
+                                                      &tmp_keymgmt, ctx->propquery);
+            if (tmp_keymgmt == NULL)
+                EVP_KEYMGMT_free(tmp_keymgmt_tofree);
+        }
+
+        if (provkey == NULL) {
+            EVP_SIGNATURE_free(signature);
+            goto legacy;
+        }
+
+        ERR_pop_to_mark();
+    }
 
     /* No more legacy from here down to legacy: */
 
@@ -531,6 +725,14 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation,
         }
         ret = signature->sign_init(ctx->op.sig.algctx, provkey, params);
         break;
+    case EVP_PKEY_OP_SIGNMSG:
+        if (signature->sign_message_init == NULL) {
+            ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+            ret = -2;
+            goto err;
+        }
+        ret = signature->sign_message_init(ctx->op.sig.algctx, provkey, params);
+        break;
     case EVP_PKEY_OP_VERIFY:
         if (signature->verify_init == NULL) {
             ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
@@ -539,14 +741,21 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation,
         }
         ret = signature->verify_init(ctx->op.sig.algctx, provkey, params);
         break;
+    case EVP_PKEY_OP_VERIFYMSG:
+        if (signature->verify_message_init == NULL) {
+            ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+            ret = -2;
+            goto err;
+        }
+        ret = signature->verify_message_init(ctx->op.sig.algctx, provkey, params);
+        break;
     case EVP_PKEY_OP_VERIFYRECOVER:
         if (signature->verify_recover_init == NULL) {
             ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
             ret = -2;
             goto err;
         }
-        ret = signature->verify_recover_init(ctx->op.sig.algctx, provkey,
-                                             params);
+        ret = signature->verify_recover_init(ctx->op.sig.algctx, provkey, params);
         break;
     default:
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
@@ -617,12 +826,69 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation,
 
 int EVP_PKEY_sign_init(EVP_PKEY_CTX *ctx)
 {
-    return evp_pkey_signature_init(ctx, EVP_PKEY_OP_SIGN, NULL);
+    return evp_pkey_signature_init(ctx, NULL, EVP_PKEY_OP_SIGN, NULL);
 }
 
 int EVP_PKEY_sign_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
 {
-    return evp_pkey_signature_init(ctx, EVP_PKEY_OP_SIGN, params);
+    return evp_pkey_signature_init(ctx, NULL, EVP_PKEY_OP_SIGN, params);
+}
+
+int EVP_PKEY_sign_init_ex2(EVP_PKEY_CTX *ctx,
+                           EVP_SIGNATURE *algo, const OSSL_PARAM params[])
+{
+    return evp_pkey_signature_init(ctx, algo, EVP_PKEY_OP_SIGN, params);
+}
+
+int EVP_PKEY_sign_message_init(EVP_PKEY_CTX *ctx,
+                               EVP_SIGNATURE *algo, const OSSL_PARAM params[])
+{
+    return evp_pkey_signature_init(ctx, algo, EVP_PKEY_OP_SIGNMSG, params);
+}
+
+int EVP_PKEY_sign_message_update(EVP_PKEY_CTX *ctx,
+                                 const unsigned char *in, size_t inlen)
+{
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return -1;
+    }
+
+    if (ctx->operation != EVP_PKEY_OP_SIGNMSG) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_INITIALIZED);
+        return -1;
+    }
+
+    if (ctx->op.sig.signature->sign_message_update == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        return -2;
+    }
+
+    return ctx->op.sig.signature->sign_message_update(ctx->op.sig.algctx,
+                                                      in, inlen);
+}
+
+int EVP_PKEY_sign_message_final(EVP_PKEY_CTX *ctx,
+                                unsigned char *sig, size_t *siglen)
+{
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return -1;
+    }
+
+    if (ctx->operation != EVP_PKEY_OP_SIGNMSG) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_INITIALIZED);
+        return -1;
+    }
+
+    if (ctx->op.sig.signature->sign_message_final == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        return -2;
+    }
+
+    return ctx->op.sig.signature->sign_message_final(ctx->op.sig.algctx,
+                                                     sig, siglen,
+                                                     (sig == NULL) ? 0 : *siglen);
 }
 
 int EVP_PKEY_sign(EVP_PKEY_CTX *ctx,
@@ -632,17 +898,23 @@ int EVP_PKEY_sign(EVP_PKEY_CTX *ctx,
     int ret;
 
     if (ctx == NULL) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return -1;
     }
 
-    if (ctx->operation != EVP_PKEY_OP_SIGN) {
+    if (ctx->operation != EVP_PKEY_OP_SIGN
+        && ctx->operation != EVP_PKEY_OP_SIGNMSG) {
         ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_INITIALIZED);
         return -1;
     }
 
     if (ctx->op.sig.algctx == NULL)
         goto legacy;
+
+    if (ctx->op.sig.signature->sign == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        return -2;
+    }
 
     ret = ctx->op.sig.signature->sign(ctx->op.sig.algctx, sig, siglen,
                                       (sig == NULL) ? 0 : *siglen, tbs, tbslen);
@@ -661,12 +933,88 @@ int EVP_PKEY_sign(EVP_PKEY_CTX *ctx,
 
 int EVP_PKEY_verify_init(EVP_PKEY_CTX *ctx)
 {
-    return evp_pkey_signature_init(ctx, EVP_PKEY_OP_VERIFY, NULL);
+    return evp_pkey_signature_init(ctx, NULL, EVP_PKEY_OP_VERIFY, NULL);
 }
 
 int EVP_PKEY_verify_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
 {
-    return evp_pkey_signature_init(ctx, EVP_PKEY_OP_VERIFY, params);
+    return evp_pkey_signature_init(ctx, NULL, EVP_PKEY_OP_VERIFY, params);
+}
+
+int EVP_PKEY_verify_init_ex2(EVP_PKEY_CTX *ctx,
+                             EVP_SIGNATURE *algo, const OSSL_PARAM params[])
+{
+    return evp_pkey_signature_init(ctx, algo, EVP_PKEY_OP_VERIFY, params);
+}
+
+int EVP_PKEY_verify_message_init(EVP_PKEY_CTX *ctx,
+                                 EVP_SIGNATURE *algo, const OSSL_PARAM params[])
+{
+    return evp_pkey_signature_init(ctx, algo, EVP_PKEY_OP_VERIFYMSG, params);
+}
+
+int EVP_PKEY_CTX_set_signature(EVP_PKEY_CTX *ctx,
+                               const unsigned char *sig, size_t siglen)
+{
+    OSSL_PARAM sig_params[2], *p = sig_params;
+
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_SIGNATURE_PARAM_SIGNATURE,
+                                             /*
+                                              * Cast away the const. This is
+                                              * read only so should be safe
+                                              */
+                                             (char *)sig, siglen);
+    *p = OSSL_PARAM_construct_end();
+
+    return EVP_PKEY_CTX_set_params(ctx, sig_params);
+}
+
+int EVP_PKEY_verify_message_update(EVP_PKEY_CTX *ctx,
+                                   const unsigned char *in, size_t inlen)
+{
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return -1;
+    }
+
+    if (ctx->operation != EVP_PKEY_OP_VERIFYMSG) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_INITIALIZED);
+        return -1;
+    }
+
+    if (ctx->op.sig.signature->verify_message_update == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        return -2;
+    }
+
+    return ctx->op.sig.signature->verify_message_update(ctx->op.sig.algctx,
+                                                        in, inlen);
+}
+
+int EVP_PKEY_verify_message_final(EVP_PKEY_CTX *ctx)
+{
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return -1;
+    }
+
+    if (ctx->operation != EVP_PKEY_OP_VERIFYMSG) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_INITIALIZED);
+        return -1;
+    }
+
+    if (ctx->op.sig.signature->verify_message_final == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        return -2;
+    }
+
+    /* The signature must have been set with EVP_PKEY_CTX_set_signature() */
+    return ctx->op.sig.signature->verify_message_final(ctx->op.sig.algctx);
 }
 
 int EVP_PKEY_verify(EVP_PKEY_CTX *ctx,
@@ -676,17 +1024,23 @@ int EVP_PKEY_verify(EVP_PKEY_CTX *ctx,
     int ret;
 
     if (ctx == NULL) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return -1;
     }
 
-    if (ctx->operation != EVP_PKEY_OP_VERIFY) {
+    if (ctx->operation != EVP_PKEY_OP_VERIFY
+        && ctx->operation != EVP_PKEY_OP_VERIFYMSG) {
         ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_INITIALIZED);
         return -1;
     }
 
     if (ctx->op.sig.algctx == NULL)
         goto legacy;
+
+    if (ctx->op.sig.signature->verify == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        return -2;
+    }
 
     ret = ctx->op.sig.signature->verify(ctx->op.sig.algctx, sig, siglen,
                                         tbs, tbslen);
@@ -703,13 +1057,19 @@ int EVP_PKEY_verify(EVP_PKEY_CTX *ctx,
 
 int EVP_PKEY_verify_recover_init(EVP_PKEY_CTX *ctx)
 {
-    return evp_pkey_signature_init(ctx, EVP_PKEY_OP_VERIFYRECOVER, NULL);
+    return evp_pkey_signature_init(ctx, NULL, EVP_PKEY_OP_VERIFYRECOVER, NULL);
 }
 
 int EVP_PKEY_verify_recover_init_ex(EVP_PKEY_CTX *ctx,
                                     const OSSL_PARAM params[])
 {
-    return evp_pkey_signature_init(ctx, EVP_PKEY_OP_VERIFYRECOVER, params);
+    return evp_pkey_signature_init(ctx, NULL, EVP_PKEY_OP_VERIFYRECOVER, params);
+}
+
+int EVP_PKEY_verify_recover_init_ex2(EVP_PKEY_CTX *ctx,
+                                     EVP_SIGNATURE *algo, const OSSL_PARAM params[])
+{
+    return evp_pkey_signature_init(ctx, algo, EVP_PKEY_OP_VERIFYRECOVER, params);
 }
 
 int EVP_PKEY_verify_recover(EVP_PKEY_CTX *ctx,
@@ -719,8 +1079,8 @@ int EVP_PKEY_verify_recover(EVP_PKEY_CTX *ctx,
     int ret;
 
     if (ctx == NULL) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return -1;
     }
 
     if (ctx->operation != EVP_PKEY_OP_VERIFYRECOVER) {
@@ -730,6 +1090,11 @@ int EVP_PKEY_verify_recover(EVP_PKEY_CTX *ctx,
 
     if (ctx->op.sig.algctx == NULL)
         goto legacy;
+
+    if (ctx->op.sig.signature->verify_recover == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        return -2;
+    }
 
     ret = ctx->op.sig.signature->verify_recover(ctx->op.sig.algctx, rout,
                                                 routlen,

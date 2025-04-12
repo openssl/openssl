@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -43,6 +43,22 @@
 static int expand(OPENSSL_LHASH *lh);
 static void contract(OPENSSL_LHASH *lh);
 static OPENSSL_LH_NODE **getrn(OPENSSL_LHASH *lh, const void *data, unsigned long *rhash);
+
+OPENSSL_LHASH *OPENSSL_LH_set_thunks(OPENSSL_LHASH *lh,
+                                     OPENSSL_LH_HASHFUNCTHUNK hw,
+                                     OPENSSL_LH_COMPFUNCTHUNK cw,
+                                     OPENSSL_LH_DOALL_FUNC_THUNK daw,
+                                     OPENSSL_LH_DOALL_FUNCARG_THUNK daaw)
+{
+
+    if (lh == NULL)
+        return NULL;
+    lh->compw = cw;
+    lh->hashw = hw;
+    lh->daw = daw;
+    lh->daaw = daaw;
+    return lh;
+}
 
 OPENSSL_LHASH *OPENSSL_LH_new(OPENSSL_LH_HASHFUNC h, OPENSSL_LH_COMPFUNC c)
 {
@@ -168,8 +184,11 @@ void *OPENSSL_LH_retrieve(OPENSSL_LHASH *lh, const void *data)
 }
 
 static void doall_util_fn(OPENSSL_LHASH *lh, int use_arg,
+                          OPENSSL_LH_DOALL_FUNC_THUNK wfunc,
                           OPENSSL_LH_DOALL_FUNC func,
-                          OPENSSL_LH_DOALL_FUNCARG func_arg, void *arg)
+                          OPENSSL_LH_DOALL_FUNCARG func_arg,
+                          OPENSSL_LH_DOALL_FUNCARG_THUNK wfunc_arg,
+                          void *arg)
 {
     int i;
     OPENSSL_LH_NODE *a, *n;
@@ -186,9 +205,9 @@ static void doall_util_fn(OPENSSL_LHASH *lh, int use_arg,
         while (a != NULL) {
             n = a->next;
             if (use_arg)
-                func_arg(a->data, arg);
+                wfunc_arg(a->data, arg, func_arg);
             else
-                func(a->data);
+                wfunc(a->data, func);
             a = n;
         }
     }
@@ -196,12 +215,29 @@ static void doall_util_fn(OPENSSL_LHASH *lh, int use_arg,
 
 void OPENSSL_LH_doall(OPENSSL_LHASH *lh, OPENSSL_LH_DOALL_FUNC func)
 {
-    doall_util_fn(lh, 0, func, (OPENSSL_LH_DOALL_FUNCARG)0, NULL);
+    if (lh == NULL)
+        return;
+
+    doall_util_fn(lh, 0, lh->daw, func, (OPENSSL_LH_DOALL_FUNCARG)NULL,
+                  (OPENSSL_LH_DOALL_FUNCARG_THUNK)NULL, NULL);
 }
 
-void OPENSSL_LH_doall_arg(OPENSSL_LHASH *lh, OPENSSL_LH_DOALL_FUNCARG func, void *arg)
+void OPENSSL_LH_doall_arg(OPENSSL_LHASH *lh,
+                          OPENSSL_LH_DOALL_FUNCARG func, void *arg)
 {
-    doall_util_fn(lh, 1, (OPENSSL_LH_DOALL_FUNC)0, func, arg);
+    if (lh == NULL)
+        return;
+
+    doall_util_fn(lh, 1, (OPENSSL_LH_DOALL_FUNC_THUNK)NULL,
+                  (OPENSSL_LH_DOALL_FUNC)NULL, func, lh->daaw, arg);
+}
+
+void OPENSSL_LH_doall_arg_thunk(OPENSSL_LHASH *lh,
+                                OPENSSL_LH_DOALL_FUNCARG_THUNK daaw,
+                                OPENSSL_LH_DOALL_FUNCARG fn, void *arg)
+{
+    doall_util_fn(lh, 1, (OPENSSL_LH_DOALL_FUNC_THUNK)NULL,
+                  (OPENSSL_LH_DOALL_FUNC)NULL, fn, daaw, arg);
 }
 
 static int expand(OPENSSL_LHASH *lh)
@@ -260,12 +296,12 @@ static void contract(OPENSSL_LHASH *lh)
         if (n == NULL) {
             /* fputs("realloc error in lhash", stderr); */
             lh->error++;
-            return;
+        } else {
+            lh->b = n;
         }
         lh->num_alloc_nodes /= 2;
         lh->pmax /= 2;
         lh->p = lh->pmax - 1;
-        lh->b = n;
     } else
         lh->p--;
 
@@ -286,24 +322,32 @@ static OPENSSL_LH_NODE **getrn(OPENSSL_LHASH *lh,
 {
     OPENSSL_LH_NODE **ret, *n1;
     unsigned long hash, nn;
-    OPENSSL_LH_COMPFUNC cf;
 
-    hash = (*(lh->hash)) (data);
+    if (lh->hashw != NULL)
+        hash = lh->hashw(data, lh->hash);
+    else
+        hash = lh->hash(data);
+
     *rhash = hash;
 
     nn = hash % lh->pmax;
     if (nn < lh->p)
         nn = hash % lh->num_alloc_nodes;
 
-    cf = lh->comp;
     ret = &(lh->b[(int)nn]);
     for (n1 = *ret; n1 != NULL; n1 = n1->next) {
         if (n1->hash != hash) {
             ret = &(n1->next);
             continue;
         }
-        if (cf(n1->data, data) == 0)
-            break;
+
+        if (lh->compw != NULL) {
+            if (lh->compw(n1->data, data, lh->comp) == 0)
+                break;
+        } else {
+            if (lh->comp(n1->data, data) == 0)
+                break;
+        }
         ret = &(n1->next);
     }
     return ret;

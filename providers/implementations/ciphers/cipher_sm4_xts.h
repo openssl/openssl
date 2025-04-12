@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,7 +14,7 @@
 PROV_CIPHER_FUNC(void, xts_stream,
                  (const unsigned char *in, unsigned char *out, size_t len,
                   const SM4_KEY *key1, const SM4_KEY *key2,
-                  const unsigned char iv[16]));
+                  const unsigned char iv[16], const int enc));
 
 typedef struct prov_sm4_xts_ctx_st {
     /* Must be first */

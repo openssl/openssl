@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -179,10 +179,6 @@ int dhparam_main(int argc, char **argv)
         goto end;
     }
 
-    out = bio_open_default(outfile, 'w', outformat);
-    if (out == NULL)
-        goto end;
-
     /* DH parameters */
     if (num && !g)
         g = 2;
@@ -233,6 +229,8 @@ int dhparam_main(int argc, char **argv)
         }
 
         tmppkey = app_paramgen(ctx, alg);
+        if (tmppkey == NULL)
+            goto end;
         EVP_PKEY_CTX_free(ctx);
         ctx = NULL;
         if (dsaparam) {
@@ -319,6 +317,10 @@ int dhparam_main(int argc, char **argv)
             tmppkey = NULL;
         }
     }
+
+    out = bio_open_default(outfile, 'w', outformat);
+    if (out == NULL)
+        goto end;
 
     if (text)
         EVP_PKEY_print_params(out, pkey, 4, NULL);

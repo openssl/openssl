@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -33,6 +33,27 @@ static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *i, RSA *rsa,
                            BN_CTX *ctx);
 static int rsa_ossl_init(RSA *rsa);
 static int rsa_ossl_finish(RSA *rsa);
+#ifdef S390X_MOD_EXP
+static int rsa_ossl_s390x_mod_exp(BIGNUM *r0, const BIGNUM *i, RSA *rsa,
+                                BN_CTX *ctx);
+static RSA_METHOD rsa_pkcs1_ossl_meth = {
+    "OpenSSL PKCS#1 RSA",
+    rsa_ossl_public_encrypt,
+    rsa_ossl_public_decrypt,     /* signature verification */
+    rsa_ossl_private_encrypt,    /* signing */
+    rsa_ossl_private_decrypt,
+    rsa_ossl_s390x_mod_exp,
+    s390x_mod_exp,
+    rsa_ossl_init,
+    rsa_ossl_finish,
+    RSA_FLAG_FIPS_METHOD,       /* flags */
+    NULL,
+    0,                          /* rsa_sign */
+    0,                          /* rsa_verify */
+    NULL,                       /* rsa_keygen */
+    NULL                        /* rsa_multi_prime_keygen */
+};
+#else
 static RSA_METHOD rsa_pkcs1_ossl_meth = {
     "OpenSSL PKCS#1 RSA",
     rsa_ossl_public_encrypt,
@@ -51,6 +72,7 @@ static RSA_METHOD rsa_pkcs1_ossl_meth = {
     NULL,                       /* rsa_keygen */
     NULL                        /* rsa_multi_prime_keygen */
 };
+#endif
 
 static const RSA_METHOD *default_RSA_meth = &rsa_pkcs1_ossl_meth;
 
@@ -133,10 +155,35 @@ static int rsa_ossl_public_encrypt(int flen, const unsigned char *from,
     if (BN_bin2bn(buf, num, f) == NULL)
         goto err;
 
-    if (BN_ucmp(f, rsa->n) >= 0) {
-        /* usually the padding functions would catch this */
-        ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_LARGE_FOR_MODULUS);
-        goto err;
+#ifdef FIPS_MODULE
+    /*
+     * See SP800-56Br2, section 7.1.1.1
+     * RSAEP: 1 < f < (n – 1).
+     * (where f is the plaintext).
+     */
+    if (padding == RSA_NO_PADDING) {
+        BIGNUM *nminus1 = BN_CTX_get(ctx);
+
+        if (BN_ucmp(f, BN_value_one()) <= 0) {
+            ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_SMALL);
+            goto err;
+        }
+        if (nminus1 == NULL
+                || BN_copy(nminus1, rsa->n) == NULL
+                || !BN_sub_word(nminus1, 1))
+            goto err;
+        if (BN_ucmp(f, nminus1) >= 0) {
+            ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_LARGE_FOR_MODULUS);
+            goto err;
+        }
+    } else
+#endif
+    {
+        if (BN_ucmp(f, rsa->n) >= 0) {
+            /* usually the padding functions would catch this */
+            ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_LARGE_FOR_MODULUS);
+            goto err;
+        }
     }
 
     if (rsa->flags & RSA_FLAG_CACHE_PUBLIC)
@@ -164,11 +211,21 @@ static BN_BLINDING *rsa_get_blinding(RSA *rsa, int *local, BN_CTX *ctx)
 {
     BN_BLINDING *ret;
 
-    if (!CRYPTO_THREAD_write_lock(rsa->lock))
+    if (!CRYPTO_THREAD_read_lock(rsa->lock))
         return NULL;
 
     if (rsa->blinding == NULL) {
-        rsa->blinding = RSA_setup_blinding(rsa, ctx);
+        /*
+         * This dance with upgrading the lock from read to write will be
+         * slower in cases of a single use RSA object, but should be
+         * significantly better in multi-thread cases (e.g. servers). It's
+         * probably worth it.
+         */
+        CRYPTO_THREAD_unlock(rsa->lock);
+        if (!CRYPTO_THREAD_write_lock(rsa->lock))
+            return NULL;
+        if (rsa->blinding == NULL)
+            rsa->blinding = RSA_setup_blinding(rsa, ctx);
     }
 
     ret = rsa->blinding;
@@ -190,7 +247,11 @@ static BN_BLINDING *rsa_get_blinding(RSA *rsa, int *local, BN_CTX *ctx)
         *local = 0;
 
         if (rsa->mt_blinding == NULL) {
-            rsa->mt_blinding = RSA_setup_blinding(rsa, ctx);
+            CRYPTO_THREAD_unlock(rsa->lock);
+            if (!CRYPTO_THREAD_write_lock(rsa->lock))
+                return NULL;
+            if (rsa->mt_blinding == NULL)
+                rsa->mt_blinding = RSA_setup_blinding(rsa, ctx);
         }
         ret = rsa->mt_blinding;
     }
@@ -235,6 +296,7 @@ static int rsa_blinding_invert(BN_BLINDING *b, BIGNUM *f, BIGNUM *unblind,
      * will only read the modulus from BN_BLINDING. In both cases it's safe
      * to access the blinding without a lock.
      */
+    BN_set_flags(f, BN_FLG_CONSTTIME);
     return BN_BLINDING_invert_ex(f, unblind, b, ctx);
 }
 
@@ -369,19 +431,100 @@ static int rsa_ossl_private_encrypt(int flen, const unsigned char *from,
     return r;
 }
 
+static int derive_kdk(int flen, const unsigned char *from, RSA *rsa,
+                      unsigned char *buf, int num, unsigned char *kdk)
+{
+    int ret = 0;
+    HMAC_CTX *hmac = NULL;
+    EVP_MD *md = NULL;
+    unsigned int md_len = SHA256_DIGEST_LENGTH;
+    unsigned char d_hash[SHA256_DIGEST_LENGTH] = {0};
+    /*
+     * because we use d as a handle to rsa->d we need to keep it local and
+     * free before any further use of rsa->d
+     */
+    BIGNUM *d = BN_new();
+
+    if (d == NULL) {
+        ERR_raise(ERR_LIB_RSA, ERR_R_CRYPTO_LIB);
+        goto err;
+    }
+    if (rsa->d == NULL) {
+        ERR_raise(ERR_LIB_RSA, RSA_R_MISSING_PRIVATE_KEY);
+        BN_free(d);
+        goto err;
+    }
+    BN_with_flags(d, rsa->d, BN_FLG_CONSTTIME);
+    if (BN_bn2binpad(d, buf, num) < 0) {
+        ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
+        BN_free(d);
+        goto err;
+    }
+    BN_free(d);
+
+    /*
+     * we use hardcoded hash so that migrating between versions that use
+     * different hash doesn't provide a Bleichenbacher oracle:
+     * if the attacker can see that different versions return different
+     * messages for the same ciphertext, they'll know that the message is
+     * synthetically generated, which means that the padding check failed
+     */
+    md = EVP_MD_fetch(rsa->libctx, "sha256", NULL);
+    if (md == NULL) {
+        ERR_raise(ERR_LIB_RSA, ERR_R_FETCH_FAILED);
+        goto err;
+    }
+
+    if (EVP_Digest(buf, num, d_hash, NULL, md, NULL) <= 0) {
+        ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    hmac = HMAC_CTX_new();
+    if (hmac == NULL) {
+        ERR_raise(ERR_LIB_RSA, ERR_R_CRYPTO_LIB);
+        goto err;
+    }
+
+    if (HMAC_Init_ex(hmac, d_hash, sizeof(d_hash), md, NULL) <= 0) {
+        ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    if (flen < num) {
+        memset(buf, 0, num - flen);
+        if (HMAC_Update(hmac, buf, num - flen) <= 0) {
+            ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+    }
+    if (HMAC_Update(hmac, from, flen) <= 0) {
+        ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    md_len = SHA256_DIGEST_LENGTH;
+    if (HMAC_Final(hmac, kdk, &md_len) <= 0) {
+        ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+    ret = 1;
+
+ err:
+    HMAC_CTX_free(hmac);
+    EVP_MD_free(md);
+    return ret;
+}
+
 static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
                                    unsigned char *to, RSA *rsa, int padding)
 {
     BIGNUM *f, *ret;
     int j, num = 0, r = -1;
     unsigned char *buf = NULL;
-    unsigned char d_hash[SHA256_DIGEST_LENGTH] = {0};
-    HMAC_CTX *hmac = NULL;
-    unsigned int md_len = SHA256_DIGEST_LENGTH;
     unsigned char kdk[SHA256_DIGEST_LENGTH] = {0};
     BN_CTX *ctx = NULL;
     int local_blinding = 0;
-    EVP_MD *md = NULL;
     /*
      * Used only if the blinding structure is shared. A non-NULL unblind
      * instructs rsa_blinding_convert() and rsa_blinding_invert() to store
@@ -428,10 +571,39 @@ static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
     if (BN_bin2bn(from, (int)flen, f) == NULL)
         goto err;
 
-    if (BN_ucmp(f, rsa->n) >= 0) {
-        ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_LARGE_FOR_MODULUS);
-        goto err;
+#ifdef FIPS_MODULE
+    /*
+     * See SP800-56Br2, section 7.1.2.1
+     * RSADP: 1 < f < (n – 1)
+     * (where f is the ciphertext).
+     */
+    if (padding == RSA_NO_PADDING) {
+        BIGNUM *nminus1 = BN_CTX_get(ctx);
+
+        if (BN_ucmp(f, BN_value_one()) <= 0) {
+            ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_SMALL);
+            goto err;
+        }
+        if (nminus1 == NULL
+                || BN_copy(nminus1, rsa->n) == NULL
+                || !BN_sub_word(nminus1, 1))
+            goto err;
+        if (BN_ucmp(f, nminus1) >= 0) {
+            ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_LARGE_FOR_MODULUS);
+            goto err;
+        }
+    } else
+#endif
+    {
+        if (BN_ucmp(f, rsa->n) >= 0) {
+            ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_LARGE_FOR_MODULUS);
+            goto err;
+        }
     }
+    if (rsa->flags & RSA_FLAG_CACHE_PUBLIC)
+        if (!BN_MONT_CTX_set_locked(&rsa->_method_mod_n, rsa->lock,
+                                    rsa->n, ctx))
+            goto err;
 
     if (!(rsa->flags & RSA_FLAG_NO_BLINDING)) {
         blinding = rsa_get_blinding(rsa, &local_blinding, ctx);
@@ -470,13 +642,6 @@ static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
             goto err;
         }
         BN_with_flags(d, rsa->d, BN_FLG_CONSTTIME);
-
-        if (rsa->flags & RSA_FLAG_CACHE_PUBLIC)
-            if (!BN_MONT_CTX_set_locked(&rsa->_method_mod_n, rsa->lock,
-                                        rsa->n, ctx)) {
-                BN_free(d);
-                goto err;
-            }
         if (!rsa->meth->bn_mod_exp(ret, f, d, rsa->n, ctx,
                                    rsa->_method_mod_n)) {
             BN_free(d);
@@ -495,74 +660,8 @@ static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
      * ciphertext
      */
     if (padding == RSA_PKCS1_PADDING) {
-        /*
-         * because we use d as a handle to rsa->d we need to keep it local and
-         * free before any further use of rsa->d
-         */
-        BIGNUM *d = BN_new();
-        if (d == NULL) {
-            ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
+        if (derive_kdk(flen, from, rsa, buf, num, kdk) == 0)
             goto err;
-        }
-        if (rsa->d == NULL) {
-            ERR_raise(ERR_LIB_RSA, RSA_R_MISSING_PRIVATE_KEY);
-            BN_free(d);
-            goto err;
-        }
-        BN_with_flags(d, rsa->d, BN_FLG_CONSTTIME);
-        if (BN_bn2binpad(d, buf, num) < 0) {
-            ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
-            BN_free(d);
-            goto err;
-        }
-        BN_free(d);
-
-        /*
-         * we use hardcoded hash so that migrating between versions that use
-         * different hash doesn't provide a Bleichenbacher oracle:
-         * if the attacker can see that different versions return different
-         * messages for the same ciphertext, they'll know that the message is
-         * syntethically generated, which means that the padding check failed
-         */
-        md = EVP_MD_fetch(rsa->libctx, "sha256", NULL);
-        if (md == NULL) {
-            ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
-            goto err;
-        }
-
-        if (EVP_Digest(buf, num, d_hash, NULL, md, NULL) <= 0) {
-            ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
-            goto err;
-        }
-
-        hmac = HMAC_CTX_new();
-        if (hmac == NULL) {
-            ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
-            goto err;
-        }
-
-        if (HMAC_Init_ex(hmac, d_hash, sizeof(d_hash), md, NULL) <= 0) {
-            ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
-            goto err;
-        }
-
-        if (flen < num) {
-            memset(buf, 0, num - flen);
-            if (HMAC_Update(hmac, buf, num - flen) <= 0) {
-                ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
-                goto err;
-            }
-        }
-        if (HMAC_Update(hmac, from, flen) <= 0) {
-            ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
-            goto err;
-        }
-
-        md_len = SHA256_DIGEST_LENGTH;
-        if (HMAC_Final(hmac, kdk, &md_len) <= 0) {
-            ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
-            goto err;
-        }
     }
 
     j = BN_bn2binpad(ret, buf, num);
@@ -597,8 +696,6 @@ static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
 #endif
 
  err:
-    HMAC_CTX_free(hmac);
-    EVP_MD_free(md);
     BN_CTX_end(ctx);
     BN_CTX_free(ctx);
     OPENSSL_clear_free(buf, num);
@@ -672,6 +769,7 @@ static int rsa_ossl_public_decrypt(int flen, const unsigned char *from,
                                rsa->_method_mod_n))
         goto err;
 
+    /* For X9.31: Assuming e is odd it does a 12 mod 16 test */
     if ((padding == RSA_X931_PADDING) && ((bn_get_words(ret)[0] & 0xf) != 12))
         if (!BN_sub(ret, rsa->n, ret))
             goto err;
@@ -1098,3 +1196,16 @@ static int rsa_ossl_finish(RSA *rsa)
     BN_MONT_CTX_free(rsa->_method_mod_q);
     return 1;
 }
+
+#ifdef S390X_MOD_EXP
+static int rsa_ossl_s390x_mod_exp(BIGNUM *r0, const BIGNUM *i, RSA *rsa,
+                                BN_CTX *ctx)
+{
+    if (rsa->version != RSA_ASN1_VERSION_MULTI) {
+        if (s390x_crt(r0, i, rsa->p, rsa->q, rsa->dmp1, rsa->dmq1, rsa->iqmp) == 1)
+            return 1;
+    }
+    return rsa_ossl_mod_exp(r0, i, rsa, ctx);
+}
+
+#endif

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -71,7 +71,7 @@ static void *ossl_aes_gcm_siv_dupctx(void *vctx)
     ret->aad = NULL;
     ret->ecb_ctx = NULL;
 
-    if (in->aad == NULL) {
+    if (in->aad != NULL) {
         if ((ret->aad = OPENSSL_memdup(in->aad, UP16(ret->aad_len))) == NULL)
             goto err;
     }
@@ -143,13 +143,6 @@ static int ossl_aes_gcm_siv_cipher(void *vctx, unsigned char *out, size_t *outl,
 
     if (!ossl_prov_is_running())
         return 0;
-
-    /* The RFC has a test case for this, but we don't try to do anything */
-    if (inl == 0) {
-        if (outl != NULL)
-            *outl = 0;
-        return 1;
-    }
 
     if (outsize < inl) {
         ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
@@ -225,7 +218,7 @@ static int ossl_aes_gcm_siv_set_ctx_params(void *vctx, const OSSL_PARAM params[]
     const OSSL_PARAM *p;
     unsigned int speed = 0;
 
-    if (params == NULL)
+    if (ossl_param_is_empty(params))
         return 1;
 
     p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_AEAD_TAG);
@@ -296,7 +289,7 @@ static int ossl_##alg##_##kbits##_##lc##_get_params(OSSL_PARAM params[])        
     return ossl_cipher_generic_get_params(params, EVP_CIPH_##UCMODE##_MODE,                             \
                                           flags, kbits, blkbits, ivbits);                               \
 }                                                                                                       \
-static void * ossl_##alg##kbits##_##lc##_newctx(void *provctx)                                          \
+static void *ossl_##alg##kbits##_##lc##_newctx(void *provctx)                                          \
 {                                                                                                       \
     return ossl_##alg##_##lc##_newctx(provctx, kbits);                                                  \
 }                                                                                                       \
@@ -315,7 +308,7 @@ const OSSL_DISPATCH ossl_##alg##kbits##lc##_functions[] = {                     
     { OSSL_FUNC_CIPHER_GETTABLE_CTX_PARAMS, (void (*)(void))ossl_##alg##_##lc##_gettable_ctx_params },  \
     { OSSL_FUNC_CIPHER_SET_CTX_PARAMS,      (void (*)(void))ossl_##alg##_##lc##_set_ctx_params },       \
     { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS, (void (*)(void))ossl_##alg##_##lc##_settable_ctx_params },  \
-    { 0, NULL }                                                                                         \
+    OSSL_DISPATCH_END                                                                                   \
 }
 
 IMPLEMENT_cipher(aes, gcm_siv, GCM_SIV, AEAD_FLAGS, 128, 8, 96);

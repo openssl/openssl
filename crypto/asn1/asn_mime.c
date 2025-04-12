@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -96,7 +96,7 @@ int i2d_ASN1_bio_stream(BIO *out, ASN1_VALUE *val, BIO *in, int flags,
      * internally
      */
     else
-        ASN1_item_i2d_bio(it, out, val);
+        rv = ASN1_item_i2d_bio(it, out, val);
     return rv;
 }
 
@@ -300,6 +300,8 @@ int SMIME_write_ASN1_ex(BIO *bio, ASN1_VALUE *val, BIO *data, int flags,
 
     if (ctype_nid == NID_pkcs7_enveloped) {
         msg_type = "enveloped-data";
+    } else if (ctype_nid == NID_id_smime_ct_authEnvelopedData) {
+        msg_type = "authEnveloped-data";
     } else if (ctype_nid == NID_pkcs7_signed) {
         if (econt_nid == NID_id_smime_ct_receipt)
             msg_type = "signed-receipt";
@@ -516,6 +518,12 @@ int SMIME_crlf_copy(BIO *in, BIO *out, int flags)
     int len;
     char linebuf[MAX_SMLEN];
     int ret;
+
+    if (in == NULL || out == NULL) {
+        ERR_raise(ERR_LIB_ASN1, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
     /*
      * Buffer output so we don't write one line at a time. This is useful
      * when streaming as we don't end up with one OCTET STRING per line.
@@ -679,7 +687,7 @@ static STACK_OF(MIME_HEADER) *mime_parse_hdr(BIO *bio)
     char linebuf[MAX_SMLEN];
     MIME_HEADER *mhdr = NULL, *new_hdr = NULL;
     STACK_OF(MIME_HEADER) *headers;
-    int len, state, save_state = 0;
+    int i, len, state, save_state = 0;
 
     headers = sk_MIME_HEADER_new(mime_hdr_cmp);
     if (headers == NULL)
@@ -785,6 +793,12 @@ static STACK_OF(MIME_HEADER) *mime_parse_hdr(BIO *bio)
             break;              /* Blank line means end of headers */
     }
 
+    /* Sort the headers and their params for faster searching */
+    sk_MIME_HEADER_sort(headers);
+    for (i = 0; i < sk_MIME_HEADER_num(headers); i++)
+        if ((mhdr = sk_MIME_HEADER_value(headers, i)) != NULL
+                && mhdr->params != NULL)
+            sk_MIME_PARAM_sort(mhdr->params);
     return headers;
 
  err:

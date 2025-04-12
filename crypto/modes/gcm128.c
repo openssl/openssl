@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2010-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -27,9 +27,10 @@ typedef size_t size_t_aX;
 # define PUTU32(p,v)     *(u32 *)(p) = BSWAP4(v)
 #endif
 
-/* RISC-V uses C implementation of gmult as a fallback. */
+/* RISC-V uses C implementation as a fallback. */
 #if defined(__riscv)
 # define INCLUDE_C_GMULT_4BIT
+# define INCLUDE_C_GHASH_4BIT
 #endif
 
 #define PACK(s)         ((size_t)(s)<<(sizeof(size_t)*8-16))
@@ -48,7 +49,7 @@ typedef size_t size_t_aX;
 
 /*-
  *
- * NOTE: TABLE_BITS and all non-4bit implmentations have been removed in 3.1.
+ * NOTE: TABLE_BITS and all non-4bit implementations have been removed in 3.1.
  *
  * Even though permitted values for TABLE_BITS are 8, 4 and 1, it should
  * never be set to 8. 8 is effectively reserved for testing purposes.
@@ -232,7 +233,7 @@ static void gcm_gmult_4bit(u64 Xi[2], const u128 Htable[16])
 
 # endif
 
-# if !defined(GHASH_ASM)
+# if !defined(GHASH_ASM) || defined(INCLUDE_C_GHASH_4BIT)
 #  if !defined(OPENSSL_SMALL_FOOTPRINT)
 /*
  * Streamed gcm_mult_4bit, see CRYPTO_gcm128_[en|de]crypt for
@@ -368,7 +369,7 @@ void gcm_gmult_4bit_x86(u64 Xi[2], const u128 Htable[16]);
 void gcm_ghash_4bit_x86(u64 Xi[2], const u128 Htable[16], const u8 *inp,
                         size_t len);
 #  endif
-# elif defined(__arm__) || defined(__arm) || defined(__aarch64__)
+# elif defined(__arm__) || defined(__arm) || defined(__aarch64__) || defined(_M_ARM64)
 #  include "arm_arch.h"
 #  if __ARM_MAX_ARCH__>=7
 #   define GHASH_ASM_ARM
@@ -392,7 +393,7 @@ void gcm_init_vis3(u128 Htable[16], const u64 Xi[2]);
 void gcm_gmult_vis3(u64 Xi[2], const u128 Htable[16]);
 void gcm_ghash_vis3(u64 Xi[2], const u128 Htable[16], const u8 *inp,
                     size_t len);
-# elif defined(OPENSSL_CPUID_OBJ) && (defined(__powerpc__) || defined(__ppc__) || defined(_ARCH_PPC))
+# elif defined(OPENSSL_CPUID_OBJ) && (defined(__powerpc__) || defined(__POWERPC__) || defined(_ARCH_PPC))
 #  include "crypto/ppc_arch.h"
 #  define GHASH_ASM_PPC
 void gcm_init_p8(u128 Htable[16], const u64 Xi[2]);
@@ -401,10 +402,28 @@ void gcm_ghash_p8(u64 Xi[2], const u128 Htable[16], const u8 *inp,
                   size_t len);
 # elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 64
 #  include "crypto/riscv_arch.h"
-#  define GHASH_ASM_RISCV
-#  undef  GHASH
-void gcm_init_clmul_rv64i_zbb_zbc(u128 Htable[16], const u64 Xi[2]);
-void gcm_gmult_clmul_rv64i_zbb_zbc(u64 Xi[2], const u128 Htable[16]);
+#  define GHASH_ASM_RV64I
+/* Zbc/Zbkc (scalar crypto with clmul) based routines. */
+void gcm_init_rv64i_zbc(u128 Htable[16], const u64 Xi[2]);
+void gcm_init_rv64i_zbc__zbb(u128 Htable[16], const u64 Xi[2]);
+void gcm_init_rv64i_zbc__zbkb(u128 Htable[16], const u64 Xi[2]);
+void gcm_gmult_rv64i_zbc(u64 Xi[2], const u128 Htable[16]);
+void gcm_gmult_rv64i_zbc__zbkb(u64 Xi[2], const u128 Htable[16]);
+void gcm_ghash_rv64i_zbc(u64 Xi[2], const u128 Htable[16],
+                         const u8 *inp, size_t len);
+void gcm_ghash_rv64i_zbc__zbkb(u64 Xi[2], const u128 Htable[16],
+                               const u8 *inp, size_t len);
+/* zvkb/Zvbc (vector crypto with vclmul) based routines. */
+void gcm_init_rv64i_zvkb_zvbc(u128 Htable[16], const u64 Xi[2]);
+void gcm_gmult_rv64i_zvkb_zvbc(u64 Xi[2], const u128 Htable[16]);
+void gcm_ghash_rv64i_zvkb_zvbc(u64 Xi[2], const u128 Htable[16],
+                               const u8 *inp, size_t len);
+/* Zvkg (vector crypto with vgmul.vv and vghsh.vv). */
+void gcm_init_rv64i_zvkg(u128 Htable[16], const u64 Xi[2]);
+void gcm_init_rv64i_zvkg_zvkb(u128 Htable[16], const u64 Xi[2]);
+void gcm_gmult_rv64i_zvkg(u64 Xi[2], const u128 Htable[16]);
+void gcm_ghash_rv64i_zvkg(u64 Xi[2], const u128 Htable[16],
+                          const u8 *inp, size_t len);
 # endif
 #endif
 
@@ -412,7 +431,7 @@ static void gcm_get_funcs(struct gcm_funcs_st *ctx)
 {
     /* set defaults -- overridden below as needed */
     ctx->ginit = gcm_init_4bit;
-#if !defined(GHASH_ASM) || defined(INCLUDE_C_GMULT_4BIT)
+#if !defined(GHASH_ASM)
     ctx->gmult = gcm_gmult_4bit;
 #else
     ctx->gmult = NULL;
@@ -466,7 +485,11 @@ static void gcm_get_funcs(struct gcm_funcs_st *ctx)
 #elif defined(GHASH_ASM_ARM)
     /* ARM defaults */
     ctx->gmult = gcm_gmult_4bit;
+# if !defined(OPENSSL_SMALL_FOOTPRINT)
     ctx->ghash = gcm_ghash_4bit;
+# else
+    ctx->ghash = NULL;
+# endif
 # ifdef PMULL_CAPABLE
     if (PMULL_CAPABLE) {
         ctx->ginit = (gcm_init_fn)gcm_init_v8;
@@ -499,12 +522,36 @@ static void gcm_get_funcs(struct gcm_funcs_st *ctx)
         ctx->ghash = gcm_ghash_p8;
     }
     return;
-#elif defined(GHASH_ASM_RISCV) && __riscv_xlen == 64
-    /* RISCV defaults; gmult already set above */
-    ctx->ghash = NULL;
-    if (RISCV_HAS_ZBB() && RISCV_HAS_ZBC()) {
-        ctx->ginit = gcm_init_clmul_rv64i_zbb_zbc;
-        ctx->gmult = gcm_gmult_clmul_rv64i_zbb_zbc;
+#elif defined(GHASH_ASM_RV64I)
+    /* RISCV defaults */
+    ctx->gmult = gcm_gmult_4bit;
+    ctx->ghash = gcm_ghash_4bit;
+
+    if (RISCV_HAS_ZVKG() && riscv_vlen() >= 128) {
+        if (RISCV_HAS_ZVKB())
+            ctx->ginit = gcm_init_rv64i_zvkg_zvkb;
+        else
+            ctx->ginit = gcm_init_rv64i_zvkg;
+        ctx->gmult = gcm_gmult_rv64i_zvkg;
+        ctx->ghash = gcm_ghash_rv64i_zvkg;
+    } else if (RISCV_HAS_ZVKB() && RISCV_HAS_ZVBC() && riscv_vlen() >= 128) {
+        ctx->ginit = gcm_init_rv64i_zvkb_zvbc;
+        ctx->gmult = gcm_gmult_rv64i_zvkb_zvbc;
+        ctx->ghash = gcm_ghash_rv64i_zvkb_zvbc;
+    } else if (RISCV_HAS_ZBC()) {
+        if (RISCV_HAS_ZBKB()) {
+            ctx->ginit = gcm_init_rv64i_zbc__zbkb;
+            ctx->gmult = gcm_gmult_rv64i_zbc__zbkb;
+            ctx->ghash = gcm_ghash_rv64i_zbc__zbkb;
+        } else if (RISCV_HAS_ZBB()) {
+            ctx->ginit = gcm_init_rv64i_zbc__zbb;
+            ctx->gmult = gcm_gmult_rv64i_zbc;
+            ctx->ghash = gcm_ghash_rv64i_zbc;
+        } else {
+            ctx->ginit = gcm_init_rv64i_zbc;
+            ctx->gmult = gcm_gmult_rv64i_zbc;
+            ctx->ghash = gcm_ghash_rv64i_zbc;
+        }
     }
     return;
 #elif defined(GHASH_ASM)

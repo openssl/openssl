@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,13 +9,12 @@
 
 #define idea_mul(r,a,b,ul) \
 ul=(unsigned long)a*b; \
-if (ul != 0) \
-        { \
+if (ul != 0) { \
         r=(ul&0xffff)-(ul>>16); \
         r-=((r)>>16); \
-        } \
-else \
-        r=(-(int)a-b+1);        /* assuming a or b is 0 and in range */
+} else { \
+        r=(-(int)a-b+1);        /* assuming a or b is 0 and in range */ \
+}
 
 /* NOTE - c is not incremented as per n2l */
 #define n2ln(c,l1,l2,n) { \

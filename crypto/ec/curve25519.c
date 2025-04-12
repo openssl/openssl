@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -5536,6 +5536,21 @@ err:
     EVP_MD_free(sha512);
     EVP_MD_CTX_free(hash_ctx);
     return res;
+}
+
+/*
+ * This function should not be necessary since ossl_ed25519_verify() already
+ * does this check internally.
+ * For some reason the FIPS ACVP requires a EDDSA KeyVer test.
+ */
+int
+ossl_ed25519_pubkey_verify(const uint8_t *pub, size_t pub_len)
+{
+    ge_p3 A;
+
+    if (pub_len != ED25519_KEYLEN)
+        return 0;
+    return (ge_frombytes_vartime(&A, pub) == 0);
 }
 
 static const char allzeroes[15];

@@ -1,5 +1,5 @@
 /*-
- * Copyright 2007-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2025 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2019
  * Copyright Siemens AG 2015-2019
  *
@@ -57,6 +57,21 @@ ASN1_SEQUENCE(OSSL_CRMF_ENCRYPTEDVALUE) = {
     ASN1_SIMPLE(OSSL_CRMF_ENCRYPTEDVALUE, encValue, ASN1_BIT_STRING)
 } ASN1_SEQUENCE_END(OSSL_CRMF_ENCRYPTEDVALUE)
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_CRMF_ENCRYPTEDVALUE)
+
+/*
+ * Note from CMP Updates defining CMPv3:
+ * The EncryptedKey structure defined in CRMF [RFC4211] is reused
+ * here, which makes the update backward compatible.  Using the new
+ * syntax with the untagged default choice EncryptedValue is bits-on-
+ * the-wire compatible with the old syntax.
+ */
+ASN1_CHOICE(OSSL_CRMF_ENCRYPTEDKEY) = {
+    ASN1_SIMPLE(OSSL_CRMF_ENCRYPTEDKEY, value.encryptedValue, OSSL_CRMF_ENCRYPTEDVALUE),
+#ifndef OPENSSL_NO_CMS
+    ASN1_IMP(OSSL_CRMF_ENCRYPTEDKEY, value.envelopedData, CMS_EnvelopedData, 0),
+#endif
+} ASN1_CHOICE_END(OSSL_CRMF_ENCRYPTEDKEY)
+IMPLEMENT_ASN1_FUNCTIONS(OSSL_CRMF_ENCRYPTEDKEY)
 
 ASN1_SEQUENCE(OSSL_CRMF_SINGLEPUBINFO) = {
     ASN1_SIMPLE(OSSL_CRMF_SINGLEPUBINFO, pubMethod, ASN1_INTEGER),
@@ -146,6 +161,12 @@ ASN1_ADB(OSSL_CRMF_ATTRIBUTETYPEANDVALUE) = {
     ADB_ENTRY(NID_id_regCtrl_protocolEncrKey,
               ASN1_SIMPLE(OSSL_CRMF_ATTRIBUTETYPEANDVALUE,
                           value.protocolEncrKey, X509_PUBKEY)),
+    ADB_ENTRY(NID_id_regCtrl_algId,
+              ASN1_SIMPLE(OSSL_CRMF_ATTRIBUTETYPEANDVALUE,
+                          value.algId, X509_ALGOR)),
+    ADB_ENTRY(NID_id_regCtrl_rsaKeyLen,
+              ASN1_SIMPLE(OSSL_CRMF_ATTRIBUTETYPEANDVALUE,
+                          value.rsaKeyLen, ASN1_INTEGER)),
     ADB_ENTRY(NID_id_regInfo_utf8Pairs,
               ASN1_SIMPLE(OSSL_CRMF_ATTRIBUTETYPEANDVALUE,
                           value.utf8Pairs, ASN1_UTF8STRING)),
@@ -194,6 +215,7 @@ ASN1_SEQUENCE(OSSL_CRMF_CERTTEMPLATE) = {
                              X509_EXTENSION, 9),
 } ASN1_SEQUENCE_END(OSSL_CRMF_CERTTEMPLATE)
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_CRMF_CERTTEMPLATE)
+IMPLEMENT_ASN1_DUP_FUNCTION(OSSL_CRMF_CERTTEMPLATE)
 
 ASN1_SEQUENCE(OSSL_CRMF_CERTREQUEST) = {
     ASN1_SIMPLE(OSSL_CRMF_CERTREQUEST, certReqId, ASN1_INTEGER),

@@ -1,4 +1,4 @@
-# Copyright 2021-2022 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2021-2024 The OpenSSL Project Authors. All Rights Reserved.
 # Copyright (c) 2021, Intel Corporation. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -59,8 +59,17 @@ if (!$avx512vaes
   $avx512vaes = ($1 == 2.13 && $2 >= 3) + ($1 >= 2.14);
 }
 
-if (!$avx512vaes && `$ENV{CC} -v 2>&1` =~ /((?:clang|LLVM) version|.*based on LLVM) ([0-9]+\.[0-9]+)/) {
-  $avx512vaes = ($2 >= 7.0);
+if (!$avx512vaes && `$ENV{CC} -v 2>&1`
+    =~ /(Apple)?\s*((?:clang|LLVM) version|.*based on LLVM) ([0-9]+)\.([0-9]+)\.([0-9]+)?/) {
+    my $ver = $3 + $4/100.0 + $5/10000.0; # 3.1.0->3.01, 3.10.1->3.1001
+    if ($1) {
+        # Apple conditions, they use a different version series, see
+        # https://en.wikipedia.org/wiki/Xcode#Xcode_7.0_-_10.x_(since_Free_On-Device_Development)_2
+        # clang 7.0.0 is Apple clang 10.0.1
+        $avx512vaes = ($ver>=10.0001)
+    } else {
+        $avx512vaes = ($ver>=7.0);
+    }
 }
 
 open OUT, "| \"$^X\" \"$xlate\" $flavour \"$output\""
@@ -146,6 +155,9 @@ my $STACK_LOCAL_OFFSET = ($STACK_HKEYS_OFFSET + $HKEYS_STORAGE);
 # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 my ($arg1, $arg2, $arg3, $arg4, $arg5, $arg6, $arg7, $arg8, $arg9, $arg10, $arg11);
 
+# ; Counter used for assembly label generation
+my $label_count = 0;
+
 # ; This implementation follows the convention: for non-leaf functions (they
 # ; must call PROLOG) %rbp is used as a frame pointer, and has fixed offset from
 # ; the function entry: $GP_STORAGE + [8 bytes alignment (Windows only)].  This
@@ -190,15 +202,6 @@ my $CTX_OFFSET_HTable    = (16 * 6);          #  ; (Htable) Precomputed table (a
 # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 # ;;; Helper functions
 # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-# ; Generates "random" local labels
-sub random_string() {
-  my @chars  = ('a' .. 'z', 'A' .. 'Z', '0' .. '9', '_');
-  my $length = 15;
-  my $str;
-  map { $str .= $chars[rand(33)] } 1 .. $length;
-  return $str;
-}
 
 sub BYTE {
   my ($reg) = @_;
@@ -408,7 +411,7 @@ ___
 sub EPILOG {
   my ($hkeys_storage_on_stack, $payload_len) = @_;
 
-  my $rndsuffix = &random_string();
+  my $label_suffix = $label_count++;
 
   if ($hkeys_storage_on_stack && $CLEAR_HKEYS_STORAGE_ON_EXIT) {
 
@@ -416,13 +419,13 @@ sub EPILOG {
     # ; were stored in the local frame storage
     $code .= <<___;
         cmpq              \$`16*16`,$payload_len
-        jbe               .Lskip_hkeys_cleanup_${rndsuffix}
+        jbe               .Lskip_hkeys_cleanup_${label_suffix}
         vpxor             %xmm0,%xmm0,%xmm0
 ___
     for (my $i = 0; $i < int($HKEYS_STORAGE / 64); $i++) {
       $code .= "vmovdqa64         %zmm0,`$STACK_HKEYS_OFFSET + 64*$i`(%rsp)\n";
     }
-    $code .= ".Lskip_hkeys_cleanup_${rndsuffix}:\n";
+    $code .= ".Lskip_hkeys_cleanup_${label_suffix}:\n";
   }
 
   if ($CLEAR_SCRATCH_REGISTERS) {
@@ -528,11 +531,11 @@ sub precompute_hkeys_on_stack {
     && $HKEYS_RANGE ne "first32"
     && $HKEYS_RANGE ne "last32");
 
-  my $rndsuffix = &random_string();
+  my $label_suffix = $label_count++;
 
   $code .= <<___;
         test              $HKEYS_READY,$HKEYS_READY
-        jnz               .L_skip_hkeys_precomputation_${rndsuffix}
+        jnz               .L_skip_hkeys_precomputation_${label_suffix}
 ___
 
   if ($HKEYS_RANGE eq "first16" || $HKEYS_RANGE eq "first32" || $HKEYS_RANGE eq "all") {
@@ -606,7 +609,7 @@ ___
     }
   }
 
-  $code .= ".L_skip_hkeys_precomputation_${rndsuffix}:\n";
+  $code .= ".L_skip_hkeys_precomputation_${label_suffix}:\n";
 }
 
 # ;; =============================================================================
@@ -1225,7 +1228,7 @@ ___
 # ;; To compute GH = GH*HashKey mod poly, give HK = HashKey<<1 mod poly as input
 # ;; GH = GH * HK * x mod poly which is equivalent to GH*HashKey mod poly.
 # ;;
-# ;; Refer to [3] for more detals.
+# ;; Refer to [3] for more details.
 # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 sub GHASH_MUL {
   my $GH = $_[0];    #; [in/out] xmm/ymm/zmm with multiply operand(s) (128-bits)
@@ -1409,20 +1412,20 @@ sub CALC_AAD_HASH {
 
   my $SHFMSK = $ZT13;
 
-  my $rndsuffix = &random_string();
+  my $label_suffix = $label_count++;
 
   $code .= <<___;
         mov               $A_IN,$T1      # ; T1 = AAD
         mov               $A_LEN,$T2     # ; T2 = aadLen
         or                $T2,$T2
-        jz                .L_CALC_AAD_done_${rndsuffix}
+        jz                .L_CALC_AAD_done_${label_suffix}
 
         xor               $HKEYS_READY,$HKEYS_READY
         vmovdqa64         SHUF_MASK(%rip),$SHFMSK
 
-.L_get_AAD_loop48x16_${rndsuffix}:
+.L_get_AAD_loop48x16_${label_suffix}:
         cmp               \$`(48*16)`,$T2
-        jl                .L_exit_AAD_loop48x16_${rndsuffix}
+        jl                .L_exit_AAD_loop48x16_${label_suffix}
 ___
 
   $code .= <<___;
@@ -1490,15 +1493,15 @@ ___
 
   $code .= <<___;
         sub               \$`(48*16)`,$T2
-        je                .L_CALC_AAD_done_${rndsuffix}
+        je                .L_CALC_AAD_done_${label_suffix}
 
         add               \$`(48*16)`,$T1
-        jmp               .L_get_AAD_loop48x16_${rndsuffix}
+        jmp               .L_get_AAD_loop48x16_${label_suffix}
 
-.L_exit_AAD_loop48x16_${rndsuffix}:
+.L_exit_AAD_loop48x16_${label_suffix}:
         # ; Less than 48x16 bytes remaining
         cmp               \$`(32*16)`,$T2
-        jl                .L_less_than_32x16_${rndsuffix}
+        jl                .L_less_than_32x16_${label_suffix}
 ___
 
   $code .= <<___;
@@ -1547,14 +1550,14 @@ ___
 
   $code .= <<___;
         sub               \$`(32*16)`,$T2
-        je                .L_CALC_AAD_done_${rndsuffix}
+        je                .L_CALC_AAD_done_${label_suffix}
 
         add               \$`(32*16)`,$T1
-        jmp               .L_less_than_16x16_${rndsuffix}
+        jmp               .L_less_than_16x16_${label_suffix}
 
-.L_less_than_32x16_${rndsuffix}:
+.L_less_than_32x16_${label_suffix}:
         cmp               \$`(16*16)`,$T2
-        jl                .L_less_than_16x16_${rndsuffix}
+        jl                .L_less_than_16x16_${label_suffix}
         # ; Get next 16 blocks
         vmovdqu64         `64*0`($T1),$ZT1
         vmovdqu64         `64*1`($T1),$ZT2
@@ -1579,11 +1582,11 @@ ___
 
   $code .= <<___;
         sub               \$`(16*16)`,$T2
-        je                .L_CALC_AAD_done_${rndsuffix}
+        je                .L_CALC_AAD_done_${label_suffix}
 
         add               \$`(16*16)`,$T1
         # ; Less than 16x16 bytes remaining
-.L_less_than_16x16_${rndsuffix}:
+.L_less_than_16x16_${label_suffix}:
         # ;; prep mask source address
         lea               byte64_len_to_mask_table(%rip),$T3
         lea               ($T3,$T2,8),$T3
@@ -1592,28 +1595,28 @@ ___
         add               \$15,@{[DWORD($T2)]}
         shr               \$4,@{[DWORD($T2)]}
         cmp               \$2,@{[DWORD($T2)]}
-        jb                .L_AAD_blocks_1_${rndsuffix}
-        je                .L_AAD_blocks_2_${rndsuffix}
+        jb                .L_AAD_blocks_1_${label_suffix}
+        je                .L_AAD_blocks_2_${label_suffix}
         cmp               \$4,@{[DWORD($T2)]}
-        jb                .L_AAD_blocks_3_${rndsuffix}
-        je                .L_AAD_blocks_4_${rndsuffix}
+        jb                .L_AAD_blocks_3_${label_suffix}
+        je                .L_AAD_blocks_4_${label_suffix}
         cmp               \$6,@{[DWORD($T2)]}
-        jb                .L_AAD_blocks_5_${rndsuffix}
-        je                .L_AAD_blocks_6_${rndsuffix}
+        jb                .L_AAD_blocks_5_${label_suffix}
+        je                .L_AAD_blocks_6_${label_suffix}
         cmp               \$8,@{[DWORD($T2)]}
-        jb                .L_AAD_blocks_7_${rndsuffix}
-        je                .L_AAD_blocks_8_${rndsuffix}
+        jb                .L_AAD_blocks_7_${label_suffix}
+        je                .L_AAD_blocks_8_${label_suffix}
         cmp               \$10,@{[DWORD($T2)]}
-        jb                .L_AAD_blocks_9_${rndsuffix}
-        je                .L_AAD_blocks_10_${rndsuffix}
+        jb                .L_AAD_blocks_9_${label_suffix}
+        je                .L_AAD_blocks_10_${label_suffix}
         cmp               \$12,@{[DWORD($T2)]}
-        jb                .L_AAD_blocks_11_${rndsuffix}
-        je                .L_AAD_blocks_12_${rndsuffix}
+        jb                .L_AAD_blocks_11_${label_suffix}
+        je                .L_AAD_blocks_12_${label_suffix}
         cmp               \$14,@{[DWORD($T2)]}
-        jb                .L_AAD_blocks_13_${rndsuffix}
-        je                .L_AAD_blocks_14_${rndsuffix}
+        jb                .L_AAD_blocks_13_${label_suffix}
+        je                .L_AAD_blocks_14_${label_suffix}
         cmp               \$15,@{[DWORD($T2)]}
-        je                .L_AAD_blocks_15_${rndsuffix}
+        je                .L_AAD_blocks_15_${label_suffix}
 ___
 
   # ;; fall through for 16 blocks
@@ -1626,7 +1629,7 @@ ___
   # ;; - jump to reduction code
 
   for (my $aad_blocks = 16; $aad_blocks > 0; $aad_blocks--) {
-    $code .= ".L_AAD_blocks_${aad_blocks}_${rndsuffix}:\n";
+    $code .= ".L_AAD_blocks_${aad_blocks}_${label_suffix}:\n";
     if ($aad_blocks > 12) {
       $code .= "sub               \$`12*16*8`, $T3\n";
     } elsif ($aad_blocks > 8) {
@@ -1647,11 +1650,11 @@ ___
     if ($aad_blocks > 1) {
 
       # ;; fall through to CALC_AAD_done in 1 block case
-      $code .= "jmp           .L_CALC_AAD_done_${rndsuffix}\n";
+      $code .= "jmp           .L_CALC_AAD_done_${label_suffix}\n";
     }
 
   }
-  $code .= ".L_CALC_AAD_done_${rndsuffix}:\n";
+  $code .= ".L_CALC_AAD_done_${label_suffix}:\n";
 
   # ;; result in AAD_HASH
 }
@@ -1701,13 +1704,13 @@ sub PARTIAL_BLOCK {
   my $IA1    = $GPTMP2;
   my $IA2    = $GPTMP0;
 
-  my $rndsuffix = &random_string();
+  my $label_suffix = $label_count++;
 
   $code .= <<___;
         # ;; if no partial block present then LENGTH/DATA_OFFSET will be set to zero
         mov             ($PBLOCK_LEN),$LENGTH
         or              $LENGTH,$LENGTH
-        je              .L_partial_block_done_${rndsuffix}         #  ;Leave Macro if no partial blocks
+        je              .L_partial_block_done_${label_suffix}         #  ;Leave Macro if no partial blocks
 ___
 
   &READ_SMALL_DATA_INPUT($XTMP0, $PLAIN_CIPH_IN, $PLAIN_CIPH_LEN, $IA0, $IA2, $MASKREG);
@@ -1746,9 +1749,9 @@ ___
   }
   $code .= <<___;
         sub               \$16,$IA1
-        jge               .L_no_extra_mask_${rndsuffix}
+        jge               .L_no_extra_mask_${label_suffix}
         sub               $IA1,$IA0
-.L_no_extra_mask_${rndsuffix}:
+.L_no_extra_mask_${label_suffix}:
         # ;; get the appropriate mask to mask out bottom $LENGTH bytes of $XTMP1
         # ;; - mask out bottom $LENGTH bytes of $XTMP1
         # ;; sizeof(SHIFT_MASK) == 16 bytes
@@ -1772,7 +1775,7 @@ ___
   }
   $code .= <<___;
         cmp               \$0,$IA1
-        jl                .L_partial_incomplete_${rndsuffix}
+        jl                .L_partial_incomplete_${label_suffix}
 ___
 
   # ;; GHASH computation for the last <16 Byte block
@@ -1784,9 +1787,9 @@ ___
         mov               $LENGTH,$IA0
         mov               \$16,$LENGTH
         sub               $IA0,$LENGTH
-        jmp               .L_enc_dec_done_${rndsuffix}
+        jmp               .L_enc_dec_done_${label_suffix}
 
-.L_partial_incomplete_${rndsuffix}:
+.L_partial_incomplete_${label_suffix}:
 ___
   if ($win64) {
     $code .= <<___;
@@ -1799,7 +1802,7 @@ ___
   $code .= <<___;
         mov               $PLAIN_CIPH_LEN,$LENGTH
 
-.L_enc_dec_done_${rndsuffix}:
+.L_enc_dec_done_${label_suffix}:
         # ;; output encrypted Bytes
 
         lea               byte_len_to_mask_table(%rip),$IA0
@@ -1817,7 +1820,7 @@ ___
   $code .= <<___;
         mov               $CIPH_PLAIN_OUT,$IA0
         vmovdqu8          $XTMP1,($IA0){$MASKREG}
-.L_partial_block_done_${rndsuffix}:
+.L_partial_block_done_${label_suffix}:
 ___
 }
 
@@ -2004,10 +2007,10 @@ sub INITIAL_BLOCKS_PARTIAL_GHASH {
   my $ZT8             = $_[20];    # [clobbered] ZMM temporary
   my $PBLOCK_LEN      = $_[21];    # [in] partial block length
   my $GH              = $_[22];    # [in] ZMM with hi product part
-  my $GM              = $_[23];    # [in] ZMM with mid prodcut part
+  my $GM              = $_[23];    # [in] ZMM with mid product part
   my $GL              = $_[24];    # [in] ZMM with lo product part
 
-  my $rndsuffix = &random_string();
+  my $label_suffix = $label_count++;
 
   # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   # ;;; - Hash all but the last partial block of data
@@ -2025,7 +2028,7 @@ sub INITIAL_BLOCKS_PARTIAL_GHASH {
         # ;; NOTE: the 'jl' is always taken for num_initial_blocks = 16.
         # ;;      This is run in the context of GCM_ENC_DEC_SMALL for length < 256.
         cmp               \$16,$LENGTH
-        jl                .L_small_initial_partial_block_${rndsuffix}
+        jl                .L_small_initial_partial_block_${label_suffix}
 
         # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
         # ;;; Handle a full length final block - encrypt and hash all blocks
@@ -2047,11 +2050,11 @@ ___
       &GHASH_1_TO_16($GCM128_CTX, $HASH_IN_OUT, $ZT0, $ZT1, $ZT2, $ZT3, $ZT4,
         $ZT5, $ZT6, $ZT7, $ZT8, &ZWORD($HASH_IN_OUT), $DAT0, $DAT1, $DAT2, $DAT3, $NUM_BLOCKS, $GH, $GM, $GL);
     }
-    $code .= "jmp           .L_small_initial_compute_done_${rndsuffix}\n";
+    $code .= "jmp           .L_small_initial_compute_done_${label_suffix}\n";
   }
 
   $code .= <<___;
-.L_small_initial_partial_block_${rndsuffix}:
+.L_small_initial_partial_block_${label_suffix}:
 
         # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
         # ;;; Handle ghash for a <16B final block
@@ -2116,7 +2119,7 @@ ___
         # ;; a partial block of data, so xor that into the hash.
         vpxorq            $LAST_GHASH_BLK,$HASH_IN_OUT,$HASH_IN_OUT
         # ;; The result is in $HASH_IN_OUT
-        jmp               .L_after_reduction_${rndsuffix}
+        jmp               .L_after_reduction_${label_suffix}
 ___
   }
 
@@ -2124,7 +2127,7 @@ ___
   # ;;; After GHASH reduction
   # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-  $code .= ".L_small_initial_compute_done_${rndsuffix}:\n";
+  $code .= ".L_small_initial_compute_done_${label_suffix}:\n";
 
   # ;; If using init/update/finalize, we need to xor any partial block data
   # ;; into the hash.
@@ -2135,13 +2138,13 @@ ___
       $code .= <<___;
         # ;; NOTE: for $NUM_BLOCKS = 16, $LENGTH, stored in [PBlockLen] is never zero
         or                $LENGTH,$LENGTH
-        je                .L_after_reduction_${rndsuffix}
+        je                .L_after_reduction_${label_suffix}
 ___
     }
     $code .= "vpxorq            $LAST_GHASH_BLK,$HASH_IN_OUT,$HASH_IN_OUT\n";
   }
 
-  $code .= ".L_after_reduction_${rndsuffix}:\n";
+  $code .= ".L_after_reduction_${label_suffix}:\n";
 
   # ;; Final hash is now in HASH_IN_OUT
 }
@@ -2257,7 +2260,7 @@ sub GHASH_16_ENCRYPT_N_GHASH_N {
   die "GHASH_16_ENCRYPT_N_GHASH_N: num_blocks is out of bounds = $NUM_BLOCKS\n"
     if ($NUM_BLOCKS > 16 || $NUM_BLOCKS < 0);
 
-  my $rndsuffix = &random_string();
+  my $label_suffix = $label_count++;
 
   my $GH1H = $HASH_IN_OUT;
 
@@ -2317,16 +2320,16 @@ ___
 
   $code .= <<___;
         cmp               \$`(256 - $NUM_BLOCKS)`,@{[DWORD($CTR_CHECK)]}
-        jae               .L_16_blocks_overflow_${rndsuffix}
+        jae               .L_16_blocks_overflow_${label_suffix}
 ___
 
   &ZMM_OPCODE3_DSTR_SRC1R_SRC2R_BLOCKS_0_16(
     $NUM_BLOCKS, "vpaddd", $B00_03, $B04_07,     $B08_11,    $B12_15,    $CTR_BE,
     $B00_03,     $B04_07,  $B08_11, $ADDBE_1234, $ADDBE_4x4, $ADDBE_4x4, $ADDBE_4x4);
   $code .= <<___;
-        jmp               .L_16_blocks_ok_${rndsuffix}
+        jmp               .L_16_blocks_ok_${label_suffix}
 
-.L_16_blocks_overflow_${rndsuffix}:
+.L_16_blocks_overflow_${label_suffix}:
         vpshufb           $SHFMSK,$CTR_BE,$CTR_BE
         vpaddd            ddq_add_1234(%rip),$CTR_BE,$B00_03
 ___
@@ -2346,7 +2349,7 @@ ___
     $NUM_BLOCKS, "vpshufb", $B00_03, $B04_07, $B08_11, $B12_15, $B00_03,
     $B04_07,     $B08_11,   $B12_15, $SHFMSK, $SHFMSK, $SHFMSK, $SHFMSK);
   $code .= <<___;
-.L_16_blocks_ok_${rndsuffix}:
+.L_16_blocks_ok_${label_suffix}:
 
         # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
         # ;; - pre-load constants
@@ -2796,53 +2799,53 @@ sub GCM_ENC_DEC_LAST {
   my $MASKREG            = $_[44];    # [clobbered] mask register
   my $PBLOCK_LEN         = $_[45];    # [in] partial block length
 
-  my $rndsuffix = &random_string();
+  my $label_suffix = $label_count++;
 
   $code .= <<___;
         mov               @{[DWORD($LENGTH)]},@{[DWORD($IA0)]}
         add               \$15,@{[DWORD($IA0)]}
         shr               \$4,@{[DWORD($IA0)]}
-        je                .L_last_num_blocks_is_0_${rndsuffix}
+        je                .L_last_num_blocks_is_0_${label_suffix}
 
         cmp               \$8,@{[DWORD($IA0)]}
-        je                .L_last_num_blocks_is_8_${rndsuffix}
-        jb                .L_last_num_blocks_is_7_1_${rndsuffix}
+        je                .L_last_num_blocks_is_8_${label_suffix}
+        jb                .L_last_num_blocks_is_7_1_${label_suffix}
 
 
         cmp               \$12,@{[DWORD($IA0)]}
-        je                .L_last_num_blocks_is_12_${rndsuffix}
-        jb                .L_last_num_blocks_is_11_9_${rndsuffix}
+        je                .L_last_num_blocks_is_12_${label_suffix}
+        jb                .L_last_num_blocks_is_11_9_${label_suffix}
 
         # ;; 16, 15, 14 or 13
         cmp               \$15,@{[DWORD($IA0)]}
-        je                .L_last_num_blocks_is_15_${rndsuffix}
-        ja                .L_last_num_blocks_is_16_${rndsuffix}
+        je                .L_last_num_blocks_is_15_${label_suffix}
+        ja                .L_last_num_blocks_is_16_${label_suffix}
         cmp               \$14,@{[DWORD($IA0)]}
-        je                .L_last_num_blocks_is_14_${rndsuffix}
-        jmp               .L_last_num_blocks_is_13_${rndsuffix}
+        je                .L_last_num_blocks_is_14_${label_suffix}
+        jmp               .L_last_num_blocks_is_13_${label_suffix}
 
-.L_last_num_blocks_is_11_9_${rndsuffix}:
+.L_last_num_blocks_is_11_9_${label_suffix}:
         # ;; 11, 10 or 9
         cmp               \$10,@{[DWORD($IA0)]}
-        je                .L_last_num_blocks_is_10_${rndsuffix}
-        ja                .L_last_num_blocks_is_11_${rndsuffix}
-        jmp               .L_last_num_blocks_is_9_${rndsuffix}
+        je                .L_last_num_blocks_is_10_${label_suffix}
+        ja                .L_last_num_blocks_is_11_${label_suffix}
+        jmp               .L_last_num_blocks_is_9_${label_suffix}
 
-.L_last_num_blocks_is_7_1_${rndsuffix}:
+.L_last_num_blocks_is_7_1_${label_suffix}:
         cmp               \$4,@{[DWORD($IA0)]}
-        je                .L_last_num_blocks_is_4_${rndsuffix}
-        jb                .L_last_num_blocks_is_3_1_${rndsuffix}
+        je                .L_last_num_blocks_is_4_${label_suffix}
+        jb                .L_last_num_blocks_is_3_1_${label_suffix}
         # ;; 7, 6 or 5
         cmp               \$6,@{[DWORD($IA0)]}
-        ja                .L_last_num_blocks_is_7_${rndsuffix}
-        je                .L_last_num_blocks_is_6_${rndsuffix}
-        jmp               .L_last_num_blocks_is_5_${rndsuffix}
+        ja                .L_last_num_blocks_is_7_${label_suffix}
+        je                .L_last_num_blocks_is_6_${label_suffix}
+        jmp               .L_last_num_blocks_is_5_${label_suffix}
 
-.L_last_num_blocks_is_3_1_${rndsuffix}:
+.L_last_num_blocks_is_3_1_${label_suffix}:
         # ;; 3, 2 or 1
         cmp               \$2,@{[DWORD($IA0)]}
-        ja                .L_last_num_blocks_is_3_${rndsuffix}
-        je                .L_last_num_blocks_is_2_${rndsuffix}
+        ja                .L_last_num_blocks_is_3_${label_suffix}
+        je                .L_last_num_blocks_is_2_${label_suffix}
 ___
 
   # ;; fall through for `jmp .L_last_num_blocks_is_1`
@@ -2850,7 +2853,7 @@ ___
   # ;; Use rep to generate different block size variants
   # ;; - one block size has to be the first one
   for my $num_blocks (1 .. 16) {
-    $code .= ".L_last_num_blocks_is_${num_blocks}_${rndsuffix}:\n";
+    $code .= ".L_last_num_blocks_is_${num_blocks}_${label_suffix}:\n";
     &GHASH_16_ENCRYPT_N_GHASH_N(
       $AES_KEYS,   $GCM128_CTX,  $CIPH_PLAIN_OUT, $PLAIN_CIPH_IN,  $DATA_OFFSET,
       $LENGTH,     $CTR_BE,      $CTR_CHECK,      $HASHKEY_OFFSET, $GHASHIN_BLK_OFFSET,
@@ -2863,10 +2866,10 @@ ___
       $ENC_DEC,    $HASH_IN_OUT, $IA0,            $IA1,            $MASKREG,
       $num_blocks, $PBLOCK_LEN);
 
-    $code .= "jmp           .L_last_blocks_done_${rndsuffix}\n";
+    $code .= "jmp           .L_last_blocks_done_${label_suffix}\n";
   }
 
-  $code .= ".L_last_num_blocks_is_0_${rndsuffix}:\n";
+  $code .= ".L_last_num_blocks_is_0_${label_suffix}:\n";
 
   # ;; if there is 0 blocks to cipher then there are only 16 blocks for ghash and reduction
   # ;; - convert mid into end_reduce
@@ -2882,7 +2885,7 @@ ___
     $GHASHIN_BLK_OFFSET, 0, "%rsp", $HASHKEY_OFFSET, 0, $HASH_IN_OUT, $ZT00, $ZT01,
     $ZT02, $ZT03, $ZT04, $ZT05, $ZT06, $ZT07, $ZT08, $ZT09);
 
-  $code .= ".L_last_blocks_done_${rndsuffix}:\n";
+  $code .= ".L_last_blocks_done_${label_suffix}:\n";
 }
 
 # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2976,20 +2979,20 @@ sub GHASH_16_ENCRYPT_16_PARALLEL {
   my $GHDAT1 = $ZT21;
   my $GHDAT2 = $ZT22;
 
-  my $rndsuffix = &random_string();
+  my $label_suffix = $label_count++;
 
   # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   # ;; prepare counter blocks
 
   $code .= <<___;
         cmpb              \$`(256 - 16)`,@{[BYTE($CTR_CHECK)]}
-        jae               .L_16_blocks_overflow_${rndsuffix}
+        jae               .L_16_blocks_overflow_${label_suffix}
         vpaddd            $ADDBE_1234,$CTR_BE,$B00_03
         vpaddd            $ADDBE_4x4,$B00_03,$B04_07
         vpaddd            $ADDBE_4x4,$B04_07,$B08_11
         vpaddd            $ADDBE_4x4,$B08_11,$B12_15
-        jmp               .L_16_blocks_ok_${rndsuffix}
-.L_16_blocks_overflow_${rndsuffix}:
+        jmp               .L_16_blocks_ok_${label_suffix}
+.L_16_blocks_overflow_${label_suffix}:
         vpshufb           $SHFMSK,$CTR_BE,$CTR_BE
         vmovdqa64         ddq_add_4444(%rip),$B12_15
         vpaddd            ddq_add_1234(%rip),$CTR_BE,$B00_03
@@ -3000,7 +3003,7 @@ sub GHASH_16_ENCRYPT_16_PARALLEL {
         vpshufb           $SHFMSK,$B04_07,$B04_07
         vpshufb           $SHFMSK,$B08_11,$B08_11
         vpshufb           $SHFMSK,$B12_15,$B12_15
-.L_16_blocks_ok_${rndsuffix}:
+.L_16_blocks_ok_${label_suffix}:
 ___
 
   # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3329,25 +3332,25 @@ sub ENCRYPT_SINGLE_BLOCK {
   my $XMM0    = $_[1];    # ; [in/out]
   my $GPR1    = $_[2];    # ; [clobbered]
 
-  my $rndsuffix = &random_string();
+  my $label_suffix = $label_count++;
 
   $code .= <<___;
         # ; load number of rounds from AES_KEY structure (offset in bytes is
         # ; size of the |rd_key| buffer)
         mov             `4*15*4`($AES_KEY),@{[DWORD($GPR1)]}
         cmp             \$9,@{[DWORD($GPR1)]}
-        je              .Laes_128_${rndsuffix}
+        je              .Laes_128_${label_suffix}
         cmp             \$11,@{[DWORD($GPR1)]}
-        je              .Laes_192_${rndsuffix}
+        je              .Laes_192_${label_suffix}
         cmp             \$13,@{[DWORD($GPR1)]}
-        je              .Laes_256_${rndsuffix}
-        jmp             .Lexit_aes_${rndsuffix}
+        je              .Laes_256_${label_suffix}
+        jmp             .Lexit_aes_${label_suffix}
 ___
   for my $keylen (sort keys %aes_rounds) {
     my $nr = $aes_rounds{$keylen};
     $code .= <<___;
 .align 32
-.Laes_${keylen}_${rndsuffix}:
+.Laes_${keylen}_${label_suffix}:
 ___
     $code .= "vpxorq          `16*0`($AES_KEY),$XMM0, $XMM0\n\n";
     for (my $i = 1; $i <= $nr; $i++) {
@@ -3355,10 +3358,10 @@ ___
     }
     $code .= <<___;
         vaesenclast     `16*($nr+1)`($AES_KEY),$XMM0,$XMM0
-        jmp .Lexit_aes_${rndsuffix}
+        jmp .Lexit_aes_${label_suffix}
 ___
   }
-  $code .= ".Lexit_aes_${rndsuffix}:\n\n";
+  $code .= ".Lexit_aes_${label_suffix}:\n\n";
 }
 
 sub CALC_J0 {
@@ -3553,52 +3556,52 @@ sub GCM_ENC_DEC_SMALL {
   my $SHUFMASK       = $_[29];    # [in] ZMM with BE/LE shuffle mask
   my $PBLOCK_LEN     = $_[30];    # [in] partial block length
 
-  my $rndsuffix = &random_string();
+  my $label_suffix = $label_count++;
 
   $code .= <<___;
         cmp               \$8,$NUM_BLOCKS
-        je                .L_small_initial_num_blocks_is_8_${rndsuffix}
-        jl                .L_small_initial_num_blocks_is_7_1_${rndsuffix}
+        je                .L_small_initial_num_blocks_is_8_${label_suffix}
+        jl                .L_small_initial_num_blocks_is_7_1_${label_suffix}
 
 
         cmp               \$12,$NUM_BLOCKS
-        je                .L_small_initial_num_blocks_is_12_${rndsuffix}
-        jl                .L_small_initial_num_blocks_is_11_9_${rndsuffix}
+        je                .L_small_initial_num_blocks_is_12_${label_suffix}
+        jl                .L_small_initial_num_blocks_is_11_9_${label_suffix}
 
         # ;; 16, 15, 14 or 13
         cmp               \$16,$NUM_BLOCKS
-        je                .L_small_initial_num_blocks_is_16_${rndsuffix}
+        je                .L_small_initial_num_blocks_is_16_${label_suffix}
         cmp               \$15,$NUM_BLOCKS
-        je                .L_small_initial_num_blocks_is_15_${rndsuffix}
+        je                .L_small_initial_num_blocks_is_15_${label_suffix}
         cmp               \$14,$NUM_BLOCKS
-        je                .L_small_initial_num_blocks_is_14_${rndsuffix}
-        jmp               .L_small_initial_num_blocks_is_13_${rndsuffix}
+        je                .L_small_initial_num_blocks_is_14_${label_suffix}
+        jmp               .L_small_initial_num_blocks_is_13_${label_suffix}
 
-.L_small_initial_num_blocks_is_11_9_${rndsuffix}:
+.L_small_initial_num_blocks_is_11_9_${label_suffix}:
         # ;; 11, 10 or 9
         cmp               \$11,$NUM_BLOCKS
-        je                .L_small_initial_num_blocks_is_11_${rndsuffix}
+        je                .L_small_initial_num_blocks_is_11_${label_suffix}
         cmp               \$10,$NUM_BLOCKS
-        je                .L_small_initial_num_blocks_is_10_${rndsuffix}
-        jmp               .L_small_initial_num_blocks_is_9_${rndsuffix}
+        je                .L_small_initial_num_blocks_is_10_${label_suffix}
+        jmp               .L_small_initial_num_blocks_is_9_${label_suffix}
 
-.L_small_initial_num_blocks_is_7_1_${rndsuffix}:
+.L_small_initial_num_blocks_is_7_1_${label_suffix}:
         cmp               \$4,$NUM_BLOCKS
-        je                .L_small_initial_num_blocks_is_4_${rndsuffix}
-        jl                .L_small_initial_num_blocks_is_3_1_${rndsuffix}
+        je                .L_small_initial_num_blocks_is_4_${label_suffix}
+        jl                .L_small_initial_num_blocks_is_3_1_${label_suffix}
         # ;; 7, 6 or 5
         cmp               \$7,$NUM_BLOCKS
-        je                .L_small_initial_num_blocks_is_7_${rndsuffix}
+        je                .L_small_initial_num_blocks_is_7_${label_suffix}
         cmp               \$6,$NUM_BLOCKS
-        je                .L_small_initial_num_blocks_is_6_${rndsuffix}
-        jmp               .L_small_initial_num_blocks_is_5_${rndsuffix}
+        je                .L_small_initial_num_blocks_is_6_${label_suffix}
+        jmp               .L_small_initial_num_blocks_is_5_${label_suffix}
 
-.L_small_initial_num_blocks_is_3_1_${rndsuffix}:
+.L_small_initial_num_blocks_is_3_1_${label_suffix}:
         # ;; 3, 2 or 1
         cmp               \$3,$NUM_BLOCKS
-        je                .L_small_initial_num_blocks_is_3_${rndsuffix}
+        je                .L_small_initial_num_blocks_is_3_${label_suffix}
         cmp               \$2,$NUM_BLOCKS
-        je                .L_small_initial_num_blocks_is_2_${rndsuffix}
+        je                .L_small_initial_num_blocks_is_2_${label_suffix}
 
         # ;; for $NUM_BLOCKS == 1, just fall through and no 'jmp' needed
 
@@ -3607,7 +3610,7 @@ sub GCM_ENC_DEC_SMALL {
 ___
 
   for (my $num_blocks = 1; $num_blocks <= 16; $num_blocks++) {
-    $code .= ".L_small_initial_num_blocks_is_${num_blocks}_${rndsuffix}:\n";
+    $code .= ".L_small_initial_num_blocks_is_${num_blocks}_${label_suffix}:\n";
     &INITIAL_BLOCKS_PARTIAL(
       $AES_KEYS,   $GCM128_CTX, $CIPH_PLAIN_OUT, $PLAIN_CIPH_IN, $LENGTH,   $DATA_OFFSET,
       $num_blocks, $CTR,        $HASH_IN_OUT,    $ENC_DEC,       $ZTMP0,    $ZTMP1,
@@ -3616,11 +3619,11 @@ ___
       $ZTMP14,     $IA0,        $IA1,            $MASKREG,       $SHUFMASK, $PBLOCK_LEN);
 
     if ($num_blocks != 16) {
-      $code .= "jmp           .L_small_initial_blocks_encrypted_${rndsuffix}\n";
+      $code .= "jmp           .L_small_initial_blocks_encrypted_${label_suffix}\n";
     }
   }
 
-  $code .= ".L_small_initial_blocks_encrypted_${rndsuffix}:\n";
+  $code .= ".L_small_initial_blocks_encrypted_${label_suffix}:\n";
 }
 
 # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3701,7 +3704,7 @@ sub GCM_ENC_DEC {
 
   my $MASKREG = "%k1";
 
-  my $rndsuffix = &random_string();
+  my $label_suffix = $label_count++;
 
   # ;; reduction every 48 blocks, depth 32 blocks
   # ;; @note 48 blocks is the maximum capacity of the stack frame
@@ -3742,7 +3745,7 @@ sub GCM_ENC_DEC {
   } else {
     $code .= "or                $PLAIN_CIPH_LEN,$PLAIN_CIPH_LEN\n";
   }
-  $code .= "je            .L_enc_dec_done_${rndsuffix}\n";
+  $code .= "je            .L_enc_dec_done_${label_suffix}\n";
 
   # Length value from context $CTX_OFFSET_InLen`($GCM128_CTX) is updated in
   # 'providers/implementations/ciphers/cipher_aes_gcm_hw_vaes_avx512.inc'
@@ -3769,12 +3772,12 @@ sub GCM_ENC_DEC {
   # ;; There may be no more data if it was consumed in the partial block.
   $code .= <<___;
         sub               $DATA_OFFSET,$LENGTH
-        je                .L_enc_dec_done_${rndsuffix}
+        je                .L_enc_dec_done_${label_suffix}
 ___
 
   $code .= <<___;
         cmp               \$`(16 * 16)`,$LENGTH
-        jbe              .L_message_below_equal_16_blocks_${rndsuffix}
+        jbe              .L_message_below_equal_16_blocks_${label_suffix}
 
         vmovdqa64         SHUF_MASK(%rip),$SHUF_MASK
         vmovdqa64         ddq_addbe_4444(%rip),$ADDBE_4x4
@@ -3806,7 +3809,7 @@ ___
 
   $code .= <<___;
         cmp               \$`(32 * 16)`,$LENGTH
-        jb                .L_message_below_32_blocks_${rndsuffix}
+        jb                .L_message_below_32_blocks_${label_suffix}
 ___
 
   # ;; ==== AES-CTR - next 16 blocks
@@ -3827,13 +3830,13 @@ ___
         sub               \$`(32 * 16)`,$LENGTH
 
         cmp               \$`($big_loop_nblocks * 16)`,$LENGTH
-        jb                .L_no_more_big_nblocks_${rndsuffix}
+        jb                .L_no_more_big_nblocks_${label_suffix}
 ___
 
   # ;; ====
   # ;; ==== AES-CTR + GHASH - 48 blocks loop
   # ;; ====
-  $code .= ".L_encrypt_big_nblocks_${rndsuffix}:\n";
+  $code .= ".L_encrypt_big_nblocks_${label_suffix}:\n";
 
   # ;; ==== AES-CTR + GHASH - 16 blocks, start
   $aesout_offset      = ($STACK_LOCAL_OFFSET + (32 * 16));
@@ -3884,15 +3887,15 @@ ___
         add               \$`($big_loop_nblocks * 16)`,$DATA_OFFSET
         sub               \$`($big_loop_nblocks * 16)`,$LENGTH
         cmp               \$`($big_loop_nblocks * 16)`,$LENGTH
-        jae               .L_encrypt_big_nblocks_${rndsuffix}
+        jae               .L_encrypt_big_nblocks_${label_suffix}
 
-.L_no_more_big_nblocks_${rndsuffix}:
+.L_no_more_big_nblocks_${label_suffix}:
 
         cmp               \$`(32 * 16)`,$LENGTH
-        jae               .L_encrypt_32_blocks_${rndsuffix}
+        jae               .L_encrypt_32_blocks_${label_suffix}
 
         cmp               \$`(16 * 16)`,$LENGTH
-        jae               .L_encrypt_16_blocks_${rndsuffix}
+        jae               .L_encrypt_16_blocks_${label_suffix}
 ___
 
   # ;; =====================================================
@@ -3900,7 +3903,7 @@ ___
   # ;; ==== GHASH 1 x 16 blocks
   # ;; ==== GHASH 1 x 16 blocks (reduction) & encrypt N blocks
   # ;; ====      then GHASH N blocks
-  $code .= ".L_encrypt_0_blocks_ghash_32_${rndsuffix}:\n";
+  $code .= ".L_encrypt_0_blocks_ghash_32_${label_suffix}:\n";
 
   # ;; calculate offset to the right hash key
   $code .= <<___;
@@ -3928,7 +3931,7 @@ ___
     $IA0,        $IA5,        $MASKREG,        $PBLOCK_LEN);
 
   $code .= "vpshufb           @{[XWORD($SHUF_MASK)]},$CTR_BLOCKx,$CTR_BLOCKx\n";
-  $code .= "jmp           .L_ghash_done_${rndsuffix}\n";
+  $code .= "jmp           .L_ghash_done_${label_suffix}\n";
 
   # ;; =====================================================
   # ;; =====================================================
@@ -3937,7 +3940,7 @@ ___
   # ;; ==== GHASH 1 x 16 blocks (reduction)
   # ;; ==== GHASH 1 x 16 blocks (reduction) & encrypt N blocks
   # ;; ====      then GHASH N blocks
-  $code .= ".L_encrypt_32_blocks_${rndsuffix}:\n";
+  $code .= ".L_encrypt_32_blocks_${label_suffix}:\n";
 
   # ;; ==== AES-CTR + GHASH - 16 blocks, start
   $aesout_offset  = ($STACK_LOCAL_OFFSET + (32 * 16));
@@ -3998,7 +4001,7 @@ ___
     $IA0,        $IA5,        $MASKREG,        $PBLOCK_LEN);
 
   $code .= "vpshufb           @{[XWORD($SHUF_MASK)]},$CTR_BLOCKx,$CTR_BLOCKx\n";
-  $code .= "jmp           .L_ghash_done_${rndsuffix}\n";
+  $code .= "jmp           .L_ghash_done_${label_suffix}\n";
 
   # ;; =====================================================
   # ;; =====================================================
@@ -4006,7 +4009,7 @@ ___
   # ;; ==== GHASH 1 x 16 blocks
   # ;; ==== GHASH 1 x 16 blocks (reduction) & encrypt N blocks
   # ;; ====      then GHASH N blocks
-  $code .= ".L_encrypt_16_blocks_${rndsuffix}:\n";
+  $code .= ".L_encrypt_16_blocks_${label_suffix}:\n";
 
   # ;; ==== AES-CTR + GHASH - 16 blocks, start
   $aesout_offset  = ($STACK_LOCAL_OFFSET + (32 * 16));
@@ -4050,9 +4053,9 @@ ___
 
   $code .= "vpshufb           @{[XWORD($SHUF_MASK)]},$CTR_BLOCKx,$CTR_BLOCKx\n";
   $code .= <<___;
-        jmp               .L_ghash_done_${rndsuffix}
+        jmp               .L_ghash_done_${label_suffix}
 
-.L_message_below_32_blocks_${rndsuffix}:
+.L_message_below_32_blocks_${label_suffix}:
         # ;; 32 > number of blocks > 16
 
         sub               \$`(16 * 16)`,$LENGTH
@@ -4085,9 +4088,9 @@ ___
 
   $code .= "vpshufb           @{[XWORD($SHUF_MASK)]},$CTR_BLOCKx,$CTR_BLOCKx\n";
   $code .= <<___;
-        jmp           .L_ghash_done_${rndsuffix}
+        jmp           .L_ghash_done_${label_suffix}
 
-.L_message_below_equal_16_blocks_${rndsuffix}:
+.L_message_below_equal_16_blocks_${label_suffix}:
         # ;; Determine how many blocks to process
         # ;; - process one additional block if there is a partial block
         mov               @{[DWORD($LENGTH)]},@{[DWORD($IA1)]}
@@ -4104,13 +4107,13 @@ ___
 
   # ;; fall through to exit
 
-  $code .= ".L_ghash_done_${rndsuffix}:\n";
+  $code .= ".L_ghash_done_${label_suffix}:\n";
 
   # ;; save the last counter block
   $code .= "vmovdqu64         $CTR_BLOCKx,`$CTX_OFFSET_CurCount`($GCM128_CTX)\n";
   $code .= <<___;
         vmovdqu64         $AAD_HASHx,`$CTX_OFFSET_AadHash`($GCM128_CTX)
-.L_enc_dec_done_${rndsuffix}:
+.L_enc_dec_done_${label_suffix}:
 ___
 }
 
@@ -4146,7 +4149,7 @@ sub INITIAL_BLOCKS_16 {
   my $B08_11 = $T7;
   my $B12_15 = $T8;
 
-  my $rndsuffix = &random_string();
+  my $label_suffix = $label_count++;
 
   my $stack_offset = $BLK_OFFSET;
   $code .= <<___;
@@ -4154,13 +4157,13 @@ sub INITIAL_BLOCKS_16 {
         # ;; prepare counter blocks
 
         cmpb              \$`(256 - 16)`,@{[BYTE($CTR_CHECK)]}
-        jae               .L_next_16_overflow_${rndsuffix}
+        jae               .L_next_16_overflow_${label_suffix}
         vpaddd            $ADDBE_1234,$CTR,$B00_03
         vpaddd            $ADDBE_4x4,$B00_03,$B04_07
         vpaddd            $ADDBE_4x4,$B04_07,$B08_11
         vpaddd            $ADDBE_4x4,$B08_11,$B12_15
-        jmp               .L_next_16_ok_${rndsuffix}
-.L_next_16_overflow_${rndsuffix}:
+        jmp               .L_next_16_ok_${label_suffix}
+.L_next_16_overflow_${label_suffix}:
         vpshufb           $SHUF_MASK,$CTR,$CTR
         vmovdqa64         ddq_add_4444(%rip),$B12_15
         vpaddd            ddq_add_1234(%rip),$CTR,$B00_03
@@ -4171,7 +4174,7 @@ sub INITIAL_BLOCKS_16 {
         vpshufb           $SHUF_MASK,$B04_07,$B04_07
         vpshufb           $SHUF_MASK,$B08_11,$B08_11
         vpshufb           $SHUF_MASK,$B12_15,$B12_15
-.L_next_16_ok_${rndsuffix}:
+.L_next_16_ok_${label_suffix}:
         vshufi64x2        \$0b11111111,$B12_15,$B12_15,$CTR
         addb               \$16,@{[BYTE($CTR_CHECK)]}
         # ;; === load 16 blocks of data
@@ -4255,7 +4258,7 @@ sub GCM_COMPLETE {
   my $GCM128_CTX = $_[0];
   my $PBLOCK_LEN = $_[1];
 
-  my $rndsuffix = &random_string();
+  my $label_suffix = $label_count++;
 
   $code .= <<___;
         vmovdqu           @{[HashKeyByIdx(1,$GCM128_CTX)]},%xmm2
@@ -4267,14 +4270,14 @@ ___
 
         # ;; Process the final partial block.
         cmp               \$0,$PBLOCK_LEN
-        je                .L_partial_done_${rndsuffix}
+        je                .L_partial_done_${label_suffix}
 ___
 
   #  ;GHASH computation for the last <16 Byte block
   &GHASH_MUL("%xmm4", "%xmm2", "%xmm0", "%xmm16", "%xmm17");
 
   $code .= <<___;
-.L_partial_done_${rndsuffix}:
+.L_partial_done_${label_suffix}:
         vmovq           `$CTX_OFFSET_InLen`($GCM128_CTX), %xmm5
         vpinsrq         \$1, `$CTX_OFFSET_AadLen`($GCM128_CTX), %xmm5, %xmm5    #  ; xmm5 = len(A)||len(C)
         vpsllq          \$3, %xmm5, %xmm5                                       #  ; convert bytes into bits
@@ -4288,7 +4291,7 @@ ___
         vpshufb         SHUF_MASK(%rip),%xmm4,%xmm4      # ; perform a 16Byte swap
         vpxor           %xmm4,%xmm3,%xmm3
 
-.L_return_T_${rndsuffix}:
+.L_return_T_${label_suffix}:
         vmovdqu           %xmm3,`$CTX_OFFSET_AadHash`($GCM128_CTX)
 ___
 }
@@ -4809,7 +4812,7 @@ ___
 }
 
 $code .= <<___;
-.data
+.section .rodata align=16
 .align 16
 POLY:   .quad     0x0000000000000001, 0xC200000000000000
 

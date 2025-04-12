@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -158,7 +158,7 @@
 /*
  * Define macros for deprecation and simulated removal purposes.
  *
- * The macros OSSL_DEPRECATED_{major}_{minor} are always defined for
+ * The macros OSSL_DEPRECATEDIN_{major}_{minor} are always defined for
  * all OpenSSL versions we care for.  They can be used as attributes
  * in function declarations where appropriate.
  *
@@ -169,7 +169,8 @@
  * 'no-deprecated'.
  */
 
-# undef OPENSSL_NO_DEPRECATED_3_2
+# undef OPENSSL_NO_DEPRECATED_3_4
+# undef OPENSSL_NO_DEPRECATED_3_1
 # undef OPENSSL_NO_DEPRECATED_3_0
 # undef OPENSSL_NO_DEPRECATED_1_1_1
 # undef OPENSSL_NO_DEPRECATED_1_1_0
@@ -178,16 +179,38 @@
 # undef OPENSSL_NO_DEPRECATED_1_0_0
 # undef OPENSSL_NO_DEPRECATED_0_9_8
 
-# if OPENSSL_API_LEVEL >= 30200
+# if OPENSSL_API_LEVEL >= 30500
 #  ifndef OPENSSL_NO_DEPRECATED
-#   define OSSL_DEPRECATEDIN_3_2                OSSL_DEPRECATED(3.2)
-#   define OSSL_DEPRECATEDIN_3_2_FOR(msg)       OSSL_DEPRECATED_FOR(3.2, msg)
+#   define OSSL_DEPRECATEDIN_3_5                OSSL_DEPRECATED(3.5)
+#   define OSSL_DEPRECATEDIN_3_5_FOR(msg)       OSSL_DEPRECATED_FOR(3.5, msg)
 #  else
-#   define OPENSSL_NO_DEPRECATED_3_2
+#   define OPENSSL_NO_DEPRECATED_3_5
 #  endif
 # else
-#  define OSSL_DEPRECATEDIN_3_2
-#  define OSSL_DEPRECATEDIN_3_2_FOR(msg)
+#  define OSSL_DEPRECATEDIN_3_5
+#  define OSSL_DEPRECATEDIN_3_5_FOR(msg)
+# endif
+# if OPENSSL_API_LEVEL >= 30400
+#  ifndef OPENSSL_NO_DEPRECATED
+#   define OSSL_DEPRECATEDIN_3_4                OSSL_DEPRECATED(3.4)
+#   define OSSL_DEPRECATEDIN_3_4_FOR(msg)       OSSL_DEPRECATED_FOR(3.4, msg)
+#  else
+#   define OPENSSL_NO_DEPRECATED_3_4
+#  endif
+# else
+#  define OSSL_DEPRECATEDIN_3_4
+#  define OSSL_DEPRECATEDIN_3_4_FOR(msg)
+# endif
+# if OPENSSL_API_LEVEL >= 30100
+#  ifndef OPENSSL_NO_DEPRECATED
+#   define OSSL_DEPRECATEDIN_3_1                OSSL_DEPRECATED(3.1)
+#   define OSSL_DEPRECATEDIN_3_1_FOR(msg)       OSSL_DEPRECATED_FOR(3.1, msg)
+#  else
+#   define OPENSSL_NO_DEPRECATED_3_1
+#  endif
+# else
+#  define OSSL_DEPRECATEDIN_3_1
+#  define OSSL_DEPRECATEDIN_3_1_FOR(msg)
 # endif
 # if OPENSSL_API_LEVEL >= 30000
 #  ifndef OPENSSL_NO_DEPRECATED
@@ -315,7 +338,7 @@
 
 # ifndef OSSL_CRYPTO_ALLOC
 #  if defined(__GNUC__)
-#   define OSSL_CRYPTO_ALLOC __attribute__((malloc))
+#   define OSSL_CRYPTO_ALLOC __attribute__((__malloc__))
 #  elif defined(_MSC_VER)
 #   define OSSL_CRYPTO_ALLOC __declspec(restrict)
 #  else

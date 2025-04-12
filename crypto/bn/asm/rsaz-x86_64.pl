@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2013-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2013-2024 The OpenSSL Project Authors. All Rights Reserved.
 # Copyright (c) 2012, Intel Corporation. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -34,7 +34,7 @@
 # to more modular mixture of C and assembly. And it's optimized even
 # for processors other than Intel Core family (see table below for
 # improvement coefficients).
-# 						<appro@openssl.org>
+# 						<https://github.com/dot-asm>
 #
 # RSA1024 sign/sec	this/original	|this/rsax(*)	this/fips(*)
 #			----------------+---------------------------
@@ -2248,10 +2248,12 @@ $code.=<<___;
 .cfi_endproc
 .size	rsaz_512_gather4,.-rsaz_512_gather4
 
+.section .rodata align=64
 .align	64
 .Linc:
 	.long	0,0, 1,1
 	.long	2,2, 2,2
+.previous
 ___
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -132,6 +132,10 @@ static int enc_read(BIO *b, char *out, int outl)
     }
 
     blocksize = EVP_CIPHER_CTX_get_block_size(ctx->cipher);
+
+    if (blocksize == 0)
+        return 0;
+
     if (blocksize == 1)
         blocksize = 0;
 
@@ -360,6 +364,7 @@ static long enc_ctrl(BIO *b, int cmd, long num, void *ptr)
 
         /* Finally flush the underlying BIO */
         ret = BIO_ctrl(next, cmd, num, ptr);
+        BIO_copy_next_retry(b);
         break;
     case BIO_C_GET_CIPHER_STATUS:
         ret = (long)ctx->ok;

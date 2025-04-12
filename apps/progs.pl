@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 1995-2023 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -104,7 +104,7 @@ EOF
 # The format of this table is:
 #   [0] = alternative command to use instead
 #   [1] = deprecented in this version
-#   [2] = preprocessor conditional for exclusing irrespective of deprecation
+#   [2] = preprocessor conditional for excluding irrespective of deprecation
 #        rsa      => [ "pkey",      "3_0", "rsa" ],
 #        genrsa   => [ "genpkey",   "3_0", "rsa" ],
         rsautl   => [ "pkeyutl",   "3_0", "rsa" ],

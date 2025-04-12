@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -35,7 +35,7 @@ static int dh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
     if (OBJ_obj2nid(aoid) != NID_dhpublicnumber)
         goto err;
     /* Only absent parameters allowed in RFC XXXX */
-    if (atype != V_ASN1_UNDEF && atype == V_ASN1_NULL)
+    if (atype != V_ASN1_UNDEF && atype != V_ASN1_NULL)
         goto err;
 
     pk = EVP_PKEY_CTX_get0_pkey(pctx);
@@ -65,7 +65,7 @@ static int dh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
     pkpeer = EVP_PKEY_new();
     if (pkpeer == NULL
             || !EVP_PKEY_copy_parameters(pkpeer, pk)
-            || !EVP_PKEY_set1_encoded_public_key(pkpeer, buf, plen))
+            || EVP_PKEY_set1_encoded_public_key(pkpeer, buf, plen) <= 0)
         goto err;
 
     if (EVP_PKEY_derive_set_peer(pctx, pkpeer) > 0)
@@ -123,7 +123,7 @@ static int dh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
         goto err;
 
     kekcipher = EVP_CIPHER_fetch(pctx->libctx, name, pctx->propquery);
-    if (kekcipher == NULL 
+    if (kekcipher == NULL
         || EVP_CIPHER_get_mode(kekcipher) != EVP_CIPH_WRAP_MODE)
         goto err;
     if (!EVP_EncryptInit_ex(kekctx, kekcipher, NULL, NULL, NULL))
@@ -309,7 +309,7 @@ static int dh_cms_encrypt(CMS_RecipientInfo *ri)
      */
     penc = NULL;
     penclen = i2d_X509_ALGOR(wrap_alg, &penc);
-    if (penc == NULL || penclen == 0)
+    if (penclen <= 0)
         goto err;
     wrap_str = ASN1_STRING_new();
     if (wrap_str == NULL)

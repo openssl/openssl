@@ -31,7 +31,11 @@ SSL_CTX *create_ssl_ctx(void)
 {
     SSL_CTX *ctx;
 
+#ifdef USE_QUIC
+    ctx = SSL_CTX_new(OSSL_QUIC_client_method());
+#else
     ctx = SSL_CTX_new(TLS_client_method());
+#endif
     if (ctx == NULL)
         return NULL;
 
@@ -58,6 +62,9 @@ APP_CONN *new_conn(SSL_CTX *ctx, const char *bare_hostname)
     BIO *ssl_bio, *internal_bio, *net_bio;
     APP_CONN *conn;
     SSL *ssl;
+#ifdef USE_QUIC
+    static const unsigned char alpn[] = {5, 'd', 'u', 'm', 'm', 'y'};
+#endif
 
     conn = calloc(1, sizeof(APP_CONN));
     if (conn == NULL)
@@ -71,7 +78,11 @@ APP_CONN *new_conn(SSL_CTX *ctx, const char *bare_hostname)
 
     SSL_set_connect_state(ssl); /* cannot fail */
 
+#ifdef USE_QUIC
+    if (BIO_new_bio_dgram_pair(&internal_bio, 0, &net_bio, 0) <= 0) {
+#else
     if (BIO_new_bio_pair(&internal_bio, 0, &net_bio, 0) <= 0) {
+#endif
         SSL_free(ssl);
         free(conn);
         return NULL;
@@ -103,6 +114,16 @@ APP_CONN *new_conn(SSL_CTX *ctx, const char *bare_hostname)
         BIO_free(ssl_bio);
         return NULL;
     }
+
+#ifdef USE_QUIC
+    /* Configure ALPN, which is required for QUIC. */
+    if (SSL_set_alpn_protos(ssl, alpn, sizeof(alpn))) {
+        /* Note: SSL_set_alpn_protos returns 1 for failure. */
+        SSL_free(ssl);
+        BIO_free(ssl_bio);
+        return NULL;
+    }
+#endif
 
     conn->ssl_bio   = ssl_bio;
     conn->net_bio   = net_bio;
@@ -168,7 +189,11 @@ int rx(APP_CONN *conn, void *buf, int buf_len)
 
 /*
  * Called to get data which has been enqueued for transmission to the network
- * by OpenSSL.
+ * by OpenSSL. For QUIC, this always outputs a single datagram.
+ *
+ * IMPORTANT (QUIC): If buf_len is inadequate to hold the datagram, it is truncated
+ * (similar to read(2)). A buffer size of at least 1472 must be used by default
+ * to guarantee this does not occur.
  */
 int read_net_tx(APP_CONN *conn, void *buf, int buf_len)
 {
@@ -177,6 +202,9 @@ int read_net_tx(APP_CONN *conn, void *buf, int buf_len)
 
 /*
  * Called to feed data which has been received from the network to OpenSSL.
+ *
+ * QUIC: buf must contain the entirety of a single datagram. It will be consumed
+ * entirely (return value == buf_len) or not at all.
  */
 int write_net_rx(APP_CONN *conn, const void *buf, int buf_len)
 {
@@ -215,12 +243,22 @@ size_t net_tx_avail(APP_CONN *conn)
  */
 int get_conn_pending_tx(APP_CONN *conn)
 {
+#ifdef USE_QUIC
+    return (SSL_net_read_desired(conn->ssl) ? POLLIN : 0)
+           | (SSL_net_write_desired(conn->ssl) ? POLLOUT : 0)
+           | POLLERR;
+#else
     return (conn->tx_need_rx ? POLLIN : 0) | POLLOUT | POLLERR;
+#endif
 }
 
 int get_conn_pending_rx(APP_CONN *conn)
 {
+#ifdef USE_QUIC
+    return get_conn_pending_tx(conn);
+#else
     return (conn->rx_need_tx ? POLLOUT : 0) | POLLIN | POLLERR;
+#endif
 }
 
 /*
@@ -259,7 +297,7 @@ void teardown_ctx(SSL_CTX *ctx)
 static int pump(APP_CONN *conn, int fd, int events, int timeout)
 {
     int l, l2;
-    char buf[2048];
+    char buf[2048]; /* QUIC: would need to be changed if < 1472 */
     size_t wspace;
     struct pollfd pfd = {0};
 
@@ -315,14 +353,23 @@ static int pump(APP_CONN *conn, int fd, int events, int timeout)
 int main(int argc, char **argv)
 {
     int rc, fd = -1, res = 1;
-    const char tx_msg[] = "GET / HTTP/1.0\r\nHost: www.openssl.org\r\n\r\n";
+    static char tx_msg[300];
     const char *tx_p = tx_msg;
     char rx_buf[2048];
-    int l, tx_len = sizeof(tx_msg)-1;
+    int l, tx_len;
     int timeout = 2000 /* ms */;
     APP_CONN *conn = NULL;
     struct addrinfo hints = {0}, *result = NULL;
-    SSL_CTX *ctx;
+    SSL_CTX *ctx = NULL;
+
+    if (argc < 3) {
+        fprintf(stderr, "usage: %s host port\n", argv[0]);
+        goto fail;
+    }
+
+    tx_len = snprintf(tx_msg, sizeof(tx_msg),
+                      "GET / HTTP/1.0\r\nHost: %s\r\n\r\n",
+                      argv[1]);
 
     ctx = create_ssl_ctx();
     if (ctx == NULL) {
@@ -333,7 +380,7 @@ int main(int argc, char **argv)
     hints.ai_family     = AF_INET;
     hints.ai_socktype   = SOCK_STREAM;
     hints.ai_flags      = AI_PASSIVE;
-    rc = getaddrinfo("www.openssl.org", "443", &hints, &result);
+    rc = getaddrinfo(argv[1], argv[2], &hints, &result);
     if (rc < 0) {
         fprintf(stderr, "cannot resolve\n");
         goto fail;
@@ -341,7 +388,11 @@ int main(int argc, char **argv)
 
     signal(SIGPIPE, SIG_IGN);
 
+#ifdef USE_QUIC
+    fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+#else
     fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+#endif
     if (fd < 0) {
         fprintf(stderr, "cannot create socket\n");
         goto fail;
@@ -359,7 +410,7 @@ int main(int argc, char **argv)
         goto fail;
     }
 
-    conn = new_conn(ctx, "www.openssl.org");
+    conn = new_conn(ctx, argv[1]);
     if (conn == NULL) {
         fprintf(stderr, "cannot establish connection\n");
         goto fail;

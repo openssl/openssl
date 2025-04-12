@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,7 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
+#define OPENSSL_SUPPRESS_DEPRECATED /* EVP_PKEY_get1/set1_RSA */
+
 #include <openssl/x509.h>
+#include <openssl/asn1.h>
+#include <openssl/evp.h>
+#include <openssl/rsa.h>
+#include <openssl/pem.h>
+#include "crypto/x509.h" /* x509_st definition */
 #include "testutil.h"
 
 static EVP_PKEY *pubkey = NULL;
@@ -114,9 +121,73 @@ static int test_x509_crl_tbs_cache(void)
     return ret;
 }
 
+static int test_asn1_item_verify(void)
+{
+    int ret = 0;
+    BIO *bio = NULL;
+    X509 *x509 = NULL;
+    const char *certfile;
+    const ASN1_BIT_STRING *sig = NULL;
+    const X509_ALGOR *alg = NULL;
+    EVP_PKEY *pkey;
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    RSA *rsa = NULL;
+#endif
+
+    if (!TEST_ptr(certfile = test_get_argument(0))
+        || !TEST_ptr(bio = BIO_new_file(certfile, "r"))
+        || !TEST_ptr(x509 = PEM_read_bio_X509(bio, NULL, NULL, NULL))
+        || !TEST_ptr(pkey = X509_get0_pubkey(x509)))
+        goto err;
+
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    /* Issue #24575 requires legacy key but the test is useful anyway */
+    if (!TEST_ptr(rsa = EVP_PKEY_get1_RSA(pkey)))
+        goto err;
+
+    if (!TEST_int_gt(EVP_PKEY_set1_RSA(pkey, rsa), 0))
+        goto err;
+#endif
+
+    X509_get0_signature(&sig, &alg, x509);
+
+    if (!TEST_int_gt(ASN1_item_verify(ASN1_ITEM_rptr(X509_CINF),
+                                      (X509_ALGOR *)alg, (ASN1_BIT_STRING *)sig,
+                                      &x509->cert_info, pkey), 0))
+        goto err;
+
+    ERR_set_mark();
+    if (!TEST_int_lt(ASN1_item_verify(ASN1_ITEM_rptr(X509_CINF),
+                                     (X509_ALGOR *)alg, (ASN1_BIT_STRING *)sig,
+                                     NULL, pkey), 0)) {
+        ERR_clear_last_mark();
+        goto err;
+    }
+    ERR_pop_to_mark();
+
+    ret = 1;
+
+ err:
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    RSA_free(rsa);
+#endif
+    X509_free(x509);
+    BIO_free(bio);
+    return ret;
+}
+
+OPT_TEST_DECLARE_USAGE("<pss-self-signed-cert.pem>\n")
+
 int setup_tests(void)
 {
     const unsigned char *p;
+    int cnt;
+
+    cnt = test_get_argument_count();
+    if (cnt != 1) {
+        TEST_error("Must specify a certificate file self-signed with RSA-PSS.\n");
+        return 0;
+    }
 
     p = pubkeydata;
     pubkey = d2i_PUBKEY(NULL, &p, sizeof(pubkeydata));
@@ -138,6 +209,7 @@ int setup_tests(void)
 
     ADD_TEST(test_x509_tbs_cache);
     ADD_TEST(test_x509_crl_tbs_cache);
+    ADD_TEST(test_asn1_item_verify);
     return 1;
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -50,7 +50,11 @@ X509 *TS_CONF_load_cert(const char *file)
     BIO *cert = NULL;
     X509 *x = NULL;
 
+#if defined(OPENSSL_SYS_WINDOWS)
+    if ((cert = BIO_new_file(file, "rb")) == NULL)
+#else
     if ((cert = BIO_new_file(file, "r")) == NULL)
+#endif
         goto end;
     x = PEM_read_bio_X509_AUX(cert, NULL, NULL, NULL);
  end:
@@ -67,7 +71,11 @@ STACK_OF(X509) *TS_CONF_load_certs(const char *file)
     STACK_OF(X509_INFO) *allcerts = NULL;
     int i;
 
+#if defined(OPENSSL_SYS_WINDOWS)
+    if ((certs = BIO_new_file(file, "rb")) == NULL)
+#else
     if ((certs = BIO_new_file(file, "r")) == NULL)
+#endif
         goto end;
     if ((othercerts = sk_X509_new_null()) == NULL)
         goto end;
@@ -98,7 +106,11 @@ EVP_PKEY *TS_CONF_load_key(const char *file, const char *pass)
     BIO *key = NULL;
     EVP_PKEY *pkey = NULL;
 
+#if defined(OPENSSL_SYS_WINDOWS)
+    if ((key = BIO_new_file(file, "rb")) == NULL)
+#else
     if ((key = BIO_new_file(file, "r")) == NULL)
+#endif
         goto end;
     pkey = PEM_read_bio_PrivateKey(key, NULL, NULL, (char *)pass);
  end:
@@ -481,7 +493,7 @@ int TS_CONF_set_ess_cert_id_digest(CONF *conf, const char *section,
     const char *md = NCONF_get_string(conf, section, ENV_ESS_CERT_ID_ALG);
 
     if (md == NULL)
-        md = "sha1";
+        md = "sha256";
 
     cert_md = EVP_get_digestbyname(md);
     if (cert_md == NULL) {

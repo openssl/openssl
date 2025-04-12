@@ -14,6 +14,9 @@ setup("test_quic_record");
 plan skip_all => "QUIC protocol is not supported by this OpenSSL build"
     if disabled('quic');
 
+plan skip_all => "These tests are not supported in a fuzz build"
+    if config('options') =~ /-DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION|enable-fuzz-afl/;
+
 plan tests => 1;
 
 ok(run(test(["quic_record_test"])));

@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2004-2025 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2004, EdelKey Project. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -21,6 +21,7 @@
 #include <openssl/rand.h>
 #include <openssl/err.h>
 #include "ssl_local.h"
+#include "internal/ssl_unwrap.h"
 
 #ifndef OPENSSL_NO_SRP
 # include <openssl/srp.h>
@@ -199,7 +200,7 @@ int ssl_srp_server_param_with_username_intern(SSL_CONNECTION *s, int *ad)
     *ad = SSL_AD_UNKNOWN_PSK_IDENTITY;
     if ((s->srp_ctx.TLS_ext_srp_username_callback != NULL) &&
         ((al =
-          s->srp_ctx.TLS_ext_srp_username_callback(SSL_CONNECTION_GET_SSL(s),
+          s->srp_ctx.TLS_ext_srp_username_callback(SSL_CONNECTION_GET_USER_SSL(s),
                                                    ad,
                                                    s->srp_ctx.SRP_cb_arg)) !=
          SSL_ERROR_NONE))
@@ -373,7 +374,7 @@ int srp_generate_client_master_secret(SSL_CONNECTION *s)
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    if ((passwd = s->srp_ctx.SRP_give_srp_client_pwd_callback(SSL_CONNECTION_GET_SSL(s),
+    if ((passwd = s->srp_ctx.SRP_give_srp_client_pwd_callback(SSL_CONNECTION_GET_USER_SSL(s),
                                                               s->srp_ctx.SRP_cb_arg))
             == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_CALLBACK_FAILED);
@@ -426,7 +427,7 @@ int srp_verify_server_param(SSL_CONNECTION *s)
     }
 
     if (srp->SRP_verify_param_callback) {
-        if (srp->SRP_verify_param_callback(SSL_CONNECTION_GET_SSL(s),
+        if (srp->SRP_verify_param_callback(SSL_CONNECTION_GET_USER_SSL(s),
                                            srp->SRP_cb_arg) <= 0) {
             SSLfatal(s, SSL_AD_INSUFFICIENT_SECURITY, SSL_R_CALLBACK_FAILED);
             return 0;

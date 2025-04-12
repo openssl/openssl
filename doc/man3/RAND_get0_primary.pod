@@ -68,7 +68,7 @@ To set the type of DRBG that will be instantiated, use the
 L<RAND_set_DRBG_type(3)> call before accessing the random number generation
 infrastructure.
 
-The two set functions, operate on the the current thread.  If you want to
+The two set functions, operate on the current thread.  If you want to
 use the same random number generator across all threads, each thread
 must individually call the set functions.
 
@@ -85,7 +85,7 @@ The remaining functions were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020-2024 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

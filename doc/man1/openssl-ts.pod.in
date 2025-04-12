@@ -7,6 +7,8 @@ openssl-ts - Time Stamping Authority command
 
 =head1 SYNOPSIS
 
+=for openssl duplicate options
+
 B<openssl> B<ts>
 B<-help>
 
@@ -163,9 +165,9 @@ use its own default policy. (Optional)
 =item B<-no_nonce>
 
 No nonce is specified in the request if this option is
-given. Otherwise a 64 bit long pseudo-random none is
-included in the request. It is recommended to use nonce to
-protect against replay-attacks. (Optional)
+given. Otherwise, a 64-bit long pseudo-random nonce is
+included in the request. It is recommended to use a nonce to
+protect against replay attacks. (Optional)
 
 =item B<-cert>
 
@@ -584,10 +586,12 @@ To verify a timestamp reply that includes the certificate chain:
         -CAfile cacert.pem
 
 To verify a timestamp token against the original data file:
+
   openssl ts -verify -data design2.txt -in design2.tsr \
         -CAfile cacert.pem
 
 To verify a timestamp token against a message imprint:
+
   openssl ts -verify -digest b7e5d3f93198b38379852f2c04e78d73abdd0f4b \
          -in design2.tsr -CAfile cacert.pem
 
@@ -652,7 +656,7 @@ L<ossl_store-file(7)>
 
 =head1 COPYRIGHT
 
-Copyright 2006-2021 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2006-2024 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

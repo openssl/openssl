@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2005-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -39,8 +39,16 @@ int RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
                               const EVP_MD *Hash, const EVP_MD *mgf1Hash,
                               const unsigned char *EM, int sLen)
 {
+    return ossl_rsa_verify_PKCS1_PSS_mgf1(rsa, mHash, Hash, mgf1Hash, EM, &sLen);
+}
+
+int ossl_rsa_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
+                                   const EVP_MD *Hash, const EVP_MD *mgf1Hash,
+                                   const unsigned char *EM, int *sLenOut)
+{
     int i;
     int ret = 0;
+    int sLen = *sLenOut;
     int hLen, maskedDBLen, MSBits, emLen;
     const unsigned char *H;
     unsigned char *DB = NULL;
@@ -54,7 +62,7 @@ int RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
         mgf1Hash = Hash;
 
     hLen = EVP_MD_get_size(Hash);
-    if (hLen < 0)
+    if (hLen <= 0)
         goto err;
     /*-
      * Negative sLen has special meanings:
@@ -118,13 +126,15 @@ int RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
                        "expected: %d retrieved: %d", sLen,
                        maskedDBLen - i);
         goto err;
+    } else {
+        sLen = maskedDBLen - i;
     }
     if (!EVP_DigestInit_ex(ctx, Hash, NULL)
         || !EVP_DigestUpdate(ctx, zeroes, sizeof(zeroes))
         || !EVP_DigestUpdate(ctx, mHash, hLen))
         goto err;
-    if (maskedDBLen - i) {
-        if (!EVP_DigestUpdate(ctx, DB + i, maskedDBLen - i))
+    if (sLen != 0) {
+        if (!EVP_DigestUpdate(ctx, DB + i, sLen))
             goto err;
     }
     if (!EVP_DigestFinal_ex(ctx, H_, NULL))
@@ -136,6 +146,7 @@ int RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
         ret = 1;
     }
 
+    *sLenOut = sLen;
  err:
     OPENSSL_free(DB);
     EVP_MD_CTX_free(ctx);
@@ -156,8 +167,17 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
                                    const EVP_MD *Hash, const EVP_MD *mgf1Hash,
                                    int sLen)
 {
+    return ossl_rsa_padding_add_PKCS1_PSS_mgf1(rsa, EM, mHash, Hash, mgf1Hash, &sLen);
+}
+
+int ossl_rsa_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
+                                        const unsigned char *mHash,
+                                        const EVP_MD *Hash, const EVP_MD *mgf1Hash,
+                                        int *sLenOut)
+{
     int i;
     int ret = 0;
+    int sLen = *sLenOut;
     int hLen, maskedDBLen, MSBits, emLen;
     unsigned char *H, *salt = NULL, *p;
     EVP_MD_CTX *ctx = NULL;
@@ -167,7 +187,7 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
         mgf1Hash = Hash;
 
     hLen = EVP_MD_get_size(Hash);
-    if (hLen < 0)
+    if (hLen <= 0)
         goto err;
     /*-
      * Negative sLen has special meanings:
@@ -187,7 +207,7 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
     if (sLen == RSA_PSS_SALTLEN_DIGEST) {
         sLen = hLen;
     } else if (sLen == RSA_PSS_SALTLEN_MAX_SIGN
-            || sLen == RSA_PSS_SALTLEN_AUTO) {
+               || sLen == RSA_PSS_SALTLEN_AUTO) {
         sLen = RSA_PSS_SALTLEN_MAX;
     } else if (sLen == RSA_PSS_SALTLEN_AUTO_DIGEST_MAX) {
         sLen = RSA_PSS_SALTLEN_MAX;
@@ -261,6 +281,7 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
 
     ret = 1;
 
+    *sLenOut = sLen;
  err:
     EVP_MD_CTX_free(ctx);
     OPENSSL_clear_free(salt, (size_t)sLen); /* salt != NULL implies sLen > 0 */
@@ -331,15 +352,6 @@ int ossl_rsa_pss_params_30_set_hashalg(RSA_PSS_PARAMS_30 *rsa_pss_params,
     if (rsa_pss_params == NULL)
         return 0;
     rsa_pss_params->hash_algorithm_nid = hashalg_nid;
-    return 1;
-}
-
-int ossl_rsa_pss_params_30_set_maskgenalg(RSA_PSS_PARAMS_30 *rsa_pss_params,
-                                          int maskgenalg_nid)
-{
-    if (rsa_pss_params == NULL)
-        return 0;
-    rsa_pss_params->mask_gen.algorithm_nid = maskgenalg_nid;
     return 1;
 }
 

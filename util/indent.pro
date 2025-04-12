@@ -382,7 +382,6 @@
 -T SRTP_PROTECTION_PROFILE
 -T SSL
 -T TLS_BUFFER
--T SSL3_COMP
 -T SSL3_ENC_METHOD
 -T TLS_RL_RECORD
 -T SSL3_STATE
@@ -601,7 +600,6 @@
 -T clock_t
 -T custom_ext_methods
 -T hm_fragment
--T record_pqueue
 -T ssl_ctx_st
 -T ssl_flag_tbl
 -T ssl_st

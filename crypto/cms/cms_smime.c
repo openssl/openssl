@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -15,6 +15,7 @@
 #include <openssl/cms.h>
 #include "cms_local.h"
 #include "crypto/asn1.h"
+#include "crypto/x509.h"
 
 static BIO *cms_get_text_bio(BIO *out, unsigned int flags)
 {
@@ -236,7 +237,7 @@ CMS_ContentInfo *CMS_EncryptedData_encrypt_ex(BIO *in, const EVP_CIPHER *cipher,
     if (cms == NULL)
         return NULL;
     if (!CMS_EncryptedData_set1_key(cms, cipher, key, keylen))
-        return NULL;
+        goto err;
 
     if (!(flags & CMS_DETACHED))
         CMS_set_detached(cms, 0);
@@ -245,6 +246,7 @@ CMS_ContentInfo *CMS_EncryptedData_encrypt_ex(BIO *in, const EVP_CIPHER *cipher,
         || CMS_final(cms, in, NULL, flags))
         return cms;
 
+ err:
     CMS_ContentInfo_free(cms);
     return NULL;
 }
@@ -307,7 +309,7 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
 {
     CMS_SignerInfo *si;
     STACK_OF(CMS_SignerInfo) *sinfos;
-    STACK_OF(X509) *cms_certs = NULL;
+    STACK_OF(X509) *untrusted = NULL;
     STACK_OF(X509_CRL) *crls = NULL;
     STACK_OF(X509) **si_chains = NULL;
     X509 *signer;
@@ -359,13 +361,21 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
             if (si_chains == NULL)
                 goto err;
         }
-        cms_certs = CMS_get1_certs(cms);
-        if (!(flags & CMS_NOCRL))
-            crls = CMS_get1_crls(cms);
+        if (!ossl_cms_get1_certs_ex(cms, &untrusted))
+            goto err;
+        if (sk_X509_num(certs) > 0
+            && !ossl_x509_add_certs_new(&untrusted, certs,
+                                        X509_ADD_FLAG_UP_REF |
+                                        X509_ADD_FLAG_NO_DUP))
+            goto err;
+
+        if ((flags & CMS_NOCRL) == 0
+            && !ossl_cms_get1_crls_ex(cms, &crls))
+            goto err;
         for (i = 0; i < scount; i++) {
             si = sk_CMS_SignerInfo_value(sinfos, i);
 
-            if (!cms_signerinfo_verify_cert(si, store, cms_certs, crls,
+            if (!cms_signerinfo_verify_cert(si, store, untrusted, crls,
                                             si_chains ? &si_chains[i] : NULL,
                                             ctx))
                 goto err;
@@ -481,7 +491,7 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
             OSSL_STACK_OF_X509_free(si_chains[i]);
         OPENSSL_free(si_chains);
     }
-    OSSL_STACK_OF_X509_free(cms_certs);
+    sk_X509_pop_free(untrusted, X509_free);
     sk_X509_CRL_pop_free(crls, X509_CRL_free);
 
     return ret;
@@ -560,7 +570,7 @@ CMS_ContentInfo *CMS_sign_receipt(CMS_SignerInfo *si,
 {
     CMS_SignerInfo *rct_si;
     CMS_ContentInfo *cms = NULL;
-    ASN1_OCTET_STRING **pos, *os;
+    ASN1_OCTET_STRING **pos, *os = NULL;
     BIO *rct_cont = NULL;
     int r = 0;
     const CMS_CTX *ctx = si->cms_ctx;
@@ -622,6 +632,7 @@ CMS_ContentInfo *CMS_sign_receipt(CMS_SignerInfo *si,
     if (r)
         return cms;
     CMS_ContentInfo_free(cms);
+    ASN1_OCTET_STRING_free(os);
     return NULL;
 
 }
@@ -710,11 +721,13 @@ int CMS_decrypt_set1_pkey_and_peer(CMS_ContentInfo *cms, EVP_PKEY *pk,
     CMS_EncryptedContentInfo *ec = ossl_cms_get0_env_enc_content(cms);
 
     /* Prevent mem leak on earlier CMS_decrypt_set1_{pkey_and_peer,password} */
-    OPENSSL_clear_free(ec->key, ec->keylen);
-    ec->key = NULL;
-    ec->keylen = 0;
+    if (ec != NULL) {
+        OPENSSL_clear_free(ec->key, ec->keylen);
+        ec->key = NULL;
+        ec->keylen = 0;
+    }
 
-    if (ris != NULL)
+    if (ris != NULL && ec != NULL)
         debug = ec->debug;
 
     cms_pkey_ri_type = ossl_cms_pkey_get_ri_type(pk);
@@ -740,7 +753,8 @@ int CMS_decrypt_set1_pkey_and_peer(CMS_ContentInfo *cms, EVP_PKEY *pk,
         }
         /* If we have a cert, try matching RecipientInfo, else try them all */
         else if (cert == NULL || !CMS_RecipientInfo_ktri_cert_cmp(ri, cert)) {
-            EVP_PKEY_up_ref(pk);
+            if (!EVP_PKEY_up_ref(pk))
+                return 0;
             CMS_RecipientInfo_set0_pkey(ri, pk);
             r = CMS_RecipientInfo_decrypt(cms, ri);
             CMS_RecipientInfo_set0_pkey(ri, NULL);
@@ -828,9 +842,11 @@ int CMS_decrypt_set1_password(CMS_ContentInfo *cms,
     CMS_EncryptedContentInfo *ec = ossl_cms_get0_env_enc_content(cms);
 
     /* Prevent mem leak on earlier CMS_decrypt_set1_{pkey_and_peer,password} */
-    OPENSSL_clear_free(ec->key, ec->keylen);
-    ec->key = NULL;
-    ec->keylen = 0;
+    if (ec != NULL) {
+        OPENSSL_clear_free(ec->key, ec->keylen);
+        ec->key = NULL;
+        ec->keylen = 0;
+    }
 
     for (i = 0; i < sk_CMS_RecipientInfo_num(ris); i++) {
         ri = sk_CMS_RecipientInfo_value(ris, i);

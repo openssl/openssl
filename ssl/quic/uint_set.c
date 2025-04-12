@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -111,14 +111,15 @@ static int uint_range_overlaps(const UINT_RANGE *a,
 
 static UINT_SET_ITEM *create_set_item(uint64_t start, uint64_t end)
 {
-        UINT_SET_ITEM *x = OPENSSL_malloc(sizeof(UINT_SET_ITEM));
+    UINT_SET_ITEM *x = OPENSSL_malloc(sizeof(UINT_SET_ITEM));
 
-        ossl_list_uint_set_init_elem(x);
-        if (x != NULL) {
-            x->range.start = start;
-            x->range.end   = end;
-        }
-        return x;
+    if (x == NULL)
+        return NULL;
+
+    ossl_list_uint_set_init_elem(x);
+    x->range.start = start;
+    x->range.end   = end;
+    return x;
 }
 
 int ossl_uint_set_insert(UINT_SET *s, const UINT_RANGE *range)
@@ -277,7 +278,7 @@ int ossl_uint_set_remove(UINT_SET *s, const UINT_RANGE *range)
              */
             ossl_list_uint_set_remove(s, z);
             OPENSSL_free(z);
-        } else if (start <= z->range.start) {
+        } else if (start <= z->range.start && end >= z->range.start) {
             /*
              * The range being removed includes start of this range, but does
              * not cover the entire range (as this would be caught by the case
@@ -303,6 +304,7 @@ int ossl_uint_set_remove(UINT_SET *s, const UINT_RANGE *range)
              */
             y = create_set_item(end + 1, z->range.end);
             ossl_list_uint_set_insert_after(s, z, y);
+            z->range.end = start - 1;
             break;
         } else {
             /* Assert no partial overlap; all cases should be covered above. */
@@ -310,7 +312,7 @@ int ossl_uint_set_remove(UINT_SET *s, const UINT_RANGE *range)
         }
     }
 
-     return 1;
+    return 1;
 }
 
 int ossl_uint_set_query(const UINT_SET *s, uint64_t v)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -78,13 +78,12 @@ pass:
     CRYPTO_THREAD_SET_STATE(thread, CRYPTO_THREAD_JOINED);
 
     /*
-     * Broadcast join completion. It is important to broadcast even if
-     * we haven't performed an actual join. Multiple threads could be
-     * awaiting the CRYPTO_THREAD_JOIN_AWAIT -> CRYPTO_THREAD_JOINED
-     * transition, but broadcast on actual join would wake only one.
-     * Broadcasing here will always wake one.
+     * Signal join completion. It is important to signal even if we haven't
+     * performed an actual join. Multiple threads could be awaiting the
+     * CRYPTO_THREAD_JOIN_AWAIT -> CRYPTO_THREAD_JOINED transition, but signal
+     * on actual join would wake only one. Signalling here will always wake one.
      */
-    ossl_crypto_condvar_broadcast(thread->condvar);
+    ossl_crypto_condvar_signal(thread->condvar);
     ossl_crypto_mutex_unlock(thread->statelock);
 
     if (retval != NULL)
@@ -98,7 +97,7 @@ fail:
     /* Have another thread that's awaiting join retry to avoid that
      * thread deadlock. */
     CRYPTO_THREAD_UNSET_STATE(thread, CRYPTO_THREAD_JOIN_AWAIT);
-    ossl_crypto_condvar_broadcast(thread->condvar);
+    ossl_crypto_condvar_signal(thread->condvar);
 
     ossl_crypto_mutex_unlock(thread->statelock);
     return 0;

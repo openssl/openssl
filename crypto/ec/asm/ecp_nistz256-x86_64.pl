@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2014-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2014-2024 The OpenSSL Project Authors. All Rights Reserved.
 # Copyright (c) 2014, Intel Corporation. All Rights Reserved.
 # Copyright (c) 2015 CloudFlare, Inc.
 #
@@ -17,7 +17,7 @@
 # S.Gueron and V.Krasnov, "Fast Prime Field Elliptic Curve Cryptography with
 #                          256 Bit Primes"
 
-# Further optimization by <appro@openssl.org>:
+# Further optimization by <https://github.com/dot-asm>:
 #
 #		this/original	with/without -DECP_NISTZ256_ASM(*)
 # Opteron	+15-49%		+150-195%
@@ -85,6 +85,7 @@ $code.=<<___;
 .extern	OPENSSL_ia32cap_P
 
 # The polynomial
+.section .rodata align=4096
 .align 64
 .Lpoly:
 .quad 0xffffffffffffffff, 0x00000000ffffffff, 0x0000000000000000, 0xffffffff00000001
@@ -107,6 +108,7 @@ $code.=<<___;
 .quad 0xf3b9cac2fc632551, 0xbce6faada7179e84, 0xffffffffffffffff, 0xffffffff00000000
 .LordK:
 .quad 0xccd1c8aaee00bc4f
+.previous
 ___
 
 {
@@ -3049,7 +3051,7 @@ ___
 # reloading them, pointers, would create undesired dependencies on
 # effective addresses calculation paths. In other words it's too done
 # to favour out-of-order execution logic.
-#						<appro@openssl.org>
+#						<https://github.com/dot-asm>
 
 my ($r_ptr,$a_ptr,$b_org,$b_ptr)=("%rdi","%rsi","%rdx","%rbx");
 my ($acc0,$acc1,$acc2,$acc3,$acc4,$acc5,$acc6,$acc7)=map("%r$_",(8..15));
@@ -4723,7 +4725,7 @@ close TABLE;
 die "insane number of elements" if ($#arr != 64*16*37-1);
 
 print <<___;
-.text
+.section .rodata align=4096
 .globl	ecp_nistz256_precomputed
 .type	ecp_nistz256_precomputed,\@object
 .align	4096

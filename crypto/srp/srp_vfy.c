@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2004-2023 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2004, EdelKey Project. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -214,6 +214,8 @@ int SRP_user_pwd_set1_ids(SRP_user_pwd *vinfo, const char *id,
 {
     OPENSSL_free(vinfo->id);
     OPENSSL_free(vinfo->info);
+    vinfo->id = NULL;
+    vinfo->info = NULL;
     if (id != NULL && NULL == (vinfo->id = OPENSSL_strdup(id)))
         return 0;
     return (info == NULL || NULL != (vinfo->info = OPENSSL_strdup(info)));
@@ -281,6 +283,7 @@ SRP_VBASE *SRP_VBASE_new(char *seed_key)
         return NULL;
     if ((vb->users_pwd = sk_SRP_user_pwd_new_null()) == NULL
         || (vb->gN_cache = sk_SRP_gN_cache_new_null()) == NULL) {
+        sk_SRP_user_pwd_free(vb->users_pwd);
         OPENSSL_free(vb);
         return NULL;
     }
@@ -407,6 +410,11 @@ int SRP_VBASE_init(SRP_VBASE *vb, char *verifier_file)
         goto err;
 
     error_code = SRP_ERR_OPEN_FILE;
+
+    if (verifier_file == NULL) {
+        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
+        goto err;
+    }
 
     if (in == NULL || BIO_read_filename(in, verifier_file) <= 0)
         goto err;

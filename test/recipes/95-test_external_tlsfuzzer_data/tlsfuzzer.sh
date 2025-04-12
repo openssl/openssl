@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright 2021-2022 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2021-2024 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -11,6 +11,7 @@
 # OpenSSL external testing using the TLSFuzzer test suite
 #
 set -e
+set -x
 
 PWD="$(pwd)"
 
@@ -31,16 +32,17 @@ export PATH="$O_EXE:$PATH"
 export LD_LIBRARY_PATH="$O_LIB:$LD_LIBRARY_PATH"
 export OPENSSL_ROOT_DIR="$O_LIB"
 
-# Check/Set openssl version
-OPENSSL_VERSION=`openssl version | cut -f 2 -d ' '`
 
 CLI="${O_EXE}/openssl"
 SERV="${O_EXE}/openssl"
 
+# Check/Set openssl version
+OPENSSL_VERSION=$($CLI version | cut -f 2 -d ' ')
+
 TMPFILE="${PWD}/tls-fuzzer.$$.tmp"
 PSKFILE="${PWD}/tls-fuzzer.psk.$$.tmp"
 
-PYTHON=`which python`
+PYTHON=`which python3`
 PORT=4433
 
 echo "------------------------------------------------------------------"
@@ -51,6 +53,7 @@ echo "   BLDTOP:             $BLDTOP"
 echo "   OPENSSL_ROOT_DIR:   $OPENSSL_ROOT_DIR"
 echo "   Python:             $PYTHON"
 echo "   TESTDATADIR:        $TESTDATADIR"
+echo "   OPENSSL_VERSION:    $OPENSSL_VERSION"
 echo "------------------------------------------------------------------"
 
 cd "${SRCTOP}/tlsfuzzer"

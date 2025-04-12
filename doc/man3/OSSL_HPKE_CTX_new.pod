@@ -68,11 +68,11 @@ OSSL_HPKE_CTX_get_seq, OSSL_HPKE_CTX_set_seq
                              const unsigned char *ikme, size_t ikmelen);
 
  int OSSL_HPKE_suite_check(OSSL_HPKE_SUITE suite);
- int OSSL_HPKE_get_grease_value(OSSL_LIB_CTX *libctx, const char *propq,
-                                const OSSL_HPKE_SUITE *suite_in,
+ int OSSL_HPKE_get_grease_value(const OSSL_HPKE_SUITE *suite_in,
                                 OSSL_HPKE_SUITE *suite,
                                 unsigned char *enc, size_t *enclen,
-                                unsigned char *ct, size_t ctlen);
+                                unsigned char *ct, size_t ctlen,
+                                OSSL_LIB_CTX *libctx, const char *propq);
 
  int OSSL_HPKE_str2suite(const char *str, OSSL_HPKE_SUITE *suite);
  size_t OSSL_HPKE_get_ciphertext_size(OSSL_HPKE_SUITE suite, size_t clearlen);
@@ -187,11 +187,11 @@ modes> and L</Sender-authenticated HPKE Modes>.
 
 =head2 HPKE Roles
 
-HPKE contexts have a role - either sender or receiver. This is used 
+HPKE contexts have a role - either sender or receiver. This is used
 to control which functions can be called and so that senders do not
-re-use a key and nonce with different plaintexts.
+reuse a key and nonce with different plaintexts.
 
-OSSL_HPKE_CTX_free(), OSSL_HPKE_export(), OSSL_HPKE_CTX_set1_psk(), 
+OSSL_HPKE_CTX_free(), OSSL_HPKE_export(), OSSL_HPKE_CTX_set1_psk(),
 and OSSL_HPKE_CTX_get_seq() can be called regardless of role.
 
 =over 4
@@ -199,7 +199,7 @@ and OSSL_HPKE_CTX_get_seq() can be called regardless of role.
 =item B<OSSL_HPKE_ROLE_SENDER>, 0
 
 An I<OSSL_HPKE_CTX> with this role can be used with
-OSSL_HPKE_encap(), OSSL_HPKE_seal(), OSSL_HPKE_CTX_set1_ikme() and 
+OSSL_HPKE_encap(), OSSL_HPKE_seal(), OSSL_HPKE_CTX_set1_ikme() and
 OSSL_HPKE_CTX_set1_authpriv().
 
 =item B<OSSL_HPKE_ROLE_RECEIVER>, 1
@@ -222,6 +222,10 @@ functions below. The constant I<OSSL_HPKE_MAX_PARMLEN> is defined as the limit
 of this value.  (We chose 66 octets so that we can validate all the test
 vectors present in RFC9180, Appendix A.)
 
+In accordance with RFC9180, section 9.5, we define a constant
+I<OSSL_HPKE_MIN_PSKLEN> with a value of 32 for the minimum length of a
+pre-shared key, passed in I<psklen>.
+
 While RFC9180 also RECOMMENDS a 64 octet limit for the I<infolen> parameter,
 that is not sufficient for TLS Encrypted ClientHello (ECH) processing, so we
 enforce a limit of I<OSSL_HPKE_MAX_INFOLEN> with a value of 1024 as the limit
@@ -236,7 +240,8 @@ I<libctx> and I<propq> are used when fetching algorithms from providers and may
 be set to NULL.
 
 OSSL_HPKE_CTX_free() frees the I<ctx> B<OSSL_HPKE_CTX> that was created
-previously by a call to OSSL_HPKE_CTX_new().
+previously by a call to OSSL_HPKE_CTX_new().  If the argument to
+OSSL_HPKE_CTX_free() is NULL, nothing is done.
 
 =head2 Sender APIs
 
@@ -406,7 +411,7 @@ I<seq> output) that will be used in the next call to seal or open. That would
 return 0 before the first call a sender made to OSSL_HPKE_seal() and 1 after
 that first call.
 
-Note that re-use of the same nonce and key with different plaintexts would
+Note that reuse of the same nonce and key with different plaintexts would
 be very dangerous and could lead to loss of confidentiality and integrity.
 We therefore only support application control over I<seq> for decryption
 (i.e. OSSL_HPKE_open()) operations.
@@ -449,9 +454,9 @@ The input I<str> should be a comma-separated string with a KEM,
 KDF and AEAD name in that order, for example "x25519,hkdf-sha256,aes128gcm".
 This can be used by command line tools that accept string form names for HPKE
 codepoints. Valid (case-insensitive) names are:
-"p256", "p384", "p521", "x25519" and "x448" for KEM,
-"hkdf-SHA256", "hkdf-SHA384" and "hkdf-SHA512" for KDF, and
-"aes-gcm-128", "aes-gcm-256" and "chacha20-poly1305" for AEAD.
+"p-256", "p-384", "p-521", "x25519" and "x448" for KEM,
+"hkdf-sha256", "hkdf-sha384" and "hkdf-sha512" for KDF, and
+"aes-gcm-128", "aes-gcm-256", "chacha20-poly1305" and "exporter" for AEAD.
 String variants of the numbers listed in L</OSSL_HPKE_SUITE Identifiers>
 can also be used.
 
@@ -561,7 +566,7 @@ This functionality described here was added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 
-Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2022-2025 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

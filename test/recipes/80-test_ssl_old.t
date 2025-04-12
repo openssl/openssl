@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2022 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2024 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -13,7 +13,7 @@ use warnings;
 use POSIX;
 use File::Basename;
 use File::Copy;
-use OpenSSL::Test qw/:DEFAULT with bldtop_file bldtop_dir srctop_file srctop_dir cmdstr data_file/;
+use OpenSSL::Test qw/:DEFAULT with bldtop_file bldtop_dir srctop_file srctop_dir cmdstr data_file result_dir result_file/;
 use OpenSSL::Test::Utils;
 
 BEGIN {
@@ -38,6 +38,7 @@ my $no_anydtls = alldisabled(available_protocols("dtls"));
 plan skip_all => "No SSL/TLS/DTLS protocol is support by this OpenSSL build"
     if $no_anytls && $no_anydtls;
 
+my $dsaallow = '1';
 my $digest = "-sha1";
 my @reqcmd = ("openssl", "req");
 my @x509cmd = ("openssl", "x509", $digest);
@@ -78,7 +79,7 @@ my $client_sess="client.ss";
 # If you're adding tests here, you probably want to convert them to the
 # new format in ssl_test.c and add recipes to 80-test_ssl_new.t instead.
 plan tests =>
-   ($no_fips ? 0 : 6)     # testssl with fips provider
+   ($no_fips ? 0 : 7)     # testssl with fips provider
     + 1                   # For testss
     + 5                   # For the testssl with default provider
     + 1                   # For security level 0 failure tests
@@ -104,8 +105,69 @@ if (disabled("legacy")) {
 
 testssl($Ukey, $Ucert, $CAcert, "default", $configfile);
 unless ($no_fips) {
-    testssl($Ukey, $Ucert, $CAcert, "fips",
-            srctop_file("test","fips-and-base.cnf"));
+    # Read in a text $infile and replace the regular expression in $srch with the
+    # value in $repl and output to a new file $outfile.
+    sub replace_line_file_internal {
+
+        my ($infile, $srch, $repl, $outfile) = @_;
+        my $msg;
+
+        open(my $in, "<", $infile) or return 0;
+        read($in, $msg, 1024);
+        close $in;
+
+        $msg =~ s/$srch/$repl/;
+
+        open(my $fh, ">", $outfile) or return 0;
+        print $fh $msg;
+        close $fh;
+        return 1;
+    }
+
+    # Read in the text input file $infile
+    # and replace a single Key = Value line with a new value in $value.
+    # OR remove the Key = Value line if the passed in $value is empty.
+    # and then output a new file $outfile.
+    # $key is the Key to find
+    sub replace_kv_file {
+        my ($infile, $key, $value, $outfile) = @_;
+        my $srch = qr/$key\s*=\s*\S*\n/;
+        my $rep;
+        if ($value eq "") {
+            $rep = "";
+        } else {
+           $rep = "$key = $value\n";
+        }
+        return replace_line_file_internal($infile, $srch, $rep, $outfile);
+    }
+
+    # Read in the text $input file
+    # and search for the $key and replace with $newkey
+    # and then output a new file $outfile.
+    sub replace_line_file {
+        my ($infile, $key, $newkey, $outfile) = @_;
+        my $srch = qr/$key/;
+        my $rep = "$newkey";
+        return replace_line_file_internal($infile,
+                                          $srch, $rep, $outfile);
+    }
+
+    # Rewrite the module configuration to all PKCS#1 v1.5 padding
+    my $fipsmodcfg_filename = "fipsmodule.cnf";
+    my $fipsmodcfg = bldtop_file("test", $fipsmodcfg_filename);
+    my $provconf = srctop_file("test", "fips-and-base.cnf");
+    my $provconfnew = result_file("fips-and-base-temp.cnf");
+    my $fipsmodcfgnew_filename = "fipsmodule_mod.cnf";
+    my $fipsmodcfgnew = result_file($fipsmodcfgnew_filename);
+    $ENV{OPENSSL_CONF_INCLUDE} = result_dir();
+    ok(replace_kv_file($fipsmodcfg,
+                       'rsa-pkcs15-pad-disabled', '0',
+                       $fipsmodcfgnew)
+       && replace_line_file($provconf,
+                            $fipsmodcfg_filename, $fipsmodcfgnew_filename,
+                            $provconfnew));
+
+    testssl($Ukey, $Ucert, $CAcert, "fips", $provconfnew);
 }
 
 # -----------
@@ -331,6 +393,12 @@ sub testssl {
         push @providerflags, "-provider", "legacy";
     }
 
+    $dsaallow = '1';
+    if  ($provider eq "fips") {
+        run(test(["fips_version_test", "-config", $configfile, "<3.4.0"]),
+              capture => 1, statusvar => \$dsaallow);
+    }
+
     my @ssltest = ("ssl_old_test",
                    "-s_key", $key, "-s_cert", $cert,
                    "-c_key", $key, "-c_cert", $cert,
@@ -436,7 +504,7 @@ sub testssl {
         my @exkeys = ();
         my $ciphers = '-PSK:-SRP:@SECLEVEL=0';
 
-        if (!$no_dsa) {
+        if (!$no_dsa && $dsaallow == '1') {
             push @exkeys, "-s_cert", "certD.ss", "-s_key", $Dkey;
         }
 
@@ -494,7 +562,11 @@ sub testssl {
             my $flag = $protocol eq "-tls1_3" ? "" : $protocol;
             my $ciphersuites = "";
             foreach my $cipher (@{$ciphersuites{$protocol}}) {
-                if ($protocol eq "-ssl3" && $cipher =~ /ECDH/ ) {
+                if ($dsaallow == '0' && index($cipher, "DSS") != -1) {
+                    # DSA is not allowed in FIPS 140-3
+                    note "*****SKIPPING $protocol $cipher";
+                    ok(1);
+                } elsif ($protocol eq "-ssl3" && $cipher =~ /ECDH/ ) {
                     note "*****SKIPPING $protocol $cipher";
                     ok(1);
                 } else {

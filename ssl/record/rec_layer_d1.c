@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2005-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -15,6 +15,7 @@
 #include "record_local.h"
 #include "internal/packet.h"
 #include "internal/cryptlib.h"
+#include "internal/ssl_unwrap.h"
 
 int DTLS_RECORD_LAYER_new(RECORD_LAYER *rl)
 {
@@ -25,9 +26,9 @@ int DTLS_RECORD_LAYER_new(RECORD_LAYER *rl)
 
     rl->d = d;
 
-    d->buffered_app_data.q = pqueue_new();
+    d->buffered_app_data = pqueue_new();
 
-    if (d->buffered_app_data.q == NULL) {
+    if (d->buffered_app_data == NULL) {
         OPENSSL_free(d);
         rl->d = NULL;
         return 0;
@@ -42,7 +43,7 @@ void DTLS_RECORD_LAYER_free(RECORD_LAYER *rl)
         return;
 
     DTLS_RECORD_LAYER_clear(rl);
-    pqueue_free(rl->d->buffered_app_data.q);
+    pqueue_free(rl->d->buffered_app_data);
     OPENSSL_free(rl->d);
     rl->d = NULL;
 }
@@ -56,28 +57,29 @@ void DTLS_RECORD_LAYER_clear(RECORD_LAYER *rl)
 
     d = rl->d;
 
-    while ((item = pqueue_pop(d->buffered_app_data.q)) != NULL) {
+    while ((item = pqueue_pop(d->buffered_app_data)) != NULL) {
         rec = (TLS_RECORD *)item->data;
+
         if (rl->s->options & SSL_OP_CLEANSE_PLAINTEXT)
-            OPENSSL_cleanse(rec->data, rec->length);
-        OPENSSL_free(rec->data);
+            OPENSSL_cleanse(rec->allocdata, rec->length);
+        OPENSSL_free(rec->allocdata);
         OPENSSL_free(item->data);
         pitem_free(item);
     }
 
-    buffered_app_data = d->buffered_app_data.q;
+    buffered_app_data = d->buffered_app_data;
     memset(d, 0, sizeof(*d));
-    d->buffered_app_data.q = buffered_app_data;
+    d->buffered_app_data = buffered_app_data;
 }
 
 static int dtls_buffer_record(SSL_CONNECTION *s, TLS_RECORD *rec)
 {
     TLS_RECORD *rdata;
     pitem *item;
-    record_pqueue *queue = &(s->rlayer.d->buffered_app_data);
+    struct pqueue_st *queue = s->rlayer.d->buffered_app_data;
 
     /* Limit the size of the queue to prevent DOS attacks */
-    if (pqueue_size(queue->q) >= 100)
+    if (pqueue_size(queue) >= 100)
         return 0;
 
     /* We don't buffer partially read records */
@@ -99,7 +101,7 @@ static int dtls_buffer_record(SSL_CONNECTION *s, TLS_RECORD *rec)
      * now. Copying data isn't good - but this should be infrequent so we
      * accept it here.
      */
-    rdata->data = OPENSSL_memdup(rec->data, rec->length);
+    rdata->data = rdata->allocdata = OPENSSL_memdup(rec->data, rec->length);
     if (rdata->data == NULL) {
         OPENSSL_free(rdata);
         pitem_free(item);
@@ -124,9 +126,9 @@ static int dtls_buffer_record(SSL_CONNECTION *s, TLS_RECORD *rec)
     }
 #endif
 
-    if (pqueue_insert(queue->q, item) == NULL) {
+    if (pqueue_insert(queue, item) == NULL) {
         /* Must be a duplicate so ignore it */
-        OPENSSL_free(rdata->data);
+        OPENSSL_free(rdata->allocdata);
         OPENSSL_free(rdata);
         pitem_free(item);
     }
@@ -144,7 +146,7 @@ static void dtls_unbuffer_record(SSL_CONNECTION *s)
     if (s->rlayer.curr_rec < s->rlayer.num_recs)
         return;
 
-    item = pqueue_pop(s->rlayer.d->buffered_app_data.q);
+    item = pqueue_pop(s->rlayer.d->buffered_app_data);
     if (item != NULL) {
         rdata = (TLS_RECORD *)item->data;
 
@@ -169,11 +171,11 @@ static void dtls_unbuffer_record(SSL_CONNECTION *s)
  * Return up to 'len' payload bytes received in 'type' records.
  * 'type' is one of the following:
  *
- *   -  SSL3_RT_HANDSHAKE (when ssl3_get_message calls us)
+ *   -  SSL3_RT_HANDSHAKE
  *   -  SSL3_RT_APPLICATION_DATA (when ssl3_read calls us)
  *   -  0 (during a shutdown, no data has to be returned)
  *
- * If we don't have stored data to work from, read a SSL/TLS record first
+ * If we don't have stored data to work from, read an SSL/TLS record first
  * (possibly multiple records if we still don't have anything to return).
  *
  * This function must handle any surprises the peer may have for us, such as
@@ -194,8 +196,9 @@ static void dtls_unbuffer_record(SSL_CONNECTION *s)
  *     Application data protocol
  *             none of our business
  */
-int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
-                     size_t len, int peek, size_t *readbytes)
+int dtls1_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
+                     unsigned char *buf, size_t len,
+                     int peek, size_t *readbytes)
 {
     int i, j, ret;
     size_t n;
@@ -292,7 +295,8 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             /* SSLfatal() already called */
             return -1;
         }
-        ssl_release_record(sc, rr);
+        if (!ssl_release_record(sc, rr, 0))
+            return -1;
         goto start;
     }
 
@@ -301,7 +305,8 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
      * 'peek' mode)
      */
     if (sc->shutdown & SSL_RECEIVED_SHUTDOWN) {
-        ssl_release_record(sc, rr);
+        if (!ssl_release_record(sc, rr, 0))
+            return -1;
         sc->rwstate = SSL_NOTHING;
         return 0;
     }
@@ -334,8 +339,8 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
              * SSL_read() with a zero length buffer will eventually cause
              * SSL_pending() to report data as being available.
              */
-            if (rr->length == 0)
-                ssl_release_record(sc, rr);
+            if (rr->length == 0 && !ssl_release_record(sc, rr, 0))
+                return -1;
             return 0;
         }
 
@@ -346,15 +351,11 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
 
         memcpy(buf, &(rr->data[rr->off]), n);
         if (peek) {
-            if (rr->length == 0)
-                ssl_release_record(sc, rr);
+            if (rr->length == 0 && !ssl_release_record(sc, rr, 0))
+                return -1;
         } else {
-            if (sc->options & SSL_OP_CLEANSE_PLAINTEXT)
-                OPENSSL_cleanse(&(rr->data[rr->off]), n);
-            rr->length -= n;
-            rr->off += n;
-            if (rr->length == 0)
-                ssl_release_record(sc, rr);
+            if (!ssl_release_record(sc, rr, n))
+                return -1;
         }
 #ifndef OPENSSL_NO_SCTP
         /*
@@ -380,7 +381,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
 
     if (rr->type == SSL3_RT_ALERT) {
         unsigned int alert_level, alert_descr;
-        unsigned char *alert_bytes = rr->data + rr->off;
+        const unsigned char *alert_bytes = rr->data + rr->off;
         PACKET alert;
 
         if (!PACKET_buf_init(&alert, alert_bytes, rr->length)
@@ -407,7 +408,8 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
 
         if (alert_level == SSL3_AL_WARNING) {
             sc->s3.warn_alert = alert_descr;
-            ssl_release_record(sc, rr);
+            if (!ssl_release_record(sc, rr, 0))
+                return -1;
 
             sc->rlayer.alert_count++;
             if (sc->rlayer.alert_count == MAX_WARN_ALERT_COUNT) {
@@ -442,7 +444,8 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
                           SSL_AD_REASON_OFFSET + alert_descr,
                           "SSL alert number %d", alert_descr);
             sc->shutdown |= SSL_RECEIVED_SHUTDOWN;
-            ssl_release_record(sc, rr);
+            if (!ssl_release_record(sc, rr, 0))
+                return -1;
             SSL_CTX_remove_session(sc->session_ctx, sc->session);
             return 0;
         } else {
@@ -456,7 +459,8 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
     if (sc->shutdown & SSL_SENT_SHUTDOWN) { /* but we have not received a
                                             * shutdown */
         sc->rwstate = SSL_NOTHING;
-        ssl_release_record(sc, rr);
+        if (!ssl_release_record(sc, rr, 0))
+            return -1;
         return 0;
     }
 
@@ -465,7 +469,8 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
          * We can't process a CCS now, because previous handshake messages
          * are still missing, so just drop it.
          */
-        ssl_release_record(sc, rr);
+        if (!ssl_release_record(sc, rr, 0))
+            return -1;
         goto start;
     }
 
@@ -481,7 +486,8 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
          */
         if (rr->epoch != sc->rlayer.d->r_epoch
                 || rr->length < DTLS1_HM_HEADER_LENGTH) {
-            ssl_release_record(sc, rr);
+            if (!ssl_release_record(sc, rr, 0))
+                return -1;
             goto start;
         }
 
@@ -502,7 +508,8 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
                 if (ossl_statem_in_error(sc))
                     return -1;
             }
-            ssl_release_record(sc, rr);
+            if (!ssl_release_record(sc, rr, 0))
+                return -1;
             if (!(sc->mode & SSL_MODE_AUTO_RETRY)) {
                 if (!sc->rlayer.rrlmethod->unprocessed_read_pending(sc->rlayer.rrl)) {
                     /* no read-ahead left? */
@@ -598,7 +605,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
  * Call this to write data in records of type 'type' It will return <= 0 if
  * not all data has been sent or non-blocking IO.
  */
-int dtls1_write_bytes(SSL_CONNECTION *s, int type, const void *buf,
+int dtls1_write_bytes(SSL_CONNECTION *s, uint8_t type, const void *buf,
                       size_t len, size_t *written)
 {
     int i;
@@ -612,7 +619,7 @@ int dtls1_write_bytes(SSL_CONNECTION *s, int type, const void *buf,
     return i;
 }
 
-int do_dtls1_write(SSL_CONNECTION *sc, int type, const unsigned char *buf,
+int do_dtls1_write(SSL_CONNECTION *sc, uint8_t type, const unsigned char *buf,
                    size_t len, size_t *written)
 {
     int i;
@@ -672,4 +679,15 @@ void dtls1_increment_epoch(SSL_CONNECTION *s, int rw)
     } else {
         s->rlayer.d->w_epoch++;
     }
+}
+
+uint16_t dtls1_get_epoch(SSL_CONNECTION *s, int rw) {
+    uint16_t epoch;
+
+    if (rw & SSL3_CC_READ)
+        epoch = s->rlayer.d->r_epoch;
+    else
+        epoch = s->rlayer.d->w_epoch;
+
+    return epoch;
 }

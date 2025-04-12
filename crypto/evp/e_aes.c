@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -885,8 +885,6 @@ typedef struct {
         /* KMO-AES parameter block - end */
     } kmo;
     unsigned int fc;
-
-    int res;
 } S390X_AES_OFB_CTX;
 
 typedef struct {
@@ -903,8 +901,6 @@ typedef struct {
         /* KMF-AES parameter block - end */
     } kmf;
     unsigned int fc;
-
-    int res;
 } S390X_AES_CFB_CTX;
 
 typedef struct {
@@ -1068,7 +1064,6 @@ static int s390x_aes_ofb_init_key(EVP_CIPHER_CTX *ctx,
     memcpy(cctx->kmo.param.cv, iv, ivlen);
     memcpy(cctx->kmo.param.k, key, keylen);
     cctx->fc = S390X_AES_FC(keylen);
-    cctx->res = 0;
     return 1;
 }
 
@@ -1078,7 +1073,7 @@ static int s390x_aes_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     S390X_AES_OFB_CTX *cctx = EVP_C_DATA(S390X_AES_OFB_CTX, ctx);
     const int ivlen = EVP_CIPHER_CTX_get_iv_length(ctx);
     unsigned char *iv = EVP_CIPHER_CTX_iv_noconst(ctx);
-    int n = cctx->res;
+    int n = ctx->num;
     int rem;
 
     memcpy(cctx->kmo.param.cv, iv, ivlen);
@@ -1111,7 +1106,7 @@ static int s390x_aes_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     }
 
     memcpy(iv, cctx->kmo.param.cv, ivlen);
-    cctx->res = n;
+    ctx->num = n;
     return 1;
 }
 
@@ -1137,7 +1132,6 @@ static int s390x_aes_cfb_init_key(EVP_CIPHER_CTX *ctx,
     if (!enc)
         cctx->fc |= S390X_DECRYPT;
 
-    cctx->res = 0;
     memcpy(cctx->kmf.param.cv, iv, ivlen);
     memcpy(cctx->kmf.param.k, key, keylen);
     return 1;
@@ -1151,7 +1145,7 @@ static int s390x_aes_cfb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     const int enc = EVP_CIPHER_CTX_is_encrypting(ctx);
     const int ivlen = EVP_CIPHER_CTX_get_iv_length(ctx);
     unsigned char *iv = EVP_CIPHER_CTX_iv_noconst(ctx);
-    int n = cctx->res;
+    int n = ctx->num;
     int rem;
     unsigned char tmp;
 
@@ -1197,7 +1191,7 @@ static int s390x_aes_cfb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     }
 
     memcpy(iv, cctx->kmf.param.cv, ivlen);
-    cctx->res = n;
+    ctx->num = n;
     return 1;
 }
 

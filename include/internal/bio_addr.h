@@ -11,6 +11,7 @@
 # define OSSL_BIO_ADDR_H
 
 # include "internal/e_os.h"
+# include "internal/e_winsock.h"
 # include "internal/sockets.h"
 
 # ifndef OPENSSL_NO_SOCK

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2021-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -47,7 +47,7 @@ static int test_do_updatedb(void)
     }
 
     testdate = test_get_argument(2);
-    testdateutc = ossl_asn1_string_to_time_t(testdate);
+    testdateutc = test_asn1_string_to_time_t(testdate);
     if (TEST_time_t_lt(testdateutc, 0)) {
         return 0;
     }

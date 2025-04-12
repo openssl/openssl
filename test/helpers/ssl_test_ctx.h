@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -231,6 +231,9 @@ typedef struct {
     char *expected_session_ticket_app_data;
 
     OSSL_LIB_CTX *libctx;
+
+    /* FIPS version string to check for compatibility */
+    char *fips_version;
 } SSL_TEST_CTX;
 
 const char *ssl_test_result_name(ssl_test_result_t result);

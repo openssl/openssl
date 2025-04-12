@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -65,14 +65,29 @@ void BIO_ADDR_free(BIO_ADDR *ap)
     OPENSSL_free(ap);
 }
 
+int BIO_ADDR_copy(BIO_ADDR *dst, const BIO_ADDR *src)
+{
+    if (dst == NULL || src == NULL)
+        return 0;
+
+    if (src->sa.sa_family == AF_UNSPEC) {
+        BIO_ADDR_clear(dst);
+        return 1;
+    }
+
+    return BIO_ADDR_make(dst, &src->sa);
+}
+
 BIO_ADDR *BIO_ADDR_dup(const BIO_ADDR *ap)
 {
     BIO_ADDR *ret = NULL;
 
     if (ap != NULL) {
         ret = BIO_ADDR_new();
-        if (ret != NULL)
-            BIO_ADDR_make(ret, &ap->sa);
+        if (ret != NULL && !BIO_ADDR_copy(ret, ap)) {
+            BIO_ADDR_free(ret);
+            ret = NULL;
+        }
     }
     return ret;
 }
@@ -89,6 +104,7 @@ void BIO_ADDR_clear(BIO_ADDR *ap)
  */
 int BIO_ADDR_make(BIO_ADDR *ap, const struct sockaddr *sa)
 {
+    memset(ap, 0, sizeof(BIO_ADDR));
     if (sa->sa_family == AF_INET) {
         memcpy(&(ap->s_in), sa, sizeof(struct sockaddr_in));
         return 1;
@@ -556,8 +572,13 @@ int BIO_parse_hostserv(const char *hostserv, char **host, char **service,
             *service = NULL;
         } else {
             *service = OPENSSL_strndup(p, pl);
-            if (*service == NULL)
+            if (*service == NULL) {
+                if (h != NULL && host != NULL) {
+                    OPENSSL_free(*host);
+                    *host = NULL;
+                }
                 return 0;
+            }
         }
     }
 
@@ -759,16 +780,19 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
         /* Windows doesn't seem to have in_addr_t */
 #if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
         static uint32_t he_fallback_address;
-        static const char *he_fallback_addresses[] =
-            { (char *)&he_fallback_address, NULL };
+        static const char *he_fallback_addresses[] = {
+            (char *)&he_fallback_address, NULL
+        };
 #else
         static in_addr_t he_fallback_address;
-        static const char *he_fallback_addresses[] =
-            { (char *)&he_fallback_address, NULL };
+        static const char *he_fallback_addresses[] = {
+            (char *)&he_fallback_address, NULL
+        };
 #endif
-        static const struct hostent he_fallback =
-            { NULL, NULL, AF_INET, sizeof(he_fallback_address),
-              (char **)&he_fallback_addresses };
+        static const struct hostent he_fallback = {
+            NULL, NULL, AF_INET, sizeof(he_fallback_address),
+            (char **)&he_fallback_addresses
+        };
 #if defined(OPENSSL_SYS_VMS) && defined(__DECC)
 # pragma pointer_size restore
 #endif
@@ -784,14 +808,12 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
         if (!RUN_ONCE(&bio_lookup_init, do_bio_lookup_init)) {
             /* Should this be raised inside do_bio_lookup_init()? */
             ERR_raise(ERR_LIB_BIO, ERR_R_CRYPTO_LIB);
-            ret = 0;
-            goto err;
+            return 0;
         }
 
-        if (!CRYPTO_THREAD_write_lock(bio_lookup_lock)) {
-            ret = 0;
-            goto err;
-        }
+        if (!CRYPTO_THREAD_write_lock(bio_lookup_lock))
+            return 0;
+        
         he_fallback_address = INADDR_ANY;
         if (host == NULL) {
             he = &he_fallback;

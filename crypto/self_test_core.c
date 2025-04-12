@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -13,14 +13,12 @@
 #include "internal/cryptlib.h"
 #include "crypto/context.h"
 
-typedef struct self_test_cb_st
-{
+typedef struct self_test_cb_st {
     OSSL_CALLBACK *cb;
     void *cbarg;
 } SELF_TEST_CB;
 
-struct ossl_self_test_st
-{
+struct ossl_self_test_st {
     /* local state variables */
     const char *phase;
     const char *type;

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2005 Nokia. All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -11,6 +11,8 @@
 #include <stdio.h>
 #include <openssl/buffer.h>
 #include "ssl_local.h"
+
+#include "internal/comp.h"
 
 #ifndef OPENSSL_NO_STDIO
 int SSL_SESSION_print_fp(FILE *fp, const SSL_SESSION *x)

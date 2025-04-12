@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -103,9 +103,17 @@ static int b64_free(BIO *a)
     return 1;
 }
 
+/*
+ * Unless `BIO_FLAGS_BASE64_NO_NL` is set, this BIO ignores leading lines that
+ * aren't exclusively composed of valid Base64 characters (followed by <CRLF>
+ * or <LF>).  Once a valid Base64 line is found, `ctx->start` is set to 0 and
+ * lines are processed until EOF or the first line that contains invalid Base64
+ * characters.  In a nod to PEM, lines that start with a '-' (hyphen) are
+ * treated as a soft EOF, rather than an error.
+ */
 static int b64_read(BIO *b, char *out, int outl)
 {
-    int ret = 0, i, ii, j, k, x, n, num, ret_code = 0;
+    int ret = 0, i, ii, j, k, x, n, num, ret_code;
     BIO_B64_CTX *ctx;
     unsigned char *p, *q;
     BIO *next;
@@ -128,7 +136,7 @@ static int b64_read(BIO *b, char *out, int outl)
         EVP_DecodeInit(ctx->base64);
     }
 
-    /* First check if there are bytes decoded/encoded */
+    /* First check if there are buffered bytes already decoded */
     if (ctx->buf_len > 0) {
         OPENSSL_assert(ctx->buf_len >= ctx->buf_off);
         i = ctx->buf_len - ctx->buf_off;
@@ -146,14 +154,17 @@ static int b64_read(BIO *b, char *out, int outl)
         }
     }
 
-    /*
-     * At this point, we have room of outl bytes and an empty buffer, so we
-     * should read in some more.
-     */
+    /* Restore any non-retriable error condition (ctx->cont < 0) */
+    ret_code = ctx->cont < 0 ? ctx->cont : 0;
 
-    ret_code = 0;
+    /*
+     * At this point, we have room of outl bytes and an either an empty buffer,
+     * or outl == 0, so we'll attempt to read in some more.
+     */
     while (outl > 0) {
-        if (ctx->cont <= 0)
+        int again = ctx->cont;
+
+        if (again <= 0)
             break;
 
         i = BIO_read(next, &(ctx->tmp[ctx->tmp_len]),
@@ -164,18 +175,22 @@ static int b64_read(BIO *b, char *out, int outl)
 
             /* Should we continue next time we are called? */
             if (!BIO_should_retry(next)) {
-                ctx->cont = i;
-                /* If buffer empty break */
-                if (ctx->tmp_len == 0)
-                    break;
-                /* Fall through and process what we have */
-                else
-                    i = 0;
+                /* Incomplete final Base64 chunk in the decoder is an error */
+                if (ctx->tmp_len == 0) {
+                    if (EVP_DecodeFinal(ctx->base64, NULL, &num) < 0)
+                        ret_code = -1;
+                    EVP_DecodeInit(ctx->base64);
+                }
+                ctx->cont = ret_code;
             }
-            /* else we retry and add more data to buffer */
-            else
+            if (ctx->tmp_len == 0)
                 break;
+            /* Fall through and process what we have */
+            i = 0;
+            /* But don't loop to top-up even if the buffer is not full! */
+            again = 0;
         }
+
         i += ctx->tmp_len;
         ctx->tmp_len = i;
 
@@ -204,23 +219,23 @@ static int b64_read(BIO *b, char *out, int outl)
                 }
 
                 k = EVP_DecodeUpdate(ctx->base64, ctx->buf, &num, p, q - p);
-                if (k <= 0 && num == 0 && ctx->start) {
-                    EVP_DecodeInit(ctx->base64);
-                } else {
-                    if (p != ctx->tmp) {
-                        i -= p - ctx->tmp;
-                        for (x = 0; x < i; x++)
-                            ctx->tmp[x] = p[x];
-                    }
-                    EVP_DecodeInit(ctx->base64);
-                    ctx->start = 0;
-                    break;
+                EVP_DecodeInit(ctx->base64);
+                if (k <= 0 && num == 0) {
+                    p = q;
+                    continue;
                 }
-                p = q;
+
+                ctx->start = 0;
+                if (p != ctx->tmp) {
+                    i -= p - ctx->tmp;
+                    for (x = 0; x < i; x++)
+                        ctx->tmp[x] = p[x];
+                }
+                break;
             }
 
             /* we fell off the end without starting */
-            if (j == i && num == 0) {
+            if (ctx->start) {
                 /*
                  * Is this is one long chunk?, if so, keep on reading until a
                  * new line.
@@ -231,18 +246,29 @@ static int b64_read(BIO *b, char *out, int outl)
                         ctx->tmp_nl = 1;
                         ctx->tmp_len = 0;
                     }
-                } else if (p != q) { /* finished on a '\n' */
+                } else if (p != q) {
+                    /* Retain partial line at end of buffer */
                     n = q - p;
                     for (ii = 0; ii < n; ii++)
                         ctx->tmp[ii] = p[ii];
                     ctx->tmp_len = n;
+                } else {
+                    /* All we have is newline terminated non-start data */
+                    ctx->tmp_len = 0;
                 }
-                /* else finished on a '\n' */
-                continue;
+                /*
+                 * Try to read more if possible, otherwise we can't make
+                 * progress unless the underlying BIO is retriable and may
+                 * produce more data next time we're called.
+                 */
+                if (again > 0)
+                    continue;
+                else
+                    break;
             } else {
                 ctx->tmp_len = 0;
             }
-        } else if (i < B64_BLOCK_SIZE && ctx->cont > 0) {
+        } else if (i < B64_BLOCK_SIZE && again > 0) {
             /*
              * If buffer isn't full and we can retry then restart to read in
              * more data.
@@ -250,35 +276,9 @@ static int b64_read(BIO *b, char *out, int outl)
             continue;
         }
 
-        if ((BIO_get_flags(b) & BIO_FLAGS_BASE64_NO_NL) != 0) {
-            int z, jj;
-
-            jj = i & ~3;        /* process per 4 */
-            z = EVP_DecodeBlock(ctx->buf, ctx->tmp, jj);
-            if (jj > 2) {
-                if (ctx->tmp[jj - 1] == '=') {
-                    z--;
-                    if (ctx->tmp[jj - 2] == '=')
-                        z--;
-                }
-            }
-            /*
-             * z is now number of output bytes and jj is the number consumed
-             */
-            if (jj != i) {
-                memmove(ctx->tmp, &ctx->tmp[jj], i - jj);
-                ctx->tmp_len = i - jj;
-            }
-            ctx->buf_len = 0;
-            if (z > 0) {
-                ctx->buf_len = z;
-            }
-            i = z;
-        } else {
-            i = EVP_DecodeUpdate(ctx->base64, ctx->buf, &ctx->buf_len,
-                                 ctx->tmp, i);
-            ctx->tmp_len = 0;
-        }
+        i = EVP_DecodeUpdate(ctx->base64, ctx->buf, &ctx->buf_len,
+                             ctx->tmp, i);
+        ctx->tmp_len = 0;
         /*
          * If eof or an error was signalled, then the condition
          * 'ctx->cont <= 0' will prevent b64_read() from reading
@@ -289,7 +289,7 @@ static int b64_read(BIO *b, char *out, int outl)
 
         ctx->buf_off = 0;
         if (i < 0) {
-            ret_code = 0;
+            ret_code = ctx->start ? 0 : i;
             ctx->buf_len = 0;
             break;
         }
@@ -496,6 +496,7 @@ static long b64_ctrl(BIO *b, int cmd, long num, void *ptr)
         }
         /* Finally flush the underlying BIO */
         ret = BIO_ctrl(next, cmd, num, ptr);
+        BIO_copy_next_retry(b);
         break;
 
     case BIO_C_DO_STATE_MACHINE:

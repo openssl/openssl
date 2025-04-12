@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -178,7 +178,7 @@ static ECDSA_SIG *ecdsa_s390x_nistp_sign_sig(const unsigned char *dgst,
             goto ret;
         }
         /*
-         * Generate random k and copy to param param block. RAND_priv_bytes_ex
+         * Generate random k and copy to param block. RAND_priv_bytes_ex
          * is used instead of BN_priv_rand_range or BN_generate_dsa_nonce
          * because kdsa instruction constructs an in-range, invertible nonce
          * internally implementing counter-measures for RNG weakness.

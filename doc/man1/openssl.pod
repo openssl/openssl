@@ -6,12 +6,16 @@ openssl - OpenSSL command line program
 
 =head1 SYNOPSIS
 
+=for openssl duplicate options
+
 B<openssl>
 I<command>
 [ I<options> ... ]
 [ I<parameters> ... ]
 
 B<openssl> B<no->I<XXX> [ I<options> ]
+
+B<openssl> B<-help> | B<-version>
 
 =head1 DESCRIPTION
 
@@ -499,13 +503,33 @@ SM4 Cipher
 Details of which options are available depend on the specific command.
 This section describes some common options with common behavior.
 
-=head2 Common Options
+=head2 Program Options
+
+These options can be specified without a command specified to get help
+or version information.
 
 =over 4
 
 =item B<-help>
 
 Provides a terse summary of all options.
+For more detailed information, each command supports a B<-help> option.
+Accepts B<--help> as well.
+
+=item B<-version>
+
+Provides a terse summary of the B<openssl> program version.
+For more detailed information see L<openssl-version(1)>.
+Accepts B<--version> as well.
+
+=back
+
+=head2 Common Options
+
+=over 4
+
+=item B<-help>
+
 If an option takes an argument, the "type" of argument is also given.
 
 =item B<-->
@@ -584,10 +608,12 @@ When a specific TLS version is required, only that version will be offered or
 accepted.
 Only one specific protocol can be given and it cannot be combined with any of
 the B<no_> options.
+The B<no_*> options do not work with B<s_time> and B<ciphers> commands but work with
+B<s_client> and B<s_server> commands.
 
 =item B<-dtls>, B<-dtls1>, B<-dtls1_2>
 
-These options specify to use DTLS instead of DLTS.
+These options specify to use DTLS instead of TLS.
 With B<-dtls>, clients will negotiate any supported DTLS protocol version.
 Use the B<-dtls1> or B<-dtls1_2> options to support only DTLS1.0 or DTLS1.2,
 respectively.
@@ -657,6 +683,21 @@ See L<provider(7)> for a more detailed description.
 Specifies the search path that is to be used for looking for providers.
 Equivalently, the B<OPENSSL_MODULES> environment variable may be set.
 
+=item B<-provparam> I<[name:]key=value>
+
+Set configuration parameter I<key> to value I<val> in provider I<name>
+(optional), if I<name> is not specified, the setting will be applied to all
+loaded providers.
+This option can be specified multiple times, to set multiple parameters.
+Options that specify nondefault providers to load should precede this option
+if the setting is intended to apply to the to be loaded providers.
+Parameters that only affect provider initialisation must, for now, be set in
+the configuration file, only parameters that are also queried as needed later
+have any affect when set via this interface.
+Only UTF8-string-valued parameters are supported.
+See the documentation of the specific provider and associated algorithms for
+any supported parameters.
+
 =item B<-propquery> I<propq>
 
 Specifies the I<property query clause> to be used when fetching algorithms
@@ -667,113 +708,21 @@ See L<property(7)> for a more detailed description.
 
 =head1 ENVIRONMENT
 
-The OpenSSL library can be take some configuration parameters from the
-environment.  Some of these variables are listed below.  For information
-about specific commands, see L<openssl-engine(1)>,
-L<openssl-rehash(1)>, and L<tsget(1)>.
+The OpenSSL libraries can take some configuration parameters from the
+environment.
+
+For information about all environment variables used by the OpenSSL libraries,
+such as B<OPENSSL_CONF>, B<OPENSSL_MODULES>, and B<OPENSSL_TRACE>,
+see L<openssl-env(7)>.
 
 For information about the use of environment variables in configuration,
 see L<config(5)/ENVIRONMENT>.
 
+For information about specific commands, see L<openssl-engine(1)>,
+L<openssl-rehash(1)>, and L<tsget(1)>.
+
 For information about querying or specifying CPU architecture flags, see
-L<OPENSSL_ia32cap(3)>, and L<OPENSSL_s390xcap(3)>.
-
-For information about all environment variables used by the OpenSSL libraries,
-see L<openssl-env(7)>.
-
-=over 4
-
-=item B<OPENSSL_TRACE=>I<name>[,...]
-
-Enable tracing output of OpenSSL library, by name.
-This output will only make sense if you know OpenSSL internals well.
-Also, it might not give you any output at all
-if OpenSSL was built without tracing support.
-
-The value is a comma separated list of names, with the following
-available:
-
-=over 4
-
-=item B<TRACE>
-
-Traces the OpenSSL trace API itself.
-
-=item B<INIT>
-
-Traces OpenSSL library initialization and cleanup.
-
-=item B<TLS>
-
-Traces the TLS/SSL protocol.
-
-=item B<TLS_CIPHER>
-
-Traces the ciphers used by the TLS/SSL protocol.
-
-=item B<CONF>
-
-Show details about provider and engine configuration.
-
-=item B<ENGINE_TABLE>
-
-The function that is used by RSA, DSA (etc) code to select registered
-ENGINEs, cache defaults and functional references (etc), will generate
-debugging summaries.
-
-=item B<ENGINE_REF_COUNT>
-
-Reference counts in the ENGINE structure will be monitored with a line
-of generated for each change.
-
-=item B<PKCS5V2>
-
-Traces PKCS#5 v2 key generation.
-
-=item B<PKCS12_KEYGEN>
-
-Traces PKCS#12 key generation.
-
-=item B<PKCS12_DECRYPT>
-
-Traces PKCS#12 decryption.
-
-=item B<X509V3_POLICY>
-
-Generates the complete policy tree at various points during X.509 v3
-policy evaluation.
-
-=item B<BN_CTX>
-
-Traces BIGNUM context operations.
-
-=item B<CMP>
-
-Traces CMP client and server activity.
-
-=item B<STORE>
-
-Traces STORE operations.
-
-=item B<DECODER>
-
-Traces decoder operations.
-
-=item B<ENCODER>
-
-Traces encoder operations.
-
-=item B<REF_COUNT>
-
-Traces decrementing certain ASN.1 structure references.
-
-=item B<HTTP>
-
-Traces the HTTP client and server, such as messages being sent and received.
-
-=back
-
-=back
+L<OPENSSL_ia32cap(3)>, L<OPENSSL_s390xcap(3)> and L<OPENSSL_riscvcap(3)>.
 
 =head1 SEE ALSO
 
@@ -851,7 +800,7 @@ that program with no arguments is now equivalent to C<openssl help>.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2022 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2025 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

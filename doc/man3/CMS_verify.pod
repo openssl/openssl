@@ -26,6 +26,8 @@ B<CMS SignedData> structure contained in a structure of type B<CMS_ContentInfo>.
 I<cms> points to the B<CMS_ContentInfo> structure to verify.
 The optional I<certs> parameter refers to a set of certificates
 in which to search for signing certificates.
+It is also used
+as a source of untrusted intermediate CA certificates for chain building.
 I<cms> may contain extra untrusted CA certificates that may be used for
 chain building as well as CRLs that may be used for certificate validation.
 I<store> may be NULL or point to
@@ -38,9 +40,9 @@ I<flags> is an optional set of flags, which can be used to modify the operation.
 CMS_SignedData_verify() is like CMS_verify() except that
 it operates on B<CMS SignedData> input in the I<sd> argument,
 it has some additional parameters described next,
-and on success it returns the verfied content as a memory BIO.
+and on success it returns the verified content as a memory BIO.
 The optional I<extra> parameter may be used to provide untrusted CA
-certificates that may be helpful for chain building in certificate valiation.
+certificates that may be helpful for chain building in certificate validation.
 This list of certificates must not contain duplicates.
 The optional I<crls> parameter may be used to provide extra CRLs.
 Also the list of CRLs must not contain duplicates.
@@ -132,7 +134,7 @@ timestamp).
 
 CMS_verify() returns 1 for a successful verification and 0 if an error occurred.
 
-CMS_SignedData_verify() returns a memory BIO containing the verfied content,
+CMS_SignedData_verify() returns a memory BIO containing the verified content,
 or NULL on error.
 
 CMS_get0_signers() returns all signers or NULL if an error occurred.
@@ -160,7 +162,7 @@ CMS_SignedData_verify() was added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 
-Copyright 2008-2021 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2008-2024 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

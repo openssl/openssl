@@ -8,10 +8,10 @@
 
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
+# Written by Andy Polyakov, @dot-asm, initially for use in the OpenSSL
 # project. The module is, however, dual licensed under OpenSSL and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see https://github.com/dot-asm/cryptogams/.
 # ====================================================================
 #
 # This module implements Poly1305 hash for s390x.
@@ -979,6 +979,6 @@ LONG	(0xffffffff,0x00000000,0xffffffff,0xffffffff);
 LONG	(0xffffffff,0x00000000,0xffffffff,0x00000000);
 LONG	(0x00000000,0x00000000,0xffffffff,0x00000000);
 
-STRING	("\"Poly1305 for s390x, CRYPTOGAMS by <appro\@openssl.org>\"");
+STRING	("\"Poly1305 for s390x, CRYPTOGAMS by <https://github.com/dot-asm>\"");
 
 PERLASM_END();

@@ -93,7 +93,7 @@ numeric identifier, as shown here:
  email.2 = steve@example.org
 
 The syntax of raw extensions is defined by the source code that parses
-the extension but should be documened.
+the extension but should be documented.
 See L</Certificate Policies> for an example of a raw extension.
 
 If an extension type is unsupported, then the I<arbitrary> extension syntax
@@ -173,14 +173,27 @@ Examples:
 =head2 Subject Key Identifier
 
 The SKID extension specification has a value with three choices.
-If the value is the word B<none> then no SKID extension will be included.
-If the value is the word B<hash>, or by default for the B<x509>, B<req>, and
-B<ca> apps, the process specified in RFC 5280 section 4.2.1.2. (1) is followed:
+
+=over 4
+
+=item B<none>
+
+No SKID extension will be included.
+
+=item B<hash>
+
+The process specified in RFC 5280 section 4.2.1.2. (1) is followed:
 The keyIdentifier is composed of the 160-bit SHA-1 hash of the value of the BIT
 STRING subjectPublicKey (excluding the tag, length, and number of unused bits).
 
-Otherwise, the value must be a hex string (possibly with C<:> separating bytes)
-to output directly, however, this is strongly discouraged.
+=item A hex string (possibly with C<:> separating bytes)
+
+The provided value is output directly.
+This choice is strongly discouraged.
+
+=back
+
+By default the B<x509>, B<req>, and B<ca> apps behave as if B<hash> was given.
 
 Example:
 
@@ -195,6 +208,7 @@ or both of them, separated by C<,>.
 Either or both can have the option B<always>,
 indicated by putting a colon C<:> between the value and this option.
 For self-signed certificates the AKID is suppressed unless B<always> is present.
+
 By default the B<x509>, B<req>, and B<ca> apps behave as if B<none> was given
 for self-signed certificates and B<keyid>C<,> B<issuer> otherwise.
 
@@ -591,7 +605,7 @@ L<ASN1_generate_nconf(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2004-2022 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2004-2023 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

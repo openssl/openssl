@@ -1,4 +1,4 @@
-# Copyright 2021 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2021-2023 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -10,7 +10,8 @@ name: Static Analysis
 #Run once a day
 on:
   schedule:
-    - cron:  '20 0 * * *'
+    - cron:  '20 02 * * *'
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -19,14 +20,14 @@ jobs:
   coverity:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: tool download
       run: |
         wget https://scan.coverity.com/download/linux64 \
              --post-data "token=${{ secrets.COVERITY_TOKEN }}&project=openssl%2Fopenssl" \
              --progress=dot:giga -O coverity_tool.tgz
     - name: config
-      run: CC=gcc ./config --banner=Configured --debug enable-fips enable-rc5 enable-md2 enable-ssl3 enable-nextprotoneg enable-ssl3-method enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 no-shared enable-buildtest-c++ enable-external-tests -DPEDANTIC -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+      run: CC=gcc ./config --strict-warnings --banner=Configured --debug enable-fips enable-rc5 enable-md2 enable-ssl3 enable-nextprotoneg enable-ssl3-method enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 no-shared enable-buildtest-c++ enable-external-tests -DPEDANTIC
     - name: config dump
       run: ./configdata.pm --dump
     - name: tool install

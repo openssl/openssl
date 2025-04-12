@@ -79,7 +79,6 @@ typedef struct prov_gcm_ctx_st {
     const PROV_GCM_HW *hw;  /* hardware specific methods */
     GCM128_CONTEXT gcm;
     ctr128_f ctr;
-    const void *ks;
 } PROV_GCM_CTX;
 
 PROV_CIPHER_FUNC(int, GCM_setkey, (PROV_GCM_CTX *ctx, const unsigned char *key,
@@ -126,7 +125,6 @@ int ossl_gcm_cipher_update(PROV_GCM_CTX *ctx, const unsigned char *in,
                            size_t len, unsigned char *out);
 
 # define GCM_HW_SET_KEY_CTR_FN(ks, fn_set_enc_key, fn_block, fn_ctr)            \
-    ctx->ks = ks;                                                              \
     fn_set_enc_key(key, keylen * 8, ks);                                       \
     CRYPTO_gcm128_init(&ctx->gcm, ks, (block128_f)fn_block);                   \
     ctx->ctr = (ctr128_f)fn_ctr;                                               \

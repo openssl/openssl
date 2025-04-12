@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -16,12 +16,13 @@
 #include <assert.h>
 #include <string.h>
 
-#include "internal/cryptlib.h"
 #include <openssl/conf.h>
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 #include <openssl/buffer.h>
 #include <openssl/x509v3.h>
+#include "internal/cryptlib.h"
+#include "crypto/asn1.h"
 #include "crypto/x509.h"
 #include "ext_dat.h"
 #include "x509_local.h"
@@ -299,6 +300,8 @@ static int IPAddressOrRange_cmp(const IPAddressOrRange *a,
             return -1;
         prefixlen_a = length * 8;
         break;
+    default:
+        return -1;
     }
 
     switch (b->type) {
@@ -312,6 +315,8 @@ static int IPAddressOrRange_cmp(const IPAddressOrRange *a,
             return -1;
         prefixlen_b = length * 8;
         break;
+    default:
+        return -1;
     }
 
     if ((r = memcmp(addr_a, addr_b, length)) != 0)
@@ -402,11 +407,11 @@ static int make_addressPrefix(IPAddressOrRange **result, unsigned char *addr,
                               const int prefixlen, const int afilen)
 {
     int bytelen = (prefixlen + 7) / 8, bitlen = prefixlen % 8;
-    IPAddressOrRange *aor = IPAddressOrRange_new();
+    IPAddressOrRange *aor;
 
     if (prefixlen < 0 || prefixlen > (afilen * 8))
         return 0;
-    if (aor == NULL)
+    if ((aor = IPAddressOrRange_new()) == NULL)
         return 0;
     aor->type = IPAddressOrRange_addressPrefix;
     if (aor->u.addressPrefix == NULL &&
@@ -907,6 +912,11 @@ int X509v3_addr_canonize(IPAddrBlocks *addr)
 {
     int i;
 
+    if (addr == NULL) {
+        ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_NULL_ARGUMENT);
+        return 0;
+    }
+
     for (i = 0; i < sk_IPAddressFamily_num(addr); i++) {
         IPAddressFamily *f = sk_IPAddressFamily_value(addr, i);
 
@@ -983,6 +993,10 @@ static void *v2i_IPAddrBlocks(const struct v3_ext_method *method,
          * the other input values.
          */
         if (safi != NULL) {
+            if (val->value == NULL) {
+                ERR_raise(ERR_LIB_X509V3, X509V3_R_MISSING_VALUE);
+                goto err;
+            }
             *safi = strtoul(val->value, &t, 0);
             t += strspn(t, " \t");
             if (*safi > 0xFF || *t++ != ':') {
@@ -1176,6 +1190,8 @@ int X509v3_addr_subset(IPAddrBlocks *a, IPAddrBlocks *b)
     if (b == NULL || X509v3_addr_inherits(a) || X509v3_addr_inherits(b))
         return 0;
     (void)sk_IPAddressFamily_set_cmp_func(b, IPAddressFamily_cmp);
+    sk_IPAddressFamily_sort(b);
+    /* Could sort a here too and get O(|a|) running time instead of O(|a| ln |b|) */
     for (i = 0; i < sk_IPAddressFamily_num(a); i++) {
         IPAddressFamily *fa = sk_IPAddressFamily_value(a, i);
         int j = sk_IPAddressFamily_find(b, fa);
@@ -1257,6 +1273,7 @@ static int addr_validate_path_internal(X509_STORE_CTX *ctx,
             ctx->error = X509_V_ERR_OUT_OF_MEM;
         goto done;
     }
+    sk_IPAddressFamily_sort(child);
 
     /*
      * Now walk up the chain.  No cert may list resources that its
@@ -1282,6 +1299,7 @@ static int addr_validate_path_internal(X509_STORE_CTX *ctx,
         }
         (void)sk_IPAddressFamily_set_cmp_func(x->rfc3779_addr,
                                               IPAddressFamily_cmp);
+        sk_IPAddressFamily_sort(x->rfc3779_addr);
         for (j = 0; j < sk_IPAddressFamily_num(child); j++) {
             IPAddressFamily *fc = sk_IPAddressFamily_value(child, j);
             int k = sk_IPAddressFamily_find(x->rfc3779_addr, fc);

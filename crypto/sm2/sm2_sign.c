@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2024 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2017 Ribose Inc. All Rights Reserved.
  * Ported from Ribose contributions from Botan.
  *
@@ -28,6 +28,7 @@ int ossl_sm2_compute_z_digest(uint8_t *out,
 {
     int rc = 0;
     const EC_GROUP *group = EC_KEY_get0_group(key);
+    const EC_POINT *pubkey = EC_KEY_get0_public_key(key);
     BN_CTX *ctx = NULL;
     EVP_MD_CTX *hash = NULL;
     BIGNUM *p = NULL;
@@ -41,6 +42,12 @@ int ossl_sm2_compute_z_digest(uint8_t *out,
     uint8_t *buf = NULL;
     uint16_t entl = 0;
     uint8_t e_byte = 0;
+
+    /* SM2 Signatures require a public key, check for it */
+    if (pubkey == NULL) {
+        ERR_raise(ERR_LIB_SM2, ERR_R_PASSED_NULL_PARAMETER);
+        goto done;
+    }
 
     hash = EVP_MD_CTX_new();
     if (hash == NULL) {
@@ -119,7 +126,7 @@ int ossl_sm2_compute_z_digest(uint8_t *out,
             || BN_bn2binpad(yG, buf, p_bytes) < 0
             || !EVP_DigestUpdate(hash, buf, p_bytes)
             || !EC_POINT_get_affine_coordinates(group,
-                                                EC_KEY_get0_public_key(key),
+                                                pubkey,
                                                 xA, yA, ctx)
             || BN_bn2binpad(xA, buf, p_bytes) < 0
             || !EVP_DigestUpdate(hash, buf, p_bytes)
@@ -153,7 +160,7 @@ static BIGNUM *sm2_compute_msg_hash(const EVP_MD *digest,
     OSSL_LIB_CTX *libctx = ossl_ec_key_get_libctx(key);
     const char *propq = ossl_ec_key_get0_propq(key);
 
-    if (md_size < 0) {
+    if (md_size <= 0) {
         ERR_raise(ERR_LIB_SM2, SM2_R_INVALID_DIGEST);
         goto done;
     }
@@ -331,17 +338,21 @@ static int sm2_sig_verify(const EC_KEY *key, const ECDSA_SIG *sig,
     OSSL_LIB_CTX *libctx = ossl_ec_key_get_libctx(key);
 
     ctx = BN_CTX_new_ex(libctx);
-    pt = EC_POINT_new(group);
-    if (ctx == NULL || pt == NULL) {
-        ERR_raise(ERR_LIB_SM2, ERR_R_EC_LIB);
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_SM2, ERR_R_BN_LIB);
         goto done;
     }
-
     BN_CTX_start(ctx);
     t = BN_CTX_get(ctx);
     x1 = BN_CTX_get(ctx);
     if (x1 == NULL) {
         ERR_raise(ERR_LIB_SM2, ERR_R_BN_LIB);
+        goto done;
+    }
+
+    pt = EC_POINT_new(group);
+    if (pt == NULL) {
+        ERR_raise(ERR_LIB_SM2, ERR_R_EC_LIB);
         goto done;
     }
 
@@ -390,6 +401,7 @@ static int sm2_sig_verify(const EC_KEY *key, const ECDSA_SIG *sig,
         ret = 1;
 
  done:
+    BN_CTX_end(ctx);
     EC_POINT_free(pt);
     BN_CTX_free(ctx);
     return ret;
@@ -448,6 +460,11 @@ int ossl_sm2_internal_sign(const unsigned char *dgst, int dgstlen,
     ECDSA_SIG *s = NULL;
     int sigleni;
     int ret = -1;
+
+    if (sig == NULL) {
+        ERR_raise(ERR_LIB_SM2, ERR_R_PASSED_NULL_PARAMETER);
+        goto done;
+    }
 
     e = BN_bin2bn(dgst, dgstlen, NULL);
     if (e == NULL) {

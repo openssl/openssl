@@ -1,11 +1,11 @@
-# Copyright 2021 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2021-2024 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
-name: FIPS Checksums
+name: FIPS Check and ABIDIFF
 on: [pull_request]
 
 permissions:
@@ -26,7 +26,7 @@ jobs:
           mkdir ./build
           mkdir ./source
           mkdir ./artifact
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           repository: ${{ github.event.pull_request.base.repo.full_name }}
           ref: ${{ github.event.pull_request.base.ref }}
@@ -43,7 +43,7 @@ jobs:
       - name: make fips-checksums pristine
         run: make fips-checksums
         working-directory: ./build-pristine
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           path: source
       - name: config
@@ -69,7 +69,51 @@ jobs:
       - name: save PR number
         run: echo ${{ github.event.number }} > ./artifact/pr_num
       - name: save artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: fips_checksum
+          path: artifact/
+
+  compute-abidiff:
+    runs-on: ubuntu-latest
+    env:
+      BUILD_OPTS: -g --strict-warnings enable-ktls enable-fips enable-egd enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-sctp enable-ssl3 enable-ssl3-method enable-trace enable-zlib enable-zstd
+    steps:
+      - name: create build dirs
+        run: |
+          mkdir ./build-pristine
+          mkdir ./source-pristine
+          mkdir ./build
+          mkdir ./source
+          mkdir ./artifact
+      - name: install extra config support
+        run: sudo apt-get -y install libsctp-dev abigail-tools libzstd-dev zstd
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ github.event.pull_request.base.repo.full_name }}
+          ref: ${{ github.event.pull_request.base.ref }}
+          path: source-pristine
+      - name: config pristine
+        run: ../source-pristine/config --banner=Configured $BUILD_OPTS && perl configdata.pm --dump
+        working-directory: ./build-pristine
+      - name: make pristine
+        run: make -s -j4
+        working-directory: ./build-pristine
+      - uses: actions/checkout@v4
+        with:
+          path: source
+      - name: config
+        run: ../source/config --banner=Configured $BUILD_OPTS && perl configdata.pm --dump
+        working-directory: ./build
+      - name: make
+        run: make -s -j4
+        working-directory: ./build
+      - name: abidiff
+        run: abidiff --headers-dir1 build-pristine/include/openssl --headers-dir2 build/include/openssl --drop-private-types ./build-pristine/libcrypto.so ./build/libcrypto.so && abidiff --headers-dir1 build-pristine/include/openssl --headers-dir2 build/include/openssl --drop-private-types ./build-pristine/libssl.so ./build/libssl.so && touch ./artifact/abi_unchanged || ( touch ./artifact/abi_changed ; echo ABI CHANGED )
+      - name: save PR number
+        run: echo ${{ github.event.number }} > ./artifact/pr_num
+      - name: save artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: abidiff
           path: artifact/

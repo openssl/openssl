@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2024 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2004-2014, Akamai Technologies. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -65,6 +65,18 @@ VirtualLock(
 # endif
 # include <sys/stat.h>
 # include <fcntl.h>
+#endif
+#ifndef HAVE_MADVISE
+# if defined(MADV_DONTDUMP)
+#  define HAVE_MADVISE 1
+# else
+#  define HAVE_MADVISE 0
+# endif
+#endif
+#if HAVE_MADVISE
+# undef NO_MADVISE
+#else
+# define NO_MADVISE
 #endif
 
 #define CLEAR(p, s) OPENSSL_cleanse(p, s)
@@ -248,11 +260,17 @@ int CRYPTO_secure_allocated(const void *ptr)
 
 size_t CRYPTO_secure_used(void)
 {
+    size_t ret = 0;
+
 #ifndef OPENSSL_NO_SECURE_MEMORY
-    return secure_mem_used;
-#else
-    return 0;
+    if (!CRYPTO_THREAD_read_lock(sec_malloc_lock))
+        return 0;
+
+    ret = secure_mem_used;
+
+    CRYPTO_THREAD_unlock(sec_malloc_lock);
 #endif /* OPENSSL_NO_SECURE_MEMORY */
+    return ret;
 }
 
 size_t CRYPTO_secure_actual_size(void *ptr)
@@ -303,14 +321,12 @@ size_t CRYPTO_secure_actual_size(void *ptr)
     ((char*)(p) >= (char*)sh.freelist && (char*)(p) < (char*)&sh.freelist[sh.freelist_size])
 
 
-typedef struct sh_list_st
-{
+typedef struct sh_list_st {
     struct sh_list_st *next;
     struct sh_list_st **p_next;
 } SH_LIST;
 
-typedef struct sh_st
-{
+typedef struct sh_st {
     char* map_result;
     size_t map_size;
     char *arena;
@@ -567,7 +583,7 @@ static int sh_init(size_t size, size_t minsize)
     if (mlock(sh.arena, sh.arena_size) < 0)
         ret = 2;
 #endif
-#ifdef MADV_DONTDUMP
+#ifndef NO_MADVISE
     if (madvise(sh.arena, sh.arena_size, MADV_DONTDUMP) < 0)
         ret = 2;
 #endif

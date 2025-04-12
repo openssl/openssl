@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -17,9 +17,11 @@
 #include <openssl/sha.h>
 #include <openssl/rand.h>
 #include "crypto/ecx.h"
+#include "crypto/rand.h"
 #include "internal/hpke_util.h"
 #include "internal/packet.h"
 #include "internal/nelem.h"
+#include "internal/common.h"
 
 /*
  * Delimiter used in OSSL_HPKE_str2suite
@@ -66,12 +68,14 @@ static const OSSL_HPKE_KEM_INFO hpke_kem_tab[] = {
       LN_sha384, SHA384_DIGEST_LENGTH, 97, 97, 48, 0xFF },
     { OSSL_HPKE_KEM_ID_P521, "EC", OSSL_HPKE_KEMSTR_P521,
       LN_sha512, SHA512_DIGEST_LENGTH, 133, 133, 66, 0x01 },
+# ifndef OPENSSL_NO_ECX
     { OSSL_HPKE_KEM_ID_X25519, OSSL_HPKE_KEMSTR_X25519, NULL,
       LN_sha256, SHA256_DIGEST_LENGTH,
       X25519_KEYLEN, X25519_KEYLEN, X25519_KEYLEN, 0x00 },
     { OSSL_HPKE_KEM_ID_X448, OSSL_HPKE_KEMSTR_X448, NULL,
       LN_sha512, SHA512_DIGEST_LENGTH,
       X448_KEYLEN, X448_KEYLEN, X448_KEYLEN, 0x00 }
+# endif
 #else
     { OSSL_HPKE_KEM_ID_RESERVED, NULL, NULL, NULL, 0, 0, 0, 0, 0x00 }
 #endif
@@ -112,7 +116,7 @@ static const OSSL_HPKE_KDF_INFO hpke_kdf_tab[] = {
  * others above.
  *
  * The function to use these is ossl_hpke_str2suite() further down
- * this file and shouln't need modification so long as the table
+ * this file and shouldn't need modification so long as the table
  * sizes (i.e. allow exactly 4 synonyms) don't change.
  */
 static const synonymttab_t kemstrtab[] = {
@@ -122,10 +126,12 @@ static const synonymttab_t kemstrtab[] = {
      {OSSL_HPKE_KEMSTR_P384, "0x11", "0x11", "17" }},
     {OSSL_HPKE_KEM_ID_P521,
      {OSSL_HPKE_KEMSTR_P521, "0x12", "0x12", "18" }},
+# ifndef OPENSSL_NO_ECX
     {OSSL_HPKE_KEM_ID_X25519,
      {OSSL_HPKE_KEMSTR_X25519, "0x20", "0x20", "32" }},
     {OSSL_HPKE_KEM_ID_X448,
      {OSSL_HPKE_KEMSTR_X448, "0x21", "0x21", "33" }}
+# endif
 };
 static const synonymttab_t kdfstrtab[] = {
     {OSSL_HPKE_KDF_ID_HKDF_SHA256,
@@ -185,12 +191,12 @@ const OSSL_HPKE_KEM_INFO *ossl_HPKE_KEM_INFO_find_id(uint16_t kemid)
 
 const OSSL_HPKE_KEM_INFO *ossl_HPKE_KEM_INFO_find_random(OSSL_LIB_CTX *ctx)
 {
-    unsigned char rval = 0;
-    int sz = OSSL_NELEM(hpke_kem_tab);
+    uint32_t rval = 0;
+    int err = 0;
+    size_t sz = OSSL_NELEM(hpke_kem_tab);
 
-    if (RAND_bytes_ex(ctx, &rval, sizeof(rval), 0) <= 0)
-        return NULL;
-    return &hpke_kem_tab[rval % sz];
+    rval = ossl_rand_uniform_uint32(ctx, sz, &err);
+    return (err == 1 ? NULL : &hpke_kem_tab[rval]);
 }
 
 const OSSL_HPKE_KDF_INFO *ossl_HPKE_KDF_INFO_find_id(uint16_t kdfid)
@@ -207,12 +213,12 @@ const OSSL_HPKE_KDF_INFO *ossl_HPKE_KDF_INFO_find_id(uint16_t kdfid)
 
 const OSSL_HPKE_KDF_INFO *ossl_HPKE_KDF_INFO_find_random(OSSL_LIB_CTX *ctx)
 {
-    unsigned char rval = 0;
-    int sz = OSSL_NELEM(hpke_kdf_tab);
+    uint32_t rval = 0;
+    int err = 0;
+    size_t sz = OSSL_NELEM(hpke_kdf_tab);
 
-    if (RAND_bytes_ex(ctx, &rval, sizeof(rval), 0) <= 0)
-        return NULL;
-    return &hpke_kdf_tab[rval % sz];
+    rval = ossl_rand_uniform_uint32(ctx, sz, &err);
+    return (err == 1 ? NULL : &hpke_kdf_tab[rval]);
 }
 
 const OSSL_HPKE_AEAD_INFO *ossl_HPKE_AEAD_INFO_find_id(uint16_t aeadid)
@@ -229,13 +235,13 @@ const OSSL_HPKE_AEAD_INFO *ossl_HPKE_AEAD_INFO_find_id(uint16_t aeadid)
 
 const OSSL_HPKE_AEAD_INFO *ossl_HPKE_AEAD_INFO_find_random(OSSL_LIB_CTX *ctx)
 {
-    unsigned char rval = 0;
+    uint32_t rval = 0;
+    int err = 0;
     /* the minus 1 below is so we don't pick the EXPORTONLY codepoint */
-    int sz = OSSL_NELEM(hpke_aead_tab) - 1;
+    size_t sz = OSSL_NELEM(hpke_aead_tab) - 1;
 
-    if (RAND_bytes_ex(ctx, &rval, sizeof(rval), 0) <= 0)
-        return NULL;
-    return &hpke_aead_tab[rval % sz];
+    rval = ossl_rand_uniform_uint32(ctx, sz, &err);
+    return (err == 1 ? NULL : &hpke_aead_tab[rval]);
 }
 
 static int kdf_derive(EVP_KDF_CTX *kctx,

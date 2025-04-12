@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2024 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -8,10 +8,10 @@
 
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
+# Written by Andy Polyakov, @dot-asm, initially for use in the OpenSSL
 # project. The module is, however, dual licensed under OpenSSL and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see https://github.com/dot-asm/cryptogams/.
 # ====================================================================
 #
 # October 2015
@@ -170,7 +170,9 @@ $code.=<<___;
 .align	5
 .ChaCha20_ctr32_vsx_p10:
 	${UCMP}i $len,255
-	bgt 	ChaCha20_ctr32_vsx_8x
+	ble	.Not_greater_than_8x
+	b	ChaCha20_ctr32_vsx_8x
+.Not_greater_than_8x:
 	$STU	$sp,-$FRAME($sp)
 	mflr	r0
 	li	r10,`15+$LOCALS+64`
@@ -785,7 +787,7 @@ $code.=<<___;
 
 	vxxlor	        $xv6  ,$xb6,$xb6                # save vr23, so we get 8 regs
 	vxxlor	        $xv7  ,$xb7,$xb7                # save vr23, so we get 8 regs
-	be?vxxlorc      $beperm,$xv26,$xv26             # copy back the the beperm.
+	be?vxxlorc      $beperm,$xv26,$xv26             # copy back the beperm.
 
 	vxxlorc	   @K[0],$xv0,$xv0                #27
 	vxxlorc	   @K[1],$xv1,$xv1 		  #24
@@ -1030,10 +1032,10 @@ $code.=<<___;
 	vadduwm	$xcn0,$xcn4,@K[2]
 	vadduwm	$xdn0,$xdn4,@K[3]
 
-	be?vperm $xan0,$xa4,$xa4,$beperm
-	be?vperm $xbn0,$xb4,$xb4,$beperm
-	be?vperm $xcn0,$xcn4,$xcn4,$beperm
-	be?vperm $xdn0,$xdn4,$xdn4,$beperm
+	be?vperm $xan0,$xan0,$xan0,$beperm
+	be?vperm $xbn0,$xbn0,$xbn0,$beperm
+	be?vperm $xcn0,$xcn0,$xcn0,$beperm
+	be?vperm $xdn0,$xdn0,$xdn0,$beperm
 
 	${UCMP}i $len,0x40
 	blt	Ltail_vsx_8x_1
@@ -1259,7 +1261,7 @@ $code.=<<___;
 	.long	0x6b206574,0x6b206574,0x6b206574,0x6b206574
 	.long	0,1,2,3
         .long   0x03020100,0x07060504,0x0b0a0908,0x0f0e0d0c
-.asciz  "ChaCha20 for PowerPC/AltiVec, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz  "ChaCha20 for PowerPC/AltiVec, CRYPTOGAMS by <https://github.com/dot-asm>"
 .align	2
 ___
 

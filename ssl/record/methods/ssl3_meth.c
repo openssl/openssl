@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,6 +9,7 @@
 
 #include <openssl/evp.h>
 #include <openssl/core_names.h>
+#include "internal/ssl3_cbc.h"
 #include "../../ssl_local.h"
 #include "../record_local.h"
 #include "recmethod_local.h"
@@ -63,7 +64,11 @@ static int ssl3_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
         return OSSL_RECORD_RETURN_FATAL;
     }
 
-    if (EVP_CIPHER_get0_provider(ciph) != NULL
+    /*
+     * The cipher we actually ended up using in the EVP_CIPHER_CTX may be
+     * different to that in ciph if we have an ENGINE in use
+     */
+    if (EVP_CIPHER_get0_provider(EVP_CIPHER_CTX_get0_cipher(ciph_ctx)) != NULL
             && !ossl_set_tls_provider_parameters(rl, ciph_ctx, ciph, md)) {
         /* ERR_raise already called */
         return OSSL_RECORD_RETURN_FATAL;
@@ -113,6 +118,9 @@ static int ssl3_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *inrecs,
 
     l = rec->length;
     bs = EVP_CIPHER_CTX_get_block_size(ds);
+
+    if (bs == 0)
+        return 0;
 
     /* COMPRESS */
 
@@ -303,7 +311,7 @@ static int ssl3_mac(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec, unsigned char *md
     return 1;
 }
 
-struct record_functions_st ssl_3_0_funcs = {
+const struct record_functions_st ssl_3_0_funcs = {
     ssl3_set_crypto_state,
     ssl3_cipher,
     ssl3_mac,

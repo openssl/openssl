@@ -3,7 +3,7 @@
 =head1 NAME
 
 EVP_PKEY_decapsulate_init, EVP_PKEY_auth_decapsulate_init, EVP_PKEY_decapsulate
-- Key decapsulation using a private key algorithm
+- Key decapsulation using a KEM algorithm with a private key
 
 =head1 SYNOPSIS
 
@@ -13,7 +13,7 @@ EVP_PKEY_decapsulate_init, EVP_PKEY_auth_decapsulate_init, EVP_PKEY_decapsulate
  int EVP_PKEY_auth_decapsulate_init(EVP_PKEY_CTX *ctx, EVP_PKEY *authpub,
                                    const OSSL_PARAM params[]);
  int EVP_PKEY_decapsulate(EVP_PKEY_CTX *ctx,
-                          unsigned char *secret, size_t *secretlen,
+                          unsigned char *unwrapped, size_t *unwrappedlen,
                           const unsigned char *wrapped, size_t wrappedlen);
 
 =head1 DESCRIPTION
@@ -21,22 +21,42 @@ EVP_PKEY_decapsulate_init, EVP_PKEY_auth_decapsulate_init, EVP_PKEY_decapsulate
 The EVP_PKEY_decapsulate_init() function initializes a private key algorithm
 context I<ctx> for a decapsulation operation and then sets the I<params>
 on the context in the same way as calling L<EVP_PKEY_CTX_set_params(3)>.
+Note that I<ctx> usually is produced using L<EVP_PKEY_CTX_new_from_pkey(3)>,
+specifying the private key to use.
 
-The EVP_PKEY_auth_decapsulate_init() function is similiar to
+The EVP_PKEY_auth_decapsulate_init() function is similar to
 EVP_PKEY_decapsulate_init() but also passes an I<authpub> authentication public
 key that is used during decapsulation.
 
 The EVP_PKEY_decapsulate() function performs a private key decapsulation
 operation using I<ctx>. The data to be decapsulated is specified using the
-I<wrapped> and I<wrappedlen> parameters.
-If I<secret> is I<NULL> then the maximum size of the output secret buffer
-is written to the I<*secretlen> parameter. If I<secret> is not B<NULL> and the
-call is successful then the decapsulated secret data is written to I<secret> and
-the amount of data written to I<secretlen>.
+I<wrapped> and I<wrappedlen> parameters (which must both non-NULL).
+
+The I<wrapped> parameter is an output argument, to which the decapsulated
+shared secret is written.
+The shared secret may not match the peer's value even when decapsulation
+returns success.
+Instead, the shared secret must be used to derive a key that is used to
+authenticate data subsequently received from the peer.
+If I<unwrapped> is NULL then the size of the output shared secret buffer is
+written to I<*unwrappedlen> and no decapsulation is performed, this makes it
+possible to determine the required buffer size at run time.  Otherwise, the
+decapsulated secret data is written to I<unwrapped> and the length of shared
+secret is written to I<*unwrappedlen>.
+
+Note that the value pointed to by I<unwrappedlen> (which must NOT be B<NULL>)
+must be initialised to the length of I<unwrapped>, so that the call can
+validate it is of sufficient size to hold the result of the operation.
+
+Absent detailed prior knowledge of the internals of the specific KEM
+algorithm, callers SHOULD NOT assume that the returned shared secret
+is necessarily of the maximum possible length.
+The length returned via I<*unwrappedlen> SHOULD be used to determine the actual
+length of the output.
 
 =head1 NOTES
 
-After the call to EVP_PKEY_decapsulate_init() algorithm specific parameters
+After the call to EVP_PKEY_decapsulate_init() algorithm-specific parameters
 for the operation may be set or modified using L<EVP_PKEY_CTX_set_params(3)>.
 
 =head1 RETURN VALUES
@@ -62,7 +82,7 @@ Decapsulate data using RSA:
  unsigned char *secret = NULL;;
 
  ctx = EVP_PKEY_CTX_new_from_pkey(libctx, rsa_priv_key, NULL);
- if (ctx = NULL)
+ if (ctx == NULL)
      /* Error */
  if (EVP_PKEY_decapsulate_init(ctx, NULL) <= 0)
      /* Error */
@@ -86,9 +106,14 @@ Decapsulate data using RSA:
 
 =head1 SEE ALSO
 
-L<EVP_PKEY_CTX_new(3)>,
+L<EVP_PKEY_CTX_new_from_pkey(3)>,
 L<EVP_PKEY_encapsulate(3)>,
-L<EVP_KEM-RSA(7)>, L<EVP_KEM-X25519(7)>, L<EVP_KEM-EC(7)>
+L<EVP_KEM-RSA(7)>,
+L<EVP_KEM-X25519(7)>,
+L<EVP_KEM-EC(7)>,
+L<EVP_KEM-ML-KEM-512(7)>,
+L<EVP_KEM-ML-KEM-768(7)>,
+L<EVP_KEM-ML-KEM-1024(7)>
 
 =head1 HISTORY
 
@@ -97,9 +122,11 @@ in OpenSSL 3.0.
 
 The function EVP_PKEY_auth_decapsulate_init() was added in OpenSSL 3.2.
 
+Support for B<ML-KEM> was added in OpenSSL 3.5.
+
 =head1 COPYRIGHT
 
-Copyright 2020-2022 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020-2025 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

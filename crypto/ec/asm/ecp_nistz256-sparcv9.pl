@@ -8,10 +8,10 @@
 
 
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
+# Written by Andy Polyakov, @dot-asm, initially for use in the OpenSSL
 # project. The module is, however, dual licensed under OpenSSL and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see https://github.com/dot-asm/cryptogams/.
 # ====================================================================
 #
 # ECP_NISTZ256 module for SPARCv9.
@@ -111,7 +111,7 @@ $code.=<<___;
 .long	0xfffffffe, 0xffffffff, 0xfffffffd, 0x00000004
 .Lone:
 .long	1,0,0,0,0,0,0,0
-.asciz	"ECP_NISTZ256 for SPARCv9, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"ECP_NISTZ256 for SPARCv9, CRYPTOGAMS by <https://github.com/dot-asm>"
 
 ! void	ecp_nistz256_to_mont(BN_ULONG %i0[8],const BN_ULONG %i1[8]);
 .globl	ecp_nistz256_to_mont

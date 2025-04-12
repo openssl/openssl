@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -98,7 +98,7 @@ static int helper_init(struct helper *h, size_t num_pkts)
     h->have_statm = 1;
 
     /* Initialise congestion controller. */
-    h->ccdata = ossl_cc_dummy_method.new(NULL, NULL, NULL);
+    h->ccdata = ossl_cc_dummy_method.new(fake_now, NULL);
     if (!TEST_ptr(h->ccdata))
         goto err;
 
@@ -309,15 +309,15 @@ enum {
 };
 
 static int test_probe_counts(const OSSL_ACKM_PROBE_INFO *p,
-                             uint32_t handshake,
-                             uint32_t padded_initial,
+                             uint32_t anti_deadlock_handshake,
+                             uint32_t anti_deadlock_initial,
                              uint32_t pto_initial,
                              uint32_t pto_handshake,
                              uint32_t pto_app)
 {
-    if (!TEST_uint_eq(p->handshake, handshake))
+    if (!TEST_uint_eq(p->anti_deadlock_handshake, anti_deadlock_handshake))
         return 0;
-    if (!TEST_uint_eq(p->padded_initial, padded_initial))
+    if (!TEST_uint_eq(p->anti_deadlock_initial, anti_deadlock_initial))
         return 0;
     if (!TEST_uint_eq(p->pto[QUIC_PN_SPACE_INITIAL], pto_initial))
         return 0;
@@ -415,7 +415,7 @@ static int test_tx_ack_case_actual(int tidx, int space, int mode)
         }
     } else if (mode == MODE_PTO) {
         OSSL_TIME deadline = ossl_ackm_get_loss_detection_deadline(h.ackm);
-        OSSL_ACKM_PROBE_INFO probe = {0};
+        OSSL_ACKM_PROBE_INFO probe;
 
         if (!TEST_int_eq(ossl_time_compare(deadline, loss_detection_deadline), 0))
             goto err;
@@ -425,9 +425,7 @@ static int test_tx_ack_case_actual(int tidx, int space, int mode)
             goto err;
 
         /* Should not have any probe requests yet. */
-        if (!TEST_int_eq(ossl_ackm_get_probe_request(h.ackm, 0, &probe), 1))
-            goto err;
-
+        probe = *ossl_ackm_get0_probe_request(h.ackm);
         if (!TEST_int_eq(test_probe_counts(&probe, 0, 0, 0, 0, 0), 1))
             goto err;
 
@@ -447,8 +445,9 @@ static int test_tx_ack_case_actual(int tidx, int space, int mode)
 
         /* Should have a probe request. Not cleared by first call. */
         for (i = 0; i < 3; ++i) {
-            if (!TEST_int_eq(ossl_ackm_get_probe_request(h.ackm, i > 0, &probe), 1))
-                goto err;
+            probe = *ossl_ackm_get0_probe_request(h.ackm);
+            if (i > 0)
+                memset(ossl_ackm_get0_probe_request(h.ackm), 0, sizeof(probe));
 
             if (i == 2) {
                 if (!TEST_int_eq(test_probe_counts(&probe, 0, 0, 0, 0, 0), 1))
@@ -619,7 +618,8 @@ enum {
     RX_OPK_CHECK_STATE,      /* check is_desired/deadline */
     RX_OPK_CHECK_ACKS,       /* check ACK ranges */
     RX_OPK_TX,               /* TX packet */
-    RX_OPK_RX_ACK            /* RX ACK frame */
+    RX_OPK_RX_ACK,           /* RX ACK frame */
+    RX_OPK_SKIP_IF_PN_SPACE  /* skip for a given PN space */
 };
 
 struct rx_test_op {
@@ -686,6 +686,12 @@ struct rx_test_op {
       0, 0, NULL, 0, 0                                              \
     },
 
+#define RX_OP_SKIP_IF_PN_SPACE(pn_space)                            \
+    {                                                               \
+      RX_OPK_SKIP_IF_PN_SPACE, 0, (pn_space), 0,                    \
+      0, 0, NULL, 0, 0                                              \
+    },
+
 #define RX_OP_END                                                   \
     { RX_OPK_END }
 
@@ -716,7 +722,7 @@ static const struct rx_test_op rx_script_1[] = {
     RX_OP_END
 };
 
-/* RX 2. Simple Test with ACK Not Yet Desired (Packet Threshold) */
+/* RX 2. Simple Test with ACK Not Yet Desired (Packet Threshold) (1-RTT) */
 static const OSSL_QUIC_ACK_RANGE rx_ack_ranges_2a[] = {
     { 0, 0 }
 };
@@ -726,6 +732,14 @@ static const OSSL_QUIC_ACK_RANGE rx_ack_ranges_2b[] = {
 };
 
 static const struct rx_test_op rx_script_2[] = {
+    /*
+     * We skip this for INITIAL/HANDSHAKE and use a separate version
+     * (rx_script_4) for those spaces as those spaces should not delay ACK
+     * generation, so a different RX_OP_CHECK_STATE test is needed.
+     */
+    RX_OP_SKIP_IF_PN_SPACE(QUIC_PN_SPACE_INITIAL)
+    RX_OP_SKIP_IF_PN_SPACE(QUIC_PN_SPACE_HANDSHAKE)
+
     RX_OP_CHECK_STATE   (0, 0, 0)   /* no threshold yet */
     RX_OP_CHECK_PROC    (0, 0, 3)
 
@@ -827,10 +841,57 @@ static const struct rx_test_op rx_script_3[] = {
     RX_OP_END
 };
 
+/*
+ * RX 4. Simple Test with ACK Not Yet Desired (Packet Threshold)
+ * (Initial/Handshake)
+ */
+static const OSSL_QUIC_ACK_RANGE rx_ack_ranges_4a[] = {
+    { 0, 1 }
+};
+
+static const struct rx_test_op rx_script_4[] = {
+    /* The application PN space is tested in rx_script_2. */
+    RX_OP_SKIP_IF_PN_SPACE(QUIC_PN_SPACE_APP)
+
+    RX_OP_CHECK_STATE   (0, 0, 0)   /* no threshold yet */
+    RX_OP_CHECK_PROC    (0, 0, 3)
+
+    /* First packet always generates an ACK so get it out of the way. */
+    RX_OP_PKT           (0, 0, 1)
+    RX_OP_CHECK_UNPROC  (0, 0, 1)
+    RX_OP_CHECK_PROC    (0, 1, 1)
+    RX_OP_CHECK_STATE   (0, 1, 0)   /* first packet always causes ACK */
+    RX_OP_CHECK_ACKS    (0, rx_ack_ranges_2a) /* clears packet counter */
+    RX_OP_CHECK_STATE   (0, 0, 0)   /* desired state should have been cleared */
+
+    /*
+     * Second packet should cause ACK-desired state because we are
+     * INITIAL/HANDSHAKE (RFC 9000 s. 13.2.1)
+     */
+    RX_OP_PKT           (0, 1, 1)   /* just one packet, threshold is 2 */
+    RX_OP_CHECK_UNPROC  (0, 0, 2)
+    RX_OP_CHECK_PROC    (0, 2, 1)
+    RX_OP_CHECK_STATE   (0, 1, 1)
+    RX_OP_CHECK_ACKS    (0, rx_ack_ranges_4a)
+    RX_OP_CHECK_STATE   (0, 0, 0)   /* desired state should have been cleared */
+
+    /* At this point we would generate e.g. a packet with an ACK. */
+    RX_OP_TX            (0, 0, 1)   /* ACKs all */
+    RX_OP_CHECK_ACKS    (0, rx_ack_ranges_4a) /* not provably ACKed yet */
+    RX_OP_RX_ACK        (0, 0, 1)   /* TX'd packet is ACK'd */
+
+    RX_OP_CHECK_NO_ACKS (0)         /* nothing more to ACK */
+    RX_OP_CHECK_UNPROC  (0, 0, 2)   /* still unprocessable */
+    RX_OP_CHECK_PROC    (0, 2, 1)   /* still processable */
+
+    RX_OP_END
+};
+
 static const struct rx_test_op *const rx_test_scripts[] = {
     rx_script_1,
     rx_script_2,
-    rx_script_3
+    rx_script_3,
+    rx_script_4
 };
 
 static void on_ack_deadline_callback(OSSL_TIME deadline,
@@ -851,6 +912,7 @@ static int test_rx_ack_actual(int tidx, int space)
     struct pkt_info *pkts = NULL;
     OSSL_ACKM_TX_PKT *txs = NULL, *tx;
     OSSL_TIME ack_deadline[QUIC_PN_SPACE_NUM];
+    size_t opn = 0;
 
     for (i = 0; i < QUIC_PN_SPACE_NUM; ++i)
         ack_deadline[i] = ossl_time_infinite();
@@ -881,7 +943,7 @@ static int test_rx_ack_actual(int tidx, int space)
         goto err;
 
     /* Run script. */
-    for (s = script; s->kind != RX_OPK_END; ++s) {
+    for (s = script; s->kind != RX_OPK_END; ++s, ++opn) {
         fake_time = ossl_time_add(fake_time,
                                   ossl_ticks2time(s->time_advance));
         switch (s->kind) {
@@ -993,6 +1055,14 @@ static int test_rx_ack_actual(int tidx, int space)
 
             break;
 
+        case RX_OPK_SKIP_IF_PN_SPACE:
+            if (space == (int)s->pn) {
+                testresult = 1;
+                goto err;
+            }
+
+            break;
+
         default:
             goto err;
         }
@@ -1000,6 +1070,9 @@ static int test_rx_ack_actual(int tidx, int space)
 
     testresult = 1;
 err:
+    if (!testresult)
+        TEST_error("error in ACKM RX script %d, op %zu", tidx + 1, opn + 1);
+
     helper_destroy(&h);
     OPENSSL_free(pkts);
     OPENSSL_free(txs);

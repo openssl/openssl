@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2012-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -157,7 +157,8 @@ static int set_altname(X509 *crt, ...)
         default:
             abort();
         }
-        sk_GENERAL_NAME_push(gens, gen);
+        if (!sk_GENERAL_NAME_push(gens, gen))
+            goto out;
         gen = NULL;
     }
     if (!X509_add1_ext_i2d(crt, NID_subject_alt_name, gens, 0, 0))
@@ -644,6 +645,14 @@ static struct gennamedata {
             0xb7, 0x09, 0x02, 0x02
         },
         15
+    }, {
+        /*
+         * Regression test for CVE-2023-0286.
+         */
+        {
+            0xa3, 0x00
+        },
+        2
     }
 };
 

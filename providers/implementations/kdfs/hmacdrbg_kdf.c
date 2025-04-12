@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -183,8 +183,9 @@ static int hmac_drbg_kdf_set_ctx_params(void *vctx,
     const OSSL_PARAM *p;
     void *ptr = NULL;
     size_t size = 0;
+    int md_size;
 
-    if (params == NULL)
+    if (ossl_param_is_empty(params))
         return 1;
 
     p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_HMACDRBG_ENTROPY);
@@ -216,11 +217,14 @@ static int hmac_drbg_kdf_set_ctx_params(void *vctx,
         /* Confirm digest is allowed. Allow all digests that are not XOF */
         md = ossl_prov_digest_md(&drbg->digest);
         if (md != NULL) {
-            if ((EVP_MD_get_flags(md) & EVP_MD_FLAG_XOF) != 0) {
+            if (EVP_MD_xof(md)) {
                 ERR_raise(ERR_LIB_PROV, PROV_R_XOF_DIGESTS_NOT_ALLOWED);
                 return 0;
             }
-            drbg->blocklen = EVP_MD_get_size(md);
+            md_size = EVP_MD_get_size(md);
+            if (md_size <= 0)
+                return 0;
+            drbg->blocklen = (size_t)md_size;
         }
         return ossl_prov_macctx_load_from_params(&drbg->ctx, params,
                                                  "HMAC", NULL, NULL, libctx);
@@ -255,5 +259,5 @@ const OSSL_DISPATCH ossl_kdf_hmac_drbg_functions[] = {
       (void(*)(void))hmac_drbg_kdf_gettable_ctx_params },
     { OSSL_FUNC_KDF_GET_CTX_PARAMS,
       (void(*)(void))hmac_drbg_kdf_get_ctx_params },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };

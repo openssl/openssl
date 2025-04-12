@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,6 +12,7 @@
 
 # include <openssl/ssl.h>
 # include "internal/quic_types.h"
+# include "internal/quic_predef.h"
 
 # ifndef OPENSSL_NO_QUIC
 
@@ -38,6 +39,9 @@ struct quic_cfq_item_st {
 #  define QUIC_CFQ_STATE_NEW      0
 #  define QUIC_CFQ_STATE_TX       1
 
+/* If set, do not retransmit on loss */
+#define QUIC_CFQ_ITEM_FLAG_UNRELIABLE   (1U << 0)
+
 /* Returns the frame type of a CFQ item. */
 uint64_t ossl_quic_cfq_item_get_frame_type(const QUIC_CFQ_ITEM *item);
 
@@ -53,11 +57,13 @@ int ossl_quic_cfq_item_get_state(const QUIC_CFQ_ITEM *item);
 /* Returns the PN space for the CFQ item. */
 uint32_t ossl_quic_cfq_item_get_pn_space(const QUIC_CFQ_ITEM *item);
 
+/* Returns 1 if this is an unreliable frame. */
+int ossl_quic_cfq_item_is_unreliable(const QUIC_CFQ_ITEM *item);
+
 /*
  * QUIC Control Frame Queue
  * ========================
  */
-typedef struct quic_cfq_st QUIC_CFQ;
 
 QUIC_CFQ *ossl_quic_cfq_new(void);
 void ossl_quic_cfq_free(QUIC_CFQ *cfq);
@@ -88,6 +94,8 @@ void ossl_quic_cfq_free(QUIC_CFQ *cfq);
  * The frame type is duplicated as the frame_type argument here, even though it
  * is also encoded into the buffer. This allows the caller to determine the
  * frame type if desired without having to decode the frame.
+ *
+ * flags is zero or more QUIC_CFQ_ITEM_FLAG values.
  */
 typedef void (cfq_free_cb)(unsigned char *buf, size_t buf_len, void *arg);
 
@@ -95,6 +103,7 @@ QUIC_CFQ_ITEM *ossl_quic_cfq_add_frame(QUIC_CFQ            *cfq,
                                        uint32_t             priority,
                                        uint32_t             pn_space,
                                        uint64_t             frame_type,
+                                       uint32_t             flags,
                                        const unsigned char *encoded,
                                        size_t               encoded_len,
                                        cfq_free_cb         *free_cb,

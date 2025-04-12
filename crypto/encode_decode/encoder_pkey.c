@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -189,9 +189,13 @@ encoder_construct_pkey(OSSL_ENCODER_INSTANCE *encoder_inst, void *arg)
         const OSSL_PROVIDER *e_prov = OSSL_ENCODER_get0_provider(encoder);
 
         if (k_prov != e_prov) {
+            int selection = data->selection;
+
+            if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
+                selection |= OSSL_KEYMGMT_SELECT_PUBLIC_KEY;
             data->encoder_inst = encoder_inst;
 
-            if (!evp_keymgmt_export(pk->keymgmt, pk->keydata, data->selection,
+            if (!evp_keymgmt_export(pk->keymgmt, pk->keydata, selection,
                                     &encoder_import_cb, data))
                 return NULL;
             data->obj = data->constructed_obj;
@@ -206,6 +210,7 @@ encoder_construct_pkey(OSSL_ENCODER_INSTANCE *encoder_inst, void *arg)
 static void encoder_destruct_pkey(void *arg)
 {
     struct construct_data_st *data = arg;
+    int match = (data->obj == data->constructed_obj);
 
     if (data->encoder_inst != NULL) {
         OSSL_ENCODER *encoder =
@@ -214,6 +219,8 @@ static void encoder_destruct_pkey(void *arg)
         encoder->free_object(data->constructed_obj);
     }
     data->constructed_obj = NULL;
+    if (match)
+        data->obj = NULL;
 }
 
 /*
@@ -284,8 +291,10 @@ static int ossl_encoder_ctx_setup_for_pkey(OSSL_ENCODER_CTX *ctx,
         end = sk_OPENSSL_CSTRING_num(encoder_data.names);
         if (end > 0) {
             encoder_data.id_names = OPENSSL_malloc(end * sizeof(int));
-            if (encoder_data.id_names == NULL)
+            if (encoder_data.id_names == NULL) {
+                sk_OPENSSL_CSTRING_free(keymgmt_data.names);
                 goto err;
+            }
             for (i = 0; i < end; ++i) {
                 const char *name = sk_OPENSSL_CSTRING_value(keymgmt_data.names, i);
 

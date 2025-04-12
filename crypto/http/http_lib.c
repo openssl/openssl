@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,11 +14,25 @@
 #include <openssl/bio.h> /* for BIO_snprintf() */
 #include <openssl/err.h>
 #include "internal/cryptlib.h" /* for ossl_assert() */
+#ifndef OPENSSL_NO_SOCK
+# include "internal/bio_addr.h" /* for NI_MAXHOST */
+#endif
+#ifndef NI_MAXHOST
+# define NI_MAXHOST 255
+#endif
+#include "crypto/ctype.h" /* for ossl_isspace() */
 
 static void init_pstring(char **pstr)
 {
     if (pstr != NULL) {
         *pstr = NULL;
+    }
+}
+
+static void init_pint(int *pint)
+{
+    if (pint != NULL) {
+        *pint = 0;
     }
 }
 
@@ -54,6 +68,7 @@ int OSSL_parse_url(const char *url, char **pscheme, char **puser, char **phost,
     init_pstring(puser);
     init_pstring(phost);
     init_pstring(pport);
+    init_pint(pport_num);
     init_pstring(ppath);
     init_pstring(pfrag);
     init_pstring(pquery);
@@ -110,7 +125,7 @@ int OSSL_parse_url(const char *url, char **pscheme, char **puser, char **phost,
         port = ++p;
     /* remaining port spec handling is also done for the default values */
     /* make sure a decimal port number is given */
-    if (!sscanf(port, "%u", &portnum) || portnum > 65535) {
+    if (sscanf(port, "%u", &portnum) <= 0 || portnum > 65535) {
         ERR_raise_data(ERR_LIB_HTTP, HTTP_R_INVALID_PORT_NUMBER, "%s", port);
         goto err;
     }
@@ -181,6 +196,8 @@ int OSSL_parse_url(const char *url, char **pscheme, char **puser, char **phost,
     return 0;
 }
 
+#ifndef OPENSSL_NO_HTTP
+
 int OSSL_HTTP_parse_url(const char *url, int *pssl, char **puser, char **phost,
                         char **pport, int *pport_num,
                         char **ppath, char **pquery, char **pfrag)
@@ -243,25 +260,32 @@ static int use_proxy(const char *no_proxy, const char *server)
 {
     size_t sl;
     const char *found = NULL;
+    char host[NI_MAXHOST];
 
     if (!ossl_assert(server != NULL))
         return 0;
     sl = strlen(server);
+    if (sl >= 2 && sl < sizeof(host) + 2 && server[0] == '[' && server[sl - 1] == ']') {
+        /* strip leading '[' and trailing ']' from escaped IPv6 address */
+        sl -= 2;
+        strncpy(host, server + 1, sl);
+        server = host;
+    }
 
     /*
      * using environment variable names, both lowercase and uppercase variants,
      * compatible with other HTTP client implementations like wget, curl and git
      */
     if (no_proxy == NULL)
-        no_proxy = getenv("no_proxy");
+        no_proxy = ossl_safe_getenv("no_proxy");
     if (no_proxy == NULL)
-        no_proxy = getenv(OPENSSL_NO_PROXY);
+        no_proxy = ossl_safe_getenv(OPENSSL_NO_PROXY);
 
     if (no_proxy != NULL)
         found = strstr(no_proxy, server);
     while (found != NULL
-           && ((found != no_proxy && found[-1] != ' ' && found[-1] != ',')
-               || (found[sl] != '\0' && found[sl] != ' ' && found[sl] != ',')))
+           && ((found != no_proxy && !ossl_isspace(found[-1]) && found[-1] != ',')
+               || (found[sl] != '\0' && !ossl_isspace(found[sl]) && found[sl] != ',')))
         found = strstr(found + 1, server);
     return found == NULL;
 }
@@ -275,12 +299,13 @@ const char *OSSL_HTTP_adapt_proxy(const char *proxy, const char *no_proxy,
      * compatible with other HTTP client implementations like wget, curl and git
      */
     if (proxy == NULL)
-        proxy = getenv(use_ssl ? "https_proxy" : "http_proxy");
+        proxy = ossl_safe_getenv(use_ssl ? "https_proxy" : "http_proxy");
     if (proxy == NULL)
-        proxy = getenv(use_ssl ? OPENSSL_HTTP_PROXY :
-                       OPENSSL_HTTPS_PROXY);
+        proxy = ossl_safe_getenv(use_ssl ? OPENSSL_HTTPS_PROXY : OPENSSL_HTTP_PROXY);
 
     if (proxy == NULL || *proxy == '\0' || !use_proxy(no_proxy, server))
         return NULL;
     return proxy;
 }
+
+#endif /* !defined(OPENSSL_NO_HTTP) */

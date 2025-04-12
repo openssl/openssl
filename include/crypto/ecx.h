@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -15,7 +15,7 @@
 
 # include <openssl/opensslconf.h>
 
-# ifndef OPENSSL_NO_EC
+# ifndef OPENSSL_NO_ECX
 
 #  include <openssl/core.h>
 #  include <openssl/e_os2.h>
@@ -72,7 +72,6 @@ struct ecx_key_st {
     size_t keylen;
     ECX_KEY_TYPE type;
     CRYPTO_REF_COUNT references;
-    CRYPTO_RWLOCK *lock;
 };
 
 size_t ossl_ecx_key_length(ECX_KEY_TYPE type);
@@ -109,6 +108,8 @@ ossl_ed25519_verify(const uint8_t *tbs, size_t tbs_len,
                     const uint8_t *context, size_t context_len,
                     OSSL_LIB_CTX *libctx, const char *propq);
 int
+ossl_ed25519_pubkey_verify(const uint8_t *pub, size_t pub_len);
+int
 ossl_ed448_public_from_private(OSSL_LIB_CTX *ctx, uint8_t out_public_key[57],
                                const uint8_t private_key[57], const char *propq);
 int
@@ -124,6 +125,9 @@ ossl_ed448_verify(OSSL_LIB_CTX *ctx,
                   const uint8_t signature[114], const uint8_t public_key[57],
                   const uint8_t *context, size_t context_len,
                   const uint8_t phflag, const char *propq);
+
+int
+ossl_ed448_pubkey_verify(const uint8_t *pub, size_t pub_len);
 
 int
 ossl_x448(uint8_t out_shared_key[56], const uint8_t private_key[56],
@@ -155,5 +159,5 @@ ECX_KEY *ossl_evp_pkey_get1_X25519(EVP_PKEY *pkey);
 ECX_KEY *ossl_evp_pkey_get1_X448(EVP_PKEY *pkey);
 ECX_KEY *ossl_evp_pkey_get1_ED25519(EVP_PKEY *pkey);
 ECX_KEY *ossl_evp_pkey_get1_ED448(EVP_PKEY *pkey);
-# endif /* OPENSSL_NO_EC */
+# endif /* OPENSSL_NO_ECX */
 #endif

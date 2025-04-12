@@ -114,18 +114,24 @@ static int el_setup_keyslot(OSSL_QRL_ENC_LEVEL_SET *els,
 
     if (!ossl_assert(el != NULL
                      && ossl_qrl_enc_level_set_has_keyslot(els, enc_level,
-                                                           tgt_state, keyslot)))
+                                                           tgt_state, keyslot))) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
+    }
 
     cipher_name = ossl_qrl_get_suite_cipher_name(el->suite_id);
     iv_len      = ossl_qrl_get_suite_cipher_iv_len(el->suite_id);
     key_len     = ossl_qrl_get_suite_cipher_key_len(el->suite_id);
-    if (cipher_name == NULL)
+    if (cipher_name == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return 0;
+    }
 
     if (secret_len != ossl_qrl_get_suite_secret_len(el->suite_id)
-        || secret_len > EVP_MAX_KEY_LENGTH)
+        || secret_len > EVP_MAX_KEY_LENGTH) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return 0;
+    }
 
     assert(el->cctx[keyslot] == NULL);
 
@@ -136,7 +142,7 @@ static int el_setup_keyslot(OSSL_QRL_ENC_LEVEL_SET *els,
                               quic_v1_iv_label,
                               sizeof(quic_v1_iv_label),
                               NULL, 0,
-                              el->iv[keyslot], iv_len, 0))
+                              el->iv[keyslot], iv_len, 1))
         goto err;
 
     /* Derive "quic key" key. */
@@ -146,23 +152,31 @@ static int el_setup_keyslot(OSSL_QRL_ENC_LEVEL_SET *els,
                               quic_v1_key_label,
                               sizeof(quic_v1_key_label),
                               NULL, 0,
-                              key, key_len, 0))
+                              key, key_len, 1))
         goto err;
 
     /* Create and initialise cipher context. */
-    if ((cipher = EVP_CIPHER_fetch(el->libctx, cipher_name, el->propq)) == NULL)
+    if ((cipher = EVP_CIPHER_fetch(el->libctx, cipher_name, el->propq)) == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_EVP_LIB);
         goto err;
+    }
 
-    if ((cctx = EVP_CIPHER_CTX_new()) == NULL)
+    if ((cctx = EVP_CIPHER_CTX_new()) == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_EVP_LIB);
         goto err;
+    }
 
     if (!ossl_assert(iv_len == (size_t)EVP_CIPHER_get_iv_length(cipher))
-        || !ossl_assert(key_len == (size_t)EVP_CIPHER_get_key_length(cipher)))
+        || !ossl_assert(key_len == (size_t)EVP_CIPHER_get_key_length(cipher))) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         goto err;
+    }
 
     /* IV will be changed on RX/TX so we don't need to use a real value here. */
-    if (!EVP_CipherInit_ex(cctx, cipher, NULL, key, el->iv[keyslot], 0))
+    if (!EVP_CipherInit_ex(cctx, cipher, NULL, key, el->iv[keyslot], 0)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_EVP_LIB);
         goto err;
+    }
 
     el->cctx[keyslot] = cctx;
 
@@ -171,7 +185,7 @@ static int el_setup_keyslot(OSSL_QRL_ENC_LEVEL_SET *els,
     EVP_CIPHER_free(cipher);
     return 1;
 
-err:
+ err:
     EVP_CIPHER_CTX_free(cctx);
     EVP_CIPHER_free(cipher);
     OPENSSL_cleanse(el->iv[keyslot], sizeof(el->iv[keyslot]));
@@ -199,8 +213,10 @@ int ossl_qrl_enc_level_set_provide_secret(OSSL_QRL_ENC_LEVEL_SET *els,
     if (el == NULL
         || md_name == NULL
         || init_key_phase_bit > 1 || is_tx < 0 || is_tx > 1
-        || (init_key_phase_bit > 0 && enc_level != QUIC_ENC_LEVEL_1RTT))
+        || (init_key_phase_bit > 0 && enc_level != QUIC_ENC_LEVEL_1RTT)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
+    }
 
     if (enc_level == QUIC_ENC_LEVEL_INITIAL
         && el->state == QRL_EL_STATE_PROV_NORMAL) {
@@ -214,18 +230,24 @@ int ossl_qrl_enc_level_set_provide_secret(OSSL_QRL_ENC_LEVEL_SET *els,
         el->state = QRL_EL_STATE_UNPROV;
     }
 
-    if (el->state != QRL_EL_STATE_UNPROV)
+    if (el->state != QRL_EL_STATE_UNPROV) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return 0;
+    }
 
     init_keyslot = is_tx ? 0 : init_key_phase_bit;
     hpr_key_len = ossl_qrl_get_suite_hdr_prot_key_len(suite_id);
-    if (hpr_key_len == 0)
+    if (hpr_key_len == 0) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return 0;
+    }
 
     if (md == NULL) {
         md = EVP_MD_fetch(libctx, md_name, propq);
-        if (md == NULL)
+        if (md == NULL) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_EVP_LIB);
             return 0;
+        }
 
         own_md = 1;
     }
@@ -246,7 +268,7 @@ int ossl_qrl_enc_level_set_provide_secret(OSSL_QRL_ENC_LEVEL_SET *els,
                               quic_v1_hp_label,
                               sizeof(quic_v1_hp_label),
                               NULL, 0,
-                              hpr_key, hpr_key_len, 0))
+                              hpr_key, hpr_key_len, 1))
         goto err;
 
     /* Setup KS0 (or KS1 if init_key_phase_bit), our initial keyslot. */
@@ -264,7 +286,7 @@ int ossl_qrl_enc_level_set_provide_secret(OSSL_QRL_ENC_LEVEL_SET *els,
                                   quic_v1_ku_label,
                                   sizeof(quic_v1_ku_label),
                                   NULL, 0,
-                                  is_tx ? el->ku : ku_key, secret_len, 0))
+                                  is_tx ? el->ku : ku_key, secret_len, 1))
             goto err;
 
         if (!is_tx) {
@@ -282,7 +304,7 @@ int ossl_qrl_enc_level_set_provide_secret(OSSL_QRL_ENC_LEVEL_SET *els,
                                       quic_v1_ku_label,
                                       sizeof(quic_v1_ku_label),
                                       NULL, 0,
-                                      el->ku, secret_len, 0))
+                                      el->ku, secret_len, 1))
                 goto err;
         }
     }
@@ -305,15 +327,16 @@ int ossl_qrl_enc_level_set_provide_secret(OSSL_QRL_ENC_LEVEL_SET *els,
     el->state = QRL_EL_STATE_PROV_NORMAL;
     return 1;
 
-err:
+ err:
     el->suite_id = 0;
+    el->md = NULL;
     OPENSSL_cleanse(hpr_key, sizeof(hpr_key));
     OPENSSL_cleanse(ku_key, sizeof(ku_key));
     OPENSSL_cleanse(el->ku, sizeof(el->ku));
     if (have_ks0)
-        el_teardown_keyslot(els, enc_level, 0);
+        el_teardown_keyslot(els, enc_level, init_keyslot);
     if (have_ks1)
-        el_teardown_keyslot(els, enc_level, 1);
+        el_teardown_keyslot(els, enc_level, !init_keyslot);
     if (own_md)
         EVP_MD_free(md);
     return 0;
@@ -326,11 +349,15 @@ int ossl_qrl_enc_level_set_key_update(OSSL_QRL_ENC_LEVEL_SET *els,
     size_t secret_len;
     unsigned char new_ku[EVP_MAX_KEY_LENGTH];
 
-    if (el == NULL || !ossl_assert(enc_level == QUIC_ENC_LEVEL_1RTT))
+    if (el == NULL || !ossl_assert(enc_level == QUIC_ENC_LEVEL_1RTT)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
+    }
 
-    if (el->state != QRL_EL_STATE_PROV_NORMAL)
+    if (el->state != QRL_EL_STATE_PROV_NORMAL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return 0;
+    }
 
     if (!el->is_tx) {
         /*
@@ -353,7 +380,7 @@ int ossl_qrl_enc_level_set_key_update(OSSL_QRL_ENC_LEVEL_SET *els,
                               quic_v1_ku_label,
                               sizeof(quic_v1_ku_label),
                               NULL, 0,
-                              new_ku, secret_len, 0))
+                              new_ku, secret_len, 1))
         return 0;
 
     el_teardown_keyslot(els, enc_level, 0);
@@ -376,8 +403,10 @@ int ossl_qrl_enc_level_set_key_update_done(OSSL_QRL_ENC_LEVEL_SET *els,
 {
     OSSL_QRL_ENC_LEVEL *el = ossl_qrl_enc_level_set_get(els, enc_level, 0);
 
-    if (el == NULL || !ossl_assert(enc_level == QUIC_ENC_LEVEL_1RTT))
+    if (el == NULL || !ossl_assert(enc_level == QUIC_ENC_LEVEL_1RTT)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
+    }
 
     /* No new key yet, but erase key material to aid PFS. */
     el_teardown_keyslot(els, enc_level, ~el->key_epoch & 1);
@@ -396,15 +425,21 @@ int ossl_qrl_enc_level_set_key_cooldown_done(OSSL_QRL_ENC_LEVEL_SET *els,
     size_t secret_len;
     unsigned char new_ku[EVP_MAX_KEY_LENGTH];
 
-    if (el == NULL || !ossl_assert(enc_level == QUIC_ENC_LEVEL_1RTT))
+    if (el == NULL || !ossl_assert(enc_level == QUIC_ENC_LEVEL_1RTT)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
+    }
 
     if (el->state == QRL_EL_STATE_PROV_UPDATING
-        && !ossl_qrl_enc_level_set_key_update_done(els, enc_level))
+        && !ossl_qrl_enc_level_set_key_update_done(els, enc_level)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return 0;
+    }
 
-    if (el->state != QRL_EL_STATE_PROV_COOLDOWN)
+    if (el->state != QRL_EL_STATE_PROV_COOLDOWN) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return 0;
+    }
 
     secret_len = ossl_qrl_get_suite_secret_len(el->suite_id);
 
@@ -419,7 +454,7 @@ int ossl_qrl_enc_level_set_key_cooldown_done(OSSL_QRL_ENC_LEVEL_SET *els,
                               quic_v1_ku_label,
                               sizeof(quic_v1_ku_label),
                               NULL, 0,
-                              new_ku, secret_len, 0)) {
+                              new_ku, secret_len, 1)) {
         el_teardown_keyslot(els, enc_level, ~el->key_epoch & 1);
         return 0;
     }

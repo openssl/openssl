@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2021-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -21,7 +21,7 @@ static const OSSL_ALGORITHM *obj_query(void *provctx, int operation_id,
 
 static const OSSL_DISPATCH obj_dispatch_table[] = {
     { OSSL_FUNC_PROVIDER_QUERY_OPERATION, (void (*)(void))obj_query },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };
 
 static OSSL_FUNC_core_obj_add_sigid_fn *c_obj_add_sigid = NULL;

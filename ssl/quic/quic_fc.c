@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -46,21 +46,21 @@ int ossl_quic_txfc_bump_cwm(QUIC_TXFC *txfc, uint64_t cwm)
     return 1;
 }
 
-uint64_t ossl_quic_txfc_get_credit_local(QUIC_TXFC *txfc)
+uint64_t ossl_quic_txfc_get_credit_local(QUIC_TXFC *txfc, uint64_t consumed)
 {
-    assert(txfc->swm <= txfc->cwm);
-    return txfc->cwm - txfc->swm;
+    assert((txfc->swm + consumed) <= txfc->cwm);
+    return txfc->cwm - (consumed + txfc->swm);
 }
 
-uint64_t ossl_quic_txfc_get_credit(QUIC_TXFC *txfc)
+uint64_t ossl_quic_txfc_get_credit(QUIC_TXFC *txfc, uint64_t consumed)
 {
     uint64_t r, conn_r;
 
-    r = ossl_quic_txfc_get_credit_local(txfc);
+    r = ossl_quic_txfc_get_credit_local(txfc, 0);
 
     if (txfc->parent != NULL) {
         assert(txfc->parent->parent == NULL);
-        conn_r = ossl_quic_txfc_get_credit_local(txfc->parent);
+        conn_r = ossl_quic_txfc_get_credit_local(txfc->parent, consumed);
         if (conn_r < r)
             r = conn_r;
     }
@@ -71,7 +71,7 @@ uint64_t ossl_quic_txfc_get_credit(QUIC_TXFC *txfc)
 int ossl_quic_txfc_consume_credit_local(QUIC_TXFC *txfc, uint64_t num_bytes)
 {
     int ok = 1;
-    uint64_t credit = ossl_quic_txfc_get_credit_local(txfc);
+    uint64_t credit = ossl_quic_txfc_get_credit_local(txfc, 0);
 
     if (num_bytes > credit) {
         ok = 0;
@@ -146,6 +146,21 @@ int ossl_quic_rxfc_init(QUIC_RXFC *rxfc, QUIC_RXFC *conn_rxfc,
     rxfc->now               = now;
     rxfc->now_arg           = now_arg;
     rxfc->is_fin            = 0;
+    rxfc->standalone        = 0;
+    return 1;
+}
+
+int ossl_quic_rxfc_init_standalone(QUIC_RXFC *rxfc,
+                                   uint64_t initial_window_size,
+                                   OSSL_TIME (*now)(void *arg),
+                                   void *now_arg)
+{
+    if (!ossl_quic_rxfc_init(rxfc, NULL,
+                             initial_window_size, initial_window_size,
+                             now, now_arg))
+        return 0;
+
+    rxfc->standalone = 1;
     return 1;
 }
 
@@ -174,7 +189,7 @@ static int on_rx_controlled_bytes(QUIC_RXFC *rxfc, uint64_t num_bytes)
     if (num_bytes > credit) {
         ok = 0;
         num_bytes = credit;
-        rxfc->error_code = QUIC_ERR_FLOW_CONTROL_ERROR;
+        rxfc->error_code = OSSL_QUIC_ERR_FLOW_CONTROL_ERROR;
     }
 
     rxfc->swm += num_bytes;
@@ -185,12 +200,12 @@ int ossl_quic_rxfc_on_rx_stream_frame(QUIC_RXFC *rxfc, uint64_t end, int is_fin)
 {
     uint64_t delta;
 
-    if (rxfc->parent == NULL)
+    if (!rxfc->standalone && rxfc->parent == NULL)
         return 0;
 
     if (rxfc->is_fin && ((is_fin && rxfc->hwm != end) || end > rxfc->hwm)) {
         /* Stream size cannot change after the stream is finished */
-        rxfc->error_code = QUIC_ERR_FINAL_SIZE_ERROR;
+        rxfc->error_code = OSSL_QUIC_ERR_FINAL_SIZE_ERROR;
         return 1; /* not a caller error */
     }
 
@@ -201,10 +216,11 @@ int ossl_quic_rxfc_on_rx_stream_frame(QUIC_RXFC *rxfc, uint64_t end, int is_fin)
         delta = end - rxfc->hwm;
         rxfc->hwm = end;
 
-        on_rx_controlled_bytes(rxfc, delta);           /* result ignored */
-        on_rx_controlled_bytes(rxfc->parent, delta);   /* result ignored */
+        on_rx_controlled_bytes(rxfc, delta);             /* result ignored */
+        if (rxfc->parent != NULL)
+            on_rx_controlled_bytes(rxfc->parent, delta); /* result ignored */
     } else if (end < rxfc->hwm && is_fin) {
-        rxfc->error_code = QUIC_ERR_FINAL_SIZE_ERROR;
+        rxfc->error_code = OSSL_QUIC_ERR_FINAL_SIZE_ERROR;
         return 1; /* not a caller error */
     }
 
@@ -220,8 +236,8 @@ static int rxfc_cwm_bump_desired(QUIC_RXFC *rxfc)
     int err = 0;
     uint64_t window_rem = rxfc->cwm - rxfc->rwm;
     uint64_t threshold
-        = safe_mul_uint64_t(rxfc->cur_window_size,
-                            WINDOW_THRESHOLD_NUM, &err) / WINDOW_THRESHOLD_DEN;
+        = safe_muldiv_uint64_t(rxfc->cur_window_size,
+                               WINDOW_THRESHOLD_NUM, WINDOW_THRESHOLD_DEN, &err);
 
     if (err)
         /*
@@ -325,7 +341,7 @@ int ossl_quic_rxfc_on_retire(QUIC_RXFC *rxfc,
                              uint64_t num_bytes,
                              OSSL_TIME rtt)
 {
-    if (rxfc->parent == NULL)
+    if (rxfc->parent == NULL && !rxfc->standalone)
         return 0;
 
     if (num_bytes == 0)
@@ -336,23 +352,31 @@ int ossl_quic_rxfc_on_retire(QUIC_RXFC *rxfc,
         return 0;
 
     rxfc_on_retire(rxfc, num_bytes, 0, rtt);
-    rxfc_on_retire(rxfc->parent, num_bytes, rxfc->cur_window_size, rtt);
+
+    if (!rxfc->standalone)
+        rxfc_on_retire(rxfc->parent, num_bytes, rxfc->cur_window_size, rtt);
+
     return 1;
 }
 
-uint64_t ossl_quic_rxfc_get_cwm(QUIC_RXFC *rxfc)
+uint64_t ossl_quic_rxfc_get_cwm(const QUIC_RXFC *rxfc)
 {
     return rxfc->cwm;
 }
 
-uint64_t ossl_quic_rxfc_get_swm(QUIC_RXFC *rxfc)
+uint64_t ossl_quic_rxfc_get_swm(const QUIC_RXFC *rxfc)
 {
     return rxfc->swm;
 }
 
-uint64_t ossl_quic_rxfc_get_rwm(QUIC_RXFC *rxfc)
+uint64_t ossl_quic_rxfc_get_rwm(const QUIC_RXFC *rxfc)
 {
     return rxfc->rwm;
+}
+
+uint64_t ossl_quic_rxfc_get_credit(const QUIC_RXFC *rxfc)
+{
+    return ossl_quic_rxfc_get_cwm(rxfc) - ossl_quic_rxfc_get_swm(rxfc);
 }
 
 int ossl_quic_rxfc_has_cwm_changed(QUIC_RXFC *rxfc, int clear)
@@ -373,4 +397,15 @@ int ossl_quic_rxfc_get_error(QUIC_RXFC *rxfc, int clear)
         rxfc->error_code = 0;
 
     return r;
+}
+
+int ossl_quic_rxfc_get_final_size(const QUIC_RXFC *rxfc, uint64_t *final_size)
+{
+    if (!rxfc->is_fin)
+        return 0;
+
+    if (final_size != NULL)
+        *final_size = rxfc->hwm;
+
+    return 1;
 }

@@ -55,7 +55,7 @@ The adopted design makes the following design decisions:
 
   The motivation for this is that these functions are intended to support
   concurrent use on the same BIO. If they read or modify BIO state, they would
-  need to be sychronised with a lock, undermining performance on what (for
+  need to be synchronised with a lock, undermining performance on what (for
   `BIO_dgram`) would otherwise be a straight system call.
 
 - We do not support iovecs. The motivations for this are:
@@ -286,7 +286,7 @@ If we go with this, there are some issues that arise:
       `sendmsg`/`recvmsg`. This again adds burdens on the code using
       BIO_dgram, but it seems the only way to avoid the surprising performance
       pitfall of buffer copying to emulate iovec support. There is a fair risk
-      of code being written which accidentially works on one platform but not
+      of code being written which accidentally works on one platform but not
       another, because the author didn't realise the iovec limit is 1 on some
       platforms. Possibly we could have an “iovec limit” variable in the
       BIO_dgram which is 1 by default, which can be increased by a call to a

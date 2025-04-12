@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -29,6 +29,7 @@
 #include "crypto/ctype.h"        /* ossl_isdigit() */
 #include "prov/implementations.h"
 #include "prov/bio.h"
+#include "prov/providercommon.h"
 #include "file_store_local.h"
 
 DEFINE_STACK_OF(OSSL_STORE_INFO)
@@ -55,9 +56,7 @@ static OSSL_FUNC_store_close_fn file_close;
  * passes that on to the data callback; this decoder is created with
  * internal OpenSSL functions, thereby bypassing the need for a surrounding
  * provider.  This is ok, since this is a local decoder, not meant for
- * public consumption.  It also uses the libcrypto internal decoder
- * setup function ossl_decoder_ctx_setup_for_pkey(), to allow the
- * last resort decoder to be added first (and thereby be executed last).
+ * public consumption.
  * Finally, it sets up its own construct and cleanup functions.
  *
  * Essentially, that makes this implementation a kind of glorified decoder.
@@ -236,7 +235,7 @@ static void *file_open(void *provctx, const char *uri)
 #ifdef _WIN32
         /* Windows "file:" URIs with a drive letter start with a '/' */
         if (p[0] == '/' && p[2] == ':' && p[3] == '/') {
-            char c = tolower(p[1]);
+            char c = tolower((unsigned char)p[1]);
 
             if (c >= 'a' && c <= 'z') {
                 p++;
@@ -322,7 +321,7 @@ static int file_set_ctx_params(void *loaderctx, const OSSL_PARAM params[])
     struct file_ctx_st *ctx = loaderctx;
     const OSSL_PARAM *p;
 
-    if (params == NULL)
+    if (ossl_param_is_empty(params))
         return 1;
 
     if (ctx->type != IS_DIR) {
@@ -417,6 +416,7 @@ static int file_setup_decoders(struct file_ctx_st *ctx)
 {
     OSSL_LIB_CTX *libctx = ossl_prov_ctx_get0_libctx(ctx->provctx);
     const OSSL_ALGORITHM *to_algo = NULL;
+    const char *input_structure = NULL;
     int ok = 0;
 
     /* Setup for this session, so only if not already done */
@@ -440,16 +440,43 @@ static int file_setup_decoders(struct file_ctx_st *ctx)
          * for this load.
          */
         switch (ctx->expected_type) {
-        case OSSL_STORE_INFO_CERT:
+        case OSSL_STORE_INFO_PUBKEY:
+            input_structure = "SubjectPublicKeyInfo";
             if (!OSSL_DECODER_CTX_set_input_structure(ctx->_.file.decoderctx,
-                                                      "Certificate")) {
+                                                      input_structure)) {
+                ERR_raise(ERR_LIB_PROV, ERR_R_OSSL_DECODER_LIB);
+                goto err;
+            }
+            break;
+        case OSSL_STORE_INFO_PKEY:
+            /*
+             * The user's OSSL_STORE_INFO_PKEY covers PKCS#8, whether encrypted
+             * or not.  The decoder will figure out whether decryption is
+             * applicable and fall back as necessary.  We just need to indicate
+             * that it is OK to try and encrypt, which may involve a password
+             * prompt, so not done unless the data type is explicit, as we
+             * might then get a password prompt for a key when reading only
+             * certs from a file.
+             */
+            input_structure = "EncryptedPrivateKeyInfo";
+            if (!OSSL_DECODER_CTX_set_input_structure(ctx->_.file.decoderctx,
+                                                      input_structure)) {
+                ERR_raise(ERR_LIB_PROV, ERR_R_OSSL_DECODER_LIB);
+                goto err;
+            }
+            break;
+        case OSSL_STORE_INFO_CERT:
+            input_structure = "Certificate";
+            if (!OSSL_DECODER_CTX_set_input_structure(ctx->_.file.decoderctx,
+                                                      input_structure)) {
                 ERR_raise(ERR_LIB_PROV, ERR_R_OSSL_DECODER_LIB);
                 goto err;
             }
             break;
         case OSSL_STORE_INFO_CRL:
+            input_structure = "CertificateList";
             if (!OSSL_DECODER_CTX_set_input_structure(ctx->_.file.decoderctx,
-                                                      "CertificateList")) {
+                                                      input_structure)) {
                 ERR_raise(ERR_LIB_PROV, ERR_R_OSSL_DECODER_LIB);
                 goto err;
             }
@@ -463,6 +490,7 @@ static int file_setup_decoders(struct file_ctx_st *ctx)
              to_algo++) {
             OSSL_DECODER *to_obj = NULL;
             OSSL_DECODER_INSTANCE *to_obj_inst = NULL;
+            const char *input_type;
 
             /*
              * Create the internal last resort decoder implementation
@@ -472,10 +500,25 @@ static int file_setup_decoders(struct file_ctx_st *ctx)
              */
             to_obj = ossl_decoder_from_algorithm(0, to_algo, NULL);
             if (to_obj != NULL)
-                to_obj_inst = ossl_decoder_instance_new(to_obj, ctx->provctx);
+                to_obj_inst =
+                    ossl_decoder_instance_new_forprov(to_obj, ctx->provctx,
+                                                      input_structure);
             OSSL_DECODER_free(to_obj);
             if (to_obj_inst == NULL)
                 goto err;
+            /*
+             * The input type has to match unless, the input type is PEM
+             * and the decoder input type is DER, in which case we'll pick
+             * up additional decoders.
+             */
+            input_type = OSSL_DECODER_INSTANCE_get_input_type(to_obj_inst);
+            if (ctx->_.file.input_type != NULL
+                && OPENSSL_strcasecmp(input_type, ctx->_.file.input_type) != 0
+                && (OPENSSL_strcasecmp(ctx->_.file.input_type, "PEM") != 0
+                    || OPENSSL_strcasecmp(input_type, "der") != 0)) {
+                ossl_decoder_instance_free(to_obj_inst);
+                continue;
+            }
 
             if (!ossl_decoder_ctx_add_decoder_inst(ctx->_.file.decoderctx,
                                                    to_obj_inst)) {
@@ -608,9 +651,9 @@ static int file_name_check(struct file_ctx_st *ctx, const char *name)
      * Last, check that the rest of the extension is a decimal number, at
      * least one digit long.
      */
-    if (!isdigit(*p))
+    if (!isdigit((unsigned char)*p))
         return 0;
-    while (isdigit(*p))
+    while (isdigit((unsigned char)*p))
         p++;
 
 #ifdef __VMS
@@ -619,7 +662,7 @@ static int file_name_check(struct file_ctx_st *ctx, const char *name)
      */
     if (*p == ';')
         for (p++; *p != '\0'; p++)
-            if (!ossl_isdigit(*p))
+            if (!ossl_isdigit((unsigned char)*p))
                 break;
 #endif
 
@@ -782,5 +825,5 @@ const OSSL_DISPATCH ossl_file_store_functions[] = {
     { OSSL_FUNC_STORE_LOAD, (void (*)(void))file_load },
     { OSSL_FUNC_STORE_EOF, (void (*)(void))file_eof },
     { OSSL_FUNC_STORE_CLOSE, (void (*)(void))file_close },
-    { 0, NULL },
+    OSSL_DISPATCH_END,
 };

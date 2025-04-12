@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -167,9 +167,7 @@ int dsa_main(int argc, char **argv)
 
     if (!opt_cipher(ciphername, &enc))
         goto end;
-    private = pubin || pubout ? 0 : 1;
-    if (text && !pubin)
-        private = 1;
+    private = !pubin && (!pubout || text);
 
     if (!app_passwd(passinarg, passoutarg, &passin, &passout)) {
         BIO_printf(bio_err, "Error getting passwords\n");

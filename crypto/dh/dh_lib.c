@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -78,10 +78,15 @@ static DH *dh_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx)
     if (ret == NULL)
         return NULL;
 
-    ret->references = 1;
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
         ERR_raise(ERR_LIB_DH, ERR_R_CRYPTO_LIB);
+        OPENSSL_free(ret);
+        return NULL;
+    }
+
+    if (!CRYPTO_NEW_REF(&ret->references, 1)) {
+        CRYPTO_THREAD_lock_free(ret->lock);
         OPENSSL_free(ret);
         return NULL;
     }
@@ -114,6 +119,8 @@ static DH *dh_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx)
         goto err;
 #endif /* FIPS_MODULE */
 
+    ossl_ffc_params_init(&ret->params);
+
     if ((ret->meth->init != NULL) && !ret->meth->init(ret)) {
         ERR_raise(ERR_LIB_DH, ERR_R_INIT_FAIL);
         goto err;
@@ -133,8 +140,8 @@ void DH_free(DH *r)
     if (r == NULL)
         return;
 
-    CRYPTO_DOWN_REF(&r->references, &i, r->lock);
-    REF_PRINT_COUNT("DH", r);
+    CRYPTO_DOWN_REF(&r->references, &i);
+    REF_PRINT_COUNT("DH", i, r);
     if (i > 0)
         return;
     REF_ASSERT_ISNT(i < 0);
@@ -149,6 +156,7 @@ void DH_free(DH *r)
 #endif
 
     CRYPTO_THREAD_lock_free(r->lock);
+    CRYPTO_FREE_REF(&r->references);
 
     ossl_ffc_params_cleanup(&r->params);
     BN_clear_free(r->pub_key);
@@ -160,10 +168,10 @@ int DH_up_ref(DH *r)
 {
     int i;
 
-    if (CRYPTO_UP_REF(&r->references, &i, r->lock) <= 0)
+    if (CRYPTO_UP_REF(&r->references, &i) <= 0)
         return 0;
 
-    REF_PRINT_COUNT("DH", r);
+    REF_PRINT_COUNT("DH", i, r);
     REF_ASSERT_ISNT(i < 2);
     return ((i > 1) ? 1 : 0);
 }

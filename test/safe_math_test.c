@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2021-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -191,7 +191,7 @@ static int test_uint_ops(int n)
     r = safe_neg_uint(b, &err);
     if (!TEST_int_eq(err, b != 0) || (!err && !TEST_uint_eq(r, 0)))
         goto err;
- 
+
     err = 0;
     r = safe_abs_uint(a, &err);
     if (!TEST_int_eq(err, 0) || !TEST_uint_eq(r, a))
@@ -274,7 +274,7 @@ static int test_size_t_ops(int n)
     r = safe_neg_size_t(b, &err);
     if (!TEST_int_eq(err, b != 0) || (!err && !TEST_size_t_eq(r, 0)))
         goto err;
- 
+
     err = 0;
     r = safe_abs_size_t(a, &err);
     if (!TEST_int_eq(err, 0) || !TEST_size_t_eq(r, a))

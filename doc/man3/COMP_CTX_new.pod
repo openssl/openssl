@@ -54,7 +54,9 @@ These functions provide compression support for OpenSSL. Compression is used wit
 the OpenSSL library to support TLS record and certificate compression.
 
 COMP_CTX_new() is used to create a new B<COMP_CTX> structure used to compress data.
+
 COMP_CTX_free() is used to free the returned B<COMP_CTX>.
+If the argument is NULL, nothing is done.
 
 COMP_CTX_get_method() returns the B<COMP_METHOD> of the given I<ctx>.
 
@@ -123,7 +125,8 @@ Zstandard may be found at L<https://github.com/facebook/zstd>.
 Compression of SSL/TLS records is not recommended, as it has been
 shown to lead to the CRIME attack L<https://en.wikipedia.org/wiki/CRIME>.
 It is disabled by default, and may be enabled by clearing the
-SSL_OP_NO_COMPRESSION options of the L<SSL_CTX_set_options(3)> or
+SSL_OP_NO_COMPRESSION option and setting the security level as appropriate.
+See the documentation for the L<SSL_CTX_set_options(3)> and
 L<SSL_set_options(3)> functions.
 
 Compression is also used to support certificate compression as described
@@ -171,7 +174,7 @@ Brotli and Zstandard functions were added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 
-Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2022-2024 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

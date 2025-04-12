@@ -103,6 +103,9 @@ TLSv1.3 is used.
 Both SSL_stateless() and DTLSv1_listen() will clear the error queue when they
 start.
 
+SSL_stateless() cannot be used with QUIC SSL objects and returns an error if
+called on such an object.
+
 =head1 RETURN VALUES
 
 For SSL_stateless() a return value of 1 indicates success and the B<ssl> object
@@ -143,7 +146,7 @@ The type of "peer" also changed in OpenSSL 1.1.0.
 
 =head1 COPYRIGHT
 
-Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2015-2023 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

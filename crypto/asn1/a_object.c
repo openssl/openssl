@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -198,7 +198,8 @@ int i2a_ASN1_OBJECT(BIO *bp, const ASN1_OBJECT *a)
     }
     if (i <= 0) {
         i = BIO_write(bp, "<INVALID>", 9);
-        i += BIO_dump(bp, (const char *)a->data, a->length);
+        if (i > 0)
+            i += BIO_dump(bp, (const char *)a->data, a->length);
         return i;
     }
     BIO_write(bp, p, i);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -56,8 +56,9 @@ extern "C" {
 # define OSSL_TRACE_CATEGORY_ENCODER            16
 # define OSSL_TRACE_CATEGORY_REF_COUNT          17
 # define OSSL_TRACE_CATEGORY_HTTP               18
-/* Count of available categories. */
-# define OSSL_TRACE_CATEGORY_NUM                19
+# define OSSL_TRACE_CATEGORY_PROVIDER           19
+# define OSSL_TRACE_CATEGORY_QUERY              20
+# define OSSL_TRACE_CATEGORY_NUM                21
 /* KEEP THIS LIST IN SYNC with trace_categories[] in crypto/trace.c */
 
 /* Returns the trace category number for the given |name| */
@@ -304,6 +305,14 @@ void OSSL_trace_end(int category, BIO *channel);
     OSSL_TRACEV(category, (trc_out, format, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8))
 # define OSSL_TRACE9(category, format, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9) \
     OSSL_TRACEV(category, (trc_out, format, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9))
+
+#define OSSL_TRACE_STRING_MAX 80
+int OSSL_trace_string(BIO *out, int text, int full,
+                      const unsigned char *data, size_t size);
+#define OSSL_TRACE_STRING(category, text, full, data, len) \
+    OSSL_TRACE_BEGIN(category) { \
+        OSSL_trace_string(trc_out, text, full, data, len);  \
+    } OSSL_TRACE_END(category)
 
 # ifdef  __cplusplus
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -42,24 +42,20 @@ ECX_KEY *ossl_ecx_key_new(OSSL_LIB_CTX *libctx, ECX_KEY_TYPE type, int haspubkey
         break;
     }
     ret->type = type;
-    ret->references = 1;
+
+    if (!CRYPTO_NEW_REF(&ret->references, 1))
+        goto err;
 
     if (propq != NULL) {
         ret->propq = OPENSSL_strdup(propq);
         if (ret->propq == NULL)
             goto err;
     }
-
-    ret->lock = CRYPTO_THREAD_lock_new();
-    if (ret->lock == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_CRYPTO_LIB);
-        goto err;
-    }
     return ret;
 err:
     if (ret != NULL) {
         OPENSSL_free(ret->propq);
-        CRYPTO_THREAD_lock_free(ret->lock);
+        CRYPTO_FREE_REF(&ret->references);
     }
     OPENSSL_free(ret);
     return NULL;
@@ -72,15 +68,18 @@ void ossl_ecx_key_free(ECX_KEY *key)
     if (key == NULL)
         return;
 
-    CRYPTO_DOWN_REF(&key->references, &i, key->lock);
-    REF_PRINT_COUNT("ECX_KEY", key);
+    CRYPTO_DOWN_REF(&key->references, &i);
+    REF_PRINT_COUNT("ECX_KEY", i, key);
     if (i > 0)
         return;
     REF_ASSERT_ISNT(i < 0);
 
     OPENSSL_free(key->propq);
+#ifdef OPENSSL_PEDANTIC_ZEROIZATION
+    OPENSSL_cleanse(&key->pubkey, sizeof(key->pubkey));
+#endif
     OPENSSL_secure_clear_free(key->privkey, key->keylen);
-    CRYPTO_THREAD_lock_free(key->lock);
+    CRYPTO_FREE_REF(&key->references);
     OPENSSL_free(key);
 }
 
@@ -93,10 +92,10 @@ int ossl_ecx_key_up_ref(ECX_KEY *key)
 {
     int i;
 
-    if (CRYPTO_UP_REF(&key->references, &i, key->lock) <= 0)
+    if (CRYPTO_UP_REF(&key->references, &i) <= 0)
         return 0;
 
-    REF_PRINT_COUNT("ECX_KEY", key);
+    REF_PRINT_COUNT("ECX_KEY", i, key);
     REF_ASSERT_ISNT(i < 2);
     return ((i > 1) ? 1 : 0);
 }

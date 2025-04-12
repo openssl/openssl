@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2023 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -45,7 +45,6 @@ struct ec_pre_comp_st {
                                  * objects followed by a NULL */
     size_t num;                 /* numblocks * 2^(w-1) */
     CRYPTO_REF_COUNT references;
-    CRYPTO_RWLOCK *lock;
 };
 
 static EC_PRE_COMP *ec_pre_comp_new(const EC_GROUP *group)
@@ -62,11 +61,8 @@ static EC_PRE_COMP *ec_pre_comp_new(const EC_GROUP *group)
     ret->group = group;
     ret->blocksize = 8;         /* default */
     ret->w = 4;                 /* default */
-    ret->references = 1;
 
-    ret->lock = CRYPTO_THREAD_lock_new();
-    if (ret->lock == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_CRYPTO_LIB);
+    if (!CRYPTO_NEW_REF(&ret->references, 1)) {
         OPENSSL_free(ret);
         return NULL;
     }
@@ -77,7 +73,7 @@ EC_PRE_COMP *EC_ec_pre_comp_dup(EC_PRE_COMP *pre)
 {
     int i;
     if (pre != NULL)
-        CRYPTO_UP_REF(&pre->references, &i, pre->lock);
+        CRYPTO_UP_REF(&pre->references, &i);
     return pre;
 }
 
@@ -88,8 +84,8 @@ void EC_ec_pre_comp_free(EC_PRE_COMP *pre)
     if (pre == NULL)
         return;
 
-    CRYPTO_DOWN_REF(&pre->references, &i, pre->lock);
-    REF_PRINT_COUNT("EC_ec", pre);
+    CRYPTO_DOWN_REF(&pre->references, &i);
+    REF_PRINT_COUNT("EC_ec", i, pre);
     if (i > 0)
         return;
     REF_ASSERT_ISNT(i < 0);
@@ -101,7 +97,7 @@ void EC_ec_pre_comp_free(EC_PRE_COMP *pre)
             EC_POINT_free(*pts);
         OPENSSL_free(pre->points);
     }
-    CRYPTO_THREAD_lock_free(pre->lock);
+    CRYPTO_FREE_REF(&pre->references);
     OPENSSL_free(pre);
 }
 

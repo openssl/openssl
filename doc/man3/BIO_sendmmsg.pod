@@ -197,6 +197,10 @@ transient error, many of which are system specific.
 
 =back
 
+Third parties implementing custom BIOs supporting the BIO_sendmmsg() or
+BIO_recvmmsg() methods should note that it is a required part of the API
+contract that an error is always raised when either of these functions return 0.
+
 BIO_dgram_set_local_addr_enable() returns 1 if local address support was
 successfully enabled or disabled and 0 otherwise.
 
@@ -215,7 +219,7 @@ These functions were added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2022 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2023 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

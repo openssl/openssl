@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2012-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -22,16 +22,15 @@
  */
 #include "internal/deprecated.h"
 
-#include "recmethod_local.h"
-
-#include "internal/constant_time.h"
-#include "internal/cryptlib.h"
-
 #include <openssl/evp.h>
 #ifndef FIPS_MODULE
 # include <openssl/md5.h>
 #endif
 #include <openssl/sha.h>
+
+#include "internal/ssl3_cbc.h"
+#include "internal/constant_time.h"
+#include "internal/cryptlib.h"
 
 /*
  * MAX_HASH_BIT_COUNT_BYTES is the maximum number of bytes in the hash's

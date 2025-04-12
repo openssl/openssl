@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -74,7 +74,7 @@ void ossl_polyval_ghash_init(u128 Htable[16], const uint64_t H[2])
     ossl_gcm_init_4bit(Htable, (u64*)tmp);
 }
 
-/* Implmentation of POLYVAL via existing GHASH implementation */
+/* Implementation of POLYVAL via existing GHASH implementation */
 void ossl_polyval_ghash_hash(const u128 Htable[16], uint8_t *tag, const uint8_t *inp, size_t len)
 {
     uint64_t out[2];

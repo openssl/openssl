@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -11,6 +11,7 @@
 #include <openssl/evp.h>
 
 #include "../ssl/ssl_local.h"
+#include "internal/ssl_unwrap.h"
 #include "testutil.h"
 
 #define IVLEN   12
@@ -163,6 +164,13 @@ int ssl_cipher_get_evp_cipher(SSL_CTX *ctx, const SSL_CIPHER *sslc,
     return 0;
 }
 
+int ssl_cipher_get_evp_md_mac(SSL_CTX *ctx, const SSL_CIPHER *sslc,
+                              const EVP_MD **md,
+                              int *mac_pkey_type, size_t *mac_secret_size)
+{
+    return 0;
+}
+
 int ssl_cipher_get_evp(SSL_CTX *ctx, const SSL_SESSION *s,
                        const EVP_CIPHER **enc, const EVP_MD **md,
                        int *mac_pkey_type, size_t *mac_secret_size,
@@ -218,12 +226,13 @@ void ssl_evp_md_free(const EVP_MD *md)
 }
 
 int ssl_set_new_record_layer(SSL_CONNECTION *s, int version, int direction,
-                             int level, unsigned char *key, size_t keylen,
+                             int level, unsigned char *secret, size_t secretlen,
+                             unsigned char *key, size_t keylen,
                              unsigned char *iv,  size_t ivlen,
                              unsigned char *mackey, size_t mackeylen,
                              const EVP_CIPHER *ciph, size_t taglen,
                              int mactype, const EVP_MD *md,
-                             const SSL_COMP *comp)
+                             const SSL_COMP *comp, const EVP_MD *kdfdigest)
 {
     return 0;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -152,9 +152,10 @@ int spkac_main(int argc, char **argv)
         spki = NETSCAPE_SPKI_new();
         if (spki == NULL)
             goto end;
-        if (challenge != NULL)
-            ASN1_STRING_set(spki->spkac->challenge,
-                            challenge, (int)strlen(challenge));
+        if (challenge != NULL
+            && !ASN1_STRING_set(spki->spkac->challenge,
+                                challenge, (int)strlen(challenge)))
+            goto end;
         if (!NETSCAPE_SPKI_set_pubkey(spki, pkey)) {
             BIO_printf(bio_err, "Error setting public key\n");
             goto end;

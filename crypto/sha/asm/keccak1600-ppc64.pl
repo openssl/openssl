@@ -7,10 +7,10 @@
 # https://www.openssl.org/source/license.html
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
+# Written by Andy Polyakov, @dot-asm, initially for use in the OpenSSL
 # project. The module is, however, dual licensed under OpenSSL and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see https://github.com/dot-asm/cryptogams/.
 # ====================================================================
 #
 # Keccak-1600 for PPC64.
@@ -668,6 +668,8 @@ SHA3_squeeze:
 	subi	$out,r4,1		; prepare for stbu
 	mr	$len,r5
 	mr	$bsz,r6
+	cmplwi	r7,0                    ; r7 = 'next' argument
+	bne	.Lnext_block
 	b	.Loop_squeeze
 
 .align	4
@@ -698,6 +700,7 @@ SHA3_squeeze:
 	subic.	r6,r6,8
 	bgt	.Loop_squeeze
 
+.Lnext_block:
 	mr	r3,$A_flat
 	bl	KeccakF1600
 	subi	r3,$A_flat,8		; prepare for ldu
@@ -769,7 +772,7 @@ iotas:
 	.quad	0x0000000080000001
 	.quad	0x8000000080008008
 .size	iotas,.-iotas
-.asciz	"Keccak-1600 absorb and squeeze for PPC64, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"Keccak-1600 absorb and squeeze for PPC64, CRYPTOGAMS by <https://github.com/dot-asm>"
 ___
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;

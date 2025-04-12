@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -36,7 +36,7 @@ int ssl_print_groups(BIO *out, SSL *s, int noshared);
 int ssl_print_tmp_key(BIO *out, SSL *s);
 int init_client(int *sock, const char *host, const char *port,
                 const char *bindhost, const char *bindport,
-                int family, int type, int protocol, int tfo,
+                int family, int type, int protocol, int tfo, int doconn,
                 BIO_ADDR **ba_ret);
 int should_retry(int i);
 void do_ssl_shutdown(SSL *ssl);

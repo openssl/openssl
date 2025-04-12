@@ -13,6 +13,8 @@ contains a 32 bit counter as well as optional fields for "partyu-info",
 "partyv-info", "supp-pubinfo" and "supp-privinfo".
 This kdf is used by Cryptographic Message Syntax (CMS).
 
+The output is considered to be keying material.
+
 =head2 Identity
 
 "X942KDF-ASN1" or "X942KDF" is the name for this implementation; it
@@ -74,6 +76,28 @@ information.
 
 This parameter sets the CEK wrapping algorithm name.
 Valid values are "AES-128-WRAP", "AES-192-WRAP", "AES-256-WRAP" and "DES3-WRAP".
+
+=back
+
+The OpenSSL FIPS provider also supports the following parameters:
+
+=over 4
+
+=item "fips-indicator" (B<OSSL_KDF_PARAM_FIPS_APPROVED_INDICATOR>) <integer>
+
+A getter that returns 1 if the operation is FIPS approved, or 0 otherwise.
+This may be used after calling EVP_KDF_derive. It returns 0 if "key-check"
+parameter is set to 0 and the check fails.
+
+=item "key-check" (B<OSSL_KDF_PARAM_FIPS_KEY_CHECK>) <integer>
+
+The default value of 1 causes an error during EVP_KDF_CTX_set_params() if the
+length of used key-derivation key (B<OSSL_KDF_PARAM_KEY>) is shorter than 112
+bits.
+Setting this to zero will ignore the error and set the approved
+"fips-indicator" to 0.
+This option breaks FIPS compliance if it causes the approved "fips-indicator"
+to return 0.
 
 =back
 

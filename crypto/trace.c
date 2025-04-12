@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -18,6 +18,7 @@
 #include "internal/nelem.h"
 #include "internal/refcount.h"
 #include "crypto/cryptlib.h"
+#include "crypto/ctype.h"
 
 #ifndef OPENSSL_NO_TRACE
 
@@ -139,6 +140,8 @@ static const struct trace_category_st
     TRACE_CATEGORY_(ENCODER),
     TRACE_CATEGORY_(REF_COUNT),
     TRACE_CATEGORY_(HTTP),
+    TRACE_CATEGORY_(PROVIDER),
+    TRACE_CATEGORY_(QUERY),
 }; /* KEEP THIS LIST IN SYNC with #define OSSL_TRACE_CATEGORY_... in trace.h */
 
 const char *OSSL_trace_get_category_name(int num)
@@ -288,11 +291,6 @@ static int set_trace_data(int category, int type, BIO **channel,
     }
 
     /* Before running callbacks are done, set new data where appropriate */
-    if (channel != NULL && *channel != NULL) {
-        trace_channels[category].type = type;
-        trace_channels[category].bio = *channel;
-    }
-
     if (prefix != NULL && *prefix != NULL) {
         if ((curr_prefix = OPENSSL_strdup(*prefix)) == NULL)
             return 0;
@@ -303,6 +301,15 @@ static int set_trace_data(int category, int type, BIO **channel,
         if ((curr_suffix = OPENSSL_strdup(*suffix)) == NULL)
             return 0;
         trace_channels[category].suffix = curr_suffix;
+    }
+
+    if (channel != NULL && *channel != NULL) {
+        trace_channels[category].type = type;
+        trace_channels[category].bio = *channel;
+        /*
+         * This must not be done before setting prefix/suffix,
+         * as those may fail, and then the caller is mislead to free *channel.
+         */
     }
 
     /* Finally, run the attach callback on the new data */
@@ -470,7 +477,7 @@ BIO *OSSL_trace_begin(int category)
     char *prefix = NULL;
 
     category = ossl_trace_get_category(category);
-    if (category < 0)
+    if (category < 0 || !OSSL_trace_enabled(category))
         return NULL;
 
     channel = trace_channels[category].bio;
@@ -497,7 +504,7 @@ BIO *OSSL_trace_begin(int category)
     return channel;
 }
 
-void OSSL_trace_end(int category, BIO * channel)
+void OSSL_trace_end(int category, BIO *channel)
 {
 #ifndef OPENSSL_NO_TRACE
     char *suffix = NULL;
@@ -525,4 +532,28 @@ void OSSL_trace_end(int category, BIO * channel)
         CRYPTO_THREAD_unlock(trace_lock);
     }
 #endif
+}
+
+int OSSL_trace_string(BIO *out, int text, int full,
+                      const unsigned char *data, size_t size)
+{
+    unsigned char buf[OSSL_TRACE_STRING_MAX + 1];
+    int len, i;
+
+    if (!full && size > OSSL_TRACE_STRING_MAX) {
+        BIO_printf(out, "[len %zu limited to %d]: ",
+                   size, OSSL_TRACE_STRING_MAX);
+        len = OSSL_TRACE_STRING_MAX;
+    } else {
+        len = (int)size;
+    }
+    if (!text) { /* mask control characters while preserving newlines */
+        for (i = 0; i < len; i++, data++)
+            buf[i] = (char)*data != '\n' && ossl_iscntrl((int)*data)
+                ? ' ' : *data;
+        if (len == 0 || data[-1] != '\n')
+            buf[len++] = '\n';
+        data = buf;
+    }
+    return BIO_printf(out, "%.*s", len, data);
 }

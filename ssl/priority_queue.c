@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,6 +12,7 @@
 #include <assert.h>
 #include "internal/priority_queue.h"
 #include "internal/safe_math.h"
+#include "internal/numbers.h"
 
 OSSL_SAFE_MATH_UNSIGNED(size_t, size_t)
 
@@ -45,8 +46,7 @@ struct pq_elem_st {
 #endif
 };
 
-struct ossl_pqueue_st
-{
+struct ossl_pqueue_st {
     struct pq_heap_st *heap;
     struct pq_elem_st *elements;
     int (*compare)(const void *, const void *);
@@ -85,7 +85,7 @@ static const size_t max_nodes =
  *
  * We use an expansion factor of 8 / 5 = 1.6
  */
-static ossl_inline int compute_pqueue_growth(size_t target, size_t current)
+static ossl_inline size_t compute_pqueue_growth(size_t target, size_t current)
 {
     int err = 0;
 
@@ -264,8 +264,14 @@ void *ossl_pqueue_remove(OSSL_PQUEUE *pq, size_t elem)
 
     ASSERT_USED(pq, n);
 
-    if (n == pq->htop - 1)
+    if (n == pq->htop - 1) {
+        pq->elements[elem].posn = pq->freelist;
+        pq->freelist = elem;
+#ifndef NDEBUG
+        pq->elements[elem].used = 0;
+#endif
         return pq->heap[--pq->htop].data;
+    }
     if (n > 0)
         pqueue_force_bottom(pq, n);
     return ossl_pqueue_pop(pq);

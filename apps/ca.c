@@ -1,11 +1,13 @@
 /*
- * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+#include "internal/e_os.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -150,7 +152,7 @@ typedef enum OPTION_choice {
     OPT_IN, OPT_INFORM, OPT_OUT, OPT_DATEOPT, OPT_OUTDIR, OPT_VFYOPT,
     OPT_SIGOPT, OPT_NOTEXT, OPT_BATCH, OPT_PRESERVEDN, OPT_NOEMAILDN,
     OPT_GENCRL, OPT_MSIE_HACK, OPT_CRL_LASTUPDATE, OPT_CRL_NEXTUPDATE,
-    OPT_CRLDAYS, OPT_CRLHOURS, OPT_CRLSEC,
+    OPT_CRLDAYS, OPT_CRLHOURS, OPT_CRLSEC, OPT_NOT_BEFORE, OPT_NOT_AFTER,
     OPT_INFILES, OPT_SS_CERT, OPT_SPKAC, OPT_REVOKE, OPT_VALID,
     OPT_EXTENSIONS, OPT_EXTFILE, OPT_STATUS, OPT_UPDATEDB, OPT_CRLEXTS,
     OPT_RAND_SERIAL, OPT_QUIET,
@@ -199,10 +201,13 @@ const OPTIONS ca_options[] = {
      "Always create a random serial; do not store it"},
     {"multivalue-rdn", OPT_MULTIVALUE_RDN, '-',
      "Deprecated; multi-valued RDNs support is always on."},
-    {"startdate", OPT_STARTDATE, 's', "Cert notBefore, YYMMDDHHMMSSZ"},
+    {"startdate", OPT_STARTDATE, 's',
+     "[CC]YYMMDDHHMMSSZ value for notBefore certificate field"},
+    {"not_before", OPT_NOT_BEFORE, 's', "An alias for -startdate"},
     {"enddate", OPT_ENDDATE, 's',
-     "YYMMDDHHMMSSZ cert notAfter (overrides -days)"},
-    {"days", OPT_DAYS, 'p', "Number of days to certify the cert for"},
+     "[CC]YYMMDDHHMMSSZ value for notAfter certificate field, overrides -days"},
+    {"not_after", OPT_NOT_AFTER, 's', "An alias for -enddate"},
+    {"days", OPT_DAYS, 'p', "Number of days from today to certify the cert for"},
     {"extensions", OPT_EXTENSIONS, 's',
      "Extension section (override value in config file)"},
     {"extfile", OPT_EXTFILE, '<',
@@ -359,9 +364,11 @@ opthelp:
             /* obsolete */
             break;
         case OPT_STARTDATE:
+        case OPT_NOT_BEFORE:
             startdate = opt_arg();
             break;
         case OPT_ENDDATE:
+        case OPT_NOT_AFTER:
             enddate = opt_arg();
             break;
         case OPT_DAYS:
@@ -514,9 +521,7 @@ end_of_options:
         && (section = lookup_conf(conf, BASE_SECTION, ENV_DEFAULT_CA)) == NULL)
         goto end;
 
-    p = NCONF_get_string(conf, NULL, "oid_file");
-    if (p == NULL)
-        ERR_clear_error();
+    p = app_conf_try_string(conf, NULL, "oid_file");
     if (p != NULL) {
         BIO *oid_bio = BIO_new_file(p, "r");
 
@@ -534,29 +539,22 @@ end_of_options:
     if (!app_RAND_load())
         goto end;
 
-    f = NCONF_get_string(conf, section, STRING_MASK);
-    if (f == NULL)
-        ERR_clear_error();
-
+    f = app_conf_try_string(conf, section, STRING_MASK);
     if (f != NULL && !ASN1_STRING_set_default_mask_asc(f)) {
         BIO_printf(bio_err, "Invalid global string mask setting %s\n", f);
         goto end;
     }
 
     if (chtype != MBSTRING_UTF8) {
-        f = NCONF_get_string(conf, section, UTF8_IN);
-        if (f == NULL)
-            ERR_clear_error();
-        else if (strcmp(f, "yes") == 0)
+        f = app_conf_try_string(conf, section, UTF8_IN);
+        if (f != NULL && strcmp(f, "yes") == 0)
             chtype = MBSTRING_UTF8;
     }
 
     db_attr.unique_subject = 1;
-    p = NCONF_get_string(conf, section, ENV_UNIQUE_SUBJECT);
+    p = app_conf_try_string(conf, section, ENV_UNIQUE_SUBJECT);
     if (p != NULL)
         db_attr.unique_subject = parse_yesno(p, 1);
-    else
-        ERR_clear_error();
 
     /*****************************************************************/
     /* report status of cert with serial number given on command line */
@@ -619,19 +617,14 @@ end_of_options:
     if (!selfsign)
         x509p = x509;
 
-    f = NCONF_get_string(conf, BASE_SECTION, ENV_PRESERVE);
-    if (f == NULL)
-        ERR_clear_error();
-    if ((f != NULL) && ((*f == 'y') || (*f == 'Y')))
+    f = app_conf_try_string(conf, BASE_SECTION, ENV_PRESERVE);
+    if (f != NULL && (*f == 'y' || *f == 'Y'))
         preserve = 1;
-    f = NCONF_get_string(conf, BASE_SECTION, ENV_MSIE_HACK);
-    if (f == NULL)
-        ERR_clear_error();
-    if ((f != NULL) && ((*f == 'y') || (*f == 'Y')))
+    f = app_conf_try_string(conf, BASE_SECTION, ENV_MSIE_HACK);
+    if (f != NULL && (*f == 'y' || *f == 'Y'))
         msie_hack = 1;
 
-    f = NCONF_get_string(conf, section, ENV_NAMEOPT);
-
+    f = app_conf_try_string(conf, section, ENV_NAMEOPT);
     if (f != NULL) {
         if (!set_nameopt(f)) {
             BIO_printf(bio_err, "Invalid name options: \"%s\"\n", f);
@@ -640,27 +633,21 @@ end_of_options:
         default_op = 0;
     }
 
-    f = NCONF_get_string(conf, section, ENV_CERTOPT);
-
+    f = app_conf_try_string(conf, section, ENV_CERTOPT);
     if (f != NULL) {
         if (!set_cert_ex(&certopt, f)) {
             BIO_printf(bio_err, "Invalid certificate options: \"%s\"\n", f);
             goto end;
         }
         default_op = 0;
-    } else {
-        ERR_clear_error();
     }
 
-    f = NCONF_get_string(conf, section, ENV_EXTCOPY);
-
+    f = app_conf_try_string(conf, section, ENV_EXTCOPY);
     if (f != NULL) {
         if (!set_ext_copy(&ext_copy, f)) {
             BIO_printf(bio_err, "Invalid extension copy option: \"%s\"\n", f);
             goto end;
         }
-    } else {
-        ERR_clear_error();
     }
 
     /*****************************************************************/
@@ -788,7 +775,8 @@ end_of_options:
 
         /* We can have sections in the ext file */
         if (extensions == NULL) {
-            extensions = NCONF_get_string(extfile_conf, "default", "extensions");
+            extensions =
+                app_conf_try_string(extfile_conf, "default", "extensions");
             if (extensions == NULL)
                 extensions = "default";
         }
@@ -806,15 +794,20 @@ end_of_options:
     /*
      * EVP_PKEY_get_default_digest_name() returns 2 if the digest is
      * mandatory for this algorithm.
+     *
+     * That call may give back the name "UNDEF", which has these meanings:
+     *
+     * when def_ret == 2: the user MUST leave the digest unspecified
+     * when def_ret == 1: the user MAY leave the digest unspecified
      */
     if (def_ret == 2 && strcmp(def_dgst, "UNDEF") == 0) {
-        /* The signing algorithm requires there to be no digest */
         dgst = NULL;
     } else if (dgst == NULL
-               && (dgst = lookup_conf(conf, section, ENV_DEFAULT_MD)) == NULL) {
+               && (dgst = lookup_conf(conf, section, ENV_DEFAULT_MD)) == NULL
+               && strcmp(def_dgst, "UNDEF") != 0) {
         goto end;
     } else {
-        if (strcmp(dgst, "default") == 0) {
+        if (strcmp(dgst, "default") == 0 || strcmp(def_dgst, "UNDEF") == 0) {
             if (def_ret <= 0) {
                 BIO_puts(bio_err, "no default digest\n");
                 goto end;
@@ -827,7 +820,8 @@ end_of_options:
         if (email_dn == 1) {
             char *tmp_email_dn = NULL;
 
-            tmp_email_dn = NCONF_get_string(conf, section, ENV_DEFAULT_EMAIL_DN);
+            tmp_email_dn =
+                app_conf_try_string(conf, section, ENV_DEFAULT_EMAIL_DN);
             if (tmp_email_dn != NULL && strcmp(tmp_email_dn, "no") == 0)
                 email_dn = 0;
         }
@@ -840,7 +834,7 @@ end_of_options:
         if (verbose)
             BIO_printf(bio_err, "policy is %s\n", policy);
 
-        if (NCONF_get_string(conf, section, ENV_RAND_SERIAL) != NULL) {
+        if (app_conf_try_string(conf, section, ENV_RAND_SERIAL) != NULL) {
             rand_ser = 1;
         } else {
             serialfile = lookup_conf(conf, section, ENV_SERIAL);
@@ -866,11 +860,8 @@ end_of_options:
              * no '-extfile' option, so we look for extensions in the main
              * configuration file
              */
-            if (extensions == NULL) {
-                extensions = NCONF_get_string(conf, section, ENV_EXTENSIONS);
-                if (extensions == NULL)
-                    ERR_clear_error();
-            }
+            if (extensions == NULL)
+                extensions = app_conf_try_string(conf, section, ENV_EXTENSIONS);
             if (extensions != NULL) {
                 /* Check syntax of config file section */
                 X509V3_CTX ctx;
@@ -887,38 +878,22 @@ end_of_options:
             }
         }
 
-        if (startdate == NULL) {
-            startdate = NCONF_get_string(conf, section, ENV_DEFAULT_STARTDATE);
-            if (startdate == NULL)
-                ERR_clear_error();
-        }
-        if (startdate != NULL && !ASN1_TIME_set_string_X509(NULL, startdate)) {
-            BIO_printf(bio_err,
-                       "start date is invalid, it should be YYMMDDHHMMSSZ or YYYYMMDDHHMMSSZ\n");
-            goto end;
-        }
         if (startdate == NULL)
-            startdate = "today";
-
-        if (enddate == NULL) {
-            enddate = NCONF_get_string(conf, section, ENV_DEFAULT_ENDDATE);
-            if (enddate == NULL)
-                ERR_clear_error();
-        }
-        if (enddate != NULL && !ASN1_TIME_set_string_X509(NULL, enddate)) {
-            BIO_printf(bio_err,
-                       "end date is invalid, it should be YYMMDDHHMMSSZ or YYYYMMDDHHMMSSZ\n");
-            goto end;
-        }
-
+            startdate =
+                app_conf_try_string(conf, section, ENV_DEFAULT_STARTDATE);
+        if (enddate == NULL)
+            enddate = app_conf_try_string(conf, section, ENV_DEFAULT_ENDDATE);
         if (days == 0) {
-            if (!NCONF_get_number(conf, section, ENV_DEFAULT_DAYS, &days))
+            if (!app_conf_try_number(conf, section, ENV_DEFAULT_DAYS, &days))
                 days = 0;
         }
         if (enddate == NULL && days == 0) {
             BIO_printf(bio_err, "cannot lookup how many days to certify for\n");
             goto end;
         }
+        if (days != 0 && enddate != NULL)
+            BIO_printf(bio_err,
+                       "Warning: -enddate or -not_after option overriding -days option\n");
 
         if (rand_ser) {
             if ((serial = BN_new()) == NULL || !rand_serial(serial, NULL)) {
@@ -1038,7 +1013,7 @@ end_of_options:
             }
         }
         /*
-         * we have a stack of newly certified certificates and a data base
+         * we have a stack of newly certified certificates and a database
          * and serial number that need updating
          */
 
@@ -1139,18 +1114,16 @@ end_of_options:
             if (!rotate_index(dbfile, "new", "old"))
                 goto end;
 
-            BIO_printf(bio_err, "Data Base Updated\n");
+            BIO_printf(bio_err, "Database updated\n");
         }
     }
 
     /*****************************************************************/
     if (gencrl) {
         int crl_v2 = 0;
-        if (crl_ext == NULL) {
-            crl_ext = NCONF_get_string(conf, section, ENV_CRLEXT);
-            if (crl_ext == NULL)
-                ERR_clear_error();
-        }
+
+        if (crl_ext == NULL)
+            crl_ext = app_conf_try_string(conf, section, ENV_CRLEXT);
         if (crl_ext != NULL) {
             /* Check syntax of file */
             X509V3_CTX ctx;
@@ -1165,22 +1138,22 @@ end_of_options:
             }
         }
 
-        if ((crlnumberfile = NCONF_get_string(conf, section, ENV_CRLNUMBER))
-            != NULL)
+        crlnumberfile = app_conf_try_string(conf, section, ENV_CRLNUMBER);
+        if (crlnumberfile != NULL) {
             if ((crlnumber = load_serial(crlnumberfile, NULL, 0, NULL))
                 == NULL) {
                 BIO_printf(bio_err, "error while loading CRL number\n");
                 goto end;
             }
+        }
 
         if (!crldays && !crlhours && !crlsec) {
-            if (!NCONF_get_number(conf, section,
+            if (!app_conf_try_number(conf, section,
                                   ENV_DEFAULT_CRL_DAYS, &crldays))
                 crldays = 0;
-            if (!NCONF_get_number(conf, section,
+            if (!app_conf_try_number(conf, section,
                                   ENV_DEFAULT_CRL_HOURS, &crlhours))
                 crlhours = 0;
-            ERR_clear_error();
         }
         if ((crl_nextupdate == NULL) &&
                 (crldays == 0) && (crlhours == 0) && (crlsec == 0)) {
@@ -1320,7 +1293,7 @@ end_of_options:
             if (!rotate_index(dbfile, "new", "old"))
                 goto end;
 
-            BIO_printf(bio_err, "Data Base Updated\n");
+            BIO_printf(bio_err, "Database updated\n");
         }
     }
     ret = 0;
@@ -1375,7 +1348,7 @@ static int certify(X509 **xret, const char *infile, int informat,
     EVP_PKEY *pktmp = NULL;
     int ok = -1, i;
 
-    req = load_csr_autofmt(infile, informat, "certificate request");
+    req = load_csr_autofmt(infile, informat, vfyopts, "certificate request");
     if (req == NULL)
         goto end;
     if ((pktmp = X509_REQ_get0_pubkey(req)) == NULL) {
@@ -1694,7 +1667,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
             goto end;
     }
 
-    if (!set_cert_times(ret, startdate, enddate, days))
+    if (!set_cert_times(ret, startdate, enddate, days, 0))
         goto end;
 
     if (enddate != NULL) {
@@ -1771,7 +1744,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
 
     if (verbose)
         BIO_printf(bio_err,
-                   "The subject name appears to be ok, checking data base for clashes\n");
+                   "The subject name appears to be ok, checking database for clashes\n");
 
     /* Build the correct Subject if no e-mail is wanted in the subject. */
     if (!email_dn) {
@@ -1860,7 +1833,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
         else if (rrow[DB_type][0] == DB_TYPE_VAL)
             p = "Valid";
         else
-            p = "\ninvalid type, Data base error\n";
+            p = "\ninvalid type, Database error\n";
         BIO_printf(bio_err, "Type          :%s\n", p);
         if (rrow[DB_type][0] == DB_TYPE_REV) {
             p = rrow[DB_exp_date];
@@ -1926,7 +1899,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
         !EVP_PKEY_missing_parameters(pkey))
         EVP_PKEY_copy_parameters(pktmp, pkey);
 
-    if (!do_X509_sign(ret, pkey, dgst, sigopts, &ext_ctx))
+    if (!do_X509_sign(ret, 0, pkey, dgst, sigopts, &ext_ctx))
         goto end;
 
     /* We now just add it to the database as DB_TYPE_VAL('V') */

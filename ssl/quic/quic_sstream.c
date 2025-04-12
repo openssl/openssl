@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -10,182 +10,7 @@
 #include "internal/quic_stream.h"
 #include "internal/uint_set.h"
 #include "internal/common.h"
-
-/*
- * ==================================================================
- * Byte-wise ring buffer which supports pushing and popping blocks of multiple
- * bytes at a time. The logical offset of each byte for the purposes of a QUIC
- * stream is tracked. Bytes can be popped from the ring buffer in two stages;
- * first they are popped, and then they are culled. Bytes which have been popped
- * but not yet culled will not be overwritten, and can be restored.
- */
-struct ring_buf {
-    void       *start;
-    size_t      alloc;        /* size of buffer allocation in bytes */
-
-    /*
-     * Logical offset of the head (where we append to). This is the current size
-     * of the QUIC stream. This increases monotonically.
-     */
-    uint64_t    head_offset;
-
-    /*
-     * Logical offset of the cull tail. Data is no longer needed and is
-     * deallocated as the cull tail advances, which occurs as data is
-     * acknowledged. This increases monotonically.
-     */
-    uint64_t    ctail_offset;
-};
-
-static int ring_buf_init(struct ring_buf *r)
-{
-    r->start = NULL;
-    r->alloc = 0;
-    r->head_offset = r->ctail_offset = 0;
-    return 1;
-}
-
-static void ring_buf_destroy(struct ring_buf *r)
-{
-    OPENSSL_free(r->start);
-    r->start = NULL;
-    r->alloc = 0;
-}
-
-static size_t ring_buf_used(struct ring_buf *r)
-{
-    return (size_t)(r->head_offset - r->ctail_offset);
-}
-
-static size_t ring_buf_avail(struct ring_buf *r)
-{
-    return r->alloc - ring_buf_used(r);
-}
-
-static size_t ring_buf_push(struct ring_buf *r,
-                            const unsigned char *buf, size_t buf_len)
-{
-    size_t pushed = 0, avail, idx, l, i;
-    unsigned char *start = r->start;
-
-    for (i = 0;; ++i) {
-        avail = ring_buf_avail(r);
-        if (buf_len > avail)
-            buf_len = avail;
-
-        if (buf_len == 0)
-            break;
-
-        assert(i < 2);
-
-        idx = r->head_offset % r->alloc;
-        l = r->alloc - idx;
-        if (buf_len < l)
-            l = buf_len;
-
-        memcpy(start + idx, buf, l);
-        r->head_offset  += l;
-        buf             += l;
-        buf_len         -= l;
-        pushed          += l;
-    }
-
-    return pushed;
-}
-
-/*
- * Retrieves data out of the read size of the ring buffer starting at the given
- * logical offset. *buf is set to point to a contiguous span of bytes and
- * *buf_len is set to the number of contiguous bytes. After this function
- * returns, there may or may not be more bytes available at the logical offset
- * of (logical_offset + *buf_len) by calling this function again. If the logical
- * offset is out of the range retained by the ring buffer, returns 0, else
- * returns 1. A logical offset at the end of the range retained by the ring
- * buffer is not considered an error and is returned with a *buf_len of 0.
- *
- * The ring buffer state is not changed.
- */
-static int ring_buf_get_buf_at(const struct ring_buf *r,
-                               uint64_t logical_offset,
-                               const unsigned char **buf, size_t *buf_len)
-{
-    const unsigned char *start = r->start;
-    size_t idx, l;
-
-    if (logical_offset > r->head_offset || logical_offset < r->ctail_offset)
-        return 0;
-
-    if (r->alloc == 0) {
-        *buf        = NULL;
-        *buf_len    = 0;
-        return 1;
-    }
-
-    idx = logical_offset % r->alloc;
-    l   = (size_t)(r->head_offset - logical_offset);
-    if (l > r->alloc - idx)
-        l = r->alloc - idx;
-
-    *buf        = start + idx;
-    *buf_len    = l;
-    return 1;
-}
-
-static void ring_buf_cpop_range(struct ring_buf *r,
-                                uint64_t start, uint64_t end)
-{
-    assert(end >= start);
-
-    if (start > r->ctail_offset)
-        return;
-
-    r->ctail_offset = end + 1;
-}
-
-static int ring_buf_resize(struct ring_buf *r, size_t num_bytes)
-{
-    struct ring_buf rnew = {0};
-    const unsigned char *src = NULL;
-    size_t src_len = 0, copied = 0;
-
-    if (num_bytes == r->alloc)
-        return 1;
-
-    if (num_bytes < ring_buf_used(r))
-        return 0;
-
-    rnew.start = OPENSSL_malloc(num_bytes);
-    if (rnew.start == NULL)
-        return 0;
-
-    rnew.alloc          = num_bytes;
-    rnew.head_offset    = r->head_offset - ring_buf_used(r);
-    rnew.ctail_offset   = rnew.head_offset;
-
-    for (;;) {
-        if (!ring_buf_get_buf_at(r, r->ctail_offset + copied, &src, &src_len)) {
-            OPENSSL_free(rnew.start);
-            return 0;
-        }
-
-        if (src_len == 0)
-            break;
-
-        if (ring_buf_push(&rnew, src, src_len) != src_len) {
-            OPENSSL_free(rnew.start);
-            return 0;
-        }
-
-        copied += src_len;
-    }
-
-    assert(rnew.head_offset == r->head_offset);
-    rnew.ctail_offset   = r->ctail_offset;
-
-    OPENSSL_free(r->start);
-    memcpy(r, &rnew, sizeof(*r));
-    return 1;
-}
+#include "internal/ring_buf.h"
 
 /*
  * ==================================================================
@@ -227,6 +52,7 @@ struct quic_sstream_st {
     unsigned int    have_final_size     : 1;
     unsigned int    sent_final_size     : 1;
     unsigned int    acked_final_size    : 1;
+    unsigned int    cleanse             : 1;
 };
 
 static void qss_cull(QUIC_SSTREAM *qss);
@@ -240,8 +66,8 @@ QUIC_SSTREAM *ossl_quic_sstream_new(size_t init_buf_size)
         return NULL;
 
     ring_buf_init(&qss->ring_buf);
-    if (!ring_buf_resize(&qss->ring_buf, init_buf_size)) {
-        ring_buf_destroy(&qss->ring_buf);
+    if (!ring_buf_resize(&qss->ring_buf, init_buf_size, 0)) {
+        ring_buf_destroy(&qss->ring_buf, 0);
         OPENSSL_free(qss);
         return NULL;
     }
@@ -258,7 +84,7 @@ void ossl_quic_sstream_free(QUIC_SSTREAM *qss)
 
     ossl_uint_set_destroy(&qss->new_set);
     ossl_uint_set_destroy(&qss->acked_set);
-    ring_buf_destroy(&qss->ring_buf);
+    ring_buf_destroy(&qss->ring_buf, qss->cleanse);
     OPENSSL_free(qss);
 }
 
@@ -442,6 +268,17 @@ void ossl_quic_sstream_fin(QUIC_SSTREAM *qss)
     qss->have_final_size = 1;
 }
 
+int ossl_quic_sstream_get_final_size(QUIC_SSTREAM *qss, uint64_t *final_size)
+{
+    if (!qss->have_final_size)
+        return 0;
+
+    if (final_size != NULL)
+        *final_size = qss->ring_buf.head_offset;
+
+    return 1;
+}
+
 int ossl_quic_sstream_append(QUIC_SSTREAM *qss,
                              const unsigned char *buf,
                              size_t buf_len,
@@ -513,12 +350,13 @@ static void qss_cull(QUIC_SSTREAM *qss)
      * can only cull contiguous areas at the start of the ring buffer anyway.
      */
     if (h != NULL)
-        ring_buf_cpop_range(&qss->ring_buf, h->range.start, h->range.end);
+        ring_buf_cpop_range(&qss->ring_buf, h->range.start, h->range.end,
+                            qss->cleanse);
 }
 
 int ossl_quic_sstream_set_buffer_size(QUIC_SSTREAM *qss, size_t num_bytes)
 {
-    return ring_buf_resize(&qss->ring_buf, num_bytes);
+    return ring_buf_resize(&qss->ring_buf, num_bytes, qss->cleanse);
 }
 
 size_t ossl_quic_sstream_get_buffer_size(QUIC_SSTREAM *qss)
@@ -534,6 +372,32 @@ size_t ossl_quic_sstream_get_buffer_used(QUIC_SSTREAM *qss)
 size_t ossl_quic_sstream_get_buffer_avail(QUIC_SSTREAM *qss)
 {
     return ring_buf_avail(&qss->ring_buf);
+}
+
+int ossl_quic_sstream_is_totally_acked(QUIC_SSTREAM *qss)
+{
+    UINT_RANGE r;
+    uint64_t cur_size;
+
+    if (qss->have_final_size && !qss->acked_final_size)
+        return 0;
+
+    if (ossl_quic_sstream_get_cur_size(qss) == 0)
+        return 1;
+
+    if (ossl_list_uint_set_num(&qss->acked_set) != 1)
+        return 0;
+
+    r = ossl_list_uint_set_head(&qss->acked_set)->range;
+    cur_size = qss->ring_buf.head_offset;
+
+    /*
+     * The invariants of UINT_SET guarantee a single list element if we have a
+     * single contiguous range, which is what we should have if everything has
+     * been acked.
+     */
+    assert(r.end + 1 <= cur_size);
+    return r.start == 0 && r.end + 1 == cur_size;
 }
 
 void ossl_quic_sstream_adjust_iov(size_t len,
@@ -552,4 +416,9 @@ void ossl_quic_sstream_adjust_iov(size_t len,
 
         running += iovlen;
     }
+}
+
+void ossl_quic_sstream_set_cleanse(QUIC_SSTREAM *qss, int cleanse)
+{
+    qss->cleanse = cleanse;
 }

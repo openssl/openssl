@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -39,6 +39,13 @@ static void regen_frame(uint64_t frame_type, uint64_t stream_id,
 {
     regen_frame_p(frame_type, stream_id, pkt, arg);
 }
+
+static void confirm_frame(uint64_t frame_type, uint64_t stream_id,
+                          QUIC_TXPIM_PKT *pkt, void *arg)
+{}
+
+static void sstream_updated(uint64_t stream_id, void *arg)
+{}
 
 typedef struct info_st {
     QUIC_FIFD fifd;
@@ -155,7 +162,7 @@ static int test_generic(INFO *info, int kind)
     cfq_freed = 0;
     if (!TEST_ptr(cfq_item = ossl_quic_cfq_add_frame(info->cfq, 10,
                                                      pn_space,
-                                                     OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID,
+                                                     OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID, 0,
                                                      placeholder_data,
                                                      sizeof(placeholder_data),
                                                      cfq_free_cb_, NULL))
@@ -318,7 +325,7 @@ static int test_fifd(int idx)
     cb_fail = 0;
 
     if (!TEST_true(ossl_statm_init(&info.statm))
-        || !TEST_ptr(info.ccdata = ossl_cc_dummy_method.new(NULL, NULL, NULL))
+        || !TEST_ptr(info.ccdata = ossl_cc_dummy_method.new(fake_now, NULL))
         || !TEST_ptr(info.ackm = ossl_ackm_new(fake_now, NULL,
                                                &info.statm,
                                                &ossl_cc_dummy_method,
@@ -329,7 +336,10 @@ static int test_fifd(int idx)
         || !TEST_true(ossl_quic_fifd_init(&info.fifd, info.cfq, info.ackm,
                                           info.txpim,
                                           get_sstream_by_id, NULL,
-                                          regen_frame, NULL)))
+                                          regen_frame, NULL,
+                                          confirm_frame, NULL,
+                                          sstream_updated, NULL,
+                                          NULL, NULL)))
         goto err;
 
     for (i = 0; i < OSSL_NELEM(info.sstream); ++i)

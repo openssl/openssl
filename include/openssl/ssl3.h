@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2023 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -239,6 +239,13 @@ extern "C" {
 # define SSL3_RT_HEADER                  0x100
 # define SSL3_RT_INNER_CONTENT_TYPE      0x101
 
+/* Pseudo content types for QUIC */
+# define SSL3_RT_QUIC_DATAGRAM            0x200
+# define SSL3_RT_QUIC_PACKET              0x201
+# define SSL3_RT_QUIC_FRAME_FULL          0x202
+# define SSL3_RT_QUIC_FRAME_HEADER        0x203
+# define SSL3_RT_QUIC_FRAME_PADDING       0x204
+
 # define SSL3_AL_WARNING                 1
 # define SSL3_AL_FATAL                   2
 
@@ -299,6 +306,9 @@ extern "C" {
 
 /* Set if extended master secret extension required on renegotiation */
 # define TLS1_FLAGS_REQUIRED_EXTMS               0x1000
+
+/* 0x2000 is reserved for TLS1_FLAGS_QUIC (internal) */
+/* 0x4000 is reserved for TLS1_FLAGS_QUIC_INTERNAL (internal) */
 
 # define SSL3_MT_HELLO_REQUEST                   0
 # define SSL3_MT_CLIENT_HELLO                    1

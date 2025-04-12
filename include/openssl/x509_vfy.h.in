@@ -1,7 +1,7 @@
 /*
  * {- join("\n * ", @autowarntext) -}
  *
- * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -314,6 +314,7 @@ X509_LOOKUP_ctrl_ex((x), X509_L_ADD_STORE, (name), 0, NULL,           \
 # define X509_V_ERR_CA_CERT_MISSING_KEY_USAGE            92
 # define X509_V_ERR_EXTENSIONS_REQUIRE_VERSION_3         93
 # define X509_V_ERR_EC_KEY_EXPLICIT_PARAMS               94
+# define X509_V_ERR_RPK_UNTRUSTED                        95
 
 /* Certificate verify flags */
 # ifndef OPENSSL_NO_DEPRECATED_1_1_0
@@ -399,6 +400,7 @@ int X509_STORE_lock(X509_STORE *xs);
 int X509_STORE_unlock(X509_STORE *xs);
 int X509_STORE_up_ref(X509_STORE *xs);
 STACK_OF(X509_OBJECT) *X509_STORE_get0_objects(const X509_STORE *xs);
+STACK_OF(X509_OBJECT) *X509_STORE_get1_objects(X509_STORE *xs);
 STACK_OF(X509) *X509_STORE_get1_all_certs(X509_STORE *xs);
 STACK_OF(X509) *X509_STORE_CTX_get1_certs(X509_STORE_CTX *xs,
                                           const X509_NAME *nm);
@@ -468,11 +470,14 @@ int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x);
 void X509_STORE_CTX_free(X509_STORE_CTX *ctx);
 int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *trust_store,
                         X509 *target, STACK_OF(X509) *untrusted);
+int X509_STORE_CTX_init_rpk(X509_STORE_CTX *ctx, X509_STORE *trust_store,
+                            EVP_PKEY* rpk);
 void X509_STORE_CTX_set0_trusted_stack(X509_STORE_CTX *ctx, STACK_OF(X509) *sk);
 void X509_STORE_CTX_cleanup(X509_STORE_CTX *ctx);
 
 X509_STORE *X509_STORE_CTX_get0_store(const X509_STORE_CTX *ctx);
 X509 *X509_STORE_CTX_get0_cert(const X509_STORE_CTX *ctx);
+EVP_PKEY *X509_STORE_CTX_get0_rpk(const X509_STORE_CTX *ctx);
 STACK_OF(X509)* X509_STORE_CTX_get0_untrusted(const X509_STORE_CTX *ctx);
 void X509_STORE_CTX_set0_untrusted(X509_STORE_CTX *ctx, STACK_OF(X509) *sk);
 void X509_STORE_CTX_set_verify_cb(X509_STORE_CTX *ctx,
@@ -482,6 +487,8 @@ X509_STORE_CTX_verify_fn X509_STORE_CTX_get_verify(const X509_STORE_CTX *ctx);
 X509_STORE_CTX_get_issuer_fn X509_STORE_CTX_get_get_issuer(const X509_STORE_CTX *ctx);
 X509_STORE_CTX_check_issued_fn X509_STORE_CTX_get_check_issued(const X509_STORE_CTX *ctx);
 X509_STORE_CTX_check_revocation_fn X509_STORE_CTX_get_check_revocation(const X509_STORE_CTX *ctx);
+void X509_STORE_CTX_set_get_crl(X509_STORE_CTX *ctx,
+                                X509_STORE_CTX_get_crl_fn get_crl);
 X509_STORE_CTX_get_crl_fn X509_STORE_CTX_get_get_crl(const X509_STORE_CTX *ctx);
 X509_STORE_CTX_check_crl_fn X509_STORE_CTX_get_check_crl(const X509_STORE_CTX *ctx);
 X509_STORE_CTX_cert_crl_fn X509_STORE_CTX_get_cert_crl(const X509_STORE_CTX *ctx);
@@ -665,6 +672,7 @@ X509_STORE_CTX *X509_STORE_CTX_get0_parent_ctx(const X509_STORE_CTX *ctx);
 STACK_OF(X509) *X509_STORE_CTX_get0_chain(const X509_STORE_CTX *ctx);
 STACK_OF(X509) *X509_STORE_CTX_get1_chain(const X509_STORE_CTX *ctx);
 void X509_STORE_CTX_set_cert(X509_STORE_CTX *ctx, X509 *target);
+void X509_STORE_CTX_set0_rpk(X509_STORE_CTX *ctx, EVP_PKEY *target);
 void X509_STORE_CTX_set0_verified_chain(X509_STORE_CTX *c, STACK_OF(X509) *sk);
 void X509_STORE_CTX_set0_crls(X509_STORE_CTX *ctx, STACK_OF(X509_CRL) *sk);
 int X509_STORE_CTX_set_purpose(X509_STORE_CTX *ctx, int purpose);
@@ -674,6 +682,8 @@ int X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
 void X509_STORE_CTX_set_flags(X509_STORE_CTX *ctx, unsigned long flags);
 void X509_STORE_CTX_set_time(X509_STORE_CTX *ctx, unsigned long flags,
                              time_t t);
+void X509_STORE_CTX_set_current_reasons(X509_STORE_CTX *ctx,
+                                        unsigned int current_reasons);
 
 X509_POLICY_TREE *X509_STORE_CTX_get0_policy_tree(const X509_STORE_CTX *ctx);
 int X509_STORE_CTX_get_explicit_policy(const X509_STORE_CTX *ctx);
@@ -705,6 +715,7 @@ int X509_VERIFY_PARAM_clear_flags(X509_VERIFY_PARAM *param,
                                   unsigned long flags);
 unsigned long X509_VERIFY_PARAM_get_flags(const X509_VERIFY_PARAM *param);
 int X509_VERIFY_PARAM_set_purpose(X509_VERIFY_PARAM *param, int purpose);
+int X509_VERIFY_PARAM_get_purpose(const X509_VERIFY_PARAM *param);
 int X509_VERIFY_PARAM_set_trust(X509_VERIFY_PARAM *param, int trust);
 void X509_VERIFY_PARAM_set_depth(X509_VERIFY_PARAM *param, int depth);
 void X509_VERIFY_PARAM_set_auth_level(X509_VERIFY_PARAM *param, int auth_level);

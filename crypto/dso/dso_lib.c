@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -25,10 +25,7 @@ static DSO *DSO_new_method(DSO_METHOD *meth)
         return NULL;
     }
     ret->meth = DSO_METHOD_openssl();
-    ret->references = 1;
-    ret->lock = CRYPTO_THREAD_lock_new();
-    if (ret->lock == NULL) {
-        ERR_raise(ERR_LIB_DSO, ERR_R_CRYPTO_LIB);
+    if (!CRYPTO_NEW_REF(&ret->references, 1)) {
         sk_void_free(ret->meth_data);
         OPENSSL_free(ret);
         return NULL;
@@ -54,10 +51,10 @@ int DSO_free(DSO *dso)
     if (dso == NULL)
         return 1;
 
-    if (CRYPTO_DOWN_REF(&dso->references, &i, dso->lock) <= 0)
+    if (CRYPTO_DOWN_REF(&dso->references, &i) <= 0)
         return 0;
 
-    REF_PRINT_COUNT("DSO", dso);
+    REF_PRINT_COUNT("DSO", i, dso);
     if (i > 0)
         return 1;
     REF_ASSERT_ISNT(i < 0);
@@ -77,7 +74,7 @@ int DSO_free(DSO *dso)
     sk_void_free(dso->meth_data);
     OPENSSL_free(dso->filename);
     OPENSSL_free(dso->loaded_filename);
-    CRYPTO_THREAD_lock_free(dso->lock);
+    CRYPTO_FREE_REF(&dso->references);
     OPENSSL_free(dso);
     return 1;
 }
@@ -96,10 +93,10 @@ int DSO_up_ref(DSO *dso)
         return 0;
     }
 
-    if (CRYPTO_UP_REF(&dso->references, &i, dso->lock) <= 0)
+    if (CRYPTO_UP_REF(&dso->references, &i) <= 0)
         return 0;
 
-    REF_PRINT_COUNT("DSO", dso);
+    REF_PRINT_COUNT("DSO", i, dso);
     REF_ASSERT_ISNT(i < 2);
     return ((i > 1) ? 1 : 0);
 }

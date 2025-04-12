@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -111,23 +111,7 @@ static int by_store_ctrl_ex(X509_LOOKUP *ctx, int cmd, const char *argp,
 {
     switch (cmd) {
     case X509_L_ADD_STORE:
-        /* First try the newer default cert URI envvar. */
-        if (argp == NULL)
-            argp = ossl_safe_getenv(X509_get_default_cert_uri_env());
-
-        /* If not set, see if we have a URI in the older cert dir envvar. */
-        if (argp == NULL)
-            argp = ossl_safe_getenv(X509_get_default_cert_dir_env());
-
-        /* Fallback to default store URI. */
-        if (argp == NULL)
-            argp = X509_get_default_cert_uri();
-
-        /* No point adding an empty URI. */
-        if (!*argp)
-            return 1;
-
-        {
+        if (argp != NULL) {
             STACK_OF(OPENSSL_STRING) *uris = X509_LOOKUP_get_method_data(ctx);
             char *data = OPENSSL_strdup(argp);
 
@@ -138,14 +122,21 @@ static int by_store_ctrl_ex(X509_LOOKUP *ctx, int cmd, const char *argp,
                 uris = sk_OPENSSL_STRING_new_null();
                 X509_LOOKUP_set_method_data(ctx, uris);
             }
-            return sk_OPENSSL_STRING_push(uris, data) > 0;
+            if (sk_OPENSSL_STRING_push(uris, data) <= 0) {
+                OPENSSL_free(data);
+                return 0;
+            }
+            return 1;
         }
+        /* NOP if no URI is given. */
+        return 1;
     case X509_L_LOAD_STORE:
         /* This is a shortcut for quick loading of specific containers */
         return cache_objects(ctx, argp, NULL, 0, libctx, propq);
+    default:
+        /* Unsupported command */
+        return 0;
     }
-
-    return 0;
 }
 
 static int by_store_ctrl(X509_LOOKUP *ctx, int cmd,

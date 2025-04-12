@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -13,60 +13,74 @@
 /* system-specific variants defining OSSL_sleep() */
 #if defined(OPENSSL_SYS_UNIX) || defined(__DJGPP__)
 
+# if defined(OPENSSL_USE_USLEEP)                        \
+    || defined(__DJGPP__)                               \
+    || (defined(__TANDEM) && defined(_REENTRANT))
+
+/*
+ * usleep() was made obsolete by POSIX.1-2008, and nanosleep()
+ * should be used instead.  However, nanosleep() isn't implemented
+ * on the platforms given above, so we still use it for those.
+ * Also, OPENSSL_USE_USLEEP can be defined to enable the use of
+ * usleep, if it turns out that nanosleep() is unavailable.
+ */
+
+#  include <unistd.h>
 void OSSL_sleep(uint64_t millis)
 {
-# ifdef OPENSSL_SYS_VXWORKS
+    unsigned int s = (unsigned int)(millis / 1000);
+    unsigned int us = (unsigned int)((millis % 1000) * 1000);
+
+    if (s > 0)
+        sleep(s);
+    /*
+     * On NonStop with the PUT thread model, thread context switch is
+     * cooperative, with usleep() being a "natural" context switch point.
+     * We avoid checking us > 0 here, to allow that context switch to
+     * happen.
+     */
+    usleep(us);
+}
+
+# elif defined(__TANDEM) && !defined(_REENTRANT)
+
+#  include <cextdecs.h(PROCESS_DELAY_)>
+void OSSL_sleep(uint64_t millis)
+{
+    /* HPNS does not support usleep for non threaded apps */
+    PROCESS_DELAY_(millis * 1000);
+}
+
+# else
+
+/* nanosleep is defined by POSIX.1-2001 */
+#  include <time.h>
+void OSSL_sleep(uint64_t millis)
+{
     struct timespec ts;
 
     ts.tv_sec = (long int) (millis / 1000);
     ts.tv_nsec = (long int) (millis % 1000) * 1000000ul;
     nanosleep(&ts, NULL);
-# elif defined(__TANDEM)
-#  if !defined(_REENTRANT)
-#   include <cextdecs.h(PROCESS_DELAY_)>
-
-    /* HPNS does not support usleep for non threaded apps */
-    PROCESS_DELAY_(millis * 1000);
-#  elif defined(_SPT_MODEL_)
-#   include <spthread.h>
-#   include <spt_extensions.h>
-
-    usleep(millis * 1000);
-#  else
-    usleep(millis * 1000);
-#  endif
-# else
-    usleep(millis * 1000);
-# endif
 }
-#elif defined(_WIN32)
+
+# endif
+#elif defined(_WIN32) && !defined(OPENSSL_SYS_UEFI)
 # include <windows.h>
 
 void OSSL_sleep(uint64_t millis)
 {
     /*
      * Windows' Sleep() takes a DWORD argument, which is smaller than
-     * a uint64_t, so we need to split the two to shut the compiler up.
+     * a uint64_t, so we need to limit it to 49 days, which should be enough.
      */
-    DWORD dword_times;
-    DWORD i;
+    DWORD limited_millis = (DWORD)-1;
 
-    dword_times = (DWORD)(millis >> (8 * sizeof(DWORD)));
-    millis &= (DWORD)-1;
-    if (dword_times > 0) {
-        for (i = dword_times; i-- > 0;)
-            Sleep((DWORD)-1);
-        /*
-         * The loop above slept 1 millisec less on each iteration than it
-         * should, this compensates by sleeping as many milliseconds as there
-         * were iterations.  Yes, this is nit picky!
-         */
-        Sleep(dword_times);
-    }
-
-    /* Now, sleep the remaining milliseconds */
-    Sleep((DWORD)(millis));
+    if (millis < limited_millis)
+        limited_millis = (DWORD)millis;
+    Sleep(limited_millis);
 }
+
 #else
 /* Fallback to a busy wait */
 # include "internal/time.h"
@@ -75,22 +89,14 @@ static void ossl_sleep_secs(uint64_t secs)
 {
     /*
      * sleep() takes an unsigned int argument, which is smaller than
-     * a uint64_t, so it needs to be called in smaller increments.
+     * a uint64_t, so it needs to be limited to 136 years which
+     * should be enough even for Sleeping Beauty.
      */
-    unsigned int uint_times;
-    unsigned int i;
+    unsigned int limited_secs = UINT_MAX;
 
-    uint_times = (unsigned int)(secs >> (8 * sizeof(unsigned int)));
-    if (uint_times > 0) {
-        for (i = uint_times; i-- > 0;)
-            sleep((unsigned int)-1);
-        /*
-         * The loop above slept 1 second less on each iteration than it
-         * should, this compensates by sleeping as many seconds as there were
-         * iterations.  Yes, this is nit picky!
-         */
-        sleep(uint_times);
-    }
+    if (secs < limited_secs)
+        limited_secs = (unsigned int)secs;
+    sleep(limited_secs);
 }
 
 static void ossl_sleep_millis(uint64_t millis)

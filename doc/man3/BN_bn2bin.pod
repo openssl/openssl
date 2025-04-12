@@ -43,7 +43,7 @@ BN_print, BN_print_fp, BN_bn2mpi, BN_mpi2bn - format conversions
 
 BN_bn2bin() converts the absolute value of B<a> into big-endian form
 and stores it at B<to>. B<to> must point to BN_num_bytes(B<a>) bytes of
-memory.
+memory. B<a> and B<to> B<MUST NOT> be NULL.
 
 BN_bn2binpad() also converts the absolute value of B<a> into big-endian form
 and stores it at B<to>. B<tolen> indicates the length of the output buffer
@@ -59,7 +59,7 @@ C<<BN_num_bytes(B<a>) + 1>>), an error is returned.
 
 BN_bin2bn() converts the positive integer in big-endian form of length
 B<len> at B<s> into a B<BIGNUM> and places it in B<ret>. If B<ret> is
-NULL, a new B<BIGNUM> is created.
+NULL, a new B<BIGNUM> is created. B<s> B<MUST NOT> be NULL.
 
 BN_signed_bin2bn() converts the integer in big-endian signed 2's complement
 form of length B<len> at B<s> into a B<BIGNUM> and places it in B<ret>. If
@@ -132,9 +132,15 @@ L<ERR_get_error(3)>, L<BN_zero(3)>,
 L<ASN1_INTEGER_to_BN(3)>,
 L<BN_num_bytes(3)>
 
+=head1 HISTORY
+
+The functions BN_signed_bin2bn(), BN_signed_bn2bin(), BN_signed_lebin2bn(),
+BN_signed_bn2lebin(), BN_signed_native2bn(), BN_signed_bn2native()
+were added in OpenSSL 3.2.
+
 =head1 COPYRIGHT
 
-Copyright 2000-2022 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2024 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

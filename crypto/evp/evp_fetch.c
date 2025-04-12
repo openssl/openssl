@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -17,6 +17,7 @@
 #include "internal/core.h"
 #include "internal/provider.h"
 #include "internal/namemap.h"
+#include "crypto/decoder.h"
 #include "crypto/evp.h"    /* evp_local.h needs it */
 #include "evp_local.h"
 
@@ -47,13 +48,18 @@ static void *get_tmp_evp_method_store(void *data)
 {
     struct evp_method_data_st *methdata = data;
 
-    if (methdata->tmp_store == NULL)
+    if (methdata->tmp_store == NULL) {
         methdata->tmp_store = ossl_method_store_new(methdata->libctx);
+        OSSL_TRACE1(QUERY, "Allocating a new tmp_store %p\n", (void *)methdata->tmp_store);
+    } else {
+        OSSL_TRACE1(QUERY, "Using the existing tmp_store %p\n", (void *)methdata->tmp_store);
+    }
     return methdata->tmp_store;
 }
 
  static void dealloc_tmp_evp_method_store(void *store)
 {
+    OSSL_TRACE1(QUERY, "Deallocating the tmp_store %p\n", store);
     if (store != NULL)
         ossl_method_store_free(store);
 }
@@ -183,10 +189,15 @@ static int put_evp_method_in_store(void *store, void *method,
         || (meth_id = evp_method_id(name_id, methdata->operation_id)) == 0)
         return 0;
 
+    OSSL_TRACE1(QUERY, "put_evp_method_in_store: original store: %p\n", store);
     if (store == NULL
         && (store = get_evp_method_store(methdata->libctx)) == NULL)
         return 0;
 
+    OSSL_TRACE5(QUERY,
+                "put_evp_method_in_store: "
+                "store: %p, names: %s, operation_id %d, method_id: %d, properties: %s\n",
+                store, names, methdata->operation_id, meth_id, propdef ? propdef : "<null>");
     return ossl_method_store_add(store, prov, meth_id, propdef, method,
                                  methdata->refcnt_up_method,
                                  methdata->destruct_method);
@@ -239,7 +250,7 @@ static void destruct_evp_method(void *method, void *data)
 static void *
 inner_evp_generic_fetch(struct evp_method_data_st *methdata,
                         OSSL_PROVIDER *prov, int operation_id,
-                        const char *name, const char *properties,
+                        const char *name, ossl_unused const char *properties,
                         void *(*new_method)(int name_id,
                                             const OSSL_ALGORITHM *algodef,
                                             OSSL_PROVIDER *prov),
@@ -248,7 +259,17 @@ inner_evp_generic_fetch(struct evp_method_data_st *methdata,
 {
     OSSL_METHOD_STORE *store = get_evp_method_store(methdata->libctx);
     OSSL_NAMEMAP *namemap = ossl_namemap_stored(methdata->libctx);
+#ifdef FIPS_MODULE
+    /*
+     * The FIPS provider has its own internal library context where only it
+     * is loaded.  Consequently, property queries aren't relevant because
+     * there is only one fetchable algorithm and it is assumed that the
+     * FIPS-ness is handled by the using algorithm.
+     */
+    const char *const propq = "";
+#else
     const char *const propq = properties != NULL ? properties : "";
+#endif  /* FIPS_MODULE */
     uint32_t meth_id = 0;
     void *method = NULL;
     int unsupported, name_id;
@@ -317,13 +338,26 @@ inner_evp_generic_fetch(struct evp_method_data_st *methdata,
              * there is a correct name_id and meth_id, since those have
              * already been calculated in get_evp_method_from_store() and
              * put_evp_method_in_store() above.
+             * Note that there is a corner case here, in which, if a user
+             * passes a name of the form name1:name2:..., then the construction
+             * will create a method against all names, but the lookup will fail
+             * as ossl_namemap_name2num treats the name string as a single name
+             * rather than introducing new features where in the EVP_<obj>_fetch
+             * parses the string and queries for each, return an error.
              */
             if (name_id == 0)
                 name_id = ossl_namemap_name2num(namemap, name);
-            meth_id = evp_method_id(name_id, operation_id);
-            if (name_id != 0)
-                ossl_method_store_cache_set(store, prov, meth_id, propq,
-                                            method, up_ref_method, free_method);
+            if (name_id == 0) {
+                ERR_raise_data(ERR_LIB_EVP, ERR_R_FETCH_FAILED,
+                               "Algorithm %s cannot be found", name);
+                free_method(method);
+                method = NULL;
+            } else {
+                meth_id = evp_method_id(name_id, operation_id);
+                if (meth_id != 0)
+                    ossl_method_store_cache_set(store, prov, meth_id, propq,
+                                                method, up_ref_method, free_method);
+            }
         }
 
         /*
@@ -343,6 +377,11 @@ inner_evp_generic_fetch(struct evp_method_data_st *methdata,
                        ossl_lib_ctx_get_descriptor(methdata->libctx),
                        name == NULL ? "<null>" : name, name_id,
                        properties == NULL ? "<null>" : properties);
+    } else {
+        OSSL_TRACE4(QUERY, "%s, Algorithm (%s : %d), Properties (%s)\n",
+                    ossl_lib_ctx_get_descriptor(methdata->libctx),
+                    name == NULL ? "<null>" : name, name_id,
+                    properties == NULL ? "<null>" : properties);
     }
 
     return method;
@@ -422,6 +461,7 @@ static int evp_set_parsed_default_properties(OSSL_LIB_CTX *libctx,
     OSSL_PROPERTY_LIST **plp = ossl_ctx_global_properties(libctx, loadconfig);
 
     if (plp != NULL && store != NULL) {
+        int ret;
 #ifndef FIPS_MODULE
         char *propstr = NULL;
         size_t strsz;
@@ -455,8 +495,12 @@ static int evp_set_parsed_default_properties(OSSL_LIB_CTX *libctx,
 #endif
         ossl_property_free(*plp);
         *plp = def_prop;
-        if (store != NULL)
-            return ossl_method_store_cache_flush_all(store);
+
+        ret = ossl_method_store_cache_flush_all(store);
+#ifndef FIPS_MODULE
+        ossl_decoder_cache_flush(libctx);
+#endif
+        return ret;
     }
     ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
     return 0;
@@ -560,6 +604,11 @@ char *evp_get_global_properties_str(OSSL_LIB_CTX *libctx, int loadconfig)
         return NULL;
     }
     return propstr;
+}
+
+char *EVP_get1_default_properties(OSSL_LIB_CTX *libctx)
+{
+    return evp_get_global_properties_str(libctx, ossl_lib_ctx_is_global_default(libctx));
 }
 
 struct filter_data_st {

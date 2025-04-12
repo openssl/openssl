@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -17,6 +17,8 @@
 #include "ciphercommon_local.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
+#include "internal/skey.h"
+#include "crypto/types.h"
 
 /*-
  * Generic cipher functions for OSSL_PARAM gettables and settables
@@ -115,7 +117,7 @@ int ossl_cipher_var_keylen_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
     const OSSL_PARAM *p;
 
-    if (params == NULL)
+    if (ossl_param_is_empty(params))
         return 1;
 
     if (!ossl_cipher_generic_set_ctx_params(vctx, params))
@@ -128,7 +130,10 @@ int ossl_cipher_var_keylen_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
             return 0;
         }
-        ctx->keylen = keylen;
+        if (ctx->keylen != keylen) {
+            ctx->keylen = keylen;
+            ctx->key_set = 0;
+        }
     }
     return 1;
 }
@@ -149,6 +154,7 @@ static const OSSL_PARAM cipher_aead_known_gettable_ctx_params[] = {
     OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG, NULL, 0),
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_AEAD_TLS1_AAD_PAD, NULL),
     OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TLS1_GET_IV_GEN, NULL, 0),
+    OSSL_PARAM_uint(OSSL_CIPHER_PARAM_AEAD_IV_GENERATED, NULL),
     OSSL_PARAM_END
 };
 const OSSL_PARAM *ossl_cipher_aead_gettable_ctx_params(
@@ -217,6 +223,7 @@ static int cipher_generic_init_internal(PROV_CIPHER_CTX *ctx,
         }
         if (!ctx->hw->init(ctx, key, ctx->keylen))
             return 0;
+        ctx->key_set = 1;
     }
     return ossl_cipher_generic_set_ctx_params(ctx, params);
 }
@@ -237,6 +244,28 @@ int ossl_cipher_generic_dinit(void *vctx, const unsigned char *key,
                                         iv, ivlen, params, 0);
 }
 
+int ossl_cipher_generic_skey_einit(void *vctx, void *skeydata,
+                                   const unsigned char *iv, size_t ivlen,
+                                   const OSSL_PARAM params[])
+{
+    PROV_SKEY *key = skeydata;
+
+    return cipher_generic_init_internal((PROV_CIPHER_CTX *)vctx,
+                                        key->data, key->length,
+                                        iv, ivlen, params, 1);
+}
+
+int ossl_cipher_generic_skey_dinit(void *vctx, void *skeydata,
+                                   const unsigned char *iv, size_t ivlen,
+                                   const OSSL_PARAM params[])
+{
+    PROV_SKEY *key = skeydata;
+
+    return cipher_generic_init_internal((PROV_CIPHER_CTX *)vctx,
+                                        key->data, key->length,
+                                        iv, ivlen, params, 0);
+}
+
 /* Max padding including padding length byte */
 #define MAX_PADDING 256
 
@@ -248,6 +277,11 @@ int ossl_cipher_generic_block_update(void *vctx, unsigned char *out,
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
     size_t blksz = ctx->blocksize;
     size_t nextblocks;
+
+    if (!ctx->key_set) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_NO_KEY_SET);
+        return 0;
+    }
 
     if (ctx->tlsversion > 0) {
         /*
@@ -390,6 +424,11 @@ int ossl_cipher_generic_block_final(void *vctx, unsigned char *out,
     if (!ossl_prov_is_running())
         return 0;
 
+    if (!ctx->key_set) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_NO_KEY_SET);
+        return 0;
+    }
+
     if (ctx->tlsversion > 0) {
         /* We never finalize TLS, so this is an error */
         ERR_raise(ERR_LIB_PROV, PROV_R_CIPHER_OPERATION_FAILED);
@@ -456,6 +495,11 @@ int ossl_cipher_generic_stream_update(void *vctx, unsigned char *out,
 {
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
 
+    if (!ctx->key_set) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_NO_KEY_SET);
+        return 0;
+    }
+
     if (inl == 0) {
         *outl = 0;
         return 1;
@@ -510,8 +554,15 @@ int ossl_cipher_generic_stream_update(void *vctx, unsigned char *out,
 int ossl_cipher_generic_stream_final(void *vctx, unsigned char *out,
                                      size_t *outl, size_t outsize)
 {
+    PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
+
     if (!ossl_prov_is_running())
         return 0;
+
+    if (!ctx->key_set) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_NO_KEY_SET);
+        return 0;
+    }
 
     *outl = 0;
     return 1;
@@ -525,6 +576,11 @@ int ossl_cipher_generic_cipher(void *vctx, unsigned char *out, size_t *outl,
 
     if (!ossl_prov_is_running())
         return 0;
+
+    if (!ctx->key_set) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_NO_KEY_SET);
+        return 0;
+    }
 
     if (outsize < inl) {
         ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
@@ -593,7 +649,7 @@ int ossl_cipher_generic_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
     const OSSL_PARAM *p;
 
-    if (params == NULL)
+    if (ossl_param_is_empty(params))
         return 1;
 
     p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_PADDING);

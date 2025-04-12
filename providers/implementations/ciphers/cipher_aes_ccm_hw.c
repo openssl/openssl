@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -61,10 +61,10 @@ static const PROV_CCM_HW aes_ccm = {
 # include "cipher_aes_ccm_hw_aesni.inc"
 #elif defined(SPARC_AES_CAPABLE)
 # include "cipher_aes_ccm_hw_t4.inc"
-#elif defined(RV64I_ZKND_ZKNE_CAPABLE)
-# include "cipher_aes_ccm_hw_rv64i_zknd_zkne.inc"
-#elif defined(RV32I_ZBKB_ZKND_ZKNE_CAPABLE) && defined(RV32I_ZKND_ZKNE_CAPABLE)
-# include "cipher_aes_ccm_hw_rv32i_zknd_zkne.inc"
+#elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 64
+# include "cipher_aes_ccm_hw_rv64i.inc"
+#elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 32
+# include "cipher_aes_ccm_hw_rv32i.inc"
 #else
 const PROV_CCM_HW *ossl_prov_aes_hw_ccm(size_t keybits)
 {

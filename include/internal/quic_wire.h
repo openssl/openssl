@@ -1,5 +1,5 @@
 /*
-* Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
+* Copyright 2022-2023 The OpenSSL Project Authors. All Rights Reserved.
 *
 * Licensed under the Apache License 2.0 (the "License").  You may not use
 * this file except in compliance with the License.  You can obtain a copy
@@ -14,7 +14,7 @@
 # include "internal/e_os.h"
 # include "internal/time.h"
 # include "internal/quic_types.h"
-# include "internal/packet.h"
+# include "internal/packet_quic.h"
 
 # ifndef OPENSSL_NO_QUIC
 
@@ -86,6 +86,8 @@
     (((x) & ~(uint64_t)1) == OSSL_QUIC_FRAME_TYPE_STREAMS_BLOCKED_BIDI)
 #  define OSSL_QUIC_FRAME_TYPE_IS_CONN_CLOSE(x) \
     (((x) & ~(uint64_t)1) == OSSL_QUIC_FRAME_TYPE_CONN_CLOSE_TRANSPORT)
+
+const char *ossl_quic_frame_type_to_string(uint64_t frame_type);
 
 static ossl_unused ossl_inline int
 ossl_quic_frame_type_is_ack_eliciting(uint64_t frame_type)
@@ -159,6 +161,9 @@ typedef struct ossl_quic_frame_ack_st {
     unsigned int                ecn_present : 1;
 } OSSL_QUIC_FRAME_ACK;
 
+/* Returns 1 if the given frame contains the given PN. */
+int ossl_quic_frame_ack_contains_pn(const OSSL_QUIC_FRAME_ACK *ack, QUIC_PN pn);
+
 /* QUIC Frame: STREAM */
 typedef struct ossl_quic_frame_stream_st {
     uint64_t                stream_id;  /* Stream ID */
@@ -203,10 +208,10 @@ typedef struct ossl_quic_frame_stop_sending_st {
 
 /* QUIC Frame: NEW_CONNECTION_ID */
 typedef struct ossl_quic_frame_new_conn_id_st {
-    uint64_t              seq_num;
-    uint64_t              retire_prior_to;
-    QUIC_CONN_ID          conn_id;
-    unsigned char         stateless_reset_token[16];
+    uint64_t                    seq_num;
+    uint64_t                    retire_prior_to;
+    QUIC_CONN_ID                conn_id;
+    QUIC_STATELESS_RESET_TOKEN  stateless_reset;
 } OSSL_QUIC_FRAME_NEW_CONN_ID;
 
 /* QUIC Frame: CONNECTION_CLOSE */
@@ -490,7 +495,8 @@ int ossl_quic_wire_encode_transport_param_cid(WPACKET *wpkt,
  * position). This can be used to determine the frame type and determine which
  * frame decoding function to call.
  */
-int ossl_quic_wire_peek_frame_header(PACKET *pkt, uint64_t *type);
+int ossl_quic_wire_peek_frame_header(PACKET *pkt, uint64_t *type,
+                                     int *was_minimal);
 
 /*
  * Like ossl_quic_wire_peek_frame_header, but advances the current position
@@ -557,9 +563,11 @@ int ossl_quic_wire_decode_frame_stop_sending(PACKET *pkt,
  * Decodes a QUIC CRYPTO frame.
  *
  * f->data is set to point inside the packet buffer inside the PACKET, therefore
- * it is safe to access for as long as the packet buffer exists.
+ * it is safe to access for as long as the packet buffer exists. If nodata is
+ * set to 1 then reading the PACKET stops after the frame header and f->data is
+ * set to NULL.
  */
-int ossl_quic_wire_decode_frame_crypto(PACKET *pkt,
+int ossl_quic_wire_decode_frame_crypto(PACKET *pkt, int nodata,
                                        OSSL_QUIC_FRAME_CRYPTO *f);
 
 /*
@@ -572,6 +580,10 @@ int ossl_quic_wire_decode_frame_new_token(PACKET               *pkt,
 
 /*
  * Decodes a QUIC STREAM frame.
+ *
+ * If nodata is set to 1 then reading the PACKET stops after the frame header
+ * and f->data is set to NULL. In this case f->len will also be 0 in the event
+ * that "has_explicit_len" is 0.
  *
  * If the frame did not contain an offset field, f->offset is set to 0, as the
  * absence of an offset field is equivalent to an offset of 0.
@@ -595,7 +607,7 @@ int ossl_quic_wire_decode_frame_new_token(PACKET               *pkt,
  * f->is_fin is set according to whether the frame was marked as ending the
  * stream.
  */
-int ossl_quic_wire_decode_frame_stream(PACKET *pkt,
+int ossl_quic_wire_decode_frame_stream(PACKET *pkt, int nodata,
                                        OSSL_QUIC_FRAME_STREAM *f);
 
 /*
@@ -753,6 +765,19 @@ int ossl_quic_wire_decode_transport_param_int(PACKET *pkt,
 int ossl_quic_wire_decode_transport_param_cid(PACKET *pkt,
                                               uint64_t *id,
                                               QUIC_CONN_ID *cid);
+
+/*
+ * Decodes a QUIC transport parameter TLV containing a preferred_address.
+ */
+typedef struct quic_preferred_addr_st {
+    uint16_t                    ipv4_port, ipv6_port;
+    unsigned char               ipv4[4], ipv6[16];
+    QUIC_STATELESS_RESET_TOKEN  stateless_reset;
+    QUIC_CONN_ID                cid;
+} QUIC_PREFERRED_ADDR;
+
+int ossl_quic_wire_decode_transport_param_preferred_addr(PACKET *pkt,
+                                                         QUIC_PREFERRED_ADDR *p);
 
 # endif
 

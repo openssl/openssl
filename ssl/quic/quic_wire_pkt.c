@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <openssl/err.h>
+#include "internal/common.h"
 #include "internal/quic_wire_pkt.h"
 
 int ossl_quic_hdr_protector_init(QUIC_HDR_PROTECTOR *hpr,
@@ -29,21 +31,28 @@ int ossl_quic_hdr_protector_init(QUIC_HDR_PROTECTOR *hpr,
             cipher_name = "ChaCha20";
             break;
         default:
+            ERR_raise(ERR_LIB_SSL, ERR_R_UNSUPPORTED);
             return 0;
     }
 
     hpr->cipher_ctx = EVP_CIPHER_CTX_new();
-    if (hpr->cipher_ctx == NULL)
+    if (hpr->cipher_ctx == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_EVP_LIB);
         return 0;
+    }
 
     hpr->cipher = EVP_CIPHER_fetch(libctx, cipher_name, propq);
     if (hpr->cipher == NULL
-        || quic_hp_key_len != (size_t)EVP_CIPHER_get_key_length(hpr->cipher))
+        || quic_hp_key_len != (size_t)EVP_CIPHER_get_key_length(hpr->cipher)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_EVP_LIB);
         goto err;
+    }
 
     if (!EVP_CipherInit_ex(hpr->cipher_ctx, hpr->cipher, NULL,
-                           quic_hp_key, NULL, 1))
+                           quic_hp_key, NULL, 1)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_EVP_LIB);
         goto err;
+    }
 
     hpr->libctx     = libctx;
     hpr->propq      = propq;
@@ -75,27 +84,41 @@ static int hdr_generate_mask(QUIC_HDR_PROTECTOR *hpr,
 
     if (hpr->cipher_id == QUIC_HDR_PROT_CIPHER_AES_128
         || hpr->cipher_id == QUIC_HDR_PROT_CIPHER_AES_256) {
-        if (sample_len < 16)
+        if (sample_len < 16) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
             return 0;
+        }
 
         if (!EVP_CipherInit_ex(hpr->cipher_ctx, NULL, NULL, NULL, NULL, 1)
-            || !EVP_CipherUpdate(hpr->cipher_ctx, dst, &l, sample, 16))
+            || !EVP_CipherUpdate(hpr->cipher_ctx, dst, &l, sample, 16)) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_EVP_LIB);
             return 0;
+        }
 
         for (i = 0; i < 5; ++i)
             mask[i] = dst[i];
     } else if (hpr->cipher_id == QUIC_HDR_PROT_CIPHER_CHACHA) {
-        if (sample_len < 16)
+        if (sample_len < 16) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
             return 0;
+        }
 
         if (!EVP_CipherInit_ex(hpr->cipher_ctx, NULL, NULL, NULL, sample, 1)
             || !EVP_CipherUpdate(hpr->cipher_ctx, mask, &l,
-                                 zeroes, sizeof(zeroes)))
+                                 zeroes, sizeof(zeroes))) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_EVP_LIB);
             return 0;
+        }
     } else {
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         assert(0);
         return 0;
     }
+
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    /* No matter what we did above we use the same mask in fuzzing mode */
+    memset(mask, 0, 5);
+#endif
 
     return 1;
 }
@@ -162,12 +185,17 @@ int ossl_quic_hdr_protector_encrypt_fields(QUIC_HDR_PROTECTOR *hpr,
 int ossl_quic_wire_decode_pkt_hdr(PACKET *pkt,
                                   size_t short_conn_id_len,
                                   int partial,
+                                  int nodata,
                                   QUIC_PKT_HDR *hdr,
-                                  QUIC_PKT_HDR_PTRS *ptrs)
+                                  QUIC_PKT_HDR_PTRS *ptrs,
+                                  uint64_t *fail_cause)
 {
     unsigned int b0;
     unsigned char *pn = NULL;
     size_t l = PACKET_remaining(pkt);
+
+    if (fail_cause != NULL)
+        *fail_cause = QUIC_PKT_HDR_DECODE_DECODE_ERR;
 
     if (ptrs != NULL) {
         ptrs->raw_start         = (unsigned char *)PACKET_data(pkt);
@@ -180,8 +208,9 @@ int ossl_quic_wire_decode_pkt_hdr(PACKET *pkt,
         || !PACKET_get_1(pkt, &b0))
         return 0;
 
-    hdr->partial = partial;
-    hdr->unused  = 0;
+    hdr->partial    = partial;
+    hdr->unused     = 0;
+    hdr->reserved   = 0;
 
     if ((b0 & 0x80) == 0) {
         /* Short header. */
@@ -198,9 +227,11 @@ int ossl_quic_wire_decode_pkt_hdr(PACKET *pkt,
         if (partial) {
             hdr->key_phase  = 0; /* protected, zero for now */
             hdr->pn_len     = 0; /* protected, zero for now */
+            hdr->reserved   = 0; /* protected, zero for now */
         } else {
-            hdr->key_phase  = (b0 & 0x4) != 0;
-            hdr->pn_len     = (b0 & 0x3) + 1;
+            hdr->key_phase  = (b0 & 0x04) != 0;
+            hdr->pn_len     = (b0 & 0x03) + 1;
+            hdr->reserved   = (b0 & 0x18) >> 3;
         }
 
         /* Copy destination connection ID field to header structure. */
@@ -284,6 +315,13 @@ int ossl_quic_wire_decode_pkt_hdr(PACKET *pkt,
             hdr->data       = PACKET_data(pkt);
             hdr->len        = PACKET_remaining(pkt);
 
+            /*
+             * Version negotiation packets must contain an array of u32s, so it
+             * is invalid for their payload length to not be divisible by 4.
+             */
+            if ((hdr->len % 4) != 0)
+                return 0;
+
             /* Version negotiation packets are always fully decoded. */
             hdr->partial    = 0;
 
@@ -298,6 +336,8 @@ int ossl_quic_wire_decode_pkt_hdr(PACKET *pkt,
             if (!PACKET_forward(pkt, hdr->len))
                 return 0;
         } else if (version != QUIC_VERSION_1) {
+            if (fail_cause != NULL)
+                *fail_cause |= QUIC_PKT_HDR_DECODE_BAD_VERSION;
             /* Unknown version, do not decode. */
             return 0;
         } else {
@@ -366,11 +406,14 @@ int ossl_quic_wire_decode_pkt_hdr(PACKET *pkt,
                 /* Initial, 0-RTT or Handshake packet. */
                 uint64_t len;
 
-                hdr->pn_len = partial ? 0 : (b0 & 3) + 1;
+                hdr->pn_len     = partial ? 0 : ((b0 & 0x03) + 1);
+                hdr->reserved   = partial ? 0 : ((b0 & 0x0C) >> 2);
 
                 if (!PACKET_get_quic_vlint(pkt, &len)
-                    || len < sizeof(hdr->pn)
-                    || len > PACKET_remaining(pkt))
+                        || len < sizeof(hdr->pn))
+                    return 0;
+
+                if (!nodata && len > PACKET_remaining(pkt))
                     return 0;
 
                 /*
@@ -393,11 +436,15 @@ int ossl_quic_wire_decode_pkt_hdr(PACKET *pkt,
                     hdr->len = (size_t)(len - hdr->pn_len);
                 }
 
-                hdr->data = PACKET_data(pkt);
+                if (nodata) {
+                    hdr->data = NULL;
+                } else {
+                    hdr->data = PACKET_data(pkt);
 
-                /* Skip over packet body. */
-                if (!PACKET_forward(pkt, hdr->len))
-                    return 0;
+                    /* Skip over packet body. */
+                    if (!PACKET_forward(pkt, hdr->len))
+                        return 0;
+                }
             }
         }
     }
@@ -409,6 +456,12 @@ int ossl_quic_wire_decode_pkt_hdr(PACKET *pkt,
             ptrs->raw_sample_len    = PACKET_end(pkt) - ptrs->raw_sample;
         }
     }
+
+    /*
+     * Good decode, clear the generic DECODE_ERR flag
+     */
+    if (fail_cause != NULL)
+        *fail_cause &= ~QUIC_PKT_HDR_DECODE_DECODE_ERR;
 
     return 1;
 }
@@ -426,6 +479,9 @@ int ossl_quic_wire_encode_pkt_hdr(WPACKET *pkt,
         return 0;
 
     if (ptrs != NULL) {
+        /* ptrs would not be stable on non-static WPACKET */
+        if (!ossl_assert(pkt->staticbuf != NULL))
+            return 0;
         ptrs->raw_start         = NULL;
         ptrs->raw_sample        = NULL;
         ptrs->raw_sample_len    = 0;
@@ -453,6 +509,7 @@ int ossl_quic_wire_encode_pkt_hdr(WPACKET *pkt,
         b0 = (hdr->spin_bit << 5)
              | (hdr->key_phase << 2)
              | (hdr->pn_len - 1)
+             | (hdr->reserved << 3)
              | 0x40; /* fixed bit */
 
         if (!WPACKET_put_bytes_u8(pkt, b0)
@@ -492,8 +549,10 @@ int ossl_quic_wire_encode_pkt_hdr(WPACKET *pkt,
         b0 = (raw_type << 4) | 0x80; /* long */
         if (hdr->type != QUIC_PKT_TYPE_VERSION_NEG || hdr->fixed)
             b0 |= 0x40; /* fixed */
-        if (ossl_quic_pkt_type_has_pn(hdr->type))
+        if (ossl_quic_pkt_type_has_pn(hdr->type)) {
             b0 |= hdr->pn_len - 1;
+            b0 |= (hdr->reserved << 2);
+        }
         if (hdr->type == QUIC_PKT_TYPE_RETRY)
             b0 |= hdr->unused;
 
@@ -507,8 +566,7 @@ int ossl_quic_wire_encode_pkt_hdr(WPACKET *pkt,
                                hdr->src_conn_id.id_len))
             return 0;
 
-        if (hdr->type == QUIC_PKT_TYPE_VERSION_NEG
-            || hdr->type == QUIC_PKT_TYPE_RETRY) {
+        if (hdr->type == QUIC_PKT_TYPE_VERSION_NEG) {
             if (hdr->len > 0 && !WPACKET_reserve_bytes(pkt, hdr->len, NULL))
                 return 0;
 
@@ -519,6 +577,12 @@ int ossl_quic_wire_encode_pkt_hdr(WPACKET *pkt,
             if (!WPACKET_quic_write_vlint(pkt, hdr->token_len)
                 || !WPACKET_memcpy(pkt, hdr->token, hdr->token_len))
                 return 0;
+        }
+
+        if (hdr->type == QUIC_PKT_TYPE_RETRY) {
+            if (!WPACKET_memcpy(pkt, hdr->token, hdr->token_len))
+                return 0;
+            return 1;
         }
 
         if (!WPACKET_quic_write_vlint(pkt, hdr->len + hdr->pn_len)
@@ -804,8 +868,10 @@ int ossl_quic_calculate_retry_integrity_tag(OSSL_LIB_CTX *libctx,
         || hdr->len < QUIC_RETRY_INTEGRITY_TAG_LEN
         || hdr->data == NULL
         || client_initial_dcid == NULL || tag == NULL
-        || client_initial_dcid->id_len > QUIC_MAX_CONN_ID_LEN)
+        || client_initial_dcid->id_len > QUIC_MAX_CONN_ID_LEN) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         goto err;
+    }
 
     /*
      * Do not reserve packet body in WPACKET. Retry packet header
@@ -816,54 +882,74 @@ int ossl_quic_calculate_retry_integrity_tag(OSSL_LIB_CTX *libctx,
     hdr2.len = 0;
 
     /* Assemble retry psuedo-packet. */
-    if (!WPACKET_init_static_len(&wpkt, buf, sizeof(buf), 0))
+    if (!WPACKET_init_static_len(&wpkt, buf, sizeof(buf), 0)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         goto err;
+    }
 
     wpkt_valid = 1;
 
     /* Prepend original DCID to the packet. */
     if (!WPACKET_put_bytes_u8(&wpkt, client_initial_dcid->id_len)
         || !WPACKET_memcpy(&wpkt, client_initial_dcid->id,
-                           client_initial_dcid->id_len))
+                           client_initial_dcid->id_len)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         goto err;
+    }
 
     /* Encode main retry header. */
     if (!ossl_quic_wire_encode_pkt_hdr(&wpkt, hdr2.dst_conn_id.id_len,
                                        &hdr2, NULL))
         goto err;
 
-    if (!WPACKET_get_total_written(&wpkt, &hdr_enc_len))
-        return 0;
+    if (!WPACKET_get_total_written(&wpkt, &hdr_enc_len)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
+        goto err;
+    }
 
     /* Create and initialise cipher context. */
-    /* TODO(QUIC): Cipher fetch caching. */
-    if ((cipher = EVP_CIPHER_fetch(libctx, "AES-128-GCM", propq)) == NULL)
+    /* TODO(QUIC FUTURE): Cipher fetch caching. */
+    if ((cipher = EVP_CIPHER_fetch(libctx, "AES-128-GCM", propq)) == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_EVP_LIB);
         goto err;
+    }
 
-    if ((cctx = EVP_CIPHER_CTX_new()) == NULL)
+    if ((cctx = EVP_CIPHER_CTX_new()) == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_EVP_LIB);
         goto err;
+    }
 
     if (!EVP_CipherInit_ex(cctx, cipher, NULL,
-                           retry_integrity_key, retry_integrity_nonce, /*enc=*/1))
+                           retry_integrity_key, retry_integrity_nonce, /*enc=*/1)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_EVP_LIB);
         goto err;
+    }
 
     /* Feed packet header as AAD data. */
-    if (EVP_CipherUpdate(cctx, NULL, &l, buf, hdr_enc_len) != 1)
-        return 0;
+    if (EVP_CipherUpdate(cctx, NULL, &l, buf, hdr_enc_len) != 1) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_EVP_LIB);
+        goto err;
+    }
 
     /* Feed packet body as AAD data. */
     if (EVP_CipherUpdate(cctx, NULL, &l, hdr->data,
-                         hdr->len - QUIC_RETRY_INTEGRITY_TAG_LEN) != 1)
-        return 0;
+                         hdr->len - QUIC_RETRY_INTEGRITY_TAG_LEN) != 1) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_EVP_LIB);
+        goto err;
+    }
 
     /* Finalise and get tag. */
-    if (EVP_CipherFinal_ex(cctx, NULL, &l2) != 1)
-        return 0;
+    if (EVP_CipherFinal_ex(cctx, NULL, &l2) != 1) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_EVP_LIB);
+        goto err;
+    }
 
     if (EVP_CIPHER_CTX_ctrl(cctx, EVP_CTRL_AEAD_GET_TAG,
                             QUIC_RETRY_INTEGRITY_TAG_LEN,
-                            tag) != 1)
-        return 0;
+                            tag) != 1) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_EVP_LIB);
+        goto err;
+    }
 
     ok = 1;
 err:

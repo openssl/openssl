@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -166,7 +166,7 @@ static X509_ALGOR *pkcs5_scrypt_set(const unsigned char *salt, size_t saltlen,
     }
 
     if (!saltlen)
-        saltlen = PKCS5_SALT_LEN;
+        saltlen = PKCS5_DEFAULT_PBE2_SALT_LEN;
 
     /* This will either copy salt or grow the buffer */
     if (ASN1_STRING_set(sparam->salt, salt, saltlen) == 0) {

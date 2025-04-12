@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -70,8 +70,13 @@ static int kdf_pbkdf1_do_derive(const unsigned char *pass, size_t passlen,
         || !EVP_DigestFinal_ex(ctx, md_tmp, NULL))
         goto err;
     mdsize = EVP_MD_size(md_type);
-    if (mdsize < 0)
+    if (mdsize <= 0)
         goto err;
+    if (n > (size_t)mdsize) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_LENGTH_TOO_LARGE);
+        goto err;
+    }
+
     for (i = 1; i < iter; i++) {
         if (!EVP_DigestInit_ex(ctx, md_type, NULL))
             goto err;
@@ -84,6 +89,7 @@ static int kdf_pbkdf1_do_derive(const unsigned char *pass, size_t passlen,
     memcpy(out, md_tmp, n);
     ret = 1;
 err:
+    OPENSSL_cleanse(md_tmp, EVP_MAX_MD_SIZE);
     EVP_MD_CTX_free(ctx);
     return ret;
 }
@@ -260,5 +266,5 @@ const OSSL_DISPATCH ossl_kdf_pbkdf1_functions[] = {
     { OSSL_FUNC_KDF_GETTABLE_CTX_PARAMS,
       (void(*)(void))kdf_pbkdf1_gettable_ctx_params },
     { OSSL_FUNC_KDF_GET_CTX_PARAMS, (void(*)(void))kdf_pbkdf1_get_ctx_params },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };

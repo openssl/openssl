@@ -21,7 +21,11 @@ SSL_CTX *create_ssl_ctx(void)
 {
     SSL_CTX *ctx;
 
+#ifdef USE_QUIC
+    ctx = SSL_CTX_new(OSSL_QUIC_client_method());
+#else
     ctx = SSL_CTX_new(TLS_client_method());
+#endif
     if (ctx == NULL)
         return NULL;
 
@@ -46,6 +50,9 @@ SSL_CTX *create_ssl_ctx(void)
 SSL *new_conn(SSL_CTX *ctx, int fd, const char *bare_hostname)
 {
     SSL *ssl;
+#ifdef USE_QUIC
+    static const unsigned char alpn[] = {5, 'd', 'u', 'm', 'm', 'y'};
+#endif
 
     ssl = SSL_new(ctx);
     if (ssl == NULL)
@@ -67,6 +74,15 @@ SSL *new_conn(SSL_CTX *ctx, int fd, const char *bare_hostname)
         SSL_free(ssl);
         return NULL;
     }
+
+#ifdef USE_QUIC
+    /* Configure ALPN, which is required for QUIC. */
+    if (SSL_set_alpn_protos(ssl, alpn, sizeof(alpn))) {
+        /* Note: SSL_set_alpn_protos returns 1 for failure. */
+        SSL_free(ssl);
+        return NULL;
+    }
+#endif
 
     return ssl;
 }
@@ -120,12 +136,20 @@ void teardown_ctx(SSL_CTX *ctx)
 
 int main(int argc, char **argv)
 {
-    int rc, fd = -1, l, res = 1;
-    const char msg[] = "GET / HTTP/1.0\r\nHost: www.openssl.org\r\n\r\n";
+    int rc, fd = -1, l, mlen, res = 1;
+    static char msg[300];
     struct addrinfo hints = {0}, *result = NULL;
     SSL *ssl = NULL;
-    SSL_CTX *ctx;
+    SSL_CTX *ctx = NULL;
     char buf[2048];
+
+    if (argc < 3) {
+        fprintf(stderr, "usage: %s host port\n", argv[0]);
+        goto fail;
+    }
+
+    mlen = snprintf(msg, sizeof(msg),
+                    "GET / HTTP/1.0\r\nHost: %s\r\n\r\n", argv[1]);
 
     ctx = create_ssl_ctx();
     if (ctx == NULL) {
@@ -136,7 +160,7 @@ int main(int argc, char **argv)
     hints.ai_family     = AF_INET;
     hints.ai_socktype   = SOCK_STREAM;
     hints.ai_flags      = AI_PASSIVE;
-    rc = getaddrinfo("www.openssl.org", "443", &hints, &result);
+    rc = getaddrinfo(argv[1], argv[2], &hints, &result);
     if (rc < 0) {
         fprintf(stderr, "cannot resolve\n");
         goto fail;
@@ -144,7 +168,11 @@ int main(int argc, char **argv)
 
     signal(SIGPIPE, SIG_IGN);
 
+#ifdef USE_QUIC
+    fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+#else
     fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+#endif
     if (fd < 0) {
         fprintf(stderr, "cannot create socket\n");
         goto fail;
@@ -156,13 +184,14 @@ int main(int argc, char **argv)
         goto fail;
     }
 
-    ssl = new_conn(ctx, fd, "www.openssl.org");
+    ssl = new_conn(ctx, fd, argv[1]);
     if (ssl == NULL) {
         fprintf(stderr, "cannot create connection\n");
         goto fail;
     }
 
-    if (tx(ssl, msg, sizeof(msg)-1) < sizeof(msg)-1) {
+    l = tx(ssl, msg, mlen);
+    if (l < mlen) {
         fprintf(stderr, "tx error\n");
         goto fail;
     }

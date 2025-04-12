@@ -39,7 +39,7 @@ $proxy->filter(\&alert_filter);
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
 plan tests => 1;
 my $alert = TLSProxy::Message->alert();
-ok(TLSProxy::Message->fail() && !$alert->server() && !$alert->encrypted(), "Client sends an unecrypted alert");
+ok(TLSProxy::Message->fail() && !$alert->server() && !$alert->encrypted(), "Client sends an unencrypted alert");
 
 sub alert_filter
 {

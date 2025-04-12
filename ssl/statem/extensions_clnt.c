@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -10,16 +10,44 @@
 #include <openssl/ocsp.h>
 #include "../ssl_local.h"
 #include "internal/cryptlib.h"
+#include "internal/ssl_unwrap.h"
 #include "statem_local.h"
 
 EXT_RETURN tls_construct_ctos_renegotiate(SSL_CONNECTION *s, WPACKET *pkt,
                                           unsigned int context, X509 *x,
                                           size_t chainidx)
 {
-    /* Add RI if renegotiating */
-    if (!s->renegotiate)
-        return EXT_RETURN_NOT_SENT;
+    if (!s->renegotiate) {
+        /* If not renegotiating, send an empty RI extension to indicate support */
 
+#if DTLS_MAX_VERSION_INTERNAL != DTLS1_2_VERSION
+# error Internal DTLS version error
+#endif
+
+        if (!SSL_CONNECTION_IS_DTLS(s)
+            && (s->min_proto_version >= TLS1_3_VERSION
+                || (ssl_security(s, SSL_SECOP_VERSION, 0, TLS1_VERSION, NULL)
+                    && s->min_proto_version <= TLS1_VERSION))) {
+            /*
+             * For TLS <= 1.0 SCSV is used instead, and for TLS 1.3 this
+             * extension isn't used at all.
+             */
+            return EXT_RETURN_NOT_SENT;
+        }
+
+
+        if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_renegotiate)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_put_bytes_u8(pkt, 0)
+            || !WPACKET_close(pkt)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return EXT_RETURN_FAIL;
+        }
+
+        return EXT_RETURN_SENT;
+    }
+
+    /* Add a complete RI extension if renegotiating */
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_renegotiate)
             || !WPACKET_start_sub_packet_u16(pkt)
             || !WPACKET_sub_memcpy_u8(pkt, s->s3.previous_client_finished,
@@ -301,8 +329,22 @@ EXT_RETURN tls_construct_ctos_sig_algs(SSL_CONNECTION *s, WPACKET *pkt,
     size_t salglen;
     const uint16_t *salg;
 
-    if (!SSL_CLIENT_USE_SIGALGS(s))
+    /*
+     * This used both in the initial hello and as part of renegotiation,
+     * in the latter case, the client version may be already set and may
+     * be lower than that initially offered in `client_version`.
+     */
+    if (!SSL_CONNECTION_IS_DTLS(s)) {
+        if (s->client_version < TLS1_2_VERSION
+            || (s->ssl.method->version != TLS_ANY_VERSION
+                && s->version < TLS1_2_VERSION))
         return EXT_RETURN_NOT_SENT;
+    } else {
+        if (DTLS_VERSION_LT(s->client_version, DTLS1_2_VERSION)
+            || (s->ssl.method->version != DTLS_ANY_VERSION
+                && DTLS_VERSION_LT(s->version, DTLS1_2_VERSION)))
+        return EXT_RETURN_NOT_SENT;
+    }
 
     salglen = tls12_get_psigalgs(s, 1, &salg);
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_signature_algorithms)
@@ -599,23 +641,24 @@ EXT_RETURN tls_construct_ctos_psk_kex_modes(SSL_CONNECTION *s, WPACKET *pkt,
 }
 
 #ifndef OPENSSL_NO_TLS1_3
-static int add_key_share(SSL_CONNECTION *s, WPACKET *pkt, unsigned int curve_id)
+static int add_key_share(SSL_CONNECTION *s, WPACKET *pkt, unsigned int group_id, size_t loop_num)
 {
-    unsigned char *encoded_point = NULL;
+    unsigned char *encoded_pubkey = NULL;
     EVP_PKEY *key_share_key = NULL;
     size_t encodedlen;
 
-    if (s->s3.tmp.pkey != NULL) {
-        if (!ossl_assert(s->hello_retry_request == SSL_HRR_PENDING)) {
+    if (loop_num < s->s3.tmp.num_ks_pkey) {
+        if (!ossl_assert(s->hello_retry_request == SSL_HRR_PENDING)
+            || !ossl_assert(s->s3.tmp.ks_pkey[loop_num] != NULL)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return 0;
         }
         /*
          * Could happen if we got an HRR that wasn't requesting a new key_share
          */
-        key_share_key = s->s3.tmp.pkey;
+        key_share_key = s->s3.tmp.ks_pkey[loop_num];
     } else {
-        key_share_key = ssl_generate_pkey_group(s, curve_id);
+        key_share_key = ssl_generate_pkey_group(s, group_id);
         if (key_share_key == NULL) {
             /* SSLfatal() already called */
             return 0;
@@ -624,33 +667,37 @@ static int add_key_share(SSL_CONNECTION *s, WPACKET *pkt, unsigned int curve_id)
 
     /* Encode the public key. */
     encodedlen = EVP_PKEY_get1_encoded_public_key(key_share_key,
-                                                  &encoded_point);
+                                                  &encoded_pubkey);
     if (encodedlen == 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EC_LIB);
         goto err;
     }
 
     /* Create KeyShareEntry */
-    if (!WPACKET_put_bytes_u16(pkt, curve_id)
-            || !WPACKET_sub_memcpy_u16(pkt, encoded_point, encodedlen)) {
+    if (!WPACKET_put_bytes_u16(pkt, group_id)
+            || !WPACKET_sub_memcpy_u16(pkt, encoded_pubkey, encodedlen)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     }
 
-    /*
-     * When changing to send more than one key_share we're
-     * going to need to be able to save more than one EVP_PKEY. For now
-     * we reuse the existing tmp.pkey
-     */
-    s->s3.tmp.pkey = key_share_key;
-    s->s3.group_id = curve_id;
-    OPENSSL_free(encoded_point);
+    /* For backward compatibility, we use the first valid group to add a key share */
+    if (loop_num == 0) {
+        s->s3.tmp.pkey = key_share_key;
+        s->s3.group_id = group_id;
+    }
+    /* We ensure in t1_lib.c that the loop number does not exceed OPENSSL_CLIENT_MAX_KEY_SHARES */
+    s->s3.tmp.ks_pkey[loop_num] = key_share_key;
+    s->s3.tmp.ks_group_id[loop_num] = group_id;
+    if (loop_num >= s->s3.tmp.num_ks_pkey)
+        s->s3.tmp.num_ks_pkey++;
+
+    OPENSSL_free(encoded_pubkey);
 
     return 1;
  err:
-    if (s->s3.tmp.pkey == NULL)
+    if (key_share_key != s->s3.tmp.ks_pkey[loop_num])
         EVP_PKEY_free(key_share_key);
-    OPENSSL_free(encoded_point);
+    OPENSSL_free(encoded_pubkey);
     return 0;
 }
 #endif
@@ -662,48 +709,68 @@ EXT_RETURN tls_construct_ctos_key_share(SSL_CONNECTION *s, WPACKET *pkt,
 #ifndef OPENSSL_NO_TLS1_3
     size_t i, num_groups = 0;
     const uint16_t *pgroups = NULL;
-    uint16_t curve_id = 0;
+    uint16_t group_id = 0;
+    int add_only_one = 0;
+    size_t valid_keyshare = 0;
 
     /* key_share extension */
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_key_share)
-               /* Extension data sub-packet */
+            /* Extension data sub-packet */
             || !WPACKET_start_sub_packet_u16(pkt)
-               /* KeyShare list sub-packet */
+            /* KeyShare list sub-packet */
             || !WPACKET_start_sub_packet_u16(pkt)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return EXT_RETURN_FAIL;
     }
 
-    tls1_get_supported_groups(s, &pgroups, &num_groups);
-
-    /*
-     * Make the number of key_shares sent configurable. For
-     * now, we just send one
-     */
-    if (s->s3.group_id != 0) {
-        curve_id = s->s3.group_id;
-    } else {
-        for (i = 0; i < num_groups; i++) {
-            if (!tls_group_allowed(s, pgroups[i], SSL_SECOP_CURVE_SUPPORTED))
-                continue;
-
-            if (!tls_valid_group(s, pgroups[i], TLS1_3_VERSION, TLS1_3_VERSION,
-                                 0, NULL))
-                continue;
-
-            curve_id = pgroups[i];
-            break;
-        }
+    tls1_get_requested_keyshare_groups(s, &pgroups, &num_groups);
+    if (num_groups == 1 && pgroups[0] == 0) { /* Indication that no * prefix was used */
+        tls1_get_supported_groups(s, &pgroups, &num_groups);
+        add_only_one = 1;
     }
 
-    if (curve_id == 0) {
+    /* If neither the default nor the keyshares have any entry --> fatal */
+    if (num_groups == 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_NO_SUITABLE_KEY_SHARE);
         return EXT_RETURN_FAIL;
     }
 
-    if (!add_key_share(s, pkt, curve_id)) {
-        /* SSLfatal() already called */
-        return EXT_RETURN_FAIL;
+    /* Add key shares */
+
+    if (s->s3.group_id != 0 && s->s3.tmp.pkey == NULL) {
+        /* new, single key share */
+        group_id = s->s3.group_id;
+        s->s3.tmp.num_ks_pkey = 0;
+        if (!add_key_share(s, pkt, group_id, 0)) {
+            /* SSLfatal() already called */
+            return EXT_RETURN_FAIL;
+        }
+    } else {
+        if (s->ext.supportedgroups == NULL) /* use default */
+            add_only_one = 1;
+
+        for (i = 0; i < num_groups; i++) {
+            if (!tls_group_allowed(s, pgroups[i], SSL_SECOP_CURVE_SUPPORTED))
+                continue;
+            if (!tls_valid_group(s, pgroups[i], TLS1_3_VERSION, TLS1_3_VERSION,
+                                 0, NULL))
+                continue;
+
+            group_id = pgroups[i];
+
+            if (group_id == 0) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_NO_SUITABLE_KEY_SHARE);
+                return EXT_RETURN_FAIL;
+            }
+            if (!add_key_share(s, pkt, group_id, valid_keyshare)) {
+                /* SSLfatal() already called */
+                return EXT_RETURN_FAIL;
+            }
+            if (add_only_one)
+                break;
+
+            valid_keyshare++;
+        }
     }
 
     if (!WPACKET_close(pkt) || !WPACKET_close(pkt)) {
@@ -757,13 +824,13 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
     SSL_SESSION *psksess = NULL;
     SSL_SESSION *edsess = NULL;
     const EVP_MD *handmd = NULL;
-    SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+    SSL *ussl = SSL_CONNECTION_GET_USER_SSL(s);
 
     if (s->hello_retry_request == SSL_HRR_PENDING)
         handmd = ssl_handshake_md(s);
 
     if (s->psk_use_session_cb != NULL
-            && (!s->psk_use_session_cb(ssl, handmd, &id, &idlen, &psksess)
+            && (!s->psk_use_session_cb(ussl, handmd, &id, &idlen, &psksess)
                 || (psksess != NULL
                     && psksess->ssl_version != TLS1_3_VERSION))) {
         SSL_SESSION_free(psksess);
@@ -777,7 +844,7 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
         size_t psklen = 0;
 
         memset(identity, 0, sizeof(identity));
-        psklen = s->psk_client_callback(ssl, NULL,
+        psklen = s->psk_client_callback(ussl, NULL,
                                         identity, sizeof(identity) - 1,
                                         psk, sizeof(psk));
 
@@ -799,7 +866,8 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
              * We found a PSK using an old style callback. We don't know
              * the digest so we default to SHA256 as per the TLSv1.3 spec
              */
-            cipher = SSL_CIPHER_find(ssl, tls13_aes128gcmsha256_id);
+            cipher = SSL_CIPHER_find(SSL_CONNECTION_GET_SSL(s),
+                                     tls13_aes128gcmsha256_id);
             if (cipher == NULL) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 return EXT_RETURN_FAIL;
@@ -952,8 +1020,12 @@ EXT_RETURN tls_construct_ctos_padding(SSL_CONNECTION *s, WPACKET *pkt,
              * Add the fixed PSK overhead, the identity length and the binder
              * length.
              */
+            int md_size = EVP_MD_get_size(md);
+
+            if (md_size <= 0)
+                return EXT_RETURN_FAIL;
             hlen +=  PSK_PRE_BINDER_OVERHEAD + s->session->ext.ticklen
-                     + EVP_MD_get_size(md);
+                     + md_size;
         }
     }
 
@@ -992,7 +1064,8 @@ EXT_RETURN tls_construct_ctos_psk(SSL_CONNECTION *s, WPACKET *pkt,
 {
 #ifndef OPENSSL_NO_TLS1_3
     uint32_t agesec, agems = 0;
-    size_t reshashsize = 0, pskhashsize = 0, binderoffset, msglen;
+    size_t binderoffset, msglen;
+    int reshashsize = 0, pskhashsize = 0;
     unsigned char *resbinder = NULL, *pskbinder = NULL, *msgstart = NULL;
     const EVP_MD *handmd = NULL, *mdres = NULL, *mdpsk = NULL;
     int dores = 0;
@@ -1088,6 +1161,8 @@ EXT_RETURN tls_construct_ctos_psk(SSL_CONNECTION *s, WPACKET *pkt,
         agems += s->session->ext.tick_age_add;
 
         reshashsize = EVP_MD_get_size(mdres);
+        if (reshashsize <= 0)
+            goto dopsksess;
         s->ext.tick_identity++;
         dores = 1;
     }
@@ -1117,6 +1192,10 @@ EXT_RETURN tls_construct_ctos_psk(SSL_CONNECTION *s, WPACKET *pkt,
         }
 
         pskhashsize = EVP_MD_get_size(mdpsk);
+        if (pskhashsize <= 0) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_PSK);
+            return EXT_RETURN_FAIL;
+        }
     }
 
     /* Create the extension, but skip over the binder for now */
@@ -1383,7 +1462,7 @@ int tls_parse_stoc_session_ticket(SSL_CONNECTION *s, PACKET *pkt,
                                   unsigned int context,
                                   X509 *x, size_t chainidx)
 {
-    SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+    SSL *ssl = SSL_CONNECTION_GET_USER_SSL(s);
 
     if (s->ext.session_ticket_cb != NULL &&
         !s->ext.session_ticket_cb(ssl, PACKET_data(pkt),
@@ -1557,11 +1636,11 @@ int tls_parse_stoc_npn(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
         /* SSLfatal() already called */
         return 0;
     }
-    if (sctx->ext.npn_select_cb(SSL_CONNECTION_GET_SSL(s),
+    if (sctx->ext.npn_select_cb(SSL_CONNECTION_GET_USER_SSL(s),
                                 &selected, &selected_len,
                                 PACKET_data(pkt), PACKET_remaining(pkt),
-                                sctx->ext.npn_select_cb_arg) !=
-             SSL_TLSEXT_ERR_OK) {
+                                sctx->ext.npn_select_cb_arg) != SSL_TLSEXT_ERR_OK
+            || selected_len == 0) {
         SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_R_BAD_EXTENSION);
         return 0;
     }
@@ -1590,6 +1669,8 @@ int tls_parse_stoc_alpn(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
                         X509 *x, size_t chainidx)
 {
     size_t len;
+    PACKET confpkt, protpkt;
+    int valid = 0;
 
     /* We must have requested it. */
     if (!s->s3.alpn_sent) {
@@ -1608,6 +1689,28 @@ int tls_parse_stoc_alpn(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         return 0;
     }
+
+    /* It must be a protocol that we sent */
+    if (!PACKET_buf_init(&confpkt, s->ext.alpn, s->ext.alpn_len)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    while (PACKET_get_length_prefixed_1(&confpkt, &protpkt)) {
+        if (PACKET_remaining(&protpkt) != len)
+            continue;
+        if (memcmp(PACKET_data(pkt), PACKET_data(&protpkt), len) == 0) {
+            /* Valid protocol found */
+            valid = 1;
+            break;
+        }
+    }
+
+    if (!valid) {
+        /* The protocol sent from the server does not match one we advertised */
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+
     OPENSSL_free(s->s3.alpn_selected);
     s->s3.alpn_selected = OPENSSL_malloc(len);
     if (s->s3.alpn_selected == NULL) {
@@ -1773,6 +1876,8 @@ int tls_parse_stoc_key_share(SSL_CONNECTION *s, PACKET *pkt,
     PACKET encoded_pt;
     EVP_PKEY *ckey = s->s3.tmp.pkey, *skey = NULL;
     const TLS_GROUP_INFO *ginf = NULL;
+    uint16_t valid_ks_id = 0;
+    size_t i;
 
     /* Sanity check */
     if (ckey == NULL || s->s3.peer_tmp != NULL) {
@@ -1780,6 +1885,7 @@ int tls_parse_stoc_key_share(SSL_CONNECTION *s, PACKET *pkt,
         return 0;
     }
 
+    /* Which group ID does the server want -> group_id */
     if (!PACKET_get_net_2(pkt, &group_id)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
         return 0;
@@ -1787,7 +1893,7 @@ int tls_parse_stoc_key_share(SSL_CONNECTION *s, PACKET *pkt,
 
     if ((context & SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST) != 0) {
         const uint16_t *pgroups = NULL;
-        size_t i, num_groups;
+        size_t num_groups;
 
         if (PACKET_remaining(pkt) != 0) {
             SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
@@ -1798,9 +1904,11 @@ int tls_parse_stoc_key_share(SSL_CONNECTION *s, PACKET *pkt,
          * It is an error if the HelloRetryRequest wants a key_share that we
          * already sent in the first ClientHello
          */
-        if (group_id == s->s3.group_id) {
-            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_KEY_SHARE);
-            return 0;
+        for (i = 0; i < s->s3.tmp.num_ks_pkey; i++) {
+            if (s->s3.tmp.ks_group_id[i] == group_id) {
+                SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_KEY_SHARE);
+                return 0;
+            }
         }
 
         /* Validate the selected group is one we support */
@@ -1817,13 +1925,36 @@ int tls_parse_stoc_key_share(SSL_CONNECTION *s, PACKET *pkt,
             return 0;
         }
 
+        /* Memorize which groupID the server wants */
         s->s3.group_id = group_id;
-        EVP_PKEY_free(s->s3.tmp.pkey);
+
+        /* The initial keyshares are obsolete now, hence free memory */
+        for (i = 0; i < s->s3.tmp.num_ks_pkey; i++) {
+            if (s->s3.tmp.ks_pkey[i] != NULL) {
+                EVP_PKEY_free(s->s3.tmp.ks_pkey[i]);
+                s->s3.tmp.ks_pkey[i] = NULL;
+            }
+        }
+        s->s3.tmp.num_ks_pkey = 0;
         s->s3.tmp.pkey = NULL;
+
         return 1;
     }
 
-    if (group_id != s->s3.group_id) {
+    /*
+     * check that the group requested by the server is one we've
+     * sent a key share for, and if so: memorize which one
+     */
+    for (i = 0; i < s->s3.tmp.num_ks_pkey; i++) {
+        if (s->s3.tmp.ks_group_id[i] == group_id) {
+            valid_ks_id = group_id;
+            ckey = s->s3.tmp.ks_pkey[i];
+            s->s3.group_id = group_id;
+            s->s3.tmp.pkey = ckey;
+            break;
+        }
+    }
+    if (valid_ks_id == 0) {
         /*
          * This isn't for the group that we sent in the original
          * key_share!
@@ -1934,6 +2065,22 @@ int tls_parse_stoc_early_data(SSL_CONNECTION *s, PACKET *pkt,
 
         s->session->ext.max_early_data = max_early_data;
 
+        if (SSL_IS_QUIC_HANDSHAKE(s) && max_early_data != 0xffffffff) {
+            /*
+             * QUIC allows missing max_early_data, or a max_early_data value
+             * of 0xffffffff. Missing max_early_data is stored in the session
+             * as 0. This is indistinguishable in OpenSSL from a present
+             * max_early_data value that was 0. In order that later checks for
+             * invalid max_early_data correctly treat as an error the case where
+             * max_early_data is present and it is 0, we store any invalid
+             * value in the same (non-zero) way. Otherwise we would have to
+             * introduce a new flag just for this.
+             */
+            s->session->ext.max_early_data = 1;
+            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_INVALID_MAX_EARLY_DATA);
+            return 0;
+        }
+
         return 1;
     }
 
@@ -2013,5 +2160,109 @@ int tls_parse_stoc_psk(SSL_CONNECTION *s, PACKET *pkt,
         s->ext.early_data_ok = 0;
 #endif
 
+    return 1;
+}
+
+EXT_RETURN tls_construct_ctos_client_cert_type(SSL_CONNECTION *sc, WPACKET *pkt,
+                                               unsigned int context,
+                                               X509 *x, size_t chainidx)
+{
+    sc->ext.client_cert_type_ctos = OSSL_CERT_TYPE_CTOS_NONE;
+    if (sc->client_cert_type == NULL)
+        return EXT_RETURN_NOT_SENT;
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_client_cert_type)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_sub_memcpy_u8(pkt, sc->client_cert_type, sc->client_cert_type_len)
+            || !WPACKET_close(pkt)) {
+        SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+    sc->ext.client_cert_type_ctos = OSSL_CERT_TYPE_CTOS_GOOD;
+    return EXT_RETURN_SENT;
+}
+
+int tls_parse_stoc_client_cert_type(SSL_CONNECTION *sc, PACKET *pkt,
+                                    unsigned int context,
+                                    X509 *x, size_t chainidx)
+{
+    unsigned int type;
+
+    if (PACKET_remaining(pkt) != 1) {
+        SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+    if (!PACKET_get_1(pkt, &type)) {
+        SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+    /* We did not send/ask for this */
+    if (!ossl_assert(sc->ext.client_cert_type_ctos == OSSL_CERT_TYPE_CTOS_GOOD)) {
+        SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+    /* We don't have this enabled */
+    if (sc->client_cert_type == NULL) {
+        SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+    /* Given back a value we didn't configure */
+    if (memchr(sc->client_cert_type, type, sc->client_cert_type_len) == NULL) {
+        SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_BAD_VALUE);
+        return 0;
+    }
+    sc->ext.client_cert_type = type;
+    return 1;
+}
+
+EXT_RETURN tls_construct_ctos_server_cert_type(SSL_CONNECTION *sc, WPACKET *pkt,
+                                               unsigned int context,
+                                               X509 *x, size_t chainidx)
+{
+    sc->ext.server_cert_type_ctos = OSSL_CERT_TYPE_CTOS_NONE;
+    if (sc->server_cert_type == NULL)
+        return EXT_RETURN_NOT_SENT;
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_server_cert_type)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_sub_memcpy_u8(pkt, sc->server_cert_type, sc->server_cert_type_len)
+            || !WPACKET_close(pkt)) {
+        SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+    sc->ext.server_cert_type_ctos = OSSL_CERT_TYPE_CTOS_GOOD;
+    return EXT_RETURN_SENT;
+}
+
+int tls_parse_stoc_server_cert_type(SSL_CONNECTION *sc, PACKET *pkt,
+                                    unsigned int context,
+                                    X509 *x, size_t chainidx)
+{
+    unsigned int type;
+
+    if (PACKET_remaining(pkt) != 1) {
+        SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+    if (!PACKET_get_1(pkt, &type)) {
+        SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+    /* We did not send/ask for this */
+    if (!ossl_assert(sc->ext.server_cert_type_ctos == OSSL_CERT_TYPE_CTOS_GOOD)) {
+        SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+    /* We don't have this enabled */
+    if (sc->server_cert_type == NULL) {
+        SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+    /* Given back a value we didn't configure */
+    if (memchr(sc->server_cert_type, type, sc->server_cert_type_len) == NULL) {
+        SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_BAD_VALUE);
+        return 0;
+    }
+    sc->ext.server_cert_type = type;
     return 1;
 }

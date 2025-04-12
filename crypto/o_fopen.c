@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -39,8 +39,14 @@ FILE *openssl_fopen(const char *filename, const char *mode)
 {
     FILE *file = NULL;
 # if defined(_WIN32) && defined(CP_UTF8)
-    int sz, len_0 = (int)strlen(filename) + 1;
+    int sz, len_0;
     DWORD flags;
+# endif
+
+    if (filename == NULL)
+        return NULL;
+# if defined(_WIN32) && defined(CP_UTF8)
+    len_0 = (int)strlen(filename) + 1;
 
     /*
      * Basically there are three cases to cover: a) filename is

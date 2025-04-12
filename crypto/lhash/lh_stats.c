@@ -23,7 +23,7 @@
 #include "lhash_local.h"
 
 # ifndef OPENSSL_NO_STDIO
-#  ifndef OPENSSL_NO_DEPRECATED_3_2
+#  ifndef OPENSSL_NO_DEPRECATED_3_1
 void OPENSSL_LH_stats(const OPENSSL_LHASH *lh, FILE *fp)
 {
     BIO *bp;
@@ -62,7 +62,7 @@ void OPENSSL_LH_node_usage_stats(const OPENSSL_LHASH *lh, FILE *fp)
 #  endif
 # endif
 
-# ifndef OPENSSL_NO_DEPRECATED_3_2
+# ifndef OPENSSL_NO_DEPRECATED_3_1
 /*
  * These functions are implemented as separate static functions as they are
  * called from the stdio functions above and calling deprecated functions will

@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1998-2023 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -12,7 +12,7 @@
 #include "crypto/cryptlib.h"
 #include <openssl/safestack.h>
 
-#if defined(_WIN32)
+#if defined(_WIN32) && !defined(OPENSSL_SYS_UEFI)
 # include <tchar.h>
 # include <signal.h>
 # ifdef __WATCOMC__
@@ -256,7 +256,7 @@ void OPENSSL_die(const char *message, const char *file, int line)
 {
     OPENSSL_showfatal("%s:%d: OpenSSL internal error: %s\n",
                       file, line, message);
-#if !defined(_WIN32)
+#if !defined(_WIN32) || defined(OPENSSL_SYS_UEFI)
     abort();
 #else
     /*

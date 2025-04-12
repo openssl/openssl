@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2009-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -30,7 +30,7 @@ void ChaCha20_ctr32(unsigned char *out, const unsigned char *inp,
                     size_t len, const unsigned int key[8],
                     const unsigned int counter[4])
 {
-#ifndef OPENSSL_SYS_AIX
+#if !defined(OPENSSL_SYS_AIX) && !defined(OPENSSL_SYS_MACOSX)
     OPENSSL_ppccap_P & PPC_BRD31
         ? ChaCha20_ctr32_vsx_p10(out, inp, len, key, counter) :
 #endif

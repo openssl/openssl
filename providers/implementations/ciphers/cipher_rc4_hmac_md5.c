@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -34,6 +34,7 @@ static OSSL_FUNC_cipher_encrypt_init_fn rc4_hmac_md5_einit;
 static OSSL_FUNC_cipher_decrypt_init_fn rc4_hmac_md5_dinit;
 static OSSL_FUNC_cipher_newctx_fn rc4_hmac_md5_newctx;
 static OSSL_FUNC_cipher_freectx_fn rc4_hmac_md5_freectx;
+static OSSL_FUNC_cipher_dupctx_fn rc4_hmac_md5_dupctx;
 static OSSL_FUNC_cipher_get_ctx_params_fn rc4_hmac_md5_get_ctx_params;
 static OSSL_FUNC_cipher_gettable_ctx_params_fn rc4_hmac_md5_gettable_ctx_params;
 static OSSL_FUNC_cipher_set_ctx_params_fn rc4_hmac_md5_set_ctx_params;
@@ -69,6 +70,15 @@ static void rc4_hmac_md5_freectx(void *vctx)
 
     ossl_cipher_generic_reset_ctx((PROV_CIPHER_CTX *)vctx);
     OPENSSL_clear_free(ctx,  sizeof(*ctx));
+}
+
+static void *rc4_hmac_md5_dupctx(void *vctx)
+{
+    PROV_RC4_HMAC_MD5_CTX *ctx = vctx;
+
+    if (ctx == NULL)
+        return NULL;
+    return OPENSSL_memdup(ctx, sizeof(*ctx));
 }
 
 static int rc4_hmac_md5_einit(void *ctx, const unsigned char *key,
@@ -143,7 +153,7 @@ static int rc4_hmac_md5_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     const OSSL_PARAM *p;
     size_t sz;
 
-    if (params == NULL)
+    if (ossl_param_is_empty(params))
         return 1;
 
     p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_KEYLEN);
@@ -214,6 +224,7 @@ static int rc4_hmac_md5_get_params(OSSL_PARAM params[])
 const OSSL_DISPATCH ossl_rc4_hmac_ossl_md5_functions[] = {
     { OSSL_FUNC_CIPHER_NEWCTX, (void (*)(void))rc4_hmac_md5_newctx },
     { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void))rc4_hmac_md5_freectx },
+    { OSSL_FUNC_CIPHER_DUPCTX, (void (*)(void))rc4_hmac_md5_dupctx },
     { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))rc4_hmac_md5_einit },
     { OSSL_FUNC_CIPHER_DECRYPT_INIT, (void (*)(void))rc4_hmac_md5_dinit },
     { OSSL_FUNC_CIPHER_UPDATE, (void (*)(void))rc4_hmac_md5_update },
@@ -230,5 +241,5 @@ const OSSL_DISPATCH ossl_rc4_hmac_ossl_md5_functions[] = {
         (void (*)(void))rc4_hmac_md5_set_ctx_params },
     { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS,
         (void (*)(void))rc4_hmac_md5_settable_ctx_params },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };

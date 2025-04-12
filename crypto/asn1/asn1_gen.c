@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,9 +7,10 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/cryptlib.h"
 #include <openssl/asn1.h>
 #include <openssl/x509v3.h>
+#include "internal/cryptlib.h"
+#include "crypto/asn1.h"
 
 #define ASN1_GEN_FLAG           0x10000
 #define ASN1_GEN_FLAG_IMP       (ASN1_GEN_FLAG|1)
@@ -498,7 +499,8 @@ static int append_exp(tag_exp_arg *arg, int exp_tag, int exp_class,
 static int asn1_str2tag(const char *tagstr, int len)
 {
     unsigned int i;
-    static const struct tag_name_st *tntmp, tnst[] = {
+    const struct tag_name_st *tntmp;
+    static const struct tag_name_st tnst[] = {
         ASN1_GEN_STR("BOOL", V_ASN1_BOOLEAN),
         ASN1_GEN_STR("BOOLEAN", V_ASN1_BOOLEAN),
         ASN1_GEN_STR("NULL", V_ASN1_NULL),
@@ -698,9 +700,12 @@ static ASN1_TYPE *asn1_str2type(const char *str, int format, int utype)
             atmp->value.asn1_string->data = rdata;
             atmp->value.asn1_string->length = rdlen;
             atmp->value.asn1_string->type = utype;
-        } else if (format == ASN1_GEN_FORMAT_ASCII)
-            ASN1_STRING_set(atmp->value.asn1_string, str, -1);
-        else if ((format == ASN1_GEN_FORMAT_BITLIST)
+        } else if (format == ASN1_GEN_FORMAT_ASCII) {
+            if (!ASN1_STRING_set(atmp->value.asn1_string, str, -1)) {
+                ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
+                goto bad_str;
+            }
+        } else if ((format == ASN1_GEN_FORMAT_BITLIST)
                  && (utype == V_ASN1_BIT_STRING)) {
             if (!CONF_parse_list
                 (str, ',', 1, bitstr_cb, atmp->value.bit_string)) {

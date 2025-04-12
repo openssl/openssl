@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -57,9 +57,6 @@ static ossl_inline void objs_free_locks(void)
 
 DEFINE_RUN_ONCE_STATIC(obj_lock_initialise)
 {
-    /* Make sure we've loaded config before checking for any "added" objects */
-    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
-
     ossl_obj_lock = CRYPTO_THREAD_lock_new();
     if (ossl_obj_lock == NULL)
         return 0;
@@ -76,6 +73,10 @@ DEFINE_RUN_ONCE_STATIC(obj_lock_initialise)
 
 static ossl_inline int ossl_init_added_lock(void)
 {
+#ifndef OPENSSL_NO_AUTOLOAD_CONFIG
+    /* Make sure we've loaded config before checking for any "added" objects */
+    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
+#endif
     return RUN_ONCE(&ossl_obj_lock_init, obj_lock_initialise);
 }
 
@@ -127,7 +128,7 @@ static unsigned long added_obj_hash(const ADDED_OBJ *ca)
     a = ca->obj;
     switch (ca->type) {
     case ADDED_DATA:
-        ret = a->length << 20L;
+        ret = (unsigned long)a->length << 20UL;
         p = (unsigned char *)a->data;
         for (i = 0; i < a->length; i++)
             ret ^= p[i] << ((i * 3) % 24);
@@ -220,29 +221,49 @@ void ossl_obj_cleanup_int(void)
     objs_free_locks();
 }
 
-int OBJ_new_nid(int num)
+/*
+ * Requires that the ossl_obj_lock be held
+ * if TSAN_REQUIRES_LOCKING defined
+ */
+static int obj_new_nid_unlocked(int num)
 {
     static TSAN_QUALIFIER int new_nid = NUM_NID;
 #ifdef TSAN_REQUIRES_LOCKING
     int i;
 
-    if (!CRYPTO_THREAD_write_lock(ossl_obj_nid_lock)) {
-        ERR_raise(ERR_LIB_OBJ, ERR_R_UNABLE_TO_GET_WRITE_LOCK);
-        return NID_undef;
-    }
     i = new_nid;
     new_nid += num;
-    CRYPTO_THREAD_unlock(ossl_obj_nid_lock);
+
     return i;
 #else
     return tsan_add(&new_nid, num);
 #endif
 }
 
+int OBJ_new_nid(int num)
+{
+#ifdef TSAN_REQUIRES_LOCKING
+    int i;
+
+    if (!ossl_obj_write_lock(1)) {
+        ERR_raise(ERR_LIB_OBJ, ERR_R_UNABLE_TO_GET_WRITE_LOCK);
+        return NID_undef;
+    }
+
+    i = obj_new_nid_unlocked(num);
+
+    ossl_obj_unlock(1);
+
+    return i;
+#else
+    return obj_new_nid_unlocked(num);
+#endif
+}
+
 static int ossl_obj_add_object(const ASN1_OBJECT *obj, int lock)
 {
     ASN1_OBJECT *o = NULL;
-    ADDED_OBJ *ao[4] = { NULL, NULL, NULL, NULL }, *aop;
+    ADDED_OBJ *ao[4] = { NULL, NULL, NULL, NULL }, *aop[4];
     int i;
 
     if ((o = OBJ_dup(obj)) == NULL)
@@ -273,9 +294,21 @@ static int ossl_obj_add_object(const ASN1_OBJECT *obj, int lock)
         if (ao[i] != NULL) {
             ao[i]->type = i;
             ao[i]->obj = o;
-            aop = lh_ADDED_OBJ_insert(added, ao[i]);
-            /* memory leak, but should not normally matter */
-            OPENSSL_free(aop);
+            aop[i] = lh_ADDED_OBJ_retrieve(added, ao[i]);
+            if (aop[i] != NULL)
+                aop[i]->type = -1;
+            (void)lh_ADDED_OBJ_insert(added, ao[i]);
+            if (lh_ADDED_OBJ_error(added)) {
+                if (aop[i] != NULL)
+                    aop[i]->type = i;
+                while (i-- > ADDED_DATA) {
+                    lh_ADDED_OBJ_delete(added, ao[i]);
+                    if (aop[i] != NULL)
+                        aop[i]->type = i;
+                }
+                ERR_raise(ERR_LIB_OBJ, ERR_R_CRYPTO_LIB);
+                goto err;
+            }
         }
     }
     o->flags &=
@@ -299,9 +332,8 @@ ASN1_OBJECT *OBJ_nid2obj(int n)
     ADDED_OBJ ad, *adp = NULL;
     ASN1_OBJECT ob;
 
-    if (n == NID_undef)
-        return NULL;
-    if (n >= 0 && n < NUM_NID && nid_objs[n].nid != NID_undef)
+    if (n == NID_undef
+        || (n > 0 && n < NUM_NID && nid_objs[n].nid != NID_undef))
         return (ASN1_OBJECT *)&(nid_objs[n]);
 
     ad.type = ADDED_NID;
@@ -465,6 +497,25 @@ int OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
 
     first = 1;
     bl = NULL;
+
+    /*
+     * RFC 2578 (STD 58) says this about OBJECT IDENTIFIERs:
+     *
+     * > 3.5. OBJECT IDENTIFIER values
+     * >
+     * > An OBJECT IDENTIFIER value is an ordered list of non-negative
+     * > numbers. For the SMIv2, each number in the list is referred to as a
+     * > sub-identifier, there are at most 128 sub-identifiers in a value,
+     * > and each sub-identifier has a maximum value of 2^32-1 (4294967295
+     * > decimal).
+     *
+     * So a legitimate OID according to this RFC is at most (32 * 128 / 7),
+     * i.e. 586 bytes long.
+     *
+     * Ref: https://datatracker.ietf.org/doc/html/rfc2578#section-3.5
+     */
+    if (len > 586)
+        goto err;
 
     while (len > 0) {
         l = 0;
@@ -658,13 +709,14 @@ const void *OBJ_bsearch_ex_(const void *key, const void *base, int num,
     if (p == NULL) {
         const char *base_ = base;
         int l, h, i = 0, c = 0;
+        char *p1;
 
         for (i = 0; i < num; ++i) {
-            p = &(base_[i * size]);
-            c = (*cmp) (key, p);
+            p1 = &(base_[i * size]);
+            c = (*cmp) (key, p1);
             if (c == 0
                 || (c < 0 && (flags & OBJ_BSEARCH_VALUE_ON_NOMATCH)))
-                return p;
+                return p1;
         }
     }
 #endif
@@ -750,6 +802,10 @@ int OBJ_create(const char *oid, const char *sn, const char *ln)
     } else {
         /* Create a no-OID ASN1_OBJECT */
         tmpoid = ASN1_OBJECT_new();
+        if (tmpoid == NULL) {
+            ERR_raise(ERR_LIB_OBJ, ERR_R_ASN1_LIB);
+            return 0;
+        }
     }
 
     if (!ossl_obj_write_lock(1)) {
@@ -765,7 +821,8 @@ int OBJ_create(const char *oid, const char *sn, const char *ln)
         goto err;
     }
 
-    tmpoid->nid = OBJ_new_nid(1);
+    tmpoid->nid = obj_new_nid_unlocked(1);
+
     if (tmpoid->nid == NID_undef)
         goto err;
 

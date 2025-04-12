@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -21,7 +21,5 @@ int ossl_punycode_decode (
 );
 
 int ossl_a2ulabel(const char *in, char *out, size_t outlen);
-
-int ossl_a2ucompare(const char *a, const char *u);
 
 #endif

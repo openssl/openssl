@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -356,7 +356,7 @@ static int acpt_state(BIO *b, BIO_ACCEPT *c)
         BIO_free(bio);
     else if (s >= 0)
         BIO_closesocket(s);
-  end:
+ end:
     return ret;
 }
 
@@ -568,7 +568,7 @@ BIO *BIO_new_accept(const char *str)
     ret = BIO_new(BIO_s_accept());
     if (ret == NULL)
         return NULL;
-    if (BIO_set_accept_name(ret, str))
+    if (BIO_set_accept_name(ret, str) > 0)
         return ret;
     BIO_free(ret);
     return NULL;

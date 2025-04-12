@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2021-2022 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2021-2025 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -22,6 +22,7 @@ open OUT,"| \"$^X\" $xlate $flavour \"$output\""
     or die "can't call $xlate: $!";
 *STDOUT=*OUT;
 
+$prefix="sm3";
 # Message expanding:
 #	Wj <- P1(W[j-16]^W[j-9]^(W[j-3]<<<15))^(W[j-13]<<<7)^W[j-6]
 # Input: s0, s1, s2, s3
@@ -109,7 +110,6 @@ ___
 
 $code=<<___;
 #include "arm_arch.h"
-.arch	armv8.2-a
 .text
 ___
 
@@ -136,8 +136,19 @@ ossl_hwsm3_block_data_order:
 	rev64   $state2.4s, $state2.4s
 	ext     $state1.16b, $state1.16b, $state1.16b, #8
 	ext     $state2.16b, $state2.16b, $state2.16b, #8
-
+___
+if ($flavour =~ /linux64/)
+{
+$code.=<<___;
+	adrp    $constaddr, .Tj
+	add     $constaddr, $constaddr, #:lo12:.Tj
+___
+} else {
+$code.=<<___;
 	adr     $constaddr, .Tj
+___
+}
+$code.=<<___;
 	ldp     $sconst1, $sconst2, [$constaddr]
 
 .Loop:
@@ -210,11 +221,22 @@ $code.=<<___;
 	st1     {$state1.4s-$state2.4s}, [$pstate]
 	ret
 .size	ossl_hwsm3_block_data_order,.-ossl_hwsm3_block_data_order
+___
 
+$code.=".rodata\n"  if ($flavour =~ /linux64/);
+
+$code.=<<___;
+
+.type	_${prefix}_consts,%object
 .align	3
+_${prefix}_consts:
 .Tj:
 .word	0x79cc4519, 0x9d8a7a87
+.size _${prefix}_consts,.-_${prefix}_consts
 ___
+
+$code.=".previous\n"  if ($flavour =~ /linux64/);
+
 }}}
 
 #########################################

@@ -127,8 +127,7 @@ pointer to a provider key object in the I<provkey> parameter.
 The I<params>, if not NULL, should be set on the context in a manner similar to
 using OSSL_FUNC_asym_cipher_set_ctx_params().
 The key object should have been previously generated, loaded or imported into
-the provider using the key management (OSSL_OP_KEYMGMT) operation (see
-provider-keymgmt(7)>.
+the provider using the key management (OSSL_OP_KEYMGMT) operation (see L<provider-keymgmt(7)>).
 OSSL_FUNC_asym_cipher_encrypt() performs the actual encryption itself.
 A previously initialised asymmetric cipher context is passed in the I<ctx>
 parameter.
@@ -150,7 +149,7 @@ The I<params>, if not NULL, should be set on the context in a manner similar to
 using OSSL_FUNC_asym_cipher_set_ctx_params().
 The key object should have been previously generated, loaded or imported into
 the provider using the key management (OSSL_OP_KEYMGMT) operation (see
-provider-keymgmt(7)>.
+L<provider-keymgmt(7)>).
 
 OSSL_FUNC_asym_cipher_decrypt() performs the actual decryption itself.
 A previously initialised asymmetric cipher context is passed in the I<ctx>
@@ -235,14 +234,36 @@ The TLS protocol version first requested by the client.
 
 The negotiated TLS protocol version.
 
-=item "implicit-rejection" (B<OSSL_PKEY_PARAM_IMPLICIT_REJECTION>) <unsigned integer>
+=item "implicit-rejection" (B<OSSL_ASYM_CIPHER_PARAM_IMPLICIT_REJECTION>) <unsigned integer>
 
-Gets of sets the use of the implicit rejection mechanism for RSA PKCS#1 v1.5
+Gets or sets the use of the implicit rejection mechanism for RSA PKCS#1 v1.5
 decryption. When set (non zero value), the decryption API will return
 a deterministically random value if the PKCS#1 v1.5 padding check fails.
 This makes exploitation of the Bleichenbacher significantly harder, even
 if the code using the RSA decryption API is not implemented in side-channel
-free manner. Set by default.
+free manner. Set by default in OpenSSL providers.
+
+=back
+
+The OpenSSL FIPS provider also supports the following parameters:
+
+=over 4
+
+=item "fips-indicator" (B<OSSL_ASYM_CIPHER_PARAM_FIPS_APPROVED_INDICATOR>) <integer>
+
+A getter that returns 1 if the operation is FIPS approved, or 0 otherwise.
+This may be used after calling either OSSL_FUNC_asym_cipher_encrypt() or
+OSSL_FUNC_asym_cipher_decrypt(). It may return 0 if "key-check" is set to 0.
+
+=item "key-check" (B<OSSL_ASYM_CIPHER_PARAM_FIPS_KEY_CHECK>) <integer>
+
+If required this parameter should be set using either
+OSSL_FUNC_asym_cipher_encrypt_init() or OSSL_FUNC_asym_cipher_decrypt_init().
+The default value of 1 causes an error during the init if the key is not FIPS
+approved (e.g. The key has a security strength of less than 112 bits). Setting
+this to 0 will ignore the error and set the approved "fips-indicator" to 0.
+This option breaks FIPS compliance if it causes the approved "fips-indicator"
+to return 0.
 
 =back
 
@@ -265,10 +286,12 @@ L<provider(7)>
 =head1 HISTORY
 
 The provider ASYM_CIPHER interface was introduced in OpenSSL 3.0.
+The Asymmetric Cipher Parameters "fips-indicator" and "key-check"
+were added in OpenSSL 3.4.
 
 =head1 COPYRIGHT
 
-Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
