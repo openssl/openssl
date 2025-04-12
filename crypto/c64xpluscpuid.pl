@@ -20,7 +20,6 @@ $code.=<<___;
 	.asg	OPENSSL_cleanse,_OPENSSL_cleanse
 	.asg	CRYPTO_memcmp,_CRYPTO_memcmp
 	.asg	OPENSSL_atomic_add,_OPENSSL_atomic_add
-	.asg	OPENSSL_wipe_cpu,_OPENSSL_wipe_cpu
 	.asg	OPENSSL_instrument_bus,_OPENSSL_instrument_bus
 	.asg	OPENSSL_instrument_bus2,_OPENSSL_instrument_bus2
 	.endif
