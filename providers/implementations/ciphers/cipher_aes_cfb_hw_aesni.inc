@@ -8,13 +8,15 @@
  */
 
 /*-
- * AES-NI and VAES support for AES mode cfb.
+ * AES-NI and VAES support for AES CFB mode.
  * This file is included by cipher_aes_cfb_hw.c
  */
 
-#include <assert.h>
-
-#define cipher_hw_vaes_cfb128  aes_cfb128_vaes_encdec_wrapper
+#if (defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64))
+    #define cipher_hw_vaes_cfb128 aes_cfb128_vaes_encdec_wrapper
+#else
+    #define cipher_hw_vaes_cfb128 ossl_cipher_hw_generic_cfb128
+#endif
 #define cipher_hw_vaes_cfb8    ossl_cipher_hw_generic_cfb8
 #define cipher_hw_vaes_cfb1    ossl_cipher_hw_generic_cfb1
 
@@ -22,28 +24,31 @@
 #define cipher_hw_aesni_cfb8   ossl_cipher_hw_generic_cfb8
 #define cipher_hw_aesni_cfb1   ossl_cipher_hw_generic_cfb1
 
-// active when AES-NI, AVX512F, and VAES are detected
+// active in 64-bit builds when AES-NI, AVX512F, and VAES are detected
 static int aes_cfb128_vaes_encdec_wrapper(
     PROV_CIPHER_CTX* dat,
     unsigned char *out,
     const unsigned char *in,
     size_t len)
 {
-    assert(dat != NULL);
-    assert(out != NULL);
-    assert(in  != NULL);
+    ossl_ssize_t num;
+    num = (ossl_ssize_t)dat->num;
 
-    assert(dat->mode == EVP_CIPH_CFB_MODE);
+    if (num < 0) {
+        // behavior from CRYPTO_cfb128_encrypt
+        dat->num = -1;
+        return 1;
+    }
 
-    assert(dat->keylen == 16 || dat->keylen == 24 || dat->keylen == 32);
-    assert(dat->ks != NULL);
+    if (dat->enc) {
+        aes_cfb128_vaes_enc(in, out, len, dat->ks, dat->iv, &num);
+    } else {
+        aes_cfb128_vaes_dec(in, out, len, dat->ks, dat->iv, &num);
+    }
 
-    assert(dat->ivlen == 16);
-    assert(dat->iv != NULL);
+    dat->num = (int)num;
 
-    assert(dat->enc == 0 || dat->enc == 1);
-
-    return ossl_cipher_hw_generic_cfb128(dat, out, in, len);
+    return 1;
 }
 
 // generates AES round keys for AES-NI and VAES implementations
