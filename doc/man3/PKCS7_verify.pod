@@ -65,7 +65,9 @@ If I<store> is not NULL and any chain verify fails an error code is returned.
 Finally the signed content is read (and written to I<out> unless it is NULL)
 and the signature is checked.
 
-If all signatures verify correctly then the function is successful.
+If all signatures verify correctly then the function is successful. By default,
+verification succeeds if B<at least one> signature is valid. This behavior can be
+modified using the flags below.
 
 Any of the following flags (ored together) can be passed in the I<flags>
 parameter to change the default verify behaviour.
@@ -89,6 +91,23 @@ not used as untrusted CAs. This means that the whole verify chain (apart from
 the signer's certificates) must be contained in the trusted store.
 
 If B<PKCS7_NOSIGS> is set then the signatures on the data are not checked.
+
+If B<PKCS7_VERIFY_POLICY_AND> is set, verification requires B<all> signatures
+that can be successfully checked against a certificate in the trust store to be valid.
+The default behavior (without this flag) requires only B<at least one>
+valid signature.
+
+If B<PKCS7_VERIFY_POLICY_REQUIRE_PQ> is set, verification requires B<at least one>
+valid signature to use a recognized Post-Quantum (PQ) algorithm (currently ML-DSA or SLH-DSA).
+This check is performed in addition to the standard validity checks (either the
+default "at least one valid" or the "all valid" check if B<PKCS7_VERIFY_POLICY_AND>
+is also set). If this flag is set and no valid PQ signature is found, verification fails
+with the error code B<PKCS7_R_PQ_SIGNATURE_REQUIRED_BUT_NOT_FOUND>,
+even if other valid non-PQ signatures exist.
+
+When both B<PKCS7_VERIFY_POLICY_AND> and B<PKCS7_VERIFY_POLICY_REQUIRE_PQ> are set,
+verification succeeds only if B<all> verifiable signatures are valid B<and> at least
+one of those valid signatures uses a PQ algorithm.
 
 =head1 NOTES
 
