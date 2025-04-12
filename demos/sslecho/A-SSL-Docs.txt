@@ -6,7 +6,7 @@ Github: https://github.com/openssl/openssl
 
 OpenSSL Wiki: https://github.com/openssl/openssl/wiki
 
-Original Simple Server:https://wiki.openssl.org/index.php/Simple_TLS_Server
+Original Simple Server: ttps://github.com/openssl/openssl/wiki/Simple_TLS_Server
 
 ---------------------------------------------------------------
 
