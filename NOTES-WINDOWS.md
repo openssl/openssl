@@ -86,6 +86,11 @@ Quick start
     - `perl Configure VC-WIN64A-HYBRIDCRT` if you want 64-bit OpenSSL dependent
        on the Universal CRT or
     - `perl Configure`              to let Configure figure out the platform
+ 
+    a. If you don't plan to develop OpenSSL yourself and don't need to rebuild,
+       in other words, if you always do a new build, turning off the build
+       dependency feature can speed up build times by up to 50%:
+       `perl Configure no-makedepend`
 
  6. `nmake`
 
