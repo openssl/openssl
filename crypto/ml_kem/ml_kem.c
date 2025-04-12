@@ -1279,8 +1279,12 @@ static int parse_pubkey(const uint8_t *in, EVP_MD_CTX *mdctx, ML_KEM_KEY *key)
     const ML_KEM_VINFO *vinfo = key->vinfo;
 
     /* Decode and check |t| */
-    if (!vector_decode_12(key->t, in, vinfo->rank))
+    if (!vector_decode_12(key->t, in, vinfo->rank)) {
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY,
+                       "%s invalid public 't' vector",
+                       vinfo->algorithm_name);
         return 0;
+    }
     /* Save the matrix |m| recovery seed |rho| */
     memcpy(key->rho, in + vinfo->vector_bytes, ML_KEM_RANDOM_BYTES);
     /*
@@ -1302,8 +1306,12 @@ static int parse_prvkey(const uint8_t *in, EVP_MD_CTX *mdctx, ML_KEM_KEY *key)
     const ML_KEM_VINFO *vinfo = key->vinfo;
 
     /* Decode and check |s|. */
-    if (!vector_decode_12(key->s, in, vinfo->rank))
+    if (!vector_decode_12(key->s, in, vinfo->rank)) {
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY,
+                       "%s invalid private 's' vector",
+                       vinfo->algorithm_name);
         return 0;
+    }
     in += vinfo->vector_bytes;
 
     if (!parse_pubkey(in, mdctx, key))
