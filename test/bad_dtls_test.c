@@ -448,10 +448,12 @@ static int validate_ccs(BIO *wbio)
 #define NODROP(x) { x##UL, 0 }
 #define DROP(x)   { x##UL, 1 }
 
-static struct {
+typedef struct {
     uint64_t seq;
     int drop;
-} tests[] = {
+} RECORD_SEQ_HANDLE;
+
+static RECORD_SEQ_HANDLE bad_dtls[] = {
     NODROP(1), NODROP(3), NODROP(2),
     NODROP(0x1234), NODROP(0x1230), NODROP(0x1235),
     NODROP(0xffff), NODROP(0x10001), NODROP(0xfffe), NODROP(0x10000),
@@ -464,7 +466,17 @@ static struct {
     /* The last test should be NODROP, because a DROP wouldn't get tested. */
 };
 
-static int test_bad_dtls(void)
+static RECORD_SEQ_HANDLE no_dtls_replay_check[] = {
+    NODROP(1), NODROP(2), NODROP(2), /* repeat record */
+    NODROP(68), NODROP(4) /* old record: 4 is out of range of slide window */
+};
+
+static RECORD_SEQ_HANDLE dtls_replay_check[] = {
+    NODROP(1), NODROP(2), DROP(2), /* repeat record */
+    NODROP(68), DROP(4), NODROP(5) /* old record: 4 is out of range of slide window */
+};
+
+static int test_dtls_record_seq_handle(RECORD_SEQ_HANDLE tests[], int tests_num, uint64_t options)
 {
     SSL_SESSION *sess = NULL;
     SSL_CTX *ctx = NULL;
@@ -500,6 +512,8 @@ static int test_bad_dtls(void)
             || !TEST_true(SSL_CTX_set_max_proto_version(ctx, DTLS1_BAD_VER))
             || !TEST_true(SSL_CTX_set_options(ctx,
                                               SSL_OP_LEGACY_SERVER_CONNECT))
+            || !TEST_true(SSL_CTX_set_options(ctx,
+                                              options))
             || !TEST_true(SSL_CTX_set_cipher_list(ctx, "AES128-SHA")))
         goto end;
 
@@ -565,7 +579,7 @@ static int test_bad_dtls(void)
        specific but useful anyway for the general case. It's been broken
        before, and in fact was broken even for a basic 0, 2, 1 test case
        when this test was first added.... */
-    for (i = 0; i < (int)OSSL_NELEM(tests); i++) {
+    for (i = 0; i < tests_num; i++) {
         uint64_t recv_buf[2];
 
         if (!TEST_true(send_record(rbio, SSL3_RT_APPLICATION_DATA, tests[i].seq,
@@ -605,8 +619,25 @@ static int test_bad_dtls(void)
     return testresult;
 }
 
+static int test_bad_dtls(void)
+{
+    return test_dtls_record_seq_handle(bad_dtls, (int)OSSL_NELEM(bad_dtls), 0);
+}
+
+static int test_dtls_replay_check(void)
+{
+    return test_dtls_record_seq_handle(dtls_replay_check, (int)OSSL_NELEM(dtls_replay_check), 0);
+}
+
+static int test_no_dtls_replay_check(void)
+{
+    return test_dtls_record_seq_handle(no_dtls_replay_check, (int)OSSL_NELEM(no_dtls_replay_check), SSL_OP_NO_DTLS_RECORD_REPLAY_CHECK);
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_bad_dtls);
+    ADD_TEST(test_dtls_replay_check); /* enbale replay check */
+    ADD_TEST(test_no_dtls_replay_check); /* disable replay check */
     return 1;
 }
