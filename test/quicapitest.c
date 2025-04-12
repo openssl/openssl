@@ -33,6 +33,12 @@ static char *datadir = NULL;
 
 static int is_fips = 0;
 
+static BIO_ADDR *create_addr(struct in_addr *ina, short int port);
+static int bio_addr_bind(BIO *bio, BIO_ADDR *addr);
+static SSL *ql_create(SSL_CTX *ssl_ctx, BIO *bio);
+static SSL_CTX *create_server_ctx(void);
+static int qc_init(SSL *qconn, BIO_ADDR *dst_addr);
+
 /* The ssltrace test assumes some options are switched on/off */
 #if !defined(OPENSSL_NO_SSL_TRACE) \
     && defined(OPENSSL_NO_BROTLI) && defined(OPENSSL_NO_ZSTD) \
@@ -891,6 +897,102 @@ err:
     SSL_CTX_free(ctx);
     if (fd >= 0)
         BIO_closesocket(fd);
+    return testresult;
+}
+
+static int test_ssl_listen_ex(void)
+{
+    SSL_CTX *lctx = NULL, *sctx = NULL;
+    SSL_CTX *sconnctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_method());
+    SSL *qlistener = NULL, *qserver = NULL, *qconn = NULL;
+    SSL *sconn = NULL;
+    int testresult = 0;
+    int chk;
+    BIO *lbio = NULL, *sbio = NULL;
+    BIO_ADDR *addr = NULL;
+    struct in_addr ina;
+    int count = 0;
+
+    if (!TEST_ptr(sconnctx))
+        goto err;
+
+    ina.s_addr = htonl(0x1f000001);
+    if (!TEST_ptr(lctx = create_server_ctx())
+        || !TEST_ptr(sctx = create_server_ctx())
+        || !TEST_true(BIO_new_bio_dgram_pair(&lbio, 0, &sbio, 0)))
+        goto err;
+
+    if (!TEST_ptr(addr = create_addr(&ina, 8040)))
+        goto err;
+
+    if (!TEST_true(bio_addr_bind(lbio, addr)))
+        goto err;
+    addr = NULL;
+
+    if (!TEST_ptr(addr = create_addr(&ina, 4080)))
+        goto err;
+
+    if (!TEST_true(bio_addr_bind(sbio, addr)))
+        goto err;
+    addr = NULL;
+
+    qlistener = ql_create(lctx, lbio);
+    lbio = NULL;
+    if (!TEST_ptr(qlistener))
+        goto err;
+
+    qserver = ql_create(sctx, sbio);
+    sbio = NULL;
+    if (!TEST_ptr(qserver))
+        goto err;
+
+    if (!TEST_ptr(qconn = SSL_new_from_listener(qlistener, 0)))
+        goto err;
+
+    if (!TEST_ptr(addr = create_addr(&ina, 4080)))
+        goto err;
+
+    chk = qc_init(qconn, addr);
+    if (!TEST_true(chk))
+        goto err;
+
+    sconn = SSL_new(sconnctx);
+    if (!TEST_ptr(sconn))
+        goto err;
+
+    SSL_listen_ex(qserver, sconn);
+
+    for (count = 0; count < 10; count++) {
+        chk = SSL_do_handshake(qconn);
+        if (chk == -1) {
+            SSL_handle_events(qserver);
+            SSL_handle_events(qlistener);
+        }
+        chk = SSL_listen_ex(qserver, sconn);
+        if (chk > 0) {
+            TEST_info("Listener event received\n");
+            break;
+        }
+    }
+
+    if (!TEST_int_gt(chk, 0)) {
+        TEST_info("SSL_do_handshake() failed\n");
+        goto err;
+    }
+
+    testresult = 1;
+ err:
+    SSL_free(sconn);
+    SSL_free(qconn);
+    SSL_free(qlistener);
+    SSL_free(qserver);
+    BIO_free(lbio);
+    BIO_free(sbio);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(lctx);
+    SSL_CTX_free(sconnctx);
+    BIO_ADDR_free(addr);
+
     return testresult;
 }
 
@@ -3260,6 +3362,7 @@ int setup_tests(void)
     ADD_TEST(test_quic_forbidden_options);
     ADD_ALL_TESTS(test_quic_set_fd, 3);
     ADD_TEST(test_bio_ssl);
+    ADD_TEST(test_ssl_listen_ex);
     ADD_TEST(test_back_pressure);
     ADD_TEST(test_multiple_dgrams);
     ADD_ALL_TESTS(test_non_io_retry, 2);
