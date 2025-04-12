@@ -57,6 +57,13 @@ OpenSSL 3.6
 
    *Adrian Stanciu*
 
+ * Add new configure option disable-fips186-4-ffc for DH keys.
+   When compiling with enable-fips, this option allows to compile out
+   support for legacy-only use of FIPS 186-4 FFC-style params for DH
+   keys.
+
+   *Dimitri John Ledkov*
+
 OpenSSL 3.5
 -----------
 
