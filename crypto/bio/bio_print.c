@@ -63,7 +63,7 @@ int BIO_vprintf(BIO *bio, const char *format, va_list args)
         if (abuf == NULL) {
             ret = -1;
         } else {
-            _vsnprintf(abuf, ret, format, cp_args);
+            ret = _vsnprintf(abuf, ret, format, cp_args);
             ret = BIO_write(bio, abuf, ret);
             OPENSSL_free(abuf);
         }
@@ -85,7 +85,7 @@ int BIO_vprintf(BIO *bio, const char *format, va_list args)
             if (abuf == NULL) {
                 ret = -1;
             } else {
-                vsnprintf(abuf, ret, format, cp_args);
+                ret = vsnprintf(abuf, ret, format, cp_args);
                 ret = BIO_write(bio, abuf, ret);
                 OPENSSL_free(abuf);
             }
