@@ -366,11 +366,11 @@ static int kdf_hkdf_fixed_digest_change_digest(const char *kdf_name, char *bad_d
 
     params_set = construct_hkdf_params(bad_digest, "secret", 6, "salt", "label");
 
-    /* In a fixed-digest KDF it is allowed to set the same digest but not change it */
+    /* In a fixed-digest KDF it is not allowed to set the same digest nor change it */
     ret = TEST_ptr(params_get)
         && TEST_ptr(kctx = get_kdfbyname(kdf_name))
         && TEST_int_eq(EVP_KDF_CTX_get_params(kctx, params_get), 1)
-        && TEST_true(EVP_KDF_CTX_set_params(kctx, params_get))
+        && TEST_false(EVP_KDF_CTX_set_params(kctx, params_get))
         && TEST_false(EVP_KDF_CTX_set_params(kctx, params_set));
 
     EVP_KDF_CTX_free(kctx);

@@ -147,16 +147,11 @@ static void kdf_hkdf_reset_ex(void *vctx, int full_reset)
     KDF_HKDF *ctx = (KDF_HKDF *)vctx;
     void *provctx = ctx->provctx;
     int preserve_digest = full_reset ? 0 : ctx->fixed_digest;
-    PROV_DIGEST digest = { 0 };
+    PROV_DIGEST save_prov_digest = { 0 };
 
-    /*
-     * TODO: OPENSSL MAINTAINERS: should this instead use ossl_prov_digest_copy() to back up the
-     *   digest? And again to restore it at the end of this function? The problem with that is
-     *   ossl_prov_digest_copy can fail, but kdf_hkdf_reset can't. Or rather than the memset
-     *   below, just individually clear all members?
-     */
+    /* For fixed digests just save and restore the PROV_DIGEST object */
     if (preserve_digest)
-        digest = ctx->digest;
+        save_prov_digest = ctx->digest;
     else
         ossl_prov_digest_reset(&ctx->digest);
 #ifdef OPENSSL_PEDANTIC_ZEROIZATION
@@ -170,15 +165,10 @@ static void kdf_hkdf_reset_ex(void *vctx, int full_reset)
     OPENSSL_clear_free(ctx->key, ctx->key_len);
     OPENSSL_clear_free(ctx->info, ctx->info_len);
     memset(ctx, 0, sizeof(*ctx));
-    /*
-     * TODO: OPENSSL MAINTAINERS: unrelated to my change, but should there have been an
-     *   OSSL_FIPS_IND_INIT(ctx) here after the memset? This call happens in kdf_hkdf_new,
-     *   and kdf_hkdf_reset is supposed to reset the context to like-new.
-     */
     ctx->provctx = provctx;
     if (preserve_digest) {
         ctx->fixed_digest = preserve_digest;
-        ctx->digest = digest;
+        ctx->digest = save_prov_digest;
     }
 }
 
@@ -301,28 +291,21 @@ static int hkdf_common_set_ctx_params(KDF_HKDF *ctx, const OSSL_PARAM params[])
         return 1;
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_ALG_PARAM_DIGEST)) != NULL) {
-        const EVP_MD *md = ossl_prov_digest_md(&ctx->digest);
+        const EVP_MD *md = NULL;
 
-        if (ctx->fixed_digest && md != NULL) {
-            char digest[OSSL_MAX_NAME_SIZE];
-            char *str = digest;
+        if (ctx->fixed_digest) {
+            ERR_raise_data(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED,
+                           "Setting the digest is not supported for fixed-digest HKDFs");
+            return 0;
+        }
 
-            if (!OSSL_PARAM_get_utf8_string(p, &str, sizeof(digest)))
-                return 0;
-            if (!EVP_MD_is_a(md, digest)) {
-                ERR_raise_data(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED,
-                               "Changing the digest is not supported for fixed-digest HKDFs");
-                return 0;
-            }
-        } else {
-            if (!ossl_prov_digest_load_from_params(&ctx->digest, params, libctx))
-                return 0;
+        if (!ossl_prov_digest_load_from_params(&ctx->digest, params, libctx))
+            return 0;
 
-            md = ossl_prov_digest_md(&ctx->digest);
-            if (EVP_MD_xof(md)) {
-                ERR_raise(ERR_LIB_PROV, PROV_R_XOF_DIGESTS_NOT_ALLOWED);
-                return 0;
-            }
+        md = ossl_prov_digest_md(&ctx->digest);
+        if (EVP_MD_xof(md)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_XOF_DIGESTS_NOT_ALLOWED);
+            return 0;
         }
     }
 
