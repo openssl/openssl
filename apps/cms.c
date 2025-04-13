@@ -1093,8 +1093,10 @@ int cms_main(int argc, char **argv)
             }
             flags |= CMS_PARTIAL;
             cms = CMS_sign_ex(NULL, NULL, other, in, flags, libctx, app_get0_propq());
-            if (cms == NULL)
+            if (cms == NULL) {
+                BIO_puts(bio_err, "CMS SignedData Creation Error\n");
                 goto end;
+            }
             if (econtent_type != NULL)
                 CMS_set1_eContentType(cms, econtent_type);
 
@@ -1132,30 +1134,38 @@ int cms_main(int argc, char **argv)
                 }
             }
             si = CMS_add1_signer(cms, signer, key, sign_md, tflags);
-            if (si == NULL)
+            if (si == NULL) {
+                BIO_printf(bio_err, "Error adding SignerInfo with key from %s\n", keyfile);
                 goto end;
+            }
+
             if (kparam != NULL) {
-                EVP_PKEY_CTX *pctx;
-                pctx = CMS_SignerInfo_get0_pkey_ctx(si);
+                EVP_PKEY_CTX *pctx = CMS_SignerInfo_get0_pkey_ctx(si);
+
                 if (!cms_set_pkey_param(pctx, kparam->param))
                     goto end;
             }
-            if (rr != NULL && !CMS_add1_ReceiptRequest(si, rr))
+            if (rr != NULL && !CMS_add1_ReceiptRequest(si, rr)) {
+                BIO_puts(bio_err, "Error adding CMS ReceiptRequest\n");
                 goto end;
+            }
             X509_free(signer);
             signer = NULL;
             EVP_PKEY_free(key);
             key = NULL;
         }
         /* If not streaming or resigning finalize structure */
-        if (operation == SMIME_SIGN && digestbin != NULL
-            && (flags & CMS_STREAM) == 0) {
-            /* Use pre-computed digest instead of content */
-            if (!CMS_final_digest(cms, digestbin, digestlen, NULL, flags))
+        if (operation == SMIME_SIGN && (flags & CMS_STREAM) == 0) {
+            int res;
+
+            if (digestbin != NULL) /* Use pre-computed digest instead of content */
+                res = CMS_final_digest(cms, digestbin, digestlen, NULL, flags);
+            else
+                res = CMS_final(cms, in, NULL, flags);
+            if (!res) {
+                BIO_puts(bio_err, "Error finalizing CMS structure\n");
                 goto end;
-        } else if (operation == SMIME_SIGN && (flags & CMS_STREAM) == 0) {
-            if (!CMS_final(cms, in, NULL, flags))
-                goto end;
+            }
         }
     }
 
