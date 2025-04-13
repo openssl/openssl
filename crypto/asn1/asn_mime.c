@@ -268,31 +268,36 @@ int SMIME_write_ASN1_ex(BIO *bio, ASN1_VALUE *val, BIO *data, int flags,
             bound[i] = c;
         }
         bound[32] = 0;
-        BIO_printf(bio, "MIME-Version: 1.0%s", mime_eol);
-        BIO_printf(bio, "Content-Type: multipart/signed;");
-        BIO_printf(bio, " protocol=\"%ssignature\";", mime_prefix);
-        BIO_puts(bio, " micalg=\"");
-        asn1_write_micalg(bio, mdalgs);
-        BIO_printf(bio, "\"; boundary=\"----%s\"%s%s",
-                   bound, mime_eol, mime_eol);
-        BIO_printf(bio, "This is an S/MIME signed message%s%s",
-                   mime_eol, mime_eol);
-        /* Now write out the first part */
-        BIO_printf(bio, "------%s%s", bound, mime_eol);
+        if (BIO_printf(bio, "MIME-Version: 1.0%s"
+                       "Content-Type: multipart/signed; protocol=\"%ssignature\";"
+                       " micalg=\"", /* not 'macalg', seee RFC 2311 section 3.4.3.2 */
+                       mime_eol, mime_prefix) < 0) return 0;
+        if (!asn1_write_micalg(bio, mdalgs))
+            return 0;
+        if (BIO_printf(bio, "\"; boundary=\"----%s\"%s%s"
+                       "This is an S/MIME signed message%s%s"
+                       /* Now comes the first part */
+                       "------%s%s",
+                       bound, mime_eol, mime_eol,
+                       mime_eol, mime_eol,
+                       bound, mime_eol) < 0)
+            return 0;
         if (!asn1_output_data(bio, data, val, flags, it))
             return 0;
-        BIO_printf(bio, "%s------%s%s", mime_eol, bound, mime_eol);
+        if (BIO_printf(bio, "%s------%s%s", mime_eol, bound, mime_eol) < 0)
+            return 0;
 
         /* Headers for signature */
 
-        BIO_printf(bio, "Content-Type: %ssignature;", mime_prefix);
-        BIO_printf(bio, " name=\"smime.p7s\"%s", mime_eol);
-        BIO_printf(bio, "Content-Transfer-Encoding: base64%s", mime_eol);
-        BIO_printf(bio, "Content-Disposition: attachment;");
-        BIO_printf(bio, " filename=\"smime.p7s\"%s%s", mime_eol, mime_eol);
-        B64_write_ASN1(bio, val, NULL, 0, it);
-        BIO_printf(bio, "%s------%s--%s%s", mime_eol, bound,
-                   mime_eol, mime_eol);
+        if (BIO_printf(bio, "Content-Type: %ssignature; name=\"smime.p7s\"%s"
+                       "Content-Transfer-Encoding: base64%s"
+                       "Content-Disposition: attachment; filename=\"smime.p7s\"%s%s",
+                       mime_prefix, mime_eol,
+                       mime_eol,mime_eol, mime_eol) < 0)
+            return 0;
+        if (!B64_write_ASN1(bio, val, NULL, 0, it)
+            || BIO_printf(bio, "%s------%s--%s%s", mime_eol, bound, mime_eol, mime_eol) < 0)
+            return 0;
         return 1;
     }
 
@@ -314,19 +319,21 @@ int SMIME_write_ASN1_ex(BIO *bio, ASN1_VALUE *val, BIO *data, int flags,
         cname = "smime.p7z";
     }
     /* MIME headers */
-    BIO_printf(bio, "MIME-Version: 1.0%s", mime_eol);
-    BIO_printf(bio, "Content-Disposition: attachment;");
-    BIO_printf(bio, " filename=\"%s\"%s", cname, mime_eol);
-    BIO_printf(bio, "Content-Type: %smime;", mime_prefix);
-    if (msg_type)
-        BIO_printf(bio, " smime-type=%s;", msg_type);
-    BIO_printf(bio, " name=\"%s\"%s", cname, mime_eol);
-    BIO_printf(bio, "Content-Transfer-Encoding: base64%s%s",
-               mime_eol, mime_eol);
+    if (BIO_printf(bio, "MIME-Version: 1.0%s"
+                   "Content-Disposition: attachment;"
+                   " filename=\"%s\"%s", mime_eol, cname, mime_eol) < 0)
+        return 0;
+    if (BIO_printf(bio, "Content-Type: %smime;", mime_prefix) < 0)
+        return 0;
+    if (msg_type != NULL && BIO_printf(bio, " smime-type=%s;", msg_type) < 0)
+        return 0;
+    if (BIO_printf(bio, " name=\"%s\"%s"
+                   "Content-Transfer-Encoding: base64%s%s",
+                   cname, mime_eol, mime_eol, mime_eol) < 0)
+        return 0;
     if (!B64_write_ASN1(bio, val, data, flags, it))
         return 0;
-    BIO_printf(bio, "%s", mime_eol);
-    return 1;
+    return BIO_printf(bio, "%s", mime_eol) >= 0;
 }
 
 int SMIME_write_ASN1(BIO *bio, ASN1_VALUE *val, BIO *data, int flags,
