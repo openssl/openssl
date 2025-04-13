@@ -16,7 +16,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_crl");
 
-plan tests => 12;
+plan tests => 14;
 
 require_ok(srctop_file('test','recipes','tconversion.pl'));
 
@@ -151,6 +151,14 @@ EOF
                  "-gendelta", "delta-newer.crl", "-out", "delta-nokey.crl"])),
        "-gendelta without -key fails");
 };
+
+my $crl_in = srctop_file('test/certs', 'crl_Chinese_AuthorityCertIssuer.pem');
+my $crl_out = "crl_Chinese_AuthorityCertIssuer.out";
+
+ok(run(app([qw{openssl crl -text -in}, $crl_in, '-out', $crl_out])));
+like(get_field($crl_out, "DirName"),
+     qr/C=CN, ST=中文, L=中文, O=中文, OU=中文, CN=中文/,
+     "prints UTF-8 characters in the authorityCertIssuer DirName");
 
 sub compare1stline {
     my ($cmdarray, $str) = @_;
