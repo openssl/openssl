@@ -164,18 +164,33 @@ static int asn1_write_micalg(BIO *out, STACK_OF(X509_ALGOR) *mdalgs)
     have_unknown = 0;
     write_comma = 0;
     for (i = 0; i < sk_X509_ALGOR_num(mdalgs); i++) {
-        if (write_comma)
-            BIO_write(out, ",", 1);
+        if (write_comma && BIO_puts(out, ",") < 0)
+            goto err;
         write_comma = 1;
         md_nid = OBJ_obj2nid(sk_X509_ALGOR_value(mdalgs, i)->algorithm);
+
+        /* RFC 8702 does not define a micalg for SHAKE, assuming "shake-<bitlen>" */
+        if (md_nid == NID_shake128) {
+            if (BIO_puts(out, "shake-128") < 0)
+                goto err;
+            continue;
+        }
+        if (md_nid == NID_shake256) {
+            if (BIO_puts(out, "shake-256") < 0)
+                goto err;
+            continue;
+        }
+
         md = EVP_get_digestbynid(md_nid);
         if (md && md->md_ctrl) {
             int rv;
             char *micstr;
             rv = md->md_ctrl(NULL, EVP_MD_CTRL_MICALG, 0, &micstr);
             if (rv > 0) {
-                BIO_puts(out, micstr);
+                rv = BIO_puts(out, micstr);
                 OPENSSL_free(micstr);
+                if (rv < 0)
+                    goto err;
                 continue;
             }
             if (rv != -2)
@@ -183,42 +198,51 @@ static int asn1_write_micalg(BIO *out, STACK_OF(X509_ALGOR) *mdalgs)
         }
         switch (md_nid) {
         case NID_sha1:
-            BIO_puts(out, "sha1");
+            if (BIO_puts(out, "sha1") < 0)
+                goto err;
             break;
 
         case NID_md5:
-            BIO_puts(out, "md5");
+            if (BIO_puts(out, "md5") < 0)
+                goto err;
             break;
 
         case NID_sha256:
-            BIO_puts(out, "sha-256");
+            if (BIO_puts(out, "sha-256") < 0)
+                goto err;
             break;
 
         case NID_sha384:
-            BIO_puts(out, "sha-384");
+            if (BIO_puts(out, "sha-384") < 0)
+                goto err;
             break;
 
         case NID_sha512:
-            BIO_puts(out, "sha-512");
+            if (BIO_puts(out, "sha-512") < 0)
+                goto err;
             break;
 
         case NID_id_GostR3411_94:
-            BIO_puts(out, "gostr3411-94");
-            goto err;
+            if (BIO_puts(out, "gostr3411-94") < 0)
+                goto err;
+            break;
 
         case NID_id_GostR3411_2012_256:
-            BIO_puts(out, "gostr3411-2012-256");
-            goto err;
+            if (BIO_puts(out, "gostr3411-2012-256") < 0)
+                goto err;
+            break;
 
         case NID_id_GostR3411_2012_512:
-            BIO_puts(out, "gostr3411-2012-512");
-            goto err;
+            if (BIO_puts(out, "gostr3411-2012-512") < 0)
+                goto err;
+            break;
 
         default:
             if (have_unknown) {
                 write_comma = 0;
             } else {
-                BIO_puts(out, "unknown");
+                if (BIO_puts(out, "unknown") < 0)
+                    goto err;
                 have_unknown = 1;
             }
             break;
@@ -271,7 +295,8 @@ int SMIME_write_ASN1_ex(BIO *bio, ASN1_VALUE *val, BIO *data, int flags,
         if (BIO_printf(bio, "MIME-Version: 1.0%s"
                        "Content-Type: multipart/signed; protocol=\"%ssignature\";"
                        " micalg=\"", /* not 'macalg', seee RFC 2311 section 3.4.3.2 */
-                       mime_eol, mime_prefix) < 0) return 0;
+                       mime_eol, mime_prefix) < 0)
+            return 0;
         if (!asn1_write_micalg(bio, mdalgs))
             return 0;
         if (BIO_printf(bio, "\"; boundary=\"----%s\"%s%s"
@@ -293,7 +318,7 @@ int SMIME_write_ASN1_ex(BIO *bio, ASN1_VALUE *val, BIO *data, int flags,
                        "Content-Transfer-Encoding: base64%s"
                        "Content-Disposition: attachment; filename=\"smime.p7s\"%s%s",
                        mime_prefix, mime_eol,
-                       mime_eol,mime_eol, mime_eol) < 0)
+                       mime_eol, mime_eol, mime_eol) < 0)
             return 0;
         if (!B64_write_ASN1(bio, val, NULL, 0, it)
             || BIO_printf(bio, "%s------%s--%s%s", mime_eol, bound, mime_eol, mime_eol) < 0)
