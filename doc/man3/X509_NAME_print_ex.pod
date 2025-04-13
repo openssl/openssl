@@ -55,7 +55,7 @@ The complete set of the flags supported by X509_NAME_print_ex() is listed below.
 Several options can be ored together.
 
 The options B<XN_FLAG_SEP_COMMA_PLUS>, B<XN_FLAG_SEP_CPLUS_SPC>,
-B<XN_FLAG_SEP_SPLUS_SPC> and B<XN_FLAG_SEP_MULTILINE>
+B<XN_FLAG_SEP_SLASH_PLUS>, B<XN_FLAG_SEP_SPLUS_SPC> and B<XN_FLAG_SEP_MULTILINE>
 determine the field separators to use.
 Two distinct separators are used between distinct RelativeDistinguishedName
 components and separate values in the same RDN for a multi-valued RDN.
@@ -67,6 +67,7 @@ B<XN_FLAG_SEP_CPLUS_SPC> uses comma and plus with spaces:
 this is more readable that plain comma and plus.
 B<XN_FLAG_SEP_SPLUS_SPC> uses spaced semicolon and plus.
 B<XN_FLAG_SEP_MULTILINE> uses spaced newline and plus respectively.
+B<XN_FLAG_SEP_SLASH_PLUS> uses slash and plus as separators.
 
 If B<XN_FLAG_DN_REV> is set the whole DN is printed in reversed order.
 

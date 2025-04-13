@@ -151,6 +151,8 @@ typedef struct x509_cinf_st X509_CINF;
 # define XN_FLAG_SEP_CPLUS_SPC   (2 << 16)/* ,+ spaced: more readable */
 # define XN_FLAG_SEP_SPLUS_SPC   (3 << 16)/* ;+ spaced */
 # define XN_FLAG_SEP_MULTILINE   (4 << 16)/* One line per field */
+# define XN_FLAG_SEP_SLASH_PLUS  (5 << 16)/* /+ Backward compatibilty with
+                                           * X509_NAME_oneline() */
 
 # define XN_FLAG_DN_REV          (1 << 20)/* Reverse DN order */
 
