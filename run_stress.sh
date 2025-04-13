@@ -12,15 +12,15 @@ touch $LOG
 
 while true
 do
-    ./_run_stress.sh | tee -a $LOG &
-    ./_run_stress.sh | tee -a $LOG &
-    ./_run_stress.sh | tee -a $LOG &
-    ./_run_stress.sh | tee -a $LOG &
-    ./_run_stress.sh | tee -a $LOG &
-    ./_run_stress.sh | tee -a $LOG &
-    ./_run_stress.sh | tee -a $LOG &
-    ./_run_stress.sh | tee -a $LOG
-    if grep "cause:" $LOG -rn; then
+    ./_run_stress.sh 2>&1 | tee -a $LOG &
+    ./_run_stress.sh 2>&1 | tee -a $LOG &
+    ./_run_stress.sh 2>&1 | tee -a $LOG &
+    ./_run_stress.sh 2>&1 | tee -a $LOG &
+    ./_run_stress.sh 2>&1 | tee -a $LOG &
+    ./_run_stress.sh 2>&1 | tee -a $LOG &
+    ./_run_stress.sh 2>&1 | tee -a $LOG &
+    ./_run_stress.sh 2>&1 | tee -a $LOG
+    if grep "Segmentation fault" $LOG -rn; then
         echo error !!!!!!!!!!
         echo error !!!!!!!!!!
         echo error !!!!!!!!!!
