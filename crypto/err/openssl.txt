@@ -803,6 +803,12 @@ EVP_R_PKEY_APPLICATION_ASN1_METHOD_ALREADY_REGISTERED:179:\
 	pkey application asn1 method already registered
 EVP_R_PRIVATE_KEY_DECODE_ERROR:145:private key decode error
 EVP_R_PRIVATE_KEY_ENCODE_ERROR:146:private key encode error
+EVP_R_PROVIDER_ASYM_CIPHER_FAILURE:232:provider asym cipher failure
+EVP_R_PROVIDER_ASYM_CIPHER_NOT_SUPPORTED:235:provider asym cipher not supported
+EVP_R_PROVIDER_KEYMGMT_FAILURE:233:provider keymgmt failure
+EVP_R_PROVIDER_KEYMGMT_NOT_SUPPORTED:236:provider keymgmt not supported
+EVP_R_PROVIDER_SIGNATURE_FAILURE:234:provider signature failure
+EVP_R_PROVIDER_SIGNATURE_NOT_SUPPORTED:237:provider signature not supported
 EVP_R_PUBLIC_KEY_NOT_RSA:106:public key not rsa
 EVP_R_SETTING_XOF_FAILED:227:setting xof failed
 EVP_R_SET_DEFAULT_PROPERTY_FAILURE:209:set default property failure
