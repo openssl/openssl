@@ -451,9 +451,20 @@ const OSSL_PARAM *EVP_KEYMGMT_gen_gettable_params(const EVP_KEYMGMT *keymgmt)
 void *evp_keymgmt_gen(const EVP_KEYMGMT *keymgmt, void *genctx,
                       OSSL_CALLBACK *cb, void *cbarg)
 {
-    if (keymgmt->gen == NULL)
+    void *ret;
+    const char *desc = keymgmt->description != NULL ? keymgmt->description : "";
+
+    if (keymgmt->gen == NULL) {
+        ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_KEYMGMT_NOT_SUPPORTED,
+                       "%s key generation:%s", keymgmt->type_name, desc);
         return NULL;
-    return keymgmt->gen(genctx, cb, cbarg);
+    }
+
+    ret = keymgmt->gen(genctx, cb, cbarg);
+    if (ret == NULL)
+        ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_KEYMGMT_FAILURE,
+                       "%s key generation:%s", keymgmt->type_name, desc);
+    return ret;
 }
 
 void evp_keymgmt_gen_cleanup(const EVP_KEYMGMT *keymgmt, void *genctx)

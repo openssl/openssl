@@ -33,6 +33,7 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation,
     int ret = 0;
     void *provkey = NULL;
     EVP_ASYM_CIPHER *cipher = NULL;
+    const char *desc;
     EVP_KEYMGMT *tmp_keymgmt = NULL;
     const OSSL_PROVIDER *tmp_prov = NULL;
     const char *supported_ciph = NULL;
@@ -159,10 +160,12 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation,
         goto err;
     }
 
+    desc = cipher->description != NULL ? cipher->description : "";
     switch (operation) {
     case EVP_PKEY_OP_ENCRYPT:
         if (cipher->encrypt_init == NULL) {
-            ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+            ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_ASYM_CIPHER_NOT_SUPPORTED,
+                           "%s encrypt_init:%s", cipher->type_name, desc);
             ret = -2;
             goto err;
         }
@@ -170,7 +173,8 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation,
         break;
     case EVP_PKEY_OP_DECRYPT:
         if (cipher->decrypt_init == NULL) {
-            ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+            ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_ASYM_CIPHER_NOT_SUPPORTED,
+                           "%s decrypt_init:%s", cipher->type_name, desc);
             ret = -2;
             goto err;
         }
@@ -238,6 +242,8 @@ int EVP_PKEY_encrypt(EVP_PKEY_CTX *ctx,
                      unsigned char *out, size_t *outlen,
                      const unsigned char *in, size_t inlen)
 {
+    EVP_ASYM_CIPHER *cipher;
+    const char *desc;
     int ret;
 
     if (ctx == NULL) {
@@ -253,8 +259,12 @@ int EVP_PKEY_encrypt(EVP_PKEY_CTX *ctx,
     if (ctx->op.ciph.algctx == NULL)
         goto legacy;
 
-    ret = ctx->op.ciph.cipher->encrypt(ctx->op.ciph.algctx, out, outlen,
-                                       (out == NULL ? 0 : *outlen), in, inlen);
+    cipher = ctx->op.ciph.cipher;
+    desc = cipher->description != NULL ? cipher->description : "";
+    ret = cipher->encrypt(ctx->op.ciph.algctx, out, outlen, (out == NULL ? 0 : *outlen), in, inlen);
+    if (ret <= 0)
+        ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_ASYM_CIPHER_FAILURE,
+                       "%s encrypt:%s", cipher->type_name, desc);
     return ret;
 
  legacy:
@@ -280,6 +290,8 @@ int EVP_PKEY_decrypt(EVP_PKEY_CTX *ctx,
                      unsigned char *out, size_t *outlen,
                      const unsigned char *in, size_t inlen)
 {
+    EVP_ASYM_CIPHER *cipher;
+    const char *desc;
     int ret;
 
     if (ctx == NULL) {
@@ -295,8 +307,13 @@ int EVP_PKEY_decrypt(EVP_PKEY_CTX *ctx,
     if (ctx->op.ciph.algctx == NULL)
         goto legacy;
 
-    ret = ctx->op.ciph.cipher->decrypt(ctx->op.ciph.algctx, out, outlen,
-                                       (out == NULL ? 0 : *outlen), in, inlen);
+    cipher = ctx->op.ciph.cipher;
+    desc = cipher->description != NULL ? cipher->description : "";
+    ret = cipher->decrypt(ctx->op.ciph.algctx, out, outlen, (out == NULL ? 0 : *outlen), in, inlen);
+    if (ret <= 0)
+        ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_ASYM_CIPHER_FAILURE,
+                       "%s decrypt:%s", cipher->type_name, desc);
+
     return ret;
 
  legacy:
