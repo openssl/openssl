@@ -17,6 +17,37 @@
 #include "crypto/asn1.h"
 #include "crypto/x509.h"
 
+/* Helper function to identify Post-Quantum signature algorithm NIDs */
+/* TODO: Update with official/correct NIDs when available */
+static int is_pq_sigalg(int nid)
+{
+    /* Placeholder NIDs for known PQ algorithms */
+    /* Replace with actual NIDs like NID_ml_dsa_*, NID_slh_dsa_* etc. */
+# ifdef NID_ml_dsa_44 /* Example check */
+    if (nid == NID_ml_dsa_44 || nid == NID_ml_dsa_65 || nid == NID_ml_dsa_87)
+        return 1;
+# endif
+# ifdef NID_id_alg_sphincshar256_128f_simple /* Example check */
+    if (nid == NID_id_alg_sphincshar256_128f_simple ||
+        nid == NID_id_alg_sphincshar256_128s_simple ||
+        nid == NID_id_alg_sphincshar256_192f_simple ||
+        nid == NID_id_alg_sphincshar256_192s_simple ||
+        nid == NID_id_alg_sphincshar256_256f_simple ||
+        nid == NID_id_alg_sphincshar256_256s_simple ||
+        nid == NID_id_alg_sphincsshake256_128f_simple ||
+        nid == NID_id_alg_sphincsshake256_128s_simple ||
+        nid == NID_id_alg_sphincsshake256_192f_simple ||
+        nid == NID_id_alg_sphincsshake256_192s_simple ||
+        nid == NID_id_alg_sphincsshake256_256f_simple ||
+        nid == NID_id_alg_sphincsshake256_256s_simple)
+        return 1;
+# endif
+    /* Add other known PQ NIDs here */
+
+    return 0; /* Not a known PQ algorithm */
+}
+
+
 static BIO *cms_get_text_bio(BIO *out, unsigned int flags)
 {
     BIO *rbio;
@@ -314,6 +345,7 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
     STACK_OF(X509) **si_chains = NULL;
     X509 *signer;
     int i, scount = 0, ret = 0;
+    int pq_sigs_valid = 0, classic_sigs_valid = 0, sigs_failed = 0; /* Counters for hybrid verification */
     BIO *cmsbio = NULL, *tmpin = NULL, *tmpout = NULL;
     int cadesVerify = (flags & CMS_CADES) != 0;
     const CMS_CTX *ctx = ossl_cms_get0_cmsctx(cms);
@@ -459,14 +491,91 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
             goto err;
 
     }
+    /* Verify content digest */
+    /* Verify content digest */
     if (!(flags & CMS_NO_CONTENT_VERIFY)) {
+        int sig_nid;
+        int is_pq;
+        X509_ALGOR *sigalg = NULL;
+        int is_hybrid_check = (flags & (CMS_VERIFY_PQ_REQUIRED | CMS_VERIFY_PQ_AND | CMS_VERIFY_PQ_OR)) != 0;
+
         for (i = 0; i < sk_CMS_SignerInfo_num(sinfos); i++) {
             si = sk_CMS_SignerInfo_value(sinfos, i);
-            if (CMS_SignerInfo_verify_content(si, cmsbio) <= 0) {
-                ERR_raise(ERR_LIB_CMS, CMS_R_CONTENT_VERIFY_ERROR);
-                goto err;
+
+            /* Default behavior: verify and fail immediately if requested */
+            if (!is_hybrid_check) {
+                if (CMS_SignerInfo_verify_content(si, cmsbio) <= 0)
+                    goto err; /* Fail immediately, preserving the error */
+                /* If default verification passed, continue to next signer */
+                continue;
             }
+
+            /* --- Hybrid Flag Logic --- */
+            /* Determine if the signature algorithm is PQ */
+            CMS_SignerInfo_get0_algs(si, NULL, NULL, &sigalg, NULL);
+            if (sigalg == NULL || sigalg->algorithm == NULL) {
+                 /* Should not happen in a valid SignerInfo, but handle defensively */
+                 ERR_raise(ERR_LIB_CMS, CMS_R_UNKNOWN_SIGNATURE_ALGORITHM); /* Need to add this error code */
+                 goto err;
+            }
+            sig_nid = OBJ_obj2nid(sigalg->algorithm);
+            is_pq = is_pq_sigalg(sig_nid);
+
+            if (CMS_SignerInfo_verify_content(si, cmsbio) <= 0) {
+                /* Don't immediately error out for hybrid checks, just count the failure */
+                ERR_clear_error(); /* Clear specific error for hybrid logic */
+                sigs_failed++;
+            } else {
+                if (is_pq)
+                    pq_sigs_valid++;
+                else
+                    classic_sigs_valid++;
+            }
+        } /* End of signer loop */
+
+        /* Evaluate results based on flags (only if hybrid flags were set) */
+        /* If default flags were used, the loop above would have already failed or completed */
+        if (is_hybrid_check) {
+            if (flags & CMS_VERIFY_PQ_REQUIRED) {
+                if (pq_sigs_valid == 0) {
+                    ERR_raise(ERR_LIB_CMS, CMS_R_PQ_SIGNATURE_MISSING);
+                    goto err;
+                }
+                /* If PQ_REQUIRED is set, we also implicitly require all signatures to be valid */
+                if (sigs_failed > 0) {
+                    ERR_raise(ERR_LIB_CMS, CMS_R_CONTENT_VERIFY_ERROR);
+                    goto err;
+                }
+            }
+
+            if (flags & CMS_VERIFY_PQ_AND) {
+                /* Requires at least one valid PQ AND at least one valid classical AND no failures */
+                if (pq_sigs_valid == 0 || classic_sigs_valid == 0 || sigs_failed > 0) {
+                     if (sigs_failed > 0)
+                        ERR_raise(ERR_LIB_CMS, CMS_R_CONTENT_VERIFY_ERROR);
+                     else if (pq_sigs_valid == 0)
+                        ERR_raise(ERR_LIB_CMS, CMS_R_PQ_SIGNATURE_MISSING);
+                     else /* classic_sigs_valid == 0 */
+                        ERR_raise(ERR_LIB_CMS, CMS_R_CLASSICAL_SIGNATURE_MISSING);
+                    goto err;
+                }
+            } else if (flags & CMS_VERIFY_PQ_OR) {
+                /* Requires at least one valid PQ OR at least one valid classical */
+                /* Failures are ignored if one type succeeds */
+                if (pq_sigs_valid == 0 && classic_sigs_valid == 0) {
+                     /* If sigs_failed > 0, that was the reason, otherwise just no valid ones found */
+                     ERR_raise(ERR_LIB_CMS, sigs_failed > 0 ? CMS_R_CONTENT_VERIFY_ERROR : CMS_R_NO_VALID_SIGNATURES);
+                    goto err;
+                }
+            }
+            /* Implicit: If only PQ_REQUIRED was set, we already checked for failures above. */
         }
+        /*
+         * If we reach here:
+         * - If is_hybrid_check was true, the hybrid logic passed.
+         * - If is_hybrid_check was false, the loop completed without any
+         *   CMS_SignerInfo_verify_content failure, meaning all signers verified.
+         */
     }
 
     ret = 1;

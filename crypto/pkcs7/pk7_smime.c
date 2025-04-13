@@ -191,6 +191,8 @@ static int pkcs7_copy_existing_digest(PKCS7 *p7, PKCS7_SIGNER_INFO *si)
     PKCS7_SIGNER_INFO *sitmp;
     ASN1_OCTET_STRING *osdig = NULL;
     sinfos = PKCS7_get_signer_info(p7);
+
+
     for (i = 0; i < sk_PKCS7_SIGNER_INFO_num(sinfos); i++) {
         sitmp = sk_PKCS7_SIGNER_INFO_value(sinfos, i);
         if (si == sitmp)
@@ -316,8 +318,9 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
             goto err;
         }
         BIO_set_mem_eof_return(tmpout, 0);
-    } else
+    } else {
         tmpout = out;
+    }
 
     /* We now have to 'read' from p7bio to calculate digests etc. */
     if ((buf = OPENSSL_malloc(BUFFERSIZE)) == NULL)
@@ -339,19 +342,114 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
         BIO_free(tmpout);
     }
 
-    /* Now Verify All Signatures */
-    if (!(flags & PKCS7_NOSIGS))
-        for (i = 0; i < sk_PKCS7_SIGNER_INFO_num(sinfos); i++) {
+    /* Now Verify All Signatures with Custom Logic */
+    int pq_valid_count = 0;
+    int classical_valid_count = 0;
+    int other_valid_count = 0; /* For algorithms not classified */
+    int verification_failed_count = 0;
+    int total_signatures = sk_PKCS7_SIGNER_INFO_num(sinfos);
+
+    if (!(flags & PKCS7_NOSIGS)) {
+        if (total_signatures != sk_X509_num(signers)) {
+            ERR_raise(ERR_LIB_PKCS7, PKCS7_R_SIGNER_CERTIFICATE_NOT_FOUND);
+            /* Treat mismatch as a general failure before detailed checks */
+            goto err;
+        }
+        for (i = 0; i < total_signatures; i++) {
+            char *subj_line = NULL;
+
             si = sk_PKCS7_SIGNER_INFO_value(sinfos, i);
             signer = sk_X509_value(signers, i);
             j = PKCS7_signatureVerify(p7bio, p7, si, signer);
             if (j <= 0) {
-                ERR_raise(ERR_LIB_PKCS7, PKCS7_R_SIGNATURE_FAILURE);
-                goto err;
+                char idx_buf[12]; /* Buffer for integer conversion */
+                subj_line = X509_NAME_oneline(X509_get_subject_name(signer),
+                                              NULL, 0);
+                /* Log the specific error but continue checking others */
+                snprintf(idx_buf, sizeof(idx_buf), "%d", i); /* Convert index to string */
+                ERR_add_error_data(4, "Signer index: ", idx_buf,
+                                   ", Subject: ", subj_line != NULL ? subj_line : "(null)");
+                OPENSSL_free(subj_line);
+                verification_failed_count++;
+            } else {
+                /* Signature verified, check algorithm type */
+                /* Use digest_enc_alg for the signature algorithm identifier. */
+                /*
+                 * NOTE: Actual PQ NIDs (e.g., NID_ml_dsa_*, NID_slh_dsa_*) need
+                 * to be used based on OpenSSL definitions.
+                 */
+                int sig_alg_nid = OBJ_obj2nid(si->digest_enc_alg->algorithm);
+
+                /* Example PQ NIDs - Replace/Add actual NIDs */
+#ifdef NID_ml_dsa_44 /* Check if these defines exist and are correct */
+                if (sig_alg_nid == NID_ml_dsa_44
+                    || sig_alg_nid == NID_ml_dsa_65
+                    || sig_alg_nid == NID_ml_dsa_87) {
+                {
+                    pq_valid_count++;
+                }
+                }
+#else
+                /* Add placeholder check if NIDs not defined yet */
+                if (0 /* Add actual PQ NID checks here */) {
+                {
+                    pq_valid_count++;
+                }
+                }
+#endif
+                /* Example Classical NIDs */
+                else if (sig_alg_nid == NID_rsaEncryption
+                         || sig_alg_nid == NID_dsa
+                         || sig_alg_nid == NID_ecdsa_with_SHA1
+                         || sig_alg_nid == NID_ecdsa_with_SHA224
+                         || sig_alg_nid == NID_ecdsa_with_SHA256
+                         || sig_alg_nid == NID_ecdsa_with_SHA384
+                         || sig_alg_nid == NID_ecdsa_with_SHA512) {
+                    classical_valid_count++;
+                } else {
+                    /* Count other valid signatures if needed */
+                    other_valid_count++;
+                }
             }
         }
 
-    ret = 1;
+        /*
+         * Apply custom verification logic (Example: OR logic + No Failures)
+         * Requires at least one valid PQ OR classical signature, and no
+         * signature verification failures.
+         */
+        if (verification_failed_count == 0
+            && (pq_valid_count > 0 || classical_valid_count > 0)) {
+            ret = 1;
+        } else {
+            ret = 0;
+            /* Raise a specific error if verification failed */
+            if (verification_failed_count > 0) {
+                ERR_raise(ERR_LIB_PKCS7, PKCS7_R_SIGNATURE_FAILURE);
+            } else if (total_signatures > 0) { /* Only raise if there were signatures to check */
+                /*
+                 * TODO: Define and use a new error code like
+                 * PKCS7_R_VERIFICATION_FAILURE_CUSTOM_LOGIC
+                 */
+                /* Using generic signature failure for now */
+                ERR_raise(ERR_LIB_PKCS7, PKCS7_R_SIGNATURE_FAILURE);
+            }
+            /* If ret is 0, jump to err for cleanup */
+            goto err;
+        }
+        /*
+         * Add more complex logic (AND, Downgrade Prevention) here based on
+         * flags or config as needed.
+         */
+
+    } else {
+        /*
+         * PKCS7_NOSIGS is set, treat as success if no other errors occurred
+         * before this point.
+         */
+        ret = 1;
+    }
+    /* If ret is 1, execution continues to the cleanup section below. */
 
  err:
     X509_STORE_CTX_free(cert_ctx);
@@ -505,6 +603,8 @@ int PKCS7_decrypt(PKCS7 *p7, EVP_PKEY *pkey, X509 *cert, BIO *data, int flags)
 
     if (flags & PKCS7_TEXT) {
         BIO *tmpbuf, *bread;
+
+
         /* Encrypt BIOs can't do BIO_gets() so add a buffer BIO */
         if ((tmpbuf = BIO_new(BIO_f_buffer())) == NULL) {
             ERR_raise(ERR_LIB_PKCS7, ERR_R_BIO_LIB);

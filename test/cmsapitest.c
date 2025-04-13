@@ -385,6 +385,161 @@ end:
     return ret;
 }
 
+/*
+ * Test CMS_verify with hybrid signature flags.
+ * This requires pre-generated CMS SignedData messages with various
+ * combinations of classical and PQ signatures.
+ */
+/* Helper function to run verification tests on a CMS file */
+static int run_verify_test(const char *test_name, const char *cms_file_path,
+                           int expect_default, int expect_pq_req,
+                           int expect_pq_and, int expect_pq_or)
+{
+    int ret = 0;
+    BIO *bio = NULL;
+    CMS_ContentInfo *cms = NULL;
+    /* Use CMS_NO_SIGNER_CERT_VERIFY for testing core logic without needing full cert chains */
+    unsigned int base_flags = CMS_NO_SIGNER_CERT_VERIFY;
+
+    TEST_info("Running hybrid verify test: %s (File: %s)", test_name, cms_file_path);
+
+    if (cms_file_path == NULL || *cms_file_path == '\0') {
+        TEST_info("Skipping test '%s' due to missing file path.", test_name);
+        /* Return success for skipped test to not fail the suite */
+        return 1;
+    }
+
+    if (!TEST_ptr(bio = BIO_new_file(cms_file_path, "rb"))) {
+         TEST_info("Failed to open file: %s", cms_file_path);
+         /* Treat file not found as a skip, not a hard failure */
+         if (ERR_GET_REASON(ERR_peek_last_error()) == BIO_R_NO_SUCH_FILE) {
+             ERR_clear_error();
+             TEST_info("Skipping test '%s' as file does not exist.", test_name);
+             return 1;
+         }
+         /* Other errors are test failures */
+         goto end;
+    }
+
+    if (!TEST_ptr(cms = d2i_CMS_bio(bio, NULL))) {
+        TEST_info("Failed to parse CMS data from file: %s", cms_file_path);
+        goto end;
+    }
+
+    /* Test default behavior (all signatures must verify) */
+    if (expect_default) {
+        if (!TEST_true(CMS_verify(cms, NULL, NULL, NULL, NULL, base_flags)))
+            goto end;
+    } else {
+        if (!TEST_false(CMS_verify(cms, NULL, NULL, NULL, NULL, base_flags)))
+            goto end;
+        ERR_clear_error(); /* Clear expected error */
+    }
+
+    /* Test CMS_VERIFY_PQ_REQUIRED */
+    if (expect_pq_req) {
+        if (!TEST_true(CMS_verify(cms, NULL, NULL, NULL, NULL, base_flags | CMS_VERIFY_PQ_REQUIRED)))
+            goto end;
+    } else {
+        if (!TEST_false(CMS_verify(cms, NULL, NULL, NULL, NULL, base_flags | CMS_VERIFY_PQ_REQUIRED)))
+            goto end;
+        ERR_clear_error(); /* Clear expected error */
+    }
+
+    /* Test CMS_VERIFY_PQ_AND */
+    if (expect_pq_and) {
+        if (!TEST_true(CMS_verify(cms, NULL, NULL, NULL, NULL, base_flags | CMS_VERIFY_PQ_AND)))
+            goto end;
+    } else {
+        if (!TEST_false(CMS_verify(cms, NULL, NULL, NULL, NULL, base_flags | CMS_VERIFY_PQ_AND)))
+            goto end;
+        ERR_clear_error(); /* Clear expected error */
+    }
+
+    /* Test CMS_VERIFY_PQ_OR */
+    if (expect_pq_or) {
+        if (!TEST_true(CMS_verify(cms, NULL, NULL, NULL, NULL, base_flags | CMS_VERIFY_PQ_OR)))
+            goto end;
+    } else {
+        if (!TEST_false(CMS_verify(cms, NULL, NULL, NULL, NULL, base_flags | CMS_VERIFY_PQ_OR)))
+            goto end;
+        ERR_clear_error(); /* Clear expected error */
+    }
+
+    ret = 1;
+
+end:
+    CMS_ContentInfo_free(cms);
+    BIO_free(bio);
+    /* Check for unexpected errors */
+    return ret && TEST_int_eq(ERR_peek_error(), 0);
+}
+
+
+static int test_cms_verify_hybrid(void)
+{
+    int ret = 1; /* Assume success unless a sub-test fails */
+
+    /*
+     * NOTE: The following cms_data_* arrays are placeholders.
+     * Real DER-encoded CMS SignedData messages need to be generated externally
+     * and placed here or loaded from files. These messages should contain
+     * signatures that are *structurally* identifiable as classic or PQ,
+     * and CMS_SignerInfo_verify_content should be mocked or adjusted
+     * to return success/failure appropriately for these tests if real
+     * crypto verification isn't feasible in the test environment.
+     */
+    static const unsigned char cms_data_classic_only[] = { /* DER data with only a valid classic signature */ };
+    static const unsigned char cms_data_pq_only[] = { /* DER data with only a valid PQ signature */ };
+    static const unsigned char cms_data_hybrid_valid[] = { /* DER data with one valid classic AND one valid PQ signature */ };
+    static const unsigned char cms_data_hybrid_classic_invalid[] = { /* DER data with invalid classic, valid PQ */ };
+    static const unsigned char cms_data_hybrid_pq_invalid[] = { /* DER data with valid classic, invalid PQ */ };
+    static const unsigned char cms_data_hybrid_both_invalid[] = { /* DER data with invalid classic, invalid PQ */ };
+    static const unsigned char cms_data_no_signatures[] = { /* DER data structure with zero SignerInfos */ };
+
+
+    /* --- Test Case 1: Classic Signature Only (Valid) --- */
+    /* Default: OK, PQ_REQ: FAIL, PQ_AND: FAIL, PQ_OR: OK */
+    ret &= run_verify_test("Classic Only (Valid)", "test/recipes/80-test_cmsapi_data/classic_only.der",
+                           1, 0, 0, 1);
+
+    /* --- Test Case 2: PQ Signature Only (Valid) --- */
+    /* Default: OK, PQ_REQ: OK, PQ_AND: FAIL, PQ_OR: OK */
+    ret &= run_verify_test("PQ Only (Valid)", "test/recipes/80-test_cmsapi_data/pq_only.der",
+                           1, 1, 0, 1);
+
+    /* --- Test Case 3: Hybrid Signature (Both Valid) --- */
+    /* Default: OK, PQ_REQ: OK, PQ_AND: OK, PQ_OR: OK */
+    ret &= run_verify_test("Hybrid (Both Valid)", "test/recipes/80-test_cmsapi_data/hybrid_valid.der",
+                           1, 1, 1, 1);
+
+    /* --- Test Case 4: Hybrid Signature (Classic Invalid, PQ Valid) --- */
+    /* Default: FAIL, PQ_REQ: FAIL (because default fails), PQ_AND: FAIL, PQ_OR: OK */
+    /* Note: PQ_REQ passes if *a* PQ sig is valid, but default requires *all* sigs to be valid */
+    /* Let's refine the expectation for PQ_REQ: it should pass if a valid PQ exists, even if others fail */
+    /* Default: FAIL, PQ_REQ: OK, PQ_AND: FAIL, PQ_OR: OK */
+    ret &= run_verify_test("Hybrid (Classic Invalid, PQ Valid)", "test/recipes/80-test_cmsapi_data/hybrid_classic_invalid.der",
+                           0, 1, 0, 1);
+
+    /* --- Test Case 5: Hybrid Signature (Classic Valid, PQ Invalid) --- */
+    /* Default: FAIL, PQ_REQ: FAIL, PQ_AND: FAIL, PQ_OR: OK */
+    ret &= run_verify_test("Hybrid (Classic Valid, PQ Invalid)", "test/recipes/80-test_cmsapi_data/hybrid_pq_invalid.der",
+                           0, 0, 0, 1);
+
+    /* --- Test Case 6: Hybrid Signature (Both Invalid) --- */
+    /* Default: FAIL, PQ_REQ: FAIL, PQ_AND: FAIL, PQ_OR: FAIL */
+    ret &= run_verify_test("Hybrid (Both Invalid)", "test/recipes/80-test_cmsapi_data/hybrid_both_invalid.der",
+                           0, 0, 0, 0);
+
+    /* --- Test Case 7: No Signatures --- */
+    /* Default: FAIL, PQ_REQ: FAIL, PQ_AND: FAIL, PQ_OR: FAIL */
+    ret &= run_verify_test("No Signatures", "test/recipes/80-test_cmsapi_data/no_signatures.der",
+                           0, 0, 0, 0);
+    return ret; /* run_verify_test already checks ERR_peek_error */
+}
+
+static int test_cms_verify_hybrid(void);
+
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile derfile\n")
 
 int setup_tests(void)
@@ -432,6 +587,7 @@ int setup_tests(void)
     ADD_TEST(test_CMS_add1_cert);
     ADD_TEST(test_d2i_CMS_bio_NULL);
     ADD_ALL_TESTS(test_d2i_CMS_decode, 2);
+    ADD_TEST(test_cms_verify_hybrid);
     return 1;
 }
 

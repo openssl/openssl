@@ -100,6 +100,13 @@ CMS_ContentInfo *CMS_ContentInfo_new_ex(OSSL_LIB_CTX *libctx, const char *propq)
 # define CMS_USE_ORIGINATOR_KEYID        0x200000
 # define CMS_NO_SIGNING_TIME             0x400000
 
+
+/* Post-Quantum / Hybrid Verification Flags */
+# define CMS_VERIFY_PQ_REQUIRED          0x800000 /* Require at least one valid PQ signature */
+# define CMS_VERIFY_PQ_AND               0x1000000 /* If PQ and classical present, require both valid */
+# define CMS_VERIFY_PQ_OR                0x2000000 /* If PQ and classical present, require either valid */
+
+
 const ASN1_OBJECT *CMS_get0_type(const CMS_ContentInfo *cms);
 
 BIO *CMS_dataInit(CMS_ContentInfo *cms, BIO *icont);
