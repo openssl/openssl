@@ -360,8 +360,13 @@ The length of the "digest-size" parameter should not exceed that of a B<size_t>.
 
 =item "algorithm-id" (B<OSSL_SIGNATURE_PARAM_ALGORITHM_ID>) <octet string>
 
-Gets the DER encoded AlgorithmIdentifier that corresponds to the combination of
-signature algorithm and digest algorithm for the signature operation.
+Gets the DER-encoded AlgorithmIdentifier for the signature operation.
+This typically corresponds to the combination of a digest algorithm
+with a purely asymmetric signature algorithm, such as SHA256WithECDSA.
+
+The L<ASN1_item_sign_ctx(3)> relies on this operation and is used by
+many other functions signing ASN.1 structures such as X.509 certificates,
+certificate requests, and CRLs, as well as OCSP, CMP, and CMS messages.
 
 =item "nonce-type" (B<OSSL_SIGNATURE_PARAM_NONCE_TYPE>) <unsigned integer>
 
@@ -435,7 +440,8 @@ All other functions should return 1 for success or 0 on error.
 
 =head1 SEE ALSO
 
-L<provider(7)>
+L<provider(7)>,
+L<ASN1_item_sign_ctx(3)>
 
 =head1 HISTORY
 
