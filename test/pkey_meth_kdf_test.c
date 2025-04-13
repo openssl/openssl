@@ -160,12 +160,12 @@ static int test_kdf_hkdf_sha256(int index)
         goto err;
     }
     if (EVP_PKEY_CTX_set1_hkdf_salt(pctx, (const unsigned char *)"salt", 4)
-            <= 0) {
+        <= 0) {
         TEST_error("EVP_PKEY_CTX_set1_hkdf_salt");
         goto err;
     }
     if (EVP_PKEY_CTX_set1_hkdf_key(pctx, (const unsigned char *)"secret", 6)
-            <= 0) {
+        <= 0) {
         TEST_error("EVP_PKEY_CTX_set1_hkdf_key");
         goto err;
     }
@@ -196,9 +196,8 @@ static int test_kdf_hkdf_sha256(int index)
         const unsigned char expected[sizeof(out)] = {
             0x2a, 0xc4, 0x36, 0x9f, 0x52, 0x59, 0x96, 0xf8, 0xde, 0x13
         };
-        if (!TEST_mem_eq(out, sizeof(out), expected, sizeof(expected))) {
+        if (!TEST_mem_eq(out, sizeof(out), expected, sizeof(expected)))
             goto err;
-        }
     }
     ret = 1;
 err:
