@@ -1244,6 +1244,7 @@ int cms_main(int argc, char **argv)
             goto end;
         }
     } else {
+        /* within this block, ret > 0 means 'ok' */
         if (noout) {
             if (print) {
                 ASN1_PCTX *pctx = NULL;
@@ -1258,6 +1259,7 @@ int cms_main(int argc, char **argv)
                 CMS_ContentInfo_print_ctx(out, cms, 0, pctx);
                 ASN1_PCTX_free(pctx);
             }
+            ret = 1;
         } else if (outformat == FORMAT_SMIME) {
             if (to)
                 BIO_printf(out, "To: %s%s", to, mime_eol);
@@ -1285,7 +1287,7 @@ int cms_main(int argc, char **argv)
     }
     ret = 0;
  end:
-    if (ret)
+    if (ret != 0)
         ERR_print_errors(bio_err);
     OSSL_STACK_OF_X509_free(encerts);
     OSSL_STACK_OF_X509_free(other);
