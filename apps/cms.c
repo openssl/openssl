@@ -854,36 +854,24 @@ int cms_main(int argc, char **argv)
         }
     }
 
-    if (certfile != NULL) {
-        if (!load_certs(certfile, 0, &other, NULL, "certificate file")) {
-            ERR_print_errors(bio_err);
-            goto end;
-        }
-    }
+    if (certfile != NULL
+            && !load_certs(certfile, 0, &other, NULL, "certificate file"))
+        goto end;
 
-    if (recipfile != NULL && (operation == SMIME_DECRYPT)) {
-        if ((recip = load_cert(recipfile, FORMAT_UNDEF,
-                               "recipient certificate file")) == NULL) {
-            ERR_print_errors(bio_err);
-            goto end;
-        }
-    }
+    if (recipfile != NULL && (operation == SMIME_DECRYPT)
+        && (recip = load_cert(recipfile, FORMAT_UNDEF,
+                              "recipient certificate file")) == NULL)
+        goto end;
 
-    if (originatorfile != NULL) {
-        if ((originator = load_cert(originatorfile, FORMAT_UNDEF,
-                                    "originator certificate file")) == NULL) {
-            ERR_print_errors(bio_err);
-            goto end;
-        }
-    }
+    if (originatorfile != NULL
+        && (originator = load_cert(originatorfile, FORMAT_UNDEF,
+                                   "originator certificate file")) == NULL)
+        goto end;
 
-    if (operation == SMIME_SIGN_RECEIPT) {
-        if ((signer = load_cert(signerfile, FORMAT_UNDEF,
-                                "receipt signer certificate file")) == NULL) {
-            ERR_print_errors(bio_err);
-            goto end;
-        }
-    }
+    if (operation == SMIME_SIGN_RECEIPT
+        && (signer = load_cert(signerfile, FORMAT_UNDEF,
+                               "receipt signer certificate file")) == NULL)
+        goto end;
 
     if ((operation == SMIME_DECRYPT) || (operation == SMIME_ENCRYPT)) {
         if (keyfile == NULL)
@@ -1511,8 +1499,7 @@ static int cms_set_pkey_param(EVP_PKEY_CTX *pctx,
     for (i = 0; i < sk_OPENSSL_STRING_num(param); i++) {
         keyopt = sk_OPENSSL_STRING_value(param, i);
         if (pkey_ctrl_string(pctx, keyopt) <= 0) {
-            BIO_printf(bio_err, "parameter error \"%s\"\n", keyopt);
-            ERR_print_errors(bio_err);
+            BIO_printf(bio_err, "Error setting CMS key parameter \"%s\"\n", keyopt);
             return 0;
         }
     }
