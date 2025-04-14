@@ -547,7 +547,7 @@ int SMIME_crlf_copy(BIO *in, BIO *out, int flags)
     char eol;
     int len;
     char linebuf[MAX_SMLEN];
-    int ret;
+    int ret = 0;
 
     if (in == NULL || out == NULL) {
         ERR_raise(ERR_LIB_ASN1, ERR_R_PASSED_NULL_PARAMETER);
@@ -565,12 +565,16 @@ int SMIME_crlf_copy(BIO *in, BIO *out, int flags)
     }
     out = BIO_push(bf, out);
     if (flags & SMIME_BINARY) {
-        while ((len = BIO_read(in, linebuf, MAX_SMLEN)) > 0)
-            BIO_write(out, linebuf, len);
+        while ((len = BIO_read(in, linebuf, MAX_SMLEN)) > 0) {
+            if (BIO_write(out, linebuf, len) != len && out != NULL)
+                goto err;
+        }
     } else {
         int eolcnt = 0;
-        if (flags & SMIME_TEXT)
-            BIO_printf(out, "Content-Type: text/plain\r\n\r\n");
+
+        if ((flags & SMIME_TEXT) != 0
+                && BIO_puts(out, "Content-Type: text/plain\r\n\r\n") < 0)
+            goto err;
         while ((len = BIO_gets(in, linebuf, MAX_SMLEN)) > 0) {
             eol = strip_eol(linebuf, &len, flags);
             if (len > 0) {
@@ -578,26 +582,29 @@ int SMIME_crlf_copy(BIO *in, BIO *out, int flags)
                 if (flags & SMIME_ASCIICRLF) {
                     int i;
                     for (i = 0; i < eolcnt; i++)
-                        BIO_write(out, "\r\n", 2);
+                        if (BIO_puts(out, "\r\n") < 0)
+                            goto err;
                     eolcnt = 0;
                 }
-                BIO_write(out, linebuf, len);
-                if (eol)
-                    BIO_write(out, "\r\n", 2);
+                if (BIO_write(out, linebuf, len) != len && out != NULL)
+                    goto err;
+                if (eol && BIO_puts(out, "\r\n") < 0)
+                    goto err;
             } else if (flags & SMIME_ASCIICRLF) {
                 eolcnt++;
             } else if (eol) {
-                BIO_write(out, "\r\n", 2);
+                if (BIO_puts(out, "\r\n") < 0)
+                    goto err;
             }
         }
     }
-    ret = BIO_flush(out);
+    ret = 1;
+
+ err:
+    ret = BIO_flush(out) > 0 && ret;
     BIO_pop(out);
     BIO_free(bf);
-    if (ret <= 0)
-        return 0;
-
-    return 1;
+    return ret;
 }
 
 /* Strip off headers if they are text/plain */
