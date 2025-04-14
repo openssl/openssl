@@ -57,7 +57,7 @@ up to two B<X509_ALGOR> values representing the signature algorithm
 which is useful for structures like B<X509> that must contain the same signature
 algorithm information in two places: I<sig_alg> and I<cert_info.signature>.
 Each of the <algor1> and I<algor2> pointers may be NULL, otherwise
-they must must have been allocated beforehand (e.g., using I<X509_ALGOR_new()>,
+they must have been allocated beforehand (e.g., using I<X509_ALGOR_new()>,
 or indirectly like for the B<X509>fields I<sig_alg> and I<cert_info.signature>),
 and the ASN1_item_sign_ex() function sets into it the signature algorithm. This
 is done before generating the signature value and setting it into I<signature>.
