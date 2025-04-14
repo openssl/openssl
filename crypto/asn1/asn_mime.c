@@ -692,14 +692,17 @@ static int multi_split(BIO *bio, int flags, const char *bound, STACK_OF(BIO) **r
 #else
                     1
 #endif
-                        || (flags & SMIME_CRLFEOL) != 0)
-                    BIO_write(bpart, "\r\n", 2);
-                else
-                    BIO_write(bpart, "\n", 1);
+                        || (flags & SMIME_CRLFEOL) != 0) {
+                    if (BIO_puts(bpart, "\r\n") < 0)
+                        return 0;
+                } else {
+                    if (BIO_puts(bpart, "\n") < 0)
+                        return 0;
+                }
             }
             eol = next_eol;
-            if (len > 0)
-                BIO_write(bpart, linebuf, len);
+            if (len > 0 && BIO_write(bpart, linebuf, len) != len)
+                return 0;
         }
     }
     BIO_free(bpart);
