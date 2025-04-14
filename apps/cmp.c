@@ -767,6 +767,16 @@ static int set_verbosity(int level)
     return 1;
 }
 
+static EVP_PKEY *load_pubkey_pwd(const char *uri, int format,
+                                 const char *source, ENGINE *eng, const char *desc)
+{
+    char *pass = get_passwd(source, desc);
+    EVP_PKEY *pkey = load_pubkey(uri, format, 0, pass, eng, desc);
+
+    clear_free(pass);
+    return pkey;
+}
+
 static EVP_PKEY *load_key_pwd(const char *uri, int format,
                               const char *source, ENGINE *eng, const char *desc)
 {
@@ -1876,7 +1886,7 @@ static int setup_request_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
             desc = opt_csr == NULL
                 ? "fallback public key for cert to be enrolled"
                 : "public key for checking cert resulting from p10cr";
-            pkey = load_pubkey(file, format, 0, pass, engine, desc);
+            pkey = load_pubkey_pwd(file, format, pass, engine, desc);
             priv = 0;
         }
 
