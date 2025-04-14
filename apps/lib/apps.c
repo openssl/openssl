@@ -890,7 +890,7 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
     X509_CRL **pcrl, STACK_OF(X509_CRL) **pcrls,
     EVP_SKEY **pskey)
 {
-    PW_CB_DATA uidata;
+    PW_CB_DATA uidata = { pass, uri };
     OSSL_STORE_CTX *ctx = NULL;
     OSSL_LIB_CTX *libctx = app_get0_libctx();
     const char *propq = app_get0_propq();
@@ -949,9 +949,6 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
          */
         SET_EXPECT(OSSL_STORE_INFO_CRL);
     }
-
-    uidata.password = pass;
-    uidata.prompt_info = uri;
 
     if ((input_type = format2string(format)) != NULL) {
         itp[0] = OSSL_PARAM_construct_utf8_string(OSSL_STORE_PARAM_INPUT_TYPE,
@@ -1100,7 +1097,7 @@ end:
             pskey = NULL;
         failed = FAIL_NAME;
         if (failed != NULL && !quiet)
-            BIO_printf(bio_err, "Could not find");
+            BIO_printf(bio_err, "Could not find or decode");
     }
 
     if (failed != NULL && !quiet) {
