@@ -1261,12 +1261,12 @@ int cms_main(int argc, char **argv)
             }
             ret = 1;
         } else if (outformat == FORMAT_SMIME) {
-            if (to)
-                BIO_printf(out, "To: %s%s", to, mime_eol);
-            if (from)
-                BIO_printf(out, "From: %s%s", from, mime_eol);
-            if (subject)
-                BIO_printf(out, "Subject: %s%s", subject, mime_eol);
+            if (to != NULL && BIO_printf(out, "To: %s%s", to, mime_eol) < 0)
+                goto end;
+            if (from != NULL && BIO_printf(out, "From: %s%s", from, mime_eol) < 0)
+                goto end;
+            if (subject != NULL && BIO_printf(out, "Subject: %s%s", subject, mime_eol) < 0)
+                goto end;
             if (operation == SMIME_RESIGN)
                 ret = SMIME_write_CMS(out, cms, indata, flags);
             else
