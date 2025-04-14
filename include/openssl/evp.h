@@ -37,6 +37,27 @@
 # define EVP_MAX_BLOCK_LENGTH            32
 # define EVP_MAX_AEAD_TAG_LENGTH         16
 
+/*
+ * Maximum block size for AES-CBC-HMAC-SHAx-ETM combined ciphers.
+ *
+ * These ciphers are designed by interleaving two cryptographic primitives:
+ * - AES in CBC mode for encryption/decryption
+ * - HMAC with SHA (e.g., SHA-256 or SHA-512) for authentication
+ *
+ * Due to the interleaved processing of both algorithms, the effective block
+ * size required for secure and correct operation is equal to the digest block
+ * size of the corresponding SHA algorithm (e.g., 64 bytes for SHA-256, 128 bytes
+ * for SHA-512), not the AES block size (16 bytes).
+ *
+ * WARNING: Do NOT use EVP_MAX_BLOCK_LENGTH (32 bytes) for buffer sizing with
+ * these ciphers.
+ *
+ * Instead, always use EVP_CIPHER_get_block_size() at runtime to determine
+ * the correct block size, or use EVP_MAX_BLOCK_LENGTH_CBC_HMAC_SHA_ETM macro for
+ * a safe upper bound when statically allocating buffers.
+ */
+# define EVP_MAX_BLOCK_LENGTH_CBC_HMAC_SHA_ETM 128
+
 /* Maximum pipes in cipher pipelining */
 # define EVP_MAX_PIPES                   32
 
