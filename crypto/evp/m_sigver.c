@@ -252,11 +252,10 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
         }
     }
 
-    desc = signature->description != NULL ? signature->description
-        : "no signature description by provider";
+    desc = signature->description != NULL ? signature->description : "no signature description";
     if (ver) {
         if (signature->digest_verify_init == NULL) {
-            ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_SIGNATURE_MISSING,
+            ERR_raise_data(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE,
                            "%s digest_verify_init:%s", signature->type_name, desc);
             goto err;
         }
@@ -264,7 +263,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                                             mdname, provkey, params);
     } else {
         if (signature->digest_sign_init == NULL) {
-            ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_SIGNATURE_MISSING,
+            ERR_raise_data(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE,
                            "%s digest_sign_init:%s", signature->type_name, desc);
             goto err;
         }
@@ -420,16 +419,15 @@ int EVP_DigestSignUpdate(EVP_MD_CTX *ctx, const void *data, size_t dsize)
         goto legacy;
 
     signature = pctx->op.sig.signature;
-    desc = signature->description != NULL ? signature->description
-        : "no signature description by provider";
+    desc = signature->description != NULL ? signature->description : "no signature description";
     if (signature->digest_sign_update == NULL) {
-        ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_SIGNATURE_MISSING,
+        ERR_raise_data(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE,
                        "%s digest_sign_update:%s", signature->type_name, desc);
         return 0;
     }
 
     ret = signature->digest_sign_update(pctx->op.sig.algctx, data, dsize);
-    if (!ret)
+    if (ret <= 0)
         ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_SIGNATURE_FAILURE,
                        "%s digest_sign_update:%s", signature->type_name, desc);
     return ret;
@@ -465,16 +463,15 @@ int EVP_DigestVerifyUpdate(EVP_MD_CTX *ctx, const void *data, size_t dsize)
         goto legacy;
 
     signature = pctx->op.sig.signature;
-    desc = signature->description != NULL ? signature->description
-        : "no signature description by provider";
+    desc = signature->description != NULL ? signature->description : "no signature description";
     if (signature->digest_verify_update == NULL) {
-        ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_SIGNATURE_MISSING,
+        ERR_raise_data(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE,
                        "%s digest_verify_update:%s", signature->type_name, desc);
         return 0;
     }
 
     ret = signature->digest_verify_update(pctx->op.sig.algctx, data, dsize);
-    if (!ret)
+    if (ret <= 0)
         ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_SIGNATURE_FAILURE,
                        "%s digest_verify_update:%s", signature->type_name, desc);
     return ret;
@@ -518,10 +515,9 @@ int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
             pctx = dctx;
     }
     signature = pctx->op.sig.signature;
-    desc = signature->description != NULL ? signature->description
-        : "no signature description by provider";
+    desc = signature->description != NULL ? signature->description : "no signature description";
     if (signature->digest_sign_final == NULL) {
-        ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_SIGNATURE_MISSING,
+        ERR_raise_data(ERR_LIB_EVP, EVP_R_INVALID_PROVIDER_FUNCTIONS,
                        "%s digest_sign_final:%s", signature->type_name, desc);
         return 0;
     }
@@ -632,14 +628,14 @@ int EVP_DigestSign(EVP_MD_CTX *ctx, unsigned char *sigret, size_t *siglen,
         EVP_SIGNATURE *signature = pctx->op.sig.signature;
 
         if (signature->digest_sign != NULL) {
-            const char *desc = signature->description != NULL ? signature->description
-                : "no signature description by provider";
+            const char *desc = signature->description != NULL
+                ? signature->description : "no signature description";
 
             if (sigret != NULL)
                 ctx->flags |= EVP_MD_CTX_FLAG_FINALISED;
             ret = signature->digest_sign(pctx->op.sig.algctx, sigret, siglen,
                                          sigret == NULL ? 0 : *siglen, tbs, tbslen);
-            if (!ret)
+            if (ret <= 0)
                 ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_SIGNATURE_FAILURE,
                                "%s digest_sign:%s", signature->type_name, desc);
             return ret;
@@ -685,10 +681,9 @@ int EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sig,
     }
 
     signature = pctx->op.sig.signature;
-    desc = signature->description != NULL ? signature->description
-        : "no signature description by provider";
+    desc = signature->description != NULL ? signature->description : "no signature description";
     if (signature->digest_verify_final == NULL) {
-        ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_SIGNATURE_MISSING,
+        ERR_raise_data(ERR_LIB_EVP, EVP_R_INVALID_PROVIDER_FUNCTIONS,
                        "%s digest_verify_final:%s", signature->type_name, desc);
         return 0;
     }
@@ -764,13 +759,13 @@ int EVP_DigestVerify(EVP_MD_CTX *ctx, const unsigned char *sigret,
             && pctx->op.sig.signature != NULL) {
         if (pctx->op.sig.signature->digest_verify != NULL) {
             EVP_SIGNATURE *signature = pctx->op.sig.signature;
-            const char *desc = signature->description != NULL ? signature->description
-                : "no signature description by provider";
+            const char *desc = signature->description != NULL
+                ? signature->description : "no signature description";
             int ret;
 
             ctx->flags |= EVP_MD_CTX_FLAG_FINALISED;
             ret = signature->digest_verify(pctx->op.sig.algctx, sigret, siglen, tbs, tbslen);
-            if (!ret)
+            if (ret <= 0)
                 ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_SIGNATURE_FAILURE,
                                "%s digest_verify:%s", signature->type_name, desc);
             return ret;

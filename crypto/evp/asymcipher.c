@@ -160,12 +160,11 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation,
         goto err;
     }
 
-    desc = cipher->description != NULL ? cipher->description
-        : "no asym cipher description by provider";
+    desc = cipher->description != NULL ? cipher->description : "no asym cipher description";
     switch (operation) {
     case EVP_PKEY_OP_ENCRYPT:
         if (cipher->encrypt_init == NULL) {
-            ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_ASYM_CIPHER_MISSING,
+            ERR_raise_data(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE,
                            "%s encrypt_init:%s", cipher->type_name, desc);
             ret = -2;
             goto err;
@@ -174,7 +173,7 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation,
         break;
     case EVP_PKEY_OP_DECRYPT:
         if (cipher->decrypt_init == NULL) {
-            ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_ASYM_CIPHER_MISSING,
+            ERR_raise_data(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE,
                            "%s decrypt_init:%s", cipher->type_name, desc);
             ret = -2;
             goto err;
@@ -261,10 +260,9 @@ int EVP_PKEY_encrypt(EVP_PKEY_CTX *ctx,
         goto legacy;
 
     cipher = ctx->op.ciph.cipher;
-    desc = cipher->description != NULL ? cipher->description
-        : "no asym cipher description by provider";
+    desc = cipher->description != NULL ? cipher->description : "no asym cipher description";
     ret = cipher->encrypt(ctx->op.ciph.algctx, out, outlen, (out == NULL ? 0 : *outlen), in, inlen);
-    if (!ret)
+    if (ret <= 0)
         ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_ASYM_CIPHER_FAILURE,
                        "%s encrypt:%s", cipher->type_name, desc);
     return ret;
@@ -310,10 +308,9 @@ int EVP_PKEY_decrypt(EVP_PKEY_CTX *ctx,
         goto legacy;
 
     cipher = ctx->op.ciph.cipher;
-    desc = cipher->description != NULL ? cipher->description
-        : "no asym cipher description by provider";
+    desc = cipher->description != NULL ? cipher->description : "no asym cipher description";
     ret = cipher->decrypt(ctx->op.ciph.algctx, out, outlen, (out == NULL ? 0 : *outlen), in, inlen);
-    if (!ret)
+    if (ret <= 0)
         ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_ASYM_CIPHER_FAILURE,
                        "%s decrypt:%s", cipher->type_name, desc);
 
