@@ -201,10 +201,22 @@ set of "signature" functions, i.e. at least one of:
 
 =back
 
-OSSL_FUNC_signature_set_ctx_params and OSSL_FUNC_signature_settable_ctx_params are optional,
-but if one of them is present then the other one must also be present. The same
-applies to OSSL_FUNC_signature_get_ctx_params and OSSL_FUNC_signature_gettable_ctx_params, as
-well as the "md_params" functions. The OSSL_FUNC_signature_dupctx function is optional.
+OSSL_FUNC_signature_set_ctx_params and OSSL_FUNC_signature_settable_ctx_params
+function are optional,
+but if one of them is present then the other one must also be present.
+The same applies to the
+OSSL_FUNC_signature_get_ctx_params and OSSL_FUNC_signature_gettable_ctx_params functions,
+as well as the "md_params" functions.
+
+The OSSL_FUNC_signature_dupctx function is optional.
+So far it is not used by OpenSSL.
+
+The OSSL_FUNC_signature_query_key_types function is optional.
+When present, it should return a NULL-terminated array of strings
+indicating the key types supported by the provider for signature operations.
+Otherwise the signature algorithm name must match the given key
+or match the default signature algorithm name of the key,
+both checked using L<EVP_SIGNATURE_is_a(3)>.
 
 A signature algorithm must also implement some mechanism for generating,
 loading or importing keys via the key management (OSSL_OP_KEYMGMT) operation.
@@ -599,11 +611,18 @@ OSSL_FUNC_signature_gettable_ctx_params(), OSSL_FUNC_signature_settable_ctx_para
 OSSL_FUNC_signature_gettable_md_ctx_params() and OSSL_FUNC_signature_settable_md_ctx_params(),
 return the gettable or settable parameters in a constant L<OSSL_PARAM(3)> array.
 
-All other functions should return 1 for success or 0 on error.
+OSSL_FUNC_signature_query_key_types() should return a NULL-terminated array of strings.
+
+All verification functions should return 1 for success,
+0 for a non-matching signature, and a negative value for operation failure.
+
+All other functions should return 1 for success
+and 0 or a negative value for failure.
 
 =head1 SEE ALSO
 
-L<provider(7)>
+L<provider(7)>,
+L<EVP_SIGNATURE_is_a(3)>
 
 =head1 HISTORY
 
