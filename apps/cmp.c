@@ -834,22 +834,21 @@ static int set_verbosity(int level)
 }
 
 static EVP_PKEY *load_key_pwd(const char *uri, int format,
-    const char *pass, const char *desc)
+    const char *source, const char *desc)
 {
-    char *pass_string = get_passwd(pass, desc);
-    EVP_PKEY *pkey = load_key(uri, format, 0, pass_string, desc);
+    char *pass = get_passwd(source, desc);
+    EVP_PKEY *pkey = load_key(uri, format, 0, pass, desc);
 
-    clear_free(pass_string);
+    clear_free(pass);
     return pkey;
 }
 
-static X509 *load_cert_pwd(const char *uri, const char *pass, const char *desc)
+static X509 *load_cert_pwd(const char *uri, const char *source, const char *desc)
 {
-    X509 *cert;
-    char *pass_string = get_passwd(pass, desc);
+    char *pass = get_passwd(source, desc);
+    X509 *cert = load_cert_pass(uri, FORMAT_UNDEF, 0, pass, desc);
 
-    cert = load_cert_pass(uri, FORMAT_UNDEF, 0, pass_string, desc);
-    clear_free(pass_string);
+    clear_free(pass);
     return cert;
 }
 
