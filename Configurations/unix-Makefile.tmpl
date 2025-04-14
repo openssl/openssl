@@ -650,7 +650,11 @@ depend: Makefile
 # Install helper targets #############################################
 ##@ Installation
 
-install: install_sw install_ssldirs {- "install_docs" if !$disabled{docs}; -} {- $disabled{fips} ? "" : "install_fips" -} ## Install software and documentation, create OpenSSL directories
+install: Makefile ## Install software and documentation, create OpenSSL directories
+	$(MAKE) install_sw
+	$(MAKE) install_ssldirs
+	{- "\$(MAKE) install_docs" if !$disabled{docs} -}
+	{- "\$(MAKE) install_fips" if !$disabled{fips} -}
 
 uninstall: {- "uninstall_docs" if !$disabled{docs}; -} uninstall_sw {- $disabled{fips} ? "" : "uninstall_fips" -} ## Uninstall software and documentation
 
