@@ -584,7 +584,7 @@ const OPTIONS cmp_options[] = {
         "NOTE: -tls_used and all other TLS options not supported due to no-sock/no-http build" },
 #else
     { "tls_used", OPT_TLS_USED, '-',
-        "Enable using TLS for HTTP (also when other TLS options are not set)" },
+        "Require using TLS for HTTP (also when other TLS options are not set)" },
     { "tls_cert", OPT_TLS_CERT, 's',
         "Client's TLS certificate. May include chain to be provided to TLS server" },
     { "tls_key", OPT_TLS_KEY, 's',

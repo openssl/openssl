@@ -536,8 +536,8 @@ It is ignored if I<-rspin> is given with enough filename arguments.
 
 If the scheme C<https> is given, the B<-tls_used> option is implied.
 When TLS is used, the default port is 443, otherwise 80.
-The optional userinfo and fragment components are ignored.
-Any given query component is handled as part of the path component.
+The optional userinfo component is ignored.
+Any given query and fragment components are handled as part of the path component.
 If a path is included it provides the default value for the B<-path> option.
 
 =item B<-proxy> I<[http[s]://][userinfo@]host[:port][/path][?query][#fragment]>
@@ -549,6 +549,7 @@ The proxy port defaults to 80 or 443 if the scheme is C<https>; apart from that
 the optional C<http://> or C<https://> prefix is ignored (note that using TLS
 may be required by B<-tls_used> or B<-server> with the prefix C<https>),
 as well as any path, userinfo, and query, and fragment components.
+
 Defaults to the environment variable C<http_proxy> if set, else C<HTTP_PROXY>
 in case no TLS is used, otherwise C<https_proxy> if set, else C<HTTPS_PROXY>.
 This option is ignored if I<-server> is not given.
@@ -986,7 +987,7 @@ L<openssl-passphrase-options(1)>.
 
 =item B<-tls_used>
 
-Make the CMP client use TLS (regardless if other TLS-related options are set)
+Require the CMP client to use TLS (regardless if other TLS-related options are set)
 for message exchange with the server via HTTP.
 This option is not supported with the I<-port> option.
 It is implied if the B<-server> option is given with the scheme C<https>.
