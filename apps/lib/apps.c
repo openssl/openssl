@@ -726,9 +726,10 @@ int load_cert_certs(const char *uri,
     return ret;
 }
 
-STACK_OF(X509) *load_certs_multifile(char *files, const char *pass,
+STACK_OF(X509) *load_certs_multifile(char *files, const char *source,
     const char *desc, X509_VERIFY_PARAM *vpm)
 {
+    char *pass = get_passwd(source, desc);
     STACK_OF(X509) *certs = NULL;
     STACK_OF(X509) *result = sk_X509_new_null();
 
@@ -749,11 +750,13 @@ STACK_OF(X509) *load_certs_multifile(char *files, const char *pass,
         certs = NULL;
         files = next;
     }
+    clear_free(pass);
     return result;
 
 oom:
     BIO_printf(bio_err, "out of memory\n");
 err:
+    clear_free(pass);
     OSSL_STACK_OF_X509_free(certs);
     OSSL_STACK_OF_X509_free(result);
     return NULL;
@@ -781,9 +784,10 @@ static X509_STORE *sk_X509_to_store(X509_STORE *store /* may be NULL */,
  * Create cert store structure with certificates read from given file(s).
  * Returns pointer to created X509_STORE on success, NULL on error.
  */
-X509_STORE *load_certstore(char *input, const char *pass, const char *desc,
+X509_STORE *load_certstore(char *input, const char *source, const char *desc,
     X509_VERIFY_PARAM *vpm)
 {
+    char *pass = get_passwd(source, desc);
     X509_STORE *store = NULL;
     STACK_OF(X509) *certs = NULL;
 
@@ -793,15 +797,19 @@ X509_STORE *load_certstore(char *input, const char *pass, const char *desc,
 
         if (!load_cert_certs(input, NULL, &certs, 1, pass, desc, vpm)) {
             X509_STORE_free(store);
-            return NULL;
+            store = NULL;
+            goto end;
         }
         ok = (store = sk_X509_to_store(store, certs)) != NULL;
         OSSL_STACK_OF_X509_free(certs);
         certs = NULL;
         if (!ok)
-            return NULL;
+            goto end;
         input = next;
     }
+
+end:
+    clear_free(pass);
     return store;
 }
 
