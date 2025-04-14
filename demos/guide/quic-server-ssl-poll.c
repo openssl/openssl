@@ -75,6 +75,7 @@
     SSL_POLL_ITEM				 pe_poll_item;		\
     OSSL_LIST_MEMBER(pe, struct poll_event);				\
     uint64_t					 pe_want_events;	\
+    uint64_t                                     pe_want_mask;          \
     struct poll_manager				*pe_my_pm;		\
     unsigned char				 pe_type;		\
     struct poll_event				*pe_self;		\
@@ -143,6 +144,9 @@ static int pe_handle_listener_error(struct poll_event *);
 static int pe_handle_qconn_error(struct poll_event *);
 static int pe_handle_qstream_error(struct poll_event *);
 
+static void pe_disable_read(struct poll_event *);
+static void pe_disable_write(struct poll_event *);
+
 #ifdef _WIN32
 static const char *progname;
 
@@ -205,15 +209,13 @@ static const char *pe_type_to_name(const struct poll_event *pe)
 static void init_pe(struct poll_event *pe, SSL *ssl)
 {
     pe->pe_poll_item.desc = SSL_as_poll_descriptor(ssl);
-    pe->pe_poll_item.events = 0;
-    pe->pe_poll_item.revents = 0;
-    pe->pe_my_pm = NULL;
     pe->pe_cb_in = pe_return_error;
     pe->pe_cb_out = pe_return_error;
     pe->pe_cb_error = pe_return_error;
     pe->pe_cb_ondestroy = pe_return_void;
     pe->pe_self = pe;
     pe->pe_type = PE_NONE;
+    pe->pe_want_mask = ~0;
 }
 
 static struct poll_event *new_pe(SSL *ssl)
@@ -334,6 +336,85 @@ static int handle_ssl_error(struct poll_event *pe, int rc, const char *caller)
     return rv;
 }
 
+static const char *stream_state_str(int stream_state)
+{
+    const char *rv;
+
+    switch (stream_state) {
+    case SSL_STREAM_STATE_NONE:
+        rv = "SSL_STREAM_STATE_NONE";
+        break;
+    case SSL_STREAM_STATE_OK:
+        rv = "SSL_STREAM_STATE_OK";
+        break;
+    case SSL_STREAM_STATE_WRONG_DIR:
+        rv = "SSL_STREAM_STATE_WRONG_DIR";
+        break;
+    case SSL_STREAM_STATE_FINISHED:
+        rv = "SSL_STREAM_STATE_FINISHED";
+        break;
+    case SSL_STREAM_STATE_RESET_LOCAL:
+        rv = "SSL_STREAM_STATE_RESET_LOCAL";
+        break;
+    case SSL_STREAM_STATE_RESET_REMOTE:
+        rv = "SSL_STREAM_STATE_RESET_REMOTE";
+        break;
+    case SSL_STREAM_STATE_CONN_CLOSED:
+        rv = "SSL_STREAM_STATE_CONN_CLOSED";
+        break;
+    default:
+        rv = "???";
+    }
+
+    return rv;
+}
+
+static int handle_read_stream_state(struct poll_event *pe)
+{
+    int stream_state = SSL_get_stream_read_state(get_ssl_from_pe(pe));
+    int rv;
+
+    switch (stream_state) {
+    case SSL_STREAM_STATE_FINISHED:
+        DPRINTF(stderr, "%s remote peer concluded the stream\n", __func__);
+        pe_disable_read(pe);
+        /* FALLTHRU */
+    case SSL_STREAM_STATE_OK:
+        rv = 0;
+        break;
+    default:
+        DPRINTF(stderr,
+                "%s error %s on stream, the %p (%s) should be destroyed\n",
+                __func__, stream_state_str(stream_state), pe,
+                pe_type_to_name(pe));
+        rv = -1;
+    }
+
+    return rv;
+}
+
+static int handle_write_stream_state(struct poll_event *pe)
+{
+    int state = SSL_get_stream_write_state(get_ssl_from_pe(pe));
+    int rv;
+
+    switch (state) {
+    case SSL_STREAM_STATE_FINISHED:
+        DPRINTF(stderr, "%s remote peer concluded the stream\n", __func__);
+        /* FALLTHRU */
+    case SSL_STREAM_STATE_OK:
+        rv = 0;
+        break;
+    default:
+        DPRINTF(stderr,
+                "%s error %s on stream, the %p (%s) should be destroyed\n",
+                __func__, stream_state_str(state), pe, pe_type_to_name(pe));
+        rv = -1;
+    }
+
+    return rv;
+}
+
 static void add_pe_to_pm(struct poll_manager *pm, struct poll_event *pe)
 {
     if (pe->pe_my_pm == NULL) {
@@ -426,7 +507,11 @@ static int rebuild_poll_set(struct poll_manager *pm)
         pm->pm_poll_set_sz += POLL_GROW;
 
     } else if ((pe_num + POLL_DOWNSIZ) < pm->pm_poll_set_sz) {
-        new_sz = sizeof (struct poll_event) * (pm->pm_poll_set_sz - POLL_DOWNSIZ);
+        /*
+         * shrink poll set by POLL_DOWNSIZ
+         */
+        new_sz = sizeof (struct poll_event) *
+                 (pm->pm_poll_set_sz - POLL_DOWNSIZ);
         new_poll_set = (struct poll_event *)OPENSSL_realloc(pm->pm_poll_set,
                                                             new_sz);
         if (new_poll_set == NULL)
@@ -436,11 +521,16 @@ static int rebuild_poll_set(struct poll_manager *pm)
     }
 
     i = 0;
+    DPRINTF(stderr, "%s there %zu events to poll\n", __func__,
+            ossl_list_pe_num(&pm->pm_head));
     OSSL_LIST_FOREACH(pe, pe, &pm->pm_head) {
         pe->pe_poll_item.events = pe->pe_want_events;
         pm->pm_poll_set[i++] = *pe;
+        DPRINTF(stderr, "\t%p (%s) " POLL_FMT " (disabled: " POLL_FMT ")\n",
+                pe, pe_type_to_name(pe),
+                POLL_PRINTA(pe->pe_poll_item.events),
+                POLL_PRINTA(~pe->pe_want_mask));
     }
-    DPRINTF(stderr, "%s event count: %zu\n", __func__, i);
     pm->pm_event_count = i;
     pm->pm_need_rebuild = 0;
 
@@ -747,7 +837,7 @@ static void pe_pause_read(struct poll_event *pe)
 
 static void pe_resume_read(struct poll_event *pe)
 {
-    pe->pe_want_events |= SSL_POLL_EVENT_R;
+    pe->pe_want_events |= (SSL_POLL_EVENT_R & pe->pe_want_mask);
     pe->pe_my_pm->pm_need_rebuild = 1;
 }
 
@@ -759,8 +849,23 @@ static void pe_pause_write(struct poll_event *pe)
 
 static void pe_resume_write(struct poll_event *pe)
 {
-    pe->pe_want_events |= SSL_POLL_EVENT_W;
+    pe->pe_want_events |= (SSL_POLL_EVENT_W & pe->pe_want_mask);
     pe->pe_my_pm->pm_need_rebuild = 1;
+}
+
+/*
+ * like pause, but is permanent,
+ */
+static void pe_disable_read(struct poll_event *pe)
+{
+    pe_pause_read(pe);
+    pe->pe_want_mask &= ~SSL_POLL_EVENT_R;
+}
+
+static void pe_disable_write(struct poll_event *pe)
+{
+    pe_pause_write(pe);
+    pe->pe_want_mask &= ~SSL_POLL_EVENT_W;
 }
 
 /*
@@ -1158,9 +1263,14 @@ static int app_read_cb(struct poll_event *pe)
                      &lb->lb_len);
     if (rv == 0) {
         free(lb);
+        /*
+	 * May be it's over cautious, we should just examine stream state and
+	 * decide if we can continue with poll (rv == 0) or we should stop
+	 * polling (rv == -1).
+         */
         rv = handle_ssl_error(pe, rv, __func__);
         if (rv == 0)
-            pe_pause_read(pe);
+            rv = handle_read_stream_state(pe);
         return rv;
     }
     lb->lb_wpos = lb->lb_data;
@@ -1232,7 +1342,7 @@ static int app_write_cb(struct poll_event *pe)
          * too soon to deliver the STREAM_CONCLUDE to peer. The stream
          * is torn down immediately causing client to see a RESET.
          */
-        pe_pause_write(pe);
+        pe_disable_write(pe);
     }
 
     return 0;
