@@ -49,14 +49,18 @@ I<ASN1_ITEM_rptr(X509_REQ_INFO)>, and I<ASN1_ITEM_rptr(X509_CRL_INFO)>.
 I<signature>, <algor1>, and I<algor2> are essentially output parameters.
 The generated signature is set into I<signature>,
 which must have been allocated beforehand, e.g., using I<ASN1_BIT_STRING_new()>.
-The <algor1> and I<algor2> parameters are optional and support outputting up to two
-B<X509_ALGOR> values representing the signature algorithm (including any digest
-algorithm and/or further parameters), which is useful for structures like X.509
-that must contain the same signature algorithm information in two places.
+This may happen indirectly, for instance by having an ASN.1 structure like
+B<X509> that includes a non-optional signature field of type B<ASN1_BIT_STRING>.
+The <algor1> and I<algor2> parameters are optional and support outputting
+up to two B<X509_ALGOR> values representing the signature algorithm
+(typically including a digest algorithm, and/or possibly other parameters),
+which is useful for structures like B<X509> that must contain the same signature
+algorithm information in two places: I<sig_alg> and I<cert_info.signature>.
 Each of the <algor1> and I<algor2> pointers may be NULL, otherwise
-the caller must have allocated it beforehand (e.g., using I<X509_ALGOR_new()>),
-and the ASN1_item_sign_ex() function sets into it the signature algorithm.
-This is done before generating the signature value and setting it into I<signature>.
+they must must have been allocated beforehand (e.g., using I<X509_ALGOR_new()>,
+or indirectly like for the B<X509>fields I<sig_alg> and I<cert_info.signature>),
+and the ASN1_item_sign_ex() function sets into it the signature algorithm. This
+is done before generating the signature value and setting it into I<signature>.
 
 The B<OSSL_LIB_CTX> specified in I<libctx> and the property query string
 specified in I<props> are used when searching for algorithms in providers.
