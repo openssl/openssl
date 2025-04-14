@@ -55,6 +55,7 @@ static void *evp_signature_from_algorithm(int name_id,
 {
     const OSSL_DISPATCH *fns = algodef->implementation;
     EVP_SIGNATURE *signature = NULL;
+    const char *desc;
     /* Counts newctx / freectx */
     int ctxfncnt = 0;
     /* Counts all init functions  */
@@ -72,6 +73,7 @@ static void *evp_signature_from_algorithm(int name_id,
     if ((signature->type_name = ossl_algorithm_get1_first_name(algodef)) == NULL)
         goto err;
     signature->description = algodef->algorithm_description;
+    desc = signature->description != NULL ? signature->description : "";
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {
@@ -290,23 +292,30 @@ static void *evp_signature_from_algorithm(int name_id,
      */
     valid = 1;
     /* Start with the ones where counters say enough */
-    if (ctxfncnt != 2)
-        /* newctx or freectx missing */
+    if (ctxfncnt != 2) {
+        ERR_raise_data(ERR_LIB_EVP, EVP_R_INVALID_PROVIDER_FUNCTIONS,
+                       "missing %s newctx or freectx:%s", signature->type_name, desc);
         valid = 0;
+    }
     if (valid
         && ((gparamfncnt != 0 && gparamfncnt != 2)
             || (sparamfncnt != 0 && sparamfncnt != 2)
             || (gmdparamfncnt != 0 && gmdparamfncnt != 2)
-            || (smdparamfncnt != 0 && smdparamfncnt != 2)))
+            || (smdparamfncnt != 0 && smdparamfncnt != 2))) {
         /*
          * Params functions are optional, but if defined, they must
          * be pairwise complete sets, i.e. a getter must have an
          * associated gettable, etc
          */
+        ERR_raise_data(ERR_LIB_EVP, EVP_R_INVALID_PROVIDER_FUNCTIONS,
+                       "missing %s params getter or setter:%s", signature->type_name, desc);
         valid = 0;
-    if (valid && initfncnt == 0)
-        /* No init functions */
+    }
+    if (valid && initfncnt == 0) {
+        ERR_raise_data(ERR_LIB_EVP, EVP_R_INVALID_PROVIDER_FUNCTIONS,
+                       "missing %s init:%s", signature->type_name, desc);
         valid = 0;
+    }
 
     /* Now we check for function combinations */
     if (valid
@@ -315,17 +324,23 @@ static void *evp_signature_from_algorithm(int name_id,
             || (signature->sign_message_init != NULL
                 && signature->sign == NULL
                 && (signature->sign_message_update == NULL
-                    || signature->sign_message_final == NULL))))
-        /* sign_init functions with no signing function?  That's weird */
+                    || signature->sign_message_final == NULL)))) {
+        /* sign_init function(s) with no signing function?  That's weird */
+        ERR_raise_data(ERR_LIB_EVP, EVP_R_INVALID_PROVIDER_FUNCTIONS,
+                       "missing %s signing function:%s", signature->type_name, desc);
         valid = 0;
+    }
     if (valid
         && (signature->sign != NULL
             || signature->sign_message_update != NULL
             || signature->sign_message_final != NULL)
         && signature->sign_init == NULL
-        && signature->sign_message_init == NULL)
-        /* signing functions with no sign_init? That's odd */
+        && signature->sign_message_init == NULL) {
+        /* signing function(s) with no sign_init? That's odd */
+        ERR_raise_data(ERR_LIB_EVP, EVP_R_INVALID_PROVIDER_FUNCTIONS,
+                       "missing %s sign_init or sign_message_init:%s", signature->type_name, desc);
         valid = 0;
+    }
 
     if (valid
         && ((signature->verify_init != NULL
@@ -333,46 +348,76 @@ static void *evp_signature_from_algorithm(int name_id,
             || (signature->verify_message_init != NULL
                 && signature->verify == NULL
                 && (signature->verify_message_update == NULL
-                    || signature->verify_message_final == NULL))))
-        /* verify_init functions with no verification function?  That's weird */
+                    || signature->verify_message_final == NULL)))) {
+        /* verify_init function(s) with no verification function?  That's weird */
+        ERR_raise_data(ERR_LIB_EVP, EVP_R_INVALID_PROVIDER_FUNCTIONS,
+                       "missing %s verification function:%s", signature->type_name, desc);
         valid = 0;
+    }
     if (valid
         && (signature->verify != NULL
             || signature->verify_message_update != NULL
             || signature->verify_message_final != NULL)
         && signature->verify_init == NULL
-        && signature->verify_message_init == NULL)
-        /* verification functions with no verify_init? That's odd */
+            && signature->verify_message_init == NULL) {
+        ERR_raise_data(ERR_LIB_EVP, EVP_R_INVALID_PROVIDER_FUNCTIONS,
+                       "missing %s verify_init or verify_message_init:%s",
+                       signature->type_name, desc);
+        /* verification function(s) with no verify_init? That's odd */
         valid = 0;
+    }
 
     if (valid
         && (signature->verify_recover_init != NULL)
-            && (signature->verify_recover == NULL))
-        /* verify_recover_init functions with no verify_recover?  How quaint */
+            && (signature->verify_recover == NULL)) {
+        /* verify_recover_init function with no verify_recover?  How quaint */
+        ERR_raise_data(ERR_LIB_EVP, EVP_R_INVALID_PROVIDER_FUNCTIONS,
+                       "missing %s verify_recover:%s", signature->type_name, desc);
         valid = 0;
+    }
 
     if (valid
         && (signature->digest_sign_init != NULL
             && signature->digest_sign == NULL
             && (signature->digest_sign_update == NULL
-                || signature->digest_sign_final == NULL)))
-        /*
-         * You can't have a digest_sign_init without *some* performing functions
-         */
+                || signature->digest_sign_final == NULL))) {
+        /* You can't have a digest_sign_init without *some* performing functions */
+        ERR_raise_data(ERR_LIB_EVP, EVP_R_INVALID_PROVIDER_FUNCTIONS,
+                       "missing %s digest_sign function:%s", signature->type_name, desc);
         valid = 0;
+    }
 
     if (valid
         && ((signature->digest_verify_init != NULL
              && signature->digest_verify == NULL
              && (signature->digest_verify_update == NULL
-                 || signature->digest_verify_final == NULL))))
-        /*
-         * You can't have a digest_verify_init without *some* performing functions
-         */
+                 || signature->digest_verify_final == NULL)))) {
+        /* You can't have a digest_verify_init without *some* performing functions */
+        ERR_raise_data(ERR_LIB_EVP, EVP_R_INVALID_PROVIDER_FUNCTIONS,
+                       "missing %s digest_verify function:%s", signature->type_name, desc);
         valid = 0;
+    }
 
-    if (!valid) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_PROVIDER_FUNCTIONS);
+    if (!valid)
+        goto err;
+
+    if ((signature->digest_sign != NULL
+         || signature->digest_sign_update != NULL
+         || signature->digest_sign_final != NULL)
+        && signature->digest_sign_init == NULL) {
+        /* digest signing function(s) with no digest_sign_init? That's odd */
+        ERR_raise_data(ERR_LIB_EVP, EVP_R_INVALID_PROVIDER_FUNCTIONS,
+                       "missing %s digest_sign_init:%s", signature->type_name, desc);
+        goto err;
+    }
+
+    if ((signature->digest_verify != NULL
+         || signature->digest_verify_update != NULL
+         || signature->digest_verify_final != NULL)
+        && signature->digest_verify_init == NULL) {
+        /* digest verification function(s) with no digest_verify_init? That's odd */
+        ERR_raise_data(ERR_LIB_EVP, EVP_R_INVALID_PROVIDER_FUNCTIONS,
+                       "missing %s digest_verify_init:%s", signature->type_name, desc);
         goto err;
     }
 
@@ -499,6 +544,7 @@ const OSSL_PARAM *EVP_SIGNATURE_settable_ctx_params(const EVP_SIGNATURE *sig)
 static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature,
                                    int operation, const OSSL_PARAM params[])
 {
+    const char *desc;
     int ret = 0;
     void *provkey = NULL;
     EVP_KEYMGMT *tmp_keymgmt = NULL;
@@ -557,7 +603,7 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature,
          * ensured that the key is at least exported to a provider (above).
          */
         if (signature->query_key_types != NULL) {
-            /* This is expect to be a NULL terminated array */
+            /* This is expected to be a NULL-terminated array */
             const char **keytypes;
 
             keytypes = signature->query_key_types();
@@ -708,6 +754,8 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature,
     /* No more legacy from here down to legacy: */
 
     ctx->op.sig.signature = signature;
+    desc = signature->description != NULL ? signature->description : "";
+
     ctx->op.sig.algctx =
         signature->newctx(ossl_provider_ctx(signature->prov), ctx->propquery);
     if (ctx->op.sig.algctx == NULL) {
@@ -719,7 +767,8 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature,
     switch (operation) {
     case EVP_PKEY_OP_SIGN:
         if (signature->sign_init == NULL) {
-            ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+            ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_SIGNATURE_NOT_SUPPORTED,
+                           "%s sign_init:%s", signature->type_name, desc);
             ret = -2;
             goto err;
         }
@@ -727,7 +776,8 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature,
         break;
     case EVP_PKEY_OP_SIGNMSG:
         if (signature->sign_message_init == NULL) {
-            ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+            ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_SIGNATURE_NOT_SUPPORTED,
+                           "%s sign_message_init:%s", signature->type_name, desc);
             ret = -2;
             goto err;
         }
@@ -735,7 +785,8 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature,
         break;
     case EVP_PKEY_OP_VERIFY:
         if (signature->verify_init == NULL) {
-            ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+            ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_SIGNATURE_NOT_SUPPORTED,
+                           "%s verify_init:%s", signature->type_name, desc);
             ret = -2;
             goto err;
         }
@@ -743,7 +794,8 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature,
         break;
     case EVP_PKEY_OP_VERIFYMSG:
         if (signature->verify_message_init == NULL) {
-            ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+            ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_SIGNATURE_NOT_SUPPORTED,
+                           "%s verify_message_init:%s", signature->type_name, desc);
             ret = -2;
             goto err;
         }
@@ -751,7 +803,8 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature,
         break;
     case EVP_PKEY_OP_VERIFYRECOVER:
         if (signature->verify_recover_init == NULL) {
-            ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+            ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_SIGNATURE_NOT_SUPPORTED,
+                           "%s verify_recover_init:%s", signature->type_name, desc);
             ret = -2;
             goto err;
         }
