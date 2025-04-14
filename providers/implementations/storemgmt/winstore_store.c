@@ -210,6 +210,7 @@ static int setup_decoder(struct winstore_ctx_st *ctx)
          to_algo++) {
         OSSL_DECODER *to_obj = NULL;
         OSSL_DECODER_INSTANCE *to_obj_inst = NULL;
+        const char *input_type;
 
         /*
          * Create the internal last resort decoder implementation
@@ -225,6 +226,15 @@ static int setup_decoder(struct winstore_ctx_st *ctx)
         OSSL_DECODER_free(to_obj);
         if (to_obj_inst == NULL)
             goto err;
+
+        /*
+         * The input type has to be DER
+         */
+        input_type = OSSL_DECODER_INSTANCE_get_input_type(to_obj_inst);
+        if (OPENSSL_strcasecmp(input_type, "DER") != 0) {
+            ossl_decoder_instance_free(to_obj_inst);
+            continue;
+        }
 
         if (!ossl_decoder_ctx_add_decoder_inst(ctx->dctx,
                                                to_obj_inst)) {
