@@ -515,7 +515,7 @@ const OPTIONS cmp_options[] = {
      "NOTE: -tls_used and all other TLS options not supported due to no-sock/no-http build"},
 #else
     {"tls_used", OPT_TLS_USED, '-',
-     "Enable using TLS (also when other TLS options are not set)"},
+     "Enable using TLS for HTTP (also when other TLS options are not set)"},
     {"tls_cert", OPT_TLS_CERT, 's',
      "Client's TLS certificate. May include chain to be provided to TLS server"},
     {"tls_key", OPT_TLS_KEY, 's',
@@ -814,8 +814,8 @@ static int write_PKIMESSAGE(const OSSL_CMP_MSG *msg, char **filenames)
         return 0;
     }
     if (*filenames == NULL) {
-        CMP_err("not enough file names provided for writing PKIMessage");
-        return 0;
+        CMP_warn("not enough file names provided for writing PKIMessage");
+        return 1;
     }
 
     file = *filenames;
@@ -838,7 +838,7 @@ static OSSL_CMP_MSG *read_PKIMESSAGE(const char *desc, char **filenames)
         return NULL;
     }
     if (*filenames == NULL) {
-        CMP_err("not enough file names provided for reading PKIMessage");
+        CMP_err("too few file names provided for reading PKIMessage");
         return NULL;
     }
 
@@ -901,10 +901,11 @@ static OSSL_CMP_MSG *read_write_req_resp(OSSL_CMP_CTX *ctx,
         res = read_PKIMESSAGE("actually using", &opt_rspin);
     } else {
         const OSSL_CMP_MSG *actual_req = req_new != NULL ? req_new : req;
+        const char *const msg = "not enough -rspin filename arguments; resorting to";
 
         if (opt_use_mock_srv) {
             if (rspin_in_use)
-                CMP_warn("too few -rspin filename arguments; resorting to using mock server");
+                CMP_warn1("%s; using mock server", msg);
             res = OSSL_CMP_CTX_server_perform(ctx, actual_req);
         } else {
 #if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_HTTP)
@@ -913,7 +914,7 @@ static OSSL_CMP_MSG *read_write_req_resp(OSSL_CMP_CTX *ctx,
                 goto err;
             }
             if (rspin_in_use)
-                CMP_warn("too few -rspin filename arguments; resorting to contacting server");
+                CMP_warn1("%s contacting server", msg);
             res = OSSL_CMP_MSG_http_perform(ctx, actual_req);
 #else
             CMP_err("-server not supported on no-sock/no-http build; missing -use_mock_srv option or too few -rspin filename arguments");
@@ -2334,7 +2335,7 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
     if (opt_reqout_only == NULL)
         CMP_info3("will contact %s%s%s ", server_buf, proxy_buf,
                   opt_rspin == NULL ? "" :
-                  " only if -rspin argument gives too few filenames");
+                  " only if -rspin argument does not give enough filenames");
 
     ret = 1;
 
@@ -3693,9 +3694,9 @@ int cmp_main(int argc, char **argv)
             && opt_tls_extra == NULL && opt_tls_trusted == NULL
             && opt_tls_host == NULL) {
         if (opt_tls_used)
-            CMP_warn("-tls_used given without any other TLS options");
+            CMP_warn("-tls_used is active without any other TLS options");
     } else if (!opt_tls_used) {
-        CMP_warn("ignoring TLS options(s) since -tls_used is not given");
+        CMP_warn("ignoring TLS options(s) since -tls_used is not active");
     }
     if (opt_port != NULL) {
         if (opt_tls_used) {
@@ -3755,18 +3756,40 @@ int cmp_main(int argc, char **argv)
         ret = cmp_server(srv_cmp_ctx);
         goto err;
     }
+#endif
 
     /* act as CMP client, possibly using internal mock server */
 
     if (opt_reqout_only != NULL) {
         const char *msg = "option is ignored since -reqout_only option is given";
 
-# if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_HTTP)
-        if (opt_server != NULL)
+#if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_HTTP)
+        if (opt_server != NULL) {
             CMP_warn1("-server %s", msg);
-# endif
-        if (opt_use_mock_srv)
+            opt_server = NULL;
+        }
+        if (opt_proxy != NULL) {
+            CMP_warn1("-proxy %s", msg);
+            opt_proxy = NULL;
+        }
+        if (opt_no_proxy != NULL) {
+            CMP_warn1("-no_proxy %s", msg);
+            opt_no_proxy = NULL;
+        }
+#endif
+        if (opt_path != NULL) {
+            CMP_warn1("-path %s", msg);
+            opt_path = NULL;
+        }
+        if (opt_tls_used) {
+            CMP_warn1("-tls_used %s", msg);
+            opt_tls_used = 0;
+        }
+
+        if (opt_use_mock_srv) {
             CMP_warn1("-use_mock_srv %s", msg);
+            opt_use_mock_srv = 0;
+        }
         if (opt_reqout != NULL)
             CMP_warn1("-reqout %s", msg);
         if (opt_rspin != NULL)
@@ -3775,13 +3798,18 @@ int cmp_main(int argc, char **argv)
             CMP_warn1("-rspout %s", msg);
         opt_reqout = opt_reqout_only;
     }
+#if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_HTTP)
+    if (opt_server == NULL && !opt_use_mock_srv && opt_port == NULL)
+        CMP_info("will not contact any server");
+#endif
     if (opt_rspin != NULL) {
+#if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_HTTP)
         if (opt_server != NULL)
-            CMP_warn("-server option is not used if enough filenames given for -rspin");
+            CMP_warn("-server option etc. are not used if enough filenames given for -rspin");
+#endif
         if (opt_use_mock_srv)
             CMP_warn("-use_mock_srv option is not used if enough filenames given for -rspin");
     }
-#endif
 
     if (!setup_client_ctx(cmp_ctx, engine)) {
         CMP_err("cannot set up CMP context");
