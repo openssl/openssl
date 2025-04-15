@@ -2578,8 +2578,7 @@ void SSL_trace(int write_p, int version, int content_type,
 int DTLSv1_listen(SSL *s, BIO_ADDR *client);
 # endif
 
-
-__owur int SSL_listen_ex(SSL *listener, SSL *new_conn);
+int SSL_listen_ex(SSL *listener, SSL *new_conn);
 
 # ifndef OPENSSL_NO_CT
 
