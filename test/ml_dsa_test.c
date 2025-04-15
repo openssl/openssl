@@ -202,6 +202,95 @@ err:
     return ret;
 }
 
+static int ml_dsa_siggen_upd_test(int tst_id)
+{
+    int ret = 0;
+    const ML_DSA_SIG_GEN_TEST_DATA *td = &ml_dsa_siggen_testdata[tst_id];
+    EVP_PKEY_CTX *sctx = NULL;
+    EVP_PKEY *pkey = NULL;
+    EVP_SIGNATURE *sig_alg = NULL;
+    OSSL_PARAM params[4], *p = params;
+    uint8_t *psig = NULL;
+    size_t psig_len = 0, sig_len2 = 0;
+    uint8_t digest[32];
+    size_t digest_len = sizeof(digest);
+    int encode = 0, deterministic = 1;
+
+    *p++ = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_DETERMINISTIC, &deterministic);
+    *p++ = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_MESSAGE_ENCODING, &encode);
+    if (td->add_random != NULL)
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_SIGNATURE_PARAM_TEST_ENTROPY,
+                                                 (char *)td->add_random,
+                                                 td->add_random_len);
+    *p = OSSL_PARAM_construct_end();
+
+    /*
+     * This just uses from data here, but keygen also works.
+     * The keygen path is tested via ml_dsa_keygen_test
+     */
+    if (!TEST_true(ml_dsa_create_keypair(&pkey, td->alg, td->priv, td->priv_len,
+                                         NULL, 0, 1))
+            || !TEST_ptr(sctx = EVP_PKEY_CTX_new_from_pkey(lib_ctx, pkey, NULL))
+            || !TEST_ptr(sig_alg = EVP_SIGNATURE_fetch(lib_ctx, td->alg, NULL))
+            || !TEST_int_eq(EVP_PKEY_sign_message_init(sctx, sig_alg, params), 1)
+            || !TEST_int_eq(EVP_PKEY_sign_message_update(sctx, td->msg, 1), 1)
+            || !TEST_int_eq(EVP_PKEY_sign_message_update(sctx, td->msg + 1,
+                                                         td->msg_len -1), 1)
+            || !TEST_int_eq(EVP_PKEY_sign_message_final(sctx, NULL, &psig_len), 1)
+            || !TEST_true(EVP_PKEY_get_size_t_param(pkey, OSSL_PKEY_PARAM_MAX_SIZE,
+                                                    &sig_len2))
+            || !TEST_int_eq(sig_len2, psig_len)
+            || !TEST_ptr(psig = OPENSSL_zalloc(psig_len))
+            || !TEST_int_eq(EVP_PKEY_sign_message_final(sctx, psig, &psig_len), 1)
+            || !TEST_int_eq(EVP_Q_digest(lib_ctx, "SHA256", NULL, psig, psig_len,
+                                         digest, &digest_len), 1)
+            || !TEST_mem_eq(digest, digest_len, td->sig_digest, td->sig_digest_len))
+        goto err;
+    ret = 1;
+err:
+    EVP_SIGNATURE_free(sig_alg);
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_CTX_free(sctx);
+    OPENSSL_free(psig);
+    return ret;
+}
+
+static int ml_dsa_sigver_upd_test(int tst_id)
+{
+    int ret = 0;
+    const ML_DSA_SIG_VER_TEST_DATA *td = &ml_dsa_sigver_testdata[tst_id];
+    EVP_PKEY_CTX *vctx = NULL;
+    EVP_PKEY *pkey = NULL;
+    EVP_SIGNATURE *sig_alg = NULL;
+    OSSL_PARAM params[2], *p = params;
+    int encode = 0;
+
+    *p++ = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_MESSAGE_ENCODING, &encode);
+    *p = OSSL_PARAM_construct_end();
+
+    if (!TEST_true(ml_dsa_create_keypair(&pkey, td->alg, NULL, 0,
+                                         td->pub, td->pub_len, 1)))
+        goto err;
+
+    if (!TEST_ptr(vctx = EVP_PKEY_CTX_new_from_pkey(lib_ctx, pkey, NULL)))
+        goto err;
+    if (!TEST_ptr(sig_alg = EVP_SIGNATURE_fetch(lib_ctx, td->alg, NULL)))
+        goto err;
+    if (!TEST_int_eq(EVP_PKEY_verify_message_init(vctx, sig_alg, params), 1)
+            || !TEST_int_eq(EVP_PKEY_CTX_set_signature(vctx, td->sig,
+                                                       td->sig_len), 1)
+            || !TEST_int_eq(EVP_PKEY_verify_message_update(vctx, td->msg,
+                                                           td->msg_len), 1)
+            || !TEST_int_eq(EVP_PKEY_verify_message_final(vctx), td->expected))
+        goto err;
+    ret = 1;
+err:
+    EVP_SIGNATURE_free(sig_alg);
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_CTX_free(vctx);
+    return ret;
+}
+
 static int ml_dsa_key_dup_test(void)
 {
     int ret = 0;
@@ -570,6 +659,10 @@ int setup_tests(void)
     ADD_ALL_TESTS(ml_dsa_keygen_test, OSSL_NELEM(ml_dsa_keygen_testdata));
     ADD_ALL_TESTS(ml_dsa_siggen_test, OSSL_NELEM(ml_dsa_siggen_testdata));
     ADD_ALL_TESTS(ml_dsa_sigver_test, OSSL_NELEM(ml_dsa_sigver_testdata));
+    if (fips_provider_version_ge(lib_ctx, 3, 6, 0)) {
+        ADD_ALL_TESTS(ml_dsa_siggen_upd_test, OSSL_NELEM(ml_dsa_siggen_testdata));
+        ADD_ALL_TESTS(ml_dsa_sigver_upd_test, OSSL_NELEM(ml_dsa_sigver_testdata));
+    }
     ADD_TEST(ml_dsa_key_dup_test);
     ADD_TEST(ml_dsa_key_internal_test);
     ADD_TEST(ml_dsa_keygen_drbg_test);
