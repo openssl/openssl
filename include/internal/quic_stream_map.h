@@ -360,7 +360,7 @@ static ossl_inline ossl_unused int ossl_quic_stream_is_local_init(const QUIC_STR
 static ossl_inline ossl_unused int ossl_quic_stream_has_send(const QUIC_STREAM *s)
 {
     return s->send_state != QUIC_SSTREAM_STATE_NONE &&
-           s->send_state != QUIC_SSTREAM_STATE_DATA_RECVD;
+       s->send_state != QUIC_SSTREAM_STATE_DATA_RECVD;
 }
 
 /*

@@ -4000,7 +4000,8 @@ static void quic_classify_stream(QUIC_CONNECTION *qc,
             ? qs->peer_reset_stream_aec
             : qs->peer_stop_sending_aec;
     } else if (is_write && (!ossl_quic_stream_has_send(qs) ||
-               !ossl_quic_sstream_get_final_size(qs->sstream, &final_size))) {
+                            !ossl_quic_sstream_get_final_size(qs->sstream,
+                                                              &final_size))) {
         *state = SSL_STREAM_STATE_FINISHED;
         /*
          * Stream has been finished. Stream reset takes precedence over this for
@@ -5124,9 +5125,9 @@ static int test_poll_event_ew(QUIC_XSO *xso)
      * longer true.
      */
     return ((ossl_quic_stream_has_send(xso->stream)
-        && xso->stream->peer_stop_sending
-        && !xso->requested_reset
-        && !xso->conn->shutting_down) || xso->stream->sstream_fin_acked);
+            && xso->stream->peer_stop_sending
+            && !xso->requested_reset
+            && !xso->conn->shutting_down) || xso->stream->sstream_fin_acked);
 }
 
 /* Do we have the EC (exception: connection) condition? */
