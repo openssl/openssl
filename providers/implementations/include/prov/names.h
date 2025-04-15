@@ -180,7 +180,7 @@
 #define PROV_NAMES_CAST5_OFB "CAST5-OFB"
 #define PROV_NAMES_CAST5_CFB "CAST5-CFB"
 #define PROV_NAMES_BF_ECB "BF-ECB"
-/* For compatibility reasons, Blowfish has a second, outdated OID.  *\
+/* For compatibility reasons, Blowfish has a second, outdated OID.  */
 #define PROV_NAMES_BF_CBC "BF-CBC:BF:BLOWFISH:1.3.6.1.4.1.3029.1.1.2:1.3.6.1.4.1.3029.1.2"
 #define PROV_NAMES_BF_OFB "BF-OFB"
 #define PROV_NAMES_BF_CFB "BF-CFB"
