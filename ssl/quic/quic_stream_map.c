@@ -346,8 +346,8 @@ void ossl_quic_stream_map_update_state(QUIC_STREAM_MAP *qsm, QUIC_STREAM *s)
             stream_map_mark_active(qsm, s);
         }
     } else if (s->shutdown_flush
-             && s->send_state == QUIC_SSTREAM_STATE_SEND
-             && ossl_quic_sstream_is_totally_acked(s->sstream))
+               && s->send_state == QUIC_SSTREAM_STATE_SEND
+               && ossl_quic_sstream_is_totally_acked(s->sstream))
         shutdown_flush_done(qsm, s);
 
     if (!s->ready_for_gc) {

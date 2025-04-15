@@ -5125,9 +5125,9 @@ static int test_poll_event_ew(QUIC_XSO *xso)
      * longer true.
      */
     return ((ossl_quic_stream_has_send(xso->stream)
-            && xso->stream->peer_stop_sending
-            && !xso->requested_reset
-            && !xso->conn->shutting_down) || xso->stream->sstream_fin_acked);
+             && xso->stream->peer_stop_sending
+             && !xso->requested_reset
+             && !xso->conn->shutting_down) || xso->stream->sstream_fin_acked);
 }
 
 /* Do we have the EC (exception: connection) condition? */
