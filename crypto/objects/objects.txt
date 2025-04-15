@@ -467,6 +467,7 @@ ms-corp 21 10	: ms-app-policies	: Microsoft Application Policies Extension
 
 1 3 6 1 4 1 3029 1 1 2	: BF-CBC		: bf-cbc
 			: BF-ECB		: bf-ecb
+!Alias bf-cbc 1 3 6 1 4 1 3029 1 2
 !Cname bf-cfb64
 			: BF-CFB		: bf-cfb
 !Cname bf-ofb64
