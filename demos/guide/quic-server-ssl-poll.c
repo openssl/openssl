@@ -456,6 +456,7 @@ static struct poll_manager *create_poll_manager(void)
         pm->pm_qconn_done = pm_nop;
         pm->pm_qstream_in = pm_nop;
         pm->pm_qstream_out = pm_nop;
+        pm->pm_qstream_done = pm_nop;
         pm->pm_do_read = pe_return_error;
         pm->pm_do_write = pe_return_error;
     } else {
