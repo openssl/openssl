@@ -10,8 +10,8 @@
 #include "apps.h"
 #include "app_params.h"
 
-/* Maximum number of characters that will be output for a string body */
-#define MAX_STRING_OUTPUT_CHARS 48
+/* Maximum number of bytes that will be output for an octet string body */
+#define MAX_OCTET_STRING_OUTPUT_BYTES 24
 
 static int describe_param_type(char *buf, size_t bufsz, const OSSL_PARAM *param)
 {
@@ -137,8 +137,8 @@ static void print_param_octet(const unsigned char **bytes_ptr, size_t len)
         return;
     }
 
-    if (len > MAX_STRING_OUTPUT_CHARS / 2) {
-        len = MAX_STRING_OUTPUT_CHARS;
+    if (len > MAX_OCTET_STRING_OUTPUT_BYTES) {
+        len = MAX_OCTET_STRING_OUTPUT_BYTES;
         tail = "...\n";
     }
     BIO_puts(bio_out, " ");
