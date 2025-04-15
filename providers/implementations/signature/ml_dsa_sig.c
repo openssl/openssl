@@ -151,7 +151,7 @@ static int ml_dsa_signverify_msg_init(void *vctx, void *vkey,
 static int ml_dsa_sign_msg_init(void *vctx, void *vkey, const OSSL_PARAM params[])
 {
     return ml_dsa_signverify_msg_init(vctx, vkey, params,
-                                      EVP_PKEY_OP_SIGN, "ML_DSA Sign Init");
+                                      EVP_PKEY_OP_SIGNMSG, "ML_DSA Sign Init");
 }
 
 static int ml_dsa_digest_signverify_init(void *vctx, const char *mdname,
@@ -213,7 +213,7 @@ static int ml_dsa_digest_sign(void *vctx, uint8_t *sig, size_t *siglen, size_t s
 
 static int ml_dsa_verify_msg_init(void *vctx, void *vkey, const OSSL_PARAM params[])
 {
-    return ml_dsa_signverify_msg_init(vctx, vkey, params, EVP_PKEY_OP_VERIFY,
+    return ml_dsa_signverify_msg_init(vctx, vkey, params, EVP_PKEY_OP_VERIFYMSG,
                                       "ML_DSA Verify Init");
 }
 
