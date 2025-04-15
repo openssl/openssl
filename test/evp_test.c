@@ -4274,6 +4274,10 @@ static int is_pkey_disabled(const char *name)
     if (HAS_CASE_PREFIX(name, "DSA"))
         return 1;
 #endif
+#ifdef OPENSSL_NO_SM2
+    if (HAS_CASE_PREFIX(name, "SM2"))
+        return 1;
+#endif
     return 0;
 }
 
