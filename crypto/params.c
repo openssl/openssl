@@ -1665,7 +1665,7 @@ OSSL_PARAM OSSL_PARAM_construct_end(void)
 }
 
 static int get_string_ptr_internal(const OSSL_PARAM *p, const void **val,
-                                   size_t *used_len, unsigned int type_ptr,
+                                   size_t *used_len, unsigned int ref_type,
                                    unsigned int type)
 {
     if (val == NULL || p == NULL) {
@@ -1673,7 +1673,7 @@ static int get_string_ptr_internal(const OSSL_PARAM *p, const void **val,
         return 0;
     }
 
-    if (p->data_type == type_ptr)
+    if (p->data_type == ref_type)
         return get_ptr_internal_skip_checks(p, (const void **)val, used_len);
 
     if (p->data_type != type) {
