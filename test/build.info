@@ -69,7 +69,8 @@ IF[{- !$disabled{tests} -}]
           ca_internals_test bio_tfo_test membio_test bio_dgram_test list_test \
           fips_version_test x509_test hpke_test pairwise_fail_test \
           nodefltctxtest evp_xof_test x509_load_cert_file_test bio_meth_test \
-          x509_acert_test x509_req_test strtoultest bio_pw_callback_test
+          x509_acert_test x509_req_test strtoultest bio_pw_callback_test \
+          rsa_version_test
 
   IF[{- !$disabled{'rpk'} -}]
     PROGRAMS{noinst}=rpktest
@@ -726,6 +727,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[cipher_overhead_test]=cipher_overhead_test.c
   INCLUDE[cipher_overhead_test]=.. ../include ../apps/include
   DEPEND[cipher_overhead_test]=../libcrypto.a ../libssl.a libtestutil.a
+
+  SOURCE[rsa_version_test]=rsa_version_test.c
+  INCLUDE[rsa_version_test]=../include ../apps/include
+  DEPEND[rsa_version_test]=../libcrypto libtestutil.a
 
   SOURCE[uitest]=uitest.c ../apps/lib/apps_ui.c
   INCLUDE[uitest]=.. ../include ../apps/include
