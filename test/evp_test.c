@@ -5601,7 +5601,7 @@ static int is_kdf_disabled(const char *name)
         return 1;
 #endif
 #ifdef OPENSSL_NO_ARGON2
-    if (HAS_CASE_SUFFIX(name, "ARGON2"))
+    if (HAS_CASE_PREFIX(name, "ARGON2"))
         return 1;
 #endif
     return 0;
