@@ -419,19 +419,32 @@ static int ml_dsa_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     return 1;
 }
 
+#define MLDSA_COMMON_SETTABLE_CTX_PARAMS                                   \
+    OSSL_PARAM_octet_string(OSSL_SIGNATURE_PARAM_CONTEXT_STRING, NULL, 0), \
+    OSSL_PARAM_octet_string(OSSL_SIGNATURE_PARAM_TEST_ENTROPY, NULL, 0),   \
+    OSSL_PARAM_int(OSSL_SIGNATURE_PARAM_DETERMINISTIC, 0),                 \
+    OSSL_PARAM_int(OSSL_SIGNATURE_PARAM_MU, 0),                            \
+    OSSL_PARAM_int(OSSL_SIGNATURE_PARAM_MESSAGE_ENCODING, 0),              \
+    OSSL_PARAM_END
+
 static const OSSL_PARAM *ml_dsa_settable_ctx_params(void *vctx,
                                                     ossl_unused void *provctx)
 {
+    PROV_ML_DSA_CTX *pctx = (PROV_ML_DSA_CTX *)vctx;
+
     static const OSSL_PARAM settable_ctx_params[] = {
-        OSSL_PARAM_octet_string(OSSL_SIGNATURE_PARAM_CONTEXT_STRING, NULL, 0),
-        OSSL_PARAM_octet_string(OSSL_SIGNATURE_PARAM_TEST_ENTROPY, NULL, 0),
-        OSSL_PARAM_int(OSSL_SIGNATURE_PARAM_DETERMINISTIC, 0),
-        OSSL_PARAM_int(OSSL_SIGNATURE_PARAM_MU, 0),
-        OSSL_PARAM_int(OSSL_SIGNATURE_PARAM_MESSAGE_ENCODING, 0),
-        OSSL_PARAM_END
+        MLDSA_COMMON_SETTABLE_CTX_PARAMS
     };
 
-    return settable_ctx_params;
+    static const OSSL_PARAM settable_verifymsg_ctx_params[] = {
+        OSSL_PARAM_octet_string(OSSL_SIGNATURE_PARAM_SIGNATURE, NULL, 0),
+        MLDSA_COMMON_SETTABLE_CTX_PARAMS
+    };
+
+    if (pctx != NULL && pctx->operation == EVP_PKEY_OP_VERIFYMSG)
+        return settable_verifymsg_ctx_params;
+    else
+        return settable_ctx_params;
 }
 
 static const OSSL_PARAM known_gettable_ctx_params[] = {
