@@ -789,12 +789,8 @@ static int pe_handle_qstream_error(struct poll_event *pe)
                     POLL_PRINTA(pe->pe_poll_item.revents));
         }
 
-        if (pe->pe_type == PE_STREAM) {
-            SSL_shutdown(get_ssl_from_pe(pe));
-            rv = 0; /* attempt to shutdown the stream */
-        } else {
-            rv = -1; /* stop polling immediately */
-        }
+        (void) handle_read_stream_state(pe);
+        rv = -1; /* stop polling immediately */
     } else if (pe->pe_poll_item.revents & SSL_POLL_EVENT_EW) {
 
         if ((pe->pe_poll_item.events & SSL_POLL_EVENT_W) == 0) {
@@ -802,8 +798,9 @@ static int pe_handle_qstream_error(struct poll_event *pe)
                     POLL_FMT "\n", __func__, pe, pe_type_to_name(pe),
                     POLL_PRINTA(pe->pe_poll_item.revents));
         }
+        (void) handle_write_stream_state(pe);
 
-        rv = -1; /* stop polling immediately */
+        rv = -1; /* stop polling immediatel, will send reset */
     } else {
         DPRINTF(stderr, "%s unexpected failure on writer/reader %p (%s) "
                 POLL_FMT "\n", __func__, pe, pe_type_to_name(pe),
@@ -1406,9 +1403,9 @@ int main(int argc, char *argv[])
         errx(res, "Error in QUIC server loop");
     }
 
+    destroy_poll_manager(pm);
     /* Free resources. */
     SSL_CTX_free(ctx);
-    destroy_poll_manager(pm);
     BIO_closesocket(fd);
     res = EXIT_SUCCESS;
     return res;
