@@ -58,6 +58,28 @@ static int test_store_open(void)
     return ret;
 }
 
+#ifndef OPENSSL_NO_WINSTORE
+static int test_store_open_winstore(void)
+{
+    int ret = 0;
+    OSSL_STORE_CTX *sctx = NULL;
+    OSSL_STORE_SEARCH *search = NULL;
+    UI_METHOD *ui_method = NULL;
+
+    ret = TEST_ptr(search = OSSL_STORE_SEARCH_by_alias("nothing"))
+          && TEST_ptr(ui_method= UI_create_method("DummyUI"))
+          && TEST_ptr(sctx = OSSL_STORE_open_ex("org.openssl.winstore:", NULL,
+                                                NULL, ui_method, NULL, NULL,
+                                                NULL, NULL))
+          && TEST_false(OSSL_STORE_find(sctx, NULL))
+          && TEST_true(OSSL_STORE_find(sctx, search));
+    UI_destroy_method(ui_method);
+    OSSL_STORE_SEARCH_free(search);
+    OSSL_STORE_close(sctx);
+    return ret;
+}
+#endif
+
 static int test_store_search_by_key_fingerprint_fail(void)
 {
     int ret;
@@ -230,6 +252,9 @@ int setup_tests(void)
 
     if (infile != NULL)
         ADD_TEST(test_store_open);
+#ifndef OPENSSL_NO_WINSTORE
+    ADD_TEST(test_store_open_winstore);
+#endif
     ADD_TEST(test_store_search_by_key_fingerprint_fail);
     ADD_ALL_TESTS(test_store_get_params, 3);
     if (sm2file != NULL)
