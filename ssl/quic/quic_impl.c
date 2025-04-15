@@ -5115,10 +5115,18 @@ static int test_poll_event_w(QUIC_XSO *xso)
 QUIC_NEEDS_LOCK
 static int test_poll_event_ew(QUIC_XSO *xso)
 {
-    return ossl_quic_stream_has_send(xso->stream)
+    /*
+     * QUIC stack releases send stream as soon as it moves
+     * stream state to QUIC_SSTREAM_STATE_DATA_RECVD.
+     * (see RFC 9000, section 3.1). In other words we release
+     * send stream as soon as we receive an ACK for our FIN.
+     * The ossl_quic_stream_has_send() condition is no
+     * longer true.
+     */
+    return ((ossl_quic_stream_has_send(xso->stream)
         && xso->stream->peer_stop_sending
         && !xso->requested_reset
-        && !xso->conn->shutting_down;
+        && !xso->conn->shutting_down) || xso->stream->sstream_fin_acked);
 }
 
 /* Do we have the EC (exception: connection) condition? */

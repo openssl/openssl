@@ -314,6 +314,7 @@ struct quic_stream_st {
     unsigned int    ready_for_gc            : 1;
     /* Set to 1 if this is currently counted in the shutdown flush stream count. */
     unsigned int    shutdown_flush          : 1;
+    unsigned int    sstream_fin_acked       : 1;
 };
 
 #define QUIC_STREAM_INITIATOR_CLIENT        0
