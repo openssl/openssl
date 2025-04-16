@@ -338,8 +338,11 @@ static int ml_dsa_verify_internal(const ML_DSA_KEY *pub,
     size_t c_tilde_len = params->bit_strength >> 2;
     uint32_t z_max;
 
-    if (mu_len != ML_DSA_MU_BYTES)
+    if (mu_len != ML_DSA_MU_BYTES) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_BAD_LENGTH);
         return 0;
+    }
+
 
     /* Allocate space for all the POLYNOMIALS used by temporary VECTORS */
     w1_encoded_len = k * (gamma2 == ML_DSA_GAMMA2_Q_MINUS1_DIV88 ? 192 : 128);
