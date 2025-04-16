@@ -755,7 +755,7 @@ static EVP_RAND_CTX *rand_new_crngt(OSSL_LIB_CTX *libctx, EVP_RAND_CTX *parent)
  */
 static EVP_RAND_CTX *rand_get0_primary(OSSL_LIB_CTX *ctx, RAND_GLOBAL *dgbl)
 {
-    EVP_RAND_CTX *ret, *seed, *primary;
+    EVP_RAND_CTX *ret, *seed, *newseed = NULL, *primary;
 
     if (dgbl == NULL)
         return NULL;
@@ -774,7 +774,7 @@ static EVP_RAND_CTX *rand_get0_primary(OSSL_LIB_CTX *ctx, RAND_GLOBAL *dgbl)
     /* Create a seed source for libcrypto or jitter enabled FIPS provider */
     if (seed == NULL) {
         ERR_set_mark();
-        seed = rand_new_seed(ctx);
+        seed = newseed = rand_new_seed(ctx);
         ERR_pop_to_mark();
     }
 #endif  /* !FIPS_MODULE || !OPENSSL_NO_FIPS_JITTER */
@@ -796,7 +796,7 @@ static EVP_RAND_CTX *rand_get0_primary(OSSL_LIB_CTX *ctx, RAND_GLOBAL *dgbl)
             ERR_raise(ERR_LIB_EVP, EVP_R_UNABLE_TO_ENABLE_LOCKING);
             EVP_RAND_CTX_free(ret);
         }
-        if (seed == NULL)
+        if (newseed == NULL)
             return NULL;
         /* else carry on and store seed */
         ret = NULL;
@@ -809,10 +809,11 @@ static EVP_RAND_CTX *rand_get0_primary(OSSL_LIB_CTX *ctx, RAND_GLOBAL *dgbl)
     if (primary != NULL) {
         CRYPTO_THREAD_unlock(dgbl->lock);
         EVP_RAND_CTX_free(ret);
-        EVP_RAND_CTX_free(seed);
+        EVP_RAND_CTX_free(newseed);
         return primary;
     }
-    dgbl->seed = seed;
+    if (newseed != NULL)
+        dgbl->seed = newseed;
     dgbl->primary = ret;
     CRYPTO_THREAD_unlock(dgbl->lock);
 
