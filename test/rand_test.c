@@ -15,6 +15,8 @@
 #include "crypto/rand.h"
 #include "testutil.h"
 
+static char *configfile;
+
 static int test_rand(void)
 {
     EVP_RAND_CTX *privctx;
@@ -244,9 +246,33 @@ static int test_rand_random_provider(void)
     return res;
 }
 
+static int test_rand_get0_primary(void)
+{
+    OSSL_LIB_CTX *ctx = OSSL_LIB_CTX_new();
+    int res = 0;
+
+    if (!TEST_ptr(ctx))
+        return 0;
+
+    if (!TEST_true(OSSL_LIB_CTX_load_config(ctx, configfile)))
+        goto err;
+
+    /* We simply test that we get a valid primary */
+    if (!TEST_ptr(RAND_get0_primary(ctx)))
+        goto err;
+
+    res = 1;
+ err:
+    OSSL_LIB_CTX_free(ctx);
+    return res;
+}
+
 int setup_tests(void)
 {
-    char *configfile;
+    if (!test_skip_common_options()) {
+        TEST_error("Error parsing test options\n");
+        return 0;
+    }
 
     if (!TEST_ptr(configfile = test_get_argument(0))
             || !TEST_true(RAND_set_DRBG_type(NULL, "TEST-RAND", "fips=no",
@@ -263,5 +289,9 @@ int setup_tests(void)
         ADD_TEST(fips_health_tests);
 
     ADD_TEST(test_rand_random_provider);
+
+    if (!OSSL_PROVIDER_available(NULL, "fips")
+            || fips_provider_version_ge(NULL, 3, 5, 1))
+        ADD_TEST(test_rand_get0_primary);
     return 1;
 }
