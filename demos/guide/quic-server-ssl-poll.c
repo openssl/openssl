@@ -605,7 +605,7 @@ static int pe_accept_qstream(struct poll_event *qconn_pe)
         if (qconn_pe->pe_poll_item.revents & SSL_POLL_EVENT_ISU) {
             qs_pe->pe_cb_out = pe_return_error;
             qs_pe->pe_type = PE_STREAM_UNI_IN;
-        } else if (qconn_pe->pe_poll_item.revents * SSL_POLL_EVENT_ISB) {
+        } else if (qconn_pe->pe_poll_item.revents & SSL_POLL_EVENT_ISB) {
             qs_pe->pe_want_events |= SSL_POLL_EVENT_EW;
             qs_pe->pe_cb_out = pe_write_qstream;
             qs_pe->pe_type = PE_STREAM;
@@ -1330,7 +1330,7 @@ static int app_write_cb(struct poll_event *pe)
 	 * here the client application (quic-client-*block,c sends its data
          * and concludes stream.
          */
-        SSL_stream_conclude(get_ssl_from_pe(pe), 0);
+        /* SSL_stream_conclude(get_ssl_from_pe(pe), 0); */
         /*
          * Notes: I still don't know what's the best course of action here.
          * Doing pe_resume_read() is not option because it makes reader
@@ -1340,7 +1340,8 @@ static int app_write_cb(struct poll_event *pe)
          * too soon to deliver the STREAM_CONCLUDE to peer. The stream
          * is torn down immediately causing client to see a RESET.
          */
-        pe_disable_write(pe);
+        /* pe_disable_write(pe); */
+        pe_pause_write(pe);
     }
 
     return 0;
