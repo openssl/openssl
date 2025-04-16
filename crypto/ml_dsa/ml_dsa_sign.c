@@ -43,7 +43,7 @@ static void signature_init(ML_DSA_SIG *sig,
 }
 
 /*
- * @brief: Auxiliar functions to compute ML-DSA's MU.
+ * @brief: Auxiliary functions to compute ML-DSA's MU.
  * This combines the steps of creating M' and concatenating it
  * to the Public Key Hash to obtain MU.
  * See FIPS 204 Algorithm 2 Step 10 (and algorithm 3 Step 5) as
