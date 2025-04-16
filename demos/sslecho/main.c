@@ -251,6 +251,11 @@ int main(int argc, char **argv)
                 SSL_shutdown(ssl);
                 SSL_free(ssl);
                 close(client_skt);
+                /*
+                 * Set client_skt to -1 to avoid double close when
+                 * server_running become false before next accept
+                 */
+                client_skt = -1;
             }
         }
         printf("Server exiting...\n");
