@@ -658,16 +658,12 @@ jobs:
         gdb < <(echo -e "file ./libcrypto.so.3\nquit") > ./results
         grep -q "Reading symbols from.*libcrypto\.so\.3\.debug" results
 
-  external-tests-providers:
+  external-tests-oqs-provider:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
       with:
         submodules: recursive
-    - name: package installs
-      run: |
-        sudo apt-get update
-        sudo apt-get -yq install meson pkg-config gnutls-bin libnss3-tools libnss3-dev libsofthsm2 opensc expect
     - name: config
       run: ./config --strict-warnings --banner=Configured --debug enable-external-tests && perl configdata.pm --dump
     - name: make
@@ -678,6 +674,21 @@ jobs:
         ./util/opensslwrap.sh version -c
     - name: test external oqs-provider
       run: make test TESTS="test_external_oqsprovider"
+
+  external-tests-pkcs11-provider:
+    runs-on: ubuntu-latest
+    container: fedora:rawhide
+    steps:
+    - name: package installs
+      run: |
+        dnf install -y kryoptic perl git meson opensc expect
+    - uses: actions/checkout@v4
+      with:
+        submodules: true  
+    - name: config
+      run: ./config --strict-warnings --banner=Configured --debug enable-external-tests && perl configdata.pm --dump
+    - name: make
+      run: make -s -j4
     - name: test external pkcs11-provider
       run: make test TESTS="test_external_pkcs11_provider" VERBOSE=1
 
