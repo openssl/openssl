@@ -129,7 +129,7 @@ int ossl_ml_dsa_mu_update(EVP_MD_CTX *md_ctx, const uint8_t *msg, size_t msg_len
  */
 int ossl_ml_dsa_mu_finalize(EVP_MD_CTX *md_ctx, uint8_t *mu, size_t mu_len)
 {
-    if (!ossl_assert(mu_len != ML_DSA_MU_BYTES)) {
+    if (!ossl_assert(mu_len == ML_DSA_MU_BYTES)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_BAD_LENGTH);
         return 0;
     }
