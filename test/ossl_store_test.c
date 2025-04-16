@@ -67,7 +67,7 @@ static int test_store_open_winstore(void)
     UI_METHOD *ui_method = NULL;
 
     ret = TEST_ptr(search = OSSL_STORE_SEARCH_by_alias("nothing"))
-          && TEST_ptr(ui_method= UI_create_method("DummyUI"))
+          && TEST_ptr(ui_method = UI_create_method("DummyUI"))
           && TEST_ptr(sctx = OSSL_STORE_open_ex("org.openssl.winstore:", NULL,
                                                 NULL, ui_method, NULL, NULL,
                                                 NULL, NULL))
