@@ -90,6 +90,8 @@ SOURCE[$COMMON_GOAL]=\
         ciphercommon_gcm.c ciphercommon_gcm_hw.c \
         ciphercommon_ccm.c ciphercommon_ccm_hw.c
 
+INCLUDE[ciphercommon.o]=.
+
 IF[{- !$disabled{des} -}]
   SOURCE[$TDES_1_GOAL]=cipher_tdes.c cipher_tdes_common.c cipher_tdes_hw.c
 ENDIF

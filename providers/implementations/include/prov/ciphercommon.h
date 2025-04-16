@@ -372,4 +372,8 @@ int ossl_cipher_trailingdata(unsigned char *buf, size_t *buflen,
                              size_t blocksize,
                              const unsigned char **in, size_t *inlen);
 
+/* Machine generated TRIE based OSSL_PARAM name parsers */
+int ossl_cipher_aead_get_ctx_params_find_pidx(const char *);
+int ossl_cipher_aead_set_ctx_params_find_pidx(const char *);
+
 #endif
