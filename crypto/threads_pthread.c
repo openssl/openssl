@@ -624,7 +624,7 @@ CRYPTO_RWLOCK *CRYPTO_THREAD_lock_new(void)
 __owur int CRYPTO_THREAD_read_lock(CRYPTO_RWLOCK *lock)
 {
 # ifdef USE_RWLOCK
-    if (pthread_rwlock_rdlock(lock) != 0)
+    if (!ossl_assert(pthread_rwlock_rdlock(lock) == 0))
         return 0;
 # else
     if (pthread_mutex_lock(lock) != 0) {
@@ -639,7 +639,7 @@ __owur int CRYPTO_THREAD_read_lock(CRYPTO_RWLOCK *lock)
 __owur int CRYPTO_THREAD_write_lock(CRYPTO_RWLOCK *lock)
 {
 # ifdef USE_RWLOCK
-    if (pthread_rwlock_wrlock(lock) != 0)
+    if (!ossl_assert(pthread_rwlock_wrlock(lock) == 0))
         return 0;
 # else
     if (pthread_mutex_lock(lock) != 0) {
