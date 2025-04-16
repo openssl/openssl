@@ -47,7 +47,7 @@ static void signature_init(ML_DSA_SIG *sig,
  * This combines the steps of creating M' and concatenating it
  * to the Public Key Hash to obtain MU.
  * See FIPS 204 Algorithm 2 Step 10 (and algorithm 3 Step 5) as
- * well as Algorithm 7 Step6 (and algorithm 8 Step 7)
+ * well as Algorithm 7 Step 6 (and algorithm 8 Step 7)
  *
  * ML_DSA pure signatures are encoded as M' = 00 || ctx_len || ctx || msg
  * Where ctx is the empty string by default and ctx_len <= 255.
