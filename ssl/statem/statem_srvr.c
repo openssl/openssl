@@ -2262,6 +2262,79 @@ int tls_handle_alpn(SSL_CONNECTION *s)
          * If r == SSL_TLSEXT_ERR_NOACK then behave as if no callback was
          * present.
          */
+    } else if (sctx->ext.alpn != NULL && s->s3.alpn_proposed != NULL
+               && sctx->ext.alpn_select_cb == NULL) {
+        /* "first match" algorithm */
+        fprintf(stderr, "DEBUG: Using server list for ALPN selection (NO CALLBACK)\n");
+        const unsigned char *client_proto = s->s3.alpn_proposed;
+        const unsigned char *client_proto_end = client_proto + s->s3.alpn_proposed_len;
+        const unsigned char *server_proto = sctx->ext.alpn;
+        const unsigned char *server_proto_end = server_proto + sctx->ext.alpn_len;
+        
+        while (client_proto < client_proto_end) {
+            unsigned char client_proto_len = *client_proto++;
+            
+            if (client_proto + client_proto_len > client_proto_end) {
+                SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+                return 0;
+            }
+            
+            const unsigned char *sp = server_proto;
+            while (sp < server_proto_end) {
+                unsigned char server_proto_len = *sp++;
+                
+                if (sp + server_proto_len > server_proto_end) {
+                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                    return 0;
+                }
+                
+                if (server_proto_len == client_proto_len &&
+                    memcmp(sp, client_proto, client_proto_len) == 0) {
+                    OPENSSL_free(s->s3.alpn_selected);
+                    s->s3.alpn_selected = OPENSSL_memdup(sp, server_proto_len);
+                    if (s->s3.alpn_selected == NULL) {
+                        s->s3.alpn_selected_len = 0;
+                        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                        return 0;
+                    }
+                    s->s3.alpn_selected_len = server_proto_len;
+                    
+                    if (s->session->ext.alpn_selected == NULL
+                            || server_proto_len != s->session->ext.alpn_selected_len
+                            || memcmp(sp, s->session->ext.alpn_selected,
+                                     server_proto_len) != 0) {
+                        s->ext.early_data_ok = 0;
+                        
+                        if (!s->hit) {
+                            if (!ossl_assert(s->session->ext.alpn_selected == NULL)) {
+                                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                                return 0;
+                            }
+                            s->session->ext.alpn_selected = OPENSSL_memdup(sp,
+                                                                         server_proto_len);
+                            if (s->session->ext.alpn_selected == NULL) {
+                                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                                return 0;
+                            }
+                            s->session->ext.alpn_selected_len = server_proto_len;
+                        }
+                    }
+                    
+#ifndef OPENSSL_NO_NEXTPROTONEG
+                    /* ALPN takes precedence over NPN. */
+                    s->s3.npn_seen = 0;
+#endif
+                    return 1;
+                }
+                
+                sp += server_proto_len;
+            }
+            
+            client_proto += client_proto_len;
+        }
+        
+        SSLfatal(s, SSL_AD_NO_APPLICATION_PROTOCOL, SSL_R_NO_APPLICATION_PROTOCOL);
+        return 0;
     }
 
     /* Check ALPN is consistent with session */

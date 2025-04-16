@@ -1683,6 +1683,8 @@ struct ssl_connection_st {
         /*
          * For a client, this contains the list of supported protocols in wire
          * format.
+         * For a server, this contains the list of supported protocols in wire
+         * format.
          */
         unsigned char *alpn;
         size_t alpn_len;

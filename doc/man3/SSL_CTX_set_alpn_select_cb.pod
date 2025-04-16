@@ -49,16 +49,24 @@ SSL_select_next_proto, SSL_get0_alpn_selected, SSL_get0_next_proto_negotiated
 
 =head1 DESCRIPTION
 
-SSL_CTX_set_alpn_protos() and SSL_set_alpn_protos() are used by the client to
-set the list of protocols available to be negotiated. The B<protos> must be in
-protocol-list format, described below. The length of B<protos> is specified in
-B<protos_len>. Setting B<protos_len> to 0 clears any existing list of ALPN
-protocols and no ALPN extension will be sent to the server.
+SSL_CTX_set_alpn_protos() and SSL_set_alpn_protos() can be used by both
+clients and servers. For clients, they set the list of protocols available
+to be negotiated. For servers, if no callback is registered via
+SSL_CTX_set_alpn_select_cb(), they define the list of supported protocols.
+During the TLS handshake, the server will automatically select the first
+protocol from the client's list that matches any entry in its own list.
+
+The B<protos> must be in protocol-list format, described below, and its
+length is specified by B<protos_len>. Setting B<protos_len> to 0 clears any
+existing ALPN protocol list. For clients, if no protocols are set, no ALPN
+extension will be sent to the server.
 
 SSL_CTX_set_alpn_select_cb() sets the application callback B<cb> used by a
-server to select which protocol to use for the incoming connection. When B<cb>
-is NULL, ALPN is not used. The B<arg> value is a pointer which is passed to
-the application callback.
+server to select the protocol to use for an incoming connection. When B<cb>
+is NULL, the server will use the protocol list set via
+SSL_CTX_set_alpn_protos() (if any). If neither the callback nor a protocol
+list is set, ALPN will not be used. The B<arg> value is a pointer passed to
+the callback during selection.
 
 B<cb> is the application defined callback. The B<in>, B<inlen> parameters are a
 vector in protocol-list format. The value of the B<out>, B<outlen> vector

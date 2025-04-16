@@ -3729,7 +3729,12 @@ static int alpn_value_ok(const unsigned char *protos, unsigned int protos_len)
 /*
  * SSL_CTX_set_alpn_protos sets the ALPN protocol list on |ctx| to |protos|.
  * |protos| must be in wire-format (i.e. a series of non-empty, 8-bit
- * length-prefixed strings). Returns 0 on success.
+ * length-prefixed strings). 
+ * This function can be used by both clients and servers:
+ * - For clients, it sets the protocols to be sent in the ClientHello
+ * - For servers, it sets the protocols to be used for selection when no
+ *   alpn_select_cb is set (using a "first match" algorithm)
+ * Returns 0 on success.
  */
 int SSL_CTX_set_alpn_protos(SSL_CTX *ctx, const unsigned char *protos,
                             unsigned int protos_len)
@@ -3759,7 +3764,12 @@ int SSL_CTX_set_alpn_protos(SSL_CTX *ctx, const unsigned char *protos,
 /*
  * SSL_set_alpn_protos sets the ALPN protocol list on |ssl| to |protos|.
  * |protos| must be in wire-format (i.e. a series of non-empty, 8-bit
- * length-prefixed strings). Returns 0 on success.
+ * length-prefixed strings).
+ * This function can be used by both clients and servers:
+ * - For clients, it sets the protocols to be sent in the ClientHello
+ * - For servers, it sets the protocols to be used for selection when no
+ *   alpn_select_cb is set (using a "first match" algorithm)
+ * Returns 0 on success.
  */
 int SSL_set_alpn_protos(SSL *ssl, const unsigned char *protos,
                         unsigned int protos_len)
