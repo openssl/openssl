@@ -14,16 +14,92 @@ $flavour = $#ARGV >= 0 && $ARGV[0] !~ m|\.| ? shift : undef;
 
 $win64=0; $win64=1 if ($flavour =~ /[nm]asm|mingw64/ || $output =~ /\.asm$/);
 
+$avx512vaes=0; # will be non-zero if tooling supports Intel AVX-512 and VAES
+
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 ( $xlate="${dir}x86_64-xlate.pl" and -f $xlate ) or
 ( $xlate="${dir}../../perlasm/x86_64-xlate.pl" and -f $xlate) or
 die "can't locate x86_64-xlate.pl";
 
+if (`$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
+        =~ /GNU assembler version ([2-9]\.[0-9]+)/) {
+    $avx512vaes = ($1>=2.30);
+}
+
+if (!$avx512vaes && $win64 && ($flavour =~ /nasm/ || $ENV{ASM} =~ /nasm/) &&
+       `nasm -v 2>&1` =~ /NASM version ([2-9]\.[0-9]+)(?:\.([0-9]+))?/) {
+    $avx512vaes = ($1==2.11 && $2>=8) + ($1>=2.12);
+}
+
+if (!$avx512vaes && `$ENV{CC} -v 2>&1`
+    =~ /(Apple)?\s*((?:clang|LLVM) version|.*based on LLVM) ([0-9]+)\.([0-9]+)\.([0-9]+)?/) {
+    my $ver = $3 + $4/100.0 + $5/10000.0; # 3.1.0->3.01, 3.10.1->3.1001
+    if ($1) {
+        # Apple conditions, they use a different version series, see
+        # https://en.wikipedia.org/wiki/Xcode#Xcode_7.0_-_10.x_(since_Free_On-Device_Development)_2
+        # clang 7.0.0 is Apple clang 10.0.1
+        $avx512vaes = ($ver>=10.0001)
+    } else {
+        $avx512vaes = ($ver>=7.0);
+    }
+}
+
 open OUT,"| \"$^X\" \"$xlate\" $flavour \"$output\""
     or die "can't call $xlate: $!";
 *STDOUT=*OUT;
 
+##################################################################
+
 $code=".text\n";
+
+if ($avx512vaes) {
+
+$code.=<<___;
+.extern  OPENSSL_ia32cap_P
+
+#################################################################
+# Signature:
+#
+# int aes_cfb128_vaes_eligible(void);
+#
+# Detects if the underlying hardware supports all the features
+# required to run the Intel AVX-512 implementations of AES-CFB128 algorithms.
+#
+# Returns: non zero if all the required features are detected, 0 otherwise
+#################################################################
+
+.globl   aes_cfb128_vaes_eligible
+.type    aes_cfb128_vaes_eligible,\@abi-omnipotent
+.balign  64
+
+aes_cfb128_vaes_eligible:
+.cfi_startproc
+    endbranch
+
+    mov OPENSSL_ia32cap_P+8(%rip),%ecx
+    xor %eax,%eax
+
+    # Check 3rd 32-bit word of OPENSSL_ia32cap_P for the feature bit(s):
+    # AVX512BW (bit 30) + AVX512DQ (bit 17) + AVX512F (bit 16)
+
+    and \$0x40030000,%ecx                 # mask is 1<<30|1<<17|1<<16
+    cmp \$0x40030000,%ecx
+    jne .Laes_cfb128_vaes_eligible_done
+
+    mov OPENSSL_ia32cap_P+12(%rip),%ecx
+
+    # Check 4th 32-bit word of OPENSSL_ia32cap_P for the feature bit(s):
+    # AVX512VAES (bit 10)
+
+    and \$0x400,%ecx                      # mask is 1<<10
+    cmp \$0x400,%ecx
+    cmove %ecx,%eax
+
+.Laes_cfb128_vaes_eligible_done:
+    ret
+.cfi_endproc
+.size   aes_cfb128_vaes_eligible, .-aes_cfb128_vaes_eligible
+___
 
 
 # expects the key schedule address in $key_original
@@ -45,8 +121,8 @@ $code.=<<___;
     vmovdqu8 208($key_original),%xmm30  #          13
     vmovdqu8 224($key_original),%xmm31  #          14 last for AES-256
 
-    mov 240($key_original),$rounds             # load AES rounds
-                                               # 240 is the byte-offset of the rounds field in AES_KEY
+    mov 240($key_original),$rounds      # load AES rounds
+                                        # 240 is the byte-offset of the rounds field in AES_KEY
 ___
 }
 
@@ -168,7 +244,7 @@ ___
 }
 
 
-# expects input in $temp_*, non-final AES rounds in $rounds and key schedule in zmm17..31
+# expects input in $temp_*x, non-final AES rounds in $rounds and key schedule in zmm17..31
 sub vaes_encrypt_block_16x() {
     my ($label_prefix)=@_;
 $code.=<<___;
@@ -310,7 +386,6 @@ $len="%rdx";          # arg2
 
 $key_original="%rcx"; # arg3
 $key_backup="%r10";
-$key_crt="%r10";
 
 $ivp="%r8";           # arg4
 $nump="%r9";          # arg5
@@ -504,7 +579,6 @@ $len="%rdx";          # arg2
 
 $key_original="%rcx"; # arg3
 $key_backup="%r10";
-$key_crt="%r10";
 
 $ivp="%r8";           # arg4
 $nump="%r9";          # arg5
@@ -808,6 +882,40 @@ $code.=<<___;
 .cfi_endproc
 .size aes_cfb128_vaes_dec,.-aes_cfb128_vaes_dec
 ___
+
+} else {
+
+$code .= <<___;
+.globl     aes_cfb128_vaes_enc
+.globl     aes_cfb128_vaes_dec
+
+# Mock implementations of AES-CFB128 encryption/decryption
+# that always fail. Should not be executed under normal circumstances.
+
+aes_cfb128_vaes_enc:
+aes_cfb128_vaes_dec:
+    .byte 0x0f,0x0b                # Undefined Instruction in the Intel architecture
+                                   # Raises the Invalid Opcode exception
+    ret
+
+#################################################################
+# Signature:
+#
+# int aes_cfb128_vaes_eligible(void);
+#
+# Always returns 0 (not eligible), meaning that tooling does not support
+# the Intel AVX-512 extensions. Signals higher level code to fallback
+# to an alternative implementation.
+#################################################################
+
+.globl     aes_cfb128_vaes_eligible
+.type      aes_cfb128_vaes_eligible,\@abi-omnipotent
+aes_cfb128_vaes_eligible:
+    xor %eax,%eax
+    ret
+.size aes_cfb128_vaes_eligible, .-aes_cfb128_vaes_eligible
+___
+}
 
 print $code;
 

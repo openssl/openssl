@@ -74,15 +74,6 @@ static int cipher_hw_aesni_initkey(PROV_CIPHER_CTX *dat,
     return 1;
 }
 
-#define VAES_BIT    (1<<(41-32))
-#define AVX512F_BIT (1<<16)
-
-#define AVX512F_VAES_CAPABLE (                                                 \
-    (OPENSSL_ia32cap_P[3] & VAES_BIT)                                          \
-    &&                                                                         \
-    (OPENSSL_ia32cap_P[2] & AVX512F_BIT)                                       \
-)
-
 #define PROV_CIPHER_HW_declare(mode)                                           \
 static const PROV_CIPHER_HW aesni_##mode = {                                   \
     cipher_hw_aesni_initkey,                                                   \
@@ -96,7 +87,7 @@ static const PROV_CIPHER_HW vaes_##mode = {                                    \
 };
 #define PROV_CIPHER_HW_select(mode)                                            \
 if (AESNI_CAPABLE) {                                                           \
-    if (AVX512F_VAES_CAPABLE)                                                  \
+    if (aes_cfb128_vaes_eligible())                                            \
         return &vaes_##mode;                                                   \
     return &aesni_##mode;                                                      \
 }
