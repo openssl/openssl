@@ -17,6 +17,7 @@
 #include <openssl/proverr.h>
 #include <openssl/indicator.h>
 #include "internal/cryptlib.h"
+#include "internal/provider.h"
 #include "prov/implementations.h"
 #include "prov/names.h"
 #include "prov/provider_ctx.h"
@@ -902,6 +903,15 @@ int OSSL_provider_init_int(const OSSL_CORE_HANDLE *handle,
      * then memory leaks could otherwise occur.
      */
     if (!ossl_thread_register_fips(libctx))
+        goto err;
+
+    /*
+     * Ensure our internal provider is loaded. We use this whenever the FIPS
+     * provider internally uses the EVP API. We proactively load this now
+     * rather than waiting for lazy loading to ensure it is always present when
+     * we need it.
+     */
+    if (!ossl_provider_activate_fallbacks(libctx))
         goto err;
 
     /*

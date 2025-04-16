@@ -1511,6 +1511,16 @@ static int provider_activate_fallbacks(struct provider_store_st *store)
     return ret;
 }
 
+int ossl_provider_activate_fallbacks(OSSL_LIB_CTX *ctx)
+{
+    struct provider_store_st *store = get_provider_store(ctx);
+
+    if (store == NULL)
+        return 0;
+
+    return provider_activate_fallbacks(store);
+}
+
 int ossl_provider_doall_activated(OSSL_LIB_CTX *ctx,
                                   int (*cb)(OSSL_PROVIDER *provider,
                                             void *cbdata),
