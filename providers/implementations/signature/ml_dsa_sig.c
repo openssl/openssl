@@ -267,7 +267,7 @@ static int ml_dsa_sign_msg_final(void *vctx, unsigned char *sig,
                 return 0;
         }
 
-        if (!ossl_ml_dsa_mu_finalize(ctx->md_ctx, mu, ML_DSA_MU_BYTES))
+        if (!ossl_ml_dsa_mu_finalize(ctx->md_ctx, mu, sizeof(mu)))
             return 0;
     }
 
@@ -332,7 +332,7 @@ static int ml_dsa_verify_msg_final(void *vctx)
     if (ctx->md_ctx == NULL)
         return 0;
 
-    if (!ossl_ml_dsa_mu_finalize(ctx->md_ctx, mu, ML_DSA_MU_BYTES))
+    if (!ossl_ml_dsa_mu_finalize(ctx->md_ctx, mu, sizeof(mu)))
         return 0;
 
     return ossl_ml_dsa_verify(ctx->key, 1, mu, sizeof(mu), NULL, 0, 0,
