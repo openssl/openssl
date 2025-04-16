@@ -11,6 +11,8 @@
 #include <openssl/core_names.h>
 #include <openssl/params.h>
 #include <openssl/rand.h>
+#include <openssl/err.h>
+#include <openssl/proverr.h>
 #include "ml_dsa_local.h"
 #include "ml_dsa_key.h"
 #include "ml_dsa_matrix.h"
@@ -126,8 +128,10 @@ int ossl_ml_dsa_mu_update(EVP_MD_CTX *md_ctx, const uint8_t *msg, size_t msg_len
  */
 int ossl_ml_dsa_mu_finalize(EVP_MD_CTX *md_ctx, uint8_t *mu, size_t mu_len)
 {
-    if (mu_len != ML_DSA_MU_BYTES)
+    if (mu_len != ML_DSA_MU_BYTES) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_BAD_LENGTH);
         return 0;
+    }
     return EVP_DigestSqueeze(md_ctx, mu, mu_len);
 }
 
@@ -170,8 +174,10 @@ static int ml_dsa_sign_internal(const ML_DSA_KEY *priv,
     size_t c_tilde_len = params->bit_strength >> 2;
     size_t kappa;
 
-    if (mu_len != ML_DSA_MU_BYTES)
+    if (mu_len != ML_DSA_MU_BYTES) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_BAD_LENGTH);
         return 0;
+    }
 
     /*
      * Allocate a single blob for most of the variable size temporary variables.
