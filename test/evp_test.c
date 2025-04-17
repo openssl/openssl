@@ -4142,7 +4142,9 @@ static int run_file_tests(int i)
     clear_test(t);
 
     free_key_list(public_keys);
+    public_keys = NULL;
     free_key_list(private_keys);
+    private_keys = NULL;
     BIO_free(t->s.key);
     c = t->s.errors;
     OPENSSL_free(t);
