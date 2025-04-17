@@ -13,7 +13,7 @@
 
 /*
  * NOTE: An endpoint method can be used to create a quic connection
- * for use as a client or server, based on a subsequent call to 
+ * for use as a client or server, based on a subsequent call to
  * SSL_set_[accept|connect]_state
  */
 IMPLEMENT_quic_meth_func(OSSL_QUIC_ANY_VERSION,
