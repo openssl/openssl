@@ -10,6 +10,7 @@ PROGRAMS{noinst} = tls-client-block \
                    tls-client-non-block \
                    quic-client-non-block \
                    quic-server-block \
+                   quic-server-ssl-poll \
                    quic-server-non-block \
                    quic-client-non-block \
 
@@ -43,4 +44,4 @@ DEPEND[quic-client-non-block]=../../libcrypto ../../libssl
 
 INCLUDE[quic-server-ssl-poll]=../../include
 SOURCE[quic-server-ssl-poll]=quic-server-ssl-poll.c
-DEPEND[quic-server-non-block]=../../libcrypto ../../libssl
+DEPEND[quic-server-ssl-poll]=../../libcrypto ../../libssl

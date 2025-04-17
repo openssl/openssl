@@ -301,16 +301,16 @@ static int handle_ssl_error(struct poll_event *pe, int rc, const char *caller)
 
     /* may be we should use SSL_shutdown_ex() to signal peer what's going on */
     ssl_error = SSL_get_error(ssl, rc);
-    if (rc < 0) {
+    if (rc <= 0) {
         switch (ssl_error) {
         case SSL_ERROR_SYSCALL:
         case SSL_ERROR_SSL:
-        case SSL_ERROR_ZERO_RETURN:
             DPRINTF(stderr, "%s permanent error on %p (%s) [ %s ]\n",
                     caller, pe, pe_type_to_name(pe),
                     err_str_n(ssl_error, err_str, sizeof (err_str)));
             rv = -1;
             break;
+        case SSL_ERROR_ZERO_RETURN:
         default:
             DPRINTF(stderr, "%s temporal error on %p (%s) [ %s ]\n",
                     caller, pe, pe_type_to_name(pe),
@@ -1330,7 +1330,7 @@ static int app_write_cb(struct poll_event *pe)
 	 * here the client application (quic-client-*block,c sends its data
          * and concludes stream.
          */
-        /* SSL_stream_conclude(get_ssl_from_pe(pe), 0); */
+        SSL_stream_conclude(get_ssl_from_pe(pe), 0);
         /*
          * Notes: I still don't know what's the best course of action here.
          * Doing pe_resume_read() is not option because it makes reader
@@ -1340,8 +1340,8 @@ static int app_write_cb(struct poll_event *pe)
          * too soon to deliver the STREAM_CONCLUDE to peer. The stream
          * is torn down immediately causing client to see a RESET.
          */
-        /* pe_disable_write(pe); */
-        pe_pause_write(pe);
+        pe_disable_write(pe);
+        /* pe_pause_write(pe); */
     }
 
     return 0;
