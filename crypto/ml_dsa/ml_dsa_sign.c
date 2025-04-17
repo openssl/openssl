@@ -140,7 +140,7 @@ int ossl_ml_dsa_mu_finalize(EVP_MD_CTX *md_ctx, uint8_t *mu, size_t mu_len)
  * @brief FIPS 204, Algorithm 7, ML-DSA.Sign_internal()
  *
  * This algorithm is decomposed in 2 steps, a set of functions to compute mu
- * and then the actual signign function.
+ * and then the actual signing function.
  *
  * @param priv: The private ML-DSA key
  * @param mu: The pre-computed mu hash
