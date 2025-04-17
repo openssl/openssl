@@ -437,10 +437,100 @@ for the B<-pkeyopt> B<digest> option.
 The X25519 and X448 algorithms support key derivation only. Currently there are
 no additional options.
 
+=head2 SLH-DSA ALGORITHMS
+
+The SLH-DSA algorithms (SLH-DSA-SHA2-128s, SLH-DSA-SHA2-128f, SLH-DSA-SHA2-192s, SLH-DSA-SHA2-192f, SLH-DSA-SHA2-256s, SLH-DSA-SHA2-256f) are post-quantum signature algorithms. When using SLH-DSA with pkeyutl, the following options are available:
+
+=over 4
+
+=item B<-sign>
+
+Sign the input data using an SLH-DSA private key. For example:
+
+  $ openssl pkeyutl -sign -in file.txt -inkey slhdsa.pem -out sig
+
+=item B<-verify>
+
+Verify the signature using an SLH-DSA public key. For example:
+
+  $ openssl pkeyutl -verify -in file.txt -inkey slhdsa.pem -sigfile sig
+
+=back
+
+See L<EVP_PKEY-SLH-DSA(7)> and L<EVP_SIGNATURE-SLH-DSA(7)> for additional details about the SLH-DSA algorithm and its implementation.
+
 =head1 ML-DSA-44, ML-DSA-65 AND ML-DSA-87 ALGORITHMS
 
-The B<ML-DSA> algorithms support signing and verification of "raw" messages.
-No preliminary hashing is performed.
+The ML-DSA algorithms are post-quantum signature algorithms that support signing and verification of "raw" messages.
+No preliminary hashing is performed. When using ML-DSA with pkeyutl, the following options are available:
+
+=over 4
+
+=item B<-sign>
+
+Sign the input data using an ML-DSA private key. For example:
+
+  $ openssl pkeyutl -sign -in file.txt -inkey mldsa65.pem -out sig
+
+=item B<-verify>
+
+Verify the signature using an ML-DSA public key. For example:
+
+  $ openssl pkeyutl -verify -in file.txt -inkey mldsa65.pem -sigfile sig
+
+=item B<-pkeyopt> I<opt>:I<value>
+
+Additional options for ML-DSA signing and verification:
+
+=over 4
+
+=item B<message-encoding>:I<value>
+
+Specifies the message encoding mode used for signing. This controls how the input message is processed before signing. Valid values are described in L<EVP_SIGNATURE-ML-DSA(7)>. For example:
+
+  $ openssl pkeyutl -sign -in file.txt -inkey mldsa65.pem -out sig -pkeyopt message-encoding:1
+
+=item B<test-entropy>:I<value>
+
+Specifies a test entropy value for deterministic signing. For example:
+
+  $ openssl pkeyutl -sign -in file.txt -inkey mldsa65.pem -out sig -pkeyopt test-entropy:abcdefghijklmnopqrstuvwxyz012345
+
+=item B<hextest-entropy>:I<value>
+
+Specifies a test entropy value in hex format. For example:
+
+  $ openssl pkeyutl -sign -in file.txt -inkey mldsa65.pem -out sig -pkeyopt hextest-entropy:000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f
+
+=item B<deterministic>:I<value>
+
+Enables deterministic signing. For example:
+
+  $ openssl pkeyutl -sign -in file.txt -inkey mldsa65.pem -out sig -pkeyopt deterministic:1
+
+=item B<mu>:I<value>
+
+Specifies the mu parameter. For example:
+
+  $ echo -n "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef" >file.txt
+  $ openssl pkeyutl -sign -in file.txt -inkey mldsa65.pem -out sig -pkeyopt mu:1
+
+=back
+
+=item B<context-string>:I<string>
+
+Specifies a context string for both signing and verification operations. The context string must be the same for verification to succeed. For example:
+
+  $ openssl pkeyutl -sign -in file.txt -inkey mldsa65.pem -out sig -pkeyopt context-string:mycontext
+  $ openssl pkeyutl -verify -in file.txt -inkey mldsa65.pem -sigfile sig -pkeyopt context-string:mycontext
+
+=item B<hexcontext-string>:I<string>
+
+Specifies a context string in hex format, allowing binary control values. For example:
+
+  $ openssl pkeyutl -sign -in file.txt -inkey mldsa65.pem -out sig -pkeyopt hexcontext-string:6d79636f6e74657874
+
+=back
 
 The signing operation supports a B<deterministic>:I<bool> option,
 with I<bool> set to C<1> if a deterministic signature is to be generated
@@ -450,7 +540,7 @@ A deterministic result can also be obtained by specifying an explicit
 entropy value via the B<hextest-entropy>:I<value> parameter.
 Deterministic B<ML-DSA> signing should only be used in tests.
 
-See L<EVP_SIGNATURE-ML-DSA(7)> for additional options and detail.
+See L<EVP_SIGNATURE-ML-DSA(7)> for additional details about the ML-DSA algorithms and their implementation.
 
 =head1 ML-KEM-512, ML-KEM-768 AND ML-KEM-1024 ALGORITHMS
 
@@ -548,6 +638,34 @@ Decrypt some data using a private key with OAEP padding using SHA256:
 
  openssl pkeyutl -decrypt -in file -inkey key.pem -out secret \
     -pkeyopt rsa_padding_mode:oaep -pkeyopt rsa_oaep_md:sha256
+
+Create an ML-DSA key pair and sign data with a specific context string:
+
+  $ openssl genpkey -algorithm ML-DSA-65 -out mldsa65.pem
+  $ openssl pkeyutl -sign -in file.txt -inkey mldsa65.pem -out sig -pkeyopt context-string:example
+
+Verify a signature using ML-DSA with the same context string:
+
+  $ openssl pkeyutl -verify -in file.txt -inkey mldsa65.pem -sigfile sig -pkeyopt context-string:example
+
+Generate an ML-KEM key pair and use it for encapsulation:
+
+  $ openssl genpkey -algorithm ML-KEM-768 -out mlkem768.pem
+  $ openssl pkey -in mlkem768.pem -pubout -out mlkem768_pub.pem
+  $ openssl pkeyutl -encap -inkey mlkem768_pub.pem -pubin -out ciphertext -secret shared_secret.bin
+
+Decapsulate a shared secret using an ML-KEM private key:
+
+  $ openssl pkeyutl -decap -inkey mlkem768.pem -in ciphertext -secret decapsulated_secret.bin
+
+Create an SLH-DSA key pair and sign data:
+
+  $ openssl genpkey -algorithm SLH-DSA-SHA2-128s -out slh-dsa.pem
+  $ openssl pkeyutl -sign -in file.txt -inkey slh-dsa.pem -out sig
+
+Verify a signature using SLH-DSA:
+
+  $ openssl pkeyutl -verify -in file.txt -inkey slh-dsa.pem -sigfile sig
 
 =head1 SEE ALSO
 
