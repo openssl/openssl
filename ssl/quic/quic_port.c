@@ -542,18 +542,6 @@ static QUIC_CHANNEL *port_make_channel(QUIC_PORT *port, SSL *tls, OSSL_QRX *qrx,
              * We're using the normal SSL_accept_connection_path
              */
             ch->tls = port_new_handshake_layer(port, ch);
-#ifndef OPENSSL_NO_QLOG
-            /*
-             * If we're using qlog, make sure the tls get further configured properly
-             */
-            ch->use_qlog = 1;
-            if (ch->tls->ctx->qlog_title != NULL) {
-                if ((ch->qlog_title = OPENSSL_strdup(ch->tls->ctx->qlog_title)) == NULL) {
-                    OPENSSL_free(ch);
-                    return NULL;
-                }
-            }
-#endif
         } else {
             /*
              * We're deferring user ssl creation until SSL_accept_ex is called
@@ -561,6 +549,18 @@ static QUIC_CHANNEL *port_make_channel(QUIC_PORT *port, SSL *tls, OSSL_QRX *qrx,
             ch->tls = NULL;
         }
     }
+#ifndef OPENSSL_NO_QLOG
+    /*
+     * If we're using qlog, make sure the tls get further configured properly
+     */
+    ch->use_qlog = 1;
+    if (ch->tls->ctx->qlog_title != NULL) {
+        if ((ch->qlog_title = OPENSSL_strdup(ch->tls->ctx->qlog_title)) == NULL) {
+            OPENSSL_free(ch);
+            return NULL;
+        }
+    }
+#endif
 
     /*
      * And finally init the channel struct
