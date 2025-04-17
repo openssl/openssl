@@ -186,6 +186,7 @@ will be allowed but the desired configuration will B<not> be used.
  ssl_conf = ssl_configuration
  engines = engines
  random = random
+ stbl_section = string_table_limits
 
  [oids]
  ... new oids here ...
@@ -485,6 +486,46 @@ entropy sources.  It defaults to "fips".  If the named provider is not loaded, t
 built-in entropy sources will be used.
 
 =back
+
+=head2 ASN.1 String-Table Configuration
+
+The name B<stbl_section> in the initialization section names the section
+containing overrides for the built-in ASN.1 string-table size limits
+(defined in C<tbl_standard.h>). Within this section, each entry is a
+name/value pair where the B<name> is an ASN.1 object short or long name,
+and the B<value> is a comma-separated list of parameters in the form
+C<min:<n>>, C<max:<n>>, C<mask:<mask>>, or C<flags:<flags>>.
+
+=over 4
+
+=item C<min> and C<max>
+
+Specify the minimum and maximum character counts, respectively.
+
+=item C<mask>
+
+Passed through L<ASN1_str2mask(3)>; defines which ASN.1 string encodings
+are permitted (for example: printableString, ia5String, utf8String,
+bmpString, numericString, teletexString, etc.).
+
+=item C<flags>
+
+Accepts exactly two values:
+
+  * B<nomask> - disable all mask checking (STABLE_NO_MASK)  
+  * B<none> - clear all flags (STABLE_FLAGS_CLEAR), so only length
+              constraints are enforced.
+
+=back
+
+For example:
+
+    [openssl_init]
+    stbl_section = string_table_limits
+
+    [string_table_limits]
+    serialNumber = min:1,max:20
+    otherName = min:1,max:40,mask:printableString,flags:nomask
 
 =head1 EXAMPLES
 
