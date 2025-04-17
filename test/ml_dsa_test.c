@@ -659,8 +659,10 @@ int setup_tests(void)
     ADD_ALL_TESTS(ml_dsa_keygen_test, OSSL_NELEM(ml_dsa_keygen_testdata));
     ADD_ALL_TESTS(ml_dsa_siggen_test, OSSL_NELEM(ml_dsa_siggen_testdata));
     ADD_ALL_TESTS(ml_dsa_sigver_test, OSSL_NELEM(ml_dsa_sigver_testdata));
-    ADD_ALL_TESTS(ml_dsa_siggen_upd_test, OSSL_NELEM(ml_dsa_siggen_testdata));
-    ADD_ALL_TESTS(ml_dsa_sigver_upd_test, OSSL_NELEM(ml_dsa_sigver_testdata));
+    if (fips_provider_version_ge(lib_ctx, 3, 6, 0)) {
+        ADD_ALL_TESTS(ml_dsa_siggen_upd_test, OSSL_NELEM(ml_dsa_siggen_testdata));
+        ADD_ALL_TESTS(ml_dsa_sigver_upd_test, OSSL_NELEM(ml_dsa_sigver_testdata));
+    }
     ADD_TEST(ml_dsa_key_dup_test);
     ADD_TEST(ml_dsa_key_internal_test);
     ADD_TEST(ml_dsa_keygen_drbg_test);
