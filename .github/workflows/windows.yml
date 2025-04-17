@@ -35,7 +35,7 @@ jobs:
     - uses: ilammy/msvc-dev-cmd@v1
       with:
         arch: ${{ matrix.platform.arch }}
-    - uses: ilammy/setup-nasm@v1
+    - uses: ilammy/setup-nasm@v1.5.2
       with:
         platform: ${{ matrix.platform.arch }}
     - name: prepare the build directory
