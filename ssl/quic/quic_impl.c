@@ -395,7 +395,7 @@ static int is_quic_c(const SSL *s, QCTX *ctx, int raiseerrs)
     return expect_quic_as(s, ctx, flags);
 }
 
-/* Same as expect_quic_cs except that errors are not raised if raiseerrs == 0*/
+/* Same as expect_quic_cs except that errors are not raised if raiseerrs == 0 */
 static int is_quic_cs(const SSL *s, QCTX *ctx, int raiseerrs)
 {
     uint32_t flags = QCTX_C | QCTX_S;
