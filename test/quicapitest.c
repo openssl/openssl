@@ -977,7 +977,6 @@ err:
 
 static int test_ssl_listen_ex(void)
 {
-
     SSL_CTX *lctx = NULL, *sctx = NULL;
     SSL_CTX *sconnctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_method());
     SSL *qlistener = NULL, *qserver = NULL, *qconn = NULL;
@@ -1038,7 +1037,6 @@ static int test_ssl_listen_ex(void)
 
     SSL_listen_ex(qserver, sconn);
 
-
     for (count = 0; count < 10; count++) {
         chk = SSL_do_handshake(qconn);
         if (chk == -1) {
@@ -1052,7 +1050,6 @@ static int test_ssl_listen_ex(void)
         }
     }
 
-    
     if (!TEST_int_gt(chk, 0)) {
         TEST_info("SSL_do_handshake() failed\n");
         goto err;
