@@ -289,6 +289,9 @@ int setup_tests(void)
         ADD_TEST(fips_health_tests);
 
     ADD_TEST(test_rand_random_provider);
-    ADD_TEST(test_rand_get0_primary);
+
+    if (!OSSL_PROVIDER_available(NULL, "fips")
+            || fips_provider_version_ge(NULL, 3, 5, 1))
+        ADD_TEST(test_rand_get0_primary);
     return 1;
 }
