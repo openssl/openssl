@@ -1092,6 +1092,7 @@ static int cipher_test_enc(EVP_TEST *t, int enc, size_t out_misalign,
     EVP_CIPHER_CTX *ctx_base = NULL;
     EVP_CIPHER_CTX *ctx = NULL, *duped;
     int fips_dupctx_supported = fips_provider_version_ge(libctx, 3, 2, 0);
+    int fips_no_silent_error = fips_provider_version_ge(libctx, 3, 6, 0);
 
     t->err = "TEST_FAILURE";
     if (!TEST_ptr(ctx_base = EVP_CIPHER_CTX_new()))
@@ -1219,7 +1220,7 @@ static int cipher_test_enc(EVP_TEST *t, int enc, size_t out_misalign,
             t->err = "INVALID_IV";
             goto err;
         } else {
-            if (!TEST_false(ERR_peek_error())) {
+            if (fips_no_silent_error && !TEST_false(ERR_peek_error())) {
                 t->err = "GET_UPDATED_IV_SILENT_ERROR";
                 goto err;
             }
@@ -1515,7 +1516,7 @@ static int cipher_test_enc(EVP_TEST *t, int enc, size_t out_misalign,
             t->err = "INVALID_NEXT_IV";
             goto err;
         } else {
-            if (!TEST_false(ERR_peek_error())) {
+            if (fips_no_silent_error && !TEST_false(ERR_peek_error())) {
                 t->err = "GET_UPDATED_IV_SILENT_ERROR";
                 goto err;
             }

@@ -5172,7 +5172,7 @@ static int test_evp_updated_iv(int idx)
         errmsg = "CIPHER_CTX_GET_UPDATED_IV";
         goto err;
     } else {
-        if (!TEST_false(ERR_peek_error())) {
+        if (fips_provider_version_ge(testctx, 3, 6, 0) && !TEST_false(ERR_peek_error())) {
             errmsg = "CIPHER_CTX_GET_UPDATED_IV_SILENT_ERROR";
             goto err;
         }
