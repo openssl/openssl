@@ -11,7 +11,6 @@
 #include "internal/nelem.h"
 #include "internal/numbers.h"
 #include <string.h>
-#include <math.h>
 
 /*
  * wbuf
@@ -593,33 +592,6 @@ void ossl_json_i64(OSSL_JSON_ENC *json, int64_t value)
 
     if (quote && !ossl_json_in_error(json))
         json_write_char(json, '"');
-}
-
-/* Encode a JSON number from a 64-bit floating point value. */
-void ossl_json_f64(OSSL_JSON_ENC *json, double value)
-{
-    char buf[32];
-
-    if (!json_pre_item(json))
-        return;
-
-#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
-    {
-        int checks = isnan(value);
-# if !defined(OPENSSL_SYS_VMS)
-        checks |= isinf(value);
-# endif
-
-        if (checks) {
-            json_raise_error(json);
-            return;
-        }
-    }
-#endif
-
-    BIO_snprintf(buf, sizeof(buf), "%1.17g", value);
-    json_write_str(json, buf);
-    json_post_item(json);
 }
 
 /*
