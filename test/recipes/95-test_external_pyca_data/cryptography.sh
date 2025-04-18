@@ -35,7 +35,6 @@ echo "------------------------------------------------------------------"
 
 cd $SRCTOP
 
-
 # Create a python virtual env and activate
 rm -rf venv-cryptography
 python -m venv venv-cryptography
