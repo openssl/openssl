@@ -684,6 +684,22 @@ static void felem_reduce_ref(felem out, const widefelem in)
         out[i] = acc[i];
 }
 
+static ossl_inline void felem_square_reduce_ref(felem out, const felem in)
+{
+    widefelem tmp;
+
+    felem_square_ref(tmp, in);
+    felem_reduce_ref(out, tmp);
+}
+
+static ossl_inline void felem_mul_reduce_ref(felem out, const felem in1, const felem in2)
+{
+    widefelem tmp;
+
+    felem_mul_ref(tmp, in1, in2);
+    felem_reduce_ref(out, tmp);
+}
+
 #if defined(ECP_NISTP384_ASM)
 static void felem_square_wrapper(widefelem out, const felem in);
 static void felem_mul_wrapper(widefelem out, const felem in1, const felem in2);
@@ -695,9 +711,17 @@ static void (*felem_mul_p)(widefelem out, const felem in1, const felem in2) =
 
 static void (*felem_reduce_p)(felem out, const widefelem in) = felem_reduce_ref;
 
+static void (*felem_square_reduce_p)(felem out, const felem in) =
+    felem_square_reduce_ref;
+static void (*felem_mul_reduce_p)(felem out, const felem in1, const felem in2) =
+    felem_mul_reduce_ref;
+
 void p384_felem_square(widefelem out, const felem in);
 void p384_felem_mul(widefelem out, const felem in1, const felem in2);
 void p384_felem_reduce(felem out, const widefelem in);
+
+void p384_felem_square_reduce(felem out, const felem in);
+void p384_felem_mul_reduce(felem out, const felem in1, const felem in2);
 
 # if defined(_ARCH_PPC64)
 #  include "crypto/ppc_arch.h"
@@ -710,6 +734,8 @@ static void felem_select(void)
         felem_square_p = p384_felem_square;
         felem_mul_p = p384_felem_mul;
         felem_reduce_p = p384_felem_reduce;
+        felem_square_reduce_p = p384_felem_square_reduce;
+        felem_mul_reduce_p = p384_felem_mul_reduce;
 
         return;
     }
@@ -718,7 +744,9 @@ static void felem_select(void)
     /* Default */
     felem_square_p = felem_square_ref;
     felem_mul_p = felem_mul_ref;
-    felem_reduce_p = p384_felem_reduce;
+    felem_reduce_p = felem_reduce_ref;
+    felem_square_reduce_p = felem_square_reduce_ref;
+    felem_mul_reduce_p = felem_mul_reduce_ref;
 }
 
 static void felem_square_wrapper(widefelem out, const felem in)
@@ -737,31 +765,15 @@ static void felem_mul_wrapper(widefelem out, const felem in1, const felem in2)
 # define felem_mul felem_mul_p
 # define felem_reduce felem_reduce_p
 
-void p384_felem_square_reduce(felem out, const felem in);
-void p384_felem_mul_reduce(felem out, const felem in1, const felem in2);
-
-# define felem_square_reduce p384_felem_square_reduce
-# define felem_mul_reduce p384_felem_mul_reduce
+# define felem_square_reduce felem_square_reduce_p
+# define felem_mul_reduce felem_mul_reduce_p
 #else
 # define felem_square felem_square_ref
 # define felem_mul felem_mul_ref
 # define felem_reduce felem_reduce_ref
 
-static ossl_inline void felem_square_reduce(felem out, const felem in)
-{
-    widefelem tmp;
-
-    felem_square(tmp, in);
-    felem_reduce(out, tmp);
-}
-
-static ossl_inline void felem_mul_reduce(felem out, const felem in1, const felem in2)
-{
-    widefelem tmp;
-
-    felem_mul(tmp, in1, in2);
-    felem_reduce(out, tmp);
-}
+# define felem_square_reduce felem_square_reduce_ref
+# define felem_mul_reduce felem_mul_reduce_ref
 #endif
 
 /*-
