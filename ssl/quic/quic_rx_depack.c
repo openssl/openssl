@@ -237,7 +237,7 @@ static int depack_do_frame_stop_sending(PACKET *pkt,
     if (stream == NULL)
         return 1; /* old deleted stream, not a protocol violation, ignore */
 
-    if (!ossl_quic_stream_has_send(stream)) {
+    if (stream->send_state == QUIC_SSTREAM_STATE_NONE) {
         ossl_quic_channel_raise_protocol_error(ch,
                                                OSSL_QUIC_ERR_STREAM_STATE_ERROR,
                                                OSSL_QUIC_FRAME_TYPE_STOP_SENDING,

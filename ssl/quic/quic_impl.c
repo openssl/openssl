@@ -5093,8 +5093,7 @@ static int test_poll_event_r(QUIC_XSO *xso)
 QUIC_NEEDS_LOCK
 static int test_poll_event_er(QUIC_XSO *xso)
 {
-    return ossl_quic_stream_has_recv(xso->stream)
-        && ossl_quic_stream_recv_is_reset(xso->stream)
+    return ossl_quic_stream_recv_is_reset(xso->stream)
         && !xso->retired_fin;
 }
 
@@ -5115,8 +5114,7 @@ static int test_poll_event_w(QUIC_XSO *xso)
 QUIC_NEEDS_LOCK
 static int test_poll_event_ew(QUIC_XSO *xso)
 {
-    return ossl_quic_stream_has_send(xso->stream)
-        && xso->stream->peer_stop_sending
+    return xso->stream->peer_stop_sending
         && !xso->requested_reset
         && !xso->conn->shutting_down;
 }
