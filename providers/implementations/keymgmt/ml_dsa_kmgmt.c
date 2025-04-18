@@ -84,6 +84,8 @@ static int ml_dsa_pairwise_test(const ML_DSA_KEY *key)
                          sig, &sig_len, sizeof(sig)) <= 0)
         goto err;
 
+    OSSL_SELF_TEST_oncorrupt_byte(st, sig);
+
     if (ossl_ml_dsa_verify(key, 0, msg, sizeof(msg), NULL, 0, 0,
                            sig, sig_len) <= 0)
         goto err;
