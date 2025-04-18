@@ -45,6 +45,18 @@ OpenSSL 4.0
 
   * Support for the SSLv2 Client Hello was removed
 
+  * When using the FIPS provider via the PKCS5_PBKDF2_HMAC API,
+    password protected encrypted files will now have lower bounds
+    checks (minimum iteration count, minimum password length, salt
+    size and derived key lengths) enforced by default.  Prior to
+    upgrading to this version, users may want to check if their
+    password protected key–stores are encrypted using short passwords,
+    salts, low iteration counts for PBKDF or weaker ciphers. To
+    upgrade to the new defaults one can decrypt the keys with a
+    previous OpenSSL version or the default provider, and then
+    re-encrypt them with the newer OpenSSL (using the FIPS provider),
+    thus upgrading to longer password, salt length and AES-256 CBC.
+
 OpenSSL 3.6
 -----------
 
