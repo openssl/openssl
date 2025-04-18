@@ -119,7 +119,6 @@ typedef void (*fp_pz_type)(OSSL_JSON_ENC *, const void *, size_t);
 #define OPJ_BOOL(x)           OP_CALL_I(ossl_json_bool, (x))
 #define OPJ_U64(x)            OP_CALL_U64(ossl_json_u64, (x))
 #define OPJ_I64(x)            OP_CALL_I64(ossl_json_i64, (x))
-#define OPJ_F64(x)            OP_CALL_D(ossl_json_f64, (x))
 #define OPJ_KEY(x)            OP_CALL_P(ossl_json_key, (x))
 #define OPJ_STR(x)            OP_CALL_P(ossl_json_str, (x))
 #define OPJ_STR_LEN(x, xl)    OP_CALL_PZ(ossl_json_str_len, (x), (xl))
