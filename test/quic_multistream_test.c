@@ -25,6 +25,16 @@
 
 static const char *certfile, *keyfile;
 
+#if defined(_AIX)
+/*
+ * Some versions of AIX define macros for events and revents for use when
+ * accessing pollfd structures (see Github issue #24236). That interferes
+ * with our use of these names here. We simply undef them.
+ */
+# undef revents
+# undef events
+#endif
+
 #if defined(OPENSSL_THREADS)
 struct child_thread_args {
     struct helper *h;
