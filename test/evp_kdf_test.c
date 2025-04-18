@@ -17,6 +17,7 @@
 #include <openssl/kdf.h>
 #include <openssl/core_names.h>
 #include "internal/numbers.h"
+#include "internal/sizes.h"
 #include "testutil.h"
 
 
@@ -239,26 +240,35 @@ static int test_kdf_hkdf(void)
     return ret;
 }
 
-static int do_kdf_hkdf_gettables(int expand_only, int has_digest)
+static int do_kdf_hkdf_gettables(int extract_only, int has_digest)
 {
     int ret = 0;
     size_t sz = 0;
     OSSL_PARAM *params;
-    OSSL_PARAM params_get[2];
+    OSSL_PARAM params_get[5];
+    char digest[OSSL_MAX_NAME_SIZE];
+    char mode_utf8[OSSL_MAX_NAME_SIZE];
+    int mode_int = -1;
+    char salt[16] = { 0 };
+    char info[16] = { 0 };
     const OSSL_PARAM *gettables, *p;
     EVP_KDF_CTX *kctx = NULL;
 
     if (!TEST_ptr(params = construct_hkdf_params(
                                                  has_digest ? "sha256" : NULL,
                                                  "secret", 6, "salt",
-                                                 expand_only ? NULL : "label"))
+                                                 extract_only ? NULL : "label"))
         || !TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_HKDF))
         || !TEST_true(EVP_KDF_CTX_set_params(kctx, params)))
         goto err;
 
     /* Check OSSL_KDF_PARAM_SIZE is gettable */
     if (!TEST_ptr(gettables = EVP_KDF_CTX_gettable_params(kctx))
-        || !TEST_ptr(p = OSSL_PARAM_locate_const(gettables, OSSL_KDF_PARAM_SIZE)))
+        || !TEST_ptr(p = OSSL_PARAM_locate_const(gettables, OSSL_KDF_PARAM_SIZE))
+        || !TEST_ptr(p = OSSL_PARAM_locate_const(gettables, OSSL_KDF_PARAM_MODE))
+        || !TEST_ptr(p = OSSL_PARAM_locate_const(gettables, OSSL_KDF_PARAM_DIGEST))
+        || !TEST_ptr(p = OSSL_PARAM_locate_const(gettables, OSSL_KDF_PARAM_SALT))
+        || !TEST_ptr(p = OSSL_PARAM_locate_const(gettables, OSSL_KDF_PARAM_INFO)))
         goto err;
 
     /* Get OSSL_KDF_PARAM_SIZE as a size_t */
@@ -266,12 +276,38 @@ static int do_kdf_hkdf_gettables(int expand_only, int has_digest)
     params_get[1] = OSSL_PARAM_construct_end();
     if (has_digest) {
         if (!TEST_int_eq(EVP_KDF_CTX_get_params(kctx, params_get), 1)
-            || !TEST_size_t_eq(sz, expand_only ? SHA256_DIGEST_LENGTH : SIZE_MAX))
+            || !TEST_size_t_eq(sz, extract_only ? SHA256_DIGEST_LENGTH : SIZE_MAX))
             goto err;
     } else {
         if (!TEST_int_eq(EVP_KDF_CTX_get_params(kctx, params_get), 0))
             goto err;
     }
+
+    params_get[0] = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST, digest,
+                                                     sizeof(digest));
+    params_get[1] = OSSL_PARAM_construct_end();
+    if (has_digest) {
+        if (!TEST_int_eq(EVP_KDF_CTX_get_params(kctx, params_get), 1)
+            || !TEST_str_eq(digest, "SHA2-256"))
+            goto err;
+    } else {
+        if (!TEST_int_eq(EVP_KDF_CTX_get_params(kctx, params_get), 0))
+            goto err;
+    }
+
+    params_get[0] = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_MODE, mode_utf8,
+                                                     sizeof(mode_utf8));
+    params_get[1] = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode_int);
+    params_get[2] = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT, salt, sizeof(salt));
+    params_get[3] = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO, info, sizeof(info));
+    params_get[4] = OSSL_PARAM_construct_end();
+    if (!TEST_int_eq(EVP_KDF_CTX_get_params(kctx, params_get), 1)
+        || !TEST_str_eq(mode_utf8, extract_only ? "EXTRACT_ONLY" : "EXTRACT_AND_EXPAND")
+        || !TEST_int_eq(mode_int, extract_only ? EVP_KDF_HKDF_MODE_EXTRACT_ONLY :
+                        EVP_KDF_HKDF_MODE_EXTRACT_AND_EXPAND)
+        || !TEST_str_eq(info, extract_only ? "" : "label")
+        || !TEST_str_eq(salt, "salt"))
+        goto err;
 
     /* Get params returns 1 if an unsupported parameter is requested */
     params_get[0] = OSSL_PARAM_construct_end();
@@ -289,7 +325,7 @@ static int test_kdf_hkdf_gettables(void)
     return do_kdf_hkdf_gettables(0, 1);
 }
 
-static int test_kdf_hkdf_gettables_expandonly(void)
+static int test_kdf_hkdf_gettables_extractonly(void)
 {
     return do_kdf_hkdf_gettables(1, 1);
 }
@@ -2066,7 +2102,7 @@ int setup_tests(void)
     ADD_TEST(test_kdf_hkdf_1byte_key);
     ADD_TEST(test_kdf_hkdf_empty_salt);
     ADD_TEST(test_kdf_hkdf_gettables);
-    ADD_TEST(test_kdf_hkdf_gettables_expandonly);
+    ADD_TEST(test_kdf_hkdf_gettables_extractonly);
     ADD_TEST(test_kdf_hkdf_gettables_no_digest);
     ADD_TEST(test_kdf_hkdf_derive_set_params_fail);
     ADD_TEST(test_kdf_hkdf_set_invalid_mode);
