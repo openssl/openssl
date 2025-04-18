@@ -676,32 +676,37 @@ sub generate_internal_macros {
 }
 
 sub generate_trie {
+    my @keys = @_;
     my %trie;
     my $nodes = 0;
     my $chars = 0;
 
-    foreach my $name (sort keys %params) {
+    foreach my $name (sort @keys) {
         my $val = $params{$name};
-        if (substr($val, 0, 1) ne '*') {
-            my $cursor = \%trie;
-
-            $chars += length($val);
-            for my $i (0 .. length($val) - 1) {
-                my $c = substr($val, $i, 1);
-
-                if (not $case_sensitive) {
-                    $c = '_' if $c eq '-';
-                    $c = lc $c;
-                }
-
-                if (not defined $$cursor{$c}) {
-                    $cursor->{$c} = {};
-                    $nodes++;
-                }
-                $cursor = $cursor->{$c};
-            }
-            $cursor->{'val'} = $name;
+        die("Unknown parameter name '$name'\n") if !defined $val;
+        while (substr($val, 0, 1) eq '*') {
+            $val = $params{substr($val, 1)};
+            die("Unknown referenced parameter from '$name'\n")
+                if !defined $val;
         }
+        my $cursor = \%trie;
+
+        $chars += length($val);
+        for my $i (0 .. length($val) - 1) {
+            my $c = substr($val, $i, 1);
+
+            if (not $case_sensitive) {
+                $c = '_' if $c eq '-';
+                $c = lc $c;
+            }
+
+            if (not defined $$cursor{$c}) {
+                $cursor->{$c} = {};
+                $nodes++;
+            }
+            $cursor = $cursor->{$c};
+        }
+        $cursor->{'val'} = $name;
     }
     #print "\n\n/* $nodes nodes for $chars letters*/\n\n";
     return %trie;
@@ -714,8 +719,6 @@ sub generate_code_from_trie {
     my $indent0 = $idt x ($n + 1);
     my $indent1 = $indent0 . $idt;
     my $strcmp = $case_sensitive ? 'strcmp' : 'strcasecmp';
-
-    print "int ossl_param_find_pidx(const char *s)\n{\n" if $n == 0;
 
     if ($trieref->{'suffix'}) {
         my $suf = $trieref->{'suffix'};
@@ -750,7 +753,6 @@ sub generate_code_from_trie {
         }
     }
     printf "%s}\n", $indent0;
-    print "    return -1;\n}\n" if $n == 0;
     return "";
 }
 
@@ -781,12 +783,16 @@ sub locate_long_endings {
 }
 
 sub produce_decoder {
-    my %t = generate_trie();
+    my $func_name = shift;
+    my @keys = @_;
+    my %t = generate_trie(@keys);
     my $s;
 
     locate_long_endings(\%t);
 
     open local *STDOUT, '>', \$s;
+    printf "int %s(const char *s)\n{\n", $func_name;
     generate_code_from_trie(0, \%t);
+    print "    return -1;\n}\n";
     return $s;
 }
