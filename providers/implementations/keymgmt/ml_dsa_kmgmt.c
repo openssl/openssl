@@ -84,6 +84,8 @@ static int ml_dsa_pairwise_test(const ML_DSA_KEY *key)
                          sig, &sig_len, sizeof(sig)) <= 0)
         goto err;
 
+    OSSL_SELF_TEST_oncorrupt_byte(st, sig);
+
     if (ossl_ml_dsa_verify(key, 0, msg, sizeof(msg), NULL, 0, 0,
                            sig, sig_len) <= 0)
         goto err;
@@ -472,8 +474,10 @@ static void *ml_dsa_gen(void *genctx, int evp_type)
         goto err;
     }
 #ifdef FIPS_MODULE
-    if (!ml_dsa_pairwise_test(key))
+    if (!ml_dsa_pairwise_test(key)) {
+        ossl_set_error_state(OSSL_SELF_TEST_TYPE_PCT);
         goto err;
+    }
 #endif
     return key;
  err:

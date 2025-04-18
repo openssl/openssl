@@ -22,7 +22,7 @@ use lib bldtop_dir('.');
 plan skip_all => "These tests are unsupported in a non fips build"
     if disabled("fips");
 
-plan tests => 6;
+plan tests => 9;
 my $provconf = srctop_file("test", "fips-and-base.cnf");
 
 run(test(["fips_version_test", "-config", $provconf, ">=3.1.0"]),
@@ -76,4 +76,46 @@ SKIP: {
     ok(run(test(["pairwise_fail_test", "-config", $provconf,
                  "-pairwise", "eddsa"])),
        "fips provider eddsa keygen pairwise failure test");
+}
+
+SKIP: {
+    skip "Skip ML-DSA test because of no ml-dsa in this build", 1
+        if disabled("ml-dsa");
+
+    run(test(["fips_version_test", "-config", $provconf, ">=3.5.0"]),
+             capture => 1, statusvar => \my $exit);
+    skip "FIPS provider version is too old", 1
+        if !$exit;
+
+    ok(run(test(["pairwise_fail_test", "-config", $provconf,
+                 "-pairwise", "ml-dsa"])),
+       "fips provider ml-dsa keygen pairwise failure test");
+}
+
+SKIP: {
+    skip "Skip SLH-DSA test because of no slh-dsa in this build", 1
+        if disabled("slh-dsa");
+
+    run(test(["fips_version_test", "-config", $provconf, ">=3.5.0"]),
+             capture => 1, statusvar => \my $exit);
+    skip "FIPS provider version is too old", 1
+        if !$exit;
+
+    ok(run(test(["pairwise_fail_test", "-config", $provconf,
+                 "-pairwise", "slh-dsa"])),
+       "fips provider slh-dsa keygen pairwise failure test");
+}
+
+SKIP: {
+    skip "Skip ML-KEM test because of no ml-kem in this build", 1
+        if disabled("ml-kem");
+
+    run(test(["fips_version_test", "-config", $provconf, ">=3.5.0"]),
+             capture => 1, statusvar => \my $exit);
+    skip "FIPS provider version is too old", 1
+        if !$exit;
+
+    ok(run(test(["pairwise_fail_test", "-config", $provconf,
+                 "-pairwise", "ml-kem"])),
+       "fips provider ml-kem keygen pairwise failure test");
 }
