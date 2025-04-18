@@ -344,7 +344,6 @@ static int dtls_rlayer_buffer_record(OSSL_RECORD_LAYER *rl, struct pqueue_st *qu
 static int dtls_copy_rlayer_record(OSSL_RECORD_LAYER *rl, pitem *item)
 {
     DTLS_RLAYER_RECORD_DATA *rdata;
-    PACKET pkt;
 
     rdata = (DTLS_RLAYER_RECORD_DATA *)item->data;
 
@@ -434,6 +433,10 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
     TLS_RL_RECORD *rr;
     DTLS_BITMAP *bitmap;
     unsigned int is_next_epoch;
+    unsigned char recseqnum[6];
+    size_t recseqnumlen = 0;
+    size_t rechdrlen = 0;
+    size_t recseqnumoffs = 0;
 
     memset(recseqnum, 0, sizeof(recseqnum));
     rl->num_recs = 0;
@@ -487,14 +490,30 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
         }
 
         /* Pull apart the header into the DTLS1_RECORD */
-        if (!PACKET_buf_init(&pkt, rl->packet, rl->packet_length)
-                || !PACKET_get_1(&pkt, &record_type)
-                || !PACKET_get_net_2(&pkt, &version)
-                || !PACKET_get_net_2(&pkt, &epoch)
-                || !PACKET_get_net_6(&pkt, &rl->sequence)
-                || !PACKET_get_net_2_len(&pkt, &rr->length)) {
-            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            return OSSL_RECORD_RETURN_FATAL;
+        rr->type = (int)record_type;
+
+        /*-
+         * rfc9147:
+         * Implementations can demultiplex DTLS 1.3 records by examining the first
+         * byte as follows:
+         *   • If the first byte is alert(21), handshake(22), or ack(proposed, 26),
+         *     the record MUST be interpreted as a DTLSPlaintext record.
+         *   • If the first byte is any other value, then receivers MUST check to
+         *     see if the leading bits of the first byte are 001. If so, the implementation
+         *     MUST process the record as DTLSCiphertext; the true content type
+         *     will be inside the protected portion.
+         *   • Otherwise, the record MUST be rejected as if it had failed deprotection,
+         *     as described in Section 4.5.2.
+         */
+        if (rl->version == DTLS1_3_VERSION
+            && rr->type != SSL3_RT_ALERT
+            && rr->type != SSL3_RT_HANDSHAKE
+            && rr->type != SSL3_RT_ACK
+            && !DTLS13_UNI_HDR_FIX_BITS_IS_SET(rr->type)) {
+            /* Silently discard*/
+            rr->length = 0;
+            rl->packet_length = 0;
+            goto again;
         }
 
         if (DTLS13_UNI_HDR_FIX_BITS_IS_SET(rr->type)) {
@@ -519,22 +538,15 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
                  * Naive approach? We expect sequence number to be filled already
                  * and then override the last bytes of the sequence number.
                  */
-                || !PACKET_copy_bytes(&dtlsrecord, recseqnum + recseqnumoffs, recseqnumlen)) {
-                rr->length = 0;
-                rl->packet_length = 0;
-                goto again;
-            }
-
-            /*
-             * rfc9147:
-             * The length field MAY be omitted by clearing the L bit, which means
-             * that the record consumes the entire rest of the datagram in the
-             * lower level transport
-             */
-            length = TLS_BUFFER_get_len(&rl->rbuf) - dtls_get_rec_header_size(rr->type);
-
-            if ((lbitisset && !PACKET_get_net_2(&dtlsrecord, &length))
-                || length == 0) {
+                || !PACKET_copy_bytes(&dtlsrecord, recseqnum + recseqnumoffs, recseqnumlen)
+                /*
+                 * rfc9147:
+                 * The length field MAY be omitted by clearing the L bit, which means
+                 * that the record consumes the entire rest of the datagram in the
+                 * lower level transport
+                 */
+                || (lbitisset ? !PACKET_get_net_2(&dtlsrecord, &length)
+                              : (length = TLS_BUFFER_get_len(&rl->rbuf)) > 0)) {
                 rr->length = 0;
                 rl->packet_length = 0;
                 goto again;
@@ -644,20 +656,32 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
 
     /*
      * rfc9147:
-     * This procedure requires the ciphertext length to be at least
-     * DTLS13_CIPHERTEXT_MINSIZE (16) bytes.
+     * This procedure requires the ciphertext length to be at least 16 bytes.
      * Receivers MUST reject shorter records as if they had failed deprotection
      */
-    if (rl->sn_enc_ctx != NULL
-            && (rl->packet_length < DTLS1_RT_HEADER_LENGTH + 16
-                || !dtls_crypt_sequence_number(rl->sn_enc_ctx, &(rl->sequence[2]),
-                                               rl->packet + DTLS1_RT_HEADER_LENGTH,
+    if (DTLS13_UNI_HDR_FIX_BITS_IS_SET(rr->type)
+            && rl->version == DTLS1_3_VERSION
+            && ossl_assert(rl->sn_enc_ctx != NULL)
+            && (!ossl_assert(rl->packet_length >= rechdrlen + 16)
+                || !dtls_crypt_sequence_number(rl->sn_enc_ctx,
+                                               recseqnum + recseqnumoffs,
+                                               recseqnumlen,
+                                               rl->packet + rechdrlen,
                                                rl->sn_enc_offs))) {
         /* sequence number encryption failed dump record */
         rr->length = 0;
         rl->packet_length = 0;
         goto again;
     }
+
+    /* TODO: make recseqnum a uint64_t */
+    memset(recseqnum, 0, recseqnumoffs);
+    rl->sequence =  ((uint64_t)recseqnum[0]) << 40;
+    rl->sequence ^= ((uint64_t)recseqnum[1]) << 32;
+    rl->sequence ^= ((uint64_t)recseqnum[2]) << 24;
+    rl->sequence ^= ((uint64_t)recseqnum[3]) << 16;
+    rl->sequence ^= ((uint64_t)recseqnum[4]) << 8;
+    rl->sequence ^= ((uint64_t)recseqnum[5]) << 0;
 
     /* match epochs.  NULL means the packet is dropped on the floor */
     bitmap = dtls_get_bitmap(rl, rr, &is_next_epoch);
@@ -850,7 +874,8 @@ int dtls_prepare_record_header(OSSL_RECORD_LAYER *rl,
         uint8_t unifiedhdrbits = fixedbits | cbit | sbit | lbit | ebits;
 
         if (!WPACKET_put_bytes_u8(thispkt, unifiedhdrbits)
-            || !WPACKET_memcpy(thispkt, rl->sequence + 6, 2)
+            || (sbit ? !WPACKET_put_bytes_u16(thispkt, rl->sequence)
+                     : !WPACKET_put_bytes_u8(thispkt, rl->sequence))
             || !WPACKET_start_sub_packet_u16(thispkt)
             || (rl->eivlen > 0
                 && !WPACKET_allocate_bytes(thispkt, rl->eivlen, NULL))

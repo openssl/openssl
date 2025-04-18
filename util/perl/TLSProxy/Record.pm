@@ -24,7 +24,7 @@ use constant {
     RT_HANDSHAKE          => 22,
     RT_ALERT              => 21,
     RT_CCS                => 20,
-    RT_ACK => 26,
+    RT_ACK                => 26,
     RT_UNKNOWN            => 100,
     RT_DTLS_UNIHDR_EPOCH4 => 0x2c,
     RT_DTLS_UNIHDR_EPOCH1 => 0x2d,
@@ -117,6 +117,12 @@ sub get_records
                     ($content_type, $seq, $len) = unpack('CCn', $packet);
                     $record_hdr_len = 4;
                 }
+                # Encrypted DTLS 1.3 records have encrypted sequence numbers.
+                # ossltest engine overrides ecb encryption to be a no-op.
+                # This effectively means that the sequence number encryption mask
+                # is just the 16 first bytes of the record body.
+                my $recordbody = substr($packet, $record_hdr_len, $len);
+                (my $maskhi, my $maskmi, my $masklo) = unpack('nnn', $recordbody);
                 $version = VERS_DTLS_1_2; # DTLSv1.3 headers has DTLSv1.2 in its legacy_version field
 
                 if ($eebits == "00") {
@@ -130,6 +136,7 @@ sub get_records
                 } else {
                     die("Epoch bits is not 0's or 1's: should not happen")
                 }
+                $seq ^= $maskhi;
             } else {
                 my $seqhi;
                 my $seqmi;
@@ -408,10 +415,10 @@ sub decrypt()
             return $data if (length($data) == 2);
         }
         $mactaglen = 16;
-    } elsif ((!$self->isdtls && $self->version >= VERS_TLS_1_1)
-             || ($self->isdtls && $self->version <= VERS_DTLS_1)) {
+    } elsif ($self->version >= VERS_TLS_1_1()) {
         #16 bytes for a standard IV
         $data = substr($data, 16);
+
         #Find out what the padding byte is
         my $padval = unpack("C", substr($data, length($data) - 1));
 
@@ -454,10 +461,7 @@ sub reconstruct_record
         my $content_type = (TLSProxy::Proxy->is_tls13() && $self->encrypted)
                            ? $self->outer_content_type : $self->content_type;
         if($self->{isdtls}) {
-            if (TLSProxy::Proxy->is_tls13() && $self->encrypted) {
-                # Prepare a unified header
-                $data = pack('Cnn', $content_type, $self->seq, $self->len);
-            } else {my $seqhi = ($self->seq >> 32) & 0xffff;
+            my $seqhi = ($self->seq >> 32) & 0xffff;
             my $seqmi = ($self->seq >> 16) & 0xffff;
             my $seqlo = ($self->seq >> 0) & 0xffff;
 
@@ -465,13 +469,13 @@ sub reconstruct_record
                 # Mask sequence number with record body bytes. Explanation
                 # given in get_records.
                 (my $maskhi, my $maskmi, my $masklo) = unpack("nnn", $self->data);
-                $seqhi ^= $maskhi;
-                $seqmi ^= $maskmi;
-                $seqlo ^= $masklo;
+                $seqlo ^= $maskhi;
+                # Prepare a unified header
+                $data = pack('Cnn', $content_type, $seqlo, $self->len);
+            } else {
+                $data = pack('Cnnnnnn', $content_type, $self->version,
+                    $self->epoch, $seqhi, $seqmi, $seqlo, $self->len);
             }
-
-            $data = pack('Cnnnnnn', $content_type, $self->version,
-                         $self->epoch, $seqhi, $seqmi, $seqlo, $self->len);}
         } else {
             $data = pack('Cnn', $content_type, $self->version,
                          $self->len);

@@ -1737,7 +1737,7 @@ int tls_post_encryption_processing_default(OSSL_RECORD_LAYER *rl,
         size_t seqnumlen = DTLS13_UNI_HDR_SEQ_BIT_IS_SET(*recordstart) ? 2 : 1;
 
         if (!ossl_assert(DTLS13_UNI_HDR_SEQ_OFF + seqnumlen <= rechdrlen)
-            || !dtls_crypt_sequence_number(rl->sn_enc_ctx, recordstart + DTLS13_UNI_HDR_SEQ_OFF, 6,
+            || !dtls_crypt_sequence_number(rl->sn_enc_ctx, recordstart + DTLS13_UNI_HDR_SEQ_OFF,
                                            seqnumlen, recordstart + rechdrlen,
                                            rl->sn_enc_offs)) {
             RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);

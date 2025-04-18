@@ -428,7 +428,7 @@ int dtls_get_message_body(SSL_CONNECTION *s, size_t *len)
 end:
     if (s->msg_callback)
         s->msg_callback(0, s->version, recordtype, msg, msg_len,
-                        SSL_CONNECTION_GET_SSL(s), s->msg_callback_arg);
+                        SSL_CONNECTION_GET_USER_SSL(s), s->msg_callback_arg);
 
     *len = s->init_num;
     return 1;
