@@ -349,8 +349,26 @@ static ossl_inline ossl_unused int ossl_quic_stream_is_local_init(const QUIC_STR
     return ossl_quic_stream_is_server_init(s) == s->as_server;
 }
 
+static ossl_inline ossl_unused const char *ossl_quic_get_sstream_state_str(
+    QUIC_STREAM *s)
+{
+    static const char *state_names[] = {
+        "QUIC_SSTREAM_STATE_NONE",
+        "QUIC_SSTREAM_STATE_READY",
+        "QUIC_SSTREAM_STATE_SEND",
+        "QUIC_SSTREAM_STATE_DATA_SENT",
+        "QUIC_SSTREAM_STATE_DATA_RECVD",
+        "QUIC_SSTREAM_STATE_RESET_SENT",
+        "QUIC_SSTREAM_STATE_RESET_RECVD",
+        "???"
+    };
+    int state = (s->send_state > QUIC_SSTREAM_STATE_RESET_RECVD) ?
+                 QUIC_SSTREAM_STATE_DATA_RECVD + 1 : s->send_state;
+    return state_names[state];
+}
+
 /*
- * Returns 1 if the QUIC_STREAM has a sending part, based on its stream type.
+ * Returns 1 if the QUIC_STREAM has a sending part, based on its stream state.
  *
  * Do NOT use (s->sstream != NULL) to test this; use this function. Note that
  * even if this function returns 1, s->sstream might be NULL if the QUIC_SSTREAM
@@ -358,11 +376,45 @@ static ossl_inline ossl_unused int ossl_quic_stream_is_local_init(const QUIC_STR
  */
 static ossl_inline ossl_unused int ossl_quic_stream_has_send(const QUIC_STREAM *s)
 {
-    return s->send_state != QUIC_SSTREAM_STATE_NONE;
+    int rv = 0;
+
+    switch (s->send_state) {
+    case QUIC_SSTREAM_STATE_NONE:
+    case QUIC_SSTREAM_STATE_RESET_SENT:
+    case QUIC_SSTREAM_STATE_RESET_RECVD:
+        rv = 0;
+        break;
+    case QUIC_SSTREAM_STATE_READY:
+    case QUIC_SSTREAM_STATE_SEND:
+    case QUIC_SSTREAM_STATE_DATA_SENT:
+    case QUIC_SSTREAM_STATE_DATA_RECVD:
+        rv = 1;
+        break;
+    default:
+        assert(0);
+    }
+    return rv;
+}
+
+static ossl_inline ossl_unused const char *ossl_quic_get_rstream_state_str(
+     QUIC_STREAM *s)
+{
+    static const char *state_names[] = {
+        "QUIC_RSTREAM_STATE_NONE",
+        "QUIC_RSTREAM_STATE_RECV",
+        "QUIC_RSTREAM_STATE_SIZE_KNOWN",
+        "QUIC_RSTREAM_STATE_DATA_RECVD",
+        "QUIC_RSTREAM_STATE_DATA_READ",
+        "QUIC_RSTREAM_STATE_RESET_RECVD",
+        "QUIC_RSTREAM_STATE_RESET_READ"
+    };
+    int state = (s->recv_state > QUIC_RSTREAM_STATE_RESET_READ) ?
+                 QUIC_RSTREAM_STATE_RESET_READ + 1 : s->recv_state;
+    return state_names[state];
 }
 
 /*
- * Returns 1 if the QUIC_STREAM has a receiving part, based on its stream type.
+ * Returns 1 if the QUIC_STREAM has a receiving part, based on its stream state.
  *
  * Do NOT use (s->rstream != NULL) to test this; use this function. Note that
  * even if this function returns 1, s->rstream might be NULL if the QUIC_RSTREAM
@@ -371,7 +423,25 @@ static ossl_inline ossl_unused int ossl_quic_stream_has_send(const QUIC_STREAM *
  */
 static ossl_inline ossl_unused int ossl_quic_stream_has_recv(const QUIC_STREAM *s)
 {
-    return s->recv_state != QUIC_RSTREAM_STATE_NONE;
+    int rv = 0;
+
+    switch (s->recv_state) {
+    case QUIC_RSTREAM_STATE_NONE:
+    case QUIC_RSTREAM_STATE_RESET_RECVD:
+    case QUIC_RSTREAM_STATE_RESET_READ:
+        rv = 0;
+        break;
+    case QUIC_RSTREAM_STATE_RECV:
+    case QUIC_RSTREAM_STATE_SIZE_KNOWN:
+    case QUIC_RSTREAM_STATE_DATA_RECVD:
+    case QUIC_RSTREAM_STATE_DATA_READ:
+        rv = 1;
+        break;
+    default:
+        assert(0);
+    }
+
+    return rv;
 }
 
 /*
