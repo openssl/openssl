@@ -603,7 +603,7 @@ int dtls1_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
         return -1;
 
     case SSL3_RT_ACK:
-        switch(sc->rlayer.rrlmethod->get_protocol_version(sc->rlayer.rrl)) {
+        switch (sc->negotiated_version) {
         case DTLS1_3_VERSION:
             /* ACK should have been handled if DTLSv1.3 has been negotiated. */
             SSLfatal(sc, SSL_AD_UNEXPECTED_MESSAGE, ERR_R_INTERNAL_ERROR);

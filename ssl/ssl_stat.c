@@ -124,7 +124,7 @@ const char *SSL_state_string_long(const SSL *s)
     case TLS_ST_SR_END_OF_EARLY_DATA:
         return "TLSv1.3 read end of early data";
     case TLS_ST_CR_ACK:
-        return "DTLSv1.3 read server ack";
+        return "DTLSv1.3 read client ack";
     case TLS_ST_CW_ACK:
         return "DTLSv1.3 write client ack";
     case TLS_ST_SR_ACK:

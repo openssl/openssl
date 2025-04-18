@@ -438,7 +438,6 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
     size_t rechdrlen = 0;
     size_t recseqnumoffs = 0;
 
-    memset(recseqnum, 0, sizeof(recseqnum));
     rl->num_recs = 0;
     rl->curr_rec = 0;
     rl->num_released = 0;
@@ -453,6 +452,8 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
     }
 
  again:
+    memset(recseqnum, 0, sizeof(recseqnum));
+
     /* if we're renegotiating, then there may be buffered records */
     if (dtls_retrieve_rlayer_buffered_record(rl, &rl->processed_rcds)) {
         rl->num_recs = 1;
@@ -662,7 +663,7 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
     if (DTLS13_UNI_HDR_FIX_BITS_IS_SET(rr->type)
             && rl->version == DTLS1_3_VERSION
             && ossl_assert(rl->sn_enc_ctx != NULL)
-            && (!ossl_assert(rl->packet_length >= rechdrlen + 16)
+            && (!ossl_assert(rl->packet_length >= rechdrlen + DTLS13_CIPHERTEXT_MINSIZE)
                 || !dtls_crypt_sequence_number(rl->sn_enc_ctx,
                                                recseqnum + recseqnumoffs,
                                                recseqnumlen,
@@ -675,7 +676,6 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
     }
 
     /* TODO: make recseqnum a uint64_t */
-    memset(recseqnum, 0, recseqnumoffs);
     rl->sequence =  ((uint64_t)recseqnum[0]) << 40;
     rl->sequence ^= ((uint64_t)recseqnum[1]) << 32;
     rl->sequence ^= ((uint64_t)recseqnum[2]) << 24;
