@@ -186,6 +186,10 @@ static int quic_raise_non_normal_error(QCTX *ctx,
  *      This determines whether SSL_get_error() is updated; the value it returns
  *      is modified only by an I/O call.
  *
+ *   QCTX_NO_ERROR
+ *      Don't raise an error if the object type is wrong. Should not be used in
+ *      conjunction with any flags that may raise errors not related to a wrong
+ *      object type.
  */
 #define QCTX_C              (1U << 0)
 #define QCTX_S              (1U << 1)
@@ -195,6 +199,7 @@ static int quic_raise_non_normal_error(QCTX *ctx,
 #define QCTX_LOCK           (1U << 5)
 #define QCTX_IO             (1U << 6)
 #define QCTX_D              (1U << 7)
+#define QCTX_NO_ERROR       (1U << 8)
 
 /*
  * Called when expect_quic failed. Used to diagnose why such a call failed and
@@ -205,7 +210,9 @@ static int wrong_type(const SSL *s, uint32_t flags)
     const uint32_t mask = QCTX_C | QCTX_S | QCTX_L | QCTX_D;
     int code = ERR_R_UNSUPPORTED;
 
-    if ((flags & mask) == QCTX_D)
+    if ((flags & QCTX_NO_ERROR) != 0)
+        return 1;
+    else if ((flags & mask) == QCTX_D)
         code = SSL_R_DOMAIN_USE_ONLY;
     else if ((flags & mask) == QCTX_L)
         code = SSL_R_LISTENER_USE_ONLY;
@@ -225,7 +232,8 @@ static int wrong_type(const SSL *s, uint32_t flags)
  *
  * After this returns 1, all fields of the passed QCTX are initialised.
  * Returns 0 on failure. This function is intended to be used to provide API
- * semantics and as such, it invokes QUIC_RAISE_NON_NORMAL_ERROR() on failure.
+ * semantics and as such, it invokes QUIC_RAISE_NON_NORMAL_ERROR() on failure
+ * unless the QCTX_NO_ERROR flag is set.
  *
  * The flags argument controls the preconditions and postconditions of this
  * function. See above for the different flags.
@@ -376,6 +384,25 @@ err:
         qctx_unlock(ctx);
 
     return ok;
+}
+
+static int is_quic_c(const SSL *s, QCTX *ctx, int raiseerrs)
+{
+    uint32_t flags = QCTX_C;
+
+    if (!raiseerrs)
+        flags |= QCTX_NO_ERROR;
+    return expect_quic_as(s, ctx, flags);
+}
+
+/* Same as expect_quic_cs except that errors are not raised if raiseerrs == 0 */
+static int is_quic_cs(const SSL *s, QCTX *ctx, int raiseerrs)
+{
+    uint32_t flags = QCTX_C | QCTX_S;
+
+    if (!raiseerrs)
+        flags |= QCTX_NO_ERROR;
+    return expect_quic_as(s, ctx, flags);
 }
 
 static int expect_quic_cs(const SSL *s, QCTX *ctx)
@@ -1672,33 +1699,47 @@ long ossl_quic_ctrl(SSL *s, int cmd, long larg, void *parg)
 }
 
 /* SSL_set_connect_state */
-void ossl_quic_set_connect_state(SSL *s)
+int ossl_quic_set_connect_state(SSL *s, int raiseerrs)
 {
     QCTX ctx;
 
-    if (!expect_quic_cs(s, &ctx))
-        return;
+    if (!is_quic_c(s, &ctx, raiseerrs))
+        return 0;
+
+    if (ctx.qc->as_server_state == 0)
+        return 1;
 
     /* Cannot be changed after handshake started */
-    if (ctx.qc->started || ctx.is_stream)
-        return;
+    if (ctx.qc->started) {
+        if (raiseerrs)
+            QUIC_RAISE_NON_NORMAL_ERROR(NULL, SSL_R_INVALID_COMMAND, NULL);
+        return 0;
+    }
 
     ctx.qc->as_server_state = 0;
+    return 1;
 }
 
 /* SSL_set_accept_state */
-void ossl_quic_set_accept_state(SSL *s)
+int ossl_quic_set_accept_state(SSL *s, int raiseerrs)
 {
     QCTX ctx;
 
-    if (!expect_quic_cs(s, &ctx))
-        return;
+    if (!is_quic_c(s, &ctx, raiseerrs))
+        return 0;
+
+    if (ctx.qc->as_server_state == 1)
+        return 1;
 
     /* Cannot be changed after handshake started */
-    if (ctx.qc->started || ctx.is_stream)
-        return;
+    if (ctx.qc->started) {
+        if (raiseerrs)
+            QUIC_RAISE_NON_NORMAL_ERROR(NULL, SSL_R_INVALID_COMMAND, NULL);
+        return 0;
+    }
 
     ctx.qc->as_server_state = 1;
+    return 1;
 }
 
 /* SSL_do_handshake */
@@ -1983,7 +2024,8 @@ int ossl_quic_do_handshake(SSL *s)
 int ossl_quic_connect(SSL *s)
 {
     /* Ensure we are in connect state (no-op if non-idle). */
-    ossl_quic_set_connect_state(s);
+    if (!ossl_quic_set_connect_state(s, 1))
+        return -1;
 
     /* Begin or continue the handshake */
     return ossl_quic_do_handshake(s);
@@ -1993,7 +2035,8 @@ int ossl_quic_connect(SSL *s)
 int ossl_quic_accept(SSL *s)
 {
     /* Ensure we are in accept state (no-op if non-idle). */
-    ossl_quic_set_accept_state(s);
+    if (!ossl_quic_set_accept_state(s, 1))
+        return -1;
 
     /* Begin or continue the handshake */
     return ossl_quic_do_handshake(s);
@@ -2325,8 +2368,9 @@ int ossl_quic_get_error(const SSL *s, int i)
     QCTX ctx;
     int net_error, last_error;
 
-    if (!expect_quic_cs(s, &ctx))
-        return 0;
+    /* SSL_get_errors() should not raise new errors */
+    if (!is_quic_cs(s, &ctx, 0 /* suppress errors */))
+        return SSL_ERROR_SSL;
 
     qctx_lock(&ctx);
     net_error = ossl_quic_channel_net_error(ctx.qc->ch);

@@ -4980,7 +4980,8 @@ void SSL_set_accept_state(SSL *s)
 
 #ifndef OPENSSL_NO_QUIC
     if (IS_QUIC(s)) {
-        ossl_quic_set_accept_state(s);
+        /* We suppress errors because this is a void function */
+        (void)ossl_quic_set_accept_state(s, 0 /* suppress errors */);
         return;
     }
 #endif
@@ -4999,7 +5000,8 @@ void SSL_set_connect_state(SSL *s)
 
 #ifndef OPENSSL_NO_QUIC
     if (IS_QUIC(s)) {
-        ossl_quic_set_connect_state(s);
+        /* We suppress errors because this is a void function */
+        (void)ossl_quic_set_connect_state(s, 0 /* suppress errors */);
         return;
     }
 #endif
