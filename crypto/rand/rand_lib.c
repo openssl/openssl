@@ -755,7 +755,7 @@ static EVP_RAND_CTX *rand_new_crngt(OSSL_LIB_CTX *libctx, EVP_RAND_CTX *parent)
  */
 static EVP_RAND_CTX *rand_get0_primary(OSSL_LIB_CTX *ctx, RAND_GLOBAL *dgbl)
 {
-    EVP_RAND_CTX *ret;
+    EVP_RAND_CTX *ret, *seed, *newseed = NULL, *primary;
 
     if (dgbl == NULL)
         return NULL;
@@ -764,34 +764,26 @@ static EVP_RAND_CTX *rand_get0_primary(OSSL_LIB_CTX *ctx, RAND_GLOBAL *dgbl)
         return NULL;
 
     ret = dgbl->primary;
+    seed = dgbl->seed;
     CRYPTO_THREAD_unlock(dgbl->lock);
 
     if (ret != NULL)
         return ret;
 
-    if (!CRYPTO_THREAD_write_lock(dgbl->lock))
-        return NULL;
-
-    ret = dgbl->primary;
-    if (ret != NULL) {
-        CRYPTO_THREAD_unlock(dgbl->lock);
-        return ret;
-    }
-
 #if !defined(FIPS_MODULE) || !defined(OPENSSL_NO_FIPS_JITTER)
     /* Create a seed source for libcrypto or jitter enabled FIPS provider */
-    if (dgbl->seed == NULL) {
+    if (seed == NULL) {
         ERR_set_mark();
-        dgbl->seed = rand_new_seed(ctx);
+        seed = newseed = rand_new_seed(ctx);
         ERR_pop_to_mark();
     }
 #endif  /* !FIPS_MODULE || !OPENSSL_NO_FIPS_JITTER */
 
 #if defined(FIPS_MODULE)
     /* The FIPS provider has entropy health tests instead of the primary */
-    ret = rand_new_crngt(ctx, dgbl->seed);
+    ret = rand_new_crngt(ctx, seed);
 #else   /* FIPS_MODULE */
-    ret = rand_new_drbg(ctx, dgbl->seed, PRIMARY_RESEED_INTERVAL,
+    ret = rand_new_drbg(ctx, seed, PRIMARY_RESEED_INTERVAL,
                         PRIMARY_RESEED_TIME_INTERVAL);
 #endif  /* FIPS_MODULE */
 
@@ -799,12 +791,30 @@ static EVP_RAND_CTX *rand_get0_primary(OSSL_LIB_CTX *ctx, RAND_GLOBAL *dgbl)
      * The primary DRBG may be shared between multiple threads so we must
      * enable locking.
      */
-    dgbl->primary = ret;
-    if (ret != NULL && !EVP_RAND_enable_locking(ret)) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_UNABLE_TO_ENABLE_LOCKING);
-        EVP_RAND_CTX_free(ret);
-        ret = dgbl->primary = NULL;
+    if (ret == NULL || !EVP_RAND_enable_locking(ret)) {
+        if (ret != NULL) {
+            ERR_raise(ERR_LIB_EVP, EVP_R_UNABLE_TO_ENABLE_LOCKING);
+            EVP_RAND_CTX_free(ret);
+        }
+        if (newseed == NULL)
+            return NULL;
+        /* else carry on and store seed */
+        ret = NULL;
     }
+
+    if (!CRYPTO_THREAD_write_lock(dgbl->lock))
+        return NULL;
+
+    primary = dgbl->primary;
+    if (primary != NULL) {
+        CRYPTO_THREAD_unlock(dgbl->lock);
+        EVP_RAND_CTX_free(ret);
+        EVP_RAND_CTX_free(newseed);
+        return primary;
+    }
+    if (newseed != NULL)
+        dgbl->seed = newseed;
+    dgbl->primary = ret;
     CRYPTO_THREAD_unlock(dgbl->lock);
 
     return ret;
