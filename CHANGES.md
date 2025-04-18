@@ -31,6 +31,12 @@ OpenSSL 3.6
 
 ### Changes between 3.5 and 3.6 [xx XXX xxxx]
 
+* A configuration page has been updated to remove the Vx-Works configurations. 
+  They are listed as an unsupported platform, so it was updated to remove it,
+  per the `10-main.conf` configuration page.
+
+  *Anthony Ioppolo*
+
  * Support setting a free function thunk to OPENSSL_sk stack types. Using a thunk
    allows the type specific free function to be called with the correct type
    information from generic functions like OPENSSL_sk_pop_free().

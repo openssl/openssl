@@ -25,7 +25,11 @@ OpenSSL 3.5
 
 ### Major changes between OpenSSL 3.5 and OpenSSL 3.6 [under development]
 
-  * none
+This release incorporates the following potentially significant or incompatible
+changes:
+
+* Updated a configuration to remove `Vx-Works` targets because they are
+  currently unsupported as a platform.
 
 ### Major changes between OpenSSL 3.4 and OpenSSL 3.5 [under development]
 
