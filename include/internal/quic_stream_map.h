@@ -314,6 +314,7 @@ struct quic_stream_st {
     unsigned int    ready_for_gc            : 1;
     /* Set to 1 if this is currently counted in the shutdown flush stream count. */
     unsigned int    shutdown_flush          : 1;
+    unsigned int    sstream_fin_acked       : 1;
 };
 
 #define QUIC_STREAM_INITIATOR_CLIENT        0
@@ -358,7 +359,8 @@ static ossl_inline ossl_unused int ossl_quic_stream_is_local_init(const QUIC_STR
  */
 static ossl_inline ossl_unused int ossl_quic_stream_has_send(const QUIC_STREAM *s)
 {
-    return s->send_state != QUIC_SSTREAM_STATE_NONE;
+    return s->send_state != QUIC_SSTREAM_STATE_NONE &&
+        s->send_state != QUIC_SSTREAM_STATE_DATA_RECVD;
 }
 
 /*

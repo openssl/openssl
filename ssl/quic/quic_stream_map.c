@@ -340,11 +340,14 @@ void ossl_quic_stream_map_update_state(QUIC_STREAM_MAP *qsm, QUIC_STREAM *s)
     }
 
     if (s->send_state == QUIC_SSTREAM_STATE_DATA_SENT
-        && ossl_quic_sstream_is_totally_acked(s->sstream))
-        ossl_quic_stream_map_notify_totally_acked(qsm, s);
-    else if (s->shutdown_flush
-             && s->send_state == QUIC_SSTREAM_STATE_SEND
-             && ossl_quic_sstream_is_totally_acked(s->sstream))
+        && ossl_quic_sstream_is_totally_acked(s->sstream)) {
+        if (ossl_quic_stream_map_notify_totally_acked(qsm, s)) {
+            s->sstream_fin_acked = 1;
+            stream_map_mark_active(qsm, s);
+        }
+    } else if (s->shutdown_flush
+               && s->send_state == QUIC_SSTREAM_STATE_SEND
+               && ossl_quic_sstream_is_totally_acked(s->sstream))
         shutdown_flush_done(qsm, s);
 
     if (!s->ready_for_gc) {
