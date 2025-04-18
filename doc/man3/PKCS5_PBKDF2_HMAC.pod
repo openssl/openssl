@@ -36,6 +36,9 @@ equal to 1. RFC 2898 suggests an iteration count of at least 1000. Any
 B<iter> value less than 1 is invalid; such values will result in failure
 and raise the PROV_R_INVALID_ITERATION_COUNT error.
 
+Lower bounds checks are provider dependent and are described in the
+L<EVP_KDF-PBKDF2(7)/Supported parameters> B<OSSL_KDF_PARAM_PKCS5>.
+
 B<digest> is the message digest function used in the derivation.
 PKCS5_PBKDF2_HMAC_SHA1() calls PKCS5_PBKDF2_HMAC() with EVP_sha1().
 
