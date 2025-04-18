@@ -85,18 +85,20 @@ EVP_MD_CTX *ossl_ml_dsa_mu_init(const ML_DSA_KEY *key, int encode,
     /* ..pk (= key->tr) */
     if (!EVP_DigestUpdate(md_ctx, key->tr, sizeof(key->tr)))
         goto err;
-    /* M' */
+    /* M' = .. */
     if (encode) {
         if (ctx_len > ML_DSA_MAX_CONTEXT_STRING_LEN)
             goto err;
-        /* || IntegerToBytes(0, 1) || IntegerToBytes(|ctx|, 1) */
+        /* IntegerToBytes(0, 1) .. */
         itb[0] = 0;
+        /* || IntegerToBytes(|ctx|, 1) || .. */
         itb[1] = (uint8_t)ctx_len;
         if (!EVP_DigestUpdate(md_ctx, itb, 2))
             goto err;
-        /* || ctx || .. */
+        /* ctx || .. */
         if (!EVP_DigestUpdate(md_ctx, ctx, ctx_len))
             goto err;
+        /* .. msg) will follow in update and final functions */
     }
 
     return md_ctx;
@@ -372,7 +374,7 @@ static int ml_dsa_verify_internal(const ML_DSA_KEY *pub,
             || !matrix_expand_A(md_ctx, pub->shake128_md, pub->rho, &a_ntt))
         goto err;
 
-    /* Compute verifiers challenge c_ntt = NTT(SampleInBall(c_tilde) */
+    /* Compute verifiers challenge c_ntt = NTT(SampleInBall(c_tilde)) */
     if (!poly_sample_in_ball_ntt(c_ntt, c_tilde_sig, c_tilde_len,
                                  md_ctx, pub->shake256_md, params->tau))
         goto err;
