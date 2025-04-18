@@ -2428,8 +2428,8 @@ static int aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 #endif
 #ifdef BSAES_CAPABLE
         if (BSAES_CAPABLE && mode == EVP_CIPH_CBC_MODE) {
-            ret = AES_set_decrypt_key(key, keylen, &dat->ks.ks);
-            dat->block = (block128_f) AES_decrypt;
+            ret = ossl_bsaes_set_decrypt_key(key, keylen, &dat->ks.ks);
+            dat->block = (block128_f) ossl_bsaes_decrypt;
             dat->stream.cbc = (cbc128_f) ossl_bsaes_cbc_encrypt;
         } else
 #endif
@@ -2468,8 +2468,8 @@ static int aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 #endif
 #ifdef BSAES_CAPABLE
     if (BSAES_CAPABLE && mode == EVP_CIPH_CTR_MODE) {
-        ret = AES_set_encrypt_key(key, keylen, &dat->ks.ks);
-        dat->block = (block128_f) AES_encrypt;
+        ret = ossl_bsaes_set_encrypt_key(key, keylen, &dat->ks.ks);
+        dat->block = (block128_f) ossl_bsaes_encrypt;
         dat->stream.ctr = (ctr128_f) ossl_bsaes_ctr32_encrypt_blocks;
     } else
 #endif
@@ -2816,9 +2816,9 @@ static int aes_gcm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 #endif
 #ifdef BSAES_CAPABLE
             if (BSAES_CAPABLE) {
-                AES_set_encrypt_key(key, keylen, &gctx->ks.ks);
+                ossl_bsaes_set_encrypt_key(key, keylen, &gctx->ks.ks);
                 CRYPTO_gcm128_init(&gctx->gcm, &gctx->ks,
-                                   (block128_f) AES_encrypt);
+                                   (block128_f) ossl_bsaes_encrypt);
                 gctx->ctr = (ctr128_f) ossl_bsaes_ctr32_encrypt_blocks;
                 break;
             } else
@@ -3286,9 +3286,23 @@ static int aes_xts_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
             } else
 #endif
 #ifdef BSAES_CAPABLE
-            if (BSAES_CAPABLE)
-                xctx->stream = enc ? ossl_bsaes_xts_encrypt : ossl_bsaes_xts_decrypt;
-            else
+            if (BSAES_CAPABLE) {
+                if (enc) {
+                    xctx->stream = ossl_bsaes_xts_encrypt;
+                    ossl_bsaes_set_encrypt_key(key, bits, &xctx->ks1.ks);
+                    xctx->xts.block1 = (block128_f) ossl_bsaes_encrypt;
+                } else {
+                    xctx->stream = ossl_bsaes_xts_decrypt;
+                    ossl_bsaes_set_decrypt_key(key, bits, &xctx->ks1.ks);
+                    xctx->xts.block1 = (block128_f) ossl_bsaes_decrypt;
+                }
+
+                ossl_bsaes_set_encrypt_key(key + bytes, bits, &xctx->ks2.ks);
+                xctx->xts.block2 = (block128_f) ossl_bsaes_encrypt;
+
+                xctx->xts.key1 = &xctx->ks1;
+                break;
+            } else
 #endif
 #ifdef VPAES_CAPABLE
             if (VPAES_CAPABLE) {
