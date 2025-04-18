@@ -162,7 +162,7 @@ static int depack_do_frame_reset_stream(PACKET *pkt,
     if (stream == NULL)
         return 1; /* old deleted stream, not a protocol violation, ignore */
 
-    if (!ossl_quic_stream_has_recv(stream)) {
+    if (stream->recv_state == QUIC_RSTREAM_STATE_NONE) {
         ossl_quic_channel_raise_protocol_error(ch,
                                                OSSL_QUIC_ERR_STREAM_STATE_ERROR,
                                                OSSL_QUIC_FRAME_TYPE_RESET_STREAM,
