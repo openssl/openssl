@@ -121,6 +121,33 @@ if (!$avx && `$ENV{CC} -v 2>&1` =~ /((?:clang|LLVM) version|.*based on LLVM) ([0
 	$avx = ($2>=3.0) + ($2>3.0);
 }
 
+$use_tool_asm=0;
+#
+# clang 9 or newer
+#
+$use_tool_asm=1 if (!$use_tool_asm && `$ENV{CC} -v 2>&1` =~ /((?:clang|LLVM) version|.*based on LLVM) ([0-9]+\.[0-9]+)/ && $2>=9.0);
+
+#
+# GNU assembler 2.30 or newer
+#
+$use_tool_asm=1 if (!$use_tool_asm && `$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
+		=~ /GNU assembler version ([2-9]\.[0-9]+)/ &&
+	   $1>=2.30);
+#
+# masm version 14 or higher. The version is bundled with Visual Studio 2019
+#
+$use_tool_asm=1 if (!$use_tool_asm && $win64 && ($flavour =~ /masm/ || $ENV{ASM} =~ /ml64/) &&
+	   `ml64 2>&1` =~ /Version ([0-9]+)\./ &&
+	   $1>=14);
+
+#
+# netwide assembler 2.15 or newer (2.15 is since 2020)
+#
+$use_tool_asm=1 if (!$use_tool_asm && $win64 && ($flavour =~ /nasm/ || $ENV{ASM} =~ /nasm/) &&
+	   `nasm -v 2>&1` =~ /NASM version ([2-9]\.[0-9]+)/ &&
+	   $1>=2.15);
+
+
 open OUT,"| \"$^X\" \"$xlate\" $flavour \"$output\""
     or die "can't call $xlate: $!";
 *STDOUT=*OUT;
@@ -675,6 +702,21 @@ ___
 $code.=<<___ if ($win64);
 	lea	-0x88(%rsp),%rax
 .LSEH_begin_gcm_ghash_clmul:
+___
+$code.=<<___ if ($win64 && $use_tool_asm);
+	lea	-0x20(%rax),%rsp
+	movaps	%xmm6,-0x20(%rax)
+	movaps	%xmm7,-0x10(%rax)
+	movaps	%xmm8,0(%rax)
+	movaps	%xmm9,0x10(%rax)
+	movaps	%xmm10,0x20(%rax)
+	movaps	%xmm11,0x30(%rax)
+	movaps	%xmm12,0x40(%rax)
+	movaps	%xmm13,0x50(%rax)
+	movaps	%xmm14,0x60(%rax)
+	movaps	%xmm15,0x70(%rax)
+___
+$code.=<<___ if ($win64 && !$use_tool_asm);
 	# I can't trust assembler to use specific encoding:-(
 	.byte	0x48,0x8d,0x60,0xe0		#lea	-0x20(%rax),%rsp
 	.byte	0x0f,0x29,0x70,0xe0		#movaps	%xmm6,-0x20(%rax)
@@ -1194,10 +1236,24 @@ my ($Xlo,$Xhi,$Xmi,
     $Zlo,$Zhi,$Zmi,
     $Hkey,$HK,$T1,$T2,
     $Xi,$Xo,$Tred,$bswap,$Ii,$Ij) = map("%xmm$_",(0..15));
-
-$code.=<<___ if ($win64);
+$code.=<<___ if ($win64) ;
 	lea	-0x88(%rsp),%rax
 .LSEH_begin_gcm_ghash_avx:
+___
+$code.=<<___ if ($win64 && $use_tool_asm);
+	lea	-0x20(%rax),%rsp
+	movaps	%xmm6,-0x20(%rax)
+	movaps	%xmm7,-0x10(%rax)
+	movaps	%xmm8,0(%rax)
+	movaps	%xmm9,0x10(%rax)
+	movaps	%xmm10,0x20(%rax)
+	movaps	%xmm11,0x30(%rax)
+	movaps	%xmm12,0x40(%rax)
+	movaps	%xmm13,0x50(%rax)
+	movaps	%xmm14,0x60(%rax)
+	movaps	%xmm15,0x70(%rax)
+___
+$code.=<<___ if ($win64 && !$use_tool_asm);
 	# I can't trust assembler to use specific encoding:-(
 	.byte	0x48,0x8d,0x60,0xe0		#lea	-0x20(%rax),%rsp
 	.byte	0x0f,0x29,0x70,0xe0		#movaps	%xmm6,-0x20(%rax)
@@ -1803,12 +1859,36 @@ $code.=<<___;
 	.byte	9,0,0,0
 	.rva	se_handler
 	.rva	.Lghash_prologue,.Lghash_epilogue	# HandlerData
+	.byte	0x01,0x08,0x03,0x00	# ? is this is unwind info for windows ?
+					#	version flags: 0x1
+					#	sizeof of prolog: 8
+					#	count of codes to unwind: 3
+					#	frame offset: 0
 .LSEH_info_gcm_init_clmul:
-	.byte	0x01,0x08,0x03,0x00
+	.byte	0x01,0x08,0x03,0x00	# ? is this is unwind info for windows ?
+					#	version flags: 0x1
+					#	sizeof of prolog: 8
+					#	count of codes to unwind: 3
+					#	frame offset: 0
 	.byte	0x08,0x68,0x00,0x00	#movaps	0x00(rsp),xmm6
 	.byte	0x04,0x22,0x00,0x00	#sub	rsp,0x18
 .LSEH_info_gcm_ghash_clmul:
 	.byte	0x01,0x33,0x16,0x00
+___
+$code.=<<___ if ($use_tool_asm) ;
+	movaps 0x90(rsp),xmm15
+	movaps 0x80(rsp),xmm14
+	movaps 0x70(rsp),xmm13
+	movaps 0x60(rsp),xmm12
+	movaps 0x50(rsp),xmm11
+	movaps 0x40(rsp),xmm10
+	movaps 0x30(rsp),xmm9
+	movaps 0x20(rsp),xmm8
+	movaps 0x10(rsp),xmm7
+	movaps 0x00(rsp),xmm6
+	sub	rsp,\$168
+___
+$code.=<<___ if (!$use_tool_asm) ;
 	.byte	0x33,0xf8,0x09,0x00	#movaps 0x90(rsp),xmm15
 	.byte	0x2e,0xe8,0x08,0x00	#movaps 0x80(rsp),xmm14
 	.byte	0x29,0xd8,0x07,0x00	#movaps 0x70(rsp),xmm13
