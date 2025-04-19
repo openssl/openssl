@@ -541,6 +541,7 @@ static QUIC_CHANNEL *port_make_channel(QUIC_PORT *port, SSL *tls, OSSL_QRX *qrx,
     ch->use_qlog = 1;
     if (ch->tls->ctx->qlog_title != NULL) {
         if ((ch->qlog_title = OPENSSL_strdup(ch->tls->ctx->qlog_title)) == NULL) {
+            SSL_free(ch->tls);
             OPENSSL_free(ch);
             return NULL;
         }
@@ -551,6 +552,7 @@ static QUIC_CHANNEL *port_make_channel(QUIC_PORT *port, SSL *tls, OSSL_QRX *qrx,
      * And finally init the channel struct
      */
     if (!ossl_quic_channel_init(ch)) {
+        OPENSSL_free(ch->qlog_title);
         SSL_free(ch->tls);
         OPENSSL_free(ch);
         return NULL;
