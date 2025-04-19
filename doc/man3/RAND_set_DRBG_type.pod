@@ -5,6 +5,8 @@
 RAND_set_DRBG_type,
 RAND_set_seed_source_type
 - specify the global random number generator types
+RAND_get_seed_source_name
+- get active seed source name
 
 =head1 SYNOPSIS
 
@@ -14,6 +16,7 @@ RAND_set_seed_source_type
                         const char *cipher, const char *digest);
  int RAND_set_seed_source_type(OSSL_LIB_CTX *ctx, const char *seed,
                                const char *propq);
+ const char* RAND_get_seed_source_name(OSSL_LIB_CTX *ctx);
 
 =head1 DESCRIPTION
 
@@ -29,9 +32,13 @@ within the library context I<ctx>.  The seed source of name I<seed>
 with properties I<propq> will be fetched and used to seed the primary
 random bit generator.
 
+RAND_get_seed_source_type() returns the currently configured or the
+default seed source name within the library context I<ctx>.
+
 =head1 RETURN VALUES
 
-These function return 1 on success and 0 on failure.
+The set functions return 1 on success and 0 on failure.
+The get function returns pointer to a const string value.
 
 =head1 NOTES
 
