@@ -386,6 +386,11 @@ err:
     return ok;
 }
 
+static int expect_quic_c(const SSL *s, QCTX *ctx)
+{
+    return expect_quic_as(s, ctx, QCTX_C);
+}
+
 static int is_quic_c(const SSL *s, QCTX *ctx, int raiseerrs)
 {
     uint32_t flags = QCTX_C;
@@ -5140,9 +5145,9 @@ static int test_poll_event_r(QUIC_XSO *xso)
 QUIC_NEEDS_LOCK
 static int test_poll_event_er(QUIC_XSO *xso)
 {
-    return ossl_quic_stream_has_recv(xso->stream)
+    return (ossl_quic_stream_has_recv(xso->stream)
         && ossl_quic_stream_recv_is_reset(xso->stream)
-        && !xso->retired_fin;
+        && !xso->retired_fin) || xso->stream->conn_tearing_down;
 }
 
 /* Do we have the W (write) condition? */
@@ -5162,10 +5167,10 @@ static int test_poll_event_w(QUIC_XSO *xso)
 QUIC_NEEDS_LOCK
 static int test_poll_event_ew(QUIC_XSO *xso)
 {
-    return ossl_quic_stream_has_send(xso->stream)
+    return (ossl_quic_stream_has_send(xso->stream)
         && xso->stream->peer_stop_sending
         && !xso->requested_reset
-        && !xso->conn->shutting_down;
+        && !xso->conn->shutting_down) || xso->stream->conn_tearing_down;
 }
 
 /* Do we have the EC (exception: connection) condition? */
@@ -5211,6 +5216,21 @@ QUIC_NEEDS_LOCK
 static int test_poll_event_ic(QUIC_LISTENER *ql)
 {
     return ossl_quic_port_get_num_incoming_channels(ql->port) > 0;
+}
+
+QUIC_TAKES_LOCK
+void ossl_quic_conn_notify_close(SSL *qc_ssl)
+{
+    QCTX ctx;
+    QUIC_STREAM_MAP *qsm;
+
+    if (!expect_quic_c(qc_ssl, &ctx))
+        return;
+
+    qctx_lock(&ctx);
+    qsm = ossl_quic_channel_get_qsm(ctx.qc->ch);
+    ossl_quic_stream_map_notify_close(qsm);
+    qctx_unlock(&ctx);
 }
 
 QUIC_TAKES_LOCK

@@ -369,6 +369,35 @@ static int poll_readout(SSL_POLL_ITEM *items,
 #ifndef OPENSSL_NO_QUIC
             case SSL_TYPE_QUIC_LISTENER:
             case SSL_TYPE_QUIC_CONNECTION:
+                if (!ossl_quic_conn_poll_events(ssl, events, do_tick, &revents))
+                    /* above call raises ERR */
+                    FAIL_ITEM(i);
+
+                /*
+                 * Current testing happens on local end, that's when
+                 * local application closes connection. From QUIC stack
+		 * point of view there are two events: we first see
+		 * SSL_POLL_EVENT_EC, followed by SSL_POLL_EVENT_ECD.
+                 * More tests are needed to see if it is always the case,
+                 * like:
+                 *     what happens when connection is closed by remote
+                 *     peer,
+                 *     what happens when connection is closed by various
+                 *     shutdown options.
+                 *
+                 * The current plan is to notify all stream which belong
+                 * to connection (channel) when _EC event is triggered.
+                 * We are going to signal error to all streams so application
+                 * can cleanup those streams as a part of its error handling.
+                 */
+                if (revents & SSL_POLL_EVENT_EC) {
+                    ossl_quic_conn_notify_close(ssl);
+                    ++result_count;
+                } else if (revents != 0) {
+                    ++result_count;
+                }
+
+                break;
             case SSL_TYPE_QUIC_XSO:
                 if (!ossl_quic_conn_poll_events(ssl, events, do_tick, &revents))
                     /* above call raises ERR */
