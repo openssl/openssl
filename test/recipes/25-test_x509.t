@@ -16,7 +16,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_x509");
 
-plan tests => 134;
+plan tests => 135;
 
 # Prevent MSys2 filename munging for arguments that look like file paths but
 # aren't
@@ -606,3 +606,53 @@ SKIP: {
 
     ok(run(test(["x509_test", $psscert])), "running x509_test");
 }
+
+# Test case for #27182 -certopt ext_oid for x509 -text
+subtest 'Test -certopt ext_oid for x509 -text' => sub {
+    plan tests => 5;
+
+    my $cert = srctop_file('test', 'certs', 'rootcert.pem');
+    my $stdout_default = "ext_oid_default.tmp";
+    my $stdout_with_oid = "ext_oid_with_oid.tmp";
+
+    # Test default output (no OIDs)
+    ok(run(app(['openssl', 'x509', '-text', '-noout', '-in', $cert], 
+               stdout => $stdout_default)),
+       "Run openssl x509 default");
+       
+    # Read the default output file
+    open my $fh_default, '<', $stdout_default or die "Cannot open $stdout_default: $!";
+    my @default_output = <$fh_default>;
+    close $fh_default;
+    
+    ok(!grep(/\(2\.5\.29\.19\)/, @default_output),
+       "Default output should not contain OID (2.5.29.19) for Basic Constraints");
+
+    # Test with -certopt ext_oid (OIDs should appear)
+    ok(run(app(['openssl', 'x509', '-text', '-noout', '-certopt', 'ext_oid', '-in', $cert],
+               stdout => $stdout_with_oid)),
+       "Run openssl x509 with -certopt ext_oid");
+       
+    # Read the ext_oid output file
+    open my $fh_with_oid, '<', $stdout_with_oid or die "Cannot open $stdout_with_oid: $!";
+    my @oid_output = <$fh_with_oid>;
+    close $fh_with_oid;
+    
+    # Print diagnostic output for debugging
+    diag("ext_oid output sample lines:");
+    for my $line (@oid_output) {
+        if ($line =~ /X509v3/) {
+            diag($line);
+        }
+    }
+    
+    ok(grep(/X509v3 Basic Constraints \(2\.5\.29\.19\)/, @oid_output),
+       "ext_oid output should contain 'X509v3 Basic Constraints (2.5.29.19)'");
+       
+    ok(grep(/X509v3 Subject Key Identifier \(2\.5\.29\.14\)/, @oid_output),
+       "ext_oid output should contain 'X509v3 Subject Key Identifier (2.5.29.14)'");
+       
+    # Clean up temporary files
+    unlink $stdout_default;
+    unlink $stdout_with_oid;
+};

@@ -715,6 +715,12 @@ ASN1 parse unsupported extensions.
 
 Hex dump unsupported extensions.
 
+=item B<ext_oid>
+
+When printing known X.509v3 extensions, print the Object Identifier (OID)
+in parentheses after the extension name. By default, only the name is printed.
+Unknown extensions are always printed with their OID.
+
 =item B<ca_default>
 
 The value used by L<openssl-ca(1)>, equivalent to B<no_issuer>, B<no_pubkey>,
@@ -730,6 +736,10 @@ line.
 Print the contents of a certificate:
 
  openssl x509 -in cert.pem -noout -text
+
+Print the contents of a certificate, showing OIDs for known extensions:
+
+ openssl x509 -in cert.pem -noout -text -certopt ext_oid
 
 Print the "Subject Alternative Name" extension of a certificate:
 
