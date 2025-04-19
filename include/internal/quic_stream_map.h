@@ -314,6 +314,10 @@ struct quic_stream_st {
     unsigned int    ready_for_gc            : 1;
     /* Set to 1 if this is currently counted in the shutdown flush stream count. */
     unsigned int    shutdown_flush          : 1;
+    /* set when underlying connection signals EC, the connection is being closed
+     * by removte peer, while there are still streams hanging around
+     */
+    unsigned int    conn_tearing_down       : 1;
 };
 
 #define QUIC_STREAM_INITIATOR_CLIENT        0
