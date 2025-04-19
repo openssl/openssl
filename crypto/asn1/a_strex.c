@@ -471,6 +471,14 @@ static int do_name_ex(char_io *io_ch, void *arg, const X509_NAME *n,
         indent = 0;
         break;
 
+        case XN_FLAG_SEP_SLASH_PLUS:
+        sep_dn = "/";
+        sep_dn_len = 1;
+        sep_mv = "+";
+        sep_mv_len = 1;
+        indent = 0;
+        break;
+
     default:
         return -1;
     }
