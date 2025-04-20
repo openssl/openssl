@@ -85,6 +85,12 @@ OpenSSL 3.6
 
    *Tim Perry*
 
+ * Increase PKCS12 default macsaltlen from 8 to 16, as per NIST SP
+   800-132 this improves interoperability for newly generated PKCS12
+   stores between FIPS and non-FIPS implementations.
+
+   *Dimitri John Ledkov*
+
 OpenSSL 3.5
 -----------
 
