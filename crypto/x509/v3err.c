@@ -85,6 +85,7 @@ static const ERR_STRING_DATA X509V3_str_reasons[] = {
     {ERR_PACK(ERR_LIB_X509V3, 0, X509V3_R_INVALID_SAFI), "invalid safi"},
     {ERR_PACK(ERR_LIB_X509V3, 0, X509V3_R_INVALID_SECTION), "invalid section"},
     {ERR_PACK(ERR_LIB_X509V3, 0, X509V3_R_INVALID_SYNTAX), "invalid syntax"},
+    {ERR_PACK(ERR_LIB_X509V3, 0, X509V3_R_INVALID_URI), "invalid URI"},
     {ERR_PACK(ERR_LIB_X509V3, 0, X509V3_R_ISSUER_DECODE_ERROR),
      "issuer decode error"},
     {ERR_PACK(ERR_LIB_X509V3, 0, X509V3_R_MISSING_VALUE), "missing value"},

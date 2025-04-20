@@ -35,6 +35,10 @@ static int ipv6_from_asc(unsigned char *v6, const char *in);
 static int ipv6_cb(const char *elem, int len, void *usr);
 static int ipv6_hex(unsigned char *out, const char *in, int inlen);
 
+static int starts_with(const char *str, const char* prefix);
+static int is_valid_uri_char(char c);
+static int is_valid_uri(const char *uri);
+
 /* Add a CONF_VALUE name value pair to stack */
 
 static int x509v3_add_len_value(const char *name, const char *value,
@@ -58,6 +62,14 @@ static int x509v3_add_len_value(const char *name, const char *value,
         goto err;
     if (sk_allocated && (*extlist = sk_CONF_VALUE_new_null()) == NULL) {
         ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
+        goto err;
+    }
+    int err_raised = 0;
+    if (!is_valid_uri(value) && strncmp(name, "URI", 3) == 0) {
+        ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_URI);
+        err_raised = 1;
+    }
+    if (err_raised) {
         goto err;
     }
     vtmp->section = NULL;
@@ -1450,4 +1462,37 @@ int ossl_bio_print_hex(BIO *out, unsigned char *buf, int len)
 
     OPENSSL_free(hexbuf);
     return result;
+}
+
+static int starts_with(const char *str, const char *prefix)
+{
+    return strncmp(str, prefix, strlen(prefix)) == 0;
+}
+
+static int is_valid_uri_char(char c)
+{
+    /* Valid characters include alphanumeric, '-', '_', '.', '~', and reserved characters */
+    return isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~' ||
+           c == '!'|| c == '$' || c == '&' || c == '\'' || c == '(' ||
+           c == ')' || c == '*' || c == '+' || c == ',' || c == ';' ||
+           c == '=' || c == ':' || c == '@' || c == '/' || c == '#' ||
+           c == '[' || c == ']' || c == '?';
+}
+
+static int is_valid_uri(const char *uri)
+{
+    /* Check if URI begins with a valid scheme */
+    if (!(starts_with(uri, "http://") || starts_with(uri, "https://") ||
+        starts_with(uri, "ftp://"))) {
+        return 0;
+    }
+    
+    /* Check the validity of each character in the URI */
+    for (const char *p = uri; *p != '\0'; ++p) {
+        if (!is_valid_uri_char(*p)) {
+            return 0;
+        }
+    }
+    
+    return 1; /* URI is valid */
 }
