@@ -83,7 +83,8 @@ static int xp_cmp(const X509_PURPOSE *const *a, const X509_PURPOSE *const *b)
  * As much as I'd like to make X509_check_purpose use a "const" X509* I really
  * can't because it does recalculate hashes and do other non-const things.
  * If id == -1 it just calls x509v3_cache_extensions() for its side-effect.
- * Returns 1 on success, 0 if x does not allow purpose, -1 on (internal) error.
+ * Returns > 0 on success, -1 on (internal) error,
+ * 0 if x does not allow purpose or is not a CA cert while non_leaf is nonzero
  */
 int X509_check_purpose(X509 *x, int id, int non_leaf)
 {
@@ -139,6 +140,7 @@ X509_PURPOSE *X509_PURPOSE_get0(int idx)
     return sk_X509_PURPOSE_value(xptable, idx - X509_PURPOSE_COUNT);
 }
 
+/* Returns -1 if not found, else an index => 0 in the standard/extended table */
 int X509_PURPOSE_get_by_sname(const char *sname)
 {
     int i;
@@ -152,7 +154,7 @@ int X509_PURPOSE_get_by_sname(const char *sname)
     return -1;
 }
 
-/* Returns -1 on error, else an index => 0 in standard/extended purpose table */
+/* Returns -1 if not found, else an index => 0 in the standard/extended table */
 int X509_PURPOSE_get_by_id(int purpose)
 {
     X509_PURPOSE tmp;
@@ -172,6 +174,7 @@ int X509_PURPOSE_get_by_id(int purpose)
 /*
  * Add purpose entry identified by |sname|. |id| must be >= X509_PURPOSE_MIN.
  * May also be used to modify existing entry, including changing its id.
+ * This overrides a standard purpose if id <= X509_PURPOSE_MAX.
  */
 int X509_PURPOSE_add(int id, int trust, int flags,
     int (*ck)(const X509_PURPOSE *, const X509 *, int),
@@ -435,7 +438,8 @@ static int check_sig_alg_match(const EVP_PKEY *issuer_key, const X509 *subject)
  * e.g., if cert 'x' is self-issued, in x->ex_flags and other internal fields.
  * x->sha1_hash is filled in, or else EXFLAG_NO_FINGERPRINT is set in x->flags.
  * X509_SIG_INFO_VALID is set in x->flags if x->siginf was filled successfully.
- * Set EXFLAG_INVALID and return 0 in case the certificate is invalid.
+ * Set EXFLAG_INVALID and return 0 if the X509 structure is incomplete
+ * or malformed according to superficial checks on some RFC 5280 requirements
  */
 int ossl_x509v3_cache_extensions(X509 *x)
 {
@@ -455,6 +459,10 @@ int ossl_x509v3_cache_extensions(X509 *x)
 
     if (!CRYPTO_THREAD_write_lock(x->lock))
         return 0;
+    /*
+     * The following check could be done much more efficiently without acquiring
+     * a lock first, as simply done by many other functions in crypto/x509/
+     */
     if ((x->ex_flags & EXFLAG_SET) != 0) { /* Cert has already been processed */
         CRYPTO_THREAD_unlock(x->lock);
         return (x->ex_flags & EXFLAG_INVALID) == 0;
@@ -473,14 +481,19 @@ int ossl_x509v3_cache_extensions(X509 *x)
     /* Handle basic constraints */
     x->ex_pathlen = -1;
     if ((bs = X509_get_ext_d2i(x, NID_basic_constraints, &i, NULL)) != NULL) {
+        /*
+         * The error case !bs->ca is checked by check_extensions()
+         * in case ctx->param->flags & X509_V_FLAG_X509_STRICT
+         */
         if (bs->ca)
             x->ex_flags |= EXFLAG_CA;
         if (bs->pathlen != NULL) {
-            /*
-             * The error case !bs->ca is checked by check_chain()
-             * in case ctx->param->flags & X509_V_FLAG_X509_STRICT
-             */
             if (bs->pathlen->type == V_ASN1_NEG_INTEGER) {
+                /*
+                 * This should better be checked by check_extensions()
+                 * and should not directly use the low-level DER TLV stuff but
+                 * compare the result of ASN1_INTEGER_get(bs->pathlen) for < 0
+                 */
                 ERR_raise(ERR_LIB_X509V3, X509V3_R_NEGATIVE_PATHLEN);
                 x->ex_flags |= EXFLAG_INVALID;
             } else {
@@ -794,7 +807,7 @@ static int check_purpose_ns_ssl_server(const X509_PURPOSE *xp, const X509 *x,
 {
     int ret = check_purpose_ssl_server(xp, x, non_leaf);
 
-    if (!ret || non_leaf)
+    if (!ret || non_leaf) /* should check for CA if non_leaf */
         return ret;
     /* We need to encipher or Netscape complains */
     return ku_reject(x, KU_KEY_ENCIPHERMENT) ? 0 : ret;
@@ -971,7 +984,7 @@ static int check_purpose_code_sign(const X509_PURPOSE *xp, const X509 *x,
 static int no_check_purpose(const X509_PURPOSE *xp, const X509 *x,
     int non_leaf)
 {
-    return 1;
+    return 1; /* bug? should anyway check for CA if non_leaf */
 }
 
 /*-

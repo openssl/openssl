@@ -1,0 +1,70 @@
+=pod
+
+=head1 NAME
+
+X509_VERIFY_PARAM_lookup,
+X509_VERIFY_PARAM_get0,
+X509_VERIFY_PARAM_add0_table,
+X509_VERIFY_PARAM_get_count,
+X509_VERIFY_PARAM_table_cleanup
+- X509 verification parameters table management
+
+=head1 SYNOPSIS
+
+ #include <openssl/x509_vfy.h>
+
+ const X509_VERIFY_PARAM *X509_VERIFY_PARAM_lookup(const char *name);
+ const X509_VERIFY_PARAM *X509_VERIFY_PARAM_get0(int id);
+ int X509_VERIFY_PARAM_add0_table(X509_VERIFY_PARAM *param);
+ int X509_VERIFY_PARAM_get_count(void);
+ void X509_VERIFY_PARAM_table_cleanup(void);
+
+=head1 DESCRIPTION
+
+These functions manipulate the internal table of B<X509_VERIFY_PARAM>
+structures to be used in certificate verification.
+
+Currently several standard entries are defined with the following names:
+C<ssl_client>, C<ssl_server>, C<code_sign>,
+C<smime_sign>, C<pkcs7> (which equivalent to C<smime_sign>), and C<default>.
+
+These entries are immutable but the list may be extended.
+
+X509_VERIFY_PARAM_lookup() determines the B<X509_VERIFY_PARAM> structure
+associated with the given I<name> by looking it up in the internal table.
+
+X509_VERIFY_PARAM_get0() returns the B<X509_VERIFY_PARAM> structure
+at table index I<id>, which must be nonnegative.
+
+X509_VERIFY_PARAM_add0_table() adds to the internal table
+the given custom B<X509_VERIFY_PARAM> structure I<param>,
+after deleting any previously added entry with the same name.
+On success, ownership of I<param> is transferred to the table,
+so the caller must not free it in this case.
+
+X509_VERIFY_PARAM_get_count() returns the total number of entries in the table.
+
+X509_VERIFY_PARAM_table_cleanup() removes all custom table entries,
+restoring the original state containing just the standard entries.
+
+=head1 RETURN VALUES
+
+X509_VERIFY_PARAM_lookup() and X509_VERIFY_PARAM_get0()
+return a constant pointer to an B<X509_VERIFY_PARAM> structure or NULL on error.
+b
+X509_VERIFY_PARAM_add0_table() returns 1 on success, 0 on error.
+
+X509_VERIFY_PARAM_get_count() returns a nonnegative integer.
+
+X509_VERIFY_PARAM_table_cleanup() does not return a value.
+
+=head1 COPYRIGHT
+
+Copyright 2024 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut
