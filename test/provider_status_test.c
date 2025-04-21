@@ -157,7 +157,7 @@ static int test_provider_status(void)
         goto err;
 
     /* Test that the provider status is ok */
-    params[0] = OSSL_PARAM_construct_int(OSSL_PROV_PARAM_STATUS, &status);
+    params[0] = OSSL_PARAM_construct_uint(OSSL_PROV_PARAM_STATUS, &status);
     params[1] = OSSL_PARAM_construct_end();
     if (!TEST_true(OSSL_PROVIDER_get_params(prov, params))
         || !TEST_true(status == 1))
