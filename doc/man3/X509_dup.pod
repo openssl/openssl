@@ -442,6 +442,8 @@ X509_SIG_free,
 X509_SIG_new,
 X509_VAL_free,
 X509_VAL_new,
+X509_VERIFY_PARAM_new,
+X509_VERIFY_PARAM_free,
 X509_dup,
 - ASN1 object utilities
 
@@ -489,7 +491,8 @@ The macro IMPLEMENT_ASN1_FUNCTIONS() is used once in a source file
 to generate the function bodies.
 
 
-B<I<TYPE>_new>() allocates an empty object of the indicated type.
+B<I<TYPE>_new>() allocates an object of the indicated type
+with default field values.
 The object returned must be released by calling B<I<TYPE>_free>().
 
 B<I<TYPE>_new_ex>() is similar to B<I<TYPE>_new>() but also passes the

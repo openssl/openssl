@@ -40,13 +40,15 @@ X509_PURPOSE_set - functions related to checking the purpose of a certificate
 
 =head1 DESCRIPTION
 
-X509_check_purpose() checks if certificate I<x> was created with the purpose
-represented by I<id>. If I<ca> is nonzero, then certificate I<x> is
-checked to determine if it's a possible CA with various levels of certainty
-possibly returned. The certificate I<x> must be a complete certificate
+X509_check_purpose() checks if certificate I<x> supports the purpose
+represented by I<id>.
+If I<ca> is nonzero, then certificate I<x> is checked to determine
+if it is a CA certificiate, with various levels of certainty returned.
+The certificate I<x> must be a complete certificate
 otherwise the function returns an error.
 
-Below are the potential ID's that can be checked:
+See L<openssl-verification-options(1)/Purposes> for details on purposes.
+Below are the standard purpose IDs that can be checked:
 
  # define X509_PURPOSE_SSL_CLIENT        1
  # define X509_PURPOSE_SSL_SERVER        2
@@ -59,8 +61,14 @@ Below are the potential ID's that can be checked:
  # define X509_PURPOSE_TIMESTAMP_SIGN    9
  # define X509_PURPOSE_CODE_SIGN        10
 
-The checks performed take into account the X.509 extensions
-keyUsage, extendedKeyUsage, and basicConstraints.
+Further purposes may also be checked
+if custom purposes were added using L<X509_PURPOSE_add(3)>.
+
+Note that the type of the I<x> parameter is not B<const X509 *>.
+This is because, as a side effect, the function needs to make sure
+that X.509 extensions etc. are cached in I<*x> before being able to check them.
+If the function is called with I<id> being -1, just this caching is performed
+and then the function returns 1 without actually checking a purpose.
 
 X509_PURPOSE_get_count() returns the number of currently defined purposes.
 
@@ -102,38 +110,38 @@ This resets to the any purpose if I<purpose> is B<X509_PURPOSE_DEFAULT_ANY>.
 =head1 RETURN VALUES
 
 X509_check_purpose() returns the following values.
-For non-CA checks
+
+It returns -1 if an error condition occurred,
+for instance the purpose I<id> is invalid
+or I<x> does not point to a complete certificate structure
+or some further basic well-formedness checks failed.
+
+It returns 0 if I<x> does not support the purpose represented by I<id>.
+
+Otherwise, it returns 1 if I<ca> is 0.
+If I<ca> is nonzero, which means that the certificate is supposed to be a
+CA certificate, it can return the following values with the given meanings:
 
 =over 4
 
-=item -1 an error condition has occurred
+=item 0 not a CA certificate (or does not support the purpose I<id>)
 
-=item E<32>1 if the certificate was created to perform the purpose represented by I<id>
+=item 1 clearly is a CA certificate
 
-=item E<32>0 if the certificate was not created to perform the purpose represented by I<id>
+=item 2 Only possible in old OpenSSL versions when basicConstraints are absent.
+        New versions will not return this value. May be a CA certificate.
 
-=back
+=item 3 self-signed X.509v1 certificate (which cannot have basicConstraints)
 
-For CA checks the below integers could be returned with the following meanings:
+=item 4 basicConstraints absent but keyUsage present and keyCertSign asserted
 
-=over 4
-
-=item -1 an error condition has occurred
-
-=item E<32>0 not a CA or does not have the purpose represented by I<id>
-
-=item E<32>1 is a CA.
-
-=item E<32>2 Only possible in old versions of openSSL when basicConstraints are absent.
-         New versions will not return this value. May be a CA
-
-=item E<32>3 basicConstraints absent but self signed V1.
-
-=item E<32>4 basicConstraints absent but keyUsage present and keyCertSign asserted.
-
-=item E<32>5 legacy Netscape specific CA Flags present
+=item 5 legacy Netscape-specific CA flags present
 
 =back
+
+=head1 SEE ALSO
+
+L<X509_PURPOSE_add(3)>
 
 X509_PURPOSE_get_count() returns the number of currently defined purposes.
 
