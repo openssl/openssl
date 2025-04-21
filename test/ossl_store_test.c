@@ -58,6 +58,43 @@ static int test_store_open(void)
     return ret;
 }
 
+#ifndef OPENSSL_NO_WINSTORE
+static int test_store_open_winstore(void)
+{
+    int ret = 0;
+    OSSL_STORE_CTX *sctx = NULL;
+    OSSL_STORE_SEARCH *search = NULL;
+    UI_METHOD *ui_method = NULL;
+    OSSL_STORE_INFO *info = NULL;
+    X509_NAME *name = X509_NAME_new();
+
+    /*
+     * Test the winstore, by opening it, searching for the MS root certificate
+     * and ensure that it was found.  Note that we have to search by
+     * subject name, as winstore only allows searches by that method
+     */
+    ret = TEST_ptr(name)
+        && TEST_true(X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC, (unsigned char *)"Microsoft Root Certificate Authority 2011", -1, -1, 0))
+        && TEST_true(X509_NAME_add_entry_by_txt(name, "O", MBSTRING_ASC, (unsigned char *)"Microsoft Corporation", -1, -1, 0))
+        && TEST_true(X509_NAME_add_entry_by_txt(name, "L", MBSTRING_ASC, (unsigned char *)"Redmond", -1, -1, 0))
+        && TEST_true(X509_NAME_add_entry_by_txt(name, "S", MBSTRING_ASC, (unsigned char *)"Washington", -1, -1, 0))
+        && TEST_true(X509_NAME_add_entry_by_txt(name, "C", MBSTRING_ASC, (unsigned char *)"US", -1, -1, 0))
+        && TEST_ptr(search = OSSL_STORE_SEARCH_by_name(name))
+        && TEST_ptr(ui_method = UI_create_method("DummyUI"))
+        && TEST_ptr(sctx = OSSL_STORE_open_ex("org.openssl.winstore:", NULL,
+            NULL, ui_method, NULL, NULL,
+            NULL, NULL))
+        && TEST_true(OSSL_STORE_find(sctx, search))
+        && !TEST_ptr(info = OSSL_STORE_load(sctx));
+    UI_destroy_method(ui_method);
+    OSSL_STORE_INFO_free(info);
+    OSSL_STORE_SEARCH_free(search);
+    OSSL_STORE_close(sctx);
+    X509_NAME_free(name);
+    return ret;
+}
+#endif
+
 static int test_store_search_by_key_fingerprint_fail(void)
 {
     int ret;
@@ -230,6 +267,9 @@ int setup_tests(void)
 
     if (infile != NULL)
         ADD_TEST(test_store_open);
+#ifndef OPENSSL_NO_WINSTORE
+    ADD_TEST(test_store_open_winstore);
+#endif
     ADD_TEST(test_store_search_by_key_fingerprint_fail);
     ADD_ALL_TESTS(test_store_get_params, 3);
     if (sm2file != NULL)
