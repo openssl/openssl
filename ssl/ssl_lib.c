@@ -1135,52 +1135,55 @@ int SSL_set_trust(SSL *s, int trust)
     return X509_VERIFY_PARAM_set_trust(sc->param, trust);
 }
 
-int SSL_set1_host(SSL *s, const char *hostname)
+int SSL_set1_host(SSL *s, const char *host)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
 
     if (sc == NULL)
         return 0;
 
-    /* If a hostname is provided and parses as an IP address,
-     * treat it as such. */
-    if (hostname != NULL
-        && X509_VERIFY_PARAM_set1_ip_asc(sc->param, hostname) == 1)
+    /* clear hostname(s) and IP address in any case, also if host parses as an IP address */
+    (void)X509_VERIFY_PARAM_set1_host(sc->param, NULL, 0);
+    (void)X509_VERIFY_PARAM_set1_ip(sc->param, NULL, 0);
+    if (host == NULL)
         return 1;
 
-    return X509_VERIFY_PARAM_set1_host(sc->param, hostname, 0);
+    /* If a host is provided and parses as an IP address, treat it as such. */
+    return X509_VERIFY_PARAM_set1_ip_asc(sc->param, host)
+        || X509_VERIFY_PARAM_set1_host(sc->param, host, 0);
 }
 
-int SSL_add1_host(SSL *s, const char *hostname)
+int SSL_add1_host(SSL *s, const char *host)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
 
     if (sc == NULL)
         return 0;
 
-    /* If a hostname is provided and parses as an IP address,
-     * treat it as such. */
-    if (hostname) {
+    /* If a host is provided and parses as an IP address, treat it as such. */
+    if (host != NULL) {
         ASN1_OCTET_STRING *ip;
         char *old_ip;
 
-        ip = a2i_IPADDRESS(hostname);
-        if (ip) {
+        ip = a2i_IPADDRESS(host);
+        if (ip != NULL) {
             /* We didn't want it; only to check if it *is* an IP address */
             ASN1_OCTET_STRING_free(ip);
 
             old_ip = X509_VERIFY_PARAM_get1_ip_asc(sc->param);
-            if (old_ip) {
+            if (old_ip != NULL) {
                 OPENSSL_free(old_ip);
                 /* There can be only one IP address */
+                ERR_raise_data(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT,
+                               "IP address was already set");
                 return 0;
             }
 
-            return X509_VERIFY_PARAM_set1_ip_asc(sc->param, hostname);
+            return X509_VERIFY_PARAM_set1_ip_asc(sc->param, host);
         }
     }
 
-    return X509_VERIFY_PARAM_add1_host(sc->param, hostname, 0);
+    return X509_VERIFY_PARAM_add1_host(sc->param, host, 0);
 }
 
 void SSL_set_hostflags(SSL *s, unsigned int flags)
