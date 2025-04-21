@@ -34,7 +34,9 @@ problems, this program attempts to display all of them.
 
 =item B<-help>
 
-Print out a usage message.
+Print out a usage message, listing the available options as well as the
+recognized certificate verification purposes (for use with B<-purpose>)
+and recognized names of verification parameters (for use with B<-verify_name>).
 
 =item B<-CRLfile> I<filename>|I<uri>
 
@@ -91,9 +93,9 @@ with a B<->.
 
 =item I<certificate> ...
 
-One or more target certificates to verify, one per file. If no certificates are
-given, this command will attempt to read a single certificate from standard
-input.
+List of one or more files providing target certificates to verify, one per file.
+If no files are given,
+this command will attempt to read a single certificate from standard input.
 
 =back
 

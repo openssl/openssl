@@ -94,14 +94,20 @@ It must be called before each call to L<X509_verify_cert(3)> or
 L<X509_STORE_CTX_verify(3)>, i.e., a context is only good for one verification.
 If you want to verify a further certificate or chain with the same I<ctx>
 then you must call X509_STORE_CTX_init() again.
+
+Among others, the verification parameters with name C<default> are set.
+
 The trusted certificate store is set to I<trust_store> of type B<X509_STORE>.
 This may be NULL because there are no trusted certificates or because
 they are provided simply as a list using X509_STORE_CTX_set0_trusted_stack().
+
 The certificate to be verified is set to I<target>,
 and a list of additional certificates may be provided in I<untrusted>,
 which will be untrusted but may be used to build the chain.
+
 The I<target> certificate is not copied (its reference count is not updated),
 and the caller must not free it before verification is complete.
+
 Each of the I<trust_store>, I<target> and I<untrusted> parameters can be NULL.
 Yet note that L<X509_verify_cert(3)> and L<X509_STORE_CTX_verify(3)>
 will need a verification target.
@@ -181,13 +187,14 @@ by I<ctx> to be I<chain>.
 Ownership of the chain is transferred to I<ctx>,
 and so it should not be free'd by the caller.
 
-X509_STORE_CTX_set_default() looks up and sets the default verification method.
-This uses the function X509_VERIFY_PARAM_lookup() to find
-the set of parameters associated with the given verification method I<name>.
-Among others, the parameters determine the trust model and verification purpose.
+X509_STORE_CTX_set_default() looks up and sets the default verification method
+in I<ctx> using the function L<X509_VERIFY_PARAM_inherit(3)>.
+This uses the function L<X509_VERIFY_PARAM_lookup(3)> to find the set of
+verification parameters associated with the given verification method I<name>.
+Among others, the parameters determine the trust model and verification purpose,
+unless the purpose was already set before and B<X509_VP_FLAG_OVERWRITE> is not set.
 More detail, including the list of currently predefined methods,
-is described for the B<-verify_name> command-line option
-in L<openssl-verification-options(1)/Verification Options>.
+is described in L<openssl-verification-options(1)/Verification Methods>.
 
 X509_STORE_CTX_set_verify() provides the capability for overriding the default
 verify function. This function is responsible for verifying chain signatures and
@@ -312,6 +319,7 @@ used.
 
 =head1 SEE ALSO
 
+L<X509_VERIFY_PARAM_lookup(3)>, L<X509_VERIFY_PARAM_inherit(3)>,
 L<X509_verify_cert(3)>, L<X509_STORE_CTX_verify(3)>,
 L<X509_VERIFY_PARAM_set_flags(3)>
 
