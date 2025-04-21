@@ -2,6 +2,8 @@
 
 =head1 NAME
 
+X509_VERIFY_PARAM_inherit, X509_VERIFY_PARAM_set1,
+X509_VERIFY_PARAM_set1_name, X509_VERIFY_PARAM_get0_name,
 X509_VERIFY_PARAM_set_flags, X509_VERIFY_PARAM_clear_flags,
 X509_VERIFY_PARAM_get_flags, X509_VERIFY_PARAM_set_purpose,
 X509_VERIFY_PARAM_get_purpose,
@@ -11,13 +13,20 @@ X509_VERIFY_PARAM_get_depth, X509_VERIFY_PARAM_set_auth_level,
 X509_VERIFY_PARAM_get_auth_level, X509_VERIFY_PARAM_set_time,
 X509_VERIFY_PARAM_get_time,
 X509_VERIFY_PARAM_add0_policy, X509_VERIFY_PARAM_set1_policies,
-X509_VERIFY_PARAM_get0_peername
+X509_VERIFY_PARAM_get0_peername, X509_VERIFY_PARAM_move_peername
 - X509 verification parameters
 
 =head1 SYNOPSIS
 
  #include <openssl/x509_vfy.h>
 
+ int X509_VERIFY_PARAM_inherit(X509_VERIFY_PARAM *dest,
+                               const X509_VERIFY_PARAM *src);
+ int X509_VERIFY_PARAM_set1(X509_VERIFY_PARAM *dest,
+                            const X509_VERIFY_PARAM *src);
+
+ int X509_VERIFY_PARAM_set1_name(X509_VERIFY_PARAM *param, const char *name);
+ const char *X509_VERIFY_PARAM_get0_name(const X509_VERIFY_PARAM *param);
  int X509_VERIFY_PARAM_set_flags(X509_VERIFY_PARAM *param,
                                  unsigned long flags);
  int X509_VERIFY_PARAM_clear_flags(X509_VERIFY_PARAM *param,
@@ -48,6 +57,8 @@ X509_VERIFY_PARAM_get0_peername
  int X509_VERIFY_PARAM_get_auth_level(const X509_VERIFY_PARAM *param);
 
  char *X509_VERIFY_PARAM_get0_peername(const X509_VERIFY_PARAM *param);
+ void X509_VERIFY_PARAM_move_peername(X509_VERIFY_PARAM *dest,
+                                      X509_VERIFY_PARAM *src);
 
 =head1 DESCRIPTION
 
@@ -66,6 +77,23 @@ configuring its reference identifiers (hostnames, email addresses, and
 IP addresses) are documented in
 L<X509_VERIFY_PARAM_set1_host(3)>.
 
+X509_VERIFY_PARAM_inherit() returns success if I<src> is NULL.  Otherwise,
+it copies the parameters from the B<X509_VERIFY_PARAM> structure I<src> to
+I<dest>, depending on the inheritance flags of I<src> and I<dest> ORed together.
+See the L</INHERITANCE FLAGS> section for a description of these bits.
+Yet if in the resulting flags B<X509_VP_FLAG_LOCKED> is set, it just
+returns success (after resetting the inheritance flags of I<dest>
+if the B<X509_VP_FLAG_ONCE> flag is set).
+The flags in I<dest> get ORed by those in I<src>.
+
+X509_VERIFY_PARAM_set1() acts like X509_VERIFY_PARAM_inherit() while in addition
+B<X509_VP_FLAG_DEFAULT> is temporarily set in the inheritance flags of I<dest>,
+and finally restores the original inheritance flags of I<dest>.
+
+X509_VERIFY_PARAM_set1_name() copies the given I<name> as the name of I<param>.
+
+X509_VERIFY_PARAM_get0_name() returns the name set for I<param>.
+
 The X509_VERIFY_PARAM_set_flags() function sets the flags in I<param> by
 ORing it with I<flags>. See L</VERIFICATION FLAGS> for a complete
 description of values the I<flags> parameter can take.
@@ -80,9 +108,11 @@ another. X509_VERIFY_PARAM_set_inh_flags() sets the inheritance flags.
 See the L</INHERITANCE FLAGS> section for a description of these bits.
 
 X509_VERIFY_PARAM_set_purpose() sets the verification purpose in I<param>
-to I<purpose>. This determines the acceptable purpose of the certificate
+to I<purpose>. This determines the acceptable use of the certificate
 chain, for example B<X509_PURPOSE_SSL_CLIENT>.
-The purpose requirement is cleared if I<purpose> is B<X509_PURPOSE_DEFAULT_ANY>.
+See L<openssl-verification-options(1)/Purposes> for details.
+The purpose requirement is cleared if I<purpose> is B<X509_PURPOSE_DEFAULT_ANY>,
+which is the default.
 
 X509_VERIFY_PARAM_get_purpose() returns the purpose in I<param>.
 
@@ -117,12 +147,12 @@ I<depth>. That is the maximum number of intermediate CA certificates that
 can appear in a chain. If X509_VERIFY_PARAM_set_depth() is not called,
 the verification depth defaults to 100.
 A maximal depth chain contains 2 more certificates than the limit, since
-neither the end-entity certificate nor the trust-anchor count against this
-limit.
-Thus a I<depth> limit of 0 only allows the end-entity certificate to be signed
+neither the target certificate nor the trust-anchor count against this limit.
+Thus a I<depth> limit of 0 only allows the target certificate to be signed
 directly by the trust anchor, while with a I<depth> limit of 1 there can be one
 intermediate CA certificate between the trust anchor and the end-entity
 certificate.
+The default value is -1, meaning "no maximum".
 
 X509_VERIFY_PARAM_set_auth_level() sets the authentication security level to
 I<auth_level>.
@@ -135,7 +165,7 @@ anchor> certificate, which is either directly trusted or validated by means othe
 than its signature.
 See L<SSL_CTX_set_security_level(3)> for the definitions of the available
 levels.
-The default security level is -1, or "not set".
+The default security level is -1, meaning "not set".
 At security level 0 or lower all algorithms are acceptable.
 Security level 1 requires at least 80-bit-equivalent security and is broadly
 interoperable, though it will, for example, reject MD5 signatures or RSA keys
@@ -152,13 +182,22 @@ reference identifier respectively. The returned string is allocated by
 the library and is no longer valid once the associated I<param> argument
 is freed. Applications must not free the return value.
 
+X509_VERIFY_PARAM_move_peername() copies the peername from the
+B<X509_VERIFY_PARAM> structure I<src> to the structure <dest> and removes it
+from I<src>. If I<src> is NULL, it just removes the peername from <dest>.
+
 =head1 RETURN VALUES
 
+X509_VERIFY_PARAM_inherit(), X509_VERIFY_PARAM_set1(),
+X509_VERIFY_PARAM_set1_name(),
 X509_VERIFY_PARAM_set_flags(), X509_VERIFY_PARAM_clear_flags(),
 X509_VERIFY_PARAM_set_inh_flags(),
 X509_VERIFY_PARAM_set_purpose(), X509_VERIFY_PARAM_set_trust(),
 X509_VERIFY_PARAM_add0_policy(), and X509_VERIFY_PARAM_set1_policies()
 return 1 for success and 0 for failure.
+
+X509_VERIFY_PARAM_get0_name() returns a string pointer
+or NULL if the value has not been set or on error.
 
 X509_VERIFY_PARAM_get0_peername() returns a pointer to the name from the
 peer certificate that matched a configured reference identifier, or NULL
@@ -175,9 +214,14 @@ X509_VERIFY_PARAM_get_time() returns the verification time previously
 configured on I<param> via X509_VERIFY_PARAM_set_time().
 
 X509_VERIFY_PARAM_get_depth() returns the current verification depth.
-
 X509_VERIFY_PARAM_get_auth_level() returns the current authentication security
 level.
+X509_VERIFY_PARAM_get_time() returns the verification time, NULL if unset.
+
+X509_VERIFY_PARAM_set_time(), X509_VERIFY_PARAM_set_depth(),
+X509_VERIFY_PARAM_set_auth_level(), X509_VERIFY_PARAM_set_hostflags(),
+and X509_VERIFY_PARAM_move_peername() do not return values.
+
 
 X509_VERIFY_PARAM_get_purpose() returns the current purpose,
 which may be B<X509_PURPOSE_DEFAULT_ANY> if unset.
@@ -219,7 +263,7 @@ to the verification callback relating to policy checking.
 
 B<X509_V_FLAG_EXPLICIT_POLICY>, B<X509_V_FLAG_INHIBIT_ANY>, and
 B<X509_V_FLAG_INHIBIT_MAP> set the C<require explicit policy>, C<inhibit
-any policy>, and C<inhibit policy mapping> flags respectively as defined
+any policy>, and C<inhibit policy mapping> flags, respectively, as defined
 in RFC 5280. Policy checking is automatically enabled if any of these
 flags is set.
 

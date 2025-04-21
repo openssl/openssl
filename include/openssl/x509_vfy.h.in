@@ -134,7 +134,7 @@ int X509_TRUST_get_flags(const X509_TRUST *xp);
 char *X509_TRUST_get0_name(const X509_TRUST *xp);
 int X509_TRUST_get_trust(const X509_TRUST *xp);
 
-int X509_trusted(const X509 *x);
+int X509_trusted(const X509 *x); /* very misleading name */
 int X509_add1_trust_object(X509 *x, const ASN1_OBJECT *obj);
 int X509_add1_reject_object(X509 *x, const ASN1_OBJECT *obj);
 void X509_trust_clear(X509 *x);
