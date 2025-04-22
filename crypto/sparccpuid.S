@@ -422,7 +422,3 @@ _sparcv9_vis1_instrument_bus2:
 	sub	%o3,%o1,%o0
 .type	_sparcv9_vis1_instrument_bus2,#function
 .size	_sparcv9_vis1_instrument_bus2,.-_sparcv9_vis1_instrument_bus2
-
-.section	".init",#alloc,#execinstr
-	call	OPENSSL_cpuid_setup
-	nop

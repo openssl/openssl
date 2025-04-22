@@ -30,9 +30,6 @@ print<<___;
 #include crypto/cryptlib.h
 .extern		OPENSSL_cpuid_setup
 .hidden		OPENSSL_cpuid_setup
-.section	.init
-	call	OPENSSL_cpuid_setup
-
 .hidden	OPENSSL_ia32cap_P
 .comm	OPENSSL_ia32cap_P,40,4	# <--Should match with internal/cryptlib.h OPENSSL_IA32CAP_P_MAX_INDEXES
 .text

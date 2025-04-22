@@ -15,8 +15,6 @@ $::lbdecor="L\$";		# local label decoration
 $nmdecor="_";			# external name decoration
 $drdecor=$::mwerks?".":"";	# directive decoration
 
-$initseg="";
-
 sub ::generic
 { my $opcode=shift;
   my $tmp;
@@ -133,7 +131,6 @@ ___
 	grep {s/(^extern\s+${nmdecor}OPENSSL_ia32cap_P)/\;$1/} @out;
 	push (@out,$comm)
     }
-    push (@out,$initseg) if ($initseg);
 }
 
 sub ::comment {   foreach (@_) { push(@out,"\t; $_\n"); }   }
@@ -159,17 +156,6 @@ sub ::align
 sub ::picmeup
 { my($dst,$sym)=@_;
     &::lea($dst,&::DWP($sym));
-}
-
-sub ::initseg
-{ my $f=$nmdecor.shift;
-    if ($::win32)
-    {	$initseg=<<___;
-segment	.CRT\$XCU data align=4
-extern	$f
-dd	$f
-___
-    }
 }
 
 sub ::dataseg
