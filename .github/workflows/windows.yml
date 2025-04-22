@@ -18,42 +18,46 @@ jobs:
     strategy:
       matrix:
         platform:
-          - arch: win64
+          - arch: amd64
             os: windows-2022
             config: enable-lms enable-fips
-          - arch: win64
+            vcvars: C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat
+          - arch: amd64
             os: windows-2025
             config: enable-lms enable-fips no-thread-pool no-quic
-          - arch: win32
-            os: windows-2025
-            config: --strict-warnings enable-lms no-fips
+            vcvars: C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat
+          - arch: x86
+            os: windows-2022
+            config: --strict-warnings no-fips enable-lms
+            vcvars: C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars32.bat
     runs-on: ${{ matrix.platform.os }}
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
-    - uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 #v1.13.0
-      with:
-        arch: ${{ matrix.platform.arch }}
     - name: install nasm
       run: |
-        choco install nasm ${{ matrix.platform.arch == 'win32' && '--x86' || '' }}
-        "C:\Program Files${{ matrix.platform.arch == 'win32' && ' (x86)' || '' }}\NASM" | Out-File -FilePath "$env:GITHUB_PATH" -Append
+        choco install nasm ${{ matrix.platform.arch == 'x86' && '--x86' || '' }}
+        "C:\Program Files${{ matrix.platform.arch == 'x86' && ' (x86)' || '' }}\NASM" | Out-File -FilePath "$env:GITHUB_PATH" -Append
     - name: prepare the build directory
       run: mkdir _build
     - name: config
       working-directory: _build
+      shell: cmd
       run: |
+        call "${{ matrix.platform.vcvars }}"
         perl ..\Configure --banner=Configured --strict-warnings no-makedepend -DOSSL_WINCTX=openssl ${{ matrix.platform.config }}
         perl configdata.pm --dump
     - name: build
       working-directory: _build
-      run: nmake /S
+      shell: cmd
+      run: |
+        call "${{ matrix.platform.vcvars }}"
+        nmake /S
     - name: download coreinfo
-      uses: suisei-cn/actions-download-file@818d6b7dc8fe73f2f924b6241f2b1134ca1377d9 #v1.6.0
-      with:
-        url: "https://download.sysinternals.com/files/Coreinfo.zip"
-        target: _build/coreinfo/
+      run: |
+        mkdir _build\coreinfo
+        Invoke-WebRequest -Uri "https://download.sysinternals.com/files/Coreinfo.zip" -outfile "_build\coreinfo\Coreinfo.zip"
     - name: Gather openssl version info
       working-directory: _build
       run: |
@@ -81,40 +85,45 @@ jobs:
       run: perl ../util/checkplatformsyms.pl ../util/platform_symbols/windows-symbols.txt libcrypto-3-x64.dll ./libssl-3-x64.dll
     - name: test
       working-directory: _build
-      run: nmake test VERBOSE_FAILURE=yes TESTS=-test_fuzz* HARNESS_JOBS=4
+      shell: cmd
+      run: |
+        call "${{ matrix.platform.vcvars }}"
+        nmake test VERBOSE_FAILURE=yes TESTS=-test_fuzz* HARNESS_JOBS=4
     - name: install
       # Run on 64 bit only as 32 bit is slow enough already
-      if: ${{ matrix.platform.arch == 'win64' }}
+      if: ${{ matrix.platform.arch == 'amd64' }}
+      working-directory: _build
+      shell: cmd
       run: |
+        call "${{ matrix.platform.vcvars }}"
         mkdir _dest
         nmake install DESTDIR=_dest
-      working-directory: _build
+
   plain:
-    strategy:
-      matrix:
-        os:
-          - windows-2022
-    runs-on: ${{ matrix.os }}
+    runs-on: windows-2022
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
-    - uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 #v1.13.0
     - name: prepare the build directory
       run: mkdir _build
     - name: config
       working-directory: _build
+      shell: cmd
       run: |
+        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
         perl ..\Configure --banner=Configured --strict-warnings enable-demos no-makedepend no-shared no-fips enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-trace enable-crypto-mdebug -DOSSL_WINCTX=openssl VC-WIN64A-masm
         perl configdata.pm --dump
     - name: build
       working-directory: _build
-      run: nmake /S
+      shell: cmd
+      run: |
+        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+        nmake /S
     - name: download coreinfo
-      uses: suisei-cn/actions-download-file@818d6b7dc8fe73f2f924b6241f2b1134ca1377d9 #v1.6.0
-      with:
-        url: "https://download.sysinternals.com/files/Coreinfo.zip"
-        target: _build/coreinfo/
+      run: |
+        mkdir _build\coreinfo
+        Invoke-WebRequest -Uri "https://download.sysinternals.com/files/Coreinfo.zip" -outfile "_build\coreinfo\Coreinfo.zip"
     - name: get cpu info
       working-directory: _build
       continue-on-error: true
@@ -124,33 +133,36 @@ jobs:
         ./apps/openssl.exe version -c
     - name: test
       working-directory: _build
-      run: nmake test VERBOSE_FAILURE=yes HARNESS_JOBS=4
+      shell: cmd
+      run: |
+        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+        nmake test VERBOSE_FAILURE=yes HARNESS_JOBS=4
+
   minimal:
-    strategy:
-      matrix:
-        os:
-          - windows-2022
-    runs-on: ${{ matrix.os }}
+    runs-on: windows-2019
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
-    - uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 #v1.13.0
     - name: prepare the build directory
       run: mkdir _build
     - name: config
       working-directory: _build
+      shell: cmd
       run: |
+        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
         perl ..\Configure --banner=Configured --strict-warnings enable-demos no-makedepend no-bulk no-deprecated no-fips no-asm no-threads -DOPENSSL_SMALL_FOOTPRINT -DOSSL_WINCTX=openssl
         perl configdata.pm --dump
     - name: build
       working-directory: _build
-      run: nmake # verbose, so no /S here
+      shell: cmd
+      run: |
+        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+        nmake
     - name: download coreinfo
-      uses: suisei-cn/actions-download-file@818d6b7dc8fe73f2f924b6241f2b1134ca1377d9 #v1.6.0
-      with:
-        url: "https://download.sysinternals.com/files/Coreinfo.zip"
-        target: _build/coreinfo/
+      run: |
+        mkdir _build\coreinfo
+        Invoke-WebRequest -Uri "https://download.sysinternals.com/files/Coreinfo.zip" -outfile "_build\coreinfo\Coreinfo.zip"
     - name: get cpu info
       working-directory: _build
       continue-on-error: true
@@ -160,7 +172,11 @@ jobs:
         ./apps/openssl.exe version -c
     - name: test
       working-directory: _build
-      run: nmake test VERBOSE_FAILURE=yes TESTS=-test_fuzz* HARNESS_JOBS=4
+      shell: cmd
+      run: |
+        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+        nmake test VERBOSE_FAILURE=yes TESTS=-test_fuzz* HARNESS_JOBS=4
+
   cygwin:
     # Run a job for each of the specified target architectures:
     strategy:
