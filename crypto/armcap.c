@@ -62,10 +62,6 @@ uint32_t OPENSSL_rdtsc(void)
 
  /* First determine if getauxval() is available (OSSL_IMPLEMENT_GETAUXVAL) */
 
-# if defined(__GNUC__) && __GNUC__>=2
-void OPENSSL_cpuid_setup(void) __attribute__ ((constructor));
-# endif
-
 # if defined(__GLIBC__) && defined(__GLIBC_PREREQ)
 #  if __GLIBC_PREREQ(2, 16)
 #   include <sys/auxv.h>

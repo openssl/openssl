@@ -14,8 +14,6 @@ package x86gas;
 $::lbdecor=$::aout?"L":".L";		# local label decoration
 $nmdecor=($::aout or $::coff)?"_":"";	# external name decoration
 
-$initseg="";
-
 $align=16;
 $align=log($align)/log(2) if ($::aout);
 $com_start="#" if ($::aout or $::coff);
@@ -173,7 +171,6 @@ sub ::file_end
 	elsif ($::elf)	{ push (@out,"$tmp,4\n"); }
 	else		{ push (@out,"$tmp\n"); }
     }
-    push(@out,$initseg) if ($initseg);
     if ($::elf) {
 	push(@out,"
 	.section \".note.gnu.property\", \"a\"
@@ -235,48 +232,6 @@ sub ::picmeup
     }
     else
     {	&::lea($dst,&::DWP($sym));	}
-}
-
-sub ::initseg
-{ my $f=$nmdecor.shift;
-
-    if ($::android)
-    {	$initseg.=<<___;
-.section	.init_array
-.align	4
-.long	$f
-___
-    }
-    elsif ($::elf)
-    {	$initseg.=<<___;
-.section	.init
-	call	$f
-___
-    }
-    elsif ($::coff)
-    {   $initseg.=<<___;	# applies to both Cygwin and Mingw
-.section	.ctors
-.long	$f
-___
-    }
-    elsif ($::macosx)
-    {	$initseg.=<<___;
-.mod_init_func
-.align 2
-.long   $f
-___
-    }
-    elsif ($::aout)
-    {	my $ctor="${nmdecor}_GLOBAL_\$I\$$f";
-	$initseg.=".text\n";
-	$initseg.=".type	$ctor,\@function\n" if ($::pic);
-	$initseg.=<<___;	# OpenBSD way...
-.globl	$ctor
-.align	2
-$ctor:
-	jmp	$f
-___
-    }
 }
 
 sub ::dataseg
