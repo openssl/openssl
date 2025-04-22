@@ -370,6 +370,7 @@ int pkeyutl_main(int argc, char **argv)
             if (EVP_PKEY_CTX_ctrl_str(ctx, opt, passwd) <= 0) {
                 BIO_printf(bio_err, "%s: Can't set parameter \"%s\":\n",
                            prog, opt);
+                OPENSSL_free(passwd);
                 goto end;
             }
             OPENSSL_free(passwd);
