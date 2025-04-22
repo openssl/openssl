@@ -31,9 +31,10 @@ jobs:
     - uses: ilammy/msvc-dev-cmd@v1
       with:
         arch: ${{ matrix.platform.arch }}
-    - uses: ilammy/setup-nasm@v1
-      with:
-        platform: ${{ matrix.platform.arch }}
+    - name: install nasm
+      run: |
+        choco install nasm ${{ matrix.platform.arch == 'win32' && '--x86' || '' }}
+        "C:\Program Files${{ matrix.platform.arch == 'win32' && ' (x86)' || '' }}\NASM" | Out-File -FilePath "$env:GITHUB_PATH" -Append
     - uses: shogo82148/actions-setup-perl@v1
     - name: prepare the build directory
       run: mkdir _build
