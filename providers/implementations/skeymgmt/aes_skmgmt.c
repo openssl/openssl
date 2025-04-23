@@ -48,5 +48,7 @@ const OSSL_DISPATCH ossl_aes_skeymgmt_functions[] = {
     { OSSL_FUNC_SKEYMGMT_FREE, (void (*)(void))generic_free },
     { OSSL_FUNC_SKEYMGMT_IMPORT, (void (*)(void))aes_import },
     { OSSL_FUNC_SKEYMGMT_EXPORT, (void (*)(void))aes_export },
+    { OSSL_FUNC_SKEYMGMT_IMP_SETTABLE_PARAMS,
+      (void (*)(void))generic_imp_settable_params },
     OSSL_DISPATCH_END
 };
