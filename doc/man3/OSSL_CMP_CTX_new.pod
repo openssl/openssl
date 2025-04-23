@@ -106,7 +106,7 @@ OSSL_CMP_CTX_set1_senderNonce
  /* server authentication: */
  int OSSL_CMP_CTX_set1_srvCert(OSSL_CMP_CTX *ctx, X509 *cert);
  int OSSL_CMP_CTX_set1_expected_sender(OSSL_CMP_CTX *ctx,
-                                      const X509_NAME *name);
+                                       const X509_NAME *name);
  #define OSSL_CMP_CTX_set0_trusted OSSL_CMP_CTX_set0_trustedStore
  int OSSL_CMP_CTX_set0_trustedStore(OSSL_CMP_CTX *ctx, X509_STORE *store);
  #define OSSL_CMP_CTX_get0_trusted OSSL_CMP_CTX_get0_trustedStore
@@ -214,147 +214,147 @@ The following options can be set:
 
 =item B<OSSL_CMP_OPT_LOG_VERBOSITY>
 
-        The level of severity needed for actually outputting log messages
-        due to errors, warnings, general info, debugging, etc.
-        Default is OSSL_CMP_LOG_INFO. See also L<OSSL_CMP_log_open(3)>.
+The level of severity needed for actually outputting log messages
+due to errors, warnings, general info, debugging, etc.
+Default is OSSL_CMP_LOG_INFO. See also L<OSSL_CMP_log_open(3)>.
 
 =item B<OSSL_CMP_OPT_KEEP_ALIVE>
 
-        If the given value is 0 then HTTP connections are not kept open
-        after receiving a response, which is the default behavior for HTTP 1.0.
-        If the value is 1 or 2 then persistent connections are requested.
-        If the value is 2 then persistent connections are required,
-        i.e., in case the server does not grant them an error occurs.
-        The default value is 1: prefer to keep the connection open.
+If the given value is 0 then HTTP connections are not kept open
+after receiving a response, which is the default behavior for HTTP 1.0.
+If the value is 1 or 2 then persistent connections are requested.
+If the value is 2 then persistent connections are required,
+i.e., in case the server does not grant them an error occurs.
+The default value is 1: prefer to keep the connection open.
 
 =item B<OSSL_CMP_OPT_MSG_TIMEOUT>
 
-        Number of seconds a CMP request-response message round trip
-        is allowed to take before a timeout error is returned.
-        A value <= 0 means no limitation (waiting indefinitely).
-        Default is to use the B<OSSL_CMP_OPT_TOTAL_TIMEOUT> setting.
+Number of seconds a CMP request-response message round trip
+is allowed to take before a timeout error is returned.
+A value <= 0 means no limitation (waiting indefinitely).
+Default is to use the B<OSSL_CMP_OPT_TOTAL_TIMEOUT> setting.
 
 =item B<OSSL_CMP_OPT_TOTAL_TIMEOUT>
 
-        Maximum total number of seconds a transaction may take,
-        including polling etc.
-        A value <= 0 means no limitation (waiting indefinitely).
-        Default is 0.
+Maximum total number of seconds a transaction may take,
+including polling etc.
+A value <= 0 means no limitation (waiting indefinitely).
+Default is 0.
 
 =item B<OSSL_CMP_OPT_USE_TLS>
 
-        Use this option to indicate to the HTTP implementation
-        whether TLS is going to be used for the connection (resulting in HTTPS).
-        The value 1 indicates that TLS is used for client-side HTTP connections,
-        which needs to be implemented via a callback function set by
-        OSSL_CMP_CTX_set_http_cb().
-        The value 0 indicates that TLS is not used.
-        Default is -1 for backward compatibility: TLS is used by the client side
-        if and only if OSSL_CMP_CTX_set_http_cb_arg() sets a non-NULL I<arg>.
+Use this option to indicate to the HTTP implementation
+whether TLS is going to be used for the connection (resulting in HTTPS).
+The value 1 indicates that TLS is used for client-side HTTP connections,
+which needs to be implemented via a callback function set by
+OSSL_CMP_CTX_set_http_cb().
+The value 0 indicates that TLS is not used.
+Default is -1 for backward compatibility: TLS is used by the client side
+if and only if OSSL_CMP_CTX_set_http_cb_arg() sets a non-NULL I<arg>.
 
 =item B<OSSL_CMP_OPT_VALIDITY_DAYS>
 
-        Number of days new certificates are asked to be valid for.
+Number of days new certificates are asked to be valid for.
 
 =item B<OSSL_CMP_OPT_SUBJECTALTNAME_NODEFAULT>
 
-        Do not take default Subject Alternative Names
-        from the reference certificate.
+Do not take default Subject Alternative Names
+from the reference certificate.
 
 =item B<OSSL_CMP_OPT_SUBJECTALTNAME_CRITICAL>
 
-        Demand that the given Subject Alternative Names are flagged as critical.
+Demand that the given Subject Alternative Names are flagged as critical.
 
 =item B<OSSL_CMP_OPT_POLICIES_CRITICAL>
 
-        Demand that the given policies are flagged as critical.
+Demand that the given policies are flagged as critical.
 
 =item B<OSSL_CMP_OPT_POPO_METHOD>
 
-        Select the proof of possession method to use. Possible values are:
+Select the proof of possession method to use. Possible values are:
 
-            OSSL_CRMF_POPO_NONE       - ProofOfPossession field omitted,
-                                        which implies central key generation
-            OSSL_CRMF_POPO_RAVERIFIED - assert that the RA has already
-                                        verified the PoPo
-            OSSL_CRMF_POPO_SIGNATURE  - sign a value with private key,
-                                        which is the default.
-            OSSL_CRMF_POPO_KEYENC     - decrypt the encrypted certificate
-                                        ("indirect method")
+    OSSL_CRMF_POPO_NONE       - ProofOfPossession field omitted,
+                                which implies central key generation
+    OSSL_CRMF_POPO_RAVERIFIED - assert that the RA has already
+                                verified the PoPo
+    OSSL_CRMF_POPO_SIGNATURE  - sign a value with private key,
+                                which is the default.
+    OSSL_CRMF_POPO_KEYENC     - decrypt the encrypted certificate
+                                ("indirect method")
 
-        Note that a signature-based POPO can only be produced if a private key
-        is provided as the newPkey or client's pkey component of the CMP context.
+Note that a signature-based POPO can only be produced if a private key
+is provided as the newPkey or client's pkey component of the CMP context.
 
 =item B<OSSL_CMP_OPT_DIGEST_ALGNID>
 
-        The NID of the digest algorithm to be used in RFC 4210's MSG_SIG_ALG
-        for signature-based message protection and Proof-of-Possession (POPO).
-        Default is SHA256.
+The NID of the digest algorithm to be used in RFC 4210's MSG_SIG_ALG
+for signature-based message protection and Proof-of-Possession (POPO).
+Default is SHA256.
 
 =item B<OSSL_CMP_OPT_OWF_ALGNID>
-        The NID of the digest algorithm to be used as one-way function (OWF)
-        for MAC-based message protection with password-based MAC (PBM).
-        See RFC 4210 section 5.1.3.1 for details.
-        Default is SHA256.
+The NID of the digest algorithm to be used as one-way function (OWF)
+for MAC-based message protection with password-based MAC (PBM).
+See RFC 4210 section 5.1.3.1 for details.
+Default is SHA256.
 
 =item B<OSSL_CMP_OPT_MAC_ALGNID>
-        The NID of the MAC algorithm to be used for message protection with PBM.
-        Default is HMAC-SHA1 as per RFC 4210.
+The NID of the MAC algorithm to be used for message protection with PBM.
+Default is HMAC-SHA1 as per RFC 4210.
 
 =item B<OSSL_CMP_OPT_REVOCATION_REASON>
 
-        The reason code to be included in a Revocation Request (RR);
-        values: 0..10 (RFC 5210, 5.3.1) or -1 for none, which is the default.
+The reason code to be included in a Revocation Request (RR);
+values: 0..10 (RFC 5210, 5.3.1) or -1 for none, which is the default.
 
 =item B<OSSL_CMP_OPT_IMPLICIT_CONFIRM>
 
-        Request server to enable implicit confirm mode, where the client
-        does not need to send confirmation upon receiving the
-        certificate. If the server does not enable implicit confirmation
-        in the return message, then confirmation is sent anyway.
+Request server to enable implicit confirm mode, where the client
+does not need to send confirmation upon receiving the
+certificate. If the server does not enable implicit confirmation
+in the return message, then confirmation is sent anyway.
 
 =item B<OSSL_CMP_OPT_DISABLE_CONFIRM>
 
-        Do not confirm enrolled certificates, to cope with broken servers
-        not supporting implicit confirmation correctly.
+Do not confirm enrolled certificates, to cope with broken servers
+not supporting implicit confirmation correctly.
 B<WARNING:> This setting leads to unspecified behavior and it is meant
 exclusively to allow interoperability with server implementations violating
 RFC 4210.
 
 =item B<OSSL_CMP_OPT_UNPROTECTED_SEND>
 
-        Send request or response messages without CMP-level protection.
+Send request or response messages without CMP-level protection.
 
 =item B<OSSL_CMP_OPT_UNPROTECTED_ERRORS>
 
-        Accept unprotected error responses which are either explicitly
-        unprotected or where protection verification failed. Applies to regular
-        error messages as well as certificate responses (IP/CP/KUP) and
-        revocation responses (RP) with rejection.
+Accept unprotected error responses which are either explicitly
+unprotected or where protection verification failed. Applies to regular
+error messages as well as certificate responses (IP/CP/KUP) and
+revocation responses (RP) with rejection.
 B<WARNING:> This setting leads to unspecified behavior and it is meant
 exclusively to allow interoperability with server implementations violating
 RFC 4210.
 
 =item B<OSSL_CMP_OPT_IGNORE_KEYUSAGE>
 
-        Ignore key usage restrictions in the signer's certificate when
-        validating signature-based protection in received CMP messages.
-        Else, 'digitalSignature' must be allowed by CMP signer certificates.
+Ignore key usage restrictions in the signer's certificate when
+validating signature-based protection in received CMP messages.
+Else, 'digitalSignature' must be allowed by CMP signer certificates.
 
 =item B<OSSL_CMP_OPT_PERMIT_TA_IN_EXTRACERTS_FOR_IR>
 
-        Allow retrieving a trust anchor from extraCerts and using that
-        to validate the certificate chain of an IP message.
-        This is a quirk option added to support 3GPP TS 33.310.
+Allow retrieving a trust anchor from extraCerts and using that
+to validate the certificate chain of an IP message.
+This is a quirk option added to support 3GPP TS 33.310.
 
-        Note that using this option is dangerous as the certificate obtained
-        this way has not been authenticated (at least not at CMP level).
-        Taking it over as a trust anchor implements trust-on-first-use (TOFU).
+Note that using this option is dangerous as the certificate obtained
+this way has not been authenticated (at least not at CMP level).
+Taking it over as a trust anchor implements trust-on-first-use (TOFU).
 
 =item B<OSSL_CMP_OPT_NO_CACHE_EXTRACERTS>
 
-        Do not cache certificates received in the extraCerts CMP message field.
-        Otherwise they are stored to potentially help validate further messages.
+Do not cache certificates received in the extraCerts CMP message field.
+Otherwise they are stored to potentially help validate further messages.
 
 =back
 
