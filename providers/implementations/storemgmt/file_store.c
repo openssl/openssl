@@ -195,10 +195,7 @@ static void *file_open(void *provctx, const char *uri)
 {
     struct file_ctx_st *ctx = NULL;
     struct stat st;
-    struct {
-        const char *path;
-        unsigned int check_absolute:1;
-    } path_data[2];
+    const char *path_data[2];
     size_t path_data_n = 0, i;
     const char *path, *p = uri, *q;
     BIO *bio;
@@ -208,8 +205,7 @@ static void *file_open(void *provctx, const char *uri)
     /*
      * First step, just take the URI as is.
      */
-    path_data[path_data_n].check_absolute = 0;
-    path_data[path_data_n++].path = uri;
+    path_data[path_data_n++] = uri;
 
     /*
      * Second step, if the URI appears to start with the "file" scheme,
@@ -222,7 +218,11 @@ static void *file_open(void *provctx, const char *uri)
         if (CHECK_AND_SKIP_CASE_PREFIX(q, "//")) {
             path_data_n--;           /* Invalidate using the full URI */
             if (CHECK_AND_SKIP_CASE_PREFIX(q, "localhost/")
-                    || CHECK_AND_SKIP_CASE_PREFIX(q, "/")) {
+                || CHECK_AND_SKIP_CASE_PREFIX(q, "/")) {
+                /*
+                 * In this case, we step back on char to ensure that the
+                 * first slash is preserved, making the path always absolute
+                 */
                 p = q - 1;
             } else {
                 ERR_clear_last_mark();
@@ -230,42 +230,28 @@ static void *file_open(void *provctx, const char *uri)
                 return NULL;
             }
         }
-
-        path_data[path_data_n].check_absolute = 1;
 #ifdef _WIN32
         /* Windows "file:" URIs with a drive letter start with a '/' */
         if (p[0] == '/' && p[2] == ':' && p[3] == '/') {
             char c = tolower((unsigned char)p[1]);
 
             if (c >= 'a' && c <= 'z') {
+                /* Skip past the slash, making the path a normal Windows path */
                 p++;
-                /* We know it's absolute, so no need to check */
-                path_data[path_data_n].check_absolute = 0;
             }
         }
 #endif
-        path_data[path_data_n++].path = p;
+        path_data[path_data_n++] = p;
     }
 
 
     for (i = 0, path = NULL; path == NULL && i < path_data_n; i++) {
-        /*
-         * If the scheme "file" was an explicit part of the URI, the path must
-         * be absolute.  So says RFC 8089
-         */
-        if (path_data[i].check_absolute && path_data[i].path[0] != '/') {
-            ERR_clear_last_mark();
-            ERR_raise_data(ERR_LIB_PROV, PROV_R_PATH_MUST_BE_ABSOLUTE,
-                           "Given path=%s", path_data[i].path);
-            return NULL;
-        }
-
-        if (stat(path_data[i].path, &st) < 0) {
+        if (stat(path_data[i], &st) < 0) {
             ERR_raise_data(ERR_LIB_SYS, errno,
                            "calling stat(%s)",
-                           path_data[i].path);
+                           path_data[i]);
         } else {
-            path = path_data[i].path;
+            path = path_data[i];
         }
     }
     if (path == NULL) {

@@ -233,8 +233,9 @@ indir "store_$$" => sub {
 
                     ok(run(app([@storeutl, "-noout", "-passin",
                                 "pass:password", to_abs_file_uri($_)])));
-                    ok(!run(app([@storeutl, "-noout", "-passin",
-                                 "pass:password", to_file_uri($_)])));
+                    # Check relaxed 'file' scheme implementation
+                    ok(run(app([@storeutl, "-noout", "-passin",
+                                "pass:password", to_file_uri($_)])));
                 }
             }
             foreach (values %generated_file_files) {
