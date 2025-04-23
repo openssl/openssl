@@ -141,8 +141,9 @@ For example, the "function" core_gettable_params() has these:
  static ossl_inline OSSL_NAME_core_gettable_params_fn
      OSSL_FUNC_core_gettable_params(const OSSL_DISPATCH *opf);
 
-L<OSSL_DISPATCH(3)> arrays are indexed by numbers that are provided as
-macros in L<openssl-core_dispatch.h(7)>, as follows:
+L<OSSL_DISPATCH(3)> arrays contain function id pairs with macros as 
+provided in L<openssl-core_dispatch.h(7)> to create valid
+pointers, as follows:
 
 For I<in> (the L<OSSL_DISPATCH(3)> array passed from F<libcrypto> to the
 provider):
