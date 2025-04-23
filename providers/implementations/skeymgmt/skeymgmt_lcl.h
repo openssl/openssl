@@ -15,5 +15,6 @@
 OSSL_FUNC_skeymgmt_import_fn generic_import;
 OSSL_FUNC_skeymgmt_export_fn generic_export;
 OSSL_FUNC_skeymgmt_free_fn generic_free;
+OSSL_FUNC_skeymgmt_imp_settable_params_fn generic_imp_settable_params;
 
 #endif
