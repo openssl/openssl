@@ -264,12 +264,6 @@ struct ossl_record_method_st {
     int (*set_protocol_version)(OSSL_RECORD_LAYER *rl, int version);
 
     /*
-     * Returns the protocol version if TLS_ANY_VERSION or DTLS_ANY_VERSION is
-     * returned it means that the protocol version has not been set.
-     */
-    int (*get_protocol_version)(OSSL_RECORD_LAYER *rl);
-
-    /*
      * Whether we are allowed to receive unencrypted alerts, even if we might
      * otherwise expect encrypted records. Ignored by protocol versions where
      * this isn't relevant

@@ -316,7 +316,6 @@ const struct record_functions_st ssl_3_0_funcs = {
     ssl3_cipher,
     ssl3_mac,
     tls_default_set_protocol_version,
-    tls_default_get_protocol_version,
     tls_default_read_n,
     tls_get_more_records,
     tls_default_validate_record_header,

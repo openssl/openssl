@@ -2048,19 +2048,9 @@ int tls_default_set_protocol_version(OSSL_RECORD_LAYER *rl, int version)
     return 1;
 }
 
-int tls_default_get_protocol_version(OSSL_RECORD_LAYER *rl)
-{
-    return rl->version;
-}
-
 int tls_set_protocol_version(OSSL_RECORD_LAYER *rl, int version)
 {
     return rl->funcs->set_protocol_version(rl, version);
-}
-
-int tls_get_protocol_version(OSSL_RECORD_LAYER *rl)
-{
-    return rl->funcs->get_protocol_version(rl);
 }
 
 void tls_set_plain_alerts(OSSL_RECORD_LAYER *rl, int allow)
@@ -2213,7 +2203,6 @@ const OSSL_RECORD_METHOD ossl_tls_record_method = {
     tls_get_alert_code,
     tls_set1_bio,
     tls_set_protocol_version,
-    tls_get_protocol_version,
     tls_set_plain_alerts,
     tls_set_first_handshake,
     tls_set_max_pipelines,

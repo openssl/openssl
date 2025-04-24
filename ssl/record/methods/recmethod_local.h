@@ -124,12 +124,6 @@ struct record_functions_st {
     /* Return 1 for success or 0 for error */
     int (*set_protocol_version)(OSSL_RECORD_LAYER *rl, int version);
 
-    /*
-     * Returns the protocol version if TLS_ANY_VERSION or DTLS_ANY_VERSION is
-     * returned it means that the protocol version has not been set.
-     */
-    int (*get_protocol_version)(OSSL_RECORD_LAYER *rl);
-
     /* Read related functions */
 
     int (*read_n)(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
@@ -459,7 +453,6 @@ int dtls_post_encryption_processing(OSSL_RECORD_LAYER *rl,
                                     TLS_RL_RECORD *thiswr);
 
 int tls_default_set_protocol_version(OSSL_RECORD_LAYER *rl, int version);
-int tls_default_get_protocol_version(OSSL_RECORD_LAYER *rl);
 int tls_default_validate_record_header(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *re);
 size_t tls_get_record_header_len(OSSL_RECORD_LAYER *rl);
 int tls_do_compress(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *wr);
@@ -492,7 +485,6 @@ int tls_read_record(OSSL_RECORD_LAYER *rl, void **rechandle, int *rversion,
                     uint16_t *epoch, uint64_t *seq_num);
 int tls_release_record(OSSL_RECORD_LAYER *rl, void *rechandle, size_t length);
 int tls_set_protocol_version(OSSL_RECORD_LAYER *rl, int version);
-int tls_get_protocol_version(OSSL_RECORD_LAYER *rl);
 void tls_set_plain_alerts(OSSL_RECORD_LAYER *rl, int allow);
 void tls_set_first_handshake(OSSL_RECORD_LAYER *rl, int first);
 void tls_set_max_pipelines(OSSL_RECORD_LAYER *rl, size_t max_pipelines);

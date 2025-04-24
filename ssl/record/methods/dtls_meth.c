@@ -969,7 +969,6 @@ const OSSL_RECORD_METHOD ossl_dtls_record_method = {
     tls_get_alert_code,
     tls_set1_bio,
     tls_set_protocol_version,
-    tls_get_protocol_version,
     tls_set_plain_alerts,
     tls_set_first_handshake,
     tls_set_max_pipelines,

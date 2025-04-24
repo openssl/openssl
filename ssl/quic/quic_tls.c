@@ -583,7 +583,6 @@ static const OSSL_RECORD_METHOD quic_tls_record_method = {
     quic_get_alert_code,
     quic_set1_bio,
     quic_set_protocol_version,
-    NULL,
     quic_set_plain_alerts,
     quic_set_first_handshake,
     quic_set_max_pipelines,
