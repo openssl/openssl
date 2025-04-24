@@ -864,7 +864,7 @@ L<ERR_print_errors_cb(3)>, L<OSSL_HTTP_open(3)>
 
 =head1 HISTORY
 
-The OpenSSL CMP support was added in OpenSSL 3.0.
+The OpenSSL CMP functions were added in OpenSSL 3.0.
 
 OSSL_CMP_CTX_get0_trustedStore() was renamed to OSSL_CMP_CTX_get0_trusted() and
 OSSL_CMP_CTX_set0_trustedStore() was renamed to OSSL_CMP_CTX_set0_trusted(),

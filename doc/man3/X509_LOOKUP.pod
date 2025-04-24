@@ -233,7 +233,7 @@ The functions X509_LOOKUP_by_subject_ex() and
 X509_LOOKUP_ctrl_ex() were added in OpenSSL 3.0.
 
 The macros X509_LOOKUP_load_file_ex(),
-X509_LOOKUP_load_store_ex() and 509_LOOKUP_add_store_ex() were
+X509_LOOKUP_load_store_ex() and X509_LOOKUP_add_store_ex() were
 added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
