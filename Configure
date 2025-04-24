@@ -171,6 +171,7 @@ my @gcc_devteam_warn = qw(
     -Wextra
     -Wno-unused-parameter
     -Wno-missing-field-initializers
+    -Wno-unterminated-string-initialization
     -Wswitch
     -Wsign-compare
     -Wshadow
