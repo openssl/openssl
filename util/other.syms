@@ -281,10 +281,10 @@ BN_num_bytes                            define
 BN_one                                  define
 BN_zero                                 define deprecated 0.9.8
 CONF_modules_free                       define deprecated 1.1.0
-DES_ecb2_encrypt                        define
-DES_ede2_cbc_encrypt                    define
-DES_ede2_cfb64_encrypt                  define
-DES_ede2_ofb64_encrypt                  define
+DES_ecb2_encrypt                        define deprecated 3.0
+DES_ede2_cbc_encrypt                    define deprecated 3.0
+DES_ede2_cfb64_encrypt                  define deprecated 3.0
+DES_ede2_ofb64_encrypt                  define deprecated 3.0
 DTLS_get_link_min_mtu                   define
 DTLS_set_link_mtu                       define
 DTLSv1_get_timeout                      define
