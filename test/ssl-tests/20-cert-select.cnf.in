@@ -1037,3 +1037,57 @@ my @tests_mldsa_tls_1_3 = (
 if (!disabled("ml-dsa") && (!$fips_mode || $fips_3_5)) {
     push @tests, @tests_mldsa_tls_1_3 unless disabled("tls1_3");
 }
+
+my @tests_slhdsa_sha2_tls_1_3 = (
+    {
+        name => "TLS 1.3 SLH-DSA-SHA2 Certificate Test",
+        server => {
+            "Certificate" => test_pem("server-slh-dsa-sha2-128s-cert.pem"),
+            "PrivateKey" => test_pem("server-slh-dsa-sha2-128s-key.pem"),
+            "MinProtocol" => "TLSv1.3",
+            "MaxProtocol" => "TLSv1.3",
+            "SignatureAlgorithms" => randcase("slhdsa_sha2_128s"),
+        },
+        client => {
+            "MinProtocol" => "TLSv1.3",
+            "MaxProtocol" => "TLSv1.3",
+            "SignatureAlgorithms" => randcase("slhdsa_sha2_128s"),
+            "VerifyCAFile" => test_pem("root-slh-dsa-sha2-128s-cert.pem"),
+            "VerifyMode" => "Peer",
+        },
+        test   => {
+            "ExpectedResult" => "Success"
+        },
+    },
+);
+
+if (!disabled("slh-dsa") && (!$fips_mode || $fips_3_5)) {
+    push @tests, @tests_slhdsa_sha2_tls_1_3 unless disabled("tls1_3");
+}
+
+my @tests_slhdsa_shake_tls_1_3 = (
+    {
+        name => "TLS 1.3 SLH-DSA-SHAKE Certificate Test",
+        server => {
+            "Certificate" => test_pem("server-slh-dsa-shake-256f-cert.pem"),
+            "PrivateKey" => test_pem("server-slh-dsa-shake-256f-key.pem"),
+            "MinProtocol" => "TLSv1.3",
+            "MaxProtocol" => "TLSv1.3",
+            "SignatureAlgorithms" => randcase("slhdsa_shake_256f"),
+        },
+        client => {
+            "MinProtocol" => "TLSv1.3",
+            "MaxProtocol" => "TLSv1.3",
+            "SignatureAlgorithms" => randcase("slhdsa_shake_256f"),
+            "VerifyCAFile" => test_pem("root-slh-dsa-shake-256f-cert.pem"),
+            "VerifyMode" => "Peer",
+        },
+        test   => {
+            "ExpectedResult" => "Success"
+        },
+    },
+);
+
+if (!disabled("slh-dsa") && (!$fips_mode || $fips_3_5)) {
+    push @tests, @tests_slhdsa_shake_tls_1_3 unless disabled("tls1_3");
+}

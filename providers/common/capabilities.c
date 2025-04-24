@@ -273,7 +273,7 @@ static int tls_group_capability(OSSL_CALLBACK *cb, void *arg)
 
 /* --------------------------------------------------------------- */
 
-#if !defined(OPENSSL_NO_ML_DSA)
+#if !defined(OPENSSL_NO_ML_DSA) || !defined(OPENSSL_NO_SLH_DSA)
 
 typedef struct tls_sigalg_constants_st {
     unsigned int code_point;
@@ -284,10 +284,42 @@ typedef struct tls_sigalg_constants_st {
     int max_dtls;             /* Maximum DTLS version (or 0 for undefined) */
 } TLS_SIGALG_CONSTANTS;
 
-static const TLS_SIGALG_CONSTANTS sigalg_constants_list[3] = {
+#define ML_DSA_SIGALG_OFFSET 0
+
+#if !defined(OPENSSL_NO_ML_DSA)
+# define ML_DSA_SIGALG_COUNT 3
+#else
+# define ML_DSA_SIGALG_COUNT 0
+#endif
+
+#define SLH_DSA_SIGALG_OFFSET (ML_DSA_SIGALG_OFFSET + ML_DSA_SIGALG_COUNT)
+
+#if !defined(OPENSSL_NO_SLH_DSA)
+# define SLH_DSA_SIGALG_COUNT 12
+#else
+# define SLH_DSA_SIGALG_COUNT 0
+#endif
+
+static const TLS_SIGALG_CONSTANTS sigalg_constants_list[] = {
+#if !defined(OPENSSL_NO_ML_DSA)
     { 0x0904, 128, TLS1_3_VERSION, 0, -1, -1 },
     { 0x0905, 192, TLS1_3_VERSION, 0, -1, -1 },
     { 0x0906, 256, TLS1_3_VERSION, 0, -1, -1 },
+#endif
+#if !defined(OPENSSL_NO_SLH_DSA)
+    { 0x0911, 128, TLS1_3_VERSION, 0, -1, -1 },
+    { 0x0912, 128, TLS1_3_VERSION, 0, -1, -1 },
+    { 0x0913, 192, TLS1_3_VERSION, 0, -1, -1 },
+    { 0x0914, 192, TLS1_3_VERSION, 0, -1, -1 },
+    { 0x0915, 256, TLS1_3_VERSION, 0, -1, -1 },
+    { 0x0916, 256, TLS1_3_VERSION, 0, -1, -1 },
+    { 0x0917, 128, TLS1_3_VERSION, 0, -1, -1 },
+    { 0x0918, 128, TLS1_3_VERSION, 0, -1, -1 },
+    { 0x0919, 192, TLS1_3_VERSION, 0, -1, -1 },
+    { 0x091A, 192, TLS1_3_VERSION, 0, -1, -1 },
+    { 0x091B, 256, TLS1_3_VERSION, 0, -1, -1 },
+    { 0x091C, 256, TLS1_3_VERSION, 0, -1, -1 },
+#endif
 };
 
 # define TLS_SIGALG_ENTRY(tlsname, algorithm, oid, idx)                         \
@@ -314,15 +346,31 @@ static const TLS_SIGALG_CONSTANTS sigalg_constants_list[3] = {
     }
 
 static const OSSL_PARAM param_sigalg_list[][10] = {
-    TLS_SIGALG_ENTRY("mldsa44", "ML-DSA-44", "2.16.840.1.101.3.4.3.17", 0),
-    TLS_SIGALG_ENTRY("mldsa65", "ML-DSA-65", "2.16.840.1.101.3.4.3.18", 1),
-    TLS_SIGALG_ENTRY("mldsa87", "ML-DSA-87", "2.16.840.1.101.3.4.3.19", 2),
+#if !defined(OPENSSL_NO_ML_DSA)
+    TLS_SIGALG_ENTRY("mldsa44", "ML-DSA-44", "2.16.840.1.101.3.4.3.17", ML_DSA_SIGALG_OFFSET),
+    TLS_SIGALG_ENTRY("mldsa65", "ML-DSA-65", "2.16.840.1.101.3.4.3.18", ML_DSA_SIGALG_OFFSET + 1),
+    TLS_SIGALG_ENTRY("mldsa87", "ML-DSA-87", "2.16.840.1.101.3.4.3.19", ML_DSA_SIGALG_OFFSET + 2),
+#endif
+#if !defined(OPENSSL_NO_SLH_DSA)
+    TLS_SIGALG_ENTRY("slhdsa_sha2_128s", "SLH-DSA-SHA2-128s", "2.16.840.1.101.3.4.3.20", SLH_DSA_SIGALG_OFFSET),
+    TLS_SIGALG_ENTRY("slhdsa_sha2_128f", "SLH-DSA-SHA2-128f", "2.16.840.1.101.3.4.3.21", SLH_DSA_SIGALG_OFFSET + 1),
+    TLS_SIGALG_ENTRY("slhdsa_sha2_192s", "SLH-DSA-SHA2-192s", "2.16.840.1.101.3.4.3.22", SLH_DSA_SIGALG_OFFSET + 2),
+    TLS_SIGALG_ENTRY("slhdsa_sha2_192f", "SLH-DSA-SHA2-192f", "2.16.840.1.101.3.4.3.23", SLH_DSA_SIGALG_OFFSET + 3),
+    TLS_SIGALG_ENTRY("slhdsa_sha2_256s", "SLH-DSA-SHA2-256s", "2.16.840.1.101.3.4.3.24", SLH_DSA_SIGALG_OFFSET + 4),
+    TLS_SIGALG_ENTRY("slhdsa_sha2_256f", "SLH-DSA-SHA2-256f", "2.16.840.1.101.3.4.3.25", SLH_DSA_SIGALG_OFFSET + 5),
+    TLS_SIGALG_ENTRY("slhdsa_shake_128s", "SLH-DSA-SHAKE-128s", "2.16.840.1.101.3.4.3.26", SLH_DSA_SIGALG_OFFSET + 6),
+    TLS_SIGALG_ENTRY("slhdsa_shake_128f", "SLH-DSA-SHAKE-128f", "2.16.840.1.101.3.4.3.27", SLH_DSA_SIGALG_OFFSET + 7),
+    TLS_SIGALG_ENTRY("slhdsa_shake_192s", "SLH-DSA-SHAKE-192s", "2.16.840.1.101.3.4.3.28", SLH_DSA_SIGALG_OFFSET + 8),
+    TLS_SIGALG_ENTRY("slhdsa_shake_192f", "SLH-DSA-SHAKE-192f", "2.16.840.1.101.3.4.3.29", SLH_DSA_SIGALG_OFFSET + 9),
+    TLS_SIGALG_ENTRY("slhdsa_shake_256s", "SLH-DSA-SHAKE-256s", "2.16.840.1.101.3.4.3.30", SLH_DSA_SIGALG_OFFSET + 10),
+    TLS_SIGALG_ENTRY("slhdsa_shake_256f", "SLH-DSA-SHAKE-256f", "2.16.840.1.101.3.4.3.31", SLH_DSA_SIGALG_OFFSET + 11),
+#endif
 };
-#endif /* OPENSSL_NO_ML_DSA */
+#endif /* OPENSSL_NO_ML_DSA || OPENSSL_NO_SLH_DSA */
 
 static int tls_sigalg_capability(OSSL_CALLBACK *cb, void *arg)
 {
-#if !defined(OPENSSL_NO_ML_DSA)
+#if !defined(OPENSSL_NO_ML_DSA) || !defined(OPENSSL_NO_SLH_DSA)
     size_t i;
 
     for (i = 0; i < OSSL_NELEM(param_sigalg_list); i++)
