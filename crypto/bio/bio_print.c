@@ -535,6 +535,10 @@ static LDOUBLE abs_val(LDOUBLE value)
     LDOUBLE result = value;
     if (value < 0)
         result = -value;
+    if (result > 0 && result / 2 == result) /* INF */
+        result = 0;
+    else if (result != result) /* NAN */
+        result = 0;
     return result;
 }
 
@@ -591,6 +595,8 @@ fmtfp(char **sbuffer,
     else if (flags & DP_F_SPACE)
         signvalue = ' ';
     ufvalue = abs_val(fvalue);
+    if (ufvalue == 0 && fvalue != 0) /* INF or NAN? */
+        signvalue = '?';
 
     /*
      * G_FORMAT sometimes prints like E_FORMAT and sometimes like F_FORMAT
