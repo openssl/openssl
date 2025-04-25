@@ -209,11 +209,11 @@ int aesni_set_decrypt_key(const unsigned char *userKey, int bits,
                           AES_KEY *key);
 
 void ossl_aes_cfb128_vaes_enc(const unsigned char *in, unsigned char *out,
-                         size_t len, const AES_KEY *ks,
-                         const unsigned char ivec[16], ossl_ssize_t *num);
+                              size_t len, const AES_KEY *ks,
+                              const unsigned char ivec[16], ossl_ssize_t *num);
 void ossl_aes_cfb128_vaes_dec(const unsigned char *in, unsigned char *out,
-                         size_t len, const AES_KEY *ks,
-                         const unsigned char ivec[16], ossl_ssize_t *num);
+                              size_t len, const AES_KEY *ks,
+                              const unsigned char ivec[16], ossl_ssize_t *num);
 int ossl_aes_cfb128_vaes_eligible(void);
 
 void aesni_encrypt(const unsigned char *in, unsigned char *out,
