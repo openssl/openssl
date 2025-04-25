@@ -3254,7 +3254,8 @@ int s_client_main(int argc, char **argv)
     }
 
  shut:
-    ERR_print_errors(bio_err); /* show any errors accumulated so far */
+    if (ret > 0)
+        ERR_print_errors(bio_err); /* show any errors accumulated so far */
     if (in_init)
         print_stuff(bio_c_out, con, full_log);
     do_ssl_shutdown(con);
@@ -3285,7 +3286,8 @@ int s_client_main(int argc, char **argv)
 
     BIO_closesocket(SSL_get_fd(con));
  end:
-    ERR_print_errors(bio_err); /* show any new or remaining errors */
+    if (ret > 0)
+        ERR_print_errors(bio_err); /* show any new or remaining errors */
     if (con != NULL) {
         if (prexit != 0)
             print_stuff(bio_c_out, con, 1);
