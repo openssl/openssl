@@ -336,22 +336,26 @@ static int file_set_ctx_params(void *loaderctx, const OSSL_PARAM params[])
         size_t der_len = 0;
         X509_NAME *x509_name;
         unsigned long hash;
-        int ok;
-
-        if (ctx->type != IS_DIR) {
-            ERR_raise(ERR_LIB_PROV,
-                      PROV_R_SEARCH_ONLY_SUPPORTED_FOR_DIRECTORIES);
-            return 0;
-        }
+        int ok = 0;
 
         if (!OSSL_PARAM_get_octet_string_ptr(p, (const void **)&der, &der_len)
             || (x509_name = d2i_X509_NAME(NULL, &der, der_len)) == NULL)
             return 0;
+        if (ctx->type != IS_DIR) {
+            char *str = X509_NAME_oneline(x509_name, NULL, 0);
+
+            ERR_raise_data(ERR_LIB_PROV, PROV_R_SEARCH_ONLY_SUPPORTED_FOR_DIRECTORIES,
+                           "uri=%s:subject=%s", ctx->uri, str);
+            OPENSSL_free(str);
+            goto end;
+        }
+
         hash = X509_NAME_hash_ex(x509_name,
                                  ossl_prov_ctx_get0_libctx(ctx->provctx), NULL,
                                  &ok);
         BIO_snprintf(ctx->_.dir.search_name, sizeof(ctx->_.dir.search_name),
                      "%08lx", hash);
+    end:
         X509_NAME_free(x509_name);
         if (ok == 0)
             return 0;
