@@ -507,12 +507,12 @@ by some servers.
 =item B<-ign_eof>
 
 Inhibit shutting down the connection when end of file is reached in the
-input.
+input. This implicitly turns on B<-nocommands> as well.
 
 =item B<-quiet>
 
 Inhibit printing of session and certificate information.  This implicitly
-turns on B<-ign_eof> as well.
+turns on B<-ign_eof> and B<-nocommands> as well.
 
 =item B<-no_ign_eof>
 
