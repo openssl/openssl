@@ -60,7 +60,7 @@ $code.=<<___;
 #################################################################
 # Signature:
 #
-# int aes_cfb128_vaes_eligible(void);
+# int ossl_aes_cfb128_vaes_eligible(void);
 #
 # Detects if the underlying hardware supports all the features
 # required to run the Intel AVX-512 implementations of AES-CFB128 algorithms.
@@ -68,11 +68,11 @@ $code.=<<___;
 # Returns: non zero if all the required features are detected, 0 otherwise
 #################################################################
 
-.globl   aes_cfb128_vaes_eligible
-.type    aes_cfb128_vaes_eligible,\@abi-omnipotent
+.globl   ossl_aes_cfb128_vaes_eligible
+.type    ossl_aes_cfb128_vaes_eligible,\@abi-omnipotent
 .balign  64
 
-aes_cfb128_vaes_eligible:
+ossl_aes_cfb128_vaes_eligible:
 .cfi_startproc
     endbranch
 
@@ -98,7 +98,7 @@ aes_cfb128_vaes_eligible:
 .Laes_cfb128_vaes_eligible_done:
     ret
 .cfi_endproc
-.size   aes_cfb128_vaes_eligible, .-aes_cfb128_vaes_eligible
+.size   ossl_aes_cfb128_vaes_eligible, .-ossl_aes_cfb128_vaes_eligible
 ___
 
 
@@ -355,7 +355,7 @@ ___
 #################################################################
 # Signature:
 #
-# void aes_cfb128_vaes_enc(
+# void ossl_aes_cfb128_vaes_enc(
 #     const unsigned char *in,
 #     unsigned char *out,
 #     size_t len,
@@ -372,10 +372,10 @@ ___
 #################################################################
 
 $code.=<<___;
-.globl   aes_cfb128_vaes_enc
-.type    aes_cfb128_vaes_enc,\@function,6
+.globl   ossl_aes_cfb128_vaes_enc
+.type    ossl_aes_cfb128_vaes_enc,\@function,6
 .balign  64
-aes_cfb128_vaes_enc:
+ossl_aes_cfb128_vaes_enc:
 .cfi_startproc
     endbranch
 ___
@@ -541,14 +541,14 @@ $code.=<<___;
 .Laes_cfb128_vaes_enc_done:
     ret
 .cfi_endproc
-.size aes_cfb128_vaes_enc,.-aes_cfb128_vaes_enc
+.size ossl_aes_cfb128_vaes_enc,.-ossl_aes_cfb128_vaes_enc
 ___
 
 
 #################################################################
 # Signature:
 #
-# void aes_cfb128_vaes_dec(
+# void ossl_aes_cfb128_vaes_dec(
 #     const unsigned char *in,
 #     unsigned char *out,
 #     size_t len,
@@ -565,10 +565,10 @@ ___
 #################################################################
 
 $code.=<<___;
-.globl   aes_cfb128_vaes_dec
-.type    aes_cfb128_vaes_dec,\@function,6
+.globl   ossl_aes_cfb128_vaes_dec
+.type    ossl_aes_cfb128_vaes_dec,\@function,6
 .balign  64
-aes_cfb128_vaes_dec:
+ossl_aes_cfb128_vaes_dec:
 .cfi_startproc
     endbranch
 ___
@@ -878,20 +878,20 @@ $code.=<<___;
 .Laes_cfb128_vaes_dec_done:
     ret
 .cfi_endproc
-.size aes_cfb128_vaes_dec,.-aes_cfb128_vaes_dec
+.size ossl_aes_cfb128_vaes_dec,.-ossl_aes_cfb128_vaes_dec
 ___
 
 } else {
 
 $code .= <<___;
-.globl     aes_cfb128_vaes_enc
-.globl     aes_cfb128_vaes_dec
+.globl     ossl_aes_cfb128_vaes_enc
+.globl     ossl_aes_cfb128_vaes_dec
 
 # Mock implementations of AES-CFB128 encryption/decryption
 # that always fail. Should not be executed under normal circumstances.
 
-aes_cfb128_vaes_enc:
-aes_cfb128_vaes_dec:
+ossl_aes_cfb128_vaes_enc:
+ossl_aes_cfb128_vaes_dec:
     .byte 0x0f,0x0b                # Undefined Instruction in the Intel architecture
                                    # Raises the Invalid Opcode exception
     ret
@@ -899,19 +899,19 @@ aes_cfb128_vaes_dec:
 #################################################################
 # Signature:
 #
-# int aes_cfb128_vaes_eligible(void);
+# int ossl_aes_cfb128_vaes_eligible(void);
 #
 # Always returns 0 (not eligible), meaning that tooling does not support
 # the Intel AVX-512 extensions. Signals higher level code to fallback
 # to an alternative implementation.
 #################################################################
 
-.globl     aes_cfb128_vaes_eligible
-.type      aes_cfb128_vaes_eligible,\@abi-omnipotent
-aes_cfb128_vaes_eligible:
+.globl     ossl_aes_cfb128_vaes_eligible
+.type      ossl_aes_cfb128_vaes_eligible,\@abi-omnipotent
+ossl_aes_cfb128_vaes_eligible:
     xor %eax,%eax
     ret
-.size aes_cfb128_vaes_eligible, .-aes_cfb128_vaes_eligible
+.size ossl_aes_cfb128_vaes_eligible, .-ossl_aes_cfb128_vaes_eligible
 ___
 }
 

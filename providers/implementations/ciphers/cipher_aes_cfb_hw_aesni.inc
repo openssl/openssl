@@ -16,7 +16,7 @@
     #define cipher_hw_vaes_cfb128 aes_cfb128_vaes_encdec_wrapper
 #else
     #define cipher_hw_vaes_cfb128 ossl_cipher_hw_generic_cfb128
-    int aes_cfb128_vaes_eligible() {
+    int ossl_aes_cfb128_vaes_eligible() {
         return 0;
     }
 #endif
@@ -44,9 +44,9 @@ static int aes_cfb128_vaes_encdec_wrapper(
     }
 
     if (dat->enc) {
-        aes_cfb128_vaes_enc(in, out, len, dat->ks, dat->iv, &num);
+        ossl_aes_cfb128_vaes_enc(in, out, len, dat->ks, dat->iv, &num);
     } else {
-        aes_cfb128_vaes_dec(in, out, len, dat->ks, dat->iv, &num);
+        ossl_aes_cfb128_vaes_dec(in, out, len, dat->ks, dat->iv, &num);
     }
 
     dat->num = (int)num;
@@ -90,7 +90,7 @@ static const PROV_CIPHER_HW vaes_##mode = {                                    \
 };
 #define PROV_CIPHER_HW_select(mode)                                            \
 if (AESNI_CAPABLE) {                                                           \
-    if (aes_cfb128_vaes_eligible())                                            \
+    if (ossl_aes_cfb128_vaes_eligible())                                       \
         return &vaes_##mode;                                                   \
     return &aesni_##mode;                                                      \
 }
