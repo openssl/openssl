@@ -89,10 +89,10 @@ aes_cfb128_vaes_eligible:
     mov OPENSSL_ia32cap_P+12(%rip),%ecx
 
     # Check 4th 32-bit word of OPENSSL_ia32cap_P for the feature bit(s):
-    # AVX512VAES (bit 10)
+    # AVX512VAES (bit 9)
 
-    and \$0x400,%ecx                      # mask is 1<<10
-    cmp \$0x400,%ecx
+    and \$0x200,%ecx                      # mask is 1<<9
+    cmp \$0x200,%ecx
     cmove %ecx,%eax
 
 .Laes_cfb128_vaes_eligible_done:
