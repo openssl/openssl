@@ -27,7 +27,7 @@
 #define cipher_hw_aesni_cfb8   ossl_cipher_hw_generic_cfb8
 #define cipher_hw_aesni_cfb1   ossl_cipher_hw_generic_cfb1
 
-// active in 64-bit builds when AES-NI, AVX512F, and VAES are detected
+/* active in 64-bit builds when AES-NI, AVX512F, and VAES are detected */
 static int aes_cfb128_vaes_encdec_wrapper(
     PROV_CIPHER_CTX* dat,
     unsigned char *out,
@@ -38,7 +38,7 @@ static int aes_cfb128_vaes_encdec_wrapper(
     num = (ossl_ssize_t)dat->num;
 
     if (num < 0) {
-        // behavior from CRYPTO_cfb128_encrypt
+        /* behavior from CRYPTO_cfb128_encrypt */
         dat->num = -1;
         return 1;
     }
@@ -54,7 +54,7 @@ static int aes_cfb128_vaes_encdec_wrapper(
     return 1;
 }
  
-// generates AES round keys for AES-NI and VAES implementations
+/* generates AES round keys for AES-NI and VAES implementations */
 static int cipher_hw_aesni_initkey(PROV_CIPHER_CTX *dat,
                                    const unsigned char *key, size_t keylen)
 {
