@@ -636,9 +636,8 @@ $code.=<<___;
     dec $mask                         # $mask is 2^$left-1
     kmovq $mask,%k1
 
-    mov $num,%rax                     # keep in-out num in %al
-    add $left,%rax                    # advance $num
-    and \$0x0F,%al                    # wrap-around $num in a 16-byte block
+    lea ($num,$left),%rax             # keep in-out num in %al, advance by $left
+    and \$0x0F,%al                    # wrap-around in a 16-byte block
 
     leaq ($num,$ivp),%r11             # process $left iv bytes
     vmovdqu8 (%r11),%xmm0
