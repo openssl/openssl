@@ -58,6 +58,10 @@ BIO_get_indent() returns the current indentation, or a negative value for failur
 
 L<bio(7)>
 
+=head1 HISTORY
+
+BIO_get_indent(), BIO_set_indent(), BIO_set_prefix() were added in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
 Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.

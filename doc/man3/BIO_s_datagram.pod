@@ -258,6 +258,10 @@ BIO_dgram_get_mtu_overhead() returns a value in bytes.
 
 L<BIO_sendmmsg(3)>, L<BIO_s_dgram_pair(3)>, L<DTLSv1_listen(3)>, L<bio(7)>
 
+=head1 HISTORY
+
+BIO_dgram_detect_peer_addr() was added in OpenSSL 3.2.
+
 =head1 COPYRIGHT
 
 Copyright 2022-2023 The OpenSSL Project Authors. All Rights Reserved.

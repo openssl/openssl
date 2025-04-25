@@ -224,7 +224,12 @@ L<BIO_s_bio(3)>, L<bio(7)>
 
 =head1 HISTORY
 
-BIO_s_dgram_pair(), BIO_new_bio_dgram_pair() were added in OpenSSL 3.2.
+BIO_s_dgram_pair(), BIO_new_bio_dgram_pair(),
+BIO_dgram_get_caps(), BIO_dgram_get_effective_caps(),
+BIO_dgram_get_no_trunc(), BIO_dgram_set_caps(),
+BIO_dgram_set_mtu(), BIO_dgram_set_no_trunc() were added in OpenSSL 3.2.
+
+BIO_dgram_set0_local_addr() was added in OpenSSL 3.5.
 
 =head1 COPYRIGHT
 

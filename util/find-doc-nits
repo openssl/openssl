@@ -1055,7 +1055,7 @@ sub checkmacros {
             }
 
             next if defined $macros_maybe_undocumented{$macro};
-            
+
             $macros_maybe_undocumented{$macro} = $f;
         }
         close(IN);
