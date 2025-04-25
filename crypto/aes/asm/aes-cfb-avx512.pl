@@ -28,7 +28,7 @@ if (`$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
 
 if (!$avx512vaes && $win64 && ($flavour =~ /nasm/ || $ENV{ASM} =~ /nasm/) &&
        `nasm -v 2>&1` =~ /NASM version ([2-9]\.[0-9]+)(?:\.([0-9]+))?/) {
-    $avx512vaes = ($1==2.11 && $2>=8) + ($1>=2.12);
+    $avx512vaes = ($1==2.13 && $2>=3) + ($1>=2.14);
 }
 
 if (!$avx512vaes && `$ENV{CC} -v 2>&1`
