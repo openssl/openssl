@@ -59,6 +59,8 @@ L<ssl(7)>, L<SSL_get_peer_certificate(3)>,
 The SSL_get0_peer_signature_name() and SSL_get0_signature_name() functions were
 added in OpenSSL 3.5.
 
+SSL_get_signature_nid() was added in OpenSSL 1.1.1a.
+
 =head1 COPYRIGHT
 
 Copyright 2017-2025 The OpenSSL Project Authors. All Rights Reserved.
