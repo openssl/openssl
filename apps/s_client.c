@@ -446,11 +446,13 @@ static int tlsa_import_rr(SSL *con, const char *rrdata)
     OPENSSL_free(data);
 
     if (ret == 0) {
+        ERR_print_errors(bio_err);
         BIO_printf(bio_err, "%s: warning: unusable TLSA rrdata: %s\n",
                    prog, rrdata);
         return 0;
     }
     if (ret < 0) {
+        ERR_print_errors(bio_err);
         BIO_printf(bio_err, "%s: warning: error loading TLSA rrdata: %s\n",
                    prog, rrdata);
         return 0;
