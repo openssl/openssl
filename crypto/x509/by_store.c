@@ -43,8 +43,11 @@ static int cache_objects(X509_LOOKUP *lctx, const char *uri,
      * but it's a nice optimization when it can be applied (such as on an
      * actual directory with a thousand CA certs).
      */
-    if (criterion != NULL)
+    if (criterion != NULL) {
+        ERR_set_mark();
         OSSL_STORE_find(ctx, criterion);
+        ERR_pop_to_mark();
+    }
 
     for (;;) {
         OSSL_STORE_INFO *info = OSSL_STORE_load(ctx);
