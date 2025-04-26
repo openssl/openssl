@@ -29,6 +29,16 @@ iter = 1
 MD = sha256
 Key = 120fb6cffcf8b32c43e7225256c4f837a86548c92ccc35480805987cb70be17b
 
+Availablein = fips
+PBE = pbkdf2
+Password = "password"
+Salt = "salt"
+iter = 1
+MD = sha256
+Key = 120fb6cffcf8b32c43e7225256c4f837a86548c92ccc35480805987cb70be17b
+Result = PBKDF2_ERROR
+Reason = invalid salt length
+
 Availablein = default
 PBE = pbkdf2
 Password = "password"
