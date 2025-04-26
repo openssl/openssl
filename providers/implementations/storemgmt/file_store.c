@@ -10,23 +10,19 @@
 /* This file has quite some overlap with engines/e_loader_attic.c */
 
 #include <string.h>
-#include <sys/stat.h>
+#include "internal/e_os.h" /* for stat() */
+#include <sys/stat.h> /* for struct stat */
 #include <ctype.h> /* isdigit */
 #include <assert.h>
 
-#include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/core_object.h>
-#include <openssl/bio.h>
-#include <openssl/err.h>
 #include <openssl/params.h>
-#include <openssl/decoder.h>
 #include <openssl/proverr.h>
 #include <openssl/store.h> /* The OSSL_STORE_INFO type numbers */
 #include "internal/cryptlib.h"
 #include "internal/o_dir.h"
 #include "crypto/decoder.h"
-#include "crypto/ctype.h" /* ossl_isdigit() */
 #include "prov/implementations.h"
 #include "prov/bio.h"
 #include "prov/providercommon.h"
@@ -35,10 +31,6 @@
 #include "providers/implementations/storemgmt/file_store.inc"
 
 DEFINE_STACK_OF(OSSL_STORE_INFO)
-
-#ifdef _WIN32
-#define stat _stat
-#endif
 
 #ifndef S_ISDIR
 #define S_ISDIR(a) (((a) & S_IFMT) == S_IFDIR)
@@ -140,6 +132,83 @@ static struct file_ctx_st *new_file_ctx(int type, const char *uri,
 static OSSL_DECODER_CONSTRUCT file_load_construct;
 static OSSL_DECODER_CLEANUP file_load_cleanup;
 
+#ifdef _WIN32
+#define OSSL_is_drive_letter(c) (((c) >= 'A' && (c) <= 'Z') || ((c) >= 'a' && (c) <= 'z'))
+#endif
+
+/*
+ * ossl_file_stat() handles URIs that may be interpreted as a reference to a local file.
+ * It attempts to derive from the given |uri| a file pathname that points to an
+ * existing file. To this end it takes the full |uri| as a filename (which may be
+ * an absolute or relative name, such as file.pem) or takes a postfix of |uri|,
+ * such as path-to-file if |uri| is of the form file:path-to-file
+ * or /path-to-file if |uri| is of the form file://localhost/path-to-file.
+ * On success it populates the file stat buffer pointed at by |st|
+ * (unless |st| is NULL) and returns the derived pathname, otherwise NULL.
+ */
+
+static const char *ossl_file_stat(const char *uri, struct stat *st)
+{
+    const char *path = uri, *q;
+    struct stat local_st;
+
+    if (st == NULL)
+        st = &local_st;
+
+    /*
+     * First, unless the URI starts with "file://",
+     * try and see if the full URI can be taken as a local file path name.
+     */
+    if (!HAS_CASE_PREFIX(uri, "file://")) {
+        if (stat(path, st) == 0)
+            return uri;
+        ERR_raise_data(ERR_LIB_SYS, errno, "calling stat(%s)", path);
+    }
+
+    /* Do a second attempt only if the URI appears to start with the "file" scheme. */
+    if (!CHECK_AND_SKIP_CASE_PREFIX(path, "file:"))
+        return NULL;
+
+    /*
+     * Extract the alternative path to check.
+     * There's a special case if the URI also contains an authority,
+     * then the full URI shouldn't be used as a path anywhere.
+     */
+    q = path;
+    if (CHECK_AND_SKIP_CASE_PREFIX(q, "//")) {
+        if (CHECK_AND_SKIP_CASE_PREFIX(q, "localhost/")
+            || CHECK_AND_SKIP_CASE_PREFIX(q, "/")) {
+            /*
+             * In these cases, we step back one char to ensure that the
+             * first slash is preserved, making the path always absolute
+             */
+            path = q - 1;
+#ifdef _WIN32
+        } else if (OSSL_is_drive_letter(path[2]) && path[3] == ':' && path[4] == '/') {
+            /* Support also Windows "file://" URIs starting with a drive letter before a '/' */
+            path = q;
+#endif
+        } else {
+            const char *p = strchr(q, '/');
+            size_t len = p == NULL ? strlen(q) : (size_t)(p - q);
+
+            ERR_raise_data(ERR_LIB_OSSL_STORE, OSSL_STORE_R_URI_AUTHORITY_UNSUPPORTED,
+                "%.*s", len, q);
+            return NULL;
+        }
+    }
+#ifdef _WIN32
+    /* Windows "file:" URIs with a drive letter are required to start with a '/' */
+    if (path[0] == '/' && OSSL_is_drive_letter(path[1]) && path[2] == ':' && path[3] == '/')
+        path++; /* Skip past the slash, making the path a normal Windows path */
+#endif
+
+    if (stat(path, st) == 0)
+        return path;
+    ERR_raise_data(ERR_LIB_SYS, errno, "calling stat(%s)", path);
+    return NULL;
+}
+
 /*-
  *  Opening / attaching streams and directories
  *  -------------------------------------------
@@ -197,71 +266,11 @@ static void *file_open(void *provctx, const char *uri)
 {
     struct file_ctx_st *ctx = NULL;
     struct stat st;
-    const char *path_data[2];
-    size_t path_data_n = 0, i;
-    const char *path, *p = uri, *q;
+    const char *path = ossl_file_stat(uri, &st);
     BIO *bio;
 
-    ERR_set_mark();
-
-    /*
-     * First step, just take the URI as is.
-     */
-    path_data[path_data_n++] = uri;
-
-    /*
-     * Second step, if the URI appears to start with the "file" scheme,
-     * extract the path and make that the second path to check.
-     * There's a special case if the URI also contains an authority, then
-     * the full URI shouldn't be used as a path anywhere.
-     */
-    if (CHECK_AND_SKIP_CASE_PREFIX(p, "file:")) {
-        q = p;
-        if (CHECK_AND_SKIP_CASE_PREFIX(q, "//")) {
-            path_data_n--; /* Invalidate using the full URI */
-            if (CHECK_AND_SKIP_CASE_PREFIX(q, "localhost/")
-                || CHECK_AND_SKIP_CASE_PREFIX(q, "/")) {
-                /*
-                 * In this case, we step back on char to ensure that the
-                 * first slash is preserved, making the path always absolute
-                 */
-                p = q - 1;
-            } else {
-                ERR_clear_last_mark();
-                ERR_raise(ERR_LIB_PROV, PROV_R_URI_AUTHORITY_UNSUPPORTED);
-                return NULL;
-            }
-        }
-#ifdef _WIN32
-        /* Windows "file:" URIs with a drive letter start with a '/' */
-        if (p[0] == '/' && p[2] == ':' && p[3] == '/') {
-            char c = tolower((unsigned char)p[1]);
-
-            if (c >= 'a' && c <= 'z') {
-                /* Skip past the slash, making the path a normal Windows path */
-                p++;
-            }
-        }
-#endif
-        path_data[path_data_n++] = p;
-    }
-
-    for (i = 0, path = NULL; path == NULL && i < path_data_n; i++) {
-        if (stat(path_data[i], &st) < 0) {
-            ERR_raise_data(ERR_LIB_SYS, errno,
-                "calling stat(%s)",
-                path_data[i]);
-        } else {
-            path = path_data[i];
-        }
-    }
-    if (path == NULL) {
-        ERR_clear_last_mark();
+    if (path == NULL)
         return NULL;
-    }
-
-    /* Successfully found a working path, clear possible collected errors */
-    ERR_pop_to_mark();
 
     if (S_ISDIR(st.st_mode))
         ctx = file_open_dir(path, uri, provctx);
