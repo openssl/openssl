@@ -110,8 +110,9 @@ The certificates in the directory must be in hashed form, as
 documented in L<X509_LOOKUP_hash_dir(3)>.
 Use the L<openssl-rehash(1)> utility to create the necessary links.
 
-X509_STORE_load_store_ex() loads trusted certificate(s) into an B<X509_STORE>
-from a given URI. The library context I<libctx> and
+X509_STORE_load_store_ex() passes a URI or filename for a directory-like or file-like
+structure from which one or more trusted certificates are loaded on demand
+in the given B<X509_STORE>. The library context I<libctx> and
 property query I<propq> are used when fetching algorithms from providers.
 I<uri> must not be NULL. It must be a URI to a store, which may
 represent a single container or a whole catalogue of containers.
