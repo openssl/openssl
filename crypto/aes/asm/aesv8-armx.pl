@@ -152,7 +152,7 @@ $code.=<<___	if ($flavour =~ /64/);
 	adrp	$ptr,.Lrcon
 	add	$ptr,$ptr,:lo12:.Lrcon
 ___
-$code.=<<___	if ($flavour =~ /32/);
+$code.=<<___	if ($flavour !~ /64/);
 	adr	$ptr,.Lrcon
 ___
 $code.=<<___;
