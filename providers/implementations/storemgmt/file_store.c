@@ -9,9 +9,10 @@
 
 /* This file has quite some overlap with engines/e_loader_attic.c */
 
+#include "internal/e_os.h" /* for stat */
 #include <string.h>
-#include <sys/stat.h>
 #include <ctype.h>  /* isdigit */
+#include <sys/stat.h> /* for Windows, must include stat.h after ctype.h */
 #include <assert.h>
 
 #include <openssl/core_dispatch.h>
@@ -195,72 +196,11 @@ static void *file_open(void *provctx, const char *uri)
 {
     struct file_ctx_st *ctx = NULL;
     struct stat st;
-    const char *path_data[2];
-    size_t path_data_n = 0, i;
-    const char *path, *p = uri, *q;
+    const char *path = OSSL_file_stat(uri, &st);
     BIO *bio;
 
-    ERR_set_mark();
-
-    /*
-     * First step, just take the URI as is.
-     */
-    path_data[path_data_n++] = uri;
-
-    /*
-     * Second step, if the URI appears to start with the "file" scheme,
-     * extract the path and make that the second path to check.
-     * There's a special case if the URI also contains an authority, then
-     * the full URI shouldn't be used as a path anywhere.
-     */
-    if (CHECK_AND_SKIP_CASE_PREFIX(p, "file:")) {
-        q = p;
-        if (CHECK_AND_SKIP_CASE_PREFIX(q, "//")) {
-            path_data_n--;           /* Invalidate using the full URI */
-            if (CHECK_AND_SKIP_CASE_PREFIX(q, "localhost/")
-                || CHECK_AND_SKIP_CASE_PREFIX(q, "/")) {
-                /*
-                 * In this case, we step back on char to ensure that the
-                 * first slash is preserved, making the path always absolute
-                 */
-                p = q - 1;
-            } else {
-                ERR_clear_last_mark();
-                ERR_raise(ERR_LIB_PROV, PROV_R_URI_AUTHORITY_UNSUPPORTED);
-                return NULL;
-            }
-        }
-#ifdef _WIN32
-        /* Windows "file:" URIs with a drive letter start with a '/' */
-        if (p[0] == '/' && p[2] == ':' && p[3] == '/') {
-            char c = tolower((unsigned char)p[1]);
-
-            if (c >= 'a' && c <= 'z') {
-                /* Skip past the slash, making the path a normal Windows path */
-                p++;
-            }
-        }
-#endif
-        path_data[path_data_n++] = p;
-    }
-
-
-    for (i = 0, path = NULL; path == NULL && i < path_data_n; i++) {
-        if (stat(path_data[i], &st) < 0) {
-            ERR_raise_data(ERR_LIB_SYS, errno,
-                           "calling stat(%s)",
-                           path_data[i]);
-        } else {
-            path = path_data[i];
-        }
-    }
-    if (path == NULL) {
-        ERR_clear_last_mark();
+    if (path == NULL)
         return NULL;
-    }
-
-    /* Successfully found a working path, clear possible collected errors */
-    ERR_pop_to_mark();
 
     if (S_ISDIR(st.st_mode))
         ctx = file_open_dir(path, uri, provctx);

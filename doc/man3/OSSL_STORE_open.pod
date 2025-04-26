@@ -5,7 +5,8 @@
 OSSL_STORE_CTX, OSSL_STORE_post_process_info_fn,
 OSSL_STORE_open, OSSL_STORE_open_ex,
 OSSL_STORE_ctrl, OSSL_STORE_load, OSSL_STORE_eof, OSSL_STORE_delete,
-OSSL_STORE_error, OSSL_STORE_close
+OSSL_STORE_error, OSSL_STORE_close,
+OSSL_file_stat
 - Types and functions to read objects from a URI
 
 =head1 SYNOPSIS
@@ -35,6 +36,7 @@ OSSL_STORE_error, OSSL_STORE_close
                        const OSSL_PARAM params[]);
  int OSSL_STORE_error(OSSL_STORE_CTX *ctx);
  int OSSL_STORE_close(OSSL_STORE_CTX *ctx);
+ const char *OSSL_file_stat(const char *uri, struct stat *st);
 
 The following function has been deprecated since OpenSSL 3.0, and can be
 hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
@@ -122,6 +124,16 @@ by OSSL_STORE_open() and frees all other information that was stored in the
 B<OSSL_STORE_CTX>, as well as the B<OSSL_STORE_CTX> itself.
 If I<ctx> is NULL it does nothing.
 
+OSSL_file_stat() is an auxiliary function
+for handling URIs that may be interpreted as a reference to a local file.
+It attempts to derive from the given I<uri> a file pathname that points to an
+existing file. To this end it takes the full I<uri> as a filename (which may be
+an absolute or relative name, such as C<file.pem>) or takes a postfix of I<uri>,
+such as C<path-to-file> if the uri is of the form C<file:path-to-file>
+or C</path-to-file> if the uri is of the form C<file://localhost/path-to-file>.
+On success it populates the file stat buffer pointed at by I<st>
+(unless I<st> is NULL) and returns the derived pathname, otherwise NULL.
+
 =head1 NOTES
 
 A string without a scheme prefix (that is, a non-URI string) is
@@ -160,12 +172,16 @@ otherwise 0.
 OSSL_STORE_delete(), OSSL_STORE_ctrl() and OSSL_STORE_close() return 1 on
 success, or 0 on failure.
 
+OSSL_file_stat() returns a file pathname or NULL on error.
+
 =head1 SEE ALSO
 
 L<ossl_store(7)>, L<OSSL_STORE_INFO(3)>, L<OSSL_STORE_register_loader(3)>,
 L<passphrase-encoding(7)>
 
 =head1 HISTORY
+
+OSSL_file_stat() was added in OpenSSL 3.6.
 
 OSSL_STORE_delete() was added in OpenSSL 3.2.
 
