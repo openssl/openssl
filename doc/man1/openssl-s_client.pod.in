@@ -29,10 +29,7 @@ B<openssl> B<s_client>
 {- $OpenSSL::safe::opt_trust_synopsis -}
 [B<-verifyCAfile> I<filename>]
 [B<-verifyCApath> I<dir>]
-[B<-verifyCAstore> I<uri>]
-[B<-chainCAfile> I<filename>]
-[B<-chainCApath> I<directory>]
-[B<-chainCAstore> I<uri>]
+[B<-verifyCAstore> I<filename>|I<uri>]
 [B<-cert> I<filename>]
 [B<-certform> B<DER>|B<PEM>|B<P12>]
 [B<-cert_chain> I<filename>]
@@ -43,6 +40,9 @@ B<openssl> B<s_client>
 [B<-key> I<filename>|I<uri>]
 [B<-keyform> B<DER>|B<PEM>|B<P12>]
 [B<-pass> I<arg>]
+[B<-chainCAfile> I<filename>]
+[B<-chainCApath> I<directory>]
+[B<-chainCAstore> I<filename>|I<uri>]
 [B<-requestCAfile> I<filename>]
 [B<-dane_tlsa_domain> I<domain>]
 [B<-dane_tlsa_rrdata> I<rrdata>]
@@ -349,11 +349,11 @@ to trust for verifying the server's certificate.
 This directory must be in "hash format",
 see L<openssl-verify(1)> for more information.
 
-=item B<-verifyCAstore> I<uri>
+=item B<-verifyCAstore> I<filename>|I<uri>
 
-URI of a store containing CA certificates
+The filename or URI of a store containing CA certificates
 to trust for verifying the server's certificate.
-The URI may indicate a single certificate, as well as a collection of them.
+May indicate a single certificate, as well as a collection of them.
 With URIs in the C<file:> scheme, this is generally treated like B<-verifyCApath> or
 B<-verifyCAfile>, depending on if the URI indicates a directory or a single file.
 See L<ossl_store(7)> for more information on stores and supported schemes.
@@ -379,11 +379,11 @@ when attempting to build the client certificate chain provided to the server.
 This directory must be in "hash format",
 see L<openssl-verify(1)> for more information.
 
-=item B<-chainCAstore> I<uri>
+=item B<-chainCAstore> I<filename>|I<uri>
 
-The URI of a store containing trusted certificates to use
+The filename or URI of a store containing trusted certificates to use
 when attempting to build the client certificate chain provided to the server.
-The URI may indicate a single certificate, as well as a collection of them.
+May indicate a single certificate, as well as a collection of them.
 With URIs in the C<file:> scheme, this is generally treated like B<-chainCApath> or
 B<-chainCAfile>, depending on whether the URI points to a directory or a single file.
 See L<ossl_store(7)> for more information on stores and supported schemes.
