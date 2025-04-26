@@ -8,7 +8,6 @@
  */
 
 #include <string.h>
-#include "crypto/ctype.h"
 #include <assert.h>
 
 #include <openssl/err.h>
@@ -165,12 +164,7 @@ int ossl_store_register_loader_int(OSSL_STORE_LOADER *loader)
      *
      * scheme        = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )
      */
-    if (ossl_isalpha(*scheme))
-        while (*scheme != '\0'
-            && (ossl_isalpha(*scheme)
-                || ossl_isdigit(*scheme)
-                || strchr("+-.", *scheme) != NULL))
-            scheme++;
+    OSSL_SKIP_SCHEME(scheme);
     if (*scheme != '\0') {
         ERR_raise_data(ERR_LIB_OSSL_STORE, OSSL_STORE_R_INVALID_SCHEME,
             "scheme=%s", loader->scheme);
