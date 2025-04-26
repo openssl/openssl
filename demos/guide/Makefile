@@ -11,11 +11,13 @@ TESTS = tls-client-block \
         tls-client-non-block \
         quic-server-block \
         quic-server-non-block \
-        quic-client-non-block
+        quic-client-non-block \
+        quic-server-ssl-poll-http
 
 CFLAGS  = -I../../include -g -Wall
 LDFLAGS = -L../..
 LDLIBS  = -lcrypto -lssl
+CPPFLAGS = -DDEBUG
 
 all: $(TESTS) chain
 
@@ -27,6 +29,7 @@ tls-client-non-block: tls-client-non-block.o
 quic-server-block: quic-server-block.o
 quic-server-non-block: quic-server-non-block.o
 quic-client-non-block: quic-client-non-block.o
+quic-server-ssl-poll-http09: quic-server-ssl-poll-http.o
 
 chain: chain.pem
 pkey.pem:
@@ -35,7 +38,7 @@ chain.pem: pkey.pem
 	openssl req -x509 -new -key pkey.pem -days 36500 -subj '/CN=localhost' -out chain.pem
 
 $(TESTS):
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LDLIBS)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LDLIBS)
 
 clean:
 	$(RM) $(TESTS) *.o

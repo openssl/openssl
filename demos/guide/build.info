@@ -12,6 +12,7 @@ PROGRAMS{noinst} = tls-client-block \
                    quic-server-block \
                    quic-server-non-block \
                    quic-client-non-block \
+                   quic-server-ssl-poll-http
 
 INCLUDE[tls-client-block]=../../include
 SOURCE[tls-client-block]=tls-client-block.c
@@ -41,3 +42,6 @@ INCLUDE[quic-client-non-block]=../../include
 SOURCE[quic-client-non-block]=quic-client-non-block.c
 DEPEND[quic-client-non-block]=../../libcrypto ../../libssl
 
+INCLUDE[quic-server-ssl-poll-http]=../../include
+SOURCE[quic-server-ssl-poll-http]=quic-server-ssl-poll-http.c
+DEPEND[quic-server-ssl-poll-http]=../../libcrypto ../../libssl
