@@ -519,8 +519,8 @@ sub runall {
     return 1;
 }
 
-# According to RFC8089, a relative file: path is invalid.  We still produce
-# them for testing purposes.
+# According to RFC8089, a relative file: path is invalid.
+# We still support them and produce them here for testing purposes.
 sub to_file_uri {
     my ($file, $isdir, $authority) = @_;
     my $vol;
