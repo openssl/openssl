@@ -82,18 +82,21 @@ int crl_main(int argc, char **argv)
     X509_STORE_CTX *ctx = NULL;
     X509_LOOKUP *lookup = NULL;
     X509_OBJECT *xobj = NULL;
+	X509_EXTENSION *ext, *tmp, *ext2;
     EVP_PKEY *pkey;
     EVP_MD *digest = (EVP_MD *)EVP_sha1();
+    STACK_OF(X509_EXTENSION) *exts;
+    struct { int nid, count; } *counts;
     char *infile = NULL, *outfile = NULL, *crldiff = NULL, *keyfile = NULL;
     char *digestname = NULL;
-    const char *CAfile = NULL, *CApath = NULL, *CAstore = NULL, *prog;
+    const char *CAfile = NULL, *CApath = NULL, *CAstore = NULL, *prog, *name, *sn;
     OPTION_CHOICE o;
     int hash = 0, issuer = 0, lastupdate = 0, nextupdate = 0, noout = 0;
     int informat = FORMAT_UNDEF, outformat = FORMAT_PEM, keyformat = FORMAT_UNDEF;
     int ret = 1, num = 0, badsig = 0, fingerprint = 0, crlnumber = 0;
-    int text = 0, do_ver = 0, noCAfile = 0, noCApath = 0, noCAstore = 0;
+    int text = 0, do_ver = 0, noCAfile = 0, noCApath = 0, noCAstore = 0, distinct = 0;
     unsigned long dateopt = ASN1_DTFLGS_RFC822;
-    int i;
+    int ext_total, nid, cnt, i, j, k;
 #ifndef OPENSSL_NO_MD5
     int hash_old = 0;
 #endif
@@ -220,6 +223,7 @@ int crl_main(int argc, char **argv)
         goto end;
 
     if (do_ver) {
+        /* Set up trust store */
         if ((store = setup_verify(CAfile, noCAfile, CApath, noCApath,
                                   CAstore, noCAstore)) == NULL)
             goto end;
@@ -231,7 +235,109 @@ int crl_main(int argc, char **argv)
             BIO_printf(bio_err, "Error initialising X509 store\n");
             goto end;
         }
-
+        /* Count CRL extensions */
+        exts = X509_CRL_get0_extensions(x);
+        ext_total = sk_X509_EXTENSION_num(exts);
+        counts = OPENSSL_malloc(ext_total * sizeof(*counts));
+        if (counts == NULL) {
+            BIO_printf(bio_err,
+                       "Out of memory counting extensions\n");
+        } else {
+            for (i = 0; i < ext_total; i++) {
+                ext = sk_X509_EXTENSION_value(exts, i);
+                nid = OBJ_obj2nid(X509_EXTENSION_get_object(ext));
+                for (j = 0; j < distinct; j++) {
+                    if (counts[j].nid == nid) {
+                        counts[j].count++;
+                        break;
+                    }
+                }
+                if (j == distinct) {
+                    counts[distinct].nid   = nid;
+                    counts[distinct].count = 1;
+                    distinct++;
+                }
+            }
+            for (i = 0; i < distinct; i++) {
+                name = OBJ_nid2sn(counts[i].nid);
+                if (name == NULL)
+                    name = OBJ_nid2ln(counts[i].nid);
+                BIO_printf(bio_err,
+                           "Extension %-30s (NID %3d): %d\n",
+                           name,
+                           counts[i].nid,
+                           counts[i].count);
+            }
+            /*
+            * Enforce RFC 5280 §5.1.2.7 / §5.2 rules:
+            *  - Authority Key Identifier: exactly one
+            *  - CRL Number: xactly one
+            *  - IssuerAltName, DeltaCRLIndicator,
+            *    IssuingDistributionPoint, FreshestCRL, AIA:
+            *    at most one each
+            *  - Any critical unknown extension -> error
+            */
+            for (i = 0; i < distinct; i++) {
+                nid = counts[i].nid;
+                cnt = counts[i].count;
+                sn = OBJ_nid2sn(nid);
+                if (sn == NULL)
+                    sn = OBJ_nid2ln(nid);
+                switch (nid) {
+                case NID_authority_key_identifier:
+                case NID_crl_number:
+                    if (cnt != 1) {
+                        BIO_printf(bio_err,
+                                   "CRL extension %s must appear "
+                                   "exactly once (found %d)\n",
+                                   sn, cnt);
+                        ret = 1;
+                        OPENSSL_free(counts);
+                        goto end;
+                    }
+                    break;
+                case NID_issuer_alt_name:
+                case NID_delta_crl:
+                case NID_issuing_distribution_point:
+                case NID_freshest_crl:
+                case NID_info_access:
+                    if (cnt > 1) {
+                        BIO_printf(bio_err,
+                                   "CRL extension %s must appear "
+                                   "at most once (found %d)\n",
+                                   sn, cnt);
+                        ret = 1;
+                        OPENSSL_free(counts);
+                        goto end;
+                    }
+                    break;
+                default:
+                    /* Any unknown critical extension is fatal */
+                    ext2 = NULL;
+                    for (k = 0; k < ext_total; k++) {
+                        tmp = sk_X509_EXTENSION_value(exts, k);
+                        if (OBJ_obj2nid(
+                                X509_EXTENSION_get_object(
+                                    tmp)) == nid) {
+                            ext2 = tmp;
+                            break;
+                        }
+                    }
+                    if (ext2 != NULL
+                        && X509_EXTENSION_get_critical(ext2)) {
+                        BIO_printf(bio_err,
+                                   "Unknown critical CRL "
+                                   "extension %s\n", sn);
+                        ret = 1;
+                        OPENSSL_free(counts);
+                        goto end;
+                    }
+                    break;
+                }
+            }
+            OPENSSL_free(counts);
+        }
+        /* Fetch the issuer object */
         xobj = X509_STORE_CTX_get_obj_by_subject(ctx, X509_LU_X509,
                                                  X509_CRL_get_issuer(x));
         if (xobj == NULL) {
