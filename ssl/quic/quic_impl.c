@@ -4043,13 +4043,14 @@ static void quic_classify_stream(QUIC_CONNECTION *qc,
         *app_error_code = !is_write
             ? qs->peer_reset_stream_aec
             : qs->peer_stop_sending_aec;
-    } else if (is_write && ossl_quic_sstream_get_final_size(qs->sstream,
-                                                            &final_size)) {
+    } else if (is_write && (!ossl_quic_stream_has_send(qs) ||
+                            !ossl_quic_sstream_get_final_size(qs->sstream,
+                                                              &final_size))) {
+        *state = SSL_STREAM_STATE_FINISHED;
         /*
          * Stream has been finished. Stream reset takes precedence over this for
          * the write case as peer may not have received all data.
          */
-        *state = SSL_STREAM_STATE_FINISHED;
     } else {
         /* Stream still healthy. */
         *state = SSL_STREAM_STATE_OK;
@@ -5159,10 +5160,18 @@ static int test_poll_event_w(QUIC_XSO *xso)
 QUIC_NEEDS_LOCK
 static int test_poll_event_ew(QUIC_XSO *xso)
 {
-    return ossl_quic_stream_has_send(xso->stream)
-        && xso->stream->peer_stop_sending
-        && !xso->requested_reset
-        && !xso->conn->shutting_down;
+    /*
+     * QUIC stack releases send stream as soon as it moves
+     * stream state to QUIC_SSTREAM_STATE_DATA_RECVD.
+     * (see RFC 9000, section 3.1). In other words we release
+     * send stream as soon as we receive an ACK for our FIN.
+     * The ossl_quic_stream_has_send() condition is no
+     * longer true.
+     */
+    return ((ossl_quic_stream_has_send(xso->stream)
+             && xso->stream->peer_stop_sending
+             && !xso->requested_reset
+             && !xso->conn->shutting_down) || xso->stream->sstream_fin_acked);
 }
 
 /* Do we have the EC (exception: connection) condition? */
