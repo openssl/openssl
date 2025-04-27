@@ -29,7 +29,7 @@ tls-client-non-block: tls-client-non-block.o
 quic-server-block: quic-server-block.o
 quic-server-non-block: quic-server-non-block.o
 quic-client-non-block: quic-client-non-block.o
-quic-server-ssl-poll-http09: quic-server-ssl-poll-http.o
+quic-server-ssl-poll-http: quic-server-ssl-poll-http.o
 
 chain: chain.pem
 pkey.pem:

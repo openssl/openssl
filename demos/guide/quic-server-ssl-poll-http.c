@@ -400,7 +400,7 @@ static unsigned int rb_txt_simple_read_cb(struct response_buffer *rb, char *buf,
     if (rts == NULL || rb_eof(rb))
         return 0;
 
-    while ((i < rts->rts_len) && (i < buf_sz)) {
+    while ((i < rts->rts_len) && (rv < buf_sz)) {
         *buf++ = rts->rts_pattern[i % rts->rts_pattern_len];
         i++;
         rv++;
@@ -494,13 +494,13 @@ static unsigned int rb_txt_full_read_cb(struct response_buffer *rb, char *buf,
     if (rtf == NULL || rb_eof(rb))
         return 0;
 
-    while ((i < rtf->rtf_hdr_len) && (i < buf_sz)) {
+    while ((i < rtf->rtf_hdr_len) && (rv < buf_sz)) {
         *buf++ = rtf->rtf_headers[i++];
         rv++;
     }
 
     j = i - rtf->rtf_hdr_len;
-    while ((i < rtf->rtf_len) && (i < buf_sz)) {
+    while ((i < rtf->rtf_len) && (rv < buf_sz)) {
         *buf++ = rtf->rtf_pattern[j % rtf->rtf_pattern_len];
         j++;
         i++;
@@ -1154,8 +1154,6 @@ static int app_write_cb(struct poll_event *pe)
 
     if (rb == NULL) {
         DPRINTF(stderr, "%s no response buffer\n", __func__);
-        pe_pause_write(pe);
-        pe_resume_read(pe);
         return -1;
     }
 
@@ -1179,6 +1177,8 @@ static int app_write_cb(struct poll_event *pe)
         if (rv == 1) {
             rb_advrpos(rb, (unsigned int)written);
             rv = 0;
+        } else {
+            rv = handle_ssl_error(pe, rv, __func__);
         }
     }
 
