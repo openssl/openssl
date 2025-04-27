@@ -57,6 +57,11 @@ OpenSSL 4.0
 
    *Daniel Kubec*
 
+ * Enforce lower bounds checks when using PKCS5_PBKDF2_HMAC API with
+   FIPS provider.
+
+   *Dimitri John Ledkov*
+
 OpenSSL 3.6
 -----------
 
