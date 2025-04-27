@@ -431,7 +431,7 @@ static void rb_txt_simple_advrpos_cb(struct response_buffer *rb,
     }
 }
 
-static struct response_txt_simple *new_txt_simple_respoonse(
+static ossl_unused struct response_txt_simple *new_txt_simple_respoonse(
     const char *fill_pattern, unsigned int fsize)
 {
     struct response_txt_simple *rts;
@@ -550,7 +550,7 @@ static struct response_txt_full *new_txt_full_respoonse(const char *fill_pattern
         "Content-Length: %u\r\n"
         "Date: %s\r\n"
         "\r\n", fsize, date_str);
-    if (hlen >= sizeof (rtf->rtf_headers)) {
+    if (hlen >= (int)sizeof (rtf->rtf_headers)) {
         OPENSSL_free(rtf->rtf_pattern);
         OPENSSL_free(rtf);
         return NULL;
@@ -570,7 +570,7 @@ static struct response_txt_full *new_txt_full_respoonse(const char *fill_pattern
     return rtf;
 }
 
-static const char *pe_type_to_name(const struct poll_event *pe)
+static ossl_unused const char *pe_type_to_name(const struct poll_event *pe)
 {
     static const char *names[] = {
         "none",
@@ -729,7 +729,8 @@ static void pe_disable_write(struct poll_event *pe)
  * or error is permanent. In case of permanent error the
  * poll event pe should be removed from poll manager and destroyed.
  */
-static const char *err_str_n(unsigned long e, char *buf, size_t buf_sz)
+static ossl_unused const char *err_str_n(unsigned long e, char *buf,
+                                         size_t buf_sz)
 {
     ERR_error_string_n(e, buf, buf_sz);
     return buf;
@@ -740,7 +741,9 @@ static int handle_ssl_error(struct poll_event *pe, int rc, const char *caller)
 
     SSL *ssl = get_ssl_from_pe(pe);
     int ssl_error, rv;
+#ifdef DEBUG
     char err_str[120];
+#endif
 
     /* may be we should use SSL_shutdown_ex() to signal peer what's going on */
     ssl_error = SSL_get_error(ssl, rc);
@@ -779,7 +782,7 @@ static int handle_ssl_error(struct poll_event *pe, int rc, const char *caller)
     return rv;
 }
 
-static const char *stream_state_str(int stream_state)
+static ossl_unused const char *stream_state_str(int stream_state)
 {
     const char *rv;
 
@@ -1161,7 +1164,7 @@ static int app_write_cb(struct poll_event *pe)
     if (wlen == 0) {
         DPRINTF(stderr, "%s no more data to write to %p (%s)\n", __func__,
                 pe, pe_type_to_name(pe));
-        SSL_stream_conclude(get_ssl_from_pe(pe), 0);
+        (void) SSL_stream_conclude(get_ssl_from_pe(pe), 0);
         pe_disable_write(pe);
         /*
          * We've sent all data out. We can stop polling and ask poll
@@ -1473,13 +1476,15 @@ static int app_accept_stream_cb(struct poll_event *qconn_pe)
 {
     SSL *qconn;
     SSL *qs;
-    struct poll_event_connection *pec;
     struct poll_event *qs_pe;
     int rv = 0;
+#ifdef DEBUG
+    struct poll_event_connection *pec;
 
     assert(qconn_pe->pe_poll_item.revents & SSL_POLL_EVENT_IS);
     pec = pe_to_connection(qconn_pe);
     assert(pec != NULL);
+#endif
 
     qconn = get_ssl_from_pe(qconn_pe);
 
