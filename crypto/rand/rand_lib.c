@@ -1081,6 +1081,20 @@ int RAND_set_seed_source_type(OSSL_LIB_CTX *ctx, const char *seed,
         && random_set_string(&dgbl->seed_propq, propq);
 }
 
+const char* RAND_get_seed_source_name(OSSL_LIB_CTX *ctx)
+{
+    RAND_GLOBAL *dgbl = rand_get_global(ctx);
+
+    if (dgbl != NULL && dgbl->seed_name != NULL)
+        return dgbl->seed_name;
+
+    /*
+     * This duplicates logic in rand_new_seed(). Maybe it should set
+     * dgbl->seed_name as a side-effect.
+     */
+    return OPENSSL_MSTR(OPENSSL_DEFAULT_SEED_SRC);
+}
+
 int RAND_set1_random_provider(OSSL_LIB_CTX *ctx, OSSL_PROVIDER *prov)
 {
     RAND_GLOBAL *dgbl = rand_get_global(ctx);

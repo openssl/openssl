@@ -142,6 +142,8 @@ opthelp:
     if (seed) {
         const char *src = OPENSSL_info(OPENSSL_INFO_SEED_SOURCE);
         printf("Seeding source: %s\n", src ? src : "N/A");
+        const char *seedname = RAND_get_seed_source_name(NULL);
+        printf("Active seed name: %s\n", seedname);
     }
     if (cpuinfo)
         printf("%s\n", OpenSSL_version(OPENSSL_CPU_INFO));
