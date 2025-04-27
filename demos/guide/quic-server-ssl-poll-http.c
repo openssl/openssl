@@ -201,14 +201,14 @@ struct poll_manager {
     int			 pm_continue;
 };
 
-#define POLL_ERROR	(SSL_POLL_EVENT_F | SSL_POLL_EVENT_EL | \
+#define SSL_POLL_ERROR	(SSL_POLL_EVENT_F | SSL_POLL_EVENT_EL | \
     SSL_POLL_EVENT_EC | SSL_POLL_EVENT_ECD | SSL_POLL_EVENT_ER | \
     SSL_POLL_EVENT_EW)
 
-#define POLL_IN		(SSL_POLL_EVENT_R | SSL_POLL_EVENT_IC | \
+#define SSL_POLL_IN		(SSL_POLL_EVENT_R | SSL_POLL_EVENT_IC | \
     SSL_POLL_EVENT_ISB | SSL_POLL_EVENT_ISU)
 
-#define POLL_OUT	(SSL_POLL_EVENT_W | SSL_POLL_EVENT_OSB | \
+#define SSL_POLL_OUT	(SSL_POLL_EVENT_W | SSL_POLL_EVENT_OSB | \
     SSL_POLL_EVENT_OSU)
 
 struct poll_event_stream {
@@ -1639,11 +1639,11 @@ static int run_quic_server(SSL_CTX *ctx, struct poll_manager *pm, int fd)
                    pe_type_to_name(pe), pe,
                    POLL_PRINTA(pe->pe_poll_item.revents));
             pe->pe_self->pe_poll_item.revents = pe->pe_poll_item.revents;
-            if (pe->pe_poll_item.revents & POLL_ERROR)
+            if (pe->pe_poll_item.revents & SSL_POLL_ERROR)
                 e = pe->pe_cb_error(pe->pe_self);
-            else if (pe->pe_poll_item.revents & POLL_IN)
+            else if (pe->pe_poll_item.revents & SSL_POLL_IN)
                 e = pe->pe_cb_in(pe->pe_self);
-            else if (pe->pe_poll_item.revents & POLL_OUT)
+            else if (pe->pe_poll_item.revents & SSL_POLL_OUT)
                 e = pe->pe_cb_out(pe->pe_self);
 
             if (e == -1) {
