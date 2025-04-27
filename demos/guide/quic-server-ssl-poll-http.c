@@ -1164,7 +1164,7 @@ static int app_write_cb(struct poll_event *pe)
     if (wlen == 0) {
         DPRINTF(stderr, "%s no more data to write to %p (%s)\n", __func__,
                 pe, pe_type_to_name(pe));
-        (void) SSL_stream_conclude(get_ssl_from_pe(pe), 0);
+        rv = SSL_stream_conclude(get_ssl_from_pe(pe), 0);
         pe_disable_write(pe);
         /*
          * We've sent all data out. We can stop polling and ask poll
@@ -1173,6 +1173,11 @@ static int app_write_cb(struct poll_event *pe)
          * However I'm not entirely sure about it yet, see
          * project ticket #1160
          * https://github.com/openssl/project/issues/1160
+         */
+        /*
+	 * we deliberately override return value of SSL_stream_conclude() here
+         * to keep CI build happy. -1 means we are going to kill poll evvent
+         * anyway.
          */
         rv = -1;
     } else {
@@ -1576,7 +1581,7 @@ static int app_accept_qconn(struct poll_event *listener_pe)
 static int run_quic_server(SSL_CTX *ctx, struct poll_manager *pm, int fd)
 {
     int ok = -1;
-    int e;
+    int e = 0;
     unsigned int i;
     SSL *listener;
     struct poll_event *pe;
