@@ -28,7 +28,20 @@
  * The main() function creates instance of poll_manager which manages
  * all events (poll_event). If all is good execution calls to
  * run_quic_server() function where QUIC listener is created and passed
- * to manager. Then the polling loop is entered to server remote clients.
+ * to manager. Then the polling loop is entered to serve remote clients.
+ *
+ * Some naming conventions are followed in code:
+ *    - pe is used for poll event, it can be associated with listener,
+ *      connection or stream.
+ *    - pec is used for poll event which handles connection
+ *    - pes is used for poll event which handles stream
+ *
+ * there is also response buffer which helps server to dispatch reply:
+ *    - rb is used for any response buffer type
+ *    - rts is used for simple text buffer (just data with no HTTP/1.0
+ *      headers)
+ *    - rtf is used for response text buffers which carry HTTP/1.0 headers
+ *      (response text full)
  */
 #include <string.h>
 #include <stdio.h>
@@ -1302,10 +1315,10 @@ get_fsize(const char *file_name)
     /* any number we find in filename is desired size */
     fsize = 0;
 
-    while (*digit && !isdigit(*digit))
+    while (*digit && !isdigit((int)*digit))
         digit++;
 
-    while (*digit && isdigit(*digit)) {
+    while (*digit && isdigit((int)*digit)) {
         fsize = fsize * 10;
         fsize = fsize + (*digit - 0x30);
         digit++;
@@ -1332,14 +1345,14 @@ parse_request(struct poll_event_stream *pes)
     if (pe->pe_appdata != NULL)
         return -1;
 
-    while (*pos && isspace(*pos))
+    while (*pos && isspace((int)*pos))
         pos++;
 
     if (strncasecmp(pos, "GET", 3) != 0)
         return -1; /* this will reset the stream */
     pos += 3;
 
-    while (*pos && isspace(*pos))
+    while (*pos && isspace((int)*pos))
         pos++;
 
     if (*pos != '/')
@@ -1349,7 +1362,7 @@ parse_request(struct poll_event_stream *pes)
     while (*pos == '/')
         pos++;
 
-    while ((isalnum(*pos) || ispunct(*pos)) && (dst < end))
+    while ((isalnum((int)*pos) || ispunct((int)*pos)) && (dst < end))
         *dst++ = *pos++;
     if (dst == end)
         dst--;
