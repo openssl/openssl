@@ -24,9 +24,8 @@ plan skip_all => "$test_name needs the sock feature enabled"
     if disabled("sock");
 
 plan skip_all => "$test_name needs TLS1.3 and TLS1.2 enabled"
-    if disabled("tls1_3")
-       || (disabled("ec") && disabled("dh"))
-       || disabled("tls1_2");
+    if disabled("tls1_3") || disabled("tls1_2")
+        || (disabled("ec") && disabled("dh"));
 
 my $proxy = TLSProxy::Proxy->new(
     undef,
@@ -46,49 +45,70 @@ $proxy->filter(\&downgrade_filter);
 my $testtype = DOWNGRADE_TO_TLS_1_2;
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
 plan tests => 6;
-ok(TLSProxy::Message->fail(), "Downgrade TLSv1.3 to TLSv1.2");
+ok(is_illegal_parameter_client_alert(), "Downgrade TLSv1.3 to TLSv1.2");
 
-#Test 2: Downgrade from TLSv1.3 to TLSv1.1
-$proxy->clear();
-$testtype = DOWNGRADE_TO_TLS_1_1;
-$proxy->start();
-ok(TLSProxy::Message->fail(), "Downgrade TLSv1.3 to TLSv1.1");
-
-#Test 3: Downgrade from TLSv1.2 to TLSv1.1
-$proxy->clear();
-$proxy->clientflags("-no_tls1_3");
-$proxy->serverflags("-no_tls1_3");
-$proxy->start();
-ok(TLSProxy::Message->fail(), "Downgrade TLSv1.2 to TLSv1.1");
-
-#Test 4: Client falls back from TLSv1.3 (server does not support the fallback
+#Test 2: Client falls back from TLSv1.3 (server does not support the fallback
 #        SCSV)
 $proxy->clear();
 $testtype = FALLBACK_FROM_TLS_1_3;
 $proxy->clientflags("-fallback_scsv -no_tls1_3");
 $proxy->start();
-my $alert = TLSProxy::Message->alert();
-ok(TLSProxy::Message->fail()
-   && !$alert->server()
-   && $alert->description() == TLSProxy::Message::AL_DESC_ILLEGAL_PARAMETER,
-   "Fallback from TLSv1.3");
+ok(is_illegal_parameter_client_alert(), "Fallback from TLSv1.3");
 
 SKIP: {
-    skip "TLSv1.1 disabled", 2 if disabled("tls1_1");
+    skip "TLSv1.1 disabled", 4 if disabled("tls1_1");
+
+    my $client_flags = "-min_protocol TLSv1.1 -cipher DEFAULT:\@SECLEVEL=0";
+    my $server_flags = "-min_protocol TLSv1.1";
+    my $ciphers = "AES128-SHA:\@SECLEVEL=0";
+
+    #Test 3: Downgrade from TLSv1.3 to TLSv1.1
+    $proxy->clear();
+    $testtype = DOWNGRADE_TO_TLS_1_1;
+    $proxy->clientflags($client_flags);
+    $proxy->serverflags($server_flags);
+    $proxy->ciphers($ciphers);
+    $proxy->start();
+    ok(is_illegal_parameter_client_alert(), "Downgrade TLSv1.3 to TLSv1.1");
+
+    #Test 4: Downgrade from TLSv1.2 to TLSv1.1
+    $proxy->clear();
+    $testtype = DOWNGRADE_TO_TLS_1_1;
+    $proxy->clientflags($client_flags." -max_protocol TLSv1.2");
+    $proxy->serverflags($server_flags." -max_protocol TLSv1.2");
+    $proxy->ciphers($ciphers);
+    $proxy->start();
+    ok(is_illegal_parameter_client_alert(), "Downgrade TLSv1.2 to TLSv1.1");
+
     #Test 5: A client side protocol "hole" should not be detected as a downgrade
     $proxy->clear();
     $proxy->filter(undef);
-    $proxy->clientflags("-no_tls1_2");
-    $proxy->ciphers("AES128-SHA:\@SECLEVEL=0");
+    $proxy->clientflags($client_flags." -no_tls1_2");
+    $proxy->serverflags($server_flags);
+    $proxy->ciphers($ciphers);
     $proxy->start();
     ok(TLSProxy::Message->success(), "TLSv1.2 client-side protocol hole");
 
     #Test 6: A server side protocol "hole" should not be detected as a downgrade
     $proxy->clear();
     $proxy->filter(undef);
-    $proxy->serverflags("-no_tls1_2");
+    $proxy->clientflags($client_flags);
+    $proxy->serverflags($server_flags." -no_tls1_2");
+    $proxy->ciphers($ciphers);
     $proxy->start();
     ok(TLSProxy::Message->success(), "TLSv1.2 server-side protocol hole");
+}
+
+# Validate that the exchange fails with an illegal parameter alert from
+#  the client
+sub is_illegal_parameter_client_alert
+{
+    return 0 unless TLSProxy::Message->fail();
+    my $alert = TLSProxy::Message->alert();
+    return 1 if !$alert->server()
+                && $alert->description()
+                   == TLSProxy::Message::AL_DESC_ILLEGAL_PARAMETER;
+    return 0;
 }
 
 sub downgrade_filter
