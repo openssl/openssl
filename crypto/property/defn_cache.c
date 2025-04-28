@@ -89,7 +89,7 @@ OSSL_PROPERTY_LIST *ossl_prop_defn_get(OSSL_LIB_CTX *ctx, const char *prop)
 int ossl_prop_defn_set(OSSL_LIB_CTX *ctx, const char *prop,
                        OSSL_PROPERTY_LIST **pl)
 {
-    PROPERTY_DEFN_ELEM elem, *old, *p = NULL;
+    PROPERTY_DEFN_ELEM elem, *old, *p = NULL, *q;
     size_t len;
     LHASH_OF(PROPERTY_DEFN_ELEM) *property_defns;
     int res = 1;
@@ -116,12 +116,12 @@ int ossl_prop_defn_set(OSSL_LIB_CTX *ctx, const char *prop,
         goto end;
     }
     len = strlen(prop);
-    p = OPENSSL_malloc(sizeof(*p) + len);
-    if (p != NULL) {
-        p->prop = p->body;
-        p->defn = *pl;
-        memcpy(p->body, prop, len + 1);
-        old = lh_PROPERTY_DEFN_ELEM_insert(property_defns, p);
+    q = OPENSSL_malloc(sizeof(*q) + len);
+    if (q != NULL) {
+        q->prop = q->body;
+        q->defn = *pl;
+        memcpy(q->body, prop, len + 1);
+        old = lh_PROPERTY_DEFN_ELEM_insert(property_defns, q);
         if (!ossl_assert(old == NULL))
             /* This should not happen. An existing entry is handled above. */
             goto end;
@@ -130,7 +130,7 @@ int ossl_prop_defn_set(OSSL_LIB_CTX *ctx, const char *prop,
     }
     res = 0;
  end:
-    OPENSSL_free(p);
+    OPENSSL_free(q);
     ossl_lib_ctx_unlock(ctx);
     return res;
 }
