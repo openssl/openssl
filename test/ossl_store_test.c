@@ -64,7 +64,7 @@ static int test_store_open(void)
  * microsoft cert store.  We use it to extract the subject name
  * so that we can search for it in the store
  */
-static unsigned char mscert[] = {
+static const unsigned char mscert[] = {
   0x30, 0x82, 0x05, 0xed, 0x30, 0x82, 0x03, 0xd5, 0xa0, 0x03, 0x02, 0x01, 0x02,
   0x02, 0x10, 0x3f, 0x8b, 0xc8, 0xb5, 0xfc, 0x9f, 0xb2, 0x96, 0x43, 0xb5, 0x69,
   0xd6, 0x6c, 0x42, 0xe1, 0x44, 0x30, 0x0d, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86,
@@ -193,7 +193,7 @@ static int test_store_open_winstore(void)
     UI_METHOD *ui_method = NULL;
     OSSL_STORE_INFO *info = NULL;
     X509* testcert = NULL;
-    unsigned char* certptr = mscert;
+    const unsigned char* certptr = mscert;
 
     /*
      * Test the winstore, by opening it, searching for the MS root certificate
