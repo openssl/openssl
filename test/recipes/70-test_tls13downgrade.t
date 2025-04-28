@@ -40,16 +40,25 @@ use constant {
     DOWNGRADE_TO_TLS_1_2 => 0,
     DOWNGRADE_TO_TLS_1_1 => 1,
     FALLBACK_FROM_TLS_1_3 => 2,
+    DOWNGRADE_TO_TLS_1_2_WITH_TLS_1_1_SIGNAL => 3,
+    DOWNGRADE_TO_TLS_1_1_WITH_TLS_1_2_SIGNAL => 4,
 };
 
 #Test 1: Downgrade from TLSv1.3 to TLSv1.2
 $proxy->filter(\&downgrade_filter);
 my $testtype = DOWNGRADE_TO_TLS_1_2;
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 6;
+plan tests => 8;
 ok(is_illegal_parameter_client_alert(), "Downgrade TLSv1.3 to TLSv1.2");
 
-#Test 2: Client falls back from TLSv1.3 (server does not support the fallback
+#Test 2: Downgrade from TLSv1.3 to TLSv1.2 (server sends TLSv1.1 signal)
+$proxy->clear();
+$testtype = DOWNGRADE_TO_TLS_1_2_WITH_TLS_1_1_SIGNAL;
+$proxy->start();
+ok(is_illegal_parameter_client_alert(),
+   "Downgrade from TLSv1.3 to TLSv1.2 (server sends TLSv1.1 signal)");
+
+#Test 3: Client falls back from TLSv1.3 (server does not support the fallback
 #        SCSV)
 $proxy->clear();
 $testtype = FALLBACK_FROM_TLS_1_3;
@@ -58,13 +67,13 @@ $proxy->start();
 ok(is_illegal_parameter_client_alert(), "Fallback from TLSv1.3");
 
 SKIP: {
-    skip "TLSv1.1 disabled", 4 if disabled("tls1_1");
+    skip "TLSv1.1 disabled", 5 if disabled("tls1_1");
 
     my $client_flags = "-min_protocol TLSv1.1 -cipher DEFAULT:\@SECLEVEL=0";
     my $server_flags = "-min_protocol TLSv1.1";
     my $ciphers = "AES128-SHA:\@SECLEVEL=0";
 
-    #Test 3: Downgrade from TLSv1.3 to TLSv1.1
+    #Test 4: Downgrade from TLSv1.3 to TLSv1.1
     $proxy->clear();
     $testtype = DOWNGRADE_TO_TLS_1_1;
     $proxy->clientflags($client_flags);
@@ -73,7 +82,17 @@ SKIP: {
     $proxy->start();
     ok(is_illegal_parameter_client_alert(), "Downgrade TLSv1.3 to TLSv1.1");
 
-    #Test 4: Downgrade from TLSv1.2 to TLSv1.1
+    #Test 5: Downgrade from TLSv1.3 to TLSv1.1 (server sends TLSv1.2 signal)
+    $proxy->clear();
+    $testtype = DOWNGRADE_TO_TLS_1_1_WITH_TLS_1_2_SIGNAL;
+    $proxy->clientflags($client_flags);
+    $proxy->serverflags($server_flags);
+    $proxy->ciphers($ciphers);
+    $proxy->start();
+    ok(is_illegal_parameter_client_alert(),
+       "Downgrade TLSv1.3 to TLSv1.1 (server sends TLSv1.2 signal)");
+
+    #Test 6: Downgrade from TLSv1.2 to TLSv1.1
     $proxy->clear();
     $testtype = DOWNGRADE_TO_TLS_1_1;
     $proxy->clientflags($client_flags." -max_protocol TLSv1.2");
@@ -82,7 +101,7 @@ SKIP: {
     $proxy->start();
     ok(is_illegal_parameter_client_alert(), "Downgrade TLSv1.2 to TLSv1.1");
 
-    #Test 5: A client side protocol "hole" should not be detected as a downgrade
+    #Test 7: A client side protocol "hole" should not be detected as a downgrade
     $proxy->clear();
     $proxy->filter(undef);
     $proxy->clientflags($client_flags." -no_tls1_2");
@@ -91,7 +110,7 @@ SKIP: {
     $proxy->start();
     ok(TLSProxy::Message->success(), "TLSv1.2 client-side protocol hole");
 
-    #Test 6: A server side protocol "hole" should not be detected as a downgrade
+    #Test 8: A server side protocol "hole" should not be detected as a downgrade
     $proxy->clear();
     $proxy->filter(undef);
     $proxy->clientflags($client_flags);
@@ -117,33 +136,54 @@ sub downgrade_filter
 {
     my $proxy = shift;
 
-    # We're only interested in the initial ClientHello
-    if ($proxy->flight != 0) {
+    # We're only interested in the initial ClientHello and ServerHello
+    if ($proxy->flight > 1) {
         return;
     }
 
-    my $message = ${$proxy->message_list}[0];
+    my $message = ${$proxy->message_list}[$proxy->flight];
 
-    my $ext;
-    if ($testtype == FALLBACK_FROM_TLS_1_3) {
-        #The default ciphersuite we use for TLSv1.2 without any SCSV
-        my @ciphersuites = (TLSProxy::Message::CIPHER_RSA_WITH_AES_128_CBC_SHA);
-        $message->ciphersuite_len(2 * scalar @ciphersuites);
-        $message->ciphersuites(\@ciphersuites);
-    } else {
-        if ($testtype == DOWNGRADE_TO_TLS_1_2) {
-            $ext = pack "C3",
-                0x02, # Length
-                0x03, 0x03; #TLSv1.2
-        } else {
-            $ext = pack "C3",
-                0x02, # Length
-                0x03, 0x02; #TLSv1.1
+    # ServerHello
+    if ($proxy->flight == 1 && defined($message)) {
+        # Update the last byte of the downgrade signal
+        if ($testtype == DOWNGRADE_TO_TLS_1_2_WITH_TLS_1_1_SIGNAL) {
+            $message->random(substr($message->random, 0, 31) . "\0");
+            $message->repack();
+        } elsif ($testtype == DOWNGRADE_TO_TLS_1_1_WITH_TLS_1_2_SIGNAL) {
+            $message->random(substr($message->random, 0, 31) . "\1");
+            $message->repack();
         }
 
-        $message->set_extension(TLSProxy::Message::EXT_SUPPORTED_VERSIONS, $ext);
+        return;
     }
 
-    $message->repack();
+    # ClientHello
+    if ($proxy->flight == 0) {
+        my $ext;
+        if ($testtype == FALLBACK_FROM_TLS_1_3) {
+            #The default ciphersuite we use for TLSv1.2 without any SCSV
+            my @ciphersuites = (TLSProxy::Message::CIPHER_RSA_WITH_AES_128_CBC_SHA);
+            $message->ciphersuite_len(2 * scalar @ciphersuites);
+            $message->ciphersuites(\@ciphersuites);
+        }
+        else {
+            if ($testtype == DOWNGRADE_TO_TLS_1_2
+                || $testtype == DOWNGRADE_TO_TLS_1_2_WITH_TLS_1_1_SIGNAL) {
+                $ext = pack "C3",
+                    0x02,       # Length
+                    0x03, 0x03; #TLSv1.2
+            }
+            else {
+                $ext = pack "C3",
+                    0x02,       # Length
+                    0x03, 0x02; #TLSv1.1
+            }
+
+            $message->set_extension(TLSProxy::Message::EXT_SUPPORTED_VERSIONS,
+                                    $ext);
+        }
+
+        $message->repack();
+    }
 }
 
