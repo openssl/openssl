@@ -86,6 +86,7 @@ int crl_main(int argc, char **argv)
     EVP_PKEY *pkey;
     EVP_MD *digest = (EVP_MD *)EVP_sha1();
     STACK_OF(X509_EXTENSION) *exts;
+    AUTHORITY_KEYID *akid;
     struct { int nid, count; } *counts;
     char *infile = NULL, *outfile = NULL, *crldiff = NULL, *keyfile = NULL;
     char *digestname = NULL;
@@ -96,7 +97,7 @@ int crl_main(int argc, char **argv)
     int ret = 1, num = 0, badsig = 0, fingerprint = 0, crlnumber = 0;
     int text = 0, do_ver = 0, noCAfile = 0, noCApath = 0, noCAstore = 0, distinct = 0;
     unsigned long dateopt = ASN1_DTFLGS_RFC822;
-    int ext_total, nid, cnt, i, j, k;
+    int ext_total, nid, cnt, crit, idx, i, j, k;
 #ifndef OPENSSL_NO_MD5
     int hash_old = 0;
 #endif
@@ -336,6 +337,47 @@ int crl_main(int argc, char **argv)
                 }
             }
             OPENSSL_free(counts);
+        }
+        /* Additional Authority Key Identifier semantic checks */
+        crit = 0;
+        idx = -1;
+        akid = X509_CRL_get_ext_d2i(x, NID_authority_key_identifier,
+                                    &crit, &idx);
+        if (akid) {
+            if (crit) {
+                BIO_printf(bio_err,
+                           "CRL extension Authority Key Identifier "
+                           "must not be marked critical\n");
+                AUTHORITY_KEYID_free(akid);
+                ret = 1;
+                goto end;
+            }
+            if (akid->keyid == NULL) {
+                BIO_printf(bio_err,
+                           "CRL extension Authority Key Identifier "
+                           "must contain a keyIdentifier\n");
+                AUTHORITY_KEYID_free(akid);
+                ret = 1;
+                goto end;
+            }
+            if (akid->keyid->length == 0) {
+                BIO_printf(bio_err,
+                           "CRL extension Authority Key Identifier "
+                           "keyIdentifier must not be empty\n");
+                AUTHORITY_KEYID_free(akid);
+                ret = 1;
+                goto end;
+            }
+            if (akid->serial != NULL
+                && ASN1_INTEGER_get(akid->serial) <= 0) {
+                BIO_printf(bio_err,
+                           "CRL extension Authority Key Identifier "
+                           "authorityCertSerialNumber must be positive\n");
+                AUTHORITY_KEYID_free(akid);
+                ret = 1;
+                goto end;
+                }
+            AUTHORITY_KEYID_free(akid);
         }
         /* Fetch the issuer object */
         xobj = X509_STORE_CTX_get_obj_by_subject(ctx, X509_LU_X509,
