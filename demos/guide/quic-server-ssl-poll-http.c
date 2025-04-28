@@ -48,9 +48,9 @@
  */
 
 #ifdef DEBUG
-#define DPRINTF		fprintf
+# define DPRINTF fprintf
 #else
-#define DPRINTF(...)	(void)(0)
+# define DPRINTF(...) (void)(0)
 #endif
 
 /*
@@ -59,21 +59,21 @@
  *   int events = SSL_POLL_EVENT_F | SSL_POLL_EVENT_R;
  *   printf("%s We got events: " POLL_FMT "\n", __func__, POLL_PRINTA(events));
  */
-#define POLL_FMT	"%s%s%s%s%s%s%s%s%s%s%s%s%s"
-#define POLL_PRINTA(_revents_)	\
-                (_revents_) & SSL_POLL_EVENT_F ? "SSL_POLL_EVENT_F " : "",	\
-                (_revents_) & SSL_POLL_EVENT_EL ? "SSL_POLL_EVENT_EL" : "",	\
-                (_revents_) & SSL_POLL_EVENT_EC ? "SSL_POLL_EVENT_EC " : "",	\
-                (_revents_) & SSL_POLL_EVENT_ECD ? "SSL_POLL_EVENT_ECD " : "",	\
-                (_revents_) & SSL_POLL_EVENT_ER ? "SSL_POLL_EVENT_ER " : "",	\
-                (_revents_) & SSL_POLL_EVENT_EW ? "SSL_POLL_EVENT_EW " : "",	\
-                (_revents_) & SSL_POLL_EVENT_R ? "SSL_POLL_EVENT_R " : "",	\
-                (_revents_) & SSL_POLL_EVENT_W ? "SSL_POLL_EVENT_W " : "",	\
-                (_revents_) & SSL_POLL_EVENT_IC ? "SSL_POLL_EVENT_IC " : "",	\
-                (_revents_) & SSL_POLL_EVENT_ISB ? "SSL_POLL_EVENT_ISB " : "",	\
-                (_revents_) & SSL_POLL_EVENT_ISU ? "SSL_POLL_EVENT_ISU " : "",	\
-                (_revents_) & SSL_POLL_EVENT_OSB ? "SSL_POLL_EVENT_OSB " : "",	\
-                (_revents_) & SSL_POLL_EVENT_OSU ? "SSL_POLL_EVENT_OSU " : ""
+#define POLL_FMT "%s%s%s%s%s%s%s%s%s%s%s%s%s"
+#define POLL_PRINTA(_revents_) \
+    (_revents_) & SSL_POLL_EVENT_F ? "SSL_POLL_EVENT_F " : "", \
+    (_revents_) & SSL_POLL_EVENT_EL ? "SSL_POLL_EVENT_EL" : "", \
+    (_revents_) & SSL_POLL_EVENT_EC ? "SSL_POLL_EVENT_EC " : "", \
+    (_revents_) & SSL_POLL_EVENT_ECD ? "SSL_POLL_EVENT_ECD " : "", \
+    (_revents_) & SSL_POLL_EVENT_ER ? "SSL_POLL_EVENT_ER " : "", \
+    (_revents_) & SSL_POLL_EVENT_EW ? "SSL_POLL_EVENT_EW " : "", \
+    (_revents_) & SSL_POLL_EVENT_R ? "SSL_POLL_EVENT_R " : "", \
+    (_revents_) & SSL_POLL_EVENT_W ? "SSL_POLL_EVENT_W " : "", \
+    (_revents_) & SSL_POLL_EVENT_IC ? "SSL_POLL_EVENT_IC " : "", \
+    (_revents_) & SSL_POLL_EVENT_ISB ? "SSL_POLL_EVENT_ISB " : "", \
+    (_revents_) & SSL_POLL_EVENT_ISU ? "SSL_POLL_EVENT_ISU " : "", \
+    (_revents_) & SSL_POLL_EVENT_OSB ? "SSL_POLL_EVENT_OSB " : "", \
+    (_revents_) & SSL_POLL_EVENT_OSU ? "SSL_POLL_EVENT_OSU " : ""
 
 /*
  * every poll_event structure has members enumerated here in poll_event_base
@@ -81,29 +81,29 @@
  * However SSL_poll(9ossl) expects an array of SSL_POLL_ITEM structures. Therefore
  * the poll manager needs to construct array of poll_event structures from list.
  * We get two copies of poll_event structures:
- *	- one copy is held in list (original)
- *	- one copy is held in array (copy for SSL_poll())
+ *    - one copy is held in list (original)
+ *    - one copy is held in array (copy for SSL_poll())
  * We use pe_self member to easily reach from SSL_poll() copy instance back to
  * original managed by poll manager and used by our application.
  * There are four callbacks:
- *	- pe_cb_in() - triggered when inbound daate/stram/connection is coming
- *	- pe_cb_out() - triggered when outbount data/stream/connection is coming
- *	- pe_cb_error() - triggered when polled object enters an error state 
- *	- pe_cb_destroy() - this a destructor, application destroy pe_appdata
+ *    - pe_cb_in() - triggered when inbound daate/stram/connection is coming
+ *    - pe_cb_out() - triggered when outbount data/stream/connection is coming
+ *    - pe_cb_error() - triggered when polled object enters an error state
+ *    - pe_cb_destroy() - this a destructor, application destroy pe_appdata
  * The remaining members are rather self explanatory.
  */
-#define poll_event_base	\
-    SSL_POLL_ITEM				 pe_poll_item;		\
-    OSSL_LIST_MEMBER(pe, struct poll_event);				\
-    uint64_t					 pe_want_events;	\
-    uint64_t                                     pe_want_mask;          \
-    struct poll_manager				*pe_my_pm;		\
-    unsigned char				 pe_type;		\
-    struct poll_event				*pe_self;		\
-    void					*pe_appdata;		\
-    int(*pe_cb_in)(struct poll_event *);				\
-    int(*pe_cb_out)(struct poll_event *);				\
-    int(*pe_cb_error)(struct poll_event *);				\
+#define poll_event_base \
+    SSL_POLL_ITEM pe_poll_item; \
+    OSSL_LIST_MEMBER(pe, struct poll_event);\
+    uint64_t pe_want_events; \
+    uint64_t pe_want_mask; \
+    struct poll_manager *pe_my_pm; \
+    unsigned char pe_type; \
+    struct poll_event *pe_self; \
+    void *pe_appdata; \
+    int(*pe_cb_in)(struct poll_event *); \
+    int(*pe_cb_out)(struct poll_event *); \
+    int(*pe_cb_error)(struct poll_event *); \
     void(*pe_cb_ondestroy)(struct poll_event *)
 
 struct poll_event {
@@ -118,8 +118,8 @@ struct poll_event_listener {
  * Each poll_event holds pe_appdata context. The poll_event is assocated with
  * SSL object which is typically QUIC stream. There are two types of streams
  * in QUIC:
- *	- uni-directional (simplex)
- *	- bi-directional (duplex)
+ *    - uni-directional (simplex)
+ *    - bi-directional (duplex)
  * bi-directional are easy to handle: we create them, then we read request
  * from client and write reply back. Then stream gets destroyed.
  * This request-reply handling is more tricky with uni-directional streams.
@@ -128,13 +128,13 @@ struct poll_event_listener {
  * pass data we read from input stream to output stream. The poll_event_context
  * here is to do it for us. The echo-reply server handling with simplex
  * (unidirectional) streams goes as follows:
- *	- we read data from input stream, data are held in pe_appdata
- *	- then we request poll manager to create an outbound stream,
- *	  so we can send echo reply back. we move pe_appdata to request
- *	  for outbound stream.
- *	- the inbound stream is then destroyed
- *	- once oubtound stream is esablkhed poll manager moves app data
- *	  from request to poll_event associated with outbound stream.
+ *    - we read data from input stream, data are held in pe_appdata
+ *    - then we request poll manager to create an outbound stream,
+ *      so we can send echo reply back. we move pe_appdata to request
+ *      for outbound stream.
+ *    - the inbound stream is then destroyed
+ *    - once oubtound stream is esablkhed poll manager moves app data
+ *      from request to poll_event associated with outbound stream.
  * We need to keep thhoe application data in list, because there might
  * be more than one echo-request to handle.
  */
@@ -151,22 +151,22 @@ DEFINE_LIST_OF(peccx, struct poll_event_context);
 /*
  * It facilitates transfer of app data from one stream to the other.
  * There are two lists:
- *	- pec_stream_cx for bi-directioanl streams (this list is unused
- *	  currently).
- *	- pec_unistream_cx for uni-direcitonal (simplex) streams.
+ *    - pec_stream_cx for bi-directioanl streams (this list is unused
+ *      currently).
+ *    - pec_unistream_cx for uni-direcitonal (simplex) streams.
  *
  * Then there are two counters:
- *	- pec_want_stream bumbped up when application requests duplex stream,
- *	  bumped down when stream is created
- *	- pec_want_unistream bumped up when application requests simplex stream.
- *	  bumped down when stream is created
+ *    - pec_want_stream bumbped up when application requests duplex stream,
+ *      bumped down when stream is created
+ *    - pec_want_unistream bumped up when application requests simplex stream.
+ *      bumped down when stream is created
  */
 struct poll_event_connection {
     poll_event_base;
-    OSSL_LIST(peccx)				 pec_stream_cx;
-    OSSL_LIST(peccx)				 pec_unistream_cx;
-    uint64_t					 pec_want_stream;
-    uint64_t					 pec_want_unistream;
+    OSSL_LIST(peccx) pec_stream_cx;
+    OSSL_LIST(peccx) pec_unistream_cx;
+    uint64_t pec_want_stream;
+    uint64_t pec_want_unistream;
 };
 
 /*
@@ -175,49 +175,49 @@ struct poll_event_connection {
  * Downsizing isi simila. This is very naive it leads to socilations
  * we need to figure out better strategy.
  */
-#define POLL_GROW	20
-#define	POLL_DOWNSIZ	20
+#define POLL_GROW 20
+#define POLL_DOWNSIZ 20
 
 /*
  * Members in poll manager deserve some explanation:
- *	- pm_head, holds a list of poll_event structures (connections and
- *	  streams)
- *	- pm_event_count number of events to montior in SSL_poll(3ossl)
- *	- pm_poll_set array of events to poll on
- *	- pm_poll_set_sz number of slots (space) available in pm_poll_set
- *	- pm_need_rebuild whenver list of events to monitor in a list changes
- *	  poll mamnager must rebuild pm_poll_set
- *	- pm_continue a flag indicats whether event loop should continue to
- *	  run or if it should be terminated (pm_continue == 0)
- *	- pm_wconn_in() callback fires when there is a new connection
- *	- pm qconn
+ *    - pm_head, holds a list of poll_event structures (connections and
+ *      streams)
+ *    - pm_event_count number of events to montior in SSL_poll(3ossl)
+ *    - pm_poll_set array of events to poll on
+ *    - pm_poll_set_sz number of slots (space) available in pm_poll_set
+ *    - pm_need_rebuild whenver list of events to monitor in a list changes
+ *      poll mamnager must rebuild pm_poll_set
+ *    - pm_continue a flag indicats whether event loop should continue to
+ *      run or if it should be terminated (pm_continue == 0)
+ *    - pm_wconn_in() callback fires when there is a new connection
+ *    - pm qconn
  */
 struct poll_manager {
-    OSSL_LIST(pe)	 pm_head;
-    unsigned int	 pm_event_count;
-    struct poll_event	*pm_poll_set;
-    unsigned int	 pm_poll_set_sz;
-    int			 pm_need_rebuild;
-    int			 pm_continue;
+    OSSL_LIST(pe) pm_head;
+    unsigned int pm_event_count;
+    struct poll_event *pm_poll_set;
+    unsigned int pm_poll_set_sz;
+    int pm_need_rebuild;
+    int pm_continue;
 };
 
-#define SSL_POLL_ERROR	(SSL_POLL_EVENT_F | SSL_POLL_EVENT_EL | \
-    SSL_POLL_EVENT_EC | SSL_POLL_EVENT_ECD | SSL_POLL_EVENT_ER | \
-    SSL_POLL_EVENT_EW)
+#define SSL_POLL_ERROR (SSL_POLL_EVENT_F | SSL_POLL_EVENT_EL | \
+                        SSL_POLL_EVENT_EC | SSL_POLL_EVENT_ECD | \
+                        SSL_POLL_EVENT_ER | SSL_POLL_EVENT_EW)
 
-#define SSL_POLL_IN		(SSL_POLL_EVENT_R | SSL_POLL_EVENT_IC | \
-    SSL_POLL_EVENT_ISB | SSL_POLL_EVENT_ISU)
+#define SSL_POLL_IN (SSL_POLL_EVENT_R | SSL_POLL_EVENT_IC | \
+                     SSL_POLL_EVENT_ISB | SSL_POLL_EVENT_ISU)
 
-#define SSL_POLL_OUT	(SSL_POLL_EVENT_W | SSL_POLL_EVENT_OSB | \
-    SSL_POLL_EVENT_OSU)
+#define SSL_POLL_OUT (SSL_POLL_EVENT_W | SSL_POLL_EVENT_OSB | \
+                      SSL_POLL_EVENT_OSU)
 
 struct poll_event_stream {
     poll_event_base;
-    struct poll_event_connection		*pes_conn;
-    char					*pes_wpos;
-    unsigned int				 pes_wpos_sz;
-    int						 pes_got_request;
-    char					 pes_reqbuf[8192];
+    struct poll_event_connection *pes_conn;
+    char *pes_wpos;
+    unsigned int pes_wpos_sz;
+    int pes_got_request;
+    char pes_reqbuf[8192];
 };
 
 enum {
@@ -225,15 +225,14 @@ enum {
     RB_TYPE_TEXT_SIMPLE,
     RB_TYPE_TEXT_FULL
 };
-#define	response_buffer_base	\
-    unsigned char	rb_type;		\
-    unsigned int	rb_rpos;		\
-    void		(*rb_advrpos_cb)(struct response_buffer *,\
-            unsigned int);\
-    unsigned int	(*rb_read_cb)(struct response_buffer *, char *, \
-	    unsigned int);			\
-    int			(*rb_eof_cb)(struct response_buffer *); \
-    void		(*rb_ondestroy_cb)(struct response_buffer *)
+#define response_buffer_base \
+    unsigned char rb_type; \
+    unsigned int rb_rpos; \
+    void (*rb_advrpos_cb)(struct response_buffer *, unsigned int);\
+    unsigned int (*rb_read_cb)(struct response_buffer *, char *, \
+                               unsigned int); \
+    int (*rb_eof_cb)(struct response_buffer *); \
+    void (*rb_ondestroy_cb)(struct response_buffer *)
 
 struct response_buffer {
     response_buffer_base;
@@ -241,18 +240,18 @@ struct response_buffer {
 
 struct response_txt_simple {
     response_buffer_base;
-    char		*rts_pattern;
-    unsigned int	 rts_pattern_len;
-    unsigned int	 rts_len;
+    char *rts_pattern;
+    unsigned int rts_pattern_len;
+    unsigned int rts_len;
 };
 
 struct response_txt_full {
     response_buffer_base;
-    char		 rtf_headers[1024];
-    char		*rtf_pattern;
-    unsigned int	 rtf_pattern_len;
-    unsigned int	 rtf_hdr_len;
-    unsigned int	 rtf_len; /* headers + data */
+    char rtf_headers[1024];
+    char *rtf_pattern;
+    unsigned int rtf_pattern_len;
+    unsigned int rtf_hdr_len;
+    unsigned int rtf_len; /* headers + data */
 };
 
 static void destroy_pe(struct poll_event *);
@@ -262,7 +261,8 @@ static void pe_return_void(struct poll_event *);
 #ifdef _WIN32
 static const char *progname;
 
-static void vwarnx(const char *fmt, va_list ap)
+static void
+vwarnx(const char *fmt, va_list ap)
 {
     if (progname != NULL)
         fprintf(stderr, "%s: ", progname);
@@ -270,7 +270,8 @@ static void vwarnx(const char *fmt, va_list ap)
     putc('\n', stderr);
 }
 
-static void errx(int status, const char *fmt, ...)
+static void
+errx(int status, const char *fmt, ...)
 {
     va_list ap;
 
@@ -280,7 +281,8 @@ static void errx(int status, const char *fmt, ...)
     exit(status);
 }
 
-static void warnx(const char *fmt, ...)
+static void
+warnx(const char *fmt, ...)
 {
     va_list ap;
 
@@ -294,14 +296,15 @@ static void warnx(const char *fmt, ...)
  * we generate payload for any URL we obtain in
  * GET request. mock-up is good enough for us.
  */
-static char *basename(char *path)
+static char *
+basename(char *path)
 {
     return path;
 }
 
-#define strncasecmp(_a_, _b_, _c_) _strnicmp((_a_), (_b_), (_c_))
+# define strncasecmp(_a_, _b_, _c_) _strnicmp((_a_), (_b_), (_c_))
 
-#define	ctime_r(_t_, _b_) ctime_s((_b_), sizeof ((_b_)), (_t_))
+# define ctime_r(_t_, _b_) ctime_s((_b_), sizeof ((_b_)), (_t_))
 
 #endif
 
@@ -315,45 +318,51 @@ enum pe_types {
     PE_INVALID
 };
 
-static struct response_txt_simple *rb_to_txt_simple(struct response_buffer *rb)
+static struct response_txt_simple *
+rb_to_txt_simple(struct response_buffer *rb)
 {
     if (rb == NULL || rb->rb_type != RB_TYPE_TEXT_SIMPLE)
-	return NULL;
+        return NULL;
 
     return (struct response_txt_simple *)rb;
 }
 
-static struct response_txt_full *rb_to_txt_full(struct response_buffer *rb)
+static struct response_txt_full *
+rb_to_txt_full(struct response_buffer *rb)
 {
     if (rb == NULL || rb->rb_type != RB_TYPE_TEXT_FULL)
-	return NULL;
+        return NULL;
 
     return (struct response_txt_full *)rb;
 }
 
-static void rb_advrpos_cb(struct response_buffer *rb, unsigned int rpos)
+static void
+rb_advrpos_cb(struct response_buffer *rb, unsigned int rpos)
 {
     /* we assume base response_buffer is unlimited */
     rb->rb_rpos += rpos;
 }
 
-static void rb_ondestroy_cb(struct response_buffer *rb)
+static void
+rb_ondestroy_cb(struct response_buffer *rb)
 {
     OPENSSL_free(rb);
 }
 
-static unsigned int rb_null_read_cb(struct response_buffer *rb, char *buf,
-                                    unsigned int buf_sz)
+static unsigned int
+rb_null_read_cb(struct response_buffer *rb, char *buf, unsigned int buf_sz)
 {
     return 0;
 }
 
-static int rb_eof_cb(struct response_buffer *rb)
+static int
+rb_eof_cb(struct response_buffer *rb)
 {
     return 1;
 }
 
-static void rb_init(struct response_buffer *rb)
+static void
+rb_init(struct response_buffer *rb)
 {
     rb->rb_type = RB_TYPE_NONE;
     rb->rb_advrpos_cb = rb_advrpos_cb;
@@ -363,14 +372,15 @@ static void rb_init(struct response_buffer *rb)
     rb->rb_rpos = 0;
 }
 
-static void rb_advrpos(struct response_buffer *rb, unsigned int rpos)
+static void
+rb_advrpos(struct response_buffer *rb, unsigned int rpos)
 {
     if (rb != NULL)
         rb->rb_advrpos_cb(rb, rpos);
 }
 
-static unsigned int rb_read(struct response_buffer *rb, char *buf,
-                            unsigned int buf_sz)
+static unsigned int
+rb_read(struct response_buffer *rb, char *buf, unsigned int buf_sz)
 {
     if (rb != NULL)
         return rb->rb_read_cb(rb, buf, buf_sz);
@@ -378,7 +388,8 @@ static unsigned int rb_read(struct response_buffer *rb, char *buf,
         return 0;
 }
 
-static unsigned int rb_eof(struct response_buffer *rb)
+static unsigned int
+rb_eof(struct response_buffer *rb)
 {
     if (rb != NULL)
         return rb->rb_eof_cb(rb);
@@ -386,18 +397,20 @@ static unsigned int rb_eof(struct response_buffer *rb)
         return 1;
 }
 
-static void rb_destroy(struct response_buffer *rb)
+static void
+rb_destroy(struct response_buffer *rb)
 {
     if (rb != NULL)
         rb->rb_ondestroy_cb(rb);
 }
 
-static int rb_txt_simple_eof_cb(struct response_buffer *rb)
+static int
+rb_txt_simple_eof_cb(struct response_buffer *rb)
 {
     struct response_txt_simple *rts = rb_to_txt_simple(rb);
 
     if (rb_to_txt_full(rb) == NULL)
-	return 1;
+        return 1;
 
     if (rb->rb_rpos >= rts->rts_len)
         return 1;
@@ -405,8 +418,9 @@ static int rb_txt_simple_eof_cb(struct response_buffer *rb)
         return 0;
 }
 
-static unsigned int rb_txt_simple_read_cb(struct response_buffer *rb, char *buf,
-                                          unsigned int buf_sz)
+static unsigned int
+rb_txt_simple_read_cb(struct response_buffer *rb, char *buf,
+                      unsigned int buf_sz)
 {
     struct response_txt_simple *rts = rb_to_txt_simple(rb);
     unsigned int i = rb->rb_rpos;
@@ -424,7 +438,8 @@ static unsigned int rb_txt_simple_read_cb(struct response_buffer *rb, char *buf,
     return rv;
 }
 
-static void rb_txt_simple_ondestroy_cb(struct response_buffer *rb)
+static void
+rb_txt_simple_ondestroy_cb(struct response_buffer *rb)
 {
     struct response_txt_simple *rts = rb_to_txt_simple(rb);
 
@@ -434,8 +449,8 @@ static void rb_txt_simple_ondestroy_cb(struct response_buffer *rb)
     }
 }
 
-static void rb_txt_simple_advrpos_cb(struct response_buffer *rb,
-                                     unsigned int sz)
+static void
+rb_txt_simple_advrpos_cb(struct response_buffer *rb, unsigned int sz)
 {
     struct response_txt_simple *rts = rb_to_txt_simple(rb);
 
@@ -446,20 +461,19 @@ static void rb_txt_simple_advrpos_cb(struct response_buffer *rb,
     }
 }
 
-static ossl_unused struct response_txt_simple *new_txt_simple_respoonse(
-    const char *fill_pattern, unsigned int fsize)
+static ossl_unused struct response_txt_simple *
+new_txt_simple_respoonse(const char *fill_pattern, unsigned int fsize)
 {
     struct response_txt_simple *rts;
     struct response_buffer *rb;
 
-    rts = (struct response_txt_simple *)
-	OPENSSL_malloc(sizeof (struct response_txt_simple));
+    rts = OPENSSL_malloc(sizeof (struct response_txt_simple));
     if (rts == NULL)
-	return NULL;
+        return NULL;
 
     if ((rts->rts_pattern = strdup(fill_pattern)) == NULL) {
-	OPENSSL_free(rts);
-	return NULL;
+        OPENSSL_free(rts);
+        return NULL;
     }
     rts->rts_pattern_len = strlen(fill_pattern);
     rts->rts_len = fsize;
@@ -475,12 +489,13 @@ static ossl_unused struct response_txt_simple *new_txt_simple_respoonse(
     return rts;
 }
 
-static int rb_txt_full_eof_cb(struct response_buffer *rb)
+static int
+rb_txt_full_eof_cb(struct response_buffer *rb)
 {
     struct response_txt_full *rtf = rb_to_txt_full(rb);
 
     if (rtf == NULL)
-	return 1;
+        return 1;
 
     if (rb->rb_rpos >= rtf->rtf_len)
         return 1;
@@ -488,7 +503,8 @@ static int rb_txt_full_eof_cb(struct response_buffer *rb)
         return 0;
 }
 
-static void rb_txt_full_ondestroy_cb(struct response_buffer *rb)
+static void
+rb_txt_full_ondestroy_cb(struct response_buffer *rb)
 {
     struct response_txt_full *rtf = rb_to_txt_full(rb);
 
@@ -498,8 +514,8 @@ static void rb_txt_full_ondestroy_cb(struct response_buffer *rb)
     }
 }
 
-static unsigned int rb_txt_full_read_cb(struct response_buffer *rb, char *buf,
-                                        unsigned int buf_sz)
+static unsigned int
+rb_txt_full_read_cb(struct response_buffer *rb, char *buf, unsigned int buf_sz)
 {
     struct response_txt_full *rtf = rb_to_txt_full(rb);
     unsigned int i = rb->rb_rpos;
@@ -525,7 +541,8 @@ static unsigned int rb_txt_full_read_cb(struct response_buffer *rb, char *buf,
     return rv;
 }
 
-static void rb_txt_full_advrpos_cb(struct response_buffer *rb, unsigned int sz)
+static void
+rb_txt_full_advrpos_cb(struct response_buffer *rb, unsigned int sz)
 {
     struct response_txt_full *rtf = rb_to_txt_full(rb);
 
@@ -536,8 +553,8 @@ static void rb_txt_full_advrpos_cb(struct response_buffer *rb, unsigned int sz)
     }
 }
 
-static struct response_txt_full *new_txt_full_respoonse(const char *fill_pattern,
-                                                        unsigned int fsize)
+static struct response_txt_full *
+new_txt_full_respoonse(const char *fill_pattern, unsigned int fsize)
 {
     struct response_txt_full *rtf;
     struct response_buffer *rb;
@@ -545,14 +562,13 @@ static struct response_txt_full *new_txt_full_respoonse(const char *fill_pattern
     int hlen;
     time_t t;
 
-    rtf = (struct response_txt_full *)
-	OPENSSL_malloc(sizeof (struct response_txt_full));
+    rtf = OPENSSL_malloc(sizeof (struct response_txt_full));
     if (rtf == NULL)
-	return NULL;
+        return NULL;
 
     if ((rtf->rtf_pattern = strdup(fill_pattern)) == NULL) {
-	OPENSSL_free(rtf);
-	return NULL;
+        OPENSSL_free(rtf);
+        return NULL;
     }
     rtf->rtf_pattern_len = strlen(fill_pattern);
 
@@ -560,11 +576,11 @@ static struct response_txt_full *new_txt_full_respoonse(const char *fill_pattern
     ctime_r(&t, date_str);
     /* TODO check headers if they confirm to HTTP/1.0 */
     hlen = snprintf(rtf->rtf_headers, sizeof (rtf->rtf_headers),
-        "HTTP/1.0 200 OK\r\n"
-        "Content-Type: text/plain\r\n"
-        "Content-Length: %u\r\n"
-        "Date: %s\r\n"
-        "\r\n", fsize, date_str);
+                    "HTTP/1.0 200 OK\r\n"
+                    "Content-Type: text/plain\r\n"
+                    "Content-Length: %u\r\n"
+                    "Date: %s\r\n"
+                    "\r\n", fsize, date_str);
     if (hlen >= (int)sizeof (rtf->rtf_headers)) {
         OPENSSL_free(rtf->rtf_pattern);
         OPENSSL_free(rtf);
@@ -585,7 +601,8 @@ static struct response_txt_full *new_txt_full_respoonse(const char *fill_pattern
     return rtf;
 }
 
-static ossl_unused const char *pe_type_to_name(const struct poll_event *pe)
+static ossl_unused const char *
+pe_type_to_name(const struct poll_event *pe)
 {
     static const char *names[] = {
         "none",
@@ -603,7 +620,8 @@ static ossl_unused const char *pe_type_to_name(const struct poll_event *pe)
     return names[pe->pe_type];
 }
 
-static struct poll_event_connection *pe_to_connection(struct poll_event *pe)
+static struct poll_event_connection *
+pe_to_connection(struct poll_event *pe)
 {
     if ((pe == NULL) || (pe->pe_type != PE_CONNECTION))
         return NULL;
@@ -611,7 +629,8 @@ static struct poll_event_connection *pe_to_connection(struct poll_event *pe)
     return ((struct poll_event_connection *)pe);
 }
 
-static void init_pe(struct poll_event *pe, SSL *ssl)
+static void
+init_pe(struct poll_event *pe, SSL *ssl)
 {
     pe->pe_poll_item.desc = SSL_as_poll_descriptor(ssl);
     pe->pe_cb_in = pe_return_error;
@@ -623,7 +642,8 @@ static void init_pe(struct poll_event *pe, SSL *ssl)
     pe->pe_want_mask = ~0;
 }
 
-static struct poll_event *new_pe(SSL *ssl)
+static struct poll_event *
+new_pe(SSL *ssl)
 {
     struct poll_event *pe;
 
@@ -637,7 +657,8 @@ static struct poll_event *new_pe(SSL *ssl)
     return pe;
 }
 
-static struct poll_event_listener *new_listener_pe(SSL *ssl_listener)
+static struct poll_event_listener *
+new_listener_pe(SSL *ssl_listener)
 {
     struct poll_event *listener_pe = new_pe(ssl_listener);
 
@@ -649,7 +670,8 @@ static struct poll_event_listener *new_listener_pe(SSL *ssl_listener)
     return (struct poll_event_listener *)listener_pe;
 }
 
-static struct poll_event *new_qconn_pe(SSL *ssl_qconn)
+static struct poll_event *
+new_qconn_pe(SSL *ssl_qconn)
 {
     struct poll_event *qconn_pe;
     struct poll_event_connection *pec;
@@ -673,7 +695,8 @@ static struct poll_event *new_qconn_pe(SSL *ssl_qconn)
     return qconn_pe;
 }
 
-static struct poll_event_stream *new_stream_pe(SSL *ssl_qs)
+static struct poll_event_stream *
+new_stream_pe(SSL *ssl_qs)
 {
     struct poll_event_stream *pes;
 
@@ -681,14 +704,15 @@ static struct poll_event_stream *new_stream_pe(SSL *ssl_qs)
 
     if (pes != NULL) {
         init_pe((struct poll_event *)pes, ssl_qs);
-	pes->pes_wpos = pes->pes_reqbuf;
-	pes->pes_wpos_sz = sizeof (pes->pes_reqbuf) - 1;
+        pes->pes_wpos = pes->pes_reqbuf;
+        pes->pes_wpos_sz = sizeof (pes->pes_reqbuf) - 1;
     }
 
     return (pes);
 }
 
-static SSL *get_ssl_from_pe(struct poll_event *pe)
+static SSL *
+get_ssl_from_pe(struct poll_event *pe)
 {
     SSL *ssl = NULL;
 
@@ -698,25 +722,29 @@ static SSL *get_ssl_from_pe(struct poll_event *pe)
     return ssl;
 }
 
-static void pe_pause_read(struct poll_event *pe)
+static void
+pe_pause_read(struct poll_event *pe)
 {
     pe->pe_want_events &= ~SSL_POLL_EVENT_R;
     pe->pe_my_pm->pm_need_rebuild = 1;
 }
 
-static void pe_resume_read(struct poll_event *pe)
+static void
+pe_resume_read(struct poll_event *pe)
 {
     pe->pe_want_events |= (SSL_POLL_EVENT_R & pe->pe_want_mask);
     pe->pe_my_pm->pm_need_rebuild = 1;
 }
 
-static void pe_pause_write(struct poll_event *pe)
+static void
+pe_pause_write(struct poll_event *pe)
 {
     pe->pe_want_events &= ~SSL_POLL_EVENT_W;
     pe->pe_my_pm->pm_need_rebuild = 1;
 }
 
-static void pe_resume_write(struct poll_event *pe)
+static void
+pe_resume_write(struct poll_event *pe)
 {
     pe->pe_want_events |= (SSL_POLL_EVENT_W & pe->pe_want_mask);
     pe->pe_my_pm->pm_need_rebuild = 1;
@@ -725,18 +753,19 @@ static void pe_resume_write(struct poll_event *pe)
 /*
  * like pause, but is permanent,
  */
-static void pe_disable_read(struct poll_event *pe)
+static void
+pe_disable_read(struct poll_event *pe)
 {
     pe_pause_read(pe);
     pe->pe_want_mask &= ~SSL_POLL_EVENT_R;
 }
 
-static void pe_disable_write(struct poll_event *pe)
+static void
+pe_disable_write(struct poll_event *pe)
 {
     pe_pause_write(pe);
     pe->pe_want_mask &= ~SSL_POLL_EVENT_W;
 }
-
 
 /*
  * handle_ssl_error() diagnoses error from SSL/QUIC stack and
@@ -744,16 +773,16 @@ static void pe_disable_write(struct poll_event *pe)
  * or error is permanent. In case of permanent error the
  * poll event pe should be removed from poll manager and destroyed.
  */
-static ossl_unused const char *err_str_n(unsigned long e, char *buf,
-                                         size_t buf_sz)
+static ossl_unused const char *
+err_str_n(unsigned long e, char *buf, size_t buf_sz)
 {
     ERR_error_string_n(e, buf, buf_sz);
     return buf;
 }
 
-static int handle_ssl_error(struct poll_event *pe, int rc, const char *caller)
+static int
+handle_ssl_error(struct poll_event *pe, int rc, const char *caller)
 {
-
     SSL *ssl = get_ssl_from_pe(pe);
     int ssl_error, rv;
 #ifdef DEBUG
@@ -797,7 +826,8 @@ static int handle_ssl_error(struct poll_event *pe, int rc, const char *caller)
     return rv;
 }
 
-static ossl_unused const char *stream_state_str(int stream_state)
+static ossl_unused const char *
+stream_state_str(int stream_state)
 {
     const char *rv;
 
@@ -830,7 +860,8 @@ static ossl_unused const char *stream_state_str(int stream_state)
     return rv;
 }
 
-static int handle_read_stream_state(struct poll_event *pe)
+static int
+handle_read_stream_state(struct poll_event *pe)
 {
     int stream_state = SSL_get_stream_read_state(get_ssl_from_pe(pe));
     int rv;
@@ -854,7 +885,8 @@ static int handle_read_stream_state(struct poll_event *pe)
     return rv;
 }
 
-static int handle_write_stream_state(struct poll_event *pe)
+static int
+handle_write_stream_state(struct poll_event *pe)
 {
     int state = SSL_get_stream_write_state(get_ssl_from_pe(pe));
     int rv;
@@ -876,7 +908,8 @@ static int handle_write_stream_state(struct poll_event *pe)
     return rv;
 }
 
-static void add_pe_to_pm(struct poll_manager *pm, struct poll_event *pe)
+static void
+add_pe_to_pm(struct poll_manager *pm, struct poll_event *pe)
 {
     if (pe->pe_my_pm == NULL) {
         ossl_list_pe_insert_head(&pm->pm_head, pe);
@@ -884,8 +917,9 @@ static void add_pe_to_pm(struct poll_manager *pm, struct poll_event *pe)
         pe->pe_my_pm = pm;
     }
 }
- 
-static void remove_pe_from_pm(struct poll_manager *pm, struct poll_event *pe)
+
+static void
+remove_pe_from_pm(struct poll_manager *pm, struct poll_event *pe)
 {
     if (pe->pe_my_pm == pm) {
         ossl_list_pe_remove(&pm->pm_head, pe);
@@ -894,7 +928,8 @@ static void remove_pe_from_pm(struct poll_manager *pm, struct poll_event *pe)
     }
 }
 
-static struct poll_manager *create_poll_manager(void)
+static struct poll_manager *
+create_poll_manager(void)
 {
     struct poll_manager *pm = NULL;
 
@@ -914,7 +949,8 @@ static struct poll_manager *create_poll_manager(void)
     return pm;
 }
 
-static int rebuild_poll_set(struct poll_manager *pm)
+static int
+rebuild_poll_set(struct poll_manager *pm)
 {
     struct poll_event *new_poll_set;
     struct poll_event *pe;
@@ -932,7 +968,7 @@ static int rebuild_poll_set(struct poll_manager *pm)
          */
         new_sz = sizeof (struct poll_event) * (pm->pm_poll_set_sz + POLL_GROW);
         new_poll_set = (struct poll_event *)OPENSSL_realloc(pm->pm_poll_set,
-                                                        new_sz);
+                                                            new_sz);
         if (new_poll_set == NULL)
             return -1;
         pm->pm_poll_set = new_poll_set;
@@ -943,7 +979,7 @@ static int rebuild_poll_set(struct poll_manager *pm)
          * shrink poll set by POLL_DOWNSIZ
          */
         new_sz = sizeof (struct poll_event) *
-                 (pm->pm_poll_set_sz - POLL_DOWNSIZ);
+            (pm->pm_poll_set_sz - POLL_DOWNSIZ);
         new_poll_set = (struct poll_event *)OPENSSL_realloc(pm->pm_poll_set,
                                                             new_sz);
         if (new_poll_set == NULL)
@@ -969,23 +1005,25 @@ static int rebuild_poll_set(struct poll_manager *pm)
     return 0;
 }
 
-static void destroy_poll_manager(struct poll_manager *pm)
+static void
+destroy_poll_manager(struct poll_manager *pm)
 {
     struct poll_event *pe, *pe_safe;
+
     if (pm == NULL)
         return;
 
     OSSL_LIST_FOREACH_DELSAFE(pe, pe_safe, pe, &pm->pm_head) {
         SSL_free(get_ssl_from_pe(pe));
-	/* ?todo? custom destroy callback on pe */
-        OPENSSL_free(pe);
+        destroy_pe(pe);
     }
 
     OPENSSL_free(pm->pm_poll_set);
     OPENSSL_free(pm);
 }
 
-static void destroy_pe(struct poll_event *pe)
+static void
+destroy_pe(struct poll_event *pe)
 {
     SSL *ssl;
 
@@ -994,9 +1032,8 @@ static void destroy_pe(struct poll_event *pe)
 
     DPRINTF(stderr, "%s %p (%s)\n", __func__, pe, pe_type_to_name(pe));
     ssl = get_ssl_from_pe(pe);
-    if (pe->pe_my_pm) {
+    if (pe->pe_my_pm)
         remove_pe_from_pm(pe->pe_my_pm, pe);
-    }
 
     pe->pe_cb_ondestroy(pe);
 
@@ -1005,17 +1042,20 @@ static void destroy_pe(struct poll_event *pe)
     SSL_free(ssl);
 }
 
-static int pe_return_error(struct poll_event *pe)
+static int
+pe_return_error(struct poll_event *pe)
 {
     return -1;
 }
 
-static void pe_return_void(struct poll_event *ctx)
+static void
+pe_return_void(struct poll_event *ctx)
 {
     return;
 }
 
-static int pe_handle_listener_error(struct poll_event *pe)
+static int
+pe_handle_listener_error(struct poll_event *pe)
 {
     pe->pe_my_pm->pm_continue = 0;
     if (pe->pe_poll_item.revents & SSL_POLL_EVENT_EL)
@@ -1027,7 +1067,8 @@ static int pe_handle_listener_error(struct poll_event *pe)
     return -1;
 }
 
-static struct poll_event_stream *pe_to_stream(struct poll_event *pe)
+static struct poll_event_stream *
+pe_to_stream(struct poll_event *pe)
 {
     switch (pe->pe_type) {
     case PE_STREAM:
@@ -1054,8 +1095,9 @@ static struct poll_event_stream *pe_to_stream(struct poll_event *pe)
  * which uses SSL_poll()  to manage I/O. We expect there might be more
  * than 1 stream request.
  */
-static int request_new_stream(struct poll_event_connection *pec,
-                              uint64_t qsflag, void *peccx_arg)
+static int
+request_new_stream(struct poll_event_connection *pec, uint64_t qsflag,
+                   void *peccx_arg)
 {
     struct poll_event_context *peccx;
     struct poll_event *qconn_pe = (struct poll_event *)pec;
@@ -1063,8 +1105,7 @@ static int request_new_stream(struct poll_event_connection *pec,
     if (peccx_arg == NULL)
         return -1;
 
-    peccx = (struct poll_event_context *)
-            OPENSSL_malloc(sizeof (struct poll_event_context));
+    peccx = OPENSSL_malloc(sizeof (struct poll_event_context));
     if (peccx == NULL)
         return -1;
     peccx->peccx = peccx_arg;
@@ -1087,7 +1128,8 @@ static int request_new_stream(struct poll_event_connection *pec,
     return 0;
 }
 
-static void *get_response_from_pec(struct poll_event_connection *pec, int stype)
+static void *
+get_response_from_pec(struct poll_event_connection *pec, int stype)
 {
     struct poll_event_context *peccx;
     void *rv;
@@ -1122,7 +1164,8 @@ static void *get_response_from_pec(struct poll_event_connection *pec, int stype)
     return rv;
 }
 
-static int app_handle_stream_error(struct poll_event *pe)
+static int
+app_handle_stream_error(struct poll_event *pe)
 {
     int rv = 0;
 
@@ -1162,7 +1205,8 @@ static int app_handle_stream_error(struct poll_event *pe)
  * all buffers in write queue.
  * if write queue becomes empty, stream is concluded.
  */
-static int app_write_cb(struct poll_event *pe)
+static int
+app_write_cb(struct poll_event *pe)
 {
     struct response_buffer *rb = (struct response_buffer *)pe->pe_appdata;
     char buf[4096];
@@ -1182,17 +1226,15 @@ static int app_write_cb(struct poll_event *pe)
         rv = SSL_stream_conclude(get_ssl_from_pe(pe), 0);
         pe_disable_write(pe);
         /*
-         * We've sent all data out. We can stop polling and ask poll
-         * manager (caller) to destroy the event.
-         *
-         * However I'm not entirely sure about it yet, see
-         * project ticket #1160
-         * https://github.com/openssl/project/issues/1160
-         */
-        /*
-	 * we deliberately override return value of SSL_stream_conclude() here
-         * to keep CI build happy. -1 means we are going to kill poll evvent
+         * we deliberately override return value of SSL_stream_conclude() here
+         * to keep CI build happy. -1 means we are going to kill poll event
          * anyway.
+         *
+         * another option would be to return 0 and let poll manager wait
+         * for confirmation of FIN packet sent on behalf of
+         * SSL_stream_conclude(). At the moment it does not seem necessary.
+         * More details can be found here:
+         *     https://github.com/openssl/project/issues/1160
          */
         rv = -1;
     } else {
@@ -1208,7 +1250,8 @@ static int app_write_cb(struct poll_event *pe)
     return rv;
 }
 
-static int app_setup_response(struct poll_event_stream *pes)
+static int
+app_setup_response(struct poll_event_stream *pes)
 {
     struct poll_event *pe = (struct poll_event *)pes;
     int rv;
@@ -1230,7 +1273,8 @@ static int app_setup_response(struct poll_event_stream *pes)
     return rv;
 }
 
-static unsigned int get_fsize(const char *file_name)
+static unsigned int
+get_fsize(const char *file_name)
 {
     const char *digit = file_name;
     unsigned int fsize;
@@ -1239,21 +1283,22 @@ static unsigned int get_fsize(const char *file_name)
     fsize = 0;
 
     while (*digit && !isdigit(*digit))
-	digit++;
+        digit++;
 
     while (*digit && isdigit(*digit)) {
-	fsize = fsize * 10;
-	fsize = fsize + (*digit - 0x30);
-	digit++;
+        fsize = fsize * 10;
+        fsize = fsize + (*digit - 0x30);
+        digit++;
     }
 
     if (fsize == 0)
-	fsize = 12345;	/* ? may be random ? */
+        fsize = 12345; /* ? may be random ? */
 
     return fsize;
 }
 
-static int parse_request(struct poll_event_stream *pes)
+static int
+parse_request(struct poll_event_stream *pes)
 {
     const char *pos = pes->pes_reqbuf;
     char file_name_buf[4096];
@@ -1265,29 +1310,29 @@ static int parse_request(struct poll_event_stream *pes)
 
     /* got request already */
     if (pe->pe_appdata != NULL)
-	return -1;
+        return -1;
 
     while (*pos && isspace(*pos))
-	pos++;
+        pos++;
 
     if (strncasecmp(pos, "GET", 3) != 0)
-	return -1; /* this will reset the stream */
+        return -1; /* this will reset the stream */
     pos += 3;
 
     while (*pos && isspace(*pos))
-	pos++;
+        pos++;
 
     if (*pos != '/')
-	return -1; /* this will reset the stream */
+        return -1; /* this will reset the stream */
 
     /* strip leading slashes */
     while (*pos == '/')
-	pos++;
+        pos++;
 
     while ((isalnum(*pos) || ispunct(*pos)) && (dst < end))
-	*dst++ = *pos++;
+        *dst++ = *pos++;
     if (dst == end)
-	dst--;
+        dst--;
     *dst = '\0';
     /*
      * if request is something like 'GET / HTTP/1.0...' we assume /index.html
@@ -1302,9 +1347,8 @@ static int parse_request(struct poll_event_stream *pes)
          * like that: /foo/bar/nothing/
          * (the basename component is missing/is empty).
          */
-        if (file_name == NULL || *file_name == '\0') {
+        if (file_name == NULL || *file_name == '\0')
             file_name = "foo";
-        }
     }
 
     assert(pe->pe_appdata == NULL);
@@ -1318,18 +1362,19 @@ static int parse_request(struct poll_event_stream *pes)
     return rv;
 }
 
-static int wrap_around(struct poll_event_stream *pes)
+static int
+wrap_around(struct poll_event_stream *pes)
 {
     int rv = 0;
 
     /* we can wrap the buffer iff we got request */
     if (pes->pes_wpos_sz == 0) {
-	if (((struct poll_event *)pes)->pe_appdata != NULL) {
-	    pes->pes_wpos = pes->pes_reqbuf;
+        if (((struct poll_event *)pes)->pe_appdata != NULL) {
+            pes->pes_wpos = pes->pes_reqbuf;
             pes->pes_wpos_sz = sizeof (pes->pes_reqbuf) - 1;
-	} else {
-	    rv = -1;
-	}
+        } else {
+            rv = -1;
+        }
     }
 
     return rv;
@@ -1342,7 +1387,8 @@ static int wrap_around(struct poll_event_stream *pes)
  * buffer. It then uses request_write() to put the buffer to write
  * queue so data can be echoed back to client.
  */
-static int app_read_cb(struct poll_event *pe)
+static int
+app_read_cb(struct poll_event *pe)
 {
     struct poll_event_stream *pes = pe_to_stream(pe);
     size_t read_len;
@@ -1357,16 +1403,16 @@ static int app_read_cb(struct poll_event *pe)
      * data from client.
      */
     if (wrap_around(pes) == -1)
-	return -1;
+        return -1;
 
     rv = SSL_read_ex(get_ssl_from_pe(pe), pes->pes_wpos, pes->pes_wpos_sz,
                      &read_len);
     if (rv == 0) {
         pe_disable_read(pe);
         /*
-	 * May be it's over cautious, we should just examine stream state and
-	 * decide if we can continue with poll (rv == 0) or we should stop
-	 * polling (rv == -1).
+         * May be it's over cautious, we should just examine stream state and
+         * decide if we can continue with poll (rv == 0) or we should stop
+         * polling (rv == -1).
          */
         rv = handle_ssl_error(pe, rv, __func__);
         if (rv == 0)
@@ -1381,7 +1427,8 @@ static int app_read_cb(struct poll_event *pe)
     return rv;
 }
 
-static void app_ondestroy_cb(struct poll_event *pe)
+static void
+app_ondestroy_cb(struct poll_event *pe)
 {
     rb_destroy((struct response_buffer *)pe->pe_appdata);
 }
@@ -1389,7 +1436,8 @@ static void app_ondestroy_cb(struct poll_event *pe)
 /*
  * create new outbound stream
  */
-static int app_new_stream_cb(struct poll_event *qconn_pe)
+static int
+app_new_stream_cb(struct poll_event *qconn_pe)
 {
     SSL *qconn;
     SSL *qs;
@@ -1427,7 +1475,7 @@ static int app_new_stream_cb(struct poll_event *qconn_pe)
             qs_pe->pe_cb_out = app_read_cb;
             qs_pe->pe_want_events = SSL_POLL_EVENT_ER;
         }
-       
+
         qs_pe->pe_appdata = get_response_from_pec(pec, qs_pe->pe_type);
         if (qs_pe->pe_appdata == NULL) {
             rv = -1;
@@ -1448,7 +1496,8 @@ static int app_new_stream_cb(struct poll_event *qconn_pe)
     return rv;
 }
 
-static int app_handle_qconn_error(struct poll_event *pe)
+static int
+app_handle_qconn_error(struct poll_event *pe)
 {
     int rv = -2;
 
@@ -1492,7 +1541,8 @@ static int app_handle_qconn_error(struct poll_event *pe)
 /*
  * accept stream from remote peer
  */
-static int app_accept_stream_cb(struct poll_event *qconn_pe)
+static int
+app_accept_stream_cb(struct poll_event *qconn_pe)
 {
     SSL *qconn;
     SSL *qs;
@@ -1543,7 +1593,8 @@ static int app_accept_stream_cb(struct poll_event *qconn_pe)
     return rv;
 }
 
-static void app_destroy_qconn(struct poll_event *pe)
+static void
+app_destroy_qconn(struct poll_event *pe)
 {
     struct poll_event_connection *pec;
     struct poll_event_context *peccx, *peccx_save;
@@ -1563,7 +1614,8 @@ static void app_destroy_qconn(struct poll_event *pe)
     }
 }
 
-static int app_accept_qconn(struct poll_event *listener_pe)
+static int
+app_accept_qconn(struct poll_event *listener_pe)
 {
     SSL *listener;
     SSL *qconn;
@@ -1579,7 +1631,7 @@ static int app_accept_qconn(struct poll_event *listener_pe)
         qc_pe->pe_cb_in = app_accept_stream_cb;
         qc_pe->pe_cb_out = app_new_stream_cb;
         qc_pe->pe_cb_error = app_handle_qconn_error;
-        qc_pe->pe_cb_ondestroy = app_destroy_qconn; 
+        qc_pe->pe_cb_ondestroy = app_destroy_qconn;
         add_pe_to_pm(listener_pe->pe_my_pm, qc_pe);
     } else {
         SSL_free(qconn);
@@ -1593,7 +1645,8 @@ static int app_accept_qconn(struct poll_event *listener_pe)
  * Main loop for server to accept QUIC connections.
  * Echo every request back to the client.
  */
-static int run_quic_server(SSL_CTX *ctx, struct poll_manager *pm, int fd)
+static int
+run_quic_server(SSL_CTX *ctx, struct poll_manager *pm, int fd)
 {
     int ok = -1;
     int e = 0;
@@ -1656,8 +1709,8 @@ static int run_quic_server(SSL_CTX *ctx, struct poll_manager *pm, int fd)
             if (pe->pe_poll_item.revents == 0)
                 continue;
             DPRINTF(stderr, "%s %s (%p) " POLL_FMT "\n", __func__,
-                   pe_type_to_name(pe), pe,
-                   POLL_PRINTA(pe->pe_poll_item.revents));
+                    pe_type_to_name(pe), pe,
+                    POLL_PRINTA(pe->pe_poll_item.revents));
             pe->pe_self->pe_poll_item.revents = pe->pe_poll_item.revents;
             if (pe->pe_poll_item.revents & SSL_POLL_ERROR)
                 e = pe->pe_cb_error(pe->pe_self);
@@ -1693,9 +1746,9 @@ static const unsigned char alpn_ossltest[] = {
 /*
  * This callback validates and negotiates the desired ALPN on the server side.
  */
-static int select_alpn(SSL *ssl, const unsigned char **out,
-                       unsigned char *out_len, const unsigned char *in,
-                       unsigned int in_len, void *arg)
+static int
+select_alpn(SSL *ssl, const unsigned char **out, unsigned char *out_len,
+            const unsigned char *in, unsigned int in_len, void *arg)
 {
     if (SSL_select_next_proto((unsigned char **)out, out_len, alpn_ossltest,
                               sizeof(alpn_ossltest), in,
@@ -1705,7 +1758,8 @@ static int select_alpn(SSL *ssl, const unsigned char **out,
 }
 
 /* Create SSL_CTX. */
-static SSL_CTX *create_ctx(const char *cert_path, const char *key_path)
+static SSL_CTX *
+create_ctx(const char *cert_path, const char *key_path)
 {
     SSL_CTX *ctx;
 
@@ -1773,7 +1827,8 @@ err:
 }
 
 /* Create UDP socket on the given port. */
-static int create_socket(uint16_t port)
+static int
+create_socket(uint16_t port)
 {
     int fd;
     struct sockaddr_in sa = {0};
@@ -1805,7 +1860,8 @@ static int create_socket(uint16_t port)
 }
 
 /* Minimal QUIC HTTP/1.0 server. */
-int main(int argc, char *argv[])
+int
+main(int argc, char *argv[])
 {
     int res = EXIT_FAILURE;
     SSL_CTX *ctx = NULL;
