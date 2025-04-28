@@ -2365,6 +2365,7 @@ int ssl_choose_client_version(SSL_CONNECTION *s, int version,
         real_max = ver_max;
 
     /* Check for downgrades */
+    /* TODO(DTLSv1.3): Update this code for DTLSv1.3 */
     if (!SSL_CONNECTION_IS_DTLS(s) && real_max > s->version) {
         /* Signal applies to all versions */
         if (memcmp(tls11downgrade,
