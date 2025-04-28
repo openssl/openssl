@@ -53,6 +53,11 @@ OpenSSL 3.6
 
    *Viktor Dukhovni*
 
+ * Added an `openssl configutl` utility for processing the openssl
+   configuration file and dumping the equal configuration file.
+
+   *Dmitry Belyavskiy based on Clemens Lang's code*
+
  * Support setting a free function thunk to OPENSSL_sk stack types. Using a thunk
    allows the type specific free function to be called with the correct type
    information from generic functions like OPENSSL_sk_pop_free().
