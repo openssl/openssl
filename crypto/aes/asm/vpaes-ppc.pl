@@ -191,7 +191,7 @@ $code.=<<___;
 .align	4
 _vpaes_encrypt_preheat:
 	mflr	r8
-       bl      vpaes_const_fn
+	bl      vpaes_const_fn
 	mtlr	r8
 	li	r11, 0xc0		# Lk_inv
 	li	r10, 0xd0
@@ -408,7 +408,7 @@ Lenc_done:
 .align	4
 _vpaes_decrypt_preheat:
 	mflr	r8
-       bl      vpaes_const_fn
+	bl      vpaes_const_fn
 	mtlr	r8
 	li	r11, 0xc0		# Lk_inv
 	li	r10, 0xd0
@@ -879,7 +879,7 @@ $code.=<<___;
 .align	4
 _vpaes_key_preheat:
 	mflr	r8
-       bl      vpaes_const_fn
+	bl      vpaes_const_fn
 	mtlr	r8
 	li	r11, 0xc0		# Lk_inv
 	li	r10, 0xd0
