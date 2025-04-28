@@ -346,8 +346,10 @@ static void *slh_dsa_gen(void *genctx, const char *alg)
                                    gctx->entropy, gctx->entropy_len))
         goto err;
 #ifdef FIPS_MODULE
-    if (!slh_dsa_fips140_pairwise_test(ctx, key, gctx->libctx))
+    if (!slh_dsa_fips140_pairwise_test(ctx, key, gctx->libctx)) {
+        ossl_set_error_state(OSSL_SELF_TEST_TYPE_PCT);
         goto err;
+    }
 #endif /* FIPS_MODULE */
     ossl_slh_dsa_hash_ctx_free(ctx);
     return key;

@@ -135,7 +135,7 @@ GENERATED_PODS={- # common0.tmpl provides @generated
                        fill_lines(" ", $COLUMNS - 15,
                                   map { my $x = $_;
                                         (
-                                          grep { 
+                                          grep {
                                                  $unified_info{attributes}->{depends}
                                                  ->{$x}->{$_}->{pod} // 0
                                                }
@@ -813,12 +813,12 @@ install_dev: install_runtime_libs
 		cp $$e "$(DESTDIR)$(PKGCONFIGDIR)/$$fn"; \
 		chmod 644 "$(DESTDIR)$(PKGCONFIGDIR)/$$fn"; \
 	done
-	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(CMAKECONFIGDIR)
+	@$(PERL) $(SRCDIR)/util/mkdir-p.pl "$(DESTDIR)$(CMAKECONFIGDIR)"
 	@for e in $(INSTALL_EXPORTERS_CMAKE); do \
 		fn=`basename $$e`; \
 		$(ECHO) "install $$e -> $(DESTDIR)$(CMAKECONFIGDIR)/$$fn"; \
-		cp $$e $(DESTDIR)$(CMAKECONFIGDIR)/$$fn; \
-		chmod 644 $(DESTDIR)$(CMAKECONFIGDIR)/$$fn; \
+		cp $$e "$(DESTDIR)$(CMAKECONFIGDIR)/$$fn"; \
+		chmod 644 "$(DESTDIR)$(CMAKECONFIGDIR)/$$fn"; \
 	done
 
 uninstall_dev: uninstall_runtime_libs

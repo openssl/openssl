@@ -5927,3 +5927,4 @@ PEM_ASN1_write_bio_ctx                  ?	3_5_0	EXIST::FUNCTION:
 OPENSSL_sk_set_thunks                   ?	3_6_0	EXIST::FUNCTION:
 i2d_PKCS8PrivateKey                     ?	3_6_0	EXIST::FUNCTION:
 OSSL_PARAM_set_octet_string_or_ptr      ?	3_6_0	EXIST::FUNCTION:
+OSSL_STORE_LOADER_settable_ctx_params   ?	3_6_0	EXIST::FUNCTION:

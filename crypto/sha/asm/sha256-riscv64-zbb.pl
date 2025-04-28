@@ -134,7 +134,7 @@ sub sha256_T2 {
         $a, $b, $c,
     ) = @_;
     my $code=<<___;
-    # Sigma0
+    # Sum0
     @{[roriw $T2, $a, 2]}  # roriw $T2, $a, 2
     @{[roriw $T3, $a, 13]}  # roriw $T3, $a, 13
     @{[roriw $T4, $a, 22]}  # roriw $T4, $a, 22
