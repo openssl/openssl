@@ -8,10 +8,28 @@
  */
 
 /*
- * NB: Changes to this file should also be reflected in
- * doc/man7/ossl-guide-quic-server-non-block.pod
+ * Implementation of hq-interop and http/1.0 QUIC server built on top of
+ * SSL_poll(3ossl). The server is able to deal with simultaneous connections
+ * All I/O operations are non-blocking.
+ *
+ * The only supported request is get. Not HTTP errors are sent back. If
+ * request is not understood the channel is reset.
+ *
+ * If client sends request for example GET /foo_1024.txt the server
+ * replies with HTTP/1.0 200 OK with plain-text body. The body is
+ * 1k of text foo_1024.txtfoo_1024,txtfoo...
+ *
+ * To run the server use command as follows:
+ *    ./quic-server-ssl-poll-http 8080 chain.pem pkey.pem
+ * command above starts server which listens to port localhost;8080
+ * Although the server is simple one can use it with tquic_client
+ * found at https://tquic.net/. Other 3rd party clients were not tested yet.
+ *
+ * The main() function creates instance of poll_manager which manages
+ * all events (poll_event). If all is good execution calls to
+ * run_quic_server() function where QUIC listener is created and passed
+ * to manager. Then the polling loop is entered to server remote clients.
  */
-
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
@@ -86,8 +104,8 @@
  * We use pe_self member to easily reach from SSL_poll() copy instance back to
  * original managed by poll manager and used by our application.
  * There are four callbacks:
- *    - pe_cb_in() - triggered when inbound daate/stram/connection is coming
- *    - pe_cb_out() - triggered when outbount data/stream/connection is coming
+ *    - pe_cb_in() - triggered when inbound data/stream/connection is coming
+ *    - pe_cb_out() - triggered when outbound data/stream/connection is coming
  *    - pe_cb_error() - triggered when polled object enters an error state
  *    - pe_cb_destroy() - this a destructor, application destroy pe_appdata
  * The remaining members are rather self explanatory.
@@ -115,7 +133,7 @@ struct poll_event_listener {
 };
 
 /*
- * Each poll_event holds pe_appdata context. The poll_event is assocated with
+ * Each poll_event holds pe_appdata context. The poll_event is associated with
  * SSL object which is typically QUIC stream. There are two types of streams
  * in QUIC:
  *    - uni-directional (simplex)
@@ -124,19 +142,18 @@ struct poll_event_listener {
  * from client and write reply back. Then stream gets destroyed.
  * This request-reply handling is more tricky with uni-directional streams.
  * We need a pair of streams: server reads a request from one stream and
- * then must create a strem for reply. For echo-reply server we need to
+ * then must create a stream for reply. For echo-reply server we need to
  * pass data we read from input stream to output stream. The poll_event_context
  * here is to do it for us. The echo-reply server handling with simplex
  * (unidirectional) streams goes as follows:
- *    - we read data from input stream, data are held in pe_appdata
+ *    - we read data from input stream and parse request
  *    - then we request poll manager to create an outbound stream,
- *      so we can send echo reply back. we move pe_appdata to request
- *      for outbound stream.
- *    - the inbound stream is then destroyed
- *    - once oubtound stream is esablkhed poll manager moves app data
- *      from request to poll_event associated with outbound stream.
- * We need to keep thhoe application data in list, because there might
- * be more than one echo-request to handle.
+ *      at this point we also create a response (response_buffer).
+ *      the response buffer is added to connection.
+ *    - connection keeps list of responses to be dispatched because
+ *      client may establish more streams to send more requests
+ *    - once outbound stream is created, poll manager moves response
+ *      connection to outbound stream.
  */
 struct poll_event_context {
     OSSL_LIST_MEMBER(peccx, struct poll_event_context);
@@ -220,6 +237,9 @@ struct poll_event_stream {
     char pes_reqbuf[8192];
 };
 
+/*
+ * Response buffer.
+ */
 enum {
     RB_TYPE_NONE,
     RB_TYPE_TEXT_SIMPLE,
