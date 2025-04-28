@@ -2365,23 +2365,24 @@ int ssl_choose_client_version(SSL_CONNECTION *s, int version,
         real_max = ver_max;
 
     /* Check for downgrades */
-    if (s->version == TLS1_2_VERSION && real_max > s->version) {
-        if (memcmp(tls12downgrade,
+    /* TODO(DTLSv1.3): Update this code for DTLSv1.3 */
+    if (!SSL_CONNECTION_IS_DTLS(s) && real_max > s->version) {
+        /* Signal applies to all versions */
+        if (memcmp(tls11downgrade,
                    s->s3.server_random + SSL3_RANDOM_SIZE
-                                        - sizeof(tls12downgrade),
-                   sizeof(tls12downgrade)) == 0) {
+                   - sizeof(tls11downgrade),
+                   sizeof(tls11downgrade)) == 0) {
             s->version = origv;
             SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
                      SSL_R_INAPPROPRIATE_FALLBACK);
             return 0;
         }
-    } else if (!SSL_CONNECTION_IS_DTLS(s)
-               && s->version < TLS1_2_VERSION
-               && real_max > s->version) {
-        if (memcmp(tls11downgrade,
-                   s->s3.server_random + SSL3_RANDOM_SIZE
-                                        - sizeof(tls11downgrade),
-                   sizeof(tls11downgrade)) == 0) {
+        /* Only when accepting TLS1.3 */
+        if (real_max == TLS1_3_VERSION
+            && memcmp(tls12downgrade,
+                      s->s3.server_random + SSL3_RANDOM_SIZE
+                      - sizeof(tls12downgrade),
+                      sizeof(tls12downgrade)) == 0) {
             s->version = origv;
             SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
                      SSL_R_INAPPROPRIATE_FALLBACK);
