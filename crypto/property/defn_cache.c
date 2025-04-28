@@ -89,7 +89,7 @@ OSSL_PROPERTY_LIST *ossl_prop_defn_get(OSSL_LIB_CTX *ctx, const char *prop)
 int ossl_prop_defn_set(OSSL_LIB_CTX *ctx, const char *prop,
                        OSSL_PROPERTY_LIST **pl)
 {
-    PROPERTY_DEFN_ELEM elem, *old, *p = NULL, *q;
+    PROPERTY_DEFN_ELEM elem, *old, *p, *q = NULL;
     size_t len;
     LHASH_OF(PROPERTY_DEFN_ELEM) *property_defns;
     int res = 1;
