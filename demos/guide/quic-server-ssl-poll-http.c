@@ -298,6 +298,11 @@ static char *basename(char *path)
 {
     return path;
 }
+
+#define strncasecmp(_a_, _b_, _c_) _strnicmp((_a_), (_b_), (_c_))
+
+#define	ctime_r(_t_, _b_) ctime_s((_b_), sizeof ((_b_)), (_t_))
+
 #endif
 
 enum pe_types {
