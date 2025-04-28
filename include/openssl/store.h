@@ -17,7 +17,6 @@
 # endif
 
 # include <stdarg.h>
-# include <sys/stat.h>
 # include <openssl/types.h>
 # include <openssl/pem.h>
 # include <openssl/storeerr.h>
@@ -144,8 +143,6 @@ OSSL_STORE_CTX *OSSL_STORE_attach(BIO *bio, const char *scheme,
                                   const OSSL_PARAM params[],
                                   OSSL_STORE_post_process_info_fn post_process,
                                   void *post_process_data);
-
-const char *OSSL_file_stat(const char *uri, struct stat *st);
 
 /*-
  *  Extracting OpenSSL types from and creating new OSSL_STORE_INFOs

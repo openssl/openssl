@@ -12,7 +12,6 @@
 #include "internal/e_os.h" /* for stat */
 #include <string.h>
 #include <ctype.h>  /* isdigit */
-#include <sys/stat.h> /* for Windows, must include stat.h after ctype.h */
 #include <assert.h>
 
 #include <openssl/core_dispatch.h>
@@ -34,10 +33,6 @@
 #include "file_store_local.h"
 
 DEFINE_STACK_OF(OSSL_STORE_INFO)
-
-#ifdef _WIN32
-# define stat _stat
-#endif
 
 #ifndef S_ISDIR
 # define S_ISDIR(a) (((a) & S_IFMT) == S_IFDIR)
@@ -196,7 +191,7 @@ static void *file_open(void *provctx, const char *uri)
 {
     struct file_ctx_st *ctx = NULL;
     struct stat st;
-    const char *path = OSSL_file_stat(uri, &st);
+    const char *path = ossl_file_stat(uri, &st);
     BIO *bio;
 
     if (path == NULL)

@@ -16,7 +16,6 @@
 
 #include "internal/e_os.h" /* for stat */
 #include <string.h>
-#include <sys/stat.h>
 #include <ctype.h>
 #include <assert.h>
 
@@ -947,7 +946,7 @@ static OSSL_STORE_LOADER_CTX *file_open_ex
 {
     OSSL_STORE_LOADER_CTX *ctx = NULL;
     struct stat st;
-    const char *path = OSSL_file_stat(uri, &st);
+    const char *path = ossl_file_stat(uri, &st);
 
     if (path == NULL)
         return NULL;
