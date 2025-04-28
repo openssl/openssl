@@ -128,9 +128,9 @@ int ossl_prop_defn_set(OSSL_LIB_CTX *ctx, const char *prop,
         if (!lh_PROPERTY_DEFN_ELEM_error(property_defns))
             goto end;
     }
-    OPENSSL_free(p);
     res = 0;
  end:
+    OPENSSL_free(p);
     ossl_lib_ctx_unlock(ctx);
     return res;
 }
