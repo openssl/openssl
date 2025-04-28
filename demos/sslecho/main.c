@@ -19,7 +19,7 @@
 
 static const int server_port = 4433;
 
-typedef unsigned char   bool;
+typedef unsigned char   flag;
 #define true            1
 #define false           0
 
@@ -27,9 +27,9 @@ typedef unsigned char   bool;
  * This flag won't be useful until both accept/read (TCP & SSL) methods
  * can be called with a timeout. TBD.
  */
-static volatile bool    server_running = true;
+static volatile flag server_running = true;
 
-int create_socket(bool isServer)
+int create_socket(flag isServer)
 {
     int s;
     int optval = 1;
@@ -67,7 +67,7 @@ int create_socket(bool isServer)
     return s;
 }
 
-SSL_CTX* create_context(bool isServer)
+SSL_CTX *create_context(flag isServer)
 {
     const SSL_METHOD *method;
     SSL_CTX *ctx;
@@ -130,7 +130,7 @@ void usage(void)
 
 int main(int argc, char **argv)
 {
-    bool isServer;
+    flag isServer;
     int result;
 
     SSL_CTX *ssl_ctx = NULL;
