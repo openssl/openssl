@@ -18,7 +18,6 @@
 #include <ctype.h>
 #include <sys/types.h>
 #include <time.h>
-#include <libgen.h>
 
 /* Include the appropriate header file for SOCK_STREAM */
 #ifdef _WIN32 /* Windows */
@@ -31,6 +30,7 @@
 # include <netinet/in.h>
 # include <unistd.h>
 # include <poll.h>
+# include <libgen.h>
 #endif
 
 #include <openssl/bio.h>
@@ -287,6 +287,16 @@ static void warnx(const char *fmt, ...)
     va_start(ap, fmt);
     vwarnx(fmt, ap);
     va_end(ap);
+}
+
+/*
+ * we can get away with this mock-up on windows.
+ * we generate payload for any URL we obtain in
+ * GET request. mock-up is good enough for us.
+ */
+static char *basename(char *path)
+{
+    return path;
 }
 #endif
 
