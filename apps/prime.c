@@ -40,9 +40,10 @@ static int check_num(const char *s, const int is_hex)
     return s[i] == 0;
 }
 
-static void process_num(const char *s, const int is_hex, BIGNUM *bn)
+static void process_num(const char *s, const int is_hex)
 {
     int r;
+    BIGNUM *bn = NULL;
 
     r = check_num(s, is_hex);
 
@@ -51,11 +52,13 @@ static void process_num(const char *s, const int is_hex, BIGNUM *bn)
 
     if (!r) {
         BIO_printf(bio_err, "Failed to process value (%s)\n", s);
+        BN_free(bn);
         return;
     }
 
     BN_print(bio_out, bn);
     r = BN_check_prime(bn, NULL, NULL);
+    BN_free(bn);
     if (r < 0) {
         BIO_printf(bio_err, "Error checking prime\n");
         return;
@@ -173,7 +176,7 @@ opthelp:
             int valid_digits_length = 0;
 
             if (!in_file) {
-                process_num(argv[0], hex, bn);
+                process_num(argv[0], hex);
             } else {
                 in = bio_open_default_quiet(argv[0], 'r', 0);
                 if (in == NULL) {
@@ -193,7 +196,7 @@ opthelp:
                     valid_digits_length = strspn(file_read_buf, "1234567890abcdefABCDEF");
                     file_read_buf[valid_digits_length] = '\0';
 
-                    process_num(file_read_buf, hex, bn);
+                    process_num(file_read_buf, hex);
                 }
 
                 if (bytes_read < 0)
