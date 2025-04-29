@@ -140,14 +140,14 @@ static int b64_read(BIO *b, char *out, int outl)
     if (ctx->buf_len > 0) {
         if (!ossl_assert(ctx->buf_len >= ctx->buf_off)) {
             ERR_raise(ERR_LIB_BIO, ERR_R_INTERNAL_ERROR);
-            return 0;
+            return -1;
         }
         i = ctx->buf_len - ctx->buf_off;
         if (i > outl)
             i = outl;
         if (!ossl_assert(ctx->buf_off + i < (int)sizeof(ctx->buf))) {
             ERR_raise(ERR_LIB_BIO, ERR_R_INTERNAL_ERROR);
-            return 0;
+            return -1;
         }
         memcpy(out, &(ctx->buf[ctx->buf_off]), i);
         ret = i;
@@ -344,15 +344,15 @@ static int b64_write(BIO *b, const char *in, int inl)
     }
     if (!ossl_assert(ctx->buf_off < (int)sizeof(ctx->buf))) {
 	ERR_raise(ERR_LIB_BIO, ERR_R_INTERNAL_ERROR);
-	return 0;
+	return -1;
     }
     if (!ossl_assert(ctx->buf_len <= (int)sizeof(ctx->buf))) {
 	ERR_raise(ERR_LIB_BIO, ERR_R_INTERNAL_ERROR);
-	return 0;
+	return -1;
     }
     if (!ossl_assert(ctx->buf_len >= ctx->buf_off)) {
         ERR_raise(ERR_LIB_BIO, ERR_R_INTERNAL_ERROR);
-        return 0;
+        return -1;
     }
     n = ctx->buf_len - ctx->buf_off;
     while (n > 0) {
@@ -364,11 +364,11 @@ static int b64_write(BIO *b, const char *in, int inl)
         ctx->buf_off += i;
         if (!ossl_assert(ctx->buf_off <= (int)sizeof(ctx->buf))) {
             ERR_raise(ERR_LIB_BIO, ERR_R_INTERNAL_ERROR);
-            return ret == 0 ? -1 : ret;
+            return -1;
         }
         if (!ossl_assert(ctx->buf_len >= ctx->buf_off)) {
             ERR_raise(ERR_LIB_BIO, ERR_R_INTERNAL_ERROR);
-            return ret == 0 ? -1 : ret;
+            return -1;
         }
         n -= i;
     }
@@ -504,7 +504,7 @@ static long b64_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_CTRL_WPENDING:    /* More to write in buffer */
         if (!ossl_assert(ctx->buf_len >= ctx->buf_off)) {
             ERR_raise(ERR_LIB_BIO, ERR_R_INTERNAL_ERROR);
-            return 0;
+            return -1;
         }
         ret = ctx->buf_len - ctx->buf_off;
         if (ret == 0 && ctx->encode != B64_NONE
@@ -516,7 +516,7 @@ static long b64_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_CTRL_PENDING:     /* More to read in buffer */
         if (!ossl_assert(ctx->buf_len >= ctx->buf_off)) {
             ERR_raise(ERR_LIB_BIO, ERR_R_INTERNAL_ERROR);
-            return 0;
+            return -1;
         }
         ret = ctx->buf_len - ctx->buf_off;
         if (ret <= 0)
