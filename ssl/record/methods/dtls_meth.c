@@ -571,6 +571,12 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
         return OSSL_RECORD_RETURN_FATAL;
     }
 
+    if (rr->length == 0) {
+        /* No payload data in this record. Dump it */
+        rl->packet_length = 0;
+        goto again;
+    }
+
     rl->num_recs = 1;
     return OSSL_RECORD_RETURN_SUCCESS;
 }
