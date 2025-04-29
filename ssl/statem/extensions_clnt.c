@@ -768,7 +768,10 @@ static int add_key_share(SSL_CONNECTION *s, WPACKET *pkt, unsigned int curve_id)
     }
 # ifndef OPENSSL_NO_ECH
     if (s->ext.ech.ch_depth == 1) { /* stash inner */
-        EVP_PKEY_up_ref(key_share_key);
+        if (EVP_PKEY_up_ref(key_share_key) != 1) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
         EVP_PKEY_free(s->ext.ech.tmp_pkey);
         s->ext.ech.tmp_pkey = key_share_key;
         s->ext.ech.group_id = curve_id;
@@ -1359,8 +1362,7 @@ EXT_RETURN tls_construct_ctos_psk(SSL_CONNECTION *s, WPACKET *pkt,
             return EXT_RETURN_FAIL;
         }
         /* for outer CH allocate a similar sized random value */
-        if (RAND_bytes_ex(s->ssl.ctx->libctx, rndbuf, totalrndsize,
-                          RAND_DRBG_STRENGTH) <= 0) {
+        if (RAND_bytes_ex(s->ssl.ctx->libctx, rndbuf, totalrndsize, 0) <= 0) {
             OPENSSL_free(rndbuf);
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return EXT_RETURN_FAIL;
@@ -2535,8 +2537,7 @@ EXT_RETURN tls_construct_ctos_ech(SSL_CONNECTION *s, WPACKET *pkt,
     } OSSL_TRACE_END(TLS);
     config_id_to_use = ee->config_id; /* if requested, use a random config_id instead */
     if ((s->options & SSL_OP_ECH_IGNORE_CID) != 0) {
-        if (RAND_bytes_ex(s->ssl.ctx->libctx, &config_id_to_use, 1,
-                          RAND_DRBG_STRENGTH) <= 0) {
+        if (RAND_bytes_ex(s->ssl.ctx->libctx, &config_id_to_use, 1, 0) <= 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return 0;
         }

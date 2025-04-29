@@ -1223,12 +1223,12 @@ __owur CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s,
     /* note version we're attempting and that an attempt is being made */
     if (s->ext.ech.es->entries != NULL) {
         if (ossl_ech_pick_matching_cfg(s, &ee, &suite) != 1 || ee == NULL) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, protverr);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_UNSUPPORTED);
             return 0;
         }
         if (ee->version != OSSL_ECH_RFCXXXX_VERSION) {
             /* we only support that version for now */
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, protverr);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_UNSUPPORTED);
             return 0;
         }
         s->ext.ech.attempted_type = TLSEXT_TYPE_ech;
@@ -1264,7 +1264,7 @@ __owur CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s,
             s->tmp_session_id_len = sess_id_len;
             if (s->hello_retry_request == SSL_HRR_NONE
                 && RAND_bytes_ex(s->ssl.ctx->libctx, s->tmp_session_id,
-                                 sess_id_len, RAND_DRBG_STRENGTH) <= 0) {
+                                 sess_id_len, 0) <= 0) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 return 0;
             }
@@ -1294,7 +1294,7 @@ __owur CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s,
         || tls_construct_client_hello_aux(s, &inner) != 1
         || !WPACKET_close(&inner)
         || !WPACKET_get_length(&inner, &innerlen)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, protverr);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     }
     OPENSSL_free(s->ext.ech.innerch);
@@ -1345,7 +1345,7 @@ __owur CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s,
     /* Make second call into CH construction for outer CH. */
     rv = tls_construct_client_hello_aux(s, pkt);
     if (rv != 1) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, protverr);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     }
 # ifdef OSSL_ECH_SUPERVERBOSE

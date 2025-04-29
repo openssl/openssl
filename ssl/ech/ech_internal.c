@@ -293,8 +293,7 @@ int ossl_ech_send_grease(SSL_CONNECTION *s, WPACKET *pkt)
     }
     WPACKET_get_total_written(pkt, &pp_at_start);
     /* randomly select cipher_len to be one of 144, 176, 208, 244 */
-    if (RAND_bytes_ex(s->ssl.ctx->libctx, &cid, 1,
-                      RAND_DRBG_STRENGTH) <= 0) {
+    if (RAND_bytes_ex(s->ssl.ctx->libctx, &cid, 1, 0) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
     }
@@ -302,8 +301,7 @@ int ossl_ech_send_grease(SSL_CONNECTION *s, WPACKET *pkt)
     cipher_len = 144;
     cipher_len += 32 * cipher_len_jitter;
     /* generate a random (1 octet) client id */
-    if (RAND_bytes_ex(s->ssl.ctx->libctx, &cid, 1,
-                      RAND_DRBG_STRENGTH) <= 0) {
+    if (RAND_bytes_ex(s->ssl.ctx->libctx, &cid, 1, 0) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
     }
@@ -387,7 +385,7 @@ int ossl_ech_pick_matching_cfg(SSL_CONNECTION *s, OSSL_ECHSTORE_ENTRY **ee,
         hnlen = 0;
         nameoverride = 1;
     }
-    for (cind = 0; cind != num && (suitematch == 0 || namematch == 0); cind++) {
+    for (cind = 0; cind < num && (suitematch == 0 || namematch == 0); cind++) {
         lee = sk_OSSL_ECHSTORE_ENTRY_value(es->entries, cind);
         if (lee == NULL || lee->version != OSSL_ECH_RFCXXXX_VERSION)
             continue;
@@ -398,8 +396,8 @@ int ossl_ech_pick_matching_cfg(SSL_CONNECTION *s, OSSL_ECHSTORE_ENTRY **ee,
             if (hnlen == 0
                 || (lee->public_name != NULL
                     && strlen(lee->public_name) == hnlen
-                    && !OPENSSL_strncasecmp(hn, (char *)lee->public_name,
-                                            hnlen)))
+                    && OPENSSL_strncasecmp(hn, (char *)lee->public_name,
+                                           hnlen) == 0))
                 namematch = 1;
         }
         suitematch = 0;
@@ -601,7 +599,7 @@ int ossl_ech_reset_hs_buffer(SSL_CONNECTION *s, const unsigned char *buf,
  * better really, BUT... we might want to keep this if others (e.g.
  * browsers) do it so as to not stand out compared to them.
  *
- * The "+ 9" constant below is from the specifiation and is the
+ * The "+ 9" constant below is from the specification and is the
  * expansion comparing a string length to an encoded SNI extension.
  * Same is true of the 31/32 formula below.
  *
@@ -978,9 +976,8 @@ err:
 /*
  * ECH accept_confirmation calculation
  * for_hrr is 1 if this is for an HRR, otherwise for SH
- * ac is (a caller allocated) 8 octet buffer
- * shbuf is a pointer to the SH buffer (incl. the type+3-octet length)
- * shlen is the length of the SH buf
+ * acbuf is an 8 octet buffer for the confirmation value
+ * shlen is the server hello length
  * return: 1 for success, 0 otherwise
  *
  * This is a magic value in the ServerHello.random lower 8 octets
@@ -1042,8 +1039,7 @@ int ossl_ech_calc_confirm(SSL_CONNECTION *s, int for_hrr,
             if (s->ext.ech.hrrsignal_p == NULL) {
                 /* No ECH found so we'll exit, but set random output */
                 if (RAND_bytes_ex(s->ssl.ctx->libctx, acbuf,
-                                  OSSL_ECH_SIGNAL_LEN,
-                                  RAND_DRBG_STRENGTH) <= 0) {
+                                  OSSL_ECH_SIGNAL_LEN, 0) <= 0) {
                     SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_ECH_REQUIRED);
                     goto end;
                 }

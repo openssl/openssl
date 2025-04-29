@@ -703,8 +703,7 @@ int OSSL_ECHSTORE_new_config(OSSL_ECHSTORE *es,
         goto err;
     }
     /* random config_id */
-    if (RAND_bytes_ex(es->libctx, (unsigned char *)&config_id, 1,
-                      RAND_DRBG_STRENGTH) <= 0) {
+    if (RAND_bytes_ex(es->libctx, (unsigned char *)&config_id, 1, 0) <= 0) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         goto err;
     }
