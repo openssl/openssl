@@ -343,12 +343,12 @@ static int b64_write(BIO *b, const char *in, int inl)
         EVP_EncodeInit(ctx->base64);
     }
     if (!ossl_assert(ctx->buf_off < (int)sizeof(ctx->buf))) {
-	ERR_raise(ERR_LIB_BIO, ERR_R_INTERNAL_ERROR);
-	return -1;
+        ERR_raise(ERR_LIB_BIO, ERR_R_INTERNAL_ERROR);
+        return -1;
     }
     if (!ossl_assert(ctx->buf_len <= (int)sizeof(ctx->buf))) {
-	ERR_raise(ERR_LIB_BIO, ERR_R_INTERNAL_ERROR);
-	return -1;
+        ERR_raise(ERR_LIB_BIO, ERR_R_INTERNAL_ERROR);
+        return -1;
     }
     if (!ossl_assert(ctx->buf_len >= ctx->buf_off)) {
         ERR_raise(ERR_LIB_BIO, ERR_R_INTERNAL_ERROR);
