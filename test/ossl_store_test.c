@@ -111,7 +111,7 @@ static int test_store_open_winstore(void)
      * subject name, as winstore only allows searches by that method
      */
     ret = TEST_ptr(testcert = d2i_X509(NULL, &certptr, TEST_CERT_LEN))
-        && TEST_ptr(search = OSSL_STORE_SEARCH_by_name(X509_get_subject_name(testcert)))
+        && TEST_ptr(search = OSSL_STORE_SEARCH_by_name(X509_get_issuer_name(testcert)))
         && TEST_ptr(ui_method = UI_create_method("DummyUI"))
         && TEST_ptr(sctx = OSSL_STORE_open_ex("org.openssl.winstore:", NULL,
             NULL, ui_method, NULL, NULL,
