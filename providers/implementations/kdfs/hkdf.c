@@ -76,10 +76,8 @@ static int HKDF_Expand(const EVP_MD *evp_md,
     OSSL_PARAM_octet_string(OSSL_KDF_PARAM_SALT, NULL, 0)
 
 /*
- * Gettable context parameters that are common across HKDF and the TLS KDF
- *   OSSL_KDF_PARAM_KEY is not gettable because it is a secret value
- *   OSSL_KDF_PARAM_PROPERTIES is not gettable because, despite being listed as settable,
- *     it's not implemented as settable.
+ * Gettable context parameters that are common across HKDF and the TLS KDF.
+ *   OSSL_KDF_PARAM_KEY is not gettable because it is a secret value.
  */
 #define HKDF_COMMON_GETTABLES                                       \
     OSSL_PARAM_size_t(OSSL_KDF_PARAM_SIZE, NULL),                   \
