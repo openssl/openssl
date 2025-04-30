@@ -128,6 +128,8 @@ static int aes_cbc_hmac_sha512_etm_update(void *vctx, unsigned char *out,
 {
     PROV_AES_HMAC_SHA512_ETM_CTX *ctx = (PROV_AES_HMAC_SHA512_ETM_CTX *)vctx;
 
+    ctx->base_ctx.hmac_mode = HMAC_MODE_PARTIAL;
+
     return ossl_cipher_generic_block_update_common(vctx, out, outl, outsize, in,
         inl, ctx->buf);
 }
