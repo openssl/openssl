@@ -190,8 +190,7 @@ static int by_store_ctrl(X509_LOOKUP *ctx, int cmd,
 }
 
 static int by_store(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
-                    const OSSL_STORE_SEARCH *criterion, X509_OBJECT *ret,
-                    OSSL_LIB_CTX *libctx, const char *propq)
+                    const OSSL_STORE_SEARCH *criterion, X509_OBJECT *ret)
 {
     STACK_OF(CACHED_STORE) *stores = X509_LOOKUP_get_method_data(ctx);
     int i;
@@ -207,13 +206,12 @@ static int by_store(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
     return ok;
 }
 
-static int by_store_subject_ex(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
-                               const X509_NAME *name, X509_OBJECT *ret,
-                               OSSL_LIB_CTX *libctx, const char *propq)
+static int by_store_subject(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
+                            const X509_NAME *name, X509_OBJECT *ret)
 {
     OSSL_STORE_SEARCH *criterion =
         OSSL_STORE_SEARCH_by_name((X509_NAME *)name); /* won't modify it */
-    int ok = by_store(ctx, type, criterion, ret, libctx, propq);
+    int ok = by_store(ctx, type, criterion, ret);
     STACK_OF(X509_OBJECT) *store_objects =
         X509_STORE_get0_objects(X509_LOOKUP_get_store(ctx));
     X509_OBJECT *tmp = NULL;
@@ -261,12 +259,6 @@ static int by_store_subject_ex(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
     return ok;
 }
 
-static int by_store_subject(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
-                            const X509_NAME *name, X509_OBJECT *ret)
-{
-    return by_store_subject_ex(ctx, type, name, ret, NULL, NULL);
-}
-
 /*
  * We lack the implementations for get_by_issuer_serial, get_by_fingerprint
  * and get_by_alias.  There's simply not enough support in the X509_LOOKUP
@@ -284,7 +276,7 @@ static X509_LOOKUP_METHOD x509_store_lookup = {
     NULL,                        /* get_by_issuer_serial */
     NULL,                        /* get_by_fingerprint */
     NULL,                        /* get_by_alias */
-    by_store_subject_ex,
+    NULL,                        /* get_by_subject_ex */
     by_store_ctrl_ex
 };
 
