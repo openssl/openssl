@@ -31,6 +31,12 @@ OpenSSL 3.6
 
 ### Changes between 3.5 and 3.6 [xx XXX xxxx]
 
+ * Changed DirName output format. Previously, DirName was using non-standard
+   single-byte output format `/C=CN/ST...`. The new format is
+   RFC2533 (`C = CN, ST = ...`), and handles multi-byte output correctly.
+
+   *Nikola Pajkovsky*
+
  * The VxWorks platforms have been removed. These platforms were unadopted,
    unmaintained and reported to be non-functional.
 
