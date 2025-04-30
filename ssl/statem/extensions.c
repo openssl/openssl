@@ -118,8 +118,8 @@ typedef struct extensions_definition_st {
      */
     unsigned int context;
     /*
-     * exceptionally, we don't conditionally compile this field to avoid a pile of
-     * fndefs all over the ext_defs values
+     * exceptionally, we don't conditionally compile this field to avoid a
+     * pile of ifndefs all over the ext_defs values
      */
     int ech_handling;  /* how to handle ECH for this extension type */
     /*
