@@ -39,6 +39,7 @@ $code=<<___;
 #define HMAC_IKEYPAD	24
 #define HMAC_OKEYPAD	32
 #define HMAC_INLEN	40
+#define HMAC_MODE	48
 
 .text
 .arch armv8-a+crypto
@@ -181,6 +182,7 @@ $code.=<<___;
  *		arg->digest.hmac.i_key_pad	(partially hashed i_key_pad)
  *		arg->digest.hmac.o_key_pad	(partially hashed o_key_pad)
  *		arg->digest.in_len		(length of hash input processed so far)
+ *		arg->digest.hmac_mode		(flag enabling hmac final tag calculation)
  *	)
  *
  * Routine register definitions:
@@ -269,6 +271,14 @@ asm_aescbc_sha256_hmac:
 	ld1		{v3.16b}, [x7]		/* get 1st ivec */
 
 	add		x17, x9, #160		/* point to the last 5 rounds keys */
+	mov		x11, x2			/* len -> x11 needed at end */
+
+	/* If the input length is 0, then there is no data to encrypt. This
+	 * will be the EVP final call with no pending data in internal buf. Just
+	 * calculate the final HMAC tag using the partially hashed i_key_pad
+	 * and partially hashed o_key_pad.
+	*/
+	cbz		x2, .Lonly_hmac_final
 
 	/*
 	 * Init sha state, prefetch, check for small cases.
@@ -281,7 +291,6 @@ asm_aescbc_sha256_hmac:
 	/* proceed */
 	/* read first aes block, bump aes_ptr_in */
 	ld1		{v0.16b},[x0],16
-	mov		x11,x2			/* len -> x11 needed at end */
 	lsr		x12,x11,6		/* total_blocks */
 	/*
 	 * now we can do the loop prolog, 1st aes sequence of 4 blocks
@@ -1314,11 +1323,28 @@ $code.=<<___;
 	b.ne		.Lpost_long_Q0
 	/* set "1" of the padding if this was a final block */
 	mov		v26.b[3],w15
+	b       .Lpost_long_loop
+
+.Lonly_hmac_final:
+	eor		v26.16b, v26.16b, v26.16b	/* zero sha src 0 */
+	eor		v27.16b, v27.16b, v27.16b	/* zero sha src 1 */
+	eor		v28.16b, v28.16b, v28.16b	/* zero sha src 2 */
+	eor		v29.16b, v29.16b, v29.16b	/* zero sha src 3 */
+	ldr		x7, [x6, #HMAC_IKEYPAD]
+	ldp		q24, q25, [x7]
+	/* SHA padding: start with single set bit followed by zeros i.e 0x80 */
+	mov		w15, 0x80
+	mov		v26.b[3], w15
+	sub		x12, x5, x2			/* outstanding bytes of the digest */
 
 .Lpost_long_loop:
 	/* Save inner hash state so far */
 	ldr		x7, [x6, #HMAC_IKEYPAD]
 	stp		q24, q25, [x7]
+
+	/* Skip HMAC final tag calculation for update calls */
+	ldr		x7, [x6, #HMAC_MODE]
+	cbz		x7, .Lskip_hmac_tag1
 
 	/* Fetch number of blocks already processed and add to x11 */
 	ldr		x7, [x6, #HMAC_INLEN]
@@ -1613,6 +1639,7 @@ $code.=<<___;
 	sha256h		q22, q23, v6.4s
 	sha256h2	q23, q21, v6.4s
 
+.Lskip_hmac_tag1:
 	ldp		d10,d11,[sp,#16]
 	ldp		d12,d13,[sp,#32]
 
@@ -2190,6 +2217,10 @@ $code.=<<___;
 	ldr		x7, [x6, #HMAC_IKEYPAD]
 	stp		q24, q25, [x7]
 
+	/* Skip HMAC final tag calculation for update calls */
+	ldr		x7, [x6, #HMAC_MODE]
+	cbz		x7, .Lskip_hmac_tag2
+
 	/* Fetch number of blocks already processed and add to x11 */
 	ldr		x7, [x6, #HMAC_INLEN]
 	add		x11, x11, x7
@@ -2482,6 +2513,7 @@ $code.=<<___;
 	sha256h		q22, q23, v6.4s
 	sha256h2	q23, q21, v6.4s
 
+.Lskip_hmac_tag2:
 	ldp		d10,d11,[sp,#16]
 	ldp		d12,d13,[sp,#32]
 
@@ -2538,6 +2570,7 @@ $code.=<<___;
  *		arg->digest.hmac.i_key_pad	(partially hashed i_key_pad)
  *		arg->digest.hmac.o_key_pad	(partially hashed o_key_pad)
  *		arg->digest.in_len		(length of hash input processed so far)
+ *		arg->digest.hmac_mode		(flag enabling hmac final tag calculation)
  *	)
  *
  * Routine register definitions:
@@ -3699,6 +3732,10 @@ $code.=<<___;
 	stp		q0,q1,[x1],32
 	stp		q2,q3,[x1],32
 1:
+	/* Skip HMAC final tag calculation for update calls */
+	ldr		x7, [x6, #HMAC_MODE]
+	cbz		x7, .Lskip_hmac_tag3
+
 	/*
 	 * final sha block
 	 * the strategy is to combine the 0-3 aes blocks, which is faster but
@@ -4183,6 +4220,8 @@ $code.=<<___;
 
 	sha256h		q22, q23, v6.4s
 	add		v7.4s,v7.4s,v29.4s	/* wk = key15+w3 */
+
+.Lskip_hmac_tag3:
 	ldp		d10,d11,[sp,#16]
 	sha256h2	q23, q21, v6.4s
 

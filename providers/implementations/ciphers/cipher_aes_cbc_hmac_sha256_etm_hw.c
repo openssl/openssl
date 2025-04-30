@@ -67,6 +67,7 @@ static void ciph_digest_arg_init(CIPH_DIGEST *arg, PROV_CIPHER_CTX *vctx)
     arg->digest.hmac.i_key_pad = (uint8_t *)&(sctx->head);
     arg->digest.hmac.o_key_pad = (uint8_t *)&(sctx->tail);
     arg->digest.hmac.in_len = ctx->in_len;
+    arg->digest.hmac.hmac_mode = ctx->hmac_mode;
 }
 
 static int hwaes_cbc_hmac_sha256_etm(PROV_CIPHER_CTX *vctx,
@@ -84,17 +85,26 @@ static int hwaes_cbc_hmac_sha256_etm(PROV_CIPHER_CTX *vctx,
     }
     if (ctx->base.enc) {
         HWAES128_ENC_CBC_SHA256_ETM(in, out, len, out, ctx->tag, len, &arg);
-        memcpy(vctx->iv, out + len - AES_BLOCK_SIZE, AES_BLOCK_SIZE);
+        if (ctx->hmac_mode == HMAC_MODE_PARTIAL) {
+            memcpy(vctx->iv, out + len - AES_BLOCK_SIZE, AES_BLOCK_SIZE);
+        }
     } else {
         if (ctx->taglen == 0) {
             ERR_raise(ERR_LIB_PROV, PROV_R_TAG_NOT_SET);
             return 0;
         }
-        uint8_t next_iv[AES_BLOCK_SIZE];
-        memcpy(next_iv, in + len - AES_BLOCK_SIZE, AES_BLOCK_SIZE);
+        uint8_t next_iv[AES_BLOCK_SIZE] = { 0 };
+        /* For partial update operation, preserve the last AES block */
+        if (ctx->hmac_mode == HMAC_MODE_PARTIAL) {
+            memcpy(next_iv, in + len - AES_BLOCK_SIZE, AES_BLOCK_SIZE);
+        }
 
         HWAES128_DEC_CBC_SHA256_ETM(in, out, len, in, ctx->tag, len, &arg);
-        memcpy(vctx->iv, next_iv, AES_BLOCK_SIZE);
+        if (ctx->hmac_mode == HMAC_MODE_PARTIAL) {
+            memcpy(vctx->iv, next_iv, AES_BLOCK_SIZE);
+        } else {
+            memcpy(vctx->iv, in + len - AES_BLOCK_SIZE, AES_BLOCK_SIZE);
+        }
     }
 
     ctx->in_len += len;
