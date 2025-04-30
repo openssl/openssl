@@ -33,17 +33,17 @@ my $fatal_alert = undef; # set by filters at expected fatal alerts
 my $sslv2testtype = undef;
 my $proxy_start_success = 0;
 
-plan tests => 42;
+plan tests => 44;
 
 SKIP: {
-    skip "TLS 1.2 is disabled", 21 if disabled("tls1_2");
+    skip "TLS 1.2 is disabled", 22 if disabled("tls1_2");
     # Run tests with TLS
     run_tests(0);
 }
 
 SKIP: {
-    skip "DTLS 1.2 is disabled", 21 if disabled("dtls1_2");
-    skip "DTLSProxy does not work on Windows", 21 if $^O =~ /^(MSWin32)$/;
+    skip "DTLS 1.2 is disabled", 22 if disabled("dtls1_2");
+    skip "DTLSProxy does not work on Windows", 22 if $^O =~ /^(MSWin32)$/;
     run_tests(1);
 }
 
@@ -336,8 +336,17 @@ sub run_tests
             }
         }
     }
-}
 
+    SKIP: {
+        skip "DTLS only record tests", 1 if $run_test_as_dtls != 1;
+        #Test 22: We should ignore empty app data records
+        $proxy->clear();
+        $proxy->filter(\&empty_app_data);
+        $proxy->start();
+        ok(TLSProxy::Message->success(), "Empty app data in DTLS");
+
+    }
+}
 
 sub add_empty_recs_filter
 {
@@ -863,4 +872,42 @@ sub not_on_record_boundary
         push @{$records}, $record;
 
     }
+}
+
+sub empty_app_data
+{
+    my $proxy = shift;
+
+    # We're only interested in the client's Certificate..Finished flight
+    if ($proxy->flight != 4) {
+        return;
+    }
+
+    my $data = pack "C52",
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, #IV
+        0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f,
+        0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, #One block of empty padded data
+        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+        0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+        0x10, 0x11, 0x12, 0x13; #MAC, assume to be 20 bytes
+
+    # Add a zero length app data record at the end
+    # This will have the same sequence number as the subsequent app data record
+    # that s_client will send - which will cause that second record to be
+    # dropped. But that isn't important for this test.
+    my $record = TLSProxy::Record->new_dtls(
+        4,
+        TLSProxy::Record::RT_APPLICATION_DATA,
+        TLSProxy::Record::VERS_DTLS_1_2,
+        1,
+        1,
+        length($data),
+        0,
+        length($data),
+        0,
+        $data,
+        ""
+    );
+    push @{$proxy->record_list}, $record;
 }
