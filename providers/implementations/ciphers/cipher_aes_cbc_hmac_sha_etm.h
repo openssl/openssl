@@ -31,6 +31,11 @@ const PROV_CIPHER_HW_AES_HMAC_SHA_ETM *ossl_prov_cipher_hw_aes_cbc_hmac_sha512_e
 
 #define AES_CBC_MAX_HMAC_SIZE 64
 
+typedef enum {
+    HMAC_MODE_PARTIAL = 0, /* Only compute inner hash and preserve state */
+    HMAC_MODE_FULL = 1 /* Compute full HMAC (inner + outer) and produce tag */
+} HMAC_MODE;
+
 typedef struct prov_aes_hmac_sha_etm_ctx_st {
     PROV_CIPHER_CTX base;
     AES_KEY ks;
@@ -39,6 +44,7 @@ typedef struct prov_aes_hmac_sha_etm_ctx_st {
     unsigned char exp_tag[AES_CBC_MAX_HMAC_SIZE];
     size_t taglen;
     size_t in_len;
+    HMAC_MODE hmac_mode;
 } PROV_AES_HMAC_SHA_ETM_CTX;
 
 typedef struct prov_aes_hmac_sha1_etm_ctx_st {
@@ -73,6 +79,7 @@ typedef struct {
             uint8_t *i_key_pad;
             uint8_t *o_key_pad;
             size_t in_len;
+            HMAC_MODE hmac_mode;
         } hmac;
     } digest;
 } CIPH_DIGEST;

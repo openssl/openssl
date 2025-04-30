@@ -104,6 +104,8 @@ static int aes_cbc_hmac_sha1_etm_update(void *vctx, unsigned char *out,
 {
     PROV_AES_HMAC_SHA1_ETM_CTX *ctx = (PROV_AES_HMAC_SHA1_ETM_CTX *)vctx;
 
+    ctx->base_ctx.hmac_mode = HMAC_MODE_PARTIAL;
+
     return ossl_cipher_generic_block_update_common(vctx, out, outl, outsize, in,
         inl, ctx->buf);
 }
@@ -132,7 +134,10 @@ static int aes_final(void *vctx, unsigned char *out, size_t *outl,
     size_t outsize, unsigned char *buf)
 {
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
+    PROV_AES_HMAC_SHA_ETM_CTX *pctx = (PROV_AES_HMAC_SHA_ETM_CTX *)vctx;
     size_t blksz = AES_BLOCK_SIZE;
+
+    pctx->hmac_mode = HMAC_MODE_FULL;
 
     if (!ossl_prov_is_running())
         return 0;
@@ -302,6 +307,7 @@ static int aes_einit(void *vctx, const unsigned char *key, size_t keylen,
     hw->reset_sha_state(vctx);
     ctx->in_len = 0;
     pctx->bufsz = 0;
+    ctx->hmac_mode = HMAC_MODE_FULL;
     return ret;
 }
 
@@ -317,6 +323,7 @@ static int aes_dinit(void *vctx, const unsigned char *key, size_t keylen,
     int ret = aes_set_ctx_params(ctx, params);
     hw->reset_sha_state(vctx);
     ctx->in_len = 0;
+    ctx->hmac_mode = HMAC_MODE_FULL;
     return ret;
 }
 
