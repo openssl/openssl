@@ -212,7 +212,5 @@ opthelp:
     ret = 0;
  end:
     BN_free(bn);
-    if (in != NULL)
-        BIO_free(in);
     return ret;
 }
