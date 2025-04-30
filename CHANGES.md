@@ -31,6 +31,12 @@ OpenSSL 3.6
 
 ### Changes between 3.5 and 3.6 [xx XXX xxxx]
 
+ * Changed DirName output format. Previously, DirName was using non-standard
+   single-byte output format `/C=CN/ST...`. The new format is
+   RFC2533 (`C = CN, ST = ...`), and handles multi-byte output correctly.
+
+   *Nikola Pajkovsky*
+
  * An ANSI-C toolchain is no longer sufficient for building OpenSSL. The code
    should build on compilers supporting C-99 features.
 
