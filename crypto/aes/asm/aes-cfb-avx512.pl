@@ -31,6 +31,11 @@ if (!$avx512vaes && $win64 && ($flavour =~ /nasm/ || $ENV{ASM} =~ /nasm/) &&
     $avx512vaes = ($1==2.13 && $2>=3) + ($1>=2.14);
 }
 
+if (!$avx512vaes && $win64 && ($flavour =~ /masm/ || $ENV{ASM} =~ /ml64/) &&
+       `ml64 2>&1` =~ /Version ([0-9]+\.[0-9]+)\./) {
+    $avx512vaes = ($1>=14.16);
+}
+
 if (!$avx512vaes && `$ENV{CC} -v 2>&1`
     =~ /(Apple)?\s*((?:clang|LLVM) version|.*based on LLVM) ([0-9]+)\.([0-9]+)\.([0-9]+)?/) {
     my $ver = $3 + $4/100.0 + $5/10000.0; # 3.1.0->3.01, 3.10.1->3.1001
