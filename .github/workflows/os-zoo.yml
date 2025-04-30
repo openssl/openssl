@@ -213,7 +213,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: config
-      run: ./config enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
+      run: ./config enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
     - name: config dump
       run: ./configdata.pm --dump
     - name: make
