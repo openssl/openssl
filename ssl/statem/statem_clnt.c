@@ -759,7 +759,7 @@ int ossl_statem_dtls_client_use_timer(SSL_CONNECTION *s)
     default:
         break;
 
-    case TLS_ST_CW_KEY_UPDATE:
+    case TLS_ST_CW_CHANGE:
         /*
          * We're into the last flight so we don't retransmit these
          * messages unless we need to.
