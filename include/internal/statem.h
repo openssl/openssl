@@ -117,6 +117,7 @@ struct ossl_statem_st {
     int cleanuphand;
     /* Should we skip the CertificateVerify message? */
     unsigned int no_cert_verify;
+    int use_timer;
 
     /* Test harness message mutator callbacks */
     ossl_statem_mutate_handshake_cb mutate_handshake_cb;

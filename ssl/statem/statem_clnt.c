@@ -730,22 +730,12 @@ WRITE_TRAN ossl_statem_client_write_transition(SSL_CONNECTION *s)
     }
 }
 
-int ossl_statem_dtls_client_use_timer(SSL_CONNECTION *s)
+static int ossl_statem_dtls_client13_use_timer(SSL_CONNECTION *s)
 {
     OSSL_STATEM *st = &s->statem;
 
     switch (st->hand_state) {
     default:
-        break;
-
-    case TLS_ST_CW_CHANGE:
-        /*
-         * We're into the last flight so we don't retransmit these
-         * messages unless we need to.
-         */
-        if (s->hit)
-            return 0;
-
         break;
 
     case TLS_ST_CW_ACK:
@@ -756,6 +746,30 @@ int ossl_statem_dtls_client_use_timer(SSL_CONNECTION *s)
     }
 
     return 1;
+}
+
+int ossl_statem_dtls_client_use_timer(SSL_CONNECTION *s)
+{
+    OSSL_STATEM *st = &s->statem;
+
+    if (SSL_CONNECTION_IS_DTLS13(s))
+        return ossl_statem_dtls_client13_use_timer(s);
+
+    switch (st->hand_state) {
+    default:
+        break;
+
+    case TLS_ST_CW_KEY_UPDATE:
+        /*
+         * We're into the last flight so we don't retransmit these
+         * messages unless we need to.
+         */
+        if (s->hit)
+            st->use_timer = 0;
+        break;
+    }
+
+    return st->use_timer;
 }
 
 /*

@@ -786,24 +786,13 @@ WRITE_TRAN ossl_statem_server_write_transition(SSL_CONNECTION *s)
     }
 }
 
-int ossl_statem_dtls_server_use_timer(SSL_CONNECTION *s)
+static int ossl_statem_dtls_server13_use_timer(SSL_CONNECTION *s)
 {
     OSSL_STATEM *st = &s->statem;
 
     switch (st->hand_state) {
     default:
         break;
-
-    case TLS_ST_SW_CHANGE:
-        /* Fall through */
-
-    case TLS_ST_SW_SESSION_TICKET:
-        if (SSL_CONNECTION_IS_DTLS13(s))
-            return 1;
-        /* Fall through */
-
-    case DTLS_ST_SW_HELLO_VERIFY_REQUEST:
-        /* Fall through */
 
     case TLS_ST_SW_ACK:
         /* Fall through */
@@ -813,6 +802,52 @@ int ossl_statem_dtls_server_use_timer(SSL_CONNECTION *s)
     }
 
     return 1;
+}
+
+int ossl_statem_dtls_server_use_timer(SSL_CONNECTION *s)
+{
+    OSSL_STATEM *st = &s->statem;
+
+    if (SSL_CONNECTION_IS_DTLS13(s))
+        return ossl_statem_dtls_server13_use_timer(s);
+
+    switch (st->hand_state) {
+    default:
+        break;
+
+    case TLS_ST_SW_SESSION_TICKET:
+        /*
+         * We're into the last flight. We don't retransmit the last flight
+         * unless we need to, so we don't use the timer
+         */
+        st->use_timer = 0;
+        break;
+
+    case TLS_ST_SW_CHANGE:
+        /*
+         * We're into the last flight. We don't retransmit the last flight
+         * unless we need to, so we don't use the timer. This might have
+         * already been set to 0 if we sent a NewSessionTicket message,
+         * but we'll set it again here in case we didn't.
+         */
+        st->use_timer = 0;
+        break;
+
+    case DTLS_ST_SW_HELLO_VERIFY_REQUEST:
+        /* We don't buffer this message so don't use the timer */
+        st->use_timer = 0;
+        break;
+
+    case TLS_ST_SW_SRVR_HELLO:
+        /*
+        * Messages we write from now on should be buffered and
+        * retransmitted if necessary, so we need to use the timer now
+        */
+        st->use_timer = 1;
+        break;
+    }
+
+    return st->use_timer;
 }
 
 /*
