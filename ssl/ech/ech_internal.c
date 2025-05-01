@@ -164,6 +164,20 @@ void ossl_ech_ctx_clear(OSSL_ECH_CTX *ce)
     return;
 }
 
+static void ech_free_stashed_key_shares(OSSL_ECH_CONN *ec)
+{
+    size_t i;
+
+    if (ec == NULL)
+        return;
+    for (i = 0; i != ec->num_ks_pkey; i++) {
+        EVP_PKEY_free(ec->ks_pkey[i]);
+        ec->ks_pkey[i] = NULL;
+    }
+    ec->num_ks_pkey = 0;
+    return;
+}
+
 void ossl_ech_conn_clear(OSSL_ECH_CONN *ec)
 {
     if (ec == NULL)
@@ -179,8 +193,8 @@ void ossl_ech_conn_clear(OSSL_ECH_CONN *ec)
     OPENSSL_free(ec->returned);
     OPENSSL_free(ec->pub);
     OSSL_HPKE_CTX_free(ec->hpke_ctx);
-    EVP_PKEY_free(ec->tmp_pkey);
     OPENSSL_free(ec->encoded_inner);
+    ech_free_stashed_key_shares(ec);
     return;
 }
 
@@ -814,15 +828,11 @@ int ossl_ech_swaperoo(SSL_CONNECTION *s)
 # ifdef OSSL_ECH_SUPERVERBOSE
     ossl_ech_ptranscript(s, "ech_swaperoo, b4");
 # endif
-    /* un-stash inner key share */
-    if (s->ext.ech.tmp_pkey == NULL) {
+    /* un-stash inner key share(s) */
+    if (ossl_ech_unstash_keyshares(s) != 1) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
     }
-    EVP_PKEY_free(s->s3.tmp.pkey);
-    s->s3.tmp.pkey = s->ext.ech.tmp_pkey;
-    s->s3.group_id = s->ext.ech.group_id;
-    s->ext.ech.tmp_pkey = NULL;
     /*
      * When not doing HRR... fix up the transcript to reflect the inner CH.
      * If there's a client hello at the start of the buffer, then that's
@@ -1147,6 +1157,38 @@ int ossl_ech_intbuf_fetch(SSL_CONNECTION *s, unsigned char **buf, size_t *blen)
         return 0;
     *buf = s->ext.ech.transbuf;
     *blen = s->ext.ech.transbuf_len;
+    return 1;
+}
+
+int ossl_ech_stash_keyshares(SSL_CONNECTION *s)
+{
+    size_t i;
+
+    ech_free_stashed_key_shares(&s->ext.ech);
+    for (i = 0; i != s->s3.tmp.num_ks_pkey; i++) {
+        s->ext.ech.ks_pkey[i] = s->s3.tmp.ks_pkey[i];
+        EVP_PKEY_up_ref(s->ext.ech.ks_pkey[i]);
+        s->ext.ech.ks_group_id[i] = s->s3.tmp.ks_group_id[i];
+    }
+    s->ext.ech.num_ks_pkey = s->s3.tmp.num_ks_pkey;
+    return 1;
+}
+
+int ossl_ech_unstash_keyshares(SSL_CONNECTION *s)
+{
+    size_t i;
+
+    for (i = 0; i != s->s3.tmp.num_ks_pkey; i++) {
+        EVP_PKEY_free(s->s3.tmp.ks_pkey[i]);
+        s->s3.tmp.ks_pkey[i] = NULL;
+    }
+    for (i = 0; i != s->ext.ech.num_ks_pkey; i++) {
+        s->s3.tmp.ks_pkey[i] = s->ext.ech.ks_pkey[i];
+        EVP_PKEY_up_ref(s->s3.tmp.ks_pkey[i]);
+        s->s3.tmp.ks_group_id[i] = s->ext.ech.ks_group_id[i];
+    }
+    s->s3.tmp.num_ks_pkey = s->ext.ech.num_ks_pkey;
+    ech_free_stashed_key_shares(&s->ext.ech);
     return 1;
 }
 #endif

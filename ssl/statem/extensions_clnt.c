@@ -795,26 +795,6 @@ static int add_key_share(SSL_CONNECTION *s, WPACKET *pkt, unsigned int group_id,
         s->s3.tmp.num_ks_pkey++;
 
     OPENSSL_free(encoded_pubkey);
-# ifndef OPENSSL_NO_ECH
-    if (s->ext.ech.ch_depth == 1) { /* stash inner */
-        if (EVP_PKEY_up_ref(key_share_key) != 1) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            goto err;
-        }
-        EVP_PKEY_free(s->ext.ech.tmp_pkey);
-        s->ext.ech.tmp_pkey = key_share_key;
-        s->ext.ech.group_id = curve_id;
-    }
-# endif
-    /*
-     * When changing to send more than one key_share we're
-     * going to need to be able to save more than one EVP_PKEY. For now
-     * we reuse the existing tmp.pkey
-     */
-    s->s3.tmp.pkey = key_share_key;
-    s->s3.group_id = curve_id;
-    OPENSSL_free(encoded_point);
-
     return 1;
  err:
     if (key_share_key != s->s3.tmp.ks_pkey[loop_num])
@@ -898,6 +878,15 @@ EXT_RETURN tls_construct_ctos_key_share(SSL_CONNECTION *s, WPACKET *pkt,
             valid_keyshare++;
         }
     }
+
+#ifndef OPENSSL_NO_ECH
+    /* stash inner key shares */
+    if (s->ext.ech.ch_depth == 1 && ossl_ech_stash_keyshares(s) != 1) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+# endif
+
 
     if (!WPACKET_close(pkt) || !WPACKET_close(pkt)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
