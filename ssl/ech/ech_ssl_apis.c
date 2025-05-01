@@ -10,6 +10,7 @@
 #include <openssl/ssl.h>
 #include <openssl/ech.h>
 #include "../ssl_local.h"
+#include <internal/ssl_unwrap.h>
 
 int SSL_CTX_set1_echstore(SSL_CTX *ctx, OSSL_ECHSTORE *es)
 {

@@ -223,7 +223,7 @@ IF[{- !$disabled{tests} -}]
   DEPEND[hpke_test]=../libcrypto.a libtestutil.a
 
   SOURCE[ech_test]=ech_test.c helpers/ssltestlib.c filterprov.c tls-provider.c
-  INCLUDE[ech_test]=../include ../apps/include
+  INCLUDE[ech_test]=../include ../apps/include ../providers/common/include ..
   DEPEND[ech_test]=../libssl.a ../libcrypto.a libtestutil.a
 
   SOURCE[evp_extra_test2]=evp_extra_test2.c $INITSRC tls-provider.c
