@@ -1466,11 +1466,22 @@ int ossl_bio_print_hex(BIO *out, unsigned char *buf, int len)
 static int is_valid_uri_char(char c)
 {
     /* Valid characters include alphanumeric, '-', '_', '.', '~', and reserved characters */
-    return isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~' ||
-           c == '!'|| c == '$' || c == '&' || c == '\'' || c == '(' ||
-           c == ')' || c == '*' || c == '+' || c == ',' || c == ';' ||
-           c == '=' || c == ':' || c == '@' || c == '/' || c == '#' ||
-           c == '[' || c == ']' || c == '?';
+    switch (c) {
+        // Unreserved characters 
+        case '-': case '_': case '.': case '~':
+        // Reserved characters
+        case '!': case '*': case '\'': case '(': case ')':
+        case ';': case ':': case '@': case '&': case '=':
+        case '+': case '$': case ',': case '/': case '?':
+        case '#': case '[': case ']':
+            return 1;
+        default:
+            // Check if alphanumeric
+            if (isalnum(c)) {
+                return 1;
+            }
+            return 0;
+    }  
 }
 
 static int is_valid_uri(const char *uri)
