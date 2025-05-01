@@ -540,8 +540,8 @@ static OSSL_FUNC_store_eof_fn fake_rsa_st_eof;
 static OSSL_FUNC_store_close_fn fake_rsa_st_close;
 static OSSL_FUNC_store_delete_fn fake_rsa_st_delete;
 
-static const char fake_rsa_scheme[] = "fake_rsa:";
-static const char fake_rsa_openpwtest[] = "fake_rsa:openpwtest";
+static const char fake_rsa_scheme[] = "fake-rsa:";
+static const char fake_rsa_openpwtest[] = "fake-rsa:openpwtest";
 static const char fake_rsa_prompt[] = "Fake Prompt Info";
 
 static void *fake_rsa_st_open_ex(void *provctx, const char *uri,
@@ -703,7 +703,7 @@ static const OSSL_DISPATCH fake_rsa_store_funcs[] = {
 };
 
 static const OSSL_ALGORITHM fake_rsa_store_algs[] = {
-    { "fake_rsa", "provider=fake-rsa", fake_rsa_store_funcs },
+    { "fake-rsa", "provider=fake-rsa", fake_rsa_store_funcs },
     { NULL, NULL, NULL }
 };
 
