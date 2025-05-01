@@ -35,7 +35,6 @@ static int ipv6_from_asc(unsigned char *v6, const char *in);
 static int ipv6_cb(const char *elem, int len, void *usr);
 static int ipv6_hex(unsigned char *out, const char *in, int inlen);
 
-static int starts_with(const char *str, const char* prefix);
 static int is_valid_uri_char(char c);
 static int is_valid_uri(const char *uri);
 
@@ -1464,11 +1463,6 @@ int ossl_bio_print_hex(BIO *out, unsigned char *buf, int len)
     return result;
 }
 
-static int starts_with(const char *str, const char *prefix)
-{
-    return strncmp(str, prefix, strlen(prefix)) == 0;
-}
-
 static int is_valid_uri_char(char c)
 {
     /* Valid characters include alphanumeric, '-', '_', '.', '~', and reserved characters */
@@ -1482,8 +1476,8 @@ static int is_valid_uri_char(char c)
 static int is_valid_uri(const char *uri)
 {
     /* Check if URI begins with a valid scheme */
-    if (!(starts_with(uri, "http://") || starts_with(uri, "https://") ||
-        starts_with(uri, "ftp://"))) {
+    if (!(strncmp(uri, "http://", 7) == 0 || strncmp(uri, "https://", 8) == 0 ||
+        strncmp(uri, "ftp://", 6) == 0)) {
         return 0;
     }
     
