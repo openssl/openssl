@@ -397,6 +397,8 @@ const Flag<TestConfig> *FindFlag(const char *name) {
         StringFlag("-cert-file", &TestConfig::cert_file),
         StringFlag("-key-file", &TestConfig::key_file),
         Base64Flag("-ocsp-response", &TestConfig::ocsp_response),
+
+        StringFlag("-shim-key-log-file", &TestConfig::shim_key_log_file),
     };
     std::sort(ret.begin(), ret.end(), FlagNameComparator{});
     return ret;
@@ -980,6 +982,12 @@ static bool InstallCertificate(SSL *ssl) {
   return true;
 }
 
+void KeylogCallback(const SSL *ssl, const char *line) {
+  const TestConfig *config = GetTestConfig(ssl);
+  const bssl::UniquePtr<BIO> bio(BIO_new_file(config->shim_key_log_file.c_str(), "a"));
+  BIO_printf(bio.get(), "%s\n", line);
+}
+
 /*
  * We match BoringSSL's cipher suites and signature algorithms here and
  * groups/curves in |NewSSL|. A number of tests verify the defaults, which is
@@ -1109,6 +1117,10 @@ bssl::UniquePtr<SSL_CTX> TestConfig::SetupCtx(SSL_CTX *old_ctx) const {
 
   if (server_preference) {
     SSL_CTX_set_options(ssl_ctx.get(), SSL_OP_CIPHER_SERVER_PREFERENCE);
+  }
+
+  if (!shim_key_log_file.empty()) {
+    SSL_CTX_set_keylog_callback(ssl_ctx.get(), KeylogCallback);
   }
 
   return ssl_ctx;

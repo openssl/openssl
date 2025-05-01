@@ -213,6 +213,9 @@ struct TestConfig {
   // bool resumption_across_names_enabled = false; // Not available
   // std::optional<bool> expect_resumable_across_names; // Not available
 
+  // Debugging options
+  std::string shim_key_log_file;
+
   bssl::UniquePtr<SSL_CTX> SetupCtx(SSL_CTX *old_ctx) const;
   bssl::UniquePtr<SSL> NewSSL(SSL_CTX *ssl_ctx, SSL_SESSION *session,
                               std::unique_ptr<TestState> test_state) const;
