@@ -152,17 +152,8 @@ static int DoRead(SSL *ssl, uint8_t *out, size_t max_out) {
   TestState *test_state = GetTestState(ssl);
   int ret;
   do {
-    if (config->async) {
-      // The DTLS retransmit logic silently ignores write failures. So the test
-      // may progress, allow writes through synchronously. |SSL_read| may
-      // trigger a retransmit, so disconnect the write quota.
-      AsyncBioEnforceWriteQuota(test_state->async_bio, false);
-    }
     ret = config->peek_then_read ? SSL_peek(ssl, out, max_out)
                                  : SSL_read(ssl, out, max_out);
-    if (config->async) {
-      AsyncBioEnforceWriteQuota(test_state->async_bio, true);
-    }
   } while (config->async && RetryAsync(ssl, ret));
 
   if (config->peek_then_read && ret > 0) {
@@ -351,7 +342,14 @@ static bool DoExchange(bssl::UniquePtr<SSL_SESSION> *out_session,
     return false;
   }
   if (config->is_dtls) {
-    bssl::UniquePtr<BIO> packeted = PacketedBioCreate(!config->async);
+    bssl::UniquePtr<BIO> packeted = PacketedBioCreate(
+        GetClock(),
+        [ssl_raw = ssl.get()](timeval *out) -> bool {
+          return DTLSv1_get_timeout(ssl_raw, out);
+        },
+        [ssl_raw = ssl.get()](uint32_t mtu) -> bool {
+          return SSL_set_mtu(ssl_raw, mtu);
+        });
     if (!packeted) {
       return false;
     }

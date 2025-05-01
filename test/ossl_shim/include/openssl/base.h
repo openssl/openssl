@@ -18,6 +18,14 @@
 
 # define OPENSSL_ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
 
+// BSSL_CHECK aborts if |condition| is not true.
+#define BSSL_CHECK(condition) \
+  do {                        \
+    if (!(condition)) {       \
+      abort();                \
+    }                         \
+  } while (0);
+
 extern "C++" {
 
 #include <memory>
@@ -26,22 +34,24 @@ namespace bssl {
 
 namespace internal {
 
-template <typename T>
+// The Enable parameter is ignored and only exists so specializations can use
+// SFINAE.
+template <typename T, typename Enable = void>
 struct DeleterImpl {};
 
-template <typename T>
 struct Deleter {
-  void operator()(T *ptr) {
-    // Rather than specialize Deleter for each type, we specialize
-    // DeleterImpl. This allows bssl::UniquePtr<T> to be used while only
-    // including base.h as long as the destructor is not emitted. This matches
-    // std::unique_ptr's behavior on forward-declared types.
-    //
-    // DeleterImpl itself is specialized in the corresponding module's header
-    // and must be included to release an object. If not included, the compiler
-    // will error that DeleterImpl<T> does not have a method Free.
-    DeleterImpl<T>::Free(ptr);
-  }
+template <typename T>
+void operator()(T *ptr) {
+  // Rather than specialize Deleter for each type, we specialize
+  // DeleterImpl. This allows bssl::UniquePtr<T> to be used while only
+  // including base.h as long as the destructor is not emitted. This matches
+  // std::unique_ptr's behavior on forward-declared types.
+  //
+  // DeleterImpl itself is specialized in the corresponding module's header
+  // and must be included to release an object. If not included, the compiler
+  // will error that DeleterImpl<T> does not have a method Free.
+  DeleterImpl<T>::Free(ptr);
+}
 };
 
 template <typename T, typename CleanupRet, void (*init)(T *),
@@ -51,11 +61,14 @@ class StackAllocated {
   StackAllocated() { init(&ctx_); }
   ~StackAllocated() { cleanup(&ctx_); }
 
-  StackAllocated(const StackAllocated<T, CleanupRet, init, cleanup> &) = delete;
-  T& operator=(const StackAllocated<T, CleanupRet, init, cleanup> &) = delete;
+  StackAllocated(const StackAllocated &) = delete;
+  StackAllocated &operator=(const StackAllocated &) = delete;
 
   T *get() { return &ctx_; }
   const T *get() const { return &ctx_; }
+
+  T *operator->() { return &ctx_; }
+  const T *operator->() const { return &ctx_; }
 
   void Reset() {
     cleanup(&ctx_);
@@ -89,10 +102,10 @@ class StackAllocated {
   }
 
 // Holds ownership of heap-allocated BoringSSL structures. Sample usage:
-//   bssl::UniquePtr<BIO> rsa(RSA_new());
+//   bssl::UniquePtr<RSA> rsa(RSA_new());
 //   bssl::UniquePtr<BIO> bio(BIO_new(BIO_s_mem()));
 template <typename T>
-using UniquePtr = std::unique_ptr<T, internal::Deleter<T>>;
+using UniquePtr = std::unique_ptr<T, internal::Deleter>;
 
 BORINGSSL_MAKE_DELETER(BIO, BIO_free)
 BORINGSSL_MAKE_DELETER(EVP_PKEY, EVP_PKEY_free)

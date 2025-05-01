@@ -10,6 +10,8 @@
 #ifndef OSSL_TEST_SHIM_HANDSHAKE_UTIL_H
 #define OSSL_TEST_SHIM_HANDSHAKE_UTIL_H
 
+#include <functional>
+
 #include <openssl/types.h>
 
 // RetryAsync is called after a failed operation on |ssl| with return code
@@ -17,4 +19,8 @@
 // event and returns true. Otherwise it returns false.
 bool RetryAsync(SSL *ssl, int ret);
 
-#endif //OSSL_TEST_SHIM_HANDSHAKE_UTIL_H
+// CheckIdempotentError runs |func|, an operation on |ssl|, ensuring that
+// errors are idempotent.
+int CheckIdempotentError(const char *name, SSL *ssl, std::function<int()> func);
+
+#endif  // OSSL_TEST_SHIM_HANDSHAKE_UTIL_H

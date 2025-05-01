@@ -10,26 +10,37 @@
 #ifndef OSSL_TEST_SHIM_PACKETED_BIO_H
 #define OSSL_TEST_SHIM_PACKETED_BIO_H
 
+#include <functional>
+
 #include <openssl/base.h>
-#include <openssl/bio.h>
+
+#if defined(OPENSSL_WINDOWS)
+#include <winsock2.h>
+#else
+#include <sys/time.h>
+#endif
+
 
 // PacketedBioCreate creates a filter BIO which implements a reliable in-order
-// blocking datagram socket. It internally maintains a clock and honors
-// |BIO_CTRL_DGRAM_SET_NEXT_TIMEOUT| based on it.
+// blocking datagram socket. It uses the value of |*clock| as the clock.
+// |get_timeout| should output what the |SSL| object believes is the next
+// timeout, or return false if there is none. It will be compared against
+// assertions from the runner. |set_mtu| will be called when the runner asks to
+// change the MTU.
 //
 // During a |BIO_read|, the peer may signal the filter BIO to simulate a
-// timeout. If |advance_clock| is true, it automatically advances the clock and
-// continues reading, subject to the read deadline. Otherwise, it fails
-// immediately. The caller must then call |PacketedBioAdvanceClock| before
-// retrying |BIO_read|.
-bssl::UniquePtr<BIO> PacketedBioCreate(bool advance_clock);
+// timeout. The operation will fail immediately. The caller must then call
+// |PacketedBioAdvanceClock| before retrying |BIO_read|.
+bssl::UniquePtr<BIO> PacketedBioCreate(
+    timeval *clock, std::function<bool(timeval *)> get_timeout,
+    std::function<bool(uint32_t)> set_mtu);
 
-// PacketedBioGetClock returns the current time for |bio|.
-timeval PacketedBioGetClock(const BIO *bio);
-
-// PacketedBioAdvanceClock advances |bio|'s internal clock and returns true if
-// there is a pending timeout. Otherwise, it returns false.
+// PacketedBioAdvanceClock advances |bio|'s clock and returns true if there is a
+// pending timeout. Otherwise, it returns false.
 bool PacketedBioAdvanceClock(BIO *bio);
+
+// PacketedBioAdvanceClock return's |bio|'s clock.
+timeval *PacketedBioGetClock(BIO *bio);
 
 
 #endif  // OSSL_TEST_SHIM_PACKETED_BIO_H

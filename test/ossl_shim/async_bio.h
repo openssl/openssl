@@ -11,8 +11,6 @@
 #define OSSL_TEST_SHIM_ASYNC_BIO_H
 
 #include <openssl/base.h>
-#include <openssl/bio.h>
-
 
 // AsyncBioCreate creates a filter BIO for testing asynchronous state
 // machines which consume a stream socket. Reads and writes will fail
@@ -31,9 +29,6 @@ void AsyncBioAllowRead(BIO *bio, size_t count);
 
 // AsyncBioAllowWrite increments |bio|'s write quota by |count|.
 void AsyncBioAllowWrite(BIO *bio, size_t count);
-
-// AsyncBioEnforceWriteQuota configures where |bio| enforces its write quota.
-void AsyncBioEnforceWriteQuota(BIO *bio, bool enforce);
 
 
 #endif  // OSSL_TEST_SHIM_ASYNC_BIO_H

@@ -10,54 +10,60 @@
 #include "packeted_bio.h"
 
 #include <assert.h>
+#include <inttypes.h>
 #include <limits.h>
 #include <stdio.h>
 #include <string.h>
 
-#include <openssl/crypto.h>
+#include <functional>
+#include <utility>
+#include <vector>
 
+#include <openssl/bio.h>
+#include <openssl/internal.h>
 
 namespace {
 
-const uint8_t kOpcodePacket = 'P';
-const uint8_t kOpcodeTimeout = 'T';
-const uint8_t kOpcodeTimeoutAck = 't';
+constexpr uint8_t kOpcodePacket = 'P';
+constexpr uint8_t kOpcodeTimeout = 'T';
+constexpr uint8_t kOpcodeTimeoutAck = 't';
+constexpr uint8_t kOpcodeMTU = 'M';
+constexpr uint8_t kOpcodeExpectNextTimeout = 'E';
 
 struct PacketedBio {
-  explicit PacketedBio(bool advance_clock_arg)
-      : advance_clock(advance_clock_arg) {
+  PacketedBio(timeval *clock_arg,
+              std::function<bool(timeval *)> get_timeout_arg,
+              std::function<bool(uint32_t)> set_mtu_arg)
+      : clock(clock_arg),
+        get_timeout(std::move(get_timeout_arg)),
+        set_mtu(std::move(set_mtu_arg)) {
     memset(&timeout, 0, sizeof(timeout));
-    memset(&clock, 0, sizeof(clock));
-    memset(&read_deadline, 0, sizeof(read_deadline));
   }
 
   bool HasTimeout() const {
     return timeout.tv_sec != 0 || timeout.tv_usec != 0;
   }
 
-  bool CanRead() const {
-    if (read_deadline.tv_sec == 0 && read_deadline.tv_usec == 0) {
-      return true;
-    }
-
-    if (clock.tv_sec == read_deadline.tv_sec) {
-      return clock.tv_usec < read_deadline.tv_usec;
-    }
-    return clock.tv_sec < read_deadline.tv_sec;
-  }
-
   timeval timeout;
-  timeval clock;
-  timeval read_deadline;
-  bool advance_clock;
+  timeval *clock;
+  std::function<bool(timeval *)> get_timeout;
+  std::function<bool(uint32_t)> set_mtu;
 };
 
-PacketedBio *GetData(BIO *bio) {
-  return (PacketedBio *)BIO_get_data(bio);
+static int PacketedBioMethodType() {
+  static int type = [] {
+    int idx = BIO_get_new_index();
+    BSSL_CHECK(idx > 0);
+    return idx | BIO_TYPE_FILTER;
+  }();
+  return type;
 }
 
-const PacketedBio *GetData(const BIO *bio) {
-  return GetData(const_cast<BIO*>(bio));
+PacketedBio *GetData(BIO *bio) {
+  if (BIO_method_type(bio) != PacketedBioMethodType()) {
+    return NULL;
+  }
+  return static_cast<PacketedBio *>(BIO_get_data(bio));
 }
 
 // ReadAll reads |len| bytes from |bio| into |out|. It returns 1 on success and
@@ -79,8 +85,9 @@ static int ReadAll(BIO *bio, uint8_t *out, size_t len) {
 }
 
 static int PacketedWrite(BIO *bio, const char *in, int inl) {
-  if (BIO_next(bio) == NULL) {
-    return 0;
+  BIO *next = BIO_next(bio);
+  if (next == nullptr) {
+    return -1;
   }
 
   BIO_clear_retry_flags(bio);
@@ -92,14 +99,14 @@ static int PacketedWrite(BIO *bio, const char *in, int inl) {
   header[2] = (inl >> 16) & 0xff;
   header[3] = (inl >> 8) & 0xff;
   header[4] = inl & 0xff;
-  int ret = BIO_write(BIO_next(bio), header, sizeof(header));
+  int ret = BIO_write(next, header, sizeof(header));
   if (ret <= 0) {
     BIO_copy_next_retry(bio);
     return ret;
   }
 
   // Write the buffer.
-  ret = BIO_write(BIO_next(bio), in, inl);
+  ret = BIO_write(next, in, inl);
   if (ret < 0 || (inl > 0 && ret == 0)) {
     BIO_copy_next_retry(bio);
     return ret;
@@ -110,22 +117,17 @@ static int PacketedWrite(BIO *bio, const char *in, int inl) {
 
 static int PacketedRead(BIO *bio, char *out, int outl) {
   PacketedBio *data = GetData(bio);
-  if (BIO_next(bio) == NULL) {
-    return 0;
+  BIO *next = BIO_next(bio);
+  if (next == nullptr) {
+    return -1;
   }
 
   BIO_clear_retry_flags(bio);
 
   for (;;) {
-    // Check if the read deadline has passed.
-    if (!data->CanRead()) {
-      BIO_set_retry_read(bio);
-      return -1;
-    }
-
     // Read the opcode.
     uint8_t opcode;
-    int ret = ReadAll(BIO_next(bio), &opcode, sizeof(opcode));
+    int ret = ReadAll(next, &opcode, sizeof(opcode));
     if (ret <= 0) {
       BIO_copy_next_retry(bio);
       return ret;
@@ -141,38 +143,86 @@ static int PacketedRead(BIO *bio, char *out, int outl) {
 
       // Process the timeout.
       uint8_t buf[8];
-      ret = ReadAll(BIO_next(bio), buf, sizeof(buf));
+      ret = ReadAll(next, buf, sizeof(buf));
       if (ret <= 0) {
         BIO_copy_next_retry(bio);
         return ret;
       }
-      uint64_t timeout = (static_cast<uint64_t>(buf[0]) << 56) |
-          (static_cast<uint64_t>(buf[1]) << 48) |
-          (static_cast<uint64_t>(buf[2]) << 40) |
-          (static_cast<uint64_t>(buf[3]) << 32) |
-          (static_cast<uint64_t>(buf[4]) << 24) |
-          (static_cast<uint64_t>(buf[5]) << 16) |
-          (static_cast<uint64_t>(buf[6]) << 8) |
-          static_cast<uint64_t>(buf[7]);
+      uint64_t timeout = CRYPTO_load_u64_be(buf);
       timeout /= 1000;  // Convert nanoseconds to microseconds.
 
       data->timeout.tv_usec = timeout % 1000000;
       data->timeout.tv_sec = timeout / 1000000;
 
       // Send an ACK to the peer.
-      ret = BIO_write(BIO_next(bio), &kOpcodeTimeoutAck, 1);
+      ret = BIO_write(next, &kOpcodeTimeoutAck, 1);
       if (ret <= 0) {
         return ret;
       }
       assert(ret == 1);
 
-      if (!data->advance_clock) {
-        // Signal to the caller to retry the read, after advancing the clock.
-        BIO_set_retry_read(bio);
+      // Signal to the caller to retry the read, after advancing the clock.
+      BIO_set_retry_read(bio);
+      return -1;
+    }
+
+    if (opcode == kOpcodeMTU) {
+      uint8_t buf[4];
+      ret = ReadAll(next, buf, sizeof(buf));
+      if (ret <= 0) {
+        BIO_copy_next_retry(bio);
+        return ret;
+      }
+      uint32_t mtu = CRYPTO_load_u32_be(buf);
+      if (!data->set_mtu(mtu)) {
+        fprintf(stderr, "Error setting MTU\n");
         return -1;
       }
+      // Continue reading.
+      continue;
+    }
 
-      PacketedBioAdvanceClock(bio);
+    if (opcode == kOpcodeExpectNextTimeout) {
+      uint8_t buf[8];
+      ret = ReadAll(next, buf, sizeof(buf));
+      if (ret <= 0) {
+        BIO_copy_next_retry(bio);
+        return ret;
+      }
+      uint64_t expected = CRYPTO_load_u64_be(buf);
+      timeval timeout;
+      bool has_timeout = data->get_timeout(&timeout);
+      if (expected == UINT64_MAX) {
+        if (has_timeout) {
+          fprintf(stderr,
+                  "Expected no timeout, but got %" PRIu64 ".%06" PRIu64 "s.\n",
+                  static_cast<uint64_t>(timeout.tv_sec),
+                  static_cast<uint64_t>(timeout.tv_usec));
+          return -1;
+        }
+      } else {
+        expected /= 1000;  // Convert nanoseconds to microseconds.
+        uint64_t expected_sec = expected / 1000000;
+        uint64_t expected_usec = expected % 1000000;
+        if (!has_timeout) {
+          fprintf(stderr,
+                  "Expected timeout of %" PRIu64 ".%06" PRIu64
+                  "s, but got none.\n",
+                  expected_sec, expected_usec);
+          return -1;
+        }
+        if (static_cast<uint64_t>(timeout.tv_sec) != expected_sec ||
+            static_cast<uint64_t>(timeout.tv_usec) != expected_usec) {
+          fprintf(stderr,
+                  "Expected timeout of %" PRIu64 ".%06" PRIu64
+                  "s, but got %" PRIu64 ".%06" PRIu64 "s.\n",
+                  expected_sec, expected_usec,
+                  static_cast<uint64_t>(timeout.tv_sec),
+                  static_cast<uint64_t>(timeout.tv_usec));
+          return -1;
+        }
+      }
+      // Continue reading.
       continue;
     }
 
@@ -183,44 +233,35 @@ static int PacketedRead(BIO *bio, char *out, int outl) {
 
     // Read the length prefix.
     uint8_t len_bytes[4];
-    ret = ReadAll(BIO_next(bio), len_bytes, sizeof(len_bytes));
+    ret = ReadAll(next, len_bytes, sizeof(len_bytes));
     if (ret <= 0) {
       BIO_copy_next_retry(bio);
       return ret;
     }
 
-    uint32_t len = (len_bytes[0] << 24) | (len_bytes[1] << 16) |
-        (len_bytes[2] << 8) | len_bytes[3];
-    uint8_t *buf = (uint8_t *)OPENSSL_malloc(len);
-    if (buf == NULL) {
-      return -1;
-    }
-    ret = ReadAll(BIO_next(bio), buf, len);
+    std::vector<uint8_t> buf(CRYPTO_load_u32_be(len_bytes), 0);
+    ret = ReadAll(next, buf.data(), buf.size());
     if (ret <= 0) {
       fprintf(stderr, "Packeted BIO was truncated\n");
       return -1;
     }
 
-    if (outl > (int)len) {
-      outl = len;
+    if (static_cast<size_t>(outl) > buf.size()) {
+      outl = static_cast<int>(buf.size());
     }
-    memcpy(out, buf, outl);
-    OPENSSL_free(buf);
+    OPENSSL_memcpy(out, buf.data(), outl);
     return outl;
   }
 }
 
 static long PacketedCtrl(BIO *bio, int cmd, long num, void *ptr) {
-  if (cmd == BIO_CTRL_DGRAM_SET_NEXT_TIMEOUT) {
-    memcpy(&GetData(bio)->read_deadline, ptr, sizeof(timeval));
-    return 1;
-  }
-
-  if (BIO_next(bio) == NULL) {
+  BIO *next = BIO_next(bio);
+  if (next == nullptr) {
     return 0;
   }
+
   BIO_clear_retry_flags(bio);
-  int ret = BIO_ctrl(BIO_next(bio), cmd, num, ptr);
+  long ret = BIO_ctrl(next, cmd, num, ptr);
   BIO_copy_next_retry(bio);
   return ret;
 }
@@ -231,53 +272,49 @@ static int PacketedNew(BIO *bio) {
 }
 
 static int PacketedFree(BIO *bio) {
-  if (bio == NULL) {
+  if (bio == nullptr) {
     return 0;
   }
 
   delete GetData(bio);
-  BIO_set_init(bio, 0);
   return 1;
 }
 
-static long PacketedCallbackCtrl(BIO *bio, int cmd, BIO_info_cb fp)
-{
-  if (BIO_next(bio) == NULL)
+static long PacketedCallbackCtrl(BIO *bio, int cmd, BIO_info_cb *fp) {
+  BIO *next = BIO_next(bio);
+  if (next == nullptr) {
     return 0;
-  return BIO_callback_ctrl(BIO_next(bio), cmd, fp);
-}
-
-static BIO_METHOD *g_packeted_bio_method = NULL;
-
-static const BIO_METHOD *PacketedMethod(void)
-{
-  if (g_packeted_bio_method == NULL) {
-    g_packeted_bio_method = BIO_meth_new(BIO_TYPE_FILTER, "packeted bio");
-    if (   g_packeted_bio_method == NULL
-        || !BIO_meth_set_write(g_packeted_bio_method, PacketedWrite)
-        || !BIO_meth_set_read(g_packeted_bio_method, PacketedRead)
-        || !BIO_meth_set_ctrl(g_packeted_bio_method, PacketedCtrl)
-        || !BIO_meth_set_create(g_packeted_bio_method, PacketedNew)
-        || !BIO_meth_set_destroy(g_packeted_bio_method, PacketedFree)
-        || !BIO_meth_set_callback_ctrl(g_packeted_bio_method,
-                                       PacketedCallbackCtrl))
-    return NULL;
   }
-  return g_packeted_bio_method;
+  return BIO_callback_ctrl(next, cmd, fp);
 }
+
+static const BIO_METHOD *PacketedBioMethod() {
+  static const BIO_METHOD *method = [] {
+    BIO_METHOD *ret = BIO_meth_new(PacketedBioMethodType(), "packeted bio");
+    BSSL_CHECK(ret);
+    BSSL_CHECK(BIO_meth_set_write(ret, PacketedWrite));
+    BSSL_CHECK(BIO_meth_set_read(ret, PacketedRead));
+    BSSL_CHECK(BIO_meth_set_ctrl(ret, PacketedCtrl));
+    BSSL_CHECK(BIO_meth_set_create(ret, PacketedNew));
+    BSSL_CHECK(BIO_meth_set_destroy(ret, PacketedFree));
+    BSSL_CHECK(BIO_meth_set_callback_ctrl(ret, PacketedCallbackCtrl));
+    return ret;
+  }();
+  return method;
+}
+
 }  // namespace
 
-bssl::UniquePtr<BIO> PacketedBioCreate(bool advance_clock) {
-  bssl::UniquePtr<BIO> bio(BIO_new(PacketedMethod()));
+bssl::UniquePtr<BIO> PacketedBioCreate(
+    timeval *clock, std::function<bool(timeval *)> get_timeout,
+    std::function<bool(uint32_t)> set_mtu) {
+  bssl::UniquePtr<BIO> bio(BIO_new(PacketedBioMethod()));
   if (!bio) {
     return nullptr;
   }
-  BIO_set_data(bio.get(), new PacketedBio(advance_clock));
+  BIO_set_data(bio.get(), new PacketedBio(clock, std::move(get_timeout),
+                                          std::move(set_mtu)));
   return bio;
-}
-
-timeval PacketedBioGetClock(const BIO *bio) {
-  return GetData(bio)->clock;
 }
 
 bool PacketedBioAdvanceClock(BIO *bio) {
@@ -290,10 +327,18 @@ bool PacketedBioAdvanceClock(BIO *bio) {
     return false;
   }
 
-  data->clock.tv_usec += data->timeout.tv_usec;
-  data->clock.tv_sec += data->clock.tv_usec / 1000000;
-  data->clock.tv_usec %= 1000000;
-  data->clock.tv_sec += data->timeout.tv_sec;
+  data->clock->tv_usec += data->timeout.tv_usec;
+  data->clock->tv_sec += data->clock->tv_usec / 1000000;
+  data->clock->tv_usec %= 1000000;
+  data->clock->tv_sec += data->timeout.tv_sec;
   memset(&data->timeout, 0, sizeof(data->timeout));
   return true;
+}
+
+timeval *PacketedBioGetClock(BIO *bio) {
+  PacketedBio *data = GetData(bio);
+  if (data == nullptr) {
+    return nullptr;
+  }
+  return data->clock;
 }
