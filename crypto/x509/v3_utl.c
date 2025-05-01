@@ -35,7 +35,6 @@ static int ipv6_from_asc(unsigned char *v6, const char *in);
 static int ipv6_cb(const char *elem, int len, void *usr);
 static int ipv6_hex(unsigned char *out, const char *in, int inlen);
 
-static int starts_with(const char *str, const char* prefix);
 static int is_valid_uri_char(char c);
 static int is_valid_uri(const char *uri);
 
@@ -1464,29 +1463,67 @@ int ossl_bio_print_hex(BIO *out, unsigned char *buf, int len)
     return result;
 }
 
-static int starts_with(const char *str, const char *prefix)
+static int isalnum(int c)
 {
-    return strncmp(str, prefix, strlen(prefix)) == 0;
+    return ((c >= 'A' && c <= 'Z') ||
+            (c >= 'a' && c <= 'z') ||
+            (c >= '0' && c <= '9'));
 }
 
 static int is_valid_uri_char(char c)
 {
     /* Valid characters include alphanumeric, '-', '_', '.', '~', and reserved characters */
-    return isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~' ||
-           c == '!'|| c == '$' || c == '&' || c == '\'' || c == '(' ||
-           c == ')' || c == '*' || c == '+' || c == ',' || c == ';' ||
-           c == '=' || c == ':' || c == '@' || c == '/' || c == '#' ||
-           c == '[' || c == ']' || c == '?';
+    switch (c) {
+        /* Unreserved characters */ 
+        case '-': case '_': case '.': case '~':
+        /* Reserved characters */ 
+        case '!': case '*': case '\'': case '(': case ')':
+        case ';': case ':': case '@': case '&': case '=':
+        case '+': case '$': case ',': case '/': case '?':
+        case '#': case '[': case ']':
+            return 1;
+        default:
+            /* Check if alphanumeric */ 
+            if (isalnum(c)) {
+                return 1;
+            }
+            return 0;
+    }  
+}
+
+static int is_valid_uri_scheme(const char *input)
+{
+    int i;
+    char c;
+   
+    /* Input may not be null and first character must be a letter */ 
+    if (input == NULL || !((input[0] >= 'A' && input[0] <= 'Z') || (input[0] >= 'a' && input[0] <= 'z'))) {
+        return 0;
+    }
+    
+    for (i = 1; input[i] != '\0'; i++) {
+        c = input[i];
+
+        if (c == ':') {
+            /* Valid scheme found */ 
+            return 1;
+        }
+            
+        /* Characters must be alphanumeric or '+', '-', '.' */ 
+        if (!isalnum(c) && c != '+' && c != '-' && c != '.') {
+            return 0;
+        } 
+    }
+    return 0;
 }
 
 static int is_valid_uri(const char *uri)
 {
     /* Check if URI begins with a valid scheme */
-    if (!(starts_with(uri, "http://") || starts_with(uri, "https://") ||
-        starts_with(uri, "ftp://"))) {
+    if (!is_valid_uri_scheme(uri)) {
         return 0;
-    }
-    
+    } 
+ 
     /* Check the validity of each character in the URI */
     for (const char *p = uri; *p != '\0'; ++p) {
         if (!is_valid_uri_char(*p)) {
