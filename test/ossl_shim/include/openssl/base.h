@@ -10,13 +10,9 @@
 #ifndef OSSL_TEST_SHIM_INCLUDE_OPENSSL_BASE_H
 #define OSSL_TEST_SHIM_INCLUDE_OPENSSL_BASE_H
 
-/* Needed for DH functions */
-#include "internal/deprecated.h"
-
 /* Needed for BORINGSSL_MAKE_DELETER */
 # include <openssl/bio.h>
 # include <openssl/evp.h>
-# include <openssl/dh.h>
 # include <openssl/x509.h>
 # include <openssl/ssl.h>
 
@@ -100,7 +96,6 @@ using UniquePtr = std::unique_ptr<T, internal::Deleter<T>>;
 
 BORINGSSL_MAKE_DELETER(BIO, BIO_free)
 BORINGSSL_MAKE_DELETER(EVP_PKEY, EVP_PKEY_free)
-BORINGSSL_MAKE_DELETER(DH, DH_free)
 BORINGSSL_MAKE_DELETER(X509, X509_free)
 BORINGSSL_MAKE_DELETER(SSL, SSL_free)
 BORINGSSL_MAKE_DELETER(SSL_CTX, SSL_CTX_free)

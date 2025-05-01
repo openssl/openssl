@@ -409,63 +409,6 @@ static int TicketKeyCallback(SSL *ssl, uint8_t *key_name, uint8_t *iv,
   return 1;
 }
 
-// kCustomExtensionValue is the extension value that the custom extension
-// callbacks will add.
-static const uint16_t kCustomExtensionValue = 1234;
-static void *const kCustomExtensionAddArg =
-    reinterpret_cast<void *>(kCustomExtensionValue);
-static void *const kCustomExtensionParseArg =
-    reinterpret_cast<void *>(kCustomExtensionValue + 1);
-static const char kCustomExtensionContents[] = "custom extension";
-
-static int CustomExtensionAddCallback(SSL *ssl, unsigned extension_value,
-                                      const uint8_t **out, size_t *out_len,
-                                      int *out_alert_value, void *add_arg) {
-  if (extension_value != kCustomExtensionValue ||
-      add_arg != kCustomExtensionAddArg) {
-    abort();
-  }
-
-  if (GetTestConfig(ssl)->custom_extension_skip) {
-    return 0;
-  }
-  if (GetTestConfig(ssl)->custom_extension_fail_add) {
-    return -1;
-  }
-
-  *out = reinterpret_cast<const uint8_t*>(kCustomExtensionContents);
-  *out_len = sizeof(kCustomExtensionContents) - 1;
-
-  return 1;
-}
-
-static void CustomExtensionFreeCallback(SSL *ssl, unsigned extension_value,
-                                        const uint8_t *out, void *add_arg) {
-  if (extension_value != kCustomExtensionValue ||
-      add_arg != kCustomExtensionAddArg ||
-      out != reinterpret_cast<const uint8_t *>(kCustomExtensionContents)) {
-    abort();
-  }
-}
-
-static int CustomExtensionParseCallback(SSL *ssl, unsigned extension_value,
-                                        const uint8_t *contents,
-                                        size_t contents_len,
-                                        int *out_alert_value, void *parse_arg) {
-  if (extension_value != kCustomExtensionValue ||
-      parse_arg != kCustomExtensionParseArg) {
-    abort();
-  }
-
-  if (contents_len != sizeof(kCustomExtensionContents) - 1 ||
-      memcmp(contents, kCustomExtensionContents, contents_len) != 0) {
-    *out_alert_value = SSL_AD_DECODE_ERROR;
-    return 0;
-  }
-
-  return 1;
-}
-
 static int ServerNameCallback(SSL *ssl, int *out_alert, void *arg) {
   // SNI must be accessible from the SNI callback.
   const TestConfig *config = GetTestConfig(ssl);
@@ -571,46 +514,6 @@ static bssl::UniquePtr<SSL_CTX> SetupCtx(const TestConfig *config) {
     return nullptr;
   }
 
-  DH *tmpdh;
-
-  if (config->use_sparse_dh_prime) {
-    BIGNUM *p, *g;
-    p = BN_new();
-    g = BN_new();
-    tmpdh = DH_new();
-    if (p == NULL || g == NULL || tmpdh == NULL) {
-        BN_free(p);
-        BN_free(g);
-        DH_free(tmpdh);
-        return nullptr;
-    }
-    // This prime number is 2^1024 + 643 – a value just above a power of two.
-    // Because of its form, values modulo it are essentially certain to be one
-    // byte shorter. This is used to test padding of these values.
-    if (BN_hex2bn(
-            &p,
-            "1000000000000000000000000000000000000000000000000000000000000000"
-            "0000000000000000000000000000000000000000000000000000000000000000"
-            "0000000000000000000000000000000000000000000000000000000000000000"
-            "0000000000000000000000000000000000000000000000000000000000000028"
-            "3") == 0 ||
-        !BN_set_word(g, 2)) {
-      BN_free(p);
-      BN_free(g);
-      DH_free(tmpdh);
-      return nullptr;
-    }
-    DH_set0_pqg(tmpdh, p, NULL, g);
-  } else {
-      tmpdh = DH_get_2048_256();
-  }
-
-  bssl::UniquePtr<DH> dh(tmpdh);
-
-  if (!dh || !SSL_CTX_set_tmp_dh(ssl_ctx.get(), dh.get())) {
-    return nullptr;
-  }
-
   SSL_CTX_set_session_cache_mode(ssl_ctx.get(), SSL_SESS_CACHE_BOTH);
 
   if (config->use_old_client_cert_callback) {
@@ -635,30 +538,10 @@ static bssl::UniquePtr<SSL_CTX> SetupCtx(const TestConfig *config) {
     SSL_CTX_set_tlsext_ticket_key_evp_cb(ssl_ctx.get(), TicketKeyCallback);
   }
 
-  if (config->enable_client_custom_extension &&
-      !SSL_CTX_add_client_custom_ext(
-          ssl_ctx.get(), kCustomExtensionValue, CustomExtensionAddCallback,
-          CustomExtensionFreeCallback, kCustomExtensionAddArg,
-          CustomExtensionParseCallback, kCustomExtensionParseArg)) {
-    return nullptr;
-  }
-
-  if (config->enable_server_custom_extension &&
-      !SSL_CTX_add_server_custom_ext(
-          ssl_ctx.get(), kCustomExtensionValue, CustomExtensionAddCallback,
-          CustomExtensionFreeCallback, kCustomExtensionAddArg,
-          CustomExtensionParseCallback, kCustomExtensionParseArg)) {
-    return nullptr;
-  }
-
   if (config->verify_fail) {
     SSL_CTX_set_cert_verify_callback(ssl_ctx.get(), VerifyFail, NULL);
   } else {
     SSL_CTX_set_cert_verify_callback(ssl_ctx.get(), VerifySucceed, NULL);
-  }
-
-  if (config->use_null_client_ca_list) {
-    SSL_CTX_set_client_CA_list(ssl_ctx.get(), nullptr);
   }
 
   if (!SSL_CTX_set_session_id_context(ssl_ctx.get(),
@@ -949,9 +832,6 @@ static bool DoExchange(bssl::UniquePtr<SSL_SESSION> *out_session,
   if (config->no_tls1) {
     SSL_set_options(ssl.get(), SSL_OP_NO_TLSv1);
   }
-  if (config->no_ssl3) {
-    SSL_set_options(ssl.get(), SSL_OP_NO_SSLv3);
-  }
   if (!config->host_name.empty() &&
       !SSL_set_tlsext_host_name(ssl.get(), config->host_name.c_str())) {
     return false;
@@ -991,21 +871,6 @@ static bool DoExchange(bssl::UniquePtr<SSL_SESSION> *out_session,
   }
   if (!config->check_close_notify) {
     SSL_set_quiet_shutdown(ssl.get(), 1);
-  }
-  if (config->p384_only) {
-    int nid = NID_secp384r1;
-    if (!SSL_set1_curves(ssl.get(), &nid, 1)) {
-      return false;
-    }
-  }
-  if (config->enable_all_curves) {
-    static const int kAllCurves[] = {
-      NID_X25519, NID_X9_62_prime256v1, NID_X448, NID_secp521r1, NID_secp384r1
-    };
-    if (!SSL_set1_curves(ssl.get(), kAllCurves,
-                         OPENSSL_ARRAY_SIZE(kAllCurves))) {
-      return false;
-    }
   }
   if (config->max_cert_list > 0) {
     SSL_set_max_cert_list(ssl.get(), config->max_cert_list);
@@ -1266,8 +1131,6 @@ static int Main(int argc, char **argv) {
   signal(SIGPIPE, SIG_IGN);
 #endif
 
-  OPENSSL_init_crypto(0, NULL);
-  OPENSSL_init_ssl(0, NULL);
   g_config_index = SSL_get_ex_new_index(0, NULL, NULL, NULL, NULL);
   g_state_index = SSL_get_ex_new_index(0, NULL, NULL, NULL, TestStateExFree);
   if (g_config_index < 0 || g_state_index < 0) {

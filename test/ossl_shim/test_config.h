@@ -37,7 +37,6 @@ struct TestConfig {
   bool no_tls12 = false;
   bool no_tls11 = false;
   bool no_tls1 = false;
-  bool no_ssl3 = false;
   bool shim_writes_first = false;
   std::string host_name;
   std::string advertise_alpn;
@@ -64,10 +63,6 @@ struct TestConfig {
   bool expect_no_session = false;
   bool use_ticket_callback = false;
   bool renew_ticket = false;
-  bool enable_client_custom_extension = false;
-  bool enable_server_custom_extension = false;
-  bool custom_extension_skip = false;
-  bool custom_extension_fail_add = false;
   bool check_close_notify = false;
   bool shim_shuts_down = false;
   bool verify_fail = false;
@@ -75,11 +70,7 @@ struct TestConfig {
   bool expect_verify_result = false;
   int expect_total_renegotiations = 0;
   bool renegotiate_freely = false;
-  bool p384_only = false;
-  bool enable_all_curves = false;
-  bool use_sparse_dh_prime = false;
   bool use_old_client_cert_callback = false;
-  bool use_null_client_ca_list = false;
   bool peek_then_read = false;
   int max_cert_list = 0;
 };
