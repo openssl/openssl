@@ -1463,20 +1463,27 @@ int ossl_bio_print_hex(BIO *out, unsigned char *buf, int len)
     return result;
 }
 
+static int isalnum(int c)
+{
+    return ((c >= 'A' && c <= 'Z') ||
+            (c >= 'a' && c <= 'z') ||
+            (c >= '0' && c <= '9'));
+}
+
 static int is_valid_uri_char(char c)
 {
     /* Valid characters include alphanumeric, '-', '_', '.', '~', and reserved characters */
     switch (c) {
-        // Unreserved characters 
+        /* Unreserved characters */ 
         case '-': case '_': case '.': case '~':
-        // Reserved characters
+        /* Reserved characters */ 
         case '!': case '*': case '\'': case '(': case ')':
         case ';': case ':': case '@': case '&': case '=':
         case '+': case '$': case ',': case '/': case '?':
         case '#': case '[': case ']':
             return 1;
         default:
-            // Check if alphanumeric
+            /* Check if alphanumeric */ 
             if (isalnum(c)) {
                 return 1;
             }
@@ -1484,14 +1491,39 @@ static int is_valid_uri_char(char c)
     }  
 }
 
-static int is_valid_uri(const char *uri)
+static int is_valid_uri_scheme(const char *input)
 {
-    /* Check if URI begins with a valid scheme */
-    if (!(strncmp(uri, "http://", 7) == 0 || strncmp(uri, "https://", 8) == 0 ||
-        strncmp(uri, "ftp://", 6) == 0)) {
+    int i;
+    char c;
+   
+    /* Input may not be null and first character must be a letter */ 
+    if (input == NULL || !((input[0] >= 'A' && input[0] <= 'Z') || (input[0] >= 'a' && input[0] <= 'z'))) {
         return 0;
     }
     
+    for (i = 1; input[i] != '\0'; i++) {
+        c = input[i];
+
+        if (c == ':') {
+            /* Valid scheme found */ 
+            return 1;
+        }
+            
+        /* Characters must be alphanumeric or '+', '-', '.' */ 
+        if (!isalnum(c) && c != '+' && c != '-' && c != '.') {
+            return 0;
+        } 
+    }
+    return 0;
+}
+
+static int is_valid_uri(const char *uri)
+{
+    /* Check if URI begins with a valid scheme */
+    if (!is_valid_uri_scheme(uri)) {
+        return 0;
+    } 
+ 
     /* Check the validity of each character in the URI */
     for (const char *p = uri; *p != '\0'; ++p) {
         if (!is_valid_uri_char(*p)) {
