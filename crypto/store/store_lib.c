@@ -74,7 +74,7 @@ OSSL_STORE_open_ex(const char *uri, OSSL_LIB_CTX *libctx, const char *propq,
     OSSL_STORE_CTX *ctx = NULL;
     char *propq_copy = NULL;
     int no_loader_found = 1;
-    char scheme_copy[256], *p, *schemes[2], *scheme = NULL;
+    char scheme_copy[256], *p = scheme_copy, *schemes[2], *scheme = NULL;
     size_t schemes_n = 0;
     size_t i;
 
@@ -91,14 +91,15 @@ OSSL_STORE_open_ex(const char *uri, OSSL_LIB_CTX *libctx, const char *propq,
     schemes[schemes_n++] = "file";
 
     /*
-     * Now, check if we have something that looks like a scheme, and add it
+     * Now, check if we have a syntactically valid scheme, and add it
      * as a second scheme.  However, also check if there's an authority start
      * (://), because that will invalidate the previous file scheme.  Also,
      * check that this isn't actually the file scheme, as there's no point
      * going through that one twice!
      */
     OPENSSL_strlcpy(scheme_copy, uri, sizeof(scheme_copy));
-    if ((p = strchr(scheme_copy, ':')) != NULL) {
+    OSSL_SKIP_SCHEME(p);
+    if (p != scheme_copy && *p == ':') {
         *p++ = '\0';
         if (OPENSSL_strcasecmp(scheme_copy, "file") != 0) {
             if (HAS_PREFIX(p, "//"))
