@@ -250,35 +250,35 @@ static bool CheckHandshakeProperties(SSL *ssl, bool is_resume) {
     }
   }
 
-  if (!config->expected_server_name.empty()) {
+  if (!config->expect_server_name.empty()) {
     const char *server_name =
         SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name);
     if (server_name == nullptr ||
-            std::string(server_name) != config->expected_server_name) {
+            std::string(server_name) != config->expect_server_name) {
       fprintf(stderr, "servername mismatch (got %s; want %s)\n",
-              server_name, config->expected_server_name.c_str());
+              server_name, config->expect_server_name.c_str());
       return false;
     }
   }
 
-  if (!config->expected_next_proto.empty()) {
+  if (!config->expect_next_proto.empty()) {
     const uint8_t *next_proto;
     unsigned next_proto_len;
     SSL_get0_next_proto_negotiated(ssl, &next_proto, &next_proto_len);
-    if (next_proto_len != config->expected_next_proto.size() ||
-        memcmp(next_proto, config->expected_next_proto.data(),
+    if (next_proto_len != config->expect_next_proto.size() ||
+        memcmp(next_proto, config->expect_next_proto.data(),
                next_proto_len) != 0) {
       fprintf(stderr, "negotiated next proto mismatch\n");
       return false;
     }
   }
 
-  if (!config->expected_alpn.empty()) {
+  if (!config->expect_alpn.empty()) {
     const uint8_t *alpn_proto;
     unsigned alpn_proto_len;
     SSL_get0_alpn_selected(ssl, &alpn_proto, &alpn_proto_len);
-    if (alpn_proto_len != config->expected_alpn.size() ||
-        memcmp(alpn_proto, config->expected_alpn.data(),
+    if (alpn_proto_len != config->expect_alpn.size() ||
+        memcmp(alpn_proto, config->expect_alpn.data(),
                alpn_proto_len) != 0) {
       fprintf(stderr, "negotiated alpn proto mismatch\n");
       return false;
@@ -589,27 +589,33 @@ static int Main(int argc, char **argv) {
   signal(SIGPIPE, SIG_IGN);
 #endif
 
-  TestConfig config;
-  if (!ParseConfig(argc - 1, argv + 1, &config)) {
+  TestConfig initial_config, resume_config, retry_config;
+  if (!ParseConfig(argc - 1, argv + 1, /*is_shim=*/true, &initial_config,
+                   &resume_config, &retry_config)) {
     return Usage(argv[0]);
   }
 
-  bssl::UniquePtr<SSL_CTX> ssl_ctx = config.SetupCtx(nullptr);
+  if (initial_config.is_handshaker_supported) {
+    printf("No\n");
+    return 0;
+  }
+
+  bssl::UniquePtr<SSL_CTX> ssl_ctx = initial_config.SetupCtx(nullptr);
   if (!ssl_ctx) {
     ERR_print_errors_fp(stderr);
     return 1;
   }
 
   bssl::UniquePtr<SSL_SESSION> session;
-  for (int i = 0; i < config.resume_count + 1; i++) {
+  for (int i = 0; i < initial_config.resume_count + 1; i++) {
     bool is_resume = i > 0;
-    if (is_resume && !config.is_server && !session) {
+    if (is_resume && !initial_config.is_server && !session) {
       fprintf(stderr, "No session to offer.\n");
       return 1;
     }
 
     bssl::UniquePtr<SSL_SESSION> offer_session = std::move(session);
-    if (!DoExchange(&session, ssl_ctx.get(), &config, is_resume,
+    if (!DoExchange(&session, ssl_ctx.get(), &initial_config, is_resume,
                     offer_session.get())) {
       fprintf(stderr, "Connection %d failed.\n", i + 1);
       ERR_print_errors_fp(stderr);

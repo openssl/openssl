@@ -69,6 +69,10 @@ static inline uint64_t CRYPTO_load_u64_be(const void *ptr) {
     return CRYPTO_bswap8(ret);
 }
 
+// FROM mem.h
+
+static inline int OPENSSL_isdigit(int c) { return c >= '0' && c <= '9'; }
+
 #if defined(__cplusplus)
 }
 #endif

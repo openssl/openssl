@@ -12,9 +12,10 @@
 
 #include <string>
 #include <vector>
+#include <optional>
 
-#include <openssl/ssl.h>
 #include <openssl/base.h>
+#include <openssl/x509.h>
 
 #include "test_state.h"
 
@@ -27,11 +28,12 @@ struct TestConfig {
   bool fallback_scsv = false;
   std::string key_file;
   std::string cert_file;
-  std::string expected_server_name;
-  std::string expected_certificate_types;
+  std::string trust_cert; // Accepted but unused, since certificate trust is not verified by default
+  std::string expect_server_name;
+  std::vector<uint8_t> expect_certificate_types;
   bool require_any_client_certificate = false;
   std::string advertise_npn;
-  std::string expected_next_proto;
+  std::string expect_next_proto;
   std::string select_next_proto;
   bool async = false;
   bool write_different_record_sizes = false;
@@ -43,8 +45,8 @@ struct TestConfig {
   bool shim_writes_first = false;
   std::string host_name;
   std::string advertise_alpn;
-  std::string expected_alpn;
-  std::string expected_advertised_alpn;
+  std::string expect_alpn;
+  std::string expect_advertised_alpn;
   std::string select_alpn;
   bool decline_alpn = false;
   bool expect_session_miss = false;
@@ -52,8 +54,8 @@ struct TestConfig {
   std::string psk;
   std::string psk_identity;
   std::string srtp_profiles;
-  int min_version = 0;
-  int max_version = 0;
+  uint16_t min_version = 0;
+  uint16_t max_version = 0;
   int mtu = 0;
   bool implicit_handshake = false;
   std::string cipher;
@@ -76,13 +78,15 @@ struct TestConfig {
   bool use_old_client_cert_callback = false;
   bool peek_then_read = false;
   int max_cert_list = 0;
+  bool is_handshaker_supported = false;
 
   bssl::UniquePtr<SSL_CTX> SetupCtx(SSL_CTX *old_ctx) const;
   bssl::UniquePtr<SSL> NewSSL(SSL_CTX *ssl_ctx, SSL_SESSION *session,
                               std::unique_ptr<TestState> test_state) const;
 };
 
-bool ParseConfig(int argc, char **argv, TestConfig *out_config);
+bool ParseConfig(int argc, char **argv, bool is_shim, TestConfig *out_initial,
+                 TestConfig *out_resume, TestConfig *out_retry);
 
 bool SetTestConfig(SSL *ssl, const TestConfig *config);
 

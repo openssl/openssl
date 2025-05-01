@@ -9,178 +9,425 @@
 
 #include "test_config.h"
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include <memory>
+#include <limits>
+
 #include <openssl/core_names.h>
+#include <openssl/err.h>
 
 #include <openssl/evp.h>
+#include <openssl/internal.h>
 #include <openssl/rand.h>
+#include <openssl/span.h>
 
 #include "test_state.h"
 
 namespace {
 
-template <typename T>
+template <typename Config>
 struct Flag {
-  const char *flag;
-  T TestConfig::*member;
+  const char *name;
+  bool has_param;
+  // skip_handshaker, if true, causes this flag to be skipped when
+  // forwarding flags to the handshaker. This should be used with flags
+  // that only impact connecting to the runner.
+  bool skip_handshaker;
+  // If |has_param| is false, |param| will be nullptr.
+  std::function<bool(Config *config, const char *param)> set_param;
 };
 
-// FindField looks for the flag in |flags| that matches |flag|. If one is found,
-// it returns a pointer to the corresponding field in |config|. Otherwise, it
-// returns NULL.
-template<typename T, size_t N>
-T *FindField(TestConfig *config, const Flag<T> (&flags)[N], const char *flag) {
-  for (size_t i = 0; i < N; i++) {
-    if (strcmp(flag, flags[i].flag) == 0) {
-      return &(config->*(flags[i].member));
-    }
-  }
-  return NULL;
+template <typename Config>
+Flag<Config> BoolFlag(const char *name, bool Config::*field,
+                      bool skip_handshaker = false) {
+  return Flag<Config>{name, false, skip_handshaker,
+                      [=](Config *config, const char *) -> bool {
+                        config->*field = true;
+                        return true;
+                      }};
 }
 
-const Flag<bool> kBoolFlags[] = {
-  { "-server", &TestConfig::is_server },
-  { "-dtls", &TestConfig::is_dtls },
-  { "-fallback-scsv", &TestConfig::fallback_scsv },
-  { "-require-any-client-certificate",
-    &TestConfig::require_any_client_certificate },
-  { "-async", &TestConfig::async },
-  { "-write-different-record-sizes",
-    &TestConfig::write_different_record_sizes },
-  { "-partial-write", &TestConfig::partial_write },
-  { "-no-tls13", &TestConfig::no_tls13 },
-  { "-no-tls12", &TestConfig::no_tls12 },
-  { "-no-tls11", &TestConfig::no_tls11 },
-  { "-no-tls1", &TestConfig::no_tls1 },
-  { "-shim-writes-first", &TestConfig::shim_writes_first },
-  { "-expect-session-miss", &TestConfig::expect_session_miss },
-  { "-decline-alpn", &TestConfig::decline_alpn },
-  { "-expect-extended-master-secret",
-    &TestConfig::expect_extended_master_secret },
-  { "-implicit-handshake", &TestConfig::implicit_handshake },
-  { "-handshake-never-done", &TestConfig::handshake_never_done },
-  { "-use-export-context", &TestConfig::use_export_context },
-  { "-expect-ticket-renewal", &TestConfig::expect_ticket_renewal },
-  { "-expect-no-session", &TestConfig::expect_no_session },
-  { "-use-ticket-callback", &TestConfig::use_ticket_callback },
-  { "-renew-ticket", &TestConfig::renew_ticket },
-  { "-check-close-notify", &TestConfig::check_close_notify },
-  { "-shim-shuts-down", &TestConfig::shim_shuts_down },
-  { "-verify-fail", &TestConfig::verify_fail },
-  { "-verify-peer", &TestConfig::verify_peer },
-  { "-expect-verify-result", &TestConfig::expect_verify_result },
-  { "-renegotiate-freely", &TestConfig::renegotiate_freely },
-  { "-use-old-client-cert-callback",
-    &TestConfig::use_old_client_cert_callback },
-  { "-peek-then-read", &TestConfig::peek_then_read },
+template <typename Config>
+Flag<Config> OptionalBoolTrueFlag(const char *name,
+                                  std::optional<bool> Config::*field,
+                                  bool skip_handshaker = false) {
+  return Flag<Config>{name, false, skip_handshaker,
+                      [=](Config *config, const char *) -> bool {
+                        config->*field = true;
+                        return true;
+                      }};
+}
+
+template <typename Config>
+Flag<Config> OptionalBoolFalseFlag(const char *name,
+                                   std::optional<bool> Config::*field,
+                                   bool skip_handshaker = false) {
+  return Flag<Config>{name, false, skip_handshaker,
+                      [=](Config *config, const char *) -> bool {
+                        config->*field = false;
+                        return true;
+                      }};
+}
+
+template <typename T>
+bool StringToInt(T *out, const char *str) {
+  static_assert(std::is_integral<T>::value, "not an integral type");
+
+  // |strtoull| allows leading '-' with wraparound. Additionally, both
+  // functions accept empty strings and leading whitespace.
+  if (!OPENSSL_isdigit(static_cast<unsigned char>(*str)) &&
+      (!std::is_signed<T>::value || *str != '-')) {
+    return false;
+  }
+
+  errno = 0;
+  char *end;
+  if (std::is_signed<T>::value) {
+    static_assert(sizeof(T) <= sizeof(long long),
+                  "type too large for long long");
+    long long value = strtoll(str, &end, 10);
+    if (value < static_cast<long long>(std::numeric_limits<T>::min()) ||
+        value > static_cast<long long>(std::numeric_limits<T>::max())) {
+      return false;
+    }
+    *out = static_cast<T>(value);
+  } else {
+    static_assert(sizeof(T) <= sizeof(unsigned long long),
+                  "type too large for unsigned long long");
+    unsigned long long value = strtoull(str, &end, 10);
+    if (value >
+        static_cast<unsigned long long>(std::numeric_limits<T>::max())) {
+      return false;
+    }
+    *out = static_cast<T>(value);
+  }
+
+  // Check for overflow and that the whole input was consumed.
+  return errno != ERANGE && *end == '\0';
+}
+
+template <typename Config, typename T>
+Flag<Config> IntFlag(const char *name, T Config::*field,
+                     bool skip_handshaker = false) {
+  return Flag<Config>{name, true, skip_handshaker,
+                      [=](Config *config, const char *param) -> bool {
+                        return StringToInt(&(config->*field), param);
+                      }};
+}
+
+template <typename Config, typename T>
+Flag<Config> OptionalIntFlag(const char *name, std::optional<T> Config::*field,
+                             bool skip_handshaker = false) {
+  return Flag<Config>{name, true, skip_handshaker,
+                      [=](Config *config, const char *param) -> bool {
+                        T value;
+                        if (!StringToInt(&value, param)) {
+                          return false;
+                        }
+                        config->*field = value;
+                        return true;
+                      }};
+}
+
+template <typename Config, typename T>
+Flag<Config> IntVectorFlag(const char *name, std::vector<T> Config::*field,
+                           bool skip_handshaker = false) {
+  return Flag<Config>{name, true, skip_handshaker,
+                      [=](Config *config, const char *param) -> bool {
+                        T value;
+                        if (!StringToInt(&value, param)) {
+                          return false;
+                        }
+                        (config->*field).push_back(value);
+                        return true;
+                      }};
+}
+
+template <typename Config>
+Flag<Config> StringFlag(const char *name, std::string Config::*field,
+                        bool skip_handshaker = false) {
+  return Flag<Config>{name, true, skip_handshaker,
+                      [=](Config *config, const char *param) -> bool {
+                        config->*field = param;
+                        return true;
+                      }};
+}
+
+template <typename Config>
+Flag<Config> OptionalStringFlag(const char *name,
+                                std::optional<std::string> Config::*field,
+                                bool skip_handshaker = false) {
+  return Flag<Config>{name, true, skip_handshaker,
+                      [=](Config *config, const char *param) -> bool {
+                        (config->*field).emplace(param);
+                        return true;
+                      }};
+}
+
+bool DecodeBase64(std::vector<uint8_t> *out, const std::string &in) {
+  bssl::UniquePtr<EVP_ENCODE_CTX> decode_ctx(EVP_ENCODE_CTX_new());
+  EVP_DecodeInit(decode_ctx.get());
+
+  out->resize(EVP_DECODE_LENGTH(in.size()));
+
+  int inlen = in.size();
+  int outlen = 0;
+  int donelen = 0;
+  int read = 0;
+  const int chunklen = 80;
+  const unsigned char *pin = reinterpret_cast<const uint8_t *>(in.data());
+  unsigned char *pout = out->data();
+
+  do {
+    int currentlen = inlen > chunklen ? chunklen : inlen;
+    if (EVP_DecodeUpdate(decode_ctx.get(), pout+outlen, &read,
+      pin+donelen, currentlen) < 0) {
+      fprintf(stderr, "Invalid base64: %s.\n", in.c_str());
+      return false;
+    }
+
+    donelen += currentlen;
+    inlen -= currentlen;
+    outlen += read;
+  } while (inlen>0);
+
+  if (EVP_DecodeFinal(decode_ctx.get(), pout+outlen, &read) != 1) {
+    fprintf(stderr, "Failed to decode: %s.\n", in.c_str());
+    return false;
+  }
+  outlen += read;
+  out->resize(outlen);
+  return true;
+}
+
+template <typename Config>
+Flag<Config> Base64Flag(const char *name, std::vector<uint8_t> Config::*field,
+                        bool skip_handshaker = false) {
+  return Flag<Config>{name, true, skip_handshaker,
+                      [=](Config *config, const char *param) -> bool {
+                        return DecodeBase64(&(config->*field), param);
+                      }};
+}
+
+template <typename Config>
+Flag<Config> OptionalBase64Flag(
+    const char *name, std::optional<std::vector<uint8_t>> Config::*field,
+    bool skip_handshaker = false) {
+  return Flag<Config>{name, true, skip_handshaker,
+                      [=](Config *config, const char *param) -> bool {
+                        (config->*field).emplace();
+                        return DecodeBase64(&*(config->*field), param);
+                      }};
+}
+
+template <typename Config>
+Flag<Config> Base64VectorFlag(const char *name,
+                              std::vector<std::vector<uint8_t>> Config::*field,
+                              bool skip_handshaker = false) {
+  return Flag<Config>{name, true, skip_handshaker,
+                      [=](Config *config, const char *param) -> bool {
+                        std::vector<uint8_t> value;
+                        if (!DecodeBase64(&value, param)) {
+                          return false;
+                        }
+                        (config->*field).push_back(std::move(value));
+                        return true;
+                      }};
+}
+
+template <typename Config>
+Flag<Config> StringPairVectorFlag(
+    const char *name,
+    std::vector<std::pair<std::string, std::string>> Config::*field,
+    bool skip_handshaker = false) {
+  return Flag<Config>{
+      name, true, skip_handshaker,
+      [=](Config *config, const char *param) -> bool {
+        const char *comma = strchr(param, ',');
+        if (!comma) {
+          return false;
+        }
+        (config->*field)
+            .push_back(std::make_pair(std::string(param, comma - param),
+                                      std::string(comma + 1)));
+        return true;
+      }};
+}
+
+struct FlagNameComparator {
+  template <typename Config>
+  bool operator()(const Flag<Config> &flag1, const Flag<Config> &flag2) const {
+    return strcmp(flag1.name, flag2.name) < 0;
+  }
+
+  template <typename Config>
+  bool operator()(const Flag<Config> &flag, const char *name) const {
+    return strcmp(flag.name, name) < 0;
+  }
 };
 
-const Flag<std::string> kStringFlags[] = {
-  { "-key-file", &TestConfig::key_file },
-  { "-cert-file", &TestConfig::cert_file },
-  { "-expect-server-name", &TestConfig::expected_server_name },
-  { "-advertise-npn", &TestConfig::advertise_npn },
-  { "-expect-next-proto", &TestConfig::expected_next_proto },
-  { "-select-next-proto", &TestConfig::select_next_proto },
-  { "-host-name", &TestConfig::host_name },
-  { "-advertise-alpn", &TestConfig::advertise_alpn },
-  { "-expect-alpn", &TestConfig::expected_alpn },
-  { "-expect-advertised-alpn", &TestConfig::expected_advertised_alpn },
-  { "-select-alpn", &TestConfig::select_alpn },
-  { "-psk", &TestConfig::psk },
-  { "-psk-identity", &TestConfig::psk_identity },
-  { "-srtp-profiles", &TestConfig::srtp_profiles },
-  { "-cipher", &TestConfig::cipher },
-  { "-export-label", &TestConfig::export_label },
-  { "-export-context", &TestConfig::export_context },
-};
+const Flag<TestConfig> *FindFlag(const char *name) {
+  static const std::vector<Flag<TestConfig>> flags = [] {
+    std::vector<Flag<TestConfig>> ret = {
+        IntFlag("-port", &TestConfig::port, /*skip_handshaker=*/true),
+        BoolFlag("-server", &TestConfig::is_server),
+        BoolFlag("-dtls", &TestConfig::is_dtls),
+        IntFlag("-resume-count", &TestConfig::resume_count),
+        BoolFlag("-fallback-scsv", &TestConfig::fallback_scsv),
+        StringFlag("-trust-cert", &TestConfig::trust_cert),
+        StringFlag("-expect-server-name", &TestConfig::expect_server_name),
+        Base64Flag("-expect-certificate-types",
+                   &TestConfig::expect_certificate_types),
+        BoolFlag("-require-any-client-certificate",
+                 &TestConfig::require_any_client_certificate),
+        StringFlag("-advertise-npn", &TestConfig::advertise_npn),
+        StringFlag("-expect-next-proto", &TestConfig::expect_next_proto),
+        StringFlag("-select-next-proto", &TestConfig::select_next_proto),
+        BoolFlag("-async", &TestConfig::async),
+        BoolFlag("-write-different-record-sizes",
+                 &TestConfig::write_different_record_sizes),
+        BoolFlag("-partial-write", &TestConfig::partial_write),
+        BoolFlag("-no-tls13", &TestConfig::no_tls13),
+        BoolFlag("-no-tls12", &TestConfig::no_tls12),
+        BoolFlag("-no-tls11", &TestConfig::no_tls11),
+        BoolFlag("-no-tls1", &TestConfig::no_tls1),
+        BoolFlag("-shim-writes-first", &TestConfig::shim_writes_first),
+        StringFlag("-host-name", &TestConfig::host_name),
+        StringFlag("-advertise-alpn", &TestConfig::advertise_alpn),
+        StringFlag("-expect-alpn", &TestConfig::expect_alpn),
+        StringFlag("-expect-advertised-alpn",
+                   &TestConfig::expect_advertised_alpn),
+        StringFlag("-select-alpn", &TestConfig::select_alpn),
+        BoolFlag("-decline-alpn", &TestConfig::decline_alpn),
+        BoolFlag("-expect-session-miss", &TestConfig::expect_session_miss),
+        BoolFlag("-expect-extended-master-secret",
+                 &TestConfig::expect_extended_master_secret),
+        StringFlag("-psk", &TestConfig::psk),
+        StringFlag("-psk-identity", &TestConfig::psk_identity),
+        StringFlag("-srtp-profiles", &TestConfig::srtp_profiles),
+        IntFlag("-min-version", &TestConfig::min_version),
+        IntFlag("-max-version", &TestConfig::max_version),
+        IntFlag("-mtu", &TestConfig::mtu),
+        BoolFlag("-implicit-handshake", &TestConfig::implicit_handshake),
+        StringFlag("-cipher", &TestConfig::cipher),
+        BoolFlag("-handshake-never-done", &TestConfig::handshake_never_done),
+        IntFlag("-export-keying-material", &TestConfig::export_keying_material),
+        StringFlag("-export-label", &TestConfig::export_label),
+        StringFlag("-export-context", &TestConfig::export_context),
+        BoolFlag("-use-export-context", &TestConfig::use_export_context),
+        BoolFlag("-expect-ticket-renewal", &TestConfig::expect_ticket_renewal),
+        BoolFlag("-expect-no-session", &TestConfig::expect_no_session),
+        BoolFlag("-use-ticket-callback", &TestConfig::use_ticket_callback),
+        BoolFlag("-renew-ticket", &TestConfig::renew_ticket),
+        BoolFlag("-check-close-notify", &TestConfig::check_close_notify),
+        BoolFlag("-shim-shuts-down", &TestConfig::shim_shuts_down),
+        BoolFlag("-verify-fail", &TestConfig::verify_fail),
+        BoolFlag("-verify-peer", &TestConfig::verify_peer),
+        BoolFlag("-expect-verify-result", &TestConfig::expect_verify_result),
+        IntFlag("-expect-total-renegotiations",
+                &TestConfig::expect_total_renegotiations),
+        BoolFlag("-renegotiate-freely", &TestConfig::renegotiate_freely),
+        BoolFlag("-use-old-client-cert-callback",
+                 &TestConfig::use_old_client_cert_callback),
+        BoolFlag("-peek-then-read", &TestConfig::peek_then_read),
+        IntFlag("-max-cert-list", &TestConfig::max_cert_list),
+        BoolFlag("-is-handshaker-supported",
+                 &TestConfig::is_handshaker_supported),
 
-const Flag<std::string> kBase64Flags[] = {
-  { "-expect-certificate-types", &TestConfig::expected_certificate_types },
-};
+        StringFlag("-cert-file", &TestConfig::cert_file),
+        StringFlag("-key-file", &TestConfig::key_file),
+    };
+    std::sort(ret.begin(), ret.end(), FlagNameComparator{});
+    return ret;
+  }();
+  auto iter =
+      std::lower_bound(flags.begin(), flags.end(), name, FlagNameComparator{});
+  if (iter == flags.end() || strcmp(iter->name, name) != 0) {
+    return nullptr;
+  }
+  return &*iter;
+}
 
-const Flag<int> kIntFlags[] = {
-  { "-port", &TestConfig::port },
-  { "-resume-count", &TestConfig::resume_count },
-  { "-min-version", &TestConfig::min_version },
-  { "-max-version", &TestConfig::max_version },
-  { "-mtu", &TestConfig::mtu },
-  { "-export-keying-material", &TestConfig::export_keying_material },
-  { "-expect-total-renegotiations", &TestConfig::expect_total_renegotiations },
-  { "-max-cert-list", &TestConfig::max_cert_list },
-};
+// RemovePrefix checks if |*str| begins with |prefix| + "-". If so, it advances
+// |*str| past |prefix| (but not past the "-") and returns true. Otherwise, it
+// returns false and leaves |*str| unmodified.
+bool RemovePrefix(const char **str, const char *prefix) {
+  size_t prefix_len = strlen(prefix);
+  if (strncmp(*str, prefix, strlen(prefix)) == 0 && (*str)[prefix_len] == '-') {
+    *str += strlen(prefix);
+    return true;
+  }
+  return false;
+}
 
 }  // namespace
 
-bool ParseConfig(int argc, char **argv, TestConfig *out_config) {
+
+bool ParseConfig(int argc, char **argv, bool is_shim, TestConfig *out_initial,
+                 TestConfig *out_resume, TestConfig *out_retry) {
   for (int i = 0; i < argc; i++) {
-    bool *bool_field = FindField(out_config, kBoolFlags, argv[i]);
-    if (bool_field != NULL) {
-      *bool_field = true;
-      continue;
+    bool skip = false;
+    const char *arg = argv[i];
+    const char *name = arg;
+
+    // -on-shim and -on-handshaker prefixes enable flags only on the shim or
+    // handshaker.
+    if (RemovePrefix(&name, "-on-shim")) {
+      if (!is_shim) {
+        skip = true;
+      }
+    } else if (RemovePrefix(&name, "-on-handshaker")) {
+      if (is_shim) {
+        skip = true;
+      }
     }
 
-    std::string *string_field = FindField(out_config, kStringFlags, argv[i]);
-    if (string_field != NULL) {
-      const char *val;
+    // The following prefixes allow different configurations for each of the
+    // initial, resumption, and 0-RTT retry handshakes.
+    TestConfig *out = nullptr;
+    if (RemovePrefix(&name, "-on-initial")) {
+      out = out_initial;
+    } else if (RemovePrefix(&name, "-on-resume")) {
+      out = out_resume;
+    } else if (RemovePrefix(&name, "-on-retry")) {
+      out = out_retry;
+    }
 
-      i++;
+    const Flag<TestConfig> *flag = FindFlag(name);
+    if (flag == nullptr) {
+      fprintf(stderr, "Unrecognized flag: %s\n", name);
+      exit(89);
+    }
+
+    const char *param = nullptr;
+    if (flag->has_param) {
       if (i >= argc) {
-        fprintf(stderr, "Missing parameter\n");
+        fprintf(stderr, "Missing parameter for %s\n", name);
         return false;
       }
-
-      /*
-       * Fix up the -cipher argument. runner uses "DEFAULT:NULL-SHA" to enable
-       * the NULL-SHA cipher. However in OpenSSL "DEFAULT" permanently switches
-       * off NULL ciphers, so we use "ALL:NULL-SHA" instead.
-       */
-      if (strcmp(argv[i - 1], "-cipher") == 0
-          && strcmp(argv[i], "DEFAULT:NULL-SHA") == 0)
-        val = "ALL:NULL-SHA";
-      else
-        val = argv[i];
-
-      string_field->assign(val);
-      continue;
-    }
-
-    std::string *base64_field = FindField(out_config, kBase64Flags, argv[i]);
-    if (base64_field != NULL) {
       i++;
-      if (i >= argc) {
-        fprintf(stderr, "Missing parameter\n");
-        return false;
-      }
-      std::unique_ptr<uint8_t[]> decoded(new uint8_t[strlen(argv[i])]);
-      int len = EVP_DecodeBlock(decoded.get(),
-                                reinterpret_cast<const uint8_t *>(argv[i]),
-                                strlen(argv[i]));
-      if (len < 0) {
-        fprintf(stderr, "Invalid base64: %s\n", argv[i]);
-        return false;
-      }
-      base64_field->assign(reinterpret_cast<const char *>(decoded.get()), len);
-      continue;
+      param = argv[i];
     }
 
-    int *int_field = FindField(out_config, kIntFlags, argv[i]);
-    if (int_field) {
-      i++;
-      if (i >= argc) {
-        fprintf(stderr, "Missing parameter\n");
-        return false;
+    if (!skip) {
+      if (out != nullptr) {
+        if (!flag->set_param(out, param)) {
+          fprintf(stderr, "Invalid parameter for %s: %s\n", name, param);
+          return false;
+        }
+      } else {
+        // Unprefixed flags apply to all three.
+        if (!flag->set_param(out_initial, param) ||
+            !flag->set_param(out_resume, param) ||
+            !flag->set_param(out_retry, param)) {
+          fprintf(stderr, "Invalid parameter for %s: %s\n", name, param);
+          return false;
+        }
       }
-      *int_field = atoi(argv[i]);
-      continue;
     }
-
-    fprintf(stderr, "Unknown argument: %s\n", argv[i]);
-    exit(89);
   }
 
   return true;
@@ -189,7 +436,7 @@ bool ParseConfig(int argc, char **argv, TestConfig *out_config) {
 static int TestConfigExDataIndex() {
   static int index = [&] {
     int ret = SSL_get_ex_new_index(0, nullptr, nullptr, nullptr, nullptr);
-    OPENSSL_assert(ret >= 0);
+    BSSL_CHECK(ret >= 0);
     return ret;
   }();
   return index;
@@ -200,7 +447,8 @@ bool SetTestConfig(SSL *ssl, const TestConfig *config) {
 }
 
 const TestConfig *GetTestConfig(const SSL *ssl) {
-  return (const TestConfig *)SSL_get_ex_data(ssl, TestConfigExDataIndex());
+  return static_cast<const TestConfig *>(
+      SSL_get_ex_data(ssl, TestConfigExDataIndex()));
 }
 
 static int ServerNameCallback(SSL *ssl, int *out_alert, void *arg) {
@@ -208,23 +456,20 @@ static int ServerNameCallback(SSL *ssl, int *out_alert, void *arg) {
   const TestConfig *config = GetTestConfig(ssl);
   const char *server_name = SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name);
   if (server_name == nullptr ||
-      std::string(server_name) != config->expected_server_name) {
-    fprintf(stderr, "servername mismatch (got %s; want %s)\n", server_name,
-            config->expected_server_name.c_str());
+      std::string(server_name) != config->expect_server_name) {
+    fprintf(stderr, "servername mismatch (got %s; want %s).\n", server_name,
+            config->expect_server_name.c_str());
     return SSL_TLSEXT_ERR_ALERT_FATAL;
   }
 
   return SSL_TLSEXT_ERR_OK;
 }
 
-static int NextProtoSelectCallback(SSL* ssl, uint8_t** out, uint8_t* outlen,
-                                   const uint8_t* in, unsigned inlen, void* arg) {
+static int NextProtoSelectCallback(SSL *ssl, uint8_t **out, uint8_t *outlen,
+                                   const uint8_t *in, unsigned inlen,
+                                   void *arg) {
   const TestConfig *config = GetTestConfig(ssl);
-  if (config->select_next_proto.empty()) {
-    return SSL_TLSEXT_ERR_NOACK;
-  }
-
-  *out = (uint8_t*)config->select_next_proto.data();
+  *out = (uint8_t *)config->select_next_proto.data();
   *outlen = config->select_next_proto.size();
   return SSL_TLSEXT_ERR_OK;
 }
@@ -236,16 +481,19 @@ static int NextProtosAdvertisedCallback(SSL *ssl, const uint8_t **out,
     return SSL_TLSEXT_ERR_NOACK;
   }
 
-  *out = (const uint8_t*)config->advertise_npn.data();
-  *out_len = config->advertise_npn.size();
+  if (config->advertise_npn.size() > UINT_MAX) {
+    fprintf(stderr, "NPN value too large.\n");
+    return SSL_TLSEXT_ERR_ALERT_FATAL;
+  }
+
+  *out = reinterpret_cast<const uint8_t *>(config->advertise_npn.data());
+  *out_len = static_cast<unsigned>(config->advertise_npn.size());
   return SSL_TLSEXT_ERR_OK;
 }
 
 static int TicketKeyCallback(SSL *ssl, uint8_t *key_name, uint8_t *iv,
                              EVP_CIPHER_CTX *ctx, EVP_MAC_CTX *hmac_ctx,
                              int encrypt) {
-  OSSL_PARAM params[2], *p = params;
-
   if (!encrypt) {
     if (GetTestState(ssl)->ticket_decrypt_done) {
       fprintf(stderr, "TicketKeyCallback called after completion.\n");
@@ -260,17 +508,22 @@ static int TicketKeyCallback(SSL *ssl, uint8_t *key_name, uint8_t *iv,
 
   if (encrypt) {
     memcpy(key_name, kZeros, sizeof(kZeros));
-    RAND_bytes(iv, 16);
+    RAND_bytes(iv, EVP_MAX_IV_LENGTH);
   } else if (memcmp(key_name, kZeros, 16) != 0) {
     return 0;
   }
 
+  OSSL_PARAM params[3], *p = params;
+  *p++ = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
+                                           (void *)kZeros,
+                                           sizeof(kZeros));
   *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
-                                          const_cast<char *>("SHA256"), 0);
+                                          const_cast<char *>("sha256"), 0);
   *p = OSSL_PARAM_construct_end();
 
-  if (!EVP_CipherInit_ex(ctx, EVP_aes_128_cbc(), NULL, kZeros, iv, encrypt)
-      || !EVP_MAC_init(hmac_ctx, kZeros, sizeof(kZeros), params)) {
+  if (!EVP_MAC_CTX_set_params(hmac_ctx, params)
+      || !EVP_CipherInit_ex2(ctx, EVP_aes_128_cbc(), kZeros, iv,
+                             encrypt, nullptr)) {
     return -1;
   }
 
@@ -281,9 +534,20 @@ static int TicketKeyCallback(SSL *ssl, uint8_t *key_name, uint8_t *iv,
 }
 
 static int NewSessionCallback(SSL *ssl, SSL_SESSION *session) {
+  // This callback is called whenever a new session has been negotiated and
+  // session caching is enabled. This is different from BoringSSL, since
+  // their callback is called as the handshake completes.
+  if (SSL_get_session(ssl) == nullptr) {
+    fprintf(stderr, "Invalid state for NewSessionCallback.\n");
+    abort();
+  }
+
   GetTestState(ssl)->got_new_session = true;
-  GetTestState(ssl)->new_session.reset(session);
-  return 1;
+  // Create a duplicate of the session to prevent SSL_CTX_free resetting the
+  // resumable flag to false
+  GetTestState(ssl)->new_session.reset(SSL_SESSION_dup(session));
+
+  return 0;
 }
 
 static void InfoCallback(const SSL *ssl, int type, int val) {
@@ -294,16 +558,34 @@ static void InfoCallback(const SSL *ssl, int type, int val) {
       // test fails.
       abort();
     }
-    GetTestState(ssl)->handshake_done = true;
 
-    // Callbacks may be called again on a new handshake.
-    GetTestState(ssl)->ticket_decrypt_done = false;
-    GetTestState(ssl)->alpn_select_done = false;
+    // This callback is called when the handshake completes. |SSL_get_session|
+    // must continue to work and |SSL_in_init| must return false.
+    if (SSL_in_init(ssl) || SSL_get_session(ssl) == nullptr) {
+      fprintf(stderr, "Invalid state for SSL_CB_HANDSHAKE_DONE.\n");
+      abort();
+    }
+
+    TestState *test_state = GetTestState(ssl);
+    test_state->handshake_done = true;
   }
 }
 
-static int AlpnSelectCallback(SSL* ssl, const uint8_t** out, uint8_t* outlen,
-                              const uint8_t* in, unsigned inlen, void* arg) {
+static SSL_SESSION *GetSessionCallback(SSL *ssl, const uint8_t *data, int len,
+                                       int *copy) {
+  TestState *async_state = GetTestState(ssl);
+  if (async_state->session) {
+    *copy = 0;
+    return async_state->session.release();
+  }
+  if (async_state->pending_session) {
+    return async_state->pending_session.release();
+  }
+  return nullptr;
+}
+
+static int AlpnSelectCallback(SSL *ssl, const uint8_t **out, uint8_t *outlen,
+                              const uint8_t *in, unsigned inlen, void *arg) {
   if (GetTestState(ssl)->alpn_select_done) {
     fprintf(stderr, "AlpnSelectCallback called after completion.\n");
     exit(1);
@@ -316,37 +598,87 @@ static int AlpnSelectCallback(SSL* ssl, const uint8_t** out, uint8_t* outlen,
     return SSL_TLSEXT_ERR_NOACK;
   }
 
-  if (!config->expected_advertised_alpn.empty() &&
-      (config->expected_advertised_alpn.size() != inlen ||
-       memcmp(config->expected_advertised_alpn.data(),
-              in, inlen) != 0)) {
-    fprintf(stderr, "bad ALPN select callback inputs\n");
+  if (!config->expect_advertised_alpn.empty() &&
+      bssl::StringAsBytes(config->expect_advertised_alpn) !=
+          bssl::Span(in, inlen)) {
+    fprintf(stderr, "bad ALPN select callback inputs.\n");
     exit(1);
   }
 
-  *out = (const uint8_t*)config->select_alpn.data();
+  assert(config->select_alpn.empty());
+  *out = (const uint8_t *)config->select_alpn.data();
   *outlen = config->select_alpn.size();
   return SSL_TLSEXT_ERR_OK;
 }
 
-static int VerifySucceed(X509_STORE_CTX *store_ctx, void *arg) {
+static bool CheckVerifyCallback(SSL *ssl) {
+  if (GetTestState(ssl)->cert_verified) {
+    fprintf(stderr, "Certificate verified twice.\n");
+    return false;
+  }
+
+  return true;
+}
+
+static int CertVerifyCallback(X509_STORE_CTX *store_ctx, void *arg) {
+  SSL *ssl = (SSL *)X509_STORE_CTX_get_ex_data(
+      store_ctx, SSL_get_ex_data_X509_STORE_CTX_idx());
+  const TestConfig *config = GetTestConfig(ssl);
+  if (!CheckVerifyCallback(ssl)) {
+    return 0;
+  }
+
+  GetTestState(ssl)->cert_verified = true;
+  if (config->verify_fail) {
+    X509_STORE_CTX_set_error(store_ctx, X509_V_ERR_APPLICATION_VERIFICATION);
+    return 0;
+  }
+
   return 1;
 }
 
-static int VerifyFail(X509_STORE_CTX *store_ctx, void *arg) {
-  X509_STORE_CTX_set_error(store_ctx, X509_V_ERR_APPLICATION_VERIFICATION);
-  return 0;
-}
-
-static bssl::UniquePtr<X509> LoadCertificate(const std::string &file) {
+bool LoadCertificate(bssl::UniquePtr<X509> *out_x509,
+                     bssl::UniquePtr<STACK_OF(X509)> *out_chain,
+                     const std::string &file) {
   bssl::UniquePtr<BIO> bio(BIO_new(BIO_s_file()));
   if (!bio || !BIO_read_filename(bio.get(), file.c_str())) {
-    return nullptr;
+    return false;
   }
-  return bssl::UniquePtr<X509>(PEM_read_bio_X509(bio.get(), NULL, NULL, NULL));
+
+  out_x509->reset(PEM_read_bio_X509(bio.get(), nullptr, nullptr, nullptr));
+  if (!*out_x509) {
+    return false;
+  }
+
+  out_chain->reset(sk_X509_new_null());
+  if (!*out_chain) {
+    return false;
+  }
+
+  // Keep reading the certificate chain.
+  for (;;) {
+    bssl::UniquePtr<X509> cert(
+        PEM_read_bio_X509(bio.get(), nullptr, nullptr, nullptr));
+    if (!cert) {
+      break;
+    }
+
+    if (!sk_X509_push(out_chain->get(), cert.release())) {
+      return false;
+    }
+  }
+
+  uint32_t err = ERR_peek_last_error();
+  if (ERR_GET_LIB(err) != ERR_LIB_PEM ||
+      ERR_GET_REASON(err) != PEM_R_NO_START_LINE) {
+    return false;
+  }
+
+  ERR_clear_error();
+  return true;
 }
 
-static bssl::UniquePtr<EVP_PKEY> LoadPrivateKey(const std::string &file) {
+bssl::UniquePtr<EVP_PKEY> LoadPrivateKey(const std::string &file) {
   bssl::UniquePtr<BIO> bio(BIO_new(BIO_s_file()));
   if (!bio || !BIO_read_filename(bio.get(), file.c_str())) {
     return nullptr;
@@ -356,32 +688,53 @@ static bssl::UniquePtr<EVP_PKEY> LoadPrivateKey(const std::string &file) {
 }
 
 static bool GetCertificate(SSL *ssl, bssl::UniquePtr<X509> *out_x509,
+                           bssl::UniquePtr<STACK_OF(X509)> *out_chain,
                            bssl::UniquePtr<EVP_PKEY> *out_pkey) {
   const TestConfig *config = GetTestConfig(ssl);
 
   if (!config->key_file.empty()) {
-    *out_pkey = LoadPrivateKey(config->key_file.c_str());
+    *out_pkey = LoadPrivateKey(config->key_file);
     if (!*out_pkey) {
       return false;
     }
   }
-  if (!config->cert_file.empty()) {
-    *out_x509 = LoadCertificate(config->cert_file.c_str());
-    if (!*out_x509) {
-      return false;
-    }
+  if (!config->cert_file.empty() &&
+      !LoadCertificate(out_x509, out_chain, config->cert_file)) {
+    return false;
   }
   return true;
 }
 
+static bool CheckCertificateRequest(SSL *ssl) {
+  const TestConfig *config = GetTestConfig(ssl);
+
+  if (!config->expect_certificate_types.empty()) {
+    const uint8_t *certificate_types;
+    size_t certificate_types_len =
+        SSL_get0_certificate_types(ssl, &certificate_types);
+    if (bssl::Span(config->expect_certificate_types) !=
+        bssl::Span(certificate_types, certificate_types_len)) {
+      fprintf(stderr, "certificate types mismatch.\n");
+      return false;
+    }
+  }
+
+  return true;
+}
+
 static int ClientCertCallback(SSL *ssl, X509 **out_x509, EVP_PKEY **out_pkey) {
+  if (!CheckCertificateRequest(ssl)) {
+    return -1;
+  }
+
   if (GetTestConfig(ssl)->async && !GetTestState(ssl)->cert_ready) {
     return -1;
   }
 
   bssl::UniquePtr<X509> x509;
+  bssl::UniquePtr<STACK_OF(X509)> chain;
   bssl::UniquePtr<EVP_PKEY> pkey;
-  if (!GetCertificate(ssl, &x509, &pkey)) {
+  if (!GetCertificate(ssl, &x509, &chain, &pkey)) {
     return -1;
   }
 
@@ -390,7 +743,7 @@ static int ClientCertCallback(SSL *ssl, X509 **out_x509, EVP_PKEY **out_pkey) {
     return 0;
   }
 
-  // Asynchronous private keys are not supported with client_cert_cb.
+  // Chains and asynchronous private keys are not supported with client_cert_cb.
   *out_x509 = x509.release();
   *out_pkey = pkey.release();
   return 1;
@@ -398,8 +751,9 @@ static int ClientCertCallback(SSL *ssl, X509 **out_x509, EVP_PKEY **out_pkey) {
 
 static bool InstallCertificate(SSL *ssl) {
   bssl::UniquePtr<X509> x509;
+  bssl::UniquePtr<STACK_OF(X509)> chain;
   bssl::UniquePtr<EVP_PKEY> pkey;
-  if (!GetCertificate(ssl, &x509, &pkey)) {
+  if (!GetCertificate(ssl, &x509, &chain, &pkey)) {
     return false;
   }
 
@@ -411,34 +765,46 @@ static bool InstallCertificate(SSL *ssl) {
     return false;
   }
 
+  if (sk_X509_num(chain.get()) > 0 && !SSL_set1_chain(ssl, chain.get())) {
+    return false;
+  }
+
   return true;
 }
 
+/*
+ * We match BoringSSL's cipher suites and signature algorithms here and
+ * groups/curves in |NewSSL|. A number of tests verify the defaults, which is
+ * in theory pretty useless for us.
+ * However, some of the other tests in the suite (implicitly) assume certain
+ * options to be available. A failing defaults-test can easily identify a
+ * missing option, while it might be more difficult to debug a failing test
+ * not directly related to defaults.
+ */
 bssl::UniquePtr<SSL_CTX> TestConfig::SetupCtx(SSL_CTX *old_ctx) const {
-  const char sess_id_ctx[] = "ossl_shim";
-  bssl::UniquePtr<SSL_CTX> ssl_ctx(SSL_CTX_new(
-      is_dtls ? DTLS_method() : TLS_method()));
+  bssl::UniquePtr<SSL_CTX> ssl_ctx(
+      SSL_CTX_new(is_dtls ? DTLS_method() : TLS_method()));
   if (!ssl_ctx) {
     return nullptr;
   }
 
+  // Enable TLS1.0, TLS1.1, DTLS1.0, 3DES
   SSL_CTX_set_security_level(ssl_ctx.get(), 0);
-#if 0
-  /* Disabled for now until we have some TLS1.3 support */
-  // Enable TLS 1.3 for tests.
-  if (!config->is_dtls &&
-      !SSL_CTX_set_max_proto_version(ssl_ctx.get(), TLS1_3_VERSION)) {
-    return nullptr;
-  }
-#else
-  /* Ensure we don't negotiate TLSv1.3 until we can handle it */
-  if (!is_dtls &&
-      !SSL_CTX_set_max_proto_version(ssl_ctx.get(), TLS1_2_VERSION)) {
-    return nullptr;
-  }
-#endif
 
-  std::string cipher_list = "ALL";
+  const std::string kDefaultCipherList =
+    "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256"
+    ":ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384"
+    ":ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305"
+    ":ECDHE-RSA-AES128-SHA256"
+    ":ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES128-SHA"
+    ":ECDHE-ECDSA-AES256-SHA:ECDHE-RSA-AES256-SHA"
+    ":ECDHE-PSK-CHACHA20-POLY1305"
+    ":ECDHE-PSK-AES128-CBC-SHA:ECDHE-PSK-AES256-CBC-SHA"
+    ":AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA:AES256-SHA"
+    ":PSK-AES128-CBC-SHA:PSK-AES256-CBC-SHA"
+    ":AES128-GCM-SHA256:AES256-GCM-SHA384";
+
+  std::string cipher_list = kDefaultCipherList;
   if (!cipher.empty()) {
     cipher_list = cipher;
     SSL_CTX_set_options(ssl_ctx.get(), SSL_OP_CIPHER_SERVER_PREFERENCE);
@@ -447,14 +813,22 @@ bssl::UniquePtr<SSL_CTX> TestConfig::SetupCtx(SSL_CTX *old_ctx) const {
     return nullptr;
   }
 
-  SSL_CTX_set_session_cache_mode(ssl_ctx.get(), SSL_SESS_CACHE_BOTH);
+  if (async && is_server) {
+    // Disable the internal session cache. To test asynchronous session lookup,
+    // we use an external session cache.
+    SSL_CTX_set_session_cache_mode(
+        ssl_ctx.get(), SSL_SESS_CACHE_BOTH | SSL_SESS_CACHE_NO_INTERNAL);
+    SSL_CTX_sess_set_get_cb(ssl_ctx.get(), GetSessionCallback);
+  } else {
+    SSL_CTX_set_session_cache_mode(ssl_ctx.get(), SSL_SESS_CACHE_BOTH);
+  }
 
   if (use_old_client_cert_callback) {
     SSL_CTX_set_client_cert_cb(ssl_ctx.get(), ClientCertCallback);
   }
 
-  SSL_CTX_set_npn_advertised_cb(
-      ssl_ctx.get(), NextProtosAdvertisedCallback, NULL);
+  SSL_CTX_set_next_protos_advertised_cb(ssl_ctx.get(),
+                                        NextProtosAdvertisedCallback, NULL);
   if (!select_next_proto.empty()) {
     SSL_CTX_set_next_proto_select_cb(ssl_ctx.get(), NextProtoSelectCallback,
                                      NULL);
@@ -471,28 +845,53 @@ bssl::UniquePtr<SSL_CTX> TestConfig::SetupCtx(SSL_CTX *old_ctx) const {
     SSL_CTX_set_tlsext_ticket_key_evp_cb(ssl_ctx.get(), TicketKeyCallback);
   }
 
-  if (verify_fail) {
-    SSL_CTX_set_cert_verify_callback(ssl_ctx.get(), VerifyFail, NULL);
-  } else {
-    SSL_CTX_set_cert_verify_callback(ssl_ctx.get(), VerifySucceed, NULL);
+  constexpr unsigned char kSessionCtx[] = "ossl_shim";
+  if (!SSL_CTX_set_session_id_context(ssl_ctx.get(),
+                                      kSessionCtx,
+                                      sizeof(kSessionCtx) - 1)) {
+    return nullptr;
   }
 
-  if (!SSL_CTX_set_session_id_context(ssl_ctx.get(),
-                                      (const unsigned char *)sess_id_ctx,
-                                      sizeof(sess_id_ctx) - 1))
-    return nullptr;
+  SSL_CTX_set_cert_verify_callback(ssl_ctx.get(), CertVerifyCallback, NULL);
 
-  if (!expected_server_name.empty()) {
+  if (!expect_server_name.empty()) {
     SSL_CTX_set_tlsext_servername_callback(ssl_ctx.get(), ServerNameCallback);
+  }
+
+  // Match BoringSSL default signature algorithms
+  auto kDefaultSigAlgs = "ECDSA+SHA256:ECDSA+SHA384:ECDSA+SHA512:Ed25519:RSA-PSS+SHA256:RSA-PSS+SHA384:RSA-PSS+SHA512:rsa_pkcs1_sha256:rsa_pkcs1_sha384:rsa_pkcs1_sha512:rsa_pkcs1_sha1:ECDSA+SHA1";
+  if (!SSL_CTX_set1_sigalgs_list(ssl_ctx.get(), kDefaultSigAlgs)) {
+    fprintf(stderr, "Failed to set default signature algorithms\n");
+    return nullptr;
+  }
+
+  if (old_ctx) {
+    const long len = SSL_CTX_get_tlsext_ticket_keys(old_ctx, nullptr, 0);
+    std::vector<uint8_t> keys(len);
+
+    if (!SSL_CTX_get_tlsext_ticket_keys(old_ctx, keys.data(), len) ||
+        !SSL_CTX_set_tlsext_ticket_keys(ssl_ctx.get(), keys.data(), len)) {
+      return nullptr;
+    }
+    CopySessions(ssl_ctx.get(), old_ctx);
   }
 
   return ssl_ctx;
 }
 
+// The callback is called twice during the handshake. First when the client
+// hello is written (state TLS_ST_CW_CLNT_HELLO). In that call the hint is
+// always NULL.
+// Second time is after receiving server key exchange, then the hint is passed.
+// See https://docs.openssl.org/master/man3/SSL_CTX_set_psk_client_callback/
 static unsigned PskClientCallback(SSL *ssl, const char *hint,
-                                  char *out_identity,
-                                  unsigned max_identity_len,
+                                  char *out_identity, unsigned max_identity_len,
                                   uint8_t *out_psk, unsigned max_psk_len) {
+  // Unable to validate hint
+  if (SSL_get_state(ssl) == TLS_ST_CW_CLNT_HELLO) {
+    return 0;
+  }
+
   const TestConfig *config = GetTestConfig(ssl);
 
   if (config->psk_identity.empty()) {
@@ -509,14 +908,13 @@ static unsigned PskClientCallback(SSL *ssl, const char *hint,
   // Account for the trailing '\0' for the identity.
   if (config->psk_identity.size() >= max_identity_len ||
       config->psk.size() > max_psk_len) {
-    fprintf(stderr, "PSK buffers too small\n");
+    fprintf(stderr, "PSK buffers too small.\n");
     return 0;
   }
 
-  OPENSSL_strlcpy(out_identity, config->psk_identity.c_str(),
-                  max_identity_len);
-  memcpy(out_psk, config->psk.data(), config->psk.size());
-  return config->psk.size();
+  OPENSSL_strlcpy(out_identity, config->psk_identity.c_str(), max_identity_len);
+  OPENSSL_memcpy(out_psk, config->psk.data(), config->psk.size());
+  return static_cast<unsigned>(config->psk.size());
 }
 
 static unsigned PskServerCallback(SSL *ssl, const char *identity,
@@ -529,37 +927,24 @@ static unsigned PskServerCallback(SSL *ssl, const char *identity,
   }
 
   if (config->psk.size() > max_psk_len) {
-    fprintf(stderr, "PSK buffers too small\n");
+    fprintf(stderr, "PSK buffers too small.\n");
     return 0;
   }
 
-  memcpy(out_psk, config->psk.data(), config->psk.size());
-  return config->psk.size();
+  OPENSSL_memcpy(out_psk, config->psk.data(), config->psk.size());
+  return static_cast<unsigned>(config->psk.size());
 }
 
 static int CertCallback(SSL *ssl, void *arg) {
   const TestConfig *config = GetTestConfig(ssl);
 
-  // Check the CertificateRequest metadata is as expected.
-  //
-  // TODO(davidben): Test |SSL_get_client_CA_list|.
-  if (!SSL_is_server(ssl) &&
-      !config->expected_certificate_types.empty()) {
-    const uint8_t *certificate_types;
-    size_t certificate_types_len =
-        SSL_get0_certificate_types(ssl, &certificate_types);
-    if (certificate_types_len != config->expected_certificate_types.size() ||
-        memcmp(certificate_types,
-               config->expected_certificate_types.data(),
-               certificate_types_len) != 0) {
-      fprintf(stderr, "certificate types mismatch\n");
-      return 0;
-    }
+  // Check the peer certificate metadata is as expected.
+  if ((!SSL_is_server(ssl) && !CheckCertificateRequest(ssl))) {
+    return -1;
   }
 
   // The certificate will be installed via other means.
-  if (!config->async ||
-      config->use_old_client_cert_callback) {
+  if (!config->async) {
     return 1;
   }
 
@@ -573,15 +958,20 @@ static int CertCallback(SSL *ssl, void *arg) {
 }
 
 bssl::UniquePtr<SSL> TestConfig::NewSSL(
-    SSL_CTX *ssl_ctx, SSL_SESSION *session, std::unique_ptr<TestState> test_state) const {
+    SSL_CTX *ssl_ctx, SSL_SESSION *session,
+    std::unique_ptr<TestState> test_state) const {
   bssl::UniquePtr<SSL> ssl(SSL_new(ssl_ctx));
   if (!ssl) {
     return nullptr;
   }
 
-  if (!SetTestConfig(ssl.get(), this) ||
-      !SetTestState(ssl.get(), std::unique_ptr<TestState>(new TestState))) {
+  if (!SetTestConfig(ssl.get(), this)) {
     return nullptr;
+  }
+  if (test_state != nullptr) {
+    if (!SetTestState(ssl.get(), std::move(test_state))) {
+      return nullptr;
+    }
   }
 
   if (fallback_scsv && !SSL_set_mode(ssl.get(), SSL_MODE_SEND_FALLBACK_SCSV)) {
@@ -592,13 +982,18 @@ bssl::UniquePtr<SSL> TestConfig::NewSSL(
       !InstallCertificate(ssl.get())) {
     return nullptr;
   }
-  SSL_set_cert_cb(ssl.get(), CertCallback, nullptr);
+  if (!use_old_client_cert_callback) {
+    SSL_set_cert_cb(ssl.get(), CertCallback, nullptr);
+  }
+  int mode = SSL_VERIFY_NONE;
   if (require_any_client_certificate) {
-    SSL_set_verify(ssl.get(), SSL_VERIFY_PEER|SSL_VERIFY_FAIL_IF_NO_PEER_CERT,
-                   NULL);
+    mode = SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT;
   }
   if (verify_peer) {
-    SSL_set_verify(ssl.get(), SSL_VERIFY_PEER, NULL);
+    mode = SSL_VERIFY_PEER;
+  }
+  if (mode != SSL_VERIFY_NONE) {
+    SSL_set_verify(ssl.get(), mode, NULL);
   }
   if (partial_write) {
     SSL_set_mode(ssl.get(), SSL_MODE_ENABLE_PARTIAL_WRITE);
@@ -620,9 +1015,9 @@ bssl::UniquePtr<SSL> TestConfig::NewSSL(
     return nullptr;
   }
   if (!advertise_alpn.empty() &&
-      SSL_set_alpn_protos(ssl.get(),
-                          (const uint8_t *)advertise_alpn.data(),
-                          advertise_alpn.size()) != 0) {
+      SSL_set_alpn_protos(
+          ssl.get(), reinterpret_cast<const uint8_t *>(advertise_alpn.data()),
+          advertise_alpn.size()) != 0) {
     return nullptr;
   }
   if (!psk.empty()) {
@@ -634,34 +1029,59 @@ bssl::UniquePtr<SSL> TestConfig::NewSSL(
     return nullptr;
   }
   if (!srtp_profiles.empty() &&
+      // 0 on success, 1 on error
       SSL_set_tlsext_use_srtp(ssl.get(), srtp_profiles.c_str())) {
     return nullptr;
   }
-  if (min_version != 0 &&
-      !SSL_set_min_proto_version(ssl.get(), (uint16_t)min_version)) {
+  if (min_version != 0 && !SSL_set_min_proto_version(ssl.get(), min_version)) {
     return nullptr;
   }
-  if (max_version != 0 &&
-      !SSL_set_max_proto_version(ssl.get(), (uint16_t)max_version)) {
+  if (max_version != 0 && !SSL_set_max_proto_version(ssl.get(), max_version)) {
     return nullptr;
   }
   if (mtu != 0) {
     SSL_set_options(ssl.get(), SSL_OP_NO_QUERY_MTU);
     SSL_set_mtu(ssl.get(), mtu);
   }
-  if (renegotiate_freely) {
-    // This is always on for OpenSSL.
+  if (!renegotiate_freely) {
+    // Default to no renegotiation
+    SSL_set_options(ssl.get(), SSL_OP_NO_RENEGOTIATION);
+
+    // When running as client, we always send the renegotiation (RI) extension
+    // for TLS < 1.3. Allow the client to continue when the server doesn't
+    // send the RI extension in the server hello.
+    // This allows tests for empty server hello to pass
+    SSL_set_options(ssl.get(), SSL_OP_LEGACY_SERVER_CONNECT);
+  } else {
+    // renegotiate_freely is always on for OpenSSL
+    // Never resume after renegotiation
+    SSL_set_options(ssl.get(), SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION);
   }
   if (!check_close_notify) {
     SSL_set_quiet_shutdown(ssl.get(), 1);
   }
+
+  // Match BoringSSL default group list
+  const std::string kDefaultGroups = "*X25519:*secp256r1:secp384r1";
+  if (!SSL_set1_groups_list(ssl.get(), kDefaultGroups.c_str())) {
+    fprintf(stderr, "SSL_set1_groups_list failed: %s\n", kDefaultGroups.c_str());
+    return nullptr;
+  }
+
   if (max_cert_list > 0) {
     SSL_set_max_cert_list(ssl.get(), max_cert_list);
   }
-
-  if (!async) {
-    SSL_set_mode(ssl.get(), SSL_MODE_AUTO_RETRY);
+  if (session != nullptr) {
+    if (!is_server) {
+      if (SSL_set_session(ssl.get(), session) != 1) {
+        return nullptr;
+      }
+    } else if (async) {
+      // The internal session cache is disabled, so install the session
+      // manually.
+      SSL_SESSION_up_ref(session);
+      GetTestState(ssl.get())->pending_session.reset(session);
+    }
   }
-
   return ssl;
 }
