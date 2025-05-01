@@ -1211,7 +1211,7 @@ ecp_nistz256_point_add:
 	ld	r18,$FRAME-8*14($sp)
 	ld	r19,$FRAME-8*13($sp)
 	stdu	$bp,$FRAME-288($sp)	# difference in stack frame sizes
-	b       ec_dbl_shortcut         # .Ldouble_shortcut
+	b       ec_dbl_shortcut
 
 .align	4
 .Ladd_proceed:
