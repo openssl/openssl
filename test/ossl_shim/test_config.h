@@ -13,7 +13,10 @@
 #include <string>
 #include <vector>
 
-#include <openssl/configuration.h>
+#include <openssl/ssl.h>
+#include <openssl/base.h>
+
+#include "test_state.h"
 
 
 struct TestConfig {
@@ -73,9 +76,16 @@ struct TestConfig {
   bool use_old_client_cert_callback = false;
   bool peek_then_read = false;
   int max_cert_list = 0;
+
+  bssl::UniquePtr<SSL_CTX> SetupCtx(SSL_CTX *old_ctx) const;
+  bssl::UniquePtr<SSL> NewSSL(SSL_CTX *ssl_ctx, SSL_SESSION *session,
+                              std::unique_ptr<TestState> test_state) const;
 };
 
 bool ParseConfig(int argc, char **argv, TestConfig *out_config);
 
+bool SetTestConfig(SSL *ssl, const TestConfig *config);
+
+const TestConfig *GetTestConfig(const SSL *ssl);
 
 #endif  // OSSL_TEST_SHIM_TEST_CONFIG_H
