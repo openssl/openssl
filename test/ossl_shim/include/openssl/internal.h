@@ -63,6 +63,10 @@ static inline uint32_t CRYPTO_load_u32_be(const void *in) {
     return CRYPTO_bswap4(v);
 }
 
+static inline void CRYPTO_store_u64_le(void *out, uint64_t v) {
+    OPENSSL_memcpy(out, &v, sizeof(v));
+}
+
 static inline uint64_t CRYPTO_load_u64_be(const void *ptr) {
     uint64_t ret;
     OPENSSL_memcpy(&ret, ptr, sizeof(ret));

@@ -22,6 +22,8 @@
 
 struct TestConfig {
   int port = 0;
+  bool ipv6 = false;
+  uint64_t shim_id = 0;
   bool is_server = false;
   bool is_dtls = false;
   int resume_count = 0;
@@ -79,6 +81,7 @@ struct TestConfig {
   bool peek_then_read = false;
   int max_cert_list = 0;
   bool is_handshaker_supported = false;
+  bool wait_for_debugger = false;
 
   bssl::UniquePtr<SSL_CTX> SetupCtx(SSL_CTX *old_ctx) const;
   bssl::UniquePtr<SSL> NewSSL(SSL_CTX *ssl_ctx, SSL_SESSION *session,

@@ -273,6 +273,8 @@ const Flag<TestConfig> *FindFlag(const char *name) {
   static const std::vector<Flag<TestConfig>> flags = [] {
     std::vector<Flag<TestConfig>> ret = {
         IntFlag("-port", &TestConfig::port, /*skip_handshaker=*/true),
+        BoolFlag("-ipv6", &TestConfig::ipv6, /*skip_handshaker=*/true),
+        IntFlag("-shim-id", &TestConfig::shim_id, /*skip_handshaker=*/true),
         BoolFlag("-server", &TestConfig::is_server),
         BoolFlag("-dtls", &TestConfig::is_dtls),
         IntFlag("-resume-count", &TestConfig::resume_count),
@@ -336,6 +338,7 @@ const Flag<TestConfig> *FindFlag(const char *name) {
         IntFlag("-max-cert-list", &TestConfig::max_cert_list),
         BoolFlag("-is-handshaker-supported",
                  &TestConfig::is_handshaker_supported),
+        BoolFlag("-wait-for-debugger", &TestConfig::wait_for_debugger),
 
         StringFlag("-cert-file", &TestConfig::cert_file),
         StringFlag("-key-file", &TestConfig::key_file),
