@@ -792,11 +792,6 @@ typedef struct {
 
 # define TLS_GROUP_FFDHE_FOR_TLS1_3 (TLS_GROUP_FFDHE|TLS_GROUP_ONLY_FOR_TLS1_3)
 
-/* We limit the number of key shares sent */
-# ifndef OPENSSL_CLIENT_MAX_KEY_SHARES
-#  define OPENSSL_CLIENT_MAX_KEY_SHARES 4
-# endif
-
 struct ssl_ctx_st {
     OSSL_LIB_CTX *libctx;
 
