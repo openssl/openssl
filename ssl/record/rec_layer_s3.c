@@ -548,6 +548,10 @@ int ossl_tls_handle_rlayer_return(SSL_CONNECTION *s, int writing, int ret,
     return ret;
 }
 
+/*
+ * Release data from a record.
+ * If length == 0 then we will release the entire record.
+ */
 int ssl_release_record(SSL_CONNECTION *s, TLS_RECORD *rr, size_t length)
 {
     assert(rr->length >= length);
