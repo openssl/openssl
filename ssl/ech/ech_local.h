@@ -58,8 +58,15 @@
  * defined in a header file I could find.
  */
 #   define CLIENT_VERSION_LEN 2
-
 #  endif
+
+/*
+ * This is also in ssl_local.h but due to mutual includes
+ * we need it here too, or somewhere used by both
+ */
+# ifndef OPENSSL_CLIENT_MAX_KEY_SHARES
+#  define OPENSSL_CLIENT_MAX_KEY_SHARES 4
+# endif
 
 /*
  * Reminder of what goes in DNS for ECH RFC XXXX
@@ -219,8 +226,10 @@ typedef struct ossl_ech_conn_st {
      * keep and swap over IFF ECH has succeeded. Same names chosen as are
      * used in SSL_CONNECTION
      */
-    EVP_PKEY *tmp_pkey; /* client's key share for inner */
-    int group_id; /*  key share group */
+    EVP_PKEY *ks_pkey[OPENSSL_CLIENT_MAX_KEY_SHARES];
+    /* The IDs of the keyshare keys */
+    uint16_t ks_group_id[OPENSSL_CLIENT_MAX_KEY_SHARES];
+    size_t num_ks_pkey; /* how many keyshares are there */
     unsigned char client_random[SSL3_RANDOM_SIZE]; /* CH random */
 } OSSL_ECH_CONN;
 
@@ -306,6 +315,8 @@ int ossl_ech_intbuf_add(SSL_CONNECTION *s, const unsigned char *buf,
 int ossl_ech_intbuf_fetch(SSL_CONNECTION *s, unsigned char **buf, size_t *blen);
 size_t ossl_ech_calc_padding(SSL_CONNECTION *s, OSSL_ECHSTORE_ENTRY *ee,
                              size_t encoded_len);
+int ossl_ech_stash_keyshares(SSL_CONNECTION *s);
+int ossl_ech_unstash_keyshares(SSL_CONNECTION *s);
 
 # endif
 #endif
