@@ -568,6 +568,7 @@ int ssl_release_record(SSL_CONNECTION *s, TLS_RECORD *rr, size_t length)
         /* We allocated the buffers for this record (only happens with DTLS) */
         OPENSSL_free(rr->allocdata);
         rr->allocdata = NULL;
+        s->rlayer.curr_rec++;
     }
     rr->length -= length;
     if (rr->length > 0)
