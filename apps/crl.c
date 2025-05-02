@@ -24,7 +24,7 @@ typedef enum OPTION_choice {
     OPT_ISSUER, OPT_LASTUPDATE, OPT_NEXTUPDATE, OPT_FINGERPRINT,
     OPT_CRLNUMBER, OPT_BADSIG, OPT_GENDELTA, OPT_CAPATH, OPT_CAFILE, OPT_CASTORE,
     OPT_NOCAPATH, OPT_NOCAFILE, OPT_NOCASTORE, OPT_VERIFY, OPT_DATEOPT, OPT_TEXT, OPT_HASH,
-    OPT_HASH_OLD, OPT_NOOUT, OPT_NAMEOPT, OPT_MD, OPT_PROV_ENUM
+    OPT_HASH_OLD, OPT_NOOUT, OPT_NAMEOPT, OPT_MD, OPT_PROV_ENUM, OPT_CHECK_EXTS
 } OPTION_CHOICE;
 
 const OPTIONS crl_options[] = {
@@ -59,6 +59,7 @@ const OPTIONS crl_options[] = {
     {"crlnumber", OPT_CRLNUMBER, '-', "Print CRL number"},
     {"badsig", OPT_BADSIG, '-', "Corrupt last byte of loaded CRL signature (for test)" },
     {"gendelta", OPT_GENDELTA, '<', "Other CRL to compare/diff to the Input one"},
+    {"check-extensions", OPT_CHECK_EXTS, '-',  "Perform RFC-5280 CRL extension checks"},
 
     OPT_SECTION("Certificate"),
     {"CApath", OPT_CAPATH, '/', "Verify CRL using certificates in dir"},
@@ -82,18 +83,26 @@ int crl_main(int argc, char **argv)
     X509_STORE_CTX *ctx = NULL;
     X509_LOOKUP *lookup = NULL;
     X509_OBJECT *xobj = NULL;
+    X509_EXTENSION *ext, *ext0;
+    ASN1_OBJECT *obj, *tmpobj;
     EVP_PKEY *pkey;
     EVP_MD *digest = (EVP_MD *)EVP_sha1();
+    const STACK_OF(X509_EXTENSION) *exts;
+    AUTHORITY_KEYID *akid;
+    struct { char *name; int count; } *counts;
     char *infile = NULL, *outfile = NULL, *crldiff = NULL, *keyfile = NULL;
     char *digestname = NULL;
-    const char *CAfile = NULL, *CApath = NULL, *CAstore = NULL, *prog;
+    char txt[128], oidbuf[128];
+    const char *CAfile = NULL, *CApath = NULL, *CAstore = NULL, *prog, *sn;
     OPTION_CHOICE o;
     int hash = 0, issuer = 0, lastupdate = 0, nextupdate = 0, noout = 0;
     int informat = FORMAT_UNDEF, outformat = FORMAT_PEM, keyformat = FORMAT_UNDEF;
-    int ret = 1, num = 0, badsig = 0, fingerprint = 0, crlnumber = 0;
-    int text = 0, do_ver = 0, noCAfile = 0, noCApath = 0, noCAstore = 0;
+    int ret = 1, num = 0, badsig = 0, fingerprint = 0, crlnumber = 0, do_extcheck = 0;
+    int text = 0, do_ver = 0, noCAfile = 0, noCApath = 0, noCAstore = 0, distinct = 0;
+    int saw_aki = 0, saw_crlnum = 0, saw_delta = 0;
     unsigned long dateopt = ASN1_DTFLGS_RFC822;
-    int i;
+    long version;
+    int ext_total, nid, cnt, crit, idx, i, j, k;
 #ifndef OPENSSL_NO_MD5
     int hash_old = 0;
 #endif
@@ -206,6 +215,9 @@ int crl_main(int argc, char **argv)
             if (!opt_provider(o))
                 goto end;
             break;
+        case OPT_CHECK_EXTS:
+            do_extcheck = 1;
+            break;
         }
     }
 
@@ -251,8 +263,247 @@ int crl_main(int argc, char **argv)
         if (i == 0) {
             BIO_printf(bio_err, "verify failure\n");
             goto end;
+<<<<<<< HEAD
         } else {
+=======
+        } else
+>>>>>>> 315c3582a2 (crl/x509: enforce full RFC5280 extension rules and comprehensive CRL tests)
             BIO_printf(bio_err, "verify OK\n");
+        }
+    }
+
+    if (do_extcheck) {
+        exts = X509_CRL_get0_extensions(x);
+        ext_total = sk_X509_EXTENSION_num(exts);
+        version = X509_CRL_get_version(x);
+        /* Only v2 CRLs may carry extensions (§5.1.2.7) */
+        if (version != 1 && ext_total > 0) {
+            BIO_printf(bio_err,
+                       "! Extensions are only valid in a v2 CRL "
+                       "(found version %ld)\n",
+                       version);
+        } else {
+            /* Count CRL extensions */
+            counts = OPENSSL_malloc(ext_total * sizeof(*counts));
+            if (counts == NULL) {
+                BIO_printf(bio_err,
+                           "! Out of memory counting extensions\n");
+                ret = 1;
+                goto end;
+            }
+            distinct = 0;
+            for (i = 0; i < ext_total; i++) {
+                ext = sk_X509_EXTENSION_value(exts, i);
+                obj = X509_EXTENSION_get_object(ext);
+                OBJ_obj2txt(txt, sizeof(txt), obj, 0);
+                for (j = 0; j < distinct; j++) {
+                    if (strcmp(counts[j].name, txt) == 0) {
+                        counts[j].count++;
+                        break;
+                    }
+                }
+                if (j == distinct) {
+                    counts[distinct].name = strdup(txt);
+                    counts[distinct].count = 1;
+                    distinct++;
+                }
+            }
+            /* print summary of counts */
+            for (i = 0; i < distinct; i++) {
+                /* reconstitute the ASN1_OBJECT from the saved text */
+                tmpobj = OBJ_txt2obj(counts[i].name, 0);
+                if (tmpobj) {
+                    /* always numeric form */
+                    OBJ_obj2txt(oidbuf, sizeof(oidbuf), tmpobj, 1);
+                    ASN1_OBJECT_free(tmpobj);
+                } else {
+                    /* fallback if something went really wrong */
+                    strncpy(oidbuf, "unknown", sizeof(oidbuf));
+                    oidbuf[sizeof(oidbuf)-1] = '\0';
+                }
+                BIO_printf(bio_err,
+                           "Extension %-35s (OID %-9s): %d\n",
+                           counts[i].name,
+                           oidbuf,
+                           counts[i].count);
+            }
+            /* ensure required extensions appear exactly once */
+            saw_aki   = 0;
+            saw_crlnum= 0;
+            saw_delta = 0;
+            for (i = 0; i < distinct; i++) {
+                nid = OBJ_txt2nid(counts[i].name);
+                if (nid == NID_authority_key_identifier)
+                    saw_aki = counts[i].count;
+                if (nid == NID_crl_number)
+                    saw_crlnum = counts[i].count;
+                if (nid == NID_delta_crl)
+                    saw_delta = counts[i].count;
+            }
+            /* Ensure required extensions are present exactly once */
+            if (saw_aki != 1) {
+                BIO_printf(bio_err,
+                           "! Extension Authority Key Identifier (id-ce 35) "
+                           "MUST appear exactly once (found %d)\n",
+                           saw_aki);
+            }
+            if (saw_crlnum != 1) {
+                BIO_printf(bio_err,
+                           "! Extension CRL Number (id-ce 20) "
+                           "MUST appear exactly once (found %d)\n",
+                           saw_crlnum);
+            }
+            /* Cardinality & criticality per extension type */
+            for (i = 0; i < distinct; i++) {
+                cnt = counts[i].count;
+                sn  = counts[i].name;
+                nid = OBJ_txt2nid(sn);
+                crit= 0;
+                idx = -1;
+                ext0= NULL;
+                /* Locate one instance for criticality checks */
+                for (k = 0; k < ext_total; k++) {
+                    X509_EXTENSION *tmp = sk_X509_EXTENSION_value(exts, k);
+                    OBJ_obj2txt(txt, sizeof(txt),
+                                X509_EXTENSION_get_object(tmp), 1);
+                    if (strcmp(txt, sn) == 0) {
+                        ext0 = tmp;
+                        break;
+                    }
+                }
+                if (ext0)
+                    crit = X509_EXTENSION_get_critical(ext0);
+                /*
+                * Enforce RFC 5280 §5.1.2.7 (Extensions field) and §5.2 (CRL Extensions) rules:
+                *  - Authority Key Identifier (id-ce 35): exactly one (§5.2.1)
+                *  - CRL Number (id-ce 20): exactly one (§5.2.2)
+                *  - Issuer Alternative Name (id-ce 18): at most one (§5.2.3)
+                *  - Delta CRL Indicator (id-ce 27): at most one (§5.2.4)
+                *  - Issuing Distribution Point: at most one (§5.2.5)
+                *  - Freshest CRL (id-ce 46): at most one (§5.2.6)
+                *  - Authority Information Access (id-pe 1.3.6.1.5.5.7.1.1): at most one (§5.2.7)
+                *  - Any unknown critical extension: error (§5.1.2.7 processing)
+                */
+                switch (nid) {
+                case NID_authority_key_identifier:
+                    akid = X509_CRL_get_ext_d2i(x, NID_authority_key_identifier,
+                                            &crit, &idx);
+                    if (akid) {
+                        /* MUST have a valid keyID */
+                        if (akid->keyid == NULL || akid->keyid->length == 0)
+                            BIO_printf(bio_err,
+                                       "! Extension Authority Key Identifier MUST "
+                                       "contain a non-empty keyIdentifier\n");
+                        /* MUST NOT include a certIssuer or certSerial */
+                        if (akid->issuer)
+                            BIO_printf(bio_err,
+                                       "! Extension Authority Key Identifier MUST "
+                                       "NOT include authorityCertIssuer when using key-ID\n");
+                        if (akid->serial)
+                            BIO_printf(bio_err,
+                                       "! Extension Authority Key Identifier MUST "
+                                       "NOT include authorityCertSerialNumber when using key-ID\n");
+                    }
+                    /* MUST be non-critical */
+                    if (crit) {
+                        BIO_printf(bio_err,
+                                   "! Extension Authority Key Identifier "
+                                   "MUST NOT be marked critical\n");
+                    }
+                    AUTHORITY_KEYID_free(akid);
+                    break;
+
+                case NID_crl_number:
+                    /* MUST be non-critical */
+                    if (crit)
+                        BIO_printf(bio_err,
+                                   "! Extension CRL Number MUST NOT be "
+                                   "marked critical\n");
+                    /* Octet-length is issuer-side, skip */
+                    break;
+
+                case NID_issuer_alt_name:
+                    /* SHOULD be at most one */
+                    if (cnt > 1)
+                        BIO_printf(bio_err,
+                                   "! Extension %s SHOULD appear at most "
+                                   "once (found %d)\n", sn, cnt);
+                    /* SHOULD be non-critical */
+                    if (crit)
+                        BIO_printf(bio_err,
+                                   "! Extension %s SHOULD NOT be critical\n",
+                                   sn);
+                    break;
+
+                case NID_delta_crl:
+                    /* OPTIONAL at most one */
+                    if (cnt > 1)
+                        BIO_printf(bio_err,
+                                   "! Extension %s MUST appear at most "
+                                   "once (found %d)\n", sn, cnt);
+                    /* MUST be critical when present (it *identifies* a delta CRL) */
+                    if (!crit)
+                        BIO_printf(bio_err,
+                                   "! Extension Delta CRL Indicator MUST be "
+                                   "marked critical in a delta CRL\n");
+                    break;
+
+                case NID_issuing_distribution_point:
+                    /* OPTIONAL at most one */
+                    if (cnt > 1)
+                        BIO_printf(bio_err,
+                                   "! Extension %s MUST appear at most "
+                                   "once (found %d)\n", sn, cnt);
+                    /* MUST be critical */
+                    if (!crit)
+                        BIO_printf(bio_err,
+                                   "! Extension Issuing Distribution Point MUST be "
+                                   "marked critical\n");
+                    break;
+
+                case NID_freshest_crl:
+                    /* MUST NOT appear in a delta CRL */
+                    if (saw_delta > 0)
+                        BIO_printf(bio_err,
+                                   "! Extension Freshest CRL MUST NOT "
+                                   "appear in a delta CRL\n");
+                    /* OPTIONAL at most one */
+                    if (cnt > 1)
+                        BIO_printf(bio_err,
+                                   "! Extension %s MUST appear at most "
+                                   "once (found %d)\n", sn, cnt);
+                    /* SHOULD be non-critical */
+                    if (crit)
+                        BIO_printf(bio_err,
+                                   "! Extension Freshest CRL SHOULD NOT be critical\n");
+                    break;
+
+                case NID_info_access:
+                    /* OPTIONAL at most one */
+                    if (cnt > 1)
+                        BIO_printf(bio_err,
+                                   "! Extension %s MUST appear at most "
+                                   "once (found %d)\n", sn, cnt);
+                    /* SHOULD be non-critical */
+                    if (crit)
+                        BIO_printf(bio_err,
+                                   "! Extension Authority Information Access SHOULD "
+                                   "NOT be critical\n");
+                    break;
+
+                default:
+                    /* Unknown critical extension -> error */
+                    if (ext0 && crit)
+                        BIO_printf(bio_err,
+                                   "! Extension unknown critical CRL extension %s\n", sn);
+                    break;
+                }
+            }
+            /* free all strdup'd names */
+            for (i = 0; i < distinct; i++)
+                OPENSSL_free(counts[i].name);
+            OPENSSL_free(counts);
+            BIO_printf(bio_out,"\n");
         }
     }
 
@@ -345,7 +596,6 @@ int crl_main(int argc, char **argv)
                 BIO_printf(bio_out, "\n");
             }
             if (fingerprint == i) {
-                int j;
                 unsigned int n;
                 unsigned char md[EVP_MAX_MD_SIZE];
 
