@@ -55,9 +55,8 @@ static int chacha20_cipher(PROV_CIPHER_CTX *bctx, unsigned char *out,
         if (inl == 0)
             return 1;
 
-        if (n == CHACHA_BLK_SIZE) {
+        if (n == CHACHA_BLK_SIZE)
             ctx->partial_len = 0;
-        }
     }
 
     rem = (unsigned int)(inl % CHACHA_BLK_SIZE);
