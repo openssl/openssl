@@ -36,14 +36,14 @@ my $proxy_start_success = 0;
 plan tests => 44;
 
 SKIP: {
-    skip "TLS 1.2 is disabled", 21 if disabled("tls1_2");
+    skip "TLS 1.2 is disabled", 22 if disabled("tls1_2");
     # Run tests with TLS
     run_tests(0);
 }
 
 SKIP: {
-    skip "DTLS 1.2 is disabled", 21 if disabled("dtls1_2");
-    skip "DTLSProxy does not work on Windows", 21 if $^O =~ /^(MSWin32)$/;
+    skip "DTLS 1.2 is disabled", 22 if disabled("dtls1_2");
+    skip "DTLSProxy does not work on Windows", 22 if $^O =~ /^(MSWin32)$/;
     run_tests(1);
 }
 
