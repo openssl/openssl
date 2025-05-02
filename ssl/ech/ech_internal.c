@@ -1167,7 +1167,8 @@ int ossl_ech_stash_keyshares(SSL_CONNECTION *s)
     ech_free_stashed_key_shares(&s->ext.ech);
     for (i = 0; i != s->s3.tmp.num_ks_pkey; i++) {
         s->ext.ech.ks_pkey[i] = s->s3.tmp.ks_pkey[i];
-        EVP_PKEY_up_ref(s->ext.ech.ks_pkey[i]);
+        if (EVP_PKEY_up_ref(s->ext.ech.ks_pkey[i]) != 1)
+            return 0;
         s->ext.ech.ks_group_id[i] = s->s3.tmp.ks_group_id[i];
     }
     s->ext.ech.num_ks_pkey = s->s3.tmp.num_ks_pkey;
@@ -1184,7 +1185,8 @@ int ossl_ech_unstash_keyshares(SSL_CONNECTION *s)
     }
     for (i = 0; i != s->ext.ech.num_ks_pkey; i++) {
         s->s3.tmp.ks_pkey[i] = s->ext.ech.ks_pkey[i];
-        EVP_PKEY_up_ref(s->s3.tmp.ks_pkey[i]);
+        if (EVP_PKEY_up_ref(s->s3.tmp.ks_pkey[i]) != 1)
+            return 0;
         s->s3.tmp.ks_group_id[i] = s->ext.ech.ks_group_id[i];
     }
     s->s3.tmp.num_ks_pkey = s->ext.ech.num_ks_pkey;

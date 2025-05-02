@@ -880,14 +880,13 @@ EXT_RETURN tls_construct_ctos_key_share(SSL_CONNECTION *s, WPACKET *pkt,
         }
     }
 
-#ifndef OPENSSL_NO_ECH
+# ifndef OPENSSL_NO_ECH
     /* stash inner key shares */
     if (s->ext.ech.ch_depth == 1 && ossl_ech_stash_keyshares(s) != 1) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return EXT_RETURN_FAIL;
     }
 # endif
-
 
     if (!WPACKET_close(pkt) || !WPACKET_close(pkt)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);

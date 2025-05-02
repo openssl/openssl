@@ -61,14 +61,6 @@
 #  endif
 
 /*
- * This is also in ssl_local.h but due to mutual includes
- * we need it here too, or somewhere used by both
- */
-# ifndef OPENSSL_CLIENT_MAX_KEY_SHARES
-#  define OPENSSL_CLIENT_MAX_KEY_SHARES 4
-# endif
-
-/*
  * Reminder of what goes in DNS for ECH RFC XXXX
  *
  *     opaque HpkePublicKey<1..2^16-1>;
