@@ -19,7 +19,7 @@
 # define timezone _timezone
 #endif
 
-#if defined(__FreeBSD__) || defined(__wasi__)
+#if defined(__FreeBSD__) || defined(__wasi__) || (defined(__APPLE__) && !defined(OPENSSL_NO_APPLE_CRYPTO_RANDOM) && !(defined(__MAC_OS_X_VERSION_MIN_REQUIRED) && __MAC_OS_X_VERSION_MIN_REQUIRED >= 1050))
 # define USE_TIMEGM
 #endif
 
