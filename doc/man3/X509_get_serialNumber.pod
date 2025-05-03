@@ -6,7 +6,8 @@ X509_get_serialNumber,
 X509_get0_serialNumber,
 X509_set_serialNumber,
 X509_ACERT_get0_serialNumber,
-X509_ACERT_set1_serialNumber
+X509_ACERT_set1_serialNumber,
+X509_get_issuer_serial
 - get or set certificate serial number
 
 =head1 SYNOPSIS
@@ -21,6 +22,7 @@ X509_ACERT_set1_serialNumber
 
  ASN1_INTEGER *X509_ACERT_get0_serialNumber(X509_ACERT *x);
  int X509_ACERT_set1_serialNumber(X509_ACERT *x, ASN1_INTEGER *serial);
+ OSSL_ISSUER_SERIAL *X509_get_issuer_serial(X509 *x);
 
 =head1 DESCRIPTION
 
@@ -40,6 +42,10 @@ X509_get_serialNumber() for attribute certificates.
 
 X509_ACERT_set1_serialNumber() performs the same operation as
 X509_set_serialNumber() for attribute certificates.
+
+X509_get_issuer_serial() returns the entire IssuerSerial structure from the
+I<baseCertificateId> field of the I<issuer> field of the attribute certificate,
+if it is present, returning NULL otherwise.
 
 =head1 RETURN VALUES
 
