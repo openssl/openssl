@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2023-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -17,7 +17,7 @@
 void sha256_block_data_order_zvkb_zvknha_or_zvknhb(void *ctx, const void *in,
                                                    size_t num);
 void sha256_block_data_order_zbb(void *ctx, const void *in, size_t num);
-void sha256_block_data_order_c(void *ctx, const void *in, size_t num);
+void sha256_block_data_order_riscv64(void *ctx, const void *in, size_t num);
 void sha256_block_data_order(SHA256_CTX *ctx, const void *in, size_t num);
 
 void sha256_block_data_order(SHA256_CTX *ctx, const void *in, size_t num)
@@ -28,7 +28,7 @@ void sha256_block_data_order(SHA256_CTX *ctx, const void *in, size_t num)
     } else if (RISCV_HAS_ZBB()) {
         sha256_block_data_order_zbb(ctx, in, num);
     } else {
-        sha256_block_data_order_c(ctx, in, num);
+        sha256_block_data_order_riscv64(ctx, in, num);
     }
 }
 

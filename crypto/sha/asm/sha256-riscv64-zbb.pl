@@ -36,6 +36,7 @@
 
 # The generated code of this file depends on the following RISC-V extensions:
 # - RV64I
+# Optional:
 # - RISC-V Basic Bit-manipulation extension ('Zbb')
 
 use strict;
@@ -51,6 +52,9 @@ use riscv;
 my $output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
 my $flavour = $#ARGV >= 0 && $ARGV[0] !~ m|\.| ? shift : undef;
 
+my $use_zbb = $flavour && $flavour =~ /zbb/i ? 1 : 0;
+my $isaext = "_" . ( $use_zbb ? "zbb" : "riscv64" );
+
 $output and open STDOUT,">$output";
 
 my $code=<<___;
@@ -61,21 +65,37 @@ my $K256 = "K256";
 
 # Function arguments
 my ($INP, $LEN, $ADDR) = ("a1", "a2", "sp");
-my ($KT, $T1, $T2, $T3, $T4, $T5, $T6) = ("t0", "t1", "t2", "t3", "t4", "t5", "t6");
+my ($KT, $T1, $T2, $T3, $T4, $T5, $T6, $T7, $T8) = ("t0", "t1", "t2", "t3", "t4", "t5", "t6", "a3", "a4");
 my ($A, $B, $C, $D ,$E ,$F ,$G ,$H) = ("s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9");
 
 sub MSGSCHEDULE0 {
     my (
         $index,
     ) = @_;
-    my $code=<<___;
-	lw $T1, (4*$index+0)($INP)
-    @{[rev8 $T1, $T1]} # rev8 $T1, $T1
-    srli $T1, $T1, 32
-    sw $T1, 4*$index($ADDR)
+    if ($use_zbb) {
+        my $code=<<___;
+        lw $T1, (4*$index+0)($INP)
+        @{[rev8 $T1, $T1]} # rev8 $T1, $T1
+        srli $T1, $T1, 32
+        sw $T1, 4*$index($ADDR)
 ___
-
-    return $code;
+        return $code;
+    } else {
+        my $code=<<___;
+        lbu $T1, (4*$index+0)($INP)
+        lbu $T2, (4*$index+1)($INP)
+        lbu $T3, (4*$index+2)($INP)
+        lbu $T4, (4*$index+3)($INP)
+        slliw $T1, $T1, 24
+        slliw $T2, $T2, 16
+        or $T1, $T1, $T2
+        slliw $T3, $T3, 8
+        or $T1, $T1, $T3
+        or $T1, $T1, $T4
+        sw $T1, 4*$index($ADDR)
+___
+        return $code;
+    }
 }
 
 sub MSGSCHEDULE1 {
@@ -87,14 +107,40 @@ sub MSGSCHEDULE1 {
     lw $T2, (($INDEX-15)&0x0f)*4($ADDR)
     lw $T3, (($INDEX-7)&0x0f)*4($ADDR)
     lw $T4, ($INDEX&0x0f)*4($ADDR)
-    @{[roriw $T5, $T1, 17]}  # roriw $T5, $T1, 17
-    @{[roriw $T6, $T1, 19]}  # roriw $T6, $T1, 19
+___
+    if ($use_zbb) {
+        my $ror_part = <<___;
+        @{[roriw $T5, $T1, 17]}  # roriw $T5, $T1, 17
+        @{[roriw $T6, $T1, 19]}  # roriw $T6, $T1, 19
+___
+        $code .= $ror_part;
+    } else {
+        my $ror_part = <<___;
+        @{[roriw_rv64i $T5, $T1, $T7, $T8, 17]}
+        @{[roriw_rv64i $T6, $T1, $T7, $T8, 19]}
+___
+        $code .= $ror_part;
+    }
+    $code .= <<___;
     srliw $T1, $T1, 10
     xor $T1, $T1, $T5
     xor $T1, $T1, $T6
     addw $T1, $T1, $T3
-    @{[roriw $T5, $T2, 7]}  # roriw $T5, $T2, 7
-    @{[roriw $T6, $T2, 18]}  # roriw $T6, $T2, 18
+___
+    if ($use_zbb) {
+        my $ror_part = <<___;
+        @{[roriw $T5, $T2, 7]}  # roriw $T5, $T2, 7
+        @{[roriw $T6, $T2, 18]}  # roriw $T6, $T2, 18
+___
+        $code .= $ror_part;
+    } else {
+        my $ror_part = <<___;
+        @{[roriw_rv64i $T5, $T2, $T7, $T8, 7]}
+        @{[roriw_rv64i $T6, $T2, $T7, $T8, 18]}
+___
+        $code .= $ror_part;
+    }
+    $code .= <<___;
     srliw $T2, $T2, 3
     xor $T2, $T2, $T5
     xor $T2, $T2, $T6
@@ -114,9 +160,23 @@ sub sha256_T1 {
     lw $T4, 4*$INDEX($KT)
     addw $h, $h, $T1
     addw $h, $h, $T4
-    @{[roriw $T2, $e, 6]}  # roriw $T2, $e, 6
-    @{[roriw $T3, $e, 11]}  # roriw $T3, $e, 11
-    @{[roriw $T4, $e, 25]}  # roriw $T4, $e, 25
+___
+    if ($use_zbb) {
+        my $ror_part = <<___;
+        @{[roriw $T2, $e, 6]}  # roriw $T2, $e, 6
+        @{[roriw $T3, $e, 11]}  # roriw $T3, $e, 11
+        @{[roriw $T4, $e, 25]}  # roriw $T4, $e, 25
+___
+        $code .= $ror_part;
+    } else {
+        my $ror_part = <<___;
+        @{[roriw_rv64i $T2, $e, $T7, $T8, 6]}
+        @{[roriw_rv64i $T3, $e, $T7, $T8, 11]}
+        @{[roriw_rv64i $T4, $e, $T7, $T8, 25]}
+___
+        $code .= $ror_part;
+    }
+    $code .= <<___;
     xor $T2, $T2, $T3
     xor $T1, $f, $g
     xor $T2, $T2, $T4
@@ -135,9 +195,23 @@ sub sha256_T2 {
     ) = @_;
     my $code=<<___;
     # Sum0
-    @{[roriw $T2, $a, 2]}  # roriw $T2, $a, 2
-    @{[roriw $T3, $a, 13]}  # roriw $T3, $a, 13
-    @{[roriw $T4, $a, 22]}  # roriw $T4, $a, 22
+___
+    if ($use_zbb) {
+        my $ror_part = <<___;
+        @{[roriw $T2, $a, 2]}  # roriw $T2, $a, 2
+        @{[roriw $T3, $a, 13]}  # roriw $T3, $a, 13
+        @{[roriw $T4, $a, 22]}  # roriw $T4, $a, 22
+___
+        $code .= $ror_part;
+    } else {
+        my $ror_part = <<___;
+        @{[roriw_rv64i $T2, $a, $T7, $T8, 2]}
+        @{[roriw_rv64i $T3, $a, $T7, $T8, 13]}
+        @{[roriw_rv64i $T4, $a, $T7, $T8, 22]}
+___
+        $code .= $ror_part;
+    }
+    $code .= <<___;
     xor $T2, $T2, $T3
     xor $T2, $T2, $T4
     # Maj
@@ -191,12 +265,12 @@ ___
 }
 
 ################################################################################
-# void sha256_block_data_order_zbb(void *c, const void *p, size_t len)
+# void sha256_block_data_order@{[$isaext]}(void *c, const void *p, size_t len)
 $code .= <<___;
-.p2align 2
-.globl sha256_block_data_order_zbb
-.type   sha256_block_data_order_zbb,\@function
-sha256_block_data_order_zbb:
+.p2align 3
+.globl sha256_block_data_order@{[$isaext]}
+.type   sha256_block_data_order@{[$isaext]},\@function
+sha256_block_data_order@{[$isaext]}:
 
     addi sp, sp, -96
 
@@ -363,7 +437,7 @@ L_round_loop:
     addi sp, sp, 96
 
     ret
-.size sha256_block_data_order_zbb,.-sha256_block_data_order_zbb
+.size sha256_block_data_order@{[$isaext]},.-sha256_block_data_order@{[$isaext]}
 
 .section .rodata
 .p2align 3

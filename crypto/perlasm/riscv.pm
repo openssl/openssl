@@ -2,7 +2,7 @@
 # This file is dual-licensed, meaning that you can use it under your
 # choice of either of the following two licenses:
 #
-# Copyright 2023-2024 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2023-2025 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License"). You can obtain
 # a copy in the file LICENSE in the source distribution or at
@@ -13,6 +13,7 @@
 # Copyright (c) 2023, Christoph Müllner <christoph.muellner@vrull.eu>
 # Copyright (c) 2023, Jerry Shih <jerry.shih@sifive.com>
 # Copyright (c) 2023, Phoebe Chen <phoebe.chen@sifive.com>
+# Copyright (c) 2025, Julian Zhu <julian.oerv@isrc.iscas.ac.cn>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -274,6 +275,18 @@ sub sd_rev8_rv64i {
         sb      $tmp, $off0($addr)
 ___
     return $seq;
+}
+
+sub roriw_rv64i {
+    my (
+        $rd, $rs, $tmp1, $tmp2, $imm,
+    ) = @_;
+    my $code=<<___;
+    srliw $tmp1, $rs, $imm
+    slliw $tmp2, $rs, (32-$imm)
+    or $rd, $tmp1, $tmp2
+___
+    return $code;
 }
 
 # Scalar crypto instructions
