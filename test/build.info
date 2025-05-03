@@ -5,6 +5,8 @@
 # be useful here.
 #
 
+SUBDIRS=ossl_shim
+
 IF[{- !$disabled{hqinterop} -}]
   SUBDIRS=quic-openssl-docker
 ENDIF

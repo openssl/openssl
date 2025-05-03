@@ -1,3 +1,4 @@
+# TODO: how to check for C++ >= 17 ??
 IF[{- defined $target{CXX} && !$disabled{"external-tests"} -}]
   PROGRAMS{noinst}=ossl_shim
   SOURCE[ossl_shim]=ossl_shim.cc async_bio.cc handshake_util.cc packeted_bio.cc test_config.cc test_state.cc

@@ -822,6 +822,7 @@ external test suites are currently supported:
  - GOST engine test suite
  - Python PYCA/Cryptography test suite
  - krb5 test suite
+ - BoringSSL test suite
 
 See the file [test/README-external.md](test/README-external.md)
 for further details.

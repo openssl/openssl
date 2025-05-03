@@ -713,3 +713,20 @@ jobs:
         ./util/opensslwrap.sh version -c
     - name: test external pyca
       run: make test TESTS="test_external_pyca" VERBOSE=1
+
+  external-tests-boringssl:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: true
+    - name: config
+      run: CXXFLAGS="-std=c++17" ./config --strict-warnings --banner=Configured --debug no-afalgeng enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 enable-external-tests no-fips && perl configdata.pm --dump
+    - name: make
+      run: make -s -j4
+    - name: get cpu info
+      run: |
+        cat /proc/cpuinfo
+        ./util/opensslwrap.sh version -c
+    - name: test external boringssl
+      run: BORING_RUNNER_DIR=$(pwd)/boringssl/ssl/test/runner make test TESTS="test_external_boringssl"
