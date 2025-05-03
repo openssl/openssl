@@ -141,9 +141,11 @@ For example, the "function" core_gettable_params() has these:
  static ossl_inline OSSL_NAME_core_gettable_params_fn
      OSSL_FUNC_core_gettable_params(const OSSL_DISPATCH *opf);
 
-L<OSSL_DISPATCH(3)> arrays contain function id pairs with macros as 
-provided in L<openssl-core_dispatch.h(7)> to create valid
-pointers, as follows:
+L<OSSL_DISPATCH(3)> arrays consist of entries as a function pairs with
+unique function identifiers and pointers as defined in 
+L<openssl-core_dispatch.h(7)>. These are searched where the function ID
+matches a desired macro to be cast to the appropriate function type,
+terminating in empty id/pointer pair of {0, NULL}, as follows:
 
 For I<in> (the L<OSSL_DISPATCH(3)> array passed from F<libcrypto> to the
 provider):
