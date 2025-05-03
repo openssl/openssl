@@ -142,6 +142,24 @@ Output the nextUpdate field.
 
 =back
 
+=head1 ENVIRONMENT
+
+=over 4
+
+=item B<LANG>, B<LC_CTYPE>, B<LC_ALL>
+
+If any of these is defined with a codeset of C<.UTF-8>,
+and the CRL is printed out in text form,
+and the CRL's X.509 NAME value type is C<UTF8String>,
+then don't hex-escape non-ASCII UTF-8-encoded characters
+in the C<DirName> field.
+
+When more than one of these are defined,
+B<LC_CTYPE> overrides B<LANG>, and
+B<LC_ALL> overrides both B<LC_CTYPE> and B<LANG>.
+
+=back
+
 =head1 EXAMPLES
 
 Convert a CRL file from PEM to DER:
@@ -151,6 +169,12 @@ Convert a CRL file from PEM to DER:
 Output the text form of a DER encoded certificate:
 
  openssl crl -in crl.der -text -noout
+
+Output the text form of a DER encoded certificate,
+displaying non-ASCII UTF-8 characters in the C<DirName> field
+without hex-escaping them:
+
+ LC_ALL=C.UTF-8 openssl crl -in crl.der -text -noout
 
 =head1 BUGS
 
@@ -171,7 +195,7 @@ Since OpenSSL 3.3, the B<-verify> option will exit with 1 on failure.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2024 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2025 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
