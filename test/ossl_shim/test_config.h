@@ -36,7 +36,7 @@ struct TestConfig {
   // std::vector<uint16_t> signing_prefs;
   // std::vector<uint16_t> verify_prefs;
   // std::vector<uint16_t> expect_peer_verify_prefs; // Not available, requires checking peer signature algorithms
-  // std::vector<uint16_t> curves;
+  std::vector<uint16_t> curves;
   std::string key_file;
   std::string cert_file;
   std::string trust_cert; // Accepted but unused, since certificate trust is not verified by default
@@ -94,10 +94,10 @@ struct TestConfig {
   std::string psk;
   std::string psk_identity;
   std::string srtp_profiles;
-  // bool enable_ocsp_stapling = false;
-  // std::vector<uint8_t> expect_ocsp_response;
-  // bool enable_signed_cert_timestamps = false;
-  // std::vector<uint8_t> expect_signed_cert_timestamps;
+  bool enable_ocsp_stapling = false;
+  std::vector<uint8_t> expect_ocsp_response;
+  bool enable_signed_cert_timestamps = false;
+  std::vector<uint8_t> expect_signed_cert_timestamps;
   uint16_t min_version = 0;
   uint16_t max_version = 0;
   uint16_t expect_version = 0;
@@ -128,7 +128,7 @@ struct TestConfig {
   bool renew_ticket = false;
   bool skip_ticket = false;
   // bool enable_early_data = false;
-  // std::vector<uint8_t> ocsp_response;
+  std::vector<uint8_t> ocsp_response;
   bool check_close_notify = false;
   bool shim_shuts_down = false;
   bool verify_fail = false;
@@ -142,11 +142,11 @@ struct TestConfig {
   // bool renegotiate_explicit = false;
   // bool forbid_renegotiation_after_handshake = false;
   // uint16_t expect_peer_signature_algorithm = 0;
-  // uint16_t expect_curve_id = 0;
+  uint16_t expect_curve_id = 0;
   bool use_old_client_cert_callback = false;
   // int initial_timeout_duration_ms = 0;
-  // std::string use_client_ca_list;
-  // std::string expect_client_ca_list;
+  std::string use_client_ca_list;
+  std::string expect_client_ca_list;
   // bool send_alert = false;
   bool peek_then_read = false;
   // bool enable_grease = false; // Not available
@@ -156,7 +156,7 @@ struct TestConfig {
   // bool use_exporter_between_reads = false;
   // uint16_t expect_cipher_aes = 0;
   // uint16_t expect_cipher_no_aes = 0;
-  // uint16_t expect_cipher = 0;
+  uint16_t expect_cipher = 0;
   std::string expect_peer_cert_file;
   // int resumption_delay = 0;
   // bool retain_only_sha256_client_cert = false;
@@ -165,7 +165,7 @@ struct TestConfig {
   // bool expect_secure_renegotiation = false;
   // bool expect_no_secure_renegotiation = false;
   // int max_send_fragment = 0;
-  // int read_size = 0;
+  int read_size = 0;
   bool expect_session_id = false;
   bool expect_no_session_id = false;
   // int expect_ticket_age_skew = 0;
@@ -178,10 +178,10 @@ struct TestConfig {
   // bool handoff = false;
   // bool handshake_hints = false;
   // bool allow_hint_mismatch = false;
-  // bool use_ocsp_callback = false;
-  // bool set_ocsp_in_callback = false;
-  // bool decline_ocsp_callback = false;
-  // bool fail_ocsp_callback = false;
+  bool use_ocsp_callback = false;
+  bool set_ocsp_in_callback = false;
+  bool decline_ocsp_callback = false;
+  bool fail_ocsp_callback = false;
   // bool install_cert_compression_algs = false; // Not available
   // int install_one_cert_compression_alg = 0; // Not available
   // bool reverify_on_resume = false;
@@ -191,10 +191,10 @@ struct TestConfig {
   // bool handshaker_resume = false;
   // std::string handshaker_path;
   // bool jdk11_workaround = false;
-  // bool server_preference = false;
+  bool server_preference = false;
   // bool export_traffic_secrets = false;
-  // bool key_update = false;
-  // bool key_update_before_read = false;
+  bool key_update = false;
+  bool key_update_before_read = false;
   // std::string expect_early_data_reason;
   // bool expect_hrr = false;
   // bool expect_no_hrr = false;
@@ -228,5 +228,14 @@ const TestConfig *GetTestConfig(const SSL *ssl);
 bool LoadCertificate(bssl::UniquePtr<X509> *out_x509,
                      bssl::UniquePtr<STACK_OF(X509)> *out_chain,
                      const std::string &file);
+
+typedef struct shim_group_st {
+    int nid;
+    std::string name;
+} shim_group;
+
+// Get group by IANA/TLS id
+// Converts a BoringSSL id to OpenSSL name/nid
+std::optional<shim_group> GetGroup(uint16_t id);
 
 #endif  // OSSL_TEST_SHIM_TEST_CONFIG_H

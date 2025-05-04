@@ -263,6 +263,40 @@ static bool SSL_in_early_data(SSL *ssl) {
 // after a renegotiation, that authentication-related properties match |config|.
 static bool CheckAuthProperties(SSL *ssl, bool is_resume,
                                 const TestConfig *config) {
+  // Runner checks response for initial and resumed session, but OCSP response
+  // is not available in a resumed session. Therefor we skip this check
+  // on resumption so we can still validate the initial request.
+  if (!config->expect_ocsp_response.empty() && !is_resume) {
+    const uint8_t *data;
+    int len = SSL_get_tlsext_status_ocsp_resp(ssl, &data);
+    if (len == -1 ||
+      bssl::Span(config->expect_ocsp_response) != bssl::Span(data, len)) {
+      fprintf(stderr, "OCSP response mismatch\n");
+      return false;
+    }
+  }
+
+  // Runner checks SCT list for initial and resumed session, but SCTs are
+  // not available in a resumed session. Therefor we skip this check
+  // on resumption so we can still validate the initial request.
+  if (!config->expect_signed_cert_timestamps.empty() && !is_resume) {
+    const STACK_OF(SCT) *scts = SSL_get0_peer_scts(ssl);
+    if (scts == nullptr) {
+      fprintf(stderr, "SCT list mismatch\n");
+      return false;
+    }
+
+    unsigned char *data = nullptr;
+    size_t len = i2o_SCT_LIST(scts, &data);
+    bool sct_verify_result = bssl::Span(config->expect_signed_cert_timestamps)
+                             == bssl::Span(data, len);
+    OPENSSL_free(data);
+    if (!sct_verify_result) {
+      fprintf(stderr, "SCT list mismatch\n");
+      return false;
+    }
+  }
+
   if (config->expect_verify_result) {
     int expected_verify_result =
         config->verify_fail ? X509_V_ERR_APPLICATION_VERIFICATION : X509_V_OK;
@@ -414,6 +448,27 @@ static bool CheckHandshakeProperties(SSL *ssl, bool is_resume,
 
   if (config->expect_extended_master_secret && !SSL_get_extms_support(ssl)) {
     fprintf(stderr, "No EMS for connection when expected\n");
+    return false;
+  }
+
+  if (config->expect_curve_id != 0) {
+    int curve_nid = SSL_get_negotiated_group(ssl);
+    if (const auto group = GetGroup(config->expect_curve_id)) {
+      if (group.value().nid != curve_nid) {
+        fprintf(stderr, "curve_nid was %04x, wanted %04x\n", curve_nid,
+                group.value().nid);
+        return false;
+      }
+    } else {
+      fprintf(stderr, "Expected curve unknown\n");
+      return false;
+    }
+  }
+
+  uint16_t cipher_id = SSL_CIPHER_get_protocol_id(SSL_get_current_cipher(ssl));
+  if (config->expect_cipher != 0 && config->expect_cipher != cipher_id) {
+    fprintf(stderr, "Cipher ID was %04x, wanted %04x\n", cipher_id,
+            config->expect_cipher);
     return false;
   }
 
@@ -604,9 +659,18 @@ static bool DoExchange(bssl::UniquePtr<SSL_SESSION> *out_session,
     }
     if (!config->shim_shuts_down) {
       for (;;) {
+        if (config->key_update_before_read &&
+            !SSL_key_update(ssl, SSL_KEY_UPDATE_NOT_REQUESTED)) {
+          fprintf(stderr, "SSL_key_update failed.\n");
+          return false;
+        }
+
         // Read only 512 bytes at a time in TLS to ensure records may be
         // returned in multiple reads.
         size_t read_size = config->is_dtls ? 16384 : 512;
+        if (config->read_size > 0) {
+          read_size = config->read_size;
+        }
         auto buf = std::make_unique<uint8_t[]>(read_size);
 
         int n = DoRead(ssl, buf.get(), read_size);
@@ -646,6 +710,12 @@ static bool DoExchange(bssl::UniquePtr<SSL_SESSION> *out_session,
             return false;
           }
           pending_initial_write = false;
+        }
+
+        if (config->key_update &&
+            !SSL_key_update(ssl, SSL_KEY_UPDATE_NOT_REQUESTED)) {
+          fprintf(stderr, "SSL_key_update failed.\n");
+          return false;
         }
 
         for (int i = 0; i < n; i++) {

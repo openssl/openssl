@@ -26,6 +26,25 @@
 
 #include "test_state.h"
 
+#define GROUP_ID_X25519MLKEM768 0x11ec
+
+static const std::unordered_map<uint16_t, shim_group> kGroups = {
+  {0x0015, {NID_secp224r1, "secp224r1"}},
+  {0x0017, {NID_X9_62_prime256v1, "secp256r1"}},
+  {0x0018, {NID_secp384r1, "secp384r1"}},
+  {0x0019, {NID_secp521r1, "secp521r1"}},
+  {0x001d, {NID_X25519, "X25519"}},
+  {0x11ec, {TLSEXT_nid_unknown | 0x11ec, "X25519MLKEM768"}}
+};
+
+std::optional<shim_group> GetGroup(const uint16_t id) {
+  if (const auto group = kGroups.find(id); group != kGroups.end()) {
+    return {group->second};
+  }
+
+  return {};
+}
+
 namespace {
 
 template <typename Config>
@@ -279,6 +298,7 @@ const Flag<TestConfig> *FindFlag(const char *name) {
         BoolFlag("-dtls", &TestConfig::is_dtls),
         IntFlag("-resume-count", &TestConfig::resume_count),
         BoolFlag("-fallback-scsv", &TestConfig::fallback_scsv),
+        IntVectorFlag("-curves", &TestConfig::curves),
         StringFlag("-trust-cert", &TestConfig::trust_cert),
         StringFlag("-expect-server-name", &TestConfig::expect_server_name),
         Base64Flag("-expect-certificate-types",
@@ -317,6 +337,11 @@ const Flag<TestConfig> *FindFlag(const char *name) {
         StringFlag("-psk", &TestConfig::psk),
         StringFlag("-psk-identity", &TestConfig::psk_identity),
         StringFlag("-srtp-profiles", &TestConfig::srtp_profiles),
+        BoolFlag("-enable-ocsp-stapling", &TestConfig::enable_ocsp_stapling),
+        BoolFlag("-enable-signed-cert-timestamps",
+                 &TestConfig::enable_signed_cert_timestamps),
+        Base64Flag("-expect-signed-cert-timestamps",
+                   &TestConfig::expect_signed_cert_timestamps),
         IntFlag("-min-version", &TestConfig::min_version),
         IntFlag("-max-version", &TestConfig::max_version),
         IntFlag("-expect-version", &TestConfig::expect_version),
@@ -334,6 +359,7 @@ const Flag<TestConfig> *FindFlag(const char *name) {
         BoolFlag("-use-ticket-callback", &TestConfig::use_ticket_callback),
         BoolFlag("-renew-ticket", &TestConfig::renew_ticket),
         BoolFlag("-skip-ticket", &TestConfig::skip_ticket),
+        Base64Flag("-expect-ocsp-response", &TestConfig::expect_ocsp_response),
         BoolFlag("-check-close-notify", &TestConfig::check_close_notify),
         BoolFlag("-shim-shuts-down", &TestConfig::shim_shuts_down),
         BoolFlag("-verify-fail", &TestConfig::verify_fail),
@@ -342,20 +368,35 @@ const Flag<TestConfig> *FindFlag(const char *name) {
         IntFlag("-expect-total-renegotiations",
                 &TestConfig::expect_total_renegotiations),
         BoolFlag("-renegotiate-freely", &TestConfig::renegotiate_freely),
+        IntFlag("-expect-curve-id", &TestConfig::expect_curve_id),
         BoolFlag("-use-old-client-cert-callback",
                  &TestConfig::use_old_client_cert_callback),
+        StringFlag("-use-client-ca-list", &TestConfig::use_client_ca_list),
+        StringFlag("-expect-client-ca-list",
+                   &TestConfig::expect_client_ca_list),
         BoolFlag("-peek-then-read", &TestConfig::peek_then_read),
         IntFlag("-max-cert-list", &TestConfig::max_cert_list),
+        IntFlag("-expect-cipher", &TestConfig::expect_cipher),
         StringFlag("-expect-peer-cert-file",
                    &TestConfig::expect_peer_cert_file),
+        IntFlag("-read-size", &TestConfig::read_size),
         BoolFlag("-expect-session-id", &TestConfig::expect_session_id),
         BoolFlag("-expect-no-session-id", &TestConfig::expect_no_session_id),
+        BoolFlag("-use-ocsp-callback", &TestConfig::use_ocsp_callback),
+        BoolFlag("-set-ocsp-in-callback", &TestConfig::set_ocsp_in_callback),
+        BoolFlag("-decline-ocsp-callback", &TestConfig::decline_ocsp_callback),
+        BoolFlag("-fail-ocsp-callback", &TestConfig::fail_ocsp_callback),
         BoolFlag("-is-handshaker-supported",
                  &TestConfig::is_handshaker_supported),
+        BoolFlag("-server-preference", &TestConfig::server_preference),
+        BoolFlag("-key-update", &TestConfig::key_update),
+        BoolFlag("-key-update-before-read",
+                 &TestConfig::key_update_before_read),
         BoolFlag("-wait-for-debugger", &TestConfig::wait_for_debugger),
 
         StringFlag("-cert-file", &TestConfig::cert_file),
         StringFlag("-key-file", &TestConfig::key_file),
+        Base64Flag("-ocsp-response", &TestConfig::ocsp_response),
     };
     std::sort(ret.begin(), ret.end(), FlagNameComparator{});
     return ret;
@@ -465,6 +506,33 @@ bool SetTestConfig(SSL *ssl, const TestConfig *config) {
 const TestConfig *GetTestConfig(const SSL *ssl) {
   return static_cast<const TestConfig *>(
       SSL_get_ex_data(ssl, TestConfigExDataIndex()));
+}
+
+static int OCSPCallback(SSL *ssl, void *arg) {
+  const TestConfig *config = GetTestConfig(ssl);
+  if (!SSL_is_server(ssl)) {
+    return !config->fail_ocsp_callback;
+  }
+
+  if (!config->ocsp_response.empty() && config->set_ocsp_in_callback) {
+    const size_t len = config->ocsp_response.size();
+    auto *buf = static_cast<uint8_t *>(OPENSSL_malloc(len));
+    if (buf == nullptr) {
+      return SSL_TLSEXT_ERR_ALERT_FATAL;
+    }
+    OPENSSL_memcpy(buf, config->ocsp_response.data(), len);
+    if (!SSL_set_tlsext_status_ocsp_resp(ssl, buf, len)) {
+      OPENSSL_free(buf);
+      return SSL_TLSEXT_ERR_ALERT_FATAL;
+    }
+  }
+  if (config->fail_ocsp_callback) {
+    return SSL_TLSEXT_ERR_ALERT_FATAL;
+  }
+  if (config->decline_ocsp_callback) {
+    return SSL_TLSEXT_ERR_NOACK;
+  }
+  return SSL_TLSEXT_ERR_OK;
 }
 
 static int ServerNameCallback(SSL *ssl, int *out_alert, void *arg) {
@@ -634,6 +702,8 @@ static int AlpnSelectCallback(SSL *ssl, const uint8_t **out, uint8_t *outlen,
 }
 
 static bool CheckVerifyCallback(SSL *ssl) {
+  // OCSP response not available here
+
   if (GetTestState(ssl)->cert_verified) {
     fprintf(stderr, "Certificate verified twice.\n");
     return false;
@@ -724,7 +794,99 @@ static bool GetCertificate(SSL *ssl, bssl::UniquePtr<X509> *out_x509,
       !LoadCertificate(out_x509, out_chain, config->cert_file)) {
     return false;
   }
+  if (!config->ocsp_response.empty() && !config->set_ocsp_in_callback) {
+    const size_t len = config->ocsp_response.size();
+    auto *buf = static_cast<uint8_t *>(OPENSSL_malloc(len));
+    if (buf == nullptr) {
+      return false;
+    }
+    OPENSSL_memcpy(buf, config->ocsp_response.data(), len);
+    if (!SSL_set_tlsext_status_ocsp_resp(ssl, buf, len)) {
+      OPENSSL_free(buf);
+      return false;
+    }
+  }
   return true;
+}
+
+static bool HexDecode(std::string *out, const std::string &in) {
+  if ((in.size() & 1) != 0) {
+    return false;
+  }
+
+  auto buf = std::make_unique<uint8_t[]>(in.size() / 2);
+  for (size_t i = 0; i < in.size() / 2; i++) {
+    uint8_t high, low;
+    if (!OPENSSL_fromxdigit(&high, in[i * 2]) ||
+        !OPENSSL_fromxdigit(&low, in[i * 2 + 1])) {
+      return false;
+    }
+    buf[i] = (high << 4) | low;
+  }
+
+  out->assign(reinterpret_cast<const char *>(buf.get()), in.size() / 2);
+  return true;
+}
+
+static std::vector<std::string> SplitParts(const std::string &in,
+                                           const char delim) {
+  std::vector<std::string> ret;
+  size_t start = 0;
+
+  for (size_t i = 0; i < in.size(); i++) {
+    if (in[i] == delim) {
+      ret.push_back(in.substr(start, i - start));
+      start = i + 1;
+    }
+  }
+
+  ret.push_back(in.substr(start, std::string::npos));
+  return ret;
+}
+
+static std::vector<std::string> DecodeHexStrings(
+    const std::string &hex_strings) {
+  std::vector<std::string> ret;
+  const std::vector<std::string> parts = SplitParts(hex_strings, ',');
+
+  for (const auto &part : parts) {
+    std::string binary;
+    if (!HexDecode(&binary, part)) {
+      fprintf(stderr, "Bad hex string: %s.\n", part.c_str());
+      return ret;
+    }
+
+    ret.push_back(binary);
+  }
+
+  return ret;
+}
+
+static bssl::UniquePtr<STACK_OF(X509_NAME)> DecodeHexX509Names(
+    const std::string &hex_names) {
+  const std::vector<std::string> der_names = DecodeHexStrings(hex_names);
+  bssl::UniquePtr<STACK_OF(X509_NAME)> ret(sk_X509_NAME_new_null());
+  if (!ret) {
+    return nullptr;
+  }
+
+  for (const auto &der_name : der_names) {
+    const uint8_t *const data =
+        reinterpret_cast<const uint8_t *>(der_name.data());
+    const uint8_t *derp = data;
+    bssl::UniquePtr<X509_NAME> name(
+        d2i_X509_NAME(nullptr, &derp, der_name.size()));
+    if (!name || derp != data + der_name.size()) {
+      fprintf(stderr, "Failed to parse X509_NAME.\n");
+      return nullptr;
+    }
+
+    if (!sk_X509_NAME_push(ret.get(), name.release())) {
+      return nullptr;
+    }
+  }
+
+  return ret;
 }
 
 static bool CheckCertificateRequest(SSL *ssl) {
@@ -738,6 +900,30 @@ static bool CheckCertificateRequest(SSL *ssl) {
         bssl::Span(certificate_types, certificate_types_len)) {
       fprintf(stderr, "certificate types mismatch.\n");
       return false;
+    }
+  }
+
+  if (!config->expect_client_ca_list.empty()) {
+    bssl::UniquePtr<STACK_OF(X509_NAME)> expected =
+        DecodeHexX509Names(config->expect_client_ca_list);
+    const size_t num_expected = sk_X509_NAME_num(expected.get());
+
+    const STACK_OF(X509_NAME) *received = SSL_get_client_CA_list(ssl);
+    const size_t num_received = sk_X509_NAME_num(received);
+
+    if (num_received != num_expected) {
+      fprintf(stderr, "expected %zu names in CertificateRequest but got %zu.\n",
+              num_expected, num_received);
+      return false;
+    }
+
+    for (size_t i = 0; i < num_received; i++) {
+      if (X509_NAME_cmp(sk_X509_NAME_value(received, i),
+                        sk_X509_NAME_value(expected.get(), i)) != 0) {
+        fprintf(stderr, "names in CertificateRequest differ at index #%zu.\n",
+                i);
+        return false;
+      }
     }
   }
 
@@ -877,6 +1063,24 @@ bssl::UniquePtr<SSL_CTX> TestConfig::SetupCtx(SSL_CTX *old_ctx) const {
 
   SSL_CTX_set_cert_verify_callback(ssl_ctx.get(), CertVerifyCallback, NULL);
 
+  if (enable_signed_cert_timestamps &&
+      !SSL_CTX_enable_ct(ssl_ctx.get(), SSL_CT_VALIDATION_STRICT)) {
+    return nullptr;
+  }
+
+  if (!use_client_ca_list.empty()) {
+    if (use_client_ca_list == "<NULL>") {
+      SSL_CTX_set_client_CA_list(ssl_ctx.get(), nullptr);
+    } else if (use_client_ca_list == "<EMPTY>") {
+      bssl::UniquePtr<STACK_OF(X509_NAME)> names;
+      SSL_CTX_set_client_CA_list(ssl_ctx.get(), names.release());
+    } else {
+      bssl::UniquePtr<STACK_OF(X509_NAME)> names =
+          DecodeHexX509Names(use_client_ca_list);
+      SSL_CTX_set_client_CA_list(ssl_ctx.get(), names.release());
+    }
+  }
+
   if (!expect_server_name.empty()) {
     SSL_CTX_set_tlsext_servername_callback(ssl_ctx.get(), ServerNameCallback);
   }
@@ -888,6 +1092,10 @@ bssl::UniquePtr<SSL_CTX> TestConfig::SetupCtx(SSL_CTX *old_ctx) const {
     return nullptr;
   }
 
+  // Always set the callback. OCSP response is only sent when the callback
+  // is set. We can still choose to set the response elsewhere (GetCertificate)
+  SSL_CTX_set_tlsext_status_cb(ssl_ctx.get(), OCSPCallback);
+
   if (old_ctx) {
     const long len = SSL_CTX_get_tlsext_ticket_keys(old_ctx, nullptr, 0);
     std::vector<uint8_t> keys(len);
@@ -897,6 +1105,10 @@ bssl::UniquePtr<SSL_CTX> TestConfig::SetupCtx(SSL_CTX *old_ctx) const {
       return nullptr;
     }
     CopySessions(ssl_ctx.get(), old_ctx);
+  }
+
+  if (server_preference) {
+    SSL_CTX_set_options(ssl_ctx.get(), SSL_OP_CIPHER_SERVER_PREFERENCE);
   }
 
   return ssl_ctx;
@@ -1067,6 +1279,9 @@ bssl::UniquePtr<SSL> TestConfig::NewSSL(
       SSL_set_tlsext_use_srtp(ssl.get(), srtp_profiles.c_str())) {
     return nullptr;
   }
+  if (enable_ocsp_stapling) {
+    SSL_set_tlsext_status_type(ssl.get(), TLSEXT_STATUSTYPE_ocsp);
+  }
   if (min_version != 0 && !SSL_set_min_proto_version(ssl.get(), min_version)) {
     return nullptr;
   }
@@ -1094,11 +1309,28 @@ bssl::UniquePtr<SSL> TestConfig::NewSSL(
   if (!check_close_notify) {
     SSL_set_quiet_shutdown(ssl.get(), 1);
   }
+  // If not specified, use the default BoringSSL groups
+  std::string groups = "*X25519:*secp256r1:secp384r1";
+  if (!curves.empty()) {
+    groups = "";
+    for (int i = 0; i < curves.size(); ++i) {
+      if (auto group = GetGroup(curves[i])) {
+        if (i > 0) {
+          groups.append(":");
+        }
+        // Mark for key share
+        if (i == 0 || curves[i] == GROUP_ID_X25519MLKEM768) {
+          groups.append("*");
+        }
 
-  // Match BoringSSL default group list
-  const std::string kDefaultGroups = "*X25519:*secp256r1:secp384r1";
-  if (!SSL_set1_groups_list(ssl.get(), kDefaultGroups.c_str())) {
-    fprintf(stderr, "SSL_set1_groups_list failed: %s\n", kDefaultGroups.c_str());
+        groups.append(group.value().name);
+      } else {
+        fprintf(stderr, "Unknown curve %hu\n", curves[i]);
+        return nullptr;
+      }
+    }
+  }
+  if (!SSL_set1_groups_list(ssl.get(), groups.c_str())) {
     return nullptr;
   }
 

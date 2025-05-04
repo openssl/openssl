@@ -77,6 +77,22 @@ static inline uint64_t CRYPTO_load_u64_be(const void *ptr) {
 
 static inline int OPENSSL_isdigit(int c) { return c >= '0' && c <= '9'; }
 
+static inline int OPENSSL_fromxdigit(uint8_t *out, int c) {
+    if (OPENSSL_isdigit(c)) {
+        *out = c - '0';
+        return 1;
+    }
+    if ('a' <= c && c <= 'f') {
+        *out = c - 'a' + 10;
+        return 1;
+    }
+    if ('A' <= c && c <= 'F') {
+        *out = c - 'A' + 10;
+        return 1;
+    }
+    return 0;
+}
+
 #if defined(__cplusplus)
 }
 #endif
