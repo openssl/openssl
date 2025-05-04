@@ -273,6 +273,45 @@ static bool CheckAuthProperties(SSL *ssl, bool is_resume,
     }
   }
 
+  if (!config->expect_peer_cert_file.empty()) {
+    bssl::UniquePtr<X509> expect_leaf;
+    bssl::UniquePtr<STACK_OF(X509)> expect_chain;
+    if (!LoadCertificate(&expect_leaf, &expect_chain,
+                         config->expect_peer_cert_file)) {
+      return false;
+    }
+
+    // For historical reasons, clients report a chain with a leaf and servers
+    // without.
+    if (!config->is_server) {
+      if (!sk_X509_insert(expect_chain.get(), expect_leaf.get(), 0)) {
+        return false;
+      }
+      X509_up_ref(expect_leaf.get());  // sk_X509_insert takes ownership.
+    }
+
+    bssl::UniquePtr<X509> leaf(SSL_get_peer_certificate(ssl));
+    STACK_OF(X509) *chain = SSL_get_peer_cert_chain(ssl);
+    if (X509_cmp(leaf.get(), expect_leaf.get()) != 0) {
+      fprintf(stderr, "Received a different leaf certificate than expected.\n");
+      return false;
+    }
+
+    if (sk_X509_num(chain) != sk_X509_num(expect_chain.get())) {
+      fprintf(stderr, "Received a chain of length %d instead of %d.\n",
+              sk_X509_num(chain), sk_X509_num(expect_chain.get()));
+      return false;
+    }
+
+    for (size_t i = 0; i < sk_X509_num(chain); i++) {
+      if (X509_cmp(sk_X509_value(chain, i),
+                   sk_X509_value(expect_chain.get(), i)) != 0) {
+        fprintf(stderr, "Chain certificate %zu did not match.\n", i + 1);
+        return false;
+      }
+    }
+  }
+
   return true;
 }
 
@@ -291,6 +330,12 @@ static bool CheckHandshakeProperties(SSL *ssl, bool is_resume,
     return false;
   }
 
+  if (config->expect_version != 0 &&
+      SSL_version(ssl) != int{config->expect_version}) {
+    fprintf(stderr, "want version %04x, got %04x\n", config->expect_version,
+            static_cast<uint16_t>(SSL_version(ssl)));
+    return false;
+  }
 
   bool expect_resume =
       is_resume && (!config->expect_session_miss || SSL_in_early_data(ssl));
@@ -318,6 +363,16 @@ static bool CheckHandshakeProperties(SSL *ssl, bool is_resume,
               "new session was%s cached, but we expected the opposite\n",
               state->got_new_session ? "" : " not");
       return false;
+    }
+  }
+
+  if (!is_resume) {
+    if (config->expect_session_id && !state->got_new_session) {
+      fprintf(stderr, "session was not cached on the server.\n");
+      return false;
+    }
+    if (config->expect_no_session_id && state->got_new_session) {
+      fprintf(stderr, "session was unexpectedly cached on the server.\n");
       return false;
     }
   }
@@ -332,7 +387,7 @@ static bool CheckHandshakeProperties(SSL *ssl, bool is_resume,
     }
   }
 
-  if (!config->expect_next_proto.empty()) {
+  if (!config->expect_next_proto.empty() || config->expect_no_next_proto) {
     const uint8_t *next_proto;
     unsigned next_proto_len;
     SSL_get0_next_proto_negotiated(ssl, &next_proto, &next_proto_len);

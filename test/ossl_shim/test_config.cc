@@ -286,8 +286,12 @@ const Flag<TestConfig> *FindFlag(const char *name) {
         BoolFlag("-require-any-client-certificate",
                  &TestConfig::require_any_client_certificate),
         StringFlag("-advertise-npn", &TestConfig::advertise_npn),
+        BoolFlag("-advertise-empty-npn", &TestConfig::advertise_empty_npn),
         StringFlag("-expect-next-proto", &TestConfig::expect_next_proto),
+        BoolFlag("-expect-no-next-proto", &TestConfig::expect_no_next_proto),
         StringFlag("-select-next-proto", &TestConfig::select_next_proto),
+        BoolFlag("-select-empty-next-proto",
+                 &TestConfig::select_empty_next_proto),
         BoolFlag("-async", &TestConfig::async),
         BoolFlag("-write-different-record-sizes",
                  &TestConfig::write_different_record_sizes),
@@ -296,6 +300,7 @@ const Flag<TestConfig> *FindFlag(const char *name) {
         BoolFlag("-no-tls12", &TestConfig::no_tls12),
         BoolFlag("-no-tls11", &TestConfig::no_tls11),
         BoolFlag("-no-tls1", &TestConfig::no_tls1),
+        BoolFlag("-no-ticket", &TestConfig::no_ticket),
         BoolFlag("-shim-writes-first", &TestConfig::shim_writes_first),
         StringFlag("-host-name", &TestConfig::host_name),
         StringFlag("-advertise-alpn", &TestConfig::advertise_alpn),
@@ -304,6 +309,8 @@ const Flag<TestConfig> *FindFlag(const char *name) {
                    &TestConfig::expect_advertised_alpn),
         StringFlag("-select-alpn", &TestConfig::select_alpn),
         BoolFlag("-decline-alpn", &TestConfig::decline_alpn),
+        BoolFlag("-reject-alpn", &TestConfig::reject_alpn),
+        BoolFlag("-select-empty-alpn", &TestConfig::select_empty_alpn),
         BoolFlag("-expect-session-miss", &TestConfig::expect_session_miss),
         BoolFlag("-expect-extended-master-secret",
                  &TestConfig::expect_extended_master_secret),
@@ -312,8 +319,10 @@ const Flag<TestConfig> *FindFlag(const char *name) {
         StringFlag("-srtp-profiles", &TestConfig::srtp_profiles),
         IntFlag("-min-version", &TestConfig::min_version),
         IntFlag("-max-version", &TestConfig::max_version),
+        IntFlag("-expect-version", &TestConfig::expect_version),
         IntFlag("-mtu", &TestConfig::mtu),
         BoolFlag("-implicit-handshake", &TestConfig::implicit_handshake),
+        BoolFlag("-fail-cert-callback", &TestConfig::fail_cert_callback),
         StringFlag("-cipher", &TestConfig::cipher),
         BoolFlag("-handshake-never-done", &TestConfig::handshake_never_done),
         IntFlag("-export-keying-material", &TestConfig::export_keying_material),
@@ -324,6 +333,7 @@ const Flag<TestConfig> *FindFlag(const char *name) {
         BoolFlag("-expect-no-session", &TestConfig::expect_no_session),
         BoolFlag("-use-ticket-callback", &TestConfig::use_ticket_callback),
         BoolFlag("-renew-ticket", &TestConfig::renew_ticket),
+        BoolFlag("-skip-ticket", &TestConfig::skip_ticket),
         BoolFlag("-check-close-notify", &TestConfig::check_close_notify),
         BoolFlag("-shim-shuts-down", &TestConfig::shim_shuts_down),
         BoolFlag("-verify-fail", &TestConfig::verify_fail),
@@ -336,6 +346,10 @@ const Flag<TestConfig> *FindFlag(const char *name) {
                  &TestConfig::use_old_client_cert_callback),
         BoolFlag("-peek-then-read", &TestConfig::peek_then_read),
         IntFlag("-max-cert-list", &TestConfig::max_cert_list),
+        StringFlag("-expect-peer-cert-file",
+                   &TestConfig::expect_peer_cert_file),
+        BoolFlag("-expect-session-id", &TestConfig::expect_session_id),
+        BoolFlag("-expect-no-session-id", &TestConfig::expect_no_session_id),
         BoolFlag("-is-handshaker-supported",
                  &TestConfig::is_handshaker_supported),
         BoolFlag("-wait-for-debugger", &TestConfig::wait_for_debugger),
@@ -367,7 +381,6 @@ bool RemovePrefix(const char **str, const char *prefix) {
 }
 
 }  // namespace
-
 
 bool ParseConfig(int argc, char **argv, bool is_shim, TestConfig *out_initial,
                  TestConfig *out_resume, TestConfig *out_retry) {
@@ -480,7 +493,7 @@ static int NextProtoSelectCallback(SSL *ssl, uint8_t **out, uint8_t *outlen,
 static int NextProtosAdvertisedCallback(SSL *ssl, const uint8_t **out,
                                         unsigned int *out_len, void *arg) {
   const TestConfig *config = GetTestConfig(ssl);
-  if (config->advertise_npn.empty()) {
+  if (config->advertise_npn.empty() && !config->advertise_empty_npn) {
     return SSL_TLSEXT_ERR_NOACK;
   }
 
@@ -510,6 +523,9 @@ static int TicketKeyCallback(SSL *ssl, uint8_t *key_name, uint8_t *iv,
   static const uint8_t kZeros[16] = {0};
 
   if (encrypt) {
+    if (GetTestConfig(ssl)->skip_ticket) {
+      return 0;
+    }
     memcpy(key_name, kZeros, sizeof(kZeros));
     RAND_bytes(iv, EVP_MAX_IV_LENGTH);
   } else if (memcmp(key_name, kZeros, 16) != 0) {
@@ -600,6 +616,9 @@ static int AlpnSelectCallback(SSL *ssl, const uint8_t **out, uint8_t *outlen,
   if (config->decline_alpn) {
     return SSL_TLSEXT_ERR_NOACK;
   }
+  if (config->reject_alpn) {
+    return SSL_TLSEXT_ERR_ALERT_FATAL;
+  }
 
   if (!config->expect_advertised_alpn.empty() &&
       bssl::StringAsBytes(config->expect_advertised_alpn) !=
@@ -608,7 +627,7 @@ static int AlpnSelectCallback(SSL *ssl, const uint8_t **out, uint8_t *outlen,
     exit(1);
   }
 
-  assert(config->select_alpn.empty());
+  assert(config->select_alpn.empty() || !config->select_empty_alpn);
   *out = (const uint8_t *)config->select_alpn.data();
   *outlen = config->select_alpn.size();
   return SSL_TLSEXT_ERR_OK;
@@ -832,12 +851,13 @@ bssl::UniquePtr<SSL_CTX> TestConfig::SetupCtx(SSL_CTX *old_ctx) const {
 
   SSL_CTX_set_next_protos_advertised_cb(ssl_ctx.get(),
                                         NextProtosAdvertisedCallback, NULL);
-  if (!select_next_proto.empty()) {
+  if (!select_next_proto.empty() || select_empty_next_proto) {
     SSL_CTX_set_next_proto_select_cb(ssl_ctx.get(), NextProtoSelectCallback,
                                      NULL);
   }
 
-  if (!select_alpn.empty() || decline_alpn) {
+  if (!select_alpn.empty() || decline_alpn || reject_alpn ||
+      select_empty_alpn) {
     SSL_CTX_set_alpn_select_cb(ssl_ctx.get(), AlpnSelectCallback, NULL);
   }
 
@@ -946,6 +966,10 @@ static int CertCallback(SSL *ssl, void *arg) {
     return -1;
   }
 
+  if (config->fail_cert_callback) {
+    return 0;
+  }
+
   // The certificate will be installed via other means.
   if (!config->async) {
     return 1;
@@ -1012,6 +1036,13 @@ bssl::UniquePtr<SSL> TestConfig::NewSSL(
   }
   if (no_tls1) {
     SSL_set_options(ssl.get(), SSL_OP_NO_TLSv1);
+  }
+  if (no_ticket) {
+    SSL_set_options(ssl.get(), SSL_OP_NO_TICKET);
+    // SSL_OP_NO_TICKET doesn't block stateful tickets in TLS 1.3
+    if (!SSL_set_num_tickets(ssl.get(), 0)) {
+      return nullptr;
+    }
   }
   if (!host_name.empty() &&
       !SSL_set_tlsext_host_name(ssl.get(), host_name.c_str())) {

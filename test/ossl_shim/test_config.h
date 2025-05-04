@@ -54,12 +54,12 @@ struct TestConfig {
   std::vector<uint8_t> expect_certificate_types;
   bool require_any_client_certificate = false;
   std::string advertise_npn;
-  // bool advertise_empty_npn = false;
+  bool advertise_empty_npn = false;
   std::string expect_next_proto;
-  // bool expect_no_next_proto = false;
+  bool expect_no_next_proto = false;
   // bool false_start = false; // Not available
   std::string select_next_proto;
-  // bool select_empty_next_proto = false;
+  bool select_empty_next_proto = false;
   bool async = false;
   bool write_different_record_sizes = false;
   // bool cbc_record_splitting = false; // Not available
@@ -68,7 +68,7 @@ struct TestConfig {
   bool no_tls12 = false;
   bool no_tls11 = false;
   bool no_tls1 = false;
-  // bool no_ticket = false;
+  bool no_ticket = false;
   // std::vector<uint8_t> expect_channel_id; // Not available
   // bool enable_channel_id = false; // Not available
   // std::string send_channel_id; // Not available
@@ -79,8 +79,8 @@ struct TestConfig {
   std::string expect_advertised_alpn;
   std::string select_alpn;
   bool decline_alpn = false;
-  // bool reject_alpn = false;
-  // bool select_empty_alpn = false;
+  bool reject_alpn = false;
+  bool select_empty_alpn = false;
   // bool defer_alps = false; // Not available
   // std::vector<std::pair<std::string, std::string>> application_settings; // Not available
   // std::optional<std::string> expect_peer_application_settings; // Not available
@@ -100,7 +100,7 @@ struct TestConfig {
   // std::vector<uint8_t> expect_signed_cert_timestamps;
   uint16_t min_version = 0;
   uint16_t max_version = 0;
-  // uint16_t expect_version = 0;
+  uint16_t expect_version = 0;
   int mtu = 0;
   bool implicit_handshake = false;
   // bool use_early_callback = false;
@@ -108,7 +108,7 @@ struct TestConfig {
   // bool fail_early_callback_ech_rewind = false;
   // bool install_ddos_callback = false; // Not available
   // bool fail_ddos_callback = false; // Not available
-  // bool fail_cert_callback = false;
+  bool fail_cert_callback = false;
   std::string cipher;
   bool handshake_never_done = false;
   int export_keying_material = 0;
@@ -126,7 +126,7 @@ struct TestConfig {
   bool use_ticket_callback = false;
   // bool use_ticket_aead_callback = false;
   bool renew_ticket = false;
-  // bool skip_ticket = false;
+  bool skip_ticket = false;
   // bool enable_early_data = false;
   // std::vector<uint8_t> ocsp_response;
   bool check_close_notify = false;
@@ -157,7 +157,7 @@ struct TestConfig {
   // uint16_t expect_cipher_aes = 0;
   // uint16_t expect_cipher_no_aes = 0;
   // uint16_t expect_cipher = 0;
-  // std::string expect_peer_cert_file;
+  std::string expect_peer_cert_file;
   // int resumption_delay = 0;
   // bool retain_only_sha256_client_cert = false;
   // bool expect_sha256_client_cert = false;
@@ -166,8 +166,8 @@ struct TestConfig {
   // bool expect_no_secure_renegotiation = false;
   // int max_send_fragment = 0;
   // int read_size = 0;
-  // bool expect_session_id = false;
-  // bool expect_no_session_id = false;
+  bool expect_session_id = false;
+  bool expect_no_session_id = false;
   // int expect_ticket_age_skew = 0;
   // bool no_op_extra_handshake = false;
   // bool handshake_twice = false;
@@ -224,5 +224,9 @@ bool ParseConfig(int argc, char **argv, bool is_shim, TestConfig *out_initial,
 bool SetTestConfig(SSL *ssl, const TestConfig *config);
 
 const TestConfig *GetTestConfig(const SSL *ssl);
+
+bool LoadCertificate(bssl::UniquePtr<X509> *out_x509,
+                     bssl::UniquePtr<STACK_OF(X509)> *out_chain,
+                     const std::string &file);
 
 #endif  // OSSL_TEST_SHIM_TEST_CONFIG_H
