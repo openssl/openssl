@@ -451,6 +451,29 @@ static bool CheckHandshakeProperties(SSL *ssl, bool is_resume,
     return false;
   }
 
+  // Peer signature algorithms are not available after resumption
+  if (config->expect_peer_signature_algorithm != 0 && !is_resume) {
+    const char *name;
+
+    if (!SSL_get0_peer_signature_name(ssl, &name)) {
+      fprintf(stderr, "Failed to retrieve peer signature algorithm name\n");
+      return false;
+    }
+
+    auto expected =
+        GetSignatureAlgorithm(config->expect_peer_signature_algorithm);
+    if (expected.has_value()) {
+      if (strcmp(expected.value().c_str(), name) != 0) {
+        fprintf(stderr, "Peer signature algorithm was %s, wanted %s.\n",
+                name, expected.value().c_str());
+        return false;
+      }
+    } else {
+      fprintf(stderr, "Expected peer signature algorithm unknown\n");
+      return false;
+    }
+  }
+
   if (config->expect_curve_id != 0) {
     int curve_nid = SSL_get_negotiated_group(ssl);
     if (const auto group = GetGroup(config->expect_curve_id)) {

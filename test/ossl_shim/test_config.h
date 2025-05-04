@@ -33,8 +33,8 @@ struct TestConfig {
 //     bool fuzzer_mode = false;
 // #endif
   bool fallback_scsv = false;
-  // std::vector<uint16_t> signing_prefs;
-  // std::vector<uint16_t> verify_prefs;
+  std::vector<uint16_t> signing_prefs;
+  std::vector<uint16_t> verify_prefs;
   // std::vector<uint16_t> expect_peer_verify_prefs; // Not available, requires checking peer signature algorithms
   std::vector<uint16_t> curves;
   std::string key_file;
@@ -141,7 +141,7 @@ struct TestConfig {
   // bool renegotiate_ignore = false;
   // bool renegotiate_explicit = false;
   // bool forbid_renegotiation_after_handshake = false;
-  // uint16_t expect_peer_signature_algorithm = 0;
+  uint16_t expect_peer_signature_algorithm = 0;
   uint16_t expect_curve_id = 0;
   bool use_old_client_cert_callback = false;
   // int initial_timeout_duration_ms = 0;
@@ -240,5 +240,9 @@ typedef struct shim_group_st {
 // Get group by IANA/TLS id
 // Converts a BoringSSL id to OpenSSL name/nid
 std::optional<shim_group> GetGroup(uint16_t id);
+
+// Get signature algorithm by IANA/TLS id
+// Converts a BoringSSL id to OpenSSL internal name
+std::optional<std::string> GetSignatureAlgorithm(uint16_t id);
 
 #endif  // OSSL_TEST_SHIM_TEST_CONFIG_H

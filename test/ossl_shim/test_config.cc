@@ -45,6 +45,61 @@ std::optional<shim_group> GetGroup(const uint16_t id) {
   return {};
 }
 
+// BoringSSL default signature algorithms for signing
+const std::string kDefaultSignatureAlgorithmsSign =
+  "ecdsa_secp256r1_sha256:ecdsa_secp384r1_sha384:ecdsa_secp521r1_sha512"
+  ":ed25519"
+  ":rsa_pss_rsae_sha256:rsa_pss_rsae_sha384:rsa_pss_rsae_sha512"
+  ":rsa_pkcs1_sha256:rsa_pkcs1_sha384:rsa_pkcs1_sha512"
+  ":ecdsa_sha1:rsa_pkcs1_sha1";
+
+// BoringSSL default signature algorithms for verify
+const std::string kDefaultSignatureAlgorithmsVerify =
+    "ecdsa_secp256r1_sha256:ecdsa_secp384r1_sha384"
+    ":rsa_pss_rsae_sha256:rsa_pss_rsae_sha384:rsa_pss_rsae_sha512"
+    ":rsa_pkcs1_sha256:rsa_pkcs1_sha384:rsa_pkcs1_sha512"
+    ":rsa_pkcs1_sha1";
+
+static const std::unordered_map<uint16_t, std::string> kSignatureAlgorithms = {
+  {0x201, "rsa_pkcs1_sha1"},
+  {0x401, "rsa_pkcs1_sha256"},
+  {0x501, "rsa_pkcs1_sha384"},
+  {0x601, "rsa_pkcs1_sha512"},
+  {0x203, "ecdsa_sha1"},
+  {0x403, "ecdsa_secp256r1_sha256"},
+  {0x503, "ecdsa_secp384r1_sha384"},
+  {0x603, "ecdsa_secp521r1_sha512"},
+  {0x804, "rsa_pss_rsae_sha256"},
+  {0x805, "rsa_pss_rsae_sha384"},
+  {0x806, "rsa_pss_rsae_sha512"},
+  {0x807, "ed25519"}
+};
+
+std::optional<std::string> GetSignatureAlgorithm(uint16_t id) {
+  if (const auto alg = kSignatureAlgorithms.find(id); alg != kSignatureAlgorithms.end()) {
+    return {alg->second};
+  }
+
+  return {};
+}
+
+std::optional<std::string> GetSignatureAlgorithmList(const std::vector<uint16_t> &ids) {
+  std::string sigalgs;
+
+  for (int i = 0; i < ids.size(); ++i) {
+    if (i > 0) {
+      sigalgs.append(":");
+    }
+    if (const auto alg = GetSignatureAlgorithm(ids[i])) {
+      sigalgs.append(alg.value());
+    } else {
+      fprintf(stderr, "Unknown signature algorithm %hu\n", ids[i]);
+      return {};
+    }
+  }
+  return sigalgs;
+}
+
 namespace {
 
 template <typename Config>
@@ -298,6 +353,7 @@ const Flag<TestConfig> *FindFlag(const char *name) {
         BoolFlag("-dtls", &TestConfig::is_dtls),
         IntFlag("-resume-count", &TestConfig::resume_count),
         BoolFlag("-fallback-scsv", &TestConfig::fallback_scsv),
+        IntVectorFlag("-verify-prefs", &TestConfig::verify_prefs),
         IntVectorFlag("-curves", &TestConfig::curves),
         StringFlag("-trust-cert", &TestConfig::trust_cert),
         StringFlag("-expect-server-name", &TestConfig::expect_server_name),
@@ -367,6 +423,8 @@ const Flag<TestConfig> *FindFlag(const char *name) {
         BoolFlag("-expect-verify-result", &TestConfig::expect_verify_result),
         IntFlag("-expect-total-renegotiations",
                 &TestConfig::expect_total_renegotiations),
+        IntFlag("-expect-peer-signature-algorithm",
+                &TestConfig::expect_peer_signature_algorithm),
         BoolFlag("-renegotiate-freely", &TestConfig::renegotiate_freely),
         IntFlag("-expect-curve-id", &TestConfig::expect_curve_id),
         BoolFlag("-use-old-client-cert-callback",
@@ -396,6 +454,7 @@ const Flag<TestConfig> *FindFlag(const char *name) {
 
         StringFlag("-cert-file", &TestConfig::cert_file),
         StringFlag("-key-file", &TestConfig::key_file),
+        IntVectorFlag("-signing-prefs", &TestConfig::signing_prefs),
         Base64Flag("-ocsp-response", &TestConfig::ocsp_response),
 
         StringFlag("-shim-key-log-file", &TestConfig::shim_key_log_file),
@@ -786,6 +845,26 @@ static bool GetCertificate(SSL *ssl, bssl::UniquePtr<X509> *out_x509,
                            bssl::UniquePtr<EVP_PKEY> *out_pkey) {
   const TestConfig *config = GetTestConfig(ssl);
 
+  std::string sigalgs = kDefaultSignatureAlgorithmsSign;
+  if (!config->signing_prefs.empty()) {
+    auto list = GetSignatureAlgorithmList(config->signing_prefs);
+    if (list->empty()) {
+      return false;
+    }
+    sigalgs = list.value();
+  }
+  if (config->is_server) {
+    if (!SSL_set1_sigalgs_list(ssl, sigalgs.c_str())) {
+      fprintf(stderr, "Failed to set signature algorithms\n");
+      return false;
+    }
+  } else {
+    if (!SSL_set1_client_sigalgs_list(ssl, sigalgs.c_str())) {
+      fprintf(stderr, "Failed to set client signature algorithms\n");
+      return false;
+    }
+  }
+
   if (!config->key_file.empty()) {
     *out_pkey = LoadPrivateKey(config->key_file);
     if (!*out_pkey) {
@@ -1007,6 +1086,7 @@ bssl::UniquePtr<SSL_CTX> TestConfig::SetupCtx(SSL_CTX *old_ctx) const {
   // Enable TLS1.0, TLS1.1, DTLS1.0, 3DES
   SSL_CTX_set_security_level(ssl_ctx.get(), 0);
 
+  // BoringSSL default cipher list
   const std::string kDefaultCipherList =
     "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256"
     ":ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384"
@@ -1093,11 +1173,32 @@ bssl::UniquePtr<SSL_CTX> TestConfig::SetupCtx(SSL_CTX *old_ctx) const {
     SSL_CTX_set_tlsext_servername_callback(ssl_ctx.get(), ServerNameCallback);
   }
 
-  // Match BoringSSL default signature algorithms
-  auto kDefaultSigAlgs = "ECDSA+SHA256:ECDSA+SHA384:ECDSA+SHA512:Ed25519:RSA-PSS+SHA256:RSA-PSS+SHA384:RSA-PSS+SHA512:rsa_pkcs1_sha256:rsa_pkcs1_sha384:rsa_pkcs1_sha512:rsa_pkcs1_sha1:ECDSA+SHA1";
-  if (!SSL_CTX_set1_sigalgs_list(ssl_ctx.get(), kDefaultSigAlgs)) {
-    fprintf(stderr, "Failed to set default signature algorithms\n");
-    return nullptr;
+  // Trying to match the logic between BoringSSL and OpenSSL is a little
+  // confusing. BoringSSL uses defaults for sign and verify (as do the tests),
+  // while OpenSSL specifies sigalgs and client_sigalgs. The logic "swaps"
+  // between client and server:
+  // Client-Verify: list in Client hello (*_set1_sigalgs_list)
+  // Server-Sign: selection for Server key exchange (*_set1_sigalgs_list)
+  // Server-Verify: list in Certificate request (*_set1_client_sigalgs_list)
+  // Client-Sign: selection for Certificate verify (*_set1_client_sigalgs_list)
+  std::string sigalgs = kDefaultSignatureAlgorithmsVerify;
+  if (!verify_prefs.empty()) {
+    auto list = GetSignatureAlgorithmList(verify_prefs);
+    if (list->empty()) {
+      return nullptr;
+    }
+    sigalgs = list.value();
+  }
+  if (is_server) {
+    if (!SSL_CTX_set1_client_sigalgs_list(ssl_ctx.get(), sigalgs.c_str())) {
+      fprintf(stderr, "Failed to set client signature algorithms\n");
+      return nullptr;
+    }
+  } else {
+    if (!SSL_CTX_set1_sigalgs_list(ssl_ctx.get(), sigalgs.c_str())) {
+      fprintf(stderr, "Failed to set signature algorithms\n");
+      return nullptr;
+    }
   }
 
   // Always set the callback. OCSP response is only sent when the callback
