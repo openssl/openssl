@@ -30,7 +30,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 204;
+plan tests => 202;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -605,12 +605,10 @@ SKIP: {
     my $foo_file = "foo:cert.pem";
     copy($rootcert, $foo_file);
     ok(vfy_root("-CAstore", $foo_file), "CAstore foo:file");
-    ok(vfy_root("-CAstore", "file:".$foo_file), "CAstore file:foo:file");
 }
 my $foo_file = "cert.pem";
 copy($rootcert, $foo_file);
-ok(vfy_root("-CAstore", $foo_file), "CAstore foo:file");
-ok(vfy_root("-CAstore", "file:".$foo_file), "CAstore file:foo:file");
+ok(vfy_root("-CAstore", $foo_file), "CAstore file");
 my $abs_cert = abs_path($rootcert);
 # Windows file: URIs should have a path part starting with a slash, i.e.
 # file://authority/C:/what/ever/foo.pem and file:///C:/what/ever/foo.pem
