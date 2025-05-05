@@ -202,8 +202,8 @@ int custom_ext_add(SSL_CONNECTION *s, int context, WPACKET *pkt, X509 *x,
                 if (s->ext.ech.n_outer_only >= OSSL_ECH_OUTERS_MAX) {
                     OSSL_TRACE_BEGIN(TLS) {
                         BIO_printf(trc_out,
-                                "Too many outers to compress (max=%d)\n",
-                                OSSL_ECH_OUTERS_MAX);
+                                   "Too many outers to compress (max=%d)\n",
+                                   OSSL_ECH_OUTERS_MAX);
                     } OSSL_TRACE_END(TLS);
                     SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_EXTENSION);
                     return 0;
@@ -212,9 +212,9 @@ int custom_ext_add(SSL_CONNECTION *s, int context, WPACKET *pkt, X509 *x,
                 s->ext.ech.n_outer_only++;
                 OSSL_TRACE_BEGIN(TLS) {
                     BIO_printf(trc_out, "ECH compressing type "
-                            "0x%04x (tot: %d)\n",
-                            (int) meth->ext_type,
-                            (int) s->ext.ech.n_outer_only);
+                               "0x%04x (tot: %d)\n",
+                               (int) meth->ext_type,
+                               (int) s->ext.ech.n_outer_only);
                 } OSSL_TRACE_END(TLS);
             }
             if (s->ext.ech.ch_depth == 0) {
@@ -240,8 +240,8 @@ int custom_ext_add(SSL_CONNECTION *s, int context, WPACKET *pkt, X509 *x,
                     SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_EXTENSION);
                     return 0;
                 }
-                if (ossl_ech_copy_inner2outer(s, meth->ext_type, tind, pkt)
-                        != OSSL_ECH_SAME_EXT_DONE) {
+                if (ossl_ech_copy_inner2outer(s, meth->ext_type, tind,
+                                              pkt) != OSSL_ECH_SAME_EXT_DONE) {
                     /* for custom exts, we really should have found it */
                     SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_EXTENSION);
                     return 0;
@@ -496,19 +496,7 @@ int ossl_tls_add_custom_ext_intern(SSL_CTX *ctx, custom_ext_methods *exts,
      * for extension types that previously were not supported, but now are.
      */
     if (SSL_extension_supported(ext_type)
-#if !defined(OPENSSL_NO_ECH) && defined(OPENSSL_ECH_ALLOW_CUST_INJECT)
-            /*
-             * Do this conditionally so we can test an ECH in TLSv1.2 
-             * via the custom extensions API.
-             * OPENSSL_ECH_ALLOW_CUST_INJECT is defined (or not) in
-             * include/openssl/ech.h and if defined enables a test in
-             * test/ech_test.c
-             */
-            && ext_type != TLSEXT_TYPE_ech
             && ext_type != TLSEXT_TYPE_signed_certificate_timestamp)
-#else
-            && ext_type != TLSEXT_TYPE_signed_certificate_timestamp)
-#endif
         return 0;
 
     /* Extension type must fit in 16 bits */

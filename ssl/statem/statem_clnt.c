@@ -1310,7 +1310,7 @@ __owur CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s,
         goto err;
     }
     OPENSSL_free(s->ext.ech.innerch);
-    s->ext.ech.innerch = (unsigned char*)inner_mem->data;
+    s->ext.ech.innerch = (unsigned char *)inner_mem->data;
     inner_mem->data = NULL;
     s->ext.ech.innerch_len = innerlen;
     /* add inner to transcript */
