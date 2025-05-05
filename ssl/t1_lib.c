@@ -972,8 +972,10 @@ int tls1_get0_implemented_groups(int min_proto_version, int max_proto_version,
             goto end;
         gix->grp = grps;
         gix->ix = ix;
-        if (sk_TLS_GROUP_IX_push(collect, gix) <= 0)
+        if (sk_TLS_GROUP_IX_push(collect, gix) <= 0) {
+            OPENSSL_free(gix);
             goto end;
+        }
     }
 
     sk_TLS_GROUP_IX_sort(collect);
