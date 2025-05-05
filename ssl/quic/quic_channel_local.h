@@ -41,7 +41,10 @@ struct quic_channel_st {
     /*
      * The associated TLS 1.3 connection data. Used to provide the handshake
      * layer; its 'network' side is plugged into the crypto stream for each EL
-     * (other than the 0-RTT EL).
+     * (other than the 0-RTT EL). Note that the `tls` SSL object is not "owned"
+     * by this channel. It is created and managed elsewhere and is guaranteed
+     * to be valid for the lifetime of the channel. Therefore we do not free it
+     * when we free the channel.
      */
     QUIC_TLS                        *qtls;
     SSL                             *tls;
