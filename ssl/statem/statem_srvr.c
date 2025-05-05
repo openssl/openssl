@@ -2079,9 +2079,15 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
      * server random later to include the ECH accept value.
      * We can't do it now as we don't yet have the SH encoding.
      */
-    if ((s->ext.ech.es != NULL && s->ext.ech.success == 1)
-        || s->ext.ech.es == NULL)
-#endif
+    if (((s->ext.ech.es != NULL && s->ext.ech.success == 1)
+         || s->ext.ech.es == NULL)
+        && (!s->hit
+            && s->version >= TLS1_VERSION
+            && !SSL_CONNECTION_IS_TLS13(s)
+            && !SSL_CONNECTION_IS_DTLS(s)
+            && s->ext.session_secret_cb != NULL)) {
+        const SSL_CIPHER *pref_cipher = NULL;
+#else
 
     if (!s->hit
             && s->version >= TLS1_VERSION
@@ -2089,6 +2095,7 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
             && !SSL_CONNECTION_IS_DTLS(s)
             && s->ext.session_secret_cb != NULL) {
         const SSL_CIPHER *pref_cipher = NULL;
+#endif
         /*
          * s->session->master_key_length is a size_t, but this is an int for
          * backwards compat reasons
@@ -2620,7 +2627,7 @@ CON_FUNC_RETURN tls_construct_server_hello(SSL_CONNECTION *s, WPACKET *pkt)
                        s->ext.ech.success, (void *)s->ext.ech.innerch);
         } OSSL_TRACE_END(TLS);
         if ((s->ext.ech.backend == 1 || s->ext.ech.success == 1)
-             && s->ext.ech.innerch != NULL) {
+            && s->ext.ech.innerch != NULL) {
             /* do pre-existing HRR stuff */
             unsigned char hashval[EVP_MAX_MD_SIZE];
             unsigned int hashlen;
@@ -2656,10 +2663,10 @@ CON_FUNC_RETURN tls_construct_server_hello(SSL_CONNECTION *s, WPACKET *pkt)
                 /* SSLfatal() already called */
                 return CON_FUNC_ERROR;
             }
-        } else
+        } else {
             if (!create_synthetic_message_hash(s, NULL, 0, NULL, 0))
-                /* SSLfatal() already called */
-                return CON_FUNC_ERROR;
+                return CON_FUNC_ERROR; /* SSLfatal() already called */
+        }
 #else
         if (!create_synthetic_message_hash(s, NULL, 0, NULL, 0))
             /* SSLfatal() already called */
