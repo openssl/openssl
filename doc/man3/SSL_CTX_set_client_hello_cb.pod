@@ -111,6 +111,8 @@ The SSL_client_hello_get0_*() functions return raw ClientHello data, whereas
 SSL_client_hello_get1_extensions_present() returns only recognized extensions
 (so unknown/GREASE-extensions are not included).
 
+TODO(ECH): How ECH is handled here needs to be documented.
+
 =head1 RETURN VALUES
 
 The application's supplied ClientHello callback returns

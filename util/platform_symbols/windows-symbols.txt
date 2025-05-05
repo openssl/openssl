@@ -89,6 +89,7 @@ __current_exception_context
 strlen
 strstr
 strchr
+strlen
 memmove
 strrchr
 memcmp
