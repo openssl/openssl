@@ -32,11 +32,13 @@ static OSSL_FUNC_cipher_settable_ctx_params_fn chacha20_settable_ctx_params;
 #define chacha20_update ossl_cipher_generic_stream_update
 #define chacha20_final ossl_cipher_generic_stream_final
 #define chacha20_gettable_params ossl_cipher_generic_gettable_params
-#define CHACHA_U32TOU8(ct, st) do { \
-    (ct)[3] = (unsigned char)((st) >> 24); \
-    (ct)[2] = (unsigned char)((st) >> 16); \
-    (ct)[1] = (unsigned char)((st) >>  8); \
-    (ct)[0] = (unsigned char)(st); } while (0)
+#define CHACHA_U32TOU8(ct, st) \
+    do { \
+        (ct)[3] = (unsigned char)((st) >> 24); \
+        (ct)[2] = (unsigned char)((st) >> 16); \
+        (ct)[1] = (unsigned char)((st) >>  8); \
+        (ct)[0] = (unsigned char)(st); \
+    } while (0)
 
 void ossl_chacha20_initctx(PROV_CHACHA20_CTX *ctx)
 {
@@ -116,9 +118,9 @@ static int chacha20_get_ctx_params(void *vctx, OSSL_PARAM params[])
     }
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_UPDATED_IV);
     if (p != NULL) {
-        CHACHA_U32TOU8(ivbuf     , ctx->counter[0]);
-        CHACHA_U32TOU8(ivbuf +  4, ctx->counter[1]);
-        CHACHA_U32TOU8(ivbuf +  8, ctx->counter[2]);
+        CHACHA_U32TOU8(ivbuf, ctx->counter[0]);
+        CHACHA_U32TOU8(ivbuf + 4, ctx->counter[1]);
+        CHACHA_U32TOU8(ivbuf + 8, ctx->counter[2]);
         CHACHA_U32TOU8(ivbuf + 12, ctx->counter[3]);
         if (!OSSL_PARAM_set_octet_string(p, ivbuf, CHACHA20_IVLEN)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
