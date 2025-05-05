@@ -461,7 +461,8 @@ See L<EVP_PKEY-SLH-DSA(7)> and L<EVP_SIGNATURE-SLH-DSA(7)> for additional detail
 
 =head2 ML-DSA ALGORITHMS
 
-The ML-DSA algorithm is a post-quantum signature algorithm. When using ML-DSA with pkeyutl, the following options are available:
+The ML-DSA algorithm is a post-quantum signature algorithm that supports signing and verification of "raw" messages.
+No preliminary hashing is performed. When using ML-DSA with pkeyutl, the following options are available:
 
 =over 4
 
@@ -530,6 +531,14 @@ Specifies a context string in hex format, allowing binary control values. For ex
   $ openssl pkeyutl -sign -in file.txt -inkey mldsa65.pem -out sig -pkeyopt hexcontext-string:6d79636f6e74657874
 
 =back
+
+The signing operation supports a B<deterministic>:I<bool> option,
+with I<bool> set to C<1> if a deterministic signature is to be generated
+with a fixed all zero random input.
+By default, or if the I<bool> is C<0> a random entropy value is used.
+A deterministic result can also be obtained by specifying an explicit
+entropy value via the B<hextest-entropy>:I<value> parameter.
+Deterministic B<ML-DSA> signing should only be used in tests.
 
 See L<EVP_SIGNATURE-ML-DSA(7)> for additional details about the ML-DSA algorithm and its implementation.
 
