@@ -660,8 +660,8 @@ static int test_duplicate_app_data(void)
         goto end;
 
     /*
-    * Read flight 4 (app data)
-    */
+     * Read flight 4 (app data)
+     */
     if (!TEST_int_eq(SSL_read(cssl, buf, sizeof(buf)), (int)sizeof(msg)))
         goto end;
 
@@ -685,7 +685,6 @@ static int test_duplicate_app_data(void)
 
     return testresult;
 }
-
 
 /* Confirm that we can create a connections using DTLSv1_listen() */
 static int test_listen(void)
