@@ -1100,6 +1100,1025 @@ end:
     return rv;
 }
 
+/*!
+ * Given a CH find the offsets of the session id, extensions and ECH
+ * pkt is the CH
+ * sessid points to offset of session_id length
+ * exts points to offset of extensions
+ * echoffset points to offset of ECH
+ * echtype points to the ext type of the ECH
+ * inner 1 if the ECH is marked as an inner, 0 for outer
+ * snioffset points to offset of (outer) SNI
+ * return 1 for success, other otherwise
+ *
+ * Offsets are set to zero if relevant thing not found.
+ * Offsets are returned to the type or length field in question.
+ *
+ * Note: input here is untrusted!
+ */
+int ossl_ech_get_ch_offsets(SSL_CONNECTION *s, PACKET *pkt, size_t *sessid,
+                           size_t *exts, size_t *echoffset, uint16_t *echtype,
+                           int *inner, size_t *snioffset)
+{
+    const unsigned char *ch = NULL;
+    size_t ch_len = 0, extlens = 0, snilen = 0, echlen = 0;
+
+    if (s == NULL || pkt == NULL || sessid == NULL || exts == NULL
+        || echoffset == NULL || echtype == NULL || inner == NULL
+        || snioffset == NULL)
+        return 0;
+    *sessid = 0;
+    *exts = 0;
+    *echoffset = 0;
+    *echtype = OSSL_ECH_type_unknown;
+    *snioffset = 0;
+    ch_len = PACKET_remaining(pkt);
+    if (PACKET_peek_bytes(pkt, &ch, ch_len) != 1) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+    if (ossl_ech_helper_get_ch_offsets(ch, ch_len, sessid, exts, &extlens,
+                                       echoffset, echtype, &echlen,
+                                       snioffset, &snilen, inner) != 1) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+# ifdef OSSL_ECH_SUPERVERBOSE
+    OSSL_TRACE_BEGIN(TLS) {
+        BIO_printf(trc_out, "orig CH/ECH type: %4x\n", *echtype);
+    } OSSL_TRACE_END(TLS);
+    ossl_ech_pbuf("orig CH", (unsigned char *)ch, ch_len);
+    ossl_ech_pbuf("orig CH exts", (unsigned char *)ch + *exts, extlens);
+    ossl_ech_pbuf("orig CH/ECH", (unsigned char *)ch + *echoffset, echlen);
+    ossl_ech_pbuf("orig CH SNI", (unsigned char *)ch + *snioffset, snilen);
+# endif
+    return 1;
+}
+
+static void OSSL_ECH_ENCCH_free(OSSL_ECH_ENCCH *tbf)
+{
+    if (tbf == NULL)
+        return;
+    OPENSSL_free(tbf->enc);
+    OPENSSL_free(tbf->payload);
+    return;
+}
+
+/*
+ * decode outer sni value so we can trace it
+ * osni_str is the string-form of the SNI
+ * opd is the outer CH buffer
+ * opl is the length of the above
+ * snioffset is where we find the outer SNI
+ *
+ * The caller doesn't have to free the osni_str.
+ */
+static int ech_get_outer_sni(SSL_CONNECTION *s, char **osni_str,
+                             const unsigned char *opd, size_t opl,
+                             size_t snioffset)
+{
+    PACKET wrap, osni;
+    unsigned int type, osnilen;
+
+    if (snioffset >= opl
+        || !PACKET_buf_init(&wrap, opd + snioffset, opl - snioffset)
+        || !PACKET_get_net_2(&wrap, &type)
+        || type != 0
+        || !PACKET_get_net_2(&wrap, &osnilen)
+        || !PACKET_get_sub_packet(&wrap, &osni, osnilen)
+        || tls_parse_ctos_server_name(s, &osni, 0, NULL, 0) != 1)
+        return 0;
+    OPENSSL_free(s->ext.ech.outer_hostname);
+    *osni_str = s->ext.ech.outer_hostname = s->ext.hostname;
+    /* clean up what the ECH-unaware parse func above left behind */
+    s->ext.hostname = NULL;
+    s->servername_done = 0;
+    return 1;
+}
+
+/*
+ * decode EncryptedClientHello extension value
+ * pkt contains the ECH value as a PACKET
+ * extval is the returned decoded structure
+ * payload_offset is the offset to the ciphertext
+ * return 1 for good, 0 for bad
+ *
+ * SSLfatal called from inside, as needed
+ */
+static int ech_decode_inbound_ech(SSL_CONNECTION *s, PACKET *pkt,
+                                  OSSL_ECH_ENCCH **retext,
+                                  size_t *payload_offset)
+{
+    unsigned char innerorouter = 0xff;
+    unsigned int pval_tmp; /* tmp placeholder of value from packet */
+    OSSL_ECH_ENCCH *extval = NULL;
+    const unsigned char *startofech = NULL;
+
+    /*
+     * Decode the inbound ECH value.
+     *  enum { outer(0), inner(1) } ECHClientHelloType;
+     *  struct {
+     *     ECHClientHelloType type;
+     *     select (ECHClientHello.type) {
+     *         case outer:
+     *             HpkeSymmetricCipherSuite cipher_suite;
+     *             uint8 config_id;
+     *             opaque enc<0..2^16-1>;
+     *             opaque payload<1..2^16-1>;
+     *         case inner:
+     *             Empty;
+     *     };
+     *  } ECHClientHello;
+     */
+    startofech = PACKET_data(pkt);
+    extval = OPENSSL_zalloc(sizeof(OSSL_ECH_ENCCH));
+    if (extval == NULL)
+        goto err;
+    if (!PACKET_copy_bytes(pkt, &innerorouter, 1)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        goto err;
+    }
+    if (innerorouter != OSSL_ECH_OUTER_CH_TYPE) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        goto err;
+    }
+    if (!PACKET_get_net_2(pkt, &pval_tmp)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        goto err;
+    }
+    extval->kdf_id = pval_tmp & 0xffff;
+    if (!PACKET_get_net_2(pkt, &pval_tmp)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        goto err;
+    }
+    extval->aead_id = pval_tmp & 0xffff;
+    /* config id */
+    if (!PACKET_copy_bytes(pkt, &extval->config_id, 1)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        goto err;
+    }
+# ifdef OSSL_ECH_SUPERVERBOSE
+    ossl_ech_pbuf("EARLY config id", &extval->config_id, 1);
+# endif
+    s->ext.ech.attempted_cid = extval->config_id;
+    /* enc - the client's public share */
+    if (!PACKET_get_net_2(pkt, &pval_tmp)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        goto err;
+    }
+    if (pval_tmp > OSSL_ECH_MAX_GREASE_PUB) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        goto err;
+    }
+    if (pval_tmp > PACKET_remaining(pkt)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        goto err;
+    }
+    if (pval_tmp == 0 && s->hello_retry_request != SSL_HRR_PENDING) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        goto err;
+    } else if (pval_tmp > 0 && s->hello_retry_request == SSL_HRR_PENDING) {
+        unsigned char *tmpenc = NULL;
+
+        /*
+         * if doing HRR, client should only send this when GREASEing
+         * and it should be the same value as 1st time, so we'll check
+         * that
+         */
+        if (s->ext.ech.pub == NULL || s->ext.ech.pub_len == 0) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+            goto err;
+        }
+        if (pval_tmp != s->ext.ech.pub_len) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+            goto err;
+        }
+        tmpenc = OPENSSL_malloc(pval_tmp);
+        if (tmpenc == NULL)
+            goto err;
+        if (!PACKET_copy_bytes(pkt, tmpenc, pval_tmp)) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+            goto err;
+        }
+        if (memcmp(tmpenc, s->ext.ech.pub, pval_tmp)) {
+            OPENSSL_free(tmpenc);
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+            goto err;
+        }
+        OPENSSL_free(tmpenc);
+    } else if (pval_tmp == 0 && s->hello_retry_request == SSL_HRR_PENDING) {
+        if (s->ext.ech.pub == NULL || s->ext.ech.pub_len == 0) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+            goto err;
+        }
+        extval->enc_len = s->ext.ech.pub_len;
+        extval->enc = OPENSSL_malloc(extval->enc_len);
+        if (extval->enc == NULL)
+            goto err;
+        memcpy(extval->enc, s->ext.ech.pub, extval->enc_len);
+    } else {
+        extval->enc_len = pval_tmp;
+        extval->enc = OPENSSL_malloc(pval_tmp);
+        if (extval->enc == NULL)
+            goto err;
+        if (!PACKET_copy_bytes(pkt, extval->enc, pval_tmp)) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+            goto err;
+        }
+        /* squirrel away that value in case of future HRR */
+        OPENSSL_free(s->ext.ech.pub);
+        s->ext.ech.pub_len = extval->enc_len;
+        s->ext.ech.pub = OPENSSL_malloc(extval->enc_len);
+        if (s->ext.ech.pub == NULL)
+            goto err;
+        memcpy(s->ext.ech.pub, extval->enc, extval->enc_len);
+    }
+    /* payload - the encrypted CH */
+    *payload_offset = PACKET_data(pkt) - startofech;
+    if (!PACKET_get_net_2(pkt, &pval_tmp)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        goto err;
+    }
+    if (pval_tmp > OSSL_ECH_MAX_PAYLOAD_LEN) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        goto err;
+    }
+    if (pval_tmp > PACKET_remaining(pkt)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        goto err;
+    }
+    extval->payload_len = pval_tmp;
+    extval->payload = OPENSSL_malloc(pval_tmp);
+    if (extval->payload == NULL)
+        goto err;
+    if (!PACKET_copy_bytes(pkt, extval->payload, pval_tmp)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        goto err;
+    }
+    *retext = extval;
+    return 1;
+err:
+    if (extval != NULL) {
+        OSSL_ECH_ENCCH_free(extval);
+        OPENSSL_free(extval);
+        extval = NULL;
+    }
+    return 0;
+}
+
+/*
+ * find outers if any, and do initial checks
+ * pkt is the encoded inner
+ * outers is the array of outer ext types
+ * n_outers is the number of outers found
+ * return 1 for good, 0 for error
+ *
+ * recall we're dealing with recovered ECH plaintext here so
+ * the content must be a TLSv1.3 ECH encoded inner
+ */
+static int ech_find_outers(SSL_CONNECTION *s, PACKET *pkt,
+                           uint16_t *outers, size_t *n_outers)
+{
+    const unsigned char *pp_tmp;
+    unsigned int pi_tmp, extlens, etype, elen, olen;
+    int outers_found = 0;
+    size_t i;
+    PACKET op;
+
+    PACKET_null_init(&op);
+    /* chew up the packet to extensions */
+    if (!PACKET_get_net_2(pkt, &pi_tmp)
+        || pi_tmp != TLS1_2_VERSION
+        || !PACKET_get_bytes(pkt, &pp_tmp, SSL3_RANDOM_SIZE)
+        || !PACKET_get_1(pkt, &pi_tmp)
+        || pi_tmp != 0x00 /* zero'd session id */
+        || !PACKET_get_net_2(pkt, &pi_tmp) /* ciphersuite len */
+        || !PACKET_get_bytes(pkt, &pp_tmp, pi_tmp) /* suites */
+        || !PACKET_get_1(pkt, &pi_tmp) /* compression meths */
+        || pi_tmp != 0x01 /* 1 octet of comressions */
+        || !PACKET_get_1(pkt, &pi_tmp) /* compression meths */
+        || pi_tmp != 0x00 /* 1 octet of no comressions */
+        || !PACKET_get_net_2(pkt, &extlens) /* len(extensions) */
+        || extlens == 0) { /* no extensions! */
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        goto err;
+    }
+    while (PACKET_remaining(pkt) > 0 && outers_found == 0) {
+        if (!PACKET_get_net_2(pkt, &etype)) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+            goto err;
+        }
+        if (etype == TLSEXT_TYPE_outer_extensions) {
+            outers_found = 1;
+            if (!PACKET_get_length_prefixed_2(pkt, &op)) {
+                SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+                goto err;
+            }
+        } else { /* skip over */
+            if (!PACKET_get_net_2(pkt, &elen)
+                || !PACKET_get_bytes(pkt, &pp_tmp, elen)) {
+                SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+                goto err;
+            }
+        }
+    }
+
+    if (outers_found == 0) { /* which is fine! */
+        *n_outers = 0;
+        return 1;
+    }
+    /*
+     * outers has a silly internal length as well and that betterk
+     * be one less than the extension length and an even number
+     * and we only support a certain max of outers
+     */
+    if (!PACKET_get_1(&op, &olen)
+        || olen % 2 == 1
+        || olen / 2 > OSSL_ECH_OUTERS_MAX) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        goto err;
+    }
+    *n_outers = olen / 2;
+    for (i = 0; i != *n_outers; i++) {
+        if (!PACKET_get_net_2(&op, &pi_tmp)
+            || pi_tmp == TLSEXT_TYPE_outer_extensions) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+            goto err;
+        }
+        outers[i] = (uint16_t) pi_tmp;
+    }
+    return 1;
+err:
+    return 0;
+}
+
+/*
+ * copy one extension from outer to inner
+ * di is the reconstituted inner CH
+ * type2copy is the outer type to copy
+ * extsbuf is the outer extensions buffer
+ * extslen is the outer extensions buffer length
+ * return 1 for good 0 for error
+ */
+static int ech_copy_ext(SSL_CONNECTION *s, WPACKET *di, uint16_t type2copy,
+                        const unsigned char *extsbuf, size_t extslen)
+{
+    PACKET exts;
+    unsigned int etype, elen;
+    const unsigned char *eval;
+
+    if (PACKET_buf_init(&exts, extsbuf, extslen) != 1) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+    while (PACKET_remaining(&exts) > 0) {
+        if (!PACKET_get_net_2(&exts, &etype)
+            || !PACKET_get_net_2(&exts, &elen)
+            || !PACKET_get_bytes(&exts, &eval, elen)) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+            goto err;
+        }
+        if (etype == type2copy) {
+            if (!WPACKET_put_bytes_u16(di, etype)
+                || !WPACKET_put_bytes_u16(di, elen)
+                || !WPACKET_memcpy(di, eval, elen)) {
+                SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+                goto err;
+            }
+            return 1;
+        }
+    }
+    /* we didn't find such an extension - that's an error */
+    SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+err:
+    return 0;
+}
+
+/*
+ * reconstitute the inner CH from encoded inner and outers
+ * di is the reconstituted inner CH
+ * ei is the encoded inner
+ * ob is the outer CH as a buffer
+ * ob_len is the size of the above
+ * outers is the array of outer ext types
+ * n_outers is the number of outers found
+ * return 1 for good, 0 for error
+ */
+static int ech_reconstitute_inner(SSL_CONNECTION *s, WPACKET *di, PACKET *ei,
+                                  const unsigned char *ob, size_t ob_len,
+                                  uint16_t *outers, size_t n_outers)
+{
+    const unsigned char *pp_tmp, *eval, *outer_exts;
+    unsigned int pi_tmp, etype, elen, outer_extslen;
+    PACKET outer, session_id;
+    size_t i;
+
+    if (PACKET_buf_init(&outer, ob, ob_len) != 1) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+    /* read/write from encoded inner to decoded inner with help from outer */
+    if (/* version */
+        !PACKET_get_net_2(&outer, &pi_tmp)
+        || !PACKET_get_net_2(ei, &pi_tmp)
+        || !WPACKET_put_bytes_u16(di, pi_tmp)
+
+        /* client random */
+        || !PACKET_get_bytes(&outer, &pp_tmp, SSL3_RANDOM_SIZE)
+        || !PACKET_get_bytes(ei, &pp_tmp, SSL3_RANDOM_SIZE)
+        || !WPACKET_memcpy(di, pp_tmp, SSL3_RANDOM_SIZE)
+
+        /* session ID */
+        || !PACKET_get_1(ei, &pi_tmp)
+        || !PACKET_get_length_prefixed_1(&outer, &session_id)
+        || !WPACKET_start_sub_packet_u8(di)
+        || (PACKET_remaining(&session_id) != 0
+            && !WPACKET_memcpy(di, PACKET_data(&session_id),
+                               PACKET_remaining(&session_id)))
+        || !WPACKET_close(di)
+
+        /* ciphersuites */
+        || !PACKET_get_net_2(&outer, &pi_tmp) /* ciphersuite len */
+        || !PACKET_get_bytes(&outer, &pp_tmp, pi_tmp) /* suites */
+        || !PACKET_get_net_2(ei, &pi_tmp) /* ciphersuite len */
+        || !PACKET_get_bytes(ei, &pp_tmp, pi_tmp) /* suites */
+        || !WPACKET_put_bytes_u16(di, pi_tmp)
+        || !WPACKET_memcpy(di, pp_tmp, pi_tmp)
+
+        /* compression len & meth */
+        || !PACKET_get_net_2(ei, &pi_tmp)
+        || !PACKET_get_net_2(&outer, &pi_tmp)
+        || !WPACKET_put_bytes_u16(di, pi_tmp)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        goto err;
+    }
+    /* handle simple, but unlikely, case first */
+    if (n_outers == 0) {
+        if (PACKET_remaining(ei) == 0)
+            return 1; /* no exts is theoretically possible */
+        if (!PACKET_get_net_2(ei, &pi_tmp) /* len(extensions) */
+            || !PACKET_get_bytes(ei, &pp_tmp, pi_tmp)
+            || !WPACKET_put_bytes_u16(di, pi_tmp)
+            || !WPACKET_memcpy(di, pp_tmp, pi_tmp)) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+            goto err;
+        }
+        WPACKET_close(di);
+        return 1;
+    }
+    /*
+     * general case, copy one by one from inner, 'till we hit
+     * the outers extension, then copy one by one from outer
+     */
+    if (!PACKET_get_net_2(ei, &pi_tmp) /* len(extensions) */
+        || !PACKET_get_net_2(&outer, &outer_extslen)
+        || !PACKET_get_bytes(&outer, &outer_exts, outer_extslen)
+        || !WPACKET_start_sub_packet_u16(di)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        goto err;
+    }
+    while (PACKET_remaining(ei) > 0) {
+        if (!PACKET_get_net_2(ei, &etype)
+            || !PACKET_get_net_2(ei, &elen)
+            || !PACKET_get_bytes(ei, &eval, elen)) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+            goto err;
+        }
+        if (etype == TLSEXT_TYPE_outer_extensions) {
+            for (i = 0; i != n_outers; i++) {
+                if (ech_copy_ext(s, di, outers[i],
+                                 outer_exts, outer_extslen) != 1)
+                    goto err;
+            }
+        } else {
+            if (!WPACKET_put_bytes_u16(di, etype)
+                || !WPACKET_put_bytes_u16(di, elen)
+                || !WPACKET_memcpy(di, eval, elen)) {
+                SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+                goto err;
+            }
+        }
+    }
+    WPACKET_close(di);
+    return 1;
+err:
+    WPACKET_cleanup(di);
+    return 0;
+}
+
+/*
+ * After successful ECH decrypt, we decode, decompress etc.
+ * ob is the outer CH as a buffer
+ * ob_len is the size of the above
+ * return 1 for success, error otherwise
+ *
+ * We need the outer CH as a buffer (ob, below) so we can
+ * ECH-decompress.
+ * The plaintext we start from is in encoded_innerch
+ * and our final decoded, decompressed buffer will end up
+ * in innerch (which'll then be further processed).
+ * That further processing includes all existing decoding
+ * checks so we should be fine wrt fuzzing without having
+ * to make all checks here (e.g. we can assume that the
+ * protocol version, NULL compression etc are correct here -
+ * if not, those'll be caught later).
+ * Note: there are a lot of literal values here, but it's
+ * not clear that changing those to #define'd symbols will
+ * help much - a change to the length of a type or from a
+ * 2 octet length to longer would seem unlikely.
+ */
+static int ech_decode_inner(SSL_CONNECTION *s, const unsigned char *ob,
+                            size_t ob_len, unsigned char *encoded_inner,
+                            size_t encoded_inner_len)
+{
+    int rv = 0;
+    PACKET ei; /* encoded inner */
+    BUF_MEM *di_mem = NULL;
+    uint16_t outers[OSSL_ECH_OUTERS_MAX]; /* compressed extension types */
+    size_t n_outers = 0;
+    WPACKET di;
+
+    if (encoded_inner == NULL || ob == NULL || ob_len == 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    if ((di_mem = BUF_MEM_new()) == NULL
+        || !BUF_MEM_grow(di_mem, SSL3_RT_MAX_PLAIN_LENGTH)
+        || !WPACKET_init(&di, di_mem)
+        || !WPACKET_put_bytes_u8(&di, SSL3_MT_CLIENT_HELLO)
+        || !WPACKET_start_sub_packet_u24(&di)
+        || !PACKET_buf_init(&ei, encoded_inner, encoded_inner_len)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+# ifdef OSSL_ECH_SUPERVERBOSE
+    memset(outers, -1, sizeof(outers)); /* fill with known values for debug */
+# endif
+
+    /* 1. check for outers and make inital checks of those */
+    if (ech_find_outers(s, &ei, outers, &n_outers) != 1)
+        goto err; /* SSLfatal called already */
+
+    /* 2. reconstitute inner CH */
+    /* reset ei */
+    if (PACKET_buf_init(&ei, encoded_inner, encoded_inner_len) != 1) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+    if (ech_reconstitute_inner(s, &di, &ei, ob, ob_len, outers, n_outers) != 1)
+        goto err; /* SSLfatal called already */
+    /* 3. store final inner CH in connection */
+    WPACKET_close(&di);
+    if (!WPACKET_get_length(&di, &s->ext.ech.innerch_len))
+        goto err;
+    OPENSSL_free(s->ext.ech.innerch);
+    s->ext.ech.innerch = OPENSSL_malloc(s->ext.ech.innerch_len);
+    if (s->ext.ech.innerch == NULL)
+        goto err;
+    memcpy(s->ext.ech.innerch, di_mem->data, s->ext.ech.innerch_len);
+    rv = 1;
+err:
+    WPACKET_cleanup(&di);
+    BUF_MEM_free(di_mem);
+    return rv;
+}
+
+/*
+ * wrapper for hpke_dec just to save code repetition
+ * ech is the selected ECHConfig
+ * the_ech is the value sent by the client
+ * aad_len is the length of the AAD to use
+ * aad is the AAD to use
+ * forhrr is 0 if not hrr, 1 if this is for 2nd CH
+ * innerlen points to the size of the recovered plaintext
+ * return pointer to plaintext or NULL (if error)
+ *
+ * The plaintext returned is allocated here and must
+ * be freed by the caller later.
+ */
+static unsigned char *hpke_decrypt_encch(SSL_CONNECTION *s,
+                                         OSSL_ECHSTORE_ENTRY *ee,
+                                         OSSL_ECH_ENCCH *the_ech,
+                                         size_t aad_len, unsigned char *aad,
+                                         int forhrr, size_t *innerlen)
+{
+    size_t cipherlen = 0;
+    unsigned char *cipher = NULL;
+    size_t senderpublen = 0;
+    unsigned char *senderpub = NULL;
+    size_t clearlen = 0;
+    unsigned char *clear = NULL;
+    int hpke_mode = OSSL_HPKE_MODE_BASE;
+    OSSL_HPKE_SUITE hpke_suite = OSSL_HPKE_SUITE_DEFAULT;
+    unsigned char info[SSL3_RT_MAX_PLAIN_LENGTH];
+    size_t info_len = SSL3_RT_MAX_PLAIN_LENGTH;
+    int rv = 0;
+    OSSL_HPKE_CTX *hctx = NULL;
+# ifdef OSSL_ECH_SUPERVERBOSE
+    size_t publen = 0;
+    unsigned char *pub = NULL;
+# endif
+
+    cipherlen = the_ech->payload_len;
+    cipher = the_ech->payload;
+    senderpublen = the_ech->enc_len;
+    senderpub = the_ech->enc;
+    hpke_suite.aead_id = the_ech->aead_id;
+    hpke_suite.kdf_id = the_ech->kdf_id;
+    clearlen = cipherlen; /* small overestimate */
+    clear = OPENSSL_malloc(clearlen);
+    if (clear == NULL || ee == NULL || ee->nsuites == 0)
+        return NULL;
+    /* The kem_id will be the same for all suites in the entry */
+    hpke_suite.kem_id = ee->suites[0].kem_id;
+# ifdef OSSL_ECH_SUPERVERBOSE
+    publen = ee->pub_len;
+    pub = ee->pub;
+    ossl_ech_pbuf("aad", aad, aad_len);
+    ossl_ech_pbuf("my local pub", pub, publen);
+    ossl_ech_pbuf("senderpub", senderpub, senderpublen);
+    ossl_ech_pbuf("cipher", cipher, cipherlen);
+# endif
+    if (ossl_ech_make_enc_info(ee->encoded, ee->encoded_len,
+                                      info, &info_len) != 1) {
+        OPENSSL_free(clear);
+        return NULL;
+    }
+# ifdef OSSL_ECH_SUPERVERBOSE
+    ossl_ech_pbuf("info", info, info_len);
+# endif
+    OSSL_TRACE_BEGIN(TLS) {
+        BIO_printf(trc_out,
+                   "hpke_dec suite: kem: %04x, kdf: %04x, aead: %04x\n",
+                   hpke_suite.kem_id, hpke_suite.kdf_id, hpke_suite.aead_id);
+    } OSSL_TRACE_END(TLS);
+    /*
+     * We may generate externally visible OpenSSL errors
+     * if decryption fails (which is normal) but we'll
+     * ignore those as we might be dealing with a GREASEd
+     * ECH. The way to do that is to consume all
+     * errors generated internally during the attempt
+     * to decrypt. Failing to clear those errors can
+     * trigger an application to consider TLS session
+     * establishment has failed when someone just
+     * GREASEd or used an old key.  But to do that we
+     * first need to know there are no other errors in
+     * the queue that we ought not consume as the application
+     * really should know about those.
+     */
+    if (ERR_peek_error() != 0) {
+        OPENSSL_free(clear);
+        return NULL;
+    }
+    /* Use OSSL_HPKE_* APIs */
+    hctx = OSSL_HPKE_CTX_new(hpke_mode, hpke_suite, OSSL_HPKE_ROLE_RECEIVER,
+                             NULL, NULL);
+    if (hctx == NULL)
+        goto clearerrs;
+    rv = OSSL_HPKE_decap(hctx, senderpub, senderpublen, ee->keyshare,
+                         info, info_len);
+    if (rv != 1)
+        goto clearerrs;
+    if (forhrr == 1) {
+        rv = OSSL_HPKE_CTX_set_seq(hctx, 1);
+        if (rv != 1) {
+            /* don't clear this error - GREASE can't cause it */
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            goto end;
+        }
+    }
+    rv = OSSL_HPKE_open(hctx, clear, &clearlen, aad, aad_len,
+                        cipher, cipherlen);
+    if (rv != 1)
+        goto clearerrs;
+
+clearerrs:
+    /*
+     * clear errors from failed decryption as per the above
+     * we do this before checking the result from hpke_dec
+     * then return, or carry on
+     */
+    while (ERR_get_error() != 0);
+end:
+    OSSL_HPKE_CTX_free(hctx);
+    if (rv != 1) {
+        OSSL_TRACE(TLS, "HPKE decryption failed somehow\n");
+        OPENSSL_free(clear);
+        return NULL;
+    }
+# ifdef OSSL_ECH_SUPERVERBOSE
+    ossl_ech_pbuf("padded clear", clear, clearlen);
+# endif
+    /* we need to remove possible (actually, v. likely) padding */
+    *innerlen = clearlen;
+    if (ee->version == OSSL_ECH_RFCXXXX_VERSION) {
+        /* draft-13 pads after the encoded CH with zeros */
+        size_t extsoffset = 0;
+        size_t extslen = 0;
+        size_t ch_len = 0;
+        size_t startofsessid = 0;
+        size_t echoffset = 0; /* offset of start of ECH within CH */
+        uint16_t echtype = OSSL_ECH_type_unknown; /* type of ECH seen */
+        size_t outersnioffset = 0; /* offset to SNI in outer */
+        int innerflag = -1;
+        PACKET innerchpkt;
+
+        if (PACKET_buf_init(&innerchpkt, clear, clearlen) != 1) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+            OPENSSL_free(clear);
+            return NULL;
+        }
+        rv = ossl_ech_get_ch_offsets(s, &innerchpkt, &startofsessid,
+                                     &extsoffset, &echoffset, &echtype,
+                                     &innerflag, &outersnioffset);
+        if (rv != 1) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+            OPENSSL_free(clear);
+            return NULL;
+        }
+        /* odd form of check below just for emphasis */
+        if ((extsoffset + 1) > clearlen) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+            OPENSSL_free(clear);
+            return NULL;
+        }
+        extslen = (unsigned char)(clear[extsoffset]) * 256
+            + (unsigned char)(clear[extsoffset + 1]);
+        ch_len = extsoffset + 2 + extslen;
+        /* the check below protects us from bogus data */
+        if (ch_len > clearlen) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+            OPENSSL_free(clear);
+            return NULL;
+        }
+        /*
+         * The RFC calls for that padding to be all zeros. I'm not so
+         * keen on that being a good idea to enforce, so we'll make it
+         * easy to not do so (but check by default)
+         */
+# define CHECKZEROS
+# ifdef CHECKZEROS
+        {
+            size_t zind = 0;
+            size_t nonzeros = 0;
+            size_t zeros = 0;
+
+            if (*innerlen < ch_len) {
+                OPENSSL_free(clear);
+                return NULL;
+            }
+            for (zind = ch_len; zind != *innerlen; zind++) {
+                if (clear[zind] == 0x00) {
+                    zeros++;
+                } else {
+                    nonzeros++;
+                }
+            }
+            if (nonzeros > 0 || zeros != (*innerlen - ch_len)) {
+                OPENSSL_free(clear);
+                return NULL;
+            }
+        }
+# endif
+        *innerlen = ch_len;
+# ifdef OSSL_ECH_SUPERVERBOSE
+        ossl_ech_pbuf("unpadded clear", clear, *innerlen);
+# endif
+        return clear;
+    }
+    OPENSSL_free(clear);
+    return NULL;
+}
+
+/*
+ * If an ECH is present, attempt decryption
+ * outerpkt is the packet with the outer CH
+ * newpkt is the packet with the decrypted inner CH
+ * return 1 for success, other otherwise
+ *
+ * If decryption succeeds, the caller can swap the inner and outer
+ * CHs so that all further processing will only take into account
+ * the inner CH.
+ *
+ * The fact that decryption worked is signalled to the caller
+ * via s->ext.ech.success
+ *
+ * This function is called early, (hence the name:-), before
+ * the outer CH decoding has really started, so we need to be
+ * careful peeking into the packet
+ *
+ * The plan:
+ * 1. check if there's an ECH
+ * 2. trial-decrypt or check if config matches one loaded
+ * 3. if decrypt fails tee-up GREASE
+ * 4. if decrypt worked, decode and de-compress cleartext to
+ *    make up real inner CH for later processing
+ */
+int ossl_ech_early_decrypt(SSL_CONNECTION *s, PACKET *outerpkt, PACKET *newpkt)
+{
+    int rv = 0, num = 0, cfgind = -1, foundcfg = 0, forhrr = 0, innerflag = -1;
+    OSSL_ECH_ENCCH *extval = NULL;
+    PACKET echpkt;
+    const unsigned char *startofech = NULL, *opd = NULL;
+    size_t echlen = 0, clearlen = 0, aad_len = SSL3_RT_MAX_PLAIN_LENGTH;
+    unsigned char *clear = NULL, aad[SSL3_RT_MAX_PLAIN_LENGTH];
+    /* offsets of things within CH */
+    size_t startofsessid = 0, startofexts = 0, echoffset = 0;
+    size_t outersnioffset = 0, startofciphertext = 0;
+    size_t lenofciphertext = 0, opl = 0;
+    uint16_t echtype = OSSL_ECH_type_unknown; /* type of ECH seen */
+    char *osni_str = NULL;
+    OSSL_ECHSTORE *es = NULL;
+    OSSL_ECHSTORE_ENTRY *ee = NULL;
+
+    if (s == NULL)
+        return 0;
+    if (outerpkt == NULL || newpkt == NULL) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+    /* find offsets - on success, outputs are safe to use */
+    rv = ossl_ech_get_ch_offsets(s, outerpkt, &startofsessid, &startofexts,
+                                 &echoffset, &echtype, &innerflag,
+                                 &outersnioffset);
+    if (rv != 1) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+    if (echoffset == 0 || echtype != TLSEXT_TYPE_ech)
+        return 1; /* ECH not present or wrong version */
+    if (innerflag == 1) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+    s->ext.ech.attempted = 1; /* Remember that we got an ECH */
+    s->ext.ech.attempted_type = echtype;
+    if (s->hello_retry_request == SSL_HRR_PENDING)
+        forhrr = 1; /* set forhrr if that's correct */
+    opl = PACKET_remaining(outerpkt);
+    opd = PACKET_data(outerpkt);
+    s->tmp_session_id_len = opd[startofsessid]; /* grab the session id */
+    if (s->tmp_session_id_len > SSL_MAX_SSL_SESSION_ID_LENGTH
+        || startofsessid + 1 + s->tmp_session_id_len > opl) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        goto err;
+    }
+    memcpy(s->tmp_session_id, &opd[startofsessid + 1],
+           s->tmp_session_id_len);
+    if (outersnioffset > 0) { /* Grab the outer SNI for tracing */
+        if (ech_get_outer_sni(s, &osni_str, opd, opl, outersnioffset) != 1
+            || osni_str == NULL) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+            goto err;
+        }
+        OSSL_TRACE1(TLS, "EARLY: outer SNI of %s\n", osni_str);
+    } else {
+        OSSL_TRACE(TLS, "EARLY: no sign of an outer SNI\n");
+    }
+    /* trial-decrypt or check if config matches one loaded */
+    if (echoffset > opl - 4)
+        goto err;
+    startofech = &opd[echoffset + 4];
+    echlen = opd[echoffset + 2] * 256 + opd[echoffset + 3];
+    if (echlen > opl - echoffset - 4)
+        goto err;
+    if (PACKET_buf_init(&echpkt, startofech, echlen) != 1) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        goto err;
+    }
+    if (ech_decode_inbound_ech(s, &echpkt, &extval, &startofciphertext) != 1)
+        goto err; /* SSLfatal already called if needed */
+    /*
+     * startofciphertext so far is within the ECH value and after the
+     * length of the ciphertext, so we need to bump it by the offset
+     * of ECH within the CH plus the ECH type (2 octets) and
+     * length (also 2 octets) and that ciphertext length (another
+     * 2 octets) for a total of 6 octets
+     */
+    startofciphertext += echoffset + 6;
+    lenofciphertext = extval->payload_len;
+    aad_len = opl;
+    memcpy(aad, opd, aad_len);
+    memset(aad + startofciphertext, 0, lenofciphertext);
+# ifdef OSSL_ECH_SUPERVERBOSE
+    ossl_ech_pbuf("EARLY aad", aad, aad_len);
+# endif
+    /* See if any of our configs match, or trial decrypt if needed */
+    s->ext.ech.grease = OSSL_ECH_GREASE_UNKNOWN;
+    if (s->ext.ech.es == NULL) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        goto err;
+    }
+    es = s->ext.ech.es;
+    num = (es == NULL || es->entries == NULL ? 0
+           : sk_OSSL_ECHSTORE_ENTRY_num(es->entries));
+    for (cfgind = 0; cfgind != num; cfgind++) {
+        ee = sk_OSSL_ECHSTORE_ENTRY_value(es->entries, cfgind);
+
+        OSSL_TRACE_BEGIN(TLS) {
+            BIO_printf(trc_out,
+                       "EARLY: rx'd config id (%x) ==? %d-th configured (%x)\n",
+                       extval->config_id, cfgind, ee->config_id);
+        } OSSL_TRACE_END(TLS);
+        if (extval->config_id == ee->config_id) {
+            foundcfg = 1;
+            break;
+        }
+    }
+    if (foundcfg == 1) {
+        clear = hpke_decrypt_encch(s, ee, extval, aad_len, aad,
+                                   forhrr, &clearlen);
+        if (clear == NULL)
+            s->ext.ech.grease = OSSL_ECH_IS_GREASE;
+    }
+    /* if still needed, trial decryptions */
+    if (clear == NULL && (s->options & SSL_OP_ECH_TRIALDECRYPT)) {
+        foundcfg = 0; /* reset as we're trying again */
+        for (cfgind = 0; cfgind != num; cfgind++) {
+            ee = sk_OSSL_ECHSTORE_ENTRY_value(es->entries, cfgind);
+            clear = hpke_decrypt_encch(s, ee, extval,
+                                       aad_len, aad, forhrr, &clearlen);
+            if (clear != NULL) {
+                foundcfg = 1;
+                s->ext.ech.grease = OSSL_ECH_NOT_GREASE;
+                break;
+            }
+        }
+    }
+    /* decrypting worked or not, but we're done with that now  */
+    s->ext.ech.done = 1;
+    /* 3. if decrypt fails tee-up GREASE */
+    s->ext.ech.grease = OSSL_ECH_IS_GREASE;
+    s->ext.ech.success = 0;
+    if (clear != NULL) {
+        s->ext.ech.grease = OSSL_ECH_NOT_GREASE;
+        s->ext.ech.success = 1;
+    }
+    OSSL_TRACE_BEGIN(TLS) {
+        BIO_printf(trc_out, "EARLY: success: %d, assume_grease: %d, "
+                   "foundcfg: %d, cfgind: %d, clearlen: %zd, clear %p\n",
+                   s->ext.ech.success, s->ext.ech.grease, foundcfg,
+                   cfgind, clearlen, (void *)clear);
+    } OSSL_TRACE_END(TLS);
+# ifdef OSSL_ECH_SUPERVERBOSE
+    if (foundcfg == 1 && clear != NULL) { /* Bit more logging */
+        ossl_ech_pbuf("local config_id", &ee->config_id, 1);
+        ossl_ech_pbuf("remote config_id", &extval->config_id, 1);
+        ossl_ech_pbuf("clear", clear, clearlen);
+    }
+# endif
+    if (extval != NULL) {
+        OSSL_ECH_ENCCH_free(extval);
+        OPENSSL_free(extval);
+        extval = NULL;
+    }
+    if (s->ext.ech.grease == OSSL_ECH_IS_GREASE) {
+        OPENSSL_free(clear);
+        return 1;
+    }
+    /* 4. if decrypt worked, de-compress cleartext to make up real inner CH */
+    if (ech_decode_inner(s, opd, opl, clear, clearlen) != 1) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+    OPENSSL_free(clear);
+# ifdef OSSL_ECH_SUPERVERBOSE
+    ossl_ech_pbuf("Inner CH (decoded)", s->ext.ech.innerch, s->ext.ech.innerch_len);
+# endif
+    /*
+     * The +4 below is because tls_process_client_hello doesn't
+     * want to be given the message type & length, so the buffer should
+     * start with the version octets (0x03 0x03)
+     */
+    if (PACKET_buf_init(newpkt, s->ext.ech.innerch + 4,
+                        s->ext.ech.innerch_len - 4) != 1) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+    /* we may need to fix up the overall 3-octet CH length */
+    if (s->init_buf != NULL && s->init_buf->data != NULL) {
+        unsigned char *rwm = (unsigned char *)s->init_buf->data;
+        size_t olen = s->ext.ech.innerch_len - 4;
+
+        rwm[1] = (olen >> 16) % 256;
+        rwm[2] = (olen >> 8) % 256;
+        rwm[3] = olen % 256;
+    }
+    if (ossl_ech_intbuf_add(s, s->ext.ech.innerch, s->ext.ech.innerch_len, 0) != 1) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+    return 1;
+err:
+    if (extval != NULL) {
+        OSSL_ECH_ENCCH_free(extval);
+        OPENSSL_free(extval);
+        extval = NULL;
+    }
+    OPENSSL_free(clear);
+    return 0;
+}
+
 int ossl_ech_intbuf_add(SSL_CONNECTION *s, const unsigned char *buf,
                         size_t blen, int hash_existing)
 {

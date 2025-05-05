@@ -118,6 +118,33 @@ typedef struct ossl_echstore_entry_st {
     unsigned char *encoded; /* overall encoded content */
 } OSSL_ECHSTORE_ENTRY;
 
+/*
+ * What we send in the ech CH extension:
+ *     enum { outer(0), inner(1) } ECHClientHelloType;
+ *     struct {
+ *        ECHClientHelloType type;
+ *        select (ECHClientHello.type) {
+ *            case outer:
+ *                HpkeSymmetricCipherSuite cipher_suite;
+ *                uint8 config_id;
+ *                opaque enc<0..2^16-1>;
+ *                opaque payload<1..2^16-1>;
+ *            case inner:
+ *                Empty;
+ *        };
+ *     } ECHClientHello;
+ *
+ */
+typedef struct ech_encch_st {
+    uint16_t kdf_id; /* ciphersuite  */
+    uint16_t aead_id; /* ciphersuite  */
+    uint8_t config_id; /* (maybe) identifies DNS RR value used */
+    size_t enc_len; /* public share */
+    unsigned char *enc; /* public share for sender */
+    size_t payload_len; /* ciphertext  */
+    unsigned char *payload; /* ciphertext  */
+} OSSL_ECH_ENCCH;
+
 DEFINE_STACK_OF(OSSL_ECHSTORE_ENTRY)
 
 struct ossl_echstore_st {

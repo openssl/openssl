@@ -893,11 +893,15 @@ static int ech_ingest_test(int run)
      * Occasionally, flush_time will be 1 more than add_time. We'll
      * check for that as that should catch a few more code paths
      * in the flush_keys API.
+     * When flush_time is 1 more, we may or may not have flushed
+     * the one and only key (depending on which "side" of the second
+     * it was generated, so we may be left with 0 or 1 keys.
      */
     if (!TEST_true(OSSL_ECHSTORE_flush_keys(es, flush_time - add_time))
         || !TEST_int_eq(OSSL_ECHSTORE_num_keys(es, &keysaftr), 1)
         || ((flush_time <= add_time) && !TEST_int_eq(keysaftr, 0))
-        || ((flush_time > add_time) && !TEST_int_eq(keysaftr, 1))) {
+        || ((flush_time > add_time) && !TEST_int_eq(keysaftr, 1)
+             && !TEST_int_eq(keysaftr, 1))) {
         TEST_info("Flush time: %lld, add_time: %lld", (long long)flush_time,
                   (long long)add_time);
         goto end;
@@ -1141,6 +1145,7 @@ end:
 # define OSSL_ECH_TEST_EARLY    2
 # define OSSL_ECH_TEST_CUSTOM   3
 # define OSSL_ECH_TEST_ENOE     4 /* early + no-ech */
+/* note: early-data is prohibited after HRR so no tests for that */
 
 /*
  * @brief ECH roundtrip test helper
@@ -1155,13 +1160,6 @@ end:
  *
  * The combo input is one of the #define'd OSSL_ECH_TEST_*
  * values above.
- *
- * TODO(ECH): we're not yet really attempting ECH, but we currently
- * set the inputs as if we were doing ECH, yet don't expect to see
- * real ECH status outcomes, so while we do make calls to get that
- * status outcome, we don't compare vs. real expected results.
- * That's done via the "if (0 &&" clauses below which will be
- * removed once ECH is really being attempted.
  */
 static int test_ech_roundtrip_helper(int idx, int combo)
 {
@@ -1205,10 +1203,9 @@ static int test_ech_roundtrip_helper(int idx, int combo)
     if (combo == OSSL_ECH_TEST_EARLY || combo == OSSL_ECH_TEST_ENOE) {
         if (!TEST_true(SSL_CTX_set_options(sctx, SSL_OP_NO_ANTI_REPLAY))
             || !TEST_true(SSL_CTX_set_max_early_data(sctx,
-                                                     SSL3_RT_MAX_PLAIN_LENGTH)))
-            goto end;
-        if (!TEST_true(SSL_CTX_set_recv_max_early_data(sctx,
-                                                       SSL3_RT_MAX_PLAIN_LENGTH)))
+                                                     SSL3_RT_MAX_PLAIN_LENGTH))
+            || !TEST_true(SSL_CTX_set_recv_max_early_data(sctx,
+                                                          SSL3_RT_MAX_PLAIN_LENGTH)))
             goto end;
     }
     if (combo == OSSL_ECH_TEST_CUSTOM) {
@@ -1239,58 +1236,38 @@ static int test_ech_roundtrip_helper(int idx, int combo)
         goto end;
     if (!TEST_true(SSL_set_tlsext_host_name(clientssl, "server.example")))
         goto end;
-# undef DROPFORNOW
-# ifdef DROPFORNOW
-    /* TODO(ECH): we'll re-instate this once server-side ECH code is in */
     if (!TEST_true(create_ssl_connection(serverssl, clientssl,
                                          SSL_ERROR_NONE)))
-        goto end;
-# else
-    /*
-     * For this PR, check connections fail when client does ECH
-     * and server doesn't, but work if client doesn't do ECH.
-     * Added in early data for the no-ECH case because an
-     * intermediate state of the code had an issue.
-     */
-    if (combo != OSSL_ECH_TEST_ENOE
-        && !TEST_false(create_ssl_connection(serverssl, clientssl,
-                                             SSL_ERROR_NONE)))
-        goto end;
-    if (combo == OSSL_ECH_TEST_ENOE
-        && !TEST_true(create_ssl_connection(serverssl, clientssl,
-                                            SSL_ERROR_NONE)))
-        goto end;
-# endif
-    serverstatus = SSL_ech_get1_status(serverssl, &sinner, &souter);
-    if (verbose)
-        TEST_info("server status %d, %s, %s", serverstatus, sinner, souter);
-    if (0 && !TEST_int_eq(serverstatus, SSL_ECH_STATUS_SUCCESS))
         goto end;
     /* override cert verification */
     SSL_set_verify_result(clientssl, X509_V_OK);
     clientstatus = SSL_ech_get1_status(clientssl, &cinner, &couter);
     if (verbose)
         TEST_info("client status %d, %s, %s", clientstatus, cinner, couter);
-    if (0 && !TEST_int_eq(clientstatus, SSL_ECH_STATUS_SUCCESS))
+    serverstatus = SSL_ech_get1_status(serverssl, &sinner, &souter);
+    if (verbose)
+        TEST_info("server status %d, %s, %s", serverstatus, sinner, souter);
+    if (combo != OSSL_ECH_TEST_ENOE 
+        && !TEST_int_eq(serverstatus, SSL_ECH_STATUS_SUCCESS))
+        goto end;
+    if (combo == OSSL_ECH_TEST_ENOE
+        && !TEST_int_eq(serverstatus, SSL_ECH_STATUS_NOT_TRIED))
+        goto end;
+    if (combo != OSSL_ECH_TEST_ENOE
+        && !TEST_int_eq(clientstatus, SSL_ECH_STATUS_SUCCESS))
+        goto end;
+    if (combo == OSSL_ECH_TEST_ENOE
+        && !TEST_int_eq(clientstatus, SSL_ECH_STATUS_NOT_CONFIGURED))
         goto end;
     /* all good */
-    if (combo == OSSL_ECH_TEST_BASIC
-        || combo == OSSL_ECH_TEST_HRR
+    if (combo == OSSL_ECH_TEST_BASIC || combo == OSSL_ECH_TEST_HRR
         || combo == OSSL_ECH_TEST_CUSTOM) {
         res = 1;
         goto end;
     }
     /* continue for EARLY test */
-# ifdef DROPFORNOW
-    /* TODO(ECH): turn back on later */
     if (combo != OSSL_ECH_TEST_EARLY && combo != OSSL_ECH_TEST_ENOE)
         goto end;
-# else
-    if (combo != OSSL_ECH_TEST_ENOE) {
-        res = 1;
-        goto end;
-    }
-# endif
     /* shutdown for start over */
     sess = SSL_get1_session(clientssl);
     OPENSSL_free(sinner);
@@ -1310,8 +1287,8 @@ static int test_ech_roundtrip_helper(int idx, int combo)
         || !TEST_true(SSL_set_session(clientssl, sess))
         || !TEST_true(SSL_write_early_data(clientssl, ed, sizeof(ed), &written))
         || !TEST_size_t_eq(written, sizeof(ed))
-        || !TEST_int_eq(SSL_read_early_data(serverssl, buf,
-                                            sizeof(buf), &readbytes),
+        || !TEST_int_eq(SSL_read_early_data(serverssl, buf, sizeof(buf),
+                                            &readbytes),
                         SSL_READ_EARLY_DATA_SUCCESS)
         || !TEST_size_t_eq(written, readbytes))
         goto end;
@@ -1324,17 +1301,25 @@ static int test_ech_roundtrip_helper(int idx, int combo)
             || !TEST_true(SSL_read_ex(clientssl, buf, sizeof(buf), &readbytes))
             || !TEST_mem_eq(buf, readbytes, ed, sizeof(ed)))
         goto end;
-    serverstatus = SSL_ech_get1_status(serverssl, &sinner, &souter);
-    if (verbose)
-        TEST_info("server status %d, %s, %s", serverstatus, sinner, souter);
-    if (0 && !TEST_int_eq(serverstatus, SSL_ECH_STATUS_SUCCESS))
-        goto end;
     /* override cert verification */
     SSL_set_verify_result(clientssl, X509_V_OK);
     clientstatus = SSL_ech_get1_status(clientssl, &cinner, &couter);
     if (verbose)
         TEST_info("client status %d, %s, %s", clientstatus, cinner, couter);
-    if (0 && !TEST_int_eq(clientstatus, SSL_ECH_STATUS_SUCCESS))
+    serverstatus = SSL_ech_get1_status(serverssl, &sinner, &souter);
+    if (verbose)
+        TEST_info("server status %d, %s, %s", serverstatus, sinner, souter);
+    if (combo != OSSL_ECH_TEST_ENOE
+        && !TEST_int_eq(serverstatus, SSL_ECH_STATUS_SUCCESS))
+        goto end;
+    if (combo == OSSL_ECH_TEST_ENOE
+        && !TEST_int_eq(serverstatus, SSL_ECH_STATUS_NOT_TRIED))
+        goto end;
+    if (combo != OSSL_ECH_TEST_ENOE
+        && !TEST_int_eq(clientstatus, SSL_ECH_STATUS_SUCCESS))
+        goto end;
+    if (combo == OSSL_ECH_TEST_ENOE
+        && !TEST_int_eq(clientstatus, SSL_ECH_STATUS_NOT_CONFIGURED))
         goto end;
     /* all good */
     res = 1;

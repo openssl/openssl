@@ -66,6 +66,22 @@
 #  define OSSL_ECH_NO_RETRY  0
 
 /*
+ * Define this if you want to allow a test where we inject an ECH
+ * extension into a TLSv1.2 client hello message via the custom
+ * extensions handler in order to test that doesn't break anything.
+ * Without this, we won't allow adding an ECH via the custom exts
+ * API, as ECH is a standard supported extension.
+ * There is a test case in test/ech_test.c that is run when this is
+ * defined, but not otherwise. The code to allow injection is in
+ * ssl/statem/extension_cust.c.
+ * This should probably be defined elsewhere, in some header that's
+ * included in both test/ech_test.c and ssl/statem/extension_cust.c
+ * but I'm not sure where that'd be so here will do for now. Or maybe
+ * there's a better way to do this test.
+ */
+#  define OPENSSL_ECH_ALLOW_CUST_INJECT
+
+/*
  * API calls built around OSSL_ECHSTORE
  */
 OSSL_ECHSTORE *OSSL_ECHSTORE_new(OSSL_LIB_CTX *libctx, const char *propq);

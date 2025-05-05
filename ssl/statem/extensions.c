@@ -497,13 +497,8 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST,
         OSSL_ECH_HANDLING_CALL_BOTH,
         init_ech,
-        /*
-         * TODO(ECH): add server calls as per below in a bit
-         * tls_parse_ctos_ech, tls_parse_stoc_ech,
-         * tls_construct_stoc_ech, tls_construct_ctos_ech,
-         */
-        NULL, tls_parse_stoc_ech,
-        NULL, tls_construct_ctos_ech,
+        tls_parse_ctos_ech, tls_parse_stoc_ech,
+        tls_construct_stoc_ech, tls_construct_ctos_ech,
         NULL
     },
     {
