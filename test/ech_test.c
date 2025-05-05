@@ -901,7 +901,7 @@ static int ech_ingest_test(int run)
         || !TEST_int_eq(OSSL_ECHSTORE_num_keys(es, &keysaftr), 1)
         || ((flush_time <= add_time) && !TEST_int_eq(keysaftr, 0))
         || ((flush_time > add_time) && !TEST_int_eq(keysaftr, 1)
-             && !TEST_int_eq(keysaftr, 1))) {
+            && !TEST_int_eq(keysaftr, 0))) {
         TEST_info("Flush time: %lld, add_time: %lld", (long long)flush_time,
                   (long long)add_time);
         goto end;
@@ -1247,7 +1247,7 @@ static int test_ech_roundtrip_helper(int idx, int combo)
     serverstatus = SSL_ech_get1_status(serverssl, &sinner, &souter);
     if (verbose)
         TEST_info("server status %d, %s, %s", serverstatus, sinner, souter);
-    if (combo != OSSL_ECH_TEST_ENOE 
+    if (combo != OSSL_ECH_TEST_ENOE
         && !TEST_int_eq(serverstatus, SSL_ECH_STATUS_SUCCESS))
         goto end;
     if (combo == OSSL_ECH_TEST_ENOE

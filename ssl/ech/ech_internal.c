@@ -1117,8 +1117,8 @@ end:
  * Note: input here is untrusted!
  */
 int ossl_ech_get_ch_offsets(SSL_CONNECTION *s, PACKET *pkt, size_t *sessid,
-                           size_t *exts, size_t *echoffset, uint16_t *echtype,
-                           int *inner, size_t *snioffset)
+                            size_t *exts, size_t *echoffset, uint16_t *echtype,
+                            int *inner, size_t *snioffset)
 {
     const unsigned char *ch = NULL;
     size_t ch_len = 0, extlens = 0, snilen = 0, echlen = 0;
@@ -1740,7 +1740,7 @@ static unsigned char *hpke_decrypt_encch(SSL_CONNECTION *s,
     ossl_ech_pbuf("cipher", cipher, cipherlen);
 # endif
     if (ossl_ech_make_enc_info(ee->encoded, ee->encoded_len,
-                                      info, &info_len) != 1) {
+                               info, &info_len) != 1) {
         OPENSSL_free(clear);
         return NULL;
     }
@@ -1923,9 +1923,8 @@ int ossl_ech_early_decrypt(SSL_CONNECTION *s, PACKET *outerpkt, PACKET *newpkt)
     size_t echlen = 0, clearlen = 0, aad_len = SSL3_RT_MAX_PLAIN_LENGTH;
     unsigned char *clear = NULL, aad[SSL3_RT_MAX_PLAIN_LENGTH];
     /* offsets of things within CH */
-    size_t startofsessid = 0, startofexts = 0, echoffset = 0;
-    size_t outersnioffset = 0, startofciphertext = 0;
-    size_t lenofciphertext = 0, opl = 0;
+    size_t startofsessid = 0, startofexts = 0, echoffset = 0, opl = 0;
+    size_t outersnioffset = 0, startofciphertext = 0, lenofciphertext = 0;
     uint16_t echtype = OSSL_ECH_type_unknown; /* type of ECH seen */
     char *osni_str = NULL;
     OSSL_ECHSTORE *es = NULL;
@@ -1963,8 +1962,7 @@ int ossl_ech_early_decrypt(SSL_CONNECTION *s, PACKET *outerpkt, PACKET *newpkt)
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         goto err;
     }
-    memcpy(s->tmp_session_id, &opd[startofsessid + 1],
-           s->tmp_session_id_len);
+    memcpy(s->tmp_session_id, &opd[startofsessid + 1], s->tmp_session_id_len);
     if (outersnioffset > 0) { /* Grab the outer SNI for tracing */
         if (ech_get_outer_sni(s, &osni_str, opd, opl, outersnioffset) != 1
             || osni_str == NULL) {
