@@ -18,7 +18,7 @@
 # include <openssl/trace.h>
 #endif
 
-#define COOKIE_STATE_FORMAT_VERSION     1
+#define COOKIE_STATE_FORMAT_VERSION 1
 
 /*
  * 2 bytes for packet length, 2 bytes for format version, 2 bytes for
@@ -2471,7 +2471,7 @@ int tls_parse_ctos_ech(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     }
     /* yay - we're ok with this */
     OSSL_TRACE_BEGIN(TLS) {
-        BIO_printf(trc_out,"ECH seen in inner as exptected.\n");
+        BIO_printf(trc_out, "ECH seen in inner as exptected.\n");
     } OSSL_TRACE_END(TLS);
     return 1;
 }
@@ -2504,7 +2504,7 @@ EXT_RETURN tls_construct_stoc_ech(SSL_CONNECTION *s, WPACKET *pkt,
             return 0;
         }
         OSSL_TRACE_BEGIN(TLS) {
-            BIO_printf(trc_out,"set 8 zeros for ECH accept confirm in HRR\n");
+            BIO_printf(trc_out, "set 8 zeros for ECH accept confirm in HRR\n");
         } OSSL_TRACE_END(TLS);
         return EXT_RETURN_SENT;
     }
@@ -2525,19 +2525,17 @@ EXT_RETURN tls_construct_stoc_ech(SSL_CONNECTION *s, WPACKET *pkt,
             return 0;
         }
         OSSL_TRACE_BEGIN(TLS) {
-            BIO_printf(trc_out,"set random for ECH acccpt confirm in HRR\n");
+            BIO_printf(trc_out, "set random for ECH acccpt confirm in HRR\n");
         } OSSL_TRACE_END(TLS);
         return EXT_RETURN_SENT;
     }
     /* in other HRR circumstances: don't set */
-    if (context == SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST) {
+    if (context == SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST)
         return EXT_RETURN_NOT_SENT;
-    }
     /* If in some weird state we ignore and send nothing */
     if (s->ext.ech.grease != OSSL_ECH_IS_GREASE
-        || s->ext.ech.attempted_type != TLSEXT_TYPE_ech) {
+        || s->ext.ech.attempted_type != TLSEXT_TYPE_ech)
         return EXT_RETURN_NOT_SENT;
-    }
     /*
      * If the client GREASEd, or we think it did, return the
      * most-recently loaded ECHConfigList, as the value of the

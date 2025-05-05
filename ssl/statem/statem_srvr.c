@@ -1515,8 +1515,8 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL_CONNECTION *s, PACKET *pkt)
         const unsigned char *pbuf = NULL;
 
         rv = ossl_ech_get_ch_offsets(s, pkt, &startofsessid, &startofexts,
-                                    &echoffset, &echtype, &innerflag,
-                                    &outersnioffset);
+                                     &echoffset, &echtype, &innerflag,
+                                     &outersnioffset);
         if (rv != 1) {
             SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
             goto err;
@@ -1524,9 +1524,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL_CONNECTION *s, PACKET *pkt)
         if (innerflag == 1) {
             WPACKET inner;
 
-            OSSL_TRACE_BEGIN(TLS) {
-                BIO_printf(trc_out, "Got inner ECH so setting backend\n");
-            } OSSL_TRACE_END(TLS);
+            OSSL_TRACE(TLS, "Got inner ECH so setting backend\n");
             /* For backend, include msg type & 3 octet length */
             s->ext.ech.backend = 1;
             s->ext.ech.attempted_type = TLSEXT_TYPE_ech;
@@ -2629,11 +2627,10 @@ CON_FUNC_RETURN tls_construct_server_hello(SSL_CONNECTION *s, WPACKET *pkt)
             EVP_MD_CTX *ctx = EVP_MD_CTX_new();
             const EVP_MD *md = NULL;
 
-            OSSL_TRACE_BEGIN(TLS) {
-                BIO_printf(trc_out, "Adding in digest of ClientHello\n");
-            } OSSL_TRACE_END(TLS);
+            OSSL_TRACE(TLS, "Adding in digest of ClientHello\n");
 # ifdef OSSL_ECH_SUPERVERBOSE
-            ossl_ech_pbuf("innerch", s->ext.ech.innerch, s->ext.ech.innerch_len);
+            ossl_ech_pbuf("innerch", s->ext.ech.innerch,
+                          s->ext.ech.innerch_len);
 # endif
             md = ssl_handshake_md(s);
             if (md == NULL) {
@@ -2651,7 +2648,7 @@ CON_FUNC_RETURN tls_construct_server_hello(SSL_CONNECTION *s, WPACKET *pkt)
             ossl_ech_pbuf("digested CH", hashval, hashlen);
 # endif
             EVP_MD_CTX_free(ctx);
-            if (ossl_ech_reset_hs_buffer(s ,NULL, 0) != 1) {
+            if (ossl_ech_reset_hs_buffer(s, NULL, 0) != 1) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 return CON_FUNC_ERROR;
             }
@@ -2660,13 +2657,16 @@ CON_FUNC_RETURN tls_construct_server_hello(SSL_CONNECTION *s, WPACKET *pkt)
                 return CON_FUNC_ERROR;
             }
         } else
-#endif /* OPENSSL_NO_ECH */
-        if (!create_synthetic_message_hash(s, NULL, 0, NULL, 0)) {
+            if (!create_synthetic_message_hash(s, NULL, 0, NULL, 0))
+                /* SSLfatal() already called */
+                return CON_FUNC_ERROR;
+#else
+        if (!create_synthetic_message_hash(s, NULL, 0, NULL, 0))
             /* SSLfatal() already called */
             return CON_FUNC_ERROR;
-        }
+#endif /* OPENSSL_NO_ECH */
     } else if (!(s->verify_mode & SSL_VERIFY_PEER)
-                && !ssl3_digest_cached_records(s, 0)) {
+               && !ssl3_digest_cached_records(s, 0)) {
         /* SSLfatal() already called */;
         return CON_FUNC_ERROR;
     }
@@ -2708,10 +2708,10 @@ CON_FUNC_RETURN tls_construct_server_hello(SSL_CONNECTION *s, WPACKET *pkt)
         memcpy(s->s3.server_random + SSL3_RANDOM_SIZE - 8, acbuf, 8);
         if (hrr == 0) {
             /* confirm value hacked into SH.random rightmost octets */
-            shoffset= SSL3_HM_HEADER_LENGTH /* 4 */
-                  + CLIENT_VERSION_LEN /* 2 */
-                  + SSL3_RANDOM_SIZE /* 32 */
-                  - 8;
+            shoffset = SSL3_HM_HEADER_LENGTH /* 4 */
+                + CLIENT_VERSION_LEN /* 2 */
+                + SSL3_RANDOM_SIZE /* 32 */
+                - 8;
             memcpy(shbuf + shoffset, acbuf, 8);
         } else {
             /*
@@ -2734,10 +2734,7 @@ CON_FUNC_RETURN tls_construct_server_hello(SSL_CONNECTION *s, WPACKET *pkt)
         cbrv = s->ext.ech.cb(&s->ssl, pstr);
         BIO_free(biom);
         if (cbrv != 1) {
-            OSSL_TRACE_BEGIN(TLS) {
-                BIO_printf(trc_out, "Error from ech_cb in "
-                           "tls_construct_server_hello at %d\n",  __LINE__);
-            } OSSL_TRACE_END(TLS);
+            OSSL_TRACE(TLS, "Error from tls_construct_server_hello/ech_cb\n");
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return CON_FUNC_ERROR;
         }
