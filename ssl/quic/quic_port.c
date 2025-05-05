@@ -461,34 +461,38 @@ static SSL *port_new_handshake_layer(QUIC_PORT *port, QUIC_CHANNEL *ch)
     QUIC_CONNECTION *qc = NULL;
     QUIC_LISTENER *ql = NULL;
 
-    if (port->get_conn_user_ssl != NULL) {
-        user_ssl = port->get_conn_user_ssl(ch, port->user_ssl_arg);
-        if (user_ssl == NULL)
-            return NULL;
-        qc = (QUIC_CONNECTION *)user_ssl;
-        ql = (QUIC_LISTENER *)port->user_ssl_arg;
+    /*
+     * It only makes sense to call this function if we know how to associate
+     * the handshake layer we are about to create with some user_ssl object.
+     */
+    if (!ossl_assert(port->get_conn_user_ssl != NULL))
+        return NULL;
+    user_ssl = port->get_conn_user_ssl(ch, port->user_ssl_arg);
+    if (user_ssl == NULL)
+        return NULL;
+    qc = (QUIC_CONNECTION *)user_ssl;
+    ql = (QUIC_LISTENER *)port->user_ssl_arg;
+
+    /*
+     * We expect the user_ssl to be newly created so it must not have an
+     * existing qc->tls
+     */
+    if (!ossl_assert(qc->tls == NULL)) {
+        SSL_free(user_ssl);
+        return NULL;
     }
 
     tls = ossl_ssl_connection_new_int(port->channel_ctx, user_ssl, TLS_method());
+    qc->tls = tls;
     if (tls == NULL || (tls_conn = SSL_CONNECTION_FROM_SSL(tls)) == NULL) {
         SSL_free(user_ssl);
         return NULL;
     }
 
-    /*
-     * If we got a user ssl, which will be embedded in a quic connection
-     * we need to fix up the connections tls pointer here
-     */
-    if (qc != NULL)
-        qc->tls = tls;
-
     if (ql != NULL && ql->obj.ssl.ctx->new_pending_conn_cb != NULL)
         if (!ql->obj.ssl.ctx->new_pending_conn_cb(ql->obj.ssl.ctx, user_ssl,
                                                   ql->obj.ssl.ctx->new_pending_conn_arg)) {
-            SSL_free(tls);
             SSL_free(user_ssl);
-            if (qc != NULL)
-                qc->tls = NULL;
             return NULL;
         }
 
@@ -534,6 +538,11 @@ static QUIC_CHANNEL *port_make_channel(QUIC_PORT *port, SSL *tls, OSSL_QRX *qrx,
      */
     ch->tls = (tls != NULL) ? tls : port_new_handshake_layer(port, ch);
 
+    if (ch->tls == NULL) {
+        OPENSSL_free(ch);
+        return NULL;
+    }
+
 #ifndef OPENSSL_NO_QLOG
     /*
      * If we're using qlog, make sure the tls get further configured properly
@@ -551,7 +560,6 @@ static QUIC_CHANNEL *port_make_channel(QUIC_PORT *port, SSL *tls, OSSL_QRX *qrx,
      * And finally init the channel struct
      */
     if (!ossl_quic_channel_init(ch)) {
-        SSL_free(ch->tls);
         OPENSSL_free(ch);
         return NULL;
     }
