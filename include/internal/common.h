@@ -16,7 +16,6 @@
 # include "openssl/configuration.h"
 
 # include "internal/e_os.h" /* ossl_inline in many files */
-# include <sys/stat.h>
 # include "internal/nelem.h"
 
 # if defined(__GNUC__) || defined(__clang__)
@@ -233,7 +232,5 @@ const char *ossl_get_openssldir(void);
 const char *ossl_get_enginesdir(void);
 const char *ossl_get_modulesdir(void);
 const char *ossl_get_wininstallcontext(void);
-
-const char *ossl_file_stat(const char *uri, struct stat *st);
 
 #endif
