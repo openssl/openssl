@@ -16,11 +16,6 @@
 #ifndef OPENSSL_NO_ECH
 #include <openssl/rand.h>
 #include "internal/ech_helpers.h"
-/*
- * the max HPKE 'info' we'll process is the max ECHConfig size
- * (OSSL_ECH_MAX_ECHCONFIG_LEN) plus OSSL_ECH_CONTEXT_STRING(len=7) + 1
- */
-#define OSSL_ECH_MAX_INFO_LEN (OSSL_ECH_MAX_ECHCONFIG_LEN + 8)
 #endif
 
 /* Used in the negotiate_dhe function */
@@ -2580,7 +2575,6 @@ EXT_RETURN tls_construct_ctos_ech(SSL_CONNECTION *s, WPACKET *pkt,
     unsigned char *encoded = NULL, *mypub = NULL;
     size_t cipherlen = 0, aad_len = 0, lenclen = 0, mypub_len = 0;
     size_t info_len = OSSL_ECH_MAX_INFO_LEN, clear_len = 0, encoded_len = 0;
-
     /* whether or not we've been asked to GREASE, one way or another */
     int grease_opt_set = (s->ext.ech.grease == OSSL_ECH_IS_GREASE
         || ((s->options & SSL_OP_ECH_GREASE) != 0));
