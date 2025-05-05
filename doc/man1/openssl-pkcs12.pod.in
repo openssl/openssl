@@ -385,9 +385,9 @@ to be needed to use MAC iterations counts but they are now used by default.
 
 =item B<-macsaltlen>
 
-This option specifies the salt length in bytes for the MAC. The salt length 
-should be at least 16 bytes as per NIST SP 800-132. The default value 
-is 8 bytes for backwards compatibility.
+This option specifies the salt length in bytes for the MAC. The salt
+length should be at least 16 bytes as per NIST SP 800-132, which is
+the default value.
 
 =item B<-nomac>
 
@@ -487,6 +487,7 @@ L<ossl_store-file(7)>
 
 The B<-engine> option was deprecated in OpenSSL 3.0.
 The B<-nodes> option was deprecated in OpenSSL 3.0, too; use B<-noenc> instead.
+The B<-macsaltlen> option default changed from 8 to 16 bytes in OpenSSL 3.6.
 
 =head1 COPYRIGHT
 

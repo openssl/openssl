@@ -25,7 +25,17 @@ OpenSSL 3.5
 
 ### Major changes between OpenSSL 3.5 and OpenSSL 3.6 [under development]
 
-  * none
+  * Password protected encrypted files when using FIPS provider will
+    now enforce lower bounds checks (minimum interation count, salt
+    and derived key lengths) when using PKCS5_PBKDF2_HMAC API. Default
+    salt length (PKCS12_SALT_LEN) has been increased from 64 to 128
+    bits such that newly encrypted keys are compatible with all
+    systems. Prior to upgrade to this version, users may want to check
+    if their password protected keystores are encrypted using short
+    password, salt, and low interation count for PBKDF and a weaker
+    cipher. To upgrade to the new defaults one can decrypt the keys
+    with existing OpenSSL, and re-encrypt them with the new OpenSSL
+    thus potentially upgrading to salt length 128bits and AES-256 CBC.
 
 ### Major changes between OpenSSL 3.4 and OpenSSL 3.5 [under development]
 
