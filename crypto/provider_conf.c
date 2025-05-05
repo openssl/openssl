@@ -379,7 +379,7 @@ static int provider_conf_load(OSSL_LIB_CTX *libctx, const char *name,
             ok = provider_conf_params(NULL, &entry, NULL, value, cnf);
         if (ok >= 1 && (entry.path != NULL || entry.parameters != NULL)) {
             ok = ossl_provider_info_add_to_store(libctx, &entry);
-            added = 1;
+            added = ok;
         }
         if (added == 0)
             ossl_provider_info_clear(&entry);
