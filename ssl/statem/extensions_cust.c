@@ -244,7 +244,8 @@ int custom_ext_add(SSL_CONNECTION *s, int context, WPACKET *pkt, X509 *x,
                     SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_EXTENSION);
                     return 0;
                 }
-                if (ossl_ech_copy_inner2outer(s, meth->ext_type, tind, pkt)
+                if (ossl_ech_copy_inner2outer(s, meth->ext_type, tind,
+                        pkt)
                     != OSSL_ECH_SAME_EXT_DONE) {
                     /* for custom exts, we really should have found it */
                     SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_EXTENSION);
@@ -500,19 +501,7 @@ int ossl_tls_add_custom_ext_intern(SSL_CTX *ctx, custom_ext_methods *exts,
      * for extension types that previously were not supported, but now are.
      */
     if (SSL_extension_supported(ext_type)
-#if !defined(OPENSSL_NO_ECH) && defined(OPENSSL_ECH_ALLOW_CUST_INJECT)
-        /*
-         * Do this conditionally so we can test an ECH in TLSv1.2
-         * via the custom extensions API.
-         * OPENSSL_ECH_ALLOW_CUST_INJECT is defined (or not) in
-         * include/openssl/ech.h and if defined enables a test in
-         * test/ech_test.c
-         */
-        && ext_type != TLSEXT_TYPE_ech
         && ext_type != TLSEXT_TYPE_signed_certificate_timestamp)
-#else
-        && ext_type != TLSEXT_TYPE_signed_certificate_timestamp)
-#endif
         return 0;
 
     /* Extension type must fit in 16 bits */
