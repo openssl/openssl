@@ -150,6 +150,7 @@ int main(int ac, char **av)
     }
     fp = fopen(av[0], "r");
     if ((long)fread(contents, 1, sb.st_size, fp) != sb.st_size) {
+        OPENSSL_free(contents);
         perror("fread");
         exit(EXIT_FAILURE);
     }
@@ -171,10 +172,12 @@ int main(int ac, char **av)
     }
 
     if (gettimeofday(&e_start, NULL) < 0) {
+        OPENSSL_free(contents);
         perror("elapsed start");
         exit(EXIT_FAILURE);
     }
     if (getrusage(RUSAGE_SELF, &start) < 0) {
+        OPENSSL_free(contents);
         perror("start");
         exit(EXIT_FAILURE);
     }
@@ -189,10 +192,12 @@ int main(int ac, char **av)
         }
     }
     if (getrusage(RUSAGE_SELF, &end) < 0) {
+        OPENSSL_free(contents);
         perror("getrusage");
         exit(EXIT_FAILURE);
     }
     if (gettimeofday(&e_end, NULL) < 0) {
+        OPENSSL_free(contents);
         perror("gettimeofday");
         exit(EXIT_FAILURE);
     }
