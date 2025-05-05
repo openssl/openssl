@@ -163,7 +163,7 @@ int main(int argc, char *argv[])
      * verification fails. Virtually all clients should do this unless you
      * really know what you are doing.
      */
-    SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
+    SSL_CTX_set_verify(ctx, SSL_VERIFY_NONE, NULL);
 
     /* Use the default trusted certificate store */
     if (!SSL_CTX_set_default_verify_paths(ctx)) {
