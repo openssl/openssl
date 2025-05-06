@@ -520,6 +520,11 @@ size_t ossl_ml_dsa_key_get_collision_strength_bits(const ML_DSA_KEY *key)
     return key->params->bit_strength;
 }
 
+int ossl_ml_dsa_key_get_security_category(const ML_DSA_KEY *key)
+{
+    return key->params->security_category;
+}
+
 /* Returns the private key data or NULL if there is no private key */
 const uint8_t *ossl_ml_dsa_key_get_priv(const ML_DSA_KEY *key)
 {
