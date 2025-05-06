@@ -483,20 +483,16 @@ static SSL *port_new_handshake_layer(QUIC_PORT *port, QUIC_CHANNEL *ch)
     }
 
     tls = ossl_ssl_connection_new_int(port->channel_ctx, user_ssl, TLS_method());
+    qc->tls = tls;
     if (tls == NULL || (tls_conn = SSL_CONNECTION_FROM_SSL(tls)) == NULL) {
         SSL_free(user_ssl);
         return NULL;
     }
 
-    qc->tls = tls;
-
     if (ql != NULL && ql->obj.ssl.ctx->new_pending_conn_cb != NULL)
         if (!ql->obj.ssl.ctx->new_pending_conn_cb(ql->obj.ssl.ctx, user_ssl,
                                                   ql->obj.ssl.ctx->new_pending_conn_arg)) {
-            SSL_free(tls);
             SSL_free(user_ssl);
-            if (qc != NULL)
-                qc->tls = NULL;
             return NULL;
         }
 
