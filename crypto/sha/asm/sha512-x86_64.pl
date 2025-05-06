@@ -284,7 +284,7 @@ $code.=<<___ if ($SZ==4 || $avx);
     mov 0(%r10),%r9
     mov 8(%r10),%r11d
 ___
-$code.=<<___ if ($SZ==8);
+$code.=<<___ if ($SZ==8 && $avx>1);
     mov 20(%r10),%r10d
 ___
 if ($SZ==4) {
@@ -306,12 +306,8 @@ if ($avx>1) { # $SZ==8 && $avx>1
 $code.=<<___;
     test \$`1<<5`,%r11d             # check for AVX2
     jz   .Lavx_dispatch
-___
-$code.=<<___ if ($SZ==8);
     test \$`1<<0`,%r10d             # AVX2 confirmed, check SHA512
     jnz  .Lsha512ext_shortcut
-___
-$code.=<<___;
     and \$`1<<8|1<<3`,%r11d         # AVX2 confirmed, check BMI2+BMI1
     cmp \$`1<<8|1<<3`,%r11d
     je  .Lavx2_shortcut
