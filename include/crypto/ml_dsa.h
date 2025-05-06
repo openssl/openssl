@@ -99,6 +99,7 @@ int ossl_ml_dsa_set_prekey(ML_DSA_KEY *key, int flags_set, int flags_clr,
                            const uint8_t *seed, size_t seed_len,
                            const uint8_t *sk, size_t sk_len);
 __owur size_t ossl_ml_dsa_key_get_collision_strength_bits(const ML_DSA_KEY *key);
+__owur int ossl_ml_dsa_key_get_security_category(const ML_DSA_KEY *key);
 __owur size_t ossl_ml_dsa_key_get_sig_len(const ML_DSA_KEY *key);
 __owur int ossl_ml_dsa_key_matches(const ML_DSA_KEY *key, int evp_type);
 __owur const char *ossl_ml_dsa_key_get_name(const ML_DSA_KEY *key);
