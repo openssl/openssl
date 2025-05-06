@@ -284,7 +284,7 @@ $code.=<<___ if ($SZ==4 || $avx);
     mov 0(%r10),%r9
     mov 8(%r10),%r11d
 ___
-$code.=<<___ if ($SZ==8);
+$code.=<<___ if ($SZ==8 && $avx>1);
     mov 20(%r10),%r10d
 ___
 if ($SZ==4) {
