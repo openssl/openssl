@@ -425,6 +425,11 @@ size_t ossl_slh_dsa_key_get_n(const SLH_DSA_KEY *key)
     return key->params->n;
 }
 
+int ossl_slh_dsa_key_get_security_category(const SLH_DSA_KEY *key)
+{
+    return key->params->security_category;
+}
+
 size_t ossl_slh_dsa_key_get_sig_len(const SLH_DSA_KEY *key)
 {
     return key->params->sig_len;
