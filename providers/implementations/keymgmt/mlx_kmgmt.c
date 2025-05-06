@@ -478,6 +478,7 @@ static const OSSL_PARAM *mlx_kem_gettable_params(void *provctx)
         OSSL_PARAM_int(OSSL_PKEY_PARAM_BITS, NULL),
         OSSL_PARAM_int(OSSL_PKEY_PARAM_SECURITY_BITS, NULL),
         OSSL_PARAM_int(OSSL_PKEY_PARAM_MAX_SIZE, NULL),
+        OSSL_PARAM_int(OSSL_PKEY_PARAM_SECURITY_CATEGORY, NULL),
         OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY, NULL, 0),
         OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PRIV_KEY, NULL, 0),
         OSSL_PARAM_END
@@ -508,6 +509,12 @@ static int mlx_kem_get_params(void *vkey, OSSL_PARAM params[])
     p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_SECURITY_BITS);
     if (p != NULL)
         if (!OSSL_PARAM_set_int(p, key->minfo->secbits))
+            return 0;
+
+    /* The reported security category are those of the ML-KEM key */
+    p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_SECURITY_CATEGORY);
+    if (p != NULL)
+        if (!OSSL_PARAM_set_int(p, key->minfo->security_category))
             return 0;
 
     /* The ciphertext sizes are additive */
