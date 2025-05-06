@@ -21,6 +21,8 @@
  * following digit indicating the number of reports expected for this line.
  */
 
+/* this line is between 81 and 100 chars long, to be reported with -strict-len */
+
 /* For each of the following set of lines the tool should complain once */
 /*@ tab character: 	 */
 /*@ intra-line carriage return character:  */
@@ -46,8 +48,7 @@
 */ /*@ multi-line comment end indent off by -1 (relative to comment start) */
 */ /*@ unexpected comment ending delimiter outside comment */
 /*- '-' for formatted comment not allowed in intra-line comment */
-/*@ comment line is 4 columns tooooooooooooooooo wide, reported unless sloppy-len */
-/*@ comment line is 5 columns toooooooooooooooooooooooooooooooooooooooooooooo wide */
+/*@ comment line is toooooooooooo wide by 1 char, or by 21 chars in case strict-len option is used */
 #if ~0              /*@ '#if' with constant condition */
  #endif             /*@ indent of preproc. directive off by 1 (must be 0) */
 #define X (1 +  1)  /*@0 extra space in body, reported unless sloppy-spc */
@@ -100,7 +101,7 @@ int f (int a,       /*@ space after fn before '(', reported unless sloppy-spc */
            b,       /*@ expr indent as on line above, accepted if sloppy-hang */
     b, /*@ expr indent off -8 but @ extra indent accepted if sloppy-hang */
    "again aligned" /*@ expr indent off by -9 (left of stmt indent, */ "right",
-            abc == /*@ .. so reported also with sloppy-hang; this line is too long */ 456
+            abc == /*@ .. so reported also with sloppy-hang; this line is too long by 6 or 26 chars */ 456
 # define MAC(A) (A) /*@ nesting indent of preprocessor directive off by 1 */
              ? 1    /*@ hanging expr indent off by 1 */
               : 2); /*@ hanging expr indent off by 2, or 1 for leading ':' */
