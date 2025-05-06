@@ -15,10 +15,11 @@
  */
 
 /*
- * The '@'s after '*' are used for self-tests: they mark lines containing
- * a single flaw that should be reported. Normally it should be reported
- * while handling the given line, but in case of delayed checks there is a
- * following digit indicating the number of reports expected for this line.
+ * The '@'s after leading '*' in comment lines are used for self-tests:
+ * they mark lines containing a single issue that should be reported.
+ * Normally it should be reported while handling the given line,
+ * but in case of delayed checks there is a following digit
+ * indicating the number of reports expected for this line.
  */
 
 /* this line is between 81 and 100 chars long, to be reported with -strict-len */
