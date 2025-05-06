@@ -406,6 +406,12 @@ dimensions handled in the rest of the same provider.
 The value should be the number of security bits of the given key.
 Bits of security is defined in SP800-57.
 
+=item "security-category" (B<OSSL_PKEY_PARAM_SECURITY_CATEGORY>) <integer>
+
+The value is the NIST
+L<post-quantum security category|https://nvlpubs.nist.gov/nistpubs/ir/2024/NIST.IR.8547.ipd.pdf>
+for the algorithm.  It is an integer value in the range [0, 5] inclusive.
+
 =item "mandatory-digest" (B<OSSL_PKEY_PARAM_MANDATORY_DIGEST>) <UTF8 string>
 
 If there is a mandatory digest for performing a signature operation with
