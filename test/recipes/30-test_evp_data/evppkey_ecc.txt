@@ -52,6 +52,7 @@ Availablein = default
 Derive=BOB_cf_c2pnb163v1
 PeerKey=ALICE_cf_c2pnb163v1_PUB
 SharedSecret=065dd38fb6de7f394778e1bf65d840a2c0e7219acd
+Security-Category = 0
 
 # ECC CDH Alice with Bob peer
 Availablein = default
@@ -280,6 +281,7 @@ Availablein = default
 Derive=ALICE_cf_c2pnb176v1
 PeerKey=BOB_cf_c2pnb176v1_PUB
 SharedSecret=3a8021848ee0b2c1c377404267a515225781c181e6ab
+Security-Category = 0
 
 # ECDH Bob with Alice peer
 Availablein = default
@@ -1991,6 +1993,7 @@ Availablein = default
 Derive=ALICE_cf_secp256k1
 PeerKey=BOB_cf_secp256k1_PUB
 SharedSecret=a4745cc4d19cabb9e5cb0abdd5c604cab2846a4638ad844ed9175f3cadda2da1
+Security-Category = 0
 
 # ECDH Bob with Alice peer
 Availablein = default
@@ -2031,6 +2034,7 @@ Availablein = default
 Derive=ALICE_cf_sect113r1
 PeerKey=BOB_cf_sect113r1_PUB
 SharedSecret=01ed16f1948dcb368a54004237842d
+Security-Category = 0
 
 # ECDH Bob with Alice peer
 Availablein = default
@@ -3542,6 +3546,7 @@ Availablein = default
 Derive=ALICE_zero_wap-wsg-idm-ecid-wtls7
 PeerKey=BOB_zero_wap-wsg-idm-ecid-wtls7_PUB
 SharedSecret=6582fc03bbb340fcf24a5fe8fcdf722655efa8b9
+Security-Category = 0
 
 # tests: 14
 
@@ -3580,6 +3585,7 @@ Availablein = default
 Derive=ALICE_cf_prime192v1
 PeerKey=BOB_cf_prime192v1_PUB
 SharedSecret=e36cad3b0f8d00f60f090440a76df47896713ae61421c354
+Security-Category = 0
 
 # ECDH Bob with Alice peer
 Availablein = default
@@ -3653,6 +3659,12 @@ PrivPubKeyPair=BOB_cf_prime256v1:BOB_cf_prime256v1_PUB
 Derive=ALICE_cf_prime256v1
 PeerKey=BOB_cf_prime256v1_PUB
 SharedSecret=ee63690b553dcd9bccb066137725f0489395a83f4d280f309339d606c969734a
+
+FIPSversion = >=3.6.0
+Derive=ALICE_cf_prime256v1
+PeerKey=BOB_cf_prime256v1_PUB
+SharedSecret=ee63690b553dcd9bccb066137725f0489395a83f4d280f309339d606c969734a
+Security-Category = 0
 
 # ECDH Bob with Alice peer
 Derive=BOB_cf_prime256v1
