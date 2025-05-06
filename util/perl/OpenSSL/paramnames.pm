@@ -94,6 +94,7 @@ my %params = (
     'ALG_PARAM_MAC' =>          "mac",          # utf8_string
     'ALG_PARAM_PROPERTIES' =>   "properties",   # utf8_string
     'ALG_PARAM_FIPS_APPROVED_INDICATOR' => 'fips-indicator',   # int, -1, 0 or 1
+    'ALG_PARAM_SECURITY_CATEGORY' => "security-category", # int, 0 .. 5
 
     # For any operation that deals with AlgorithmIdentifier, they should
     # implement both of these.
@@ -290,6 +291,7 @@ my %params = (
     'PKEY_PARAM_BITS' =>                "bits",# integer
     'PKEY_PARAM_MAX_SIZE' =>            "max-size",# integer
     'PKEY_PARAM_SECURITY_BITS' =>       "security-bits",# integer
+    'PKEY_PARAM_SECURITY_CATEGORY' =>   '*ALG_PARAM_SECURITY_CATEGORY',
     'PKEY_PARAM_DIGEST' =>              '*ALG_PARAM_DIGEST',
     'PKEY_PARAM_CIPHER' =>              '*ALG_PARAM_CIPHER', # utf8 string
     'PKEY_PARAM_ENGINE' =>              '*ALG_PARAM_ENGINE', # utf8 string
