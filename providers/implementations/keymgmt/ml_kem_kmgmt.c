@@ -489,6 +489,7 @@ static const OSSL_PARAM *ml_kem_gettable_params(void *provctx)
         OSSL_PARAM_int(OSSL_PKEY_PARAM_BITS, NULL),
         OSSL_PARAM_int(OSSL_PKEY_PARAM_SECURITY_BITS, NULL),
         OSSL_PARAM_int(OSSL_PKEY_PARAM_MAX_SIZE, NULL),
+        OSSL_PARAM_int(OSSL_PKEY_PARAM_SECURITY_CATEGORY, NULL),
         /* Exported for import */
         OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_ML_KEM_SEED, NULL, 0),
         /* Exported to EVP_PKEY_get_raw_private_key() */
@@ -577,6 +578,10 @@ static int ml_kem_get_params(void *vkey, OSSL_PARAM params[])
     p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_MAX_SIZE);
     if (p != NULL)
         if (!OSSL_PARAM_set_int(p, v->ctext_bytes))
+            return 0;
+    p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_SECURITY_CATEGORY);
+    if (p != NULL)
+        if (!OSSL_PARAM_set_int(p, v->security_category))
             return 0;
 
     if (ossl_ml_kem_have_pubkey(key)) {
@@ -818,6 +823,8 @@ static void *ml_kem_dup(const void *vkey, int selection)
 #endif
 
 #define DECLARE_VARIANT(bits) \
+    static OSSL_FUNC_keymgmt_new_fn ml_kem_##bits##_new;                    \
+    static OSSL_FUNC_keymgmt_gen_init_fn ml_kem_##bits##_gen_init;          \
     static void *ml_kem_##bits##_new(void *provctx) \
     { \
         return ossl_prov_ml_kem_new(provctx, NULL, EVP_PKEY_ML_KEM_##bits); \

@@ -192,7 +192,8 @@ static const ML_KEM_VINFO vinfo_map[3] = {
         ML_KEM_512_RANK,
         ML_KEM_512_DU,
         ML_KEM_512_DV,
-        ML_KEM_512_SECBITS
+        ML_KEM_512_SECBITS,
+        ML_KEM_512_SECURITY_CATEGORY
     },
     {
         "ML-KEM-768",
@@ -208,7 +209,8 @@ static const ML_KEM_VINFO vinfo_map[3] = {
         ML_KEM_768_RANK,
         ML_KEM_768_DU,
         ML_KEM_768_DV,
-        ML_KEM_768_SECBITS
+        ML_KEM_768_SECBITS,
+        ML_KEM_768_SECURITY_CATEGORY
     },
     {
         "ML-KEM-1024",
@@ -224,7 +226,8 @@ static const ML_KEM_VINFO vinfo_map[3] = {
         ML_KEM_1024_RANK,
         ML_KEM_1024_DU,
         ML_KEM_1024_DV,
-        ML_KEM_1024_SECBITS
+        ML_KEM_1024_SECBITS,
+        ML_KEM_1024_SECURITY_CATEGORY
     }
 };
 
