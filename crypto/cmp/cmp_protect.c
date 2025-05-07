@@ -324,16 +324,17 @@ int ossl_cmp_msg_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
         goto err;
 
     /*
-     * As per RFC 9810 section 5.1.1., if the sender name is not known to the
-     * client, it must be the NULL-DN. In this case for identification at least
-     * the senderKID must be set, where we took the referenceValue as fallback.
-     * Yet for unprotected messages these RFC requirements do not make sense.
+     * As required by RFC 9810 section 5.1.1., if nothing about the sender is known to
+     * the sending entity, it is set to NULL-DN. In this case for identification at least
+     * the senderKID MUST be set, where we took the referenceValue as fallback.
+     * Yet for unprotected messages the latter RFC requirement does not make sense.
      */
     if (ctx->unprotectedSend
         || !ossl_cmp_general_name_is_NULL_DN(msg->header->sender)
         || msg->header->senderKID != NULL)
         return 1;
     ERR_raise(ERR_LIB_CMP, CMP_R_MISSING_SENDER_IDENTIFICATION);
+    return 0;
 
 err:
     ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_PROTECTING_MESSAGE);
