@@ -55,7 +55,7 @@ typedef enum OPTION_choice {
     OPT_SUBJECT_HASH_OLD, OPT_ISSUER_HASH_OLD, OPT_COPY_EXTENSIONS,
     OPT_BADSIG, OPT_MD, OPT_ENGINE, OPT_NOCERT, OPT_PRESERVE_DATES,
     OPT_NOT_BEFORE, OPT_NOT_AFTER,
-    OPT_R_ENUM, OPT_PROV_ENUM, OPT_EXT, OPT_BUNDLE
+    OPT_R_ENUM, OPT_PROV_ENUM, OPT_EXT, OPT_MULTI
 } OPTION_CHOICE;
 
 const OPTIONS x509_options[] = {
@@ -122,7 +122,7 @@ const OPTIONS x509_options[] = {
     {"purpose", OPT_PURPOSE, '-', "Print out certificate purposes"},
     {"pubkey", OPT_PUBKEY, '-', "Print the public key in PEM format"},
     {"modulus", OPT_MODULUS, '-', "Print the RSA key modulus"},
-    {"bundle", OPT_BUNDLE, '-', "Process multiple certificates"},
+    {"multi", OPT_MULTI, '-', "Process multiple certificates"},
 
     OPT_SECTION("Certificate checking"),
     {"checkend", OPT_CHECKEND, 'M',
@@ -294,7 +294,7 @@ int x509_main(int argc, char **argv)
     int fingerprint = 0, reqfile = 0, checkend = 0;
     int informat = FORMAT_UNDEF, outformat = FORMAT_PEM, keyformat = FORMAT_UNDEF;
     int next_serial = 0, subject_hash = 0, issuer_hash = 0, ocspid = 0;
-    int noout = 0, CA_createserial = 0, email = 0, bundle = 0;
+    int noout = 0, CA_createserial = 0, email = 0, multi = 0;
     int ocsp_uri = 0, trustout = 0, clrtrust = 0, clrreject = 0, aliasout = 0;
     int ret = 1, i, j, k = 0, num = 0, badsig = 0, clrext = 0, nocert = 0;
     int text = 0, serial = 0, subject = 0, issuer = 0, startdate = 0, ext = 0;
@@ -607,8 +607,8 @@ int x509_main(int argc, char **argv)
         case OPT_CHECKIP:
             checkip = opt_arg();
             break;
-        case OPT_BUNDLE:
-            bundle = 1;
+        case OPT_MULTI:
+            multi = 1;
             break;
         case OPT_PRESERVE_DATES:
             preserve_dates = 1;
@@ -737,8 +737,8 @@ int x509_main(int argc, char **argv)
         }
     }
 
-    if (bundle && (reqfile || newcert)) {
-        BIO_printf(bio_err, "Error: -bundle cannot be used with -req or -new\n");
+    if (multi && (reqfile || newcert)) {
+        BIO_printf(bio_err, "Error: -multi cannot be used with -req or -new\n");
         goto err;
     }
 
@@ -799,7 +799,7 @@ int x509_main(int argc, char **argv)
         if (infile == NULL && isatty(fileno_stdin()))
             BIO_printf(bio_err,
                        "Warning: Reading certificate(s) from stdin since no -in or -new option is given\n");
-        if (bundle) {
+        if (multi) {
             certs = sk_X509_new_null();
             if (!load_certs(infile, 1, &certs, passin, NULL))
                 goto end;
@@ -817,7 +817,7 @@ int x509_main(int argc, char **argv)
         goto end;
 
  cert_loop:
-    if (bundle)
+    if (multi)
         x = sk_X509_value(certs, k);
 
     if ((fsubj != NULL || req != NULL)
@@ -1129,7 +1129,7 @@ int x509_main(int argc, char **argv)
     }
 
  end_cert_loop:
-    if (bundle && ++k < sk_X509_num(certs))
+    if (multi && ++k < sk_X509_num(certs))
         goto cert_loop;
 
     ret = 0;
@@ -1139,7 +1139,7 @@ int x509_main(int argc, char **argv)
     ERR_print_errors(bio_err);
 
  end:
-    if (bundle) {
+    if (multi) {
         sk_X509_pop_free(certs, X509_free);
         x = NULL;
     }
