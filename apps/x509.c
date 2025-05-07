@@ -1102,6 +1102,7 @@ int x509_main(int argc, char **argv)
             BIO_printf(out, "Certificate will expire\n");
         else
             BIO_printf(out, "Certificate will not expire\n");
+        goto end_cert_loop;
     }
 
     if (!check_cert_attributes(out, x, checkhost, checkemail, checkip, 1))
