@@ -319,13 +319,13 @@ int EVP_CIPHER_get_type(const EVP_CIPHER *cipher)
 
 int evp_cipher_cache_constants(EVP_CIPHER *cipher)
 {
-    int ok, aead = 0, custom_iv = 0, cts = 0, multiblock = 0, randkey = 0;
+    int ok, aead = 0, custom_iv = 0, cts = 0, multiblock = 0, randkey = 0, security_category = 0;
     int encrypt_then_mac = 0;
     size_t ivlen = 0;
     size_t blksz = 0;
     size_t keylen = 0;
     unsigned int mode = 0;
-    OSSL_PARAM params[11];
+    OSSL_PARAM params[12];
 
     params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_BLOCK_SIZE, &blksz);
     params[1] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_IVLEN, &ivlen);
@@ -341,13 +341,15 @@ int evp_cipher_cache_constants(EVP_CIPHER *cipher)
                                          &randkey);
     params[9] = OSSL_PARAM_construct_int(OSSL_CIPHER_PARAM_ENCRYPT_THEN_MAC,
                                          &encrypt_then_mac);
-    params[10] = OSSL_PARAM_construct_end();
+    params[10] = OSSL_PARAM_construct_int(OSSL_CIPHER_PARAM_SECURITY_CATEGORY, &security_category);
+    params[11] = OSSL_PARAM_construct_end();
     ok = evp_do_ciph_getparams(cipher, params) > 0;
     if (ok) {
         cipher->block_size = blksz;
         cipher->iv_len = ivlen;
         cipher->key_len = keylen;
         cipher->flags = mode;
+        cipher->security_category = security_category;
         if (aead)
             cipher->flags |= EVP_CIPH_FLAG_AEAD_CIPHER;
         if (custom_iv)
