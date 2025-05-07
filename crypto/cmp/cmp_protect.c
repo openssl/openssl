@@ -232,11 +232,10 @@ static int set1_pwd_senderKID(OSSL_CMP_PKIHEADER *hdr, const ASN1_OCTET_STRING *
         if (gn != NULL && gn->type == GEN_DIRNAME
             && (sender = gn->d.directoryName) != NULL
             && (res = X509_NAME_get_index_by_NID(sender, NID_commonName, -1)) >= 0) {
-            ASN1_STRING *astr = X509_NAME_ENTRY_get_data(X509_NAME_get_entry(sender, res));
+            const ASN1_STRING *astr = X509_NAME_ENTRY_get_data(X509_NAME_get_entry(sender, res));
             ASN1_OCTET_STRING *ostr = NULL;
 
-            if (!ossl_cmp_asn1_octet_string_set1_bytes(&ostr, ASN1_STRING_get0_data(astr),
-                    ASN1_STRING_length(astr)))
+            if (!ossl_cmp_asn1_octet_string_set1_bytes(&ostr, astr->data, astr->length))
                 return 0;
             res = ossl_cmp_hdr_set1_senderKID(hdr, ostr);
             ASN1_OCTET_STRING_free(ostr);
@@ -327,16 +326,17 @@ int ossl_cmp_msg_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
         goto err;
 
     /*
-     * As per RFC 9810 section 5.1.1., if the sender name is not known to the
-     * client, it must be the NULL-DN. In this case for identification at least
-     * the senderKID must be set, where we took the referenceValue as fallback.
-     * Yet for unprotected messages these RFC requirements do not make sense.
+     * As required by RFC 9810 section 5.1.1., if nothing about the sender is known to
+     * the sending entity, it is set to NULL-DN. In this case for identification at least
+     * the senderKID MUST be set, where we took the referenceValue as fallback.
+     * Yet for unprotected messages the latter RFC requirement does not make sense.
      */
     if (ctx->unprotectedSend
         || !ossl_cmp_general_name_is_NULL_DN(msg->header->sender)
         || msg->header->senderKID != NULL)
         return 1;
     ERR_raise(ERR_LIB_CMP, CMP_R_MISSING_SENDER_IDENTIFICATION);
+    return 0;
 
 err:
     ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_PROTECTING_MESSAGE);
