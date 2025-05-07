@@ -586,7 +586,6 @@ int x509_main(int argc, char **argv)
             break;
         case OPT_CHECKEND:
             checkend = 1;
-            noout = 1;
             {
                 ossl_intmax_t temp = 0;
                 if (!opt_intmax(opt_arg(), &temp))
@@ -610,7 +609,6 @@ int x509_main(int argc, char **argv)
             break;
         case OPT_BUNDLE:
             bundle = 1;
-            noout = 1;
             break;
         case OPT_PRESERVE_DATES:
             preserve_dates = 1;
@@ -739,9 +737,8 @@ int x509_main(int argc, char **argv)
         }
     }
 
-    if (bundle && (req || reqfile || newcert || x509toreq || pubkey ||
-                   privkey || clrext || subj || CAfile)) {
-        BIO_printf(bio_err, "Error: -bundle can only be used with other printing options\n");
+    if (bundle && (reqfile || newcert)) {
+        BIO_printf(bio_err, "Error: -bundle cannot be used with -req or -new\n");
         goto err;
     }
 
@@ -798,17 +795,21 @@ int x509_main(int argc, char **argv)
                 goto err;
             }
         }
-    } else if (bundle) {
-        certs = sk_X509_new_null();
-        if (!load_certs(infile, 1, &certs, passin, NULL))
-            goto end;
     } else {
         if (infile == NULL && isatty(fileno_stdin()))
             BIO_printf(bio_err,
-                       "Warning: Reading certificate from stdin since no -in or -new option is given\n");
-        x = load_cert_pass(infile, informat, 1, passin, "certificate");
-        if (x == NULL)
-            goto end;
+                       "Warning: Reading certificate(s) from stdin since no -in or -new option is given\n");
+        if (bundle) {
+            certs = sk_X509_new_null();
+            if (!load_certs(infile, 1, &certs, passin, NULL))
+                goto end;
+            if (sk_X509_num(certs) <= 0)
+                goto end;
+        } else {
+            x = load_cert_pass(infile, informat, 1, passin, "certificate");
+            if (x == NULL)
+                goto end;
+        }
     }
 
     out = bio_open_default(outfile, 'w', outformat);
@@ -816,7 +817,7 @@ int x509_main(int argc, char **argv)
         goto end;
 
  cert_loop:
-    if (bundle && sk_X509_num(certs) > 0)
+    if (bundle)
         x = sk_X509_value(certs, k);
 
     if ((fsubj != NULL || req != NULL)
@@ -1103,15 +1104,12 @@ int x509_main(int argc, char **argv)
             BIO_printf(out, "Certificate will not expire\n");
     }
 
-    if (bundle && ++k < sk_X509_num(certs))
-        goto cert_loop;
-
     if (!check_cert_attributes(out, x, checkhost, checkemail, checkip, 1))
         goto err;
 
     if (noout || nocert) {
         ret = 0;
-        goto end;
+        goto end_cert_loop;
     }
 
     if (outformat == FORMAT_ASN1) {
@@ -1130,6 +1128,10 @@ int x509_main(int argc, char **argv)
         goto err;
     }
 
+ end_cert_loop:
+    if (bundle && ++k < sk_X509_num(certs))
+        goto cert_loop;
+
     ret = 0;
     goto end;
 
@@ -1139,7 +1141,6 @@ int x509_main(int argc, char **argv)
  end:
     if (bundle) {
         sk_X509_pop_free(certs, X509_free);
-        certs = NULL;
         x = NULL;
     }
     NCONF_free(extconf);
