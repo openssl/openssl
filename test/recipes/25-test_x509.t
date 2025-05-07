@@ -485,27 +485,27 @@ ok(!run(app(["openssl", "x509", "-noout", "-dates", "-dateopt", "invalid_format"
 	     "-in", srctop_file("test/certs", "ca-cert.pem")])),
    "Run with invalid -dateopt format");
 
-# same tests w/ -bundle (single cert)
-ok(run(app(["openssl", "x509", "-noout", "-bundle", "-dates", "-dateopt", "rfc_822",
+# same tests w/ -multi (single cert)
+ok(run(app(["openssl", "x509", "-noout", "-multi", "-dates", "-dateopt", "rfc_822",
 	     "-in", srctop_file("test/certs", "ca-cert.pem")])),
-   "Run with rfc_8222 -dateopt format and -bundle (single cert)");
-ok(run(app(["openssl", "x509", "-noout", "-bundle", "-dates", "-dateopt", "iso_8601",
+   "Run with rfc_8222 -dateopt format and -multi (single cert)");
+ok(run(app(["openssl", "x509", "-noout", "-multi", "-dates", "-dateopt", "iso_8601",
 	     "-in", srctop_file("test/certs", "ca-cert.pem")])),
-   "Run with iso_8601 -dateopt format and -bundle (single cert)");
-ok(!run(app(["openssl", "x509", "-noout", "-bundle", "-dates", "-dateopt", "invalid_format",
+   "Run with iso_8601 -dateopt format and -multi (single cert)");
+ok(!run(app(["openssl", "x509", "-noout", "-multi", "-dates", "-dateopt", "invalid_format",
 	     "-in", srctop_file("test/certs", "ca-cert.pem")])),
-   "Run with invalid -dateopt format and -bundle (single cert)");
+   "Run with invalid -dateopt format and -multi (single cert)");
 
-# same tests w/ -bundle (multi cert)
-ok(run(app(["openssl", "x509", "-noout", "-bundle", "-dates", "-dateopt", "rfc_822",
+# same tests w/ -multi (multi cert)
+ok(run(app(["openssl", "x509", "-noout", "-multi", "-dates", "-dateopt", "rfc_822",
 	     "-in", srctop_file("test/certs", "goodcn2-chain.pem")])),
-   "Run with rfc_8222 -dateopt format and -bundle (multi cert)");
-ok(run(app(["openssl", "x509", "-noout", "-bundle", "-dates", "-dateopt", "iso_8601",
+   "Run with rfc_8222 -dateopt format and -multi (multi cert)");
+ok(run(app(["openssl", "x509", "-noout", "-multi", "-dates", "-dateopt", "iso_8601",
 	     "-in", srctop_file("test/certs", "goodcn2-chain.pem")])),
-   "Run with iso_8601 -dateopt format and -bundle (multi cert)");
-ok(!run(app(["openssl", "x509", "-noout", "-bundle", "-dates", "-dateopt", "invalid_format",
+   "Run with iso_8601 -dateopt format and -multi (multi cert)");
+ok(!run(app(["openssl", "x509", "-noout", "-multi", "-dates", "-dateopt", "invalid_format",
 	     "-in", srctop_file("test/certs", "goodcn2-chain.pem")])),
-   "Run with invalid -dateopt format and -bundle (multi cert)");
+   "Run with invalid -dateopt format and -multi (multi cert)");
 
 # Tests for signing certs (broken in 1.1.1o)
 my $a_key = "a-key.pem";
