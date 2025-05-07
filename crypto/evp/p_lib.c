@@ -90,6 +90,11 @@ int EVP_PKEY_get_security_bits(const EVP_PKEY *pkey)
     return size;
 }
 
+int EVP_PKEY_get_security_category(const EVP_PKEY *pkey)
+{
+    return pkey != NULL ? pkey->cache.security_category : -1;
+}
+
 int EVP_PKEY_save_parameters(EVP_PKEY *pkey, int mode)
 {
 # ifndef OPENSSL_NO_DSA
