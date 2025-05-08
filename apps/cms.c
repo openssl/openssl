@@ -73,7 +73,7 @@ typedef enum OPTION_choice {
     OPT_COMMON,
     OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT, OPT_ENCRYPT,
     OPT_DECRYPT, OPT_SIGN, OPT_CADES, OPT_SIGN_RECEIPT, OPT_RESIGN,
-    OPT_VERIFY, OPT_VERIFY_RETCODE, OPT_VERIFY_RECEIPT,
+    OPT_VERIFY, OPT_VERIFY_PARTIAL, OPT_VERIFY_RETCODE, OPT_VERIFY_RECEIPT,
     OPT_CMSOUT, OPT_DATA_OUT, OPT_DATA_CREATE, OPT_DIGEST_VERIFY,
     OPT_DIGEST, OPT_DIGEST_CREATE, OPT_COMPRESS, OPT_UNCOMPRESS,
     OPT_ED_DECRYPT, OPT_ED_ENCRYPT, OPT_DEBUG_DECRYPT, OPT_TEXT,
@@ -225,8 +225,10 @@ const OPTIONS cms_options[] = {
     {"nointern", OPT_NOINTERN, '-',
      "Don't search certificates in message for signer"},
     {"cades", OPT_DUP, '-', "Check signingCertificate (CAdES-BES)"},
+    {"verify_partial", OPT_VERIFY_PARTIAL, '-',
+     "Return success if at least one signature can be verified"},
     {"verify_retcode", OPT_VERIFY_RETCODE, '-',
-     "Exit non-zero on verification failure"},
+     "Exit non-zero on verification failure (depends on -verify_partial etc.)"},
     {"CAfile", OPT_CAFILE, '<', "Trusted certificates file"},
     {"CApath", OPT_CAPATH, '/', "Trusted certificates directory"},
     {"CAstore", OPT_CASTORE, ':', "Trusted certificates store URI"},
@@ -400,6 +402,9 @@ int cms_main(int argc, char **argv)
         case OPT_VERIFY_RECEIPT:
             operation = SMIME_VERIFY_RECEIPT;
             rctfile = opt_arg();
+            break;
+        case OPT_VERIFY_PARTIAL:
+            flags |= CMS_VERIFY_PARTIAL;
             break;
         case OPT_VERIFY_RETCODE:
             verify_retcode = 1;
