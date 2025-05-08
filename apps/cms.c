@@ -81,6 +81,7 @@ typedef enum OPTION_choice {
     OPT_SIGN_RECEIPT,
     OPT_RESIGN,
     OPT_VERIFY,
+    OPT_VERIFY_PARTIAL,
     OPT_VERIFY_RETCODE,
     OPT_VERIFY_RECEIPT,
     OPT_CMSOUT,
@@ -282,8 +283,10 @@ const OPTIONS cms_options[] = {
     { "nointern", OPT_NOINTERN, '-',
         "Don't search certificates in message for signer" },
     { "cades", OPT_DUP, '-', "Check signingCertificate (CAdES-BES)" },
+    { "verify_partial", OPT_VERIFY_PARTIAL, '-',
+        "Return success if at least one signature can be verified" },
     { "verify_retcode", OPT_VERIFY_RETCODE, '-',
-        "Exit non-zero on verification failure" },
+        "Exit non-zero on verification failure (depends on -verify_partial etc.)" },
     { "CAfile", OPT_CAFILE, '<', "Trusted certificates file" },
     { "CApath", OPT_CAPATH, '/', "Trusted certificates directory" },
     { "CAstore", OPT_CASTORE, ':', "Trusted certificates store URI" },
@@ -456,6 +459,9 @@ int cms_main(int argc, char **argv)
         case OPT_VERIFY_RECEIPT:
             operation = SMIME_VERIFY_RECEIPT;
             rctfile = opt_arg();
+            break;
+        case OPT_VERIFY_PARTIAL:
+            flags |= CMS_VERIFY_PARTIAL;
             break;
         case OPT_VERIFY_RETCODE:
             verify_retcode = 1;
