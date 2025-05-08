@@ -102,6 +102,11 @@ struct CMS_SignerInfo_st {
     const CMS_CTX *cms_ctx;
     /* Set to 1 if signing time attribute is to be omitted */
     int omit_signing_time;
+    /* Remember which aspects have been verified */
+    int verify_result; /* for this SignerInfo, all attempted verification aspects succeeded */
+    int cert_verified; /* the certificate was verified successfully */
+    int attr_verified; /* any given signed attributes were verified successfully */
+    int content_verified; /* the signature over the content was verified successfully */
 };
 
 struct CMS_SignerIdentifier_st {

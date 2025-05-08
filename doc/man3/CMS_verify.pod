@@ -86,21 +86,26 @@ the content is detached I<detached_data> cannot be NULL.
 An attempt is made to locate all the signing certificate(s), first looking in
 the I<certs> parameter (if it is not NULL) and then looking in any
 certificates contained in the I<cms> structure unless B<CMS_NOINTERN> is set.
-If any signing certificate cannot be located the operation fails.
+If any signing certificate cannot be located the operation fails unless
+B<CMS_VERIFY_PARTIAL> is set, where one signing certificate can be sufficient.
 
-Each signing certificate is chain verified using the I<smimesign> purpose and
+Each found signing certificate is chain verified using the I<smimesign> purpose and
 using the trusted certificate store I<store> if supplied.
 Any internal certificates in the message, which may have been added using
 L<CMS_add1_cert(3)>, are used as untrusted CAs.
 If CRL checking is enabled in I<store> and B<CMS_NOCRL> is not set,
 any internal CRLs, which may have been added using L<CMS_add1_crl(3)>,
 are used in addition to attempting to look them up in I<store>.
-If I<store> is not NULL and any chain verify fails an error code is returned.
+If I<store> is not NULL and any chain verify fails an error code is returned
+unless B<CMS_VERIFY_PARTIAL> is set, where one successful verify can be sufficient.
 
 Finally the signed content is read (and written to I<out> unless it is NULL)
-and the signature is checked.
+and each signature (for which the certificate was successfully verified) is checked.
 
-If all signatures verify correctly then the function is successful.
+The overall result of the function depends on whether B<CMS_VERIFY_PARTIAL> is
+set. When set, a single successfully verified signature is enough and
+L<CMS_get0_SignerInfos(3)> can be used to inspect each signature.
+Otherwise, the function is only successful if all signatures verify successfully.
 
 Any of the following flags (ored together) can be passed in the I<flags>
 parameter to change the default verify behaviour.

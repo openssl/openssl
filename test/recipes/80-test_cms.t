@@ -56,7 +56,7 @@ my ($no_des, $no_dh, $no_dsa, $no_ec, $no_ec2m, $no_rc2, $no_zlib)
 
 $no_rc2 = 1 if disabled("legacy");
 
-plan tests => 34;
+plan tests => 35;
 
 ok(run(test(["pkcs7_test"])), "test pkcs7");
 
@@ -1658,4 +1658,81 @@ subtest "ML-KEM KEMRecipientInfo tests for CMS" => sub {
            && compare_text($smcont, "mlkem768-2.txt") == 0,
            "CMS decrypt with ML-KEM-768 and using UKM");
     }
+};
+
+subtest "sign and verify with multiple keys and -verify_partial" => sub {
+    plan tests => 9;
+
+    my $smrsa2 = catfile($smdir, "smrsa2.pem");
+    my $sig1 = "sig1.cms";
+    my $out1 = "out1.txt";
+    my $sig2 = "sig2.cms";
+    my $out2 = "out2.txt";
+
+    ok(run(app(['openssl', 'cms',
+                @defaultprov,
+                '-sign', '-in', $smcont,
+                '-nodetach',
+                '-signer', $smrsa1,
+                '-out', $sig1, '-outform', 'DER',
+               ])),
+       "sign with first key");
+    ok(run(app(['openssl', 'cms',
+                @defaultprov,
+                '-verify', '-in', $sig1, '-inform', 'DER',
+                '-CAfile', $smrsa1, '-partial_chain',
+                '-verify_partial',
+                '-out', $out1,
+               ])),
+       "verify single signature");
+    is(compare($smcont, $out1), 0, "compare original message with verified message");
+
+    # because the smrsa2 signature cannot be verified, overall verification fails
+    ok(!run(app(['openssl', 'cms',
+                 @defaultprov,
+                 '-verify', '-in', $sig1, '-inform', 'DER',
+                 '-CAfile', $smrsa2, '-partial_chain',
+                 '-verify_partial',
+                 '-out', $out2,
+                ])),
+       "try to verify rsa1 signature with only rsa2");
+
+    ok(run(app(['openssl', 'cms',
+                @defaultprov,
+                '-resign', '-in', $sig1, '-inform', 'DER',
+                '-signer', $smrsa2,
+                '-out', $sig2, '-outform', 'DER',
+               ])),
+       "resign with second key");
+
+    # because the smrsa1 signature can be verified, overall verification succeeds
+    ok(run(app(['openssl', 'cms',
+                @defaultprov,
+                '-verify', '-in', $sig2, '-inform', 'DER',
+                '-CAfile', $smrsa1, '-partial_chain',
+                '-verify_partial',
+                '-out', $out2,
+               ])),
+       "verify two signatures with only rsa1");
+
+    # because the smrsa2 signature can be verified, overall verification succeeds
+    ok(run(app(['openssl', 'cms',
+                @defaultprov,
+                '-verify', '-in', $sig2, '-inform', 'DER',
+                '-CAfile', $smrsa2, '-partial_chain',
+                '-verify_partial',
+                '-out', $out2,
+               ])),
+       "verify two signatures with only rsa2");
+
+    # because both signatures can be verified, overall verification succeeds
+    ok(run(app(['openssl', 'cms',
+                 @defaultprov,
+                 '-verify', '-in', $sig2, '-inform', 'DER',
+                 '-CAfile', $smroot,
+                 '-verify_partial',
+                 '-out', $out2,
+                ])),
+       "verify both signature signatures with root");
+    is(compare($smcont, $out2), 0, "compare original message with verified message");
 };
