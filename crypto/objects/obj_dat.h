@@ -10,7 +10,7 @@
  */
 
 /* Serialized OID's */
-static const unsigned char so[8487] = {
+static const unsigned char so[8500] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,                 /* [    0] OBJ_rsadsi */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,            /* [    6] OBJ_pkcs */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,       /* [   13] OBJ_md2 */
@@ -1183,9 +1183,11 @@ static const unsigned char so[8487] = {
     0x55,0x1D,0x4A,                                /* [ 8469] OBJ_alt_signature_value */
     0x55,0x1D,0x4B,                                /* [ 8472] OBJ_associated_information */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x01,0x33,  /* [ 8475] OBJ_id_ct_rpkiSignedPrefixList */
+    0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x15,  /* [ 8486] OBJ_id_aa_relatedCertRequest */
+    0x55,0x1D,0x88,0x10,                           /* [ 8495] OBJ_id_pe_relatedCert */
 };
 
-#define NUM_NID 1321
+#define NUM_NID 1323
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2508,9 +2510,11 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"altSignatureValue", "X509v3 Alternative Signature Value", NID_alt_signature_value, 3, &so[8469]},
     {"associatedInformation", "X509v3 Associated Information", NID_associated_information, 3, &so[8472]},
     {"id-ct-rpkiSignedPrefixList", "id-ct-rpkiSignedPrefixList", NID_id_ct_rpkiSignedPrefixList, 11, &so[8475]},
+    {"relatedCertRequest", "Bound certificate request attribute", NID_id_aa_relatedCertRequest, 9, &so[8486]},
+    {"relatedCertificate", "X509v3 Bound certificate extension", NID_id_pe_relatedCert, 4, &so[8495]},
 };
 
-#define NUM_SN 1312
+#define NUM_SN 1314
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -3556,6 +3560,8 @@ static const unsigned int sn_objs[NUM_SN] = {
      457,    /* "qualityLabelledData" */
      450,    /* "rFC822localPart" */
      870,    /* "registeredAddress" */
+    1321,    /* "relatedCertRequest" */
+    1322,    /* "relatedCertificate" */
      400,    /* "role" */
      877,    /* "roleOccupant" */
     1296,    /* "roleSpecCertIdentifier" */
@@ -3826,7 +3832,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1289,    /* "zstd" */
 };
 
-#define NUM_LN 1312
+#define NUM_LN 1314
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -3837,6 +3843,7 @@ static const unsigned int ln_objs[NUM_LN] = {
     1220,    /* "BGPsec Router" */
      365,    /* "Basic OCSP Response" */
      285,    /* "Biometric Info" */
+    1321,    /* "Bound certificate request attribute" */
     1221,    /* "Brand Indicator for Message Identification" */
     1288,    /* "Brotli compression" */
      179,    /* "CA Issuers" */
@@ -4048,6 +4055,7 @@ static const unsigned int ln_objs[NUM_LN] = {
     1314,    /* "X509v3 Authorization Validation" */
     1297,    /* "X509v3 Basic Attribute Certificate Constraints" */
       87,    /* "X509v3 Basic Constraints" */
+    1322,    /* "X509v3 Bound certificate extension" */
      103,    /* "X509v3 CRL Distribution Points" */
       88,    /* "X509v3 CRL Number" */
      141,    /* "X509v3 CRL Reason Code" */
@@ -5142,7 +5150,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      125,    /* "zlib compression" */
 };
 
-#define NUM_OBJ 1178
+#define NUM_OBJ 1180
 static const unsigned int obj_objs[NUM_OBJ] = {
        0,    /* OBJ_undef                        0 */
      181,    /* OBJ_iso                          1 */
@@ -5306,6 +5314,7 @@ static const unsigned int obj_objs[NUM_OBJ] = {
       95,    /* OBJ_mdc2                         2 5 8 3 101 */
      746,    /* OBJ_any_policy                   2 5 29 32 0 */
      910,    /* OBJ_anyExtendedKeyUsage          2 5 29 37 0 */
+    1322,    /* OBJ_id_pe_relatedCert            2 5 29 1040 */
      519,    /* OBJ_setct_PANData                2 23 42 0 0 */
      520,    /* OBJ_setct_PANToken               2 23 42 0 1 */
      521,    /* OBJ_setct_PANOnly                2 23 42 0 2 */
@@ -5990,6 +5999,7 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      188,    /* OBJ_SMIME                        1 2 840 113549 1 9 16 */
      156,    /* OBJ_friendlyName                 1 2 840 113549 1 9 20 */
      157,    /* OBJ_localKeyID                   1 2 840 113549 1 9 21 */
+    1321,    /* OBJ_id_aa_relatedCertRequest     1 2 840 113549 1 9 21 */
     1263,    /* OBJ_id_aa_CMSAlgorithmProtection 1 2 840 113549 1 9 52 */
      681,    /* OBJ_X9_62_onBasis                1 2 840 10045 1 2 3 1 */
      682,    /* OBJ_X9_62_tpBasis                1 2 840 10045 1 2 3 2 */

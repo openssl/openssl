@@ -1864,3 +1864,14 @@ oracle 746875 1 1 : oracle-jdk-trustedkeyusage : Trusted key usage (Oracle)
 # NID for compression
                             : brotli : Brotli compression
 			    : zstd : Zstandard compression
+
+# Bound Certificate
+# Bound Certificate OIDs
+
+# Attribut CSR (PKCS#10) – relatedCertRequest
+!Cname id-aa-relatedCertRequest
+1 2 840 113549 1 9 21 : relatedCertRequest : Bound certificate request attribute
+
+# Extension X.509 – relatedCertificate
+!Cname id-pe-relatedCert
+2 5 29 1040 : relatedCertificate : X509v3 Bound certificate extension 
