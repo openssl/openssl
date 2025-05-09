@@ -174,7 +174,7 @@ C<ML-DSA-87>,
 B<ML-KEM-512>,
 B<ML-KEM-768> and
 B<ML-KEM-1024>
-keys, which don't have legacy numeric I<NID> assigments, but their raw form is
+keys, which don't have legacy numeric I<NID> assignments, but their raw form is
 nevertheless available.
 
 
@@ -198,7 +198,7 @@ C<ML-DSA-87>,
 B<ML-KEM-512>,
 B<ML-KEM-768> and
 B<ML-KEM-1024>
-keys, which don't have legacy numeric I<NID> assigments, but their raw form is
+keys, which don't have legacy numeric I<NID> assignments, but their raw form is
 nevertheless available.
 
 EVP_PKEY_new_CMAC_key() works in the same way as EVP_PKEY_new_raw_private_key()
