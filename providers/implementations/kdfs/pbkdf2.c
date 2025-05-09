@@ -242,6 +242,9 @@ static int lower_bound_check_passed(KDF_PBKDF2 *ctx, int saltlen, uint64_t iter,
             ERR_raise(ERR_LIB_PROV, error);
             return 0;
         }
+    } else if (iter < 1) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_ITERATION_COUNT);
+        return 0;
     }
 #endif
 
