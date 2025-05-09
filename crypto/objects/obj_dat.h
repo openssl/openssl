@@ -10,7 +10,7 @@
  */
 
 /* Serialized OID's */
-static const unsigned char so[8500] = {
+static const unsigned char so[8507] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,                 /* [    0] OBJ_rsadsi */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,            /* [    6] OBJ_pkcs */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,       /* [   13] OBJ_md2 */
@@ -1183,8 +1183,13 @@ static const unsigned char so[8500] = {
     0x55,0x1D,0x4A,                                /* [ 8469] OBJ_alt_signature_value */
     0x55,0x1D,0x4B,                                /* [ 8472] OBJ_associated_information */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x01,0x33,  /* [ 8475] OBJ_id_ct_rpkiSignedPrefixList */
+<<<<<<< HEAD
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x15,  /* [ 8486] OBJ_id_aa_relatedCertRequest */
     0x55,0x1D,0x88,0x10,                           /* [ 8495] OBJ_id_pe_relatedCert */
+=======
+    0x2B,0x06,0x01,0x04,0x01,0x86,0x8D,0x1F,0x01,0x01,  /* [ 8486] OBJ_id_aa_relatedCertRequest */
+    0x2B,0x06,0x01,0x04,0x01,0x86,0x8D,0x1F,0x01,0x02,  /* [ 8496] OBJ_id_pe_relatedCert */
+>>>>>>> f273c12b02 (Bound Certificate OID registration)
 };
 
 #define NUM_NID 1323
@@ -2510,8 +2515,13 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"altSignatureValue", "X509v3 Alternative Signature Value", NID_alt_signature_value, 3, &so[8469]},
     {"associatedInformation", "X509v3 Associated Information", NID_associated_information, 3, &so[8472]},
     {"id-ct-rpkiSignedPrefixList", "id-ct-rpkiSignedPrefixList", NID_id_ct_rpkiSignedPrefixList, 11, &so[8475]},
+<<<<<<< HEAD
     {"relatedCertRequest", "Bound certificate request attribute", NID_id_aa_relatedCertRequest, 9, &so[8486]},
     {"relatedCertificate", "X509v3 Bound certificate extension", NID_id_pe_relatedCert, 4, &so[8495]},
+=======
+    {"relatedCertRequest", "Bound certificate request attribute", NID_id_aa_relatedCertRequest, 10, &so[8486]},
+    {"relatedCertificate", "X509v3 Bound certificate extension", NID_id_pe_relatedCert, 10, &so[8496]},
+>>>>>>> f273c12b02 (Bound Certificate OID registration)
 };
 
 #define NUM_SN 1314
@@ -6211,6 +6221,8 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      648,    /* OBJ_ms_smartcard_login           1 3 6 1 4 1 311 20 2 2 */
      649,    /* OBJ_ms_upn                       1 3 6 1 4 1 311 20 2 3 */
     1291,    /* OBJ_ms_ntds_obj_sid              1 3 6 1 4 1 311 25 2 1 */
+    1321,    /* OBJ_id_aa_relatedCertRequest     1 3 6 1 4 1 99999 1 1 */
+    1322,    /* OBJ_id_pe_relatedCert            1 3 6 1 4 1 99999 1 2 */
     1201,    /* OBJ_blake2bmac                   1 3 6 1 4 1 1722 12 2 1 */
     1202,    /* OBJ_blake2smac                   1 3 6 1 4 1 1722 12 2 2 */
      951,    /* OBJ_ct_precert_scts              1 3 6 1 4 1 11129 2 4 2 */

@@ -5760,12 +5760,14 @@
 #define SN_id_aa_relatedCertRequest             "relatedCertRequest"
 #define LN_id_aa_relatedCertRequest             "Bound certificate request attribute"
 #define NID_id_aa_relatedCertRequest            1321
-#define OBJ_id_aa_relatedCertRequest            1L,2L,840L,113549L,1L,9L,21L
+
+#define OBJ_id_aa_relatedCertRequest            1L,3L,6L,1L,4L,1L,99999L,1L,1L
 
 #define SN_id_pe_relatedCert            "relatedCertificate"
 #define LN_id_pe_relatedCert            "X509v3 Bound certificate extension"
 #define NID_id_pe_relatedCert           1322
-#define OBJ_id_pe_relatedCert           2L,5L,29L,1040L
+#define OBJ_id_pe_relatedCert           1L,3L,6L,1L,4L,1L,99999L,1L,2L
+
 
 #endif /* OPENSSL_OBJ_MAC_H */
 
