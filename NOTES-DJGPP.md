@@ -32,6 +32,34 @@ Notes for the DOS platform with DJGPP
  running in a DOS box under Windows. If so, just close the BASH
  shell, go back to Windows, and restart BASH. Then run `make` again.
 
+Cross compilation
+=================
+ To cross compile OpenSSL, first export the necessary ENV variables,
+ next compile Watt-32 and then configure for DJGPP by running
+ `./Configure` with appropriate arguments. The following is an example
+ for i386 targets using a DJGPP build on a Linux platform using
+ <https://github.com/jwt27/build-gcc>. Make sure the cross compiler is
+ in your PATH:
+
+   export CROSS=i586-pc-msdosdjgpp
+   export HOST=${CROSS}
+   export CROSS_PLATFORM=i586-pc-msdosdjgpp-
+   export CC=${CROSS_PLATFORM}gcc
+   export CXX=${CROSS_PLATFORM}g++
+   export AR=${CROSS_PLATFORM}ar
+   export LD=${CROSS_PLATFORM}ld
+   export LN=${CROSS_PLATFORM}gcc
+   export STRIP=${CROSS_PLATFORM}strip
+   export RANLIB=${CROSS_PLATFORM}ranlib
+
+   cd <YOUR_BUILD_ROOT>/Watt-32/src
+   make -f djgpp.mak
+   cd <YOUR_BUILD_ROOT>/openssl
+   ./Configure no-threads 386 no-sse2 no-shared --prefix="<YOUR_INSTALL_DIR>" DJGPP
+   make
+   make install
+
+
  RUN-TIME CAVEAT LECTOR
  --------------
 
