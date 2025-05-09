@@ -55,7 +55,7 @@ typedef enum OPTION_choice {
     OPT_SUBJECT_HASH_OLD, OPT_ISSUER_HASH_OLD, OPT_COPY_EXTENSIONS,
     OPT_BADSIG, OPT_MD, OPT_ENGINE, OPT_NOCERT, OPT_PRESERVE_DATES,
     OPT_NOT_BEFORE, OPT_NOT_AFTER,
-    OPT_R_ENUM, OPT_PROV_ENUM, OPT_EXT
+    OPT_R_ENUM, OPT_PROV_ENUM, OPT_EXT, OPT_MULTI
 } OPTION_CHOICE;
 
 const OPTIONS x509_options[] = {
@@ -122,6 +122,7 @@ const OPTIONS x509_options[] = {
     {"purpose", OPT_PURPOSE, '-', "Print out certificate purposes"},
     {"pubkey", OPT_PUBKEY, '-', "Print the public key in PEM format"},
     {"modulus", OPT_MODULUS, '-', "Print the RSA key modulus"},
+    {"multi", OPT_MULTI, '-', "Process multiple certificates"},
 
     OPT_SECTION("Certificate checking"),
     {"checkend", OPT_CHECKEND, 'M',
@@ -281,6 +282,7 @@ int x509_main(int argc, char **argv)
     X509_STORE *ctx = NULL;
     char *CAkeyfile = NULL, *CAserial = NULL, *pubkeyfile = NULL, *alias = NULL;
     char *checkhost = NULL, *checkemail = NULL, *checkip = NULL;
+    STACK_OF(X509) *certs = NULL;
     char *ext_names = NULL;
     char *extsect = NULL, *extfile = NULL, *passin = NULL, *passinarg = NULL;
     char *infile = NULL, *outfile = NULL, *privkeyfile = NULL, *CAfile = NULL;
@@ -292,9 +294,9 @@ int x509_main(int argc, char **argv)
     int fingerprint = 0, reqfile = 0, checkend = 0;
     int informat = FORMAT_UNDEF, outformat = FORMAT_PEM, keyformat = FORMAT_UNDEF;
     int next_serial = 0, subject_hash = 0, issuer_hash = 0, ocspid = 0;
-    int noout = 0, CA_createserial = 0, email = 0;
+    int noout = 0, CA_createserial = 0, email = 0, multi = 0;
     int ocsp_uri = 0, trustout = 0, clrtrust = 0, clrreject = 0, aliasout = 0;
-    int ret = 1, i, j, num = 0, badsig = 0, clrext = 0, nocert = 0;
+    int ret = 1, i, j, k = 0, num = 0, badsig = 0, clrext = 0, nocert = 0;
     int text = 0, serial = 0, subject = 0, issuer = 0, startdate = 0, ext = 0;
     int enddate = 0;
     time_t checkoffset = 0;
@@ -605,6 +607,9 @@ int x509_main(int argc, char **argv)
         case OPT_CHECKIP:
             checkip = opt_arg();
             break;
+        case OPT_MULTI:
+            multi = 1;
+            break;
         case OPT_PRESERVE_DATES:
             preserve_dates = 1;
             break;
@@ -732,6 +737,11 @@ int x509_main(int argc, char **argv)
         }
     }
 
+    if (multi && (reqfile || newcert)) {
+        BIO_printf(bio_err, "Error: -multi cannot be used with -req or -new\n");
+        goto err;
+    }
+
     if (reqfile) {
         if (infile == NULL && isatty(fileno_stdin()))
             BIO_printf(bio_err,
@@ -788,11 +798,28 @@ int x509_main(int argc, char **argv)
     } else {
         if (infile == NULL && isatty(fileno_stdin()))
             BIO_printf(bio_err,
-                       "Warning: Reading certificate from stdin since no -in or -new option is given\n");
-        x = load_cert_pass(infile, informat, 1, passin, "certificate");
-        if (x == NULL)
-            goto end;
+                       "Warning: Reading certificate(s) from stdin since no -in or -new option is given\n");
+        if (multi) {
+            certs = sk_X509_new_null();
+            if (!load_certs(infile, 1, &certs, passin, NULL))
+                goto end;
+            if (sk_X509_num(certs) <= 0)
+                goto end;
+        } else {
+            x = load_cert_pass(infile, informat, 1, passin, "certificate");
+            if (x == NULL)
+                goto end;
+        }
     }
+
+    out = bio_open_default(outfile, 'w', outformat);
+    if (out == NULL)
+        goto end;
+
+ cert_loop:
+    if (multi)
+        x = sk_X509_value(certs, k);
+
     if ((fsubj != NULL || req != NULL)
         && !X509_set_subject_name(x, fsubj != NULL ? fsubj :
                                   X509_REQ_get_subject_name(req)))
@@ -808,10 +835,6 @@ int x509_main(int argc, char **argv)
         if (xca == NULL)
             goto end;
     }
-
-    out = bio_open_default(outfile, 'w', outformat);
-    if (out == NULL)
-        goto end;
 
     if (alias)
         X509_alias_set1(x, (unsigned char *)alias, -1);
@@ -1079,7 +1102,7 @@ int x509_main(int argc, char **argv)
             BIO_printf(out, "Certificate will expire\n");
         else
             BIO_printf(out, "Certificate will not expire\n");
-        goto end;
+        goto end_cert_loop;
     }
 
     if (!check_cert_attributes(out, x, checkhost, checkemail, checkip, 1))
@@ -1087,7 +1110,7 @@ int x509_main(int argc, char **argv)
 
     if (noout || nocert) {
         ret = 0;
-        goto end;
+        goto end_cert_loop;
     }
 
     if (outformat == FORMAT_ASN1) {
@@ -1106,6 +1129,10 @@ int x509_main(int argc, char **argv)
         goto err;
     }
 
+ end_cert_loop:
+    if (multi && ++k < sk_X509_num(certs))
+        goto cert_loop;
+
     ret = 0;
     goto end;
 
@@ -1113,6 +1140,10 @@ int x509_main(int argc, char **argv)
     ERR_print_errors(bio_err);
 
  end:
+    if (multi) {
+        sk_X509_pop_free(certs, X509_free);
+        x = NULL;
+    }
     NCONF_free(extconf);
     BIO_free_all(out);
     X509_STORE_free(ctx);
