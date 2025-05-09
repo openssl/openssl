@@ -146,6 +146,77 @@ Test failures and suppressions
 There are tests for different software tokens - softhsm, nss-softokn and kryoptic.
 Kryoptic tests will not run at this point. Currently no test fails.
 
+The BoringSSL test suite
+========================
+
+In order to run the BoringSSL tests with OpenSSL, first checkout the BoringSSL
+source code into an appropriate directory. This can be done in two ways:
+
+1) Separately from the OpenSSL checkout using:
+
+   $ `git clone https://boringssl.googlesource.com/boringssl boringssl`
+
+ The BoringSSL tests are only confirmed to work at a specific commit in the
+ BoringSSL repository. Later commits may or may not pass the test suite.
+ Use the command below in the root of the OpenSSL source tree to determine the
+ current commit hash:
+
+   $ git submodule status
+
+   $ cd boringssl
+   $ git checkout `<boringssl_hash>`
+
+2) Using the already configured submodule settings in OpenSSL:
+
+   $ git submodule update --init
+
+The BoringSSL tests use C++ 17 functions, so either CXX should be defined
+for your configuration, or you set it when running configure. In addition
+CXXFLAGS should include `-std=c++17`. Configure the OpenSSL source code to
+enable the external tests:
+
+   $ cd ../openssl
+   $ CXX="g++" CXXFLAGS="-std=c++17" ./config enable-weak-ssl-ciphers \
+       enable-external-tests
+
+Note that using other config options than those given above may cause the tests
+to fail.
+
+Run the OpenSSL tests by providing the path to the BoringSSL test runner in the
+`BORING_RUNNER_DIR` environment variable:
+
+   $ BORING_RUNNER_DIR=/path/to/boringssl/ssl/test/runner make \
+       TESTS="test_external_boringssl" test
+
+Note that the test suite may change directory while running so the path provided
+should be absolute and not relative to the current working directory.
+
+To see more detailed output you can run just the BoringSSL tests with the
+verbose option:
+
+   $ VERBOSE=1 BORING_RUNNER_DIR=/path/to/boringssl/ssl/test/runner make \
+       TESTS="test_external_boringssl" test
+
+Test failures and suppressions
+------------------------------
+
+A large number of the BoringSSL tests are known to fail. A test could fail
+because of many possible reasons. For example:
+
+- A bug in OpenSSL
+- Different interpretations of standards
+- Assumptions about the way BoringSSL works that do not apply to OpenSSL
+- The test uses APIs added to BoringSSL that are not present in OpenSSL
+- etc
+
+In order to provide a "clean" baseline run with all the tests passing a config
+file has been provided that suppresses the running of tests that are known to
+fail. These suppressions are held in the file "test/ossl_shim/ossl_config.json"
+within the OpenSSL source code.
+
+The community is encouraged to contribute patches which reduce the number of
+suppressions that are currently present.
+
 Updating test suites
 ====================
 
