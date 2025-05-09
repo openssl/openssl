@@ -3140,8 +3140,11 @@ static int tls_process_cke_ecdhe(SSL_CONNECTION *s, PACKET *pkt)
          * ClientKeyExchange message.
          */
 
-        /* Get encoded point length */
-        if (!PACKET_get_1(pkt, &i) || !PACKET_get_bytes(pkt, &data, i)
+        /*
+         * Get encoded point length
+         * empty key should be handled here
+         */
+        if (!PACKET_get_1(pkt, &i) || i == 0 || !PACKET_get_bytes(pkt, &data, i)
             || PACKET_remaining(pkt) != 0) {
             SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
             goto err;
