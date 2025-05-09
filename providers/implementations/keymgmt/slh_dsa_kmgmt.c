@@ -135,6 +135,7 @@ static const OSSL_PARAM slh_dsa_params[] = {
     OSSL_PARAM_int(OSSL_PKEY_PARAM_BITS, NULL),
     OSSL_PARAM_int(OSSL_PKEY_PARAM_SECURITY_BITS, NULL),
     OSSL_PARAM_int(OSSL_PKEY_PARAM_MAX_SIZE, NULL),
+    OSSL_PARAM_int(OSSL_PKEY_PARAM_SECURITY_CATEGORY, NULL),
     OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_MANDATORY_DIGEST, NULL, 0),
     SLH_DSA_IMEXPORTABLE_PARAMETERS,
     OSSL_PARAM_END
@@ -180,6 +181,9 @@ static int slh_dsa_get_params(void *keydata, OSSL_PARAM params[])
         return 0;
     if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_MAX_SIZE)) != NULL
             && !OSSL_PARAM_set_int(p, ossl_slh_dsa_key_get_sig_len(key)))
+        return 0;
+    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_SECURITY_CATEGORY)) != NULL
+            && !OSSL_PARAM_set_int(p, ossl_slh_dsa_key_get_security_category(key)))
         return 0;
 
     priv = ossl_slh_dsa_key_get_priv(key);
