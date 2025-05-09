@@ -30,14 +30,14 @@ key that is used during encapsulation.
 
 The EVP_PKEY_encapsulate() function performs a public key encapsulation
 operation using I<ctx>.
-The shared secret writen to I<genkey> can be used as an input for key
+The shared secret written to I<genkey> can be used as an input for key
 derivation, typically for various symmetric algorithms.
 Its size is written to I<genkeylen>, which must be initialised to the
 size of the provided buffer.
 
 The ciphertext written to I<wrappedkey> is an encapsulated form, which
 is expected to be only usable by the holder of the private key corresponding
-to wthe public key associated with I<ctx>.
+to the public key associated with I<ctx>.
 This ciphertext is then communicated to the private-key holder, who can use
 L<EVP_PKEY_decapsulate(3)> to securely recover the same shared secret.
 
