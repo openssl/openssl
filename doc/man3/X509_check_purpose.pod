@@ -80,7 +80,7 @@ Unless the id stays the same for an existing entry, I<id> must be fresh,
 which can be achieved by using the result of X509_PURPOSE_get_unused_id().
 The function also sets in the entry the trust id I<trust>, the given I<flags>,
 the purpose (long) name I<name>, the short name I<sname>, the purpose checking
-funktion I<ck> of type B<int (*) (const X509_PURPOSE *, const X509 *, int)>,
+function I<ck> of type B<int (*) (const X509_PURPOSE *, const X509 *, int)>,
 and its user data I<arg> which may be retrieved via the B<X509_PURPOSE> pointer.
 
 X509_PURPOSE_cleanup() removes all purposes that are not pre-defined.
