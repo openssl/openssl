@@ -131,6 +131,21 @@ OpenSSL 4.0
 
    *Daniel Kubec*
 
+ * Add `CMS_VERIFY_PARTIAL` flag to `CMS_verify()` and `-verify_partial` option
+   to `openssl cms -verify`.
+
+   If this flag is set, the call is successful also if not all, but at least
+   one of the individual signatures can be verified (perhaps due to CAs missing
+   from the local store, expired certificates, or unsupported algorithms). The
+   application would then call `CMS_get0_signers()` and check if the set of
+   valid signatures satisfies its policy.
+
+   To access detailed verification results, the new functions
+   `CMS_SignerInfo_get_verification_result()` and
+   `CMS_SignerInfo_get0_signer_cert()` can be used.
+
+   *Jan Lübbe*
+
  * Enabled Server verification by default in `s_server` when option
    verify_return_error is enabled.
 
