@@ -1397,6 +1397,35 @@ int cms_main(int argc, char **argv)
                 ret = verify_err + 32;
             goto end;
         }
+        if ((flags & CMS_VERIFY_PARTIAL) != 0) {
+            int i;
+            STACK_OF(CMS_SignerInfo) *sinfos = CMS_get0_SignerInfos(cms);
+
+            for (i = 0; i < sk_CMS_SignerInfo_num(sinfos); i++) {
+                CMS_SignerInfo *si = sk_CMS_SignerInfo_value(sinfos, i);
+                X509 *si_signer = CMS_SignerInfo_get0_signer_cert(si);
+                X509_NAME *si_subject = NULL;
+
+                if (si_signer == NULL) {
+                    BIO_printf(bio_err, "Signer %d: no certificate\n", i);
+                    continue;
+                }
+
+                si_subject = X509_get_subject_name(si_signer);
+                if (si_subject == NULL) {
+                    BIO_printf(bio_err, "Signer %d: no subject name\n", i);
+                    continue;
+                }
+
+                BIO_printf(bio_err, "Signer %d: ", i);
+                X509_NAME_print_ex(bio_err, si_subject, 0, XN_FLAG_ONELINE);
+                BIO_printf(bio_err, "\n  Verification %s (cert: %s, attrs: %s, content: %s)\n",
+                    CMS_SignerInfo_get_verification_result(si, CMS_VERIFY_RESULT) ? "successful" : "failed",
+                    CMS_SignerInfo_get_verification_result(si, CMS_VERIFY_CERT) ? "success" : "failure or not verified",
+                    CMS_SignerInfo_get_verification_result(si, CMS_VERIFY_ATTR) ? "success" : "failure or not verified",
+                    CMS_SignerInfo_get_verification_result(si, CMS_VERIFY_CONTENT) ? "success" : "failure or not verified");
+            }
+        }
         if (signerfile != NULL) {
             STACK_OF(X509) *signers = CMS_get0_signers(cms);
 
