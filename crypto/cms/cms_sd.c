@@ -861,6 +861,11 @@ void CMS_SignerInfo_set1_signer_cert(CMS_SignerInfo *si, X509 *signer)
     si->signer = signer;
 }
 
+X509 *CMS_SignerInfo_get0_signer_cert(const CMS_SignerInfo *si)
+{
+    return si->signer;
+}
+
 int CMS_SignerInfo_get0_signer_id(CMS_SignerInfo *si,
     ASN1_OCTET_STRING **keyid,
     X509_NAME **issuer, ASN1_INTEGER **sno)
@@ -1041,6 +1046,27 @@ static int cms_EVP_PKEY_verify(EVP_PKEY_CTX *pctx, BIO *in, unsigned char *sig,
         ret = EVP_PKEY_verify_message_final(pctx);
     }
     return ret;
+}
+
+int CMS_SignerInfo_get_verification_result(const CMS_SignerInfo *si, int type)
+{
+    switch (type) {
+    case CMS_VERIFY_RESULT:
+        return si->verify_result;
+
+    case CMS_VERIFY_CERT:
+        return si->cert_verified;
+
+    case CMS_VERIFY_ATTR:
+        return si->attr_verified;
+
+    case CMS_VERIFY_CONTENT:
+        return si->content_verified;
+
+    default:
+        ERR_raise(ERR_LIB_CMS, CMS_R_UNKNOWN_ID);
+        return 0;
+    }
 }
 
 static int cms_SignerInfo_content_sign(CMS_ContentInfo *cms,
