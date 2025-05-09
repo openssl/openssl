@@ -907,7 +907,7 @@ static int set_name(const char *str,
                     OSSL_CMP_CTX *ctx, const char *desc)
 {
     if (str != NULL) {
-        X509_NAME *n = parse_name(str, MBSTRING_ASC, 1, desc);
+        X509_NAME *n = parse_name(str, MBSTRING_UTF8, 1, desc);
 
         if (n == NULL)
             return 0;
