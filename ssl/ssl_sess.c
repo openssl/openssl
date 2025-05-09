@@ -595,6 +595,8 @@ int ssl_get_prev_session(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello)
     SSL_TICKET_STATUS r;
 
     if (SSL_CONNECTION_IS_TLS13(s)) {
+        SSL_SESSION_free(s->session);
+        s->session = NULL;
         /*
          * By default we will send a new ticket. This can be overridden in the
          * ticket processing.
@@ -607,6 +609,7 @@ int ssl_get_prev_session(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello)
                                         hello->pre_proc_exts, NULL, 0))
             return -1;
 
+        /* If we resumed, s->session will now be set */
         ret = s->session;
     } else {
         /* sets s->ext.ticket_expected */
