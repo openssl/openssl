@@ -347,10 +347,8 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
     impl->provider = prov;
 
     /* Insert into the hash table if required */
-    if (!ossl_property_write_lock(store)) {
-        OPENSSL_free(impl);
-        return 0;
-    }
+    if (!ossl_property_write_lock(store))
+        goto err;
 
     /*
      * Flush the alg cache of any implementation that already exists
