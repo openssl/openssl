@@ -316,6 +316,7 @@ CMS_R_CIPHER_GET_TAG:185:cipher get tag
 CMS_R_CIPHER_INITIALISATION_ERROR:101:cipher initialisation error
 CMS_R_CIPHER_PARAMETER_INITIALISATION_ERROR:102:\
 	cipher parameter initialisation error
+CMS_R_CLASSICAL_SIGNATURE_MISSING:197:classical signature missing
 CMS_R_CMS_DATAFINAL_ERROR:103:cms datafinal error
 CMS_R_CMS_LIB:104:cms lib
 CMS_R_CONTENTIDENTIFIER_MISMATCH:170:contentidentifier mismatch
@@ -373,9 +374,12 @@ CMS_R_NO_PASSWORD:178:no password
 CMS_R_NO_PRIVATE_KEY:133:no private key
 CMS_R_NO_PUBLIC_KEY:134:no public key
 CMS_R_NO_RECEIPT_REQUEST:168:no receipt request
+CMS_R_NO_SIGNATURES_VERIFIED:198:no signatures verified
 CMS_R_NO_SIGNERS:135:no signers
+CMS_R_NO_VALID_SIGNATURES:199:no valid signatures
 CMS_R_OPERATION_UNSUPPORTED:182:operation unsupported
 CMS_R_PEER_KEY_ERROR:188:peer key error
+CMS_R_PQ_SIGNATURE_MISSING:200:pq signature missing
 CMS_R_PRIVATE_KEY_DOES_NOT_MATCH_CERTIFICATE:136:\
 	private key does not match certificate
 CMS_R_RECEIPT_DECODE_ERROR:169:receipt decode error
@@ -394,6 +398,7 @@ CMS_R_UNABLE_TO_FINALIZE_CONTEXT:147:unable to finalize context
 CMS_R_UNKNOWN_CIPHER:148:unknown cipher
 CMS_R_UNKNOWN_DIGEST_ALGORITHM:149:unknown digest algorithm
 CMS_R_UNKNOWN_ID:150:unknown id
+CMS_R_UNKNOWN_SIGNATURE_ALGORITHM:201:unknown signature algorithm
 CMS_R_UNSUPPORTED_COMPRESSION_ALGORITHM:151:unsupported compression algorithm
 CMS_R_UNSUPPORTED_CONTENT_ENCRYPTION_ALGORITHM:194:\
 	unsupported content encryption algorithm
@@ -1028,6 +1033,7 @@ PKCS7_R_UNKNOWN_DIGEST_TYPE:109:unknown digest type
 PKCS7_R_UNKNOWN_OPERATION:110:unknown operation
 PKCS7_R_UNSUPPORTED_CIPHER_TYPE:111:unsupported cipher type
 PKCS7_R_UNSUPPORTED_CONTENT_TYPE:112:unsupported content type
+PKCS7_R_VERIFICATION_FAILURE_CUSTOM_LOGIC:125:verification failure custom logic
 PKCS7_R_WRONG_CONTENT_TYPE:113:wrong content type
 PKCS7_R_WRONG_PKCS7_TYPE:114:wrong pkcs7 type
 PROP_R_NAME_TOO_LONG:100:name too long
