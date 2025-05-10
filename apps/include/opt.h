@@ -16,6 +16,7 @@
 
 #define OPT_COMMON OPT_ERR = -1, OPT_EOF = 0, OPT_HELP
 
+
 /*
  * Common verification options.
  */
@@ -31,7 +32,7 @@
         OPT_V_SUITEB_128_ONLY, OPT_V_SUITEB_128, OPT_V_SUITEB_192, \
         OPT_V_PARTIAL_CHAIN, OPT_V_NO_ALT_CHAINS, OPT_V_NO_CHECK_TIME, \
         OPT_V_VERIFY_AUTH_LEVEL, OPT_V_ALLOW_PROXY_CERTS, \
-        OPT_V__LAST
+        OPT_V__LAST 
 
 # define OPT_V_OPTIONS \
         OPT_SECTION("Validation"), \

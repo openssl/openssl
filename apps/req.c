@@ -30,6 +30,8 @@
 #ifndef OPENSSL_NO_DSA
 # include <openssl/dsa.h>
 #endif
+#include <openssl/v3_certbind.h>
+
 
 #define BITS               "default_bits"
 #define KEYFILE            "default_keyfile"
@@ -91,7 +93,9 @@ typedef enum OPTION_choice {
     OPT_COPY_EXTENSIONS, OPT_EXTENSIONS, OPT_REQEXTS, OPT_ADDEXT,
     OPT_PRECERT, OPT_MD,
     OPT_SECTION, OPT_QUIET,
-    OPT_R_ENUM, OPT_PROV_ENUM
+    OPT_R_ENUM, OPT_PROV_ENUM,
+    OPT_RELATED_URI = 3002,
+    OPT_ADD_RELATED_CERT = 3001,
 } OPTION_CHOICE;
 
 const OPTIONS req_options[] = {
@@ -109,6 +113,8 @@ const OPTIONS req_options[] = {
 
     OPT_SECTION("Certificate"),
     {"new", OPT_NEW, '-', "New request"},
+    { "add_related_cert", OPT_ADD_RELATED_CERT, '<', "PEM file of related certificate" },
+    { "related_uri",      OPT_RELATED_URI,      's', "URI pointing to related certificate" },
     {"config", OPT_CONFIG, '<', "Request template file"},
     {"section", OPT_SECTION, 's', "Config section to use (default \"req\")"},
     {"utf8", OPT_UTF8, '-', "Input characters are UTF8 (default ASCII)"},
@@ -233,9 +239,36 @@ static int duplicated(LHASH_OF(OPENSSL_STRING) *addexts, char *kv)
 
     return 0;
 }
+// Load an X.509 certificate from a file, either in PEM or DER format.
+X509 *load_certif(const char *path, int format, const char *desc) {
+    FILE *fp = NULL;
+    X509 *cert = NULL;
+
+    fp = fopen(path, "r");
+    if (fp == NULL) {
+        BIO_printf(bio_err, "Error opening %s file %s\n", desc, path);
+        return NULL;
+    }
+
+    if (format == FORMAT_PEM) {
+        cert = PEM_read_X509(fp, NULL, NULL, NULL);
+    } else {
+        cert = d2i_X509_fp(fp, NULL);
+    }
+
+    fclose(fp);
+
+    if (!cert) {
+        BIO_printf(bio_err, "Error loading %s certificate from file %s\n", desc, path);
+    }
+
+    return cert;
+}
+
 
 int req_main(int argc, char **argv)
-{
+{   char *related_cert_path = NULL;
+    char *related_uri = NULL;
     ASN1_INTEGER *serial = NULL;
     BIO *out = NULL;
     ENGINE *e = NULL, *gen_eng = NULL;
@@ -482,6 +515,13 @@ int req_main(int argc, char **argv)
         case OPT_MD:
             digest = opt_unknown();
             break;
+	case OPT_ADD_RELATED_CERT:
+            related_cert_path = opt_arg();
+            break;
+        case OPT_RELATED_URI:
+            related_uri = opt_arg();
+            break;
+
         }
     }
 
@@ -883,6 +923,23 @@ int req_main(int argc, char **argv)
                 BIO_printf(bio_err, "Error adding request extensions defined via -addext\n");
                 goto end;
             }
+	    // Add the relatedCertRequest attribute to the CSR
+	    if (related_cert_path != NULL) {
+   		 X509 *related_cert = load_cert(related_cert_path, FORMAT_PEM, "related");
+   		 if (related_cert == NULL) {
+        	     BIO_printf(bio_err, "Failed to load related certificate\n");
+          	     goto end;
+                 }
+
+   		 if (!add_related_cert_request_to_csr(req, pkey, related_cert, related_uri)) {
+       		     BIO_printf(bio_err, "Failed to add related cert to CSR\n");
+        	     X509_free(related_cert);
+       		     goto end;
+    		 }
+
+   		 X509_free(related_cert);
+	    }
+
             i = do_X509_REQ_sign(req, pkey, digest, sigopts);
             if (!i)
                 goto end;
@@ -934,6 +991,7 @@ int req_main(int argc, char **argv)
                            keyout != NULL && outfile != NULL &&
                            strcmp(keyout, outfile) == 0 ? 'a' : 'w',
                            outformat);
+
     if (out == NULL)
         goto end;
 
@@ -948,10 +1006,11 @@ int req_main(int argc, char **argv)
     }
 
     if (text) {
-        if (gen_x509)
+        if (gen_x509) 
             ret = X509_print_ex(out, new_x509, get_nameopt(), reqflag);
         else
             ret = X509_REQ_print_ex(out, req, get_nameopt(), reqflag);
+	
 
         if (ret == 0) {
             if (gen_x509)
@@ -961,6 +1020,7 @@ int req_main(int argc, char **argv)
             goto end;
         }
     }
+
 
     if (subject) {
         print_name(out, "subject=", gen_x509

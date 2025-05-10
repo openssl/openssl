@@ -1183,13 +1183,10 @@ static const unsigned char so[8507] = {
     0x55,0x1D,0x4A,                                /* [ 8469] OBJ_alt_signature_value */
     0x55,0x1D,0x4B,                                /* [ 8472] OBJ_associated_information */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x01,0x33,  /* [ 8475] OBJ_id_ct_rpkiSignedPrefixList */
-<<<<<<< HEAD
-    0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x15,  /* [ 8486] OBJ_id_aa_relatedCertRequest */
-    0x55,0x1D,0x88,0x10,                           /* [ 8495] OBJ_id_pe_relatedCert */
-=======
+
     0x2B,0x06,0x01,0x04,0x01,0x86,0x8D,0x1F,0x01,0x01,  /* [ 8486] OBJ_id_aa_relatedCertRequest */
     0x2B,0x06,0x01,0x04,0x01,0x86,0x8D,0x1F,0x01,0x02,  /* [ 8496] OBJ_id_pe_relatedCert */
->>>>>>> f273c12b02 (Bound Certificate OID registration)
+
 };
 
 #define NUM_NID 1323
@@ -2515,13 +2512,10 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"altSignatureValue", "X509v3 Alternative Signature Value", NID_alt_signature_value, 3, &so[8469]},
     {"associatedInformation", "X509v3 Associated Information", NID_associated_information, 3, &so[8472]},
     {"id-ct-rpkiSignedPrefixList", "id-ct-rpkiSignedPrefixList", NID_id_ct_rpkiSignedPrefixList, 11, &so[8475]},
-<<<<<<< HEAD
-    {"relatedCertRequest", "Bound certificate request attribute", NID_id_aa_relatedCertRequest, 9, &so[8486]},
-    {"relatedCertificate", "X509v3 Bound certificate extension", NID_id_pe_relatedCert, 4, &so[8495]},
-=======
+
     {"relatedCertRequest", "Bound certificate request attribute", NID_id_aa_relatedCertRequest, 10, &so[8486]},
     {"relatedCertificate", "X509v3 Bound certificate extension", NID_id_pe_relatedCert, 10, &so[8496]},
->>>>>>> f273c12b02 (Bound Certificate OID registration)
+
 };
 
 #define NUM_SN 1314

@@ -16,6 +16,8 @@
 #include <openssl/x509v3.h>
 #include <openssl/rsa.h>
 #include <openssl/dsa.h>
+#include <openssl/v3_certbind.h>
+
 
 #ifndef OPENSSL_NO_STDIO
 int X509_REQ_print_fp(FILE *fp, X509_REQ *x)
@@ -120,6 +122,38 @@ int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags,
 
                 a = X509_REQ_get_attr(x, i);
                 aobj = X509_ATTRIBUTE_get0_object(a);
+		if (OBJ_obj2nid(aobj) == NID_id_aa_relatedCertRequest) {
+   	            ASN1_TYPE *at = X509_ATTRIBUTE_get0_type(a, 0);
+    		    const unsigned char *p = at->value.sequence->data;
+    		    REQUESTER_CERTIFICATE *rc = d2i_REQUESTER_CERTIFICATE(NULL, &p, at->value.sequence->length);
+
+    		    if (rc != NULL) {
+       		        BIO_printf(bp, "%12srelatedCertRequest:\n", "");
+       		        BIO_printf(bp, "%16sIssuer: ", "");
+       		        X509_NAME_print_ex(bp, rc->certID->issuer, 0, nmflags);
+       		        BIO_printf(bp, "\n%16sSerial: ", "");
+                        i2a_ASN1_INTEGER(bp, rc->certID->serialNumber);
+       		        BIO_printf(bp, "\n%16sRequest Time: ", "");
+       		        ASN1_GENERALIZEDTIME_print(bp, rc->requestTime);
+       		        BIO_printf(bp, "\n%16sLocation Info: %.*s\n", "", rc->locationInfo->length, rc->locationInfo->data);
+        		BIO_printf(bp, "%16sSignature Value:\n%20s", "", "");
+        		for (int k = 0; k < rc->signature->length; k++){
+            		    BIO_printf(bp, "%02X", rc->signature->data[k]);
+			    if (k + 1 != rc->signature->length)
+        		        BIO_printf(bp, ":");
+    			    if ((k + 1) % 16 == 0 && (k + 1) != rc->signature->length)
+        			BIO_printf(bp, "\n%20s", "");
+        		}
+
+   			BIO_printf(bp, "\n");
+
+        		REQUESTER_CERTIFICATE_free(rc);
+    		    } else {
+        		BIO_printf(bp, "%12s[Unable to parse relatedCertRequest]\n", "");
+    		    }
+   		    continue;
+		}
+
                 if (X509_REQ_extension_nid(OBJ_obj2nid(aobj)))
                     continue;
                 if (BIO_printf(bp, "%12s", "") <= 0)
