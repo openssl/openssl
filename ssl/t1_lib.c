@@ -1003,8 +1003,10 @@ int tls1_get0_implemented_groups(int min_proto_version, int max_proto_version,
  * For nmatch == -1, return number of matches
  * For nmatch == -2, return the id of the group to use for
  * a tmp key, or 0 if there is no match.
+ * If ec == 0, EC curves will not be included.
+ * If dh == 0, DH groups will not be included.
  */
-uint16_t tls1_shared_group(SSL_CONNECTION *s, int nmatch)
+uint16_t tls1_shared_group(SSL_CONNECTION *s, int nmatch, int ec, int dh)
 {
     const uint16_t *pref, *supp;
     size_t num_pref, num_supp, i;
@@ -1015,7 +1017,7 @@ uint16_t tls1_shared_group(SSL_CONNECTION *s, int nmatch)
     if (s->server == 0)
         return 0;
     if (nmatch == -2) {
-        if (tls1_suiteb(s)) {
+        if (ec && tls1_suiteb(s)) {
             /*
              * For Suite B ciphersuite determines curve: we already know
              * these are acceptable due to previous checks.
@@ -1065,6 +1067,12 @@ uint16_t tls1_shared_group(SSL_CONNECTION *s, int nmatch)
         if ((minversion != 0 && ssl_version_cmp(s, s->version, minversion) < 0)
             || (maxversion != 0
                 && ssl_version_cmp(s, s->version, maxversion) > 0))
+            continue;
+        if (!ec && (strcmp(inf->algorithm, "EC") == 0 ||
+                    strcmp(inf->algorithm, "X25519") == 0 ||
+                    strcmp(inf->algorithm, "X448") == 0))
+            continue;
+        if (!dh && strcmp(inf->algorithm, "DH") == 0)
             continue;
 
         if (nmatch == k)
@@ -1904,7 +1912,7 @@ int tls1_check_ec_tmp_key(SSL_CONNECTION *s, unsigned long cid)
 {
     /* If not Suite B just need a shared group */
     if (!tls1_suiteb(s))
-        return tls1_shared_group(s, 0) != 0;
+        return tls1_shared_group(s, 0, 1, 0) != 0;
     /*
      * If Suite B, AES128 MUST use P-256 and AES256 MUST use P-384, no other
      * curves permitted.
