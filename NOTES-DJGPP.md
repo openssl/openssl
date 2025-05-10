@@ -32,8 +32,9 @@ Notes for the DOS platform with DJGPP
  running in a DOS box under Windows. If so, just close the BASH
  shell, go back to Windows, and restart BASH. Then run `make` again.
 
-Cross compilation
-=================
+ CROSS COMPILATION
+ -----------------
+
  To cross compile OpenSSL, first export the necessary ENV variables,
  next compile Watt-32 and then configure for DJGPP by running
  `./Configure` with appropriate arguments. The following is an example
