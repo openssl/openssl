@@ -50,6 +50,7 @@ my $smcont   = srctop_file("test", "smcont.txt");
 my $smcont_zero = srctop_file("test", "smcont_zero.txt");
 my ($no_des, $no_dh, $no_dsa, $no_ec, $no_ec2m, $no_rc2, $no_zlib)
     = disabled qw/des dh dsa ec ec2m rc2 zlib/;
+my @test_certs = qw(test certs);
 
 $no_rc2 = 1 if disabled("legacy");
 
@@ -955,7 +956,7 @@ subtest "CMS Check that bad encryption algorithm fails\n" => sub {
     plan tests => 1;
 
     SKIP: {
-        skip "DES or Legacy isn't supported in this build", 1
+        skip "DES or Legacy is not supported in this build", 1
             if disabled("des") || disabled("legacy");
 
         my $out = "smtst.txt";
@@ -973,7 +974,7 @@ subtest "CMS Decrypt message encrypted with OpenSSL 1.1.1\n" => sub {
     plan tests => 1;
 
     SKIP: {
-        skip "EC or DES isn't supported in this build", 1
+        skip "EC or DES is not supported in this build", 1
             if disabled("ec") || disabled("des");
 
         my $out = "smtst.txt";
@@ -1243,8 +1244,8 @@ with({ exit_checker => sub { return shift == 4; } },
         ok(run(app(['openssl', 'smime', '-decrypt',
                     '-inform', 'PEM',
                     '-in', data_file("pkcs7-md4-encrypted.pem"),
-                    '-recip', srctop_file("test", "certs", "ee-cert.pem"),
-                    '-inkey', srctop_file("test", "certs", "ee-key.pem")
+                    '-recip', srctop_file(@test_certs, "ee-cert.pem"),
+                    '-inkey', srctop_file(@test_certs, "ee-key.pem")
                    ])),
             "Check failure of EVP_DigestInit in PKCS7 signedAndEnveloped is handled");
     });
@@ -1274,7 +1275,7 @@ sub check_availability {
 # This will fail if the fix is in and deadlock on Windows (and possibly
 # other platforms) if not.
 ok(!run(app(['openssl', 'cms', '-verify',
-             '-CAfile', srctop_file("test/certs", "pkitsta.pem"),
+             '-CAfile', srctop_file(@test_certs, "pkitsta.pem"),
              '-policy', 'anyPolicy',
              '-in', srctop_file("test/smime-eml",
                                 "SignedInvalidMappingFromanyPolicyTest7.eml")
@@ -1381,24 +1382,35 @@ subtest "encrypt to three recipients with RSA-OAEP, key only decrypt" => sub {
     is(compare($pt, $ptpt), 0, "compare original message with decrypted ciphertext");
 };
 
-subtest "EdDSA tests for CMS" => sub {
-    plan tests => 2;
+subtest "EdDSA tests for CMS and PKCS7" => sub {
+    plan tests => 4;
 
     SKIP: {
-        skip "ECX (EdDSA) is not supported in this build", 2
+        skip "ECX (EdDSA) is not supported in this build", 4
             if disabled("ecx");
 
-        my $crt1 = srctop_file("test", "certs", "root-ed25519.pem");
-        my $key1 = srctop_file("test", "certs", "root-ed25519.privkey.pem");
+        my $crt1 = srctop_file(@test_certs, "root-ed25519.pem");
+        my $key1 = srctop_file(@test_certs, "root-ed25519.privkey.pem");
+        my $crt2 = srctop_file(@test_certs, "root-ed448-cert.pem");
+        my $key2 = srctop_file(@test_certs, "root-ed448-key.pem");
         my $sig1 = "sig1.cms";
+        my $sig2 = "sig2.p7s";
 
-        ok(run(app(["openssl", "cms", @prov, "-sign", "-md", "sha512", "-in", $smcont,
+        ok(run(app(["openssl", "cms", @prov, "-sign", "-in", $smcont,
                     "-signer", $crt1, "-inkey", $key1, "-out", $sig1])),
            "accept CMS signature with Ed25519");
 
         ok(run(app(["openssl", "cms", @prov, "-verify", "-in", $sig1,
                     "-CAfile", $crt1, "-content", $smcont])),
            "accept CMS verify with Ed25519");
+
+        ok(run(app(["openssl", "smime", @prov, "-sign", "-in", $smcont,
+                    "-signer", $crt2, "-inkey", $key2, "-out", $sig2])),
+           "accept PKCS7 signature with Ed448");
+
+        ok(run(app(["openssl", "smime", @prov, "-verify", "-in", $sig2,
+                    "-CAfile", $crt2, "-content", $smcont, "-purpose", "any"])),
+           "accept PKCS7 verify with Ed448");
     }
 };
 
