@@ -664,9 +664,6 @@ jobs:
     - uses: actions/checkout@v4
       with:
         submodules: recursive
-    - name: package installs
-      run: |
-        sudo apt-get update
     - name: config
       run: ./config --strict-warnings --banner=Configured --debug enable-external-tests && perl configdata.pm --dump
     - name: make
