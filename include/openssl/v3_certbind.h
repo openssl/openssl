@@ -1,11 +1,15 @@
-#ifndef REQUESTER_CERTIFICATE_H
-#define REQUESTER_CERTIFICATE_H
+#ifndef V3_CERTBIND_H
+#define V3_CERTBIND_H
 
 #include <openssl/x509.h>
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 
-/* Définition complète de CERT_ID */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// Structure ASN.1 : CertID ::= SEQUENCE { issuer Name, serialNumber INTEGER }
 typedef struct cert_id_st {
     X509_NAME *issuer;
     ASN1_INTEGER *serialNumber;
@@ -13,7 +17,7 @@ typedef struct cert_id_st {
 
 DECLARE_ASN1_FUNCTIONS(CERT_ID)
 
-/* Définition complète de REQUESTER_CERTIFICATE */
+// Structure ASN.1 : RequesterCertificate ::= SEQUENCE { ... }
 typedef struct requester_certificate_st {
     CERT_ID *certID;
     ASN1_OCTET_STRING *requestTime;
@@ -23,4 +27,14 @@ typedef struct requester_certificate_st {
 
 DECLARE_ASN1_FUNCTIONS(REQUESTER_CERTIFICATE)
 
+// Function for verifying a relatedCertRequest attribute in a CSR
+int verify_related_cert_request(X509_REQ *req);
+
+int add_related_cert_request_to_csr(X509_REQ *req, EVP_PKEY *pkey, X509 *related_cert, const char *uri);
+
+
+#ifdef __cplusplus
+}
 #endif
+
+#endif 

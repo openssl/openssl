@@ -239,6 +239,7 @@ static int duplicated(LHASH_OF(OPENSSL_STRING) *addexts, char *kv)
 
     return 0;
 }
+
 // Load an X.509 certificate from a file, either in PEM or DER format.
 X509 *load_certif(const char *path, int format, const char *desc) {
     FILE *fp = NULL;
@@ -980,6 +981,15 @@ int req_main(int argc, char **argv)
 	    goto end;
         } else /* i > 0 */
             BIO_printf(bio_out, "Certificate request self-signature verify OK\n");
+	 
+         // verification of relatedCertRequest attribut 
+            if (!verify_related_cert_request(req)) {
+                BIO_printf(bio_err, "relatedCertRequest signature verification failed\n");
+                goto end;
+            } else {
+                BIO_printf(bio_out, "relatedCertRequest signature verification OK\n");
+            }
+
     }
 
     if (noout && !text && !modulus && !subject && !pubkey) {
