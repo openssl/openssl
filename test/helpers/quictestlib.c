@@ -164,17 +164,18 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
         return 0;
 
     *qtserv = NULL;
-    if (*cssl == NULL) {
-        *cssl = SSL_new(clientctx);
-        if (!TEST_ptr(*cssl))
-            return 0;
-    }
 
     if (fault != NULL) {
         *fault = OPENSSL_zalloc(sizeof(**fault));
         if (*fault == NULL)
             goto err;
         bdata->fault = *fault;
+    }
+
+    if (*cssl == NULL) {
+        *cssl = SSL_new(clientctx);
+        if (!TEST_ptr(*cssl))
+            goto err;
     }
 
 #ifndef OPENSSL_NO_SSL_TRACE
