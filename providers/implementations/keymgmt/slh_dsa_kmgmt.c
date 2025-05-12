@@ -145,21 +145,23 @@ static const OSSL_PARAM *slh_dsa_gettable_params(void *provctx)
 }
 
 static int key_to_params(SLH_DSA_KEY *key, OSSL_PARAM_BLD *tmpl,
-                         int include_private)
+                         int selection)
 {
     /* Error if there is no key or public key */
     if (key == NULL || ossl_slh_dsa_key_get_pub(key) == NULL)
         return 0;
-    /*
-     * Note that the private key always contains the public key elements so we
-     * just save the one blob and return.
-     */
-    if (include_private && ossl_slh_dsa_key_get_priv(key) != NULL)
-        return ossl_param_build_set_octet_string(tmpl, NULL,
-                                                 OSSL_PKEY_PARAM_PRIV_KEY,
-                                                 ossl_slh_dsa_key_get_priv(key),
-                                                 ossl_slh_dsa_key_get_priv_len(key));
-    /* Otherwise write out the public key element */
+
+    if (((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
+        && ossl_slh_dsa_key_get_priv(key) != NULL)
+        if (ossl_param_build_set_octet_string(tmpl, NULL,
+                                              OSSL_PKEY_PARAM_PRIV_KEY,
+                                              ossl_slh_dsa_key_get_priv(key),
+                                              ossl_slh_dsa_key_get_priv_len(key)) != 1)
+            return 0;
+
+    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) == 0)
+        return 1;
+
     return ossl_param_build_set_octet_string(tmpl, NULL,
                                              OSSL_PKEY_PARAM_PUB_KEY,
                                              ossl_slh_dsa_key_get_pub(key),
@@ -215,7 +217,7 @@ static int slh_dsa_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
     SLH_DSA_KEY *key = keydata;
     OSSL_PARAM_BLD *tmpl;
     OSSL_PARAM *params = NULL;
-    int ret = 0, include_private;
+    int ret = 0;
 
     if (!ossl_prov_is_running() || key == NULL)
         return 0;
@@ -227,8 +229,7 @@ static int slh_dsa_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
     if (tmpl == NULL)
         return 0;
 
-    include_private = ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0);
-    if (!key_to_params(key, tmpl, include_private))
+    if (!key_to_params(key, tmpl, selection))
         goto err;
 
     params = OSSL_PARAM_BLD_to_param(tmpl);
