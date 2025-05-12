@@ -357,7 +357,7 @@ static int ml_dsa_export(void *keydata, int selection,
                          OSSL_CALLBACK *param_cb, void *cbarg)
 {
     ML_DSA_KEY *key = keydata;
-    OSSL_PARAM params[3];
+    OSSL_PARAM params[4];
     const uint8_t *buf;
     int include_private, pnum = 0;
 
@@ -370,9 +370,8 @@ static int ml_dsa_export(void *keydata, int selection,
     include_private = ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0);
 
     /*
-     * Note that the public key can be recovered from the private key, so we
-     * just export one or the other.  If the seed is present, both the seed and
-     * the private key are exported.  The recipient will have a choice.
+     * Note that if the seed is present, both the seed and the private key are
+     * exported.  The recipient will have a choice.
      */
     if (include_private) {
         if ((buf = ossl_ml_dsa_key_get_seed(key)) != NULL) {
@@ -385,7 +384,8 @@ static int ml_dsa_export(void *keydata, int selection,
                  ossl_ml_dsa_key_get_priv_len(key));
         }
     }
-    if (pnum == 0 && (buf = ossl_ml_dsa_key_get_pub(key)) != NULL) {
+    if (((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
+        && ((buf = ossl_ml_dsa_key_get_pub(key)) != NULL)) {
         params[pnum++] = OSSL_PARAM_construct_octet_string
             (OSSL_PKEY_PARAM_PUB_KEY, (void *)buf,
              ossl_ml_dsa_key_get_pub_len(key));
