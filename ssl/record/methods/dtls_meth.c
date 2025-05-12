@@ -13,7 +13,7 @@
 #include "recmethod_local.h"
 
 /* mod 128 saturating subtract of two 64-bit values */
-static int satsub64be(uint64_t l1, uint64_t l2)
+static int satsub64(uint64_t l1, uint64_t l2)
 {
     uint64_t max, min;
     int sign;
@@ -39,7 +39,7 @@ static int dtls_record_replay_check(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
     int cmp;
     unsigned int shift;
 
-    cmp = satsub64be(rl->sequence, bitmap->max_seq_num);
+    cmp = satsub64(rl->sequence, bitmap->max_seq_num);
     if (cmp > 0) {
         rl->rrec[0].seq_num = rl->sequence;
         return 1;               /* this record in new */
@@ -59,7 +59,7 @@ static void dtls_record_bitmap_update(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap
     int cmp;
     unsigned int shift;
 
-    cmp = satsub64be(rl->sequence, bitmap->max_seq_num);
+    cmp = satsub64(rl->sequence, bitmap->max_seq_num);
     if (cmp > 0) {
         shift = cmp;
         if (shift < sizeof(bitmap->map) * 8)
@@ -511,7 +511,7 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
             && rr->type != SSL3_RT_HANDSHAKE
             && rr->type != SSL3_RT_ACK
             && !DTLS13_UNI_HDR_FIX_BITS_IS_SET(rr->type)) {
-            /* Silently discard*/
+            /* Silently discard */
             rr->length = 0;
             rl->packet_length = 0;
             goto again;
@@ -675,13 +675,13 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
         goto again;
     }
 
-    /* TODO: make recseqnum a uint64_t */
+    /* TODO(DTLSv1.3): make recseqnum a uint64_t */
     rl->sequence =  ((uint64_t)recseqnum[0]) << 40;
-    rl->sequence ^= ((uint64_t)recseqnum[1]) << 32;
-    rl->sequence ^= ((uint64_t)recseqnum[2]) << 24;
-    rl->sequence ^= ((uint64_t)recseqnum[3]) << 16;
-    rl->sequence ^= ((uint64_t)recseqnum[4]) << 8;
-    rl->sequence ^= ((uint64_t)recseqnum[5]) << 0;
+    rl->sequence |= ((uint64_t)recseqnum[1]) << 32;
+    rl->sequence |= ((uint64_t)recseqnum[2]) << 24;
+    rl->sequence |= ((uint64_t)recseqnum[3]) << 16;
+    rl->sequence |= ((uint64_t)recseqnum[4]) << 8;
+    rl->sequence |= ((uint64_t)recseqnum[5]) << 0;
 
     /* match epochs.  NULL means the packet is dropped on the floor */
     bitmap = dtls_get_bitmap(rl, rr, &is_next_epoch);

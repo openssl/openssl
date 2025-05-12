@@ -16,7 +16,7 @@
 typedef struct dtls_bitmap_st {
     /* Track 64 packets */
     uint64_t map;
-    /* Max record number seen so far, 64-bit value in big-endian encoding */
+    /* Max record number seen so far */
     uint64_t max_seq_num;
 } DTLS_BITMAP;
 

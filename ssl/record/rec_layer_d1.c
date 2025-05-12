@@ -496,17 +496,15 @@ int dtls1_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
     /*
      * Unexpected handshake message (Client Hello, or protocol violation)
      */
-    if (!ossl_statem_get_in_handshake(sc)
-            && (rr->type == SSL3_RT_HANDSHAKE || rr->type == SSL3_RT_ACK)) {
+    if (!ossl_statem_get_in_handshake(sc) && rr->type == SSL3_RT_HANDSHAKE) {
         unsigned char msg_type;
 
         /*
          * This may just be a stale retransmit. Also sanity check that we have
          * at least enough record bytes for a message header
          */
-        if (rr->type == SSL3_RT_HANDSHAKE
-                && (rr->epoch != dtls1_get_epoch(sc, SSL3_CC_READ)
-                    || rr->length < DTLS1_HM_HEADER_LENGTH)) {
+        if (rr->epoch != dtls1_get_epoch(sc, SSL3_CC_READ)
+                || rr->length < DTLS1_HM_HEADER_LENGTH) {
             if (!ssl_release_record(sc, rr, 0))
                 return -1;
             goto start;
@@ -518,7 +516,7 @@ int dtls1_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
          * If we are server, we may have a repeated FINISHED of the client
          * here, then retransmit our CCS and FINISHED.
          */
-        if (rr->type == SSL3_RT_HANDSHAKE && msg_type == SSL3_MT_FINISHED) {
+        if (msg_type == SSL3_MT_FINISHED) {
             if (dtls1_check_timeout_num(sc) < 0) {
                 /* SSLfatal) already called */
                 return -1;
@@ -534,7 +532,7 @@ int dtls1_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
             if (!(sc->mode & SSL_MODE_AUTO_RETRY)) {
                 if (!sc->rlayer.rrlmethod->unprocessed_read_pending(sc->rlayer.rrl)) {
                     /* no read-ahead left? */
-                    BIO *bio;
+                    BIO * bio;
 
                     sc->rwstate = SSL_READING;
                     bio = SSL_get_rbio(s);
@@ -545,7 +543,10 @@ int dtls1_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
             }
             goto start;
         }
+    }
 
+    if (!ossl_statem_get_in_handshake(sc)
+        && (rr->type == SSL3_RT_HANDSHAKE || rr->type == SSL3_RT_ACK)) {
         /*
          * To get here we must be trying to read app data but found handshake
          * data. But if we're trying to read app data, and we're not in init

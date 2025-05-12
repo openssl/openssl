@@ -127,8 +127,8 @@ sub get_expected_ack_record_numbers
                         || $message->mt == TLSProxy::Message::MT_CERTIFICATE
                         || $message->mt == TLSProxy::Message::MT_COMPRESSED_CERTIFICATE
                         || $message->mt == TLSProxy::Message::MT_CERTIFICATE_VERIFY)
-                # The ACK of the following messages are never processed by the proxy
-                # because s_client is closed too early send it:
+                # TODO(DTLSv1.3): The ACK of the following messages are never processed
+                # by the proxy because s_client is closed too early send it:
                 #        || $message->mt == TLSProxy::Message::MT_KEY_UPDATE
                 #        || $message->mt == TLSProxy::Message::MT_NEW_SESSION_TICKET
                 ) {

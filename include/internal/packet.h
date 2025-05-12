@@ -917,17 +917,17 @@ int WPACKET_put_bytes__(WPACKET *pkt, uint64_t val, size_t bytes);
  * Convenience macros for calling WPACKET_put_bytes with different
  * lengths
  */
-# define WPACKET_put_bytes_u8(pkt, val) \
+#define WPACKET_put_bytes_u8(pkt, val) \
     WPACKET_put_bytes__((pkt), (val), 1)
-# define WPACKET_put_bytes_u16(pkt, val) \
+#define WPACKET_put_bytes_u16(pkt, val) \
     WPACKET_put_bytes__((pkt), (val), 2)
-# define WPACKET_put_bytes_u24(pkt, val) \
+#define WPACKET_put_bytes_u24(pkt, val) \
     WPACKET_put_bytes__((pkt), (val), 3)
-# define WPACKET_put_bytes_u32(pkt, val) \
+#define WPACKET_put_bytes_u32(pkt, val) \
     WPACKET_put_bytes__((pkt), (val), 4)
-# define WPACKET_put_bytes_u48(pkt, val) \
+#define WPACKET_put_bytes_u48(pkt, val) \
     WPACKET_put_bytes__((pkt), (val), 6)
-# define WPACKET_put_bytes_u64(pkt, val) \
+#define WPACKET_put_bytes_u64(pkt, val) \
     WPACKET_put_bytes__((pkt), (val), 8)
 
 /* Set a maximum size that we will not allow the WPACKET to grow beyond */

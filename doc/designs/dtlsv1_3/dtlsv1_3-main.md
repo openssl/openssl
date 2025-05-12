@@ -87,7 +87,7 @@ Notes on RFC9147 Section 7.1:
   in RFC9147 Figure 12.
 * ACKs are always sent immediately after receiving a full message to be ACKed.
 * If the implementation does not receive an ACK for all fragments of a flight,
-  then the full flight wil be retransmitted.
+  then the full flight will be retransmitted.
 * Empty ACKs are never sent.
 * The implementation does not explicitly prohibit receiving unencrypted ACKs. The
   implementation will only ACK records of epoch > 0 so all ACKs sent by the

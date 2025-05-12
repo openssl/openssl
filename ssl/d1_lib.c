@@ -133,7 +133,10 @@ void dtls1_clear_received_buffer(SSL_CONNECTION *s)
 void ossl_list_record_number_elem_free(OSSL_LIST(record_number) *p_list)
 {
     DTLS1_RECORD_NUMBER *p_elem;
-    DTLS1_RECORD_NUMBER *p_elem_next = ossl_list_record_number_head(p_list);
+    DTLS1_RECORD_NUMBER *p_elem_next = NULL;
+
+    if (p_list != NULL)
+        p_elem_next = ossl_list_record_number_head(p_list);
 
     while ((p_elem = p_elem_next) != NULL) {
         p_elem_next = ossl_list_record_number_next(p_elem_next);
