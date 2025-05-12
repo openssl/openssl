@@ -92,6 +92,7 @@ static void setup_trace_category(int category)
                 "warning: unable to setup trace callback for category '%s'.\n",
                 OSSL_trace_get_category_name(category));
 
+        OPENSSL_free(trace_data);
         OSSL_trace_set_callback(category, NULL, NULL);
         BIO_free_all(channel);
     }
