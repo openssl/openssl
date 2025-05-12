@@ -664,6 +664,9 @@ int enc_main(int argc, char **argv)
         if (wrap == 1)
             EVP_CIPHER_CTX_set_flags(ctx, EVP_CIPHER_CTX_FLAG_WRAP_ALLOW);
 
+        if (nopad)
+            EVP_CIPHER_CTX_set_padding(ctx, 0);
+
         if (rawkey_set) {
             if (!EVP_CipherInit_ex(ctx, cipher, e, key,
                                    (hiv == NULL && wrap == 1 ? NULL : iv), enc)) {
@@ -705,9 +708,6 @@ int enc_main(int argc, char **argv)
                 goto end;
             }
         }
-
-        if (nopad)
-            EVP_CIPHER_CTX_set_padding(ctx, 0);
 
         if (debug) {
             BIO_set_callback_ex(benc, BIO_debug_callback_ex);
