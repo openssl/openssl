@@ -12,11 +12,12 @@ use warnings;
 
 use File::Spec;
 use OpenSSL::Test::Utils;
-use OpenSSL::Test qw/:DEFAULT srctop_file/;
+use OpenSSL::Test qw/:DEFAULT srctop_file result_file/;
+use File::Compare qw/compare_text/;
 
 setup("test_x509");
 
-plan tests => 140;
+plan tests => 136;
 
 # Prevent MSys2 filename munging for arguments that look like file paths but
 # aren't
@@ -485,27 +486,18 @@ ok(!run(app(["openssl", "x509", "-noout", "-dates", "-dateopt", "invalid_format"
 	     "-in", srctop_file("test/certs", "ca-cert.pem")])),
    "Run with invalid -dateopt format");
 
-# same tests w/ -multi (single cert)
-ok(run(app(["openssl", "x509", "-noout", "-multi", "-dates", "-dateopt", "rfc_822",
-	     "-in", srctop_file("test/certs", "ca-cert.pem")])),
-   "Run with rfc_8222 -dateopt format and -multi (single cert)");
-ok(run(app(["openssl", "x509", "-noout", "-multi", "-dates", "-dateopt", "iso_8601",
-	     "-in", srctop_file("test/certs", "ca-cert.pem")])),
-   "Run with iso_8601 -dateopt format and -multi (single cert)");
-ok(!run(app(["openssl", "x509", "-noout", "-multi", "-dates", "-dateopt", "invalid_format",
-	     "-in", srctop_file("test/certs", "ca-cert.pem")])),
-   "Run with invalid -dateopt format and -multi (single cert)");
+my $ca_cert = srctop_file(@certs, "ca-cert.pem");
+my $goodcn2_chain = srctop_file(@certs, "goodcn2-chain.pem");
 
-# same tests w/ -multi (multi cert)
-ok(run(app(["openssl", "x509", "-noout", "-multi", "-dates", "-dateopt", "rfc_822",
-	     "-in", srctop_file("test/certs", "goodcn2-chain.pem")])),
-   "Run with rfc_8222 -dateopt format and -multi (multi cert)");
-ok(run(app(["openssl", "x509", "-noout", "-multi", "-dates", "-dateopt", "iso_8601",
-	     "-in", srctop_file("test/certs", "goodcn2-chain.pem")])),
-   "Run with iso_8601 -dateopt format and -multi (multi cert)");
-ok(!run(app(["openssl", "x509", "-noout", "-multi", "-dates", "-dateopt", "invalid_format",
-	     "-in", srctop_file("test/certs", "goodcn2-chain.pem")])),
-   "Run with invalid -dateopt format and -multi (multi cert)");
+# -multi test with single cert
+ok(run(app(["openssl", "x509", "-multi", "-in", $ca_cert])),
+   "Run with -multi (single cert)");
+
+# -multi test with multiple certs
+my $outfile = result_file("multi.out");
+ok(run(app(["openssl", "x509", "-multi", "-in", $goodcn2_chain, "-out", $outfile]))
+   && compare_text($outfile, $goodcn2_chain) == 0,
+   "Run with -multi (multiple certs)");
 
 # Tests for signing certs (broken in 1.1.1o)
 my $a_key = "a-key.pem";

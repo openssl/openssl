@@ -47,7 +47,7 @@ typedef enum OPTION_choice {
     OPT_CASERIAL, OPT_SET_SERIAL, OPT_NEW, OPT_FORCE_PUBKEY, OPT_ISSU, OPT_SUBJ,
     OPT_ADDTRUST, OPT_ADDREJECT, OPT_SETALIAS, OPT_CERTOPT, OPT_DATEOPT, OPT_NAMEOPT,
     OPT_EMAIL, OPT_OCSP_URI, OPT_SERIAL, OPT_NEXT_SERIAL,
-    OPT_MODULUS, OPT_PUBKEY, OPT_X509TOREQ, OPT_TEXT, OPT_HASH,
+    OPT_MODULUS, OPT_MULTI, OPT_PUBKEY, OPT_X509TOREQ, OPT_TEXT, OPT_HASH,
     OPT_ISSUER_HASH, OPT_SUBJECT, OPT_ISSUER, OPT_FINGERPRINT, OPT_DATES,
     OPT_PURPOSE, OPT_STARTDATE, OPT_ENDDATE, OPT_CHECKEND, OPT_CHECKHOST,
     OPT_CHECKEMAIL, OPT_CHECKIP, OPT_NOOUT, OPT_TRUSTOUT, OPT_CLRTRUST,
@@ -55,7 +55,7 @@ typedef enum OPTION_choice {
     OPT_SUBJECT_HASH_OLD, OPT_ISSUER_HASH_OLD, OPT_COPY_EXTENSIONS,
     OPT_BADSIG, OPT_MD, OPT_ENGINE, OPT_NOCERT, OPT_PRESERVE_DATES,
     OPT_NOT_BEFORE, OPT_NOT_AFTER,
-    OPT_R_ENUM, OPT_PROV_ENUM, OPT_EXT, OPT_MULTI
+    OPT_R_ENUM, OPT_PROV_ENUM, OPT_EXT
 } OPTION_CHOICE;
 
 const OPTIONS x509_options[] = {
@@ -288,13 +288,13 @@ int x509_main(int argc, char **argv)
     char *infile = NULL, *outfile = NULL, *privkeyfile = NULL, *CAfile = NULL;
     char *prog, *not_before = NULL, *not_after = NULL;
     int days = UNSET_DAYS; /* not explicitly set */
-    int x509toreq = 0, modulus = 0, print_pubkey = 0, pprint = 0;
+    int x509toreq = 0, modulus = 0, multi = 0, print_pubkey = 0, pprint = 0;
     int CAformat = FORMAT_UNDEF, CAkeyformat = FORMAT_UNDEF;
     unsigned long dateopt = ASN1_DTFLGS_RFC822;
     int fingerprint = 0, reqfile = 0, checkend = 0;
     int informat = FORMAT_UNDEF, outformat = FORMAT_PEM, keyformat = FORMAT_UNDEF;
     int next_serial = 0, subject_hash = 0, issuer_hash = 0, ocspid = 0;
-    int noout = 0, CA_createserial = 0, email = 0, multi = 0;
+    int noout = 0, CA_createserial = 0, email = 0;
     int ocsp_uri = 0, trustout = 0, clrtrust = 0, clrreject = 0, aliasout = 0;
     int ret = 1, i, j, k = 0, num = 0, badsig = 0, clrext = 0, nocert = 0;
     int text = 0, serial = 0, subject = 0, issuer = 0, startdate = 0, ext = 0;
@@ -501,6 +501,9 @@ int x509_main(int argc, char **argv)
         case OPT_MODULUS:
             modulus = ++num;
             break;
+        case OPT_MULTI:
+            multi = 1;
+            break;
         case OPT_PUBKEY:
             print_pubkey = ++num;
             break;
@@ -606,9 +609,6 @@ int x509_main(int argc, char **argv)
             break;
         case OPT_CHECKIP:
             checkip = opt_arg();
-            break;
-        case OPT_MULTI:
-            multi = 1;
             break;
         case OPT_PRESERVE_DATES:
             preserve_dates = 1;
@@ -801,6 +801,8 @@ int x509_main(int argc, char **argv)
                        "Warning: Reading certificate(s) from stdin since no -in or -new option is given\n");
         if (multi) {
             certs = sk_X509_new_null();
+            if (certs == NULL)
+                goto end;
             if (!load_certs(infile, 1, &certs, passin, NULL))
                 goto end;
             if (sk_X509_num(certs) <= 0)
