@@ -889,7 +889,7 @@ static int aesni_cbc_hmac_sha256_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
     }
 }
 
-static EVP_CIPHER aesni_128_cbc_hmac_sha256_cipher = {
+static const EVP_CIPHER aesni_128_cbc_hmac_sha256_cipher = {
 # ifdef NID_aes_128_cbc_hmac_sha256
     NID_aes_128_cbc_hmac_sha256,
 # else
@@ -909,7 +909,7 @@ static EVP_CIPHER aesni_128_cbc_hmac_sha256_cipher = {
     NULL
 };
 
-static EVP_CIPHER aesni_256_cbc_hmac_sha256_cipher = {
+static const EVP_CIPHER aesni_256_cbc_hmac_sha256_cipher = {
 # ifdef NID_aes_256_cbc_hmac_sha256
     NID_aes_256_cbc_hmac_sha256,
 # else
