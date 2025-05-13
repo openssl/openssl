@@ -246,7 +246,7 @@ static int rc4_hmac_md5_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
     }
 }
 
-static EVP_CIPHER r4_hmac_md5_cipher = {
+static const EVP_CIPHER r4_hmac_md5_cipher = {
 # ifdef NID_rc4_hmac_md5
     NID_rc4_hmac_md5,
 # else
