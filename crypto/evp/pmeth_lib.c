@@ -584,6 +584,9 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *pctx)
             EVP_KEYMGMT *tmp_keymgmt = pctx->keymgmt;
             void *provkey;
 
+            if (pctx->pkey == NULL)
+                return rctx;
+
             provkey = evp_pkey_export_to_provider(pctx->pkey, pctx->libctx,
                                                   &tmp_keymgmt, pctx->propquery);
             if (provkey == NULL)

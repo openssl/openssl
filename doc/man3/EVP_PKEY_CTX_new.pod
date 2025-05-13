@@ -49,8 +49,11 @@ used when no B<EVP_PKEY> structure is associated with the operations,
 for example during parameter generation or key generation for some
 algorithms.
 
-EVP_PKEY_CTX_dup() duplicates the context I<ctx>. It is not supported for a
-keygen operation.
+EVP_PKEY_CTX_dup() duplicates the context I<ctx>.
+It is not supported for a keygen operation.
+It is however possible to duplicate a context freshly created via any of the
+above C<new> functions, provided L<EVP_PKEY_keygen_init(3)> has not yet been
+called on the source context, and then use the copy for key generation.
 
 EVP_PKEY_CTX_free() frees up the context I<ctx>.
 If I<ctx> is NULL, nothing is done.
