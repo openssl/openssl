@@ -4893,6 +4893,9 @@ int ossl_quic_get_peer_token(SSL_CTX *ctx, BIO_ADDR *peer,
         return 0;
 
     key = ossl_quic_build_new_token(peer, NULL, 0);
+    if (key == NULL)
+        return 0;
+
     ossl_crypto_mutex_lock(c->mutex);
     tok = lh_QUIC_TOKEN_retrieve(c->cache, key);
     if (tok != NULL) {
