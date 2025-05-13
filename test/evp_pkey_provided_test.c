@@ -1782,6 +1782,53 @@ err:
     return ret;
 }
 
+static const char *name_dup_algs[] = {
+#ifndef OPENSSL_NO_ECX
+    "ED25519",
+#endif
+#ifndef OPENSSL_NO_ML_KEM
+    "ML-KEM-512",
+#endif
+#ifndef OPENSSL_NO_ML_DSA
+    "ML-DSA-44",
+#endif
+    NULL
+};
+
+static int test_name_dup(int idx)
+{
+    const char *alg = name_dup_algs[idx];
+    EVP_PKEY *key = NULL;
+    EVP_PKEY_CTX *factory = NULL, *ctx = NULL;
+    int i, ret = 0;
+
+    if (alg == NULL
+        || (factory = EVP_PKEY_CTX_new_from_name(NULL, alg, NULL)) == NULL)
+        return 1;
+    TEST_info("Testing fresh context dup for: %s", alg);
+
+    /* Run twice to check that *repeated* use works */
+    for (i = 0; i < 2; ++i) {
+        EVP_PKEY_CTX_free(ctx);
+        EVP_PKEY_free(key);
+        key = NULL;
+        if (!TEST_ptr(ctx = EVP_PKEY_CTX_dup(factory))
+            || !TEST_int_gt(EVP_PKEY_keygen_init(ctx), 0)
+            || !TEST_int_gt(EVP_PKEY_keygen(ctx, &key), 0)) {
+            ERR_print_errors(bio_err);
+            goto end;
+        }
+    }
+    ret = 1;
+
+ end:
+    EVP_PKEY_CTX_free(factory);
+    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_free(key);
+
+    return ret;
+}
+
 int setup_tests(void)
 {
     if (!test_skip_common_options()) {
@@ -1793,6 +1840,7 @@ int setup_tests(void)
         return 0;
 
     ADD_TEST(test_evp_pkey_ctx_dup_kdf_fail);
+    ADD_ALL_TESTS(test_name_dup, OSSL_NELEM(name_dup_algs));
     ADD_TEST(test_evp_pkey_get_bn_param_large);
     ADD_TEST(test_fromdata_rsa);
 #ifndef OPENSSL_NO_DH
