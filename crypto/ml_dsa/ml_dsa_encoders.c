@@ -713,7 +713,7 @@ int ossl_ml_dsa_sk_encode(ML_DSA_KEY *key)
     size_t enc_len = params->sk_len;
     const POLY *t0 = key->t0.poly;
     WPACKET pkt;
-    uint8_t *enc = OPENSSL_malloc(enc_len);
+    uint8_t *enc = OPENSSL_secure_malloc(enc_len);
 
     if (enc == NULL)
         return 0;
@@ -741,7 +741,7 @@ int ossl_ml_dsa_sk_encode(ML_DSA_KEY *key)
     if (!WPACKET_get_total_written(&pkt, &written)
             || written != enc_len)
         goto err;
-    OPENSSL_clear_free(key->priv_encoding, enc_len);
+    OPENSSL_secure_clear_free(key->priv_encoding, enc_len);
     key->priv_encoding = enc;
     ret = 1;
 err:
@@ -805,9 +805,12 @@ int ossl_ml_dsa_sk_decode(ML_DSA_KEY *key, const uint8_t *in, size_t in_len)
             goto err;
     if (PACKET_remaining(&pkt) != 0)
         goto err;
-    if (key->priv_encoding == NULL
-        && (key->priv_encoding = OPENSSL_memdup(in, in_len)) == NULL)
-        goto err;
+    if (key->priv_encoding == NULL) {
+        key->priv_encoding = OPENSSL_secure_malloc(in_len);
+        if (key->priv_encoding == NULL)
+            goto err;
+        memcpy(key->priv_encoding, in, in_len);
+    }
     /*
      * Computing the public key also computes its hash, which must be equal to
      * the |tr| value in the private key, else the key was corrupted.
