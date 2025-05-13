@@ -114,6 +114,7 @@ my %params = (
     'CIPHER_PARAM_TLS_MAC_SIZE' =>         "tls-mac-size",# size_t
     'CIPHER_PARAM_MODE' =>                 "mode",        # uint
     'CIPHER_PARAM_BLOCK_SIZE' =>           "blocksize",   # size_t
+    'CIPHER_PARAM_SECURITY_CATEGORY' =>    '*ALG_PARAM_SECURITY_CATEGORY',
     'CIPHER_PARAM_AEAD' =>                 "aead",        # int, 0 or 1
     'CIPHER_PARAM_CUSTOM_IV' =>            "custom-iv",   # int, 0 or 1
     'CIPHER_PARAM_CTS' =>                  "cts",         # int, 0 or 1
