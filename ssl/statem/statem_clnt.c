@@ -180,7 +180,14 @@ static int ossl_statem_client13_read_transition(SSL_CONNECTION *s, int mt)
         }
         break;
 
+    case TLS_ST_CW_KEY_UPDATE:
+    case TLS_ST_CW_FINISHED:
+    case TLS_ST_CR_ACK:
     case TLS_ST_OK:
+        if (mt == DTLS13_MT_ACK) {
+            st->hand_state = TLS_ST_CR_ACK;
+            return 1;
+        }
         if (mt == SSL3_MT_NEWSESSION_TICKET) {
             st->hand_state = TLS_ST_CR_SESSION_TICKET;
             return 1;
@@ -507,9 +514,31 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL_CONNECTION *s)
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_CR_KEY_UPDATE:
-    case TLS_ST_CW_KEY_UPDATE:
     case TLS_ST_CR_SESSION_TICKET:
+        if (SSL_CONNECTION_IS_DTLS13(s)) {
+            st->hand_state = TLS_ST_CW_ACK;
+            return WRITE_TRAN_CONTINUE;
+        }
+        /* Fall-through */
+    case TLS_ST_CW_KEY_UPDATE:
     case TLS_ST_CW_FINISHED:
+        if (SSL_CONNECTION_IS_DTLS13(s))
+            /* We wait for ACK */
+            return WRITE_TRAN_FINISHED;
+        else
+            st->hand_state = TLS_ST_OK;
+        return WRITE_TRAN_CONTINUE;
+
+    case TLS_ST_CR_ACK:
+        if (SSL_CONNECTION_IS_DTLS13(s)
+            && dtls_any_sent_messages_are_missing_acknowledge(s)) {
+            /* We wait for ACK */
+            return WRITE_TRAN_FINISHED;
+        }
+        st->hand_state = TLS_ST_OK;
+        return WRITE_TRAN_CONTINUE;
+
+    case TLS_ST_CW_ACK:
         st->hand_state = TLS_ST_OK;
         return WRITE_TRAN_CONTINUE;
 
@@ -695,6 +724,48 @@ WRITE_TRAN ossl_statem_client_write_transition(SSL_CONNECTION *s)
     }
 }
 
+static int ossl_statem_dtls_client13_use_timer(SSL_CONNECTION *s)
+{
+    OSSL_STATEM *st = &s->statem;
+
+    switch (st->hand_state) {
+    default:
+        break;
+
+    case TLS_ST_CW_ACK:
+        /* Fall through */
+
+    case TLS_ST_OK:
+        return 0;
+    }
+
+    return 1;
+}
+
+int ossl_statem_dtls_client_use_timer(SSL_CONNECTION *s)
+{
+    OSSL_STATEM *st = &s->statem;
+
+    if (SSL_CONNECTION_IS_DTLS13(s))
+        return ossl_statem_dtls_client13_use_timer(s);
+
+    switch (st->hand_state) {
+    default:
+        break;
+
+    case TLS_ST_CW_CHANGE:
+        /*
+         * We're into the last flight so we don't retransmit these
+         * messages unless we need to.
+         */
+        if (s->hit)
+            st->use_timer = 0;
+        break;
+    }
+
+    return st->use_timer;
+}
+
 /*
  * Perform any pre work that needs to be done prior to sending a message from
  * the client to the server.
@@ -738,13 +809,6 @@ WORK_STATE ossl_statem_client_pre_work(SSL_CONNECTION *s, WORK_STATE wst)
 
     case TLS_ST_CW_CHANGE:
         if (SSL_CONNECTION_IS_DTLS(s)) {
-            if (s->hit) {
-                /*
-                 * We're into the last flight so we don't retransmit these
-                 * messages unless we need to.
-                 */
-                st->use_timer = 0;
-            }
 #ifndef OPENSSL_NO_SCTP
             if (BIO_dgram_is_sctp(SSL_get_wbio(SSL_CONNECTION_GET_SSL(s)))) {
                 /* Calls SSLfatal() as required */
@@ -910,6 +974,11 @@ WORK_STATE ossl_statem_client_post_work(SSL_CONNECTION *s, WORK_STATE wst)
             return WORK_ERROR;
         }
         break;
+
+    case TLS_ST_CW_ACK:
+        if (statem_flush(s) != 1)
+            return WORK_MORE_A;
+        break;
     }
 
     return WORK_FINISHED_CONTINUE;
@@ -994,6 +1063,11 @@ int ossl_statem_client_construct_message(SSL_CONNECTION *s,
         *confunc = tls_construct_key_update;
         *mt = SSL3_MT_KEY_UPDATE;
         break;
+
+    case TLS_ST_CW_ACK:
+        *confunc = dtls_construct_ack;
+        *mt = DTLS13_MT_ACK;
+        break;
     }
 
     return 1;
@@ -1059,6 +1133,9 @@ size_t ossl_statem_client_max_message_size(SSL_CONNECTION *s)
 
     case TLS_ST_CR_KEY_UPDATE:
         return KEY_UPDATE_MAX_LENGTH;
+
+    case TLS_ST_CR_ACK:
+        return ACK_MAX_LENGTH;
     }
 }
 
@@ -1122,6 +1199,9 @@ MSG_PROCESS_RETURN ossl_statem_client_process_message(SSL_CONNECTION *s,
 
     case TLS_ST_CR_KEY_UPDATE:
         return tls_process_key_update(s, pkt);
+
+    case TLS_ST_CR_ACK:
+        return dtls_process_ack(s, pkt);
     }
 }
 
