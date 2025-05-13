@@ -532,7 +532,7 @@ int dtls1_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
             if (!(sc->mode & SSL_MODE_AUTO_RETRY)) {
                 if (!sc->rlayer.rrlmethod->unprocessed_read_pending(sc->rlayer.rrl)) {
                     /* no read-ahead left? */
-                    BIO * bio;
+                    BIO *bio;
 
                     sc->rwstate = SSL_READING;
                     bio = SSL_get_rbio(s);
