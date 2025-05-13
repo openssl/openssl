@@ -1592,6 +1592,11 @@ static int cipher_test_run(EVP_TEST *t)
     size_t params_n = 0;
 
     TEST_info("RUNNING TEST FOR CIPHER %s\n", EVP_CIPHER_get0_name(cdat->cipher));
+
+    if (!TEST_true(check_security_category(t, (void *)cdat->cipher,
+                                           (int (*)(void *, OSSL_PARAM *))EVP_CIPHER_get_params)))
+        return 0;
+
     if (!cdat->key) {
         t->err = "NO_KEY";
         return 0;
