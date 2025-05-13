@@ -254,7 +254,7 @@ ossl_ml_kem_d2i_PKCS8(const uint8_t *prvenc, int prvlen,
         }
     }
     if (p8fmt->priv_length > 0) {
-        if ((key->encoded_dk = OPENSSL_malloc(p8fmt->priv_length)) == NULL) {
+        if ((key->encoded_dk = OPENSSL_secure_malloc(p8fmt->priv_length)) == NULL) {
             ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY,
                            "error parsing %s private key",
                            v->algorithm_name);

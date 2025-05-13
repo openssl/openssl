@@ -48,9 +48,13 @@ int ossl_ml_dsa_set_prekey(ML_DSA_KEY *key, int flags_set, int flags_clr,
         || key->seed != NULL)
         return 0;
 
-    if (sk != NULL
-        && (key->priv_encoding = OPENSSL_memdup(sk, sk_len)) == NULL)
-        goto end;
+    if (sk != NULL) {
+        key->priv_encoding = OPENSSL_secure_malloc(sk_len);
+        if (key->priv_encoding == NULL)
+            goto end;
+        memcpy(key->priv_encoding, sk, sk_len);
+    }
+
     if (seed != NULL
         && (key->seed = OPENSSL_memdup(seed, seed_len)) == NULL)
         goto end;
@@ -60,7 +64,7 @@ int ossl_ml_dsa_set_prekey(ML_DSA_KEY *key, int flags_set, int flags_clr,
 
  end:
     if (!ret) {
-        OPENSSL_free(key->priv_encoding);
+        OPENSSL_secure_free(key->priv_encoding);
         OPENSSL_free(key->seed);
         key->priv_encoding = key->seed = NULL;
     }
@@ -114,7 +118,7 @@ int ossl_ml_dsa_key_priv_alloc(ML_DSA_KEY *key)
 
     if (key->s1.poly != NULL)
         return 0;
-    if (!vector_alloc(&key->s1, l + 2 * k))
+    if (!vector_secure_alloc(&key->s1, l + 2 * k))
         return 0;
 
     poly = key->s1.poly;
@@ -151,7 +155,7 @@ void ossl_ml_dsa_key_reset(ML_DSA_KEY *key)
         vector_zero(&key->s1);
         vector_zero(&key->s2);
         vector_zero(&key->t0);
-        vector_free(&key->s1);
+        vector_secure_free(&key->s1);
         key->s2.poly = NULL;
         key->t0.poly = NULL;
     }
@@ -161,7 +165,7 @@ void ossl_ml_dsa_key_reset(ML_DSA_KEY *key)
     OPENSSL_free(key->pub_encoding);
     key->pub_encoding = NULL;
     if (key->priv_encoding != NULL)
-        OPENSSL_clear_free(key->priv_encoding, key->params->sk_len);
+        OPENSSL_secure_clear_free(key->priv_encoding, key->params->sk_len);
     key->priv_encoding = NULL;
     if (key->seed != NULL)
         OPENSSL_clear_free(key->seed, ML_DSA_SEED_BYTES);
@@ -217,10 +221,10 @@ ML_DSA_KEY *ossl_ml_dsa_key_dup(const ML_DSA_KEY *src, int selection)
                         vector_copy(&ret->s2, &src->s2);
                         vector_copy(&ret->t0, &src->t0);
                     }
-                    if ((ret->priv_encoding =
-                            OPENSSL_memdup(src->priv_encoding,
-                                           src->params->sk_len)) == NULL)
+                    ret->priv_encoding = OPENSSL_secure_malloc(src->params->sk_len);
+                    if (!ret->priv_encoding)
                         goto err;
+                    memcpy(ret->priv_encoding, src->priv_encoding, src->params->sk_len);
                 }
                 if (src->seed != NULL
                     && (ret->seed = OPENSSL_memdup(src->seed,

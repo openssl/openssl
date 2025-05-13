@@ -537,12 +537,12 @@ void *ml_kem_load(const void *reference, size_t reference_sz)
             if (!ml_kem_pairwise_test(key, key->prov_flags))
                 goto err;
         }
-        OPENSSL_free(encoded_dk);
+        OPENSSL_secure_clear_free(encoded_dk, key->vinfo->prvkey_bytes);
         return key;
     }
 
  err:
-    OPENSSL_free(encoded_dk);
+    OPENSSL_secure_clear_free(encoded_dk, key->vinfo->prvkey_bytes);
     ossl_ml_kem_key_free(key);
     return NULL;
 }
