@@ -106,6 +106,32 @@ ossl_aes_cfb128_vaes_eligible:
 .size   ossl_aes_cfb128_vaes_eligible, .-ossl_aes_cfb128_vaes_eligible
 ___
 
+#################################################################
+#
+# AES subroutines for:
+# - preloading the AES key schedule into AVX registers
+# - single-block AES encryption used by CFB encryption and decryption
+# - multiple-block AES encryption used by CFB decryption
+#
+# The CFB mode only uses block cipher encryption.
+#
+# The AES encryption step is described in Section 5.1 Cipher() of
+# FIPS 197 https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.197-upd1.pdf
+# and implemented with Intel(R) AES-NI and VAES instructions:
+#
+# - AESKEYGENASSIST for key expansion, elsewhere in aesni_set_encrypt_key()
+# - VPXORD for AES pre-whitening
+# - VAESENC for performing one AES encryption round
+# - VAESENCLAST for performing the last AES encryption round
+#
+# For more information please consult:
+# - the Intel(R) 64 and IA-32 Architectures Optimization Reference Manual,
+# Chapter 21: Cryptography & Finite Field Arithmetic Instructions
+# https://www.intel.com/content/www/us/en/developer/articles/technical/intel64-and-ia32-architectures-optimization.html
+# - the Intel(R) Advanced Encryption Standard (AES) New Instructions Set Whitepaper
+# https://www.intel.com/content/dam/doc/white-paper/advanced-encryption-standard-new-instructions-set-paper.pdf
+#
+#################################################################
 
 # expects the key schedule address in $key_original
 sub load_aes_key_schedule_1x() {
@@ -156,12 +182,12 @@ $code.=<<___;
 ___
 }
 
-
-# expects iv in $temp, non-final AES rounds in $rounds and key schedule in xmm17..31
+# Performs AES encryption of 1 128-bit block
+# Expects iv in $temp, non-final AES rounds in $rounds and key schedule in xmm17..31
 sub vaes_encrypt_block_1x() {
     my ($label_prefix)=@_;
 $code.=<<___;
-    vpxord  %xmm17,$temp,$temp # AES pre-whitening
+    vpxord  %xmm17,$temp,$temp     # AES pre-whitening
     vaesenc %xmm18,$temp,$temp
     vaesenc %xmm19,$temp,$temp
     vaesenc %xmm20,$temp,$temp
@@ -175,7 +201,7 @@ $code.=<<___;
     cmp \$0x09,$rounds
     ja ${label_prefix}_192_256
 
-    vaesenclast %xmm27,$temp,$temp
+    vaesenclast %xmm27,$temp,$temp # last AES-128 encryption round
     jmp ${label_prefix}_end
 
 .balign 32
@@ -187,7 +213,7 @@ ${label_prefix}_192_256:
     cmp \$0x0B,$rounds
     ja ${label_prefix}_256
 
-    vaesenclast %xmm29,$temp,$temp
+    vaesenclast %xmm29,$temp,$temp # last AES-192 encryption round
     jmp ${label_prefix}_end
 
 .balign 32
@@ -195,7 +221,7 @@ ${label_prefix}_256:
 
     vaesenc %xmm29,$temp,$temp
     vaesenc %xmm30,$temp,$temp
-    vaesenclast %xmm31,$temp,$temp
+    vaesenclast %xmm31,$temp,$temp # last AES-256 encryption round
 
 .balign 32
 ${label_prefix}_end:
@@ -203,11 +229,12 @@ ___
 }
 
 
-# expects iv in $temp_4x, non-final AES rounds in $rounds and key schedule in zmm17..31
+# Performs parallel AES encryption of 4 128-bit blocks
+# Expects iv in $temp_4x, non-final AES rounds in $rounds and key schedule in zmm17..31
 sub vaes_encrypt_block_4x() {
     my ($label_prefix)=@_;
 $code.=<<___;
-    vpxord  %zmm17,$temp_4x,$temp_4x # parallel AES pre-whitening
+    vpxord  %zmm17,$temp_4x,$temp_4x     # AES pre-whitening
     vaesenc %zmm18,$temp_4x,$temp_4x
     vaesenc %zmm19,$temp_4x,$temp_4x
     vaesenc %zmm20,$temp_4x,$temp_4x
@@ -221,7 +248,7 @@ $code.=<<___;
     cmp \$0x09,$rounds
     ja ${label_prefix}_192_256
 
-    vaesenclast %zmm27,$temp_4x,$temp_4x
+    vaesenclast %zmm27,$temp_4x,$temp_4x # last AES-128 encryption round
     jmp ${label_prefix}_end
 
 .balign 32
@@ -233,7 +260,7 @@ ${label_prefix}_192_256:
     cmp \$0x0B,$rounds
     ja ${label_prefix}_256
 
-    vaesenclast %zmm29,$temp_4x,$temp_4x
+    vaesenclast %zmm29,$temp_4x,$temp_4x # last AES-192 encryption round
     jmp ${label_prefix}_end
 
 .balign 32
@@ -241,7 +268,7 @@ ${label_prefix}_256:
 
     vaesenc %zmm29,$temp_4x,$temp_4x
     vaesenc %zmm30,$temp_4x,$temp_4x
-    vaesenclast %zmm31,$temp_4x,$temp_4x
+    vaesenclast %zmm31,$temp_4x,$temp_4x # last AES-256 encryption round
 
 .balign 32
 ${label_prefix}_end:
@@ -249,11 +276,12 @@ ___
 }
 
 
-# expects input in $temp_*x, non-final AES rounds in $rounds and key schedule in zmm17..31
+# Performs parallel AES encryption of 16 128-bit blocks
+# Expects input in $temp_*x, non-final AES rounds in $rounds and key schedule in zmm17..31
 sub vaes_encrypt_block_16x() {
     my ($label_prefix)=@_;
 $code.=<<___;
-    vpxord %zmm17,$temp_4x, $temp_4x            # parallel AES pre-whitening
+    vpxord %zmm17,$temp_4x, $temp_4x       # parallel AES pre-whitening
     vpxord %zmm17,$temp_8x, $temp_8x
     vpxord %zmm17,$temp_12x,$temp_12x
     vpxord %zmm17,$temp_16x,$temp_16x
@@ -306,7 +334,7 @@ $code.=<<___;
     cmp \$0x09,$rounds
     ja ${label_prefix}_192_256
 
-    vaesenclast %zmm27,$temp_4x, $temp_4x
+    vaesenclast %zmm27,$temp_4x, $temp_4x  # last AES-128 encryption round
     vaesenclast %zmm27,$temp_8x, $temp_8x
     vaesenclast %zmm27,$temp_12x,$temp_12x
     vaesenclast %zmm27,$temp_16x,$temp_16x
@@ -328,7 +356,7 @@ ${label_prefix}_192_256:
     cmp \$0x0B,$rounds
     ja ${label_prefix}_256
 
-    vaesenclast %zmm29,$temp_4x, $temp_4x
+    vaesenclast %zmm29,$temp_4x, $temp_4x  # last AES-192 encryption round
     vaesenclast %zmm29,$temp_8x, $temp_8x
     vaesenclast %zmm29,$temp_12x,$temp_12x
     vaesenclast %zmm29,$temp_16x,$temp_16x
@@ -347,7 +375,7 @@ ${label_prefix}_256:
     vaesenc %zmm30,$temp_12x,$temp_12x
     vaesenc %zmm30,$temp_16x,$temp_16x
 
-    vaesenclast %zmm31,$temp_4x, $temp_4x
+    vaesenclast %zmm31,$temp_4x, $temp_4x  # last AES-256 encryption round
     vaesenclast %zmm31,$temp_8x, $temp_8x
     vaesenclast %zmm31,$temp_12x,$temp_12x
     vaesenclast %zmm31,$temp_16x,$temp_16x
@@ -374,6 +402,41 @@ ___
 #
 # Invariants:
 # - `*num` is between 0 and 15 (inclusive)
+#
+#################################################################
+#
+# The implementation follows closely the encryption half of CRYPTO_cfb128_encrypt:
+# - "pre" step: processes the last bytes of a partial block
+# - "mid" step: processes complete blocks
+# - "post" step: processes the first bytes of a partial block
+#
+# To obtain the next ciphertext block `cipher <N>` from
+# the plaintext block `plain <N>`, the previous ciphertext
+# block `cipher <N-1>` is required as input.
+#
+# The dependency on previous encryption outputs (ciphertexts)
+# makes CFB encryption inherently serial.
+#
+#                  +----+                       +----------+
+#                  | iv |       +---------------> cipher 0 |
+#                  +--+-+       |               +----------+
+#                     |         |                     |
+#                     |         |                     |
+#              +------v------+  |              +------v------+
+#              | AES encrypt |  |              | AES encrypt |
+#              |  with  key  |  |              |  with  key  |
+#              +------+------+  |              +------+------+
+#                     |         |                     |
+#                     |         |                     |
+#   +---------+    +--v--+      |   +---------+    +--v--+
+#   | plain 0 +----> XOR |      |   | plain 1 +----> XOR |
+#   +---------+    +--+--+      |   +---------+    +--+--+
+#                     |         |                     |
+#                     |         |                     |
+#               +-----v----+    |               +-----v----+
+#               | cipher 0 +----+               | cipher 1 |
+#               +----------+                    +----------+
+#
 #################################################################
 
 $code.=<<___;
@@ -567,6 +630,51 @@ ___
 #
 # Invariants:
 # - `*num` is between 0 and 15 (inclusive)
+#
+#################################################################
+#
+# The implementation follows closely the decryption half of CRYPTO_cfb128_encrypt:
+#
+# - "pre" step: processes the last bytes of a partial block
+# - "mid" step: processes complete blocks using an unrolled approach:
+#   - processes 16 blocks in parallel until fewer than 16 blocks remain
+#   - processes  4 blocks in parallel until fewer than  4 blocks remain
+#   - processes  1 block  in series   until none are left
+# - "post" step: processes the first bytes of a partial block
+#
+# To obtain the next plaintext block `plain <N>` from
+# its ciphertext block `cipher <N>`, the previous ciphertext
+# block `cipher <N-1>` is required as input.
+#
+# Since CFB decryption for the current block only depends on
+# iv and ciphertext blocks (already available as inputs)
+# and not on plaintext blocks, it can be efficiently parallelized.
+#
+#     +----+                    +----------+                +----------+                +----------+
+#     | iv |                    | cipher 0 |                | cipher 1 |                | cipher 2 |
+#     +--+-+                    +----+-----+                +----+-----+                +----+-----+
+#        |                           |                           |                           |
+#        |                           |                           |                           |
+# +------v------+             +------v------+             +------v------+             +------v------+
+# | AES encrypt |             | AES encrypt |             | AES encrypt |             | AES encrypt |
+# |  with  key  |             |  with  key  |             |  with  key  |             |  with  key  |
+# +------+------+             +------+------+             +------+------+             +------+------+
+#        |                           |                           |                           |
+#        |                           |                           |                           |
+#     +--v--+     +----------+    +--v--+     +----------+    +--v--+     +----------+    +--v--+     +----------+
+#     | XOR <-----+ cipher 0 |    | XOR <-----+ cipher 1 |    | XOR <-----+ cipher 2 |    | XOR <-----+ cipher 3 |
+#     +--+--+     +----------+    +--+--+     +----------+    +--+--+     +----------+    +--+--+     +----------+
+#        |                           |                           |                           |
+#        |                           |                           |                           |
+#   +----v----+                 +----v----+                 +----v----+                 +----v----+
+#   | plain 0 |                 | plain 1 |                 | plain 2 |                 | plain 3 |
+#   +---------+                 +---------+                 +---------+                 +---------+
+#
+# To produce N (4 in the diagram above) output/plaintext blocks we require as inputs:
+# - iv
+# - N ciphertext blocks
+# The N-th ciphertext block is not encrypted and becomes the next iv input.
+#
 #################################################################
 
 $code.=<<___;
