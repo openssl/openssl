@@ -20,13 +20,14 @@
 #include <openssl/prov_ssl.h>
 #include <openssl/proverr.h>
 #include "cipher_aes_cbc_hmac_sha.h"
+#include "crypto/evp.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 
 #ifndef AES_CBC_HMAC_SHA_CAPABLE
-# define IMPLEMENT_CIPHER(nm, sub, kbits, blkbits, ivbits, flags)              \
+# define IMPLEMENT_CIPHER(nm, sub, kbits, blkbits, ivbits, seccat, flags)      \
 const OSSL_DISPATCH ossl_##nm##kbits##sub##_functions[] = {                    \
-    OSSL_DISPATCH_END                                                              \
+    OSSL_DISPATCH_END                                                          \
 };
 #else
 
@@ -392,7 +393,7 @@ static void aes_cbc_hmac_sha256_freectx(void *vctx)
     }
 }
 
-# define IMPLEMENT_CIPHER(nm, sub, kbits, blkbits, ivbits, flags)              \
+# define IMPLEMENT_CIPHER(nm, sub, kbits, blkbits, ivbits, seccat, flags)      \
 static OSSL_FUNC_cipher_newctx_fn nm##_##kbits##_##sub##_newctx;               \
 static void *nm##_##kbits##_##sub##_newctx(void *provctx)                      \
 {                                                                              \
@@ -402,7 +403,8 @@ static OSSL_FUNC_cipher_get_params_fn nm##_##kbits##_##sub##_get_params;       \
 static int nm##_##kbits##_##sub##_get_params(OSSL_PARAM params[])              \
 {                                                                              \
     return ossl_cipher_generic_get_params(params, EVP_CIPH_CBC_MODE,           \
-                                          flags, kbits, blkbits, ivbits);      \
+                                          flags, kbits, blkbits, ivbits,       \
+                                          seccat);                             \
 }                                                                              \
 const OSSL_DISPATCH ossl_##nm##kbits##sub##_functions[] = {                    \
     { OSSL_FUNC_CIPHER_NEWCTX, (void (*)(void))nm##_##kbits##_##sub##_newctx },\
@@ -430,11 +432,24 @@ const OSSL_DISPATCH ossl_##nm##kbits##sub##_functions[] = {                    \
 
 #endif /* AES_CBC_HMAC_SHA_CAPABLE */
 
+/*
+ * Note about security categories.
+ *
+ * The security category of the combined algorithms will be the lower of
+ * the category for the cipher and the HMAC.  NIST has not defined security
+ * categories for HMACs at this stage but it seems reasonable to equate
+ * these to the pre-image security category of the underlying digest.
+ */
+#define SC_SHA1(c) \
+    ((c) < SHA1_PREIMAGE_CATEGORY ? (c) : SHA1_PREIMAGE_CATEGORY)
+#define SC_SHA256(c)\
+    ((c) < SHA256_PREIMAGE_CATEGORY ? (c) : SHA256_PREIMAGE_CATEGORY)
+
 /* ossl_aes128cbc_hmac_sha1_functions */
-IMPLEMENT_CIPHER(aes, cbc_hmac_sha1, 128, 128, 128, AES_CBC_HMAC_SHA_FLAGS)
+IMPLEMENT_CIPHER(aes, cbc_hmac_sha1, 128, 128, 128, SC_SHA1(1), AES_CBC_HMAC_SHA_FLAGS)
 /* ossl_aes256cbc_hmac_sha1_functions */
-IMPLEMENT_CIPHER(aes, cbc_hmac_sha1, 256, 128, 128, AES_CBC_HMAC_SHA_FLAGS)
+IMPLEMENT_CIPHER(aes, cbc_hmac_sha1, 256, 128, 128, SC_SHA1(5), AES_CBC_HMAC_SHA_FLAGS)
 /* ossl_aes128cbc_hmac_sha256_functions */
-IMPLEMENT_CIPHER(aes, cbc_hmac_sha256, 128, 128, 128, AES_CBC_HMAC_SHA_FLAGS)
+IMPLEMENT_CIPHER(aes, cbc_hmac_sha256, 128, 128, 128, SC_SHA256(1), AES_CBC_HMAC_SHA_FLAGS)
 /* ossl_aes256cbc_hmac_sha256_functions */
-IMPLEMENT_CIPHER(aes, cbc_hmac_sha256, 256, 128, 128, AES_CBC_HMAC_SHA_FLAGS)
+IMPLEMENT_CIPHER(aes, cbc_hmac_sha256, 256, 128, 128, SC_SHA256(5), AES_CBC_HMAC_SHA_FLAGS)

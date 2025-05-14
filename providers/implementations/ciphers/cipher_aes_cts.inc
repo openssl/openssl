@@ -87,8 +87,8 @@ err:
 }
 
 /* ossl_aes256cbc_cts_functions */
-IMPLEMENT_cts_cipher(aes, AES, cbc, CBC, CTS_FLAGS, 256, 128, 128, block)
+IMPLEMENT_cts_cipher(aes, AES, cbc, CBC, CTS_FLAGS, 256, 128, 128, 5, block)
 /* ossl_aes192cbc_cts_functions */
-IMPLEMENT_cts_cipher(aes, AES, cbc, CBC, CTS_FLAGS, 192, 128, 128, block)
+IMPLEMENT_cts_cipher(aes, AES, cbc, CBC, CTS_FLAGS, 192, 128, 128, 3, block)
 /* ossl_aes128cbc_cts_functions */
-IMPLEMENT_cts_cipher(aes, AES, cbc, CBC, CTS_FLAGS, 128, 128, 128, block)
+IMPLEMENT_cts_cipher(aes, AES, cbc, CBC, CTS_FLAGS, 128, 128, 128, 1, block)

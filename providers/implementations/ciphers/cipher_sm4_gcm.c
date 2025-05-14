@@ -52,4 +52,4 @@ static void sm4_gcm_freectx(void *vctx)
 }
 
 /* ossl_sm4128gcm_functions */
-IMPLEMENT_aead_cipher(sm4, gcm, GCM, AEAD_FLAGS, 128, 8, 96);
+IMPLEMENT_aead_cipher(sm4, gcm, GCM, AEAD_FLAGS, 128, 8, 96, 1);

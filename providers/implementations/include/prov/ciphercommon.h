@@ -127,7 +127,8 @@ OSSL_FUNC_cipher_decrypt_skey_init_fn ossl_cipher_generic_skey_dinit;
 
 int ossl_cipher_generic_get_params(OSSL_PARAM params[], unsigned int md,
                                    uint64_t flags,
-                                   size_t kbits, size_t blkbits, size_t ivbits);
+                                   size_t kbits, size_t blkbits, size_t ivbits,
+                                   int security_category);
 void ossl_cipher_generic_initkey(void *vctx, size_t kbits, size_t blkbits,
                                  size_t ivbits, unsigned int mode,
                                  uint64_t flags,
@@ -192,13 +193,14 @@ const OSSL_DISPATCH ossl_##alg##kbits##lcmode##_functions[] = {                \
 };
 
 
-# define IMPLEMENT_generic_cipher_genfn(alg, UCALG, lcmode, UCMODE, flags,      \
-                                       kbits, blkbits, ivbits, typ)            \
+# define IMPLEMENT_generic_cipher_genfn(alg, UCALG, lcmode, UCMODE, flags,     \
+                                       kbits, blkbits, ivbits, seccat, typ)    \
 static OSSL_FUNC_cipher_get_params_fn alg##_##kbits##_##lcmode##_get_params;   \
 static int alg##_##kbits##_##lcmode##_get_params(OSSL_PARAM params[])          \
 {                                                                              \
     return ossl_cipher_generic_get_params(params, EVP_CIPH_##UCMODE##_MODE,    \
-                                          flags, kbits, blkbits, ivbits);      \
+                                          flags, kbits, blkbits, ivbits,       \
+                                          seccat);                             \
 }                                                                              \
 static OSSL_FUNC_cipher_newctx_fn alg##_##kbits##_##lcmode##_newctx;           \
 static void * alg##_##kbits##_##lcmode##_newctx(void *provctx)                 \
@@ -214,17 +216,17 @@ static void * alg##_##kbits##_##lcmode##_newctx(void *provctx)                 \
      return ctx;                                                               \
 }                                                                              \
 
-# define IMPLEMENT_generic_cipher(alg, UCALG, lcmode, UCMODE, flags, kbits,     \
-                                 blkbits, ivbits, typ)                         \
+# define IMPLEMENT_generic_cipher(alg, UCALG, lcmode, UCMODE, flags, kbits,    \
+                                 blkbits, ivbits, seccat, typ)                 \
 IMPLEMENT_generic_cipher_genfn(alg, UCALG, lcmode, UCMODE, flags, kbits,       \
-                               blkbits, ivbits, typ)                           \
+                               blkbits, ivbits, seccat, typ)                   \
 IMPLEMENT_generic_cipher_func(alg, UCALG, lcmode, UCMODE, flags, kbits,        \
                               blkbits, ivbits, typ)
 
-# define IMPLEMENT_var_keylen_cipher(alg, UCALG, lcmode, UCMODE, flags, kbits,  \
-                                    blkbits, ivbits, typ)                      \
+# define IMPLEMENT_var_keylen_cipher(alg, UCALG, lcmode, UCMODE, flags, kbits, \
+                                    blkbits, ivbits, seccat, typ)              \
 IMPLEMENT_generic_cipher_genfn(alg, UCALG, lcmode, UCMODE, flags, kbits,       \
-                               blkbits, ivbits, typ)                           \
+                               blkbits, ivbits, seccat, typ)                   \
 IMPLEMENT_var_keylen_cipher_func(alg, UCALG, lcmode, UCMODE, flags, kbits,     \
                                  blkbits, ivbits, typ)
 

@@ -47,46 +47,46 @@ static void *camellia_dupctx(void *ctx)
 }
 
 /* ossl_camellia256ecb_functions */
-IMPLEMENT_generic_cipher(camellia, CAMELLIA, ecb, ECB, 0, 256, 128, 0, block)
+IMPLEMENT_generic_cipher(camellia, CAMELLIA, ecb, ECB, 0, 256, 128, 0, 5, block)
 /* ossl_camellia192ecb_functions */
-IMPLEMENT_generic_cipher(camellia, CAMELLIA, ecb, ECB, 0, 192, 128, 0, block)
+IMPLEMENT_generic_cipher(camellia, CAMELLIA, ecb, ECB, 0, 192, 128, 0, 3, block)
 /* ossl_camellia128ecb_functions */
-IMPLEMENT_generic_cipher(camellia, CAMELLIA, ecb, ECB, 0, 128, 128, 0, block)
+IMPLEMENT_generic_cipher(camellia, CAMELLIA, ecb, ECB, 0, 128, 128, 0, 1, block)
 /* ossl_camellia256cbc_functions */
-IMPLEMENT_generic_cipher(camellia, CAMELLIA, cbc, CBC, 0, 256, 128, 128, block)
+IMPLEMENT_generic_cipher(camellia, CAMELLIA, cbc, CBC, 0, 256, 128, 128, 5, block)
 /* ossl_camellia192cbc_functions */
-IMPLEMENT_generic_cipher(camellia, CAMELLIA, cbc, CBC, 0, 192, 128, 128, block)
+IMPLEMENT_generic_cipher(camellia, CAMELLIA, cbc, CBC, 0, 192, 128, 128, 3, block)
 /* ossl_camellia128cbc_functions */
-IMPLEMENT_generic_cipher(camellia, CAMELLIA, cbc, CBC, 0, 128, 128, 128, block)
+IMPLEMENT_generic_cipher(camellia, CAMELLIA, cbc, CBC, 0, 128, 128, 128, 1, block)
 /* ossl_camellia256ofb_functions */
-IMPLEMENT_generic_cipher(camellia, CAMELLIA, ofb, OFB, 0, 256, 8, 128, stream)
+IMPLEMENT_generic_cipher(camellia, CAMELLIA, ofb, OFB, 0, 256, 8, 128, 5, stream)
 /* ossl_camellia192ofb_functions */
-IMPLEMENT_generic_cipher(camellia, CAMELLIA, ofb, OFB, 0, 192, 8, 128, stream)
+IMPLEMENT_generic_cipher(camellia, CAMELLIA, ofb, OFB, 0, 192, 8, 128, 3, stream)
 /* ossl_camellia128ofb_functions */
-IMPLEMENT_generic_cipher(camellia, CAMELLIA, ofb, OFB, 0, 128, 8, 128, stream)
+IMPLEMENT_generic_cipher(camellia, CAMELLIA, ofb, OFB, 0, 128, 8, 128, 1, stream)
 /* ossl_camellia256cfb_functions */
-IMPLEMENT_generic_cipher(camellia, CAMELLIA, cfb,  CFB, 0, 256, 8, 128, stream)
+IMPLEMENT_generic_cipher(camellia, CAMELLIA, cfb,  CFB, 0, 256, 8, 128, 5, stream)
 /* ossl_camellia192cfb_functions */
-IMPLEMENT_generic_cipher(camellia, CAMELLIA, cfb,  CFB, 0, 192, 8, 128, stream)
+IMPLEMENT_generic_cipher(camellia, CAMELLIA, cfb,  CFB, 0, 192, 8, 128, 3, stream)
 /* ossl_camellia128cfb_functions */
-IMPLEMENT_generic_cipher(camellia, CAMELLIA, cfb,  CFB, 0, 128, 8, 128, stream)
+IMPLEMENT_generic_cipher(camellia, CAMELLIA, cfb,  CFB, 0, 128, 8, 128, 1, stream)
 /* ossl_camellia256cfb1_functions */
-IMPLEMENT_generic_cipher(camellia, CAMELLIA, cfb1, CFB, 0, 256, 8, 128, stream)
+IMPLEMENT_generic_cipher(camellia, CAMELLIA, cfb1, CFB, 0, 256, 8, 128, 5, stream)
 /* ossl_camellia192cfb1_functions */
-IMPLEMENT_generic_cipher(camellia, CAMELLIA, cfb1, CFB, 0, 192, 8, 128, stream)
+IMPLEMENT_generic_cipher(camellia, CAMELLIA, cfb1, CFB, 0, 192, 8, 128, 3, stream)
 /* ossl_camellia128cfb1_functions */
-IMPLEMENT_generic_cipher(camellia, CAMELLIA, cfb1, CFB, 0, 128, 8, 128, stream)
+IMPLEMENT_generic_cipher(camellia, CAMELLIA, cfb1, CFB, 0, 128, 8, 128, 1, stream)
 /* ossl_camellia256cfb8_functions */
-IMPLEMENT_generic_cipher(camellia, CAMELLIA, cfb8, CFB, 0, 256, 8, 128, stream)
+IMPLEMENT_generic_cipher(camellia, CAMELLIA, cfb8, CFB, 0, 256, 8, 128, 5, stream)
 /* ossl_camellia192cfb8_functions */
-IMPLEMENT_generic_cipher(camellia, CAMELLIA, cfb8, CFB, 0, 192, 8, 128, stream)
+IMPLEMENT_generic_cipher(camellia, CAMELLIA, cfb8, CFB, 0, 192, 8, 128, 3, stream)
 /* ossl_camellia128cfb8_functions */
-IMPLEMENT_generic_cipher(camellia, CAMELLIA, cfb8, CFB, 0, 128, 8, 128, stream)
+IMPLEMENT_generic_cipher(camellia, CAMELLIA, cfb8, CFB, 0, 128, 8, 128, 1, stream)
 /* ossl_camellia256ctr_functions */
-IMPLEMENT_generic_cipher(camellia, CAMELLIA, ctr, CTR, 0, 256, 8, 128, stream)
+IMPLEMENT_generic_cipher(camellia, CAMELLIA, ctr, CTR, 0, 256, 8, 128, 5, stream)
 /* ossl_camellia192ctr_functions */
-IMPLEMENT_generic_cipher(camellia, CAMELLIA, ctr, CTR, 0, 192, 8, 128, stream)
+IMPLEMENT_generic_cipher(camellia, CAMELLIA, ctr, CTR, 0, 192, 8, 128, 3, stream)
 /* ossl_camellia128ctr_functions */
-IMPLEMENT_generic_cipher(camellia, CAMELLIA, ctr, CTR, 0, 128, 8, 128, stream)
+IMPLEMENT_generic_cipher(camellia, CAMELLIA, ctr, CTR, 0, 128, 8, 128, 1, stream)
 
 #include "cipher_camellia_cts.inc"

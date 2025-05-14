@@ -87,8 +87,8 @@ err:
 }
 
 /* ossl_camellia256cbc_cts_functions */
-IMPLEMENT_cts_cipher(camellia, CAMELLIA, cbc, CBC, CTS_FLAGS, 256, 128, 128, block)
+IMPLEMENT_cts_cipher(camellia, CAMELLIA, cbc, CBC, CTS_FLAGS, 256, 128, 128, 5, block)
 /* ossl_camellia192cbc_cts_functions */
-IMPLEMENT_cts_cipher(camellia, CAMELLIA, cbc, CBC, CTS_FLAGS, 192, 128, 128, block)
+IMPLEMENT_cts_cipher(camellia, CAMELLIA, cbc, CBC, CTS_FLAGS, 192, 128, 128, 3, block)
 /* ossl_camellia128cbc_cts_functions */
-IMPLEMENT_cts_cipher(camellia, CAMELLIA, cbc, CBC, CTS_FLAGS, 128, 128, 128, block)
+IMPLEMENT_cts_cipher(camellia, CAMELLIA, cbc, CBC, CTS_FLAGS, 128, 128, 128, 1, block)

@@ -246,7 +246,7 @@ static int sm4_##kbits##_##lcmode##_get_params(OSSL_PARAM params[])            \
 {                                                                              \
     return ossl_cipher_generic_get_params(params, EVP_CIPH_##UCMODE##_MODE,    \
                                           flags, 2 * kbits, SM4_XTS_BLOCK_BITS,\
-                                          SM4_XTS_IV_BITS);                    \
+                                          SM4_XTS_IV_BITS, 1);                 \
 }                                                                              \
 static OSSL_FUNC_cipher_newctx_fn sm4_##kbits##_xts_newctx;                    \
 static void *sm4_##kbits##_xts_newctx(void *provctx)                           \

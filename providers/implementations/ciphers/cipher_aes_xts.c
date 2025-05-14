@@ -276,13 +276,13 @@ static int aes_xts_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     return 1;
 }
 
-#define IMPLEMENT_cipher(lcmode, UCMODE, kbits, flags)                         \
+#define IMPLEMENT_cipher(lcmode, UCMODE, kbits, seccat, flags)                 \
 static OSSL_FUNC_cipher_get_params_fn aes_##kbits##_##lcmode##_get_params;     \
 static int aes_##kbits##_##lcmode##_get_params(OSSL_PARAM params[])            \
 {                                                                              \
     return ossl_cipher_generic_get_params(params, EVP_CIPH_##UCMODE##_MODE,    \
                                      flags, 2 * kbits, AES_XTS_BLOCK_BITS,     \
-                                     AES_XTS_IV_BITS);                         \
+                                     AES_XTS_IV_BITS, seccat);                 \
 }                                                                              \
 static OSSL_FUNC_cipher_newctx_fn aes_##kbits##_xts_newctx;                    \
 static void *aes_##kbits##_xts_newctx(void *provctx)                           \
@@ -314,5 +314,5 @@ const OSSL_DISPATCH ossl_aes##kbits##xts_functions[] = {                       \
     OSSL_DISPATCH_END                                                          \
 }
 
-IMPLEMENT_cipher(xts, XTS, 256, AES_XTS_FLAGS);
-IMPLEMENT_cipher(xts, XTS, 128, AES_XTS_FLAGS);
+IMPLEMENT_cipher(xts, XTS, 256, 5, AES_XTS_FLAGS);
+IMPLEMENT_cipher(xts, XTS, 128, 1, AES_XTS_FLAGS);

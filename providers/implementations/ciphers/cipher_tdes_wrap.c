@@ -181,7 +181,7 @@ static OSSL_FUNC_cipher_get_params_fn tdes_wrap_get_params;                    \
 static int tdes_wrap_get_params(OSSL_PARAM params[])                           \
 {                                                                              \
     return ossl_cipher_generic_get_params(params, EVP_CIPH_WRAP_MODE, flags,   \
-                                          kbits, blkbits, ivbits);             \
+                                          kbits, blkbits, ivbits, 0);          \
 }                                                                              \
 const OSSL_DISPATCH ossl_tdes_wrap_cbc_functions[] =                           \
 {                                                                              \
