@@ -1463,3 +1463,29 @@ subtest "SLH-DSA tests for CMS" => sub {
            "accept CMS verify with SLH-DSA-SHAKE-256s");
     }
 };
+
+subtest "CMS CRLF EOL output tests\n" => sub {
+    my $input = "test.txt";
+    my $signed = "test.signed";
+    my $verified = "test.verified";
+
+    plan tests => 4;
+
+    ok(run(app(["openssl", "cms", "-sign", "-md", "sha256", "-signer", $smrsa1,
+                "-crlfeol", "-in", $input, "-out", $signed])),
+       "sign with -crlfeol");
+
+    # Verify the signature and check CRLF line endings
+    ok(run(app(["openssl", "cms", "-verify", "-CAfile", $smroot,
+                "-crlfeol", "-in", $signed, "-out", $verified])),
+       "verify with -crlfeol");
+
+    # Check that the base64 section has CRLF line endings
+    ok(run(app(["hexdump", "-C", $signed])),
+       "dump signed content for manual verification");
+
+    # Verify that the signature is still valid without -crlfeol
+    ok(run(app(["openssl", "cms", "-verify", "-CAfile", $smroot,
+                "-in", $signed, "-out", $verified])),
+       "verify without -crlfeol");
+};

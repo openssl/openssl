@@ -112,6 +112,9 @@ static int B64_write_ASN1(BIO *out, ASN1_VALUE *val, BIO *in, int flags,
         ERR_raise(ERR_LIB_ASN1, ERR_R_BIO_LIB);
         return 0;
     }
+    /* Set CRLF line endings if requested */
+    if (flags & SMIME_CRLFEOL)
+        BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
     /*
      * prepend the b64 BIO so all data is base64 encoded.
      */
