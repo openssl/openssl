@@ -241,7 +241,7 @@ static const OSSL_PARAM *aes_siv_settable_ctx_params(ossl_unused void *cctx,
     return aes_siv_known_settable_ctx_params;
 }
 
-#define IMPLEMENT_cipher(alg, lc, UCMODE, flags, kbits, blkbits, ivbits)       \
+#define IMPLEMENT_cipher(alg, lc, UCMODE, flags, kbits, blkbits, ivbits, seccat) \
 static OSSL_FUNC_cipher_newctx_fn alg##kbits##lc##_newctx;                     \
 static OSSL_FUNC_cipher_freectx_fn alg##_##lc##_freectx;                       \
 static OSSL_FUNC_cipher_dupctx_fn lc##_dupctx;                                 \
@@ -260,7 +260,8 @@ static OSSL_FUNC_cipher_settable_ctx_params_fn                                 \
 static int alg##_##kbits##_##lc##_get_params(OSSL_PARAM params[])              \
 {                                                                              \
     return ossl_cipher_generic_get_params(params, EVP_CIPH_##UCMODE##_MODE,    \
-                                          flags, 2*kbits, blkbits, ivbits);    \
+                                          flags, 2*kbits, blkbits, ivbits,     \
+                                          seccat);                             \
 }                                                                              \
 static void *alg##kbits##lc##_newctx(void *provctx)                            \
 {                                                                              \
@@ -291,6 +292,6 @@ const OSSL_DISPATCH ossl_##alg##kbits##lc##_functions[] = {                    \
     OSSL_DISPATCH_END                                                          \
 };
 
-IMPLEMENT_cipher(aes, siv, SIV, SIV_FLAGS, 128, 8, 0)
-IMPLEMENT_cipher(aes, siv, SIV, SIV_FLAGS, 192, 8, 0)
-IMPLEMENT_cipher(aes, siv, SIV, SIV_FLAGS, 256, 8, 0)
+IMPLEMENT_cipher(aes, siv, SIV, SIV_FLAGS, 128, 8, 0, 1)
+IMPLEMENT_cipher(aes, siv, SIV, SIV_FLAGS, 192, 8, 0, 3)
+IMPLEMENT_cipher(aes, siv, SIV, SIV_FLAGS, 256, 8, 0, 5)
