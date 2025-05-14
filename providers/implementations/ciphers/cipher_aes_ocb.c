@@ -523,12 +523,13 @@ static int aes_ocb_cipher(void *vctx, unsigned char *out, size_t *outl,
     return 1;
 }
 
-#define IMPLEMENT_cipher(mode, UCMODE, flags, kbits, blkbits, ivbits)          \
+#define IMPLEMENT_cipher(mode, UCMODE, flags, kbits, blkbits, ivbits, seccat)  \
 static OSSL_FUNC_cipher_get_params_fn aes_##kbits##_##mode##_get_params;       \
 static int aes_##kbits##_##mode##_get_params(OSSL_PARAM params[])              \
 {                                                                              \
     return ossl_cipher_generic_get_params(params, EVP_CIPH_##UCMODE##_MODE,    \
-                                          flags, kbits, blkbits, ivbits);      \
+                                          flags, kbits, blkbits, ivbits,       \
+                                          seccat);                             \
 }                                                                              \
 static OSSL_FUNC_cipher_newctx_fn aes_##kbits##_##mode##_newctx;               \
 static void *aes_##kbits##_##mode##_newctx(void *provctx)                      \
@@ -561,6 +562,6 @@ const OSSL_DISPATCH ossl_##aes##kbits##mode##_functions[] = {                  \
     OSSL_DISPATCH_END                                                          \
 }
 
-IMPLEMENT_cipher(ocb, OCB, AES_OCB_FLAGS, 256, 128, OCB_DEFAULT_IV_LEN * 8);
-IMPLEMENT_cipher(ocb, OCB, AES_OCB_FLAGS, 192, 128, OCB_DEFAULT_IV_LEN * 8);
-IMPLEMENT_cipher(ocb, OCB, AES_OCB_FLAGS, 128, 128, OCB_DEFAULT_IV_LEN * 8);
+IMPLEMENT_cipher(ocb, OCB, AES_OCB_FLAGS, 256, 128, OCB_DEFAULT_IV_LEN * 8, 5);
+IMPLEMENT_cipher(ocb, OCB, AES_OCB_FLAGS, 192, 128, OCB_DEFAULT_IV_LEN * 8, 3);
+IMPLEMENT_cipher(ocb, OCB, AES_OCB_FLAGS, 128, 128, OCB_DEFAULT_IV_LEN * 8, 1);
