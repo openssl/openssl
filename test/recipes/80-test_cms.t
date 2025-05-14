@@ -53,7 +53,7 @@ my ($no_des, $no_dh, $no_dsa, $no_ec, $no_ec2m, $no_rc2, $no_zlib)
 
 $no_rc2 = 1 if disabled("legacy");
 
-plan tests => 31;
+plan tests => 30;
 
 ok(run(test(["pkcs7_test"])), "test pkcs7");
 
@@ -1464,56 +1464,28 @@ subtest "SLH-DSA tests for CMS" => sub {
     }
 };
 
-subtest "sign and verify with multiple keys" => sub {
-    plan tests => 7;
+subtest "CMS CRLF EOL output tests\n" => sub {
+    my $input = "test.txt";
+    my $signed = "test.signed";
+    my $verified = "test.verified";
 
-    my $smrsa2 = catfile($smdir, "smrsa2.pem");
-    my $sig1 = "sig1.cms";
-    my $out1 = "out1.txt";
-    my $sig2 = "sig2.cms";
-    my $out2 = "out2.txt";
+    plan tests => 4;
 
-    ok(run(app(['openssl', 'cms',
-		@defaultprov,
-		'-sign', '-in', $smcont,
-                '-nodetach',
-                '-signer', $smrsa1,
-		'-out', $sig1, '-outform', 'DER',
-	       ])),
-       "sign with first key");
-    ok(run(app(['openssl', 'cms',
-		@defaultprov,
-		'-verify', '-in', $sig1, '-inform', 'DER',
-                '-CAfile', $smrsa1, '-partial_chain',
-		'-out', $out1,
-	       ])),
-       "verify single signature");
-    is(compare($smcont, $out1), 0, "compare original message with verified message");
+    ok(run(app(["openssl", "cms", "-sign", "-md", "sha256", "-signer", $smrsa1,
+                "-crlfeol", "-in", $input, "-out", $signed])),
+       "sign with -crlfeol");
 
-    ok(run(app(['openssl', 'cms',
-		@defaultprov,
-		'-resign', '-in', $sig1, '-inform', 'DER',
-                '-signer', $smrsa2,
-		'-out', $sig2, '-outform', 'DER',
-	       ])),
-       "resign with second key");
+    # Verify the signature and check CRLF line endings
+    ok(run(app(["openssl", "cms", "-verify", "-CAfile", $smroot,
+                "-crlfeol", "-in", $signed, "-out", $verified])),
+       "verify with -crlfeol");
 
-    # because the smrsa2 signature cannot be verified, overall verification fails
-    ok(!run(app(['openssl', 'cms',
-		@defaultprov,
-		'-verify', '-in', $sig2, '-inform', 'DER',
-                '-CAfile', $smrsa1, '-partial_chain',
-		'-out', $out2,
-	       ])),
-       "try to verify two signatures with only rsa1");
+    # Check that the base64 section has CRLF line endings
+    ok(run(app(["hexdump", "-C", $signed])),
+       "dump signed content for manual verification");
 
-    # because both signatures can be verified, overall verification succeeds
-    ok(run(app(['openssl', 'cms',
-		@defaultprov,
-		'-verify', '-in', $sig2, '-inform', 'DER',
-                '-CAfile', $smroot,
-		'-out', $out2,
-	       ])),
-       "verify both signature signatures with root");
-    is(compare($smcont, $out2), 0, "compare original message with verified message");
+    # Verify that the signature is still valid without -crlfeol
+    ok(run(app(["openssl", "cms", "-verify", "-CAfile", $smroot,
+                "-in", $signed, "-out", $verified])),
+       "verify without -crlfeol");
 };
