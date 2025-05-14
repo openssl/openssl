@@ -202,8 +202,7 @@ opthelp:
                 if (bytes_read < 0)
                     BIO_printf(bio_err, "Read error in %s\n", argv[0]);
 
-                if (in != NULL)
-                    BIO_free(in);
+                BIO_free(in);
                 in = NULL;
             }
         }
