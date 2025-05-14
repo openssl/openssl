@@ -43,9 +43,11 @@ PKCS7_ISSUER_AND_SERIAL_digest
 X509_digest_sig() calculates a digest of the given certificate I<cert>
 using the same hash algorithm as in its signature, if the digest
 is an integral part of the certificate signature algorithm identifier.
-Otherwise, a fallback hash algorithm is determined as follows:
-SHA512 if the signature algorithm is ED25519,
-SHAKE256 if it is ED448, otherwise SHA256.
+Otherwise, a fallback hash algorithm is determined as follows, following
+the conventions of RFC 8419 (CMS) on message digest algorithms for EdDSA:
+SHA512 if the signature algorithm is Ed25519,
+SHAKE256 with 512 bits output if it is Ed448,
+otherwise SHA256 as a default.
 The output parameters are assigned as follows.
 Unless I<md_used> is NULL, the hash algorithm used is provided
 in I<*md_used> and must be freed by the caller (if it is not NULL).

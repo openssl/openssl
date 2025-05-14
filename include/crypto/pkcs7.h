@@ -16,4 +16,6 @@ void ossl_pkcs7_resolve_libctx(PKCS7 *p7);
 void ossl_pkcs7_set0_libctx(PKCS7 *p7, OSSL_LIB_CTX *ctx);
 int ossl_pkcs7_set1_propq(PKCS7 *p7, const char *propq);
 
+const EVP_MD *ossl_pkcs7_get_default_digest(EVP_PKEY *pkey);
+
 #endif

@@ -19,6 +19,7 @@
 #include <openssl/objects.h>
 #include <openssl/buffer.h>
 #include <openssl/core_names.h>
+#include "internal/sizes.h"
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 
@@ -125,10 +126,15 @@ int ASN1_item_sign_ex(const ASN1_ITEM *it, X509_ALGOR *algor1,
                       EVP_PKEY *pkey, const EVP_MD *md, OSSL_LIB_CTX *libctx,
                       const char *propq)
 {
+    char name[OSSL_MAX_NAME_SIZE];
     int rv = 0;
-    EVP_MD_CTX *ctx = evp_md_ctx_new_ex(pkey, id, libctx, propq);
+    EVP_MD_CTX *ctx;
 
-    if (ctx == NULL) {
+    if (EVP_PKEY_get_default_digest_name(pkey, name, sizeof(name)) > 0
+            && strcmp(name, "UNDEF") == 0) /* at least for Ed25519, Ed448 */
+        md = NULL;
+
+    if ((ctx = evp_md_ctx_new_ex(pkey, id, libctx, propq)) == NULL) {
         ERR_raise(ERR_LIB_ASN1, ERR_R_EVP_LIB);
         return 0;
     }

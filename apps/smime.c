@@ -178,7 +178,7 @@ int smime_main(int argc, char **argv)
     char *subject = NULL, *digestname = NULL, *ciphername = NULL;
     OPTION_CHOICE o;
     int noCApath = 0, noCAfile = 0, noCAstore = 0;
-    int flags = PKCS7_DETACHED, operation = 0, ret = 0, indef = 0;
+    int flags = PKCS7_DETACHED, operation = 0, ret = EXIT_SUCCESS, indef = 0;
     int informat = FORMAT_SMIME, outformat = FORMAT_SMIME, keyform =
         FORMAT_UNDEF;
     int vpmtouched = 0, rv = 0;
@@ -187,7 +187,7 @@ int smime_main(int argc, char **argv)
     OSSL_LIB_CTX *libctx = app_get0_libctx();
 
     if ((vpm = X509_VERIFY_PARAM_new()) == NULL)
-        return 1;
+        return EXIT_FAILURE;
 
     opt_set_unknown_name("cipher");
     prog = opt_init(argc, argv, smime_options);
@@ -197,10 +197,11 @@ int smime_main(int argc, char **argv)
         case OPT_ERR:
  opthelp:
             BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
+            ret = EXIT_FAILURE;
             goto end;
         case OPT_HELP:
             opt_help(smime_options);
-            ret = 0;
+            ret = EXIT_SUCCESS;
             goto end;
         case OPT_INFORM:
             if (!opt_format(opt_arg(), OPT_FMT_PDS, &informat))
@@ -684,9 +685,9 @@ int smime_main(int argc, char **argv)
             goto end;
         }
     }
-    ret = 0;
+    ret = EXIT_SUCCESS;
  end:
-    if (ret)
+    if (ret != EXIT_SUCCESS)
         ERR_print_errors(bio_err);
     OSSL_STACK_OF_X509_free(encerts);
     OSSL_STACK_OF_X509_free(other);

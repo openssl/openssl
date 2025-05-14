@@ -28,6 +28,7 @@ int ASN1_verify(i2d_of_void *i2d, X509_ALGOR *a, ASN1_BIT_STRING *signature,
                 char *data, EVP_PKEY *pkey)
 {
     EVP_MD_CTX *ctx = EVP_MD_CTX_new();
+    const char *name;
     const EVP_MD *type;
     unsigned char *p, *buf_in = NULL;
     int ret = -1, i, inl;
@@ -37,9 +38,12 @@ int ASN1_verify(i2d_of_void *i2d, X509_ALGOR *a, ASN1_BIT_STRING *signature,
         goto err;
     }
     i = OBJ_obj2nid(a->algorithm);
-    type = EVP_get_digestbyname(OBJ_nid2sn(i));
+    name = OBJ_nid2sn(i);
+    type = EVP_get_digestbyname(name);
     if (type == NULL) {
-        ERR_raise(ERR_LIB_ASN1, ASN1_R_UNKNOWN_MESSAGE_DIGEST_ALGORITHM);
+        ERR_raise_data(ERR_LIB_ASN1,
+                       ASN1_R_UNKNOWN_MESSAGE_DIGEST_ALGORITHM,
+                       "nid=%d, name=%s", i, name);
         goto err;
     }
 
@@ -114,7 +118,7 @@ int ASN1_item_verify_ctx(const ASN1_ITEM *it, const X509_ALGOR *alg,
     EVP_PKEY *pkey;
     unsigned char *buf_in = NULL;
     int ret = -1, inl = 0;
-    int mdnid, pknid;
+    int signid, mdnid, pknid;
     size_t inll = 0;
 
     pkey = EVP_PKEY_CTX_get0_pkey(EVP_MD_CTX_get_pkey_ctx(ctx));
@@ -130,14 +134,20 @@ int ASN1_item_verify_ctx(const ASN1_ITEM *it, const X509_ALGOR *alg,
     }
 
     /* Convert signature OID into digest and public key OIDs */
-    if (!OBJ_find_sigid_algs(OBJ_obj2nid(alg->algorithm), &mdnid, &pknid)) {
-        ERR_raise(ERR_LIB_ASN1, ASN1_R_UNKNOWN_SIGNATURE_ALGORITHM);
+    signid = OBJ_obj2nid(alg->algorithm);
+    if (!OBJ_find_sigid_algs(signid, &mdnid, &pknid)) {
+        ERR_raise_data(ERR_LIB_ASN1,
+                       ASN1_R_UNKNOWN_SIGNATURE_ALGORITHM,
+                       "nid=%d, name=%s",
+                       signid, OBJ_nid2sn(signid));
         goto err;
     }
 
     if (mdnid == NID_undef && evp_pkey_is_legacy(pkey)) {
         if (pkey->ameth == NULL || pkey->ameth->item_verify == NULL) {
-            ERR_raise(ERR_LIB_ASN1, ASN1_R_UNKNOWN_SIGNATURE_ALGORITHM);
+            ERR_raise_data(ERR_LIB_ASN1,
+                           ASN1_R_UNKNOWN_SIGNATURE_ALGORITHM,
+                           "pkey nid=%d", pkey->type);
             goto err;
         }
         ret = pkey->ameth->item_verify(ctx, it, data, alg, signature, pkey);
@@ -182,7 +192,7 @@ int ASN1_item_verify_ctx(const ASN1_ITEM *it, const X509_ALGOR *alg,
                 if (type == NULL) {
                     ERR_raise_data(ERR_LIB_ASN1,
                                    ASN1_R_UNKNOWN_MESSAGE_DIGEST_ALGORITHM,
-                                   "nid=0x%x", mdnid);
+                                   "nid=%d", mdnid);
                     goto err;
                 }
             }

@@ -501,6 +501,7 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature,
 {
     int ret = 0;
     void *provkey = NULL;
+    int keynid;
     EVP_KEYMGMT *tmp_keymgmt = NULL;
     const OSSL_PROVIDER *tmp_prov = NULL;
     const char *supported_sig = NULL;
@@ -513,6 +514,7 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature,
 
     evp_pkey_ctx_free_old_ops(ctx);
     ctx->operation = operation;
+    keynid = ctx->pkey->type;
 
     if (signature != NULL) {
         /*
@@ -719,7 +721,8 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature,
     switch (operation) {
     case EVP_PKEY_OP_SIGN:
         if (signature->sign_init == NULL) {
-            ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+            ERR_raise_data(ERR_LIB_EVP,
+                           EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE, "nid=%d", keynid);
             ret = -2;
             goto err;
         }
@@ -735,7 +738,8 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature,
         break;
     case EVP_PKEY_OP_VERIFY:
         if (signature->verify_init == NULL) {
-            ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+            ERR_raise_data(ERR_LIB_EVP,
+                           EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE, "nid=%d", keynid);
             ret = -2;
             goto err;
         }
@@ -751,7 +755,8 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature,
         break;
     case EVP_PKEY_OP_VERIFYRECOVER:
         if (signature->verify_recover_init == NULL) {
-            ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+            ERR_raise_data(ERR_LIB_EVP,
+                           EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE, "nid=%d", keynid);
             ret = -2;
             goto err;
         }
@@ -783,7 +788,8 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature,
             || (operation == EVP_PKEY_OP_VERIFY && ctx->pmeth->verify == NULL)
             || (operation == EVP_PKEY_OP_VERIFYRECOVER
                 && ctx->pmeth->verify_recover == NULL)) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        ERR_raise_data(ERR_LIB_EVP,
+                       EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE, "nid=%d", keynid);
         return -2;
     }
 
@@ -923,7 +929,8 @@ int EVP_PKEY_sign(EVP_PKEY_CTX *ctx,
  legacy:
 
     if (ctx->pmeth == NULL || ctx->pmeth->sign == NULL) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        ERR_raise_data(ERR_LIB_EVP,
+                       EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE, "nid=%d", ctx->pkey->type);
         return -2;
     }
 
@@ -1048,7 +1055,8 @@ int EVP_PKEY_verify(EVP_PKEY_CTX *ctx,
     return ret;
  legacy:
     if (ctx->pmeth == NULL || ctx->pmeth->verify == NULL) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        ERR_raise_data(ERR_LIB_EVP,
+                       EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE, "nid=%d", ctx->pkey->type);
         return -2;
     }
 
@@ -1103,7 +1111,8 @@ int EVP_PKEY_verify_recover(EVP_PKEY_CTX *ctx,
     return ret;
  legacy:
     if (ctx->pmeth == NULL || ctx->pmeth->verify_recover == NULL) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        ERR_raise_data(ERR_LIB_EVP,
+                       EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE, "nid=%d", ctx->pkey->type);
         return -2;
     }
     M_check_autoarg(ctx, rout, routlen, EVP_F_EVP_PKEY_VERIFY_RECOVER)
