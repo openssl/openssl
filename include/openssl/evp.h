@@ -630,6 +630,7 @@ int EVP_CIPHER_get_key_length(const EVP_CIPHER *cipher);
 # define EVP_CIPHER_key_length EVP_CIPHER_get_key_length
 int EVP_CIPHER_get_iv_length(const EVP_CIPHER *cipher);
 # define EVP_CIPHER_iv_length EVP_CIPHER_get_iv_length
+int EVP_CIPHER_get_security_category(const EVP_CIPHER *cipher);
 unsigned long EVP_CIPHER_get_flags(const EVP_CIPHER *cipher);
 # define EVP_CIPHER_flags EVP_CIPHER_get_flags
 int EVP_CIPHER_get_mode(const EVP_CIPHER *cipher);
