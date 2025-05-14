@@ -40,6 +40,7 @@ static const OSSL_PARAM cipher_known_gettable_params[] = {
     OSSL_PARAM_int(OSSL_CIPHER_PARAM_CTS, NULL),
     OSSL_PARAM_int(OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK, NULL),
     OSSL_PARAM_int(OSSL_CIPHER_PARAM_HAS_RAND_KEY, NULL),
+    OSSL_PARAM_int(OSSL_CIPHER_PARAM_ENCRYPT_THEN_MAC, NULL),
     OSSL_PARAM_END
 };
 const OSSL_PARAM *ossl_cipher_generic_gettable_params(ossl_unused void *provctx)
@@ -59,6 +60,7 @@ static {- produce_decoder('ossl_cipher_get_params_find_pidx',
                            'CIPHER_PARAM_CTS',
                            'CIPHER_PARAM_TLS1_MULTIBLOCK',
                            'CIPHER_PARAM_HAS_RAND_KEY',
+                           'CIPHER_PARAM_ENCRYPT_THEN_MAC',
                           )); -}
 /* End of machine generated */
 
