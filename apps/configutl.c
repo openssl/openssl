@@ -111,7 +111,6 @@ int configutl_main(int argc, char *argv[])
     int ret = 1;
     char *prog, *configfile = NULL;
     OPTION_CHOICE o;
-    int dump = 1;
     CONF *cnf = NULL;
     long eline = 0;
     int default_section_idx, idx;
@@ -137,6 +136,7 @@ int configutl_main(int argc, char *argv[])
             no_header = 1;
             break;
         case OPT_CONFIG:
+            OPENSSL_free(configfile);
             configfile = OPENSSL_strdup(opt_arg());
             break;
         case OPT_OUT:
@@ -144,9 +144,6 @@ int configutl_main(int argc, char *argv[])
             break;
         }
     }
-
-    if (dump == 0)
-        goto opthelp;
 
     out = bio_open_default(outfile, 'w', FORMAT_TEXT);
     if (out == NULL)
