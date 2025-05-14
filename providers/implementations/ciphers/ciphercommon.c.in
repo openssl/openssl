@@ -43,6 +43,7 @@ use OpenSSL::paramnames qw(produce_param_list);
                        ['CIPHER_PARAM_CTS',                 'int'],
                        ['CIPHER_PARAM_TLS1_MULTIBLOCK',     'int'],
                        ['CIPHER_PARAM_HAS_RAND_KEY',        'int'],
+                       ['CIPHER_PARAM_ENCRYPT_THEN_MAC',    'int'],
                       )); -}
 /* End of machine generated */
 
