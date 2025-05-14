@@ -912,13 +912,23 @@ static int aesni_cbc_hmac_sha1_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
     }
 }
 
+/*
+ * Note about security categories.
+ *
+ * The security category of the combined algorithms will be the lower of
+ * the category for the cipher and the HMAC.  NIST has not defined security
+ * categories for HMACs at this stage but it seems reasonable to equate
+ * these to the pre-image security category of the underlying digest.  The
+ * pre-image category of SHA1 is less than or equal to the category for the
+ * AES flavour used, so we use it throughout.
+ */
 static const EVP_CIPHER aesni_128_cbc_hmac_sha1_cipher = {
 # ifdef NID_aes_128_cbc_hmac_sha1
     NID_aes_128_cbc_hmac_sha1,
 # else
     NID_undef,
 # endif
-    AES_BLOCK_SIZE, 16, AES_BLOCK_SIZE,
+    AES_BLOCK_SIZE, 16, AES_BLOCK_SIZE, SHA1_PREIMAGE_CATEGORY,
     EVP_CIPH_CBC_MODE | EVP_CIPH_FLAG_DEFAULT_ASN1 |
         EVP_CIPH_FLAG_AEAD_CIPHER | EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK,
     EVP_ORIG_GLOBAL,
@@ -938,7 +948,7 @@ static const EVP_CIPHER aesni_256_cbc_hmac_sha1_cipher = {
 # else
     NID_undef,
 # endif
-    AES_BLOCK_SIZE, 32, AES_BLOCK_SIZE,
+    AES_BLOCK_SIZE, 32, AES_BLOCK_SIZE, SHA1_PREIMAGE_CATEGORY,
     EVP_CIPH_CBC_MODE | EVP_CIPH_FLAG_DEFAULT_ASN1 |
         EVP_CIPH_FLAG_AEAD_CIPHER | EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK,
     EVP_ORIG_GLOBAL,

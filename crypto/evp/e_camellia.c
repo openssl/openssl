@@ -139,9 +139,9 @@ static int cmll_t4_cfb1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 static int cmll_t4_ctr_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                               const unsigned char *in, size_t len);
 
-# define BLOCK_CIPHER_generic(nid,keylen,blocksize,ivlen,nmode,mode,MODE,flags) \
+# define BLOCK_CIPHER_generic(nid,keylen,blocksize,ivlen,seccat,nmode,mode,MODE,flags) \
 static const EVP_CIPHER cmll_t4_##keylen##_##mode = { \
-        nid##_##keylen##_##nmode,blocksize,keylen/8,ivlen, \
+        nid##_##keylen##_##nmode,blocksize,keylen/8,ivlen, seccat, \
         flags|EVP_CIPH_##MODE##_MODE,   \
         EVP_ORIG_GLOBAL,                \
         cmll_t4_init_key,               \
@@ -151,7 +151,7 @@ static const EVP_CIPHER cmll_t4_##keylen##_##mode = { \
         NULL,NULL,NULL,NULL }; \
 static const EVP_CIPHER camellia_##keylen##_##mode = { \
         nid##_##keylen##_##nmode,blocksize,     \
-        keylen/8,ivlen, \
+        keylen/8,ivlen, seccat, \
         flags|EVP_CIPH_##MODE##_MODE,   \
         EVP_ORIG_GLOBAL,                \
         camellia_init_key,              \
@@ -164,9 +164,9 @@ const EVP_CIPHER *EVP_camellia_##keylen##_##mode(void) \
 
 #else
 
-# define BLOCK_CIPHER_generic(nid,keylen,blocksize,ivlen,nmode,mode,MODE,flags) \
+# define BLOCK_CIPHER_generic(nid,keylen,blocksize,ivlen,seccat,nmode,mode,MODE,flags) \
 static const EVP_CIPHER camellia_##keylen##_##mode = { \
-        nid##_##keylen##_##nmode,blocksize,keylen/8,ivlen, \
+        nid##_##keylen##_##nmode,blocksize,keylen/8,ivlen, seccat, \
         flags|EVP_CIPH_##MODE##_MODE,   \
         EVP_ORIG_GLOBAL,                \
         camellia_init_key,              \
@@ -179,14 +179,14 @@ const EVP_CIPHER *EVP_camellia_##keylen##_##mode(void) \
 
 #endif
 
-#define BLOCK_CIPHER_generic_pack(nid,keylen,flags)             \
-        BLOCK_CIPHER_generic(nid,keylen,16,16,cbc,cbc,CBC,flags|EVP_CIPH_FLAG_DEFAULT_ASN1)     \
-        BLOCK_CIPHER_generic(nid,keylen,16,0,ecb,ecb,ECB,flags|EVP_CIPH_FLAG_DEFAULT_ASN1)      \
-        BLOCK_CIPHER_generic(nid,keylen,1,16,ofb128,ofb,OFB,flags|EVP_CIPH_FLAG_DEFAULT_ASN1)   \
-        BLOCK_CIPHER_generic(nid,keylen,1,16,cfb128,cfb,CFB,flags|EVP_CIPH_FLAG_DEFAULT_ASN1)   \
-        BLOCK_CIPHER_generic(nid,keylen,1,16,cfb1,cfb1,CFB,flags)       \
-        BLOCK_CIPHER_generic(nid,keylen,1,16,cfb8,cfb8,CFB,flags)       \
-        BLOCK_CIPHER_generic(nid, keylen, 1, 16, ctr, ctr, CTR, flags)
+#define BLOCK_CIPHER_generic_pack(nid,keylen,seccat,flags)             \
+        BLOCK_CIPHER_generic(nid,keylen,16,16,seccat,cbc,cbc,CBC,flags|EVP_CIPH_FLAG_DEFAULT_ASN1)     \
+        BLOCK_CIPHER_generic(nid,keylen,16,0,seccat,ecb,ecb,ECB,flags|EVP_CIPH_FLAG_DEFAULT_ASN1)      \
+        BLOCK_CIPHER_generic(nid,keylen,1,16,seccat,ofb128,ofb,OFB,flags|EVP_CIPH_FLAG_DEFAULT_ASN1)   \
+        BLOCK_CIPHER_generic(nid,keylen,1,16,seccat,cfb128,cfb,CFB,flags|EVP_CIPH_FLAG_DEFAULT_ASN1)   \
+        BLOCK_CIPHER_generic(nid,keylen,1,16,seccat,cfb1,cfb1,CFB,flags)       \
+        BLOCK_CIPHER_generic(nid,keylen,1,16,seccat,cfb8,cfb8,CFB,flags)       \
+        BLOCK_CIPHER_generic(nid, keylen, 1, 16, seccat, ctr, ctr, CTR, flags)
 
 /* The subkey for Camellia is generated. */
 static int camellia_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
@@ -344,6 +344,6 @@ static int camellia_ctr_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     return 1;
 }
 
-BLOCK_CIPHER_generic_pack(NID_camellia, 128, 0)
-    BLOCK_CIPHER_generic_pack(NID_camellia, 192, 0)
-    BLOCK_CIPHER_generic_pack(NID_camellia, 256, 0)
+BLOCK_CIPHER_generic_pack(NID_camellia, 128, 1, 0)
+BLOCK_CIPHER_generic_pack(NID_camellia, 192, 3, 0)
+BLOCK_CIPHER_generic_pack(NID_camellia, 256, 5, 0)

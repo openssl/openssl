@@ -36,7 +36,7 @@ static int rc4_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                       const unsigned char *in, size_t inl);
 static const EVP_CIPHER r4_cipher = {
     NID_rc4,
-    1, EVP_RC4_KEY_SIZE, 0,
+    1, EVP_RC4_KEY_SIZE, 0, 0,
     EVP_CIPH_VARIABLE_LENGTH,
     EVP_ORIG_GLOBAL,
     rc4_init_key,
@@ -51,7 +51,7 @@ static const EVP_CIPHER r4_cipher = {
 
 static const EVP_CIPHER r4_40_cipher = {
     NID_rc4_40,
-    1, 5 /* 40 bit */ , 0,
+    1, 5 /* 40 bit */ , 0, 0,
     EVP_CIPH_VARIABLE_LENGTH,
     EVP_ORIG_GLOBAL,
     rc4_init_key,

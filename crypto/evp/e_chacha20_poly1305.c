@@ -130,6 +130,7 @@ static const EVP_CIPHER chacha20 = {
     1,                      /* block_size */
     CHACHA_KEY_SIZE,        /* key_len */
     CHACHA_CTR_SIZE,        /* iv_len, 128-bit counter in the context */
+    5,                      /* PQ security strength category */
     EVP_CIPH_CUSTOM_IV | EVP_CIPH_ALWAYS_CALL_INIT,
     EVP_ORIG_GLOBAL,
     chacha_init_key,
@@ -612,6 +613,7 @@ static const EVP_CIPHER chacha20_poly1305 = {
     1,                  /* block_size */
     CHACHA_KEY_SIZE,    /* key_len */
     12,                 /* iv_len, 96-bit nonce in the context */
+    5,                  /* PQ security strength category */
     EVP_CIPH_FLAG_AEAD_CIPHER | EVP_CIPH_CUSTOM_IV |
     EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_CTRL_INIT |
     EVP_CIPH_CUSTOM_COPY | EVP_CIPH_FLAG_CUSTOM_CIPHER |

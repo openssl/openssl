@@ -35,7 +35,7 @@ typedef struct {
 
 # define BLOCK_CIPHER_generic(nid,blocksize,ivlen,nmode,mode,MODE,flags) \
 static const EVP_CIPHER sm4_##mode = { \
-        nid##_##nmode,blocksize,128/8,ivlen, \
+        nid##_##nmode,blocksize,128/8,ivlen, 1, \
         flags|EVP_CIPH_##MODE##_MODE,   \
         EVP_ORIG_GLOBAL,                \
         sm4_init_key,                   \

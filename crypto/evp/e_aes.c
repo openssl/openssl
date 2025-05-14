@@ -419,9 +419,9 @@ static int aesni_ocb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                             const unsigned char *in, size_t len);
 # endif                        /* OPENSSL_NO_OCB */
 
-# define BLOCK_CIPHER_generic(nid,keylen,blocksize,ivlen,nmode,mode,MODE,flags) \
+# define BLOCK_CIPHER_generic(nid,keylen,blocksize,ivlen,seccat,nmode,mode,MODE,flags) \
 static const EVP_CIPHER aesni_##keylen##_##mode = { \
-        nid##_##keylen##_##nmode,blocksize,keylen/8,ivlen, \
+        nid##_##keylen##_##nmode,blocksize,keylen/8,ivlen, seccat, \
         flags|EVP_CIPH_##MODE##_MODE,   \
         EVP_ORIG_GLOBAL,                \
         aesni_init_key,                 \
@@ -431,7 +431,7 @@ static const EVP_CIPHER aesni_##keylen##_##mode = { \
         NULL,NULL,NULL,NULL }; \
 static const EVP_CIPHER aes_##keylen##_##mode = { \
         nid##_##keylen##_##nmode,blocksize,     \
-        keylen/8,ivlen,                 \
+        keylen/8,ivlen, seccat,         \
         flags|EVP_CIPH_##MODE##_MODE,   \
         EVP_ORIG_GLOBAL,                 \
         aes_init_key,                   \
@@ -442,11 +442,11 @@ static const EVP_CIPHER aes_##keylen##_##mode = { \
 const EVP_CIPHER *EVP_aes_##keylen##_##mode(void) \
 { return AESNI_CAPABLE?&aesni_##keylen##_##mode:&aes_##keylen##_##mode; }
 
-# define BLOCK_CIPHER_custom(nid,keylen,blocksize,ivlen,mode,MODE,flags) \
+# define BLOCK_CIPHER_custom(nid,keylen,blocksize,ivlen,seccat,mode,MODE,flags) \
 static const EVP_CIPHER aesni_##keylen##_##mode = { \
         nid##_##keylen##_##mode,blocksize, \
         (EVP_CIPH_##MODE##_MODE==EVP_CIPH_XTS_MODE||EVP_CIPH_##MODE##_MODE==EVP_CIPH_SIV_MODE?2:1)*keylen/8, \
-        ivlen,                          \
+        ivlen, seccat,                  \
         flags|EVP_CIPH_##MODE##_MODE,   \
         EVP_ORIG_GLOBAL,                \
         aesni_##mode##_init_key,        \
@@ -457,7 +457,7 @@ static const EVP_CIPHER aesni_##keylen##_##mode = { \
 static const EVP_CIPHER aes_##keylen##_##mode = { \
         nid##_##keylen##_##mode,blocksize, \
         (EVP_CIPH_##MODE##_MODE==EVP_CIPH_XTS_MODE||EVP_CIPH_##MODE##_MODE==EVP_CIPH_SIV_MODE?2:1)*keylen/8, \
-        ivlen,                          \
+        ivlen, seccat,                  \
         flags|EVP_CIPH_##MODE##_MODE,   \
         EVP_ORIG_GLOBAL,                \
         aes_##mode##_init_key,          \
@@ -805,9 +805,9 @@ static int aes_t4_ocb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 #  define aes_t4_siv_cipher aes_siv_cipher
 # endif /* OPENSSL_NO_SIV */
 
-# define BLOCK_CIPHER_generic(nid,keylen,blocksize,ivlen,nmode,mode,MODE,flags) \
+# define BLOCK_CIPHER_generic(nid,keylen,blocksize,ivlen,seccat,nmode,mode,MODE,flags) \
 static const EVP_CIPHER aes_t4_##keylen##_##mode = { \
-        nid##_##keylen##_##nmode,blocksize,keylen/8,ivlen, \
+        nid##_##keylen##_##nmode,blocksize,keylen/8,ivlen, seccat, \
         flags|EVP_CIPH_##MODE##_MODE,   \
         EVP_ORIG_GLOBAL,                \
         aes_t4_init_key,                \
@@ -817,7 +817,7 @@ static const EVP_CIPHER aes_t4_##keylen##_##mode = { \
         NULL,NULL,NULL,NULL }; \
 static const EVP_CIPHER aes_##keylen##_##mode = { \
         nid##_##keylen##_##nmode,blocksize,     \
-        keylen/8,ivlen, \
+        keylen/8,ivlen, seccat, \
         flags|EVP_CIPH_##MODE##_MODE,   \
         EVP_ORIG_GLOBAL,                \
         aes_init_key,                   \
@@ -828,11 +828,11 @@ static const EVP_CIPHER aes_##keylen##_##mode = { \
 const EVP_CIPHER *EVP_aes_##keylen##_##mode(void) \
 { return SPARC_AES_CAPABLE?&aes_t4_##keylen##_##mode:&aes_##keylen##_##mode; }
 
-# define BLOCK_CIPHER_custom(nid,keylen,blocksize,ivlen,mode,MODE,flags) \
+# define BLOCK_CIPHER_custom(nid,keylen,blocksize,ivlen,seccat,mode,MODE,flags) \
 static const EVP_CIPHER aes_t4_##keylen##_##mode = { \
         nid##_##keylen##_##mode,blocksize, \
         (EVP_CIPH_##MODE##_MODE==EVP_CIPH_XTS_MODE||EVP_CIPH_##MODE##_MODE==EVP_CIPH_SIV_MODE?2:1)*keylen/8, \
-        ivlen,                          \
+        ivlen, seccat,                  \
         flags|EVP_CIPH_##MODE##_MODE,   \
         EVP_ORIG_GLOBAL,                \
         aes_t4_##mode##_init_key,       \
@@ -843,7 +843,7 @@ static const EVP_CIPHER aes_t4_##keylen##_##mode = { \
 static const EVP_CIPHER aes_##keylen##_##mode = { \
         nid##_##keylen##_##mode,blocksize, \
         (EVP_CIPH_##MODE##_MODE==EVP_CIPH_XTS_MODE||EVP_CIPH_##MODE##_MODE==EVP_CIPH_SIV_MODE?2:1)*keylen/8, \
-        ivlen,                          \
+        ivlen, seccat,                  \
         flags|EVP_CIPH_##MODE##_MODE,   \
         EVP_ORIG_GLOBAL,                \
         aes_##mode##_init_key,          \
@@ -2282,12 +2282,12 @@ static int s390x_aes_ocb_ctrl(EVP_CIPHER_CTX *, int type, int arg, void *ptr);
 #  define s390x_aes_siv_ctrl aes_siv_ctrl
 # endif
 
-# define BLOCK_CIPHER_generic(nid,keylen,blocksize,ivlen,nmode,mode,    \
-                              MODE,flags)                               \
+# define BLOCK_CIPHER_generic(nid,keylen,blocksize,ivlen,seccat,        \
+                              nmode,mode,MODE,flags)                    \
 static const EVP_CIPHER s390x_aes_##keylen##_##mode = {                 \
     nid##_##keylen##_##nmode,blocksize,                                 \
     keylen / 8,                                                         \
-    ivlen,                                                              \
+    ivlen, seccat,                                                      \
     flags | EVP_CIPH_##MODE##_MODE,                                     \
     EVP_ORIG_GLOBAL,                                                    \
     s390x_aes_##mode##_init_key,                                        \
@@ -2303,7 +2303,7 @@ static const EVP_CIPHER aes_##keylen##_##mode = {                       \
     nid##_##keylen##_##nmode,                                           \
     blocksize,                                                          \
     keylen / 8,                                                         \
-    ivlen,                                                              \
+    ivlen, seccat,                                                      \
     flags | EVP_CIPH_##MODE##_MODE,                                     \
     EVP_ORIG_GLOBAL,                                                    \
     aes_init_key,                                                       \
@@ -2321,12 +2321,12 @@ const EVP_CIPHER *EVP_aes_##keylen##_##mode(void)                       \
            &s390x_aes_##keylen##_##mode : &aes_##keylen##_##mode;       \
 }
 
-# define BLOCK_CIPHER_custom(nid,keylen,blocksize,ivlen,mode,MODE,flags)\
+# define BLOCK_CIPHER_custom(nid,keylen,blocksize,ivlen,seccat,mode,MODE,flags)\
 static const EVP_CIPHER s390x_aes_##keylen##_##mode = {                 \
     nid##_##keylen##_##mode,                                            \
     blocksize,                                                          \
     (EVP_CIPH_##MODE##_MODE==EVP_CIPH_XTS_MODE||EVP_CIPH_##MODE##_MODE==EVP_CIPH_SIV_MODE ? 2 : 1) * keylen / 8,        \
-    ivlen,                                                              \
+    ivlen, seccat,                                                      \
     flags | EVP_CIPH_##MODE##_MODE,                                     \
     EVP_ORIG_GLOBAL,                                                    \
     s390x_aes_##mode##_init_key,                                        \
@@ -2341,7 +2341,7 @@ static const EVP_CIPHER s390x_aes_##keylen##_##mode = {                 \
 static const EVP_CIPHER aes_##keylen##_##mode = {                       \
     nid##_##keylen##_##mode,blocksize,                                  \
     (EVP_CIPH_##MODE##_MODE==EVP_CIPH_XTS_MODE||EVP_CIPH_##MODE##_MODE==EVP_CIPH_SIV_MODE ? 2 : 1) * keylen / 8,        \
-    ivlen,                                                              \
+    ivlen, seccat,                                                      \
     flags | EVP_CIPH_##MODE##_MODE,                                     \
     EVP_ORIG_GLOBAL,                                                    \
     aes_##mode##_init_key,                                              \
@@ -2361,9 +2361,9 @@ const EVP_CIPHER *EVP_aes_##keylen##_##mode(void)                       \
 
 #else
 
-# define BLOCK_CIPHER_generic(nid,keylen,blocksize,ivlen,nmode,mode,MODE,flags) \
+# define BLOCK_CIPHER_generic(nid,keylen,blocksize,ivlen,seccat,nmode,mode,MODE,flags) \
 static const EVP_CIPHER aes_##keylen##_##mode = { \
-        nid##_##keylen##_##nmode,blocksize,keylen/8,ivlen, \
+        nid##_##keylen##_##nmode,blocksize,keylen/8,ivlen, seccat, \
         flags|EVP_CIPH_##MODE##_MODE,   \
         EVP_ORIG_GLOBAL,                \
         aes_init_key,                   \
@@ -2374,11 +2374,11 @@ static const EVP_CIPHER aes_##keylen##_##mode = { \
 const EVP_CIPHER *EVP_aes_##keylen##_##mode(void) \
 { return &aes_##keylen##_##mode; }
 
-# define BLOCK_CIPHER_custom(nid,keylen,blocksize,ivlen,mode,MODE,flags) \
+# define BLOCK_CIPHER_custom(nid,keylen,blocksize,ivlen,seccat,mode,MODE,flags) \
 static const EVP_CIPHER aes_##keylen##_##mode = { \
         nid##_##keylen##_##mode,blocksize, \
         (EVP_CIPH_##MODE##_MODE==EVP_CIPH_XTS_MODE||EVP_CIPH_##MODE##_MODE==EVP_CIPH_SIV_MODE?2:1)*keylen/8, \
-        ivlen,                          \
+        ivlen, seccat,                  \
         flags|EVP_CIPH_##MODE##_MODE,   \
         EVP_ORIG_GLOBAL,                \
         aes_##mode##_init_key,          \
@@ -2391,14 +2391,14 @@ const EVP_CIPHER *EVP_aes_##keylen##_##mode(void) \
 
 #endif
 
-#define BLOCK_CIPHER_generic_pack(nid,keylen,flags)             \
-        BLOCK_CIPHER_generic(nid,keylen,16,16,cbc,cbc,CBC,flags|EVP_CIPH_FLAG_DEFAULT_ASN1)     \
-        BLOCK_CIPHER_generic(nid,keylen,16,0,ecb,ecb,ECB,flags|EVP_CIPH_FLAG_DEFAULT_ASN1)      \
-        BLOCK_CIPHER_generic(nid,keylen,1,16,ofb128,ofb,OFB,flags|EVP_CIPH_FLAG_DEFAULT_ASN1)   \
-        BLOCK_CIPHER_generic(nid,keylen,1,16,cfb128,cfb,CFB,flags|EVP_CIPH_FLAG_DEFAULT_ASN1)   \
-        BLOCK_CIPHER_generic(nid,keylen,1,16,cfb1,cfb1,CFB,flags)       \
-        BLOCK_CIPHER_generic(nid,keylen,1,16,cfb8,cfb8,CFB,flags)       \
-        BLOCK_CIPHER_generic(nid,keylen,1,16,ctr,ctr,CTR,flags)
+#define BLOCK_CIPHER_generic_pack(nid,keylen,seccat,flags)             \
+        BLOCK_CIPHER_generic(nid,keylen,16,16,seccat,cbc,cbc,CBC,flags|EVP_CIPH_FLAG_DEFAULT_ASN1)     \
+        BLOCK_CIPHER_generic(nid,keylen,16,0,seccat,ecb,ecb,ECB,flags|EVP_CIPH_FLAG_DEFAULT_ASN1)      \
+        BLOCK_CIPHER_generic(nid,keylen,1,16,seccat,ofb128,ofb,OFB,flags|EVP_CIPH_FLAG_DEFAULT_ASN1)   \
+        BLOCK_CIPHER_generic(nid,keylen,1,16,seccat,cfb128,cfb,CFB,flags|EVP_CIPH_FLAG_DEFAULT_ASN1)   \
+        BLOCK_CIPHER_generic(nid,keylen,1,16,seccat,cfb1,cfb1,CFB,flags)       \
+        BLOCK_CIPHER_generic(nid,keylen,1,16,seccat,cfb8,cfb8,CFB,flags)       \
+        BLOCK_CIPHER_generic(nid,keylen,1,16,seccat,ctr,ctr,CTR,flags)
 
 static int aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                         const unsigned char *iv, int enc)
@@ -2632,9 +2632,9 @@ static int aes_ctr_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     return 1;
 }
 
-BLOCK_CIPHER_generic_pack(NID_aes, 128, 0)
-    BLOCK_CIPHER_generic_pack(NID_aes, 192, 0)
-    BLOCK_CIPHER_generic_pack(NID_aes, 256, 0)
+BLOCK_CIPHER_generic_pack(NID_aes, 128, 1, 0)
+BLOCK_CIPHER_generic_pack(NID_aes, 192, 3, 0)
+BLOCK_CIPHER_generic_pack(NID_aes, 256, 5, 0)
 
 static int aes_gcm_cleanup(EVP_CIPHER_CTX *c)
 {
@@ -3181,11 +3181,11 @@ static int aes_gcm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                 | EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_CTRL_INIT \
                 | EVP_CIPH_CUSTOM_COPY | EVP_CIPH_CUSTOM_IV_LENGTH)
 
-BLOCK_CIPHER_custom(NID_aes, 128, 1, 12, gcm, GCM,
+BLOCK_CIPHER_custom(NID_aes, 128, 1, 12, 1, gcm, GCM,
                     EVP_CIPH_FLAG_AEAD_CIPHER | CUSTOM_FLAGS)
-BLOCK_CIPHER_custom(NID_aes, 192, 1, 12, gcm, GCM,
+BLOCK_CIPHER_custom(NID_aes, 192, 1, 12, 3, gcm, GCM,
                     EVP_CIPH_FLAG_AEAD_CIPHER | CUSTOM_FLAGS)
-BLOCK_CIPHER_custom(NID_aes, 256, 1, 12, gcm, GCM,
+BLOCK_CIPHER_custom(NID_aes, 256, 1, 12, 5, gcm, GCM,
                     EVP_CIPH_FLAG_AEAD_CIPHER | CUSTOM_FLAGS)
 
 static int aes_xts_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
@@ -3371,8 +3371,8 @@ static int aes_xts_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                          | EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_CTRL_INIT \
                          | EVP_CIPH_CUSTOM_COPY)
 
-BLOCK_CIPHER_custom(NID_aes, 128, 1, 16, xts, XTS, XTS_FLAGS)
-BLOCK_CIPHER_custom(NID_aes, 256, 1, 16, xts, XTS, XTS_FLAGS)
+BLOCK_CIPHER_custom(NID_aes, 128, 1, 16, 1, xts, XTS, XTS_FLAGS)
+BLOCK_CIPHER_custom(NID_aes, 256, 1, 16, 5, xts, XTS, XTS_FLAGS)
 
 static int aes_ccm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 {
@@ -3649,11 +3649,11 @@ static int aes_ccm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 
 #define aes_ccm_cleanup NULL
 
-BLOCK_CIPHER_custom(NID_aes, 128, 1, 12, ccm, CCM,
+BLOCK_CIPHER_custom(NID_aes, 128, 1, 12, 1, ccm, CCM,
                     EVP_CIPH_FLAG_AEAD_CIPHER | CUSTOM_FLAGS)
-BLOCK_CIPHER_custom(NID_aes, 192, 1, 12, ccm, CCM,
+BLOCK_CIPHER_custom(NID_aes, 192, 1, 12, 3, ccm, CCM,
                     EVP_CIPH_FLAG_AEAD_CIPHER | CUSTOM_FLAGS)
-BLOCK_CIPHER_custom(NID_aes, 256, 1, 12, ccm, CCM,
+BLOCK_CIPHER_custom(NID_aes, 256, 1, 12, 5, ccm, CCM,
                     EVP_CIPH_FLAG_AEAD_CIPHER | CUSTOM_FLAGS)
 
 typedef struct {
@@ -3761,7 +3761,7 @@ static int aes_wrap_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 
 static const EVP_CIPHER aes_128_wrap = {
     NID_id_aes128_wrap,
-    8, 16, 8, WRAP_FLAGS, EVP_ORIG_GLOBAL,
+    8, 16, 8, 1, WRAP_FLAGS, EVP_ORIG_GLOBAL,
     aes_wrap_init_key, aes_wrap_cipher,
     NULL,
     sizeof(EVP_AES_WRAP_CTX),
@@ -3775,7 +3775,7 @@ const EVP_CIPHER *EVP_aes_128_wrap(void)
 
 static const EVP_CIPHER aes_192_wrap = {
     NID_id_aes192_wrap,
-    8, 24, 8, WRAP_FLAGS, EVP_ORIG_GLOBAL,
+    8, 24, 8, 3, WRAP_FLAGS, EVP_ORIG_GLOBAL,
     aes_wrap_init_key, aes_wrap_cipher,
     NULL,
     sizeof(EVP_AES_WRAP_CTX),
@@ -3789,7 +3789,7 @@ const EVP_CIPHER *EVP_aes_192_wrap(void)
 
 static const EVP_CIPHER aes_256_wrap = {
     NID_id_aes256_wrap,
-    8, 32, 8, WRAP_FLAGS, EVP_ORIG_GLOBAL,
+    8, 32, 8, 5, WRAP_FLAGS, EVP_ORIG_GLOBAL,
     aes_wrap_init_key, aes_wrap_cipher,
     NULL,
     sizeof(EVP_AES_WRAP_CTX),
@@ -3803,7 +3803,7 @@ const EVP_CIPHER *EVP_aes_256_wrap(void)
 
 static const EVP_CIPHER aes_128_wrap_pad = {
     NID_id_aes128_wrap_pad,
-    8, 16, 4, WRAP_FLAGS, EVP_ORIG_GLOBAL,
+    8, 16, 4, 1, WRAP_FLAGS, EVP_ORIG_GLOBAL,
     aes_wrap_init_key, aes_wrap_cipher,
     NULL,
     sizeof(EVP_AES_WRAP_CTX),
@@ -3817,7 +3817,7 @@ const EVP_CIPHER *EVP_aes_128_wrap_pad(void)
 
 static const EVP_CIPHER aes_192_wrap_pad = {
     NID_id_aes192_wrap_pad,
-    8, 24, 4, WRAP_FLAGS, EVP_ORIG_GLOBAL,
+    8, 24, 4, 3, WRAP_FLAGS, EVP_ORIG_GLOBAL,
     aes_wrap_init_key, aes_wrap_cipher,
     NULL,
     sizeof(EVP_AES_WRAP_CTX),
@@ -3831,7 +3831,7 @@ const EVP_CIPHER *EVP_aes_192_wrap_pad(void)
 
 static const EVP_CIPHER aes_256_wrap_pad = {
     NID_id_aes256_wrap_pad,
-    8, 32, 4, WRAP_FLAGS, EVP_ORIG_GLOBAL,
+    8, 32, 4, 5, WRAP_FLAGS, EVP_ORIG_GLOBAL,
     aes_wrap_init_key, aes_wrap_cipher,
     NULL,
     sizeof(EVP_AES_WRAP_CTX),
@@ -4145,10 +4145,10 @@ static int aes_ocb_cleanup(EVP_CIPHER_CTX *c)
     return 1;
 }
 
-BLOCK_CIPHER_custom(NID_aes, 128, 16, 12, ocb, OCB,
+BLOCK_CIPHER_custom(NID_aes, 128, 16, 12, 1, ocb, OCB,
                     EVP_CIPH_FLAG_AEAD_CIPHER | CUSTOM_FLAGS)
-BLOCK_CIPHER_custom(NID_aes, 192, 16, 12, ocb, OCB,
+BLOCK_CIPHER_custom(NID_aes, 192, 16, 12, 3, ocb, OCB,
                     EVP_CIPH_FLAG_AEAD_CIPHER | CUSTOM_FLAGS)
-BLOCK_CIPHER_custom(NID_aes, 256, 16, 12, ocb, OCB,
+BLOCK_CIPHER_custom(NID_aes, 256, 16, 12, 5, ocb, OCB,
                     EVP_CIPH_FLAG_AEAD_CIPHER | CUSTOM_FLAGS)
 #endif                         /* OPENSSL_NO_OCB */

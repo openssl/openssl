@@ -195,17 +195,17 @@ static int des_cfb8_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     return 1;
 }
 
-BLOCK_CIPHER_defs(des, EVP_DES_KEY, NID_des, 8, 8, 8, 64,
+BLOCK_CIPHER_defs(des, EVP_DES_KEY, NID_des, 8, 8, 8, 64, 0,
                   EVP_CIPH_RAND_KEY, des_init_key, NULL,
                   EVP_CIPHER_set_asn1_iv, EVP_CIPHER_get_asn1_iv, des_ctrl)
 
-    BLOCK_CIPHER_def_cfb(des, EVP_DES_KEY, NID_des, 8, 8, 1,
-                     EVP_CIPH_RAND_KEY, des_init_key, NULL,
-                     EVP_CIPHER_set_asn1_iv, EVP_CIPHER_get_asn1_iv, des_ctrl)
+BLOCK_CIPHER_def_cfb(des, EVP_DES_KEY, NID_des, 8, 8, 1, 0,
+                 EVP_CIPH_RAND_KEY, des_init_key, NULL,
+                 EVP_CIPHER_set_asn1_iv, EVP_CIPHER_get_asn1_iv, des_ctrl)
 
-    BLOCK_CIPHER_def_cfb(des, EVP_DES_KEY, NID_des, 8, 8, 8,
-                     EVP_CIPH_RAND_KEY, des_init_key, NULL,
-                     EVP_CIPHER_set_asn1_iv, EVP_CIPHER_get_asn1_iv, des_ctrl)
+BLOCK_CIPHER_def_cfb(des, EVP_DES_KEY, NID_des, 8, 8, 8, 0,
+                 EVP_CIPH_RAND_KEY, des_init_key, NULL,
+                 EVP_CIPHER_set_asn1_iv, EVP_CIPHER_get_asn1_iv, des_ctrl)
 
 static int des_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                         const unsigned char *iv, int enc)
