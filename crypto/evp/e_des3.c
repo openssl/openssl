@@ -203,22 +203,22 @@ static int des_ede3_cfb8_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     return 1;
 }
 
-BLOCK_CIPHER_defs(des_ede, DES_EDE_KEY, NID_des_ede, 8, 16, 8, 64,
+BLOCK_CIPHER_defs(des_ede, DES_EDE_KEY, NID_des_ede, 8, 16, 8, 64, 0,
                   EVP_CIPH_RAND_KEY | EVP_CIPH_FLAG_DEFAULT_ASN1,
                   des_ede_init_key, NULL, NULL, NULL, des3_ctrl)
 # define des_ede3_cfb64_cipher des_ede_cfb64_cipher
 # define des_ede3_ofb_cipher des_ede_ofb_cipher
 # define des_ede3_cbc_cipher des_ede_cbc_cipher
 # define des_ede3_ecb_cipher des_ede_ecb_cipher
-    BLOCK_CIPHER_defs(des_ede3, DES_EDE_KEY, NID_des_ede3, 8, 24, 8, 64,
+    BLOCK_CIPHER_defs(des_ede3, DES_EDE_KEY, NID_des_ede3, 8, 24, 8, 64, 0,
                   EVP_CIPH_RAND_KEY | EVP_CIPH_FLAG_DEFAULT_ASN1,
                   des_ede3_init_key, NULL, NULL, NULL, des3_ctrl)
 
-    BLOCK_CIPHER_def_cfb(des_ede3, DES_EDE_KEY, NID_des_ede3, 24, 8, 1,
+    BLOCK_CIPHER_def_cfb(des_ede3, DES_EDE_KEY, NID_des_ede3, 24, 8, 1, 0,
                      EVP_CIPH_RAND_KEY | EVP_CIPH_FLAG_DEFAULT_ASN1,
                      des_ede3_init_key, NULL, NULL, NULL, des3_ctrl)
 
-    BLOCK_CIPHER_def_cfb(des_ede3, DES_EDE_KEY, NID_des_ede3, 24, 8, 8,
+    BLOCK_CIPHER_def_cfb(des_ede3, DES_EDE_KEY, NID_des_ede3, 24, 8, 8, 0,
                      EVP_CIPH_RAND_KEY | EVP_CIPH_FLAG_DEFAULT_ASN1,
                      des_ede3_init_key, NULL, NULL, NULL, des3_ctrl)
 
@@ -410,7 +410,7 @@ static int des_ede3_wrap_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 
 static const EVP_CIPHER des3_wrap = {
     NID_id_smime_alg_CMS3DESwrap,
-    8, 24, 0,
+    8, 24, 0, 0,
     EVP_CIPH_WRAP_MODE | EVP_CIPH_CUSTOM_IV | EVP_CIPH_FLAG_CUSTOM_CIPHER
         | EVP_CIPH_FLAG_DEFAULT_ASN1,
     EVP_ORIG_GLOBAL,
