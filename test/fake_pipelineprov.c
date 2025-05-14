@@ -250,12 +250,12 @@ int fake_pipeline_aead_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 }
 
 #define IMPLEMENT_aead_cipher_pipeline(alg, lc, UCMODE, flags, kbits, blkbits,          \
-                                       ivbits, ciphername)                              \
+                                       ivbits, seccat, ciphername)                      \
     static OSSL_FUNC_cipher_get_params_fn alg##_##kbits##_##lc##_get_params;            \
     static int alg##_##kbits##_##lc##_get_params(OSSL_PARAM params[])                   \
     {                                                                                   \
         return ossl_cipher_generic_get_params(params, EVP_CIPH_##UCMODE##_MODE,         \
-                                              flags, kbits, blkbits, ivbits);           \
+                                              flags, kbits, blkbits, ivbits, seccat);   \
     }                                                                                   \
     static OSSL_FUNC_cipher_newctx_fn fake_pipeline_##alg##_##kbits##_##lc##_newctx;    \
     static void * fake_pipeline_##alg##_##kbits##_##lc##_newctx(void *provctx)          \
@@ -290,7 +290,7 @@ int fake_pipeline_aead_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         OSSL_DISPATCH_END                                                               \
     }
 
-IMPLEMENT_aead_cipher_pipeline(aes, gcm, GCM, AEAD_FLAGS, 256, 8, 96, "AES-256-GCM");
+IMPLEMENT_aead_cipher_pipeline(aes, gcm, GCM, AEAD_FLAGS, 256, 8, 96, 5, "AES-256-GCM");
 
 static const OSSL_ALGORITHM fake_ciphers[] = {
     {"AES-256-GCM", "provider=fake-pipeline", fake_pipeline_aes256gcm_functions},
