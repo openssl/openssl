@@ -355,56 +355,56 @@ $code.=<<___;
     and \$0xf, %r14
     vpsubq  .Lmask52x4(%rip), $_R0,  $T0
     shl \$5, %r14
-    vmovapd (%rdx, %r14), $T1
+    vmovapd (%rdx,%r14), $T1
     vblendvpd $T1, $T0, $_R0, $_R0
 
     shr \$4, %r10b
     and \$0xf, %r10
     vpsubq  .Lmask52x4(%rip), $_R0h,  $T0
     shl \$5, %r10
-    vmovapd (%rdx, %r10), $T1
+    vmovapd (%rdx,%r10), $T1
     vblendvpd $T1, $T0, $_R0h, $_R0h
 
     mov %r13b, %r10b
     and \$0xf, %r13
     vpsubq  .Lmask52x4(%rip), $_R1,  $T0
     shl \$5, %r13
-    vmovapd (%rdx, %r13), $T1
+    vmovapd (%rdx,%r13), $T1
     vblendvpd $T1, $T0, $_R1, $_R1
 
     shr \$4, %r10b
     and \$0xf, %r10
     vpsubq  .Lmask52x4(%rip), $_R1h,  $T0
     shl \$5, %r10
-    vmovapd (%rdx, %r10), $T1
+    vmovapd (%rdx,%r10), $T1
     vblendvpd $T1, $T0, $_R1h, $_R1h
 
     mov %r12b, %r10b
     and \$0xf, %r12
     vpsubq  .Lmask52x4(%rip), $_R2,  $T0
     shl \$5, %r12
-    vmovapd (%rdx, %r12), $T1
+    vmovapd (%rdx,%r12), $T1
     vblendvpd $T1, $T0, $_R2, $_R2
 
     shr \$4, %r10b
     and \$0xf, %r10
     vpsubq  .Lmask52x4(%rip), $_R2h,  $T0
     shl \$5, %r10
-    vmovapd (%rdx, %r10), $T1
+    vmovapd (%rdx,%r10), $T1
     vblendvpd $T1, $T0, $_R2h, $_R2h
 
     mov %r11b, %r10b
     and \$0xf, %r11
     vpsubq  .Lmask52x4(%rip), $_R3,  $T0
     shl \$5, %r11
-    vmovapd (%rdx, %r11), $T1
+    vmovapd (%rdx,%r11), $T1
     vblendvpd $T1, $T0, $_R3, $_R3
 
     shr \$4, %r10b
     and \$0xf, %r10
     vpsubq  .Lmask52x4(%rip), $_R3h,  $T0
     shl \$5, %r10
-    vmovapd (%rdx, %r10), $T1
+    vmovapd (%rdx,%r10), $T1
     vblendvpd $T1, $T0, $_R3h, $_R3h
 
     vpand  .Lmask52x4(%rip), $_R0,  $_R0

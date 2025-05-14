@@ -424,70 +424,70 @@ $code.=<<___;
     and \$0xf, %r14
     vpsubq  .Lmask52x4(%rip), $_R0,  $tmp
     shl \$5, %r14
-    vmovapd (%r8, %r14), $tmp2
+    vmovapd (%r8,%r14), $tmp2
     vblendvpd $tmp2, $tmp, $_R0, $_R0
 
     shr \$4, %r9b
     and \$0xf, %r9
     vpsubq  .Lmask52x4(%rip), $_R0h,  $tmp
     shl \$5, %r9
-    vmovapd (%r8, %r9), $tmp2
+    vmovapd (%r8,%r9), $tmp2
     vblendvpd $tmp2, $tmp, $_R0h, $_R0h
 
     movb    %r13b,%r9b
     and \$0xf, %r13
     vpsubq  .Lmask52x4(%rip), $_R1,  $tmp
     shl \$5, %r13
-    vmovapd (%r8, %r13), $tmp2
+    vmovapd (%r8,%r13), $tmp2
     vblendvpd $tmp2, $tmp, $_R1, $_R1
 
     shr \$4, %r9b
     and \$0xf, %r9
     vpsubq  .Lmask52x4(%rip), $_R1h,  $tmp
     shl \$5, %r9
-    vmovapd (%r8, %r9), $tmp2
+    vmovapd (%r8,%r9), $tmp2
     vblendvpd $tmp2, $tmp, $_R1h, $_R1h
 
     movb    %r12b,%r9b
     and \$0xf, %r12
     vpsubq  .Lmask52x4(%rip), $_R2,  $tmp
     shl \$5, %r12
-    vmovapd (%r8, %r12), $tmp2
+    vmovapd (%r8,%r12), $tmp2
     vblendvpd $tmp2, $tmp, $_R2, $_R2
 
     shr \$4, %r9b
     and \$0xf, %r9
     vpsubq  .Lmask52x4(%rip), $_R2h,  $tmp
     shl \$5, %r9
-    vmovapd (%r8, %r9), $tmp2
+    vmovapd (%r8,%r9), $tmp2
     vblendvpd $tmp2, $tmp, $_R2h, $_R2h
 
     movb    %r11b,%r9b
     and \$0xf, %r11
     vpsubq  .Lmask52x4(%rip), $_R3,  $tmp
     shl \$5, %r11
-    vmovapd (%r8, %r11), $tmp2
+    vmovapd (%r8,%r11), $tmp2
     vblendvpd $tmp2, $tmp, $_R3, $_R3
 
     shr \$4, %r9b
     and \$0xf, %r9
     vpsubq  .Lmask52x4(%rip), $_R3h,  $tmp
     shl \$5, %r9
-    vmovapd (%r8, %r9), $tmp2
+    vmovapd (%r8,%r9), $tmp2
     vblendvpd $tmp2, $tmp, $_R3h, $_R3h
 
     movb    %r10b,%r9b
     and \$0xf, %r10
     vpsubq  .Lmask52x4(%rip), $_R4,  $tmp
     shl \$5, %r10
-    vmovapd (%r8, %r10), $tmp2
+    vmovapd (%r8,%r10), $tmp2
     vblendvpd $tmp2, $tmp, $_R4, $_R4
 
     shr \$4, %r9b
     and \$0xf, %r9
     vpsubq  .Lmask52x4(%rip), $_R4h,  $tmp
     shl \$5, %r9
-    vmovapd (%r8, %r9), $tmp2
+    vmovapd (%r8,%r9), $tmp2
     vblendvpd $tmp2, $tmp, $_R4h, $_R4h
 
     pop %r8
