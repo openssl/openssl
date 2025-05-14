@@ -270,7 +270,7 @@ static const OSSL_PARAM *ossl_aes_gcm_siv_settable_ctx_params(ossl_unused void *
     return aes_gcm_siv_known_settable_ctx_params;
 }
 
-#define IMPLEMENT_cipher(alg, lc, UCMODE, flags, kbits, blkbits, ivbits)                                \
+#define IMPLEMENT_cipher(alg, lc, UCMODE, flags, kbits, blkbits, ivbits, seccat)                        \
 static OSSL_FUNC_cipher_newctx_fn              ossl_##alg##kbits##_##lc##_newctx;                       \
 static OSSL_FUNC_cipher_freectx_fn             ossl_##alg##_##lc##_freectx;                             \
 static OSSL_FUNC_cipher_dupctx_fn              ossl_##alg##_##lc##_dupctx;                              \
@@ -287,9 +287,9 @@ static OSSL_FUNC_cipher_settable_ctx_params_fn ossl_##alg##_##lc##_settable_ctx_
 static int ossl_##alg##_##kbits##_##lc##_get_params(OSSL_PARAM params[])                                \
 {                                                                                                       \
     return ossl_cipher_generic_get_params(params, EVP_CIPH_##UCMODE##_MODE,                             \
-                                          flags, kbits, blkbits, ivbits);                               \
+                                          flags, kbits, blkbits, ivbits, seccat);                       \
 }                                                                                                       \
-static void *ossl_##alg##kbits##_##lc##_newctx(void *provctx)                                          \
+static void *ossl_##alg##kbits##_##lc##_newctx(void *provctx)                                           \
 {                                                                                                       \
     return ossl_##alg##_##lc##_newctx(provctx, kbits);                                                  \
 }                                                                                                       \
@@ -311,6 +311,6 @@ const OSSL_DISPATCH ossl_##alg##kbits##lc##_functions[] = {                     
     OSSL_DISPATCH_END                                                                                   \
 }
 
-IMPLEMENT_cipher(aes, gcm_siv, GCM_SIV, AEAD_FLAGS, 128, 8, 96);
-IMPLEMENT_cipher(aes, gcm_siv, GCM_SIV, AEAD_FLAGS, 192, 8, 96);
-IMPLEMENT_cipher(aes, gcm_siv, GCM_SIV, AEAD_FLAGS, 256, 8, 96);
+IMPLEMENT_cipher(aes, gcm_siv, GCM_SIV, AEAD_FLAGS, 128, 8, 96, 1);
+IMPLEMENT_cipher(aes, gcm_siv, GCM_SIV, AEAD_FLAGS, 192, 8, 96, 3);
+IMPLEMENT_cipher(aes, gcm_siv, GCM_SIV, AEAD_FLAGS, 256, 8, 96, 5);

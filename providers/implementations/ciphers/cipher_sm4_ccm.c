@@ -51,4 +51,4 @@ static void sm4_ccm_freectx(void *vctx)
 }
 
 /* sm4128ccm functions */
-IMPLEMENT_aead_cipher(sm4, ccm, CCM, AEAD_FLAGS, 128, 8, 96);
+IMPLEMENT_aead_cipher(sm4, ccm, CCM, AEAD_FLAGS, 128, 8, 96, 1);
