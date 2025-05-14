@@ -131,6 +131,11 @@ int configutl_main(int argc, char *argv[])
             no_header = 1;
             break;
         case OPT_CONFIG:
+            /*
+             * In case multiple OPT_CONFIG options are passed, we need to free
+             * the previous one before assigning the new one.
+             */
+            OPENSSL_free(configfile);
             configfile = OPENSSL_strdup(opt_arg());
             break;
         case OPT_OUT:
