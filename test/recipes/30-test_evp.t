@@ -51,6 +51,7 @@ my @files = qw(
                 evpciph_aes_wrap.txt
                 evpciph_aes_stitched.txt
                 evpciph_des3_common.txt
+                evpciph_security_category.txt
                 evpkdf_hkdf.txt
                 evpkdf_kbkdf_counter.txt
                 evpkdf_kbkdf_kmac.txt
