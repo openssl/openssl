@@ -41,12 +41,12 @@ static void *sm4_dupctx(void *ctx)
 }
 
 /* ossl_sm4128ecb_functions */
-IMPLEMENT_generic_cipher(sm4, SM4, ecb, ECB, 0, 128, 128, 0, block)
+IMPLEMENT_generic_cipher(sm4, SM4, ecb, ECB, 0, 128, 128, 0, 1, block)
 /* ossl_sm4128cbc_functions */
-IMPLEMENT_generic_cipher(sm4, SM4, cbc, CBC, 0, 128, 128, 128, block)
+IMPLEMENT_generic_cipher(sm4, SM4, cbc, CBC, 0, 128, 128, 128, 1, block)
 /* ossl_sm4128ctr_functions */
-IMPLEMENT_generic_cipher(sm4, SM4, ctr, CTR, 0, 128, 8, 128, stream)
+IMPLEMENT_generic_cipher(sm4, SM4, ctr, CTR, 0, 128, 8, 128, 1, stream)
 /* ossl_sm4128ofb128_functions */
-IMPLEMENT_generic_cipher(sm4, SM4, ofb128, OFB, 0, 128, 8, 128, stream)
+IMPLEMENT_generic_cipher(sm4, SM4, ofb128, OFB, 0, 128, 8, 128, 1, stream)
 /* ossl_sm4128cfb128_functions */
-IMPLEMENT_generic_cipher(sm4, SM4, cfb128,  CFB, 0, 128, 8, 128, stream)
+IMPLEMENT_generic_cipher(sm4, SM4, cfb128,  CFB, 0, 128, 8, 128, 1, stream)

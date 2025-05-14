@@ -51,9 +51,9 @@ static void aria_gcm_freectx(void *vctx)
 }
 
 /* ossl_aria128gcm_functions */
-IMPLEMENT_aead_cipher(aria, gcm, GCM, AEAD_FLAGS, 128, 8, 96);
+IMPLEMENT_aead_cipher(aria, gcm, GCM, AEAD_FLAGS, 128, 8, 96, 1);
 /* ossl_aria192gcm_functions */
-IMPLEMENT_aead_cipher(aria, gcm, GCM, AEAD_FLAGS, 192, 8, 96);
+IMPLEMENT_aead_cipher(aria, gcm, GCM, AEAD_FLAGS, 192, 8, 96, 3);
 /* ossl_aria256gcm_functions */
-IMPLEMENT_aead_cipher(aria, gcm, GCM, AEAD_FLAGS, 256, 8, 96);
+IMPLEMENT_aead_cipher(aria, gcm, GCM, AEAD_FLAGS, 256, 8, 96, 5);
 
