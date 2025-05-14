@@ -111,7 +111,6 @@ int configutl_main(int argc, char *argv[])
     int ret = 1;
     char *prog, *configfile = NULL;
     OPTION_CHOICE o;
-    int dump = 1;
     CONF *cnf = NULL;
     long eline = 0;
     int default_section_idx, idx;
@@ -123,11 +122,6 @@ int configutl_main(int argc, char *argv[])
     prog = opt_init(argc, argv, configutl_options);
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
-        case OPT_EOF:
-        case OPT_ERR:
- opthelp:
-            BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
-            goto end;
         case OPT_HELP:
             opt_help(configutl_options);
             ret = 0;
@@ -142,11 +136,15 @@ int configutl_main(int argc, char *argv[])
         case OPT_OUT:
             outfile = opt_arg();
             break;
+        case OPT_ERR:
+        /*
+         * default needed for OPT_EOF which might never happen.
+         */
+        default:
+            BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
+            goto end;
         }
     }
-
-    if (dump == 0)
-        goto opthelp;
 
     out = bio_open_default(outfile, 'w', FORMAT_TEXT);
     if (out == NULL)
