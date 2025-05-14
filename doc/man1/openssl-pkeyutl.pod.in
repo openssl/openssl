@@ -439,7 +439,7 @@ no additional options.
 
 =head2 SLH-DSA ALGORITHMS
 
-The SLH-DSA algorithm is a post-quantum signature algorithm. When using SLH-DSA with pkeyutl, the following options are available:
+The SLH-DSA algorithms (SLH-DSA-SHA2-128s, SLH-DSA-SHA2-128f, SLH-DSA-SHA2-192s, SLH-DSA-SHA2-192f, SLH-DSA-SHA2-256s, SLH-DSA-SHA2-256f) are post-quantum signature algorithms. When using SLH-DSA with pkeyutl, the following options are available:
 
 =over 4
 
@@ -641,31 +641,31 @@ Decrypt some data using a private key with OAEP padding using SHA256:
 
 Create an ML-DSA key pair and sign data with a specific context string:
 
- openssl genpkey -algorithm mldsa65 -out mldsa65.pem
- openssl pkeyutl -sign -in file -inkey mldsa65.pem -out sig -pkeyopt context-string:example
+  $ openssl genpkey -algorithm ML-DSA-65 -out mldsa65.pem
+  $ openssl pkeyutl -sign -in file.txt -inkey mldsa65.pem -out sig -pkeyopt context-string:example
 
 Verify a signature using ML-DSA with the same context string:
 
- openssl pkeyutl -verify -in file -inkey mldsa65.pem -sigfile sig -pkeyopt context-string:example
+  $ openssl pkeyutl -verify -in file.txt -inkey mldsa65.pem -sigfile sig -pkeyopt context-string:example
 
 Generate an ML-KEM key pair and use it for encapsulation:
 
- openssl genpkey -algorithm mlkem768 -out mlkem768.pem
- openssl pkey -in mlkem768.pem -pubout -out mlkem768_pub.pem
- openssl pkeyutl -encap -inkey mlkem768_pub.pem -pubin -out ciphertext -secret shared_secret.bin
+  $ openssl genpkey -algorithm ML-KEM-768 -out mlkem768.pem
+  $ openssl pkey -in mlkem768.pem -pubout -out mlkem768_pub.pem
+  $ openssl pkeyutl -encap -inkey mlkem768_pub.pem -pubin -out ciphertext -secret shared_secret.bin
 
 Decapsulate a shared secret using an ML-KEM private key:
 
- openssl pkeyutl -decap -inkey mlkem768.pem -in ciphertext -secret decapsulated_secret.bin
+  $ openssl pkeyutl -decap -inkey mlkem768.pem -in ciphertext -secret decapsulated_secret.bin
 
 Create an SLH-DSA key pair and sign data:
 
- openssl genpkey -algorithm slh-dsa-sha2-128s -out slh-dsa.pem
- openssl pkeyutl -sign -in file -inkey slh-dsa.pem -out sig
+  $ openssl genpkey -algorithm SLH-DSA-SHA2-128s -out slh-dsa.pem
+  $ openssl pkeyutl -sign -in file.txt -inkey slh-dsa.pem -out sig
 
 Verify a signature using SLH-DSA:
 
- openssl pkeyutl -verify -in file -inkey slh-dsa.pem -sigfile sig
+  $ openssl pkeyutl -verify -in file.txt -inkey slh-dsa.pem -sigfile sig
 
 =head1 SEE ALSO
 
