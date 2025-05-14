@@ -28,7 +28,6 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 /*-
  * Generic cipher functions for OSSL_PARAM gettables and settables
  */
-<<<<<<< HEAD
 {- produce_param_decoder('ossl_cipher_generic_get_params',
                          (['CIPHER_PARAM_MODE',             'mode',   'uint'],
                           ['CIPHER_PARAM_KEYLEN',           'keylen', 'size_t'],
