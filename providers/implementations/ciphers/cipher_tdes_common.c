@@ -200,5 +200,5 @@ int ossl_tdes_get_params(OSSL_PARAM params[], unsigned int md, uint64_t flags,
     }
 
     return ossl_cipher_generic_get_params(params, md, flags,
-                                          kbits, blkbits, ivbits);
+                                          kbits, blkbits, ivbits, 0);
 }
