@@ -49,46 +49,46 @@ static void *aes_dupctx(void *ctx)
 }
 
 /* ossl_aes256ecb_functions */
-IMPLEMENT_generic_cipher(aes, AES, ecb, ECB, 0, 256, 128, 0, block)
+IMPLEMENT_generic_cipher(aes, AES, ecb, ECB, 0, 256, 128, 0, 5, block)
 /* ossl_aes192ecb_functions */
-IMPLEMENT_generic_cipher(aes, AES, ecb, ECB, 0, 192, 128, 0, block)
+IMPLEMENT_generic_cipher(aes, AES, ecb, ECB, 0, 192, 128, 0, 3, block)
 /* ossl_aes128ecb_functions */
-IMPLEMENT_generic_cipher(aes, AES, ecb, ECB, 0, 128, 128, 0, block)
+IMPLEMENT_generic_cipher(aes, AES, ecb, ECB, 0, 128, 128, 0, 1, block)
 /* ossl_aes256cbc_functions */
-IMPLEMENT_generic_cipher(aes, AES, cbc, CBC, 0, 256, 128, 128, block)
+IMPLEMENT_generic_cipher(aes, AES, cbc, CBC, 0, 256, 128, 128, 5, block)
 /* ossl_aes192cbc_functions */
-IMPLEMENT_generic_cipher(aes, AES, cbc, CBC, 0, 192, 128, 128, block)
+IMPLEMENT_generic_cipher(aes, AES, cbc, CBC, 0, 192, 128, 128, 3, block)
 /* ossl_aes128cbc_functions */
-IMPLEMENT_generic_cipher(aes, AES, cbc, CBC, 0, 128, 128, 128, block)
+IMPLEMENT_generic_cipher(aes, AES, cbc, CBC, 0, 128, 128, 128, 1, block)
 /* ossl_aes256ofb_functions */
-IMPLEMENT_generic_cipher(aes, AES, ofb, OFB, 0, 256, 8, 128, stream)
+IMPLEMENT_generic_cipher(aes, AES, ofb, OFB, 0, 256, 8, 128, 5, stream)
 /* ossl_aes192ofb_functions */
-IMPLEMENT_generic_cipher(aes, AES, ofb, OFB, 0, 192, 8, 128, stream)
+IMPLEMENT_generic_cipher(aes, AES, ofb, OFB, 0, 192, 8, 128, 3, stream)
 /* ossl_aes128ofb_functions */
-IMPLEMENT_generic_cipher(aes, AES, ofb, OFB, 0, 128, 8, 128, stream)
+IMPLEMENT_generic_cipher(aes, AES, ofb, OFB, 0, 128, 8, 128, 1, stream)
 /* ossl_aes256cfb_functions */
-IMPLEMENT_generic_cipher(aes, AES, cfb, CFB, 0, 256, 8, 128, stream)
+IMPLEMENT_generic_cipher(aes, AES, cfb,  CFB, 0, 256, 8, 128, 5, stream)
 /* ossl_aes192cfb_functions */
-IMPLEMENT_generic_cipher(aes, AES, cfb, CFB, 0, 192, 8, 128, stream)
+IMPLEMENT_generic_cipher(aes, AES, cfb,  CFB, 0, 192, 8, 128, 3, stream)
 /* ossl_aes128cfb_functions */
-IMPLEMENT_generic_cipher(aes, AES, cfb, CFB, 0, 128, 8, 128, stream)
+IMPLEMENT_generic_cipher(aes, AES, cfb,  CFB, 0, 128, 8, 128, 1, stream)
 /* ossl_aes256cfb1_functions */
-IMPLEMENT_generic_cipher(aes, AES, cfb1, CFB, 0, 256, 8, 128, stream)
+IMPLEMENT_generic_cipher(aes, AES, cfb1, CFB, 0, 256, 8, 128, 5, stream)
 /* ossl_aes192cfb1_functions */
-IMPLEMENT_generic_cipher(aes, AES, cfb1, CFB, 0, 192, 8, 128, stream)
+IMPLEMENT_generic_cipher(aes, AES, cfb1, CFB, 0, 192, 8, 128, 3, stream)
 /* ossl_aes128cfb1_functions */
-IMPLEMENT_generic_cipher(aes, AES, cfb1, CFB, 0, 128, 8, 128, stream)
+IMPLEMENT_generic_cipher(aes, AES, cfb1, CFB, 0, 128, 8, 128, 1, stream)
 /* ossl_aes256cfb8_functions */
-IMPLEMENT_generic_cipher(aes, AES, cfb8, CFB, 0, 256, 8, 128, stream)
+IMPLEMENT_generic_cipher(aes, AES, cfb8, CFB, 0, 256, 8, 128, 5, stream)
 /* ossl_aes192cfb8_functions */
-IMPLEMENT_generic_cipher(aes, AES, cfb8, CFB, 0, 192, 8, 128, stream)
+IMPLEMENT_generic_cipher(aes, AES, cfb8, CFB, 0, 192, 8, 128, 3, stream)
 /* ossl_aes128cfb8_functions */
-IMPLEMENT_generic_cipher(aes, AES, cfb8, CFB, 0, 128, 8, 128, stream)
+IMPLEMENT_generic_cipher(aes, AES, cfb8, CFB, 0, 128, 8, 128, 1, stream)
 /* ossl_aes256ctr_functions */
-IMPLEMENT_generic_cipher(aes, AES, ctr, CTR, 0, 256, 8, 128, stream)
+IMPLEMENT_generic_cipher(aes, AES, ctr, CTR, 0, 256, 8, 128, 5, stream)
 /* ossl_aes192ctr_functions */
-IMPLEMENT_generic_cipher(aes, AES, ctr, CTR, 0, 192, 8, 128, stream)
+IMPLEMENT_generic_cipher(aes, AES, ctr, CTR, 0, 192, 8, 128, 3, stream)
 /* ossl_aes128ctr_functions */
-IMPLEMENT_generic_cipher(aes, AES, ctr, CTR, 0, 128, 8, 128, stream)
+IMPLEMENT_generic_cipher(aes, AES, ctr, CTR, 0, 128, 8, 128, 1, stream)
 
 #include "cipher_aes_cts.inc"

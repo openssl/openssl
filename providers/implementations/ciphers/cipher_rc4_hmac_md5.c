@@ -218,7 +218,8 @@ static int rc4_hmac_md5_get_params(OSSL_PARAM params[])
                                           RC4_HMAC_MD5_FLAGS,
                                           RC4_HMAC_MD5_KEY_BITS,
                                           RC4_HMAC_MD5_BLOCK_BITS,
-                                          RC4_HMAC_MD5_IV_BITS);
+                                          RC4_HMAC_MD5_IV_BITS,
+                                          0);
 }
 
 const OSSL_DISPATCH ossl_rc4_hmac_ossl_md5_functions[] = {
