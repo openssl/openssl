@@ -224,7 +224,8 @@ static int rand_check_fips_approved(EVP_RAND_CTX *ctx, EVP_TEST *t)
 }
 
 static int check_security_category(EVP_TEST *t, void *alg_obj,
-                                   int (*get_param)(void *, OSSL_PARAM *)) {
+                                   int (*get_param)(void *, OSSL_PARAM *),
+                                   int (*get_security_category)(void *)) {
     OSSL_PARAM p[2];
     int security_category = -1;
 
@@ -233,7 +234,9 @@ static int check_security_category(EVP_TEST *t, void *alg_obj,
     p[0] = OSSL_PARAM_construct_int(OSSL_ALG_PARAM_SECURITY_CATEGORY,
                                     &security_category);
     p[1] = OSSL_PARAM_construct_end();
-    if (!TEST_int_gt(get_param(alg_obj, p), 0)
+    if (!TEST_int_eq(get_security_category(alg_obj), t->security_category)
+            /* Test getting via the param too */
+            || !TEST_int_gt(get_param(alg_obj, p), 0)
             || !TEST_true(OSSL_PARAM_modified(p))
             || !TEST_int_eq(security_category, t->security_category)) {
         t->err = "INCORRECT_SECURITY_CATEGORY";
@@ -244,7 +247,8 @@ static int check_security_category(EVP_TEST *t, void *alg_obj,
 
 static int pkey_check_security_category(EVP_TEST *t, EVP_PKEY *pkey) {
     return check_security_category(t, pkey,
-                                   (int (*)(void *, OSSL_PARAM *))EVP_PKEY_get_params);
+                                   (int (*)(void *, OSSL_PARAM *))EVP_PKEY_get_params,
+                                   (int (*)(void *))EVP_PKEY_get_security_category);
 }
 
 static int ctrladd(STACK_OF(OPENSSL_STRING) *controls, const char *value)
@@ -1594,7 +1598,8 @@ static int cipher_test_run(EVP_TEST *t)
     TEST_info("RUNNING TEST FOR CIPHER %s\n", EVP_CIPHER_get0_name(cdat->cipher));
 
     if (!TEST_true(check_security_category(t, (void *)cdat->cipher,
-                                           (int (*)(void *, OSSL_PARAM *))EVP_CIPHER_get_params)))
+                                           (int (*)(void *, OSSL_PARAM *))EVP_CIPHER_get_params,
+                                           (int (*)(void *))EVP_CIPHER_get_security_category)))
         return 0;
 
     if (!cdat->key) {
