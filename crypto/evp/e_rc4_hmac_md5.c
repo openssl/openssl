@@ -252,7 +252,7 @@ static const EVP_CIPHER r4_hmac_md5_cipher = {
 # else
     NID_undef,
 # endif
-    1, EVP_RC4_KEY_SIZE, 0,
+    1, EVP_RC4_KEY_SIZE, 0, 0,
     EVP_CIPH_STREAM_CIPHER | EVP_CIPH_VARIABLE_LENGTH |
         EVP_CIPH_FLAG_AEAD_CIPHER,
     EVP_ORIG_GLOBAL,
