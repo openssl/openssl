@@ -121,6 +121,8 @@ static int B64_write_ASN1(BIO *out, ASN1_VALUE *val, BIO *in, int flags,
 
     /* Set CRLF line endings if requested */
     if (flags & SMIME_CRLFEOL)
+        BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL | BIO_FLAGS_BASE64_CRLF);
+    else
         BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
 
     /* Prepend the b64 BIO so all data is base64 encoded */
@@ -630,14 +632,24 @@ int SMIME_crlf_copy(BIO *in, BIO *out, int flags)
                 if (BIO_write(out, linebuf, len) != len)
                     goto err;
                 if (eol) {
-                    if (BIO_write(out, "\r\n", 2) != 2)
-                        goto err;
+                    if (flags & SMIME_CRLFEOL) {
+                        if (BIO_write(out, "\r\n", 2) != 2)
+                            goto err;
+                    } else {
+                        if (BIO_write(out, "\n", 1) != 1)
+                            goto err;
+                    }
                 }
             } else if (flags & SMIME_ASCIICRLF) {
                 eolcnt++;
             } else if (eol) {
-                if (BIO_write(out, "\r\n", 2) != 2)
-                    goto err;
+                if (flags & SMIME_CRLFEOL) {
+                    if (BIO_write(out, "\r\n", 2) != 2)
+                        goto err;
+                } else {
+                    if (BIO_write(out, "\n", 1) != 1)
+                        goto err;
+                }
             }
         }
         if (len < 0)
@@ -1209,6 +1221,9 @@ static int strip_eol(char *linebuf, int *plen, int flags)
             is_eol = 1;
         } else if (is_eol && (flags & SMIME_ASCIICRLF) != 0 && *p == ' ') {
             /* Strip trailing space on a line */
+            continue;
+        } else if (*p == '\r' && (flags & SMIME_CRLFEOL) != 0) {
+            /* Keep \r if CRLFEOL is set */
             continue;
         } else if (*p != '\r') {
             break;
