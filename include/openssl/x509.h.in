@@ -67,6 +67,9 @@ extern "C" {
 # define X509_FILETYPE_ASN1      2
 # define X509_FILETYPE_DEFAULT   3
 
+/* X509v3 extension flags */
+# define X509_FLAG_EXT_OID (1UL << 31)
+
 /*-
  * <https://datatracker.ietf.org/doc/html/rfc5280#section-4.2.1.3>:
  * The KeyUsage BITSTRING is treated as a little-endian integer, hence bit `0`
