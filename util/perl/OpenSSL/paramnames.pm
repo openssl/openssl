@@ -173,6 +173,8 @@ my %params = (
     'DIGEST_PARAM_SIZE' =>         "size",         # size_t
     'DIGEST_PARAM_XOF' =>          "xof",          # int, 0 or 1
     'DIGEST_PARAM_ALGID_ABSENT' => "algid-absent", # int, 0 or 1
+    'DIGEST_PARAM_SECURITY_CATEGORY_COLLISION' =>   "collision-security-category",  # Security Category
+    'DIGEST_PARAM_SECURITY_CATEGORY_PREIMAGE' =>    "preimage-security-category",   # Security Category
 
 # MAC parameters
     'MAC_PARAM_KEY' =>            "key",           # octet string
