@@ -253,6 +253,37 @@ struct evp_kdf_st {
 #define EVP_ORIG_GLOBAL     1
 #define EVP_ORIG_METH       2
 
+/* Security categories for SHA algorithms */
+# define SHA1_COLLISION_CATEGORY        0
+# define SHA256_192_COLLISION_CATEGORY  0
+# define SHA224_COLLISION_CATEGORY      0
+# define SHA256_COLLISION_CATEGORY      2
+# define SHA384_COLLISION_CATEGORY      4
+# define SHA512_COLLISION_CATEGORY      5
+# define SHA3_224_COLLISION_CATEGORY    0
+# define SHA3_256_COLLISION_CATEGORY    2
+# define SHA3_384_COLLISION_CATEGORY    4
+# define SHA3_512_COLLISION_CATEGORY    5
+# define SHAKE128_COLLISION_CATEGORY    2
+# define SHAKE256_COLLISION_CATEGORY    5
+# define KMAC128_COLLISION_CATEGORY     2
+# define KMAC256_COLLISION_CATEGORY     5
+
+# define SHA1_PREIMAGE_CATEGORY         1
+# define SHA256_192_PREIMAGE_CATEGORY   1
+# define SHA224_PREIMAGE_CATEGORY       3
+# define SHA256_PREIMAGE_CATEGORY       5
+# define SHA384_PREIMAGE_CATEGORY       5
+# define SHA512_PREIMAGE_CATEGORY       5
+# define SHA3_224_PREIMAGE_CATEGORY     3
+# define SHA3_256_PREIMAGE_CATEGORY     5
+# define SHA3_384_PREIMAGE_CATEGORY     5
+# define SHA3_512_PREIMAGE_CATEGORY     5
+# define SHAKE128_PREIMAGE_CATEGORY     2
+# define SHAKE256_PREIMAGE_CATEGORY     5
+# define KMAC128_PREIMAGE_CATEGORY      2
+# define KMAC256_PREIMAGE_CATEGORY      5
+
 struct evp_md_st {
     /* nid */
     int type;
@@ -260,6 +291,8 @@ struct evp_md_st {
     /* Legacy structure members */
     int pkey_type;
     int md_size;
+    int security_category_collision;
+    int security_category_preimage;
     unsigned long flags;
     int origin;
     int (*init) (EVP_MD_CTX *ctx);
