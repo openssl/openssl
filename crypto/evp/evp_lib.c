@@ -828,6 +828,24 @@ int EVP_MD_get_size(const EVP_MD *md)
     return md->md_size;
 }
 
+int EVP_MD_get_security_category_collision(const EVP_MD *md)
+{
+    if (md == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_MESSAGE_DIGEST_IS_NULL);
+        return -1;
+    }
+    return md->security_category_collision;
+}
+
+int EVP_MD_get_security_category_preimage(const EVP_MD *md)
+{
+    if (md == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_MESSAGE_DIGEST_IS_NULL);
+        return -1;
+    }
+    return md->security_category_preimage;
+}
+
 int EVP_MD_xof(const EVP_MD *md)
 {
     return md != NULL && ((EVP_MD_get_flags(md) & EVP_MD_FLAG_XOF) != 0);
