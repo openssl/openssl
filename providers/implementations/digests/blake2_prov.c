@@ -15,7 +15,8 @@
 #include "prov/digestcommon.h"
 #include "prov/implementations.h"
 
-#define IMPLEMENT_BLAKE_functions(variant, VARIANT, variantsize) \
+#define IMPLEMENT_BLAKE_functions(variant, VARIANT, variantsize, \
+                                  seccat_collision, seccat_preimage) \
 static const OSSL_PARAM known_blake##variant##_ctx_params[] = { \
     {OSSL_DIGEST_PARAM_SIZE, OSSL_PARAM_UNSIGNED_INTEGER, NULL, 0, 0}, \
     OSSL_PARAM_END \
@@ -169,7 +170,11 @@ static int blake##variantsize##_internal_final(void *ctx, unsigned char *out, \
  \
 static int blake##variantsize##_get_params(OSSL_PARAM params[]) \
 { \
-    return ossl_digest_default_get_params(params, BLAKE##VARIANT##_BLOCKBYTES, BLAKE##VARIANT##_OUTBYTES, 0); \
+    return ossl_digest_default_get_params(params, \
+                                          BLAKE##VARIANT##_BLOCKBYTES, \
+                                          BLAKE##VARIANT##_OUTBYTES, \
+                                          seccat_collision,  seccat_preimage, \
+                                          0); \
 } \
  \
 const OSSL_DISPATCH ossl_blake##variantsize##_functions[] = { \
@@ -194,5 +199,5 @@ const OSSL_DISPATCH ossl_blake##variantsize##_functions[] = { \
     {0, NULL} \
 };
 
-IMPLEMENT_BLAKE_functions(2s, 2S, 2s256)
-IMPLEMENT_BLAKE_functions(2b, 2B, 2b512)
+IMPLEMENT_BLAKE_functions(2s, 2S, 2s256, 2, 5)
+IMPLEMENT_BLAKE_functions(2b, 2B, 2b512, 5, 5)
