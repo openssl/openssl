@@ -56,6 +56,6 @@ static int md5_sha1_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 
 /* ossl_md5_sha1_functions */
 IMPLEMENT_digest_functions_with_settable_ctx(
-    md5_sha1, MD5_SHA1_CTX, MD5_SHA1_CBLOCK, MD5_SHA1_DIGEST_LENGTH, 0,
+    md5_sha1, MD5_SHA1_CTX, MD5_SHA1_CBLOCK, MD5_SHA1_DIGEST_LENGTH, 0, 1, 0,
     ossl_md5_sha1_init, ossl_md5_sha1_update, ossl_md5_sha1_final,
     md5_sha1_settable_ctx_params, md5_sha1_set_ctx_params)
