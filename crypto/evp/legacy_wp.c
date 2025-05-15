@@ -23,6 +23,7 @@ static const EVP_MD whirlpool_md = {
     NID_whirlpool,
     0,
     WHIRLPOOL_DIGEST_LENGTH,
+    5, 5,
     0,
     EVP_ORIG_GLOBAL,
     LEGACY_EVP_MD_METH_TABLE(wp_init, wp_update, wp_final, NULL,
