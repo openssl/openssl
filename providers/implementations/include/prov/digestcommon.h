@@ -13,6 +13,7 @@
 # include <openssl/core_dispatch.h>
 # include <openssl/core_names.h>
 # include <openssl/params.h>
+# include "crypto/evp.h"
 # include "prov/providercommon.h"
 
 /* Internal flags that can be queried */
@@ -23,11 +24,14 @@
 extern "C" {
 # endif
 
-#define PROV_FUNC_DIGEST_GET_PARAM(name, blksize, dgstsize, flags)             \
+#define PROV_FUNC_DIGEST_GET_PARAM(name, blksize, dgstsize, seccat_collision,  \
+                                   seccat_preimage, flags)                     \
 static OSSL_FUNC_digest_get_params_fn name##_get_params;                       \
 static int name##_get_params(OSSL_PARAM params[])                              \
 {                                                                              \
-    return ossl_digest_default_get_params(params, blksize, dgstsize, flags);   \
+    return ossl_digest_default_get_params(params, blksize, dgstsize,           \
+                                          seccat_collision,                    \
+                                          seccat_preimage, flags);             \
 }
 
 #define PROV_DISPATCH_FUNC_DIGEST_GET_PARAMS(name)                             \
@@ -48,7 +52,8 @@ static int name##_internal_final(void *ctx, unsigned char *out, size_t *outl,  \
 }
 
 # define PROV_DISPATCH_FUNC_DIGEST_CONSTRUCT_START(                            \
-    name, CTX, blksize, dgstsize, flags, upd, fin)                             \
+    name, CTX, blksize, dgstsize, settable_ctx_params, set_ctx_params,         \
+    seccat_collision, seccat_preimage, flags, upd, fin)                        \
 static OSSL_FUNC_digest_newctx_fn name##_newctx;                               \
 static OSSL_FUNC_digest_freectx_fn name##_freectx;                             \
 static OSSL_FUNC_digest_dupctx_fn name##_dupctx;                               \
@@ -77,7 +82,8 @@ static void name##_copyctx(void *voutctx, void *vinctx)                        \
     *outctx = *inctx;                                                          \
 }                                                                              \
 PROV_FUNC_DIGEST_FINAL(name, dgstsize, fin)                                    \
-PROV_FUNC_DIGEST_GET_PARAM(name, blksize, dgstsize, flags)                     \
+PROV_FUNC_DIGEST_GET_PARAM(name, blksize, dgstsize, seccat_collision,          \
+                           seccat_preimage, flags)                             \
 const OSSL_DISPATCH ossl_##name##_functions[] = {                              \
     { OSSL_FUNC_DIGEST_NEWCTX, (void (*)(void))name##_newctx },                \
     { OSSL_FUNC_DIGEST_UPDATE, (void (*)(void))upd },                          \
@@ -92,21 +98,24 @@ const OSSL_DISPATCH ossl_##name##_functions[] = {                              \
 };
 
 # define IMPLEMENT_digest_functions(                                           \
-    name, CTX, blksize, dgstsize, flags, init, upd, fin)                       \
+    name, CTX, blksize, dgstsize, seccat_collision, seccat_preimage, flags,    \
+    init, upd, fin)                                                            \
 static OSSL_FUNC_digest_init_fn name##_internal_init;                          \
 static int name##_internal_init(void *ctx,                                     \
                                 ossl_unused const OSSL_PARAM params[])         \
 {                                                                              \
     return ossl_prov_is_running() && init(ctx);                                \
 }                                                                              \
-PROV_DISPATCH_FUNC_DIGEST_CONSTRUCT_START(name, CTX, blksize, dgstsize, flags, \
-                                          upd, fin),                           \
+PROV_DISPATCH_FUNC_DIGEST_CONSTRUCT_START(name, CTX, blksize, dgstsize,        \
+                                          settable_ctx_params, set_ctx_params, \
+                                          seccat_collision, seccat_preimage,   \
+                                          flags, upd, fin),                    \
     { OSSL_FUNC_DIGEST_INIT, (void (*)(void))name##_internal_init },           \
 PROV_DISPATCH_FUNC_DIGEST_CONSTRUCT_END
 
 # define IMPLEMENT_digest_functions_with_settable_ctx(                         \
-    name, CTX, blksize, dgstsize, flags, init, upd, fin,                       \
-    settable_ctx_params, set_ctx_params)                                       \
+    name, CTX, blksize, dgstsize, seccat_collision, seccat_preimage, flags,    \
+    init, upd, fin, settable_ctx_params, set_ctx_params)                       \
 static OSSL_FUNC_digest_init_fn name##_internal_init;                          \
 static int name##_internal_init(void *ctx, const OSSL_PARAM params[])          \
 {                                                                              \
@@ -114,8 +123,10 @@ static int name##_internal_init(void *ctx, const OSSL_PARAM params[])          \
            && init(ctx)                                                        \
            && set_ctx_params(ctx, params);                                     \
 }                                                                              \
-PROV_DISPATCH_FUNC_DIGEST_CONSTRUCT_START(name, CTX, blksize, dgstsize, flags, \
-                                          upd, fin),                           \
+PROV_DISPATCH_FUNC_DIGEST_CONSTRUCT_START(name, CTX, blksize, dgstsize,        \
+                                          settable_ctx_params, set_ctx_params, \
+                                          seccat_collision, seccat_preimage,   \
+                                          flags, upd, fin),                    \
     { OSSL_FUNC_DIGEST_INIT, (void (*)(void))name##_internal_init },           \
     { OSSL_FUNC_DIGEST_SETTABLE_CTX_PARAMS, (void (*)(void))settable_ctx_params }, \
     { OSSL_FUNC_DIGEST_SET_CTX_PARAMS, (void (*)(void))set_ctx_params },       \
@@ -124,7 +135,8 @@ PROV_DISPATCH_FUNC_DIGEST_CONSTRUCT_END
 
 const OSSL_PARAM *ossl_digest_default_gettable_params(void *provctx);
 int ossl_digest_default_get_params(OSSL_PARAM params[], size_t blksz,
-                                   size_t paramsz, unsigned long flags);
+                                   size_t paramsz, int seccat_collision,
+                                   int seccat_preimage, unsigned long flags);
 
 # ifdef __cplusplus
 }
