@@ -578,6 +578,8 @@ int EVP_MD_get_size(const EVP_MD *md);
 # define EVP_MD_size EVP_MD_get_size
 int EVP_MD_get_block_size(const EVP_MD *md);
 # define EVP_MD_block_size EVP_MD_get_block_size
+int EVP_MD_get_security_category_collision(const EVP_MD *md);
+int EVP_MD_get_security_category_preimage(const EVP_MD *md);
 unsigned long EVP_MD_get_flags(const EVP_MD *md);
 # define EVP_MD_flags EVP_MD_get_flags
 int EVP_MD_xof(const EVP_MD *md);
