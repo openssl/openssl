@@ -93,6 +93,7 @@ static const EVP_MD sha1_md = {
     NID_sha1,
     NID_sha1WithRSAEncryption,
     SHA_DIGEST_LENGTH,
+    SHA1_COLLISION_CATEGORY, SHA1_PREIMAGE_CATEGORY,
     EVP_MD_FLAG_DIGALGID_ABSENT,
     EVP_ORIG_GLOBAL,
     LEGACY_EVP_MD_METH_TABLE(sha1_init, sha1_update, sha1_final, sha1_int_ctrl,
@@ -108,6 +109,7 @@ static const EVP_MD sha224_md = {
     NID_sha224,
     NID_sha224WithRSAEncryption,
     SHA224_DIGEST_LENGTH,
+    SHA224_COLLISION_CATEGORY, SHA224_PREIMAGE_CATEGORY,
     EVP_MD_FLAG_DIGALGID_ABSENT,
     EVP_ORIG_GLOBAL,
     LEGACY_EVP_MD_METH_TABLE(sha224_init, sha224_update, sha224_final, NULL,
@@ -123,6 +125,7 @@ static const EVP_MD sha256_md = {
     NID_sha256,
     NID_sha256WithRSAEncryption,
     SHA256_DIGEST_LENGTH,
+    SHA256_COLLISION_CATEGORY, SHA256_PREIMAGE_CATEGORY,
     EVP_MD_FLAG_DIGALGID_ABSENT,
     EVP_ORIG_GLOBAL,
     LEGACY_EVP_MD_METH_TABLE(sha256_init, sha256_update, sha256_final, NULL,
@@ -138,6 +141,7 @@ static const EVP_MD sha512_224_md = {
     NID_sha512_224,
     NID_sha512_224WithRSAEncryption,
     SHA224_DIGEST_LENGTH,
+    SHA224_COLLISION_CATEGORY, SHA224_PREIMAGE_CATEGORY,
     EVP_MD_FLAG_DIGALGID_ABSENT,
     EVP_ORIG_GLOBAL,
     LEGACY_EVP_MD_METH_TABLE(sha512_224_int_init, sha512_224_int_update,
@@ -153,6 +157,7 @@ static const EVP_MD sha512_256_md = {
     NID_sha512_256,
     NID_sha512_256WithRSAEncryption,
     SHA256_DIGEST_LENGTH,
+    SHA256_COLLISION_CATEGORY, SHA256_PREIMAGE_CATEGORY,
     EVP_MD_FLAG_DIGALGID_ABSENT,
     EVP_ORIG_GLOBAL,
     LEGACY_EVP_MD_METH_TABLE(sha512_256_int_init, sha512_256_int_update,
@@ -168,6 +173,7 @@ static const EVP_MD sha384_md = {
     NID_sha384,
     NID_sha384WithRSAEncryption,
     SHA384_DIGEST_LENGTH,
+    SHA384_COLLISION_CATEGORY, SHA384_PREIMAGE_CATEGORY,
     EVP_MD_FLAG_DIGALGID_ABSENT,
     EVP_ORIG_GLOBAL,
     LEGACY_EVP_MD_METH_TABLE(sha384_init, sha384_update, sha384_final, NULL,
@@ -183,6 +189,7 @@ static const EVP_MD sha512_md = {
     NID_sha512,
     NID_sha512WithRSAEncryption,
     SHA512_DIGEST_LENGTH,
+    SHA512_COLLISION_CATEGORY, SHA512_PREIMAGE_CATEGORY,
     EVP_MD_FLAG_DIGALGID_ABSENT,
     EVP_ORIG_GLOBAL,
     LEGACY_EVP_MD_METH_TABLE(sha512_init, sha512_update, sha512_final, NULL,
@@ -194,13 +201,14 @@ const EVP_MD *EVP_sha512(void)
     return &sha512_md;
 }
 
-#define EVP_MD_SHA3(bitlen)                                                    \
+#define EVP_MD_SHA3(bitlen, seccat_collision, seccat_preimage)                 \
 const EVP_MD *EVP_sha3_##bitlen(void)                                          \
 {                                                                              \
     static const EVP_MD sha3_##bitlen##_md = {                                 \
         NID_sha3_##bitlen,                                                     \
         NID_RSA_SHA3_##bitlen,                                                 \
         bitlen / 8,                                                            \
+        seccat_collision, seccat_preimage,                                     \
         EVP_MD_FLAG_DIGALGID_ABSENT,                                           \
         EVP_ORIG_GLOBAL,                                                       \
         LEGACY_EVP_MD_METH_TABLE(sha3_int_init, sha3_int_update,               \
@@ -209,13 +217,14 @@ const EVP_MD *EVP_sha3_##bitlen(void)                                          \
     };                                                                         \
     return &sha3_##bitlen##_md;                                                \
 }
-#define EVP_MD_SHAKE(bitlen)                                                   \
+#define EVP_MD_SHAKE(bitlen, seccat_collision, seccat_preimage)                \
 const EVP_MD *EVP_shake##bitlen(void)                                          \
 {                                                                              \
     static const EVP_MD shake##bitlen##_md = {                                 \
         NID_shake##bitlen,                                                     \
         0,                                                                     \
         bitlen / 8,                                                            \
+        seccat_collision, seccat_preimage,                                     \
         EVP_MD_FLAG_XOF | EVP_MD_FLAG_DIGALGID_ABSENT,                         \
         EVP_ORIG_GLOBAL,                                                       \
         LEGACY_EVP_MD_METH_TABLE(shake_init, sha3_int_update, sha3_int_final,  \
@@ -224,10 +233,10 @@ const EVP_MD *EVP_shake##bitlen(void)                                          \
     return &shake##bitlen##_md;                                                \
 }
 
-EVP_MD_SHA3(224)
-EVP_MD_SHA3(256)
-EVP_MD_SHA3(384)
-EVP_MD_SHA3(512)
+EVP_MD_SHA3(224, SHA3_224_COLLISION_CATEGORY, SHA3_224_PREIMAGE_CATEGORY)
+EVP_MD_SHA3(256, SHA3_256_COLLISION_CATEGORY, SHA3_256_PREIMAGE_CATEGORY)
+EVP_MD_SHA3(384, SHA3_384_COLLISION_CATEGORY, SHA3_384_PREIMAGE_CATEGORY)
+EVP_MD_SHA3(512, SHA3_512_COLLISION_CATEGORY, SHA3_512_PREIMAGE_CATEGORY)
 
-EVP_MD_SHAKE(128)
-EVP_MD_SHAKE(256)
+EVP_MD_SHAKE(128, SHAKE128_COLLISION_CATEGORY, SHAKE128_PREIMAGE_CATEGORY)
+EVP_MD_SHAKE(256, SHAKE256_COLLISION_CATEGORY, SHAKE256_PREIMAGE_CATEGORY)
