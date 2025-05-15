@@ -984,9 +984,10 @@ static void set_legacy_nid(const char *name, void *vlegacy_nid)
 static int evp_md_cache_constants(EVP_MD *md)
 {
     int ok, xof = 0, algid_absent = 0;
+    int seccat_collision = -1, seccat_preimage = -1;
     size_t blksz = 0;
     size_t mdsize = 0;
-    OSSL_PARAM params[5];
+    OSSL_PARAM params[7];
 
     /*
      * Note that these parameters are 'constants' that are only set up
@@ -998,13 +999,19 @@ static int evp_md_cache_constants(EVP_MD *md)
     params[2] = OSSL_PARAM_construct_int(OSSL_DIGEST_PARAM_XOF, &xof);
     params[3] = OSSL_PARAM_construct_int(OSSL_DIGEST_PARAM_ALGID_ABSENT,
                                          &algid_absent);
-    params[4] = OSSL_PARAM_construct_end();
+    params[4] = OSSL_PARAM_construct_int(OSSL_DIGEST_PARAM_SECURITY_CATEGORY_COLLISION,
+                                         &seccat_collision);
+    params[5] = OSSL_PARAM_construct_int(OSSL_DIGEST_PARAM_SECURITY_CATEGORY_PREIMAGE,
+                                         &seccat_preimage);
+    params[6] = OSSL_PARAM_construct_end();
     ok = evp_do_md_getparams(md, params) > 0;
     if (mdsize > INT_MAX || blksz > INT_MAX)
         ok = 0;
     if (ok) {
         md->block_size = (int)blksz;
         md->md_size = (int)mdsize;
+        md->security_category_collision = seccat_collision;
+        md->security_category_preimage = seccat_preimage;
         if (xof)
             md->flags |= EVP_MD_FLAG_XOF;
         if (algid_absent)
