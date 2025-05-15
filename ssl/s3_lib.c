@@ -5006,7 +5006,7 @@ int ssl_encapsulate(SSL_CONNECTION *s, EVP_PKEY *pubkey,
     }
 
     if (EVP_PKEY_encapsulate(pctx, ct, &ctlen, pms, &pmslen) <= 0) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_KEY_SHARE);
         goto err;
     }
 
