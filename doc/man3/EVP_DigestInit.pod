@@ -16,6 +16,7 @@ EVP_DigestSqueeze,
 EVP_MD_is_a, EVP_MD_get0_name, EVP_MD_get0_description,
 EVP_MD_names_do_all, EVP_MD_get0_provider, EVP_MD_get_type,
 EVP_MD_get_pkey_type, EVP_MD_get_size, EVP_MD_get_block_size, EVP_MD_get_flags,
+EVP_MD_get_security_category_collision, EVP_MD_get_security_category_preimage,
 EVP_MD_CTX_get0_name, EVP_MD_CTX_md, EVP_MD_CTX_get0_md, EVP_MD_CTX_get1_md,
 EVP_MD_CTX_get_type, EVP_MD_CTX_get_size_ex, EVP_MD_CTX_get_block_size,
 EVP_MD_CTX_get0_md_data, EVP_MD_CTX_update_fn, EVP_MD_CTX_set_update_fn,
@@ -85,6 +86,8 @@ EVP_MD_CTX_type, EVP_MD_CTX_pkey_ctx, EVP_MD_CTX_md_data
  int EVP_MD_get_pkey_type(const EVP_MD *md);
  int EVP_MD_get_size(const EVP_MD *md);
  int EVP_MD_get_block_size(const EVP_MD *md);
+ int EVP_MD_get_security_category_collision(const EVP_MD *md);
+ int EVP_MD_get_security_category_preimage(const EVP_MD *md);
  unsigned long EVP_MD_get_flags(const EVP_MD *md);
  int EVP_MD_xof(const EVP_MD *md);
 
@@ -441,6 +444,48 @@ Returns the update function for I<ctx>.
 Returns the I<md> flags. Note that these are different from the B<EVP_MD_CTX>
 ones. See L<EVP_MD_meth_set_flags(3)> for more information.
 
+=item EVP_MD_get_security_category_collision(),
+EVP_MD_get_security_category_preimage()
+
+These functions return the
+L<post-quantum security categories|https://nvlpubs.nist.gov/nistpubs/ir/2024/NIST.IR.8547.ipd.pdf>
+for the digest as defined by NIST.
+EVP_MD_get_security_category_collision() returns the security category with respect
+to the generation of two inputs that output an identical digest value.
+EVP_MD_get_security_category_preimage() returns the security category with respect
+to the generation of an input that outputs a specific digest value.
+The post-quantum security category is an integer value from 0 to 5 that
+is based on an algorithm's classification on the range of security strengths
+offered by the existing standards in symmetric cryptography:
+
+=begin text
+
+ Security       Attack
+ Category       Type
+ ==============================================================
+    0           Weak
+    1           Key search on a block cipher with a 128-bit key
+    2           Collision search on a 256-bit hash function
+    3           Key search on a block cipher with a 192-bit key
+    4           Collision search on a 384-bit hash function
+    5           Key search on a block cipher with a 256-bit key
+
+=end text
+
+=begin html
+
+<table>
+<tr><th>Security Category</th><th>Attack Type</th>></tr>
+<tr><td>0</td><td>Weak</td></tr>
+<tr><td>1</td><td>Key search on a block cipher with a 128-bit key</td></tr>
+<tr><td>2</td><td>Collision search on a 256-bit hash function</td></tr>
+<tr><td>3</td><td>Key search on a block cipher with a 192-bit key</td></tr>
+<tr><td>4</td><td>Collision search on a 384-bit hash function</td></tr>
+<tr><td>5</td><td>Key search on a block cipher with a 256-bit key</td></tr>
+</table>
+
+=end html
+
 =item EVP_MD_get_pkey_type()
 
 Returns the NID of the public key signing algorithm associated with this
@@ -692,6 +737,13 @@ This function has no return value.
 Returns 1 if the callback was called for all names. A return value of 0 means
 that the callback was not called for any names.
 
+=item EVP_MD_get_security_category_collision(),
+EVP_MD_get_security_category_preimage()
+
+Return the post-quantum security category which is an integer in the range
+zero to five inclusive.  They returns -1 if the security category information
+isn't available.
+
 =back
 
 =head1 NOTES
@@ -862,9 +914,12 @@ to be aliases for EVP_MD_CTX_get_size_ex(), previously they were aliases for
 EVP_MD_get_size which returned a constant value. This is required for XOF
 digests since they do not have a fixed size.
 
+The EVP_MD_get_security_category_collision() and
+EVP_MD_get_security_category_preimage() functions were added in OpenSSL 3.6.
+
 =head1 COPYRIGHT
 
-Copyright 2000-2024 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2025 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
