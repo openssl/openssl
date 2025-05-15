@@ -50,7 +50,7 @@ int ossl_ml_dsa_set_prekey(ML_DSA_KEY *key, int flags_set, int flags_clr,
     
     if (sk != NULL) {
         key->priv_encoding = OPENSSL_secure_malloc(sk_len);
-        if (!key->priv_encoding)
+        if (key->priv_encoding == NULL)
             goto end;
         memcpy(key->priv_encoding, sk, sk_len);
     }
