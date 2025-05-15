@@ -64,6 +64,7 @@ my @files = qw(
                 evpkdf_x942.txt
                 evpkdf_x963.txt
                 evpmac_common.txt
+                evpmd_security_category.txt
                 evpmd_sha.txt
                 evppbe_pbkdf2.txt
                 evppkey_kdf_hkdf.txt
