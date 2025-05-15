@@ -1645,14 +1645,14 @@ ML_KEM_KEY *ossl_ml_kem_key_dup(const ML_KEM_KEY *key, int selection)
         break;
     case OSSL_KEYMGMT_SELECT_PRIVATE_KEY:
         tmp = OPENSSL_secure_malloc(key->vinfo->prvalloc);
-        if (!tmp)
+        if (tmp == NULL)
             break;
         memcpy(tmp, key->t, key->vinfo->prvalloc);
         ok = add_storage(tmp, 1, ret);
         /* Duplicated keys retain |d|, if available */
         if (key->d != NULL)
             ret->d = ret->z + ML_KEM_RANDOM_BYTES;
-        break;  
+        break;
     }
 
     if (!ok) {
