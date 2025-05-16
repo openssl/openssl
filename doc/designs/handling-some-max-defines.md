@@ -124,6 +124,33 @@ Keep the value as is, do not deprecate. Possibly review the codebase
 to not depend on this value but there are many such cases. Avoid adding
 APIs depending on this value.
 
+### EVP_MAX_BLOCK_LENGTH_CBC_HMAC_SHA_ETM
+
+**Current value:** 128
+
+This macro defines the maximum block size allowed for interleaved
+AES-CBC-HMAC-SHAx-ETM combined cipher implementations.
+
+These ciphers combine AES in CBC mode for encryption and HMAC for authentication
+in a tightly interleaved fashion (Encrypt-then-MAC), where buffering requirements
+depend on the digest block size (e.g. 64 bytes for SHA-256, 128 bytes for
+SHA-512), not on the AES block size (16 bytes).
+
+The macro provides a safe static upper bound for internal or caller-side buffer
+allocation in such ciphers. It should not be used for general-purpose cipher
+buffer sizing. Instead, use EVP_CIPHER_get_block_size() at runtime whenever
+possible.
+
+#### API calls depending on this:
+
+None
+
+#### Proposed solution:
+
+Keep the macro as a static constant for buffer sizing in interleaved cipher
+modes. Document clearly that it is not a generic block size and must not be used
+with unrelated ciphers. Favour dynamic querying via EVP_CIPHER_get_block_size().
+
 ### EVP_MAX_AEAD_TAG_LENGTH
 
 **Current value:** 16
