@@ -1787,12 +1787,24 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
      * we're done with this message
      */
     if (SSL_CONNECTION_IS_TLS13(s)) {
-        if (!ssl->method->ssl3_enc->setup_key_block(s)
-                || !ssl->method->ssl3_enc->change_cipher_state(s,
-                    SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_CLIENT_READ)) {
+        if (!ssl->method->ssl3_enc->setup_key_block(s))
             /* SSLfatal() already called */
             goto err;
-        }
+        if (!ssl->method->ssl3_enc->change_cipher_state(s,
+             SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_CLIENT_READ))
+            /* SSLfatal() already called */
+            goto err;
+        /*
+         * QUIC needs to provide the write handshake at the same time as the read handshake
+         * in case the quic stack needs to ACK packets independent of the handshake process
+         */
+        if (SSL_IS_QUIC_HANDSHAKE(s)
+            && s->early_data_state != SSL_EARLY_DATA_NONE
+            && !ssl->method->ssl3_enc->change_cipher_state(s,
+             SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_CLIENT_WRITE))
+            /* SSLfatal() already called */
+            goto err;
+
         /*
          * If we're not doing early-data and we're not going to send a dummy CCS
          * (i.e. no middlebox compat mode) then we can change the write keys
