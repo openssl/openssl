@@ -90,32 +90,35 @@
  * Variant-specific constants and structures
  * -----------------------------------------
  */
-# define EVP_PKEY_ML_KEM_512    NID_ML_KEM_512
-# define ML_KEM_512_BITS        512
-# define ML_KEM_512_RANK        2
-# define ML_KEM_512_ETA1        3
-# define ML_KEM_512_ETA2        2
-# define ML_KEM_512_DU          10
-# define ML_KEM_512_DV          4
-# define ML_KEM_512_SECBITS     128
+# define EVP_PKEY_ML_KEM_512            NID_ML_KEM_512
+# define ML_KEM_512_BITS                512
+# define ML_KEM_512_RANK                2
+# define ML_KEM_512_ETA1                3
+# define ML_KEM_512_ETA2                2
+# define ML_KEM_512_DU                  10
+# define ML_KEM_512_DV                  4
+# define ML_KEM_512_SECBITS             128
+# define ML_KEM_512_SECURITY_CATEGORY   1
 
-# define EVP_PKEY_ML_KEM_768    NID_ML_KEM_768
-# define ML_KEM_768_BITS        768
-# define ML_KEM_768_RANK        3
-# define ML_KEM_768_ETA1        2
-# define ML_KEM_768_ETA2        2
-# define ML_KEM_768_DU          10
-# define ML_KEM_768_DV          4
-# define ML_KEM_768_SECBITS     192
+# define EVP_PKEY_ML_KEM_768            NID_ML_KEM_768
+# define ML_KEM_768_BITS                768
+# define ML_KEM_768_RANK                3
+# define ML_KEM_768_ETA1                2
+# define ML_KEM_768_ETA2                2
+# define ML_KEM_768_DU                  10
+# define ML_KEM_768_DV                  4
+# define ML_KEM_768_SECBITS             192
+# define ML_KEM_768_SECURITY_CATEGORY   3
 
-# define EVP_PKEY_ML_KEM_1024   NID_ML_KEM_1024
-# define ML_KEM_1024_BITS       1024
-# define ML_KEM_1024_RANK       4
-# define ML_KEM_1024_ETA1       2
-# define ML_KEM_1024_ETA2       2
-# define ML_KEM_1024_DU         11
-# define ML_KEM_1024_DV         5
-# define ML_KEM_1024_SECBITS    256
+# define EVP_PKEY_ML_KEM_1024           NID_ML_KEM_1024
+# define ML_KEM_1024_BITS               1024
+# define ML_KEM_1024_RANK               4
+# define ML_KEM_1024_ETA1               2
+# define ML_KEM_1024_ETA2               2
+# define ML_KEM_1024_DU                 11
+# define ML_KEM_1024_DV                 5
+# define ML_KEM_1024_SECBITS            256
+# define ML_KEM_1024_SECURITY_CATEGORY  5
 
 # define ML_KEM_KEY_RANDOM_PCT  (1 << 0)
 # define ML_KEM_KEY_FIXED_PCT   (1 << 1)
@@ -148,6 +151,7 @@ typedef struct {
     int du;
     int dv;
     int secbits;
+    int security_category;
 } ML_KEM_VINFO;
 
 /* Retrive global variant-specific parameters */

@@ -94,6 +94,7 @@ my %params = (
     'ALG_PARAM_MAC' =>          "mac",          # utf8_string
     'ALG_PARAM_PROPERTIES' =>   "properties",   # utf8_string
     'ALG_PARAM_FIPS_APPROVED_INDICATOR' => 'fips-indicator',   # int, -1, 0 or 1
+    'ALG_PARAM_SECURITY_CATEGORY' => "security-category", # int, 0 .. 5
 
     # For any operation that deals with AlgorithmIdentifier, they should
     # implement both of these.
@@ -113,6 +114,7 @@ my %params = (
     'CIPHER_PARAM_TLS_MAC_SIZE' =>         "tls-mac-size",# size_t
     'CIPHER_PARAM_MODE' =>                 "mode",        # uint
     'CIPHER_PARAM_BLOCK_SIZE' =>           "blocksize",   # size_t
+    'CIPHER_PARAM_SECURITY_CATEGORY' =>    '*ALG_PARAM_SECURITY_CATEGORY',
     'CIPHER_PARAM_AEAD' =>                 "aead",        # int, 0 or 1
     'CIPHER_PARAM_CUSTOM_IV' =>            "custom-iv",   # int, 0 or 1
     'CIPHER_PARAM_CTS' =>                  "cts",         # int, 0 or 1
@@ -171,6 +173,8 @@ my %params = (
     'DIGEST_PARAM_SIZE' =>         "size",         # size_t
     'DIGEST_PARAM_XOF' =>          "xof",          # int, 0 or 1
     'DIGEST_PARAM_ALGID_ABSENT' => "algid-absent", # int, 0 or 1
+    'DIGEST_PARAM_SECURITY_CATEGORY_COLLISION' =>   "collision-security-category",  # Security Category
+    'DIGEST_PARAM_SECURITY_CATEGORY_PREIMAGE' =>    "preimage-security-category",   # Security Category
 
 # MAC parameters
     'MAC_PARAM_KEY' =>            "key",           # octet string
@@ -290,6 +294,7 @@ my %params = (
     'PKEY_PARAM_BITS' =>                "bits",# integer
     'PKEY_PARAM_MAX_SIZE' =>            "max-size",# integer
     'PKEY_PARAM_SECURITY_BITS' =>       "security-bits",# integer
+    'PKEY_PARAM_SECURITY_CATEGORY' =>   '*ALG_PARAM_SECURITY_CATEGORY',
     'PKEY_PARAM_DIGEST' =>              '*ALG_PARAM_DIGEST',
     'PKEY_PARAM_CIPHER' =>              '*ALG_PARAM_CIPHER', # utf8 string
     'PKEY_PARAM_ENGINE' =>              '*ALG_PARAM_ENGINE', # utf8 string

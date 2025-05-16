@@ -571,6 +571,8 @@ int EVP_MD_get_size(const EVP_MD *md);
 # define EVP_MD_size EVP_MD_get_size
 int EVP_MD_get_block_size(const EVP_MD *md);
 # define EVP_MD_block_size EVP_MD_get_block_size
+int EVP_MD_get_security_category_collision(const EVP_MD *md);
+int EVP_MD_get_security_category_preimage(const EVP_MD *md);
 unsigned long EVP_MD_get_flags(const EVP_MD *md);
 # define EVP_MD_flags EVP_MD_get_flags
 int EVP_MD_xof(const EVP_MD *md);
@@ -623,6 +625,7 @@ int EVP_CIPHER_get_key_length(const EVP_CIPHER *cipher);
 # define EVP_CIPHER_key_length EVP_CIPHER_get_key_length
 int EVP_CIPHER_get_iv_length(const EVP_CIPHER *cipher);
 # define EVP_CIPHER_iv_length EVP_CIPHER_get_iv_length
+int EVP_CIPHER_get_security_category(const EVP_CIPHER *cipher);
 unsigned long EVP_CIPHER_get_flags(const EVP_CIPHER *cipher);
 # define EVP_CIPHER_flags EVP_CIPHER_get_flags
 int EVP_CIPHER_get_mode(const EVP_CIPHER *cipher);
@@ -1371,6 +1374,7 @@ int EVP_PKEY_get_bits(const EVP_PKEY *pkey);
 # define EVP_PKEY_bits EVP_PKEY_get_bits
 int EVP_PKEY_get_security_bits(const EVP_PKEY *pkey);
 # define EVP_PKEY_security_bits EVP_PKEY_get_security_bits
+int EVP_PKEY_get_security_category(const EVP_PKEY *pkey);
 int EVP_PKEY_get_size(const EVP_PKEY *pkey);
 # define EVP_PKEY_size EVP_PKEY_get_size
 int EVP_PKEY_can_sign(const EVP_PKEY *pkey);

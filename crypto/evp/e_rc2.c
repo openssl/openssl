@@ -41,7 +41,7 @@ typedef struct {
 
 IMPLEMENT_BLOCK_CIPHER(rc2, ks, RC2, EVP_RC2_KEY, NID_rc2,
                        8,
-                       RC2_KEY_LENGTH, 8, 64,
+                       RC2_KEY_LENGTH, 8, 64, 0,
                        EVP_CIPH_VARIABLE_LENGTH | EVP_CIPH_CTRL_INIT,
                        rc2_init_key, NULL,
                        rc2_set_asn1_type_and_iv, rc2_get_asn1_type_and_iv,
@@ -51,7 +51,7 @@ IMPLEMENT_BLOCK_CIPHER(rc2, ks, RC2, EVP_RC2_KEY, NID_rc2,
 # define RC2_128_MAGIC   0x3a
 static const EVP_CIPHER r2_64_cbc_cipher = {
     NID_rc2_64_cbc,
-    8, 8 /* 64 bit */ , 8,
+    8, 8 /* 64 bit */ , 8, 0,
     EVP_CIPH_CBC_MODE | EVP_CIPH_VARIABLE_LENGTH | EVP_CIPH_CTRL_INIT,
     EVP_ORIG_GLOBAL,
     rc2_init_key,
@@ -66,7 +66,7 @@ static const EVP_CIPHER r2_64_cbc_cipher = {
 
 static const EVP_CIPHER r2_40_cbc_cipher = {
     NID_rc2_40_cbc,
-    8, 5 /* 40 bit */ , 8,
+    8, 5 /* 40 bit */ , 8, 0,
     EVP_CIPH_CBC_MODE | EVP_CIPH_VARIABLE_LENGTH | EVP_CIPH_CTRL_INIT,
     EVP_ORIG_GLOBAL,
     rc2_init_key,
