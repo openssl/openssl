@@ -320,8 +320,12 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
         tmpout = out;
 
     /* We now have to 'read' from p7bio to calculate digests etc. */
-    if ((buf = OPENSSL_malloc(BUFFERSIZE)) == NULL)
+    if ((buf = OPENSSL_malloc(BUFFERSIZE)) == NULL) {
+        if (flags & PKCS7_TEXT)
+            BIO_free(tmpout);
         goto err;
+    }
+
     for (;;) {
         i = BIO_read(p7bio, buf, BUFFERSIZE);
         if (i <= 0)
