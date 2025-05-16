@@ -27,7 +27,6 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 ( $xlate="${dir}../../perlasm/x86_64-xlate.pl" and -f $xlate) or
 die "can't locate x86_64-xlate.pl";
 
-# TODO: Find out the version of NASM that supports VEX-encoded AVX-IFMA instructions
 if (`$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
         =~ /GNU assembler version ([2-9]\.[0-9]+)/) {
     $avxifma = ($1>=2.40);
@@ -37,6 +36,11 @@ if (!$avxifma && `$ENV{CC} -v 2>&1`
     =~ /\s*((?:clang|LLVM) version|.*based on LLVM) ([0-9]+)\.([0-9]+)\.([0-9]+)?/) {
     my $ver = $2 + $3/100.0 + $4/10000.0; # 3.1.0->3.01, 3.10.1->3.1001
     $avxifma = ($ver>=16.0);
+}
+
+if ($win64 && ($flavour =~ /nasm/ || $ENV{ASM} =~ /nasm/) &&
+       `nasm -v 2>&1` =~ /NASM version ([2-9]\.[0-9]+)(?:\.([0-9]+))?(rc[0-9]+)?/) {
+    $avxifma = ($1>2.16) + ($1==2.16 && ((!defined($2) && !defined($3)) || (defined($2))));
 }
 
 open OUT,"| \"$^X\" \"$xlate\" $flavour \"$output\""
@@ -296,34 +300,34 @@ $code.=<<___;
     and \$0xf, %r14
     vpsubq  .Lmask52x4(%rip), $_R0,  $T0
     shl \$5, %r14
-    vmovapd (%rdx, %r14), $T1
+    vmovapd (%rdx,%r14), $T1
     vblendvpd $T1, $T0, $_R0, $_R0
 
     shr \$4, %r13b
     and \$0xf, %r13
     vpsubq  .Lmask52x4(%rip), $_R0h,  $T0
     shl \$5, %r13
-    vmovapd (%rdx, %r13), $T1
+    vmovapd (%rdx,%r13), $T1
     vblendvpd $T1, $T0, $_R0h, $_R0h
 
     mov %r12b, %r11b
     and \$0xf, %r12
     vpsubq  .Lmask52x4(%rip), $_R1,  $T0
     shl \$5, %r12
-    vmovapd (%rdx, %r12), $T1
+    vmovapd (%rdx,%r12), $T1
     vblendvpd $T1, $T0, $_R1, $_R1
 
     shr \$4, %r11b
     and \$0xf, %r11
     vpsubq  .Lmask52x4(%rip), $_R1h,  $T0
     shl \$5, %r11
-    vmovapd (%rdx, %r11), $T1
+    vmovapd (%rdx,%r11), $T1
     vblendvpd $T1, $T0, $_R1h, $_R1h
 
     and \$0xf, %r10
     vpsubq  .Lmask52x4(%rip), $_R2,  $T0
     shl \$5, %r10
-    vmovapd (%rdx, %r10), $T1
+    vmovapd (%rdx,%r10), $T1
     vblendvpd $T1, $T0, $_R2, $_R2
 
     # Add carries according to the obtained mask

@@ -218,6 +218,25 @@ my @segment_stack = ();
 my $current_function;
 my %globals;
 
+{ package vex_prefix;	# pick up vex prefixes, example: {vex} vpmadd52luq m256, %ymm, %ymm
+    sub re {
+	my ($class, $line) = @_;
+	my $self = {};
+	my $ret;
+
+	if ($$line =~ /(^\{vex\})/) {
+	    bless $self,$class;
+	    $self->{value} = $1;
+	    $ret = $self;
+	    $$line = substr($$line,@+[0]); $$line =~ s/^\s+//;
+	}
+	$ret;
+	}
+    sub out {
+	my $self = shift;
+	$self->{value};
+	}
+}
 { package opcode;	# pick up opcodes
     sub re {
 	my	($class, $line) = @_;
@@ -1396,7 +1415,11 @@ while(defined(my $line=<>)) {
 
     if (my $directive=directive->re(\$line)) {
 	printf "%s",$directive->out();
-    } elsif (my $opcode=opcode->re(\$line)) {
+    } else {
+	if (my $vex_prefix=vex_prefix->re(\$line)) {
+	printf "%s",$vex_prefix->out();
+	}
+	if (my $opcode=opcode->re(\$line)) {
 	my $asm = eval("\$".$opcode->mnemonic());
 
 	if ((ref($asm) eq 'CODE') && scalar(my @bytes=&$asm($line))) {
@@ -1445,6 +1468,7 @@ while(defined(my $line=<>)) {
 	    }
 	} else {
 	    printf "\t%s",$opcode->out();
+	}
 	}
     }
 
