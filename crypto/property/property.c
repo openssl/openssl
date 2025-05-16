@@ -329,7 +329,7 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
 
     /* Insert into the hash table if required */
     if (!ossl_property_write_lock(store)) {
-        OPENSSL_free(impl);
+        impl_free(impl);
         return 0;
     }
     ossl_method_cache_flush(store, nid);
