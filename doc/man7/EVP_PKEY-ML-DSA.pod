@@ -211,27 +211,7 @@ output, by listing those first.
 
 =head1 EXAMPLES
 
-An B<EVP_PKEY> context can be obtained by calling:
-
-    EVP_PKEY_CTX *pctx =
-        EVP_PKEY_CTX_new_from_name(NULL, "ML-DSA-44", NULL);
-
-An B<ML-DSA-44> key can be generated like this:
-
-    pkey = EVP_PKEY_Q_keygen(NULL, NULL, "ML-DSA-44");
-
-The key pair components can be extracted from a key by calling:
-
-    /* Sizes large enough for ML-DSA-87 */
-    uint8_t pub[2592], priv[4896], seed[32]:
-    size_t priv_len, pub_len, seed_len;
-
-    EVP_PKEY_get_octet_string_param(pkey, OSSL_PKEY_PARAM_ML_DSA_SEED,
-                                    seed, sizeof(seed), &seed_len);
-    EVP_PKEY_get_octet_string_param(pkey, OSSL_PKEY_PARAM_PRIV_KEY,
-                                    priv, sizeof(priv), &priv_len);
-    EVP_PKEY_get_octet_string_param(pkey, OSSL_PKEY_PARAM_PUB_KEY,
-                                    pub, sizeof(pub), &pub_len));
+=head2 Command Line Examples
 
 An B<ML-DSA> private key in seed format can be converted to a key in the FIPS
 204 B<sk> format by running:
@@ -276,6 +256,63 @@ In the B<openssl.cnf> file, this looks like:
 
     [base_sect]
     ml-dsa = ml_dsa_sect
+
+
+=head2 EVP API Examples
+
+=head3 Key Generation
+
+An B<ML-DSA-44> key can be generated using the Quick API like this (note: error handling is omitted from all examples below):
+
+    PKEY *pkey = EVP_PKEY_Q_keygen(NULL, NULL, "ML-DSA-44");
+
+or using the multi-step API like this :
+
+    EVP_PKEY_CTX *ctx =
+        EVP_PKEY_CTX_new_from_name(NULL, "ML-DSA-44", NULL);
+
+    !EVP_PKEY_keygen_init();
+
+    PKEY *key = NULL;
+    !EVP_PKEY_generate(ctx, &key);
+
+    EVP_PKEY_CTX_free(ctx);  // Don't need this anymore
+
+B<ML-DSA> keys can also be generated from a seed like this:
+
+    uint8_t seed[32];
+    // seed obtained from random number generator or from private key file.
+
+    EVP_PKEY_CTX *ctx = NULL;
+    OSSL_PARAM params[3], *p = params;
+
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_ML_DSA_SEED, (char*)seed, 32);
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_PROPERTIES, "?fips=yes", 0);
+    *p++ = OSSL_PARAM_construct_end();
+
+    ctx = EVP_PKEY_CTX_new_from_name(NULL, alg, NULL);
+    EVP_KEY_keygen_init(ctx);
+    EVP_PKEY_CTX_set_params(ctx, params);
+    EVP_PKEY_generate(ctx, key);
+
+    EVP_PKEY_CTX_free(ctx);  // Don't need this anymore
+
+Once the PKEY has been generated, the key pair components can be extracted calling:
+
+    /* Sizes large enough for ML-DSA-87 */
+    uint8_t pub[2592], priv[4896], seed[32]:
+    size_t priv_len, pub_len, seed_len;
+
+    EVP_PKEY_get_octet_string_param(pkey, OSSL_PKEY_PARAM_ML_DSA_SEED,
+                                    seed, sizeof(seed), &seed_len);
+    EVP_PKEY_get_octet_string_param(pkey, OSSL_PKEY_PARAM_PRIV_KEY,
+                                    priv, sizeof(priv), &priv_len);
+    EVP_PKEY_get_octet_string_param(pkey, OSSL_PKEY_PARAM_PUB_KEY,
+                                    pub, sizeof(pub), &pub_len));
+
+=head3 Signing and Verifying
+
+Signing and verifying with an ML-DSA key is described in L<EVP_SIGNATURE-ML-DSA(7)>.
 
 =head1 SEE ALSO
 
