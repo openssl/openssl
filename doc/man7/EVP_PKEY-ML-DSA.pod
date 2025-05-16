@@ -262,7 +262,8 @@ In the B<openssl.cnf> file, this looks like:
 
 =head3 Key Generation
 
-An B<ML-DSA-44> key can be generated using the Quick API like this (note: error handling is omitted from all examples below):
+An B<ML-DSA-44> key can be generated using the Quick API like this:
+(note: error handling is omitted from all examples below)
 
     PKEY *pkey = EVP_PKEY_Q_keygen(NULL, NULL, "ML-DSA-44");
 
@@ -271,22 +272,22 @@ or using the multi-step API like this :
     EVP_PKEY_CTX *ctx =
         EVP_PKEY_CTX_new_from_name(NULL, "ML-DSA-44", NULL);
 
-    !EVP_PKEY_keygen_init();
+    EVP_PKEY_keygen_init();
 
     PKEY *key = NULL;
-    !EVP_PKEY_generate(ctx, &key);
+    EVP_PKEY_generate(ctx, &key);
 
-    EVP_PKEY_CTX_free(ctx);  // Don't need this anymore
+    EVP_PKEY_CTX_free(ctx);
 
 B<ML-DSA> keys can also be generated from a seed like this:
 
     uint8_t seed[32];
-    // seed obtained from random number generator or from private key file.
+    /* seed obtained from random number generator or from private key file. */
 
     EVP_PKEY_CTX *ctx = NULL;
     OSSL_PARAM params[3], *p = params;
 
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_ML_DSA_SEED, (char*)seed, 32);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_ML_DSA_SEED, seed, 32);
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_PROPERTIES, "?fips=yes", 0);
     *p++ = OSSL_PARAM_construct_end();
 
@@ -295,7 +296,7 @@ B<ML-DSA> keys can also be generated from a seed like this:
     EVP_PKEY_CTX_set_params(ctx, params);
     EVP_PKEY_generate(ctx, key);
 
-    EVP_PKEY_CTX_free(ctx);  // Don't need this anymore
+    EVP_PKEY_CTX_free(ctx);
 
 Once the PKEY has been generated, the key pair components can be extracted calling:
 
