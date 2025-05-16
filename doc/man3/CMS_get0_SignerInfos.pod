@@ -38,7 +38,7 @@ CMS_SignerInfo_cert_cmp() compares the certificate B<cert> against the signer
 identifier B<si>. It returns zero if the comparison is successful and non zero
 if not.
 
-CMS_SignerInfo_set1_signer_cert() sets the signers certificate of B<si> to
+CMS_SignerInfo_set1_signer_cert() sets the signer's certificate of B<si> to
 B<signer>.
 
 =head1 NOTES

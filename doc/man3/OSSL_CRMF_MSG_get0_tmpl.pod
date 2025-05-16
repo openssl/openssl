@@ -109,7 +109,7 @@ On success, the function verifies the decrypted data as signed data,
 using the trust store I<ts> and any untrusted certificates in I<extra>.
 Doing so, it checks for the purpose "CMP Key Generation Authority" (cmKGA).
 
-OSSL_CRMF_ENCRYPTEDKEY_init_envdata() returns I<OSSL_CRMF_ENCRYPTEDKEY>, intialized with 
+OSSL_CRMF_ENCRYPTEDKEY_init_envdata() returns I<OSSL_CRMF_ENCRYPTEDKEY>, initialized with
 the enveloped data I<envdata>.
 
 OSSL_CRMF_ENCRYPTEDVALUE_decrypt() decrypts the encrypted value in the given

@@ -1474,46 +1474,46 @@ subtest "sign and verify with multiple keys" => sub {
     my $out2 = "out2.txt";
 
     ok(run(app(['openssl', 'cms',
-		@defaultprov,
-		'-sign', '-in', $smcont,
+                @defaultprov,
+                '-sign', '-in', $smcont,
                 '-nodetach',
                 '-signer', $smrsa1,
-		'-out', $sig1, '-outform', 'DER',
-	       ])),
+                '-out', $sig1, '-outform', 'DER',
+               ])),
        "sign with first key");
     ok(run(app(['openssl', 'cms',
-		@defaultprov,
-		'-verify', '-in', $sig1, '-inform', 'DER',
+                @defaultprov,
+                '-verify', '-in', $sig1, '-inform', 'DER',
                 '-CAfile', $smrsa1, '-partial_chain',
-		'-out', $out1,
-	       ])),
+                '-out', $out1,
+               ])),
        "verify single signature");
     is(compare($smcont, $out1), 0, "compare original message with verified message");
 
     ok(run(app(['openssl', 'cms',
-		@defaultprov,
-		'-resign', '-in', $sig1, '-inform', 'DER',
+                @defaultprov,
+                '-resign', '-in', $sig1, '-inform', 'DER',
                 '-signer', $smrsa2,
-		'-out', $sig2, '-outform', 'DER',
-	       ])),
+                '-out', $sig2, '-outform', 'DER',
+               ])),
        "resign with second key");
 
     # because the smrsa2 signature cannot be verified, overall verification fails
     ok(!run(app(['openssl', 'cms',
-		@defaultprov,
-		'-verify', '-in', $sig2, '-inform', 'DER',
-                '-CAfile', $smrsa1, '-partial_chain',
-		'-out', $out2,
-	       ])),
+                 @defaultprov,
+                 '-verify', '-in', $sig2, '-inform', 'DER',
+                 '-CAfile', $smrsa1, '-partial_chain',
+                 '-out', $out2,
+                ])),
        "try to verify two signatures with only rsa1");
 
     # because both signatures can be verified, overall verification succeeds
     ok(run(app(['openssl', 'cms',
-		@defaultprov,
-		'-verify', '-in', $sig2, '-inform', 'DER',
+                @defaultprov,
+                '-verify', '-in', $sig2, '-inform', 'DER',
                 '-CAfile', $smroot,
-		'-out', $out2,
-	       ])),
+                '-out', $out2,
+               ])),
        "verify both signature signatures with root");
     is(compare($smcont, $out2), 0, "compare original message with verified message");
 };

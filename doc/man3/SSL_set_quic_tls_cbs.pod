@@ -110,7 +110,7 @@ ever be read by OpenSSL.
 
 The OSSL_FUNC_SSL_QUIC_TLS_yield_secret_fn callback (function id
 B<OSSL_FUNC_SSL_QUIC_TLS_YIELD_SECRET>) is called when a new secret has been
-established. The I<prot_level> argument identies the TLS protection level and
+established. The I<prot_level> argument identities the TLS protection level and
 will be one of B<OSSL_RECORD_PROTECTION_LEVEL_NONE>,
 B<OSSL_RECORD_PROTECTION_LEVEL_EARLY>, B<OSSL_RECORD_PROTECTION_LEVEL_HANDSHAKE>
 or B<OSSL_RECORD_PROTECTION_LEVEL_APPLICATION>. The I<direction> will either be
