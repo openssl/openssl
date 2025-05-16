@@ -42,4 +42,30 @@ our @tests = (
             "ExpectedResult" => "ClientFail"
         }
     },
+    {
+        name => "certstatus-good-ext",
+        server => {
+            extra => {
+                "CertStatus" => "GoodResponseExt",
+            },
+        },
+        client => {},
+        test => {
+            "Method" => "TLS",
+            "ExpectedResult" => "Success"
+        }
+    },
+    {
+        name => "certstatus-bad-ext",
+        server => {
+            extra => {
+                "CertStatus" => "BadResponseExt",
+            },
+        },
+        client => {},
+        test => {
+            "Method" => "TLS",
+            "ExpectedResult" => "ClientFail"
+        }
+    },
 );
