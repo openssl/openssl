@@ -203,7 +203,6 @@ opthelp:
                     BIO_printf(bio_err, "Read error in %s\n", argv[0]);
 
                 BIO_free(in);
-                in = NULL;
             }
         }
     }
