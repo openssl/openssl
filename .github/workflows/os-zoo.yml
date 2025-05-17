@@ -125,13 +125,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2019, windows-2022]
-    runs-on: ${{ matrix.os }}
+        platform:
+          - os: windows-2019
+            vcvars: C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat
+          - os: windows-2022
+            vcvars: C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat
+    runs-on: ${{ matrix.platform.os }}
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
-    - uses: ilammy/msvc-dev-cmd@v1
     - name: install nasm
       run: |
         choco install nasm
@@ -140,18 +143,21 @@ jobs:
       run: mkdir _build
     - name: config
       working-directory: _build
-      run: perl ..\Configure --banner=Configured no-makedepend enable-fips
-    - name: config dump
-      working-directory: _build
-      run: ./configdata.pm --dump
+      shell: cmd
+      run: |
+        call "${{ matrix.platform.vcvars }}"
+        perl ..\Configure --banner=Configured no-makedepend enable-fips
+        perl configdata.pm --dump
     - name: build
       working-directory: _build
-      run: nmake /S
+      shell: cmd
+      run: |
+        call "${{ matrix.platform.vcvars }}"
+        nmake /S
     - name: download coreinfo
-      uses: suisei-cn/actions-download-file@v1.6.0
-      with:
-        url: "https://download.sysinternals.com/files/Coreinfo.zip"
-        target: _build/coreinfo/
+      run: |
+        mkdir _build\coreinfo
+        Invoke-WebRequest -Uri "https://download.sysinternals.com/files/Coreinfo.zip" -outfile "_build\coreinfo\Coreinfo.zip"
     - name: get cpu info
       working-directory: _build
       run: |
@@ -160,7 +166,10 @@ jobs:
         apps/openssl.exe version -c
     - name: test
       working-directory: _build
-      run: nmake test VERBOSE_FAILURE=yes HARNESS_JOBS=4
+      shell: cmd
+      run: |
+        call "${{ matrix.platform.vcvars }}"
+        nmake test VERBOSE_FAILURE=yes HARNESS_JOBS=4
 
   linux-arm64:
     runs-on: linux-arm64
