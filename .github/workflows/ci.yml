@@ -677,20 +677,32 @@ jobs:
 
   external-tests-pkcs11-provider:
     runs-on: ubuntu-latest
-    container: fedora:rawhide
+    container: fedora:latest
     steps:
     - name: package installs
       run: |
-        dnf install -y kryoptic perl git meson opensc expect
+        dnf install -y perl-FindBin perl-IPC-Cmd perl-File-Compare perl-File-Copy perl-Test-Simple perl-Test-Harness python3 make g++ perl git meson opensc expect kryoptic
     - uses: actions/checkout@v4
-      with:
-        submodules: true  
+    - name: checkout fuzz/corpora and pkcs11-provider submodule
+      run: |
+        git config --global --add safe.directory /__w/openssl/openssl
+        git submodule update --init --depth 1 fuzz/corpora
+        git submodule update --init --depth 1 pkcs11-provider
     - name: config
-      run: ./config --strict-warnings --banner=Configured --debug enable-external-tests && perl configdata.pm --dump
+      run: ./config --strict-warnings --banner=Configured --debug enable-external-tests no-fips && perl configdata.pm --dump
     - name: make
       run: make -s -j4
+    # Run all tests except external tests to make sure they work fine on Fedora because
+    # this is the only job running on Fedora, only then execute pkcs11-provider external
+    # test.
+    - name: test (except external tests)
+      run: make test TESTS="-test_external_*"
     - name: test external pkcs11-provider
       run: make test TESTS="test_external_pkcs11_provider" VERBOSE=1
+    - name: get cpu info
+      run: |
+        cat /proc/cpuinfo
+        ./util/opensslwrap.sh version -c
 
   external-tests-pyca:
     runs-on: ubuntu-latest
