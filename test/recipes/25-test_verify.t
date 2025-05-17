@@ -30,7 +30,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 205;
+plan tests => 206;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -516,6 +516,11 @@ ok(verify("ee-self-signed", "", ["ee-self-signed"], [], "-attime", "1593565200")
    "accept trusted self-signed EE cert excluding key usage keyCertSign");
 ok(verify("ee-ss-with-keyCertSign", "", ["ee-ss-with-keyCertSign"], []),
    "accept trusted self-signed EE cert with key usage keyCertSign also when strict");
+
+# Duplicate‐extension in CRL must be rejected
+ok(!verify("ee-cert", "", [qw(root-cert)], [], "-crl_check", "-CRLfile",
+    srctop_file("test", "crls", "crl-dup-ext.pem")),
+    "reject CRL containing duplicate extensions");
 
 SKIP: {
     skip "Ed25519 is not supported by this OpenSSL build", 6
