@@ -322,6 +322,18 @@ static ossl_inline size_t value_barrier_s(size_t a)
     return r;
 }
 
+/* Convenience method for unsigned char. */
+static ossl_inline unsigned char value_barrier_8(unsigned char a)
+{
+#if !defined(OPENSSL_NO_ASM) && defined(__GNUC__)
+    unsigned char r;
+    __asm__("" : "=r"(r) : "0"(a));
+#else
+    volatile unsigned char r = a;
+#endif
+    return r;
+}
+
 static ossl_inline unsigned int constant_time_select(unsigned int mask,
                                                      unsigned int a,
                                                      unsigned int b)
@@ -382,7 +394,7 @@ static ossl_inline void constant_time_cond_swap_32(uint32_t mask, uint32_t *a,
 {
     uint32_t xor = *a ^ *b;
 
-    xor &= mask;
+    xor &= value_barrier_32(mask);
     *a ^= xor;
     *b ^= xor;
 }
@@ -402,7 +414,7 @@ static ossl_inline void constant_time_cond_swap_64(uint64_t mask, uint64_t *a,
 {
     uint64_t xor = *a ^ *b;
 
-    xor &= mask;
+    xor &= value_barrier_64(mask);
     *a ^= xor;
     *b ^= xor;
 }
@@ -429,7 +441,7 @@ static ossl_inline void constant_time_cond_swap_buff(unsigned char mask,
 
     for (i = 0; i < len; i++) {
         tmp = a[i] ^ b[i];
-        tmp &= mask;
+        tmp &= value_barrier_8(mask);
         a[i] ^= tmp;
         b[i] ^= tmp;
     }
