@@ -182,8 +182,11 @@ static int test_self_signed(const char *filename, int use_trusted, int expected)
 {
     X509 *cert = load_cert_from_file(filename); /* may result in NULL */
     STACK_OF(X509) *trusted = sk_X509_new_null();
-    X509_STORE_CTX *ctx = X509_STORE_CTX_new();
+    X509_STORE_CTX *ctx = NULL;
     int ret;
+
+    if (!TEST_ptr(ctx = X509_STORE_CTX_new()))
+        return 0;
 
     ret = TEST_int_eq(X509_self_signed(cert, 1), expected);
 
