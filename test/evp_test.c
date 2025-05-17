@@ -702,8 +702,10 @@ static int digest_test_init(EVP_TEST *t, const char *alg)
     if ((digest = fetched_digest = EVP_MD_fetch(libctx, alg, propquery)) == NULL
         && (digest = EVP_get_digestbyname(alg)) == NULL)
         return 0;
-    if (!TEST_ptr(mdat = OPENSSL_zalloc(sizeof(*mdat))))
+    if (!TEST_ptr(mdat = OPENSSL_zalloc(sizeof(*mdat)))) {
+        EVP_MD_free(fetched_digest);
         return 0;
+    }
     t->data = mdat;
     mdat->digest = digest;
     mdat->fetched_digest = fetched_digest;
