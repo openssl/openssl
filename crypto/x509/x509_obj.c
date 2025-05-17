@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -15,6 +15,24 @@
 #include "crypto/x509.h"
 #include "crypto/ctype.h"
 
+#if !defined(TRUE) && !defined(FALSE)
+# define TRUE  1
+# define FALSE (!TRUE)
+#endif
+#ifdef UNINITIALIZED
+# undef UNINITIALIZED
+#endif
+#define UNINITIALIZED (-1)
+
+#ifdef DEL
+# undef DEL
+#endif
+#ifndef CHARSET_EBCDIC
+# define DEL 127
+#else
+# define DEL 7
+#endif
+
 /*
  * Limit to ensure we don't overflow: much greater than
  * anything encountered in practice.
@@ -22,7 +40,20 @@
 
 #define NAME_ONELINE_MAX    (1024 * 1024)
 
-char *X509_NAME_oneline(const X509_NAME *a, char *buf, int len)
+/*
+ * X509_NAME_online_with_bool() is the foundation of both X509_NAME_oneline()
+ * and X509_NAME_oneline_for_locale(). It prints a version of "a" to "buf".
+ * If "is_hex_escaping_non_ASCII" is TRUE, then non-ASCII UTF-8 characters
+ * will be hex-escaped, and "buf" will be ASCII; if it's FALSE, then
+ * such characters will remain UTF-8 if the X.509 NAME entry value type
+ * is UTF8String. If "buf" is NULL, then a buffer is dynamically allocated
+ * and returned, and "len" is ignored. Otherwise, at most "len" bytes will
+ * be written, including the ending '\0', and "buf" is returned.
+ */
+
+static char *X509_NAME_oneline_with_bool(const X509_NAME *a, char *buf,
+                                         int len,
+                                         int is_hex_escaping_non_ASCII)
 {
     const X509_NAME_ENTRY *ne;
     int i;
@@ -58,9 +89,15 @@ char *X509_NAME_oneline(const X509_NAME *a, char *buf, int len)
         return buf;
     }
 
+    if (is_hex_escaping_non_ASCII != TRUE &&
+        is_hex_escaping_non_ASCII != FALSE)
+        is_hex_escaping_non_ASCII = TRUE;
+
     len--;                      /* space for '\0' */
     l = 0;
     for (i = 0; i < sk_X509_NAME_ENTRY_num(a->entries); i++) {
+        int is_hex_escaping = is_hex_escaping_non_ASCII;
+
         ne = sk_X509_NAME_ENTRY_value(a->entries, i);
         n = OBJ_obj2nid(ne->object);
         if ((n == NID_undef) || ((s = OBJ_nid2sn(n)) == NULL)) {
@@ -70,6 +107,10 @@ char *X509_NAME_oneline(const X509_NAME *a, char *buf, int len)
         l1 = strlen(s);
 
         type = ne->value->type;
+
+        if (!is_hex_escaping && type != V_ASN1_UTF8STRING)
+            is_hex_escaping = TRUE;
+
         num = ne->value->length;
         if (num > NAME_ONELINE_MAX) {
             ERR_raise(ERR_LIB_X509, X509_R_NAME_TOO_LONG);
@@ -110,8 +151,10 @@ char *X509_NAME_oneline(const X509_NAME *a, char *buf, int len)
             l2++;
             if (q[j] == '/' || q[j] == '+')
                 l2++; /* char needs to be escaped */
-            else if ((ossl_toascii(q[j]) < ossl_toascii(' ')) ||
-                     (ossl_toascii(q[j]) > ossl_toascii('~')))
+            else if (ossl_toascii(q[j]) < ossl_toascii(' ') ||
+                     ossl_toascii(q[j]) == ossl_toascii(DEL) ||
+                     (is_hex_escaping &&
+                      ossl_toascii(q[j]) > ossl_toascii('~')))
                 l2 += 3;
         }
 
@@ -129,8 +172,8 @@ char *X509_NAME_oneline(const X509_NAME *a, char *buf, int len)
             break;
         } else
             p = &(buf[lold]);
-        *(p++) = prev_set == ne->set ? '+' : '/';
-        memcpy(p, s, (unsigned int)l1);
+        *(p++) = (prev_set == ne->set) ? '+' : '/';
+        memcpy(p, s, (size_t)l1);
         p += l1;
         *(p++) = '=';
 
@@ -143,18 +186,19 @@ char *X509_NAME_oneline(const X509_NAME *a, char *buf, int len)
                 continue;
 #ifndef CHARSET_EBCDIC
             n = q[j];
-            if ((n < ' ') || (n > '~')) {
+            if (n < ' ' || n == DEL || (is_hex_escaping && n > '~')) {
                 *(p++) = '\\';
                 *(p++) = 'x';
                 p += ossl_to_hex(p, n);
             } else {
                 if (n == '/' || n == '+')
                     *(p++) = '\\';
-                *(p++) = n;
+                *(p++) = (char)((unsigned char)n);
             }
 #else
             n = os_toascii[q[j]];
-            if ((n < os_toascii[' ']) || (n > os_toascii['~'])) {
+            if (n < os_toascii[' '] || n == os_toascii[DEL]
+                || (is_hex_escaping && n > os_toascii['~'])) {
                 *(p++) = '\\';
                 *(p++) = 'x';
                 p += ossl_to_hex(p, n);
@@ -181,4 +225,62 @@ char *X509_NAME_oneline(const X509_NAME *a, char *buf, int len)
  end:
     BUF_MEM_free(b);
     return NULL;
+}
+
+char *X509_NAME_oneline(const X509_NAME *a, char *buf, int size)
+{
+    return X509_NAME_oneline_with_bool(a, buf, size, TRUE);
+}
+
+/*
+ * If the locale of the process specifies the UTF-8 codeset,
+ * then don't hex-escape non-ASCII UTF-8-encoded characters
+ * via X509_NAME_oneline_for_locale().
+ *
+ * However, if the X.509 NAME entry value type is not UTF8String,
+ * then non-ASCII UTF-8-encoded characters will always be
+ * hex-escaped in X509_NAME_oneline_with_bool(), even if
+ * the provided is_hex_escaping_non_ASCII value is FALSE.
+ */
+
+char *X509_NAME_oneline_for_locale(const X509_NAME *a, char *buf, int size)
+{
+    static int is_hex_escaping_non_ASCII = UNINITIALIZED;
+
+    if (is_hex_escaping_non_ASCII == UNINITIALIZED) {
+        static const char *environment_variable[] = {
+            "LC_ALL", "LC_CTYPE", "LANG", NULL
+        };
+        static const char utf_8[] = ".UTF-8";
+        static const size_t utf_8_len =
+            sizeof utf_8 / sizeof *utf_8 - sizeof *utf_8;
+        const char **this_environment_variable;
+
+        /*
+         * Check LC_ALL, LC_CTYPE, and LANG, in this order.
+         * Only process the first non-NULL value found.
+         */
+        for (this_environment_variable = environment_variable;
+             *this_environment_variable != NULL;
+             ++this_environment_variable) {
+            char *this_environment_value = getenv(*this_environment_variable);
+
+            if (this_environment_value != NULL) {
+                size_t length = strlen(this_environment_value);
+
+                is_hex_escaping_non_ASCII =
+                    (length <= utf_8_len
+                     || strncmp(this_environment_value + length - utf_8_len,
+                                utf_8, utf_8_len) != 0)
+                    ? TRUE : FALSE;
+                break;
+            }
+        }
+
+        if (is_hex_escaping_non_ASCII == UNINITIALIZED)
+            is_hex_escaping_non_ASCII = TRUE;
+    }
+
+    return X509_NAME_oneline_with_bool(a, buf, size,
+                                       is_hex_escaping_non_ASCII);
 }
