@@ -17,7 +17,7 @@ Finally, it also has a set of providers that supply implementations of a broad
 set of cryptographic algorithms.
 
 OpenSSL is fully open source. Version 3.0 and above are distributed under the
-Apache v2 license.
+Apache v2 license. The codebase is mostly in C, C++, and Perl.
 
 =head1 GETTING AND INSTALLING OPENSSL
 
