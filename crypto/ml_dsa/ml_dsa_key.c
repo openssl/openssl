@@ -47,7 +47,7 @@ int ossl_ml_dsa_set_prekey(ML_DSA_KEY *key, int flags_set, int flags_clr,
         || (seed != NULL && seed_len != ML_DSA_SEED_BYTES)
         || key->seed != NULL)
         return 0;
-    
+
     if (sk != NULL) {
         key->priv_encoding = OPENSSL_secure_malloc(sk_len);
         if (key->priv_encoding == NULL)
