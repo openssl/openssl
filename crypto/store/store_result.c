@@ -154,15 +154,17 @@ int ossl_store_handle_load_result(const OSSL_PARAM params[], void *arg)
     ERR_pop_to_mark();
 
     if (*v == NULL) {
-        const char *prov_name = NULL, *hint = "";
+        const char *hint = "";
 
-        if (provider != NULL)
-            prov_name = OSSL_PROVIDER_get0_name(provider);
-        if (prov_name == NULL)
-            prov_name = "(none)";
         if (!OSSL_PROVIDER_available(libctx, "default"))
             hint = ":maybe need to load the default provider?";
-        ERR_raise_data(ERR_LIB_OSSL_STORE, ERR_R_UNSUPPORTED, "provider=%s%s", prov_name, hint);
+        if (provider != NULL)
+            ERR_raise_data(ERR_LIB_OSSL_STORE, ERR_R_UNSUPPORTED, "provider=%s%s",
+                           OSSL_PROVIDER_get0_name(provider), hint);
+        else if (hint[0] != '\0')
+            ERR_raise_data(ERR_LIB_OSSL_STORE, ERR_R_UNSUPPORTED, "%s", hint);
+        else
+            ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_UNSUPPORTED);
     }
 
     return (*v != NULL);
